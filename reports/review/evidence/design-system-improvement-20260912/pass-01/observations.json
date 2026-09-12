@@ -1,0 +1,4900 @@
+{
+  "observations": [
+    {
+      "name": "01-home-new-375",
+      "title": "TRAINORACLE",
+      "text": "TRAINORACLE\n달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.\n\n모든 데이터는 이 기기에만 저장돼요.\n\n오늘 기록 남기기\n훈련 계획 만들기\n이렇게 쓰여요\n첫날\n4.6km를 달린 첫 기록\n거리 4.6km · 시간 30분\n민지의 예시 일지 보기\n내 일지\n아직 기록이 없어요 · 달력 · 하루 기록\n훈련 계획\n저장된 계획 없음 · 계획안 만들기\n분석\n기록이 쌓이면 변화를 볼 수 있어요\n\n첫 기록을 남기면 일지를 꾸밀 수 있어요. 훈련 기록 또는 몸 상태·회복 체크를 남긴 날마다 4P가 쌓여요. 거리·속도·훈련 강도에는 점수를 매기지 않아요.\n\n오늘 방문 확인 +1P\n홈\n일지\n경기기록\n계획\n분석",
+      "scrollHeight": 976,
+      "clientHeight": 622,
+      "overflow": false,
+      "fontReady": true,
+      "loadedFonts": [
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        }
+      ],
+      "geometry": [
+        {
+          "className": "app-tab-bar",
+          "top": 622,
+          "width": 373,
+          "height": 45,
+          "display": "grid",
+          "columns": "74.5938px 74.5938px 74.6094px 74.5938px 74.5938px",
+          "font": "14.5px",
+          "color": "rgb(14, 20, 18)",
+          "border": "1px solid rgb(14, 20, 18)",
+          "accent": "",
+          "lineDark": ""
+        }
+      ],
+      "controls": [
+        {
+          "text": "더보기",
+          "tag": "BUTTON",
+          "className": "training-home__more",
+          "width": 44,
+          "height": 44,
+          "top": 17,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "오늘 기록 남기기",
+          "tag": "BUTTON",
+          "className": "training-home__primary",
+          "width": 333,
+          "height": 52,
+          "top": 226,
+          "font": "15px",
+          "weight": "600"
+        },
+        {
+          "text": "훈련 계획 만들기",
+          "tag": "BUTTON",
+          "className": "training-home__secondary",
+          "width": 333,
+          "height": 52,
+          "top": 286,
+          "font": "15px",
+          "weight": "600"
+        },
+        {
+          "text": "민지의 예시 일지 보기",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 333,
+          "height": 104,
+          "top": 377,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "내 일지아직 기록이 없어요 · 달력 · 하루 기록",
+          "tag": "BUTTON",
+          "className": "training-home__service",
+          "width": 333,
+          "height": 68,
+          "top": 513,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "훈련 계획저장된 계획 없음 · 계획안 만들기",
+          "tag": "BUTTON",
+          "className": "training-home__service",
+          "width": 333,
+          "height": 68,
+          "top": 581,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "분석기록이 쌓이면 변화를 볼 수 있어요",
+          "tag": "BUTTON",
+          "className": "training-home__service",
+          "width": 333,
+          "height": 68,
+          "top": 649,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "오늘 방문 확인 +1P",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 125,
+          "height": 44,
+          "top": 827,
+          "font": "13px",
+          "weight": "600"
+        },
+        {
+          "text": "홈",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "일지",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "경기기록",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "계획",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "분석",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        }
+      ],
+      "headings": [
+        {
+          "text": "달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.",
+          "top": 80,
+          "size": "29px"
+        }
+      ]
+    },
+    {
+      "name": "02-journal-empty-375",
+      "title": "TRAINORACLE",
+      "text": "JOURNAL ARCHIVE\n지난 일지\n월간 달력\n9.5일 주기\n첫 일지를 남겨보세요\n\n훈련한 날도, 쉰 날도 기록할 수 있어요. 한 번 남기면 날짜별 일지가 여기에 모입니다.\n\n오늘 기록하기\n홈\n일지\n경기기록\n계획\n분석",
+      "scrollHeight": 622,
+      "clientHeight": 622,
+      "overflow": false,
+      "fontReady": true,
+      "loadedFonts": [
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        }
+      ],
+      "geometry": [
+        {
+          "className": "app-tab-bar",
+          "top": 622,
+          "width": 373,
+          "height": 45,
+          "display": "grid",
+          "columns": "74.5938px 74.5938px 74.6094px 74.5938px 74.5938px",
+          "font": "14.5px",
+          "color": "rgb(14, 20, 18)",
+          "border": "1px solid rgb(14, 20, 18)",
+          "accent": "",
+          "lineDark": ""
+        }
+      ],
+      "controls": [
+        {
+          "text": "홈으로",
+          "tag": "BUTTON",
+          "className": "journal-archive__back",
+          "width": 44,
+          "height": 44,
+          "top": 17,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "월간 달력",
+          "tag": "BUTTON",
+          "className": "app-compact-tab",
+          "width": 165,
+          "height": 44,
+          "top": 89,
+          "font": "11px",
+          "weight": "600"
+        },
+        {
+          "text": "9.5일 주기",
+          "tag": "BUTTON",
+          "className": "app-compact-tab",
+          "width": 165,
+          "height": 44,
+          "top": 89,
+          "font": "11px",
+          "weight": "600"
+        },
+        {
+          "text": "오늘 기록하기",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 260,
+          "height": 48,
+          "top": 318,
+          "font": "14px",
+          "weight": "650"
+        },
+        {
+          "text": "홈",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "일지",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "경기기록",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "계획",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "분석",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        }
+      ],
+      "headings": [
+        {
+          "text": "지난 일지",
+          "top": 35,
+          "size": "22px"
+        },
+        {
+          "text": "첫 일지를 남겨보세요",
+          "top": 217,
+          "size": "20px"
+        }
+      ]
+    },
+    {
+      "name": "03-race-entry-375",
+      "title": "TRAINORACLE",
+      "text": "← 뒤로\n새 일지\n2026·09·12 SAT · 10:29\n어떤 일지를 쓰세요?\n✓\n빠르게 기록\n운동 결과·RPE·몸 상태만\nQUICK · 2~5번\n↻\n훈련 후\n방금 끝낸 세션 기록\nPOST · ~1분\n☾\n회복 · 하루 마무리\n쉬는 날도 그대로 · 수면·감정·통증 체크\nEVENING · ~2분\n▲\n경기 직전/직후\n기록·심박·감정\nRACE · ~30초\n워치 기록 불러오기\n가민 커넥트 등에서 내보낸 TCX·GPX 파일 · 거리·시간 자동 입력\n오늘 첫 일지예요. 짧게 몰아 쓰면 1분이면 끝나요.\n홈\n일지\n경기기록\n계획\n분석",
+      "scrollHeight": 673,
+      "clientHeight": 622,
+      "overflow": false,
+      "fontReady": true,
+      "loadedFonts": [
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        }
+      ],
+      "geometry": [
+        {
+          "className": "app-tab-bar",
+          "top": 622,
+          "width": 373,
+          "height": 45,
+          "display": "grid",
+          "columns": "74.5938px 74.5938px 74.6094px 74.5938px 74.5938px",
+          "font": "14.5px",
+          "color": "rgb(14, 20, 18)",
+          "border": "1px solid rgb(14, 20, 18)",
+          "accent": "",
+          "lineDark": ""
+        }
+      ],
+      "controls": [
+        {
+          "text": "← 뒤로",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 64,
+          "height": 44,
+          "top": 12,
+          "font": "11px",
+          "weight": "400"
+        },
+        {
+          "text": "✓빠르게 기록운동 결과·RPE·몸 상태만QUICK · 2~5번",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 373,
+          "height": 81,
+          "top": 167,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "↻훈련 후방금 끝낸 세션 기록POST · ~1분",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 373,
+          "height": 81,
+          "top": 248,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "☾회복 · 하루 마무리쉬는 날도 그대로 · 수면·감정·통증 체크EVENING · ~2분",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 373,
+          "height": 81,
+          "top": 329,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "▲경기 직전/직후기록·심박·감정RACE · ~30초",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 373,
+          "height": 82,
+          "top": 410,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "워치 기록 불러오기가민 커넥트 등에서 내보낸 TCX·GPX 파일 · 거리·시간 자동 입력",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 333,
+          "height": 68,
+          "top": 512,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "홈",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "일지",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "경기기록",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "계획",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "분석",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        }
+      ],
+      "headings": [
+        {
+          "text": "새 일지",
+          "top": 25,
+          "size": "11px"
+        },
+        {
+          "text": "어떤 일지를 쓰세요?",
+          "top": 111,
+          "size": "22px"
+        }
+      ]
+    },
+    {
+      "name": "04-plan-start-375",
+      "title": "TRAINORACLE",
+      "text": "이전\n1/11\n목표 종목\n준비할 달리기를 골라주세요\n?\n\n고른 종목은 계획 방향과 상세 훈련 제공 범위를 정해요. 훈련 경험이 많고 같은 종목의 현재 기록을 고르면 800m·1500m·3000m·5km는 한 번의 주요 훈련에 개인 페이스를 계산하고, 그 밖에는 RPE 기준 계획을 보여드려요.\n\n800m\n두 바퀴 경기 준비 · 빠른 반복과 속도 지구력 중심\n1500m\n중거리 경기 준비 · 경기 속도와 유산소 능력을 함께 다룸\n3000m\n중장거리 경기 준비 · 유산소 능력과 경기 속도 유지 중심\n5000m\n5km 경기 준비 · 지구력과 5km 경기 속도 중심\n10km\n10km 경기 준비 · 지속 능력과 경기 속도 조절 중심\n하프마라톤\n21.097km 경기 준비 · 오래 달리는 힘과 페이스 유지 중심\n마라톤\n42.195km 경기 준비 · 장거리 적응과 안정적인 페이스 운영 중심\n내 경기 기록 관리\n훈련표 표기 읽기\n\n경기 기록을 저장해도 지금 계획의 페이스·거리·반복은 자동으로 바뀌지 않아요.\n\n개인 계획 파일 불러오기\n홈\n일지\n경기기록\n계획\n분석",
+      "scrollHeight": 1016,
+      "clientHeight": 622,
+      "overflow": false,
+      "fontReady": true,
+      "loadedFonts": [
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        }
+      ],
+      "geometry": [
+        {
+          "className": "app-tab-bar",
+          "top": 622,
+          "width": 373,
+          "height": 45,
+          "display": "grid",
+          "columns": "74.5938px 74.5938px 74.6094px 74.5938px 74.5938px",
+          "font": "14.5px",
+          "color": "rgb(14, 20, 18)",
+          "border": "1px solid rgb(14, 20, 18)",
+          "accent": "",
+          "lineDark": ""
+        }
+      ],
+      "controls": [
+        {
+          "text": "이전",
+          "tag": "BUTTON",
+          "className": "plan-back",
+          "width": 38,
+          "height": 44,
+          "top": 20,
+          "font": "10px",
+          "weight": "400"
+        },
+        {
+          "text": "준비 목표 설명 보기",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 44,
+          "height": 44,
+          "top": 134,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "800m두 바퀴 경기 준비 · 빠른 반복과 속도 지구력 중심",
+          "tag": "BUTTON",
+          "className": "plan-choice",
+          "width": 333,
+          "height": 70,
+          "top": 314,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "1500m중거리 경기 준비 · 경기 속도와 유산소 능력을 함께 다룸",
+          "tag": "BUTTON",
+          "className": "plan-choice",
+          "width": 333,
+          "height": 70,
+          "top": 384,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "3000m중장거리 경기 준비 · 유산소 능력과 경기 속도 유지 중심",
+          "tag": "BUTTON",
+          "className": "plan-choice",
+          "width": 333,
+          "height": 70,
+          "top": 455,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "5000m5km 경기 준비 · 지구력과 5km 경기 속도 중심",
+          "tag": "BUTTON",
+          "className": "plan-choice",
+          "width": 333,
+          "height": 70,
+          "top": 525,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "10km10km 경기 준비 · 지속 능력과 경기 속도 조절 중심",
+          "tag": "BUTTON",
+          "className": "plan-choice",
+          "width": 333,
+          "height": 70,
+          "top": 595,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "하프마라톤21.097km 경기 준비 · 오래 달리는 힘과 페이스 유지 중심",
+          "tag": "BUTTON",
+          "className": "plan-choice",
+          "width": 333,
+          "height": 89,
+          "top": 666,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "마라톤42.195km 경기 준비 · 장거리 적응과 안정적인 페이스 운영 중심",
+          "tag": "BUTTON",
+          "className": "plan-choice",
+          "width": 333,
+          "height": 89,
+          "top": 755,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "내 경기 기록 관리",
+          "tag": "BUTTON",
+          "className": "plan-text-action plan-records-entry",
+          "width": 92,
+          "height": 44,
+          "top": 844,
+          "font": "10px",
+          "weight": "400"
+        },
+        {
+          "text": "훈련표 표기 읽기",
+          "tag": "BUTTON",
+          "className": "plan-text-action plan-notation-entry",
+          "width": 66,
+          "height": 44,
+          "top": 856,
+          "font": "10px",
+          "weight": "400"
+        },
+        {
+          "text": "개인 계획 파일 불러오기",
+          "tag": "BUTTON",
+          "className": "plan-file-import",
+          "width": 162,
+          "height": 44,
+          "top": 972,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "홈",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "일지",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "경기기록",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "계획",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "분석",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        }
+      ],
+      "headings": [
+        {
+          "text": "준비할 달리기를 골라주세요",
+          "top": 139,
+          "size": "24px"
+        }
+      ]
+    },
+    {
+      "name": "05-analysis-empty-375",
+      "title": "TRAINORACLE",
+      "text": "뒤로\n분석\n내 기록 오라클\n지금까지 기록으로 알 수 있는 것\n기록을 기다리는 중\n\n아직 단정할 수 있는 흐름은 없어요. 첫 기록부터 근거가 시작됩니다.\n\n1\n최근 달린 거리\n직접 적은 거리 기록이 아직 없어요\n\n거리를 적으면 최근 4주와 그 전 4주를 같은 기준으로 나란히 보여드려요.\n\n최근 4주 (2026-08-16~2026-09-12) 반영 0건 · 제외 0건 · 중복 사본 0개 · 충돌 0건 / 그 전 4주 (2026-07-19~2026-08-15) 반영 0건 · 제외 0건 · 중복 사본 0개 · 충돌 0건\n2\n훈련 목적의 구성\n직접 고른 에너지 시스템 기록이 아직 없어요\n\n훈련 후 주된 목적을 고르면 8주 동안 어떤 유형을 얼마나 경험했는지 모아 보여드려요.\n\n최근 8주 반영 0건 · 제외 0건\n3\n계획과 실행 표시\n진행 중인 계획이 아직 없어요\n\n계획을 시작하면 예정한 훈련과 완료로 표시한 훈련을 분리해 보여드려요.\n\n저장된 계획 0개\n근거와 해석 범위 보기\n기록이 쌓이면 변화를 확인할 수 있어요\n\n훈련한 날과 쉰 날의 거리·시간·RPE\n?\n·기분을 직접 남기면 주간과 월간 기록으로 정리해요.\n\n첫 기록 남기기\n홈\n일지\n경기기록\n계획\n분석",
+      "scrollHeight": 1154,
+      "clientHeight": 622,
+      "overflow": false,
+      "fontReady": true,
+      "loadedFonts": [
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        }
+      ],
+      "geometry": [
+        {
+          "className": "personal-oracle__mark",
+          "top": 107.16783142089844,
+          "width": 34.001220703125,
+          "height": 34.001220703125,
+          "display": "flex",
+          "columns": "none",
+          "font": "14.5px",
+          "color": "rgb(250, 250, 247)",
+          "border": "0px none rgb(250, 250, 247)",
+          "accent": "",
+          "lineDark": ""
+        },
+        {
+          "className": "personal-oracle__status",
+          "top": 164.21531677246094,
+          "width": 105,
+          "height": 28.1875,
+          "display": "block",
+          "columns": "none",
+          "font": "12px",
+          "color": "rgb(43, 51, 48)",
+          "border": "1px solid rgb(191, 187, 176)",
+          "accent": "",
+          "lineDark": ""
+        },
+        {
+          "className": "app-tab-bar",
+          "top": 622,
+          "width": 373,
+          "height": 45,
+          "display": "grid",
+          "columns": "74.5938px 74.5938px 74.6094px 74.5938px 74.5938px",
+          "font": "14.5px",
+          "color": "rgb(14, 20, 18)",
+          "border": "1px solid rgb(14, 20, 18)",
+          "accent": "",
+          "lineDark": ""
+        }
+      ],
+      "controls": [
+        {
+          "text": "뒤로",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 64,
+          "height": 44,
+          "top": 12,
+          "font": "11px",
+          "weight": "400"
+        },
+        {
+          "text": "근거와 해석 범위 보기",
+          "tag": "SUMMARY",
+          "className": "",
+          "width": 333,
+          "height": 44,
+          "top": 776,
+          "font": "12px",
+          "weight": "700"
+        },
+        {
+          "text": "운동 자각도 RPE 설명 보기",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 44,
+          "height": 48,
+          "top": 967,
+          "font": "14px",
+          "weight": "650"
+        },
+        {
+          "text": "첫 기록 남기기",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 260,
+          "height": 48,
+          "top": 1049,
+          "font": "14px",
+          "weight": "650"
+        },
+        {
+          "text": "홈",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "일지",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "경기기록",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "계획",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "분석",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        }
+      ],
+      "headings": [
+        {
+          "text": "분석",
+          "top": 25,
+          "size": "11px"
+        },
+        {
+          "text": "지금까지 기록으로 알 수 있는 것",
+          "top": 128,
+          "size": "20px"
+        },
+        {
+          "text": "직접 적은 거리 기록이 아직 없어요",
+          "top": 307,
+          "size": "15px"
+        },
+        {
+          "text": "직접 고른 에너지 시스템 기록이 아직 없어요",
+          "top": 496,
+          "size": "15px"
+        },
+        {
+          "text": "진행 중인 계획이 아직 없어요",
+          "top": 648,
+          "size": "15px"
+        },
+        {
+          "text": "기록이 쌓이면 변화를 확인할 수 있어요",
+          "top": 940,
+          "size": "20px"
+        }
+      ]
+    },
+    {
+      "name": "06-more-375",
+      "title": "TRAINORACLE",
+      "text": "TRAINORACLE\n더보기\n민지의 예시 일지\n기록이 쌓이는 모습을 한 장씩 구경해요\n훈련 용어집·도움말\n전문 용어의 쉬운 뜻과 이름의 이유, 앱 사용법을 확인해요\n요즘 주목받는 훈련법\n유행 이름보다 근거와 사용 범위를 먼저 봐요\n문의 게시판\n지금은 준비 중이에요. 열리면 앱 안에서 알려드려요\n기기 연동 상태\nGarmin·COROS 신청 현황과 파일 가져오기를 확인해요\n개인정보처리방침\n어떤 정보를 왜 사용하는지 확인해요\n이용약관\n계정·기기 저장·훈련 계획 이용 기준을 확인해요\n스티커·오픈소스 출처\n귀여운 스티커의 원본과 이용 조건을 확인해요\n내 일지는 이 기기에 먼저 저장돼요\n브라우저 데이터 정리·기기 변경·앱 삭제 때 일지가 지워질 수 있어요. 더보기의 백업·복원에서 사본을 보관해 주세요.\n내 일지 데이터 내려받기 (JSON)\n메모 원문과 메모 목적은 제외해요 · 파일은 이 기기에만 저장되고 어디로도 전송되지 않아요\n메모 포함 파일 내보내기 (JSON)\n내려받은 백업 되돌리기\n지금 있는 일지는 그대로 두고 백업에 있는 것만 더해요 · 파일은 이 기기에서만 읽어요\n홈\n일지\n경기기록\n계획\n분석",
+      "scrollHeight": 1092,
+      "clientHeight": 622,
+      "overflow": false,
+      "fontReady": true,
+      "loadedFonts": [
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        }
+      ],
+      "geometry": [
+        {
+          "className": "app-tab-bar",
+          "top": 622,
+          "width": 373,
+          "height": 45,
+          "display": "grid",
+          "columns": "74.5938px 74.5938px 74.6094px 74.5938px 74.5938px",
+          "font": "14.5px",
+          "color": "rgb(14, 20, 18)",
+          "border": "1px solid rgb(14, 20, 18)",
+          "accent": "",
+          "lineDark": ""
+        }
+      ],
+      "controls": [
+        {
+          "text": "홈으로 돌아가기",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 44,
+          "height": 44,
+          "top": 17,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "민지의 예시 일지",
+          "tag": "BUTTON",
+          "className": "more-screen__row",
+          "width": 333,
+          "height": 68,
+          "top": 87,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "훈련 용어집·도움말",
+          "tag": "BUTTON",
+          "className": "more-screen__row",
+          "width": 333,
+          "height": 68,
+          "top": 155,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "요즘 주목받는 훈련법",
+          "tag": "BUTTON",
+          "className": "more-screen__row",
+          "width": 333,
+          "height": 68,
+          "top": 223,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "문의 게시판지금은 준비 중이에요. 열리면 앱 안에서 알려드려요",
+          "tag": "A",
+          "className": "more-screen__row",
+          "width": 337,
+          "height": 93,
+          "top": 292,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "기기 연동 상태Garmin·COROS 신청 현황과 파일 가져오기를 확인해요",
+          "tag": "A",
+          "className": "more-screen__row",
+          "width": 337,
+          "height": 93,
+          "top": 385,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "개인정보처리방침어떤 정보를 왜 사용하는지 확인해요",
+          "tag": "A",
+          "className": "more-screen__row",
+          "width": 337,
+          "height": 93,
+          "top": 478,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "이용약관계정·기기 저장·훈련 계획 이용 기준을 확인해요",
+          "tag": "A",
+          "className": "more-screen__row",
+          "width": 337,
+          "height": 93,
+          "top": 571,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "스티커·오픈소스 출처귀여운 스티커의 원본과 이용 조건을 확인해요",
+          "tag": "A",
+          "className": "more-screen__row",
+          "width": 337,
+          "height": 93,
+          "top": 664,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "내 일지 데이터 내려받기 (JSON)",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 145,
+          "height": 44,
+          "top": 875,
+          "font": "10px",
+          "weight": "400"
+        },
+        {
+          "text": "메모 포함 파일 내보내기 (JSON)",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 145,
+          "height": 44,
+          "top": 953,
+          "font": "10px",
+          "weight": "400"
+        },
+        {
+          "text": "내려받은 백업 되돌리기",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 101,
+          "height": 44,
+          "top": 997,
+          "font": "10px",
+          "weight": "400"
+        },
+        {
+          "text": "홈",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "일지",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "경기기록",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "계획",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "분석",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        }
+      ],
+      "headings": [
+        {
+          "text": "더보기",
+          "top": 32,
+          "size": "21px"
+        }
+      ]
+    },
+    {
+      "name": "07-example-index-375",
+      "title": "TRAINORACLE",
+      "text": "더보기로 돌아가기\n가상 기록 · 예시 꾸미기\n민지의 일지\n\n거리·시간·RPE, 쉬는 날, 통증, 경기 기록이 쌓이는 여섯 장을 차례로 보세요.\n\n첫날\n4.6km를 달린 첫 기록\n첫 기록을 남겨 뿌듯함 · 맑음 · 약한 바람\n6개월\n오른쪽 무릎이 불편해 쉰 날\n무릎이 더 아플까 걱정됨 · 약한 비\n14개월\n경기 전 확인한 세 경기 기록\n경기가 기다려지고 조금 긴장됨 · 맑음 · 바람 적음\n첫날\n4.6km를 달린 첫 기록\n거리 4.6km, 시간 30분, RPE 4를 적었어요.\n첫 기록을 남겨 뿌듯함\n다리에 불편함 없음\n맑음 · 약한 바람\n3주\n훈련 4일과 휴식 3일\n7일 동안 달린 날과 쉰 날을 모두 적었어요.\n쉬기로 정해서 마음이 편함\n다리에 피로가 조금 남음\n흐림 · 약한 바람\n2개월\n5시간 잔 다음 날, RPE 8\n수면 5시간 12분과 RPE 8을 함께 적었어요.\n집중이 안 돼 답답함\n다리가 평소보다 무거움\n흐림\n6개월\n오른쪽 무릎이 불편해 쉰 날\n통증 2/5와 달리기 대신 걷기를 적었어요.\n무릎이 더 아플까 걱정됨\n오른쪽 무릎 통증 2/5\n약한 비\n10개월\n같은 1000m 반복, RPE 9에서 6\n같은 6×1000m 기록 두 개를 비교했어요.\n마지막 반복까지 마쳐 뿌듯함\n마지막 반복 뒤 숨이 찼음\n맑음 · 추움\n14개월\n경기 전 확인한 세 경기 기록\n이전 세 경기 기록과 경기 전 몸 상태를 확인했어요.\n경기가 기다려지고 조금 긴장됨\n통증 없음 · 몸이 가벼움\n맑음 · 바람 적음\n홈\n일지\n경기기록\n계획\n분석",
+      "scrollHeight": 1234,
+      "clientHeight": 622,
+      "overflow": false,
+      "fontReady": true,
+      "loadedFonts": [
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        }
+      ],
+      "geometry": [
+        {
+          "className": "app-tab-bar",
+          "top": 622,
+          "width": 373,
+          "height": 45,
+          "display": "grid",
+          "columns": "74.5938px 74.5938px 74.6094px 74.5938px 74.5938px",
+          "font": "14.5px",
+          "color": "rgb(14, 20, 18)",
+          "border": "1px solid rgb(14, 20, 18)",
+          "accent": "",
+          "lineDark": ""
+        }
+      ],
+      "controls": [
+        {
+          "text": "더보기로 돌아가기",
+          "tag": "BUTTON",
+          "className": "guide-screen__back",
+          "width": 111,
+          "height": 44,
+          "top": 10,
+          "font": "12px",
+          "weight": "400"
+        },
+        {
+          "text": "첫날4.6km를 달린 첫 기록거리 4.6km, 시간 30분, RPE 4를 적었어요.첫 기록을 남겨 뿌듯함다리에 불편함 없음맑음 · 약한 바람",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 333,
+          "height": 132,
+          "top": 414,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "3주훈련 4일과 휴식 3일7일 동안 달린 날과 쉰 날을 모두 적었어요.쉬기로 정해서 마음이 편함다리에 피로가 조금 남음흐림 · 약한 바람",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 333,
+          "height": 132,
+          "top": 547,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "2개월5시간 잔 다음 날, RPE 8수면 5시간 12분과 RPE 8을 함께 적었어요.집중이 안 돼 답답함다리가 평소보다 무거움흐림",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 333,
+          "height": 132,
+          "top": 679,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "6개월오른쪽 무릎이 불편해 쉰 날통증 2/5와 달리기 대신 걷기를 적었어요.무릎이 더 아플까 걱정됨오른쪽 무릎 통증 2/5약한 비",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 333,
+          "height": 115,
+          "top": 812,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "10개월같은 1000m 반복, RPE 9에서 6같은 6×1000m 기록 두 개를 비교했어요.마지막 반복까지 마쳐 뿌듯함마지막 반복 뒤 숨이 찼음",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 333,
+          "height": 132,
+          "top": 927,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "14개월경기 전 확인한 세 경기 기록이전 세 경기 기록과 경기 전 몸 상태를 확인했어요.경기가 기다려지고 조금 긴장됨통증 없음 · 몸이 가벼움맑",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 333,
+          "height": 132,
+          "top": 1059,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "홈",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "일지",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "경기기록",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "계획",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "분석",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        }
+      ],
+      "headings": [
+        {
+          "text": "민지의 일지",
+          "top": 97,
+          "size": "24px"
+        }
+      ]
+    },
+    {
+      "name": "08-example-paper-375",
+      "title": "TRAINORACLE",
+      "text": "더보기로 돌아가기\n가상 기록 · 예시 꾸미기\n1 / 6\n2025-03-02 · 첫날\n4.6km를 달린 첫 기록\n기분 첫 기록을 남겨 뿌듯함\n몸 상태 다리에 불편함 없음\n날씨 맑음 · 약한 바람\n\n동네 코스에서 4.6km를 30분 동안 천천히 달리고 거리·시간·RPE를 적었어요.\n\n처음 10분은 다리가 뻣뻣했지만, 뒤에는 편하게 달렸다.\n거리 4.6km\n시간 30분\n힘든 정도(RPE) 4/10\n이 페이지에 쓴 꾸미기\n\n햇살 스티커\n\n트랙 노트\n남색 잉크\n맑은 날\n기록에서 확인한 점\n\n첫 기록에 거리 4.6km, 시간 30분, RPE 4가 남았어요.\n\n거리와 시간만 적어도 될까?\n이전 일지\n오늘의 한 페이지\n1 / 6\n다음 일지\n홈\n일지\n경기기록\n계획\n분석",
+      "scrollHeight": 1072,
+      "clientHeight": 622,
+      "overflow": false,
+      "fontReady": true,
+      "loadedFonts": [
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        }
+      ],
+      "geometry": [
+        {
+          "className": "app-tab-bar",
+          "top": 622,
+          "width": 373,
+          "height": 45,
+          "display": "grid",
+          "columns": "74.5938px 74.5938px 74.6094px 74.5938px 74.5938px",
+          "font": "14.5px",
+          "color": "rgb(14, 20, 18)",
+          "border": "1px solid rgb(14, 20, 18)",
+          "accent": "",
+          "lineDark": ""
+        }
+      ],
+      "controls": [
+        {
+          "text": "더보기로 돌아가기",
+          "tag": "BUTTON",
+          "className": "guide-screen__back",
+          "width": 111,
+          "height": 44,
+          "top": -89,
+          "font": "12px",
+          "weight": "400"
+        },
+        {
+          "text": "민지의 일지 닫기",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 44,
+          "height": 44,
+          "top": -45,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "거리와 시간만 적어도 될까?",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 134,
+          "height": 44,
+          "top": 672,
+          "font": "12.5px",
+          "weight": "400"
+        },
+        {
+          "text": "이전 일지",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 77,
+          "height": 44,
+          "top": 750,
+          "font": "12px",
+          "weight": "400"
+        },
+        {
+          "text": "다음 일지",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 77,
+          "height": 44,
+          "top": 750,
+          "font": "12px",
+          "weight": "400"
+        },
+        {
+          "text": "홈",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "일지",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "경기기록",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "계획",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "분석",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        }
+      ],
+      "headings": [
+        {
+          "text": "4.6km를 달린 첫 기록",
+          "top": 48,
+          "size": "24px"
+        },
+        {
+          "text": "이 페이지에 쓴 꾸미기",
+          "top": 479,
+          "size": "14.5px"
+        }
+      ]
+    },
+    {
+      "name": "09-example-next-375",
+      "title": "TRAINORACLE",
+      "text": "더보기로 돌아가기\n가상 기록 · 예시 꾸미기\n2 / 6\n2025-03-23 · 3주\n훈련 4일과 휴식 3일\n기분 쉬기로 정해서 마음이 편함\n몸 상태 다리에 피로가 조금 남음\n날씨 흐림 · 약한 바람\n\n월·화·목·토요일에는 훈련했고, 나머지 3일은 쉬었다고 적었어요.\n\n다리에 피로가 남아 오늘은 쉬었다. 내일 아침 상태를 다시 적겠다.\n훈련 4일\n휴식 3일\n기록한 날 7일\n이 페이지에 쓴 꾸미기\n\n체크 테이프와 휴식 도장\n\n트랙 노트\n남색 잉크\n체크 테이프\n푹 쉬었어요\n기록에서 확인한 점\n\n7일 중 훈련 4일과 휴식 3일을 바로 확인할 수 있어요.\n\n쉬는 날도 적어야 할까?\n이전 일지\n오늘의 한 페이지\n2 / 6\n다음 일지\n홈\n일지\n경기기록\n계획\n분석",
+      "scrollHeight": 1072,
+      "clientHeight": 622,
+      "overflow": false,
+      "fontReady": true,
+      "loadedFonts": [
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        }
+      ],
+      "geometry": [
+        {
+          "className": "app-tab-bar",
+          "top": 622,
+          "width": 373,
+          "height": 45,
+          "display": "grid",
+          "columns": "74.5938px 74.5938px 74.6094px 74.5938px 74.5938px",
+          "font": "14.5px",
+          "color": "rgb(14, 20, 18)",
+          "border": "1px solid rgb(14, 20, 18)",
+          "accent": "",
+          "lineDark": ""
+        }
+      ],
+      "controls": [
+        {
+          "text": "더보기로 돌아가기",
+          "tag": "BUTTON",
+          "className": "guide-screen__back",
+          "width": 111,
+          "height": 44,
+          "top": -103,
+          "font": "12px",
+          "weight": "400"
+        },
+        {
+          "text": "민지의 일지 닫기",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 44,
+          "height": 44,
+          "top": -59,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "쉬는 날도 적어야 할까?",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 113,
+          "height": 44,
+          "top": 658,
+          "font": "12.5px",
+          "weight": "400"
+        },
+        {
+          "text": "이전 일지",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 77,
+          "height": 44,
+          "top": 736,
+          "font": "12px",
+          "weight": "400"
+        },
+        {
+          "text": "다음 일지",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 77,
+          "height": 44,
+          "top": 736,
+          "font": "12px",
+          "weight": "400"
+        },
+        {
+          "text": "홈",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "일지",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "경기기록",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "계획",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "분석",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        }
+      ],
+      "headings": [
+        {
+          "text": "훈련 4일과 휴식 3일",
+          "top": 34,
+          "size": "24px"
+        },
+        {
+          "text": "이 페이지에 쓴 꾸미기",
+          "top": 465,
+          "size": "14.5px"
+        }
+      ]
+    },
+    {
+      "name": "10-guide-375",
+      "title": "TRAINORACLE",
+      "text": "더보기로 돌아가기\nTRAINORACLE\n훈련 용어집\n\n처음에는 쉬운 뜻만 보고, 궁금할 때 이름의 이유와 생리학적 맥락까지 확인하세요.\n\n용어 검색\n분류\n전체 용어\n일정에서 맡는 역할\n훈련 목적\n몸이 에너지를 만드는 경로\n연료와 몸의 반응\n강도와 기록\n훈련 구성\n훈련 주기\n앱 사용과 안전 표시\n자주 보는 용어\n운동 자각도RPE\n기초 지구력BASE\n지속 페이스LT\n강한 유산소 반복VO₂\n짧은 고강도 반복GLY\n스피드·가속ATP-PC\n훈련표 읽는 법\n일정에서 맡는 역할\n주요 훈련\nMAIN\n\n이번 훈련 주기에서 준비 목표를 가장 직접적으로 다루는 훈련이에요.\n\n회복 운동\nREC\n\n빠른 걷기·아주 가벼운 조깅·느린 자전거처럼 RPE 1~2로 편하게 움직이는 운동이에요.\n\n훈련 없음\nOFF\n\n계획표에 달리기나 회복 운동을 따로 배치하지 않은 날이에요.\n\n훈련 목적\n기초 지구력\nBASE\n\n땀이 나도 친구와 대화하거나 전화 통화가 가능한 RPE 3~4 정도의 쉬운 유산소 달리기예요.\n\n지속 페이스\nLT\n\n조금 힘든 느낌을 비교적 일정하게 유지하는 훈련 목적이에요.\n\n강한 유산소 반복\nVO₂\n\n숨이 많이 차는 구간과 회복 구간을 반복해 강한 유산소 능력을 준비하는 훈련 목적이에요.\n\n짧은 고강도 반복\nGLY\n\n짧고 강한 구간과 목적에 맞는 회복을 함께 구성해 해당과정의 부담을 다뤄요. 회복 시간과 방식은 실제 처방에 따라 달라집니다.\n\n스피드·가속\nATP-PC\n\n매우 짧은 스피드·가속 구간과 충분한 회복을 다루는 훈련 목적이에요.\n\n여러 강도 조합\nMIX\n\n한 가지 훈련 목적만 고정하지 않고 여러 강도 구간을 함께 다루는 주요 훈련이에요.\n\n몸이 에너지를 만드는 경로\n훈련 목적과 에너지 대사\n\n훈련 목적을 구분하고 몸이 에너지를 만드는 방식을 이해하기 위한 설명이에요. 앱이 몸속 대사를 측정했다는 뜻은 아닙니다.\n\n인원질 경로\nATP-PCr\n\n근육에 저장된 ATP와 인산크레아틴을 이용해 매우 빠르게 에너지를 공급하는 경로예요.\n\n해당과정\n\n포도당이나 글리코겐을 분해해 비교적 빠르게 ATP를 만드는 대사 경로예요.\n\n산화 대사\n\n산소를 이용해 탄수화물과 지방 등에서 ATP를 만드는 지속적인 대사 경로예요.\n\n연료와 몸의 반응\n지방 대사\n\n지방산을 연료로 사용해 산화 대사에서 ATP를 만드는 과정이에요.\n\n탄수화물 대사\n\n포도당과 글리코겐을 연료로 사용해 ATP를 만드는 여러 과정을 함께 부르는 말이에요.\n\n젖산\n\n운동 중 만들어지고 다른 조직에서 다시 연료로 쓰일 수 있는 대사 물질이에요.\n\n강도와 기록\n운동 자각도\nRPE\n\n운동이 얼마나 힘들었는지 내 몸의 느낌으로 매기는 1~10점이에요. 심박계 수치와는 다른 기록입니다.\n\n페이스\n\n일정한 거리를 달리는 데 걸리는 시간이에요. 예: 3분24초/km는 1km를 3분24초에 달린다는 뜻입니다.\n\n개인 최고 기록\nPB\n\n그 종목에서 지금까지 세운 내 최고 기록이에요.\n\n시즌 최고 기록\nSB\n\n이번 시즌에 세운 그 종목의 최고 기록이에요.\n\n구간 기록 저하\nDRIFT\n\n비슷한 힘으로 달리는데 뒤 구간으로 갈수록 기록이 느려지는 변화예요.\n\n구간 기록\nLAP\n\n전체 운동을 나눈 한 구간의 기록이에요. 1000m를 6번 뛰면 각 1000m가 한 구간입니다.\n\n존 2\nZ2\n\n개인 심박 구간 체계에서 비교적 편하게 오래 움직이는 유산소 강도 구간을 가리켜요.\n\n훈련 구성\n인터벌 훈련\n\n운동 구간과 회복 구간을 번갈아 반복하는 훈련 구성이에요.\n\n반복\nREP\n\n같은 목적의 운동 구간을 한 번 수행하는 단위예요.\n\n세트\nSET\n\n여러 반복을 한 묶음으로 모은 단위예요.\n\n회복 시간\n\n다음 반복이나 세트를 수행하기 전에 쉬거나 가볍게 움직이는 시간이에요.\n\n하루 두 번 운동\n\n한 날의 훈련을 오전과 오후 두 번으로 나누어 진행하는 방식이에요.\n\n상세 훈련 수치\n\n조건이 맞으면 한 번의 주요 훈련에 반복 수·거리·회복 시간·개인 기록 기준 페이스를 표시해요.\n\n훈련표 읽는 법\n\n세트·반복·거리·회복 시간을 짧게 적는 약속이에요. 2×(10×400m)는 400m 10회를 두 세트 한다는 뜻입니다.\n\n훈련 주기\n소주기\n\n며칠에서 약 2주 안에 주요 훈련과 회복을 한 묶음으로 배치한 짧은 훈련 주기예요.\n\n중주기\n\n여러 소주기를 묶어 4~8주 정도의 적응 목표와 에너지 목적 분포를 살피는 기간이에요.\n\n대주기\n\n시즌이나 주요 경기를 향해 여러 중주기를 연결한 긴 훈련 계획 범위예요.\n\n테이퍼\n\n중요한 경기 전 피로를 줄이면서 준비한 능력을 유지하도록 훈련 부담을 조절하는 기간이에요.\n\n주기 일차\nDAY\n\n현재 훈련 주기에서 몇 번째 날인지 나타내는 달력 위치예요.\n\n계획 길이\n\n한 번에 만들고 달력에 표시할 훈련 계획의 기간이에요.\n\n앱 사용과 안전 표시\n사람이 확인할 기록\nREVIEW\n\n통증 신호가 있어 계획을 더 진행하기 전에 사람이 확인해야 한다는 안전 표시예요.\n\n준비 목표\n\n이번 계획에서 준비하고 싶은 종목이나 달리기 목적이에요.\n\n현재 참가 부문\n\n대회에서 사용하는 초등부·중등부·고등부·대학부·일반부 같은 구분이에요.\n\n훈련 경험\n\n계획에 맞춘 구조화 훈련을 해 본 정도를 묻는 질문이에요.\n\n이번 계획에서 운동할 날\n\n학교·일·다른 운동을 고려해 이번 계획 기간에 실제로 운동할 수 있는 날 수예요.\n\n베타 계획에 사용한 정보\n\n목표·경험·훈련 목적·운동일·시간대·안전 확인 중 실제 계획 계산에 사용한 정보를 알려줘요.\n\n계획안\n\n같은 주요 훈련을 유지하면서 쉬운 훈련 시간을 다르게 구성한 선택안이에요.\n\nFAQ · 쉬운 안내\n궁금한 점을 쉽게 풀어드려요\n\nTrainOracle 베타는 현재 무료입니다. 서비스 운영을 위해 나중에 월 구독이나 광고가 포함된 선택 상품이 생길 수 있습니다. 가격이나 무료 기능이 바뀌기 전에는 앱에서 먼저 알려드립니다.\n\n이 페이지는 쉬운 설명이에요. 개인정보 처리방침이나 이용 약관을 대신하지 않아요. 정식 문서는 계정·공유 기능을 열기 전에 함께 제공해요.\n\n지금 무료인가요?\n지금 무엇을 할 수 있나요?\n아직 준비 중인 기능은 무엇인가요?\n나중에도 계속 무료인가요?\n나중에 월 구독이나 광고가 생길 수 있나요?\n무료 기능이 갑자기 사라지나요?\n내 일지와 메모는 누가 볼 수 있나요?\n나만의 메모는 서비스 운영자도 볼 수 없나요?\n코치는 무엇을 볼 수 있나요?\n코치는 실제 자격을 확인한 사람인가요?\n훈련계획은 자동으로 바뀌나요?\n위험 경고가 뜨면 운동하면 안 되나요?\n만 14세 미만도 사용할 수 있나요?\n계정을 삭제하면 데이터도 없어지나요?\n문제가 생기면 앱 전체가 멈추나요?\n포인트를 돈으로 바꿀 수 있나요?\n불편한 점이 있었나요?\n\n문의 게시판은 지금 준비 중이에요. 열리면 앱 안에서 알려드릴게요.\n\n문의 게시판 상태 보기\n홈\n일지\n경기기록\n계획\n분석",
+      "scrollHeight": 6561,
+      "clientHeight": 622,
+      "overflow": false,
+      "fontReady": true,
+      "loadedFonts": [
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        }
+      ],
+      "geometry": [
+        {
+          "className": "app-tab-bar",
+          "top": 622,
+          "width": 373,
+          "height": 45,
+          "display": "grid",
+          "columns": "74.5938px 74.5938px 74.6094px 74.5938px 74.5938px",
+          "font": "14.5px",
+          "color": "rgb(14, 20, 18)",
+          "border": "1px solid rgb(14, 20, 18)",
+          "accent": "",
+          "lineDark": ""
+        }
+      ],
+      "controls": [
+        {
+          "text": "더보기로 돌아가기",
+          "tag": "BUTTON",
+          "className": "guide-screen__back",
+          "width": 111,
+          "height": 44,
+          "top": 10,
+          "font": "12px",
+          "weight": "400"
+        },
+        {
+          "text": "",
+          "tag": "INPUT",
+          "className": "",
+          "width": 290,
+          "height": 44,
+          "top": 263,
+          "font": "16.5px",
+          "weight": "400"
+        },
+        {
+          "text": "전체 용어일정에서 맡는 역할훈련 목적몸이 에너지를 만드는 경로연료와 몸의 반응강도와 기록훈련 구성훈련 주기앱 사용과 안전 표시",
+          "tag": "SELECT",
+          "className": "",
+          "width": 341,
+          "height": 48,
+          "top": 345,
+          "font": "16.5px",
+          "weight": "400"
+        },
+        {
+          "text": "운동 자각도RPE",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 111,
+          "height": 44,
+          "top": 471,
+          "font": "13px",
+          "weight": "600"
+        },
+        {
+          "text": "기초 지구력BASE",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 119,
+          "height": 44,
+          "top": 471,
+          "font": "13px",
+          "weight": "600"
+        },
+        {
+          "text": "지속 페이스LT",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 104,
+          "height": 44,
+          "top": 523,
+          "font": "13px",
+          "weight": "600"
+        },
+        {
+          "text": "강한 유산소 반복VO₂",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 137,
+          "height": 44,
+          "top": 523,
+          "font": "13px",
+          "weight": "600"
+        },
+        {
+          "text": "짧은 고강도 반복GLY",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 137,
+          "height": 44,
+          "top": 575,
+          "font": "13px",
+          "weight": "600"
+        },
+        {
+          "text": "스피드·가속ATP-PC",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 131,
+          "height": 44,
+          "top": 575,
+          "font": "13px",
+          "weight": "600"
+        },
+        {
+          "text": "훈련표 읽는 법",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 99,
+          "height": 44,
+          "top": 627,
+          "font": "13px",
+          "weight": "600"
+        },
+        {
+          "text": "주요 훈련MAIN이번 훈련 주기에서 준비 목표를 가장 직접적으로 다루는 훈련이에요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 753,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "회복 운동REC빠른 걷기·아주 가벼운 조깅·느린 자전거처럼 RPE 1~2로 편하게 움직이는 운동이에요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 852,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "훈련 없음OFF계획표에 달리기나 회복 운동을 따로 배치하지 않은 날이에요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 78,
+          "top": 952,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "기초 지구력BASE땀이 나도 친구와 대화하거나 전화 통화가 가능한 RPE 3~4 정도의 쉬운 유산소 달리기예요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 1092,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "지속 페이스LT조금 힘든 느낌을 비교적 일정하게 유지하는 훈련 목적이에요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 78,
+          "top": 1192,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "강한 유산소 반복VO₂숨이 많이 차는 구간과 회복 구간을 반복해 강한 유산소 능력을 준비하는 훈련 목적이에요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 1271,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "짧은 고강도 반복GLY짧고 강한 구간과 목적에 맞는 회복을 함께 구성해 해당과정의 부담을 다뤄요. 회복 시간과 방식은 실제 처방에 따라 달라집니",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 1370,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "스피드·가속ATP-PC매우 짧은 스피드·가속 구간과 충분한 회복을 다루는 훈련 목적이에요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 1470,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "여러 강도 조합MIX한 가지 훈련 목적만 고정하지 않고 여러 강도 구간을 함께 다루는 주요 훈련이에요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 1569,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "훈련 목적과 에너지 대사훈련 목적을 구분하고 몸이 에너지를 만드는 방식을 이해하기 위한 설명이에요. 앱이 몸속 대사를 측정했다는 뜻은 아닙니다.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 1730,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "인원질 경로ATP-PCr근육에 저장된 ATP와 인산크레아틴을 이용해 매우 빠르게 에너지를 공급하는 경로예요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 1830,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "해당과정포도당이나 글리코겐을 분해해 비교적 빠르게 ATP를 만드는 대사 경로예요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 1930,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "산화 대사산소를 이용해 탄수화물과 지방 등에서 ATP를 만드는 지속적인 대사 경로예요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 2029,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "지방 대사지방산을 연료로 사용해 산화 대사에서 ATP를 만드는 과정이에요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 78,
+          "top": 2190,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "탄수화물 대사포도당과 글리코겐을 연료로 사용해 ATP를 만드는 여러 과정을 함께 부르는 말이에요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 2269,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "젖산운동 중 만들어지고 다른 조직에서 다시 연료로 쓰일 수 있는 대사 물질이에요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 2368,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "운동 자각도RPE운동이 얼마나 힘들었는지 내 몸의 느낌으로 매기는 1~10점이에요. 심박계 수치와는 다른 기록입니다.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 2529,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "페이스일정한 거리를 달리는 데 걸리는 시간이에요. 예: 3분24초/km는 1km를 3분24초에 달린다는 뜻입니다.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 2629,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "개인 최고 기록PB그 종목에서 지금까지 세운 내 최고 기록이에요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 78,
+          "top": 2729,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "시즌 최고 기록SB이번 시즌에 세운 그 종목의 최고 기록이에요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 78,
+          "top": 2807,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "구간 기록 저하DRIFT비슷한 힘으로 달리는데 뒤 구간으로 갈수록 기록이 느려지는 변화예요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 2886,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "구간 기록LAP전체 운동을 나눈 한 구간의 기록이에요. 1000m를 6번 뛰면 각 1000m가 한 구간입니다.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 2986,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "존 2Z2개인 심박 구간 체계에서 비교적 편하게 오래 움직이는 유산소 강도 구간을 가리켜요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 3085,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "인터벌 훈련운동 구간과 회복 구간을 번갈아 반복하는 훈련 구성이에요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 78,
+          "top": 3246,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "반복REP같은 목적의 운동 구간을 한 번 수행하는 단위예요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 78,
+          "top": 3325,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "세트SET여러 반복을 한 묶음으로 모은 단위예요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 78,
+          "top": 3404,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "회복 시간다음 반복이나 세트를 수행하기 전에 쉬거나 가볍게 움직이는 시간이에요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 3483,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "하루 두 번 운동한 날의 훈련을 오전과 오후 두 번으로 나누어 진행하는 방식이에요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 78,
+          "top": 3582,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "상세 훈련 수치조건이 맞으면 한 번의 주요 훈련에 반복 수·거리·회복 시간·개인 기록 기준 페이스를 표시해요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 3661,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "훈련표 읽는 법세트·반복·거리·회복 시간을 짧게 적는 약속이에요. 2×(10×400m)는 400m 10회를 두 세트 한다는 뜻입니다.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 3761,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "소주기며칠에서 약 2주 안에 주요 훈련과 회복을 한 묶음으로 배치한 짧은 훈련 주기예요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 3922,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "중주기여러 소주기를 묶어 4~8주 정도의 적응 목표와 에너지 목적 분포를 살피는 기간이에요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 4021,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "대주기시즌이나 주요 경기를 향해 여러 중주기를 연결한 긴 훈련 계획 범위예요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 4121,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "테이퍼중요한 경기 전 피로를 줄이면서 준비한 능력을 유지하도록 훈련 부담을 조절하는 기간이에요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 4221,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "주기 일차DAY현재 훈련 주기에서 몇 번째 날인지 나타내는 달력 위치예요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 78,
+          "top": 4320,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "계획 길이한 번에 만들고 달력에 표시할 훈련 계획의 기간이에요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 78,
+          "top": 4399,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "사람이 확인할 기록REVIEW통증 신호가 있어 계획을 더 진행하기 전에 사람이 확인해야 한다는 안전 표시예요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 4539,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "준비 목표이번 계획에서 준비하고 싶은 종목이나 달리기 목적이에요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 78,
+          "top": 4639,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "현재 참가 부문대회에서 사용하는 초등부·중등부·고등부·대학부·일반부 같은 구분이에요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 4717,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "훈련 경험계획에 맞춘 구조화 훈련을 해 본 정도를 묻는 질문이에요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 78,
+          "top": 4817,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "이번 계획에서 운동할 날학교·일·다른 운동을 고려해 이번 계획 기간에 실제로 운동할 수 있는 날 수예요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 4896,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "베타 계획에 사용한 정보목표·경험·훈련 목적·운동일·시간대·안전 확인 중 실제 계획 계산에 사용한 정보를 알려줘요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 4996,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "계획안같은 주요 훈련을 유지하면서 쉬운 훈련 시간을 다르게 구성한 선택안이에요.",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 99,
+          "top": 5095,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "지금 무료인가요?",
+          "tag": "SUMMARY",
+          "className": "",
+          "width": 333,
+          "height": 48,
+          "top": 5524,
+          "font": "14px",
+          "weight": "600"
+        },
+        {
+          "text": "지금 무엇을 할 수 있나요?",
+          "tag": "SUMMARY",
+          "className": "",
+          "width": 333,
+          "height": 48,
+          "top": 5577,
+          "font": "14px",
+          "weight": "600"
+        },
+        {
+          "text": "아직 준비 중인 기능은 무엇인가요?",
+          "tag": "SUMMARY",
+          "className": "",
+          "width": 333,
+          "height": 48,
+          "top": 5630,
+          "font": "14px",
+          "weight": "600"
+        },
+        {
+          "text": "나중에도 계속 무료인가요?",
+          "tag": "SUMMARY",
+          "className": "",
+          "width": 333,
+          "height": 48,
+          "top": 5683,
+          "font": "14px",
+          "weight": "600"
+        },
+        {
+          "text": "나중에 월 구독이나 광고가 생길 수 있나요?",
+          "tag": "SUMMARY",
+          "className": "",
+          "width": 333,
+          "height": 48,
+          "top": 5736,
+          "font": "14px",
+          "weight": "600"
+        },
+        {
+          "text": "무료 기능이 갑자기 사라지나요?",
+          "tag": "SUMMARY",
+          "className": "",
+          "width": 333,
+          "height": 48,
+          "top": 5789,
+          "font": "14px",
+          "weight": "600"
+        },
+        {
+          "text": "내 일지와 메모는 누가 볼 수 있나요?",
+          "tag": "SUMMARY",
+          "className": "",
+          "width": 333,
+          "height": 48,
+          "top": 5842,
+          "font": "14px",
+          "weight": "600"
+        },
+        {
+          "text": "나만의 메모는 서비스 운영자도 볼 수 없나요?",
+          "tag": "SUMMARY",
+          "className": "",
+          "width": 333,
+          "height": 48,
+          "top": 5895,
+          "font": "14px",
+          "weight": "600"
+        },
+        {
+          "text": "코치는 무엇을 볼 수 있나요?",
+          "tag": "SUMMARY",
+          "className": "",
+          "width": 333,
+          "height": 48,
+          "top": 5948,
+          "font": "14px",
+          "weight": "600"
+        },
+        {
+          "text": "코치는 실제 자격을 확인한 사람인가요?",
+          "tag": "SUMMARY",
+          "className": "",
+          "width": 333,
+          "height": 48,
+          "top": 6001,
+          "font": "14px",
+          "weight": "600"
+        },
+        {
+          "text": "훈련계획은 자동으로 바뀌나요?",
+          "tag": "SUMMARY",
+          "className": "",
+          "width": 333,
+          "height": 48,
+          "top": 6054,
+          "font": "14px",
+          "weight": "600"
+        },
+        {
+          "text": "위험 경고가 뜨면 운동하면 안 되나요?",
+          "tag": "SUMMARY",
+          "className": "",
+          "width": 333,
+          "height": 48,
+          "top": 6107,
+          "font": "14px",
+          "weight": "600"
+        },
+        {
+          "text": "만 14세 미만도 사용할 수 있나요?",
+          "tag": "SUMMARY",
+          "className": "",
+          "width": 333,
+          "height": 48,
+          "top": 6160,
+          "font": "14px",
+          "weight": "600"
+        },
+        {
+          "text": "계정을 삭제하면 데이터도 없어지나요?",
+          "tag": "SUMMARY",
+          "className": "",
+          "width": 333,
+          "height": 48,
+          "top": 6213,
+          "font": "14px",
+          "weight": "600"
+        },
+        {
+          "text": "문제가 생기면 앱 전체가 멈추나요?",
+          "tag": "SUMMARY",
+          "className": "",
+          "width": 333,
+          "height": 48,
+          "top": 6266,
+          "font": "14px",
+          "weight": "600"
+        },
+        {
+          "text": "포인트를 돈으로 바꿀 수 있나요?",
+          "tag": "SUMMARY",
+          "className": "",
+          "width": 333,
+          "height": 48,
+          "top": 6319,
+          "font": "14px",
+          "weight": "600"
+        },
+        {
+          "text": "문의 게시판 상태 보기",
+          "tag": "A",
+          "className": "",
+          "width": 333,
+          "height": 46,
+          "top": 6473,
+          "font": "13px",
+          "weight": "400"
+        },
+        {
+          "text": "홈",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "일지",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "경기기록",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "계획",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "분석",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        }
+      ],
+      "headings": [
+        {
+          "text": "훈련 용어집",
+          "top": 109,
+          "size": "24px"
+        },
+        {
+          "text": "자주 보는 용어",
+          "top": 438,
+          "size": "14.5px"
+        },
+        {
+          "text": "일정에서 맡는 역할",
+          "top": 720,
+          "size": "14.5px"
+        },
+        {
+          "text": "훈련 목적",
+          "top": 1059,
+          "size": "14.5px"
+        },
+        {
+          "text": "몸이 에너지를 만드는 경로",
+          "top": 1697,
+          "size": "14.5px"
+        },
+        {
+          "text": "연료와 몸의 반응",
+          "top": 2157,
+          "size": "14.5px"
+        },
+        {
+          "text": "강도와 기록",
+          "top": 2496,
+          "size": "14.5px"
+        },
+        {
+          "text": "훈련 구성",
+          "top": 3213,
+          "size": "14.5px"
+        },
+        {
+          "text": "훈련 주기",
+          "top": 3888,
+          "size": "14.5px"
+        },
+        {
+          "text": "앱 사용과 안전 표시",
+          "top": 4506,
+          "size": "14.5px"
+        },
+        {
+          "text": "궁금한 점을 쉽게 풀어드려요",
+          "top": 5298,
+          "size": "20px"
+        },
+        {
+          "text": "불편한 점이 있었나요?",
+          "top": 6411,
+          "size": "16px"
+        }
+      ]
+    },
+    {
+      "name": "11-content-375",
+      "title": "TRAINORACLE",
+      "text": "요즘 주목받는 훈련법\n읽고 비교하는 훈련 자료\n유행 이름보다\n어떻게 쓰이는지 봐요.\n\n선수 사례와 훈련 개념을 소개합니다. 검토가 끝나기 전에는 어떤 글도 내 계획을 자동으로 바꾸지 않아요.\n\n01\n요즘 해외 훈련법 · 추가 검토 중인 기사\n노르웨이식 더블 스레숄드, 왜 자주 들릴까요?\n하루 두 번 문턱 부근 훈련을 배치하는 엘리트 사례가 알려지며 주목받은 방식이에요.\n02\n훈련 개념 · 원문 확인 자료\n크루즈 인터벌은 지속주와 무엇이 다를까요?\n지속 페이스 훈련을 여러 구간으로 나눠, 짧은 회복을 사이에 두는 구성으로 설명돼요.\n03\n선수 사례 · 원문 확인 자료\n엘리트 마라톤 한 주를 그대로 따라 하면 안 되는 이유\n공개된 엘리트 훈련 주간은 배울 자료이지만, 다른 선수의 다음 주 계획은 아니에요.\n\n콘텐츠 포인트는 기존 포인트와 합치는 규칙이 정해진 뒤에 열어요.\n\n홈\n일지\n경기기록\n계획\n분석",
+      "scrollHeight": 783,
+      "clientHeight": 622,
+      "overflow": false,
+      "fontReady": true,
+      "loadedFonts": [
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        }
+      ],
+      "geometry": [
+        {
+          "className": "app-tab-bar",
+          "top": 622,
+          "width": 373,
+          "height": 45,
+          "display": "grid",
+          "columns": "74.5938px 74.5938px 74.6094px 74.5938px 74.5938px",
+          "font": "14.5px",
+          "color": "rgb(14, 20, 18)",
+          "border": "1px solid rgb(14, 20, 18)",
+          "accent": "",
+          "lineDark": ""
+        }
+      ],
+      "controls": [
+        {
+          "text": "이전 화면",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 44,
+          "height": 44,
+          "top": 6,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "01요즘 해외 훈련법 · 추가 검토 중인 기사노르웨이식 더블 스레숄드, 왜 자주 들릴까요?하루 두 번 문턱 부근 훈련을 배치하는 엘리트 사례가 ",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 333,
+          "height": 142,
+          "top": 269,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "02훈련 개념 · 원문 확인 자료크루즈 인터벌은 지속주와 무엇이 다를까요?지속 페이스 훈련을 여러 구간으로 나눠, 짧은 회복을 사이에 두는 구성",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 333,
+          "height": 142,
+          "top": 411,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "03선수 사례 · 원문 확인 자료엘리트 마라톤 한 주를 그대로 따라 하면 안 되는 이유공개된 엘리트 훈련 주간은 배울 자료이지만, 다른 선수의 ",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 333,
+          "height": 163,
+          "top": 553,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "홈",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "일지",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "경기기록",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "계획",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "분석",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        }
+      ],
+      "headings": [
+        {
+          "text": "유행 이름보다어떻게 쓰이는지 봐요.",
+          "top": 119,
+          "size": "24px"
+        }
+      ]
+    },
+    {
+      "name": "13-home-new-1440",
+      "title": "TRAINORACLE",
+      "text": "TRAINORACLE\n달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.\n\n모든 데이터는 이 기기에만 저장돼요.\n\n오늘 기록 남기기\n훈련 계획 만들기\n이렇게 쓰여요\n첫날\n4.6km를 달린 첫 기록\n거리 4.6km · 시간 30분\n민지의 예시 일지 보기\n내 일지\n아직 기록이 없어요 · 달력 · 하루 기록\n훈련 계획\n저장된 계획 없음 · 계획안 만들기\n분석\n기록이 쌓이면 변화를 볼 수 있어요\n\n첫 기록을 남기면 일지를 꾸밀 수 있어요. 훈련 기록 또는 몸 상태·회복 체크를 남긴 날마다 4P가 쌓여요. 거리·속도·훈련 강도에는 점수를 매기지 않아요.\n\n오늘 방문 확인 +1P\n홈\n일지\n경기기록\n계획\n분석",
+      "scrollHeight": 922,
+      "clientHeight": 855,
+      "overflow": false,
+      "fontReady": true,
+      "loadedFonts": [
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        }
+      ],
+      "geometry": [
+        {
+          "className": "app-tab-bar",
+          "top": 855,
+          "width": 518,
+          "height": 45,
+          "display": "grid",
+          "columns": "103.594px 103.594px 103.609px 103.594px 103.594px",
+          "font": "14.5px",
+          "color": "rgb(14, 20, 18)",
+          "border": "1px solid rgb(14, 20, 18)",
+          "accent": "",
+          "lineDark": ""
+        }
+      ],
+      "controls": [
+        {
+          "text": "더보기",
+          "tag": "BUTTON",
+          "className": "training-home__more",
+          "width": 44,
+          "height": 44,
+          "top": 17,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "오늘 기록 남기기",
+          "tag": "BUTTON",
+          "className": "training-home__primary",
+          "width": 478,
+          "height": 52,
+          "top": 192,
+          "font": "15px",
+          "weight": "600"
+        },
+        {
+          "text": "훈련 계획 만들기",
+          "tag": "BUTTON",
+          "className": "training-home__secondary",
+          "width": 478,
+          "height": 52,
+          "top": 252,
+          "font": "15px",
+          "weight": "600"
+        },
+        {
+          "text": "민지의 예시 일지 보기",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 478,
+          "height": 104,
+          "top": 342,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "내 일지아직 기록이 없어요 · 달력 · 하루 기록",
+          "tag": "BUTTON",
+          "className": "training-home__service",
+          "width": 478,
+          "height": 68,
+          "top": 478,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "훈련 계획저장된 계획 없음 · 계획안 만들기",
+          "tag": "BUTTON",
+          "className": "training-home__service",
+          "width": 478,
+          "height": 68,
+          "top": 546,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "분석기록이 쌓이면 변화를 볼 수 있어요",
+          "tag": "BUTTON",
+          "className": "training-home__service",
+          "width": 478,
+          "height": 68,
+          "top": 614,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "오늘 방문 확인 +1P",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 125,
+          "height": 44,
+          "top": 773,
+          "font": "13px",
+          "weight": "600"
+        },
+        {
+          "text": "홈",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 104,
+          "height": 44,
+          "top": 856,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "일지",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 104,
+          "height": 44,
+          "top": 856,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "경기기록",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 104,
+          "height": 44,
+          "top": 856,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "계획",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 104,
+          "height": 44,
+          "top": 856,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "분석",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 104,
+          "height": 44,
+          "top": 856,
+          "font": "14.5px",
+          "weight": "400"
+        }
+      ],
+      "headings": [
+        {
+          "text": "달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.",
+          "top": 80,
+          "size": "29px"
+        }
+      ]
+    },
+    {
+      "name": "14-home-new-320",
+      "title": "TRAINORACLE",
+      "text": "TRAINORACLE\n달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.\n\n모든 데이터는 이 기기에만 저장돼요.\n\n오늘 기록 남기기\n훈련 계획 만들기\n이렇게 쓰여요\n첫날\n4.6km를 달린 첫 기록\n거리 4.6km · 시간 30분\n민지의 예시 일지 보기\n내 일지\n아직 기록이 없어요 · 달력 · 하루 기록\n훈련 계획\n저장된 계획 없음 · 계획안 만들기\n분석\n기록이 쌓이면 변화를 볼 수 있어요\n\n첫 기록을 남기면 일지를 꾸밀 수 있어요. 훈련 기록 또는 몸 상태·회복 체크를 남긴 날마다 4P가 쌓여요. 거리·속도·훈련 강도에는 점수를 매기지 않아요.\n\n오늘 방문 확인 +1P\n홈\n일지\n경기기록\n계획\n분석",
+      "scrollHeight": 986,
+      "clientHeight": 523,
+      "overflow": false,
+      "fontReady": true,
+      "loadedFonts": [
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        }
+      ],
+      "geometry": [
+        {
+          "className": "app-tab-bar",
+          "top": 523,
+          "width": 318,
+          "height": 45,
+          "display": "grid",
+          "columns": "63.5938px 63.5938px 63.6094px 63.5938px 63.5938px",
+          "font": "14.5px",
+          "color": "rgb(14, 20, 18)",
+          "border": "1px solid rgb(14, 20, 18)",
+          "accent": "",
+          "lineDark": ""
+        }
+      ],
+      "controls": [
+        {
+          "text": "더보기",
+          "tag": "BUTTON",
+          "className": "training-home__more",
+          "width": 44,
+          "height": 44,
+          "top": 17,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "오늘 기록 남기기",
+          "tag": "BUTTON",
+          "className": "training-home__primary",
+          "width": 278,
+          "height": 52,
+          "top": 215,
+          "font": "15px",
+          "weight": "600"
+        },
+        {
+          "text": "훈련 계획 만들기",
+          "tag": "BUTTON",
+          "className": "training-home__secondary",
+          "width": 278,
+          "height": 52,
+          "top": 275,
+          "font": "15px",
+          "weight": "600"
+        },
+        {
+          "text": "민지의 예시 일지 보기",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 278,
+          "height": 104,
+          "top": 366,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "내 일지아직 기록이 없어요 · 달력 · 하루 기록",
+          "tag": "BUTTON",
+          "className": "training-home__service",
+          "width": 278,
+          "height": 68,
+          "top": 502,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "훈련 계획저장된 계획 없음 · 계획안 만들기",
+          "tag": "BUTTON",
+          "className": "training-home__service",
+          "width": 278,
+          "height": 68,
+          "top": 570,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "분석기록이 쌓이면 변화를 볼 수 있어요",
+          "tag": "BUTTON",
+          "className": "training-home__service",
+          "width": 278,
+          "height": 68,
+          "top": 638,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "오늘 방문 확인 +1P",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 125,
+          "height": 44,
+          "top": 837,
+          "font": "13px",
+          "weight": "600"
+        },
+        {
+          "text": "홈",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 64,
+          "height": 44,
+          "top": 524,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "일지",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 64,
+          "height": 44,
+          "top": 524,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "경기기록",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 64,
+          "height": 44,
+          "top": 524,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "계획",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 64,
+          "height": 44,
+          "top": 524,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "분석",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 64,
+          "height": 44,
+          "top": 524,
+          "font": "14.5px",
+          "weight": "400"
+        }
+      ],
+      "headings": [
+        {
+          "text": "달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.",
+          "top": 80,
+          "size": "26px"
+        }
+      ]
+    },
+    {
+      "name": "15-quick-outcome-375",
+      "title": "TRAINORACLE",
+      "text": "← 뒤로\n빠르게 기록\n2026·09·12 · SAT\n누르면 여기에 기록돼요.\n1 / 2\n오늘 운동은 어떻게 됐나요?\n운동을 마쳤어요\n하던 운동을 일부만 했어요\n가볍게 움직였어요\n오늘은 쉬었어요\n하려던 운동을 건너뛰었어요\n홈\n일지\n경기기록\n계획\n분석",
+      "scrollHeight": 645,
+      "clientHeight": 622,
+      "overflow": false,
+      "fontReady": true,
+      "loadedFonts": [
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        }
+      ],
+      "geometry": [
+        {
+          "className": "app-tab-bar",
+          "top": 622,
+          "width": 373,
+          "height": 45,
+          "display": "grid",
+          "columns": "74.5938px 74.5938px 74.6094px 74.5938px 74.5938px",
+          "font": "14.5px",
+          "color": "rgb(14, 20, 18)",
+          "border": "1px solid rgb(14, 20, 18)",
+          "accent": "",
+          "lineDark": ""
+        }
+      ],
+      "controls": [
+        {
+          "text": "← 뒤로",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 64,
+          "height": 44,
+          "top": 12,
+          "font": "11px",
+          "weight": "400"
+        },
+        {
+          "text": "운동을 마쳤어요",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 333,
+          "height": 50,
+          "top": 319,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "하던 운동을 일부만 했어요",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 333,
+          "height": 50,
+          "top": 369,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "가볍게 움직였어요",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 333,
+          "height": 50,
+          "top": 419,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "오늘은 쉬었어요",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 333,
+          "height": 50,
+          "top": 469,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "하려던 운동을 건너뛰었어요",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 333,
+          "height": 50,
+          "top": 519,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "홈",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "일지",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "경기기록",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "계획",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "분석",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        }
+      ],
+      "headings": [
+        {
+          "text": "빠르게 기록",
+          "top": 25,
+          "size": "11px"
+        },
+        {
+          "text": "오늘 운동은 어떻게 됐나요?",
+          "top": 276,
+          "size": "22px"
+        }
+      ]
+    },
+    {
+      "name": "16-quick-slot-375",
+      "title": "TRAINORACLE",
+      "text": "← 뒤로\n빠르게 기록\n2026·09·12 · SAT\n오늘\n운동 완료\n1 / 2\n오늘 운동은 어떻게 됐나요?\n운동을 마쳤어요\n하던 운동을 일부만 했어요\n가볍게 움직였어요\n오늘은 쉬었어요\n하려던 운동을 건너뛰었어요\n언제 했나요?\n시간 미지정\n오전\n오후\n홈\n일지\n경기기록\n계획\n분석",
+      "scrollHeight": 744,
+      "clientHeight": 622,
+      "overflow": false,
+      "fontReady": true,
+      "loadedFonts": [
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        }
+      ],
+      "geometry": [
+        {
+          "className": "app-tab-bar",
+          "top": 622,
+          "width": 373,
+          "height": 45,
+          "display": "grid",
+          "columns": "74.5938px 74.5938px 74.6094px 74.5938px 74.5938px",
+          "font": "14.5px",
+          "color": "rgb(14, 20, 18)",
+          "border": "1px solid rgb(14, 20, 18)",
+          "accent": "",
+          "lineDark": ""
+        }
+      ],
+      "controls": [
+        {
+          "text": "← 뒤로",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 64,
+          "height": 44,
+          "top": -110,
+          "font": "11px",
+          "weight": "400"
+        },
+        {
+          "text": "오늘운동 완료",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 299,
+          "height": 48,
+          "top": -6,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "운동을 마쳤어요",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 333,
+          "height": 50,
+          "top": 197,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "하던 운동을 일부만 했어요",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 333,
+          "height": 50,
+          "top": 247,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "가볍게 움직였어요",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 333,
+          "height": 50,
+          "top": 297,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "오늘은 쉬었어요",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 333,
+          "height": 50,
+          "top": 347,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "하려던 운동을 건너뛰었어요",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 333,
+          "height": 50,
+          "top": 397,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "시간 미지정",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 106,
+          "height": 44,
+          "top": 502,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "오전",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 106,
+          "height": 44,
+          "top": 502,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "오후",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 106,
+          "height": 44,
+          "top": 502,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "홈",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "일지",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "경기기록",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "계획",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "분석",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        }
+      ],
+      "headings": [
+        {
+          "text": "빠르게 기록",
+          "top": -97,
+          "size": "11px"
+        },
+        {
+          "text": "오늘 운동은 어떻게 됐나요?",
+          "top": 154,
+          "size": "22px"
+        }
+      ]
+    },
+    {
+      "name": "17-quick-rpe-375",
+      "title": "TRAINORACLE",
+      "text": "← 뒤로\n빠르게 기록\n2026·09·12 · SAT\n오늘\n운동 완료\n시간\n오후\n2 / 2\n몸에는 어느 정도로 느껴졌나요?\n\n가장 가까운 숫자를 한 번 눌러 주세요. 답하기 어렵다면 비워 둘 수 있어요.\n\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n모르겠어요 · RPE는 비워 둘게요\n홈\n일지\n경기기록\n계획\n분석",
+      "scrollHeight": 622,
+      "clientHeight": 622,
+      "overflow": false,
+      "fontReady": true,
+      "loadedFonts": [
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        }
+      ],
+      "geometry": [
+        {
+          "className": "app-tab-bar",
+          "top": 622,
+          "width": 373,
+          "height": 45,
+          "display": "grid",
+          "columns": "74.5938px 74.5938px 74.6094px 74.5938px 74.5938px",
+          "font": "14.5px",
+          "color": "rgb(14, 20, 18)",
+          "border": "1px solid rgb(14, 20, 18)",
+          "accent": "",
+          "lineDark": ""
+        }
+      ],
+      "controls": [
+        {
+          "text": "← 뒤로",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 64,
+          "height": 44,
+          "top": 12,
+          "font": "11px",
+          "weight": "400"
+        },
+        {
+          "text": "오늘운동 완료",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 299,
+          "height": 48,
+          "top": 116,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "시간오후",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 299,
+          "height": 48,
+          "top": 166,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "RPE 1, 걷기·느린 자전거 같은 회복 움직임",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 62,
+          "height": 44,
+          "top": 369,
+          "font": "14.5px",
+          "weight": "700"
+        },
+        {
+          "text": "RPE 2, 걷기보다 조금 빠른 아주 느린 조깅",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 62,
+          "height": 44,
+          "top": 369,
+          "font": "14.5px",
+          "weight": "700"
+        },
+        {
+          "text": "RPE 3, 친구와 편하게 대화할 수 있는 기초 유산소",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 62,
+          "height": 44,
+          "top": 369,
+          "font": "14.5px",
+          "weight": "700"
+        },
+        {
+          "text": "RPE 4, 땀이 나지만 전화 통화가 가능한 강도",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 62,
+          "height": 44,
+          "top": 369,
+          "font": "14.5px",
+          "weight": "700"
+        },
+        {
+          "text": "RPE 5, 호흡을 의식하며 꾸준히 이어가는 노력",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 62,
+          "height": 44,
+          "top": 369,
+          "font": "14.5px",
+          "weight": "700"
+        },
+        {
+          "text": "RPE 6, 짧은 문장으로만 말할 수 있는 강도",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 62,
+          "height": 44,
+          "top": 419,
+          "font": "14.5px",
+          "weight": "700"
+        },
+        {
+          "text": "RPE 7, 몇 마디만 가능한 힘든 운동",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 62,
+          "height": 44,
+          "top": 419,
+          "font": "14.5px",
+          "weight": "700"
+        },
+        {
+          "text": "RPE 8, 매우 힘들지만 정해진 반복을 수행하는 강도",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 62,
+          "height": 44,
+          "top": 419,
+          "font": "14.5px",
+          "weight": "700"
+        },
+        {
+          "text": "RPE 9, 거의 최대에 가까운 강한 노력",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 62,
+          "height": 44,
+          "top": 419,
+          "font": "14.5px",
+          "weight": "700"
+        },
+        {
+          "text": "RPE 10, 아주 짧게만 가능한 최대 노력에 가까운 느낌",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 62,
+          "height": 44,
+          "top": 419,
+          "font": "14.5px",
+          "weight": "700"
+        },
+        {
+          "text": "모르겠어요 · RPE는 비워 둘게요",
+          "tag": "BUTTON",
+          "className": "quick-log__unknown",
+          "width": 333,
+          "height": 44,
+          "top": 471,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "홈",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "일지",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "경기기록",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "계획",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "분석",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        }
+      ],
+      "headings": [
+        {
+          "text": "빠르게 기록",
+          "top": 25,
+          "size": "11px"
+        },
+        {
+          "text": "몸에는 어느 정도로 느껴졌나요?",
+          "top": 276,
+          "size": "22px"
+        }
+      ]
+    },
+    {
+      "name": "18-quick-body-375",
+      "title": "TRAINORACLE",
+      "text": "← 뒤로\n빠르게 기록\n2026·09·12 · SAT\n오늘\n운동 완료\n시간\n오후\n몸의 느낌\nRPE 6\n2 / 2\n몸에는 어느 정도로 느껴졌나요?\n\n가장 가까운 숫자를 한 번 눌러 주세요. 답하기 어렵다면 비워 둘 수 있어요.\n\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n모르겠어요 · RPE는 비워 둘게요\n\n짧은 문장으로만 말할 수 있는 강도\n\n운동 후 불편하거나 아픈 곳이 있나요?\n\n이 확인은 몸 상태를 남기기 위한 것이며 의료 판단이 아니에요.\n\n없어요\n있어요\n홈\n일지\n경기기록\n계획\n분석",
+      "scrollHeight": 846,
+      "clientHeight": 622,
+      "overflow": false,
+      "fontReady": true,
+      "loadedFonts": [
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        }
+      ],
+      "geometry": [
+        {
+          "className": "app-tab-bar",
+          "top": 622,
+          "width": 373,
+          "height": 45,
+          "display": "grid",
+          "columns": "74.5938px 74.5938px 74.6094px 74.5938px 74.5938px",
+          "font": "14.5px",
+          "color": "rgb(14, 20, 18)",
+          "border": "1px solid rgb(14, 20, 18)",
+          "accent": "",
+          "lineDark": ""
+        }
+      ],
+      "controls": [
+        {
+          "text": "← 뒤로",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 64,
+          "height": 44,
+          "top": -205,
+          "font": "11px",
+          "weight": "400"
+        },
+        {
+          "text": "오늘운동 완료",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 299,
+          "height": 48,
+          "top": -101,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "시간오후",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 299,
+          "height": 48,
+          "top": -51,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "몸의 느낌RPE 6",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 299,
+          "height": 48,
+          "top": -1,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "RPE 1, 걷기·느린 자전거 같은 회복 움직임",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 62,
+          "height": 44,
+          "top": 196,
+          "font": "14.5px",
+          "weight": "700"
+        },
+        {
+          "text": "RPE 2, 걷기보다 조금 빠른 아주 느린 조깅",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 62,
+          "height": 44,
+          "top": 196,
+          "font": "14.5px",
+          "weight": "700"
+        },
+        {
+          "text": "RPE 3, 친구와 편하게 대화할 수 있는 기초 유산소",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 62,
+          "height": 44,
+          "top": 196,
+          "font": "14.5px",
+          "weight": "700"
+        },
+        {
+          "text": "RPE 4, 땀이 나지만 전화 통화가 가능한 강도",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 62,
+          "height": 44,
+          "top": 196,
+          "font": "14.5px",
+          "weight": "700"
+        },
+        {
+          "text": "RPE 5, 호흡을 의식하며 꾸준히 이어가는 노력",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 62,
+          "height": 44,
+          "top": 196,
+          "font": "14.5px",
+          "weight": "700"
+        },
+        {
+          "text": "RPE 6, 짧은 문장으로만 말할 수 있는 강도",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 62,
+          "height": 44,
+          "top": 246,
+          "font": "14.5px",
+          "weight": "650"
+        },
+        {
+          "text": "RPE 7, 몇 마디만 가능한 힘든 운동",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 62,
+          "height": 44,
+          "top": 246,
+          "font": "14.5px",
+          "weight": "700"
+        },
+        {
+          "text": "RPE 8, 매우 힘들지만 정해진 반복을 수행하는 강도",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 62,
+          "height": 44,
+          "top": 246,
+          "font": "14.5px",
+          "weight": "700"
+        },
+        {
+          "text": "RPE 9, 거의 최대에 가까운 강한 노력",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 62,
+          "height": 44,
+          "top": 246,
+          "font": "14.5px",
+          "weight": "700"
+        },
+        {
+          "text": "RPE 10, 아주 짧게만 가능한 최대 노력에 가까운 느낌",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 62,
+          "height": 44,
+          "top": 246,
+          "font": "14.5px",
+          "weight": "700"
+        },
+        {
+          "text": "모르겠어요 · RPE는 비워 둘게요",
+          "tag": "BUTTON",
+          "className": "quick-log__unknown",
+          "width": 333,
+          "height": 44,
+          "top": 298,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "없어요",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 163,
+          "height": 44,
+          "top": 509,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "있어요",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 163,
+          "height": 44,
+          "top": 509,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "홈",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "일지",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "경기기록",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "계획",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "분석",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        }
+      ],
+      "headings": [
+        {
+          "text": "빠르게 기록",
+          "top": -192,
+          "size": "11px"
+        },
+        {
+          "text": "몸에는 어느 정도로 느껴졌나요?",
+          "top": 103,
+          "size": "22px"
+        },
+        {
+          "text": "운동 후 불편하거나 아픈 곳이 있나요?",
+          "top": 445,
+          "size": "18px"
+        }
+      ]
+    },
+    {
+      "name": "19-quick-saved-375",
+      "title": "TRAINORACLE",
+      "text": "← 뒤로\n빠르게 기록\n2026·09·12 · SAT\n오늘\n운동 완료\n시간\n오후\n몸의 느낌\nRPE 6\n몸 상태\n불편한 곳 없음\n저장됨\n오늘 기록\n오늘 기록을 남겼어요.\n\n거리와 시간은 워치 기록이 들어오면 확인한 뒤 같은 일지에 더할 수 있어요.\n\n완료\n일지 더 쓰기\n방금 기록 수정\n홈\n일지\n경기기록\n계획\n분석",
+      "scrollHeight": 709,
+      "clientHeight": 622,
+      "overflow": false,
+      "fontReady": true,
+      "loadedFonts": [
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        }
+      ],
+      "geometry": [
+        {
+          "className": "app-tab-bar",
+          "top": 622,
+          "width": 373,
+          "height": 45,
+          "display": "grid",
+          "columns": "74.5938px 74.5938px 74.6094px 74.5938px 74.5938px",
+          "font": "14.5px",
+          "color": "rgb(14, 20, 18)",
+          "border": "1px solid rgb(14, 20, 18)",
+          "accent": "",
+          "lineDark": ""
+        }
+      ],
+      "controls": [
+        {
+          "text": "← 뒤로",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 64,
+          "height": 44,
+          "top": -75,
+          "font": "11px",
+          "weight": "400"
+        },
+        {
+          "text": "오늘운동 완료",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 299,
+          "height": 48,
+          "top": 29,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "시간오후",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 299,
+          "height": 48,
+          "top": 79,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "몸의 느낌RPE 6",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 299,
+          "height": 48,
+          "top": 129,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "몸 상태불편한 곳 없음",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 299,
+          "height": 48,
+          "top": 179,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "완료",
+          "tag": "BUTTON",
+          "className": "quick-log__primary",
+          "width": 333,
+          "height": 50,
+          "top": 380,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "일지 더 쓰기",
+          "tag": "BUTTON",
+          "className": "quick-log__secondary",
+          "width": 333,
+          "height": 50,
+          "top": 438,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "방금 기록 수정",
+          "tag": "BUTTON",
+          "className": "quick-log__secondary",
+          "width": 333,
+          "height": 50,
+          "top": 496,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "홈",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "일지",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "경기기록",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "계획",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "분석",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        }
+      ],
+      "headings": [
+        {
+          "text": "빠르게 기록",
+          "top": -62,
+          "size": "11px"
+        },
+        {
+          "text": "오늘 기록을 남겼어요.",
+          "top": 283,
+          "size": "22px"
+        }
+      ]
+    },
+    {
+      "name": "20-detailed-journal-375",
+      "title": "TRAINORACLE",
+      "text": "← 뒤로\n훈련 후 · 기록\n2026·09·12\nSAT · 10:29\n빠르게 남긴 운동 결과\n완료\n일부 완료\n가벼운 운동\n휴식\n건너뜀\n시간 미지정\n오전\n오후\n강도 시스템\n?\n회복\nREC\n기초\nBASE\n지속\nLT\n고산소\nVO₂\n해당계\nGLY\n스피드\nATP-PC\n혼합\nMIX\n세션 제목\n거리 · 시간 · 평균 페이스\n?\nkm\nmin\n/km\n\n예: 5'30\" 또는 5:30 (분:초)\n\nRPE · 주관 강도\n접기\n?\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n매우 쉬움\n최대\n운동 후 몸 상태\n불편한 곳 없음\n불편한 곳 있음\n예상 강도 (미선택)\n?\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n객관 기록 · 0개\n+ 추가\n메모 · 손글씨처럼\n메모 용도\n나만의 메모\n훈련 메모\n글을 적는다면 용도를 먼저 선택해 주세요. 원문은 이 기기에만 남아요.\n훈련 메모 내용\n수정 저장\n→\n홈\n일지\n경기기록\n계획\n분석",
+      "scrollHeight": 1451,
+      "clientHeight": 622,
+      "overflow": false,
+      "fontReady": true,
+      "loadedFonts": [
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        }
+      ],
+      "geometry": [
+        {
+          "className": "app-tab-bar",
+          "top": 622,
+          "width": 373,
+          "height": 45,
+          "display": "grid",
+          "columns": "74.5938px 74.5938px 74.6094px 74.5938px 74.5938px",
+          "font": "14.5px",
+          "color": "rgb(14, 20, 18)",
+          "border": "1px solid rgb(14, 20, 18)",
+          "accent": "",
+          "lineDark": ""
+        }
+      ],
+      "controls": [
+        {
+          "text": "← 뒤로",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 64,
+          "height": 44,
+          "top": 12,
+          "font": "11px",
+          "weight": "400"
+        },
+        {
+          "text": "완료",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 51,
+          "height": 44,
+          "top": 161,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "일부 완료",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 80,
+          "height": 44,
+          "top": 161,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "가벼운 운동",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 92,
+          "height": 44,
+          "top": 161,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "휴식",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 51,
+          "height": 44,
+          "top": 161,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "건너뜀",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 64,
+          "height": 44,
+          "top": 211,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "시간 미지정",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 92,
+          "height": 44,
+          "top": 263,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "오전",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 51,
+          "height": 44,
+          "top": 263,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "오후",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 51,
+          "height": 44,
+          "top": 263,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "훈련 목적과 에너지 대사 설명 보기",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 44,
+          "height": 44,
+          "top": 302,
+          "font": "9.5px",
+          "weight": "600"
+        },
+        {
+          "text": "REC 회복 운동",
+          "tag": "BUTTON",
+          "className": "journal-energy-picker__option",
+          "width": 77,
+          "height": 44,
+          "top": 341,
+          "font": "13px",
+          "weight": "600"
+        },
+        {
+          "text": "BASE 기초 지구력",
+          "tag": "BUTTON",
+          "className": "journal-energy-picker__option",
+          "width": 77,
+          "height": 44,
+          "top": 341,
+          "font": "13px",
+          "weight": "600"
+        },
+        {
+          "text": "LT 지속 페이스",
+          "tag": "BUTTON",
+          "className": "journal-energy-picker__option",
+          "width": 77,
+          "height": 44,
+          "top": 341,
+          "font": "13px",
+          "weight": "600"
+        },
+        {
+          "text": "VO₂ 강한 유산소 반복",
+          "tag": "BUTTON",
+          "className": "journal-energy-picker__option",
+          "width": 77,
+          "height": 44,
+          "top": 341,
+          "font": "13px",
+          "weight": "600"
+        },
+        {
+          "text": "GLY 짧은 고강도 반복",
+          "tag": "BUTTON",
+          "className": "journal-energy-picker__option",
+          "width": 77,
+          "height": 44,
+          "top": 389,
+          "font": "13px",
+          "weight": "600"
+        },
+        {
+          "text": "ATP-PC 스피드·가속",
+          "tag": "BUTTON",
+          "className": "journal-energy-picker__option",
+          "width": 77,
+          "height": 44,
+          "top": 389,
+          "font": "13px",
+          "weight": "600"
+        },
+        {
+          "text": "MIX 여러 강도 조합",
+          "tag": "BUTTON",
+          "className": "journal-energy-picker__option",
+          "width": 77,
+          "height": 44,
+          "top": 389,
+          "font": "13px",
+          "weight": "600"
+        },
+        {
+          "text": "세션 제목",
+          "tag": "INPUT",
+          "className": "",
+          "width": 333,
+          "height": 46,
+          "top": 456,
+          "font": "14px",
+          "weight": "400"
+        },
+        {
+          "text": "페이스 설명 보기",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 44,
+          "height": 44,
+          "top": 497,
+          "font": "9.5px",
+          "weight": "600"
+        },
+        {
+          "text": "거리 (km)",
+          "tag": "INPUT",
+          "className": "",
+          "width": 106,
+          "height": 46,
+          "top": 536,
+          "font": "14px",
+          "weight": "400"
+        },
+        {
+          "text": "시간 (분)",
+          "tag": "INPUT",
+          "className": "",
+          "width": 106,
+          "height": 46,
+          "top": 536,
+          "font": "14px",
+          "weight": "400"
+        },
+        {
+          "text": "평균 페이스 (/km)",
+          "tag": "INPUT",
+          "className": "",
+          "width": 106,
+          "height": 46,
+          "top": 536,
+          "font": "14px",
+          "weight": "400"
+        },
+        {
+          "text": "RPE · 주관 강도접기",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 288,
+          "height": 44,
+          "top": 626,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "운동 자각도 RPE 설명 보기",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 44,
+          "height": 44,
+          "top": 626,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "1",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 66,
+          "height": 44,
+          "top": 675,
+          "font": "12px",
+          "weight": "500"
+        },
+        {
+          "text": "2",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 66,
+          "height": 44,
+          "top": 675,
+          "font": "12px",
+          "weight": "500"
+        },
+        {
+          "text": "3",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 66,
+          "height": 44,
+          "top": 675,
+          "font": "12px",
+          "weight": "500"
+        },
+        {
+          "text": "4",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 66,
+          "height": 44,
+          "top": 675,
+          "font": "12px",
+          "weight": "500"
+        },
+        {
+          "text": "5",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 66,
+          "height": 44,
+          "top": 675,
+          "font": "12px",
+          "weight": "500"
+        },
+        {
+          "text": "6",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 66,
+          "height": 44,
+          "top": 719,
+          "font": "12px",
+          "weight": "500"
+        },
+        {
+          "text": "7",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 66,
+          "height": 44,
+          "top": 719,
+          "font": "12px",
+          "weight": "500"
+        },
+        {
+          "text": "8",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 66,
+          "height": 44,
+          "top": 719,
+          "font": "12px",
+          "weight": "500"
+        },
+        {
+          "text": "9",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 66,
+          "height": 44,
+          "top": 719,
+          "font": "12px",
+          "weight": "500"
+        },
+        {
+          "text": "10",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 66,
+          "height": 44,
+          "top": 719,
+          "font": "12px",
+          "weight": "500"
+        },
+        {
+          "text": "불편한 곳 없음",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 108,
+          "height": 44,
+          "top": 809,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "불편한 곳 있음",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 108,
+          "height": 44,
+          "top": 809,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "운동 자각도 RPE 설명 보기",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 44,
+          "height": 44,
+          "top": 862,
+          "font": "9.5px",
+          "weight": "600"
+        },
+        {
+          "text": "예상 강도 1",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 66,
+          "height": 44,
+          "top": 906,
+          "font": "12px",
+          "weight": "500"
+        },
+        {
+          "text": "예상 강도 2",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 66,
+          "height": 44,
+          "top": 906,
+          "font": "12px",
+          "weight": "500"
+        },
+        {
+          "text": "예상 강도 3",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 66,
+          "height": 44,
+          "top": 906,
+          "font": "12px",
+          "weight": "500"
+        },
+        {
+          "text": "예상 강도 4",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 66,
+          "height": 44,
+          "top": 906,
+          "font": "12px",
+          "weight": "500"
+        },
+        {
+          "text": "예상 강도 5",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 66,
+          "height": 44,
+          "top": 906,
+          "font": "12px",
+          "weight": "500"
+        },
+        {
+          "text": "예상 강도 6",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 66,
+          "height": 44,
+          "top": 950,
+          "font": "12px",
+          "weight": "500"
+        },
+        {
+          "text": "예상 강도 7",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 66,
+          "height": 44,
+          "top": 950,
+          "font": "12px",
+          "weight": "500"
+        },
+        {
+          "text": "예상 강도 8",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 66,
+          "height": 44,
+          "top": 950,
+          "font": "12px",
+          "weight": "500"
+        },
+        {
+          "text": "예상 강도 9",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 66,
+          "height": 44,
+          "top": 950,
+          "font": "12px",
+          "weight": "500"
+        },
+        {
+          "text": "예상 강도 10",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 66,
+          "height": 44,
+          "top": 950,
+          "font": "12px",
+          "weight": "500"
+        },
+        {
+          "text": "객관 기록 · 0개+ 추가",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 333,
+          "height": 44,
+          "top": 1013,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "",
+          "tag": "INPUT",
+          "className": "",
+          "width": 13,
+          "height": 13,
+          "top": 1129,
+          "font": "12.5px",
+          "weight": "400"
+        },
+        {
+          "text": "",
+          "tag": "INPUT",
+          "className": "",
+          "width": 13,
+          "height": 13,
+          "top": 1129,
+          "font": "12.5px",
+          "weight": "400"
+        },
+        {
+          "text": "",
+          "tag": "TEXTAREA",
+          "className": "paper-grid",
+          "width": 333,
+          "height": 125,
+          "top": 1219,
+          "font": "18px",
+          "weight": "400"
+        },
+        {
+          "text": "수정 저장→",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 341,
+          "height": 50,
+          "top": 561,
+          "font": "14px",
+          "weight": "500"
+        },
+        {
+          "text": "홈",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "일지",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "경기기록",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "계획",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "분석",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        }
+      ],
+      "headings": [
+        {
+          "text": "훈련 후 · 기록",
+          "top": 25,
+          "size": "11px"
+        }
+      ]
+    },
+    {
+      "name": "21-saved-journal-detail-375",
+      "title": "TRAINORACLE",
+      "text": "← 뒤로\n일지\n이전 일지\n오늘의 한 페이지\n1 / 1\n다음 일지\n꾸미기\n2026 · 09 · 12\nSAT\n2026 autumn\n이 날짜에 일지 더 쓰기\n훈련 기록 수정\n— TRAINING SESSION\n10:29\nLOG\n빠른 기록\n이 기기\n운동 완료\n거리\n5\nkm\n시간\n—\nmin\n평균 페이스\n—\n/km\nRPE\n?\n6\n/10\n주관 기록만 있음\n예상\n미기록\n실제 체감\n6/10\n이 일지 지우기\n이 페이지는 이 기기에만 저장돼 있어요. 온라인 보관·기기 이동은 계정 연동 후에 할 수 있어요.\n오늘 5 km를 저장했어요 · 총 1건\n직접 입력한 거리만 기록했어요.\n기록한 날 +4P가 반영됐어요.\n거리 추이 보기\n홈\n일지\n경기기록\n계획\n분석",
+      "scrollHeight": 870,
+      "clientHeight": 622,
+      "overflow": false,
+      "fontReady": true,
+      "loadedFonts": [
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        }
+      ],
+      "geometry": [
+        {
+          "className": "saved-toast saved-toast--enter",
+          "top": 476.5,
+          "width": 375,
+          "height": 146.5,
+          "display": "block",
+          "columns": "none",
+          "font": "14.5px",
+          "color": "rgb(14, 20, 18)",
+          "border": "0px none rgb(14, 20, 18)",
+          "accent": "",
+          "lineDark": ""
+        },
+        {
+          "className": "app-tab-bar",
+          "top": 622,
+          "width": 373,
+          "height": 45,
+          "display": "grid",
+          "columns": "74.5938px 74.5938px 74.6094px 74.5938px 74.5938px",
+          "font": "14.5px",
+          "color": "rgb(14, 20, 18)",
+          "border": "1px solid rgb(14, 20, 18)",
+          "accent": "",
+          "lineDark": ""
+        }
+      ],
+      "controls": [
+        {
+          "text": "← 뒤로",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 64,
+          "height": 44,
+          "top": -171,
+          "font": "11px",
+          "weight": "400"
+        },
+        {
+          "text": "이전 일지",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 77,
+          "height": 44,
+          "top": -93,
+          "font": "12px",
+          "weight": "400"
+        },
+        {
+          "text": "다음 일지",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 77,
+          "height": 44,
+          "top": -93,
+          "font": "12px",
+          "weight": "400"
+        },
+        {
+          "text": "일지 꾸미기 열기",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 79,
+          "height": 44,
+          "top": -32,
+          "font": "12px",
+          "weight": "500"
+        },
+        {
+          "text": "이 날짜에 일지 더 쓰기",
+          "tag": "BUTTON",
+          "className": "journal-detail-actions__button journal-detail-actions__button--add",
+          "width": 160,
+          "height": 44,
+          "top": 94,
+          "font": "13px",
+          "weight": "600"
+        },
+        {
+          "text": "훈련 기록 수정",
+          "tag": "BUTTON",
+          "className": "journal-detail-actions__button",
+          "width": 121,
+          "height": 44,
+          "top": 94,
+          "font": "13px",
+          "weight": "400"
+        },
+        {
+          "text": "운동 자각도 RPE 설명 보기",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 44,
+          "height": 44,
+          "top": 330,
+          "font": "12px",
+          "weight": "500"
+        },
+        {
+          "text": "이 일지 지우기",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 66,
+          "height": 44,
+          "top": 516,
+          "font": "9.5px",
+          "weight": "400"
+        },
+        {
+          "text": "거리 추이 보기",
+          "tag": "BUTTON",
+          "className": "saved-toast__action",
+          "width": 317,
+          "height": 44,
+          "top": 558,
+          "font": "10px",
+          "weight": "600"
+        },
+        {
+          "text": "홈",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "일지",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "경기기록",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "계획",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "분석",
+          "tag": "BUTTON",
+          "className": "app-tab-bar__button",
+          "width": 75,
+          "height": 44,
+          "top": 623,
+          "font": "14.5px",
+          "weight": "400"
+        }
+      ],
+      "headings": []
+    },
+    {
+      "name": "22-editor-canvas-375",
+      "title": "TRAINORACLE",
+      "text": "← 뒤로\n일지\n이전 일지\n오늘의 한 페이지\n1 / 1\n다음 일지\n이 일지 꾸미기\n장식을 눌러 옮기고 모서리로 크기를 바꿔요.\n전체\n재료\n이모지\n글\n테마\n글자색\n오늘 5 km를 저장했어요 · 총 1건\n직접 입력한 거리만 기록했어요.\n기록한 날 +4P가 반영됐어요.\n거리 추이 보기\n2026 · 09 · 12\nSAT\n2026 autumn\n이 날짜에 일지 더 쓰기\n훈련 기록 수정\n— TRAINING SESSION\n10:29\nLOG\n빠른 기록\n이 기기\n운동 완료\n거리\n5\nkm\n시간\n—\nmin\n평균 페이스\n—\n/km\nRPE\n?\n6\n/10\n주관 기록만 있음\n예상\n미기록\n실제 체감\n6/10\n이 일지 지우기\n이 페이지는 이 기기에만 저장돼 있어요. 온라인 보관·기기 이동은 계정 연동 후에 할 수 있어요.",
+      "scrollHeight": 622,
+      "clientHeight": 622,
+      "overflow": false,
+      "fontReady": true,
+      "loadedFonts": [
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        }
+      ],
+      "geometry": [
+        {
+          "className": "journal-decoration-toolbar",
+          "top": 681,
+          "width": 375,
+          "height": 294.46875,
+          "display": "block",
+          "columns": "none",
+          "font": "14.5px",
+          "color": "rgb(14, 20, 18)",
+          "border": "1px solid rgb(14, 20, 18)",
+          "accent": "",
+          "lineDark": ""
+        },
+        {
+          "className": "saved-toast saved-toast--enter",
+          "top": 69,
+          "width": 351,
+          "height": 138.5,
+          "display": "block",
+          "columns": "none",
+          "font": "14.5px",
+          "color": "rgb(14, 20, 18)",
+          "border": "0px none rgb(14, 20, 18)",
+          "accent": "",
+          "lineDark": ""
+        },
+        {
+          "className": "app-tab-bar",
+          "top": 622,
+          "width": 373,
+          "height": 45,
+          "display": "grid",
+          "columns": "74.5938px 74.5938px 74.6094px 74.5938px 74.5938px",
+          "font": "14.5px",
+          "color": "rgb(14, 20, 18)",
+          "border": "1px solid rgb(14, 20, 18)",
+          "accent": "",
+          "lineDark": ""
+        }
+      ],
+      "controls": [
+        {
+          "text": "← 뒤로",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 64,
+          "height": 44,
+          "top": 12,
+          "font": "11px",
+          "weight": "400"
+        },
+        {
+          "text": "이전 일지",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 77,
+          "height": 44,
+          "top": 90,
+          "font": "12px",
+          "weight": "400"
+        },
+        {
+          "text": "다음 일지",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 77,
+          "height": 44,
+          "top": 90,
+          "font": "12px",
+          "weight": "400"
+        },
+        {
+          "text": "꾸미기 편집기 닫기",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 44,
+          "height": 44,
+          "top": 8,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "꾸미기 완료",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 44,
+          "height": 44,
+          "top": 8,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "모든 꾸미기 도구",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 57,
+          "height": 52,
+          "top": 606,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "꾸미기 재료 도구",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 57,
+          "height": 52,
+          "top": 606,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "이모지 스티커 도구",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 57,
+          "height": 52,
+          "top": 606,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "글 스티커 도구",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 57,
+          "height": 52,
+          "top": 606,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "페이지 테마 도구",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 57,
+          "height": 52,
+          "top": 606,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "글자색 도구",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 57,
+          "height": 52,
+          "top": 606,
+          "font": "14.5px",
+          "weight": "400"
+        },
+        {
+          "text": "거리 추이 보기",
+          "tag": "BUTTON",
+          "className": "saved-toast__action",
+          "width": 317,
+          "height": 44,
+          "top": 151,
+          "font": "10px",
+          "weight": "600"
+        },
+        {
+          "text": "이 날짜에 일지 더 쓰기",
+          "tag": "BUTTON",
+          "className": "journal-detail-actions__button journal-detail-actions__button--add",
+          "width": 160,
+          "height": 44,
+          "top": 289,
+          "font": "13px",
+          "weight": "600"
+        },
+        {
+          "text": "훈련 기록 수정",
+          "tag": "BUTTON",
+          "className": "journal-detail-actions__button",
+          "width": 121,
+          "height": 44,
+          "top": 289,
+          "font": "13px",
+          "weight": "400"
+        },
+        {
+          "text": "운동 자각도 RPE 설명 보기",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 44,
+          "height": 44,
+          "top": 525,
+          "font": "12px",
+          "weight": "500"
+        },
+        {
+          "text": "이 일지 지우기",
+          "tag": "BUTTON",
+          "className": "",
+          "width": 66,
+          "height": 44,
+          "top": 711,
+          "font": "9.5px",
+          "weight": "400"
+        }
+      ],
+      "headings": [
+        {
+          "text": "스티커",
+          "top": 800,
+          "size": "12px"
+        },
+        {
+          "text": "도장",
+          "top": 1322,
+          "size": "12px"
+        },
+        {
+          "text": "테이프",
+          "top": 1679,
+          "size": "12px"
+        },
+        {
+          "text": "테마",
+          "top": 1904,
+          "size": "12px"
+        },
+        {
+          "text": "아바타",
+          "top": 2152,
+          "size": "12px"
+        },
+        {
+          "text": "글자색",
+          "top": 2400,
+          "size": "12px"
+        },
+        {
+          "text": "이모지 스티커",
+          "top": 2516,
+          "size": "10px"
+        }
+      ]
+    },
+    {
+      "name": "receipt-drawer-hit-test",
+      "observed": true,
+      "overlapArea": 0,
+      "receiptExposed": true,
+      "controlReachable": false
+    }
+  ],
+  "errors": []
+}
