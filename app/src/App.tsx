@@ -4,6 +4,7 @@ import { productFeatures } from "./domain/product-features"
 import { AppLoadingState } from "./components/AppLoadingState"
 import { useAccountJournalRuntime } from "./domain/account/useAccountJournalRuntime"
 import { AccountJournalStorageStatus } from "./components/AccountJournalStorageStatus"
+import { InstallShortcutProvider } from "./components/InstallShortcut"
 
 const DesktopWorkspace = React.lazy(() => import("./DesktopWorkspace"))
 const PublicProfilePage = React.lazy(async () => {
@@ -24,12 +25,12 @@ export default function App({ multiPlanRuntime }: { readonly multiPlanRuntime?: 
     )
   }
   const appShell = useIsMobileShell()
-  if (appShell) return <><AccountJournalStorageStatus /><AppShell multiPlanRuntime={multiPlanRuntime} /></>
+  if (appShell) return <InstallShortcutProvider><AccountJournalStorageStatus /><AppShell multiPlanRuntime={multiPlanRuntime} /></InstallShortcutProvider>
   return (
-    <><AccountJournalStorageStatus />
+    <InstallShortcutProvider><AccountJournalStorageStatus />
     <React.Suspense fallback={<AppLoadingState fullScreen />}>
       <DesktopWorkspace />
     </React.Suspense>
-    </>
+    </InstallShortcutProvider>
   )
 }

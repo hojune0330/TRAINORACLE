@@ -24,6 +24,7 @@ import { accountJournalPreviewEnabled } from "../domain/account/account-journal-
 import { AccountJournalHistory } from "./account/AccountJournalHistory"
 import { AccountJournalMigration } from "./account/AccountJournalMigration"
 import { mono, primaryBtn, secondaryBtn } from "./account/styles"
+import { InstallShortcutSuggestion } from "../components/InstallShortcut"
 
 type SetupState = "checking" | "not-required" | "saving" | "needs-profile" | "ready" | "failed"
 
@@ -155,6 +156,7 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
             type="button"
             onClick={onBack}
             aria-label="뒤로"
+            data-install-shortcut-return="account"
             style={{ ...secondaryBtn, width: 44, minWidth: 44, minHeight: 44, padding: 0 }}
           ><ArrowLeft aria-hidden="true" size={19} /></button>
         )}
@@ -225,6 +227,7 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
           </div>
 
           {setupNotice !== null && <p role="status" style={{ ...mono, fontSize: 11, margin: 0 }}>{setupNotice}</p>}
+          <InstallShortcutSuggestion eligible={setupState === "ready"} returnFocusTo={() => document.querySelector<HTMLElement>('[data-install-shortcut-return="account"]')} />
 
           <AccountNetworkSettings
             userId={user.id}

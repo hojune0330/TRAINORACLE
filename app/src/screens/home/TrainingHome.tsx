@@ -41,6 +41,7 @@ type TrainingHomeProps = {
   readonly accountEntry?: ReactNode
   readonly todayContext?: ReactNode
   readonly recentJournal?: ReactNode
+  readonly installSuggestion?: ReactNode
 }
 
 export function TrainingHome({
@@ -55,6 +56,7 @@ export function TrainingHome({
   accountEntry,
   todayContext,
   recentJournal,
+  installSuggestion,
 }: TrainingHomeProps) {
   const laterSameDaySession = model.nextTraining?.laterSameDaySession ?? null
   const nextTrainingSection = model.nextTraining === null ? null : (
@@ -213,6 +215,7 @@ export function TrainingHome({
 
       {model.homeMode === "TRAINING" && nextTrainingSection}
       {model.homeMode !== "WELCOME" && todaySection}
+      {installSuggestion}
       {model.homeMode !== "WELCOME" && recentJournal}
 
       <nav className="training-home__services" aria-label="내 기록 살펴보기">
