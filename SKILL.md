@@ -1,10 +1,26 @@
 ---
 name: trainoracle-design
-description: TRAINORACLE — an AI coaching platform for elite 1500m–10000m runners. Scientific Minimalism (Tufte × Linear): warm off-white surfaces, teal-tinted ink, Deep Teal as the sole brand accent, Inter + JetBrains Mono, square corners, hairline borders. Color is for information, never decoration. Energy systems (BASE/LT/VO2/GLY/ATP/REST) are encoded as 7px dot + 2-char mono code + 1.5px underline — never as background. AI verdicts (CONFIRM/RECOMMEND/UNC/LACK) with confidence % accompany every AI utterance.
+description: Preserve TrainOracle's current product wording, flows and domain contracts while applying its existing paper-journal and scientific-minimal UI system. Read PRODUCT_NORTH_STAR.md and docs/UX_UI_VISUAL_STANDARD.md first. Root tokens and self-hosted Pretendard serve the app; historical design-kit rules below are not authority to add confidence scores, remove Korean explanations, or remove approved decoration features.
 user-invocable: true
 ---
 
 # TRAINORACLE Design System — Skill Map
+
+## Current app scope (2026-09-12)
+
+The owner approved the [design-system improvement plan](reports/plans/TRAINORACLE_DESIGN_SYSTEM_IMPROVEMENT_PLAN_2026-09-12.md). Preserve current words, routes, training values, storage semantics and approved editor behavior. Reuse visual assets and components selectively; a design handoff does not activate its proposed functionality.
+
+Read `PRODUCT_NORTH_STAR.md`, `AGENTS.md`, then `docs/UX_UI_VISUAL_STANDARD.md`. The sections below preserve the original kit, not a replacement product contract:
+
+- Inter/JetBrains Mono are historical kit choices. The current app uses self-hosted Pretendard and existing root tokens, including tabular numerals.
+- Rules 8 and 9 do not authorize confidence percentages or English-only labels in the app. Existing evidence contracts and Korean terminology/help govern those displays.
+- Rule 10 does not remove approved points, collections or journal decoration. Those features retain their own safety and acquisition boundaries.
+- The original elite-only audience and fixed CycleRail description do not redefine the current plan eligibility or calendar calculation.
+- Motion, compact chrome and v3 free placement follow their current approved scoped contracts. Do not roll them back to a static kit.
+
+Historical skill description retained for provenance: TRAINORACLE — an AI coaching platform for elite 1500m–10000m runners. Scientific Minimalism (Tufte × Linear): warm off-white surfaces, teal-tinted ink, Deep Teal as the sole brand accent, Inter + JetBrains Mono, square corners, hairline borders. Color is for information, never decoration. Energy systems (BASE/LT/VO2/GLY/ATP/REST) are encoded as 7px dot + 2-char mono code + 1.5px underline — never as background. AI verdicts (CONFIRM/RECOMMEND/UNC/LACK) with confidence % accompany every AI utterance.
+
+## Historical kit reference (original content preserved)
 
 ## What this is
 A **thinking tool** for elite middle-distance running coaches and athletes.

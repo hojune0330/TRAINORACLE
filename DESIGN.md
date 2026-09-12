@@ -1,5 +1,7 @@
 # TrainOracle Design System
 
+> **2026-09-12 applicability update:** For the hosted app, read [the approved improvement plan](reports/plans/TRAINORACLE_DESIGN_SYSTEM_IMPROVEMENT_PLAN_2026-09-12.md) and [current UI standard](docs/UX_UI_VISUAL_STANDARD.md). Preserve existing wording, navigation, numeric prescriptions and account-storage semantics. This document also preserves dashboard and earlier app descriptions: static dashboard motion, historical local-only receipts, old intent names and initial beta prescription limits are not new instructions for current app behavior. Verify the current component and its adopted contract before editing. Root app tokens remain separate from `design-v3` dashboard tokens; no consolidation is authorized here.
+
 ## 1. Atmosphere & Identity
 
 TrainOracle feels like a coach's control room for serious training work: calm, dense, accountable, and easy to scan every day. The signature is a document-first command surface that connects safety, evidence, and planning without decorative noise.
