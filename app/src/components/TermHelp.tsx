@@ -19,14 +19,14 @@ export function TermHelp({ term }: { term: TermId }) {
   const accent = entry.safety ? "var(--warn)" : "var(--ink-3)"
 
   return (
-    <span ref={wrapRef} style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+    <span ref={wrapRef} style={{ position: "relative", display: "inline-flex", alignItems: "center", flexShrink: 0 }}>
       <button
         type="button"
         aria-label={`${entry.label}${entry.code === undefined ? "" : ` ${entry.code}`} 설명 ${open ? "닫기" : "보기"}`}
         aria-expanded={open}
         onClick={toggle}
         style={{
-          width: 44, height: 44, margin: "-9px -8px -9px 1px", padding: 0,
+          width: 44, minWidth: 44, height: 44, flexShrink: 0, margin: "-9px -8px -9px 1px", padding: 0,
           border: 0, background: "transparent", cursor: "pointer",
           display: "inline-flex", alignItems: "center", justifyContent: "center",
           verticalAlign: "middle",
