@@ -133,11 +133,21 @@
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   line-height: 1.35;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 2px;
+  overflow: visible;
+  white-space: normal;
+}
+
+.journal-entry-metric__number {
+  min-width: 0;
+  max-width: 100%;
   overflow-wrap: anywhere;
 }
 
-.journal-entry-metric__value > span {
-  margin-inline-start: 2px;
+.journal-entry-metric__unit {
   color: var(--ink-3);
   font-size: var(--fs-mono-xs);
   font-weight: 400;
@@ -216,7 +226,7 @@
   }
 }
 
-@media (max-width: 360px) {
+@media (max-width: 400px) {
   .journal-detail-page__date { padding-inline: var(--space-3); }
 
   .journal-entry-card,

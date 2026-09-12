@@ -251,8 +251,8 @@
 .decorated-journal-page__transform-handle::before {
   content: "";
   position: absolute;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border: 1px solid var(--ink-blue);
   border-radius: 50%;
   background: var(--surface);
@@ -355,7 +355,7 @@
   max-height: min(66dvh, 620px);
   margin: 0;
   border-top: 1px solid var(--ink);
-  padding: 0 16px max(12px, env(safe-area-inset-bottom));
+  padding: 0 12px max(12px, env(safe-area-inset-bottom));
   background: var(--surface);
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -366,7 +366,7 @@
   pointer-events: none;
 }
 
-.journal-decoration-toolbar > header,
+.journal-decoration-toolbar__drawer-header > header,
 .journal-decoration-toolbar > footer {
   display: flex;
   align-items: center;
@@ -374,13 +374,14 @@
   gap: 10px;
 }
 
-.journal-decoration-toolbar > header {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  min-height: 44px;
-  margin-inline: -16px;
-  padding: 10px 16px 0;
+.journal-decoration-toolbar__drawer-header {
+  margin-inline: -12px;
+  background: var(--surface);
+}
+
+.journal-decoration-toolbar__drawer-header > header {
+  min-height: 48px;
+  padding: 4px 12px;
   border-bottom: 1px solid var(--line);
   background: var(--surface);
 }
@@ -389,16 +390,13 @@
   position: sticky;
   bottom: calc(env(safe-area-inset-bottom) * -1);
   min-height: 52px;
-  margin-inline: -16px;
-  padding: 4px 16px;
+  margin-inline: -12px;
+  padding: 4px 12px;
   border-top: 1px solid var(--line);
   background: var(--surface);
 }
 
 .journal-decoration-toolbar__grabber {
-  position: sticky;
-  top: 4px;
-  z-index: 3;
   width: 36px;
   height: 4px;
   margin: 4px auto -8px;
@@ -406,7 +404,7 @@
   background: var(--line);
 }
 /* 제목·안내·포인트를 한 덩어리로 — 서랍 높이(44dvh)에서 타일 그리드가 최대한 보이게 한다. */
-.journal-decoration-toolbar > header div {
+.journal-decoration-toolbar__drawer-header > header div {
   min-width: 0;
   display: flex;
   flex-wrap: wrap;
@@ -414,34 +412,34 @@
   column-gap: 8px;
   row-gap: 0;
 }
-.journal-decoration-toolbar > header div > span { flex-basis: 100%; }
+.journal-decoration-toolbar__drawer-header > header div > span { flex-basis: 100%; }
 /* 포인트 잔액은 구매 확인 행과 같은 서랍 안에서만 보여 준다. */
-.journal-decoration-toolbar__points { color: var(--ink-3); font-family: var(--mono); font-size: var(--fs-mono-sm); white-space: nowrap; }
-.journal-decoration-toolbar > header strong { font-size: var(--fs-body); }
-.journal-decoration-toolbar > header span,
-.journal-decoration-toolbar > footer span { color: var(--ink-3); font-size: var(--fs-mono-sm); line-height: 1.45; }
+.journal-decoration-toolbar__points { color: var(--ink-3); font-family: var(--sans); font-size: var(--fs-caption); white-space: nowrap; }
+.journal-decoration-toolbar__points > b { color: var(--ink-2); font-variant-numeric: tabular-nums; font-weight: 700; }
+.journal-decoration-toolbar__drawer-header > header strong { font-size: var(--fs-body); }
+.journal-decoration-toolbar__drawer-header > header span,
+.journal-decoration-toolbar > footer span { color: var(--ink-3); font-family: var(--sans); font-size: var(--fs-caption); line-height: 1.3; }
 .journal-decoration-toolbar__icon { width: 44px; padding: 0; display: grid; place-items: center; flex: 0 0 auto; }
 
 .journal-decoration-toolbar__filters {
   position: sticky;
-  top: 44px;
+  top: 0;
   z-index: 2;
   display: flex;
-  gap: 6px;
-  margin-inline: -16px;
-  padding: 8px 16px;
+  gap: 4px;
+  margin-inline: -12px;
+  padding: 4px 12px;
   overflow-x: auto;
   scrollbar-width: none;
-  /* 375px 에서 칩 줄이 이어진다는 것을 오른쪽 가장자리의 배경 톤 변화로 암시한다.
-   * 스크롤 컨테이너의 배경은 내용과 함께 움직이지 않는다 (그림자·마스크 아님). */
-  background: linear-gradient(to right, var(--surface) 0, var(--surface) calc(100% - 40px), var(--hair) 100%);
+  /* 좁은 화면에서는 마지막 칩 일부가 자연스럽게 남아 가로 목록의 연속을 알린다. */
+  background: var(--surface);
   border-bottom: 1px solid var(--hair);
 }
 .journal-decoration-toolbar__filters::-webkit-scrollbar { display: none; }
 .journal-decoration-toolbar__filters button {
   min-width: max-content;
   min-height: 44px;
-  padding: 0 12px;
+  padding: 0 10px;
   border-radius: var(--r-md);
   background: var(--paper, var(--surface));
   white-space: nowrap;
@@ -458,15 +456,15 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: stretch;
   gap: 8px;
-  margin: 10px 0 14px;
+  margin: 4px 0 12px;
 }
 .journal-decoration-toolbar__section-title {
   grid-column: 1 / -1;
-  margin: 8px 0 0;
-  color: var(--ink-3);
-  font-family: var(--mono);
-  font-size: var(--fs-mono-xs);
-  font-weight: 700;
+  margin: 4px 0 0;
+  color: var(--ink-2);
+  font-family: var(--sans);
+  font-size: var(--fs-caption);
+  font-weight: 600;
 }
 .journal-decoration-toolbar__collection-entry {
   grid-column: 1 / -1;
@@ -515,7 +513,7 @@
   color: var(--ink-3);
   font-size: var(--fs-mono-xs);
 }
-.journal-decoration-toolbar__collection { margin: 10px 0 14px; }
+.journal-decoration-toolbar__collection { margin: 8px 0 12px; }
 .journal-decoration-toolbar__collection > header {
   display: grid;
   gap: 8px;
@@ -578,13 +576,14 @@
 .journal-decoration-toolbar__material-tile {
   position: relative;
   min-width: 0;
-  min-height: 96px;
-  padding: 5px;
+  min-height: 92px;
+  padding: 4px;
   display: grid;
-  grid-template-rows: 56px minmax(18px, auto) auto;
+  grid-template-rows: 48px minmax(16px, auto);
+  grid-auto-rows: minmax(16px, auto);
   align-content: start;
   justify-items: stretch;
-  gap: 3px;
+  gap: 4px;
   border: 1px solid var(--line);
   border-radius: var(--r-md);
   background: var(--paper, var(--surface));
@@ -602,7 +601,7 @@
 .journal-decoration-toolbar__material-tile:active { transform: scale(0.97); }
 .journal-decoration-toolbar__material-tile[data-active="true"] {
   border: 2px solid var(--ink);
-  padding: 4px;
+  padding: 3px;
 }
 .journal-decoration-toolbar__material-tile[data-previewing="true"] { border-color: var(--ink-blue); }
 .journal-decoration-toolbar__material-tile[data-blocked="true"] { opacity: 0.45; }
@@ -616,30 +615,38 @@
 .journal-decoration-toolbar__material-preview {
   width: 100%;
   min-width: 0;
-  height: 56px;
+  height: 48px;
   display: grid;
   place-items: center;
   overflow: hidden;
   background: var(--paper, #F7F3E8);
 }
 .journal-decoration-toolbar__material-preview img {
-  width: 52px;
-  height: 52px;
+  width: 44px;
+  height: 44px;
   object-fit: contain;
   pointer-events: none;
 }
+.journal-decoration-toolbar__material-preview[data-collection="true"] img {
+  width: 42px;
+  height: 42px;
+}
+.journal-decoration-toolbar__material-preview[data-category="STAMP"] img {
+  width: 46px;
+  height: 46px;
+}
 .journal-decoration-toolbar__material-preview[data-category="TAPE"] img {
-  width: 92%;
-  height: 24px;
+  width: calc(100% - 8px);
+  height: 20px;
 }
 .journal-decoration-toolbar__material-preview[data-category="THEME"] img {
-  width: 46px;
-  height: 52px;
+  width: 36px;
+  height: 44px;
   border: 1px solid var(--paper-edge, #C9C0A6);
 }
 .journal-decoration-toolbar__material-preview[data-category="AVATAR"] img {
-  width: 50px;
-  height: 50px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
 }
 .journal-decoration-toolbar__ink-swatch {
@@ -664,8 +671,10 @@
   align-items: center;
   gap: 3px;
   color: var(--ink-3);
-  font-family: var(--mono);
-  font-size: var(--fs-mono-xs);
+  justify-self: end;
+  font-family: var(--sans);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
 }
 /* 부착 표시·개수 배지: 잉크 도장처럼 각진 작은 사각 (원형은 아바타·손잡이 전용). */
 .journal-decoration-toolbar__material-check,
@@ -699,11 +708,11 @@
  * 그리드와 구분하고, '받기'만 잉크로 채워 주 행동을 드러낸다. */
 .journal-decoration-toolbar__purchase-row {
   grid-column: 1 / -1;
-  min-height: 54px;
-  padding: 8px 10px;
+  min-height: 52px;
+  padding: 4px 8px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   border: 1px solid var(--line);
   background: var(--surface-2);
   animation: decoration-tools-content-enter var(--dur-base) var(--ease-out-strong) backwards;
@@ -724,7 +733,7 @@
 .journal-decoration-toolbar__purchase-row small { color: var(--ink-3); font-size: var(--fs-mono-sm); }
 .journal-decoration-toolbar__purchase-row button {
   min-height: 44px;
-  padding: 0 10px;
+  padding: 0 8px;
   border-radius: var(--r-md);
   white-space: nowrap;
 }
@@ -746,7 +755,7 @@
  * 이모지 스티커 그리드: 44px 터치 타깃(계약 §6), 유니코드 텍스트 렌더.
  * 붙인 이모지는 만년필 잉크색 테두리로 상태를 보여 준다.
  */
-.journal-decoration-toolbar__emoji-section { display: grid; gap: 6px; margin: 12px 0; }
+.journal-decoration-toolbar__emoji-section { display: grid; gap: 4px; margin: 8px 0 12px; }
 .journal-decoration-toolbar__emoji-section > h3 { margin: 0; color: var(--ink-3); font-family: var(--mono); font-size: var(--fs-mono-xs); }
 .journal-decoration-toolbar__emoji-section > small { color: var(--ink-3); font-family: var(--sans); font-size: var(--fs-mono-xs); }
 .journal-decoration-toolbar__emoji-grid {
@@ -800,8 +809,6 @@
     border-left: 1px solid var(--line);
   }
   .journal-decoration-toolbar__items { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .journal-decoration-toolbar > header { top: 0; }
-  .journal-decoration-toolbar__filters { top: 44px; }
 }
 
 @media (max-width: 350px) {
@@ -870,7 +877,7 @@
 }
 .journal-decoration-editor__topbar > span { min-width: 0; display: grid; gap: 1px; }
 .journal-decoration-editor__topbar strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-body-sm); }
-.journal-decoration-editor__topbar small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-3); font-size: var(--fs-mono-xs); }
+.journal-decoration-editor__topbar small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-3); font-family: var(--sans); font-size: var(--fs-caption); line-height: 1.3; }
 .journal-decoration-editor__topbar button,
 .journal-decoration-editor__dock button {
   min-width: 44px;
@@ -951,6 +958,24 @@
   animation: decoration-notice-enter var(--dur-base) var(--ease-out-strong) backwards;
 }
 
+/* 저장 알림은 열린 모달 안에서 상단 바 다음의 정상 흐름을 차지한다.
+ * 하단 도구 높이를 추정하지 않고 캔버스 좌표 컨테이너도 바꾸지 않는다. */
+.journal-decoration-workspace--open > .shell-toast-host {
+  position: relative;
+  z-index: 73;
+  min-width: 0;
+  padding: 8px 12px 0;
+  box-sizing: border-box;
+}
+.journal-decoration-workspace--open > .shell-toast-host:empty { display: none; }
+.journal-decoration-workspace--open > .shell-toast-host > .saved-toast {
+  position: static;
+  inset: auto;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
 /* 선택 직후에만 나타나는 짧은 레이어 도구. 팔레트와 겹칠 때는 팔레트가 우선한다. */
 .journal-decoration-editor__selection-actions {
   position: fixed;
@@ -998,7 +1023,7 @@
   width: auto;
   max-height: min(44dvh, 380px);
   margin: 0;
-  padding: 0 16px;
+  padding: 0 12px;
   border: 0;
   border-top: 1px solid var(--ink);
   background: var(--surface);
@@ -1060,8 +1085,8 @@
   left: 0;
   z-index: 78;
   display: grid;
-  gap: 12px;
-  padding: 14px 16px 16px;
+  gap: 8px;
+  padding: 12px 16px 16px;
   border-top: 1px solid var(--ink);
   background: var(--surface);
   animation: decoration-tools-content-enter var(--dur-base) var(--ease-out-strong) backwards;
@@ -1115,7 +1140,7 @@
   text-align: right;
 }
 /* 44px 스와치 (계약 U2): 시각 원은 32px, 히트 영역은 44px. */
-.journal-text-sticker-sheet__inks { display: flex; gap: 4px; }
+.journal-text-sticker-sheet__inks { display: grid; grid-template-columns: repeat(6, minmax(44px, 1fr)); gap: 4px; }
 .journal-text-sticker-sheet__ink {
   position: relative;
   width: 44px;
@@ -1126,6 +1151,7 @@
   border: none;
   background: transparent;
   cursor: pointer;
+  justify-self: center;
 }
 .journal-text-sticker-sheet__ink::before {
   content: "";
@@ -1181,11 +1207,22 @@
 }
 
 @media (min-width: 760px) {
+  .journal-decoration-workspace--open > .decorated-journal-page .decorated-journal-page__body,
+  .journal-decoration-workspace--open > .decorated-journal-page .decorated-journal-page__top-rail,
+  .journal-decoration-workspace--open > .shell-toast-host {
+    width: min(960px, calc(100% - min(440px, 42vw) - 32px));
+    margin-right: auto;
+    margin-left: 16px;
+  }
+  .journal-decoration-editor__notice {
+    right: calc(min(440px, 42vw) + 12px);
+  }
   .journal-decoration-workspace--open .journal-decoration-toolbar {
     top: calc(52px + env(safe-area-inset-top));
     bottom: calc(58px + env(safe-area-inset-bottom));
     left: auto;
     width: min(440px, 42vw);
+    box-sizing: border-box;
     max-height: none;
     border-top: 0;
     border-left: 1px solid var(--line);

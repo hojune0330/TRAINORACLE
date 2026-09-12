@@ -2118,11 +2118,10 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
 
 .device-journal__values {
   min-width: 0;
-  overflow: hidden;
   color: var(--ink-3);
   line-height: 1.4;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .device-journal__badges {
@@ -2513,36 +2512,6 @@ button:not(:disabled):not([aria-disabled="true"]):active {
   margin: 0 auto;
   padding: 0 var(--space-3) var(--space-2);
   box-sizing: border-box;
-}
-
-/* The decoration editor owns the bottom dock and material drawer. Keep short
- * receipts above those controls; review-required alerts remain visible near
- * the editor header and keep their explicit dismiss action. */
-.app-shell:has(.journal-decoration-workspace--open) > .saved-toast[data-toast-priority="receipt"] {
-  bottom: calc(58px + env(safe-area-inset-bottom, 0px) + var(--space-2));
-}
-
-.app-shell:has(.journal-decoration-workspace--open .journal-decoration-toolbar[data-open="true"])
-  > .saved-toast[data-toast-priority="receipt"] {
-  bottom: calc(min(44dvh, 380px) + 58px + env(safe-area-inset-bottom, 0px) + var(--space-2));
-}
-
-.app-shell:has(.journal-decoration-workspace--open) > .saved-toast[data-toast-priority="review"] {
-  top: calc(58px + env(safe-area-inset-top, 0px));
-  bottom: auto;
-}
-
-@media (min-width: 760px) {
-  .app-shell:has(.journal-decoration-workspace--open) > .saved-toast {
-    right: calc(min(440px, 42vw) + var(--space-3));
-    left: var(--space-3);
-  }
-
-  .app-shell:has(.journal-decoration-workspace--open .journal-decoration-toolbar[data-open="true"])
-    > .saved-toast[data-toast-priority="receipt"] {
-    top: calc(58px + env(safe-area-inset-top, 0px));
-    bottom: auto;
-  }
 }
 
 .saved-toast__surface {
@@ -3089,4 +3058,52 @@ button:not(:disabled):not([aria-disabled="true"]):active {
   .distance-overview__heatmap-grid > span[data-has-distance="true"] {
     background: var(--brand);
   }
+}
+
+/* Keep analysis evidence readable without changing aggregation or labels. */
+.personal-oracle__summary,
+.personal-oracle__insight p {
+  max-width: 68ch;
+  font-size: var(--fs-body-sm);
+  word-break: keep-all;
+}
+
+.personal-oracle__source { flex-wrap: wrap; }
+
+.accessible-trend-table__toggle { margin-left: auto; flex: 0 0 auto; }
+.accessible-trend-table[open] > summary .accessible-trend-table__toggle { transform: rotate(180deg); }
+
+.distance-overview__eyebrow,
+.distance-overview__totals span,
+.distance-overview__totals em,
+.distance-overview__empty,
+.distance-overview__plan-note,
+.distance-overview__excluded,
+.distance-overview__heatmap-note,
+.distance-overview__details,
+.distance-overview__bar-item > span { font-size: var(--fs-caption); }
+
+.distance-overview__totals strong,
+.distance-overview__bar-item > span,
+.energy-ledger__count,
+.energy-ledger__metrics { font-variant-numeric: tabular-nums; }
+
+.distance-overview__bar-item > small,
+.distance-overview__weekdays,
+.distance-overview__heatmap-grid b,
+.distance-overview__heatmap-grid small { font-size: var(--fs-mono-xs); }
+
+.energy-ledger__metrics,
+.energy-ledger__coverage,
+.energy-ledger__mixed-note,
+.energy-ledger__plan-brief {
+  font-size: var(--fs-caption);
+  line-height: 1.55;
+  word-break: keep-all;
+}
+
+.energy-ledger__compact-row span:nth-child(3) {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
 }

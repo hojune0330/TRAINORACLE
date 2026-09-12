@@ -213,7 +213,10 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
                 ] as const).map(([l, v, u], i, a) => (
                   <div key={i} className="journal-entry-metric" data-last={i === a.length - 1 ? "true" : undefined}>
                     <div className="journal-entry-metric__label">{l}{l === "RPE" && <TermHelp term="rpe" />}</div>
-                    <div className="journal-entry-metric__value">{v}<span>{u}</span></div>
+                    <div className="journal-entry-metric__value">
+                      <span className="journal-entry-metric__number">{v}</span>
+                      <span className="journal-entry-metric__unit">{u}</span>
+                    </div>
                   </div>
                 ))}
               </div>

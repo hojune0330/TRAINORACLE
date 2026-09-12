@@ -304,8 +304,9 @@
 }
 .training-content-article__compatibility details summary {
   min-height: var(--app-touch-min);
-  display: flex;
-  align-items: center;
+  display: list-item;
+  box-sizing: border-box;
+  padding-block: var(--space-3);
   cursor: pointer;
 }
 .training-content-article__compatibility-boundary {

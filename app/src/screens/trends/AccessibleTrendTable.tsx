@@ -1,4 +1,4 @@
-import { TableProperties } from "lucide-react"
+import { ChevronDown, TableProperties } from "lucide-react"
 
 type TrendTableRow = {
   readonly key: string
@@ -29,6 +29,7 @@ export function AccessibleTrendTable({ caption, rows }: AccessibleTrendTableProp
       }}>
         <TableProperties aria-hidden="true" size={16} />
         <span>표로 보기</span>
+        <ChevronDown className="accessible-trend-table__toggle" aria-hidden="true" size={16} />
       </summary>
       <table style={{
         width: "100%",
@@ -60,6 +61,7 @@ export function AccessibleTrendTable({ caption, rows }: AccessibleTrendTableProp
                 textAlign: "left",
                 fontWeight: 600,
                 wordBreak: "keep-all",
+                overflowWrap: "anywhere",
               }}>{row.label}</th>
               <td style={{
                 padding: "var(--space-2) 0 var(--space-2) var(--space-2)",

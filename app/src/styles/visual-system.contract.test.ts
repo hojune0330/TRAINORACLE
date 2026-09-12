@@ -108,16 +108,26 @@ describe("shared visual system", () => {
     expect(accountCss).not.toContain(".plan-training-flow__legend")
   })
 
-  it("keeps receipt toasts clear of decoration controls without suppressing review alerts", () => {
+  it("hosts the single saved toast inside an active decoration editor without bottom-offset guesses", () => {
     const appCss = readFileSync("src/styles/app.css", "utf8")
+    const shellFrame = readFileSync("src/components/AppShellFrame.tsx", "utf8")
+    const toastHost = readFileSync("src/components/ShellToastHost.tsx", "utf8")
+    const decorationSurface = readFileSync("src/screens/journal/JournalDecorationSurface.tsx", "utf8")
+    const decorationCss = readFileSync("src/styles/journal-decoration.css", "utf8")
     const tokens = readFileSync("../colors_and_type.css", "utf8")
+    const hostedToastRule = decorationCss.match(
+      /\.journal-decoration-workspace--open > \.shell-toast-host > \.saved-toast\s*\{[^}]*\}/u,
+    )?.[0] ?? ""
 
     expect(tokens).toMatch(/--z-toast:\s*200/u)
-    expect(appCss).toContain('.saved-toast[data-toast-priority="receipt"]')
-    expect(appCss).toContain('.journal-decoration-toolbar[data-open="true"]')
-    expect(appCss).toContain("min(44dvh, 380px)")
-    expect(appCss).toMatch(/\.saved-toast\[data-toast-priority="review"\]\s*\{[\s\S]*?top:\s*calc\(58px[^;]+;[\s\S]*?bottom:\s*auto/u)
-    expect(appCss).not.toMatch(/\.saved-toast\[data-toast-priority="review"\][^{]*\{[^}]*display:\s*none/u)
+    expect(shellFrame).toContain("<ShellToastOutlet>")
+    expect(toastHost).toContain("createPortal(children, context.host)")
+    expect(decorationSurface).toContain("<ShellToastHost active={open} />")
+    expect(hostedToastRule).toContain("position: static")
+    expect(hostedToastRule).toContain("inset: auto")
+    expect(hostedToastRule).not.toContain("bottom:")
+    expect(decorationCss).toMatch(/\.journal-decoration-workspace--open > \.shell-toast-host:empty\s*\{\s*display:\s*none/u)
+    expect(appCss).not.toMatch(/\.app-shell:has\(\.journal-decoration-workspace--open[^)]*\)\s*>\s*\.saved-toast/u)
   })
 
   it("uses readable semantic type tokens for DS-01 status and explanation text", () => {
