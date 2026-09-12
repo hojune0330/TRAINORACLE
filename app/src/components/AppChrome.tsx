@@ -9,6 +9,7 @@ import {
   X,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
+import { useLayoutEffect, useRef } from "react"
 import { LOCAL_SAVE_NOTICE, SYNC_UPSELL_NOTICE } from "../domain/journal-store"
 import type { SavedFactReceipt } from "../domain/save-receipt"
 import { isWithinTrailingDays, isoToDate } from "../domain/dates"
@@ -31,12 +32,51 @@ const TAB_ITEMS: readonly TabItem[] = [
   { id: "trends", label: "분석", icon: TrendingUp },
 ] as const
 
+const APP_SHELL_TAB_BAR_HEIGHT = "--app-shell-tab-bar-height"
+
+function useMeasuredTabBarHeight() {
+  const navRef = useRef<HTMLElement>(null)
+
+  useLayoutEffect(() => {
+    const nav = navRef.current
+    if (nav === null || typeof window === "undefined") return
+    const shell = nav.closest(".app-shell") as HTMLElement | null
+    if (shell === null) return
+
+    const previousValue = shell.style.getPropertyValue(APP_SHELL_TAB_BAR_HEIGHT)
+    const previousPriority = shell.style.getPropertyPriority(APP_SHELL_TAB_BAR_HEIGHT)
+    const measure = () => {
+      const boundsHeight = nav.getBoundingClientRect().height
+      if (boundsHeight <= 0) return
+      const style = window.getComputedStyle(nav)
+      const subtract = [style.paddingBottom, style.borderTopWidth, style.borderBottomWidth]
+        .reduce((total, value) => total + (Number.parseFloat(value) || 0), 0)
+      const contentHeight = boundsHeight - subtract
+      if (contentHeight > 0) shell.style.setProperty(APP_SHELL_TAB_BAR_HEIGHT, `${contentHeight}px`)
+    }
+
+    measure()
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure)
+    observer?.observe(nav)
+
+    return () => {
+      observer?.disconnect()
+      if (previousValue === "") shell.style.removeProperty(APP_SHELL_TAB_BAR_HEIGHT)
+      else shell.style.setProperty(APP_SHELL_TAB_BAR_HEIGHT, previousValue, previousPriority)
+    }
+  }, [])
+
+  return navRef
+}
+
 export function TabBar({ tab, onTab }: {
   readonly tab: AppTab
   readonly onTab: (tab: AppTab) => void
 }) {
+  const navRef = useMeasuredTabBarHeight()
+
   return (
-    <nav className="app-tab-bar" aria-label="주 탭">
+    <nav ref={navRef} className="app-tab-bar" aria-label="주 탭">
       {TAB_ITEMS.map(({ id, label, icon: Icon }) => {
         const active = tab === id
         return (

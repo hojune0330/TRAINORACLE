@@ -962,7 +962,6 @@
  * 하단 도구 높이를 추정하지 않고 캔버스 좌표 컨테이너도 바꾸지 않는다. */
 .journal-decoration-workspace--open > .shell-toast-host {
   position: relative;
-  z-index: 73;
   min-width: 0;
   padding: 8px 12px 0;
   box-sizing: border-box;

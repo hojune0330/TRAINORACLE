@@ -2258,8 +2258,12 @@
 
   .plan-main-comparison__pair > .plan-main-comparison__values {
     display: block;
-    grid-column: auto;
     grid-row: auto;
+  }
+
+  .plan-main-comparison__pair > .plan-main-comparison__values:first-child,
+  .plan-main-comparison__pair > .plan-main-comparison__values:last-child {
+    grid-column: auto;
   }
 
   .plan-main-comparison__pair > .plan-main-comparison__values > dl { display: block; }
