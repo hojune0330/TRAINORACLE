@@ -2196,7 +2196,7 @@
 .plan-main-comparison {
   margin-top: var(--space-3);
   border-block: var(--bw-line) solid var(--hair);
-  font-size: var(--fs-body-sm);
+  font-size: 0.875rem;
   line-height: 1.6;
   overflow-wrap: anywhere;
   letter-spacing: 0;
