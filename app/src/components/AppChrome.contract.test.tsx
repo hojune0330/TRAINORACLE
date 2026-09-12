@@ -24,6 +24,7 @@ describe("saved receipt date wording", () => {
     render(<SavedToast count={0} phase="enter" receipt={{ kind: "generic", savedDate: "2026-09-08" }} />)
 
     expect(screen.getByRole("status")).toHaveTextContent("9월 8일 기록을 남겼어요.")
+    expect(screen.getByRole("status")).toHaveAttribute("data-toast-priority", "receipt")
   })
 
   it("does not claim a future saved value is already in a current aggregation window", () => {
@@ -62,5 +63,21 @@ describe("saved receipt date wording", () => {
     render(<SavedToast count={0} phase="enter" />)
 
     expect(screen.getByRole("status")).toHaveTextContent("이 기기에 저장됐어요")
+  })
+
+  it("keeps review-required save guidance persistent and explicitly dismissible", () => {
+    render(
+      <SavedToast
+        count={1}
+        phase="enter"
+        reviewMessage="확인이 필요한 기록이에요."
+        onDismiss={() => undefined}
+      />,
+    )
+
+    const alert = screen.getByRole("alert")
+    expect(alert).toHaveAttribute("data-toast-priority", "review")
+    expect(alert).toHaveTextContent("확인이 필요한 기록이에요.")
+    expect(within(alert).getByRole("button", { name: "검토 안내 닫기" })).toBeVisible()
   })
 })

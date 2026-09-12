@@ -170,7 +170,7 @@
 .engagement-strip__goal progress {
   width: 100%;
   height: 6px;
-  accent-color: var(--accent);
+  accent-color: var(--brand);
 }
 
 .engagement-strip__badges > div {
@@ -431,12 +431,14 @@
   padding: 0;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
   gap: var(--space-2) var(--space-3);
   list-style: none;
 }
 
 .plan-training-flow__legend li {
   min-width: 0;
+  min-height: var(--app-touch-min);
   display: flex;
   align-items: center;
   gap: 3px;
@@ -454,7 +456,7 @@
 .plan-flow-code-help__trigger {
   min-width: 44px;
   min-height: 44px;
-  margin: -10px -6px;
+  margin: 0;
   padding: 0 6px;
   border: 0;
   background: transparent;
@@ -479,7 +481,7 @@
 
 .plan-flow-code-help__name { min-width: 0; display: inline-flex; align-items: baseline; gap: 4px; }
 .plan-flow-code-help__name > strong { color: inherit; font-family: var(--sans); font-size: inherit; line-height: 1.3; }
-.plan-flow-code-help__name > small { color: inherit; opacity: .72; font-family: var(--mono); font-size: 8.5px; line-height: 1; }
+.plan-flow-code-help__name > small { color: inherit; opacity: .72; font-family: var(--mono); font-size: var(--fs-mono-xs); line-height: 1.2; }
 .plan-flow-code-help__name[data-secondary="true"] { padding-left: 5px; border-left: 1px solid currentColor; }
 
 .plan-flow-code-help__question {
@@ -489,7 +491,7 @@
   border-radius: 50%;
   color: inherit;
   font-family: var(--mono);
-  font-size: 8.5px;
+  font-size: var(--fs-mono-xs);
   font-weight: 700;
   line-height: 1;
   display: inline-flex;
@@ -564,7 +566,7 @@
 }
 
 .plan-training-flow__days time span {
-  font-size: 9px;
+  font-size: var(--fs-mono-xs);
 }
 
 .plan-training-flow__days time strong {
@@ -1662,7 +1664,7 @@
   border: 0;
   padding: 0;
   background: transparent;
-  color: var(--accent-ink);
+  color: var(--brand-ink);
   font-family: var(--sans);
   font-size: var(--fs-body-sm);
   font-weight: 700;
@@ -2768,6 +2770,12 @@
 
   .active-plan__actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 280px) {
+  .plan-training-flow__legend {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 .plan-intake,

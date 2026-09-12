@@ -86,6 +86,7 @@ export function SavedToast({
     <div
       role={needsReview ? "alert" : "status"}
       aria-atomic="true"
+      data-toast-priority={needsReview ? "review" : "receipt"}
       className={`saved-toast saved-toast--${phase}`}
     >
       <div className="saved-toast__surface">

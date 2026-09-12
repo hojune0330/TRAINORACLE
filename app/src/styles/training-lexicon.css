@@ -28,12 +28,12 @@
   font: 500 13px/1 var(--sans);
   cursor: pointer;
 }
-.training-lexicon__eyebrow { display: inline-flex; align-items: center; gap: 7px; color: var(--accent); font: 700 11px/1.2 var(--mono); }
+.training-lexicon__eyebrow { display: inline-flex; align-items: center; gap: 7px; color: var(--brand); font: 700 var(--fs-mono-sm)/1.2 var(--mono); }
 .training-lexicon__header h1 { margin: 9px 0 8px; font-size: 30px; line-height: 1.2; letter-spacing: 0; }
 .training-lexicon__header p { max-width: 620px; margin: 0; color: var(--ink-2); font-size: 14px; line-height: 1.65; word-break: keep-all; }
 
 .training-lexicon__tools { padding: 20px 0; display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 12px; border-bottom: 1px solid var(--hair); }
-.training-lexicon__tools label { display: grid; gap: 7px; color: var(--ink-3); font: 700 10px/1.2 var(--mono); }
+.training-lexicon__tools label { display: grid; gap: 7px; color: var(--ink-3); font: 700 var(--fs-caption)/1.2 var(--mono); }
 .training-lexicon__search-field { min-height: 46px; padding: 0 12px; display: flex; align-items: center; gap: 9px; border: 1px solid var(--ink); background: var(--surface); }
 .training-lexicon__search-field input,
 .training-lexicon__tools select { width: 100%; min-height: 46px; border: 1px solid var(--ink); border-radius: 0; background: var(--surface); color: var(--ink); font: 400 14px/1.4 var(--sans); }
@@ -56,13 +56,13 @@
 .training-lexicon__group li button { width: 100%; min-height: 68px; padding: 14px 0; display: grid; grid-template-columns: minmax(140px, .38fr) minmax(0, 1fr); gap: 18px; align-items: start; border: 0; background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
 .training-lexicon__group li span { display: flex; align-items: baseline; flex-wrap: wrap; gap: 7px; }
 .training-lexicon__group li strong { font-size: 14px; line-height: 1.4; }
-.training-lexicon__group li small { color: var(--accent); font: 700 10px/1.3 var(--mono); }
+.training-lexicon__group li small { color: var(--brand); font: 700 var(--fs-mono-xs)/1.3 var(--mono); }
 .training-lexicon__group li p { margin: 0; color: var(--ink-2); font-size: 13px; line-height: 1.55; word-break: keep-all; }
 .training-lexicon__empty { margin: 30px 0; color: var(--ink-2); line-height: 1.6; }
 
 .training-term { padding-top: 18px; }
 .training-term > header { padding: 2px 0 20px; border-bottom: 1px solid var(--ink); }
-.training-term > header > span { color: var(--accent); font: 700 11px/1.3 var(--mono); }
+.training-term > header > span { color: var(--brand); font: 700 var(--fs-mono-sm)/1.3 var(--mono); }
 .training-term h2 { margin: 9px 0 10px; font-size: 28px; line-height: 1.25; letter-spacing: 0; }
 .training-term h2 small { margin-left: 9px; color: var(--ink-3); font: 700 13px/1 var(--mono); }
 .training-term > header p { max-width: 640px; margin: 0; color: var(--ink-2); font-size: 15px; line-height: 1.7; word-break: keep-all; }
@@ -73,17 +73,17 @@
 .training-term__sections { border-top: 1px solid var(--hair); }
 .training-term__section { padding: 18px 0; border-bottom: 1px solid var(--hair); }
 .training-term__section h3,
-.training-term__related h3 { margin: 0 0 8px; color: var(--ink-3); font: 700 11px/1.3 var(--mono); }
+.training-term__related h3 { margin: 0 0 8px; color: var(--ink-3); font: 700 var(--fs-caption)/1.3 var(--mono); }
 .training-term__section p,
 .training-term__section li { margin: 0; color: var(--ink); font-size: 14px; line-height: 1.7; word-break: keep-all; }
 .training-term__section[data-caution="true"] { padding-inline: 12px; border: 1px solid var(--warn); }
 .training-term__section ul { margin: 0; padding-left: 20px; }
 .training-term__sources { display: grid; gap: 8px; padding-left: 0 !important; list-style: none; }
-.training-term__sources a { min-height: 44px; display: inline-flex; align-items: center; gap: 7px; color: var(--accent); }
-.training-term__section > small { display: block; margin-top: 10px; color: var(--ink-3); font-size: 11px; line-height: 1.55; }
+.training-term__sources a { min-height: 44px; display: inline-flex; align-items: center; gap: 7px; color: var(--brand); }
+.training-term__section > small { display: block; margin-top: 10px; color: var(--ink-3); font-size: var(--fs-caption); line-height: 1.55; }
 .training-term__related { padding: 22px 0; }
 
-.term-help__more { min-height: 38px; margin-top: 9px; display: inline-flex; align-items: center; color: var(--accent); font: 700 11px/1.2 var(--sans); text-decoration: underline; text-underline-offset: 3px; }
+.term-help__more { min-height: var(--app-touch-min); margin-top: 9px; display: inline-flex; align-items: center; color: var(--brand); font: 700 var(--fs-caption)/1.2 var(--sans); text-decoration: underline; text-underline-offset: 3px; }
 
 @media (max-width: 560px) {
   .training-lexicon { padding-inline: 16px; }
