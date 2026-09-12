@@ -94,7 +94,7 @@ export function JournalThenNow({ onOpenDay }: { readonly onOpenDay?: (date: stri
               <span className="journal-then-now__label">{label}</span>
               <time dateTime={entry.date}>{entry.date.replaceAll("-", ". ")}.</time>
               <strong>{entry.title || "훈련 기록"}</strong>
-              <span>{entryFacts.length === 0 ? "수치 없이 남긴 기록" : entryFacts.join(" · ")}</span>
+              <span className="journal-then-now__values">{entryFacts.length === 0 ? "수치 없이 남긴 기록" : entryFacts.join(" · ")}</span>
             </button>
           )
         })}

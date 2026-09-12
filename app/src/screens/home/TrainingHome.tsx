@@ -6,6 +6,13 @@ import type { PlanSession } from "@impl/plan-generator/types"
 import type { AdjustedCandidateSession } from "../../domain/adjusted-plan-candidate"
 import { deriveSequenceTotals } from "@impl/prescription/sequence"
 import type { LogEntryType } from "../log-entry/shared"
+import { decorationCatalogItem } from "../../domain/decoration-catalog"
+import { MINJI_JOURNAL_PAGES } from "../minji/minji-journal-data"
+
+const MINJI_HOME_PREVIEW = MINJI_JOURNAL_PAGES[0]
+const MINJI_HOME_PREVIEW_DECORATION = MINJI_HOME_PREVIEW === undefined
+  ? undefined
+  : decorationCatalogItem(MINJI_HOME_PREVIEW.decorationPreset.placements[0]?.itemId ?? MINJI_HOME_PREVIEW.decorationPreset.themeId)
 
 /** 홈 "다음 훈련" 카드용 축약 처방 라벨 — "거리·목표 페이스는 지정하지 않음" 같은
  * 저가치 단서는 카드에서 생략한다 (상세는 훈련 계획 화면에서 확인). */
@@ -61,8 +68,10 @@ export function TrainingHome({
       >
         <span>
           <strong>{sessionLabel(model.nextTraining.session)}</strong>
-          <small>
-            {nextTrainingDateLabel(model.nextTraining.date)} · {sessionSlotLabel(model.nextTraining.session.slot)} · {nextTrainingPrescriptionLabel(model.nextTraining.session)}
+          <small className="training-home__next-meta">
+            <span>{nextTrainingDateLabel(model.nextTraining.date)}</span>
+            <span>{sessionSlotLabel(model.nextTraining.session.slot)}</span>
+            <span>{nextTrainingPrescriptionLabel(model.nextTraining.session)}</span>
           </small>
           {laterSameDaySession !== null && (
             <small className="training-home__next-follow-up">
@@ -177,8 +186,24 @@ export function TrainingHome({
               aria-labelledby="training-home-example"
             >
               <div id="training-home-example" className="training-home__label">이렇게 쓰여요</div>
-              <button type="button" onClick={onOpenGuide}>
-                <strong>민지의 예시 일지 보기</strong>
+              <button type="button" onClick={onOpenGuide} aria-label="민지의 예시 일지 보기">
+                {MINJI_HOME_PREVIEW !== undefined && (
+                  <span className="training-home__example-preview" aria-hidden="true">
+                    {MINJI_HOME_PREVIEW_DECORATION !== undefined
+                      && MINJI_HOME_PREVIEW_DECORATION.category !== "EMOJI_STICKER" && (
+                      <img
+                        src={`${import.meta.env.BASE_URL}${MINJI_HOME_PREVIEW_DECORATION.assetPath}`}
+                        alt=""
+                        draggable="false"
+                        loading="lazy"
+                      />
+                    )}
+                    <small>{MINJI_HOME_PREVIEW.when}</small>
+                    <strong>{MINJI_HOME_PREVIEW.title}</strong>
+                    <span>{MINJI_HOME_PREVIEW.facts.slice(0, 2).join(" · ")}</span>
+                  </span>
+                )}
+                <strong className="training-home__example-link">민지의 예시 일지 보기</strong>
                 <ChevronRight aria-hidden="true" size={18} />
               </button>
             </section>

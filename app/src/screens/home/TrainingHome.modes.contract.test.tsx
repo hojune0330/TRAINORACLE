@@ -105,12 +105,14 @@ describe("training home modes", () => {
     expect(phraseRule).toContain("white-space: nowrap")
   })
 
-  it("groups every welcome lead surface in one token-sized visible fold before services", () => {
+  it("keeps every welcome lead surface together without forcing viewport-height blank space", () => {
     const { container } = render(<TrainingHome model={WELCOME_MODEL} />)
 
     const fold = container.querySelector(".training-home__welcome-fold")
     const foldRule = appCss.match(/\.training-home__welcome-fold\s*\{[^}]*\}/u)?.[0] ?? ""
+    const exampleRule = appCss.match(/\.training-home__welcome-fold \.training-home__example--welcome\s*\{[^}]*\}/u)?.[0] ?? ""
     const services = screen.getByRole("navigation", { name: "내 기록 살펴보기" })
+    const guide = screen.getByRole("button", { name: "민지의 예시 일지 보기" })
 
     expect(fold).toBeInstanceOf(HTMLElement)
     if (!(fold instanceof HTMLElement)) return
@@ -121,11 +123,19 @@ describe("training home modes", () => {
     }))
     expect(fold).toContainElement(screen.getByRole("button", { name: "오늘 기록 남기기" }))
     expect(fold).toContainElement(screen.getByRole("button", { name: "훈련 계획 만들기" }))
-    expect(fold).toContainElement(screen.getByRole("button", { name: "민지의 예시 일지 보기" }))
+    expect(fold).toContainElement(guide)
     expect(fold.compareDocumentPosition(services) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
-    expect(foldRule).toContain(
-      "min-block-size: calc(100dvh - var(--app-shell-tab-bar-height))",
-    )
+    expect(foldRule).toContain("min-block-size: 0")
+    expect(foldRule).not.toContain("100dvh")
+    expect(exampleRule).toContain("margin-block-start: 0")
+    expect(exampleRule).not.toContain("margin-block-start: auto")
+
+    const preview = guide.querySelector(".training-home__example-preview")
+    expect(preview).toHaveTextContent("첫날")
+    expect(preview).toHaveTextContent("4.6km를 달린 첫 기록")
+    expect(preview).toHaveTextContent("거리 4.6km · 시간 30분")
+    expect(preview?.querySelector("[id]")).toBeNull()
+    expect(preview?.querySelector("button, a, input, select, textarea")).toBeNull()
   })
 
   it("places the unchanged next-training section before today in training mode", () => {

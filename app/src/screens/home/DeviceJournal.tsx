@@ -71,11 +71,11 @@ export function DeviceJournal({ onOpenDay, onOpenArchive }: DeviceJournalProps) 
 
   if (entries.length === 0) return null
   return (
-    <div style={{ padding: "24px 0 0" }}>
+    <section className="device-journal" aria-label="최근 일지">
       <SectionLb action="전체 보기" onAction={onOpenArchive}>
         — 내 일지 · 최근 {entries.length}건
       </SectionLb>
-      <div style={{ margin: "0 20px", borderTop: "1px solid var(--ink)", borderBottom: "1px solid var(--ink)" }}>
+      <div className="device-journal__list">
         {entries.map((entry, index) => {
           const meta = KIND_META[entry.kind]
           const headline = entryHeadline(entry)
@@ -85,45 +85,29 @@ export function DeviceJournal({ onOpenDay, onOpenArchive }: DeviceJournalProps) 
               key={`${entry.kind}-${entry.id}-${index}`}
               onClick={() => onOpenDay?.(entry.date)}
               aria-label={`${journalDateAriaLabel(entry.date)} ${meta.label} ${headline} 상세 열기`}
-              style={{
-                width: "100%", padding: "12px 0", border: 0,
-                borderBottom: index < entries.length - 1 ? "1px dashed var(--hair)" : 0,
-                background: "transparent", color: "inherit", textAlign: "left",
-                display: "grid", gridTemplateColumns: "26px 1fr auto", gap: 10,
-                alignItems: "baseline", cursor: "pointer",
-              }}
+              className="device-journal__entry"
+              data-last={index === entries.length - 1 ? "true" : undefined}
             >
-              <span aria-hidden="true" style={{ fontFamily: "var(--mono)", fontSize: 15, color: "var(--brand)", lineHeight: 1 }}>{meta.mark}</span>
-              <span style={{ minWidth: 0 }}>
-                <span style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                  <span style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-3)", letterSpacing: "0.04em" }}>{journalDateLabel(entry.date)}</span>
-                  <span style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-4)", letterSpacing: "0.08em" }}>{meta.label}</span>
+              <span className="device-journal__mark" aria-hidden="true">{meta.mark}</span>
+              <span className="device-journal__body">
+                <span className="device-journal__meta">
+                  <span className="device-journal__date">{journalDateLabel(entry.date)}</span>
+                  <span className="device-journal__kind">{meta.label}</span>
                 </span>
-                <span style={{
-                  display: "block", fontFamily: "var(--sans)", fontSize: 14, fontWeight: 500, color: "var(--ink)",
-                  marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                }}>{headline}</span>
-                <span style={{ display: "block", fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-3)", marginTop: 2 }}>{entrySub(entry)}</span>
+                <span className="device-journal__headline">{headline}</span>
+                <span className="device-journal__values">{entrySub(entry)}</span>
               </span>
-              <span style={{ display: "grid", gap: 3, justifyItems: "end" }}>
-                <span style={{
-                  fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", letterSpacing: "0.1em",
-                  color: "var(--ink-4)",
-                  border: "1px solid var(--hair)", padding: "2px 5px", whiteSpace: "nowrap",
-                }}>{entry.syncState === "synced" ? "계정 보관" : "이 기기만"}</span>
+              <span className="device-journal__badges">
+                <span className="device-journal__badge">{entry.syncState === "synced" ? "계정 보관" : "이 기기만"}</span>
                 {hasImportedField(entry.fieldProvenance) && (
-                  <span data-testid="imported-chip" style={{
-                    fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", letterSpacing: "0.1em",
-                    color: "var(--ink-2)",
-                    border: "1px solid var(--line)", padding: "2px 5px", whiteSpace: "nowrap",
-                  }}>가져옴</span>
+                  <span className="device-journal__badge device-journal__badge--imported" data-testid="imported-chip">가져옴</span>
                 )}
               </span>
             </button>
           )
         })}
       </div>
-    </div>
+    </section>
   )
 }
 

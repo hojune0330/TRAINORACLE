@@ -133,12 +133,12 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
   const races = entries.filter((e): e is RaceEntry => e.kind === "race")
 
   return (
-    <div style={{ paddingBottom: 40 }} className="paper-grid">
+    <div className="paper-grid journal-detail-page">
       <TopBar2 onBack={onBack}>일지</TopBar2>
       {readerControls}
       <JournalDecorationSurface key={date} date={date} hasEntries={entries.length > 0} pageTopRef={pageTopRef}>
 
-      <div style={{ padding: "14px 20px 0" }}>
+      <div className="journal-detail-page__date">
         <IndexCard date={cardDate(date)} dow={dowOf(date)} season={seasonOf(date)} />
       </div>
       <JournalDetailActions date={date} entries={actionEntries} onAddEntry={onAddEntry} onEditEntry={onEditEntry ? edit : undefined} />
@@ -192,28 +192,28 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
           : SYSTEM_META[s.system] ?? { c: "??", n: s.system, cls: "rest", term: null }
         const shownRpe = journalRpeLabel(s)
         return (
-          <div key={`post-session-${s.id}-${index}`} style={{ padding: "24px 20px 0" }}>
+          <section key={`post-session-${s.id}-${index}`} className="journal-entry-section">
             <SectionLb action={savedClock(s.savedAt)}>— TRAINING SESSION</SectionLb>
-            <div style={{ background: "var(--surface)", border: "1px solid var(--ink)", padding: "14px 16px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            <div className="journal-entry-card journal-entry-card--session">
+              <div className="journal-entry-card__meta">
                 <span className={`etag ${meta.cls}`}><span className="d"></span><span className="c">{meta.c}</span><span className="n">{meta.n}</span></span>
                 {meta.term !== null && <TermHelp term={meta.term} />}
                 <SyncChip />
                 {hasImportedField(s.fieldProvenance) && <ImportedChip />}
               </div>
-              <div style={{ fontFamily: "var(--sans)", fontSize: 17, fontWeight: 500, color: "var(--ink)", letterSpacing: "-0.005em" }}>
+              <div className="journal-entry-card__title">
                 {s.title || "훈련 기록"}
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", borderTop: "1px solid var(--ink)", borderBottom: "1px solid var(--ink)", marginTop: 12 }}>
+              <div className="journal-entry-metrics">
                 {([
                   ["거리", s.distanceKm || "—", "km"],
                   ["시간", s.durationMin || "—", "min"],
                   ["평균 페이스", s.avgPace || "—", "/km"],
                   ["RPE", shownRpe ?? "—", shownRpe === null ? "" : "/10"],
                 ] as const).map(([l, v, u], i, a) => (
-                  <div key={i} style={{ padding: "10px 8px 10px 0", borderRight: i < a.length - 1 ? "1px solid var(--hair)" : 0, paddingLeft: i > 0 ? 8 : 0 }}>
-                    <div style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>{l}{l === "RPE" && <TermHelp term="rpe" />}</div>
-                    <div style={{ fontFamily: "var(--mono)", fontSize: 14, fontWeight: 500, color: "var(--ink)", marginTop: 3, letterSpacing: "-0.01em" }}>{v}<span style={{ fontSize: "var(--fs-mono-xs)", color: "var(--ink-3)", fontWeight: 400, marginLeft: 2 }}>{u}</span></div>
+                  <div key={i} className="journal-entry-metric" data-last={i === a.length - 1 ? "true" : undefined}>
+                    <div className="journal-entry-metric__label">{l}{l === "RPE" && <TermHelp term="rpe" />}</div>
+                    <div className="journal-entry-metric__value">{v}<span>{u}</span></div>
                   </div>
                 ))}
               </div>
@@ -222,24 +222,24 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
               <EntryDeleteRow entryId={s.id} onDelete={() => setPendingDelete({ id: s.id, label: "훈련" })} />
               <AccountJournalHistory entryId={s.id} />
             </div>
-          </div>
+          </section>
         )
       })}
 
       {/* 경기 (실데이터) */}
       {races.map((r, index) => (
-        <div key={`race-${r.id}-${index}`} style={{ padding: "24px 20px 0" }}>
+        <section key={`race-${r.id}-${index}`} className="journal-entry-section">
           <SectionLb action={savedClock(r.savedAt)}>— RACE · {r.stage === "pre" ? "직전" : "직후"}</SectionLb>
-          <div style={{ border: "2px solid var(--ink-blue)", background: "var(--paper)", padding: "14px 16px" }}>
-            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
-              <span style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-mono-sm)", fontWeight: 600, color: "var(--ink-blue)", letterSpacing: "0.14em", textTransform: "uppercase" }}>RACE DAY</span>
+          <div className="journal-entry-card journal-entry-card--race">
+            <div className="journal-entry-card__meta journal-entry-card__meta--apart">
+              <span className="journal-entry-card__eyebrow">RACE DAY</span>
               <SyncChip />
             </div>
             {r.record && (
-              <div style={{ fontFamily: "var(--mono)", fontSize: 28, fontWeight: 500, color: "var(--ink)", letterSpacing: "-0.02em", marginTop: 8 }}>{r.record}</div>
+              <div className="journal-entry-card__record">{r.record}</div>
             )}
             {(r.rank || r.result) && (
-              <div style={{ marginTop: 6, fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-2)", letterSpacing: "0.04em" }}>
+              <div className="journal-entry-card__result">
                 {[r.rank, r.result].filter(Boolean).join(" · ")}
               </div>
             )}
@@ -248,7 +248,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
             <EntryDeleteRow entryId={r.id} onDelete={() => setPendingDelete({ id: r.id, label: "경기" })} />
             <AccountJournalHistory entryId={r.id} />
           </div>
-        </div>
+        </section>
       ))}
 
       {/* 하루 마무리 (실데이터) */}
@@ -256,9 +256,9 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
         const pains = Object.entries(ev.painParts ?? {}).filter(([, lv]) => lv > 0)
         const needsReview = painLevelsRequireReview(ev.painParts ?? {})
         return (
-          <div key={`evening-${ev.id}-${index}`} style={{ padding: "24px 20px 0" }}>
+          <section key={`evening-${ev.id}-${index}`} className="journal-entry-section">
             <SectionLb action={savedClock(ev.savedAt)}>— EVENING CHECK-IN</SectionLb>
-            <div style={{ background: "var(--surface)", border: "1px solid var(--line)" }}>
+            <div className="journal-entry-card journal-entry-card--checkin">
               <CheckinRow lb="수면" v={ev.sleepH > 0 ? `${ev.sleepH} h · ${["", "나쁨", "부족", "보통", "좋음", "최고"][ev.sleepQuality] ?? "—"}` : "미기록"} />
               {ev.weightKg && <CheckinRow lb="체중" v={`${ev.weightKg} kg`} />}
               {ev.restingHr && <CheckinRow lb="안정시 HR" v={`${ev.restingHr} bpm`} />}
@@ -275,24 +275,21 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
               </div>
             </div>
             {needsReview && (
-              <div data-testid="pain-review-persist" style={{
-                marginTop: 10, padding: "11px 13px",
-                border: "1px solid var(--pain-5)", background: "var(--surface)",
-              }}>
-                <div style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", fontWeight: 600, color: "var(--pain-5)", letterSpacing: "0.14em" }}>
+              <div className="journal-entry-review" data-testid="pain-review-persist">
+                <div className="journal-entry-review__title">
                   REVIEW · 통증 4 이상 기록됨<TermHelp term="review" />
                 </div>
-                <div style={{ marginTop: 6, fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-2)", letterSpacing: "0.03em", lineHeight: 1.6 }}>
+                <div className="journal-entry-review__copy">
                   이 날 강한 통증이 적혀 있어요. 통증이 계속되면 훈련 전에 지도자·보호자와 꼭 상의해 주세요. 기록은 그대로 보관돼요.
                 </div>
               </div>
             )}
-          </div>
+          </section>
         )
       })}
 
       {entries.length > 0 && (
-        <div style={{ padding: "24px 20px 8px", fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-4)", letterSpacing: "0.06em", lineHeight: 1.6 }}>
+        <div className="journal-detail-page__storage-note">
           이 페이지는 이 기기에만 저장돼 있어요. 온라인 보관·기기 이동은 계정 연동 후에 할 수 있어요.
         </div>
       )}
