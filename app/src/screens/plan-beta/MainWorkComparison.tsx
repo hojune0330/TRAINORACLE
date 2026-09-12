@@ -18,7 +18,7 @@ export function MainWorkComparison({ comparison }: { readonly comparison: Return
     <details className="plan-main-comparison">
       <summary>본운동 방법 비교<ChevronDown size={18} aria-hidden="true" /></summary>
       {comparison.rows.map((row) => (
-        <section key={row.key} aria-label={`${row.day}일차 ${row.slot === "AM" ? "오전" : "오후"} 본운동 비교`}>
+        <section className="plan-main-comparison__row" key={row.key} aria-label={`${row.day}일차 ${row.slot === "AM" ? "오전" : "오후"} 본운동 비교`}>
           <h3>{row.day}일차 · {row.slot === "AM" ? "오전" : "오후"}</h3>
           <p className="plan-main-comparison__status">{statusText(row)}</p>
           {row.methodRelation === "DIFFERENT_REQUIRES_REVIEW" && row.methodDifferences.length > 0 && (
@@ -54,7 +54,7 @@ function MethodValues({ label, view }: { readonly label: string; readonly view: 
   return <div className="plan-main-comparison__values">
     <strong>{label}</strong>
     {view === null ? <p>대응하는 본운동이 없거나 구성을 읽을 수 없어요.</p> : (
-      <dl>{FIELDS.map(([field, title]) => <div key={field}><dt>{title}</dt><dd>{view[field]}</dd></div>)}</dl>
+      <dl>{FIELDS.map(([field, title]) => <div data-field={field} key={field}><dt>{title}</dt><dd>{view[field]}</dd></div>)}</dl>
     )}
   </div>
 }

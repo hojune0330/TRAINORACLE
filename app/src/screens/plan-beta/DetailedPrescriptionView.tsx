@@ -24,9 +24,9 @@ export function DetailedPrescriptionView({ prescription, variant = "default" }: 
           <code>{prescription.notation}</code>
           <TermHelp term="training-notation" />
         </p>
-        <p>
+        <p className="plan-detailed-prescription__lead">
           <strong>개인 추천 시간</strong>
-          <span>{prescription.repetitionDistanceM}m당 약 {formatTrainingSeconds(prescription.targetRepSeconds)} · 직접 선택한 {anchor.eventDistanceM}m {formatRecordTime(anchor.performanceSeconds)} 기준</span>
+          <span className="plan-detailed-prescription__lead-value">{prescription.repetitionDistanceM}m당 약 {formatTrainingSeconds(prescription.targetRepSeconds)} · 직접 선택한 {anchor.eventDistanceM}m {formatRecordTime(anchor.performanceSeconds)} 기준</span>
         </p>
         <PaceRecommendation prescription={prescription} />
       </div>
@@ -39,7 +39,7 @@ export function DetailedPrescriptionView({ prescription, variant = "default" }: 
         <code>{prescription.notation}</code>
         <TermHelp term="training-notation" />
       </p>
-      <p>
+      <p className="plan-detailed-prescription__primary">
         <strong>본운동</strong>
         <span>
           {prescription.setCount > 1 && `${prescription.setCount}세트 · 세트마다 `}
@@ -51,7 +51,7 @@ export function DetailedPrescriptionView({ prescription, variant = "default" }: 
       </p>
       <PaceRecommendation prescription={prescription} />
       {prescription.repetitionRecoverySeconds !== null && (
-        <p>
+        <p className="plan-detailed-prescription__recovery" data-recovery-kind="repetition">
           <strong>반복 사이 회복</strong>
           <span>
             {prescription.totals.repetitionRecoveryOccurrences}번 · 매번
@@ -62,7 +62,7 @@ export function DetailedPrescriptionView({ prescription, variant = "default" }: 
         </p>
       )}
       {prescription.setRecoverySeconds !== null && (
-        <p>
+        <p className="plan-detailed-prescription__recovery" data-recovery-kind="set">
           <strong>세트 사이 회복</strong>
           <span>
             {prescription.totals.setRecoveryOccurrences}번 · 매번
@@ -72,14 +72,14 @@ export function DetailedPrescriptionView({ prescription, variant = "default" }: 
           </span>
         </p>
       )}
-      <p>
+      <p className="plan-detailed-prescription__support" data-phase="prepare">
         <strong>준비</strong>
         <span>
           {warmup.easyDurationMinutes}분 RPE {warmup.rpeMin}-{warmup.rpeMax} 쉬운 움직임 ·
           {" "}{warmup.strides.durationSeconds}초 점진 가속 {warmup.strides.repetitions}회, 사이 <span className="plan-session-term">{warmup.strides.recoverySeconds}초</span> 걷기/조깅
         </span>
       </p>
-      <p>
+      <p className="plan-detailed-prescription__support" data-phase="cooldown">
         <strong>정리</strong>
         <span>{cooldown.easyDurationMinutes}분 RPE {cooldown.rpeMin}-{cooldown.rpeMax} 쉬운 움직임</span>
       </p>
