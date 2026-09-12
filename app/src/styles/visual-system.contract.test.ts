@@ -98,13 +98,13 @@ describe("shared visual system", () => {
     expect(unresolved(tokensWithoutBrand)).toContain("--brand")
   })
 
-  it("keeps plan legends touch-safe, two-column at phone widths, and reflowable under zoom", () => {
+  it("keeps plan legends touch-safe and single-column on narrow phones under zoom", () => {
     const planCss = readFileSync("src/styles/plan-beta.css", "utf8")
     const accountCss = readFileSync("src/screens/plan-beta/AccountPlanStorage.css", "utf8")
 
     expect(planCss).toMatch(/\.plan-training-flow__legend\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/u)
     expect(planCss).toMatch(/\.plan-training-flow__legend li\s*\{[\s\S]*?min-height:\s*var\(--app-touch-min\)/u)
-    expect(planCss).toMatch(/@media \(max-width:\s*280px\)[\s\S]*?\.plan-training-flow__legend\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0,\s*1fr\)/u)
+    expect(planCss).toMatch(/@media \(max-width:\s*375px\)[\s\S]*?\.plan-training-flow__legend\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0,\s*1fr\)/u)
     expect(accountCss).not.toContain(".plan-training-flow__legend")
   })
 
