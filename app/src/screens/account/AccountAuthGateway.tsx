@@ -21,6 +21,7 @@ import { formatBirthDateInput } from "./birth-date-input"
 import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
 
 type GatewayStep = "method" | "eligibility" | "email" | "email-sent" | "phone" | "phone-code" | "under14"
+type NoticeTone = "pending" | "success" | "error"
 
 export type AccountAuthGatewayProps = {
   readonly config: AccountConfig
@@ -49,8 +50,14 @@ export function AccountAuthGateway({
   const [phoneResendSeconds, setPhoneResendSeconds] = React.useState(0)
   const [busy, setBusy] = React.useState(false)
   const [notice, setNotice] = React.useState<string | null>(null)
+  const [noticeTone, setNoticeTone] = React.useState<NoticeTone>("pending")
   const activeStepRef = React.useRef<HTMLDivElement>(null)
   useActiveContentScroll(step, activeStepRef, undefined, true)
+
+  const showNotice = (message: string, tone: NoticeTone) => {
+    setNotice(message)
+    setNoticeTone(tone)
+  }
 
   React.useEffect(() => {
     if (phoneResendSeconds <= 0) return
@@ -77,7 +84,7 @@ export function AccountAuthGateway({
     if (method === null) return
     const eligibility = onlineAccountEligibility(birthDate, today)
     if (eligibility === "INVALID") {
-      setNotice("생년월일을 확인해 주세요.")
+      showNotice("생년월일을 확인해 주세요.", "error")
       return
     }
     if (eligibility === "UNDER_14") {
@@ -87,7 +94,7 @@ export function AccountAuthGateway({
       return
     }
     if (!legalAcknowledged) {
-      setNotice("필수 약관을 확인하고 동의해 주세요.")
+      showNotice("필수 약관을 확인하고 동의해 주세요.", "error")
       return
     }
 
@@ -106,9 +113,9 @@ export function AccountAuthGateway({
     setNotice(null)
     try {
       const result = await onSocialSignIn(method)
-      if (!result.ok) setNotice(result.message)
+      if (!result.ok) showNotice(result.message, "error")
     } catch {
-      setNotice("간편 로그인을 시작하지 못했어요. 잠시 후 다시 시도해 주세요.")
+      showNotice("간편 로그인을 시작하지 못했어요. 잠시 후 다시 시도해 주세요.", "error")
     } finally {
       setBusy(false)
     }
@@ -119,10 +126,10 @@ export function AccountAuthGateway({
     setNotice(null)
     try {
       const result = await sendEmailOtp(email)
-      setNotice(result.message)
+      showNotice(result.message, result.ok ? "success" : "error")
       if (result.ok) setStep("email-sent")
     } catch {
-      setNotice("확인 이메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요.")
+      showNotice("확인 이메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요.", "error")
     } finally {
       setBusy(false)
     }
@@ -134,13 +141,13 @@ export function AccountAuthGateway({
     setNotice(null)
     try {
       const result = await sendPhoneOtp(phone)
-      setNotice(result.message)
+      showNotice(result.message, result.ok ? "success" : "error")
       if (result.ok) {
         setPhoneResendSeconds(PHONE_OTP_RESEND_SECONDS)
         setStep("phone-code")
       }
     } catch {
-      setNotice("인증번호를 보내지 못했어요. 잠시 후 다시 시도해 주세요.")
+      showNotice("인증번호를 보내지 못했어요. 잠시 후 다시 시도해 주세요.", "error")
     } finally {
       setBusy(false)
     }
@@ -151,16 +158,16 @@ export function AccountAuthGateway({
     setNotice(null)
     try {
       const result = await checkPhoneOtp(phone, phoneCode)
-      setNotice(result.ok ? "로그인 정보를 확인하고 있어요." : result.message)
+      showNotice(result.ok ? "로그인 정보를 확인하고 있어요." : result.message, result.ok ? "pending" : "error")
     } catch {
-      setNotice("인증번호를 확인하지 못했어요. 잠시 후 다시 시도해 주세요.")
+      showNotice("인증번호를 확인하지 못했어요. 잠시 후 다시 시도해 주세요.", "error")
     } finally {
       setBusy(false)
     }
   }
 
   return (
-    <div ref={activeStepRef} className="account-auth active-content-scroll-target" data-step={step}>
+    <div ref={activeStepRef} className="account-auth active-content-scroll-target" data-step={step} aria-busy={busy}>
       {step === "method" && (
         <>
           <div className="account-auth__intro">
@@ -322,7 +329,11 @@ export function AccountAuthGateway({
         </div>
       )}
 
-      {notice !== null && <p className="account-auth__notice" role="status">{notice}</p>}
+      {notice !== null && (
+        <p className="account-auth__notice" data-state={noticeTone} role="status" aria-live="polite">
+          {notice}
+        </p>
+      )}
       <p className="account-auth__privacy-note">기록을 안전하게 남기려면 로그인한 상태로 쓰는 걸 권해요. 업로드 항목은 로그인 뒤 계정 설정에서 확인할 수 있어요.</p>
     </div>
   )
