@@ -1,6 +1,7 @@
 import React from "react"
 import { ACCOUNT_PLAN_EVENT, accountPlanService, accountPlansEnabled } from "../domain/account/account-plan-service"
 import { TermHelp } from "../components/TermHelp"
+import { InstallShortcutSuggestion } from "../components/InstallShortcut"
 import { buildTrainingHomeViewModel } from "../domain/home-view-model"
 import { loadEntries, todayISO } from "../domain/journal-store"
 import { readPlanBetaStateFromStorage } from "../domain/plan-beta-store"
@@ -243,6 +244,7 @@ export function Home({
         onOpenMore={onOpenMore}
         accountEntry={<AccountEntryButton onOpenAccount={onOpenAccount} />}
         todayContext={<DailyContextTags date={today} />}
+        installSuggestion={<InstallShortcutSuggestion eligible={entries.length > 0 || homePlan != null || accountCurrent != null || accountAuthState() === "ACCOUNT"} returnFocusTo={() => document.querySelector<HTMLElement>(".training-home__more")} />}
         recentJournal={(
           <section className="training-home__recent" aria-label="최근 기록">
             <DeviceJournal onOpenDay={onOpenDay} onOpenArchive={onOpenArchive} />

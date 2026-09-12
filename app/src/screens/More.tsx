@@ -2,6 +2,7 @@ import { ArrowLeft, BookOpen, CircleHelp, MessageSquareText, Newspaper, ScrollTe
 import { DataSafetyNotice } from "../components/DataSafetyNotice"
 import { feedbackConfig } from "../domain/feedback/feedback-config"
 import { SafeJournalExport } from "./home/DeviceJournal"
+import { InstallShortcutMenuEntry } from "../components/InstallShortcut"
 
 export type MoreProps = {
   readonly onBack: () => void
@@ -35,6 +36,7 @@ export function More({
       </header>
 
       <div className="more-screen__list">
+        <InstallShortcutMenuEntry />
         <UtilityRow icon={BookOpen} label="민지의 예시 일지" detail="기록이 쌓이는 모습을 한 장씩 구경해요" onClick={onOpenMinji} />
         <UtilityRow icon={CircleHelp} label="훈련 용어집·도움말" detail="전문 용어의 쉬운 뜻과 이름의 이유, 앱 사용법을 확인해요" onClick={onOpenGuide} />
         {onOpenContent !== undefined && <UtilityRow icon={Newspaper} label="요즘 주목받는 훈련법" detail="유행 이름보다 근거와 사용 범위를 먼저 봐요" onClick={onOpenContent} />}

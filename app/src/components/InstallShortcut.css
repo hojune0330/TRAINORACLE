@@ -1,0 +1,292 @@
+.install-shortcut-suggestion {
+  box-sizing: border-box;
+  width: auto;
+  margin-block-start: var(--space-4);
+  padding: var(--space-3);
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) var(--app-touch-min);
+  gap: var(--space-2) var(--space-3);
+  align-items: start;
+  border: var(--bw-line) solid var(--line-2);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  letter-spacing: 0;
+}
+
+.training-home-screen > .install-shortcut-suggestion {
+  margin-inline: var(--space-5);
+}
+
+.install-shortcut-suggestion__icon {
+  margin-block-start: 2px;
+  color: var(--brand);
+}
+
+.install-shortcut-suggestion__copy {
+  min-width: 0;
+}
+
+.install-shortcut-suggestion__copy > span {
+  display: block;
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.install-shortcut-suggestion__copy h2 {
+  margin: var(--space-1) 0 0;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--fs-body);
+  font-weight: 650;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.install-shortcut-suggestion__copy p {
+  margin: var(--space-1) 0 0;
+  color: var(--ink-3);
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.install-shortcut-suggestion__dismiss,
+.install-shortcut-dialog__close {
+  width: var(--app-touch-min);
+  min-width: var(--app-touch-min);
+  height: var(--app-touch-min);
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+
+.install-shortcut-suggestion__open {
+  grid-column: 1 / -1;
+  min-height: var(--app-touch-min);
+  padding: 0 var(--space-3);
+  border: var(--bw-line) solid var(--ink);
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+  font-weight: 600;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+
+.install-shortcut-menu > svg {
+  color: var(--ink-2);
+}
+
+.install-shortcut-dialog {
+  box-sizing: border-box;
+  width: min(var(--app-dialog-max-width), calc(100vw - (2 * var(--space-3))));
+  max-width: calc(100vw - (2 * var(--space-3)));
+  max-height: calc(100dvh - (2 * var(--space-3)));
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  border: var(--bw-line) solid var(--ink);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--sans);
+  letter-spacing: 0;
+}
+
+.install-shortcut-dialog::backdrop {
+  background: var(--scrim);
+}
+
+.install-shortcut-dialog__header {
+  min-height: var(--app-action-height);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--app-touch-min);
+  gap: var(--space-2);
+  align-items: center;
+  border-bottom: var(--bw-line) solid var(--line);
+}
+
+.install-shortcut-dialog__heading {
+  min-width: 0;
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.install-shortcut-dialog__heading > svg {
+  flex: 0 0 auto;
+  color: var(--brand);
+}
+
+.install-shortcut-dialog__heading h2 {
+  min-width: 0;
+  margin: 0;
+  font-size: var(--fs-h3);
+  font-weight: 650;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.install-shortcut-dialog__content {
+  padding: var(--space-4);
+  display: grid;
+  gap: var(--space-4);
+}
+
+.install-shortcut-dialog__content p {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--fs-body-sm);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.install-shortcut-dialog__status {
+  padding: var(--space-3);
+  border: var(--bw-line) solid var(--line);
+  background: var(--surface-2);
+}
+
+.install-shortcut-dialog__native {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.install-shortcut-dialog__install,
+.install-shortcut-dialog__done {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--app-touch-min);
+  padding: var(--space-2) var(--space-3);
+  border: var(--bw-line) solid var(--ink);
+  border-radius: var(--r-md);
+  font-family: var(--sans);
+  font-size: var(--fs-body);
+  font-weight: 650;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+
+.install-shortcut-dialog__install {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: center;
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.install-shortcut-dialog__done {
+  background: transparent;
+  color: var(--ink);
+}
+
+.install-shortcut-dialog__guide {
+  min-width: 0;
+}
+
+.install-shortcut-dialog__guide h3 {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 650;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.install-shortcut-dialog__guide > p {
+  margin-block-start: var(--space-2);
+}
+
+.install-shortcut-dialog__guide ol {
+  margin: var(--space-3) 0 0;
+  padding-inline-start: var(--space-5);
+  color: var(--ink-2);
+  font-size: var(--fs-body-sm);
+  line-height: 1.6;
+}
+
+.install-shortcut-dialog__guide li {
+  padding-inline-start: var(--space-1);
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.install-shortcut-dialog__guide li + li {
+  margin-block-start: var(--space-2);
+}
+
+.install-shortcut-dialog__privacy {
+  padding-block-start: var(--space-3);
+  border-top: var(--bw-line) solid var(--line);
+}
+
+.install-shortcut-dialog__privacy strong,
+.install-shortcut-dialog__installed strong {
+  display: block;
+  font-size: var(--fs-body-sm);
+  font-weight: 650;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.install-shortcut-dialog__privacy p,
+.install-shortcut-dialog__installed p {
+  margin-block-start: var(--space-1);
+}
+
+.install-shortcut-dialog__installed {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.install-shortcut-dialog__installed > svg {
+  color: var(--ok);
+}
+
+.install-shortcut-dialog button:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.install-shortcut-dialog button:disabled {
+  color: var(--ink-4);
+  cursor: wait;
+}
+
+@media (max-width: 375px) {
+  .training-home-screen > .install-shortcut-suggestion {
+    margin-inline: var(--space-3);
+  }
+
+  .install-shortcut-dialog__content {
+    padding: var(--space-3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .install-shortcut-suggestion,
+  .install-shortcut-dialog {
+    scroll-behavior: auto;
+  }
+}
