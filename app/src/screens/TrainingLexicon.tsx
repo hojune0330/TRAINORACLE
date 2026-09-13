@@ -27,15 +27,20 @@ const FREQUENT_TERMS: readonly TermId[] = ["rpe", "base", "lt", "vo2", "gly", "a
 export function TrainingLexicon({
   initialTerm,
   standalone = false,
+  directEntry = false,
   onBack,
+  onNavigateTerm,
 }: {
   readonly initialTerm?: TermId
   readonly standalone?: boolean
+  readonly directEntry?: boolean
   readonly onBack?: () => void
+  readonly onNavigateTerm?: (term: TermId) => void
 }) {
   const [query, setQuery] = React.useState("")
   const [category, setCategory] = React.useState<TermCategory | "ALL">("ALL")
   const [selectedTerm, setSelectedTerm] = React.useState<TermId | null>(initialTerm ?? null)
+  const [termTrail, setTermTrail] = React.useState<readonly TermId[]>([])
   const [detailMode, setDetailMode] = React.useState<"EASY" | "PRO">("EASY")
   const topRef = React.useRef<HTMLElement>(null)
 
@@ -46,6 +51,13 @@ export function TrainingLexicon({
   ))
 
   const openTerm = (term: TermId) => {
+    if (directEntry && onNavigateTerm !== undefined) {
+      onNavigateTerm(term)
+      return
+    }
+    if (selectedTerm !== null && selectedTerm !== term) {
+      setTermTrail((trail) => [...trail, selectedTerm])
+    }
     setSelectedTerm(term)
     setDetailMode("EASY")
     if (standalone) {
@@ -64,6 +76,22 @@ export function TrainingLexicon({
   }
 
   const closeTerm = () => {
+    const previous = termTrail.at(-1)
+    if (previous !== undefined) {
+      setTermTrail((trail) => trail.slice(0, -1))
+      setSelectedTerm(previous)
+      if (standalone) {
+        const url = new URL(window.location.href)
+        url.searchParams.set("terms", "1")
+        url.searchParams.set("term", previous)
+        window.history.pushState({}, "", url)
+      }
+      return
+    }
+    if (directEntry && onBack !== undefined) {
+      onBack()
+      return
+    }
     setSelectedTerm(null)
     if (standalone) {
       const url = new URL(window.location.href)
@@ -77,6 +105,7 @@ export function TrainingLexicon({
     if (!standalone) return
     const syncFromUrl = () => {
       const term = new URLSearchParams(window.location.search).get("term")
+      setTermTrail([])
       setSelectedTerm(isTermId(term) ? term : null)
     }
     window.addEventListener("popstate", syncFromUrl)
@@ -118,6 +147,7 @@ export function TrainingLexicon({
           mode={detailMode}
           onModeChange={setDetailMode}
           onBack={closeTerm}
+          backLabel={termTrail.length > 0 ? "이전 용어" : directEntry ? "이전 화면" : "용어 목록"}
           onOpenTerm={openTerm}
         />
       )}
@@ -212,6 +242,7 @@ function TermDetail({
   mode,
   onModeChange,
   onBack,
+  backLabel,
   onOpenTerm,
 }: {
   readonly term: TermId
@@ -219,12 +250,13 @@ function TermDetail({
   readonly mode: "EASY" | "PRO"
   readonly onModeChange: (mode: "EASY" | "PRO") => void
   readonly onBack: () => void
+  readonly backLabel: string
   readonly onOpenTerm: (term: TermId) => void
 }) {
   return (
     <article className="training-term" aria-labelledby={`training-term-${term}`}>
       <button type="button" className="training-term__index-back" onClick={onBack}>
-        <ArrowLeft aria-hidden="true" size={18} />용어 목록
+        <ArrowLeft aria-hidden="true" size={18} />{backLabel}
       </button>
       <header>
         <span>{TERM_CATEGORY_LABELS[entry.category]}</span>
