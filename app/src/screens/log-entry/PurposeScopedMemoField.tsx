@@ -4,6 +4,8 @@ import { MEMO_PURPOSE } from "../../domain/journal-schema"
 import type { MemoPurpose } from "../../domain/journal-schema"
 import { assessPurposeScopedMemo } from "../../safety/memo-safety"
 import { inputStyle } from "./input-style"
+import { loadSessionRecoveryCode } from "../../domain/account/private-note-sync"
+import { PrivateMemoSaveSetup } from "./PrivateMemoSaveSetup"
 
 export type PurposeScopedMemoController = {
   readonly text: string
@@ -15,6 +17,7 @@ export type PurposeScopedMemoController = {
   readonly choosePurpose: (purpose: MemoPurpose) => void
   readonly reviewIfNeeded: () => void
   readonly prepareForSave: () => MemoSavePreparation
+  readonly clearPreparationError: () => void
 }
 
 export type MemoSavePreparation = {
@@ -51,6 +54,12 @@ export function usePurposeScopedMemo(
       privateOptionRef.current?.focus()
       return { ready: false, reviewMessage: null }
     }
+    if (text.trim() !== "" && purpose === MEMO_PURPOSE.privateSelfOnly
+      && !accountJournalRecordsEnabled() && loadSessionRecoveryCode() === null) {
+      setPurposeError("나만의 메모를 저장하려면 아래에서 복구 코드를 준비해 주세요. 입력 내용은 그대로 남아 있어요.")
+      privateOptionRef.current?.focus()
+      return { ready: false, reviewMessage: null }
+    }
     setPurposeError(null)
     const nextReviewMessage = reviewMessageFor(text, purpose)
     setReviewMessage(nextReviewMessage)
@@ -74,6 +83,7 @@ export function usePurposeScopedMemo(
     },
     reviewIfNeeded,
     prepareForSave,
+    clearPreparationError: () => setPurposeError(null),
   }
 }
 
@@ -128,6 +138,9 @@ export function PurposeScopedMemoField({
       <div id={explanationId} style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)", lineHeight: 1.55, marginBottom: 8 }}>
         {purposeExplanation(controller.purpose, accountEnabled)}
       </div>
+      {!accountEnabled && controller.purpose === MEMO_PURPOSE.privateSelfOnly && controller.text.trim() !== "" && (
+        <PrivateMemoSaveSetup onReady={controller.clearPreparationError} />
+      )}
       {controller.purposeError !== null && (
         <div id={errorId} role="alert" style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--pain-5)", marginBottom: 8 }}>
           {controller.purposeError}
