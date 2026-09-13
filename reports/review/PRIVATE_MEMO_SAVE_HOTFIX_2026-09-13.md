@@ -2,7 +2,7 @@
 
 ## Scope
 
-Status: LOCAL_VERIFIED_PENDING_PR_REVIEW_AND_DEPLOYMENT.
+Status: LOCAL_VERIFIED_INDEPENDENT_REVIEW_COMPLETE_PENDING_CI_AND_DEPLOYMENT.
 Base: origin/main 87e78be. The uncommitted navigation rewrite and PR #338 are
 not included in this hotfix. No schema, encryption algorithm, account storage,
 training prescription or D9 rule is changed.
@@ -25,6 +25,9 @@ incorrectly presented as storage capacity or browser blocking.
   by real decryption before activation. Journal/vault snapshots and the previous
   session code are rechecked after asynchronous verification. Scope change/unmount
   aborts activation; no user key or memo is sent to external services or logged.
+  Ownership metadata is also checked before/after each decryption and before key
+  activation. Already-started WebCrypto cannot be cancelled; its result is discarded
+  when the context changed and no code is installed.
 - Account-enabled storage bypasses this local recovery setup and retains its
   existing account encryption and acknowledgement contract.
 - Unclassified errors no longer claim storage is full or recommend deleting data.
@@ -49,6 +52,11 @@ incorrectly presented as storage capacity or browser blocking.
   Both were reproduced by new tests against 527e327 before being patched. Those two
   named tests pass after the patch; this does not claim a global transaction spanning
   preparation and a later, separate journal save or replace existing writer guards.
+- Follow-up review added ownership-only changes to the same verification boundary.
+  The new named ownership-change test fails when that guard is disabled and passes
+  when restored. Updated private-setup suite: 7/7; with the isolated CI-failing
+  PlanBeta account file: 10/10 passed. The earlier broad hotfix suite remains 180/180
+  before that one additional test, not a claimed new full-suite pass.
 - Initial navigation-worktree browser attempts failed because its preview was not
   running, then because the development-only react-grab overlay intercepted clicks.
   Neither was counted as a production save failure. Production build passed.
@@ -62,6 +70,16 @@ not include that new guest navigation-memory implementation. Remaining navigatio
 review findings must be fixed and reviewed separately before PR #338 is expanded.
 
 ## Release Gate
+
+PR: https://github.com/hojune0330/TRAINORACLE/pull/339
+Luna max final bounded static review found no remaining merge blocker in the
+preparation guards after the ownership recheck fix. The reviewer did not rerun
+tests. Parent reran the final production-browser scenario: 4/4 passed.
+
+The first PR CI run (34753985153, 527e327) passed contract-tests but failed one
+existing `PlanBeta.account.contract.test.tsx` V6 progress test (expected remote
+revision 2, observed 1). Isolated local reexecution passed all three versions;
+this is not enough to declare that CI green. Final-head CI must be checked.
 
 Independent review, GitHub CI, merge, Pages deployment and public version check
 are separate from the local results above. Record their actual results in the PR;

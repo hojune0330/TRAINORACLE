@@ -6,7 +6,7 @@ import { PrivateMemoSaveSetup } from "./PrivateMemoSaveSetup"
 import { loadEntries, loadEntriesWithPrivateMemos, savePrivateEntry } from "../../domain/journal-store"
 import { createRecoveryCode } from "../../domain/account/private-note-crypto"
 import { clearSessionRecoveryCode, loadSessionRecoveryCode, saveSessionRecoveryCode } from "../../domain/account/private-note-sync"
-import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
+import { LOCAL_JOURNAL_OWNERSHIP_KEY, setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 import { StickyBar } from "./StickyBar"
 import * as privateCrypto from "../../domain/account/private-note-crypto"
 
@@ -109,6 +109,23 @@ it("rejects activation when the journal changes during asynchronous key verifica
   const decrypt = privateCrypto.decryptPrivateNote
   vi.spyOn(privateCrypto, "decryptPrivateNote").mockImplementationOnce(async (...args) => {
     localStorage.setItem("trainoracle.journal.v1", "[]")
+    return decrypt(...args)
+  })
+  const ready = vi.fn()
+  render(<PrivateMemoSaveSetup onReady={ready} />)
+  fireEvent.change(screen.getByLabelText("기존 복구 코드"), { target: { value: code } })
+  fireEvent.click(screen.getByRole("button", { name: "이 코드로 저장 준비" }))
+  await screen.findByRole("alert")
+  expect(ready).not.toHaveBeenCalled()
+  expect(loadSessionRecoveryCode()).toBeNull()
+})
+
+it("rejects ownership-only changes during verification without installing the key", async () => {
+  const code = await seedPrivateVault()
+  const decrypt = privateCrypto.decryptPrivateNote
+  vi.spyOn(privateCrypto, "decryptPrivateNote").mockImplementationOnce(async (...args) => {
+    localStorage.setItem(LOCAL_JOURNAL_OWNERSHIP_KEY, JSON.stringify({ schemaVersion: 1,
+      ownerByEntryId: { "private-fixture": "another-synthetic-owner" } }))
     return decrypt(...args)
   })
   const ready = vi.fn()

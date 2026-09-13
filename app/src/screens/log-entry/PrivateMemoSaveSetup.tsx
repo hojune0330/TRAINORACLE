@@ -2,7 +2,7 @@ import React from "react"
 import { KeyRound } from "lucide-react"
 import { createRecoveryCode, decryptPrivateNote, isValidRecoveryCode } from "../../domain/account/private-note-crypto"
 import { loadSessionRecoveryCode, saveSessionRecoveryCode } from "../../domain/account/private-note-sync"
-import { activeLocalAccount } from "../../domain/account/local-journal-ownership"
+import { activeLocalAccount, LOCAL_JOURNAL_OWNERSHIP_KEY } from "../../domain/account/local-journal-ownership"
 import { journalStorage } from "../../domain/journal-local-storage"
 import { loadEntries, loadJournalEntriesSnapshot } from "../../domain/journal-store"
 import { loadPrivateMemoVault } from "../../domain/private-memo-vault"
@@ -24,16 +24,18 @@ export function PrivateMemoSaveSetup({ onReady }: { readonly onReady: () => void
   const records = () => {
     const storage = journalStorage()
     const snapshot = storage === null ? null : readVaultJournalStorageSnapshot(storage)
+    const ownership = storage?.getItem(LOCAL_JOURNAL_OWNERSHIP_KEY)
     const vault = storage === null ? null : loadPrivateMemoVault(storage)
     const journal = loadJournalEntriesSnapshot()
     if (storage === null || snapshot === null || vault === null || journal.readStatus !== "complete"
       || journal.raw !== snapshot.journal) throw new Error("storage-unavailable")
     const visible = new Set(loadEntries().map(entry => entry.id))
-    // Unknown/hidden/orphan ciphertext is not an empty vault. Never decrypt another scope.
+    // Unknown/hidden/orphan ciphertext is not an empty vault or eligible for verification.
     if (Object.keys(vault.records).some(id => !visible.has(id))) throw new Error("vault-scope-unresolved")
     const current = readVaultJournalStorageSnapshot(storage)
-    if (!current || current.vault !== snapshot.vault || current.journal !== snapshot.journal) throw new Error("storage-changed")
-    return { storage, snapshot, encrypted: Object.values(vault.records) }
+    if (!current || current.vault !== snapshot.vault || current.journal !== snapshot.journal
+      || storage.getItem(LOCAL_JOURNAL_OWNERSHIP_KEY) !== ownership) throw new Error("storage-changed")
+    return { storage, snapshot, ownership, encrypted: Object.values(vault.records) }
   }
   const create = () => {
     try {
@@ -56,11 +58,19 @@ export function PrivateMemoSaveSetup({ onReady }: { readonly onReady: () => void
     try {
       // A valid-looking but wrong code must not replace the key for existing notes.
       const checked = records()
-      for (const record of checked.encrypted) await decryptPrivateNote(record.encrypted, normalized)
-      if (!mounted.current || activeLocalAccount() !== owner) return
-      const current = readVaultJournalStorageSnapshot(checked.storage)
-      if (!current || current.vault !== checked.snapshot.vault || current.journal !== checked.snapshot.journal
-        || loadSessionRecoveryCode() !== previousCode) throw new Error("storage-changed")
+      const verifyCurrent = () => {
+        const current = readVaultJournalStorageSnapshot(checked.storage)
+        if (!mounted.current || activeLocalAccount() !== owner || !current
+          || current.vault !== checked.snapshot.vault || current.journal !== checked.snapshot.journal
+          || checked.storage.getItem(LOCAL_JOURNAL_OWNERSHIP_KEY) !== checked.ownership
+          || loadSessionRecoveryCode() !== previousCode) throw new Error("storage-changed")
+      }
+      for (const record of checked.encrypted) {
+        verifyCurrent()
+        await decryptPrivateNote(record.encrypted, normalized)
+        verifyCurrent()
+      }
+      verifyCurrent()
       if (!saveSessionRecoveryCode(normalized)) throw new Error("session-unavailable")
       setReady(true); setCode(""); onReady()
     } catch {
