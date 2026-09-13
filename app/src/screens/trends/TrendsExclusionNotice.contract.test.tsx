@@ -76,7 +76,7 @@ describe("추이 화면 · 반영되지 않은 일지 안내", () => {
     expect(notice.textContent).toContain("일지 1개")
     // 사용자가 할 수 없는 일을 요구하면 안 된다
     expect(notice.textContent).not.toContain("직접 적어 주세요")
-    expect(notice.textContent).toContain("앱이 고쳐야 할 부분")
+    expect(notice.textContent).toContain("같은 내용을 다시 입력할 필요는 없어요")
     // 원인이 다르므로 가져오기 안내는 뜨지 않아야 한다
     expect(screen.queryByTestId("trends-excluded-imported")).toBeNull()
   })

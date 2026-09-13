@@ -5,7 +5,7 @@ test.use({ serviceWorkers: "block" })
 test("shows the seven initial plan events from 800m through marathon", async ({ page }, testInfo) => {
   // Given: a new athlete has opened the plan flow.
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "내 기록 살펴보기" })
+  await page.getByRole("navigation", { name: "바로 시작하기" })
     .getByRole("button", { name: /^훈련 계획/u })
     .click()
   const choices = page.getByRole("group", { name: "계획 종목 선택" })
@@ -26,7 +26,7 @@ test("shows the seven initial plan events from 800m through marathon", async ({ 
 test("creates a mobile marathon beta plan without inventing pace numbers", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 650 })
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "내 기록 살펴보기" })
+  await page.getByRole("navigation", { name: "바로 시작하기" })
     .getByRole("button", { name: /^훈련 계획/u })
     .click()
   await page.getByRole("button", { name: /^마라톤/u }).click()

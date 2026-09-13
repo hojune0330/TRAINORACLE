@@ -171,7 +171,7 @@ test("기록이 하나 생기면 홈 일지 정원과 꾸미기 포인트가 보
   await page.goto("/?app=1")
 
   const strip = page.getByLabel("기록 습관")
-  await expect(strip.getByText(/이 기기에 1건 저장됨/u)).toBeVisible()
+  await expect(strip.getByText("남긴 기록 1건", { exact: true })).toBeVisible()
   await expect(strip.getByLabel("식물 상태: 새싹이 자라고 있어요")).toBeVisible()
   await expect(strip.getByText("기록한 날", { exact: true })).toBeVisible()
   await expect(strip.getByText("1일", { exact: true })).toBeVisible()

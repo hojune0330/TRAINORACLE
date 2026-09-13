@@ -6,14 +6,16 @@ beforeEach(() => window.localStorage.clear())
 afterEach(cleanup)
 
 describe("training content reader", () => {
-  it("shows source status and the no-auto-plan boundary before opening an article", () => {
+  it("shows topics and source status first and keeps the reading boundary available on demand", () => {
     render(<TrainingContent onBack={vi.fn()} />)
 
-    expect(screen.getByRole("heading", { name: /유행 이름보다/u })).toBeVisible()
-    expect(screen.getByText(/내 계획을 자동으로 바꾸지 않아요/u)).toBeVisible()
+    expect(screen.getByRole("heading", { name: "어떤 훈련이 궁금한가요?" })).toBeVisible()
     expect(screen.getByRole("button", { name: /노르웨이식 더블 스레숄드/u })).toHaveTextContent("추가 검토 중인 기사")
     expect(screen.getByRole("button", { name: /크루즈 인터벌/u })).toHaveTextContent("원문 확인 자료")
-    expect(screen.getByText(/콘텐츠 포인트는 기존 포인트와 합치는 규칙/u)).toBeVisible()
+    const help = screen.getByText("훈련 자료와 읽기 포인트 안내")
+    expect(help.closest("details")).not.toHaveAttribute("open")
+    fireEvent.click(help)
+    expect(screen.getByText(/읽거나 저장해도/u)).toBeVisible()
   })
 
   it("opens an article, saves it locally, and keeps the prescription boundary visible", () => {

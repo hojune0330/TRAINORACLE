@@ -4,17 +4,24 @@ import {
   TRAINING_CONTENT_CATALOG,
   trainingContentById,
 } from "../domain/training-content-catalog"
-import type { TrainingContentId, TrainingContentSourceState } from "../domain/training-content-catalog"
+import type { TrainingContentArticle, TrainingContentId, TrainingContentSourceState } from "../domain/training-content-catalog"
 import { loadSavedTrainingContent, setTrainingContentSaved } from "../domain/training-content-store"
 import { loadEntries, todayISO } from "../domain/journal-store"
 import { projectStructuredJournalObservations } from "../domain/journal-observation"
 import { loadPlanBetaState } from "../domain/plan-beta-store"
 import { deriveTrainingMethodCompatibility } from "../domain/training-method-compatibility"
 import type { TrainingMethodCompatibilityStatus } from "../domain/training-method-compatibility"
+import { InfoDisclosure } from "../components/InfoDisclosure"
 
 const SOURCE_STATE_LABEL: Record<TrainingContentSourceState, string> = {
   DIRECT_SOURCE_REOPENED: "원문 확인 자료",
   DISCOVERY_SOURCE_ONLY: "추가 검토 중인 기사",
+}
+
+const SOURCE_GRADE_LABEL: Record<TrainingContentArticle["sourceGrade"], string> = {
+  A_OBSERVED: "공개된 선수 훈련 사례",
+  B_TECHNICAL: "훈련 이론·기술 자료",
+  C_MEDIA: "언론·커뮤니티 기사",
 }
 
 const COMPATIBILITY_LABEL: Record<TrainingMethodCompatibilityStatus, string> = {
@@ -71,6 +78,7 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
               </div>
               <strong data-status={compatibility.status}>{COMPATIBILITY_LABEL[compatibility.status]}</strong>
             </div>
+            <InfoDisclosure title="어떤 점이 맞고, 어떤 점을 확인해야 하나요?">
             {compatibility.supports.length > 0 && (
               <CompatibilityGroup title="맞는 조건" items={compatibility.supports} />
             )}
@@ -83,28 +91,31 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
             <details>
               <summary>판단에 사용한 기록</summary>
               {compatibility.evidence.length === 0
-                ? <p>사용한 구조화 기록이 없어요.</p>
+                ? <p>비교에 사용할 훈련 기록이 아직 없어요.</p>
                 : compatibility.evidence.map((item) => <p key={item}>{item}</p>)}
             </details>
             <p className="training-content-article__compatibility-boundary">
-              이 비교는 훈련법을 이해하기 위한 설명이에요. 계획안을 만들거나 강도·양·빈도와 안전 상태를 바꾸지 않아요.
+              내 기록과 훈련법의 조건을 비교한 설명이에요. 훈련 계획이나 몸 상태의 안전 판단을 바꾸지 않아요.
             </p>
+            </InfoDisclosure>
           </section>
           <section className="training-content-article__boundary">
             <h2>따라 하기 전에</h2>
             <p>{article.useBoundary}</p>
           </section>
 
+          <InfoDisclosure title="자료 출처와 저장 안내">
           <div className="training-content-article__source">
-            <span>{SOURCE_STATE_LABEL[article.sourceState]} · {article.sourceGrade}</span>
+            <span>{SOURCE_STATE_LABEL[article.sourceState]} · {SOURCE_GRADE_LABEL[article.sourceGrade]}</span>
             <a href={article.sourceUrl} target="_blank" rel="noreferrer">
               {article.sourceLabel}<ExternalLink aria-hidden="true" size={14} />
             </a>
           </div>
-          <TrainingContentCorrectionNotice notice={article.correctionNotice} />
           <p className="training-content-article__footnote">
-            이 읽을거리는 훈련 계획이 아니며, 저장해도 계획·안전 판단·포인트가 바뀌지 않아요.
+            나중에 읽을 글로 저장해도 내 훈련 계획은 바뀌지 않아요. 읽기 포인트는 아직 준비 중이에요.
           </p>
+          </InfoDisclosure>
+          <TrainingContentCorrectionNotice notice={article.correctionNotice} />
         </article>
       </div>
     )
@@ -112,11 +123,10 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
 
   return (
     <div className="training-content-screen">
-      <ContentHeader title="요즘 주목받는 훈련법" onBack={onBack} />
+      <ContentHeader title="훈련 방법 배우기" onBack={onBack} />
       <div className="training-content-intro">
-        <span>읽고 비교하는 훈련 자료</span>
-        <h1>유행 이름보다<br />어떻게 쓰이는지 봐요.</h1>
-        <p>선수 사례와 훈련 개념을 소개합니다. 검토가 끝나기 전에는 어떤 글도 내 계획을 자동으로 바꾸지 않아요.</p>
+        <span>훈련 방법 · 선수 사례</span>
+        <h1>어떤 훈련이 궁금한가요?</h1>
       </div>
       <div className="training-content-list" aria-label="훈련법 콘텐츠 목록">
         {TRAINING_CONTENT_CATALOG.map((article, index) => (
@@ -131,7 +141,7 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
           </button>
         ))}
       </div>
-      <p className="training-content-reward-note">콘텐츠 포인트는 기존 포인트와 합치는 규칙이 정해진 뒤에 열어요.</p>
+      <div className="training-content-reward-note"><InfoDisclosure title="훈련 자료와 읽기 포인트 안내"><p>선수 사례와 훈련 개념을 소개하는 자료예요. 글을 읽거나 저장해도 내 계획을 자동으로 바꾸지 않아요.</p><p>읽기 포인트는 아직 준비 중이에요.</p></InfoDisclosure></div>
     </div>
   )
 }

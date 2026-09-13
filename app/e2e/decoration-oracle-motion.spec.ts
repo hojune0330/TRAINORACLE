@@ -33,7 +33,7 @@ test("keeps decoration and oracle motion brief, directional, and optional", asyn
 
   const mainTabs = page.getByRole("navigation", { name: "주 탭" })
   await mainTabs.getByRole("button", { name: "분석" }).click()
-  const oracle = page.getByRole("region", { name: "지금까지 기록으로 알 수 있는 것" })
+  const oracle = page.getByRole("region", { name: "내 훈련 요약" })
   await expect(oracle).toBeVisible()
 
   const oracleAnimations = await oracle.locator(".personal-oracle__insight").evaluateAll((elements) => (

@@ -12,12 +12,14 @@ import { activePlanDateWindow } from "../domain/cumulative-distance"
 import { CumulativeDistancePanel } from "./trends/CumulativeDistancePanel"
 import { EnergySystemLedgerPanel } from "./trends/EnergySystemLedgerPanel"
 import { PersonalOraclePanel } from "./trends/PersonalOraclePanel"
+import { InfoDisclosure } from "../components/InfoDisclosure"
 
 export function Trends({ onBack, onWriteLog }: {
   readonly onBack?: (() => void) | undefined
   readonly onWriteLog?: (() => void) | undefined
 }) {
-  const observations = React.useMemo(() => projectStructuredJournalObservations(loadEntries()), [])
+  const entries = React.useMemo(() => loadEntries(), [])
+  const observations = React.useMemo(() => projectStructuredJournalObservations(entries), [entries])
   const today = todayISO()
   const planState = loadPlanBetaState()
   const planFrame = planState?.activePlan.frame
@@ -46,9 +48,20 @@ export function Trends({ onBack, onWriteLog }: {
     <div style={{ paddingBottom: 30 }}>
       <TrendsHeader onBack={onBack} />
       <div className="trends-motion-stage">
-        <PersonalOraclePanel observations={observations} today={today} planState={planState} />
         {isEmpty ? (
           <>
+            <div style={{ padding: "0 20px" }}>
+              <GuidedEmptyState
+                title={entries.length > 0 ? "분석할 수치가 아직 없어요" : "분석할 기록이 아직 없어요"}
+                description={<>거리·시간·RPE<TermHelp term="rpe" /> 등 분석에 사용할 항목이 아직 없어요.</>}
+                actionLabel={entries.length > 0 ? "기록 더 남기기" : "첫 기록 남기기"}
+                onAction={onWriteLog}
+              />
+              <AnalysisExclusionNotice summary={exclusion} />
+              <InfoDisclosure title="어떤 기록을 분석하나요?">
+                <PersonalOraclePanel observations={observations} today={today} planState={planState} />
+              </InfoDisclosure>
+            </div>
             {planState !== null && (
               <EnergySystemLedgerPanel
                 observations={observations}
@@ -57,18 +70,10 @@ export function Trends({ onBack, onWriteLog }: {
                 mode="full"
               />
             )}
-            <div style={{ padding: "0 20px" }}>
-              <GuidedEmptyState
-                title="기록이 쌓이면 변화를 확인할 수 있어요"
-                description={<>훈련한 날과 쉰 날의 거리·시간·RPE<TermHelp term="rpe" />·기분을 직접 남기면 주간과 월간 기록으로 정리해요.</>}
-                actionLabel="첫 기록 남기기"
-                onAction={onWriteLog}
-              />
-              <AnalysisExclusionNotice summary={exclusion} />
-            </div>
           </>
         ) : (
           <>
+            <PersonalOraclePanel observations={observations} today={today} planState={planState} />
             <CumulativeDistancePanel
               observations={observations}
               today={today}
@@ -82,15 +87,11 @@ export function Trends({ onBack, onWriteLog }: {
               mode="full"
             />
             <MonthlyTrendSection observations={observations} today={today} />
-            <div style={{
-              padding: "24px 20px 0",
-              fontFamily: "var(--mono)",
-              fontSize: 9.5,
-              color: "var(--ink-4)",
-              lineHeight: 1.6,
-            }}>
-              이 화면은 출처가 확인된 구조화 기록의 설명 통계예요. 개인 메모는 읽지 않으며,
-              계획·안전 판정·다음 훈련 결정에는 쓰이지 않아요.
+            <div style={{ padding: "0 20px" }}>
+              <InfoDisclosure title="분석 결과는 어디까지 알 수 있나요?">
+                <p>출처가 확인된 기록만 분석해요. 개인 메모는 읽지 않아요.</p>
+                <p>기록의 변화를 정리한 결과이며, 이 화면만으로 훈련 계획이나 몸 상태의 안전 판단을 바꾸지 않아요.</p>
+              </InfoDisclosure>
             </div>
             <div style={{ padding: "0 20px" }}>
               <AnalysisExclusionNotice summary={exclusion} />
@@ -129,10 +130,13 @@ function AnalysisExclusionNotice({ summary }: {
       style={{
         marginTop: 14, padding: "10px 12px",
         border: "1px solid var(--line)", background: "transparent",
-        fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-2)",
-        letterSpacing: "0.02em", lineHeight: 1.7,
+        fontFamily: "var(--sans)", color: "var(--ink-2)", lineHeight: 1.6,
       }}
     >
+      <InfoDisclosure title={[
+        excludedImported > 0 ? `가져온 기록 ${excludedImported}개` : null,
+        excludedNoProvenance > 0 ? `출처 확인이 필요한 기록 ${excludedNoProvenance}개` : null,
+      ].filter(Boolean).join(" · ") + " · 분석에서 제외된 항목 안내"}>
       {excludedImported > 0 && (
         <div data-testid="trends-excluded-imported">
           워치·앱에서 <b>가져온 일지 {excludedImported}개</b>에 포함된 외부 수치는 아직 분석에 넣지 않았어요.
@@ -150,9 +154,10 @@ function AnalysisExclusionNotice({ summary }: {
           기록이 없어서 추이에 넣지 못했어요. 예전 버전에서 저장했거나, 그 정보가 없는
           백업 파일에서 되돌린 일지예요.
           <br />
-          일지 내용은 그대로 있어요. 이건 앱이 고쳐야 할 부분이라 따로 알려 드려요.
+          일지 내용은 그대로 남아 있어요. 같은 내용을 다시 입력할 필요는 없어요.
         </div>
       )}
+      </InfoDisclosure>
     </div>
   )
 }

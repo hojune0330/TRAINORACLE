@@ -76,6 +76,9 @@ describe("competition division intake", () => {
       />,
     )
 
+    const help = screen.getByText("이 선택은 계획에 어떻게 쓰이나요?")
+    expect(help.closest("details")).not.toHaveAttribute("open")
+    await userEvent.click(help)
     expect(screen.getByText(/나이·성숙도.*의료 판단에 사용하지 않아요/u)).toBeVisible()
     expect(screen.getByRole("button", { name: /고등부/u })).toBeVisible()
     await screen.getByRole("button", { name: /선택하지 않음.*나중에 입력/u }).click()

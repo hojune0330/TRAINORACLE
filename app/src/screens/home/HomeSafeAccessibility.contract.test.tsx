@@ -102,11 +102,10 @@ describe("home journal controls", () => {
     expect(recentEntry).toHaveAccessibleName(/2026년 7월 14일.*훈련 후.*시드 템포런/u)
   })
 
-  it("centers the first screen on the user's records and keeps service choices to three", () => {
+  it("keeps recording primary with a separate archive and direct purpose routes", () => {
     render(<Home />)
 
     expect(screen.getByRole("heading", { name: "내 기록" })).toBeVisible()
-    expect(screen.getByText("오늘을 남기고, 필요할 때 훈련을 더 자세히 봐요.")).toBeVisible()
     expect(screen.getByRole("button", { name: "오늘 기록하기" })).toBeVisible()
     expect(screen.getByRole("button", { name: "하루 마무리 기록하기" })).toBeVisible()
     expect(screen.getByRole("button", { name: /내 일지.*1일.*1개의 기록/u })).toBeVisible()
@@ -116,7 +115,8 @@ describe("home journal controls", () => {
     expect(screen.queryByRole("button", { name: "민지의 예시 일지 보기" })).toBeNull()
     expect(screen.queryByRole("region", { name: "꾸미기 미리보기" })).toBeNull()
     const serviceChoices = within(screen.getByRole("navigation", { name: "내 기록 살펴보기" })).getAllByRole("button")
-    expect(serviceChoices).toHaveLength(3)
+    expect(serviceChoices).toHaveLength(1)
+    expect(screen.getByRole("navigation", { name: "바로 시작하기" })).toBeVisible()
     expect(screen.queryByRole("button", { name: /훈련 흐름/u })).toBeNull()
     expect(screen.queryByText("비공개 원문")).toBeNull()
   })
@@ -135,8 +135,8 @@ describe("home journal controls", () => {
 
     render(<Home onOpenDay={onOpenDay} onWriteLog={onWriteLog} />)
 
-    expect(screen.getByText("오늘 기록을 마쳤어요.")).toBeVisible()
-    expect(screen.getByText("1개의 기록이 이 기기에 저장됐어요.")).toBeVisible()
+    expect(screen.getByText("오늘 기록을 남겼어요.")).toBeVisible()
+    expect(screen.getByText("오늘 남긴 기록 1개")).toBeVisible()
     expect(screen.queryByRole("button", { name: "오늘 기록하기" })).toBeNull()
     expect(screen.queryByRole("button", { name: "하루 마무리 기록하기" })).toBeNull()
     expect(screen.queryByRole("region", { name: "오늘의 기분 몸 상태 날씨" })).toBeNull()
@@ -156,7 +156,7 @@ describe("home journal controls", () => {
     const nextTraining = screen.getByRole("button", { name: /다음 훈련.*지속 페이스.*오후/u })
     expect(nextTraining).toHaveTextContent("7월 14일")
     expect(nextTraining).toHaveTextContent("총 25~40분 · RPE 5~6")
-    expect(within(screen.getByRole("navigation", { name: "내 기록 살펴보기" })).getAllByRole("button")).toHaveLength(3)
+    expect(within(screen.getByRole("navigation", { name: "내 기록 살펴보기" })).getAllByRole("button")).toHaveLength(1)
 
     await user.click(nextTraining)
 
@@ -199,7 +199,7 @@ describe("home journal controls", () => {
       name: /다음 훈련.*같은 날 오후.*오후 회복 운동/u,
     })
     expect(nextTraining).toHaveTextContent("같은 날 오후 · 오후 회복 운동도 예정")
-    expect(within(screen.getByRole("navigation", { name: "내 기록 살펴보기" })).getAllByRole("button")).toHaveLength(3)
+    expect(within(screen.getByRole("navigation", { name: "내 기록 살펴보기" })).getAllByRole("button")).toHaveLength(1)
   })
 
   it("places a recent journal entry before services and decoration so returning athletes can continue reading first", () => {
@@ -260,7 +260,7 @@ describe("home journal controls", () => {
     expect(screen.getByTestId("home-pain-review")).toBeVisible()
   })
 
-  it("shows the welcome value, local trust, equal entry actions, and one promoted example when empty", async () => {
+  it("shows recording first, direct purpose routes, and an honestly labeled example when empty", async () => {
     const user = userEvent.setup()
     const onWriteLog = vi.fn()
     const onOpenPlan = vi.fn()
@@ -269,26 +269,24 @@ describe("home journal controls", () => {
     render(<Home onWriteLog={onWriteLog} onOpenPlan={onOpenPlan} onOpenGuide={onOpenGuide} />)
 
     expect(screen.getByRole("heading", {
-      name: "달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.",
+      name: "오늘 운동을 기록해요",
     })).toBeVisible()
-    expect(screen.getByText("모든 데이터는 이 기기에만 저장돼요.")).toBeVisible()
+    expect(screen.queryByText("모든 데이터는 이 기기에만 저장돼요.")).toBeNull()
     const writeLog = screen.getByRole("button", { name: "오늘 기록 남기기" })
     const openPlan = screen.getByRole("button", { name: "훈련 계획 만들기" })
     const openGuide = screen.getByRole("button", { name: "민지의 예시 일지 보기" })
-    // 최종 폴리시 D1: 기록 CTA만 프라이머리, 계획 CTA는 세컨더리(아웃라인) — "일지 먼저" 위계
     expect(writeLog).toHaveClass("training-home__primary")
-    expect(openPlan).toHaveClass("training-home__secondary")
-    expect(writeLog.parentElement).toBe(openPlan.parentElement)
-    expect(screen.getByText("이렇게 쓰여요")).toBeVisible()
+    expect(openPlan.closest("nav")).toHaveAccessibleName("바로 시작하기")
+    expect(screen.getByText("일지 예시")).toBeVisible()
     expect(screen.queryByRole("region", { name: "오늘의 기분 몸 상태 날씨" })).toBeNull()
     expect(screen.queryByRole("button", { name: "하루 마무리 기록하기" })).toBeNull()
     expect(screen.queryByRole("region", { name: "최근 기록" })).toBeNull()
     expect(screen.queryByText("기록이 쌓이면 어떻게 보일까요?")).toBeNull()
     expect(screen.queryByText(/일지 꾸미기/u)).toBeNull()
     expect(screen.getByRole("region", { name: "기록 습관" })).toBeVisible()
-    const services = screen.getByRole("navigation", { name: "내 기록 살펴보기" })
+    const services = screen.getByRole("navigation", { name: "바로 시작하기" })
     expect(within(services).getAllByRole("button")).toHaveLength(3)
-    expect(openGuide.compareDocumentPosition(services) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    expect(services.compareDocumentPosition(openGuide) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     expect(services.compareDocumentPosition(screen.getByRole("region", { name: "기록 습관" }))
       & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
 
@@ -307,6 +305,7 @@ describe("home journal controls", () => {
     render(<Home />)
 
     // When
+    await user.click(screen.getByText("기분·몸 상태·날씨 남기기"))
     await user.click(screen.getByRole("button", { name: "날씨 맑음" }))
 
     // Then

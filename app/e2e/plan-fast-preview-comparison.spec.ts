@@ -6,7 +6,7 @@ test.use({ serviceWorkers: "block" })
 
 async function openPlan(page: Page): Promise<void> {
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "내 기록 살펴보기" })
+  await page.getByRole("navigation", { name: "바로 시작하기" })
     .getByRole("button", { name: /^훈련 계획/u })
     .click()
 }

@@ -64,7 +64,7 @@ export function CumulativeDistancePanel({
         <div className="distance-overview__heading">
           <div>
             <span className="distance-overview__eyebrow">쌓인 거리</span>
-            <h2 id="home-distance-title">내 달리기가 얼마나 쌓였을까요?</h2>
+            <h2 id="home-distance-title">달린 거리</h2>
           </div>
           <button type="button" onClick={onOpenTrends} aria-label="누적 거리 자세히 보기">
             자세히 <ArrowRight aria-hidden="true" size={16} />
@@ -97,7 +97,6 @@ export function CumulativeDistancePanel({
         <div>
           <span className="distance-overview__eyebrow">누적 거리</span>
           <h2 id="distance-analysis-title">누적 거리와 변화</h2>
-          <p>직접 적어 출처가 확인된 거리만 더해요. 미기록은 0 km로 바꾸지 않아요.</p>
         </div>
       </div>
 
@@ -107,13 +106,6 @@ export function CumulativeDistancePanel({
         <DistanceTotal label="올해" summary={dashboard.toDate.year} />
         {dashboard.plan !== null && <DistanceTotal label="현재 계획 기간" summary={dashboard.plan} />}
       </div>
-
-      {dashboard.plan !== null && (
-        <p className="distance-overview__plan-note">
-          <CalendarDays aria-hidden="true" size={15} />
-          계획 시작일부터 화면에 보이는 마지막 계획 날짜까지 더한 값이에요. 정확한 9.5일 시간 경계 값은 아니에요.
-        </p>
-      )}
 
       <DistanceSeries
         title="주간 거리"
@@ -149,6 +141,8 @@ export function CumulativeDistancePanel({
 
       <details className="distance-overview__details">
         <summary>집계 기준과 제외된 기록 보기</summary>
+        <p>직접 적어 출처가 확인된 거리만 더해요. 미기록은 0 km로 바꾸지 않아요.</p>
+        {dashboard.plan !== null && <p className="distance-overview__plan-note"><CalendarDays aria-hidden="true" size={15} />계획 시작일부터 화면의 마지막 계획 날짜까지 합친 거리예요. 정확히 9.5일을 시간 단위로 계산한 값은 아니에요.</p>}
         <p>가져온 값, 출처가 없는 예전 값, 잘못된 숫자, 같은 ID인데 내용이 충돌한 기록은 합계에서 제외해요.</p>
         <p>비밀 메모 원문과 메모가 있다는 사실은 읽거나 점수로 쓰지 않아요.</p>
       </details>
@@ -276,7 +270,6 @@ function DailyDistanceHeatmap({ buckets, month }: {
           )
         })}
       </div>
-      <p className="distance-overview__heatmap-note">색과 함께 날짜 안의 숫자로 거리 유무를 확인할 수 있어요.</p>
     </div>
   )
 }

@@ -31,16 +31,16 @@ test("keeps the welcome home clear and usable on narrow phones", async ({ page }
     await page.goto("/")
 
     await expect(page.getByRole("heading", {
-      name: "달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.",
+      name: "오늘 운동을 기록해요",
     })).toBeVisible()
-    await expect(page.getByText("모든 데이터는 이 기기에만 저장돼요.")).toBeVisible()
+    await expect(page.getByText("모든 데이터는 이 기기에만 저장돼요.")).toHaveCount(0)
     await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
     await expect(page.getByRole("button", { name: "오늘 기록 남기기" })).toBeInViewport()
-    const services = page.getByRole("navigation", { name: "내 기록 살펴보기" })
-    for (const name of [/^내 일지/u, /^훈련 계획/u, /^분석/u]) {
-      await expect(services.getByRole("button", { name })).toBeVisible()
+    const services = page.getByRole("navigation", { name: "바로 시작하기" })
+    for (const name of ["내 훈련 분석", "훈련 계획 만들기", "예시 훈련 보기", "훈련 방법 배우기"]) {
+      await expect(services.getByRole("button", { name })).toBeInViewport()
     }
-    await expect(services.getByRole("button")).toHaveCount(3)
+    await expect(services.getByRole("button")).toHaveCount(4)
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
     await page.screenshot({
       path: testInfo.outputPath(`first-screen-${viewport.width}x${viewport.height}.png`),
@@ -52,8 +52,8 @@ test("keeps the welcome home clear and usable on narrow phones", async ({ page }
   await expect(page.getByRole("heading", { name: "오늘 운동은 어떻게 됐나요?" })).toBeVisible()
   await expect(page.getByRole("button", { name: "← 뒤로" })).toBeInViewport()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
-  // the chooser is reached via the "경기기록" tab bar button (§3-3)
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "경기기록" }).click()
+  // the chooser is reached via the "기록하기" tab bar button (§3-3)
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
   const heading = page.getByRole("heading", { name: "어떤 일지를 쓰세요?" })
   await expect(heading).toBeFocused()
   await expect(page.getByRole("button", { name: /경기 직전\/직후/u })).toBeInViewport()

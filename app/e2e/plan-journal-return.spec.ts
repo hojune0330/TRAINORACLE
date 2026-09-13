@@ -50,7 +50,7 @@ test("returning from a cancelled DAY 5 PM journal restores its slot without a sa
   }, stateWithDayFivePm())
 
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "내 기록 살펴보기" })
+  await page.getByRole("navigation", { name: "바로 시작하기" })
     .getByRole("button", { name: /^훈련 계획/u }).click()
   for (let index = 0; index < 4; index += 1) {
     await page.getByRole("button", { name: "다음 날짜" }).click()
@@ -78,7 +78,7 @@ test(`returning from a ${detailed ? "detailed" : "quick"} DAY 5 PM journal keeps
   }, stateWithDayFivePm())
 
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "내 기록 살펴보기" })
+  await page.getByRole("navigation", { name: "바로 시작하기" })
     .getByRole("button", { name: /^훈련 계획/u }).click()
   for (let index = 0; index < 4; index += 1) {
     await page.getByRole("button", { name: "다음 날짜" }).click()

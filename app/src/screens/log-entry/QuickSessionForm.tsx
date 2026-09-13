@@ -1,5 +1,6 @@
 import React from "react"
 import { FormInputDraftBoundary, useFormInputDraft, useRecoveredFormInput } from "./useFormInputDraft"
+import { InfoDisclosure } from "../../components/InfoDisclosure"
 import { accountJournalRecordsEnabled } from "../../domain/account/account-journal-record-service"
 import { FormFinalizationRecovery, useFormFinalization } from "./useFormFinalization"
 import { Check, ChevronRight, Clock3, FilePenLine, RotateCcw, TriangleAlert } from "lucide-react"
@@ -349,11 +350,7 @@ function QuickSessionFormEditor({
   const slotLabel = ACTIVITY_SLOTS.find((candidate) => candidate.value === slot)?.label
   const rpeDetail = RPE_OPTIONS.find((candidate) => candidate.value === rpe)?.detail
 
-  return (
-    <div className="quick-log" aria-busy={saving}>
-      <fieldset disabled={saving} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
-      <TopBar onBack={draft.back(onBack)}>빠르게 기록</TopBar>
-      <FormFinalizationRecovery recovery={finalization} onBack={draft.back(onBack)} />
+  const recordSummary = (
       <section className="quick-log__paper" aria-label="지금까지 기록한 내용">
         <div className="quick-log__date">{compactDate(date)} · {dowOf(date)}</div>
         {planLink !== undefined && <div className="quick-log__plan-source">계획 DAY {planLink.sessionDay} · {planLink.sessionSlot === "AM" ? "오전" : "오후"}</div>}
@@ -369,6 +366,16 @@ function QuickSessionFormEditor({
           {savedStorage === "ACCOUNT" ? "계정에 저장됨" : savedStorage === "PENDING" ? "기기 보관 · 전송 대기" : savedStorage === "CONFLICT" ? "기기 보관 · 수정 충돌" : "저장됨"}
         </div>}
       </section>
+  )
+
+  return (
+    <div className="quick-log" aria-busy={saving}>
+      <fieldset disabled={saving} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
+      <TopBar onBack={draft.back(onBack)}>빠르게 기록</TopBar>
+      <FormFinalizationRecovery recovery={finalization} onBack={draft.back(onBack)} />
+      {step === "saved" ? recordSummary : outcome !== null && (
+        <InfoDisclosure title="지금까지 기록한 내용" className="quick-log__summary-help">{recordSummary}</InfoDisclosure>
+      )}
 
       {saving && <p role="status">저장 중이에요.</p>}
       <div

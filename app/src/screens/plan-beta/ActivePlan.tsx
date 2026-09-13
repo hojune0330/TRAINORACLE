@@ -139,6 +139,14 @@ export function ActivePlan({
         </div>
       )}
       <h1 id="active-plan-title">{frameLengthDays}일 훈련 계획</h1>
+      {(cloudPersistence === "FAILED" || cloudPersistence === "SAVING" || cloudPersistence === "CHECKING") && (
+        <div className="active-plan__storage-status" role={cloudPersistence === "FAILED" ? "alert" : "status"}>
+          <p>{cloudPersistenceLabel(cloudPersistence)}</p>
+          {cloudPersistence === "FAILED" && onRetryCloudBackup !== undefined && (
+            <button className="plan-source-strip__retry" type="button" onClick={onRetryCloudBackup}>계정에 다시 저장</button>
+          )}
+        </div>
+      )}
       <p className="active-plan__variant">
         <strong>{label.title}</strong>
         <span>{planAdjustment}</span>
@@ -239,19 +247,10 @@ export function ActivePlan({
                       <TermHelp term="plan-beta-basis" />
                     </strong>
                     <small>{cloudPersistenceLabel(cloudPersistence)} · 의료 판단 아님</small>
-                    {cloudPersistence === "FAILED" && onRetryCloudBackup !== undefined && (
-                      <button
-                        className="plan-source-strip__retry"
-                        type="button"
-                        onClick={onRetryCloudBackup}
-                      >
-                        계정에 다시 저장
-                      </button>
-                    )}
                     {state.athleteEvidence !== undefined && (
                       <small>
                         저장된 경기 기록 {state.athleteEvidence.storedRecordCount}개
-                        {" · "}최근 구조화 일지 {state.athleteEvidence.recentJournalSessionCount}개 연결
+                        {" · "}최근 일지 {state.athleteEvidence.recentJournalSessionCount}개 연결
                         {" · "}{hasDetailedPrescription
                             ? `확인한 ${detailedPrescription.targetEventDistanceM}m 기록은 상세 세션 페이스에 사용 · 연결된 일지 값은 이번 계획 계산에 사용하지 않았어요`
                           : "연결된 기록과 일지 값은 이번 계획 계산에 사용하지 않았어요"}

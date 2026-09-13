@@ -24,7 +24,7 @@ test("offers a rest-day path without pressuring the athlete to log more", async 
   })
   await page.goto("/?app=1")
 
-  await expect(page.getByText("오늘 기록을 마쳤어요.")).toBeVisible()
+  await expect(page.getByText("오늘 기록을 남겼어요.")).toBeVisible()
   await expect(page.getByRole("button", { name: "오늘 기록하기" })).toHaveCount(0)
   await expect(page.getByRole("button", { name: "하루 마무리 기록하기" })).toHaveCount(0)
   await expect(page.getByText(/일만 더 쓰면/u)).toHaveCount(0)
@@ -34,8 +34,8 @@ test("offers a rest-day path without pressuring the athlete to log more", async 
   await page.getByRole("button", { name: /회복 · 하루 마무리/u }).click()
   await expect(page.getByRole("heading", { name: "회복 · 하루 마무리" })).toBeVisible()
 
-  // 하루 마무리 폼에서 탭바 "경기기록"을 누르면 종류 선택으로 돌아온다(§3-3).
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "경기기록" }).click()
+  // 하루 마무리 폼에서 탭바 "기록하기"을 누르면 종류 선택으로 돌아온다(§3-3).
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
   await expect(page.getByRole("button", { name: /회복 · 하루 마무리.*쉬는 날도 그대로/u })).toBeVisible()
 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석" }).click()

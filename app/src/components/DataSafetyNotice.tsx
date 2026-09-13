@@ -1,14 +1,8 @@
-// 데이터 안전 상시 안내 — 소유자 지시(2026-07-24):
-// "기기 저장은 맞지만 언제든 (브라우저 정리 등) 이유로 지워질 수 있으니
-//  회원 가입·계정 연동으로 일지와 데이터를 지키라고 계속 언급하게 하자."
-//
-// 원칙:
-//  - 영구 닫기 없음 (상시 노출). 대신 작고 조용한 안내 블록으로 피로 최소화.
-//  - 계정 기능 ON: "계정 연동으로 지키기" CTA.
-//    계정 기능 OFF(키 미설정 빌드): CTA 없이 사실 고지 + JSON 내보내기 안내.
-//  - 협박형 문구 금지 — 사실만 말한다 ("지워질 수 있어요", 손실 카운트다운 없음).
+// General storage help stays available; actual save failures and pending states
+// are shown by their owning forms and must not be placed in this disclosure.
 import React from "react"
 import { accountFeatureEnabled } from "../domain/account/config"
+import { InfoDisclosure } from "./InfoDisclosure"
 
 export function DataSafetyNotice({ onOpenAccount }: {
   readonly onOpenAccount?: () => void
@@ -24,15 +18,13 @@ export function DataSafetyNotice({ onOpenAccount }: {
           padding: "10px 13px",
         }}
       >
-        <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, fontWeight: 600, color: "var(--ink-3)", letterSpacing: "0.14em" }}>
-          내 일지는 이 기기에 먼저 저장돼요
-        </div>
-        <div style={{ marginTop: 5, fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-2)", lineHeight: 1.65 }}>
-          브라우저 데이터 정리·기기 변경·앱 삭제 때 일지가 지워질 수 있어요.
+        <InfoDisclosure title="내 일지는 어디에 보관되나요?">
+        <p>
+          로그인하지 않은 기록은 이 기기에 남아요. 브라우저 데이터 정리·기기 변경·앱 삭제 때 지워질 수 있어요.
           {accountOn
-            ? " 계정에 연동해 두면 다른 기기와 합치고 사본을 보관할 수 있어요."
-            : " 더보기의 백업·복원에서 사본을 보관해 주세요."}
-        </div>
+            ? " 계정 저장을 사용할 때는 ‘계정 저장 완료’로 확인된 기록이 계정에 보관돼요."
+            : " 백업·복원에서 사본을 보관해 주세요."}
+        </p>
         {accountOn && (
           <button
             type="button"
@@ -44,9 +36,10 @@ export function DataSafetyNotice({ onOpenAccount }: {
               border: 0, borderRadius: "var(--r-md)", cursor: "pointer",
             }}
           >
-            계정 연동으로 일지 지키기
+            계정 저장 상태 확인
           </button>
         )}
+        </InfoDisclosure>
       </div>
     </div>
   )

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs"
-import { cleanup, render, screen } from "@testing-library/react"
-import { afterEach, describe, expect, it } from "vitest"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import type { TrainingHomeViewModel } from "../../domain/home-view-model"
 import { TrainingHome } from "./TrainingHome"
 
@@ -22,7 +22,7 @@ const WELCOME_MODEL = {
 const JOURNAL_MODEL = {
   ...WELCOME_MODEL,
   homeMode: "JOURNAL",
-  todayMessage: "오늘 기록을 마쳤어요.",
+  todayMessage: "오늘 기록을 남겼어요.",
   todayRecordCount: 1,
   journalSummary: "1일 · 1개의 기록",
 } satisfies TrainingHomeViewModel
@@ -55,7 +55,7 @@ describe("training home modes", () => {
     render(<TrainingHome model={WELCOME_MODEL} />)
 
     const title = screen.getByRole("heading", {
-      name: "달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.",
+      name: "오늘 운동을 기록해요",
     })
     const titleRule = appCss.match(/\.training-home__welcome-title\s*\{[^}]*\}/u)?.[0] ?? ""
 
@@ -83,26 +83,23 @@ describe("training home modes", () => {
     expect(anywhereSelectors.join("\n")).not.toMatch(/\.training-home__(?:briefing|next-button small|service small)/u)
   })
 
-  it("preserves the welcome heading name while grouping its semantic phrases", () => {
-    render(<TrainingHome model={WELCOME_MODEL} />)
+  it("offers four direct purpose routes without a purpose questionnaire", () => {
+    const onOpenTrends = vi.fn()
+    const onOpenPlan = vi.fn()
+    const onOpenGuide = vi.fn()
+    const onOpenContent = vi.fn()
+    render(<TrainingHome model={WELCOME_MODEL} {...{ onOpenTrends, onOpenPlan, onOpenGuide, onOpenContent }} />)
 
-    const title = screen.getByRole("heading", {
-      name: "달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.",
-    })
-    const phraseRule = appCss.match(/\.training-home__welcome-title-phrase\s*\{[^}]*\}/u)?.[0] ?? ""
-    const phraseTexts = [...title.querySelectorAll(".training-home__welcome-title-phrase")]
-      .map((phrase) => phrase.textContent)
-
-    expect(title).toHaveAccessibleName(
-      "달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.",
-    )
-    expect(phraseTexts).toEqual([
-      "달리기 일지를",
-      "남기고,",
-      "내 기록으로",
-      "훈련 계획을 받아요.",
-    ])
-    expect(phraseRule).toContain("white-space: nowrap")
+    const routes = within(screen.getByRole("navigation", { name: "바로 시작하기" }))
+    expect(routes.getAllByRole("button")).toHaveLength(4)
+    for (const [label, callback] of [
+      ["내 훈련 분석", onOpenTrends], ["훈련 계획 만들기", onOpenPlan],
+      ["예시 훈련 보기", onOpenGuide], ["훈련 방법 배우기", onOpenContent],
+    ] as const) {
+      fireEvent.click(routes.getByRole("button", { name: label }))
+      expect(callback).toHaveBeenCalledTimes(1)
+    }
+    expect(screen.queryByText("모든 데이터는 이 기기에만 저장돼요.")).toBeNull()
   })
 
   it("keeps every welcome lead surface together without forcing viewport-height blank space", () => {
@@ -111,7 +108,7 @@ describe("training home modes", () => {
     const fold = container.querySelector(".training-home__welcome-fold")
     const foldRule = appCss.match(/\.training-home__welcome-fold\s*\{[^}]*\}/u)?.[0] ?? ""
     const exampleRule = appCss.match(/\.training-home__welcome-fold \.training-home__example--welcome\s*\{[^}]*\}/u)?.[0] ?? ""
-    const services = screen.getByRole("navigation", { name: "내 기록 살펴보기" })
+    const services = screen.getByRole("navigation", { name: "바로 시작하기" })
     const guide = screen.getByRole("button", { name: "민지의 예시 일지 보기" })
 
     expect(fold).toBeInstanceOf(HTMLElement)
@@ -119,12 +116,12 @@ describe("training home modes", () => {
 
     expect(fold).toContainElement(screen.getByRole("banner"))
     expect(fold).toContainElement(screen.getByRole("heading", {
-      name: "달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.",
+      name: "오늘 운동을 기록해요",
     }))
     expect(fold).toContainElement(screen.getByRole("button", { name: "오늘 기록 남기기" }))
     expect(fold).toContainElement(screen.getByRole("button", { name: "훈련 계획 만들기" }))
     expect(fold).toContainElement(guide)
-    expect(fold.compareDocumentPosition(services) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    expect(fold).toContainElement(services)
     expect(foldRule).toContain("min-block-size: 0")
     expect(foldRule).not.toContain("100dvh")
     expect(exampleRule).toContain("margin-block-start: 0")
@@ -174,7 +171,7 @@ describe("training home modes", () => {
     expect(intro.compareDocumentPosition(today) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     expect(today.compareDocumentPosition(recent) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     expect(recent.compareDocumentPosition(services) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
-    expect(screen.getByText("오늘 기록을 마쳤어요.")).toBeVisible()
+    expect(screen.getByText("오늘 기록을 남겼어요.")).toBeVisible()
     expect(screen.queryByRole("button", { name: "오늘 기록하기" })).toBeNull()
     expect(screen.queryByRole("button", { name: "하루 마무리 기록하기" })).toBeNull()
     expect(screen.queryByText("오늘 상태")).toBeNull()
@@ -200,7 +197,7 @@ describe("training home modes", () => {
     )
 
     expect(screen.getByRole("heading", {
-      name: "달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.",
+      name: "오늘 운동을 기록해요",
     })).toBeVisible()
     expect(screen.queryByLabelText("오늘")).toBeNull()
 
@@ -213,7 +210,7 @@ describe("training home modes", () => {
     )
 
     expect(screen.getByRole("heading", { name: "내 기록" })).toBeVisible()
-    expect(screen.queryByText("달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.")).toBeNull()
+    expect(screen.queryByText("오늘 운동을 기록해요")).toBeNull()
     expect(screen.getByLabelText("오늘")).toBeVisible()
     expect(screen.getByRole("region", { name: "최근 기록" })).toBeVisible()
   })

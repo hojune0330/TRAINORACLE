@@ -20,7 +20,7 @@ export function PlanChoice({
     >
       <span>
         <strong>{title}</strong>
-        <small>{detail}</small>
+        {detail !== "" && <small>{detail}</small>}
       </span>
       <ChevronRight aria-hidden="true" size={18} />
     </button>

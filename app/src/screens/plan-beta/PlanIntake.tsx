@@ -12,6 +12,7 @@ import type {
   TrainingTimePreference,
 } from "@impl/plan-generator/types"
 import { TermHelp } from "../../components/TermHelp"
+import { InfoDisclosure } from "../../components/InfoDisclosure"
 import { isValidIsoDate, isoShift } from "../../domain/dates"
 import { todayISO } from "../../domain/journal-store"
 import { COMPETITION_DIVISIONS } from "../../domain/plan-beta-schema"
@@ -159,8 +160,7 @@ export function PlanIntake({
         <i style={{ width: `${stepNumber * (100 / visibleSteps.length)}%` }} />
       </div>
       {answeredSteps.length > 0 && (
-        <div className="plan-intake__summary" aria-label="지금까지">
-          <span className="plan-intake__summary-label">지금까지</span>
+        <InfoDisclosure key={`summary-${step}`} className="plan-intake__summary" title={`선택한 조건 ${answeredSteps.length}개 · 수정하기`}>
           {answeredSteps.map(({ step: answeredStep, label }) => (
             <button
               key={answeredStep}
@@ -172,14 +172,16 @@ export function PlanIntake({
               <ChevronRight aria-hidden="true" size={14} />
             </button>
           ))}
-        </div>
+        </InfoDisclosure>
       )}
       <div ref={questionRef} className="plan-eyebrow active-content-scroll-target">{meta.eyebrow}</div>
       <div className="plan-heading-row">
         <h1 id="plan-intake-title">{meta.title}</h1>
         {meta.helpTerm !== null && <TermHelp term={meta.helpTerm} />}
       </div>
-      <p className="plan-copy">{meta.copy}</p>
+      {step === "safety" && <p className="plan-copy">{meta.copy}</p>}
+      {step === "days" && <p className="plan-copy">회복 운동을 하는 날도 포함해 주세요. 훈련일이 적으면 하루 운동 시간이 늘어날 수 있어요.</p>}
+      {step === "two-a-day" && <p className="plan-copy">두 번을 고르면 모든 훈련일에 오전·오후 운동을 배치해요.</p>}
       {step === "preview" && (
         <>
           <dl className="plan-shape-preview" aria-label="미리보기 기준">
@@ -228,7 +230,7 @@ export function PlanIntake({
       )}
       {step !== "preview" && (
         <div
-          className="plan-choice-list"
+          className={`plan-choice-list${step === "goal" ? " plan-choice-list--goals" : ""}`}
           role={step === "goal" ? "group" : undefined}
           aria-label={step === "goal" ? "계획 종목 선택" : undefined}
         >
@@ -237,7 +239,7 @@ export function PlanIntake({
             <Choice
               key={event.distanceM}
               title={event.title}
-              detail={event.detail}
+              detail=""
               selected={draft.eventDistanceM === event.distanceM}
               onClick={() => onGoal(event.distanceM)}
             />
@@ -384,7 +386,7 @@ export function PlanIntake({
             />
             <Choice
               title="통증·부상·몸 이상이 있거나 잘 모르겠어요"
-              detail="계획은 멈춤 · 앱이 사람에게 자동으로 연결하지 않음"
+              detail="계획을 만들지 않고 몸 상태 확인을 먼저 안내해요"
               selected={false}
               onClick={() => onSafety("REVIEW_REQUIRED")}
             />
@@ -411,11 +413,13 @@ export function PlanIntake({
               훈련표 표기 읽기
             </button>
           </div>
-          <p className="plan-records-note">
-            경기 기록을 저장해도 지금 계획의 페이스·거리·반복은 자동으로 바뀌지 않아요.
-          </p>
         </>
       )}
+      {step !== "safety" && <InfoDisclosure key={`explanation-${step}`} title="이 선택은 계획에 어떻게 쓰이나요?">
+        <p className="plan-copy">{meta.copy}</p>
+        {step === "goal" && <dl>{SUPPORTED_PLAN_EVENTS.map(event => <div key={event.distanceM}><dt>{event.title}</dt><dd>{event.detail}</dd></div>)}</dl>}
+        <p>경기 기록을 저장해도 지금 계획의 페이스·거리·반복은 자동으로 바뀌지 않아요.</p>
+      </InfoDisclosure>}
     </section>
   )
 }

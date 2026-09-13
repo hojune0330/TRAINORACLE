@@ -200,7 +200,7 @@ describe("saved toast motion structure", () => {
       render(<AppShell />)
       const tabBar = screen.getByRole("navigation", { name: "주 탭" })
 
-      fireEvent.click(within(tabBar).getByRole("button", { name: "경기기록" }))
+      fireEvent.click(within(tabBar).getByRole("button", { name: "기록하기" }))
       fireEvent.click(screen.getByRole("button", { name: /훈련 후/u }))
       fireEvent.click(screen.getByRole("button", { name: /^저장/u }))
 
@@ -226,7 +226,7 @@ describe("saved toast motion structure", () => {
     try {
       render(<AppShell />)
       const tabBar = screen.getByRole("navigation", { name: "주 탭" })
-      fireEvent.click(within(tabBar).getByRole("button", { name: "경기기록" }))
+      fireEvent.click(within(tabBar).getByRole("button", { name: "기록하기" }))
       fireEvent.click(screen.getByRole("button", { name: new RegExp("경기 직전/직후", "u") }))
       fireEvent.change(screen.getByRole("textbox", { name: "경기 메모" }), { target: { value: "무릎이 아파" } })
       fireEvent.click(screen.getByRole("radio", { name: "훈련 메모" }))

@@ -22,7 +22,7 @@ test("archives the original in the real plan flow and compares it from its journ
     localStorage.setItem("synthetic-original-plan-seeded", "1")
   }, { plan: state, journal: entry })
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
+  await page.getByRole("navigation", { name: "바로 시작하기" }).getByRole("button", { name: /^훈련 계획/u }).click()
   await page.getByRole("button", { name: "현재 기준으로 다음 계획안 만들기" }).click()
   await expect.poll(() => page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBeNull()
   const snapshot = await page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.plan-beta.history.v1")!))

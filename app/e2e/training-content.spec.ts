@@ -6,11 +6,12 @@ test("opens, saves, and reloads a training article without changing other produc
   await page.goto("/?app=1")
 
   await openTrainingContent(page)
-  await expect(page.getByText("요즘 주목받는 훈련법", { exact: true })).toBeVisible()
+  await expect(page.getByText("훈련 방법 배우기", { exact: true })).toBeVisible()
   await page.getByRole("button", { name: /노르웨이식 더블 스레숄드/u }).click()
   await expect(page.getByRole("heading", { name: "노르웨이식 더블 스레숄드, 왜 자주 들릴까요?" })).toBeVisible()
-  await expect(page.getByText(/추가 검토 중인 기사 · C_MEDIA/u)).toBeVisible()
-  await expect(page.getByText(/저장해도 계획·안전 판단·포인트가 바뀌지 않아요/u)).toBeVisible()
+  await page.locator("summary", { hasText: "자료 출처와 저장 안내" }).click()
+  await expect(page.getByText(/추가 검토 중인 기사 · 언론·커뮤니티 기사/u)).toBeVisible()
+  await expect(page.getByText(/나중에 읽을 글로 저장해도 내 훈련 계획은 바뀌지 않아요/u)).toBeVisible()
 
   const before = await page.evaluate((contentKey) => Object.fromEntries(
     Object.entries(window.localStorage).filter(([key]) => key !== contentKey),

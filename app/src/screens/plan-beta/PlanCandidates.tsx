@@ -4,6 +4,7 @@ import type {
   PlanGenerationSuccess,
 } from "@impl/plan-generator/types"
 import { TermHelp } from "../../components/TermHelp"
+import { InfoDisclosure } from "../../components/InfoDisclosure"
 import { isValidIsoDate } from "../../domain/dates"
 import { todayISO } from "../../domain/journal-store"
 import type { PlanBetaIntake } from "../../domain/plan-beta-store"
@@ -111,6 +112,7 @@ export function PlanCandidates({
         <h1 id="plan-candidates-title">두 계획에서 하나를 골라보세요</h1>
         <TermHelp term="plan-option" />
       </div>
+      <InfoDisclosure title="이 계획은 어떤 정보로 만들었나요?">
       <p className="plan-copy">
         {prescriptionBinding.kind === "bound"
           ? `직접 고르고 확인한 현재 ${selectedEventLabel} 기록으로 한 강도 세션의 상세 페이스를 계산했어요. 다른 훈련과 일지 값은 시간이나 RPE를 바꾸지 않습니다.`
@@ -118,6 +120,7 @@ export function PlanCandidates({
           ? "종목, 경험, 고른 훈련 목적, 가능한 훈련일과 9.5일 기본 틀만 사용했어요. 개인 페이스와 최근 훈련량은 추정하지 않습니다."
           : "최근 일지가 있는지만 확인했어요. 일지의 거리, RPE, 메모는 이번 베타 계획의 시간이나 강도를 바꾸지 않습니다."}
       </p>
+      </InfoDisclosure>
       <RacePlacementNotice state={generated.racePlacement} />
       {onChangeMethod !== undefined && <PlanMethodPicker
         options={resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference)}
@@ -151,13 +154,14 @@ export function PlanCandidates({
         </>
       )}
       <CandidateComparison candidates={generated.candidates} />
+      <InfoDisclosure title="기준 기록·참가 부문·이전 계획 확인">
       <div className="plan-source-strip">
         <ShieldCheck aria-hidden="true" size={17} />
         <span>
           <strong>
             <span className="plan-source-strip__title">
               {athleteEvidence.storedRecordCount + athleteEvidence.recentJournalSessionCount === 0
-                ? "기록 없이 시작한 베타 계획"
+                ? "기준 기록 없이 만든 계획"
                 : "경기 기록 "
                   + athleteEvidence.storedRecordCount
                   + "개 · 최근 일지 "
@@ -169,7 +173,7 @@ export function PlanCandidates({
           <small>
             {prescriptionBinding.kind === "bound"
               ? `선택하고 확인한 ${selectedEventLabel} 기록만 상세 페이스 계산에 사용 · 연결된 일지 값은 이번 계획 계산에 사용하지 않았어요`
-              : "확인한 기준 기록이 없어 기록값과 구조화 일지는 이번 계획 계산에 사용하지 않았어요"}
+              : "확인한 기준 기록이 없어 개인 기록과 일지 수치는 이번 계획 계산에 사용하지 않았어요"}
           </small>
           {athleteEvidence.goalRecordCount > 0 && (
             <small>목표 기록 {athleteEvidence.goalRecordCount}개 포함 · 현재 수치 계산에는 사용하지 않았어요</small>
@@ -187,6 +191,7 @@ export function PlanCandidates({
           )}
         </span>
       </div>
+      </InfoDisclosure>
       <label className="plan-start-date" htmlFor="plan-start-date">
         <span>계획 시작 날짜</span>
         <input

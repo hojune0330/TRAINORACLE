@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test"
 
 test("typing a private memo keeps the textarea above the sticky save bar", async ({ page }) => {
   await page.goto("/?app=1&uitest=1")
-  await page.getByRole("button", { name: "경기기록", exact: true }).click()
+  await page.getByRole("button", { name: "기록하기", exact: true }).click()
   await page.getByTestId("entry-choice-race").click()
   await page.getByRole("radio", { name: "나만의 메모" }).check()
   await page.evaluate(() => document.fonts.ready)
@@ -22,7 +22,7 @@ test("typing a private memo keeps the textarea above the sticky save bar", async
 
 test("prepares encryption without leaving the race form and saves without plaintext storage", async ({ page }, testInfo) => {
   await page.goto("/?app=1&uitest=1")
-  await page.getByRole("button", { name: "경기기록", exact: true }).click()
+  await page.getByRole("button", { name: "기록하기", exact: true }).click()
   await page.getByTestId("entry-choice-race").click()
   await page.getByRole("radio", { name: "나만의 메모" }).check()
   await page.getByLabel("경기 메모", { exact: true }).fill("synthetic-private-browser-fixture")
@@ -48,7 +48,7 @@ test("prepares encryption without leaving the race form and saves without plaint
   expect(result.rawLeaked).toBe(false)
   expect(result.vaultPresent).toBe(true)
   expect(result.overflow).toBe(false)
-  await page.getByRole("button", { name: "경기기록", exact: true }).click()
+  await page.getByRole("button", { name: "기록하기", exact: true }).click()
   await page.getByTestId("entry-choice-race").click()
   await expect(page.getByLabel("경기 메모", { exact: true })).toHaveValue("")
   await page.getByRole("button", { name: /^저장/ }).click()

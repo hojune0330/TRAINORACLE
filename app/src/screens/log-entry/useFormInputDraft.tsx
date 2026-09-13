@@ -1,4 +1,5 @@
 import React from "react"
+import { InfoDisclosure } from "../../components/InfoDisclosure"
 import { RefreshCw, Save } from "lucide-react"
 import { accountJournalPreviewEnabled, requestAccountJournal } from "../../domain/account/account-journal-api"
 import { activeLocalAccount, onLocalJournalScopeChange } from "../../domain/account/local-journal-ownership"
@@ -381,7 +382,7 @@ function ScopedFormInputDraft({ owner, enabled, context, date, kind, children }:
     }
   }, [active, owner, context, date, kind, loadAttempt])
 
-  if (!active) return <>{enabled && <p role="status">로그인 필요 · 입력 초안 자동 보관은 로그인 후 사용할 수 있어요.</p>}{children}</>
+  if (!active) return <>{children}{enabled && <div className="form-draft-storage-help"><InfoDisclosure title="작성 중인 내용은 자동으로 보관되나요?"><p>로그인하면 작성 중인 초안을 자동으로 보관해요. 로그인하지 않았다면 화면을 나가기 전에 기록을 마쳐 주세요.</p></InfoDisclosure></div>}</>
   const reviewRequired = resolving || !!review.primary?.blocked || review.recoveries.some(item => item.draft.state === "OPEN")
   return <DraftContext.Provider value={session}><ReviewContext.Provider value={{
     visible: reviewRequired || review.recoveries.length > 0 || review.archive.length > 0, required: reviewRequired,

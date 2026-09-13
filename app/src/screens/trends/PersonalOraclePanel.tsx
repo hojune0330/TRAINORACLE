@@ -2,11 +2,12 @@ import { BookOpenCheck, ChevronDown, Route, Sparkles } from "lucide-react"
 import type { StructuredJournalObservation } from "../../domain/journal-observation"
 import type { PlanBetaState } from "../../domain/plan-beta-schema"
 import { derivePersonalOracle } from "../../domain/personal-oracle"
+import { InfoDisclosure } from "../../components/InfoDisclosure"
 
 const MATURITY_LABEL = {
-  EMPTY: "기록을 기다리는 중",
-  STARTING: "첫 흐름 확인 중",
-  DESCRIPTIVE: "기록 흐름 설명 가능",
+  EMPTY: "기록 없음",
+  STARTING: "기록을 모으는 중",
+  DESCRIPTIVE: "최근 기록 요약",
 } as const
 
 export function PersonalOraclePanel({
@@ -25,7 +26,7 @@ export function PersonalOraclePanel({
         <div className="personal-oracle__mark" aria-hidden="true"><Sparkles size={18} /></div>
         <div>
           <span className="personal-oracle__eyebrow">내 기록 오라클</span>
-          <h2 id="personal-oracle-title">지금까지 기록으로 알 수 있는 것</h2>
+          <h2 id="personal-oracle-title">내 훈련 요약</h2>
         </div>
         <span className="personal-oracle__status">{MATURITY_LABEL[oracle.maturity]}</span>
       </header>
@@ -39,8 +40,10 @@ export function PersonalOraclePanel({
             <div>
               <span>{insight.title}</span>
               <h3>{insight.headline}</h3>
-              <p>{insight.detail}</p>
-              <small>{insight.evidence}</small>
+              <InfoDisclosure title={`${insight.title} · 근거 보기`}>
+                <p>{insight.detail}</p>
+                <p>{insight.evidence}</p>
+              </InfoDisclosure>
             </div>
           </article>
         ))}
@@ -63,7 +66,7 @@ export function PersonalOraclePanel({
           </div>
         </div>
         <p className="personal-oracle__source">
-          <Route aria-hidden="true" size={15} /> 최근 8주 구조화 훈련 기록 {oracle.structuredSourceCount}건 기준
+          <Route aria-hidden="true" size={15} /> 최근 8주 훈련 일지 {oracle.structuredSourceCount}건 기준
         </p>
       </details>
     </section>

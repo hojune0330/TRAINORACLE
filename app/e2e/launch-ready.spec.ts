@@ -35,7 +35,7 @@ async function expectCanonicalPlanCandidates(page: Page): Promise<void> {
 test("keeps plan help inside the narrow scroll region", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 650 })
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
+  await page.getByRole("navigation", { name: "바로 시작하기" }).getByRole("button", { name: /^훈련 계획/u }).click()
   await page.getByRole("button", { name: "준비 목표 설명 보기" }).click()
 
   const geometry = await page.evaluate(() => {
@@ -65,7 +65,7 @@ test("keeps plan help inside the narrow scroll region", async ({ page }) => {
 test("moves a first visitor from WELCOME to JOURNAL after a real first save", async ({ page }) => {
   await page.goto("/")
   await expect(page.getByRole("heading", {
-    name: "달리기 일지를 남기고, 내 기록으로 훈련 계획을 받아요.",
+    name: "오늘 운동을 기록해요",
   })).toBeVisible()
 
   await page.getByRole("button", { name: "오늘 기록 남기기" }).click()
@@ -84,7 +84,7 @@ test("moves a first visitor from WELCOME to JOURNAL after a real first save", as
     return Array.isArray(parsed) ? parsed.length : -1
   })).toBe(1)
   await expect(page.getByRole("heading", { name: "내 기록" })).toBeVisible()
-  await expect(page.getByText("오늘 기록을 마쳤어요.")).toBeVisible()
+  await expect(page.getByText("오늘 기록을 남겼어요.")).toBeVisible()
   await expect(page.getByRole("button", { name: "오늘 기록하기" })).toHaveCount(0)
   await expect(page.getByRole("button", { name: "하루 마무리 기록하기" })).toHaveCount(0)
 
@@ -99,7 +99,7 @@ test("generates selectable 9-day candidates from first-screen intake", async ({ 
   await page.goto("/?app=1")
 
   // When
-  await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
+  await page.getByRole("navigation", { name: "바로 시작하기" }).getByRole("button", { name: /^훈련 계획/u }).click()
   await answerMinimumPlanQuestions(page)
 
   // Then
@@ -111,7 +111,7 @@ test("generates selectable 9-day candidates from first-screen intake", async ({ 
 
 test("generates a bounded two-a-day 9-day candidate", async ({ page }) => {
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
+  await page.getByRole("navigation", { name: "바로 시작하기" }).getByRole("button", { name: /^훈련 계획/u }).click()
   await page.getByRole("button", { name: /^5000m\b/u }).click()
   await page.getByRole("button", { name: /고등부/u }).click()
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
@@ -132,7 +132,7 @@ test("generates a bounded two-a-day 9-day candidate", async ({ page }) => {
 test("keeps an evening two-a-day plan after selection and reload", async ({ page }) => {
   // Given
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
+  await page.getByRole("navigation", { name: "바로 시작하기" }).getByRole("button", { name: /^훈련 계획/u }).click()
   await page.getByRole("button", { name: /^5000m\b/u }).click()
   await page.getByRole("button", { name: /고등부/u }).click()
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
@@ -177,8 +177,8 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   })).toBe(true)
 
   await page.reload()
-  await expect(page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", {
-    name: /훈련 계획 저장된 계획/u,
+  await expect(page.getByRole("navigation", { name: "바로 시작하기" }).getByRole("button", {
+    name: "훈련 계획 만들기",
   })).toBeVisible()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
   await expectActivePlanHeading(page)
@@ -189,7 +189,7 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
 
 test("reads a detailed training notation without creating a plan", async ({ page }) => {
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
+  await page.getByRole("navigation", { name: "바로 시작하기" }).getByRole("button", { name: /^훈련 계획/u }).click()
   await page.getByRole("button", { name: "훈련표 표기 읽기" }).click()
   await page.getByRole("textbox", { name: "훈련표 표기" }).fill(
     "2×(10×400m) @5000m RP · r60″ STAND · R3′ STAND",
@@ -268,7 +268,7 @@ test("shows a truthful distance receipt and opens the real trend", async ({ page
     }]))
   })
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "경기기록" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
   await page.getByRole("button", { name: /훈련 후.*방금 끝낸/u }).click()
   await page.getByRole("textbox", { name: "거리 (km)" }).fill("8")
 

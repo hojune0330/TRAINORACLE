@@ -15,11 +15,11 @@ function requireTouchProject(projectName: string) {
 test("audits empty home and chooser touch actions", async ({ page }, testInfo) => {
   requireTouchProject(testInfo.project.name)
   await page.goto("/")
-  const services = page.getByRole("navigation", { name: "내 기록 살펴보기" })
+  const services = page.getByRole("navigation", { name: "바로 시작하기" })
   await auditTouchTargets(page, [
     { name: "empty-home.first-entry", locator: page.getByRole("button", { name: "오늘 기록 남기기" }), heightOnly: true },
     { name: "empty-home.create-plan", locator: page.getByRole("button", { name: "훈련 계획 만들기" }), heightOnly: true },
-    { name: "empty-home.journal", locator: services.getByRole("button", { name: /^내 일지/u }), heightOnly: true },
+    { name: "empty-home.learn", locator: services.getByRole("button", { name: "훈련 방법 배우기" }), heightOnly: true },
     { name: "empty-home.plan", locator: services.getByRole("button", { name: /^훈련 계획/u }), heightOnly: true },
     { name: "empty-home.more", locator: page.getByRole("button", { name: "더보기" }) },
   ])
@@ -32,8 +32,8 @@ test("audits empty home and chooser touch actions", async ({ page }, testInfo) =
     { name: "quick.outcome", locator: page.getByRole("button", { name: /^(운동을 마쳤어요|하던 운동을 일부만 했어요|가볍게 움직였어요|오늘은 쉬었어요|하려던 운동을 건너뛰었어요)$/u }), count: 5, heightOnly: true },
   ])
   await expectNoHorizontalOverflow(page)
-  // the chooser is reached via the "경기기록" tab bar button
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "경기기록" }).click()
+  // the chooser is reached via the "기록하기" tab bar button
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
   await auditTouchTargets(page, [
     { name: "chooser.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
     { name: "chooser.post", locator: page.getByRole("button", { name: /훈련 후/u }), heightOnly: true },
@@ -84,7 +84,7 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
   ])
   await expectNoHorizontalOverflow(page)
   if (testInfo.project.name === "touch-narrow") {
-    await page.screenshot({ path: "../.omo/evidence/mobile-touch-targets/task-5-320.png" })
+    await page.screenshot({ path: testInfo.outputPath("touch-targets-320.png") })
   }
 })
 

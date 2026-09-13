@@ -93,7 +93,7 @@ export function PublicProfilePage({ handle }: { readonly handle: string }) {
         {publicSnapshot === null ? (
           <p style={bodyStyle}>이 사용자는 친구 비교용 기록을 공개하지 않았어요.</p>
         ) : comparison === null ? (
-          <p style={bodyStyle}>내 기기에 경기 기록이나 구조화 일지를 남기면, 공개된 항목만 나란히 비교할 수 있어요.</p>
+          <p style={bodyStyle}>내 경기 기록이나 거리·시간을 남긴 일지가 있으면, 상대가 공개한 항목과 비교할 수 있어요.</p>
         ) : (
           <>
             <p style={bodyStyle}>{comparison.headline}</p>

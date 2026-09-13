@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test"
 
 test("writes direct and skipped post-session provenance without a test query", async ({ page }) => {
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "경기기록" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
   await page.getByRole("button", { name: /훈련 후/u }).click()
   await page.getByRole("textbox", { name: "거리 (km)" }).fill("8")
   await page.getByRole("button", { name: "6", exact: true }).click()
@@ -47,7 +47,7 @@ test("shows a legacy journal entry without allowing it into home totals or trend
   await expect(page.getByRole("button", { name: /훈련 후.*legacy tempo/u })).toBeVisible()
   const services = page.getByRole("navigation", { name: "내 기록 살펴보기" })
   await expect(services.getByRole("button", { name: /^내 일지/u })).toContainText("1일 · 1개의 기록")
-  await expect(services.getByRole("button", { name: /^분석/u })).toContainText("분석에 쓸 직접 입력 기록이 없어요")
+  await expect(page.getByRole("button", { name: "내 훈련 분석", exact: true })).toBeVisible()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석" }).click()
   const distance = page.getByRole("region", { name: "누적 거리와 변화" })
   await expect(distance.getByLabel(/이번 주, 집계 가능한 거리 기록 없음/u)).toBeVisible()

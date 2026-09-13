@@ -6,7 +6,7 @@ test.use({ serviceWorkers: "block" })
 test("explains the easy-session time difference while keeping the selected purpose identical", async ({ page }, testInfo) => {
   // Given: a mobile athlete starts a new LT-focused plan.
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "내 기록 살펴보기" })
+  await page.getByRole("navigation", { name: "바로 시작하기" })
     .getByRole("button", { name: /^훈련 계획/ })
     .click()
   await page.getByRole("button", { name: /^1500m/u }).click()

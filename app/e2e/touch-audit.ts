@@ -36,7 +36,7 @@ export async function undersizedInteractiveTargets(root: Locator) {
 
 export async function openEntry(page: Page, entryName: RegExp) {
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "경기기록" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
   await page.getByRole("button", { name: entryName }).click()
 }
 

@@ -1,5 +1,6 @@
 import { Award, Leaf, Share2, Sprout, TreePine, type LucideIcon } from "lucide-react"
 import type { EngagementSummary } from "../../domain/engagement"
+import { InfoDisclosure } from "../../components/InfoDisclosure"
 import { engagementBadges, engagementGarden, nextEngagementMilestone } from "../../domain/engagement-rewards"
 
 function isUntouched(summary: EngagementSummary) {
@@ -38,15 +39,16 @@ export function EngagementStrip({
   if (isUntouched(summary)) {
     return (
       <section className="engagement-strip engagement-strip--untouched" aria-label="기록 습관">
-        <p>
+        <p>{savedCount > 0 ? `남긴 기록 ${savedCount}건` : "기록하며 모은 포인트로 일지를 꾸며보세요."}</p>
+        <VisitAction summary={summary} notice={notice} onRecordVisit={onRecordVisit} />
+        <InfoDisclosure title="포인트는 어떻게 쌓이나요?"><p>
           {savedCount > 0
-            ? "기록은 이 기기에 저장됐어요. 포인트는 훈련·회복 항목을 남긴 날에 쌓여요. 메모 내용은 포인트 판단에 사용하지 않아요."
+            ? "포인트는 훈련·회복 항목을 남긴 날에 쌓여요. 메모 내용은 포인트 판단에 사용하지 않아요."
             : "첫 기록을 남기면 일지를 꾸밀 수 있어요. 훈련 기록 또는 몸 상태·회복 체크를 남긴 날마다 4P가 쌓여요."}
-          {" "}<span className="engagement-strip__nowrap">
+          {" "}<span>
             거리·속도·훈련 강도에는 점수를 매기지 않아요.
           </span>
-        </p>
-        <VisitAction summary={summary} notice={notice} onRecordVisit={onRecordVisit} />
+        </p></InfoDisclosure>
       </section>
     )
   }
@@ -123,24 +125,23 @@ export function EngagementStrip({
       </section>
       <VisitAction summary={summary} notice={notice} onRecordVisit={onRecordVisit} />
       <p className="engagement-strip__preservation">
-        <span>이 기기에 {savedCount}건 저장됨</span>
-        <span className="engagement-strip__nowrap">온라인 보관은 계정 연동 후</span>
+        <span>남긴 기록 {savedCount}건</span>
         {onOpenMore !== undefined && (
           <button type="button" aria-label="백업 안내 보기" onClick={onOpenMore}>
             백업 안내 보기
           </button>
         )}
       </p>
-      <p>
+      <InfoDisclosure title="포인트는 어떻게 쌓이나요?"><p>
         {savedCount === 0 && summary.journalDays > 0
           ? "일지를 삭제해도 이미 받은 일지 작성 포인트는 그대로 유지돼요."
           : summary.journalRecordedToday
           ? "오늘 기록한 날 4P도 반영됐어요. 다음 방문 때 편하게 이어가면 돼요."
           : "오늘 훈련 기록 또는 몸 상태·회복 체크를 남기면 기록한 날 4P가 한 번 쌓여요."}
-        {" "}<span className="engagement-strip__nowrap">
+        {" "}<span>
           거리·속도·훈련 강도에는 점수를 매기지 않아요.
         </span>
-      </p>
+      </p></InfoDisclosure>
     </section>
   )
 }

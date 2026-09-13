@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it } from "vitest"
 import type { EngagementSummary } from "../../domain/engagement"
@@ -20,8 +20,8 @@ describe("engagement copy", () => {
   it("shows participation, a gentle plant state, and points earned only by recording days", () => {
     render(<EngagementStrip summary={summary({ journalDays: 2, visitDays: 2, points: 10 })} savedCount={3} />)
 
-    expect(screen.getByText(/이 기기에 3건 저장됨/u)).toBeVisible()
-    expect(screen.getByText(/온라인 보관은 계정 연동 후/u)).toBeVisible()
+    expect(screen.getByText("남긴 기록 3건")).toBeVisible()
+    expect(screen.queryByText(/온라인 보관은 계정 연동 후/u)).toBeNull()
     expect(screen.getByText("기록한 날")).toBeVisible()
     expect(screen.getByText("2일")).toBeVisible()
     expect(screen.getByText("사용 가능")).toBeVisible()
@@ -44,6 +44,7 @@ describe("engagement copy", () => {
   it("rewards a recorded day without tying points to distance, speed, or intensity", () => {
     render(<EngagementStrip summary={summary({ journalDays: 1, points: 4 })} savedCount={1} />)
 
+    fireEvent.click(screen.getByText("포인트는 어떻게 쌓이나요?"))
     expect(screen.getByText(/몸 상태·회복 체크/u)).toBeVisible()
     expect(screen.getByText(/기록한 날 4P/u)).toBeVisible()
     expect(screen.getByText(/거리·속도·훈련 강도에는 점수를 매기지 않아요/u)).toBeVisible()
@@ -61,7 +62,8 @@ describe("engagement copy", () => {
   it("explains a saved memo-only or partial entry without calling it the first record", () => {
     render(<EngagementStrip summary={summary({})} savedCount={1} />)
 
-    expect(screen.getByText(/기록은 이 기기에 저장됐어요/u)).toBeVisible()
+    expect(screen.getByText("남긴 기록 1건")).toBeVisible()
+    fireEvent.click(screen.getByText("포인트는 어떻게 쌓이나요?"))
     expect(screen.getByText(/메모 내용은 포인트 판단에 사용하지 않아요/u)).toBeVisible()
     expect(screen.queryByText(/첫 기록을 남기면/u)).toBeNull()
   })
@@ -69,6 +71,7 @@ describe("engagement copy", () => {
   it("explains why earned journal points remain after every source journal is deleted", () => {
     render(<EngagementStrip summary={summary({ journalDays: 1, points: 4 })} savedCount={0} />)
 
+    fireEvent.click(screen.getByText("포인트는 어떻게 쌓이나요?"))
     expect(screen.getByText(/일지를 삭제해도.*포인트는 그대로 유지돼요/u)).toBeVisible()
   })
 
@@ -141,6 +144,8 @@ describe("engagement empty state", () => {
     render(<EngagementStrip summary={summary({})} savedCount={0} />)
 
     expect(screen.getByLabelText("기록 습관")).toBeVisible()
+    expect(screen.getByText("기록하며 모은 포인트로 일지를 꾸며보세요.")).toBeVisible()
+    fireEvent.click(screen.getByText("포인트는 어떻게 쌓이나요?"))
     expect(screen.getByText(/남긴 날마다 4P/u)).toBeVisible()
     expect(screen.getByText(/첫 기록을 남기면 일지를 꾸밀 수 있어요/u)).toBeVisible()
   })

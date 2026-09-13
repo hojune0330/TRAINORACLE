@@ -9,8 +9,8 @@ describe("personal oracle panel", () => {
   it("shows a useful empty explanation and keeps the evidence boundary expandable", () => {
     render(<PersonalOraclePanel observations={[]} today="2026-08-28" planState={null} />)
 
-    const region = screen.getByRole("region", { name: "지금까지 기록으로 알 수 있는 것" })
-    expect(within(region).getByText("기록을 기다리는 중")).toBeVisible()
+    const region = screen.getByRole("region", { name: "내 훈련 요약" })
+    expect(within(region).getByText("기록 없음")).toBeVisible()
     expect(within(region).getByText("최근 달린 거리")).toBeVisible()
     expect(within(region).getByText("훈련 목적의 구성")).toBeVisible()
     expect(within(region).getByText("계획과 실행 표시")).toBeVisible()
@@ -26,6 +26,8 @@ describe("personal oracle panel", () => {
     render(<PersonalOraclePanel observations={[]} today="2026-08-28" planState={stateFixture()} />)
 
     expect(screen.getByText(/예정 1회 중 완료 표시 0회/u)).toBeVisible()
+    expect(screen.getByText(/완료 표시는 실제 일지와 다른 기록/u)).not.toBeVisible()
+    fireEvent.click(screen.getByText("계획과 실행 표시 · 근거 보기"))
     expect(screen.getByText(/완료 표시는 실제 일지와 다른 기록/u)).toBeVisible()
     expect(screen.queryByText(/훈련 효과가/u)).not.toBeInTheDocument()
   })

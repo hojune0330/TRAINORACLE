@@ -1,4 +1,4 @@
-import { CalendarPlus, CheckCircle2, ChevronRight, Ellipsis, PencilLine, Plus } from "lucide-react"
+import { BookOpen, CalendarPlus, ChartNoAxesCombined, CheckCircle2, ChevronRight, Ellipsis, NotebookPen, PencilLine, Plus } from "lucide-react"
 import type { ReactNode } from "react"
 import type { TrainingHomeViewModel } from "../../domain/home-view-model"
 import { prescriptionLabel, sessionLabel, sessionSlotLabel } from "../plan-beta/labels"
@@ -8,6 +8,7 @@ import { deriveSequenceTotals } from "@impl/prescription/sequence"
 import type { LogEntryType } from "../log-entry/shared"
 import { decorationCatalogItem } from "../../domain/decoration-catalog"
 import { MINJI_JOURNAL_PAGES } from "../minji/minji-journal-data"
+import { InfoDisclosure } from "../../components/InfoDisclosure"
 
 const MINJI_HOME_PREVIEW = MINJI_JOURNAL_PAGES[0]
 const MINJI_HOME_PREVIEW_DECORATION = MINJI_HOME_PREVIEW === undefined
@@ -37,6 +38,7 @@ type TrainingHomeProps = {
   readonly onOpenPlan?: () => void
   readonly onOpenTrends?: () => void
   readonly onOpenMore?: () => void
+  readonly onOpenContent?: () => void
   /** 헤더 우측 계정 진입 버튼 슬롯 — 로그인 발견성 개선(2026-08-27). 계정 기능 OFF면 null. */
   readonly accountEntry?: ReactNode
   readonly todayContext?: ReactNode
@@ -53,6 +55,7 @@ export function TrainingHome({
   onOpenPlan,
   onOpenTrends,
   onOpenMore,
+  onOpenContent,
   accountEntry,
   todayContext,
   recentJournal,
@@ -93,8 +96,8 @@ export function TrainingHome({
           <div className="training-home__today-complete-status">
             <CheckCircle2 aria-hidden="true" size={22} />
             <span>
-              <strong>{model.todayMessage}</strong>
-              <small>{model.todayRecordCount}개의 기록이 이 기기에 저장됐어요.</small>
+              <strong>오늘 기록을 남겼어요.</strong>
+              <small>오늘 남긴 기록 {model.todayRecordCount}개</small>
             </span>
           </div>
           {model.briefing !== "" && (
@@ -126,7 +129,7 @@ export function TrainingHome({
           >
             하루 마무리 기록하기
           </button>
-          {todayContext}
+          {todayContext && <InfoDisclosure title="기분·몸 상태·날씨 남기기">{todayContext}</InfoDisclosure>}
           {model.briefing !== "" && (
             <p className="training-home__briefing" aria-label="아침 브리핑">{model.briefing}</p>
           )}
@@ -151,18 +154,11 @@ export function TrainingHome({
         <section className="training-home__intro" aria-labelledby="training-home-title">
           {model.homeMode === "WELCOME" ? (
             <>
-              <h1 id="training-home-title" className="training-home__welcome-title">
-                <span className="training-home__welcome-title-phrase">달리기 일지를</span>{" "}
-                <span className="training-home__welcome-title-phrase">남기고,</span>{" "}
-                <span className="training-home__welcome-title-phrase">내 기록으로</span>{" "}
-                <span className="training-home__welcome-title-phrase">훈련 계획을 받아요.</span>
-              </h1>
-              <p className="training-home__trust">모든 데이터는 이 기기에만 저장돼요.</p>
+              <h1 id="training-home-title" className="training-home__welcome-title">오늘 운동을 기록해요</h1>
             </>
           ) : (
             <>
               <h1 id="training-home-title">{model.homeMode === "TRAINING" ? "오늘의 훈련" : "내 기록"}</h1>
-              <p>{model.homeMode === "TRAINING" ? "계획된 훈련을 확인하고, 오늘의 상태를 남겨요." : "오늘을 남기고, 필요할 때 훈련을 더 자세히 봐요."}</p>
             </>
           )}
         </section>
@@ -175,19 +171,23 @@ export function TrainingHome({
                 <span>오늘 기록 남기기</span>
                 <ChevronRight aria-hidden="true" size={18} />
               </button>
-              {/* 최종 폴리시 D1: 한 화면 한 주행동. "일지 먼저" 철학에 따라
-               * 기록 CTA만 필 프라이머리, 계획 CTA는 아웃라인 세컨더리로 위계를 준다. */}
-              <button className="training-home__secondary" type="button" onClick={onOpenPlan}>
-                <CalendarPlus aria-hidden="true" size={19} />
-                <span>훈련 계획 만들기</span>
-                <ChevronRight aria-hidden="true" size={18} />
-              </button>
             </div>
+          </>
+        )}
+        {model.homeMode === "TRAINING" && nextTrainingSection}
+        {model.homeMode !== "WELCOME" && todaySection}
+        <nav className="training-home__intents" aria-label="바로 시작하기">
+          <button type="button" onClick={onOpenTrends}><ChartNoAxesCombined size={19} aria-hidden="true" /><span>내 훈련 분석</span></button>
+          <button type="button" onClick={onOpenPlan}><CalendarPlus size={19} aria-hidden="true" /><span>훈련 계획 만들기</span></button>
+          <button type="button" onClick={onOpenGuide}><NotebookPen size={19} aria-hidden="true" /><span>예시 훈련 보기</span></button>
+          {onOpenContent && <button type="button" onClick={onOpenContent}><BookOpen size={19} aria-hidden="true" /><span>훈련 방법 배우기</span></button>}
+        </nav>
+        {model.homeMode === "WELCOME" && (
             <section
               className="training-home__example training-home__example--welcome"
               aria-labelledby="training-home-example"
             >
-              <div id="training-home-example" className="training-home__label">이렇게 쓰여요</div>
+              <div id="training-home-example" className="training-home__label">일지 예시</div>
               <button type="button" onClick={onOpenGuide} aria-label="민지의 예시 일지 보기">
                 {MINJI_HOME_PREVIEW !== undefined && (
                   <span className="training-home__example-preview" aria-hidden="true">
@@ -209,20 +209,15 @@ export function TrainingHome({
                 <ChevronRight aria-hidden="true" size={18} />
               </button>
             </section>
-          </>
         )}
       </div>
 
-      {model.homeMode === "TRAINING" && nextTrainingSection}
-      {model.homeMode !== "WELCOME" && todaySection}
-      {installSuggestion}
       {model.homeMode !== "WELCOME" && recentJournal}
 
-      <nav className="training-home__services" aria-label="내 기록 살펴보기">
+      {model.homeMode !== "WELCOME" && <nav className="training-home__services" aria-label="내 기록 살펴보기">
         <ServiceRow label="내 일지" detail={`${model.journalSummary} · 달력 · 하루 기록`} onClick={onOpenArchive} />
-        <ServiceRow label="훈련 계획" detail={model.planSummary} onClick={onOpenPlan} />
-        <ServiceRow label="분석" detail={model.analysisSummary} onClick={onOpenTrends} />
-      </nav>
+      </nav>}
+      {installSuggestion}
     </>
   )
 }

@@ -47,7 +47,7 @@ it("keeps confirmed guest rewards and spending on the device ledger with the acc
   render(<Home />)
   const strip = screen.getByRole("region", { name: "기록 습관" })
   expect(within(strip).getByText("3P")).toBeVisible()
-  expect(screen.getByText(/이 기기의 게스트 포인트예요/)).toBeVisible()
+  expect(screen.getByText("게스트 포인트는 어디에 보관되나요?")).toBeVisible()
   await userEvent.click(screen.getByRole("button", { name: "오늘 방문 확인 +1P" }))
   expect(within(strip).getByText("4P")).toBeVisible()
   expect(loadEngagementSummary("2026-09-08").points).toBe(6)
@@ -70,7 +70,7 @@ it("does not read or write the guest ledger while auth resolves or fails; explic
   expect(localStorage.getItem(ENGAGEMENT_STORAGE_KEY)).toBe(raw)
   expect(mocks.request).not.toHaveBeenCalled()
   act(() => setAccountAuthState("GUEST"))
-  expect(screen.getByText(/이 기기의 게스트 포인트예요/)).toBeVisible()
+  expect(screen.getByText("게스트 포인트는 어디에 보관되나요?")).toBeVisible()
   expect(screen.getByText("3P")).toBeVisible()
 })
 
@@ -83,7 +83,7 @@ it("does not fall back from an account reward failure even after a prior guest s
   expect(loadEngagementSummary("2026-09-08").points).toBe(0)
   expect(loadDecorationState().spentPoints).toBe(0)
   expect(localStorage.getItem(ENGAGEMENT_STORAGE_KEY)).toBe(raw)
-  expect(screen.queryByText(/이 기기의 게스트 포인트예요/)).not.toBeInTheDocument()
+  expect(screen.queryByText("게스트 포인트는 어디에 보관되나요?")).not.toBeInTheDocument()
 })
 
 it("renders verified asynchronous credit and refreshes debit after the decoration event", async () => {

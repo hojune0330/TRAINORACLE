@@ -126,6 +126,9 @@ describe("active plan first-view overview", () => {
       />,
     )
 
+    expect(screen.getByRole("alert")).toHaveTextContent("계정에는 저장하지 못했어요")
+    expect(screen.getByRole("alert").closest("details")).toBeNull()
+    expect(screen.getByRole("button", { name: "계정에 다시 저장" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "계정에 다시 저장" }))
     expect(retry).toHaveBeenCalledTimes(1)
   })

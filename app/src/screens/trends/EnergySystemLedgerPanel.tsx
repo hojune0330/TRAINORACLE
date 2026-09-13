@@ -15,6 +15,7 @@ import type { EnergySystemKey } from "../../domain/energy-system-taxonomy"
 import type { StructuredJournalObservation } from "../../domain/journal-observation"
 import type { PlanBetaState } from "../../domain/plan-beta-schema"
 import { AccessibleTrendTable } from "./AccessibleTrendTable"
+import { InfoDisclosure } from "../../components/InfoDisclosure"
 
 const PERIODS: readonly { readonly value: EnergyLedgerPeriod; readonly label: string }[] = [
   { value: "RECENT_4_WEEKS", label: "4주" },
@@ -109,7 +110,7 @@ export function EnergySystemLedgerPanel({
         </div>
       </div>
       <p className="energy-ledger__intro">
-        몸을 측정한 결과가 아니라, 훈련 후 일지에서 직접 고른 주된 목적을 모아 보여줘요.
+        일지에서 고른 훈련 목적별 횟수예요.
       </p>
 
       <div className="energy-ledger__periods app-compact-tabs" aria-label="에너지 시스템 분석 기간">
@@ -162,15 +163,14 @@ export function EnergySystemLedgerPanel({
         }))}
       />
 
-      <p className="energy-ledger__coverage">
-        직접 선택 {ledger.includedSourceCount}건 · 제외 {ledger.excludedSourceCount}건 · 중복 사본 {ledger.duplicateSourceCount}개 · 충돌 {ledger.conflictingSourceCount}건
-      </p>
-      <p className="energy-ledger__boundary">시간과 거리는 해당 목적으로 기록한 세션의 합계예요. 준비·회복·정리가 포함될 수 있고, 한 대사 경로만 사용한 시간은 아니에요. RPE는 입력된 기록의 단순 평균이에요.</p>
+      <InfoDisclosure title={`계산 기준 · 기록 ${ledger.includedSourceCount}건 사용 · ${ledger.excludedSourceCount}건 제외`}>
+        <p>중복된 기록 {ledger.duplicateSourceCount}개 · 내용이 서로 다른 기록 {ledger.conflictingSourceCount}건</p>
+        <p>몸을 측정한 결과가 아니라 일지에서 직접 고른 훈련 목적을 모은 값이에요. 실제 에너지 공급 비율은 아니에요.</p>
+        <p>시간과 거리는 해당 목적으로 기록한 세션의 합계예요. 준비·회복·정리가 포함될 수 있고, 한 대사 경로만 사용한 시간은 아니에요. RPE는 입력된 기록의 단순 평균이에요.</p>
+        <p>계획, 완료 표시, 실제 일지 수치는 서로 다른 기록이에요. 이 표만으로 효과·부족·위험을 판단하거나 다음 계획을 자동 변경하지 않아요.</p>
+      </InfoDisclosure>
 
       <CurrentPlanEnergy plan={plan} />
-      <p className="energy-ledger__boundary">
-        계획, 완료 표시, 실제 일지 수치는 서로 다른 기록이에요. 이 표만으로 효과·부족·위험을 판단하거나 다음 계획을 자동 변경하지 않아요.
-      </p>
     </section>
   )
 }

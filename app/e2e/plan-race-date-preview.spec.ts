@@ -15,7 +15,7 @@ test.beforeAll(() => {
 
 async function reachRaceDate(page: Page): Promise<void> {
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "내 기록 살펴보기" })
+  await page.getByRole("navigation", { name: "바로 시작하기" })
     .getByRole("button", { name: /^훈련 계획/u }).click()
   await page.getByRole("button", { name: /^1500m/u }).click()
   await page.getByRole("button", { name: /고등부/u }).click()

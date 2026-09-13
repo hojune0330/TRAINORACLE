@@ -22,7 +22,7 @@ function tcxFor(date: string): string {
 
 async function openImport(page: import("@playwright/test").Page) {
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "경기기록" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
   await page.getByTestId("open-import").click()
   await expect(page.getByTestId("import-privacy-notice")).toBeVisible()
 }
@@ -31,8 +31,12 @@ test("imports a watch TCX file into the local journal and marks its source", asy
   const today = new Date().toISOString().slice(0, 10)
   await openImport(page)
 
-  // 자동 연동을 되는 척하지 않는다.
-  await expect(page.getByTestId("oauth-status")).toContainText("아직 시점을 약속할 수 없어요")
+  // 자동 연동 준비 상태는 보이고, 자세한 일정 안내는 눌러 확인한다.
+  const integrationStatus = page.getByTestId("oauth-status")
+  await expect(integrationStatus.locator("summary")).toHaveText("가민·WHOOP·스트라바 자동 연동은 준비 중이에요")
+  await expect(integrationStatus.locator("details")).not.toHaveAttribute("open")
+  await integrationStatus.locator("summary").click()
+  await expect(integrationStatus).toContainText("시작 날짜는 아직 정해지지 않았어요")
 
   await page.getByLabel(/내보낸 활동 파일/u).setInputFiles({
     name: "garmin-activity.tcx",
@@ -81,7 +85,10 @@ test("counts an imported journal without treating its numbers as analysis eviden
   await expect(page.getByTestId("imported-chip").first()).toBeVisible()
   const services = page.getByRole("navigation", { name: "내 기록 살펴보기" })
   await expect(services.getByRole("button", { name: /^내 일지/u })).toContainText("1일 · 1개의 기록")
-  await expect(services.getByRole("button", { name: /^분석/u })).toContainText("분석에 쓸 직접 입력 기록이 없어요")
+  await page.getByRole("button", { name: "내 훈련 분석", exact: true }).click()
+  await expect(page.getByTestId("trends-analysis-exclusion").locator("summary")).toContainText("가져온 기록 1개")
+  await page.getByTestId("trends-analysis-exclusion").locator("summary").click()
+  await expect(page.getByTestId("trends-excluded-imported")).toContainText("외부 수치는 아직 분석에 넣지 않았어요")
 })
 
 test("shows a duplicate warning unchecked instead of merging silently", async ({ page }) => {

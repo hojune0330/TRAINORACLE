@@ -5,6 +5,7 @@ import type { ActivityParseResult } from "../../domain/import/activity-file"
 import type { ImportDraft, ImportSaveIntent, ImportSaveResult } from "../../domain/import/import-draft"
 import { mono, primaryBtn, secondaryBtn } from "./styles"
 import { TermHelp } from "../../components/TermHelp"
+import { InfoDisclosure } from "../../components/InfoDisclosure"
 import { accountJournalRecordsEnabled } from "../../domain/account/account-journal-record-service"
 
 export type ReadFailure = "unreadable" | "empty" | "too-large" | "cancelled" | "account-unavailable" | null
@@ -82,13 +83,10 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
         </div>
       )}
 
-      <SectionLb>자동 연동은 준비 중</SectionLb>
       <div data-testid="oauth-status" style={{ border: "1px dashed var(--line)", padding: "12px 14px" }}>
-        <div style={{ ...mono, fontSize: 10.5, color: "var(--ink-2)", lineHeight: 1.7 }}>
-          가민·WHOOP·스트라바 계정을 연결해 자동으로 받아오는 기능은 각 서비스의
-          승인·계약 조건 때문에 <b>아직 시점을 약속할 수 없어요</b>. 되는 척하지
-          않고, 준비되면 알려 드릴게요. 연동은 언제나 <b>읽기 전용</b>이에요.
-        </div>
+        <InfoDisclosure title="가민·WHOOP·스트라바 자동 연동은 준비 중이에요">
+          <p>지금은 파일을 골라 기록을 가져올 수 있어요. 계정을 연결해 자동으로 받는 기능의 시작 날짜는 아직 정해지지 않았어요.</p>
+        </InfoDisclosure>
       </div>
     </div>
   )

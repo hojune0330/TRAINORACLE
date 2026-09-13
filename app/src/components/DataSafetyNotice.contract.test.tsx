@@ -3,7 +3,7 @@
 // - 계정 flag OFF(테스트 env): CTA 없이 내보내기 안내로 폴백
 // - 사실 고지 문구 포함, 협박형 카운트다운/손실 문구 없음
 import { afterEach, describe, expect, it } from "vitest"
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 afterEach(cleanup)
 import React from "react"
@@ -13,7 +13,10 @@ describe("DataSafetyNotice", () => {
   it("기기 저장의 한계를 사실대로 고지한다", () => {
     render(<DataSafetyNotice />)
     const notice = screen.getByTestId("data-safety-notice")
-    expect(notice.textContent).toContain("이 기기에 먼저 저장돼요")
+    const help = screen.getByText("내 일지는 어디에 보관되나요?")
+    expect(help.closest("details")).not.toHaveAttribute("open")
+    fireEvent.click(help)
+    expect(notice.textContent).toContain("로그인하지 않은 기록은 이 기기에 남아요")
     expect(notice.textContent).not.toContain("이 기기에만 있어요")
     expect(notice.textContent).toContain("지워질 수 있어요")
   })
@@ -27,7 +30,7 @@ describe("DataSafetyNotice", () => {
     render(<DataSafetyNotice onOpenAccount={() => {}} />)
     // 테스트 환경은 VITE_SUPABASE_* 미설정 → flag OFF
     expect(screen.queryByRole("button", { name: /계정 연동/ })).toBeNull()
-    expect(screen.getByTestId("data-safety-notice").textContent).toContain("더보기의 백업·복원")
+    expect(screen.getByTestId("data-safety-notice").textContent).toContain("백업·복원에서 사본을 보관")
   })
 
   it("협박형 문구(손실 임박·카운트다운)를 쓰지 않는다", () => {

@@ -21,6 +21,7 @@ import { buildEngagementSharePayload } from "../domain/engagement-rewards"
 import { DECORATION_CATALOG, loadDecorationState } from "../domain/decorations"
 import { painLevelsRequireReview } from "../safety/memo-safety"
 import { AccountEntryButton } from "../components/AccountEntryButton"
+import { InfoDisclosure } from "../components/InfoDisclosure"
 import { DailyContextTags } from "./home/DailyContextTags"
 import { DeviceJournal } from "./home/DeviceJournal"
 import { DecorationShop } from "./home/DecorationShop"
@@ -242,6 +243,7 @@ export function Home({
         onOpenPlan={onOpenPlan}
         onOpenTrends={onOpenTrends}
         onOpenMore={onOpenMore}
+        onOpenContent={onOpenContent}
         accountEntry={<AccountEntryButton onOpenAccount={onOpenAccount} />}
         todayContext={<DailyContextTags date={today} />}
         installSuggestion={<InstallShortcutSuggestion eligible={entries.length > 0 || homePlan != null || accountCurrent != null || accountAuthState() === "ACCOUNT"} returnFocusTo={() => document.querySelector<HTMLElement>(".training-home__more")} />}
@@ -263,9 +265,7 @@ export function Home({
         />
       )}
 
-      {(entries.length > 0 || homePlan !== null) && (
-        <TrainingContentTeaser onOpen={onOpenContent} />
-      )}
+      <TrainingContentTeaser onOpen={onOpenContent} />
 
       {(entries.length > 0 || homePlan !== null) && (
         <EnergySystemLedgerPanel
@@ -278,7 +278,7 @@ export function Home({
       )}
 
       {painReviewDates.length > 0 && <PainReview dates={painReviewDates} />}
-      {accountAuthState() === "GUEST" && <p role="note">이 기기의 게스트 포인트예요. 계정 포인트와 별도로 보관해요.</p>}
+      {accountAuthState() === "GUEST" && <div className="training-home__support-note"><InfoDisclosure title="게스트 포인트는 어디에 보관되나요?"><p>로그인하지 않고 모은 포인트는 이 기기에 남아요. 계정 포인트와는 별도로 보관해요.</p></InfoDisclosure></div>}
       <EngagementStrip
         summary={engagement}
         savedCount={entries.length}

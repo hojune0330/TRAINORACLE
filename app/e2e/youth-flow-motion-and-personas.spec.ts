@@ -40,7 +40,7 @@ test("moves from a choice to the next question and gives a clear journal save co
   const nextAnimation = await page.locator(".plan-intake").evaluate((element) => getComputedStyle(element).animationName)
   expect(nextAnimation).toBe(testInfo.project.name === "reduced-motion" ? "none" : "flow-stage-forward")
 
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "경기기록" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
   await page.getByRole("button", { name: /훈련 후/u }).click()
   await expect(page.getByRole("heading", { name: /훈련 후/u })).toBeVisible()
   await page.getByRole("button", { name: /^저장/u }).click()
