@@ -4,8 +4,9 @@ import { createRecoveryCode, decryptPrivateNote, isValidRecoveryCode } from "../
 import { loadSessionRecoveryCode, saveSessionRecoveryCode } from "../../domain/account/private-note-sync"
 import { activeLocalAccount } from "../../domain/account/local-journal-ownership"
 import { journalStorage } from "../../domain/journal-local-storage"
-import { loadEntries } from "../../domain/journal-store"
+import { loadEntries, loadJournalEntriesSnapshot } from "../../domain/journal-store"
 import { loadPrivateMemoVault } from "../../domain/private-memo-vault"
+import { readVaultJournalStorageSnapshot } from "../../domain/private-memo-vault-storage"
 import { inputStyle } from "./input-style"
 
 // This only prepares the existing local encryption path; it never saves the form.
@@ -22,16 +23,21 @@ export function PrivateMemoSaveSetup({ onReady }: { readonly onReady: () => void
 
   const records = () => {
     const storage = journalStorage()
+    const snapshot = storage === null ? null : readVaultJournalStorageSnapshot(storage)
     const vault = storage === null ? null : loadPrivateMemoVault(storage)
-    if (vault === null) throw new Error("storage-unavailable")
-    return loadEntries().flatMap(entry => {
-      const record = vault.records[entry.id]
-      return record ? [record] : []
-    })
+    const journal = loadJournalEntriesSnapshot()
+    if (storage === null || snapshot === null || vault === null || journal.readStatus !== "complete"
+      || journal.raw !== snapshot.journal) throw new Error("storage-unavailable")
+    const visible = new Set(loadEntries().map(entry => entry.id))
+    // Unknown/hidden/orphan ciphertext is not an empty vault. Never decrypt another scope.
+    if (Object.keys(vault.records).some(id => !visible.has(id))) throw new Error("vault-scope-unresolved")
+    const current = readVaultJournalStorageSnapshot(storage)
+    if (!current || current.vault !== snapshot.vault || current.journal !== snapshot.journal) throw new Error("storage-changed")
+    return { storage, snapshot, encrypted: Object.values(vault.records) }
   }
   const create = () => {
     try {
-      if (records().length > 0) {
+      if (records().encrypted.length > 0) {
         setNotice("이미 암호화된 메모가 있어요. 보관한 기존 복구 코드를 입력해 주세요. 새 코드로 기존 메모를 열 수는 없어요.")
         return
       }
@@ -45,11 +51,16 @@ export function PrivateMemoSaveSetup({ onReady }: { readonly onReady: () => void
     const normalized = code.trim().toUpperCase()
     if (!isValidRecoveryCode(normalized)) { setNotice("복구 코드 전체를 확인해 주세요."); return }
     const owner = activeLocalAccount()
+    const previousCode = loadSessionRecoveryCode()
     setBusy(true); setNotice(null)
     try {
       // A valid-looking but wrong code must not replace the key for existing notes.
-      for (const record of records()) await decryptPrivateNote(record.encrypted, normalized)
+      const checked = records()
+      for (const record of checked.encrypted) await decryptPrivateNote(record.encrypted, normalized)
       if (!mounted.current || activeLocalAccount() !== owner) return
+      const current = readVaultJournalStorageSnapshot(checked.storage)
+      if (!current || current.vault !== checked.snapshot.vault || current.journal !== checked.snapshot.journal
+        || loadSessionRecoveryCode() !== previousCode) throw new Error("storage-changed")
       if (!saveSessionRecoveryCode(normalized)) throw new Error("session-unavailable")
       setReady(true); setCode(""); onReady()
     } catch {
@@ -68,7 +79,7 @@ export function PrivateMemoSaveSetup({ onReady }: { readonly onReady: () => void
       <button type="button" onClick={create} style={{ minHeight: 44 }}><KeyRound size={16} aria-hidden="true" /> 처음 사용해요 · 코드 만들기</button>
       <label htmlFor={id} style={{ display: "block", marginTop: 8 }}>{created ? "보관할 복구 코드" : "기존 복구 코드"}</label>
       <input id={id} value={code} readOnly={created} type={created ? "text" : "password"} autoComplete="off" spellCheck={false}
-        onChange={event => setCode(event.target.value)} style={{ ...inputStyle(), fontSize: 14 }} />
+        onChange={event => setCode(event.target.value)} style={{ ...inputStyle(), fontSize: 16 }} />
       {created && <>
         <label style={{ display: "flex", gap: 8, alignItems: "center", minHeight: 44 }}>
           <input type="checkbox" checked={kept} onChange={event => setKept(event.target.checked)} /> 복구 코드를 따로 보관했어요

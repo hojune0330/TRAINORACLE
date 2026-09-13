@@ -19,8 +19,11 @@ incorrectly presented as storage capacity or browser blocking.
 - Inline recovery setup preserves the form and private purpose. It never silently
   downgrades privacy, writes plaintext, or saves the journal automatically.
 - New codes require explicit confirmation of separate safekeeping before use.
-- Visible existing vault records prevent creating an unrelated new key. Existing
-  codes are checked by real decryption before activation. Scope change/unmount
+- Existing vault records prevent creating an unrelated new key. Incomplete journal
+  reads and hidden/orphan ciphertext reject setup rather than pretending the vault
+  is empty. Another scope's ciphertext is not decrypted. Existing codes are checked
+  by real decryption before activation. Journal/vault snapshots and the previous
+  session code are rechecked after asynchronous verification. Scope change/unmount
   aborts activation; no user key or memo is sent to external services or logged.
 - Account-enabled storage bypasses this local recovery setup and retains its
   existing account encryption and acknowledgement contract.
@@ -28,7 +31,7 @@ incorrectly presented as storage capacity or browser blocking.
 
 ## Verification
 
-- Hotfix checkout: 13 unit/contract files, 178/178 tests passed.
+- Hotfix checkout after review fixes: 13 unit/contract files, 180/180 tests passed.
 - Hotfix production build and TypeScript: passed. Existing chunk-size and font
   resolution warnings remain, not introduced by this patch.
 - Hotfix production-browser scenario: 4/4 passed, desktop Chromium, mobile Chromium,
@@ -41,6 +44,11 @@ incorrectly presented as storage capacity or browser blocking.
   to fail. Guard restored, suite passed again.
 - Wrong valid-format code rejects without modifying the existing vault. Correct
   original code subsequently unlocks preparation; save remains a separate action.
+- Luna max independent static review found two gaps: orphan/hidden ciphertext
+  mistakenly treated as empty, and no snapshot recheck after asynchronous decryption.
+  Both were reproduced by new tests against 527e327 before being patched. Those two
+  named tests pass after the patch; this does not claim a global transaction spanning
+  preparation and a later, separate journal save or replace existing writer guards.
 - Initial navigation-worktree browser attempts failed because its preview was not
   running, then because the development-only react-grab overlay intercepted clicks.
   Neither was counted as a production save failure. Production build passed.

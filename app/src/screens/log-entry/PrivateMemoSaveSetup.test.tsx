@@ -8,9 +8,10 @@ import { createRecoveryCode } from "../../domain/account/private-note-crypto"
 import { clearSessionRecoveryCode, loadSessionRecoveryCode, saveSessionRecoveryCode } from "../../domain/account/private-note-sync"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 import { StickyBar } from "./StickyBar"
+import * as privateCrypto from "../../domain/account/private-note-crypto"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); clearSessionRecoveryCode() })
-afterEach(() => { cleanup(); localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); clearSessionRecoveryCode() })
+afterEach(() => { cleanup(); vi.restoreAllMocks(); localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); clearSessionRecoveryCode() })
 
 it("keeps the race input and explains missing encryption setup instead of blaming storage capacity", async () => {
   const done = vi.fn()
@@ -74,4 +75,47 @@ it("never diagnoses storage capacity or asks users to delete data for an unclass
   render(<StickyBar error />)
   expect(screen.getByRole("alert")).toHaveTextContent("새로고침하거나 앱 데이터를 지우지 말고")
   expect(screen.getByRole("alert")).not.toHaveTextContent("가득")
+})
+
+async function seedPrivateVault() {
+  const code = createRecoveryCode()
+  saveSessionRecoveryCode(code)
+  expect((await savePrivateEntry({ id: "private-fixture", kind: "race", date: "2026-09-13",
+    savedAt: "2026-09-13T00:00:00.000Z", syncState: "local", stage: "pre", record: "", rank: "", result: "",
+    memo: "synthetic-existing", memoPurpose: "PRIVATE_SELF_ONLY" })).ok).toBe(true)
+  clearSessionRecoveryCode()
+  return code
+}
+
+it("does not treat orphan ciphertext as an empty vault or activate a replacement key", async () => {
+  await seedPrivateVault()
+  localStorage.removeItem("trainoracle.journal.v1")
+  const vault = localStorage.getItem("trainoracle.private-memo.v1")
+  const ready = vi.fn()
+  render(<PrivateMemoSaveSetup onReady={ready} />)
+  fireEvent.click(screen.getByRole("button", { name: /처음 사용해요/ }))
+  expect(screen.queryByLabelText("보관할 복구 코드")).not.toBeInTheDocument()
+  expect(screen.getByRole("alert")).toBeVisible()
+  fireEvent.change(screen.getByLabelText("기존 복구 코드"), { target: { value: createRecoveryCode() } })
+  fireEvent.click(screen.getByRole("button", { name: "이 코드로 저장 준비" }))
+  await waitFor(() => expect(screen.getByRole("alert")).toBeVisible())
+  expect(ready).not.toHaveBeenCalled()
+  expect(loadSessionRecoveryCode()).toBeNull()
+  expect(localStorage.getItem("trainoracle.private-memo.v1")).toBe(vault)
+})
+
+it("rejects activation when the journal changes during asynchronous key verification", async () => {
+  const code = await seedPrivateVault()
+  const decrypt = privateCrypto.decryptPrivateNote
+  vi.spyOn(privateCrypto, "decryptPrivateNote").mockImplementationOnce(async (...args) => {
+    localStorage.setItem("trainoracle.journal.v1", "[]")
+    return decrypt(...args)
+  })
+  const ready = vi.fn()
+  render(<PrivateMemoSaveSetup onReady={ready} />)
+  fireEvent.change(screen.getByLabelText("기존 복구 코드"), { target: { value: code } })
+  fireEvent.click(screen.getByRole("button", { name: "이 코드로 저장 준비" }))
+  await screen.findByRole("alert")
+  expect(ready).not.toHaveBeenCalled()
+  expect(loadSessionRecoveryCode()).toBeNull()
 })
