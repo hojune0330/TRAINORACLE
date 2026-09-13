@@ -38,6 +38,7 @@ import { pruneUnusedJournalDecorations } from "./journal-decoration-lifecycle"
 import { isJournalVisible } from "./account/local-journal-ownership"
 
 const KEY = "trainoracle.journal.trash.v1"
+export const JOURNAL_TRASH_STORAGE_KEY = KEY
 
 /** 보관 기간 — 소유자 결정: 30일 */
 export const TRASH_RETENTION_DAYS = 30
@@ -83,6 +84,19 @@ function parseTrashed(value: unknown): TrashedEntry | null {
   if (record.privateMemo === undefined) return { entry, deletedAt: record.deletedAt }
   const privateMemo = parsePrivateMemoRecord(record.privateMemo)
   return privateMemo === null ? null : { entry, deletedAt: record.deletedAt, privateMemo }
+}
+
+// Recovery must not mistake unreadable or retained ciphertext for an empty vault.
+export function readTrashForRecovery(target: Storage): { raw: string | null; items: TrashedEntry[] } | null {
+  try {
+    const raw = target.getItem(KEY)
+    if (raw === null) return { raw, items: [] }
+    const values: unknown = JSON.parse(raw)
+    if (!Array.isArray(values)) return null
+    const items = values.map(parseTrashed)
+    if (items.some(item => item === null)) return null
+    return { raw, items: items as TrashedEntry[] }
+  } catch { return null }
 }
 
 function write(items: readonly TrashedEntry[]): boolean {

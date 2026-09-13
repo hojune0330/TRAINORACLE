@@ -101,6 +101,14 @@ export function PurposeScopedMemoField({
   readonly rows?: number
 }) {
   const accountEnabled = accountJournalRecordsEnabled()
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null)
+  const revealMemo = () => {
+    const field = textareaRef.current
+    const saveBar = field?.closest(".app-scroll-region")?.querySelector(".entry-sticky-bar")
+    if (field && saveBar && field.getBoundingClientRect().bottom > saveBar.getBoundingClientRect().top - 8) {
+      field.scrollIntoView?.({ block: "center", behavior: "auto" })
+    }
+  }
   const explanationId = `${fieldId}-purpose-explanation`
   const errorId = `${fieldId}-purpose-error`
   const describedBy = controller.purposeError === null
@@ -138,9 +146,6 @@ export function PurposeScopedMemoField({
       <div id={explanationId} style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)", lineHeight: 1.55, marginBottom: 8 }}>
         {purposeExplanation(controller.purpose, accountEnabled)}
       </div>
-      {!accountEnabled && controller.purpose === MEMO_PURPOSE.privateSelfOnly && controller.text.trim() !== "" && (
-        <PrivateMemoSaveSetup onReady={controller.clearPreparationError} />
-      )}
       {controller.purposeError !== null && (
         <div id={errorId} role="alert" style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--pain-5)", marginBottom: 8 }}>
           {controller.purposeError}
@@ -150,8 +155,10 @@ export function PurposeScopedMemoField({
         {label}
       </label>
       <textarea
+        ref={textareaRef}
         id={fieldId}
         value={controller.text}
+        onFocus={revealMemo}
         onChange={(event) => controller.updateText(event.target.value)}
         onBlur={controller.reviewIfNeeded}
         placeholder={placeholder}
@@ -162,6 +169,14 @@ export function PurposeScopedMemoField({
           fontSize: 18, lineHeight: 1.4, color: "var(--ink-blue)", resize: "none",
         }}
       />
+      {!accountEnabled && controller.purpose === MEMO_PURPOSE.privateSelfOnly && controller.text.trim() !== "" && (
+        <PrivateMemoSaveSetup onReady={() => {
+          controller.clearPreparationError()
+          textareaRef.current?.focus({ preventScroll: true })
+          textareaRef.current?.scrollIntoView?.({ block: "nearest", behavior: "auto" })
+          revealMemo()
+        }} requested={controller.purposeError !== null} />
+      )}
       {controller.reviewMessage !== null && (
         <div role="status" style={{ marginTop: 8, padding: "9px 10px", border: "1px solid var(--warn)", fontSize: 11.5, color: "var(--ink-2)", lineHeight: 1.55 }}>
           {controller.reviewMessage} {accountEnabled ? "계정 저장 여부는 저장 결과에서 확인해 주세요." : "저장은 이 기기에만 됩니다."}
