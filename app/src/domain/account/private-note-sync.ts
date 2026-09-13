@@ -10,9 +10,23 @@ import { restorePrivateMemo, rotatePrivateMemoVault } from "../private-memo-vaul
 import { journalStorage } from "../journal-local-storage"
 import { PRIVATE_NOTE_RECOVERY_STORAGE_KEY } from "../journal-storage-keys"
 import { accountScopedStorageKey } from "./local-account-scope"
+import { onLocalJournalScopeChange } from "./local-journal-ownership"
 
 const RECOVERY_KEY = PRIVATE_NOTE_RECOVERY_STORAGE_KEY
 const INVALIDATED_RECOVERY_CODE = "recovery-code-cleared"
+const RECOVERY_CHANGED_EVENT = "trainoracle:private-recovery-changed"
+
+export function subscribeSessionRecoveryCode(listener: () => void): () => void {
+  if (typeof window === "undefined") return () => undefined
+  window.addEventListener(RECOVERY_CHANGED_EVENT, listener)
+  window.addEventListener("storage", listener)
+  const unsubscribeScope = onLocalJournalScopeChange(listener)
+  return () => {
+    window.removeEventListener(RECOVERY_CHANGED_EVENT, listener)
+    window.removeEventListener("storage", listener)
+    unsubscribeScope()
+  }
+}
 
 const invalidatedRecoveryKeys = new Set<string>()
 
@@ -56,6 +70,7 @@ export function saveSessionRecoveryCode(recoveryCode: string): boolean {
       window.sessionStorage.setItem(recoveryKey, recoveryCode)
       if (window.sessionStorage.getItem(recoveryKey) === recoveryCode) {
         invalidatedRecoveryKeys.delete(recoveryKey)
+        window.dispatchEvent(new Event(RECOVERY_CHANGED_EVENT))
         return true
       }
     } catch {
@@ -110,6 +125,7 @@ export function clearSessionRecoveryCode(): void {
   if (typeof window === "undefined") return
   const recoveryKey = activeRecoveryKey()
   invalidatedRecoveryKeys.add(recoveryKey)
+  window.dispatchEvent(new Event(RECOVERY_CHANGED_EVENT))
   try {
     window.sessionStorage.setItem(recoveryKey, INVALIDATED_RECOVERY_CODE)
   } catch {
@@ -117,6 +133,7 @@ export function clearSessionRecoveryCode(): void {
     return
   }
   removeStoredRecoveryCode(recoveryKey)
+  window.dispatchEvent(new Event(RECOVERY_CHANGED_EVENT))
 }
 
 function removeStoredRecoveryCode(recoveryKey: string): void {
