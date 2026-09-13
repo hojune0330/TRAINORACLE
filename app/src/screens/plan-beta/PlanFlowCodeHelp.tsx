@@ -1,6 +1,7 @@
 import { createPortal } from "react-dom"
 import { GLOSSARY, type TermId } from "../../domain/glossary"
 import { PopCard, usePopover } from "../../components/Popover"
+import { useAppOverlayNavigation } from "../../components/AppOverlayNavigation"
 
 export type PlanFlowPrimaryCode = "MAIN" | "BASE" | "REC" | "OFF"
 export type PlanFlowSecondaryCode = "LT" | "VO2" | "GLY" | "ATP" | "MIX"
@@ -32,7 +33,8 @@ export function PlanFlowCodeHelp({
   readonly kind: PlanFlowKind
   readonly variant?: "legend" | "badge"
 }) {
-  const { open, toggle, wrapRef } = usePopover()
+  const { open, toggle, close, wrapRef, portalRef } = usePopover()
+  const appNavigation = useAppOverlayNavigation()
   const primaryTerm = PRIMARY_TERM[primary]
   const secondaryTerm = secondary === undefined ? undefined : SECONDARY_TERM[secondary]
   const primaryEntry = GLOSSARY[primaryTerm]
@@ -43,8 +45,14 @@ export function PlanFlowCodeHelp({
   const contextLabel = variant === "legend" ? "일정표 구분" : "훈련"
   const content = (
     <>
-      <GlossarySection term={primaryTerm} />
-      {secondaryTerm !== undefined && <GlossarySection term={secondaryTerm} divided />}
+      <GlossarySection term={primaryTerm} onOpen={appNavigation === null ? undefined : () => {
+        close()
+        appNavigation.openTrainingTerm(primaryTerm)
+      }} />
+      {secondaryTerm !== undefined && <GlossarySection term={secondaryTerm} divided onOpen={appNavigation === null ? undefined : () => {
+        close()
+        appNavigation.openTrainingTerm(secondaryTerm)
+      }} />}
     </>
   )
 
@@ -91,6 +99,7 @@ export function PlanFlowCodeHelp({
         </PopCard>
       ) : open && typeof document !== "undefined" ? createPortal(
         <div
+          ref={portalRef}
           className="plan-flow-code-help__floating-card"
           role="note"
           aria-label={`${accessibleCode} 훈련 설명`}
@@ -103,16 +112,20 @@ export function PlanFlowCodeHelp({
   )
 }
 
-function GlossarySection({ term, divided = false }: {
+function GlossarySection({ term, divided = false, onOpen }: {
   readonly term: TermId
   readonly divided?: boolean
+  readonly onOpen?: () => void
 }) {
   const entry = GLOSSARY[term]
   return (
     <section className="plan-flow-code-help__section" data-divided={divided ? "true" : undefined}>
       <div className="term-help__label">{entry.label}</div>
       <div className="term-help__short">{entry.short}</div>
-      <a className="term-help__more" href={`?terms=1&term=${term}`}>용어 자세히 보기</a>
+      <a className="term-help__more" href={`?terms=1&term=${term}`} onClick={onOpen === undefined ? undefined : (event) => {
+        event.preventDefault()
+        onOpen()
+      }}>용어 자세히 보기</a>
     </section>
   )
 }

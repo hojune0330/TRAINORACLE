@@ -2,6 +2,8 @@ import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it } from "vitest"
 import { TermHelp } from "./TermHelp"
+import { AppOverlayNavigationProvider } from "./AppOverlayNavigation"
+import { GLOSSARY } from "../domain/glossary"
 
 afterEach(cleanup)
 
@@ -32,5 +34,21 @@ describe("plan help copy", () => {
 
     expect(screen.getByText(/실제 계획 계산에 사용한 정보/u)).toBeVisible()
     expect(screen.getByRole("link", { name: "왜 이런 이름인가요?" })).toHaveAttribute("href", "?terms=1&term=plan-beta-basis")
+  })
+
+  it("uses in-app term navigation without reloading when the shell provides it", async () => {
+    const user = userEvent.setup()
+    let opened = ""
+    render(
+      <AppOverlayNavigationProvider openTrainingTerm={(term) => { opened = term }} openFeedback={() => undefined}>
+        <TermHelp term="rpe" />
+      </AppOverlayNavigationProvider>,
+    )
+
+    await user.click(screen.getByRole("button", { name: /운동 자각도.*설명 보기/u }))
+    await user.click(screen.getByRole("link", { name: "왜 이런 이름인가요?" }))
+
+    expect(opened).toBe("rpe")
+    expect(screen.queryByText(GLOSSARY.rpe.short)).not.toBeInTheDocument()
   })
 })
