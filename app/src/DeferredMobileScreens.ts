@@ -14,4 +14,6 @@ export const DeferredMobileScreens = {
   RestoreBackup: React.lazy(() => import("./screens/RestoreBackup").then(module => ({ default: module.RestoreBackup }))),
   More: React.lazy(() => import("./screens/More").then(module => ({ default: module.More }))),
   TrainingContent: React.lazy(() => import("./screens/TrainingContent").then(module => ({ default: module.TrainingContent }))),
+  TrainingLexicon: React.lazy(() => import("./screens/TrainingLexicon").then(module => ({ default: module.TrainingLexicon }))),
+  FeedbackBoard: React.lazy(() => import("./screens/FeedbackBoard").then(module => ({ default: module.FeedbackBoard }))),
 }

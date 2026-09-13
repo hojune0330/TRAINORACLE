@@ -22,15 +22,21 @@ const POPOVER_TEST =
 export function usePopover(): {
   open: boolean
   toggle: () => void
+  close: () => void
   wrapRef: RefObject<HTMLSpanElement>
+  portalRef: RefObject<HTMLDivElement>
 } {
   const [open, setOpen] = useState<boolean>(POPOVER_TEST)
   const wrapRef = useRef<HTMLSpanElement>(null)
+  const portalRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!open) return
     const onDown = (e: MouseEvent | TouchEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false)
+      const target = e.target as Node
+      const insideTrigger = wrapRef.current?.contains(target) ?? false
+      const insidePortal = portalRef.current?.contains(target) ?? false
+      if (!insideTrigger && !insidePortal) setOpen(false)
     }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false)
@@ -45,7 +51,7 @@ export function usePopover(): {
     }
   }, [open])
 
-  return { open, toggle: () => setOpen(v => !v), wrapRef }
+  return { open, toggle: () => setOpen(v => !v), close: () => setOpen(false), wrapRef, portalRef }
 }
 
 function boundaryRect(el: HTMLElement): DOMRect {

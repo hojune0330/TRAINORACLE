@@ -39,4 +39,36 @@ describe("TrainOracle training lexicon", () => {
     expect(screen.getByRole("heading", { name: "산화 대사" })).toBeVisible()
     expect(screen.getByText(/지방만 태우는 별도 시스템은 아니에요/u)).toBeVisible()
   })
+
+  it("returns through related terms before leaving a direct-entry glossary", async () => {
+    const user = userEvent.setup()
+    let returned = 0
+    render(<TrainingLexicon initialTerm="fat-metabolism" directEntry onBack={() => { returned += 1 }} />)
+
+    await user.click(screen.getByRole("button", { name: "산화 대사" }))
+    expect(screen.getByRole("heading", { name: "산화 대사" })).toBeVisible()
+
+    await user.click(screen.getByRole("button", { name: "이전 용어" }))
+    expect(screen.getByRole("heading", { name: "지방 대사" })).toBeVisible()
+    expect(returned).toBe(0)
+
+    await user.click(screen.getByRole("button", { name: "이전 화면" }))
+    expect(returned).toBe(1)
+  })
+
+  it("delegates related terms to shell history for a direct in-app entry", async () => {
+    const user = userEvent.setup()
+    let nextTerm = ""
+    render(
+      <TrainingLexicon
+        initialTerm="base"
+        directEntry
+        onBack={() => undefined}
+        onNavigateTerm={(term) => { nextTerm = term }}
+      />,
+    )
+
+    await user.click(screen.getByRole("button", { name: "산화 대사" }))
+    expect(nextTerm).toBe("oxidative")
+  })
 })

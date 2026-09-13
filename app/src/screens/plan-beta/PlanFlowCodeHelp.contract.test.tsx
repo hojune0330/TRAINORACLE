@@ -1,8 +1,9 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it } from "vitest"
 import { GLOSSARY } from "../../domain/glossary"
 import { PlanFlowCodeHelp } from "./PlanFlowCodeHelp"
+import { AppOverlayNavigationProvider } from "../../components/AppOverlayNavigation"
 
 afterEach(cleanup)
 
@@ -46,5 +47,23 @@ describe("plan flow code help", () => {
     await user.click(screen.getByRole("button", { name: new RegExp(`주요 훈련 MAIN.*${GLOSSARY[term].label}.*훈련 설명 보기`, "u") }))
 
     expect(screen.getByText(GLOSSARY[term].short)).toBeVisible()
+  })
+
+  it("opens the full term inside the app and closes the floating explanation", async () => {
+    const user = userEvent.setup()
+    let opened = ""
+    render(
+      <AppOverlayNavigationProvider openTrainingTerm={(term) => { opened = term }} openFeedback={() => undefined}>
+        <PlanFlowCodeHelp primary="MAIN" secondary="LT" kind="main" />
+      </AppOverlayNavigationProvider>,
+    )
+
+    await user.click(screen.getByRole("button", { name: /주요 훈련 MAIN.*지속 페이스 LT/u }))
+    const ltSection = screen.getByText(GLOSSARY.lt.short).closest("section")
+    expect(ltSection).not.toBeNull()
+    await user.click(within(ltSection!).getByRole("link", { name: "용어 자세히 보기" }))
+
+    expect(opened).toBe("lt")
+    expect(screen.queryByText(GLOSSARY.lt.short)).not.toBeInTheDocument()
   })
 })
