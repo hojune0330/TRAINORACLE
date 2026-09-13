@@ -74,6 +74,9 @@ jobs:
         working-directory: supabase/tests/local-postgres
         run: npm test
 
+      - name: Verify COROS protocol and encrypted daily transport
+        run: node --test supabase/tests/coros-*.test.mjs
+
       - name: Install D9 evaluator dependencies
         working-directory: runtime-evidence/d9-evaluator
         run: npm ci
