@@ -16,14 +16,14 @@ export function StickyBar({
       padding: "12px 16px",
     }}>
       {error && (
-        <div data-testid="save-error" style={{
+        <div data-testid="save-error" role="alert" style={{
           marginBottom: 10, padding: "10px 12px",
           border: "1px solid var(--pain-5)", background: "var(--surface)",
           fontFamily: "var(--mono)", fontSize: 10.5, lineHeight: 1.55,
           color: "var(--ink)", letterSpacing: "0.03em",
         }}>
-          저장하지 못했어요. 기기 저장 공간이 가득 찼거나 브라우저가 저장을 막고 있어요.<br />
-          적은 내용은 이 화면에 그대로 남아 있어요. 공간을 비운 뒤 다시 저장을 눌러 주세요.
+          저장을 완료하지 못했어요. 현재 안내만으로는 원인을 확인할 수 없어요.<br />
+          입력 내용은 이 화면에 그대로 남아 있어요. 새로고침하거나 앱 데이터를 지우지 말고 다시 저장해 주세요.
         </div>
       )}
       <div style={{ display: "flex", gap: 8 }}>
