@@ -24,7 +24,7 @@ test("offers a rest-day path without pressuring the athlete to log more", async 
   })
   await page.goto("/?app=1")
 
-  await expect(page.getByText("오늘 기록을 남겼어요.")).toBeVisible()
+  await expect(page.getByText("오늘 기록을 남겼어요.", { exact: true })).toBeVisible()
   await expect(page.getByRole("button", { name: "오늘 기록하기" })).toHaveCount(0)
   await expect(page.getByRole("button", { name: "하루 마무리 기록하기" })).toHaveCount(0)
   await expect(page.getByText(/일만 더 쓰면/u)).toHaveCount(0)
@@ -36,12 +36,13 @@ test("offers a rest-day path without pressuring the athlete to log more", async 
 
   // 하루 마무리 폼에서 탭바 "기록하기"을 누르면 종류 선택으로 돌아온다(§3-3).
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
-  await expect(page.getByRole("button", { name: /회복 · 하루 마무리.*쉬는 날도 그대로/u })).toBeVisible()
+  await expect(page.getByRole("button", { name: /회복 · 하루 마무리.*수면·기분·몸 상태/u })).toBeVisible()
 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석" }).click()
   const distance = page.getByRole("region", { name: "누적 거리와 변화" })
   await expect(distance.getByLabel(/이번 주, 집계 가능한 거리 기록 없음/u)).toBeVisible()
   await expect(distance.getByText(/집계 기준에 맞지 않아 제외한 기록 1건/u).first()).toBeVisible()
-  await expect(page.getByText(/계획·안전 판정·다음 훈련 결정에는 쓰이지 않아요/u)).toBeVisible()
+  await page.locator("summary", { hasText: "분석 결과는 어디까지 알 수 있나요?" }).click()
+  await expect(page.getByText(/이 화면만으로 훈련 계획이나 몸 상태의 안전 판단을 바꾸지 않아요/u)).toBeVisible()
   await expect(page.getByText(/준비가 됐|부상 위험|좋아졌|나빠졌/u)).toHaveCount(0)
 })

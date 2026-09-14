@@ -57,7 +57,11 @@ test("keeps explicit energy records separate from legacy defaults across home an
   const analysis = page.getByRole("region", { name: "에너지 시스템 누적" })
   await expect(analysis.getByRole("img", { name: /LT 지속 페이스 1회/u })).toBeVisible()
   await expect(analysis.getByText("40분 (1회 기록) · 8km (1회 기록) · RPE 6 (1회 기록)", { exact: true })).toBeVisible()
-  await expect(analysis.getByText(/직접 선택 1건 · 제외 1건/u)).toBeVisible()
+  const basis = analysis.locator("summary", { hasText: "계산 기준 · 기록 1건 사용 · 1건 제외" })
+  await expect(basis).toBeVisible()
+  await expect(basis.locator("..")).not.toHaveAttribute("open")
+  await basis.click()
+  await expect(analysis.getByText(/일지에서 직접 고른 훈련 목적을 모은 값/u)).toBeVisible()
   await analysis.getByRole("button", { name: "24주" }).click()
   await expect(analysis.getByRole("button", { name: "24주" })).toHaveAttribute("aria-pressed", "true")
 

@@ -84,7 +84,7 @@ test("moves a first visitor from WELCOME to JOURNAL after a real first save", as
     return Array.isArray(parsed) ? parsed.length : -1
   })).toBe(1)
   await expect(page.getByRole("heading", { name: "내 기록" })).toBeVisible()
-  await expect(page.getByText("오늘 기록을 남겼어요.")).toBeVisible()
+  await expect(page.getByText("오늘 기록을 남겼어요.", { exact: true })).toBeVisible()
   await expect(page.getByRole("button", { name: "오늘 기록하기" })).toHaveCount(0)
   await expect(page.getByRole("button", { name: "하루 마무리 기록하기" })).toHaveCount(0)
 
@@ -269,7 +269,7 @@ test("shows a truthful distance receipt and opens the real trend", async ({ page
   })
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
-  await page.getByRole("button", { name: /훈련 후.*방금 끝낸/u }).click()
+  await page.getByRole("button", { name: /훈련 후.*거리·시간·훈련 내용을 자세히/u }).click()
   await page.getByRole("textbox", { name: "거리 (km)" }).fill("8")
 
   // When

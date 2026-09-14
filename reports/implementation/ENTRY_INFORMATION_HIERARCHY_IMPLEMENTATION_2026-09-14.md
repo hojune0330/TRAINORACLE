@@ -172,4 +172,12 @@ node node_modules/@playwright/test/cli.js test e2e/touch-surfaces.spec.ts --proj
 관련 단위·계약 123/123, 브라우저 16/16, 앱 빌드·e2e 타입 검사는 통과했다.
 결과는 `runtime/progressive-information-20260914/release-gate-repair.json`, `release-repair-browser.json`과 새 main 실행으로 구분한다.
 
+두 번째 실행 `34791987857`은 계약·앱 품질을 통과했다. 전체 브라우저 검사의 desktop 단계는
+145건 통과·8건 실패·28건 조건부 건너뜀으로 종료되어 배포하지 않았다.
+기분 입력 열기, 거리 제목, 기록 종류 이름, 에너지 집계 안내, 참가 부문 도움말, 저장 완료 문구의
+정확 일치 선택자를 현재 화면에 맞췄다. 데이터·프라이버시·청소년 동일 수치 단언은 유지했다.
+이 추가 보완은 테스트와 보고서만 바꾸며 앱 런타임은 변경하지 않는다.
+해당 8개 흐름을 4개 브라우저 설정에서 재검사한 결과 32/32 통과·실패 0·건너뜀 0·flaky 0을
+`release-browser-compatibility.json`으로 확인했다. e2e 타입 검사도 통과했다.
+
 [DRAFT_COMPLETE]

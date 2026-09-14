@@ -51,6 +51,7 @@ test(`uses the diary flow with ${hasEarnedHistory ? "previously earned" : "no ba
 
   await page.goto("/?app=1&uitest=1")
 
+  await page.locator("summary", { hasText: "기분·몸 상태·날씨 남기기" }).click()
   await page.getByRole("button", { name: "기분 좋음" }).click()
   await page.getByRole("button", { name: "몸 상태 가벼움" }).click()
   await page.getByRole("button", { name: "날씨 흐림" }).click()

@@ -214,6 +214,7 @@ test("keeps youth and adult 5K eligibility and dose identical", async ({ browser
     await seedRecords(page, currentRecords)
     await openPlan(page)
     await reachExperiencedFiveKCandidates(page, divisionName)
+    await page.locator("summary", { hasText: "기준 기록·참가 부문·이전 계획 확인" }).click()
     await expect(page.getByText(new RegExp(`참가 부문: ${divisionName.source}`, "u"))).toBeVisible()
     await bindFirstRecord(page)
     await expect(page.getByText(/5×1000m @5000m RP.*r150.*JOG/u).first()).toBeVisible()
