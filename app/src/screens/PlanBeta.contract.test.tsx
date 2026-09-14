@@ -390,12 +390,15 @@ describe("plan beta user flow", () => {
       .toBeDisabled()
   })
 
-  it("explains that managing race records does not automatically change this beta plan", () => {
+  it("explains on demand that managing race records does not automatically change this beta plan", async () => {
     // Given
     render(<PlanBeta />)
 
     // Then
     expect(screen.getByText("목표 종목", { selector: ".plan-eyebrow" })).toBeVisible()
+    const help = screen.getByText("이 선택은 계획에 어떻게 쓰이나요?")
+    expect(help.closest("details")).not.toHaveAttribute("open")
+    await userEvent.click(help)
     expect(screen.getByText(
       "경기 기록을 저장해도 지금 계획의 페이스·거리·반복은 자동으로 바뀌지 않아요.",
     )).toBeVisible()
@@ -465,6 +468,8 @@ describe("plan beta user flow", () => {
     expect(screen.getByRole("heading", {
       name: "하루에 두 번 운동하는 날도 넣을까요?",
     })).toBeVisible()
+    expect(screen.getByText("두 번을 고르면 모든 훈련일에 오전·오후 운동을 배치해요.")).toBeVisible()
+    await user.click(screen.getByText("이 선택은 계획에 어떻게 쓰이나요?"))
     expect(screen.getByText(
       "고른 모든 훈련일을 오전과 오후 두 칸으로 나눠 보여줘요. 집중 훈련은 고른 시간대에, 다른 칸은 가벼운 훈련이나 회복으로 안내해요.",
     )).toBeVisible()
@@ -646,6 +651,9 @@ describe("plan beta user flow", () => {
     await answerMinimumPlanQuestions("clear")
 
     expectGeneratedCandidates()
+    const help = screen.getByText("기준 기록·참가 부문·이전 계획 확인")
+    expect(help.closest("details")).not.toHaveAttribute("open")
+    await userEvent.click(help)
     expect(screen.getByText(
       "경기 기록 0개 · 최근 일지 2개 연결",
     )).toBeVisible()

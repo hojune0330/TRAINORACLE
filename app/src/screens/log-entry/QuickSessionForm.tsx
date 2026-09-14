@@ -353,7 +353,7 @@ function QuickSessionFormEditor({
   const recordSummary = (
       <section className="quick-log__paper" aria-label="지금까지 기록한 내용">
         <div className="quick-log__date">{compactDate(date)} · {dowOf(date)}</div>
-        {planLink !== undefined && <div className="quick-log__plan-source">계획 DAY {planLink.sessionDay} · {planLink.sessionSlot === "AM" ? "오전" : "오후"}</div>}
+        {step === "saved" && planLink !== undefined && <div className="quick-log__plan-source">계획 {planLink.sessionDay}일차 · {planLink.sessionSlot === "AM" ? "오전" : "오후"}</div>}
         <div className="quick-log__ink-stack" aria-live="polite">
           {outcomeLabel === undefined && <span className="quick-log__empty">누르면 여기에 기록돼요.</span>}
           {outcomeLabel !== undefined && <button type="button" onClick={() => setStep("activity")}><span>{savedDateLabel(date)}</span><strong>{outcomeLabel}</strong></button>}
@@ -387,6 +387,7 @@ function QuickSessionFormEditor({
         {step === "activity" && (
           <section aria-labelledby="quick-activity-title">
             <small>1 / 2</small>
+            {planLink !== undefined && <div className="quick-log__plan-source">계획 {planLink.sessionDay}일차 · {planLink.sessionSlot === "AM" ? "오전" : "오후"}</div>}
             <h1 id="quick-activity-title">{savedDateLabel(date)} 운동은 어떻게 됐나요?</h1>
             <div className="quick-log__choices">
               {outcomes.map((item) => <button key={item.value} type="button" aria-pressed={outcome === item.value} onClick={() => selectOutcome(item.value)}><span>{item.label}</span><ChevronRight aria-hidden="true" /></button>)}

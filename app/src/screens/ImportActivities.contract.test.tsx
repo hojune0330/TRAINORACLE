@@ -59,14 +59,18 @@ describe("ImportActivities — 고르기 단계", () => {
     expect(notice).toHaveTextContent(/서버로 올라가지 않아요/u)
   })
 
-  it("자동 연동 시점을 약속하지 않는다", () => {
+  it("자동 연동 시점을 약속하지 않고 도움말에서 원본 보존을 설명한다", async () => {
     // Given / When
     render(<ImportActivities />)
 
     // Then
     const status = screen.getByTestId("oauth-status")
-    expect(status).toHaveTextContent(/아직 시점을 약속할 수 없어요/u)
-    expect(status).toHaveTextContent(/읽기 전용/u)
+    const help = screen.getByText("가민·WHOOP·스트라바 자동 연동은 준비 중이에요")
+    expect(help).toBeVisible()
+    expect(help.closest("details")).not.toHaveAttribute("open")
+    await userEvent.click(help)
+    expect(status).toHaveTextContent(/시작 날짜는 아직 정해지지 않았어요/u)
+    expect(screen.getByText("파일을 가져와도 워치 앱의 원본 기록은 바뀌지 않아요.")).toBeVisible()
     expect(status.textContent ?? "").not.toMatch(/곧 가져올 수 있어요/u)
   })
 

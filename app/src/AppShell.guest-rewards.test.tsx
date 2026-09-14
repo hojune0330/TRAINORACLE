@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 const mocks = vi.hoisted(() => ({ current: vi.fn(), change: vi.fn(), reward: vi.fn() }))
 vi.mock("./domain/account/auth", () => ({ currentUser: mocks.current, onAuthChange: mocks.change }))
@@ -34,7 +34,10 @@ it("connects the guest ledger only after successful initial auth and invalidates
   expect(screen.getByText(/로그인 상태를 확인하고 있어요/)).toBeVisible()
   expect(screen.queryByText("5P")).not.toBeInTheDocument()
   await act(async () => resolve(null))
-  expect(screen.getByText(/이 기기의 게스트 포인트예요/)).toBeVisible()
+  const help = screen.getByText("게스트 포인트는 어디에 보관되나요?")
+  expect(help.closest("details")).not.toHaveAttribute("open")
+  fireEvent.click(help)
+  expect(screen.getByText("로그인하지 않고 모은 포인트는 이 기기에 남아요. 계정 포인트와는 별도로 보관해요.")).toBeVisible()
   expect(screen.getByText("5P")).toBeVisible()
   expect(mocks.current).toHaveBeenCalledWith({ throwOnFailure: true })
   expect(mocks.change.mock.calls.some(call => call[1]?.ignoreInitialSession === true)).toBe(true)

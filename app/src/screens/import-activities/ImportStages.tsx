@@ -86,6 +86,7 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
       <div data-testid="oauth-status" style={{ border: "1px dashed var(--line)", padding: "12px 14px" }}>
         <InfoDisclosure title="가민·WHOOP·스트라바 자동 연동은 준비 중이에요">
           <p>지금은 파일을 골라 기록을 가져올 수 있어요. 계정을 연결해 자동으로 받는 기능의 시작 날짜는 아직 정해지지 않았어요.</p>
+          <p>파일을 가져와도 워치 앱의 원본 기록은 바뀌지 않아요.</p>
         </InfoDisclosure>
       </div>
     </div>

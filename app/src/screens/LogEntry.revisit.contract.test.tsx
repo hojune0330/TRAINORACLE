@@ -137,7 +137,7 @@ describe("past journal revisit forms", () => {
     render(<LogEntry entryType="choose" targetDate={DATE} />)
 
     // Then
-    expect(screen.getByText("이 날짜의 첫 일지예요. 짧게 몰아 쓰면 1분이면 끝나요.")).toBeVisible()
+    expect(screen.getByText("이 날짜의 첫 일지예요. 원하는 항목만 남겨도 괜찮아요.")).toBeVisible()
     expect(screen.queryByText(/오늘 첫 일지/u)).not.toBeInTheDocument()
   })
 

@@ -159,4 +159,17 @@ node node_modules/@playwright/test/cli.js test e2e/touch-surfaces.spec.ts --proj
 [GitHub Actions](https://github.com/hojune0330/TRAINORACLE/actions/workflows/ci.yml)와
 [공개 배포 확인 파일](https://hojune0330.github.io/TRAINORACLE/trainoracle-deploy-receipt.json)에서 확인한다.
 
+### 배포 검사에서 발견한 보완
+
+첫 배포 실행 `34791007229`에서 계약 검사는 통과했지만 앱 단위 검사 3,732건 중 7건이 실패했다.
+실패한 상태로 배포하지 않았으며 브라우저 검사와 배포는 건너뛰어졌다. 이 실패를 PASS로 집계하지 않는다.
+
+- 게스트 포인트, 파일 가져오기, 과거 일지 문구와 계획 설명의 검사 6건은 새 문구 및 닫힌 도움말을 여는 실제 동작에 맞췄다. 원본 보존·계정 분리·자동 처방 변경 금지의 의미를 유지한다.
+- 계획에서 빠른 기록으로 진입한 경우의 계획 일차·오전/오후 표시는 단순 설명이 아닌 현재 작업 맥락이다. 첫 질문 위에 짧게 표시하고 실제 표시 여부를 검사하도록 보완했다.
+- 같은 문구를 참조하는 경기 기록 관리와 계획-일지 왕복 브라우저 검사도 함께 갱신했다. 안전·저장·처방 검사를 삭제하거나 배포 관문을 완화하지 않았다.
+- 로컬 배포 직전 브라우저 재검사의 첫 시도는 서버 미기동으로 실패했고, 자동 서버 재실행은 캡처 후 Windows 종료 단계에서 중단했다. 이 두 실행은 성공 증거로 사용하지 않는다.
+
+관련 단위·계약 123/123, 브라우저 16/16, 앱 빌드·e2e 타입 검사는 통과했다.
+결과는 `runtime/progressive-information-20260914/release-gate-repair.json`, `release-repair-browser.json`과 새 main 실행으로 구분한다.
+
 [DRAFT_COMPLETE]

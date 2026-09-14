@@ -57,7 +57,7 @@ test("returning from a cancelled DAY 5 PM journal restores its slot without a sa
   }
   await page.getByText("오후 훈련 방법과 기록", { exact: true }).click()
   await page.getByRole("button", { name: "이 훈련 일지 쓰기" }).click()
-  await expect(page.getByText("계획 DAY 5 · 오후")).toBeVisible()
+  await expect(page.getByText("계획 5일차 · 오후")).toBeVisible()
   await page.getByRole("button", { name: /뒤로/u }).click()
 
   const returnedSession = page.getByRole("group", { name: /오후 세션 · 일지에서 돌아온 세션/u })
@@ -85,7 +85,7 @@ test(`returning from a ${detailed ? "detailed" : "quick"} DAY 5 PM journal keeps
   }
   await page.getByText("오후 훈련 방법과 기록", { exact: true }).click()
   await page.getByRole("button", { name: "이 훈련 일지 쓰기" }).click()
-  await expect(page.getByText("계획 DAY 5 · 오후")).toBeVisible()
+  await expect(page.getByText("계획 5일차 · 오후")).toBeVisible()
   await page.getByRole("button", { name: "계획대로 마쳤어요" }).click()
   await page.getByRole("button", { name: "오후" }).click()
   await page.getByRole("button", { name: /RPE 6,/u }).click()

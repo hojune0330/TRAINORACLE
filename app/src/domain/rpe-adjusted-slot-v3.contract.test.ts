@@ -277,13 +277,14 @@ it("opens a saved multi-plan through real application navigation with independen
   const slotName = address.slot === "AM" ? "오전" : "오후"
   fireEvent.click(within(screen.getByRole("navigation", { name: "훈련 날짜" })).getAllByRole("button")[address.day - 1]!)
   await act(async () => { fireEvent.click(within(screen.getByRole("region", { name: `${slotName} 훈련` })).getByRole("button", { name: "이 훈련 일지 쓰기" })) })
-  expect(screen.getByText(`계획 DAY ${address.day} · ${slotName}`)).toBeTruthy()
+  expect(screen.getByText(`계획 ${address.day}일차 · ${slotName}`)).toBeVisible()
   expect(loadEntries()).toEqual([])
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
   fireEvent.click(screen.getByRole("button", { name: "계획대로 마쳤어요" }))
   fireEvent.click(screen.getByRole("button", { name: slotName }))
   fireEvent.click(screen.getByRole("button", { name: /RPE 6,/ }))
   fireEvent.click(screen.getByRole("button", { name: "없어요" }))
+  expect(screen.getByText(`계획 ${address.day}일차 · ${slotName}`)).toBeVisible()
   expect(loadEntries()).toHaveLength(1)
   expect(loadEntries()[0]).toMatchObject({ activityOutcome: "COMPLETED", rpe: 6,
     plannedSessionLink: { sessionDay: address.day, sessionSlot: address.slot } })
