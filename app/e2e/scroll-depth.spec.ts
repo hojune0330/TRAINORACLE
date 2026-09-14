@@ -129,13 +129,17 @@ test("WELCOME은 빈 꾸미기·성취 점수판을 숨기고 유용한 기록 �
   await expect(page.getByRole("heading", { name: "일지 꾸미기 · 사용 가능 0P" })).toHaveCount(0)
   await expect(page.getByRole("button", { name: "꾸미기 열기" })).toHaveCount(0)
 
-  // 그렇다고 아무 말도 없으면 "useful" 이 아니다. 규칙은 남는다.
-  await expect(strip.getByText(/몸 상태·회복 체크/u)).toBeVisible()
+  const rules = strip.locator("summary", { hasText: "포인트는 어떻게 쌓이나요?" })
+  await expect(rules).toBeVisible()
+  await expect(rules.locator("..")).not.toHaveAttribute("open")
 
   const height = await scrollHeightPx(page)
   console.log(`[SCROLL] ${project} home-empty before=${HOME_BEFORE[project]} after=${height} limit=${HOME_LIMIT[project]}`)
   expect(height).toBeLessThanOrEqual(HOME_LIMIT[project])
   expect(height).toBeLessThan(HOME_BEFORE[project])
+
+  await rules.click()
+  await expect(strip.getByText(/몸 상태·회복 체크/u)).toBeVisible()
 })
 
 test("기록이 하나 생기면 홈 일지 정원과 꾸미기 포인트가 보인다", async ({ page }, testInfo) => {

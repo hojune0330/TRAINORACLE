@@ -96,6 +96,7 @@ test("a self-directed runner with no journal can still reach an RPE plan", async
 
   await expect(page.getByRole("heading", { name: "두 계획에서 하나를 골라보세요" })).toBeVisible()
   await expect(page.getByText("RPE 기준 실행 안내").first()).toBeVisible()
-  await expect(page.getByText("기록 없이 시작한 베타 계획")).toBeVisible()
-  await expect(page.getByText(/확인한 기준 기록이 없어 기록값과 구조화 일지는 이번 계획 계산에 사용하지 않았어요/u)).toBeVisible()
+  await page.locator("summary", { hasText: "기준 기록·참가 부문·이전 계획 확인" }).click()
+  await expect(page.getByText("기준 기록 없이 만든 계획")).toBeVisible()
+  await expect(page.getByText(/확인한 기준 기록이 없어 개인 기록과 일지 수치는 이번 계획 계산에 사용하지 않았어요/u)).toBeVisible()
 })
