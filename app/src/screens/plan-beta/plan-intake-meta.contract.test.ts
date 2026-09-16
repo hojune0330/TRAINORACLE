@@ -8,16 +8,18 @@ import {
 describe("plan intake wording", () => {
   it("uses short Korean labels for every question step", () => {
     expect(Object.values(STEP_META).map((step) => step.eyebrow)).toEqual([
-      "목표 종목",
-      "현재 참가 부문",
-      "훈련 경험",
-      "이번 목표",
-      "훈련 상세 방식",
-      "가능한 날",
-      "주로 하는 시간",
-      "하루 두 번 훈련",
-      "지금 몸 상태",
+      "목표",
+      "참가 부문",
+      "경험",
+      "훈련 종류",
+      "안내 방식",
+      "운동할 날",
+      "시간대",
+      "하루 두 번",
+      "몸 상태",
     ])
+    // 글자 피로를 줄이기 위해 각 질문의 보조 문구는 한두 문장, 60자 이내로 유지한다.
+    for (const step of Object.values(STEP_META)) expect(step.copy.length).toBeLessThanOrEqual(60)
   })
 })
 
@@ -27,8 +29,9 @@ describe("conditional competition division", () => {
     expect(visibleIntakeSteps("GENERAL_ENDURANCE")).not.toContain("division")
   })
 
-  it("keeps division for competition-oriented goals", () => {
-    expect(divisionForGoal("MIDDLE_DISTANCE")).toBeUndefined()
-    expect(visibleIntakeSteps("MIDDLE_DISTANCE")).toContain("division")
+  it("never asks division up front for any event; it is a refine item", () => {
+    expect(divisionForGoal("MIDDLE_DISTANCE")).toBe("NOT_PROVIDED")
+    expect(visibleIntakeSteps("MIDDLE_DISTANCE")).not.toContain("division")
+    expect(visibleIntakeSteps("MIDDLE_DISTANCE")).toEqual(["goal", "experience", "days", "safety"])
   })
 })

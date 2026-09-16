@@ -13,7 +13,6 @@ async function openPlan(page: Page): Promise<void> {
 
 async function answerFirstThree(page: Page, review = false): Promise<void> {
   await page.getByRole("button", { name: /^1500m\b/u }).click()
-  await page.getByRole("button", { name: /고등부/u }).click()
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", {
     name: review
@@ -36,7 +35,6 @@ test("shows an unsaved, non-selectable preview after the required direction answ
     () => window.localStorage.getItem("trainoracle.plan-beta.v1"),
   )).toBeNull()
 
-  await page.getByRole("button", { name: "내 계획 완성하기" }).click()
   await expect(page.getByRole("heading", {
     name: "이번 주기에 어떤 훈련을 더 넣고 싶나요?",
   })).toBeVisible()
@@ -61,7 +59,6 @@ test("asks for the missing focus and explicit detail mode after fresh safety", a
   const remaining = page.getByText(/남은 선택 2개/u)
   await expect(remaining).toContainText("훈련 목적")
   await expect(remaining).toContainText("훈련 상세 방식")
-  await page.getByRole("button", { name: "내 계획 완성하기" }).click()
 
   await expect(page.getByRole("heading", {
     name: "이번 주기에 어떤 훈련을 더 넣고 싶나요?",
@@ -90,7 +87,6 @@ test("reuses a fully explicit returning intake to create two candidates", async 
   await expect(page.getByText(/남은 선택 0개/u)).toContainText("저장된 선택을 그대로 다시 사용할 수 있어요")
   await expect(page.getByText(/남은 선택 0개/u)).toContainText("계획안은 아직 만들지 않았어요")
   await page.getByRole("button", { name: "계획안 만들기" }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
 
   await expect(page.locator(".plan-candidate")).toHaveCount(2)
   await expect(page.getByRole("heading", { name: "두 계획에서 하나를 골라보세요" })).toBeVisible()
@@ -109,14 +105,8 @@ test("blocks review-risk before any preview or candidates", async ({ page }) => 
 test("moves the single expanded schedule between candidates and allows collapse", async ({ page }) => {
   await openPlan(page)
   await answerFirstThree(page)
-  await page.getByRole("button", { name: "내 계획 완성하기" }).click()
-  await page.getByRole("button", { name: /지속 페이스.*LT/u }).click()
-  await page.getByRole("button", { name: /^RPE 기준으로 받기/u }).click()
   await page.getByRole("button", { name: /^3일/u }).click()
   await selectNineDayProjection(page)
-  await page.getByRole("button", { name: /아침에 운동해요/u }).click()
-  await page.getByRole("button", { name: /하루 한 번 운동/u }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
 
   const candidateA = page.getByRole("button", { name: "계획안 A 일정 접기" })
   const candidateB = page.getByRole("button", { name: "계획안 B 일정 펼치기" })

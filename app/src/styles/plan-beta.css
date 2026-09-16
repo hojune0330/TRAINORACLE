@@ -2880,3 +2880,304 @@
 .plan-method-picker .plan-method-picker__limit { color: var(--ink-3); }
 .plan-method-picker > summary:focus-visible,
 .plan-method-picker__option:focus-within { outline: var(--bw-line) solid var(--brand); outline-offset: var(--space-1); }
+
+/* ---------------------------------------------------------------------------
+   빠른 계획 흐름 (4질문) — 카드 목록, 달력 미리보기, 다듬기 패널, 멈춤 안내
+   --------------------------------------------------------------------------- */
+
+/* 선택지를 카드로: 스크롤 목록 대신 한 화면 안에 들어오게 크기와 여백을 줄인다. */
+.plan-choice-list--cards {
+  border-top: 0;
+  margin-top: var(--space-4);
+  display: grid;
+  gap: var(--space-2);
+}
+
+.plan-choice-list--cards .plan-choice,
+.plan-choice-list--cards .plan-choice-row {
+  border: var(--bw-line) solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.plan-choice-list--cards .plan-choice {
+  min-height: calc(var(--app-choice-height) - 4px);
+  padding: var(--space-3) var(--space-3);
+}
+
+.plan-choice-list--cards .plan-choice[aria-pressed="true"] {
+  border-color: var(--brand);
+  background: var(--surface-2);
+}
+
+.plan-choice-list--cards .plan-choice small {
+  line-height: 1.35;
+}
+
+/* 물음표는 버튼 바깥: 선택과 설명 열기가 겹치지 않는다. */
+.plan-choice-row {
+  display: flex;
+  align-items: stretch;
+}
+
+.plan-choice-row .plan-choice {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.plan-choice-row__help {
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding-inline: var(--space-1);
+  border-inline-start: var(--bw-line) solid var(--hair);
+}
+
+/* 종목 카드: 두 열, 짧은 문구만 */
+.plan-choice-list--cards[aria-label="계획 종목 선택"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.plan-choice-list--cards[aria-label="계획 종목 선택"] .plan-choice {
+  min-height: 64px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.plan-choice-list--cards[aria-label="계획 종목 선택"] .plan-choice > svg {
+  display: none;
+}
+
+@media (max-width: 340px) {
+  .plan-choice-list--cards[aria-label="계획 종목 선택"] {
+    grid-template-columns: 1fr;
+  }
+}
+
+.plan-choice-note--muted {
+  color: var(--ink-3);
+  font-size: var(--fs-caption);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-3);
+}
+
+/* 기록 관련 진입은 접어둔다 — 대부분의 사용자에게는 필요 없다. */
+.plan-support-more {
+  margin-top: var(--space-5);
+  border-top: var(--bw-line) solid var(--hair);
+}
+
+.plan-support-more > summary {
+  min-height: var(--app-touch-min);
+  display: flex;
+  align-items: center;
+  color: var(--ink-3);
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+  cursor: pointer;
+  list-style: none;
+}
+
+.plan-support-more > summary::-webkit-details-marker { display: none; }
+.plan-support-more > summary::before { content: "+ "; }
+.plan-support-more[open] > summary::before { content: "− "; }
+
+/* 진행 요약: 라벨 없이 칩만 */
+.plan-intake__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.plan-intake[data-refining="true"] .plan-back {
+  color: var(--brand);
+}
+
+/* 달력 미리보기: 답할 때마다 칸이 채워지는 작은 그림 */
+.intake-calendar-peek {
+  margin: var(--space-4) 0 0;
+  padding: var(--space-3);
+  border: var(--bw-line) solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  display: grid;
+  gap: var(--space-2);
+}
+
+.intake-calendar-peek figcaption {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+  color: var(--ink-2);
+}
+
+.intake-calendar-peek figcaption span { flex: 1; min-width: 0; }
+.intake-calendar-peek figcaption small { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+.intake-calendar-peek__days {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.intake-calendar-peek__days li {
+  aspect-ratio: 1;
+  border-radius: var(--r-sm);
+  border: var(--bw-hair) solid var(--hair);
+  display: grid;
+  place-items: center;
+  font-family: var(--sans);
+  font-size: 11px;
+  color: var(--ink-3);
+  transition: background-color var(--dur-base) var(--ease-out-strong), border-color var(--dur-base) var(--ease-out-strong);
+}
+
+.intake-calendar-peek__days li[data-state="empty"] { opacity: 0.45; }
+.intake-calendar-peek__days li[data-state="pending"] { background: var(--surface-2); border-style: dashed; }
+.intake-calendar-peek__days li[data-state="training"] { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
+.intake-calendar-peek__days li[data-state="rest"] { background: var(--surface-2); }
+
+.intake-calendar-peek[data-filled="3"] {
+  border-color: var(--brand);
+}
+
+/* 다듬기 패널 */
+.plan-refine {
+  margin-block: var(--space-4);
+  border-block: var(--bw-line) solid var(--line);
+  font-family: var(--sans);
+}
+
+.plan-refine > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--app-touch-min);
+  padding-block: var(--space-3);
+  cursor: pointer;
+  list-style: none;
+}
+
+.plan-refine > summary::-webkit-details-marker { display: none; }
+.plan-refine > summary > svg { flex: none; }
+.plan-refine > summary > span { flex: 1; min-width: 0; display: grid; font-weight: 600; font-size: var(--fs-body); }
+.plan-refine > summary > span small { font-weight: 400; color: var(--ink-3); font-size: var(--fs-body-sm); }
+.plan-refine__chevron { transition: transform var(--dur-base) var(--ease-out-strong); }
+.plan-refine[open] .plan-refine__chevron { transform: rotate(90deg); }
+
+.plan-refine__hint {
+  margin: 0 0 var(--space-2);
+  color: var(--ink-3);
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+}
+
+.plan-refine__list {
+  list-style: none;
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  border-top: var(--bw-hair) solid var(--hair);
+}
+
+.plan-refine__row {
+  width: 100%;
+  min-height: var(--app-touch-min);
+  padding: var(--space-2) 0;
+  border: 0;
+  border-bottom: var(--bw-hair) solid var(--hair);
+  background: transparent;
+  color: var(--ink);
+  display: grid;
+  grid-template-columns: 5.5em minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  text-align: left;
+  font-size: var(--fs-body-sm);
+  cursor: pointer;
+}
+
+.plan-refine__label { color: var(--ink-3); }
+.plan-refine__value { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.plan-refine__value small {
+  padding: 1px 6px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--ink-3);
+  font-size: var(--fs-caption);
+}
+.plan-refine__row[data-changed="true"] .plan-refine__value { font-weight: 600; }
+.plan-refine__row:focus-visible { outline: var(--bw-line) solid var(--brand); outline-offset: 2px; }
+
+/* 멈춤 안내에 남겨둔 선택과 다음 할 일 */
+.plan-blocked__kept {
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  border: var(--bw-line) solid var(--line);
+  border-radius: var(--r-md);
+  display: grid;
+  gap: var(--space-1);
+  font-family: var(--sans);
+  text-align: left;
+}
+
+.plan-blocked__kept strong { font-size: var(--fs-body-sm); }
+.plan-blocked__kept span { font-size: var(--fs-body); }
+.plan-blocked__kept small { color: var(--ink-3); font-size: var(--fs-caption); line-height: 1.5; }
+
+.plan-blocked__next {
+  margin: var(--space-4) 0 0;
+  padding-inline-start: 1.4em;
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+  line-height: 1.7;
+  color: var(--ink-2);
+  text-align: left;
+}
+
+.plan-blocked__note {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--ink-3);
+  font-size: var(--fs-caption);
+}
+
+/* RPE 쉬운 표 */
+.plan-rpe-guide__scale {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.plan-rpe-guide__scale li {
+  display: grid;
+  grid-template-columns: 3.2em minmax(0, 1fr);
+  gap: var(--space-2);
+  font-size: var(--fs-body-sm);
+  line-height: 1.5;
+}
+
+.plan-rpe-guide__scale b { font-variant-numeric: tabular-nums; color: var(--ink); }
+.plan-rpe-guide__scale span { color: var(--ink-2); }
+
+.plan-rpe-guide__more > summary {
+  color: var(--ink-3);
+  font-size: var(--fs-caption);
+  cursor: pointer;
+  min-height: var(--app-touch-min);
+  display: flex;
+  align-items: center;
+}

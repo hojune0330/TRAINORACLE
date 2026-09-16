@@ -13,17 +13,10 @@ afterEach(cleanup)
 async function generateCandidates(purpose: RegExp): Promise<void> {
   const user = userEvent.setup()
   await user.click(screen.getByRole("button", { name: /^1500m/u }))
-  await user.click(screen.getByRole("button", { name: /고등부/u }))
   await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험이 있어요/u }))
   await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
-  await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
   await user.click(screen.getByRole("button", { name: purpose }))
-  await user.click(screen.getByRole("button", { name: /RPE 기준으로 받기/u }))
   await user.click(screen.getByRole("button", { name: /^3일/u }))
-  await user.click(screen.getByRole("button", { name: /9일 계획 받기/u }))
-  await user.click(screen.getByRole("button", { name: /아침에 운동해요/u }))
-  await user.click(screen.getByRole("button", { name: /하루 한 번 운동/u }))
-  await user.click(screen.getByRole("button", { name: "날짜 없이 계획안 보기" }))
 }
 
 describe("plan candidate purpose contrast", () => {

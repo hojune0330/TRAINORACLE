@@ -5,19 +5,14 @@ import { expectActivePlanHeading, openActiveSessionDetails } from "./active-plan
 
 async function answerMinimumPlanQuestions(page: Page): Promise<void> {
   await page.getByRole("button", { name: /^1500m\b/u }).click()
-  await page.getByRole("button", { name: /고등부/u }).click()
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
   const continueButton = page.getByRole("button", { name: "내 계획 완성하기" })
   if (await continueButton.count() === 0) return
   await continueButton.click()
-  await page.getByRole("button", { name: /지속 페이스.*LT/u }).click()
-  await page.getByRole("button", { name: /^RPE 기준으로 받기/u }).click()
   await page.getByRole("button", { name: /^3일/u }).click()
   await selectNineDayProjection(page)
-  await page.getByRole("button", { name: /날마다 달라요/u }).click()
   await page.getByRole("button", { name: "하루 한 번 운동" }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
 }
 
 async function expectCanonicalPlanCandidates(page: Page): Promise<void> {
@@ -113,17 +108,12 @@ test("generates a bounded two-a-day 9-day candidate", async ({ page }) => {
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
   await page.getByRole("button", { name: /^5000m\b/u }).click()
-  await page.getByRole("button", { name: /고등부/u }).click()
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
-  await page.getByRole("button", { name: "내 계획 완성하기" }).click()
   await page.getByRole("button", { name: /강한 유산소 반복.*VO₂/u }).click()
-  await page.getByRole("button", { name: /^RPE 기준으로 받기/u }).click()
   await page.getByRole("button", { name: "매일" }).click()
   await selectNineDayProjection(page)
-  await page.getByRole("button", { name: /날마다 달라요/u }).click()
   await page.getByRole("button", { name: "하루 두 번 운동할게요" }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
 
   await expectCanonicalPlanCandidates(page)
   await expect(page.getByText(/오후 회복/u).first()).toBeVisible()
@@ -134,17 +124,12 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "내 기록 살펴보기" }).getByRole("button", { name: /^훈련 계획/u }).click()
   await page.getByRole("button", { name: /^5000m\b/u }).click()
-  await page.getByRole("button", { name: /고등부/u }).click()
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
-  await page.getByRole("button", { name: "내 계획 완성하기" }).click()
   await page.getByRole("button", { name: /강한 유산소 반복.*VO₂/u }).click()
-  await page.getByRole("button", { name: /^RPE 기준으로 받기/u }).click()
   await page.getByRole("button", { name: "매일" }).click()
   await selectNineDayProjection(page)
-  await page.getByRole("button", { name: /저녁에 운동해요/u }).click()
   await page.getByRole("button", { name: "하루 두 번 운동할게요" }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
 
   // When
   await page.getByRole("button", { name: /선택하기/u }).first().click()

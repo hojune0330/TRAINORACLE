@@ -1,5 +1,4 @@
 import React from "react"
-import { AlertTriangle, RotateCcw } from "lucide-react"
 import type {
   PlanGenerationSuccess,
   TrainingTimePreference,
@@ -38,11 +37,13 @@ import { planErrorMessage } from "./plan-beta/plan-feedback"
 import { loadAthleteRecords } from "../domain/athlete-records"
 import type { CandidatePrescriptionBinding } from "../domain/plan-candidate-prescription"
 import {
-  divisionForGoal,
   eventGroupForDistance,
-  firstUnansweredRefinement,
+  firstUnansweredQuickStep,
   previousIntakeStep,
+  QUICK_INTAKE_DEFAULTS,
+  withQuickDefaults,
 } from "./plan-beta/plan-intake-navigation"
+import { PlanBlockedGuide } from "./plan-beta/PlanBlockedGuide"
 import {
   backupActivePlanToServer,
   loadLatestPlanFromServer,
@@ -59,13 +60,27 @@ const AthleteRecords = React.lazy(() => import("./AthleteRecords").then(module =
 
 const INTAKE_MOTION_ORDER: readonly IntakeStep[] = [
   "goal",
-  "division",
   "experience",
+  "days",
   "safety",
   "preview",
+  "division",
   "focus",
   "template",
+  "frame-length",
+  "training-time",
+  "two-a-day",
+  "race-date",
+]
+
+/** 다듬기에서 열 수 있는 단계. 결과 화면에서 하나씩 열고, 고르면 바로 결과로 돌아간다. */
+const REFINE_STEPS: readonly IntakeStep[] = [
+  "goal",
+  "experience",
   "days",
+  "division",
+  "focus",
+  "template",
   "frame-length",
   "training-time",
   "two-a-day",
@@ -98,13 +113,10 @@ export function PlanBeta({
     previousIntake ?? {},
   )
   const [step, setStep] = React.useState<IntakeStep>(
-    previousIntake === null || !("eventDistanceM" in previousIntake)
-      ? "goal"
-      : previousIntake.competitionDivision === undefined
-        && previousIntake.eventGroup !== "GENERAL_ENDURANCE"
-        ? "division"
-        : "safety",
+    () => firstUnansweredQuickStep(previousIntake ?? {}),
   )
+  /** 결과 화면의 "다듬기"에서 연 질문인지. 고르면 결과로 바로 돌아간다. */
+  const [refining, setRefining] = React.useState(false)
   const [generated, setGenerated] = React.useState<PlanGenerationSuccess | null>(
     null,
   )
@@ -219,8 +231,9 @@ export function PlanBeta({
       setStep("safety")
       return
     }
+    const completed = withQuickDefaults(nextDraft)
     const result = generatePlanFromDraft(
-      raceDate === undefined ? nextDraft : { ...nextDraft, targetRaceDate: raceDate },
+      raceDate === undefined ? completed : { ...completed, targetRaceDate: raceDate },
       currentCheck,
       recordId === null ? undefined : { selectedRecordId: recordId },
     )
@@ -251,14 +264,30 @@ export function PlanBeta({
     }
   }
 
+  /**
+   * 다듬기에서 항목 하나를 고른 뒤: 초안을 갱신하고 계획을 다시 만들어 결과로 돌아간다.
+   * 안전 확인은 `generateCandidates` 안에서 다시 적용된다(현재 확인 값이 없으면 안전 질문으로).
+   */
   const continueAfterRefinement = (nextDraft: Partial<PlanBetaIntake>) => {
-    setDraft(nextDraft)
-    const nextRefinement = firstUnansweredRefinement(nextDraft)
-    if (nextRefinement !== null) {
-      setStep(nextRefinement)
-      return
-    }
-    setStep("race-date")
+    const completed = withQuickDefaults(nextDraft)
+    setDraft(completed)
+    setRefining(false)
+    setSelectedRecordId(null)
+    setComparisonRecordId(null)
+    setRecordConfirmationPending(false)
+    generateCandidates(completed, null, targetRaceDate || undefined)
+  }
+
+  /** 결과 화면에서 "다듬기" 항목을 탭하면 해당 질문 하나만 연다. */
+  const openRefinement = (target: IntakeStep) => {
+    if (!REFINE_STEPS.includes(target)) return
+    draftRevision.current += 1
+    setRetrySelection(null)
+    setGenerated(null)
+    setGate(null)
+    setErrorCode(null)
+    setRefining(true)
+    setStep(target)
   }
 
   const selectRecord = (recordId: string) => {
@@ -372,12 +401,8 @@ export function PlanBeta({
           setGate(null)
           setBlocked(false)
           setCurrentCheck(null)
-          setStep(
-            intake.competitionDivision === undefined
-              && intake.eventGroup !== "GENERAL_ENDURANCE"
-              ? "division"
-              : "safety",
-          )
+          setRefining(false)
+          setStep("safety")
         }}
         onWritePlannedSessionLog={onWritePlannedSessionLog}
         returnToSession={returnToSession}
@@ -387,30 +412,15 @@ export function PlanBeta({
 
   if (blocked) {
     return (
-      <section className="plan-blocked" aria-labelledby="plan-blocked-title">
-        <AlertTriangle aria-hidden="true" size={28} />
-        <div className="plan-eyebrow">계획을 만들 수 없음</div>
-        <h1 id="plan-blocked-title">지금은 계획을 멈췄어요</h1>
-        <p>
-          이 앱은 사람에게 자동으로 연결하거나 몸 상태를 확인할 수 없어요.
-          <br />
-          계획을 만들지 말고 지도자·보호자 또는 의료진과 직접 상의해 주세요.
-        </p>
-        <button type="button" onClick={() => onWriteLog?.("evening")}>
-          지도자와 상의한 내용을 일지에 남기기
-        </button>
-        <button
-          className="plan-text-action"
-          type="button"
-          onClick={() => {
-            setBlocked(false)
-            setStep("safety")
-          }}
-        >
-          <RotateCcw aria-hidden="true" size={16} />
-          다시 확인하기
-        </button>
-      </section>
+      <PlanBlockedGuide
+        draft={draft}
+        onWriteLog={() => onWriteLog?.("evening")}
+        onRecheck={() => {
+          setBlocked(false)
+          setRefining(false)
+          setStep("safety")
+        }}
+      />
     )
   }
 
@@ -446,6 +456,7 @@ export function PlanBeta({
           startDateValue={candidateStartDate}
           onStartDateChange={setCandidateStartDate}
           recordReturnCount={recordReturnCount}
+          targetRaceDate={targetRaceDate}
           onManageRecords={() => {
             draftRevision.current += 1
             setRetrySelection(null)
@@ -473,8 +484,10 @@ export function PlanBeta({
             setSelectedRecordId(null)
             setComparisonRecordId(null)
             setRecordConfirmationPending(false)
-            setStep("race-date")
+            setRefining(false)
+            setStep("safety")
           }}
+          onRefine={openRefinement}
           onSelect={(selection) => {
             void saveCandidate(selection, generated)
           }}
@@ -507,67 +520,79 @@ export function PlanBeta({
         motion={intakeMotion}
         questionRef={intakeQuestionRef}
         draft={draft}
-        onBack={() => setStep(previousIntakeStep(step, draft.eventGroup))}
+        refining={refining}
+        onBack={() => {
+          if (refining) {
+            setRefining(false)
+            generateCandidates(draft, null, targetRaceDate || undefined)
+            return
+          }
+          setStep(previousIntakeStep(step, draft.eventGroup))
+        }}
         onJump={(target) => setStep(target)}
         onGoal={(eventDistanceM) => {
           const eventGroup = eventGroupForDistance(eventDistanceM)
-          const competitionDivision = divisionForGoal(eventGroup)
           setSelectedRecordId(null)
           setComparisonRecordId(null)
           setRecordConfirmationPending(false)
-          setDraft((current) => competitionDivision === undefined
-            ? {
-                ...current,
-                eventGroup,
-                eventDistanceM,
-                competitionDivision: undefined,
-                selectedDetailedTemplateRef: undefined,
-              }
-            : {
-                ...current,
-                eventGroup,
-                eventDistanceM,
-                competitionDivision,
-                selectedDetailedTemplateRef: undefined,
-              })
-          setStep(competitionDivision === undefined ? "division" : "experience")
+          const nextDraft: Partial<PlanBetaIntake> = {
+            ...draft,
+            eventGroup,
+            eventDistanceM,
+            competitionDivision: draft.competitionDivision ?? QUICK_INTAKE_DEFAULTS.competitionDivision,
+            // 종목이 바뀌면 상세 훈련표는 다시 고른다(다른 종목 표를 그대로 쓰지 않음).
+            selectedDetailedTemplateRef: draft.eventDistanceM === eventDistanceM
+              ? draft.selectedDetailedTemplateRef
+              : QUICK_INTAKE_DEFAULTS.selectedDetailedTemplateRef,
+          }
+          if (refining) {
+            continueAfterRefinement(nextDraft)
+            return
+          }
+          setDraft(nextDraft)
+          setStep(draft.experienceBand === undefined ? "experience" : firstUnansweredQuickStep(nextDraft))
         }}
-        onDivision={(competitionDivision) => {
-          setDraft((current) => ({ ...current, competitionDivision }))
-          setStep(draft.experienceBand === undefined ? "experience" : "safety")
-        }}
+        onDivision={(competitionDivision) => continueAfterRefinement({ ...draft, competitionDivision })}
         onExperience={(experienceBand) => {
-          setDraft((current) => ({ ...current, experienceBand }))
-          setStep("safety")
+          const nextDraft = { ...draft, experienceBand }
+          if (refining) {
+            continueAfterRefinement(nextDraft)
+            return
+          }
+          setDraft(nextDraft)
+          setStep(firstUnansweredQuickStep(nextDraft))
         }}
         onFocus={(trainingFocus) => continueAfterRefinement({
           ...draft,
           trainingFocus,
-          selectedDetailedTemplateRef: undefined,
+          selectedDetailedTemplateRef: null,
         })}
         onTemplate={(selectedDetailedTemplateRef) => continueAfterRefinement({
           ...draft,
           selectedDetailedTemplateRef,
         })}
-        onDays={(availableDayCount) => continueAfterRefinement({ ...draft, availableDayCount })}
+        onDays={(availableDayCount) => {
+          const nextDraft = { ...draft, availableDayCount }
+          if (refining) {
+            continueAfterRefinement(nextDraft)
+            return
+          }
+          setDraft(nextDraft)
+          setStep("safety")
+        }}
         onFrameLength={(requestedFrameLength) => continueAfterRefinement({ ...draft, requestedFrameLength })}
         onTrainingTime={(trainingTimePreference: TrainingTimePreference) => continueAfterRefinement({ ...draft, trainingTimePreference })}
         onSecondSession={(secondSessionMode) => continueAfterRefinement({ ...draft, secondSessionMode })}
         targetRaceDate={targetRaceDate}
         onTargetRaceDateChange={setTargetRaceDate}
-        onRaceDate={(raceDate) => generateCandidates(draft, null, raceDate)}
+        onRaceDate={(raceDate) => {
+          setRefining(false)
+          if (raceDate === undefined) setTargetRaceDate("")
+          generateCandidates(draft, null, raceDate)
+        }}
         onManageRecords={() => onManageRecords?.()}
         onOpenNotationReader={() => setNotationReaderOpen(true)}
         onSafety={(nextCurrentCheck) => {
-          if (
-            draft.eventGroup !== undefined
-            && divisionForGoal(draft.eventGroup) === undefined
-            && draft.competitionDivision === undefined
-          ) {
-            setCurrentCheck(null)
-            setStep("division")
-            return
-          }
           const safety = evaluatePlanSafety(nextCurrentCheck)
           if (safety.kind === "blocked") {
             setErrorCode(null)
@@ -577,16 +602,36 @@ export function PlanBeta({
           }
           setErrorCode(null)
           setCurrentCheck(nextCurrentCheck)
-          setStep("preview")
-        }}
-        onContinue={() => {
-          const nextRefinement = firstUnansweredRefinement(draft)
-          if (nextRefinement !== null) {
-            setStep(nextRefinement)
-            return
+          // 네 번째 답과 함께 바로 계획을 만든다. 나머지 항목은 기본값, 결과에서 다듬는다.
+          const completed = withQuickDefaults(draft)
+          setDraft(completed)
+          draftRevision.current += 1
+          setRetrySelection(null)
+          const result = generatePlanFromDraft(completed, nextCurrentCheck)
+          switch (result.kind) {
+            case "blocked":
+              setCurrentCheck(null)
+              setBlocked(true)
+              return
+            case "rejected":
+              setErrorCode(result.code)
+              return
+            case "generated":
+              setRacePreview(null)
+              setGate(result.gate)
+              setGenerated(result.generated)
+              setGeneratedIntake(result.intake)
+              setGeneratedEvidence(result.athleteEvidence)
+              setPrescriptionBinding(result.prescriptionBinding)
+              return
+            case "preview_only":
+              setGenerated(null)
+              setGate(null)
+              setRacePreview(result)
+              return
           }
-          setStep("race-date")
         }}
+        onContinue={() => generateCandidates(draft, null, targetRaceDate || undefined)}
       />
       {errorCode !== null && (
         <div className="plan-inline-error" role="alert">

@@ -35,18 +35,23 @@ export const EVENT_LABELS: Record<PlanEventGroup, {
 export const EXPERIENCE_LABELS: Record<ExperienceBand, {
   readonly title: string
   readonly detail: string
+  /** 달력 미리보기·요약 줄에 쓰는 두세 글자 표현 */
+  readonly short: string
 }> = {
   NEW_TO_RUNNING: {
     title: "달리기를 막 시작했어요",
-    detail: "규칙적인 달리기 습관을 만드는 중",
+    detail: "습관을 만드는 중",
+    short: "처음",
   },
   DEVELOPING: {
     title: "훈련 계획에 맞춰 달려 본 경험이 있어요",
-    detail: "규칙적으로 달리고 있음",
+    detail: "꾸준히 달리고 있어요",
+    short: "꾸준히",
   },
   EXPERIENCED: {
     title: "구조화된 훈련과 경기 경험이 많아요",
-    detail: "강도일과 회복일을 나눠 훈련해 봄",
+    detail: "힘든 날과 쉬는 날을 나눠 훈련해 봤어요",
+    short: "경험자",
   },
 }
 

@@ -212,7 +212,6 @@ async function openPlan(page: Page): Promise<void> {
 async function createBoundActivePlan(page: Page, projectionLength: 7 | 9 | 10): Promise<void> {
   await page.getByRole("button", { name: /^5000m\b/u }).click()
   await expect(page.getByRole("button", { name: /일반부/u })).toBeVisible()
-  await page.getByRole("button", { name: /일반부/u }).click()
   await expect(page.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u })).toBeVisible()
   await page.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }).click()
   await expect(page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u })).toBeVisible()
@@ -221,7 +220,6 @@ async function createBoundActivePlan(page: Page, projectionLength: 7 | 9 | 10): 
     "구조화된 훈련과 경기 경험이 많아요",
     { exact: true },
   )).toBeVisible()
-  await page.getByRole("button", { name: "내 계획 완성하기" }).click()
   await page.getByRole("button", { name: /강한 유산소 반복.*VO₂/u }).click()
   await page.getByRole("button", { name: /5000m 경기 페이스 상세 훈련 포함/u }).click()
   await page.getByRole("button", { name: /^3일/u }).click()
@@ -231,9 +229,6 @@ async function createBoundActivePlan(page: Page, projectionLength: 7 | 9 | 10): 
       ? /^7일만 먼저 받기/u
       : new RegExp(`^${projectionLength}일 계획 받기`, "u"),
   }).click()
-  await page.getByRole("button", { name: /아침에 운동해요/u }).click()
-  await page.getByRole("button", { name: /하루 한 번 운동/u }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
 
   const picker = page.getByRole("region", { name: "개인 페이스 기준 기록" })
   await expect(picker).toBeVisible()

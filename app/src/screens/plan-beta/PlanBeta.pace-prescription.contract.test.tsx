@@ -46,19 +46,13 @@ afterEach(() => { cleanup(); vi.restoreAllMocks() })
 async function reachCandidates(): Promise<void> {
   const user = userEvent.setup()
   await user.click(screen.getByRole("button", { name: /^5000m/u }))
-  await user.click(screen.getByRole("button", { name: /일반부/u }))
   await user.click(screen.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }))
   await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
-  await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
   await user.click(screen.getByRole("button", { name: /강한 유산소 반복.*VO₂/u }))
   await user.click(screen.getByRole("button", {
     name: /5000m 경기 페이스 상세 훈련 포함/u,
   }))
   await user.click(screen.getByRole("button", { name: /^3일/u }))
-  await user.click(screen.getByRole("button", { name: /9일 계획 받기/u }))
-  await user.click(screen.getByRole("button", { name: /아침에 운동해요/u }))
-  await user.click(screen.getByRole("button", { name: /하루 한 번 운동/u }))
-  await user.click(screen.getByRole("button", { name: "날짜 없이 계획안 보기" }))
 }
 
 describe("production detailed prescription experience", () => {
@@ -329,7 +323,6 @@ describe("production detailed prescription experience", () => {
     const user = userEvent.setup()
     render(<PlanBeta />)
     await user.click(screen.getByRole("button", { name: /^5000m/u }))
-    await user.click(screen.getByRole("button", { name: /일반부/u }))
     await user.click(screen.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }))
     await user.click(screen.getByRole("button", { name: /통증.*부상.*몸 이상/u }))
 

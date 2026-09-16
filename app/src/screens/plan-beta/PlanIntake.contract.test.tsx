@@ -147,7 +147,6 @@ describe("optional target race date", () => {
     expect(screen.getByRole("button", { name: "날짜 없이 계획안 보기" })).toBeEnabled()
     expect(screen.getByRole("button", { name: "이 날짜로 배치 미리보기" })).toBeDisabled()
     expect(screen.getByLabelText("목표 경기 날짜")).toHaveAttribute("aria-invalid", "false")
-    await user.click(screen.getByRole("button", { name: "날짜 없이 계획안 보기" }))
     expect(onRaceDate).toHaveBeenCalledWith()
 
     rerender(
