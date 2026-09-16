@@ -23,15 +23,13 @@ import {
   EXPERIENCE_LABELS,
 } from "./labels"
 import { PlanChoice as Choice } from "./PlanChoice"
+import { IntakeCalendarPeek } from "./IntakeCalendarPeek"
 import { answeredSummary, DIVISION_LABELS, STEP_META, trainingTimeLabel } from "./plan-intake-meta"
 import type { IntakeStep as MetaIntakeStep } from "./plan-intake-meta"
 import {
-  unansweredRefinements,
-  eventDistanceLabel,
-  SUPPORTED_PLAN_EVENTS,
+  QUICK_STEP_ORDER,
   visibleIntakeSteps,
 } from "./plan-intake-navigation"
-import type { RefinementStep } from "./plan-intake-navigation"
 import { resolveDetailedPlanTemplateOptions } from "./plan-template-options"
 import { PlanSupportCoverage } from "./PlanSupportCoverage"
 
@@ -39,23 +37,13 @@ export type IntakeStep = MetaIntakeStep | "frame-length" | "race-date" | "previe
 
 type IntakeDraft = Partial<PlanBetaIntake>
 
-const PREVIEW_REFINEMENTS: readonly {
-  readonly step: RefinementStep
-  readonly label: string
-}[] = [
-  { step: "days", label: "훈련일" },
-  { step: "frame-length", label: "첫 계획 길이 7·9·10일" },
-  { step: "focus", label: "훈련 목적" },
-  { step: "template", label: "훈련 상세 방식" },
-  { step: "training-time", label: "주로 하는 시간" },
-  { step: "two-a-day", label: "하루 한 번/두 번 선택" },
-]
-
 type PlanIntakeProps = {
   readonly step: IntakeStep
   readonly motion?: "initial" | "forward" | "backward" | "replace"
   readonly draft: IntakeDraft
   readonly questionRef?: React.RefObject<HTMLDivElement>
+  /** true면 "다듬기"에서 열린 단일 질문 — 진행 표시·달력 미리보기를 숨기고 뒤로 가기 문구를 바꾼다. */
+  readonly refining?: boolean
   readonly onBack: () => void
   readonly onGoal: (distanceM: PlanBetaIntake["eventDistanceM"]) => void
   readonly onDivision: (division: CompetitionDivision) => void
@@ -83,6 +71,7 @@ export function PlanIntake({
   motion = "initial",
   draft,
   questionRef,
+  refining = false,
   onBack,
   onGoal,
   onDivision,
@@ -104,42 +93,36 @@ export function PlanIntake({
 }: PlanIntakeProps) {
   const meta = step === "preview"
     ? {
-        eyebrow: "방향 확인",
-        title: "계획 형태 미리보기",
-        copy: "선택한 종목과 훈련 경험으로 어떤 정보를 더 정할지 먼저 보여드려요. 일정이나 훈련 처방은 아직 만들지 않았어요.",
+        eyebrow: "확인",
+        title: "이대로 계획을 만들까요?",
+        copy: "아직 계획이 아니에요. 만든 뒤에 바꿀 수 있어요.",
         helpTerm: null,
       }
     : step === "frame-length"
     ? {
         eyebrow: "계획 길이",
-        title: "이번에 며칠 계획을 받을까요?",
-        copy: "7일은 먼저 7일만 받고 다음 계획으로 이어집니다. 9일과 10일은 고른 날짜 수만큼 한 번에 받습니다.",
-        helpTerm: "plan-option" as const,
+        title: "며칠짜리 달력을 받을까요?",
+        copy: "7일은 끝나면 다음 계획으로 이어져요.",
+        helpTerm: "plan-frame" as const,
       }
     : step === "race-date"
     ? {
-        eyebrow: "목표 경기 날짜",
-        title: "목표 경기 날짜가 있나요? (선택)",
-        copy: "날짜 없이도 일반 계획안 두 개를 바로 만들 수 있어요. 날짜를 고르면 저장하거나 훈련량·강도를 바꾸지 않고 이 화면에서 적용 가능 여부만 미리 확인해요.",
+        eyebrow: "대회 날짜",
+        title: "대회 날짜가 있나요?",
+        copy: "없어도 괜찮아요. 있으면 그 날이 달력에 표시돼요.",
         helpTerm: null,
       }
     : STEP_META[step]
   const visibleSteps = visibleIntakeSteps(draft.eventGroup)
-  const unanswered = unansweredRefinements(draft)
-  const remainingRefinements = PREVIEW_REFINEMENTS.filter(({ step: refinementStep }) => (
-    unanswered.includes(refinementStep)
-  ))
-  const currentStepIndex = visibleSteps.indexOf(step === "preview" ? "safety" : step)
-  const stepNumber = currentStepIndex < 0 ? 1 : currentStepIndex + 1
+  const isQuickStep = (QUICK_STEP_ORDER as readonly IntakeStep[]).includes(step)
+  const currentStepIndex = visibleSteps.indexOf(step)
+  const stepNumber = currentStepIndex < 0 ? visibleSteps.length : currentStepIndex + 1
+  const showProgress = !refining && isQuickStep
   const summaryLabels = new Map<IntakeStep, string>(
-    answeredSummary(draft).map(({ step: answeredStep, label }) => [answeredStep, label]),
+    answeredSummary(draft)
+      .filter(({ step: answeredStep }) => (QUICK_STEP_ORDER as readonly IntakeStep[]).includes(answeredStep))
+      .map(({ step: answeredStep, label }) => [answeredStep, label]),
   )
-  if (draft.requestedFrameLength !== undefined) {
-    summaryLabels.set("frame-length", `${draft.requestedFrameLength}일 계획`)
-  }
-  if (targetRaceDate !== "") {
-    summaryLabels.set("race-date", `목표 경기 ${targetRaceDate}`)
-  }
   const answeredSteps = visibleSteps.flatMap((answeredStep) => {
     const label = summaryLabels.get(answeredStep)
     return label === undefined ? [] : [{ step: answeredStep, label }]
@@ -149,18 +132,22 @@ export function PlanIntake({
     <section
       className="plan-intake active-stage-content"
       data-flow-direction={motion}
+      data-refining={refining ? "true" : undefined}
       aria-labelledby="plan-intake-title"
     >
       <button className="plan-back" type="button" onClick={onBack}>
         <ArrowLeft aria-hidden="true" size={17} />
-        이전
+        {refining ? "계획으로" : "이전"}
       </button>
-      <div className="plan-progress" aria-label={`계획 질문 ${stepNumber}/${visibleSteps.length}`}>
-        <span>{stepNumber}/{visibleSteps.length}</span>
-        <i style={{ width: `${stepNumber * (100 / visibleSteps.length)}%` }} />
-      </div>
-      {answeredSteps.length > 0 && (
-        <InfoDisclosure key={`summary-${step}`} className="plan-intake__summary" title={`선택한 조건 ${answeredSteps.length}개 · 수정하기`}>
+      {showProgress && (
+        <div className="plan-progress" aria-label={`계획 질문 ${stepNumber}/${visibleSteps.length}`}>
+          <span>{stepNumber}/{visibleSteps.length}</span>
+          <i style={{ width: `${stepNumber * (100 / visibleSteps.length)}%` }} />
+        </div>
+      )}
+      {showProgress && <IntakeCalendarPeek draft={draft} />}
+      {showProgress && answeredSteps.length > 0 && (
+        <div className="plan-intake__summary" aria-label="지금까지">
           {answeredSteps.map(({ step: answeredStep, label }) => (
             <button
               key={answeredStep}
@@ -172,70 +159,49 @@ export function PlanIntake({
               <ChevronRight aria-hidden="true" size={14} />
             </button>
           ))}
-        </InfoDisclosure>
+        </div>
       )}
       <div ref={questionRef} className="plan-eyebrow active-content-scroll-target">{meta.eyebrow}</div>
       <div className="plan-heading-row">
         <h1 id="plan-intake-title">{meta.title}</h1>
         {meta.helpTerm !== null && <TermHelp term={meta.helpTerm} />}
       </div>
-      {step === "safety" && <p className="plan-copy">{meta.copy}</p>}
-      {step === "days" && <p className="plan-copy">회복 운동을 하는 날도 포함해 주세요. 훈련일이 적으면 하루 운동 시간이 늘어날 수 있어요.</p>}
-      {step === "two-a-day" && <p className="plan-copy">두 번을 고르면 모든 훈련일에 오전·오후 운동을 배치해요.</p>}
+      <p className="plan-copy">{meta.copy}</p>
       {step === "preview" && (
         <>
           <dl className="plan-shape-preview" aria-label="미리보기 기준">
             <div>
-              <dt>준비 종목</dt>
-              <dd>
-                {eventDistanceLabel(draft.eventDistanceM)}
-              </dd>
+              <dt>목표</dt>
+              <dd>{eventDistanceLabelSafe(draft.eventDistanceM)}</dd>
             </div>
             <div>
-              <dt>훈련 경험</dt>
+              <dt>경험</dt>
               <dd>
                 {draft.experienceBand === undefined
                   ? "아직 선택되지 않음"
                   : EXPERIENCE_LABELS[draft.experienceBand].title}
               </dd>
             </div>
-            <div>
-              <dt>비교 방식</dt>
-              <dd>쉬운 훈련 시간이 다른 계획안 A와 B를 나란히 비교</dd>
-            </div>
           </dl>
-          <div className="plan-preview-boundary">
-            <strong>아직 계획이 아니에요.</strong>
-            <p>
-              {remainingRefinements.length === 0
-                ? "남은 선택 0개 · 저장된 선택을 그대로 다시 사용할 수 있어요. 계획안은 아직 만들지 않았어요."
-                : `남은 선택 ${remainingRefinements.length}개 · ${remainingRefinements
-                    .map(({ label }) => label)
-                    .join(" · ")}`}
-            </p>
-            <small>
-              이 미리보기는 저장되지 않으며 실제 계획안을 만들 때 안전 확인을 다시 적용해요.
-            </small>
-          </div>
           <button
             className="plan-select-action plan-preview-action"
             type="button"
             disabled={draft.eventDistanceM === undefined || draft.experienceBand === undefined}
             onClick={onContinue}
           >
-            {remainingRefinements.length === 0 ? "계획안 만들기" : "내 계획 완성하기"}
+            계획 만들기
             <ChevronRight aria-hidden="true" size={18} />
           </button>
         </>
       )}
       {step !== "preview" && (
         <div
-          className={`plan-choice-list${step === "goal" ? " plan-choice-list--goals" : ""}`}
+          className={`plan-choice-list${isQuickStep || step === "division" || step === "focus" ? " plan-choice-list--cards" : ""}${step === "goal" ? " plan-choice-list--goals" : ""}`}
           role={step === "goal" ? "group" : undefined}
           aria-label={step === "goal" ? "계획 종목 선택" : undefined}
         >
         {step === "goal" && (
-          SUPPORTED_PLAN_EVENTS.map((event) => (
+          SUPPORTED_GOAL_ORDER.map((event) => (
             <Choice
               key={event.distanceM}
               title={event.title}
@@ -282,7 +248,7 @@ export function PlanIntake({
           <>
             <Choice
               title="RPE 기준으로 받기"
-              detail="경기 기록 없이도 시작 · 각 훈련의 체감 강도와 시간을 안내"
+              detail="기록 없이 시작 · 힘든 정도(1~10)와 시간으로 안내"
               selected={draft.selectedDetailedTemplateRef === null}
               onClick={() => onTemplate(null)}
             />
@@ -321,8 +287,8 @@ export function PlanIntake({
               key={days}
               title={days === "EVERY_DAY" ? "매일" : `${days}일`}
               detail={days === "EVERY_DAY"
-                ? "매일 움직일 수 있어요 · 완전 휴식일도 계획에서 따로 보여요"
-                : `운동 ${days}일 · 고르지 않은 날은 완전 휴식`}
+                ? "쉬는 날도 달력에 따로 보여요"
+                : `나머지 ${7 - days}일은 쉬어요`}
               selected={draft.availableDayCount === days}
               onClick={() => onDays(days)}
             />
@@ -380,13 +346,13 @@ export function PlanIntake({
           <>
             <Choice
               title="통증은 없고 몸 상태는 평소와 같아요"
-              detail="이 응답은 의료적 허가를 뜻하지 않아요"
+              detail="바로 계획을 만들어요"
               selected={false}
               onClick={() => onSafety("NO_KNOWN_RISK")}
             />
             <Choice
               title="통증·부상·몸 이상이 있거나 잘 모르겠어요"
-              detail="계획을 만들지 않고 몸 상태 확인을 먼저 안내해요"
+              detail="계획 대신 쉬는 안내와 다음 할 일을 보여드려요"
               selected={false}
               onClick={() => onSafety("REVIEW_REQUIRED")}
             />
@@ -394,8 +360,15 @@ export function PlanIntake({
         )}
         </div>
       )}
-      {step === "goal" && (
-        <>
+      {step === "safety" && !refining && (
+        <p className="plan-choice-note plan-choice-note--muted">
+          이 질문은 진단이나 의료 허가가 아니에요.
+          <TermHelp term="review" />
+        </p>
+      )}
+      {step === "goal" && !refining && (
+        <details className="plan-support-more">
+          <summary>경기 기록이 있나요?</summary>
           <div className="plan-support-actions">
             <button
               className="plan-text-action plan-records-entry"
@@ -413,15 +386,33 @@ export function PlanIntake({
               훈련표 표기 읽기
             </button>
           </div>
-        </>
+          <p className="plan-records-note">
+            기록을 저장해도 계획의 페이스·거리·반복은 자동으로 바뀌지 않아요.
+          </p>
+        </details>
       )}
-      {step !== "safety" && <InfoDisclosure key={`explanation-${step}`} title="이 선택은 계획에 어떻게 쓰이나요?">
-        <p className="plan-copy">{meta.copy}</p>
-        {step === "goal" && <dl>{SUPPORTED_PLAN_EVENTS.map(event => <div key={event.distanceM}><dt>{event.title}</dt><dd>{event.detail}</dd></div>)}</dl>}
-        <p>경기 기록을 저장해도 지금 계획의 페이스·거리·반복은 자동으로 바뀌지 않아요.</p>
-      </InfoDisclosure>}
     </section>
   )
+}
+
+/** 초보자가 많이 고르는 순서로 정렬: 5km/10km 먼저, 트랙 종목은 뒤로. 값은 그대로. */
+const SUPPORTED_GOAL_ORDER = [
+  { distanceM: 5000, title: "5000m", detail: "5km · 처음 시작하기 좋아요" },
+  { distanceM: 10000, title: "10km", detail: "첫 대회로 많이 골라요" },
+  { distanceM: 21097, title: "하프마라톤", detail: "21.1km" },
+  { distanceM: 42195, title: "마라톤", detail: "42.2km" },
+  { distanceM: 800, title: "800m", detail: "트랙 두 바퀴" },
+  { distanceM: 1500, title: "1500m", detail: "트랙 중거리" },
+  { distanceM: 3000, title: "3000m", detail: "트랙 중장거리" },
+] as const satisfies readonly {
+  readonly distanceM: PlanBetaIntake["eventDistanceM"]
+  readonly title: string
+  readonly detail: string
+}[]
+
+function eventDistanceLabelSafe(distanceM: PlanBetaIntake["eventDistanceM"] | undefined): string {
+  if (distanceM === undefined) return "아직 선택되지 않음"
+  return SUPPORTED_GOAL_ORDER.find((event) => event.distanceM === distanceM)?.title ?? `${distanceM}m`
 }
 
 function RaceDateChoice({
@@ -456,7 +447,7 @@ function RaceDateChoice({
         />
       </label>
       <small id="plan-race-date-help">
-        입력한 날짜는 이 미리보기에서만 사용하고 기기나 계정에 저장하지 않아요.
+        날짜는 이 화면에서만 쓰고 저장하지 않아요.
       </small>
       {value !== "" && !validFutureDate && (
         <p id="plan-race-date-error" role="alert">

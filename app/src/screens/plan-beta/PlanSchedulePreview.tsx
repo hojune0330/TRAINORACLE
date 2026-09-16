@@ -316,11 +316,21 @@ function PlanSessionPreview({
 export function PlanRpeGuide() {
   return (
     <div className="plan-rpe-guide">
-      <strong>RPE 기준<TermHelp term="rpe" /></strong>
-      <span>
-        1~2 회복 움직임 · 3~4 대화 가능한 쉬운 유산소 · 5 꾸준한 노력 · 6 짧은 문장만 가능 · 7 몇 마디만 가능 · 8 매우 힘든 짧은 반복 · 9 거의 최대인 짧은 노력 · 10 최대 노력에 가까운 느낌
-      </span>
-      <small>몸의 느낌을 설명하는 기준이며 의료 판단이 아닙니다.</small>
+      <strong>RPE = 얼마나 힘든지 1~10<TermHelp term="rpe" /></strong>
+      <ul className="plan-rpe-guide__scale" aria-label="RPE 쉽게 보기">
+        <li><b>1~2</b><span>산책처럼 편해요</span></li>
+        <li><b>3~4</b><span>대화하며 달릴 수 있어요</span></li>
+        <li><b>5~6</b><span>짧게만 말할 수 있어요</span></li>
+        <li><b>7~8</b><span>말하기 어려워요</span></li>
+        <li><b>9~10</b><span>거의 전력이에요</span></li>
+      </ul>
+      <details className="plan-rpe-guide__more">
+        <summary>자세히</summary>
+        <span>
+          1~2 회복 움직임 · 3~4 대화 가능한 쉬운 유산소 · 5 꾸준한 노력 · 6 짧은 문장만 가능 · 7 몇 마디만 가능 · 8 매우 힘든 짧은 반복 · 9 거의 최대인 짧은 노력 · 10 최대 노력에 가까운 느낌
+        </span>
+        <small>몸의 느낌을 설명하는 기준이며 의료 판단이 아닙니다.</small>
+      </details>
     </div>
   )
 }
