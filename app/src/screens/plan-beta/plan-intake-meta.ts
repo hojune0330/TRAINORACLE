@@ -20,14 +20,14 @@ export const DIVISION_LABELS: Record<CompetitionDivision, {
   readonly title: string
   readonly detail: string
 }> = {
-  ELEMENTARY: { title: "초등부", detail: "현재 대회에서 초등부로 참가하거나 준비 중" },
-  MIDDLE_SCHOOL: { title: "중등부", detail: "현재 대회에서 중등부로 참가하거나 준비 중" },
-  HIGH_SCHOOL: { title: "고등부", detail: "현재 대회에서 고등부로 참가하거나 준비 중" },
-  COLLEGE: { title: "대학부", detail: "현재 대회에서 대학부로 참가하거나 준비 중" },
-  OPEN: { title: "일반부", detail: "현재 대회에서 일반부로 참가하거나 준비 중" },
-  MASTERS: { title: "생활체육·마스터즈", detail: "연령대·동호인 부문 대회를 준비 중" },
-  NO_REGISTERED_DIVISION: { title: "정해진 참가 부문이 없어요", detail: "대회 등록 없이 혼자 훈련하거나 아직 부문을 정하지 않음" },
-  NOT_PROVIDED: { title: "선택하지 않음/나중에 입력", detail: "지금 정하지 않고 계획을 계속 만들어요" },
+  ELEMENTARY: { title: "초등부", detail: "대회 참가 부문" },
+  MIDDLE_SCHOOL: { title: "중등부", detail: "대회 참가 부문" },
+  HIGH_SCHOOL: { title: "고등부", detail: "대회 참가 부문" },
+  COLLEGE: { title: "대학부", detail: "대회 참가 부문" },
+  OPEN: { title: "일반부", detail: "대회 참가 부문" },
+  MASTERS: { title: "생활체육·마스터즈", detail: "동호인 부문" },
+  NO_REGISTERED_DIVISION: { title: "정해진 참가 부문이 없어요", detail: "혼자 훈련해요" },
+  NOT_PROVIDED: { title: "선택하지 않음/나중에 입력", detail: "지금은 넘어가요" },
 }
 
 export const STEP_META: Record<IntakeStep, {
@@ -62,15 +62,15 @@ export const STEP_META: Record<IntakeStep, {
   focus: {
     number: 0,
     eyebrow: "훈련 종류",
-    title: "이번에 어떤 훈련을 넣을까요?",
-    copy: "주요 훈련 하나의 종류를 정해요.",
+    title: "더 하고 싶은 훈련이 있나요?",
+    copy: "모르면 골고루가 좋아요.",
     helpTerm: "energy-system",
   },
   template: {
     number: 0,
     eyebrow: "안내 방식",
-    title: "훈련 강도를 어떻게 안내받을까요?",
-    copy: "느낌(RPE) 기준은 기록이 없어도 돼요.",
+    title: "강도를 어떻게 알려줄까요?",
+    copy: "기록이 없으면 RPE로.",
     helpTerm: "rpe",
   },
   days: {

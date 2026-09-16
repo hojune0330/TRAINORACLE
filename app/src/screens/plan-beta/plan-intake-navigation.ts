@@ -81,7 +81,7 @@ export function divisionForGoal(
 
 /**
  * 빠른 흐름에서 묻지 않는 항목의 기본값.
- * - trainingFocus BASE: 기초 달리기. 주요 훈련 종류만 정하며 강도 수치는 생성기가 정한다.
+ * - trainingFocus MIXED: 여러 강도 조합(골고루). 주요 훈련 종류만 정하며 강도 수치는 생성기가 정한다.
  * - selectedDetailedTemplateRef null: RPE 기준. 상세 훈련표는 다듬기에서 고른다.
  * - requestedFrameLength 9: 한 번에 9일 달력.
  * - trainingTimePreference VARIES: 오너 결정(C3A0) 기본값. "오전"으로 몰래 취급하지 않는다.
@@ -89,7 +89,7 @@ export function divisionForGoal(
  */
 export const QUICK_INTAKE_DEFAULTS = Object.freeze({
   competitionDivision: "NOT_PROVIDED",
-  trainingFocus: "BASE_INTENT",
+  trainingFocus: "MIXED_INTENT",
   selectedDetailedTemplateRef: null,
   requestedFrameLength: 9,
   trainingTimePreference: "VARIES",
@@ -97,6 +97,21 @@ export const QUICK_INTAKE_DEFAULTS = Object.freeze({
 } as const satisfies Partial<PlanBetaIntake>)
 
 export type QuickIntakeDefaultKey = keyof typeof QUICK_INTAKE_DEFAULTS
+
+/**
+ * 각 질문에서 "추천"으로 표시할 답. 첫 카드에 놓고 한 번 탭하면 넘어간다.
+ * 훈련 수치와 무관한 선택 편의 표시다. 안전 질문에는 추천을 두지 않는다.
+ */
+export const RECOMMENDED_ANSWERS = Object.freeze({
+  eventDistanceM: 5000,
+  experienceBand: "NEW_TO_RUNNING",
+  availableDayCount: 3,
+  trainingFocus: QUICK_INTAKE_DEFAULTS.trainingFocus,
+  requestedFrameLength: QUICK_INTAKE_DEFAULTS.requestedFrameLength,
+  trainingTimePreference: QUICK_INTAKE_DEFAULTS.trainingTimePreference,
+  secondSessionMode: QUICK_INTAKE_DEFAULTS.secondSessionMode,
+  competitionDivision: QUICK_INTAKE_DEFAULTS.competitionDivision,
+} as const satisfies Partial<PlanBetaIntake>)
 
 /** 아직 답하지 않은 항목만 기본값으로 채운다. 사용자가 이미 고른 값은 절대 덮어쓰지 않는다. */
 export function withQuickDefaults(

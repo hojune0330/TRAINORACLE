@@ -10,7 +10,7 @@ async function answerMinimumPlanQuestions(page: Page): Promise<void> {
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
   await page.getByRole("button", { name: "내 계획 완성하기" }).click()
-  await page.getByRole("button", { name: /지속 페이스.*LT/u }).click()
+  await page.getByRole("button", { name: /조금 힘들게 꾸준히.*LT/u }).click()
   await page.getByRole("button", { name: /^RPE 기준으로 받기/u }).click()
   await page.getByRole("button", { name: /^3일/u }).click()
   await selectNineDayProjection(page)
@@ -37,7 +37,7 @@ test("retries a selected plan save and keeps the plan after reload", async ({ pa
   await answerMinimumPlanQuestions(page)
 
   // When: the athlete selects a candidate, retries, and returns after a reload.
-  await page.getByRole("button", { name: /선택하기/u }).first().click()
+  await page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u }).first().click()
   await expect(page.getByRole("alert")).toContainText("계획을 이 기기에 저장하지 못했어요")
   await page.getByRole("button", { name: "계획 다시 저장하기" }).click()
   await expect(page.getByRole("heading", { name: /9일 훈련 계획/u })).toBeVisible()
@@ -75,7 +75,7 @@ test("retries a completed-session save without losing the active plan", async ({
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "바로 시작하기" }).getByRole("button", { name: /^훈련 계획/u }).click()
   await answerMinimumPlanQuestions(page)
-  await page.getByRole("button", { name: /선택하기/u }).first().click()
+  await page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u }).first().click()
 
   // When: the athlete records completion, sees the save failure, and retries the same change.
   await page.getByText("오전 훈련 방법과 기록", { exact: true }).first().click()

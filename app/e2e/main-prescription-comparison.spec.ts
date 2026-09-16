@@ -23,7 +23,7 @@ test("compares actual MAIN values and refreshes the chosen record without claimi
   await page.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
   await page.getByRole("button", { name: "내 계획 완성하기" }).click()
-  await page.getByRole("button", { name: /짧은 고강도 반복.*GLY/u }).click()
+  await page.getByRole("button", { name: /짧고 세게.*GLY/u }).click()
   await page.getByRole("button", { name: /800m 경기 페이스 상세 훈련 포함/u }).click()
   await page.getByRole("button", { name: /^3일/u }).click()
   await selectNineDayProjection(page)

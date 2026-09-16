@@ -57,43 +57,44 @@ export const EXPERIENCE_LABELS: Record<ExperienceBand, {
 
 export const ENERGY_INTENT_LABELS: Record<PlannedEnergyIntent, {
   readonly title: string
+  /** 한 줄 이하. 원리·경계 설명은 `term` 물음표 뒤로. */
   readonly detail: string
   readonly term: "base" | "lt" | "vo2" | "gly" | "atp" | "energy-system" | "rpe"
 }> = {
-  RECOVERY_INTENT: {
-    title: "회복 운동 · REC",
-    detail: "걷기, 아주 가벼운 조깅, 느린 자전거처럼 몸을 편하게 움직이는 날이에요.",
-    term: "rpe",
+  MIXED_INTENT: {
+    title: "골고루 · MIX",
+    detail: "빠른 날, 오래 뛰는 날을 섞어요. 처음이면 이걸로",
+    term: "energy-system",
   },
   BASE_INTENT: {
-    title: "기초 지구력 · BASE",
-    detail: "땀이 나도 친구와 대화하거나 전화 통화가 가능한 기본 유산소 달리기예요.",
+    title: "편하게 오래 · BASE",
+    detail: "대화하며 뛸 수 있는 속도로",
     term: "base",
   },
   LT_INTENT: {
-    title: "지속 페이스 · LT",
-    detail: "조금 힘든 느낌을 일정하게 유지하는 날이에요. 반복 수와 페이스는 아직 정하지 않아요.",
+    title: "조금 힘들게 꾸준히 · LT",
+    detail: "살짝 힘든 속도를 일정하게",
     term: "lt",
   },
   VO2_INTENT: {
-    title: "강한 유산소 반복 · VO₂",
-    detail: "숨이 많이 차는 구간과 회복 구간을 반복해 강한 유산소 능력을 준비해요. 정확한 반복 구성은 지원 근거가 있을 때만 정합니다.",
+    title: "숨차게 반복 · VO₂",
+    detail: "숨찬 구간과 쉬는 구간을 반복",
     term: "vo2",
   },
   GLY_INTENT: {
-    title: "짧은 고강도 반복 · GLY",
-    detail: "높은 에너지 요구에 대응하는 해당과정을 겨냥해요. 운동 길이·출력·회복 조건에 따라 자극이 달라지며, 모든 빠른 달리기를 뜻하지 않아요.",
+    title: "짧고 세게 · GLY",
+    detail: "짧은 전력 구간을 여러 번",
     term: "gly",
   },
   ATP_PC_INTENT: {
-    title: "스피드·가속 · ATP-PC",
-    detail: "매우 짧은 스피드·가속 구간과 충분한 회복을 다루는 목적이에요. 100·200·400m 전용 계획은 아직 만들지 않아요.",
+    title: "스피드 · ATP-PC",
+    detail: "아주 짧은 가속과 충분한 휴식",
     term: "atp",
   },
-  MIXED_INTENT: {
-    title: "여러 강도 조합 · MIX",
-    detail: "한 가지 목적만 고정하지 않고 여러 강도 구간을 함께 다루는 목적이에요. 상세 반복과 회복은 직접 고른 훈련표가 있을 때만 안내해요.",
-    term: "energy-system",
+  RECOVERY_INTENT: {
+    title: "회복만 · REC",
+    detail: "걷기·아주 가벼운 조깅",
+    term: "rpe",
   },
 }
 
@@ -107,12 +108,12 @@ export function candidateLabel(
   if (kind === "CONSERVATIVE") {
     return {
       title: "최소 시간 계획",
-      detail: `고른 ${ENERGY_INTENT_LABELS[selectedEnergyIntent].title} 목적의 주요 훈련과 함께, 조정할 수 있는 쉬운 훈련만 각 시간 범위의 가장 짧은 값으로 정해요.`,
+      detail: `${ENERGY_INTENT_LABELS[selectedEnergyIntent].title.split(" · ")[0]} + 쉬운 날은 짧게`,
     }
   }
   return {
     title: "시간 조절 계획",
-    detail: `고른 ${ENERGY_INTENT_LABELS[selectedEnergyIntent].title} 목적의 주요 훈련과 함께, 쉬운 훈련은 표시된 시간 범위 안에서 직접 조절해요.`,
+    detail: `${ENERGY_INTENT_LABELS[selectedEnergyIntent].title.split(" · ")[0]} + 쉬운 날은 내가 조절`,
   }
 }
 

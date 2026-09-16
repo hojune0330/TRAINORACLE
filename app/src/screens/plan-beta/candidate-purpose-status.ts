@@ -12,14 +12,14 @@ export function candidatePurposeStatus(kind: PlanCandidateKind): CandidatePurpos
     case "BALANCED":
       return {
         tone: "included",
-        label: "쉬운 훈련 시간을 범위로 표시해요.",
-        detail: "각 날에 표시된 최소~최대 시간 안에서 직접 정해요.",
+        label: "쉬운 날은 시간 범위로",
+        detail: "그날 컨디션에 맞춰 범위 안에서",
       }
     case "CONSERVATIVE":
       return {
         tone: "conservative",
-        label: "쉬운 훈련을 가장 짧은 시간으로 표시해요.",
-        detail: "조정할 수 있는 날은 최소~최대 시간 중 가장 짧은 값으로 미리 정해요.",
+        label: "쉬운 날은 가장 짧게",
+        detail: "바쁠 때 좋아요",
       }
     default:
       return assertNever(kind)

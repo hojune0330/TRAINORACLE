@@ -10,7 +10,7 @@ test("missing-record journey resumes the same choices and explicitly binds a non
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
   for (const name of [/^5000m\b/u, /고등부/u, /구조화된 훈련과 경기 경험이 많아요/u,
-    /통증은 없고 몸 상태는 평소와 같아요/u, "내 계획 완성하기", /강한 유산소 반복.*VO₂/u,
+    /통증은 없고 몸 상태는 평소와 같아요/u, "내 계획 완성하기", /숨차게 반복.*VO₂/u,
     /5000m 경기 페이스 상세 훈련 포함/u, /^3일/u, /^9일 계획 받기/u,
     /아침에 운동해요/u, /하루 한 번 운동/u, "날짜 없이 계획안 보기"]) {
     await page.getByRole("button", { name, exact: typeof name === "string" }).click()

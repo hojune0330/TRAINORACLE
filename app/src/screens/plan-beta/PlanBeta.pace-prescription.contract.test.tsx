@@ -51,7 +51,7 @@ async function reachCandidates(): Promise<void> {
   await user.click(screen.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }))
   await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
   await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
-  await user.click(screen.getByRole("button", { name: /강한 유산소 반복.*VO₂/u }))
+  await user.click(screen.getByRole("button", { name: /숨차게 반복.*VO₂/u }))
   await user.click(screen.getByRole("button", {
     name: /5000m 경기 페이스 상세 훈련 포함/u,
   }))
@@ -78,7 +78,7 @@ describe.skip("production detailed prescription experience", () => {
     await user.type(screen.getByLabelText("달성일"), "2026-09-01")
     await user.click(screen.getByRole("button", { name: "기록 저장" }))
     await user.click(screen.getByRole("button", { name: "계획으로" }))
-    expect(screen.getByRole("heading", { name: "두 계획에서 하나를 골라보세요" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
     expect(screen.getByLabelText("계획 시작 날짜")).toHaveValue("2026-09-10")
     expect(screen.getByRole("button", { name: /시간 조절 계획 선택하기/u })).toBeDisabled()
     const picker = screen.getByRole("region", { name: "개인 페이스 기준 기록" })

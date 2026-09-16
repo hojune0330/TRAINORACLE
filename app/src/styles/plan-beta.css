@@ -3375,3 +3375,34 @@
   display: flex;
   align-items: center;
 }
+
+/* 추천 배지 — 첫 카드/첫 계획안. 고민 없이 탭. */
+.plan-choice__badge {
+  display: inline-block;
+  margin-inline-start: var(--space-2);
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: #fff;
+  font-style: normal;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  vertical-align: middle;
+  line-height: 1.4;
+}
+
+.plan-choice-list--cards .plan-choice[data-recommended="true"] {
+  border-color: var(--brand);
+  box-shadow: inset 0 0 0 1px var(--brand);
+}
+
+.plan-candidate[data-recommended="true"] {
+  border: var(--bw-line) solid var(--brand);
+  border-radius: var(--r-md);
+  padding: var(--space-3);
+}
+
+.plan-candidate[data-recommended="true"] .plan-select-action {
+  background: var(--brand);
+  color: #fff;
+}

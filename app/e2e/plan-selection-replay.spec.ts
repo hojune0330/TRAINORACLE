@@ -13,7 +13,7 @@ async function prepare(page: Page, startDate: string) {
   await page.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
   await page.getByRole("button", { name: "내 계획 완성하기" }).click()
-  await page.getByRole("button", { name: /강한 유산소 반복.*VO₂/u }).click()
+  await page.getByRole("button", { name: /숨차게 반복.*VO₂/u }).click()
   await page.getByRole("button", { name: /RPE 기준으로 받기/u }).click()
   await page.getByRole("button", { name: /^3일/u }).click()
   await selectNineDayProjection(page)

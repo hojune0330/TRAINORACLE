@@ -61,7 +61,7 @@ test("a high-school athlete can make a ten-day two-a-day plan without prior reco
   await page.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
   await page.getByRole("button", { name: "내 계획 완성하기" }).click()
-  await page.getByRole("button", { name: /지속 페이스.*LT/u }).click()
+  await page.getByRole("button", { name: /조금 힘들게 꾸준히.*LT/u }).click()
   await page.getByRole("button", { name: /^RPE 기준으로 받기/u }).click()
   await page.getByRole("button", { name: /^매일/u }).click()
   await page.getByRole("button", { name: /^10일 계획 받기/u }).click()

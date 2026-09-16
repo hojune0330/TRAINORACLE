@@ -24,7 +24,7 @@ describe("plan calendar selection", () => {
     await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
     await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
     await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
-    await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
+    await user.click(screen.getByRole("button", { name: /조금 힘들게 꾸준히.*LT/u }))
     await user.click(screen.getByRole("button", { name: /RPE 기준으로 받기/u }))
     await user.click(screen.getByRole("button", { name: /^3일/u }))
     await user.click(screen.getByRole("button", { name: /9일 계획 받기/u }))
@@ -39,7 +39,7 @@ describe("plan calendar selection", () => {
     expect(screen.getByText(/시작 날짜를 고르면 실제 날짜에 맞춘 계획을 보여드려요/u))
       .toHaveAttribute("role", "status")
     expect(screen.queryByLabelText("9.5일 달력 요약")).not.toBeInTheDocument()
-    expect(screen.getAllByRole("button", { name: /선택하기/u })[0]).toBeDisabled()
+    expect(screen.getAllByRole("button", { name: /선택하기|이 계획으로 시작하기/u })[0]).toBeDisabled()
   })
 
   it.skip("keeps a chosen date and two daily sessions when the athlete activates a plan", async () => {
@@ -51,7 +51,7 @@ describe("plan calendar selection", () => {
     await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
     await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
     await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
-    await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
+    await user.click(screen.getByRole("button", { name: /조금 힘들게 꾸준히.*LT/u }))
     await user.click(screen.getByRole("button", { name: /RPE 기준으로 받기/u }))
     await user.click(screen.getByRole("button", { name: /^3일/u }))
     await user.click(screen.getByRole("button", { name: /9일 계획 받기/u }))
@@ -70,7 +70,7 @@ describe("plan calendar selection", () => {
     expect(lastDayPreviews).toHaveLength(1)
     expect(lastDayPreviews[0]).toHaveTextContent("오후")
 
-    await user.click(screen.getAllByRole("button", { name: /선택하기/u })[0]!)
+    await user.click(screen.getAllByRole("button", { name: /선택하기|이 계획으로 시작하기/u })[0]!)
 
     expect(screen.getByRole("group", {
       name: "8월 25일 화요일 · 훈련 2개",
@@ -90,7 +90,7 @@ describe("plan calendar selection", () => {
     await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
     await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
     await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
-    await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
+    await user.click(screen.getByRole("button", { name: /조금 힘들게 꾸준히.*LT/u }))
     await user.click(screen.getByRole("button", { name: /RPE 기준으로 받기/u }))
     await user.click(screen.getByRole("button", { name: /^3일/u }))
     await user.click(screen.getByRole("button", { name: /9일 계획 받기/u }))
@@ -115,7 +115,7 @@ describe("plan calendar selection", () => {
       return realSetItem.call(this, key, value)
     })
 
-    await user.click(screen.getAllByRole("button", { name: /선택하기/u })[0]!)
+    await user.click(screen.getAllByRole("button", { name: /선택하기|이 계획으로 시작하기/u })[0]!)
 
     expect(screen.getByRole("alert")).toHaveTextContent("계획을 이 기기에 저장하지 못했어요")
     expect(screen.getByLabelText("계획 시작 날짜")).toHaveValue("2026-08-17")

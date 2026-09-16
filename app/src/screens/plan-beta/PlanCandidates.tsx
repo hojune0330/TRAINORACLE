@@ -116,27 +116,9 @@ export function PlanCandidates({
       </button>
       <div className="plan-eyebrow">계획이 나왔어요</div>
       <div className="plan-heading-row">
-        <h1 id="plan-candidates-title">두 계획에서 하나를 골라보세요</h1>
+        <h1 id="plan-candidates-title">계획이 준비됐어요</h1>
         <TermHelp term="plan-option" />
       </div>
-      <InfoDisclosure title="이 계획은 어떤 정보로 만들었나요?">
-      <p className="plan-copy">
-        {prescriptionBinding.kind === "bound"
-          ? `직접 고르고 확인한 현재 ${selectedEventLabel} 기록으로 한 강도 세션의 상세 페이스를 계산했어요. 다른 훈련과 일지 값은 시간이나 RPE를 바꾸지 않습니다.`
-          : generated.sourceMode === "PROFILE_ONLY"
-          ? "고른 목표·경험·운동할 날로 만들었어요. 아래에서 조금씩 다듬을 수 있어요."
-          : "최근 일지가 있는지만 확인했어요. 일지의 거리, RPE, 메모는 계획의 시간이나 강도를 바꾸지 않아요."}
-      </p>
-      </InfoDisclosure>
-      {onRefine !== undefined && (
-        <PlanRefinePanel
-          intake={intake}
-          targetRaceDate={targetRaceDate}
-          onRefine={onRefine}
-          detailedTemplateAvailable={resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference).length > 0}
-        />
-      )}
-      <RacePlacementNotice state={generated.racePlacement} />
       {onChangeMethod !== undefined && resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference).length > 0 && <PlanMethodPicker
         options={resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference)}
         selected={intake.selectedDetailedTemplateRef}
@@ -168,7 +150,86 @@ export function PlanCandidates({
         />
         </>
       )}
-      <CandidateComparison candidates={generated.candidates} />
+      {!hasValidStartDate && (
+        <>
+          <p className="plan-start-date-error" role="alert">
+            실제 날짜를 고른 뒤 계획을 선택해 주세요.
+          </p>
+          <p className="plan-schedule-unavailable" role="status">
+            시작 날짜를 고르면 실제 날짜에 맞춘 계획을 보여드려요.
+          </p>
+        </>
+      )}
+      {recordConfirmationPending && (
+        <p className="plan-start-date-error" role="alert">
+          새로 고른 기준 기록을 확인한 뒤 계획을 선택해 주세요.
+        </p>
+      )}
+      {detailedEvidencePending && !recordConfirmationPending && (
+        <p className="plan-start-date-error" role="alert">
+          상세 훈련을 선택했어요. 같은 종목의 현재 기록을 고르고 확인해 주세요. 기록 없이 받으려면 위의 훈련 방법 선택에서 시간·RPE 기준으로 바꿀 수 있어요.
+        </p>
+      )}
+      <label className="plan-start-date" htmlFor="plan-start-date">
+        <span>계획 시작 날짜</span>
+        <input
+          id="plan-start-date"
+          type="date"
+          value={startDate}
+          aria-label="계획 시작 날짜"
+          aria-describedby="plan-start-date-help"
+          onChange={(event) => {
+            if (event.target.value !== startDate) onSelectionDetailsChange?.()
+            setLocalStartDate(event.target.value)
+            onStartDateChange?.(event.target.value)
+          }}
+        />
+        <small id="plan-start-date-help">
+          오늘부터 시작해요. 바꿀 수 있어요.
+        </small>
+      </label>
+      <div className="plan-candidate-list">
+        {generated.candidates.map((candidate) => (
+          <CandidateSection
+            key={candidate.kind}
+            candidate={candidate}
+            startDate={startDate}
+            detailedTargets={intake.selectedDetailedTemplateRef === null ? [] : listDetailedSessionTargets(generated)}
+            detailedTarget={candidateSessionTargets[candidate.kind] ?? detailedSessionTarget}
+            onChangeSessionTarget={onChangeCandidateSessionTarget === undefined ? undefined : target => onChangeCandidateSessionTarget(candidate.kind, target)}
+            canSelect={canSelect}
+            recommended={candidate.kind === "BALANCED"}
+            expanded={expandedCandidateKind === candidate.kind}
+            onToggleSchedule={() => setExpandedCandidateKind((current) =>
+              current === candidate.kind ? null : candidate.kind)}
+            onSelect={() => onSelect({ candidateId: candidate.candidateId, startDate })}
+            onAdjust={adjustmentActions[candidate.candidateId]}
+          />
+        ))}
+      </div>
+      {onRefine !== undefined && (
+        <PlanRefinePanel
+          intake={intake}
+          targetRaceDate={targetRaceDate}
+          onRefine={onRefine}
+          detailedTemplateAvailable={resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference).length > 0}
+        />
+      )}
+      {generated.racePlacement.kind === "NO_TARGET_RACE"
+        ? <InfoDisclosure title="경기 날짜는 어떻게 되나요?"><RacePlacementNotice state={generated.racePlacement} /></InfoDisclosure>
+        : <RacePlacementNotice state={generated.racePlacement} />}
+      <InfoDisclosure title="A와 B는 뭐가 달라요?">
+        <CandidateComparison candidates={generated.candidates} />
+      </InfoDisclosure>
+      <InfoDisclosure title="이 계획은 어떤 정보로 만들었나요?">
+      <p className="plan-copy">
+        {prescriptionBinding.kind === "bound"
+          ? `직접 고르고 확인한 현재 ${selectedEventLabel} 기록으로 한 강도 세션의 상세 페이스를 계산했어요. 다른 훈련과 일지 값은 시간이나 RPE를 바꾸지 않습니다.`
+          : generated.sourceMode === "PROFILE_ONLY"
+          ? "고른 목표·경험·운동할 날로 만들었어요. 아래에서 조금씩 다듬을 수 있어요."
+          : "최근 일지가 있는지만 확인했어요. 일지의 거리, RPE, 메모는 계획의 시간이나 강도를 바꾸지 않아요."}
+      </p>
+      </InfoDisclosure>
       <InfoDisclosure title="기준 기록·참가 부문·이전 계획 확인">
       <div className="plan-source-strip">
         <ShieldCheck aria-hidden="true" size={17} />
@@ -207,62 +268,6 @@ export function PlanCandidates({
         </span>
       </div>
       </InfoDisclosure>
-      <label className="plan-start-date" htmlFor="plan-start-date">
-        <span>계획 시작 날짜</span>
-        <input
-          id="plan-start-date"
-          type="date"
-          value={startDate}
-          aria-label="계획 시작 날짜"
-          aria-describedby="plan-start-date-help"
-          onChange={(event) => {
-            if (event.target.value !== startDate) onSelectionDetailsChange?.()
-            setLocalStartDate(event.target.value)
-            onStartDateChange?.(event.target.value)
-          }}
-        />
-        <small id="plan-start-date-help">
-          고른 날짜부터 실제 달력에 맞춰 보여드려요.
-        </small>
-      </label>
-      {!hasValidStartDate && (
-        <>
-          <p className="plan-start-date-error" role="alert">
-            실제 날짜를 고른 뒤 계획을 선택해 주세요.
-          </p>
-          <p className="plan-schedule-unavailable" role="status">
-            시작 날짜를 고르면 실제 날짜에 맞춘 계획을 보여드려요.
-          </p>
-        </>
-      )}
-      {recordConfirmationPending && (
-        <p className="plan-start-date-error" role="alert">
-          새로 고른 기준 기록을 확인한 뒤 계획을 선택해 주세요.
-        </p>
-      )}
-      {detailedEvidencePending && !recordConfirmationPending && (
-        <p className="plan-start-date-error" role="alert">
-          상세 훈련을 선택했어요. 같은 종목의 현재 기록을 고르고 확인해 주세요. 기록 없이 받으려면 위의 훈련 방법 선택에서 시간·RPE 기준으로 바꿀 수 있어요.
-        </p>
-      )}
-      <div className="plan-candidate-list">
-        {generated.candidates.map((candidate) => (
-          <CandidateSection
-            key={candidate.kind}
-            candidate={candidate}
-            startDate={startDate}
-            detailedTargets={intake.selectedDetailedTemplateRef === null ? [] : listDetailedSessionTargets(generated)}
-            detailedTarget={candidateSessionTargets[candidate.kind] ?? detailedSessionTarget}
-            onChangeSessionTarget={onChangeCandidateSessionTarget === undefined ? undefined : target => onChangeCandidateSessionTarget(candidate.kind, target)}
-            canSelect={canSelect}
-            expanded={expandedCandidateKind === candidate.kind}
-            onToggleSchedule={() => setExpandedCandidateKind((current) =>
-              current === candidate.kind ? null : candidate.kind)}
-            onSelect={() => onSelect({ candidateId: candidate.candidateId, startDate })}
-            onAdjust={adjustmentActions[candidate.candidateId]}
-          />
-        ))}
-      </div>
     </section>
   )
 }
