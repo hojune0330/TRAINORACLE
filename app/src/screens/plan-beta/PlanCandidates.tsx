@@ -26,6 +26,8 @@ import { RacePlacementNotice } from "./RacePlacementNotice"
 import { comparePlanMainWork } from "../../domain/plan-main-comparison"
 import { MainWorkComparison } from "./MainWorkComparison"
 import { PlanMethodPicker } from "./PlanMethodPicker"
+import { PlanRefinePanel } from "./PlanRefinePanel"
+import type { IntakeStep } from "./PlanIntake"
 import { resolveDetailedPlanTemplateOptions } from "./plan-template-options"
 import { listDetailedSessionTargets, type PlanSessionTarget, type CandidateSessionTargets } from "../../domain/plan-session-target"
 import { PlanSessionTargetPicker } from "./PlanSessionTargetPicker"
@@ -53,6 +55,8 @@ export function PlanCandidates({
   startDateValue,
   onStartDateChange,
   recordReturnCount,
+  targetRaceDate,
+  onRefine,
   onBack,
   onSelect,
   adjustmentActions = {},
@@ -78,6 +82,9 @@ export function PlanCandidates({
   readonly startDateValue?: string
   readonly onStartDateChange?: (value: string) => void
   readonly recordReturnCount?: number
+  readonly targetRaceDate?: string
+  /** 결과 화면에서 항목 하나를 열어 다듬기. 없으면 다듬기 패널을 숨긴다. */
+  readonly onRefine?: (step: IntakeStep) => void
   readonly onBack: () => void
   readonly onSelect: (selection: CandidateSelection) => void
   readonly adjustmentActions?: Readonly<Record<string, (() => void) | undefined>>
@@ -107,7 +114,7 @@ export function PlanCandidates({
         <ArrowLeft aria-hidden="true" size={17} />
         질문 다시 보기
       </button>
-      <div className="plan-eyebrow">선택 가능한 계획 2가지</div>
+      <div className="plan-eyebrow">계획이 나왔어요</div>
       <div className="plan-heading-row">
         <h1 id="plan-candidates-title">두 계획에서 하나를 골라보세요</h1>
         <TermHelp term="plan-option" />
@@ -117,12 +124,20 @@ export function PlanCandidates({
         {prescriptionBinding.kind === "bound"
           ? `직접 고르고 확인한 현재 ${selectedEventLabel} 기록으로 한 강도 세션의 상세 페이스를 계산했어요. 다른 훈련과 일지 값은 시간이나 RPE를 바꾸지 않습니다.`
           : generated.sourceMode === "PROFILE_ONLY"
-          ? "종목, 경험, 고른 훈련 목적, 가능한 훈련일과 9.5일 기본 틀만 사용했어요. 개인 페이스와 최근 훈련량은 추정하지 않습니다."
-          : "최근 일지가 있는지만 확인했어요. 일지의 거리, RPE, 메모는 이번 베타 계획의 시간이나 강도를 바꾸지 않습니다."}
+          ? "고른 목표·경험·운동할 날로 만들었어요. 아래에서 조금씩 다듬을 수 있어요."
+          : "최근 일지가 있는지만 확인했어요. 일지의 거리, RPE, 메모는 계획의 시간이나 강도를 바꾸지 않아요."}
       </p>
       </InfoDisclosure>
+      {onRefine !== undefined && (
+        <PlanRefinePanel
+          intake={intake}
+          targetRaceDate={targetRaceDate}
+          onRefine={onRefine}
+          detailedTemplateAvailable={resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference).length > 0}
+        />
+      )}
       <RacePlacementNotice state={generated.racePlacement} />
-      {onChangeMethod !== undefined && <PlanMethodPicker
+      {onChangeMethod !== undefined && resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference).length > 0 && <PlanMethodPicker
         options={resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference)}
         selected={intake.selectedDetailedTemplateRef}
         onChange={onChangeMethod}
