@@ -2,7 +2,6 @@ import React from "react"
 import { ArrowLeft, CalendarDays, ChevronRight, Medal } from "lucide-react"
 import {
   EXPERIENCE_BANDS,
-  PLANNED_ENERGY_INTENTS,
   TRAINING_TIME_PREFERENCES,
 } from "@impl/plan-generator/types"
 import type {
@@ -28,6 +27,7 @@ import { answeredSummary, DIVISION_LABELS, STEP_META, trainingTimeLabel } from "
 import type { IntakeStep as MetaIntakeStep } from "./plan-intake-meta"
 import {
   QUICK_STEP_ORDER,
+  RECOMMENDED_ANSWERS,
   visibleIntakeSteps,
 } from "./plan-intake-navigation"
 import { resolveDetailedPlanTemplateOptions } from "./plan-template-options"
@@ -207,6 +207,7 @@ export function PlanIntake({
               title={event.title}
               detail=""
               selected={draft.eventDistanceM === event.distanceM}
+              recommended={event.distanceM === RECOMMENDED_ANSWERS.eventDistanceM}
               onClick={() => onGoal(event.distanceM)}
             />
           ))
@@ -218,6 +219,7 @@ export function PlanIntake({
               title={DIVISION_LABELS[value].title}
               detail={DIVISION_LABELS[value].detail}
               selected={draft.competitionDivision === value}
+              recommended={value === "NO_REGISTERED_DIVISION"}
               onClick={() => onDivision(value)}
             />
           ))
@@ -229,17 +231,19 @@ export function PlanIntake({
               title={EXPERIENCE_LABELS[value].title}
               detail={EXPERIENCE_LABELS[value].detail}
               selected={draft.experienceBand === value}
+              recommended={value === RECOMMENDED_ANSWERS.experienceBand}
               onClick={() => onExperience(value)}
             />
           ))
         )}
         {step === "focus" && (
-          PLANNED_ENERGY_INTENTS.map((value) => (
+          FOCUS_ORDER.map((value) => (
             <Choice
               key={value}
               title={ENERGY_INTENT_LABELS[value].title}
               detail={ENERGY_INTENT_LABELS[value].detail}
               selected={draft.trainingFocus === value}
+              recommended={value === RECOMMENDED_ANSWERS.trainingFocus}
               onClick={() => onFocus(value)}
             />
           ))
@@ -248,8 +252,9 @@ export function PlanIntake({
           <>
             <Choice
               title="RPE 기준으로 받기"
-              detail="기록 없이 시작 · 힘든 정도(1~10)와 시간으로 안내"
+              detail="기록 없이 바로 · 힘든 정도(1~10)와 시간"
               selected={draft.selectedDetailedTemplateRef === null}
+              recommended
               onClick={() => onTemplate(null)}
             />
             {detailedTemplates.map((detailedTemplate, index) => (
@@ -258,7 +263,7 @@ export function PlanIntake({
                   title={detailedTemplates.length > 1
                     ? `${detailedTemplate.targetEventDistanceM}m 상세 훈련 ${index + 1}`
                     : `${detailedTemplate.targetEventDistanceM}m 경기 페이스 상세 훈련 포함`}
-                  detail={`${detailedTemplate.mainSummary} · ${detailedTemplate.recoverySummary} · 같은 종목의 현재 기록으로 목표 시간을 계산`}
+                  detail={`${detailedTemplate.mainSummary} · 내 기록으로 목표 시간 계산`}
                   selected={draft.selectedDetailedTemplateRef?.templateId === detailedTemplate.ref.templateId
                     && draft.selectedDetailedTemplateRef.version === detailedTemplate.ref.version}
                   onClick={() => onTemplate(detailedTemplate.ref)}
@@ -274,8 +279,8 @@ export function PlanIntake({
             {detailedTemplates.length === 0 && (
               <p className="plan-choice-note" role="status">
                 {draft.experienceBand !== "EXPERIENCED"
-                  ? "지금 고른 경험 범위에 맞는 상세 반복 훈련은 아직 제공하지 않아요. RPE 기준으로 시간과 강도를 안내받을 수 있어요."
-                  : "지금 고른 종목·훈련 목적에는 활성화된 상세 훈련표가 없어요. RPE 기준 계획은 그대로 받을 수 있어요."}
+                  ? "이 경험 범위엔 상세 훈련표가 아직 없어요. RPE 기준으로 받아요."
+                  : "이 종목·훈련 종류엔 상세 훈련표가 없어요. RPE 기준으로 받아요."}
               </p>
             )}
             <PlanSupportCoverage experienceBand={draft.experienceBand} />
@@ -290,6 +295,7 @@ export function PlanIntake({
                 ? "쉬는 날도 달력에 따로 보여요"
                 : `나머지 ${7 - days}일은 쉬어요`}
               selected={draft.availableDayCount === days}
+              recommended={days === RECOMMENDED_ANSWERS.availableDayCount}
               onClick={() => onDays(days)}
             />
           ))
@@ -300,9 +306,10 @@ export function PlanIntake({
               key={length}
               title={length === 7 ? "7일만 먼저 받기" : `${length}일 계획 받기`}
               detail={length === 7
-                ? "첫 7일을 받고, 끝나면 다음 계획으로 이어서 받아요"
-                : `${length}일 분량을 한 번에 받아요`}
+                ? "끝나면 다음 계획으로 이어서"
+                : "한 번에 받아요"}
               selected={draft.requestedFrameLength === length}
+              recommended={length === RECOMMENDED_ANSWERS.requestedFrameLength}
               onClick={() => onFrameLength(length)}
             />
           ))
@@ -314,6 +321,7 @@ export function PlanIntake({
               title={trainingTimeLabel(preference).title}
               detail={trainingTimeLabel(preference).detail}
               selected={draft.trainingTimePreference === preference}
+              recommended={preference === RECOMMENDED_ANSWERS.trainingTimePreference}
               onClick={() => onTrainingTime(preference)}
             />
           ))
@@ -322,13 +330,14 @@ export function PlanIntake({
           <>
             <Choice
               title="하루 한 번 운동"
-              detail="하루에 한 가지 운동만 계획에 넣어요"
+              detail="하루에 운동 하나"
               selected={draft.secondSessionMode === "SINGLE_SESSION_ONLY"}
+              recommended
               onClick={() => onSecondSession("SINGLE_SESSION_ONLY")}
             />
             <Choice
               title="하루 두 번 운동할게요"
-              detail="고른 시간대에 주요 훈련을 배치하고 다른 시간에는 쉬운 훈련이나 회복 운동을 안내해요. 주요 훈련 두 개를 자동으로 넣지는 않아요"
+              detail="오전·오후 두 칸. 힘든 훈련은 하나만"
               selected={draft.secondSessionMode === "RECOVERY_PM_ALLOWED"}
               onClick={() => onSecondSession("RECOVERY_PM_ALLOWED")}
             />
@@ -394,6 +403,17 @@ export function PlanIntake({
     </section>
   )
 }
+
+/** 훈련 종류: "골고루(MIX)"를 맨 앞에. 회복만은 맨 뒤. 값은 그대로. */
+const FOCUS_ORDER = [
+  "MIXED_INTENT",
+  "BASE_INTENT",
+  "LT_INTENT",
+  "VO2_INTENT",
+  "GLY_INTENT",
+  "ATP_PC_INTENT",
+  "RECOVERY_INTENT",
+] as const satisfies readonly PlannedEnergyIntent[]
 
 /** 초보자가 많이 고르는 순서로 정렬: 5km/10km 먼저, 트랙 종목은 뒤로. 값은 그대로. */
 const SUPPORTED_GOAL_ORDER = [

@@ -26,7 +26,7 @@ async function answerMinimumPlanQuestions(): Promise<void> {
     name: /통증은 없고 몸 상태는 평소와 같아요/u,
   }))
   await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
-  await user.click(screen.getByRole("button", { name: /지속 페이스.*LT/u }))
+  await user.click(screen.getByRole("button", { name: /조금 힘들게 꾸준히.*LT/u }))
   await user.click(screen.getByRole("button", { name: /RPE 기준으로 받기/u }))
   await user.click(screen.getByRole("button", { name: /^3일/u }))
   await user.click(screen.getByRole("button", { name: /9일 계획 받기/u }))

@@ -222,7 +222,7 @@ async function createBoundActivePlan(page: Page, projectionLength: 7 | 9 | 10): 
     { exact: true },
   )).toBeVisible()
   await page.getByRole("button", { name: "내 계획 완성하기" }).click()
-  await page.getByRole("button", { name: /강한 유산소 반복.*VO₂/u }).click()
+  await page.getByRole("button", { name: /숨차게 반복.*VO₂/u }).click()
   await page.getByRole("button", { name: /5000m 경기 페이스 상세 훈련 포함/u }).click()
   await page.getByRole("button", { name: /^3일/u }).click()
   await expect(page.getByRole("heading", { name: "이번에 며칠 계획을 받을까요?" })).toBeVisible()

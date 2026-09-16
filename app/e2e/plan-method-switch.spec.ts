@@ -25,7 +25,7 @@ test("switches method in place and saves only the reconfirmed prescription", asy
   await page.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
   await page.getByRole("button", { name: "내 계획 완성하기" }).click()
-  await page.getByRole("button", { name: /강한 유산소 반복.*VO₂/u }).click()
+  await page.getByRole("button", { name: /숨차게 반복.*VO₂/u }).click()
   const support = page.locator(".plan-support-coverage")
   const supportToggle = support.locator("summary")
   await expect(support).not.toHaveAttribute("open")

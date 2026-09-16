@@ -30,7 +30,7 @@ test("shows an unsaved, non-selectable preview after the required direction answ
   await expect(page.getByText(
     /훈련일.*첫 계획 길이.*7.*9.*10.*훈련 목적.*시간.*하루 한 번.*두 번/u,
   )).toBeVisible()
-  await expect(page.getByRole("button", { name: /선택하기/u })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u })).toHaveCount(0)
   await expect(page.locator(".plan-candidate")).toHaveCount(0)
   await expect.poll(() => page.evaluate(
     () => window.localStorage.getItem("trainoracle.plan-beta.v1"),
@@ -93,7 +93,7 @@ test("reuses a fully explicit returning intake to create two candidates", async 
   await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
 
   await expect(page.locator(".plan-candidate")).toHaveCount(2)
-  await expect(page.getByRole("heading", { name: "두 계획에서 하나를 골라보세요" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
 })
 
 test("blocks review-risk before any preview or candidates", async ({ page }) => {
@@ -103,14 +103,14 @@ test("blocks review-risk before any preview or candidates", async ({ page }) => 
   await expect(page.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
   await expect(page.getByRole("heading", { name: "계획 형태 미리보기" })).toHaveCount(0)
   await expect(page.locator(".plan-candidate")).toHaveCount(0)
-  await expect(page.getByRole("button", { name: /선택하기/u })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u })).toHaveCount(0)
 })
 
 test("moves the single expanded schedule between candidates and allows collapse", async ({ page }) => {
   await openPlan(page)
   await answerFirstThree(page)
   await page.getByRole("button", { name: "내 계획 완성하기" }).click()
-  await page.getByRole("button", { name: /지속 페이스.*LT/u }).click()
+  await page.getByRole("button", { name: /조금 힘들게 꾸준히.*LT/u }).click()
   await page.getByRole("button", { name: /^RPE 기준으로 받기/u }).click()
   await page.getByRole("button", { name: /^3일/u }).click()
   await selectNineDayProjection(page)

@@ -98,7 +98,7 @@ export function PlanRefinePanel({
         <ChevronRight className="plan-refine__chevron" size={16} aria-hidden="true" />
       </summary>
       <p className="plan-refine__hint">
-        바꾸면 계획을 다시 만들어요. 훈련 강도는 바뀌지 않고 배치와 표시만 달라져요.
+        바꾸면 다시 만들어요. 강도는 그대로.
       </p>
       <ul className="plan-refine__list" aria-label="처음 고른 것">
         {primary.map((row) => <RefineLine key={row.step} row={row} onRefine={onRefine} />)}

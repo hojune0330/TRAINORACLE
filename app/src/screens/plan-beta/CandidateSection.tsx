@@ -18,6 +18,7 @@ export function CandidateSection({
   candidate,
   startDate,
   canSelect,
+  recommended = false,
   expanded,
   onToggleSchedule,
   onSelect,
@@ -29,6 +30,8 @@ export function CandidateSection({
   readonly candidate: PlanGenerationSuccess["candidates"][number]
   readonly startDate: string
   readonly canSelect: boolean
+  /** 첫 계획안에 "추천" 표시. 고민 없이 한 번 탭하면 시작. */
+  readonly recommended?: boolean
   readonly expanded: boolean
   readonly onToggleSchedule: () => void
   readonly onSelect: () => void
@@ -51,9 +54,9 @@ export function CandidateSection({
   const headingId = `candidate-heading-${localId}`
   const scheduleId = `candidate-schedule-${localId}`
   return (
-    <article className="plan-candidate" aria-labelledby={headingId}>
+    <article className="plan-candidate" aria-labelledby={headingId} data-recommended={recommended ? "true" : undefined}>
       <header>
-        <span>계획안 {optionLetter}</span>
+        <span>계획안 {optionLetter}{recommended && <em className="plan-choice__badge">추천</em>}</span>
         <h2 id={headingId}>{label.title}</h2>
         <p>{label.detail}</p>
         <p className={`plan-candidate-purpose plan-candidate-purpose--${purposeStatus.tone}`}>
@@ -65,7 +68,6 @@ export function CandidateSection({
         </strong>
         <small>
           {eventDistanceLabel(candidate.eventDistanceM)} · {EVENT_LABELS[candidate.eventGroup].title} · {frameLengthDays}일
-          {" · "}훈련일마다 총 시간·RPE·훈련 목적 표시
         </small>
         <div className="plan-session-legend" aria-label="훈련 수치와 의도 설명">
           <span>RPE<TermHelp term="rpe" /></span>
@@ -124,7 +126,7 @@ export function CandidateSection({
         onClick={onSelect}
       >
         <Check aria-hidden="true" size={18} />
-        {label.title} 선택하기
+        {recommended ? "이 계획으로 시작하기" : `${label.title} 선택하기`}
       </button>
     </article>
   )

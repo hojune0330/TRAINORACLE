@@ -31,7 +31,7 @@ describe("plan candidate purpose contrast", () => {
   it.skip("keeps one candidate schedule expanded and allows both to collapse", async () => {
     render(<PlanBeta />)
 
-    await generateCandidates(/지속 페이스.*LT/u)
+    await generateCandidates(/조금 힘들게 꾸준히.*LT/u)
 
     const user = userEvent.setup()
     const candidateA = screen.getByRole("button", { name: "계획안 A 일정 접기" })
@@ -57,15 +57,15 @@ describe("plan candidate purpose contrast", () => {
     render(<PlanBeta />)
 
     // When: the plan candidates are generated.
-    await generateCandidates(/지속 페이스.*LT/u)
+    await generateCandidates(/조금 힘들게 꾸준히.*LT/u)
 
     // Then: the athlete sees the shared high-intensity work before the only authorized difference.
     const comparison = screen.getByRole("region", { name: "두 계획 핵심 비교" })
     expect(within(comparison).getByRole("heading", {
       name: "고른 목표는 같고, 쉬운 훈련 시간만 달라요",
     })).toBeVisible()
-    expect(within(comparison).getByText("쉬운 훈련 시간을 범위로 표시해요.")).toBeVisible()
-    expect(within(comparison).getByText("쉬운 훈련을 가장 짧은 시간으로 표시해요.")).toBeVisible()
+    expect(within(comparison).getByText("쉬운 날은 시간 범위로")).toBeVisible()
+    expect(within(comparison).getByText("쉬운 날은 가장 짧게")).toBeVisible()
     expect(within(comparison).getByText(/같은 날·시간대에 같은 시간·RPE 범위/u)).toBeVisible()
     expect(comparison).not.toHaveTextContent("같은 횟수와 RPE로")
     expect(within(comparison).getByText(/주요 훈련이 더 많거나 세지는 차이는 아니에요/u)).toBeVisible()
@@ -81,7 +81,7 @@ describe("plan candidate purpose contrast", () => {
   it.skip("shows each VO2 candidate's readable total time without repeating shared facts", async () => {
     render(<PlanBeta />)
 
-    await generateCandidates(/강한 유산소 반복.*VO₂/u)
+    await generateCandidates(/숨차게 반복.*VO₂/u)
 
     const comparison = screen.getByRole("region", { name: "두 계획 핵심 비교" })
     const comparisonSummaries = within(comparison).getAllByText(/표시된 시간 합계/u)

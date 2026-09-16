@@ -28,7 +28,7 @@ const records = [
 const cases = [
   {
     eventDistanceM: 800,
-    focus: /짧은 고강도 반복.*GLY/u,
+    focus: /짧고 세게.*GLY/u,
     notation: /10×200m @800m RP.*r60.*STAND/u,
     summary: "총 10회 · 주요 구간 2000m · 200m당 31초",
     execution: "준비, 10회 본운동과 9번의 사이 회복, 정리 순서로 진행하세요.",
@@ -46,7 +46,7 @@ const cases = [
   },
   {
     eventDistanceM: 3000,
-    focus: /강한 유산소 반복.*VO₂/u,
+    focus: /숨차게 반복.*VO₂/u,
     notation: /4×800m @3000m RP.*r180.*WALK/u,
     summary: "총 4회 · 주요 구간 3200m · 800m당 2분 43초",
     execution: "준비, 4회 본운동과 3번의 사이 회복, 정리 순서로 진행하세요.",
