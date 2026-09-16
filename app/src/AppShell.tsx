@@ -38,6 +38,8 @@ import {
 } from "./domain/screen-motion"
 import { AppLoadingState } from "./components/AppLoadingState"
 import { MultiPlanEvidenceContext } from "./components/MultiPlanEvidenceContext"
+import { AppOverlayNavigationProvider } from "./components/AppOverlayNavigation"
+import { isTermId, type TermId } from "./domain/glossary"
 const JOURNAL_REWARD_MESSAGE = {
   AWARDED: "기록한 날 +4P가 반영됐어요.",
   ALREADY_AWARDED: "오늘의 다른 기록도 함께 모였어요. 이 날짜의 4P는 이미 반영돼 있어요.",
@@ -48,6 +50,35 @@ const JOURNAL_REWARD_MESSAGE = {
 
 const TOAST_READABLE_MS = 4000
 const TOAST_EXIT_MS = 150
+const OVERLAY_HISTORY_KEY = "trainoracleOverlay"
+
+type AppOverlay =
+  | { readonly kind: "term"; readonly term: TermId }
+  | { readonly kind: "feedback" }
+
+type OverlayHistoryMarker = AppOverlay & {
+  readonly owner: string
+  readonly version: 1
+}
+
+type ShellReturnPoint = {
+  readonly view: ReturnType<typeof viewForTab>
+  readonly utilityView: "more" | "guide" | "minji" | "content" | null
+  readonly utilityOrigin: "home" | "more"
+  readonly athleteRecordsOpen: boolean
+}
+
+function overlayHistoryMarker(state: unknown, owner: string): AppOverlay | null {
+  if (typeof state !== "object" || state === null) return null
+  const marker = (state as Record<string, unknown>)[OVERLAY_HISTORY_KEY]
+  if (typeof marker !== "object" || marker === null) return null
+  const value = marker as Record<string, unknown>
+  if (value.version !== 1 || value.owner !== owner) return null
+  if (value.kind === "feedback") return { kind: "feedback" }
+  const term = typeof value.term === "string" ? value.term : null
+  if (value.kind === "term" && isTermId(term)) return { kind: "term", term }
+  return null
+}
 
 export type AppShellMultiPlanRuntime = Pick<React.ComponentProps<typeof DeferredMobileScreens.PlanBeta>,
   "multiAdjustmentResolverV3" | "readMultiAdjustedEvidenceV3">
@@ -67,6 +98,12 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const scrollRegionRef = React.useRef<HTMLElement>(null)
   const [utilityView, setUtilityView] = React.useState<"more" | "guide" | "minji" | "content" | null>(null)
   const [utilityOrigin, setUtilityOrigin] = React.useState<"home" | "more">("more")
+  const [overlay, setOverlay] = React.useState<AppOverlay | null>(null)
+  const overlayRef = React.useRef<AppOverlay | null>(null)
+  const overlayScrollTopRef = React.useRef(0)
+  const overlayHistoryOwnerRef = React.useRef(`shell-${Date.now()}-${Math.random().toString(36).slice(2)}`)
+  const restoreReturnRef = React.useRef<ShellReturnPoint | null>(null)
+  const importReturnRef = React.useRef<ShellReturnPoint | null>(null)
   const pendingScreenMotionRef = React.useRef<Exclude<AppScreenMotion, "initial" | "none"> | null>(null)
   const runViewTransition = React.useCallback((
     motion: Exclude<AppScreenMotion, "initial" | "none">,
@@ -79,6 +116,53 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       update()
     })
   }, [])
+
+  const applyOverlay = React.useCallback((next: AppOverlay | null) => {
+    overlayRef.current = next
+    setOverlay(next)
+    window.requestAnimationFrame(() => {
+      const scrollRegion = scrollRegionRef.current
+      if (scrollRegion === null) return
+      scrollRegion.scrollTop = next === null ? overlayScrollTopRef.current : 0
+      scrollRegion.scrollLeft = 0
+    })
+  }, [])
+
+  const openOverlay = React.useCallback((next: AppOverlay) => {
+    if (overlayRef.current === null) overlayScrollTopRef.current = scrollRegionRef.current?.scrollTop ?? 0
+    const marker: OverlayHistoryMarker = { ...next, owner: overlayHistoryOwnerRef.current, version: 1 }
+    const currentState = typeof window.history.state === "object" && window.history.state !== null
+      ? window.history.state as Record<string, unknown>
+      : {}
+    const addsTermHistory = overlayRef.current?.kind === "term"
+      && next.kind === "term"
+      && overlayRef.current.term !== next.term
+    const method = overlayRef.current === null || addsTermHistory ? "pushState" : "replaceState"
+    window.history[method]({ ...currentState, [OVERLAY_HISTORY_KEY]: marker }, "", window.location.href)
+    applyOverlay(next)
+  }, [applyOverlay])
+
+  const closeOverlay = React.useCallback(() => {
+    const marker = overlayHistoryMarker(window.history.state, overlayHistoryOwnerRef.current)
+    if (marker !== null) {
+      window.history.back()
+      return
+    }
+    applyOverlay(null)
+  }, [applyOverlay])
+
+  React.useEffect(() => {
+    const onPopState = (event: PopStateEvent) => {
+      const next = overlayHistoryMarker(event.state, overlayHistoryOwnerRef.current)
+      if (next !== null) {
+        applyOverlay(next)
+      } else if (overlayRef.current !== null) {
+        applyOverlay(null)
+      }
+    }
+    window.addEventListener("popstate", onPopState)
+    return () => window.removeEventListener("popstate", onPopState)
+  }, [applyOverlay])
 
   React.useEffect(() => {
     const refresh = () => {
@@ -245,7 +329,26 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     pendingScreenMotionRef.current = null
   }, [screenKey, v.tab, screenDepth])
 
+  const captureReturnPoint = (): ShellReturnPoint => ({
+    view: v,
+    utilityView,
+    utilityOrigin,
+    athleteRecordsOpen,
+  })
+  const restoreReturnPoint = (point: ShellReturnPoint | null) => {
+    if (point === null) {
+      setV(INITIAL_VIEW_STATE)
+      setUtilityView(null)
+      setAthleteRecordsOpen(false)
+      return
+    }
+    setV(point.view)
+    setUtilityView(point.utilityView)
+    setUtilityOrigin(point.utilityOrigin)
+    setAthleteRecordsOpen(point.athleteRecordsOpen)
+  }
   const openRestore = () => runViewTransition("push", () => {
+    restoreReturnRef.current = captureReturnPoint()
     setUtilityView(null)
     setV(s => ({
       ...s,
@@ -255,6 +358,22 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       restoreOpen: true,
       archiveSelection: null,
     }))
+  })
+  const closeRestore = () => runViewTransition("pop", () => {
+    const point = restoreReturnRef.current
+    restoreReturnRef.current = null
+    restoreReturnPoint(point)
+  })
+  const openImport = () => runViewTransition("push", () => {
+    importReturnRef.current = captureReturnPoint()
+    setUtilityView(null)
+    setAthleteRecordsOpen(false)
+    setV(s => ({ ...s, tab: "log", accountOpen: false, restoreOpen: false, importOpen: true }))
+  })
+  const closeImport = () => runViewTransition("pop", () => {
+    const point = importReturnRef.current
+    importReturnRef.current = null
+    restoreReturnPoint(point)
   })
 
   const detailScreen = (onBack: () => void, withReader = false) => {
@@ -277,7 +396,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   if (v.tab === "home" && v.restoreOpen) {
     screen = (
       <DeferredMobileScreens.RestoreBackup
-        onBack={() => runViewTransition("pop", () => setV(s => ({ ...s, restoreOpen: false })))}
+        onBack={closeRestore}
         onOpenHome={goHome}
       />
     )
@@ -285,7 +404,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     screen = (
       <DeferredMobileScreens.Account
         onBack={() => runViewTransition("pop", () => setV(s => ({ ...s, accountOpen: false })))}
-        onOpenImport={() => runViewTransition("tab-forward", () => setV(s => ({ ...s, tab: "log", accountOpen: false, importOpen: true })))}
+        onOpenImport={openImport}
         onOpenRestore={openRestore}
       />
     )
@@ -295,18 +414,20 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         onBack={() => runViewTransition("pop", () => setUtilityView(null))}
         onOpenMinji={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("minji") })}
         onOpenGuide={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("guide") })}
-        onOpenContent={() => runViewTransition("push", () => setUtilityView("content"))}
+        onOpenContent={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("content") })}
+        onOpenFeedback={() => openOverlay({ kind: "feedback" })}
         onOpenAccount={accountEnabled ? () => runViewTransition("push", () => setV(s => ({ ...s, accountOpen: true }))) : undefined}
         onOpenRestore={openRestore}
       />
     )
   } else if (v.tab === "home" && utilityView === "content") {
-    screen = <DeferredMobileScreens.TrainingContent onBack={() => runViewTransition("pop", () => setUtilityView(null))} />
+    screen = <DeferredMobileScreens.TrainingContent onBack={() => runViewTransition("pop", () => setUtilityView(utilityOrigin === "home" ? null : "more"))} />
   } else if (v.tab === "home" && (utilityView === "guide" || utilityView === "minji")) {
     screen = <DeferredMobileScreens.Guide
       initialSection={utilityView}
       onBack={() => runViewTransition("pop", () => setUtilityView(utilityOrigin === "home" ? null : "more"))}
       onWriteLog={() => runViewTransition("tab-forward", () => { setUtilityView(null); setV(viewForTab("log")) })}
+      onOpenFeedback={() => openOverlay({ kind: "feedback" })}
     />
   } else if (v.tab === "home") {
     screen = v.detailDate !== null
@@ -329,7 +450,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           onOpenTrends={() => goTab("trends")}
           onOpenMore={() => runViewTransition("push", () => setUtilityView("more"))}
           onOpenAccount={accountEnabled ? () => runViewTransition("push", () => setV(s => ({ ...s, accountOpen: true }))) : undefined}
-          onOpenContent={() => runViewTransition("push", () => setUtilityView("content"))}
+          onOpenContent={() => runViewTransition("push", () => { setUtilityOrigin("home"); setUtilityView("content") })}
         />
       )
   } else if (v.tab === "journal") {
@@ -371,7 +492,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   } else if (v.tab === "log" && v.importOpen) {
     screen = (
       <DeferredMobileScreens.ImportActivities
-        onBack={() => runViewTransition("pop", () => setV(s => ({ ...s, importOpen: false })))}
+        onBack={closeImport}
         onOpenLog={goHome}
       />
     )
@@ -389,7 +510,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           : v.journalDraft?.initialEntry !== undefined || v.journalDraft?.plannedSessionLink !== undefined
             ? () => runViewTransition("pop", () => setV(viewForJournalReturn(v)))
             : () => runViewTransition("pop", () => setV(s => ({ ...s, entryType: "choose" })))}
-        onOpenImport={() => runViewTransition("push", () => setV(s => ({ ...s, importOpen: true })))}
+        onOpenImport={openImport}
         onContinueDetailed={(entry) => runViewTransition("replace", () => setV((state) => viewForJournalDraft(state, entry.date, entry)))}
         onDone={(picked, savedEntry, reviewMessage) => {
           if (v.entryType === "choose") {
@@ -411,6 +532,10 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
 
   return (
     <MultiPlanEvidenceContext.Provider value={multiPlanRuntime?.readMultiAdjustedEvidenceV3}>
+    <AppOverlayNavigationProvider
+      openTrainingTerm={(term) => openOverlay({ kind: "term", term })}
+      openFeedback={() => openOverlay({ kind: "feedback" })}
+    >
     <AppShellFrame
       scrollRegionRef={scrollRegionRef}
       savedToast={savedToast}
@@ -422,18 +547,36 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         openRestore()
       }}
       onTab={goTab}
-      hideTabBar={false}
+      hideTabBar={overlay !== null}
     >
       <React.Suspense fallback={<AppLoadingState />}>
         <div
           key={`${screenKey}:account-scope-${accountScopeRevision}`}
           className="app-flow-stage"
           data-motion={currentScreenMotion}
+          hidden={overlay !== null}
         >
           {screen}
         </div>
+        {overlay?.kind === "term" && (
+          <div className="app-flow-stage" data-motion="push" data-overlay="training-term">
+            <DeferredMobileScreens.TrainingLexicon
+              key={overlay.term}
+              initialTerm={overlay.term}
+              directEntry
+              onBack={closeOverlay}
+              onNavigateTerm={(term) => openOverlay({ kind: "term", term })}
+            />
+          </div>
+        )}
+        {overlay?.kind === "feedback" && (
+          <div className="app-flow-stage" data-motion="push" data-overlay="feedback">
+            <DeferredMobileScreens.FeedbackBoard onBack={closeOverlay} />
+          </div>
+        )}
       </React.Suspense>
     </AppShellFrame>
+    </AppOverlayNavigationProvider>
     </MultiPlanEvidenceContext.Provider>
   )
 }
