@@ -1,9 +1,9 @@
 {
   "kind": "TRAINORACLE_PAGES_DEPLOYMENT",
-  "sourceSha": "9716982af8bb723a09b15f632b78e71d261c09c1",
-  "previousPagesSha": "93bf0c7e1f60b5c26a3b2f031ca9a43432de5b1d",
+  "sourceSha": "27cc6d5705a58f55eb3e07140a7f932d1118269c",
+  "previousPagesSha": "19fe7e874a4f64bb5a79c12e0907549c962726ce",
   "workflowRunId": "manual",
-  "workflowAttempt": "1",
-  "deployedAt": "2026-09-16T03:50:14.072Z",
-  "note": "manual deploy by owner instruction; CI app-browser (legacy 11-step e2e specs) pending update"
+  "workflowAttempt": "2",
+  "deployedAt": "2026-09-16T04:20:36.734Z",
+  "note": "manual deploy by owner instruction (#343 recommended one-tap flow, MIX default)"
 }
