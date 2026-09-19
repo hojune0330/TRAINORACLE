@@ -35,10 +35,10 @@ test("keeps the Korean-first training lexicon readable from narrow phones to des
 
   const search = page.getByRole("searchbox", { name: "용어 검색" })
   await search.fill("해당계")
-  const glycolyticTerm = page.getByRole("button", { name: /짧고 세게.*GLY/u })
+  const glycolyticTerm = page.getByRole("button", { name: /짧은 고강도 반복.*GLY/u })
   await expect(glycolyticTerm).toBeVisible()
   await glycolyticTerm.click()
-  await expect(page.getByRole("heading", { name: /짧고 세게.*GLY/u })).toBeVisible()
+  await expect(page.getByRole("heading", { name: /짧은 고강도 반복.*GLY/u })).toBeVisible()
   await expect(page.getByRole("heading", { name: "왜 이런 이름인가요?" })).toBeVisible()
   await page.getByRole("button", { name: "전문 설명" }).click()
   await expect(page.getByRole("heading", { name: "에너지 경로 맥락" })).toBeVisible()
