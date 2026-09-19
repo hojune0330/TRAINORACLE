@@ -38,6 +38,29 @@ function distanceObservation(
 }
 
 describe("weekly provenance-safe distance", () => {
+  it("counts an identical source once and excludes every conflicting revision", () => {
+    const duplicate = distanceObservation("duplicate", "2026-07-21", 5.04949)
+    const conflict = distanceObservation("conflict", "2026-07-22", 8)
+    const buckets = bucketDistanceByWeek([
+      duplicate, { ...duplicate }, conflict,
+      { ...conflict, distanceKm: 10, sourceRef: { ...conflict.sourceRef, observedAt: "2026-07-23T08:00:00Z" } },
+    ], "2026-07-27", 2)
+
+    expect(buckets[0]).toEqual({
+      kind: "DATA", start: "2026-07-20", end: "2026-07-26",
+      totalKm: 5, n: 1, sourceRefs: [duplicate.sourceRef],
+    })
+  })
+
+  it("scopes conflicting source detection to each week before aggregation", () => {
+    const buckets = bucketDistanceByWeek([
+      distanceObservation("same-source", "2026-07-21", 5),
+      distanceObservation("same-source", "2026-07-28", 8),
+    ], "2026-07-27", 2)
+
+    expect(buckets.map(bucket => bucket.kind === "DATA" ? bucket.totalKm : null)).toEqual([5, 8])
+  })
+
   it("sums eligible distance and leaves an empty week missing", () => {
     const buckets = bucketDistanceByWeek(
       [

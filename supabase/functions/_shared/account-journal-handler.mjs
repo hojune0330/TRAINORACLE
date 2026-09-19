@@ -1,5 +1,9 @@
 import { encryptAccountJournalDocument, decryptAccountJournalDocument } from './account-journal-crypto.mjs';
-import { validateAccountJournalRecord, validateAccountJournalRecordUpdate } from './account-journal-record-validator.mjs';
+import { validateAccountJournalRecord, validateAccountJournalRecordUpdate, validateInitialFileObservationRecord,
+  correctAccountJournalImportedObservation, FILE_OBSERVATION_CORRECTION_FIELDS, parseFileObservation,
+  confirmComparisonRelationRequestSchema, releaseComparisonRelationRequestSchema, applyAccountJournalComparisonMutation,
+  validateAccountJournalComparisonConfirmation, validateAccountJournalComparisonRestore, resolveComparisonOriginalFromPlanDocument } from './account-journal-record-validator.mjs';
+import { readAccountJournalComparisonCollection } from './account-journal-comparison-original.mjs';
 import * as accountState from './account-state-validator.mjs';
 
 // Gateway-derived metadata is authenticated together with ciphertext by 0035.
@@ -39,6 +43,14 @@ const stable = value => Array.isArray(value) ? value.map(stable) : object(value)
 const canonical = document => document.state !== 'DRAFT' ? JSON.stringify(stable(document))
   : JSON.stringify({ version: document.version, state: document.state,
     visibility: document.visibility, date: document.date, title: document.title, body: document.body });
+const observationOf = document => document?.kind === 'JOURNAL' ? document.entry?.fileObservation ?? null : null;
+const sameObservation = (left, right) => canonical(observationOf(left) ?? {}) === canonical(observationOf(right) ?? {});
+const relationsOf = document => document?.entry?.comparisonRelations ?? null;
+const sameRelations = (left, right) => JSON.stringify(stable(relationsOf(left))) === JSON.stringify(stable(relationsOf(right)));
+const comparisonAction = action => ['confirmComparisonRelation', 'releaseComparisonRelation'].includes(action);
+const commitAction = action => ['save', 'correctImportedObservation'].includes(action) || comparisonAction(action);
+const awardAllowed = input => input.action === 'save'
+  && input.writePurpose !== 'MIGRATION' && input.writePurpose !== 'FILE_OBSERVATION';
 export const validateAccountJournalDocument = value => validateDraftDocument(value) || validateAccountJournalRecord(value)
   || accountState.validateAccountStateDocument(value);
 
@@ -153,6 +165,13 @@ async function bodyJson(request) {
 
 function parseAction(input, validateDocument) {
   if (!object(input)) fail(400, 'INVALID_REQUEST');
+  const supportedJournalVersions = input.supportedJournalVersions ?? [2];
+  if (!Array.isArray(supportedJournalVersions) || supportedJournalVersions.length < 1 || supportedJournalVersions.length > 2
+    || new Set(supportedJournalVersions).size !== supportedJournalVersions.length
+    || supportedJournalVersions.some(version => ![2, 3].includes(version))
+    || Object.hasOwn(input, 'supportedJournalVersions') && input.supportedJournalVersions === null) fail(400, 'INVALID_REQUEST');
+  const { supportedJournalVersions: _capabilities, ...actionInput } = input;
+  input = actionInput;
   const { action } = input;
   let valid = false;
   if (action === 'status') valid = keys(input, ['action']);
@@ -171,21 +190,36 @@ function parseAction(input, validateDocument) {
   if (action === 'save') valid = keys(input, ['action', 'documentId', 'operationId', 'expectedRevision', 'document'], ['writePurpose'])
     && isUuid(input.documentId) && isUuid(input.operationId) && revision(input.expectedRevision)
     && (!Object.hasOwn(input,'writePurpose') || input.writePurpose === 'MIGRATION'
-      && (input.document?.state === 'FINALIZED' || input.document?.state === 'ACCOUNT_STATE' && input.document?.kind === 'DECORATIONS'));
+      && (input.document?.state === 'FINALIZED' || input.document?.state === 'ACCOUNT_STATE' && input.document?.kind === 'DECORATIONS')
+      || input.writePurpose === 'FILE_OBSERVATION' && input.document?.state === 'FINALIZED');
+  if (action === 'correctImportedObservation') valid = keys(input, ['action', 'documentId', 'operationId', 'expectedRevision',
+    'previousContentRevisionFingerprint', 'replacementObservation', 'confirmedChangedFields'])
+    && isUuid(input.documentId) && isUuid(input.operationId) && revision(input.expectedRevision)
+    && typeof input.previousContentRevisionFingerprint === 'string' && /^sha256:[a-f0-9]{64}$/u.test(input.previousContentRevisionFingerprint)
+    && Array.isArray(input.confirmedChangedFields) && input.confirmedChangedFields.length > 0
+    && input.confirmedChangedFields.length <= FILE_OBSERVATION_CORRECTION_FIELDS.length
+    && new Set(input.confirmedChangedFields).size === input.confirmedChangedFields.length
+    && input.confirmedChangedFields.every(field => FILE_OBSERVATION_CORRECTION_FIELDS.includes(field));
+  if (comparisonAction(action)) {
+    const schema = action === 'confirmComparisonRelation' ? confirmComparisonRelationRequestSchema : releaseComparisonRelationRequestSchema;
+    if (!schema.safeParse(input).success) fail(422, 'INVALID_COMPARISON_RELATION');
+    valid = true;
+  }
   if (!valid) fail(400, 'INVALID_REQUEST');
   if (action === 'save') {
     let accepted = false;
     try { accepted = validateAccountJournalDocument(input.document) && validateDocument(input.document) === true; } catch { /* Fail closed without validator details. */ }
-    if (!accepted) fail(422, 'INVALID_DOCUMENT');
+    if (!accepted) fail(422, observationOf(input.document) || input.writePurpose === 'FILE_OBSERVATION' ? 'INVALID_FILE_OBSERVATION' : 'INVALID_DOCUMENT');
   }
-  return { ...input, ...(input.documentId ? { documentId: input.documentId.toLowerCase() } : {}),
+  if (action === 'correctImportedObservation' && !parseFileObservation(input.replacementObservation)) fail(422, 'INVALID_FILE_OBSERVATION');
+  return { ...input, supportedJournalVersions, ...(input.documentId ? { documentId: input.documentId.toLowerCase() } : {}),
     ...(input.operationId ? { operationId: input.operationId.toLowerCase() } : {}),
     ...(input.cursor ? { cursor: input.cursor.toLowerCase() } : {}) };
 }
 
 function receiptFor(result, input) {
   if (!object(result) || result.documentId !== input.documentId || result.operationId !== input.operationId) fail(503, 'INVALID_STORED_DATA');
-  const success = { save: 'saved', delete: 'deleted', restore: 'restored' }[input.action];
+  const success = commitAction(input.action) ? 'saved' : { delete: 'deleted', restore: 'restored' }[input.action];
   if (result.kind === success && keys(result, ['kind', 'documentId', 'operationId', 'revision',
     ...(input.action === 'restore' ? ['sourceRevision'] : [])])
     && (input.action !== 'restore' || result.sourceRevision === input.sourceRevision)
@@ -246,6 +280,11 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
       const ownerId = session.ownerId.toLowerCase();
       const repo = session.repo;
       const input = parseAction(await bodyJson(request), validateDocument);
+      const requireSupported = document => {
+        if (document?.state === 'FINALIZED' && !input.supportedJournalVersions.includes(document.version)) fail(426, 'UPGRADE_REQUIRED');
+      };
+      if (input.action === 'save') requireSupported(input.document);
+      if ((input.action === 'correctImportedObservation' || comparisonAction(input.action)) && !input.supportedJournalVersions.includes(3)) fail(426, 'UPGRADE_REQUIRED');
       if (input.action === 'save' && input.document.state === 'FINALIZED'
         && await recordId(ownerId, input.document.entry.id) !== input.documentId) fail(422, 'INVALID_DOCUMENT');
       if (input.action === 'save' && !await stateIdentityValid(ownerId,input.documentId,input.document)) fail(422,'INVALID_DOCUMENT');
@@ -255,6 +294,11 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         if (enabled !== true) fail(503, 'UNAVAILABLE');
       };
       await checkGate();
+      const checkFileGate = async () => {
+        const enabled = typeof repo.fileEvidenceEnabled === 'function' ? await repo.fileEvidenceEnabled(ownerId) : undefined;
+        if (enabled === false) fail(409, 'FILE_EVIDENCE_DISABLED');
+        if (enabled !== true) fail(503, 'UNAVAILABLE');
+      };
       if (input.action === 'rewardSummary' || input.action === 'visit') {
         const result = await repo[input.action]();
         await checkGate();
@@ -309,12 +353,26 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         return { documentId: row.document_id, revision: row.revision,
           document: await decode(row.encrypted_payload, row.document_id) };
       };
+      const readComparisonOriginal = async reference => {
+        let original = await readAccountJournalComparisonCollection(ownerId, repo.planCollection, material, reference);
+        if (original?.status !== 'ORIGINAL_VERIFIED') {
+          const planId = await namespacedId(['trainoracle.account.plan.v1', ownerId]);
+          const row = await repo.read(ownerId, planId);
+          if (row !== null) {
+            if (row.document_id !== planId) fail(503, 'INVALID_STORED_DATA');
+            original = resolveComparisonOriginalFromPlanDocument((await entry(row)).document, reference);
+          }
+        }
+        if (original?.status !== 'ORIGINAL_VERIFIED') fail(409, 'COMPARISON_ORIGINAL_UNAVAILABLE');
+        return original;
+      };
       if (input.action === 'read') {
         const row = await repo.read(ownerId, input.documentId);
         await checkGate();
         if (row === null) fail(404, 'NOT_FOUND');
         if (row?.document_id !== input.documentId) fail(503, 'INVALID_STORED_DATA');
         const value = await entry(row);
+        requireSupported(value.document);
         return respond(200, { kind: Object.hasOwn(value, 'document') ? 'document' : 'deleted', ...value });
       }
       if (input.action === 'list') {
@@ -330,6 +388,9 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
           previous = row.document_id;
         }
         const page = entries.slice(0, limit);
+        for (const value of page) {
+          if (input.collection === 'JOURNAL') requireSupported(value.document);
+        }
         const deletedDocuments = page.filter(entry => !Object.hasOwn(entry, 'document'));
         return respond(200, { kind: 'list', documents: page.filter(entry => entry.document && (input.collection === 'JOURNAL'
           ? entry.document.state === 'FINALIZED' : entry.document.state === 'DRAFT')),
@@ -357,28 +418,73 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
       if (input.action === 'history') {
         const values = await versions();
         await checkGate();
+        for (const value of values) requireSupported(value.document);
         return respond(200, { kind: 'history', documentId: input.documentId,
           versions: values.filter(value => input.collection !== 'JOURNAL' || value.document.state === 'FINALIZED') });
       }
+      const originalRevision = async expected => {
+        const row = await repo.read(ownerId, input.documentId);
+        await checkGate();
+        if (row !== null) {
+          if (row.document_id !== input.documentId) fail(503, 'INVALID_STORED_DATA');
+          const value = await entry(row);
+          if (value.revision === expected && value.document) return value.document;
+        }
+        if (typeof repo.history !== 'function') fail(409, 'OPERATION_REPLAY_UNAVAILABLE');
+        const original = (await versions()).find(value => value.revision === expected)?.document;
+        if (!original) fail(409, 'OPERATION_REPLAY_UNAVAILABLE');
+        return original;
+      };
       const comparePrior = async prior => {
         if (!object(prior) || prior.user_id !== ownerId || prior.operation_id !== input.operationId
           || !isUuid(prior.document_id) || !revision(prior.expected_revision)) fail(503, 'INVALID_STORED_DATA');
         if (prior.document_id !== input.documentId || prior.expected_revision !== input.expectedRevision) fail(409, 'OPERATION_REUSED');
-        const operationKind = input.action === 'save' ? 'commit' : input.action;
+        const operationKind = commitAction(input.action) ? 'commit' : input.action;
         if (!['commit', 'delete', 'restore'].includes(prior.operation_kind)) fail(503, 'INVALID_STORED_DATA');
         if (prior.operation_kind !== operationKind
           || (input.action === 'restore' && prior.source_revision !== input.sourceRevision)) fail(409, 'OPERATION_REUSED');
-        if (input.action !== 'save') return receiptFor(prior.result, input);
-        if (input.document.state === 'FINALIZED' && (prior.trusted_metadata
-          ? prior.trusted_metadata.awardAllowed !== (input.writePurpose !== 'MIGRATION')
+        if (!commitAction(input.action)) return receiptFor(prior.result, input);
+        if ((input.action !== 'save' || input.document.state === 'FINALIZED') && (prior.trusted_metadata
+          ? prior.trusted_metadata.awardAllowed !== awardAllowed(input)
           : input.writePurpose === 'MIGRATION')) fail(409,'OPERATION_REUSED');
-        if (input.document.kind === 'DECORATIONS'
+        if (input.document?.kind === 'DECORATIONS'
           && Boolean(prior.trusted_metadata?.legacyInitialGrant) !== (input.writePurpose === 'MIGRATION' && input.expectedRevision === 0)) fail(409, 'OPERATION_REUSED');
         if (prior.proposed_encrypted_payload === null) fail(409, 'OPERATION_REPLAY_UNAVAILABLE');
         const document = await decode(prior.proposed_encrypted_payload, prior.document_id);
+        requireSupported(document);
+        if (comparisonAction(input.action)) {
+          const { supportedJournalVersions: ignored, ...request } = input;
+          const proposal = applyAccountJournalComparisonMutation(await originalRevision(input.expectedRevision), request);
+          if (!proposal || canonical(proposal) !== canonical(document)) fail(409, 'OPERATION_REUSED');
+          return receiptFor(prior.result, input);
+        }
+        if (input.action === 'correctImportedObservation') {
+          if (!observationOf(document) || canonical(observationOf(document)) !== canonical(input.replacementObservation)) fail(409, 'OPERATION_REUSED');
+          const original = await originalRevision(input.expectedRevision);
+          const proposal = correctAccountJournalImportedObservation(original, input.previousContentRevisionFingerprint,
+            input.replacementObservation, input.confirmedChangedFields);
+          if (!proposal || canonical(proposal) !== canonical(document)) fail(409, 'OPERATION_REUSED');
+          return receiptFor(prior.result, input);
+        }
         if (canonical(document) !== canonical(input.document)) fail(409, 'OPERATION_REUSED');
+        if (observationOf(document)) {
+          if (input.expectedRevision === 0) {
+            if (!['FILE_OBSERVATION', 'MIGRATION'].includes(input.writePurpose) || !validateInitialFileObservationRecord(document)) fail(409, 'OPERATION_REUSED');
+          } else if (!validateAccountJournalRecordUpdate(await originalRevision(input.expectedRevision), document, input.writePurpose)) {
+            fail(409, 'OPERATION_REUSED');
+          }
+        }
         return receiptFor(prior.result, input);
       };
+      let lifecycleCurrent;
+      if (input.action === 'delete' || input.action === 'restore') {
+        const row = await repo.read(ownerId, input.documentId);
+        if (row !== null) {
+          if (row.document_id !== input.documentId) fail(503, 'INVALID_STORED_DATA');
+          lifecycleCurrent = await entry(row);
+          requireSupported(lifecycleCurrent.document);
+        }
+      }
       const prior = await repo.operation(ownerId, input.operationId);
       let receipt;
       if (prior !== null) receipt = await comparePrior(prior);
@@ -387,6 +493,20 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         if (input.action === 'restore') {
           const values = await versions();
           restoredDocument = values.find(value => value.revision === input.sourceRevision)?.document;
+          requireSupported(restoredDocument);
+          const restoreBaseline = lifecycleCurrent?.document ?? values[0]?.document;
+          if (restoredDocument && restoreBaseline?.state === 'FINALIZED' && restoredDocument.state !== 'FINALIZED') fail(422, 'INVALID_DOCUMENT_UPDATE');
+          if (restoredDocument?.state === 'FINALIZED') {
+            // A tombstone's newest retained version remains its evidence baseline.
+            const baseline = restoreBaseline;
+            if (!sameRelations(baseline, restoredDocument)) fail(422, 'INVALID_COMPARISON_RELATION');
+            requireSupported(baseline);
+            if (baseline?.state === 'FINALIZED' && baseline.version === 3 && restoredDocument.version === 2) fail(422, 'INVALID_FILE_OBSERVATION');
+            const changed = !sameObservation(lifecycleCurrent?.document, restoredDocument);
+            if (changed) await checkFileGate();
+            if (baseline?.state === 'FINALIZED' && (!sameObservation(baseline, restoredDocument)
+              || baseline.entry.id !== restoredDocument.entry.id || baseline.entry.date !== restoredDocument.entry.date)) fail(422, 'INVALID_FILE_OBSERVATION');
+          }
           if (restoredDocument?.state === 'ACCOUNT_STATE') {
             const row = await repo.read(ownerId,input.documentId);
             if (row?.revision === input.expectedRevision) {
@@ -416,8 +536,83 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
           }
         }
       }
+      else if (input.action === 'correctImportedObservation' || comparisonAction(input.action)) {
+        const row = await repo.read(ownerId, input.documentId);
+        await checkGate();
+        if (row === null || row.revision !== input.expectedRevision || row.deleted_at != null) {
+          // The same operation may have won after our first receipt lookup.
+          const winner = await repo.operation(ownerId, input.operationId);
+          if (winner !== null) {
+            receipt = await comparePrior(winner);
+            await checkGate();
+            return respond(receipt.kind === 'conflict' ? 409 : 200, receipt);
+          }
+        }
+        if (row === null) fail(404, 'NOT_FOUND');
+        if (row.document_id !== input.documentId) fail(503, 'INVALID_STORED_DATA');
+        const current = await entry(row);
+        requireSupported(current.document);
+        if (!current.document || current.revision !== input.expectedRevision) {
+          return respond(409, { kind: 'conflict', documentId: input.documentId, operationId: input.operationId,
+            currentRevision: current.revision });
+        }
+        let document;
+        if (comparisonAction(input.action)) {
+          const { supportedJournalVersions: ignored, ...request } = input;
+          if (input.action === 'confirmComparisonRelation') {
+            if ((relationsOf(current.document)?.length ?? 0) >= 32) fail(409, 'COMPARISON_CAPACITY_EXCEEDED');
+            const original = await readComparisonOriginal(input.relation.original);
+            if (!validateAccountJournalComparisonConfirmation(current.document, request, original)) fail(422, 'INVALID_COMPARISON_RELATION');
+          }
+          document = applyAccountJournalComparisonMutation(current.document, request);
+          if (!document || validateDocument(document) !== true) fail(422, 'INVALID_COMPARISON_RELATION');
+        } else {
+          const observation = observationOf(current.document);
+          if (!observation) fail(422, 'INVALID_FILE_OBSERVATION');
+          if (observation.contentRevisionFingerprint !== input.previousContentRevisionFingerprint) fail(409, 'FILE_OBSERVATION_CONFLICT');
+          document = correctAccountJournalImportedObservation(current.document, input.previousContentRevisionFingerprint,
+            input.replacementObservation, input.confirmedChangedFields);
+          if (!document || validateDocument(document) !== true) fail(422, 'INVALID_FILE_OBSERVATION');
+        }
+        await checkFileGate();
+        await checkGate();
+        const encryptedPayload = await encryptAccountJournalDocument(canonical(document),
+          { ownerId, documentId: input.documentId }, material.active);
+        try {
+          receipt = receiptFor(await repo.commit({ documentId: input.documentId, operationId: input.operationId,
+            expectedRevision: input.expectedRevision, encryptedPayload,
+            metadata: { ...accountJournalMetadata(document), awardAllowed: false } }), input);
+        } catch (error) {
+          if (error?.code !== '22023') throw error;
+          const winner = await repo.operation(ownerId, input.operationId);
+          if (winner === null) fail(503, 'UNAVAILABLE');
+          receipt = await comparePrior(winner);
+        }
+      }
       else {
         const currentRow = await repo.read(ownerId, input.documentId);
+        let currentDocument;
+        if (currentRow !== null) {
+          if (currentRow.document_id !== input.documentId) fail(503, 'INVALID_STORED_DATA');
+          currentDocument = (await entry(currentRow)).document;
+          requireSupported(currentDocument);
+        }
+        if (input.document.state === 'FINALIZED') {
+          if (relationsOf(input.document)) {
+            if (currentRow === null && input.writePurpose === 'MIGRATION' && input.expectedRevision === 0) {
+              await checkFileGate();
+              for (const relation of relationsOf(input.document)) {
+                const original = await readComparisonOriginal(relation.original);
+                if (!validateAccountJournalComparisonRestore(input.document, relation, original)) fail(422, 'INVALID_COMPARISON_RELATION');
+              }
+            } else if (currentRow === null || !sameRelations(currentDocument, input.document)) fail(422, 'INVALID_COMPARISON_RELATION');
+          }
+          if (relationsOf(currentDocument) && !sameRelations(currentDocument, input.document)) fail(422, 'INVALID_COMPARISON_RELATION');
+          if (input.writePurpose === 'FILE_OBSERVATION' && !validateInitialFileObservationRecord(input.document)) fail(422, 'INVALID_FILE_OBSERVATION');
+          if (currentRow === null && input.document.version === 3
+            && (!['FILE_OBSERVATION', 'MIGRATION'].includes(input.writePurpose)
+              || !validateInitialFileObservationRecord(input.document))) fail(422, 'INVALID_FILE_OBSERVATION');
+        }
         if (currentRow !== null && currentRow.revision === input.expectedRevision
           && (currentRow.deleted_at === null || currentRow.deleted_at === undefined)) {
           const current = await entry(currentRow);
@@ -426,14 +621,18 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
               || typeof accountState.validateAccountStateDocumentUpdate !== 'function'
               || !accountState.validateAccountStateDocumentUpdate(current.document,input.document)))
             || (input.document.state === 'FINALIZED'
-              && !validateAccountJournalRecordUpdate(current.document, input.document))) fail(422, 'INVALID_DOCUMENT_UPDATE');
+              && !validateAccountJournalRecordUpdate(current.document, input.document, input.writePurpose))) {
+            fail(422, observationOf(current.document) || observationOf(input.document) ? 'INVALID_FILE_OBSERVATION' : 'INVALID_DOCUMENT_UPDATE');
+          }
         }
+        if (!sameObservation(currentDocument, input.document)
+          || input.writePurpose === 'MIGRATION' && observationOf(input.document)) await checkFileGate();
         const encryptedPayload = await encryptAccountJournalDocument(canonical(input.document),
           { ownerId, documentId: input.documentId }, material.active);
         try { receipt = receiptFor(await repo.commit({ documentId: input.documentId,
           operationId: input.operationId, expectedRevision: input.expectedRevision, encryptedPayload,
           metadata: { ...accountJournalMetadata(input.document), ...(input.document.state === 'FINALIZED'
-            ? { awardAllowed: input.writePurpose !== 'MIGRATION' } : {}),
+            ? { awardAllowed: awardAllowed(input) } : {}),
             ...(input.document.kind === 'DECORATIONS' && input.writePurpose === 'MIGRATION' && input.expectedRevision === 0
               ? { legacyInitialGrant: true } : {}) } }), input); }
         catch (error) {
@@ -476,6 +675,7 @@ export function createAccountJournalRepository(client, { ownerId, attest } = {})
     attestationStatus: () => mutate('status', {}),
     rewardSummary: () => result(client.rpc('account_reward_summary')),
     visit: () => result(client.rpc('record_account_reward_visit')),
+    fileEvidenceEnabled: () => result(client.rpc('service_feature_enabled', { feature_key_input: 'FILE_ANALYSIS_WRITE' })),
     async enabled(ownerId) {
       for (const feature of ['ACCOUNT', 'ACCOUNT_JOURNAL_V2']) {
         const value = await result(client.rpc('service_feature_enabled', { feature_key_input: feature }));

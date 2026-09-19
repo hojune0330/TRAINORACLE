@@ -22,6 +22,24 @@ test("keeps the local-only release valid when every network feature is closed", 
   assert.deepEqual(validateHostedReleaseEnvironment({}), [])
 })
 
+for (const format of ["TCX", "CSV", "JSON", "GPX"]) {
+  test(`${format} analysis requires an account and account journal independently`, () => {
+    const flag = `VITE_FEATURE_FILE_ANALYSIS_${format}`
+    assert.deepEqual(validateHostedReleaseEnvironment({ [flag]: "true" }), [
+      `FILE_ANALYSIS_${format}_REQUIRES_ACCOUNT`, `FILE_ANALYSIS_${format}_REQUIRES_ACCOUNT_JOURNAL`,
+    ])
+    const account = { ...connection, ...legalDocuments, VITE_ACCOUNT_PUBLIC_ENABLED: "true" }
+    assert.deepEqual(validateHostedReleaseEnvironment({ ...account, [flag]: "true" }), [
+      `FILE_ANALYSIS_${format}_REQUIRES_ACCOUNT_JOURNAL`,
+    ])
+    assert.deepEqual(validateHostedReleaseEnvironment({ ...account, [flag]: "true", VITE_FEATURE_ACCOUNT_JOURNAL: "true" }), [])
+    assert.deepEqual(validateHostedReleaseEnvironment({ ...account, [flag]: "true", VITE_FEATURE_ACCOUNT_JOURNAL: "true", VITE_KILL_ACCOUNT_JOURNAL: "true" }), [
+      `FILE_ANALYSIS_${format}_REQUIRES_ACCOUNT_JOURNAL`,
+    ])
+    assert.deepEqual(validateHostedReleaseEnvironment({ [flag]: "true", [`VITE_KILL_FILE_ANALYSIS_${format}`]: "true" }), [])
+  })
+}
+
 test("account journal cannot be published without account access", () => {
   assert.deepEqual(validateHostedReleaseEnvironment({ VITE_FEATURE_ACCOUNT_JOURNAL: "true" }), ["ACCOUNT_JOURNAL_REQUIRES_ACCOUNT"])
   assert.deepEqual(validateHostedReleaseEnvironment({ VITE_FEATURE_ACCOUNT_JOURNAL: "true", VITE_KILL_ACCOUNT_JOURNAL: "true" }), [])

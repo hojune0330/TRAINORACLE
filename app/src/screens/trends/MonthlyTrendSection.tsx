@@ -6,6 +6,7 @@ import {
   summarizeMetricCoverage,
 } from "../../domain/trend-analysis"
 import { isoToDate } from "../../domain/dates"
+import { acceptsFileDistance } from "../../domain/analysis-field-eligibility"
 import { MonthlyTrendBars } from "./MonthlyTrendBars"
 import {
   displayStatusText,
@@ -31,6 +32,7 @@ export function MonthlyTrendSection({
   const scoped = observations.filter((observation) => labels.has(observation.loggedOn.slice(0, 7)))
   const coverage = summarizeMetricCoverage(scoped, metric)
   const sourceRefs = buckets.flatMap((bucket) => bucket.sourceRefs)
+  const fileDistanceRefs = new Set(scoped.filter(acceptsFileDistance).map(observation => observation.sourceRef))
 
   return (
     <section aria-label="최근 4개월 추이" style={{ padding: "26px 20px 0" }}>
@@ -46,6 +48,12 @@ export function MonthlyTrendSection({
           ><span>{item.buttonLabel}</span></button>
         ))}
       </div>
+
+      {metric === "SECONDS_PER_KM" && (
+        <div style={{ marginTop: 10, fontSize: 10, color: "var(--ink-3)" }}>
+          직접 기록 기준 · 파일 페이스 제외
+        </div>
+      )}
 
       <MonthlyTrendBars buckets={buckets} metric={metric} metricLabel={option.noun} />
 
@@ -65,7 +73,8 @@ export function MonthlyTrendSection({
                   {monthText(bucket.label)} 중앙 {option.noun} {formatTrendValue(metric, bucket.median)}
                 </div>
                 <div style={{ marginTop: 3, fontSize: 9.5, color: "var(--ink-3)" }}>
-                  표본 {bucket.n}건 · 범위 {formatTrendRange(metric, bucket)} · {displayStatusText(bucket)}
+                  표본 {bucket.n}건 · 범위 {formatTrendRange(metric, bucket)} · {bucket.nonSensitiveReasonCodes.includes("CONFIRMED_FILE_DISTANCE")
+                    ? "확인한 파일 거리 포함" : displayStatusText(bucket)}
                 </div>
               </>
             )}
@@ -87,7 +96,8 @@ export function MonthlyTrendSection({
                 key={`${source.sourceId}-${source.observedAt ?? "unknown"}`}
                 style={{ overflowWrap: "anywhere" }}
               >
-                {source.sourceId} · {source.trustState === "ACCEPTED" ? "출처 확인" : "확인 필요"}
+                {source.sourceId} · {metric === "DISTANCE_KM" && fileDistanceRefs.has(source)
+                  ? "확인한 파일 거리" : source.trustState === "ACCEPTED" ? "출처 확인" : "확인 필요"}
               </li>
             ))}
           </ul>

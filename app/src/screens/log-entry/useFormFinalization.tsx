@@ -2,12 +2,13 @@ import React from "react"
 import type { JournalEntry } from "../../domain/journal-schema"
 import { persistAccountJournalRecord } from "../../domain/account/account-journal-record-service"
 import { activeLocalAccount } from "../../domain/account/local-journal-ownership"
-import { isAccountJournalWriteRejection, type AccountJournalWriteRejection } from "../../domain/account/account-write-rejection"
+import { FILE_WRITE_REJECTION_MESSAGES, isAccountJournalWriteRejection, type AccountJournalWriteRejection } from "../../domain/account/account-write-rejection"
 import { readFormFinalization } from "./form-finalization-reader"
 
 type Result = Awaited<ReturnType<typeof persistAccountJournalRecord>>
 type Attempt = { entry: JournalEntry; expectedSavedAt?: string; state: "PENDING" | "CONFLICT" | "ACK" | "REJECTED"; rejection?: AccountJournalWriteRejection }
 const rejected: Record<AccountJournalWriteRejection, string> = {
+  ...FILE_WRITE_REJECTION_MESSAGES,
   PLANNED_SESSION_ALREADY_RECORDED: "연결된 계획 세션이 이미 기록되어 저장이 거절됐어요. 계정의 기존 기록을 먼저 확인해 주세요.",
   INSUFFICIENT_POINTS: "포인트가 부족해 저장 요청이 거절됐어요. 계정의 포인트와 요청 내용을 확인해 주세요.",
   OPERATION_REPLAY_UNAVAILABLE: "이전 저장 요청의 결과를 다시 확인할 수 없어요. 계정 기록을 먼저 확인해 주세요.",

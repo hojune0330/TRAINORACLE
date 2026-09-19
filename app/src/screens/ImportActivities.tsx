@@ -1,6 +1,6 @@
 import React from "react"
 import { parseActivityFile } from "../domain/import/activity-file"
-import type { ActivityParseResult } from "../domain/import/activity-file"
+import type { ActivityParseResult, ImportedActivity } from "../domain/import/activity-file"
 import { buildImportDrafts, confirmImportDrafts } from "../domain/import/import-draft"
 import type { ImportDraft, ImportDraftSelection, ImportFormat, ImportSaveIntent, ImportSaveResult } from "../domain/import/import-draft"
 import { PickStage, ReviewStage, SavedStage } from "./import-activities/ImportStages"
@@ -12,18 +12,21 @@ import { useOrderedStepMotion } from "../hooks/useOrderedStepMotion"
 import { accountJournalRecordsEnabled } from "../domain/account/account-journal-record-service"
 import { buildAccountImportDrafts, createAccountImportConfirmation } from "../domain/import/account-import"
 import { useImportOwnerScope } from "./import-activities/useImportOwnerScope"
+import { fileAnalysisFormats } from "../domain/import/file-analysis-policy"
 
 type Stage =
   | { readonly step: "pick" }
   | { readonly step: "review"; readonly drafts: readonly ImportDraft[]; readonly result: ActivityParseResult }
   | { readonly step: "saved"; readonly outcome: ImportSaveResult }
 
-export function ImportActivities({ onBack, onOpenLog }: {
+export function ImportActivities({ onBack, onOpenLog, onOpenAnalysis }: {
   readonly onBack?: () => void
   readonly onOpenLog?: () => void
+  readonly onOpenAnalysis?: () => void
 }) {
   const [stage, setStage] = React.useState<Stage>({ step: "pick" })
   const [failure, setFailure] = React.useState<ReadFailure>(null)
+  const [reviewError, setReviewError] = React.useState<string | null>(null)
   const [selected, setSelected] = React.useState<ReadonlySet<number>>(new Set())
   const [intents, setIntents] = React.useState<ReadonlyMap<number, ImportSaveIntent>>(new Map())
   const [busy, setBusy] = React.useState(false)
@@ -38,7 +41,7 @@ export function ImportActivities({ onBack, onOpenLog }: {
     readControllerRef.current?.abort(); readControllerRef.current = null
     confirmation.current?.dispose(); confirmation.current = null
     busyRef.current = false; setBusy(false); setStage({ step: "pick" })
-    setSelected(new Set()); setIntents(new Map()); setFailure(null)
+    setSelected(new Set()); setIntents(new Map()); setFailure(null); setReviewError(null)
   })
 
   React.useEffect(() => () => { readControllerRef.current?.abort(); confirmation.current?.dispose() }, [])
@@ -50,6 +53,7 @@ export function ImportActivities({ onBack, onOpenLog }: {
     confirmation.current?.dispose(); confirmation.current = null
     setBusy(true)
     setFailure(null)
+    setReviewError(null)
     if (file.size > MAX_IMPORT_FILE_BYTES) {
       busyRef.current = false
       setBusy(false)
@@ -73,26 +77,38 @@ export function ImportActivities({ onBack, onOpenLog }: {
     }
     if (!current() || controller.signal.aborted) return
 
-    const result = parseActivityFile(text)
-    const drafts = accountJournalRecordsEnabled()
-      ? await buildAccountImportDrafts(result.activities) : buildImportDrafts(result.activities)
-    if (!current() || controller.signal.aborted) return
-    if (readControllerRef.current === controller) readControllerRef.current = null
-    busyRef.current = false
-    setBusy(false)
-    if (drafts === null) { setFailure("account-unavailable"); return }
-    if (result.activities.length === 0) {
-      setFailure(result.skipped > 0 ? "empty" : "unreadable")
-      setStage({ step: "pick" })
-      return
+    try {
+      const formats = accountJournalRecordsEnabled() ? fileAnalysisFormats() : []
+      const result = parseActivityFile(text, Intl.DateTimeFormat().resolvedOptions().timeZone, {
+        observations: { csv: formats.includes("csv"), json: formats.includes("json"), gpx: formats.includes("gpx") },
+      })
+      if (result.activities.length === 0) {
+        const codes = result.issues?.map(issue => issue.code) ?? []
+        setFailure(codes.includes("FILE_TOO_LARGE") ? "too-large"
+          : codes.includes("ACTIVITY_LIMIT_EXCEEDED") ? "too-many-records"
+            : codes.includes("POINT_LIMIT_EXCEEDED") || codes.includes("LAP_LIMIT_EXCEEDED") ? "too-many-segments"
+              : result.skipped > 0 ? "empty" : "unreadable")
+        setStage({ step: "pick" }); return
+      }
+      const drafts = accountJournalRecordsEnabled()
+        ? await buildAccountImportDrafts(result.activities) : buildImportDrafts(result.activities)
+      if (!current() || controller.signal.aborted) return
+      if (drafts === null) { setFailure("account-unavailable"); return }
+      const separate = drafts.flatMap((draft, index) => (
+        draft.duplicateOf === null && draft.reconciliationCandidates.length === 0
+          && !(formats.some(format => format === result.format)
+            && (draft.requiresIdentityChoice || (draft.identityCandidates?.length ?? 0) > 0)) ? [index] : []
+      ))
+      setSelected(new Set(separate))
+      setIntents(new Map(separate.map((index) => [index, { kind: "SAVE_SEPARATE" }])))
+      setStage({ step: "review", drafts, result })
+    } catch { if (current()) setFailure("account-unavailable") }
+    finally {
+      if (current()) {
+        if (readControllerRef.current === controller) readControllerRef.current = null
+        busyRef.current = false; setBusy(false)
+      }
     }
-
-    const separate = drafts.flatMap((draft, index) => (
-      draft.duplicateOf === null && draft.reconciliationCandidates.length === 0 ? [index] : []
-    ))
-    setSelected(new Set(separate))
-    setIntents(new Map(separate.map((index) => [index, { kind: "SAVE_SEPARATE" }])))
-    setStage({ step: "review", drafts, result })
   }
 
   const cancelRead = () => {
@@ -119,6 +135,8 @@ export function ImportActivities({ onBack, onOpenLog }: {
       if (!selected.has(index)) continue
       const intent = intents.get(index)
       if (intent === undefined) return
+      if (accountJournalRecordsEnabled() && fileAnalysisFormats().some(format => format === stage.result.format)
+        && draft.requiresIdentityChoice && intent.kind === "SAVE_SEPARATE" && intent.confirmedSeparate !== true) return
       chosen.push({ draft, intent })
     }
     if (chosen.length === 0) return
@@ -127,12 +145,33 @@ export function ImportActivities({ onBack, onOpenLog }: {
     const current = captureScope()
     busyRef.current = true; setBusy(true)
     const account = accountJournalRecordsEnabled()
-    if (account) confirmation.current ??= createAccountImportConfirmation(chosen, format)
-    const outcome = account ? await confirmation.current!.confirm() : confirmImportDrafts(chosen, format)
-    if (!current()) return
-    busyRef.current = false; setBusy(false)
-    if (!outcome) return
-    setStage({ step: "saved", outcome })
+    try {
+      if (account) confirmation.current ??= createAccountImportConfirmation(chosen, format)
+      const outcome = account ? await confirmation.current!.confirm() : confirmImportDrafts(chosen, format)
+      if (!current() || !outcome) return
+      setStage({ step: "saved", outcome })
+    } catch {
+      if (current()) setStage({ step: "saved", outcome: {
+        ...(account ? { account: 0, pending: 0 } : {}), saved: 0, failed: chosen.length,
+        total: chosen.length, stopReason: "SAVE_REJECTED",
+      } })
+    } finally { if (current()) { busyRef.current = false; setBusy(false) } }
+  }
+
+  const changeActivity = async (index: number, activity: ImportedActivity) => {
+    if (busyRef.current || stage.step !== "review") return
+    const current = captureScope()
+    busyRef.current = true; setBusy(true); setReviewError(null)
+    try {
+      const activities = stage.drafts.map((draft, row) => row === index ? activity : draft.activity)
+      const drafts = accountJournalRecordsEnabled() ? await buildAccountImportDrafts(activities) : buildImportDrafts(activities)
+      if (!current()) return
+      if (!drafts) { setReviewError("계정 기록을 확인하지 못했어요. 앞서 고른 내용은 유지했어요. 다시 시도해 주세요."); return }
+      setStage({ ...stage, drafts })
+      setIntents(previous => new Map([...previous].filter(([row, intent]) => row !== index
+        && intent.kind !== "USE_EXISTING" && intent.kind !== "ADD_TO_EXISTING")))
+    } catch { if (current()) setReviewError("기록을 다시 확인하지 못했어요. 앞서 고른 내용은 유지했어요. 연결을 확인하고 다시 골라 주세요.") }
+    finally { if (current()) { busyRef.current = false; setBusy(false) } }
   }
 
   return (
@@ -160,6 +199,7 @@ export function ImportActivities({ onBack, onOpenLog }: {
         className="active-stage-content active-content-scroll-target"
         data-flow-direction={stageMotion}
       >
+        {reviewError && <p role="alert">{reviewError}</p>}
         {stage.step === "pick" && (
           <PickStage
             busy={busy}
@@ -184,6 +224,7 @@ export function ImportActivities({ onBack, onOpenLog }: {
               return next
             })}
             onToggle={toggle}
+            onActivityChange={(index, activity) => { void changeActivity(index, activity) }}
             onSave={handleSave}
             onRestart={() => { setStage({ step: "pick" }); setSelected(new Set()) }}
           />
@@ -196,13 +237,15 @@ export function ImportActivities({ onBack, onOpenLog }: {
               if (busyRef.current) return
               const current = captureScope()
               busyRef.current = true; setBusy(true)
-              const outcome = await confirmation.current!.confirm()
-              if (!current()) return
-              busyRef.current = false; setBusy(false)
-              if (outcome) setStage({ step: "saved", outcome })
+              try {
+                const outcome = await confirmation.current!.confirm()
+                if (current() && outcome) setStage({ step: "saved", outcome })
+              } catch { if (current()) setReviewError("저장 상태를 확인하지 못했어요. 기존 결과는 유지했어요. 다시 시도해 주세요.") }
+              finally { if (current()) { busyRef.current = false; setBusy(false) } }
             } : undefined}
             outcome={stage.outcome}
             onOpenLog={onOpenLog}
+            onOpenAnalysis={fileAnalysisFormats().length > 0 ? onOpenAnalysis : undefined}
             onRestart={() => { setStage({ step: "pick" }); setSelected(new Set()); setFailure(null) }}
           />
         )}

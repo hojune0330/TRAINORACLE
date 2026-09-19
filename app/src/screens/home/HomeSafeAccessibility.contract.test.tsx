@@ -153,11 +153,15 @@ describe("home journal controls", () => {
     const onOpenPlan = vi.fn()
     render(<TrainingHome model={HOME_MODEL_WITH_NEXT_TRAINING} onOpenPlan={onOpenPlan} />)
 
-    const nextTraining = screen.getByRole("button", { name: /다음 훈련.*지속 페이스.*오후/u })
+    const nextTraining = screen.getByRole("button", { name: /^다음 훈련 ·/u })
+    expect(nextTraining).toHaveAccessibleName(/조금 힘들게 꾸준히 · LT 훈련.*7월 14일.*오후.*총 25~40분.*RPE 5~6/u)
+    expect(nextTraining).toHaveTextContent("조금 힘들게 꾸준히 · LT 훈련")
     expect(nextTraining).toHaveTextContent("7월 14일")
+    expect(nextTraining).toHaveTextContent("오후")
     expect(nextTraining).toHaveTextContent("총 25~40분 · RPE 5~6")
     expect(within(screen.getByRole("navigation", { name: "내 기록 살펴보기" })).getAllByRole("button")).toHaveLength(1)
 
+    expect(onOpenPlan).not.toHaveBeenCalled()
     await user.click(nextTraining)
 
     expect(onOpenPlan).toHaveBeenCalledTimes(1)

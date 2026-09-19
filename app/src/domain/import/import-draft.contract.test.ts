@@ -11,6 +11,7 @@ import { hasImportedField, isImportedField } from "../field-provenance"
 import { loadAnalysisEntries, loadEntries, saveEntry, updateEntry } from "../journal-store"
 import type { PostSessionEntry } from "../journal-store"
 import type { ImportedActivity } from "./activity-file"
+import { buildFileObservation, toFileObservationSummary } from "./file-observation"
 import {
   buildImportDrafts,
   confirmImportDrafts,
@@ -48,6 +49,61 @@ function existingSession(overrides: Partial<PostSessionEntry> = {}): PostSession
     ...overrides,
   }
 }
+
+describe("file identity candidate review", () => {
+  const observed = (sourceActivityId: string | null = null, distanceMeters = 5000): ImportedActivity => {
+    const observation = buildFileObservation({ format: "tcx", sourceProfile: "TCX_ACTIVITY_V1", parserVersion: "tcx-v1",
+      sourceActivityId, date: "2026-07-20", startedAt: null, timeZone: null, sport: "RUNNING", distanceMeters,
+      durationSeconds: 1800, durationMeaning: "SOURCE_DEFINED", confirmation: null,
+      laps: [{ sourceIndex: 0, distanceMeters, durationSeconds: 1800, durationMeaning: "SOURCE_DEFINED", kind: "UNKNOWN" }] })
+    return activity({ ...toFileObservationSummary(observation), observation })
+  }
+
+  it("lists same no-ID content as a candidate, not an identity decision", () => {
+    const source = observed(), previous = { ...toImportedEntry(source, "tcx", { includeFileObservation: true }),
+      memo: "SYNTHETIC_PRIVATE_CANDIDATE", memoPurpose: "PRIVATE_SELF_ONLY" as const }
+    const draft = buildImportDrafts([source], [previous])[0]!
+    expect(draft.requiresIdentityChoice).toBe(true)
+    expect(draft.identityCandidates).toEqual([{ id: previous.id, savedAt: previous.savedAt, title: previous.title,
+      activitySlot: undefined, kind: "REUSE" }])
+    expect(JSON.stringify(draft.identityCandidates)).not.toContain(previous.memo)
+  })
+
+  it("identifies a changed stable source even when summary similarity no longer matches", () => {
+    const previous = toImportedEntry(observed("stable-id", 5000), "tcx", { includeFileObservation: true })
+    const draft = buildImportDrafts([observed("stable-id", 10000)], [previous])[0]!
+    expect(draft.duplicateOf).toBeNull()
+    expect(draft.identityCandidates).toMatchObject([{ id: previous.id, kind: "CORRECTION" }])
+  })
+
+  it("does not use matching rounded summaries to reuse a different stable source ID", () => {
+    const previous = toImportedEntry(observed("first-id"), "tcx", { includeFileObservation: true })
+    const draft = buildImportDrafts([observed("second-id")], [previous])[0]!
+    expect(draft.duplicateOf).toBe(previous.id)
+    expect(draft.identityCandidates).toEqual([])
+  })
+
+  it("does not arbitrarily select among repeated journal IDs", () => {
+    const source = observed(), previous = toImportedEntry(source, "tcx", { includeFileObservation: true })
+    const draft = buildImportDrafts([source], [previous, { ...previous, title: "SYNTHETIC_OTHER" }])[0]!
+    expect(draft.identityCandidates).toEqual([])
+    expect(draft.requiresIdentityChoice).toBe(true)
+  })
+
+  it("does not infer a missing legacy provenance map for attachment", () => {
+    const draft = buildImportDrafts([observed()], [existingSession({ distanceKm: "5", durationMin: "30", avgPace: "" })])[0]!
+    expect(draft.identityCandidates).toEqual([])
+    expect(draft.requiresIdentityChoice).toBe(true)
+  })
+
+  it("honors explicit exclusion on the legacy local path", () => {
+    window.localStorage.clear()
+    const source = activity(), draft = buildImportDrafts([source], [])[0]!
+    expect(confirmImportDrafts([{ draft, intent: { kind: "EXCLUDE" } }], "csv"))
+      .toMatchObject({ saved: 0, failed: 0, excluded: 1 })
+    expect(loadEntries()).toEqual([])
+  })
+})
 
 describe("imported activity save", () => {
   beforeEach(() => {

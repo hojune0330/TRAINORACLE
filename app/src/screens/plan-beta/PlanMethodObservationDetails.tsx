@@ -19,7 +19,7 @@ export function PlanMethodObservationDetails({ observation, comparison }: { read
       <dt>직접 기록한 페이스</dt><dd>{actual.secondsPerKm === null ? "미기록" : `${formatTrainingSeconds(actual.secondsPerKm)}/km`}</dd>
       <dt>체감 강도</dt><dd>{actual.rpe === null ? "비교할 수 있는 RPE 미기록" : `직접 기록한 RPE ${actual.rpe}`}</dd>
     </dl>
-    {comparison !== undefined && <p>{comparison}</p>}
+    {comparison !== undefined && <p>계획 RPE와 비교: {comparison}</p>}
     <p>반복별 기록과 회복 구간은 확인하지 않았어요. 완료 표시만으로 계획의 방법·수치를 그대로 수행했다고 판단하지 않아요.</p>
   </div>
 }

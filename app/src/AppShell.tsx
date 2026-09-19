@@ -372,7 +372,8 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     screen = (
       <DeferredMobileScreens.ImportActivities
         onBack={() => runViewTransition("pop", () => setV(s => ({ ...s, importOpen: false })))}
-        onOpenLog={goHome}
+        onOpenLog={() => goTab("journal")}
+        onOpenAnalysis={() => goTab("trends")}
       />
     )
   } else if (v.tab === "log") {
@@ -405,6 +406,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       <DeferredMobileScreens.Trends
         onBack={goHome}
         onWriteLog={() => goTab("log")}
+        onOpenPlan={() => goTab("plan")}
       />
     )
   }

@@ -65,6 +65,15 @@ describe("shared visual system", () => {
     expect(journalTokens).not.toMatch(/Segoe Print|Nanum Pen Script|cursive/iu)
   })
 
+  it("marks recommended plan choices with the existing border width and preserves keyboard focus", () => {
+    const css = readFileSync("src/styles/plan-beta.css", "utf8")
+    const recommended = css.match(/\.plan-choice-list--cards \.plan-choice\[data-recommended="true"\]\s*\{([^}]+)\}/u)?.[1]
+    expect(recommended).toBeDefined()
+    expect(recommended?.trim()).toBe("border: var(--bw-line) solid var(--brand);")
+    expect(css).toMatch(/\.plan-choice-list--cards \.plan-choice,\s*\.plan-choice-list--cards \.plan-choice-row\s*\{\s*border:\s*var\(--bw-line\) solid var\(--line\)/u)
+    expect(css).toMatch(/\.plan-choice:focus-visible\s*\{\s*outline:\s*2px solid var\(--brand\);\s*outline-offset:\s*2px/u)
+  })
+
   it("keeps the audited new surfaces free from inline presentation styles", () => {
     const guardedSurfaces = [
       "src/screens/TrainingContent.tsx",

@@ -1,6 +1,8 @@
 import type { BrowserContext, Page } from "@playwright/test"
 import type { AccountJournalRequest } from "../../src/domain/account/account-journal-api"
 import type { AccountJournalRecord } from "../../src/domain/account/account-journal-record-schema"
+const validatorUrl = new URL("../../../supabase/functions/_shared/account-journal-record-validator.mjs", import.meta.url).href
+const { correctAccountJournalImportedObservation, applyAccountJournalComparisonMutation } = await import(validatorUrl)
 
 const origin = "http://127.0.0.1:4381"
 type Request<T> = AccountJournalRequest<T>
@@ -76,7 +78,8 @@ export function mockRecordServer<T = AccountJournalRecord>() {
           else { status = 404; result = { code: "NOT_FOUND" } }
         } else if (request.action === "history") {
           result = { kind: "history", documentId: request.documentId, versions: structuredClone(history.get(key) ?? []) }
-        } else if (request.action === "save" || request.action === "delete" || request.action === "restore") {
+        } else if (request.action === "save" || request.action === "delete" || request.action === "restore" || request.action === "correctImportedObservation"
+          || request.action === "confirmComparisonRelation" || request.action === "releaseComparisonRelation") {
           if (failSave) { status = 503; result = { code: "UNAVAILABLE" } }
           else {
             const receiptKey = `${ownerId}:${request.operationId}`
@@ -88,11 +91,18 @@ export function mockRecordServer<T = AccountJournalRecord>() {
               const old = documents.get(key)
               const current = old?.revision ?? tombstones.get(key)?.revision ?? 0
               const source = request.action === "restore" ? history.get(key)?.find(version => version.revision === request.sourceRevision) : undefined
+              const corrected = request.action === "correctImportedObservation" ? correctAccountJournalImportedObservation(old?.document,
+                request.previousContentRevisionFingerprint, request.replacementObservation, request.confirmedChangedFields)
+                : request.action === "confirmComparisonRelation" || request.action === "releaseComparisonRelation"
+                  ? applyAccountJournalComparisonMutation(old?.document, Object.fromEntries(Object.entries(request).filter(([key]) => key !== "supportedJournalVersions"))) : null
+              const mutation = request.action === "correctImportedObservation" || request.action === "confirmComparisonRelation" || request.action === "releaseComparisonRelation"
               if (current !== request.expectedRevision) {
                 status = 409
                 result = { kind: "conflict", documentId: request.documentId, operationId: request.operationId, currentRevision: current }
               } else if (request.action === "restore" && !source) {
                 status = 409; result = { code: "SOURCE_UNAVAILABLE" }
+              } else if (mutation && !corrected) {
+                status = 422; result = { error: "INVALID_FILE_OBSERVATION" }
               } else {
                 if (old) history.set(key, [...(history.get(key) ?? []), { revision: old.revision, document: structuredClone(old.document),
                   replacedAt: "2026-09-08T00:00:00.000Z", expiresAt: "2026-10-08T00:00:00.000Z",
@@ -102,10 +112,11 @@ export function mockRecordServer<T = AccountJournalRecord>() {
                   tombstones.set(key, { documentId: request.documentId, revision: current + 1 })
                 } else {
                   documents.set(key, { documentId: request.documentId, revision: current + 1,
-                    document: structuredClone(request.action === "save" ? request.document : source!.document) })
+                    document: structuredClone(request.action === "save" ? request.document
+                      : mutation ? corrected as T : source!.document) })
                   tombstones.delete(key)
                 }
-                result = { kind: request.action === "save" ? "saved" : request.action === "delete" ? "deleted" : "restored",
+                result = { kind: request.action === "save" || mutation ? "saved" : request.action === "delete" ? "deleted" : "restored",
                   documentId: request.documentId, operationId: request.operationId, revision: current + 1,
                   ...(request.action === "restore" ? { sourceRevision: request.sourceRevision } : {}) }
                 receipts.set(receiptKey, { request: JSON.stringify(request), result })

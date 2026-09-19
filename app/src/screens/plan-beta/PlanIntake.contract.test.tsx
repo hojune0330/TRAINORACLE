@@ -2,6 +2,7 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
+import { DETAILED_PRESCRIPTION_APPROVALS } from "../../domain/detailed-prescription-approvals"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
 import { PlanIntake } from "./PlanIntake"
 import { firstUnansweredRefinement } from "./plan-intake-navigation"
@@ -26,7 +27,9 @@ describe("returning intake navigation", () => {
 })
 
 describe("two-a-day intake", () => {
-  it("explains the current two-session option before it is chosen", () => {
+  it("explains the current two-session option before it is chosen", async () => {
+    const user = userEvent.setup()
+    const onSecondSession = vi.fn()
     render(
       <PlanIntake
         step="two-a-day"
@@ -40,7 +43,7 @@ describe("two-a-day intake", () => {
         onDays={vi.fn()}
         onFrameLength={vi.fn()}
         onTrainingTime={vi.fn()}
-        onSecondSession={vi.fn()}
+        onSecondSession={onSecondSession}
         onManageRecords={vi.fn()}
         onOpenNotationReader={vi.fn()}
         onSafety={vi.fn()}
@@ -48,8 +51,16 @@ describe("two-a-day intake", () => {
       />,
     )
 
-    expect(screen.getByRole("button", { name: /하루 두 번 운동할게요/u }))
-      .toHaveTextContent("고른 시간대에 주요 훈련을 배치하고 다른 시간에는 쉬운 훈련이나 회복 운동을 안내해요. 주요 훈련 두 개를 자동으로 넣지는 않아요")
+    const single = screen.getByRole("button", { name: /하루 한 번 운동/u, pressed: true })
+    const double = screen.getByRole("button", { name: /하루 두 번 운동할게요/u, pressed: false })
+    expect(double).toHaveAccessibleName(/오전·오후 두 칸.*힘든 훈련은 하나만/u)
+    expect(double).toBeVisible()
+    expect(onSecondSession).not.toHaveBeenCalled()
+    await user.click(double)
+    expect(onSecondSession).toHaveBeenNthCalledWith(1, "RECOVERY_PM_ALLOWED")
+    await user.click(single)
+    expect(onSecondSession).toHaveBeenNthCalledWith(2, "SINGLE_SESSION_ONLY")
+    expect(onSecondSession).toHaveBeenCalledTimes(2)
   })
 })
 
@@ -88,7 +99,9 @@ describe("competition division intake", () => {
 })
 
 describe("plan length intake", () => {
-  it("explains the continuing 7-day choice and keeps 9/10 wording factual", () => {
+  it("explains the continuing 7-day choice and keeps 9/10 wording factual", async () => {
+    const user = userEvent.setup()
+    const onFrameLength = vi.fn()
     render(
       <PlanIntake
         step="frame-length"
@@ -100,7 +113,7 @@ describe("plan length intake", () => {
         onFocus={vi.fn()}
         onTemplate={vi.fn()}
         onDays={vi.fn()}
-        onFrameLength={vi.fn()}
+        onFrameLength={onFrameLength}
         onTrainingTime={vi.fn()}
         onSecondSession={vi.fn()}
         onManageRecords={vi.fn()}
@@ -112,10 +125,18 @@ describe("plan length intake", () => {
 
     expect(screen.getByRole("button", { name: /7일만 먼저 받기/u }))
       .toHaveTextContent("다음 계획으로 이어서")
-    expect(screen.getByRole("button", { name: /9일 계획 받기/u }))
-      .toHaveTextContent("9일 분량")
-    expect(screen.getByRole("button", { name: /10일 계획 받기/u }))
-      .toHaveTextContent("10일 분량")
+    expect(onFrameLength).not.toHaveBeenCalled()
+    for (const [index, days] of [7, 9, 10].entries()) {
+      const choice = screen.getByRole("button", {
+        name: days === 7 ? /7일만 먼저 받기/u : new RegExp(`${days}일 계획 받기`, "u"),
+        pressed: false,
+      })
+      expect(choice).toBeVisible()
+      if (days !== 7) expect(choice).toHaveAccessibleName(/한 번에 받아요/u)
+      await user.click(choice)
+      expect(onFrameLength).toHaveBeenNthCalledWith(index + 1, days)
+    }
+    expect(onFrameLength).toHaveBeenCalledTimes(3)
   })
 })
 
@@ -238,14 +259,27 @@ describe("exact event and explicit detail selection", () => {
       />,
     )
 
-    expect(screen.getByRole("button", { name: /RPE 기준으로 받기/u })).toBeVisible()
-    const detailed = screen.getByRole("button", { name: /1500m 경기 페이스 상세 훈련 포함/u })
-    expect(detailed).toHaveTextContent("500m 3회 · 반복 사이 3분 서서 쉬기")
+    const rpe = screen.getByRole("button", { name: /RPE 기준으로 받기/u, pressed: false })
+    expect(rpe).toBeVisible()
+    expect(rpe).toHaveAccessibleName(/기록 없이 바로.*힘든 정도\(1~10\)와 시간/u)
+    const detailed = screen.getByRole("button", { name: /1500m 경기 페이스 상세 훈련 포함/u, pressed: false })
+    expect(detailed).toHaveAccessibleName(/500m 3회.*내 기록으로 목표 시간 계산/u)
+    expect(detailed).toBeVisible()
+    expect(screen.getByText("준비·정리와 훈련 표기 보기").closest("details")).not.toHaveAttribute("open")
     await user.click(screen.getByText("준비·정리와 훈련 표기 보기"))
     expect(screen.getByText("3×500m @1500m RP · r180″ STAND")).toBeVisible()
     expect(screen.getByText(/준비 15분 RPE/u)).toBeVisible()
     expect(onTemplate).not.toHaveBeenCalled()
     await user.click(detailed)
-    expect(onTemplate).toHaveBeenCalledWith(expect.objectContaining({ templateId: "MD-1500-01" }))
+    const approval = DETAILED_PRESCRIPTION_APPROVALS.find((item) => item.templateId === "MD-1500-01")
+    if (approval === undefined) throw new Error("Expected the approved 1500m template")
+    expect(onTemplate).toHaveBeenNthCalledWith(1, {
+      templateId: approval.templateId,
+      version: approval.templateVersion,
+      fingerprint: approval.templateContentFingerprint,
+    })
+    await user.click(rpe)
+    expect(onTemplate).toHaveBeenNthCalledWith(2, null)
+    expect(onTemplate).toHaveBeenCalledTimes(2)
   })
 })

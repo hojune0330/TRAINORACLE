@@ -12,7 +12,12 @@ export async function buildAccountJournalRecordValidator() {
   return build({
     absWorkingDir: root,
     stdin: {
-      contents: 'export { validateAccountJournalRecord, validateAccountJournalRecordUpdate } from "./src/domain/account/account-journal-record-schema.ts"',
+      contents: `export { validateAccountJournalRecord, validateAccountJournalRecordUpdate, validateInitialFileObservationRecord,
+        correctAccountJournalImportedObservation, FILE_OBSERVATION_CORRECTION_FIELDS, applyAccountJournalComparisonMutation,
+        validateAccountJournalComparisonConfirmation, validateAccountJournalComparisonRestore } from "./src/domain/account/account-journal-record-schema.ts";
+        export { parseFileObservation } from "./src/domain/import/file-observation.ts";
+        export { confirmComparisonRelationRequestSchema, releaseComparisonRelationRequestSchema } from "./src/domain/import/comparison-relation.ts";
+        export { resolveComparisonOriginalFromPlanDocument, resolveComparisonOriginalFromPlanCollection } from "./src/domain/import/file-plan-comparison.ts";`,
       resolveDir: app,
       sourcefile: 'account-journal-record-server-entry.ts',
       loader: 'ts',

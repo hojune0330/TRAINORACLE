@@ -1,6 +1,6 @@
 import { isoShift, weekStartOf } from "./dates"
 import type { StructuredJournalObservation } from "./journal-observation"
-import { eligibleMetricValue } from "./trend-analysis"
+import { cumulativeDistance } from "./cumulative-distance"
 
 export type WeeklyDistanceBucket =
   | {
@@ -30,19 +30,17 @@ export function bucketDistanceByWeek(
   return Array.from({ length: weeksBack }, (_, index) => {
     const start = isoShift(thisMonday, -7 * (weeksBack - index - 1))
     const end = isoShift(start, 6)
-    const eligible = observations.flatMap((observation) => {
-      if (observation.loggedOn < start || observation.loggedOn > end) return []
-      const value = eligibleMetricValue(observation, "DISTANCE_KM")
-      return value === null ? [] : [{ observation, value }]
+    const summary = cumulativeDistance(observations, {
+      kind: "RECENT_WEEK", startDate: start, endDate: end, precision: "LOCAL_DATE",
     })
-    if (eligible.length === 0) return { kind: "MISSING", start, end, sourceRefs: [] }
+    if (summary.totalKm === null) return { kind: "MISSING", start, end, sourceRefs: [] }
     return {
       kind: "DATA",
       start,
       end,
-      totalKm: Math.round(eligible.reduce((sum, item) => sum + item.value, 0) * 10) / 10,
-      n: eligible.length,
-      sourceRefs: eligible.map((item) => item.observation.sourceRef),
+      totalKm: summary.totalKm,
+      n: summary.includedSourceCount,
+      sourceRefs: summary.sourceRefs,
     }
   })
 }

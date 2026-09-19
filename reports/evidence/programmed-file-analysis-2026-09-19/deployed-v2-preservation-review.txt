@@ -1,0 +1,57 @@
+# S04 Actual Deployed Artifact: Independent Browser Evidence
+
+Date: 2026-09-19. Reviewer: Huygens. No active runtime source edit, commit, push, real authentication, or provider API operation.
+
+## Verdict and scope
+
+PASS for the work-order S04 cache/outbox preservation criterion in the two executed actual-deployed-byte scenarios: warm session and page reload, each receiving HTTP 426 after a genuine V2 ACK plus a durable pending write. This closes the earlier source-reconstruction-only gap for these scenarios. It does not claim a service-worker upgrade test, complete failure/empty UI semantics, a production server test, or blanket V3 release approval.
+
+## Artifact identity
+
+- Public site: https://hojune0330.github.io/TRAINORACLE/
+- Public deployment receipt: https://hojune0330.github.io/TRAINORACLE/trainoracle-deploy-receipt.json
+- Published receipt sourceSha: `27cc6d5705a58f55eb3e07140a7f932d1118269c`; deployedAt `2026-09-16T04:20:36.734Z`; workflowRunId `manual`, attempt `2`. Receipt metadata is reported as published, not a cryptographic source attestation.
+- Retrieved main asset: `assets/index-L0x0TA97.js`, 846642 bytes, SHA256 `efeac295d284535bf8a48d651e872deb9bbb090d56d8ac6915c62708b342ad9d`.
+- Mirror: `C:\Users\admin\AppData\Local\Temp\trainoracle-deployed-s04-20260919-4498`.
+- 36 original public static files, 4357891 bytes, fetched at `2026-09-19T14:30:03.098Z`. No rebuilt/transformed/instrumented bundle, SDK replacement or feature-flag substitution.
+- Every mirrored file matched its downloaded SHA256 after browser execution: zero mutated assets.
+- Public artifact manifest SHA256 `1637C39301204227D81E1C3A640F48EDC51C43850003999D2DDAAE20F05B8A94`.
+- The local origin/gh-pages ref was stale and was NOT used as the deployed artifact.
+
+## Real and synthetic boundaries
+
+Real: published HTML and JavaScript/dependencies, app bootstrap and account-scope subscription, compiled Supabase SDK, compiled V2 journal codec/API/service/sync/projection, Chrome native IndexedDB, WebCrypto and Web Locks. The actual compiled module exports `fa` (persist) and `f5` (hydrate) were invoked without rewriting their code; their minified definitions were inspected against the baseline behavior. Export `y` confirms the synthetic active owner, and `ay` confirms the actually compiled account-record gate.
+
+Synthetic: newly generated fixture UUID/session/token, localStorage session under the real SDK storage key, V2 journals, and HTTP responses. Browser routing continues requests ONLY to loopback `127.0.0.1:4498`; nonlocal journal/auth/RPC requests are fulfilled locally or aborted. No actual login, real user credentials, live user data, real server write, or provider traffic was used. Service workers were blocked explicitly.
+
+## Executed assertions
+
+Both warm and reload cases assert:
+
+1. Actual built client boots with the synthetic account and enabled account-record gate.
+2. First V2 save receives a real browser HTTP 200 mock receipt and becomes ACCOUNT.
+3. Second V2 save receives HTTP 503 and becomes PENDING, producing a durable encrypted outbox.
+4. Every captured journal request omits supportedJournalVersions; every saved document remains version 2.
+5. Switching the journal endpoint to HTTP 426 makes actual built hydration return false.
+6. All native IndexedDB stores for `trainoracle-account-journal-records-v1` remain byte-for-byte JSON-equivalent; encrypted cache/outbox material is unchanged and no automatic pending save occurs.
+7. Explicitly retrying the pending entry under 426 remains PENDING, with the identical request/operationId/body and unchanged raw stores.
+8. Restoring HTTP 200 permits the original pending request/nonce to complete; both journals exist, with no replacement or duplicate pending operation.
+
+Result: **2/2 PASS**, retries 0, 4.1 seconds (Playwright's successful run). The first fixture attempts failed before this criterion because nonempty synthetic memo lacked required memoPurpose; the baseline validator independently returned false for that fixture and true with memoPurpose. The legal fixture passed. Those earlier attempts are test-construction failures, not observed product defects.
+
+## Reproduction and evidence
+
+From `C:\Users\admin\AppData\Local\Temp\trainoracle-final-review-20260919-4498\app`:
+
+```powershell
+& 'C:\Program Files\nodejs\node.exe' node_modules/@playwright/test/cli.js test --config=playwright.deployed-s04.config.ts
+```
+
+- Test: `e2e/deployed-s04.spec.ts`.
+- Static-only loopback server: `e2e/deployed-s04.setup.ts`.
+- Config: `playwright.deployed-s04.config.ts`.
+- Public-only bounded downloader: `scripts/reviewer-download-deployed.mjs` (maximum 100 files/40MB, no auth and no API endpoints).
+- Result: `deployed-s04-results/results.json`, SHA256 `66DB151A817B3556AF796217B186982C889C5BB0B910CA821181C6BE974ED465`.
+- Successful execution was followed by independent hashing of all 36 mirrored assets; none changed. Static server closed after execution.
+
+The earlier seven-case source-baseline browser test and mutation remain complementary evidence, not substitutes for this artifact test. Reverse rollout remains incompatible: actual new-client/old-server tests produce 400 for all seven journal actions even with file flags OFF. Compatible server first, then client publication; this report does not authorize a main push, deployment or flag activation.

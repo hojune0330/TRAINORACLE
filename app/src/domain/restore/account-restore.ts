@@ -133,8 +133,8 @@ export async function createAccountBackupRestoration(source: BackupReadResult) {
         if (!candidate) { result.failed++; continue }
         // Reject, rather than silently rewrite, backup provenance/immutable facts.
         if (current && !validateAccountJournalRecordUpdate(
-          { version: 2, kind: "JOURNAL", state: "FINALIZED", entry: { ...current, syncState: "local" } },
-          { version: 2, kind: "JOURNAL", state: "FINALIZED", entry: candidate },
+          { version: current.kind === "post-session" && current.fileObservation ? 3 : 2, kind: "JOURNAL", state: "FINALIZED", entry: { ...current, syncState: "local" } },
+          { version: candidate.kind === "post-session" && candidate.fileObservation ? 3 : 2, kind: "JOURNAL", state: "FINALIZED", entry: candidate },
         )) { result.conflicts++; continue }
         item = { entry: candidate, expectedBase, ...(current ? { expectedSavedAt: current.savedAt } : {}) }
         prepared.set(original.id, item)

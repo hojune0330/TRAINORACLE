@@ -1,0 +1,166 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\admin\\AppData\\Local\\Temp\\trainoracle-final-review-20260919-4498\\app\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config=playwright.deployed-s04.config.ts"
+    ],
+    "configFile": "C:\\Users\\admin\\AppData\\Local\\Temp\\trainoracle-final-review-20260919-4498\\app\\playwright.deployed-s04.config.ts",
+    "rootDir": "C:/Users/admin/AppData/Local/Temp/trainoracle-final-review-20260919-4498/app/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "C:\\Users\\admin\\AppData\\Local\\Temp\\trainoracle-final-review-20260919-4498\\app\\e2e\\deployed-s04.setup.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/admin/AppData/Local/Temp/trainoracle-final-review-20260919-4498/app/deployed-s04-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "C:/Users/admin/AppData/Local/Temp/trainoracle-final-review-20260919-4498/app/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "deployed-s04.spec.ts"
+        ],
+        "timeout": 45000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "./deployed-s04-results/results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.61.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "deployed-s04.spec.ts",
+      "file": "deployed-s04.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "actual deployed V2 bytes preserve native cache and outbox on426 warm",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1215,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-19T14:35:48.695Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "deployed-S04-evidence",
+                      "contentType": "application/json",
+                      "body": "eyJtYWluQXNzZXQiOiIvYXNzZXRzL2luZGV4LUwweDBUQTk3LmpzIiwiYmFzZWxpbmUiOiIyN2NjNmQ1NzA1YTU4ZjU1ZWIzZTA3MTQwYTdmOTMyZDExMTgyNjljIiwicmVsb2FkIjpmYWxzZSwibmF0aXZlQnl0ZXNSZXRhaW5lZCI6MTI4MDYsInByZXNlcnZlZEV4YWN0bHkiOnRydWUsIm9yaWdpbmFsTm9uY2VSZXBsYXllZCI6dHJ1ZSwicHJvdmlkZXJOZXR3b3JrQ29udGludWVzIjowfQ=="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "988f50e5d2173260af47-c1de7d44d39e83815cad",
+          "file": "deployed-s04.spec.ts",
+          "line": 79,
+          "column": 37
+        },
+        {
+          "title": "actual deployed V2 bytes preserve native cache and outbox on426 after reload",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1372,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-19T14:35:50.326Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "deployed-S04-evidence",
+                      "contentType": "application/json",
+                      "body": "eyJtYWluQXNzZXQiOiIvYXNzZXRzL2luZGV4LUwweDBUQTk3LmpzIiwiYmFzZWxpbmUiOiIyN2NjNmQ1NzA1YTU4ZjU1ZWIzZTA3MTQwYTdmOTMyZDExMTgyNjljIiwicmVsb2FkIjp0cnVlLCJuYXRpdmVCeXRlc1JldGFpbmVkIjoxMjg4OSwicHJlc2VydmVkRXhhY3RseSI6dHJ1ZSwib3JpZ2luYWxOb25jZVJlcGxheWVkIjp0cnVlLCJwcm92aWRlck5ldHdvcmtDb250aW51ZXMiOjB9"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "988f50e5d2173260af47-8ba9cc8aa58e4762fd93",
+          "file": "deployed-s04.spec.ts",
+          "line": 79,
+          "column": 37
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-09-19T14:35:47.830Z",
+    "duration": 4137.02,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

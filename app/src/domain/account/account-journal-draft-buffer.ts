@@ -1,5 +1,8 @@
 import { z } from "zod"
 import { isValidIsoDate } from "../dates"
+import { fileObservationSchema } from "../import/file-observation"
+import { accountJournalRecordSchema, correctAccountJournalImportedObservation, FILE_OBSERVATION_CORRECTION_FIELDS, applyAccountJournalComparisonMutation } from "./account-journal-record-schema"
+import { comparisonRelationSchema, releaseComparisonRelationRequestSchema } from "../import/comparison-relation"
 
 /** Local draft protection only, not authentication or server/account storage.
  * Callers must verify the current authenticated scope before every call and discard
@@ -28,9 +31,34 @@ const cipherSchema = z.object({
 }).strict()
 import { ACCOUNT_WRITE_REJECTIONS, type AccountJournalWriteRejection } from "./account-write-rejection"
 const accountJournalWriteRejectionSchema = z.enum(ACCOUNT_WRITE_REJECTIONS)
+const correctionMutationSchema = z.object({
+  action: z.literal("correctImportedObservation"),
+  previousContentRevisionFingerprint: z.string().regex(/^sha256:[a-f0-9]{64}$/u),
+  replacementObservation: fileObservationSchema,
+  confirmedChangedFields: z.array(z.enum(FILE_OBSERVATION_CORRECTION_FIELDS)).min(1).max(FILE_OBSERVATION_CORRECTION_FIELDS.length),
+}).strict()
+const mutationSchema = z.union([correctionMutationSchema,
+  z.object({ action: z.literal("confirmComparisonRelation"), relation: comparisonRelationSchema }).strict(),
+  z.object({ action: z.literal("releaseComparisonRelation"), relationId: uuid,
+    releasedAt: releaseComparisonRelationRequestSchema.shape.releasedAt }).strict(),
+])
+export type AccountJournalMutation = z.infer<typeof mutationSchema>
+const mutationEnvelopeSchema = z.object({ mutation: mutationSchema, original: accountJournalRecordSchema }).strict()
+type MutationEnvelope = z.infer<typeof mutationEnvelopeSchema>
+function mutationMatches(envelope: MutationEnvelope, draft: unknown, expectedRevision: number) {
+  const { mutation, original } = envelope
+  const proposal = mutation.action === "correctImportedObservation"
+    ? correctAccountJournalImportedObservation(original, mutation.previousContentRevisionFingerprint,
+      mutation.replacementObservation, mutation.confirmedChangedFields)
+    : applyAccountJournalComparisonMutation(original, { ...mutation, expectedRevision,
+      documentId: "00000000-0000-4000-8000-000000000001", operationId: "00000000-0000-4000-8000-000000000002" })
+  const parsed = accountJournalRecordSchema.safeParse(draft)
+  return proposal !== null && parsed.success && JSON.stringify(proposal) === JSON.stringify(parsed.data)
+}
 const operationSchema = z.object({
+  encryptedMutation: cipherSchema.optional(),
   rejection: accountJournalWriteRejectionSchema.optional(),
-  writePurpose: z.literal("MIGRATION").optional(),
+  writePurpose: z.enum(["MIGRATION", "FILE_OBSERVATION"]).optional(),
   operationId: uuid,
   expectedRevision: revision,
   sequence: sequence.refine(value => value > 0),
@@ -54,7 +82,9 @@ const archiveSchema = z.object({
 }).strict()
 export const MAX_CONFLICT_ARCHIVE_ENTRIES = 128
 const recordSchema = z.object({
-  writePurpose: z.literal("MIGRATION").optional(),
+  encryptedMutation: cipherSchema.optional(),
+  acknowledgedWritePurpose: z.literal("FILE_OBSERVATION").optional(),
+  writePurpose: z.enum(["MIGRATION", "FILE_OBSERVATION"]).optional(),
   version: z.literal(1), ownerId: uuid, documentId: uuid,
   serverRevision: revision,
   localSequence: sequence.refine(value => value > 0),
@@ -70,6 +100,10 @@ const recordSchema = z.object({
   if (record.acknowledgedSequence > record.localSequence) invalid()
   if (record.serverRevision === 0 && record.acknowledgedSequence !== 0) invalid()
   const op = record.operation
+  if (record.encryptedMutation && (!op || op.sequence !== record.localSequence || record.writePurpose !== undefined)) invalid()
+  if (op?.encryptedMutation && (op.writePurpose !== undefined || !record.encryptedMutation)) invalid()
+  if (op?.sequence === record.localSequence
+    && JSON.stringify(op.encryptedMutation) !== JSON.stringify(record.encryptedMutation)) invalid()
   if (op?.sequence === record.localSequence && op.writePurpose !== record.writePurpose) invalid()
   if (op && (op.sequence > record.localSequence || op.sequence <= record.acknowledgedSequence
     || op.expectedRevision !== record.serverRevision
@@ -86,12 +120,15 @@ const recordSchema = z.object({
 
 export type AccountJournalDraftRecord = z.infer<typeof recordSchema>
 export type AccountJournalDraftPending<T = AccountJournalDraft> = {
+  mutation?: AccountJournalMutation
+  originalDraft?: T
   rejection?: AccountJournalWriteRejection
-  writePurpose?: "MIGRATION"
+  writePurpose?: "MIGRATION" | "FILE_OBSERVATION"
   operationId: string; expectedRevision: number; sequence: number; draft: T
 }
 export type AccountJournalDraftView<T = AccountJournalDraft> = {
-  writePurpose?: "MIGRATION"
+  acknowledgedWritePurpose?: "FILE_OBSERVATION"
+  writePurpose?: "MIGRATION" | "FILE_OBSERVATION"
   ownerId: string; documentId: string; serverRevision: number
   localSequence: number; acknowledgedSequence: number
   state: "LOCAL_CHANGES" | "PENDING" | "DRAFT_ACKNOWLEDGED" | "CONFLICT"
@@ -111,7 +148,7 @@ export type AccountJournalConflictArchive<T = AccountJournalDraft> = {
   pending: AccountJournalDraftPending<T> | null
 }
 export interface AccountJournalDraftBuffer<T = AccountJournalDraft> {
-  saveDraft(owner: string, doc: string, draft: T, expectedLocalSequence?: number, writePurpose?: "MIGRATION"): Promise<void>
+  saveDraft(owner: string, doc: string, draft: T, expectedLocalSequence?: number, writePurpose?: "MIGRATION" | "FILE_OBSERVATION"): Promise<void>
   read(owner: string, doc: string): Promise<AccountJournalDraftView<T> | null>
   list(owner: string): Promise<AccountJournalDraftView<T>[]>
   queue(owner: string, doc: string, operationId: string): Promise<void>
@@ -125,6 +162,8 @@ export interface AccountJournalDraftBuffer<T = AccountJournalDraft> {
 }
 /** Existing autosave/sync mocks may keep implementing the smaller base interface. */
 export interface AccountJournalConflictBuffer<T = AccountJournalDraft> extends AccountJournalDraftBuffer<T> {
+  saveMutation?(owner: string, doc: string, draft: T, mutation: AccountJournalMutation, operationId: string,
+    expectedLocalSequence: number, expectedRevision: number, isCurrent?: () => boolean): Promise<void>
   captureConflict(owner: string, doc: string, remote: T | null, remoteRevision: number, expectedLocalSequence: number, isCurrent?: () => boolean): Promise<void>
   resolveConflict(owner: string, doc: string, choice: ConflictChoice, remoteRevision: number, expectedLocalSequence: number, isCurrent?: () => boolean): Promise<void>
   acceptCleanDeletion(owner: string, doc: string, remoteRevision: number, expectedLocalSequence: number): Promise<void>
@@ -315,13 +354,20 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
     const key = await keyFor(ownerId, false)
     const draft = await decrypt(key, ownerId, documentId, record.encryptedCurrent, schema, databaseName)
     const op = record.operation
-    const pending = op ? { operationId: op.operationId, expectedRevision: op.expectedRevision,
+    const pending: AccountJournalDraftPending<T> | null = op ? { operationId: op.operationId, expectedRevision: op.expectedRevision,
       ...(op.writePurpose ? { writePurpose: op.writePurpose } : {}),
       sequence: op.sequence, ...(op.rejection ? { rejection: op.rejection } : {}), draft: await decrypt(key, ownerId, documentId, op.encryptedSnapshot, schema, databaseName) } : null
+    if (op?.encryptedMutation && pending) {
+      const envelope = await decrypt(key, ownerId, documentId, op.encryptedMutation, mutationEnvelopeSchema, `${databaseName}:mutation`)
+      if (!mutationMatches(envelope, pending.draft, pending.expectedRevision)) throw new Error("Invalid journal mutation")
+      pending.mutation = envelope.mutation
+      pending.originalDraft = parseDocument(envelope.original, schema)
+    }
     const remoteDraft = record.blocked?.encryptedRemote
       ? await decrypt(key, ownerId, documentId, record.blocked.encryptedRemote, schema, databaseName) : null
     scope(ownerId)
     return { ownerId, documentId, serverRevision: record.serverRevision,
+      ...(record.acknowledgedWritePurpose ? { acknowledgedWritePurpose: record.acknowledgedWritePurpose } : {}),
       ...(record.writePurpose ? { writePurpose: record.writePurpose } : {}),
       localSequence: record.localSequence, acknowledgedSequence: record.acknowledgedSequence,
       state: record.blocked ? "CONFLICT" : op ? "PENDING"
@@ -333,13 +379,14 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
   }
 
   return {
-    async saveDraft(owner: string, doc: string, input: T, expectedLocalSequence?: number, writePurpose?: "MIGRATION") {
+    async saveDraft(owner: string, doc: string, input: T, expectedLocalSequence?: number, writePurpose?: "MIGRATION" | "FILE_OBSERVATION") {
       const { ownerId, documentId } = scope(owner, doc)
-      z.literal("MIGRATION").optional().parse(writePurpose)
+      z.enum(["MIGRATION", "FILE_OBSERVATION"]).optional().parse(writePurpose)
       const draft = parseDocument(input, schema)
       if (expectedLocalSequence !== undefined) sequence.parse(expectedLocalSequence)
       const encrypted = await encrypt(await keyFor(ownerId, true), ownerId, documentId!, draft, databaseName)
       await update(ownerId, documentId!, old => {
+        if (old?.encryptedMutation) throw new Error("Pending correction is immutable")
         if (writePurpose && old?.operation && old.operation.writePurpose !== writePurpose) {
           throw new Error("Pending operation purpose is immutable")
         }
@@ -350,7 +397,34 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
         const record = old ? { ...old, localSequence: old.localSequence + 1, encryptedCurrent: encrypted }
           : initial(ownerId, documentId!, encrypted)
         if (writePurpose) record.writePurpose = writePurpose
+        else if (record.writePurpose === "FILE_OBSERVATION") delete record.writePurpose
+        delete record.acknowledgedWritePurpose
         return { record, result: record }
+      })
+    },
+
+    async saveMutation(owner, doc, input, mutationInput, id, expectedLocalSequence, expectedRevision, isCurrent = () => true) {
+      const { ownerId, documentId } = scope(owner, doc)
+      const operationId = uuid.parse(id).toLowerCase()
+      sequence.parse(expectedLocalSequence); revision.refine(value => value > 0).parse(expectedRevision)
+      const draft = parseDocument(input, schema)
+      const mutation = parseDocument(mutationInput, mutationSchema)
+      const before = required(await get(ownerId, documentId!))
+      if (!isCurrent() || before.operation || before.blocked || before.resolvedDeletion
+        || before.localSequence !== before.acknowledgedSequence || before.localSequence !== expectedLocalSequence
+        || before.serverRevision !== expectedRevision || before.retiredOperationIds.includes(operationId)) throw new Error("Correction base changed")
+      const key = await keyFor(ownerId, false)
+      const original = await decrypt(key, ownerId, documentId!, before.encryptedCurrent, accountJournalRecordSchema, databaseName)
+      const envelope = { mutation, original }
+      if (!mutationMatches(envelope, draft, expectedRevision)) throw new Error("Invalid journal mutation")
+      const encryptedCurrent = await encrypt(key, ownerId, documentId!, draft, databaseName)
+      const encryptedMutation = await encrypt(key, ownerId, documentId!, envelope, `${databaseName}:mutation`)
+      await update(ownerId, documentId!, old => {
+        if (!isCurrent() || JSON.stringify(old) !== JSON.stringify(before)) throw new Error("Correction base changed")
+        const localSequence = before.localSequence + 1
+        return { record: { ...before, localSequence, encryptedCurrent, encryptedMutation, writePurpose: undefined,
+          acknowledgedWritePurpose: undefined, operation: { operationId, expectedRevision, sequence: localSequence,
+            encryptedSnapshot: encryptedCurrent, encryptedMutation } }, result: undefined }
       })
     },
 
@@ -395,6 +469,9 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
           return { record, result: false }
         }
         return { record: { ...record, serverRevision, acknowledgedSequence: op.sequence, operation: null,
+          encryptedMutation: undefined,
+          ...(record.localSequence === op.sequence && op.writePurpose === "FILE_OBSERVATION"
+            ? { writePurpose: undefined, acknowledgedWritePurpose: "FILE_OBSERVATION" as const } : {}),
           retiredOperationIds: [...record.retiredOperationIds, operationId] }, result: true }
       })
     },
@@ -458,7 +535,9 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
         }
         const localSequence = old ? old.localSequence + 1 : 1
         const record = { ...(old ?? initial(ownerId, documentId!, encrypted)), encryptedCurrent: encrypted,
-          serverRevision, localSequence, acknowledgedSequence: localSequence, resolvedDeletion: null }
+          serverRevision, localSequence, acknowledgedSequence: localSequence, resolvedDeletion: null,
+          encryptedMutation: undefined, acknowledgedWritePurpose: undefined,
+          ...(old?.writePurpose === "FILE_OBSERVATION" ? { writePurpose: undefined } : {}) }
         return { record, result: "IMPORTED" as const }
       })
     },
@@ -512,6 +591,7 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
       revision.parse(remoteRevision); sequence.parse(expectedLocalSequence)
       await update(ownerId, documentId!, old => {
         const record = required(old), blocked = record.blocked
+        if (record.encryptedMutation && choice === "LOCAL") throw new Error("Correction requires a new reviewed base")
         if (!isCurrent() || !blocked || blocked.kind !== "REMOTE" || record.localSequence !== expectedLocalSequence
           || blocked.currentRevision !== remoteRevision || (choice === "DELETE") !== blocked.deleted) {
           throw new Error("Conflict changed; review again")
@@ -526,7 +606,9 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
         }], encryptedCurrent: choice === "REMOTE" ? blocked.encryptedRemote! : record.encryptedCurrent,
           serverRevision: remoteRevision, localSequence,
           acknowledgedSequence: choice === "LOCAL" ? record.acknowledgedSequence : localSequence,
-          operation: null, blocked: null, resolvedDeletion: choice === "DELETE" ? remoteRevision : null,
+          operation: null, blocked: null, encryptedMutation: undefined,
+          ...(record.encryptedMutation || record.writePurpose === "FILE_OBSERVATION" ? { writePurpose: undefined } : {}),
+          resolvedDeletion: choice === "DELETE" ? remoteRevision : null,
           retiredOperationIds: record.operation
             ? [...record.retiredOperationIds, record.operation.operationId] : record.retiredOperationIds,
         }, result: undefined }
@@ -546,13 +628,18 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
       for (const item of record.conflictArchive) {
         if (!isCurrent()) throw new Error("Archive scope changed")
         const op = item.operation
+        const envelope = op?.encryptedMutation ? await decrypt(key, ownerId, documentId!, op.encryptedMutation,
+          mutationEnvelopeSchema, `${databaseName}:mutation`) : null
+        const pendingDraft = op ? await decrypt(key, ownerId, documentId!, op.encryptedSnapshot, schema, databaseName) : null
+        if (envelope && !mutationMatches(envelope, pendingDraft, op!.expectedRevision)) throw new Error("Invalid archived journal mutation")
         versions.push({ version: item.version, createdAt: item.createdAt, localServerRevision: item.localServerRevision,
           localSequence: item.localSequence, remoteRevision: item.remoteRevision, deleted: item.deleted, choice: item.choice,
           local: await decrypt(key, ownerId, documentId!, item.encryptedLocal, schema, databaseName),
           remote: item.encryptedRemote ? await decrypt(key, ownerId, documentId!, item.encryptedRemote, schema, databaseName) : null,
           pending: op ? { operationId: op.operationId, expectedRevision: op.expectedRevision, sequence: op.sequence,
+            ...(envelope ? { mutation: envelope.mutation, originalDraft: parseDocument(envelope.original, schema) } : {}),
             ...(op.writePurpose ? { writePurpose: op.writePurpose } : {}),
-            draft: await decrypt(key, ownerId, documentId!, op.encryptedSnapshot, schema, databaseName) } : null,
+            draft: pendingDraft! } : null,
         })
       }
       scope(ownerId)

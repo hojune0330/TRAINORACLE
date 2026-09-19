@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { PlanSession } from "@impl/plan-generator/types"
@@ -7,6 +7,7 @@ import { createPlannedSessionLogDraft } from "../../domain/planned-session-link"
 import { collectSessionExplanationEvidence, type SessionExplanationEvidence } from "../../domain/session-explanation-evidence"
 import type { PostSessionEntry } from "../../domain/journal-schema"
 import { FIELD_PROVENANCE } from "../../domain/field-provenance"
+import { createExplanationReceipt } from "../../domain/training-explanation-receipt"
 import { SessionExplanationEntry } from "./SessionExplanation"
 import { sessionExecutionSteps } from "./labels"
 
@@ -14,7 +15,7 @@ const originalShowModal = Object.getOwnPropertyDescriptor(HTMLDialogElement.prot
 const originalScrollTo = Object.getOwnPropertyDescriptor(Element.prototype, "scrollTo")
 beforeEach(() => {
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value: function (this: HTMLDialogElement) { this.setAttribute("open", "") } })
-  Object.defineProperty(Element.prototype, "scrollTo", { configurable: true, value: vi.fn() })
+  Object.defineProperty(Element.prototype, "scrollTo", { configurable: true, value: vi.fn(function (this: Element, options: ScrollToOptions) { this.scrollTop = options.top ?? this.scrollTop }) })
 })
 afterEach(() => {
   cleanup()
@@ -136,6 +137,121 @@ describe("session explanation review regressions", () => {
     await userEvent.click(screen.getByRole("tab", { name: "주기·기록" }))
     expect(screen.getByText(/조회하지 못한 상태를 일지가 없는 것으로 판단하지 않아요/u)).toBeVisible()
     expect(screen.queryByText(/연결된 일지가 아직 없어요/u)).toBeNull()
+  })
+
+  it.each(["day", "slot", "role", "content"] as const)("rejects same-generation evidence for a different session %s", async (mismatch) => {
+    const state = stateFixture()
+    const session = state.activePlan.sessions[0]!
+    const evidence = scope(state.activePlan.candidateId, state.generatedAt, 3)
+    const changedSession: PlanSession = { ...session, role: "EASY", plannedEnergyIntent: "BASE_INTENT", prescription: { kind: "RPE_TIME_RANGE", durationMinutes: { minimum: 10, maximum: 15 }, rpe: { minimum: 1, maximum: 2 } } }
+    const row = evidence.rows[0]!
+    const wrongEvidence = { ...evidence, rows: [{ ...row,
+      day: mismatch === "day" ? 2 : row.day,
+      slot: mismatch === "slot" ? "PM" as const : row.slot,
+      role: mismatch === "role" ? "QUALITY" as const : row.role,
+    }] }
+    render(<SessionExplanationEntry session={mismatch === "content" ? changedSession : session}
+      context={{ kind: "SAVED", plan: state.activePlan, generatedAt: state.generatedAt }} loadEvidence={() => wrongEvidence} />)
+    await userEvent.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))
+    await userEvent.click(screen.getByRole("tab", { name: "주기·기록" }))
+    expect(screen.queryByText("직접 기록한 RPE 3")).toBeNull()
+    expect(screen.getByText(/조회하지 못한 상태를 일지가 없는 것으로 판단하지 않아요/u)).toBeVisible()
+    expect(screen.queryByText(/연결된 일지가 아직 없어요/u)).toBeNull()
+  })
+
+  it("restores each tab's scroll and does not reset a reselected tab", async () => {
+    render(<SessionExplanationEntry session={paceSession()} />)
+    await userEvent.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))
+    const panel = screen.getByRole("tabpanel")
+    panel.scrollTop = 240
+    await userEvent.click(screen.getByRole("tab", { name: "이유·근거" }))
+    expect(Element.prototype.scrollTo).toHaveBeenLastCalledWith({ top: 0, behavior: "instant" })
+    const termDetails = document.querySelector<HTMLDetailsElement>(".session-explanation__term")!
+    await userEvent.click(termDetails.querySelector("summary")!)
+    panel.scrollTop = 520
+    await userEvent.click(screen.getByRole("tab", { name: "방법" }))
+    expect(Element.prototype.scrollTo).toHaveBeenLastCalledWith({ top: 240, behavior: "instant" })
+    panel.scrollTop = 240
+    await userEvent.click(screen.getByRole("tab", { name: "이유·근거" }))
+    expect(Element.prototype.scrollTo).toHaveBeenLastCalledWith({ top: 520, behavior: "instant" })
+    expect(document.querySelector(".session-explanation__term")).toBe(termDetails)
+    expect(termDetails.open).toBe(true)
+    vi.mocked(Element.prototype.scrollTo).mockClear()
+    await userEvent.click(screen.getByRole("tab", { name: "이유·근거" }))
+    expect(Element.prototype.scrollTo).not.toHaveBeenCalled()
+  })
+
+  it("moves keyboard focus with the reason action and preserves roving tab navigation", async () => {
+    render(<SessionExplanationEntry session={paceSession()} />)
+    await userEvent.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))
+    screen.getByRole("button", { name: "이렇게 구성한 이유" }).focus()
+    await userEvent.keyboard("{Enter}")
+    expect(screen.getByRole("tab", { name: "이유·근거" })).toHaveFocus()
+    expect(screen.getByRole("tabpanel")).toHaveAccessibleName("이유·근거")
+    await userEvent.keyboard("{ArrowRight}")
+    expect(screen.getByRole("tab", { name: "주기·기록" })).toHaveFocus()
+    await userEvent.keyboard("{Home}{ArrowLeft}")
+    expect(screen.getByRole("tab", { name: "주기·기록" })).toHaveFocus()
+    expect(screen.getAllByRole("tab").filter(node => node.tabIndex === 0)).toHaveLength(1)
+  })
+
+  it("keeps glossary navigation in a separate tab without losing reader state or changing the prescription", async () => {
+    const session = paceSession()
+    const before = JSON.stringify(session)
+    render(<SessionExplanationEntry session={session} />)
+    const opener = screen.getByRole("button", { name: "훈련 방법과 이유" })
+    await userEvent.click(opener)
+    const metric = document.querySelector(".session-explanation__metric")!.textContent
+    await userEvent.click(screen.getByRole("checkbox", { name: "전문 보기" }))
+    expect(document.querySelector(".session-explanation__metric")).toHaveTextContent(metric!)
+    await userEvent.click(screen.getByRole("tab", { name: "이유·근거" }))
+    const termDetails = document.querySelector<HTMLDetailsElement>(".session-explanation__term")!
+    await userEvent.click(termDetails.querySelector("summary")!)
+    const link = screen.getByRole("link", { name: "용어집에서 더 읽기 (새 탭)" })
+    expect(link).toHaveAttribute("href", "?terms=1&term=vo2")
+    expect(link).toHaveAttribute("target", "_blank")
+    expect(link).toHaveAttribute("rel", "noopener noreferrer")
+    // jsdom cannot open a browser tab; assert the retained reader on focus return.
+    link.addEventListener("click", event => event.preventDefault(), { once: true })
+    const panel = screen.getByRole("tabpanel")
+    panel.scrollTop = 480
+    await userEvent.click(link)
+    fireEvent(window, new Event("blur"))
+    fireEvent(window, new Event("focus"))
+    expect(screen.getByRole("tab", { name: "이유·근거" })).toHaveAttribute("aria-selected", "true")
+    expect(screen.getByRole("checkbox", { name: "전문 보기" })).toBeChecked()
+    expect(termDetails.open).toBe(true)
+    expect(panel.scrollTop).toBe(480)
+    expect(link).toHaveFocus()
+    fireEvent(screen.getByRole("dialog"), new Event("cancel", { cancelable: true }))
+    expect(screen.queryByRole("dialog")).toBeNull()
+    expect(opener).toHaveFocus()
+    expect(document.body.style.overflow).not.toBe("hidden")
+    expect(JSON.stringify(session)).toBe(before)
+  })
+
+  it.each(["matching", "legacy"] as const)("preserves the %s explanation and method when journal lookup fails", async (kind) => {
+    const state = stateFixture()
+    const before = JSON.stringify(state)
+    const receipt = kind === "matching" ? createExplanationReceipt(state.activePlan, state.generatedAt) : undefined
+    render(<SessionExplanationEntry session={state.activePlan.sessions[0]!}
+      context={{ kind: "SAVED", plan: state.activePlan, generatedAt: state.generatedAt, receipt }}
+      loadEvidence={() => { throw new Error("synthetic lookup failure") }} />)
+    await userEvent.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))
+    const method = document.querySelector(".session-explanation__method-flow")!
+    const originalMethod = method.textContent
+    expect(method).toBeVisible()
+    await userEvent.click(screen.getByRole("tab", { name: "이유·근거" }))
+    expect(screen.getByText(kind === "matching" ? "저장된 처방과 설명 버전이 일치해요." : /과거 선택 이유를 복원한 것은 아니에요/u)).toBeVisible()
+    for (const heading of ["훈련 목적", "몸이 에너지를 공급하는 방식", "거리·시간·강도·반복을 이렇게 정한 이유", "회복을 이렇게 넣은 이유", "이번 주기에서 맡는 역할", "기대하는 변화와 한계", "실제로 사용한 내 정보", "연구·코칭 근거"]) {
+      expect(screen.getByRole("heading", { name: heading })).toBeVisible()
+    }
+    await userEvent.click(screen.getByRole("tab", { name: "주기·기록" }))
+    expect(screen.getByText(/조회하지 못한 상태를 일지가 없는 것으로 판단하지 않아요/u)).toBeVisible()
+    await userEvent.click(screen.getByRole("tab", { name: "방법" }))
+    expect(method).toBeVisible()
+    expect(method.textContent).toBe(originalMethod)
+    expect(JSON.stringify(state)).toBe(before)
   })
 
   it("collects the exact plan occurrence and never reads raw memo", () => {

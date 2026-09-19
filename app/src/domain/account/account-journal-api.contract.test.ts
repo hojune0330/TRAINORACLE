@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest"
 import { createClient, type Session, type SupabaseClient } from "@supabase/supabase-js"
-import { accountJournalPreviewEnabled, requestAccountJournal } from "./account-journal-api"
+import { accountJournalPreviewEnabled, requestAccountJournal, requestAccountDocument } from "./account-journal-api"
+import { accountJournalRecordSchema, type AccountJournalRecord } from "./account-journal-record-schema"
+import { waitingJournal } from "../../test/progressive-journal-fixture"
+import { buildFileObservation } from "../import/file-observation"
 
 const ownerId = "a1111111-1111-4111-8111-111111111111"
 const documentId = "b2222222-2222-4222-8222-222222222222"
@@ -16,6 +19,88 @@ function dependencies(data: unknown, error: unknown = null) {
     functions: { invoke } }
   return { client: vi.fn().mockResolvedValue(client as unknown as SupabaseClient), owner: () => ownerId, invoke, auth: client.auth }
 }
+describe("account record compatibility API", () => {
+  const document: AccountJournalRecord = { version: 2, state: "FINALIZED", kind: "JOURNAL", entry: waitingJournal() }
+  const calls = [
+    { request: { action: "status" as const }, response: { kind: "ready" } },
+    { request: { action: "list" as const, collection: "JOURNAL" as const }, response: { kind: "list", documents: [], nextCursor: null } },
+    { request: { action: "read" as const, documentId }, response: { kind: "document", documentId, revision: 1, document } },
+    { request: { action: "history" as const, documentId, collection: "JOURNAL" as const }, response: { kind: "history", documentId, versions: [] } },
+    { request: { action: "delete" as const, documentId, operationId, expectedRevision: 1 }, response: { kind: "deleted", documentId, operationId, revision: 2 } },
+    { request: { action: "restore" as const, documentId, operationId, expectedRevision: 1, sourceRevision: 1 }, response: { kind: "restored", documentId, operationId, revision: 2, sourceRevision: 1 } },
+    { request: { action: "save" as const, documentId, operationId, expectedRevision: 0, document }, response: { kind: "saved", documentId, operationId, revision: 1 } },
+  ]
+  it.each(calls)("advertises [2,3] without changing V2 for $request.action", async ({ request, response }) => {
+    const deps = dependencies(response)
+    expect(await requestAccountDocument(ownerId, request, () => true, accountJournalRecordSchema, deps))
+      .toEqual({ ok: true, data: response })
+    expect(deps.invoke).toHaveBeenCalledWith("account-journal", {
+      body: { ...request, supportedJournalVersions: [2, 3] }, headers: { Authorization: `Bearer ${accessToken}` },
+    })
+    expect(document.version).toBe(2)
+  })
+  it.each(calls)("keeps upgrade failure explicit for $request.action", async ({ request }) => {
+    expect(await requestAccountDocument(ownerId, request, () => true, accountJournalRecordSchema,
+      dependencies(null, { context: new Response(JSON.stringify({ error: "UPGRADE_REQUIRED" }), { status: 426 }) })))
+      .toEqual({ ok: false, code: "UPGRADE_REQUIRED" })
+  })
+  it.each([
+    [409, "FILE_EVIDENCE_DISABLED"], [422, "INVALID_FILE_OBSERVATION"], [409, "FILE_OBSERVATION_CONFLICT"],
+    [409, "COMPARISON_ORIGINAL_UNAVAILABLE"], [422, "INVALID_COMPARISON_RELATION"], [409, "COMPARISON_CAPACITY_EXCEEDED"],
+  ] as const)("preserves terminal file error %s %s", async (status, code) => {
+    expect(await requestAccountDocument(ownerId, { ...request, document, writePurpose: "FILE_OBSERVATION" },
+      () => true, accountJournalRecordSchema,
+      dependencies(null, { context: new Response(JSON.stringify({ error: code }), { status }) })))
+      .toEqual({ ok: false, code })
+  })
+  it("checks the active owner again after asynchronous error decoding", async () => {
+    let active = true
+    const context = new Response(null, { status: 422 })
+    vi.spyOn(context, "clone").mockReturnValue({ json: async () => {
+      active = false
+      return { error: "INVALID_FILE_OBSERVATION" }
+    } } as Response)
+    expect(await requestAccountDocument(ownerId, { ...request, document }, () => active, accountJournalRecordSchema,
+      dependencies(null, { context }))).toEqual({ ok: false, code: "STALE_RESPONSE" })
+  })
+  it("sends the dedicated correction without a client entry and validates its exact receipt", async () => {
+    const replacementObservation = buildFileObservation({
+      format: "csv", sourceProfile: "CSV_COLUMNS_V1", parserVersion: "csv-v1", sourceActivityId: null,
+      date: "2026-09-02", startedAt: null, timeZone: null, sport: "RUNNING", distanceMeters: 5000,
+      durationSeconds: 1800, durationMeaning: "SOURCE_DEFINED", laps: [], confirmation: { sport: null, durationMeaning: null },
+    })
+    const correction = { action: "correctImportedObservation" as const, documentId, operationId, expectedRevision: 1,
+      previousContentRevisionFingerprint: replacementObservation.contentRevisionFingerprint,
+      replacementObservation, confirmedChangedFields: ["distanceMeters"] }
+    const receipt = { kind: "saved", documentId, operationId, revision: 2 }
+    const deps = dependencies(receipt)
+    expect(await requestAccountDocument(ownerId, correction, () => true, accountJournalRecordSchema, deps)).toEqual({ ok: true, data: receipt })
+    expect(deps.invoke).toHaveBeenCalledWith("account-journal", { body: { ...correction, supportedJournalVersions: [2, 3] },
+      headers: { Authorization: `Bearer ${accessToken}` } })
+    expect(await requestAccountDocument(ownerId, correction, () => true, accountJournalRecordSchema,
+      dependencies({ ...receipt, revision: 3 }))).toEqual({ ok: false, code: "INVALID_RESPONSE" })
+    const conflict = { kind: "conflict", documentId, operationId, currentRevision: 2 }
+    expect(await requestAccountDocument(ownerId, correction, () => true, accountJournalRecordSchema,
+      dependencies(null, { context: new Response(JSON.stringify(conflict), { status: 409 }) }))).toEqual({ ok: true, data: conflict })
+  })
+  it("sends comparison release without a client snapshot and binds receipt capability, revision and nonce", async () => {
+    const release = { action: "releaseComparisonRelation" as const, documentId, operationId, expectedRevision: 2,
+      relationId: otherOwnerId, releasedAt: "2026-09-02T00:00:00Z" }
+    const receipt = { kind: "saved", documentId, operationId, revision: 3 }
+    const deps = dependencies(receipt)
+    expect(await requestAccountDocument(ownerId, release, () => true, accountJournalRecordSchema, deps)).toEqual({ ok: true, data: receipt })
+    expect(deps.invoke).toHaveBeenCalledWith("account-journal", { body: { ...release, supportedJournalVersions: [2, 3] },
+      headers: { Authorization: `Bearer ${accessToken}` } })
+    for (const changed of [{ revision: 4 }, { operationId: otherOwnerId }, { documentId: otherOwnerId }]) {
+      expect(await requestAccountDocument(ownerId, release, () => true, accountJournalRecordSchema,
+        dependencies({ ...receipt, ...changed }))).toEqual({ ok: false, code: "INVALID_RESPONSE" })
+    }
+    for (const [status, code] of [[409, "COMPARISON_ORIGINAL_UNAVAILABLE"], [422, "INVALID_COMPARISON_RELATION"], [409, "COMPARISON_CAPACITY_EXCEEDED"]] as const) {
+      expect(await requestAccountDocument(ownerId, release, () => true, accountJournalRecordSchema,
+        dependencies(null, { context: new Response(JSON.stringify({ error: code }), { status }) }))).toEqual({ ok: false, code })
+    }
+  })
+})
 describe("account draft API", () => {
   it.each(["PLANNED_SESSION_ALREADY_RECORDED", "INSUFFICIENT_POINTS", "OPERATION_REPLAY_UNAVAILABLE"] as const)(
     "preserves controlled rejection %s without inventing a revision", async error => {

@@ -32,8 +32,9 @@ import {
   unboundJournalIds,
 } from "./account/local-journal-ownership"
 import { samePlannedSessionLink } from "./planned-session-link"
-import { readAccountJournalProjection, readAccountJournalPrivateEntry, accountJournalProjectionStatus, isAccountJournalLocalCopyShadowed } from "./account/account-journal-projection"
+import { readAccountJournalProjection, readCurrentConfirmedAccountJournalProjection, readAccountJournalPrivateEntry, accountJournalProjectionStatus, isAccountJournalLocalCopyShadowed } from "./account/account-journal-projection"
 import { accountJournalPreviewEnabled } from "./account/account-journal-api"
+import { buildFileAnalysisReport } from "./import/file-analysis"
 
 const privateMemoCache = new Map<string, { readonly recoveryCode: string; readonly memo: string }>()
 
@@ -472,13 +473,15 @@ export function restoreDeletedEntry(id: string): RestoreDeletedResult {
 
 export function exportEntriesJSON(options: JournalExportOptions = {}): string {
   if (options.includeRawMemos === true) {
+    const entries = entriesForOwnerFullBackup()
     return JSON.stringify(
       {
         app: "TRAINORACLE",
-        format: "trainoracle.journal.full-backup.v3",
+        format: entries.some(entry => entry.kind === "post-session" && entry.fileObservation !== undefined)
+          ? "trainoracle.journal.full-backup.v4" : "trainoracle.journal.full-backup.v3",
         exportMode: "OWNER_FULL_BACKUP",
         exportedAt: new Date().toISOString(),
-        entries: entriesForOwnerFullBackup(),
+        entries,
         decorations: loadDecorationState(),
       },
       null,
@@ -588,11 +591,18 @@ export type AnalysisExclusionSummary = {
  */
 export function analysisExclusionSummary(): AnalysisExclusionSummary {
   const entries = loadEntries()
+  const confirmed = readCurrentConfirmedAccountJournalProjection()
+  const dates = confirmed.map(entry => entry.date).sort()
+  const fileReport = buildFileAnalysisReport(confirmed, {
+    startDate: dates[0] ?? todayISO(), endDate: dates.at(-1) ?? todayISO(), sourceContext: "ACCOUNT_CONFIRMED",
+  })
+  const includedFileIds = new Set(fileReport.observations.map(item => item.journalEntryId))
   let included = 0
   let excludedImported = 0
   let excludedNoProvenance = 0
   for (const entry of entries) {
-    if (toAnalysisJournalEntry(entry) !== null) included += 1
+    if (toAnalysisJournalEntry(entry) !== null || includedFileIds.has(entry.id)) included += 1
+    if (includedFileIds.has(entry.id)) continue
     if (!hasValueExcludedFromAnalysis(entry)) continue
     // 원인을 뭉치지 않는다. 가져온 필드가 하나라도 있으면 가져오기가 원인이고,
     // 출처 맵 자체가 없으면 구버전·복원이 원인이다.

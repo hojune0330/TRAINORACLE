@@ -7,8 +7,12 @@ import { mono, primaryBtn, secondaryBtn } from "./styles"
 import { TermHelp } from "../../components/TermHelp"
 import { InfoDisclosure } from "../../components/InfoDisclosure"
 import { accountJournalRecordsEnabled } from "../../domain/account/account-journal-record-service"
+import { fileAnalysisFormats } from "../../domain/import/file-analysis-policy"
+import { FileObservationReview } from "./FileObservationReview"
+import type { ImportedActivity } from "../../domain/import/activity-file"
+import "./file-analysis.css"
 
-export type ReadFailure = "unreadable" | "empty" | "too-large" | "cancelled" | "account-unavailable" | null
+export type ReadFailure = "unreadable" | "empty" | "too-large" | "too-many-records" | "too-many-segments" | "cancelled" | "account-unavailable" | null
 
 export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
   readonly busy: boolean
@@ -73,6 +77,8 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
           <div style={{ ...mono, fontSize: 10.5, color: "var(--ink)", lineHeight: 1.6 }}>
             {failure === "account-unavailable" ? "계정 기록을 조회하지 못했어요. 연결과 로그인을 확인한 뒤 다시 시도해 주세요." : failure === "empty"
               ? "파일은 읽었지만 일지로 옮길 활동을 찾지 못했어요. 날짜·거리·시간이 비어 있는 파일일 수 있어요."
+              : failure === "too-many-records" ? "한 파일에서 읽을 수 있는 운동은 1,000개까지예요. 기간을 나눠 내보내 주세요."
+                : failure === "too-many-segments" ? "구간이나 위치 기록이 너무 많아요. 운동을 나눈 파일로 다시 골라 주세요."
               : failure === "too-large"
                 ? "파일이 너무 커요. 10MB 이하 파일로 나누어 다시 골라 주세요."
                 : failure === "cancelled"
@@ -93,7 +99,7 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
   )
 }
 
-export function ReviewStage({ drafts, result, selected, intents, onIntent, onToggle, onSave, onRestart, busy = false }: {
+export function ReviewStage({ drafts, result, selected, intents, onIntent, onToggle, onSave, onRestart, onActivityChange, busy = false }: {
   readonly busy?: boolean
   readonly drafts: readonly ImportDraft[]
   readonly result: ActivityParseResult
@@ -103,9 +109,15 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
   readonly onToggle: (index: number) => void
   readonly onSave: () => void
   readonly onRestart: () => void
+  readonly onActivityChange?: (index: number, activity: ImportedActivity) => void
 }) {
+  const analysisEnabled = accountJournalRecordsEnabled() && fileAnalysisFormats().some(format => format === result.format)
   const chosenCount = drafts.filter((_, index) => selected.has(index)).length
-  const missingIntent = drafts.some((_, index) => selected.has(index) && !intents.has(index))
+  const excludedCount = drafts.filter((_, index) => selected.has(index) && intents.get(index)?.kind === "EXCLUDE").length
+  const saveCount = chosenCount - excludedCount
+  const needsChoice = (draft: ImportDraft, intent: ImportSaveIntent | undefined) => !intent
+    || analysisEnabled && draft.requiresIdentityChoice && intent.kind === "SAVE_SEPARATE" && !intent.confirmedSeparate
+  const missingIntent = drafts.some((draft, index) => selected.has(index) && needsChoice(draft, intents.get(index)))
   return (
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
       <p style={{ fontFamily: "var(--sans)", fontSize: 13, lineHeight: 1.65, color: "var(--ink-2)", margin: 0 }}>
@@ -116,6 +128,20 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
           날짜나 기록을 읽지 못한 활동 {result.skipped}건은 목록에서 빠졌어요. 없는 값을 채워 넣지 않으려고 일부러 건너뛰어요.
         </div>
       )}
+      {(result.issues?.length ?? 0) > 0 && <InfoDisclosure title="읽지 못한 수치와 확인할 항목">
+        {result.issues?.map((issue, index) => <p key={`${issue.code}-${issue.activityIndex}-${index}`}>
+          {issue.activityIndex === null ? "파일" : `운동 ${issue.activityIndex + 1}`} · {
+            issue.code.includes("DISTANCE") ? "거리 누락 또는 형식 확인 필요"
+              : issue.code.includes("DURATION") ? "시간 누락 또는 형식 확인 필요"
+                : issue.code.includes("TIMEZONE") ? "시간대 확인 필요"
+                  : issue.code.includes("DATE") ? "날짜 확인 필요"
+                    : issue.code.includes("LIMIT") || issue.code === "FILE_TOO_LARGE" ? "읽을 수 있는 파일 크기·구간 수 초과"
+                      : issue.code === "INVALID_SOURCE_ID" ? "원본 운동 ID를 확인하지 못함"
+                        : "지원 형식·측정값 확인 필요"
+          } · {issue.count}개
+        </p>)}
+        <p>읽지 못한 값은 추측해서 채우지 않아요. 원본 파일은 바뀌지 않아요.</p>
+      </InfoDisclosure>}
       <SectionLb>가져올 활동</SectionLb>
       <div style={{ borderTop: "1px solid var(--ink)", borderBottom: "1px solid var(--ink)" }}>
         {drafts.map((draft, index) => {
@@ -137,7 +163,7 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
                   style={{ width: 20, height: 20, margin: 0 }}
                 />
               </label>
-              <span style={{ minWidth: 0 }}>
+              <div style={{ minWidth: 0 }}>
                 <span style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
                   <span style={{ ...mono, fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.1em" }}>{compactDate(activity.date)}</span>
                   {draft.duplicateOf !== null && (
@@ -150,19 +176,24 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
                 <span style={{ display: "block", fontFamily: "var(--sans)", fontSize: 14, fontWeight: 500, marginTop: 3 }}>{activity.name}</span>
                 <span style={{ display: "block", ...mono, fontSize: 10.5, color: "var(--ink-3)", marginTop: 2 }}>
                   {[
-                    activity.distanceKm === "" ? null : `${activity.distanceKm}km`,
-                    activity.durationMin === "" ? null : `${activity.durationMin}min`,
+                    activity.distanceKm === "" ? null : `${Number(activity.distanceKm).toLocaleString("ko-KR", { maximumFractionDigits: 3 })}km`,
+                    activity.durationMin === "" ? null : `${Number(activity.durationMin).toLocaleString("ko-KR", { maximumFractionDigits: 2 })}분`,
                     activity.avgPace === "" ? null : `${activity.avgPace}/km`,
                   ].filter((part) => part !== null).join(" · ") || "기록 값 없음"}
                 </span>
                 {selected.has(index) && <select
                   disabled={busy}
                   aria-label={`${activity.name} 저장 방식`}
-                  value={intent?.kind === "SAVE_SEPARATE" ? "separate" : intent?.entryId ?? ""}
+                  value={needsChoice(draft, intent) ? "" : intent?.kind === "SAVE_SEPARATE" ? "separate"
+                    : intent?.kind === "EXCLUDE" ? "exclude" : intent?.kind === "USE_EXISTING" ? `use:${intent.entryId}`
+                      : intent?.kind === "ADD_TO_EXISTING" ? intent.entryId : ""}
                   onChange={(event) => {
                     const value = event.target.value
                     const target = draft.reconciliationCandidates.find((candidate) => candidate.id === value)
-                    onIntent(index, value === "separate" ? { kind: "SAVE_SEPARATE" }
+                    const identity = draft.identityCandidates?.find(candidate => `use:${candidate.id}` === value && candidate.kind !== "CORRECTION")
+                    onIntent(index, value === "separate" ? { kind: "SAVE_SEPARATE", confirmedSeparate: true }
+                      : value === "exclude" ? { kind: "EXCLUDE" }
+                      : analysisEnabled && identity ? { kind: "USE_EXISTING", entryId: identity.id, expectedSavedAt: identity.savedAt }
                       : target === undefined ? undefined
                         : { kind: "ADD_TO_EXISTING", entryId: target.id, expectedSavedAt: target.savedAt })
                   }}
@@ -170,22 +201,39 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
                 >
                   <option value="">저장 방식 선택</option>
                   <option value="separate">새 일지로 저장</option>
+                  <option value="exclude">이번 가져오기에서 제외</option>
+                  {analysisEnabled && draft.identityCandidates?.map(candidate => <option key={`use:${candidate.id}`}
+                    value={`use:${candidate.id}`} disabled={candidate.kind === "CORRECTION"}>
+                    {candidate.kind === "REUSE" ? "같은 기록으로 확인" : candidate.kind === "ATTACH" ? "기존 일지에 파일 근거 연결" : "기존 일지 정정 필요"}
+                    {" · "}{candidate.activitySlot === "AM" ? "오전" : candidate.activitySlot === "PM" ? "오후" : "시간 미지정"} · {candidate.title}
+                  </option>)}
                   {draft.reconciliationCandidates.map((candidate) => <option key={candidate.id} value={candidate.id}>
                     기존 일지 보완 · {candidate.activitySlot === "AM" ? "오전" : candidate.activitySlot === "PM" ? "오후" : "시간 미지정"} · {candidate.title}
                   </option>)}
                 </select>}
-              </span>
+                {analysisEnabled && draft.batchDuplicateOf !== undefined && <p style={{ fontSize: 12, color: "var(--ink-3)" }}>
+                  이 파일의 운동 {draft.batchDuplicateOf + 1}과 기록 값이 같고 원본 ID가 없어요. 서로 다른 운동인지 확인해 주세요.
+                </p>}
+                {analysisEnabled && draft.identityCandidates?.some(candidate => candidate.kind === "CORRECTION")
+                  && <p style={{ fontSize: 12, color: "var(--ink-3)" }}>기존 원본 기록과 값이 달라요. 같은 운동이면 기존 일지에서 정정해 주세요.</p>}
+                {analysisEnabled && onActivityChange && <FileObservationReview activity={activity} disabled={busy}
+                  onChange={next => onActivityChange(index, next)} />}
+              </div>
             </div>
           )
         })}
       </div>
       <div style={{ ...mono, fontSize: 10, color: "var(--ink-4)", lineHeight: 1.65 }}>
         기존 일지를 보완하면 RPE<TermHelp term="rpe" />와 메모는 계속 수정할 수 있어요.
-        새 일지로 가져온 활동은 현재 읽기 전용이에요.
-        가져온 숫자는 <b>주간 통계·추이·훈련계획에는 들어가지 않아요</b> (직접 확인한 값만 분석에 쓰는 원칙).
+        {analysisEnabled ? "파일 기록은 분석에서 정정할 수 있어요. " : "새 일지로 가져온 활동은 현재 읽기 전용이에요. "}
+        {analysisEnabled
+          ? "계정에 저장된 달리기 거리는 누적 거리에 포함해요. 시간과 페이스는 시간의 뜻을 확인한 항목끼리만 비교해요. 이 파일만으로 개인 최고기록이나 훈련 강도를 바꾸지는 않아요."
+          : <>가져온 숫자는 <b>주간 통계·추이·훈련계획에는 들어가지 않아요</b> (직접 확인한 값만 분석에 쓰는 원칙).</>}
       </div>
       <button type="button" style={primaryBtn} disabled={busy || chosenCount === 0 || missingIntent} onClick={onSave}>
-        {chosenCount === 0 ? "저장할 활동을 골라 주세요" : missingIntent ? "저장 방식을 골라 주세요" : `고른 ${chosenCount}건 일지에 저장`}
+        {chosenCount === 0 ? "저장할 활동을 골라 주세요" : missingIntent ? "저장 방식을 골라 주세요"
+          : saveCount === 0 ? `고른 ${excludedCount}건 가져오기에서 제외`
+            : excludedCount > 0 ? `${saveCount}건 저장 · ${excludedCount}건 제외` : `고른 ${saveCount}건 일지에 저장`}
       </button>
       {busy && <p role="status">계정 저장 확인 중</p>}
       <button type="button" style={secondaryBtn} disabled={busy} onClick={onRestart}>다른 파일 고르기</button>
@@ -193,23 +241,29 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
   )
 }
 
-export function SavedStage({ outcome, onOpenLog, onRestart, onRetry, busy = false }: {
+export function SavedStage({ outcome, onOpenLog, onOpenAnalysis, onRestart, onRetry, busy = false }: {
   readonly busy?: boolean
   readonly onRetry?: () => void
   readonly outcome: ImportSaveResult
   readonly onOpenLog?: () => void
+  readonly onOpenAnalysis?: () => void
   readonly onRestart: () => void
 }) {
   if (outcome.account !== undefined) return <div data-testid="import-saved" role="status">
     <h2>계정 가져오기 결과</h2>
     <p>계정에 저장됨 {outcome.account}건 · 연결 대기 {outcome.pending ?? 0}건 · 충돌 확인 {outcome.conflicts ?? 0}건 · 실패 {outcome.failed}건</p>
+    {((outcome.reused ?? 0) > 0 || (outcome.excluded ?? 0) > 0) && <p>기존 기록 확인 {outcome.reused ?? 0}건 · 가져오기 제외 {outcome.excluded ?? 0}건</p>}
     <p>원본 파일은 그대로 보관해 주세요. 연결 대기는 계정 저장 완료가 아니에요.</p>
+    {outcome.stopReason && <p role="alert">나머지 저장을 멈췄어요. 이미 저장된 기록은 그대로 있어요. 연결·로그인·앱 업데이트 상태를 확인한 뒤 다시 시도해 주세요.</p>}
+    {onOpenAnalysis && (outcome.account ?? 0) > 0 && <button type="button" style={primaryBtn} disabled={busy} onClick={onOpenAnalysis}>가져온 기록 분석하기</button>}
     {onRetry && <button type="button" style={primaryBtn} disabled={busy} onClick={onRetry}>저장 상태 다시 확인</button>}
     {onOpenLog && <button type="button" style={secondaryBtn} disabled={busy} onClick={onOpenLog}>일지에서 확인하기</button>}
     <button type="button" style={secondaryBtn} disabled={busy} onClick={onRestart}>파일 더 가져오기</button>
   </div>
   const completed = outcome.saved + (outcome.merged ?? 0)
-  const resultLabel = completed === 0
+  const onlyExcluded = completed === 0 && (outcome.excluded ?? 0) > 0
+    && outcome.failed === 0 && (outcome.conflicts ?? 0) === 0 && !outcome.stopReason
+  const resultLabel = onlyExcluded ? "가져오기 제외 완료" : completed === 0
     ? "가져오기 실패"
     : outcome.failed > 0 || (outcome.conflicts ?? 0) > 0
       ? "일부 완료"
@@ -219,11 +273,12 @@ export function SavedStage({ outcome, onOpenLog, onRestart, onRetry, busy = fals
       <div data-testid="import-saved" style={{ border: "1px solid var(--ink)", background: "var(--surface)", padding: "14px 16px" }}>
         <div style={{ ...mono, fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.1em" }}>{resultLabel}</div>
         <div style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500, marginTop: 5 }}>
-          새 일지 {outcome.saved}건 저장 · 기존 일지 {outcome.merged ?? 0}건 보완
+          {onlyExcluded ? `${outcome.excluded}건 가져오기에서 제외` : <>새 일지 {outcome.saved}건 저장 · 기존 일지 {outcome.merged ?? 0}건 보완</>}
         </div>
         <div style={{ ...mono, fontSize: 10, color: "var(--ink-3)", marginTop: 4 }}>
-          {outcome.saved + (outcome.merged ?? 0)}건을 일지에 저장했어요
+          {onlyExcluded ? "새로 저장한 일지는 없어요. 기존 일지는 그대로예요." : `${completed}건을 일지에 저장했어요`}
         </div>
+        {!onlyExcluded && (outcome.excluded ?? 0) > 0 && <p>이번 가져오기에서 {outcome.excluded}건 제외했어요</p>}
         {(outcome.conflicts ?? 0) > 0 && (
           <div style={{ ...mono, fontSize: 10.5, color: "var(--ink-2)", lineHeight: 1.6, marginTop: 6 }}>
             {outcome.conflicts}건은 기존 일지가 변경됐거나 보완할 수 없는 상태라 합치지 않았어요. 기존 기록은 그대로예요.
@@ -234,10 +289,10 @@ export function SavedStage({ outcome, onOpenLog, onRestart, onRetry, busy = fals
             {outcome.failed}건은 저장하지 못했어요 — 기기 저장 공간이 가득 찼을 수 있어요. 공간을 비운 뒤 다시 시도해 주세요.
           </div>
         )}
-        <div style={{ ...mono, fontSize: 10, color: "var(--ink-4)", lineHeight: 1.65, marginTop: 8 }}>
+        {!onlyExcluded && <div style={{ ...mono, fontSize: 10, color: "var(--ink-4)", lineHeight: 1.65, marginTop: 8 }}>
           가져온 값에는 <b>가져옴</b> 표시가 붙어요. 기존 일지에 직접 입력한 RPE<TermHelp term="rpe" />는 분석에 쓸 수 있고, 가져온 값과 메모 원문은 분석에 포함되지 않아요.
           {outcome.saved > 0 && " 새 일지로 가져온 활동은 현재 읽기 전용이에요."}
-        </div>
+        </div>}
       </div>
       {onOpenLog && <button type="button" style={primaryBtn} onClick={onOpenLog}>일지에서 확인하기</button>}
       <button type="button" style={secondaryBtn} onClick={onRestart}>파일 더 가져오기</button>

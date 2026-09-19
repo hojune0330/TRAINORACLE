@@ -11,6 +11,8 @@ import { parsePaceText } from "./numeric-input"
 import { isValidIsoDate } from "./dates"
 import { plannedSessionLinkSchema } from "./planned-session-link"
 import type { PlannedSessionLink } from "./planned-session-link"
+import { fileObservationSchema, type FileObservationV1 } from "./import/file-observation"
+import { comparisonRelationSchema, type ComparisonRelationV1 } from "./import/comparison-relation"
 
 export const MEMO_PURPOSE = {
   privateSelfOnly: "PRIVATE_SELF_ONLY",
@@ -67,6 +69,8 @@ export type PostSessionEntry = JournalEntryBase & PurposeScopedMemo & {
   readonly memo: string
   readonly intensityAssessment?: SessionIntensityAssessment
   readonly plannedSessionLink?: PlannedSessionLink
+  readonly fileObservation?: FileObservationV1
+  readonly comparisonRelations?: readonly ComparisonRelationV1[]
 }
 
 export type EveningEntry = JournalEntryBase & PurposeScopedMemo & {
@@ -163,6 +167,8 @@ const postSessionSchema: z.ZodType<PostSessionEntry> = z.object({
   memo: z.string(),
   intensityAssessment: sessionIntensityAssessmentSchema.optional(),
   plannedSessionLink: plannedSessionLinkSchema.optional(),
+  fileObservation: fileObservationSchema.optional(),
+  comparisonRelations: z.array(comparisonRelationSchema).min(1).max(32).optional(),
 })
 
 const eveningSchema: z.ZodType<EveningEntry> = z.object({
@@ -224,6 +230,16 @@ const journalEntryWriteSchema = journalEntrySchema.superRefine((entry, context) 
   }
 
   if (entry.kind === "post-session") {
+    if (entry.comparisonRelations !== undefined && (!entry.fileObservation
+      || entry.comparisonRelations.some(relation => relation.journalId !== entry.id)
+      || new Set(entry.comparisonRelations.map(relation => relation.relationId)).size !== entry.comparisonRelations.length)) {
+      context.addIssue({ code: "custom", path: ["comparisonRelations"], message: "Invalid comparison relation identity." })
+    }
+    if (entry.fileObservation !== undefined && (entry.fileObservation.date !== entry.date
+      || entry.fileObservation.confirmation === null)) {
+      context.addIssue({ code: "custom", path: ["fileObservation"],
+        message: "Imported observation must be confirmed for this journal date." })
+    }
     const performed = entry.activityOutcome === "COMPLETED"
       || entry.activityOutcome === "PARTIAL"
       || entry.activityOutcome === "LIGHT_ACTIVITY"

@@ -8,6 +8,7 @@ export type DraftTransport<T = import("./account-journal-draft-buffer").AccountJ
 export async function flushAccountJournalDraft<T>(
   buffer: AccountJournalDraftBuffer<T>, ownerId: string, documentId: string,
   send: DraftTransport<T>, isCurrent: () => boolean,
+  onAcknowledged?: (document: T, revision: number) => void,
 ): Promise<"SAVED" | "PENDING" | "CONFLICT" | "STALE" | AccountJournalWriteRejection> {
   for (let attempt = 0; attempt < 8; attempt += 1) {
     if (!isCurrent()) return "STALE"
@@ -24,7 +25,8 @@ export async function flushAccountJournalDraft<T>(
     const pending = view?.pending
     if (!pending) return "PENDING"
     if (pending.rejection) return pending.rejection
-    const result = await send({ action: "save", documentId, operationId: pending.operationId,
+    const result = await send(pending.mutation ? { ...pending.mutation, documentId,
+      operationId: pending.operationId, expectedRevision: pending.expectedRevision } : { action: "save", documentId, operationId: pending.operationId,
       ...(pending.writePurpose ? { writePurpose: pending.writePurpose } : {}),
       expectedRevision: pending.expectedRevision, document: pending.draft })
     if (!isCurrent()) return "STALE"
@@ -42,6 +44,7 @@ export async function flushAccountJournalDraft<T>(
       || result.data.operationId !== pending.operationId
       || result.data.revision !== pending.expectedRevision + 1) return "PENDING"
     if (!await buffer.ack(ownerId, documentId, pending.operationId, result.data.revision)) return "PENDING"
+    if (isCurrent()) onAcknowledged?.(pending.draft, result.data.revision)
   }
   return "PENDING"
 }

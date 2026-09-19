@@ -1,0 +1,99 @@
+# Independent frozen-core review
+
+Reviewer: Huygens. Date: 2026-09-19. Active runtime and test source were read-only throughout. Main owns the requested durable repository copy of these review artifacts.
+
+## Verdict
+
+No unresolved P1/P2 defect found in the reviewed frozen programmed-file-analysis core. The four accepted P2 repairs are verified within the scopes below. This is NOT full work-order/release/deployment approval. Server-first compatibility remains a hard release gate. The subsequently executed actual deployed-byte S04 preservation tests pass within their documented scope; see S04_DEPLOYED_REVIEW.md.
+
+## Release blocker: new client with old server
+
+- Current `app/src/domain/account/account-journal-api.ts:88-92` adds `supportedJournalVersions: [2,3]` for journal calls independently of file feature flags.
+- Actual archived baseline handler `old-server/supabase/functions/_shared/account-journal-handler.mjs:160,171,175` rejects this extra key with HTTP 400 `INVALID_REQUEST` before repository gates, encryption material, or storage access.
+- Executed current `requestAccountDocument` directly against that exact baseline handler: status/list/read/history/save/delete/restore all fail, including a genuine V2 save with TCX/CSV/JSON/GPX feature flags all OFF. Current API reports `UNAVAILABLE`. Gate/material/mutation counters are zero.
+- Positive controls: otherwise identical V2 save and list without the capability field return 200. Nine focused tests PASS.
+- Therefore a compatible server MUST be deployed and verified before a main push that automatically publishes this client. Flags OFF do not provide backwards compatibility. No protocol redesign, provider operation, push, or deployment was performed.
+- Fixture: `app/src/domain/account/reviewer-old-server-compat.test.ts`; isolated config: `app/reviewer-compat.config.ts`.
+- Result: `app/old-server-compat-results.json`, SHA256 `6C03432BA713320D720BCADE075805F2B744E9413B809FF966C72D341763C91D`.
+- Baseline server archive SHA256 `12EB03C6E0AE1B603C3DC85CDE4BBDEF0E9297E7E9581AAFF65D0201958099D8`.
+
+Command from this snapshot's app directory:
+
+```powershell
+& 'C:\Program Files\nodejs\node.exe' node_modules/vitest/vitest.mjs run --config=reviewer-compat.config.ts --configLoader runner --no-cache --reporter=verbose --reporter=json --outputFile.json=old-server-compat-results.json
+```
+
+## S04: source baseline plus actual deployed-byte confirmation
+
+The initial source-only result was correctly PARTIAL. A bounded follow-up retrieved the actual public deployment's unchanged HTML and 36 assets, then executed the real compiled V2 service in Chrome against locally mocked HTTP 426. Warm and reload preservation scenarios both PASS (2/2). Cache/outbox ciphertext remains identical, explicit retry keeps the original nonce/body pending, and 200 recovery completes the original request. The source-reconstruction-only gap is therefore closed for those actual artifact scenarios, not for service-worker upgrade or full failure UX. See S04_DEPLOYED_REVIEW.md for artifact hashes, exact command, result and safety boundaries.
+
+Actual old V2 browser execution completed, not merely old-source inspection. Baseline `27cc6d5705a58f55eb3e07140a7f932d1118269c`, Chrome 151.0.7922.176, real IndexedDB/WebCrypto/Web Locks, isolated loopback 4498, synthetic transport/auth fixtures only.
+
+- Seven scenarios PASS, destructive ACK-cache-clear mutation makes the named preservation test FAIL, exact baseline restoration followed by seven PASS (zero skips/flakes).
+- First-page and later-page 426, reload, dirty existing edit, read/history rejection, and explicit retry preserve ciphertext and durable outbox; failure does not authorize additional successful writes. Positive recovery retains the original nonce/body.
+- All 915 archived app/src and impl/src files match the baseline archive after restoration.
+- These seven source-baseline scenarios used Vite-served SOURCE with installed dependencies, not historical dependencies or deployed bytes. That initial result was PARTIAL. The separately executed two deployed-byte scenarios above close the artifact-preservation gap within their narrower scope; service-worker upgrade and full failure UI remain unverified.
+- Old API reports UNAVAILABLE, not an upgrade-specific result. A previous ACK projection for a dirty edited entry is memory-only and may disappear from statistics after reload plus 426, while the edit/outbox remain recoverable. No ciphertext/outbox deletion was observed.
+- Evidence: `C:\Users\admin\AppData\Local\Temp\trainoracle-s04-baseline-20260919-4498\S04_REVIEW.md`.
+- Restored browser JSON SHA256 `C91EEFA2B423481F7214797966AE0EF242EAE79BD4B2DDE5CB618144AE941448`.
+
+Executed command from that isolated baseline app directory:
+
+```powershell
+& 'C:\Program Files\nodejs\node.exe' node_modules\@playwright\test\cli.js test --config=playwright.s04.config.ts
+```
+
+## Independent focused checks
+
+- EXPLICIT decimal distance/duration and provenance preservation: source plus generated validator, 4/4 PASS.
+- Authentic original plus fresh MIGRATION relation restore: legacy/collection, corrected stale history, active/released history, binding negatives: 7/7 PASS.
+- Import confirmation/identity, backup and safe-export integration, file analysis, comparison semantics: four focused test files, 92/92 PASS. No duplicate full suite.
+- Correction real parsed TCX allowlist, persisted-read capability and current projection UI contracts: selected five-file run initially 53 PASS and one invalid summary-only TCX fixture FAIL before render. Latest legal CSV fixture independently 12/12 PASS, closing that test-only failure. Correction, relation UI, read capability and journal projection files passed unchanged.
+- Native browser current-session authority: 3/3 PASS. Retained encrypted cache unchanged; current confirmed list empty after failed hydration; file metric inputs and pure-file included count excluded; cached write base unavailable.
+- The independent browser count fixture initially retained unrelated EXPLICIT quick-entry fields. Correcting the temporary fixture to use the real `toImportedEntry` adapter removed that false expectation. No production change was requested for it.
+- Latest Motion test preload: static diff is one await-import plus comment, no changed assertion/timeout/production behavior; independent 18/18 PASS.
+- Generated server validator `--check` PASS, 636303 bytes, no generated file written.
+
+## Boundaries reviewed
+
+Unknown/SOURCE_DEFINED time remains reference-only; null is not fabricated zero; pace uses paired summed time/distance; direct EXPLICIT facts stay independent from file sport; precise raw observation is retained separately from display rounding; corrected content/interpretation invalidates stale quantitative binding unless exact facts are restored; released relations remain invalid. Safe export excludes file observations/relations and raw memo/GPS content. File observations do not grant adaptation/PB/execution authority.
+
+Persisted read context uses an opaque in-memory binding to owner, scope/projection epoch, current revision, relation, and observation; no caller-provided boolean adoption. Restored revision 1 with historical relation revision 4 is allowed only through the current confirmed context and verified original path.
+
+Latest UI exceptions reviewed: numeric nowrap wrappers; no-laps hides comparison action while retaining totals/correction; final table CSS uses 20em minimum inline size, keep-all/normal wrap, a block small element limited to 9em, and focus-visible outline on keyboard-focusable horizontal scroll regions. The browser spec adds actual text rectangle left/right/top/bottom bounds, not weaker assertions. Pasteur owns zoom/reflow/keyboard and full plan-flow browser evidence; those flows were not duplicated or claimed as my own execution.
+
+## Exact snapshot
+
+`FINAL_SNAPSHOT.json` captured 96 changed/untracked app/impl/supabase paths at 2026-09-19T14:44:55.8750050Z; source/snapshot mismatches zero. This final set adds the reviewed device-import test to the previous 95-path snapshot. Docs and tsbuildinfo are excluded. Canonical digest is SHA256 of sorted `path + space + uppercase file SHA256` lines, LF-separated without a trailing LF.
+
+- Complete captured patch digest: `CD1E75FE356B7C06E188AF993F6FB4370A88EB3D51B5F4AB71C6CC82E1A9CF23`.
+- Runtime/config/build-script subset: 56 paths, digest `3CA8E1322ABF412A7A7BF935FF710567ED5F347A042F3025C14BD274DB3D495F`.
+- Final file-analysis CSS SHA256: `27B565463264BF56FADF983601517D1A5B62C034AD068B085F0BE38F6B5847AF`.
+- Final device-import spec SHA256: `C91EA749578BCC7936AA7B861D499EA1D7D846567CF878B89DDCEB8D852076DF`.
+- Baseline HEAD: `27cc6d5705a58f55eb3e07140a7f932d1118269c`.
+- No .github/workflows diff at audit.
+- Snapshot copy only: source files, synthetic tests/reports; active worktree was never edited. Browser fixture origin was temporarily changed in the copy to 4498 and restored before hash comparison.
+
+## Remaining scope and environment gaps
+
+Avicenna's eight CI-exception files are captured and statically reviewed: updated labels preserve intent; new callbacks/metadata/CSS assertions strengthen contracts; production change is only same-width brand border replacing inset shadow in plan-beta.css, retaining the existing keyboard focus outline. This is not an independently rerun CI/full-suite claim, nor an approval of any subsequent changes while that repair is still active. No engine or threshold change was observed.
+
+Pasteur's final `app/e2e/device-import.spec.ts` delta is exactly +15/-4 and was independently statically reviewed. Three stale expectations are repaired: canonical `8` instead of padded `8.00`, actual month/calendar/day archive traversal, and continuation storage formatting. Duration `40` and empty avgPace assertions are added. Privacy notice, analysis exclusion, provenance, duplicate opt-in, count, readonly imported distance, subjective editing and reload assertions remain. No test is removed and no assertion is replaced with a weaker timing workaround. Independent `git diff --check` passes. Its 20/20 browser results across four profiles, 44.1 seconds, e2e typecheck and closed preview are Pasteur-reported evidence, not my execution.
+
+Main reports full UTC and KST each 4086 PASS, 0 FAIL, 35 existing SKIP; server 184, validator 93, impl 891, D9 11 and CI-contract 28 PASS. Pasteur reports the final file-analysis flow 9/9 PASS with 320px/zoom/text-bounds and keyboard checks. I did not duplicate those suites. This report approves the reviewed frozen core and narrow CSS/test exceptions for local integration only, not live publication or completion of every work-order stage.
+
+## Exact reproducer locations
+
+Final snapshot root: `C:\Users\admin\AppData\Local\Temp\trainoracle-final-review-20260919-4498`.
+
+- Actual deployed artifact browser test: `app/e2e/deployed-s04.spec.ts`; setup `app/e2e/deployed-s04.setup.ts`; config `app/playwright.deployed-s04.config.ts`; fixture dependency `app/src/test/progressive-journal-fixture.ts`; result `app/deployed-s04-results/results.json`.
+- Artifact retrieval script: `app/scripts/reviewer-download-deployed.mjs`. Original public mirror, public receipt and `public-artifact-manifest.json`: `C:\Users\admin\AppData\Local\Temp\trainoracle-deployed-s04-20260919-4498`. The 36 downloaded assets are preserved unchanged in that mirror; no deployed test screenshot was requested or generated.
+- Reverse compatibility: `app/src/domain/account/reviewer-old-server-compat.test.ts`; config `app/reviewer-compat.config.ts`; result `app/old-server-compat-results.json`; exact old handler tree `old-server/supabase/functions/_shared`; archived inputs `old-server-27cc6d5.zip`.
+- Earlier source-only browser test root: `C:\Users\admin\AppData\Local\Temp\trainoracle-s04-baseline-20260919-4498`; test `app/e2e/s04-baseline.spec.ts`; config `app/playwright.s04.config.ts`; restored result `app/s04-evidence/restored-green.json`; raw report `S04_REVIEW.md`.
+- Pasteur's separately owned device-import browser evidence: `C:\Users\admin\AppData\Local\Temp\trainoracle-device-import-repair-1789828779241`. Its screenshots are synthetic-flow evidence, not actual-deployed S04 screenshots.
+
+The commands above were executed from their isolated app directories. Reproduction requires the documented local dependency installation; the deployed static setup binds only 127.0.0.1:4498 and reads the absolute mirror path. Copying a report or screenshot alone does not constitute a runnable reproduction package. Main's requested verbatim .txt copies preserve this distinction.
+
+The isolated reverse-compatibility test first stopped in the repository's DOM-only global setup under a Node environment, before any test ran. A standalone temporary Node config then ran all nine tests successfully. Earlier esbuild sandbox ancestor-ACL errors required an approved isolated execution; these were environment failures, not product findings.
+
+The actual deployed old bundle is now verified for the two S04 preservation scenarios in S04_DEPLOYED_REVIEW.md. Service-worker cache/upgrade, complete failure UX, live compatible server state and rollout are not verified. No V3 activation or main push is authorized by this review; server-first remains mandatory. No live authentication, real user/private data, external AI, threshold change, commit, provider operation or deployment was used.

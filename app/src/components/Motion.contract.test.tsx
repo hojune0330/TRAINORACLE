@@ -247,6 +247,8 @@ describe("saved toast motion structure", () => {
 describe("app screen direction structure", () => {
   it("labels the first screen and bottom-tab travel direction", async () => {
     window.localStorage.clear()
+    // Test navigation direction independently of lazy-module compilation latency.
+    await import("../screens/PlanBeta")
     const view = render(<AppShell />)
     expect(view.container.querySelector(".app-flow-stage")).toHaveAttribute("data-motion", "initial")
 

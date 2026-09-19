@@ -23,7 +23,7 @@
 .session-explanation__tabs [aria-selected="true"] { border-bottom-color: var(--brand); color: var(--brand); font-weight: 700; }
 .session-explanation__tabs button span { display: inline-block; white-space: nowrap; }
 .session-explanation__content { overflow-y: auto; overscroll-behavior: contain; padding: 20px 16px max(32px, env(safe-area-inset-bottom)); line-height: 1.75; word-break: keep-all; overflow-wrap: anywhere; }
-.session-explanation__content > * { width: 100%; max-width: 42rem; margin-inline: auto; }
+.session-explanation__content > *, .session-explanation__tab-content > * { width: 100%; max-width: 42rem; margin-inline: auto; }
 .session-explanation__content section { padding-block: 12px 20px; border-bottom: 1px solid var(--line); }
 .session-explanation__content h3 { margin: 0 0 10px; font-size: 1.05rem; line-height: 1.5; }
 .session-explanation__content p { margin-block: 8px; font-size: 1rem; }

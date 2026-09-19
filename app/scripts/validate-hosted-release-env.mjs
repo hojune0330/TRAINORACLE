@@ -65,6 +65,15 @@ export function validateHostedReleaseEnvironment(environment) {
     }
   }
 
+  for (const format of ["TCX", "CSV", "JSON", "GPX"]) {
+    const feature = `FILE_ANALYSIS_${format}`
+    if (!isFeatureEnabled(environment, feature)) continue
+    if (!accountOpen) errors.push(`${feature}_REQUIRES_ACCOUNT`)
+    if (!isFeatureEnabled(environment, "ACCOUNT_JOURNAL")) {
+      errors.push(`${feature}_REQUIRES_ACCOUNT_JOURNAL`)
+    }
+  }
+
   if (isFeatureEnabled(environment, "FEEDBACK_BOARD") && !connectionReady) {
     errors.push("FEEDBACK_BOARD_REQUIRES_PUBLIC_CONNECTION")
   }

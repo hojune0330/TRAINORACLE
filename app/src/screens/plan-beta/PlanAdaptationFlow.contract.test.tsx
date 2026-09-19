@@ -164,7 +164,8 @@ describe("next-frame adaptation flow", () => {
 
     const changedSection = (await screen.findByRole("heading", { name: "바뀌는 것" })).parentElement
     if (changedSection === null) throw new Error("Changed-session section missing")
-    expect(within(changedSection).getAllByRole("listitem")).toHaveLength(3)
+    const changedSessions = within(changedSection).getAllByRole("listitem")
+    expect(changedSessions).toHaveLength(3)
     expect(within(changedSection).getByText(/DAY 1 오전 · 기초 지구력 달리기/u)).toBeVisible()
     expect(within(changedSection).getByText(/DAY 5 오전 · 기초 지구력 달리기/u)).toBeVisible()
     expect(within(changedSection).getByText(/DAY 7 오전 · 기초 지구력 달리기/u)).toBeVisible()
@@ -172,7 +173,9 @@ describe("next-frame adaptation flow", () => {
     const metadataTokens = [...changedSection.querySelectorAll(".plan-adaptation__metadata-token")]
       .map((token) => token.textContent)
     expect(metadataTokens).toContain("35~35분")
-    expect(metadataTokens).toContain("기초 지구력 · BASE")
+    for (const session of changedSessions) {
+      expect(session).toHaveTextContent(/총 35~60분 · RPE 3~4 · 편하게 오래 · BASE → 총 35~35분 · RPE 3~4 · 편하게 오래 · BASE/u)
+    }
     const unchangedSection = screen.getByRole("heading", { name: "그대로인 것" }).parentElement
     if (unchangedSection === null) throw new Error("Unchanged-session section missing")
     expect(within(unchangedSection).getByText(/훈련 날짜와 세션 역할, 선택한 훈련 의도/u)).toBeVisible()

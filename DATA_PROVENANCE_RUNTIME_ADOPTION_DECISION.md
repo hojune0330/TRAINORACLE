@@ -38,3 +38,9 @@ register external derivation rules or change safety/plan authority.
 2. imported 또는 demo 데이터의 별도 출처 라벨은 아직 채택하지 않는다.
 3. 이 결정은 Formation 실행, 자동 처방, 코치 공유, 서버 전송을 열지 않는다.
 4. 이 변경은 병합 전까지 `origin/main`의 런타임 상태를 바꾸지 않는다.
+
+## Scoped file analysis: 2026-09-19
+
+[파일 분석 채택](./PROGRAMMED_FILE_ANALYSIS_ADOPTION_2026-09-19.md)은 확인한 정밀
+FILE_UPLOAD 관측에 한해 설명형 분석을 추가한다. EXPLICIT로 바꾸거나 전역 파생 규칙
+목록을 개방하지 않는다. 기존 정밀 근거 없는 imported/legacy 제외와 안전·처방 경계는 유지한다.

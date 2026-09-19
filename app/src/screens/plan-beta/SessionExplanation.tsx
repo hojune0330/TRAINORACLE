@@ -2,6 +2,7 @@ import React from "react"
 import { createPortal } from "react-dom"
 import { ArrowLeft, BookOpen, ChevronRight } from "lucide-react"
 import type { PlanSession } from "@impl/plan-generator/types"
+import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
 import { GLOSSARY } from "../../domain/glossary"
 import { EXPLANATION_SOURCES } from "../../domain/training-explanation-profiles"
 import { explainSession, explanationProfile, type SessionExplanationContext } from "../../domain/session-explanation"
@@ -46,17 +47,26 @@ function SessionExplanationReader({ session, context, loadEvidence, returnLabel 
   }, [loadEvidence, session, context?.plan.candidateId, context?.generatedAt])
   const dialog = React.useRef<HTMLDialogElement>(null)
   const content = React.useRef<HTMLDivElement>(null)
+  const scrollPositions = React.useRef<Record<Tab, number>>({ "방법": 0, "이유·근거": 0, "주기·기록": 0 })
   const tabs = React.useRef<(HTMLButtonElement | null)[]>([])
   const id = React.useId()
   const explanation = explainSession(session, context)
   const sequence = sessionPrescriptionSequence(session)
   const executionGuidance = new Map(sessionExecutionSteps(session).map((step) => [step.title, step.detail]))
   const term = GLOSSARY[explanation.profile.termId]
-  const evidenceMatches = evidence !== null && context?.kind === "SAVED"
+  const occurrence = evidence?.methodObservation?.occurrence
+  // A loader can retain another session from the same plan generation.
+  const evidenceMatches = evidence !== null && context?.kind === "SAVED" && explanation.contextMatchesSession
     && evidence.candidateId === context.plan.candidateId && evidence.generatedAt === context.generatedAt
-  const rows = evidenceMatches ? evidence.rows.filter((row) => row.plannedSessionId === evidence.sessionId) : []
-  const methodObservation = evidenceMatches && evidence.methodObservation?.occurrence.plannedSessionId === evidence.sessionId
-    ? evidence.methodObservation : null
+    && evidence.rows.every(row => row.plannedSessionId === evidence.sessionId
+      && row.day === session.day && row.slot === session.slot && row.role === session.role
+      && (occurrence === undefined || row.date === occurrence.plannedDate))
+    && (occurrence === undefined || (occurrence.plannedSessionId === evidence.sessionId
+      && occurrence.sessionDay === session.day && occurrence.sessionSlot === session.slot
+      && occurrence.plannedRole === session.role && occurrence.plannedEnergyIntent === session.plannedEnergyIntent
+      && occurrence.sessionContentFingerprint === canonicalJsonFingerprint("trainoracle.planned-session-content.v1", session)))
+  const rows = evidenceMatches ? evidence.rows : []
+  const methodObservation = evidenceMatches ? evidence.methodObservation ?? null : null
 
   React.useEffect(() => {
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
@@ -69,9 +79,15 @@ function SessionExplanationReader({ session, context, loadEvidence, returnLabel 
     }
   }, [])
 
+  React.useLayoutEffect(() => {
+    content.current?.scrollTo({ top: scrollPositions.current[tab], behavior: "instant" })
+  }, [tab])
+
   function selectTab(next: Tab) {
+    if (next === tab) return
+    scrollPositions.current[tab] = content.current?.scrollTop ?? 0
     setTab(next)
-    content.current?.scrollTo({ top: 0, behavior: "instant" })
+    tabs.current[TABS.indexOf(next)]?.focus({ preventScroll: true })
   }
 
   return (
@@ -93,13 +109,11 @@ function SessionExplanationReader({ session, context, loadEvidence, returnLabel 
               if (next === null) return
               event.preventDefault()
               selectTab(TABS[next]!)
-              tabs.current[next]?.focus()
             }}>{item === "방법" ? item : <><span>{item.split("·")[0]}</span><wbr /><span>·{item.split("·")[1]}</span></>}</button>
         ))}
       </div>
       <div ref={content} className="session-explanation__content" role="tabpanel" id={`${id}-panel`} aria-labelledby={`${id}-tab-${TABS.indexOf(tab)}`} tabIndex={0}>
-        {tab === "방법" && (
-          <>
+        <div className="session-explanation__tab-content" hidden={tab !== "방법"}>
             <section className="session-explanation__method-flow"><h3>수행 순서</h3>
               <p className="session-explanation__metric">{sessionExecution(session)}</p>
               {session.prescription.kind === "PACE_TARGET" && <DetailedPrescriptionView prescription={session.prescription} variant="sequence-lead" />}
@@ -118,10 +132,8 @@ function SessionExplanationReader({ session, context, loadEvidence, returnLabel 
             </section>
             {session.prescription.kind === "RPE_TIME_RANGE" && session.role === "QUALITY" && <p className="session-explanation__notice">상세 반복·구간별 시간은 아직 정해지지 않은 RPE 안내예요. 총 시간을 고강도 본운동 시간으로 사용하지 마세요.</p>}
             <button className="session-explanation__next" type="button" onClick={() => selectTab("이유·근거")}>이렇게 구성한 이유<ChevronRight size={18} aria-hidden="true" /></button>
-          </>
-        )}
-        {tab === "이유·근거" && (
-          <>
+        </div>
+        <div className="session-explanation__tab-content" hidden={tab !== "이유·근거"}>
             <p className="session-explanation__notice">{explanation.availability}</p>
             <section><h3>훈련 목적</h3><p>{explanation.profile.purpose}</p></section>
             <section><h3>몸이 에너지를 공급하는 방식</h3><p>{explanation.profile.energyContext}</p>
@@ -161,19 +173,16 @@ function SessionExplanationReader({ session, context, loadEvidence, returnLabel 
               <small>설명 버전 {explanation.version} · 근거 확인과 개별 처방 채택은 별도 검토예요.</small>
               {expert && explanation.template !== null && <p className="session-explanation__note">템플릿 {explanation.template.id} · 버전 {explanation.template.version}<br />채택 결정 {explanation.template.decision}</p>}
             </section>
-          </>
-        )}
-        {tab === "주기·기록" && (
-          <>
+        </div>
+        <div className="session-explanation__tab-content" hidden={tab !== "주기·기록"}>
             <section><h3>주기 안의 위치</h3><ol>{explanation.cycle.map((line) => <li key={line}>{line}</li>)}</ol></section>
             {explanation.currentFrameLabel !== null && <section><h3>현재 장기 계획 연결</h3><p>{explanation.currentFrameLabel}</p></section>}
             <section><h3>계획한 자극</h3><p>{explanation.profile.purpose}</p><p>{prescriptionLabel(session)}</p></section>
             <section><h3>실제 기록</h3>{!evidenceMatches ? <p>이 화면에서는 현재 훈련과 연결된 일지를 확인하지 못했어요. 조회하지 못한 상태를 일지가 없는 것으로 판단하지 않아요.</p> : methodObservation !== null ? <PlanMethodObservationDetails observation={methodObservation} comparison={rows[0] === undefined ? undefined : COMPARISON_LABELS[rows[0].comparison]} /> : rows.length === 0 ? <p>이 훈련과 연결된 일지가 아직 없어요. 미기록을 0이나 훈련 실패로 계산하지 않아요.</p> : rows.map((row) => (
-              <div key={row.plannedSessionId}><p>{row.date} · {row.slot === "AM" ? "오전" : "오후"}</p><p>{row.actualRpe === null ? "비교할 수 있는 RPE 미기록" : `직접 기록한 RPE ${row.actualRpe}`}</p><p>{COMPARISON_LABELS[row.comparison]}</p></div>
+              <div key={row.plannedSessionId}><p>{row.date} · {row.slot === "AM" ? "오전" : "오후"}</p><p>{row.actualRpe === null ? "비교할 수 있는 RPE 미기록" : `직접 기록한 RPE ${row.actualRpe}`}</p><p>계획 RPE와 비교: {COMPARISON_LABELS[row.comparison]}</p></div>
             ))}</section>
             <section><h3>관찰할 변화</h3><p>{explanation.profile.observationGuide}</p><p>계획의 자극과 실제 수행은 다를 수 있어요. 한 번의 기록이나 특정 훈련 횟수만으로 능력 부족·향상 원인·다음 경기 성적을 판단하지 않아요.</p><p>다음 주기에도 같은 방법을 선택할 수 있어요. 기록이 쌓였다는 이유만으로 강도·양·횟수를 자동으로 올리지 않아요.</p></section>
-          </>
-        )}
+        </div>
       </div>
     </dialog>
   )

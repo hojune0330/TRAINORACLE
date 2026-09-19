@@ -6,8 +6,9 @@ import type {
   ObservationProvenance,
   StructuredJournalObservation,
 } from "./journal-observation"
-import { pad2 } from "./dates"
-import { acceptsExplicitField } from "./analysis-field-eligibility"
+import { isValidIsoDate, pad2 } from "./dates"
+import { acceptsExplicitField, acceptsFileDistance } from "./analysis-field-eligibility"
+import { cumulativeDistance } from "./cumulative-distance"
 
 export type TrendMetric =
   | "DISTANCE_KM"
@@ -139,9 +140,13 @@ function isEligible(
   metric: TrendMetric,
 ): boolean {
   if (!metricApplies(observation, metric) || metricValue(observation, metric) === null) return false
+  if (metric === "DISTANCE_KM") {
+    return isValidIsoDate(observation.loggedOn)
+      && (acceptsExplicitField(observation, "distanceKm") || acceptsFileDistance(observation))
+  }
   if (observation.sourceRef.trustState === "MISSING") return false
   if (observation.sourceRef.trustState === "SOURCE_NOT_VERIFIED") {
-    const field = metric === "DISTANCE_KM" ? "distanceKm" : metric === "RPE" ? "rpe" : null
+    const field = metric === "RPE" ? "rpe" : null
     if (field === null || !acceptsExplicitField(observation, field)) return false
   }
 
@@ -184,6 +189,16 @@ function median(values: readonly number[]): number {
   return (previousValue + middleValue) / 2
 }
 
+function distanceSummaryForMonth(observations: readonly StructuredJournalObservation[], label: string) {
+  const lastDay = new Date(Number(label.slice(0, 4)), Number(label.slice(5, 7)), 0).getDate()
+  return cumulativeDistance(observations, {
+    kind: "RECENT_MONTH",
+    startDate: `${label}-01`,
+    endDate: `${label}-${pad2(lastDay)}`,
+    precision: "LOCAL_DATE",
+  })
+}
+
 function statusOf(
   observations: readonly StructuredJournalObservation[],
   metric: TrendMetric,
@@ -207,8 +222,15 @@ export function bucketByMonth(
   metric: TrendMetric,
 ): readonly TrendBucket[] {
   return monthLabels(today, monthsBack).map((label) => {
-    const eligible = observations.filter((observation) =>
-      observation.loggedOn.slice(0, 7) === label && isEligible(observation, metric))
+    const scoped = observations.filter(observation => observation.loggedOn.slice(0, 7) === label)
+    const distanceSummary = metric === "DISTANCE_KM" ? distanceSummaryForMonth(scoped, label) : null
+    // The shared reducer returns original references after grouping all revisions.
+    // Recover those exact samples, not rounded totals or a second deduplication rule.
+    const byRef = new Map(scoped.filter(observation => isValidIsoDate(observation.loggedOn))
+      .map(observation => [observation.sourceRef, observation]))
+    const eligible = distanceSummary === null
+      ? scoped.filter(observation => isEligible(observation, metric))
+      : distanceSummary.sourceRefs.map(ref => byRef.get(ref)!)
     if (eligible.length === 0) {
       return {
         kind: "MISSING",
@@ -236,10 +258,10 @@ export function bucketByMonth(
       sourceRefs: eligible.map((observation) => observation.sourceRef),
       confidence: null,
       ...statusOf(eligible, metric),
-      nonSensitiveReasonCodes: eligible.some((observation) =>
+      nonSensitiveReasonCodes: distanceSummary?.reasonCodes ?? (eligible.some((observation) =>
         metricProvenance(observation, metric) === "DERIVED")
         ? ["REGISTERED_DERIVATION"]
-        : ["STRUCTURED_OBSERVATION"],
+        : ["STRUCTURED_OBSERVATION"]),
     }
   })
 }
@@ -249,6 +271,17 @@ export function summarizeMetricCoverage(
   metric: TrendMetric,
 ): { readonly included: number; readonly excluded: number } {
   const applicable = observations.filter((observation) => metricApplies(observation, metric))
+  if (metric === "DISTANCE_KM") {
+    const labels = new Set(applicable.filter(observation => isValidIsoDate(observation.loggedOn))
+      .map(observation => observation.loggedOn.slice(0, 7)))
+    return [...labels].reduce((coverage, label) => {
+      const summary = distanceSummaryForMonth(applicable, label)
+      return {
+        included: coverage.included + summary.includedSourceCount,
+        excluded: coverage.excluded + summary.excludedSourceCount,
+      }
+    }, { included: 0, excluded: 0 })
+  }
   const included = applicable.filter((observation) => isEligible(observation, metric)).length
   return { included, excluded: applicable.length - included }
 }

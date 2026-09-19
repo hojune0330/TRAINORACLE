@@ -411,4 +411,17 @@ These are this draft's own issues. They do not change issue counts in other SPEC
 | Metrics can raise attention but cannot clear D9 or Safety Gate | PASS |
 | Does not create/select plan options | PASS |
 
+## Scoped file-analysis amendment: 2026-09-19
+
+[File analysis adoption](../../PROGRAMMED_FILE_ANALYSIS_ADOPTION_2026-09-19.md)
+adds only confirmed FILE_UPLOAD observations to descriptive summaries and the
+specified distance/time/segment comparison purposes. The earlier blanket imported
+exclusion remains for legacy imports without precise evidence and all unadopted
+provider fields. Import confirmation is not EXPLICIT provenance, provider approval,
+PB/SB certification, physiological diagnosis, safety clearance or prescription authority.
+SOURCE_DEFINED/UNKNOWN time is reference-only until its meaning is confirmed;
+different time meanings cannot share a total or a pace denominator.
+Existing draft formulas, issue status and canonical status remain unchanged.
+Implementation, runtime verification and release are recorded separately.
+
 [DRAFT_COMPLETE]

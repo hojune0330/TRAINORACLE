@@ -67,7 +67,29 @@ describe("DS-02 plan presentation contract", () => {
   })
 
   it("uses a readable explanation measure and does not activate a V3 renderer", () => {
-    expect(explanationCss).toMatch(/\.session-explanation__content > \*\s*\{[^}]*max-width:\s*42rem/u)
+    const style = document.createElement("style")
+    style.textContent = explanationCss
+    document.head.append(style)
+    try {
+      expect(style.sheet).not.toBeNull()
+      const rules = [...style.sheet!.cssRules].filter(
+        (rule): rule is CSSStyleRule => rule.type === CSSRule.STYLE_RULE,
+      )
+      for (const selector of [".session-explanation__content > *", ".session-explanation__tab-content > *"]) {
+        const rule = rules.find((item) => item.selectorText.split(",").map((part) => part.trim()).includes(selector))
+        expect(rule, selector).toBeDefined()
+        expect(rule!.style.getPropertyValue("width")).toBe("100%")
+        expect(rule!.style.getPropertyValue("max-width")).toBe("42rem")
+        expect(rule!.style.getPropertyValue("margin-inline")).toBe("auto")
+      }
+      const content = rules.find((rule) => rule.selectorText === ".session-explanation__content")
+      expect(content).toBeDefined()
+      expect(content!.style.getPropertyValue("line-height")).toBe("1.75")
+      expect(content!.style.getPropertyValue("overflow-wrap")).toBe("anywhere")
+      expect(content!.style.getPropertyValue("overflow-y")).toBe("auto")
+    } finally {
+      style.remove()
+    }
     expect(explanationCss).not.toMatch(/text-overflow:\s*ellipsis|line-clamp/u)
     expect(ownedRenderers).not.toMatch(/PrescriptionAdjustmentEditorV3|MultiAdjustedPlan|sequence-v3/u)
   })

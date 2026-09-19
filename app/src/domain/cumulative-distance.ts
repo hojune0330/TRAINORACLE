@@ -1,7 +1,7 @@
 import { isValidIsoDate, isoShift, pad2, weekStartOf } from "./dates"
 import type { StructuredJournalObservation } from "./journal-observation"
-import { eligibleMetricValue } from "./trend-analysis"
-import { acceptsExplicitField } from "./analysis-field-eligibility"
+import { acceptsExplicitField, acceptsFileDistance } from "./analysis-field-eligibility"
+import { fileObservationAnalysisSignature, isProjectedFileObservation } from "./import/file-analysis"
 
 export const CUMULATIVE_DISTANCE_FORMULA_VERSION = "CUMULATIVE_DISTANCE_SUM_V1" as const
 
@@ -23,6 +23,8 @@ export type DistanceWindow = {
 
 export type CumulativeDistanceReasonCode =
   | "STRUCTURED_EXPLICIT_DISTANCE"
+  | "CONFIRMED_FILE_DISTANCE"
+  | "NON_FINITE_DISTANCE_TOTAL"
   | "NO_ELIGIBLE_SOURCE"
   | "EXCLUDED_SOURCE_PRESENT"
   | "IDENTICAL_DUPLICATE_SOURCE"
@@ -54,6 +56,9 @@ export type CumulativeDistanceDashboard = {
 }
 
 function sourceKey(observation: StructuredJournalObservation): string {
+  if (isProjectedFileObservation(observation.acceptedFileObservation)) {
+    return `FILE_UPLOAD:${observation.acceptedFileObservation.sourceObservationKey}`
+  }
   return `${observation.sourceRef.sourceKind}:${observation.sourceRef.sourceId}`
 }
 
@@ -64,6 +69,9 @@ function sourceSignature(observation: StructuredJournalObservation): string {
     provenance: observation.fieldProvenance.distanceKm,
     trustState: observation.sourceRef.trustState,
     explicitDistanceAccepted: acceptsExplicitField(observation, "distanceKm"),
+    fileDistanceAccepted: acceptsFileDistance(observation),
+    fileSignature: isProjectedFileObservation(observation.acceptedFileObservation)
+      ? fileObservationAnalysisSignature(observation.acceptedFileObservation) : null,
   })
 }
 
@@ -92,12 +100,17 @@ export function cumulativeDistance(
       && !(observation.distanceKm === null
         && observation.fieldProvenance.distanceKm === "MISSING"))
   const grouped = new Map<string, StructuredJournalObservation[]>()
+  const journalKeys = new Map<string, Set<string>>()
 
   for (const observation of scoped) {
     const key = sourceKey(observation)
     const current = grouped.get(key)
     if (current === undefined) grouped.set(key, [observation])
     else current.push(observation)
+    const journalKey = `${observation.sourceRef.sourceKind}:${observation.sourceRef.sourceId}`
+    const keys = journalKeys.get(journalKey) ?? new Set<string>()
+    keys.add(key)
+    journalKeys.set(journalKey, keys)
   }
 
   const included: { readonly observation: StructuredJournalObservation; readonly value: number }[] = []
@@ -107,15 +120,20 @@ export function cumulativeDistance(
   let hasIdenticalDuplicate = false
   let hasConflict = false
 
-  for (const group of grouped.values()) {
-    const first = group[0]
+  for (const [, group] of [...grouped].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)) {
+    const first = [...group].sort((a, b) => {
+      const left = JSON.stringify(a.sourceRef)
+      const right = JSON.stringify(b.sourceRef)
+      return left < right ? -1 : left > right ? 1 : 0
+    })[0]
     if (first === undefined) continue
     if (first.sourceRef.sourceId.trim() === "") {
       excludedSourceCount += 1
       continue
     }
     const signatures = new Set(group.map(sourceSignature))
-    if (signatures.size > 1) {
+    if (signatures.size > 1 || group.some(value =>
+      (journalKeys.get(`${value.sourceRef.sourceKind}:${value.sourceRef.sourceId}`)?.size ?? 0) > 1)) {
       excludedSourceCount += 1
       conflictingSourceCount += 1
       hasConflict = true
@@ -127,11 +145,12 @@ export function cumulativeDistance(
     if (first.distanceKm === null && first.fieldProvenance.distanceKm === "MISSING") {
       continue
     }
-    const value = acceptsExplicitField(first, "distanceKm") ? first.distanceKm : eligibleMetricValue(first, "DISTANCE_KM")
-    if (!acceptsExplicitField(first, "distanceKm")
+    const fileAccepted = acceptsFileDistance(first)
+    const value = first.distanceKm
+    if ((!acceptsExplicitField(first, "distanceKm") && !fileAccepted)
       || value === null
       || !Number.isFinite(value)
-      || value <= 0) {
+      || (fileAccepted ? value < 0 : value <= 0)) {
       excludedSourceCount += 1
       continue
     }
@@ -139,23 +158,28 @@ export function cumulativeDistance(
   }
 
   const reasonCodes: CumulativeDistanceReasonCode[] = []
-  if (included.length > 0) reasonCodes.push("STRUCTURED_EXPLICIT_DISTANCE")
-  else reasonCodes.push("NO_ELIGIBLE_SOURCE")
+  if (included.some(item => acceptsExplicitField(item.observation, "distanceKm"))) reasonCodes.push("STRUCTURED_EXPLICIT_DISTANCE")
+  if (included.some(item => acceptsFileDistance(item.observation))) reasonCodes.push("CONFIRMED_FILE_DISTANCE")
+  if (included.length === 0) reasonCodes.push("NO_ELIGIBLE_SOURCE")
   if (excludedSourceCount > 0) reasonCodes.push("EXCLUDED_SOURCE_PRESENT")
   if (hasIdenticalDuplicate) reasonCodes.push("IDENTICAL_DUPLICATE_SOURCE")
   if (hasConflict) reasonCodes.push("CONFLICTING_SOURCE_ID")
+  const summed = included.reduce((sum, item) => sum + item.value, 0)
+  const rounded = roundKm(summed)
+  const finiteTotal = Number.isFinite(rounded)
+  if (!finiteTotal) reasonCodes.push("NON_FINITE_DISTANCE_TOTAL")
 
   return {
     formulaVersion: CUMULATIVE_DISTANCE_FORMULA_VERSION,
     window,
-    totalKm: included.length === 0
+    totalKm: included.length === 0 || !finiteTotal
       ? null
-      : roundKm(included.reduce((sum, item) => sum + item.value, 0)),
+      : rounded,
     includedSourceCount: included.length,
     excludedSourceCount,
     duplicateSourceCount,
     conflictingSourceCount,
-    coverage: included.length === 0
+    coverage: included.length === 0 || !finiteTotal
       ? "MISSING"
       : excludedSourceCount > 0 || duplicateSourceCount > 0
         ? "PARTIAL"

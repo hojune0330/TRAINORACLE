@@ -198,6 +198,8 @@ function QuickSessionFormEditor({
         ? { intensityAssessment: base.intensityAssessment }
         : {}),
       ...(planLink === undefined ? {} : { plannedSessionLink: planLink }),
+      ...(base?.fileObservation === undefined ? {} : { fileObservation: base.fileObservation }),
+      ...(base?.comparisonRelations === undefined ? {} : { comparisonRelations: base.comparisonRelations }),
       fieldProvenance: {
         ...previousProvenance,
         activityOutcome: explicitOrMissing(true),

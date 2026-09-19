@@ -10,6 +10,494 @@ test.beforeEach(async ({ context, page }) => {
   await loadRecordHarness(page)
 })
 
+test("persisted ACK cache survives failed hydration without current-session authority or a cached write base", async ({ page }) => {
+  let unavailable = false
+  await page.route("**/__record_api__", route => unavailable
+    ? route.fulfill({ status: 503, contentType: "application/json", body: "{}" }) : route.fallback())
+  await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    await h.persistAccountJournalRecord(h.fileRecord().entry, undefined, "FILE_OBSERVATION")
+  })
+  expect(await page.evaluate(() => window.accountRecordHarness.readCurrentConfirmedAccountJournalProjection())).toHaveLength(1)
+  expect(await page.evaluate(() => window.accountRecordHarness.currentFileAnalysis())).toEqual({ accepted: true, included: 1 })
+  unavailable = true
+  await page.reload(); await loadRecordHarness(page)
+  const failed = await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    return { hydrated: await h.hydrateAccountJournalRecords(), status: h.accountJournalProjectionStatus(),
+      cached: h.readAccountJournalProjection(), current: h.readCurrentConfirmedAccountJournalProjection(),
+      base: await h.readAccountJournalWriteBase("ordinary"), raw: await h.rawRecords(), analysis: h.currentFileAnalysis() }
+  })
+  expect(failed.hydrated).toBe(false)
+  expect(failed.status).toBe("FAILED")
+  expect(failed.cached).toHaveLength(1)
+  expect(failed.cached[0]).toMatchObject({ syncState: "synced", fileObservation: { distanceMeters: 5000 } })
+  expect(failed.current).toEqual([])
+  expect(failed.analysis).toEqual({ accepted: false, included: 0 })
+  expect(failed.base).toBeNull()
+  expect(failed.raw).toHaveLength(1)
+  unavailable = false
+  expect(await page.evaluate(() => window.accountRecordHarness.hydrateAccountJournalRecords())).toBe(true)
+  expect(await page.evaluate(() => window.accountRecordHarness.readCurrentConfirmedAccountJournalProjection())).toHaveLength(1)
+  expect(await page.evaluate(() => window.accountRecordHarness.readAccountJournalWriteBase("ordinary"))).toMatchObject({ revision: 1 })
+  expect(await page.evaluate(() => window.accountRecordHarness.currentFileAnalysis())).toEqual({ accepted: true, included: 1 })
+  unavailable = true
+  expect(await page.evaluate(() => window.accountRecordHarness.hydrateAccountJournalRecords())).toBe(false)
+  expect(await page.evaluate(() => window.accountRecordHarness.readCurrentConfirmedAccountJournalProjection())).toEqual([])
+  expect(await page.evaluate(() => window.accountRecordHarness.readAccountJournalProjection())).toHaveLength(1)
+})
+
+test("older list revisions cannot promote an unverified newer ACK cache", async ({ page }) => {
+  await page.evaluate(async () => {
+    const h = window.accountRecordHarness, entry = h.fileRecord().entry
+    await h.persistAccountJournalRecord(entry, undefined, "FILE_OBSERVATION")
+    await h.correctAccountJournalFileObservation(entry.id, h.fileRecord().replacement,
+      (await h.readAccountJournalWriteBase(entry.id))!, ["distanceMeters", "laps"])
+  })
+  const [key, current] = [...server.documents.entries()][0]!
+  const original = server.history.get(key)![0]!
+  server.documents.set(key, { documentId: current.documentId, revision: original.revision, document: original.document })
+  await page.reload(); await loadRecordHarness(page)
+  const result = await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    return { hydrated: await h.hydrateAccountJournalRecords(), current: h.readCurrentConfirmedAccountJournalProjection(),
+      cached: h.readAccountJournalProjection(), base: await h.readAccountJournalWriteBase("ordinary"), view: await h.view("ordinary") }
+  })
+  expect(result.hydrated).toBe(false)
+  expect(result.current).toEqual([])
+  expect(result.cached[0]).toMatchObject({ fileObservation: { distanceMeters: 5100 } })
+  expect(result.view?.serverRevision).toBe(2)
+  expect(result.base).toBeNull()
+})
+
+test("file correction stays encrypted and leaves original visible until ACK; no sticky attachment purpose", async ({ page }) => {
+  await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    const { entry } = h.fileRecord()
+    await h.persistAccountJournalRecord(entry, undefined, "FILE_OBSERVATION")
+  })
+  server.offline(true)
+  const pending = await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    const { entry, replacement } = h.fileRecord()
+    const base = (await h.readAccountJournalWriteBase(entry.id))!
+    const saved = await h.correctAccountJournalFileObservation(entry.id, replacement, base, ["distanceMeters", "laps"])
+    const before = await h.rawRecords()
+    const overwrite = await h.persistAccountJournalRecord({ ...entry, memo: "FORBIDDEN_OVERWRITE", savedAt: "2026-09-02T02:00:00.000Z" }, entry.savedAt)
+    const differentCorrection = await h.correctAccountJournalFileObservation(entry.id, replacement, base, ["distanceMeters"])
+    return { saved, overwrite, differentCorrection, before, after: await h.rawRecords(), view: await h.view(entry.id),
+      visible: h.readAccountJournalPrivateEntry(entry.id), analysis: h.loadAnalysisEntries() }
+  })
+  expect(pending.saved).toEqual({ ok: true, storage: "PENDING" })
+  expect(pending.overwrite).toEqual({ ok: false, storage: "FAILED" })
+  expect(pending.differentCorrection).toEqual({ ok: false, storage: "FAILED" })
+  expect(pending.before).toEqual(pending.after)
+  expect(pending.visible).toMatchObject({ distanceKm: "5", rpe: 6, fileObservation: { distanceMeters: 5000 } })
+  expect(pending.view).toMatchObject({ serverRevision: 1, pending: { mutation: { action: "correctImportedObservation" },
+    originalDraft: { entry: { distanceKm: "5" } }, draft: { entry: { distanceKm: "5.1" } } } })
+  for (const text of ["SYNTHETIC_OBSERVATION_ONLY", "SYNTHETIC_ORDINARY_BODY", "replacementObservation", "confirmedChangedFields", "sourceObservationKey"])
+    expect(JSON.stringify(pending.before)).not.toContain(text)
+  expect(pending.before[0]).toHaveProperty("encryptedMutation")
+  server.offline(false)
+  const done = await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    const saved = await h.retryAccountJournalFileObservation("ordinary")
+    const base = (await h.readAccountJournalWriteBase("ordinary"))!
+    const entry = base.entry!
+    if (entry.kind !== "post-session") throw new Error("Expected post-session fixture")
+    const edited = await h.persistAccountJournalRecord({ ...entry, savedAt: "2026-09-02T02:00:00.000Z", memo: "ORDINARY_EDIT_AFTER_FILE" }, entry.savedAt)
+    return { saved, base, edited, view: await h.view("ordinary") }
+  })
+  expect(done.saved).toEqual({ ok: true, storage: "ACCOUNT" })
+  expect(done.base.entry).toMatchObject({ distanceKm: "5.1", savedAt: "2026-09-02T01:00:00.000Z", rpe: 6 })
+  expect(done.edited).toEqual({ ok: true, storage: "ACCOUNT" })
+  expect(done.view?.pending).toBeNull()
+  expect(done.view?.writePurpose).toBeUndefined()
+  const ordinarySave = server.calls.filter(call => call.request.action === "save").at(-1)!.request
+  expect(ordinarySave).not.toHaveProperty("writePurpose")
+  expect(server.calls.filter(call => call.request.action === "correctImportedObservation")).toHaveLength(2)
+})
+
+test("file correction lost receipt reload replays identical encrypted snapshot nonce and request", async ({ page }) => {
+  await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    await h.persistAccountJournalRecord(h.fileRecord().entry, undefined, "FILE_OBSERVATION")
+  })
+  server.loseReceipt("correctImportedObservation")
+  const pending = await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    const { entry, replacement } = h.fileRecord()
+    const base = (await h.readAccountJournalWriteBase(entry.id))!
+    return { result: await h.correctAccountJournalFileObservation(entry.id, replacement, base, ["laps", "distanceMeters"]), raw: await h.rawRecords() }
+  })
+  expect(pending.result).toEqual({ ok: true, storage: "PENDING" })
+  await page.reload(); await loadRecordHarness(page)
+  expect(await page.evaluate(() => window.accountRecordHarness.rawRecords())).toEqual(pending.raw)
+  expect(await page.evaluate(() => window.accountRecordHarness.hydrateAccountJournalRecords())).toBe(true)
+  expect(await page.evaluate(() => window.accountRecordHarness.view("ordinary"))).toMatchObject({ state: "DRAFT_ACKNOWLEDGED", serverRevision: 2,
+    pending: null, draft: { entry: { distanceKm: "5.1", savedAt: "2026-09-02T01:00:00.000Z" } } })
+  const requests = server.calls.filter(call => call.request.action === "correctImportedObservation")
+  expect(requests).toHaveLength(2)
+  expect(requests[1]!.request).toEqual(requests[0]!.request)
+  expect([...server.documents.values()][0]!.revision).toBe(2)
+})
+
+test("file correction tombstone hydration preserves ciphertext without retry or resurrection", async ({ page }) => {
+  await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    await h.persistAccountJournalRecord(h.fileRecord().entry, undefined, "FILE_OBSERVATION")
+  })
+  server.offline(true)
+  await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    await h.correctAccountJournalFileObservation("ordinary", h.fileRecord().replacement, (await h.readAccountJournalWriteBase("ordinary"))!, ["laps", "distanceMeters"])
+  })
+  const [key, old] = [...server.documents.entries()][0]!
+  server.documents.delete(key); server.tombstones.set(key, { documentId: old.documentId, revision: 2 })
+  server.offline(false)
+  await page.reload(); await loadRecordHarness(page)
+  await page.evaluate(() => window.accountRecordHarness.hydrateAccountJournalRecords())
+  const result = await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    return { retry: await h.retryAccountJournalFileObservation("ordinary"), view: await h.view("ordinary"), entries: h.loadEntries(), raw: await h.rawRecords() }
+  })
+  expect(result.retry).toEqual({ ok: false, storage: "FAILED" })
+  expect(result.view).toMatchObject({ state: "CONFLICT", blocked: { currentRevision: 2 }, pending: { mutation: { action: "correctImportedObservation" } } })
+  expect(result.entries).toEqual([])
+  expect(result.raw).toHaveLength(1)
+  expect(server.calls.filter(call => call.request.action === "correctImportedObservation")).toHaveLength(1)
+})
+
+test("file correction A-B-A invalidates late ACK but leaves original operation retryable", async ({ page }) => {
+  await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    await h.persistAccountJournalRecord(h.fileRecord().entry, undefined, "FILE_OBSERVATION")
+  })
+  const release = server.holdNext("correctImportedObservation")
+  await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    const base = (await h.readAccountJournalWriteBase("ordinary"))!
+    h.pending = h.correctAccountJournalFileObservation("ordinary", h.fileRecord().replacement, base, ["laps", "distanceMeters"])
+  })
+  await expect.poll(() => server.calls.filter(call => call.request.action === "correctImportedObservation").length).toBe(1)
+  await page.evaluate(() => {
+    const h = window.accountRecordHarness
+    h.setActiveLocalAccount(h.otherOwner); h.setActiveLocalAccount(h.owner)
+  })
+  release()
+  expect(await page.evaluate(() => window.accountRecordHarness.pending)).toEqual({ ok: false, storage: "FAILED" })
+  expect(await page.evaluate(() => window.accountRecordHarness.view("ordinary"))).toMatchObject({ serverRevision: 1, state: "PENDING" })
+  expect(await page.evaluate(() => window.accountRecordHarness.retryAccountJournalFileObservation("ordinary"))).toEqual({ ok: true, storage: "ACCOUNT" })
+  const corrections = server.calls.filter(call => call.request.action === "correctImportedObservation")
+  expect(corrections).toHaveLength(2)
+  expect(corrections.every(call => call.ownerId === "11111111-1111-4111-8111-111111111111")).toBe(true)
+  expect(corrections[1]!.request).toEqual(corrections[0]!.request)
+})
+
+test("file correction rejects stale reviewed fingerprint and invalid fields before durable writes", async ({ page }) => {
+  const result = await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    const { entry, replacement } = h.fileRecord()
+    await h.persistAccountJournalRecord(entry, undefined, "FILE_OBSERVATION")
+    const base = (await h.readAccountJournalWriteBase(entry.id))!
+    const before = await h.rawRecords()
+    const results = [
+      await h.correctAccountJournalFileObservation(entry.id, replacement, { ...base, contentFingerprint: `sha256:${"0".repeat(64)}` }, ["laps", "distanceMeters"]),
+      await h.correctAccountJournalFileObservation(entry.id, replacement, { ...base, revision: 2 }, ["laps", "distanceMeters"]),
+      await h.correctAccountJournalFileObservation(entry.id, replacement, base, ["distanceMeters"]),
+    ]
+    return { before, after: await h.rawRecords(), results }
+  })
+  expect(result.results).toEqual(Array(3).fill({ ok: false, storage: "FAILED" }))
+  expect(result.after).toEqual(result.before)
+  expect(server.calls.filter(call => call.request.action === "correctImportedObservation")).toHaveLength(0)
+})
+
+for (const [rejection, status] of [["UPGRADE_REQUIRED", 426], ["FILE_EVIDENCE_DISABLED", 409],
+  ["INVALID_FILE_OBSERVATION", 422], ["FILE_OBSERVATION_CONFLICT", 409], ["OPERATION_REPLAY_UNAVAILABLE", 409]] as const) {
+  test(`file correction ${rejection} persists terminal rejection and does not retry after reload`, async ({ page }) => {
+    await page.evaluate(async () => {
+      const h = window.accountRecordHarness
+      await h.persistAccountJournalRecord(h.fileRecord().entry, undefined, "FILE_OBSERVATION")
+    })
+    let attempts = 0
+    await page.route("**/__record_api__", route => {
+      if (route.request().postDataJSON().request.action !== "correctImportedObservation") return route.fallback()
+      attempts++
+      return route.fulfill({ status, contentType: "application/json", body: JSON.stringify({ error: rejection }) })
+    })
+    expect(await page.evaluate(async () => {
+      const h = window.accountRecordHarness
+      return h.correctAccountJournalFileObservation("ordinary", h.fileRecord().replacement,
+        (await h.readAccountJournalWriteBase("ordinary"))!, ["laps", "distanceMeters"])
+    })).toEqual({ ok: false, storage: "FAILED", rejection })
+    await page.reload(); await loadRecordHarness(page)
+    expect(await page.evaluate(() => window.accountRecordHarness.hydrateAccountJournalRecords())).toBe(true)
+    const retained = await page.evaluate(async () => {
+      const h = window.accountRecordHarness
+      return { retry: await h.retryAccountJournalFileObservation("ordinary"), view: await h.view("ordinary"),
+        visible: h.readAccountJournalPrivateEntry("ordinary"), status: h.accountJournalProjectionStatus() }
+    })
+    expect(retained).toMatchObject({ retry: { ok: false, storage: "FAILED", rejection }, status: "REJECTED",
+      view: { pending: { rejection, mutation: { action: "correctImportedObservation" } }, blocked: null, serverRevision: 1 },
+      visible: { distanceKm: "5", rpe: 6 } })
+    expect(attempts).toBe(1)
+    expect([...server.documents.values()][0]!.revision).toBe(1)
+  })
+}
+
+test("file correction buffer validates proposal, complete CAS, scope and immutable encrypted command", async ({ page }) => {
+  const result = await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    const { entry, replacement } = h.fileRecord()
+    await h.persistAccountJournalRecord(entry, undefined, "FILE_OBSERVATION")
+    const documentId = await h.accountJournalDocumentId(h.owner, entry.id)
+    const buffer = h.createRecordBuffer()
+    try {
+      const view = (await buffer.read(h.owner, documentId))!
+      const mutation = { action: "correctImportedObservation" as const,
+        previousContentRevisionFingerprint: entry.fileObservation.contentRevisionFingerprint,
+        replacementObservation: replacement, confirmedChangedFields: ["distanceMeters", "laps"] as ("distanceMeters" | "laps")[] }
+      const proposal = h.correctAccountJournalImportedObservation(view.draft, mutation.previousContentRevisionFingerprint,
+        replacement, mutation.confirmedChangedFields)!
+      if (proposal.entry.kind !== "post-session") throw new Error("Expected post-session proposal")
+      const operationId = crypto.randomUUID()
+      const before = await h.rawRecords()
+      const refused: boolean[] = []
+      for (const [draft, sequence, revision, current] of [
+        [{ ...proposal, entry: { ...proposal.entry, memo: "FORBIDDEN_PROPOSAL" } }, view.localSequence, 1, true],
+        [proposal, view.localSequence + 1, 1, true], [proposal, view.localSequence, 2, true],
+        [proposal, view.localSequence, 1, false],
+      ] as const) {
+        try { await buffer.saveMutation!(h.owner, documentId, draft, mutation, operationId, sequence, revision, () => current); refused.push(false) }
+        catch { refused.push(true) }
+      }
+      const afterInvalid = await h.rawRecords()
+      await buffer.saveMutation!(h.owner, documentId, proposal, mutation, operationId, view.localSequence, 1)
+      const afterValid = await h.rawRecords()
+      try { await buffer.saveDraft(h.owner, documentId, proposal); refused.push(false) } catch { refused.push(true) }
+      try { await buffer.saveMutation!(h.owner, documentId, proposal, mutation, crypto.randomUUID(), view.localSequence, 1); refused.push(false) }
+      catch { refused.push(true) }
+      return { refused, before, afterInvalid, afterValid, afterOverwrite: await h.rawRecords(), pending: await buffer.read(h.owner, documentId) }
+    } finally { buffer.close() }
+  })
+  expect(result.refused).toEqual(Array(6).fill(true))
+  expect(result.afterInvalid).toEqual(result.before)
+  expect(result.afterOverwrite).toEqual(result.afterValid)
+  expect(result.pending).toMatchObject({ serverRevision: 1, state: "PENDING", pending: {
+    originalDraft: { entry: { distanceKm: "5" } }, draft: { entry: { distanceKm: "5.1" } } } })
+  expect(server.calls.filter(call => call.request.action === "correctImportedObservation")).toHaveLength(0)
+})
+
+test("file correction CAS conflict requires fresh review and archives encrypted mutation on remote choice", async ({ page }) => {
+  await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    await h.persistAccountJournalRecord(h.fileRecord().entry, undefined, "FILE_OBSERVATION")
+  })
+  const stored = [...server.documents.values()][0]!
+  if (stored.document.entry.kind !== "post-session") throw new Error("Expected post-session fixture")
+  stored.revision = 2
+  stored.document = { ...stored.document, entry: { ...stored.document.entry, memo: "REMOTE_WINNER" } }
+  const conflict = await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    return h.correctAccountJournalFileObservation("ordinary", h.fileRecord().replacement,
+      (await h.readAccountJournalWriteBase("ordinary"))!, ["laps", "distanceMeters"])
+  })
+  expect(conflict).toEqual({ ok: true, storage: "CONFLICT" })
+  const result = await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    const documentId = await h.accountJournalDocumentId(h.owner, "ordinary")
+    const review = (await h.reviewAccountJournalConflict(documentId))!
+    const local = await h.resolveAccountJournalConflict(review, "LOCAL")
+    const remote = await h.resolveAccountJournalConflict(review, "REMOTE")
+    return { local, remote, archive: await h.readAccountJournalConflictArchive(h.owner, documentId),
+      raw: await h.rawRecords(), view: await h.view("ordinary") }
+  })
+  expect(result.local).toBe("FAILED")
+  expect(result.remote).toBe("ACCOUNT")
+  expect(result.view).toMatchObject({ state: "DRAFT_ACKNOWLEDGED", pending: null, draft: { entry: { distanceKm: "5", memo: "REMOTE_WINNER" } } })
+  expect(result.archive?.at(-1)).toMatchObject({ choice: "REMOTE", pending: { mutation: { action: "correctImportedObservation" },
+    originalDraft: { entry: { distanceKm: "5" } }, draft: { entry: { distanceKm: "5.1" } } } })
+  expect(JSON.stringify(result.raw)).not.toContain("replacementObservation")
+  expect(JSON.stringify(result.raw)).not.toContain("REMOTE_WINNER")
+  expect(server.calls.filter(call => call.request.action === "correctImportedObservation")).toHaveLength(1)
+})
+
+test("file correction original-until-ACK assertion detects a route-only projection mutation", async ({ page }) => {
+  await page.route("**/src/domain/account/account-journal-record-service.ts*", async route => {
+    const response = await route.fetch()
+    const body = await response.text()
+    const guard = "const confirmed = view.remoteDraft ?? view.pending.originalDraft;"
+    expect(body.split(guard)).toHaveLength(2)
+    await route.fulfill({ response, body: body.replace(guard, "const confirmed = view.draft;") })
+  })
+  await loadRecordHarness(page)
+  expect(await page.evaluate(() => {
+    const h = window.accountRecordHarness
+    return h.persistAccountJournalRecord(h.fileRecord().entry, undefined, "FILE_OBSERVATION")
+  })).toEqual({ ok: true, storage: "ACCOUNT" })
+  server.offline(true)
+  const distance = await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    await h.correctAccountJournalFileObservation("ordinary", h.fileRecord().replacement,
+      (await h.readAccountJournalWriteBase("ordinary"))!, ["laps", "distanceMeters"])
+    const entry = h.readAccountJournalPrivateEntry("ordinary")
+    return entry?.kind === "post-session" ? entry.distanceKm : null
+  })
+  // The positive path's unchanged projection assertion must detect this defect.
+  expect(() => expect(distance).toBe("5")).toThrow()
+})
+
+test("comparison mutations preserve original until ACK and freeze confirm/release request across reload", async ({ page }) => {
+  await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    await h.persistAccountJournalRecord(h.fileRecord().entry, undefined, "FILE_OBSERVATION")
+  })
+  server.loseReceipt("confirmComparisonRelation")
+  const pending = await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    const base = (await h.readAccountJournalWriteBase("ordinary"))!
+    const result = await h.confirmAccountJournalComparison("ordinary", h.comparisonRelation(), base)
+    const correction = await h.correctAccountJournalFileObservation("ordinary", h.fileRecord().replacement, base, ["distanceMeters", "laps"])
+    const release = await h.releaseAccountJournalComparison("ordinary", h.comparisonRelation().relationId, base)
+    return { result, correction, release, raw: await h.rawRecords(), original: h.readAccountJournalPrivateEntry("ordinary") }
+  })
+  expect(pending.result).toEqual({ ok: true, storage: "PENDING" })
+  expect(pending.correction).toEqual({ ok: false, storage: "FAILED" })
+  expect(pending.release).toEqual({ ok: false, storage: "FAILED" })
+  expect(pending.original).not.toHaveProperty("comparisonRelations")
+  expect(JSON.stringify(pending.raw)).not.toContain("SYNTHETIC_COMPARISON_SEGMENT")
+  expect(JSON.stringify(pending.raw)).not.toContain("relationId")
+  await page.reload(); await loadRecordHarness(page)
+  expect(await page.evaluate(() => window.accountRecordHarness.rawRecords())).toEqual(pending.raw)
+  expect(await page.evaluate(() => window.accountRecordHarness.hydrateAccountJournalRecords())).toBe(true)
+  const confirms = server.calls.filter(call => call.request.action === "confirmComparisonRelation")
+  expect(confirms).toHaveLength(2)
+  expect(confirms[1]!.request).toEqual(confirms[0]!.request)
+  server.offline(true)
+  const releasing = await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    const base = (await h.readAccountJournalWriteBase("ordinary"))!
+    const result = await h.releaseAccountJournalComparison("ordinary", h.comparisonRelation().relationId, base)
+    const raw = await h.rawRecords()
+    const retry = await h.releaseAccountJournalComparison("ordinary", h.comparisonRelation().relationId, base)
+    return { result, retry, raw, after: await h.rawRecords(), original: h.readAccountJournalPrivateEntry("ordinary") }
+  })
+  expect(releasing.result).toEqual({ ok: true, storage: "PENDING" })
+  expect(releasing.retry).toEqual(releasing.result)
+  expect(releasing.after).toEqual(releasing.raw)
+  expect(releasing.original).toMatchObject({ comparisonRelations: [{ releasedAt: null }] })
+  await page.reload(); await loadRecordHarness(page)
+  server.offline(false)
+  expect(await page.evaluate(() => window.accountRecordHarness.retryAccountJournalComparison("ordinary"))).toEqual({ ok: true, storage: "ACCOUNT" })
+  const releases = server.calls.filter(call => call.request.action === "releaseComparisonRelation")
+  expect(releases).toHaveLength(3)
+  expect(releases.every(call => JSON.stringify(call.request) === JSON.stringify(releases[0]!.request))).toBe(true)
+  const view = await page.evaluate(() => window.accountRecordHarness.view("ordinary"))
+  expect(view).toMatchObject({ serverRevision: 3, pending: null, draft: { entry: { savedAt: "2026-09-02T01:00:00.000Z", rpe: 6,
+    distanceKm: "5", comparisonRelations: [{ releasedAt: expect.any(String) }] } } })
+  expect(view?.writePurpose).toBeUndefined()
+})
+
+for (const [rejection, status] of [["COMPARISON_ORIGINAL_UNAVAILABLE", 409], ["INVALID_COMPARISON_RELATION", 422], ["COMPARISON_CAPACITY_EXCEEDED", 409]] as const) {
+  test(`comparison mutation ${rejection} stays terminal across reload`, async ({ page }) => {
+    await page.evaluate(async () => {
+      const h = window.accountRecordHarness
+      await h.persistAccountJournalRecord(h.fileRecord().entry, undefined, "FILE_OBSERVATION")
+    })
+    let attempts = 0
+    await page.route("**/__record_api__", route => {
+      if (route.request().postDataJSON().request.action !== "confirmComparisonRelation") return route.fallback()
+      attempts++
+      return route.fulfill({ status, contentType: "application/json", body: JSON.stringify({ error: rejection }) })
+    })
+    expect(await page.evaluate(async () => {
+      const h = window.accountRecordHarness
+      return h.confirmAccountJournalComparison("ordinary", h.comparisonRelation(), (await h.readAccountJournalWriteBase("ordinary"))!)
+    })).toEqual({ ok: false, storage: "FAILED", rejection })
+    await page.reload(); await loadRecordHarness(page)
+    await page.evaluate(() => window.accountRecordHarness.hydrateAccountJournalRecords())
+    expect(await page.evaluate(() => window.accountRecordHarness.retryAccountJournalComparison("ordinary"))).toEqual({ ok: false, storage: "FAILED", rejection })
+    expect(await page.evaluate(() => window.accountRecordHarness.readAccountJournalPrivateEntry("ordinary"))).not.toHaveProperty("comparisonRelations")
+    expect(attempts).toBe(1)
+  })
+}
+
+test("comparison mutation A-B-A drops late ACK and tombstone prevents pending release resurrection", async ({ page }) => {
+  await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    await h.persistAccountJournalRecord(h.fileRecord().entry, undefined, "FILE_OBSERVATION")
+  })
+  const release = server.holdNext("confirmComparisonRelation")
+  await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    const base = (await h.readAccountJournalWriteBase("ordinary"))!
+    h.pending = h.confirmAccountJournalComparison("ordinary", h.comparisonRelation(), base)
+  })
+  await expect.poll(() => server.calls.filter(call => call.request.action === "confirmComparisonRelation").length).toBe(1)
+  await page.evaluate(() => { const h = window.accountRecordHarness; h.setActiveLocalAccount(h.otherOwner); h.setActiveLocalAccount(h.owner) })
+  release()
+  expect(await page.evaluate(() => window.accountRecordHarness.pending)).toEqual({ ok: false, storage: "FAILED" })
+  expect(await page.evaluate(() => window.accountRecordHarness.retryAccountJournalComparison("ordinary"))).toEqual({ ok: true, storage: "ACCOUNT" })
+  server.offline(true)
+  await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    await h.releaseAccountJournalComparison("ordinary", h.comparisonRelation().relationId, (await h.readAccountJournalWriteBase("ordinary"))!)
+  })
+  const [key, current] = [...server.documents.entries()][0]!
+  server.documents.delete(key); server.tombstones.set(key, { documentId: current.documentId, revision: 3 })
+  server.offline(false)
+  await page.reload(); await loadRecordHarness(page)
+  await page.evaluate(() => window.accountRecordHarness.hydrateAccountJournalRecords())
+  expect(await page.evaluate(() => window.accountRecordHarness.retryAccountJournalComparison("ordinary"))).toEqual({ ok: false, storage: "FAILED" })
+  expect(await page.evaluate(() => window.accountRecordHarness.loadEntries())).toEqual([])
+  expect(await page.evaluate(() => window.accountRecordHarness.view("ordinary"))).toMatchObject({ state: "CONFLICT", pending: { mutation: { action: "releaseComparisonRelation" } } })
+  expect(server.calls.filter(call => call.request.action === "releaseComparisonRelation")).toHaveLength(1)
+})
+
+test("comparison capacity refuses without durable write or evicting any relation", async ({ page }) => {
+  await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    await h.persistAccountJournalRecord(h.fileRecord().entry, undefined, "FILE_OBSERVATION")
+  })
+  const stored = [...server.documents.values()][0]!
+  const relation = await page.evaluate(() => window.accountRecordHarness.comparisonRelation())
+  if (stored.document.entry.kind !== "post-session") throw new Error("Expected post-session fixture")
+  stored.document = { ...stored.document, entry: { ...stored.document.entry,
+    comparisonRelations: Array.from({ length: 32 }, (_, index) => ({ ...relation, relationId: `10000000-0000-4000-8000-${String(index + 10).padStart(12, "0")}` })) } }
+  stored.revision = 2
+  const result = await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    await h.hydrateAccountJournalRecords()
+    const before = await h.rawRecords()
+    const saved = await h.confirmAccountJournalComparison("ordinary", { ...h.comparisonRelation(), journalRevisionAtConfirmation: 2 },
+      (await h.readAccountJournalWriteBase("ordinary"))!)
+    return { saved, before, after: await h.rawRecords(), view: await h.view("ordinary") }
+  })
+  expect(result.saved).toEqual({ ok: false, storage: "FAILED", rejection: "COMPARISON_CAPACITY_EXCEEDED" })
+  expect(result.after).toEqual(result.before)
+  expect(result.view?.draft.entry.kind === "post-session" && result.view.draft.entry.comparisonRelations).toHaveLength(32)
+  expect(server.calls.filter(call => call.request.action === "confirmComparisonRelation")).toHaveLength(0)
+})
+
+test("owned migration terminal rejection stops later writes and retains all device originals", async ({ page }) => {
+  let writes = 0
+  await page.route("**/__record_api__", route => {
+    if (route.request().postDataJSON().request.action !== "save") return route.fallback()
+    writes++
+    return route.fulfill({ status: 426, contentType: "application/json", body: JSON.stringify({ error: "UPGRADE_REQUIRED" }) })
+  })
+  const result = await page.evaluate(async () => {
+    const h = window.accountRecordHarness
+    const before = h.seedLegacy("synced", 2)
+    const migrated = await h.migrateOwnedAccountJournals()
+    return { before, after: h.legacyRaw(), migrated }
+  })
+  expect(result.migrated).toEqual({ saved: 0, pending: 0, attention: 1, ok: false })
+  expect(result.after).toEqual(result.before)
+  expect(writes).toBe(1)
+})
+
 test("reviewed write base includes full private content and rejects same-savedAt remote change before any draft/save", async ({ page }) => {
   const reviewed = await page.evaluate(async () => {
     const h = window.accountRecordHarness

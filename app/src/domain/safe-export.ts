@@ -7,7 +7,7 @@ import type {
 import { parseJournalEntry } from "./journal-schema"
 import { isEligibleForAnalysis } from "./field-provenance"
 
-export type SafePostSessionEntry = Omit<PostSessionEntry, "memo" | "memoPurpose">
+export type SafePostSessionEntry = Omit<PostSessionEntry, "memo" | "memoPurpose" | "fileObservation" | "comparisonRelations">
 export type SafeEveningEntry = Omit<EveningEntry, "note" | "memoPurpose">
 export type SafeRaceEntry = Omit<RaceEntry, "memo" | "memoPurpose">
 
@@ -249,6 +249,7 @@ export function toExportJournalEntry(entry: JournalEntry): SafeJournalEntry | nu
 export function fromStructuredJournalPayload(value: unknown): JournalEntry | null {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return null
   const record = value as Record<string, unknown>
+  if (record.fileObservation !== undefined || record.comparisonRelations !== undefined) return null
   const { memo: _memo, note: _note, memoPurpose: _memoPurpose, ...structured } = record
   const textField = structured.kind === "evening" ? "note" : "memo"
   return parseJournalEntry({ ...structured, syncState: "local", [textField]: "" })

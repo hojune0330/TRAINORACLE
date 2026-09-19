@@ -13,12 +13,27 @@ import { CumulativeDistancePanel } from "./trends/CumulativeDistancePanel"
 import { EnergySystemLedgerPanel } from "./trends/EnergySystemLedgerPanel"
 import { PersonalOraclePanel } from "./trends/PersonalOraclePanel"
 import { InfoDisclosure } from "../components/InfoDisclosure"
+import { FileAnalysisPanel } from "./trends/FileAnalysisPanel"
+import { readAccountJournalProjection, readCurrentConfirmedAccountJournalProjection } from "../domain/account/account-journal-projection"
 
-export function Trends({ onBack, onWriteLog }: {
+export function Trends({ onBack, onWriteLog, onOpenPlan }: {
   readonly onBack?: (() => void) | undefined
   readonly onWriteLog?: (() => void) | undefined
+  readonly onOpenPlan?: (() => void) | undefined
 }) {
-  const entries = React.useMemo(() => loadEntries(), [])
+  const [entryRevision, setEntryRevision] = React.useState(0)
+  React.useEffect(() => {
+    const refresh = () => setEntryRevision(value => value + 1)
+    window.addEventListener("trainoracle:account-journals-changed", refresh)
+    return () => window.removeEventListener("trainoracle:account-journals-changed", refresh)
+  }, [])
+  const entries = React.useMemo(() => loadEntries(), [entryRevision])
+  const accountEntries = React.useMemo(() => readCurrentConfirmedAccountJournalProjection(), [entryRevision])
+  const pendingFileCount = React.useMemo(() => {
+    const currentIds = new Set(accountEntries.map(entry => entry.id))
+    return readAccountJournalProjection().filter(entry => entry.kind === "post-session" && entry.fileObservation
+      && !currentIds.has(entry.id)).length
+  }, [accountEntries])
   const observations = React.useMemo(() => projectStructuredJournalObservations(entries), [entries])
   const today = todayISO()
   const planState = loadPlanBetaState()
@@ -36,7 +51,7 @@ export function Trends({ onBack, onWriteLog }: {
    * 이 화면의 실제 관문(eligibleMetricValue)에서 가져온 값과 출처 없는 값이
    * 0km로 떨어지는 것을 실행으로 확인한 뒤 붙였다.
    */
-  const exclusion = React.useMemo(() => analysisExclusionSummary(), [])
+  const exclusion = React.useMemo(() => analysisExclusionSummary(), [entryRevision])
 
   React.useEffect(() => {
     if (window.location.search.includes("uitest")) {
@@ -48,6 +63,7 @@ export function Trends({ onBack, onWriteLog }: {
     <div style={{ paddingBottom: 30 }}>
       <TrendsHeader onBack={onBack} />
       <div className="trends-motion-stage">
+        <FileAnalysisPanel entries={accountEntries} pendingVerificationCount={pendingFileCount} onOpenPlan={onOpenPlan} />
         {isEmpty ? (
           <>
             <div style={{ padding: "0 20px" }}>

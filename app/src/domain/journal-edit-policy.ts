@@ -1,5 +1,6 @@
 import { hasImportedField, isImportedField, type FieldProvenanceMap } from "./field-provenance"
 import type { JournalEntry } from "./journal-schema"
+import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
 
 export const IMPORTED_OBJECTIVE_FIELDS = ["distanceKm", "durationMin", "avgPace"] as const
 
@@ -17,6 +18,10 @@ export function canEditJournalEntry(entry: JournalEntry): boolean {
 }
 
 export function keepsImportedObjectiveFacts(previous: JournalEntry, next: JournalEntry): boolean {
+  if (previous.kind === "post-session" && previous.fileObservation !== undefined
+    && (next.kind !== "post-session" || next.fileObservation === undefined
+      || canonicalJsonFingerprint("trainoracle.file-observation-preservation.v1", previous.fileObservation)
+        !== canonicalJsonFingerprint("trainoracle.file-observation-preservation.v1", next.fileObservation))) return false
   if (!hasImportedField(previous.fieldProvenance)) return true
   if (!canEditJournalEntry(previous) || previous.kind !== "post-session" || next.kind !== "post-session") return false
   return IMPORTED_OBJECTIVE_FIELDS.every((field) => !isImportedField(field, previous.fieldProvenance)

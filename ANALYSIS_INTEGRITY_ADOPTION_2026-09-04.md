@@ -68,4 +68,12 @@ ordering, sample denominators, Oracle identity union and compact/chart semantics
 Record actual execution separately. Existing issue tables and historical evidence
 remain unchanged; this document does not close them.
 
+## Scoped file analysis: 2026-09-19
+
+[File analysis adoption](./PROGRAMMED_FILE_ANALYSIS_ADOPTION_2026-09-19.md)
+adds a separate, purpose-limited projection for confirmed precise FILE_UPLOAD facts.
+The historical activation:false above remains the scope of the September 4 decision;
+it is not a veto on the separately approved implementation. Provider activation,
+legacy precision inference, safety and prescription authority remain excluded.
+
 [DRAFT_COMPLETE]

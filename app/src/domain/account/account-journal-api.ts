@@ -4,6 +4,10 @@ import { activeLocalAccount } from "./local-journal-ownership"
 import { accountJournalDraftSchema } from "./account-journal-draft-buffer"
 import { isAccountJournalWriteRejection, type AccountJournalWriteRejection } from "./account-write-rejection"
 import type { AccountJournalDraft } from "./account-journal-draft-buffer"
+import { accountJournalRecordSchema, type AccountJournalWritePurpose } from "./account-journal-record-schema"
+import type { FileObservationV1 } from "../import/file-observation"
+import type { ConfirmComparisonRelationRequest, ReleaseComparisonRelationRequest } from "../import/comparison-relation"
+export type { ConfirmComparisonRelationRequest, ReleaseComparisonRelationRequest } from "../import/comparison-relation"
 
 export function accountJournalPreviewEnabled(env: Readonly<Record<string, unknown>> = import.meta.env) {
   return env.VITE_FEATURE_ACCOUNT_JOURNAL === "true" && env.VITE_KILL_ACCOUNT_JOURNAL !== "true"
@@ -38,6 +42,7 @@ export type AccountJournalResponse<T = AccountJournalDraft> =
   | { kind: "saved"; documentId: string; operationId: string; revision: number }
   | { kind: "conflict"; documentId: string; operationId: string; currentRevision: number }
 export type AccountJournalRequest<T = AccountJournalDraft> =
+  | ConfirmComparisonRelationRequest | ReleaseComparisonRelationRequest
   | { action: "status" }
   | { action: "list"; cursor?: string; collection?: "JOURNAL" }
   | { action: "read"; documentId: string }
@@ -45,11 +50,16 @@ export type AccountJournalRequest<T = AccountJournalDraft> =
   | { action: "delete"; documentId: string; operationId: string; expectedRevision: number }
   | { action: "restore"; documentId: string; operationId: string; expectedRevision: number; sourceRevision: number }
   | { action: "save"; documentId: string; operationId: string; expectedRevision: number;
-      document: T; writePurpose?: "MIGRATION" }
+      document: T; writePurpose?: AccountJournalWritePurpose }
+  | { action: "correctImportedObservation"; documentId: string; operationId: string; expectedRevision: number;
+      previousContentRevisionFingerprint: string; replacementObservation: FileObservationV1;
+      confirmedChangedFields: readonly string[] }
 
 export type AccountJournalResult<T = AccountJournalDraft> =
   | { ok: true; data: AccountJournalResponse<T> }
-  | { ok: false; code: "AUTH_REQUIRED" | "ACCESS_DENIED" | "NOT_FOUND" | "UNAVAILABLE" | "INVALID_RESPONSE" | "STALE_RESPONSE" | "CONFLICT" | AccountJournalWriteRejection }
+  | { ok: false; code: "AUTH_REQUIRED" | "ACCESS_DENIED" | "NOT_FOUND" | "UNAVAILABLE" | "INVALID_RESPONSE" | "STALE_RESPONSE" | "CONFLICT" | "UPGRADE_REQUIRED" | "FILE_EVIDENCE_DISABLED" | "INVALID_FILE_OBSERVATION" | "FILE_OBSERVATION_CONFLICT" | "COMPARISON_ORIGINAL_UNAVAILABLE" | "INVALID_COMPARISON_RELATION" | "COMPARISON_CAPACITY_EXCEEDED" | AccountJournalWriteRejection }
+
+export type CorrectImportedObservationRequest = Extract<AccountJournalRequest, { action: "correctImportedObservation" }>
 
 export async function requestAccountJournal(
   ownerId: string, request: AccountJournalRequest,
@@ -75,18 +85,27 @@ export async function requestAccountDocument<T>(
     if (session.error || session.data.session?.user.id !== ownerId || typeof token !== "string"
       || token.trim() !== token || !/^[A-Za-z0-9._~+\/-]+=*$/u.test(token)) return { ok: false, code: "AUTH_REQUIRED" }
     // The SDK rereads auth before fetch; never let a later session select this request's owner.
+    const journalCall = Object.is(schema, accountJournalRecordSchema) || ["correctImportedObservation", "confirmComparisonRelation", "releaseComparisonRelation"].includes(request.action)
+      || ((request.action === "list" || request.action === "history") && request.collection === "JOURNAL")
+      || (request.action === "save" && (request.document as { kind?: unknown })?.kind === "JOURNAL")
     const { data, error } = await client.functions.invoke("account-journal", {
-      body: request, headers: { Authorization: `Bearer ${token}` },
+      body: journalCall ? { ...request, supportedJournalVersions: [2, 3] } : request,
+      headers: { Authorization: `Bearer ${token}` },
     })
     let responseData: unknown = data
     if (!current()) return { ok: false, code: "STALE_RESPONSE" }
     if (error) {
       const status = error.context instanceof Response ? error.context.status : 0
-      if (status === 409 && ["save", "delete", "restore"].includes(request.action)) {
+      if (status === 426) return { ok: false, code: "UPGRADE_REQUIRED" }
+      if ([409, 422].includes(status) && ["save", "delete", "restore", "correctImportedObservation", "confirmComparisonRelation", "releaseComparisonRelation"].includes(request.action)) {
         responseData = await error.context.clone().json()
         if (!current()) return { ok: false, code: "STALE_RESPONSE" }
         const rejection = (responseData as { error?: unknown })?.error
+        if (rejection === "FILE_EVIDENCE_DISABLED" || rejection === "INVALID_FILE_OBSERVATION"
+          || rejection === "FILE_OBSERVATION_CONFLICT" || rejection === "COMPARISON_ORIGINAL_UNAVAILABLE"
+          || rejection === "INVALID_COMPARISON_RELATION" || rejection === "COMPARISON_CAPACITY_EXCEEDED") return { ok: false, code: rejection }
         if (isAccountJournalWriteRejection(rejection)) return { ok: false, code: rejection }
+        if (status === 422) return { ok: false, code: "UNAVAILABLE" }
         if ((responseData as { kind?: unknown })?.kind !== "conflict") return { ok: false, code: "CONFLICT" }
       } else return { ok: false, code: status === 401 ? "AUTH_REQUIRED" : status === 403 ? "ACCESS_DENIED"
         : status === 404 && request.action === "read" ? "NOT_FOUND" : "UNAVAILABLE" }

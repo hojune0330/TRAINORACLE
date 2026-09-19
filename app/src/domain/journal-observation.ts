@@ -8,13 +8,17 @@ import type { JournalEntry } from "./journal-schema"
 import { parseDistanceKm, parseDurationMin, parsePaceText } from "./numeric-input"
 import { journalSystemToEnergySystem } from "./energy-system-taxonomy"
 import type { EnergySystemKey } from "./energy-system-taxonomy"
+import { isProjectedFileObservation, projectFileObservation, type FileAnalysisEntry, type ProjectedFileObservation } from "./import/file-analysis"
+import type { FileAnalysisFormat } from "./import/file-analysis-policy"
+import { parseFileObservation } from "./import/file-observation"
+import { readCurrentConfirmedAccountJournalProjection } from "./account/account-journal-projection"
 
 export const PACE_DERIVATION_RULE_ID = "JOURNAL_DISTANCE_DURATION_TO_SECONDS_PER_KM_V1"
 export const PAIN_MAX_DERIVATION_RULE_ID = "JOURNAL_EXPLICIT_PAIN_PARTS_TO_MAX_V1"
 
 export type ObservationTrustState = "ACCEPTED" | "STALE" | "CONFLICTING" | "MISSING" | "SOURCE_NOT_VERIFIED"
 
-export type ObservationProvenance = "EXPLICIT" | "DERIVED" | "MISSING" | "LEGACY_MISSING_PROVENANCE"
+export type ObservationProvenance = "EXPLICIT" | "DERIVED" | "FILE" | "MISSING" | "LEGACY_MISSING_PROVENANCE"
 
 export type StructuredJournalInput =
   | {
@@ -28,6 +32,7 @@ export type StructuredJournalInput =
       readonly avgPace: string
       readonly rpe: number
       readonly fieldProvenance?: FieldProvenanceMap
+      readonly acceptedFileObservation?: ProjectedFileObservation
     }
   | {
       readonly sourceKind: "DAILY_CHECKIN_RECORD"
@@ -41,6 +46,8 @@ export type StructuredJournalInput =
 
 export type StructuredJournalObservation = {
   readonly acceptedExplicitFields?: readonly string[]
+  readonly acceptedFileFields?: readonly "distanceKm"[]
+  readonly acceptedFileObservation?: ProjectedFileObservation
   readonly sourceRef: {
     readonly sourceKind: StructuredJournalInput["sourceKind"]
     readonly sourceId: string
@@ -121,9 +128,36 @@ function hasEveningSignal(entry: Extract<JournalEntry, { readonly kind: "evening
   return entry.mood > 0 || Object.values(entry.painParts).some((level) => level > 0)
 }
 
-export function selectStructuredJournalInput(entry: JournalEntry): StructuredJournalInput | null {
+export type StructuredJournalProjectionOptions = {
+  readonly formats?: readonly FileAnalysisFormat[]
+  /** Trusted caller scope, never loaded from a journal/backup payload. Defaults to revisions checked in this account session. */
+  readonly confirmedFileEntries?: readonly FileAnalysisEntry[]
+}
+
+function matchesConfirmedFileEntry(entry: FileAnalysisEntry, confirmedEntries: readonly FileAnalysisEntry[]): boolean {
+  const file = parseFileObservation(entry.fileObservation)
+  if (file === null) return false
+  const matches = confirmedEntries.filter(candidate => candidate.id === entry.id)
+  if (matches.length === 0) return false
+  const signature = JSON.stringify(file)
+  return matches.every(candidate => {
+    if (candidate.kind !== entry.kind || candidate.date !== entry.date) return false
+    const confirmed = parseFileObservation(candidate.fileObservation)
+    return confirmed !== null && JSON.stringify(confirmed) === signature
+  })
+}
+
+export function selectStructuredJournalInput(
+  entry: JournalEntry,
+  options: StructuredJournalProjectionOptions = {},
+): StructuredJournalInput | null {
   if (entry.kind === "post-session") {
-    if (!hasSessionSignal(entry)) return null
+    const file = projectFileObservation({ id: entry.id, kind: entry.kind, date: entry.date, fileObservation: entry.fileObservation }, {
+      formats: options.formats,
+      sourceContext: matchesConfirmedFileEntry(entry, options.confirmedFileEntries ?? readCurrentConfirmedAccountJournalProjection())
+        ? "ACCOUNT_CONFIRMED" : "DEVICE_PREVIEW",
+    })
+    if (!hasSessionSignal(entry) && file.status !== "ACCEPTED") return null
     return {
       sourceKind: "SESSION_RESULT_RECORD",
       sourceId: entry.id,
@@ -134,6 +168,7 @@ export function selectStructuredJournalInput(entry: JournalEntry): StructuredJou
       durationMin: entry.durationMin,
       avgPace: entry.avgPace,
       rpe: entry.rpe,
+      ...(file.status === "ACCEPTED" ? { acceptedFileObservation: file.observation } : {}),
       ...(entry.fieldProvenance === undefined ? {} : { fieldProvenance: entry.fieldProvenance }),
     }
   }
@@ -159,9 +194,11 @@ export function selectStructuredJournalInput(entry: JournalEntry): StructuredJou
  */
 export function projectStructuredJournalObservations(
   entries: readonly JournalEntry[],
+  options: StructuredJournalProjectionOptions = {},
 ): readonly StructuredJournalObservation[] {
+  const scopedOptions = { ...options, confirmedFileEntries: options.confirmedFileEntries ?? readCurrentConfirmedAccountJournalProjection() }
   return entries.flatMap((entry) => {
-    const input = selectStructuredJournalInput(entry)
+    const input = selectStructuredJournalInput(entry, scopedOptions)
     return input === null ? [] : [projectStructuredJournalObservation(input)]
   })
 }
@@ -243,7 +280,12 @@ export function projectStructuredJournalObservation(
     }
   }
 
-  const distanceKm = positiveDistance(input.distanceKm)
+  const file = isProjectedFileObservation(input.acceptedFileObservation)
+    && input.acceptedFileObservation.journalEntryId === input.sourceId
+    && input.acceptedFileObservation.date === input.loggedOn
+      ? input.acceptedFileObservation : null
+  const useFileDistance = file !== null && input.fieldProvenance?.distanceKm?.provenance !== "EXPLICIT"
+  const distanceKm = useFileDistance ? file.distanceMeters === null ? null : file.distanceMeters / 1000 : positiveDistance(input.distanceKm)
   const durationMin = positiveDuration(input.durationMin)
   const recordedPace = parsePaceText(input.avgPace)
   const derivedPace = recordedPace === null
@@ -255,8 +297,15 @@ export function projectStructuredJournalObservation(
   const hasDerivedPace = derivedPace !== null
 
   return {
-    sourceRef,
+    sourceRef: file === null ? sourceRef : {
+      ...sourceRef,
+      sourceVersion: file.contentRevisionFingerprint,
+    },
     loggedOn: input.loggedOn,
+    ...(file === null ? {} : { acceptedFileObservation: file }),
+    ...(useFileDistance ? {
+      acceptedFileFields: file.sport === "RUNNING" && file.distanceMeters !== null ? ["distanceKm" as const] : [],
+    } : {}),
     acceptedExplicitFields: ["system", "distanceKm", "durationMin", "rpe"]
       .filter(field => input.fieldProvenance?.[field]?.provenance === "EXPLICIT"),
     energySystem: journalSystemToEnergySystem(input.system ?? ""),
@@ -269,7 +318,7 @@ export function projectStructuredJournalObservation(
     painSourceLevels: [],
     fieldProvenance: {
       system: provenanceOf("system", input.fieldProvenance),
-      distanceKm: provenanceOf("distanceKm", input.fieldProvenance),
+      distanceKm: useFileDistance ? "FILE" : provenanceOf("distanceKm", input.fieldProvenance),
       durationMin: provenanceOf("durationMin", input.fieldProvenance),
       secondsPerKm: hasDerivedPace
         ? "DERIVED"

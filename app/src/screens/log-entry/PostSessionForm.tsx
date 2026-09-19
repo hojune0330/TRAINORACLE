@@ -165,6 +165,8 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
         ? { intensityAssessment: intensity.assessment }
         : {}),
       ...(planLink === undefined ? {} : { plannedSessionLink: planLink }),
+      ...(initial?.fileObservation === undefined ? {} : { fileObservation: initial.fileObservation }),
+      ...(initial?.comparisonRelations === undefined ? {} : { comparisonRelations: initial.comparisonRelations }),
       fieldProvenance: {
         ...(activityOutcome === undefined ? {} : { activityOutcome: explicitOrMissing(true) }),
         ...(didPerform && activitySlot !== undefined ? { activitySlot: explicitOrMissing(true) } : {}),

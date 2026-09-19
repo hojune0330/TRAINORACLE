@@ -14,11 +14,16 @@ import type { JournalEntry, PostSessionEntry } from "../journal-schema"
 import { legacyJournalWritesBlocked, loadEntries, newEntryId, saveEntry, updateEntryPreservingMemo } from "../journal-store"
 import { canEditJournalEntry } from "../journal-edit-policy"
 import type { AccountJournalWriteBase } from "../account/account-journal-record-service"
+import { parseFileObservation, toFileObservationSummary, type FileObservationV1 } from "./file-observation"
 
 /** 가져오기 파생 입력 토큰 — 일지 필드가 아니라 "파일에서 왔다"는 표시 */
 export const IMPORT_DERIVED_FROM = ["import:activity-file"] as const
 
 export type ImportFormat = "tcx" | "gpx" | "csv" | "json"
+
+export type ImportIdentityCandidate = Pick<PostSessionEntry, "id" | "savedAt" | "activitySlot" | "title"> & {
+  readonly kind: "REUSE" | "ATTACH" | "CORRECTION"
+}
 
 export type ImportDraft = {
   readonly accountWriteBases?: Readonly<Record<string, Pick<AccountJournalWriteBase, "revision" | "contentFingerprint">>>
@@ -27,11 +32,17 @@ export type ImportDraft = {
   /** 같은 날 비슷한 활동의 기존 일지 id — 있으면 UI가 "이미 있는 것 같아요" 표시 */
   readonly duplicateOf: string | null
   readonly reconciliationCandidates: readonly Pick<PostSessionEntry, "id" | "savedAt" | "activitySlot" | "title">[]
+  readonly identityCandidates?: readonly ImportIdentityCandidate[]
+  readonly requiresIdentityChoice?: boolean
+  /** Review hint only; never a persisted source identity. */
+  readonly batchDuplicateOf?: number
 }
 
 export type ImportSaveIntent =
-  | { readonly kind: "SAVE_SEPARATE" }
+  | { readonly kind: "SAVE_SEPARATE"; readonly confirmedSeparate?: true }
   | { readonly kind: "ADD_TO_EXISTING"; readonly entryId: string; readonly expectedSavedAt: string }
+  | { readonly kind: "USE_EXISTING"; readonly entryId: string; readonly expectedSavedAt: string }
+  | { readonly kind: "EXCLUDE" }
 
 export type ImportDraftSelection = { readonly draft: ImportDraft; readonly intent: ImportSaveIntent }
 
@@ -40,14 +51,27 @@ export type ImportSaveResult = {
   readonly pending?: number
   readonly saved: number
   readonly merged?: number
+  readonly reused?: number
+  readonly excluded?: number
   readonly conflicts?: number
   readonly failed: number
   readonly total: number
+  readonly stopReason?: "ACCOUNT_UNAVAILABLE" | "SAVE_REJECTED"
 }
 
 function numeric(value: string): number | null {
-  const parsed = Number.parseFloat(value)
+  if (!/^(?:\d+(?:\.\d*)?|\.\d+)$/u.test(value.trim())) return null
+  const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : null
+}
+
+/** Called only after the athlete confirms the import. It does not assert a time meaning. */
+export function confirmedFileActivity(activity: ImportedActivity, format: ImportFormat): ImportedActivity | null {
+  const parsed = parseFileObservation(activity.observation)
+  if (!parsed || parsed.format !== format || parsed.date !== activity.date) return null
+  const observation: FileObservationV1 = { ...parsed,
+    confirmation: parsed.confirmation ?? { durationMeaning: null, sport: null } }
+  return { ...activity, ...toFileObservationSummary(observation), observation }
 }
 
 /** 같은 활동으로 볼 만한지 — 거리 우선, 거리를 못 읽으면 시간으로 판단 */
@@ -66,11 +90,52 @@ function looksLikeSameActivity(existing: PostSessionEntry, activity: ImportedAct
   return false
 }
 
+export function sameFileObservation(left: FileObservationV1, right: FileObservationV1): boolean {
+  const confirmation = (value: FileObservationV1) => value.confirmation ?? { durationMeaning: null, sport: null }
+  return left.contentRevisionFingerprint === right.contentRevisionFingerprint
+    && confirmation(left).durationMeaning === confirmation(right).durationMeaning
+    && confirmation(left).sport === confirmation(right).sport
+}
+
+/** Candidates are hints, not merge authority. A fresh private revision is checked at save. */
+export function fileImportCandidateKind(entry: JournalEntry, activity: ImportedActivity): ImportIdentityCandidate["kind"] | null {
+  const observation = parseFileObservation(activity.observation)
+  return observation ? identityCandidateKind(entry, activity, observation) : null
+}
+
+function identityCandidateKind(entry: JournalEntry, activity: ImportedActivity, observation: FileObservationV1): ImportIdentityCandidate["kind"] | null {
+  if (entry.kind !== "post-session") return null
+  const previous = entry.fileObservation
+  if (previous) {
+    const sameSource = previous.sourceObservationKey === observation.sourceObservationKey
+    const noIdCandidate = observation.sourceActivityId === null && previous.sourceProfile === observation.sourceProfile
+      && previous.contentRevisionFingerprint === observation.contentRevisionFingerprint
+    return sameSource || noIdCandidate ? sameFileObservation(previous, observation) ? "REUSE" : "CORRECTION" : null
+  }
+  if (entry.date !== activity.date || entry.fieldProvenance === undefined || !looksLikeSameActivity(entry, activity)) return null
+  const summary = toFileObservationSummary(observation)
+  return (["distanceKm", "durationMin", "avgPace"] as const).every(field => {
+    const provenance = entry.fieldProvenance?.[field]
+    return entry[field] === "" || entry[field] === summary[field]
+      || provenance?.provenance === "DERIVED" && provenance.derivedFrom.includes("import:activity-file")
+  }) ? "ATTACH" : null
+}
+
 export function buildImportDrafts(
   activities: readonly ImportedActivity[],
   existing: readonly JournalEntry[] = loadEntries(),
 ): ImportDraft[] {
-  return activities.map((activity) => {
+  const firstNoId = new Map<string, number>()
+  const noIdCounts = new Map<string, number>()
+  const entryCounts = new Map<string, number>()
+  for (const entry of existing) entryCounts.set(entry.id, (entryCounts.get(entry.id) ?? 0) + 1)
+  for (const activity of activities) {
+    const observation = activity.observation
+    if (observation?.sourceActivityId === null) noIdCounts.set(observation.sourceObservationKey,
+      (noIdCounts.get(observation.sourceObservationKey) ?? 0) + 1)
+  }
+  return activities.map((activity, sourceIndex) => {
+    const observation = parseFileObservation(activity.observation)
     const duplicate = existing.find(
       (entry): entry is PostSessionEntry =>
         entry.kind === "post-session"
@@ -81,9 +146,21 @@ export function buildImportDrafts(
     // the athlete chooses one exact entry and confirms its saved revision.
     const reconciliationCandidates = existing
       .filter((entry): entry is PostSessionEntry => isWaitingCandidate(entry, activity.date)
-        && existing.filter((other) => other.id === entry.id).length === 1)
+        && entryCounts.get(entry.id) === 1)
       .map(({ id, savedAt, activitySlot, title }) => ({ id, savedAt, activitySlot, title }))
-    return { activity, duplicateOf: duplicate?.id ?? null, reconciliationCandidates }
+    const identityCandidates: ImportIdentityCandidate[] = existing.flatMap(entry => {
+      const kind = observation ? identityCandidateKind(entry, activity, observation) : null
+      if (!kind || entry.kind !== "post-session" || entryCounts.get(entry.id) !== 1) return []
+      const { id, savedAt, activitySlot, title } = entry
+      return [{ id, savedAt, activitySlot, title, kind }]
+    })
+    const batchDuplicateOf = observation?.sourceActivityId === null ? firstNoId.get(observation.sourceObservationKey) : undefined
+    if (observation?.sourceActivityId === null && batchDuplicateOf === undefined) firstNoId.set(observation.sourceObservationKey, sourceIndex)
+    const requiresIdentityChoice = observation !== null && (observation.sourceActivityId === null
+      ? duplicate !== undefined || identityCandidates.length > 0 || (noIdCounts.get(observation.sourceObservationKey) ?? 0) > 1
+      : !identityCandidates.some(candidate => candidate.kind === "REUSE") && identityCandidates.some(candidate => candidate.kind === "ATTACH"))
+    return { activity, duplicateOf: duplicate?.id ?? null, reconciliationCandidates,
+      identityCandidates, requiresIdentityChoice, ...(batchDuplicateOf === undefined ? {} : { batchDuplicateOf }) }
   })
 }
 
@@ -140,9 +217,11 @@ export function confirmImportDrafts(
   let merged = 0
   let conflicts = 0
   let failed = 0
+  let excluded = 0
   let total = loadEntries().length
 
   for (const { draft, intent } of selections) {
+    if (intent?.kind === "EXCLUDE") { excluded++; continue }
     if (intent?.kind === "SAVE_SEPARATE") {
       const result = saveImportedActivity(draft.activity, format)
       if (result.ok) saved += 1
@@ -185,25 +264,30 @@ export function confirmImportDrafts(
     total = result.total
   }
 
-  return { saved, merged, conflicts, failed, total }
+  return { saved, merged, conflicts, failed, total, ...(excluded ? { excluded } : {}) }
 }
 
 /** 가져온 활동 1건을 저장할 post-session 일지로 변환 (저장은 하지 않음) */
-export function toImportedEntry(activity: ImportedActivity, format: ImportFormat): PostSessionEntry {
+export function toImportedEntry(activity: ImportedActivity, format: ImportFormat,
+  options: { readonly includeFileObservation?: boolean } = {}): PostSessionEntry {
+  const confirmed = options.includeFileObservation ? confirmedFileActivity(activity, format) : null
+  if (options.includeFileObservation && !confirmed) throw new Error("INVALID_FILE_OBSERVATION")
+  const source = confirmed ?? activity
   return {
     id: newEntryId(),
     kind: "post-session",
     date: activity.date,
     savedAt: new Date().toISOString(),
     syncState: "local",
-    system: "base",
-    title: activity.name,
-    distanceKm: activity.distanceKm,
-    durationMin: activity.durationMin,
-    avgPace: activity.avgPace,
+    system: confirmed ? "" : "base",
+    title: confirmed ? (confirmed.observation?.sport === "RUNNING" ? "가져온 달리기" : "가져온 운동") : activity.name,
+    distanceKm: source.distanceKm,
+    durationMin: source.durationMin,
+    avgPace: source.avgPace,
     rpe: 0,
     memo: "",
-    fieldProvenance: importedProvenance(activity, format),
+    fieldProvenance: importedProvenance(source, format),
+    ...(confirmed?.observation ? { fileObservation: confirmed.observation } : {}),
   }
 }
 

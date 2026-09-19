@@ -149,9 +149,11 @@ describe("training home modes", () => {
     expect(contentSections[0]).toHaveClass("training-home__next")
     expect(contentSections[1]).toHaveClass("training-home__today")
     expect(contentSections[2]).toHaveClass("training-home__recent")
-    expect(screen.getByRole("button", {
-      name: /다음 훈련.*지속 페이스.*LT 훈련.*8월 20일.*오후.*총 25~40분.*RPE 5~6/u,
-    })).toBeVisible()
+    const nextTraining = screen.getByRole("button", { name: /^다음 훈련 ·/u })
+    expect(nextTraining).toBeVisible()
+    expect(nextTraining).toHaveAccessibleName(/조금 힘들게 꾸준히 · LT 훈련.*8월 20일.*오후.*총 25~40분.*RPE 5~6/u)
+    expect(nextTraining).toHaveTextContent("조금 힘들게 꾸준히 · LT 훈련")
+    expect(nextTraining).toHaveTextContent(/8월 20일.*오후.*총 25~40분.*RPE 5~6/u)
   })
 
   it("preserves intro, today, recent journal, and services order in journal mode", () => {

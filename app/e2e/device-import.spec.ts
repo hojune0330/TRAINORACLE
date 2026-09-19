@@ -60,7 +60,10 @@ test("imports a watch TCX file into the local journal and marks its source", asy
   expect(entry).toMatchObject({
     kind: "post-session",
     syncState: "local",
-    distanceKm: "8.00",
+    // Storage uses the canonical source value; display padding is not stored precision.
+    distanceKm: "8",
+    durationMin: "40",
+    avgPace: "",
     fieldProvenance: {
       distanceKm: { provenance: "DERIVED", derivedFrom: ["import:activity-file"] },
       rpe: { provenance: "MISSING" },
@@ -81,8 +84,16 @@ test("counts an imported journal without treating its numbers as analysis eviden
 
   await page.getByRole("button", { name: "일지에서 확인하기" }).click()
 
-  // 일지에는 보이고, 출처 배지가 붙는다.
+  // 월 목록과 달력을 거쳐 실제 날짜의 일지를 연다.
+  const [year, month, day] = today.split("-").map(Number)
+  const monthLabel = `${year}년 ${month}월`
+  await page.getByRole("region", { name: "월별 기록" }).getByRole("button", { name: new RegExp(`^${monthLabel} `, "u") }).click()
+  await expect(page.getByText("1일 · 1개 기록", { exact: true })).toBeVisible()
+  await page.getByRole("grid", { name: `${monthLabel} 달력` }).getByRole("button", {
+    name: new RegExp(`^${monthLabel} ${day}일 .*훈련 후 1건 일지 열기$`, "u"),
+  }).click()
   await expect(page.getByTestId("imported-chip").first()).toBeVisible()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "홈", exact: true }).click()
   const services = page.getByRole("navigation", { name: "내 기록 살펴보기" })
   await expect(services.getByRole("button", { name: /^내 일지/u })).toContainText("1일 · 1개의 기록")
   await page.getByRole("button", { name: "내 훈련 분석", exact: true }).click()
@@ -156,7 +167,7 @@ test("reconciles a detailed continuation and keeps subjective editing available"
   await expect(page.getByTestId("import-saved")).toContainText("기존 일지 1건 보완")
   const merged = await page.evaluate((key) => JSON.parse(window.localStorage.getItem(key) ?? "[]"), JOURNAL_KEY)
   expect(merged).toHaveLength(1)
-  expect(merged[0]).toMatchObject({ id: original.id, distanceKm: "8.00", rpe: 6, objectiveDataState: "CONFIRMED" })
+  expect(merged[0]).toMatchObject({ id: original.id, distanceKm: "8", durationMin: "40", avgPace: "", rpe: 6, objectiveDataState: "CONFIRMED" })
 
   await page.goto("/?app=1")
   await page.getByRole("button", { name: /Synthetic afternoon journal.*상세 열기/u }).click()
@@ -167,7 +178,7 @@ test("reconciles a detailed continuation and keeps subjective editing available"
   await page.reload()
   const edited = await page.evaluate((key) => JSON.parse(window.localStorage.getItem(key) ?? "[]"), JOURNAL_KEY)
   expect(edited).toHaveLength(1)
-  expect(edited[0]).toMatchObject({ id: original.id, distanceKm: "8.00", rpe: 7 })
+  expect(edited[0]).toMatchObject({ id: original.id, distanceKm: "8", durationMin: "40", avgPace: "", rpe: 7 })
   expect(edited[0].fieldProvenance.distanceKm).toEqual(merged[0].fieldProvenance.distanceKm)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 })

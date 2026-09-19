@@ -7,6 +7,7 @@ import { createAccountJournalHandler, createAccountJournalRepository, importJour
   validateDraftDocument, validateAccountJournalDocument, MAX_BODY_BYTES } from '../functions/_shared/account-journal-handler.mjs';
 import { encryptAccountJournalDocument as encrypt } from '../functions/_shared/account-journal-crypto.mjs';
 import * as accountState from '../functions/_shared/account-state-validator.mjs';
+import { accountPlanCollectionDocumentId, accountPlanCollectionMetadata } from '../functions/_shared/account-plan-collection-handler.mjs';
 
 const OWNER = 'a1111111-1111-4111-8111-111111111111';
 const OTHER = 'b2222222-2222-4222-8222-222222222222';
@@ -27,11 +28,14 @@ if (process.env.JOURNAL_HANDLER_MUTATION) {
     'history-record-identity': ["if (doc.state === 'FINALIZED' && await recordId(ownerId, doc.entry.id) !== documentId) throw 0;", ''],
     'history-collection-filter': ["input.collection !== 'JOURNAL' || value.document.state === 'FINALIZED'", 'true'],
     'purged-operation-guard': ["if (prior.proposed_encrypted_payload === null) fail(409, 'OPERATION_REPLAY_UNAVAILABLE');", ''],
+    'file-evidence-gate': ["if (enabled === false) fail(409, 'FILE_EVIDENCE_DISABLED');", 'if (enabled === false) return;'],
+    'journal-capability': ["if (document?.state === 'FINALIZED' && !input.supportedJournalVersions.includes(document.version)) fail(426, 'UPGRADE_REQUIRED');", ''],
+    'comparison-binding': ["if (!validateAccountJournalComparisonConfirmation(current.document, request, original)) fail(422, 'INVALID_COMPARISON_RELATION');", ''],
   };
   const change = mutations[process.env.JOURNAL_HANDLER_MUTATION];
   assert.ok(change && source.includes(change[0]), 'mutation must change an observed guard');
   source = source.replace(...change);
-  for (const file of ['account-journal-crypto.mjs','account-journal-record-validator.mjs','account-state-validator.mjs'])
+  for (const file of ['account-journal-crypto.mjs','account-journal-record-validator.mjs','account-state-validator.mjs','account-journal-comparison-original.mjs'])
     source = source.replace(`'./${file}'`,JSON.stringify(new URL(file,url).href));
   handlerFactory = (await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`)).createAccountJournalHandler;
 }
@@ -378,6 +382,260 @@ const finalized = { version: 2, state: 'FINALIZED', kind: 'JOURNAL', entry: {
   syncState: 'local', system: 'recovery', title: '', distanceKm: '', durationMin: '', avgPace: '',
   rpe: 0, memo: 'Synthetic private record', memoPurpose: 'PRIVATE_SELF_ONLY',
 } };
+const capabilities = { supportedJournalVersions: [2, 3] };
+let evidenceFixtureModule;
+async function evidenceFixture() {
+  if (!evidenceFixtureModule) {
+    const { build } = createRequire(new URL('../../app/package.json', import.meta.url))('esbuild');
+    const output = await build({ stdin: { contents: 'export * from "./src/domain/import/file-observation.ts";',
+      resolveDir: fileURLToPath(new URL('../../app/', import.meta.url)), loader: 'ts' },
+      tsconfig: fileURLToPath(new URL('../../app/tsconfig.json', import.meta.url)),
+      bundle: true, write: false, platform: 'neutral', format: 'esm' });
+    evidenceFixtureModule = await import(`data:text/javascript;base64,${Buffer.from(output.outputFiles[0].text).toString('base64')}`);
+  }
+  const module = evidenceFixtureModule;
+  const input = { format: 'tcx', sourceProfile: 'TCX_ACTIVITY_V1', parserVersion: 'tcx-v1', sourceActivityId: null,
+    date: finalized.entry.date, startedAt: null, timeZone: null, sport: 'RUNNING', distanceMeters: 5000,
+    durationSeconds: 1800, durationMeaning: 'SOURCE_DEFINED', confirmation: { sport: null, durationMeaning: null },
+    laps: [{ sourceIndex: 0, distanceMeters: 5000, durationSeconds: 1800, durationMeaning: 'SOURCE_DEFINED', kind: 'UNKNOWN' }] };
+  const observation = module.buildFileObservation(input);
+  const document = { ...finalized, version: 3, entry: { ...finalized.entry,
+    ...module.toFileObservationSummary(observation), fileObservation: observation } };
+  const replacement = module.buildFileObservation({ ...input, sourceIdentityFingerprint: observation.sourceIdentityFingerprint,
+    distanceMeters: 5100, laps: [{ ...input.laps[0], distanceMeters: 5100 }] });
+  const documentId = await finalizedId();
+  const f = await fixture({ dependencies: { validateDocument: validateAccountJournalDocument },
+    repo: { fileEvidenceEnabled: async owner => { assert.equal(owner, OWNER); return true; } } });
+  const history = [];
+  const commit = f.repo.commit;
+  f.repo.commit = async request => {
+    const old = f.docs.get(f.key(OWNER, request.documentId));
+    const receipt = await commit(request);
+    if (receipt.kind === 'saved' && old?.encrypted_payload) history.unshift({ revision: old.revision,
+      encryptedPayload: old.encrypted_payload, replacedAt, expiresAt, reason: 'replaced' });
+    return receipt;
+  };
+  f.repo.history = async () => history;
+  const create = save({ ...capabilities, documentId, document, writePurpose: 'FILE_OBSERVATION' });
+  const correction = { ...capabilities, action: 'correctImportedObservation', documentId, operationId: OP2, expectedRevision: 1,
+    previousContentRevisionFingerprint: observation.contentRevisionFingerprint, replacementObservation: replacement,
+    confirmedChangedFields: ['distanceMeters', 'laps'] };
+  return { ...f, history, module, observation, replacement, document, documentId, create, correction };
+}
+
+test('P2B dual-read capabilities return explicit 426, preserve status and page boundaries', async () => {
+  const f = await evidenceFixture();
+  await response(await f.request(f.create), 200);
+  for (const input of [{ action: 'read', documentId: f.documentId }, { action: 'list', collection: 'JOURNAL' }]) {
+    await response(await f.request(input), 426, { error: 'UPGRADE_REQUIRED' });
+    const supported = await response(await f.request({ ...input, ...capabilities }), 200);
+    assert.deepEqual(input.action === 'read' ? supported.document : supported.documents[0].document, f.document);
+  }
+  await response(await f.request({ action: 'status' }), 200, { kind: 'ready' });
+  await response(await f.request({ action: 'status', ...capabilities }), 200, { kind: 'ready' });
+  await response(await f.request({ action: 'list' }), 200, { kind: 'list', documents: [], nextCursor: null });
+  await response(await f.request({ action: 'list', supportedJournalVersions: [3, 3] }), 400);
+  f.history.push(await historyRow(f, {}, f.document, { ownerId: OWNER, documentId: f.documentId }));
+  await response(await f.request({ action: 'history', documentId: f.documentId, collection: 'JOURNAL' }), 426);
+  assert.equal((await response(await f.request({ action: 'history', documentId: f.documentId, collection: 'JOURNAL', ...capabilities }), 200)).versions.length, 1);
+  await response(await f.request(save({ documentId: f.documentId, expectedRevision: 1, operationId: OP2, document: finalized })), 426);
+  assert.equal(f.calls.commit, 1);
+});
+
+test('P2B file gate blocks only new evidence, no import awards, downgrade or ordinary evidence mutation', async () => {
+  const f = await evidenceFixture();
+  f.repo.fileEvidenceEnabled = async () => false;
+  await response(await f.request(f.create), 409, { error: 'FILE_EVIDENCE_DISABLED' });
+  f.repo.fileEvidenceEnabled = async () => undefined;
+  await response(await f.request(f.create), 503);
+  await response(await f.request(save({ documentId: f.documentId, document: finalized })), 200);
+  const attach = { ...f.create, expectedRevision: 1, operationId: OP2 };
+  f.repo.fileEvidenceEnabled = async () => true;
+  await response(await f.request(attach), 200);
+  assert.equal(f.operations.get(f.key(OWNER, OP2)).trusted_metadata.awardAllowed, false);
+  f.repo.fileEvidenceEnabled = async () => false;
+  await response(await f.request(attach), 200);
+  const memo = { ...f.document, entry: { ...f.document.entry, memo: 'Synthetic changed memo' } };
+  await response(await f.request(save({ ...capabilities, documentId: f.documentId, document: memo, expectedRevision: 2,
+    operationId: crypto.randomUUID() })), 200);
+  for (const document of [finalized, { ...memo, entry: { ...memo.entry, fileObservation: f.replacement } }]) {
+    await response(await f.request(save({ ...capabilities, documentId: f.documentId, document, expectedRevision: 3,
+      operationId: crypto.randomUUID() })), 422);
+  }
+  const fresh = await evidenceFixture();
+  await response(await fresh.request(fresh.create), 200);
+  assert.equal(fresh.operations.get(fresh.key(OWNER, OP)).trusted_metadata.awardAllowed, false);
+});
+
+test('P2B correction preserves private/base fields, recalculates summary, replays exactly without rewards', async () => {
+  const f = await evidenceFixture();
+  await response(await f.request(f.create), 200);
+  const receipt = await response(await f.request(f.correction), 200);
+  assert.equal(receipt.revision, 2);
+  const loaded = await response(await f.request({ action: 'read', documentId: f.documentId, ...capabilities }), 200);
+  assert.deepEqual(loaded.document, { ...f.document, entry: { ...f.document.entry,
+    ...f.module.toFileObservationSummary(f.replacement), fileObservation: f.replacement } });
+  assert.equal(f.operations.get(f.key(OWNER, OP2)).trusted_metadata.awardAllowed, false);
+  f.repo.fileEvidenceEnabled = async () => false;
+  await response(await f.request(f.correction), 200, receipt);
+  for (const changed of [{ confirmedChangedFields: ['distanceMeters'] },
+    { previousContentRevisionFingerprint: `sha256:${'0'.repeat(64)}` }, { replacementObservation: f.observation }])
+    await response(await f.request({ ...f.correction, ...changed }), 409, { error: 'OPERATION_REUSED' });
+  f.history.length = 0;
+  await response(await f.request(f.correction), 409, { error: 'OPERATION_REPLAY_UNAVAILABLE' });
+  assert.equal(f.calls.commit, 2);
+});
+
+test('P2B correction rejects stale, unconfirmed, foreign, deleted and ordinary-save bypasses', async () => {
+  const f = await evidenceFixture();
+  await response(await f.request(f.create), 200);
+  await response(await f.request({ ...f.correction, expectedRevision: 0 }), 409);
+  await response(await f.request({ ...f.correction, previousContentRevisionFingerprint: `sha256:${'0'.repeat(64)}` }), 409);
+  await response(await f.request({ ...f.correction, confirmedChangedFields: ['distanceMeters'] }), 422);
+  await response(await f.request({ ...f.correction, memo: 'must not change' }), 400);
+  await response(await f.request({ ...f.correction, replacementObservation: { ...f.replacement, parserVersion: 'new' } }), 422);
+  await response(await f.request(f.correction, { headers: { Authorization: 'Bearer other-token' } }), 404);
+  f.repo.fileEvidenceEnabled = async () => false;
+  await response(await f.request(f.correction), 409, { error: 'FILE_EVIDENCE_DISABLED' });
+  f.docs.set(f.key(OWNER, f.documentId), { user_id: OWNER, document_id: f.documentId, revision: 1,
+    encrypted_payload: null, deleted_at: replacedAt });
+  await response(await f.request(f.correction), 409);
+  assert.equal(f.calls.commit, 1);
+});
+
+test('P2B restore cannot downgrade or change evidence and tombstone restoration checks file gate', async () => {
+  const f = await evidenceFixture();
+  await response(await f.request(f.create), 200);
+  const current = f.docs.get(f.key(OWNER, f.documentId));
+  const earlier = { ...f.document, entry: { ...f.document.entry, memo: 'Synthetic earlier memo' } };
+  f.history.push(await historyRow(f, {}, earlier, { ownerId: OWNER, documentId: f.documentId }));
+  let restores = 0;
+  f.repo.restore = async input => {
+    restores++;
+    assert.equal(input.metadata.kind, 'JOURNAL');
+    return { kind: 'restored', documentId: f.documentId, operationId: OP2, revision: 2, sourceRevision: 1 };
+  };
+  const restore = { ...capabilities, action: 'restore', documentId: f.documentId, operationId: OP2,
+    expectedRevision: 1, sourceRevision: 1 };
+  f.repo.fileEvidenceEnabled = async () => false;
+  await response(await f.request(restore), 200);
+  await response(await f.request({ ...restore, supportedJournalVersions: [2] }), 426);
+  f.history[0] = await historyRow(f, {}, finalized, { ownerId: OWNER, documentId: f.documentId });
+  await response(await f.request(restore), 422, { error: 'INVALID_FILE_OBSERVATION' });
+  const corrected = { ...f.document, entry: { ...f.document.entry, ...f.module.toFileObservationSummary(f.replacement), fileObservation: f.replacement } };
+  f.history[0] = await historyRow(f, {}, corrected, { ownerId: OWNER, documentId: f.documentId });
+  await response(await f.request(restore), 409, { error: 'FILE_EVIDENCE_DISABLED' });
+  f.repo.fileEvidenceEnabled = async () => true;
+  await response(await f.request(restore), 422, { error: 'INVALID_FILE_OBSERVATION' });
+  f.history[0] = await historyRow(f, { revision: 2 }, f.document, { ownerId: OWNER, documentId: f.documentId });
+  f.history.push(await historyRow(f, {}, finalized, { ownerId: OWNER, documentId: f.documentId }));
+  f.docs.set(f.key(OWNER, f.documentId), { ...current, encrypted_payload: null, deleted_at: replacedAt });
+  await response(await f.request(restore), 422, { error: 'INVALID_FILE_OBSERVATION' });
+  f.history.length = 1;
+  f.history[0].revision = 1;
+  f.repo.fileEvidenceEnabled = async () => false;
+  await response(await f.request(restore), 409, { error: 'FILE_EVIDENCE_DISABLED' });
+  f.repo.fileEvidenceEnabled = async () => true;
+  await response(await f.request(restore), 200);
+  assert.equal(restores, 2);
+});
+
+test('P2B V3 delete needs capability but not file-write gate; lookahead does not change page scope', async () => {
+  const f = await evidenceFixture();
+  await response(await f.request(f.create), 200);
+  const firstId = '00000000-0000-4000-8000-000000000001';
+  f.docs.set(f.key(OWNER, firstId), { user_id: OWNER, document_id: firstId, revision: 1,
+    encrypted_payload: await encrypt(JSON.stringify(draft), { ownerId: OWNER, documentId: firstId }, f.material.active) });
+  await response(await f.request({ action: 'list', collection: 'JOURNAL', limit: 1 }), 200,
+    { kind: 'list', documents: [], nextCursor: firstId });
+  await response(await f.request({ action: 'list', collection: 'JOURNAL', limit: 1, cursor: firstId }), 426);
+  const page = await response(await f.request({ action: 'list', collection: 'JOURNAL', limit: 1, cursor: firstId, ...capabilities }), 200);
+  assert.equal(page.nextCursor, null); assert.equal(page.documents.length, 1);
+  f.repo.fileEvidenceEnabled = async () => false;
+  let deletes = 0;
+  f.repo.delete = async () => { deletes++; return { kind: 'deleted', documentId: f.documentId, operationId: OP2, revision: 2 }; };
+  const input = { action: 'delete', documentId: f.documentId, operationId: OP2, expectedRevision: 1 };
+  await response(await f.request(input), 426);
+  await response(await f.request({ ...input, ...capabilities }), 200);
+  assert.equal(deletes, 1);
+});
+
+test('P2B corrected owner backup MIGRATION is gated, preserved and never rewarded', async () => {
+  const f = await evidenceFixture();
+  const document = { ...f.document, entry: { ...f.document.entry,
+    ...f.module.toFileObservationSummary(f.replacement), fileObservation: f.replacement } };
+  assert.notEqual(f.replacement.sourceIdentityFingerprint, f.replacement.contentRevisionFingerprint);
+  const input = { ...f.create, document, writePurpose: 'MIGRATION' };
+  f.repo.fileEvidenceEnabled = async () => false;
+  await response(await f.request(input), 409, { error: 'FILE_EVIDENCE_DISABLED' });
+  f.repo.fileEvidenceEnabled = async () => true;
+  await response(await f.request(input), 200);
+  assert.equal(f.operations.get(f.key(OWNER, OP)).trusted_metadata.awardAllowed, false);
+  assert.deepEqual((await response(await f.request({ ...capabilities, action: 'read', documentId: f.documentId }), 200)).document, document);
+  f.repo.fileEvidenceEnabled = async () => false;
+  await response(await f.request(input), 200);
+  const ordinary = await evidenceFixture();
+  await response(await ordinary.request(save({ documentId: ordinary.documentId, document: finalized })), 200);
+  assert.equal(ordinary.operations.get(ordinary.key(OWNER, OP)).trusted_metadata.awardAllowed, true);
+});
+
+test('P2B correction nonce races reuse one receipt and CAS losers never overwrite winner', async () => {
+  const f = await evidenceFixture();
+  await response(await f.request(f.create), 200);
+  let arrived = 0, release;
+  const barrier = new Promise(resolve => { release = resolve; });
+  const operation = f.repo.operation;
+  f.repo.operation = async (owner, id) => {
+    if (id === OP2 && arrived < 2) { arrived++; if (arrived === 2) release(); await barrier; return null; }
+    return operation(owner, id);
+  };
+  const receipts = await Promise.all([f.request(f.correction), f.request(f.correction)]);
+  assert.deepEqual(await response(receipts[0], 200), await response(receipts[1], 200));
+  assert.equal(f.operations.size, 2); assert.equal(f.docs.get(f.key(OWNER, f.documentId)).revision, 2);
+  const loser = await evidenceFixture();
+  await response(await loser.request(loser.create), 200);
+  const commit = loser.repo.commit;
+  const winner = { ...loser.document, entry: { ...loser.document.entry, memo: 'Synthetic concurrent memo' } };
+  loser.repo.commit = async input => {
+    await commit({ ...input, operationId: crypto.randomUUID(), encryptedPayload: await encrypt(JSON.stringify(winner),
+      { ownerId: OWNER, documentId: loser.documentId }, loser.material.active) });
+    return commit(input);
+  };
+  const result = await response(await loser.request(loser.correction), 409);
+  assert.equal(result.kind, 'conflict'); assert.equal(result.currentRevision, 2);
+  assert.deepEqual((await response(await loser.request({ ...capabilities, action: 'read', documentId: loser.documentId }), 200)).document, winner);
+  await response(await loser.request(loser.correction), 409, result);
+});
+
+test('P2B correction winning between receipt lookup and read still returns identical receipt', async () => {
+  const f = await evidenceFixture();
+  await response(await f.request(f.create), 200);
+  const operation = f.repo.operation;
+  let interleave = true, winner;
+  f.repo.operation = async (owner, id) => {
+    if (id === OP2 && interleave) {
+      interleave = false;
+      winner = await response(await f.request(f.correction), 200);
+      return null;
+    }
+    return operation(owner, id);
+  };
+  await response(await f.request(f.correction), 200, winner);
+  assert.equal(f.calls.commit, 2);
+  assert.equal(f.docs.get(f.key(OWNER, f.documentId)).revision, 2);
+  assert.equal(f.operations.size, 2);
+});
+
+test('P2B repository file gate uses existing feature registry and migration defaults off', async () => {
+  const calls = [];
+  const repository = createAccountJournalRepository({ rpc: async (...args) => { calls.push(args); return { data: false, error: null }; } });
+  assert.equal(await repository.fileEvidenceEnabled(OWNER), false);
+  assert.deepEqual(calls, [['service_feature_enabled', { feature_key_input: 'FILE_ANALYSIS_WRITE' }]]);
+  const sql = await readFile(new URL('../migrations/0038_file_analysis_write_control.sql', import.meta.url), 'utf8');
+  assert.match(sql, /values \('FILE_ANALYSIS_WRITE', false, 'INITIAL_SAFE_DEFAULT'\)/u);
+  assert.match(sql, /on conflict \(feature_key\) do nothing/u);
+  assert.equal(/\bupdate\s+public\.service_feature_controls/iu.test(sql), false);
+});
 let stateFixtures;
 async function decorationFixtures() {
   if (!stateFixtures) stateFixtures = (async () => {
@@ -388,6 +646,296 @@ async function decorationFixtures() {
   })();
   return stateFixtures;
 }
+let comparisonFixtureModule;
+async function comparisonFixture(storage = 'legacy') {
+  const f = await evidenceFixture();
+  if (!comparisonFixtureModule) {
+    const { build } = createRequire(new URL('../../app/package.json', import.meta.url))('esbuild');
+    const output = await build({ stdin: { contents: `
+      export { accountPlanPacketFixture } from './src/domain/account/account-plan.test-fixtures.ts';
+      export * from './src/domain/account/account-plan-document-schema.ts';
+      export * from './src/domain/account/account-plan-collection-schema.ts';
+      export * from './src/domain/import/file-plan-comparison.ts';
+      export { projectFileObservation } from './src/domain/import/file-analysis.ts';
+      export { createPlannedSessionLogDraft } from './src/domain/planned-session-link.ts';`,
+      resolveDir: fileURLToPath(new URL('../../app/', import.meta.url)), loader: 'ts' },
+      tsconfig: fileURLToPath(new URL('../../app/tsconfig.json', import.meta.url)),
+      bundle: true, write: false, platform: 'node', format: 'esm',
+      plugins: [{ name: 'node-test-fixture-assertions', setup(build) {
+        build.onResolve({ filter: /^vitest$/ }, () => ({ path: 'unused-assertions', namespace: 'fixture-only' }));
+        // Preserve the existing fixture's equality assertion under node:test.
+        build.onLoad({ filter: /.*/, namespace: 'fixture-only' }, () => ({
+          contents: 'import assert from "node:assert/strict"; export function expect(value) { return { toEqual(expected) { assert.deepEqual(value, expected); } }; }', loader: 'js',
+        }));
+      } }], define: { 'import.meta.env': '{}' } });
+    comparisonFixtureModule = await import(`data:text/javascript;base64,${Buffer.from(output.outputFiles[0].text).toString('base64')}`);
+  }
+  const m = comparisonFixtureModule, at = '2026-09-01T00:00:00.000Z';
+  let packet;
+  const realDate = globalThis.Date, priorWindow = globalThis.window, values = new Map();
+  globalThis.window = { localStorage: { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key) } };
+  globalThis.Date = class extends realDate {
+    constructor(...args) { super(...(args.length ? args : ['2026-08-17T03:00:00.000Z'])); }
+    static now() { return realDate.parse('2026-08-17T03:00:00.000Z'); }
+  };
+  try { packet = m.accountPlanPacketFixture(4); } catch (error) { throw new Error(`Comparison fixture: ${error.message}`); }
+  finally { globalThis.Date = realDate; if (priorWindow === undefined) delete globalThis.window; else globalThis.window = priorWindow; }
+  const planEntry = m.accountPlanEntry(packet, at), plan = m.emptyAccountPlanDocument();
+  plan.data.plans = [planEntry]; plan.data.currentPlanId = planEntry.planId;
+  const state = packet.state.selection;
+  const session = state.activePlan.sessions.find(value => value.prescription.kind.startsWith('ADJUSTED_METHOD'));
+  assert.ok(session);
+  const original = { planFingerprint: planEntry.planId, session: m.createPlannedSessionLogDraft(state, session, at).link };
+  const resolved = m.resolveComparisonOriginal(planEntry.snapshot, original);
+  assert.equal(resolved.status, 'ORIGINAL_VERIFIED');
+  const segment = resolved.segments[0]; assert.ok(segment);
+  const projected = m.projectFileObservation(f.document.entry, { formats: ['tcx'], sourceContext: 'ACCOUNT_CONFIRMED' });
+  assert.equal(projected.status, 'ACCEPTED');
+  const relation = { schemaVersion: 1, relationId: DOC, journalId: f.document.entry.id, journalRevisionAtConfirmation: 1,
+    contentRevisionFingerprint: f.observation.contentRevisionFingerprint,
+    observationInterpretationFingerprint: m.comparisonObservationInterpretationFingerprint(projected.observation), original,
+    mappingVersion: 1, mappingConfirmation: 'USER_CONFIRMED', createdAt: at, releasedAt: null,
+    segmentMappings: [{ planSegmentId: segment.id, sourceLapIndex: 0, confirmedKind: segment.kind,
+      confirmedTargetUnit: segment.targetUnit, confirmedDurationMeaning: 'TIMER', confirmedRecoveryMode: segment.recoveryMode }] };
+  const confirm = { ...capabilities, action: 'confirmComparisonRelation', documentId: f.documentId, operationId: OP2,
+    expectedRevision: 1, relation };
+  const planId = await fixedStateId('PLAN');
+  const legacy = { user_id: OWNER, document_id: planId, revision: 1,
+    encrypted_payload: await encrypt(JSON.stringify(plan), { ownerId: OWNER, documentId: planId }, f.material.active) };
+  const parts = m.splitAccountPlanCollection(plan), rows = new Map();
+  for (const part of [...parts.snapshots, ...parts.progress]) rows.set(`${part.kind}:${part.id}`, {
+    part_kind: part.kind, part_id: part.id, plan_id: part.planId, content_hash: m.accountPlanCollectionPartHash(part),
+    metadata: accountPlanCollectionMetadata(part), payload: await encrypt(JSON.stringify(part),
+      { ownerId: OWNER, documentId: await accountPlanCollectionDocumentId(OWNER, part.kind, part.id) }, f.material.active) });
+  const index = { revision: 1, index_document: parts.index, index_fingerprint: m.accountPlanFingerprint(parts.index),
+    payload: await encrypt(JSON.stringify(parts.index),
+      { ownerId: OWNER, documentId: await accountPlanCollectionDocumentId(OWNER, 'PLAN_COLLECTION', 'index') }, f.material.active) };
+  if (storage === 'legacy') f.docs.set(f.key(OWNER, planId), legacy);
+  else f.repo.planCollection = { enabled: async owner => owner === OWNER, attestationStatus: async () => ({ kind: 'ready' }),
+    readIndex: async () => storage === 'staged' ? null : index, readPart: async (kind, id) => rows.get(`${kind}:${id}`) ?? null };
+  await response(await f.request(f.create), 200);
+  return { ...f, m, confirm, relation, plan, planId, legacy, parts, rows, index };
+}
+
+for (const storage of ['legacy', 'collection']) test(`P4 ${storage} MIGRATION restores authentic comparison history into a fresh journal`, async () => {
+  const f = await comparisonFixture(storage);
+  await response(await f.request(f.confirm), 200);
+  const document = (await response(await f.request({ ...capabilities, action: 'read', documentId: f.documentId }), 200)).document;
+  f.docs.delete(f.key(OWNER, f.documentId)); f.operations.clear();
+  const restore = { ...capabilities, action: 'save', documentId: f.documentId, operationId: crypto.randomUUID(),
+    expectedRevision: 0, writePurpose: 'MIGRATION', document };
+  const saved = await response(await f.request(restore), 200);
+  assert.equal(saved.revision, 1);
+  assert.deepEqual((await response(await f.request({ ...capabilities, action: 'read', documentId: f.documentId }), 200)).document, document);
+  assert.equal(f.operations.get(f.key(OWNER, restore.operationId)).trusted_metadata.awardAllowed, false);
+  f.docs.delete(f.key(OWNER, f.planId)); f.repo.planCollection = undefined;
+  await response(await f.request(restore), 200, saved);
+});
+
+for (const storage of ['legacy', 'collection']) for (const released of [false, true]) {
+  test(`P4 ${storage} restores corrected file with ${released ? 'released' : 'active'} stale comparison history without adopting it`, async () => {
+    const f = await comparisonFixture(storage);
+    await response(await f.request(f.confirm), 200);
+    await response(await f.request({ ...f.correction, operationId: crypto.randomUUID(), expectedRevision: 2 }), 200);
+    if (released) await response(await f.request({ ...capabilities, action: 'releaseComparisonRelation', documentId: f.documentId,
+      operationId: crypto.randomUUID(), expectedRevision: 3, relationId: f.relation.relationId, releasedAt: '2026-09-03T00:00:00Z' }), 200);
+    const document = (await response(await f.request({ ...capabilities, action: 'read', documentId: f.documentId }), 200)).document;
+    assert.notEqual(document.entry.fileObservation.contentRevisionFingerprint, document.entry.comparisonRelations[0].contentRevisionFingerprint);
+    f.docs.delete(f.key(OWNER, f.documentId)); f.operations.clear();
+    const restore = { ...capabilities, action: 'save', documentId: f.documentId, operationId: crypto.randomUUID(),
+      expectedRevision: 0, writePurpose: 'MIGRATION', document };
+    for (const change of [{ planSegmentId: 'invented-historical-segment' },
+      { confirmedTargetUnit: f.relation.segmentMappings[0].confirmedTargetUnit === 'DISTANCE' ? 'DURATION' : 'DISTANCE' }]) {
+      const invalid = structuredClone(document);
+      Object.assign(invalid.entry.comparisonRelations[0].segmentMappings[0], change);
+      await response(await f.request({ ...restore, document: invalid }), 422, { error: 'INVALID_COMPARISON_RELATION' });
+      assert.equal(f.docs.has(f.key(OWNER, f.documentId)), false);
+    }
+    await response(await f.request(restore), 200);
+    const restored = (await response(await f.request({ ...capabilities, action: 'read', documentId: f.documentId }), 200)).document;
+    assert.deepEqual(restored, document);
+    const original = f.m.resolveComparisonOriginalFromPlanDocument(f.plan, f.relation.original);
+    const projected = f.m.projectFileObservation(restored.entry, { formats: ['tcx'], sourceContext: 'ACCOUNT_CONFIRMED' });
+    assert.equal(projected.status, 'ACCEPTED');
+    assert.equal(f.m.compareFileToPlan(original, projected.observation, restored.entry.comparisonRelations[0], 1).status, 'INVALID_COMPARISON');
+    assert.equal(f.operations.get(f.key(OWNER, restore.operationId)).trusted_metadata.awardAllowed, false);
+    const revert = { ...f.correction, operationId: crypto.randomUUID(), expectedRevision: 1,
+      previousContentRevisionFingerprint: restored.entry.fileObservation.contentRevisionFingerprint, replacementObservation: f.observation };
+    await response(await f.request(revert), 200);
+    const reverted = (await response(await f.request({ ...capabilities, action: 'read', documentId: f.documentId }), 200)).document;
+    assert.deepEqual(reverted.entry.comparisonRelations, document.entry.comparisonRelations);
+    assert.deepEqual(reverted.entry.fileObservation, f.observation);
+    const exact = f.m.projectFileObservation(reverted.entry, { formats: ['tcx'], sourceContext: 'ACCOUNT_CONFIRMED' });
+    assert.equal(exact.status, 'ACCEPTED');
+    assert.equal(f.m.compareFileToPlan(original, exact.observation, reverted.entry.comparisonRelations[0], 2).status,
+      released ? 'INVALID_COMPARISON' : 'QUANTITATIVE_COMPARISON');
+    const interpreted = f.m.projectFileObservation({ ...reverted.entry, fileObservation: {
+      ...reverted.entry.fileObservation, confirmation: { sport: 'WALKING', durationMeaning: null } } },
+      { formats: ['tcx'], sourceContext: 'ACCOUNT_CONFIRMED' });
+    assert.equal(interpreted.status, 'ACCEPTED');
+    assert.equal(f.m.compareFileToPlan(original, interpreted.observation, reverted.entry.comparisonRelations[0], 2).status, 'INVALID_COMPARISON');
+  });
+}
+
+for (const storage of ['legacy', 'collection']) test(`P4 ${storage} exact owner original confirms, correction preserves stale relation, release replays without rewards`, async () => {
+  const f = await comparisonFixture(storage);
+  const receipt = await response(await f.request(f.confirm), 200);
+  assert.equal(receipt.revision, 2);
+  const read = () => f.request({ ...capabilities, action: 'read', documentId: f.documentId });
+  const linked = (await response(await read(), 200)).document;
+  assert.deepEqual(linked, { ...f.document, entry: { ...f.document.entry, comparisonRelations: [f.relation] } });
+  assert.equal(f.operations.get(f.key(OWNER, OP2)).trusted_metadata.awardAllowed, false);
+  f.docs.delete(f.key(OWNER, f.planId)); f.repo.planCollection = undefined;
+  f.repo.fileEvidenceEnabled = async () => false;
+  await response(await f.request(f.confirm), 200, receipt);
+  await response(await f.request({ ...f.confirm, relation: { ...f.relation, createdAt: '2026-09-02T00:00:00Z' } }), 409, { error: 'OPERATION_REUSED' });
+  f.repo.fileEvidenceEnabled = async () => true;
+  await response(await f.request({ ...f.correction, operationId: crypto.randomUUID(), expectedRevision: 2 }), 200);
+  const corrected = (await response(await read(), 200)).document;
+  assert.deepEqual(corrected.entry.comparisonRelations, [f.relation]);
+  assert.notEqual(corrected.entry.fileObservation.contentRevisionFingerprint, f.relation.contentRevisionFingerprint);
+  const release = { ...capabilities, action: 'releaseComparisonRelation', documentId: f.documentId, operationId: crypto.randomUUID(),
+    expectedRevision: 3, relationId: f.relation.relationId, releasedAt: '2026-09-03T00:00:00Z' };
+  const released = await response(await f.request(release), 200);
+  await response(await f.request(release), 200, released);
+  await response(await f.request({ ...release, releasedAt: '2026-09-04T00:00:00Z' }), 409, { error: 'OPERATION_REUSED' });
+  const latest = (await response(await read(), 200)).document;
+  assert.deepEqual(latest, { ...corrected, entry: { ...corrected.entry, comparisonRelations: [{ ...f.relation, releasedAt: release.releasedAt }] } });
+  assert.equal(f.operations.get(f.key(OWNER, release.operationId)).trusted_metadata.awardAllowed, false);
+});
+
+test('P4 missing/staged/foreign/deleted originals and request snapshots never confirm', async () => {
+  const f = await comparisonFixture('staged');
+  await response(await f.request(f.confirm), 409, { error: 'COMPARISON_ORIGINAL_UNAVAILABLE' });
+  await response(await f.request({ ...f.confirm, selectedSnapshot: f.plan }), 422, { error: 'INVALID_COMPARISON_RELATION' });
+  const row = { ...f.legacy, user_id: OTHER };
+  f.docs.set(f.key(OWNER, f.planId), row);
+  await response(await f.request(f.confirm), 503);
+  f.docs.set(f.key(OWNER, f.planId), { ...f.legacy, deleted_at: '2026-09-01T00:00:00Z', encrypted_payload: null });
+  await response(await f.request(f.confirm), 409, { error: 'COMPARISON_ORIGINAL_UNAVAILABLE' });
+  assert.equal(f.calls.commit, 1);
+});
+
+test('P4 collection validates encrypted index, part metadata and acknowledged hashes rather than staged parts', async () => {
+  const f = await comparisonFixture('collection');
+  const snapshot = f.rows.get(`PLAN_SNAPSHOT:${f.parts.snapshots[0].id}`);
+  const before = structuredClone(snapshot);
+  snapshot.metadata = { ...snapshot.metadata, updatedAt: '2026-09-01T00:00:00Z' };
+  await response(await f.request(f.confirm), 503);
+  Object.assign(snapshot, before);
+  f.index.index_fingerprint = `sha256:${'0'.repeat(64)}`;
+  await response(await f.request(f.confirm), 503);
+  f.index.index_fingerprint = f.m.accountPlanFingerprint(f.parts.index);
+  f.rows.delete(`PLAN_PROGRESS:${f.parts.progress[0].id}`);
+  await response(await f.request(f.confirm), 409, { error: 'COMPARISON_ORIGINAL_UNAVAILABLE' });
+  assert.equal(f.calls.commit, 1);
+});
+
+test('P4 confirmation requires unchanged observation interpretation, exact selected reference and legal mapping', async () => {
+  const f = await comparisonFixture();
+  for (const relation of [{ ...f.relation, observationInterpretationFingerprint: `sha256:${'0'.repeat(64)}` },
+    { ...f.relation, contentRevisionFingerprint: `sha256:${'0'.repeat(64)}` },
+    { ...f.relation, segmentMappings: [{ ...f.relation.segmentMappings[0], planSegmentId: 'invented' }] }])
+    await response(await f.request({ ...f.confirm, relation }), 422, { error: 'INVALID_COMPARISON_RELATION' });
+  await response(await f.request({ ...f.confirm, relation: { ...f.relation,
+    original: { ...f.relation.original, planFingerprint: `sha256:${'0'.repeat(64)}` } } }), 409, { error: 'COMPARISON_ORIGINAL_UNAVAILABLE' });
+  await response(await f.request({ ...f.confirm, supportedJournalVersions: [2] }), 426);
+  f.repo.fileEvidenceEnabled = async () => false;
+  await response(await f.request(f.confirm), 409, { error: 'FILE_EVIDENCE_DISABLED' });
+  f.repo.fileEvidenceEnabled = async () => true;
+  await response(await f.request(f.confirm), 200);
+  const conflict = await response(await f.request({ ...f.confirm, operationId: crypto.randomUUID() }), 409);
+  assert.equal(conflict.kind, 'conflict'); assert.equal(conflict.currentRevision, 2);
+  f.history.length = 0;
+  await response(await f.request(f.confirm), 409, { error: 'OPERATION_REPLAY_UNAVAILABLE' });
+});
+
+test('P4 generic save, migration and restore cannot forge, replace or discard relations', async () => {
+  const f = await comparisonFixture();
+  const forged = { ...f.document, entry: { ...f.document.entry, comparisonRelations: [f.relation] } };
+  await response(await f.request({ ...f.create, operationId: crypto.randomUUID(), expectedRevision: 1, document: forged }), 422, { error: 'INVALID_COMPARISON_RELATION' });
+  await response(await f.request({ ...f.create, operationId: crypto.randomUUID(), expectedRevision: 1, writePurpose: 'MIGRATION', document: forged }), 422, { error: 'INVALID_COMPARISON_RELATION' });
+  f.docs.delete(f.key(OWNER, f.documentId));
+  await response(await f.request({ ...f.create, operationId: crypto.randomUUID() }), 200);
+  await response(await f.request(f.confirm), 200);
+  await response(await f.request({ ...f.create, operationId: crypto.randomUUID(), expectedRevision: 2, writePurpose: 'MIGRATION' }), 422, { error: 'INVALID_COMPARISON_RELATION' });
+  const restore = { ...capabilities, action: 'restore', documentId: f.documentId, operationId: crypto.randomUUID(), expectedRevision: 2, sourceRevision: 1 };
+  await response(await f.request(restore), 422, { error: 'INVALID_COMPARISON_RELATION' });
+  f.history[0] = await historyRow(f, {}, forged, { ownerId: OWNER, documentId: f.documentId });
+  f.repo.restore = async () => ({ kind: 'restored', documentId: f.documentId, operationId: restore.operationId, revision: 3, sourceRevision: 1 });
+  await response(await f.request(restore), 200);
+});
+
+test('P4 fresh relation restore revalidates every binding and original, retains released historical revisions, and never awards', async () => {
+  const f = await comparisonFixture();
+  await response(await f.request({ ...capabilities, action: 'save', documentId: f.documentId, operationId: crypto.randomUUID(),
+    expectedRevision: 1, document: { ...f.document, entry: { ...f.document.entry, title: 'Owner edit before comparison' } } }), 200);
+  const relation = { ...f.relation, journalRevisionAtConfirmation: 2 };
+  await response(await f.request({ ...f.confirm, expectedRevision: 2, relation }), 200);
+  await response(await f.request({ ...capabilities, action: 'releaseComparisonRelation', documentId: f.documentId,
+    operationId: crypto.randomUUID(), expectedRevision: 3, relationId: relation.relationId, releasedAt: '2026-09-03T00:00:00Z' }), 200);
+  const document = (await response(await f.request({ ...capabilities, action: 'read', documentId: f.documentId }), 200)).document;
+  f.docs.delete(f.key(OWNER, f.documentId)); f.operations.clear();
+  const restore = { ...capabilities, action: 'save', documentId: f.documentId, operationId: crypto.randomUUID(),
+    expectedRevision: 0, writePurpose: 'MIGRATION', document };
+  const commits = f.calls.commit;
+  const bad = { ...relation, relationId: crypto.randomUUID(), segmentMappings: [{ ...relation.segmentMappings[0], planSegmentId: 'invented' }] };
+  await response(await f.request({ ...restore, document: { ...document, entry: { ...document.entry,
+    comparisonRelations: [...document.entry.comparisonRelations, bad] } } }), 422, { error: 'INVALID_COMPARISON_RELATION' });
+  await response(await f.request({ ...restore, writePurpose: 'FILE_OBSERVATION' }), 422, { error: 'INVALID_COMPARISON_RELATION' });
+  await response(await f.request({ ...restore, documentId: await finalizedId(OTHER) }), 422);
+  f.docs.delete(f.key(OWNER, f.planId));
+  await response(await f.request(restore), 409, { error: 'COMPARISON_ORIGINAL_UNAVAILABLE' });
+  f.docs.set(f.key(OWNER, f.planId), { ...f.legacy, user_id: OTHER });
+  await response(await f.request(restore), 503);
+  f.docs.set(f.key(OWNER, f.planId), f.legacy);
+  f.repo.fileEvidenceEnabled = async () => false;
+  await response(await f.request(restore), 409, { error: 'FILE_EVIDENCE_DISABLED' });
+  f.repo.fileEvidenceEnabled = async () => true;
+  assert.equal(f.calls.commit, commits);
+  await response(await f.request(restore), 200);
+  const restored = await response(await f.request({ ...capabilities, action: 'read', documentId: f.documentId }), 200);
+  assert.equal(restored.revision, 1);
+  assert.deepEqual(restored.document, document);
+  assert.equal(restored.document.entry.comparisonRelations[0].journalRevisionAtConfirmation, 2);
+  assert.equal(restored.document.entry.comparisonRelations[0].releasedAt, '2026-09-03T00:00:00Z');
+  assert.equal(f.operations.get(f.key(OWNER, restore.operationId)).trusted_metadata.awardAllowed, false);
+});
+
+test('P4 relation capacity and tombstones fail explicitly without eviction or commit', async () => {
+  const f = await comparisonFixture();
+  const document = { ...f.document, entry: { ...f.document.entry,
+    comparisonRelations: Array.from({ length: 32 }, () => ({ ...f.relation, relationId: crypto.randomUUID() })) } };
+  const row = f.docs.get(f.key(OWNER, f.documentId));
+  const full = { ...row, encrypted_payload: await encrypt(JSON.stringify(document), { ownerId: OWNER, documentId: f.documentId }, f.material.active) };
+  f.docs.set(f.key(OWNER, f.documentId), full);
+  await response(await f.request(f.confirm), 409, { error: 'COMPARISON_CAPACITY_EXCEEDED' });
+  assert.deepEqual(f.docs.get(f.key(OWNER, f.documentId)), full);
+  f.docs.set(f.key(OWNER, f.documentId), { ...full, encrypted_payload: null, deleted_at: '2026-09-01T00:00:00Z' });
+  const conflict = await response(await f.request(f.confirm), 409);
+  assert.equal(conflict.kind, 'conflict'); assert.equal(conflict.currentRevision, 1);
+  assert.equal(f.calls.commit, 1);
+});
+
+test('P4 concurrent identical relation nonces replay while distinct stale writers cannot overwrite', async () => {
+  const f = await comparisonFixture();
+  let arrived = 0, release;
+  const barrier = new Promise(resolve => { release = resolve; });
+  const operation = f.repo.operation;
+  f.repo.operation = async (owner, id) => {
+    if (id === OP2 && arrived < 2) { arrived++; if (arrived === 2) release(); await barrier; return null; }
+    return operation(owner, id);
+  };
+  const responses = await Promise.all([f.request(f.confirm), f.request(f.confirm)]);
+  const first = await response(responses[0], 200);
+  await response(responses[1], 200, first);
+  assert.equal(f.docs.get(f.key(OWNER, f.documentId)).revision, 2);
+  const stale = await response(await f.request({ ...f.confirm, operationId: crypto.randomUUID(),
+    relation: { ...f.relation, relationId: crypto.randomUUID() } }), 409);
+  assert.equal(stale.kind, 'conflict'); assert.equal(stale.currentRevision, 2);
+  assert.equal(f.operations.size, 2);
+});
+
 async function fixedStateId(kind,owner=OWNER) {
   const namespace = kind === 'PLAN' ? 'trainoracle.account.plan.v1' : 'trainoracle.account.decorations.v1';
   const bytes=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify([namespace,owner]))));

@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.109.0';
 import { createAccountJournalHandler, createAccountJournalRepository, importJournalKeyring, importJournalAttestor,
   validateAccountJournalDocument } from '../_shared/account-journal-handler.mjs';
+import { createAccountPlanCollectionRepository } from '../_shared/account-plan-collection-handler.mjs';
 
 // Strict draft, finalized journal and account-state documents with compiled pure validators.
 // ACCOUNT_JOURNAL_V2 remains operationally OFF until actual server readiness is verified.
@@ -28,6 +29,7 @@ Deno.serve((request: Request) => createAccountJournalHandler({
     // Import only after identity and repository feature checks, never from clients.
     const attest = async (ownerId: string, action: string, input: unknown) =>
       (await importJournalAttestor(Deno.env.get('TRAINORACLE_JOURNAL_ATTESTATION_JSON')))(ownerId, action, input);
-    return { ownerId: data.user.id, repo: createAccountJournalRepository(client, { ownerId: data.user.id, attest }) };
+    return { ownerId: data.user.id, repo: { ...createAccountJournalRepository(client, { ownerId: data.user.id, attest }),
+      planCollection: createAccountPlanCollectionRepository(client, { ownerId: data.user.id, attest }) } };
   },
 })(request));

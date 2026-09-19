@@ -63,7 +63,8 @@ describe("active plan first-view overview", () => {
     const buildSummary = screen.getByRole("list", { name: "계획 구성 요약" })
     const summaryItems = within(buildSummary).getAllByRole("listitem")
     expect(summaryItems[0]).toHaveTextContent("5000m")
-    expect(summaryItems[1]).toHaveTextContent("지속 페이스 · LT")
+    expect(summaryItems).toHaveLength(3)
+    expect(summaryItems[1]).toHaveTextContent("조금 힘들게 꾸준히 · LT")
     expect(summaryItems[2]).toHaveTextContent("하루 2회 포함")
     expect(within(buildSummary).getByRole("button", { name: "지속 페이스 LT 설명 보기" })).toBeVisible()
 
@@ -75,7 +76,9 @@ describe("active plan first-view overview", () => {
     })
 
     expect(flow).toHaveTextContent(/주요 훈련MAIN.*회복 운동REC/u)
-    expect(trainingDay).toHaveTextContent(/오전.*주요 훈련MAIN.*지속 페이스LT.*오후.*회복 운동REC.*오후 회복 운동/u)
+    expect(trainingDay).toHaveTextContent(/오전.*주요 훈련MAIN.*조금 힘들게 꾸준히.*LT.*오후.*회복 운동REC.*오후 회복 운동/u)
+    expect(trainingDay).toHaveTextContent(/총 30~40분.*RPE 6~7/u)
+    expect(trainingDay).toHaveTextContent(/총 15~20분.*RPE 1~2/u)
     expect(flow.compareDocumentPosition(timeline) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     expect(timeline.compareDocumentPosition(information as Node) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     expect(information).not.toHaveAttribute("open")

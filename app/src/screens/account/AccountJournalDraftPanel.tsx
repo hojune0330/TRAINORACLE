@@ -8,11 +8,12 @@ import { koreaServiceDate } from "../../domain/account/service-date"
 import { secondaryBtn } from "./styles"
 import { registerUnsavedDraftGuard } from "../../domain/unsaved-draft-navigation"
 import { isFormInputDraft } from "../log-entry/form-draft-marker"
-import { isAccountJournalWriteRejection, type AccountJournalWriteRejection } from "../../domain/account/account-write-rejection"
+import { FILE_WRITE_REJECTION_MESSAGES, isAccountJournalWriteRejection, type AccountJournalWriteRejection } from "../../domain/account/account-write-rejection"
 
 const IDLE_MS = 800
 
 const messages = {
+  ...FILE_WRITE_REJECTION_MESSAGES,
   SAVED: "계정에 초안이 저장됐어요.",
   PENDING: "계정 저장을 확인하지 못했어요. 이 기기에 보관한 초안을 다시 전송해 주세요.",
   CONFLICT: "다른 기기의 수정과 겹쳤어요. 덮어쓰지 않고 이 기기의 내용도 보관했어요.",
@@ -25,6 +26,13 @@ const messages = {
 type DraftNoticeTone = "info" | "pending" | "success" | "warning" | "error" | "conflict"
 
 const messageTones: Record<keyof typeof messages, DraftNoticeTone> = {
+  UPGRADE_REQUIRED: "error",
+  FILE_EVIDENCE_DISABLED: "warning",
+  INVALID_FILE_OBSERVATION: "error",
+  FILE_OBSERVATION_CONFLICT: "conflict",
+  COMPARISON_ORIGINAL_UNAVAILABLE: "warning",
+  INVALID_COMPARISON_RELATION: "error",
+  COMPARISON_CAPACITY_EXCEEDED: "warning",
   SAVED: "success",
   PENDING: "warning",
   CONFLICT: "conflict",

@@ -43,6 +43,7 @@ import type { DecorationSlot } from "../decoration-catalog"
 /** 인식하는 내보내기 형식 — journal-store.exportEntriesJSON이 쓰는 값들 */
 export const SAFE_FORMAT = "trainoracle.journal.v1"
 export const FULL_FORMAT_V3 = "trainoracle.journal.full-backup.v3"
+export const FULL_FORMAT_V4 = "trainoracle.journal.full-backup.v4"
 export const FULL_FORMAT = "trainoracle.journal.full-backup.v2"
 export const LEGACY_FULL_FORMAT = "trainoracle.journal.full-backup.v1"
 
@@ -95,7 +96,7 @@ export function readBackupFile(text: string): BackupReadResult {
   if (root.app !== "TRAINORACLE") return UNRECOGNIZED
 
   const format = root.format
-  const kind: BackupKind | null = format === FULL_FORMAT_V3 || format === FULL_FORMAT || format === LEGACY_FULL_FORMAT
+  const kind: BackupKind | null = format === FULL_FORMAT_V4 || format === FULL_FORMAT_V3 || format === FULL_FORMAT || format === LEGACY_FULL_FORMAT
     ? "full"
     : format === SAFE_FORMAT ? "safe" : null
   if (kind === null) return UNRECOGNIZED
@@ -103,7 +104,12 @@ export function readBackupFile(text: string): BackupReadResult {
   const rawEntries = root.entries
   if (!Array.isArray(rawEntries)) return { ...UNRECOGNIZED, recognized: true, kind }
 
-  const prepared = kind === "safe" ? rawEntries.map(withEmptyTextFields) : rawEntries
+  // A legacy/safe envelope may not smuggle newly adopted evidence into an old format.
+  const formatEntries = format === FULL_FORMAT_V4 ? rawEntries : rawEntries.filter(entry => {
+    const record = asRecord(entry)
+    return record?.fileObservation === undefined && record?.comparisonRelations === undefined
+  })
+  const prepared = kind === "safe" ? formatEntries.map(withEmptyTextFields) : formatEntries
   const parsedEntries = parseJournalEntryList(prepared)
   const seenIds = new Set<string>()
   const entries = parsedEntries.filter((entry) => {
@@ -129,7 +135,7 @@ function readDecorationSection(
   format: unknown,
   candidate: unknown,
 ): { readonly state: DecorationState | null; readonly status: BackupReadResult["decorationStatus"] } {
-  if (format !== FULL_FORMAT_V3 && format !== FULL_FORMAT) return { state: null, status: "not-included" }
+  if (format !== FULL_FORMAT_V4 && format !== FULL_FORMAT_V3 && format !== FULL_FORMAT) return { state: null, status: "not-included" }
   if (typeof candidate !== "object" || candidate === null) return { state: null, status: "invalid" }
   const normalized = readLosslessDecorationState(candidate)
   return normalized === null
