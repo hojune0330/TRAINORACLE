@@ -1941,6 +1941,8 @@
   margin-top: var(--space-5);
   padding-block: var(--space-4);
   border-block: var(--bw-line) solid var(--ink);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .plan-candidate-comparison h2 {

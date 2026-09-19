@@ -44,6 +44,10 @@ test("compares actual MAIN values and refreshes the chosen record without claimi
   const normalFont = await summary.evaluate((node) => parseFloat(getComputedStyle(node).fontSize))
   await page.evaluate(() => { document.documentElement.style.fontSize = "200%" })
   expect(await summary.evaluate((node) => parseFloat(getComputedStyle(node).fontSize))).toBeGreaterThanOrEqual(normalFont * 1.9)
+  await testInfo.attach("comparison-overflow", { contentType: "application/json", body: JSON.stringify(await comparison.evaluate((node) => {
+    const right = node.getBoundingClientRect().right
+    return Array.from(node.querySelectorAll("*")).filter((child) => child.getBoundingClientRect().right > right + 1).map((child) => ({ tag: child.tagName, className: child.className, text: child.textContent, width: child.getBoundingClientRect().width }))
+  })) })
   await expect.poll(() => comparison.evaluate((node) => node.scrollWidth <= node.clientWidth + 1)).toBe(true)
   expect((await summary.boundingBox())!.height).toBeGreaterThanOrEqual(44)
   await summary.evaluate((node) => node.scrollIntoView({ behavior: "instant", block: "start" }))
