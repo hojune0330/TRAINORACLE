@@ -2,6 +2,20 @@
 
 ## 현재 결과
 
+- 최종 상태: `DEPLOYED_AUTHENTICATED_TCX_SMOKE_PENDING`. 코드·서버·웹 배포 완료, 새 V3 TCX의 실제 계정 저장/재조회만 로그인 승인 대기다. 아래 중간 실패·미배포 문단은 당시의 이력이다.
+- 공개 런타임 소스: `827008890affb4ec089857955f54082ad9a11a79`.
+- CI 전체 성공: https://github.com/hojune0330/TRAINORACLE/actions/runs/35468619924
+- 실제 Pages 게시 성공: https://github.com/hojune0330/TRAINORACLE/actions/runs/35471182839
+- 공개 사이트의 `trainoracle-deploy-receipt.json`에서 sourceSha와 workflowRunId 일치를 확인했다. 배포 시각 `2026-09-19T21:41:49.046Z` (한국 시각 9월 20일 06:41).
+- 서버 `FILE_ANALYSIS_WRITE=true`, revision 2. TCX R1 공개 빌드 활성, CSV/JSON/GPX의 새 분석 기능은 비활성 유지. 기존 파일 읽기 지원과 새 분석 기능 공개 범위는 별개다.
+- 최종 브라우저 기본 시나리오: PC 153, 모바일 169, 320px 171, 줄인 모션 149 = 642 pass, 기존 조건별 skip 82. 별도 파일 분석 9/9 및 계정 복구·충돌·저장 검사가 통과했다. app-quality/contract-tests/deploy-pages 모두 성공이다.
+- 공개 UI에서 합성 TCX(1km/300초 2개 랩)를 골라 `2026·09·19 가져온 달리기 2km · 10분` 미리보기를 확인했다. 저장하지 않고 홈으로 돌아왔으며 기존 일지 수는 유지됐다. 이 결과는 계정 저장 성공 증거가 아니다.
+- Google 로그인은 도구의 권한 확인에서 중단됐다. 지정 계정으로 로그인하여 합성 파일만 저장/재조회/휴지통 정리하는 추가 승인을 요청했으며, 승인 전에는 우회하거나 완료로 표시하지 않았다. 재개 조건은 해당 로그인 승인 및 로그인 세션 확보다.
+- GitHub 사용량 제한은 발생하지 않았으므로 수동 배포를 사용하지 않았다.
+- 로컬에 별도로 변경된 `.omo/evidence/task-5-p1-records-393x852.png`는 출처를 확정할 수 없어 이번 커밋에 포함하거나 원복하지 않았다. 소스/보고서는 푸시했고 이 이미지 변경은 보존했다.
+
+## 최초 인수 및 선적용 기준
+
 - 오너 승인: 서버 선적용 후 푸시·배포 진행. GitHub 사용량 제한 시 수동 배포 허용. 이미 끝낸 검사를 불필요하게 반복하지 않음.
 - 구현 기준: `fbf35068aa8c37b257fb37dd1bcafaca6ab2ade5`.
 - 원격 main 읽기 확인: `27cc6d5705a58f55eb3e07140a7f932d1118269c`.
