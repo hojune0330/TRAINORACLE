@@ -74,6 +74,14 @@ describe("plan journal safety read boundary", () => {
 })
 
 describe("canonical plan intake boundary", () => {
+  it.each(["MIDDLE_SCHOOL", "HIGH_SCHOOL", "OPEN"] as const)(
+    "preserves explicitly refined division %s instead of applying the quick default",
+    (competitionDivision) => {
+      const result = generatePlanFromDraft({ ...COMPLETE_DRAFT, competitionDivision }, "NO_KNOWN_RISK")
+      expect(result.kind).toBe("generated")
+      if (result.kind === "generated") expect(result.intake.competitionDivision).toBe(competitionDivision)
+    },
+  )
   it.each([
     [undefined, "MALFORMED_INPUT"],
     ["NOT_PROVIDED" as const, "MINIMUM_PROFILE_INCOMPLETE"],

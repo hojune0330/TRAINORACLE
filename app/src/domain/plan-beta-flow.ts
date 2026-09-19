@@ -493,7 +493,7 @@ function completeIntake(
   ) {
     return null
   }
-  const normalizedCompetitionDivision = divisionForGoal(eventGroup) ?? competitionDivision
+  const normalizedCompetitionDivision = competitionDivision ?? divisionForGoal(eventGroup)
   if (normalizedCompetitionDivision === undefined) return null
   const parsed = planIntakeSchema.safeParse({
     eventGroup,

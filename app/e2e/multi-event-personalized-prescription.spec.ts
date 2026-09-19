@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
 import { expectActivePlanHeading, openActiveSessionDetails } from "./active-plan-flow"
-import { selectNineDayProjection } from "./plan-flow"
+import { completeDetailedPlan, openPlanRefinement } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
 const appPath = process.env.PLAYWRIGHT_APP_PATH ?? "/"
@@ -37,7 +37,7 @@ const cases = [
   },
   {
     eventDistanceM: 1500,
-    focus: /여러 강도 조합.*MIX/u,
+    focus: /골고루.*MIX/u,
     notation: /3×500m @1500m RP.*r180.*STAND/u,
     summary: "총 3회 · 주요 구간 1500m · 500m당 1분 22초",
     execution: "준비, 3회 본운동과 2번의 사이 회복, 정리 순서로 진행하세요.",
@@ -70,16 +70,14 @@ async function reachExactEventCandidates(
   await page.getByRole("navigation", { name: "주 탭" })
     .getByRole("button", { name: "계획" })
     .click()
-  await page.getByRole("button", { name: new RegExp(`^${eventDistanceM}m`, "u") }).click()
-  await page.getByRole("button", { name: /일반부/u }).click()
-  await page.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }).click()
-  await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
-  await page.getByRole("button", { name: "내 계획 완성하기" }).click()
-  await page.getByRole("button", { name: focus }).click()
+  await completeDetailedPlan(page, { event: new RegExp(`^${eventDistanceM}m`, "u"),
+    division: /일반부/u, experience: /구조화된 훈련과 경기 경험이 많아요/u,
+    focus, time: /아침에 운동해요/u })
+  await openPlanRefinement(page, "안내 방식")
   const detailChoice = page.getByRole("button", {
     name: new RegExp(`${eventDistanceM}m 경기 페이스 상세 훈련 포함`, "u"),
   })
-  await expect(detailChoice).toContainText("반복 사이")
+  await expect(detailChoice).toContainText("내 기록으로 목표 시간 계산")
   await page.getByText("준비·정리와 훈련 표기 보기").click()
   await expect(page.getByText(/준비 15분 RPE/u)).toBeVisible()
   await expect(page.locator(".plan-detailed-prescription code")).toBeVisible()
@@ -90,11 +88,6 @@ async function reachExactEventCandidates(
   await page.getByRole("button", {
     name: new RegExp(`${eventDistanceM}m 경기 페이스 상세 훈련 포함`, "u"),
   }).click()
-  await page.getByRole("button", { name: /^3일/u }).click()
-  await selectNineDayProjection(page)
-  await page.getByRole("button", { name: /아침에 운동해요/u }).click()
-  await page.getByRole("button", { name: /하루 한 번 운동/u }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
 }
 
 for (const fixture of cases) {
@@ -111,6 +104,7 @@ for (const fixture of cases) {
     await reachExactEventCandidates(page, fixture.eventDistanceM, fixture.focus)
 
     const picker = page.getByRole("region", { name: "개인 페이스 기준 기록" })
+    await page.locator("summary", { hasText: "A와 B는 뭐가 달라요?" }).click()
     const comparison = page.getByRole("region", { name: "두 계획 핵심 비교" })
     const pickerBox = await picker.boundingBox()
     const comparisonBox = await comparison.boundingBox()
@@ -140,7 +134,7 @@ for (const fixture of cases) {
         path: testInfo.outputPath(`candidate-${fixture.eventDistanceM}m.png`),
       })
     }
-    await page.getByRole("button", { name: /시간 조절 계획 선택하기/u }).click()
+    await page.getByRole("button", { name: /이 계획으로 시작하기/u }).click()
     await expectActivePlanHeading(page)
     const selectedSession = await openActiveSessionDetails(page, fixture.notation)
     await expect(selectedSession.getByText(fixture.summary).first()).toBeVisible()

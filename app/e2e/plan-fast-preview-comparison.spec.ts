@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
-import { selectNineDayProjection } from "./plan-flow"
+import { completeQuickPlan, openPlanRefinement, refinePlan } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
@@ -12,37 +12,28 @@ async function openPlan(page: Page): Promise<void> {
 }
 
 async function answerFirstThree(page: Page, review = false): Promise<void> {
-  await page.getByRole("button", { name: /^1500m\b/u }).click()
-  await page.getByRole("button", { name: /고등부/u }).click()
-  await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
-  await page.getByRole("button", {
-    name: review
-      ? /통증.*부상.*몸 이상이 있거나 잘 모르겠어요/u
-      : /통증은 없고 몸 상태는 평소와 같아요/u,
-  }).click()
+  await completeQuickPlan(page, { review })
 }
 
-test("shows an unsaved, non-selectable preview after the required direction answers and a clear current-risk answer", async ({ page }) => {
+test("creates unsaved candidates after four explicit answers and exposes optional refinement", async ({ page }) => {
   await openPlan(page)
   await answerFirstThree(page)
 
-  await expect(page.getByRole("heading", { name: "계획 형태 미리보기" })).toBeVisible()
-  await expect(page.getByText(
-    /훈련일.*첫 계획 길이.*7.*9.*10.*훈련 목적.*시간.*하루 한 번.*두 번/u,
-  )).toBeVisible()
-  await expect(page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u })).toHaveCount(0)
-  await expect(page.locator(".plan-candidate")).toHaveCount(0)
+  await expect(page.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
+  await expect(page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u })).toHaveCount(2)
+  await expect(page.locator(".plan-candidate")).toHaveCount(2)
+  await expect(page.getByTestId("plan-refine")).not.toHaveAttribute("open")
   await expect.poll(() => page.evaluate(
     () => window.localStorage.getItem("trainoracle.plan-beta.v1"),
   )).toBeNull()
 
-  await page.getByRole("button", { name: "내 계획 완성하기" }).click()
+  await openPlanRefinement(page, "훈련 종류")
   await expect(page.getByRole("heading", {
-    name: "이번 주기에 어떤 훈련을 더 넣고 싶나요?",
+    name: "더 하고 싶은 훈련이 있나요?",
   })).toBeVisible()
 })
 
-test("asks for the missing focus and explicit detail mode after fresh safety", async ({ page }) => {
+test("labels default settings after fresh safety and lets the athlete explicitly refine them", async ({ page }) => {
   await page.addInitScript(() => {
     window.sessionStorage.setItem("trainoracle.plan-beta.previous-intake.v1", JSON.stringify({
       eventGroup: "FIVE_K",
@@ -58,13 +49,12 @@ test("asks for the missing focus and explicit detail mode after fresh safety", a
   await openPlan(page)
 
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
-  const remaining = page.getByText(/남은 선택 2개/u)
-  await expect(remaining).toContainText("훈련 목적")
-  await expect(remaining).toContainText("훈련 상세 방식")
-  await page.getByRole("button", { name: "내 계획 완성하기" }).click()
+  await expect(page.locator(".plan-candidate")).toHaveCount(2)
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBeNull()
+  await openPlanRefinement(page, "훈련 종류")
 
   await expect(page.getByRole("heading", {
-    name: "이번 주기에 어떤 훈련을 더 넣고 싶나요?",
+    name: "더 하고 싶은 훈련이 있나요?",
   })).toBeVisible()
   await expect(page.locator(".plan-candidate")).toHaveCount(0)
 })
@@ -87,10 +77,10 @@ test("reuses a fully explicit returning intake to create two candidates", async 
   await openPlan(page)
 
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
-  await expect(page.getByText(/남은 선택 0개/u)).toContainText("저장된 선택을 그대로 다시 사용할 수 있어요")
-  await expect(page.getByText(/남은 선택 0개/u)).toContainText("계획안은 아직 만들지 않았어요")
-  await page.getByRole("button", { name: "계획안 만들기" }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBeNull()
+  await page.getByTestId("plan-refine").locator("summary").click()
+  await expect(page.getByRole("button", { name: /달력 길이 바꾸기.*10일/u })).toBeVisible()
+  await expect(page.getByRole("button", { name: /하루 두 번 바꾸기.*함/u })).toBeVisible()
 
   await expect(page.locator(".plan-candidate")).toHaveCount(2)
   await expect(page.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
@@ -109,14 +99,8 @@ test("blocks review-risk before any preview or candidates", async ({ page }) => 
 test("moves the single expanded schedule between candidates and allows collapse", async ({ page }) => {
   await openPlan(page)
   await answerFirstThree(page)
-  await page.getByRole("button", { name: "내 계획 완성하기" }).click()
-  await page.getByRole("button", { name: /조금 힘들게 꾸준히.*LT/u }).click()
-  await page.getByRole("button", { name: /^RPE 기준으로 받기/u }).click()
-  await page.getByRole("button", { name: /^3일/u }).click()
-  await selectNineDayProjection(page)
-  await page.getByRole("button", { name: /아침에 운동해요/u }).click()
-  await page.getByRole("button", { name: /하루 한 번 운동/u }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
+  await refinePlan(page, "훈련 종류", /조금 힘들게 꾸준히.*LT/u)
+  await refinePlan(page, "시간대", /아침에 운동해요/u)
 
   const candidateA = page.getByRole("button", { name: "계획안 A 일정 접기" })
   const candidateB = page.getByRole("button", { name: "계획안 B 일정 펼치기" })

@@ -1,22 +1,11 @@
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
-import { selectNineDayProjection } from "./plan-flow"
+import { completeDetailedPlan } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
 async function answerTwoSessionPlanQuestions(page: Page): Promise<void> {
-  await page.getByRole("button", { name: /^1500m\b/u }).click()
-  await page.getByRole("button", { name: /고등부/u }).click()
-  await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
-  await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
-  await page.getByRole("button", { name: "내 계획 완성하기" }).click()
-  await page.getByRole("button", { name: /조금 힘들게 꾸준히.*LT/u }).click()
-  await page.getByRole("button", { name: /^RPE 기준으로 받기/u }).click()
-  await page.getByRole("button", { name: /^3일/u }).click()
-  await selectNineDayProjection(page)
-  await page.getByRole("button", { name: /아침에 운동해요/u }).click()
-  await page.getByRole("button", { name: /하루 두 번 운동할게요/u }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
+  await completeDetailedPlan(page, { division: /고등부/u, time: /아침에 운동해요/u, twice: true })
 }
 
 test("shows a dated AM and PM plan before selection and after reload", async ({ page }) => {
@@ -61,6 +50,6 @@ test("shows a dated AM and PM plan before selection and after reload", async ({ 
   await expect(reader.getByText("9일차 · 오후", { exact: true })).toBeVisible()
   await reader.getByRole("tab", { name: "이유·근거" }).click()
   await expect(reader.getByRole("heading", { name: "회복을 이렇게 넣은 이유", exact: true })).toBeAttached()
-  await expect(reader.getByText(/대상 종목은 1500m/u)).toBeAttached()
+  await expect(reader.getByRole("paragraph").filter({ hasText: /대상 종목은 1500m/u })).toBeAttached()
   await reader.getByRole("button", { name: "훈련 일정으로 돌아가기" }).click()
 })

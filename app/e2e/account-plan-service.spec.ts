@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test"
+import { completeDetailedPlan } from "./plan-flow"
 import { mockRecordServer } from "./fixtures/account-journal-record-server"
 import { mockPlanCollectionServer } from "./fixtures/account-plan-collection-server"
 import type {} from "./fixtures/account-plan-service"
@@ -152,10 +153,7 @@ test("actual PlanBeta selection, progress, archive and Home/journal projections 
   const errors: string[] = []; page.on("pageerror", e => errors.push(e.message))
   await page.evaluate(() => localStorage.setItem("trainoracle.plan-beta.v1", "SYNTHETIC_DEVICE_ORIGINAL"))
   await mountUi(page)
-  for (const name of [/^1500m/u, /고등부/u, /훈련 계획에 맞춰 달려 본 경험/u,
-    /통증은 없고 몸 상태는 평소와 같아요/u, /^내 계획 완성하기$/u, /조금 힘들게 꾸준히.*LT/u,
-    /RPE 기준으로 받기/u, /^3일/u, /9일 계획 받기/u, /날마다 달라요/u, /하루 한 번 운동/u,
-    /^날짜 없이 계획안 보기$/u]) await page.getByRole("button", { name }).click()
+  await completeDetailedPlan(page, { division: /고등부/u })
   await page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u }).first().click()
   await expect(page.getByText("계정에 저장됨", { exact: true })).toBeVisible()
   await expect.poll(() => page.evaluate(() => window.accountPlanUi.service.snapshot().currentPlan?.kind)).toBe("read_only")

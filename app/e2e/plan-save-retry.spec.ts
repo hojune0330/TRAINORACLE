@@ -1,22 +1,11 @@
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
-import { selectNineDayProjection } from "./plan-flow"
+import { completeDetailedPlan } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
 async function answerMinimumPlanQuestions(page: Page): Promise<void> {
-  await page.getByRole("button", { name: /^1500m\b/u }).click()
-  await page.getByRole("button", { name: /고등부/u }).click()
-  await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
-  await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
-  await page.getByRole("button", { name: "내 계획 완성하기" }).click()
-  await page.getByRole("button", { name: /조금 힘들게 꾸준히.*LT/u }).click()
-  await page.getByRole("button", { name: /^RPE 기준으로 받기/u }).click()
-  await page.getByRole("button", { name: /^3일/u }).click()
-  await selectNineDayProjection(page)
-  await page.getByRole("button", { name: /날마다 달라요/u }).click()
-  await page.getByRole("button", { name: "하루 한 번 운동" }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
+await completeDetailedPlan(page, { event: /^1500m\b/u, division: /고등부/u, experience: /훈련 계획에 맞춰 달려 본 경험/u, days: /^3일/u, focus: /조금 힘들게 꾸준히.*LT/u, time: /날마다 달라요/u })
 }
 
 test("retries a selected plan save and keeps the plan after reload", async ({ page }) => {

@@ -1,34 +1,14 @@
-import { mkdirSync } from "node:fs"
-import path from "node:path"
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
-import { selectNineDayProjection } from "./plan-flow"
-
-const evidenceDirectory = path.resolve(
-  process.cwd(),
-  "../.omo/evidence/personalized-prescription-algorithm-v2/task-9/race-date-preview",
-)
-
-test.beforeAll(() => {
-  mkdirSync(evidenceDirectory, { recursive: true })
-})
+import { completeDetailedPlan, openPlanRefinement } from "./plan-flow"
 
 async function reachRaceDate(page: Page): Promise<void> {
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "바로 시작하기" })
     .getByRole("button", { name: /^훈련 계획/u }).click()
-  await page.getByRole("button", { name: /^1500m/u }).click()
-  await page.getByRole("button", { name: /고등부/u }).click()
-  await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
-  await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
-  await page.getByRole("button", { name: "내 계획 완성하기" }).click()
-  await page.getByRole("button", { name: /조금 힘들게 꾸준히.*LT/u }).click()
-  await page.getByRole("button", { name: /RPE 기준으로 받기/u }).click()
-  await page.getByRole("button", { name: /^3일/u }).click()
-  await selectNineDayProjection(page)
-  await page.getByRole("button", { name: /날마다 달라요/u }).click()
-  await page.getByRole("button", { name: /하루 한 번 운동/u }).click()
-  await expect(page.getByRole("heading", { name: "목표 경기 날짜가 있나요? (선택)" })).toBeVisible()
+  await completeDetailedPlan(page, { division: /고등부/u })
+  await openPlanRefinement(page, "대회 날짜")
+  await expect(page.getByRole("heading", { name: "대회 날짜가 있나요?" })).toBeVisible()
 }
 
 for (const viewport of [
@@ -57,12 +37,13 @@ for (const viewport of [
     })).toBe(true)
 
     await page.screenshot({
-      path: path.join(evidenceDirectory, `${viewport.label}-${viewport.width}x${viewport.height}.png`),
+      path: test.info().outputPath(`${viewport.label}-${viewport.width}x${viewport.height}.png`),
       fullPage: true,
     })
 
     await page.getByRole("button", { name: "날짜 없이 일반 계획 보기" }).click()
-    await expect(page.getByRole("heading", { name: "두 계획에서 하나를 골라보세요" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
+    await page.getByText("경기 날짜는 어떻게 되나요?", { exact: true }).click()
     await expect(page.getByText("경기 날짜 없이 만든 일반 계획")).toBeVisible()
   })
 }

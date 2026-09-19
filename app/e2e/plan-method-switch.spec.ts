@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { selectNineDayProjection } from "./plan-flow"
+import { completeDetailedPlan, openPlanRefinement } from "./plan-flow"
 import { undersizedInteractiveTargets } from "./touch-audit"
 
 test.use({ serviceWorkers: "block" })
@@ -20,12 +20,10 @@ test("switches method in place and saves only the reconfirmed prescription", asy
   })
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
-  await page.getByRole("button", { name: /^5000m/u }).click()
-  await page.getByRole("button", { name: /고등부/u }).click()
-  await page.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }).click()
-  await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
-  await page.getByRole("button", { name: "내 계획 완성하기" }).click()
-  await page.getByRole("button", { name: /숨차게 반복.*VO₂/u }).click()
+  await completeDetailedPlan(page, { event: /^5000m/u, division: /고등부/u,
+    experience: /구조화된 훈련과 경기 경험이 많아요/u, focus: /숨차게 반복.*VO₂/u,
+    time: /저녁에 운동해요/u, twice: true })
+  await openPlanRefinement(page, "안내 방식")
   const support = page.locator(".plan-support-coverage")
   const supportToggle = support.locator("summary")
   await expect(support).not.toHaveAttribute("open")
@@ -56,11 +54,6 @@ test("switches method in place and saves only the reconfirmed prescription", asy
   await supportToggle.press("Space")
   await expect(support).not.toHaveAttribute("open")
   await page.getByRole("button", { name: /RPE 기준으로 받기/u }).click()
-  await page.getByRole("button", { name: /^3일/u }).click()
-  await selectNineDayProjection(page)
-  await page.getByRole("button", { name: /저녁에 운동해요/u }).click()
-  await page.getByRole("button", { name: /하루 두 번 운동할게요/u }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
   const method = page.locator(".plan-method-picker")
   const summary = method.locator(":scope > summary")
   await expect(method).not.toHaveAttribute("open")
@@ -77,7 +70,7 @@ test("switches method in place and saves only the reconfirmed prescription", asy
   await date.fill("2026-09-10")
   await method.getByText("1000m 5회", { exact: true }).click()
   await expect(method.getByRole("radio", { name: /1000m 5회/u })).toBeChecked()
-  const save = page.getByRole("button", { name: /시간 조절 계획 선택하기/u })
+  const save = page.getByRole("button", { name: /이 계획으로 시작하기/u })
   await expect(save).toBeDisabled()
   const record = page.getByRole("region", { name: "개인 페이스 기준 기록" })
   await record.getByRole("group", { name: "기준 기록 선택" }).getByRole("button").first().click()
@@ -93,6 +86,7 @@ test("switches method in place and saves only the reconfirmed prescription", asy
   await record.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
   await expect(save).toBeEnabled()
   await expect(date).toHaveValue("2026-09-10")
+  await page.locator("summary", { hasText: "A와 B는 뭐가 달라요?" }).click()
   const mainComparison = page.locator(".plan-main-comparison")
   await mainComparison.locator("summary").click()
   await expect(mainComparison.getByText("본운동 방법과 목표값이 같아요. 다른 방법 두 개가 아니에요.")).toBeVisible()

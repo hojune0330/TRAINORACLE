@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { selectNineDayProjection } from "./plan-flow"
+import { completeDetailedPlan } from "./plan-flow"
 import { expectActivePlanHeading } from "./active-plan-flow"
 
 test.use({ serviceWorkers: "block" })
@@ -18,18 +18,7 @@ for (const mode of ["shared", "candidate-only", "candidate-B"] as const) test(`$
   })
   await page.goto(`${process.env.PLAYWRIGHT_APP_PATH ?? "/"}?app=1`)
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
-  await page.getByRole("button", { name: /^5000m\b/u }).click()
-  await page.getByRole("button", { name: /일반부/u }).click()
-  await page.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }).click()
-  await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
-  await page.getByRole("button", { name: "내 계획 완성하기" }).click()
-  await page.getByRole("button", { name: /숨차게 반복.*VO₂/u }).click()
-  await page.getByRole("button", { name: /5000m 경기 페이스 상세 훈련 포함/u }).click()
-  await page.getByRole("button", { name: /^매일/u }).click()
-  await selectNineDayProjection(page)
-  await page.getByRole("button", { name: /아침에 운동해요/u }).click()
-  await page.getByRole("button", { name: /하루 두 번 운동할게요/u }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
+await completeDetailedPlan(page, { event: /^5000m\b/u, division: /일반부/u, experience: /구조화된 훈련과 경기 경험이 많아요/u, days: /^매일/u, focus: /숨차게 반복.*VO₂/u, template: /5000m 경기 페이스 상세 훈련 포함/u, time: /아침에 운동해요/u, twice: true })
   await page.locator("summary").filter({ hasText: "훈련 방법 선택" }).click()
   await page.getByText("추천에 참고한 이력", { exact: true }).click()
   await expect(page.getByText(/전체 종목을 합쳐 최근 18개 계획/u)).toBeVisible()
@@ -70,7 +59,7 @@ for (const mode of ["shared", "candidate-only", "candidate-B"] as const) test(`$
   await evidence.getByRole("button", { name: /개인 최고.*18분 31초/u }).click()
   await evidence.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
   await expect(evidence.getByRole("status")).toContainText("상세 훈련 수치를 적용")
-  await page.getByRole("button", { name: mode === "candidate-B" ? /최소 시간 계획 선택하기/u : /시간 조절 계획 선택하기/u }).click()
+  await page.getByRole("button", { name: mode === "candidate-B" ? /최소 시간 계획 선택하기/u : /이 계획으로 시작하기/u }).click()
   await expectActivePlanHeading(page)
   const read = () => page.evaluate(() => {
     const value = localStorage.getItem("trainoracle.plan-beta.v1")

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { selectNineDayProjection } from "./plan-flow"
+import { completeDetailedPlan } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
@@ -18,18 +18,10 @@ test("compares actual MAIN values and refreshes the chosen record without claimi
   })
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
-  await page.getByRole("button", { name: /^800m/u }).click()
-  await page.getByRole("button", { name: /고등부/u }).click()
-  await page.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }).click()
-  await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
-  await page.getByRole("button", { name: "내 계획 완성하기" }).click()
-  await page.getByRole("button", { name: /짧고 세게.*GLY/u }).click()
-  await page.getByRole("button", { name: /800m 경기 페이스 상세 훈련 포함/u }).click()
-  await page.getByRole("button", { name: /^3일/u }).click()
-  await selectNineDayProjection(page)
-  await page.getByRole("button", { name: /아침에 운동해요/u }).click()
-  await page.getByRole("button", { name: /하루 한 번 운동/u }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
+  await completeDetailedPlan(page, { event: /^800m/u, division: /고등부/u,
+    experience: /구조화된 훈련과 경기 경험이 많아요/u, focus: /짧고 세게.*GLY/u,
+    template: /800m 경기 페이스 상세 훈련 포함/u, time: /아침에 운동해요/u })
+  await page.locator("summary", { hasText: "A와 B는 뭐가 달라요?" }).click()
   const comparison = page.getByRole("region", { name: "두 계획 핵심 비교" })
   const summary = comparison.locator("summary").filter({ hasText: "본운동 방법 비교" })
   await expect(comparison.locator(".plan-main-comparison")).not.toHaveAttribute("open")

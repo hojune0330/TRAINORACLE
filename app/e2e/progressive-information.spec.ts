@@ -36,17 +36,21 @@ for (const width of [320, 375]) {
     await page.getByRole("button", { name: "훈련 계획 만들기", exact: true }).click()
     const choices = page.getByRole("group", { name: "계획 종목 선택" }).getByRole("button")
     await expect(choices).toHaveCount(7)
-    for (const button of await choices.all()) await expect(button).toBeInViewport({ ratio: 1 })
-    const explanation = page.locator("details").filter({ has: page.locator("summary", { hasText: "이 선택은 계획에 어떻게 쓰이나요?" }) })
+    await expect(choices.first()).toBeInViewport({ ratio: 1 })
+    for (const button of await choices.all()) {
+      // The approved <=340px layout uses one column rather than squeezing labels.
+      if (width === 320) await button.scrollIntoViewIfNeeded()
+      await expect(button).toBeInViewport({ ratio: 1 })
+    }
+    const explanation = page.locator("details").filter({ has: page.locator("summary", { hasText: "경기 기록이 있나요?" }) })
     await expect(explanation).not.toHaveAttribute("open")
     await page.screenshot({ path: testInfo.outputPath(`plan-${width}.png`) })
-    await page.getByRole("button", { name: "1500m", exact: true }).click()
+    await page.getByRole("button", { name: /^1500m\b/u }).click()
     const summary = page.locator(".plan-intake__summary")
-    await expect(summary).not.toHaveAttribute("open")
-    await summary.locator("summary").click()
+    await expect(summary).toBeVisible()
     await summary.getByRole("button", { name: "1500m", exact: true }).click()
     await expect(page.getByRole("group", { name: "계획 종목 선택" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "1500m", exact: true }).last()).toHaveAttribute("aria-pressed", "true")
+    await expect(page.getByRole("group", { name: "계획 종목 선택" }).getByRole("button", { name: /^1500m\b/u })).toHaveAttribute("aria-pressed", "true")
   })
 }
 

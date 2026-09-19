@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
-import { selectNineDayProjection } from "./plan-flow"
+import { completeDetailedPlan, completeQuickPlan } from "./plan-flow"
 import { expectActivePlanHeading, openActiveSessionDetails } from "./active-plan-flow"
 import { undersizedInteractiveTargets } from "./touch-audit"
 
@@ -52,18 +52,7 @@ async function reachExperiencedFiveKCandidates(
   page: Page,
   divisionName: RegExp = /일반부/u,
 ): Promise<void> {
-  await page.getByRole("button", { name: /^5000m\b/u }).click()
-  await page.getByRole("button", { name: divisionName }).click()
-  await page.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }).click()
-  await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
-  await page.getByRole("button", { name: "내 계획 완성하기" }).click()
-  await page.getByRole("button", { name: /숨차게 반복.*VO₂/u }).click()
-  await page.getByRole("button", { name: /5000m 경기 페이스 상세 훈련 포함/u }).click()
-  await page.getByRole("button", { name: /^3일/u }).click()
-  await selectNineDayProjection(page)
-  await page.getByRole("button", { name: /아침에 운동해요/u }).click()
-  await page.getByRole("button", { name: /하루 한 번 운동/u }).click()
-  await page.getByRole("button", { name: "날짜 없이 계획안 보기" }).click()
+await completeDetailedPlan(page, { division: divisionName, event: /^5000m\b/u, experience: /구조화된 훈련과 경기 경험이 많아요/u, days: /^3일/u, focus: /숨차게 반복.*VO₂/u, template: /5000m 경기 페이스 상세 훈련 포함/u, time: /아침에 운동해요/u })
 }
 
 async function assertViewportIntegrity(page: Page): Promise<void> {
@@ -163,7 +152,7 @@ for (const viewport of [
       fullPage: true,
     })
 
-    await page.getByRole("button", { name: /시간 조절 계획 선택하기/u }).click()
+    await page.getByRole("button", { name: /이 계획으로 시작하기/u }).click()
     await expectActivePlanHeading(page)
     const storedSequence = await page.evaluate(() => {
       const state = JSON.parse(localStorage.getItem("trainoracle.plan-beta.v1")!)
@@ -218,7 +207,7 @@ test("keeps youth and adult 5K eligibility and dose identical", async ({ browser
     await expect(page.getByText(new RegExp(`참가 부문: ${divisionName.source}`, "u"))).toBeVisible()
     await bindFirstRecord(page)
     await expect(page.getByText(/5×1000m @5000m RP.*r150.*JOG/u).first()).toBeVisible()
-    await page.getByRole("button", { name: /시간 조절 계획 선택하기/u }).click()
+    await page.getByRole("button", { name: /이 계획으로 시작하기/u }).click()
     await expectActivePlanHeading(page)
 
     storedDoses.push(await page.evaluate(() => {
@@ -261,12 +250,12 @@ test("requires reconfirmation after replacing the selected record", async ({ pag
   await expect(page.getByText(/5×1000m @5000m RP.*r150.*JOG/u).first()).toBeVisible()
 
   await picker.getByRole("button", { name: /^시즌 최고.*19분/u }).click()
-  await expect(page.getByRole("button", { name: /시간 조절 계획 선택하기/u })).toBeDisabled()
+  await expect(page.getByRole("button", { name: /이 계획으로 시작하기/u })).toBeDisabled()
   await expect(page.getByText(/5×1000m @5000m RP/u)).toHaveCount(0)
   await expect(page.getByText("새로 고른 기준 기록을 확인한 뒤 계획을 선택해 주세요.")).toBeVisible()
 
   await picker.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
-  await expect(page.getByRole("button", { name: /시간 조절 계획 선택하기/u })).toBeEnabled()
+  await expect(page.getByRole("button", { name: /이 계획으로 시작하기/u })).toBeEnabled()
   await page.getByText("기준 기록·중단·낮춤 규칙 보기").first().click()
   await expect(page.getByText(/기준 기록.*5000m.*19분.*2026-04-20/u).first()).toBeVisible()
 })
@@ -300,10 +289,7 @@ test("D9 blocks before candidates", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 })
   await seedRecords(page, currentRecords)
   await openPlan(page)
-  await page.getByRole("button", { name: /^5000m\b/u }).click()
-  await page.getByRole("button", { name: /일반부/u }).click()
-  await page.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }).click()
-  await page.getByRole("button", { name: /통증.*부상.*몸 이상/u }).click()
+  await completeQuickPlan(page, { event: /^5000m\b/u, experience: /구조화된 훈련과 경기 경험이 많아요/u, review: true })
   await expect(page.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
   await expect(page.getByText("선택 가능한 계획 2가지")).toHaveCount(0)
   await page.screenshot({ path: test.info().outputPath("mobile-375x667-d9-blocked.png"), fullPage: true })
