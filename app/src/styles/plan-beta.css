@@ -1943,6 +1943,7 @@
   border-block: var(--bw-line) solid var(--ink);
   min-width: 0;
   overflow-wrap: anywhere;
+  container: plan-comparison / inline-size;
 }
 
 .plan-candidate-comparison h2 {
@@ -2626,6 +2627,36 @@
     border-right: 0;
     border-bottom: var(--bw-line) solid var(--hair);
   }
+}
+
+/* A rem-based container threshold also responds to text-only enlargement. */
+@container plan-comparison (max-width: 16rem) {
+  .plan-candidate-comparison__options,
+  .plan-main-comparison__pair {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+  }
+
+  .plan-candidate-comparison article {
+    padding: var(--space-3) 0;
+  }
+
+  .plan-candidate-comparison article:first-child {
+    border-right: 0;
+    border-bottom: var(--bw-line) solid var(--hair);
+  }
+
+  .plan-main-comparison__pair > .plan-main-comparison__values {
+    display: block;
+    grid-row: auto;
+  }
+
+  .plan-main-comparison__pair > .plan-main-comparison__values:first-child,
+  .plan-main-comparison__pair > .plan-main-comparison__values:last-child {
+    grid-column: auto;
+  }
+
+  .plan-main-comparison__pair > .plan-main-comparison__values > dl { display: block; }
 }
 
 .plan-select-action,

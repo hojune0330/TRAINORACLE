@@ -44,11 +44,14 @@ test("compares actual MAIN values and refreshes the chosen record without claimi
   const normalFont = await summary.evaluate((node) => parseFloat(getComputedStyle(node).fontSize))
   await page.evaluate(() => { document.documentElement.style.fontSize = "200%" })
   expect(await summary.evaluate((node) => parseFloat(getComputedStyle(node).fontSize))).toBeGreaterThanOrEqual(normalFont * 1.9)
-  await testInfo.attach("comparison-overflow", { contentType: "application/json", body: JSON.stringify(await comparison.evaluate((node) => {
+  if ((page.viewportSize()?.width ?? 1440) <= 375) {
+    await expect.poll(() => comparison.locator(".plan-candidate-comparison__options").evaluate((node) => getComputedStyle(node).gridTemplateColumns.split(" ").length)).toBe(1)
+  }
+  await expect.poll(() => comparison.evaluate((node) => {
+    if (node.scrollWidth <= node.clientWidth + 1) return []
     const right = node.getBoundingClientRect().right
-    return Array.from(node.querySelectorAll("*")).filter((child) => child.getBoundingClientRect().right > right + 1).map((child) => ({ tag: child.tagName, className: child.className, text: child.textContent, width: child.getBoundingClientRect().width }))
-  })) })
-  await expect.poll(() => comparison.evaluate((node) => node.scrollWidth <= node.clientWidth + 1)).toBe(true)
+    return [{ className: node.className, width: node.clientWidth, scrollWidth: node.scrollWidth }, ...Array.from(node.querySelectorAll("*")).filter((child) => child.getBoundingClientRect().right > right + 1).map((child) => ({ tag: child.tagName, className: child.className, text: child.textContent, width: child.getBoundingClientRect().width }))]
+  })).toEqual([])
   expect((await summary.boundingBox())!.height).toBeGreaterThanOrEqual(44)
   await summary.evaluate((node) => node.scrollIntoView({ behavior: "instant", block: "start" }))
   await page.screenshot({ path: testInfo.outputPath("main-comparison-200pct.png") })
