@@ -10,6 +10,8 @@ describe("plan help copy", () => {
     render(<div style={{ display: "flex", width: 100 }}><TermHelp term="training-notation" /></div>)
     const button = screen.getByRole("button", { name: "훈련표 읽는 법 설명 보기" })
     expect(button).toHaveStyle({ minWidth: "44px", flexShrink: "0" })
+    expect(parseFloat(getComputedStyle(button).marginRight)).toBeGreaterThanOrEqual(0)
+    expect(parseFloat(getComputedStyle(button).marginLeft)).toBeGreaterThanOrEqual(0)
     expect(button.parentElement).toHaveStyle({ flexShrink: "0" })
   })
 

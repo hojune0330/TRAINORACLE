@@ -26,7 +26,7 @@ export function TermHelp({ term }: { term: TermId }) {
         aria-expanded={open}
         onClick={toggle}
         style={{
-          width: 44, minWidth: 44, height: 44, flexShrink: 0, margin: "-9px -8px -9px 1px", padding: 0,
+          width: 44, minWidth: 44, height: 44, flexShrink: 0, margin: "-9px 0 -9px 1px", padding: 0,
           border: 0, background: "transparent", cursor: "pointer",
           display: "inline-flex", alignItems: "center", justifyContent: "center",
           verticalAlign: "middle",
