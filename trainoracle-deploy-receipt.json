@@ -1,9 +1,8 @@
 {
   "kind": "TRAINORACLE_PAGES_DEPLOYMENT",
-  "sourceSha": "27cc6d5705a58f55eb3e07140a7f932d1118269c",
-  "previousPagesSha": "19fe7e874a4f64bb5a79c12e0907549c962726ce",
-  "workflowRunId": "manual",
-  "workflowAttempt": "2",
-  "deployedAt": "2026-09-16T04:20:36.734Z",
-  "note": "manual deploy by owner instruction (#343 recommended one-tap flow, MIX default)"
+  "sourceSha": "827008890affb4ec089857955f54082ad9a11a79",
+  "previousPagesSha": "1b28aa5955cfe5108cd29a471365535497f99da2",
+  "workflowRunId": "35468619924",
+  "workflowAttempt": "1",
+  "deployedAt": "2026-09-19T21:41:49.046Z"
 }
