@@ -310,6 +310,7 @@ describe("plan beta user flow", () => {
       "trainoracle.plan-beta.previous-intake.v1",
       JSON.stringify({
         ...stateFixture().intake,
+        competitionDivision: "HIGH_SCHOOL",
         availableDayCount: 6,
         requestedFrameLength: 10,
         trainingFocus: "VO2_INTENT",
@@ -325,7 +326,8 @@ describe("plan beta user flow", () => {
     expect(screen.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
     expect(screen.getAllByText(/5km.*10일/u)).not.toHaveLength(0)
     expect(screen.getAllByText(/숨차게 반복.*VO₂/u)).not.toHaveLength(0)
-    expect(screen.getByText("4개 바꿨어요")).toBeVisible()
+    expect(screen.getByText("5개 바꿨어요")).toBeVisible()
+    expect(screen.getByRole("button", { name: /^참가 부문 바꾸기 · 지금 고등부/u, hidden: true })).toBeInTheDocument()
   })
 
   it("routes a missing stored focus to candidates with the base default", async () => {
