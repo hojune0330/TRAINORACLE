@@ -38,6 +38,9 @@ import { PERIODIZATION_PHASE_LABELS } from "../../domain/periodization-lineage"
 import type { PlanCloudPersistenceState } from "../../domain/account/plan-cloud-backup"
 import type { PlannedSessionLogDraft } from "../../domain/planned-session-link"
 import { resolveCurrentPlannedSession, samePlannedSessionLink } from "../../domain/planned-session-link"
+import { InstantPlanTodayView } from "../../components/instant-plan/InstantPlanTodayView"
+import { instantSessionId } from "./instant-plan-today"
+import { projectCurrentInstantToday } from "./instant-plan-today-context"
 
 const PROGRESS_ACTIONS: readonly {
   readonly state: PlanProgressState
@@ -60,6 +63,8 @@ export function ActivePlan({
   showCreatedCelebration = false,
   onWriteSessionLog,
   returnToSession,
+  executionMessage,
+  executionBlocked = false,
 }: {
   readonly state: PlanBetaState
   readonly cloudPersistence?: PlanCloudPersistenceState
@@ -75,10 +80,25 @@ export function ActivePlan({
   readonly showCreatedCelebration?: boolean
   readonly onWriteSessionLog?: (session: PlanSession) => void
   readonly returnToSession?: PlannedSessionLogDraft["link"]
+  readonly executionMessage?: string | null
+  readonly executionBlocked?: boolean
 }) {
   const [hasPendingSuccessor, setHasPendingSuccessor] = React.useState(false)
   const [showActivationCheck, setShowActivationCheck] = React.useState(false)
   const [showCreated, setShowCreated] = React.useState(false)
+  const scheduleAnchor = React.useRef<HTMLDivElement>(null)
+  const checkedToday = projectCurrentInstantToday(state)
+  const todayView = executionBlocked
+    ? { ...checkedToday, state: "UNAVAILABLE" as const, title: "몸 상태와 처방을 먼저 확인해 주세요", sessions: [] }
+    : checkedToday
+  const todayIds = new Set(checkedToday.sessions.map(session => session.id))
+  const todayDetailedSessions = state.activePlan.sessions.filter(session => todayIds.has(instantSessionId(session))
+    && session.prescription.kind === "PACE_TARGET")
+  const showSchedule = () => {
+    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false
+    scheduleAnchor.current?.scrollIntoView?.({ block: "start", behavior: reduced ? "auto" : "smooth" })
+    scheduleAnchor.current?.focus({ preventScroll: true })
+  }
   const { activePlan } = state
   const recorded = new Map(
     state.progress.map((progress) => [
@@ -147,6 +167,29 @@ export function ActivePlan({
           )}
         </div>
       )}
+      {todayDetailedSessions.length > 0 && <section aria-label="오늘 상세 훈련 시작 전 확인">
+        <p>저장된 훈련 내용이에요. 시작 전 몸 상태와 현재 처방을 다시 확인해 주세요.</p>
+        {todayDetailedSessions.map(session => session.prescription.kind === "PACE_TARGET" && <div key={instantSessionId(session)}>
+          {!executionBlocked && (todayView.state === "SCHEDULED" || todayView.state === "PARTLY_RECORDED")
+            && todayView.sessions.some(item => item.id === instantSessionId(session) && !item.recorded)
+            && <button type="button" className="plan-text-action"
+            onClick={() => { if (session.prescription.kind === "PACE_TARGET") onCheckDetailedExecution(session.prescription, "START", "NO_KNOWN_RISK") }}>
+            {sessionSlotLabel(session.slot)} 상세 훈련 · 통증 없고 평소와 같음
+          </button>}
+          <button type="button" className="plan-text-action"
+            onClick={() => { if (session.prescription.kind === "PACE_TARGET") onCheckDetailedExecution(session.prescription, "START", "REVIEW_REQUIRED") }}>
+            {sessionSlotLabel(session.slot)} 상세 훈련 · 통증·이상 또는 잘 모르겠음
+          </button>
+        </div>)}
+      </section>}
+      {executionMessage && <div className="plan-execution-status" role="status">{executionMessage}</div>}
+      <InstantPlanTodayView today={todayView} onContinue={showSchedule} onChangeSchedule={showSchedule}
+        onRecordSession={onWriteSessionLog === undefined ? undefined : id => {
+          const session = activePlan.sessions.find(item => instantSessionId(item) === id)
+          if (session && session.role !== "REST") onWriteSessionLog(session)
+        }} />
+      <details className="plan-detailed-options">
+      <summary>전체 계획 구성</summary>
       <p className="active-plan__variant">
         <strong>{label.title}</strong>
         <span>{planAdjustment}</span>
@@ -196,6 +239,8 @@ export function ActivePlan({
           </p>
         </section>
       )}
+      </details>
+      <div ref={scheduleAnchor} tabIndex={-1} aria-label="전체 일정과 기록">
       <PlanSchedulePreview
         startDate={startDate}
         frameLengthDays={frameLengthDays}
@@ -372,6 +417,7 @@ export function ActivePlan({
           )
         }}
       />
+      </div>
       <div className="active-plan__continuity">
         <strong>다음 계획에 이어지는 정보</strong>
         <p>

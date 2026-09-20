@@ -14,10 +14,10 @@ describe("easy-session-duration-only candidate copy", () => {
     }
     const copy = JSON.stringify([balanced, conservative])
 
-    expect(balanced.title).toBe("시간 조절 계획")
-    expect(conservative.title).toBe("최소 시간 계획")
-    expect(balanced.label).toBe("쉬운 날은 시간 범위로")
-    expect(conservative.label).toBe("쉬운 날은 가장 짧게")
+    expect(balanced.title).toBe("기초·회복 운동 시간을 범위로")
+    expect(conservative.title).toBe("기초·회복 운동을 짧게")
+    expect(balanced.label).toBe("기초·회복 운동은 시간 범위로")
+    expect(conservative.label).toBe("기초·회복 운동은 범위의 짧은 시간으로")
     expect(copy).not.toMatch(/보조훈련|보조 훈련|부담|더 안전|회복 여유|회복 최적화|쉬는 날을 늘/u)
   })
 })

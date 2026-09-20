@@ -32,6 +32,10 @@ import { resolveDetailedPlanTemplateOptions } from "./plan-template-options"
 import { listDetailedSessionTargets, type PlanSessionTarget, type CandidateSessionTargets } from "../../domain/plan-session-target"
 import { PlanSessionTargetPicker } from "./PlanSessionTargetPicker"
 import type { RepeatPreference } from "@impl/prescription/method-recommendation"
+import { InstantPlanRecommendationView } from "../../components/instant-plan/InstantPlanRecommendationView"
+import type { InstantPlanEntry } from "../../domain/instant-plan-contract"
+import { formatRecordTime } from "../../domain/athlete-record-display"
+import { defaultInstantCandidate, projectInstantRecommendation } from "./instant-plan-projection"
 
 export function PlanCandidates({
   generated,
@@ -60,6 +64,11 @@ export function PlanCandidates({
   onBack,
   onSelect,
   adjustmentActions = {},
+  instantEntry,
+  saving = false,
+  saveError,
+  saveCode,
+  onRetrySave,
 }: {
   readonly generated: PlanGenerationSuccess
   readonly intake: PlanBetaIntake
@@ -88,7 +97,13 @@ export function PlanCandidates({
   readonly onBack: () => void
   readonly onSelect: (selection: CandidateSelection) => void
   readonly adjustmentActions?: Readonly<Record<string, (() => void) | undefined>>
+  readonly instantEntry?: InstantPlanEntry
+  readonly saving?: boolean
+  readonly saveError?: string | null
+  readonly saveCode?: string | null
+  readonly onRetrySave?: () => void
 }) {
+  const [showOptions, setShowOptions] = React.useState(false)
   const [repeatPreference, setRepeatPreference] = React.useState<RepeatPreference>("NEUTRAL")
   const [targetDraftPending, setTargetDraftPending] = React.useState(false)
   React.useEffect(() => {
@@ -97,28 +112,52 @@ export function PlanCandidates({
   const [localStartDate, setLocalStartDate] = React.useState(todayISO)
   const startDate = startDateValue ?? localStartDate
   const [expandedCandidateKind, setExpandedCandidateKind] = React.useState<PlanGenerationSuccess["candidates"][number]["kind"] | null>(
-    generated.candidates[0]?.kind ?? null,
+    null,
   )
   const hasValidStartDate = isValidIsoDate(startDate)
   const detailedEvidencePending = intake.selectedDetailedTemplateRef !== null
     && prescriptionBinding.kind !== "bound"
-  const canSelect = hasValidStartDate && !recordConfirmationPending && !detailedEvidencePending && !targetDraftPending
+  const selectionUnavailable = saving || saveCode?.startsWith("ACCOUNT_PLAN_") === true
+  // A rejected review may be corrected; an in-flight/uncertain write must not fork.
+  const canRevise = !saving && (saveCode === undefined || saveCode === null
+    || !saveCode.startsWith("ACCOUNT_PLAN_")
+    || ["ACCOUNT_PLAN_STALE", "ACCOUNT_PLAN_EVIDENCE_REQUIRED", "ACCOUNT_PLAN_REVIEW_REQUIRED"].includes(saveCode))
+  const canSelect = hasValidStartDate && !recordConfirmationPending && !detailedEvidencePending && !targetDraftPending && !selectionUnavailable
   const selectedRecord = athleteRecords.find((record) => record.id === selectedRecordId)
   const selectedEventLabel = selectedRecord === undefined
     ? "선택한 종목"
     : `${selectedRecord.eventDistanceM}m`
+  const recommendation = projectInstantRecommendation(defaultInstantCandidate(generated), startDate)
+  const needsReview = recordConfirmationPending || detailedEvidencePending || targetDraftPending || !hasValidStartDate
 
   return (
     <section className="plan-candidates" aria-labelledby="plan-candidates-title">
-      <button className="plan-back" type="button" onClick={onBack}>
+      <div className="plan-result-header">
+      <button className="plan-back" type="button" onClick={onBack} disabled={!canRevise} aria-label="질문 다시 보기" title="질문 다시 보기">
         <ArrowLeft aria-hidden="true" size={17} />
-        질문 다시 보기
       </button>
-      <div className="plan-eyebrow">계획이 나왔어요</div>
       <div className="plan-heading-row">
         <h1 id="plan-candidates-title">계획이 준비됐어요</h1>
         <TermHelp term="plan-option" />
       </div>
+      </div>
+      {recommendation && <InstantPlanRecommendationView recommendation={recommendation}
+        actionState={saving ? { kind: "SAVING" } : saveCode === "ACCOUNT_PLAN_PENDING" ? { kind: "PENDING", message: saveError ?? "계정 저장을 확인하고 있어요." }
+          : selectionUnavailable ? { kind: "BLOCKED", message: saveError ?? "계정 저장 상태를 먼저 확인해 주세요." }
+          : saveError ? { kind: "FAILED", message: saveError }
+          : needsReview ? { kind: "BLOCKED", message: "아래에서 기준 기록이나 변경한 내용을 확인해 주세요." } : { kind: "READY" }}
+        onStart={candidateId => { if (canSelect) onSelect({ candidateId, startDate }) }}
+        onRetry={saveCode === "PLAN_STORAGE_WRITE_FAILED" && canSelect ? onRetrySave : undefined}
+        onShowAlternatives={() => setShowOptions(true)} onEditSchedule={() => setShowOptions(true)}
+        anchorLabel={prescriptionBinding.kind === "bound" && selectedRecord
+          ? `${selectedEventLabel} ${formatRecordTime(selectedRecord.performanceSeconds)}` : undefined}
+        goalLabel={instantEntry?.kind === "GOAL_ONLY" ? `${instantEntry.eventDistanceM}m ${formatRecordTime(instantEntry.performanceSeconds)}` : undefined}
+      />}
+      {!recommendation && saveError && <p role="alert">{saveError}</p>}
+      <details className="plan-detailed-options" open={showOptions || needsReview}
+        onToggle={event => { if (!needsReview) setShowOptions(event.currentTarget.open) }}>
+      <summary>기록 확인·다른 계획·상세 훈련 보기</summary>
+      <fieldset disabled={selectionUnavailable} style={{ border: 0, padding: 0, minWidth: 0 }}>
       {onChangeMethod !== undefined && resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference).length > 0 && <PlanMethodPicker
         options={resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference)}
         selected={intake.selectedDetailedTemplateRef}
@@ -207,7 +246,9 @@ export function PlanCandidates({
           />
         ))}
       </div>
-      {onRefine !== undefined && (
+      </fieldset>
+      </details>
+      {onRefine !== undefined && canRevise && (
         <PlanRefinePanel
           intake={intake}
           targetRaceDate={targetRaceDate}

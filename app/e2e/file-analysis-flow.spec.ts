@@ -332,7 +332,7 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
   await method.evaluate(node => node.scrollIntoView({ block: "start" }))
   await page.screenshot({ path: testInfo.outputPath("method-preference-eligibility.png"), animations: "disabled" })
   await method.getByRole("radio", { name: /1000m 5회/u }).check()
-  const choose = page.getByRole("article", { name: "시간 조절 계획" }).getByRole("button", { name: "이 계획으로 시작하기" })
+  const choose = page.getByRole("article", { name: "기초·회복 운동 시간을 범위로" }).getByRole("button", { name: "이 계획으로 시작하기" })
   await expect(choose).toBeDisabled()
   const record = page.getByRole("region", { name: "개인 페이스 기준 기록" })
   await record.getByRole("group", { name: "기준 기록 선택" }).getByRole("button").first().click()

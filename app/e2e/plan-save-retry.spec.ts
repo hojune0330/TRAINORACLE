@@ -28,7 +28,7 @@ test("retries a selected plan save and keeps the plan after reload", async ({ pa
   // When: the athlete selects a candidate, retries, and returns after a reload.
   await page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u }).first().click()
   await expect(page.getByRole("alert")).toContainText("계획을 이 기기에 저장하지 못했어요")
-  await page.getByRole("button", { name: "계획 다시 저장하기" }).click()
+  await page.getByRole("button", { name: "저장 다시 시도" }).click()
   await expect(page.getByRole("heading", { name: /9일 훈련 계획/u })).toBeVisible()
   await expect.poll(() => page.evaluate(
     () => window.localStorage.getItem("trainoracle.plan-beta.v1"),

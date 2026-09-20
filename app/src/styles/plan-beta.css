@@ -3438,3 +3438,40 @@
   background: var(--brand);
   color: #fff;
 }
+
+.plan-result-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.plan-result-header .plan-back {
+  width: var(--app-touch-min);
+  flex: 0 0 var(--app-touch-min);
+}
+
+.plan-result-header .plan-heading-row {
+  align-items: center;
+  min-width: 0;
+}
+
+.plan-result-header h1 {
+  margin: 0;
+  font-size: var(--fs-app-section-title);
+}
+
+.plan-detailed-options {
+  margin-block: var(--space-3);
+  border-top: var(--bw-line) solid var(--line);
+}
+
+.plan-detailed-options > summary {
+  min-height: var(--app-touch-min);
+  padding-block: var(--space-3);
+  cursor: pointer;
+}
+
+.plan-day-deck[hidden] {
+  display: none;
+}

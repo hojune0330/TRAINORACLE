@@ -54,6 +54,7 @@ export function PlanActiveState({
   const [error, setError] = React.useState<string | null>(null)
   const [retry, setRetry] = React.useState<PersistenceRetry | null>(null)
   const [executionMessage, setExecutionMessage] = React.useState<string | null>(null)
+  const [executionBlocked, setExecutionBlocked] = React.useState(false)
 
   const saveProgress = async (progress: StoredPlanProgress) => {
     setExecutionMessage(null)
@@ -181,6 +182,7 @@ export function PlanActiveState({
     const evaluatedAt = new Date()
     const safety = evaluatePlanSafety(currentCheck, evaluatedAt)
     if (safety.kind === "blocked") {
+      setExecutionBlocked(true)
       setExecutionMessage("지금은 상세 세션을 시작하지 않아요. 몸 상태를 먼저 직접 확인해 주세요.")
       return
     }
@@ -190,6 +192,7 @@ export function PlanActiveState({
       evaluatedAt: evaluatedAt.toISOString(),
       safetyGate: safety.gate,
     })
+    setExecutionBlocked(authority.kind !== "permitted")
     setExecutionMessage(authority.kind === "permitted"
       ? `현재 안전 상태와 승인 상태를 다시 확인했어요. ${operation === "START" ? "시작" : "다시 시작"}할 수 있어요. 의료 판단은 아닙니다.`
       : "현재 승인 상태에서 상세 세션을 시작하지 않아요. 저장된 계획은 그대로 유지됩니다.")
@@ -208,10 +211,9 @@ export function PlanActiveState({
         onCheckDetailedExecution={checkDetailedExecution}
         onWriteSessionLog={onWritePlannedSessionLog === undefined ? undefined : writePlannedSessionLog}
         returnToSession={returnToSession}
+        executionMessage={executionMessage}
+        executionBlocked={executionBlocked}
       />
-      {executionMessage !== null && (
-        <div className="plan-execution-status" role="status">{executionMessage}</div>
-      )}
       {error !== null && (
         <div className="plan-inline-error" role="alert">{error}</div>
       )}

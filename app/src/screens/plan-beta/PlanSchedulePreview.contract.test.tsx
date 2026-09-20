@@ -40,6 +40,19 @@ afterEach(cleanup)
 afterEach(() => vi.useRealTimers())
 
 describe("plan schedule preview", () => {
+  it("keeps the actual date and AM/PM overview visible when instructions collapse", () => {
+    const { rerender } = render(<PlanSchedulePreview startDate="2026-08-17" frameLengthDays={9}
+      sessions={sessions} detailsExpanded={false} detailsId="schedule-details" />)
+    expect(screen.getByLabelText("9일 훈련 흐름")).toBeVisible()
+    expect(screen.getByRole("listitem", { name: "8월 17일 월요일 · 주요 훈련 LT · 회복 운동" })).toBeVisible()
+    expect(document.getElementById("schedule-details")).not.toBeVisible()
+    expect(screen.queryByLabelText("RPE 쉽게 보기")).not.toBeInTheDocument()
+    rerender(<PlanSchedulePreview startDate="2026-08-17" frameLengthDays={9}
+      sessions={sessions} detailsExpanded detailsId="schedule-details" />)
+    expect(document.getElementById("schedule-details")).toBeVisible()
+    expect(screen.getByRole("group", { name: "8월 17일 월요일 오후 세션" })).toBeVisible()
+  })
+
   it("projects only days 1-7 from a full canonical session list", () => {
     const dayEightSession: PlanSession = {
       day: 8,

@@ -55,10 +55,12 @@ function overviewState() {
 }
 
 describe("active plan first-view overview", () => {
-  it("shows the training flow and same-day sessions before collapsed notes", () => {
+  it("shows the training flow and same-day sessions before collapsed notes", async () => {
     render(<ActivePlan state={overviewState()} {...callbacks} />)
 
     expect(screen.getByRole("heading", { level: 1, name: "9일 훈련 계획" })).toBeVisible()
+    expect(screen.getByText("전체 계획 구성").closest("details")).not.toHaveAttribute("open")
+    await userEvent.setup().click(screen.getByText("전체 계획 구성"))
     expect(screen.getByText("8월 27일(목) - 9월 4일(금)")).toBeVisible()
     const buildSummary = screen.getByRole("list", { name: "계획 구성 요약" })
     const summaryItems = within(buildSummary).getAllByRole("listitem")

@@ -51,6 +51,8 @@ export function PlanSchedulePreview({
   explanationContext,
   loadEvidence,
   focusSession,
+  detailsExpanded = true,
+  detailsId,
 }: {
   readonly startDate: string
   readonly frameLengthDays?: FrameLengthDays
@@ -63,6 +65,8 @@ export function PlanSchedulePreview({
   readonly explanationContext?: SessionExplanationContext
   readonly loadEvidence?: (session: PlanSession) => SessionExplanationEvidence | null
   readonly focusSession?: Pick<PlanSession, "day" | "slot">
+  readonly detailsExpanded?: boolean
+  readonly detailsId?: string
 }) {
   const validStartDate = isValidIsoDate(startDate)
   const dayCount = Math.ceil(frameLengthDays)
@@ -121,7 +125,7 @@ export function PlanSchedulePreview({
 
   return (
     <>
-      {showRpeGuide && <PlanRpeGuide />}
+      {showRpeGuide && detailsExpanded && <PlanRpeGuide />}
       <PlanTrainingFlow
         days={days}
         today={today}
@@ -129,7 +133,9 @@ export function PlanSchedulePreview({
         activeDayIndex={activeDayIndex}
       />
       <section
+        id={detailsId}
         className="plan-day-deck"
+        hidden={!detailsExpanded}
         data-display-mode={displayMode}
         aria-label="날짜별 훈련 카드"
       >

@@ -36,7 +36,7 @@ export function PlanRefinePanel({
     {
       step: "days",
       label: "운동할 날",
-      value: intake.availableDayCount === "EVERY_DAY" ? "매일" : `주 ${intake.availableDayCount}일`,
+      value: intake.availableDayCount === "EVERY_DAY" ? "매일" : `이번 ${Math.ceil(intake.requestedFrameLength)}일 중 ${intake.availableDayCount}일`,
       changed: true,
     },
   ]

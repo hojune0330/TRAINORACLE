@@ -4,9 +4,9 @@ import type { PlanBetaIntake } from "../../domain/plan-beta-store"
 import type { IntakeStep } from "./PlanIntake"
 
 /**
- * 기본 흐름(빠른 계획): 네 번만 고르면 계획이 나온다.
+ * 기존 빠른 질문 흐름. 간편 기록 입력도 같은 누락 사실 질문을 재사용한다.
  * 나머지 항목은 `QUICK_INTAKE_DEFAULTS`로 채우고, 계획을 받은 뒤 "다듬기"에서 바꾼다.
- * 훈련 수치(강도·시간·반복)는 기본값을 넣어도 달라지지 않는다 — 배치와 표시만 정한다.
+ * 이 기본값은 목적·일정·생성 결과에 영향을 준다. 선수의 응답으로 주장하지 않는다.
  */
 export const QUICK_STEP_ORDER = [
   "goal",

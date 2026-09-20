@@ -30,7 +30,7 @@ export function CandidateSection({
   readonly candidate: PlanGenerationSuccess["candidates"][number]
   readonly startDate: string
   readonly canSelect: boolean
-  /** 첫 계획안에 "추천" 표시. 고민 없이 한 번 탭하면 시작. */
+  /** Caller must select this using an explicit display policy, not array position. */
   readonly recommended?: boolean
   readonly expanded: boolean
   readonly onToggleSchedule: () => void
@@ -58,18 +58,18 @@ export function CandidateSection({
       <header>
         <span>계획안 {optionLetter}{recommended && <em className="plan-choice__badge">추천</em>}</span>
         <h2 id={headingId}>{label.title}</h2>
-        <p>{label.detail}</p>
-        <p className={`plan-candidate-purpose plan-candidate-purpose--${purposeStatus.tone}`}>
+        {expanded && <p>{label.detail}</p>}
+        {expanded && <p className={`plan-candidate-purpose plan-candidate-purpose--${purposeStatus.tone}`}>
           <strong>{purposeStatus.label}</strong>
           <span>{purposeStatus.detail}</span>
-        </p>
+        </p>}
         <strong className="plan-candidate-summary">
           {candidateSessionSummary(candidate)}
         </strong>
         <small>
           {eventDistanceLabel(candidate.eventDistanceM)} · {EVENT_LABELS[candidate.eventGroup].title} · {frameLengthDays}일
         </small>
-        <div className="plan-session-legend" aria-label="훈련 수치와 의도 설명">
+        {expanded && <div className="plan-session-legend" aria-label="훈련 수치와 의도 설명">
           <span>RPE<TermHelp term="rpe" /></span>
           <span>
             {ENERGY_INTENT_LABELS[candidate.selectedEnergyIntent].title}
@@ -79,7 +79,7 @@ export function CandidateSection({
             {hasDetailedPrescription ? "개인 페이스 상세 훈련 포함" : "RPE 기준 실행 안내"}
             <TermHelp term="quality-session" />
           </span>
-        </div>
+        </div>}
       </header>
       {isValidIsoDate(startDate) && (
         <>
@@ -94,8 +94,10 @@ export function CandidateSection({
             일정 {expanded ? "접기" : "펼치기"}
             <ChevronDown aria-hidden="true" size={18} />
           </button>
-          <div id={scheduleId} hidden={!expanded}>
             <PlanSchedulePreview
+              detailsId={scheduleId}
+              detailsExpanded={expanded}
+              showRpeGuide={false}
               startDate={startDate}
               frameLengthDays={frameLengthDays}
               sessions={candidate.sessions}
@@ -112,7 +114,6 @@ export function CandidateSection({
                 return <button type="button" className="plan-text-action" onClick={() => setPendingTarget(target)}>이 훈련을 개인 페이스로 받기</button>
               }}
             />
-          </div>
         </>
       )}
       {onAdjust !== undefined && <button type="button" className="plan-text-action"

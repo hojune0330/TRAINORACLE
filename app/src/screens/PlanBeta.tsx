@@ -44,6 +44,10 @@ import {
 import type { CandidateSelection } from "./plan-beta/plan-selection"
 import { planErrorMessage } from "./plan-beta/plan-feedback"
 import { loadAthleteRecords } from "../domain/athlete-records"
+import { InstantPlanEntryForm } from "../components/instant-plan/InstantPlanEntryForm"
+import type { InstantPlanEntry } from "../domain/instant-plan-contract"
+import { prepareInstantPlanEntry } from "../domain/instant-plan-entry"
+import { prepareInstantIntake } from "./plan-beta/instant-plan-intake"
 import type { CandidatePrescriptionBinding } from "../domain/plan-candidate-prescription"
 import { samePlanSessionTarget, type PlanSessionTarget, type CandidateSessionTargets } from "../domain/plan-session-target"
 import {
@@ -369,6 +373,9 @@ function LegacyPlanBeta({
   )
   const cloudBackupAttempt = React.useRef(0)
   const previousIntake = React.useState(() => loadPreviousIntake())[0]
+  const [instantEntryOpen, setInstantEntryOpen] = React.useState(previousIntake === null && stored === null)
+  const [instantEntry, setInstantEntry] = React.useState<InstantPlanEntry | undefined>()
+  const [instantEntryError, setInstantEntryError] = React.useState<string | null>(null)
   const [draft, setDraft] = React.useState<Partial<PlanBetaIntake>>(
     previousIntake ?? {},
   )
@@ -392,6 +399,8 @@ function LegacyPlanBeta({
   const [currentCheck, setCurrentCheck] = React.useState<PlanCurrentCheck | null>(null)
   const [errorCode, setErrorCode] = React.useState<string | null>(null)
   const [retrySelection, setRetrySelection] = React.useState<CandidateSelection | null>(null)
+  const [selectionSaving, setSelectionSaving] = React.useState(false)
+  const selectionWrite = React.useRef(false)
   const [notationReaderOpen, setNotationReaderOpen] = React.useState(false)
   const [celebrateActivePlan, setCelebrateActivePlan] = React.useState(false)
   const [athleteRecords, setAthleteRecords] = React.useState(() => loadAthleteRecords())
@@ -422,7 +431,7 @@ function LegacyPlanBeta({
       ? "blocked"
       : generated !== null && gate !== null
         ? "candidates"
-        : `intake-${step}`
+        : instantEntryOpen ? "instant-entry" : `intake-${step}`
 
   React.useLayoutEffect(() => {
     if (viewKey.startsWith("intake-")) return
@@ -584,7 +593,7 @@ function LegacyPlanBeta({
     generateCandidates(change.intake)
   }
 
-  const saveCandidate = async (
+  const persistCandidate = async (
     selection: CandidateSelection,
     activeGenerated: PlanGenerationSuccess,
   ) => {
@@ -641,6 +650,15 @@ function LegacyPlanBeta({
         setRetrySelection(result.code === "PLAN_STORAGE_WRITE_FAILED" ? selection : null)
         return
     }
+  }
+
+  const saveCandidate = async (selection: CandidateSelection, activeGenerated: PlanGenerationSuccess) => {
+    if (selectionWrite.current) return
+    selectionWrite.current = true
+    setSelectionSaving(true)
+    try { await persistCandidate(selection, activeGenerated) }
+    catch { setErrorCode("PLAN_STORAGE_WRITE_FAILED"); setRetrySelection(selection) }
+    finally { selectionWrite.current = false; setSelectionSaving(false) }
   }
 
   if (recordsOpen) {
@@ -776,6 +794,11 @@ function LegacyPlanBeta({
           selectedRecordId={selectedRecordId}
           comparisonRecordId={comparisonRecordId}
           prescriptionBinding={prescriptionBinding}
+          instantEntry={instantEntry}
+          saving={selectionSaving}
+          saveError={errorCode === null ? null : planErrorMessage(errorCode)}
+          saveCode={errorCode}
+          onRetrySave={retrySelection === null ? undefined : () => { void saveCandidate(retrySelection, generated) }}
           recordConfirmationPending={recordConfirmationPending}
           startDateValue={candidateStartDate}
           onStartDateChange={setCandidateStartDate}
@@ -833,25 +856,35 @@ function LegacyPlanBeta({
             void saveCandidate(selection, generated)
           }}
         />
-        {errorCode !== null && (
-          <div className="plan-inline-error" role="alert">
-            {planErrorMessage(errorCode)}
-          </div>
-        )}
-        {errorCode === "PLAN_STORAGE_WRITE_FAILED" && retrySelection !== null && (
-          <button
-            className="plan-text-action"
-            type="button"
-            onClick={() => {
-              void saveCandidate(retrySelection, generated)
-            }}
-          >
-            계획 다시 저장하기
-          </button>
-        )}
       </>
     )
   }
+
+  if (instantEntryOpen) return <>
+    <InstantPlanEntryForm today={todayISO()} initialEntry={instantEntry} onSubmit={value => {
+      const prepared = prepareInstantPlanEntry(value)
+      if (prepared.kind !== "ready") {
+        setInstantEntryError(prepared.kind === "invalid" ? "입력한 종목·기록·날짜를 다시 확인해 주세요."
+          : "기록을 저장하지 못했어요. 입력은 그대로 남아 있어요. 다시 시도해 주세요.")
+        return
+      }
+      draftRevision.current += 1
+      setInstantEntry(prepared.entry); setInstantEntryError(null); setInstantEntryOpen(false)
+      setAthleteRecords(loadAthleteRecords()); setSelectedRecordId(prepared.recordId)
+      setComparisonRecordId(null); setRecordConfirmationPending(false)
+      const nextDraft: Partial<PlanBetaIntake> = { ...draft, eventDistanceM: prepared.entry.eventDistanceM,
+        eventGroup: eventGroupForDistance(prepared.entry.eventDistanceM) }
+      delete nextDraft.selectedDetailedTemplateRef
+      if (draft.eventDistanceM !== prepared.entry.eventDistanceM) delete nextDraft.trainingFocus
+      setDraft(nextDraft); setStep(firstUnansweredQuickStep(nextDraft)); setCurrentCheck(null)
+    }} />
+    {instantEntryError && <p role="alert">{instantEntryError}</p>}
+    <details className="plan-detailed-options">
+      <summary>기록 관리·훈련표 읽기</summary>
+      <button type="button" className="plan-text-action" onClick={() => onManageRecords ? onManageRecords() : setRecordsOpen(true)}>내 경기 기록</button>
+      <button type="button" className="plan-text-action" onClick={() => setNotationReaderOpen(true)}>훈련표 표기 읽기</button>
+    </details>
+  </>
 
   return (
     <>
@@ -866,6 +899,10 @@ function LegacyPlanBeta({
           if (refining) {
             setRefining(false)
             generateCandidates(draft, null, targetRaceDate || undefined)
+            return
+          }
+          if (instantEntry !== undefined && (step === "experience" || step === "goal")) {
+            setInstantEntryOpen(true)
             return
           }
           setStep(previousIntakeStep(step, draft.eventGroup))
@@ -944,11 +981,12 @@ function LegacyPlanBeta({
           setErrorCode(null)
           setCurrentCheck(nextCurrentCheck)
           // 네 번째 답과 함께 바로 계획을 만든다. 나머지 항목은 기본값, 결과에서 다듬는다.
-          const completed = withQuickDefaults(draft)
+          const completed = prepareInstantIntake(draft, instantEntry)
           setDraft(completed)
           draftRevision.current += 1
           setRetrySelection(null)
-          const result = generatePlanFromDraft(completed, nextCurrentCheck)
+          const result = generatePlanFromDraft(completed, nextCurrentCheck,
+            instantEntry?.kind === "CURRENT_RECORD" && selectedRecordId !== null ? { selectedRecordId } : undefined)
           switch (result.kind) {
             case "blocked":
               setCurrentCheck(null)
@@ -964,6 +1002,7 @@ function LegacyPlanBeta({
               setGeneratedIntake(result.intake)
               setGeneratedEvidence(result.athleteEvidence)
               setPrescriptionBinding(result.prescriptionBinding)
+              setRecordConfirmationPending(result.prescriptionBinding.kind === "bound" && instantEntry?.kind === "CURRENT_RECORD")
               return
             case "preview_only":
               setGenerated(null)

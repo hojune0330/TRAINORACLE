@@ -59,7 +59,7 @@ await completeDetailedPlan(page, { event: /^5000m\b/u, division: /일반부/u, e
   await evidence.getByRole("button", { name: /개인 최고.*18분 31초/u }).click()
   await evidence.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
   await expect(evidence.getByRole("status")).toContainText("상세 훈련 수치를 적용")
-  await page.getByRole("button", { name: mode === "candidate-B" ? /최소 시간 계획 선택하기/u : /이 계획으로 시작하기/u }).click()
+  await page.getByRole("button", { name: mode === "candidate-B" ? /기초·회복 운동을 짧게 선택하기/u : /이 계획으로 시작하기/u }).click()
   await expectActivePlanHeading(page)
   const read = () => page.evaluate(() => {
     const value = localStorage.getItem("trainoracle.plan-beta.v1")

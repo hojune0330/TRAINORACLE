@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { completeDetailedPlan } from "./plan-flow"
+import { completeDetailedPlan, enterPlanWithoutRecord } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
@@ -32,12 +32,8 @@ test("moves from a choice to the next question and gives a clear journal save co
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
 
-  const firstStep = page.locator(".plan-intake")
-  await expect(firstStep).toBeVisible()
-  const firstAnimation = await firstStep.evaluate((element) => getComputedStyle(element).animationName)
-  expect(firstAnimation).toBe(testInfo.project.name === "reduced-motion" ? "none" : "flow-stage-enter")
-
-  await page.getByRole("button", { name: /^1500m/u }).click()
+  await expect(page.getByRole("combobox", { name: "종목" })).toBeVisible()
+  await enterPlanWithoutRecord(page)
   await expect(page.getByRole("heading", { name: "지금까지 어떻게 달려왔나요?" })).toBeVisible()
   await expectActiveQuestionAtReadingPosition(page)
   const nextAnimation = await page.locator(".plan-intake").evaluate((element) => getComputedStyle(element).animationName)

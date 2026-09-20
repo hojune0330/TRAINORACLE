@@ -91,6 +91,7 @@ export function PlanIntake({
   onContinue,
   onJump,
 }: PlanIntakeProps) {
+  const projectionDays = Math.ceil(draft.requestedFrameLength ?? 9)
   const meta = step === "preview"
     ? {
         eyebrow: "확인",
@@ -112,6 +113,8 @@ export function PlanIntake({
         copy: "없어도 괜찮아요. 있으면 그 날이 달력에 표시돼요.",
         helpTerm: null,
       }
+    : step === "days"
+    ? { ...STEP_META.days, title: `이번 ${projectionDays}일 중 며칠 훈련할까요?` }
     : STEP_META[step]
   const visibleSteps = visibleIntakeSteps(draft.eventGroup)
   const isQuickStep = (QUICK_STEP_ORDER as readonly IntakeStep[]).includes(step)
@@ -292,8 +295,8 @@ export function PlanIntake({
               key={days}
               title={days === "EVERY_DAY" ? "매일" : `${days}일`}
               detail={days === "EVERY_DAY"
-                ? "쉬는 날도 달력에 따로 보여요"
-                : `나머지 ${7 - days}일은 쉬어요`}
+                ? "매일 훈련을 배치해요. 모두 강한 훈련은 아니에요"
+                : `이번 ${projectionDays}일 중 ${days}일 훈련 · ${projectionDays - days}일 휴식`}
               selected={draft.availableDayCount === days}
               recommended={days === RECOMMENDED_ANSWERS.availableDayCount}
               onClick={() => onDays(days)}

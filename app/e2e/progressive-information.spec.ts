@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { enterPlanWithoutRecord } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
@@ -34,18 +35,13 @@ for (const width of [320, 375]) {
   test(`shows seven event choices and puts previous answers in an editable summary at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: width === 320 ? 568 : 667 })
     await page.getByRole("button", { name: "훈련 계획 만들기", exact: true }).click()
-    const choices = page.getByRole("group", { name: "계획 종목 선택" }).getByRole("button")
-    await expect(choices).toHaveCount(7)
-    await expect(choices.first()).toBeInViewport({ ratio: 1 })
-    for (const button of await choices.all()) {
-      // The approved <=340px layout uses one column rather than squeezing labels.
-      if (width === 320) await button.scrollIntoViewIfNeeded()
-      await expect(button).toBeInViewport({ ratio: 1 })
-    }
-    const explanation = page.locator("details").filter({ has: page.locator("summary", { hasText: "경기 기록이 있나요?" }) })
+    const choices = page.getByRole("combobox", { name: "종목" })
+    await expect(choices.locator("option")).toHaveCount(8)
+    await expect(choices).toBeInViewport({ ratio: 1 })
+    const explanation = page.locator("details").filter({ has: page.locator("summary", { hasText: "기록 관리·훈련표 읽기" }) })
     await expect(explanation).not.toHaveAttribute("open")
     await page.screenshot({ path: testInfo.outputPath(`plan-${width}.png`) })
-    await page.getByRole("button", { name: /^1500m\b/u }).click()
+    await enterPlanWithoutRecord(page)
     const summary = page.locator(".plan-intake__summary")
     await expect(summary).toBeVisible()
     await summary.getByRole("button", { name: "1500m", exact: true }).click()

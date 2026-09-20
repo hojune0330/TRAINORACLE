@@ -90,4 +90,17 @@ B가 수정한 UX와 D의 파일 담당을 적용한다. 기본 흐름은 최소
 | U4 오늘/일지/복귀 | NOT_STARTED | 오전/오후·휴식·종료·실패 통합 검사 |
 | U5 검수/배포 | NOT_STARTED | 개발 검수까지 실행. 병합·배포는 오너 확인까지 WAITING_OWNER |
 
+## 7. 1차 개발 진행 상태
+
+최신 결과는 [통합 개발 보고서](../implementation/INSTANT_PLAN_INTEGRATION_REPORT_2026-09-20.md)에 있다. 위 시작 상태는 당시 계획으로 보존한다.
+
+| 단위 | 현재 상태 | 범위 |
+|---|---|---|
+| U0 | COMPLETE | 원문 보존, 계약, 분업 수신 및 브랜치 분리 |
+| U1 | BLOCKED_SOURCE | 제작자 계약·컴포넌트·레지스트리 검증 구현. 실제 승인 원본은 없음 |
+| U2 | IMPLEMENTED_LOCAL_REVIEW | 일반 경로의 최소 입력·기준 확인·단일 추천·실제 일정 연결 |
+| U3 | PARTIAL | 기존 저장 연결과 실제 배치 표시 검수. 서버 삭제·복구는 계약만 준비 |
+| U4 | PARTIAL | 기존 V2/V3 오늘 안내·정확한 일지 연결. 조정형 V4~V6 새 투영은 후속 |
+| U5 | LOCAL_CHECKED_NOT_RELEASED | 로컬 검수 결과 보고. 전체 개발 완료 및 병합·배포 아님 |
+
 [DRAFT_COMPLETE]

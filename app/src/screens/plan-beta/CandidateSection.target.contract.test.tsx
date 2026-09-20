@@ -37,7 +37,7 @@ it("uses an explicit apply/cancel transaction on the exact schedule slot", () =>
     onChangeSessionTarget: onChange }
   const view = render(<CandidateSection {...props} />)
   const choose = () => fireEvent.click(screen.getAllByRole("button", { name: "이 훈련을 개인 페이스로 받기" }).at(-1)!)
-  const acceptPlan = screen.getByRole("button", { name: "시간 조절 계획 선택하기" })
+  const acceptPlan = screen.getByRole("button", { name: "기초·회복 운동 시간을 범위로 선택하기" })
   expect(acceptPlan).toBeEnabled()
   choose()
   expect(acceptPlan).toBeDisabled()
