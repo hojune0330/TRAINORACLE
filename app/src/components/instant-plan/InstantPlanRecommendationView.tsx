@@ -1,4 +1,5 @@
 import { useId } from "react"
+import type { Ref } from "react"
 import type {
   InstantPlanActionState,
   InstantPlanDaySummary,
@@ -13,6 +14,7 @@ export type InstantPlanRecommendationViewProps = {
   readonly onShowAlternatives?: () => void
   readonly onEditSchedule?: () => void
   readonly onRetry?: () => void
+  readonly recoveryRef?: Ref<HTMLElement>
   readonly anchorLabel?: string
   readonly goalLabel?: string
   readonly programPurposeLabel?: string
@@ -42,6 +44,7 @@ export function InstantPlanRecommendationView({
   onShowAlternatives,
   onEditSchedule,
   onRetry,
+  recoveryRef,
   anchorLabel,
   goalLabel,
   programPurposeLabel,
@@ -107,6 +110,8 @@ export function InstantPlanRecommendationView({
           id={actionRecoveryId}
           className="instant-plan__save-recovery"
           aria-label="계획 저장 상태"
+          ref={recoveryRef}
+          tabIndex={-1}
         >
           <p
             id={actionStatusId}
