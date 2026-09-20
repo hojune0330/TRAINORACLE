@@ -32,8 +32,8 @@ for (const width of [320, 375]) {
     await expect(page.getByRole("heading", { name: "일정을 보고 골라요" })).toBeInViewport()
     await expect(page.getByRole("button", { name: "계획안 A 일정 펼치기" })).toHaveAttribute("aria-expanded", "false")
     await expect(page.getByRole("button", { name: "계획안 B 일정 펼치기" })).toHaveAttribute("aria-expanded", "false")
-    await expect(page.getByLabel("9일 훈련 흐름", { exact: true }).first()).toBeVisible()
-    await expect(page.getByLabel("9일 훈련 흐름", { exact: true }).last()).toBeVisible()
+    await expect(page.getByLabel("9일 훈련 일정", { exact: true }).first()).toBeVisible()
+    await expect(page.getByLabel("9일 훈련 일정", { exact: true }).last()).toBeVisible()
   })
 }
 

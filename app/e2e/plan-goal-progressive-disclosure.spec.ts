@@ -32,6 +32,7 @@ test("creates a mobile marathon beta plan without inventing pace numbers", async
 
   await expect(page.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
   await expect(page.getByText("마라톤").first()).toBeVisible()
+  await page.getByText("계획안 A 설명·시간 합계", { exact: true }).click()
   await expect(page.getByText("RPE 기준 실행 안내").first()).toBeVisible()
   await expect(page.getByText(/@(?:10km|하프|마라톤).*RP/u)).toHaveCount(0)
   await expect.poll(() => page.locator(".app-scroll-region").evaluate(
