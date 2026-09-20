@@ -50,6 +50,7 @@
 ## Deployment Boundaries
 
 - CI run `35512922404`: contract-tests and app-quality passed (4,264 unit tests passed and 35 existing skips in each timezone). Browser verification found one mobile exact-scroll restoration failure. The return alignment animation was replaced with captured-position restoration, without weakening the pixel assertion; all 20 explanation browser cases passed locally afterward. The final-head gate is still required.
+- CI run `35514958977`: contract-tests and app-quality passed; desktop and mobile browser projects passed. The 320px popover test still expected the replaced goal-entry question. It now enters through the current minimal form and checks the training-experience help, preserving width, outside-tap and Escape assertions. The focused 320px test passed.
 
 - `account-journal` and `account-plan-collection` Edge Functions were deployed with matching generated validators. Auth and owner-scoped guards are retained.
 - No operational database migration, COROS credentials, provider switch, or plan-trash activation is performed by this integration.
