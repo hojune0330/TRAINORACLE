@@ -58,28 +58,6 @@ export function CandidateSection({
       <header>
         <span>계획안 {optionLetter}{recommended && <em className="plan-choice__badge">추천</em>}</span>
         <h2 id={headingId}>{label.title}</h2>
-        {expanded && <p>{label.detail}</p>}
-        {expanded && <p className={`plan-candidate-purpose plan-candidate-purpose--${purposeStatus.tone}`}>
-          <strong>{purposeStatus.label}</strong>
-          <span>{purposeStatus.detail}</span>
-        </p>}
-        <strong className="plan-candidate-summary">
-          {candidateSessionSummary(candidate)}
-        </strong>
-        <small>
-          {eventDistanceLabel(candidate.eventDistanceM)} · {EVENT_LABELS[candidate.eventGroup].title} · {frameLengthDays}일
-        </small>
-        {expanded && <div className="plan-session-legend" aria-label="훈련 수치와 의도 설명">
-          <span>RPE<TermHelp term="rpe" /></span>
-          <span>
-            {ENERGY_INTENT_LABELS[candidate.selectedEnergyIntent].title}
-            <TermHelp term={ENERGY_INTENT_LABELS[candidate.selectedEnergyIntent].term} />
-          </span>
-          <span>
-            {hasDetailedPrescription ? "개인 페이스 상세 훈련 포함" : "RPE 기준 실행 안내"}
-            <TermHelp term="quality-session" />
-          </span>
-        </div>}
       </header>
       {isValidIsoDate(startDate) && (
         <>
@@ -116,6 +94,20 @@ export function CandidateSection({
             />
         </>
       )}
+      <details className="plan-candidate-explanation">
+        <summary>계획안 {optionLetter} 설명·시간 합계<ChevronDown size={16} aria-hidden="true" /></summary>
+        <p>{label.detail}</p>
+        <p>{purposeStatus.detail}</p>
+        <strong className="plan-candidate-summary">{candidateSessionSummary(candidate)}</strong>
+        <p>{eventDistanceLabel(candidate.eventDistanceM)} · {EVENT_LABELS[candidate.eventGroup].title} · {frameLengthDays}일</p>
+        <div className="plan-session-legend" aria-label="훈련 수치와 의도 설명">
+          <span>RPE<TermHelp term="rpe" /></span>
+          <span>{ENERGY_INTENT_LABELS[candidate.selectedEnergyIntent].title}
+            <TermHelp term={ENERGY_INTENT_LABELS[candidate.selectedEnergyIntent].term} /></span>
+          <span>{hasDetailedPrescription ? "개인 페이스 상세 훈련 포함" : "RPE 기준 실행 안내"}
+            <TermHelp term="quality-session" /></span>
+        </div>
+      </details>
       {onAdjust !== undefined && <button type="button" className="plan-text-action"
         disabled={!canSelect || pendingTarget !== null} onClick={onAdjust}>
         <SlidersHorizontal size={18} aria-hidden="true" />훈련 구성 조정하기

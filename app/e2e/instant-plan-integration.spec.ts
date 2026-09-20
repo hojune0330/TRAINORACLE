@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { completeQuickPlan, enterPlanWithoutRecord } from "./plan-flow"
+import { completeQuickPlan, enterPlanWithoutRecord, refinePlan } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
 test.beforeEach(async ({ page }) => {
@@ -28,6 +28,8 @@ for (const width of [320, 375]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
     await page.screenshot({ path: info.outputPath(`recommendation-${width}.png`), fullPage: true })
     await page.getByRole("button", { name: "다른 계획 보기" }).click()
+    await expect(page.getByRole("region", { name: "다른 계획 비교" })).toBeFocused()
+    await expect(page.getByRole("heading", { name: "일정을 보고 골라요" })).toBeInViewport()
     await expect(page.getByRole("button", { name: "계획안 A 일정 펼치기" })).toHaveAttribute("aria-expanded", "false")
     await expect(page.getByRole("button", { name: "계획안 B 일정 펼치기" })).toHaveAttribute("aria-expanded", "false")
     await expect(page.getByLabel("9일 훈련 흐름", { exact: true }).first()).toBeVisible()
@@ -66,6 +68,8 @@ test("decimal current record binds, survives reload and reaches the linked journ
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
   await expect(page.getByRole("button", { name: "이 일정으로 시작" })).toBeDisabled()
   await page.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
+  await expect(page.getByRole("heading", { name: "계획이 준비됐어요" })).toBeFocused()
+  await expect(page.getByRole("button", { name: "이 일정으로 시작" })).toBeInViewport({ ratio: 1 })
   await page.getByRole("button", { name: "이 일정으로 시작" }).click()
   await expect(page.getByRole("heading", { name: "오늘 훈련", exact: true })).toBeVisible()
   const before = await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))
@@ -80,6 +84,53 @@ test("decimal current record binds, survives reload and reaches the linked journ
   await page.getByRole("button", { name: /오전 훈련 기록 남기기/u }).click()
   await expect(page.getByText("계획 1일차 · 오전", { exact: false })).toBeVisible()
   await expect(page.getByRole("button", { name: "계획대로 마쳤어요", exact: true })).toBeVisible()
+})
+
+test("editing the schedule moves directly to the actual start-date input", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 })
+  await completeQuickPlan(page, { days: /^매일/u })
+  await page.getByRole("button", { name: "시작일·훈련일 바꾸기" }).click()
+  const input = page.getByLabel("계획 시작 날짜", { exact: true })
+  await expect(input).toBeFocused()
+  await expect(input).toBeInViewport({ ratio: 1 })
+})
+
+test("a storage failure keeps the explanation and retry together in view", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 })
+  await completeQuickPlan(page, { days: /^매일/u })
+  await page.evaluate(() => {
+    const original = Storage.prototype.setItem
+    let failed = false
+    Storage.prototype.setItem = function (key, value) {
+      if (!failed && key === "trainoracle.plan-beta.v1") {
+        failed = true
+        throw new DOMException("Synthetic storage failure", "QuotaExceededError")
+      }
+      return original.call(this, key, value)
+    }
+  })
+  await page.getByRole("button", { name: "이 일정으로 시작" }).click()
+  const recovery = page.getByRole("region", { name: "계획 저장 상태" })
+  await expect(recovery).toBeFocused()
+  await expect(recovery.getByRole("alert")).toBeInViewport({ ratio: 1 })
+  await expect(recovery.getByRole("button", { name: "저장 다시 시도" })).toBeInViewport({ ratio: 1 })
+  await recovery.getByRole("button", { name: "저장 다시 시도" }).click()
+  await expect(page.getByRole("heading", { name: "오늘 훈련", exact: true })).toBeVisible()
+})
+
+test("two daily sessions stay together and the selected afternoon links to its own diary", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 })
+  await completeQuickPlan(page, { days: /^매일/u })
+  await refinePlan(page, "하루 두 번", /하루 두 번 운동할게요/u)
+  await page.getByRole("button", { name: "이 일정으로 시작" }).click()
+  const sessions = page.getByRole("group", { name: "오늘 세션 선택" })
+  await expect(sessions.getByRole("button")).toHaveCount(2)
+  await expect(sessions).toBeInViewport({ ratio: 1 })
+  await sessions.getByRole("button", { name: /오후/u }).click()
+  await expect(sessions.getByRole("button", { name: /오후/u })).toHaveAttribute("aria-pressed", "true")
+  await expect(page.getByRole("button", { name: /오전 훈련 기록 남기기/u })).toHaveCount(0)
+  await page.getByRole("button", { name: /오후 훈련 기록 남기기/u }).click()
+  await expect(page.getByText("계획 1일차 · 오후", { exact: false })).toBeVisible()
 })
 
 test("safety remains before activation and the small screen works at enlarged text", async ({ page }, info) => {

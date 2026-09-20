@@ -1933,8 +1933,41 @@
 }
 
 .plan-candidate-list {
-  margin-top: var(--space-6);
+  margin-top: var(--space-3);
   border-top: var(--bw-line) solid var(--ink);
+  scroll-margin-top: var(--space-2);
+}
+
+.plan-candidate-list > h2 {
+  font-size: var(--fs-body);
+  margin: var(--space-3) 0;
+}
+
+.plan-candidate-explanation > summary {
+  min-height: var(--app-touch-min);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  cursor: pointer;
+  font-size: var(--fs-body-sm);
+}
+
+.plan-candidate-explanation > summary::-webkit-details-marker {
+  display: none;
+}
+
+.plan-candidate-explanation > summary svg {
+  flex-shrink: 0;
+}
+
+.plan-candidate-explanation[open] > summary svg {
+  transform: rotate(180deg);
+}
+
+.plan-candidate-explanation p {
+  font-size: var(--fs-body-sm);
+  color: var(--ink-2);
 }
 
 .plan-candidate-comparison {

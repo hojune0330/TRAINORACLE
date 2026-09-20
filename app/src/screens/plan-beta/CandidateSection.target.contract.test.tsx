@@ -8,6 +8,21 @@ import { CandidateSection } from "./CandidateSection"
 
 afterEach(cleanup)
 
+it("keeps the real schedule before optional copy while collapsed", () => {
+  const result = generatePlanFromDraft(draftFor(RUNTIME_CASES[3]!), "NO_KNOWN_RISK")
+  if (result.kind !== "generated") throw Error("Expected candidate fixture")
+  render(<CandidateSection candidate={result.generated.candidates[0]} startDate="2026-09-07"
+    canSelect expanded={false} onToggleSchedule={vi.fn()} onSelect={vi.fn()} />)
+  const candidate = result.generated.candidates[0]
+  const days = Math.ceil(candidate.frame.projectionLengthDays ?? candidate.frame.lengthDays)
+  const flow = screen.getByLabelText(`${days}일 훈련 흐름`)
+  const explanation = screen.getByText("계획안 A 설명·시간 합계").closest("details")!
+  expect(flow).toBeVisible()
+  expect(flow.compareDocumentPosition(explanation) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(explanation.open).toBe(false)
+  expect(screen.getByRole("button", { name: "계획안 A 일정 펼치기" })).toHaveAttribute("aria-expanded", "false")
+})
+
 it("only offers adjustment through an explicit available action and respects pending selection", () => {
   const result = generatePlanFromDraft(draftFor(RUNTIME_CASES[3]!), "NO_KNOWN_RISK")
   if (result.kind !== "generated") throw Error("Expected candidate fixture")
