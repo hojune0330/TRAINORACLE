@@ -22,7 +22,7 @@ export function OracleTopicGrid({ onSelectTopic, compact = false, title = "훈�
   return <section className={`oracle-topic-grid${compact ? " oracle-topic-grid--compact" : ""}`} aria-labelledby={headingId}>
     <div className="oracle-topic-grid__heading">
       <h2 id={headingId}>{title}</h2>
-      <span>예시로 살펴보기</span>
+      <span>내 기록 · 결과 예시</span>
     </div>
     <div className="oracle-topic-grid__tiles">
       {ORACLE_TOPICS.map(topic => {
@@ -32,7 +32,7 @@ export function OracleTopicGrid({ onSelectTopic, compact = false, title = "훈�
           type="button"
           className="oracle-topic-grid__tile"
           onClick={() => onSelectTopic(topic.id)}
-          aria-label={`${topic.title} · ${topic.question} · 예시 보기`}
+          aria-label={`${topic.title} · ${topic.question} · 분석 열기`}
         >
           <span className="oracle-topic-grid__tile-top" aria-hidden="true">
             <Icon size={20} />

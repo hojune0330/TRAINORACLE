@@ -47,3 +47,4 @@
 .trends-hub__empty h2 { margin: 0; font-size: 22px; line-height: 1.4; }
 .trends-hub__empty p { margin: 8px 0 20px; color: var(--ink-2); font-size: 14.5px; line-height: 1.6; }
 .trends-hub__empty { padding: 24px 20px; }
+.trends-hub__saved-context { margin: 8px 20px 16px; color: var(--ink-2); font-size: var(--fs-caption, 12px); line-height: 1.6; }

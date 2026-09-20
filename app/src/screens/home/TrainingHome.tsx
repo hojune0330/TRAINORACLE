@@ -3,7 +3,9 @@ import { useId, type ReactNode } from "react"
 import type { HomeSession, TrainingHomeViewModel } from "../../domain/home-view-model"
 import { InfoDisclosure } from "../../components/InfoDisclosure"
 import { OracleTopicGrid } from "../../components/OracleTopicGrid"
+import { OracleResume } from "../../components/OracleResume"
 import type { OracleTopicId } from "../../domain/oracle-exploration"
+import { loadAthleteRecords } from "../../domain/athlete-records"
 import { deriveSequenceTotals } from "@impl/prescription/sequence"
 import type { PlanSession } from "@impl/plan-generator/types"
 import { prescriptionLabel, sessionLabel, sessionSlotLabel } from "../plan-beta/labels"
@@ -49,6 +51,7 @@ export function TrainingHome({
   const next = model.nextTraining
   const nextAction = onOpenNextTraining ?? onOpenPlan
   const showOwnAnalysis = !model.showMinjiPrompt && onOpenTrends !== undefined
+  const hasPerformanceRecord = onOpenOracle !== undefined && loadAthleteRecords().some(record => record.purpose !== "RACE_GOAL")
 
   return (
     <div className="home-hub">
@@ -67,12 +70,13 @@ export function TrainingHome({
         <p className="home-hub__eyebrow">{onOpenOracle ? "훈련 분석" : model.homeMode === "WELCOME" ? "처음 기록하기" : model.homeMode === "TRAINING" ? "오늘 할 일" : "최근 기록"}</p>
         <h1 id="home-hub-title">{onOpenOracle ? "내 훈련, 무엇부터 개선할까요?" : model.homeMode === "WELCOME" ? "오늘 운동을 기록해요" : model.homeMode === "TRAINING" ? "오늘의 훈련" : "내 기록"}</h1>
         {onOpenOracle && <div className="home-hub__oracle-start">
-          <button className="home-hub__primary" type="button" onClick={showOwnAnalysis ? onOpenTrends : () => onOpenOracle("focus")}>{showOwnAnalysis ? "내 훈련 분석 보기" : "분석 결과 먼저 보기"}<ChevronRight aria-hidden="true" size={18} /></button>
-          <span className="home-hub__oracle-caption">{showOwnAnalysis ? model.analysisSummary : "기록 없이도 예시로 체험해요."}</span>
+          <button className="home-hub__primary" type="button" onClick={showOwnAnalysis ? onOpenTrends : () => onOpenOracle(hasPerformanceRecord ? "level" : "focus")}>{showOwnAnalysis || hasPerformanceRecord ? "내 훈련 분석 보기" : "분석 결과 먼저 보기"}<ChevronRight aria-hidden="true" size={18} /></button>
+          <span className="home-hub__oracle-caption">{showOwnAnalysis ? model.analysisSummary : hasPerformanceRecord ? "저장한 경기 기록을 확인해요." : "기록 없이도 예시로 체험해요."}</span>
         </div>}
       </section>
 
       {onOpenOracle && <OracleTopicGrid title="궁금한 항목부터" compact onSelectTopic={onOpenOracle} />}
+      {onOpenOracle && <OracleResume onOpenTopic={onOpenOracle} compact />}
 
       {model.homeMode === "WELCOME" ? <WelcomeToday model={model} onWriteLog={onWriteLog} onOpenPlan={onOpenPlan} compact={onOpenOracle !== undefined} /> : <>
         {next !== null && <NextTrainingCard next={next} onOpen={nextAction} />}

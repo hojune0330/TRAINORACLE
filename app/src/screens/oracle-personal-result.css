@@ -1,0 +1,166 @@
+.oracle-personal-result {
+  min-width: 0;
+  padding-block: var(--space-4) var(--space-8);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--fs-body);
+  line-height: 1.55;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.oracle-personal-result__label {
+  margin-bottom: var(--space-2);
+  color: var(--brand);
+  font-size: var(--fs-caption);
+  font-weight: 650;
+}
+
+.oracle-personal-result h1 {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--fs-app-title);
+  font-weight: 700;
+  line-height: 1.45;
+  text-wrap: balance;
+}
+
+.oracle-personal-result__summary,
+.oracle-personal-result__missing {
+  margin: var(--space-2) 0 0;
+  color: var(--ink-2);
+  font-size: var(--fs-body);
+}
+
+.oracle-personal-result__missing {
+  padding: var(--space-3);
+  border: var(--bw-line) solid var(--line);
+  background: var(--surface-2);
+}
+
+.oracle-personal-result__source {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: baseline;
+  margin-top: var(--space-4);
+  color: var(--ink-3);
+  font-size: var(--fs-caption);
+}
+
+.oracle-personal-result__source strong {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+.oracle-personal-result__data {
+  margin-top: var(--space-4);
+  border-block: var(--bw-line) solid var(--line);
+}
+
+.oracle-personal-result__chart {
+  padding-block: var(--space-4);
+}
+
+.oracle-personal-result__bars {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.oracle-personal-result__bar-row {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr) minmax(0, 5fr);
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-8);
+}
+
+.oracle-personal-result__bar-label {
+  min-width: 0;
+  color: var(--ink-2);
+  font-size: var(--fs-caption);
+}
+
+.oracle-personal-result__bar-value {
+  min-width: 0;
+  color: var(--ink);
+  font-size: var(--fs-body);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.oracle-personal-result__bar-track {
+  min-width: 0;
+  height: var(--space-2);
+  background: var(--surface-2);
+}
+
+.oracle-personal-result__bar {
+  display: block;
+  height: 100%;
+  background: var(--brand);
+}
+
+.oracle-personal-result__empty {
+  margin-top: var(--space-4);
+  padding-block: var(--space-4);
+  border-block: var(--bw-line) solid var(--line);
+  color: var(--ink-2);
+  font-size: var(--fs-body);
+}
+
+.oracle-personal-result__actions {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.oracle-personal-result__primary,
+.oracle-personal-result__secondary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--app-action-height);
+  padding: var(--space-3) var(--space-4);
+  border: var(--bw-line) solid var(--ink);
+  border-radius: var(--r-md);
+  font-family: inherit;
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  text-align: left;
+  cursor: pointer;
+}
+
+.oracle-personal-result__primary {
+  background: var(--ink);
+  color: var(--surface);
+  font-weight: 650;
+}
+
+.oracle-personal-result__secondary {
+  border-color: var(--hair);
+  background: transparent;
+  color: var(--ink);
+}
+
+.oracle-personal-result :is(button, summary):focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: var(--space-1);
+}
+
+@media (max-width: 340px) {
+  .oracle-personal-result__bar-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  }
+
+  .oracle-personal-result__bar-label {
+    grid-column: 1 / -1;
+  }
+
+  .oracle-personal-result__bar-value {
+    text-align: left;
+  }
+}

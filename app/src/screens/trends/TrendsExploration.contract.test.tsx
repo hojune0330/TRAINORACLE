@@ -90,12 +90,12 @@ describe("Trends exploration hub", () => {
     const onOpenOracle = vi.fn<(topic: OracleTopicId) => void>()
     render(<Trends onOpenOracle={onOpenOracle} />)
 
-    const topicButtons = screen.getAllByRole("button", { name: /예시 보기/u })
+    const topicButtons = screen.getAllByRole("button", { name: /분석 열기/u })
     expect(topicButtons).toHaveLength(ORACLE_TOPICS.length)
 
     for (const topic of ORACLE_TOPICS) {
       await user.click(screen.getByRole("button", {
-        name: `${topic.title} · ${topic.question} · 예시 보기`,
+        name: `${topic.title} · ${topic.question} · 분석 열기`,
       }))
     }
 

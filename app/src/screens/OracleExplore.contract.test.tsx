@@ -206,11 +206,11 @@ describe("Oracle six-topic entry grid", () => {
     const onSelectTopic = vi.fn()
     render(<OracleTopicGrid compact={compact} title="궁금한 항목부터" onSelectTopic={onSelectTopic} />)
     const grid = screen.getByRole("region", { name: "궁금한 항목부터" })
-    expect(within(grid).getByText("예시로 살펴보기")).toBeVisible()
+    expect(within(grid).getByText("내 기록 · 결과 예시")).toBeVisible()
     expect(within(grid).getAllByRole("button")).toHaveLength(6)
     routes.forEach(({ id, title }, index) => {
       const topic = catalog.getOracleTopic(id)
-      const button = within(grid).getByRole("button", { name: `${title} · ${topic.question} · 예시 보기` })
+      const button = within(grid).getByRole("button", { name: `${title} · ${topic.question} · 분석 열기` })
       expect(button).toBeEnabled()
       expect(within(button).getByText(title)).toBeVisible()
       if (compact) expect(within(button).queryByText(topic.teaser)).not.toBeInTheDocument()

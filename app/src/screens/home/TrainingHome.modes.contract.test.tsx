@@ -1,12 +1,16 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { TrainingHomeViewModel } from "../../domain/home-view-model"
 import { TrainingHome } from "./TrainingHome"
+import * as athleteRecords from "../../domain/athlete-records"
 
 const BASE = { homeMode: "WELCOME", todayMessage: "아직 오늘 기록이 없어요.", todayRecordCount: 0, journalSummary: "아직 기록이 없어요", flowSummary: "9.5일 주기로 일지 묶어 보기 · 시작일 직접 선택", planSummary: "저장된 계획 없음 · 계획안 만들기", analysisSummary: "기록이 쌓이면 변화를 볼 수 있어요", showMinjiPrompt: true, nextTraining: null, briefing: "" } satisfies TrainingHomeViewModel
 const TRAINING = { ...BASE, homeMode: "TRAINING", planSummary: "저장된 계획 · 2개 일정", nextTraining: { date: "2026-08-20", laterSameDaySession: null, session: { day: 2, slot: "PM", role: "QUALITY", plannedEnergyIntent: "LT_INTENT", prescription: { kind: "RPE_TIME_RANGE", rpe: { minimum: 5, maximum: 6 }, durationMinutes: { minimum: 25, maximum: 40 } } } } } satisfies TrainingHomeViewModel
 
 afterEach(cleanup)
+beforeEach(() => {
+  window.localStorage.clear()
+})
 
 describe("training home presentation", () => {
   it("lets a first visitor try analysis before writing and keeps all six topics open", () => {
@@ -15,7 +19,7 @@ describe("training home presentation", () => {
     fireEvent.click(screen.getByRole("button", { name: "분석 결과 먼저 보기" }))
     expect(explore).toHaveBeenCalledWith("focus")
     expect(analysis).not.toHaveBeenCalled()
-    expect(screen.getAllByRole("button", { name: /· 예시 보기$/u })).toHaveLength(6)
+    expect(screen.getAllByRole("button", { name: /분석 열기$/u })).toHaveLength(6)
     expect(screen.getByText("기록 없이도 예시로 체험해요.")).toBeVisible()
     expect(screen.queryByText(BASE.todayMessage)).not.toBeInTheDocument()
   })
@@ -25,8 +29,21 @@ describe("training home presentation", () => {
     fireEvent.click(screen.getByRole("button", { name: "내 훈련 분석 보기" }))
     expect(analysis).toHaveBeenCalledOnce()
     expect(explore).not.toHaveBeenCalled()
-    expect(screen.getAllByRole("button", { name: /· 예시 보기$/u })).toHaveLength(6)
+    expect(screen.getAllByRole("button", { name: /분석 열기$/u })).toHaveLength(6)
     expect(screen.queryByRole("button", { name: "분석 결과 먼저 보기" })).not.toBeInTheDocument()
+  })
+  it("offers own analysis when only a stored performance record exists", () => {
+    const explore = vi.fn()
+    vi.spyOn(athleteRecords, "loadAthleteRecords").mockReturnValue([{
+      schemaVersion: 1, id: "pb-5k", purpose: "PERSONAL_BEST", eventDistanceM: 5000,
+      performanceSeconds: 1500, achievedOn: "2020-08-20", seasonId: null,
+      enteredBy: "ATHLETE", verificationState: "SELF_REPORTED", sourceRef: "manual",
+      savedAt: "2026-08-20T08:00:00.000Z",
+    }])
+    render(<TrainingHome model={BASE} onOpenOracle={explore} />)
+    fireEvent.click(screen.getByRole("button", { name: "내 훈련 분석 보기" }))
+    expect(explore).toHaveBeenCalledWith("level")
+    expect(screen.getByText("저장한 경기 기록을 확인해요.")).toBeVisible()
   })
   it("keeps welcome concise and exposes learning and decoration entry points", () => {
     const learn = vi.fn(); const decorate = vi.fn(); const guide = vi.fn()

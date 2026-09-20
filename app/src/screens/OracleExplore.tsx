@@ -1,23 +1,37 @@
-import { useId } from "react"
+import { useEffect, useId, useState, type ReactNode } from "react"
 import { ArrowLeft, ArrowRight, ChevronDown, NotebookPen, Target, ListChecks } from "lucide-react"
 import { InfoDisclosure } from "../components/InfoDisclosure"
 import { ORACLE_TOPICS, getOracleTopic, type OracleTopicId } from "../domain/oracle-exploration"
 import { AccessibleTrendTable } from "./trends/AccessibleTrendTable"
+import { OraclePersonalResult } from "./OraclePersonalResult"
+import type { OraclePersonalResult as PersonalResult } from "../domain/oracle-personal-result"
+import type { AnalysisSection } from "../domain/analysis-navigation"
+import { OracleBookmark } from "../components/OracleBookmark"
 import "./oracle-explore.css"
 
-type OraclePersonalAction = "records" | "journal" | "trends" | "plan"
+type OraclePersonalAction = "records" | "journal" | "trends" | "plan" | "log"
 
 export type OracleExploreProps = {
   readonly topicId: OracleTopicId
   readonly onBack: () => void
   readonly onSelectTopic: (id: OracleTopicId) => void
-  readonly onPersonalAction: (action: OraclePersonalAction) => void
+  readonly onPersonalAction: (action: OraclePersonalAction, section?: AnalysisSection, metric?: PersonalResult["metric"]) => void
+  readonly personalResult?: PersonalResult | undefined
+  readonly initialMode?: "example" | "personal" | undefined
+  readonly onPersonalResultSeen?: ((fingerprint: string) => void) | undefined
+  readonly bookmarkControl?: ReactNode
 }
 
-export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction }: OracleExploreProps) {
+export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction, personalResult, initialMode, onPersonalResultSeen, bookmarkControl }: OracleExploreProps) {
   const topic = getOracleTopic(topicId)
   const selectId = useId()
   const headlineId = useId()
+  const [selection, setSelection] = useState<{ topic: OracleTopicId; mode: "example" | "personal" } | null>(null)
+  const mode = selection?.topic === topicId ? selection.mode
+    : initialMode ?? (personalResult && personalResult.status !== "missing" ? "personal" : "example")
+  useEffect(() => {
+    if (mode === "personal" && personalResult?.fingerprint) onPersonalResultSeen?.(personalResult.fingerprint)
+  }, [mode, topicId, personalResult?.fingerprint, onPersonalResultSeen])
   const rows = topic.example.rows
   const maxValue = Math.max(...rows.map(row => row.value), 0)
   const chartLabel = `${topic.title} 예시. ${topic.example.source}. 단위 ${topic.example.unit}. ${rows.map(row => `${row.label} ${row.valueLabel}`).join(". ")}. 내 기록 분석이 아닙니다.`
@@ -32,6 +46,7 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
     </header>
 
     <div className="oracle-explore__body">
+      <div className={personalResult ? "oracle-explore__controls" : undefined}>
       <div className="oracle-explore__picker">
         <label htmlFor={selectId}>분석 주제</label>
         <div className="oracle-explore__select-wrap">
@@ -45,6 +60,18 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
         </div>
       </div>
 
+      {personalResult && <div className="oracle-explore__modes" role="group" aria-label="결과 종류">
+        <button type="button" aria-pressed={mode === "personal"} onClick={() => setSelection({ topic: topicId, mode: "personal" })}>내 기록</button>
+        <button type="button" aria-pressed={mode === "example"} onClick={() => setSelection({ topic: topicId, mode: "example" })}>예시</button>
+      </div>}
+      </div>
+
+      {personalResult && mode === "personal" ? <OraclePersonalResult
+        key={`personal-${topicId}`}
+        result={personalResult}
+        onAction={() => onPersonalAction(personalResult.action, personalResult.section, personalResult.metric)}
+        onShowExample={() => setSelection({ topic: topicId, mode: "example" })}
+      /> : <>
       <section key={topicId} className="oracle-explore__result" aria-labelledby={headlineId}>
         <div className="oracle-explore__example-label">
           <span>{rows.length > 0 ? "예시 기록" : "예시 상황"}</span>
@@ -76,8 +103,8 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
       </section>
 
       <div className="oracle-explore__actions">
-        <button type="button" className="oracle-explore__personal" onClick={() => onPersonalAction(topic.personalAction)}>
-          <span>{topic.personalLabel}</span><ArrowRight size={18} aria-hidden="true" />
+        <button type="button" className="oracle-explore__personal" onClick={() => personalResult ? setSelection({ topic: topicId, mode: "personal" }) : onPersonalAction(topic.personalAction)}>
+          <span>{personalResult ? "내 기록으로 확인하기" : topic.personalLabel}</span><ArrowRight size={18} aria-hidden="true" />
         </button>
         <button type="button" className="oracle-explore__related" onClick={() => onSelectTopic(topic.nextId)}>
           <span><small>이어서 살펴보기</small><strong>{topic.nextLabel}</strong></span>
@@ -88,6 +115,12 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
         <p>{topic.example.summary}</p>
         <p>{topic.example.detail}</p>
       </InfoDisclosure>
+      </>}
+      {personalResult && mode === "personal" && <button type="button" className="oracle-explore__related" onClick={() => onSelectTopic(topic.nextId)}>
+        <span><small>이어서 살펴보기</small><strong>{topic.nextLabel}</strong></span><ArrowRight size={18} aria-hidden="true" />
+      </button>}
+      {bookmarkControl}
+      {personalResult && <OracleBookmark key={topicId} topicId={topicId} fingerprint={mode === "personal" ? personalResult.fingerprint : undefined} />}
     </div>
   </div>
 }

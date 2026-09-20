@@ -1,5 +1,6 @@
 import React from "react"
 import { SectionLb } from "../../components/JournalPrimitives"
+import { InfoDisclosure } from "../../components/InfoDisclosure"
 import type { StructuredJournalObservation } from "../../domain/journal-observation"
 import {
   bucketByMonth,
@@ -16,15 +17,23 @@ import {
   TREND_METRIC_OPTIONS,
 } from "./trend-display"
 import type { DisplayTrendMetric } from "./trend-display"
+import "./monthly-trend-details.css"
 
 export function MonthlyTrendSection({
   observations,
   today,
+  initialMetric,
 }: {
   readonly observations: readonly StructuredJournalObservation[]
   readonly today: string
+  /** Optional deep-link context; invalid values keep the existing pace default. */
+  readonly initialMetric?: DisplayTrendMetric | string | undefined
 }) {
-  const [metric, setMetric] = React.useState<DisplayTrendMetric>("SECONDS_PER_KM")
+  const [metric, setMetric] = React.useState<DisplayTrendMetric>(() => (
+    typeof initialMetric === "string" && TREND_METRIC_OPTIONS.some((item) => item.metric === initialMetric)
+      ? initialMetric as DisplayTrendMetric
+      : "SECONDS_PER_KM"
+  ))
   const option = TREND_METRIC_OPTIONS.find((item) => item.metric === metric)
   if (option === undefined) throw new Error(`Missing trend metric option: ${metric}`)
   const buckets = bucketByMonth(observations, isoToDate(today), 4, metric)
@@ -35,7 +44,7 @@ export function MonthlyTrendSection({
   const fileDistanceRefs = new Set(scoped.filter(acceptsFileDistance).map(observation => observation.sourceRef))
 
   return (
-    <section aria-label="최근 4개월 추이" style={{ padding: "26px 20px 0" }}>
+    <section className="monthly-trend-section" aria-label="최근 4개월 추이">
       <SectionLb>최근 4개월</SectionLb>
       <div className="monthly-trend__tabs app-compact-tabs" role="group" aria-label="추이 항목">
         {TREND_METRIC_OPTIONS.map((item) => (
@@ -50,51 +59,56 @@ export function MonthlyTrendSection({
       </div>
 
       {metric === "SECONDS_PER_KM" && (
-        <div style={{ marginTop: 10, fontSize: 10, color: "var(--ink-3)" }}>
+        <div className="monthly-trend-section__scope-note">
           직접 기록 기준 · 파일 페이스 제외
         </div>
       )}
 
       <MonthlyTrendBars buckets={buckets} metric={metric} metricLabel={option.noun} />
 
-      <div style={{ marginTop: 12, borderTop: "1px solid var(--line)" }}>
-        {buckets.map((bucket) => (
-          <div key={bucket.label} style={{
-            padding: "10px 0",
-            borderBottom: "1px dashed var(--hair)",
-            fontFamily: "var(--mono)",
-            color: "var(--ink-2)",
-          }}>
-            {bucket.kind === "MISSING" ? (
-              <div style={{ fontSize: 10.5 }}>{monthText(bucket.label)}은 집계 가능한 기록이 없어요.</div>
-            ) : (
-              <>
-                <div style={{ fontSize: 11.5, color: "var(--ink)" }}>
-                  {monthText(bucket.label)} 중앙 {option.noun} {formatTrendValue(metric, bucket.median)}
-                </div>
-                <div style={{ marginTop: 3, fontSize: 9.5, color: "var(--ink-3)" }}>
-                  표본 {bucket.n}건 · 범위 {formatTrendRange(metric, bucket)} · {bucket.nonSensitiveReasonCodes.includes("CONFIRMED_FILE_DISTANCE")
-                    ? "확인한 파일 거리 포함" : displayStatusText(bucket)}
-                </div>
-              </>
-            )}
-          </div>
-        ))}
+      <div className="monthly-trend-section__status" aria-live="polite">
+        집계 사용 {coverage.included}건 · 집계 제외 {coverage.excluded}건
+        {buckets.some((bucket) => bucket.kind === "DATA" && bucket.displayStatus === "STALE") && (
+          <span> · 오래된 출처가 포함된 달이 있어요.</span>
+        )}
+        {buckets.some((bucket) => bucket.kind === "DATA" && bucket.displayStatus === "CONFLICTING") && (
+          <span> · 출처가 서로 달라 확인이 필요한 달이 있어요.</span>
+        )}
+        {buckets.some((bucket) => bucket.kind === "MISSING") && (
+          <span> · 기록이 없는 달은 계산하지 않았어요.</span>
+        )}
       </div>
 
-      <div style={{ marginTop: 10, fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)" }}>
-        집계 사용 {coverage.included}건 · 집계 제외 {coverage.excluded}건
-      </div>
+      <InfoDisclosure title="월별 수치와 집계 범위 보기" className="monthly-trend-section__details">
+        <div className="monthly-trend-section__rows">
+          {buckets.map((bucket) => (
+            <div className="monthly-trend-section__row" key={bucket.label}>
+              {bucket.kind === "MISSING" ? (
+                <div>{monthText(bucket.label)}은 집계 가능한 기록이 없어요.</div>
+              ) : (
+                <>
+                  <div className="monthly-trend-section__row-title">
+                    {monthText(bucket.label)} 중앙 {option.noun} {formatTrendValue(metric, bucket.median)}
+                  </div>
+                  <div className="monthly-trend-section__row-meta">
+                    표본 {bucket.n}건 · 범위 {formatTrendRange(metric, bucket)} · {bucket.nonSensitiveReasonCodes.includes("CONFIRMED_FILE_DISTANCE")
+                      ? "확인한 파일 거리 포함" : displayStatusText(bucket)}
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      </InfoDisclosure>
       {sourceRefs.length > 0 && (
-        <details style={{ marginTop: 8 }}>
-          <summary style={{ cursor: "pointer", fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)" }}>
+        <details className="monthly-trend-section__sources">
+          <summary>
             출처 기록 보기
           </summary>
-          <ul style={{ margin: "6px 0 0", paddingLeft: 18, fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-3)" }}>
-            {sourceRefs.map((source) => (
+          <ul>
+            {sourceRefs.map((source, index) => (
               <li
-                key={`${source.sourceId}-${source.observedAt ?? "unknown"}`}
-                style={{ overflowWrap: "anywhere" }}
+                key={`${source.sourceId}-${source.observedAt ?? "unknown"}-${index}`}
               >
                 {source.sourceId} · {metric === "DISTANCE_KM" && fileDistanceRefs.has(source)
                   ? "확인한 파일 거리" : source.trustState === "ACCEPTED" ? "출처 확인" : "확인 필요"}

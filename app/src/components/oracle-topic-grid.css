@@ -32,7 +32,7 @@
 
 .oracle-topic-grid__tiles {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr));
   gap: var(--space-2);
 }
 
@@ -90,6 +90,14 @@
 
 .oracle-topic-grid--compact .oracle-topic-grid__tile {
   padding: var(--space-3);
+}
+
+/* Keep two columns at the 375px baseline; narrow or enlarged-text viewports
+   use one column so labels can wrap without clipping or horizontal scroll. */
+@media (max-width: 340px) {
+  .oracle-topic-grid__tiles {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

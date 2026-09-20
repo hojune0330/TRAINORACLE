@@ -15,6 +15,7 @@ import type {
   StoredPlanProgress,
 } from "../../domain/plan-beta-store"
 import { ActivePlan } from "./ActivePlan"
+import { OraclePlanReviewButton } from "../../components/OraclePlanReviewButton"
 import { evaluatePlanSafety, type PlanCurrentCheck } from "../../domain/plan-beta-flow"
 import {
   recheckStoredDetailedPrescriptionAuthority,
@@ -217,6 +218,7 @@ export function PlanActiveState({
       {error !== null && (
         <div className="plan-inline-error" role="alert">{error}</div>
       )}
+      <OraclePlanReviewButton />
       {retry !== null && (
         <button className="plan-text-action" type="button" onClick={retryPendingWrite}>
           {retry.kind === "progress"

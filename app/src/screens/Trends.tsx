@@ -16,7 +16,9 @@ import { InfoDisclosure } from "../components/InfoDisclosure"
 import { FileAnalysisPanel } from "./trends/FileAnalysisPanel"
 import { readAccountJournalProjection, readCurrentConfirmedAccountJournalProjection } from "../domain/account/account-journal-projection"
 import { OracleTopicGrid } from "../components/OracleTopicGrid"
+import { OracleResume } from "../components/OracleResume"
 import type { OracleTopicId } from "../domain/oracle-exploration"
+import type { AnalysisNavigation, AnalysisSection } from "../domain/analysis-navigation"
 import { fileAnalysisFormats } from "../domain/import/file-analysis-policy"
 import "./trends/trends-hub.css"
 
@@ -28,15 +30,14 @@ const ANALYSIS_SECTIONS = [
   { id: "files", label: "파일 분석" },
 ] as const
 
-type AnalysisSection = typeof ANALYSIS_SECTIONS[number]["id"]
-
-export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle }: {
+export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, initialContext }: {
   readonly onBack?: (() => void) | undefined
   readonly onWriteLog?: (() => void) | undefined
   readonly onOpenPlan?: (() => void) | undefined
   readonly onOpenOracle?: ((topic: OracleTopicId) => void) | undefined
+  readonly initialContext?: AnalysisNavigation | undefined
 }) {
-  const [section, setSection] = React.useState<AnalysisSection>("summary")
+  const [section, setSection] = React.useState<AnalysisSection>(initialContext?.section ?? "summary")
   const fileAnalysisEnabled = fileAnalysisFormats().length > 0
   const [entryRevision, setEntryRevision] = React.useState(0)
   React.useEffect(() => {
@@ -86,6 +87,11 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle }: {
               onClick={() => setSection(item.id)}>{item.label}</button>
           ))}
         </div>
+        {initialContext?.savedDate && section === initialContext.section && (
+          <p className="trends-hub__saved-context" role="status">
+            {initialContext.savedDate}에 저장한 {initialContext.metric === "PAIN_MAX" ? "통증" : initialContext.metric === "MOOD" ? "기분" : "거리"}를 월별 기록과 함께 볼 수 있어요.
+          </p>
+        )}
         {pendingFileCount > 0 && section !== "files" && (
           <div className="trends-hub__notice" role="status">
             <span>파일 기록 {pendingFileCount}건 · 확인 전 분석에서 제외</span>
@@ -139,7 +145,8 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle }: {
         )}
         {section === "distance" && <CumulativeDistancePanel observations={observations} today={today} planWindow={planWindow} mode="full" />}
         {section === "mix" && <EnergySystemLedgerPanel observations={observations} today={today} planState={planState} mode="full" />}
-        {section === "monthly" && <MonthlyTrendSection observations={observations} today={today} />}
+        {section === "monthly" && <MonthlyTrendSection observations={observations} today={today} initialMetric={initialContext?.metric} />}
+        {section === "summary" && onOpenOracle && <div className="trends-hub__explore"><OracleResume onOpenTopic={onOpenOracle} /></div>}
         <div style={{ padding: "0 20px" }}>
           <AnalysisExclusionNotice summary={exclusion} />
           <InfoDisclosure title="분석 기준">

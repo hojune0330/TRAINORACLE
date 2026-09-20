@@ -27,7 +27,11 @@ const PURPOSE_OPTIONS: ReadonlyArray<readonly [RecordPurpose, string]> = [
   ["RACE_GOAL", "경기 목표"],
 ]
 
-export function AthleteRecords({ onBack }: { readonly onBack: () => void }) {
+export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로" }: {
+  readonly onBack: () => void
+  readonly onSaved?: (() => void) | undefined
+  readonly backLabel?: string | undefined
+}) {
   const [records, setRecords] = React.useState(() => loadAthleteRecords(new Date()))
   const [purpose, setPurpose] = React.useState<RecordPurpose>("PERSONAL_BEST")
   const [distanceOption, setDistanceOption] = React.useState("5000")
@@ -100,6 +104,7 @@ export function AthleteRecords({ onBack }: { readonly onBack: () => void }) {
     setAchievedOn("")
     setSeasonId("")
     setError(null)
+    onSaved?.()
   }
 
   return (
@@ -107,7 +112,7 @@ export function AthleteRecords({ onBack }: { readonly onBack: () => void }) {
       <header className="athlete-records-header">
         <button className="plan-back" type="button" onClick={onBack}>
           <ArrowLeft aria-hidden="true" size={17} />
-          계획으로
+          {backLabel}
         </button>
         <div className="plan-eyebrow">내 경기 기록</div>
         <h1 id="athlete-records-title">내 경기 기록</h1>

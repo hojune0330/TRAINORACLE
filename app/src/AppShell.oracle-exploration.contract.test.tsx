@@ -3,6 +3,7 @@ import { act, cleanup, render, screen, waitFor, within } from "@testing-library/
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { getOracleTopic, ORACLE_TOPICS, type OracleTopicId } from "./domain/oracle-exploration"
+import { setActiveLocalAccount } from "./domain/account/local-journal-ownership"
 
 vi.mock("./screens/Home", () => ({
   Home: ({ onOpenOracle }: { onOpenOracle: (topic: OracleTopicId) => void }) => (
@@ -18,6 +19,23 @@ vi.mock("./screens/LogEntry", () => ({
   LogEntry: () => <h1>새 일지 작성</h1>,
 }))
 
+vi.mock("./domain/oracle-personal-result", () => ({
+  buildOraclePersonalResult: ({ topicId }: { topicId: OracleTopicId }) => ({
+    status: "missing",
+    headline: `${topicId} 개인 결과`,
+    summary: "개인 기록이 아직 부족해요.",
+    source: "계약 테스트 구조화 기록",
+    rows: [],
+    unit: "없음",
+    detail: "테스트용 결과 설명입니다.",
+    action: getOracleTopic(topicId).personalAction,
+    actionLabel: "결과 행동",
+    requiredInput: "필요한 구조화 기록",
+    section: "summary",
+    fingerprint: null,
+  }),
+}))
+
 vi.mock("./DeferredMobileScreens", async () => {
   const { OracleExplore } = await import("./screens/OracleExplore")
   return {
@@ -30,7 +48,10 @@ vi.mock("./DeferredMobileScreens", async () => {
           <button type="button" onClick={() => onOpenOracle("compare")}>분석 훈련 비교 예시</button>
         </section>
       ),
-      AthleteRecords: () => <h1>내 종목 기록</h1>,
+      AthleteRecords: ({ onSaved }: { onSaved?: (() => void) | undefined }) => <>
+        <h1>내 종목 기록</h1>
+        {onSaved && <button type="button" onClick={onSaved}>기록 저장 완료</button>}
+      </>,
       JournalArchive: () => <h1>지난 일지</h1>,
       PlanBeta: () => <h1>내 훈련 계획</h1>,
       PlanProposalInbox: () => null,
@@ -107,7 +128,9 @@ describe("AppShell oracle exploration navigation", () => {
     const topic = getOracleTopic(topicId)
     expect(topic.personalAction).toBe(action)
 
-    await user.click(screen.getByRole("button", { name: topic.personalLabel }))
+    await user.click(screen.getByRole("button", { name: "내 기록으로 확인하기" }))
+    expect(screen.getByText("필요한 입력: 필요한 구조화 기록")).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "결과 행동" }))
 
     expect(screen.getByRole("heading", { name: heading })).toBeVisible()
     expect(screen.queryByRole("combobox", { name: "분석 주제" })).not.toBeInTheDocument()
@@ -125,6 +148,33 @@ describe("AppShell oracle exploration navigation", () => {
     expect(screen.getByRole("heading", { name: "분석 출발 화면" })).toBeVisible()
     expect(screen.queryByRole("combobox", { name: "분석 주제" })).not.toBeInTheDocument()
     expect(mainTabs().getByRole("button", { name: "분석" })).toHaveAttribute("aria-current", "page")
+  })
+
+  it("returns to the original topic after athlete-records save", async () => {
+    const user = userEvent.setup()
+    render(<AppShell />)
+    await user.click(screen.getByRole("button", { name: "홈 현재 수준 예시" }))
+    await user.click(screen.getByRole("button", { name: "내 기록으로 확인하기" }))
+    await user.click(screen.getByRole("button", { name: "결과 행동" }))
+    expect(screen.getByRole("heading", { name: "내 종목 기록" })).toBeVisible()
+
+    await user.click(screen.getByRole("button", { name: "기록 저장 완료" }))
+    expect(screen.getByRole("heading", { name: "level 개인 결과" })).toBeVisible()
+    expect(screen.getByText("필요한 입력: 필요한 구조화 기록")).toBeVisible()
+  })
+
+  it("does not carry a personal-result mode across account scope changes", async () => {
+    const user = userEvent.setup()
+    render(<AppShell />)
+    await user.click(screen.getByRole("button", { name: "홈 현재 수준 예시" }))
+    await user.click(screen.getByRole("button", { name: "내 기록으로 확인하기" }))
+    await user.click(screen.getByRole("button", { name: "결과 행동" }))
+    expect(screen.getByRole("heading", { name: "내 종목 기록" })).toBeVisible()
+
+    act(() => setActiveLocalAccount("different-account"))
+    await user.click(screen.getByRole("button", { name: "기록 저장 완료" }))
+    await waitFor(() => expect(screen.getByRole("heading", { name: "내 훈련 계획" })).toBeVisible())
+    expect(screen.queryByText("필요한 입력: 필요한 구조화 기록")).not.toBeInTheDocument()
   })
 
   it("does not reopen an abandoned topic over another tab after browser Back", async () => {
@@ -170,8 +220,8 @@ describe("AppShell oracle exploration navigation", () => {
     await user.click(mainTabs().getByRole("button", { name: "홈" }))
 
     expect(screen.getByRole("heading", { name: "홈 출발 화면" })).toBeVisible()
-    expect(write).not.toHaveBeenCalled()
-    expect(remove).not.toHaveBeenCalled()
+    expect(write.mock.calls.filter(([key]) => key !== "__to_probe__")).toHaveLength(0)
+    expect(remove.mock.calls.filter(([key]) => key !== "__to_probe__")).toHaveLength(0)
     expect(clear).not.toHaveBeenCalled()
     expect(storageSnapshot(window.localStorage)).toEqual(localBefore)
     expect(storageSnapshot(window.sessionStorage)).toEqual(sessionBefore)

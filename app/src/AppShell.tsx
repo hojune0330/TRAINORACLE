@@ -13,6 +13,11 @@ import { awardJournalEntry, type EngagementAwardResult } from "./domain/engageme
 import { ACCOUNT_REWARD_EVENT, accountRewardsEnabled, accountRewardStatus, readAccountRewardSummary } from "./domain/account/account-reward-service"
 import { requestJournalDecorationAutoOpen } from "./domain/journal-decoration-intent"
 import { createSavedFactReceipt } from "./domain/save-receipt"
+import { analysisNavigationForReceipt, type AnalysisNavigation, type AnalysisSection } from "./domain/analysis-navigation"
+import { buildOraclePersonalResult } from "./domain/oracle-personal-result"
+import { loadPlanBetaState } from "./domain/plan-beta-store"
+import { loadAthleteRecords } from "./domain/athlete-records"
+import { recordOracleJournalParticipation } from "./domain/oracle-participation"
 import { trackProductEvent } from "./domain/account/product-analytics-service"
 import { currentUser, onAuthChange } from "./domain/account/auth"
 import { setAccountAuthState } from "./domain/account/account-auth-state"
@@ -57,7 +62,7 @@ const OVERLAY_HISTORY_KEY = "trainoracleOverlay"
 type AppOverlay =
   | { readonly kind: "term"; readonly term: TermId }
   | { readonly kind: "feedback" }
-  | { readonly kind: "oracle"; readonly topic: OracleTopicId }
+  | { readonly kind: "oracle"; readonly topic: OracleTopicId; readonly mode?: "example" | "personal" }
 
 type OverlayHistoryMarker = AppOverlay & {
   readonly owner: string
@@ -78,7 +83,10 @@ function overlayHistoryMarker(state: unknown, owner: string): AppOverlay | null 
   const value = marker as Record<string, unknown>
   if (value.version !== 1 || value.owner !== owner) return null
   if (value.kind === "feedback") return { kind: "feedback" }
-  if (value.kind === "oracle" && isOracleTopicId(value.topic)) return { kind: "oracle", topic: value.topic }
+  if (value.kind === "oracle" && isOracleTopicId(value.topic)) return {
+    kind: "oracle", topic: value.topic,
+    ...(value.mode === "example" || value.mode === "personal" ? { mode: value.mode } : {}),
+  }
   const term = typeof value.term === "string" ? value.term : null
   if (value.kind === "term" && isTermId(term)) return { kind: "term", term }
   return null
@@ -97,6 +105,8 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       : INITIAL_VIEW_STATE
   })
   const [savedToast, setSavedToast] = React.useState<ShellToastState | null>(null)
+  const [analysisContext, setAnalysisContext] = React.useState<AnalysisNavigation | undefined>()
+  const oracleInputRef = React.useRef<{ topic: OracleTopicId; owner: string | null } | null>(null)
   const pendingReward = React.useRef<{ ownerId: string | null; date: string } | null>(null)
   const [athleteRecordsOpen, setAthleteRecordsOpen] = React.useState(false)
   const [homeDetailOrigin, setHomeDetailOrigin] = React.useState<"home" | "rewards">("home")
@@ -184,7 +194,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       setSavedToast(current => current?.rewardMessage === JOURNAL_REWARD_MESSAGE.PENDING ? { ...current, rewardMessage } : current)
       pendingReward.current = null
     }
-    const scope = () => { pendingReward.current = null; setSavedToast(null) }
+    const scope = () => { pendingReward.current = null; oracleInputRef.current = null; setSavedToast(null); setAnalysisContext(undefined) }
     window.addEventListener(ACCOUNT_REWARD_EVENT, refresh)
     const unsubscribe = onLocalJournalScopeChange(scope)
     return () => { window.removeEventListener(ACCOUNT_REWARD_EVENT, refresh); unsubscribe() }
@@ -239,6 +249,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
 
   const goHome = () => {
     runViewTransition("pop", () => {
+      oracleInputRef.current = null
       setAthleteRecordsOpen(false)
       setUtilityView(null)
       setHomeDetailOrigin("home")
@@ -246,6 +257,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     })
   }
   const goHomeAfterSave = (savedEntry: JournalEntry, reviewMessage?: string, detailDate?: string) => {
+    recordOracleJournalParticipation(savedEntry)
     const receipt = createSavedFactReceipt(savedEntry)
     const reward = awardJournalEntry(savedEntry, todayISO())
     pendingReward.current = reward.kind === "PENDING" ? { ownerId: activeLocalAccount(), date: savedEntry.date } : null
@@ -254,6 +266,11 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       setUtilityView(null)
       setV(detailDate === undefined ? INITIAL_VIEW_STATE : viewForJournalReturn(v))
       setSavedToast({ count: localOnlyCount(), phase: "enter", receipt, reviewMessage, rewardMessage })
+      const intent = oracleInputRef.current
+      oracleInputRef.current = null
+      if (reviewMessage === undefined && intent && intent.owner === activeLocalAccount()) {
+        openOverlay({ kind: "oracle", topic: intent.topic, mode: "personal" })
+      }
     })
     void trackProductEvent("JOURNAL_SAVED")
   }
@@ -290,14 +307,23 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     if (!shouldResetTabView(v, tab, utilityView !== null || athleteRecordsOpen || overlayRef.current !== null)) return
     runViewTransition(tabMotion(v.tab, tab), () => {
       dismissOracle()
+      oracleInputRef.current = null
       setAthleteRecordsOpen(false)
       setUtilityView(null)
+      setAnalysisContext(undefined)
       setV(viewForTab(tab))
     })
   }
   const goTrendsFromReceipt = () => {
-    setSavedToast(null)
-    goTab("trends")
+    const context = savedToast ? analysisNavigationForReceipt(savedToast.receipt ?? { kind: "generic" }) : null
+    runViewTransition(tabMotion(v.tab, "trends"), () => {
+      dismissOracle()
+      setSavedToast(null)
+      setAthleteRecordsOpen(false)
+      setUtilityView(null)
+      setAnalysisContext(context ?? undefined)
+      setV(viewForTab("trends"))
+    })
   }
   const dismissOracle = () => {
     // Leaving the exploration invalidates its older history entries too.
@@ -314,18 +340,35 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     if (scrollRegionRef.current !== null) scrollRegionRef.current.scrollTop = 0
   }
   const openOracle = (topic: OracleTopicId) => runDraftSafeNavigation(() => openOverlay({ kind: "oracle", topic }))
-  const openOraclePersonal = (action: "records" | "journal" | "trends" | "plan") => {
-    if (action === "records") {
-      runViewTransition("push", () => {
+  const openOraclePersonal = (action: "records" | "journal" | "trends" | "plan" | "log", section?: AnalysisSection, metric?: "DISTANCE_KM" | "RPE") => {
+    runViewTransition("push", () => {
+      const topic = overlayRef.current?.kind === "oracle" ? overlayRef.current.topic : null
+      oracleInputRef.current = topic && (action === "records" || action === "log" || action === "plan")
+        ? { topic, owner: activeLocalAccount() } : null
+      if (action === "records") {
         dismissOracle()
         setUtilityView(null)
         setV(viewForTab("plan"))
         setAthleteRecordsOpen(true)
-      })
-    } else {
-      goTab(action)
-    }
+      } else {
+        dismissOracle()
+        setAthleteRecordsOpen(false)
+        setUtilityView(null)
+        setAnalysisContext(action === "trends" ? { section: section ?? "summary", ...(metric === "DISTANCE_KM" ? { metric } : {}) } : undefined)
+        setV(viewForTab(action, action === "log" ? "post-session" : undefined))
+      }
+    })
   }
+  const returnToOracleAfterRecord = () => runViewTransition("pop", () => {
+    setAthleteRecordsOpen(false)
+    const intent = oracleInputRef.current
+    oracleInputRef.current = null
+    if (intent && intent.owner === activeLocalAccount()) openOverlay({ kind: "oracle", topic: intent.topic, mode: "personal" })
+  })
+  const oracleResult = overlay?.kind === "oracle" ? buildOraclePersonalResult({
+    topicId: overlay.topic, entries: loadEntries(), planState: loadPlanBetaState(),
+    athleteRecords: loadAthleteRecords(), today: todayISO(),
+  }) : undefined
 
   const accountEnabled = accountFeatureEnabled()
   const screenKey = [
@@ -541,7 +584,11 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       )
   } else if (v.tab === "plan") {
     screen = athleteRecordsOpen ? (
-      <DeferredMobileScreens.AthleteRecords onBack={() => runViewTransition("pop", () => setAthleteRecordsOpen(false))} />
+      <DeferredMobileScreens.AthleteRecords
+        onBack={returnToOracleAfterRecord}
+        onSaved={oracleInputRef.current ? returnToOracleAfterRecord : undefined}
+        backLabel={oracleInputRef.current ? "분석으로" : "계획으로"}
+      />
     ) : (
       <>
         <DeferredMobileScreens.PlanProposalInbox />
@@ -591,6 +638,8 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   } else if (v.tab === "trends") {
     screen = (
       <DeferredMobileScreens.Trends
+        key={`${analysisContext?.section ?? "summary"}-${analysisContext?.metric ?? "default"}-${analysisContext?.savedDate ?? ""}`}
+        initialContext={analysisContext}
         onBack={goHome}
         onWriteLog={() => goTab("log")}
         onOpenPlan={() => goTab("plan")}
@@ -646,7 +695,10 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         {overlay?.kind === "oracle" && (
           <div className="app-flow-stage" data-motion="push" data-overlay="oracle">
             <DeferredMobileScreens.OracleExplore
+              key={`${overlay.topic}-${overlay.mode ?? "auto"}-${accountScopeRevision}`}
               topicId={overlay.topic}
+              personalResult={oracleResult}
+              initialMode={overlay.mode}
               onBack={closeOverlay}
               onSelectTopic={openOracle}
               onPersonalAction={openOraclePersonal}
