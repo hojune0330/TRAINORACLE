@@ -1,0 +1,49 @@
+.trends-hub__sections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 16px 20px 8px;
+}
+
+.trends-hub__sections button,
+.trends-hub__notice button,
+.trends-hub__empty button {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--bg);
+  color: var(--ink-2);
+  font-family: var(--sans);
+  font-size: var(--fs-body, 14.5px);
+  cursor: pointer;
+}
+
+.trends-hub__sections button[aria-pressed="true"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
+}
+
+.trends-hub__sections button:focus-visible,
+.trends-hub__notice button:focus-visible,
+.trends-hub__empty button:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+}
+
+.trends-hub__notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 20px;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.trends-hub__notice span { flex: 1; }
+.trends-hub__notice button { flex-shrink: 0; }
+.trends-hub__explore { padding: 16px 20px 0; }
+.trends-hub__empty h2 { margin: 0; font-size: 22px; line-height: 1.4; }
+.trends-hub__empty p { margin: 8px 0 20px; color: var(--ink-2); font-size: 14.5px; line-height: 1.6; }
+.trends-hub__empty { padding: 24px 20px; }

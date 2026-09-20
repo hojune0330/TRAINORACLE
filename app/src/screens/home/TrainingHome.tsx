@@ -2,6 +2,8 @@ import { BookOpen, ChartNoAxesCombined, CheckCircle2, ChevronRight, Ellipsis, No
 import { useId, type ReactNode } from "react"
 import type { HomeSession, TrainingHomeViewModel } from "../../domain/home-view-model"
 import { InfoDisclosure } from "../../components/InfoDisclosure"
+import { OracleTopicGrid } from "../../components/OracleTopicGrid"
+import type { OracleTopicId } from "../../domain/oracle-exploration"
 import { deriveSequenceTotals } from "@impl/prescription/sequence"
 import type { PlanSession } from "@impl/plan-generator/types"
 import { prescriptionLabel, sessionLabel, sessionSlotLabel } from "../plan-beta/labels"
@@ -25,6 +27,7 @@ type TrainingHomeProps = {
   readonly onOpenGuide?: () => void
   readonly onOpenPlan?: () => void
   readonly onOpenTrends?: () => void
+  readonly onOpenOracle?: (topic: OracleTopicId) => void
   readonly onOpenMore?: () => void
   readonly onOpenContent?: () => void
   readonly onOpenRewards?: () => void
@@ -39,12 +42,13 @@ type TrainingHomeProps = {
 
 export function TrainingHome({
   model, onWriteLog, onOpenArchive, onOpenToday, onOpenGuide, onOpenPlan,
-  onOpenTrends, onOpenMore, onOpenContent, onOpenRewards, onOpenNextTraining,
+  onOpenTrends, onOpenOracle, onOpenMore, onOpenContent, onOpenRewards, onOpenNextTraining,
   safetyNotice, hasPlan, accountEntry, todayContext, recentJournal, installSuggestion,
 }: TrainingHomeProps) {
   const resolvedHasPlan = hasPlan ?? !model.planSummary.startsWith("저장된 계획 없음")
   const next = model.nextTraining
   const nextAction = onOpenNextTraining ?? onOpenPlan
+  const showOwnAnalysis = !model.showMinjiPrompt && onOpenTrends !== undefined
 
   return (
     <div className="home-hub">
@@ -60,11 +64,17 @@ export function TrainingHome({
       {safetyNotice}
 
       <section className="home-hub__intro" aria-labelledby="home-hub-title">
-        <p className="home-hub__eyebrow">{model.homeMode === "WELCOME" ? "처음 기록하기" : model.homeMode === "TRAINING" ? "오늘 할 일" : "최근 기록"}</p>
-        <h1 id="home-hub-title">{model.homeMode === "WELCOME" ? "오늘 운동을 기록해요" : model.homeMode === "TRAINING" ? "오늘의 훈련" : "내 기록"}</h1>
+        <p className="home-hub__eyebrow">{onOpenOracle ? "훈련 분석" : model.homeMode === "WELCOME" ? "처음 기록하기" : model.homeMode === "TRAINING" ? "오늘 할 일" : "최근 기록"}</p>
+        <h1 id="home-hub-title">{onOpenOracle ? "내 훈련, 무엇부터 개선할까요?" : model.homeMode === "WELCOME" ? "오늘 운동을 기록해요" : model.homeMode === "TRAINING" ? "오늘의 훈련" : "내 기록"}</h1>
+        {onOpenOracle && <div className="home-hub__oracle-start">
+          <button className="home-hub__primary" type="button" onClick={showOwnAnalysis ? onOpenTrends : () => onOpenOracle("focus")}>{showOwnAnalysis ? "내 훈련 분석 보기" : "분석 결과 먼저 보기"}<ChevronRight aria-hidden="true" size={18} /></button>
+          <span className="home-hub__oracle-caption">{showOwnAnalysis ? model.analysisSummary : "기록 없이도 예시로 체험해요."}</span>
+        </div>}
       </section>
 
-      {model.homeMode === "WELCOME" ? <WelcomeToday model={model} onWriteLog={onWriteLog} onOpenPlan={onOpenPlan} /> : <>
+      {onOpenOracle && <OracleTopicGrid title="궁금한 항목부터" compact onSelectTopic={onOpenOracle} />}
+
+      {model.homeMode === "WELCOME" ? <WelcomeToday model={model} onWriteLog={onWriteLog} onOpenPlan={onOpenPlan} compact={onOpenOracle !== undefined} /> : <>
         {next !== null && <NextTrainingCard next={next} onOpen={nextAction} />}
         <TodaySection model={model} onWriteLog={onWriteLog} onOpenToday={onOpenToday} todayContext={todayContext} />
       </>}
@@ -89,12 +99,12 @@ export function TrainingHome({
   )
 }
 
-function WelcomeToday({ model, onWriteLog, onOpenPlan }: { model: TrainingHomeViewModel; onWriteLog?: (entryType?: LogEntryType) => void; onOpenPlan?: () => void }) {
+function WelcomeToday({ model, onWriteLog, onOpenPlan, compact = false }: { model: TrainingHomeViewModel; onWriteLog?: (entryType?: LogEntryType) => void; onOpenPlan?: () => void; compact?: boolean }) {
   return <section className="home-hub__today home-hub__today--welcome" aria-labelledby="home-hub-today">
     <div id="home-hub-today" className="home-hub__section-label">오늘</div>
-    <p>{model.todayMessage}</p>
+    {!compact && <p>{model.todayMessage}</p>}
     <nav aria-label="오늘 기록 또는 계획 만들기">
-    <button className="home-hub__primary" type="button" onClick={() => onWriteLog?.("quick-session")}><PencilLine aria-hidden="true" size={19} /><span>오늘 기록 남기기</span><ChevronRight aria-hidden="true" size={18} /></button>
+    <button className={compact ? "home-hub__text-action" : "home-hub__primary"} type="button" onClick={() => onWriteLog?.("quick-session")}><PencilLine aria-hidden="true" size={19} /><span>오늘 기록 남기기</span><ChevronRight aria-hidden="true" size={18} /></button>
     <button className="home-hub__text-action" type="button" onClick={onOpenPlan}>훈련 계획 만들기<ChevronRight aria-hidden="true" size={17} /></button>
     </nav>
   </section>

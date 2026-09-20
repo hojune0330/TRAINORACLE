@@ -16,6 +16,7 @@ import { DailyContextTags } from "./home/DailyContextTags"
 import { TrainingHome } from "./home/TrainingHome"
 import { LatestJournalDay } from "./home/LatestJournalDay"
 import type { LogEntryType } from "./log-entry/shared"
+import type { OracleTopicId } from "../domain/oracle-exploration"
 import { onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
 import { accountJournalProjectionStatus } from "../domain/account/account-journal-projection"
 import { createPlannedSessionLogDraft, type PlannedSessionLink } from "../domain/planned-session-link"
@@ -28,6 +29,7 @@ export type HomeProps = {
   readonly onOpenPlan?: () => void
   readonly onOpenNextTraining?: (link: PlannedSessionLink) => void
   readonly onOpenTrends?: () => void
+  readonly onOpenOracle?: (topic: OracleTopicId) => void
   readonly onOpenMore?: () => void
   readonly onOpenAccount?: () => void
   readonly onOpenContent?: () => void
@@ -37,7 +39,7 @@ export type HomeProps = {
 
 export function Home({
   onWriteLog, onOpenDay, onOpenArchive, onOpenGuide, onOpenPlan,
-  onOpenNextTraining, onOpenTrends, onOpenMore, onOpenAccount, onOpenContent, onOpenRewards,
+  onOpenNextTraining, onOpenTrends, onOpenOracle, onOpenMore, onOpenAccount, onOpenContent, onOpenRewards,
 }: HomeProps) {
   const [revision, setRevision] = React.useState(0)
   React.useEffect(() => {
@@ -132,6 +134,7 @@ export function Home({
         onOpenPlan={onOpenPlan}
         onOpenNextTraining={openNextTraining}
         onOpenTrends={onOpenTrends}
+        onOpenOracle={onOpenOracle}
         onOpenMore={onOpenMore}
         onOpenContent={onOpenContent}
         onOpenRewards={onOpenRewards}

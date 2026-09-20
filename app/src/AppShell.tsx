@@ -41,6 +41,7 @@ import { AppLoadingState } from "./components/AppLoadingState"
 import { MultiPlanEvidenceContext } from "./components/MultiPlanEvidenceContext"
 import { AppOverlayNavigationProvider } from "./components/AppOverlayNavigation"
 import { isTermId, type TermId } from "./domain/glossary"
+import { isOracleTopicId, type OracleTopicId } from "./domain/oracle-exploration"
 const JOURNAL_REWARD_MESSAGE = {
   AWARDED: "기록한 날 +4P가 반영됐어요.",
   ALREADY_AWARDED: "오늘의 다른 기록도 함께 모였어요. 이 날짜의 4P는 이미 반영돼 있어요.",
@@ -56,6 +57,7 @@ const OVERLAY_HISTORY_KEY = "trainoracleOverlay"
 type AppOverlay =
   | { readonly kind: "term"; readonly term: TermId }
   | { readonly kind: "feedback" }
+  | { readonly kind: "oracle"; readonly topic: OracleTopicId }
 
 type OverlayHistoryMarker = AppOverlay & {
   readonly owner: string
@@ -76,6 +78,7 @@ function overlayHistoryMarker(state: unknown, owner: string): AppOverlay | null 
   const value = marker as Record<string, unknown>
   if (value.version !== 1 || value.owner !== owner) return null
   if (value.kind === "feedback") return { kind: "feedback" }
+  if (value.kind === "oracle" && isOracleTopicId(value.topic)) return { kind: "oracle", topic: value.topic }
   const term = typeof value.term === "string" ? value.term : null
   if (value.kind === "term" && isTermId(term)) return { kind: "term", term }
   return null
@@ -139,7 +142,9 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     const addsTermHistory = overlayRef.current?.kind === "term"
       && next.kind === "term"
       && overlayRef.current.term !== next.term
-    const method = overlayRef.current === null || addsTermHistory ? "pushState" : "replaceState"
+    const addsOracleHistory = overlayRef.current?.kind === "oracle"
+      && next.kind === "oracle" && overlayRef.current.topic !== next.topic
+    const method = overlayRef.current === null || addsTermHistory || addsOracleHistory ? "pushState" : "replaceState"
     window.history[method]({ ...currentState, [OVERLAY_HISTORY_KEY]: marker }, "", window.location.href)
     applyOverlay(next)
   }, [applyOverlay])
@@ -282,8 +287,9 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     utilityView,
   ])
   const goTab = (tab: AppTab) => {
-    if (!shouldResetTabView(v, tab, utilityView !== null || athleteRecordsOpen)) return
+    if (!shouldResetTabView(v, tab, utilityView !== null || athleteRecordsOpen || overlayRef.current !== null)) return
     runViewTransition(tabMotion(v.tab, tab), () => {
+      dismissOracle()
       setAthleteRecordsOpen(false)
       setUtilityView(null)
       setV(viewForTab(tab))
@@ -292,6 +298,33 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const goTrendsFromReceipt = () => {
     setSavedToast(null)
     goTab("trends")
+  }
+  const dismissOracle = () => {
+    // Leaving the exploration invalidates its older history entries too.
+    // Otherwise Back could reopen a sample over a different destination tab.
+    overlayHistoryOwnerRef.current = `shell-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    if (overlayRef.current?.kind !== "oracle") return
+    const currentState = window.history.state
+    if (typeof currentState === "object" && currentState !== null) {
+      const { [OVERLAY_HISTORY_KEY]: _marker, ...rest } = currentState as Record<string, unknown>
+      window.history.replaceState(rest, "", window.location.href)
+    }
+    overlayRef.current = null
+    setOverlay(null)
+    if (scrollRegionRef.current !== null) scrollRegionRef.current.scrollTop = 0
+  }
+  const openOracle = (topic: OracleTopicId) => runDraftSafeNavigation(() => openOverlay({ kind: "oracle", topic }))
+  const openOraclePersonal = (action: "records" | "journal" | "trends" | "plan") => {
+    if (action === "records") {
+      runViewTransition("push", () => {
+        dismissOracle()
+        setUtilityView(null)
+        setV(viewForTab("plan"))
+        setAthleteRecordsOpen(true)
+      })
+    } else {
+      goTab(action)
+    }
   }
 
   const accountEnabled = accountFeatureEnabled()
@@ -474,6 +507,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           onOpenGuide={() => runViewTransition("push", () => { setUtilityOrigin("home"); setUtilityView("minji") })}
           onOpenPlan={() => goTab("plan")}
           onOpenTrends={() => goTab("trends")}
+          onOpenOracle={openOracle}
           onOpenMore={() => runViewTransition("push", () => setUtilityView("more"))}
           onOpenAccount={accountEnabled ? () => runViewTransition("push", () => setV(s => ({ ...s, accountOpen: true }))) : undefined}
           onOpenContent={() => runViewTransition("push", () => { setUtilityOrigin("home"); setUtilityView("content") })}
@@ -560,6 +594,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         onBack={goHome}
         onWriteLog={() => goTab("log")}
         onOpenPlan={() => goTab("plan")}
+        onOpenOracle={openOracle}
       />
     )
   }
@@ -581,7 +616,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         openRestore()
       }}
       onTab={goTab}
-      hideTabBar={overlay !== null}
+      hideTabBar={overlay !== null && overlay.kind !== "oracle"}
     >
       <React.Suspense fallback={<AppLoadingState />}>
         <div
@@ -606,6 +641,16 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         {overlay?.kind === "feedback" && (
           <div className="app-flow-stage" data-motion="push" data-overlay="feedback">
             <DeferredMobileScreens.FeedbackBoard onBack={closeOverlay} />
+          </div>
+        )}
+        {overlay?.kind === "oracle" && (
+          <div className="app-flow-stage" data-motion="push" data-overlay="oracle">
+            <DeferredMobileScreens.OracleExplore
+              topicId={overlay.topic}
+              onBack={closeOverlay}
+              onSelectTopic={openOracle}
+              onPersonalAction={openOraclePersonal}
+            />
           </div>
         )}
       </React.Suspense>

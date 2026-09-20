@@ -15,12 +15,29 @@ import { PersonalOraclePanel } from "./trends/PersonalOraclePanel"
 import { InfoDisclosure } from "../components/InfoDisclosure"
 import { FileAnalysisPanel } from "./trends/FileAnalysisPanel"
 import { readAccountJournalProjection, readCurrentConfirmedAccountJournalProjection } from "../domain/account/account-journal-projection"
+import { OracleTopicGrid } from "../components/OracleTopicGrid"
+import type { OracleTopicId } from "../domain/oracle-exploration"
+import { fileAnalysisFormats } from "../domain/import/file-analysis-policy"
+import "./trends/trends-hub.css"
 
-export function Trends({ onBack, onWriteLog, onOpenPlan }: {
+const ANALYSIS_SECTIONS = [
+  { id: "summary", label: "요약" },
+  { id: "distance", label: "훈련량" },
+  { id: "mix", label: "훈련 구성" },
+  { id: "monthly", label: "월별 변화" },
+  { id: "files", label: "파일 분석" },
+] as const
+
+type AnalysisSection = typeof ANALYSIS_SECTIONS[number]["id"]
+
+export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle }: {
   readonly onBack?: (() => void) | undefined
   readonly onWriteLog?: (() => void) | undefined
   readonly onOpenPlan?: (() => void) | undefined
+  readonly onOpenOracle?: ((topic: OracleTopicId) => void) | undefined
 }) {
+  const [section, setSection] = React.useState<AnalysisSection>("summary")
+  const fileAnalysisEnabled = fileAnalysisFormats().length > 0
   const [entryRevision, setEntryRevision] = React.useState(0)
   React.useEffect(() => {
     const refresh = () => setEntryRevision(value => value + 1)
@@ -63,57 +80,73 @@ export function Trends({ onBack, onWriteLog, onOpenPlan }: {
     <div style={{ paddingBottom: 30 }}>
       <TrendsHeader onBack={onBack} />
       <div className="trends-motion-stage">
-        <FileAnalysisPanel entries={accountEntries} pendingVerificationCount={pendingFileCount} onOpenPlan={onOpenPlan} />
-        {isEmpty ? (
+        <div className="trends-hub__sections" role="group" aria-label="내 기록 분석 항목">
+          {ANALYSIS_SECTIONS.map(item => (
+            <button key={item.id} type="button" aria-pressed={section === item.id}
+              onClick={() => setSection(item.id)}>{item.label}</button>
+          ))}
+        </div>
+        {pendingFileCount > 0 && section !== "files" && (
+          <div className="trends-hub__notice" role="status">
+            <span>파일 기록 {pendingFileCount}건 · 확인 전 분석에서 제외</span>
+            <button type="button" onClick={() => setSection("files")}>확인하기</button>
+          </div>
+        )}
+        {section === "files" && (
           <>
+            {fileAnalysisEnabled ? <FileAnalysisPanel entries={accountEntries} pendingVerificationCount={pendingFileCount} onOpenPlan={onOpenPlan} /> : (
+              <div className="trends-hub__empty">
+                <h2>파일 분석은 준비 중이에요</h2>
+                <p>현재는 일지에 직접 남긴 값으로 훈련량과 변화를 볼 수 있어요.</p>
+                {pendingFileCount > 0 && <p role="status">파일 기록 {pendingFileCount}건은 보관돼 있으며, 확인 전 분석에서 제외해요.</p>}
+                <button type="button" onClick={() => setSection("distance")}>훈련량 보기</button>
+              </div>
+            )}
+            {fileAnalysisEnabled && !accountEntries.some(entry => entry.kind === "post-session" && entry.fileObservation) && pendingFileCount === 0 && (
+              <div className="trends-hub__empty">
+                <h2>분석할 파일 기록이 없어요</h2>
+                <p>확인된 운동 파일이 있으면 구간과 훈련 내용을 볼 수 있어요.</p>
+                {onWriteLog && <button type="button" onClick={onWriteLog}>기록 추가하기</button>}
+              </div>
+            )}
+          </>
+        )}
+        {section === "summary" && isEmpty && (
+          <>
+            {onOpenOracle && <div className="trends-hub__explore">
+              <OracleTopicGrid onSelectTopic={onOpenOracle} title="어떤 분석이 궁금하세요?" compact />
+            </div>}
             <div style={{ padding: "0 20px" }}>
               <GuidedEmptyState
                 title={entries.length > 0 ? "분석할 수치가 아직 없어요" : "분석할 기록이 아직 없어요"}
-                description={<>거리·시간·RPE<TermHelp term="rpe" /> 등 분석에 사용할 항목이 아직 없어요.</>}
+                description={<>거리·시간·RPE<TermHelp term="rpe" />가 있는 기록이 필요해요.</>}
                 actionLabel={entries.length > 0 ? "기록 더 남기기" : "첫 기록 남기기"}
                 onAction={onWriteLog}
               />
-              <AnalysisExclusionNotice summary={exclusion} />
               <InfoDisclosure title="어떤 기록을 분석하나요?">
                 <PersonalOraclePanel observations={observations} today={today} planState={planState} />
               </InfoDisclosure>
             </div>
-            {planState !== null && (
-              <EnergySystemLedgerPanel
-                observations={observations}
-                today={today}
-                planState={planState}
-                mode="full"
-              />
-            )}
-          </>
-        ) : (
-          <>
-            <PersonalOraclePanel observations={observations} today={today} planState={planState} />
-            <CumulativeDistancePanel
-              observations={observations}
-              today={today}
-              planWindow={planWindow}
-              mode="full"
-            />
-            <EnergySystemLedgerPanel
-              observations={observations}
-              today={today}
-              planState={planState}
-              mode="full"
-            />
-            <MonthlyTrendSection observations={observations} today={today} />
-            <div style={{ padding: "0 20px" }}>
-              <InfoDisclosure title="분석 결과는 어디까지 알 수 있나요?">
-                <p>출처가 확인된 기록만 분석해요. 개인 메모는 읽지 않아요.</p>
-                <p>기록의 변화를 정리한 결과이며, 이 화면만으로 훈련 계획이나 몸 상태의 안전 판단을 바꾸지 않아요.</p>
-              </InfoDisclosure>
-            </div>
-            <div style={{ padding: "0 20px" }}>
-              <AnalysisExclusionNotice summary={exclusion} />
-            </div>
           </>
         )}
+        {section === "summary" && !isEmpty && (
+          <>
+            <PersonalOraclePanel observations={observations} today={today} planState={planState} />
+            {onOpenOracle && <div className="trends-hub__explore">
+              <OracleTopicGrid onSelectTopic={onOpenOracle} title="다른 분석 둘러보기" compact />
+            </div>}
+          </>
+        )}
+        {section === "distance" && <CumulativeDistancePanel observations={observations} today={today} planWindow={planWindow} mode="full" />}
+        {section === "mix" && <EnergySystemLedgerPanel observations={observations} today={today} planState={planState} mode="full" />}
+        {section === "monthly" && <MonthlyTrendSection observations={observations} today={today} />}
+        <div style={{ padding: "0 20px" }}>
+          <AnalysisExclusionNotice summary={exclusion} />
+          <InfoDisclosure title="분석 기준">
+            <p>확인된 기록만 분석해요. 개인 메모는 읽지 않아요.</p>
+            <p>기록을 정리한 결과이며, 계획·안전 판단은 자동으로 바꾸지 않아요.</p>
+          </InfoDisclosure>
+        </div>
         {productFeatures().experimentalFatigue && <FatigueExperimentPanel />}
       </div>
     </div>

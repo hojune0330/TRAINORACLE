@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import type { JournalEntry } from "../../domain/journal-store"
@@ -88,6 +88,7 @@ describe("provenance-safe Trends surface", () => {
   it("shows only verified weekly distance and explains excluded records", () => {
     render(<Trends />)
 
+    fireEvent.click(screen.getByRole("button", { name: "훈련량" }))
     const distance = screen.getByRole("region", { name: "누적 거리와 변화" })
     expect(within(distance).getByLabelText(/이번 주, 8킬로미터, 기록 1건/u)).toBeVisible()
     expect(within(distance).getByLabelText(/이번 달, 8킬로미터, 기록 1건/u)).toBeVisible()
@@ -102,6 +103,7 @@ describe("provenance-safe Trends surface", () => {
     const user = userEvent.setup()
     render(<Trends />)
 
+    await user.click(screen.getByRole("button", { name: "월별 변화" }))
     const monthly = screen.getByRole("region", { name: "최근 4개월 추이" })
     expect(within(monthly).getByRole("button", { name: "페이스" })).toHaveAttribute("aria-pressed", "true")
     expect(within(monthly).getByText(/중앙 페이스 5:00/u)).toBeVisible()

@@ -36,7 +36,7 @@ export function MonthlyTrendSection({
 
   return (
     <section aria-label="최근 4개월 추이" style={{ padding: "26px 20px 0" }}>
-      <SectionLb>— 4 MONTHS · 설명 통계</SectionLb>
+      <SectionLb>최근 4개월</SectionLb>
       <div className="monthly-trend__tabs app-compact-tabs" role="group" aria-label="추이 항목">
         {TREND_METRIC_OPTIONS.map((item) => (
           <button

@@ -1,0 +1,99 @@
+.oracle-topic-grid {
+  min-width: 0;
+  margin-block: var(--space-6);
+  color: var(--ink);
+  font-family: var(--sans);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.oracle-topic-grid__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.oracle-topic-grid__heading h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.oracle-topic-grid__heading > span {
+  color: var(--ink-3);
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+}
+
+.oracle-topic-grid__tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.oracle-topic-grid__tile {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: var(--app-touch-min);
+  padding: var(--space-4);
+  border: var(--bw-line) solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 200ms var(--ease-out-strong, ease-out), border-color 200ms var(--ease-out-strong, ease-out);
+}
+
+.oracle-topic-grid__tile-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  color: var(--brand);
+}
+
+.oracle-topic-grid__tile-top > svg:last-child {
+  color: var(--ink-3);
+}
+
+.oracle-topic-grid__tile strong {
+  font-size: var(--fs-body);
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.oracle-topic-grid__teaser {
+  color: var(--ink-3);
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+}
+
+.oracle-topic-grid__tile:hover {
+  border-color: var(--ink-3);
+  background: var(--surface-2);
+}
+
+.oracle-topic-grid__tile:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: var(--space-1);
+}
+
+.oracle-topic-grid--compact .oracle-topic-grid__tile {
+  padding: var(--space-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oracle-topic-grid__tile {
+    transition: none;
+  }
+}

@@ -5,6 +5,9 @@
 .home-hub__header-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-left:auto; }
 .home-hub__more { display:inline-flex; align-items:center; gap:4px; min-height:44px; padding:8px 0 8px 8px; border:0; background:none; color:var(--ink); font-size:.86rem; }
 .home-hub__intro { margin:28px 0 24px; }
+.home-hub__oracle-start { display:grid; gap:8px; margin-top:20px; }
+.home-hub__oracle-caption { color:var(--ink-3); font-size:var(--fs-caption, 12px); }
+.home-hub__today--welcome nav { display:flex; flex-wrap:wrap; gap:8px 20px; }
 .home-hub__eyebrow, .home-hub__section-label { margin:0; color:var(--ink-3); font-size:.84rem; font-weight:700; }
 .home-hub h1 { margin:4px 0 0; font-size:clamp(1.6rem, 6vw, 2.15rem); line-height:1.25; letter-spacing:-.04em; }
 .home-hub h2 { margin:0; font-size:1rem; }

@@ -9,6 +9,25 @@ const TRAINING = { ...BASE, homeMode: "TRAINING", planSummary: "저장된 계획
 afterEach(cleanup)
 
 describe("training home presentation", () => {
+  it("lets a first visitor try analysis before writing and keeps all six topics open", () => {
+    const explore = vi.fn(); const analysis = vi.fn()
+    render(<TrainingHome model={BASE} onOpenOracle={explore} onOpenTrends={analysis} />)
+    fireEvent.click(screen.getByRole("button", { name: "분석 결과 먼저 보기" }))
+    expect(explore).toHaveBeenCalledWith("focus")
+    expect(analysis).not.toHaveBeenCalled()
+    expect(screen.getAllByRole("button", { name: /· 예시 보기$/u })).toHaveLength(6)
+    expect(screen.getByText("기록 없이도 예시로 체험해요.")).toBeVisible()
+    expect(screen.queryByText(BASE.todayMessage)).not.toBeInTheDocument()
+  })
+  it("prioritizes the user's own analysis after records exist without hiding exploration", () => {
+    const explore = vi.fn(); const analysis = vi.fn()
+    render(<TrainingHome model={{ ...BASE, homeMode: "JOURNAL", showMinjiPrompt: false, analysisSummary: "이번 주 2회 · 8km" }} onOpenOracle={explore} onOpenTrends={analysis} />)
+    fireEvent.click(screen.getByRole("button", { name: "내 훈련 분석 보기" }))
+    expect(analysis).toHaveBeenCalledOnce()
+    expect(explore).not.toHaveBeenCalled()
+    expect(screen.getAllByRole("button", { name: /· 예시 보기$/u })).toHaveLength(6)
+    expect(screen.queryByRole("button", { name: "분석 결과 먼저 보기" })).not.toBeInTheDocument()
+  })
   it("keeps welcome concise and exposes learning and decoration entry points", () => {
     const learn = vi.fn(); const decorate = vi.fn(); const guide = vi.fn()
     render(<TrainingHome model={BASE} onOpenContent={learn} onOpenRewards={decorate} onOpenGuide={guide} />)
