@@ -4,13 +4,13 @@
 doc_id: TO-PLAN-DELETE-RESTORE
 spec_id: PLAN_DELETION_AND_RESTORE_IMPLEMENTATION_CONTRACT
 title: 훈련 계획 삭제와 복구 구현 계약
-version: "0.1"
-round: IMPLEMENTATION_PREPARATION
-status: DRAFT_FOR_REVIEW_NOT_IMPLEMENTED
+version: "0.2"
+round: SERVER_FOUNDATION
+status: DRAFT_FOUNDATION_IMPLEMENTED_NOT_CONNECTED
 owner: OWNER_AND_INTEGRATOR
 open_issues_total: 4
 canonical_blocking_count: 4
-executed_tests_total: 0
+executed_tests_total: 18
 canonical_promotion_allowed: false
 production_enabled: false
 ```
@@ -25,6 +25,8 @@ production_enabled: false
 - `account-plan-document-schema.ts`의 계획 항목은 `planId`, 불변 snapshot, progress, updatedAt, archivedAt으로 구성된다.
 - `account-plan-collection-schema.ts`의 업데이트 검사는 기존 항목 제거와 보관 후 내용 변경을 차단한다. 임의로 검사만 제거하면 지연 쓰기로 삭제가 취소되거나 이력이 없어질 수 있다.
 - 서버는 `_shared/account-plan-collection-handler.mjs`와 generated validator를 소비한다. 프론트엔드 스키마만 바꾸는 것으로 운영 삭제가 성립하지 않는다.
+
+2026-09-20 추가: 내부 전이 검증 모듈 `supabase/functions/_shared/account-plan-lifecycle.mjs`와 `supabase/tests/account-plan-lifecycle.test.mjs`를 구현하고 18개 검사를 실제 실행했다. 삭제 표식·복구 기한·계정 일치·revision·요청 재사용과 포인터 보존을 검사한다. 실제 DB 트랜잭션이나 서비스 연결 증거는 아니다. 내부 version 1 구조를 공개 wire 규격으로 채택한 것도 아니다. 기존 4개 이슈는 모두 OPEN이다. 자세한 경계와 다음 연결 순서는 [기반 구현 보고서](../../reports/implementation/PLAN_LIFECYCLE_FOUNDATION_2026-09-20.md)에 있다.
 
 ## 2. 사용자가 보는 의미
 
@@ -74,5 +76,11 @@ production_enabled: false
 | OI-PDR-SERVER-001 | 서버 시각·CAS·멱등 삭제/복구 처리 | OPEN | true |
 | OI-PDR-CLIENT-001 | outbox·조회·휴지통·일지 보존 UI 연결 | OPEN | true |
 | OI-PDR-EVIDENCE-001 | 동시성·복구·운영 전환 실행 증거 | OPEN | true |
+
+## 7. 변경 이력
+
+| 버전 | 추가·수정 | 유지·보류 |
+|---|---|---|
+| 0.2 | 내부 서버 전이 기반과 실행 검사 18개 반영 | 4개 OPEN 유지, wire·실제 저장·UI·운영 적용 보류. 정본 승격 없음 |
 
 [DRAFT_COMPLETE]

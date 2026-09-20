@@ -66,6 +66,9 @@ jobs:
         working-directory: app
         run: npm ci --ignore-scripts --no-audit --no-fund
 
+      - name: Verify plan lifecycle foundation
+        run: node --test supabase/tests/account-plan-lifecycle.test.mjs
+
       - name: Install isolated PostgreSQL rehearsal dependencies
         working-directory: supabase/tests/local-postgres
         run: npm ci --ignore-scripts --no-audit --no-fund
