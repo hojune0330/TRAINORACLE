@@ -1,12 +1,13 @@
 {
   "kind": "TRAINORACLE_PAGES_DEPLOYMENT",
-  "sourceSha": "83211de5943365cdcfb7798c01548fb91d62661e",
-  "previousPagesSha": "0f71288c09d7eafa0168581a26c11078e4a08ff0",
-  "deploymentMethod": "manual-user-approved",
-  "workflowRunId": "35503341564",
-  "workflowAttempt": 1,
-  "ciStatusAtDeployment": "not-used-manual-deploy",
-  "reason": "User explicitly requested manual deployment without additional review or validation.",
-  "publicConfigurationSourceSha": "0f71288c09d7eafa0168581a26c11078e4a08ff0",
-  "deployedAt": "2026-09-20T11:58:22.712Z"
+  "sourceSha": "5cc89a76f4623bd42decc342c24592a631c8bb2c",
+  "previousPagesSha": "d10feb56cc4a6c8d846a28fb6cbcf8632993a0f2",
+  "deploymentMethod": "manual-user-approved-after-successful-pr-ci",
+  "workflowRunId": "35519804115",
+  "testedSourceSha": "dccda7fea6a87332e6532a6ce25b3344a1eb4af4",
+  "testedTreeMatchesMergedMain": true,
+  "ciStatusAtDeployment": "contract-tests/app-quality/app-browser: success",
+  "publicConfigurationSourceSha": "d10feb56cc4a6c8d846a28fb6cbcf8632993a0f2",
+  "reason": "Owner approved consolidation and deployment; merge tree equals fully tested PR tree. Existing public settings retained without reading private environment or credentials.",
+  "deployedAt": "2026-09-20T16:18:08.681Z"
 }
