@@ -43,7 +43,7 @@ describe("plan schedule preview", () => {
   it("keeps the actual date and AM/PM overview visible when instructions collapse", () => {
     const { rerender } = render(<PlanSchedulePreview startDate="2026-08-17" frameLengthDays={9}
       sessions={sessions} detailsExpanded={false} detailsId="schedule-details" />)
-    expect(screen.getByLabelText("9일 훈련 흐름")).toBeVisible()
+    expect(screen.getByLabelText("9일 훈련 일정")).toBeVisible()
     expect(screen.getByRole("listitem", { name: "8월 17일 월요일 · 주요 훈련 LT · 회복 운동" })).toBeVisible()
     expect(document.getElementById("schedule-details")).not.toBeVisible()
     expect(screen.queryByLabelText("RPE 쉽게 보기")).not.toBeInTheDocument()

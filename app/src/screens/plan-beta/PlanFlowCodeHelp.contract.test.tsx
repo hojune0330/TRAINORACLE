@@ -61,7 +61,7 @@ describe("plan flow code help", () => {
     await user.click(screen.getByRole("button", { name: /주요 훈련 MAIN.*지속 페이스 LT/u }))
     const ltSection = screen.getByText(GLOSSARY.lt.short).closest("section")
     expect(ltSection).not.toBeNull()
-    await user.click(within(ltSection!).getByRole("link", { name: "용어 자세히 보기" }))
+    await user.click(within(ltSection!).getByRole("link", { name: "용어 설명 보기" }))
 
     expect(opened).toBe("lt")
     expect(screen.queryByText(GLOSSARY.lt.short)).not.toBeInTheDocument()

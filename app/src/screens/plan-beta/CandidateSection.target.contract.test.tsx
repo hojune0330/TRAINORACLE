@@ -15,7 +15,7 @@ it("keeps the real schedule before optional copy while collapsed", () => {
     canSelect expanded={false} onToggleSchedule={vi.fn()} onSelect={vi.fn()} />)
   const candidate = result.generated.candidates[0]
   const days = Math.ceil(candidate.frame.projectionLengthDays ?? candidate.frame.lengthDays)
-  const flow = screen.getByLabelText(`${days}일 훈련 흐름`)
+  const flow = screen.getByLabelText(`${days}일 훈련 일정`)
   const explanation = screen.getByText("계획안 A 설명·시간 합계").closest("details")!
   expect(flow).toBeVisible()
   expect(flow.compareDocumentPosition(explanation) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()

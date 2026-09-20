@@ -125,7 +125,7 @@
             "성인 남성 사이클 연구는 달리기 LT 처방이나 청소년의 효과를 직접 검증하지 않았어요.",
             "계획의 페이스나 체감강도로 개인의 혈중 젖산·정확한 역치를 측정할 수 없어요."
           ],
-          "observationGuide": "계획한 노력과 실제 구간 기록·체감강도, 뒤 구간의 변화를 함께 살펴봐요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
+          "observationGuide": "계획한 노력과 실제 구간 기록·체감강도, 후반 변화를 함께 확인해요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
           "sourceIds": [
             "PMID_10562610",
             "COACHING_TERMINOLOGY",
@@ -486,7 +486,7 @@
         "INDIVIDUAL_APPLICABILITY",
         "EXACT_OWNER_ADOPTION"
       ],
-      "contentFingerprint": "sha256:66b8a880da104eccd56ef46928ee9c1f1f02ed4213a582070a499127e9e2f4fe"
+      "contentFingerprint": "sha256:eea70bf16c9db65ac49ad2bf68c39a66c11fbf5df5c8e5b8d3496fbbf103a608"
     },
     "pendingReviews": [
       "CURRENT_RECORD_VERIFICATION",
@@ -503,7 +503,7 @@
     ],
     "recordIdentityVerified": false,
     "caveat": "입력으로 제공된 5km 기록 값으로 계산한 LT 참고 범위예요. 기록 신원과 현재성은 확인되지 않았어요. 실제 역치를 측정한 값이 아니며, 날씨와 훈련 구성에 따른 검토가 필요해요.",
-    "contentFingerprint": "sha256:667f4dc7b9cdb2d8fb6071f3cb8571b54fc2ff29d6df61fb22b7e63d4db45871"
+    "contentFingerprint": "sha256:d97d28cb075a3daa1a56fa95edc3a46f1aed6c3723745bba058adc4b2dbf1351"
   },
   {
     "kind": "threshold_personal_reference_review_preview",
@@ -673,7 +673,7 @@
             "성인 남성 사이클 연구는 달리기 LT 처방이나 청소년의 효과를 직접 검증하지 않았어요.",
             "계획의 페이스나 체감강도로 개인의 혈중 젖산·정확한 역치를 측정할 수 없어요."
           ],
-          "observationGuide": "계획한 노력과 실제 구간 기록·체감강도, 뒤 구간의 변화를 함께 살펴봐요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
+          "observationGuide": "계획한 노력과 실제 구간 기록·체감강도, 후반 변화를 함께 확인해요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
           "sourceIds": [
             "PMID_10562610",
             "COACHING_TERMINOLOGY",
@@ -1088,7 +1088,7 @@
         "INDIVIDUAL_APPLICABILITY",
         "EXACT_OWNER_ADOPTION"
       ],
-      "contentFingerprint": "sha256:44ebe5f60b0850e3b15ad45e67e1361395f8389ce3a05da325c87f3026ae101b"
+      "contentFingerprint": "sha256:0ebf9af5070a5c390a5eac806e33e0b1b3b9627ac40d1f475aa757e2fd8230cf"
     },
     "pendingReviews": [
       "CURRENT_RECORD_VERIFICATION",
@@ -1105,7 +1105,7 @@
     ],
     "recordIdentityVerified": false,
     "caveat": "입력으로 제공된 5km 기록 값으로 계산한 LT 참고 범위예요. 기록 신원과 현재성은 확인되지 않았어요. 실제 역치를 측정한 값이 아니며, 날씨와 훈련 구성에 따른 검토가 필요해요.",
-    "contentFingerprint": "sha256:7a797fd1bab2cac757335de77bd215284abcf8a1d2f782bf60f605f9c80f2377"
+    "contentFingerprint": "sha256:fcd5622a30a5a8137902d53f1cff4df632b00b73453350d30fecdb3f361371ea"
   },
   {
     "kind": "threshold_personal_reference_review_preview",
@@ -1313,7 +1313,7 @@
             "성인 남성 사이클 연구는 달리기 LT 처방이나 청소년의 효과를 직접 검증하지 않았어요.",
             "계획의 페이스나 체감강도로 개인의 혈중 젖산·정확한 역치를 측정할 수 없어요."
           ],
-          "observationGuide": "계획한 노력과 실제 구간 기록·체감강도, 뒤 구간의 변화를 함께 살펴봐요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
+          "observationGuide": "계획한 노력과 실제 구간 기록·체감강도, 후반 변화를 함께 확인해요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
           "sourceIds": [
             "PMID_10562610",
             "COACHING_TERMINOLOGY",
@@ -1776,7 +1776,7 @@
         "INDIVIDUAL_APPLICABILITY",
         "EXACT_OWNER_ADOPTION"
       ],
-      "contentFingerprint": "sha256:dbde099c56f0e9f33794ed73036394b3c49f091c0daa68698b749a5bd2d8393c"
+      "contentFingerprint": "sha256:35774b531724b1d5418b204d403c6ad14029938672cc952804c6ab42f365f60e"
     },
     "pendingReviews": [
       "CURRENT_RECORD_VERIFICATION",
@@ -1793,7 +1793,7 @@
     ],
     "recordIdentityVerified": false,
     "caveat": "입력으로 제공된 5km 기록 값으로 계산한 LT 참고 범위예요. 기록 신원과 현재성은 확인되지 않았어요. 실제 역치를 측정한 값이 아니며, 날씨와 훈련 구성에 따른 검토가 필요해요.",
-    "contentFingerprint": "sha256:91f0e993ef32451f762561c5910b5ddc05548e328815eb0d8d5597563dfb371a"
+    "contentFingerprint": "sha256:880b1e19441e00c43a0345b9e36170464eb86af913cce3e32c2e695fa4be30fa"
   },
   {
     "kind": "threshold_personal_reference_review_preview",
@@ -1921,7 +1921,7 @@
             "성인 남성 사이클 연구는 달리기 LT 처방이나 청소년의 효과를 직접 검증하지 않았어요.",
             "계획의 페이스나 체감강도로 개인의 혈중 젖산·정확한 역치를 측정할 수 없어요."
           ],
-          "observationGuide": "계획한 노력과 실제 구간 기록·체감강도, 뒤 구간의 변화를 함께 살펴봐요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
+          "observationGuide": "계획한 노력과 실제 구간 기록·체감강도, 후반 변화를 함께 확인해요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
           "sourceIds": [
             "PMID_10562610",
             "COACHING_TERMINOLOGY",
@@ -2285,7 +2285,7 @@
         "INTRO_SUPPORT_APPLICABILITY",
         "INTRO_EFFORT_APPLICABILITY"
       ],
-      "contentFingerprint": "sha256:21dba58a475ddc2823c3b78f920dc4eae4b5b4db0be81397f38efa75ab65c113"
+      "contentFingerprint": "sha256:7f32b9beb0c0196cbbfb337cf17dfd0b4ea9fe22d1c010417ea675a6c0b4fcc6"
     },
     "pendingReviews": [
       "CURRENT_RECORD_VERIFICATION",
@@ -2305,7 +2305,7 @@
     ],
     "recordIdentityVerified": false,
     "caveat": "입력으로 제공된 5km 기록 값으로 계산한 LT 참고 범위예요. 기록 신원과 현재성은 확인되지 않았어요. 실제 역치를 측정한 값이 아니며, 날씨와 훈련 구성에 따른 검토가 필요해요.",
-    "contentFingerprint": "sha256:f8b6db0347344f424a832a2e97962d529134c7cb6ef22a56ec9afc761ecce165"
+    "contentFingerprint": "sha256:b676ccccfe235ab7899f352e97494d3d7e6df1b8d4ec09d69d26e3a2a657ae4d"
   },
   {
     "kind": "threshold_personal_reference_review_preview",
@@ -2475,7 +2475,7 @@
             "성인 남성 사이클 연구는 달리기 LT 처방이나 청소년의 효과를 직접 검증하지 않았어요.",
             "계획의 페이스나 체감강도로 개인의 혈중 젖산·정확한 역치를 측정할 수 없어요."
           ],
-          "observationGuide": "계획한 노력과 실제 구간 기록·체감강도, 뒤 구간의 변화를 함께 살펴봐요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
+          "observationGuide": "계획한 노력과 실제 구간 기록·체감강도, 후반 변화를 함께 확인해요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
           "sourceIds": [
             "PMID_10562610",
             "COACHING_TERMINOLOGY",
@@ -2893,7 +2893,7 @@
         "INTRO_SUPPORT_APPLICABILITY",
         "INTRO_EFFORT_APPLICABILITY"
       ],
-      "contentFingerprint": "sha256:d8229c44b10f0c1c34d48801455b48ac474c7cc1766621950a1bf6b8e471e4a3"
+      "contentFingerprint": "sha256:ddde9bc375c474b30706186634de10c4b26e823beb140cb8ca9cee2eb47d302d"
     },
     "pendingReviews": [
       "CURRENT_RECORD_VERIFICATION",
@@ -2913,7 +2913,7 @@
     ],
     "recordIdentityVerified": false,
     "caveat": "입력으로 제공된 5km 기록 값으로 계산한 LT 참고 범위예요. 기록 신원과 현재성은 확인되지 않았어요. 실제 역치를 측정한 값이 아니며, 날씨와 훈련 구성에 따른 검토가 필요해요.",
-    "contentFingerprint": "sha256:6a62745d3675ad2ba8d5d054e186ef1edca78d4a97d8149ace6e2c31268d2124"
+    "contentFingerprint": "sha256:239e3453a56c8fc411f5dc7368dbd0216b20335522b96c74aba2f308fd7b75f3"
   },
   {
     "kind": "threshold_personal_reference_review_preview",
@@ -3084,7 +3084,7 @@
             "성인 남성 사이클 연구는 달리기 LT 처방이나 청소년의 효과를 직접 검증하지 않았어요.",
             "계획의 페이스나 체감강도로 개인의 혈중 젖산·정확한 역치를 측정할 수 없어요."
           ],
-          "observationGuide": "계획한 노력과 실제 구간 기록·체감강도, 뒤 구간의 변화를 함께 살펴봐요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
+          "observationGuide": "계획한 노력과 실제 구간 기록·체감강도, 후반 변화를 함께 확인해요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
           "sourceIds": [
             "PMID_10562610",
             "COACHING_TERMINOLOGY",
@@ -3499,7 +3499,7 @@
         "INDIVIDUAL_APPLICABILITY",
         "EXACT_OWNER_ADOPTION"
       ],
-      "contentFingerprint": "sha256:3c6b2eaea7110b992451ed30154ba556b8ed0292dc920c8c548646e4151b2bed"
+      "contentFingerprint": "sha256:fc5e61656eed00997c42d9ccca517dd286ca1605430c246d261d8b9ac7f486ad"
     },
     "pendingReviews": [
       "CURRENT_RECORD_VERIFICATION",
@@ -3516,6 +3516,6 @@
     ],
     "recordIdentityVerified": false,
     "caveat": "입력으로 제공된 5km 기록 값으로 계산한 LT 참고 범위예요. 기록 신원과 현재성은 확인되지 않았어요. 실제 역치를 측정한 값이 아니며, 날씨와 훈련 구성에 따른 검토가 필요해요.",
-    "contentFingerprint": "sha256:cc0f91cacbc0d989c7c25a09eedfe5fc2bff9dba8e2d7913558af341a789e3d9"
+    "contentFingerprint": "sha256:a4b6b9c0d99626f67fc87d7ebd7efd3fce7dbbe272c0262032c272c0a22fc620"
   }
 ]

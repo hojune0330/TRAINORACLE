@@ -124,7 +124,7 @@ describe("plan length intake", () => {
     )
 
     expect(screen.getByRole("button", { name: /7일만 먼저 받기/u }))
-      .toHaveTextContent("다음 계획으로 이어서")
+      .toHaveTextContent("이 계획이 끝나면 다음 계획 만들기")
     expect(onFrameLength).not.toHaveBeenCalled()
     for (const [index, days] of [7, 9, 10].entries()) {
       const choice = screen.getByRole("button", {

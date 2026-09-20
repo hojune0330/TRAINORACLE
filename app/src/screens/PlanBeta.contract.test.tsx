@@ -442,7 +442,7 @@ describe("plan beta user flow", () => {
 
     await openRefinement("달력 길이")
     expect(screen.getByRole("heading", { name: "며칠짜리 달력을 받을까요?" })).toBeVisible()
-    expect(screen.getByRole("button", { name: /7일만 먼저 받기/u })).toHaveTextContent("다음 계획으로 이어서")
+    expect(screen.getByRole("button", { name: /7일만 먼저 받기/u })).toHaveTextContent("이 계획이 끝나면 다음 계획 만들기")
     await user.click(screen.getByRole("button", { name: /9일 계획 받기/u }))
     expectGeneratedCandidates()
 

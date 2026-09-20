@@ -93,7 +93,7 @@ describe("integrated minimal entry to selected plan", () => {
     await user.click(screen.getByRole("button", { name: "다른 계획 보기" }))
     expect(screen.getByRole("button", { name: "계획안 A 일정 펼치기" })).toHaveAttribute("aria-expanded", "false")
     expect(screen.getByRole("button", { name: "계획안 B 일정 펼치기" })).toHaveAttribute("aria-expanded", "false")
-    expect(screen.getAllByLabelText("9일 훈련 흐름")).toHaveLength(2)
+    expect(screen.getAllByLabelText("9일 훈련 일정")).toHaveLength(2)
     expect(screen.getAllByText(/주요 훈련/u).length).toBeGreaterThan(0)
   })
 
