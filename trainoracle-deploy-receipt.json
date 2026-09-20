@@ -1,8 +1,12 @@
 {
   "kind": "TRAINORACLE_PAGES_DEPLOYMENT",
-  "sourceSha": "827008890affb4ec089857955f54082ad9a11a79",
-  "previousPagesSha": "1b28aa5955cfe5108cd29a471365535497f99da2",
-  "workflowRunId": "35468619924",
-  "workflowAttempt": "1",
-  "deployedAt": "2026-09-19T21:41:49.046Z"
+  "sourceSha": "c5b9a6df220611285336f25bae00a50f9eddbd98",
+  "previousPagesSha": "96eb65cf504dfbeb98911b4805b72f23d223408d",
+  "deploymentMethod": "manual-user-approved",
+  "workflowRunId": "35497390639",
+  "workflowAttempt": 1,
+  "ciStatusAtDeployment": "in_progress",
+  "reason": "User requested immediate deployment without repeating prior UI validation; existing automatic full gate takes approximately 50 minutes.",
+  "publicConfigurationSourceSha": "96eb65cf504dfbeb98911b4805b72f23d223408d",
+  "deployedAt": "2026-09-20T07:44:33.385Z"
 }
