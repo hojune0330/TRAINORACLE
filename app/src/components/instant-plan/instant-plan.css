@@ -1,0 +1,296 @@
+.instant-plan {
+  min-width: 0;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--fs-body);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.instant-plan *,
+.instant-plan *::before,
+.instant-plan *::after {
+  box-sizing: border-box;
+}
+
+.instant-plan :is(h2, h3, h4, p, dl, ol, ul, fieldset) {
+  margin: 0;
+}
+
+.instant-plan > * + * {
+  margin-block-start: var(--space-4);
+}
+
+.instant-plan__heading {
+  font-size: var(--fs-app-section-title);
+  line-height: 1.35;
+}
+
+.instant-plan__eyebrow,
+.instant-plan__hint {
+  color: var(--ink-3);
+}
+
+.instant-plan__fields,
+.instant-plan__actions,
+.instant-plan__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.instant-plan__field {
+  display: flex;
+  flex: 1 1 120px;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.instant-plan__choices {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.instant-plan__time-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.instant-plan__fields > fieldset {
+  flex: 1 1 100%;
+}
+
+.instant-plan fieldset {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+
+.instant-plan legend {
+  padding: 0;
+  margin-block-end: var(--space-2);
+  font-weight: 600;
+}
+
+.instant-plan :is(input:not([type="radio"]), select) {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: var(--app-touch-min);
+  padding: var(--space-2) var(--space-3);
+  border: var(--bw-line) solid var(--line-2);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-body-lg);
+}
+
+.instant-plan__choice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--app-touch-min);
+  padding: var(--space-2);
+  cursor: pointer;
+}
+
+.instant-plan input[type="radio"] {
+  margin: 0;
+  accent-color: var(--brand);
+}
+
+.instant-plan :is(button, a) {
+  touch-action: manipulation;
+}
+
+.instant-plan__button,
+.instant-plan__secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--app-touch-min);
+  max-width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: var(--bw-line) solid var(--ink);
+  border-radius: var(--r-md);
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.45;
+  text-align: center;
+  white-space: normal;
+  cursor: pointer;
+}
+
+.instant-plan__button {
+  background: var(--ink);
+  color: var(--surface);
+}
+
+.instant-plan__secondary {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line-2);
+}
+
+.instant-plan :is(button, input, select):disabled {
+  cursor: not-allowed;
+}
+
+.instant-plan button:disabled {
+  color: var(--ink-3);
+  background: var(--surface-2);
+  border-color: var(--line);
+}
+
+.instant-plan :is(button, input, select, a, summary):focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.instant-plan [aria-invalid="true"] {
+  border-color: var(--err);
+}
+
+.instant-plan__error {
+  color: var(--err);
+}
+
+.instant-plan__status {
+  padding-block: var(--space-3);
+  border-block: var(--bw-line) solid var(--line);
+}
+
+.instant-plan__summary > div {
+  flex: 1 1 120px;
+  min-width: 0;
+}
+
+.instant-plan__summary dt {
+  color: var(--ink-3);
+}
+
+.instant-plan__summary dd {
+  margin: var(--space-1) 0 0;
+  font-weight: 600;
+}
+
+.instant-plan__schedule {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  padding: 0;
+  list-style: none;
+}
+
+.instant-plan__day {
+  min-width: 0;
+  padding-block: var(--space-3);
+  border-block-start: var(--bw-line) solid var(--line);
+}
+
+.instant-plan__day h4 {
+  font-size: inherit;
+  margin-block-end: var(--space-2);
+}
+
+.instant-plan__day-slots {
+  display: grid;
+  gap: var(--space-2);
+  padding: 0;
+  list-style: none;
+}
+
+.instant-plan__day-slot {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.instant-plan__role {
+  font-weight: 600;
+}
+
+.instant-plan__disclosure > summary {
+  min-height: var(--app-touch-min);
+  padding-block: var(--space-3);
+  cursor: pointer;
+}
+
+.instant-plan__disclosure[open] > summary {
+  margin-block-end: var(--space-2);
+}
+
+.instant-plan__sessions,
+.instant-plan__programs {
+  display: grid;
+  gap: var(--space-4);
+  padding: 0;
+  list-style: none;
+}
+
+.instant-plan__session,
+.instant-plan__program {
+  min-width: 0;
+  padding-block: var(--space-4);
+  border-block-start: var(--bw-line) solid var(--line);
+}
+
+.instant-plan__session > * + *,
+.instant-plan__program > * + * {
+  margin-block-start: var(--space-2);
+}
+
+.instant-plan__session h3,
+.instant-plan__program h3 {
+  font-size: var(--fs-h3);
+  line-height: 1.45;
+}
+
+.instant-plan__steps {
+  padding-inline-start: var(--space-5);
+}
+
+.instant-plan__steps > * + * {
+  margin-block-start: var(--space-3);
+}
+
+.instant-plan__steps dd {
+  margin: 0;
+}
+
+@media (max-width: 359px) {
+  .instant-plan__actions > * {
+    flex: 1 1 100%;
+  }
+}
+
+@media (min-width: 600px) {
+  .instant-plan__schedule {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .instant-plan__schedule {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .instant-plan *,
+  .instant-plan *::before,
+  .instant-plan *::after {
+    animation: none;
+    transition: none;
+    scroll-behavior: auto;
+  }
+}
