@@ -16,6 +16,9 @@
 4. Move the unapplied COROS daily inbox migration from duplicate version 0038 to 0039. Existing 0038 file-analysis migration is unchanged. Add a unique-version regression check.
 5. Restore the optional install-shortcut suggestion lost during the home redesign. It stays absent for new guests, appears after eligible use, can be dismissed, and restores focus after installation.
 6. Update browser journeys to open intentionally collapsed content before asserting actual prescription, evidence, provenance, and cycle values. No new skips or weaker numerical assertions.
+7. Keep the restored install suggestion compact (populated home measured 1,073px, within the existing 1,100px limit; 44px touch targets retained).
+8. Reserve layout space for persistent review notices so they do not cover journal actions. Keep the notice until explicit dismissal and maintain one modal-owned copy in the editor.
+9. Return both focus and scroll position to the actual session-explanation opener, using the existing reduced-motion-aware scroll hook.
 
 ## Verification Evidence Before Final CI
 
@@ -34,6 +37,15 @@
 | Recheck: energy provenance and decoration motion | 2 passed |
 | App and e2e TypeScript | Passed |
 | Maintained production build (`--emptyOutDir=false`) | Passed; pre-existing chunk/font build warnings remain |
+
+### Follow-up Mobile Audit
+
+- Broad mobile audit: 176 passed, 4 failed, 12 pre-existing skips. Three actual UI integration problems (home height after install restoration, persistent toast overlap, explanation return scroll) and one collapsed-content test mismatch were identified.
+- Home/install mobile and 320px recheck: 12 passed.
+- Dialog/journal comparison on desktop, mobile, 320px and reduced motion: 20 passed; associated contracts: 46 passed.
+- Youth/self-directed plan personas: 3 passed.
+- Compact install/home contracts: 21 passed.
+- Intermediate CI run `35512146435`: contract-tests passed; app units reported 4,262 passed, 1 failed, 35 existing skips. The legacy V5 account UI round-trip clicked while the mount-triggered server read could still be loading. Its fixture now explicitly waits for service READY instead of interpreting the previous save receipt as readiness. A local re-run of all V4/V5/V6 cases passed before the additional readiness assertion; the exact final CI remains the release gate.
 
 ## Deployment Boundaries
 

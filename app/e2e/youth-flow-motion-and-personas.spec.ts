@@ -73,6 +73,7 @@ test("a self-directed runner with no journal can still reach an RPE plan", async
   await completeDetailedPlan(page, { frame: /^7일만 먼저 받기/u, event: /^5000m/u, division: /일반부/u, experience: /훈련 계획에 맞춰 달려 본 경험이 있어요/u, days: /^3일/u, focus: /편하게 오래.*BASE/u, time: /저녁에 운동해요/u })
 
   await expect(page.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
+  await page.getByText("계획안 A 설명·시간 합계", { exact: true }).click()
   await expect(page.getByText("RPE 기준 실행 안내").first()).toBeVisible()
   await page.locator("summary", { hasText: "기준 기록·참가 부문·이전 계획 확인" }).click()
   await expect(page.getByText("기준 기록 없이 만든 계획")).toBeVisible()

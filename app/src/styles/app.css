@@ -2574,6 +2574,19 @@ button:not(:disabled):not([aria-disabled="true"]):active {
   gap: var(--space-1);
 }
 
+/* Persistent review notices reserve space instead of covering journal actions.
+ * The editor's portal keeps its own scrolling, modal-owned toast layout. */
+.app-shell > .saved-toast[data-toast-priority="review"] {
+  position: relative;
+  inset: auto;
+  z-index: auto;
+  flex: 0 1 auto;
+  width: 100%;
+  min-height: 0;
+  max-height: 40dvh;
+  overflow-y: auto;
+}
+
 .saved-toast__heading {
   min-width: 0;
   display: flex;

@@ -137,7 +137,7 @@ export function Home({
         onOpenRewards={onOpenRewards}
         accountEntry={<AccountEntryButton onOpenAccount={onOpenAccount} />}
         todayContext={<DailyContextTags date={today} />}
-        installSuggestion={<InstallShortcutSuggestion eligible={entries.length > 0 || homePlan !== null || accountCurrent !== null || accountAuthState() === "ACCOUNT"} returnFocusTo={() => document.querySelector<HTMLElement>('[data-install-shortcut-return="home"]')} />}
+        installSuggestion={<InstallShortcutSuggestion compact eligible={entries.length > 0 || homePlan !== null || accountCurrent !== null || accountAuthState() === "ACCOUNT"} returnFocusTo={() => document.querySelector<HTMLElement>('[data-install-shortcut-return="home"]')} />}
         recentJournal={<LatestJournalDay entries={entries} today={today} onOpenDay={onOpenDay} onOpenArchive={onOpenArchive} />}
       />
     </div>
