@@ -40,7 +40,7 @@ type TrainingHomeProps = {
 export function TrainingHome({
   model, onWriteLog, onOpenArchive, onOpenToday, onOpenGuide, onOpenPlan,
   onOpenTrends, onOpenMore, onOpenContent, onOpenRewards, onOpenNextTraining,
-  safetyNotice, hasPlan, accountEntry, todayContext, recentJournal,
+  safetyNotice, hasPlan, accountEntry, todayContext, recentJournal, installSuggestion,
 }: TrainingHomeProps) {
   const resolvedHasPlan = hasPlan ?? !model.planSummary.startsWith("저장된 계획 없음")
   const next = model.nextTraining
@@ -52,7 +52,7 @@ export function TrainingHome({
         <div className="home-hub__brand">TRAINORACLE</div>
         <div className="home-hub__header-actions">
           {accountEntry}
-          <button className="home-hub__more" type="button" onClick={onOpenMore} aria-label="더보기" title="전체 메뉴">
+          <button className="home-hub__more" data-install-shortcut-return="home" type="button" onClick={onOpenMore} aria-label="더보기" title="전체 메뉴">
             <span>더보기</span><Ellipsis aria-hidden="true" size={20} />
           </button>
         </div>
@@ -77,6 +77,8 @@ export function TrainingHome({
         {resolvedHasPlan && next === null && <SummaryRow label="내 훈련 계획" detail={model.planSummary} onClick={onOpenPlan} />}
         {!resolvedHasPlan && <SummaryRow label="훈련 계획 만들기" detail={model.planSummary} onClick={onOpenPlan} />}
       </section>}
+
+      {installSuggestion}
 
       <nav className="home-hub__explore" aria-label="훈련 도움말과 일지 꾸미기">
         {onOpenContent && <button type="button" onClick={onOpenContent}><BookOpen aria-hidden="true" size={18} /><span>훈련 배우기</span></button>}

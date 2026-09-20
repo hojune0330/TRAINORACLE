@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
 import { expectActivePlanHeading, openActiveSessionDetails } from "./active-plan-flow"
-import { completeDetailedPlan, openPlanRefinement } from "./plan-flow"
+import { completeDetailedPlan, openPlanOptions, openPlanRefinement } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
 const appPath = process.env.PLAYWRIGHT_APP_PATH ?? "/"
@@ -125,7 +125,10 @@ for (const fixture of cases) {
     await picker.getByRole("button", {
       name: "이 기록으로 개인 페이스 적용",
     }).click()
-    await expect(picker.getByRole("status")).toBeFocused()
+    await expect(page.getByRole("heading", { name: "계획이 준비됐어요", exact: true })).toBeFocused()
+    await openPlanOptions(page, true)
+    await expect(picker.getByRole("status")).toBeVisible()
+    await expect(picker.getByRole("status")).toContainText("상세 훈련 수치를 적용")
 
     await expect(page.getByText(fixture.notation).first()).toBeVisible()
     if (process.env.CAPTURE_PLAN_QA === "1") {

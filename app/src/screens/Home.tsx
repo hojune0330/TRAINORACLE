@@ -1,6 +1,8 @@
 import React from "react"
 import { ACCOUNT_PLAN_EVENT, accountPlanService, accountPlansEnabled } from "../domain/account/account-plan-service"
 import { TermHelp } from "../components/TermHelp"
+import { InstallShortcutSuggestion } from "../components/InstallShortcut"
+import { accountAuthState } from "../domain/account/account-auth-state"
 import { buildTrainingHomeViewModel, type HomeSession } from "../domain/home-view-model"
 import { loadEntries, todayISO } from "../domain/journal-store"
 import { readPlanBetaStateFromStorage } from "../domain/plan-beta-store"
@@ -135,6 +137,7 @@ export function Home({
         onOpenRewards={onOpenRewards}
         accountEntry={<AccountEntryButton onOpenAccount={onOpenAccount} />}
         todayContext={<DailyContextTags date={today} />}
+        installSuggestion={<InstallShortcutSuggestion eligible={entries.length > 0 || homePlan !== null || accountCurrent !== null || accountAuthState() === "ACCOUNT"} returnFocusTo={() => document.querySelector<HTMLElement>('[data-install-shortcut-return="home"]')} />}
         recentJournal={<LatestJournalDay entries={entries} today={today} onOpenDay={onOpenDay} onOpenArchive={onOpenArchive} />}
       />
     </div>

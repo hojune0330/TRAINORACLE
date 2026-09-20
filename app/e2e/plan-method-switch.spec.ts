@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { completeDetailedPlan, openPlanRefinement } from "./plan-flow"
+import { completeDetailedPlan, openPlanOptions, openPlanRefinement } from "./plan-flow"
 import { undersizedInteractiveTargets } from "./touch-audit"
 
 test.use({ serviceWorkers: "block" })
@@ -54,6 +54,7 @@ test("switches method in place and saves only the reconfirmed prescription", asy
   await supportToggle.press("Space")
   await expect(support).not.toHaveAttribute("open")
   await page.getByRole("button", { name: /RPE 기준으로 받기/u }).click()
+  await openPlanOptions(page, true)
   const method = page.locator(".plan-method-picker")
   const summary = method.locator(":scope > summary")
   await expect(method).not.toHaveAttribute("open")
@@ -75,6 +76,8 @@ test("switches method in place and saves only the reconfirmed prescription", asy
   const record = page.getByRole("region", { name: "개인 페이스 기준 기록" })
   await record.getByRole("group", { name: "기준 기록 선택" }).getByRole("button").first().click()
   await record.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
+  await expect(page.getByRole("heading", { name: "계획이 준비됐어요", exact: true })).toBeFocused()
+  await openPlanOptions(page, true)
   await expect(save).toBeEnabled()
   await method.getByText("시간·RPE 기준으로 받기", { exact: true }).click()
   await expect(method.getByRole("radio", { name: /시간·RPE 기준으로 받기/u })).toBeChecked()
@@ -84,6 +87,8 @@ test("switches method in place and saves only the reconfirmed prescription", asy
   await expect(save).toBeDisabled()
   await expect(page.getByText(/5×1000m @5000m RP/u)).toHaveCount(0)
   await record.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
+  await expect(page.getByRole("heading", { name: "계획이 준비됐어요", exact: true })).toBeFocused()
+  await openPlanOptions(page, true)
   await expect(save).toBeEnabled()
   await expect(date).toHaveValue("2026-09-10")
   await page.locator("summary", { hasText: "A와 B는 뭐가 달라요?" }).click()

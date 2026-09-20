@@ -24,6 +24,11 @@ describe("training home presentation", () => {
     render(<TrainingHome model={BASE} safetyNotice={<div data-testid="safety">안전 안내</div>} />)
     expect(screen.getByRole("banner").nextElementSibling).toBe(screen.getByTestId("safety"))
   })
+  it("preserves the optional install suggestion and a stable focus return target", () => {
+    render(<TrainingHome model={TRAINING} installSuggestion={<section data-testid="install">바로가기 추가</section>} />)
+    expect(screen.getByTestId("install")).toBeVisible()
+    expect(screen.getByRole("button", { name: "더보기" })).toHaveAttribute("data-install-shortcut-return", "home")
+  })
   it("uses next-training callback first and preserves prescription metadata", () => {
     const next = vi.fn(); const plan = vi.fn()
     render(<TrainingHome model={TRAINING} onOpenNextTraining={next} onOpenPlan={plan} />)
