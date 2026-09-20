@@ -7,6 +7,7 @@ import type { FeedbackCategory, FeedbackGateway, FeedbackThread } from "../domai
 type FeedbackBoardProps = {
   readonly available?: boolean
   readonly gateway?: FeedbackGateway
+  readonly onBack?: () => void
 }
 
 function categoryValue(value: string): FeedbackCategory {
@@ -17,6 +18,7 @@ function categoryValue(value: string): FeedbackCategory {
 export function FeedbackBoard({
   available = feedbackConfig() !== null,
   gateway = feedbackGateway,
+  onBack,
 }: FeedbackBoardProps) {
   const [writing, setWriting] = React.useState(false)
   const [threads, setThreads] = React.useState<readonly FeedbackThread[]>([])
@@ -40,9 +42,15 @@ export function FeedbackBoard({
   return (
     <main className="feedback-board">
       <header className="feedback-board__header">
-        <a href={import.meta.env.BASE_URL} aria-label="TrainOracle 홈으로">
-          <ArrowLeft aria-hidden="true" size={18} />
-        </a>
+        {onBack === undefined ? (
+          <a href={import.meta.env.BASE_URL} aria-label="TrainOracle 홈으로">
+            <ArrowLeft aria-hidden="true" size={18} />
+          </a>
+        ) : (
+          <button type="button" onClick={onBack} aria-label="이전 화면으로 돌아가기">
+            <ArrowLeft aria-hidden="true" size={18} />
+          </button>
+        )}
         <div>
           <span>TRAINORACLE</span>
           <h1>문의 게시판</h1>

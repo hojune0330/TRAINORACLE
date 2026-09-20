@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { More } from "./More"
 
@@ -30,5 +31,16 @@ describe("more feedback entry", () => {
     render(<More onBack={vi.fn()} onOpenMinji={vi.fn()} onOpenGuide={vi.fn()} feedbackAvailable />)
 
     expect(screen.getByText("불편한 점을 일지 내용 없이 남겨요")).toBeVisible()
+  })
+
+  it("uses the shell callback instead of leaving the app when available", async () => {
+    const user = userEvent.setup()
+    let opened = false
+    render(<More onBack={vi.fn()} onOpenMinji={vi.fn()} onOpenGuide={vi.fn()} onOpenFeedback={() => { opened = true }} feedbackAvailable />)
+
+    await user.click(screen.getByRole("button", { name: "문의 게시판" }))
+
+    expect(opened).toBe(true)
+    expect(screen.queryByRole("link", { name: /^문의 게시판/u })).not.toBeInTheDocument()
   })
 })

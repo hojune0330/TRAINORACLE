@@ -12,9 +12,11 @@
  */
 import { GLOSSARY, type TermId } from "../domain/glossary"
 import { usePopover, PopCard } from "./Popover"
+import { useAppOverlayNavigation } from "./AppOverlayNavigation"
 
 export function TermHelp({ term }: { term: TermId }) {
-  const { open, toggle, wrapRef } = usePopover()
+  const { open, toggle, close, wrapRef } = usePopover()
+  const appNavigation = useAppOverlayNavigation()
   const entry = GLOSSARY[term]
   const accent = entry.safety ? "var(--warn)" : "var(--ink-3)"
 
@@ -68,7 +70,15 @@ export function TermHelp({ term }: { term: TermId }) {
             {entry.detail}
           </div>
         )}
-        <a className="term-help__more" href={`?terms=1&term=${term}`}>
+        <a
+          className="term-help__more"
+          href={`?terms=1&term=${term}`}
+          onClick={appNavigation === null ? undefined : (event) => {
+            event.preventDefault()
+            close()
+            appNavigation.openTrainingTerm(term)
+          }}
+        >
           왜 이런 이름인가요?
         </a>
       </PopCard>
