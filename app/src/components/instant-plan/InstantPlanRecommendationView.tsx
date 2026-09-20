@@ -48,6 +48,7 @@ export function InstantPlanRecommendationView({
 }: InstantPlanRecommendationViewProps) {
   const headingId = useId()
   const actionStatusId = useId()
+  const actionRecoveryId = useId()
   const saving = actionState.kind === "SAVING"
   const waiting = saving || actionState.kind === "PENDING"
   const ready = actionState.kind === "READY"
@@ -102,12 +103,23 @@ export function InstantPlanRecommendationView({
       </section>
 
       {status !== null && (
-        <p
-          id={actionStatusId}
-          className={actionState.kind === "FAILED" || actionState.kind === "BLOCKED"
-            ? "instant-plan__error" : "instant-plan__status"}
-          role={actionState.kind === "FAILED" || actionState.kind === "BLOCKED" ? "alert" : "status"}
-        >{status}</p>
+        <section
+          id={actionRecoveryId}
+          className="instant-plan__save-recovery"
+          aria-label="계획 저장 상태"
+        >
+          <p
+            id={actionStatusId}
+            className={actionState.kind === "FAILED" || actionState.kind === "BLOCKED"
+              ? "instant-plan__error" : "instant-plan__status"}
+            role={actionState.kind === "FAILED" || actionState.kind === "BLOCKED" ? "alert" : "status"}
+          >{status}</p>
+          {actionState.kind === "FAILED" && onRetry && (
+            <div className="instant-plan__save-recovery-actions">
+              <button className="instant-plan__secondary" type="button" onClick={onRetry}>저장 다시 시도</button>
+            </div>
+          )}
+        </section>
       )}
       <div className="instant-plan__actions">
         <button
@@ -117,9 +129,6 @@ export function InstantPlanRecommendationView({
           aria-describedby={status !== null ? actionStatusId : undefined}
           onClick={() => { if (ready) onStart(recommendation.id) }}
         >{saving ? "저장 중" : "이 일정으로 시작"}</button>
-        {actionState.kind === "FAILED" && onRetry && (
-          <button className="instant-plan__secondary" type="button" onClick={onRetry}>저장 다시 시도</button>
-        )}
         {onEditSchedule && (
           <button className="instant-plan__secondary" type="button" disabled={waiting} onClick={onEditSchedule}>
             시작일·훈련일 바꾸기

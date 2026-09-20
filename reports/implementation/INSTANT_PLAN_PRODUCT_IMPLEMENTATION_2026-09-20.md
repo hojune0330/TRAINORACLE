@@ -33,6 +33,21 @@ source_supply: BLOCKED_SOURCE
 
 미니멀 UI가 핵심 실행 정보를 생략하는 핑계가 되면 안 된다. 결과 화면은 생활 부담을 이해하게 하고, 오늘 화면은 운동을 수행할 수 있게 해야 한다. 정돈된 메뉴나 버튼 수가 그 이해를 입증하지 않는다.
 
+## 후속 UX/UI 조정 (P 전용)
+
+두 세션이 있는 오늘 화면은 오전·오후를 각각 44px 이상 터치 가능한 요약 버튼으로 먼저 보여주고, 선택한 세션의 상세 단계와 기록 행동만 펼친다. 선택 전에는 다른 세션의 긴 지시문을 숨겨 첫 화면의 인지 부담을 줄인다. 선택 상태는 실제 `session.id`를 유지하며, 기록되지 않은 세션을 우선 선택하고 사용자가 바꾼 선택은 유지한다. 세션이 하나면 기존처럼 상세를 바로 표시한다. `BEFORE_START`·`RECORDED`에는 기록 행동을 노출하지 않고, `REST`·`RETURN_AFTER_GAP`·`COMPLETED`·`UNAVAILABLE`에는 기존의 stale workout 숨김과 복구 행동을 유지한다.
+
+추천 저장 실패/대기 상태는 상태 문구와 재시도 버튼을 `계획 저장 상태` 이름의 한 영역으로 묶고, 기존 상태 역할과 시작 버튼의 설명 연결을 보존했다. 실제 포커스 이동과 스크롤은 통합 담당자가 상태 전환 경계에서 연결한다. 320px에서는 세션 요약을 세로로 쌓고 360px 이상에서는 두 열로 배치하며, 기존 44px 터치·키보드 포커스·`prefers-reduced-motion` 규칙을 유지한다.
+
+후속 근처 검사는 다음과 같이 통과했다.
+
+| 검사 | 결과 |
+|---|---|
+| `node ./node_modules/vitest/vitest.mjs run src/components/instant-plan/InstantPlanTodayView.test.tsx src/components/instant-plan/InstantPlanRecommendationView.test.tsx --no-cache` | 2 files / 22 tests PASS |
+| `npm run typecheck` (app) | PASS |
+
+이번 후속 변경은 P 전용 컴포넌트·테스트·전용 CSS와 이 보고서만 포함하며, I 작업트리·공통 도메인 계약·외부 API·배포는 건드리지 않았다.
+
 ## 통합 API
 
 공통 타입은 기존 `app/src/domain/instant-plan-contract.ts`를 그대로 사용한다. 아래 컴포넌트는 개별 파일에서 named export한다.

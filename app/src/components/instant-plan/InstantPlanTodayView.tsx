@@ -1,4 +1,4 @@
-import { useId } from "react"
+import { useEffect, useId, useState } from "react"
 import type { InstantPlanToday } from "../../domain/instant-plan-contract"
 import "./instant-plan.css"
 
@@ -29,6 +29,41 @@ const continueLabels: Partial<Record<InstantPlanToday["state"], string>> = {
   UNAVAILABLE: "계획 상태 확인",
 }
 
+type TodaySession = InstantPlanToday["sessions"][number]
+
+function SessionDetail({
+  session,
+  canRecord,
+  onRecordSession,
+}: {
+  readonly session: TodaySession
+  readonly canRecord: boolean
+  readonly onRecordSession?: (id: string) => void
+}) {
+  return (
+    <section className="instant-plan__session" aria-label={`${session.slotLabel} · ${session.title}`}>
+      <p className="instant-plan__eyebrow">{session.slotLabel}</p>
+      <h3>{session.title}</h3>
+      <p className="instant-plan__hint">
+        {session.recorded ? "남긴 기록 있음" : "아직 기록 없음"}
+      </p>
+      <dl className="instant-plan__steps">
+        {session.steps.map((step, index) => (
+          <div key={`${index}-${step.label}`}>
+            <dt>{step.label}</dt>
+            <dd>{step.instruction}</dd>
+          </div>
+        ))}
+      </dl>
+      {canRecord && !session.recorded && onRecordSession && (
+        <button className="instant-plan__secondary" type="button" onClick={() => onRecordSession(session.id)}>
+          {session.slotLabel} 훈련 기록 남기기
+        </button>
+      )}
+    </section>
+  )
+}
+
 /** Renders the existing plan projection; never calculates a replacement workout. */
 export function InstantPlanTodayView({
   today,
@@ -40,6 +75,15 @@ export function InstantPlanTodayView({
   const canRecord = today.state === "SCHEDULED" || today.state === "PARTLY_RECORDED"
   const showSessions = canRecord || today.state === "BEFORE_START" || today.state === "RECORDED"
   const continueLabel = continueLabels[today.state]
+  const defaultSessionId = today.sessions.find(session => !session.recorded)?.id ?? today.sessions[0]?.id
+  const [selectedSessionId, setSelectedSessionId] = useState(defaultSessionId)
+  const hasMultipleSessions = showSessions && today.sessions.length > 1
+  const selectedSession = today.sessions.find(session => session.id === selectedSessionId) ?? today.sessions[0]
+
+  useEffect(() => {
+    if (!showSessions || today.sessions.some(session => session.id === selectedSessionId)) return
+    setSelectedSessionId(defaultSessionId)
+  }, [defaultSessionId, selectedSessionId, showSessions, today.sessions])
 
   return (
     <section className="instant-plan" aria-labelledby={headingId}>
@@ -52,27 +96,40 @@ export function InstantPlanTodayView({
 
       {showSessions && (
         <div className="instant-plan__sessions">
-          {today.sessions.map(session => (
-            <section className="instant-plan__session" key={session.id} aria-label={`${session.slotLabel} · ${session.title}`}>
-              <p className="instant-plan__eyebrow">{session.slotLabel}</p>
-              <h3>{session.title}</h3>
-              <p className="instant-plan__hint">
-                {session.recorded ? "남긴 기록 있음" : "아직 기록 없음"}
-              </p>
-              <dl className="instant-plan__steps">
-                {session.steps.map((step, index) => (
-                  <div key={`${index}-${step.label}`}>
-                    <dt>{step.label}</dt>
-                    <dd>{step.instruction}</dd>
-                  </div>
+          {hasMultipleSessions ? (
+            <>
+              <div className="instant-plan__session-picker" role="group" aria-label="오늘 세션 선택">
+                {today.sessions.map(session => (
+                  <button
+                    className="instant-plan__session-summary"
+                    type="button"
+                    key={session.id}
+                    aria-pressed={session.id === selectedSessionId}
+                    onClick={() => setSelectedSessionId(session.id)}
+                  >
+                    <span className="instant-plan__eyebrow">{session.slotLabel}</span>
+                    <strong>{session.title}</strong>
+                    <span className="instant-plan__hint">
+                      {session.recorded ? "남긴 기록 있음" : "아직 기록 없음"}
+                    </span>
+                  </button>
                 ))}
-              </dl>
-              {canRecord && !session.recorded && onRecordSession && (
-                <button className="instant-plan__secondary" type="button" onClick={() => onRecordSession(session.id)}>
-                  {session.slotLabel} 훈련 기록 남기기
-                </button>
+              </div>
+              {selectedSession && (
+                <SessionDetail
+                  session={selectedSession}
+                  canRecord={canRecord}
+                  onRecordSession={onRecordSession}
+                />
               )}
-            </section>
+            </>
+          ) : today.sessions.map(session => (
+            <SessionDetail
+              key={session.id}
+              session={session}
+              canRecord={canRecord}
+              onRecordSession={onRecordSession}
+            />
           ))}
         </div>
       )}
