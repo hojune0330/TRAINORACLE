@@ -66,8 +66,8 @@ export function CumulativeDistancePanel({
             <span className="distance-overview__eyebrow">쌓인 거리</span>
             <h2 id="home-distance-title">달린 거리</h2>
           </div>
-          <button type="button" onClick={onOpenTrends} aria-label="누적 거리 자세히 보기">
-            자세히 <ArrowRight aria-hidden="true" size={16} />
+          <button type="button" onClick={onOpenTrends} aria-label="누적 거리 분석 보기">
+            거리 분석 <ArrowRight aria-hidden="true" size={16} />
           </button>
         </div>
         <div className={`distance-overview__totals distance-overview__totals--${items.length}`}>

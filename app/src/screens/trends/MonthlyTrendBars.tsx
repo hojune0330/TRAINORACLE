@@ -29,7 +29,7 @@ export function MonthlyTrendBars({
       <div
         className="monthly-trend-bars"
         role="img"
-        aria-label={`${metricLabel} 최근 4개월: ${ariaValues.join(", ")}. 빈 달은 이어서 계산하지 않았어요.`}
+        aria-label={`${metricLabel} 최근 4개월: ${ariaValues.join(", ")}. 기록이 없는 달은 계산하지 않았어요.`}
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 64px), 1fr))",

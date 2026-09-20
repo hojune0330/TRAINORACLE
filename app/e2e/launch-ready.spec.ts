@@ -235,7 +235,7 @@ test("shows a truthful distance receipt and opens the real trend", async ({ page
   })
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
-  await page.getByRole("button", { name: /훈련 후.*거리·시간·훈련 내용을 자세히/u }).click()
+  await page.getByRole("button", { name: /훈련 후.*거리·시간·훈련 내용을 모두 기록/u }).click()
   await page.getByRole("textbox", { name: "거리 (km)" }).fill("8")
 
   // When

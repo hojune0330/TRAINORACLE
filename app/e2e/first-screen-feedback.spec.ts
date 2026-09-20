@@ -36,7 +36,7 @@ test("keeps the welcome home clear and usable on narrow phones", async ({ page }
     await expect(page.getByText("모든 데이터는 이 기기에만 저장돼요.")).toHaveCount(0)
     await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
     await expect(page.getByRole("button", { name: "오늘 기록 남기기" })).toBeInViewport()
-    const services = page.getByRole("navigation", { name: "더 알아보기" })
+    const services = page.getByRole("navigation", { name: "훈련 도움말과 일지 꾸미기" })
     for (const name of ["훈련 배우기", "일지 꾸미기", "일지 예시 보기"]) {
       await expect(services.getByRole("button", { name })).toBeVisible()
     }
@@ -83,7 +83,7 @@ test("shows a returning athlete's latest entry before the decoration studio", as
   await page.setViewportSize({ width: 320, height: 568 })
   await page.goto("/")
   const recentEntry = page.getByRole("button", { name: /2026년 8월 10일 기록 1개 보기.*훈련 1/u })
-  const services = page.getByRole("navigation", { name: "더 알아보기" })
+  const services = page.getByRole("navigation", { name: "훈련 도움말과 일지 꾸미기" })
   // 과거 날짜를 뒤늦게 넣은 기록에는 포인트를 소급 지급하지 않는다.
   const decorationEntry = services.getByRole("button", { name: "일지 꾸미기" })
 

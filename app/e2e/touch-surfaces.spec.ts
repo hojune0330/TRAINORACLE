@@ -15,7 +15,7 @@ function requireTouchProject(projectName: string) {
 test("audits empty home and chooser touch actions", async ({ page }, testInfo) => {
   requireTouchProject(testInfo.project.name)
   await page.goto("/")
-  const services = page.getByRole("navigation", { name: "더 알아보기" })
+  const services = page.getByRole("navigation", { name: "훈련 도움말과 일지 꾸미기" })
   await auditTouchTargets(page, [
     { name: "empty-home.first-entry", locator: page.getByRole("button", { name: "오늘 기록 남기기" }), heightOnly: true },
     { name: "empty-home.create-plan", locator: page.getByRole("button", { name: "훈련 계획 만들기" }), heightOnly: true },

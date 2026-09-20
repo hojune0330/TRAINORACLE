@@ -16,7 +16,7 @@ describe("training home presentation", () => {
     expect(screen.getByRole("button", { name: "훈련 배우기" })).toBeVisible()
     expect(screen.getByRole("button", { name: "일지 꾸미기" })).toBeVisible()
     expect(screen.getByRole("button", { name: "일지 예시 보기" })).toBeVisible()
-    expect(screen.getByRole("navigation", { name: "바로 시작하기" }).querySelectorAll("button")).toHaveLength(2)
+    expect(screen.getByRole("navigation", { name: "오늘 기록 또는 계획 만들기" }).querySelectorAll("button")).toHaveLength(2)
     fireEvent.click(screen.getByRole("button", { name: "훈련 배우기" })); fireEvent.click(screen.getByRole("button", { name: "일지 꾸미기" }))
     expect(learn).toHaveBeenCalledOnce(); expect(decorate).toHaveBeenCalledOnce()
   })

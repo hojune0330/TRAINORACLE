@@ -50,7 +50,7 @@ describe("FileAnalysisPanel independent UI contract", () => {
     expect(screen.getByRole("status")).toHaveTextContent("파일 기록 2개의 최신 상태")
     expect(screen.getByRole("status")).toHaveTextContent("기록은 보관")
     expect(screen.queryByText(/0km|0개 운동/u)).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "다음 훈련 살펴보기" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "훈련 계획 보기" })).not.toBeInTheDocument()
   })
   it("shows paired aggregate pace, safe segment details and the existing next-plan action", () => {
     const onOpenPlan = vi.fn()
@@ -65,7 +65,7 @@ describe("FileAnalysisPanel independent UI contract", () => {
     const segment = within(panel).getAllByText(`${date} · 달리기 · 1개 구간`)[0]!
     fireEvent.click(segment)
     expect(within(segment.closest("details")!).getByRole("table")).toHaveTextContent("미지정")
-    fireEvent.click(within(panel).getByRole("button", { name: "다음 훈련 살펴보기" }))
+    fireEvent.click(within(panel).getByRole("button", { name: "훈련 계획 보기" }))
     expect(onOpenPlan).toHaveBeenCalledOnce()
     expect(panel.textContent).not.toMatch(/PRIVATE_|GPS_|FILENAME_/u)
   })

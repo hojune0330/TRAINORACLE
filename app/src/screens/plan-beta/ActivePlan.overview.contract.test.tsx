@@ -68,7 +68,7 @@ describe("active plan first-view overview", () => {
     expect(summaryItems[2]).toHaveTextContent("하루 2회 포함")
     expect(within(buildSummary).getByRole("button", { name: "지속 페이스 LT 설명 보기" })).toBeVisible()
 
-    const flow = screen.getByLabelText("9일 훈련 흐름")
+    const flow = screen.getByLabelText("9일 훈련 일정")
     const information = screen.getByText("계획 정보와 유의사항").closest("details")
     const timeline = screen.getByRole("list", { name: "날짜별 계획 미리보기" })
     const trainingDay = screen.getByRole("group", {

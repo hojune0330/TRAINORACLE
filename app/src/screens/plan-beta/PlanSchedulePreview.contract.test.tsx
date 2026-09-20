@@ -61,7 +61,7 @@ describe("plan schedule preview", () => {
       />,
     )
 
-    expect(screen.getByLabelText("7일 훈련 흐름")).toBeVisible()
+    expect(screen.getByLabelText("7일 훈련 일정")).toBeVisible()
     expect(screen.getByRole("group", { name: /8월 23일 일요일/u })).toBeVisible()
     expect(screen.queryByRole("group", { name: /8월 24일 월요일/u })).not.toBeInTheDocument()
   })
@@ -69,7 +69,7 @@ describe("plan schedule preview", () => {
   it("shows a chosen date as two separate same-day training slots", () => {
     render(<PlanSchedulePreview startDate="2026-08-17" sessions={sessions} />)
 
-    const flow = screen.getByLabelText("9.5일 훈련 흐름")
+    const flow = screen.getByLabelText("9.5일 훈련 일정")
     expect(flow).toContainElement(screen.getByRole("listitem", {
       name: "8월 17일 월요일 · 주요 훈련 LT · 회복 운동",
     }))

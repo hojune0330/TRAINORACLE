@@ -99,7 +99,7 @@ export function TrainingLexicon({
         )}
         <span className="training-lexicon__eyebrow"><BookOpenCheck aria-hidden="true" size={17} />TRAINORACLE</span>
         <h1 id="training-lexicon-title">훈련 용어집</h1>
-        <p>처음에는 쉬운 뜻만 보고, 궁금할 때 이름의 이유와 생리학적 맥락까지 확인하세요.</p>
+        <p>쉬운 뜻부터 보고, 필요하면 이름의 이유와 자세한 생리학 설명을 확인하세요.</p>
       </header>
 
       {selectedEntry === null ? (
@@ -245,9 +245,9 @@ function TermDetail({
         {mode === "PRO" && (
           <>
             <TermSection title="전문 설명" body={entry.technicalDefinition} />
-            <TermSection title="에너지 경로 맥락" body={entry.pathwayContext} />
-            <TermSection title="젖산 맥락" body={entry.lactateContext} />
-            <TermSection title="사용 연료 맥락" body={entry.substrateContext} />
+            <TermSection title="관련 에너지 경로" body={entry.pathwayContext} />
+            <TermSection title="젖산과의 관계" body={entry.lactateContext} />
+            <TermSection title="주로 쓰는 연료" body={entry.substrateContext} />
             {entry.aliases !== undefined && <TermList title="함께 쓰는 이름" items={entry.aliases} />}
             {entry.sourceRefs !== undefined && (
               <section className="training-term__section">

@@ -26,7 +26,7 @@ export function BalanceMarker({ hint }: { hint: BalanceHintData | null }) {
     <span ref={wrapRef} style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
       <button
         type="button"
-        aria-label={`${hint.title} — 자세히 ${open ? "닫기" : "보기"}`}
+        aria-label={`${hint.title} 설명 ${open ? "닫기" : "보기"}`}
         aria-expanded={open}
         onClick={toggle}
         style={{

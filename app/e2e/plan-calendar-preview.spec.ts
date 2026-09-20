@@ -17,7 +17,7 @@ test("shows a dated AM and PM plan before selection and after reload", async ({ 
 
   // When
   await expect(page.getByRole("group", { name: /훈련 2개/u })).toHaveCount(3)
-  const overview = page.getByLabel("9일 훈련 흐름").first()
+  const overview = page.getByLabel("9일 훈련 일정").first()
   await expect(overview.getByRole("listitem", {
     name: /8월 25일 화요일/u,
   })).toContainText("기초")
@@ -42,7 +42,7 @@ test("shows a dated AM and PM plan before selection and after reload", async ({ 
   await expect(activeDay).toContainText("오전")
   await expect(activeDay).toContainText("오후")
   await expect(activeDay).toContainText("오후 회복 운동")
-  await expect(page.getByLabel("9일 훈련 흐름")).toContainText("회복")
+  await expect(page.getByLabel("9일 훈련 일정")).toContainText("회복")
   await expect(page.getByRole("group", { name: /훈련 2개/u })).toHaveCount(3)
   await expect.poll(() => page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toContain("2026-08-17")
   await activeDay.getByRole("button", { name: "훈련 방법과 이유", exact: true }).nth(1).click()

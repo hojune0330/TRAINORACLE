@@ -306,7 +306,7 @@ export function PlanIntake({
               key={length}
               title={length === 7 ? "7일만 먼저 받기" : `${length}일 계획 받기`}
               detail={length === 7
-                ? "끝나면 다음 계획으로 이어서"
+                ? "이 계획이 끝나면 다음 계획 만들기"
                 : "한 번에 받아요"}
               selected={draft.requestedFrameLength === length}
               recommended={length === RECOMMENDED_ANSWERS.requestedFrameLength}

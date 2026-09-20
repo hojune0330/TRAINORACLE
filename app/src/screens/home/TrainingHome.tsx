@@ -60,7 +60,7 @@ export function TrainingHome({
       {safetyNotice}
 
       <section className="home-hub__intro" aria-labelledby="home-hub-title">
-        <p className="home-hub__eyebrow">{model.homeMode === "WELCOME" ? "나에게 맞는 훈련 기록" : "오늘의 흐름"}</p>
+        <p className="home-hub__eyebrow">{model.homeMode === "WELCOME" ? "처음 기록하기" : model.homeMode === "TRAINING" ? "오늘 할 일" : "최근 기록"}</p>
         <h1 id="home-hub-title">{model.homeMode === "WELCOME" ? "오늘 운동을 기록해요" : model.homeMode === "TRAINING" ? "오늘의 훈련" : "내 기록"}</h1>
       </section>
 
@@ -70,7 +70,7 @@ export function TrainingHome({
       </>}
 
       {model.homeMode !== "WELCOME" && <section className="home-hub__summary" aria-labelledby="home-hub-summary-title">
-        <h2 id="home-hub-summary-title">기록과 흐름</h2>
+        <h2 id="home-hub-summary-title">기록과 계획</h2>
         {recentJournal}
         {!recentJournal && <SummaryRow label="최근 기록" detail={model.journalSummary} onClick={onOpenArchive} />}
         <SummaryRow label="훈련 분석 보기" detail={model.analysisSummary} onClick={onOpenTrends} icon={<ChartNoAxesCombined aria-hidden="true" size={19} />} />
@@ -78,7 +78,7 @@ export function TrainingHome({
         {!resolvedHasPlan && <SummaryRow label="훈련 계획 만들기" detail={model.planSummary} onClick={onOpenPlan} />}
       </section>}
 
-      <nav className="home-hub__explore" aria-label="더 알아보기">
+      <nav className="home-hub__explore" aria-label="훈련 도움말과 일지 꾸미기">
         {onOpenContent && <button type="button" onClick={onOpenContent}><BookOpen aria-hidden="true" size={18} /><span>훈련 배우기</span></button>}
         {onOpenRewards && <button type="button" onClick={onOpenRewards}><NotebookPen aria-hidden="true" size={18} /><span>일지 꾸미기</span></button>}
         {model.homeMode === "WELCOME" && onOpenGuide && <button type="button" onClick={onOpenGuide}><NotebookPen aria-hidden="true" size={18} /><span>일지 예시 보기</span></button>}
@@ -91,7 +91,7 @@ function WelcomeToday({ model, onWriteLog, onOpenPlan }: { model: TrainingHomeVi
   return <section className="home-hub__today home-hub__today--welcome" aria-labelledby="home-hub-today">
     <div id="home-hub-today" className="home-hub__section-label">오늘</div>
     <p>{model.todayMessage}</p>
-    <nav aria-label="바로 시작하기">
+    <nav aria-label="오늘 기록 또는 계획 만들기">
     <button className="home-hub__primary" type="button" onClick={() => onWriteLog?.("quick-session")}><PencilLine aria-hidden="true" size={19} /><span>오늘 기록 남기기</span><ChevronRight aria-hidden="true" size={18} /></button>
     <button className="home-hub__text-action" type="button" onClick={onOpenPlan}>훈련 계획 만들기<ChevronRight aria-hidden="true" size={17} /></button>
     </nav>

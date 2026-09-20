@@ -96,7 +96,7 @@ export function FileAnalysisPanel({ entries, pendingVerificationCount = 0, onOpe
       {report.observations.slice(0, activityLimit).map(observation => <ActivitySegments key={observation.sourceObservationKey} observation={observation} />)}
       {report.observations.length > activityLimit && <button type="button" onClick={() => setActivityLimit(value => value + 20)}>운동 20개 더 보기</button>}
       {onOpenPlan && report.includedSourceCount > 0 && <div className="file-analysis-actions">
-        <button type="button" onClick={onOpenPlan}>다음 훈련 살펴보기 <ArrowRight size={16} aria-hidden="true" /></button>
+        <button type="button" onClick={onOpenPlan}>훈련 계획 보기 <ArrowRight size={16} aria-hidden="true" /></button>
       </div>}
     </>}
   </section>

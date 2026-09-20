@@ -161,7 +161,7 @@ export function derivePersonalOracle({
       : "DESCRIPTIVE"
 
   const summary = maturity === "EMPTY"
-    ? "아직 단정할 수 있는 흐름은 없어요. 첫 기록부터 근거가 시작됩니다."
+    ? "아직 비교할 기록이 부족해요. 첫 기록을 남기면 확인할 수 있어요."
     : maturity === "STARTING"
       ? "기록이 시작됐어요. 지금은 보이는 사실만 짧게 정리합니다."
       : "최근 기록에서 확인되는 거리·훈련 목적·계획 진행을 나눠 정리했습니다."

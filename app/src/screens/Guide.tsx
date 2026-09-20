@@ -36,7 +36,7 @@ function FeedbackEntry({ available }: { readonly available: boolean }) {
     <section className="guide-feedback" aria-labelledby="guide-feedback-title">
       <h2 id="guide-feedback-title">불편한 점이 있었나요?</h2>
       <p>{available
-        ? "알려주신 내용부터 살펴보고 고쳐요. 일지 내용은 자동으로 보내지 않아요."
+        ? "알려주신 내용을 확인하고 고쳐요. 일지 내용은 자동으로 보내지 않아요."
         : "문의 게시판은 지금 준비 중이에요. 열리면 앱 안에서 알려드릴게요."}
       </p>
       <a href="?feedback=1" data-testid="contact-link">{available ? "문의 게시판 열기" : "문의 게시판 상태 보기"}</a>

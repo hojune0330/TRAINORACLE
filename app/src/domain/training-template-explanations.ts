@@ -51,7 +51,7 @@ export const TRAINING_TEMPLATE_EXPLANATIONS: readonly TemplateExplanation[] = [
     identity: { ...singleSet, templateId: "V2-SEED-05", templateContentFingerprint: "sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a", targetEventDistanceM: 5000, repetitionsPerSet: 5, repetitionDistanceM: 1000, repetitionRecoverySeconds: 150, repetitionRecoveryMode: "JOG" },
     work: "현재 5000m 페이스의 1000m 구간을 다섯 번 나누어 수행하며 강한 유산소 노력을 반복하는 구성이에요. 1000m 단위의 목표 시간을 확인할 수 있고, 다섯 구간 사이에는 회복이 있어 5000m를 연속으로 달리는 것과 같지 않아요. 반복 수와 거리는 개인 기록에서 계산한 값이 아니라 트레인오라클이 채택한 구성이에요.",
     recovery: "반복 사이 150초는 가벼운 조깅으로 강도를 낮추되 움직임은 이어가는 구간이에요. 같은 시간의 정지 회복과 동일한 조건이 아니에요. 정확히 150초라는 값은 운영 채택이며, 모든 선수에게 필요한 회복 시간이 같다는 연구 결론이 아니에요.",
-    limitation: "원자료는 인터벌과 조깅 회복의 맥락을 제공하지만 정확히 5회·150초·현재 5000m 페이스인 이 조합이나 청소년별 훈련량을 직접 제시하지 않아요. 이 조합은 트레인오라클의 별도 채택이에요.",
+    limitation: "원자료는 인터벌 훈련과 조깅 회복을 설명하지만 정확히 5회·150초·현재 5000m 페이스인 이 조합이나 청소년별 훈련량을 직접 제시하지 않아요. 이 조합은 트레인오라클의 별도 채택이에요.",
     decisionPath: fiveKDecision, sourceRecordPath: fiveKDecision,
   },
 ]

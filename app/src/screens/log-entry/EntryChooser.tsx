@@ -15,7 +15,7 @@ interface EntryChooserProps {
 
 const ENTRY_OPTIONS = [
   { id: "quick-session", t: "빠르게 기록", d: "운동 결과와 몸 상태만", Icon: CheckCircle2 },
-  { id: "post-session", t: "훈련 후", d: "거리·시간·훈련 내용을 자세히", Icon: PencilLine },
+  { id: "post-session", t: "훈련 후", d: "거리·시간·훈련 내용을 모두 기록", Icon: PencilLine },
   { id: "evening", t: "회복 · 하루 마무리", d: "수면·기분·몸 상태", Icon: Moon },
   { id: "race", t: "경기 직전/직후", d: "경기 기록과 컨디션", Icon: Flag },
 ] as const

@@ -663,7 +663,7 @@ describe("plan beta user flow", () => {
     await userEvent.setup().click(firstChoice)
 
     expect(screen.getByRole("heading", { name: /9일 훈련 계획/u })).toBeVisible()
-    expect(screen.getByLabelText("9일 훈련 흐름")).toBeVisible()
+    expect(screen.getByLabelText("9일 훈련 일정")).toBeVisible()
     expect(screen.queryByText("ACTIVE · LOCAL BETA")).toBeNull()
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).not.toBeNull()
   })
