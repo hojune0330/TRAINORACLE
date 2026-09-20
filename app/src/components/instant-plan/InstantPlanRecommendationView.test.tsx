@@ -122,7 +122,9 @@ describe("InstantPlanRecommendationView", () => {
     if ("message" in actionState) expect(status).toHaveTextContent(actionState.message)
     expect(screen.queryByText(/시작됐어요|저장 완료/)).not.toBeInTheDocument()
     if (actionState.kind === "FAILED") {
-      fireEvent.click(screen.getByRole("button", { name: "저장 다시 시도" }))
+      const recovery = screen.getByRole("region", { name: "계획 저장 상태" })
+      expect(within(recovery).getByRole("alert")).toHaveTextContent(actionState.message)
+      fireEvent.click(within(recovery).getByRole("button", { name: "저장 다시 시도" }))
       expect(onRetry).toHaveBeenCalledTimes(1)
     } else {
       expect(screen.queryByRole("button", { name: "저장 다시 시도" })).not.toBeInTheDocument()

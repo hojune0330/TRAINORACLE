@@ -26,20 +26,38 @@ const today: InstantPlanToday = {
 }
 
 describe("InstantPlanTodayView", () => {
-  it("shows every supplied instruction and unit without a disclosure or extra view action", () => {
+  it("shows both session summaries first and expands only the selected session", () => {
     const { container } = render(<InstantPlanTodayView today={today} />)
     expect(screen.getByText(today.dateLabel)).toBeVisible()
     expect(screen.getByText(today.sourceLabel!)).toBeVisible()
-    for (const session of today.sessions) {
-      const region = screen.getByRole("region", { name: `${session.slotLabel} · ${session.title}` })
-      for (const step of session.steps) {
-        expect(within(region).getByText(step.label)).toBeVisible()
-        expect(within(region).getByText(step.instruction)).toBeVisible()
-      }
+    const picker = screen.getByRole("group", { name: "오늘 세션 선택" })
+    expect(within(picker).getAllByRole("button")).toHaveLength(2)
+    expect(within(picker).getByRole("button", { name: /오전.*준비 훈련/ })).toHaveAttribute("aria-pressed", "true")
+    expect(within(picker).getByRole("button", { name: /오후.*반복 훈련/ })).toHaveAttribute("aria-pressed", "false")
+
+    const morning = screen.getByRole("region", { name: "오전 · 준비 훈련" })
+    for (const step of today.sessions[0]!.steps) {
+      expect(within(morning).getByText(step.label)).toBeVisible()
+      expect(within(morning).getByText(step.instruction)).toBeVisible()
     }
+    expect(screen.queryByRole("region", { name: "오후 · 반복 훈련" })).not.toBeInTheDocument()
+    expect(screen.queryByText("각 반복 사이 90초 걷기")).not.toBeInTheDocument()
+
+    fireEvent.click(within(picker).getByRole("button", { name: /오후.*반복 훈련/ }))
+    const afternoon = screen.getByRole("region", { name: "오후 · 반복 훈련" })
+    expect(within(afternoon).getByText("각 반복 사이 90초 걷기")).toBeVisible()
+    expect(screen.queryByRole("region", { name: "오전 · 준비 훈련" })).not.toBeInTheDocument()
+    expect(within(picker).getByRole("button", { name: /오후.*반복 훈련/ })).toHaveAttribute("aria-pressed", "true")
     expect(container.querySelector("details")).toBeNull()
-    expect(screen.queryByRole("button", { name: "훈련 보기" })).not.toBeInTheDocument()
     expect(screen.queryByText("미수행")).not.toBeInTheDocument()
+  })
+
+  it("shows a single session directly without adding a selection step", () => {
+    render(<InstantPlanTodayView today={{ ...today, sessions: [today.sessions[0]!] }} />)
+    expect(screen.queryByRole("group", { name: "오늘 세션 선택" })).not.toBeInTheDocument()
+    const region = screen.getByRole("region", { name: "오전 · 준비 훈련" })
+    expect(within(region).getByText("준비 동작 8분")).toBeVisible()
+    expect(within(region).getByText("안내된 동작 12분")).toBeVisible()
   })
 
   it("records the specific slot only after an explicit user action", () => {
@@ -47,6 +65,7 @@ describe("InstantPlanTodayView", () => {
     const onChangeSchedule = vi.fn()
     render(<InstantPlanTodayView today={today} onRecordSession={onRecordSession} onChangeSchedule={onChangeSchedule} />)
     expect(onRecordSession).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole("button", { name: /오후.*반복 훈련/ }))
     fireEvent.click(screen.getByRole("button", { name: "오후 훈련 기록 남기기" }))
     expect(onRecordSession).toHaveBeenCalledExactlyOnceWith("pm")
     fireEvent.click(screen.getByRole("button", { name: "오늘은 어려워요" }))
@@ -59,8 +78,9 @@ describe("InstantPlanTodayView", () => {
       { ...today.sessions[0]!, recorded: true }, today.sessions[1]!,
     ] }} onRecordSession={onRecordSession} />)
     expect(screen.getByRole("status")).toHaveTextContent("일부 세션")
-    const morning = screen.getByRole("region", { name: "오전 · 준비 훈련" })
-    expect(within(morning).getByText("남긴 기록 있음")).toBeVisible()
+    const picker = screen.getByRole("group", { name: "오늘 세션 선택" })
+    expect(within(picker).getByRole("button", { name: /오전.*준비 훈련/ })).toHaveTextContent("남긴 기록 있음")
+    expect(screen.queryByRole("region", { name: "오전 · 준비 훈련" })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "오전 훈련 기록 남기기" })).not.toBeInTheDocument()
     expect(screen.getByText("각 반복 사이 90초 걷기")).toBeVisible()
     fireEvent.click(screen.getByRole("button", { name: "오후 훈련 기록 남기기" }))
@@ -73,7 +93,7 @@ describe("InstantPlanTodayView", () => {
     render(<InstantPlanTodayView today={{ ...today, state: "RECORDED", sessions: today.sessions.map(session => ({ ...session, recorded: true })) }}
       onRecordSession={vi.fn()} onContinue={onContinue} />)
     expect(screen.getByRole("status")).toHaveTextContent("오늘 남긴 기록과 다음 일정")
-    expect(screen.getAllByText("남긴 기록 있음")).toHaveLength(2)
+    expect(within(screen.getByRole("group", { name: "오늘 세션 선택" })).getAllByText("남긴 기록 있음")).toHaveLength(2)
     expect(screen.queryByText(/측정 완료|검증된 기록|오늘 훈련 완료/)).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /훈련 기록 남기기/ })).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole("button", { name: "다음 일정 확인" }))
@@ -83,6 +103,8 @@ describe("InstantPlanTodayView", () => {
   it("shows upcoming preparation before start without encouraging a workout now", () => {
     render(<InstantPlanTodayView today={{ ...today, state: "BEFORE_START" }} onRecordSession={vi.fn()} onChangeSchedule={vi.fn()} onContinue={vi.fn()} />)
     expect(screen.getByRole("status")).toHaveTextContent("시작일 전")
+    expect(screen.queryByText("각 반복 사이 90초 걷기")).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: /오후.*반복 훈련/ }))
     expect(screen.getByText("각 반복 사이 90초 걷기")).toBeVisible()
     expect(screen.queryByRole("button", { name: /훈련 기록 남기기|오늘은 어려워요/ })).not.toBeInTheDocument()
     expect(screen.getByRole("button", { name: "전체 일정 확인" })).toBeEnabled()
