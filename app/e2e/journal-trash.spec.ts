@@ -19,7 +19,7 @@ test("지운 일지를 그 자리에서 되돌릴 수 있다", async ({ page }) 
   await page.getByRole("button", { name: /^저장/u }).click()
 
   // 저장된 일지를 열어 삭제한다
-  const saved = page.getByRole("button", { name: /훈련 후 .*상세 열기/u }).first()
+  const saved = page.getByRole("button", { name: "오늘 기록 보기" })
   await expect(saved).toBeVisible()
   await saved.click()
   await page.keyboard.press("Escape")
@@ -92,6 +92,9 @@ test("휴지통 화면에서 나중에도 되돌릴 수 있다", async ({ page }
 
   await page.reload()
 
+  await page.getByRole("button", { name: "더보기" }).click()
+  await page.locator("summary").filter({ hasText: /^휴지통/u }).click()
+
   // Then — 휴지통이 보이고 남은 일수가 표시된다
   const trash = page.getByTestId("trash-bin")
   await expect(trash).toBeVisible()
@@ -103,7 +106,8 @@ test("휴지통 화면에서 나중에도 되돌릴 수 있다", async ({ page }
 
   // Then — 휴지통이 비고 일지가 돌아온다
   await expect(page.getByTestId("trash-bin")).toHaveCount(0)
-  await expect(page.getByRole("button", { name: /훈련 후 .*상세 열기/u }).first()).toBeVisible()
+  await page.getByRole("button", { name: "홈으로 돌아가기" }).click()
+  await expect(page.getByRole("button", { name: /2026년 7월 20일 기록 1개 보기/u })).toBeVisible()
 })
 
 test("완전히 지우기는 확인을 한 번 더 받는다", async ({ page }) => {
@@ -129,6 +133,8 @@ test("완전히 지우기는 확인을 한 번 더 받는다", async ({ page }) 
   }, TRASH_KEY)
   await page.reload()
 
+  await page.getByRole("button", { name: "더보기" }).click()
+  await page.locator("summary").filter({ hasText: /^휴지통/u }).click()
   await expect(page.getByTestId("trash-bin")).toBeVisible()
   await page.getByTestId("trash-purge").first().click()
 
@@ -172,6 +178,9 @@ test("30일이 지난 항목은 앱을 켤 때 사라진다", async ({ page }) =
   }, TRASH_KEY)
 
   await page.reload()
+
+  await page.getByRole("button", { name: "더보기" }).click()
+  await page.locator("summary").filter({ hasText: /^휴지통/u }).click()
 
   // 화면에 보이지 않고, 저장소에서도 실제로 비워진다
   await expect(page.getByTestId("trash-bin")).toHaveCount(0)

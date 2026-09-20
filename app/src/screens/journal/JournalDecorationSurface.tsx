@@ -44,7 +44,7 @@ import {
 import { loadEngagementSummary } from "../../domain/engagement"
 import { todayISO } from "../../domain/journal-store"
 import { withJosa } from "../../domain/korean-josa"
-import { JournalDecorationToolbar } from "./JournalDecorationToolbar"
+import { JournalDecorationLauncher, JournalDecorationToolbar } from "./JournalDecorationToolbar"
 import { JournalTextStickerSheet } from "./JournalTextStickerSheet"
 import { accountDecorationsEnabled, accountDecorationStatus, ACCOUNT_DECORATION_EVENT,
   hydrateAccountDecorations, persistAccountDecorations, purchaseAccountDecoration } from "../../domain/account/account-decoration-service"
@@ -167,6 +167,31 @@ function JournalDecorationSurfaceSession({
     if (pendingJournalDecorationAutoOpenDate() === date) clearJournalDecorationAutoOpen()
   }, [date])
   const visible = preview ?? canonical
+  React.useEffect(() => {
+    if (!open) return undefined
+    const workspace = workspaceRef.current
+    const parent = workspace?.parentElement
+    if (workspace === null || workspace === undefined || parent === null || parent === undefined) return undefined
+    const siblings = Array.from(parent.children).filter((element): element is HTMLElement => (
+      element instanceof HTMLElement && element !== workspace
+    ))
+    const previous = siblings.map((element) => ({
+      element,
+      inert: element.inert,
+      ariaHidden: element.getAttribute("aria-hidden"),
+    }))
+    for (const element of siblings) {
+      element.inert = true
+      element.setAttribute("aria-hidden", "true")
+    }
+    return () => {
+      for (const state of previous) {
+        state.element.inert = state.inert
+        if (state.ariaHidden === null) state.element.removeAttribute("aria-hidden")
+        else state.element.setAttribute("aria-hidden", state.ariaHidden)
+      }
+    }
+  }, [open])
   const owned = (itemId: DecorationId): boolean => canonical.ownedItemIds.includes(itemId)
   /* 재료 서랍은 카탈로그 전체를 보여 준다. 기록 없음·24개 상한은 항목을
    * 숨기지 않고 dim + 사유 안내로 표현해 사용자가 재료의 존재를 알게 한다. */
@@ -430,7 +455,11 @@ function JournalDecorationSurfaceSession({
     setSelectedIndex(null)
     setTextSheet(null)
     setNotice(null)
-    window.requestAnimationFrame(() => focusBeforeOpenRef.current?.focus())
+    window.requestAnimationFrame(() => {
+      const launcher = workspaceRef.current?.querySelector<HTMLButtonElement>('[aria-label="일지 꾸미기 열기"]')
+      const focusTarget = launcher ?? focusBeforeOpenRef.current
+      focusTarget?.focus()
+    })
   }
 
   /* 텍스트 스티커 입력 시트 오픈 (P5 U1): 24개 상한은 붙이기 전에 미리 안내한다. */
@@ -532,6 +561,16 @@ function JournalDecorationSurfaceSession({
     }
   }
 
+  const openEditor = (): void => {
+    if (!editable) {
+      showNotice("계정 꾸미기 상태를 먼저 확인해 주세요.", true)
+      return
+    }
+    focusBeforeOpenRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    setOpen(true)
+    setDrawerOpen(false)
+  }
+
   return (
     <div ref={workspaceRef} className={`journal-decoration-workspace${open ? " journal-decoration-workspace--open" : ""}`} role={open ? "dialog" : undefined} aria-label={open ? "이 일지 꾸미기" : undefined} aria-modal={open ? "true" : undefined}>
       {accountDecorationsEnabled() && <div role="status" className="account-storage-status">
@@ -548,6 +587,7 @@ function JournalDecorationSurfaceSession({
         hasEntries={hasEntries}
         items={items}
         open={open}
+        renderLauncher={false}
         drawerOpen={drawerOpen}
         activeItemIds={activeItemIds}
         availablePoints={availablePoints}
@@ -560,12 +600,7 @@ function JournalDecorationSurfaceSession({
         clipboardAvailable={clipboardAvailable}
         notice={notice?.text ?? ""}
         previewItemId={previewItemId}
-        onOpen={() => {
-          if (!editable) { showNotice("계정 꾸미기 상태를 먼저 확인해 주세요.", true); return }
-          focusBeforeOpenRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
-          setOpen(true)
-          setDrawerOpen(false)
-        }}
+        onOpen={openEditor}
         onDrawerOpen={() => setDrawerOpen(true)}
         onDrawerClose={() => {
           setDrawerOpen(false)
@@ -599,16 +634,6 @@ function JournalDecorationSurfaceSession({
         onPaste={pasteCopied}
         onOpenTextSticker={hasEntries ? openTextSheetForCreate : undefined}
       />
-      <ShellToastHost active={open} />
-      {textSheet !== null && (
-        <JournalTextStickerSheet
-          mode={textSheet.mode}
-          initialText={textSheet.mode === "EDIT" ? textSheet.text : ""}
-          initialInkId={textSheet.mode === "EDIT" ? textSheet.inkId : "TEXT_INK_NAVY"}
-          onConfirm={confirmTextSheet}
-          onClose={() => setTextSheet(null)}
-        />
-      )}
       <DecoratedJournalPageFrame
         date={date}
         state={visible}
@@ -625,6 +650,17 @@ function JournalDecorationSurfaceSession({
         onDuplicatePlacement={duplicatePlacement}
         onEditTextPlacement={openTextSheetForEdit}
       >{children}</DecoratedJournalPageFrame>
+      {!open && <JournalDecorationLauncher onOpen={openEditor} />}
+      <ShellToastHost active={open} />
+      {textSheet !== null && (
+        <JournalTextStickerSheet
+          mode={textSheet.mode}
+          initialText={textSheet.mode === "EDIT" ? textSheet.text : ""}
+          initialInkId={textSheet.mode === "EDIT" ? textSheet.inkId : "TEXT_INK_NAVY"}
+          onConfirm={confirmTextSheet}
+          onClose={() => setTextSheet(null)}
+        />
+      )}
     </div>
   )
 }

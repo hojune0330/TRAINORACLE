@@ -6,9 +6,7 @@ test.use({ serviceWorkers: "block" })
 test("shows the seven initial plan events from 800m through marathon", async ({ page }, testInfo) => {
   // Given: a new athlete has opened the plan flow.
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "바로 시작하기" })
-    .getByRole("button", { name: /^훈련 계획/u })
-    .click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
   const choices = page.getByRole("group", { name: "계획 종목 선택" })
   await expect(choices.getByRole("button")).toHaveCount(7)
   await expect(choices.getByRole("button", { name: /^800m\b/u })).toBeVisible()
@@ -27,9 +25,7 @@ test("shows the seven initial plan events from 800m through marathon", async ({ 
 test("creates a mobile marathon beta plan without inventing pace numbers", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 650 })
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "바로 시작하기" })
-    .getByRole("button", { name: /^훈련 계획/u })
-    .click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
   await page.getByRole("button", { name: /^마라톤/u }).click()
   await expect(page.getByRole("button", { name: /일반부/u })).toHaveCount(0)
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()

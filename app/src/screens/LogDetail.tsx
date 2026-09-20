@@ -1,10 +1,11 @@
 import React from "react"
+import { ChevronDown } from "lucide-react"
 import { accountJournalRecordsEnabled, deleteAccountJournalRecord, undoAccountJournalDeletion } from "../domain/account/account-journal-record-service"
 import { readAccountJournalPrivateEntry } from "../domain/account/account-journal-projection"
 import { activeLocalAccount } from "../domain/account/local-journal-ownership"
 import { canEditJournalEntry } from "../domain/journal-edit-policy"
 import { AccountJournalHistory } from "./account/AccountJournalHistory"
-import { IndexCard, MoodStrip, PainDot, SectionLb } from "../components/JournalPrimitives"
+import { IndexCard, MoodStrip, PainDot } from "../components/JournalPrimitives"
 import { JournalConfirmationDialog } from "../components/JournalConfirmationDialog"
 import { TermHelp } from "../components/TermHelp"
 import type { TermId } from "../domain/glossary"
@@ -64,6 +65,135 @@ function savedClock(iso: string): string {
   const d = new Date(iso)
   const p = (n: number) => String(n).padStart(2, "0")
   return `${p(d.getHours())}:${p(d.getMinutes())}`
+}
+
+function compactSummary(parts: readonly (string | null | undefined | false)[]): string {
+  return parts.filter((part): part is string => typeof part === "string" && part.length > 0).join(" · ") || "세부 내용 펼쳐보기"
+}
+
+function sessionSummary(entry: PostSessionEntry): string {
+  const shownRpe = journalRpeLabel(entry)
+  return compactSummary([
+    entry.distanceKm ? `${entry.distanceKm} km` : null,
+    entry.durationMin ? `${entry.durationMin}분` : null,
+    entry.avgPace ? `${entry.avgPace}/km` : null,
+    shownRpe === null ? null : `RPE ${shownRpe}`,
+  ])
+}
+
+function raceSummary(entry: RaceEntry): string {
+  return compactSummary([
+    entry.stage === "pre" ? "경기 전" : "경기 후",
+    entry.record || null,
+    entry.rank || null,
+    entry.result || null,
+  ])
+}
+
+function eveningSummary(entry: EveningEntry): string {
+  const mood = ["", "흐림", "무덤덤", "보통", "좋음", "최고"][entry.mood] ?? ""
+  const pain = Object.entries(entry.painParts ?? {}).reduce<{ part: string; level: number } | null>((highest, [part, level]) => (
+    level > (highest?.level ?? 0) ? { part, level } : highest
+  ), null)
+  return compactSummary([
+    entry.sleepH > 0 ? `수면 ${entry.sleepH}h` : null,
+    mood ? `기분 ${mood}` : null,
+    pain === null ? "통증 기록 없음" : `${pain.part} 통증 ${pain.level}/5`,
+  ])
+}
+
+function journalEntryViewKey(entry: JournalEntry, sourceIndex: number): string {
+  return `${entry.kind}:${entry.id}:${sourceIndex}`
+}
+
+function JournalEntryDisclosure({
+  panelId,
+  kindLabel,
+  title,
+  summary,
+  savedAt,
+  position,
+  open,
+  standalone = false,
+  imported = false,
+  attention,
+  onToggle,
+  children,
+}: {
+  readonly panelId: string
+  readonly kindLabel: string
+  readonly title: string
+  readonly summary: string
+  readonly savedAt: string
+  readonly position: number
+  readonly open: boolean
+  readonly standalone?: boolean
+  readonly imported?: boolean
+  readonly attention?: string
+  readonly onToggle: () => void
+  readonly children: React.ReactNode
+}) {
+  if (standalone) {
+    return (
+      <section
+        className="journal-entry-section"
+        data-open="true"
+        data-single="true"
+        aria-label={compactSummary([kindLabel, title, savedClock(savedAt), imported ? "가져온 기록" : null, attention])}
+      >
+        <header className="journal-entry-single-meta">
+          <strong>{kindLabel}</strong>
+          {imported && <span>가져옴</span>}
+          {attention !== undefined && <span data-attention="true">{attention}</span>}
+          <time dateTime={savedAt}>{savedClock(savedAt)}</time>
+        </header>
+        <div id={panelId} className="journal-entry-disclosure__body">
+          {children}
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <section className="journal-entry-section" data-open={open ? "true" : "false"}>
+      <button
+        type="button"
+        className="journal-entry-summary"
+        aria-expanded={open}
+        aria-controls={panelId}
+        aria-label={compactSummary([
+          `${position}번째 기록`,
+          kindLabel,
+          title,
+          summary,
+          savedClock(savedAt),
+          imported ? "가져온 기록" : null,
+          attention,
+          open ? "접기" : "펼쳐보기",
+        ])}
+        onClick={onToggle}
+      >
+        <span className="journal-entry-summary__kind">{kindLabel}</span>
+        <span className="journal-entry-summary__copy">
+          <strong>{title}</strong>
+          <small>{summary}</small>
+        </span>
+        <span className="journal-entry-summary__aside">
+          {(imported || attention !== undefined) && (
+            <span className="journal-entry-summary__flags">
+              {imported && <span>가져옴</span>}
+              {attention !== undefined && <span data-attention="true">{attention}</span>}
+            </span>
+          )}
+          <time dateTime={savedAt}>{savedClock(savedAt)}</time>
+          <ChevronDown aria-hidden="true" size={18} />
+        </span>
+      </button>
+      <div id={panelId} className="journal-entry-disclosure__body" hidden={!open}>
+        {children}
+      </div>
+    </section>
+  )
 }
 
 // ───────── A. Journal-page (실데이터) ─────────
@@ -128,20 +258,69 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
     setJustDeleted(null)
     setRev(v => v + 1)
   }
-  const sessions = entries.filter((e): e is PostSessionEntry => e.kind === "post-session")
-  const evenings = entries.filter((e): e is EveningEntry => e.kind === "evening")
-  const races = entries.filter((e): e is RaceEntry => e.kind === "race")
+  const orderedEntries = React.useMemo(() => entries
+    .map((entry, sourceIndex) => ({ entry, sourceIndex }))
+    .sort((left, right) => {
+      const leftTime = Date.parse(left.entry.savedAt)
+      const rightTime = Date.parse(right.entry.savedAt)
+      if (Number.isNaN(leftTime) || Number.isNaN(rightTime) || leftTime === rightTime) {
+        return left.sourceIndex - right.sourceIndex
+      }
+      return leftTime - rightTime
+    }), [entries])
+  const entryKeys = orderedEntries.map(({ entry, sourceIndex }) => journalEntryViewKey(entry, sourceIndex))
+  const entrySignature = entryKeys.join("|")
+  const [expandedEntryKeys, setExpandedEntryKeys] = React.useState<ReadonlySet<string>>(
+    () => new Set(entryKeys.length <= 1 ? entryKeys : []),
+  )
+  React.useEffect(() => {
+    setExpandedEntryKeys(new Set(entryKeys.length <= 1 ? entryKeys : []))
+  // entrySignature intentionally represents identity/order, not edited field values.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date, entrySignature])
+  const allEntriesExpanded = entryKeys.length > 0 && entryKeys.every((key) => expandedEntryKeys.has(key))
+  const toggleEntry = (key: string) => setExpandedEntryKeys((current) => {
+    const next = new Set(current)
+    if (next.has(key)) next.delete(key)
+    else next.add(key)
+    return next
+  })
+  const toggleAllEntries = () => setExpandedEntryKeys(allEntriesExpanded ? new Set() : new Set(entryKeys))
+  const entryCounts = entries.reduce((counts, entry) => ({
+    ...counts,
+    [entry.kind]: counts[entry.kind] + 1,
+  }), { "post-session": 0, race: 0, evening: 0 })
+  const countSummary = compactSummary([
+    entryCounts["post-session"] > 0 ? `훈련 ${entryCounts["post-session"]}` : null,
+    entryCounts.race > 0 ? `경기 ${entryCounts.race}` : null,
+    entryCounts.evening > 0 ? `하루 마무리 ${entryCounts.evening}` : null,
+  ])
 
   return (
     <div className="paper-grid journal-detail-page">
-      <TopBar2 onBack={onBack}>일지</TopBar2>
-      {readerControls}
+      {readerControls === undefined ? <TopBar2 onBack={onBack}>일지</TopBar2> : readerControls}
       <JournalDecorationSurface key={date} date={date} hasEntries={entries.length > 0} pageTopRef={pageTopRef}>
 
       <div className="journal-detail-page__date">
         <IndexCard date={cardDate(date)} dow={dowOf(date)} season={seasonOf(date)} />
       </div>
-      <JournalDetailActions date={date} entries={actionEntries} onAddEntry={onAddEntry} onEditEntry={onEditEntry ? edit : undefined} />
+
+      {entries.length > 0 && (
+        <div className="journal-day-overview" aria-label={`${countSummary} 기록`}>
+          <div>
+            <span>오늘의 기록</span>
+            <strong>{entries.length}개</strong>
+            <small>{countSummary}</small>
+          </div>
+          {entries.length > 1 && (
+            <button
+              type="button"
+              aria-pressed={allEntriesExpanded}
+              onClick={toggleAllEntries}
+            >{allEntriesExpanded ? "간단히 보기" : "모두 펼쳐보기"}</button>
+          )}
+        </div>
+      )}
 
       {justDeleted && (
         <div data-testid="delete-undo" style={{
@@ -174,7 +353,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
       )}
 
       {entries.length === 0 && (
-        <div style={{ padding: "40px 20px" }}>
+        <div className="journal-empty-state">
           <div className="hand" style={{ fontSize: 22, color: "var(--pencil)", lineHeight: 1.35 }}>
             이 날의 일지는 아직 비어 있어요.
           </div>
@@ -182,99 +361,134 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
             오늘 일지는 홈 → 일지 쓰기에서 1분이면 남길 수 있어요.<br />
             어떤 모습으로 쌓이는지 궁금하면 가이드 탭의 예시 일지를 봐 주세요.
           </div>
+          {onAddEntry !== undefined && (
+            <button type="button" className="journal-empty-state__add" onClick={() => onAddEntry(date)}>
+              첫 일지 쓰기
+            </button>
+          )}
         </div>
       )}
 
-      {/* 훈련 세션 (실데이터) */}
-      {sessions.map((s, index) => {
-        const meta = s.system === ""
-          ? { c: "LOG", n: "빠른 기록", cls: "rest", term: null }
-          : SYSTEM_META[s.system] ?? { c: "??", n: s.system, cls: "rest", term: null }
-        const shownRpe = journalRpeLabel(s)
-        return (
-          <section key={`post-session-${s.id}-${index}`} className="journal-entry-section">
-            <SectionLb action={savedClock(s.savedAt)}>— TRAINING SESSION</SectionLb>
-            <div className="journal-entry-card journal-entry-card--session">
-              <div className="journal-entry-card__meta">
-                <span className={`etag ${meta.cls}`}><span className="d"></span><span className="c">{meta.c}</span><span className="n">{meta.n}</span></span>
-                {meta.term !== null && <TermHelp term={meta.term} />}
-                <SyncChip />
-                {hasImportedField(s.fieldProvenance) && <ImportedChip />}
-              </div>
-              <div className="journal-entry-card__title">
-                {s.title || "훈련 기록"}
-              </div>
-              <div className="journal-entry-metrics">
-                {([
-                  ["거리", s.distanceKm || "—", "km"],
-                  ["시간", s.durationMin || "—", "min"],
-                  ["평균 페이스", s.avgPace || "—", "/km"],
-                  ["RPE", shownRpe ?? "—", shownRpe === null ? "" : "/10"],
-                ] as const).map(([l, v, u], i, a) => (
-                  <div key={i} className="journal-entry-metric" data-last={i === a.length - 1 ? "true" : undefined}>
-                    <div className="journal-entry-metric__label">{l}{l === "RPE" && <TermHelp term="rpe" />}</div>
-                    <div className="journal-entry-metric__value">
-                      <span className="journal-entry-metric__number">{v}</span>
-                      <span className="journal-entry-metric__unit">{u}</span>
+      {orderedEntries.map(({ entry, sourceIndex }, displayIndex) => {
+        const viewKey = journalEntryViewKey(entry, sourceIndex)
+        const panelId = `journal-entry-panel-${displayIndex}`
+        const open = expandedEntryKeys.has(viewKey)
+
+        if (entry.kind === "post-session") {
+          const meta = entry.system === ""
+            ? { c: "LOG", n: "빠른 기록", cls: "rest", term: null }
+            : SYSTEM_META[entry.system] ?? { c: "??", n: entry.system, cls: "rest", term: null }
+          const shownRpe = journalRpeLabel(entry)
+          const imported = hasImportedField(entry.fieldProvenance)
+          return (
+            <JournalEntryDisclosure
+              key={viewKey}
+              panelId={panelId}
+              kindLabel="훈련"
+              title={entry.title || "훈련 기록"}
+              summary={sessionSummary(entry)}
+              savedAt={entry.savedAt}
+              position={displayIndex + 1}
+              open={open}
+              standalone={entries.length === 1}
+              imported={imported}
+              onToggle={() => toggleEntry(viewKey)}
+            >
+              <div className="journal-entry-card journal-entry-card--session">
+                <div className="journal-entry-card__meta">
+                  <span className={`etag ${meta.cls}`}><span className="d"></span><span className="c">{meta.c}</span><span className="n">{meta.n}</span></span>
+                  {meta.term !== null && <TermHelp term={meta.term} />}
+                  <SyncChip />
+                  {imported && <ImportedChip />}
+                </div>
+                <div className="journal-entry-card__title">{entry.title || "훈련 기록"}</div>
+                <div className="journal-entry-metrics">
+                  {([
+                    ["거리", entry.distanceKm || "—", "km"],
+                    ["시간", entry.durationMin || "—", "min"],
+                    ["평균 페이스", entry.avgPace || "—", "/km"],
+                    ["RPE", shownRpe ?? "—", shownRpe === null ? "" : "/10"],
+                  ] as const).map(([label, value, unit], metricIndex, metrics) => (
+                    <div key={label} className="journal-entry-metric" data-last={metricIndex === metrics.length - 1 ? "true" : undefined}>
+                      <div className="journal-entry-metric__label">{label}{label === "RPE" && <TermHelp term="rpe" />}</div>
+                      <div className="journal-entry-metric__value">
+                        <span className="journal-entry-metric__number">{value}</span>
+                        <span className="journal-entry-metric__unit">{unit}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                <SavedMemo entry={entry} text={entry.memo} fontSize={19} />
+                <JournalOriginalPlan entry={entry} />
+                <EntryDeleteRow entryId={entry.id} onDelete={() => setPendingDelete({ id: entry.id, label: "훈련" })} />
+                <AccountJournalHistory entryId={entry.id} />
               </div>
-              <SavedMemo entry={s} text={s.memo} fontSize={19} />
-              <JournalOriginalPlan entry={s} />
-              <EntryDeleteRow entryId={s.id} onDelete={() => setPendingDelete({ id: s.id, label: "훈련" })} />
-              <AccountJournalHistory entryId={s.id} />
-            </div>
-          </section>
-        )
-      })}
+            </JournalEntryDisclosure>
+          )
+        }
 
-      {/* 경기 (실데이터) */}
-      {races.map((r, index) => (
-        <section key={`race-${r.id}-${index}`} className="journal-entry-section">
-          <SectionLb action={savedClock(r.savedAt)}>— RACE · {r.stage === "pre" ? "직전" : "직후"}</SectionLb>
-          <div className="journal-entry-card journal-entry-card--race">
-            <div className="journal-entry-card__meta journal-entry-card__meta--apart">
-              <span className="journal-entry-card__eyebrow">RACE DAY</span>
-              <SyncChip />
-            </div>
-            {r.record && (
-              <div className="journal-entry-card__record">{r.record}</div>
-            )}
-            {(r.rank || r.result) && (
-              <div className="journal-entry-card__result">
-                {[r.rank, r.result].filter(Boolean).join(" · ")}
+        if (entry.kind === "race") {
+          return (
+            <JournalEntryDisclosure
+              key={viewKey}
+              panelId={panelId}
+              kindLabel="경기"
+              title={entry.record || entry.result || "경기 기록"}
+              summary={raceSummary(entry)}
+              savedAt={entry.savedAt}
+              position={displayIndex + 1}
+              open={open}
+              standalone={entries.length === 1}
+              onToggle={() => toggleEntry(viewKey)}
+            >
+              <div className="journal-entry-card journal-entry-card--race">
+                <div className="journal-entry-card__meta journal-entry-card__meta--apart">
+                  <span className="journal-entry-card__eyebrow">RACE DAY · {entry.stage === "pre" ? "직전" : "직후"}</span>
+                  <SyncChip />
+                </div>
+                {entry.record && <div className="journal-entry-card__record">{entry.record}</div>}
+                {(entry.rank || entry.result) && (
+                  <div className="journal-entry-card__result">{[entry.rank, entry.result].filter(Boolean).join(" · ")}</div>
+                )}
+                <RaceSelfCheckSummary entry={entry} />
+                <SavedMemo entry={entry} text={entry.memo} fontSize={18} />
+                <EntryDeleteRow entryId={entry.id} onDelete={() => setPendingDelete({ id: entry.id, label: "경기" })} />
+                <AccountJournalHistory entryId={entry.id} />
               </div>
-            )}
-            <RaceSelfCheckSummary entry={r} />
-            <SavedMemo entry={r} text={r.memo} fontSize={18} />
-            <EntryDeleteRow entryId={r.id} onDelete={() => setPendingDelete({ id: r.id, label: "경기" })} />
-            <AccountJournalHistory entryId={r.id} />
-          </div>
-        </section>
-      ))}
+            </JournalEntryDisclosure>
+          )
+        }
 
-      {/* 하루 마무리 (실데이터) */}
-      {evenings.map((ev, index) => {
-        const pains = Object.entries(ev.painParts ?? {}).filter(([, lv]) => lv > 0)
-        const needsReview = painLevelsRequireReview(ev.painParts ?? {})
+        const pains = Object.entries(entry.painParts ?? {}).filter(([, level]) => level > 0)
+        const needsReview = painLevelsRequireReview(entry.painParts ?? {})
         return (
-          <section key={`evening-${ev.id}-${index}`} className="journal-entry-section">
-            <SectionLb action={savedClock(ev.savedAt)}>— EVENING CHECK-IN</SectionLb>
+          <JournalEntryDisclosure
+            key={viewKey}
+            panelId={panelId}
+            kindLabel="하루 마무리"
+            title={entry.note.trim().slice(0, 40) || "몸과 마음 기록"}
+            summary={eveningSummary(entry)}
+            savedAt={entry.savedAt}
+            position={displayIndex + 1}
+            open={open}
+            standalone={entries.length === 1}
+            attention={needsReview ? "통증 확인" : undefined}
+            onToggle={() => toggleEntry(viewKey)}
+          >
             <div className="journal-entry-card journal-entry-card--checkin">
-              <CheckinRow lb="수면" v={ev.sleepH > 0 ? `${ev.sleepH} h · ${["", "나쁨", "부족", "보통", "좋음", "최고"][ev.sleepQuality] ?? "—"}` : "미기록"} />
-              {ev.weightKg && <CheckinRow lb="체중" v={`${ev.weightKg} kg`} />}
-              {ev.restingHr && <CheckinRow lb="안정시 HR" v={`${ev.restingHr} bpm`} />}
-              {pains.map(([part, lv]) => (
-                <CheckinRow key={part} lb="통증" v={`${part} ${lv}/5`} right={<PainDot level={lv} size={10} />} />
+              <CheckinRow lb="수면" v={entry.sleepH > 0 ? `${entry.sleepH} h · ${["", "나쁨", "부족", "보통", "좋음", "최고"][entry.sleepQuality] ?? "—"}` : "미기록"} />
+              {entry.weightKg && <CheckinRow lb="체중" v={`${entry.weightKg} kg`} />}
+              {entry.restingHr && <CheckinRow lb="안정시 HR" v={`${entry.restingHr} bpm`} />}
+              {pains.map(([part, level]) => (
+                <CheckinRow key={part} lb="통증" v={`${part} ${level}/5`} right={<PainDot level={level} size={10} />} />
               ))}
-              <CheckinRow lb="감정" v={ev.mood > 0 ? "" : "미기록"} right={ev.mood > 0 ? <MoodStrip level={ev.mood} showLabel /> : undefined} last={!ev.note} />
-              <div style={{ padding: ev.note ? "0 14px" : 0 }}>
-                <SavedMemo entry={ev} text={ev.note} fontSize={17} />
+              <CheckinRow lb="감정" v={entry.mood > 0 ? "" : "미기록"} right={entry.mood > 0 ? <MoodStrip level={entry.mood} showLabel /> : undefined} last={!entry.note} />
+              <div style={{ padding: entry.note ? "0 14px" : 0 }}>
+                <SavedMemo entry={entry} text={entry.note} fontSize={17} />
               </div>
               <div style={{ padding: "0 14px" }}>
-                <EntryDeleteRow entryId={ev.id} onDelete={() => setPendingDelete({ id: ev.id, label: "하루 마무리" })} />
-                <AccountJournalHistory entryId={ev.id} />
+                <EntryDeleteRow entryId={entry.id} onDelete={() => setPendingDelete({ id: entry.id, label: "하루 마무리" })} />
+                <AccountJournalHistory entryId={entry.id} />
               </div>
             </div>
             {needsReview && (
@@ -287,14 +501,23 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
                 </div>
               </div>
             )}
-          </section>
+          </JournalEntryDisclosure>
         )
       })}
 
       {entries.length > 0 && (
-        <div className="journal-detail-page__storage-note">
-          이 페이지는 이 기기에만 저장돼 있어요. 온라인 보관·기기 이동은 계정 연동 후에 할 수 있어요.
-        </div>
+        <>
+          <div className="journal-detail-page__storage-note">
+            이 페이지는 이 기기에만 저장돼 있어요. 온라인 보관·기기 이동은 계정 연동 후에 할 수 있어요.
+          </div>
+          <div className="journal-day-end" data-testid="journal-day-end" aria-hidden="true"><span>오늘 기록 끝</span></div>
+          <JournalDetailActions
+            date={date}
+            entries={actionEntries}
+            onAddEntry={onAddEntry}
+            onEditEntry={onEditEntry ? edit : undefined}
+          />
+        </>
       )}
 
       {pendingDelete && (

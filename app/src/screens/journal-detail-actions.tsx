@@ -1,4 +1,5 @@
-import { PenLine, Plus } from "lucide-react"
+import { ChevronDown, PenLine, Plus, Settings2 } from "lucide-react"
+import React from "react"
 import type { JournalEntry } from "../domain/journal-store"
 import { canEditJournalEntry } from "../domain/journal-edit-policy"
 
@@ -61,30 +62,54 @@ export function JournalDetailActions({
   onAddEntry,
   onEditEntry,
 }: JournalDetailActionsProps) {
+  const [open, setOpen] = React.useState(false)
+  const bodyId = React.useId()
   const editableEntries = entries.filter((entry) => canEditJournalEntry(entry) && !hasDuplicateId(entries, entry.id))
   if (onAddEntry === undefined && (onEditEntry === undefined || editableEntries.length === 0)) return null
 
-  // 시각 위계: 날짜 카드(IndexCard)가 이 페이지의 유일한 굵은 틀이다. 행동 버튼은
-  // 문구점 라벨 스티커처럼 가볍게 — 얇은 선(--line), 아이콘 + 본문 활자, 한 줄에 나란히.
+  const managementSummary = [
+    onAddEntry === undefined ? null : "새 기록 추가",
+    editableEntries.length > 0 ? `수정 ${editableEntries.length}개` : null,
+  ].filter((label): label is string => label !== null).join(" · ")
+
   return (
-    <div className="journal-detail-actions">
-      {onAddEntry !== undefined && (
-        <button
-          type="button"
-          className="journal-detail-actions__button journal-detail-actions__button--add"
-          data-testid="journal-add-entry"
-          onClick={() => onAddEntry(date)}
-        ><Plus aria-hidden="true" size={15} />이 날짜에 일지 더 쓰기</button>
-      )}
-      {onEditEntry !== undefined && editableEntries.map((entry) => (
-        <button
-          key={entry.id}
-          type="button"
-          className="journal-detail-actions__button"
-          data-testid={`journal-edit-${entry.id}`}
-          onClick={() => onEditEntry(entry)}
-        ><PenLine aria-hidden="true" size={15} />{editLabel(entry, editableEntries)}</button>
-      ))}
-    </div>
+    <section className="journal-detail-actions" data-open={open ? "true" : "false"}>
+      <button
+        type="button"
+        className="journal-detail-actions__summary"
+        data-testid="journal-manage-toggle"
+        aria-expanded={open}
+        aria-controls={bodyId}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <span className="journal-detail-actions__summary-content">
+          <span className="journal-detail-actions__title">
+            <Settings2 aria-hidden="true" size={16} />
+            이 날의 기록 관리
+          </span>
+          <small>{managementSummary}</small>
+          <ChevronDown aria-hidden="true" size={18} />
+        </span>
+      </button>
+      <div id={bodyId} className="journal-detail-actions__body" hidden={!open}>
+        {onAddEntry !== undefined && (
+          <button
+            type="button"
+            className="journal-detail-actions__button journal-detail-actions__button--add"
+            data-testid="journal-add-entry"
+            onClick={() => onAddEntry(date)}
+          ><Plus aria-hidden="true" size={15} />이 날짜에 일지 더 쓰기</button>
+        )}
+        {onEditEntry !== undefined && editableEntries.map((entry) => (
+          <button
+            key={entry.id}
+            type="button"
+            className="journal-detail-actions__button"
+            data-testid={`journal-edit-${entry.id}`}
+            onClick={() => onEditEntry(entry)}
+          ><PenLine aria-hidden="true" size={15} />{editLabel(entry, editableEntries)}</button>
+        ))}
+      </div>
+    </section>
   )
 }

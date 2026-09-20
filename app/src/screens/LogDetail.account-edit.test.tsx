@@ -46,6 +46,7 @@ it("offers edit for an acknowledged current-account entry without changing the A
   seed(session)
   const edit = vi.fn()
   render(<LogDetail date={session.date} onEditEntry={edit} />)
+  fireEvent.click(screen.getByTestId("journal-manage-toggle"))
   fireEvent.click(screen.getByTestId(`journal-edit-${session.id}`))
   expect(edit).toHaveBeenCalledExactlyOnceWith(session)
   expect(readAccountJournalPrivateEntry(session.id)?.syncState).toBe("synced")
@@ -57,6 +58,7 @@ it("passes the current-account private body to its editor without mutating the a
   seed(privateEntry)
   const edit = vi.fn()
   render(<LogDetail date={session.date} onEditEntry={edit} />)
+  fireEvent.click(screen.getByTestId("journal-manage-toggle"))
   fireEvent.click(screen.getByTestId(`journal-edit-${session.id}`))
   expect(edit).toHaveBeenCalledExactlyOnceWith(privateEntry)
   expect(readAccountJournalPrivateEntry(session.id)).toEqual(privateEntry)
@@ -66,6 +68,7 @@ it("rechecks account ownership at click time rather than trusting a previously r
   seed(session)
   const edit = vi.fn()
   render(<LogDetail date={session.date} onEditEntry={edit} />)
+  fireEvent.click(screen.getByTestId("journal-manage-toggle"))
   const button = screen.getByTestId(`journal-edit-${session.id}`)
   act(() => setActiveLocalAccount("22222222-2222-4222-8222-222222222222"))
   fireEvent.click(button)
@@ -105,6 +108,7 @@ it.each(["quick-session", "post-session", "evening", "race"] as const)(
         : <LogDetail date={session.date} onEditEntry={setEditing} />
     }
     render(<Flow />)
+    fireEvent.click(screen.getByTestId("journal-manage-toggle"))
     fireEvent.click(screen.getByTestId(`journal-edit-${session.id}`))
     fireEvent.click(screen.getByRole("button", { name: form === "quick-session" ? "오늘은 쉬었어요" : /^수정 저장/ }))
     await waitFor(() => expect(mocks.persist).toHaveBeenCalledOnce())

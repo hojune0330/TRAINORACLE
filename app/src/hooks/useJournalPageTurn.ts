@@ -56,15 +56,23 @@ export function useJournalPageTurn({
   }, [])
 
   const onTouchStart = React.useCallback((event: React.TouchEvent<HTMLElement>) => {
+    if (event.touches.length !== 1) {
+      resetTouch()
+      return
+    }
     const touch = event.changedTouches[0]
     touchOrigin.current = touch === undefined ? null : {
       x: touch.clientX,
       y: touch.clientY,
       blocked: isJournalNavigationBlockedTarget(event.target),
     }
-  }, [])
+  }, [resetTouch])
 
   const onTouchMove = React.useCallback((event: React.TouchEvent<HTMLElement>) => {
+    if (event.touches.length !== 1) {
+      resetTouch()
+      return
+    }
     const origin = touchOrigin.current
     const touch = event.touches[0] ?? event.changedTouches[0]
     if (origin === null || touch === undefined || origin.blocked) return
@@ -77,9 +85,13 @@ export function useJournalPageTurn({
     const actionAvailable = deltaX > 0 ? onPrevious !== undefined : onNext !== undefined
     const limit = actionAvailable ? MAX_DRAG_OFFSET_PX : BOUNDARY_DRAG_OFFSET_PX
     setDragOffset(Math.sign(deltaX) * Math.min(limit, Math.abs(deltaX) * 0.16))
-  }, [onNext, onPrevious])
+  }, [onNext, onPrevious, resetTouch])
 
   const onTouchEnd = React.useCallback((event: React.TouchEvent<HTMLElement>) => {
+    if (event.touches.length > 0) {
+      resetTouch()
+      return
+    }
     const origin = touchOrigin.current
     const touch = event.changedTouches[0]
     touchOrigin.current = null
@@ -97,7 +109,7 @@ export function useJournalPageTurn({
       || Math.abs(deltaX) <= Math.abs(deltaY) * HORIZONTAL_INTENT_RATIO
     ) return
     finishTurn(deltaX > 0 ? "previous" : "next")
-  }, [finishTurn])
+  }, [finishTurn, resetTouch])
 
   return {
     direction,

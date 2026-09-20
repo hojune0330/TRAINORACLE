@@ -5,8 +5,8 @@ test.use({ serviceWorkers: "block" })
 const DATE = "2026-07-20"
 const ENTRY_ID = "past-revisit"
 
-async function expectJournalContentAtReadingPosition(page: import("@playwright/test").Page) {
-  await expect.poll(() => page.getByTestId("decorated-journal-content").evaluate((element) => {
+async function expectJournalReaderAtTop(page: import("@playwright/test").Page) {
+  await expect.poll(() => page.locator(".journal-day-reader").evaluate((element) => {
     const scrollRegion = element.closest<HTMLElement>(".app-scroll-region")
     if (scrollRegion === null) return false
 
@@ -14,11 +14,7 @@ async function expectJournalContentAtReadingPosition(page: import("@playwright/t
     const regionRect = scrollRegion.getBoundingClientRect()
     const scrollMargin = Number.parseFloat(window.getComputedStyle(element).scrollMarginTop) || 0
     const aligned = Math.abs(targetRect.top - regionRect.top - scrollMargin) <= 4
-    const cannotScrollFurther = scrollRegion.scrollTop >= scrollRegion.scrollHeight - scrollRegion.clientHeight - 2
-    const readableWithoutMoreScrolling = targetRect.top >= regionRect.top
-      && targetRect.top <= window.innerHeight * 0.35
-
-    return aligned || (cannotScrollFurther && readableWithoutMoreScrolling)
+    return aligned
   })).toBe(true)
 }
 
@@ -42,7 +38,7 @@ test("revisits a past journal without duplicating it and adds a same-date check-
     }]))
   }, { date: DATE, entryId: ENTRY_ID })
   await page.reload()
-  const detailButton = page.getByRole("button", { name: /Past revisit session.*상세 열기/u })
+  const detailButton = page.getByRole("button", { name: /2026년 7월 20일 기록 1개 보기/u })
   await expect(detailButton).toBeVisible()
   await page.locator(".app-scroll-region").evaluate((element) => {
     element.scrollTop = 160
@@ -52,9 +48,10 @@ test("revisits a past journal without duplicating it and adds a same-date check-
   await detailButton.click()
 
   // Then
-  await expectJournalContentAtReadingPosition(page)
+  await expectJournalReaderAtTop(page)
 
   // When
+  await page.getByTestId("journal-manage-toggle").click()
   await page.getByTestId(`journal-edit-${ENTRY_ID}`).click()
 
   // Then
@@ -77,6 +74,7 @@ test("revisits a past journal without duplicating it and adds a same-date check-
   expect(afterEdit[0]).toMatchObject({ distanceKm: "6" })
 
   // When
+  await page.getByTestId("journal-manage-toggle").click()
   await page.getByTestId("journal-add-entry").click()
   await page.getByTestId("entry-choice-evening").click()
   await page.getByRole("button", { name: /^저장/u }).click()
@@ -89,7 +87,8 @@ test("revisits a past journal without duplicating it and adds a same-date check-
     return parsed.filter((entry) => typeof entry === "object" && entry !== null && "date" in entry && entry.date === date)
   }, DATE)
   expect(sameDateEntries).toHaveLength(2)
-  await expect(page.getByText("Past revisit session")).toBeVisible()
+  await expect(page.getByRole("button", { name: /훈련 · Past revisit session.+펼쳐보기/u })).toBeVisible()
+  await page.getByTestId("journal-manage-toggle").click()
   await expect(page.getByRole("button", { name: "훈련 기록 수정" })).toBeVisible()
   await expect(page.getByRole("button", { name: "하루 마무리 수정" })).toBeVisible()
 })
@@ -116,7 +115,7 @@ test("swipes between real diary dates and returns the selected page to its conte
     ]))
   })
   await page.goto("/?app=1")
-  await page.getByRole("button", { name: /스와이프 현재 일지.*상세 열기/u }).click()
+  await page.getByRole("button", { name: /2026년 7월 22일 기록 1개 보기/u }).click()
   await expect(page.getByText("스와이프 현재 일지")).toBeVisible()
 
   await page.locator(".journal-day-reader").evaluate((element) => {
@@ -130,7 +129,7 @@ test("swipes between real diary dates and returns the selected page to its conte
 
   await expect(page.getByText("스와이프 이전 일지")).toBeVisible()
   await expect(page.getByText("1 / 2")).toBeVisible()
-  await expectJournalContentAtReadingPosition(page)
+  await expectJournalReaderAtTop(page)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 })
 

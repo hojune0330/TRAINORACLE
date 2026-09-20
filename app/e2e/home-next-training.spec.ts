@@ -11,7 +11,7 @@ async function answerPlanQuestions(page: Page): Promise<void> {
 
 test("shows a saved upcoming training on home and opens its existing plan", async ({ page }) => {
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "바로 시작하기" }).getByRole("button", { name: /^훈련 계획/u }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
   await answerPlanQuestions(page)
   await page.getByLabel("계획 시작 날짜").fill("2099-01-10")
   await page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u }).first().click()

@@ -1,0 +1,43 @@
+.home-hub { color:var(--ink); max-width:680px; margin:0 auto; padding:20px 20px 36px; font-family:var(--sans); word-break:keep-all; }
+.home-hub button { font:inherit; cursor:pointer; }
+.home-hub__header { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 16px; min-height:44px; }
+.home-hub__brand { font-size:.78rem; font-weight:800; letter-spacing:.14em; }
+.home-hub__header-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-left:auto; }
+.home-hub__more { display:inline-flex; align-items:center; gap:4px; min-height:44px; padding:8px 0 8px 8px; border:0; background:none; color:var(--ink); font-size:.86rem; }
+.home-hub__intro { margin:28px 0 24px; }
+.home-hub__eyebrow, .home-hub__section-label { margin:0; color:var(--ink-3); font-size:.84rem; font-weight:700; }
+.home-hub h1 { margin:4px 0 0; font-size:clamp(1.6rem, 6vw, 2.15rem); line-height:1.25; letter-spacing:-.04em; }
+.home-hub h2 { margin:0; font-size:1rem; }
+.home-hub__today, .home-hub__next, .home-hub__summary { margin-top:24px; }
+.home-hub__today, .home-hub__next { padding:16px 0; border-block:1px solid var(--line); }
+.home-hub__today p { margin:8px 0 16px; line-height:1.6; }
+.home-hub__primary { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; min-height:50px; padding:12px 16px; border:1px solid var(--brand); border-radius:var(--r-md); background:var(--brand); color:var(--bg); font-weight:750; }
+.home-hub__text-action { display:inline-flex; align-items:center; gap:4px; min-height:44px; max-width:100%; padding:8px 0; border:0; background:none; color:var(--brand); font-weight:700; overflow-wrap:break-word; }
+.home-hub__today-actions { display:flex; flex-wrap:wrap; gap:4px 16px; }
+.home-hub__next-card, .home-hub__summary-row { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-height:64px; padding:12px 0; border:0; border-bottom:1px solid var(--line); background:none; color:var(--ink); text-align:left; }
+.home-hub__next-card > span, .home-hub__summary-row > span { min-width:0; display:flex; flex:1 1 auto; flex-direction:column; gap:4px; }
+.home-hub__next-card strong, .home-hub__summary-row strong { font-size:1rem; }
+.home-hub__next-card small, .home-hub__summary-row small, .home-hub__status small { color:var(--ink-2); font-size:.85rem; line-height:1.45; overflow-wrap:break-word; }
+.home-hub__next-card small { display:flex; flex-wrap:wrap; gap:4px 8px; }
+.home-hub__status { display:flex; gap:8px; align-items:flex-start; }
+.home-hub__status svg { flex:0 0 auto; color:var(--brand); margin-top:2px; }
+.home-hub__status span { display:flex; flex-direction:column; gap:4px; }
+.home-hub__briefing { color:var(--ink-2); font-size:.88rem; }
+.home-hub__summary h2 { margin-bottom:4px; }
+.home-hub__section-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:0 0 4px; }
+.home-hub__section-heading h2 { margin:0; }
+.home-hub__section-heading button { min-height:44px; padding:8px 0; border:0; background:none; color:var(--brand); font-weight:700; }
+.home-hub__recent { margin-top:12px; }
+.home-hub__recent .home-hub__summary-row { min-height:72px; }
+.home-hub__summary-copy { min-width:0; display:flex; flex:1 1 auto; flex-direction:column; gap:4px; }
+.home-hub__summary-copy span { color:var(--ink-2); line-height:1.45; }
+.home-hub__notices { display:grid; gap:8px; margin-top:16px; }
+.home-hub__notice { display:block; padding:12px 0; border-block:1px solid var(--line); }
+.home-hub__notice p { margin:0; line-height:1.5; overflow-wrap:break-word; }
+.home-hub__notice strong { display:block; margin-bottom:4px; }
+.home-hub__notice button { min-height:44px; max-width:100%; margin-top:4px; padding:8px 0; border:0; background:none; color:var(--brand); font-weight:700; overflow-wrap:break-word; }
+.home-hub__explore { display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:20px; }
+.home-hub__explore button { display:inline-flex; align-items:center; gap:4px; min-height:44px; max-width:100%; padding:8px 0; border:0; background:none; color:var(--brand); font-weight:700; overflow-wrap:break-word; }
+.home-hub button:focus-visible { outline:3px solid var(--brand); outline-offset:3px; }
+@media (min-width:640px) { .home-hub { padding-inline:28px; } }
+@media (prefers-reduced-motion:reduce) { .home-hub * { scroll-behavior:auto !important; transition:none !important; } }

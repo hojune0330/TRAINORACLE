@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => ({ request: vi.fn() }))
 vi.mock("../domain/account/account-reward-client", () => ({ requestAccountRewards: mocks.request }))
 // Plan persistence has its own native IndexedDB suite; this suite renders rewards.
 vi.mock("../domain/plan-beta-store", () => ({ readPlanBetaStateFromStorage: () => ({ kind: "missing" }) }))
-import { Home } from "./Home"
+import { JournalRewards } from "./JournalRewards"
 import { setActiveLocalAccount } from "../domain/account/local-journal-ownership"
 import { disposeAccountRewards } from "../domain/account/account-reward-service"
 import { setAccountAuthState } from "../domain/account/account-auth-state"
@@ -44,7 +44,7 @@ it("keeps confirmed guest rewards and spending on the device ledger with the acc
   seedGuest()
   const accountKey = `${ENGAGEMENT_STORAGE_KEY}.account.${A}`
   localStorage.setItem(accountKey, "untouched account source")
-  render(<Home />)
+  render(<JournalRewards onBack={vi.fn()} onOpenMore={vi.fn()} onDecorateToday={vi.fn()} />)
   const strip = screen.getByRole("region", { name: "기록 습관" })
   expect(within(strip).getByText("3P")).toBeVisible()
   expect(screen.getByText("게스트 포인트는 어디에 보관되나요?")).toBeVisible()
@@ -59,7 +59,7 @@ it("keeps confirmed guest rewards and spending on the device ledger with the acc
 it("does not read or write the guest ledger while auth resolves or fails; explicit guest resolution reconnects it", async () => {
   setActiveLocalAccount(null)
   const raw = seedGuest()
-  render(<Home />)
+  render(<JournalRewards onBack={vi.fn()} onOpenMore={vi.fn()} onDecorateToday={vi.fn()} />)
   expect(screen.getByText(/로그인 상태를 확인하고 있어요/)).toBeVisible()
   expect(loadEngagementSummary("2026-09-08").points).toBe(0)
   expect(recordDailyVisit("2026-09-08").kind).toBe("SAVE_FAILED")
@@ -78,7 +78,7 @@ it("does not fall back from an account reward failure even after a prior guest s
   setAccountAuthState("GUEST")
   const raw = seedGuest()
   mocks.request.mockResolvedValue({ ok: false, code: "UNAVAILABLE" })
-  render(<Home />)
+  render(<JournalRewards onBack={vi.fn()} onOpenMore={vi.fn()} onDecorateToday={vi.fn()} />)
   expect(await screen.findByText("계정 포인트를 불러오지 못했어요.")).toBeVisible()
   expect(loadEngagementSummary("2026-09-08").points).toBe(0)
   expect(loadDecorationState().spentPoints).toBe(0)
@@ -87,7 +87,7 @@ it("does not fall back from an account reward failure even after a prior guest s
 })
 
 it("renders verified asynchronous credit and refreshes debit after the decoration event", async () => {
-  render(<Home />)
+  render(<JournalRewards onBack={vi.fn()} onOpenMore={vi.fn()} onDecorateToday={vi.fn()} />)
   const strip = screen.getByRole("region", { name: "기록 습관" })
   await waitFor(() => expect(within(strip).getByText("4P")).toBeVisible())
   mocks.request.mockResolvedValue(result(A, true))
@@ -102,7 +102,7 @@ it("renders verified asynchronous credit and refreshes debit after the decoratio
 })
 
 it("clears another account's rendered balance while B loads and shows read failure instead of A credit", async () => {
-  render(<Home />)
+  render(<JournalRewards onBack={vi.fn()} onOpenMore={vi.fn()} onDecorateToday={vi.fn()} />)
   await screen.findByText("4P")
   mocks.request.mockResolvedValue({ ok: false, code: "UNAVAILABLE" })
   act(() => { setActiveLocalAccount(B) })

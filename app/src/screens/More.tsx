@@ -1,8 +1,12 @@
-import { ArrowLeft, BookOpen, CircleHelp, MessageSquareText, Newspaper, ScrollText, ShieldCheck, Sticker, Watch } from "lucide-react"
+import React from "react"
+import { ArrowLeft, BookOpen, CircleHelp, MessageSquareText, Newspaper, ScrollText, ShieldCheck, Sticker, Trash2, Watch } from "lucide-react"
 import { DataSafetyNotice } from "../components/DataSafetyNotice"
 import { feedbackConfig } from "../domain/feedback/feedback-config"
 import { SafeJournalExport } from "./home/DeviceJournal"
 import { InstallShortcutMenuEntry } from "../components/InstallShortcut"
+import { TrashBin } from "./home/TrashBin"
+import { loadTrash } from "../domain/journal-trash"
+import "../styles/home-menu.css"
 
 export type MoreProps = {
   readonly onBack: () => void
@@ -12,6 +16,7 @@ export type MoreProps = {
   readonly onOpenRestore?: () => void
   readonly feedbackAvailable?: boolean
   readonly onOpenContent?: () => void
+  readonly onOpenRewards?: () => void
 }
 
 export function More({
@@ -22,7 +27,9 @@ export function More({
   onOpenRestore,
   feedbackAvailable = feedbackConfig() !== null,
   onOpenContent,
+  onOpenRewards,
 }: MoreProps) {
+  const [trashCount, setTrashCount] = React.useState(() => loadTrash().length)
   return (
     <div className="more-screen">
       <header className="utility-header">
@@ -36,10 +43,20 @@ export function More({
       </header>
 
       <div className="more-screen__list">
-        <InstallShortcutMenuEntry />
+        <h2 className="more-screen__group-label">배우기·꾸미기</h2>
         <UtilityRow icon={BookOpen} label="민지의 예시 일지" detail="기록이 쌓이는 모습을 한 장씩 구경해요" onClick={onOpenMinji} />
         <UtilityRow icon={CircleHelp} label="훈련 용어집·도움말" detail="전문 용어의 쉬운 뜻과 이름의 이유, 앱 사용법을 확인해요" onClick={onOpenGuide} />
         {onOpenContent !== undefined && <UtilityRow icon={Newspaper} label="요즘 주목받는 훈련법" detail="유행 이름보다 근거와 사용 범위를 먼저 봐요" onClick={onOpenContent} />}
+        {onOpenRewards !== undefined && <UtilityRow icon={Sticker} label="일지 꾸미기·포인트" detail="모은 포인트와 꾸미기 보관함을 확인해요" onClick={onOpenRewards} />}
+        <h2 className="more-screen__group-label">계정·기록 관리</h2>
+        <InstallShortcutMenuEntry />
+        <DataSafetyNotice onOpenAccount={onOpenAccount} />
+        <SafeJournalExport onOpenRestore={onOpenRestore} />
+        <details className="more-screen__trash">
+          <summary><Trash2 size={19} aria-hidden="true" /><span>휴지통 · {trashCount}개</span></summary>
+          {trashCount === 0 ? <p>지운 일지가 없어요.</p> : <TrashBin onChanged={() => setTrashCount(loadTrash().length)} />}
+        </details>
+        <h2 className="more-screen__group-label">도움말</h2>
         <a className="more-screen__row" href="?feedback=1">
           <MessageSquareText aria-hidden="true" size={19} />
           <span><strong>문의 게시판</strong><small>{feedbackAvailable ? "불편한 점을 일지 내용 없이 남겨요" : "지금은 준비 중이에요. 열리면 앱 안에서 알려드려요"}</small></span>
@@ -62,8 +79,6 @@ export function More({
         </a>
       </div>
 
-      <DataSafetyNotice onOpenAccount={onOpenAccount} />
-      <SafeJournalExport onOpenRestore={onOpenRestore} />
     </div>
   )
 }

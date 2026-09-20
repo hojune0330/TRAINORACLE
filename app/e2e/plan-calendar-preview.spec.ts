@@ -11,7 +11,7 @@ async function answerTwoSessionPlanQuestions(page: Page): Promise<void> {
 test("shows a dated AM and PM plan before selection and after reload", async ({ page }) => {
   // Given
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "바로 시작하기" }).getByRole("button", { name: /^훈련 계획/u }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
   await answerTwoSessionPlanQuestions(page)
   await page.getByLabel("계획 시작 날짜").fill("2026-08-17")
 
@@ -33,7 +33,7 @@ test("shows a dated AM and PM plan before selection and after reload", async ({ 
   await page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u }).first().click()
   await expect(page.getByRole("heading", { name: "9일 훈련 계획" })).toBeVisible()
   await page.reload()
-  await page.getByRole("navigation", { name: "바로 시작하기" }).getByRole("button", { name: /^훈련 계획/u }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
 
   // Then
   const activeDay = page.getByRole("group", {

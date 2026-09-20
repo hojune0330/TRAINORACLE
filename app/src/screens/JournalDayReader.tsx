@@ -11,6 +11,7 @@ type JournalDayReaderProps = {
   readonly entries: readonly JournalEntry[]
   readonly onDateChange: (date: string) => void
   readonly onBack: () => void
+  readonly backDestination?: "home" | "journal" | "rewards"
   readonly onAddEntry?: (date: string) => void
   readonly onEditEntry?: (entry: JournalEntry) => void
 }
@@ -20,6 +21,7 @@ export function JournalDayReader({
   entries,
   onDateChange,
   onBack,
+  backDestination,
   onAddEntry,
   onEditEntry,
 }: JournalDayReaderProps) {
@@ -27,7 +29,7 @@ export function JournalDayReader({
     () => projectJournalReader(entries, date),
     [date, entries],
   )
-  const pageTopRef = React.useRef<HTMLDivElement>(null)
+  const readerTopRef = React.useRef<HTMLDivElement>(null)
 
   const openPrevious = React.useCallback(() => {
     if (reader.previousDate !== null) onDateChange(reader.previousDate)
@@ -39,7 +41,9 @@ export function JournalDayReader({
     onPrevious: reader.previousDate === null ? undefined : openPrevious,
     onNext: reader.nextDate === null ? undefined : openNext,
   })
-  useActiveContentScroll(date, pageTopRef)
+  // Return to the whole reader, not an inner paper node. Aligning the inner
+  // page could leave a partially clipped header above short journal pages.
+  useActiveContentScroll(date, readerTopRef)
 
   const controls = (
     <JournalPageNavigator
@@ -47,11 +51,14 @@ export function JournalDayReader({
       total={reader.total}
       onPrevious={reader.previousDate === null ? undefined : pageTurn.goPrevious}
       onNext={reader.nextDate === null ? undefined : pageTurn.goNext}
+      onBack={onBack}
+      backDestination={backDestination}
     />
   )
 
   return (
     <div
+      ref={readerTopRef}
       className="journal-day-reader journal-page-turn-surface"
       data-page-turn-direction={pageTurn.direction}
       data-swipe-active={pageTurn.isDragging ? "true" : undefined}
@@ -64,7 +71,6 @@ export function JournalDayReader({
         onAddEntry={onAddEntry}
         onEditEntry={onEditEntry}
         readerControls={controls}
-        pageTopRef={pageTopRef}
       />
     </div>
   )

@@ -4,8 +4,7 @@ import { completeDetailedPlan, openPlanRefinement } from "./plan-flow"
 
 async function reachRaceDate(page: Page): Promise<void> {
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "바로 시작하기" })
-    .getByRole("button", { name: /^훈련 계획/u }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
   await completeDetailedPlan(page, { division: /고등부/u })
   await openPlanRefinement(page, "대회 날짜")
   await expect(page.getByRole("heading", { name: "대회 날짜가 있나요?" })).toBeVisible()

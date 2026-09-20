@@ -13,10 +13,10 @@ test.beforeEach(async ({ page }) => {
 })
 
 for (const width of [320, 375]) {
-  test(`shows the five purpose actions before scrolling at ${width}px`, async ({ page }, testInfo) => {
+  test(`shows the primary action and plan entry without requiring a fixed first viewport at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: width === 320 ? 568 : 667 })
     await page.evaluate(() => document.fonts.ready)
-    for (const name of ["오늘 기록 남기기", "내 훈련 분석", "훈련 계획 만들기", "예시 훈련 보기", "훈련 방법 배우기"]) {
+    for (const name of ["오늘 기록 남기기", "훈련 계획 만들기"]) {
       const button = page.getByRole("button", { name, exact: true })
       await expect(button).toBeInViewport({ ratio: 1 })
       expect((await button.boundingBox())!.height).toBeGreaterThanOrEqual(44)
@@ -56,7 +56,7 @@ for (const width of [320, 375]) {
 
 test("puts the first analysis action before optional explanation and opens help with the keyboard", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 375, height: 667 })
-  await page.getByRole("button", { name: "내 훈련 분석", exact: true }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석", exact: true }).click()
   await expect(page.getByRole("button", { name: "첫 기록 남기기", exact: true })).toBeInViewport({ ratio: 1 })
   const summary = page.locator("summary", { hasText: "어떤 기록을 분석하나요?" })
   const help = summary.locator("..")
@@ -93,7 +93,7 @@ test("keeps saved results visible and does not turn missing RPE into a value", a
 
 test("keeps learning content and its application limits available without a developer introduction", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 375, height: 667 })
-  await page.getByRole("button", { name: "훈련 방법 배우기", exact: true }).click()
+  await page.getByRole("button", { name: "훈련 배우기", exact: true }).click()
   await expect(page.getByRole("heading", { name: "어떤 훈련이 궁금한가요?" })).toBeVisible()
   await page.screenshot({ path: testInfo.outputPath("learning.png") })
   await page.getByRole("button", { name: /크루즈 인터벌은 지속주와/u }).click()
@@ -114,12 +114,12 @@ test("wraps text at double size without horizontal clipping and respects reduced
     nodes.forEach((el, i) => el.style.setProperty("font-size", `${sizes[i]! * 2}px`, "important"))
   })
   expect(await page.locator(".app-scroll-region").evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
-  for (const label of ["내 훈련 분석", "훈련 계획 만들기", "예시 훈련 보기", "훈련 방법 배우기"]) {
+  for (const label of ["훈련 계획 만들기", "훈련 배우기", "일지 꾸미기"]) {
     const button = page.getByRole("button", { name: label, exact: true })
     expect(await button.evaluate(el => el.scrollWidth <= el.clientWidth && el.scrollHeight <= el.clientHeight)).toBe(true)
   }
   await page.screenshot({ path: testInfo.outputPath("home-double-text.png") })
-  await page.getByRole("button", { name: "내 훈련 분석", exact: true }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석", exact: true }).click()
   const summary = page.locator("summary", { hasText: "어떤 기록을 분석하나요?" })
   await expect(summary.locator(".info-disclosure__chevron")).toHaveCSS("transition-property", "none")
 })

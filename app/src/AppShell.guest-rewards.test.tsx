@@ -31,7 +31,8 @@ it("connects the guest ledger only after successful initial auth and invalidates
   const pending = new Promise(done => { resolve = done })
   mocks.current.mockImplementation(options => options?.throwOnFailure ? pending : Promise.resolve(null))
   const view = render(<AppShell />)
-  expect(screen.getByText(/로그인 상태를 확인하고 있어요/)).toBeVisible()
+  fireEvent.click(screen.getByRole("button", { name: "일지 꾸미기" }))
+  expect(await screen.findByText(/로그인 상태를 확인하고 있어요/)).toBeVisible()
   expect(screen.queryByText("5P")).not.toBeInTheDocument()
   await act(async () => resolve(null))
   const help = screen.getByText("게스트 포인트는 어디에 보관되나요?")
@@ -51,6 +52,7 @@ it("does not interpret failed authentication as signed-out or alter the guest le
   mocks.current.mockImplementation(options => options?.throwOnFailure
     ? Promise.reject(new Error("AUTH_UNAVAILABLE")) : Promise.resolve(null))
   render(<AppShell />)
+  fireEvent.click(screen.getByRole("button", { name: "일지 꾸미기" }))
   expect(await screen.findByText(/게스트 장부로 전환하지 않았어요/)).toBeVisible()
   expect(accountAuthState()).toBe("FAILED")
   expect(screen.queryByText("5P")).not.toBeInTheDocument()

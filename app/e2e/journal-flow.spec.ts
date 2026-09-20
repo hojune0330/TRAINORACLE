@@ -23,7 +23,7 @@ test("saves a structured race note, carries review attention, and reopens the re
 
   // Then
   await expect(page.getByRole("alert")).toContainText("분석 결과를 확인해야 해요")
-  const savedRace = page.getByRole("button", { name: /경기 .*상세 열기/u })
+  const savedRace = page.getByRole("button", { name: "오늘 기록 보기" })
   await expect(savedRace).toBeVisible()
   await savedRace.click()
   await expect(page.getByText("3분 45초/km")).toBeVisible()

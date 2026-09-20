@@ -114,7 +114,7 @@ test("opens a day from the monthly calendar with provenance-safe summaries and r
   }, secret)
 
   await page.goto("/?app=1&uitest=1")
-  await page.getByRole("button", { name: "전체 보기" }).click()
+  await page.getByRole("button", { name: "전체 일지" }).click()
 
   const archive = page.getByTestId("journal-archive")
   await expect(archive.getByRole("heading", { name: "지난 일지" })).toBeVisible()

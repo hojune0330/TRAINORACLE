@@ -261,6 +261,7 @@ type JournalDecorationToolbarProps = {
   readonly hasEntries: boolean
   readonly items: readonly DecorationCatalogItem[]
   readonly open: boolean
+  readonly renderLauncher?: boolean
   readonly drawerOpen: boolean
   readonly activeItemIds: ReadonlySet<string>
   readonly availablePoints: number
@@ -295,6 +296,17 @@ type JournalDecorationToolbarProps = {
   readonly onCopySelected: () => void
   readonly onPaste: () => void
   readonly onOpenTextSticker?: () => void
+}
+
+export function JournalDecorationLauncher({ onOpen }: { readonly onOpen: () => void }) {
+  return (
+    <div className="journal-decoration-launch" data-decoration-interaction="true">
+      <button type="button" onClick={onOpen} aria-label="일지 꾸미기 열기">
+        <Palette aria-hidden="true" size={16} />
+        꾸미기
+      </button>
+    </div>
+  )
 }
 
 export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
@@ -339,14 +351,7 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
   }, [props.drawerOpen, props.open])
 
   if (!props.open) {
-    return (
-      <div className="journal-decoration-launch" data-decoration-interaction="true">
-        <button type="button" onClick={props.onOpen} aria-label="일지 꾸미기 열기">
-          <Palette aria-hidden="true" size={16} />
-          꾸미기
-        </button>
-      </div>
-    )
+    return props.renderLauncher === false ? null : <JournalDecorationLauncher onOpen={props.onOpen} />
   }
 
   const chooseTool = (filter: DrawerFilter) => {

@@ -16,6 +16,7 @@ import { createSavedFactReceipt } from "./domain/save-receipt"
 import { trackProductEvent } from "./domain/account/product-analytics-service"
 import { currentUser, onAuthChange } from "./domain/account/auth"
 import { setAccountAuthState } from "./domain/account/account-auth-state"
+import type { PlannedSessionLink } from "./domain/planned-session-link"
 import {
   onLocalJournalScopeChange,
   activeLocalAccount,
@@ -64,8 +65,9 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const [savedToast, setSavedToast] = React.useState<ShellToastState | null>(null)
   const pendingReward = React.useRef<{ ownerId: string | null; date: string } | null>(null)
   const [athleteRecordsOpen, setAthleteRecordsOpen] = React.useState(false)
+  const [homeDetailOrigin, setHomeDetailOrigin] = React.useState<"home" | "rewards">("home")
   const scrollRegionRef = React.useRef<HTMLElement>(null)
-  const [utilityView, setUtilityView] = React.useState<"more" | "guide" | "minji" | "content" | null>(null)
+  const [utilityView, setUtilityView] = React.useState<"more" | "guide" | "minji" | "content" | "rewards" | null>(null)
   const [utilityOrigin, setUtilityOrigin] = React.useState<"home" | "more">("more")
   const pendingScreenMotionRef = React.useRef<Exclude<AppScreenMotion, "initial" | "none"> | null>(null)
   const runViewTransition = React.useCallback((
@@ -150,6 +152,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     runViewTransition("pop", () => {
       setAthleteRecordsOpen(false)
       setUtilityView(null)
+      setHomeDetailOrigin("home")
       setV(INITIAL_VIEW_STATE)
     })
   }
@@ -267,6 +270,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     return withReader ? (
       <DeferredMobileScreens.JournalDayReader
         {...common}
+        backDestination={v.tab === "home" ? homeDetailOrigin : "journal"}
         entries={loadEntries()}
         onDateChange={(detailDate) => runViewTransition("replace", () => setV(s => ({ ...s, detailDate })))}
       />
@@ -295,13 +299,28 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         onBack={() => runViewTransition("pop", () => setUtilityView(null))}
         onOpenMinji={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("minji") })}
         onOpenGuide={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("guide") })}
-        onOpenContent={() => runViewTransition("push", () => setUtilityView("content"))}
+        onOpenContent={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("content") })}
+        onOpenRewards={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("rewards") })}
         onOpenAccount={accountEnabled ? () => runViewTransition("push", () => setV(s => ({ ...s, accountOpen: true }))) : undefined}
         onOpenRestore={openRestore}
       />
     )
   } else if (v.tab === "home" && utilityView === "content") {
-    screen = <DeferredMobileScreens.TrainingContent onBack={() => runViewTransition("pop", () => setUtilityView(null))} />
+    screen = <DeferredMobileScreens.TrainingContent onBack={() => runViewTransition("pop", () => setUtilityView(utilityOrigin === "home" ? null : "more"))} />
+  } else if (v.tab === "home" && utilityView === "rewards") {
+    screen = <DeferredMobileScreens.JournalRewards
+      onBack={() => runViewTransition("pop", () => setUtilityView(utilityOrigin === "home" ? null : "more"))}
+      onOpenMore={() => runViewTransition("push", () => { setUtilityOrigin("home"); setUtilityView("more") })}
+      onDecorateToday={() => {
+        const date = todayISO()
+        requestJournalDecorationAutoOpen(date)
+        runViewTransition("push", () => {
+          setHomeDetailOrigin("rewards")
+          setUtilityView(null)
+          setV(s => ({ ...s, detailDate: date }))
+        })
+      }}
+    />
   } else if (v.tab === "home" && (utilityView === "guide" || utilityView === "minji")) {
     screen = <DeferredMobileScreens.Guide
       initialSection={utilityView}
@@ -310,11 +329,18 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     />
   } else if (v.tab === "home") {
     screen = v.detailDate !== null
-      ? detailScreen(() => runViewTransition("pop", () => setV(s => ({ ...s, detailDate: null }))), true)
+      ? detailScreen(() => runViewTransition("pop", () => {
+        const returnToRewards = homeDetailOrigin === "rewards"
+        setV(s => ({ ...s, detailDate: null }))
+        setUtilityView(returnToRewards ? "rewards" : null)
+      }), true)
       : (
         <Home
           onWriteLog={(entryType) => runViewTransition("tab-forward", () => setV(s => ({ ...s, tab: "log", entryType: entryType ?? "choose" })))}
-          onOpenDay={(date) => runViewTransition("push", () => setV(s => ({ ...s, detailDate: date })))}
+          onOpenDay={(date) => runViewTransition("push", () => {
+            setHomeDetailOrigin("home")
+            setV(s => ({ ...s, detailDate: date }))
+          })}
           onDecorateToday={() => {
             /* 홈 꾸미기 카드: 오늘 일지 상세로 이동하며 편집기 자동 열기를 예약한다. */
             const date = todayISO()
@@ -329,7 +355,13 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           onOpenTrends={() => goTab("trends")}
           onOpenMore={() => runViewTransition("push", () => setUtilityView("more"))}
           onOpenAccount={accountEnabled ? () => runViewTransition("push", () => setV(s => ({ ...s, accountOpen: true }))) : undefined}
-          onOpenContent={() => runViewTransition("push", () => setUtilityView("content"))}
+          onOpenContent={() => runViewTransition("push", () => { setUtilityOrigin("home"); setUtilityView("content") })}
+          onOpenRewards={() => runViewTransition("push", () => { setUtilityOrigin("home"); setUtilityView("rewards") })}
+          onOpenNextTraining={(link: PlannedSessionLink) => runViewTransition("tab-forward", () => {
+            setAthleteRecordsOpen(false)
+            setUtilityView(null)
+            setV({ ...viewForTab("plan"), returnToSession: link })
+          })}
         />
       )
   } else if (v.tab === "journal") {

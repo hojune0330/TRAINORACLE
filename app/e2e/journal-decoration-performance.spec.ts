@@ -43,7 +43,7 @@ test("sustains 30fps while dragging a decoration under 4x CPU throttle", async (
   await seedEntry(page, "perf-drag-entry", "Perf drag check")
   await page.setViewportSize({ width: 375, height: 667 })
   await page.goto("/?app=1")
-  await page.getByRole("button", { name: /Perf drag check.*상세 열기/u }).click()
+  await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
   await page.getByRole("button", { name: "이모지 스티커 도구" }).click()
   await page.getByRole("button", { name: "불꽃 이모지 붙이기" }).click()
