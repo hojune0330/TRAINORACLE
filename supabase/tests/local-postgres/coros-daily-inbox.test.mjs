@@ -1,6 +1,6 @@
 import { test, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { PGlite } from '@electric-sql/pglite'
 import { createCorosDailyHandler } from '../../functions/_shared/coros-daily-handler.mjs'
 import { createCorosDailyStorage } from '../../functions/_shared/coros-daily-storage.mjs'
@@ -13,6 +13,12 @@ const payload={algorithm:'AES-GCM',version:1,keyId:'synthetic',iv:'AAAAAAAAAAAAA
 const item=(extra={})=>({ownerId:A,connectionId:C,connectionEpoch:E,providerDay:'2026-09-12',contentDigest:'a'.repeat(64),payload,...extra})
 const ingest=async rows=>(await db.query('select public.ingest_coros_daily_envelopes($1::jsonb) result',[JSON.stringify(rows)])).rows[0].result
 
+test('migration versions remain unique across concurrently developed features', () => {
+  const versions = readdirSync(new URL('../../migrations/', import.meta.url))
+    .filter(name => /^\d+_.+\.sql$/.test(name)).map(name => name.split('_')[0])
+  assert.equal(new Set(versions).size, versions.length)
+})
+
 test('encrypted daily database ownership, replay, revocation and all-or-nothing receipt', async () => {
   await db.exec(`create role anon; create role authenticated; create role service_role;
     create schema auth; create table auth.users(id uuid primary key);
@@ -22,7 +28,7 @@ test('encrypted daily database ownership, replay, revocation and all-or-nothing 
       connection_status text,scopes text[],revoked_at timestamptz);
     insert into auth.users values('${A}'),('${B}');
     insert into public.external_provider_connections values('${C}','${A}','COROS','ACTIVE',array['DAILY_READ'],null);`)
-  await db.exec(readFileSync(new URL('../../migrations/0038_coros_daily_encrypted_inbox.sql',import.meta.url),'utf8'))
+  await db.exec(readFileSync(new URL('../../migrations/0039_coros_daily_encrypted_inbox.sql',import.meta.url),'utf8'))
   await db.query('update public.external_provider_connections set connection_epoch=$1',[E])
   assert.equal((await ingest([item()])).inserted,1)
   assert.equal((await ingest([item()])).duplicates,1)

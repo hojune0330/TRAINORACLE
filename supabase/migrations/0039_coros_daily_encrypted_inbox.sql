@@ -1,4 +1,5 @@
 -- COROS daily observations are quarantined ciphertext, not analysis inputs.
+-- 0038 is already assigned to the deployed file-analysis write control migration.
 alter table public.external_provider_connections
   add column if not exists connection_epoch uuid not null default gen_random_uuid();
 grant select on public.external_provider_connections to service_role;
