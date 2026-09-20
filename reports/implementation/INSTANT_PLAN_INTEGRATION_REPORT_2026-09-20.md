@@ -130,6 +130,8 @@ P 원본 후속 커밋 `328805932d99bcd9e4550ef8bde3f4ed3e405438`, `21c5fec`를 
 - app/e2e TypeScript 및 Vite build PASS. 기존 폰트/청크 경고는 미해결이며 새 화면 완료로 숨기지 않는다.
 - GitHub CI와 운영 배포는 별도다. 아래 결과만으로 전체 앱·온라인 운영·삭제 기능 완료를 주장하지 않는다.
 
+P 작업자의 읽기 전용 교차 검수에서도 이번 `PlanCandidates`/`CandidateSection` 변경에서 재현 가능한 회귀를 찾지 못했다. 이는 별도 모델의 전체 제품·스포츠과학 승인이나 운영 검증이 아니다. 접기 화살표를 보완한 최종 화면은 대상 단위 3개와 모바일 320/375px 경로 2개를 추가 실행해 통과했다. P의 후속 커밋을 I 기능 브랜치의 조상으로 연결했고 파일 내용 변경 없는 통합 merge로 stacked PR의 중복 diff를 방지했다. main에는 병합하지 않았다.
+
 ### 다음 작업 순서
 
 1. 삭제 기반을 실제 owner transaction과 tombstone 저장에 연결: 기존 암호화 collection의 권한·CAS·receipt를 우회하지 않는다. 서버 경로 완성 전 삭제 버튼은 제공하지 않는다.
