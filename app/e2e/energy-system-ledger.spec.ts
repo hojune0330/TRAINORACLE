@@ -52,7 +52,7 @@ test("keeps explicit energy records separate from legacy defaults across home an
   await expect(home.getByText("지속 페이스")).toBeVisible()
   await expect(home.getByText("1회")).toBeVisible()
   await expect(home.getByText("MIX 여러 강도 조합 0회")).toBeVisible()
-  await home.getByRole("button", { name: "에너지 시스템 자세히 보기" }).click()
+  await home.getByRole("button", { name: "훈련 목적 분석 보기" }).click()
 
   const analysis = page.getByRole("region", { name: "에너지 시스템 누적" })
   await expect(analysis.getByRole("img", { name: /LT 지속 페이스 1회/u })).toBeVisible()

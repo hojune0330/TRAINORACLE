@@ -16,7 +16,7 @@ import { readPersistedComparisonReadContext } from "../../domain/import/comparis
 import { fileDuration, fileNumber, signedFileDifference } from "./file-analysis-display"
 
 const PHASE = { warmup: "준비", main: "본운동", cooldown: "정리" } as const
-const RECOVERY = { WALK: "걷기", JOG: "조깅", STAND: "멈춰 쉬기", WALK_OR_JOG: "걷기 또는 조깅", WALK_OR_STAND: "걷거나 멈춰 쉬기", ACTIVE_ROLL_ON: "가볍게 이어가기" } as const
+const RECOVERY = { WALK: "걷기", JOG: "조깅", STAND: "멈춰 쉬기", WALK_OR_JOG: "걷기 또는 조깅", WALK_OR_STAND: "걷거나 멈춰 쉬기", ACTIVE_ROLL_ON: "천천히 계속 움직이기" } as const
 const MEANING = { TIMER: "기록 시간 · 일시정지 제외", MOVING: "이동 시간", ELAPSED: "전체 경과 시간" } as const
 const LIMITATION: Record<string, string> = { RECOVERY_MODE_UNKNOWN_OR_DIFFERENT: "실제 회복 방법 확인 필요", TIME_MEANING_NOT_TIMER: "기록 시간인지 확인 필요", MISSING_DISTANCE: "거리 없음", MISSING_DURATION: "시간 없음" }
 const sameSession = (relation: ComparisonRelationV1, choice: ComparisonPlanChoice) => relation.original.planFingerprint === choice.reference.planFingerprint

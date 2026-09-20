@@ -136,7 +136,7 @@ export function EngagementStrip({
         {savedCount === 0 && summary.journalDays > 0
           ? "일지를 삭제해도 이미 받은 일지 작성 포인트는 그대로 유지돼요."
           : summary.journalRecordedToday
-          ? "오늘 기록한 날 4P도 반영됐어요. 다음 방문 때 편하게 이어가면 돼요."
+          ? "오늘 기록한 날 4P도 반영됐어요. 다음 기록은 원할 때 남기면 돼요."
           : "오늘 훈련 기록 또는 몸 상태·회복 체크를 남기면 기록한 날 4P가 한 번 쌓여요."}
         {" "}<span>
           거리·속도·훈련 강도에는 점수를 매기지 않아요.

@@ -71,13 +71,16 @@ describe("Minji journal fixed page frame", () => {
     expect(page).not.toBeNull()
     if (page === null) return
 
-    fireEvent.touchStart(page, { changedTouches: [{ clientX: 250, clientY: 220 }] })
+    fireEvent.touchStart(page, {
+      touches: [{ clientX: 250, clientY: 220 }],
+      changedTouches: [{ clientX: 250, clientY: 220 }],
+    })
     fireEvent.touchMove(page, {
       touches: [{ clientX: 170, clientY: 222 }],
       changedTouches: [{ clientX: 170, clientY: 222 }],
     })
     expect(page.style.getPropertyValue("--journal-swipe-offset")).toBe("-12.8px")
-    fireEvent.touchEnd(page, { changedTouches: [{ clientX: 120, clientY: 223 }] })
+    fireEvent.touchEnd(page, { touches: [], changedTouches: [{ clientX: 120, clientY: 223 }] })
 
     expect(screen.getAllByText("2 / 6")[0]).toBeVisible()
     await waitFor(() => expect(scrollIntoView).toHaveBeenLastCalledWith({
@@ -95,8 +98,11 @@ describe("Minji journal fixed page frame", () => {
     await user.click(screen.getByRole("button", { name: /첫날.*4\.6km를 달린 첫 기록/u }))
     const disclosure = screen.getByRole("button", { name: "거리와 시간만 적어도 될까?" })
 
-    fireEvent.touchStart(disclosure, { changedTouches: [{ clientX: 250, clientY: 220 }] })
-    fireEvent.touchEnd(disclosure, { changedTouches: [{ clientX: 120, clientY: 222 }] })
+    fireEvent.touchStart(disclosure, {
+      touches: [{ clientX: 250, clientY: 220 }],
+      changedTouches: [{ clientX: 250, clientY: 220 }],
+    })
+    fireEvent.touchEnd(disclosure, { touches: [], changedTouches: [{ clientX: 120, clientY: 222 }] })
 
     expect(screen.getAllByText("1 / 6")[0]).toBeVisible()
   })

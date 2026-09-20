@@ -6,7 +6,7 @@ test("opens, saves, and reloads a training article without changing other produc
   await page.goto("/?app=1")
 
   await openTrainingContent(page)
-  await expect(page.getByText("훈련 방법 배우기", { exact: true })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "어떤 훈련이 궁금한가요?" })).toBeVisible()
   await page.getByRole("button", { name: /노르웨이식 더블 스레숄드/u }).click()
   await expect(page.getByRole("heading", { name: "노르웨이식 더블 스레숄드, 왜 자주 들릴까요?" })).toBeVisible()
   await page.locator("summary", { hasText: "자료 출처와 저장 안내" }).click()

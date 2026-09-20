@@ -15,8 +15,7 @@ test("shows the 24-week direction without turning position into an automatic inc
   }, { ...state, periodization })
 
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "바로 시작하기" })
-    .getByRole("button", { name: /^훈련 계획/u }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
 
   await expect(page.getByText("24주 훈련 방향", { exact: true })).toBeVisible()
   await expect(page.getByText(/1\/18번째 계획/u)).toBeVisible()

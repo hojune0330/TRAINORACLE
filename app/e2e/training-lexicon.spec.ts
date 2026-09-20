@@ -41,7 +41,7 @@ test("keeps the Korean-first training lexicon readable from narrow phones to des
   await expect(page.getByRole("heading", { name: /짧은 고강도 반복.*GLY/u })).toBeVisible()
   await expect(page.getByRole("heading", { name: "왜 이런 이름인가요?" })).toBeVisible()
   await page.getByRole("button", { name: "전문 설명" }).click()
-  await expect(page.getByRole("heading", { name: "에너지 경로 맥락" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "관련 에너지 경로" })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
   expect(browserErrors).toEqual([])
 })

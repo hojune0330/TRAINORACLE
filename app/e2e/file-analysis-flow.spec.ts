@@ -287,7 +287,7 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
       return (await import(/* @vite-ignore */ path)).loadAthleteRecords(new Date(now))
     }, now)).toEqual(recordsBeforeSelection)
   }
-  await panel.getByRole("button", { name: "다음 훈련 살펴보기" }).click()
+  await panel.getByRole("button", { name: "훈련 계획 보기" }).click()
   await page.getByRole("button", { name: /^5000m/u }).click()
   await page.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }).click()
   await page.getByRole("button", { name: /^3일/u }).click()
@@ -472,7 +472,7 @@ test("persisted ACK cache stays displayable but cannot authorize file analysis a
   await expect(panel.getByRole("status")).toContainText("이전에 저장한 파일 기록 1개의 최신 상태를 계정에서 확인하지 못했어요.")
   await expect(panel.getByText("10km", { exact: true })).toHaveCount(0)
   await expect(panel.getByText("80분", { exact: true })).toHaveCount(0)
-  await expect(panel.getByRole("button", { name: "다음 훈련 살펴보기" })).toHaveCount(0)
+  await expect(panel.getByRole("button", { name: "훈련 계획 보기" })).toHaveCount(0)
   await page.screenshot({ path: testInfo.outputPath("stale-ack-analysis-excluded.png"), animations: "disabled" })
   account.failReads(false)
   expect(await page.evaluate(async () => {
@@ -607,7 +607,7 @@ for (const width of [320, 375]) {
     })
     expect(await panel.locator("h2").evaluate(node => parseFloat(getComputedStyle(node).fontSize))).toBe(originalFont * 2)
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
-    await expect(panel.getByRole("button", { name: "다음 훈련 살펴보기" })).toBeEnabled()
+    await expect(panel.getByRole("button", { name: "훈련 계획 보기" })).toBeEnabled()
     await segment.scrollIntoViewIfNeeded()
     await page.screenshot({ path: testInfo.outputPath(`report-${width}-200pct-text.png`) })
     const scroller = panel.getByRole("region", { name: "2026-09-19 구간 기록", exact: true })

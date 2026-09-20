@@ -55,7 +55,8 @@ test("routes the home decoration card into the real journal editor with points",
   })
 
   await page.goto("/?app=1")
-  /* 홈 카드는 이제 진입 카드 — 별도 편집 화면이나 placeholder 미리보기가 없다. */
+  /* 보상·상점은 홈에 펼치지 않고 일지 꾸미기 진입 뒤 확인한다. */
+  await page.getByRole("button", { name: "일지 꾸미기" }).click()
   await expect(page.getByRole("heading", { name: "꾸미기 보관함 · 사용 가능 8P" })).toBeVisible()
   await expect(page.getByRole("region", { name: "꾸미기 미리보기" })).toHaveCount(0)
   await expect(page.getByRole("dialog")).toHaveCount(0)
@@ -116,7 +117,7 @@ test("routes the home decoration card into the real journal editor with points",
 
   /* 자동-열기 인텐트는 1회용 — 새로고침 뒤에는 저절로 열리지 않는다. */
   await page.reload()
-  await page.getByRole("button", { name: /꾸미기 화면 점검.*상세 열기/u }).click()
+  await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
   await expect(page.getByRole("dialog", { name: "이 일지 꾸미기" })).toHaveCount(0)
   await expect(page.getByRole("button", { name: "일지 꾸미기 열기" })).toBeVisible()
 

@@ -86,7 +86,7 @@ test("review receipt has one modal-owned copy and a keyboard reachable dismissal
   await page.getByRole("radio", { name: "훈련 메모" }).click()
   await page.getByRole("button", { name: /^저장/u }).click()
   await expect(page.getByRole("alert")).toBeVisible()
-  await page.getByRole("button", { name: /상세 열기/u }).first().click()
+  await page.getByRole("button", { name: "오늘 기록 보기" }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기", exact: true }).click()
 
   const editor = page.getByRole("dialog", { name: "이 일지 꾸미기", exact: true })

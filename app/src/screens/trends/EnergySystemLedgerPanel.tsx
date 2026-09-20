@@ -65,8 +65,8 @@ export function EnergySystemLedgerPanel({
             <h2>에너지 시스템 기록<TermHelp term="energy-system" /></h2>
           </div>
           {onOpenTrends !== undefined && (
-            <button type="button" className="energy-ledger__open" onClick={onOpenTrends} aria-label="에너지 시스템 자세히 보기">
-              자세히 <ChevronRight aria-hidden="true" size={16} />
+            <button type="button" className="energy-ledger__open" onClick={onOpenTrends} aria-label="훈련 목적 분석 보기">
+              목적별 분석 <ChevronRight aria-hidden="true" size={16} />
             </button>
           )}
         </div>

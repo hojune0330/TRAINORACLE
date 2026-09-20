@@ -31,7 +31,7 @@ test("saves and reopens subjective intensity with mixed objective components", a
   await page.getByRole("button", { name: "객관 구성 추가" }).click()
   await page.getByRole("button", { name: /^저장/u }).click()
 
-  const savedSession = page.getByRole("button", { name: /훈련 .*상세 열기/u })
+  const savedSession = page.getByRole("button", { name: "오늘 기록 보기" })
   await expect(savedSession).toBeVisible()
   await savedSession.click()
   await expect(page.getByText("주관 + 객관 함께 기록")).toBeVisible()
@@ -50,7 +50,7 @@ test("uses objective records without fabricating missing subjective intensity", 
   await page.getByRole("button", { name: "객관 구성 추가" }).click()
   await page.getByRole("button", { name: /^저장/u }).click()
 
-  const savedSession = page.getByRole("button", { name: /훈련 .*상세 열기/u })
+  const savedSession = page.getByRole("button", { name: "오늘 기록 보기" })
   await expect(savedSession).toBeVisible()
   await savedSession.click()
   await expect(page.getByText("객관 기록으로만 표시")).toBeVisible()

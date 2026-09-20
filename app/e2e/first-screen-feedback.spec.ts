@@ -36,11 +36,10 @@ test("keeps the welcome home clear and usable on narrow phones", async ({ page }
     await expect(page.getByText("모든 데이터는 이 기기에만 저장돼요.")).toHaveCount(0)
     await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
     await expect(page.getByRole("button", { name: "오늘 기록 남기기" })).toBeInViewport()
-    const services = page.getByRole("navigation", { name: "바로 시작하기" })
-    for (const name of ["내 훈련 분석", "훈련 계획 만들기", "예시 훈련 보기", "훈련 방법 배우기"]) {
-      await expect(services.getByRole("button", { name })).toBeInViewport()
+    const services = page.getByRole("navigation", { name: "훈련 도움말과 일지 꾸미기" })
+    for (const name of ["훈련 배우기", "일지 꾸미기", "일지 예시 보기"]) {
+      await expect(services.getByRole("button", { name })).toBeVisible()
     }
-    await expect(services.getByRole("button")).toHaveCount(4)
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
     await page.screenshot({
       path: testInfo.outputPath(`first-screen-${viewport.width}x${viewport.height}.png`),
@@ -83,14 +82,14 @@ test("shows a returning athlete's latest entry before the decoration studio", as
   })
   await page.setViewportSize({ width: 320, height: 568 })
   await page.goto("/")
-  const recentEntry = page.getByRole("button", { name: /훈련 후.*아침 템포런.*상세/u })
-  const services = page.getByRole("navigation", { name: "내 기록 살펴보기" })
+  const recentEntry = page.getByRole("button", { name: /2026년 8월 10일 기록 1개 보기.*훈련 1/u })
+  const services = page.getByRole("navigation", { name: "훈련 도움말과 일지 꾸미기" })
   // 과거 날짜를 뒤늦게 넣은 기록에는 포인트를 소급 지급하지 않는다.
-  const decorationEntry = page.getByText("꾸미기 보관함 · 사용 가능 0P")
+  const decorationEntry = services.getByRole("button", { name: "일지 꾸미기" })
 
   // When: the athlete opens the first home screen.
   await expect(recentEntry).toBeVisible()
-  await expect(page.getByText("8월 10일")).toBeVisible()
+  await expect(recentEntry).toContainText("8월 10일 기록 1개")
   await expect(decorationEntry).toBeVisible()
 
   // Then: the latest journal appears before decoration, with no horizontal overflow.

@@ -41,12 +41,12 @@ describe("AppShell journal archive routing", () => {
     const user = userEvent.setup()
     render(<AppShell />)
 
-    await user.click(screen.getByRole("button", { name: "전체 보기" }))
+    await user.click(screen.getByRole("button", { name: "전체 일지" }))
     await user.click(await screen.findByRole("button", { name: /2026년 7월/u }, { timeout: 5_000 }))
     await user.click(await screen.findByRole("button", { name: /2026년 7월 10일/u }))
 
     expect(await screen.findByText("아카이브 복귀 훈련")).toBeVisible()
-    await user.click(screen.getByRole("button", { name: "← 뒤로" }))
+    await user.click(screen.getByRole("button", { name: "일지 목록으로 돌아가기" }))
 
     expect(await screen.findByRole("heading", { name: "2026년 7월" })).toBeVisible()
     expect(screen.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
@@ -57,14 +57,15 @@ describe("AppShell journal archive routing", () => {
     const user = userEvent.setup()
     render(<AppShell />)
 
-    await user.click(screen.getByRole("button", { name: "전체 보기" }))
+    await user.click(screen.getByRole("button", { name: "전체 일지" }))
     await user.click(await screen.findByRole("button", { name: /2026년 7월/u }, { timeout: 5_000 }))
     await user.click(await screen.findByRole("button", { name: /2026년 7월 10일/u }))
+    await user.click(await screen.findByTestId("journal-manage-toggle"))
     await user.click(await screen.findByRole("button", { name: "훈련 기록 수정" }))
 
     await user.click(screen.getByRole("button", { name: "← 뒤로" }))
     expect(await screen.findByText("아카이브 복귀 훈련")).toBeVisible()
-    await user.click(screen.getByRole("button", { name: "← 뒤로" }))
+    await user.click(screen.getByRole("button", { name: "일지 목록으로 돌아가기" }))
 
     expect(await screen.findByRole("heading", { name: "2026년 7월" })).toBeVisible()
     expect(screen.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
@@ -88,7 +89,7 @@ describe("AppShell journal archive routing", () => {
     const user = userEvent.setup()
     render(<AppShell />)
 
-    await user.click(screen.getByRole("button", { name: /민지의 예시 일지 보기/u }))
+    await user.click(screen.getByRole("button", { name: "일지 예시 보기" }))
     await user.click(await screen.findByRole("button", { name: /돌아가기/u }))
 
     expect(screen.getByRole("heading", {
@@ -162,7 +163,8 @@ describe("AppShell journal archive routing", () => {
     })).toBeVisible()
     expect(screen.getByRole("button", { name: "오늘 기록 남기기" })).toBeVisible()
     expect(screen.getByRole("button", { name: "일지" })).toBeVisible()
-    expect(screen.getByRole("button", { name: "오늘 방문 확인 +1P" })).toBeVisible()
+    expect(screen.queryByRole("button", { name: "오늘 방문 확인 +1P" })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "일지 꾸미기" })).toBeVisible()
     expect(screen.queryByLabelText(/오라클 포인트/u)).not.toBeInTheDocument()
     expect(window.localStorage.getItem("trainoracle.engagement.v1")).toBeNull()
     expect(window.localStorage.getItem(ENGAGEMENT_STORAGE_KEY)).toBeNull()

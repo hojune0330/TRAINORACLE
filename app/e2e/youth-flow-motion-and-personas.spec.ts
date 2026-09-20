@@ -61,7 +61,7 @@ await completeDetailedPlan(page, { frame: /^10일 계획 받기/u, event: /^1500
   await page.getByText("A와 B는 뭐가 달라요?", { exact: true }).click()
   await expect(page.getByRole("region", { name: "두 계획 핵심 비교" })).toContainText("조금 힘들게 꾸준히 · LT")
   await expect(page.getByRole("group", { name: /훈련 2개/u }).first()).toBeVisible()
-  await expect(page.getByLabel("10일 훈련 흐름").first()).toContainText(/MAIN|REC|BASE/u)
+  await expect(page.getByLabel("10일 훈련 일정").first()).toContainText(/MAIN|REC|BASE/u)
   expect(await page.locator("body").evaluate((body) => body.scrollWidth <= window.innerWidth)).toBe(true)
 })
 

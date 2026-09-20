@@ -15,12 +15,12 @@ function requireTouchProject(projectName: string) {
 test("audits empty home and chooser touch actions", async ({ page }, testInfo) => {
   requireTouchProject(testInfo.project.name)
   await page.goto("/")
-  const services = page.getByRole("navigation", { name: "바로 시작하기" })
+  const services = page.getByRole("navigation", { name: "훈련 도움말과 일지 꾸미기" })
   await auditTouchTargets(page, [
     { name: "empty-home.first-entry", locator: page.getByRole("button", { name: "오늘 기록 남기기" }), heightOnly: true },
     { name: "empty-home.create-plan", locator: page.getByRole("button", { name: "훈련 계획 만들기" }), heightOnly: true },
-    { name: "empty-home.learn", locator: services.getByRole("button", { name: "훈련 방법 배우기" }), heightOnly: true },
-    { name: "empty-home.plan", locator: services.getByRole("button", { name: /^훈련 계획/u }), heightOnly: true },
+    { name: "empty-home.learn", locator: services.getByRole("button", { name: "훈련 배우기" }), heightOnly: true },
+    { name: "empty-home.decorate", locator: services.getByRole("button", { name: "일지 꾸미기" }), heightOnly: true },
     { name: "empty-home.more", locator: page.getByRole("button", { name: "더보기" }) },
   ])
   await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
@@ -47,11 +47,11 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
   requireTouchProject(testInfo.project.name)
   await seedTouchAuditEntries(page)
   await page.goto("/?app=1")
-  const entries = page.getByRole("button", { name: /상세 열기/u })
+  const entries = page.getByRole("region", { name: "최근 하루 기록" }).getByRole("button", { name: /기록 2개 보기/u })
   await auditTouchTargets(page, [
     { name: "populated-home.open-today", locator: page.getByRole("button", { name: "오늘 기록 보기" }), heightOnly: true },
     { name: "populated-home.add", locator: page.getByRole("button", { name: "기록 더 남기기" }), heightOnly: true },
-    { name: "populated-home.entries", locator: entries, count: 5, heightOnly: true },
+    { name: "populated-home.entries", locator: entries, count: 1, heightOnly: true },
     { name: "populated-home.tabs", locator: page.getByRole("navigation", { name: "주 탭" }).getByRole("button"), count: 5 },
   ])
   await page.getByRole("button", { name: "더보기" }).click()
@@ -69,11 +69,37 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
   await expectNoHorizontalOverflow(page)
   await entries.nth(0).click()
   await auditTouchTargets(page, [
-    { name: "detail.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
+    { name: "detail.summary", locator: page.locator(".journal-entry-summary"), count: 2 },
+    { name: "detail.expand-all", locator: page.getByRole("button", { name: "모두 펼쳐보기" }) },
+    { name: "detail.manage", locator: page.getByRole("button", { name: /이 날의 기록 관리/u }) },
+    { name: "detail.decorate", locator: page.getByRole("button", { name: "일지 꾸미기 열기" }) },
+  ])
+  const decorationLauncher = page.getByRole("button", { name: "일지 꾸미기 열기" })
+  const primaryNavigation = page.getByRole("navigation", { name: "주 탭" })
+  await decorationLauncher.scrollIntoViewIfNeeded()
+  const decorationBox = await decorationLauncher.boundingBox()
+  const navigationBox = await primaryNavigation.boundingBox()
+  expect(decorationBox).not.toBeNull()
+  expect(navigationBox).not.toBeNull()
+  expect((decorationBox?.y ?? 0) + (decorationBox?.height ?? 0)).toBeLessThanOrEqual((navigationBox?.y ?? 0) + 0.5)
+  const manageToggle = page.getByRole("button", { name: /이 날의 기록 관리/u })
+  await expect(manageToggle).toHaveAttribute("aria-expanded", "false")
+  await expect(page.getByTestId("journal-add-entry")).toBeHidden()
+  await expect(page.locator('[data-testid^="journal-edit-"]')).toHaveCount(2)
+  await expect(page.locator('[data-testid^="journal-edit-"]').first()).toBeHidden()
+  await manageToggle.click()
+  await auditTouchTargets(page, [
+    { name: "detail.add-entry", locator: page.getByTestId("journal-add-entry") },
+    { name: "detail.edit-entry", locator: page.locator('[data-testid^="journal-edit-"]'), count: 2 },
+  ])
+  await manageToggle.click()
+  await page.getByRole("button", { name: "모두 펼쳐보기" }).click()
+  await auditTouchTargets(page, [
+    { name: "detail.back", locator: page.getByRole("button", { name: "홈으로 돌아가기" }) },
     { name: "detail.delete", locator: page.getByRole("button", { name: "이 일지 지우기" }), count: 2, heightOnly: true },
   ])
   await expectNoHorizontalOverflow(page)
-  await page.getByRole("button", { name: "← 뒤로" }).click()
+  await page.getByRole("button", { name: "홈으로 돌아가기" }).click()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석" }).click()
   const metricButtons = page
     .getByRole("region", { name: "최근 4개월 추이" })
@@ -92,10 +118,10 @@ test("saves post-session and evening entries through the mobile shell", async ({
   requireTouchProject(testInfo.project.name)
   await openEntry(page, /훈련 후/u)
   await page.getByRole("button", { name: /^저장/u }).click()
-  await expect(page.getByRole("button", { name: /상세 열기/u })).toHaveCount(1)
+  await expect(page.getByRole("button", { name: /기록 1개 보기 · 훈련 1/u })).toHaveCount(1)
   await openEntry(page, /하루 마무리/u)
   await page.getByRole("button", { name: /^저장/u }).click()
-  await expect(page.getByRole("button", { name: /상세 열기/u })).toHaveCount(2)
+  await expect(page.getByRole("button", { name: /기록 2개 보기 · 훈련 1 · 하루 마무리 1/u })).toHaveCount(1)
 })
 
 test("keeps the review toast dismissal touchable", async ({ page }, testInfo) => {

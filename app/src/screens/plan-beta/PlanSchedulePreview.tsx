@@ -331,7 +331,7 @@ export function PlanRpeGuide() {
         <li><b>9~10</b><span>거의 전력이에요</span></li>
       </ul>
       <details className="plan-rpe-guide__more">
-        <summary>자세히</summary>
+        <summary>RPE 단계 설명</summary>
         <span>
           1~2 회복 움직임 · 3~4 대화 가능한 쉬운 유산소 · 5 꾸준한 노력 · 6 짧은 문장만 가능 · 7 몇 마디만 가능 · 8 매우 힘든 짧은 반복 · 9 거의 최대인 짧은 노력 · 10 최대 노력에 가까운 느낌
         </span>
@@ -353,10 +353,10 @@ function PlanTrainingFlow({
   readonly activeDayIndex: number
 }) {
   return (
-    <section className="plan-training-flow" aria-label={`${frameLengthDays}일 훈련 흐름`}>
+    <section className="plan-training-flow" aria-label={`${frameLengthDays}일 훈련 일정`}>
       <header>
-        <strong>{frameLengthDays}일 훈련 흐름</strong>
-        <span>강약과 회복을 먼저 확인하세요.</span>
+        <strong>{frameLengthDays}일 훈련 일정</strong>
+        <span>훈련일과 쉬는 날을 확인하세요.</span>
       </header>
       <ul className="plan-training-flow__legend" aria-label="훈련 구분">
         <li><PlanFlowCodeHelp primary="MAIN" kind="main" variant="legend" /></li>

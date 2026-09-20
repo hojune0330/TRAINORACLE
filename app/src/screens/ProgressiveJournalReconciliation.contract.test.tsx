@@ -56,8 +56,10 @@ describe("progressive journal reconciliation UI", () => {
   it("P2-2 retains the edit entry point after objective import", async () => {
     const entry = seedMixed()
     const onEditEntry = vi.fn()
+    const user = userEvent.setup()
     render(<JournalDetailActions date={entry.date} entries={[entry]} onEditEntry={onEditEntry} />)
-    await userEvent.setup().click(screen.getByTestId(`journal-edit-${entry.id}`))
+    await user.click(screen.getByTestId("journal-manage-toggle"))
+    await user.click(screen.getByTestId(`journal-edit-${entry.id}`))
     expect(onEditEntry).toHaveBeenCalledWith(entry)
   })
 

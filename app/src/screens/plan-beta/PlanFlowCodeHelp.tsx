@@ -112,7 +112,7 @@ function GlossarySection({ term, divided = false }: {
     <section className="plan-flow-code-help__section" data-divided={divided ? "true" : undefined}>
       <div className="term-help__label">{entry.label}</div>
       <div className="term-help__short">{entry.short}</div>
-      <a className="term-help__more" href={`?terms=1&term=${term}`}>용어 자세히 보기</a>
+      <a className="term-help__more" href={`?terms=1&term=${term}`}>용어 설명 보기</a>
     </section>
   )
 }

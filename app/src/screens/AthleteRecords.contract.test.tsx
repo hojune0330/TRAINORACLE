@@ -31,7 +31,7 @@ describe("athlete record entry surface", () => {
     expect(onManageRecords).not.toHaveBeenCalled()
     await user.click(within(tools).getByText("기록 관리·훈련표 읽기"))
     await user.click(within(tools).getByRole("button", {
-      name: "내 경기 기록", exact: true,
+      name: "내 경기 기록",
     }))
 
     expect(onManageRecords).toHaveBeenCalledTimes(1)

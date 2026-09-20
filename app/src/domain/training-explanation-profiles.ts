@@ -128,7 +128,7 @@ export const TRAINING_EXPLANATION_PROFILES: Readonly<Record<TrainingExplanationK
     recoveryRationale: "움직임을 포함한 회복일과 훈련 없는 휴식일은 달라요. 이 설명만으로 휴식을 회복 운동으로 바꾸거나 회복이 완료됐다고 판단하지 않아요.",
     expectedAdaptation: "일반 코칭 의도는 훈련 부담을 낮추면서 편안한 움직임을 유지하는 것이에요. 개인의 회복 속도가 빨라진다고 보장하지 않아요.",
     limitations: ["회복 운동이 휴식보다 항상 낫다는 근거로 사용하지 않아요.", "통증·피로의 원인이나 다음 훈련의 안전을 이 이름만으로 판정하지 않아요."],
-    observationGuide: "계획 대비 실제 움직인 시간과 체감강도를 구분해 살펴봐요. 편안함의 변화는 관찰이지 회복 완료나 이 세션의 선택 근거가 아니에요.",
+    observationGuide: "계획 내용과 실제로 움직인 시간·체감강도를 따로 확인해요. 편안함의 변화는 관찰이지 회복 완료나 이 세션의 선택 근거가 아니에요.",
     sourceIds: ["COACHING_TERMINOLOGY", "COACHING_PRESCRIPTION"],
   },
   BASE_INTENT: {
@@ -141,7 +141,7 @@ export const TRAINING_EXPLANATION_PROFILES: Readonly<Record<TrainingExplanationK
     recoveryRationale: "연속 운동이라면 반복 사이 회복은 해당하지 않아요. 나뉜 구성이면 계획의 회복을 함께 보며, 쉬운 훈련이라는 이유로 다음 훈련까지 회복이 필요 없다고 판단하지 않아요.",
     expectedAdaptation: "지속적인 유산소 활동을 이어 갈 능력을 준비하려는 일반 코칭 의도예요. 인용한 연료 대사 연구가 이 세션의 개인 지구력 향상을 보장하지는 않아요.",
     limitations: ["성인 실험의 연료 사용 결과로 청소년이나 개인의 지방 사용 비율을 계산하지 않아요.", "체중 감소나 워치의 특정 심박 구간과 같은 뜻이 아니에요."],
-    observationGuide: "같은 계획 조건에서 실제 시간·거리와 체감강도가 어떻게 달랐는지 살펴봐요. 편해진 느낌만으로 대사 적응이나 훈련의 인과 효과를 확정하지 않아요.",
+    observationGuide: "같은 계획 조건에서 실제 시간·거리·체감강도의 차이를 비교해요. 편해진 느낌만으로 대사 적응이나 훈련의 인과 효과를 확정하지 않아요.",
     sourceIds: ["PMID_8214047", "COACHING_TERMINOLOGY", "COACHING_PRESCRIPTION"],
   },
   LT_INTENT: {
@@ -154,7 +154,7 @@ export const TRAINING_EXPLANATION_PROFILES: Readonly<Record<TrainingExplanationK
     recoveryRationale: "반복형이면 회복 구간이 다음 운동의 지속 가능성과 전체 부담에 영향을 줘요. 연속형에는 반복 사이 회복이 없으며, LT 이름만으로 특정 회복 시간이나 방식을 정하지 않아요.",
     expectedAdaptation: "지속 페이스를 견디는 능력을 준비하는 것이 설계 의도예요. 지구력 훈련 후 젖산 반응 변화는 연구 집단에서 관찰됐지만 이 세션으로 개인 역치가 높아진다고 보장하지 않아요.",
     limitations: ["성인 남성 사이클 연구는 달리기 LT 처방이나 청소년의 효과를 직접 검증하지 않았어요.", "계획의 페이스나 체감강도로 개인의 혈중 젖산·정확한 역치를 측정할 수 없어요."],
-    observationGuide: "계획한 노력과 실제 구간 기록·체감강도, 뒤 구간의 변화를 함께 살펴봐요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
+    observationGuide: "계획한 노력과 실제 구간 기록·체감강도, 후반 변화를 함께 확인해요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
     sourceIds: ["PMID_10562610", "COACHING_TERMINOLOGY", "COACHING_PRESCRIPTION"],
   },
   VO2_INTENT: {
@@ -167,7 +167,7 @@ export const TRAINING_EXPLANATION_PROFILES: Readonly<Record<TrainingExplanationK
     recoveryRationale: "회복은 다음 반복의 수행과 연속되는 부담을 조절하는 구성요소예요. 실제 반복 사이·세트 사이의 시간과 방식을 함께 읽어야 하며, 항상 완전히 쉬거나 항상 덜 쉬는 방식으로 고정하지 않아요.",
     expectedAdaptation: "강한 유산소 운동을 감당하는 능력을 준비하려는 코칭 의도예요. 연구의 급성 산소섭취 반응이 개인 최대산소섭취량의 장기 향상을 보장하지 않아요.",
     limitations: ["잘 훈련된 성인 달리기 선수의 실험을 청소년·초보자에게 그대로 적용하지 않아요.", "숨이 많이 찬 느낌만으로 최대산소섭취량 도달이나 충분한 훈련 효과를 확정하지 않아요."],
-    observationGuide: "실제 구간 기록, 회복 수행, 체감강도와 반복 후반의 변화를 함께 살펴봐요. 이는 수행 관찰이며 산소섭취량 측정이나 세션 선택 근거가 아니에요.",
+    observationGuide: "실제 구간 기록·회복 수행·체감강도와 반복 후반의 변화를 함께 확인해요. 이는 수행 관찰이며 산소섭취량 측정이나 세션 선택 근거가 아니에요.",
     sourceIds: ["PMID_15387806", "COACHING_TERMINOLOGY", "COACHING_PRESCRIPTION"],
   },
   GLY_INTENT: {
@@ -180,7 +180,7 @@ export const TRAINING_EXPLANATION_PROFILES: Readonly<Record<TrainingExplanationK
     recoveryRationale: "GLY가 언제나 완전 회복을 뜻하지는 않아요. 회복 간격에 따라 인산크레아틴 재충전과 다음 반복의 대사 부담이 달라질 수 있어요. 실제 처방의 반복 사이·세트 사이 회복 시간과 방식이 기준이며, 짧을수록 좋다는 뜻도 아니에요.",
     expectedAdaptation: "높은 에너지 공급 요구 속에서 반복 수행과 출력 유지를 준비하는 것이 코칭 의도예요. 회복 간격이 다른 달리기 훈련의 집단 차이는 개인의 해당 능력 향상을 보장하지 않아요.",
     limitations: ["성인 사이클의 급성 기전 연구와 남성 반복 달리기 훈련 연구는 대상·운동·관찰 기간이 달라요.", "청소년·여성·중장거리 선수에게 같은 효과나 회복 간격을 적용할 근거가 아니며, 젖산 수치나 에너지 비율을 추정하지 않아요."],
-    observationGuide: "구간 기록의 변화, 실제 회복 시간·방식과 체감강도를 구분해 살펴봐요. 후반 기록 저하만으로 젖산 축적이나 특정 경로의 고갈을 진단하지 않아요.",
+    observationGuide: "구간 기록의 변화와 실제 회복 시간·방식, 체감강도를 따로 확인해요. 후반 기록 저하만으로 젖산 축적이나 특정 경로의 고갈을 진단하지 않아요.",
     sourceIds: ["PMID_8226473", "PMID_21777153", "PMID_10562610", "COACHING_TERMINOLOGY", "COACHING_PRESCRIPTION"],
   },
   ATP_PC_INTENT: {
@@ -189,11 +189,11 @@ export const TRAINING_EXPLANATION_PROFILES: Readonly<Record<TrainingExplanationK
     termId: "atp",
     purpose: "매우 짧은 가속·스피드 구간에서 ATP를 빠르게 공급하며 높은 출력을 내는 능력을 준비해요.",
     energyContext: "저장된 ATP와 인산크레아틴이 빠른 에너지 공급에 관여해요. 첫 짧은 운동부터 해당과정도 기여할 수 있고 산화 대사도 작동하므로 인원질만 사용하는 구간으로 단정하지 않아요.",
-    workRationale: "짧은 운동 구간은 높은 출력을 내는 동작을 다루기 위한 설계예요. 계속 이어 달리는 부담과 목적이 다르며, 빠른 에너지 공급과 수행의 질을 함께 살펴야 해요.",
+    workRationale: "짧은 운동 구간은 높은 출력을 내는 동작을 다루기 위한 설계예요. 오래 달리는 훈련과 부담·목적이 다르며, 빠른 에너지 공급과 수행의 질을 각각 확인해야 해요.",
     recoveryRationale: "회복은 인산크레아틴 재충전과 다음 반복의 출력 유지에 중요해요. 앞선 운동에 따라 회복 경과가 달라지므로 실제 처방의 시간·방식을 따로 확인하며, 고정된 시간이 모든 사람의 완전 회복을 보장하지 않아요.",
     expectedAdaptation: "빠르게 힘을 내고 가속하는 능력을 준비하는 것이 코칭 의도예요. 급성 기전 연구만으로 개인의 스피드 향상이나 저장 에너지 증가를 보장하지 않아요.",
     limitations: ["성인 남성 사이클 연구의 대사·회복 결과를 달리기나 청소년에게 그대로 옮기지 않아요.", "인원질만 작동하거나 젖산이 전혀 없다는 뜻이 아니며, 새 단거리 전문 처방을 허가하지 않아요."],
-    observationGuide: "구간 기록과 회복 수행, 가속 동작이 유지됐는지를 살펴봐요. 기록 저하를 인산크레아틴 고갈의 측정값으로 해석하지 않아요.",
+    observationGuide: "구간 기록·회복 수행과 가속 동작 유지 여부를 확인해요. 기록 저하를 인산크레아틴 고갈의 측정값으로 해석하지 않아요.",
     sourceIds: ["PMID_8226473", "PMID_9241025", "COACHING_TERMINOLOGY", "COACHING_PRESCRIPTION"],
   },
   MIXED_INTENT: {
@@ -206,7 +206,7 @@ export const TRAINING_EXPLANATION_PROFILES: Readonly<Record<TrainingExplanationK
     recoveryRationale: "구간 안의 반복 사이 회복과 서로 다른 구간 사이 회복은 역할이 다를 수 있어요. 실제 처방의 회복을 각각 보며 MIX 전체에 같은 회복 규칙을 덧씌우지 않아요.",
     expectedAdaptation: "확인된 구간들의 요구에 맞춰 수행을 이어 가는 능력이 설계 의도예요. 조합 자체의 우월성이나 개인에게 복합 효과가 생긴다는 보장은 없어요.",
     limitations: ["미배분 표시라면 구체적인 조합 목적과 적응은 확인되지 않은 상태예요.", "성인 단일 실험의 기전을 조합 전체나 청소년의 개인 효과 검증으로 확대하지 않아요."],
-    observationGuide: "구간별 목표와 실제 기록·회복·체감강도를 따로 살펴봐요. 서로 다른 구간을 합쳐 하나의 대사 점수나 과거 선택 이유로 만들지 않아요.",
+    observationGuide: "구간별 목표와 실제 기록·회복·체감강도를 따로 확인해요. 서로 다른 구간을 합쳐 하나의 대사 점수나 과거 선택 이유로 만들지 않아요.",
     sourceIds: ["PMID_8226473", "PMID_15387806", "COACHING_TERMINOLOGY", "COACHING_PRESCRIPTION"],
   },
   REST: {
@@ -233,7 +233,7 @@ export const TRAINING_EXPLANATION_PROFILES: Readonly<Record<TrainingExplanationK
     recoveryRationale: "준비 동작 사이에 회복이 있으면 해당 구성요소의 시간·방식을 확인해요. 준비 단계의 회복을 본운동의 반복 사이 회복으로 대신하지 않아요.",
     expectedAdaptation: "당일 본운동에 맞춰 움직임을 준비하려는 코칭 의도예요. 준비운동만으로 개인의 수행 향상이나 부상 예방이 보장되지는 않아요.",
     limitations: ["출처는 기존 처방의 운영 구성 계약이며 특정 준비운동의 효과를 입증한 연구가 아니에요.", "준비운동을 마쳐도 통증이나 안전 차단이 해제되는 것은 아니에요."],
-    observationGuide: "계획한 준비 구성과 실제 수행을 구분하고 움직임·체감강도의 변화를 살펴봐요. 준비가 편했다는 사실을 안전 허가로 해석하지 않아요.",
+    observationGuide: "계획한 준비 구성과 실제 수행을 구분하고 움직임·체감강도의 차이를 확인해요. 준비가 편했다는 사실을 안전 허가로 해석하지 않아요.",
     sourceIds: ["COACHING_PRESCRIPTION", "COACHING_TERMINOLOGY"],
   },
   COOLDOWN: {
@@ -246,7 +246,7 @@ export const TRAINING_EXPLANATION_PROFILES: Readonly<Record<TrainingExplanationK
     recoveryRationale: "정리운동과 다음 세션까지의 회복은 달라요. 마무리를 했다는 이유로 다음 고강도 운동의 회복 시간을 줄이지 않아요.",
     expectedAdaptation: "당일 운동의 부담을 낮추며 마무리하려는 코칭 의도예요. 개인의 근육통 감소나 다음날 수행 회복을 보장하지 않아요.",
     limitations: ["출처는 기존 처방의 운영 구성 계약이며 정리운동의 개인 효과 검증이 아니에요.", "젖산을 없애야만 회복된다는 설명이나 부상 회복 판정으로 사용하지 않아요."],
-    observationGuide: "실제 마무리 동작과 체감강도를 살펴보고 본운동 실적과 구분해요. 이후의 회복 상태를 이 구성요소의 효과로 단정하지 않아요.",
+    observationGuide: "실제 마무리 동작·체감강도를 확인하고 본운동 실적과 구분해요. 이후의 회복 상태를 이 구성요소의 효과로 단정하지 않아요.",
     sourceIds: ["COACHING_PRESCRIPTION", "COACHING_TERMINOLOGY"],
   },
   TECHNICAL: {
@@ -259,7 +259,7 @@ export const TRAINING_EXPLANATION_PROFILES: Readonly<Record<TrainingExplanationK
     recoveryRationale: "동작 사이 회복은 피로와 기술 수행을 함께 고려하는 구성요소예요. 구체적인 휴식은 계획에 따르며 기술이라는 이름만으로 짧게 정하지 않아요.",
     expectedAdaptation: "동작 이해와 일관성을 준비하는 일반 코칭 의도예요. 이 설명은 개인 기술 향상이나 달리기 경제성 개선을 보장하지 않아요.",
     limitations: ["일반 설계 의도이며 개별 기술의 효과를 검증한 연구 근거는 포함하지 않아요.", "기술 연습의 이점을 에너지 목적 본운동의 대사 설명 대신 사용하지 않아요."],
-    observationGuide: "실제로 연습한 동작과 확인한 수행의 차이를 살펴봐요. 반복 횟수만으로 기술 습득이나 개인의 약점 보완을 확정하지 않아요.",
+    observationGuide: "실제로 연습한 동작과 확인한 수행을 비교해요. 반복 횟수만으로 기술 습득이나 개인의 약점 보완을 확정하지 않아요.",
     sourceIds: ["COACHING_TERMINOLOGY"],
   },
   STRENGTH: {
@@ -272,7 +272,7 @@ export const TRAINING_EXPLANATION_PROFILES: Readonly<Record<TrainingExplanationK
     recoveryRationale: "세트 사이 회복은 다음 힘 발휘와 수행의 질에 영향을 주는 구성요소예요. 실제 처방을 기준으로 보며 달리기 반복의 휴식 규칙을 그대로 가져오지 않아요.",
     expectedAdaptation: "힘 발휘와 달리기 수행을 뒷받침하는 능력이 코칭 의도예요. 폭발적 근력·지구력 병행 연구의 경제성 개선은 집단 관찰이며 개인의 기록 향상을 보장하지 않아요.",
     limitations: ["잘 훈련된 성인 남성 지구력 선수의 특정 병행 훈련 결과를 청소년·초보자나 모든 근력 운동에 확대하지 않아요.", "이 프로필은 새 근력 처방이나 기존 달리기 훈련량의 변경을 승인하지 않아요."],
-    observationGuide: "실제 동작·부하·반복과 체감강도를 구분해 살펴봐요. 중량이나 반복 수의 변화만으로 달리기 경제성 향상을 확정하지 않아요.",
+    observationGuide: "실제 동작·부하·반복·체감강도를 따로 확인해요. 중량이나 반복 수의 변화만으로 달리기 경제성 향상을 확정하지 않아요.",
     sourceIds: ["PMID_10233114", "COACHING_TERMINOLOGY"],
   },
 }

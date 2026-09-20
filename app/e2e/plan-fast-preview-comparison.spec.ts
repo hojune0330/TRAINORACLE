@@ -6,9 +6,7 @@ test.use({ serviceWorkers: "block" })
 
 async function openPlan(page: Page): Promise<void> {
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "바로 시작하기" })
-    .getByRole("button", { name: /^훈련 계획/u })
-    .click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
 }
 
 async function answerFirstThree(page: Page, review = false): Promise<void> {

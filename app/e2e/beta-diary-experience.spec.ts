@@ -60,15 +60,17 @@ test(`uses the diary flow with ${hasEarnedHistory ? "previously earned" : "no ba
 
   // Historical entries stay visible; only a stored award history supplies past points.
   const balanceHeading = `꾸미기 보관함 · 사용 가능 ${hasEarnedHistory ? 32 : 0}P`
+  await page.getByRole("button", { name: "일지 꾸미기" }).click()
   await expect(page.getByRole("heading", { name: balanceHeading })).toBeVisible()
   /* 홈 카드는 이제 오늘 일지 상세로 이동해 진짜 편집기를 바로 연다. */
   await page.getByRole("button", { name: "꾸미기 열기" }).click()
   await expect(page.getByRole("dialog", { name: "이 일지 꾸미기" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "일지 꾸미기·포인트로 돌아가기" })).toHaveCount(0)
   await page.getByRole("button", { name: "꾸미기 완료" }).click()
-  await page.getByRole("button", { name: "← 뒤로" }).click()
+  await page.getByRole("button", { name: "일지 꾸미기·포인트로 돌아가기" }).click()
   await expect(page.getByRole("heading", { name: balanceHeading })).toBeVisible()
 
-  await page.getByRole("button", { name: "전체 보기" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "일지", exact: true }).click()
   await page.getByRole("button", { name: "9.5일 주기" }).click()
   await expect(page.getByRole("heading", { name: "9.5일 주기 일지" })).toBeVisible()
   await expect(page.getByText(/계획을 자동으로 바꾸지 않아요/u)).toBeVisible()

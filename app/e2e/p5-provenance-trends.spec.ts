@@ -100,7 +100,7 @@ test("shows provenance-safe trends without leaking private memo signals", async 
   await page.goto("/?app=1")
   const homeDistance = page.getByRole("region", { name: "달린 거리", exact: true })
   await expect(homeDistance.getByText(/^8\s*km$/u).first()).toBeVisible()
-  await homeDistance.getByRole("button", { name: "누적 거리 자세히 보기" }).click()
+  await homeDistance.getByRole("button", { name: "누적 거리 분석 보기" }).click()
 
   const distance = page.getByRole("region", { name: "누적 거리와 변화" })
   await expect(distance.locator(".distance-overview__totals").getByText(/^8\s*km$/u).first()).toBeVisible()

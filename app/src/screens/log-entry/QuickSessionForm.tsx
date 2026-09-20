@@ -49,7 +49,7 @@ const RPE_OPTIONS = [
   { value: 2, detail: "걷기보다 조금 빠른 아주 느린 조깅" },
   { value: 3, detail: "친구와 편하게 대화할 수 있는 기초 유산소" },
   { value: 4, detail: "땀이 나지만 전화 통화가 가능한 강도" },
-  { value: 5, detail: "호흡을 의식하며 꾸준히 이어가는 노력" },
+  { value: 5, detail: "호흡이 빨라지지만 꾸준히 움직일 수 있는 노력" },
   { value: 6, detail: "짧은 문장으로만 말할 수 있는 강도" },
   { value: 7, detail: "몇 마디만 가능한 힘든 운동" },
   { value: 8, detail: "매우 힘들지만 정해진 반복을 수행하는 강도" },

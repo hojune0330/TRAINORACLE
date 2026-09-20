@@ -19,6 +19,9 @@ import {
 } from "./JournalArchiveSummary"
 import { CycleArchive } from "./CycleArchive"
 import { JournalMonthCalendar } from "./JournalMonthCalendar"
+import { JournalThenNow } from "./home/JournalThenNow"
+import { InfoDisclosure } from "../components/InfoDisclosure"
+import { todayISO } from "../domain/journal-store"
 
 export type JournalArchiveProps = {
   readonly entries: readonly JournalEntry[]
@@ -111,6 +114,15 @@ export function JournalArchive({
           <span>9.5일 주기</span>
         </button>
       </div>
+
+      {entries.some(entry => entry.kind === "post-session" && entry.date === todayISO())
+        && entries.filter(entry => entry.kind === "post-session" && entry.date <= todayISO()).length > 1 && (
+        <div style={{ padding: "0 20px 16px" }}>
+          <InfoDisclosure title="최근 훈련 비교">
+            <JournalThenNow onOpenDay={onOpenDay} />
+          </InfoDisclosure>
+        </div>
+      )}
 
       {activeMode === "CYCLE" ? (
         <CycleArchive

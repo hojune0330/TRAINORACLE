@@ -22,7 +22,7 @@ test("archives the original in the real plan flow and compares it from its journ
     localStorage.setItem("synthetic-original-plan-seeded", "1")
   }, { plan: state, journal: entry })
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "바로 시작하기" }).getByRole("button", { name: /^훈련 계획/u }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
   await page.getByRole("button", { name: "현재 기준으로 다음 계획안 만들기" }).click()
   await expect.poll(() => page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBeNull()
   const snapshot = await page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.plan-beta.history.v1")!))
@@ -31,7 +31,7 @@ test("archives the original in the real plan flow and compares it from its journ
   expect(snapshot[0].originalPlan).toEqual(state)
 
   await page.reload()
-  await page.getByRole("button", { name: /Original plan comparison 상세 열기/u }).click()
+  await page.getByRole("region", { name: "최근 하루 기록" }).getByRole("button", { name: /기록 1개 보기/u }).click()
   const summary = page.getByText("계획한 훈련과 비교하기", { exact: true })
   await summary.scrollIntoViewIfNeeded()
   if (testInfo.project.name === "desktop-chromium") {
