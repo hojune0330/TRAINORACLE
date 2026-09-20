@@ -267,6 +267,49 @@
   margin: 0;
 }
 
+/* The recommendation stays compact without changing entry or execution views. */
+.instant-plan--recommendation > * + * {
+  margin-block-start: var(--space-3);
+}
+
+.instant-plan--recommendation .instant-plan__summary {
+  gap: var(--space-1) var(--space-3);
+}
+
+.instant-plan--recommendation .instant-plan__summary > div {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-2);
+}
+
+.instant-plan--recommendation .instant-plan__summary > .instant-plan__burden {
+  flex: 1 1 auto;
+}
+
+.instant-plan--recommendation .instant-plan__summary dd {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+}
+
+.instant-plan--recommendation .instant-plan__schedule .instant-plan__day {
+  padding-block: var(--space-1);
+}
+
+.instant-plan--recommendation .instant-plan__schedule h4 {
+  margin-block-end: var(--space-1);
+}
+
+.instant-plan--recommendation .instant-plan__day-slots {
+  gap: var(--space-1);
+}
+
+.instant-plan--recommendation .instant-plan__day-slot {
+  display: block;
+}
+
 @media (max-width: 359px) {
   .instant-plan__actions > * {
     flex: 1 1 100%;

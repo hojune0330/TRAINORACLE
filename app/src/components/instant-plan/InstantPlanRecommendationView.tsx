@@ -56,8 +56,7 @@ export function InstantPlanRecommendationView({
     : actionState.kind === "READY" ? null : actionState.message
 
   return (
-    <section className="instant-plan" aria-labelledby={headingId}>
-      <p className="instant-plan__eyebrow">내 추천 프로그램</p>
+    <section className="instant-plan instant-plan--recommendation" aria-labelledby={headingId}>
       <h2 id={headingId} className="instant-plan__heading">{recommendation.title}</h2>
       {recommendation.source.kind === "CREATOR" && (
         <p className="instant-plan__source">
@@ -66,8 +65,8 @@ export function InstantPlanRecommendationView({
       )}
       <dl className="instant-plan__summary">
         <div><dt>기간</dt><dd>{recommendation.periodLabel}</dd></div>
-        <div><dt>이 기간의 훈련</dt><dd>{recommendation.sessionCount}회</dd></div>
-        <div><dt>훈련 시간</dt><dd>{recommendation.durationLabel}</dd></div>
+        <div className="instant-plan__burden"><dt>이 기간의 훈련</dt><dd>{recommendation.sessionCount}회</dd></div>
+        <div className="instant-plan__burden"><dt>훈련 시간</dt><dd>{recommendation.durationLabel}</dd></div>
         <div><dt>첫 훈련</dt><dd>{recommendation.firstSessionLabel}</dd></div>
         {anchorLabel && <div><dt>기준 기록</dt><dd>{anchorLabel}</dd></div>}
         {goalLabel && <div><dt>내 목표</dt><dd>{goalLabel}</dd></div>}
@@ -90,7 +89,7 @@ export function InstantPlanRecommendationView({
                   <ul className="instant-plan__day-slots">
                     {day.sessions.map(session => (
                       <li className="instant-plan__day-slot" key={session.id}>
-                        <span>{session.slotLabel}</span>
+                        <span>{session.slotLabel}</span>{"·"}
                         <span className="instant-plan__role">{roleLabels[session.role]}</span>
                       </li>
                     ))}
