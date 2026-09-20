@@ -18,7 +18,7 @@
 6. Update browser journeys to open intentionally collapsed content before asserting actual prescription, evidence, provenance, and cycle values. No new skips or weaker numerical assertions.
 7. Keep the restored install suggestion compact (populated home measured 1,073px, within the existing 1,100px limit; 44px touch targets retained).
 8. Reserve layout space for persistent review notices so they do not cover journal actions. Keep the notice until explicit dismissal and maintain one modal-owned copy in the editor.
-9. Return both focus and scroll position to the actual session-explanation opener, using the existing reduced-motion-aware scroll hook.
+9. Capture the exact scroll position when opening a session explanation and restore it with focus when closing. Do not start a second alignment animation that competes with position restoration.
 
 ## Verification Evidence Before Final CI
 
@@ -48,6 +48,8 @@
 - Intermediate CI run `35512146435`: contract-tests passed; app units reported 4,262 passed, 1 failed, 35 existing skips. The legacy V5 account UI round-trip clicked while the mount-triggered server read could still be loading. Its fixture now explicitly waits for service READY instead of interpreting the previous save receipt as readiness. A local re-run of all V4/V5/V6 cases passed before the additional readiness assertion; the exact final CI remains the release gate.
 
 ## Deployment Boundaries
+
+- CI run `35512922404`: contract-tests and app-quality passed (4,264 unit tests passed and 35 existing skips in each timezone). Browser verification found one mobile exact-scroll restoration failure. The return alignment animation was replaced with captured-position restoration, without weakening the pixel assertion; all 20 explanation browser cases passed locally afterward. The final-head gate is still required.
 
 - `account-journal` and `account-plan-collection` Edge Functions were deployed with matching generated validators. Auth and owner-scoped guards are retained.
 - No operational database migration, COROS credentials, provider switch, or plan-trash activation is performed by this integration.
