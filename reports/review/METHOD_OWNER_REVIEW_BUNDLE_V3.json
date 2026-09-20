@@ -56,7 +56,7 @@
               "성인 실험의 연료 사용 결과로 청소년이나 개인의 지방 사용 비율을 계산하지 않아요.",
               "체중 감소나 워치의 특정 심박 구간과 같은 뜻이 아니에요."
             ],
-            "observationGuide": "같은 계획 조건에서 실제 시간·거리와 체감강도가 어떻게 달랐는지 살펴봐요. 편해진 느낌만으로 대사 적응이나 훈련의 인과 효과를 확정하지 않아요.",
+            "observationGuide": "같은 계획 조건에서 실제 시간·거리·체감강도의 차이를 비교해요. 편해진 느낌만으로 대사 적응이나 훈련의 인과 효과를 확정하지 않아요.",
             "sourceIds": [
               "PMID_8214047",
               "COACHING_TERMINOLOGY",
@@ -284,7 +284,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:cdf1ec8db7688de850c128310268dc58afd3ced8fad79c1e941bbc498efa0b70"
+        "contentFingerprint": "sha256:1fcb78dc2901d13e5b5a268d4fbf95a4f873ae8d89a62067dcafce97951e4db3"
       }
     },
     {
@@ -338,7 +338,7 @@
               "성인 실험의 연료 사용 결과로 청소년이나 개인의 지방 사용 비율을 계산하지 않아요.",
               "체중 감소나 워치의 특정 심박 구간과 같은 뜻이 아니에요."
             ],
-            "observationGuide": "같은 계획 조건에서 실제 시간·거리와 체감강도가 어떻게 달랐는지 살펴봐요. 편해진 느낌만으로 대사 적응이나 훈련의 인과 효과를 확정하지 않아요.",
+            "observationGuide": "같은 계획 조건에서 실제 시간·거리·체감강도의 차이를 비교해요. 편해진 느낌만으로 대사 적응이나 훈련의 인과 효과를 확정하지 않아요.",
             "sourceIds": [
               "PMID_8214047",
               "COACHING_TERMINOLOGY",
@@ -668,7 +668,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:4fd5931f4418597c04cb2c4e095417dadd7daa791975bf6793f62f7218d6d991"
+        "contentFingerprint": "sha256:0965beb978ab43b08ad2273b43790e106e6466587c78548691b97254d956740f"
       }
     },
     {
@@ -721,7 +721,7 @@
               "성인 남성 사이클 연구는 달리기 LT 처방이나 청소년의 효과를 직접 검증하지 않았어요.",
               "계획의 페이스나 체감강도로 개인의 혈중 젖산·정확한 역치를 측정할 수 없어요."
             ],
-            "observationGuide": "계획한 노력과 실제 구간 기록·체감강도, 뒤 구간의 변화를 함께 살펴봐요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
+            "observationGuide": "계획한 노력과 실제 구간 기록·체감강도, 후반 변화를 함께 확인해요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
             "sourceIds": [
               "PMID_10562610",
               "COACHING_TERMINOLOGY",
@@ -1082,7 +1082,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:66b8a880da104eccd56ef46928ee9c1f1f02ed4213a582070a499127e9e2f4fe"
+        "contentFingerprint": "sha256:eea70bf16c9db65ac49ad2bf68c39a66c11fbf5df5c8e5b8d3496fbbf103a608"
       }
     },
     {
@@ -1135,7 +1135,7 @@
               "성인 남성 사이클 연구는 달리기 LT 처방이나 청소년의 효과를 직접 검증하지 않았어요.",
               "계획의 페이스나 체감강도로 개인의 혈중 젖산·정확한 역치를 측정할 수 없어요."
             ],
-            "observationGuide": "계획한 노력과 실제 구간 기록·체감강도, 뒤 구간의 변화를 함께 살펴봐요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
+            "observationGuide": "계획한 노력과 실제 구간 기록·체감강도, 후반 변화를 함께 확인해요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
             "sourceIds": [
               "PMID_10562610",
               "COACHING_TERMINOLOGY",
@@ -1550,7 +1550,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:44ebe5f60b0850e3b15ad45e67e1361395f8389ce3a05da325c87f3026ae101b"
+        "contentFingerprint": "sha256:0ebf9af5070a5c390a5eac806e33e0b1b3b9627ac40d1f475aa757e2fd8230cf"
       }
     },
     {
@@ -1603,7 +1603,7 @@
               "성인 남성 사이클 연구는 달리기 LT 처방이나 청소년의 효과를 직접 검증하지 않았어요.",
               "계획의 페이스나 체감강도로 개인의 혈중 젖산·정확한 역치를 측정할 수 없어요."
             ],
-            "observationGuide": "계획한 노력과 실제 구간 기록·체감강도, 뒤 구간의 변화를 함께 살펴봐요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
+            "observationGuide": "계획한 노력과 실제 구간 기록·체감강도, 후반 변화를 함께 확인해요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
             "sourceIds": [
               "PMID_10562610",
               "COACHING_TERMINOLOGY",
@@ -2066,7 +2066,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:dbde099c56f0e9f33794ed73036394b3c49f091c0daa68698b749a5bd2d8393c"
+        "contentFingerprint": "sha256:35774b531724b1d5418b204d403c6ad14029938672cc952804c6ab42f365f60e"
       }
     },
     {
@@ -2116,7 +2116,7 @@
               "미배분 표시라면 구체적인 조합 목적과 적응은 확인되지 않은 상태예요.",
               "성인 단일 실험의 기전을 조합 전체나 청소년의 개인 효과 검증으로 확대하지 않아요."
             ],
-            "observationGuide": "구간별 목표와 실제 기록·회복·체감강도를 따로 살펴봐요. 서로 다른 구간을 합쳐 하나의 대사 점수나 과거 선택 이유로 만들지 않아요.",
+            "observationGuide": "구간별 목표와 실제 기록·회복·체감강도를 따로 확인해요. 서로 다른 구간을 합쳐 하나의 대사 점수나 과거 선택 이유로 만들지 않아요.",
             "sourceIds": [
               "PMID_8226473",
               "PMID_15387806",
@@ -3017,7 +3017,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:2d1d91d7f346ea1d8a743ed8194eaca0ada3b5caca5f9fae0e1369061143e7b9"
+        "contentFingerprint": "sha256:753b9ea410503cff8c89884ee7d85732cc0573076bb7b37f339e8af9091e236b"
       }
     },
     {
@@ -3067,7 +3067,7 @@
               "미배분 표시라면 구체적인 조합 목적과 적응은 확인되지 않은 상태예요.",
               "성인 단일 실험의 기전을 조합 전체나 청소년의 개인 효과 검증으로 확대하지 않아요."
             ],
-            "observationGuide": "구간별 목표와 실제 기록·회복·체감강도를 따로 살펴봐요. 서로 다른 구간을 합쳐 하나의 대사 점수나 과거 선택 이유로 만들지 않아요.",
+            "observationGuide": "구간별 목표와 실제 기록·회복·체감강도를 따로 확인해요. 서로 다른 구간을 합쳐 하나의 대사 점수나 과거 선택 이유로 만들지 않아요.",
             "sourceIds": [
               "PMID_8226473",
               "PMID_15387806",
@@ -3776,7 +3776,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:b1a270d9686d0ed832b00c66319c08f3ef7435b98281c8d0dd7a557eb26489fd"
+        "contentFingerprint": "sha256:beb4983ac064e7c3dc0e1955be6d330573af7d8762afa1e23f4406ad4e3afbfb"
       }
     },
     {
@@ -3829,7 +3829,7 @@
               "미배분 표시라면 구체적인 조합 목적과 적응은 확인되지 않은 상태예요.",
               "성인 단일 실험의 기전을 조합 전체나 청소년의 개인 효과 검증으로 확대하지 않아요."
             ],
-            "observationGuide": "구간별 목표와 실제 기록·회복·체감강도를 따로 살펴봐요. 서로 다른 구간을 합쳐 하나의 대사 점수나 과거 선택 이유로 만들지 않아요.",
+            "observationGuide": "구간별 목표와 실제 기록·회복·체감강도를 따로 확인해요. 서로 다른 구간을 합쳐 하나의 대사 점수나 과거 선택 이유로 만들지 않아요.",
             "sourceIds": [
               "PMID_8226473",
               "PMID_15387806",
@@ -4477,7 +4477,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:6f49fe2c233186bb26309a3efee50141c392d3cb96868c7419d9fdd8132d5877"
+        "contentFingerprint": "sha256:f2089fb167633577e8a4c28249ad3e45bef4dd034fbf8f1a7bc802553d056ab1"
       }
     },
     {
@@ -4530,7 +4530,7 @@
               "미배분 표시라면 구체적인 조합 목적과 적응은 확인되지 않은 상태예요.",
               "성인 단일 실험의 기전을 조합 전체나 청소년의 개인 효과 검증으로 확대하지 않아요."
             ],
-            "observationGuide": "구간별 목표와 실제 기록·회복·체감강도를 따로 살펴봐요. 서로 다른 구간을 합쳐 하나의 대사 점수나 과거 선택 이유로 만들지 않아요.",
+            "observationGuide": "구간별 목표와 실제 기록·회복·체감강도를 따로 확인해요. 서로 다른 구간을 합쳐 하나의 대사 점수나 과거 선택 이유로 만들지 않아요.",
             "sourceIds": [
               "PMID_8226473",
               "PMID_15387806",
@@ -5400,7 +5400,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:0d2f729253fb065f7052bb07869c62e13be7c1825f68cce8980e566f137bbace"
+        "contentFingerprint": "sha256:2e3791d9f7a2bacfbd86b2771ec45b9304641e4eea923b9a606b0d3c4f5caaa8"
       }
     },
     {
@@ -5453,7 +5453,7 @@
               "잘 훈련된 성인 달리기 선수의 실험을 청소년·초보자에게 그대로 적용하지 않아요.",
               "숨이 많이 찬 느낌만으로 최대산소섭취량 도달이나 충분한 훈련 효과를 확정하지 않아요."
             ],
-            "observationGuide": "실제 구간 기록, 회복 수행, 체감강도와 반복 후반의 변화를 함께 살펴봐요. 이는 수행 관찰이며 산소섭취량 측정이나 세션 선택 근거가 아니에요.",
+            "observationGuide": "실제 구간 기록·회복 수행·체감강도와 반복 후반의 변화를 함께 확인해요. 이는 수행 관찰이며 산소섭취량 측정이나 세션 선택 근거가 아니에요.",
             "sourceIds": [
               "PMID_15387806",
               "COACHING_TERMINOLOGY",
@@ -6060,7 +6060,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:b2d301549fa2ddc83830e5b3f0924c5593aab2770c530329d3a4d29e8dd97603"
+        "contentFingerprint": "sha256:51c69c249c6236b23a2a1f170e991b434708b31c1cd513713643f8052e4344e3"
       }
     },
     {
@@ -6113,7 +6113,7 @@
               "잘 훈련된 성인 달리기 선수의 실험을 청소년·초보자에게 그대로 적용하지 않아요.",
               "숨이 많이 찬 느낌만으로 최대산소섭취량 도달이나 충분한 훈련 효과를 확정하지 않아요."
             ],
-            "observationGuide": "실제 구간 기록, 회복 수행, 체감강도와 반복 후반의 변화를 함께 살펴봐요. 이는 수행 관찰이며 산소섭취량 측정이나 세션 선택 근거가 아니에요.",
+            "observationGuide": "실제 구간 기록·회복 수행·체감강도와 반복 후반의 변화를 함께 확인해요. 이는 수행 관찰이며 산소섭취량 측정이나 세션 선택 근거가 아니에요.",
             "sourceIds": [
               "PMID_15387806",
               "COACHING_TERMINOLOGY",
@@ -6672,7 +6672,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:d162ca5cf55276d0d2bfbb67a1fe6a46abb99eae65b46b8e43f0abc3f4fd152e"
+        "contentFingerprint": "sha256:8b22260af88edacdd45e6e98c75dd1b1a6e6cbc7a946801d3e286028f38ef4f2"
       }
     },
     {
@@ -6725,7 +6725,7 @@
               "잘 훈련된 성인 달리기 선수의 실험을 청소년·초보자에게 그대로 적용하지 않아요.",
               "숨이 많이 찬 느낌만으로 최대산소섭취량 도달이나 충분한 훈련 효과를 확정하지 않아요."
             ],
-            "observationGuide": "실제 구간 기록, 회복 수행, 체감강도와 반복 후반의 변화를 함께 살펴봐요. 이는 수행 관찰이며 산소섭취량 측정이나 세션 선택 근거가 아니에요.",
+            "observationGuide": "실제 구간 기록·회복 수행·체감강도와 반복 후반의 변화를 함께 확인해요. 이는 수행 관찰이며 산소섭취량 측정이나 세션 선택 근거가 아니에요.",
             "sourceIds": [
               "PMID_15387806",
               "COACHING_TERMINOLOGY",
@@ -7236,7 +7236,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:c54468db38da24525e36907d249ed19124f5a0dadd275b62bedc7a54487ce6ed"
+        "contentFingerprint": "sha256:3b24358e5151ec4a3c6387db587dc2f62429a46afe3c787018c9a7aa18fd6caf"
       }
     },
     {
@@ -7282,14 +7282,14 @@
             "termId": "atp",
             "purpose": "매우 짧은 가속·스피드 구간에서 ATP를 빠르게 공급하며 높은 출력을 내는 능력을 준비해요.",
             "energyContext": "저장된 ATP와 인산크레아틴이 빠른 에너지 공급에 관여해요. 첫 짧은 운동부터 해당과정도 기여할 수 있고 산화 대사도 작동하므로 인원질만 사용하는 구간으로 단정하지 않아요.",
-            "workRationale": "짧은 운동 구간은 높은 출력을 내는 동작을 다루기 위한 설계예요. 계속 이어 달리는 부담과 목적이 다르며, 빠른 에너지 공급과 수행의 질을 함께 살펴야 해요.",
+            "workRationale": "짧은 운동 구간은 높은 출력을 내는 동작을 다루기 위한 설계예요. 오래 달리는 훈련과 부담·목적이 다르며, 빠른 에너지 공급과 수행의 질을 각각 확인해야 해요.",
             "recoveryRationale": "회복은 인산크레아틴 재충전과 다음 반복의 출력 유지에 중요해요. 앞선 운동에 따라 회복 경과가 달라지므로 실제 처방의 시간·방식을 따로 확인하며, 고정된 시간이 모든 사람의 완전 회복을 보장하지 않아요.",
             "expectedAdaptation": "빠르게 힘을 내고 가속하는 능력을 준비하는 것이 코칭 의도예요. 급성 기전 연구만으로 개인의 스피드 향상이나 저장 에너지 증가를 보장하지 않아요.",
             "limitations": [
               "성인 남성 사이클 연구의 대사·회복 결과를 달리기나 청소년에게 그대로 옮기지 않아요.",
               "인원질만 작동하거나 젖산이 전혀 없다는 뜻이 아니며, 새 단거리 전문 처방을 허가하지 않아요."
             ],
-            "observationGuide": "구간 기록과 회복 수행, 가속 동작이 유지됐는지를 살펴봐요. 기록 저하를 인산크레아틴 고갈의 측정값으로 해석하지 않아요.",
+            "observationGuide": "구간 기록·회복 수행과 가속 동작 유지 여부를 확인해요. 기록 저하를 인산크레아틴 고갈의 측정값으로 해석하지 않아요.",
             "sourceIds": [
               "PMID_8226473",
               "PMID_9241025",
@@ -7888,7 +7888,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:877d0eef6a1fcf34b61cfa3798feaa420119c88d54c2a955b7eee7b535432cb7"
+        "contentFingerprint": "sha256:26f26ae8c8d2df9cb93b9b5c164cf030f5b1ec75587e0fe589f51a0ec0b8b0ce"
       }
     },
     {
@@ -7933,14 +7933,14 @@
             "termId": "atp",
             "purpose": "매우 짧은 가속·스피드 구간에서 ATP를 빠르게 공급하며 높은 출력을 내는 능력을 준비해요.",
             "energyContext": "저장된 ATP와 인산크레아틴이 빠른 에너지 공급에 관여해요. 첫 짧은 운동부터 해당과정도 기여할 수 있고 산화 대사도 작동하므로 인원질만 사용하는 구간으로 단정하지 않아요.",
-            "workRationale": "짧은 운동 구간은 높은 출력을 내는 동작을 다루기 위한 설계예요. 계속 이어 달리는 부담과 목적이 다르며, 빠른 에너지 공급과 수행의 질을 함께 살펴야 해요.",
+            "workRationale": "짧은 운동 구간은 높은 출력을 내는 동작을 다루기 위한 설계예요. 오래 달리는 훈련과 부담·목적이 다르며, 빠른 에너지 공급과 수행의 질을 각각 확인해야 해요.",
             "recoveryRationale": "회복은 인산크레아틴 재충전과 다음 반복의 출력 유지에 중요해요. 앞선 운동에 따라 회복 경과가 달라지므로 실제 처방의 시간·방식을 따로 확인하며, 고정된 시간이 모든 사람의 완전 회복을 보장하지 않아요.",
             "expectedAdaptation": "빠르게 힘을 내고 가속하는 능력을 준비하는 것이 코칭 의도예요. 급성 기전 연구만으로 개인의 스피드 향상이나 저장 에너지 증가를 보장하지 않아요.",
             "limitations": [
               "성인 남성 사이클 연구의 대사·회복 결과를 달리기나 청소년에게 그대로 옮기지 않아요.",
               "인원질만 작동하거나 젖산이 전혀 없다는 뜻이 아니며, 새 단거리 전문 처방을 허가하지 않아요."
             ],
-            "observationGuide": "구간 기록과 회복 수행, 가속 동작이 유지됐는지를 살펴봐요. 기록 저하를 인산크레아틴 고갈의 측정값으로 해석하지 않아요.",
+            "observationGuide": "구간 기록·회복 수행과 가속 동작 유지 여부를 확인해요. 기록 저하를 인산크레아틴 고갈의 측정값으로 해석하지 않아요.",
             "sourceIds": [
               "PMID_8226473",
               "PMID_9241025",
@@ -8535,7 +8535,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:38b30554929e23c2965f95edfbd73cfb640d566c5e805880ce0d984ffb198d9a"
+        "contentFingerprint": "sha256:7e79cc9779a0ca0fdf9d7eb09364aae0b7e0b6552e62f3f8080493d261541264"
       }
     },
     {
@@ -8581,14 +8581,14 @@
             "termId": "atp",
             "purpose": "매우 짧은 가속·스피드 구간에서 ATP를 빠르게 공급하며 높은 출력을 내는 능력을 준비해요.",
             "energyContext": "저장된 ATP와 인산크레아틴이 빠른 에너지 공급에 관여해요. 첫 짧은 운동부터 해당과정도 기여할 수 있고 산화 대사도 작동하므로 인원질만 사용하는 구간으로 단정하지 않아요.",
-            "workRationale": "짧은 운동 구간은 높은 출력을 내는 동작을 다루기 위한 설계예요. 계속 이어 달리는 부담과 목적이 다르며, 빠른 에너지 공급과 수행의 질을 함께 살펴야 해요.",
+            "workRationale": "짧은 운동 구간은 높은 출력을 내는 동작을 다루기 위한 설계예요. 오래 달리는 훈련과 부담·목적이 다르며, 빠른 에너지 공급과 수행의 질을 각각 확인해야 해요.",
             "recoveryRationale": "회복은 인산크레아틴 재충전과 다음 반복의 출력 유지에 중요해요. 앞선 운동에 따라 회복 경과가 달라지므로 실제 처방의 시간·방식을 따로 확인하며, 고정된 시간이 모든 사람의 완전 회복을 보장하지 않아요.",
             "expectedAdaptation": "빠르게 힘을 내고 가속하는 능력을 준비하는 것이 코칭 의도예요. 급성 기전 연구만으로 개인의 스피드 향상이나 저장 에너지 증가를 보장하지 않아요.",
             "limitations": [
               "성인 남성 사이클 연구의 대사·회복 결과를 달리기나 청소년에게 그대로 옮기지 않아요.",
               "인원질만 작동하거나 젖산이 전혀 없다는 뜻이 아니며, 새 단거리 전문 처방을 허가하지 않아요."
             ],
-            "observationGuide": "구간 기록과 회복 수행, 가속 동작이 유지됐는지를 살펴봐요. 기록 저하를 인산크레아틴 고갈의 측정값으로 해석하지 않아요.",
+            "observationGuide": "구간 기록·회복 수행과 가속 동작 유지 여부를 확인해요. 기록 저하를 인산크레아틴 고갈의 측정값으로 해석하지 않아요.",
             "sourceIds": [
               "PMID_8226473",
               "PMID_9241025",
@@ -9097,7 +9097,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:8d6830455351c43a5e2d7870ffc9e28e6291a69f704df6c2ef0863436f550905"
+        "contentFingerprint": "sha256:545f450ef078dab4bae4936631d4860f60b27cb978fba9f37cf343c41a2b39e9"
       }
     },
     {
@@ -9150,7 +9150,7 @@
               "성인 사이클의 급성 기전 연구와 남성 반복 달리기 훈련 연구는 대상·운동·관찰 기간이 달라요.",
               "청소년·여성·중장거리 선수에게 같은 효과나 회복 간격을 적용할 근거가 아니며, 젖산 수치나 에너지 비율을 추정하지 않아요."
             ],
-            "observationGuide": "구간 기록의 변화, 실제 회복 시간·방식과 체감강도를 구분해 살펴봐요. 후반 기록 저하만으로 젖산 축적이나 특정 경로의 고갈을 진단하지 않아요.",
+            "observationGuide": "구간 기록의 변화와 실제 회복 시간·방식, 체감강도를 따로 확인해요. 후반 기록 저하만으로 젖산 축적이나 특정 경로의 고갈을 진단하지 않아요.",
             "sourceIds": [
               "PMID_8226473",
               "PMID_21777153",
@@ -9777,7 +9777,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:196776da4de197896d693919b5f4685fe863e5f24c8c9aa3bae22968625050ae"
+        "contentFingerprint": "sha256:662ec455ba8ce466db815c60e448e3822223a709cbe0d0dc790b3fb3fcb243d8"
       }
     },
     {
@@ -9830,7 +9830,7 @@
               "성인 사이클의 급성 기전 연구와 남성 반복 달리기 훈련 연구는 대상·운동·관찰 기간이 달라요.",
               "청소년·여성·중장거리 선수에게 같은 효과나 회복 간격을 적용할 근거가 아니며, 젖산 수치나 에너지 비율을 추정하지 않아요."
             ],
-            "observationGuide": "구간 기록의 변화, 실제 회복 시간·방식과 체감강도를 구분해 살펴봐요. 후반 기록 저하만으로 젖산 축적이나 특정 경로의 고갈을 진단하지 않아요.",
+            "observationGuide": "구간 기록의 변화와 실제 회복 시간·방식, 체감강도를 따로 확인해요. 후반 기록 저하만으로 젖산 축적이나 특정 경로의 고갈을 진단하지 않아요.",
             "sourceIds": [
               "PMID_8226473",
               "PMID_21777153",
@@ -10470,7 +10470,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:010e76d7d16beb637ea198071f17c26f19978d49d2d782d0a52d2a54247188b0"
+        "contentFingerprint": "sha256:1f36faa641b7db04f81d57b8dc1b52c465598dd3c678d75bc8366a1b14de208a"
       }
     },
     {
@@ -10524,7 +10524,7 @@
               "회복 운동이 휴식보다 항상 낫다는 근거로 사용하지 않아요.",
               "통증·피로의 원인이나 다음 훈련의 안전을 이 이름만으로 판정하지 않아요."
             ],
-            "observationGuide": "계획 대비 실제 움직인 시간과 체감강도를 구분해 살펴봐요. 편안함의 변화는 관찰이지 회복 완료나 이 세션의 선택 근거가 아니에요.",
+            "observationGuide": "계획 내용과 실제로 움직인 시간·체감강도를 따로 확인해요. 편안함의 변화는 관찰이지 회복 완료나 이 세션의 선택 근거가 아니에요.",
             "sourceIds": [
               "COACHING_TERMINOLOGY",
               "COACHING_PRESCRIPTION"
@@ -10742,7 +10742,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:1969b4c46f4f91c3a285a8a719eddbc21cdbbe7e1309a73a50d70b822df73cc1"
+        "contentFingerprint": "sha256:4e1b6faad792f991a49ae8e812aba000f53f43d1d1fe9e5606279743f55ec8ee"
       }
     },
     {
@@ -10936,7 +10936,7 @@
               "성인 남성 사이클 연구는 달리기 LT 처방이나 청소년의 효과를 직접 검증하지 않았어요.",
               "계획의 페이스나 체감강도로 개인의 혈중 젖산·정확한 역치를 측정할 수 없어요."
             ],
-            "observationGuide": "계획한 노력과 실제 구간 기록·체감강도, 뒤 구간의 변화를 함께 살펴봐요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
+            "observationGuide": "계획한 노력과 실제 구간 기록·체감강도, 후반 변화를 함께 확인해요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
             "sourceIds": [
               "PMID_10562610",
               "COACHING_TERMINOLOGY",
@@ -11300,7 +11300,7 @@
           "INTRO_SUPPORT_APPLICABILITY",
           "INTRO_EFFORT_APPLICABILITY"
         ],
-        "contentFingerprint": "sha256:21dba58a475ddc2823c3b78f920dc4eae4b5b4db0be81397f38efa75ab65c113"
+        "contentFingerprint": "sha256:7f32b9beb0c0196cbbfb337cf17dfd0b4ea9fe22d1c010417ea675a6c0b4fcc6"
       }
     },
     {
@@ -11352,7 +11352,7 @@
               "성인 남성 사이클 연구는 달리기 LT 처방이나 청소년의 효과를 직접 검증하지 않았어요.",
               "계획의 페이스나 체감강도로 개인의 혈중 젖산·정확한 역치를 측정할 수 없어요."
             ],
-            "observationGuide": "계획한 노력과 실제 구간 기록·체감강도, 뒤 구간의 변화를 함께 살펴봐요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
+            "observationGuide": "계획한 노력과 실제 구간 기록·체감강도, 후반 변화를 함께 확인해요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
             "sourceIds": [
               "PMID_10562610",
               "COACHING_TERMINOLOGY",
@@ -11770,7 +11770,7 @@
           "INTRO_SUPPORT_APPLICABILITY",
           "INTRO_EFFORT_APPLICABILITY"
         ],
-        "contentFingerprint": "sha256:d8229c44b10f0c1c34d48801455b48ac474c7cc1766621950a1bf6b8e471e4a3"
+        "contentFingerprint": "sha256:ddde9bc375c474b30706186634de10c4b26e823beb140cb8ca9cee2eb47d302d"
       }
     },
     {
@@ -11822,7 +11822,7 @@
               "잘 훈련된 성인 달리기 선수의 실험을 청소년·초보자에게 그대로 적용하지 않아요.",
               "숨이 많이 찬 느낌만으로 최대산소섭취량 도달이나 충분한 훈련 효과를 확정하지 않아요."
             ],
-            "observationGuide": "실제 구간 기록, 회복 수행, 체감강도와 반복 후반의 변화를 함께 살펴봐요. 이는 수행 관찰이며 산소섭취량 측정이나 세션 선택 근거가 아니에요.",
+            "observationGuide": "실제 구간 기록·회복 수행·체감강도와 반복 후반의 변화를 함께 확인해요. 이는 수행 관찰이며 산소섭취량 측정이나 세션 선택 근거가 아니에요.",
             "sourceIds": [
               "PMID_15387806",
               "COACHING_TERMINOLOGY",
@@ -12288,7 +12288,7 @@
           "INTRO_SUPPORT_APPLICABILITY",
           "INTRO_EFFORT_APPLICABILITY"
         ],
-        "contentFingerprint": "sha256:9dacb8a22ac6c86e8f553ac6c0e35cb7ee5aff600c7164a107c81b3585dab2b2"
+        "contentFingerprint": "sha256:ac991b05ec7703e92d0f43dab7458f9df919cdc074c2d32cd0c7ee8220fafb41"
       }
     },
     {
@@ -12340,7 +12340,7 @@
               "잘 훈련된 성인 달리기 선수의 실험을 청소년·초보자에게 그대로 적용하지 않아요.",
               "숨이 많이 찬 느낌만으로 최대산소섭취량 도달이나 충분한 훈련 효과를 확정하지 않아요."
             ],
-            "observationGuide": "실제 구간 기록, 회복 수행, 체감강도와 반복 후반의 변화를 함께 살펴봐요. 이는 수행 관찰이며 산소섭취량 측정이나 세션 선택 근거가 아니에요.",
+            "observationGuide": "실제 구간 기록·회복 수행·체감강도와 반복 후반의 변화를 함께 확인해요. 이는 수행 관찰이며 산소섭취량 측정이나 세션 선택 근거가 아니에요.",
             "sourceIds": [
               "PMID_15387806",
               "COACHING_TERMINOLOGY",
@@ -12758,7 +12758,7 @@
           "INTRO_SUPPORT_APPLICABILITY",
           "INTRO_EFFORT_APPLICABILITY"
         ],
-        "contentFingerprint": "sha256:163b7987803281deef78ba4ca810f33d2b86ab672125c8f346e9c0f4df36e636"
+        "contentFingerprint": "sha256:b6abeb8b3d168e556c82a3267239d9e0347d025cc25643ae9fb6b54b46a3f044"
       }
     },
     {
@@ -12803,14 +12803,14 @@
             "termId": "atp",
             "purpose": "매우 짧은 가속·스피드 구간에서 ATP를 빠르게 공급하며 높은 출력을 내는 능력을 준비해요.",
             "energyContext": "저장된 ATP와 인산크레아틴이 빠른 에너지 공급에 관여해요. 첫 짧은 운동부터 해당과정도 기여할 수 있고 산화 대사도 작동하므로 인원질만 사용하는 구간으로 단정하지 않아요.",
-            "workRationale": "짧은 운동 구간은 높은 출력을 내는 동작을 다루기 위한 설계예요. 계속 이어 달리는 부담과 목적이 다르며, 빠른 에너지 공급과 수행의 질을 함께 살펴야 해요.",
+            "workRationale": "짧은 운동 구간은 높은 출력을 내는 동작을 다루기 위한 설계예요. 오래 달리는 훈련과 부담·목적이 다르며, 빠른 에너지 공급과 수행의 질을 각각 확인해야 해요.",
             "recoveryRationale": "회복은 인산크레아틴 재충전과 다음 반복의 출력 유지에 중요해요. 앞선 운동에 따라 회복 경과가 달라지므로 실제 처방의 시간·방식을 따로 확인하며, 고정된 시간이 모든 사람의 완전 회복을 보장하지 않아요.",
             "expectedAdaptation": "빠르게 힘을 내고 가속하는 능력을 준비하는 것이 코칭 의도예요. 급성 기전 연구만으로 개인의 스피드 향상이나 저장 에너지 증가를 보장하지 않아요.",
             "limitations": [
               "성인 남성 사이클 연구의 대사·회복 결과를 달리기나 청소년에게 그대로 옮기지 않아요.",
               "인원질만 작동하거나 젖산이 전혀 없다는 뜻이 아니며, 새 단거리 전문 처방을 허가하지 않아요."
             ],
-            "observationGuide": "구간 기록과 회복 수행, 가속 동작이 유지됐는지를 살펴봐요. 기록 저하를 인산크레아틴 고갈의 측정값으로 해석하지 않아요.",
+            "observationGuide": "구간 기록·회복 수행과 가속 동작 유지 여부를 확인해요. 기록 저하를 인산크레아틴 고갈의 측정값으로 해석하지 않아요.",
             "sourceIds": [
               "PMID_8226473",
               "PMID_9241025",
@@ -13322,7 +13322,7 @@
           "INTRO_SUPPORT_APPLICABILITY",
           "INTRO_EFFORT_APPLICABILITY"
         ],
-        "contentFingerprint": "sha256:9e62bd3d243443bcff11815b1ee52fac3d13af4cef4ea452f5c99ae54c990c79"
+        "contentFingerprint": "sha256:a7e69baa64cd8a7c4948e582f881a47bc0eba5b279e31d382fe35f3898518d54"
       }
     },
     {
@@ -13367,14 +13367,14 @@
             "termId": "atp",
             "purpose": "매우 짧은 가속·스피드 구간에서 ATP를 빠르게 공급하며 높은 출력을 내는 능력을 준비해요.",
             "energyContext": "저장된 ATP와 인산크레아틴이 빠른 에너지 공급에 관여해요. 첫 짧은 운동부터 해당과정도 기여할 수 있고 산화 대사도 작동하므로 인원질만 사용하는 구간으로 단정하지 않아요.",
-            "workRationale": "짧은 운동 구간은 높은 출력을 내는 동작을 다루기 위한 설계예요. 계속 이어 달리는 부담과 목적이 다르며, 빠른 에너지 공급과 수행의 질을 함께 살펴야 해요.",
+            "workRationale": "짧은 운동 구간은 높은 출력을 내는 동작을 다루기 위한 설계예요. 오래 달리는 훈련과 부담·목적이 다르며, 빠른 에너지 공급과 수행의 질을 각각 확인해야 해요.",
             "recoveryRationale": "회복은 인산크레아틴 재충전과 다음 반복의 출력 유지에 중요해요. 앞선 운동에 따라 회복 경과가 달라지므로 실제 처방의 시간·방식을 따로 확인하며, 고정된 시간이 모든 사람의 완전 회복을 보장하지 않아요.",
             "expectedAdaptation": "빠르게 힘을 내고 가속하는 능력을 준비하는 것이 코칭 의도예요. 급성 기전 연구만으로 개인의 스피드 향상이나 저장 에너지 증가를 보장하지 않아요.",
             "limitations": [
               "성인 남성 사이클 연구의 대사·회복 결과를 달리기나 청소년에게 그대로 옮기지 않아요.",
               "인원질만 작동하거나 젖산이 전혀 없다는 뜻이 아니며, 새 단거리 전문 처방을 허가하지 않아요."
             ],
-            "observationGuide": "구간 기록과 회복 수행, 가속 동작이 유지됐는지를 살펴봐요. 기록 저하를 인산크레아틴 고갈의 측정값으로 해석하지 않아요.",
+            "observationGuide": "구간 기록·회복 수행과 가속 동작 유지 여부를 확인해요. 기록 저하를 인산크레아틴 고갈의 측정값으로 해석하지 않아요.",
             "sourceIds": [
               "PMID_8226473",
               "PMID_9241025",
@@ -13841,7 +13841,7 @@
           "INTRO_SUPPORT_APPLICABILITY",
           "INTRO_EFFORT_APPLICABILITY"
         ],
-        "contentFingerprint": "sha256:b37e650491cc190f28aae49b0b853289c95f508aa84308b7ee8c914a330bf9cf"
+        "contentFingerprint": "sha256:b4cb8d44f9e51056ab1c05e00c17ba79853723a2a5e7ead3c3c4b22a4103b3c0"
       }
     },
     {
@@ -13893,7 +13893,7 @@
               "성인 사이클의 급성 기전 연구와 남성 반복 달리기 훈련 연구는 대상·운동·관찰 기간이 달라요.",
               "청소년·여성·중장거리 선수에게 같은 효과나 회복 간격을 적용할 근거가 아니며, 젖산 수치나 에너지 비율을 추정하지 않아요."
             ],
-            "observationGuide": "구간 기록의 변화, 실제 회복 시간·방식과 체감강도를 구분해 살펴봐요. 후반 기록 저하만으로 젖산 축적이나 특정 경로의 고갈을 진단하지 않아요.",
+            "observationGuide": "구간 기록의 변화와 실제 회복 시간·방식, 체감강도를 따로 확인해요. 후반 기록 저하만으로 젖산 축적이나 특정 경로의 고갈을 진단하지 않아요.",
             "sourceIds": [
               "PMID_8226473",
               "PMID_21777153",
@@ -14427,7 +14427,7 @@
           "INTRO_SUPPORT_APPLICABILITY",
           "INTRO_EFFORT_APPLICABILITY"
         ],
-        "contentFingerprint": "sha256:066985eb3a124bac2b6bf62b615e23998ba2f12767be62ff73eae3f0c737d62a"
+        "contentFingerprint": "sha256:86550280e6a8f2e7df22cff0b9102a6274ae390470ad83e1feb3c296dc591769"
       }
     },
     {
@@ -14479,7 +14479,7 @@
               "성인 사이클의 급성 기전 연구와 남성 반복 달리기 훈련 연구는 대상·운동·관찰 기간이 달라요.",
               "청소년·여성·중장거리 선수에게 같은 효과나 회복 간격을 적용할 근거가 아니며, 젖산 수치나 에너지 비율을 추정하지 않아요."
             ],
-            "observationGuide": "구간 기록의 변화, 실제 회복 시간·방식과 체감강도를 구분해 살펴봐요. 후반 기록 저하만으로 젖산 축적이나 특정 경로의 고갈을 진단하지 않아요.",
+            "observationGuide": "구간 기록의 변화와 실제 회복 시간·방식, 체감강도를 따로 확인해요. 후반 기록 저하만으로 젖산 축적이나 특정 경로의 고갈을 진단하지 않아요.",
             "sourceIds": [
               "PMID_8226473",
               "PMID_21777153",
@@ -15026,7 +15026,7 @@
           "INTRO_SUPPORT_APPLICABILITY",
           "INTRO_EFFORT_APPLICABILITY"
         ],
-        "contentFingerprint": "sha256:8cf8033e175fe576dd51ff0c33d583aa00640e159bc82ed7f88842382a7a33f9"
+        "contentFingerprint": "sha256:f1039d018bf7b73832997922f2b9bb30ceba5029843ecf9e132cb45b8653f608"
       }
     },
     {
@@ -15078,7 +15078,7 @@
               "미배분 표시라면 구체적인 조합 목적과 적응은 확인되지 않은 상태예요.",
               "성인 단일 실험의 기전을 조합 전체나 청소년의 개인 효과 검증으로 확대하지 않아요."
             ],
-            "observationGuide": "구간별 목표와 실제 기록·회복·체감강도를 따로 살펴봐요. 서로 다른 구간을 합쳐 하나의 대사 점수나 과거 선택 이유로 만들지 않아요.",
+            "observationGuide": "구간별 목표와 실제 기록·회복·체감강도를 따로 확인해요. 서로 다른 구간을 합쳐 하나의 대사 점수나 과거 선택 이유로 만들지 않아요.",
             "sourceIds": [
               "PMID_8226473",
               "PMID_15387806",
@@ -15633,7 +15633,7 @@
           "INTRO_SUPPORT_APPLICABILITY",
           "INTRO_EFFORT_APPLICABILITY"
         ],
-        "contentFingerprint": "sha256:3a536f3d290d9e790231b27c4ef54738fd70d408845acc389a39c29637ea489b"
+        "contentFingerprint": "sha256:eebf4798bb8833da8c71f887a13a421a0a9eeb0c282311bf378dfc8cbeb25abf"
       }
     },
     {
@@ -15685,7 +15685,7 @@
               "미배분 표시라면 구체적인 조합 목적과 적응은 확인되지 않은 상태예요.",
               "성인 단일 실험의 기전을 조합 전체나 청소년의 개인 효과 검증으로 확대하지 않아요."
             ],
-            "observationGuide": "구간별 목표와 실제 기록·회복·체감강도를 따로 살펴봐요. 서로 다른 구간을 합쳐 하나의 대사 점수나 과거 선택 이유로 만들지 않아요.",
+            "observationGuide": "구간별 목표와 실제 기록·회복·체감강도를 따로 확인해요. 서로 다른 구간을 합쳐 하나의 대사 점수나 과거 선택 이유로 만들지 않아요.",
             "sourceIds": [
               "PMID_8226473",
               "PMID_15387806",
@@ -16383,7 +16383,7 @@
           "INTRO_SUPPORT_APPLICABILITY",
           "INTRO_EFFORT_APPLICABILITY"
         ],
-        "contentFingerprint": "sha256:e1755b99cbb0f672b1c10c6031ebc0d1d22a20b488069ba1fc88a9e156f0a81d"
+        "contentFingerprint": "sha256:1f668dba18329faaa807683ed1a7e774d70d4611868f732a28111dc55bc852b1"
       }
     },
     {
@@ -16437,7 +16437,7 @@
               "성인 실험의 연료 사용 결과로 청소년이나 개인의 지방 사용 비율을 계산하지 않아요.",
               "체중 감소나 워치의 특정 심박 구간과 같은 뜻이 아니에요."
             ],
-            "observationGuide": "같은 계획 조건에서 실제 시간·거리와 체감강도가 어떻게 달랐는지 살펴봐요. 편해진 느낌만으로 대사 적응이나 훈련의 인과 효과를 확정하지 않아요.",
+            "observationGuide": "같은 계획 조건에서 실제 시간·거리·체감강도의 차이를 비교해요. 편해진 느낌만으로 대사 적응이나 훈련의 인과 효과를 확정하지 않아요.",
             "sourceIds": [
               "PMID_8214047",
               "COACHING_TERMINOLOGY",
@@ -16665,7 +16665,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:cc3f14ebe40a61ed33f9ba583208a60bb0db14a4b45eba1dd59ade1288371743"
+        "contentFingerprint": "sha256:020bf52884e4cab500f86995b265932c51b69b1b7e0995ab52a7d75f7393f0cf"
       }
     },
     {
@@ -16719,7 +16719,7 @@
               "성인 실험의 연료 사용 결과로 청소년이나 개인의 지방 사용 비율을 계산하지 않아요.",
               "체중 감소나 워치의 특정 심박 구간과 같은 뜻이 아니에요."
             ],
-            "observationGuide": "같은 계획 조건에서 실제 시간·거리와 체감강도가 어떻게 달랐는지 살펴봐요. 편해진 느낌만으로 대사 적응이나 훈련의 인과 효과를 확정하지 않아요.",
+            "observationGuide": "같은 계획 조건에서 실제 시간·거리·체감강도의 차이를 비교해요. 편해진 느낌만으로 대사 적응이나 훈련의 인과 효과를 확정하지 않아요.",
             "sourceIds": [
               "PMID_8214047",
               "COACHING_TERMINOLOGY",
@@ -16947,7 +16947,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:95b412b1984a1ecb6fd9e19f9bfb036d813b4fd0cc81fc78926a0fc1cec5d354"
+        "contentFingerprint": "sha256:91c44c959472fc0761bc622ffc7f61cac1b99ffe55cece62f232197117078c6f"
       }
     },
     {
@@ -17000,7 +17000,7 @@
               "성인 남성 사이클 연구는 달리기 LT 처방이나 청소년의 효과를 직접 검증하지 않았어요.",
               "계획의 페이스나 체감강도로 개인의 혈중 젖산·정확한 역치를 측정할 수 없어요."
             ],
-            "observationGuide": "계획한 노력과 실제 구간 기록·체감강도, 뒤 구간의 변화를 함께 살펴봐요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
+            "observationGuide": "계획한 노력과 실제 구간 기록·체감강도, 후반 변화를 함께 확인해요. 관찰을 젖산 검사값이나 과거 처방 선택 이유로 바꾸지 않아요.",
             "sourceIds": [
               "PMID_10562610",
               "COACHING_TERMINOLOGY",
@@ -17415,7 +17415,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:3c6b2eaea7110b992451ed30154ba556b8ed0292dc920c8c548646e4151b2bed"
+        "contentFingerprint": "sha256:fc5e61656eed00997c42d9ccca517dd286ca1605430c246d261d8b9ac7f486ad"
       }
     },
     {
@@ -17468,7 +17468,7 @@
               "잘 훈련된 성인 달리기 선수의 실험을 청소년·초보자에게 그대로 적용하지 않아요.",
               "숨이 많이 찬 느낌만으로 최대산소섭취량 도달이나 충분한 훈련 효과를 확정하지 않아요."
             ],
-            "observationGuide": "실제 구간 기록, 회복 수행, 체감강도와 반복 후반의 변화를 함께 살펴봐요. 이는 수행 관찰이며 산소섭취량 측정이나 세션 선택 근거가 아니에요.",
+            "observationGuide": "실제 구간 기록·회복 수행·체감강도와 반복 후반의 변화를 함께 확인해요. 이는 수행 관찰이며 산소섭취량 측정이나 세션 선택 근거가 아니에요.",
             "sourceIds": [
               "PMID_15387806",
               "COACHING_TERMINOLOGY",
@@ -17979,7 +17979,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:9b1151a68188301ff82d6aabfd13c232c7bc2e4fe3e6b65d375c58cdff1d7ef5"
+        "contentFingerprint": "sha256:2c859f915d26039369a9dd982c4200f825b6bb8a2edd9efadfce5f5de533b7d6"
       }
     },
     {
@@ -18032,7 +18032,7 @@
               "잘 훈련된 성인 달리기 선수의 실험을 청소년·초보자에게 그대로 적용하지 않아요.",
               "숨이 많이 찬 느낌만으로 최대산소섭취량 도달이나 충분한 훈련 효과를 확정하지 않아요."
             ],
-            "observationGuide": "실제 구간 기록, 회복 수행, 체감강도와 반복 후반의 변화를 함께 살펴봐요. 이는 수행 관찰이며 산소섭취량 측정이나 세션 선택 근거가 아니에요.",
+            "observationGuide": "실제 구간 기록·회복 수행·체감강도와 반복 후반의 변화를 함께 확인해요. 이는 수행 관찰이며 산소섭취량 측정이나 세션 선택 근거가 아니에요.",
             "sourceIds": [
               "PMID_15387806",
               "COACHING_TERMINOLOGY",
@@ -18591,7 +18591,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:8490a98d3bfa5beed4366578bfb96ccca947e68a7b4e525d86b7c7a3926904b0"
+        "contentFingerprint": "sha256:ec308d97f52c141820766269cff0658ad2315125148b1659670cae12fd1d34d9"
       }
     },
     {
@@ -18637,14 +18637,14 @@
             "termId": "atp",
             "purpose": "매우 짧은 가속·스피드 구간에서 ATP를 빠르게 공급하며 높은 출력을 내는 능력을 준비해요.",
             "energyContext": "저장된 ATP와 인산크레아틴이 빠른 에너지 공급에 관여해요. 첫 짧은 운동부터 해당과정도 기여할 수 있고 산화 대사도 작동하므로 인원질만 사용하는 구간으로 단정하지 않아요.",
-            "workRationale": "짧은 운동 구간은 높은 출력을 내는 동작을 다루기 위한 설계예요. 계속 이어 달리는 부담과 목적이 다르며, 빠른 에너지 공급과 수행의 질을 함께 살펴야 해요.",
+            "workRationale": "짧은 운동 구간은 높은 출력을 내는 동작을 다루기 위한 설계예요. 오래 달리는 훈련과 부담·목적이 다르며, 빠른 에너지 공급과 수행의 질을 각각 확인해야 해요.",
             "recoveryRationale": "회복은 인산크레아틴 재충전과 다음 반복의 출력 유지에 중요해요. 앞선 운동에 따라 회복 경과가 달라지므로 실제 처방의 시간·방식을 따로 확인하며, 고정된 시간이 모든 사람의 완전 회복을 보장하지 않아요.",
             "expectedAdaptation": "빠르게 힘을 내고 가속하는 능력을 준비하는 것이 코칭 의도예요. 급성 기전 연구만으로 개인의 스피드 향상이나 저장 에너지 증가를 보장하지 않아요.",
             "limitations": [
               "성인 남성 사이클 연구의 대사·회복 결과를 달리기나 청소년에게 그대로 옮기지 않아요.",
               "인원질만 작동하거나 젖산이 전혀 없다는 뜻이 아니며, 새 단거리 전문 처방을 허가하지 않아요."
             ],
-            "observationGuide": "구간 기록과 회복 수행, 가속 동작이 유지됐는지를 살펴봐요. 기록 저하를 인산크레아틴 고갈의 측정값으로 해석하지 않아요.",
+            "observationGuide": "구간 기록·회복 수행과 가속 동작 유지 여부를 확인해요. 기록 저하를 인산크레아틴 고갈의 측정값으로 해석하지 않아요.",
             "sourceIds": [
               "PMID_8226473",
               "PMID_9241025",
@@ -19153,7 +19153,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:ece9348d23d4d47609ba9a83e5032c03fbd0be0f858921c82b36def79401668d"
+        "contentFingerprint": "sha256:5e9a234f0d79d23a235f9f4eaf4667741da436312133281a86e7722129fa75cc"
       }
     },
     {
@@ -19199,14 +19199,14 @@
             "termId": "atp",
             "purpose": "매우 짧은 가속·스피드 구간에서 ATP를 빠르게 공급하며 높은 출력을 내는 능력을 준비해요.",
             "energyContext": "저장된 ATP와 인산크레아틴이 빠른 에너지 공급에 관여해요. 첫 짧은 운동부터 해당과정도 기여할 수 있고 산화 대사도 작동하므로 인원질만 사용하는 구간으로 단정하지 않아요.",
-            "workRationale": "짧은 운동 구간은 높은 출력을 내는 동작을 다루기 위한 설계예요. 계속 이어 달리는 부담과 목적이 다르며, 빠른 에너지 공급과 수행의 질을 함께 살펴야 해요.",
+            "workRationale": "짧은 운동 구간은 높은 출력을 내는 동작을 다루기 위한 설계예요. 오래 달리는 훈련과 부담·목적이 다르며, 빠른 에너지 공급과 수행의 질을 각각 확인해야 해요.",
             "recoveryRationale": "회복은 인산크레아틴 재충전과 다음 반복의 출력 유지에 중요해요. 앞선 운동에 따라 회복 경과가 달라지므로 실제 처방의 시간·방식을 따로 확인하며, 고정된 시간이 모든 사람의 완전 회복을 보장하지 않아요.",
             "expectedAdaptation": "빠르게 힘을 내고 가속하는 능력을 준비하는 것이 코칭 의도예요. 급성 기전 연구만으로 개인의 스피드 향상이나 저장 에너지 증가를 보장하지 않아요.",
             "limitations": [
               "성인 남성 사이클 연구의 대사·회복 결과를 달리기나 청소년에게 그대로 옮기지 않아요.",
               "인원질만 작동하거나 젖산이 전혀 없다는 뜻이 아니며, 새 단거리 전문 처방을 허가하지 않아요."
             ],
-            "observationGuide": "구간 기록과 회복 수행, 가속 동작이 유지됐는지를 살펴봐요. 기록 저하를 인산크레아틴 고갈의 측정값으로 해석하지 않아요.",
+            "observationGuide": "구간 기록·회복 수행과 가속 동작 유지 여부를 확인해요. 기록 저하를 인산크레아틴 고갈의 측정값으로 해석하지 않아요.",
             "sourceIds": [
               "PMID_8226473",
               "PMID_9241025",
@@ -19760,7 +19760,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:a83b84bbad1c030024b30a31737788e2fd74738c48bd4e0a948c11bc348dcdf6"
+        "contentFingerprint": "sha256:68c5d17bb6cb5f37dad413e8f3b49404759f590d75a4369691c27a88a6d6c010"
       }
     },
     {
@@ -19810,7 +19810,7 @@
               "미배분 표시라면 구체적인 조합 목적과 적응은 확인되지 않은 상태예요.",
               "성인 단일 실험의 기전을 조합 전체나 청소년의 개인 효과 검증으로 확대하지 않아요."
             ],
-            "observationGuide": "구간별 목표와 실제 기록·회복·체감강도를 따로 살펴봐요. 서로 다른 구간을 합쳐 하나의 대사 점수나 과거 선택 이유로 만들지 않아요.",
+            "observationGuide": "구간별 목표와 실제 기록·회복·체감강도를 따로 확인해요. 서로 다른 구간을 합쳐 하나의 대사 점수나 과거 선택 이유로 만들지 않아요.",
             "sourceIds": [
               "PMID_8226473",
               "PMID_15387806",
@@ -20758,7 +20758,7 @@
           "INDIVIDUAL_APPLICABILITY",
           "EXACT_OWNER_ADOPTION"
         ],
-        "contentFingerprint": "sha256:220c536bcd6e89c7b89e2c79601e3b139ffa4572f0ebb3592b4a1d17eda98100"
+        "contentFingerprint": "sha256:75b667b4a860f2db66ac835cc2e4666588c05910b983e6ec8d3d6cfeb6709e44"
       }
     }
   ],
@@ -21382,5 +21382,5 @@
     "INTRO_EFFORT_APPLICABILITY",
     "EXACT_SUPPORT_ADOPTION"
   ],
-  "contentFingerprint": "sha256:0f6f8aef3848d69aca0d674a4fb0138f64dc96c824a07d2126c957b944e9ae57"
+  "contentFingerprint": "sha256:c616940f7378983f163ffbe015751a1fe89a4431567b8627f47aba2acf3a2214"
 }

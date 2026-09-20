@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { completeDetailedPlan } from "./plan-flow"
+import { completeDetailedPlan, enterPlanWithoutRecord } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
@@ -32,12 +32,8 @@ test("moves from a choice to the next question and gives a clear journal save co
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
 
-  const firstStep = page.locator(".plan-intake")
-  await expect(firstStep).toBeVisible()
-  const firstAnimation = await firstStep.evaluate((element) => getComputedStyle(element).animationName)
-  expect(firstAnimation).toBe(testInfo.project.name === "reduced-motion" ? "none" : "flow-stage-enter")
-
-  await page.getByRole("button", { name: /^1500m/u }).click()
+  await expect(page.getByRole("combobox", { name: "종목" })).toBeVisible()
+  await enterPlanWithoutRecord(page)
   await expect(page.getByRole("heading", { name: "지금까지 어떻게 달려왔나요?" })).toBeVisible()
   await expectActiveQuestionAtReadingPosition(page)
   const nextAnimation = await page.locator(".plan-intake").evaluate((element) => getComputedStyle(element).animationName)
@@ -77,6 +73,7 @@ test("a self-directed runner with no journal can still reach an RPE plan", async
   await completeDetailedPlan(page, { frame: /^7일만 먼저 받기/u, event: /^5000m/u, division: /일반부/u, experience: /훈련 계획에 맞춰 달려 본 경험이 있어요/u, days: /^3일/u, focus: /편하게 오래.*BASE/u, time: /저녁에 운동해요/u })
 
   await expect(page.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
+  await page.getByText("계획안 A 설명·시간 합계", { exact: true }).click()
   await expect(page.getByText("RPE 기준 실행 안내").first()).toBeVisible()
   await page.locator("summary", { hasText: "기준 기록·참가 부문·이전 계획 확인" }).click()
   await expect(page.getByText("기준 기록 없이 만든 계획")).toBeVisible()

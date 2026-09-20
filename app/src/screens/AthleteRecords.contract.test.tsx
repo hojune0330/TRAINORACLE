@@ -25,8 +25,13 @@ describe("athlete record entry surface", () => {
     const onManageRecords = vi.fn()
     render(<PlanBeta onManageRecords={onManageRecords} />)
 
-    await userEvent.setup().click(screen.getByRole("button", {
-      name: "내 경기 기록 관리",
+    const user = userEvent.setup()
+    const tools = screen.getByText("기록 관리·훈련표 읽기").closest("details")!
+    expect(tools.open).toBe(false)
+    expect(onManageRecords).not.toHaveBeenCalled()
+    await user.click(within(tools).getByText("기록 관리·훈련표 읽기"))
+    await user.click(within(tools).getByRole("button", {
+      name: "내 경기 기록",
     }))
 
     expect(onManageRecords).toHaveBeenCalledTimes(1)

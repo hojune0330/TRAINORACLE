@@ -121,6 +121,15 @@ afterEach(() => {
 })
 
 describe("InstallShortcut context boundary", () => {
+  it("opens the compact home action only after an explicit click", async () => {
+    const user = userEvent.setup()
+    render(<InstallShortcutProvider><InstallShortcutSuggestion eligible compact /></InstallShortcutProvider>)
+    expect(screen.getByTestId("install-shortcut-suggestion")).toHaveClass("install-shortcut-suggestion--compact")
+    expect(screen.queryByTestId("install-shortcut-dialog")).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: /^(홈 화면에 추가|앱 바로가기 만들기)$/u }))
+    expect(screen.getByTestId("install-shortcut-dialog")).toBeVisible()
+  })
+
   it("renders both consumers harmlessly as null outside the provider", () => {
     const { container } = render(<><InstallShortcutSuggestion eligible /><InstallShortcutMenuEntry /></>)
     expect(container).toBeEmptyDOMElement()

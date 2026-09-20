@@ -1497,4 +1497,37 @@ The [30-entry local readiness matrix](../../reports/review/SESSION_METHOD_CATALO
 holds source/configuration/adjustment gaps as grouped preparation work, not runtime
 approvals or repeated requests to approve the feature. No Open Issue is closed.
 
+## 29. Integrated Minimal Entry And Honest Schedule Projection (2026-09-20)
+
+The owner approved parallel development under
+[the integration work order](../../reports/plans/TRAINING_PLAN_PARALLEL_DEVELOPMENT_ORDER_2026-09-20.md).
+Development approval does not authorize merging, deployment, new doses or creator reuse.
+
+Current records, goal-only entries and missing records are separate facts. A goal
+cannot become a current-ability pace anchor. The compact entry may reuse the
+existing self-reported record store but must retain the explicit achieved date,
+source and existing confirmation/eligibility gates. Never infer experience,
+availability or safety from a fast record. A missing fact remains a question.
+
+`availableDayCount` in existing stored intakes means days within the requested
+projection, not days per seven-day week. UI copy and rest-day counts must use the
+actual projection length. This clarification changes no historical stored plan.
+
+Collapsed recommendations retain the date-level actual schedule and AM/PM roles.
+Only detailed instructions may collapse. Summaries count projected sessions,
+not the canonical formation's reserved exposure entries. An exposure ledger is
+not proof that a displayed QUALITY session was scheduled on that date. Missing
+day data is unavailable, not an invented rest day. Do not repair this distinction
+by silently adding intensity, volume or frequency.
+
+One default recommendation reduces choice effort; it is not a medical or scientific
+ranking. Its deterministic display policy and honest reason must be explicit.
+Alternative schedules and independent MAIN methods remain accessible. Candidate
+selection still uses exact identity, fresh safety and account acknowledgement.
+
+Change ledger: ADD minimal entry and projection boundary; CLARIFY availability;
+KEEP numeric authority, old plan readers and journals; DEFER unreviewed creator
+programs and any deletion retention/server protocol not yet implemented.
+No issue status, runtime evidence or canonical count changes in this patch.
+
 [DRAFT_COMPLETE]

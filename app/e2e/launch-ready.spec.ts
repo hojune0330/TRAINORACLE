@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
-import { completeDetailedPlan, completeQuickPlan } from "./plan-flow"
+import { completeDetailedPlan, completeQuickPlan, enterPlanWithoutRecord } from "./plan-flow"
 import { expectActivePlanHeading, openActiveSessionDetails } from "./active-plan-flow"
 
 async function answerMinimumPlanQuestions(page: Page): Promise<void> {
@@ -23,6 +23,8 @@ test("keeps plan help inside the narrow scroll region", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 650 })
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
+  await enterPlanWithoutRecord(page)
+  await page.locator(".plan-intake__summary").getByRole("button", { name: "1500m", exact: true }).click()
   await page.getByRole("button", { name: "준비 목표 설명 보기" }).click()
 
   const geometry = await page.evaluate(() => {
@@ -102,7 +104,7 @@ test("generates a bounded two-a-day 9-day candidate", async ({ page }) => {
   await completeDetailedPlan(page, { event: /^5000m\b/u, division: /고등부/u, days: /^매일/u, focus: /숨차게 반복.*VO₂/u, twice: true })
 
   await expectCanonicalPlanCandidates(page)
-  await expect(page.getByText(/오후 회복/u).first()).toBeVisible()
+  await expect(page.locator(".plan-day-deck:visible").getByText("오후 회복 운동", { exact: true }).first()).toBeVisible()
 })
 
 test("keeps an evening two-a-day plan after selection and reload", async ({ page }) => {
@@ -155,7 +157,7 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
 test("reads a detailed training notation without creating a plan", async ({ page }) => {
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
-  await page.locator("summary", { hasText: "경기 기록이 있나요?" }).click()
+  await page.locator("summary", { hasText: "기록 관리·훈련표 읽기" }).click()
   await page.getByRole("button", { name: "훈련표 표기 읽기" }).click()
   await page.getByRole("textbox", { name: "훈련표 표기" }).fill(
     "2×(10×400m) @5000m RP · r60″ STAND · R3′ STAND",

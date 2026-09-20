@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
-import { completeQuickPlan, openPlanRefinement, refinePlan } from "./plan-flow"
+import { completeQuickPlan, openPlanOptions, openPlanRefinement, refinePlan } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
@@ -18,7 +18,8 @@ test("creates unsaved candidates after four explicit answers and exposes optiona
   await answerFirstThree(page)
 
   await expect(page.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
-  await expect(page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u })).toHaveCount(2)
+  await expect(page.getByRole("button", { name: "이 일정으로 시작" })).toHaveCount(1)
+  await expect(page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u })).toHaveCount(0)
   await expect(page.locator(".plan-candidate")).toHaveCount(2)
   await expect(page.getByTestId("plan-refine")).not.toHaveAttribute("open")
   await expect.poll(() => page.evaluate(
@@ -99,6 +100,7 @@ test("moves the single expanded schedule between candidates and allows collapse"
   await answerFirstThree(page)
   await refinePlan(page, "훈련 종류", /조금 힘들게 꾸준히.*LT/u)
   await refinePlan(page, "시간대", /아침에 운동해요/u)
+  await openPlanOptions(page, true)
 
   const candidateA = page.getByRole("button", { name: "계획안 A 일정 접기" })
   const candidateB = page.getByRole("button", { name: "계획안 B 일정 펼치기" })

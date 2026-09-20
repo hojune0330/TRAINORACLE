@@ -76,23 +76,36 @@ test("home navigation remains usable when the bundled font cannot load", async (
   expect(blockedFonts).toBeGreaterThan(0)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await navigation.getByRole("button", { name: "계획", exact: true }).click()
-  await expect(page.getByRole("button", { name: /^1500m/u })).toBeVisible()
+  await expect(page.getByRole("combobox", { name: "종목" })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })
 
 test("review receipt has one modal-owned copy and a keyboard reachable dismissal", async ({ page }) => {
+  await page.clock.install()
   await openEntry(page, /경기 직전\/직후/u)
   await page.getByRole("textbox", { name: "경기 메모" }).fill("무릎이 아파")
   await page.getByRole("radio", { name: "훈련 메모" }).click()
   await page.getByRole("button", { name: /^저장/u }).click()
   await expect(page.getByRole("alert")).toBeVisible()
+  await page.clock.fastForward(60_000)
+  await expect(page.getByRole("alert")).toBeVisible()
+  await expect(page.locator(".saved-toast")).toHaveCount(1)
   await page.getByRole("button", { name: "오늘 기록 보기" }).click()
+  await expect.poll(() => page.locator(".saved-toast").evaluate(element => {
+    const shell = element.closest(".app-shell")!
+    const content = shell.querySelector(".app-scroll-region")!.getBoundingClientRect()
+    const tabs = shell.querySelector(".app-tab-bar")!.getBoundingClientRect()
+    const notice = element.getBoundingClientRect()
+    return content.bottom <= notice.top + 1 && notice.bottom <= tabs.top + 1 && content.height > 0
+  }), { message: "Persistent review must reserve space between the journal and navigation" }).toBe(true)
+  await page.screenshot({ path: test.info().outputPath("review-receipt-journal.png") })
   await page.getByRole("button", { name: "일지 꾸미기 열기", exact: true }).click()
 
   const editor = page.getByRole("dialog", { name: "이 일지 꾸미기", exact: true })
   const dismiss = editor.getByRole("button", { name: "검토 안내 닫기", exact: true })
   await expect(dismiss).toBeVisible()
   await expect(page.locator(".saved-toast")).toHaveCount(1)
+  await page.screenshot({ path: test.info().outputPath("review-receipt-editor.png") })
   await editor.evaluate(element => { element.scrollTop = 40 })
   const close = editor.getByRole("button", { name: "꾸미기 편집기 닫기", exact: true })
   expect(await close.evaluate(element => {

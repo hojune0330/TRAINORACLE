@@ -347,9 +347,11 @@ export function InstallShortcutProvider({ children }: { readonly children: React
 export function InstallShortcutSuggestion({
   eligible,
   returnFocusTo,
+  compact = false,
 }: {
   readonly eligible: boolean
   readonly returnFocusTo?: () => HTMLElement | null
+  readonly compact?: boolean
 }) {
   const titleId = React.useId()
   const controller = React.useContext(InstallShortcutContext)
@@ -358,16 +360,16 @@ export function InstallShortcutSuggestion({
   const label = controller.guide.mobile ? "홈 화면에 추가" : "앱 바로가기 만들기"
   return (
     <section
-      className="install-shortcut-suggestion"
+      className={`install-shortcut-suggestion${compact ? " install-shortcut-suggestion--compact" : ""}`}
       data-testid="install-shortcut-suggestion"
       aria-labelledby={titleId}
     >
-      <Smartphone className="install-shortcut-suggestion__icon" size={20} aria-hidden="true" />
-      <div className="install-shortcut-suggestion__copy">
+      {!compact && <Smartphone className="install-shortcut-suggestion__icon" size={20} aria-hidden="true" />}
+      {!compact && <div className="install-shortcut-suggestion__copy">
         <span>빠른 실행</span>
         <h2 id={titleId}>{label}</h2>
         <p>브라우저를 찾지 않고 TrainOracle을 바로 열 수 있어요.</p>
-      </div>
+      </div>}
       <button
         type="button"
         className="install-shortcut-suggestion__dismiss"
@@ -381,9 +383,11 @@ export function InstallShortcutSuggestion({
       <button
         type="button"
         className="install-shortcut-suggestion__open"
+        id={compact ? titleId : undefined}
+        title={compact ? "추가 방법 보기" : undefined}
         onClick={(event) => controller.openDialog(event.currentTarget, returnFocusTo)}
       >
-        추가 방법 보기
+        {compact ? <><Smartphone size={18} aria-hidden="true" /><span>{label}</span></> : "추가 방법 보기"}
       </button>
     </section>
   )

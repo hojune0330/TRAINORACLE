@@ -120,7 +120,7 @@ describe("plan calendar selection", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("계획을 이 기기에 저장하지 못했어요")
     expect(screen.getByLabelText("계획 시작 날짜")).toHaveValue("2026-08-17")
 
-    await user.click(screen.getByRole("button", { name: "계획 다시 저장하기" }))
+    await user.click(screen.getByRole("button", { name: "저장 다시 시도" }))
 
     expect(screen.getByRole("group", {
       name: "8월 25일 화요일 · 훈련 2개",

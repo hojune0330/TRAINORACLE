@@ -76,8 +76,8 @@ export const STEP_META: Record<IntakeStep, {
   days: {
     number: 3,
     eyebrow: "운동할 날",
-    title: "일주일에 며칠 움직일 수 있나요?",
-    copy: "걷기나 가벼운 조깅 날도 포함해요.",
+    title: "이번 계획에서 며칠 훈련할까요?",
+    copy: "걷기나 가벼운 조깅을 할 날도 포함해요.",
     helpTerm: "training-days",
   },
   "training-time": {

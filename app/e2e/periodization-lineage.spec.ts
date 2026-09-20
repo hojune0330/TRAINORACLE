@@ -17,6 +17,7 @@ test("shows the 24-week direction without turning position into an automatic inc
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
 
+  await page.locator("summary", { hasText: "전체 계획 구성" }).click()
   await expect(page.getByText("24주 훈련 방향", { exact: true })).toBeVisible()
   await expect(page.getByText(/1\/18번째 계획/u)).toBeVisible()
   await expect(page.getByRole("progressbar", { name: "24주 훈련 방향 진행 위치" }))

@@ -63,6 +63,8 @@ it.each([4, 5, 6] as const)("V%s actual apply, schedule progress, account archiv
   expect(localStorage.getItem(key)).toBe("DEVICE_ORIGINAL")
   ui.unmount()
   const plan = render(<PlanBeta readAdjustedEvidence={() => retained4} readAdjustedEvidenceV3={() => retained5} readMultiAdjustedEvidenceV3={() => retained6} />)
+  // Mount starts a fresh server read; the previous save receipt alone is not readiness.
+  await waitFor(() => expect(runtime.service!.snapshot().status).toBe("READY"), { timeout: 10_000 })
   await waitFor(() => expect(screen.getByText("계정에 저장됨", { exact: true })).toBeVisible())
   fireEvent.click(screen.getAllByRole("button", { name: "완료" })[0]!)
   await waitFor(() => expect(remote.revision()).toBe(2), { timeout: 10_000 })

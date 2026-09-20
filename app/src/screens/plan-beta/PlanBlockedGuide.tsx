@@ -27,7 +27,7 @@ export function PlanBlockedGuide({
     draft.experienceBand === undefined ? null : EXPERIENCE_LABELS[draft.experienceBand].short,
     draft.availableDayCount === undefined
       ? null
-      : draft.availableDayCount === "EVERY_DAY" ? "매일" : `주 ${draft.availableDayCount}일`,
+      : draft.availableDayCount === "EVERY_DAY" ? "매일" : `${Math.ceil(draft.requestedFrameLength ?? 9)}일 중 ${draft.availableDayCount}일`,
   ].filter((value): value is string => value !== null)
 
   return (

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { completeDetailedPlan } from "./plan-flow"
+import { completeDetailedPlan, openPlanOptions } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
@@ -37,6 +37,8 @@ test("compares actual MAIN values and refreshes the chosen record without claimi
   await expect(comparison.getByText(/반복 사이 60초 서서 쉬기 · 총 9번/u)).toHaveCount(1)
   await expect(comparison.getByText("본운동 방법과 목표값이 같아요. 다른 방법 두 개가 아니에요.")).toBeVisible()
   await expect(comparison.locator(".plan-candidate-comparison__intro")).not.toContainText("같은 횟수와 RPE로")
+  await expect(page.getByRole("heading", { name: "계획이 준비됐어요", exact: true })).toBeFocused()
+  await openPlanOptions(page)
   await picker.getByRole("group", { name: "기준 기록 선택" }).getByRole("button", { name: /2분 3.5초/u }).click()
   await picker.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
   await expect(comparison.getByText("800m 기록 기준 · 200m마다 목표 30.875초")).toBeVisible()

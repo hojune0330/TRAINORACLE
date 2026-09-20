@@ -163,7 +163,8 @@ test("shows each legacy duplicate journal item without a rendering warning", asy
 
   await page.goto("/?app=1")
 
-  await expect(page.getByText("First legacy duplicate")).toBeVisible()
-  await expect(page.getByText("Second legacy duplicate")).toBeVisible()
+  await page.getByRole("button", { name: /2026년 7월 20일 기록 2개 보기/u }).click()
+  await expect(page.getByRole("button", { name: /기록 · 훈련 · First legacy duplicate/u })).toBeVisible()
+  await expect(page.getByRole("button", { name: /기록 · 훈련 · Second legacy duplicate/u })).toBeVisible()
   expect(consoleErrors).toEqual([])
 })

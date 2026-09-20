@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 import { undersizedInteractiveTargets } from "./touch-audit"
-import { completeDetailedPlan } from "./plan-flow"
+import { completeDetailedPlan, openPlanOptions } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
@@ -36,7 +36,10 @@ test("missing-record journey resumes the same choices and explicitly binds a non
   expect(await undersizedInteractiveTargets(evidence)).toEqual([])
   await evidence.getByRole("button", { name: /개인 최고.*18분 31초/u }).click()
   await evidence.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
-  await expect(evidence.getByRole("status")).toBeFocused()
+  await expect(page.getByRole("heading", { name: "계획이 준비됐어요", exact: true })).toBeFocused()
+  await openPlanOptions(page)
+  await expect(evidence.getByRole("status")).toBeVisible()
+  await expect(evidence.getByRole("status")).toContainText("상세 훈련 수치를 적용")
   await page.getByRole("button", { name: "이 계획으로 시작하기" }).click()
   await expect(page.getByRole("heading", { name: "9일 훈련 계획", exact: true })).toBeVisible()
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.plan-beta.v1")!))

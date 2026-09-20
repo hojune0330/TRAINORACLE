@@ -18,6 +18,32 @@
   margin-inline: var(--space-5);
 }
 
+.install-shortcut-suggestion--compact {
+  grid-template-columns: minmax(0, 1fr) var(--app-touch-min);
+  align-items: center;
+  padding: var(--space-2);
+  gap: var(--space-2);
+}
+
+.install-shortcut-suggestion--compact .install-shortcut-suggestion__open {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: 0;
+  text-align: start;
+}
+
+.install-shortcut-suggestion--compact .install-shortcut-suggestion__open svg {
+  flex-shrink: 0;
+}
+
+.install-shortcut-suggestion--compact .install-shortcut-suggestion__dismiss {
+  grid-column: 2;
+  grid-row: 1;
+}
+
 .install-shortcut-suggestion__icon {
   margin-block-start: 2px;
   color: var(--brand);

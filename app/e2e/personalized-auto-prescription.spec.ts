@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
-import { completeDetailedPlan, completeQuickPlan } from "./plan-flow"
+import { completeDetailedPlan, completeQuickPlan, openPlanOptions } from "./plan-flow"
 import { expectActivePlanHeading, openActiveSessionDetails } from "./active-plan-flow"
 import { undersizedInteractiveTargets } from "./touch-audit"
 
@@ -83,9 +83,11 @@ async function assertTouchTargets(page: Page): Promise<void> {
 }
 
 async function assertEvidenceHelpDoesNotOverlap(page: Page): Promise<void> {
+  await page.locator("summary", { hasText: "기준 기록·참가 부문·이전 계획 확인" }).click()
   const strip = page.locator(".plan-source-strip")
     .filter({ has: page.locator(".plan-source-strip__title") })
     .first()
+  await expect(strip).toBeVisible()
   const geometry = await strip.evaluate((element) => {
     const title = element.querySelector<HTMLElement>(".plan-source-strip__title")
     const button = element.querySelector<HTMLElement>("strong button")
@@ -122,6 +124,9 @@ async function bindFirstRecord(page: Page): Promise<void> {
   await expect(picker.getByText(/기준 기록.*18분 30초/u)).toBeVisible()
   await expect(picker.getByText(/비교만.*19분/u)).toBeVisible()
   await picker.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
+  await expect(page.getByRole("heading", { name: "계획이 준비됐어요", exact: true })).toBeFocused()
+  await openPlanOptions(page, true)
+  await expect(picker.getByRole("status")).toContainText("상세 훈련 수치를 적용")
 }
 
 for (const viewport of [
@@ -142,6 +147,7 @@ for (const viewport of [
 
     await expect(page.getByText(/5×1000m @5000m RP.*r150.*JOG/u).first()).toBeVisible()
     await expect(page.getByText(/4번.*150초.*조깅.*600초/u).first()).toBeVisible()
+    await page.getByText("기준 기록·중단·낮춤 규칙 보기").first().click()
     await expect(page.getByText(/기준 기록.*18분 30초.*2026-05-10/u).first()).toBeVisible()
     await assertViewportIntegrity(page)
     await assertTouchTargets(page)
@@ -247,6 +253,8 @@ test("requires reconfirmation after replacing the selected record", async ({ pag
   const picker = page.getByRole("region", { name: "개인 페이스 기준 기록" })
   await picker.getByRole("button", { name: /개인 최고.*18분 30초/u }).click()
   await picker.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
+  await expect(page.getByRole("heading", { name: "계획이 준비됐어요", exact: true })).toBeFocused()
+  await openPlanOptions(page, true)
   await expect(page.getByText(/5×1000m @5000m RP.*r150.*JOG/u).first()).toBeVisible()
 
   await picker.getByRole("button", { name: /^시즌 최고.*19분/u }).click()
@@ -255,6 +263,8 @@ test("requires reconfirmation after replacing the selected record", async ({ pag
   await expect(page.getByText("새로 고른 기준 기록을 확인한 뒤 계획을 선택해 주세요.")).toBeVisible()
 
   await picker.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
+  await expect(page.getByRole("heading", { name: "계획이 준비됐어요", exact: true })).toBeFocused()
+  await openPlanOptions(page, true)
   await expect(page.getByRole("button", { name: /이 계획으로 시작하기/u })).toBeEnabled()
   await page.getByText("기준 기록·중단·낮춤 규칙 보기").first().click()
   await expect(page.getByText(/기준 기록.*5000m.*19분.*2026-04-20/u).first()).toBeVisible()

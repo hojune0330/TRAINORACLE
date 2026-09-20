@@ -5,6 +5,7 @@ import { createServer, type ViteDevServer } from "vite"
 import type { AccountJournalRecord } from "../src/domain/account/account-journal-record-schema"
 import { mockPlanCollectionServer } from "./fixtures/account-plan-collection-server"
 import { openActiveSessionDetails } from "./active-plan-flow"
+import { completeQuickPlan, openPlanOptions } from "./plan-flow"
 
 const origin = "http://127.0.0.1:4497"
 const owner = "11111111-1111-4111-8111-111111111111"
@@ -288,14 +289,12 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
     }, now)).toEqual(recordsBeforeSelection)
   }
   await panel.getByRole("button", { name: "훈련 계획 보기" }).click()
-  await page.getByRole("button", { name: /^5000m/u }).click()
-  await page.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }).click()
-  await page.getByRole("button", { name: /^3일/u }).click()
-  await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
+  await completeQuickPlan(page, { event: /^5000m/u, experience: /구조화된 훈련과 경기 경험이 많아요/u })
   const refine = page.getByTestId("plan-refine")
   await refine.locator(":scope > summary").click()
   await refine.getByRole("button", { name: /^훈련 종류 바꾸기/u }).click()
   await page.getByRole("button", { name: /숨차게 반복.*VO₂/u }).click()
+  await openPlanOptions(page, true)
   const method = page.locator(".plan-method-picker")
   await method.locator(":scope > summary").click()
   const eligibility = await page.evaluate(async now => {
@@ -332,11 +331,14 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
   await method.evaluate(node => node.scrollIntoView({ block: "start" }))
   await page.screenshot({ path: testInfo.outputPath("method-preference-eligibility.png"), animations: "disabled" })
   await method.getByRole("radio", { name: /1000m 5회/u }).check()
-  const choose = page.getByRole("article", { name: "시간 조절 계획" }).getByRole("button", { name: "이 계획으로 시작하기" })
+  const choose = page.getByRole("article", { name: "기초·회복 운동 시간을 범위로" }).getByRole("button", { name: "이 계획으로 시작하기" })
   await expect(choose).toBeDisabled()
   const record = page.getByRole("region", { name: "개인 페이스 기준 기록" })
   await record.getByRole("group", { name: "기준 기록 선택" }).getByRole("button").first().click()
   await record.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
+  await openPlanOptions(page)
+  const candidateDetails = page.getByRole("button", { name: "계획안 A 일정 펼치기" })
+  if (await candidateDetails.count()) await candidateDetails.click()
   const pace = page.getByRole("complementary", { name: "추천 페이스 기준" }).first()
   await pace.locator("summary").focus(); await pace.locator("summary").press("Enter")
   await expect(pace.getByText("1,111.25초 × 1000m ÷ 5000m")).toBeVisible()
@@ -344,7 +346,7 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
   await page.screenshot({ path: testInfo.outputPath("explicit-pace-candidate.png") })
   await assertNoAutomaticPlanWrite()
   await choose.click()
-  await expect(page.getByRole("heading", { name: /9일 훈련 계획/u })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "오늘 훈련", exact: true })).toBeVisible()
   await expect.poll(() => account.plan.calls.filter(call => call.request.action === "commit").length).toBe(1)
   expect(account.plan.indexes.get(owner)?.revision).toBe(1)
   const persisted = JSON.stringify([...account.plan.parts.values()])
@@ -364,12 +366,12 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
     await next.goto("/?app=1")
     await expect.poll(() => confirmedCount(next)).toBe(1)
     await next.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
-    await expect(next.getByRole("heading", { name: /9일 훈련 계획/u })).toBeVisible()
+    await expect(next.getByRole("heading", { name: "오늘 훈련", exact: true })).toBeVisible()
     await expect.poll(() => confirmedPlan(next)).toEqual(selected)
     expect(account.plan.calls.filter(call => call.request.action === "readPart").length).toBeGreaterThanOrEqual(2)
     expect(account.plan.calls.filter(call => call.request.action === "commit")).toHaveLength(1)
     expect(JSON.stringify([...account.plan.parts.values()])).toBe(persisted)
-    await next.getByRole("heading", { name: /9일 훈련 계획/u }).evaluate(node => node.scrollIntoView({ block: "start" }))
+    await next.getByRole("heading", { name: "오늘 훈련", exact: true }).evaluate(node => node.scrollIntoView({ block: "start" }))
     await next.screenshot({ path: testInfo.outputPath("account-plan-reopened.png") })
     const active = await openActiveSessionDetails(next, /5×1000m/u)
     await expect(active.getByText(/5×1000m/u).first()).toBeVisible()

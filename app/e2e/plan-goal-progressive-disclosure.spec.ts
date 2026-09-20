@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { refinePlan } from "./plan-flow"
+import { enterPlanWithoutRecord, openPlanOptions, refinePlan } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
@@ -7,15 +7,11 @@ test("shows the seven initial plan events from 800m through marathon", async ({ 
   // Given: a new athlete has opened the plan flow.
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
-  const choices = page.getByRole("group", { name: "계획 종목 선택" })
-  await expect(choices.getByRole("button")).toHaveCount(7)
-  await expect(choices.getByRole("button", { name: /^800m\b/u })).toBeVisible()
-  await expect(choices.getByRole("button", { name: /^1500m\b/u })).toBeVisible()
-  await expect(choices.getByRole("button", { name: /^3000m\b/u })).toBeVisible()
-  await expect(choices.getByRole("button", { name: /^5000m\b/u })).toBeVisible()
-  await expect(choices.getByRole("button", { name: /^10km\b/u })).toBeVisible()
-  await expect(choices.getByRole("button", { name: /^하프마라톤/u })).toBeVisible()
-  await expect(choices.getByRole("button", { name: /^마라톤/u })).toBeVisible()
+  const choices = page.getByRole("combobox", { name: "종목" })
+  await expect(choices).toBeVisible()
+  await expect(choices.locator("option")).toHaveCount(8)
+  expect(await choices.locator("option").evaluateAll(options => options.map(option => (option as HTMLOptionElement).value)))
+    .toEqual(["", "800", "1500", "3000", "5000", "10000", "21097", "42195"])
   await page.screenshot({
     path: testInfo.outputPath("supported-plan-events.png"),
     fullPage: true,
@@ -26,15 +22,17 @@ test("creates a mobile marathon beta plan without inventing pace numbers", async
   await page.setViewportSize({ width: 320, height: 650 })
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
-  await page.getByRole("button", { name: /^마라톤/u }).click()
+  await enterPlanWithoutRecord(page, /^마라톤/u)
   await expect(page.getByRole("button", { name: /일반부/u })).toHaveCount(0)
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /^5일/u }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
   await refinePlan(page, "훈련 종류", /편하게 오래.*BASE/u)
+  await openPlanOptions(page, true)
 
   await expect(page.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
   await expect(page.getByText("마라톤").first()).toBeVisible()
+  await page.getByText("계획안 A 설명·시간 합계", { exact: true }).click()
   await expect(page.getByText("RPE 기준 실행 안내").first()).toBeVisible()
   await expect(page.getByText(/@(?:10km|하프|마라톤).*RP/u)).toHaveCount(0)
   await expect.poll(() => page.locator(".app-scroll-region").evaluate(

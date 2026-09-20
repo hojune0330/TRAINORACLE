@@ -53,8 +53,10 @@ test("keeps decoration and oracle motion brief, directional, and optional", asyn
     expect(oracleAnimations.every((animation) => animation.duration === "0.3s")).toBe(true)
   }
 
-  /* 홈 카드는 이제 진짜 일지 편집기로 라우팅 — 편집기 진입/서랍 모션이 짧고 방향성이 있어야 한다. */
+  /* 홈의 꾸미기 진입에서 보관함을 거쳐 오늘 일지 편집기를 연다. */
   await mainTabs.getByRole("button", { name: "홈" }).click()
+  await page.getByRole("button", { name: "일지 꾸미기", exact: true }).click()
+  await expect(page.getByRole("heading", { name: "일지 꾸미기·포인트", exact: true })).toBeVisible()
   await page.getByRole("button", { name: "꾸미기 열기" }).click()
   await expect(page.getByRole("dialog", { name: "이 일지 꾸미기" })).toBeVisible()
 

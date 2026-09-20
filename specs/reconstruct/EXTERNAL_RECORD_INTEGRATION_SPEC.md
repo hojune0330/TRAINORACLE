@@ -47,6 +47,33 @@ runtime_stage:
 
 ---
 
+### 1.1 COROS V2.1.1 Implementation Authorization (2026-09-12)
+
+The owner subsequently authorized COROS integration implementation and excluded email
+work from the current task. This supersedes the application-readiness-only restriction
+for COROS development, not for Garmin. It does not declare missing provider credentials,
+signature details, end-user consent, production deployment or live verification complete.
+Existing issue counts and canonical status are unchanged.
+
+Implementation scope includes official OAuth protocol, encrypted daily-data inbox,
+explicitly selected workout serialization and disconnection. Daily data is a separate
+namespace (`COROS_DAILY_API`), not an activity or athlete-entered observation. Each
+observation retains provider day, connection generation and content identity. Repeated
+identical deliveries do not add volume; changed content is kept as another pending
+version because arrival order alone does not prove provider modification order.
+
+Daily health values are encrypted server-side before persistence. Missing values remain
+missing. Sleep strings without confirmed timezone are not converted into sleep duration.
+Raw HRV samples and overnight HRV are distinct fields; neither clears safety risk.
+No automatic statistics/plan adoption is granted by receiving or confirming a record.
+
+Transport tests with synthetic data are not provider-signature or live OAuth evidence.
+The V2.1.1 signature algorithm remains unspecified in the supplied reference; an absent
+verifier must reject ingestion. Client credentials remain server-only. Disconnect rotates
+the connection generation so previously prepared writes cannot commit afterwards.
+Outbound requests must preserve selected workout numbers and reject unsupported targets
+instead of substituting invented pace, threshold, repetition or rest values.
+
 ## 2. Provider And Direction Model
 
 | Provider | Candidate inbound scope | Candidate outbound scope | Current state |

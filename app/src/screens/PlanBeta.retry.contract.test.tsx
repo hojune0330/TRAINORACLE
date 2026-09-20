@@ -43,21 +43,21 @@ describe("plan candidate save retry", () => {
       return realSetItem.call(this, key, value)
     })
     await user.click(screen.getAllByRole("button", { name: /선택하기|이 계획으로 시작하기/u })[0]!)
-    expect(screen.getByRole("button", { name: "계획 다시 저장하기" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "저장 다시 시도" })).toBeVisible()
     let release: (() => void) | undefined
     const lock: mutationLock.PlanMutationLockManager = {
       request: <T,>(_name: string, _options: unknown, callback: (lock: object | null) => T | Promise<T>) =>
         new Promise<T>(resolve => { release = () => { resolve(callback({})) } }),
     }
     vi.spyOn(mutationLock, "getPlanMutationLockManager").mockReturnValue(lock)
-    await user.click(screen.getByRole("button", { name: "계획 다시 저장하기" }))
+    await user.click(screen.getByRole("button", { name: "저장 다시 시도" }))
     expect(release).toBeTypeOf("function")
     fireEvent.change(screen.getByLabelText("계획 시작 날짜"), { target: { value: "2026-09-15" } })
     await act(async () => { release!() })
     expect(writes).toBe(1)
     expect(localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
     expect(screen.queryByRole("heading", { name: /9일 훈련 계획/u })).toBeNull()
-    expect(screen.queryByRole("button", { name: "계획 다시 저장하기" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "저장 다시 시도" })).toBeNull()
   }, 15_000)
 
   it.skip("offers a direct retry when the selected plan cannot be stored", async () => {
@@ -85,7 +85,7 @@ describe("plan candidate save retry", () => {
 
     // Then: the failure is explained with a direct retry action.
     expect(screen.getByRole("alert")).toHaveTextContent("계획을 이 기기에 저장하지 못했어요")
-    expect(screen.getByRole("button", { name: "계획 다시 저장하기" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "저장 다시 시도" })).toBeVisible()
   })
 
   it.skip("stores the selected plan when the direct retry succeeds", async () => {
@@ -110,7 +110,7 @@ describe("plan candidate save retry", () => {
     await userEvent.setup().click(choice)
 
     // When: the athlete uses the direct retry action.
-    await userEvent.setup().click(screen.getByRole("button", { name: "계획 다시 저장하기" }))
+    await userEvent.setup().click(screen.getByRole("button", { name: "저장 다시 시도" }))
 
     // Then: the local snapshot exists and the active plan is shown.
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).not.toBeNull()
@@ -181,7 +181,7 @@ describe("plan candidate save retry", () => {
 
     // Then: the app does not claim that the plan was saved.
     expect(screen.getByRole("alert")).toHaveTextContent("계획을 이 기기에 저장하지 못했어요")
-    expect(screen.getByRole("button", { name: "계획 다시 저장하기" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "저장 다시 시도" })).toBeVisible()
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
   })
 
@@ -213,7 +213,7 @@ describe("plan candidate save retry", () => {
     await userEvent.setup().click(choice)
 
     expect(screen.getByRole("alert")).toHaveTextContent("계획 저장을 되돌렸는지 확인할 수 없어요")
-    expect(screen.queryByRole("button", { name: "계획 다시 저장하기" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "저장 다시 시도" })).not.toBeInTheDocument()
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBe("{\"corrupt\":true}")
   })
 
@@ -234,6 +234,6 @@ describe("plan candidate save retry", () => {
     await userEvent.setup().click(choice)
 
     expect(screen.getByRole("alert")).toHaveTextContent("현재 계획을 확인해 주세요")
-    expect(screen.queryByRole("button", { name: "계획 다시 저장하기" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "저장 다시 시도" })).not.toBeInTheDocument()
   })
 })

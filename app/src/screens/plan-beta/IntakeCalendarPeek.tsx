@@ -30,7 +30,7 @@ export function IntakeCalendarPeek({
       ? `${eventDistanceLabel(draft.eventDistanceM)} 달력 준비 중`
       : draft.availableDayCount === undefined
         ? `${eventDistanceLabel(draft.eventDistanceM)} · ${shortExperience(draft.experienceBand)}`
-        : `${eventDistanceLabel(draft.eventDistanceM)} · ${shortExperience(draft.experienceBand)} · ${dayCountLabel(draft.availableDayCount)}`
+        : `${eventDistanceLabel(draft.eventDistanceM)} · ${shortExperience(draft.experienceBand)} · ${dayCountLabel(draft.availableDayCount, frameLengthDays)}`
 
   return (
     <figure
@@ -82,6 +82,6 @@ function shortExperience(band: PlanBetaIntake["experienceBand"]): string {
   return EXPERIENCE_LABELS[band].short
 }
 
-function dayCountLabel(count: PlanBetaIntake["availableDayCount"]): string {
-  return count === "EVERY_DAY" ? "매일" : `주 ${count}일`
+function dayCountLabel(count: PlanBetaIntake["availableDayCount"], frameLengthDays: number): string {
+  return count === "EVERY_DAY" ? "매일" : `${frameLengthDays}일 중 ${count}일`
 }

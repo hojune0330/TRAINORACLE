@@ -107,13 +107,13 @@ export function candidateLabel(
 } {
   if (kind === "CONSERVATIVE") {
     return {
-      title: "최소 시간 계획",
-      detail: `${ENERGY_INTENT_LABELS[selectedEnergyIntent].title.split(" · ")[0]} + 쉬운 날은 짧게`,
+      title: "기초·회복 운동을 짧게",
+      detail: `${ENERGY_INTENT_LABELS[selectedEnergyIntent].title.split(" · ")[0]} 목적 · 기초·회복 운동은 제시 범위의 짧은 시간으로`,
     }
   }
   return {
-    title: "시간 조절 계획",
-    detail: `${ENERGY_INTENT_LABELS[selectedEnergyIntent].title.split(" · ")[0]} + 쉬운 날은 내가 조절`,
+    title: "기초·회복 운동 시간을 범위로",
+    detail: `${ENERGY_INTENT_LABELS[selectedEnergyIntent].title.split(" · ")[0]} 목적 · 기초·회복 운동은 표시된 시간 범위에서 선택`,
   }
 }
 

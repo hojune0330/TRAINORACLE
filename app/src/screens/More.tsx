@@ -15,6 +15,7 @@ export type MoreProps = {
   readonly onOpenAccount?: () => void
   readonly onOpenRestore?: () => void
   readonly feedbackAvailable?: boolean
+  readonly onOpenFeedback?: () => void
   readonly onOpenContent?: () => void
   readonly onOpenRewards?: () => void
 }
@@ -26,6 +27,7 @@ export function More({
   onOpenAccount,
   onOpenRestore,
   feedbackAvailable = feedbackConfig() !== null,
+  onOpenFeedback,
   onOpenContent,
   onOpenRewards,
 }: MoreProps) {
@@ -57,10 +59,14 @@ export function More({
           {trashCount === 0 ? <p>지운 일지가 없어요.</p> : <TrashBin onChanged={() => setTrashCount(loadTrash().length)} />}
         </details>
         <h2 className="more-screen__group-label">도움말</h2>
-        <a className="more-screen__row" href="?feedback=1">
-          <MessageSquareText aria-hidden="true" size={19} />
-          <span><strong>문의 게시판</strong><small>{feedbackAvailable ? "불편한 점을 일지 내용 없이 남겨요" : "지금은 준비 중이에요. 열리면 앱 안에서 알려드려요"}</small></span>
-        </a>
+        {onOpenFeedback === undefined ? (
+          <a className="more-screen__row" href="?feedback=1">
+            <MessageSquareText aria-hidden="true" size={19} />
+            <span><strong>문의 게시판</strong><small>{feedbackAvailable ? "불편한 점을 일지 내용 없이 남겨요" : "지금은 준비 중이에요. 열리면 앱 안에서 알려드려요"}</small></span>
+          </a>
+        ) : (
+          <UtilityRow icon={MessageSquareText} label="문의 게시판" detail={feedbackAvailable ? "불편한 점을 일지 내용 없이 남겨요" : "지금은 준비 중이에요. 열리면 앱 안에서 알려드려요"} onClick={onOpenFeedback} />
+        )}
         <a className="more-screen__row" href="./support.html" target="_blank" rel="noreferrer">
           <Watch aria-hidden="true" size={19} />
           <span><strong>기기 연동 상태</strong><small>Garmin·COROS 신청 현황과 파일 가져오기를 확인해요</small></span>

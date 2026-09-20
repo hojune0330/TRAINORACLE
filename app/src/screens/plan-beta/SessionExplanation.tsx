@@ -26,10 +26,23 @@ type Tab = typeof TABS[number]
 
 export function SessionExplanationEntry(props: Props) {
   const [open, setOpen] = React.useState(false)
+  const opener = React.useRef<HTMLButtonElement>(null)
+  const returnPosition = React.useRef<{ region: HTMLElement; top: number } | null>(null)
+  React.useLayoutEffect(() => {
+    if (open || returnPosition.current === null) return
+    const { region, top } = returnPosition.current
+    region.scrollTo({ top, behavior: "instant" })
+    opener.current?.focus({ preventScroll: true })
+    returnPosition.current = null
+  }, [open])
   return (
     <div className="session-explanation-entry">
       <p>{explanationProfile(props.session).purpose}</p>
-      <button type="button" onClick={() => setOpen(true)} aria-haspopup="dialog">
+      <button ref={opener} type="button" onClick={() => {
+        const region = opener.current?.closest<HTMLElement>(".app-scroll-region")
+        returnPosition.current = region ? { region, top: region.scrollTop } : null
+        setOpen(true)
+      }} aria-haspopup="dialog">
         <BookOpen aria-hidden="true" size={17} />
         훈련 방법과 이유
         <ChevronRight aria-hidden="true" size={16} />
