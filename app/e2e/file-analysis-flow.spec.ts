@@ -124,7 +124,7 @@ async function mockAccount() {
           const previous = documents.get(request.documentId)
           if (!previous || previous.revision !== request.expectedRevision) return answer({ kind: "conflict", documentId: request.documentId,
             operationId: request.operationId, currentRevision: previous?.revision ?? 0 }, 409)
-          const { supportedJournalVersions, ...command } = request
+          const { supportedJournalVersions, supportsExerciseLogV1: _exerciseCapability, ...command } = request
           if (!supportedJournalVersions?.includes(3)) return answer({ error: "UPGRADE_REQUIRED" }, 426)
           if (command.action === "confirmComparisonRelation") {
             // Owner-scoped stored collection read, never a snapshot or attestation supplied by the browser.
@@ -227,6 +227,7 @@ async function saveImport(page: Page) {
   await expect.poll(() => confirmedCount(page)).toBe(1)
   expect(await sharedDistance(page)).toEqual({ totalKm: 10, includedSourceCount: 1 })
   await page.getByRole("button", { name: "가져온 기록 분석하기" }).click()
+  await expect(page.getByRole("group", { name: "내 기록 분석 항목" }).getByRole("button", { name: "파일 분석", exact: true })).toHaveAttribute("aria-pressed", "true")
   const panel = page.getByTestId("file-analysis-panel")
   await expect(panel.getByText("10km", { exact: true })).toBeVisible()
   await expect(panel.getByText("80분", { exact: true })).toBeVisible()
@@ -379,6 +380,7 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
     await next.screenshot({ path: testInfo.outputPath("account-plan-reopened-prescription.png") })
 
     await next.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석" }).click()
+    await next.getByRole("group", { name: "내 기록 분석 항목" }).getByRole("button", { name: "파일 분석", exact: true }).click()
     const reopenedPanel = next.getByTestId("file-analysis-panel")
     await reopenedPanel.locator("summary").filter({ hasText: "2026-09-19 · 달리기 · 2개 구간" }).click()
     await reopenedPanel.getByRole("button", { name: "계획과 비교", exact: true }).click()
@@ -419,6 +421,7 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
     await next.reload()
     await expect.poll(() => confirmedCount(next)).toBe(1)
     await next.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석" }).click()
+    await next.getByRole("group", { name: "내 기록 분석 항목" }).getByRole("button", { name: "파일 분석", exact: true }).click()
     await reopenedPanel.locator("summary").filter({ hasText: "2026-09-19 · 달리기 · 2개 구간" }).click()
     await reopenedPanel.getByRole("button", { name: "계획과 비교", exact: true }).click()
     await expect(choice).toBeEnabled()
@@ -469,6 +472,7 @@ test("persisted ACK cache stays displayable but cannot authorize file analysis a
   expect(await confirmedCount(page)).toBe(1)
   expect(await sharedDistance(page)).toEqual({ totalKm: null, includedSourceCount: 0 })
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석" }).click()
+  await page.getByRole("group", { name: "내 기록 분석 항목" }).getByRole("button", { name: "파일 분석", exact: true }).click()
   const panel = page.getByTestId("file-analysis-panel")
   await expect(page.getByRole("heading", { name: "분석", exact: true, level: 1 })).toBeVisible()
   await expect(panel.getByRole("status")).toContainText("이전에 저장한 파일 기록 1개의 최신 상태를 계정에서 확인하지 못했어요.")
@@ -520,6 +524,7 @@ test("a real replacement TCX candidate saves a validated correction and reopens 
   await page.reload()
   await expect.poll(() => sharedDistance(page)).toEqual({ totalKm: 11, includedSourceCount: 1 })
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석" }).click()
+  await page.getByRole("group", { name: "내 기록 분석 항목" }).getByRole("button", { name: "파일 분석", exact: true }).click()
   await expect(panel.getByText("11km", { exact: true })).toBeVisible()
   await expect(panel.getByText("90분", { exact: true })).toBeVisible()
   await panel.locator("h2").evaluate(node => node.scrollIntoView({ block: "start" }))
@@ -562,6 +567,7 @@ for (const file of additionalFiles) {
     expect(account.documents.get(stored.documentId)).toEqual(stored)
     expect((await sharedDistance(page)).includedSourceCount).toBe(1)
     await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석" }).click()
+    await page.getByRole("group", { name: "내 기록 분석 항목" }).getByRole("button", { name: "파일 분석", exact: true }).click()
     const panel = page.getByTestId("file-analysis-panel")
     await expect(panel.getByText(file.distance, { exact: true })).toBeVisible()
     await expect(panel.getByText(file.duration, { exact: true })).toBeVisible()

@@ -94,7 +94,8 @@ export function mockRecordServer<T = AccountJournalRecord>() {
               const corrected = request.action === "correctImportedObservation" ? correctAccountJournalImportedObservation(old?.document,
                 request.previousContentRevisionFingerprint, request.replacementObservation, request.confirmedChangedFields)
                 : request.action === "confirmComparisonRelation" || request.action === "releaseComparisonRelation"
-                  ? applyAccountJournalComparisonMutation(old?.document, Object.fromEntries(Object.entries(request).filter(([key]) => key !== "supportedJournalVersions"))) : null
+                  ? applyAccountJournalComparisonMutation(old?.document, Object.fromEntries(Object.entries(request)
+                    .filter(([key]) => key !== "supportedJournalVersions" && key !== "supportsExerciseLogV1"))) : null
               const mutation = request.action === "correctImportedObservation" || request.action === "confirmComparisonRelation" || request.action === "releaseComparisonRelation"
               if (current !== request.expectedRevision) {
                 status = 409

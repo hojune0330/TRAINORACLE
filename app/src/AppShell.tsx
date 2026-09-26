@@ -325,14 +325,14 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     athleteRecordsOpen,
     utilityView,
   ])
-  const goTab = (tab: AppTab) => {
+  const goTab = (tab: AppTab, analysis?: AnalysisNavigation) => {
     if (!shouldResetTabView(v, tab, utilityView !== null || athleteRecordsOpen || overlayRef.current !== null)) return
     runViewTransition(tabMotion(v.tab, tab), () => {
       dismissOracle()
       oracleInputRef.current = null
       setAthleteRecordsOpen(false)
       setUtilityView(null)
-      setAnalysisContext(undefined)
+      setAnalysisContext(tab === "trends" ? analysis : undefined)
       setV(viewForTab(tab))
     })
   }
@@ -646,7 +646,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       <DeferredMobileScreens.ImportActivities
         onBack={closeImport}
         onOpenLog={() => goTab("journal")}
-        onOpenAnalysis={() => goTab("trends")}
+        onOpenAnalysis={() => goTab("trends", { section: "files" })}
       />
     )
   } else if (v.tab === "log") {
