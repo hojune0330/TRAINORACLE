@@ -1,4 +1,5 @@
 import React from "react"
+import { Plus, ChevronUp } from "lucide-react"
 import { FormInputDraftBoundary, useFormInputDraft, useRecoveredFormInput } from "./useFormInputDraft"
 import type { ObjectiveEditorDraft, ExerciseEditorDraft } from "./form-input-draft"
 import type { ExerciseLog } from "../../domain/exercise-log"
@@ -108,6 +109,8 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
   const [objectiveEditor, setObjectiveEditor] = React.useState<ObjectiveEditorDraft>(() => input?.objectiveEditor ?? { kind: "INTERVALS", fields: {} })
   const [exerciseLog, setExerciseLog] = React.useState<ExerciseLog>(() => input?.exerciseLog ?? initial?.exerciseLog ?? { version: 1, source: "SELF_REPORTED", components: [] })
   const [exerciseEditor, setExerciseEditor] = React.useState<ExerciseEditorDraft | undefined>(input?.exerciseEditor)
+  const [exerciseOpen, setExerciseOpen] = React.useState(() => Boolean(input?.exerciseEditor || (input?.exerciseLog ?? initial?.exerciseLog)?.components.length))
+  const exercisePanelId = React.useId()
   const memo = usePurposeScopedMemo(input?.memo ?? initial?.memo ?? "", input ? input.purpose ?? undefined : initial?.memoPurpose)
   const draft = useFormInputDraft({ kind: "post-session", rpe, activityOutcome: activityOutcome ?? null,
     activitySlot: activitySlot ?? null, painCheckStatus, painParts, system, title, distanceKm, durationMin,
@@ -313,10 +316,17 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
       </FormSec>}
 
       <FormSec compact lb="세션 제목">
-        <input aria-label="세션 제목" type="text" value={title} onChange={(event) => setTitle(event.target.value)} style={inputStyle()} />
-      </FormSec>
-      <FormSec compact lb="실제로 한 운동">
-        <ExerciseLogEditor value={exerciseLog} onChange={setExerciseLog} draft={exerciseEditor} onDraftChange={setExerciseEditor} />
+        <div className="exercise-editor__entry">
+          <input aria-label="세션 제목" type="text" value={title} onChange={(event) => setTitle(event.target.value)} style={inputStyle()} />
+          <button type="button" aria-label="운동 내용 추가·수정" title="실제로 한 운동 추가·수정"
+            aria-expanded={exerciseOpen} aria-controls={exercisePanelId} onClick={() => setExerciseOpen(open => !open)}>
+            {exerciseOpen ? <ChevronUp size={18} aria-hidden="true" /> : <Plus size={18} aria-hidden="true" />}
+            <span>{exerciseLog.components.length > 0 ? `운동 ${exerciseLog.components.length}개` : "운동 내용"}</span>
+          </button>
+        </div>
+        <div id={exercisePanelId} hidden={!exerciseOpen}>
+          <ExerciseLogEditor value={exerciseLog} onChange={setExerciseLog} draft={exerciseEditor} onDraftChange={setExerciseEditor} />
+        </div>
       </FormSec>
       {recordsPerformance && <FormSec compact lb="거리 · 시간 · 평균 페이스" help="pace">
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>

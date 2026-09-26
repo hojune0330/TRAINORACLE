@@ -101,6 +101,7 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
   await expectNoHorizontalOverflow(page)
   await page.getByRole("button", { name: "홈으로 돌아가기" }).click()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석" }).click()
+  await page.getByRole("group", { name: "내 기록 분석 항목" }).getByRole("button", { name: "월별 변화", exact: true }).click()
   const metricButtons = page
     .getByRole("region", { name: "최근 4개월 추이" })
     .getByRole("button")

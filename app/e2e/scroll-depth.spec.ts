@@ -188,6 +188,15 @@ test("훈련 후 일지가 빈 상태에서 길지 않다", async ({ page }, tes
   expect(height).toBeLessThanOrEqual(limit.post)
   // 줄었다는 것 자체도 잠근다. 상한만 두면 원래도 통과하는 값이 섞인다.
   expect(height).toBeLessThan(before.post)
+  const exerciseToggle = page.getByRole("button", { name: "운동 내용 추가·수정", exact: true })
+  await expect(exerciseToggle).toHaveAttribute("aria-expanded", "false")
+  await exerciseToggle.click()
+  await page.getByRole("button", { name: "운동 추가", exact: true }).click()
+  await page.getByRole("textbox", { name: "운동 이름", exact: true }).fill("합성 반복 훈련")
+  await exerciseToggle.click()
+  await expect(page.getByRole("textbox", { name: "운동 이름", exact: true })).toBeHidden()
+  await exerciseToggle.click()
+  await expect(page.getByRole("textbox", { name: "운동 이름", exact: true })).toHaveValue("합성 반복 훈련")
 })
 
 test("하루 마무리가 빈 상태에서 길지 않다", async ({ page }, testInfo) => {
