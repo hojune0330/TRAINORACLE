@@ -1,12 +1,8 @@
 {
   "kind": "TRAINORACLE_PAGES_DEPLOYMENT",
-  "sourceSha": "1bcf0d914b5538b267ecf96d78668713ca5719d4",
-  "implementationSha": "ceda8f2b181996db44951347b898b0961a4b81ae",
-  "previousPagesSha": "7b2f1750e895ae4f2f006b9be739bf5a44d86ff0",
-  "deploymentMethod": "manual-user-approved",
-  "workflowRunId": "manual",
-  "ciStatusAtDeployment": "not-run-owner-requested-deploy-only",
-  "reason": "Owner explicitly requested manual deployment only, with no repeated validation.",
-  "publicConfigurationSourceSha": "d10feb56cc4a6c8d846a28fb6cbcf8632993a0f2",
-  "deployedAt": "2026-09-20T23:28:08.132Z"
+  "sourceSha": "7ee3196282b72a31099790e2f5ae9768e88f2107",
+  "previousPagesSha": "72c74f4a5b74a682a94cd0c8ace76411aae9decb",
+  "workflowRunId": "36259777229",
+  "workflowAttempt": "1",
+  "deployedAt": "2026-09-26T18:27:53.230Z"
 }
