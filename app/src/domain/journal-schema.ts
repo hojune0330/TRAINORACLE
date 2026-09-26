@@ -13,6 +13,7 @@ import { plannedSessionLinkSchema } from "./planned-session-link"
 import type { PlannedSessionLink } from "./planned-session-link"
 import { fileObservationSchema, type FileObservationV1 } from "./import/file-observation"
 import { comparisonRelationSchema, type ComparisonRelationV1 } from "./import/comparison-relation"
+import { exerciseLogSchema, type ExerciseLog } from "./exercise-log"
 
 export const MEMO_PURPOSE = {
   privateSelfOnly: "PRIVATE_SELF_ONLY",
@@ -68,6 +69,7 @@ export type PostSessionEntry = JournalEntryBase & PurposeScopedMemo & {
   readonly rpe: number
   readonly memo: string
   readonly intensityAssessment?: SessionIntensityAssessment
+  readonly exerciseLog?: ExerciseLog
   readonly plannedSessionLink?: PlannedSessionLink
   readonly fileObservation?: FileObservationV1
   readonly comparisonRelations?: readonly ComparisonRelationV1[]
@@ -166,6 +168,7 @@ const postSessionSchema: z.ZodType<PostSessionEntry> = z.object({
   rpe: z.number().int().min(0).max(10),
   memo: z.string(),
   intensityAssessment: sessionIntensityAssessmentSchema.optional(),
+  exerciseLog: exerciseLogSchema.optional(),
   plannedSessionLink: plannedSessionLinkSchema.optional(),
   fileObservation: fileObservationSchema.optional(),
   comparisonRelations: z.array(comparisonRelationSchema).min(1).max(32).optional(),
@@ -308,7 +311,8 @@ const journalEntryWriteSchema = journalEntrySchema.superRefine((entry, context) 
         || entry.distanceKm.trim() !== ""
         || entry.durationMin.trim() !== ""
         || entry.avgPace.trim() !== ""
-        || entry.intensityAssessment !== undefined) {
+        || entry.intensityAssessment !== undefined
+        || (entry.exerciseLog?.components.length ?? 0) > 0) {
         context.addIssue({
           code: "custom",
           message: "Rested or skipped entries cannot retain performed-session facts.",

@@ -22,6 +22,10 @@ claiming that unlike training modalities share one scientifically validated scal
 
 ## User Contract
 
+2026-09-26: [실제 운동 기록 계약](SESSION_RECORDING_COMPOSER_CONTRACT.md)의 선택형
+`exerciseLog`는 일반 기록용 별도 구조다. 아래 `objectiveComponents`의 필수 수치나
+분석 권한은 변경하지 않는다. 불완전한 실제 기록을 이 분석 구조에 억지로 넣지 않는다.
+
 1. `plannedRpe` is an optional 1-10 answer representing the athlete or coach's expected session
    intensity before execution.
 2. The existing post-session `rpe` is the optional 1-10 reported intensity after execution. A stored

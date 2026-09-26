@@ -1,6 +1,8 @@
 import React from "react"
 import { FormInputDraftBoundary, useFormInputDraft, useRecoveredFormInput } from "./useFormInputDraft"
-import type { ObjectiveEditorDraft } from "./form-input-draft"
+import type { ObjectiveEditorDraft, ExerciseEditorDraft } from "./form-input-draft"
+import type { ExerciseLog } from "../../domain/exercise-log"
+import { ExerciseLogEditor } from "./ExerciseLogEditor"
 import { accountJournalRecordsEnabled } from "../../domain/account/account-journal-record-service"
 import { FormFinalizationRecovery, useFormFinalization } from "./useFormFinalization"
 import { IndexCard } from "../../components/JournalPrimitives"
@@ -104,11 +106,13 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
   const intensity = useIntensityAssessment(input ? { schemaVersion: 1, plannedRpe: input.plannedRpe,
     objectiveComponents: input.objectiveComponents } : initial?.intensityAssessment)
   const [objectiveEditor, setObjectiveEditor] = React.useState<ObjectiveEditorDraft>(() => input?.objectiveEditor ?? { kind: "INTERVALS", fields: {} })
+  const [exerciseLog, setExerciseLog] = React.useState<ExerciseLog>(() => input?.exerciseLog ?? initial?.exerciseLog ?? { version: 1, source: "SELF_REPORTED", components: [] })
+  const [exerciseEditor, setExerciseEditor] = React.useState<ExerciseEditorDraft | undefined>(input?.exerciseEditor)
   const memo = usePurposeScopedMemo(input?.memo ?? initial?.memo ?? "", input ? input.purpose ?? undefined : initial?.memoPurpose)
   const draft = useFormInputDraft({ kind: "post-session", rpe, activityOutcome: activityOutcome ?? null,
     activitySlot: activitySlot ?? null, painCheckStatus, painParts, system, title, distanceKm, durationMin,
     avgPace, plannedRpe: intensity.plannedRpe, objectiveComponents: [...intensity.objectiveComponents],
-    objectiveEditor, memo: memo.text, purpose: memo.purpose ?? null }, entryId, true, lastSavedAt.current)
+    objectiveEditor, exerciseLog, exerciseEditor, memo: memo.text, purpose: memo.purpose ?? null }, entryId, true, lastSavedAt.current)
   const didNotPerform = isNonPerformedOutcome(activityOutcome)
   const recordsPerformance = !didNotPerform
   const importedObjective = IMPORTED_OBJECTIVE_FIELDS.some((field) => isImportedField(field, initial?.fieldProvenance))
@@ -124,6 +128,11 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
 
   const persist = async () => {
     if (persistInFlight.current || !draft.current()) return
+    if (exerciseEditor || (didNotPerform && exerciseLog.components.length > 0)) {
+      setSaveError(true)
+      setAccountNotice(exerciseEditor ? "작성 중인 운동 내용을 반영하거나 지운 뒤 저장해 주세요." : "운동 내용이 남아 있어요. 운동 결과를 바꾸거나 운동 내용을 직접 정리해 주세요.")
+      return
+    }
     const memoPreparation = memo.prepareForSave()
     if (!memoPreparation.ready) return
     if (recordsPerformance && painCheckStatus === "SIGNAL_REPORTED"
@@ -161,6 +170,7 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
       avgPace: persistedAvgPace,
       rpe: persistedRpe,
       memo: memo.text,
+      ...(exerciseLog.components.length > 0 ? { exerciseLog } : {}),
       ...(recordsPerformance && intensity.assessment !== undefined
         ? { intensityAssessment: intensity.assessment }
         : {}),
@@ -226,8 +236,9 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
           ? "수정 충돌을 확인해 주세요. 이 기기의 내용은 보관했지만 계정 저장은 완료되지 않았어요."
           : isPrivateMemo ? "비밀 일지를 이 기기에 보관했어요. 계정 전송 대기 중이며 공유·분석에는 사용하지 않아요."
             : "일지를 이 기기에 보관했어요. 계정 전송 대기 중이에요."
-      const message = [memoPreparation.reviewMessage, storageMessage].filter(Boolean).join(" ")
-      onDone?.("post-session", saved, message || undefined)
+      const reviewMessage = memoPreparation.reviewMessage ?? (painLevelsRequireReview(saved.painParts ?? {}) ? "불편한 곳을 기록했어요. 몸 상태를 확인해 주세요." : undefined)
+      if (storageMessage) onDone?.("post-session", saved, reviewMessage, storageMessage)
+      else onDone?.("post-session", saved, reviewMessage)
     } catch {
       setSaveError(true)
     } finally {
@@ -303,6 +314,9 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
 
       <FormSec compact lb="세션 제목">
         <input aria-label="세션 제목" type="text" value={title} onChange={(event) => setTitle(event.target.value)} style={inputStyle()} />
+      </FormSec>
+      <FormSec compact lb="실제로 한 운동">
+        <ExerciseLogEditor value={exerciseLog} onChange={setExerciseLog} draft={exerciseEditor} onDraftChange={setExerciseEditor} />
       </FormSec>
       {recordsPerformance && <FormSec compact lb="거리 · 시간 · 평균 페이스" help="pace">
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
@@ -384,8 +398,8 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
         />
       </FormSec>
 
-      {accountEnabled && saveError && <p role="alert">{accountNotice ?? "계정 저장을 완료하지 못했어요. 입력은 그대로 남아 있어요. 연결과 로그인 상태를 확인한 뒤 다시 저장해 주세요."}</p>}
-      <StickyBar onSave={persist} error={saveError && !accountEnabled} label={saving ? "저장 중" : isEditing ? "수정 저장" : undefined} />
+      {saveError && (accountEnabled || accountNotice) && <p role="alert">{accountNotice ?? "계정 저장을 완료하지 못했어요. 입력은 그대로 남아 있어요. 연결과 로그인 상태를 확인한 뒤 다시 저장해 주세요."}</p>}
+      <StickyBar onSave={persist} error={saveError && !accountEnabled && !accountNotice} label={saving ? "저장 중" : isEditing ? "수정 저장" : undefined} />
       </fieldset>
     </div>
   )

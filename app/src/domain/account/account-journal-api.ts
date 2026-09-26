@@ -89,7 +89,7 @@ export async function requestAccountDocument<T>(
       || ((request.action === "list" || request.action === "history") && request.collection === "JOURNAL")
       || (request.action === "save" && (request.document as { kind?: unknown })?.kind === "JOURNAL")
     const { data, error } = await client.functions.invoke("account-journal", {
-      body: journalCall ? { ...request, supportedJournalVersions: [2, 3] } : request,
+      body: journalCall ? { ...request, supportedJournalVersions: [2, 3], supportsExerciseLogV1: true } : request,
       headers: { Authorization: `Bearer ${token}` },
     })
     let responseData: unknown = data

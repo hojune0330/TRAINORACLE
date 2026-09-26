@@ -111,6 +111,7 @@ it.each(["quick-session", "post-session", "evening", "race"] as const)(
     fireEvent.click(screen.getByTestId("journal-manage-toggle"))
     fireEvent.click(screen.getByTestId(`journal-edit-${session.id}`))
     fireEvent.click(screen.getByRole("button", { name: form === "quick-session" ? "오늘은 쉬었어요" : /^수정 저장/ }))
+    if (form === "quick-session") fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
     await waitFor(() => expect(mocks.persist).toHaveBeenCalledOnce())
     expect(mocks.persist.mock.calls[0]![0]).toMatchObject({ id: session.id, kind: entry.kind, syncState: "local" })
     expect(mocks.persist.mock.calls[0]![1]).toBe(session.savedAt)

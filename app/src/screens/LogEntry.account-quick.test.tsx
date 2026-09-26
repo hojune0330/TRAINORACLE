@@ -22,6 +22,7 @@ it.each(["ACCOUNT", "PENDING", "CONFLICT"] as const)("completes Quick only after
   const onDone = vi.fn()
   render(<LogEntry entryType="quick-session" initialEntry={initial} onDone={onDone} />)
   fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
+  fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
   if (storage !== "ACCOUNT") {
     const notice = await screen.findByText(storage === "PENDING" ? /계정 전송 대기 중이에요/ : /수정 충돌을 확인해 주세요/)
     expect(notice.textContent).toContain("기록 완료는 아직이에요")
@@ -31,14 +32,14 @@ it.each(["ACCOUNT", "PENDING", "CONFLICT"] as const)("completes Quick only after
       id: initial.id, memo: initial.memo, activityOutcome: "RESTED",
     }), expect.anything())
     mocks.persist.mockResolvedValue({ ok: true, storage: "ACCOUNT" })
-    fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
   }
   const complete = await screen.findByRole("button", { name: "완료" })
   const message = screen.getByRole("status").textContent
   fireEvent.click(complete)
   expect(onDone).toHaveBeenCalledExactlyOnceWith("post-session", expect.objectContaining({
     id: initial.id, syncState: "synced", memo: initial.memo, activityOutcome: "RESTED",
-  }), message)
+  }), expect.stringContaining("자동 확인을 완료하지 못했어요"), expect.stringContaining("계정에 저장했어요"))
   expect(message).toContain("자동 확인을 완료하지 못했어요")
   expect(message).toContain("계정에 저장했어요")
 })
@@ -48,6 +49,7 @@ it("preserves the two-argument classic callback when Quick has no review message
   const onDone = vi.fn()
   render(<LogEntry entryType="quick-session" onDone={onDone} />)
   fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
+  fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
   fireEvent.click(screen.getByRole("button", { name: "완료" }))
   expect(onDone).toHaveBeenCalledExactlyOnceWith("post-session", expect.objectContaining({ syncState: "local" }))
   expect(mocks.persist).not.toHaveBeenCalled()

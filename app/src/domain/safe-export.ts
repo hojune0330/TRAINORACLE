@@ -13,7 +13,7 @@ export type SafeRaceEntry = Omit<RaceEntry, "memo" | "memoPurpose">
 
 export type SafeJournalEntry = SafePostSessionEntry | SafeEveningEntry | SafeRaceEntry
 
-export type AnalysisPostSessionEntry = SafePostSessionEntry
+export type AnalysisPostSessionEntry = Omit<SafePostSessionEntry, "exerciseLog">
 export type AnalysisEveningEntry = SafeEveningEntry
 export type AnalysisRaceEntry = Omit<SafeRaceEntry, "tension" | "condition" | "mood" | "goalPace">
 export type AnalysisJournalEntry = AnalysisPostSessionEntry | AnalysisEveningEntry | AnalysisRaceEntry
@@ -67,6 +67,7 @@ function toSafeJournalEntry(entry: JournalEntry): SafeJournalEntry {
         ...(entry.plannedSessionLink === undefined ? {} : { plannedSessionLink: entry.plannedSessionLink }),
         ...provenance,
         ...(entry.intensityAssessment === undefined ? {} : { intensityAssessment: entry.intensityAssessment }),
+        ...(entry.exerciseLog === undefined ? {} : { exerciseLog: entry.exerciseLog }),
       }
     case "evening":
       return {
@@ -289,6 +290,7 @@ function hasExportableStructuredSignal(entry: JournalEntry): boolean {
       || Object.values(entry.painParts ?? {}).some((level) => level > 0)
       || entry.intensityAssessment?.plannedRpe !== undefined
       || (entry.intensityAssessment?.objectiveComponents.length ?? 0) > 0
+      || (entry.exerciseLog?.components.length ?? 0) > 0
   }
   if (entry.kind === "evening") {
     return entry.sleepH > 0

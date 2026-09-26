@@ -2,6 +2,7 @@ import { MEMO_PURPOSE, memoPurposeOf } from "../../domain/journal-schema"
 import { summarizeIntensityAssessment } from "../../domain/intensity-assessment"
 import type { JournalEntry, RaceEntry } from "../../domain/journal-store"
 import { IntensitySummaryPanel } from "./IntensitySummaryPanel"
+import { ExerciseLogSummary } from "./ExerciseLogEditor"
 
 export function SavedMemo({
   entry,
@@ -23,6 +24,7 @@ export function SavedMemo({
   return (
     <>
       {intensitySummary !== null && <IntensitySummaryPanel summary={intensitySummary} />}
+      {entry.kind === "post-session" && <ExerciseLogSummary log={entry.exerciseLog} />}
       {text !== "" && (
         <div style={{ marginTop: 12, borderTop: "1px dashed var(--paper-edge)", paddingTop: 10 }}>
           <div style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-3)", marginBottom: 5 }}>

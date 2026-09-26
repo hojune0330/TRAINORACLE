@@ -55,6 +55,8 @@ const privateOnlyEntry: PostSessionEntry = {
 
 describe("Oracle participation integration contracts", () => {
   beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date(2026, 8, 21, 12))
     cleanup()
     window.localStorage.clear()
     window.sessionStorage.clear()
@@ -65,6 +67,7 @@ describe("Oracle participation integration contracts", () => {
   afterEach(() => {
     cleanup()
     vi.restoreAllMocks()
+    vi.useRealTimers()
     setActiveLocalAccount(null)
   })
 

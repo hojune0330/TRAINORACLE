@@ -35,7 +35,7 @@ describe("account record compatibility API", () => {
     expect(await requestAccountDocument(ownerId, request, () => true, accountJournalRecordSchema, deps))
       .toEqual({ ok: true, data: response })
     expect(deps.invoke).toHaveBeenCalledWith("account-journal", {
-      body: { ...request, supportedJournalVersions: [2, 3] }, headers: { Authorization: `Bearer ${accessToken}` },
+      body: { ...request, supportedJournalVersions: [2, 3], supportsExerciseLogV1: true }, headers: { Authorization: `Bearer ${accessToken}` },
     })
     expect(document.version).toBe(2)
   })
@@ -75,7 +75,7 @@ describe("account record compatibility API", () => {
     const receipt = { kind: "saved", documentId, operationId, revision: 2 }
     const deps = dependencies(receipt)
     expect(await requestAccountDocument(ownerId, correction, () => true, accountJournalRecordSchema, deps)).toEqual({ ok: true, data: receipt })
-    expect(deps.invoke).toHaveBeenCalledWith("account-journal", { body: { ...correction, supportedJournalVersions: [2, 3] },
+    expect(deps.invoke).toHaveBeenCalledWith("account-journal", { body: { ...correction, supportedJournalVersions: [2, 3], supportsExerciseLogV1: true },
       headers: { Authorization: `Bearer ${accessToken}` } })
     expect(await requestAccountDocument(ownerId, correction, () => true, accountJournalRecordSchema,
       dependencies({ ...receipt, revision: 3 }))).toEqual({ ok: false, code: "INVALID_RESPONSE" })
@@ -89,7 +89,7 @@ describe("account record compatibility API", () => {
     const receipt = { kind: "saved", documentId, operationId, revision: 3 }
     const deps = dependencies(receipt)
     expect(await requestAccountDocument(ownerId, release, () => true, accountJournalRecordSchema, deps)).toEqual({ ok: true, data: receipt })
-    expect(deps.invoke).toHaveBeenCalledWith("account-journal", { body: { ...release, supportedJournalVersions: [2, 3] },
+    expect(deps.invoke).toHaveBeenCalledWith("account-journal", { body: { ...release, supportedJournalVersions: [2, 3], supportsExerciseLogV1: true },
       headers: { Authorization: `Bearer ${accessToken}` } })
     for (const changed of [{ revision: 4 }, { operationId: otherOwnerId }, { documentId: otherOwnerId }]) {
       expect(await requestAccountDocument(ownerId, release, () => true, accountJournalRecordSchema,

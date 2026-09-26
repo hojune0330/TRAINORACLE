@@ -22,20 +22,27 @@ const labels: Record<string, string> = {
   exerciseType: "운동 종류", sets: "세트", loadPercent1Rm: "최대 1회 중량 대비 강도 (%)", repsInReserve: "남은 반복 횟수",
   contacts: "접지 수", typicalContacts: "평소 접지 수", gradePercent: "경사 (%)", modality: "운동 종류",
   heartRatePercent: "최대 심박 대비 평균 심박 (%)", averageHeartRatePercentMax: "최대 심박 대비 평균 심박 (%)",
+  exerciseLog: "운동 상세 기록", exerciseEditor: "추가 전 운동 기록", components: "운동", rows: "구간",
+  name: "운동 이름", distanceM: "거리 (m)", durationSeconds: "시간 (초)", loadKg: "중량 (kg)",
+  side: "방향", recovery: "반복 사이 회복", recoveryKind: "반복 회복 방식", setRecovery: "세트 사이 회복",
+  setRecoveryKind: "세트 회복 방식", setRecoverySeconds: "세트 회복 시간 (초)", seconds: "시간 (초)",
+  source: "입력 출처", previousKinds: "종류를 바꾸기 전 입력", copiedFromPrevious: "지난 기록에서 가져옴",
 }
 const values: Record<string, string> = { PRIVATE_SELF_ONLY: "나만의 메모", ANALYZABLE_TRAINING_NOTE: "훈련 메모",
   COMPLETED: "운동 완료", PARTIAL: "일부 완료", LIGHT_ACTIVITY: "가벼운 운동", RESTED: "휴식", SKIPPED: "건너뜀",
   UNANSWERED: "미응답", NO_SIGNAL_REPORTED: "불편한 곳 없음", SIGNAL_REPORTED: "불편한 곳 있음",
   UNSPECIFIED: "시간 미지정", AM: "오전", PM: "오후", pre: "경기 직전", post: "경기 직후", activity: "운동 선택", effort: "몸의 느낌",
-  RUNNING: "달리기", INTERVALS: "인터벌", STRENGTH: "근력", PLYOMETRIC: "플라이오", HILLS: "언덕", CROSS_TRAINING: "대체유산소" }
-const enumFields = new Set(["purpose", "outcome", "activityOutcome", "slot", "activitySlot", "painStatus", "painCheckStatus", "stage", "step", "kind"])
+  RUNNING: "달리기", INTERVALS: "인터벌", STRENGTH: "근력", PLYOMETRIC: "플라이오", HILLS: "언덕", CROSS_TRAINING: "대체유산소",
+  OTHER: "기타 운동", review: "저장 전 확인", exercise: "운동 상세 입력", memo: "메모 입력",
+  LEFT: "왼쪽", RIGHT: "오른쪽", BOTH: "양쪽", NONE: "회복 없음", TIMED: "시간 지정", SELF_REPORTED: "직접 입력" }
+const enumFields = new Set(["purpose", "outcome", "activityOutcome", "slot", "activitySlot", "painStatus", "painCheckStatus", "stage", "step", "kind", "side", "recoveryKind", "setRecoveryKind", "source"])
 const bodyParts: Record<string, string> = { rKnee: "오른 무릎", lKnee: "왼 무릎", rCalf: "오른 종아리", lCalf: "왼 종아리",
   rHam: "오른 햄스트링", lHam: "왼 햄스트링", lBack: "허리", rFoot: "오른 발", lFoot: "왼 발", rShin: "정강이" }
 export function formatFormDraftValue(key: string, value: unknown): string {
   if (value === null || value === undefined || value === "") return "미입력"
   if (typeof value === "boolean") return key === "effortAnswered" ? value ? "응답함" : "미응답" : value ? "예" : "아니요"
   if (Array.isArray(value)) return value.length ? value.map(part => formatFormDraftValue(key, part)).join("; ") : "없음"
-  if (typeof value === "object") return Object.entries(value).filter(([field]) => field !== "componentId")
+  if (typeof value === "object") return Object.entries(value).filter(([field]) => !["componentId", "id", "version"].includes(field))
     .map(([field, part]) => `${key === "painParts" ? bodyParts[field] ?? "기타 부위" : labels[field] ?? "추가 항목"}: ${formatFormDraftValue(key === "painParts" ? "painLevel" : field, part)}`).join(" / ") || "없음"
   if (key === "system") return JOURNAL_ENERGY_SYSTEM_OPTIONS.find(option =>
     option.journalValue === value || option.key === value || option.code === value)?.shortLabel ?? "기존 강도 분류 · 확인 필요"

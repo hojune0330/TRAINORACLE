@@ -191,13 +191,15 @@ export function ObjectiveComponentEditor({
 }) {
   const [kind, setKind] = React.useState<ComponentKind>(() => draft?.kind ?? OBJECTIVE_COMPONENT_KIND.intervals)
   const [fields, setFields] = React.useState<Record<string, string>>(() => ({ ...draft?.fields }))
-  React.useLayoutEffect(() => { onDraftChange?.({ kind, fields }) }, [kind, fields, onDraftChange])
+  const [previousKinds, setPreviousKinds] = React.useState<NonNullable<ObjectiveEditorDraft["previousKinds"]>>(() => draft?.previousKinds ?? {})
+  React.useLayoutEffect(() => { onDraftChange?.({ kind, fields, previousKinds }) }, [kind, fields, previousKinds, onDraftChange])
   const [invalidKeys, setInvalidKeys] = React.useState<readonly string[] | null>(null)
   const add = () => {
     const result = buildComponent(kind, fields)
     if (!result.success) { setInvalidKeys(result.invalidKeys); return }
     onAdd(result.component)
     setFields({})
+    setPreviousKinds({})
     setInvalidKeys(null)
   }
   const invalidLabels = FIELDS[kind]
@@ -207,8 +209,10 @@ export function ObjectiveComponentEditor({
   return (
     <div style={{ border: "1px solid var(--line)", padding: 12, background: "var(--surface)" }}>
       <select aria-label="객관 기록 종류" value={kind} onChange={(event) => {
-        setKind(parseComponentKind(event.target.value))
-        setFields({})
+        const next = parseComponentKind(event.target.value)
+        setPreviousKinds(current => ({ ...current, [kind]: fields }))
+        setKind(next)
+        setFields({ ...previousKinds[next] })
         setInvalidKeys(null)
       }} style={inputStyle()}>
         {Object.entries(KIND_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}

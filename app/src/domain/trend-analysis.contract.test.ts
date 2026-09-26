@@ -436,6 +436,7 @@ describe("adopted file distance across distance charts", () => {
     expect(screen.getByText(/\uD30C\uC77C \uD398\uC774\uC2A4 \uC81C\uC678/u)).toBeVisible()
     const distance = TREND_METRIC_OPTIONS.find(option => option.metric === "DISTANCE_KM")!
     fireEvent.click(screen.getByRole("button", { name: distance.buttonLabel }))
+    fireEvent.click(screen.getByText("월별 수치와 집계 범위 보기"))
     expect(screen.getByText(/\uD655\uC778\uD55C \uD30C\uC77C \uAC70\uB9AC \uD3EC\uD568/u)).toBeVisible()
     expect(screen.queryByText(/\uC9C1\uC811 \uAE30\uB85D/u)).not.toBeInTheDocument()
     expect(screen.getByText(/file-source.*\uD655\uC778\uD55C \uD30C\uC77C \uAC70\uB9AC/u)).toBeInTheDocument()

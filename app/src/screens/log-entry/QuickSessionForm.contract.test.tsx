@@ -11,6 +11,7 @@ function finishPerformedSession(rpe = 6): void {
   fireEvent.click(screen.getByRole("button", { name: "오후" }))
   fireEvent.click(screen.getByRole("button", { name: new RegExp(`RPE ${rpe},`) }))
   fireEvent.click(screen.getByRole("button", { name: "없어요" }))
+  fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
 }
 
 describe("quick session journal contract", () => {
@@ -22,6 +23,38 @@ describe("quick session journal contract", () => {
     cleanup()
     vi.restoreAllMocks()
     vi.useRealTimers()
+  })
+
+  it("does not save a rest choice before the final confirmation", () => {
+    render(<QuickSessionForm />)
+    fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
+    expect(loadEntries()).toHaveLength(0)
+    expect(screen.getByRole("button", { name: "글 추가" })).toBeVisible()
+    fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
+    expect(loadEntries()).toHaveLength(1)
+  })
+
+  it("adds two different exercises and a note before saving one record", () => {
+    render(<QuickSessionForm />)
+    const click = (name: string) => fireEvent.click(screen.getByRole("button", { name }))
+    click("운동을 마쳤어요"); click("오전")
+    fireEvent.click(screen.getByRole("button", { name: /RPE 5,/ }))
+    click("없어요")
+    expect(loadEntries()).toHaveLength(0)
+    click("운동 추가·수정"); click("운동 추가"); click("반복 달리기"); click("거리·시간·횟수 적기")
+    fireEvent.change(screen.getByLabelText("1번 거리 (m)"), { target: { value: "400" } })
+    fireEvent.change(screen.getByLabelText("1번 반복 횟수"), { target: { value: "10" } })
+    click("내용 반영"); click("운동 추가"); click("근력 운동"); click("내용 반영")
+    click("기록 요약으로"); click("글 추가")
+    fireEvent.click(screen.getByRole("radio", { name: "훈련 메모" }))
+    fireEvent.change(screen.getByLabelText("일지 내용"), { target: { value: "트랙에서 반복 달리기 후 근력 운동" } })
+    click("내용 반영")
+    expect(loadEntries()).toHaveLength(0)
+    click("이대로 저장")
+    expect(loadEntries()).toHaveLength(1)
+    expect(loadEntries()[0]).toMatchObject({ memo: "트랙에서 반복 달리기 후 근력 운동", exerciseLog: { components: [
+      { kind: "INTERVALS", rows: [{ distanceM: 400, repetitions: 10 }] }, { kind: "STRENGTH", rows: [] },
+    ] }, distanceKm: "", durationMin: "", rpe: 5 })
   })
 
   it("stores an exact one-tap RPE that is immediately eligible for descriptive analysis", () => {
@@ -64,6 +97,7 @@ describe("quick session journal contract", () => {
     render(<QuickSessionForm />)
 
     fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
+  fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
 
     const [entry] = loadEntries()
     expect(entry).toMatchObject({
@@ -82,6 +116,7 @@ describe("quick session journal contract", () => {
     fireEvent.click(screen.getByRole("button", { name: "시간 미지정" }))
     fireEvent.click(screen.getByRole("button", { name: "모르겠어요 · RPE는 비워 둘게요" }))
     fireEvent.click(screen.getByRole("button", { name: "없어요" }))
+  fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
 
     expect(loadEntries()[0]).toMatchObject({
       activitySlot: "UNSPECIFIED",
@@ -112,6 +147,7 @@ describe("quick session journal contract", () => {
     fireEvent.click(screen.getByRole("button", { name: "오전" }))
     fireEvent.click(screen.getByRole("button", { name: /RPE 7,/ }))
     fireEvent.click(screen.getByRole("button", { name: "없어요" }))
+  fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
 
     expect(loadEntries()).toHaveLength(1)
     expect(loadEntries()[0]).toMatchObject({
@@ -128,6 +164,7 @@ describe("quick session journal contract", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "방금 기록 수정" }))
     fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
+  fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
 
     const [entry] = loadEntries()
     expect(entry).toMatchObject({ activityOutcome: "RESTED", objectiveDataState: "NONE", rpe: 0 })
@@ -153,6 +190,7 @@ describe("quick session journal contract", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /오른 무릎, 통증 없음/ }))
     fireEvent.click(screen.getByRole("button", { name: "이 상태로 기록" }))
+    fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
     expect(loadEntries()[0]).toMatchObject({
       painCheckStatus: "SIGNAL_REPORTED",
       painParts: { rKnee: 1 },
@@ -166,6 +204,7 @@ describe("quick session journal contract", () => {
     render(<QuickSessionForm />)
 
     fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
+  fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
 
     expect(screen.queryByRole("heading", { name: "오늘 기록을 남겼어요." })).toBeNull()
     expect(screen.getByRole("alert")).toHaveTextContent("저장하지 못했어요")
@@ -178,6 +217,7 @@ describe("quick session journal contract", () => {
     render(<QuickSessionForm targetDate="2026-09-08" />)
 
     fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
+  fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
 
     expect(screen.getByRole("heading", { name: "9월 8일 기록을 남겼어요." })).toBeVisible()
   })
@@ -195,6 +235,7 @@ describe("quick session journal contract", () => {
     fireEvent.click(screen.getByRole("button", { name: otherSlot }))
     fireEvent.click(screen.getByRole("button", { name: /RPE 6,/ }))
     fireEvent.click(screen.getByRole("button", { name: "없어요" }))
+  fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
 
     expect(loadEntries()[0]).toMatchObject({ planExecutionRelation: "MODIFIED" })
   })
@@ -211,6 +252,7 @@ describe("quick session journal contract", () => {
     fireEvent.click(screen.getByRole("button", { name: "시간 미지정" }))
     fireEvent.click(screen.getByRole("button", { name: /RPE 6,/ }))
     fireEvent.click(screen.getByRole("button", { name: "없어요" }))
+  fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
 
     expect(loadEntries()[0]).toMatchObject({
       activitySlot: "UNSPECIFIED",

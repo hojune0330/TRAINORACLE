@@ -9,7 +9,7 @@ export type LogEntryType = "quick-session" | JournalEntryType
 
 export interface EntryFormProps {
   readonly onBack?: () => void
-  readonly onDone?: (entryType: JournalEntryType, savedEntry: JournalEntry, reviewMessage?: string) => void
+  readonly onDone?: (entryType: JournalEntryType, savedEntry: JournalEntry, reviewMessage?: string, storageMessage?: string) => void
   readonly targetDate?: string
   readonly initialEntry?: JournalEntry
   readonly plannedSessionLink?: PlannedSessionLink

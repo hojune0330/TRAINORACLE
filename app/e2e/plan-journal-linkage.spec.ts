@@ -23,6 +23,8 @@ test("links one explicitly selected plan session to its journal without copying 
   await page.getByRole("button", { name: "오전" }).click()
   await page.getByRole("button", { name: /RPE 6,/u }).click()
   await page.getByRole("button", { name: "없어요" }).click()
+  await expect(page.getByRole("heading", { name: "이 내용으로 남길까요?" })).toBeVisible()
+  await page.getByRole("button", { name: "이대로 저장", exact: true }).click()
   await page.getByRole("button", { name: "완료", exact: true }).click()
 
   await expect(page.getByRole("heading", { name: "9일 훈련 계획" })).toBeVisible()

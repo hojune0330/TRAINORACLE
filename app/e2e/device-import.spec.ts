@@ -147,6 +147,8 @@ test("reconciles a detailed continuation and keeps subjective editing available"
   await page.getByRole("button", { name: "오후", exact: true }).click()
   await page.getByRole("button", { name: /RPE 6,/u }).click()
   await page.getByRole("button", { name: "없어요", exact: true }).click()
+  await expect(page.getByRole("heading", { name: "이 내용으로 남길까요?" })).toBeVisible()
+  await page.getByRole("button", { name: "이대로 저장", exact: true }).click()
   await page.getByRole("button", { name: "일지 더 쓰기" }).click()
   await page.getByLabel("세션 제목").fill("Synthetic afternoon journal")
   await page.getByRole("button", { name: /수정 저장/u }).click()

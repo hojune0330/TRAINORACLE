@@ -88,6 +88,8 @@ test(`returning from a ${detailed ? "detailed" : "quick"} DAY 5 PM journal keeps
   await page.getByRole("button", { name: "오후" }).click()
   await page.getByRole("button", { name: /RPE 6,/u }).click()
   await page.getByRole("button", { name: "없어요" }).click()
+  await expect(page.getByRole("heading", { name: "이 내용으로 남길까요?" })).toBeVisible()
+  await page.getByRole("button", { name: "이대로 저장", exact: true }).click()
   if (detailed) {
     await page.getByRole("button", { name: "일지 더 쓰기", exact: true }).click()
     await page.getByLabel("세션 제목").fill("합성 훈련 기록")

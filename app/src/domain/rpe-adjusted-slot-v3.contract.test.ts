@@ -284,6 +284,8 @@ it("opens a saved multi-plan through real application navigation with independen
   fireEvent.click(screen.getByRole("button", { name: slotName }))
   fireEvent.click(screen.getByRole("button", { name: /RPE 6,/ }))
   fireEvent.click(screen.getByRole("button", { name: "없어요" }))
+  expect(loadEntries()).toHaveLength(0)
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "이대로 저장" })) })
   expect(screen.getByText(`계획 ${address.day}일차 · ${slotName}`)).toBeVisible()
   expect(loadEntries()).toHaveLength(1)
   expect(loadEntries()[0]).toMatchObject({ activityOutcome: "COMPLETED", rpe: 6,

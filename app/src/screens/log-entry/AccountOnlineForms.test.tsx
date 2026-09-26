@@ -45,10 +45,11 @@ function mount(form: Form, purpose?: Purpose, memo = syntheticMemo) {
       fireEvent.click(screen.getByRole("radio", { name: purpose === "PRIVATE_SELF_ONLY" ? "나만의 메모" : "훈련 메모" }))
     }
   }
+  if (form === "quick") fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
   return onDone
 }
 function saveButton(form: Form) {
-  return screen.getByRole("button", { name: form === "quick" ? "오늘은 쉬었어요" : /^(저장|수정 저장)/ })
+  return screen.getByRole("button", { name: form === "quick" ? "이대로 저장" : /^(저장|수정 저장)/ })
 }
 async function settle() { await act(async () => { for (let i = 0; i < 12; i++) await Promise.resolve() }) }
 async function complete(form: Form, done: ReturnType<typeof vi.fn>) {
@@ -56,7 +57,8 @@ async function complete(form: Form, done: ReturnType<typeof vi.fn>) {
   if (form === "quick") fireEvent.click(await screen.findByRole("button", { name: "완료" }))
   await waitFor(() => expect(done).toHaveBeenCalledOnce())
   return { entry: done.mock.calls[0]![form === "quick" ? 0 : 1] as JournalEntry,
-    message: done.mock.calls[0]![form === "quick" ? 1 : 2] as string | undefined }
+    reviewMessage: done.mock.calls[0]![form === "quick" ? 1 : 2] as string | undefined,
+    storageMessage: done.mock.calls[0]![form === "quick" ? 2 : 3] as string | undefined }
 }
 
 beforeEach(() => {
@@ -87,8 +89,13 @@ describe.each(forms)("%s account-online form", form => {
     const done = mount(form, "PRIVATE_SELF_ONLY")
     fireEvent.click(saveButton(form)); await settle()
     const first = structuredClone(mocks.persist.mock.calls[0]!)
-    const saveEdited = () => fireEvent.click(form === "quick"
-      ? screen.getByRole("button", { name: "하려던 운동을 건너뛰었어요" }) : saveButton(form))
+    const saveEdited = () => {
+      if (form === "quick") {
+        fireEvent.click(screen.getByRole("button", { name: "← 뒤로" }))
+        fireEvent.click(screen.getByRole("button", { name: "하려던 운동을 건너뛰었어요" }))
+      }
+      fireEvent.click(saveButton(form))
+    }
     if (form !== "quick") fireEvent.change(screen.getByRole("textbox", { name: fields[form] }), { target: { value: "synthetic edited pending" } })
     saveEdited(); await settle()
     expect(mocks.persist).toHaveBeenCalledTimes(1)
@@ -128,9 +135,10 @@ describe.each(forms)("%s account-online form", form => {
       expect(mocks.persist.mock.calls[0]![0]).toMatchObject({ memoPurpose: purpose,
         [form === "evening" ? "note" : "memo"]: syntheticMemo })
       expect(result.entry.syncState).toBe("synced")
-      expect(result.message).toContain("계정에 저장했어요")
-      expect(result.message).not.toContain("전송 대기")
-      if (purpose === "PRIVATE_SELF_ONLY") expect(result.message).toContain("공유·분석에는 사용하지 않아요")
+      expect(result.storageMessage).toContain("계정에 저장했어요")
+      expect(result.storageMessage).not.toContain("전송 대기")
+      expect(result.reviewMessage).toBeUndefined()
+      if (purpose === "PRIVATE_SELF_ONLY") expect(result.storageMessage).toContain("공유·분석에는 사용하지 않아요")
       for (const writer of oldWriters()) expect(writer).not.toHaveBeenCalled()
     },
   )
@@ -172,6 +180,7 @@ describe.each(forms)("%s account-online form", form => {
     if (form === "quick") {
       fireEvent.click(screen.getByRole("button", { name: "방금 기록 수정" }))
       fireEvent.click(screen.getByRole("button", { name: "하려던 운동을 건너뛰었어요" }))
+      fireEvent.click(saveButton(form))
     } else {
       fireEvent.change(screen.getByRole("textbox", { name: fields[form] }), { target: { value: "synthetic correction" } })
       fireEvent.click(screen.getByRole("radio", { name: "나만의 메모" }))
@@ -217,8 +226,8 @@ describe.each(forms)("%s account-online form", form => {
       return
     }
     const result = await complete(form, done)
-    expect(result.message).toContain(review)
-    expect(result.message).toContain(storage === "ACCOUNT" ? "계정에 저장했어요" : "전송 대기")
+    expect(result.reviewMessage).toContain(review)
+    expect(result.storageMessage).toContain(storage === "ACCOUNT" ? "계정에 저장했어요" : "전송 대기")
     if (form === "quick") expect(screen.getByRole("status")).toHaveTextContent(review!)
   })
 

@@ -30,6 +30,7 @@ if (process.env.JOURNAL_HANDLER_MUTATION) {
     'purged-operation-guard': ["if (prior.proposed_encrypted_payload === null) fail(409, 'OPERATION_REPLAY_UNAVAILABLE');", ''],
     'file-evidence-gate': ["if (enabled === false) fail(409, 'FILE_EVIDENCE_DISABLED');", 'if (enabled === false) return;'],
     'journal-capability': ["if (document?.state === 'FINALIZED' && !input.supportedJournalVersions.includes(document.version)) fail(426, 'UPGRADE_REQUIRED');", ''],
+    'exercise-capability': ["if (document?.state === 'FINALIZED' && document.entry?.exerciseLog !== undefined && !input.supportsExerciseLogV1) fail(426, 'UPGRADE_REQUIRED');", ''],
     'comparison-binding': ["if (!validateAccountJournalComparisonConfirmation(current.document, request, original)) fail(422, 'INVALID_COMPARISON_RELATION');", ''],
   };
   const change = mutations[process.env.JOURNAL_HANDLER_MUTATION];
@@ -980,6 +981,26 @@ async function finalizedId(owner = OWNER) {
   const h = Buffer.from(bytes.slice(0,16)).toString('hex');
   return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`;
 }
+
+test('exercise capability prevents old clients from reading or dropping new exercise records', async () => {
+  const f = await fixture({ dependencies: { validateDocument: validateAccountJournalDocument } });
+  const documentId = await finalizedId();
+  const document = { ...finalized, entry: { ...finalized.entry, exerciseLog: { version: 1, source: 'SELF_REPORTED',
+    components: [{ id: 'exercise', kind: 'STRENGTH', name: '', rows: [{ id: 'row', loadKg: 60, repetitions: 5, sets: 4 }] }] } } };
+  await response(await f.request(save({ documentId, document })), 426, { error: 'UPGRADE_REQUIRED' });
+  assert.equal(f.calls.commit, 0);
+  await response(await f.request(save({ documentId, document, supportsExerciseLogV1: true })), 200);
+  await response(await f.request({ action: 'read', documentId }), 426, { error: 'UPGRADE_REQUIRED' });
+  await response(await f.request({ action: 'list', collection: 'JOURNAL' }), 426, { error: 'UPGRADE_REQUIRED' });
+  await response(await f.request({ action: 'read', documentId, supportsExerciseLogV1: true }), 200,
+    { kind: 'document', documentId, revision: 1, document });
+  await response(await f.request({ action: 'list', collection: 'JOURNAL', supportsExerciseLogV1: true }), 200,
+    { kind: 'list', documents: [{ documentId, revision: 1, document }], nextCursor: null });
+  await response(await f.request(save({ documentId, expectedRevision: 1, operationId: OP2, document: finalized })), 426,
+    { error: 'UPGRADE_REQUIRED' });
+  assert.equal(f.calls.commit, 1);
+  for (const invalid of [null, 'true', 1]) await response(await f.request({ action: 'status', supportsExerciseLogV1: invalid }), 400);
+});
 
 test('finalized update cannot change date or document kind while memo edits remain allowed', async () => {
   const f = await fixture({ dependencies: { validateDocument: validateAccountJournalDocument } });

@@ -62,7 +62,7 @@ const OVERLAY_HISTORY_KEY = "trainoracleOverlay"
 type AppOverlay =
   | { readonly kind: "term"; readonly term: TermId }
   | { readonly kind: "feedback" }
-  | { readonly kind: "oracle"; readonly topic: OracleTopicId; readonly mode?: "example" | "personal" }
+  | { readonly kind: "oracle"; readonly topic: OracleTopicId; readonly mode?: "example" | "personal"; readonly scrollTop?: number }
 
 type OverlayHistoryMarker = AppOverlay & {
   readonly owner: string
@@ -86,6 +86,7 @@ function overlayHistoryMarker(state: unknown, owner: string): AppOverlay | null 
   if (value.kind === "oracle" && isOracleTopicId(value.topic)) return {
     kind: "oracle", topic: value.topic,
     ...(value.mode === "example" || value.mode === "personal" ? { mode: value.mode } : {}),
+    ...(typeof value.scrollTop === "number" && Number.isFinite(value.scrollTop) && value.scrollTop >= 0 ? { scrollTop: value.scrollTop } : {}),
   }
   const term = typeof value.term === "string" ? value.term : null
   if (value.kind === "term" && isTermId(term)) return { kind: "term", term }
@@ -106,7 +107,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   })
   const [savedToast, setSavedToast] = React.useState<ShellToastState | null>(null)
   const [analysisContext, setAnalysisContext] = React.useState<AnalysisNavigation | undefined>()
-  const oracleInputRef = React.useRef<{ topic: OracleTopicId; owner: string | null } | null>(null)
+  const oracleInputRef = React.useRef<{ topic: OracleTopicId; owner: string | null; inputKind: "log" | "records" | "plan"; mode: "example" | "personal"; scrollTop: number; view: ReturnType<typeof viewForTab> } | null>(null)
   const pendingReward = React.useRef<{ ownerId: string | null; date: string } | null>(null)
   const [athleteRecordsOpen, setAthleteRecordsOpen] = React.useState(false)
   const [homeDetailOrigin, setHomeDetailOrigin] = React.useState<"home" | "rewards">("home")
@@ -138,7 +139,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     window.requestAnimationFrame(() => {
       const scrollRegion = scrollRegionRef.current
       if (scrollRegion === null) return
-      scrollRegion.scrollTop = next === null ? overlayScrollTopRef.current : 0
+      scrollRegion.scrollTop = next === null ? overlayScrollTopRef.current : next.kind === "oracle" ? next.scrollTop ?? 0 : 0
       scrollRegion.scrollLeft = 0
     })
   }, [])
@@ -155,6 +156,12 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     const addsOracleHistory = overlayRef.current?.kind === "oracle"
       && next.kind === "oracle" && overlayRef.current.topic !== next.topic
     const method = overlayRef.current === null || addsTermHistory || addsOracleHistory ? "pushState" : "replaceState"
+    if (addsOracleHistory && overlayRef.current?.kind === "oracle") {
+      window.history.replaceState({ ...currentState, [OVERLAY_HISTORY_KEY]: {
+        ...overlayRef.current, owner: overlayHistoryOwnerRef.current, version: 1,
+        scrollTop: scrollRegionRef.current?.scrollTop ?? 0,
+      } }, "", window.location.href)
+    }
     window.history[method]({ ...currentState, [OVERLAY_HISTORY_KEY]: marker }, "", window.location.href)
     applyOverlay(next)
   }, [applyOverlay])
@@ -170,6 +177,20 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
 
   React.useEffect(() => {
     const onPopState = (event: PopStateEvent) => {
+      const intent = oracleInputRef.current
+      if (intent?.inputKind === "log" && overlayRef.current === null && intent.owner === activeLocalAccount()) {
+        const restored: AppOverlay = { kind: "oracle", topic: intent.topic, mode: intent.mode, scrollTop: intent.scrollTop }
+        const allowed = runDraftSafeNavigation(() => {
+          oracleInputRef.current = null
+          setV(intent.view)
+          window.history.replaceState({ ...window.history.state, [OVERLAY_HISTORY_KEY]: {
+            ...restored, owner: overlayHistoryOwnerRef.current, version: 1,
+          } }, "", window.location.href)
+          applyOverlay(restored)
+        })
+        if (!allowed) window.history.pushState({}, "", window.location.href)
+        return
+      }
       const next = overlayHistoryMarker(event.state, overlayHistoryOwnerRef.current)
       if (next !== null) {
         applyOverlay(next)
@@ -256,7 +277,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       setV(INITIAL_VIEW_STATE)
     })
   }
-  const goHomeAfterSave = (savedEntry: JournalEntry, reviewMessage?: string, detailDate?: string) => {
+  const goHomeAfterSave = (savedEntry: JournalEntry, reviewMessage?: string, detailDate?: string, storageMessage?: string) => {
     recordOracleJournalParticipation(savedEntry)
     const receipt = createSavedFactReceipt(savedEntry)
     const reward = awardJournalEntry(savedEntry, todayISO())
@@ -265,10 +286,11 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     runViewTransition("replace", () => {
       setUtilityView(null)
       setV(detailDate === undefined ? INITIAL_VIEW_STATE : viewForJournalReturn(v))
-      setSavedToast({ count: localOnlyCount(), phase: "enter", receipt, reviewMessage, rewardMessage })
+      setSavedToast({ count: localOnlyCount(), phase: "enter", receipt, reviewMessage, storageMessage, rewardMessage })
       const intent = oracleInputRef.current
       oracleInputRef.current = null
       if (reviewMessage === undefined && intent && intent.owner === activeLocalAccount()) {
+        setV(intent.view)
         openOverlay({ kind: "oracle", topic: intent.topic, mode: "personal" })
       }
     })
@@ -340,11 +362,28 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     if (scrollRegionRef.current !== null) scrollRegionRef.current.scrollTop = 0
   }
   const openOracle = (topic: OracleTopicId) => runDraftSafeNavigation(() => openOverlay({ kind: "oracle", topic }))
+  const changeOracleMode = (mode: "example" | "personal") => {
+    const current = overlayRef.current
+    if (current?.kind !== "oracle") return
+    const next = { ...current, mode, scrollTop: scrollRegionRef.current?.scrollTop ?? 0 }
+    overlayRef.current = next
+    setOverlay(next)
+    window.history.replaceState({ ...window.history.state, [OVERLAY_HISTORY_KEY]: {
+      ...next, owner: overlayHistoryOwnerRef.current, version: 1,
+    } }, "", window.location.href)
+  }
+  const returnFromOracleInput = () => runViewTransition("pop", () => {
+    const intent = oracleInputRef.current
+    oracleInputRef.current = null
+    if (!intent || intent.owner !== activeLocalAccount()) { setV(INITIAL_VIEW_STATE); return }
+    setV(intent.view)
+    openOverlay({ kind: "oracle", topic: intent.topic, mode: intent.mode, scrollTop: intent.scrollTop })
+  })
   const openOraclePersonal = (action: "records" | "journal" | "trends" | "plan" | "log", section?: AnalysisSection, metric?: "DISTANCE_KM" | "RPE") => {
     runViewTransition("push", () => {
       const topic = overlayRef.current?.kind === "oracle" ? overlayRef.current.topic : null
       oracleInputRef.current = topic && (action === "records" || action === "log" || action === "plan")
-        ? { topic, owner: activeLocalAccount() } : null
+        ? { topic, owner: activeLocalAccount(), inputKind: action, mode: overlayRef.current?.kind === "oracle" ? overlayRef.current.mode ?? "personal" : "personal", scrollTop: scrollRegionRef.current?.scrollTop ?? 0, view: v } : null
       if (action === "records") {
         dismissOracle()
         setUtilityView(null)
@@ -355,7 +394,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         setAthleteRecordsOpen(false)
         setUtilityView(null)
         setAnalysisContext(action === "trends" ? { section: section ?? "summary", ...(metric === "DISTANCE_KM" ? { metric } : {}) } : undefined)
-        setV(viewForTab(action, action === "log" ? "post-session" : undefined))
+        setV(viewForTab(action, action === "log" ? "quick-session" : undefined))
       }
     })
   }
@@ -617,7 +656,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         targetDate={v.journalDraft?.date}
         initialEntry={v.journalDraft?.initialEntry}
         plannedSessionLink={v.journalDraft?.plannedSessionLink}
-        onBack={v.entryType === "choose"
+        onBack={oracleInputRef.current !== null ? returnFromOracleInput : v.entryType === "choose"
           ? v.journalDraft === undefined
             ? goHome
             : () => runViewTransition("pop", () => setV(viewForJournalReturn(v)))
@@ -626,11 +665,11 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
             : () => runViewTransition("pop", () => setV(s => ({ ...s, entryType: "choose" })))}
         onOpenImport={openImport}
         onContinueDetailed={(entry) => runViewTransition("replace", () => setV((state) => viewForJournalDraft(state, entry.date, entry)))}
-        onDone={(picked, savedEntry, reviewMessage) => {
+        onDone={(picked, savedEntry, reviewMessage, storageMessage) => {
           if (v.entryType === "choose") {
             runViewTransition("push", () => setV(s => ({ ...s, entryType: picked })))
           } else if (savedEntry !== undefined) {
-            goHomeAfterSave(savedEntry, reviewMessage, v.journalDraft?.date)
+            goHomeAfterSave(savedEntry, reviewMessage, v.journalDraft?.date, storageMessage)
           }
         }}
       />
@@ -699,6 +738,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
               topicId={overlay.topic}
               personalResult={oracleResult}
               initialMode={overlay.mode}
+              onModeChange={changeOracleMode}
               onBack={closeOverlay}
               onSelectTopic={openOracle}
               onPersonalAction={openOraclePersonal}

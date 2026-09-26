@@ -376,6 +376,11 @@ and runtime evidence are reviewed separately.
 
 ## 7B. Quick Log Contract
 
+2026-09-26 채택 범위: [SESSION_RECORDING_COMPOSER_CONTRACT](../active/SESSION_RECORDING_COMPOSER_CONTRACT.md).
+답변 즉시 저장 대신 저장 전 요약과 선택적 운동/글 추가를 제공한다. 기존 최소 경로의
+텍스트 입력 의무는 여전히 0개이며, 최종 저장 탭은 추가된다. 이전 탭 예산은 역사 기준이다.
+아래 이전 구현 상태는 당시 기록이며 현재 배포/검증 완료의 증거로 사용하지 않는다.
+
 ```yaml
 quick_log_contract:
   patched_from:

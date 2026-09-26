@@ -102,6 +102,7 @@ export function SavedToast({
   phase,
   receipt = { kind: "generic" },
   reviewMessage,
+  storageMessage,
   rewardMessage,
   onDismiss,
   onOpenTrends,
@@ -111,6 +112,7 @@ export function SavedToast({
   readonly phase: ToastPhase
   readonly receipt?: SavedFactReceipt
   readonly reviewMessage?: string
+  readonly storageMessage?: string
   readonly rewardMessage?: string
   readonly onDismiss?: () => void
   readonly onOpenTrends?: () => void
@@ -133,7 +135,7 @@ export function SavedToast({
         <div className="saved-toast__heading">
           <strong>
             {!needsReview && <CircleCheck className="saved-toast__check" aria-hidden="true" size={18} />}
-            {needsReview ? LOCAL_SAVE_NOTICE : presentation.title}
+            {storageMessage ?? (needsReview ? LOCAL_SAVE_NOTICE : presentation.title)}
             {count > 0 ? ` · 총 ${count}건` : ""}
           </strong>
           {needsReview && (

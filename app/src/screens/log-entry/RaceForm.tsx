@@ -124,8 +124,8 @@ function RaceFormEditor({ onBack, onDone, targetDate, initialEntry }: EntryFormP
           ? "수정 충돌을 확인해 주세요. 이 기기의 내용은 보관했지만 계정 저장은 완료되지 않았어요."
           : isPrivateMemo ? "비밀 일지를 이 기기에 보관했어요. 계정 전송 대기 중이며 공유·분석에는 사용하지 않아요."
             : "일지를 이 기기에 보관했어요. 계정 전송 대기 중이에요."
-      const message = [memoPreparation.reviewMessage, storageMessage].filter(Boolean).join(" ")
-      onDone?.("race", saved, message || undefined)
+      if (storageMessage) onDone?.("race", saved, memoPreparation.reviewMessage ?? undefined, storageMessage)
+      else onDone?.("race", saved, memoPreparation.reviewMessage ?? undefined)
     } catch {
       setSaveError(true)
     } finally {

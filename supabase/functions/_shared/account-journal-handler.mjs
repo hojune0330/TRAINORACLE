@@ -170,7 +170,9 @@ function parseAction(input, validateDocument) {
     || new Set(supportedJournalVersions).size !== supportedJournalVersions.length
     || supportedJournalVersions.some(version => ![2, 3].includes(version))
     || Object.hasOwn(input, 'supportedJournalVersions') && input.supportedJournalVersions === null) fail(400, 'INVALID_REQUEST');
-  const { supportedJournalVersions: _capabilities, ...actionInput } = input;
+  if (Object.hasOwn(input, 'supportsExerciseLogV1') && typeof input.supportsExerciseLogV1 !== 'boolean') fail(400, 'INVALID_REQUEST');
+  const supportsExerciseLogV1 = input.supportsExerciseLogV1 === true;
+  const { supportedJournalVersions: _capabilities, supportsExerciseLogV1: _exerciseCapability, ...actionInput } = input;
   input = actionInput;
   const { action } = input;
   let valid = false;
@@ -212,7 +214,7 @@ function parseAction(input, validateDocument) {
     if (!accepted) fail(422, observationOf(input.document) || input.writePurpose === 'FILE_OBSERVATION' ? 'INVALID_FILE_OBSERVATION' : 'INVALID_DOCUMENT');
   }
   if (action === 'correctImportedObservation' && !parseFileObservation(input.replacementObservation)) fail(422, 'INVALID_FILE_OBSERVATION');
-  return { ...input, supportedJournalVersions, ...(input.documentId ? { documentId: input.documentId.toLowerCase() } : {}),
+  return { ...input, supportedJournalVersions, supportsExerciseLogV1, ...(input.documentId ? { documentId: input.documentId.toLowerCase() } : {}),
     ...(input.operationId ? { operationId: input.operationId.toLowerCase() } : {}),
     ...(input.cursor ? { cursor: input.cursor.toLowerCase() } : {}) };
 }
@@ -282,6 +284,7 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
       const input = parseAction(await bodyJson(request), validateDocument);
       const requireSupported = document => {
         if (document?.state === 'FINALIZED' && !input.supportedJournalVersions.includes(document.version)) fail(426, 'UPGRADE_REQUIRED');
+        if (document?.state === 'FINALIZED' && document.entry?.exerciseLog !== undefined && !input.supportsExerciseLogV1) fail(426, 'UPGRADE_REQUIRED');
       };
       if (input.action === 'save') requireSupported(input.document);
       if ((input.action === 'correctImportedObservation' || comparisonAction(input.action)) && !input.supportedJournalVersions.includes(3)) fail(426, 'UPGRADE_REQUIRED');
@@ -453,7 +456,7 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         const document = await decode(prior.proposed_encrypted_payload, prior.document_id);
         requireSupported(document);
         if (comparisonAction(input.action)) {
-          const { supportedJournalVersions: ignored, ...request } = input;
+          const { supportedJournalVersions: ignored, supportsExerciseLogV1: ignoredExercise, ...request } = input;
           const proposal = applyAccountJournalComparisonMutation(await originalRevision(input.expectedRevision), request);
           if (!proposal || canonical(proposal) !== canonical(document)) fail(409, 'OPERATION_REUSED');
           return receiptFor(prior.result, input);
@@ -558,7 +561,7 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         }
         let document;
         if (comparisonAction(input.action)) {
-          const { supportedJournalVersions: ignored, ...request } = input;
+          const { supportedJournalVersions: ignored, supportsExerciseLogV1: ignoredExercise, ...request } = input;
           if (input.action === 'confirmComparisonRelation') {
             if ((relationsOf(current.document)?.length ?? 0) >= 32) fail(409, 'COMPARISON_CAPACITY_EXCEEDED');
             const original = await readComparisonOriginal(input.relation.original);

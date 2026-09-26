@@ -106,6 +106,7 @@ describe("provenance-safe Trends surface", () => {
     await user.click(screen.getByRole("button", { name: "월별 변화" }))
     const monthly = screen.getByRole("region", { name: "최근 4개월 추이" })
     expect(within(monthly).getByRole("button", { name: "페이스" })).toHaveAttribute("aria-pressed", "true")
+    await user.click(within(monthly).getByText("월별 수치와 집계 범위 보기"))
     expect(within(monthly).getByText(/중앙 페이스 5:00/u)).toBeVisible()
     expect(within(monthly).getAllByText(/표본 1건/u).some((element) =>
       element.tagName === "DIV")).toBe(true)
@@ -163,6 +164,7 @@ describe("non-color source states", () => {
       observations={[statusObservation("stale", "STALE")]}
       today="2026-07-27"
     />)
+    fireEvent.click(screen.getByText("월별 수치와 집계 범위 보기"))
     expect(screen.getByText(/오래된 출처 · 확인 필요/u)).toBeVisible()
 
     cleanup()
@@ -170,6 +172,7 @@ describe("non-color source states", () => {
       observations={[statusObservation("conflict", "CONFLICTING")]}
       today="2026-07-27"
     />)
+    fireEvent.click(screen.getByText("월별 수치와 집계 범위 보기"))
     expect(screen.getByText(/출처 충돌 · 확인 필요/u)).toBeVisible()
   })
 

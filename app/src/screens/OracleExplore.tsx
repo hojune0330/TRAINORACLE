@@ -18,17 +18,22 @@ export type OracleExploreProps = {
   readonly onPersonalAction: (action: OraclePersonalAction, section?: AnalysisSection, metric?: PersonalResult["metric"]) => void
   readonly personalResult?: PersonalResult | undefined
   readonly initialMode?: "example" | "personal" | undefined
+  readonly onModeChange?: (mode: "example" | "personal") => void
   readonly onPersonalResultSeen?: ((fingerprint: string) => void) | undefined
   readonly bookmarkControl?: ReactNode
 }
 
-export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction, personalResult, initialMode, onPersonalResultSeen, bookmarkControl }: OracleExploreProps) {
+export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction, personalResult, initialMode, onModeChange, onPersonalResultSeen, bookmarkControl }: OracleExploreProps) {
   const topic = getOracleTopic(topicId)
   const selectId = useId()
   const headlineId = useId()
   const [selection, setSelection] = useState<{ topic: OracleTopicId; mode: "example" | "personal" } | null>(null)
   const mode = selection?.topic === topicId ? selection.mode
     : initialMode ?? (personalResult && personalResult.status !== "missing" ? "personal" : "example")
+  const selectMode = (next: "example" | "personal") => {
+    setSelection({ topic: topicId, mode: next })
+    onModeChange?.(next)
+  }
   useEffect(() => {
     if (mode === "personal" && personalResult?.fingerprint) onPersonalResultSeen?.(personalResult.fingerprint)
   }, [mode, topicId, personalResult?.fingerprint, onPersonalResultSeen])
@@ -61,8 +66,8 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
       </div>
 
       {personalResult && <div className="oracle-explore__modes" role="group" aria-label="결과 종류">
-        <button type="button" aria-pressed={mode === "personal"} onClick={() => setSelection({ topic: topicId, mode: "personal" })}>내 기록</button>
-        <button type="button" aria-pressed={mode === "example"} onClick={() => setSelection({ topic: topicId, mode: "example" })}>예시</button>
+        <button type="button" aria-pressed={mode === "personal"} onClick={() => selectMode("personal")}>내 기록</button>
+        <button type="button" aria-pressed={mode === "example"} onClick={() => selectMode("example")}>예시</button>
       </div>}
       </div>
 
@@ -70,7 +75,7 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
         key={`personal-${topicId}`}
         result={personalResult}
         onAction={() => onPersonalAction(personalResult.action, personalResult.section, personalResult.metric)}
-        onShowExample={() => setSelection({ topic: topicId, mode: "example" })}
+        onShowExample={() => selectMode("example")}
       /> : <>
       <section key={topicId} className="oracle-explore__result" aria-labelledby={headlineId}>
         <div className="oracle-explore__example-label">
@@ -103,7 +108,7 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
       </section>
 
       <div className="oracle-explore__actions">
-        <button type="button" className="oracle-explore__personal" onClick={() => personalResult ? setSelection({ topic: topicId, mode: "personal" }) : onPersonalAction(topic.personalAction)}>
+        <button type="button" className="oracle-explore__personal" onClick={() => personalResult ? selectMode("personal") : onPersonalAction(topic.personalAction)}>
           <span>{personalResult ? "내 기록으로 확인하기" : topic.personalLabel}</span><ArrowRight size={18} aria-hidden="true" />
         </button>
         <button type="button" className="oracle-explore__related" onClick={() => onSelectTopic(topic.nextId)}>
@@ -129,9 +134,9 @@ function PriorityExample({ source }: { readonly source: string }) {
   return <div className="oracle-explore__priority">
     <p className="oracle-explore__chart-caption">{source}</p>
     <ol>
-      <li><NotebookPen size={18} aria-hidden="true" /><span><small>관찰</small><strong>전·후반의 페이스 차이</strong></span></li>
-      <li><Target size={18} aria-hidden="true" /><span><small>연습 목표</small><strong>페이스 조절</strong></span></li>
-      <li><ListChecks size={18} aria-hidden="true" /><span><small>다음 비교</small><strong>구간별 페이스·체감강도</strong></span></li>
+      <li><NotebookPen size={18} aria-hidden="true" /><span><small>기록</small><strong>계획에 연결한 훈련 일지</strong></span></li>
+      <li><Target size={18} aria-hidden="true" /><span><small>비교</small><strong>계획 강도와 실제 느낌</strong></span></li>
+      <li><ListChecks size={18} aria-hidden="true" /><span><small>다음 행동</small><strong>현재 계획 검토</strong></span></li>
     </ol>
   </div>
 }

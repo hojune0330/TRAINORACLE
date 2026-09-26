@@ -12,7 +12,7 @@ export type EntryType = "choose" | "quick-session" | JournalEntryType
 export interface LogEntryProps {
   readonly entryType?: EntryType
   readonly onBack?: () => void
-  readonly onDone?: (entryType: LogEntryType, savedEntry?: JournalEntry, reviewMessage?: string) => void
+  readonly onDone?: (entryType: LogEntryType, savedEntry?: JournalEntry, reviewMessage?: string, storageMessage?: string) => void
   readonly targetDate?: string
   readonly initialEntry?: JournalEntry
   readonly plannedSessionLink?: PlannedSessionLink
@@ -29,7 +29,12 @@ export function LogEntry({ entryType = "choose", onBack, onDone, onOpenImport, o
     picked: JournalEntryType,
     savedEntry: JournalEntry,
     reviewMessage?: string,
+    storageMessage?: string,
   ) => {
+    if (storageMessage !== undefined) {
+      onDone?.(picked, savedEntry, reviewMessage, storageMessage)
+      return
+    }
     if (reviewMessage === undefined) {
       onDone?.(picked, savedEntry)
       return
@@ -45,7 +50,7 @@ export function LogEntry({ entryType = "choose", onBack, onDone, onOpenImport, o
       targetDate={targetDate}
       initialEntry={initialEntry?.kind === "post-session" ? initialEntry : undefined}
       plannedSessionLink={plannedSessionLink}
-      onDone={(entry, reviewMessage) => handleSaved("post-session", entry, reviewMessage)}
+      onDone={(entry, reviewMessage, storageMessage) => handleSaved("post-session", entry, reviewMessage, storageMessage)}
       onContinueDetailed={onContinueDetailed}
     />
   )

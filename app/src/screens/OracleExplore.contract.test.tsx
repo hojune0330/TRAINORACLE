@@ -86,10 +86,10 @@ describe("Oracle exploration examples", () => {
 
   it.each([
     { id: "level", labels: ["앞선 기록", "최근 기록"], values: ["24분 40초", "24분 10초"], widths: [100, 97.97297297297297] },
-    { id: "focus", labels: ["1km", "2km", "3km", "4km", "5km"], values: ["4:45/km", "4:45/km", "4:50/km", "5:00/km", "5:10/km"], widths: [91.93548387096774, 91.93548387096774, 93.54838709677419, 96.7741935483871, 100] },
-    { id: "compare", labels: ["첫 훈련", "다음 훈련"], values: ["26분", "25분"], widths: [100, 96.15384615384616] },
-    { id: "mix", labels: ["조깅", "인터벌", "근력운동"], values: ["4회", "1회", "1회"], widths: [100, 25, 25] },
-    { id: "change", labels: ["이전 훈련", "이후 훈련"], values: ["7 / 10", "5 / 10"], widths: [100, 71.42857142857143] },
+    { id: "focus", labels: ["계획", "실제"], values: ["RPE 5", "RPE 7"], widths: [71.42857142857143, 100] },
+    { id: "compare", labels: ["지난달", "이번 달"], values: ["5 km", "6 km"], widths: [83.33333333333334, 100] },
+    { id: "mix", labels: ["기초 지구력 · BASE", "지속 페이스 · LT", "강한 유산소 반복 · VO2"], values: ["4건", "1건", "1건"], widths: [100, 25, 25] },
+    { id: "change", labels: ["지난달", "이번 달"], values: ["7 / 10", "5 / 10"], widths: [100, 71.42857142857143] },
   ] as const)("$id exposes the full chart data, proportional bars and matching accessible table", ({ id, labels, values, widths }) => {
     const topic = catalog.getOracleTopic(id)
     mountExplore(id)
@@ -142,9 +142,9 @@ describe("Oracle exploration examples", () => {
     expect(container.querySelector(".oracle-explore__bar")).toBeNull()
     const steps = within(screen.getByRole("list")).getAllByRole("listitem")
     expect(steps).toHaveLength(3)
-    expect(steps[0]).toHaveTextContent("관찰전·후반의 페이스 차이")
-    expect(steps[1]).toHaveTextContent("연습 목표페이스 조절")
-    expect(steps[2]).toHaveTextContent("다음 비교구간별 페이스·체감강도")
+    expect(steps[0]).toHaveTextContent("기록계획에 연결한 훈련 일지")
+    expect(steps[1]).toHaveTextContent("비교계획 강도와 실제 느낌")
+    expect(steps[2]).toHaveTextContent("다음 행동현재 계획 검토")
     expect(screen.getByText("예시 상황")).toBeVisible()
   })
 

@@ -2,6 +2,7 @@ import { z } from "zod"
 import { accountJournalDraftSchema, createAccountDocumentBuffer } from "../../domain/account/account-journal-draft-buffer"
 import { objectiveLoadComponentSchema } from "../../domain/intensity-assessment"
 import { FORM_INPUT_DRAFT_TITLE } from "./form-draft-marker"
+import { exerciseLogSchema, exerciseKindSchema } from "../../domain/exercise-log"
 
 const text = z.string().max(10_000)
 const rpe = z.number().int().min(0).max(10)
@@ -12,18 +13,33 @@ const outcome = z.enum(["COMPLETED", "PARTIAL", "LIGHT_ACTIVITY", "RESTED", "SKI
 const slot = z.enum(["UNSPECIFIED", "AM", "PM"])
 const painStatus = z.enum(["UNANSWERED", "NO_SIGNAL_REPORTED", "SIGNAL_REPORTED"])
 const memo = { memo: z.string().max(50_000), purpose }
-export const objectiveEditorDraftSchema = z.object({
-  kind: z.enum(["RUNNING", "INTERVALS", "STRENGTH", "PLYOMETRIC", "HILLS", "CROSS_TRAINING"]),
-  fields: z.object({
+const objectiveDraftFields = z.object({
     distanceKm: text.optional(), actualPace: text.optional(), typicalDistanceKm: text.optional(),
     referencePace: text.optional(), repetitions: text.optional(), workSeconds: text.optional(),
     recoverySeconds: text.optional(), exerciseType: text.optional(), sets: text.optional(),
     loadPercent1Rm: text.optional(), repsInReserve: text.optional(), contacts: text.optional(),
     typicalContacts: text.optional(), gradePercent: text.optional(), modality: text.optional(),
     durationMin: text.optional(), heartRatePercent: text.optional(),
-  }).strict(),
+  }).strict()
+export const objectiveEditorDraftSchema = z.object({
+  kind: z.enum(["RUNNING", "INTERVALS", "STRENGTH", "PLYOMETRIC", "HILLS", "CROSS_TRAINING"]),
+  fields: objectiveDraftFields,
+  previousKinds: z.record(z.string().max(30), objectiveDraftFields).optional(),
 }).strict()
 export type ObjectiveEditorDraft = z.infer<typeof objectiveEditorDraftSchema>
+
+const exerciseDraftRow = z.object({ id: z.string().max(100), distanceM: text, durationSeconds: text,
+  repetitions: text, sets: text, loadKg: text, contacts: text,
+  side: z.enum(["", "LEFT", "RIGHT", "BOTH"]), recoveryKind: z.enum(["", "NONE", "TIMED"]),
+  recoverySeconds: text, setRecoveryKind: z.enum(["", "NONE", "TIMED"]), setRecoverySeconds: text }).strict()
+const exerciseDraftValues = z.object({ name: z.string().max(80), rows: z.array(exerciseDraftRow).max(64) }).strict()
+export const exerciseEditorDraftSchema = exerciseDraftValues.extend({
+  id: z.string().max(100), kind: exerciseKindSchema,
+  copiedFromPrevious: z.boolean().optional(),
+  previousKinds: z.record(z.string().max(30), exerciseDraftValues).optional(),
+}).strict()
+export type ExerciseEditorDraft = z.infer<typeof exerciseEditorDraftSchema>
+const exerciseFields = { exerciseLog: exerciseLogSchema.optional(), exerciseEditor: exerciseEditorDraftSchema.optional() }
 
 // These are input schemas, not completed JournalEntry schemas: empty and partial
 // strings and the quick form's explicit skipped answer survive without coercion.
@@ -37,10 +53,11 @@ export const formInputSchema = z.discriminatedUnion("kind", [
     activitySlot: slot.nullable(), painCheckStatus: painStatus, painParts: pain,
     system: text, title: text, distanceKm: text, durationMin: text, avgPace: text,
     plannedRpe: rpe, objectiveComponents: z.array(objectiveLoadComponentSchema).max(6),
-    objectiveEditor: objectiveEditorDraftSchema, ...memo }).strict(),
-  z.object({ kind: z.literal("quick"), step: z.enum(["activity", "effort"]),
+    objectiveEditor: objectiveEditorDraftSchema, ...exerciseFields, ...memo }).strict(),
+  z.object({ kind: z.literal("quick"), step: z.enum(["activity", "effort", "review", "exercise", "memo"]),
     outcome: outcome.nullable(), slot: slot.nullable(), rpe, effortAnswered: z.boolean(),
-    painStatus, painParts: pain }).strict(),
+    painStatus, painParts: pain, ...exerciseFields,
+    memo: z.string().max(50_000).optional(), purpose: purpose.optional() }).strict(),
 ])
 export type FormInput = z.infer<typeof formInputSchema>
 export type FormKind = FormInput["kind"]

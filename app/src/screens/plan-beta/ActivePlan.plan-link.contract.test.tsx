@@ -41,7 +41,8 @@ function saveQuickPlanJournal(input: {
     fireEvent.click(screen.getByRole("button", { name: /오른 무릎, 통증 없음/ }))
     fireEvent.click(screen.getByRole("button", { name: "이 상태로 기록" }))
   }
-  view.unmount()
+    fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
+    view.unmount()
   return plannedDraft()
 }
 
