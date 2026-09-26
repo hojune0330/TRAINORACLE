@@ -42,5 +42,6 @@
 .home-hub__explore { display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:20px; }
 .home-hub__explore button { display:inline-flex; align-items:center; gap:4px; min-height:44px; max-width:100%; padding:8px 0; border:0; background:none; color:var(--brand); font-weight:700; overflow-wrap:break-word; }
 .home-hub button:focus-visible { outline:3px solid var(--brand); outline-offset:3px; }
+@media (max-width:380px) { .home-hub__intro { margin-block:var(--space-5, 20px) var(--space-4, 16px); } }
 @media (min-width:640px) { .home-hub { padding-inline:28px; } }
 @media (prefers-reduced-motion:reduce) { .home-hub * { scroll-behavior:auto !important; transition:none !important; } }

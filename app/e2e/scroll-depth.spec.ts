@@ -107,6 +107,7 @@ function limitsFor(projectName: string) {
 
 async function scrollHeightPx(page: Page) {
   await page.locator(SCROLL_REGION).waitFor()
+  await page.evaluate(() => document.fonts.ready.then(() => undefined))
   return page.evaluate(() => {
     const region = document.querySelector("main.app-scroll-region")
     if (!region) throw new Error("scroll region not found — AppShell 구조가 바뀌었는지 확인")
