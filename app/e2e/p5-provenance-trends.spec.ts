@@ -101,6 +101,7 @@ test("shows provenance-safe trends without leaking private memo signals", async 
   const analysis = page.getByRole("button", { name: /^훈련 분석 보기/u })
   await expect(analysis).toContainText("이번 주 8km · 직접 입력 1건")
   await analysis.click()
+  await page.getByRole("group", { name: "내 기록 분석 항목" }).getByRole("button", { name: "훈련량", exact: true }).click()
 
   const distance = page.getByRole("region", { name: "누적 거리와 변화" })
   await expect(distance.locator(".distance-overview__totals").getByText(/^8\s*km$/u).first()).toBeVisible()
@@ -113,6 +114,8 @@ test("shows provenance-safe trends without leaking private memo signals", async 
   await expect(distance.getByRole("listitem", { name: new RegExp(`${new Date().getDate()}일, 8킬로미터`, "u") })).toBeVisible()
 
   const monthly = page.getByRole("region", { name: "최근 4개월 추이" })
+  await page.getByRole("group", { name: "내 기록 분석 항목" }).getByRole("button", { name: "월별 변화", exact: true }).click()
+  await monthly.locator("summary", { hasText: "월별 수치와 집계 범위 보기" }).click()
   await expect(monthly.getByText(/중앙 페이스 5:00/u)).toBeVisible()
   await monthly.getByRole("button", { name: "기분" }).click()
   await expect(monthly.getByText(/중앙 기분 4\/5/u)).toBeVisible()

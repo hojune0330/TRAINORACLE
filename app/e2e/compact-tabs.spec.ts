@@ -19,13 +19,14 @@ test("keeps analysis view tabs compact and touchable", async ({ page }) => {
   await seedTouchAuditEntries(page)
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석" }).click()
+  await page.getByRole("group", { name: "내 기록 분석 항목" }).getByRole("button", { name: "월별 변화", exact: true }).click()
 
   const tabs = page.getByRole("region", { name: "최근 4개월 추이" }).getByRole("button")
   await expect(tabs).toHaveCount(4)
 
   for (const tab of await tabs.all()) {
     const box = await tab.boundingBox()
-    expect(box?.height).toBe(44)
+    expect(box?.height).toBeCloseTo(44, 3)
     const face = await tab.evaluate((element) => {
       const style = getComputedStyle(element, "::before")
       return { top: style.top, bottom: style.bottom }

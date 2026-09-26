@@ -40,9 +40,10 @@ test("offers a rest-day path without pressuring the athlete to log more", async 
 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석" }).click()
   const distance = page.getByRole("region", { name: "누적 거리와 변화" })
+  await page.getByRole("group", { name: "내 기록 분석 항목" }).getByRole("button", { name: "훈련량", exact: true }).click()
   await expect(distance.getByLabel(/이번 주, 집계 가능한 거리 기록 없음/u)).toBeVisible()
   await expect(distance.getByText(/집계 기준에 맞지 않아 제외한 기록 1건/u).first()).toBeVisible()
-  await page.locator("summary", { hasText: "분석 결과는 어디까지 알 수 있나요?" }).click()
-  await expect(page.getByText(/이 화면만으로 훈련 계획이나 몸 상태의 안전 판단을 바꾸지 않아요/u)).toBeVisible()
+  await page.locator("summary", { hasText: "분석 기준" }).click()
+  await expect(page.getByText(/계획·안전 판단은 자동으로 바꾸지 않아요/u)).toBeVisible()
   await expect(page.getByText(/준비가 됐|부상 위험|좋아졌|나빠졌/u)).toHaveCount(0)
 })

@@ -52,6 +52,7 @@ test("shows a legacy journal entry without allowing it into home totals or trend
   await expect(page.getByRole("button", { name: "훈련 분석 보기", exact: true })).toBeVisible()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석" }).click()
   const distance = page.getByRole("region", { name: "누적 거리와 변화" })
+  await page.getByRole("group", { name: "내 기록 분석 항목" }).getByRole("button", { name: "훈련량", exact: true }).click()
   await expect(distance.getByLabel(/이번 주, 집계 가능한 거리 기록 없음/u)).toBeVisible()
   await expect(distance.getByText(/집계 기준에 맞지 않아 제외한 기록 1건/u).first()).toBeVisible()
 })

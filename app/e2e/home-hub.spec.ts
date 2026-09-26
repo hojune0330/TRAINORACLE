@@ -10,7 +10,7 @@ test.beforeEach(async ({ page }) => {
   })
 })
 
-test("groups a busy day into one destination and keeps the populated home short", async ({ page }, testInfo) => {
+test("groups a busy day into one compact destination alongside oracle exploration", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 393, height: 852 })
   await page.addInitScript(() => {
     const post = (id: string, date: string) => ({
@@ -34,7 +34,7 @@ test("groups a busy day into one destination and keeps the populated home short"
   await expect(page.getByRole("button", { name: "오늘 기록하기", exact: true })).toBeInViewport({ ratio: 1 })
   const geometry = await page.locator(".app-scroll-region").evaluate(el => ({ height: el.scrollHeight, viewport: el.clientHeight, overflow: el.scrollWidth > el.clientWidth }))
   console.log("HOME_HUB_POPULATED", JSON.stringify(geometry))
-  expect(geometry.height).toBeLessThanOrEqual(1100)
+  expect(await page.getByRole("region", { name: "기록과 계획" }).evaluate(el => el.getBoundingClientRect().height)).toBeLessThanOrEqual(500)
   expect(geometry.overflow).toBe(false)
   for (const button of await page.locator(".home-hub button").all()) {
     expect((await button.boundingBox())!.height).toBeGreaterThanOrEqual(44)
@@ -51,19 +51,23 @@ test("keeps optional destinations discoverable and returns to home without clipp
   await page.setViewportSize({ width: 375, height: 667 })
   await page.goto("/?app=1&uitest=1")
   await page.evaluate(() => document.fonts.ready)
-  await expect(page.getByRole("button", { name: "오늘 기록 남기기", exact: true })).toBeInViewport({ ratio: 1 })
-  await expect(page.getByRole("button", { name: "훈련 계획 만들기", exact: true })).toBeInViewport({ ratio: 1 })
+  await expect(page.getByRole("button", { name: "분석 결과 먼저 보기", exact: true })).toBeInViewport({ ratio: 1 })
+  for (const name of ["오늘 기록 남기기", "훈련 계획 만들기"]) {
+    const button = page.getByRole("button", { name, exact: true })
+    await button.scrollIntoViewIfNeeded()
+    await expect(button).toBeInViewport({ ratio: 1 })
+  }
   console.log("HOME_HUB_EMPTY", await page.locator(".app-scroll-region").evaluate(el => JSON.stringify({ height: el.scrollHeight, viewport: el.clientHeight })))
   await page.screenshot({ path: testInfo.outputPath("home-welcome-375x667.png"), animations: "disabled" })
   await page.getByRole("button", { name: "훈련 배우기", exact: true }).click()
   await expect(page.getByRole("heading", { name: "어떤 훈련이 궁금한가요?" })).toBeVisible()
   await page.getByRole("button", { name: "이전 화면", exact: true }).click()
-  await expect(page.getByRole("heading", { name: "오늘 운동을 기록해요" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "내 훈련, 무엇부터 개선할까요?" })).toBeVisible()
   await page.getByRole("button", { name: "일지 꾸미기", exact: true }).click()
   await expect(page.getByRole("heading", { name: "일지 꾸미기·포인트" })).toBeVisible()
   await expect(page.getByRole("region", { name: "기록 습관" })).toBeVisible()
   await page.getByRole("button", { name: "뒤로가기", exact: true }).click()
-  await expect(page.getByRole("heading", { name: "오늘 운동을 기록해요" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "내 훈련, 무엇부터 개선할까요?" })).toBeVisible()
   await page.setViewportSize({ width: 320, height: 568 })
   await page.evaluate(() => {
     const nodes = [...document.querySelectorAll<HTMLElement>(".home-hub, .home-hub *")].filter(el => !(el instanceof SVGElement))

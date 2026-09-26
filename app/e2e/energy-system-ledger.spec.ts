@@ -53,6 +53,7 @@ test("keeps explicit energy records separate from legacy defaults across home an
   await expect(home.getByRole("region", { name: "최근 하루 기록" })).toContainText("오늘 기록 2개")
   await expect(analysisEntry).toContainText("이번 주 8km · 직접 입력 1건")
   await analysisEntry.click()
+  await page.getByRole("group", { name: "내 기록 분석 항목" }).getByRole("button", { name: "훈련 구성", exact: true }).click()
 
   const analysis = page.getByRole("region", { name: "에너지 시스템 누적" })
   await expect(analysis.getByRole("img", { name: /LT 지속 페이스 1회/u })).toBeVisible()

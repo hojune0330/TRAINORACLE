@@ -31,11 +31,13 @@ test("keeps the welcome home clear and usable on narrow phones", async ({ page }
     await page.goto("/")
 
     await expect(page.getByRole("heading", {
-      name: "오늘 운동을 기록해요",
+      name: "내 훈련, 무엇부터 개선할까요?",
     })).toBeVisible()
     await expect(page.getByText("모든 데이터는 이 기기에만 저장돼요.")).toHaveCount(0)
     await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "오늘 기록 남기기" })).toBeInViewport()
+    await expect(page.getByRole("button", { name: "분석 결과 먼저 보기", exact: true })).toBeInViewport({ ratio: 1 })
+    await page.getByRole("button", { name: "오늘 기록 남기기" }).scrollIntoViewIfNeeded()
+    await expect(page.getByRole("button", { name: "오늘 기록 남기기" })).toBeInViewport({ ratio: 1 })
     const services = page.getByRole("navigation", { name: "훈련 도움말과 일지 꾸미기" })
     for (const name of ["훈련 배우기", "일지 꾸미기", "일지 예시 보기"]) {
       await expect(services.getByRole("button", { name })).toBeVisible()

@@ -54,7 +54,7 @@ test("keeps plan help inside the narrow scroll region", async ({ page }) => {
 test("moves a first visitor from WELCOME to JOURNAL after a real first save", async ({ page }) => {
   await page.goto("/")
   await expect(page.getByRole("heading", {
-    name: "오늘 운동을 기록해요",
+    name: "내 훈련, 무엇부터 개선할까요?",
   })).toBeVisible()
 
   await page.getByRole("button", { name: "오늘 기록 남기기" }).click()
@@ -74,7 +74,7 @@ test("moves a first visitor from WELCOME to JOURNAL after a real first save", as
     const parsed: unknown = JSON.parse(stored)
     return Array.isArray(parsed) ? parsed.length : -1
   })).toBe(1)
-  await expect(page.getByRole("heading", { name: "내 기록" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "내 훈련, 무엇부터 개선할까요?" })).toBeVisible()
   await expect(page.getByText("오늘 기록을 남겼어요.", { exact: true })).toBeVisible()
   await expect(page.getByRole("button", { name: "오늘 기록하기" })).toHaveCount(0)
   await expect(page.getByRole("button", { name: "하루 마무리 기록하기" })).toHaveCount(0)
@@ -250,6 +250,10 @@ test("shows a truthful distance receipt and opens the real trend", async ({ page
   await expect(receipt).toContainText("8 km")
   await receipt.getByRole("button", { name: "거리 추이 보기" }).click()
   await expect(page.getByRole("heading", { name: "분석", exact: true })).toBeVisible()
+  await expect(page.getByRole("group", { name: "내 기록 분석 항목" }).getByRole("button", { name: "월별 변화", exact: true })).toHaveAttribute("aria-pressed", "true")
+  await page.getByRole("region", { name: "최근 4개월 추이" }).locator("summary", { hasText: "월별 수치와 집계 범위 보기" }).click()
+  await expect(page.getByRole("region", { name: "최근 4개월 추이" }).getByText(/중앙 거리 8 km/u)).toBeVisible()
+  await page.getByRole("group", { name: "내 기록 분석 항목" }).getByRole("button", { name: "훈련량", exact: true }).click()
   const distance = page.getByRole("region", { name: "누적 거리와 변화" })
   await expect(distance.getByLabel(/이번 주, 8킬로미터, 기록 1건/u)).toBeVisible()
   await expect(distance.getByText(/1건 반영/u).first()).toBeVisible()

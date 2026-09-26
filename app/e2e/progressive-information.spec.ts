@@ -17,8 +17,10 @@ for (const width of [320, 375]) {
   test(`shows the primary action and plan entry without requiring a fixed first viewport at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: width === 320 ? 568 : 667 })
     await page.evaluate(() => document.fonts.ready)
+    await expect(page.getByRole("button", { name: "분석 결과 먼저 보기", exact: true })).toBeInViewport({ ratio: 1 })
     for (const name of ["오늘 기록 남기기", "훈련 계획 만들기"]) {
       const button = page.getByRole("button", { name, exact: true })
+      await button.scrollIntoViewIfNeeded()
       await expect(button).toBeInViewport({ ratio: 1 })
       expect((await button.boundingBox())!.height).toBeGreaterThanOrEqual(44)
     }
@@ -50,10 +52,15 @@ for (const width of [320, 375]) {
   })
 }
 
-test("puts the first analysis action before optional explanation and opens help with the keyboard", async ({ page }, testInfo) => {
+test("offers analysis exploration before recording and opens help with the keyboard", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 375, height: 667 })
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석", exact: true }).click()
-  await expect(page.getByRole("button", { name: "첫 기록 남기기", exact: true })).toBeInViewport({ ratio: 1 })
+  const exploration = page.getByRole("region", { name: "어떤 분석이 궁금하세요?" })
+  await expect(exploration.getByRole("button").first()).toBeInViewport({ ratio: 1 })
+  const record = page.getByRole("button", { name: "첫 기록 남기기", exact: true })
+  expect((await exploration.boundingBox())!.y).toBeLessThan((await record.boundingBox())!.y)
+  await record.scrollIntoViewIfNeeded()
+  await expect(record).toBeInViewport({ ratio: 1 })
   const summary = page.locator("summary", { hasText: "어떤 기록을 분석하나요?" })
   const help = summary.locator("..")
   await expect(help).not.toHaveAttribute("open")
