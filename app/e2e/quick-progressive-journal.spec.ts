@@ -65,6 +65,7 @@ test("keeps each newly opened choice reachable on a 375x667 phone", async ({ pag
   const slot = page.getByRole("button", { name: "오전" })
   await expect(slot).toBeInViewport()
   await slot.click()
+  await expect(page.getByRole("heading", { name: "몸에는 어느 정도로 느껴졌나요?" })).toBeFocused()
   await page.getByRole("button", { name: /RPE 7,/u }).click()
 
   const safety = page.getByRole("heading", { name: "운동 후 불편하거나 아픈 곳이 있나요?" })
@@ -79,6 +80,7 @@ test("confirms mixed exercises before saving and preserves them when deepening t
   await page.getByRole("button", { name: "오전", exact: true }).click()
   await page.getByRole("button", { name: /RPE 5,/u }).click()
   await page.getByRole("button", { name: "없어요", exact: true }).click()
+  await expect(page.getByRole("heading", { name: "이 내용으로 남길까요?" })).toBeFocused()
   expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key) ?? "[]"), JOURNAL_KEY)).toHaveLength(0)
   await page.getByRole("button", { name: "운동 추가·수정" }).click()
   await page.getByRole("button", { name: "운동 추가", exact: true }).click()
@@ -94,6 +96,7 @@ test("confirms mixed exercises before saving and preserves them when deepening t
   await page.getByLabel("1번 세트 회복 초", { exact: true }).fill("180")
   await page.getByRole("button", { name: "글 쓰기", exact: true }).click()
   await expect(page.getByRole("heading", { name: "오늘 남길 말", exact: true })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "오늘 남길 말", exact: true })).toBeFocused()
   await page.getByRole("button", { name: "운동 내용", exact: true }).click()
   await expect(page.getByLabel("1번 거리 (m)", { exact: true })).toHaveValue("400")
   await expect(page.getByLabel("1번 세트 회복 초", { exact: true })).toHaveValue("180")

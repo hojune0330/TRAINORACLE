@@ -135,12 +135,13 @@ function QuickSessionFormEditor({
     outcome, slot, rpe, effortAnswered, painStatus, painParts, exerciseLog, exerciseEditor,
     memo: inheritedMemo.text, purpose: inheritedMemo.purpose ?? null }, entryId, step !== "saved", lastSavedAt.current)
   const stageRef = React.useRef<HTMLDivElement>(null)
+  const stageHeadingRef = React.useRef<HTMLHeadingElement>(null)
   const slotRef = React.useRef<HTMLDivElement>(null)
   const slotHeadingRef = React.useRef<HTMLSpanElement>(null)
   const safetyRef = React.useRef<HTMLDivElement>(null)
   const safetyHeadingRef = React.useRef<HTMLHeadingElement>(null)
   const motion = useOrderedStepMotion(step, ["activity", "effort", "review", "exercise", "memo", "saved"])
-  useActiveContentScroll(step, stageRef, undefined, true)
+  useActiveContentScroll(step, stageRef, stageHeadingRef)
   useActiveContentScroll(performed(outcome) ? outcome : null, slotRef, slotHeadingRef, true)
   useActiveContentScroll(effortAnswered ? `rpe-${rpe}` : null, safetyRef, safetyHeadingRef, true)
 
@@ -394,7 +395,7 @@ function QuickSessionFormEditor({
           <section aria-labelledby="quick-activity-title">
             <small>1 / 3</small>
             {planLink !== undefined && <div className="quick-log__plan-source">계획 {planLink.sessionDay}일차 · {planLink.sessionSlot === "AM" ? "오전" : "오후"}</div>}
-            <h1 id="quick-activity-title">{savedDateLabel(date)} 운동은 어떻게 됐나요?</h1>
+            <h1 id="quick-activity-title" ref={stageHeadingRef} tabIndex={-1}>{savedDateLabel(date)} 운동은 어떻게 됐나요?</h1>
             <div className="quick-log__choices">
               {outcomes.map((item) => <button key={item.value} type="button" aria-pressed={outcome === item.value} onClick={() => selectOutcome(item.value)}><span>{item.label}</span><ChevronRight aria-hidden="true" /></button>)}
             </div>
@@ -412,7 +413,7 @@ function QuickSessionFormEditor({
         {step === "effort" && (
           <section aria-labelledby="quick-effort-title">
             <small>2 / 3</small>
-            <h1 id="quick-effort-title">몸에는 어느 정도로 느껴졌나요?</h1>
+            <h1 id="quick-effort-title" ref={stageHeadingRef} tabIndex={-1}>몸에는 어느 정도로 느껴졌나요?</h1>
             <p>가장 가까운 숫자를 한 번 눌러 주세요. 답하기 어렵다면 비워 둘 수 있어요.</p>
             <div className="quick-log__rpe-scale" role="group" aria-label="RPE 1부터 10까지">
               {RPE_OPTIONS.map((item) => <button key={item.value} type="button" aria-label={`RPE ${item.value}, ${item.detail}`} aria-pressed={effortAnswered && rpe === item.value} onClick={() => selectRpe(item.value)}>{item.value}</button>)}
@@ -442,7 +443,7 @@ function QuickSessionFormEditor({
         )}
         {step === "review" && outcome !== null && <section aria-labelledby="quick-review-title">
           <small>마지막 확인</small>
-          <h1 id="quick-review-title">이 내용으로 남길까요?</h1>
+          <h1 id="quick-review-title" ref={stageHeadingRef} tabIndex={-1}>이 내용으로 남길까요?</h1>
           {!performed(outcome) && performed(savedEntry?.activityOutcome ?? null) && <p>쉬거나 건너뛴 기록으로 바꾸면 이 일지의 운동 시간·거리·RPE·몸 상태 응답은 제외돼요.</p>}
           <ExerciseLogSummary log={exerciseLog} />
           {inheritedMemo.text.trim() !== "" && <p>글을 함께 저장해요.</p>}
@@ -461,21 +462,21 @@ function QuickSessionFormEditor({
           }}>이대로 저장</button>
         </section>}
         {step === "exercise" && <section aria-labelledby="quick-exercise-title">
-          <h1 id="quick-exercise-title">실제로 한 운동</h1>
+          <h1 id="quick-exercise-title" ref={stageHeadingRef} tabIndex={-1}>실제로 한 운동</h1>
           <ExerciseLogEditor value={exerciseLog} onChange={setExerciseLog} draft={exerciseEditor} onDraftChange={setExerciseEditor}
             recent={loadEntries().filter(entry => entry.id !== entryId).flatMap(entry => entry.kind === "post-session" ? entry.exerciseLog?.components ?? [] : []).slice(0, 6)} />
           {saveError && <p role="alert">{saveError}</p>}
           <button type="button" className="quick-log__primary" onClick={() => { setSaveError(null); setStep("review") }}>기록 요약으로</button>
         </section>}
         {step === "memo" && <section aria-labelledby="quick-memo-title">
-          <h1 id="quick-memo-title">오늘 남길 말</h1>
+          <h1 id="quick-memo-title" ref={stageHeadingRef} tabIndex={-1}>오늘 남길 말</h1>
           <PurposeScopedMemoField controller={inheritedMemo} fieldId="quick-memo" label="일지 내용" rows={4} />
           <button type="button" className="quick-log__primary" onClick={() => { setSaveError(null); setStep("review") }}>내용 반영</button>
         </section>}
         {step === "saved" && savedEntry !== null && (
           <section className="quick-log__complete" aria-labelledby="quick-saved-title">
             <small>{savedDateLabel(savedEntry.date)} 기록</small>
-            <h1 id="quick-saved-title">{savedReceiptLabel(savedEntry.date)}</h1>
+            <h1 id="quick-saved-title" ref={stageHeadingRef} tabIndex={-1}>{savedReceiptLabel(savedEntry.date)}</h1>
             {savedMessage !== null && <p role="status">{savedMessage}</p>}
             {painLevelsRequireReview(savedEntry.painParts ?? {}) && <PainReviewBanner />}
             <p>{performed(savedEntry.activityOutcome ?? null)
