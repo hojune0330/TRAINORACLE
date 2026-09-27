@@ -18,6 +18,7 @@ export type PurposeScopedMemoController = {
   readonly reviewIfNeeded: () => void
   readonly prepareForSave: () => MemoSavePreparation
   readonly clearPreparationError: () => void
+  readonly needsPrivateSetup: boolean
 }
 
 export type MemoSavePreparation = {
@@ -42,6 +43,7 @@ export function usePurposeScopedMemo(
   const [purpose, setPurpose] = React.useState<MemoPurpose | undefined>(initialPurpose)
   const [purposeError, setPurposeError] = React.useState<string | null>(null)
   const [reviewMessage, setReviewMessage] = React.useState<string | null>(null)
+  const [, refreshPrivateSetup] = React.useState(0)
   const privateOptionRef = React.useRef<HTMLInputElement>(null)
 
   const reviewIfNeeded = () => {
@@ -72,6 +74,8 @@ export function usePurposeScopedMemo(
     purposeError,
     reviewMessage,
     privateOptionRef,
+    needsPrivateSetup: purpose === MEMO_PURPOSE.privateSelfOnly
+      && !accountJournalRecordsEnabled() && loadSessionRecoveryCode() === null,
     updateText: (nextText) => {
       setText(nextText)
       if (nextText.trim() === "") setPurposeError(null)
@@ -83,7 +87,7 @@ export function usePurposeScopedMemo(
     },
     reviewIfNeeded,
     prepareForSave,
-    clearPreparationError: () => setPurposeError(null),
+    clearPreparationError: () => { setPurposeError(null); refreshPrivateSetup(value => value + 1) },
   }
 }
 
@@ -145,6 +149,7 @@ export function PurposeScopedMemoField({
       </fieldset>
       <div id={explanationId} style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)", lineHeight: 1.55, marginBottom: 8 }}>
         {purposeExplanation(controller.purpose, accountEnabled)}
+        {controller.needsPrivateSetup && <p>처음 한 번, 비밀 메모를 암호화해 보관할 복구 코드가 필요해요.</p>}
       </div>
       {controller.purposeError !== null && (
         <div id={errorId} role="alert" style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--pain-5)", marginBottom: 8 }}>

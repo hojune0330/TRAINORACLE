@@ -5,6 +5,7 @@ import { OracleTopicGrid } from "../components/OracleTopicGrid"
 import * as catalog from "../domain/oracle-exploration"
 import type { OracleTopicId } from "../domain/oracle-exploration"
 import { OracleExplore } from "./OracleExplore"
+import { buildOraclePersonalResult } from "../domain/oracle-personal-result"
 
 afterEach(() => {
   cleanup()
@@ -30,6 +31,18 @@ function readWidths(chart: HTMLElement) {
 }
 
 describe("Oracle exploration examples", () => {
+  it("keeps the selected personal mode on topic navigation even without data", () => {
+    const onSelectTopic = vi.fn()
+    const result = buildOraclePersonalResult({ topicId: "level", entries: [], planState: null, today: "2026-09-27" })
+    render(<OracleExplore topicId="level" personalResult={result} onBack={vi.fn()}
+      onSelectTopic={onSelectTopic} onPersonalAction={vi.fn()} />)
+    fireEvent.click(screen.getByRole("button", { name: "내 기록" }))
+    fireEvent.click(screen.getByRole("button", { name: /이어서 살펴보기/ }))
+    expect(onSelectTopic).toHaveBeenLastCalledWith("focus", "personal")
+    fireEvent.change(screen.getByRole("combobox", { name: "분석 주제" }), { target: { value: "mix" } })
+    expect(onSelectTopic).toHaveBeenLastCalledWith("mix", "personal")
+    expect(screen.queryByText("내 기록을 분석한 결과가 아니에요")).toBeNull()
+  })
   it.each(routes)("$id keeps the example and source visible while supporting explanation starts closed", ({ id }) => {
     const topic = catalog.getOracleTopic(id)
     mountExplore(id)
@@ -62,7 +75,7 @@ describe("Oracle exploration examples", () => {
     expect(callbacks.onPersonalAction).not.toHaveBeenCalled()
 
     fireEvent.click(screen.getByRole("button", { name: name => name.startsWith("이어서 살펴보기") && name.endsWith(topic.nextLabel) }))
-    expect(callbacks.onSelectTopic).toHaveBeenCalledExactlyOnceWith(next)
+    expect(callbacks.onSelectTopic).toHaveBeenCalledExactlyOnceWith(next, "example")
     expect(callbacks.onPersonalAction).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole("button", { name: topic.personalLabel }))
     expect(callbacks.onPersonalAction).toHaveBeenCalledExactlyOnceWith(action)
@@ -79,7 +92,7 @@ describe("Oracle exploration examples", () => {
     for (const [index, route] of routes.entries()) {
       expect(within(picker).getByRole("option", { name: route.title })).toHaveValue(route.id)
       await userEvent.selectOptions(picker, route.id)
-      expect(onSelectTopic).toHaveBeenNthCalledWith(index + 1, route.id)
+      expect(onSelectTopic).toHaveBeenNthCalledWith(index + 1, route.id, "example")
     }
     expect(onSelectTopic).toHaveBeenCalledTimes(6)
   })

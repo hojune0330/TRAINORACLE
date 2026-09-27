@@ -267,6 +267,7 @@ function QuickSessionFormEditor({
         return
       }
       if (accountEnabled) await draft.complete()
+      else void draft.complete()
       if (!draft.current()) return
       lastSavedAt.current = entry.savedAt
       setOutcome(next.outcome)
@@ -446,7 +447,9 @@ function QuickSessionFormEditor({
           <h1 id="quick-review-title" ref={stageHeadingRef} tabIndex={-1}>이 내용으로 남길까요?</h1>
           {!performed(outcome) && performed(savedEntry?.activityOutcome ?? null) && <p>쉬거나 건너뛴 기록으로 바꾸면 이 일지의 운동 시간·거리·RPE·몸 상태 응답은 제외돼요.</p>}
           <ExerciseLogSummary log={exerciseLog} />
-          {inheritedMemo.text.trim() !== "" && <p>글을 함께 저장해요.</p>}
+          {inheritedMemo.text.trim() !== "" && <p>{inheritedMemo.needsPrivateSetup
+            ? "글은 아직 저장 전이에요. 비밀 메모 보관을 먼저 준비해요."
+            : "저장 버튼을 누르면 글도 함께 저장돼요."}</p>}
           {performed(outcome) && painLevelsRequireReview(painParts) && <PainReviewBanner />}
           <div className="quick-log__choices">
             {(performed(outcome) || exerciseLog.components.length > 0) && <button type="button" onClick={() => setStep("exercise")}>운동 추가·수정<ChevronRight aria-hidden="true" /></button>}
@@ -459,7 +462,7 @@ function QuickSessionFormEditor({
             void persist({ outcome, slot: performed(outcome) ? slot : null, rpe: performed(outcome) ? rpe : 0,
               effortAnswered: performed(outcome) && effortAnswered, painStatus: performed(outcome) ? painStatus : "UNANSWERED",
               painParts: performed(outcome) ? painParts : {}, answerTapCount: taps + 1 })
-          }}>이대로 저장</button>
+          }}>{inheritedMemo.text.trim() !== "" && inheritedMemo.needsPrivateSetup ? "비밀 메모 보관 준비" : "이대로 저장"}</button>
         </section>}
         {step === "exercise" && <section aria-labelledby="quick-exercise-title">
           <h1 id="quick-exercise-title" ref={stageHeadingRef} tabIndex={-1}>실제로 한 운동</h1>

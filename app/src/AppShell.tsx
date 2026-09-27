@@ -381,7 +381,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     setOverlay(null)
     if (scrollRegionRef.current !== null) scrollRegionRef.current.scrollTop = 0
   }
-  const openOracle = (topic: OracleTopicId) => runDraftSafeNavigation(() => openOverlay({ kind: "oracle", topic }))
+  const openOracle = (topic: OracleTopicId, mode?: "example" | "personal") => runDraftSafeNavigation(() => openOverlay({ kind: "oracle", topic, ...(mode ? { mode } : {}) }))
   const changeOracleMode = (mode: "example" | "personal") => {
     const current = overlayRef.current
     if (current?.kind !== "oracle") return

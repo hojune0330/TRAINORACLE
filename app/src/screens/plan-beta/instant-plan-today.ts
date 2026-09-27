@@ -35,6 +35,9 @@ export function projectInstantToday(state: PlanBetaState, today: string, linkedS
     recorded: linkedSessionIds.includes(instantSessionId(session))
       || state.progress.some(item => item.sessionDay === session.day && item.sessionSlot === session.slot),
     steps: projectInstantExecutionSteps(session),
+    ...(session.role === "QUALITY" && session.prescription.kind === "RPE_TIME_RANGE" ? {
+      guidanceNotice: "시간·체감 강도 안내예요. 반복 횟수와 회복 시간은 정해지지 않았어요. 총 시간을 계속 강하게 달리는 시간으로 쓰지 마세요.",
+    } : {}),
   }))
   const recorded = projection.filter(session => session.recorded).length
   return { ...base, dateLabel: before ? isoShift(start, day! - 1) : today,
@@ -54,12 +57,12 @@ export function projectInstantExecutionSteps(session: PlanSession): InstantPlanT
   const { warmup, cooldown } = prescription.operationalComponents
   const recoveryMode = { WALK: "걷기", JOG: "조깅", STAND: "서서 쉬기", NOT_APPLICABLE: "지정 없음" }
   return [
-    { label: "준비", instruction: `${warmup.easyDurationMinutes}분 RPE ${warmup.rpeMin}~${warmup.rpeMax}. ${warmup.strides.durationSeconds}초 점진 가속 ${warmup.strides.repetitions}회, 사이 ${warmup.strides.recoverySeconds}초 걷기·조깅.` },
-    { label: "본운동", instruction: `${prescription.repetitionDistanceM}m × ${prescription.repetitionsPerSet}회 × ${prescription.setCount}세트. 반복당 ${formatTrainingSeconds(prescription.targetRepSeconds)} · 총 ${prescription.totals.totalRepetitions}회.` },
+    { label: "준비", instruction: `${warmup.easyDurationMinutes}분 가볍게 움직이기 (RPE ${warmup.rpeMin}~${warmup.rpeMax}) → ${warmup.strides.durationSeconds}초씩 점점 빠르게 ${warmup.strides.repetitions}회. 가속 사이 ${warmup.strides.recoverySeconds}초 걷기·조깅.` },
+    { label: "본운동", instruction: `${prescription.repetitionDistanceM}m를 약 ${formatTrainingSeconds(prescription.targetRepSeconds)}에 ${prescription.repetitionsPerSet}회${prescription.setCount > 1 ? `씩 · ${prescription.setCount}세트 (총 ${prescription.totals.totalRepetitions}회)` : ""}.` },
     { label: "회복", instruction: [
       prescription.repetitionRecoverySeconds === null ? "반복 회복 시간 지정 없음" : `반복 사이 ${formatTrainingSeconds(prescription.repetitionRecoverySeconds)} ${recoveryMode[prescription.repetitionRecoveryMode]}`,
       ...(prescription.setCount > 1 ? [prescription.setRecoverySeconds === null ? "세트 회복 시간 지정 없음" : `세트 사이 ${formatTrainingSeconds(prescription.setRecoverySeconds)} ${recoveryMode[prescription.setRecoveryMode]}`] : []),
     ].join(" · ") },
-    { label: "정리", instruction: `${cooldown.easyDurationMinutes}분 RPE ${cooldown.rpeMin}~${cooldown.rpeMax}. 통증이나 몸 이상이 생기면 중단하세요.` },
+    { label: "정리", instruction: `${cooldown.easyDurationMinutes}분 가볍게 움직이기 (RPE ${cooldown.rpeMin}~${cooldown.rpeMax}). 통증이나 몸 이상이 생기면 중단하세요.` },
   ]
 }

@@ -1,7 +1,7 @@
 import React from "react"
 import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { AppShell } from "./AppShell"
 import { ENGAGEMENT_STORAGE_KEY } from "./domain/engagement"
 import type { JournalEntry } from "./domain/journal-schema"
@@ -55,6 +55,7 @@ describe("AppShell journal archive routing", () => {
   })
 
   it("returns from editing an archived entry to the same selected month", async () => {
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
     const user = userEvent.setup()
     render(<AppShell />)
 
@@ -66,6 +67,7 @@ describe("AppShell journal archive routing", () => {
     await user.click(await screen.findByRole("button", { name: "훈련 기록 수정" }))
 
     await user.click(screen.getByRole("button", { name: "← 뒤로" }))
+    expect(confirm).not.toHaveBeenCalled()
     expect(await screen.findByText("아카이브 복귀 훈련")).toBeVisible()
     await user.click(screen.getByRole("button", { name: "일지 목록으로 돌아가기" }))
 

@@ -230,6 +230,7 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
         setSaveError(true); return
       }
       if (accountEnabled) await draft.complete()
+      else void draft.complete()
       if (!draft.current()) return
       lastSavedAt.current = entry.savedAt
       const saved = accountResult?.ok ? { ...entry, syncState: accountResult.storage === "ACCOUNT" ? "synced" as const : "local" as const } : entry

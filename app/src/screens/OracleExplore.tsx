@@ -14,7 +14,7 @@ type OraclePersonalAction = "records" | "journal" | "trends" | "plan" | "log"
 export type OracleExploreProps = {
   readonly topicId: OracleTopicId
   readonly onBack: () => void
-  readonly onSelectTopic: (id: OracleTopicId) => void
+  readonly onSelectTopic: (id: OracleTopicId, mode?: "example" | "personal") => void
   readonly onPersonalAction: (action: OraclePersonalAction, section?: AnalysisSection, metric?: PersonalResult["metric"]) => void
   readonly personalResult?: PersonalResult | undefined
   readonly initialMode?: "example" | "personal" | undefined
@@ -57,7 +57,7 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
         <div className="oracle-explore__select-wrap">
           <select id={selectId} value={topicId} onChange={event => {
             const selectedTopic = ORACLE_TOPICS.find(item => item.id === event.target.value)
-            if (selectedTopic) onSelectTopic(selectedTopic.id)
+            if (selectedTopic) onSelectTopic(selectedTopic.id, mode)
           }}>
             {ORACLE_TOPICS.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}
           </select>
@@ -111,7 +111,7 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
         <button type="button" className="oracle-explore__personal" onClick={() => personalResult ? selectMode("personal") : onPersonalAction(topic.personalAction)}>
           <span>{personalResult ? "내 기록으로 확인하기" : topic.personalLabel}</span><ArrowRight size={18} aria-hidden="true" />
         </button>
-        <button type="button" className="oracle-explore__related" onClick={() => onSelectTopic(topic.nextId)}>
+        <button type="button" className="oracle-explore__related" onClick={() => onSelectTopic(topic.nextId, mode)}>
           <span><small>이어서 살펴보기</small><strong>{topic.nextLabel}</strong></span>
           <ArrowRight size={18} aria-hidden="true" />
         </button>
@@ -121,7 +121,7 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
         <p>{topic.example.detail}</p>
       </InfoDisclosure>
       </>}
-      {personalResult && mode === "personal" && <button type="button" className="oracle-explore__related" onClick={() => onSelectTopic(topic.nextId)}>
+      {personalResult && mode === "personal" && <button type="button" className="oracle-explore__related" onClick={() => onSelectTopic(topic.nextId, mode)}>
         <span><small>이어서 살펴보기</small><strong>{topic.nextLabel}</strong></span><ArrowRight size={18} aria-hidden="true" />
       </button>}
       {bookmarkControl}

@@ -72,9 +72,9 @@ export function PlanAdaptationReview({
 }
 
 function AdaptationPrescriptionLabel({ value }: { readonly value: string }) {
-  const parts = value.split(/(\d+~\d+분|기초 지구력 · BASE)/gu)
+  const parts = value.split(/(\d+(?:~\d+)?분|기초 지구력 · BASE)/gu)
   return parts.map((part, index) => (
-    /^(?:\d+~\d+분|기초 지구력 · BASE)$/u.test(part)
+    /^(?:\d+(?:~\d+)?분|기초 지구력 · BASE)$/u.test(part)
       ? <span className="plan-adaptation__metadata-token" key={`${part}:${index}`}>{part}</span>
       : part
   ))

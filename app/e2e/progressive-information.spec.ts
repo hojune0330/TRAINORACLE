@@ -52,15 +52,19 @@ for (const width of [320, 375]) {
   })
 }
 
-test("offers analysis exploration before recording and opens help with the keyboard", async ({ page }, testInfo) => {
+test("keeps empty analysis focused and opens examples and help with the keyboard", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 375, height: 667 })
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석", exact: true }).click()
   const exploration = page.getByRole("region", { name: "어떤 분석이 궁금하세요?" })
-  await expect(exploration.getByRole("button").first()).toBeInViewport({ ratio: 1 })
   const record = page.getByRole("button", { name: "첫 기록 남기기", exact: true })
-  expect((await exploration.boundingBox())!.y).toBeLessThan((await record.boundingBox())!.y)
-  await record.scrollIntoViewIfNeeded()
   await expect(record).toBeInViewport({ ratio: 1 })
+  const examples = page.locator("summary", { hasText: "예시로 먼저 둘러보기" })
+  await expect(examples.locator("..")).not.toHaveAttribute("open")
+  await examples.focus()
+  await page.keyboard.press("Enter")
+  await expect(exploration.getByRole("button").first()).toBeVisible()
+  await page.keyboard.press("Enter")
+  await expect(examples.locator("..")).not.toHaveAttribute("open")
   const summary = page.locator("summary", { hasText: "어떤 기록을 분석하나요?" })
   const help = summary.locator("..")
   await expect(help).not.toHaveAttribute("open")

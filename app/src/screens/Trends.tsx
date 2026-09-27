@@ -119,12 +119,9 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, initialCo
         )}
         {section === "summary" && isEmpty && (
           <>
-            {onOpenOracle && <div className="trends-hub__explore">
-              <OracleTopicGrid onSelectTopic={onOpenOracle} title="어떤 분석이 궁금하세요?" compact />
-            </div>}
             <div style={{ padding: "0 20px" }}>
               <GuidedEmptyState
-                title={entries.length > 0 ? "분석할 수치가 아직 없어요" : "분석할 기록이 아직 없어요"}
+                title={entries.length > 0 ? "분석 가능한 기록이 아직 없어요" : "분석할 기록이 아직 없어요"}
                 description={<>거리·시간·RPE<TermHelp term="rpe" />가 있는 기록이 필요해요.</>}
                 actionLabel={entries.length > 0 ? "기록 더 남기기" : "첫 기록 남기기"}
                 onAction={onWriteLog}
@@ -132,6 +129,9 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, initialCo
               <InfoDisclosure title="어떤 기록을 분석하나요?">
                 <PersonalOraclePanel observations={observations} today={today} planState={planState} />
               </InfoDisclosure>
+              {onOpenOracle && <InfoDisclosure title="예시로 먼저 둘러보기">
+                <OracleTopicGrid onSelectTopic={onOpenOracle} title="어떤 분석이 궁금하세요?" compact />
+              </InfoDisclosure>}
             </div>
           </>
         )}

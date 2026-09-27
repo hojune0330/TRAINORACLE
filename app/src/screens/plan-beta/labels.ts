@@ -83,7 +83,7 @@ export const ENERGY_INTENT_LABELS: Record<PlannedEnergyIntent, {
   },
   GLY_INTENT: {
     title: "짧고 세게 · GLY",
-    detail: "짧은 전력 구간을 여러 번",
+    detail: "짧고 강한 구간을 여러 번",
     term: "gly",
   },
   ATP_PC_INTENT: {
@@ -146,8 +146,9 @@ export function prescriptionLabel(session: PlanSession): string {
   if (session.prescription.kind === "PACE_TARGET") {
     return `총 ${session.prescription.totals.totalRepetitions}회 · 주요 구간 ${session.prescription.totals.qualityDistanceM}m · ${session.prescription.repetitionDistanceM}m당 ${formatTrainingSeconds(session.prescription.targetRepSeconds)}`
   }
-  const duration = `${session.prescription.durationMinutes.minimum}~${session.prescription.durationMinutes.maximum}분`
-  const rpe = `RPE ${session.prescription.rpe.minimum}~${session.prescription.rpe.maximum}`
+  const range = (minimum: number, maximum: number) => minimum === maximum ? `${minimum}` : `${minimum}~${maximum}`
+  const duration = `${range(session.prescription.durationMinutes.minimum, session.prescription.durationMinutes.maximum)}분`
+  const rpe = `RPE ${range(session.prescription.rpe.minimum, session.prescription.rpe.maximum)}`
   const intent = ENERGY_INTENT_LABELS[session.plannedEnergyIntent].title
   if (session.role === "EASY") {
     return `총 ${duration} · ${rpe} · ${intent}`

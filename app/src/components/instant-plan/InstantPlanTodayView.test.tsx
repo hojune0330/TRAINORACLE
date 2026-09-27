@@ -26,6 +26,18 @@ const today: InstantPlanToday = {
 }
 
 describe("InstantPlanTodayView", () => {
+  it("keeps incomplete repeat guidance visible and opens only the selected method", () => {
+    const onViewSession = vi.fn()
+    render(<InstantPlanTodayView today={{ ...today, sessions: [{ ...today.sessions[0]!,
+      guidanceNotice: "반복 횟수와 회복 시간은 정해지지 않았어요.",
+      steps: [{ label: "총 시간·강도", instruction: "총 35분 · RPE 6~7" },
+        { label: "방법", instruction: "저장된 안내" }],
+    }] }} compact onViewSession={onViewSession} />)
+    expect(screen.getByRole("note")).toBeVisible()
+    expect(screen.getByText("저장된 안내")).not.toBeVisible()
+    fireEvent.click(screen.getByRole("button", { name: "오전 훈련 방법·근거" }))
+    expect(onViewSession).toHaveBeenCalledExactlyOnceWith("am")
+  })
   it("shows both session summaries first and expands only the selected session", () => {
     const { container } = render(<InstantPlanTodayView today={today} />)
     expect(screen.getByText(today.dateLabel)).toBeVisible()

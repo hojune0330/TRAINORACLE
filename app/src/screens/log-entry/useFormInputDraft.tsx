@@ -48,10 +48,37 @@ export function useFormInputDraft(input: FormInput, entryId: string, capture = t
   const alive = React.useRef(true)
   React.useLayoutEffect(() => { alive.current = true; return () => { alive.current = false } }, [])
   const serialized = JSON.stringify(input)
+  // Editor hydration adds an empty history object; it is not a user edit.
+  const comparable = "objectiveEditor" in input ? { ...input,
+    objectiveEditor: { ...input.objectiveEditor, previousKinds: input.objectiveEditor.previousKinds ?? {} },
+  } : input
+  const content = JSON.stringify(comparable.kind === "quick" ? { ...comparable, step: undefined } : comparable)
+  const volatile = React.useRef({ baseline: content, latest: content, dirty: false })
+  React.useLayoutEffect(() => {
+    volatile.current.latest = content
+    volatile.current.dirty = session === null && capture && content !== volatile.current.baseline
+  }, [content, session, capture])
+  React.useEffect(() => {
+    if (session !== null) return
+    const unsafe = () => alive.current && activeLocalAccount() === owner.current && volatile.current.dirty
+    const unregister = registerUnsavedDraftGuard({ isUnsafe: unsafe, onBlocked: () => {},
+      confirmDiscard: () => window.confirm("아직 저장하지 않은 내용이 있어요. 입력을 버리고 이동할까요?\n계속 작성하려면 취소를 눌러 주세요."),
+      discard: () => { volatile.current.dirty = false },
+    })
+    const beforeUnload = (event: BeforeUnloadEvent) => {
+      if (unsafe()) { event.preventDefault(); event.returnValue = "" }
+    }
+    window.addEventListener("beforeunload", beforeUnload)
+    return () => { unregister(); window.removeEventListener("beforeunload", beforeUnload) }
+  }, [session])
   React.useLayoutEffect(() => { if (capture) session?.change(input, entryId, baseSavedAt) }, [session, serialized, entryId, capture, baseSavedAt])
   return {
     current: () => alive.current && activeLocalAccount() === owner.current && (session?.current() ?? true),
-    complete: async () => { await session?.complete() },
+    complete: async () => {
+      if (session) await session.complete()
+      volatile.current.baseline = volatile.current.latest
+      volatile.current.dirty = false
+    },
     back: (callback?: () => void) => () => runDraftSafeNavigation(() => callback?.()),
   }
 }

@@ -10,7 +10,7 @@ describe("personal oracle panel", () => {
     render(<PersonalOraclePanel observations={[]} today="2026-08-28" planState={null} />)
 
     const region = screen.getByRole("region", { name: "내 훈련 요약" })
-    expect(within(region).getByText("기록 없음")).toBeVisible()
+    expect(within(region).getByText("분석할 기록 확인 필요")).toBeVisible()
     expect(within(region).getByText("최근 달린 거리")).toBeVisible()
     expect(within(region).getByText("훈련 목적의 구성")).toBeVisible()
     expect(within(region).getByText("계획과 실행 표시")).toBeVisible()

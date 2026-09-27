@@ -5,6 +5,7 @@ import "./instant-plan.css"
 export type InstantPlanTodayViewProps = {
   readonly today: InstantPlanToday
   readonly onRecordSession?: (id: string) => void
+  readonly onViewSession?: (id: string) => void
   readonly onChangeSchedule?: (sessionId: string) => void
   readonly changeScheduleLabel?: string
   readonly onContinue?: () => void
@@ -37,6 +38,7 @@ function SessionDetail({
   session,
   canRecord,
   onRecordSession,
+  onViewSession,
   compact = false,
   showHeading = true,
   onChangeSchedule,
@@ -45,6 +47,7 @@ function SessionDetail({
   readonly session: TodaySession
   readonly canRecord: boolean
   readonly onRecordSession?: (id: string) => void
+  readonly onViewSession?: (id: string) => void
   readonly compact?: boolean
   readonly showHeading?: boolean
   readonly onChangeSchedule?: (id: string) => void
@@ -62,12 +65,15 @@ function SessionDetail({
       {(!compact || session.recorded) && <p className="instant-plan__hint">
         {session.recorded ? "남긴 기록 있음" : "아직 기록 없음"}
       </p>}
+      {session.guidanceNotice && <p className="instant-plan__hint" role="note">{session.guidanceNotice}</p>}
       {compact && session.steps[0]?.label === "총 시간·강도" ? <>
         {steps(session.steps.slice(0, 1))}
         {session.steps.length > 1 && <details className="instant-plan__disclosure">
           <summary>훈련 방법</summary>{steps(session.steps.slice(1))}
         </details>}
       </> : steps(session.steps)}
+      {onViewSession && <button className="instant-plan__secondary" type="button"
+        aria-label={`${session.slotLabel} 훈련 방법·근거`} onClick={() => onViewSession(session.id)}>훈련 방법·근거</button>}
       {canRecord && <div className="instant-plan__actions">
         {!session.recorded && onRecordSession && <button className="instant-plan__secondary" type="button"
           aria-label={`${session.slotLabel} 훈련 기록 남기기`} onClick={() => onRecordSession(session.id)}>
@@ -84,6 +90,7 @@ function SessionDetail({
 export function InstantPlanTodayView({
   today,
   onRecordSession,
+  onViewSession,
   onChangeSchedule,
   changeScheduleLabel = "일정 확인",
   onContinue,
@@ -142,6 +149,7 @@ export function InstantPlanTodayView({
                   changeScheduleLabel={changeScheduleLabel}
                   canRecord={canRecord}
                   onRecordSession={onRecordSession}
+                  onViewSession={onViewSession}
                 />
               )}
             </>
@@ -154,6 +162,7 @@ export function InstantPlanTodayView({
               changeScheduleLabel={changeScheduleLabel}
               canRecord={canRecord}
               onRecordSession={onRecordSession}
+              onViewSession={onViewSession}
             />
           ))}
         </div>

@@ -172,9 +172,9 @@ describe("next-frame adaptation flow", () => {
     expect(within(changedSection).queryByText(/DAY 9 오전 · 강한 유산소 반복 · VO₂ 훈련/u)).not.toBeInTheDocument()
     const metadataTokens = [...changedSection.querySelectorAll(".plan-adaptation__metadata-token")]
       .map((token) => token.textContent)
-    expect(metadataTokens).toContain("35~35분")
+    expect(metadataTokens).toContain("35분")
     for (const session of changedSessions) {
-      expect(session).toHaveTextContent(/총 35~60분 · RPE 3~4 · 편하게 오래 · BASE → 총 35~35분 · RPE 3~4 · 편하게 오래 · BASE/u)
+      expect(session).toHaveTextContent(/총 35~60분 · RPE 3~4 · 편하게 오래 · BASE → 총 35분 · RPE 3~4 · 편하게 오래 · BASE/u)
     }
     const unchangedSection = screen.getByRole("heading", { name: "그대로인 것" }).parentElement
     if (unchangedSection === null) throw new Error("Unchanged-session section missing")

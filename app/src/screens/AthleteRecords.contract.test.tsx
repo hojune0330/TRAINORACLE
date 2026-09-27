@@ -21,6 +21,21 @@ async function fillTime(minutes: string, seconds: string): Promise<void> {
 }
 
 describe("athlete record entry surface", () => {
+  it("focuses the first invalid field and connects its inline error", async () => {
+    const user = userEvent.setup()
+    render(<AthleteRecords onBack={() => undefined} />)
+    await user.click(screen.getByRole("button", { name: "기록 저장" }))
+    const minutes = screen.getByRole("textbox", { name: "기록 분" })
+    expect(minutes).toHaveFocus()
+    expect(minutes).toHaveAttribute("aria-invalid", "true")
+    expect(minutes).toHaveAccessibleDescription("기록의 분과 초를 다시 확인해 주세요.")
+    await fillTime("18", "31")
+    await user.click(screen.getByRole("button", { name: "기록 저장" }))
+    expect(screen.getByRole("textbox", { name: "달성일" })).toHaveFocus()
+    expect(screen.getByRole("textbox", { name: "달성일" })).toHaveAccessibleDescription("달성일을 YYYY-MM-DD로 입력해 주세요.")
+    expect(minutes).not.toHaveAttribute("aria-invalid")
+    expect(loadAthleteRecords(new Date())).toHaveLength(0)
+  })
   it("opens from the plan flow without creating a record", async () => {
     const onManageRecords = vi.fn()
     render(<PlanBeta onManageRecords={onManageRecords} />)

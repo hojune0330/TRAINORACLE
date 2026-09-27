@@ -210,6 +210,10 @@ export function ActivePlan({
       </section>}
       {executionMessage && <div className="plan-execution-status" role="status">{executionMessage}</div>}
       <InstantPlanTodayView today={todayView} compact onContinue={showSchedule} changeScheduleLabel="휴식·건너뜀 기록"
+        onViewSession={id => {
+          const session = activePlan.sessions.find(item => instantSessionId(item) === id)
+          if (session) setReaderRequest(previous => ({ day: session.day, slot: session.slot, sequence: (previous?.sequence ?? 0) + 1 }))
+        }}
         onChangeSchedule={id => {
           const session = activePlan.sessions.find(item => instantSessionId(item) === id)
           if (session) setReaderRequest(previous => ({ day: session.day, slot: session.slot, section: "records", sequence: (previous?.sequence ?? 0) + 1 }))

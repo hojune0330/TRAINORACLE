@@ -53,6 +53,7 @@ export type InstantPlanToday = {
     readonly slotLabel: string
     readonly title: string
     readonly recorded: boolean
+    readonly guidanceNotice?: string
     readonly steps: readonly { readonly label: string; readonly instruction: string }[]
   }[]
 }

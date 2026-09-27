@@ -5,6 +5,7 @@ import { QuickSessionForm } from "./QuickSessionForm"
 import { createPlannedSessionLogDraft } from "../../domain/planned-session-link"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
 import { collectPlanJournalEvidence } from "../../domain/plan-journal-evidence"
+import { runDraftSafeNavigation } from "../../domain/unsaved-draft-navigation"
 
 function finishPerformedSession(rpe = 6): void {
   fireEvent.click(screen.getByRole("button", { name: "운동을 마쳤어요" }))
@@ -15,6 +16,43 @@ function finishPerformedSession(rpe = 6): void {
 }
 
 describe("quick session journal contract", () => {
+  it("protects unsaved guest input without writing it and leaves freely after save", () => {
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+    const navigate = vi.fn()
+    render(<QuickSessionForm />)
+    expect(runDraftSafeNavigation(navigate)).toBe(true)
+    expect(confirm).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "글 추가" }))
+    fireEvent.click(screen.getByRole("radio", { name: "훈련 메모" }))
+    fireEvent.change(screen.getByLabelText("일지 내용"), { target: { value: "합성 작성 내용" } })
+    fireEvent.click(screen.getByRole("button", { name: "내용 반영" }))
+    expect(runDraftSafeNavigation(navigate)).toBe(false)
+    expect(confirm).toHaveBeenCalledOnce()
+    expect(loadEntries()).toEqual([])
+    expect(JSON.stringify(localStorage)).not.toContain("합성 작성 내용")
+    fireEvent.click(screen.getByRole("button", { name: "글 수정" }))
+    expect(screen.getByLabelText("일지 내용")).toHaveValue("합성 작성 내용")
+    fireEvent.click(screen.getByRole("button", { name: "내용 반영" }))
+    fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
+    expect(loadEntries()).toHaveLength(1)
+    expect(runDraftSafeNavigation(navigate)).toBe(true)
+    expect(confirm).toHaveBeenCalledOnce()
+  })
+
+  it("names private storage setup before the last save rather than promising a saved note", () => {
+    sessionStorage.clear()
+    render(<QuickSessionForm />)
+    fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "글 추가" }))
+    fireEvent.click(screen.getByRole("radio", { name: "나만의 메모" }))
+    expect(screen.getByText(/처음 한 번, 비밀 메모/)).toBeVisible()
+    fireEvent.change(screen.getByLabelText("일지 내용"), { target: { value: "합성 비밀 글" } })
+    fireEvent.click(screen.getByRole("button", { name: "내용 반영" }))
+    expect(screen.getByRole("button", { name: "비밀 메모 보관 준비" })).toBeVisible()
+    expect(screen.queryByRole("button", { name: "이대로 저장" })).toBeNull()
+    expect(loadEntries()).toEqual([])
+  })
   beforeEach(() => {
     window.localStorage.clear()
   })

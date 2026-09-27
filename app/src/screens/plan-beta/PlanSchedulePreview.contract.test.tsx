@@ -278,8 +278,15 @@ describe("plan schedule preview", () => {
     expect(day).toHaveAccessibleName(/오전 주요 훈련 LT · 휴식 · 오후 회복 운동/)
     expect(day).not.toHaveAccessibleName(/완료/)
     await user.click(screen.getByRole("button", { name: "다음 달" }))
+    await user.click(screen.getByRole("button", { name: /2026년 9월 15일/ }))
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "달력으로 돌아가기" }))
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull())
+    expect(screen.getByRole("status")).toHaveTextContent("이 계획의 일정이 없어요")
     await user.click(screen.getByRole("button", { name: "계획 시작일로" }))
     expect(screen.getByRole("grid", { name: "2026년 8월 달력" })).toBeVisible()
+    expect(screen.getByRole("button", { name: /2026년 8월 17일 월요일 · 오전/ })).toHaveAttribute("data-selected", "true")
+    expect(screen.queryByText(/에는 이 계획의 일정이 없어요/)).toBeNull()
+    expect(screen.queryByRole("dialog")).toBeNull()
   })
 
   it("does not reopen a dismissed reader when the same plan data refreshes", async () => {

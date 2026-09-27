@@ -5,7 +5,7 @@ import { derivePersonalOracle } from "../../domain/personal-oracle"
 import { InfoDisclosure } from "../../components/InfoDisclosure"
 
 const MATURITY_LABEL = {
-  EMPTY: "기록 없음",
+  EMPTY: "분석할 기록 확인 필요",
   STARTING: "기록을 모으는 중",
   DESCRIPTIVE: "최근 기록 요약",
 } as const

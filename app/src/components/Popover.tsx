@@ -39,7 +39,10 @@ export function usePopover(): {
       if (!insideTrigger && !insidePortal) setOpen(false)
     }
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false)
+      if (e.key === "Escape") {
+        setOpen(false)
+        wrapRef.current?.querySelector<HTMLButtonElement>("button")?.focus({ preventScroll: true })
+      }
     }
     document.addEventListener("mousedown", onDown)
     document.addEventListener("touchstart", onDown)
@@ -100,7 +103,8 @@ export function PopCard({ open, align = "left", width = 232, accentBorder, label
     if (anchor) {
       const spaceBelow = fr.bottom - anchor.bottom
       const spaceAbove = anchor.top - fr.top
-      up = r.height + pad > spaceBelow && spaceAbove > spaceBelow
+      // Prefer above the help trigger so the choices immediately below remain usable.
+      up = r.height + pad <= spaceAbove || (r.height + pad > spaceBelow && spaceAbove > spaceBelow)
     }
     setAdj({ dx: Math.round(dx), up })
   }, [open])

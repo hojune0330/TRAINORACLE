@@ -494,7 +494,10 @@ function PlanTrainingFlow({
         <strong>{frameLengthDays}일 훈련 일정</strong>
         <span>{days[0]?.date.slice(5).replace("-", "/")} ~ {days.at(-1)?.date.slice(5).replace("-", "/")}</span>
       </header>
-      {outsidePlanMonth && <button className="calendar-range-return" type="button" onClick={() => setMonth(days[0]!.date.slice(0, 7))}>계획 시작일로</button>}
+      {outsidePlanMonth && <button className="calendar-range-return" type="button" onClick={() => {
+        setMonth(days[0]!.date.slice(0, 7))
+        onToday?.(days[0]!.date)
+      }}>계획 시작일로</button>}
       <MonthCalendar month={month} today={today} selectedDate={selectedDate}
         highlightedRange={days.length ? { start: days[0]!.date, end: days.at(-1)!.date } : undefined}
         onMonthChange={setMonth} onSelectDate={onSelectDate} onToday={onToday}
