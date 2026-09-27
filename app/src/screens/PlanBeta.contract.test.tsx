@@ -55,9 +55,9 @@ async function answerMinimumPlanQuestions(
 /** 결과 화면의 다듬기 패널을 열고 항목 하나를 탭한다. */
 async function openRefinement(label: string): Promise<void> {
   const user = userEvent.setup()
-  const summary = screen.getByText("계획 다듬기")
-  await user.click(summary)
-  await user.click(screen.getByRole("button", { name: new RegExp(`^${label} 바꾸기`, "u") }))
+  const panel = screen.getByTestId("plan-refine")
+  if (!panel.hasAttribute("open")) await user.click(within(panel).getByText("계획 다듬기"))
+  await user.click(within(panel).getByRole("button", { name: new RegExp(`^${label} 바꾸기`, "u") }))
 }
 
 function expectGeneratedCandidates(): void {
@@ -360,9 +360,7 @@ describe("plan beta user flow", () => {
     await user.click(screen.getByRole("button", { name: /저녁에 운동해요/u }))
     await openRefinement("하루 두 번")
     await user.click(screen.getByRole("button", { name: /하루 두 번 운동할게요/u }))
-    const [choice] = screen.getAllByRole("button", { name: /선택하기|이 계획으로 시작하기|이 일정으로 시작/u })
-    if (choice === undefined) throw new Error("Expected a generated plan choice")
-    await user.click(choice)
+    await user.click(screen.getByRole("button", { name: "이 일정으로 시작", exact: true }))
 
     expect(loadPlanBetaState()?.intake).toMatchObject({
       trainingFocus: "VO2_INTENT",
