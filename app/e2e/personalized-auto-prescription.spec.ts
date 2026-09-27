@@ -130,6 +130,7 @@ async function bindFirstRecord(page: Page): Promise<void> {
 }
 
 for (const viewport of [
+  { name: "mobile-320x650", width: 320, height: 650 },
   { name: "mobile-375x667", width: 375, height: 667 },
   { name: "desktop-1440x900", width: 1440, height: 900 },
 ] as const) {

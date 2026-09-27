@@ -1,4 +1,4 @@
-.month-calendar { min-width: 0; color: var(--ink); }
+.month-calendar { min-width: 0; margin-inline: min(0px, calc((100% - 7 * var(--app-touch-min) - 8px) / 2)); color: var(--ink); }
 .month-calendar__toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-1); margin-bottom: var(--space-2); }
 .month-calendar__toolbar h3 { margin: 0; font-size: var(--fs-app-section-title); font-weight: 650; }
 .month-calendar__toolbar > div { display: flex; align-items: center; }
@@ -37,7 +37,6 @@
 .month-calendar__event[data-kind="journal"] { color: var(--ink-2); }
 @media (max-width: 350px) {
   .month-calendar__grid td button { min-height: 64px; }
-  .plan-training-flow:has(.month-calendar) { margin-inline: calc(-1 * var(--space-4) - 4px); }
   .journal-archive .cycle-calendar { padding-inline: 0; }
   .journal-calendar-browse { padding-inline: 0; }
 }

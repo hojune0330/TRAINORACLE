@@ -1,0 +1,17 @@
+{
+  "syntheticOnly": true,
+  "storageState": {
+    "cookies": [],
+    "origins": [
+      {
+        "origin": "http://127.0.0.1:4209",
+        "localStorage": [
+          {
+            "name": "trainoracle.journal.v1",
+            "value": "[{\"id\":\"R06-synthetic-1\",\"kind\":\"post-session\",\"date\":\"2026-09-20\",\"savedAt\":\"2026-09-20T08:00:00.000Z\",\"syncState\":\"local\",\"system\":\"base\",\"title\":\"합성 조깅\",\"distanceKm\":\"5\",\"durationMin\":\"31\",\"avgPace\":\"6:12\",\"rpe\":4,\"memo\":\"\",\"memoPurpose\":\"PRIVATE_SELF_ONLY\"}]"
+          }
+        ]
+      }
+    ]
+  }
+}

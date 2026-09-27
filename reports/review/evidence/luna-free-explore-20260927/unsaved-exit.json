@@ -1,0 +1,9 @@
+{
+  "syntheticOnly": true,
+  "build": "app/dist",
+  "finalSaveWasNotClicked": true,
+  "dialogs": [],
+  "afterExit": "TRAINORACLE\n더보기\n\n훈련 분석\n\n내 훈련, 무엇부터 개선할까요?\n분석 결과 먼저 보기\n기록 없이도 예시로 체험해요.\n궁금한 항목부터\n내 기록 · 결과 예시\n현재 수준\n강점·보완점\n훈련 비교\n훈련 구성\n우선 훈련\n훈련 후 변화\n오늘\n오늘 기록 남기기\n훈련 계획 만들기\n훈련 배우기\n일지 꾸미기\n일지 예시 보기\n홈\n일지\n기록하기\n계획\n분석",
+  "afterReopen": "← 뒤로\n빠르게 기록\n1 / 3\n오늘 운동은 어떻게 됐나요?\n운동을 마쳤어요\n하던 운동을 일부만 했어요\n가볍게 움직였어요\n오늘은 쉬었어요\n하려던 운동을 건너뛰었어요\n홈\n일지\n기록하기\n계획\n분석",
+  "journalPersisted": false
+}

@@ -1,0 +1,42 @@
+[
+  {
+    "id": "R01",
+    "age": 17,
+    "experience": "beginner, 6 months",
+    "viewport": { "width": 320, "height": 720 },
+    "device": "mobile",
+    "style": "Cautious first-time visitor. Follows the clearest visible invitation, reads unfamiliar terms, and backs away from account or personal-data prompts. Curiosity is practical, not goal-driven."
+  },
+  {
+    "id": "R02",
+    "age": 29,
+    "experience": "recreational, 3 years",
+    "viewport": { "width": 360, "height": 780 },
+    "device": "mobile",
+    "style": "Skims first, then follows anything that looks like personal progress or a useful summary. Impatient when labels repeat; tries nearby alternatives after a dead end."
+  },
+  {
+    "id": "R03",
+    "age": 48,
+    "experience": "intermittent beginner, 2 years",
+    "viewport": { "width": 375, "height": 812 },
+    "device": "mobile",
+    "style": "Careful reader who wants to understand where information goes. Opens explanations, notices save-state wording, and uses back when a screen loses context."
+  },
+  {
+    "id": "R04",
+    "age": 36,
+    "experience": "competitive club runner, 12 years",
+    "viewport": { "width": 820, "height": 1180 },
+    "device": "tablet",
+    "style": "Skeptical and comparison-oriented. Looks for evidence behind summaries, explores alternate views, and changes direction when a label over-promises."
+  },
+  {
+    "id": "R05",
+    "age": 67,
+    "experience": "new recreational runner, 4 months",
+    "viewport": { "width": 1440, "height": 900 },
+    "device": "desktop",
+    "style": "Unhurried first visit. Reads labels before acting, scans the whole page, and prefers explicit navigation and readable text over compact controls."
+  }
+]

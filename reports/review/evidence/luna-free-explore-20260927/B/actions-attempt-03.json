@@ -1,0 +1,1919 @@
+{
+  "target": "http://127.0.0.1:4209/?app=1",
+  "externalWriteBoundary": "all browser requests outside 127.0.0.1:4209 were aborted",
+  "blockedHosts": [
+    "www.react-grab.com",
+    "fonts.googleapis.com"
+  ],
+  "planProvisioning": {
+    "attempted": true,
+    "success": false,
+    "steps": [
+      "계획 탭",
+      "기록 없이 선택",
+      "1500m 선택",
+      "3일 일정",
+      "합성 상태 확인"
+    ],
+    "localStorageKeys": []
+  },
+  "results": [
+    {
+      "id": "R06",
+      "start": {
+        "url": "/?app=1",
+        "headings": [
+          "내 훈련, 무엇부터 개선할까요?",
+          "궁금한 항목부터",
+          "기록과 계획",
+          "최근 기록"
+        ],
+        "buttons": [
+          {
+            "index": 0,
+            "text": "더보기",
+            "label": "더보기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 1,
+            "text": "내 훈련 분석 보기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 2,
+            "text": "현재 수준",
+            "label": "현재 수준 · 지금 내 기록은 어디쯤일까? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 3,
+            "text": "강점·보완점",
+            "label": "강점·보완점 · 계획보다 더 힘들게 느껴진 훈련은? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 4,
+            "text": "훈련 비교",
+            "label": "훈련 비교 · 최근 두 달, 한 번에 달린 거리는? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 5,
+            "text": "훈련 구성",
+            "label": "훈련 구성 · 최근에는 어떤 훈련을 많이 했을까? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 6,
+            "text": "우선 훈련",
+            "label": "우선 훈련 · 다음 훈련의 초점은 무엇으로 잡을까? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 7,
+            "text": "훈련 후 변화",
+            "label": "훈련 후 변화 · 최근 두 달의 체감강도는 어땠을까? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 8,
+            "text": "오늘 기록하기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 9,
+            "text": "하루 마무리 기록하기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 10,
+            "text": "",
+            "label": "기분 낮음",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 11,
+            "text": "",
+            "label": "기분 괜찮음",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 12,
+            "text": "",
+            "label": "기분 좋음",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 13,
+            "text": "",
+            "label": "몸 상태 피곤",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 14,
+            "text": "",
+            "label": "몸 상태 보통",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 15,
+            "text": "",
+            "label": "몸 상태 가벼움",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 16,
+            "text": "",
+            "label": "날씨 맑음",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 17,
+            "text": "",
+            "label": "날씨 흐림",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 18,
+            "text": "",
+            "label": "날씨 비",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 19,
+            "text": "",
+            "label": "날씨 추움",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 20,
+            "text": "",
+            "label": "날씨 더움",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 21,
+            "text": "전체 일지",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 22,
+            "text": "9월 20일 기록 1개 훈련 1 이 기기에만 있는 기록 1개",
+            "label": "2026년 9월 20일 기록 1개 보기 · 훈련 1",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 23,
+            "text": "훈련 분석 보기 분석에 쓸 직접 입력 기록이 없어요",
+            "label": "훈련 분석 보기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 24,
+            "text": "훈련 계획 만들기 저장된 계획 없음 · 계획안 만들기",
+            "label": "훈련 계획 만들기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 25,
+            "text": "",
+            "label": "바로가기 제안을 7일 동안 닫기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 26,
+            "text": "앱 바로가기 만들기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 27,
+            "text": "훈련 배우기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 28,
+            "text": "일지 꾸미기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 29,
+            "text": "홈",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 30,
+            "text": "일지",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 31,
+            "text": "기록하기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 32,
+            "text": "계획",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 33,
+            "text": "분석",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          }
+        ],
+        "body": "TRAINORACLE 더보기 훈련 분석 내 훈련, 무엇부터 개선할까요? 내 훈련 분석 보기 분석에 쓸 직접 입력 기록이 없어요 궁금한 항목부터 내 기록 · 결과 예시 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 오늘 아직 오늘 기록이 없어요. 오늘 기록하기 하루 마무리 기록하기 기분·몸 상태·날씨 남기기 기록과 계획 최근 기록 전체 일지 9월 20일 기록 1개 훈련 1 이 기기에만 있는 기록 1개 훈련 분석 보기 분석에 쓸 직접 입력 기록이 없어요 훈련 계획 만들기 저장된 계획 없음 · 계획안 만들기 앱 바로가기 만들기 훈련 배우기 일지 꾸미기 홈 일지 기록하기 계획 분석",
+        "geometry": {
+          "clientWidth": 391,
+          "scrollWidth": 391,
+          "scrollHeight": 1472,
+          "clientHeight": 807
+        }
+      },
+      "endHeadings": [
+        "내 훈련, 무엇부터 개선할까요?",
+        "궁금한 항목부터",
+        "기록과 계획",
+        "최근 기록"
+      ],
+      "actionCount": 6,
+      "actions": [
+        {
+          "n": 1,
+          "screen": "내 훈련, 무엇부터 개선할까요? / 궁금한 항목부터 / 기록과 계획 / 최근 기록",
+          "action": "현재 수준",
+          "reason": "저장한 한 건이 어떤 의미로 읽히는지 궁금해함",
+          "result": "최근 5km 기록은 24분 10초",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 2,
+          "screen": "최근 5km 기록은 24분 10초",
+          "action": "일지",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "지난 일지 / 2026년 9월",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 3,
+          "screen": "지난 일지 / 2026년 9월",
+          "action": "20 훈련 1",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "2026년 9월 / 2026년 9월 / 2026년 9월 20일 일요일 / 이날 남긴 기록",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 4,
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 20일 일요일 / 이날 남긴 기록",
+          "action": "일지·메모 원문 열기",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "일지 하루 일지 1 / 1 2026 · 09 · 20 SUN 2026 autumn 오늘의 기록 1개 훈련 1 훈련 17:00 BASE 기초 지구력 ? 이 기기 합성 조깅 거리 5 km 시간 31 min 평균 페이스 6:12 /km RPE ? 4 /10",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 5,
+          "screen": "일지 하루 일지 1 / 1 2026 · 09 · 20 SUN 2026 autumn 오늘의 기록 1개 훈련 1 훈련 17:00 BASE 기초 지구력 ? 이 기기 합성 조깅 거리 5 ",
+          "action": "일지",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "2026년 9월 / 2026년 9월",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 6,
+          "screen": "2026년 9월 / 2026년 9월",
+          "action": "20 훈련 1",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "2026년 9월 / 2026년 9월 / 2026년 9월 20일 일요일 / 이날 남긴 기록",
+          "url": "/?app=1",
+          "counted": true
+        }
+      ],
+      "failedAttempts": [
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 20일 일요일 / 이날 남긴 기록",
+          "attempted": "20 훈련 1",
+          "accessibleLabel": "2026년 9월 20일 일요일 · 훈련 후 1건 일지 열기",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 20일 일요일 / 이날 남긴 기록",
+          "attempted": "일지",
+          "accessibleLabel": "",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 20일 일요일 / 이날 남긴 기록",
+          "attempted": "분석",
+          "accessibleLabel": "",
+          "reason": "현재 화면에서 자신의 관심과 가장 가까워 보이는 선택지를 눌러봄",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 20일 일요일 / 이날 남긴 기록",
+          "attempted": "기록하기",
+          "accessibleLabel": "",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 20일 일요일 / 이날 남긴 기록",
+          "attempted": "홈",
+          "accessibleLabel": "",
+          "reason": "현재 화면에서 자신의 관심과 가장 가까워 보이는 선택지를 눌러봄",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 20일 일요일 / 이날 남긴 기록",
+          "attempted": "계획",
+          "accessibleLabel": "",
+          "reason": "계획을 만들거나 다시 보는 진입이 무엇을 여는지 궁금해함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 20일 일요일 / 이날 남긴 기록",
+          "attempted": "월간 달력",
+          "accessibleLabel": "",
+          "reason": "현재 화면에서 자신의 관심과 가장 가까워 보이는 선택지를 눌러봄",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 20일 일요일 / 이날 남긴 기록",
+          "attempted": "9.5일 주기",
+          "accessibleLabel": "",
+          "reason": "현재 화면에서 자신의 관심과 가장 가까워 보이는 선택지를 눌러봄",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 20일 일요일 / 이날 남긴 기록",
+          "attempted": "2026년 9월",
+          "accessibleLabel": "2026년 9월 · 년월과 날짜 이동",
+          "reason": "현재 화면에서 자신의 관심과 가장 가까워 보이는 선택지를 눌러봄",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 20일 일요일 / 이날 남긴 기록",
+          "attempted": "오늘",
+          "accessibleLabel": "",
+          "reason": "기록 시작 화면에서 요구하는 정보량을 가늠하려 함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 20일 일요일 / 이날 남긴 기록",
+          "attempted": "2026년 9월 훈련 후 1건 출처를 확인할 수 없어 제외된 기록 1건",
+          "accessibleLabel": "2026년 9월 훈련 후 1건 · 출처를 확인할 수 없어 제외된 기록 1건",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        }
+      ],
+      "viewport": [
+        393,
+        852
+      ],
+      "beforeReload": {
+        "journalKeyPresent": true,
+        "journalCount": 1,
+        "activePlanKeyPresent": false
+      },
+      "afterReload": {
+        "journalCount": 1,
+        "activePlanKeyCount": 0
+      },
+      "errors": []
+    },
+    {
+      "id": "R07",
+      "start": {
+        "url": "/?app=1",
+        "headings": [
+          "내 훈련, 무엇부터 개선할까요?",
+          "궁금한 항목부터",
+          "기록과 계획",
+          "최근 기록"
+        ],
+        "buttons": [
+          {
+            "index": 0,
+            "text": "더보기",
+            "label": "더보기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 1,
+            "text": "내 훈련 분석 보기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 2,
+            "text": "현재 수준",
+            "label": "현재 수준 · 지금 내 기록은 어디쯤일까? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 3,
+            "text": "강점·보완점",
+            "label": "강점·보완점 · 계획보다 더 힘들게 느껴진 훈련은? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 4,
+            "text": "훈련 비교",
+            "label": "훈련 비교 · 최근 두 달, 한 번에 달린 거리는? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 5,
+            "text": "훈련 구성",
+            "label": "훈련 구성 · 최근에는 어떤 훈련을 많이 했을까? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 6,
+            "text": "우선 훈련",
+            "label": "우선 훈련 · 다음 훈련의 초점은 무엇으로 잡을까? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 7,
+            "text": "훈련 후 변화",
+            "label": "훈련 후 변화 · 최근 두 달의 체감강도는 어땠을까? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 8,
+            "text": "오늘 기록하기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 9,
+            "text": "하루 마무리 기록하기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 10,
+            "text": "",
+            "label": "기분 낮음",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 11,
+            "text": "",
+            "label": "기분 괜찮음",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 12,
+            "text": "",
+            "label": "기분 좋음",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 13,
+            "text": "",
+            "label": "몸 상태 피곤",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 14,
+            "text": "",
+            "label": "몸 상태 보통",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 15,
+            "text": "",
+            "label": "몸 상태 가벼움",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 16,
+            "text": "",
+            "label": "날씨 맑음",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 17,
+            "text": "",
+            "label": "날씨 흐림",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 18,
+            "text": "",
+            "label": "날씨 비",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 19,
+            "text": "",
+            "label": "날씨 추움",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 20,
+            "text": "",
+            "label": "날씨 더움",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 21,
+            "text": "전체 일지",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 22,
+            "text": "9월 25일 기록 1개 훈련 1 이 기기에만 있는 기록 1개",
+            "label": "2026년 9월 25일 기록 1개 보기 · 훈련 1",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 23,
+            "text": "훈련 분석 보기 분석에 쓸 직접 입력 기록이 없어요",
+            "label": "훈련 분석 보기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 24,
+            "text": "훈련 계획 만들기 저장된 계획 없음 · 계획안 만들기",
+            "label": "훈련 계획 만들기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 25,
+            "text": "",
+            "label": "바로가기 제안을 7일 동안 닫기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 26,
+            "text": "앱 바로가기 만들기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 27,
+            "text": "훈련 배우기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 28,
+            "text": "일지 꾸미기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 29,
+            "text": "홈",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 30,
+            "text": "일지",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 31,
+            "text": "기록하기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 32,
+            "text": "계획",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 33,
+            "text": "분석",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          }
+        ],
+        "body": "TRAINORACLE 더보기 훈련 분석 내 훈련, 무엇부터 개선할까요? 내 훈련 분석 보기 분석에 쓸 직접 입력 기록이 없어요 궁금한 항목부터 내 기록 · 결과 예시 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 오늘 아직 오늘 기록이 없어요. 오늘 기록하기 하루 마무리 기록하기 기분·몸 상태·날씨 남기기 기록과 계획 최근 기록 전체 일지 9월 25일 기록 1개 훈련 1 이 기기에만 있는 기록 1개 훈련 분석 보기 분석에 쓸 직접 입력 기록이 없어요 훈련 계획 만들기 저장된 계획 없음 · 계획안 만들기 앱 바로가기 만들기 훈련 배우기 일지 꾸미기 홈 일지 기록하기 계획 분석",
+        "geometry": {
+          "clientWidth": 518,
+          "scrollWidth": 518,
+          "scrollHeight": 1483,
+          "clientHeight": 855
+        }
+      },
+      "endHeadings": [
+        "내 훈련, 무엇부터 개선할까요?",
+        "궁금한 항목부터",
+        "기록과 계획",
+        "최근 기록"
+      ],
+      "actionCount": 6,
+      "actions": [
+        {
+          "n": 1,
+          "screen": "내 훈련, 무엇부터 개선할까요? / 궁금한 항목부터 / 기록과 계획 / 최근 기록",
+          "action": "훈련 비교",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "한 번에 달린 거리, 중간값은 5km와 6km",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 2,
+          "screen": "한 번에 달린 거리, 중간값은 5km와 6km",
+          "action": "일지",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "지난 일지 / 2026년 9월",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 3,
+          "screen": "지난 일지 / 2026년 9월",
+          "action": "18 훈련 1",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "2026년 9월 / 2026년 9월 / 2026년 9월 18일 금요일 / 이날 남긴 기록",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 4,
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 18일 금요일 / 이날 남긴 기록",
+          "action": "일지·메모 원문 열기",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "일지 하루 일지 1 / 7 2026 · 09 · 18 FRI 2026 autumn 오늘의 기록 1개 훈련 1 훈련 17:00 BASE 기초 지구력 ? 이 기기 합성 훈련 1 거리 5 km 시간 31 min 평균 페이스 6:12 /km RPE ? 4 /",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 5,
+          "screen": "일지 하루 일지 1 / 7 2026 · 09 · 18 FRI 2026 autumn 오늘의 기록 1개 훈련 1 훈련 17:00 BASE 기초 지구력 ? 이 기기 합성 훈련 1 거리 ",
+          "action": "일지",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "2026년 9월 / 2026년 9월",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 6,
+          "screen": "2026년 9월 / 2026년 9월",
+          "action": "18 훈련 1",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "2026년 9월 / 2026년 9월 / 2026년 9월 18일 금요일 / 이날 남긴 기록",
+          "url": "/?app=1",
+          "counted": true
+        }
+      ],
+      "failedAttempts": [
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 18일 금요일 / 이날 남긴 기록",
+          "attempted": "18 훈련 1",
+          "accessibleLabel": "2026년 9월 18일 금요일 · 훈련 후 1건 일지 열기",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 18일 금요일 / 이날 남긴 기록",
+          "attempted": "19 훈련 1",
+          "accessibleLabel": "2026년 9월 19일 토요일 · 훈련 후 1건 일지 열기",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 18일 금요일 / 이날 남긴 기록",
+          "attempted": "20 훈련 2",
+          "accessibleLabel": "2026년 9월 20일 일요일 · 훈련 후 2건 일지 열기",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 18일 금요일 / 이날 남긴 기록",
+          "attempted": "22 훈련 1",
+          "accessibleLabel": "2026년 9월 22일 화요일 · 훈련 후 1건 일지 열기",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 18일 금요일 / 이날 남긴 기록",
+          "attempted": "23 훈련 1",
+          "accessibleLabel": "2026년 9월 23일 수요일 · 훈련 후 1건 일지 열기",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 18일 금요일 / 이날 남긴 기록",
+          "attempted": "24 훈련 1",
+          "accessibleLabel": "2026년 9월 24일 목요일 · 훈련 후 1건 일지 열기",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 18일 금요일 / 이날 남긴 기록",
+          "attempted": "25 훈련 1",
+          "accessibleLabel": "2026년 9월 25일 금요일 · 훈련 후 1건 일지 열기",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 18일 금요일 / 이날 남긴 기록",
+          "attempted": "일지",
+          "accessibleLabel": "",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 18일 금요일 / 이날 남긴 기록",
+          "attempted": "분석",
+          "accessibleLabel": "",
+          "reason": "현재 화면에서 자신의 관심과 가장 가까워 보이는 선택지를 눌러봄",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 18일 금요일 / 이날 남긴 기록",
+          "attempted": "계획",
+          "accessibleLabel": "",
+          "reason": "계획을 만들거나 다시 보는 진입이 무엇을 여는지 궁금해함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 18일 금요일 / 이날 남긴 기록",
+          "attempted": "홈",
+          "accessibleLabel": "",
+          "reason": "현재 화면에서 자신의 관심과 가장 가까워 보이는 선택지를 눌러봄",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 18일 금요일 / 이날 남긴 기록",
+          "attempted": "기록하기",
+          "accessibleLabel": "",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 18일 금요일 / 이날 남긴 기록",
+          "attempted": "월간 달력",
+          "accessibleLabel": "",
+          "reason": "현재 화면에서 자신의 관심과 가장 가까워 보이는 선택지를 눌러봄",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 18일 금요일 / 이날 남긴 기록",
+          "attempted": "9.5일 주기",
+          "accessibleLabel": "",
+          "reason": "현재 화면에서 자신의 관심과 가장 가까워 보이는 선택지를 눌러봄",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 18일 금요일 / 이날 남긴 기록",
+          "attempted": "2026년 9월",
+          "accessibleLabel": "2026년 9월 · 년월과 날짜 이동",
+          "reason": "현재 화면에서 자신의 관심과 가장 가까워 보이는 선택지를 눌러봄",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 18일 금요일 / 이날 남긴 기록",
+          "attempted": "오늘",
+          "accessibleLabel": "",
+          "reason": "기록 시작 화면에서 요구하는 정보량을 가늠하려 함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 18일 금요일 / 이날 남긴 기록",
+          "attempted": "2026년 9월 훈련 후 8건 출처를 확인할 수 없어 제외된 기록 8건",
+          "accessibleLabel": "2026년 9월 훈련 후 8건 · 출처를 확인할 수 없어 제외된 기록 8건",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        }
+      ],
+      "viewport": [
+        1365,
+        900
+      ],
+      "beforeReload": {
+        "journalKeyPresent": true,
+        "journalCount": 8,
+        "activePlanKeyPresent": false
+      },
+      "afterReload": {
+        "journalCount": 8,
+        "activePlanKeyCount": 0
+      },
+      "errors": []
+    },
+    {
+      "id": "R08",
+      "start": {
+        "url": "/?app=1",
+        "headings": [
+          "내 훈련, 무엇부터 개선할까요?",
+          "궁금한 항목부터"
+        ],
+        "buttons": [
+          {
+            "index": 0,
+            "text": "더보기",
+            "label": "더보기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 1,
+            "text": "분석 결과 먼저 보기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 2,
+            "text": "현재 수준",
+            "label": "현재 수준 · 지금 내 기록은 어디쯤일까? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 3,
+            "text": "강점·보완점",
+            "label": "강점·보완점 · 계획보다 더 힘들게 느껴진 훈련은? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 4,
+            "text": "훈련 비교",
+            "label": "훈련 비교 · 최근 두 달, 한 번에 달린 거리는? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 5,
+            "text": "훈련 구성",
+            "label": "훈련 구성 · 최근에는 어떤 훈련을 많이 했을까? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 6,
+            "text": "우선 훈련",
+            "label": "우선 훈련 · 다음 훈련의 초점은 무엇으로 잡을까? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 7,
+            "text": "훈련 후 변화",
+            "label": "훈련 후 변화 · 최근 두 달의 체감강도는 어땠을까? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 8,
+            "text": "오늘 기록 남기기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 9,
+            "text": "훈련 계획 만들기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 10,
+            "text": "훈련 배우기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 11,
+            "text": "일지 꾸미기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 12,
+            "text": "일지 예시 보기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 13,
+            "text": "홈",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 14,
+            "text": "일지",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 15,
+            "text": "기록하기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 16,
+            "text": "계획",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 17,
+            "text": "분석",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          }
+        ],
+        "body": "TRAINORACLE 더보기 훈련 분석 내 훈련, 무엇부터 개선할까요? 분석 결과 먼저 보기 기록 없이도 예시로 체험해요. 궁금한 항목부터 내 기록 · 결과 예시 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 오늘 오늘 기록 남기기 훈련 계획 만들기 훈련 배우기 일지 꾸미기 일지 예시 보기 홈 일지 기록하기 계획 분석",
+        "geometry": {
+          "clientWidth": 373,
+          "scrollWidth": 373,
+          "scrollHeight": 859,
+          "clientHeight": 767
+        }
+      },
+      "endHeadings": [
+        "내 훈련, 무엇부터 개선할까요?",
+        "궁금한 항목부터"
+      ],
+      "actionCount": 12,
+      "actions": [
+        {
+          "n": 1,
+          "screen": "내 훈련, 무엇부터 개선할까요? / 궁금한 항목부터",
+          "action": "오늘 기록 남기기",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "빠르게 기록 / 오늘 운동은 어떻게 됐나요?",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 2,
+          "screen": "빠르게 기록 / 오늘 운동은 어떻게 됐나요?",
+          "action": "일지",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "지난 일지 / 2026년 9월 / 첫 일지를 남겨보세요",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 3,
+          "screen": "지난 일지 / 2026년 9월 / 첫 일지를 남겨보세요",
+          "action": "오늘 기록하기",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "새 일지 / 어떤 일지를 쓰세요?",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 4,
+          "screen": "새 일지 / 어떤 일지를 쓰세요?",
+          "action": "일지",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "지난 일지 / 2026년 9월 / 첫 일지를 남겨보세요",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 5,
+          "screen": "지난 일지 / 2026년 9월 / 첫 일지를 남겨보세요",
+          "action": "계획",
+          "reason": "계획을 만들거나 다시 보는 진입이 무엇을 여는지 궁금해함",
+          "result": "내 계획 받기",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 6,
+          "screen": "내 계획 받기",
+          "action": "일지",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "지난 일지 / 2026년 9월 / 첫 일지를 남겨보세요",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 7,
+          "screen": "지난 일지 / 2026년 9월 / 첫 일지를 남겨보세요",
+          "action": "분석",
+          "reason": "현재 화면에서 자신의 관심과 가장 가까워 보이는 선택지를 눌러봄",
+          "result": "TRAINORACLE 화면을 준비하고 있어요. 홈 일지 기록하기 계획 분석",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 8,
+          "screen": "분석 / 어떤 분석이 궁금하세요? / 분석할 기록이 아직 없어요 / 내 훈련 요약 / 직접 적은 거리 기록이 아직 없어요 / 직접 고른 에너지 시스템 기록이 아직 없어요 / 진행 중인 계획이 아직 없어요 / 관심 주제 이어보기 / 기록할 요일",
+          "action": "일지",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "지난 일지 / 2026년 9월 / 첫 일지를 남겨보세요",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 9,
+          "screen": "지난 일지 / 2026년 9월 / 첫 일지를 남겨보세요",
+          "action": "홈",
+          "reason": "현재 화면에서 자신의 관심과 가장 가까워 보이는 선택지를 눌러봄",
+          "result": "내 훈련, 무엇부터 개선할까요? / 궁금한 항목부터",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 10,
+          "screen": "내 훈련, 무엇부터 개선할까요? / 궁금한 항목부터",
+          "action": "일지 예시 보기",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "민지의 일지",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 11,
+          "screen": "민지의 일지",
+          "action": "일지",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "지난 일지 / 2026년 9월 / 첫 일지를 남겨보세요",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 12,
+          "screen": "지난 일지 / 2026년 9월 / 첫 일지를 남겨보세요",
+          "action": "9.5일 주기",
+          "reason": "현재 화면에서 자신의 관심과 가장 가까워 보이는 선택지를 눌러봄",
+          "result": "9.5일 주기 일지 / 2026년 9월 / 이 주기에 기록이 없어요",
+          "url": "/?app=1",
+          "counted": true
+        }
+      ],
+      "failedAttempts": [
+        {
+          "screen": "빠르게 기록 / 오늘 운동은 어떻게 됐나요?",
+          "attempted": "기록하기",
+          "accessibleLabel": "",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "새 일지 / 어떤 일지를 쓰세요?",
+          "attempted": "기록하기",
+          "accessibleLabel": "",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "지난 일지 / 2026년 9월 / 첫 일지를 남겨보세요",
+          "attempted": "기록하기",
+          "accessibleLabel": "",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "내 계획 받기",
+          "attempted": "기록하기",
+          "accessibleLabel": "",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "TRAINORACLE 화면을 준비하고 있어요. 홈 일지 기록하기 계획 분석",
+          "attempted": "기록하기",
+          "accessibleLabel": "",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "분석 / 어떤 분석이 궁금하세요? / 분석할 기록이 아직 없어요 / 내 훈련 요약 / 직접 적은 거리 기록이 아직 없어요 / 직접 고른 에너지 시스템 기록이 아직 없어요 / 진행 중인 계획이 아직 없어요 / 관심 주제 이어보기 / 기록할 요일",
+          "attempted": "기록하기",
+          "accessibleLabel": "",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "민지의 일지",
+          "attempted": "기록하기",
+          "accessibleLabel": "",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        }
+      ],
+      "viewport": [
+        375,
+        812
+      ],
+      "beforeReload": {
+        "journalKeyPresent": true,
+        "journalCount": 0,
+        "activePlanKeyPresent": false
+      },
+      "afterReload": {
+        "journalCount": 0,
+        "activePlanKeyCount": 0
+      },
+      "errors": []
+    },
+    {
+      "id": "R09",
+      "start": {
+        "url": "/?app=1",
+        "headings": [
+          "내 훈련, 무엇부터 개선할까요?",
+          "궁금한 항목부터"
+        ],
+        "buttons": [
+          {
+            "index": 0,
+            "text": "더보기",
+            "label": "더보기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 1,
+            "text": "분석 결과 먼저 보기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 2,
+            "text": "현재 수준",
+            "label": "현재 수준 · 지금 내 기록은 어디쯤일까? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 3,
+            "text": "강점·보완점",
+            "label": "강점·보완점 · 계획보다 더 힘들게 느껴진 훈련은? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 4,
+            "text": "훈련 비교",
+            "label": "훈련 비교 · 최근 두 달, 한 번에 달린 거리는? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 5,
+            "text": "훈련 구성",
+            "label": "훈련 구성 · 최근에는 어떤 훈련을 많이 했을까? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 6,
+            "text": "우선 훈련",
+            "label": "우선 훈련 · 다음 훈련의 초점은 무엇으로 잡을까? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 7,
+            "text": "훈련 후 변화",
+            "label": "훈련 후 변화 · 최근 두 달의 체감강도는 어땠을까? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 8,
+            "text": "오늘 기록 남기기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 9,
+            "text": "훈련 계획 만들기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 10,
+            "text": "훈련 배우기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 11,
+            "text": "일지 꾸미기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 12,
+            "text": "일지 예시 보기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 13,
+            "text": "홈",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 14,
+            "text": "일지",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 15,
+            "text": "기록하기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 16,
+            "text": "계획",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 17,
+            "text": "분석",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          }
+        ],
+        "body": "TRAINORACLE 더보기 훈련 분석 내 훈련, 무엇부터 개선할까요? 분석 결과 먼저 보기 기록 없이도 예시로 체험해요. 궁금한 항목부터 내 기록 · 결과 예시 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 오늘 오늘 기록 남기기 훈련 계획 만들기 훈련 배우기 일지 꾸미기 일지 예시 보기 홈 일지 기록하기 계획 분석",
+        "geometry": {
+          "clientWidth": 391,
+          "scrollWidth": 391,
+          "scrollHeight": 867,
+          "clientHeight": 807
+        }
+      },
+      "endHeadings": [
+        "내 훈련, 무엇부터 개선할까요?",
+        "궁금한 항목부터"
+      ],
+      "actionCount": 12,
+      "actions": [
+        {
+          "n": 1,
+          "screen": "내 훈련, 무엇부터 개선할까요? / 궁금한 항목부터",
+          "action": "강점·보완점",
+          "reason": "계획을 만들거나 다시 보는 진입이 무엇을 여는지 궁금해함",
+          "result": "계획 RPE 5, 실제 느낌은 7",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 2,
+          "screen": "계획 RPE 5, 실제 느낌은 7",
+          "action": "계획",
+          "reason": "계획을 만들거나 다시 보는 진입이 무엇을 여는지 궁금해함",
+          "result": "내 계획 받기",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 3,
+          "screen": "내 계획 받기",
+          "action": "내 계획 받기",
+          "reason": "계획을 만들거나 다시 보는 진입이 무엇을 여는지 궁금해함",
+          "result": "내 계획 받기",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 4,
+          "screen": "내 계획 받기",
+          "action": "개인 계획 파일 불러오기",
+          "reason": "계획을 만들거나 다시 보는 진입이 무엇을 여는지 궁금해함",
+          "result": "계획 원본 불러오기",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 5,
+          "screen": "계획 원본 불러오기",
+          "action": "일지",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "지난 일지 / 2026년 9월 / 첫 일지를 남겨보세요",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 6,
+          "screen": "지난 일지 / 2026년 9월 / 첫 일지를 남겨보세요",
+          "action": "계획",
+          "reason": "계획을 만들거나 다시 보는 진입이 무엇을 여는지 궁금해함",
+          "result": "내 계획 받기",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 7,
+          "screen": "내 계획 받기",
+          "action": "일지",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "지난 일지 / 2026년 9월 / 첫 일지를 남겨보세요",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 8,
+          "screen": "지난 일지 / 2026년 9월 / 첫 일지를 남겨보세요",
+          "action": "오늘 기록하기",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "새 일지 / 어떤 일지를 쓰세요?",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 9,
+          "screen": "새 일지 / 어떤 일지를 쓰세요?",
+          "action": "계획",
+          "reason": "계획을 만들거나 다시 보는 진입이 무엇을 여는지 궁금해함",
+          "result": "내 계획 받기",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 10,
+          "screen": "내 계획 받기",
+          "action": "분석",
+          "reason": "현재 화면에서 자신의 관심과 가장 가까워 보이는 선택지를 눌러봄",
+          "result": "분석 / 어떤 분석이 궁금하세요? / 분석할 기록이 아직 없어요 / 내 훈련 요약 / 직접 적은 거리 기록이 아직 없어요 / 직접 고른 에너지 시스템 기록이 아직 없어요 / 진행 중인 계획이 아직 없어요 / 관심 주제 이어보기 / 기록할 요일",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 11,
+          "screen": "분석 / 어떤 분석이 궁금하세요? / 분석할 기록이 아직 없어요 / 내 훈련 요약 / 직접 적은 거리 기록이 아직 없어요 / 직접 고른 에너지 시스템 기록이 아직 없어요 / 진행 중인 계획이 아직 없어요 / 관심 주제 이어보기 / 기록할 요일",
+          "action": "강점·보완점",
+          "reason": "계획을 만들거나 다시 보는 진입이 무엇을 여는지 궁금해함",
+          "result": "계획 RPE 5, 실제 느낌은 7",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 12,
+          "screen": "계획 RPE 5, 실제 느낌은 7",
+          "action": "일지",
+          "reason": "기록이 어디에 모이고 어떻게 다시 열리는지 확인함",
+          "result": "지난 일지 / 2026년 9월 / 첫 일지를 남겨보세요",
+          "url": "/?app=1",
+          "counted": true
+        }
+      ],
+      "failedAttempts": [],
+      "viewport": [
+        393,
+        852
+      ],
+      "beforeReload": {
+        "journalKeyPresent": true,
+        "journalCount": 0,
+        "activePlanKeyPresent": false
+      },
+      "afterReload": {
+        "journalCount": 0,
+        "activePlanKeyCount": 0
+      },
+      "errors": [],
+      "planProvisioning": {
+        "attempted": true,
+        "success": false,
+        "steps": [
+          "계획 탭",
+          "기록 없이 선택",
+          "1500m 선택",
+          "3일 일정",
+          "합성 상태 확인"
+        ],
+        "localStorageKeys": []
+      }
+    },
+    {
+      "id": "R10",
+      "start": {
+        "url": "/?app=1",
+        "headings": [
+          "내 훈련, 무엇부터 개선할까요?",
+          "궁금한 항목부터",
+          "기록과 계획",
+          "최근 기록"
+        ],
+        "buttons": [
+          {
+            "index": 0,
+            "text": "더보기",
+            "label": "더보기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 1,
+            "text": "내 훈련 분석 보기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 2,
+            "text": "현재 수준",
+            "label": "현재 수준 · 지금 내 기록은 어디쯤일까? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 3,
+            "text": "강점·보완점",
+            "label": "강점·보완점 · 계획보다 더 힘들게 느껴진 훈련은? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 4,
+            "text": "훈련 비교",
+            "label": "훈련 비교 · 최근 두 달, 한 번에 달린 거리는? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 5,
+            "text": "훈련 구성",
+            "label": "훈련 구성 · 최근에는 어떤 훈련을 많이 했을까? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 6,
+            "text": "우선 훈련",
+            "label": "우선 훈련 · 다음 훈련의 초점은 무엇으로 잡을까? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 7,
+            "text": "훈련 후 변화",
+            "label": "훈련 후 변화 · 최근 두 달의 체감강도는 어땠을까? · 분석 열기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 8,
+            "text": "오늘 기록하기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 9,
+            "text": "하루 마무리 기록하기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 10,
+            "text": "",
+            "label": "기분 낮음",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 11,
+            "text": "",
+            "label": "기분 괜찮음",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 12,
+            "text": "",
+            "label": "기분 좋음",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 13,
+            "text": "",
+            "label": "몸 상태 피곤",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 14,
+            "text": "",
+            "label": "몸 상태 보통",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 15,
+            "text": "",
+            "label": "몸 상태 가벼움",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 16,
+            "text": "",
+            "label": "날씨 맑음",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 17,
+            "text": "",
+            "label": "날씨 흐림",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 18,
+            "text": "",
+            "label": "날씨 비",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 19,
+            "text": "",
+            "label": "날씨 추움",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 20,
+            "text": "",
+            "label": "날씨 더움",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 21,
+            "text": "전체 일지",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 22,
+            "text": "9월 25일 기록 2개 훈련 2 이 기기에만 있는 기록 2개",
+            "label": "2026년 9월 25일 기록 2개 보기 · 훈련 2",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 23,
+            "text": "훈련 분석 보기 분석에 쓸 직접 입력 기록이 없어요",
+            "label": "훈련 분석 보기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 24,
+            "text": "훈련 계획 만들기 저장된 계획 없음 · 계획안 만들기",
+            "label": "훈련 계획 만들기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 25,
+            "text": "",
+            "label": "바로가기 제안을 7일 동안 닫기",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 26,
+            "text": "앱 바로가기 만들기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 27,
+            "text": "훈련 배우기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 28,
+            "text": "일지 꾸미기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 29,
+            "text": "홈",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 30,
+            "text": "일지",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 31,
+            "text": "기록하기",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 32,
+            "text": "계획",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          },
+          {
+            "index": 33,
+            "text": "분석",
+            "label": "",
+            "disabled": false,
+            "visible": true
+          }
+        ],
+        "body": "TRAINORACLE 더보기 훈련 분석 내 훈련, 무엇부터 개선할까요? 내 훈련 분석 보기 분석에 쓸 직접 입력 기록이 없어요 궁금한 항목부터 내 기록 · 결과 예시 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 오늘 아직 오늘 기록이 없어요. 오늘 기록하기 하루 마무리 기록하기 기분·몸 상태·날씨 남기기 기록과 계획 최근 기록 전체 일지 9월 25일 기록 2개 훈련 2 이 기기에만 있는 기록 2개 훈련 분석 보기 분석에 쓸 직접 입력 기록이 없어요 훈련 계획 만들기 저장된 계획 없음 · 계획안 만들기 앱 바로가기 만들기 훈련 배우기 일지 꾸미기 홈 일지 기록하기 계획 분석",
+        "geometry": {
+          "clientWidth": 518,
+          "scrollWidth": 518,
+          "scrollHeight": 1483,
+          "clientHeight": 855
+        }
+      },
+      "endHeadings": [
+        "내 훈련, 무엇부터 개선할까요?",
+        "궁금한 항목부터",
+        "기록과 계획",
+        "최근 기록"
+      ],
+      "actionCount": 5,
+      "actions": [
+        {
+          "n": 1,
+          "screen": "내 훈련, 무엇부터 개선할까요? / 궁금한 항목부터 / 기록과 계획 / 최근 기록",
+          "action": "전체 일지",
+          "reason": "하루 두 세션이 한 날짜에서 구분되는지 살펴봄",
+          "result": "지난 일지 / 2026년 9월",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 2,
+          "screen": "지난 일지 / 2026년 9월",
+          "action": "24 훈련 1",
+          "reason": "하루 두 세션이 한 날짜에서 구분되는지 살펴봄",
+          "result": "2026년 9월 / 2026년 9월 / 2026년 9월 24일 목요일 / 이날 남긴 기록",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 3,
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 24일 목요일 / 이날 남긴 기록",
+          "action": "일지·메모 원문 열기",
+          "reason": "하루 두 세션이 한 날짜에서 구분되는지 살펴봄",
+          "result": "일지 하루 일지 1 / 2 2026 · 09 · 24 THU 2026 autumn 오늘의 기록 1개 훈련 1 훈련 17:00 BASE 기초 지구력 ? 이 기기 합성 회복 훈련 거리 3 km 시간 20 min 평균 페이스 6:40 /km RPE ? 2 ",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 4,
+          "screen": "일지 하루 일지 1 / 2 2026 · 09 · 24 THU 2026 autumn 오늘의 기록 1개 훈련 1 훈련 17:00 BASE 기초 지구력 ? 이 기기 합성 회복 훈련 거리",
+          "action": "일지",
+          "reason": "하루 두 세션이 한 날짜에서 구분되는지 살펴봄",
+          "result": "2026년 9월 / 2026년 9월",
+          "url": "/?app=1",
+          "counted": true
+        },
+        {
+          "n": 5,
+          "screen": "2026년 9월 / 2026년 9월",
+          "action": "24 훈련 1",
+          "reason": "하루 두 세션이 한 날짜에서 구분되는지 살펴봄",
+          "result": "2026년 9월 / 2026년 9월 / 2026년 9월 24일 목요일 / 이날 남긴 기록",
+          "url": "/?app=1",
+          "counted": true
+        }
+      ],
+      "failedAttempts": [
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 24일 목요일 / 이날 남긴 기록",
+          "attempted": "24 훈련 1",
+          "accessibleLabel": "2026년 9월 24일 목요일 · 훈련 후 1건 일지 열기",
+          "reason": "하루 두 세션이 한 날짜에서 구분되는지 살펴봄",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 24일 목요일 / 이날 남긴 기록",
+          "attempted": "25 훈련 2",
+          "accessibleLabel": "2026년 9월 25일 금요일 · 훈련 후 2건 일지 열기",
+          "reason": "하루 두 세션이 한 날짜에서 구분되는지 살펴봄",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 24일 목요일 / 이날 남긴 기록",
+          "attempted": "일지",
+          "accessibleLabel": "",
+          "reason": "하루 두 세션이 한 날짜에서 구분되는지 살펴봄",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 24일 목요일 / 이날 남긴 기록",
+          "attempted": "분석",
+          "accessibleLabel": "",
+          "reason": "현재 화면에서 자신의 관심과 가장 가까워 보이는 선택지를 눌러봄",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 24일 목요일 / 이날 남긴 기록",
+          "attempted": "계획",
+          "accessibleLabel": "",
+          "reason": "계획을 만들거나 다시 보는 진입이 무엇을 여는지 궁금해함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 24일 목요일 / 이날 남긴 기록",
+          "attempted": "기록하기",
+          "accessibleLabel": "",
+          "reason": "하루 두 세션이 한 날짜에서 구분되는지 살펴봄",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 24일 목요일 / 이날 남긴 기록",
+          "attempted": "홈",
+          "accessibleLabel": "",
+          "reason": "현재 화면에서 자신의 관심과 가장 가까워 보이는 선택지를 눌러봄",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 24일 목요일 / 이날 남긴 기록",
+          "attempted": "월간 달력",
+          "accessibleLabel": "",
+          "reason": "현재 화면에서 자신의 관심과 가장 가까워 보이는 선택지를 눌러봄",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 24일 목요일 / 이날 남긴 기록",
+          "attempted": "9.5일 주기",
+          "accessibleLabel": "",
+          "reason": "현재 화면에서 자신의 관심과 가장 가까워 보이는 선택지를 눌러봄",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 24일 목요일 / 이날 남긴 기록",
+          "attempted": "2026년 9월",
+          "accessibleLabel": "2026년 9월 · 년월과 날짜 이동",
+          "reason": "현재 화면에서 자신의 관심과 가장 가까워 보이는 선택지를 눌러봄",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 24일 목요일 / 이날 남긴 기록",
+          "attempted": "오늘",
+          "accessibleLabel": "",
+          "reason": "기록 시작 화면에서 요구하는 정보량을 가늠하려 함",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        },
+        {
+          "screen": "2026년 9월 / 2026년 9월 / 2026년 9월 24일 목요일 / 이날 남긴 기록",
+          "attempted": "2026년 9월 훈련 후 3건 출처를 확인할 수 없어 제외된 기록 3건",
+          "accessibleLabel": "2026년 9월 훈련 후 3건 · 출처를 확인할 수 없어 제외된 기록 3건",
+          "reason": "하루 두 세션이 한 날짜에서 구분되는지 살펴봄",
+          "result": "locator.click: Timeout 1600ms exceeded."
+        }
+      ],
+      "viewport": [
+        1365,
+        900
+      ],
+      "beforeReload": {
+        "journalKeyPresent": true,
+        "journalCount": 3,
+        "activePlanKeyPresent": false
+      },
+      "afterReload": {
+        "journalCount": 3,
+        "activePlanKeyCount": 0
+      },
+      "errors": []
+    }
+  ]
+}

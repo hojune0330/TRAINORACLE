@@ -1,0 +1,17 @@
+{
+  "syntheticOnly": true,
+  "storageState": {
+    "cookies": [],
+    "origins": [
+      {
+        "origin": "http://127.0.0.1:4209",
+        "localStorage": [
+          {
+            "name": "trainoracle.journal.v1",
+            "value": "[{\"id\":\"R10-synthetic-1\",\"kind\":\"post-session\",\"date\":\"2026-09-25\",\"savedAt\":\"2026-09-25T08:00:00.000Z\",\"syncState\":\"local\",\"system\":\"base\",\"title\":\"합성 오전 훈련\",\"distanceKm\":\"4\",\"durationMin\":\"24\",\"avgPace\":\"6:00\",\"rpe\":3,\"memo\":\"\",\"memoPurpose\":\"PRIVATE_SELF_ONLY\",\"activitySlot\":\"AM\"},{\"id\":\"R10-synthetic-2\",\"kind\":\"post-session\",\"date\":\"2026-09-25\",\"savedAt\":\"2026-09-25T17:00:00.000Z\",\"syncState\":\"local\",\"system\":\"vo2\",\"title\":\"합성 오후 훈련\",\"distanceKm\":\"2\",\"durationMin\":\"10\",\"avgPace\":\"5:00\",\"rpe\":7,\"memo\":\"\",\"memoPurpose\":\"PRIVATE_SELF_ONLY\",\"activitySlot\":\"PM\"},{\"id\":\"R10-synthetic-3\",\"kind\":\"post-session\",\"date\":\"2026-09-24\",\"savedAt\":\"2026-09-24T08:00:00.000Z\",\"syncState\":\"local\",\"system\":\"base\",\"title\":\"합성 회복 훈련\",\"distanceKm\":\"3\",\"durationMin\":\"20\",\"avgPace\":\"6:40\",\"rpe\":2,\"memo\":\"\",\"memoPurpose\":\"PRIVATE_SELF_ONLY\",\"activitySlot\":\"SINGLE\"}]"
+          }
+        ]
+      }
+    ]
+  }
+}

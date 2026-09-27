@@ -1,0 +1,2020 @@
+{
+  "appUrl": "http://127.0.0.1:4209/?app=1",
+  "syntheticInput": {
+    "label": "탐색용 합성 기록, 실제 선수·계정·건강 데이터 아님",
+    "date": "2026-09-27",
+    "distanceKm": 5,
+    "duration": "00:25:00",
+    "perceivedExertion": 5,
+    "note": "탐색용 합성 기록입니다."
+  },
+  "personas": [
+    {
+      "id": "R11",
+      "profile": "키보드 우선 사용자",
+      "interaction": "keyboard",
+      "initial": {
+        "status": 200,
+        "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+        "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성",
+        "metrics": {
+          "viewport": {
+            "width": 1365,
+            "height": 900
+          },
+          "documentWidth": 1365,
+          "bodyWidth": 1365,
+          "documentHeight": 900,
+          "visualScale": 1,
+          "reducedMotion": false,
+          "active": {
+            "tag": "body",
+            "name": "TRAINORACLE 더보기 훈련 분석 내 훈련, 무엇부터 개선할까요? 분석 결과 먼저 보기 기록 없이도 예시로 체험해요. 궁금한 항목부터 내 기록 · 결과 예시 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈"
+          }
+        }
+      },
+      "actions": [
+        {
+          "step": 1,
+          "operation": "Tab",
+          "target": "더보기",
+          "why": "포인터 없이 포커스 순서와 이름을 확인",
+          "before": {
+            "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+            "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "after": {
+            "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+            "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 1365,
+              "height": 900
+            },
+            "documentWidth": 1365,
+            "bodyWidth": 1365,
+            "documentHeight": 900,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "button",
+              "name": "더보기"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 2,
+          "operation": "Enter",
+          "target": "더보기",
+          "why": "현재 포커스의 “더보기”이 실제 화면 선택지라 키보드로 열어 봄",
+          "before": {
+            "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+            "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "after": {
+            "signature": "TRAINORACLE / 더보기 / 배우기·꾸미기 / 민지의 예시 일지 / 기록이 쌓이는 모습을 한 장씩 구경해요",
+            "text": "TRAINORACLE | 더보기 | 배우기·꾸미기 | 민지의 예시 일지 | 기록이 쌓이는 모습을 한 장씩 구경해요 | 훈련 용어집·도움말 | 전문 용어의 쉬운 뜻과 이름의 이유, 앱 사용법을 확인해요 | 요즘 주목받는 훈련법 | 유행 이름보다 근거와 사용 범위를 먼저 봐요 | 일지 꾸미기·포인트 | 모은 포인트와 꾸미기 보관함을 확인해요 | 계정·기록 관리"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 1365,
+              "height": 900
+            },
+            "documentWidth": 1365,
+            "bodyWidth": 1365,
+            "documentHeight": 900,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "TRAINORACLE 더보기 배우기·꾸미기 민지의 예시 일지 기록이 쌓이는 모습을 한 장씩 구경해요 훈련 용어집·도움말 전문 용어의 쉬운 뜻과 이름의 이유, 앱 사용법을 확인해요 요즘 주목받는 훈련법 유행 이름보다 "
+            }
+          },
+          "synthetic": false,
+          "keyboardName": "더보기"
+        },
+        {
+          "step": 3,
+          "operation": "Tab",
+          "target": "홈으로 돌아가기",
+          "why": "포인터 없이 포커스 순서와 이름을 확인",
+          "before": {
+            "signature": "TRAINORACLE / 더보기 / 배우기·꾸미기 / 민지의 예시 일지 / 기록이 쌓이는 모습을 한 장씩 구경해요",
+            "text": "TRAINORACLE | 더보기 | 배우기·꾸미기 | 민지의 예시 일지 | 기록이 쌓이는 모습을 한 장씩 구경해요 | 훈련 용어집·도움말 | 전문 용어의 쉬운 뜻과 이름의 이유, 앱 사용법을 확인해요 | 요즘 주목받는 훈련법 | 유행 이름보다 근거와 사용 범위를 먼저 봐요 | 일지 꾸미기·포인트 | 모은 포인트와 꾸미기 보관함을 확인해요 | 계정·기록 관리"
+          },
+          "after": {
+            "signature": "TRAINORACLE / 더보기 / 배우기·꾸미기 / 민지의 예시 일지 / 기록이 쌓이는 모습을 한 장씩 구경해요",
+            "text": "TRAINORACLE | 더보기 | 배우기·꾸미기 | 민지의 예시 일지 | 기록이 쌓이는 모습을 한 장씩 구경해요 | 훈련 용어집·도움말 | 전문 용어의 쉬운 뜻과 이름의 이유, 앱 사용법을 확인해요 | 요즘 주목받는 훈련법 | 유행 이름보다 근거와 사용 범위를 먼저 봐요 | 일지 꾸미기·포인트 | 모은 포인트와 꾸미기 보관함을 확인해요 | 계정·기록 관리"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 1365,
+              "height": 900
+            },
+            "documentWidth": 1365,
+            "bodyWidth": 1365,
+            "documentHeight": 900,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "button",
+              "name": "홈으로 돌아가기"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 4,
+          "operation": "Enter",
+          "target": "홈으로 돌아가기",
+          "why": "현재 포커스의 “홈으로 돌아가기”이 실제 화면 선택지라 키보드로 열어 봄",
+          "before": {
+            "signature": "TRAINORACLE / 더보기 / 배우기·꾸미기 / 민지의 예시 일지 / 기록이 쌓이는 모습을 한 장씩 구경해요",
+            "text": "TRAINORACLE | 더보기 | 배우기·꾸미기 | 민지의 예시 일지 | 기록이 쌓이는 모습을 한 장씩 구경해요 | 훈련 용어집·도움말 | 전문 용어의 쉬운 뜻과 이름의 이유, 앱 사용법을 확인해요 | 요즘 주목받는 훈련법 | 유행 이름보다 근거와 사용 범위를 먼저 봐요 | 일지 꾸미기·포인트 | 모은 포인트와 꾸미기 보관함을 확인해요 | 계정·기록 관리"
+          },
+          "after": {
+            "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+            "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 1365,
+              "height": 900
+            },
+            "documentWidth": 1365,
+            "bodyWidth": 1365,
+            "documentHeight": 900,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "TRAINORACLE 더보기 훈련 분석 내 훈련, 무엇부터 개선할까요? 분석 결과 먼저 보기 기록 없이도 예시로 체험해요. 궁금한 항목부터 내 기록 · 결과 예시 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈"
+            }
+          },
+          "synthetic": false,
+          "keyboardName": "홈으로 돌아가기"
+        },
+        {
+          "step": 5,
+          "operation": "Tab",
+          "target": "더보기",
+          "why": "포인터 없이 포커스 순서와 이름을 확인",
+          "before": {
+            "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+            "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "after": {
+            "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+            "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 1365,
+              "height": 900
+            },
+            "documentWidth": 1365,
+            "bodyWidth": 1365,
+            "documentHeight": 900,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "button",
+              "name": "더보기"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 6,
+          "operation": "Enter",
+          "target": "더보기",
+          "why": "현재 포커스의 “더보기”이 실제 화면 선택지라 키보드로 열어 봄",
+          "before": {
+            "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+            "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "after": {
+            "signature": "TRAINORACLE / 더보기 / 배우기·꾸미기 / 민지의 예시 일지 / 기록이 쌓이는 모습을 한 장씩 구경해요",
+            "text": "TRAINORACLE | 더보기 | 배우기·꾸미기 | 민지의 예시 일지 | 기록이 쌓이는 모습을 한 장씩 구경해요 | 훈련 용어집·도움말 | 전문 용어의 쉬운 뜻과 이름의 이유, 앱 사용법을 확인해요 | 요즘 주목받는 훈련법 | 유행 이름보다 근거와 사용 범위를 먼저 봐요 | 일지 꾸미기·포인트 | 모은 포인트와 꾸미기 보관함을 확인해요 | 계정·기록 관리"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 1365,
+              "height": 900
+            },
+            "documentWidth": 1365,
+            "bodyWidth": 1365,
+            "documentHeight": 900,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "TRAINORACLE 더보기 배우기·꾸미기 민지의 예시 일지 기록이 쌓이는 모습을 한 장씩 구경해요 훈련 용어집·도움말 전문 용어의 쉬운 뜻과 이름의 이유, 앱 사용법을 확인해요 요즘 주목받는 훈련법 유행 이름보다 "
+            }
+          },
+          "synthetic": false,
+          "keyboardName": "더보기"
+        },
+        {
+          "step": 7,
+          "operation": "Tab",
+          "target": "홈으로 돌아가기",
+          "why": "포인터 없이 포커스 순서와 이름을 확인",
+          "before": {
+            "signature": "TRAINORACLE / 더보기 / 배우기·꾸미기 / 민지의 예시 일지 / 기록이 쌓이는 모습을 한 장씩 구경해요",
+            "text": "TRAINORACLE | 더보기 | 배우기·꾸미기 | 민지의 예시 일지 | 기록이 쌓이는 모습을 한 장씩 구경해요 | 훈련 용어집·도움말 | 전문 용어의 쉬운 뜻과 이름의 이유, 앱 사용법을 확인해요 | 요즘 주목받는 훈련법 | 유행 이름보다 근거와 사용 범위를 먼저 봐요 | 일지 꾸미기·포인트 | 모은 포인트와 꾸미기 보관함을 확인해요 | 계정·기록 관리"
+          },
+          "after": {
+            "signature": "TRAINORACLE / 더보기 / 배우기·꾸미기 / 민지의 예시 일지 / 기록이 쌓이는 모습을 한 장씩 구경해요",
+            "text": "TRAINORACLE | 더보기 | 배우기·꾸미기 | 민지의 예시 일지 | 기록이 쌓이는 모습을 한 장씩 구경해요 | 훈련 용어집·도움말 | 전문 용어의 쉬운 뜻과 이름의 이유, 앱 사용법을 확인해요 | 요즘 주목받는 훈련법 | 유행 이름보다 근거와 사용 범위를 먼저 봐요 | 일지 꾸미기·포인트 | 모은 포인트와 꾸미기 보관함을 확인해요 | 계정·기록 관리"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 1365,
+              "height": 900
+            },
+            "documentWidth": 1365,
+            "bodyWidth": 1365,
+            "documentHeight": 900,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "button",
+              "name": "홈으로 돌아가기"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 8,
+          "operation": "Enter",
+          "target": "홈으로 돌아가기",
+          "why": "현재 포커스의 “홈으로 돌아가기”이 실제 화면 선택지라 키보드로 열어 봄",
+          "before": {
+            "signature": "TRAINORACLE / 더보기 / 배우기·꾸미기 / 민지의 예시 일지 / 기록이 쌓이는 모습을 한 장씩 구경해요",
+            "text": "TRAINORACLE | 더보기 | 배우기·꾸미기 | 민지의 예시 일지 | 기록이 쌓이는 모습을 한 장씩 구경해요 | 훈련 용어집·도움말 | 전문 용어의 쉬운 뜻과 이름의 이유, 앱 사용법을 확인해요 | 요즘 주목받는 훈련법 | 유행 이름보다 근거와 사용 범위를 먼저 봐요 | 일지 꾸미기·포인트 | 모은 포인트와 꾸미기 보관함을 확인해요 | 계정·기록 관리"
+          },
+          "after": {
+            "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+            "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 1365,
+              "height": 900
+            },
+            "documentWidth": 1365,
+            "bodyWidth": 1365,
+            "documentHeight": 900,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "TRAINORACLE 더보기 훈련 분석 내 훈련, 무엇부터 개선할까요? 분석 결과 먼저 보기 기록 없이도 예시로 체험해요. 궁금한 항목부터 내 기록 · 결과 예시 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈"
+            }
+          },
+          "synthetic": false,
+          "keyboardName": "홈으로 돌아가기"
+        },
+        {
+          "step": 9,
+          "operation": "Tab",
+          "target": "더보기",
+          "why": "포인터 없이 포커스 순서와 이름을 확인",
+          "before": {
+            "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+            "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "after": {
+            "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+            "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 1365,
+              "height": 900
+            },
+            "documentWidth": 1365,
+            "bodyWidth": 1365,
+            "documentHeight": 900,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "button",
+              "name": "더보기"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 10,
+          "operation": "Enter",
+          "target": "더보기",
+          "why": "현재 포커스의 “더보기”이 실제 화면 선택지라 키보드로 열어 봄",
+          "before": {
+            "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+            "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "after": {
+            "signature": "TRAINORACLE / 더보기 / 배우기·꾸미기 / 민지의 예시 일지 / 기록이 쌓이는 모습을 한 장씩 구경해요",
+            "text": "TRAINORACLE | 더보기 | 배우기·꾸미기 | 민지의 예시 일지 | 기록이 쌓이는 모습을 한 장씩 구경해요 | 훈련 용어집·도움말 | 전문 용어의 쉬운 뜻과 이름의 이유, 앱 사용법을 확인해요 | 요즘 주목받는 훈련법 | 유행 이름보다 근거와 사용 범위를 먼저 봐요 | 일지 꾸미기·포인트 | 모은 포인트와 꾸미기 보관함을 확인해요 | 계정·기록 관리"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 1365,
+              "height": 900
+            },
+            "documentWidth": 1365,
+            "bodyWidth": 1365,
+            "documentHeight": 900,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "TRAINORACLE 더보기 배우기·꾸미기 민지의 예시 일지 기록이 쌓이는 모습을 한 장씩 구경해요 훈련 용어집·도움말 전문 용어의 쉬운 뜻과 이름의 이유, 앱 사용법을 확인해요 요즘 주목받는 훈련법 유행 이름보다 "
+            }
+          },
+          "synthetic": false,
+          "keyboardName": "더보기"
+        },
+        {
+          "step": 11,
+          "operation": "Tab",
+          "target": "홈으로 돌아가기",
+          "why": "포인터 없이 포커스 순서와 이름을 확인",
+          "before": {
+            "signature": "TRAINORACLE / 더보기 / 배우기·꾸미기 / 민지의 예시 일지 / 기록이 쌓이는 모습을 한 장씩 구경해요",
+            "text": "TRAINORACLE | 더보기 | 배우기·꾸미기 | 민지의 예시 일지 | 기록이 쌓이는 모습을 한 장씩 구경해요 | 훈련 용어집·도움말 | 전문 용어의 쉬운 뜻과 이름의 이유, 앱 사용법을 확인해요 | 요즘 주목받는 훈련법 | 유행 이름보다 근거와 사용 범위를 먼저 봐요 | 일지 꾸미기·포인트 | 모은 포인트와 꾸미기 보관함을 확인해요 | 계정·기록 관리"
+          },
+          "after": {
+            "signature": "TRAINORACLE / 더보기 / 배우기·꾸미기 / 민지의 예시 일지 / 기록이 쌓이는 모습을 한 장씩 구경해요",
+            "text": "TRAINORACLE | 더보기 | 배우기·꾸미기 | 민지의 예시 일지 | 기록이 쌓이는 모습을 한 장씩 구경해요 | 훈련 용어집·도움말 | 전문 용어의 쉬운 뜻과 이름의 이유, 앱 사용법을 확인해요 | 요즘 주목받는 훈련법 | 유행 이름보다 근거와 사용 범위를 먼저 봐요 | 일지 꾸미기·포인트 | 모은 포인트와 꾸미기 보관함을 확인해요 | 계정·기록 관리"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 1365,
+              "height": 900
+            },
+            "documentWidth": 1365,
+            "bodyWidth": 1365,
+            "documentHeight": 900,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "button",
+              "name": "홈으로 돌아가기"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 12,
+          "operation": "Enter",
+          "target": "홈으로 돌아가기",
+          "why": "현재 포커스의 “홈으로 돌아가기”이 실제 화면 선택지라 키보드로 열어 봄",
+          "before": {
+            "signature": "TRAINORACLE / 더보기 / 배우기·꾸미기 / 민지의 예시 일지 / 기록이 쌓이는 모습을 한 장씩 구경해요",
+            "text": "TRAINORACLE | 더보기 | 배우기·꾸미기 | 민지의 예시 일지 | 기록이 쌓이는 모습을 한 장씩 구경해요 | 훈련 용어집·도움말 | 전문 용어의 쉬운 뜻과 이름의 이유, 앱 사용법을 확인해요 | 요즘 주목받는 훈련법 | 유행 이름보다 근거와 사용 범위를 먼저 봐요 | 일지 꾸미기·포인트 | 모은 포인트와 꾸미기 보관함을 확인해요 | 계정·기록 관리"
+          },
+          "after": {
+            "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+            "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 1365,
+              "height": 900
+            },
+            "documentWidth": 1365,
+            "bodyWidth": 1365,
+            "documentHeight": 900,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "TRAINORACLE 더보기 훈련 분석 내 훈련, 무엇부터 개선할까요? 분석 결과 먼저 보기 기록 없이도 예시로 체험해요. 궁금한 항목부터 내 기록 · 결과 예시 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈"
+            }
+          },
+          "synthetic": false,
+          "keyboardName": "홈으로 돌아가기"
+        }
+      ],
+      "meaningfulActionCount": 12,
+      "storageKeys": {
+        "local": [],
+        "session": []
+      },
+      "blockedNetwork": [],
+      "requestSummary": {
+        "allowedLocalReads": 11,
+        "blockedRequests": 0,
+        "failedRequests": []
+      },
+      "started": "2026-09-27T06:06:03.749Z",
+      "finished": "2026-09-27T06:06:08.384Z"
+    },
+    {
+      "id": "R12",
+      "profile": "큰 글씨 선호 사용자",
+      "interaction": "large-text",
+      "initial": {
+        "status": 200,
+        "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+        "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성",
+        "metrics": {
+          "viewport": {
+            "width": 1365,
+            "height": 900
+          },
+          "documentWidth": 1365,
+          "bodyWidth": 1365,
+          "documentHeight": 900,
+          "visualScale": 1,
+          "reducedMotion": false,
+          "active": {
+            "tag": "body",
+            "name": "TRAINORACLE 더보기 훈련 분석 내 훈련, 무엇부터 개선할까요? 분석 결과 먼저 보기 기록 없이도 예시로 체험해요. 궁금한 항목부터 내 기록 · 결과 예시 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈"
+          }
+        }
+      },
+      "actions": [
+        {
+          "step": 1,
+          "operation": "browser-zoom-in",
+          "target": "browser text zoom",
+          "why": "확대 상태에서 눈에 먼저 들어온 “browser text zoom”을 따라감",
+          "before": {
+            "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+            "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "after": {
+            "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+            "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 1365,
+              "height": 900
+            },
+            "documentWidth": 1365,
+            "bodyWidth": 1365,
+            "documentHeight": 900,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "TRAINORACLE 더보기 훈련 분석 내 훈련, 무엇부터 개선할까요? 분석 결과 먼저 보기 기록 없이도 예시로 체험해요. 궁금한 항목부터 내 기록 · 결과 예시 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 2,
+          "operation": "click",
+          "target": "현재 수준 · 지금 내 기록은 어디쯤일까? · 분석 열기",
+          "why": "확대 상태에서 눈에 먼저 들어온 “현재 수준 · 지금 내 기록은 어디쯤일까? · 분석 열기”을 따라감",
+          "before": {
+            "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+            "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "after": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 1365,
+              "height": 900
+            },
+            "documentWidth": 1365,
+            "bodyWidth": 1365,
+            "documentHeight": 900,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "훈련 분석 탐색 분석 주제 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 내 기록 예시 예시 기록 내 기록을 분석한 결과가 아니에요 최근 5km 기록은 24분 10초 가상 기록 · 5km 기록"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 3,
+          "operation": "click",
+          "target": "내 기록으로 확인하기",
+          "why": "확대 상태에서 눈에 먼저 들어온 “내 기록으로 확인하기”을 따라감",
+          "before": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "after": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 내 기록 결과"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 1365,
+              "height": 900
+            },
+            "documentWidth": 1365,
+            "bodyWidth": 1365,
+            "documentHeight": 900,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "훈련 분석 탐색 분석 주제 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 내 기록 예시 내 기록 결과 경기 기록이 아직 없어요 종목과 달성일이 있는 개인 기록을 남기면 현재 기록을 나란히 볼 "
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 4,
+          "operation": "click",
+          "target": "기록 관리 열기",
+          "why": "확대 상태에서 눈에 먼저 들어온 “기록 관리 열기”을 따라감",
+          "before": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 내 기록 결과"
+          },
+          "after": {
+            "signature": "분석으로 / 내 경기 기록 / 내 경기 기록 / 실제 경기 기록과 앞으로의 목표를 서로 다른 역할로 보관해요. / 기록 역할",
+            "text": "분석으로 | 내 경기 기록 | 내 경기 기록 | 실제 경기 기록과 앞으로의 목표를 서로 다른 역할로 보관해요. | 기록 역할 | 개인 최고 | 시즌 최고 | 최근 경기 | 경기 목표 | 종목 거리 | 800m | 1500m"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 1365,
+              "height": 900
+            },
+            "documentWidth": 1365,
+            "bodyWidth": 1365,
+            "documentHeight": 900,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "분석으로 내 경기 기록 내 경기 기록 실제 경기 기록과 앞으로의 목표를 서로 다른 역할로 보관해요. 기록 역할 개인 최고 시즌 최고 최근 경기 경기 목표 종목 거리 800m 1500m 3000m 5000m 10000"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 5,
+          "operation": "click",
+          "target": "기록 저장",
+          "why": "확대 상태에서 눈에 먼저 들어온 “기록 저장”을 따라감",
+          "before": {
+            "signature": "분석으로 / 내 경기 기록 / 내 경기 기록 / 실제 경기 기록과 앞으로의 목표를 서로 다른 역할로 보관해요. / 기록 역할",
+            "text": "분석으로 | 내 경기 기록 | 내 경기 기록 | 실제 경기 기록과 앞으로의 목표를 서로 다른 역할로 보관해요. | 기록 역할 | 개인 최고 | 시즌 최고 | 최근 경기 | 경기 목표 | 종목 거리 | 800m | 1500m"
+          },
+          "after": {
+            "signature": "분석으로 / 내 경기 기록 / 내 경기 기록 / 실제 경기 기록과 앞으로의 목표를 서로 다른 역할로 보관해요. / 기록 역할",
+            "text": "분석으로 | 내 경기 기록 | 내 경기 기록 | 실제 경기 기록과 앞으로의 목표를 서로 다른 역할로 보관해요. | 기록 역할 | 개인 최고 | 시즌 최고 | 최근 경기 | 경기 목표 | 종목 거리 | 800m | 1500m"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 1365,
+              "height": 900
+            },
+            "documentWidth": 1365,
+            "bodyWidth": 1365,
+            "documentHeight": 900,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "button",
+              "name": "기록 저장"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 6,
+          "operation": "click",
+          "target": "기록하기",
+          "why": "확대 상태에서 눈에 먼저 들어온 “기록하기”을 따라감",
+          "before": {
+            "signature": "분석으로 / 내 경기 기록 / 내 경기 기록 / 실제 경기 기록과 앞으로의 목표를 서로 다른 역할로 보관해요. / 기록 역할",
+            "text": "분석으로 | 내 경기 기록 | 내 경기 기록 | 실제 경기 기록과 앞으로의 목표를 서로 다른 역할로 보관해요. | 기록 역할 | 개인 최고 | 시즌 최고 | 최근 경기 | 경기 목표 | 종목 거리 | 800m | 1500m"
+          },
+          "after": {
+            "signature": "← 뒤로 / 새 일지 / 2026·09·27 SUN · 15:06 / 어떤 일지를 쓰세요? / 빠르게 기록",
+            "text": "← 뒤로 | 새 일지 | 2026·09·27 SUN · 15:06 | 어떤 일지를 쓰세요? | 빠르게 기록 | 운동 결과와 몸 상태만 | 훈련 후 | 거리·시간·훈련 내용을 모두 기록 | 회복 · 하루 마무리 | 수면·기분·몸 상태 | 경기 직전/직후 | 경기 기록과 컨디션"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 1365,
+              "height": 900
+            },
+            "documentWidth": 1365,
+            "bodyWidth": 1365,
+            "documentHeight": 900,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "h1",
+              "name": "어떤 일지를 쓰세요?"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 7,
+          "operation": "click",
+          "target": "경기 직전/직후 경기 기록과 컨디션",
+          "why": "확대 상태에서 눈에 먼저 들어온 “경기 직전/직후 경기 기록과 컨디션”을 따라감",
+          "before": {
+            "signature": "← 뒤로 / 새 일지 / 2026·09·27 SUN · 15:06 / 어떤 일지를 쓰세요? / 빠르게 기록",
+            "text": "← 뒤로 | 새 일지 | 2026·09·27 SUN · 15:06 | 어떤 일지를 쓰세요? | 빠르게 기록 | 운동 결과와 몸 상태만 | 훈련 후 | 거리·시간·훈련 내용을 모두 기록 | 회복 · 하루 마무리 | 수면·기분·몸 상태 | 경기 직전/직후 | 경기 기록과 컨디션"
+          },
+          "after": {
+            "signature": "← 뒤로 / 경기 · 빠른 점검 / RACE DAY / 오늘의 경기 / 2026·09·27 SUN · 15:06",
+            "text": "← 뒤로 | 경기 · 빠른 점검 | RACE DAY | 오늘의 경기 | 2026·09·27 SUN · 15:06 | D-0 | 경기 직전 | 경기 직후 | 긴장도 · 선택 사항 | 1 | 2 | 3"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 1365,
+              "height": 900
+            },
+            "documentWidth": 1365,
+            "bodyWidth": 1365,
+            "documentHeight": 900,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "← 뒤로 경기 · 빠른 점검 RACE DAY 오늘의 경기 2026·09·27 SUN · 15:06 D-0 경기 직전 경기 직후 긴장도 · 선택 사항 1 2 3 4 5 6 7 8 9 10 컨디션 · 선택 사항 흐림 무"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 8,
+          "operation": "click",
+          "target": "기록하기",
+          "why": "확대 상태에서 눈에 먼저 들어온 “기록하기”을 따라감",
+          "before": {
+            "signature": "← 뒤로 / 경기 · 빠른 점검 / RACE DAY / 오늘의 경기 / 2026·09·27 SUN · 15:06",
+            "text": "← 뒤로 | 경기 · 빠른 점검 | RACE DAY | 오늘의 경기 | 2026·09·27 SUN · 15:06 | D-0 | 경기 직전 | 경기 직후 | 긴장도 · 선택 사항 | 1 | 2 | 3"
+          },
+          "after": {
+            "signature": "← 뒤로 / 새 일지 / 2026·09·27 SUN · 15:06 / 어떤 일지를 쓰세요? / 빠르게 기록",
+            "text": "← 뒤로 | 새 일지 | 2026·09·27 SUN · 15:06 | 어떤 일지를 쓰세요? | 빠르게 기록 | 운동 결과와 몸 상태만 | 훈련 후 | 거리·시간·훈련 내용을 모두 기록 | 회복 · 하루 마무리 | 수면·기분·몸 상태 | 경기 직전/직후 | 경기 기록과 컨디션"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 1365,
+              "height": 900
+            },
+            "documentWidth": 1365,
+            "bodyWidth": 1365,
+            "documentHeight": 900,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "h1",
+              "name": "어떤 일지를 쓰세요?"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 9,
+          "operation": "click",
+          "target": "빠르게 기록 운동 결과와 몸 상태만",
+          "why": "확대 상태에서 눈에 먼저 들어온 “빠르게 기록 운동 결과와 몸 상태만”을 따라감",
+          "before": {
+            "signature": "← 뒤로 / 새 일지 / 2026·09·27 SUN · 15:06 / 어떤 일지를 쓰세요? / 빠르게 기록",
+            "text": "← 뒤로 | 새 일지 | 2026·09·27 SUN · 15:06 | 어떤 일지를 쓰세요? | 빠르게 기록 | 운동 결과와 몸 상태만 | 훈련 후 | 거리·시간·훈련 내용을 모두 기록 | 회복 · 하루 마무리 | 수면·기분·몸 상태 | 경기 직전/직후 | 경기 기록과 컨디션"
+          },
+          "after": {
+            "signature": "← 뒤로 / 빠르게 기록 / 1 / 3 / 오늘 운동은 어떻게 됐나요? / 운동을 마쳤어요",
+            "text": "← 뒤로 | 빠르게 기록 | 1 / 3 | 오늘 운동은 어떻게 됐나요? | 운동을 마쳤어요 | 하던 운동을 일부만 했어요 | 가볍게 움직였어요 | 오늘은 쉬었어요 | 하려던 운동을 건너뛰었어요"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 1365,
+              "height": 900
+            },
+            "documentWidth": 1365,
+            "bodyWidth": 1365,
+            "documentHeight": 900,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "h1",
+              "name": "오늘 운동은 어떻게 됐나요?"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 10,
+          "operation": "click",
+          "target": "오늘은 쉬었어요",
+          "why": "확대 상태에서 눈에 먼저 들어온 “오늘은 쉬었어요”을 따라감",
+          "before": {
+            "signature": "← 뒤로 / 빠르게 기록 / 1 / 3 / 오늘 운동은 어떻게 됐나요? / 운동을 마쳤어요",
+            "text": "← 뒤로 | 빠르게 기록 | 1 / 3 | 오늘 운동은 어떻게 됐나요? | 운동을 마쳤어요 | 하던 운동을 일부만 했어요 | 가볍게 움직였어요 | 오늘은 쉬었어요 | 하려던 운동을 건너뛰었어요"
+          },
+          "after": {
+            "signature": "← 뒤로 / 빠르게 기록 / 2026·09·27 · SUN / 오늘 / 휴식",
+            "text": "← 뒤로 | 빠르게 기록 | 2026·09·27 · SUN | 오늘 | 휴식 | 마지막 확인 | 이 내용으로 남길까요? | 글 추가 | 이대로 저장"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 1365,
+              "height": 900
+            },
+            "documentWidth": 1365,
+            "bodyWidth": 1365,
+            "documentHeight": 900,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "h1",
+              "name": "이 내용으로 남길까요?"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 11,
+          "operation": "click",
+          "target": "오늘 휴식",
+          "why": "확대 상태에서 눈에 먼저 들어온 “오늘 휴식”을 따라감",
+          "before": {
+            "signature": "← 뒤로 / 빠르게 기록 / 2026·09·27 · SUN / 오늘 / 휴식",
+            "text": "← 뒤로 | 빠르게 기록 | 2026·09·27 · SUN | 오늘 | 휴식 | 마지막 확인 | 이 내용으로 남길까요? | 글 추가 | 이대로 저장"
+          },
+          "after": {
+            "signature": "← 뒤로 / 빠르게 기록 / 지금까지 기록한 내용 / 1 / 3 / 오늘 운동은 어떻게 됐나요?",
+            "text": "← 뒤로 | 빠르게 기록 | 지금까지 기록한 내용 | 1 / 3 | 오늘 운동은 어떻게 됐나요? | 운동을 마쳤어요 | 하던 운동을 일부만 했어요 | 가볍게 움직였어요 | 오늘은 쉬었어요 | 하려던 운동을 건너뛰었어요"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 1365,
+              "height": 900
+            },
+            "documentWidth": 1365,
+            "bodyWidth": 1365,
+            "documentHeight": 900,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "h1",
+              "name": "오늘 운동은 어떻게 됐나요?"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 12,
+          "operation": "click",
+          "target": "오늘은 쉬었어요",
+          "why": "확대 상태에서 눈에 먼저 들어온 “오늘은 쉬었어요”을 따라감",
+          "before": {
+            "signature": "← 뒤로 / 빠르게 기록 / 지금까지 기록한 내용 / 1 / 3 / 오늘 운동은 어떻게 됐나요?",
+            "text": "← 뒤로 | 빠르게 기록 | 지금까지 기록한 내용 | 1 / 3 | 오늘 운동은 어떻게 됐나요? | 운동을 마쳤어요 | 하던 운동을 일부만 했어요 | 가볍게 움직였어요 | 오늘은 쉬었어요 | 하려던 운동을 건너뛰었어요"
+          },
+          "after": {
+            "signature": "← 뒤로 / 빠르게 기록 / 2026·09·27 · SUN / 오늘 / 휴식",
+            "text": "← 뒤로 | 빠르게 기록 | 2026·09·27 · SUN | 오늘 | 휴식 | 마지막 확인 | 이 내용으로 남길까요? | 글 추가 | 이대로 저장"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 1365,
+              "height": 900
+            },
+            "documentWidth": 1365,
+            "bodyWidth": 1365,
+            "documentHeight": 900,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "h1",
+              "name": "이 내용으로 남길까요?"
+            }
+          },
+          "synthetic": false
+        }
+      ],
+      "meaningfulActionCount": 12,
+      "storageKeys": {
+        "local": [],
+        "session": []
+      },
+      "blockedNetwork": [],
+      "requestSummary": {
+        "allowedLocalReads": 11,
+        "blockedRequests": 0,
+        "failedRequests": []
+      },
+      "started": "2026-09-27T06:06:08.522Z",
+      "finished": "2026-09-27T06:06:13.550Z"
+    },
+    {
+      "id": "R13",
+      "profile": "한 손·작은 화면 사용자",
+      "interaction": "one-hand",
+      "initial": {
+        "status": 200,
+        "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+        "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성",
+        "metrics": {
+          "viewport": {
+            "width": 360,
+            "height": 740
+          },
+          "documentWidth": 360,
+          "bodyWidth": 360,
+          "documentHeight": 740,
+          "visualScale": 1,
+          "reducedMotion": false,
+          "active": {
+            "tag": "body",
+            "name": "TRAINORACLE 더보기 훈련 분석 내 훈련, 무엇부터 개선할까요? 분석 결과 먼저 보기 기록 없이도 예시로 체험해요. 궁금한 항목부터 내 기록 · 결과 예시 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈"
+          }
+        }
+      },
+      "actions": [
+        {
+          "step": 1,
+          "operation": "tap",
+          "target": "훈련 계획 만들기",
+          "why": "작은 화면에서 엄지에 가까운 “훈련 계획 만들기”부터 살펴봄",
+          "before": {
+            "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+            "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "after": {
+            "signature": "내 계획 받기 / 어떤 기준으로 시작할까요? / 내 기록 / 목표만 있어요 / 기록 없이",
+            "text": "내 계획 받기 | 어떤 기준으로 시작할까요? | 내 기록 | 목표만 있어요 | 기록 없이 | 종목 | 종목 선택 | 800m | 1500m | 3000m | 5km | 10km"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 360,
+              "height": 740
+            },
+            "documentWidth": 360,
+            "bodyWidth": 360,
+            "documentHeight": 740,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "내 계획 받기 어떤 기준으로 시작할까요? 내 기록 목표만 있어요 기록 없이 종목 종목 선택 800m 1500m 3000m 5km 10km 하프 마라톤 마라톤 현재 기록 분 초 초는 소수까지 입력할 수 있어요. 빈칸은"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 2,
+          "operation": "tap",
+          "target": "계획",
+          "why": "작은 화면에서 엄지에 가까운 “계획”부터 살펴봄",
+          "before": {
+            "signature": "내 계획 받기 / 어떤 기준으로 시작할까요? / 내 기록 / 목표만 있어요 / 기록 없이",
+            "text": "내 계획 받기 | 어떤 기준으로 시작할까요? | 내 기록 | 목표만 있어요 | 기록 없이 | 종목 | 종목 선택 | 800m | 1500m | 3000m | 5km | 10km"
+          },
+          "after": {
+            "signature": "내 계획 받기 / 어떤 기준으로 시작할까요? / 내 기록 / 목표만 있어요 / 기록 없이",
+            "text": "내 계획 받기 | 어떤 기준으로 시작할까요? | 내 기록 | 목표만 있어요 | 기록 없이 | 종목 | 종목 선택 | 800m | 1500m | 3000m | 5km | 10km"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 360,
+              "height": 740
+            },
+            "documentWidth": 360,
+            "bodyWidth": 360,
+            "documentHeight": 740,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "button",
+              "name": "계획"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 3,
+          "operation": "tap",
+          "target": "기록하기",
+          "why": "작은 화면에서 엄지에 가까운 “기록하기”부터 살펴봄",
+          "before": {
+            "signature": "내 계획 받기 / 어떤 기준으로 시작할까요? / 내 기록 / 목표만 있어요 / 기록 없이",
+            "text": "내 계획 받기 | 어떤 기준으로 시작할까요? | 내 기록 | 목표만 있어요 | 기록 없이 | 종목 | 종목 선택 | 800m | 1500m | 3000m | 5km | 10km"
+          },
+          "after": {
+            "signature": "← 뒤로 / 새 일지 / 2026·09·27 SUN · 15:06 / 어떤 일지를 쓰세요? / 빠르게 기록",
+            "text": "← 뒤로 | 새 일지 | 2026·09·27 SUN · 15:06 | 어떤 일지를 쓰세요? | 빠르게 기록 | 운동 결과와 몸 상태만 | 훈련 후 | 거리·시간·훈련 내용을 모두 기록 | 회복 · 하루 마무리 | 수면·기분·몸 상태 | 경기 직전/직후 | 경기 기록과 컨디션"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 360,
+              "height": 740
+            },
+            "documentWidth": 360,
+            "bodyWidth": 360,
+            "documentHeight": 740,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "h1",
+              "name": "어떤 일지를 쓰세요?"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 4,
+          "operation": "tap",
+          "target": "워치 기록 불러오기 워치 앱에서 내보낸 파일을 골라요",
+          "why": "작은 화면에서 엄지에 가까운 “워치 기록 불러오기 워치 앱에서 내보낸 파일을 골라요”부터 살펴봄",
+          "before": {
+            "signature": "← 뒤로 / 새 일지 / 2026·09·27 SUN · 15:06 / 어떤 일지를 쓰세요? / 빠르게 기록",
+            "text": "← 뒤로 | 새 일지 | 2026·09·27 SUN · 15:06 | 어떤 일지를 쓰세요? | 빠르게 기록 | 운동 결과와 몸 상태만 | 훈련 후 | 거리·시간·훈련 내용을 모두 기록 | 회복 · 하루 마무리 | 수면·기분·몸 상태 | 경기 직전/직후 | 경기 기록과 컨디션"
+          },
+          "after": {
+            "signature": "← / IMPORT · 기기 데이터 가져오기 / 워치 기록 불러오기 / 활동을 CSV 또는 JSON 파일로 내보내면 여기서 먼저 확인한 뒤 일지로 옮길 수 있어요. TCX·GPX 파일도 읽을 수 있어요. / 파일은 이 기기에서만 읽어요",
+            "text": "← | IMPORT · 기기 데이터 가져오기 | 워치 기록 불러오기 | 활동을 CSV 또는 JSON 파일로 내보내면 여기서 먼저 확인한 뒤 일지로 옮길 수 있어요. TCX·GPX 파일도 읽을 수 있어요. | 파일은 이 기기에서만 읽어요 | 고른 파일은 서버로 올라가지 않아요. 이 화면에서 내용을 읽어 일지 초안만 만들고, 저장을 누른 것만 이 기기의 일지에 들어가요. | 내보낸 활동 파일 (.csv / .json / .tcx / .gpx) | 가민·WHOOP·스트라바 자동 연동은 준비 중이에요"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 360,
+              "height": 740
+            },
+            "documentWidth": 360,
+            "bodyWidth": 360,
+            "documentHeight": 740,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "← IMPORT · 기기 데이터 가져오기 워치 기록 불러오기 활동을 CSV 또는 JSON 파일로 내보내면 여기서 먼저 확인한 뒤 일지로 옮길 수 있어요. TCX·GPX 파일도 읽을 수 있어요. 파일은 이 기기에서만 "
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 5,
+          "operation": "tap",
+          "target": "계획",
+          "why": "작은 화면에서 엄지에 가까운 “계획”부터 살펴봄",
+          "before": {
+            "signature": "← / IMPORT · 기기 데이터 가져오기 / 워치 기록 불러오기 / 활동을 CSV 또는 JSON 파일로 내보내면 여기서 먼저 확인한 뒤 일지로 옮길 수 있어요. TCX·GPX 파일도 읽을 수 있어요. / 파일은 이 기기에서만 읽어요",
+            "text": "← | IMPORT · 기기 데이터 가져오기 | 워치 기록 불러오기 | 활동을 CSV 또는 JSON 파일로 내보내면 여기서 먼저 확인한 뒤 일지로 옮길 수 있어요. TCX·GPX 파일도 읽을 수 있어요. | 파일은 이 기기에서만 읽어요 | 고른 파일은 서버로 올라가지 않아요. 이 화면에서 내용을 읽어 일지 초안만 만들고, 저장을 누른 것만 이 기기의 일지에 들어가요. | 내보낸 활동 파일 (.csv / .json / .tcx / .gpx) | 가민·WHOOP·스트라바 자동 연동은 준비 중이에요"
+          },
+          "after": {
+            "signature": "내 계획 받기 / 어떤 기준으로 시작할까요? / 내 기록 / 목표만 있어요 / 기록 없이",
+            "text": "내 계획 받기 | 어떤 기준으로 시작할까요? | 내 기록 | 목표만 있어요 | 기록 없이 | 종목 | 종목 선택 | 800m | 1500m | 3000m | 5km | 10km"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 360,
+              "height": 740
+            },
+            "documentWidth": 360,
+            "bodyWidth": 360,
+            "documentHeight": 740,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "button",
+              "name": "계획"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 6,
+          "operation": "tap",
+          "target": "분석",
+          "why": "작은 화면에서 엄지에 가까운 “분석”부터 살펴봄",
+          "before": {
+            "signature": "내 계획 받기 / 어떤 기준으로 시작할까요? / 내 기록 / 목표만 있어요 / 기록 없이",
+            "text": "내 계획 받기 | 어떤 기준으로 시작할까요? | 내 기록 | 목표만 있어요 | 기록 없이 | 종목 | 종목 선택 | 800m | 1500m | 3000m | 5km | 10km"
+          },
+          "after": {
+            "signature": "뒤로 / 요약 / 훈련량 / 훈련 구성 / 월별 변화",
+            "text": "뒤로 | 요약 | 훈련량 | 훈련 구성 | 월별 변화 | 파일 분석 | 어떤 분석이 궁금하세요? | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 360,
+              "height": 740
+            },
+            "documentWidth": 360,
+            "bodyWidth": 360,
+            "documentHeight": 740,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "button",
+              "name": "분석"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 7,
+          "operation": "tap",
+          "target": "운동 자각도 RPE 설명 보기",
+          "why": "작은 화면에서 엄지에 가까운 “운동 자각도 RPE 설명 보기”부터 살펴봄",
+          "before": {
+            "signature": "뒤로 / 요약 / 훈련량 / 훈련 구성 / 월별 변화",
+            "text": "뒤로 | 요약 | 훈련량 | 훈련 구성 | 월별 변화 | 파일 분석 | 어떤 분석이 궁금하세요? | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "after": {
+            "signature": "뒤로 / 요약 / 훈련량 / 훈련 구성 / 월별 변화",
+            "text": "뒤로 | 요약 | 훈련량 | 훈련 구성 | 월별 변화 | 파일 분석 | 어떤 분석이 궁금하세요? | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 360,
+              "height": 740
+            },
+            "documentWidth": 360,
+            "bodyWidth": 360,
+            "documentHeight": 740,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "button",
+              "name": "운동 자각도 RPE 설명 닫기"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 8,
+          "operation": "tap",
+          "target": "계획",
+          "why": "작은 화면에서 엄지에 가까운 “계획”부터 살펴봄",
+          "before": {
+            "signature": "뒤로 / 요약 / 훈련량 / 훈련 구성 / 월별 변화",
+            "text": "뒤로 | 요약 | 훈련량 | 훈련 구성 | 월별 변화 | 파일 분석 | 어떤 분석이 궁금하세요? | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "after": {
+            "signature": "내 계획 받기 / 어떤 기준으로 시작할까요? / 내 기록 / 목표만 있어요 / 기록 없이",
+            "text": "내 계획 받기 | 어떤 기준으로 시작할까요? | 내 기록 | 목표만 있어요 | 기록 없이 | 종목 | 종목 선택 | 800m | 1500m | 3000m | 5km | 10km"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 360,
+              "height": 740
+            },
+            "documentWidth": 360,
+            "bodyWidth": 360,
+            "documentHeight": 740,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "button",
+              "name": "계획"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 9,
+          "operation": "tap",
+          "target": "개인 계획 파일 불러오기",
+          "why": "작은 화면에서 엄지에 가까운 “개인 계획 파일 불러오기”부터 살펴봄",
+          "before": {
+            "signature": "내 계획 받기 / 어떤 기준으로 시작할까요? / 내 기록 / 목표만 있어요 / 기록 없이",
+            "text": "내 계획 받기 | 어떤 기준으로 시작할까요? | 내 기록 | 목표만 있어요 | 기록 없이 | 종목 | 종목 선택 | 800m | 1500m | 3000m | 5km | 10km"
+          },
+          "after": {
+            "signature": "돌아가기 / 계획 원본 불러오기 / 과거 계획을 보관함에 추가해 연결된 일지에서 확인할 수 있어요. 현재 훈련 일정은 바꾸지 않아요. / 개인 보관용 계획 파일",
+            "text": "돌아가기 | 계획 원본 불러오기 | 과거 계획을 보관함에 추가해 연결된 일지에서 확인할 수 있어요. 현재 훈련 일정은 바꾸지 않아요. | 개인 보관용 계획 파일"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 360,
+              "height": 740
+            },
+            "documentWidth": 360,
+            "bodyWidth": 360,
+            "documentHeight": 740,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "돌아가기 계획 원본 불러오기 과거 계획을 보관함에 추가해 연결된 일지에서 확인할 수 있어요. 현재 훈련 일정은 바꾸지 않아요. 개인 보관용 계획 파일 홈 일지 기록하기 계획 분석"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 10,
+          "operation": "tap",
+          "target": "계획",
+          "why": "작은 화면에서 엄지에 가까운 “계획”부터 살펴봄",
+          "before": {
+            "signature": "돌아가기 / 계획 원본 불러오기 / 과거 계획을 보관함에 추가해 연결된 일지에서 확인할 수 있어요. 현재 훈련 일정은 바꾸지 않아요. / 개인 보관용 계획 파일",
+            "text": "돌아가기 | 계획 원본 불러오기 | 과거 계획을 보관함에 추가해 연결된 일지에서 확인할 수 있어요. 현재 훈련 일정은 바꾸지 않아요. | 개인 보관용 계획 파일"
+          },
+          "after": {
+            "signature": "돌아가기 / 계획 원본 불러오기 / 과거 계획을 보관함에 추가해 연결된 일지에서 확인할 수 있어요. 현재 훈련 일정은 바꾸지 않아요. / 개인 보관용 계획 파일",
+            "text": "돌아가기 | 계획 원본 불러오기 | 과거 계획을 보관함에 추가해 연결된 일지에서 확인할 수 있어요. 현재 훈련 일정은 바꾸지 않아요. | 개인 보관용 계획 파일"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 360,
+              "height": 740
+            },
+            "documentWidth": 360,
+            "bodyWidth": 360,
+            "documentHeight": 740,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "button",
+              "name": "계획"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 11,
+          "operation": "tap",
+          "target": "기록하기",
+          "why": "작은 화면에서 엄지에 가까운 “기록하기”부터 살펴봄",
+          "before": {
+            "signature": "돌아가기 / 계획 원본 불러오기 / 과거 계획을 보관함에 추가해 연결된 일지에서 확인할 수 있어요. 현재 훈련 일정은 바꾸지 않아요. / 개인 보관용 계획 파일",
+            "text": "돌아가기 | 계획 원본 불러오기 | 과거 계획을 보관함에 추가해 연결된 일지에서 확인할 수 있어요. 현재 훈련 일정은 바꾸지 않아요. | 개인 보관용 계획 파일"
+          },
+          "after": {
+            "signature": "← 뒤로 / 새 일지 / 2026·09·27 SUN · 15:06 / 어떤 일지를 쓰세요? / 빠르게 기록",
+            "text": "← 뒤로 | 새 일지 | 2026·09·27 SUN · 15:06 | 어떤 일지를 쓰세요? | 빠르게 기록 | 운동 결과와 몸 상태만 | 훈련 후 | 거리·시간·훈련 내용을 모두 기록 | 회복 · 하루 마무리 | 수면·기분·몸 상태 | 경기 직전/직후 | 경기 기록과 컨디션"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 360,
+              "height": 740
+            },
+            "documentWidth": 360,
+            "bodyWidth": 360,
+            "documentHeight": 740,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "h1",
+              "name": "어떤 일지를 쓰세요?"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 12,
+          "operation": "tap",
+          "target": "계획",
+          "why": "작은 화면에서 엄지에 가까운 “계획”부터 살펴봄",
+          "before": {
+            "signature": "← 뒤로 / 새 일지 / 2026·09·27 SUN · 15:06 / 어떤 일지를 쓰세요? / 빠르게 기록",
+            "text": "← 뒤로 | 새 일지 | 2026·09·27 SUN · 15:06 | 어떤 일지를 쓰세요? | 빠르게 기록 | 운동 결과와 몸 상태만 | 훈련 후 | 거리·시간·훈련 내용을 모두 기록 | 회복 · 하루 마무리 | 수면·기분·몸 상태 | 경기 직전/직후 | 경기 기록과 컨디션"
+          },
+          "after": {
+            "signature": "내 계획 받기 / 어떤 기준으로 시작할까요? / 내 기록 / 목표만 있어요 / 기록 없이",
+            "text": "내 계획 받기 | 어떤 기준으로 시작할까요? | 내 기록 | 목표만 있어요 | 기록 없이 | 종목 | 종목 선택 | 800m | 1500m | 3000m | 5km | 10km"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 360,
+              "height": 740
+            },
+            "documentWidth": 360,
+            "bodyWidth": 360,
+            "documentHeight": 740,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "button",
+              "name": "계획"
+            }
+          },
+          "synthetic": false
+        }
+      ],
+      "meaningfulActionCount": 12,
+      "storageKeys": {
+        "local": [],
+        "session": []
+      },
+      "blockedNetwork": [],
+      "requestSummary": {
+        "allowedLocalReads": 26,
+        "blockedRequests": 0,
+        "failedRequests": []
+      },
+      "started": "2026-09-27T06:06:13.665Z",
+      "finished": "2026-09-27T06:06:19.042Z"
+    },
+    {
+      "id": "R14",
+      "profile": "모션 감소 선호 사용자",
+      "interaction": "reduced-motion",
+      "initial": {
+        "status": 200,
+        "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+        "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성",
+        "metrics": {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "documentWidth": 390,
+          "bodyWidth": 390,
+          "documentHeight": 844,
+          "visualScale": 1,
+          "reducedMotion": true,
+          "active": {
+            "tag": "body",
+            "name": "TRAINORACLE 더보기 훈련 분석 내 훈련, 무엇부터 개선할까요? 분석 결과 먼저 보기 기록 없이도 예시로 체험해요. 궁금한 항목부터 내 기록 · 결과 예시 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈"
+          }
+        }
+      },
+      "actions": [
+        {
+          "step": 1,
+          "operation": "tap",
+          "target": "현재 수준 · 지금 내 기록은 어디쯤일까? · 분석 열기",
+          "why": "모션 감소 상태에서 “현재 수준 · 지금 내 기록은 어디쯤일까? · 분석 열기”을 열고 전환 뒤 멈춰 내용을 확인",
+          "before": {
+            "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+            "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "after": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "documentWidth": 390,
+            "bodyWidth": 390,
+            "documentHeight": 844,
+            "visualScale": 1,
+            "reducedMotion": true,
+            "active": {
+              "tag": "body",
+              "name": "훈련 분석 탐색 분석 주제 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 내 기록 예시 예시 기록 내 기록을 분석한 결과가 아니에요 최근 5km 기록은 24분 10초 가상 기록 · 5km 기록"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 2,
+          "operation": "tap",
+          "target": "내 기록",
+          "why": "모션 감소 상태에서 “내 기록”을 열고 전환 뒤 멈춰 내용을 확인",
+          "before": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "after": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 내 기록 결과"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "documentWidth": 390,
+            "bodyWidth": 390,
+            "documentHeight": 844,
+            "visualScale": 1,
+            "reducedMotion": true,
+            "active": {
+              "tag": "body",
+              "name": "훈련 분석 탐색 분석 주제 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 내 기록 예시 내 기록 결과 경기 기록이 아직 없어요 종목과 달성일이 있는 개인 기록을 남기면 현재 기록을 나란히 볼 "
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 3,
+          "operation": "tap",
+          "target": "예시",
+          "why": "모션 감소 상태에서 “예시”을 열고 전환 뒤 멈춰 내용을 확인",
+          "before": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 내 기록 결과"
+          },
+          "after": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "documentWidth": 390,
+            "bodyWidth": 390,
+            "documentHeight": 844,
+            "visualScale": 1,
+            "reducedMotion": true,
+            "active": {
+              "tag": "body",
+              "name": "훈련 분석 탐색 분석 주제 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 내 기록 예시 예시 기록 내 기록을 분석한 결과가 아니에요 최근 5km 기록은 24분 10초 가상 기록 · 5km 기록"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 4,
+          "operation": "tap",
+          "target": "내 기록으로 확인하기",
+          "why": "모션 감소 상태에서 “내 기록으로 확인하기”을 열고 전환 뒤 멈춰 내용을 확인",
+          "before": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "after": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 내 기록 결과"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "documentWidth": 390,
+            "bodyWidth": 390,
+            "documentHeight": 844,
+            "visualScale": 1,
+            "reducedMotion": true,
+            "active": {
+              "tag": "body",
+              "name": "훈련 분석 탐색 분석 주제 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 내 기록 예시 내 기록 결과 경기 기록이 아직 없어요 종목과 달성일이 있는 개인 기록을 남기면 현재 기록을 나란히 볼 "
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 5,
+          "operation": "tap",
+          "target": "기록 관리 열기",
+          "why": "모션 감소 상태에서 “기록 관리 열기”을 열고 전환 뒤 멈춰 내용을 확인",
+          "before": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 내 기록 결과"
+          },
+          "after": {
+            "signature": "분석으로 / 내 경기 기록 / 내 경기 기록 / 실제 경기 기록과 앞으로의 목표를 서로 다른 역할로 보관해요. / 기록 역할",
+            "text": "분석으로 | 내 경기 기록 | 내 경기 기록 | 실제 경기 기록과 앞으로의 목표를 서로 다른 역할로 보관해요. | 기록 역할 | 개인 최고 | 시즌 최고 | 최근 경기 | 경기 목표 | 종목 거리 | 800m | 1500m"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "documentWidth": 390,
+            "bodyWidth": 390,
+            "documentHeight": 844,
+            "visualScale": 1,
+            "reducedMotion": true,
+            "active": {
+              "tag": "body",
+              "name": "분석으로 내 경기 기록 내 경기 기록 실제 경기 기록과 앞으로의 목표를 서로 다른 역할로 보관해요. 기록 역할 개인 최고 시즌 최고 최근 경기 경기 목표 종목 거리 800m 1500m 3000m 5000m 10000"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 6,
+          "operation": "tap",
+          "target": "분석으로",
+          "why": "모션 감소 상태에서 “분석으로”을 열고 전환 뒤 멈춰 내용을 확인",
+          "before": {
+            "signature": "분석으로 / 내 경기 기록 / 내 경기 기록 / 실제 경기 기록과 앞으로의 목표를 서로 다른 역할로 보관해요. / 기록 역할",
+            "text": "분석으로 | 내 경기 기록 | 내 경기 기록 | 실제 경기 기록과 앞으로의 목표를 서로 다른 역할로 보관해요. | 기록 역할 | 개인 최고 | 시즌 최고 | 최근 경기 | 경기 목표 | 종목 거리 | 800m | 1500m"
+          },
+          "after": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 내 기록 결과"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "documentWidth": 390,
+            "bodyWidth": 390,
+            "documentHeight": 844,
+            "visualScale": 1,
+            "reducedMotion": true,
+            "active": {
+              "tag": "body",
+              "name": "훈련 분석 탐색 분석 주제 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 내 기록 예시 내 기록 결과 경기 기록이 아직 없어요 종목과 달성일이 있는 개인 기록을 남기면 현재 기록을 나란히 볼 "
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 7,
+          "operation": "tap",
+          "target": "예시로 읽는 방법 보기",
+          "why": "모션 감소 상태에서 “예시로 읽는 방법 보기”을 열고 전환 뒤 멈춰 내용을 확인",
+          "before": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 내 기록 결과"
+          },
+          "after": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "documentWidth": 390,
+            "bodyWidth": 390,
+            "documentHeight": 844,
+            "visualScale": 1,
+            "reducedMotion": true,
+            "active": {
+              "tag": "body",
+              "name": "훈련 분석 탐색 분석 주제 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 내 기록 예시 예시 기록 내 기록을 분석한 결과가 아니에요 최근 5km 기록은 24분 10초 가상 기록 · 5km 기록"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 8,
+          "operation": "tap",
+          "target": "이어서 살펴보기 계획 강도와 실제 느낌은 어땠을까?",
+          "why": "모션 감소 상태에서 “이어서 살펴보기 계획 강도와 실제 느낌은 어땠을까?”을 열고 전환 뒤 멈춰 내용을 확인",
+          "before": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "after": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "documentWidth": 390,
+            "bodyWidth": 390,
+            "documentHeight": 844,
+            "visualScale": 1,
+            "reducedMotion": true,
+            "active": {
+              "tag": "body",
+              "name": "훈련 분석 탐색 분석 주제 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 내 기록 예시 예시 기록 내 기록을 분석한 결과가 아니에요 계획 RPE 5, 실제 느낌은 7 가상 기록 · 계획과 연결"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 9,
+          "operation": "tap",
+          "target": "홈",
+          "why": "모션 감소 상태에서 “홈”을 열고 전환 뒤 멈춰 내용을 확인",
+          "before": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "after": {
+            "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+            "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "documentWidth": 390,
+            "bodyWidth": 390,
+            "documentHeight": 844,
+            "visualScale": 1,
+            "reducedMotion": true,
+            "active": {
+              "tag": "button",
+              "name": "홈"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 10,
+          "operation": "tap",
+          "target": "강점·보완점 · 계획보다 더 힘들게 느껴진 훈련은? · 분석 열기",
+          "why": "모션 감소 상태에서 “강점·보완점 · 계획보다 더 힘들게 느껴진 훈련은? · 분석 열기”을 열고 전환 뒤 멈춰 내용을 확인",
+          "before": {
+            "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+            "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "after": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "documentWidth": 390,
+            "bodyWidth": 390,
+            "documentHeight": 844,
+            "visualScale": 1,
+            "reducedMotion": true,
+            "active": {
+              "tag": "body",
+              "name": "훈련 분석 탐색 분석 주제 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 내 기록 예시 예시 기록 내 기록을 분석한 결과가 아니에요 계획 RPE 5, 실제 느낌은 7 가상 기록 · 계획과 연결"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 11,
+          "operation": "tap",
+          "target": "일지",
+          "why": "모션 감소 상태에서 “일지”을 열고 전환 뒤 멈춰 내용을 확인",
+          "before": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "after": {
+            "signature": "JOURNAL ARCHIVE / 지난 일지 / 월간 달력 / 9.5일 주기 / 날짜별 일지",
+            "text": "JOURNAL ARCHIVE | 지난 일지 | 월간 달력 | 9.5일 주기 | 날짜별 일지 | 이 달 0일 · 0개 기록 | 2026년 9월 | 오늘 | 일\t월\t화\t수\t목\t금\t토 | 30 | 31 | 1"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "documentWidth": 390,
+            "bodyWidth": 390,
+            "documentHeight": 844,
+            "visualScale": 1,
+            "reducedMotion": true,
+            "active": {
+              "tag": "button",
+              "name": "일지"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 12,
+          "operation": "tap",
+          "target": "홈으로",
+          "why": "모션 감소 상태에서 “홈으로”을 열고 전환 뒤 멈춰 내용을 확인",
+          "before": {
+            "signature": "JOURNAL ARCHIVE / 지난 일지 / 월간 달력 / 9.5일 주기 / 날짜별 일지",
+            "text": "JOURNAL ARCHIVE | 지난 일지 | 월간 달력 | 9.5일 주기 | 날짜별 일지 | 이 달 0일 · 0개 기록 | 2026년 9월 | 오늘 | 일\t월\t화\t수\t목\t금\t토 | 30 | 31 | 1"
+          },
+          "after": {
+            "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+            "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "documentWidth": 390,
+            "bodyWidth": 390,
+            "documentHeight": 844,
+            "visualScale": 1,
+            "reducedMotion": true,
+            "active": {
+              "tag": "body",
+              "name": "TRAINORACLE 더보기 훈련 분석 내 훈련, 무엇부터 개선할까요? 분석 결과 먼저 보기 기록 없이도 예시로 체험해요. 궁금한 항목부터 내 기록 · 결과 예시 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈"
+            }
+          },
+          "synthetic": false
+        }
+      ],
+      "meaningfulActionCount": 12,
+      "storageKeys": {
+        "local": [],
+        "session": []
+      },
+      "blockedNetwork": [],
+      "requestSummary": {
+        "allowedLocalReads": 23,
+        "blockedRequests": 0,
+        "failedRequests": []
+      },
+      "started": "2026-09-27T06:06:19.140Z",
+      "finished": "2026-09-27T06:06:28.375Z"
+    },
+    {
+      "id": "R15",
+      "profile": "제품 용어가 익숙하지 않은 사용자",
+      "interaction": "plain-language",
+      "initial": {
+        "status": 200,
+        "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+        "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성",
+        "metrics": {
+          "viewport": {
+            "width": 375,
+            "height": 812
+          },
+          "documentWidth": 375,
+          "bodyWidth": 375,
+          "documentHeight": 812,
+          "visualScale": 1,
+          "reducedMotion": false,
+          "active": {
+            "tag": "body",
+            "name": "TRAINORACLE 더보기 훈련 분석 내 훈련, 무엇부터 개선할까요? 분석 결과 먼저 보기 기록 없이도 예시로 체험해요. 궁금한 항목부터 내 기록 · 결과 예시 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈"
+          }
+        }
+      },
+      "actions": [
+        {
+          "step": 1,
+          "operation": "tap",
+          "target": "현재 수준 · 지금 내 기록은 어디쯤일까? · 분석 열기",
+          "why": "“현재 수준 · 지금 내 기록은 어디쯤일까? · 분석 열기”의 질문·설명·예시가 낯선 용어보다 이해하기 쉬워 보여 선택",
+          "before": {
+            "signature": "TRAINORACLE / 더보기 / 훈련 분석 / 내 훈련, 무엇부터 개선할까요? / 분석 결과 먼저 보기",
+            "text": "TRAINORACLE | 더보기 | 훈련 분석 | 내 훈련, 무엇부터 개선할까요? | 분석 결과 먼저 보기 | 기록 없이도 예시로 체험해요. | 궁금한 항목부터 | 내 기록 · 결과 예시 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성"
+          },
+          "after": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 375,
+              "height": 812
+            },
+            "documentWidth": 375,
+            "bodyWidth": 375,
+            "documentHeight": 812,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "훈련 분석 탐색 분석 주제 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 내 기록 예시 예시 기록 내 기록을 분석한 결과가 아니에요 최근 5km 기록은 24분 10초 가상 기록 · 5km 기록"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 2,
+          "operation": "tap",
+          "target": "이어서 살펴보기 계획 강도와 실제 느낌은 어땠을까?",
+          "why": "“이어서 살펴보기 계획 강도와 실제 느낌은 어땠을까?”의 질문·설명·예시가 낯선 용어보다 이해하기 쉬워 보여 선택",
+          "before": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "after": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 375,
+              "height": 812
+            },
+            "documentWidth": 375,
+            "bodyWidth": 375,
+            "documentHeight": 812,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "훈련 분석 탐색 분석 주제 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 내 기록 예시 예시 기록 내 기록을 분석한 결과가 아니에요 계획 RPE 5, 실제 느낌은 7 가상 기록 · 계획과 연결"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 3,
+          "operation": "tap",
+          "target": "이어서 살펴보기 다음 훈련에서는 무엇을 살펴볼까?",
+          "why": "“이어서 살펴보기 다음 훈련에서는 무엇을 살펴볼까?”의 질문·설명·예시가 낯선 용어보다 이해하기 쉬워 보여 선택",
+          "before": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "after": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 상황"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 375,
+              "height": 812
+            },
+            "documentWidth": 375,
+            "bodyWidth": 375,
+            "documentHeight": 812,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "훈련 분석 탐색 분석 주제 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 내 기록 예시 예시 상황 내 기록을 분석한 결과가 아니에요 다음 계획 전에 실제 느낌을 확인해요 가상 상황 · 현재 계"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 4,
+          "operation": "tap",
+          "target": "이어서 살펴보기 최근 훈련 구성도 살펴볼까?",
+          "why": "“이어서 살펴보기 최근 훈련 구성도 살펴볼까?”의 질문·설명·예시가 낯선 용어보다 이해하기 쉬워 보여 선택",
+          "before": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 상황"
+          },
+          "after": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 375,
+              "height": 812
+            },
+            "documentWidth": 375,
+            "bodyWidth": 375,
+            "documentHeight": 812,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "훈련 분석 탐색 분석 주제 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 내 기록 예시 예시 기록 내 기록을 분석한 결과가 아니에요 직접 표시한 훈련은 BASE가 가장 많아요 가상 기록 · 직"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 5,
+          "operation": "tap",
+          "target": "이어서 살펴보기 각 훈련은 어떻게 달랐을까?",
+          "why": "“이어서 살펴보기 각 훈련은 어떻게 달랐을까?”의 질문·설명·예시가 낯선 용어보다 이해하기 쉬워 보여 선택",
+          "before": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "after": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 375,
+              "height": 812
+            },
+            "documentWidth": 375,
+            "bodyWidth": 375,
+            "documentHeight": 812,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "훈련 분석 탐색 분석 주제 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 내 기록 예시 예시 기록 내 기록을 분석한 결과가 아니에요 한 번에 달린 거리, 중간값은 5km와 6km 가상 기록 ·"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 6,
+          "operation": "tap",
+          "target": "이어서 살펴보기 체감강도도 달라졌을까?",
+          "why": "“이어서 살펴보기 체감강도도 달라졌을까?”의 질문·설명·예시가 낯선 용어보다 이해하기 쉬워 보여 선택",
+          "before": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "after": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 375,
+              "height": 812
+            },
+            "documentWidth": 375,
+            "bodyWidth": 375,
+            "documentHeight": 812,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "훈련 분석 탐색 분석 주제 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 내 기록 예시 예시 기록 내 기록을 분석한 결과가 아니에요 월별 체감강도 중간값은 7과 5 가상 기록 · 두 달의 RP"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 7,
+          "operation": "tap",
+          "target": "이어서 살펴보기 종목 기록에도 변화가 있을까?",
+          "why": "“이어서 살펴보기 종목 기록에도 변화가 있을까?”의 질문·설명·예시가 낯선 용어보다 이해하기 쉬워 보여 선택",
+          "before": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "after": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 375,
+              "height": 812
+            },
+            "documentWidth": 375,
+            "bodyWidth": 375,
+            "documentHeight": 812,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "훈련 분석 탐색 분석 주제 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 내 기록 예시 예시 기록 내 기록을 분석한 결과가 아니에요 최근 5km 기록은 24분 10초 가상 기록 · 5km 기록"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 8,
+          "operation": "tap",
+          "target": "내 기록",
+          "why": "“내 기록”의 질문·설명·예시가 낯선 용어보다 이해하기 쉬워 보여 선택",
+          "before": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "after": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 내 기록 결과"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 375,
+              "height": 812
+            },
+            "documentWidth": 375,
+            "bodyWidth": 375,
+            "documentHeight": 812,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "훈련 분석 탐색 분석 주제 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 내 기록 예시 내 기록 결과 경기 기록이 아직 없어요 종목과 달성일이 있는 개인 기록을 남기면 현재 기록을 나란히 볼 "
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 9,
+          "operation": "tap",
+          "target": "예시",
+          "why": "“예시”의 질문·설명·예시가 낯선 용어보다 이해하기 쉬워 보여 선택",
+          "before": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 내 기록 결과"
+          },
+          "after": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 375,
+              "height": 812
+            },
+            "documentWidth": 375,
+            "bodyWidth": 375,
+            "documentHeight": 812,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "훈련 분석 탐색 분석 주제 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 내 기록 예시 예시 기록 내 기록을 분석한 결과가 아니에요 최근 5km 기록은 24분 10초 가상 기록 · 5km 기록"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 10,
+          "operation": "tap",
+          "target": "내 기록으로 확인하기",
+          "why": "“내 기록으로 확인하기”의 질문·설명·예시가 낯선 용어보다 이해하기 쉬워 보여 선택",
+          "before": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 예시 기록"
+          },
+          "after": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 내 기록 결과"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 375,
+              "height": 812
+            },
+            "documentWidth": 375,
+            "bodyWidth": 375,
+            "documentHeight": 812,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "훈련 분석 탐색 분석 주제 현재 수준 강점·보완점 훈련 비교 훈련 구성 우선 훈련 훈련 후 변화 내 기록 예시 내 기록 결과 경기 기록이 아직 없어요 종목과 달성일이 있는 개인 기록을 남기면 현재 기록을 나란히 볼 "
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 11,
+          "operation": "tap",
+          "target": "기록 관리 열기",
+          "why": "“기록 관리 열기”의 질문·설명·예시가 낯선 용어보다 이해하기 쉬워 보여 선택",
+          "before": {
+            "signature": "훈련 분석 / 탐색 / 분석 주제 / 현재 수준 / 강점·보완점",
+            "text": "훈련 분석 | 탐색 | 분석 주제 | 현재 수준 | 강점·보완점 | 훈련 비교 | 훈련 구성 | 우선 훈련 | 훈련 후 변화 | 내 기록 | 예시 | 내 기록 결과"
+          },
+          "after": {
+            "signature": "분석으로 / 내 경기 기록 / 내 경기 기록 / 실제 경기 기록과 앞으로의 목표를 서로 다른 역할로 보관해요. / 기록 역할",
+            "text": "분석으로 | 내 경기 기록 | 내 경기 기록 | 실제 경기 기록과 앞으로의 목표를 서로 다른 역할로 보관해요. | 기록 역할 | 개인 최고 | 시즌 최고 | 최근 경기 | 경기 목표 | 종목 거리 | 800m | 1500m"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 375,
+              "height": 812
+            },
+            "documentWidth": 375,
+            "bodyWidth": 375,
+            "documentHeight": 812,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "body",
+              "name": "분석으로 내 경기 기록 내 경기 기록 실제 경기 기록과 앞으로의 목표를 서로 다른 역할로 보관해요. 기록 역할 개인 최고 시즌 최고 최근 경기 경기 목표 종목 거리 800m 1500m 3000m 5000m 10000"
+            }
+          },
+          "synthetic": false
+        },
+        {
+          "step": 12,
+          "operation": "tap",
+          "target": "기록 저장",
+          "why": "“기록 저장”의 질문·설명·예시가 낯선 용어보다 이해하기 쉬워 보여 선택",
+          "before": {
+            "signature": "분석으로 / 내 경기 기록 / 내 경기 기록 / 실제 경기 기록과 앞으로의 목표를 서로 다른 역할로 보관해요. / 기록 역할",
+            "text": "분석으로 | 내 경기 기록 | 내 경기 기록 | 실제 경기 기록과 앞으로의 목표를 서로 다른 역할로 보관해요. | 기록 역할 | 개인 최고 | 시즌 최고 | 최근 경기 | 경기 목표 | 종목 거리 | 800m | 1500m"
+          },
+          "after": {
+            "signature": "분석으로 / 내 경기 기록 / 내 경기 기록 / 실제 경기 기록과 앞으로의 목표를 서로 다른 역할로 보관해요. / 기록 역할",
+            "text": "분석으로 | 내 경기 기록 | 내 경기 기록 | 실제 경기 기록과 앞으로의 목표를 서로 다른 역할로 보관해요. | 기록 역할 | 개인 최고 | 시즌 최고 | 최근 경기 | 경기 목표 | 종목 거리 | 800m | 1500m"
+          },
+          "metrics": {
+            "viewport": {
+              "width": 375,
+              "height": 812
+            },
+            "documentWidth": 375,
+            "bodyWidth": 375,
+            "documentHeight": 812,
+            "visualScale": 1,
+            "reducedMotion": false,
+            "active": {
+              "tag": "button",
+              "name": "기록 저장"
+            }
+          },
+          "synthetic": false
+        }
+      ],
+      "meaningfulActionCount": 12,
+      "storageKeys": {
+        "local": [],
+        "session": []
+      },
+      "blockedNetwork": [],
+      "requestSummary": {
+        "allowedLocalReads": 11,
+        "blockedRequests": 0,
+        "failedRequests": []
+      },
+      "started": "2026-09-27T06:06:28.493Z",
+      "finished": "2026-09-27T06:06:33.590Z"
+    }
+  ],
+  "generatedAt": "2026-09-27T06:06:33.690Z"
+}

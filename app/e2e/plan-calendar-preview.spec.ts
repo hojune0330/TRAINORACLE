@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
 import { completeDetailedPlan } from "./plan-flow"
+import { openActivePlanCards } from "./active-plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
@@ -36,6 +37,10 @@ test("shows a dated AM and PM plan before selection and after reload", async ({ 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
 
   // Then
+  await openActivePlanCards(page)
+  for (let day = 1; day < 9; day += 1) {
+    await page.getByRole("button", { name: "다음 날짜", exact: true }).click()
+  }
   const activeDay = page.getByRole("group", {
     name: "8월 25일 화요일 · 훈련 2개",
   })
@@ -45,7 +50,8 @@ test("shows a dated AM and PM plan before selection and after reload", async ({ 
   await expect(page.getByLabel("9일 훈련 일정")).toContainText("회복")
   await expect(page.getByRole("group", { name: /훈련 2개/u })).toHaveCount(3)
   await expect.poll(() => page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toContain("2026-08-17")
-  await activeDay.getByRole("button", { name: "훈련 방법과 이유", exact: true }).nth(1).click()
+  await activeDay.getByText("오후 훈련 방법과 기록", { exact: true }).click()
+  await activeDay.locator('[data-session-slot="PM"]').getByRole("button", { name: "훈련 방법과 이유", exact: true }).click()
   const reader = page.getByRole("dialog")
   await expect(reader.getByText("9일차 · 오후", { exact: true })).toBeVisible()
   await reader.getByRole("tab", { name: "이유·근거" }).click()

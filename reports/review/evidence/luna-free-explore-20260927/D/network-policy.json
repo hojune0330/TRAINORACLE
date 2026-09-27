@@ -1,0 +1,874 @@
+{
+  "policy": "Only same-origin GET/HEAD on 127.0.0.1:4209 allowed; all other requests blocked",
+  "requests": [
+    {
+      "persona": "R16",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R16",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/fonts/PretendardVariable.woff2",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R16",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/index-C_Eiv3G0.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R16",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/vendor-react-oS_qnrG8.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R16",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/vendor-validation-Bi-lKSVX.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R16",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/vendor-icons-j_5-oT_4.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R16",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/index-B6iiWqu3.css",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R16",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/OracleExplore-B_s_2Wsn.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R16",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/AccessibleTrendTable-D3OmOnqB.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R16",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/OracleExplore-wxaDP8Zn.css",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R16",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/JournalArchive-CGt9vfMY.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R16",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/GuidedEmptyState-zlcjILkS.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R16",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/PlanDayReader-DOQnRN9t.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R16",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/quick-journal-ByNhRMGe.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R16",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/PlanDayReader-RfBOLUTX.css",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/fonts/PretendardVariable.woff2",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/index-C_Eiv3G0.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/vendor-react-oS_qnrG8.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/vendor-validation-Bi-lKSVX.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/vendor-icons-j_5-oT_4.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/index-B6iiWqu3.css",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/JournalDayReader-DyQ0CJPX.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/useJournalPageTurn-D8WFttKe.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/LogDetail-Cx-yiyFl.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/AccountJournalHistory-BX3Lqtv2.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/AdjustedPrescriptionV3-CYDK6JpA.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/session-prescription-sequence-XGF0e5Zz.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/AdjustedPrescriptionV3-BxoIPXFV.css",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/quick-journal-ByNhRMGe.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/DecoratedJournalPageFrame-BBzqBYGl.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/decorations/theme-track-notebook.webp",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/ImportActivities-JAem-z53.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/file-analysis-D3feBQCb.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/file-analysis-BRke8oGo.css",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/useImportOwnerScope-tG8Qp2_w.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/JournalArchive-CGt9vfMY.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/GuidedEmptyState-zlcjILkS.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/PlanDayReader-DOQnRN9t.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R17",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/PlanDayReader-RfBOLUTX.css",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/fonts/PretendardVariable.woff2",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/index-C_Eiv3G0.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/vendor-react-oS_qnrG8.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/vendor-validation-Bi-lKSVX.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/vendor-icons-j_5-oT_4.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/index-B6iiWqu3.css",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/Guide-O0zBecUR.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/feedback-config-Bzmkbrr-.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/DecoratedJournalPageFrame-BBzqBYGl.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/useJournalPageTurn-D8WFttKe.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/TrainingLexicon-DxdEemeK.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/decorations/theme-track-notebook.webp",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/decorations/sticker-weather-sun.webp",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/decorations/theme-sky-journal.webp",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/decorations/stamp-rest-day.webp",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/decorations/avatar-start-line.webp",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/decorations/tape-checker.webp",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/decorations/sticker-finish-line.webp",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/decorations/theme-track-notebook.webp",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/decorations/sticker-weather-sun.webp",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/decorations/theme-track-notebook.webp",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/decorations/sticker-weather-sun.webp",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/decorations/theme-sky-journal.webp",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/decorations/stamp-rest-day.webp",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/decorations/avatar-start-line.webp",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/decorations/tape-checker.webp",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/decorations/sticker-finish-line.webp",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/decorations/theme-sky-journal.webp",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/decorations/avatar-start-line.webp",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/decorations/tape-checker.webp",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/decorations/sticker-finish-line.webp",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/decorations/theme-track-notebook.webp",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/decorations/avatar-start-line.webp",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/decorations/theme-sky-journal.webp",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/JournalArchive-CGt9vfMY.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/GuidedEmptyState-zlcjILkS.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/PlanDayReader-DOQnRN9t.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/quick-journal-ByNhRMGe.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R18",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/PlanDayReader-RfBOLUTX.css",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R19",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R19",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/fonts/PretendardVariable.woff2",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R19",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/index-C_Eiv3G0.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R19",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/vendor-react-oS_qnrG8.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R19",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/vendor-validation-Bi-lKSVX.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R19",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/vendor-icons-j_5-oT_4.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R19",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/index-B6iiWqu3.css",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R19",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/PlanProposalInbox-BiBL3crD.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R19",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/PlanBeta-BANCyYvB.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R19",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/session-prescription-sequence-XGF0e5Zz.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R19",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/AdjustedPrescriptionV3-CYDK6JpA.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R19",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/AdjustedPrescriptionV3-BxoIPXFV.css",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R19",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/plan-adaptation-ui-context-DDkKpDki.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R19",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/PlanDayReader-DOQnRN9t.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R19",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/quick-journal-ByNhRMGe.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R19",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/PlanDayReader-RfBOLUTX.css",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R19",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/PlanBeta-CNMx7Hlv.css",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/fonts/PretendardVariable.woff2",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/index-C_Eiv3G0.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/vendor-react-oS_qnrG8.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/vendor-validation-Bi-lKSVX.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/vendor-icons-j_5-oT_4.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/index-B6iiWqu3.css",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/OracleExplore-B_s_2Wsn.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/AccessibleTrendTable-D3OmOnqB.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/OracleExplore-wxaDP8Zn.css",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/AthleteRecords-Cuv9YZRI.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/PlanProposalInbox-BiBL3crD.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/PlanBeta-BANCyYvB.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/session-prescription-sequence-XGF0e5Zz.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/AdjustedPrescriptionV3-CYDK6JpA.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/AdjustedPrescriptionV3-BxoIPXFV.css",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/plan-adaptation-ui-context-DDkKpDki.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/PlanDayReader-DOQnRN9t.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/quick-journal-ByNhRMGe.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/PlanDayReader-RfBOLUTX.css",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/PlanBeta-CNMx7Hlv.css",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/Trends-CE4e2CHs.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/fatigue-experiment-store-CkbBEpb4.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/GuidedEmptyState-zlcjILkS.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/file-analysis-D3feBQCb.js",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/file-analysis-BRke8oGo.css",
+      "decision": "allow-local-read"
+    },
+    {
+      "persona": "R20",
+      "method": "GET",
+      "origin": "http://127.0.0.1:4209",
+      "path": "/assets/Trends-2g91qIOL.css",
+      "decision": "allow-local-read"
+    }
+  ],
+  "pageErrors": []
+}

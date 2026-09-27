@@ -1,0 +1,21 @@
+{
+  "review": "TrainOracle free exploration UX review group B",
+  "date": "2026-09-27",
+  "dataClass": "synthetic-only",
+  "personas": [
+    { "id": "R06", "returnVisit": "one-entry", "interest": "wants to understand what the saved run means", "viewport": [393, 852], "journal": [{ "kind": "post-session", "date": "2026-09-20", "system": "base", "title": "합성 조깅", "distanceKm": "5", "durationMin": "31", "avgPace": "6:12", "rpe": 4 }] },
+    { "id": "R07", "returnVisit": "several-entries", "interest": "notices patterns and wants to compare days", "viewport": [1365, 900], "journal": [
+      { "kind": "post-session", "date": "2026-09-18", "system": "base", "title": "합성 훈련 1", "distanceKm": "5", "durationMin": "31", "avgPace": "6:12", "rpe": 4 },
+      { "kind": "post-session", "date": "2026-09-19", "system": "vo2", "title": "합성 훈련 2", "distanceKm": "3", "durationMin": "16", "avgPace": "5:20", "rpe": 7 },
+      { "kind": "post-session", "date": "2026-09-20", "system": "base", "title": "합성 훈련 3", "distanceKm": "5", "durationMin": "31", "avgPace": "6:12", "rpe": 4 },
+      { "kind": "post-session", "date": "2026-09-20", "system": "vo2", "title": "합성 훈련 4", "distanceKm": "3", "durationMin": "16", "avgPace": "5:20", "rpe": 7 },
+      { "kind": "post-session", "date": "2026-09-22", "system": "base", "title": "합성 훈련 5", "distanceKm": "5", "durationMin": "31", "avgPace": "6:12", "rpe": 4 },
+      { "kind": "post-session", "date": "2026-09-23", "system": "vo2", "title": "합성 훈련 6", "distanceKm": "3", "durationMin": "16", "avgPace": "5:20", "rpe": 7 },
+      { "kind": "post-session", "date": "2026-09-24", "system": "base", "title": "합성 훈련 7", "distanceKm": "5", "durationMin": "31", "avgPace": "6:12", "rpe": 4 },
+      { "kind": "post-session", "date": "2026-09-25", "system": "vo2", "title": "합성 훈련 8", "distanceKm": "3", "durationMin": "16", "avgPace": "5:20", "rpe": 7 }
+    ] },
+    { "id": "R08", "returnVisit": "recent-rest", "interest": "has not logged lately and looks for a low-pressure way back", "viewport": [375, 812], "journal": [] },
+    { "id": "R09", "returnVisit": "plan-only", "interest": "has a saved plan but no completed journal entries", "viewport": [393, 852], "journal": [], "planProvisioning": "UI setup in isolated synthetic context only; if not feasible, report as not provisioned" },
+    { "id": "R10", "returnVisit": "two-sessions-per-day", "interest": "wants to distinguish morning and afternoon work", "viewport": [1365, 900], "journal": [{ "kind": "post-session", "date": "2026-09-25", "activitySlot": "AM", "system": "base", "title": "합성 오전 훈련", "distanceKm": "4", "durationMin": "24", "avgPace": "6:00", "rpe": 3 }, { "kind": "post-session", "date": "2026-09-25", "activitySlot": "PM", "system": "vo2", "title": "합성 오후 훈련", "distanceKm": "2", "durationMin": "10", "avgPace": "5:00", "rpe": 7 }, { "kind": "post-session", "date": "2026-09-24", "activitySlot": "SINGLE", "system": "base", "title": "합성 회복 훈련", "distanceKm": "3", "durationMin": "20", "avgPace": "6:40", "rpe": 2 }] }
+  ]
+}

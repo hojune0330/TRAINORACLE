@@ -1,0 +1,192 @@
+{
+  "navigation": {
+    "status": 200,
+    "url": "http://127.0.0.1:4209/?app=1",
+    "title": "TRAINORACLE"
+  },
+  "viewport": {
+    "width": 1365,
+    "height": 900
+  },
+  "snapshot": "TRAINORACLE\n더보기\n\n훈련 분석\n\n내 훈련, 무엇부터 개선할까요?\n분석 결과 먼저 보기\n기록 없이도 예시로 체험해요.\n궁금한 항목부터\n내 기록 · 결과 예시\n현재 수준\n강점·보완점\n훈련 비교\n훈련 구성\n우선 훈련\n훈련 후 변화\n오늘\n오늘 기록 남기기\n훈련 계획 만들기\n훈련 배우기\n일지 꾸미기\n일지 예시 보기\n홈\n일지\n기록하기\n계획\n분석",
+  "controls": [
+    {
+      "tag": "button",
+      "role": null,
+      "name": "더보기",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "role": null,
+      "name": "분석 결과 먼저 보기",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "role": null,
+      "name": "현재 수준 · 지금 내 기록은 어디쯤일까? · 분석 열기",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "role": null,
+      "name": "강점·보완점 · 계획보다 더 힘들게 느껴진 훈련은? · 분석 열기",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "role": null,
+      "name": "훈련 비교 · 최근 두 달, 한 번에 달린 거리는? · 분석 열기",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "role": null,
+      "name": "훈련 구성 · 최근에는 어떤 훈련을 많이 했을까? · 분석 열기",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "role": null,
+      "name": "우선 훈련 · 다음 훈련의 초점은 무엇으로 잡을까? · 분석 열기",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "role": null,
+      "name": "훈련 후 변화 · 최근 두 달의 체감강도는 어땠을까? · 분석 열기",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "role": null,
+      "name": "오늘 기록 남기기",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "role": null,
+      "name": "훈련 계획 만들기",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "role": null,
+      "name": "훈련 배우기",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "role": null,
+      "name": "일지 꾸미기",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "role": null,
+      "name": "일지 예시 보기",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "role": null,
+      "name": "홈",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "role": null,
+      "name": "일지",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "role": null,
+      "name": "기록하기",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "role": null,
+      "name": "계획",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "role": null,
+      "name": "분석",
+      "disabled": false,
+      "visible": true
+    }
+  ],
+  "assetLinks": [
+    "https://hojune0330.github.io/TRAINORACLE/",
+    "fonts/PretendardVariable.woff2",
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23E4E2DA'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%232F5D3A'/%3E%3C/svg%3E",
+    "manifest.webmanifest",
+    "icons/apple-touch-icon.png",
+    "./assets/index-C_Eiv3G0.js",
+    "./assets/vendor-react-oS_qnrG8.js",
+    "./assets/vendor-validation-Bi-lKSVX.js",
+    "./assets/vendor-icons-j_5-oT_4.js",
+    "./assets/index-B6iiWqu3.css"
+  ],
+  "assetChecks": [
+    {
+      "fileName": "index-C_Eiv3G0.js",
+      "status": 200,
+      "servedSha256": "9b2ad72885569af01d72758b8121f029aff09d29f8351806d40d3043b269a0ed",
+      "targetDistSha256": "9b2ad72885569af01d72758b8121f029aff09d29f8351806d40d3043b269a0ed",
+      "matchesTargetDist": true
+    },
+    {
+      "fileName": "vendor-react-oS_qnrG8.js",
+      "status": 200,
+      "servedSha256": "6db034d152bf39f5993bbef8a0108a9383ec641633c51b5e115ab3086fd4b922",
+      "targetDistSha256": "6db034d152bf39f5993bbef8a0108a9383ec641633c51b5e115ab3086fd4b922",
+      "matchesTargetDist": true
+    },
+    {
+      "fileName": "vendor-validation-Bi-lKSVX.js",
+      "status": 200,
+      "servedSha256": "2850c8b99c56055816ee6f86a350a033a49392f57e8576e78d61d057e0c47ff1",
+      "targetDistSha256": "2850c8b99c56055816ee6f86a350a033a49392f57e8576e78d61d057e0c47ff1",
+      "matchesTargetDist": true
+    },
+    {
+      "fileName": "vendor-icons-j_5-oT_4.js",
+      "status": 200,
+      "servedSha256": "1edee8640e05de308576c30d49eceb4cd4e35c86f1d9b1952dd0c40bd70b6517",
+      "targetDistSha256": "1edee8640e05de308576c30d49eceb4cd4e35c86f1d9b1952dd0c40bd70b6517",
+      "matchesTargetDist": true
+    },
+    {
+      "fileName": "index-B6iiWqu3.css",
+      "status": 200,
+      "servedSha256": "3ffe674cc6d5106b69202054605bb15f478871ccda0e30f56a9f3437bd03a35a",
+      "targetDistSha256": "3ffe674cc6d5106b69202054605bb15f478871ccda0e30f56a9f3437bd03a35a",
+      "matchesTargetDist": true
+    }
+  ],
+  "blocked": [],
+  "failures": [],
+  "at": "2026-09-27T05:59:52.473Z"
+}

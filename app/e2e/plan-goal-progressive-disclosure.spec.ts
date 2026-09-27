@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test"
 import { enterPlanWithoutRecord, openPlanOptions, refinePlan } from "./plan-flow"
+import { openActiveSessionDetails } from "./active-plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
@@ -39,6 +40,7 @@ test("creates a mobile marathon beta plan without inventing pace numbers", async
     (element) => element.scrollWidth <= element.clientWidth,
   )).toBe(true)
   await page.getByRole("button", { name: "이 계획으로 시작하기", exact: true }).click()
+  await openActiveSessionDetails(page)
   await page.getByRole("button", { name: "훈련 방법과 이유", exact: true }).first().click()
   const reader = page.getByRole("dialog")
   await reader.getByRole("tab", { name: "이유·근거" }).click()
