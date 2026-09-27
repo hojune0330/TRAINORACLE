@@ -124,6 +124,7 @@ export function PlanCandidates({
   }, [saveError, saveCode, saving, reveal])
   const [repeatPreference, setRepeatPreference] = React.useState<RepeatPreference>("NEUTRAL")
   const [targetDraftPending, setTargetDraftPending] = React.useState(false)
+  const [methodDraftPending, setMethodDraftPending] = React.useState(false)
   React.useEffect(() => {
     setRepeatPreference("NEUTRAL")
   }, [intake.eventGroup, intake.eventDistanceM, intake.trainingFocus, intake.experienceBand])
@@ -140,13 +141,13 @@ export function PlanCandidates({
   const canRevise = !saving && (saveCode === undefined || saveCode === null
     || !saveCode.startsWith("ACCOUNT_PLAN_")
     || ["ACCOUNT_PLAN_STALE", "ACCOUNT_PLAN_EVIDENCE_REQUIRED", "ACCOUNT_PLAN_REVIEW_REQUIRED"].includes(saveCode))
-  const canSelect = hasValidStartDate && !recordConfirmationPending && !detailedEvidencePending && !targetDraftPending && !selectionUnavailable
+  const canSelect = hasValidStartDate && !recordConfirmationPending && !detailedEvidencePending && !targetDraftPending && !methodDraftPending && !selectionUnavailable
   const selectedRecord = athleteRecords.find((record) => record.id === selectedRecordId)
   const selectedEventLabel = selectedRecord === undefined
     ? "선택한 종목"
     : `${selectedRecord.eventDistanceM}m`
   const recommendation = projectInstantRecommendation(defaultInstantCandidate(generated), startDate)
-  const needsReview = recordConfirmationPending || detailedEvidencePending || targetDraftPending || !hasValidStartDate
+  const needsReview = recordConfirmationPending || detailedEvidencePending || targetDraftPending || methodDraftPending || !hasValidStartDate
   React.useEffect(() => {
     if (!confirmationRequested.current || needsReview || selectionUnavailable) return
     confirmationRequested.current = false
@@ -187,6 +188,8 @@ export function PlanCandidates({
       {onChangeMethod !== undefined && resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference).length > 0 && <PlanMethodPicker
         options={resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference)}
         selected={intake.selectedDetailedTemplateRef}
+        contextKey={JSON.stringify([intake, startDate, selectedRecordId, selectedRecord?.performanceSeconds, prescriptionBinding])}
+        onPendingChange={setMethodDraftPending}
         onChange={onChangeMethod}
         repeatPreference={repeatPreference}
         onRepeatPreferenceChange={setRepeatPreference}
@@ -232,7 +235,7 @@ export function PlanCandidates({
       )}
       {detailedEvidencePending && !recordConfirmationPending && (
         <p className="plan-start-date-error" role="alert">
-          상세 훈련을 선택했어요. 같은 종목의 현재 기록을 고르고 확인해 주세요. 기록 없이 받으려면 위의 훈련 방법 선택에서 시간·RPE 기준으로 바꿀 수 있어요.
+          같은 종목의 현재 기록을 고르고 확인해 주세요. 기록 없이 받으려면 훈련 방법 선택에서 ‘시간과 체감 강도로 안내받기’를 고르세요.
         </p>
       )}
       <label ref={dateRef} className="plan-start-date" htmlFor="plan-start-date">

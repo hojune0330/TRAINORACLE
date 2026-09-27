@@ -2,6 +2,7 @@ import React from "react"
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import * as adjustmentCore from "@impl/prescription/prescription-adjustment"
 import { adjustmentPolicyReference, configurationReference } from "@impl/prescription/prescription-adjustment"
 import type { AdjustmentAuthority, PrescriptionSnapshot, ReviewedAdjustmentPolicy } from "@impl/prescription/prescription-adjustment"
 import type { PrescriptionSequence, PrescriptionSequenceNode, SequenceRecovery } from "@impl/prescription/sequence"
@@ -83,7 +84,7 @@ describe("prepared reviewed prescription adjustment editor", () => {
     opener.focus()
     document.body.style.overflow = "auto"
     render(<PrescriptionAdjustmentEditor {...props} />)
-    expect(screen.getByRole("dialog", { name: "처방 조정" })).toHaveAttribute("open")
+    expect(screen.getByRole("dialog", { name: "훈련 바꾸기" })).toHaveAttribute("open")
     expect(screen.getAllByRole("button", { name: "취소" })[0]).toHaveFocus()
     expect(applyButton()).toBeDisabled()
     expect(screen.getByRole("radio", { name: "현재 구성" })).toBeChecked()
@@ -208,12 +209,13 @@ describe("prepared reviewed prescription adjustment editor", () => {
   })
 
   it.each(["withdrawn policy", "changed catalog"])("revalidates %s at Apply against the live trusted authority", async mode => {
-    const { props } = fixture()
-    const view = render(<PrescriptionAdjustmentEditor {...props} />)
+    const { props, refs } = fixture()
+    const orderedChoices = [{ dimension: "repetitions" as const, configurations: refs }]
+    const view = render(<PrescriptionAdjustmentEditor {...props} orderedChoices={orderedChoices} />)
     await chooseA()
     const authority: AdjustmentAuthority = mode === "withdrawn policy" ? { ...props.authority, policies: [] }
       : { ...props.authority, catalog: [{ ...props.authority.catalog[0]!, configurations: [{ configurationId: "test-0", version: "1", sequence: sequence([segment(99)]) }] }] }
-    view.rerender(<PrescriptionAdjustmentEditor {...props} authority={authority} />)
+    view.rerender(<PrescriptionAdjustmentEditor {...props} authority={authority} orderedChoices={orderedChoices} />)
     await userEvent.click(applyButton())
     expect(screen.getByRole("alert")).toBeVisible()
     expect(screen.getByRole("radio", { name: "시험 구성 A" })).toBeChecked()
@@ -238,7 +240,8 @@ describe("prepared reviewed prescription adjustment editor", () => {
     expect(props.onApply).not.toHaveBeenCalled()
     await userEvent.click(screen.getByRole("button", { name: "변경안 초기화" }))
     expect(applyButton()).toBeDisabled()
-    expect(screen.getByRole("radio", { name: "현재 구성" })).toBeChecked()
+    expect(screen.getByRole("button", { name: "변경안 초기화" })).toBeDisabled()
+    expect(screen.getByRole("radio", { name: "시험 구성 A" })).toBeChecked()
   })
 
   it("detects current mutation during click-time evaluation rather than trusting render-time state", async () => {
@@ -266,27 +269,24 @@ describe("prepared reviewed prescription adjustment editor", () => {
     expect(props.onApply).not.toHaveBeenCalled()
   })
 
-  it("moves only along explicitly supplied ordered refs, disables endpoints and never generates arithmetic doses", async () => {
+  it("uses actual numeric direction over explicitly supplied refs and never generates arithmetic doses", async () => {
     const { props, refs } = fixture()
     render(<PrescriptionAdjustmentEditor {...props} orderedChoices={[
       { dimension: "repetitions", configurations: refs },
       { dimension: "recovery", configurations: [refs[2]!, refs[1]!] },
       { dimension: "time", configurations: [refs[0]!, { ...refs[1]!, configurationId: "missing" }] },
     ]} />)
-    expect(screen.getByRole("button", { name: "반복 이전 구성" })).toBeDisabled()
-    expect(screen.getByRole("button", { name: "회복 다음 구성" })).toBeDisabled()
-    expect(screen.getByRole("button", { name: "시간 다음 구성" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "반복 횟수 늘리기" })).toBeDisabled()
+    expect(screen.queryByRole("button", { name: "본운동 시간 합계 늘리기" })).toBeNull()
     expect(screen.queryByRole("spinbutton")).toBeNull()
     expect(screen.queryByRole("slider")).toBeNull()
-    await userEvent.click(screen.getByRole("button", { name: "반복 다음 구성" }))
-    expect(screen.getByRole("radio", { name: "시험 구성 A" })).toBeChecked()
-    await userEvent.click(screen.getByRole("button", { name: "반복 다음 구성" }))
+    await userEvent.click(screen.getByRole("button", { name: "반복 횟수 줄이기" }))
     expect(screen.getByRole("radio", { name: "시험 구성 B" })).toBeChecked()
-    expect(screen.getByRole("button", { name: "반복 다음 구성" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "반복 횟수 줄이기" })).toBeDisabled()
     expect(row("본운동 시간")).toEqual(["78초", "34초", "-44초"])
-    await userEvent.click(screen.getByRole("button", { name: "회복 다음 구성" }))
+    await userEvent.click(screen.getByRole("button", { name: "회복 시간 합계 늘리기" }))
     expect(screen.getByRole("radio", { name: "시험 구성 A" })).toBeChecked()
-    await userEvent.click(screen.getByRole("button", { name: "반복 이전 구성" }))
+    await userEvent.click(screen.getByRole("button", { name: "변경안 초기화" }))
     expect(screen.getByRole("radio", { name: "현재 구성" })).toBeChecked()
     expect(props.onApply).not.toHaveBeenCalled()
   })
@@ -305,7 +305,7 @@ describe("prepared reviewed prescription adjustment editor", () => {
     await userEvent.click(screen.getByText("회복 구간별 합계"))
     expect(row("마지막 회복 횟수", "변경 전후 회복 구간")).toEqual(["0회", "1회", "+1회"])
     await userEvent.click(screen.getByText("변경안 수행 순서"))
-    expect(screen.getByText(/마지막 본운동 뒤/)).toHaveTextContent("17m 속도를 낮춰 이어 달리기")
+    expect(within(screen.getByRole("region", { name: "훈련 미리보기" })).getByText(/마지막 본운동 뒤/)).toHaveTextContent("17m 속도를 낮춰 이어 달리기")
     expect(document.body).not.toHaveTextContent("contentIdentity")
     expect(document.body).not.toHaveTextContent(props.contextKey)
     expect(document.body).not.toHaveTextContent(props.current.configuration.contentIdentity)
@@ -327,20 +327,64 @@ describe("prepared reviewed prescription adjustment editor", () => {
   })
 
   it("keeps the draft when the time source throws and restores focus on forced unmount", async () => {
-    const { props } = fixture()
+    const { props, refs } = fixture()
     let fail = false
     render(<button>열기</button>)
     const opener = screen.getByRole("button", { name: "열기" })
     opener.focus()
-    const view = render(<React.StrictMode><PrescriptionAdjustmentEditor {...props} now={() => { if (fail) throw new Error("secret"); return 150 }} /></React.StrictMode>)
+    const view = render(<React.StrictMode><PrescriptionAdjustmentEditor {...props}
+      orderedChoices={[{ dimension: "repetitions", configurations: refs }]}
+      now={() => { if (fail) throw new Error("secret"); return 150 }} /></React.StrictMode>)
     await chooseA()
     fail = true
     await userEvent.click(applyButton())
     expect(screen.getByRole("alert")).toHaveTextContent("변경안을 유지했으니")
     expect(screen.getByRole("radio", { name: "시험 구성 A" })).toBeChecked()
+    expect(row("본운동과 회복 시간")).toEqual(["113초", "125초", "+12초"])
+    expect(document.body).not.toHaveTextContent("secret")
     view.unmount()
     await waitFor(() => expect(opener).toHaveFocus())
     expect(props.onApply).not.toHaveBeenCalled()
     expect(props.onCancel).not.toHaveBeenCalled()
+  })
+
+  it.each(["clock", "authority"] as const)("preserves the ordered-choice draft when %s lookup throws during render and recovers", async source => {
+    const { props, refs } = fixture()
+    const original = JSON.stringify(props.current)
+    let fail = false
+    const createDraft = adjustmentCore.createAdjustmentDraft
+    vi.spyOn(adjustmentCore, "createAdjustmentDraft").mockImplementation(input => {
+      if (fail && source === "authority") throw new Error("PRIVATE-AUTHORITY-ERROR")
+      return createDraft(input)
+    })
+    const now = () => {
+      if (fail && source === "clock") throw new Error("PRIVATE-CLOCK-ERROR")
+      return 150
+    }
+    const editor = () => <PrescriptionAdjustmentEditor {...props} now={now}
+      orderedChoices={[{ dimension: "repetitions", configurations: refs }]} />
+    const view = render(editor())
+    await chooseA()
+    expect(screen.getByRole("button", { name: "반복 횟수 줄이기" })).toBeEnabled()
+
+    fail = true
+    expect(() => view.rerender(editor())).not.toThrow()
+    expect(screen.getByRole("dialog", { name: "훈련 바꾸기" })).toHaveAttribute("open")
+    expect(screen.getByRole("radio", { name: "시험 구성 A" })).toBeChecked()
+    expect(row("본운동과 회복 시간")).toEqual(["113초", "125초", "+12초"])
+    expect(screen.queryByRole("group", { name: "반복 횟수 구성" })).toBeNull()
+    expect(document.body).not.toHaveTextContent("PRIVATE-")
+    expect(props.onApply).not.toHaveBeenCalled()
+    expect(props.onCancel).not.toHaveBeenCalled()
+    expect(JSON.stringify(props.current)).toBe(original)
+
+    fail = false
+    view.rerender(editor())
+    expect(screen.getByRole("button", { name: "반복 횟수 줄이기" })).toBeEnabled()
+    expect(screen.getByRole("radio", { name: "시험 구성 A" })).toBeChecked()
+    await userEvent.click(applyButton())
+    expect(props.onApply).toHaveBeenCalledOnce()
+    expect(vi.mocked(props.onApply).mock.calls[0]![1].configuration).toEqual(refs[1])
+    expect(JSON.stringify(props.current)).toBe(original)
   })
 })

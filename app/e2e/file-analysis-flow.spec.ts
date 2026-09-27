@@ -322,7 +322,7 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
   } else {
     expect(eligibility.familyCount).toBe(1)
     await expect(preference).toHaveCount(0)
-    await expect(method.getByText(/상세 방법은 현재 1개/u)).toBeVisible()
+    await expect(method.getByText(/선택할 수 있는 상세 방법은 1개/u)).toBeVisible()
   }
   await testInfo.attach("workorder-6.4-method-preference", { contentType: "application/json", body: Buffer.from(JSON.stringify({
     eligibleFamilyCount: eligibility.familyCount, browserToggleExercised: eligibility.familyCount > 1,
@@ -334,6 +334,8 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
   await method.getByRole("radio", { name: /1000m 5회/u }).check()
   const choose = page.getByRole("article", { name: "기초·회복 운동 시간을 범위로" }).getByRole("button", { name: "이 계획으로 시작하기" })
   await expect(choose).toBeDisabled()
+  await assertNoAutomaticPlanWrite()
+  await method.getByRole("button", { name: "이 훈련으로 변경", exact: true }).click()
   const record = page.getByRole("region", { name: "개인 페이스 기준 기록" })
   await record.getByRole("group", { name: "기준 기록 선택" }).getByRole("button").first().click()
   await record.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()

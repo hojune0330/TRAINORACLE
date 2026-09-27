@@ -24,7 +24,7 @@ try {
     page.on("pageerror", error => errors.push(error.message))
     await page.goto(`http://127.0.0.1:${address.port}/e2e/fixtures/prescription-editor-v3.html`)
     await page.getByRole("button", { name: "편집기 열기" }).click()
-    await page.getByRole("dialog", { name: "훈련 구성 조정" }).waitFor()
+    await page.getByRole("dialog", { name: "훈련 바꾸기" }).waitFor()
     const enlargeText = (selector = "dialog *") => page.evaluate(selector => {
       for (const element of document.querySelectorAll(selector)) {
         element.style.removeProperty("font-size")
@@ -39,6 +39,7 @@ try {
     }, selector)
     if (enlarged) await enlargeText()
     assert.equal(await page.getByRole("radio", { name: "시험용 세트 구성" }).count(), 0)
+    await page.getByText("구성 목록에서 고르기", { exact: true }).click()
     await page.getByRole("button", { name: "다른 검토된 구성 보기" }).click()
     const choice = page.getByRole("radio", { name: "시험용 세트 구성" })
     await choice.focus()

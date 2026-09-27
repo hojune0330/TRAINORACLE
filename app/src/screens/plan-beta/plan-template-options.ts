@@ -14,6 +14,7 @@ import {
 import { loadPlanMethodHistorySnapshot } from "../../domain/plan-beta-store"
 import type { PlanMethodCoverage } from "../../domain/plan-method-coverage"
 import { readPlanMethodDefinition } from "../../domain/plan-method-definition"
+import type { PrescriptionSequence } from "@impl/prescription/sequence"
 
 export type DetailedPlanTemplateOption = {
   readonly ref: PlanBetaIntake["selectedDetailedTemplateRef"] & object
@@ -23,6 +24,7 @@ export type DetailedPlanTemplateOption = {
   readonly mainSummary: string
   readonly recoverySummary: string
   readonly preparationSummary: string
+  readonly sequence?: PrescriptionSequence
   readonly recommended?: boolean
   readonly recommendationReason?: string
   readonly observedPerformedCount?: number
@@ -101,6 +103,7 @@ export function resolveDetailedPlanTemplateOptions(
       ref,
       method: mapping.method,
       mappingVersion: mapping.mappingVersion,
+      sequence: configuration.sequence,
       notation: authority.approval.notation,
       targetEventDistanceM: eventDistanceM,
       trainingFocus,

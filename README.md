@@ -24,6 +24,7 @@ Design package added 2026-09-10: [design_handoff_plan_beta_extension/README.md](
 
 ## TrainOracle Master Plan
 
+- **훈련 선택·간편 조절:** [상세 계획](./reports/plans/WORKOUT_CHOICE_AND_TUNING_PRODUCT_PLAN_2026-09-27.md) / [구현·검수·남은 공급 작업](./reports/implementation/WORKOUT_CHOICE_AND_TUNING_IMPLEMENTATION_2026-09-28.md). 미리보기·조절·되돌리기를 구현했으며, 새 훈련 검토안 37개의 공개 활성화는 별도입니다.
 - **계정 저장·복구 개발:** [`ACCOUNT_CANONICAL_STORAGE_IMPLEMENTATION_PLAN.md`](./ACCOUNT_CANONICAL_STORAGE_IMPLEMENTATION_PLAN.md) — 온라인을 기준으로 보관하고 기기는 미전송 초안을 보호합니다. 개발 상태와 공개 상태는 구분합니다.
   [7개 작업의 구현·서버 적용·배포 현황](./reports/implementation/ACCOUNT_STORAGE_SEVEN_TASK_DELIVERY_2026-09-08.md)에서 실제 완료 범위와 남은 작업을 확인합니다.
 - **전체 제품 방향:** [`TRAINORACLE_MASTER_PLAN.md`](./TRAINORACLE_MASTER_PLAN.md)

@@ -3115,6 +3115,17 @@
 .plan-method-picker__option small { margin-top: var(--space-1); }
 .plan-method-picker p { font-size: 0.8125rem; line-height: 1.55; margin: var(--space-3) 0; color: var(--ink-2); }
 .plan-method-picker .plan-method-picker__limit { color: var(--ink-3); }
+.plan-method-picker__tools { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); margin-block: var(--space-3); }
+.plan-method-picker__tools button { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-width: var(--app-touch-min); min-height: var(--app-touch-min); border: var(--bw-line) solid var(--line); border-radius: var(--r-md); padding: var(--space-2); background: var(--surface); color: var(--ink); font: inherit; }
+.plan-method-picker__tools button:disabled { color: var(--ink-3); background: var(--surface-2); }
+.plan-method-picker__tools button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.plan-method-picker__preview { padding-block: var(--space-3); border-block: var(--bw-line) solid var(--line); animation: plan-method-preview-in 220ms var(--ease-out-strong); }
+.plan-method-picker__preview > strong { font-size: var(--fs-h3); }
+.plan-method-picker details > summary { min-height: var(--app-touch-min); padding-block: var(--space-3); cursor: pointer; }
+.plan-method-picker__pending { margin-block: var(--space-3); }
+.plan-method-picker__pending > button { width: 100%; min-height: var(--app-touch-min); }
+@keyframes plan-method-preview-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .plan-method-picker__preview { animation: none; } }
 .plan-method-picker__history > summary {
   min-height: 44px;
   box-sizing: border-box;

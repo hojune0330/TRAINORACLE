@@ -13,6 +13,20 @@ function Recovery({ steps }: { readonly steps: readonly RecoveryStepV3[] }) {
   return <ol>{steps.map((step, i) => <li key={i}>{modes[step.mode]} · {"distanceM" in step
     ? `${step.distanceM}m` : step.seconds === null ? "시간 미지정" : durationText(step.seconds)}</li>)}</ol>
 }
+function CompactNodes({ nodes }: { readonly nodes: readonly SequenceNodeV3[] }) {
+  return <ul className="prescription-structure__compact">{nodes.map(node => <li key={node.id}>
+    {node.kind === "group" ? <><strong>{node.repeatCount}{node.repeatUnit === "SET" ? "세트" : "회 반복"}</strong><CompactNodes nodes={node.children} /></>
+      : <><strong>{node.work.kind === "distance" ? node.work.distanceM === null ? "거리 미지정" : `${node.work.distanceM}m`
+        : node.work.durationSeconds === null ? "시간 미지정" : durationText(node.work.durationSeconds)}{node.repeatCount > 1 ? ` × ${node.repeatCount}회` : ""}</strong>
+        {node.target.kind === "RACE_PACE" && <span>{node.target.eventDistanceM === null ? "기준 경기 거리 미지정" : `${node.target.eventDistanceM}m 기준 페이스`}</span>}
+        {node.target.kind === "EFFORT_GUIDANCE" && <span>{node.target.cue === null ? "구체적인 강도 안내 미지정" : effortText(node.target.cue)}</span>}
+        {node.target.kind === "SPRINT_REFERENCE" && <span>단거리 수행 기준{node.target.reference === null ? " 미연결" : " 연결됨"} · 목표 속도 별도 확인</span>}
+      </>}
+    {node.repeatCount > 1 && node.recoveryBetweenRepeats.length > 0 && <div className="prescription-structure__compact-recovery">
+      <span>{node.kind === "group" && node.repeatUnit === "SET" ? "세트" : "반복"} 사이</span><Recovery steps={node.recoveryBetweenRepeats} /></div>}
+    {node.recoveryAfter.length > 0 && <div className="prescription-structure__compact-recovery"><span>마친 뒤</span><Recovery steps={node.recoveryAfter} /></div>}
+  </li>)}</ul>
+}
 function Nodes({ nodes, phase }: { readonly nodes: readonly SequenceNodeV3[]; readonly phase: string }) {
   return <ol className="prescription-structure__nodes">{nodes.map(node => <li key={node.id}>
     <strong>{node.label ?? (node.kind === "group" ? node.repeatUnit === "SET" ? "세트" : "반복 구성" : node.role === "PREPARATION" && phase === "정리" ? "정리 구간" : roles[node.role])} · {node.repeatCount}회</strong>
@@ -34,14 +48,22 @@ function Nodes({ nodes, phase }: { readonly nodes: readonly SequenceNodeV3[]; re
     {node.recoveryAfter.length > 0 && <div><span>위 구성을 모두 마친 뒤 한 번</span><Recovery steps={node.recoveryAfter} /></div>}
   </li>)}</ol>
 }
-export function PrescriptionStructureV3({ sequence, originalDurationMinutes }: {
+export function PrescriptionStructureV3({ sequence, originalDurationMinutes, compact = false }: {
   readonly sequence: PrescriptionSequenceV3;
   readonly originalDurationMinutes?: { readonly minimum: number; readonly maximum: number };
+  readonly compact?: boolean;
 }) {
   const totals = deriveSequenceV3Totals(sequence)
   const phases = [totals.warmup, totals.main, totals.cooldown]
   const completeTime = phases.every(phase => phase.totalSeconds !== null)
   const totalSeconds = completeTime ? phases.reduce((sum, phase) => sum + phase.totalSeconds!, 0) : null
+  if (compact) return <div className="prescription-structure">
+    {sequence.warmup.length > 0 && <section className="prescription-structure__support" aria-label="준비운동"><h4>준비운동</h4><CompactNodes nodes={sequence.warmup} /></section>}
+    <h4>본운동</h4>
+    <CompactNodes nodes={sequence.main} />
+    {sequence.cooldown.length > 0 && <section className="prescription-structure__support" aria-label="정리운동"><h4>정리운동</h4><CompactNodes nodes={sequence.cooldown} /></section>}
+    <p aria-label="계획된 전체 시간">{totalSeconds === null ? "전체 시간은 아직 계산할 수 없어요." : `총 ${durationText(totalSeconds)}`}</p>
+  </div>
   return <div className="prescription-structure">
     <p aria-label="계획된 전체 시간">{totalSeconds === null
       ? "전체 시간 미산출 · 시간이 정해지지 않은 구간이 있어요."

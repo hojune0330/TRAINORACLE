@@ -1,0 +1,109 @@
+{
+  "recordedAt": "2026-09-27T16:10:57.432Z",
+  "notes": [
+    "workout-unit-utc was actually default KST despite filename",
+    "full explicit UTC was started during review edits and is NOT an immutable release candidate gate",
+    "final-targeted is KST; final-utc explicitly sets TZ=UTC",
+    "CI and deployment are separate, not asserted here"
+  ],
+  "checks": [
+    {
+      "name": "workout-unit-utc",
+      "sha256": "68d202b452ca555e874b61cd28a9cc48f8e29754e9f7d40afd8db022aa9deec2",
+      "total": 4482,
+      "passed": 4445,
+      "failed": 2,
+      "skipped": 35,
+      "failedNames": [
+        "plan beta user flow persists every explicit answer while keeping the next frame locked until completion",
+        "changes one MAIN to a structurally different set method and preserves its exact recovery explanation through save"
+      ]
+    },
+    {
+      "name": "workout-unit-kst",
+      "sha256": "fcd199b0f79ebea1867e374a030b173704efbb6860f0aecad6101ff3a1ea5451",
+      "total": 4483,
+      "passed": 4445,
+      "failed": 3,
+      "skipped": 35,
+      "failedNames": [
+        "continues twice without fabricating outcomes or resetting the original lineage",
+        "candidate method picker starts compact and tells the truth about the one detailed method",
+        "candidate method picker sends the exact reference and does not treat RPE as another detailed method"
+      ]
+    },
+    {
+      "name": "workout-kst-followup",
+      "sha256": "b826040755a949bd0377543cc8b76f4830a5c923729ccb2a3d79783dc5b9047e",
+      "total": 33,
+      "passed": 33,
+      "failed": 0,
+      "skipped": 0,
+      "failedNames": []
+    },
+    {
+      "name": "workout-unit-explicit-utc",
+      "sha256": "29af5cac9b8ee7e64803446c753b60d0a5f3908932962292e05601854e0d6bb4",
+      "total": 4491,
+      "passed": 4454,
+      "failed": 2,
+      "skipped": 35,
+      "failedNames": [
+        "workout tuning over complete reviewed choices does not merge different set recoveries through a single-set reduction",
+        "candidate method picker keeps two explicit set-rest methods when a single-set variant sorts first by ID"
+      ]
+    },
+    {
+      "name": "workout-final-targeted",
+      "sha256": "291b8d0618e5370101abbe85b3c84aff7894809597e46079a4dd16c59146a974",
+      "total": 57,
+      "passed": 57,
+      "failed": 0,
+      "skipped": 0,
+      "failedNames": []
+    },
+    {
+      "name": "workout-final-utc",
+      "sha256": "62d1e725a473bc314eb06b614391cd45f28c9d7b84cdf7c8644e760397c5b907",
+      "total": 57,
+      "passed": 57,
+      "failed": 0,
+      "skipped": 0,
+      "failedNames": []
+    }
+  ],
+  "sourceHashes": [
+    {
+      "path": "app/src/domain/workout-preview-history.ts",
+      "sha256": "0bc5a223368ed1336a00034509ea3bc6443c08bb35bf9371f2173502c9a09ea0"
+    },
+    {
+      "path": "app/src/domain/workout-tuning-v3.ts",
+      "sha256": "358801f0f0c0469ce290ff798ad8bbf7439f539a7c28dfd0cb6cf8008a2ab042"
+    },
+    {
+      "path": "app/src/domain/workout-method-identity.ts",
+      "sha256": "9241015cc7309505b1ea852a219ccf0f3b96d73447f8ccaa07365d400259b344"
+    },
+    {
+      "path": "app/src/screens/plan-beta/PlanMethodPicker.tsx",
+      "sha256": "1928faa1079b27e235431c67133455ad562e399c6604e18735e6123fd3f6684e"
+    },
+    {
+      "path": "app/src/screens/plan-beta/PrescriptionAdjustmentEditor.tsx",
+      "sha256": "586be805bc6204c11f19df06f6d547780a2bad4b3e3dc3c0bc4bdad2c30501c0"
+    },
+    {
+      "path": "app/src/screens/plan-beta/PrescriptionAdjustmentEditorV3.tsx",
+      "sha256": "02fac8aac517e41bfaa7e90977571e60a840c9887db8d3d2a90c107164b38231"
+    },
+    {
+      "path": "app/src/screens/plan-beta/PrescriptionStructureV3.tsx",
+      "sha256": "8c556485bf75503a18fcffa48359422fe8fe5994988a666140f3efede8bec954"
+    },
+    {
+      "path": "app/src/screens/plan-beta/PlanCandidates.tsx",
+      "sha256": "40d254310057e4b5126435df7b32863d53823f940a800d2cba5dd27dbbc246ca"
+    }
+  ]
+}

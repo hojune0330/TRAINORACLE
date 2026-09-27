@@ -69,8 +69,30 @@
 .prescription-adjustment .prescription-adjustment__apply:not(:disabled) { background: var(--brand); border-color: var(--brand); color: var(--surface); }
 .prescription-adjustment__discard { width: min(100%, 480px); margin: auto; padding: var(--space-6); overflow: auto; }
 .prescription-adjustment__discard .prescription-adjustment__actions { padding-inline: 0; flex-wrap: wrap; }
+.prescription-adjustment__preview-tools { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.prescription-adjustment__preview-tools > button { display: inline-flex; align-items: center; gap: var(--space-2); }
+.prescription-adjustment__history { display: flex; gap: var(--space-2); margin-left: auto; }
+.prescription-adjustment__changes { padding: var(--space-2) 0; list-style: none; font-size: max(var(--fs-caption), 0.8125rem); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.prescription-adjustment__changes li + li { margin-top: var(--space-1); }
+.prescription-adjustment__content .prescription-adjustment__preview { padding-top: 0; animation: workout-preview-in 220ms var(--ease-out-strong); }
+.prescription-adjustment__preview .prescription-structure > section { padding-top: var(--space-2); }
+.prescription-adjustment__preview .prescription-structure :is(h4, p) { margin-block: var(--space-2); }
+.prescription-adjustment__preview .prescription-structure__nodes { margin-block: var(--space-2); }
+.prescription-adjustment__stepper { grid-template-columns: minmax(72px, 1fr) var(--app-touch-min) minmax(56px, 1fr) var(--app-touch-min); }
+.prescription-adjustment__stepper output { font-variant-numeric: tabular-nums; font-weight: 600; }
+.prescription-structure__compact { list-style: none; margin: 0; padding: 0; }
+.prescription-structure__compact > li { padding-block: var(--space-2); }
+.prescription-structure__compact > li > strong { display: block; font-size: max(var(--fs-h3), 1.125rem); }
+.prescription-structure__compact > li > span { display: block; }
+.prescription-structure__support .prescription-structure__compact > li > strong { font-size: inherit; }
+.prescription-structure__compact .prescription-structure__compact { padding-left: var(--space-3); }
+.prescription-structure__compact-recovery { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2); color: var(--ink-2); margin-top: var(--space-2); }
+.prescription-structure__compact-recovery ol { margin: 0; padding-left: var(--space-4); }
+.prescription-structure__compact-recovery ol:has(> li:only-child) { list-style: none; padding: 0; }
+@keyframes workout-preview-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .prescription-adjustment__content .prescription-adjustment__preview { animation: none; } }
 @media (max-width: 374px) {
   .prescription-adjustment__content { padding-inline: var(--space-3); }
   .prescription-adjustment__totals { font-size: max(var(--fs-caption), 0.75rem); }
-  .prescription-adjustment__stepper { grid-template-columns: 40px var(--app-touch-min) minmax(0, 1fr) var(--app-touch-min); }
+  .prescription-adjustment__stepper { grid-template-columns: minmax(64px, 1fr) var(--app-touch-min) minmax(40px, 1fr) var(--app-touch-min); }
 }

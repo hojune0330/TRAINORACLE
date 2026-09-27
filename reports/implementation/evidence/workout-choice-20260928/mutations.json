@@ -1,0 +1,46 @@
+{
+  "status": "PASS",
+  "sourceFilesModified": false,
+  "results": [
+    {
+      "id": "history-cap",
+      "baseline": "PASS",
+      "injectedDefect": "DETECTED"
+    },
+    {
+      "id": "rep-only-fake-variety",
+      "baseline": "PASS",
+      "injectedDefect": "DETECTED"
+    },
+    {
+      "id": "numeric-direction",
+      "baseline": "PASS",
+      "injectedDefect": "DETECTED"
+    },
+    {
+      "id": "unknown-not-zero",
+      "baseline": "PASS",
+      "injectedDefect": "DETECTED"
+    },
+    {
+      "id": "compound-repetition-unit",
+      "baseline": "PASS",
+      "injectedDefect": "DETECTED"
+    },
+    {
+      "id": "single-repetition-not-new-method",
+      "baseline": "PASS",
+      "injectedDefect": "DETECTED"
+    },
+    {
+      "id": "method-exhaustion",
+      "baseline": "PASS",
+      "injectedDefect": "DETECTED"
+    },
+    {
+      "id": "nested-single-set-bridge",
+      "baseline": "PASS",
+      "injectedDefect": "DETECTED"
+    }
+  ]
+}

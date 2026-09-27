@@ -1,12 +1,14 @@
 import React from "react"
 import { createPortal } from "react-dom"
-import { ArrowLeft, Minus, Plus, RotateCcw } from "lucide-react"
+import { ArrowLeft, Minus, Plus, RotateCcw, Undo2, Redo2, RefreshCw } from "lucide-react"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
 import { applyAdjustmentDraftV3, createAdjustmentDraftV3 } from "@impl/prescription/prescription-adjustment-v3"
 import type { AdjustmentAuthorityV3, AdjustmentDraftV3, AdjustmentReceiptV3, PrescriptionSnapshotV3 } from "@impl/prescription/prescription-adjustment-v3"
 import type { AdjustmentPolicyReference, ConfigurationReference } from "@impl/prescription/prescription-adjustment"
 import { deriveSequenceV3Totals, parsePrescriptionSequenceV3 } from "@impl/prescription/sequence-v3"
 import { hasCanonicalJsonTree } from "../../domain/plan-beta-schema"
+import { createWorkoutPreviewHistory, pushWorkoutPreview, undoWorkoutPreview, redoWorkoutPreview } from "../../domain/workout-preview-history"
+import { buildWorkoutTuningStepsV3, distinctWorkoutMethodsV3, nextWorkoutMethodV3, workoutTuningChangesV3 } from "../../domain/workout-tuning-v3"
 import { PrescriptionStructureV3 } from "./PrescriptionStructureV3"
 import "./PrescriptionAdjustmentEditor.css"
 
@@ -28,7 +30,6 @@ type Props = {
   readonly onApply: (receipt: AdjustmentReceiptV3, prescription: PrescriptionSnapshotV3) => void | Promise<void>
   readonly onCancel: () => void
 }
-const DIMENSIONS = { repetitions: "반복", distance: "거리", time: "시간", recovery: "회복", sets: "세트", intensity: "강도" } as const
 const PHASES = { warmup: "준비운동", main: "본운동", cooldown: "정리운동" } as const
 function identity(value: unknown) {
   try { return hasCanonicalJsonTree(value) ? canonicalJsonFingerprint("trainoracle.adjustment-editor.v3", value) : null }
@@ -67,13 +68,21 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
       initialConfigurationIdentity: identity(props.initialConfiguration ?? null), initialDraft, initialError,
       current: parsed.kind === "parsed" ? { configuration: { ...props.current.configuration }, sequence: parsed.sequence } : null }
   })
-  const [draft, setDraft] = React.useState<AdjustmentDraftV3 | null>(opened.initialDraft), [error, setError] = React.useState<string | null>(opened.initialError)
+  const [history, setHistory] = React.useState(() => createWorkoutPreviewHistory<AdjustmentDraftV3 | null>(opened.initialDraft))
+  const draft = history.present
+  const [seenMethods, setSeenMethods] = React.useState<readonly PrescriptionSnapshotV3[]>(() => {
+    const initial = opened.initialDraft?.after ?? opened.current
+    return initial ? [initial] : []
+  })
+  const [error, setError] = React.useState<string | null>(opened.initialError)
   const [discarding, setDiscarding] = React.useState(false), [closed, setClosed] = React.useState(false)
   const [applying, setApplying] = React.useState(false), [invalidated, setInvalidated] = React.useState(false)
   const [showAllChoices, setShowAllChoices] = React.useState(false)
+  const [showAllControls, setShowAllControls] = React.useState(false)
   const pending = React.useRef(false), completed = React.useRef(false), mounted = React.useRef(true)
   const latest = React.useRef(props); latest.current = props
   const dialog = React.useRef<HTMLDialogElement>(null), back = React.useRef<HTMLButtonElement>(null)
+  const choiceDetails = React.useRef<HTMLDetailsElement>(null)
   const keepEditing = React.useRef<HTMLButtonElement>(null), discardOpener = React.useRef<HTMLElement | null>(null)
   const id = React.useId()
   const changed = (live: Props) => opened.currentIdentity === null || identity(live.current) !== opened.currentIdentity
@@ -102,22 +111,41 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
   }
   const requestCancel = () => {
     if (pending.current || completed.current) return
-    if (!draft || same(draft.after.configuration, opened.initialDraft?.after.configuration)) { cancel(); return }
+    if (same(draft?.after.configuration ?? opened.current?.configuration, opened.initialDraft?.after.configuration ?? opened.current?.configuration)) { cancel(); return }
     discardOpener.current = document.activeElement instanceof HTMLElement ? document.activeElement : back.current
     setDiscarding(true)
   }
-  const reset = () => { if (!pending.current && !completed.current) { setDraft(null); setError(null) } }
-  const choose = (target: ConfigurationReference) => {
+  const select = (target: ConfigurationReference, action: "choose" | "undo" | "redo" = "choose") => {
     if (pending.current || completed.current || stale || discarding || !opened.current) return
-    if (same(target, opened.current.configuration)) { reset(); return }
     try {
       const live = latest.current
       if (changed(live)) { setInvalidated(true); return }
-      const result = createAdjustmentDraftV3({ authority: live.authority, policy: live.policy, contextKey: live.contextKey,
-        current: opened.current, target, nowMs: live.now() })
-      if (result.kind !== "draft") { setError(errorMessage(result.code)); return }
-      setDraft(result.draft); setError(null)
+      let next: AdjustmentDraftV3 | null = null
+      if (!same(target, opened.current.configuration)) {
+        if (!live.choices.some(c => same(c.configuration, target))) { setError("이 구성은 더 이상 선택할 수 없어요. 현재 변경안은 유지했어요."); return }
+        const result = createAdjustmentDraftV3({ authority: live.authority, policy: live.policy, contextKey: live.contextKey,
+          current: opened.current, target, nowMs: live.now() })
+        if (result.kind !== "draft") { setError(errorMessage(result.code)); return }
+        next = result.draft
+      }
+      setHistory(previous => {
+        if (action === "undo") return { ...undoWorkoutPreview(previous), present: next }
+        if (action === "redo") return { ...redoWorkoutPreview(previous), present: next }
+        return same(previous.present?.after.configuration ?? opened.current?.configuration, target)
+          ? previous : pushWorkoutPreview(previous, next)
+      })
+      const seen = next?.after ?? opened.current
+      setSeenMethods(previous => previous.some(item => same(item.configuration, seen.configuration)) ? previous : [...previous, seen])
+      setError(null)
     } catch { setError("구성을 확인하지 못했어요. 현재 훈련은 바뀌지 않았어요.") }
+  }
+  const choose = (target: ConfigurationReference) => select(target)
+  const reset = () => { const target = opened.initialDraft?.after.configuration ?? opened.current?.configuration; if (target) select(target) }
+  const travel = (action: "undo" | "redo") => {
+    const entries = action === "undo" ? history.past : history.future
+    if (!entries.length || !opened.current) return
+    const entry = action === "undo" ? entries[entries.length - 1] : entries[0]
+    select(entry?.after.configuration ?? opened.current.configuration, action)
   }
   const apply = async () => {
     if (pending.current || completed.current || !draft || discarding) return
@@ -144,9 +172,30 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
   const a = before ? deriveSequenceV3Totals(before) : null, b = after ? deriveSequenceV3Totals(after) : null
   const selected = draft?.after.configuration ?? opened.current?.configuration
   const blocked = applying || stale || !opened.current
+  const authorized = opened.current ? props.choices.flatMap(choice => {
+    try {
+      const result = createAdjustmentDraftV3({ authority: props.authority, policy: props.policy, contextKey: props.contextKey,
+        current: opened.current!, target: choice.configuration, nowMs: props.now() })
+      return result.kind === "draft" ? [result.draft.after] : []
+    } catch { return [] }
+  }) : []
+  const preview = draft?.after ?? opened.current
+  const pool = opened.current ? [opened.current, ...authorized] : authorized
+  const otherMethod = preview ? nextWorkoutMethodV3(preview, pool, seenMethods) : null
+  const methodsExhausted = !otherMethod && distinctWorkoutMethodsV3(pool).length > 1
+  const controls = preview ? buildWorkoutTuningStepsV3(preview, pool) : []
+  const changes = draft && opened.current ? workoutTuningChangesV3(opened.current, draft.after) : []
+  const resetDisabled = same(selected, opened.initialDraft?.after.configuration ?? opened.current?.configuration)
   return createPortal(<dialog ref={dialog} className="prescription-adjustment" role={discarding ? "alertdialog" : "dialog"}
     aria-modal="true" aria-busy={applying} aria-labelledby={`${id}-${discarding ? "discard" : "title"}`}
     aria-describedby={discarding ? `${id}-discard-description` : props.sessionLabel ? `${id}-session` : undefined}
+    onKeyDown={event => {
+      if (blocked || discarding || !(event.ctrlKey || event.metaKey) || event.altKey) return
+      const target = event.target as HTMLElement
+      if (target.closest('input, textarea, select, [contenteditable="true"]')) return
+      if (event.key.toLowerCase() === "z") { event.preventDefault(); travel(event.shiftKey ? "redo" : "undo") }
+      else if (event.key.toLowerCase() === "y") { event.preventDefault(); travel("redo") }
+    }}
     onCancel={event => { event.preventDefault(); if (discarding) setDiscarding(false); else requestCancel() }}>
     {discarding ? <div className="prescription-adjustment__discard">
       <h2 id={`${id}-discard`}>변경안을 버릴까요?</h2><p id={`${id}-discard-description`}>아직 저장하지 않은 변경안만 없어져요. 기존 계획은 유지돼요.</p>
@@ -155,15 +204,49 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
     </div> : <>
       <header className="prescription-adjustment__header">
         <button ref={back} type="button" className="prescription-adjustment__icon" title="취소" aria-label="취소" disabled={applying} onClick={requestCancel}><ArrowLeft size={20} aria-hidden="true" /></button>
-        <h2 id={`${id}-title`}>훈련 구성 조정</h2>
-        <button type="button" className="prescription-adjustment__icon" title="변경안 초기화" aria-label="변경안 초기화" disabled={!draft || applying} onClick={reset}><RotateCcw size={18} aria-hidden="true" /></button>
+        <h2 id={`${id}-title`}>훈련 바꾸기</h2>
+        <button type="button" className="prescription-adjustment__icon" title="처음 열었던 구성으로" aria-label="변경안 초기화" disabled={resetDisabled || blocked} onClick={reset}><RotateCcw size={18} aria-hidden="true" /></button>
       </header>
       <div className="prescription-adjustment__content">
         {props.sessionLabel && <p id={`${id}-session`}>{props.sessionLabel}</p>}
         {stale && <p role="alert">현재 훈련이나 적용 조건이 바뀌었어요. 닫은 뒤 다시 열어 주세요.</p>}
         {error && <p role="alert">{error}</p>}
+        <div className="prescription-adjustment__preview-tools">
+          {(otherMethod || methodsExhausted) && <button type="button" disabled={blocked} onClick={() => {
+            if (otherMethod) choose(otherMethod.configuration)
+            else {
+              setShowAllChoices(true)
+              if (choiceDetails.current) { choiceDetails.current.open = true; choiceDetails.current.scrollIntoView({ block: "nearest" }) }
+            }
+          }}><RefreshCw size={18} aria-hidden="true" />{otherMethod ? "다른 훈련" : "본 방법 다시 보기"}</button>}
+          <div role="group" aria-label="변경안 되돌리기" className="prescription-adjustment__history">
+            <button type="button" className="prescription-adjustment__icon" title="되돌리기" aria-label="되돌리기" disabled={blocked || !history.past.length} onClick={() => travel("undo")}><Undo2 size={18} aria-hidden="true" /></button>
+            <button type="button" className="prescription-adjustment__icon" title="다시 하기" aria-label="다시 하기" disabled={blocked || !history.future.length} onClick={() => travel("redo")}><Redo2 size={18} aria-hidden="true" /></button>
+          </div>
+        </div>
+        {methodsExhausted && <p className="prescription-adjustment__note">선택 가능한 방법을 모두 봤어요.</p>}
+        <p role="status" className="prescription-adjustment__note">{draft ? "바꾼 훈련을 미리 보고 있어요. 아직 계획에는 반영하지 않았어요." : "현재 훈련이에요. 바꿔 본 뒤 적용할 수 있어요."}</p>
+        <section className="prescription-adjustment__preview" aria-label="훈련 미리보기" key={identity(selected)}>
+          {after && <PrescriptionStructureV3 sequence={after} compact />}
+        </section>
+        {changes.length > 0 && <ul className="prescription-adjustment__changes" aria-label="바뀐 값" aria-live="polite">
+          {changes.map(change => <li key={change}>{change}</li>)}
+        </ul>}
+        {controls.slice(0, showAllControls ? undefined : 2).map(control => <div key={control.dimension}
+          className="prescription-adjustment__stepper" role="group" aria-label={control.label}>
+          <span>{control.label}</span>
+          <button type="button" className="prescription-adjustment__icon" aria-label={control.decrease?.label ?? `${control.label} 줄이기`} title={control.decrease?.label ?? `${control.label} 줄이기`}
+            disabled={blocked || !control.decrease} onClick={() => { if (control.decrease) choose(control.decrease.target.configuration) }}><Minus size={18} aria-hidden="true" /></button>
+          <output>{control.value}{control.unit}</output>
+          <button type="button" className="prescription-adjustment__icon" aria-label={control.increase?.label ?? `${control.label} 늘리기`} title={control.increase?.label ?? `${control.label} 늘리기`}
+            disabled={blocked || !control.increase} onClick={() => { if (control.increase) choose(control.increase.target.configuration) }}><Plus size={18} aria-hidden="true" /></button>
+        </div>)}
+        {controls.length > 2 && <button type="button" aria-expanded={showAllControls} onClick={() => setShowAllControls(value => !value)}>{showAllControls ? "조절 접기" : "더 조절"}</button>}
+        {controls.length > 0 && <p className="prescription-adjustment__note">구성에 따라 다른 값도 함께 바뀔 수 있어요. 위 훈련 순서를 확인해 주세요.</p>}
+        <details><summary>준비부터 정리까지 순서 보기</summary>{after && <PrescriptionStructureV3 sequence={after} />}</details>
+        <details ref={choiceDetails}><summary>구성 목록에서 고르기</summary>
         <fieldset disabled={blocked} className="prescription-adjustment__choices"><legend>훈련 구성</legend>
-          <label><input type="radio" name={`${id}-choice`} checked={!draft} onChange={reset} />현재 구성</label>
+          <label><input type="radio" name={`${id}-choice`} checked={!draft} onChange={() => { if (opened.current) choose(opened.current.configuration) }} />현재 구성</label>
           {props.choices.filter(c => !same(c.configuration, opened.current?.configuration)
             && (showAllChoices || props.primaryConfigurations === undefined || same(c.configuration, selected)
               || props.primaryConfigurations.some(ref => same(ref, c.configuration)))).map((choice, i) => <label key={`${i}-${choice.configuration.configurationId}`}>
@@ -173,22 +256,9 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
           && !props.primaryConfigurations!.some(ref => same(ref, c.configuration))) && <button type="button"
           disabled={blocked} aria-expanded={showAllChoices} onClick={() => setShowAllChoices(value => !value)}>
           {showAllChoices ? "기본 선택지만 보기" : "다른 검토된 구성 보기"}</button>}
-        {(props.orderedChoices ?? []).map((group, i) => {
-          const index = group.configurations.findIndex(ref => same(ref, selected)), label = DIMENSIONS[group.dimension]
-          const previous = index > 0 ? group.configurations[index - 1] : undefined
-          const next = index >= 0 ? group.configurations[index + 1] : undefined
-          const available = (ref: ConfigurationReference | undefined) => ref !== undefined
-            && (same(ref, opened.current?.configuration) || props.choices.some(c => same(c.configuration, ref)))
-          return <div key={`${group.dimension}-${i}`} className="prescription-adjustment__stepper" role="group" aria-label={`${label} 구성`}>
-            <span>{label}</span><button type="button" className="prescription-adjustment__icon" aria-label={`${label} 이전 구성`} title={`${label} 이전 구성`}
-              disabled={blocked || !available(previous)} onClick={() => { if (previous) choose(previous) }}><Minus size={18} aria-hidden="true" /></button>
-            <output>{draft ? props.choices.find(c => same(c.configuration, selected))?.label ?? "선택한 구성" : "현재 구성"}</output>
-            <button type="button" className="prescription-adjustment__icon" aria-label={`${label} 다음 구성`} title={`${label} 다음 구성`}
-              disabled={blocked || !available(next)} onClick={() => { if (next) choose(next) }}><Plus size={18} aria-hidden="true" /></button>
-          </div>
-        })}
-        <h3>변경 전후</h3><p className="prescription-adjustment__note">거리와 시간은 따로 계산해요. 값이 없는 항목은 추정하지 않아요.</p>
-        {(["warmup", "main", "cooldown"] as const).map(phase => <details key={phase} open={phase === "main"}>
+        </details>
+        <details><summary>바뀐 수치 비교</summary><p className="prescription-adjustment__note">거리와 시간은 따로 계산해요. 값이 없는 항목은 추정하지 않아요.</p>
+        {(["warmup", "main", "cooldown"] as const).map(phase => <details key={phase}>
           <summary>{PHASES[phase]} 합계</summary>
           <table className="prescription-adjustment__totals" aria-label={`${PHASES[phase]} 변경 전후 합계`}>
             <thead><tr><th scope="col">항목</th><th scope="col">현재</th><th scope="col">변경안</th><th scope="col">차이</th></tr></thead>
@@ -198,8 +268,8 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
                 <td>{first === null || second === null ? "산출 불가" : `${second > first ? "+" : ""}${metric(second - first, unit)}`}</td></tr>
             })}</tbody>
           </table></details>)}
+        </details>
         <details><summary>현재 수행 순서</summary>{before && <PrescriptionStructureV3 sequence={before} />}</details>
-        <details><summary>변경안 수행 순서</summary>{after && <PrescriptionStructureV3 sequence={after} />}</details>
       </div>
       <footer className="prescription-adjustment__actions"><button type="button" disabled={applying} onClick={requestCancel}>취소</button>
         <button type="button" className="prescription-adjustment__apply" disabled={!draft || blocked} onClick={() => void apply()}>{applying ? "적용 중" : "변경안 적용"}</button></footer>

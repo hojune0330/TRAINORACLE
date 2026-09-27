@@ -1,0 +1,1684 @@
+{
+  "kind": "SYNTHETIC_PLANNING_SCENARIOS",
+  "seed": 20260927,
+  "algorithm": "LCG32: state = (1664525 * state + 1013904223) modulo 2^32",
+  "generatorSha256": "4cad9484b24177d706c7169c2612cab202491ec23a93676f24bf0fc4035cc078",
+  "independentAgents": 0,
+  "realParticipants": 0,
+  "appTestsExecuted": 0,
+  "scientificDoseChecksExecuted": 0,
+  "verdict": "NO_PRODUCT_PASS_FAIL_CLAIM",
+  "coverage": {
+    "personas": 24,
+    "traces": 96,
+    "steps": 768,
+    "actionCounts": {
+      "OTHER": 25,
+      "REPS_UP": 21,
+      "REPS_DOWN": 20,
+      "DISTANCE_UP": 17,
+      "DISTANCE_DOWN": 19,
+      "TIME_UP": 22,
+      "TIME_DOWN": 23,
+      "EASIER": 22,
+      "PACE_FASTER": 23,
+      "MORE_REST": 24,
+      "LESS_REST": 23,
+      "SPLIT_SETS": 27,
+      "UNDO": 20,
+      "REDO": 24,
+      "RESET": 25,
+      "OPEN_REASON": 25,
+      "CLOSE_REASON": 22,
+      "BACK": 26,
+      "REOPEN": 28,
+      "APPLY": 30,
+      "DOUBLE_APPLY": 22,
+      "ACK_LOST": 23,
+      "OFFLINE": 27,
+      "ONLINE": 19,
+      "RECORD_CHANGED": 27,
+      "DATE_CHANGED": 23,
+      "ACCOUNT_CHANGED": 26,
+      "SAFETY_CHANGED": 29,
+      "DELETE_PLAN": 26,
+      "LOG_RESULT": 25,
+      "START_SESSION": 29,
+      "RULE_REVOKED": 26
+    }
+  },
+  "scenarios": [
+    {
+      "id": "P01-1",
+      "persona": "P01",
+      "context": "first-time marathon; no record; guest",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "REDO",
+        "DOUBLE_APPLY",
+        "DISTANCE_DOWN",
+        "BACK",
+        "REOPEN",
+        "LOG_RESULT",
+        "TIME_DOWN",
+        "LOG_RESULT"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P01-2",
+      "persona": "P01",
+      "context": "first-time marathon; no record; guest",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "OFFLINE",
+        "LESS_REST",
+        "REPS_UP",
+        "DISTANCE_UP",
+        "ACCOUNT_CHANGED",
+        "PACE_FASTER",
+        "TIME_DOWN",
+        "ACCOUNT_CHANGED"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P01-3",
+      "persona": "P01",
+      "context": "first-time marathon; no record; guest",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "OTHER",
+        "OFFLINE",
+        "LESS_REST",
+        "EASIER",
+        "RESET",
+        "CLOSE_REASON",
+        "REPS_UP",
+        "CLOSE_REASON"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P01-4",
+      "persona": "P01",
+      "context": "first-time marathon; no record; guest",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "ACK_LOST",
+        "RESET",
+        "OPEN_REASON",
+        "DATE_CHANGED",
+        "APPLY",
+        "CLOSE_REASON",
+        "MORE_REST",
+        "ACCOUNT_CHANGED"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P02-1",
+      "persona": "P02",
+      "context": "experienced 5km; current fractional-second record",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "RULE_REVOKED",
+        "APPLY",
+        "TIME_UP",
+        "OFFLINE",
+        "OFFLINE",
+        "RECORD_CHANGED",
+        "ACCOUNT_CHANGED",
+        "TIME_UP"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P02-2",
+      "persona": "P02",
+      "context": "experienced 5km; current fractional-second record",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "REOPEN",
+        "MORE_REST",
+        "LESS_REST",
+        "OFFLINE",
+        "MORE_REST",
+        "RESET",
+        "SAFETY_CHANGED",
+        "REPS_UP"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P02-3",
+      "persona": "P02",
+      "context": "experienced 5km; current fractional-second record",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "DISTANCE_DOWN",
+        "DATE_CHANGED",
+        "DOUBLE_APPLY",
+        "DISTANCE_DOWN",
+        "APPLY",
+        "MORE_REST",
+        "LESS_REST",
+        "APPLY"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P02-4",
+      "persona": "P02",
+      "context": "experienced 5km; current fractional-second record",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "LESS_REST",
+        "EASIER",
+        "PACE_FASTER",
+        "DELETE_PLAN",
+        "SAFETY_CHANGED",
+        "APPLY",
+        "CLOSE_REASON",
+        "LESS_REST"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P03-1",
+      "persona": "P03",
+      "context": "youth 800m; self-directed; current record",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "DISTANCE_DOWN",
+        "ONLINE",
+        "OTHER",
+        "EASIER",
+        "DOUBLE_APPLY",
+        "OTHER",
+        "REPS_DOWN",
+        "DATE_CHANGED"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P03-2",
+      "persona": "P03",
+      "context": "youth 800m; self-directed; current record",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "BACK",
+        "PACE_FASTER",
+        "BACK",
+        "DELETE_PLAN",
+        "DATE_CHANGED",
+        "LOG_RESULT",
+        "LESS_REST",
+        "REDO"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P03-3",
+      "persona": "P03",
+      "context": "youth 800m; self-directed; current record",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "UNDO",
+        "DISTANCE_UP",
+        "MORE_REST",
+        "DISTANCE_UP",
+        "SPLIT_SETS",
+        "SPLIT_SETS",
+        "DATE_CHANGED",
+        "TIME_DOWN"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P03-4",
+      "persona": "P03",
+      "context": "youth 800m; self-directed; current record",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "REOPEN",
+        "REOPEN",
+        "PACE_FASTER",
+        "RECORD_CHANGED",
+        "REPS_DOWN",
+        "LESS_REST",
+        "EASIER",
+        "DELETE_PLAN"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P04-1",
+      "persona": "P04",
+      "context": "youth 1500m; coach-required authorization",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "ONLINE",
+        "ACK_LOST",
+        "OPEN_REASON",
+        "CLOSE_REASON",
+        "REPS_DOWN",
+        "REPS_UP",
+        "OFFLINE",
+        "OFFLINE"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P04-2",
+      "persona": "P04",
+      "context": "youth 1500m; coach-required authorization",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "OTHER",
+        "REPS_UP",
+        "DOUBLE_APPLY",
+        "DISTANCE_DOWN",
+        "DELETE_PLAN",
+        "EASIER",
+        "PACE_FASTER",
+        "REDO"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P04-3",
+      "persona": "P04",
+      "context": "youth 1500m; coach-required authorization",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "SPLIT_SETS",
+        "ACK_LOST",
+        "START_SESSION",
+        "RECORD_CHANGED",
+        "RECORD_CHANGED",
+        "BACK",
+        "ONLINE",
+        "APPLY"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P04-4",
+      "persona": "P04",
+      "context": "youth 1500m; coach-required authorization",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "ACCOUNT_CHANGED",
+        "LOG_RESULT",
+        "RESET",
+        "MORE_REST",
+        "RESET",
+        "DISTANCE_UP",
+        "DELETE_PLAN",
+        "DOUBLE_APPLY"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P05-1",
+      "persona": "P05",
+      "context": "university athlete; two sessions; editing PM",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "REOPEN",
+        "RESET",
+        "APPLY",
+        "DELETE_PLAN",
+        "DELETE_PLAN",
+        "RECORD_CHANGED",
+        "START_SESSION",
+        "START_SESSION"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P05-2",
+      "persona": "P05",
+      "context": "university athlete; two sessions; editing PM",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "SAFETY_CHANGED",
+        "MORE_REST",
+        "TIME_UP",
+        "LESS_REST",
+        "ACCOUNT_CHANGED",
+        "REPS_UP",
+        "MORE_REST",
+        "LESS_REST"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P05-3",
+      "persona": "P05",
+      "context": "university athlete; two sessions; editing PM",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "APPLY",
+        "RULE_REVOKED",
+        "UNDO",
+        "ACK_LOST",
+        "REPS_DOWN",
+        "REDO",
+        "ONLINE",
+        "MORE_REST"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P05-4",
+      "persona": "P05",
+      "context": "university athlete; two sessions; editing PM",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "LOG_RESULT",
+        "ACK_LOST",
+        "REDO",
+        "RULE_REVOKED",
+        "RECORD_CHANGED",
+        "SPLIT_SETS",
+        "ONLINE",
+        "RESET"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P06-1",
+      "persona": "P06",
+      "context": "working runner; explicit total-time cap",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "REDO",
+        "RESET",
+        "UNDO",
+        "ONLINE",
+        "TIME_UP",
+        "DATE_CHANGED",
+        "PACE_FASTER",
+        "START_SESSION"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P06-2",
+      "persona": "P06",
+      "context": "working runner; explicit total-time cap",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "SPLIT_SETS",
+        "APPLY",
+        "EASIER",
+        "LOG_RESULT",
+        "BACK",
+        "TIME_UP",
+        "DATE_CHANGED",
+        "TIME_UP"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P06-3",
+      "persona": "P06",
+      "context": "working runner; explicit total-time cap",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "REOPEN",
+        "SAFETY_CHANGED",
+        "UNDO",
+        "BACK",
+        "ONLINE",
+        "DISTANCE_DOWN",
+        "ACK_LOST",
+        "REPS_UP"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P06-4",
+      "persona": "P06",
+      "context": "working runner; explicit total-time cap",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "DISTANCE_DOWN",
+        "DISTANCE_UP",
+        "SPLIT_SETS",
+        "OFFLINE",
+        "DOUBLE_APPLY",
+        "ACCOUNT_CHANGED",
+        "RECORD_CHANGED",
+        "START_SESSION"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P07-1",
+      "persona": "P07",
+      "context": "returning runner; only an old personal best",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "RULE_REVOKED",
+        "CLOSE_REASON",
+        "START_SESSION",
+        "OPEN_REASON",
+        "TIME_DOWN",
+        "UNDO",
+        "RESET",
+        "REDO"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P07-2",
+      "persona": "P07",
+      "context": "returning runner; only an old personal best",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "LESS_REST",
+        "UNDO",
+        "BACK",
+        "DELETE_PLAN",
+        "OFFLINE",
+        "REOPEN",
+        "START_SESSION",
+        "OFFLINE"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P07-3",
+      "persona": "P07",
+      "context": "returning runner; only an old personal best",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "RECORD_CHANGED",
+        "APPLY",
+        "SAFETY_CHANGED",
+        "RULE_REVOKED",
+        "UNDO",
+        "BACK",
+        "DATE_CHANGED",
+        "DELETE_PLAN"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P07-4",
+      "persona": "P07",
+      "context": "returning runner; only an old personal best",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "EASIER",
+        "SPLIT_SETS",
+        "START_SESSION",
+        "RULE_REVOKED",
+        "PACE_FASTER",
+        "TIME_DOWN",
+        "DELETE_PLAN",
+        "DOUBLE_APPLY"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P08-1",
+      "persona": "P08",
+      "context": "new pain signal during editing",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "RULE_REVOKED",
+        "DATE_CHANGED",
+        "RESET",
+        "OPEN_REASON",
+        "OPEN_REASON",
+        "REDO",
+        "ONLINE",
+        "EASIER"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P08-2",
+      "persona": "P08",
+      "context": "new pain signal during editing",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "RULE_REVOKED",
+        "REPS_DOWN",
+        "LESS_REST",
+        "ACK_LOST",
+        "DOUBLE_APPLY",
+        "REDO",
+        "ACCOUNT_CHANGED",
+        "CLOSE_REASON"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P08-3",
+      "persona": "P08",
+      "context": "new pain signal during editing",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "BACK",
+        "ACCOUNT_CHANGED",
+        "DATE_CHANGED",
+        "DOUBLE_APPLY",
+        "SAFETY_CHANGED",
+        "REPS_UP",
+        "ACK_LOST",
+        "TIME_UP"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P08-4",
+      "persona": "P08",
+      "context": "new pain signal during editing",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "REDO",
+        "OPEN_REASON",
+        "CLOSE_REASON",
+        "RECORD_CHANGED",
+        "ACK_LOST",
+        "OPEN_REASON",
+        "SAFETY_CHANGED",
+        "DOUBLE_APPLY"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P09-1",
+      "persona": "P09",
+      "context": "beginner; knows elapsed time but not distance",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "RULE_REVOKED",
+        "LOG_RESULT",
+        "TIME_UP",
+        "TIME_DOWN",
+        "ONLINE",
+        "UNDO",
+        "BACK",
+        "REOPEN"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P09-2",
+      "persona": "P09",
+      "context": "beginner; knows elapsed time but not distance",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "RULE_REVOKED",
+        "ACCOUNT_CHANGED",
+        "OPEN_REASON",
+        "MORE_REST",
+        "OPEN_REASON",
+        "SAFETY_CHANGED",
+        "LESS_REST",
+        "LOG_RESULT"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P09-3",
+      "persona": "P09",
+      "context": "beginner; knows elapsed time but not distance",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "PACE_FASTER",
+        "BACK",
+        "PACE_FASTER",
+        "EASIER",
+        "TIME_DOWN",
+        "RECORD_CHANGED",
+        "TIME_DOWN",
+        "REDO"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P09-4",
+      "persona": "P09",
+      "context": "beginner; knows elapsed time but not distance",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "SPLIT_SETS",
+        "UNDO",
+        "START_SESSION",
+        "REOPEN",
+        "RESET",
+        "OFFLINE",
+        "DISTANCE_DOWN",
+        "START_SESSION"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P10-1",
+      "persona": "P10",
+      "context": "track runner; distance-based repetitions",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "APPLY",
+        "ACCOUNT_CHANGED",
+        "OPEN_REASON",
+        "REPS_DOWN",
+        "SAFETY_CHANGED",
+        "OPEN_REASON",
+        "OFFLINE",
+        "LOG_RESULT"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P10-2",
+      "persona": "P10",
+      "context": "track runner; distance-based repetitions",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "RESET",
+        "SAFETY_CHANGED",
+        "REDO",
+        "PACE_FASTER",
+        "LOG_RESULT",
+        "SPLIT_SETS",
+        "DISTANCE_UP",
+        "OTHER"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P10-3",
+      "persona": "P10",
+      "context": "track runner; distance-based repetitions",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "PACE_FASTER",
+        "TIME_DOWN",
+        "UNDO",
+        "RESET",
+        "OFFLINE",
+        "REDO",
+        "APPLY",
+        "CLOSE_REASON"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P10-4",
+      "persona": "P10",
+      "context": "track runner; distance-based repetitions",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "DISTANCE_UP",
+        "START_SESSION",
+        "ONLINE",
+        "REDO",
+        "REPS_UP",
+        "REPS_UP",
+        "TIME_UP",
+        "EASIER"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P11-1",
+      "persona": "P11",
+      "context": "road runner; no measured track",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "SPLIT_SETS",
+        "DELETE_PLAN",
+        "DATE_CHANGED",
+        "BACK",
+        "LOG_RESULT",
+        "CLOSE_REASON",
+        "SPLIT_SETS",
+        "OTHER"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P11-2",
+      "persona": "P11",
+      "context": "road runner; no measured track",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "RULE_REVOKED",
+        "DISTANCE_UP",
+        "TIME_UP",
+        "APPLY",
+        "OPEN_REASON",
+        "UNDO",
+        "ONLINE",
+        "APPLY"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P11-3",
+      "persona": "P11",
+      "context": "road runner; no measured track",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "RECORD_CHANGED",
+        "REOPEN",
+        "SPLIT_SETS",
+        "OTHER",
+        "RECORD_CHANGED",
+        "UNDO",
+        "RESET",
+        "BACK"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P11-4",
+      "persona": "P11",
+      "context": "road runner; no measured track",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "MORE_REST",
+        "DELETE_PLAN",
+        "DELETE_PLAN",
+        "ACCOUNT_CHANGED",
+        "RESET",
+        "LOG_RESULT",
+        "REPS_DOWN",
+        "OTHER"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P12-1",
+      "persona": "P12",
+      "context": "treadmill user; speed units differ from pace",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "RECORD_CHANGED",
+        "SAFETY_CHANGED",
+        "APPLY",
+        "REPS_DOWN",
+        "PACE_FASTER",
+        "LOG_RESULT",
+        "START_SESSION",
+        "DATE_CHANGED"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P12-2",
+      "persona": "P12",
+      "context": "treadmill user; speed units differ from pace",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "DOUBLE_APPLY",
+        "REOPEN",
+        "PACE_FASTER",
+        "ACCOUNT_CHANGED",
+        "LESS_REST",
+        "DOUBLE_APPLY",
+        "BACK",
+        "SPLIT_SETS"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P12-3",
+      "persona": "P12",
+      "context": "treadmill user; speed units differ from pace",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "OTHER",
+        "DELETE_PLAN",
+        "OPEN_REASON",
+        "APPLY",
+        "DISTANCE_UP",
+        "OFFLINE",
+        "REOPEN",
+        "DELETE_PLAN"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P12-4",
+      "persona": "P12",
+      "context": "treadmill user; speed units differ from pace",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "DELETE_PLAN",
+        "DATE_CHANGED",
+        "REPS_DOWN",
+        "SAFETY_CHANGED",
+        "CLOSE_REASON",
+        "ONLINE",
+        "START_SESSION",
+        "BACK"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P13-1",
+      "persona": "P13",
+      "context": "elite marathon runner; short high-output work",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "EASIER",
+        "LOG_RESULT",
+        "CLOSE_REASON",
+        "TIME_UP",
+        "UNDO",
+        "RECORD_CHANGED",
+        "PACE_FASTER",
+        "REOPEN"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P13-2",
+      "persona": "P13",
+      "context": "elite marathon runner; short high-output work",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "DELETE_PLAN",
+        "OTHER",
+        "LOG_RESULT",
+        "RULE_REVOKED",
+        "MORE_REST",
+        "LOG_RESULT",
+        "RECORD_CHANGED",
+        "DOUBLE_APPLY"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P13-3",
+      "persona": "P13",
+      "context": "elite marathon runner; short high-output work",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "DISTANCE_DOWN",
+        "RECORD_CHANGED",
+        "DISTANCE_DOWN",
+        "OTHER",
+        "BACK",
+        "RULE_REVOKED",
+        "PACE_FASTER",
+        "TIME_DOWN"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P13-4",
+      "persona": "P13",
+      "context": "elite marathon runner; short high-output work",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "SPLIT_SETS",
+        "DISTANCE_DOWN",
+        "RESET",
+        "OTHER",
+        "DOUBLE_APPLY",
+        "TIME_UP",
+        "APPLY",
+        "ACCOUNT_CHANGED"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P14-1",
+      "persona": "P14",
+      "context": "MIX workout; distance-defined active recovery",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "TIME_UP",
+        "BACK",
+        "DISTANCE_DOWN",
+        "LESS_REST",
+        "REPS_UP",
+        "DATE_CHANGED",
+        "OPEN_REASON",
+        "ACCOUNT_CHANGED"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P14-2",
+      "persona": "P14",
+      "context": "MIX workout; distance-defined active recovery",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "DOUBLE_APPLY",
+        "DISTANCE_UP",
+        "ACCOUNT_CHANGED",
+        "DOUBLE_APPLY",
+        "RULE_REVOKED",
+        "TIME_DOWN",
+        "UNDO",
+        "REOPEN"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P14-3",
+      "persona": "P14",
+      "context": "MIX workout; distance-defined active recovery",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "MORE_REST",
+        "DISTANCE_UP",
+        "DATE_CHANGED",
+        "OTHER",
+        "TIME_UP",
+        "REOPEN",
+        "START_SESSION",
+        "LESS_REST"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P14-4",
+      "persona": "P14",
+      "context": "MIX workout; distance-defined active recovery",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "APPLY",
+        "UNDO",
+        "ACCOUNT_CHANGED",
+        "RESET",
+        "REPS_UP",
+        "OTHER",
+        "ONLINE",
+        "DOUBLE_APPLY"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P15-1",
+      "persona": "P15",
+      "context": "near competition; phase changes while editing",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "DELETE_PLAN",
+        "OFFLINE",
+        "PACE_FASTER",
+        "REPS_UP",
+        "REPS_DOWN",
+        "SPLIT_SETS",
+        "OTHER",
+        "SPLIT_SETS"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P15-2",
+      "persona": "P15",
+      "context": "near competition; phase changes while editing",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "SPLIT_SETS",
+        "CLOSE_REASON",
+        "LESS_REST",
+        "LOG_RESULT",
+        "OFFLINE",
+        "CLOSE_REASON",
+        "EASIER",
+        "DISTANCE_DOWN"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P15-3",
+      "persona": "P15",
+      "context": "near competition; phase changes while editing",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "CLOSE_REASON",
+        "SPLIT_SETS",
+        "LOG_RESULT",
+        "LESS_REST",
+        "PACE_FASTER",
+        "SPLIT_SETS",
+        "REOPEN",
+        "OPEN_REASON"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P15-4",
+      "persona": "P15",
+      "context": "near competition; phase changes while editing",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "REPS_DOWN",
+        "RECORD_CHANGED",
+        "BACK",
+        "OFFLINE",
+        "DOUBLE_APPLY",
+        "DISTANCE_UP",
+        "ACCOUNT_CHANGED",
+        "BACK"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P16-1",
+      "persona": "P16",
+      "context": "repetitive tapping; tries every increase button",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "ONLINE",
+        "ACK_LOST",
+        "ACK_LOST",
+        "DELETE_PLAN",
+        "DOUBLE_APPLY",
+        "OPEN_REASON",
+        "APPLY",
+        "TIME_DOWN"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P16-2",
+      "persona": "P16",
+      "context": "repetitive tapping; tries every increase button",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "SAFETY_CHANGED",
+        "DOUBLE_APPLY",
+        "SPLIT_SETS",
+        "REDO",
+        "UNDO",
+        "DISTANCE_DOWN",
+        "OTHER",
+        "START_SESSION"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P16-3",
+      "persona": "P16",
+      "context": "repetitive tapping; tries every increase button",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "SAFETY_CHANGED",
+        "EASIER",
+        "TIME_UP",
+        "DATE_CHANGED",
+        "PACE_FASTER",
+        "START_SESSION",
+        "MORE_REST",
+        "REPS_DOWN"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P16-4",
+      "persona": "P16",
+      "context": "repetitive tapping; tries every increase button",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "CLOSE_REASON",
+        "RESET",
+        "BACK",
+        "DELETE_PLAN",
+        "START_SESSION",
+        "REOPEN",
+        "EASIER",
+        "SAFETY_CHANGED"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P17-1",
+      "persona": "P17",
+      "context": "one-handed; small screen; accidental double tap",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "LOG_RESULT",
+        "TIME_DOWN",
+        "PACE_FASTER",
+        "UNDO",
+        "REPS_DOWN",
+        "DATE_CHANGED",
+        "REDO",
+        "OFFLINE"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P17-2",
+      "persona": "P17",
+      "context": "one-handed; small screen; accidental double tap",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "REDO",
+        "SAFETY_CHANGED",
+        "LESS_REST",
+        "TIME_DOWN",
+        "ONLINE",
+        "REDO",
+        "TIME_DOWN",
+        "RESET"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P17-3",
+      "persona": "P17",
+      "context": "one-handed; small screen; accidental double tap",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "MORE_REST",
+        "LOG_RESULT",
+        "TIME_DOWN",
+        "TIME_DOWN",
+        "SAFETY_CHANGED",
+        "BACK",
+        "ACK_LOST",
+        "ACCOUNT_CHANGED"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P17-4",
+      "persona": "P17",
+      "context": "one-handed; small screen; accidental double tap",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "PACE_FASTER",
+        "CLOSE_REASON",
+        "SPLIT_SETS",
+        "ACK_LOST",
+        "MORE_REST",
+        "BACK",
+        "DISTANCE_DOWN",
+        "APPLY"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P18-1",
+      "persona": "P18",
+      "context": "screen reader and keyboard; no swipe",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "ACK_LOST",
+        "UNDO",
+        "OTHER",
+        "DISTANCE_UP",
+        "LOG_RESULT",
+        "APPLY",
+        "DELETE_PLAN",
+        "REDO"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P18-2",
+      "persona": "P18",
+      "context": "screen reader and keyboard; no swipe",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "ACCOUNT_CHANGED",
+        "OPEN_REASON",
+        "LESS_REST",
+        "START_SESSION",
+        "TIME_UP",
+        "DELETE_PLAN",
+        "DISTANCE_DOWN",
+        "LOG_RESULT"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P18-3",
+      "persona": "P18",
+      "context": "screen reader and keyboard; no swipe",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "RECORD_CHANGED",
+        "START_SESSION",
+        "DATE_CHANGED",
+        "SPLIT_SETS",
+        "LOG_RESULT",
+        "OTHER",
+        "OPEN_REASON",
+        "ACK_LOST"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P18-4",
+      "persona": "P18",
+      "context": "screen reader and keyboard; no swipe",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "RULE_REVOKED",
+        "LOG_RESULT",
+        "REPS_UP",
+        "DISTANCE_UP",
+        "ACK_LOST",
+        "SPLIT_SETS",
+        "CLOSE_REASON",
+        "OFFLINE"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P19-1",
+      "persona": "P19",
+      "context": "200 percent text; reduced motion",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "TIME_UP",
+        "OFFLINE",
+        "RULE_REVOKED",
+        "APPLY",
+        "SAFETY_CHANGED",
+        "SAFETY_CHANGED",
+        "ONLINE",
+        "TIME_DOWN"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P19-2",
+      "persona": "P19",
+      "context": "200 percent text; reduced motion",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "MORE_REST",
+        "APPLY",
+        "RULE_REVOKED",
+        "RECORD_CHANGED",
+        "RECORD_CHANGED",
+        "TIME_DOWN",
+        "RULE_REVOKED",
+        "PACE_FASTER"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P19-3",
+      "persona": "P19",
+      "context": "200 percent text; reduced motion",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "DISTANCE_DOWN",
+        "EASIER",
+        "RECORD_CHANGED",
+        "DISTANCE_UP",
+        "REOPEN",
+        "SAFETY_CHANGED",
+        "RULE_REVOKED",
+        "DELETE_PLAN"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P19-4",
+      "persona": "P19",
+      "context": "200 percent text; reduced motion",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "START_SESSION",
+        "CLOSE_REASON",
+        "LESS_REST",
+        "START_SESSION",
+        "RECORD_CHANGED",
+        "BACK",
+        "TIME_UP",
+        "ONLINE"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P20-1",
+      "persona": "P20",
+      "context": "offline account; second device changes plan",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "RESET",
+        "REPS_UP",
+        "PACE_FASTER",
+        "BACK",
+        "ACCOUNT_CHANGED",
+        "REPS_DOWN",
+        "REPS_DOWN",
+        "TIME_UP"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P20-2",
+      "persona": "P20",
+      "context": "offline account; second device changes plan",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "OPEN_REASON",
+        "MORE_REST",
+        "OPEN_REASON",
+        "SPLIT_SETS",
+        "MORE_REST",
+        "DISTANCE_UP",
+        "ONLINE",
+        "PACE_FASTER"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P20-3",
+      "persona": "P20",
+      "context": "offline account; second device changes plan",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "EASIER",
+        "DISTANCE_DOWN",
+        "OTHER",
+        "LESS_REST",
+        "REPS_UP",
+        "EASIER",
+        "APPLY",
+        "START_SESSION"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P20-4",
+      "persona": "P20",
+      "context": "offline account; second device changes plan",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "OFFLINE",
+        "OTHER",
+        "UNDO",
+        "MORE_REST",
+        "RULE_REVOKED",
+        "DOUBLE_APPLY",
+        "RECORD_CHANGED",
+        "REPS_UP"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P21-1",
+      "persona": "P21",
+      "context": "account switch; pending save response",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "ACK_LOST",
+        "ACK_LOST",
+        "DISTANCE_UP",
+        "OPEN_REASON",
+        "OTHER",
+        "OPEN_REASON",
+        "MORE_REST",
+        "OFFLINE"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P21-2",
+      "persona": "P21",
+      "context": "account switch; pending save response",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "OPEN_REASON",
+        "OPEN_REASON",
+        "DOUBLE_APPLY",
+        "SAFETY_CHANGED",
+        "MORE_REST",
+        "REOPEN",
+        "TIME_UP",
+        "REDO"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P21-3",
+      "persona": "P21",
+      "context": "account switch; pending save response",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "DELETE_PLAN",
+        "SPLIT_SETS",
+        "REOPEN",
+        "SAFETY_CHANGED",
+        "ACCOUNT_CHANGED",
+        "DELETE_PLAN",
+        "EASIER",
+        "REOPEN"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P21-4",
+      "persona": "P21",
+      "context": "account switch; pending save response",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "REDO",
+        "REPS_UP",
+        "REPS_DOWN",
+        "SAFETY_CHANGED",
+        "REDO",
+        "RESET",
+        "DATE_CHANGED",
+        "ACCOUNT_CHANGED"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P22-1",
+      "persona": "P22",
+      "context": "already started or journal-linked session",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "RECORD_CHANGED",
+        "EASIER",
+        "RECORD_CHANGED",
+        "REPS_UP",
+        "OFFLINE",
+        "START_SESSION",
+        "TIME_DOWN",
+        "RESET"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P22-2",
+      "persona": "P22",
+      "context": "already started or journal-linked session",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "SAFETY_CHANGED",
+        "OTHER",
+        "ACCOUNT_CHANGED",
+        "OTHER",
+        "START_SESSION",
+        "ACK_LOST",
+        "START_SESSION",
+        "RULE_REVOKED"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P22-3",
+      "persona": "P22",
+      "context": "already started or journal-linked session",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "DATE_CHANGED",
+        "OTHER",
+        "CLOSE_REASON",
+        "APPLY",
+        "ACK_LOST",
+        "EASIER",
+        "OTHER",
+        "SAFETY_CHANGED"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P22-4",
+      "persona": "P22",
+      "context": "already started or journal-linked session",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "APPLY",
+        "TIME_UP",
+        "ACCOUNT_CHANGED",
+        "SAFETY_CHANGED",
+        "DELETE_PLAN",
+        "SAFETY_CHANGED",
+        "BACK",
+        "START_SESSION"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P23-1",
+      "persona": "P23",
+      "context": "one eligible method; exploration exhausts pool",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "RECORD_CHANGED",
+        "DATE_CHANGED",
+        "APPLY",
+        "LOG_RESULT",
+        "OPEN_REASON",
+        "START_SESSION",
+        "ACCOUNT_CHANGED",
+        "MORE_REST"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P23-2",
+      "persona": "P23",
+      "context": "one eligible method; exploration exhausts pool",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "ACK_LOST",
+        "CLOSE_REASON",
+        "RULE_REVOKED",
+        "RULE_REVOKED",
+        "TIME_DOWN",
+        "REOPEN",
+        "BACK",
+        "REPS_UP"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P23-3",
+      "persona": "P23",
+      "context": "one eligible method; exploration exhausts pool",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "OFFLINE",
+        "REOPEN",
+        "RULE_REVOKED",
+        "RESET",
+        "REDO",
+        "UNDO",
+        "REDO",
+        "REPS_DOWN"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P23-4",
+      "persona": "P23",
+      "context": "one eligible method; exploration exhausts pool",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "EASIER",
+        "ONLINE",
+        "APPLY",
+        "RULE_REVOKED",
+        "SAFETY_CHANGED",
+        "SAFETY_CHANGED",
+        "DISTANCE_DOWN",
+        "REPS_DOWN"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P24-1",
+      "persona": "P24",
+      "context": "repeated cycle; deliberately wants same workout",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "REOPEN",
+        "DATE_CHANGED",
+        "REPS_DOWN",
+        "OFFLINE",
+        "REPS_UP",
+        "APPLY",
+        "REOPEN",
+        "RESET"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P24-2",
+      "persona": "P24",
+      "context": "repeated cycle; deliberately wants same workout",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "SPLIT_SETS",
+        "ACK_LOST",
+        "APPLY",
+        "CLOSE_REASON",
+        "REOPEN",
+        "OFFLINE",
+        "EASIER",
+        "SPLIT_SETS"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P24-3",
+      "persona": "P24",
+      "context": "repeated cycle; deliberately wants same workout",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "TIME_DOWN",
+        "START_SESSION",
+        "TIME_DOWN",
+        "LESS_REST",
+        "TIME_UP",
+        "RULE_REVOKED",
+        "MORE_REST",
+        "RECORD_CHANGED"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    },
+    {
+      "id": "P24-4",
+      "persona": "P24",
+      "context": "repeated cycle; deliberately wants same workout",
+      "initial": "open current workout; request preview only",
+      "actions": [
+        "DATE_CHANGED",
+        "REPS_DOWN",
+        "START_SESSION",
+        "RESET",
+        "REOPEN",
+        "OFFLINE",
+        "REOPEN",
+        "ACK_LOST"
+      ],
+      "reviewStatus": "DESK_REVIEW_INPUT_NOT_EXECUTED_APP_TEST"
+    }
+  ]
+}

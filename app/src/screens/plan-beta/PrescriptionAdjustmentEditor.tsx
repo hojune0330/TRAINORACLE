@@ -1,7 +1,7 @@
 import React from "react"
 import { createPortal } from "react-dom"
-import { ArrowLeft, Minus, Plus, RotateCcw } from "lucide-react"
-import { applyAdjustmentDraft, createAdjustmentDraft, resetAdjustmentDraft } from "@impl/prescription/prescription-adjustment"
+import { ArrowLeft, Minus, Plus, RotateCcw, Undo2, Redo2 } from "lucide-react"
+import { applyAdjustmentDraft, createAdjustmentDraft } from "@impl/prescription/prescription-adjustment"
 import type {
   AdjustmentAuthority, AdjustmentDraft, AdjustmentErrorCode, AdjustmentPolicyReference,
   AdjustmentReceipt, ConfigurationReference, PrescriptionSnapshot,
@@ -9,6 +9,7 @@ import type {
 import { deriveSequenceRecoveryDistanceTotals, deriveSequenceTotals, parsePrescriptionSequence } from "@impl/prescription/sequence"
 import type { PrescriptionSequence } from "@impl/prescription/sequence"
 import { PrescriptionStructure } from "./PrescriptionStructure"
+import { createWorkoutPreviewHistory, pushWorkoutPreview, undoWorkoutPreview, redoWorkoutPreview } from "../../domain/workout-preview-history"
 import "./PrescriptionAdjustmentEditor.css"
 
 export type PrescriptionAdjustmentChoice = {
@@ -47,7 +48,9 @@ const ERRORS: Record<AdjustmentErrorCode, string> = {
   CURRENT_MISMATCH: "현재 처방이 바뀌었어요. 변경안은 그대로 두었으니 닫은 뒤 다시 열어 주세요.",
   EXPLICIT_ACTION_REQUIRED: "적용 버튼으로 변경안을 직접 확인해 주세요.",
 }
-const DIMENSIONS = { repetitions: "반복", recovery: "회복", time: "시간" } as const
+const DIMENSIONS = { repetitions: { label: "반복 횟수", metric: "totalRepetitions", unit: "회" },
+  recovery: { label: "회복 시간 합계", metric: "plannedRecoverySeconds", unit: "초" },
+  time: { label: "본운동 시간 합계", metric: "qualityDurationSeconds", unit: "초" } } as const
 
 function identity(value: unknown): string | null {
   try { return JSON.stringify(value) ?? null } catch { return null }
@@ -116,7 +119,8 @@ export function PrescriptionAdjustmentEditor(props: PrescriptionAdjustmentEditor
         ? { configuration: { ...props.current.configuration }, sequence: parsed.sequence } : null,
     }
   })
-  const [draft, setDraft] = React.useState<AdjustmentDraft | null>(null)
+  const [history, setHistory] = React.useState(() => createWorkoutPreviewHistory<AdjustmentDraft | null>(null))
+  const draft = history.present
   const [error, setError] = React.useState<string | null>(null)
   const [discarding, setDiscarding] = React.useState(false)
   const [closed, setClosed] = React.useState(false)
@@ -170,9 +174,7 @@ export function PrescriptionAdjustmentEditor(props: PrescriptionAdjustmentEditor
   }, [discarding])
 
   function reset() {
-    if (pending.current || completed.current) return
-    if (draft !== null) setDraft(resetAdjustmentDraft(draft))
-    setError(null)
+    if (opened.current) select(opened.current.configuration)
   }
 
   function cancel() {
@@ -189,20 +191,34 @@ export function PrescriptionAdjustmentEditor(props: PrescriptionAdjustmentEditor
     setDiscarding(true)
   }
 
-  function select(configuration: ConfigurationReference) {
+  function select(configuration: ConfigurationReference, action: "choose" | "undo" | "redo" = "choose") {
     if (completed.current || pending.current || stale || discarding || opened.current === null) return
-    if (sameReference(configuration, opened.current.configuration)) { reset(); return }
     try {
       const nowMs = latest.current.now()
       const live = latest.current
       const reason = staleReason(live)
       if (reason !== null) { setInvalidated(true); setError(reason); return }
-      const result = createAdjustmentDraft({ authority: live.authority, policy: live.policy,
-        contextKey: live.contextKey, current: opened.current, target: configuration, nowMs })
-      if (result.kind === "rejected") { setError(ERRORS[result.code]); return }
-      setDraft(result.draft)
+      let next: AdjustmentDraft | null = null
+      if (!sameReference(configuration, opened.current.configuration)) {
+        if (!live.choices.some(c => sameReference(c.configuration, configuration))) { setError(ERRORS.CONFIGURATION_MISMATCH); return }
+        const result = createAdjustmentDraft({ authority: live.authority, policy: live.policy,
+          contextKey: live.contextKey, current: opened.current, target: configuration, nowMs })
+        if (result.kind === "rejected") { setError(ERRORS[result.code]); return }
+        next = result.draft
+      }
+      setHistory(previous => action === "undo" ? { ...undoWorkoutPreview(previous), present: next }
+        : action === "redo" ? { ...redoWorkoutPreview(previous), present: next }
+          : sameReference(previous.present?.after.configuration ?? opened.current!.configuration, configuration)
+            ? previous : pushWorkoutPreview(previous, next))
       setError(null)
     } catch { setError("조정 정보를 확인하지 못했어요. 잠시 뒤 다시 시도해 주세요.") }
+  }
+
+  function travel(action: "undo" | "redo") {
+    const entries = action === "undo" ? history.past : history.future
+    if (!entries.length || !opened.current) return
+    const entry = action === "undo" ? entries[entries.length - 1] : entries[0]
+    select(entry?.after.configuration ?? opened.current.configuration, action)
   }
 
   async function apply() {
@@ -264,12 +280,19 @@ export function PrescriptionAdjustmentEditor(props: PrescriptionAdjustmentEditor
     </div> : <>
       <header className="prescription-adjustment__header">
         <button ref={back} type="button" className="prescription-adjustment__icon" title="취소" aria-label="취소" disabled={applying} onClick={requestCancel}><ArrowLeft size={20} aria-hidden="true" /></button>
-        <h2 id={`${id}-title`}>처방 조정</h2>
-        <button type="button" className="prescription-adjustment__icon" title="변경안 초기화" aria-label="변경안 초기화" disabled={draft === null || applying} onClick={reset}><RotateCcw size={18} aria-hidden="true" /></button>
+        <h2 id={`${id}-title`}>훈련 바꾸기</h2>
+        <button type="button" className="prescription-adjustment__icon" title="변경안 초기화" aria-label="변경안 초기화" disabled={draft === null || blocked} onClick={reset}><RotateCcw size={18} aria-hidden="true" /></button>
       </header>
       <div className="prescription-adjustment__content">
         {notice !== null && <p role="alert" className="prescription-adjustment__error">{notice}</p>}
         {opened.current === null && <p role="alert">현재 처방을 확인할 수 없어요. 닫은 뒤 다시 확인해 주세요.</p>}
+        <div className="prescription-adjustment__preview-tools"><p role="status">{draft ? "아직 계획에 반영하지 않은 변경안이에요." : "현재 훈련이에요."}</p>
+          <div className="prescription-adjustment__history" role="group" aria-label="변경안 되돌리기">
+            <button type="button" className="prescription-adjustment__icon" title="되돌리기" aria-label="되돌리기" disabled={blocked || !history.past.length} onClick={() => travel("undo")}><Undo2 size={18} aria-hidden="true" /></button>
+            <button type="button" className="prescription-adjustment__icon" title="다시 하기" aria-label="다시 하기" disabled={blocked || !history.future.length} onClick={() => travel("redo")}><Redo2 size={18} aria-hidden="true" /></button>
+          </div></div>
+        <section className="prescription-adjustment__preview" aria-label="훈련 미리보기" key={selected?.contentIdentity}>{afterSequence && <PrescriptionStructure sequence={afterSequence} />}</section>
+        <details><summary>구성 목록에서 고르기</summary>
         <fieldset disabled={blocked} className="prescription-adjustment__choices">
           <legend>훈련 구성</legend>
           <label><input type="radio" name={`${id}-choice`} checked={draft === null} onChange={reset} />현재 구성</label>
@@ -278,31 +301,44 @@ export function PrescriptionAdjustmentEditor(props: PrescriptionAdjustmentEditor
               onChange={() => select(choice.configuration)} />{choice.label}
           </label>)}
         </fieldset>
+        </details>
         {choices.length === 0 && <p>검토된 변경 구성이 없어요.</p>}
         {(props.orderedChoices ?? []).map((group, groupIndex) => {
-          const index = selected === undefined ? -1 : group.configurations.findIndex(ref => sameReference(ref, selected))
-          const previous = index > 0 ? group.configurations[index - 1] : undefined
-          const next = index >= 0 ? group.configurations[index + 1] : undefined
-          const available = (ref: ConfigurationReference | undefined) => ref !== undefined &&
-            (opened.current !== null && sameReference(ref, opened.current.configuration) || choices.some(choice => sameReference(choice.configuration, ref)))
-          const label = DIMENSIONS[group.dimension]
+          const { label, metric, unit } = DIMENSIONS[group.dimension]
+          const value = after?.[metric]
+          if (value == null || !opened.current) return null
+          const eligible = group.configurations.flatMap(ref => {
+            if (sameReference(ref, opened.current!.configuration)) return [{ ref, value: before?.[metric] ?? null }]
+            if (!choices.some(choice => sameReference(choice.configuration, ref))) return []
+            try {
+              const result = createAdjustmentDraft({ authority: props.authority, policy: props.policy,
+                contextKey: props.contextKey, current: opened.current!, target: ref, nowMs: props.now() })
+              return result.kind === "draft" ? [{ ref, value: totals(result.draft.after.sequence)?.[metric] ?? null }] : []
+            } catch {
+              // An unavailable lookup hides this control candidate, not the existing draft.
+              return []
+            }
+          })
+          const previous = eligible.filter(c => c.value !== null && c.value < value).sort((a, b) => b.value! - a.value!)[0]?.ref
+          const next = eligible.filter(c => c.value !== null && c.value > value).sort((a, b) => a.value! - b.value!)[0]?.ref
+          if (!previous && !next) return null
           return <div key={`${group.dimension}-${groupIndex}`} className="prescription-adjustment__stepper" role="group" aria-label={`${label} 구성`}>
             <span>{label}</span>
-            <button type="button" className="prescription-adjustment__icon" aria-label={`${label} 이전 구성`} title={`${label} 이전 구성`}
-              disabled={blocked || !available(previous)} onClick={() => { if (previous) select(previous) }}><Minus size={18} aria-hidden="true" /></button>
-            <output>{draft === null ? "현재 구성" : choices.find(choice => sameReference(choice.configuration, draft.after.configuration))?.label ?? "선택한 구성"}</output>
-            <button type="button" className="prescription-adjustment__icon" aria-label={`${label} 다음 구성`} title={`${label} 다음 구성`}
-              disabled={blocked || !available(next)} onClick={() => { if (next) select(next) }}><Plus size={18} aria-hidden="true" /></button>
+            <button type="button" className="prescription-adjustment__icon" aria-label={`${label} 줄이기`} title={`${label} 줄이기`}
+              disabled={blocked || !previous} onClick={() => { if (previous) select(previous) }}><Minus size={18} aria-hidden="true" /></button>
+            <output>{value}{unit}</output>
+            <button type="button" className="prescription-adjustment__icon" aria-label={`${label} 늘리기`} title={`${label} 늘리기`}
+              disabled={blocked || !next} onClick={() => { if (next) select(next) }}><Plus size={18} aria-hidden="true" /></button>
           </div>
         })}
-        <section aria-labelledby={`${id}-preview`}>
-          <h3 id={`${id}-preview`}>변경 전후</h3>
+        <details>
+          <summary>바뀐 수치 비교</summary>
           <p className="prescription-adjustment__note">준비·정리 제외. 거리와 시간은 각각 계산해요.</p>
           <TotalsTable before={before} after={after} metrics={SUMMARY} label="변경 전후 합계" />
           <details><summary>회복 구간별 합계</summary><TotalsTable before={before} after={after} metrics={RECOVERY} label="변경 전후 회복 구간" /></details>
           <details><summary>현재 수행 순서</summary>{beforeSequence && <PrescriptionStructure sequence={beforeSequence} />}</details>
           <details><summary>변경안 수행 순서</summary>{afterSequence && <PrescriptionStructure sequence={afterSequence} />}</details>
-        </section>
+        </details>
       </div>
       <footer className="prescription-adjustment__actions">
         <button type="button" disabled={applying} onClick={requestCancel}>취소</button>

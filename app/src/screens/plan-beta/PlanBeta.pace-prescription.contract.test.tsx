@@ -122,12 +122,14 @@ describe.skip("production detailed prescription experience", () => {
     }
     fireEvent.change(screen.getByLabelText("계획 시작 날짜"), { target: { value: "2026-09-10" } })
     await user.click(screen.getByText("훈련 방법 선택"))
-    await user.click(screen.getByRole("radio", { name: /시간·RPE 기준으로 받기/u }))
+    await user.click(screen.getByRole("radio", { name: /시간과 체감 강도로 안내받기/u }))
+    await user.click(screen.getByRole("button", { name: "이 훈련으로 변경" }))
     expect(screen.queryByRole("region", { name: "개인 페이스 기준 기록" })).toBeNull()
     expect(screen.queryByText(/5×1000m @5000m RP/u)).toBeNull()
     expect(screen.getByLabelText("계획 시작 날짜")).toHaveValue("2026-09-10")
     expect(screen.getByRole("button", { name: /기초·회복 운동 시간을 범위로 선택하기/u })).toBeEnabled()
     await user.click(screen.getByRole("radio", { name: /1000m 5회/u }))
+    await user.click(screen.getByRole("button", { name: "이 훈련으로 변경" }))
     expect(screen.getByRole("button", { name: /기초·회복 운동 시간을 범위로 선택하기/u })).toBeDisabled()
     expect(screen.queryByText(/5×1000m @5000m RP/u)).toBeNull()
     expect(screen.queryByText(/직접 고르고 확인한 현재.*기록으로 한 강도 세션의 상세 페이스/u)).toBeNull()
@@ -162,7 +164,8 @@ describe.skip("production detailed prescription experience", () => {
     expect(release).toBeTypeOf("function")
     if (change === "method") {
       await user.click(screen.getByText("훈련 방법 선택"))
-      await user.click(screen.getByRole("radio", { name: /시간·RPE 기준으로 받기/u }))
+      await user.click(screen.getByRole("radio", { name: /시간과 체감 강도로 안내받기/u }))
+      await user.click(screen.getByRole("button", { name: "이 훈련으로 변경" }))
     } else if (change === "record") {
       await user.click(within(picker).getByRole("button", { name: /^시즌 최고.*19분/u }))
     } else if (change === "date") {
