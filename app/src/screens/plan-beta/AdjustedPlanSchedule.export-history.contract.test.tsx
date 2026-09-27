@@ -26,6 +26,7 @@ const file = { kind: "exported" as const, raw: '{"syntheticFullHistory":true}', 
 const downloadName = "개인 보관용 계획 파일 받기"
 let click: ReturnType<typeof vi.spyOn>
 beforeEach(() => {
+  HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", "") }
   localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount("account-a")
   vi.useFakeTimers(); vi.setSystemTime(TODAY)
   mocks.history.mockReset().mockResolvedValue(true); mocks.export.mockReset().mockReturnValue(file)
@@ -74,18 +75,20 @@ const noFile = () => { expect(mocks.export).not.toHaveBeenCalled(); expect(creat
 describe.each([4, 5, 6] as const)("V%s personal export full-history gate", version => {
   it("waits once, preserves the selected day/current schedule during account events, then exports synchronously and downloads", async () => {
     const wait = pending(), { button, rerender, view } = mount(version)
-    const dates = within(screen.getByRole("navigation", { name: "훈련 날짜" })).getAllByRole("button")
-    const selected = dates.at(-1)!
+    const dates = within(screen.getByRole("grid")).getAllByRole("button")
+    const selected = dates.filter(date => date.closest("td")?.hasAttribute("data-in-range")).at(-1)!
     fireEvent.click(selected)
-    const dateLabel = selected.textContent
+    const dateLabel = selected.getAttribute("aria-label")!
+    act(() => { window.history.replaceState(null, ""); window.dispatchEvent(new PopStateEvent("popstate")) })
     fireEvent.click(button); fireEvent.click(button)
     expect(button).toBeDisabled(); expect(button).toHaveAttribute("aria-busy", "true")
     expect(screen.getByRole("heading", { name: "내 훈련 일정" })).toBeVisible()
+    expect(screen.getByText(/^\d{4}-\d{2}-\d{2} ~ \d{4}-\d{2}-\d{2}$/u)).toBeVisible()
     noFile(); expect(mocks.history).toHaveBeenCalledTimes(1)
     act(() => window.dispatchEvent(new Event(ACCOUNT_PLAN_EVENT)))
     rerender(React.cloneElement(view))
-    expect(within(screen.getByRole("navigation", { name: "훈련 날짜" })).getByRole("button", { name: dateLabel! }))
-      .toHaveAttribute("aria-pressed", "true")
+    expect(within(screen.getByRole("grid")).getByRole("button", { name: dateLabel }).closest("td"))
+      .toHaveAttribute("aria-selected", "true")
     expect(button).toBeDisabled(); noFile()
     await act(async () => { wait.resolve(true) })
     expect(mocks.export).toHaveBeenCalledTimes(1); expect(create).toHaveBeenCalledTimes(1); expect(click).toHaveBeenCalledTimes(1)

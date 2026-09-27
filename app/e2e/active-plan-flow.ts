@@ -10,6 +10,7 @@ export async function openActiveSessionDetails(
   page: Page,
   expectedText?: string | RegExp,
 ): Promise<Locator> {
+  await openActivePlanCards(page)
   const cards = page.locator(".plan-schedule-preview > li")
   const position = page.getByLabel("현재 날짜 위치")
   const next = page.getByRole("button", { name: "다음 날짜" })
@@ -38,4 +39,10 @@ export async function openActiveSessionDetails(
   }
 
   throw new Error(`Could not find a visible active-plan session matching ${String(expectedText)}`)
+}
+
+export async function openActivePlanCards(page: Page): Promise<void> {
+  await expect(page.locator(".active-plan")).toBeVisible()
+  const toggle = page.getByRole("button", { name: "날짜별 카드 보기", exact: true })
+  if (await toggle.isVisible()) await toggle.click()
 }

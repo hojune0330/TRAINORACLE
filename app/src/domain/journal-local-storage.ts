@@ -2,6 +2,7 @@ import { parseJournalEntryList } from "./journal-schema"
 import type { JournalEntry } from "./journal-schema"
 import { hasPrivateMemoText } from "./private-memo-vault"
 import { JOURNAL_STORAGE_KEY } from "./journal-storage-keys"
+import { announceLocalJournalChange } from "./journal-change-events"
 
 export { JOURNAL_STORAGE_KEY }
 
@@ -30,7 +31,10 @@ export function writeJournalEntries(
     if (expected !== undefined && previous !== expected) return false
     try {
       localStorage.setItem(JOURNAL_STORAGE_KEY, serialized)
-      if (localStorage.getItem(JOURNAL_STORAGE_KEY) === serialized) return true
+      if (localStorage.getItem(JOURNAL_STORAGE_KEY) === serialized) {
+        announceLocalJournalChange()
+        return true
+      }
     } catch {}
 
     restoreUnconfirmedJournalValue(localStorage, previous, serialized)

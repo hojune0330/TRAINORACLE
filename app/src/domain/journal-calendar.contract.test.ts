@@ -56,4 +56,37 @@ describe("journal month calendar", () => {
     // Then
     expect(cells).toHaveLength(42)
   })
+
+  it("keeps every civil date in the correct weekday column across six years", () => {
+    // UTC is an independent calendar oracle, not the local-time implementation under test.
+    for (let year = 2024; year <= 2029; year += 1) {
+      for (let monthIndex = 0; monthIndex < 12; monthIndex += 1) {
+        const month = `${year}-${String(monthIndex + 1).padStart(2, "0")}`
+        const cells = projectJournalMonthCalendar(month, [])
+        const actual = cells.filter(cell => cell.kind !== "OUTSIDE_MONTH")
+        const count = new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate()
+        expect(actual.map(cell => cell.date), month).toEqual(
+          Array.from({ length: count }, (_, index) => `${month}-${String(index + 1).padStart(2, "0")}`),
+        )
+        expect(cells.length % 7, month).toBe(0)
+        expect(new Set(cells.map(cell => cell.date)).size, month).toBe(cells.length)
+        cells.forEach((cell, index) => {
+          expect(new Date(`${cell.date}T12:00:00Z`).getUTCDay(), cell.date).toBe(index % 7)
+          if (index > 0) {
+            expect(Date.parse(`${cell.date}T12:00:00Z`) - Date.parse(`${cells[index - 1]!.date}T12:00:00Z`)).toBe(86_400_000)
+          }
+        })
+      }
+    }
+  })
+
+  it("does not invent records for empty dates or mutate the supplied summaries", () => {
+    const day = recordedDay("2028-02-29", 1)
+    const before = JSON.stringify(day)
+    const cells = projectJournalMonthCalendar("2028-02", [day])
+    expect(cells.find(cell => cell.date === "2028-02-29")).toMatchObject({ kind: "RECORDED_DAY", entryCount: 1 })
+    expect(cells.find(cell => cell.date === "2028-02-28")).toMatchObject({ kind: "EMPTY_DAY" })
+    expect(cells.filter(cell => cell.kind === "RECORDED_DAY")).toHaveLength(1)
+    expect(JSON.stringify(day)).toBe(before)
+  })
 })

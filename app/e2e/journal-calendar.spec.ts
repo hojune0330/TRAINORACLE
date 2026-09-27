@@ -34,5 +34,7 @@ test("opens a recorded day directly from the monthly journal calendar", async ({
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 
   await calendar.getByRole("button", { name: /2026년 7월 10일.*훈련 후 1건/u }).click()
+  await expect(page.getByRole("dialog")).toBeVisible()
+  await page.getByRole("button", { name: "일지·메모 원문 열기" }).click()
   await expect(page.getByText("달력 확인 훈련")).toBeVisible()
 })

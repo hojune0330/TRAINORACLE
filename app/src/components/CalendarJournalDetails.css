@@ -1,0 +1,18 @@
+.calendar-journal-detail { padding-block: var(--space-4); border-top: 1px solid var(--line); font-family: var(--sans); color: var(--ink); }
+.calendar-journal-detail h3 { margin: 0 0 var(--space-3); font-size: var(--fs-app-section-title); }
+.calendar-journal-detail article { padding-block: var(--space-4); border-bottom: 1px solid var(--line); }
+.calendar-journal-detail h4 { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2); margin: 0 0 var(--space-3); font-size: var(--fs-body); }
+.calendar-journal-detail small, .calendar-journal-detail__caption { font-size: var(--fs-caption); color: var(--ink-3); line-height: 1.6; }
+.calendar-journal-detail dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin: 0; }
+.calendar-journal-detail dt { color: var(--ink-3); font-size: var(--fs-caption); }
+.calendar-journal-detail dd { margin: var(--space-1) 0 0; font-size: var(--fs-body); overflow-wrap: anywhere; }
+.calendar-journal-detail__exercise { margin-top: var(--space-3); font-size: var(--fs-body); line-height: 1.6; }
+.calendar-journal-detail__exercise p { margin-block: var(--space-1); }
+.calendar-journal-detail > button { display: flex; align-items: center; gap: var(--space-2); min-height: var(--app-touch-min); margin-block: var(--space-3); background: transparent; border: 1px solid var(--line); padding: var(--space-2) var(--space-3); font: inherit; color: var(--brand); cursor: pointer; }
+.calendar-journal-detail__empty { color: var(--ink-3); font-size: var(--fs-body); }
+.cycle-calendar { padding: var(--space-4); }
+.cycle-calendar__controls { display: flex; align-items: center; gap: var(--space-2); justify-content: space-between; padding-block: var(--space-3); }
+.cycle-calendar__controls strong { text-align: center; font-size: var(--fs-body); word-break: keep-all; }
+.cycle-calendar__controls button { flex: 0 0 44px; min-height: 44px; display: grid; place-items: center; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+.cycle-calendar label { display: grid; gap: var(--space-2); font-size: var(--fs-body); }
+.cycle-calendar input { min-height: 44px; width: 100%; min-width: 0; box-sizing: border-box; font: inherit; background: var(--surface); color: var(--ink); border: 1px solid var(--line); }

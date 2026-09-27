@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test"
 import { stateFixture } from "../src/domain/plan-beta-store.test-fixture"
+import { openActivePlanCards } from "./active-plan-flow"
 
 test("links one explicitly selected plan session to its journal without copying planned intensity", async ({ page }, testInfo) => {
   const browserErrors: string[] = []
@@ -15,6 +16,7 @@ test("links one explicitly selected plan session to its journal without copying 
 
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
+  await openActivePlanCards(page)
   await page.getByText("오전 훈련 방법과 기록", { exact: true }).click()
   await page.getByRole("button", { name: "이 훈련 일지 쓰기" }).click()
 

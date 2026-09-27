@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
 import { completeDetailedPlan } from "./plan-flow"
+import { openActivePlanCards } from "./active-plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
@@ -67,6 +68,7 @@ test("retries a completed-session save without losing the active plan", async ({
   await page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u }).first().click()
 
   // When: the athlete records completion, sees the save failure, and retries the same change.
+  await openActivePlanCards(page)
   await page.getByText("오전 훈련 방법과 기록", { exact: true }).first().click()
   await page.getByRole("button", { name: "완료" }).first().click()
   await expect(page.getByRole("alert")).toContainText("계획을 이 기기에 저장하지 못했어요")
@@ -78,6 +80,7 @@ test("retries a completed-session save without losing the active plan", async ({
   )).toContain("COMPLETED")
   await page.reload()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
+  await openActivePlanCards(page)
   await page.getByText("오전 훈련 방법과 기록", { exact: true }).first().click()
   await expect(page.getByLabel("DAY 1 오전 진행 기록").getByRole("button", { name: "완료" })).toHaveAttribute("aria-pressed", "true")
 })

@@ -21,7 +21,7 @@ import { CycleArchive } from "./CycleArchive"
 import { JournalMonthCalendar } from "./JournalMonthCalendar"
 import { JournalThenNow } from "./home/JournalThenNow"
 import { InfoDisclosure } from "../components/InfoDisclosure"
-import { todayISO } from "../domain/journal-store"
+import { useLocalToday } from "../hooks/useLocalToday"
 
 export type JournalArchiveProps = {
   readonly entries: readonly JournalEntry[]
@@ -30,6 +30,7 @@ export type JournalArchiveProps = {
   readonly onOpenDay: (date: string) => void
   readonly onBack: () => void
   readonly onWriteLog?: (() => void) | undefined
+  readonly onWriteDate?: (date: string) => void
   readonly mode?: "CALENDAR" | "CYCLE"
   readonly cycleAnchor?: string | null
   readonly cycleIndex?: number
@@ -45,6 +46,7 @@ export function JournalArchive({
   onOpenDay,
   onBack,
   onWriteLog,
+  onWriteDate,
   mode,
   cycleAnchor,
   cycleIndex,
@@ -56,7 +58,14 @@ export function JournalArchive({
   const activeMode = mode ?? internalMode
   const changeMode = onModeChange ?? setInternalMode
   const archive = React.useMemo(() => projectJournalArchive(entries), [entries])
+  const today = useLocalToday()
+  const displayedMonth = selection.selectedMonth ?? today.slice(0, 7)
   const selectedMonth = archive.months.find((month) => month.month === selection.selectedMonth) ?? null
+  const calendarMonth = archive.months.find(month => month.month === displayedMonth) ?? {
+    month: displayedMonth, entryCount: 0, kindCounts: { postSession: 0, evening: 0, race: 0 },
+    metrics: { distanceKm: null, durationMin: null, moodAverage: null, painMax: null },
+    excludedRecordCount: 0, weeks: [],
+  }
   const selectedWeek = selectedMonth?.weeks.find(
     (week) => week.weekStart === selection.selectedWeekStart,
   ) ?? null
@@ -69,7 +78,7 @@ export function JournalArchive({
         selectedMonth: selectedMonth?.month ?? null,
         selectedWeekStart: null,
       })
-    } else if (selectedMonth !== null) {
+    } else if (selection.selectedMonth !== null) {
       onSelectionChange({ selectedMonth: null, selectedWeekStart: null })
     } else {
       onBack()
@@ -90,7 +99,7 @@ export function JournalArchive({
         <button
           type="button"
           onClick={goBack}
-          aria-label={selectedWeek !== null ? "월간 목록으로" : selectedMonth !== null ? "월 목록으로" : "홈으로"}
+          aria-label={activeMode === "CYCLE" || selectedWeek !== null ? "월간 달력으로" : selection.selectedMonth !== null ? "이번 달로" : "홈으로"}
           title="뒤로"
           className="journal-archive__back"
         >
@@ -115,8 +124,8 @@ export function JournalArchive({
         </button>
       </div>
 
-      {entries.some(entry => entry.kind === "post-session" && entry.date === todayISO())
-        && entries.filter(entry => entry.kind === "post-session" && entry.date <= todayISO()).length > 1 && (
+      {entries.some(entry => entry.kind === "post-session" && entry.date === today)
+        && entries.filter(entry => entry.kind === "post-session" && entry.date <= today).length > 1 && (
         <div style={{ padding: "0 20px 16px" }}>
           <InfoDisclosure title="최근 훈련 비교">
             <JournalThenNow onOpenDay={onOpenDay} />
@@ -133,13 +142,7 @@ export function JournalArchive({
           onIndexChange={onCycleIndexChange}
           onOpenDay={onOpenDay}
           onWriteLog={onWriteLog}
-        />
-      ) : archive.months.length === 0 ? (
-        <GuidedEmptyState
-          title="첫 일지를 남겨보세요"
-          description="훈련한 날도, 쉰 날도 기록할 수 있어요. 한 번 남기면 날짜별 일지가 여기에 모입니다."
-          actionLabel="오늘 기록하기"
-          onAction={onWriteLog}
+          onWriteDate={onWriteDate}
         />
       ) : selectedWeek !== null ? (
         <SummaryList
@@ -155,25 +158,34 @@ export function JournalArchive({
             />
           )}
         />
-      ) : selectedMonth !== null ? (
-        <JournalMonthCalendar month={selectedMonth} onOpenDay={onOpenDay} />
       ) : (
-        <SummaryList
-          label="월별 기록"
-          items={archive.months}
-          itemKey={(month) => month.month}
-          renderItem={(month) => (
-            <SummaryButton
-              heading={monthLabel(month.month)}
-              summary={month}
-              ariaLabel={`${monthLabel(month.month)} ${summaryText(month)}`}
-              onClick={() => onSelectionChange({
-                selectedMonth: month.month,
-                selectedWeekStart: null,
-              })}
+        <>
+          <JournalMonthCalendar month={calendarMonth} entries={entries} onOpenDay={onOpenDay} onWriteDate={onWriteDate}
+            onMonthChange={month => onSelectionChange({ selectedMonth: month, selectedWeekStart: null })} />
+          {archive.months.length === 0 ? (
+            <GuidedEmptyState
+              title="첫 일지를 남겨보세요"
+              description="훈련한 날도, 쉰 날도 기록할 수 있어요."
+              actionLabel="오늘 기록하기" onAction={onWriteLog} />
+          ) : (
+            <SummaryList
+              label="월별 기록"
+              items={archive.months}
+              itemKey={(month) => month.month}
+              renderItem={(month) => (
+                <SummaryButton
+                  heading={monthLabel(month.month)}
+                  summary={month}
+                  ariaLabel={`${monthLabel(month.month)} ${summaryText(month)}`}
+                  onClick={() => onSelectionChange({
+                    selectedMonth: month.month,
+                    selectedWeekStart: null,
+                  })}
+                />
+              )}
             />
           )}
-        />
+        </>
       )}
     </div>
   )

@@ -5,8 +5,10 @@ import "./instant-plan.css"
 export type InstantPlanTodayViewProps = {
   readonly today: InstantPlanToday
   readonly onRecordSession?: (id: string) => void
-  readonly onChangeSchedule?: () => void
+  readonly onChangeSchedule?: (sessionId: string) => void
+  readonly changeScheduleLabel?: string
   readonly onContinue?: () => void
+  readonly compact?: boolean
 }
 
 const stateMessages: Record<InstantPlanToday["state"], string> = {
@@ -35,31 +37,45 @@ function SessionDetail({
   session,
   canRecord,
   onRecordSession,
+  compact = false,
+  showHeading = true,
+  onChangeSchedule,
+  changeScheduleLabel,
 }: {
   readonly session: TodaySession
   readonly canRecord: boolean
   readonly onRecordSession?: (id: string) => void
+  readonly compact?: boolean
+  readonly showHeading?: boolean
+  readonly onChangeSchedule?: (id: string) => void
+  readonly changeScheduleLabel?: string
 }) {
+  const steps = (items: TodaySession["steps"]) => <dl className="instant-plan__steps">
+    {items.map((step, index) => <div key={`${index}-${step.label}`}>
+      <dt>{step.label}</dt><dd>{step.instruction}</dd>
+    </div>)}
+  </dl>
   return (
     <section className="instant-plan__session" aria-label={`${session.slotLabel} · ${session.title}`}>
-      <p className="instant-plan__eyebrow">{session.slotLabel}</p>
-      <h3>{session.title}</h3>
-      <p className="instant-plan__hint">
+      {showHeading && <><p className="instant-plan__eyebrow">{session.slotLabel}</p>
+      <h3>{session.title}</h3></>}
+      {(!compact || session.recorded) && <p className="instant-plan__hint">
         {session.recorded ? "남긴 기록 있음" : "아직 기록 없음"}
-      </p>
-      <dl className="instant-plan__steps">
-        {session.steps.map((step, index) => (
-          <div key={`${index}-${step.label}`}>
-            <dt>{step.label}</dt>
-            <dd>{step.instruction}</dd>
-          </div>
-        ))}
-      </dl>
-      {canRecord && !session.recorded && onRecordSession && (
-        <button className="instant-plan__secondary" type="button" onClick={() => onRecordSession(session.id)}>
-          {session.slotLabel} 훈련 기록 남기기
-        </button>
-      )}
+      </p>}
+      {compact && session.steps[0]?.label === "총 시간·강도" ? <>
+        {steps(session.steps.slice(0, 1))}
+        {session.steps.length > 1 && <details className="instant-plan__disclosure">
+          <summary>훈련 방법</summary>{steps(session.steps.slice(1))}
+        </details>}
+      </> : steps(session.steps)}
+      {canRecord && <div className="instant-plan__actions">
+        {!session.recorded && onRecordSession && <button className="instant-plan__secondary" type="button"
+          aria-label={`${session.slotLabel} 훈련 기록 남기기`} onClick={() => onRecordSession(session.id)}>
+          {compact ? "일지 쓰기" : `${session.slotLabel} 훈련 기록 남기기`}
+        </button>}
+        {compact && onChangeSchedule && <button className="instant-plan__secondary" type="button"
+          onClick={() => onChangeSchedule(session.id)}>{changeScheduleLabel}</button>}
+      </div>}
     </section>
   )
 }
@@ -69,7 +85,9 @@ export function InstantPlanTodayView({
   today,
   onRecordSession,
   onChangeSchedule,
+  changeScheduleLabel = "일정 확인",
   onContinue,
+  compact = false,
 }: InstantPlanTodayViewProps) {
   const headingId = useId()
   const canRecord = today.state === "SCHEDULED" || today.state === "PARTLY_RECORDED"
@@ -86,13 +104,13 @@ export function InstantPlanTodayView({
   }, [defaultSessionId, selectedSessionId, showSessions, today.sessions])
 
   return (
-    <section className="instant-plan" aria-labelledby={headingId}>
+    <section className={`instant-plan${compact ? " instant-plan--today-compact" : ""}`} aria-labelledby={headingId}>
       <p className="instant-plan__eyebrow">{today.dateLabel}</p>
       {today.sourceLabel && <p className="instant-plan__source">{today.sourceLabel}</p>}
       <h2 id={headingId} className="instant-plan__heading">{today.title}</h2>
-      <p className="instant-plan__status" role={today.state === "UNAVAILABLE" ? "alert" : "status"}>
+      {(!compact || !["SCHEDULED", "PARTLY_RECORDED", "RECORDED"].includes(today.state)) && <p className="instant-plan__status" role={today.state === "UNAVAILABLE" ? "alert" : "status"}>
         {stateMessages[today.state]}
-      </p>
+      </p>}
 
       {showSessions && (
         <div className="instant-plan__sessions">
@@ -109,15 +127,19 @@ export function InstantPlanTodayView({
                   >
                     <span className="instant-plan__eyebrow">{session.slotLabel}</span>
                     <strong>{session.title}</strong>
-                    <span className="instant-plan__hint">
+                    {(!compact || session.recorded) && <span className="instant-plan__hint">
                       {session.recorded ? "남긴 기록 있음" : "아직 기록 없음"}
-                    </span>
+                    </span>}
                   </button>
                 ))}
               </div>
               {selectedSession && (
                 <SessionDetail
                   session={selectedSession}
+                  compact={compact}
+                  showHeading={!compact}
+                  onChangeSchedule={onChangeSchedule}
+                  changeScheduleLabel={changeScheduleLabel}
                   canRecord={canRecord}
                   onRecordSession={onRecordSession}
                 />
@@ -127,6 +149,9 @@ export function InstantPlanTodayView({
             <SessionDetail
               key={session.id}
               session={session}
+              compact={compact}
+              onChangeSchedule={onChangeSchedule}
+              changeScheduleLabel={changeScheduleLabel}
               canRecord={canRecord}
               onRecordSession={onRecordSession}
             />
@@ -135,8 +160,8 @@ export function InstantPlanTodayView({
       )}
 
       <div className="instant-plan__actions">
-        {canRecord && onChangeSchedule && (
-          <button className="instant-plan__secondary" type="button" onClick={onChangeSchedule}>오늘은 어려워요</button>
+        {!compact && canRecord && selectedSession && onChangeSchedule && (
+          <button className="instant-plan__secondary" type="button" onClick={() => onChangeSchedule(selectedSession.id)}>{changeScheduleLabel}</button>
         )}
         {continueLabel && onContinue && (
           <button className="instant-plan__secondary" type="button" onClick={onContinue}>{continueLabel}</button>

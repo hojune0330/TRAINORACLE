@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
 import { completeDetailedPlan } from "./plan-flow"
+import { openActivePlanCards } from "./active-plan-flow"
 import { mkdir, writeFile } from "node:fs/promises"
 import path from "node:path"
 
@@ -51,6 +52,7 @@ for (const viewport of [
     await seedRecords(page)
     await openPlan(page)
     await createBoundActivePlan(page, viewport.projectionLength)
+    await openActivePlanCards(page)
     await assertCurrentBuild(page)
 
     await expect(page.getByRole("button", { name: "현재 계획을 먼저 기록해 주세요" })).toBeDisabled()
@@ -102,6 +104,7 @@ for (const viewport of [
 
     await page.getByRole("button", { name: "현재 계획으로 돌아가기" }).click()
     const candidateBefore = await activeCandidateId(page)
+    await openActivePlanCards(page)
     await page.getByText("오전 훈련 방법과 기록", { exact: true }).first().click()
     await page.getByLabel("DAY 1 오전 진행 기록")
       .getByRole("button", { name: "휴식" })

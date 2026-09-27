@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen, within } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import type { PlanSession } from "@impl/plan-generator/types"
@@ -72,6 +72,8 @@ describe("active plan first-view overview", () => {
 
     const flow = screen.getByLabelText("9일 훈련 일정")
     const information = screen.getByText("계획 정보와 유의사항").closest("details")
+    expect(screen.queryByRole("list", { name: "날짜별 계획 미리보기" })).toBeNull()
+    await userEvent.setup().click(screen.getByRole("button", { name: "날짜별 카드 보기" }))
     const timeline = screen.getByRole("list", { name: "날짜별 계획 미리보기" })
     const trainingDay = screen.getByRole("group", {
       name: "8월 29일 토요일 · 훈련 2개",
@@ -106,6 +108,14 @@ describe("active plan first-view overview", () => {
   it("does not celebrate an already stored plan opened later", () => {
     render(<ActivePlan state={overviewState()} {...callbacks} />)
     expect(screen.queryByText("훈련 계획이 완성됐어요")).not.toBeInTheDocument()
+  })
+
+  it.each(["pointerdown", "keydown", "scroll"])("clears its decorative toast on %s without hiding failed account storage", event => {
+    render(<ActivePlan state={overviewState()} showCreatedCelebration cloudPersistence="FAILED" {...callbacks} />)
+    expect(screen.getByText("훈련 계획이 완성됐어요")).toBeVisible()
+    fireEvent(window, new Event(event))
+    expect(screen.queryByText("훈련 계획이 완성됐어요")).not.toBeInTheDocument()
+    expect(screen.getByRole("alert")).toBeVisible()
   })
 
   it("states whether the plan is device-only or also saved to the signed-in account", () => {

@@ -24,13 +24,13 @@ import {
   PROGRESS_LABELS,
   sessionSlotLabel,
 } from "./labels"
-import { PlanRpeGuide, PlanSchedulePreview } from "./PlanSchedulePreview"
+import { PlanRpeGuide, PlanSchedulePreview, type PlanReaderRequest } from "./PlanSchedulePreview"
 import { DIVISION_LABELS } from "./plan-intake-meta"
 import { eventDistanceLabel } from "./plan-intake-navigation"
 import type { PlanCurrentCheck } from "../../domain/plan-beta-flow"
 import type { StoredPaceTargetPrescription } from "../../domain/plan-session-schema"
 import { PlanAdaptationFlow } from "./PlanAdaptationFlow"
-import { todayISO, loadEntries, loadEntriesForPlanSafety, type PostSessionEntry } from "../../domain/journal-store"
+import { loadEntries, loadEntriesForPlanSafety, type PostSessionEntry } from "../../domain/journal-store"
 import { collectSessionExplanationEvidence } from "../../domain/session-explanation-evidence"
 import { isValidIsoDate, isoShift, isoToDate } from "../../domain/dates"
 import { isPlanFrameCompletionEligible } from "../../domain/plan-successor-activation"
@@ -41,6 +41,9 @@ import { resolveCurrentPlannedSession, samePlannedSessionLink } from "../../doma
 import { InstantPlanTodayView } from "../../components/instant-plan/InstantPlanTodayView"
 import { instantSessionId } from "./instant-plan-today"
 import { projectCurrentInstantToday } from "./instant-plan-today-context"
+import { useLocalToday } from "../../hooks/useLocalToday"
+import { SessionExplanationEntry } from "./SessionExplanation"
+import { useCalendarEntries } from "../../hooks/useCalendarEntries"
 
 const PROGRESS_ACTIONS: readonly {
   readonly state: PlanProgressState
@@ -84,6 +87,9 @@ export function ActivePlan({
   readonly executionBlocked?: boolean
 }) {
   const [hasPendingSuccessor, setHasPendingSuccessor] = React.useState(false)
+  const [readerRequest, setReaderRequest] = React.useState<PlanReaderRequest>()
+  const calendarEntries = useCalendarEntries()
+  const today = useLocalToday()
   const [showActivationCheck, setShowActivationCheck] = React.useState(false)
   const [showCreated, setShowCreated] = React.useState(false)
   const scheduleAnchor = React.useRef<HTMLDivElement>(null)
@@ -100,6 +106,17 @@ export function ActivePlan({
     scheduleAnchor.current?.focus({ preventScroll: true })
   }
   const { activePlan } = state
+  const explanationContext = {
+    plan: activePlan,
+    kind: "SAVED" as const,
+    generatedAt: state.generatedAt,
+    receipt: state.version === 3 ? state.explanationReceipt : undefined,
+    frameOrdinal: state.version === 3 ? state.periodization?.frameOrdinal : undefined,
+  }
+  const loadSessionEvidence = (session: PlanSession) => {
+    const journal = loadEntriesForPlanSafety()
+    return journal.status === "complete" ? collectSessionExplanationEvidence(journal.entries, state, session) : null
+  }
   const recorded = new Map(
     state.progress.map((progress) => [
       `${progress.sessionDay}:${progress.sessionSlot}`,
@@ -119,7 +136,7 @@ export function ActivePlan({
       prescription.kind === "PACE_TARGET"
     ))
   const hasDetailedPrescription = detailedPrescription !== undefined
-  const frameComplete = isPlanFrameCompletionEligible(state, todayISO())
+  const frameComplete = isPlanFrameCompletionEligible(state, today)
   const startDate = state.intake.startDate ?? state.generatedAt.slice(0, 10)
   const frameDayCount = Math.ceil(frameLengthDays)
   const focusLabel = ENERGY_INTENT_LABELS[activePlan.selectedEnergyIntent].title
@@ -138,8 +155,17 @@ export function ActivePlan({
   React.useEffect(() => {
     if (!showCreatedCelebration) return
     setShowCreated(true)
-    const timeout = window.setTimeout(() => setShowCreated(false), 3_000)
-    return () => window.clearTimeout(timeout)
+    const dismiss = () => setShowCreated(false)
+    const timeout = window.setTimeout(dismiss, 3_000)
+    window.addEventListener("pointerdown", dismiss, { once: true, capture: true })
+    window.addEventListener("keydown", dismiss, { once: true, capture: true })
+    window.addEventListener("scroll", dismiss, { once: true, capture: true })
+    return () => {
+      window.clearTimeout(timeout)
+      window.removeEventListener("pointerdown", dismiss, true)
+      window.removeEventListener("keydown", dismiss, true)
+      window.removeEventListener("scroll", dismiss, true)
+    }
   }, [showCreatedCelebration])
 
   return (
@@ -183,7 +209,11 @@ export function ActivePlan({
         </div>)}
       </section>}
       {executionMessage && <div className="plan-execution-status" role="status">{executionMessage}</div>}
-      <InstantPlanTodayView today={todayView} onContinue={showSchedule} onChangeSchedule={showSchedule}
+      <InstantPlanTodayView today={todayView} compact onContinue={showSchedule} changeScheduleLabel="휴식·건너뜀 기록"
+        onChangeSchedule={id => {
+          const session = activePlan.sessions.find(item => instantSessionId(item) === id)
+          if (session) setReaderRequest(previous => ({ day: session.day, slot: session.slot, section: "records", sequence: (previous?.sequence ?? 0) + 1 }))
+        }}
         onRecordSession={onWriteSessionLog === undefined ? undefined : id => {
           const session = activePlan.sessions.find(item => instantSessionId(item) === id)
           if (session && session.role !== "REST") onWriteSessionLog(session)
@@ -242,26 +272,23 @@ export function ActivePlan({
       </details>
       <div ref={scheduleAnchor} tabIndex={-1} aria-label="전체 일정과 기록">
       <PlanSchedulePreview
+        journalEntries={calendarEntries}
+        readerRequest={readerRequest}
+        sessionProgress={session => recorded.get(`${session.day}:${session.slot}`)}
         startDate={startDate}
         frameLengthDays={frameLengthDays}
         sessions={activePlan.sessions}
-        explanationContext={{
-          plan: activePlan,
-          kind: "SAVED",
-          generatedAt: state.generatedAt,
-          receipt: state.version === 3 ? state.explanationReceipt : undefined,
-          frameOrdinal: state.version === 3 ? state.periodization?.frameOrdinal : undefined,
-        }}
-        loadEvidence={(session) => {
-          const journal = loadEntriesForPlanSafety()
-          return journal.status === "complete"
-            ? collectSessionExplanationEvidence(journal.entries, state, session)
-            : null
-        }}
+        explanationContext={explanationContext}
+        loadEvidence={loadSessionEvidence}
         focusSession={returnedSession ?? undefined}
         showRpeGuide={false}
         timelineHeading="날짜별 훈련"
         displayMode="swipe"
+        detailsExpanded={false}
+        readerNotice={executionMessage || executionBlocked ? <div role="status">
+          {executionMessage && <p>{executionMessage}</p>}
+          {executionBlocked && <p>몸 상태와 처방을 먼저 확인해 주세요.</p>}
+        </div> : undefined}
         renderAfterSchedule={(
           <>
             {frameComplete ? (
@@ -373,6 +400,8 @@ export function ActivePlan({
               <em className="active-plan__status">
                 {current === undefined ? "예정" : PROGRESS_LABELS[current]}
               </em>
+              <SessionExplanationEntry session={session} context={explanationContext} loadEvidence={loadSessionEvidence}
+                initialTab="주기·기록" entryLabel="연결된 일지 기록 보기" showPurpose={false} returnLabel="훈련과 일지로 돌아가기" />
               {session.role !== "REST" && onWriteSessionLog !== undefined && (
                 <button
                   className="active-plan__journal-action"
@@ -419,12 +448,14 @@ export function ActivePlan({
       />
       </div>
       <div className="active-plan__continuity">
-        <strong>다음 계획에 남기는 정보</strong>
+        <details className="plan-session-guidance">
+        <summary>다음 계획에 반영되는 내용</summary>
         <p>
           다음 계획에는 어떤 계획을 골랐는지와 완료·휴식·건너뜀·통증 체크 횟수만 남겨요.
           이번 훈련의 거리·페이스·메모는 넘기지 않고 강도도 자동으로 올리지 않습니다.
           새 계획을 만들기 전에 몸 상태를 다시 확인합니다.
         </p>
+        </details>
         {frameComplete && hasPendingSuccessor ? (
           <>
             <button type="button" onClick={() => setShowActivationCheck(true)}>

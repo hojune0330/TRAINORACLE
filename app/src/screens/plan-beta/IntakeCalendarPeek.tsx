@@ -2,6 +2,10 @@ import { CalendarDays } from "lucide-react"
 import type { PlanBetaIntake } from "../../domain/plan-beta-store"
 import { eventDistanceLabel } from "./plan-intake-navigation"
 import { EXPERIENCE_LABELS } from "./labels"
+import { useEffect, useState } from "react"
+import { MonthCalendar, calendarDayLabel } from "../../components/MonthCalendar"
+import { useLocalToday } from "../../hooks/useLocalToday"
+import { isValidIsoDate, isoShift } from "../../domain/dates"
 
 /**
  * 질문에 답할 때마다 조금씩 채워지는 달력 그림.
@@ -15,7 +19,11 @@ export function IntakeCalendarPeek({
   readonly draft: Partial<PlanBetaIntake>
   readonly frameLengthDays?: 7 | 9 | 10
 }) {
-  const days = Array.from({ length: frameLengthDays }, (_, index) => index + 1)
+  const today = useLocalToday()
+  const start = draft.startDate && isValidIsoDate(draft.startDate) ? draft.startDate : today
+  const [month, setMonth] = useState(start.slice(0, 7))
+  const [selected, setSelected] = useState(start)
+  useEffect(() => { setMonth(start.slice(0, 7)); setSelected(start) }, [start])
   const activeDays = draft.availableDayCount === undefined
     ? new Set<number>()
     : new Set(previewTrainingDays(draft.availableDayCount, frameLengthDays))
@@ -32,6 +40,7 @@ export function IntakeCalendarPeek({
         ? `${eventDistanceLabel(draft.eventDistanceM)} · ${shortExperience(draft.experienceBand)}`
         : `${eventDistanceLabel(draft.eventDistanceM)} · ${shortExperience(draft.experienceBand)} · ${dayCountLabel(draft.availableDayCount, frameLengthDays)}`
 
+  const exampleDates = new Set([...activeDays].map(day => isoShift(start, day - 1)))
   return (
     <figure
       className="intake-calendar-peek"
@@ -43,24 +52,14 @@ export function IntakeCalendarPeek({
         <span>{caption}</span>
         <small>{filled}/3</small>
       </figcaption>
-      <ol className="intake-calendar-peek__days" aria-hidden="true">
-        {days.map((day) => (
-          <li
-            key={day}
-            data-state={
-              draft.eventDistanceM === undefined
-                ? "empty"
-                : activeDays.has(day)
-                  ? "training"
-                  : draft.availableDayCount === undefined
-                    ? "pending"
-                    : "rest"
-            }
-          >
-            <span>{day}</span>
-          </li>
-        ))}
-      </ol>
+      <details>
+        <summary>{calendarDayLabel(start)}부터 · {frameLengthDays}일 달력 보기</summary>
+        <MonthCalendar month={month} today={today} selectedDate={selected} onMonthChange={setMonth} onSelectDate={setSelected}
+          highlightedRange={{ start, end: isoShift(start, frameLengthDays - 1) }}
+          dayDescription={date => exampleDates.has(date) ? "훈련일 배치 예시 · 아직 계획 아님" : "계획 생성 전"}
+          renderDay={date => exampleDates.has(date) ? <span className="month-calendar__event">예시</span> : null} />
+        <p>훈련일 배치 예시예요. 실제 훈련과 날짜는 계획을 만든 뒤 확인해요.</p>
+      </details>
     </figure>
   )
 }

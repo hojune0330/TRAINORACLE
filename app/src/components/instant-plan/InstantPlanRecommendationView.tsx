@@ -6,6 +6,7 @@ import type {
   InstantPlanRecommendation,
 } from "../../domain/instant-plan-contract"
 import "./instant-plan.css"
+import { RecommendationCalendar } from "./RecommendationCalendar"
 
 export type InstantPlanRecommendationViewProps = {
   readonly recommendation: InstantPlanRecommendation
@@ -26,14 +27,6 @@ const roleLabels: Record<InstantPlanDaySummary["sessions"][number]["role"], stri
   REC: "회복",
   OFF: "휴식",
   OTHER: "훈련",
-}
-
-function compactDateLabel(date: string): string {
-  // A calendar display only: UTC prevents the supplied date moving by time zone.
-  const parsed = new Date(`${date}T00:00:00Z`)
-  if (Number.isNaN(parsed.getTime())) return date
-  const weekday = ["일", "월", "화", "수", "목", "금", "토"][parsed.getUTCDay()]
-  return `${parsed.getUTCMonth() + 1}/${parsed.getUTCDate()} (${weekday})`
 }
 
 /** The integration boundary owns eligibility, recommendation selection and saving. */
@@ -85,23 +78,7 @@ export function InstantPlanRecommendationView({
         {recommendation.days.length === 0 ? (
           <p className="instant-plan__status">표시할 일정이 없어요.</p>
         ) : (
-          <ol className="instant-plan__schedule">
-            {recommendation.days.map(day => (
-              <li className="instant-plan__day" key={day.date}>
-                <h4><time dateTime={day.date}>{compactDateLabel(day.date)}</time></h4>
-                {day.sessions.length === 0 ? <p>등록된 훈련 없음</p> : (
-                  <ul className="instant-plan__day-slots">
-                    {day.sessions.map(session => (
-                      <li className="instant-plan__day-slot" key={session.id}>
-                        <span>{session.slotLabel}</span>{"·"}
-                        <span className="instant-plan__role">{roleLabels[session.role]}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </li>
-            ))}
-          </ol>
+          <RecommendationCalendar days={recommendation.days} />
         )}
       </section>
 

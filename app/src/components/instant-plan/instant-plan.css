@@ -322,6 +322,12 @@
   margin: 0;
 }
 
+.instant-plan--today-compact > * + * { margin-block-start: var(--space-2); }
+.instant-plan--today-compact .instant-plan__session { padding-block: var(--space-2); }
+.instant-plan--today-compact .instant-plan__status:not([role="alert"]) { padding-block: var(--space-2); border: 0; }
+.instant-plan--today-compact .instant-plan__steps { padding: 0; }
+.instant-plan--today-compact .instant-plan__steps dt { color: var(--ink-2); font-size: var(--fs-caption); }
+
 /* The recommendation stays compact without changing entry or execution views. */
 .instant-plan--recommendation > * + * {
   margin-block-start: var(--space-3);

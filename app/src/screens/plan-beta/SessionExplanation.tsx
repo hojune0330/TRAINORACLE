@@ -14,12 +14,16 @@ import { sessionPrescriptionSequence } from "../../domain/session-prescription-s
 import { PrescriptionStructure } from "./PrescriptionStructure"
 import { PlanMethodObservationDetails } from "./PlanMethodObservationDetails"
 import "../../styles/session-explanation.css"
+import { useReaderDialog } from "../../hooks/useReaderDialog"
 
 type Props = {
   readonly session: PlanSession
   readonly returnLabel?: string
   readonly context?: SessionExplanationContext
   readonly loadEvidence?: (session: PlanSession) => SessionExplanationEvidence | null
+  readonly initialTab?: Tab
+  readonly entryLabel?: string
+  readonly showPurpose?: boolean
 }
 const TABS = ["방법", "이유·근거", "주기·기록"] as const
 type Tab = typeof TABS[number]
@@ -37,14 +41,14 @@ export function SessionExplanationEntry(props: Props) {
   }, [open])
   return (
     <div className="session-explanation-entry">
-      <p>{explanationProfile(props.session).purpose}</p>
+      {props.showPurpose !== false && <p>{explanationProfile(props.session).purpose}</p>}
       <button ref={opener} type="button" onClick={() => {
         const region = opener.current?.closest<HTMLElement>(".app-scroll-region")
         returnPosition.current = region ? { region, top: region.scrollTop } : null
         setOpen(true)
       }} aria-haspopup="dialog">
         <BookOpen aria-hidden="true" size={17} />
-        훈련 방법과 이유
+        {props.entryLabel ?? "훈련 방법과 이유"}
         <ChevronRight aria-hidden="true" size={16} />
       </button>
       {open && createPortal(<SessionExplanationReader {...props} onClose={() => setOpen(false)} />, document.body)}
@@ -52,13 +56,14 @@ export function SessionExplanationEntry(props: Props) {
   )
 }
 
-function SessionExplanationReader({ session, context, loadEvidence, returnLabel = "훈련 일정으로 돌아가기", onClose }: Props & { readonly onClose: () => void }) {
-  const [tab, setTab] = React.useState<Tab>("방법")
+function SessionExplanationReader({ session, context, loadEvidence, initialTab = "방법", returnLabel = "훈련 일정으로 돌아가기", onClose }: Props & { readonly onClose: () => void }) {
+  const [tab, setTab] = React.useState<Tab>(initialTab)
   const [expert, setExpert] = React.useState(false)
   const evidence = React.useMemo(() => {
     try { return loadEvidence?.(session) ?? null } catch { return null }
   }, [loadEvidence, session, context?.plan.candidateId, context?.generatedAt])
   const dialog = React.useRef<HTMLDialogElement>(null)
+  const close = useReaderDialog(dialog, onClose)
   const content = React.useRef<HTMLDivElement>(null)
   const scrollPositions = React.useRef<Record<Tab, number>>({ "방법": 0, "이유·근거": 0, "주기·기록": 0 })
   const tabs = React.useRef<(HTMLButtonElement | null)[]>([])
@@ -81,17 +86,6 @@ function SessionExplanationReader({ session, context, loadEvidence, returnLabel 
   const rows = evidenceMatches ? evidence.rows : []
   const methodObservation = evidenceMatches ? evidence.methodObservation ?? null : null
 
-  React.useEffect(() => {
-    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = "hidden"
-    dialog.current?.showModal()
-    return () => {
-      document.body.style.overflow = previousOverflow
-      opener?.focus({ preventScroll: true })
-    }
-  }, [])
-
   React.useLayoutEffect(() => {
     content.current?.scrollTo({ top: scrollPositions.current[tab], behavior: "instant" })
   }, [tab])
@@ -104,9 +98,9 @@ function SessionExplanationReader({ session, context, loadEvidence, returnLabel 
   }
 
   return (
-    <dialog ref={dialog} className="session-explanation" aria-labelledby={`${id}-title`} onCancel={onClose}>
+    <dialog ref={dialog} className="session-explanation" aria-labelledby={`${id}-title`} onCancel={event => { event.preventDefault(); close() }}>
       <header className="session-explanation__header">
-        <button type="button" className="session-explanation__back" onClick={onClose} aria-label={returnLabel}>
+        <button type="button" className="session-explanation__back" onClick={close} aria-label={returnLabel}>
           <ArrowLeft size={21} aria-hidden="true" />
         </button>
         <div><small>{session.day}일차 · {session.slot === "AM" ? "오전" : "오후"}</small><h2 id={`${id}-title`}>{sessionLabel(session)}</h2></div>

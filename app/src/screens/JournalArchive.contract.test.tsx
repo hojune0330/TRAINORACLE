@@ -1,7 +1,7 @@
 import React from "react"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { JournalEntry } from "../domain/journal-schema"
 import type { ArchiveSelection } from "../domain/journal-archive"
 import { JournalArchive } from "./JournalArchive"
@@ -81,6 +81,9 @@ const ENTRIES: readonly JournalEntry[] = [
   },
 ]
 
+beforeEach(() => {
+  HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", "") }
+})
 afterEach(cleanup)
 
 function ArchiveHarness() {
@@ -100,6 +103,21 @@ function ArchiveHarness() {
 }
 
 describe("journal archive surface", () => {
+  it("shows the current real month even with no entries and can browse an empty month", async () => {
+    const user = userEvent.setup()
+    const onSelectionChange = vi.fn()
+    const onOpenDay = vi.fn()
+    const now = new Date()
+    render(<JournalArchive entries={[]} selection={{ selectedMonth: null, selectedWeekStart: null }}
+      onSelectionChange={onSelectionChange} onOpenDay={onOpenDay} onBack={vi.fn()} />)
+    expect(screen.getByRole("grid", { name: `${now.getFullYear()}년 ${now.getMonth() + 1}월 달력` })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "오늘" }))
+    expect(onOpenDay).not.toHaveBeenCalled()
+    expect(screen.getByRole("status")).toHaveTextContent("이날 작성한 일지가 없어요")
+    await user.click(screen.getByRole("button", { name: "다음 달" }))
+    expect(onSelectionChange).toHaveBeenCalledTimes(2)
+  })
+
   it("drills from month to week to day without exposing private text", async () => {
     const user = userEvent.setup()
     const onOpenDay = vi.fn()
@@ -137,10 +155,14 @@ describe("journal archive surface", () => {
     )
 
     expect(screen.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
-    expect(screen.getByText("색 점: 훈련 후 · 하루 마무리 · 경기")).toBeVisible()
+    expect(screen.getByText("날짜별 일지")).toBeVisible()
     const day = screen.getByRole("button", { name: /2026년 7월 10일.*훈련 후 2건/u })
     expect(day).not.toHaveAccessibleName(expect.stringContaining(SECRET))
     await user.click(day)
+    expect(screen.getByRole("dialog")).toBeVisible()
+    expect(document.body.textContent).not.toContain(SECRET)
+    expect(onOpenDay).not.toHaveBeenCalled()
+    await user.click(screen.getByRole("button", { name: "일지·메모 원문 열기" }))
     expect(onOpenDay).toHaveBeenCalledWith("2026-07-10")
   })
 
@@ -175,12 +197,29 @@ describe("journal archive surface", () => {
     )
 
     await user.click(screen.getByRole("button", { name: "9.5일 주기" }))
+    await user.click(screen.getByText("주기 시작일과 표시 기준"))
     fireEvent.change(screen.getByLabelText("주기 시작일"), { target: { value: "2026-07-10" } })
 
-    expect(screen.getAllByText(/10일 구간/u)).toHaveLength(2)
+    expect(screen.getAllByText(/10일 구간/u)).toHaveLength(1)
     expect(screen.getByRole("button", { name: /2026년 7월 10일/u })).toBeVisible()
     expect(document.body.textContent).not.toContain(SECRET)
     expect(screen.getByText(/계획을 자동으로 바꾸지 않아요/u)).toBeVisible()
     expect(screen.getByText(/처방이나 정답 주기가 아니에요/u)).toBeVisible()
+    expect(screen.getByRole("button", { name: "월간 달력으로" })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "다음 달" }))
+    expect(screen.getByText(/이 달 0일 · 0개 기록/)).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "선택한 주기로 이동" }))
+    expect(screen.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
+  })
+
+  it("offers date-specific writing on an empty past day without silently selecting today", async () => {
+    const user = userEvent.setup()
+    const write = vi.fn()
+    render(<JournalArchive entries={[]} selection={{ selectedMonth: "2025-07", selectedWeekStart: null }}
+      onSelectionChange={vi.fn()} onOpenDay={vi.fn()} onBack={vi.fn()} onWriteDate={write} />)
+    await user.click(screen.getByRole("button", { name: /2025년 7월 10일 목요일/ }))
+    expect(write).not.toHaveBeenCalled()
+    await user.click(screen.getByRole("button", { name: "이날 일지 쓰기" }))
+    expect(write).toHaveBeenCalledExactlyOnceWith("2025-07-10")
   })
 })

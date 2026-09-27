@@ -1,4 +1,5 @@
 import React from "react"
+import { READER_HISTORY_KEY } from "./hooks/useReaderDialog"
 import { runDraftSafeNavigation } from "./domain/unsaved-draft-navigation"
 import type { AppTab } from "./components/AppChrome"
 import { AppShellFrame } from "./components/AppShellFrame"
@@ -109,6 +110,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const [analysisContext, setAnalysisContext] = React.useState<AnalysisNavigation | undefined>()
   const oracleInputRef = React.useRef<{ topic: OracleTopicId; owner: string | null; inputKind: "log" | "records" | "plan"; mode: "example" | "personal"; scrollTop: number; view: ReturnType<typeof viewForTab> } | null>(null)
   const pendingReward = React.useRef<{ ownerId: string | null; date: string } | null>(null)
+  const calendarDraftReturn = React.useRef<{ token: string; owner: string | null; view: typeof v } | null>(null)
   const [athleteRecordsOpen, setAthleteRecordsOpen] = React.useState(false)
   const [homeDetailOrigin, setHomeDetailOrigin] = React.useState<"home" | "rewards">("home")
   const scrollRegionRef = React.useRef<HTMLElement>(null)
@@ -177,6 +179,15 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
 
   React.useEffect(() => {
     const onPopState = (event: PopStateEvent) => {
+      const calendarOrigin = calendarDraftReturn.current
+      if (calendarOrigin && event.state?.calendarDraft !== calendarOrigin.token) {
+        const allowed = runDraftSafeNavigation(() => {
+          calendarDraftReturn.current = null
+          setV(calendarOrigin.owner === activeLocalAccount() ? calendarOrigin.view : INITIAL_VIEW_STATE)
+        })
+        if (!allowed) window.history.pushState({ ...window.history.state, calendarDraft: calendarOrigin.token }, "", window.location.href)
+        return
+      }
       const intent = oracleInputRef.current
       if (intent?.inputKind === "log" && overlayRef.current === null && intent.owner === activeLocalAccount()) {
         const restored: AppOverlay = { kind: "oracle", topic: intent.topic, mode: intent.mode, scrollTop: intent.scrollTop }
@@ -201,6 +212,15 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     window.addEventListener("popstate", onPopState)
     return () => window.removeEventListener("popstate", onPopState)
   }, [applyOverlay])
+
+  React.useEffect(() => {
+    if (v.tab === "log" || calendarDraftReturn.current === null) return
+    if (window.history.state?.calendarDraft === calendarDraftReturn.current.token) {
+      const { calendarDraft: _draft, ...rest } = window.history.state
+      window.history.replaceState(rest, "", window.location.href)
+    }
+    calendarDraftReturn.current = null
+  }, [v.tab])
 
   React.useEffect(() => {
     const refresh = () => {
@@ -615,6 +635,16 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           onModeChange={(journalMode) => setV(s => ({ ...s, journalMode }))}
           onCycleAnchorChange={(cycleAnchor) => setV(s => ({ ...s, cycleAnchor, cycleIndex: 0 }))}
           onCycleIndexChange={(cycleIndex) => setV(s => ({ ...s, cycleIndex }))}
+          onWriteDate={(date) => runViewTransition("push", () => {
+            const token = `calendar-draft-${Date.now()}`
+            // Reuse the reader's history entry so one Back returns to its calendar.
+            const { [READER_HISTORY_KEY]: reader, ...rest } = window.history.state ?? {}
+            try {
+              window.history[reader ? "replaceState" : "pushState"]({ ...rest, calendarDraft: token }, "", window.location.href)
+              calendarDraftReturn.current = { token, owner: activeLocalAccount(), view: v }
+            } catch { /* The in-app Back action still retains the selected date. */ }
+            setV(s => viewForJournalDraft(s, date))
+          })}
           onSelectionChange={(archiveSelection) => setV(s => ({ ...s, archiveSelection }))}
           onOpenDay={(detailDate) => runViewTransition("push", () => setV(s => ({ ...s, detailDate })))}
           onBack={goHome}

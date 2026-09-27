@@ -15,6 +15,7 @@ import { isoShift } from "../../domain/dates"
 import { todayISO } from "../../domain/journal-store"
 import "./AdjustedPlanSchedule.css"
 import { MultiPlanCloudControlsV3 } from "./MultiPlanCloudControlsV3"
+import { DatedPlanPanel } from "./DatedPlanPanel"
 
 type Loaded = Extract<ReturnType<typeof readStoredMultiAdjustedPlanV6>, { kind: "loaded" }>
 export function MultiAdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChange, onWritePlannedSessionLog, returnToSession, onImportPlan, onPrepareNext }: {
@@ -40,15 +41,14 @@ export function MultiAdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChan
   }, [])
   const date = isoShift(start, day - 1)
   return <section className="plan-active adjusted-plan-schedule" aria-labelledby="multi-adjusted-title">
-    <h1 id="multi-adjusted-title">내 훈련 일정</h1><p>{start}부터 · {days.length}일 일정</p>
-    <nav aria-label="훈련 날짜">{days.map(d => <button type="button" key={d} aria-pressed={d === day}
-      onClick={() => { setDay(d); setError(null) }}>{isoShift(start, d - 1).slice(5).replace("-", "/")}</button>)}</nav>
+    <h1 id="multi-adjusted-title">내 훈련 일정</h1><p>{start} ~ {isoShift(start, days.at(-1)! - 1)}</p>
+    <DatedPlanPanel start={start} sessions={plan.activePlan.sessions} day={day} onDayChange={setDay} notice={error ? <p role="alert">{error}</p> : undefined}>
     <h2>{date} ({new Intl.DateTimeFormat("ko-KR", { weekday: "short" }).format(new Date(`${date}T12:00:00`))})</h2>
     {plan.activePlan.sessions.filter(s => s.day === day).sort((a, b) => a.slot.localeCompare(b.slot)).map(session => {
       const time = session.slot === "AM" ? "오전" : "오후"
       const recorded = loaded.state.progress.find(r => r.sessionDay === day && r.sessionSlot === session.slot)
       const explanation = loaded.explanations.find(e => e.address.day === day && e.address.slot === session.slot)?.explanation
-      return <section key={session.slot} aria-label={`${time} 훈련`}><h3>{time} · {session.role === "REST" ? "휴식" : ENERGY_INTENT_LABELS[session.plannedEnergyIntent].title}</h3>
+      return <section key={session.slot} tabIndex={-1} data-session-slot={session.slot} aria-label={`${time} 훈련`}><h3>{time} · {session.role === "REST" ? "휴식" : ENERGY_INTENT_LABELS[session.plannedEnergyIntent].title}</h3>
         <AdjustedPrescriptionV3 session={session} explanation={explanation} />
         <p role="status">{recorded ? PROGRESS_LABELS[recorded.state] : "아직 진행 기록이 없어요."}</p>
         <div role="group" aria-label={`${time} 진행 기록`}>{([
@@ -77,6 +77,7 @@ export function MultiAdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChan
         }}><PenLine size={18} aria-hidden="true" />이 훈련 일지 쓰기</button>}
       </section>
     })}
+    </DatedPlanPanel>
     {error && <p role="alert">{error}</p>}
     {onPrepareNext && <button type="button" disabled={saving} onClick={onPrepareNext}><RefreshCw size={18} aria-hidden="true" />다음 훈련 주기 준비</button>}
     <details><summary>저장과 이용 안내</summary><p>현재 이 기기에 저장된 계획이에요.</p>

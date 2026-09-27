@@ -2,6 +2,7 @@ import type { JournalEntry } from "./journal-schema"
 import { parseJournalEntryList } from "./journal-schema"
 import { JOURNAL_STORAGE_KEY, PRIVATE_MEMO_VAULT_STORAGE_KEY } from "./journal-storage-keys"
 import type { PrivateMemoVault } from "./private-memo-vault"
+import { announceLocalJournalChange } from "./journal-change-events"
 
 export type VaultJournalStorageSnapshot = {
   readonly vault: string | null
@@ -35,7 +36,10 @@ export function writeVaultAndJournalAtomically(
     storage.setItem(PRIVATE_MEMO_VAULT_STORAGE_KEY, nextVault)
     storage.setItem(JOURNAL_STORAGE_KEY, nextJournal)
     if (storage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY) === nextVault
-      && storage.getItem(JOURNAL_STORAGE_KEY) === nextJournal) return true
+      && storage.getItem(JOURNAL_STORAGE_KEY) === nextJournal) {
+      announceLocalJournalChange()
+      return true
+    }
   } catch {
     restoreUnconfirmedStorageSnapshot(storage, previous, nextVault, nextJournal)
     return false

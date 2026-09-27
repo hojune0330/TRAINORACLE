@@ -68,8 +68,8 @@ describe("InstantPlanTodayView", () => {
     fireEvent.click(screen.getByRole("button", { name: /오후.*반복 훈련/ }))
     fireEvent.click(screen.getByRole("button", { name: "오후 훈련 기록 남기기" }))
     expect(onRecordSession).toHaveBeenCalledExactlyOnceWith("pm")
-    fireEvent.click(screen.getByRole("button", { name: "오늘은 어려워요" }))
-    expect(onChangeSchedule).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole("button", { name: "일정 확인" }))
+    expect(onChangeSchedule).toHaveBeenCalledExactlyOnceWith("pm")
   })
 
   it("keeps the second slot visible after the first slot has a report", () => {
@@ -131,5 +131,22 @@ describe("InstantPlanTodayView", () => {
     render(<InstantPlanTodayView today={{ ...today, state: "RETURN_AFTER_GAP" }} />)
     expect(screen.queryByRole("button")).not.toBeInTheDocument()
     expect(screen.getByRole("status")).toBeVisible()
+  })
+
+  it("keeps the compact overview numeric and preserves every method behind one disclosure", async () => {
+    const compactToday: InstantPlanToday = { ...today, sourceLabel: undefined, sessions: [{ ...today.sessions[1]!, steps: [
+      { label: "총 시간·강도", instruction: "총 35분 · RPE 3~4" }, ...today.sessions[1]!.steps,
+    ] }] }
+    const { rerender } = render(<InstantPlanTodayView today={compactToday} compact />)
+    expect(screen.getByText("총 35분 · RPE 3~4")).toBeVisible()
+    expect(screen.queryByText("아직 기록 없음")).toBeNull()
+    expect(screen.queryByRole("status")).toBeNull()
+    expect(screen.getByText("각 반복 사이 90초 걷기")).not.toBeVisible()
+    fireEvent.click(screen.getByText("훈련 방법"))
+    expect(screen.getByText("각 반복 사이 90초 걷기")).toBeVisible()
+    expect(screen.getByText(/400m × 3회/)).toBeVisible()
+    rerender(<InstantPlanTodayView today={{ ...compactToday, state: "UNAVAILABLE" }} compact />)
+    expect(screen.getByRole("alert")).toBeVisible()
+    expect(screen.queryByText("총 35분 · RPE 3~4")).toBeNull()
   })
 })

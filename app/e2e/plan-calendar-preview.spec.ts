@@ -18,10 +18,10 @@ test("shows a dated AM and PM plan before selection and after reload", async ({ 
   // When
   await expect(page.getByRole("group", { name: /훈련 2개/u })).toHaveCount(3)
   const overview = page.getByLabel("9일 훈련 일정").first()
-  await expect(overview.getByRole("listitem", {
+  await expect(overview.getByRole("button", {
     name: /8월 25일 화요일/u,
   })).toContainText("기초")
-  await expect(overview.getByRole("listitem", {
+  await expect(overview.getByRole("button", {
     name: /8월 25일 화요일/u,
   })).toContainText("회복")
   const candidateDay = page.getByRole("group", {

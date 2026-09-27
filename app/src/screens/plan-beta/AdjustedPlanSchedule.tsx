@@ -16,6 +16,7 @@ import { saveAdjustedPlanProgress } from "../../domain/adjusted-plan-progress"
 import { TermHelp } from "../../components/TermHelp"
 import { AdjustedJournalOriginalPlan } from "../journal/AdjustedJournalOriginalPlan"
 import "./AdjustedPlanSchedule.css"
+import { DatedPlanPanel } from "./DatedPlanPanel"
 
 export function AdjustedPlanSchedule({ loaded, onWritePlannedSessionLog, returnToSession, onStoredChange, onPrepareNext, onExportPlan, onImportPlan, readEvidence = () => RETAINED_ADJUSTED_PLAN_EVIDENCE }: {
   readonly loaded: Extract<PlanBetaStateReadResult, { kind: "adjusted_loaded" }>
@@ -48,17 +49,14 @@ export function AdjustedPlanSchedule({ loaded, onWritePlannedSessionLog, returnT
   const date = isoShift(start, day - 1)
   return <section className="plan-active adjusted-plan-schedule" aria-labelledby="adjusted-plan-title">
     <h1 id="adjusted-plan-title">내 훈련 일정</h1>
-    <p>{start}부터 · {days.length}일 일정</p>
-    <nav aria-label="훈련 날짜" className="plan-day-navigation">
-      {days.map(value => <button type="button" key={value} aria-pressed={day === value}
-        onClick={() => { setDay(value); setError(null) }}>{isoShift(start, value - 1).slice(5).replace("-", "/")}</button>)}
-    </nav>
+    <p>{start} ~ {isoShift(start, days.at(-1)! - 1)}</p>
+    <DatedPlanPanel start={start} sessions={plan.activePlan.sessions} day={day} onDayChange={setDay} notice={error ? <p role="alert">{error}</p> : undefined}>
     <h2>{date} ({new Intl.DateTimeFormat("ko-KR", { weekday: "short" }).format(new Date(`${date}T12:00:00`))})</h2>
     {plan.activePlan.sessions.filter(session => session.day === day)
       .sort((a, b) => a.slot.localeCompare(b.slot)).map(session => {
       const label = ENERGY_INTENT_LABELS[session.plannedEnergyIntent]
       const recorded = loaded.state.progress.find(item => item.sessionDay === day && item.sessionSlot === session.slot)
-      return <section key={session.slot} aria-label={`${session.slot === "AM" ? "오전" : "오후"} 훈련`}>
+      return <section key={session.slot} tabIndex={-1} data-session-slot={session.slot} aria-label={`${session.slot === "AM" ? "오전" : "오후"} 훈련`}>
         <h3>{session.slot === "AM" ? "오전" : "오후"} · {session.role === "REST" ? "휴식" : label.title}</h3>
         <TermHelp term={label.term} />
         <AdjustedJournalOriginalPlan session={session} explanation={loaded.explanation} context="plan" />
@@ -86,6 +84,7 @@ export function AdjustedPlanSchedule({ loaded, onWritePlannedSessionLog, returnT
         }}><PenLine size={18} aria-hidden="true" />이 훈련 일지 쓰기</button>}
       </section>
     })}
+    </DatedPlanPanel>
     {error !== null && <p role="alert">{error}</p>}
     {onPrepareNext && <section><h2>다음 훈련 주기</h2>
       <button type="button" onClick={onPrepareNext} disabled={saving}><ArrowRight size={18} aria-hidden="true" />다음 주기 준비</button>

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { PlanSession } from "@impl/plan-generator/types"
@@ -64,6 +64,18 @@ function paceSession(): PlanSession {
 }
 
 describe("session explanation review regressions", () => {
+  it("opens a linked journal directly on actual records without inventing missing evidence", async () => {
+    const state = stateFixture()
+    const session = state.activePlan.sessions[0]!
+    const evidence = scope(state.activePlan.candidateId, state.generatedAt, 3)
+    render(<SessionExplanationEntry session={session} context={{ plan: state.activePlan, kind: "SAVED", generatedAt: state.generatedAt }}
+      initialTab="주기·기록" entryLabel="연결된 일지 기록 보기" showPurpose={false} loadEvidence={() => evidence} />)
+    await userEvent.click(screen.getByRole("button", { name: "연결된 일지 기록 보기" }))
+    expect(screen.getByRole("tab", { name: "주기·기록" })).toHaveAttribute("aria-selected", "true")
+    expect(screen.getByText("직접 기록한 RPE 3")).toBeVisible()
+    expect(screen.getByRole("heading", { name: "실제 기록" })).toBeVisible()
+  })
+
   it.each(["LT_INTENT", "VO2_INTENT", "GLY_INTENT", "ATP_PC_INTENT", "MIXED_INTENT"] as const)("preserves %s performance and stopping guidance within one RPE flow", async (intent) => {
     const session: PlanSession = { day: 1, slot: "AM", role: "QUALITY", plannedEnergyIntent: intent, prescription: { kind: "RPE_TIME_RANGE", durationMinutes: { minimum: 30, maximum: 40 }, rpe: { minimum: 6, maximum: 7 } } }
     render(<SessionExplanationEntry session={session} />)
@@ -224,7 +236,7 @@ describe("session explanation review regressions", () => {
     expect(panel.scrollTop).toBe(480)
     expect(link).toHaveFocus()
     fireEvent(screen.getByRole("dialog"), new Event("cancel", { cancelable: true }))
-    expect(screen.queryByRole("dialog")).toBeNull()
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull())
     expect(opener).toHaveFocus()
     expect(document.body.style.overflow).not.toBe("hidden")
     expect(JSON.stringify(session)).toBe(before)

@@ -131,6 +131,9 @@ test("opens a day from the monthly calendar with provenance-safe summaries and r
   await expect(calendar).toBeVisible()
   await expect(calendar.getByRole("button", { name: /2026년 7월 9일.*훈련 후 1건/u })).toBeVisible()
   await calendar.getByRole("button", { name: /2026년 7월 10일.*훈련 후 1건.*하루 마무리 1건/u }).click()
+  await expect(page.getByRole("dialog")).toBeVisible()
+  await expect(page.getByRole("dialog")).not.toContainText(secret)
+  await page.getByRole("button", { name: "일지·메모 원문 열기" }).click()
   await expect(page.getByRole("button", { name: /1번째 기록 · 훈련 · archive session/u })).toBeVisible()
   const reader = page.getByRole("navigation", { name: "날짜별 일지 넘기기" })
   await expect(reader.getByText("2 / 4")).toBeVisible()
@@ -142,7 +145,7 @@ test("opens a day from the monthly calendar with provenance-safe summaries and r
   await expect(reader.getByText("2 / 4")).toBeVisible()
   await page.getByRole("button", { name: "일지 목록으로 돌아가기" }).click()
 
-  await expect(archive.getByRole("heading", { name: "2026년 7월" })).toBeVisible()
+  await expect(archive.getByRole("heading", { name: "2026년 7월", exact: true })).toBeVisible()
   await expect(archive.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
   await expect(archive.getByRole("button", { name: /2026년 7월 10일/u })).toBeVisible()
   await expect(archive.getByText(secret, { exact: false })).toHaveCount(0)

@@ -1,9 +1,12 @@
 import React, { type ReactNode } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Check, ChevronLeft, ChevronRight, CircleMinus, HeartPulse, Maximize2, SkipForward } from "lucide-react"
+import type { PlanProgressState } from "@impl/plan-generator/types"
 import type { PlanSession } from "@impl/plan-generator/types"
 import { TermHelp } from "../../components/TermHelp"
 import { isValidIsoDate, isoShift, isoToDate } from "../../domain/dates"
 import { todayISO } from "../../domain/journal-store"
+import { useLocalToday } from "../../hooks/useLocalToday"
+import { MonthCalendar } from "../../components/MonthCalendar"
 import {
   ENERGY_INTENT_LABELS,
   prescriptionLabel,
@@ -13,17 +16,24 @@ import {
   sessionIntentLabel,
   sessionLabel,
   sessionSlotLabel,
+  PROGRESS_LABELS,
 } from "./labels"
 import { DetailedPrescriptionView } from "./DetailedPrescriptionView"
 import { PlanFlowCodeHelp } from "./PlanFlowCodeHelp"
 import { SessionExplanationEntry } from "./SessionExplanation"
 import type { SessionExplanationContext } from "../../domain/session-explanation"
 import type { SessionExplanationEvidence } from "../../domain/session-explanation-evidence"
+import { PlanDayReader } from "./PlanDayReader"
+import type { JournalEntry } from "../../domain/journal-schema"
+import { CalendarJournalBadge, CalendarJournalDetails, calendarJournalDescription } from "../../components/CalendarJournalDetails"
 
 const WEEKDAYS = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"] as const
 type FrameLengthDays = 7 | 9 | 9.5 | 10
 type ScheduleDisplayMode = "stack" | "swipe"
 type SessionFlowKind = "main" | "base" | "recovery" | "off"
+
+export type PlanReaderRequest = Pick<PlanSession, "day" | "slot"> & { readonly sequence: number; readonly section?: "records" }
+const PROGRESS_ICONS = { COMPLETED: Check, RESTED: CircleMinus, SKIPPED: SkipForward, PAIN_CHECKIN: HeartPulse } as const
 
 type ScheduleDay = {
   readonly date: string
@@ -53,6 +63,10 @@ export function PlanSchedulePreview({
   focusSession,
   detailsExpanded = true,
   detailsId,
+  readerNotice,
+  journalEntries = [],
+  readerRequest,
+  sessionProgress,
 }: {
   readonly startDate: string
   readonly frameLengthDays?: FrameLengthDays
@@ -67,44 +81,84 @@ export function PlanSchedulePreview({
   readonly focusSession?: Pick<PlanSession, "day" | "slot">
   readonly detailsExpanded?: boolean
   readonly detailsId?: string
+  readonly readerNotice?: ReactNode
+  readonly journalEntries?: readonly JournalEntry[]
+  readonly readerRequest?: PlanReaderRequest
+  readonly sessionProgress?: (session: PlanSession) => PlanProgressState | undefined
 }) {
   const validStartDate = isValidIsoDate(startDate)
   const dayCount = Math.ceil(frameLengthDays)
-  const days = validStartDate ? buildScheduleDays(startDate, sessions, dayCount) : []
-  const today = todayISO()
+  const days = React.useMemo(() => validStartDate ? buildScheduleDays(startDate, sessions, dayCount) : [],
+    [validStartDate, startDate, sessions, dayCount])
+  const today = useLocalToday()
   const focusedDayIndex = focusSession === undefined
     ? -1
     : days.findIndex((day) => day.day === focusSession.day && day.sessions.some((session) => session.slot === focusSession.slot))
   const initialDayIndex = focusedDayIndex >= 0 ? focusedDayIndex : Math.max(0, days.findIndex((day) => day.date === today))
   const [activeDayIndex, setActiveDayIndex] = React.useState(initialDayIndex)
+  const [selectedDate, setSelectedDate] = React.useState(days[initialDayIndex]?.date ?? startDate)
+  const [calendarDetailsOpen, setCalendarDetailsOpen] = React.useState(false)
+  const [reader, setReader] = React.useState<{ date: string; slot?: PlanSession["slot"]; section?: "records" } | null>(null)
+  const readerIndex = days.findIndex(day => day.date === reader?.date)
+  const readerDay = days[readerIndex]
+  const selectedInPlan = days.some(day => day.date === selectedDate)
+  const showDetails = (detailsExpanded || calendarDetailsOpen) && selectedInPlan
   const scheduleId = React.useId()
   const scheduleRef = React.useRef<HTMLOListElement>(null)
+  const handledReaderRequest = React.useRef<number>()
 
   React.useEffect(() => {
     const nextIndex = Math.max(0, days.findIndex((day) => day.date === todayISO()))
     setActiveDayIndex(nextIndex)
+    setSelectedDate(days[nextIndex]?.date ?? startDate)
+    setCalendarDetailsOpen(false)
+    setReader(null)
   }, [startDate, dayCount])
+
+  React.useEffect(() => {
+    if (!readerRequest || handledReaderRequest.current === readerRequest.sequence) return
+    const index = days.findIndex(day => day.day === readerRequest.day && day.sessions.some(session => session.slot === readerRequest.slot))
+    const day = days[index]
+    if (!day) return
+    handledReaderRequest.current = readerRequest.sequence
+    setSelectedDate(day.date)
+    setActiveDayIndex(index)
+    setReader({ date: day.date, slot: readerRequest.slot, section: readerRequest.section })
+  }, [readerRequest, days])
 
   const moveToDay = React.useCallback((nextIndex: number) => {
     const boundedIndex = Math.min(Math.max(nextIndex, 0), days.length - 1)
     setActiveDayIndex(boundedIndex)
+    const date = days[boundedIndex]?.date
+    if (date !== undefined) setSelectedDate(date)
     const list = scheduleRef.current
     const target = list?.children.item(boundedIndex) as HTMLElement | null
     if (list === null || target === null) return
 
     if (displayMode === "swipe" && typeof list.scrollTo === "function") {
       const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false
-      list.scrollTo({ left: target.offsetLeft, behavior: reduceMotion ? "auto" : "smooth" })
+      const first = list.children.item(0) as HTMLElement | null
+      list.scrollTo({ left: target.offsetLeft - (first?.offsetLeft ?? 0), behavior: reduceMotion ? "auto" : "smooth" })
       return
     }
-    target.scrollIntoView?.({ behavior: "smooth", block: "start" })
-  }, [days.length, displayMode])
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false
+    target.scrollIntoView?.({ behavior: reduceMotion ? "auto" : "smooth", block: "start" })
+  }, [days, displayMode])
+
+  React.useLayoutEffect(() => {
+    const list = scheduleRef.current
+    if (!showDetails || displayMode !== "swipe" || list === null) return
+    const target = list.children.item(activeDayIndex) as HTMLElement | null
+    const first = list.children.item(0) as HTMLElement | null
+    if (target && first) list.scrollLeft = target.offsetLeft - first.offsetLeft
+    if (focusedDayIndex >= 0) scheduleRef.current?.querySelector<HTMLElement>("[data-returned-session='true']")
+      ?.scrollIntoView?.({ behavior: "auto", block: "center", inline: "nearest" })
+  }, [showDetails, startDate, displayMode, focusedDayIndex, focusSession?.slot])
 
   React.useEffect(() => {
     if (focusedDayIndex < 0) return
+    setCalendarDetailsOpen(true)
     moveToDay(focusedDayIndex)
-    const returnedSession = scheduleRef.current?.querySelector<HTMLElement>("[data-returned-session='true']")
-    returnedSession?.scrollIntoView?.({ behavior: "auto", block: "center", inline: "nearest" })
   }, [focusedDayIndex, focusSession?.slot, moveToDay])
 
   const syncActiveDay = React.useCallback(() => {
@@ -113,29 +167,74 @@ export function PlanSchedulePreview({
     if (list === null) return
     const cards = Array.from(list.children) as HTMLElement[]
     const nearest = cards.reduce((bestIndex, card, index) => (
-      Math.abs(card.offsetLeft - list.scrollLeft)
-        < Math.abs(cards[bestIndex]!.offsetLeft - list.scrollLeft)
+      Math.abs(card.offsetLeft - (cards[0]?.offsetLeft ?? 0) - list.scrollLeft)
+        < Math.abs(cards[bestIndex]!.offsetLeft - (cards[0]?.offsetLeft ?? 0) - list.scrollLeft)
         ? index
         : bestIndex
     ), 0)
+    const nearestCard = cards[nearest]
+    if (nearestCard === undefined || Math.abs(nearestCard.offsetLeft - (cards[0]?.offsetLeft ?? 0) - list.scrollLeft) > 2) return
     setActiveDayIndex(nearest)
-  }, [displayMode])
+    const date = days[nearest]?.date
+    if (date !== undefined) setSelectedDate(date)
+  }, [days, displayMode])
+
+  const openDayReader = (index: number, slot?: PlanSession["slot"]) => {
+    const day = days[index]
+    if (!day) return
+    setSelectedDate(day.date)
+    setActiveDayIndex(index)
+    setReader({ date: day.date, slot })
+  }
+
+  const closeDayReader = () => {
+    setReader(null)
+    const list = scheduleRef.current
+    const first = list?.children.item(0) as HTMLElement | null
+    const target = list?.children.item(activeDayIndex) as HTMLElement | null
+    if (displayMode === "swipe" && list && first && target) list.scrollLeft = target.offsetLeft - first.offsetLeft
+  }
+
+  const moveReader = (date: string) => {
+    const index = days.findIndex(day => day.date === date)
+    if (index >= 0) openDayReader(index)
+    else { setReader({ date }); setSelectedDate(date) }
+  }
 
   if (!validStartDate) return null
 
   return (
     <>
-      {showRpeGuide && detailsExpanded && <PlanRpeGuide />}
+      {showRpeGuide && showDetails && <PlanRpeGuide />}
       <PlanTrainingFlow
         days={days}
+        journalEntries={journalEntries}
+        sessionProgress={sessionProgress}
         today={today}
         frameLengthDays={frameLengthDays}
-        activeDayIndex={activeDayIndex}
+        selectedDate={selectedDate}
+        onToday={date => {
+          setSelectedDate(date)
+          const index = days.findIndex(day => day.date === date)
+          if (index >= 0) moveToDay(index)
+        }}
+        onSelectDate={date => {
+          setSelectedDate(date)
+          const index = days.findIndex(day => day.date === date)
+          if (index < 0) { setReader({ date }); return }
+          openDayReader(index)
+        }}
       />
+      {!selectedInPlan && <p className="month-calendar__empty" role="status">{calendarDateLabel(selectedDate)}에는 이 계획의 일정이 없어요.</p>}
+      {!detailsExpanded && selectedInPlan && <button type="button" className="calendar-range-return"
+        aria-expanded={calendarDetailsOpen} aria-controls={detailsId ?? `${scheduleId}-cards`}
+        onClick={() => setCalendarDetailsOpen(open => !open)}>
+        {calendarDetailsOpen ? "날짜별 카드 접기" : "날짜별 카드 보기"}
+      </button>}
       <section
-        id={detailsId}
+        id={detailsId ?? `${scheduleId}-cards`}
         className="plan-day-deck"
-        hidden={!detailsExpanded}
+        hidden={!showDetails}
         data-display-mode={displayMode}
         aria-label="날짜별 훈련 카드"
       >
@@ -216,6 +315,7 @@ export function PlanSchedulePreview({
                       compact={displayMode === "swipe"}
                       footer={renderSessionFooter?.(session)}
                       returnedFromJournal={focusSession?.day === session.day && focusSession.slot === session.slot}
+                      onExpand={() => openDayReader(index, session.slot)}
                     />
                   ))}
                   {daySessions.length === 0 && (
@@ -233,6 +333,19 @@ export function PlanSchedulePreview({
           })}
         </ol>
       </section>
+      {reader !== null && <PlanDayReader date={reader.date} sessions={readerDay?.sessions ?? []}
+        initialSlot={reader.slot} initialSection={reader.section} canPrevious canNext
+        onPrevious={() => moveReader(isoShift(reader.date, -1))}
+        onNext={() => moveReader(isoShift(reader.date, 1))}
+        onClose={closeDayReader} notice={readerNotice}>
+        {readerDay?.sessions.map(session => <PlanSessionPreview key={`${reader.date}-${session.slot}`}
+          date={reader.date} session={session} compact={false} expanded
+          explanationContext={explanationContext} loadEvidence={loadEvidence}
+          footer={renderSessionFooter?.(session)}
+          returnedFromJournal={focusSession?.day === session.day && focusSession.slot === session.slot} />)}
+        {!readerDay?.sessions.length && <p>이 계획에는 이날 예정된 훈련이 없어요.</p>}
+        <CalendarJournalDetails date={reader.date} entries={journalEntries} />
+      </PlanDayReader>}
       {renderAfterSchedule}
     </>
   )
@@ -246,6 +359,8 @@ function PlanSessionPreview({
   explanationContext,
   loadEvidence,
   returnedFromJournal = false,
+  expanded = false,
+  onExpand,
 }: {
   readonly date: string
   readonly session: PlanSession
@@ -254,6 +369,8 @@ function PlanSessionPreview({
   readonly explanationContext?: SessionExplanationContext
   readonly loadEvidence?: (session: PlanSession) => SessionExplanationEvidence | null
   readonly returnedFromJournal?: boolean
+  readonly expanded?: boolean
+  readonly onExpand?: () => void
 }) {
   const flow = sessionFlowLabel(session)
   const details = (
@@ -281,7 +398,7 @@ function PlanSessionPreview({
           {sessionGuidance(session)}
         </p>
       </details>
-      {footer}
+      {!expanded && footer}
     </>
   )
 
@@ -293,6 +410,7 @@ function PlanSessionPreview({
       role="group"
       aria-label={`${calendarDateLabel(date)} ${sessionSlotLabel(session.slot)} 세션${returnedFromJournal ? " · 일지에서 돌아온 세션" : ""}`}
       data-returned-session={returnedFromJournal ? "true" : undefined}
+      tabIndex={expanded ? -1 : undefined}
     >
       <header>
         <span className="plan-schedule-preview__slot">{sessionSlotLabel(session.slot)}</span>
@@ -301,13 +419,19 @@ function PlanSessionPreview({
           secondary={flow.secondary}
           kind={flow.kind}
         />
+        {onExpand && <button className="plan-session-expand" type="button" onClick={onExpand}
+          aria-label={`${calendarDateLabel(date)} ${sessionSlotLabel(session.slot)} 훈련과 일지 크게 보기`} title="훈련과 일지 크게 보기"
+          aria-haspopup="dialog"><Maximize2 size={17} aria-hidden="true" /></button>}
       </header>
       <div className="plan-session-content">
         <strong>{sessionLabel(session)}</strong>
         <small className={session.role === "REST" ? "plan-session-help" : "plan-session-metric"}>
           {prescriptionLabel(session)}
         </small>
-        <SessionExplanationEntry session={session} context={explanationContext} loadEvidence={loadEvidence} />
+        {expanded && footer && <details className="plan-session-records" data-session-records>
+          <summary>일지·진행 기록</summary>{footer}
+        </details>}
+        <SessionExplanationEntry session={session} context={explanationContext} loadEvidence={loadEvidence} showPurpose={false} />
         {compact ? (
           <details className="plan-day-card__details" open={returnedFromJournal}>
             <summary>{sessionSlotLabel(session.slot)} 훈련 방법과 기록</summary>
@@ -345,58 +469,67 @@ function PlanTrainingFlow({
   days,
   today,
   frameLengthDays,
-  activeDayIndex,
+  selectedDate,
+  onSelectDate,
+  onToday,
+  journalEntries,
+  sessionProgress,
 }: {
   readonly days: readonly ScheduleDay[]
   readonly today: string
   readonly frameLengthDays: FrameLengthDays
-  readonly activeDayIndex: number
+  readonly selectedDate: string
+  readonly onSelectDate: (date: string) => void
+  readonly onToday: (date: string) => void
+  readonly journalEntries: readonly JournalEntry[]
+  readonly sessionProgress?: (session: PlanSession) => PlanProgressState | undefined
 }) {
+  const [month, setMonth] = React.useState(selectedDate.slice(0, 7))
+  React.useEffect(() => setMonth(selectedDate.slice(0, 7)), [selectedDate])
+  const byDate = new Map(days.map(day => [day.date, day]))
+  const outsidePlanMonth = days.length > 0 && (month < days[0]!.date.slice(0, 7) || month > days.at(-1)!.date.slice(0, 7))
   return (
     <section className="plan-training-flow" aria-label={`${frameLengthDays}일 훈련 일정`}>
       <header>
         <strong>{frameLengthDays}일 훈련 일정</strong>
-        <span>훈련일과 쉬는 날을 확인하세요.</span>
+        <span>{days[0]?.date.slice(5).replace("-", "/")} ~ {days.at(-1)?.date.slice(5).replace("-", "/")}</span>
       </header>
-      <ul className="plan-training-flow__legend" aria-label="훈련 구분">
-        <li><PlanFlowCodeHelp primary="MAIN" kind="main" variant="legend" /></li>
-        <li><PlanFlowCodeHelp primary="BASE" kind="base" variant="legend" /></li>
-        <li><PlanFlowCodeHelp primary="REC" kind="recovery" variant="legend" /></li>
-        <li><PlanFlowCodeHelp primary="OFF" kind="off" variant="legend" /></li>
-      </ul>
-      <ol
-        className="plan-training-flow__days"
-        style={{ "--flow-day-count": days.length } as React.CSSProperties}
-      >
-        {days.map((day, index) => {
-          const isToday = day.date === today
-          const labels = day.sessions.length > 0
-            ? day.sessions.map(sessionFlowLabel)
-            : [{ primary: "OFF", kind: "off", accessible: "훈련 없음", short: "휴식" } satisfies SessionFlowLabel]
-          return (
-            <li
-              key={day.date}
-              data-current-date={isToday ? "true" : undefined}
-              data-active-day={activeDayIndex === index ? "true" : undefined}
-              aria-current={isToday ? "date" : undefined}
-              aria-label={`${calendarDateLabel(day.date)} · ${labels.map((label) => label.accessible).join(" · ")}`}
-            >
-              <time dateTime={day.date}>
-                <span>{shortWeekday(day.date)}</span>
-                <strong>{isoToDate(day.date).getDate()}</strong>
-              </time>
-              <span className="plan-training-flow__markers">
-                {labels.map((label, labelIndex) => (
-                  <span key={`${day.date}-${labelIndex}`} data-flow-kind={label.kind}>
-                    <strong>{label.short}</strong>
-                    {label.secondary !== undefined && <small>{timelineSecondaryCode(label.secondary)}</small>}
-                  </span>
-                ))}
-              </span>
-            </li>
-          )
-        })}
-      </ol>
+      {outsidePlanMonth && <button className="calendar-range-return" type="button" onClick={() => setMonth(days[0]!.date.slice(0, 7))}>계획 시작일로</button>}
+      <MonthCalendar month={month} today={today} selectedDate={selectedDate}
+        highlightedRange={days.length ? { start: days[0]!.date, end: days.at(-1)!.date } : undefined}
+        onMonthChange={setMonth} onSelectDate={onSelectDate} onToday={onToday}
+        dayDescription={date => {
+          const day = byDate.get(date)
+          const planned = day === undefined ? "이 계획의 일정 없음" : day.sessions.length === 0 ? "예정 훈련 없음" : day.sessions.map(session =>
+            `${sessionSlotLabel(session.slot)} ${sessionFlowLabel(session).accessible}${sessionProgress?.(session) ? ` · ${PROGRESS_LABELS[sessionProgress(session)!]}` : ""}`).join(" · ")
+          return [planned, calendarJournalDescription(journalEntries, date)].filter(Boolean).join(" · ")
+        }}
+        renderDay={date => <>{byDate.get(date)?.sessions.map(session => {
+          const label = sessionFlowLabel(session)
+          const progress = sessionProgress?.(session)
+          const StatusIcon = progress === undefined ? null : PROGRESS_ICONS[progress]
+          return <span className="month-calendar__event month-calendar__plan-event" data-kind={label.kind} key={session.slot}
+            title={`${sessionSlotLabel(session.slot)} ${label.accessible}${progress ? ` · ${PROGRESS_LABELS[progress]}` : ""}`}>
+            <span>{session.slot}</span><span>{label.short}</span>
+            {StatusIcon && <StatusIcon size={12} aria-hidden="true" />}
+          </span>
+        })}<CalendarJournalBadge entries={journalEntries} date={date} /></>} />
+      <details className="plan-session-guidance">
+        <summary>훈련 구분·약어</summary>
+        <p>AM 오전 · PM 오후. 주요 훈련의 종류와 방법은 날짜를 눌러 확인해요.</p>
+        <ul className="plan-training-flow__legend" aria-label="훈련 구분">
+          <li><PlanFlowCodeHelp primary="MAIN" kind="main" variant="legend" /></li>
+          <li><PlanFlowCodeHelp primary="BASE" kind="base" variant="legend" /></li>
+          <li><PlanFlowCodeHelp primary="REC" kind="recovery" variant="legend" /></li>
+          <li><PlanFlowCodeHelp primary="OFF" kind="off" variant="legend" /></li>
+        </ul>
+        {sessionProgress && <ul className="plan-training-flow__legend" aria-label="진행 기록 표시">
+          {(Object.keys(PROGRESS_ICONS) as PlanProgressState[]).map(state => {
+            const Icon = PROGRESS_ICONS[state]
+            return <li key={state}><Icon size={14} aria-hidden="true" />{PROGRESS_LABELS[state]}</li>
+          })}
+        </ul>}
+      </details>
     </section>
   )
 }
@@ -458,19 +591,9 @@ function qualityIntentCode(session: PlanSession): NonNullable<SessionFlowLabel["
   }
 }
 
-function timelineSecondaryCode(code: NonNullable<SessionFlowLabel["secondary"]>): string {
-  if (code === "VO2") return "VO₂"
-  if (code === "ATP") return "ATP-PC"
-  return code
-}
-
 function calendarDateLabel(iso: string): string {
   const date = isoToDate(iso)
   return `${date.getMonth() + 1}월 ${date.getDate()}일 ${WEEKDAYS[date.getDay()]}`
-}
-
-function shortWeekday(iso: string): string {
-  return WEEKDAYS[isoToDate(iso).getDay()]!.slice(0, 1)
 }
 
 function daySummary(sessions: readonly PlanSession[]): string {
