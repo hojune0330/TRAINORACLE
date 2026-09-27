@@ -38,6 +38,7 @@ it("reopens a real saved adjustment in PlanBeta and links the exact session to a
   const onWrite = vi.fn()
   const before = Object.entries(localStorage)
   render(<PlanBeta returnToSession={link.link} onWritePlannedSessionLog={onWrite} />)
+  fireEvent.click(screen.getByRole("button", { name: /크게 보기/u }))
   expect(screen.getByRole("heading", { name: "내 훈련 일정" })).toBeVisible()
   expect(screen.getByText(/400m당 약/)).toBeVisible()
   expect(screen.queryByText(/두 계획에서 하나/)).toBeNull()
@@ -66,6 +67,7 @@ it.skip("keeps the current intake step when another tab stores unrelated data", 
 it("clears the previous account's adjusted numbers immediately on scope change", async () => {
   const { link } = await save()
   render(<PlanBeta returnToSession={link.link} />)
+  fireEvent.click(screen.getByRole("button", { name: /크게 보기/u }))
   expect(screen.getByText(/400m당 약/)).toBeVisible()
   act(() => setActiveLocalAccount("another-athlete"))
   expect(screen.queryByText(/400m당 약/)).toBeNull()
@@ -73,6 +75,7 @@ it("clears the previous account's adjusted numbers immediately on scope change",
 it("rechecks changed storage instead of retaining a corrupted adjusted view", async () => {
   const { link } = await save()
   render(<PlanBeta returnToSession={link.link} />)
+  fireEvent.click(screen.getByRole("button", { name: /크게 보기/u }))
   localStorage.setItem(activePlanBetaStorageKey(), "{broken")
   act(() => window.dispatchEvent(new StorageEvent("storage", { key: activePlanBetaStorageKey() })))
   expect(screen.queryByText(/400m당 약/)).toBeNull()
@@ -82,6 +85,7 @@ it("rechecks storage on journal click even without a storage event", async () =>
   const { link } = await save()
   const onWrite = vi.fn()
   render(<PlanBeta returnToSession={link.link} onWritePlannedSessionLog={onWrite} />)
+  fireEvent.click(screen.getByRole("button", { name: /크게 보기/u }))
   localStorage.setItem(activePlanBetaStorageKey(), "{broken")
   fireEvent.click(screen.getAllByRole("button", { name: "이 훈련 일지 쓰기" })[0]!)
   expect(onWrite).not.toHaveBeenCalled()
@@ -110,6 +114,7 @@ it("downloads a separate personal plan file only after the explicit download act
 it("records an explicit outcome from PlanBeta without moving the selected date or changing the prescription", async () => {
   const { link, saved } = await save()
   render(<PlanBeta returnToSession={link.link} />)
+  fireEvent.click(screen.getByRole("button", { name: /크게 보기/u }))
   const group = screen.getByRole("group", { name: "오전 진행 기록" })
   const complete = within(group).getByRole("button", { name: "완료" })
   await act(async () => { fireEvent.click(complete) })

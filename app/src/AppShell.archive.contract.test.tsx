@@ -44,11 +44,12 @@ describe("AppShell journal archive routing", () => {
     await user.click(screen.getByRole("button", { name: "전체 일지" }))
     await user.click(await screen.findByRole("button", { name: /2026년 7월/u }, { timeout: 5_000 }))
     await user.click(await screen.findByRole("button", { name: /2026년 7월 10일/u }))
+    await user.click(screen.getByRole("button", { name: "일지·메모 원문 열기" }))
 
     expect(await screen.findByText("아카이브 복귀 훈련")).toBeVisible()
     await user.click(screen.getByRole("button", { name: "일지 목록으로 돌아가기" }))
 
-    expect(await screen.findByRole("heading", { name: "2026년 7월" })).toBeVisible()
+    expect(await screen.findByRole("heading", { name: "2026년 7월", level: 1 })).toBeVisible()
     expect(screen.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
     expect(screen.getByRole("button", { name: /2026년 7월 10일/u })).toBeVisible()
   })
@@ -60,6 +61,7 @@ describe("AppShell journal archive routing", () => {
     await user.click(screen.getByRole("button", { name: "전체 일지" }))
     await user.click(await screen.findByRole("button", { name: /2026년 7월/u }, { timeout: 5_000 }))
     await user.click(await screen.findByRole("button", { name: /2026년 7월 10일/u }))
+    await user.click(screen.getByRole("button", { name: "일지·메모 원문 열기" }))
     await user.click(await screen.findByTestId("journal-manage-toggle"))
     await user.click(await screen.findByRole("button", { name: "훈련 기록 수정" }))
 
@@ -67,7 +69,7 @@ describe("AppShell journal archive routing", () => {
     expect(await screen.findByText("아카이브 복귀 훈련")).toBeVisible()
     await user.click(screen.getByRole("button", { name: "일지 목록으로 돌아가기" }))
 
-    expect(await screen.findByRole("heading", { name: "2026년 7월" })).toBeVisible()
+    expect(await screen.findByRole("heading", { name: "2026년 7월", level: 1 })).toBeVisible()
     expect(screen.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
     expect(screen.getByRole("button", { name: /2026년 7월 10일/u })).toBeVisible()
   })
@@ -80,7 +82,7 @@ describe("AppShell journal archive routing", () => {
     await user.click(await screen.findByRole("button", { name: /2026년 7월/u }))
     await user.click(screen.getByRole("button", { name: "일지" }))
 
-    expect(await screen.findByRole("heading", { name: "2026년 7월" })).toBeVisible()
+    expect(await screen.findByRole("heading", { name: "2026년 7월", level: 1 })).toBeVisible()
     expect(screen.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
   })
 

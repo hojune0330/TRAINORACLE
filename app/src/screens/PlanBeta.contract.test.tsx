@@ -815,6 +815,7 @@ describe("plan beta user flow", () => {
     })
 
     const user = userEvent.setup()
+    await user.click(screen.getByRole("button", { name: "날짜별 카드 보기" }))
     await user.click(screen.getAllByText(/훈련 방법과 기록/u)[0]!)
     const progress = screen.getByLabelText(/DAY 1.*진행 기록/u)
     await user.click(within(progress).getByRole("button", { name: "완료" }))

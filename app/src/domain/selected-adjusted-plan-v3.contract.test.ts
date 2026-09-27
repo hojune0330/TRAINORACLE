@@ -207,8 +207,8 @@ it("opens saved V3 in the real plan screen, records an outcome and restores it w
   const slot = saved.state.selection.activePlan.sessions.find(s => s.prescription.kind === "ADJUSTED_METHOD_V3")!
   const start = new Date(`${saved.state.selection.intake.startDate}T12:00:00`)
   start.setDate(start.getDate() + slot.day - 1)
-  const dateLabel = `${String(start.getMonth() + 1).padStart(2, "0")}/${String(start.getDate()).padStart(2, "0")}`
-  fireEvent.click(within(screen.getByRole("navigation", { name: "훈련 날짜" })).getByRole("button", { name: dateLabel }))
+  const dateLabel = new RegExp(`${start.getFullYear()}년 ${start.getMonth() + 1}월 ${start.getDate()}일`)
+  fireEvent.click(within(screen.getByRole("grid", { name: /달력/u })).getByRole("button", { name: dateLabel }))
   expect(screen.getByText(/200m당 약/)).toBeVisible()
   expect(screen.getByText("걷기 · 100m")).toBeVisible()
   const groupName = `${slot.slot === "AM" ? "오전" : "오후"} 진행 기록`
@@ -217,7 +217,7 @@ it("opens saved V3 in the real plan screen, records an outcome and restores it w
   expect(screen.getByText(/200m당 약/)).toBeVisible()
   view.unmount()
   render(React.createElement(PlanBeta, props))
-  fireEvent.click(within(screen.getByRole("navigation", { name: "훈련 날짜" })).getByRole("button", { name: dateLabel }))
+  fireEvent.click(within(screen.getByRole("grid", { name: /달력/u })).getByRole("button", { name: dateLabel }))
   expect(within(screen.getByRole("group", { name: groupName })).getByRole("button", { name: "건너뜀" })).toHaveAttribute("aria-pressed", "true")
   expect(screen.getByText(/200m당 약/)).toBeVisible()
   act(() => setActiveLocalAccount("another"))
@@ -233,6 +233,7 @@ it("links a real journal to V3 and renders its original without copying planned 
   vi.spyOn(mutationLocks, "getPlanMutationLockManager").mockReturnValue(input.locks!)
   const view = render(React.createElement(PlanBeta, { readAdjustedEvidenceV3: () => [retained],
     returnToSession: draft.link, onWritePlannedSessionLog: onWrite }))
+  fireEvent.click(screen.getByRole("button", { name: /크게 보기/u }))
   await act(async () => { fireEvent.click(within(screen.getByRole("region", { name: `${slot.slot === "AM" ? "오전" : "오후"} 훈련` }))
     .getByRole("button", { name: "이 훈련 일지 쓰기" })) })
   expect(onWrite).toHaveBeenCalledWith(draft)
@@ -287,10 +288,11 @@ it("does not open linked journal when preserving the original fails", async () =
   const draft = createPlannedSessionLogDraft(saved.state.selection, slot, TODAY.toISOString())!, onWrite = vi.fn()
   vi.spyOn(mutationLocks, "getPlanMutationLockManager").mockReturnValue(null)
   render(React.createElement(PlanBeta, { readAdjustedEvidenceV3: () => [retained], returnToSession: draft.link, onWritePlannedSessionLog: onWrite }))
+  fireEvent.click(screen.getByRole("button", { name: /크게 보기/u }))
   await act(async () => { fireEvent.click(within(screen.getByRole("region", { name: `${slot.slot === "AM" ? "오전" : "오후"} 훈련` }))
     .getByRole("button", { name: "이 훈련 일지 쓰기" })) })
   expect(onWrite).not.toHaveBeenCalled()
-  expect(screen.getByRole("alert")).toHaveTextContent("계획 원본을 보관하지 못했어요")
+  expect(within(screen.getByRole("dialog")).getByRole("alert")).toHaveTextContent("계획 원본을 보관하지 못했어요")
 })
 it("exports and imports V3 originals without activating a file or changing an existing plan", async () => {
   const { input, retained } = storeInput(), saved = await saveSelectedAdjustedPlanV3(input)

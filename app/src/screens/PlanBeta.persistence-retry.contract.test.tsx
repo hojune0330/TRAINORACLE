@@ -54,6 +54,7 @@ describe("active plan persistence retry", () => {
     render(<PlanBeta />)
 
     // When: the athlete marks a session complete and the first write fails.
+    await user.click(screen.getByRole("button", { name: "날짜별 카드 보기" }))
     await user.click(screen.getAllByText(/훈련 방법과 기록/u)[0]!)
     const firstProgress = screen.getByLabelText(/DAY 1.*진행 기록/u)
     await user.click(within(firstProgress).getByRole("button", { name: "완료" }))
@@ -86,6 +87,7 @@ describe("active plan persistence retry", () => {
       />,
     )
 
+    await user.click(screen.getByRole("button", { name: "날짜별 카드 보기" }))
     await user.click(screen.getAllByText(/훈련 방법과 기록/u)[0]!)
     const firstProgress = screen.getByLabelText(/DAY 1.*진행 기록/u)
     await user.click(within(firstProgress).getByRole("button", { name: "완료" }))
@@ -111,6 +113,7 @@ describe("active plan persistence retry", () => {
       />,
     )
 
+    await user.click(screen.getByRole("button", { name: "날짜별 카드 보기" }))
     await user.click(screen.getAllByText(/훈련 방법과 기록/u)[0]!)
     const firstProgress = screen.getByLabelText(/DAY 1.*진행 기록/u)
     await user.click(within(firstProgress).getByRole("button", { name: "완료" }))

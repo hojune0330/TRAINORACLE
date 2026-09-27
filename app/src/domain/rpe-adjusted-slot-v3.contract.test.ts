@@ -275,7 +275,11 @@ it("opens a saved multi-plan through real application navigation with independen
   expect(readPlanBetaStateFromStorage([], [], reviewed.retained).kind).toBe("multi_adjusted_v3_loaded")
   const address = f.request.preparations[0]!.address
   const slotName = address.slot === "AM" ? "오전" : "오후"
-  fireEvent.click(within(screen.getByRole("navigation", { name: "훈련 날짜" })).getAllByRole("button")[address.day - 1]!)
+  const date = new Date(`${saved.state.selection.intake.startDate}T12:00:00`)
+  date.setDate(date.getDate() + address.day - 1)
+  fireEvent.click(within(screen.getByRole("grid", { name: /달력/u })).getByRole("button", {
+    name: new RegExp(`${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`),
+  }))
   await act(async () => { fireEvent.click(within(screen.getByRole("region", { name: `${slotName} 훈련` })).getByRole("button", { name: "이 훈련 일지 쓰기" })) })
   expect(screen.getByText(`계획 ${address.day}일차 · ${slotName}`)).toBeVisible()
   expect(loadEntries()).toEqual([])
@@ -552,6 +556,7 @@ it("opens the actual multi-plan schedule, records a slot and archives its origin
   render(React.createElement(PlanBeta, { readMultiAdjustedEvidenceV3: () => retained, returnToSession: draft.link,
     onWritePlannedSessionLog: onWrite }))
   expect(screen.getByRole("heading", { name: "내 훈련 일정" })).toBeTruthy()
+  fireEvent.click(screen.getByRole("button", { name: /크게 보기/u }))
   const region = () => within(screen.getByRole("region", { name: `${slot.slot === "AM" ? "오전" : "오후"} 훈련` }))
   await act(async () => { fireEvent.click(region().getByRole("button", { name: "완료" })) })
   const current = readPlanBetaStateFromStorage([], [], retained)

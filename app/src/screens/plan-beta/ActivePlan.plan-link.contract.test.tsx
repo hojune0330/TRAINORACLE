@@ -62,6 +62,8 @@ describe("active plan journal action", () => {
       />,
     )
 
+    await user.click(screen.getByRole("button", { name: "날짜별 카드 보기" }))
+    await user.click(screen.getAllByText(/훈련 방법과 기록/u)[0]!)
     await user.click(screen.getByRole("button", { name: "이 훈련 일지 쓰기" }))
     expect(onWriteSessionLog).toHaveBeenCalledWith(state.activePlan.sessions[0])
   })

@@ -26,6 +26,7 @@ it.each([null, "[]", "{broken", '[{"invalid":"entry"}]'])
     if (raw !== null) localStorage.setItem("trainoracle.journal.v1", raw)
     render(<ActivePlan state={stateFixture()} onProgress={vi.fn()} onNextFrame={vi.fn()}
       onActivateNextFrame={vi.fn()} onCheckDetailedExecution={vi.fn()} />)
+    await userEvent.click(screen.getByRole("button", { name: "날짜별 카드 보기" }))
     await userEvent.click(screen.getAllByRole("button", { name: "훈련 방법과 이유" })[0]!)
     await userEvent.click(screen.getByRole("tab", { name: "주기·기록" }))
     const complete = raw === null || raw === "[]"
@@ -42,6 +43,7 @@ it("does not turn a storage exception into an empty journal", async () => {
   })
   render(<ActivePlan state={stateFixture()} onProgress={vi.fn()} onNextFrame={vi.fn()}
     onActivateNextFrame={vi.fn()} onCheckDetailedExecution={vi.fn()} />)
+  await userEvent.click(screen.getByRole("button", { name: "날짜별 카드 보기" }))
   await userEvent.click(screen.getAllByRole("button", { name: "훈련 방법과 이유" })[0]!)
   await userEvent.click(screen.getByRole("tab", { name: "주기·기록" }))
   expect(screen.getByText(/조회하지 못한 상태를 일지가 없는 것으로 판단하지 않아요/u)).toBeVisible()

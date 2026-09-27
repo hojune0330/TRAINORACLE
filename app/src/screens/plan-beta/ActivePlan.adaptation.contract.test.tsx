@@ -22,7 +22,7 @@ describe("active plan adaptation entry", () => {
     )
 
     const action = screen.getByRole("button", { name: "다음 계획 조정하기" })
-    const timeline = screen.getByRole("list", { name: "날짜별 계획 미리보기" })
+    const timeline = screen.getByRole("grid", { name: /달력/u })
     expect(timeline.compareDocumentPosition(action) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
   })
 })

@@ -88,10 +88,11 @@ test("counts an imported journal without treating its numbers as analysis eviden
   const [year, month, day] = today.split("-").map(Number)
   const monthLabel = `${year}년 ${month}월`
   await page.getByRole("region", { name: "월별 기록" }).getByRole("button", { name: new RegExp(`^${monthLabel} `, "u") }).click()
-  await expect(page.getByText("1일 · 1개 기록", { exact: true })).toBeVisible()
+  await expect(page.getByText("이 달 1일 · 1개 기록", { exact: true })).toBeVisible()
   await page.getByRole("grid", { name: `${monthLabel} 달력` }).getByRole("button", {
-    name: new RegExp(`^${monthLabel} ${day}일 .*훈련 후 1건 일지 열기$`, "u"),
+    name: new RegExp(`^${monthLabel} ${day}일 .*훈련 후 1건`, "u"),
   }).click()
+  await page.getByRole("button", { name: "일지·메모 원문 열기" }).click()
   await expect(page.getByTestId("imported-chip").first()).toBeVisible()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "홈", exact: true }).click()
   await expect(page.getByRole("button", { name: /기록 1개 보기/u })).toContainText("가져온 기록 포함")
@@ -118,7 +119,7 @@ test("shows a duplicate warning unchecked instead of merging silently", async ({
   await page.getByLabel(/내보낸 활동 파일/u).setInputFiles(file)
 
   await expect(page.getByTestId("import-duplicate-flag")).toBeVisible()
-  await expect(page.getByRole("checkbox")).not.toBeChecked()
+  await expect(page.getByRole("checkbox", { name: /가져오기$/u })).not.toBeChecked()
   await expect(page.getByRole("button", { name: /저장할 활동을 골라 주세요/u })).toBeDisabled()
 
   const count = await page.evaluate((key) => {
@@ -127,7 +128,7 @@ test("shows a duplicate warning unchecked instead of merging silently", async ({
   }, JOURNAL_KEY)
   expect(count).toBe(1)
 
-  const checkbox = page.getByRole("checkbox")
+  const checkbox = page.getByRole("checkbox", { name: /가져오기$/u })
   const label = checkbox.locator("..")
   await expect.poll(async () => (await label.boundingBox())?.width ?? 0).toBeGreaterThanOrEqual(44)
   await expect.poll(async () => (await label.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44)
@@ -159,8 +160,8 @@ test("reconciles a detailed continuation and keeps subjective editing available"
   await page.getByLabel(/내보낸 활동 파일/u).setInputFiles({
     name: "synthetic-afternoon.tcx", mimeType: "application/xml", buffer: Buffer.from(tcxFor(original.date), "utf-8"),
   })
-  await expect(page.getByRole("checkbox")).not.toBeChecked()
-  await page.getByRole("checkbox").locator("..").click()
+  await expect(page.getByRole("checkbox", { name: /가져오기$/u })).not.toBeChecked()
+  await page.getByRole("checkbox", { name: /가져오기$/u }).locator("..").click()
   await expect(page.getByRole("button", { name: "저장 방식을 골라 주세요" })).toBeDisabled()
   await page.getByRole("combobox").selectOption(original.id)
   await page.screenshot({ path: testInfo.outputPath("explicit-journal-reconciliation.png"), fullPage: true })
