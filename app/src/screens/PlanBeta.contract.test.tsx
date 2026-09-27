@@ -360,7 +360,7 @@ describe("plan beta user flow", () => {
     await user.click(screen.getByRole("button", { name: /저녁에 운동해요/u }))
     await openRefinement("하루 두 번")
     await user.click(screen.getByRole("button", { name: /하루 두 번 운동할게요/u }))
-    await user.click(screen.getByRole("button", { name: "이 일정으로 시작", exact: true }))
+    await user.click(screen.getByRole("button", { name: "이 일정으로 시작" }))
 
     expect(loadPlanBetaState()?.intake).toMatchObject({
       trainingFocus: "VO2_INTENT",
