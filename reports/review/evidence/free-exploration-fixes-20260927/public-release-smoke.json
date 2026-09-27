@@ -1,0 +1,22 @@
+{
+  "base": "https://hojune0330.github.io/TRAINORACLE/",
+  "sourceSha": "555eceeb4e465c7a237b2c4c6617ba77063c6bde",
+  "syntheticOnly": true,
+  "accountLogin": false,
+  "checks": [
+    "unsaved-guest-cancel-preserves-form",
+    "real-generation-exact-workout-shown",
+    "same-prescription-reader-return-no-mutation"
+  ],
+  "pageErrors": [],
+  "blockedRequests": [],
+  "deployment": {
+    "kind": "TRAINORACLE_PAGES_DEPLOYMENT",
+    "sourceSha": "555eceeb4e465c7a237b2c4c6617ba77063c6bde",
+    "previousPagesSha": "cce9b7a9684bb82acb27a6d4cbdf374621560209",
+    "workflowRunId": "36313573749",
+    "workflowAttempt": "1",
+    "deployedAt": "2026-09-27T11:35:46.246Z"
+  },
+  "result": "PASS"
+}

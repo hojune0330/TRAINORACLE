@@ -1,7 +1,7 @@
 # FREE_EXPLORATION_FIXES_AND_WORKOUT_EXECUTION_2026-09-27.md
 
 - 작성일: 2026-09-27
-- 상태: LOCAL_IMPLEMENTATION_VERIFIED_RELEASE_PENDING
+- 상태: DEPLOYED_AND_PUBLIC_CORE_FLOW_VERIFIED
 - 선행: [20개 프로필 자유 탐색 보고](CALENDAR_RELEASE_AND_FREE_EXPLORATION_2026-09-27.md)
 - 요청: 발견사항 개선, 실제 상세 훈련 제공 범위 확인, 간단하고 정확한 수행 안내.
 - 경계: 훈련 수치·활성 템플릿·안전 판정·개인 기록 계산·서버 저장 권한은 변경하지 않는다.
@@ -90,6 +90,7 @@
 - 첫 원격 CI `36311659280`의 UTC 전체: 4,432 통과, 기존 skip 35, 계획 조건 4개를 순서대로 변경하는 기존 테스트 1건이 5초 제한으로 실패했다. 계약 job은 통과했고 브라우저·배포는 실행되지 않았다.
 - 해당 테스트의 반복 검색을 전체 달력에서 `계획 다듬기` 영역으로 좁히고 저장 버튼을 정확한 현재 라벨로 찾도록 수정했다. 사용자 입력·저장 값·다음 주기 제한 단언은 보존했다. 관련 전체 파일 33통과/기존 skip 2, KST 해당 테스트 2.774초 통과. 시간 제한·필수 검사·단언을 완화하지 않았다.
 - 두 번째 CI `36312458687`에서 전체 단위 검사, 공개 설정/기기 연동 검사, 공유 저장 스키마 검사는 통과했다. 그러나 테스트 보완 시 React Testing Library의 `getByRole`에 Playwright 전용 `exact` 옵션을 잘못 넣어 타입 검사가 실패했다. 기능 오류로 숨기거나 CI 통과로 기록하지 않는다. 문자열 이름 일치가 기본인 RTL에서는 불필요한 해당 옵션을 제거했다.
+- 최종 로컬 앱·브라우저 타입 검사 통과. 추가 PC/일반 모바일 신규 동선 8/8 통과, 앞서 좁은 모바일/모션 감소 8/8과 합쳐 신규 파일 네 환경 16/16 통과.
 
 ## 6. 증거 및 배포 경계
 
@@ -97,6 +98,19 @@
 - [같은 저장 처방의 날짜 상세](evidence/free-exploration-fixes-20260927/same-workout-reader-375.png)
 - 재현: `app/e2e/free-exploration-followup.spec.ts`, `calendar-concise-flow.spec.ts`, `progressive-information.spec.ts`.
 - 실제 4종목 생성: `app/src/screens/plan-beta/instant-plan-execution-accuracy.contract.test.ts`.
-- 작성 시점의 코드는 로컬 검증 상태다. main의 정확한 커밋, 필수 CI, 배포 영수증, 공개 화면 확인은 완료 후 별도 기록한다.
+- 최초 작성은 로컬 검증 상태였으며, 아래 최종 배포 증거를 별도로 추가했다. 이전 실패 이력을 덮어쓰지 않는다.
+
+### 최종 배포 및 공개 확인
+
+- 구현 커밋 `94a33bfabff351bcf4e6a24217bda15ff1cef85f`. 후속 두 커밋은 테스트 및 보고서 보완이다.
+- 정확한 배포 소스: `555eceeb4e465c7a237b2c4c6617ba77063c6bde`.
+- [최종 CI 36313573749](https://github.com/hojune0330/TRAINORACLE/actions/runs/36313573749): `contract-tests`, `app-quality`, `app-browser`, `deploy-pages` 전부 success. 실패 실행의 재표기가 아니라 보완된 정확한 커밋의 별도 실행이다.
+- UTC와 KST 각각 단위 4,433 통과, 기존 skip 35. 451파일 중 444 통과, 기존 skip 7. 공개 설정/기기 통합·공유 저장 검증·앱 및 브라우저 타입·빌드 통과.
+- 일반 브라우저 네 환경 합계 746 통과/기존 skip 82. 별도 암호화 계정 초안·일지·충돌·꾸미기·계획·폼 복구 명령도 모두 통과. skip은 실행 성공으로 세지 않는다.
+- Pages 커밋: `a5ec2b2e7ecbc74a80416ecc8435a33c74db6a89`. Pages API `built`, 게시 완료 `2026-09-27T11:36:43Z`.
+- [공개 서비스](https://hojune0330.github.io/TRAINORACLE/)의 배포 영수증은 위 소스와 일치. 배포 시각 `2026-09-27T11:35:46.246Z`.
+- 공개 375px 격리 브라우저에서 미저장 입력 이탈 취소, 합성 18:31 기록으로 실제 생성·저장한 상세 훈련, 같은 처방 상세 열기·포커스 복귀·저장 원본 불변을 통과했다. 페이지 오류 0, 로그인/운영 서버 쓰기 없음.
+- [공개 확인 JSON](evidence/free-exploration-fixes-20260927/public-release-smoke.json), [공개 훈련 화면](evidence/free-exploration-fixes-20260927/public-executable-workout-375.png), [재현 스크립트](evidence/free-exploration-fixes-20260927/release-smoke.mjs).
+- 이번 수정과 배포는 완료다. §3의 상세 훈련 공급 부족 및 §4의 후속 확장은 여전히 남아 있으며 이번 배포로 완료 처리하지 않는다.
 
 [DRAFT_COMPLETE]
