@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test"
 import { completeQuickPlan, refinePlan } from "./plan-flow"
+import { openActivePlanCards } from "./active-plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
@@ -19,8 +20,9 @@ test("real month navigation, today, AM/PM and narrow layout", async ({ page }, i
   await expect(calendar.getByRole("columnheader", { name: "일요일" })).toBeVisible()
   const today = calendar.getByRole("button", { name: /2026년 9월 27일 일요일/u })
   await expect(today).toHaveAttribute("aria-current", "date")
-  await expect(today).toContainText("오전")
-  await expect(today).toContainText("오후")
+  await expect(today).toContainText("AM")
+  await expect(today).toContainText("PM")
+  await expect(today).toHaveAccessibleName(/오전.*오후/u)
 
   for (const width of [320, 375, 1024]) {
     await page.setViewportSize({ width, height: 800 })
@@ -43,6 +45,7 @@ test("real month navigation, today, AM/PM and narrow layout", async ({ page }, i
   await page.getByRole("dialog").getByRole("button", { name: "크게 보기 이전 날짜" }).click()
   await enlarged.getByRole("button", { name: "달력으로 돌아가기" }).click()
   await expect(enlarged).not.toBeVisible()
+  await openActivePlanCards(page)
   await expect(page.locator('[data-active-card="true"]')).toContainText("10월 1일 목요일")
   const day = page.getByRole("group", { name: "10월 1일 목요일 · 훈련 2개", exact: true })
   await expect.poll(async () => {
