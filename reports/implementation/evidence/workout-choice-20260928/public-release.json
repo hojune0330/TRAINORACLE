@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "checkedAt": "2026-09-27T17:18:38.886Z",
+  "receipt": {
+    "kind": "TRAINORACLE_PAGES_DEPLOYMENT",
+    "sourceSha": "d5d341ff0be65699461fb2e824fd52d2ef5f18d2",
+    "previousPagesSha": "a5ec2b2e7ecbc74a80416ecc8435a33c74db6a89",
+    "workflowRunId": "36332521108",
+    "workflowAttempt": "1",
+    "deployedAt": "2026-09-27T17:14:03.178Z"
+  },
+  "viewport": {
+    "width": 375,
+    "height": 667
+  },
+  "scenario": "Synthetic browser-local recent record; preview -> explicit apply -> record confirmation -> save -> reload",
+  "targetRepSeconds": 222.25,
+  "consoleErrors": 0,
+  "blockedNetworkWriteRequests": 0,
+  "productionAccountWrites": 0,
+  "newDoseActivation": false
+}
