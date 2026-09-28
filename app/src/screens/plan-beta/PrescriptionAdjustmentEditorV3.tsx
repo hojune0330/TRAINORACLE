@@ -109,9 +109,10 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
     if (pending.current || completed.current) return
     completed.current = true; setClosed(true); latest.current.onCancel()
   }
+  const visibleBaseline = opened.initialDraft?.after ?? opened.current
   const requestCancel = () => {
     if (pending.current || completed.current) return
-    if (same(draft?.after.configuration ?? opened.current?.configuration, opened.initialDraft?.after.configuration ?? opened.current?.configuration)) { cancel(); return }
+    if (same(draft?.after.configuration ?? visibleBaseline?.configuration, visibleBaseline?.configuration)) { cancel(); return }
     discardOpener.current = document.activeElement instanceof HTMLElement ? document.activeElement : back.current
     setDiscarding(true)
   }
@@ -168,7 +169,7 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
     finally { pending.current = false; if (mounted.current) setApplying(false) }
   }
   if (closed) return null
-  const before = opened.current?.sequence, after = draft?.after.sequence ?? before
+  const before = visibleBaseline?.sequence, after = draft?.after.sequence ?? before
   const a = before ? deriveSequenceV3Totals(before) : null, b = after ? deriveSequenceV3Totals(after) : null
   const selected = draft?.after.configuration ?? opened.current?.configuration
   const blocked = applying || stale || !opened.current
@@ -179,13 +180,25 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
       return result.kind === "draft" ? [result.draft.after] : []
     } catch { return [] }
   }) : []
-  const preview = draft?.after ?? opened.current
-  const pool = opened.current ? [opened.current, ...authorized] : authorized
-  const otherMethod = preview ? nextWorkoutMethodV3(preview, pool, seenMethods) : null
-  const methodsExhausted = !otherMethod && distinctWorkoutMethodsV3(pool).length > 1
-  const controls = preview ? buildWorkoutTuningStepsV3(preview, pool) : []
-  const changes = draft && opened.current ? workoutTuningChangesV3(opened.current, draft.after) : []
-  const resetDisabled = same(selected, opened.initialDraft?.after.configuration ?? opened.current?.configuration)
+  const preview = draft?.after ?? visibleBaseline
+  const pool = visibleBaseline ? [visibleBaseline, ...authorized.filter(item => !same(item.configuration, visibleBaseline.configuration))] : authorized
+  const methodPool = props.primaryConfigurations?.length
+    ? pool.filter(item => same(item.configuration, visibleBaseline?.configuration)
+      || props.primaryConfigurations!.some(configuration => same(configuration, item.configuration))) : pool
+  const otherMethod = preview ? nextWorkoutMethodV3(preview, methodPool, seenMethods) : null
+  const methodsExhausted = !otherMethod && distinctWorkoutMethodsV3(methodPool).length > 1
+  const orderedGroup = preview ? props.orderedChoices?.find(group =>
+    group.configurations.some(configuration => same(configuration, preview.configuration))) : undefined
+  const orderedPool = orderedGroup
+    ? orderedGroup.configurations.flatMap(configuration => pool.filter(item => same(item.configuration, configuration)))
+    : props.orderedChoices ? [] : pool
+  const controlDimensions = orderedGroup ? ({ repetitions: ["repetitions"], distance: ["repDistance"],
+    time: ["workTime"], recovery: ["repeatRecovery", "setRecovery"], sets: ["sets"], intensity: [],
+  } as const)[orderedGroup.dimension] : null
+  const controls = preview ? buildWorkoutTuningStepsV3(preview, orderedPool)
+    .filter(control => controlDimensions === null || (controlDimensions as readonly string[]).includes(control.dimension)) : []
+  const changes = draft && visibleBaseline ? workoutTuningChangesV3(visibleBaseline, draft.after) : []
+  const resetDisabled = same(selected, visibleBaseline?.configuration)
   return createPortal(<dialog ref={dialog} className="prescription-adjustment" role={discarding ? "alertdialog" : "dialog"}
     aria-modal="true" aria-busy={applying} aria-labelledby={`${id}-${discarding ? "discard" : "title"}`}
     aria-describedby={discarding ? `${id}-discard-description` : props.sessionLabel ? `${id}-session` : undefined}
@@ -246,13 +259,14 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
         <details><summary>준비부터 정리까지 순서 보기</summary>{after && <PrescriptionStructureV3 sequence={after} />}</details>
         <details ref={choiceDetails}><summary>구성 목록에서 고르기</summary>
         <fieldset disabled={blocked} className="prescription-adjustment__choices"><legend>훈련 구성</legend>
-          <label><input type="radio" name={`${id}-choice`} checked={!draft} onChange={() => { if (opened.current) choose(opened.current.configuration) }} />현재 구성</label>
-          {props.choices.filter(c => !same(c.configuration, opened.current?.configuration)
+          {visibleBaseline && <label><input type="radio" name={`${id}-choice`} checked={same(selected, visibleBaseline.configuration)}
+            onChange={() => choose(visibleBaseline.configuration)} />{visibleBaseline.sequence.label ?? "현재 구성"}</label>}
+          {props.choices.filter(c => !same(c.configuration, visibleBaseline?.configuration)
             && (showAllChoices || props.primaryConfigurations === undefined || same(c.configuration, selected)
               || props.primaryConfigurations.some(ref => same(ref, c.configuration)))).map((choice, i) => <label key={`${i}-${choice.configuration.configurationId}`}>
             <input type="radio" name={`${id}-choice`} checked={same(selected, choice.configuration)} onChange={() => choose(choice.configuration)} />{choice.label}</label>)}
         </fieldset>
-        {props.primaryConfigurations && props.choices.some(c => !same(c.configuration, opened.current?.configuration)
+        {props.primaryConfigurations && props.choices.some(c => !same(c.configuration, visibleBaseline?.configuration)
           && !props.primaryConfigurations!.some(ref => same(ref, c.configuration))) && <button type="button"
           disabled={blocked} aria-expanded={showAllChoices} onClick={() => setShowAllChoices(value => !value)}>
           {showAllChoices ? "기본 선택지만 보기" : "다른 검토된 구성 보기"}</button>}

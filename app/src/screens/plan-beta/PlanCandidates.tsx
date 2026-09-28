@@ -37,6 +37,7 @@ import type { InstantPlanEntry } from "../../domain/instant-plan-contract"
 import { formatRecordTime } from "../../domain/athlete-record-display"
 import { defaultInstantCandidate, projectInstantRecommendation } from "./instant-plan-projection"
 import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
+import { sameDetailedTemplateReference } from "../../domain/plan-method-selection"
 
 export function PlanCandidates({
   generated,
@@ -108,17 +109,18 @@ export function PlanCandidates({
   const resultRef = React.useRef<HTMLElement>(null)
   const headingRef = React.useRef<HTMLHeadingElement>(null)
   const optionsRef = React.useRef<HTMLDivElement>(null)
+  const methodRef = React.useRef<HTMLDivElement>(null)
   const dateRef = React.useRef<HTMLLabelElement>(null)
   const dateInputRef = React.useRef<HTMLInputElement>(null)
   const recoveryRef = React.useRef<HTMLElement>(null)
   const confirmationRequested = React.useRef(false)
-  const [navigation, setNavigation] = React.useState<{ kind: "result" | "options" | "date" | "recovery"; revision: number } | null>(null)
-  const reveal = React.useCallback((kind: "result" | "options" | "date" | "recovery") => {
+  const [navigation, setNavigation] = React.useState<{ kind: "result" | "options" | "date" | "method" | "recovery"; revision: number } | null>(null)
+  const reveal = React.useCallback((kind: "result" | "options" | "date" | "method" | "recovery") => {
     setNavigation(previous => ({ kind, revision: (previous?.revision ?? 0) + 1 }))
   }, [])
   useActiveContentScroll(navigation?.revision ?? null,
-    navigation?.kind === "recovery" ? recoveryRef : navigation?.kind === "options" ? optionsRef : navigation?.kind === "date" ? dateRef : resultRef,
-    navigation?.kind === "recovery" ? recoveryRef : navigation?.kind === "options" ? optionsRef : navigation?.kind === "date" ? dateInputRef : headingRef)
+    navigation?.kind === "recovery" ? recoveryRef : navigation?.kind === "method" ? methodRef : navigation?.kind === "options" ? optionsRef : navigation?.kind === "date" ? dateRef : resultRef,
+    navigation?.kind === "recovery" ? recoveryRef : navigation?.kind === "method" ? methodRef : navigation?.kind === "options" ? optionsRef : navigation?.kind === "date" ? dateInputRef : headingRef)
   React.useEffect(() => {
     if (saveError && !saving) reveal("recovery")
   }, [saveError, saveCode, saving, reveal])
@@ -147,6 +149,9 @@ export function PlanCandidates({
     ? "선택한 종목"
     : `${selectedRecord.eventDistanceM}m`
   const recommendation = projectInstantRecommendation(defaultInstantCandidate(generated), startDate)
+  const instantAdjustment = recommendation === null ? undefined : adjustmentActions[recommendation.id]
+  const detailedOptions = resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference)
+  const selectedDetailedOption = detailedOptions.find(option => sameDetailedTemplateReference(option.ref, intake.selectedDetailedTemplateRef))
   const needsReview = recordConfirmationPending || detailedEvidencePending || targetDraftPending || methodDraftPending || !hasValidStartDate
   React.useEffect(() => {
     if (!confirmationRequested.current || needsReview || selectionUnavailable) return
@@ -172,28 +177,39 @@ export function PlanCandidates({
           : selectionUnavailable ? { kind: "BLOCKED", message: saveError ?? "계정 저장 상태를 먼저 확인해 주세요." }
           : saveError ? { kind: "FAILED", message: saveError }
           : needsReview ? { kind: "BLOCKED", message: "아래에서 기준 기록이나 변경한 내용을 확인해 주세요." } : { kind: "READY" }}
-        onStart={candidateId => { if (canSelect) onSelect({ candidateId, startDate }) }}
+        onStart={candidateId => {
+          if (!canSelect) return
+          const adjust = adjustmentActions[candidateId]
+          if (adjust) adjust()
+          else onSelect({ candidateId, startDate })
+        }}
         onRetry={saveCode === "PLAN_STORAGE_WRITE_FAILED" && canSelect ? onRetrySave : undefined}
         onShowAlternatives={() => { setShowOptions(true); reveal("options") }}
         onEditSchedule={() => { setShowOptions(true); reveal("date") }}
+        onEditWorkout={instantAdjustment ?? (detailedOptions.length > 0 ? () => reveal("method") : undefined)}
+        workoutLabel={instantAdjustment ? "검토된 상세 훈련을 고를 수 있어요" : selectedDetailedOption?.mainSummary}
+        workoutLabelTitle={instantAdjustment ? "상세 훈련" : undefined}
+        startLabel={instantAdjustment ? "상세 훈련 고르고 시작" : undefined}
         anchorLabel={prescriptionBinding.kind === "bound" && selectedRecord
           ? `${selectedEventLabel} ${formatRecordTime(selectedRecord.performanceSeconds)}` : undefined}
         goalLabel={instantEntry?.kind === "GOAL_ONLY" ? `${instantEntry.eventDistanceM}m ${formatRecordTime(instantEntry.performanceSeconds)}` : undefined}
       />}
       {!recommendation && saveError && <p role="alert">{saveError}</p>}
+      {instantAdjustment === undefined && onChangeMethod !== undefined && detailedOptions.length > 0 && <div ref={methodRef} tabIndex={-1}>
+        <PlanMethodPicker
+          options={detailedOptions}
+          selected={intake.selectedDetailedTemplateRef}
+          contextKey={JSON.stringify([intake, startDate, selectedRecordId, selectedRecord?.performanceSeconds, prescriptionBinding])}
+          onPendingChange={setMethodDraftPending}
+          onChange={onChangeMethod}
+          repeatPreference={repeatPreference}
+          onRepeatPreferenceChange={setRepeatPreference}
+        />
+      </div>}
       <details className="plan-detailed-options" open={showOptions || needsReview}
         onToggle={event => { if (!needsReview) setShowOptions(event.currentTarget.open) }}>
-      <summary>기록 확인·다른 계획·상세 훈련 보기</summary>
+      <summary>기록·시작일·다른 일정 확인</summary>
       <fieldset disabled={selectionUnavailable} style={{ border: 0, padding: 0, minWidth: 0 }}>
-      {onChangeMethod !== undefined && resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference).length > 0 && <PlanMethodPicker
-        options={resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference)}
-        selected={intake.selectedDetailedTemplateRef}
-        contextKey={JSON.stringify([intake, startDate, selectedRecordId, selectedRecord?.performanceSeconds, prescriptionBinding])}
-        onPendingChange={setMethodDraftPending}
-        onChange={onChangeMethod}
-        repeatPreference={repeatPreference}
-        onRepeatPreferenceChange={setRepeatPreference}
-      />}
       {intake.selectedDetailedTemplateRef !== null
         && (intake.eventGroup === "FIVE_K" || intake.eventGroup === "MIDDLE_DISTANCE")
         && intake.experienceBand === "EXPERIENCED"
@@ -235,7 +251,7 @@ export function PlanCandidates({
       )}
       {detailedEvidencePending && !recordConfirmationPending && (
         <p className="plan-start-date-error" role="alert">
-          같은 종목의 현재 기록을 고르고 확인해 주세요. 기록 없이 받으려면 훈련 방법 선택에서 ‘시간과 체감 강도로 안내받기’를 고르세요.
+          같은 종목의 현재 기록을 고르고 확인해 주세요. 기록 없이 받으려면 상세 훈련에서 ‘기록 없이 시간·RPE로 받기’를 고르세요.
         </p>
       )}
       <label ref={dateRef} className="plan-start-date" htmlFor="plan-start-date">

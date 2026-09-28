@@ -46,7 +46,7 @@ function statusText(row: MainComparisonRow) {
     : "시간·RPE 범위가 달라도, 반복과 회복이 없으면 다른 방법인지 판단할 수 없어요."
   if (row.methodRelation === "DIFFERENT_REQUIRES_REVIEW") return "본운동 구성이 달라요. 두 방법의 적용 범위와 차이를 검토해야 하며, 효과가 같다는 뜻은 아니에요."
   return row.samePrescribedValues
-    ? "본운동 방법과 목표값이 같아요. 다른 방법 두 개가 아니에요."
+    ? "같은 핵심 훈련을 날짜와 전체 일정만 다르게 배치한 계획이에요. 서로 다른 훈련 두 개가 아니에요."
     : "같은 본운동 방법에서 횟수나 목표값이 달라요. 별개의 방법으로 세지 않아요."
 }
 

@@ -51,8 +51,8 @@ describe("V3 adjustment editor", () => {
   it("restores the previously selected configuration and closes an unchanged reopened editor without a discard prompt", () => {
     const { props, refs } = fixture()
     render(<PrescriptionAdjustmentEditorV3 {...props} initialConfiguration={refs[1]} />)
-    expect(screen.getByRole("radio", { name: "시험 구성" })).toBeChecked()
-    expect(row("본운동 시간")).toEqual(["78초", "52초", "-26초"])
+    expect(screen.getByRole("radio", { name: "현재 구성" })).toBeChecked()
+    expect(row("본운동 시간")).toEqual(["52초", "52초", "0초"])
     fireEvent.click(screen.getAllByRole("button", { name: "취소" })[0]!)
     expect(props.onCancel).toHaveBeenCalledOnce()
     expect(props.onApply).not.toHaveBeenCalled()
@@ -133,15 +133,15 @@ describe("V3 adjustment editor", () => {
     expect(props.onApply).not.toHaveBeenCalled()
   })
 
-  it("restores the opened selection, not a different baseline, and clears redo on a new choice", () => {
+  it("uses the opened selection as the visible baseline without exposing its hidden source", () => {
     const { props, refs } = fixture()
     render(<PrescriptionAdjustmentEditorV3 {...props} initialConfiguration={refs[1]} />)
-    fireEvent.click(screen.getByRole("button", { name: "반복 늘리기" }))
-    expect(screen.getByRole("button", { name: "변경안 초기화" })).not.toBeDisabled()
-    fireEvent.click(screen.getByRole("button", { name: "변경안 초기화" }))
-    expect(row("본운동 시간")).toEqual(["78초", "52초", "-26초"])
-    fireEvent.click(screen.getByRole("button", { name: "되돌리기" }))
-    fireEvent.click(screen.getByRole("button", { name: "반복 줄이기" }))
+    expect(screen.getByRole("radio", { name: "현재 구성" })).toBeChecked()
+    expect(screen.queryByRole("radio", { name: "시험 구성" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "반복 늘리기" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "반복 줄이기" })).toBeNull()
+    expect(screen.getByRole("button", { name: "변경안 초기화" })).toBeDisabled()
+    expect(row("본운동 시간")).toEqual(["52초", "52초", "0초"])
     expect(screen.getByRole("button", { name: "다시 하기" })).toBeDisabled()
     expect(props.onApply).not.toHaveBeenCalled()
   })

@@ -14,10 +14,12 @@ export type ReviewedMultiRuntimeCatalogV3 = {
 /** Catalog entries are independently adopted inputs, not proposals or saved plans. */
 export function createCatalogMultiPlanRuntimeV3(options: {
   readonly readCatalog: () => ReviewedMultiRuntimeCatalogV3;
+  readonly orderedChoicesFor?: Parameters<typeof createReviewedMultiAdjustmentProviderV3>[0]["orderedChoicesFor"];
   readonly now?: () => Date;
 }): AppShellMultiPlanRuntime {
   return createAssembledMultiPlanRuntimeV3({
     now: options.now,
+    orderedChoicesFor: options.orderedChoicesFor,
     readRetained: () => options.readCatalog().retained,
     readSources: (context, at) => {
       const candidate = context.generated.candidates.find(c => c.candidateId === context.candidateId)
@@ -36,12 +38,14 @@ export function createCatalogMultiPlanRuntimeV3(options: {
 export function createAssembledMultiPlanRuntimeV3(options: {
   readonly readSources: (context: Context, at: Date) => Sources | null;
   readonly readRetained: NonNullable<AppShellMultiPlanRuntime["readMultiAdjustedEvidenceV3"]>;
+  readonly orderedChoicesFor?: Parameters<typeof createReviewedMultiAdjustmentProviderV3>[0]["orderedChoicesFor"];
   readonly now?: () => Date;
 }): AppShellMultiPlanRuntime {
   return {
     readMultiAdjustedEvidenceV3: options.readRetained,
     multiAdjustmentResolverV3: createReviewedMultiAdjustmentProviderV3({
       now: options.now,
+      orderedChoicesFor: options.orderedChoicesFor,
       readMaterials: (context, changes, at) => {
         const candidate = context.generated.candidates.find(c => c.candidateId === context.candidateId)
         if (!candidate) return null

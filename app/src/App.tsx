@@ -29,7 +29,7 @@ export default function App({ multiPlanRuntime }: { readonly multiPlanRuntime?: 
   return (
     <InstallShortcutProvider><AccountJournalStorageStatus />
     <React.Suspense fallback={<AppLoadingState fullScreen />}>
-      <DesktopWorkspace />
+      <DesktopWorkspace multiPlanRuntime={multiPlanRuntime} />
     </React.Suspense>
     </InstallShortcutProvider>
   )

@@ -19,6 +19,10 @@ export type InstantPlanRecommendationViewProps = {
   readonly anchorLabel?: string
   readonly goalLabel?: string
   readonly programPurposeLabel?: string
+  readonly workoutLabel?: string
+  readonly workoutLabelTitle?: string
+  readonly onEditWorkout?: () => void
+  readonly startLabel?: string
 }
 
 const roleLabels: Record<InstantPlanDaySummary["sessions"][number]["role"], string> = {
@@ -41,6 +45,10 @@ export function InstantPlanRecommendationView({
   anchorLabel,
   goalLabel,
   programPurposeLabel,
+  workoutLabel,
+  workoutLabelTitle,
+  onEditWorkout,
+  startLabel,
 }: InstantPlanRecommendationViewProps) {
   const headingId = useId()
   const actionStatusId = useId()
@@ -68,6 +76,7 @@ export function InstantPlanRecommendationView({
         {anchorLabel && <div><dt>기준 기록</dt><dd>{anchorLabel}</dd></div>}
         {goalLabel && <div><dt>내 목표</dt><dd>{goalLabel}</dd></div>}
         {programPurposeLabel && <div><dt>이번 프로그램의 목적</dt><dd>{programPurposeLabel}</dd></div>}
+        {workoutLabel && <div><dt>{workoutLabelTitle ?? "고른 상세 훈련"}</dt><dd>{workoutLabel}</dd></div>}
       </dl>
       {goalLabel && (
         <p className="instant-plan__hint">목표 기록은 현재 능력이나 이 기간 안의 달성 보장을 뜻하지 않아요.</p>
@@ -110,7 +119,7 @@ export function InstantPlanRecommendationView({
           disabled={!ready}
           aria-describedby={status !== null ? actionStatusId : undefined}
           onClick={() => { if (ready) onStart(recommendation.id) }}
-        >{saving ? "저장 중" : "이 일정으로 시작"}</button>
+        >{saving ? "저장 중" : startLabel ?? "이 일정으로 시작"}</button>
         {onEditSchedule && (
           <button className="instant-plan__secondary" type="button" disabled={waiting} onClick={onEditSchedule}>
             시작일·훈련일 바꾸기
@@ -119,6 +128,11 @@ export function InstantPlanRecommendationView({
         {onShowAlternatives && (
           <button className="instant-plan__secondary" type="button" disabled={waiting} onClick={onShowAlternatives}>
             다른 계획 보기
+          </button>
+        )}
+        {onEditWorkout && (
+          <button className="instant-plan__secondary" type="button" disabled={waiting} onClick={onEditWorkout}>
+            훈련 방법 고르기
           </button>
         )}
       </div>

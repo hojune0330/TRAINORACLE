@@ -6,6 +6,7 @@ import { purgeExpiredTrash } from "./domain/journal-trash"
 import { registerAppServiceWorker } from "./domain/pwa-update"
 import { FeedbackBoardRoute } from "./screens/FeedbackBoardRoute"
 import { TrainingLexiconRoute } from "./screens/TrainingLexiconRoute"
+import { LT_PILOT_MULTI_PLAN_RUNTIME_V3 } from "./domain/lt-pilot-runtime-v3"
 
 // 토큰 단일 소스: 저장소 루트 CSS를 직접 import (이중 정의 금지)
 import "../../colors_and_type.css"
@@ -76,5 +77,5 @@ if (showTrainingLexicon) {
   })
 } else {
   // ErrorBoundary는 App 바깥에 둔다 — App 자체가 렌더에 실패해도 잡아야 한다.
-  renderRoot(<App />)
+  renderRoot(<App multiPlanRuntime={LT_PILOT_MULTI_PLAN_RUNTIME_V3} />)
 }

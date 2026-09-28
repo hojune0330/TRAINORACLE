@@ -7,8 +7,9 @@ import { LogDetail } from "./screens/LogDetail"
 import { LogEntry } from "./screens/LogEntry"
 import { PlanBeta } from "./screens/PlanBeta"
 import { Trends } from "./screens/Trends"
+import type { AppShellMultiPlanRuntime } from "./AppShell"
 
-export default function DesktopWorkspace() {
+export default function DesktopWorkspace({ multiPlanRuntime }: { readonly multiPlanRuntime?: AppShellMultiPlanRuntime } = {}) {
   const [, refreshAccountJournals] = React.useReducer((revision: number) => revision + 1, 0)
   React.useEffect(() => {
     window.addEventListener("trainoracle:account-journals-changed", refreshAccountJournals)
@@ -28,7 +29,7 @@ export default function DesktopWorkspace() {
         padding: "0 0 30px", justifyContent: "flex-start",
       }}>
         <MobileFrame label="PLAN · BETA">
-          <PlanBeta onWriteLog={() => {}} />
+          <PlanBeta onWriteLog={() => {}} {...multiPlanRuntime} />
         </MobileFrame>
         <MobileFrame label="HOME · 실데이터">
           <Home onWriteLog={() => {}} onOpenDay={() => {}} onOpenGuide={() => {}} onOpenMore={() => {}} />
