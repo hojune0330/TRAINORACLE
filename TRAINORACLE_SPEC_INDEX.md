@@ -329,4 +329,12 @@ Important starting points:
 - `.omo/reports/github-publish-readiness.md`
 - `.omo/reports/github-main-publish-complete.md`
 
+## 11. Execution Review And Replanning Draft (2026-09-28)
+
+- [계획과 실제 수행 비교 및 남은 훈련 재설계 계약](specs/reconstruct/PLAN_EXECUTION_DEVIATION_AND_REPLAN_CONTRACT.md): `DRAFT_FOR_REVIEW`, 로컬 사실 비교/홈 코칭 부분 구현. 현재 주기/중주기의 실제 재설계·계정 적용은 미구현이며 기존 next-frame 적응 권한을 확대하지 않는다.
+- [개발 순서와 원본 대조](reports/plans/PLAN_EXECUTION_REVIEW_AND_REPLAN_IMPLEMENTATION_PLAN_2026-09-28.md): A~G 작업, 20개 검수 시나리오, 저장·UX·정책 경계. 문서 작성과 실제 런타임/배포 증거를 분리한다.
+- [홈·훈련 코칭 UX 구현안](reports/plans/PLAN_EXECUTION_HOME_AND_COACHING_UX_2026-09-28.md): 홈 상설 진입·공통 reader·일지 비교 부분 구현, 로컬 브라우저 확인. [구현 보고서](reports/implementation/PLAN_EXECUTION_COACHING_IMPLEMENTATION_2026-09-29.md)에 남은 교정·저장 범위를 별도 기록했다.
+
+이 문서 묶음의 추가는 위 역사적 목록의 이슈 집계, 정본 상태 또는 이전 실행 증거를 바꾸지 않는다.
+
 [DRAFT_COMPLETE]

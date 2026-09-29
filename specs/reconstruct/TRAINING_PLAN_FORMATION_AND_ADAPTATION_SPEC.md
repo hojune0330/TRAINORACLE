@@ -2009,4 +2009,24 @@ consolidates source/adjustment gaps without adding runtime authority. Section 15
 11 issue rows and 10 canonical blockers, existing machine policies, historical
 vectors and canonical status are unchanged.
 
+## 18. Actual Execution And Remaining-Plan Review Direction (2026-09-28)
+
+The owner requested proactive explanation and correction when actual work differs
+from the accepted plan, including the remainder of the current frame and, when
+needed, the larger block. The new draft owner for this path is
+[PLAN_EXECUTION_DEVIATION_AND_REPLAN_CONTRACT](PLAN_EXECUTION_DEVIATION_AND_REPLAN_CONTRACT.md).
+
+Section 10.3 remains the mapping for the existing successor implementation. A
+missed MAIN, changed workout or difference in experience must not be relabelled as
+EXPLICIT_REQUEST to bypass that mapping. A future ExecutionReplanProposal requires
+separately adopted comparison/impact/full-schedule policies, immutable prior
+snapshots, preserved actual records and atomic explicit acceptance.
+
+The requested product direction is not limited to showing NOT_COMPARABLE forever:
+known differences should be explained and a justified correction scope prepared.
+However, this additive design does not activate a numerical policy, infer a new
+goal, allow catch-up/compression, chain single-dimension transforms to evade
+full-plan review, or authorize silent active-plan writes. Existing machine policies,
+canonical status and open issues are unchanged.
+
 [DRAFT_COMPLETE]

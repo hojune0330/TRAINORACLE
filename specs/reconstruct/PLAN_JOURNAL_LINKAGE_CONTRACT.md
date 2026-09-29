@@ -128,4 +128,27 @@ This contract does not authorize automatic adaptation, training-load increase, s
 
 No upstream or downstream issue is closed by this draft or by V1 implementation tests.
 
+## 11. Planned Versus Actual Review Extension (2026-09-28)
+
+See [PLAN_EXECUTION_DEVIATION_AND_REPLAN_CONTRACT](PLAN_EXECUTION_DEVIATION_AND_REPLAN_CONTRACT.md)
+for the draft execution-comparison/replan path. Exact linkage identifies the
+original prescription; it is not measured compliance. In particular, the existing
+derived AS_PLANNED relation must not prove equal pace, repetitions or recovery.
+
+Split, additional or mixed activity needs explicit versioned correspondence before
+its structured components can represent planned segments. Do not loosen the v1
+single-occurrence rule or auto-match by date/title. Preserve existing records and
+links, source-read completeness, account scope and missing/conflict states. New
+comparison authority, storage extensions and schedule acceptance need their own
+implementation evidence; this addition closes no issue or changes runtime behavior.
+
+### 11.1 Owner-approved descriptive comparison repair (2026-09-29)
+
+The actual AM/PM choice is a performed fact, not part of the immutable planned link.
+For a same-date journal whose original link and prescription resolve exactly, an
+opposite actual slot remains MODIFIED but may display the original prescription
+alongside the actual facts. It does not grant AS_PLANNED, adherence, progress
+completion or adaptation authority. Wrong dates, altered link fields, missing
+originals and account-scope failures remain unavailable. No stored link is rewritten.
+
 [DRAFT_COMPLETE]

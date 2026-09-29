@@ -22,8 +22,7 @@ export function readJournalOriginalPlan(entry: PostSessionEntry,
   retainedMultiV3: readonly RetainedMultiAdjustedEvidenceV3[] = RETAINED_MULTI_ADJUSTED_EVIDENCE_V3) {
   if (!isJournalVisible(entry.id)) return { kind: "unavailable" as const }
   const parsed = plannedSessionLinkSchema.safeParse(entry.plannedSessionLink)
-  if (!parsed.success || entry.date !== parsed.data.plannedDate
-      || ((entry.activitySlot === "AM" || entry.activitySlot === "PM") && entry.activitySlot !== parsed.data.sessionSlot)) {
+  if (!parsed.success || entry.date !== parsed.data.plannedDate) {
     return { kind: "unavailable" as const }
   }
   if (accountPlansEnabled()) {

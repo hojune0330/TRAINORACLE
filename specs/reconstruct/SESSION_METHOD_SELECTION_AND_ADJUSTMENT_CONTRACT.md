@@ -1950,4 +1950,19 @@ P-SUPPORT-INTRO-01 v0.1: 쉬운 준비 300초(RPE 2~3), 전력질주 아닌 점�
 다른 2개 방법, 유효한 1개 조절, 적용·재조회·일지 연결이 확인되어야 그 범위의
 새 기능이 완료됐다고 보고한다. 공급 미완 범위의 기존 훈련은 계속 읽고 사용한다.
 
+## 22. Execution Comparison And Replan Direction (2026-09-28)
+
+[PLAN_EXECUTION_DEVIATION_AND_REPLAN_CONTRACT](PLAN_EXECUTION_DEVIATION_AND_REPLAN_CONTRACT.md)
+specifies a separate draft path for planned-versus-actual explanation and future
+schedule correction. Section 11's completion/self-report boundaries remain intact.
+Method choice and tuning operate before an intended execution; post-execution
+review must read the exact accepted original, not replace it with the latest method.
+
+The new comparator must support the currently stored normal, adjusted and multi-slot
+plan forms through exact original readers rather than reducing them to a v3-only
+comparison. New segment correspondence and impact policies are separate work;
+existing actual projections still do not infer splits, recovery or adherence.
+No additional dose, full-frame transform, runtime activation or issue closure is
+granted by this cross-reference.
+
 [DRAFT_COMPLETE]

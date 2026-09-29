@@ -1,0 +1,54 @@
+.execution-review { color: var(--ink); overflow-wrap: anywhere; }
+.execution-review h3 { font-size: var(--fs-h3); margin: 0 0 var(--space-3); }
+.execution-review h4 { font-size: var(--fs-body); margin: var(--space-3) 0; }
+.execution-review p, .execution-review li { line-height: 1.6; }
+.execution-review p { margin-block: var(--space-3); }
+.execution-review section { padding-block: var(--space-4); border-bottom: 1px solid var(--line); }
+.execution-review ul { padding-inline-start: var(--space-5); }
+.execution-review details, .home-coaching details { margin-block: var(--space-3); }
+.execution-review summary, .home-coaching summary { min-height: var(--app-touch-min); padding-block: var(--space-3); cursor: pointer; }
+.execution-review__lead { font-size: var(--fs-body-lg); }
+.execution-review__muted { font-size: var(--fs-body-sm); color: var(--ink-2); }
+.execution-review__next { padding-top: var(--space-3); border-top: 1px solid var(--line); }
+.execution-review__metrics { margin-block: var(--space-4); display: grid; gap: var(--space-3); }
+.execution-review__metrics > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); align-items: center; gap: var(--space-3); }
+.execution-review__metrics dt { font-size: var(--fs-body-sm); color: var(--ink-2); }
+.execution-review__metrics dd { margin: 0; display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.execution-review__metrics dd > span { display: flex; flex-direction: column; gap: var(--space-1); }
+.execution-review__metrics small { font-size: var(--fs-caption); color: var(--ink-2); }
+.execution-review__metrics strong { font-size: var(--fs-h3); font-variant-numeric: tabular-nums; }
+.execution-review__metrics[data-compact] { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-block: var(--space-3); }
+.execution-review__metrics[data-compact] > div { display: block; }
+.execution-review__metrics[data-compact] dd { margin-top: var(--space-1); }
+.execution-review__metrics[data-compact] dd > span { flex-direction: row; align-items: baseline; }
+.execution-review__metrics[data-compact] strong { font-size: var(--fs-body-lg); }
+.execution-review__status { color: var(--ink-2); font-size: var(--fs-body-sm); }
+.execution-review [role="tabpanel"][hidden] { display: none; }
+.execution-review__navigation { flex: 0 0 auto; display: flex; align-items: center; border-bottom: 1px solid var(--line); padding-inline: var(--space-3); }
+.execution-review__tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); flex: 1; }
+.execution-review__tabs button, .execution-review__page-arrows button { min-height: var(--app-touch-min); background: transparent; color: var(--ink); border: 0; cursor: pointer; }
+.execution-review__tabs button { padding: var(--space-2); border-bottom: 2px solid transparent; font-size: var(--fs-body); }
+.execution-review__tabs button[aria-selected="true"] { border-bottom-color: var(--brand); color: var(--brand); font-weight: 700; }
+.execution-review__page-arrows { display: flex; }
+.execution-review__page-arrows button { width: var(--app-touch-min); display: grid; place-items: center; }
+.execution-review__actions { display: flex; flex: 0 0 auto; flex-wrap: wrap; gap: var(--space-2); padding: var(--space-3) var(--space-4) max(var(--space-3), env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: var(--paper); }
+.execution-review__actions button { flex: 1 1 7rem; min-height: var(--app-touch-min); padding: var(--space-3); font-size: var(--fs-body); border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+.execution-review__actions button[data-primary="true"] { background: var(--brand); color: var(--paper); border-color: var(--brand); font-weight: 600; }
+.execution-review-reader .plan-day-reader__body { touch-action: pan-y pinch-zoom; padding-bottom: var(--space-4); }
+.execution-review-reader .plan-day-reader__header { flex-wrap: nowrap; }
+.execution-review-reader .plan-day-reader__header h2 { font-size: var(--fs-h3); }
+.home-coaching__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.home-coaching__actions button { min-height: var(--app-touch-min); padding: var(--space-2) var(--space-3); background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.home-coaching__item { padding-bottom: var(--space-2); }
+.home-coaching button:focus-visible, .execution-review summary:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.execution-review [role="tabpanel"]:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+@media (min-width: 640px) {
+  .execution-review__comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: var(--space-6); }
+  .execution-review__comparison > section { border-bottom: 0; }
+  .execution-review__actions { justify-content: flex-end; }
+  .execution-review__actions button { flex: 0 1 12rem; }
+}
+@media (max-width: 374px) {
+  .execution-review__navigation { padding-inline: var(--space-1); }
+  .execution-review__tabs button { padding-inline: var(--space-1); }
+}

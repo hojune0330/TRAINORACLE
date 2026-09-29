@@ -14,6 +14,7 @@ type JournalDayReaderProps = {
   readonly backDestination?: "home" | "journal" | "rewards"
   readonly onAddEntry?: (date: string) => void
   readonly onEditEntry?: (entry: JournalEntry) => void
+  readonly initialEntryId?: string
 }
 
 export function JournalDayReader({
@@ -24,6 +25,7 @@ export function JournalDayReader({
   backDestination,
   onAddEntry,
   onEditEntry,
+  initialEntryId,
 }: JournalDayReaderProps) {
   const reader = React.useMemo(
     () => projectJournalReader(entries, date),
@@ -43,7 +45,8 @@ export function JournalDayReader({
   })
   // Return to the whole reader, not an inner paper node. Aligning the inner
   // page could leave a partially clipped header above short journal pages.
-  useActiveContentScroll(date, readerTopRef)
+  const hasTarget = initialEntryId !== undefined && entries.some(entry => entry.date === date && entry.id === initialEntryId)
+  useActiveContentScroll(hasTarget ? null : date, readerTopRef)
 
   const controls = (
     <JournalPageNavigator
@@ -67,6 +70,7 @@ export function JournalDayReader({
     >
       <LogDetail
         date={date}
+        initialEntryId={initialEntryId}
         onBack={onBack}
         onAddEntry={onAddEntry}
         onEditEntry={onEditEntry}

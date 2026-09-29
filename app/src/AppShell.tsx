@@ -517,6 +517,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const detailScreen = (onBack: () => void, withReader = false) => {
     const common = {
       date: v.detailDate ?? "",
+      initialEntryId: v.detailEntryId,
       onBack,
       onAddEntry: (date: string) => runViewTransition("push", () => setV(s => viewForJournalDraft(s, date))),
       onEditEntry: (entry: JournalEntry) => runViewTransition("push", () => setV(s => viewForJournalDraft(s, entry.date, entry))),
@@ -526,7 +527,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         {...common}
         backDestination={v.tab === "home" ? homeDetailOrigin : "journal"}
         entries={loadEntries()}
-        onDateChange={(detailDate) => runViewTransition("replace", () => setV(s => ({ ...s, detailDate })))}
+        onDateChange={(detailDate) => runViewTransition("replace", () => setV(s => ({ ...s, detailDate, detailEntryId: undefined })))}
       />
     ) : <DeferredMobileScreens.LogDetail {...common} />
   }
@@ -593,9 +594,9 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       : (
         <Home
           onWriteLog={(entryType) => runViewTransition("tab-forward", () => setV(s => ({ ...s, tab: "log", entryType: entryType ?? "choose" })))}
-          onOpenDay={(date) => runViewTransition("push", () => {
+          onOpenDay={(date, entryId) => runViewTransition("push", () => {
             setHomeDetailOrigin("home")
-            setV(s => ({ ...s, detailDate: date }))
+            setV(s => ({ ...s, detailDate: date, detailEntryId: entryId }))
           })}
           onDecorateToday={() => {
             /* 홈 꾸미기 카드: 오늘 일지 상세로 이동하며 편집기 자동 열기를 예약한다. */
@@ -646,7 +647,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
             setV(s => viewForJournalDraft(s, date))
           })}
           onSelectionChange={(archiveSelection) => setV(s => ({ ...s, archiveSelection }))}
-          onOpenDay={(detailDate) => runViewTransition("push", () => setV(s => ({ ...s, detailDate })))}
+          onOpenDay={(detailDate) => runViewTransition("push", () => setV(s => ({ ...s, detailDate, detailEntryId: undefined })))}
           onBack={goHome}
           onWriteLog={() => goTab("log")}
         />

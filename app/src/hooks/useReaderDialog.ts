@@ -4,10 +4,12 @@ export const READER_HISTORY_KEY = "trainoracleReader"
 const HISTORY_KEY = READER_HISTORY_KEY
 
 /** Keep native dialogs in the back stack without putting record content in history. */
-export function useReaderDialog(dialog: RefObject<HTMLDialogElement | null>, onClose: () => void) {
+export function useReaderDialog(dialog: RefObject<HTMLDialogElement | null>, onClose: () => void, returnFocusTo?: () => HTMLElement | null) {
   const id = useId()
   const closeRef = useRef(onClose)
   closeRef.current = onClose
+  const fallbackFocus = useRef(returnFocusTo)
+  fallbackFocus.current = returnFocusTo
   const closing = useRef(false)
   const createdHistoryEntry = useRef(false)
 
@@ -41,6 +43,7 @@ export function useReaderDialog(dialog: RefObject<HTMLDialogElement | null>, onC
       document.body.style.overflow = overflow
       if (region?.isConnected) region.scrollTop = top
       if (opener?.isConnected) opener.focus({ preventScroll: true })
+      else fallbackFocus.current?.()?.focus({ preventScroll: true })
     }
   }, [dialog, id])
 

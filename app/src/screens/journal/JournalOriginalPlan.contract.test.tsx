@@ -8,6 +8,7 @@ import { archiveAndClearActivePlan, savePlanBetaState } from "../../domain/plan-
 import { readJournalOriginalPlan } from "../../domain/journal-original-plan"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 import type { PostSessionEntry } from "../../domain/journal-schema"
+import * as journalStore from "../../domain/journal-store"
 
 vi.mock("../plan-beta/SessionExplanation", () => ({ SessionExplanationEntry: ({ context }: { context: { generatedAt: string } }) =>
   <button type="button">원본 상세 {context.generatedAt}</button> }))
@@ -79,6 +80,21 @@ it("does not add a control to an unlinked journal", () => {
   const { plannedSessionLink: _link, ...unlinked } = entry
   render(<JournalOriginalPlan entry={unlinked} />)
   expect(screen.queryByText("계획한 훈련과 비교하기")).toBeNull()
+})
+
+it("retains the exact original after an actual AM to PM change", () => {
+  expect(savePlanBetaState(plan).ok).toBe(true)
+  expect(readJournalOriginalPlan({ ...entry, activitySlot: "PM", planExecutionRelation: "MODIFIED" }).kind).toBe("matched")
+  expect(readJournalOriginalPlan({ ...entry, plannedSessionLink: { ...draft.link, sessionSlot: "PM" } }).kind).toBe("unavailable")
+})
+
+it("explains an incomplete journal read even when the original plan is available", async () => {
+  expect(savePlanBetaState(plan).ok).toBe(true)
+  vi.spyOn(journalStore, "loadEntriesForPlanSafety").mockReturnValue({ status: "uncertain" })
+  render(<JournalOriginalPlan entry={entry} />)
+  await open()
+  expect(screen.getByRole("status")).toHaveTextContent("기록을 모두 읽지 못해 비교를 잠시 보류")
+  expect(screen.getByRole("button", { name: /원본 상세/u })).toBeVisible()
 })
 
 it("closes the previous original when the displayed journal link changes", async () => {

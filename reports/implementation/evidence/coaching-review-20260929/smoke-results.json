@@ -1,0 +1,29 @@
+{
+  "scope": "Focused synthetic local smoke; not full regression or production account test",
+  "checks": [
+    "AM plan / PM actual resolves original",
+    "Waiting visible, tab targets valid, disclosures retained",
+    "Duplicate record 2 opens its exact journal section",
+    "Deleted opener returns focus to coaching heading",
+    "320x568 completed/partial/pain summaries fit without clipping"
+  ],
+  "errors": [],
+  "compact": [
+    {
+      "outcome": "COMPLETED",
+      "y": 0,
+      "x": 0
+    },
+    {
+      "outcome": "PARTIAL",
+      "y": 0,
+      "x": 0
+    },
+    {
+      "outcome": "PAIN",
+      "y": 0,
+      "x": 0
+    }
+  ],
+  "status": "PASS"
+}

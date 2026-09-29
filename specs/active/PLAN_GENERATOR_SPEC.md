@@ -1530,4 +1530,22 @@ KEEP numeric authority, old plan readers and journals; DEFER unreviewed creator
 programs and any deletion retention/server protocol not yet implemented.
 No issue status, runtime evidence or canonical count changes in this patch.
 
+## 30. Execution Deviation And Remaining-Schedule Review (2026-09-28)
+
+[PLAN_EXECUTION_DEVIATION_AND_REPLAN_CONTRACT](../reconstruct/PLAN_EXECUTION_DEVIATION_AND_REPLAN_CONTRACT.md)
+is the new draft contract for proactive explanation and correction after actual
+training differs from the accepted plan. This is distinct from choosing/tuning a
+method before execution and from existing PB_SB/EXPLICIT_REQUEST successors.
+
+The future replan path preserves actual history, the original accepted plan and
+the athlete's goal by default. It identifies the necessary future correction
+scope, uses only eligible adopted configurations and validates the whole proposed
+schedule before explicit atomic acceptance. It must neither auto-complete missing
+actual values nor add missed work as catch-up. A user's request for strong guidance
+does not authorize silent plan replacement or new dose/spacing policies.
+
+Until its comparison/impact/transaction policies are adopted and implemented, this
+cross-reference is design authority only, not an executable transform. Current
+runtime rules, safety semantics and all existing Open Issues remain unchanged.
+
 [DRAFT_COMPLETE]

@@ -40,12 +40,13 @@ type TrainingHomeProps = {
   readonly todayContext?: ReactNode
   readonly recentJournal?: ReactNode
   readonly installSuggestion?: ReactNode
+  readonly coaching?: ReactNode
 }
 
 export function TrainingHome({
   model, onWriteLog, onOpenArchive, onOpenToday, onOpenGuide, onOpenPlan,
   onOpenTrends, onOpenOracle, onOpenMore, onOpenContent, onOpenRewards, onOpenNextTraining,
-  safetyNotice, hasPlan, accountEntry, todayContext, recentJournal, installSuggestion,
+  safetyNotice, hasPlan, accountEntry, todayContext, recentJournal, installSuggestion, coaching,
 }: TrainingHomeProps) {
   const resolvedHasPlan = hasPlan ?? !model.planSummary.startsWith("저장된 계획 없음")
   const next = model.nextTraining
@@ -66,22 +67,26 @@ export function TrainingHome({
       </header>
       {safetyNotice}
 
-      <section className="home-hub__intro" aria-labelledby="home-hub-title">
+      {coaching ? <section className="home-hub__intro" aria-labelledby="home-hub-title"><h1 id="home-hub-title">{model.homeMode === "WELCOME" ? "오늘 운동을 기록해요" : model.homeMode === "TRAINING" ? "오늘의 훈련" : "내 기록"}</h1></section> : <section className="home-hub__intro" aria-labelledby="home-hub-title">
         <p className="home-hub__eyebrow">{onOpenOracle ? "훈련 분석" : model.homeMode === "WELCOME" ? "처음 기록하기" : model.homeMode === "TRAINING" ? "오늘 할 일" : "최근 기록"}</p>
         <h1 id="home-hub-title">{onOpenOracle ? "내 훈련, 무엇부터 개선할까요?" : model.homeMode === "WELCOME" ? "오늘 운동을 기록해요" : model.homeMode === "TRAINING" ? "오늘의 훈련" : "내 기록"}</h1>
         {onOpenOracle && <div className="home-hub__oracle-start">
           <button className="home-hub__primary" type="button" onClick={showOwnAnalysis ? onOpenTrends : () => onOpenOracle(hasPerformanceRecord ? "level" : "focus")}>{showOwnAnalysis || hasPerformanceRecord ? "내 훈련 분석 보기" : "분석 결과 먼저 보기"}<ChevronRight aria-hidden="true" size={18} /></button>
           <span className="home-hub__oracle-caption">{showOwnAnalysis ? model.analysisSummary : hasPerformanceRecord ? "저장한 경기 기록을 확인해요." : "기록 없이도 예시로 체험해요."}</span>
         </div>}
-      </section>
+      </section>}
 
-      {onOpenOracle && <OracleTopicGrid title="궁금한 항목부터" compact onSelectTopic={onOpenOracle} />}
-      {onOpenOracle && <OracleResume onOpenTopic={onOpenOracle} compact />}
+      {!coaching && onOpenOracle && <OracleTopicGrid title="궁금한 항목부터" compact onSelectTopic={onOpenOracle} />}
+      {!coaching && onOpenOracle && <OracleResume onOpenTopic={onOpenOracle} compact />}
 
       {model.homeMode === "WELCOME" ? <WelcomeToday model={model} onWriteLog={onWriteLog} onOpenPlan={onOpenPlan} compact={onOpenOracle !== undefined} /> : <>
         {next !== null && <NextTrainingCard next={next} onOpen={nextAction} />}
         <TodaySection model={model} onWriteLog={onWriteLog} onOpenToday={onOpenToday} todayContext={todayContext} />
       </>}
+
+      {coaching}
+      {coaching && onOpenOracle && <OracleTopicGrid title="더 살펴보기" compact onSelectTopic={onOpenOracle} />}
+      {coaching && onOpenOracle && <OracleResume onOpenTopic={onOpenOracle} compact />}
 
       {model.homeMode !== "WELCOME" && <section className="home-hub__summary" aria-labelledby="home-hub-summary-title">
         <h2 id="home-hub-summary-title">기록과 계획</h2>

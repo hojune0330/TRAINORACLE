@@ -22,6 +22,7 @@ import { CheckinRow, EntryDeleteRow, ImportedChip, SyncChip, TopBar2 } from "./j
 import { JournalDetailActions } from "./journal-detail-actions"
 import { JournalDecorationSurface } from "./journal/JournalDecorationSurface"
 import { JournalOriginalPlan } from "./journal/JournalOriginalPlan"
+import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
 
 export type LogDetailVariant = "A" | "B"
 
@@ -33,6 +34,7 @@ export type LogDetailProps = {
   readonly onEditEntry?: (entry: JournalEntry) => void
   readonly readerControls?: React.ReactNode
   readonly pageTopRef?: React.RefObject<HTMLDivElement>
+  readonly initialEntryId?: string
 }
 
 export function LogDetail(props: LogDetailProps) {
@@ -197,7 +199,7 @@ function JournalEntryDisclosure({
 }
 
 // ───────── A. Journal-page (실데이터) ─────────
-function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControls, pageTopRef }: LogDetailProps) {
+function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControls, pageTopRef, initialEntryId }: LogDetailProps) {
   const [rev, setRev] = React.useState(0)
   // 방금 지운 것 — 되돌리기 버튼을 그 자리에서 띄우기 위해 들고 있는다.
   // 휴지통(30일)에 남아 있으므로 이 상태가 사라져도 복구는 가능하다.
@@ -270,14 +272,23 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
     }), [entries])
   const entryKeys = orderedEntries.map(({ entry, sourceIndex }) => journalEntryViewKey(entry, sourceIndex))
   const entrySignature = entryKeys.join("|")
+  const targetIndex = initialEntryId ? orderedEntries.findIndex(({ entry }) => entry.id === initialEntryId) : -1
+  const targetKey = targetIndex >= 0 ? entryKeys[targetIndex] : undefined
+  const entryTargetRef = React.useRef<HTMLElement | null>(null)
   const [expandedEntryKeys, setExpandedEntryKeys] = React.useState<ReadonlySet<string>>(
-    () => new Set(entryKeys.length <= 1 ? entryKeys : []),
+    () => new Set(targetKey ? [targetKey] : entryKeys.length <= 1 ? entryKeys : []),
   )
   React.useEffect(() => {
-    setExpandedEntryKeys(new Set(entryKeys.length <= 1 ? entryKeys : []))
+    setExpandedEntryKeys(new Set(targetKey ? [targetKey] : entryKeys.length <= 1 ? entryKeys : []))
   // entrySignature intentionally represents identity/order, not edited field values.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, entrySignature])
+  }, [date, entrySignature, targetKey])
+  React.useLayoutEffect(() => {
+    entryTargetRef.current = targetIndex >= 0
+      ? document.getElementById(`journal-entry-panel-${targetIndex}`)?.closest<HTMLElement>(".journal-entry-section") ?? null : null
+    if (entryTargetRef.current) entryTargetRef.current.tabIndex = -1
+  }, [targetIndex, entrySignature])
+  useActiveContentScroll(targetKey ?? null, entryTargetRef, entryTargetRef)
   const allEntriesExpanded = entryKeys.length > 0 && entryKeys.every((key) => expandedEntryKeys.has(key))
   const toggleEntry = (key: string) => setExpandedEntryKeys((current) => {
     const next = new Set(current)

@@ -8,6 +8,7 @@ export type AppViewState = {
   readonly tab: AppTab
   readonly entryType: EntryType
   readonly detailDate: string | null
+  readonly detailEntryId?: string
   readonly accountOpen: boolean
   readonly importOpen: boolean
   readonly restoreOpen: boolean

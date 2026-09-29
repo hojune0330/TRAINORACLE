@@ -4,7 +4,8 @@ import { TermHelp } from "../components/TermHelp"
 import { InstallShortcutSuggestion } from "../components/InstallShortcut"
 import { accountAuthState } from "../domain/account/account-auth-state"
 import { buildTrainingHomeViewModel, type HomeSession } from "../domain/home-view-model"
-import { loadEntries, todayISO } from "../domain/journal-store"
+import { loadEntries } from "../domain/journal-store"
+import { useLocalToday } from "../hooks/useLocalToday"
 import { readPlanBetaStateFromStorage } from "../domain/plan-beta-store"
 import { toAnalysisJournalEntry, type AnalysisJournalEntry } from "../domain/safe-export"
 import { compactDate, isoShift } from "../domain/dates"
@@ -15,6 +16,8 @@ import { AccountEntryButton } from "../components/AccountEntryButton"
 import { DailyContextTags } from "./home/DailyContextTags"
 import { TrainingHome } from "./home/TrainingHome"
 import { LatestJournalDay } from "./home/LatestJournalDay"
+import { HomeCoachingSummary } from "./home/HomeCoachingSummary"
+import { LOCAL_JOURNALS_CHANGED } from "../domain/journal-change-events"
 import type { LogEntryType } from "./log-entry/shared"
 import type { OracleTopicId } from "../domain/oracle-exploration"
 import { onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
@@ -23,7 +26,7 @@ import { createPlannedSessionLogDraft, type PlannedSessionLink } from "../domain
 
 export type HomeProps = {
   readonly onWriteLog?: (entryType?: LogEntryType) => void
-  readonly onOpenDay?: (date: string) => void
+  readonly onOpenDay?: (date: string, entryId?: string) => void
   readonly onOpenArchive?: () => void
   readonly onOpenGuide?: () => void
   readonly onOpenPlan?: () => void
@@ -47,10 +50,14 @@ export function Home({
     const unsubscribe = onLocalJournalScopeChange(refresh)
     window.addEventListener(ACCOUNT_PLAN_EVENT, refresh)
     window.addEventListener("trainoracle:account-journals-changed", refresh)
+    window.addEventListener(LOCAL_JOURNALS_CHANGED, refresh)
+    window.addEventListener("storage", refresh)
     return () => {
       unsubscribe()
       window.removeEventListener(ACCOUNT_PLAN_EVENT, refresh)
       window.removeEventListener("trainoracle:account-journals-changed", refresh)
+      window.removeEventListener(LOCAL_JOURNALS_CHANGED, refresh)
+      window.removeEventListener("storage", refresh)
     }
   }, [])
   const entries = React.useMemo(() => loadEntries(), [revision])
@@ -61,7 +68,7 @@ export function Home({
     }),
     [entries],
   )
-  const today = todayISO()
+  const today = useLocalToday()
   const planRead = readPlanBetaStateFromStorage()
   const planState = planRead.kind === "loaded" ? planRead.state : null
   const adjustedPlan = planRead.kind === "adjusted_loaded" || planRead.kind === "adjusted_v3_loaded" || planRead.kind === "multi_adjusted_v3_loaded"
@@ -127,6 +134,7 @@ export function Home({
         model={model}
         hasPlan={homePlan !== null}
         safetyNotice={safetyNotice}
+        coaching={<HomeCoachingSummary revision={revision} onOpenDay={onOpenDay} onOpenPlan={onOpenPlan} />}
         onWriteLog={onWriteLog}
         onOpenArchive={onOpenArchive}
         onOpenToday={onOpenDay === undefined ? onOpenArchive : () => onOpenDay(today)}

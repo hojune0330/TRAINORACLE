@@ -150,4 +150,19 @@ Engineering approval is not scientific, efficacy or dose approval. No raw memo o
 metadata enters the response loop. Youth/self-use and safety/processing gates stay
 unchanged. All three section 7 issue rows and the one canonical blocker remain OPEN.
 
+## 12. Execution Deviation Review Direction (2026-09-28)
+
+[PLAN_EXECUTION_DEVIATION_AND_REPLAN_CONTRACT](PLAN_EXECUTION_DEVIATION_AND_REPLAN_CONTRACT.md)
+defines the new draft path for explaining changed actual work and reviewing the
+remaining schedule. Modified/partial results remain excluded from the existing
+same-prescription RPE comparison; exclusion is not a reason to discard known
+actual facts or end all coaching at `CHANGED_SESSION`.
+
+The new path distinguishes factual comparison, reviewed impact policy, a proposed
+remaining-frame/block revision and explicit acceptance. It does not convert a
+deviation into the existing PB_SB/EXPLICIT_REQUEST successor, infer adherence from
+completion, or authorize runtime dose/schedule changes now. Existing observations
+and all section 7 issues keep their current meaning and status. Implementation is
+tracked separately in the linked contract's execution plan.
+
 [DRAFT_COMPLETE]
