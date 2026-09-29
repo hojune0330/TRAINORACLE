@@ -1,18 +1,21 @@
 {
   "kind": "TRAINORACLE_PAGES_DEPLOYMENT",
-  "sourceSha": "8da974960aaa0ec224933e993f0d14330ce82c39",
-  "previousPagesSha": "36d0604722143fd72e539c212cc9ee51906f841a",
+  "sourceSha": "d4b3680da6cf3ba065a389c8d8d1cfef8781c9d3",
+  "previousPagesSha": "569eea19ce3bd8796b94336f5053ccecfd587f5d",
   "workflowRunId": null,
   "workflowAttempt": null,
   "deploymentMethod": "MANUAL_OWNER_APPROVED",
-  "deployedAt": "2026-09-29T07:59:31.048Z",
+  "deployedAt": "2026-09-29T11:46:39.758Z",
   "verification": {
-    "targetedUniqueTests": 46,
+    "focusedDomainTests": 79,
+    "focusedUiTests": 6,
+    "gatewayAndSqlTests": 19,
+    "syntheticBrowserTests": 6,
     "typecheck": "PASS",
     "productionBuild": "PASS",
-    "targetedSyntheticBrowser": "PASS",
     "fullRegression": "NOT_RUN",
-    "githubCi": "NOT_USED_AS_DEPLOYMENT_EVIDENCE"
+    "githubCi": "NOT_USED_AS_DEPLOYMENT_EVIDENCE",
+    "productionAccountRoundtrip": "NOT_RUN"
   },
-  "scope": "Plan-versus-journal descriptive coaching and independent review remediation; no automatic replanning"
+  "scope": "Athlete-confirmed bounded remainder adjustments for eligible V3 plans; no automatic load increases"
 }
