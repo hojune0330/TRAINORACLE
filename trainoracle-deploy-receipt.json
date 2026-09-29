@@ -1,8 +1,18 @@
 {
   "kind": "TRAINORACLE_PAGES_DEPLOYMENT",
-  "sourceSha": "fc00f4158425da259c2589877e72ee7abf716752",
-  "previousPagesSha": "01244907feebdfa551bc701e341b5ea5250f2ac8",
-  "workflowRunId": "36336653505",
-  "workflowAttempt": "1",
-  "deployedAt": "2026-09-27T18:18:51.076Z"
+  "sourceSha": "8da974960aaa0ec224933e993f0d14330ce82c39",
+  "previousPagesSha": "36d0604722143fd72e539c212cc9ee51906f841a",
+  "workflowRunId": null,
+  "workflowAttempt": null,
+  "deploymentMethod": "MANUAL_OWNER_APPROVED",
+  "deployedAt": "2026-09-29T07:59:31.048Z",
+  "verification": {
+    "targetedUniqueTests": 46,
+    "typecheck": "PASS",
+    "productionBuild": "PASS",
+    "targetedSyntheticBrowser": "PASS",
+    "fullRegression": "NOT_RUN",
+    "githubCi": "NOT_USED_AS_DEPLOYMENT_EVIDENCE"
+  },
+  "scope": "Plan-versus-journal descriptive coaching and independent review remediation; no automatic replanning"
 }
