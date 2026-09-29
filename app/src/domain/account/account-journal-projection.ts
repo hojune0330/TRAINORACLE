@@ -70,6 +70,12 @@ export function currentConfirmedAccountJournalRevision(id: string): number | nul
   return scope !== null && scope === activeLocalAccount() ? currentConfirmations.get(id)?.revision ?? null : null
 }
 
+export function currentConfirmedAccountJournalVersions(): { entryId: string; revision: number }[] | null {
+  if (scope === null || scope !== activeLocalAccount() || status !== "READY") return null
+  return [...currentConfirmations].map(([entryId, value]) => ({ entryId, revision: value.revision }))
+    .sort((a,b) => a.entryId.localeCompare(b.entryId))
+}
+
 export function readCurrentConfirmedAccountJournalProjection(): JournalEntry[] {
   if (scope === null || scope !== activeLocalAccount()) return []
   return [...currentConfirmations.values()].map(value => redact(value.entry))

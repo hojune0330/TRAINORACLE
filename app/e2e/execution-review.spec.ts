@@ -30,7 +30,7 @@ for (const width of [375, 320, 1024]) test(`coaching reader preserves original p
   await expect(dialog).toBeVisible()
   await expect(dialog.getByRole("tab", { name: "요약" })).toHaveAttribute("aria-selected", "true")
   await expect(dialog.getByRole("heading", { name: "당시 계획한 훈련" })).toHaveCount(0)
-  await expect(dialog.getByText("계획은 변경되지 않았어요.")).toBeVisible()
+  await expect(dialog.getByText("읽기만 해서는 일정이 바뀌지 않아요.")).toBeVisible()
   const body = dialog.locator(".plan-day-reader__body")
   expect(await body.evaluate(el => el.scrollHeight <= el.clientHeight + 1)).toBe(true)
   const action = dialog.getByRole("button", { name: "현재 일정", exact: true })

@@ -16,6 +16,15 @@ const review: ExecutionReview = {
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 describe("compact execution review", () => {
+  it("prioritizes explicit replanning but never offers it before safety review", () => {
+    const props = { onOpenPlan: vi.fn(), onOpenJournal: vi.fn(), onReplan: vi.fn(), onClose: vi.fn() }
+    const view = render(<ExecutionReviewReader review={review} {...props} />)
+    expect(screen.getByRole("button", { name: "남은 일정 조정" })).toHaveAttribute("data-primary", "true")
+    expect(screen.getByRole("button", { name: "현재 일정" })).toHaveAttribute("data-primary", "false")
+    view.rerender(<ExecutionReviewReader review={{ ...review, status: "SAFETY_REVIEW" }} {...props} />)
+    expect(screen.queryByRole("button", { name: "남은 일정 조정" })).toBeNull()
+    expect(screen.getByRole("button", { name: "일지 확인" })).toHaveAttribute("data-primary", "true")
+  })
   it("starts with summary and lets users act without reading the other pages", async () => {
     const onClose = vi.fn(), onOpenPlan = vi.fn()
     render(<ExecutionReviewReader review={review} originalMethod={<h3>당시 계획한 훈련</h3>} onOpenPlan={onOpenPlan} onOpenJournal={vi.fn()} onClose={onClose} />)
@@ -23,7 +32,7 @@ describe("compact execution review", () => {
     expect(screen.queryByRole("heading", { name: "당시 계획한 훈련" })).toBeNull()
     expect(screen.queryByText("FACT-DETAIL")).toBeNull()
     expect(screen.queryByText("6분 40초/km")).toBeNull()
-    expect(screen.getByText("계획은 변경되지 않았어요.")).toBeVisible()
+    expect(screen.getByText("읽기만 해서는 일정이 바뀌지 않아요.")).toBeVisible()
     fireEvent.click(screen.getByRole("button", { name: "현재 일정" }))
     await waitFor(() => expect(onOpenPlan).toHaveBeenCalledTimes(1))
     expect(onClose).toHaveBeenCalledTimes(1)

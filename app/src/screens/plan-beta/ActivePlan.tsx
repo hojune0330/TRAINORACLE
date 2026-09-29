@@ -185,6 +185,13 @@ export function ActivePlan({
         </div>
       )}
       <h1 id="active-plan-title">{frameLengthDays}일 훈련 계획</h1>
+      {state.version === 3 && state.executionReplan && <details className="plan-detailed-options">
+        <summary>수행 기록을 확인하고 바꾼 일정</summary>
+        <p>오늘과 이미 기록한 훈련은 그대로 두었어요. 이전 계획은 해당 일지에서 확인할 수 있어요.</p>
+        <p>{state.executionReplan.action === "REDUCE" ? "운동 시간을 기존 범위의 짧은 쪽으로 조정했어요."
+          : state.executionReplan.action === "REPLACE" ? "주요 훈련을 이 계획에 있던 저강도 운동으로 바꿨어요."
+            : "훈련을 뒤의 운동 날짜로 옮기고 원래 날짜는 휴식으로 두었어요."}</p>
+      </details>}
       {(cloudPersistence === "FAILED" || cloudPersistence === "SAVING" || cloudPersistence === "CHECKING") && (
         <div className="active-plan__storage-status" role={cloudPersistence === "FAILED" ? "alert" : "status"}>
           <p>{cloudPersistenceLabel(cloudPersistence)}</p>

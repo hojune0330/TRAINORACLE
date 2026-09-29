@@ -221,6 +221,10 @@ export function createAccountPlanCollectionHandler({ authenticate, getMaterial, 
       const next = await loadParts(r.index);
       const previous = current ? await loadParts(current.index) : null;
       if (previous && validateAccountPlanCollectionUpdate(previous, next) !== true) fail(422, 'INVALID_DOCUMENT_UPDATE');
+      const selected = next.snapshots.find(p => p.planId === next.index.currentPlanId)?.snapshot.state;
+      const replan = selected?.version === 3 && next.index.currentPlanId !== previous?.index.currentPlanId
+        ? selected.executionReplan : null;
+      if (replan && (!previous || !Array.isArray(replan.journalGuard) || typeof repo.commitReplan !== 'function')) fail(422, 'REPLAN_SOURCE_REQUIRED');
       if (r.legacy) {
         if (r.legacy.documentId !== await legacyId(ownerId)) fail(422, 'INVALID_DOCUMENT');
         const row = await repo.readLegacy(ownerId, r.legacy.documentId);
@@ -235,7 +239,8 @@ export function createAccountPlanCollectionHandler({ authenticate, getMaterial, 
       await gate();
       let result;
       try {
-        result = await repo.commit({ ...commitInput, ...binding, payload: await encrypt(r.index, 'PLAN_COLLECTION', 'index') });
+        const commit = { ...commitInput, ...binding, payload: await encrypt(r.index, 'PLAN_COLLECTION', 'index') };
+        result = replan ? await repo.commitReplan({ ...commit, journalGuard: replan.journalGuard }) : await repo.commit(commit);
       } catch (error) {
         if (error?.code !== '22023') throw error;
         const prior = await readReceipt(r.operationId);
@@ -283,5 +288,6 @@ export function createAccountPlanCollectionRepository(client, { ownerId, attest 
     receipt: operationId => result(client.rpc('read_account_plan_collection_receipt', { operation_id: operationId })),
     stage: input => mutate('planStage', input),
     commit: input => mutate('planCommit', input),
+    commitReplan: async input => result(client.rpc('mutate_account_plan_replan_attested', await attest(ownerId, 'planCommit', input))),
   };
 }

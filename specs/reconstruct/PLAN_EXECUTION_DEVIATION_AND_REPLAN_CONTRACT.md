@@ -4,16 +4,16 @@
 doc_id: PLAN_EXECUTION_DEVIATION_AND_REPLAN_CONTRACT
 spec_id: TO-PLAN-EXECUTION-REPLAN-001
 title: 계획과 실제 수행 비교 및 남은 훈련 재설계 계약
-version: "0.5"
-round: RT5_REVIEW_FINDING_REMEDIATION
+version: "0.6"
+round: RT6_OWNER_APPROVED_REMAINDER_REPLAN
 status: DRAFT_FOR_REVIEW
 owner: COACH_HOJUNE
 owner_request_date: 2026-09-28
-inspected_local_head: e7a35a0ba257891a184ed12a61ae4381a4eb07c7
-implementation_status: PARTIAL_LOCAL_DESCRIPTIVE_REVIEW
+inspected_local_head: 8da974960aaa0ec224933e993f0d14330ce82c39
+implementation_status: PARTIAL_LOCAL_BOUNDED_REPLAN
 runtime_authority: false
 descriptive_review_runtime: IMPLEMENTED_LOCAL
-replan_write_runtime: NOT_IMPLEMENTED
+replan_write_runtime: LOCAL_IMPLEMENTED_ONLINE_RELEASE_PENDING
 new_numeric_policy_adoption: false
 canonical_promotion_allowed: false
 open_issues_total: 4
@@ -337,5 +337,25 @@ owner adoption reference + runtime registry identity
 
 기존 실행 수치는 RT4 이력이다. RT5 결과와 배포 근거는 별도 구현 보고서에 기록하고,
 네 OPEN 이슈는 유지한다.
+
+## 18. RT6 오너 승인: 남은 일정 변경의 첫 공개 범위
+
+2026-09-29 오너는 `근거가 있는 실제 기록과 짧은 확인 → 유지·줄이기·교체·뒤로 옮기기 → 선수가 선택 후 적용`을 승인했다. 이는 외부 전문가 독립 검수나 전체 재설계 계약의 정본 승격이 아니다. 기존 RT3~RT5의 읽기 전용 범위는 당시 이력이며, 이번 추가 범위만 아래와 같이 개방한다.
+
+- 트리거는 `EXECUTION_REVIEW_CONFIRMED`다. 기존 NEXT_FRAME의 PB/SB·EXPLICIT_REQUEST와 섞지 않는다. 개인 메모·자유 운동명·제목을 읽거나 해시하지 않는다.
+- 첫 적용 형식은 검증 가능한 V3 계획이다. V4~V6의 별도 조정 근거를 V3로 바꾸거나 버리지 않는다. 지원하지 않는 저장 형식은 이유를 표시하고 원본을 유지한다.
+- 오늘과 과거, 결과가 기록된 슬롯은 변경하지 않는다. 미래 날짜로 연결된 일지도 보호한다. 시작일·종목·주기 길이·오전/오후 슬롯·주기 계보는 유지한다.
+- 유지: 새 계획 버전을 만들지 않는다. 줄이기: 다음 변경 가능한 RPE 시간형 훈련을 기존 범위의 최소 시간으로 제시하며 강도는 올리지 않는다. 상세 반복의 수치를 임의로 깎지 않는다.
+- 교체: 다음 주요 훈련 대신 원래 계획에 있는 회복/저강도 구성을 사용한다. 시간·강도 상한을 비교할 수 있고 늘어나지 않을 때만 가능하다. 비교 불가능한 상세 처방을 임의 시간으로 환산하지 않는다.
+- 뒤로 옮기기: 미래 훈련을 같은 시간대의 기존 운동 슬롯으로 옮기고 원래 슬롯은 휴식으로 둔다. 휴식일에 새 운동을 추가하지 않는다. 주요 훈련 간격은 원래 계획의 최소 간격보다 좁히지 않으며 같은 날 주요 훈련을 두 번 배치하지 않는다. 고정 경기·약속이 없다는 확인이 있어야 한다. 이는 회복 완료 보장이 아니며 다음 주기는 변경된 마지막 훈련을 기준으로 확인해야 한다.
+- 한번에 선택한 한 변경만 적용한다. 조건이 맞지 않는 행동에는 원인을 표시한다. 반복 적용도 항상 현재 계획을 기준으로 감소/보존 경계를 재검사한다. 빈 기록·워치 대기·파생 AS_PLANNED만으로 효과나 체력 부족을 진단하지 않는다.
+- 변경안은 원래 계획 지문, 출처 일지, 구조화 근거 지문, 날짜, 변경 정책 버전, 계정 범위에 묶는다. 적용 직전 자료·계획·통증·템플릿 권한을 재검사한다.
+- 온라인 적용은 계정 계획의 기존 CAS/영수증 경로를 사용하며 이전 계획과 진행 결과를 함께 보관한다. 서버는 동일 트랜잭션에서 일지 버전 집합도 대조해야 한다. 이 관문이 배포되기 전에는 계정 적용을 성공으로 표시하지 않는다. 응답 불명은 재확인 상태이지 저장 성공/원복 성공이 아니다.
+- 변경된 계획에서 과거 링크를 덮어쓰지 않는다. 원본 보관함이 과거 일지의 비교 근거다. 변경 전 설명 영수증을 새 계획에 재사용하지 않는다.
+- 화면은 `무엇을 바꿀까요? → 날짜별 전후 → 적용`이다. 통증은 별도 기존 확인으로 연결하고, 긴 한계와 정책 설명은 접는다. 적용 성공은 저장 확인 후에만 표시한다.
+
+이 절은 구현 범위를 채택한다. 실행·배포 증거와 미완성 사항은 [RT6 구현 보고서](../../reports/implementation/EXECUTION_REMAINDER_REPLAN_IMPLEMENTATION_2026-09-29.md)에 따로 기록하며 기존 OPEN 이슈는 닫지 않는다. 상단 실행 시험 수치는 RT4의 이력이며 RT6 완료 수치가 아니다.
+
+RT6 현재 구현은 V3의 변경안 생성, 전후 비교, 기기 원본 보관 후 적용과 계정용 서버 코드를 포함한다. SQL 0040의 로컬 실행 증거는 운영 DB 적용 증거가 아니다. 온라인 최초 저장, V4~V6 재설계, 다음 주기 자동 재생성은 완료하지 않았다.
 
 [DRAFT_COMPLETE]

@@ -2,7 +2,7 @@ import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identit
 import type { PlanBetaStateV3 } from "./plan-beta-schema"
 import { deriveStoredPlanMethodHistory } from "./plan-method-history"
 
-export type PlanArchiveReason = "MANUAL" | "SUCCESSOR"
+export type PlanArchiveReason = "MANUAL" | "SUCCESSOR" | "REPLAN"
 
 /** Projection only. Callers must validate the input and the resulting archive. */
 export function planHistorySnapshotContent(state: PlanBetaStateV3, archivedAt: string, archiveReason: PlanArchiveReason) {

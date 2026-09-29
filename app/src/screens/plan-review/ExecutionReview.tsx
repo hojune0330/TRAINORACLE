@@ -37,7 +37,7 @@ function ReviewSummary({ review }: { readonly review: Review }) {
     <ReviewMetrics review={review} compact />
     {review.metrics.some(metric => metric.planned !== undefined) && <p className="execution-review__muted">목표와 기록을 나란히 표시해요. 같은 구성을 했는지는 아직 확인되지 않았어요.</p>}
     <p className="execution-review__next">{review.next}</p>
-    <p className="execution-review__muted">계획은 변경되지 않았어요.</p></>
+    <p className="execution-review__muted">읽기만 해서는 일정이 바뀌지 않아요.</p></>
 }
 
 function ExerciseRows({ exercise }: { readonly exercise: Review["actualExercises"][number] }) {
@@ -73,12 +73,13 @@ const VIEWS = ["summary", "evidence", "reason"] as const
 type ReviewView = typeof VIEWS[number]
 const VIEW_LABELS: Record<ReviewView, string> = { summary: "요약", evidence: "계획·기록", reason: "이유" }
 
-export function ExecutionReviewReader({ review, article, originalMethod, onOpenJournal, onOpenPlan, onClose, returnFocusTo }: {
+export function ExecutionReviewReader({ review, article, originalMethod, onOpenJournal, onOpenPlan, onReplan, onClose, returnFocusTo }: {
   readonly review?: Review
   readonly article?: typeof COACHING_READING[number]
   readonly originalMethod?: ReactNode
   readonly onOpenJournal?: () => void
   readonly onOpenPlan?: () => void
+  readonly onReplan?: () => void
   readonly onClose: () => void
   readonly returnFocusTo?: () => HTMLElement | null
 }) {
@@ -135,9 +136,10 @@ export function ExecutionReviewReader({ review, article, originalMethod, onOpenJ
             : <ReviewReasons review={review} />)}
       </div>) : <>{article?.paragraphs.map(text => <p key={text}>{text}</p>)}<p className="execution-review__muted">일반 안내예요. 개인의 훈련이나 몸 상태를 분석한 결과는 아니에요.</p></>}
     </div></div>
-    {review && (onOpenJournal || onOpenPlan) && <nav className="execution-review__actions" aria-label="기록 확인 후 다음 행동">
-      {onOpenJournal && <button type="button" data-primary={journalFirst || !onOpenPlan} onClick={() => { afterClose.current = onOpenJournal; close() }}>일지 확인</button>}
-      {onOpenPlan && <button type="button" data-primary={!journalFirst || !onOpenJournal} onClick={() => { afterClose.current = onOpenPlan; close() }}>현재 일정</button>}
+    {review && (onOpenJournal || onOpenPlan || onReplan) && <nav className="execution-review__actions" aria-label="기록 확인 후 다음 행동">
+      {onOpenJournal && <button type="button" data-primary={journalFirst || (!onOpenPlan && !onReplan)} onClick={() => { afterClose.current = onOpenJournal; close() }}>일지 확인</button>}
+      {onOpenPlan && <button type="button" data-primary={journalFirst ? !onOpenJournal : !onReplan} onClick={() => { afterClose.current = onOpenPlan; close() }}>현재 일정</button>}
+      {onReplan && !journalFirst && <button type="button" data-primary="true" onClick={() => { afterClose.current = onReplan; close() }}>남은 일정 조정</button>}
     </nav>}
   </dialog>, document.body)
 }

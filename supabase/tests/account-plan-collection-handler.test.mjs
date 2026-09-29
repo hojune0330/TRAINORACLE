@@ -44,11 +44,11 @@ if (process.env.PLAN_COLLECTION_MUTATION) {
 
 const { build } = createRequire(new URL('../../app/package.json', import.meta.url))('esbuild');
 const built = await build({ stdin: {
-  contents: 'export { stateFixture } from "./src/domain/plan-beta-store.test-fixture.ts";',
+  contents: 'export { stateFixture } from "./src/domain/plan-beta-store.test-fixture.ts"; export { replanFixture } from "./src/domain/execution-replan.test-fixture.ts"; export { prepareExecutionReplan } from "./src/domain/execution-replan.ts"; export { accountPlanEntry } from "./src/domain/account/account-plan-document-schema.ts";',
   resolveDir: fileURLToPath(new URL('../../app/', import.meta.url)), loader: 'ts',
 }, tsconfig: fileURLToPath(new URL('../../app/tsconfig.json', import.meta.url)),
 bundle: true, write: false, platform: 'neutral', format: 'esm' });
-const { stateFixture } = await import(`data:text/javascript;base64,${Buffer.from(built.outputFiles[0].text).toString('base64')}`);
+const { stateFixture, replanFixture, prepareExecutionReplan, accountPlanEntry } = await import(`data:text/javascript;base64,${Buffer.from(built.outputFiles[0].text).toString('base64')}`);
 function document(count = 1) {
   const plans = Array.from({ length: count }, (_, i) => {
     const snapshot = { state: { ...stateFixture(), generatedAt: `2026-07-24T00:00:${String(i).padStart(2, '0')}.000Z` }, evidence: null };
@@ -112,6 +112,48 @@ async function check(response, status, expected) {
   if (expected !== undefined) assert.deepEqual(value, expected);
   return value;
 }
+
+test('execution replan uses a guarded commit, preserves originals, and recovers its exact receipt', async () => {
+  const f = await fixture(), seed = replanFixture(), prepared = prepareExecutionReplan(seed);
+  assert.equal(prepared.kind, 'ready');
+  const old = accountPlanEntry({ state: seed.state, evidence: null }, seed.now);
+  const beforeDoc = { version: 3, state: 'ACCOUNT_STATE', kind: 'PLAN', data: { schemaVersion: 1, currentPlanId: old.planId, plans: [old] } };
+  const before = splitAccountPlanCollection(beforeDoc);
+  await f.stage(before);
+  await check(await f.request({ action: 'commit', request: command(before) }), 200);
+  const selected = accountPlanEntry({ state: prepared.proposals[0].after, evidence: null }, seed.now);
+  const after = splitAccountPlanCollection({ ...beforeDoc, data: { schemaVersion: 1, currentPlanId: selected.planId,
+    plans: [{ ...old, archivedAt: seed.now }, selected] } });
+  await f.stage(after);
+  const request = command(after, before, { operationId: OP2 });
+  // A gateway without the database guard must not fall back to the ordinary writer.
+  await check(await f.request({ action: 'commit', request }), 422);
+  assert.equal(f.calls.commit, 1);
+  let guarded = 0, stale = true;
+  f.repo.commitReplan = async ({ journalGuard, ...input }) => {
+    guarded++;
+    assert.deepEqual(journalGuard, seed.journalGuard);
+    return stale ? { kind: 'conflict' } : f.repo.commit(input);
+  };
+  await check(await f.request({ action: 'commit', request }), 200, { kind: 'conflict' });
+  assert.equal(f.getIndex().index_document.currentPlanId, old.planId);
+  stale = false;
+  const committed = await check(await f.request({ action: 'commit', request }), 200);
+  assert.equal(committed.kind, 'committed');
+  assert.equal(f.getIndex().index_document.currentPlanId, selected.planId);
+  stale = true;
+  assert.deepEqual(await check(await f.request({ action: 'commit', request }), 200), committed);
+  assert.equal(guarded, 2);
+});
+
+test('replan SQL holds the journal owner lock before comparing all live journal revisions', async () => {
+  const sql = await readFile(new URL('../migrations/0040_execution_replan_journal_guard.sql', import.meta.url), 'utf8');
+  assert.ok(sql.indexOf('pg_advisory_xact_lock') < sql.indexOf('into actual from'));
+  assert.match(sql, /d\.deleted_at is null and i\.document_kind='JOURNAL'/u);
+  assert.match(sql, /expected is distinct from actual/u);
+  assert.match(sql, /mutate_account_plan_collection_attested\(stripped,stripped_signature,key_id\)/u);
+  assert.match(sql, /revoke all on function .* from public,anon,authenticated,service_role/u);
+});
 
 test('stage rejects missing or mismatched intended owner before key access or storage', async () => {
   const f = await fixture();
@@ -360,6 +402,7 @@ test('real PGlite 0037 with gateway and authenticated repository round trips 18 
     const directory = new URL('../migrations/', import.meta.url);
     for (const name of (await readdir(directory)).filter(name => /^\d+_.+\.sql$/u.test(name) && name < '0038').sort())
       await db.exec(await readFile(new URL(name, directory), 'utf8'));
+    await db.exec(await readFile(new URL('0040_execution_replan_journal_guard.sql', directory), 'utf8'));
     for (const owner of [OWNER, OTHER]) {
       await db.query('insert into auth.users(id) values($1)', [owner]);
       await db.query(`insert into public.user_private_profiles(user_id,birth_date,privacy_policy_version,terms_of_service_version,legal_consented_at)
@@ -373,6 +416,7 @@ test('real PGlite 0037 with gateway and authenticated repository round trips 18 
       service_feature_enabled: ['feature_key_input'], account_network_access_allowed: ['target_user'],
       mutate_account_journal_attested: ['request_text', 'signature', 'key_id'],
       mutate_account_plan_collection_attested: ['request_text', 'signature', 'key_id'],
+      mutate_account_plan_replan_attested: ['request_text', 'signature', 'key_id'],
       read_account_plan_collection_index: [], read_account_plan_collection_part: ['part_kind', 'part_id'],
       read_account_plan_collection_receipt: ['operation_id'],
     };
@@ -408,6 +452,43 @@ test('real PGlite 0037 with gateway and authenticated repository round trips 18 
     await check(await f.request({ action: 'receipt', operationId: OP }, { headers: { Authorization: 'Bearer other' } }), 200, { kind: 'missing' });
     keysAvailable = false;
     await check(await f.request({ action: 'commit', request: r }), 200, first);
+    keysAvailable = true;
+    const seed = replanFixture(), prepared = prepareExecutionReplan(seed);
+    assert.equal(prepared.kind, 'ready');
+    const original = accountPlanEntry({ state: seed.state, evidence: null }, seed.now);
+    const oldDocs = document(18).data.plans.map(p => p.planId === collection.index.currentPlanId ? { ...p, archivedAt: seed.now } : p);
+    const baselineDoc = { version: 3, state: 'ACCOUNT_STATE', kind: 'PLAN', data: { schemaVersion: 1,
+      currentPlanId: original.planId, plans: [...oldDocs, original] } };
+    const baseline = splitAccountPlanCollection(baselineDoc);
+    await f.stage(baseline);
+    await check(await f.request({ action: 'commit', request: command(baseline,collection,{ operationId: OP2 }) }), 200);
+    const selected = accountPlanEntry({ state: prepared.proposals[0].after, evidence: null }, seed.now);
+    const changed = splitAccountPlanCollection({ ...baselineDoc, data: { schemaVersion: 1, currentPlanId: selected.planId,
+      plans: [...oldDocs, { ...original, archivedAt: seed.now }, selected] } });
+    await f.stage(changed);
+    const operationId = 'e5555555-5555-4555-8555-555555555555';
+    const request = command(changed,baseline,{ operationId, expectedRevision: 2 });
+    const sourceId = seed.journalGuard[0].documentId, otherJournalId = 'f6666666-6666-4666-8666-666666666666';
+    const payload = await encryptAccountJournalDocument('{}', { ownerId: OWNER, documentId: sourceId }, material.active);
+    const addJournal = async (id, revision) => {
+      await db.exec('reset role');
+      await db.query(`insert into public.account_journal_documents(user_id,document_id,revision,encrypted_payload) values($1,$2,$3,$4)`, [OWNER,id,revision,payload]);
+      await db.query(`insert into public.account_journal_identity(user_id,document_id,document_kind,journal_date,active) values($1,$2,'JOURNAL','2026-09-28',true)`, [OWNER,id]);
+    };
+    await addJournal(sourceId,2);
+    await check(await f.request({ action: 'commit', request }), 200, { kind: 'conflict' });
+    await db.exec('reset role');
+    await db.query('update public.account_journal_documents set revision=1 where user_id=$1 and document_id=$2',[OWNER,sourceId]);
+    await addJournal(otherJournalId,1);
+    await check(await f.request({ action: 'commit', request }), 200, { kind: 'conflict' });
+    await db.exec('reset role');
+    await db.query('update public.account_journal_documents set deleted_at=clock_timestamp(),encrypted_payload=null,revision=2 where user_id=$1 and document_id=$2',[OWNER,otherJournalId]);
+    const accepted = await check(await f.request({ action: 'commit', request }),200);
+    assert.equal(accepted.kind,'committed');
+    await db.exec('reset role');
+    await db.query('update public.account_journal_documents set revision=3 where user_id=$1 and document_id=$2',[OWNER,sourceId]);
+    assert.deepEqual(await check(await f.request({ action: 'commit', request }),200),accepted);
+    assert.equal((await check(await f.request({action:'readIndex'}),200)).index.currentPlanId,selected.planId);
     // One in-process PostgreSQL session, not proof of independent-session lock waiting or live JWT verification.
   } finally { await db.close(); }
 });

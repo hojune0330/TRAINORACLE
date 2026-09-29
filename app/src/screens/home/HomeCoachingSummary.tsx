@@ -8,16 +8,18 @@ import { useLocalToday } from "../../hooks/useLocalToday"
 import { onLocalJournalScopeChange } from "../../domain/account/local-journal-ownership"
 import { COACHING_READING, ExecutionReviewReader } from "../plan-review/ExecutionReview"
 import { OriginalTrainingMethod } from "../plan-review/OriginalTrainingMethod"
+import { ExecutionReplan } from "../plan-review/ExecutionReplan"
 
 export function HomeCoachingSummary({ revision, onOpenDay, onOpenPlan }: {
   readonly revision: number; readonly onOpenDay?: (date: string, entryId?: string) => void; readonly onOpenPlan?: () => void
 }) {
   const readMulti = useContext(MultiPlanEvidenceContext)
   const [selected, setSelected] = useState<string | null>(null)
+  const [replanEntry, setReplanEntry] = useState<string | null>(null)
   const [visibleCount, setVisibleCount] = useState(2)
   const heading = useRef<HTMLHeadingElement>(null)
   const today = useLocalToday()
-  useEffect(() => onLocalJournalScopeChange(() => { setSelected(null); setVisibleCount(2) }), [])
+  useEffect(() => onLocalJournalScopeChange(() => { setSelected(null); setReplanEntry(null); setVisibleCount(2) }), [])
   const { source, reviews, total } = useMemo(() => {
     const source = loadEntriesForPlanSafety()
     const retained = readMulti?.()
@@ -26,6 +28,7 @@ export function HomeCoachingSummary({ revision, onOpenDay, onOpenPlan }: {
   }, [revision, readMulti, visibleCount, today])
   const review = reviews.find(item => `record:${item.id}` === selected)
   const article = COACHING_READING.find(item => `article:${item.id}` === selected)
+  const replanReview = reviews.find(item => item.id === replanEntry)
   useEffect(() => {
     if (selected?.startsWith("record:") && !review) setSelected(null)
   }, [selected, review])
@@ -45,6 +48,9 @@ export function HomeCoachingSummary({ revision, onOpenDay, onOpenPlan }: {
     <details><summary>훈련을 바꿨을 때 읽어보기</summary>{COACHING_READING.map(item => <button type="button" key={item.id} className="home-hub__summary-row" onClick={() => setSelected(`article:${item.id}`)}><span className="home-hub__summary-copy"><strong>{item.title}</strong><small>{item.summary}</small></span><ChevronRight size={18} aria-hidden="true" /></button>)}</details>
     {(review || article) && <ExecutionReviewReader key={selected} review={review} article={article} originalMethod={originalMethod}
       returnFocusTo={() => heading.current}
+      onReplan={review ? () => setReplanEntry(review.id) : undefined}
       onOpenJournal={review && onOpenDay ? () => onOpenDay(review.date, review.id) : undefined} onOpenPlan={onOpenPlan} onClose={() => setSelected(null)} />}
+    {replanEntry && <ExecutionReplan entryId={replanEntry} onClose={() => setReplanEntry(null)} onOpenPlan={onOpenPlan}
+      onOpenJournal={replanReview && onOpenDay ? () => onOpenDay(replanReview.date, replanReview.id) : undefined} returnFocusTo={() => heading.current} />}
   </section>
 }

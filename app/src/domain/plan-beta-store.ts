@@ -480,7 +480,7 @@ export function loadPreviousIntake(): StoredPlanBetaIntake | null {
 }
 
 export function loadPreviousContinuity(): PlanContinuityInput | undefined {
-  const [latest] = loadPlanHistory()
+  const latest = loadPlanHistory().find(row => !("archiveReason" in row) || row.archiveReason !== "REPLAN")
   if (latest === undefined) return undefined
 
   const states: readonly PlanProgressState[] = [
@@ -518,7 +518,7 @@ export function loadPlanMethodHistorySnapshot(eventDistanceM?: number,
   retained: readonly RetainedAdjustedPlanEvidence[] = RETAINED_ADJUSTED_PLAN_EVIDENCE,
 ) {
   const loaded = readPlanHistory()
-  const rows = loaded ?? []
+  const rows = (loaded ?? []).filter(row => !("archiveReason" in row) || row.archiveReason !== "REPLAN")
   const history = Object.freeze(rows.flatMap(history => {
     if (eventDistanceM !== undefined && "eventDistanceM" in history && history.eventDistanceM !== eventDistanceM) return []
     if ("methodHistory" in history) return recommendationHistoryFromStored(history.methodHistory)
@@ -573,8 +573,10 @@ function readPlanHistory(): readonly StoredPlanHistory[] | null {
     if (!document || ("historyLoaded" in view && !view.historyLoaded)) return null
     return document.data.plans.flatMap(entry => {
       const packet = materializeAccountPlan(entry)
+      const replanned = document.data.plans.some(next => next.snapshot.state.version === 3
+        && next.snapshot.state.executionReplan?.baseCandidateId === (packet.state.version === 3 ? packet.state.activePlan.candidateId : null))
       return entry.archivedAt && packet.state.version === 3
-        ? [planHistorySchema.parse(planHistorySnapshotContent(packet.state, entry.archivedAt, "MANUAL"))] : []
+        ? [planHistorySchema.parse(planHistorySnapshotContent(packet.state, entry.archivedAt, replanned ? "REPLAN" : "MANUAL"))] : []
     })
   }
   if (typeof window === "undefined") return null

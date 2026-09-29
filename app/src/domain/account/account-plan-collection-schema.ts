@@ -3,7 +3,7 @@ import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identit
 import { hasCanonicalJsonTree, progressSchema } from "../plan-beta-schema"
 import {
   ACCOUNT_PLAN_MAX_BYTES, accountPlanDocumentSchema,
-  accountPlanFingerprint, validateAccountPlanPacket,
+  accountPlanFingerprint, validateAccountPlanPacket, validateExecutionReplanTransition,
   type AccountPlanDocument, type AccountPlanPacket, type AccountPlanEntry,
 } from "./account-plan-document-schema"
 
@@ -97,7 +97,7 @@ export function validateAccountPlanCollectionEntry(indexValue: unknown, snapshot
 
 export function validateAccountPlanCollectionUpdate(previous: unknown, next: unknown): boolean {
   const before = joinAccountPlanCollection(previous), after = joinAccountPlanCollection(next)
-  if (!before || !after) return false
+  if (!before || !after || !validateExecutionReplanTransition(before, after)) return false
   if (!before.data.plans.every(old => {
     const newer = after.data.plans.find(p => p.planId === old.planId)
     return !!newer && accountPlanFingerprint(newer.snapshot) === accountPlanFingerprint(old.snapshot)
