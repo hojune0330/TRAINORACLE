@@ -92,10 +92,11 @@ export function CatalogWorkoutEditor({ generated, intake, records, onChange, onS
   const [confirmed, setConfirmed] = React.useState<string[]>([...(binding?.inputs.confirmedRequirements ?? [])])
   const [seconds, setSeconds] = React.useState<Record<string, string>>(() => Object.fromEntries((binding?.inputs.segmentSeconds ?? []).map(s => [s.segmentId, String(s.seconds)])))
   const [recoveries, setRecoveries] = React.useState<Record<string, string>>(() => Object.fromEntries((binding?.inputs.recoverySeconds ?? []).map(s => [s.segmentId, String(s.seconds)])))
-  const [acceptedDuration, setAcceptedDuration] = React.useState<string | null>(null)
+  const [durationDecision, setDurationDecision] = React.useState<{ key: string; accepted: boolean } | null>(null)
   const draft = JSON.stringify([choice, recordId, confirmed, seconds, recoveries])
   const originalDraft = React.useRef(draft)
-  const pending = draft !== originalDraft.current
+  const configurationChanged = draft !== originalDraft.current
+  const pending = configurationChanged || durationDecision !== null
   React.useEffect(() => { onPendingChange?.(pending) }, [pending, onPendingChange])
   React.useEffect(() => () => onPendingChange?.(false), [onPendingChange])
   const entry = pool.find(e => e.id === choice)
@@ -111,7 +112,7 @@ export function CatalogWorkoutEditor({ generated, intake, records, onChange, onS
   const inputs: WorkoutCalculationInputs = { eventDistanceM: intake.eventDistanceM, experience: intake.experienceBand,
     availableSeconds: pairedBudgetSeconds,
     confirmedRequirements: confirmed, segmentPaces: choice === binding?.catalogId ? binding.inputs.segmentPaces : [],
-    fiveK: !pending && binding?.inputs.fiveK ? binding.inputs.fiveK
+    fiveK: !configurationChanged && binding?.inputs.fiveK ? binding.inputs.fiveK
       : record?.achievedOn ? { recordId: record.id, seconds: record.performanceSeconds, achievedAt: record.achievedOn, evaluatedAt: todayISO() } : null,
     segmentSeconds: Object.entries(seconds).filter(([, v]) => v !== "").map(([segmentId, v]) => ({ segmentId, seconds: Number(v) })),
     recoverySeconds: Object.entries(recoveries).filter(([, v]) => v !== "").map(([segmentId, v]) => ({ segmentId, seconds: Number(v) })),
@@ -121,8 +122,9 @@ export function CatalogWorkoutEditor({ generated, intake, records, onChange, onS
   const missing = withoutTimes?.steps.filter(s => s.seconds === null).filter((s, i, all) => all.findIndex(x => x.segmentId === s.segmentId) === i) ?? []
   const durationKey = preview?.totals.seconds ? `${entry.id}:${preview.fingerprint}` : null
   const longer = preview?.totals.seconds && preview.totals.seconds.maximum > inputs.availableSeconds!
-  const acceptLonger = longer && durationKey !== null && (durationKey === acceptedDuration
-    || !pending && pairedPrescriptions.every(p => preview.totals.seconds!.maximum
+  const acceptLonger = longer && durationKey !== null && (durationDecision?.key === durationKey
+    ? durationDecision.accepted
+    : durationDecision === null && !configurationChanged && pairedPrescriptions.every(p => preview.totals.seconds!.maximum
       <= (p.catalogWorkout?.originalEnvelope.durationMinutes.maximum ?? p.durationMinutes.maximum) * 60
       || p.catalogWorkout?.acceptedDurationSeconds === preview.totals.seconds!.maximum))
   const unavailable = preview?.unavailable.filter(code => code !== "TIME_BUDGET_EXCEEDED" || !acceptLonger) ?? []
@@ -142,7 +144,7 @@ export function CatalogWorkoutEditor({ generated, intake, records, onChange, onS
   const alternatives = [...groupEligibleCatalogMethods(eligibleDraws).keys()].filter(key => key !== catalogRecommendationMethodKey(entry))
   const drawScope = JSON.stringify([session.day, session.slot, intake.eventDistanceM, intake.experienceBand,
     inputs.availableSeconds, inputs.fiveK, eligibleDraws.map(e => e.id)])
-  const reset = (id: string) => { setChoice(id); setConfirmed([]); setSeconds({}); setRecoveries({}); setAcceptedDuration(null) }
+  const reset = (id: string) => { setChoice(id); setConfirmed([]); setSeconds({}); setRecoveries({}); setDurationDecision(null) }
   const reason = (code: string) => requirementLabels[code] ? "운동 환경·경험 확인이 필요해요."
     : code === "TIME_BUDGET_EXCEEDED" ? "처음 계획보다 긴 구성이에요. 아래에서 시간을 확인하거나 다른 구성을 골라 주세요."
       : code === "TIME_BUDGET_UNCONFIRMED" ? "미정 구간을 정하면 전체 시간을 계산해요."
@@ -159,7 +161,7 @@ export function CatalogWorkoutEditor({ generated, intake, records, onChange, onS
     <label>훈련 구성<select value={entry.id} disabled={disabled} onChange={e => reset(e.target.value)}>
       {pool.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
     </select></label>
-    {["LT", "VO2", "MIX"].includes(entry.family) && <label>참고 페이스에 사용할 5km 기록<select value={recordId} disabled={disabled} onChange={e => { setRecordId(e.target.value); setSeconds({}); setAcceptedDuration(null) }}>
+    {["LT", "VO2", "MIX"].includes(entry.family) && <label>참고 페이스에 사용할 5km 기록<select value={recordId} disabled={disabled} onChange={e => { setRecordId(e.target.value); setSeconds({}); setDurationDecision(null) }}>
       <option value="">기록 없이 체감 강도로</option>
       {recordId && !record && <option value={recordId}>이 계획에 저장된 기준 기록</option>}
       {records.filter(r => r.eventDistanceM === 5000 && r.purpose !== "RACE_GOAL" && r.verificationState !== "UNVERIFIED").map(r => <option key={r.id} value={r.id}>{r.achievedOn} · {formatRecordTime(r.performanceSeconds)}</option>)}
@@ -175,10 +177,10 @@ export function CatalogWorkoutEditor({ generated, intake, records, onChange, onS
       </label>)}
     </fieldset>}
     {preview && <CatalogWorkoutDetail workout={preview} />}
-    {recordId && !record && pending && <p role="status">기준 기록을 찾을 수 없어 새 구성의 페이스 계산에 사용하지 않았어요.</p>}
+    {recordId && !record && configurationChanged && <p role="status">기준 기록을 찾을 수 없어 새 구성의 페이스 계산에 사용하지 않았어요.</p>}
     {stronger && nextRpe && <p role="status">지금 훈련 RPE {session.prescription.rpe.minimum}~{session.prescription.rpe.maximum} → 새 훈련 RPE {nextRpe.minimum}~{nextRpe.maximum}. 더 강한 구성이에요. 아래 버튼을 누르면 이 강도로 바뀌어요.</p>}
     {longer && preview?.totals.seconds && <label><input type="checkbox" checked={!!acceptLonger} disabled={disabled}
-      onChange={e => setAcceptedDuration(e.target.checked ? durationKey : null)} />준비·회복·정리까지 최대 {formatTotalMinutes(preview.totals.seconds.maximum / 60)} 걸려요. {generated ? "더 짧았던 계획안도 이 시간으로 바꿀게요." : "이 시간으로 바꿀게요."}</label>}
+      onChange={e => durationKey !== null && setDurationDecision({ key: durationKey, accepted: e.target.checked })} />준비·회복·정리까지 최대 {formatTotalMinutes(preview.totals.seconds.maximum / 60)} 걸려요. {generated ? "더 짧았던 계획안도 이 시간으로 바꿀게요." : "이 시간으로 바꿀게요."}</label>}
     {!preview && <p role="status">입력한 시간을 확인해 주세요. 0보다 큰 초 단위 숫자로 입력해요.</p>}
     {unavailable.length ? <p role="status">{[...new Set(unavailable.map(reason))].join(" ")}</p> : null}
     {preview && !canApply && !unavailable.length && (pending || !binding) && <p role="status">이 일정에는 적용할 수 없는 구성이에요. 같은 목적의 다른 훈련을 골라 주세요.</p>}

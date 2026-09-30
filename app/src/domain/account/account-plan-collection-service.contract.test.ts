@@ -1,5 +1,7 @@
 import { webcrypto } from "node:crypto"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import type { SupabaseClient } from "@supabase/supabase-js"
+import { createAccountPlanCollectionClient } from "./account-plan-collection-api"
 import { TODAY } from "../prescription-quality-matrix.test-fixtures"
 import { accountPlanPacketFixture } from "./account-plan.test-fixtures"
 import { accountPlanEntry, accountPlanFingerprint, emptyAccountPlanDocument, materializeAccountPlan } from "./account-plan-document-schema"
@@ -245,6 +247,54 @@ it("receipt loss leaves a stable segmented operation across reopen and retry, wi
   expect(server.commits).toHaveLength(1)
   expect(server.client.receipt).toHaveBeenLastCalledWith(COLLECTION_OWNER, pending!.operationId)
   expect([...stores.manifests.rows.values()][0]!.pending).toBeNull()
+})
+
+it.each(["INVALID", "INVALID_RESPONSE"])("a %s response after commit remains pending until receipt recovery", async code => {
+  const { service, server, stores } = setup()
+  await service.hydrate()
+  const commit = vi.mocked(server.client.commit).getMockImplementation()!
+  vi.mocked(server.client.commit).mockImplementationOnce(async request => {
+    await commit(request)
+    throw { code }
+  })
+  expect(await service.mutate(select(), service.snapshot().fingerprint!)).toBe("PENDING")
+  expect(service.snapshot().status).toBe("PENDING")
+  expect(service.snapshot().currentPlan).toBeNull()
+  expect(stores.manifests.buffer.ack).not.toHaveBeenCalled()
+  expect([...stores.manifests.rows.values()][0]!.pending).not.toBeNull()
+  expect(server.commits).toHaveLength(1)
+  service.close()
+  const reopened = setup(server, {}, stores).service
+  expect(await reopened.hydrate()).toBe(true)
+  expect(reopened.snapshot().status).toBe("READY")
+  expect(server.commits).toHaveLength(1)
+  expect([...stores.manifests.rows.values()][0]!.pending).toBeNull()
+})
+
+it("malformed commit ACK through the real API parser remains pending and recovers without recommit", async () => {
+  const server = collectionServer()
+  const invoke = vi.fn(async (_name, options) => {
+    expect(options.body.action).toBe("commit")
+    await server.client.commit(options.body.request)
+    return { data: { kind: "committed", receipt: null }, error: null }
+  })
+  const client = createAccountPlanCollectionClient(COLLECTION_OWNER, () => true, {
+    owner: () => COLLECTION_OWNER,
+    client: async () => ({ auth: { getSession: async () => ({ data: { session: {
+      access_token: "synthetic-only", user: { id: COLLECTION_OWNER },
+    } }, error: null }) }, functions: { invoke } }) as unknown as SupabaseClient,
+  })
+  const { service, stores } = setup(server, { client: { ...server.client, commit: request => client.commit(request) } })
+  await service.hydrate()
+  expect(await service.mutate(select(), service.snapshot().fingerprint!)).toBe("PENDING")
+  expect(service.snapshot().status).toBe("PENDING")
+  expect(service.snapshot().currentPlan).toBeNull()
+  expect([...stores.manifests.rows.values()][0]!.pending).not.toBeNull()
+  expect(server.commits).toHaveLength(1)
+  expect(await service.hydrate()).toBe(true)
+  expect(service.snapshot().status).toBe("READY")
+  expect(invoke).toHaveBeenCalledOnce()
+  expect(server.commits).toHaveLength(1)
 })
 
 it("an unsent selection needs fresh review after reopen and cannot trust transported evidence", async () => {

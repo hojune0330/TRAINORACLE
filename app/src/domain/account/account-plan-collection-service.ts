@@ -258,6 +258,11 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
     }
     if (result.kind === "invalid") { change("INVALID"); return "INVALID" }
     if (result.kind === "stale") return "STALE"
+    // A malformed reply after commit cannot prove rejection. Keep the exact operation for receipt recovery.
+    if (result.kind === "outcome_unknown" && typeof transportError === "object" && transportError !== null
+      && "code" in transportError && ["INVALID", "INVALID_RESPONSE"].includes(String(transportError.code))) {
+      change("PENDING"); return "PENDING"
+    }
     if (pending.legacy && typeof transportError === "object" && transportError !== null
       && "code" in transportError && transportError.code === "REJECTED") {
       // The migration gateway can reject a changed legacy source before a collection exists.

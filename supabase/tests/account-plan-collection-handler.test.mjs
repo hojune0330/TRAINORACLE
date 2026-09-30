@@ -273,6 +273,33 @@ test('catalog replacement rejects stale calendar days with server time and prese
   assert.equal(f.calls.commit, 2);
 });
 
+test('catalog replacement rejects an erased predecessor progress snapshot at the gateway', async () => {
+  const f = await fixture(), seed = replanFixture();
+  const prepared = ALL_WORKOUT_CATALOG.filter(e => e.family === 'BASE').map(entry => prepareCatalogReplacement({
+    ...seed, entries: [], journalGuard: [], address: { day: 4, slot: 'AM' }, catalogId: entry.id,
+    acceptStronger: false, acceptLonger: true,
+    inputs: { eventDistanceM: 5000, experience: seed.state.intake.experienceBand, availableSeconds: null,
+      confirmedRequirements: [], fiveK: null, segmentPaces: [] },
+  })).find(result => result.kind === 'ready');
+  assert.ok(prepared);
+  const old = accountPlanEntry({ state: seed.state, evidence: null }, seed.now);
+  assert.ok(old.progress.length > 0);
+  const beforeDoc = { version: 3, state: 'ACCOUNT_STATE', kind: 'PLAN', data: { schemaVersion: 1, currentPlanId: old.planId, plans: [old] } };
+  const before = splitAccountPlanCollection(beforeDoc);
+  await f.stage(before);
+  await check(await f.request({ action: 'commit', request: command(before) }), 200);
+  const selected = accountPlanEntry({ state: prepared.proposal.after, evidence: null }, seed.now);
+  const after = splitAccountPlanCollection({ ...beforeDoc, data: { schemaVersion: 1, currentPlanId: selected.planId,
+    plans: [{ ...old, archivedAt: seed.now, progress: [] }, selected] } });
+  await f.stage(after);
+  f.repo.readJournals = async () => [];
+  f.repo.commitReplan = input => f.repo.commit(input);
+  await check(await f.request({ action: 'commit', request: command(after, before, { operationId: OP2 }) }), 422,
+    { error: 'INVALID_DOCUMENT_UPDATE' });
+  assert.equal(f.calls.commit, 1);
+  assert.equal(f.getIndex().index_document.currentPlanId, old.planId);
+});
+
 test('stage rejects missing or mismatched intended owner before key access or storage', async () => {
   const f = await fixture();
   await check(await f.request({ action: 'stage', part: {} }), 400);
@@ -509,6 +536,12 @@ test('real PGlite 0037 with gateway and authenticated repository round trips 18 
   const secret = Buffer.alloc(32, 71);
   const attest = await importJournalAttestor(JSON.stringify({ keyId: 'fixture', key: secret.toString('base64') }));
   const material = await importJournalKeyring(serialized);
+  const seed = replanFixture();
+  seed.now = new Date().toISOString(); seed.today = seed.now.slice(0, 10);
+  const previousDay = new Date(Date.parse(seed.now) - 86400_000).toISOString().slice(0, 10);
+  seed.state.intake.startDate = previousDay;
+  seed.entries = seed.entries.map(entry => ({ ...entry, date: previousDay, savedAt: `${previousDay}T09:00:00.000Z`,
+    plannedSessionLink: createPlannedSessionLogDraft(seed.state, seed.state.activePlan.sessions[0], `${previousDay}T00:00:00.000Z`).link }));
   try {
     await db.exec(`create role anon; create role authenticated; create role service_role bypassrls;
       create schema auth; create schema extensions;
@@ -521,6 +554,13 @@ test('real PGlite 0037 with gateway and authenticated repository round trips 18 
     for (const name of (await readdir(directory)).filter(name => /^\d+_.+\.sql$/u.test(name) && name < '0038').sort())
       await db.exec(await readFile(new URL(name, directory), 'utf8'));
     await db.exec(await readFile(new URL('0040_execution_replan_journal_guard.sql', directory), 'utf8'));
+    let calendarSql = await readFile(new URL('0041_catalog_replacement_calendar_guard.sql', directory), 'utf8');
+    if (process.env.PLAN_COLLECTION_SQL_MUTATION === 'calendarClock') {
+      const expression = "to_char(clock_timestamp() at time zone (calendar->>'timeZone'),'YYYY-MM-DD') is distinct from calendar->>'today'";
+      assert.equal(calendarSql.split(expression).length - 1, 2);
+      calendarSql = calendarSql.replaceAll(expression, 'false');
+    }
+    await db.exec(calendarSql);
     for (const owner of [OWNER, OTHER]) {
       await db.query('insert into auth.users(id) values($1)', [owner]);
       await db.query(`insert into public.user_private_profiles(user_id,birth_date,privacy_policy_version,terms_of_service_version,legal_consented_at)
@@ -535,9 +575,11 @@ test('real PGlite 0037 with gateway and authenticated repository round trips 18 
       mutate_account_journal_attested: ['request_text', 'signature', 'key_id'],
       mutate_account_plan_collection_attested: ['request_text', 'signature', 'key_id'],
       mutate_account_plan_replan_attested: ['request_text', 'signature', 'key_id'],
+      mutate_account_plan_catalog_replacement_attested: ['request_text', 'signature', 'key_id'],
       read_account_plan_collection_index: [], read_account_plan_collection_part: ['part_kind', 'part_id'],
       read_account_plan_collection_receipt: ['operation_id'],
     };
+    let calendarDateOverride = null, lastCalendarInput = null;
     const client = { from: table => {
       assert.equal(table, 'account_journal_documents');
       return { select: columns => {
@@ -554,6 +596,12 @@ test('real PGlite 0037 with gateway and authenticated repository round trips 18 
       } };
     }, rpc: async (name, args = {}) => {
       assert.ok(Object.hasOwn(signatures, name));
+      if (name === 'mutate_account_plan_catalog_replacement_attested') {
+        const { domain: _domain, ownerId, action, expiresAt: _expiry, ...input } = JSON.parse(args.request_text);
+        lastCalendarInput = input;
+        if (calendarDateOverride !== null) args = await attest(ownerId, action,
+          { ...input, calendarGuard: { ...input.calendarGuard, today: calendarDateOverride } });
+      }
       const values = signatures[name].map(key => args[key]);
       try {
         const result = await db.query(`select public.${name}(${values.map((_, i) => `$${i + 1}`).join(',')}) as result`, values);
@@ -562,6 +610,7 @@ test('real PGlite 0037 with gateway and authenticated repository round trips 18 
     } };
     let keysAvailable = true;
     const f = await fixture({ dependencies: {
+      now: () => new Date(seed.now),
       getMaterial: async () => { if (!keysAvailable) throw Error('retired key'); return material; },
       authenticate: async token => {
         const ownerId = token === 'valid' ? OWNER : token === 'other' ? OTHER : null;
@@ -585,7 +634,7 @@ test('real PGlite 0037 with gateway and authenticated repository round trips 18 
     keysAvailable = false;
     await check(await f.request({ action: 'commit', request: r }), 200, first);
     keysAvailable = true;
-    const seed = replanFixture(), prepared = prepareExecutionReplan(seed);
+    const prepared = prepareExecutionReplan(seed);
     assert.equal(prepared.kind, 'ready');
     const original = accountPlanEntry({ state: seed.state, evidence: null }, seed.now);
     const oldDocs = document(18).data.plans.map(p => p.planId === collection.index.currentPlanId ? { ...p, archivedAt: seed.now } : p);
@@ -628,7 +677,7 @@ test('real PGlite 0037 with gateway and authenticated repository round trips 18 
     await db.query('update public.account_journal_documents set encrypted_payload=$3 where user_id=$1 and document_id=$2', [OWNER, sourceId, sourcePayload]);
     const manual = ALL_WORKOUT_CATALOG.filter(e => e.family === 'BASE').map(entry => prepareCatalogReplacement({
       ...seed, state: prepared.proposals[0].after, entries: realEntries, address: { day: 6, slot: 'AM' }, catalogId: entry.id,
-      acceptStronger: false, acceptLonger: true, journalGuard: [{ documentId: sourceId, revision: 3 }],
+      timeZone: 'UTC', acceptStronger: false, acceptLonger: true, journalGuard: [{ documentId: sourceId, revision: 3 }],
       inputs: { eventDistanceM: 5000, experience: seed.state.intake.experienceBand, availableSeconds: null,
         confirmedRequirements: [], fiveK: null, segmentPaces: [] },
     })).find(result => result.kind === 'ready');
@@ -638,9 +687,32 @@ test('real PGlite 0037 with gateway and authenticated repository round trips 18 
       plans: [...oldDocs, { ...original, archivedAt: seed.now }, { ...selected, archivedAt: seed.now }, manualEntry] } });
     await f.stage(manualParts);
     const manualRequest = command(manualParts, changed, { operationId: 'a7777777-7777-4777-8777-777777777777', expectedRevision: 3 });
+    calendarDateOverride = previousDay;
+    await check(await f.request({ action: 'commit', request: manualRequest }), 409, { error: 'PLAN_DATE_CHANGED' });
+    calendarDateOverride = null;
+    assert.equal((await check(await f.request({ action: 'readIndex' }), 200)).revision, 3);
+    // A deterministic SQL clock simulates rollover inside the nested commit, not a real multi-session wait.
+    await db.exec('reset role');
+    await db.exec(`create function pg_temp.catalog_guard_clock() returns timestamptz language plpgsql as $$
+      declare calls integer := coalesce(nullif(current_setting('review.catalog_clock_calls',true),''),'0')::integer;
+      begin perform set_config('review.catalog_clock_calls',(calls+1)::text,false);
+        return clock_timestamp() + case when calls=0 then interval '0 days' else interval '1 day' end;
+      end; $$;`);
+    const replaceCalendar = sql => sql.replace('create function public.mutate_account_plan_catalog_replacement_attested',
+      'create or replace function public.mutate_account_plan_catalog_replacement_attested');
+    await db.exec(replaceCalendar(calendarSql).replaceAll('clock_timestamp()', 'pg_temp.catalog_guard_clock()'));
+    await check(await f.request({ action: 'commit', request: manualRequest }), 409, { error: 'PLAN_DATE_CHANGED' });
+    assert.equal((await check(await f.request({ action: 'readIndex' }), 200)).revision, 3);
+    await check(await f.request({ action: 'receipt', operationId: manualRequest.operationId }), 200, { kind: 'missing' });
+    await db.exec('reset role');
+    await db.exec(replaceCalendar(calendarSql));
     const manualAccepted = await check(await f.request({ action: 'commit', request: manualRequest }), 200);
     assert.equal(manualAccepted.kind, 'committed');
     assert.equal((await check(await f.request({ action: 'readIndex' }), 200)).index.currentPlanId, manualEntry.planId);
+    const replayRepo = createAccountPlanCollectionRepository(client, { ownerId: OWNER, attest });
+    calendarDateOverride = previousDay;
+    assert.deepEqual(await replayRepo.commitReplan(lastCalendarInput), manualAccepted);
+    calendarDateOverride = null;
     await db.exec('reset role');
     await db.query('update public.account_journal_documents set revision=4 where user_id=$1 and document_id=$2', [OWNER, sourceId]);
     assert.deepEqual(await check(await f.request({ action: 'commit', request: manualRequest }), 200), manualAccepted);

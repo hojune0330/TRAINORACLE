@@ -1,0 +1,223 @@
+{
+  "commit": "41653801faeb2d069e83c2def694e3c301944cac",
+  "recordedAt": "2026-09-30T16:21:30.251Z",
+  "runtime": "v24.11.1",
+  "timezone": "UTC",
+  "productWrites": 0,
+  "networkRequests": 0,
+  "note": "Only local synthetic probes. FAIL means the expected safety invariant was violated.",
+  "pass": 10,
+  "fail": 3,
+  "results": [
+    {
+      "id": "C01",
+      "description": "Valid account transition preserves the original and completed progress",
+      "status": "PASS",
+      "evidence": {
+        "response": {
+          "status": 200,
+          "body": {
+            "kind": "committed",
+            "receipt": {
+              "ownerId": "11111111-1111-4111-8111-111111111111",
+              "operationId": "d4444444-4444-4444-8444-444444444444",
+              "revision": 2,
+              "indexFingerprint": "sha256:2559039c003ca591d3ef3cb10c1cb8909e5adef16420967076041de21a2c1042",
+              "requestFingerprint": "sha256:c1b670629ff48c5015db224a71ce61863ddab333685922b7f4604913f6230093"
+            }
+          }
+        },
+        "stats": {
+          "commits": 2,
+          "guarded": 1,
+          "revision": 2
+        },
+        "changedSlots": 1
+      }
+    },
+    {
+      "id": "F01-observation",
+      "status": "OBSERVED",
+      "evidence": {
+        "domainAccepted": true,
+        "bundledAccepted": true,
+        "response": {
+          "status": 200,
+          "body": {
+            "kind": "committed",
+            "receipt": {
+              "ownerId": "11111111-1111-4111-8111-111111111111",
+              "operationId": "d4444444-4444-4444-8444-444444444444",
+              "revision": 2,
+              "indexFingerprint": "sha256:7684af5414226c3d27f869818e1f95ee17116b0602eecfd4fee245bd76c9f8aa",
+              "requestFingerprint": "sha256:5207013500b1573972b440464df89119a7a383b32d67d148ffee04cfea74ea31"
+            }
+          }
+        },
+        "stats": {
+          "commits": 2,
+          "guarded": 1,
+          "revision": 2
+        },
+        "oldCompletedBefore": 1,
+        "oldCompletedAfter": 0,
+        "currentCompletedAfter": 1
+      }
+    },
+    {
+      "id": "F01",
+      "description": "Archived predecessor progress cannot be deleted while replacing another slot",
+      "status": "FAIL",
+      "error": "{\"domainAccepted\":true,\"bundledAccepted\":true,\"response\":{\"status\":200,\"body\":{\"kind\":\"committed\",\"receipt\":{\"ownerId\":\"11111111-1111-4111-8111-111111111111\",\"operationId\":\"d4444444-4444-4444-8444-444444444444\",\"revision\":2,\"indexFingerprint\":\"sha256:7684af5414226c3d27f869818e1f95ee17116b0602eecfd4fee245bd76c9f8aa\",\"requestFingerprint\":\"sha256:5207013500b1573972b440464df89119a7a383b32d67d148ffee04cfea74ea31\"}}},\"stats\":{\"commits\":2,\"guarded\":1,\"revision\":2},\"oldCompletedBefore\":1,\"oldCompletedAfter\":0,\"currentCompletedAfter\":1}"
+    },
+    {
+      "id": "C02",
+      "description": "Previously archived progress and immutable snapshot edits are rejected",
+      "status": "PASS",
+      "evidence": {
+        "rejected": true
+      }
+    },
+    {
+      "id": "C03",
+      "description": "Recorded source is rejected independently of supplied protection list",
+      "status": "PASS",
+      "evidence": {
+        "status": 422,
+        "body": {
+          "error": "INVALID_DOCUMENT_UPDATE"
+        }
+      }
+    },
+    {
+      "id": "C04",
+      "description": "Journal revision changing after decrypt/read conflicts atomically",
+      "status": "PASS",
+      "evidence": {
+        "result": {
+          "status": 200,
+          "body": {
+            "kind": "conflict"
+          }
+        },
+        "stats": {
+          "commits": 1,
+          "guarded": 1,
+          "revision": 1
+        }
+      }
+    },
+    {
+      "id": "C05",
+      "description": "Committed receipt replay survives next day and changed journals without reapplying",
+      "status": "PASS",
+      "evidence": {
+        "replay": "committed",
+        "stats": {
+          "commits": 2,
+          "guarded": 1,
+          "revision": 2
+        }
+      }
+    },
+    {
+      "id": "C06",
+      "description": "Uncommitted request after selected-calendar midnight is rejected",
+      "status": "PASS",
+      "evidence": {
+        "status": 409,
+        "body": {
+          "error": "PLAN_DATE_CHANGED"
+        }
+      }
+    },
+    {
+      "id": "F02-observation",
+      "status": "OBSERVED",
+      "evidence": {
+        "response": {
+          "status": 200,
+          "body": {
+            "kind": "committed",
+            "receipt": {
+              "ownerId": "11111111-1111-4111-8111-111111111111",
+              "operationId": "d4444444-4444-4444-8444-444444444444",
+              "revision": 2,
+              "indexFingerprint": "sha256:2559039c003ca591d3ef3cb10c1cb8909e5adef16420967076041de21a2c1042",
+              "requestFingerprint": "sha256:c1b670629ff48c5015db224a71ce61863ddab333685922b7f4604913f6230093"
+            }
+          }
+        },
+        "stats": {
+          "commits": 2,
+          "guarded": 1,
+          "revision": 2
+        },
+        "clockValidAtCommit": false,
+        "boundary": "Gateway + delayed in-memory transaction double, not multi-session PostgreSQL"
+      }
+    },
+    {
+      "id": "F02",
+      "description": "Calendar midnight during guarded database wait must not newly commit",
+      "status": "FAIL",
+      "error": "{\"response\":{\"status\":200,\"body\":{\"kind\":\"committed\",\"receipt\":{\"ownerId\":\"11111111-1111-4111-8111-111111111111\",\"operationId\":\"d4444444-4444-4444-8444-444444444444\",\"revision\":2,\"indexFingerprint\":\"sha256:2559039c003ca591d3ef3cb10c1cb8909e5adef16420967076041de21a2c1042\",\"requestFingerprint\":\"sha256:c1b670629ff48c5015db224a71ce61863ddab333685922b7f4604913f6230093\"}}},\"stats\":{\"commits\":2,\"guarded\":1,\"revision\":2},\"clockValidAtCommit\":false,\"boundary\":\"Gateway + delayed in-memory transaction double, not multi-session PostgreSQL\"}"
+    },
+    {
+      "id": "C07",
+      "description": "SINGLE and unknown slot protect both slots; linked original date remains protected",
+      "status": "PASS",
+      "evidence": {
+        "checks": 5
+      }
+    },
+    {
+      "id": "C08",
+      "description": "Consecutive manual changes preserve each predecessor and use one replacement receipt",
+      "status": "PASS",
+      "evidence": {
+        "retainedOriginals": 2
+      }
+    },
+    {
+      "id": "C09",
+      "description": "Manual change followed by existing execution-replan transition stays interpretable",
+      "status": "PASS",
+      "evidence": {
+        "proposals": [
+          "REDUCE",
+          "REPLACE",
+          "MOVE_LATER"
+        ]
+      }
+    },
+    {
+      "id": "C10",
+      "description": "Lost ACK remains pending then hydrate recovers receipt without a second commit",
+      "status": "PASS",
+      "evidence": {
+        "initial": "PENDING",
+        "recovered": "READY",
+        "commits": 1
+      }
+    },
+    {
+      "id": "F03-observation",
+      "status": "OBSERVED",
+      "evidence": {
+        "result": "INVALID",
+        "status": "INVALID",
+        "committedRevision": 2,
+        "commits": 1,
+        "recovered": true,
+        "recoveredStatus": "READY"
+      }
+    },
+    {
+      "id": "F03",
+      "description": "Invalid ACK after a real commit must remain unknown, not invalid/blocked",
+      "status": "FAIL",
+      "error": "{\"result\":\"INVALID\",\"status\":\"INVALID\",\"committedRevision\":2,\"commits\":1,\"recovered\":true,\"recoveredStatus\":\"READY\"}\n+ actual - expected\n\n+ 'INVALID'\n- 'PENDING'\n"
+    }
+  ]
+}

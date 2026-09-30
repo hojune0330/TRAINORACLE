@@ -86,6 +86,21 @@ describe("future catalog slot replacement", () => {
     next.data = { schemaVersion: 1, currentPlanId: selected.planId, plans: [{ ...old, archivedAt: f.now }, selected] }
     expect(validateExecutionReplanTransition(previous, next)).toBe(false)
   })
+  it.each(["removed", "changed", "updated-at"])("preserves the archived predecessor when progress is %s", mutation => {
+    const f = ready()
+    expect(f.before.progress.length).toBeGreaterThan(0)
+    const old = accountPlanEntry({ state: f.before, evidence: null }, f.now)
+    const selected = accountPlanEntry({ state: f.after, evidence: null }, f.now)
+    const archived = { ...structuredClone(old), archivedAt: f.now }
+    const previous = emptyAccountPlanDocument(), next = emptyAccountPlanDocument()
+    previous.data = { schemaVersion: 1, currentPlanId: old.planId, plans: [old] }
+    next.data = { schemaVersion: 1, currentPlanId: selected.planId, plans: [archived, selected] }
+    expect(validateExecutionReplanTransition(previous, next)).toBe(true)
+    if (mutation === "removed") archived.progress = []
+    if (mutation === "changed") archived.progress[0]!.state = "SKIPPED"
+    if (mutation === "updated-at") archived.updatedAt = new Date(Date.parse(f.now) + 1000).toISOString()
+    expect(validateExecutionReplanTransition(previous, next)).toBe(false)
+  })
   it("uses the selected calendar time zone with a trusted clock, not a client date alone", () => {
     const r = { ...ready().after.catalogReplacement!, timeZone: "Asia/Seoul" }
     expect(catalogReplacementClockIsCurrent(r, new Date("2026-09-29T14:59:59.999Z"))).toBe(true)

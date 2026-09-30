@@ -264,7 +264,9 @@ export function createAccountPlanCollectionHandler({ authenticate, getMaterial, 
       try {
         const commit = { ...commitInput, ...binding, payload: await encrypt(r.index, 'PLAN_COLLECTION', 'index') };
         if (replan?.policy === 'manual-catalog-replacement-v1' && !catalogReplacementClockIsCurrent(replan, now())) fail(409, 'PLAN_DATE_CHANGED');
-        result = replan ? await repo.commitReplan({ ...commit, journalGuard: replan.journalGuard }) : await repo.commit(commit);
+        result = replan ? await repo.commitReplan({ ...commit, journalGuard: replan.journalGuard,
+          ...(replan.policy === 'manual-catalog-replacement-v1'
+            ? { calendarGuard: { today: replan.today, timeZone: replan.timeZone } } : {}) }) : await repo.commit(commit);
       } catch (error) {
         if (error?.code !== '22023') throw error;
         const prior = await readReceipt(r.operationId);
@@ -282,6 +284,7 @@ export function createAccountPlanCollectionHandler({ authenticate, getMaterial, 
         { error: error.status === 503 ? 'SERVICE_UNAVAILABLE' : error.code });
       if (error?.code === '42501') return respond(403, { error: 'ACCESS_DENIED' });
       if (error?.code === '22023') return respond(409, { error: 'OPERATION_REUSED' });
+      if (error?.code === 'PT409') return respond(409, { error: 'PLAN_DATE_CHANGED' });
       return respond(503, { error: 'SERVICE_UNAVAILABLE' });
     }
   };
@@ -294,7 +297,7 @@ export function createAccountPlanCollectionRepository(client, { ownerId, attest 
     const { data, error } = await query;
     if (error) {
       const safe = new Error('ACCOUNT_PLAN_COLLECTION_DATABASE_ERROR');
-      if (['22023', '42501'].includes(error.code)) safe.code = error.code;
+      if (['22023', '42501', 'PT409'].includes(error.code)) safe.code = error.code;
       throw safe;
     }
     return data;
@@ -315,6 +318,7 @@ export function createAccountPlanCollectionRepository(client, { ownerId, attest 
     receipt: operationId => result(client.rpc('read_account_plan_collection_receipt', { operation_id: operationId })),
     stage: input => mutate('planStage', input),
     commit: input => mutate('planCommit', input),
-    commitReplan: async input => result(client.rpc('mutate_account_plan_replan_attested', await attest(ownerId, 'planCommit', input))),
+    commitReplan: async input => result(client.rpc(Object.hasOwn(input, 'calendarGuard')
+      ? 'mutate_account_plan_catalog_replacement_attested' : 'mutate_account_plan_replan_attested', await attest(ownerId, 'planCommit', input))),
   };
 }

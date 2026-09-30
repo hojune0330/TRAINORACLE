@@ -1,0 +1,28 @@
+[
+  {
+    "width": 320,
+    "durationCheckUncheck": true,
+    "staleConsentInvalidated": true,
+    "cancellationRestores": true,
+    "storedConsentWithdrawable": true,
+    "generationGuard": true,
+    "errors": [],
+    "geometry": {
+      "width": 320,
+      "documentWidth": 320
+    }
+  },
+  {
+    "width": 375,
+    "durationCheckUncheck": true,
+    "staleConsentInvalidated": true,
+    "cancellationRestores": true,
+    "storedConsentWithdrawable": true,
+    "generationGuard": true,
+    "errors": [],
+    "geometry": {
+      "width": 375,
+      "documentWidth": 375
+    }
+  }
+]

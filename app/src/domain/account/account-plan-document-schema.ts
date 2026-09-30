@@ -157,6 +157,9 @@ export function validateExecutionReplanTransition(previous: AccountPlanDocument,
   if (after.version !== 3 || !(after.executionReplan || after.catalogReplacement)) return true
   const old = previous.data.plans.find(p => p.planId === previous.data.currentPlanId)
   if (!old || old.archivedAt !== null) return false
+  const archived = next.data.plans.find(p => p.planId === old.planId)
+  if (!archived || archived.archivedAt === null
+    || accountPlanFingerprint({ ...archived, archivedAt: null }) !== accountPlanFingerprint(old)) return false
   const before = materializeAccountPlan(old).state, r = (after.executionReplan ?? after.catalogReplacement)!
   if (before.version !== 3 || before.activePlan.selectionActor !== "SELF" || !r.journalGuard) return false
   if (after.catalogReplacement && before.progress.some(progress => progress.state === "PAIN_CHECKIN"

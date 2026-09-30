@@ -1,0 +1,256 @@
+{
+  "scope": [
+    "F01",
+    "F03"
+  ],
+  "F02Executed": false,
+  "SQLExecuted": false,
+  "recordedAt": "2026-09-30T16:44:19.973Z",
+  "runtime": "v24.11.1",
+  "timezone": "Asia/Seoul",
+  "baselineCommit": "41653801faeb2d069e83c2def694e3c301944cac",
+  "target": "current working-tree fixes, not the unchanged baseline HEAD",
+  "pass": 12,
+  "fail": 0,
+  "faultChecks": 5,
+  "missedFaults": 0,
+  "networkRequests": 0,
+  "blockedNetworkCalls": 0,
+  "productWrites": 0,
+  "sourceUnchangedDuringRun": true,
+  "oldEvidencePreserved": true,
+  "sourceHashes": {
+    "app/src/domain/account/account-plan-document-schema.ts": "87e2577835c61bd1855272849b510ba06afbac341be8fb4b7c71c8c503cc32db",
+    "app/src/domain/account/account-plan-collection-service.ts": "216b354d5ea64358cf06725b67d7e77792eb7d6f0008d3d66b52c8e115f6ef1b",
+    "supabase/functions/_shared/account-plan-collection-validator.mjs": "14a3666c4f975264869d5c0e1660f726f4f69903479c071d6aa314ebbd78aab4",
+    "supabase/functions/_shared/account-plan-collection-handler.mjs": "2d31bfd1588bbe803be47aecdf0d8fa359e283739df304f313e8c655421b9573"
+  },
+  "oldEvidenceHashes": {
+    ".scratch/remediation-independent-v2/FINAL_REVIEW_KO.md": "7719a410079dc22291067d81370382ab781ca2a1f357af22cd87dcdb082dae13",
+    ".scratch/remediation-independent-v2/independent-account-review.mjs": "10340df91d04eda3099a644c240531d933891e966b4f00a862326ebed7a36943",
+    ".scratch/remediation-independent-v2/results-utc.json": "59f773dfa83fa35e90b354f486fe7756b4c80cc0183267ab5fdd2666b5633b14",
+    ".scratch/remediation-independent-v2/results-kst.json": "158a868f0f6f50d102b583cd11f8d409234c49447d952d9823bd4a48619f5e5e",
+    ".scratch/remediation-independent-v2/results-kst-sql.json": "3d0821bffe3f2d4a1dc1cd615a9265c57a335ac858f8ce256d19f283163d80fa"
+  },
+  "results": [
+    {
+      "id": "F01-CONTROL",
+      "title": "Only archivedAt changes: source, generated validator and gateway accept",
+      "status": "PASS",
+      "evidence": {
+        "source": true,
+        "generatedValidator": true,
+        "gateway": {
+          "status": 200,
+          "body": {
+            "kind": "committed",
+            "receipt": {
+              "ownerId": "11111111-1111-4111-8111-111111111111",
+              "operationId": "d4444444-4444-4444-8444-444444444444",
+              "revision": 2,
+              "requestFingerprint": "sha256:c1b670629ff48c5015db224a71ce61863ddab333685922b7f4604913f6230093",
+              "indexFingerprint": "sha256:2559039c003ca591d3ef3cb10c1cb8909e5adef16420967076041de21a2c1042"
+            }
+          }
+        },
+        "stats": {
+          "commitCalls": 2,
+          "guardedCalls": 1,
+          "revision": 2
+        },
+        "completedPreserved": 1
+      }
+    },
+    {
+      "id": "F01-DELETE",
+      "title": "Reject predecessor DELETE",
+      "status": "PASS",
+      "evidence": {
+        "sourceAccepted": false,
+        "generatedAccepted": false,
+        "gateway": {
+          "status": 422,
+          "body": {
+            "error": "INVALID_DOCUMENT_UPDATE"
+          }
+        },
+        "stats": {
+          "commitCalls": 1,
+          "guardedCalls": 0,
+          "revision": 1
+        }
+      }
+    },
+    {
+      "id": "F01-CHANGE",
+      "title": "Reject predecessor CHANGE",
+      "status": "PASS",
+      "evidence": {
+        "sourceAccepted": false,
+        "generatedAccepted": false,
+        "gateway": {
+          "status": 422,
+          "body": {
+            "error": "INVALID_DOCUMENT_UPDATE"
+          }
+        },
+        "stats": {
+          "commitCalls": 1,
+          "guardedCalls": 0,
+          "revision": 1
+        }
+      }
+    },
+    {
+      "id": "F01-UPDATED_AT",
+      "title": "Reject predecessor UPDATED_AT",
+      "status": "PASS",
+      "evidence": {
+        "sourceAccepted": false,
+        "generatedAccepted": false,
+        "gateway": {
+          "status": 422,
+          "body": {
+            "error": "INVALID_DOCUMENT_UPDATE"
+          }
+        },
+        "stats": {
+          "commitCalls": 1,
+          "guardedCalls": 0,
+          "revision": 1
+        }
+      }
+    },
+    {
+      "id": "F03-INVALID",
+      "title": "INVALID after commit remains PENDING and recovers once",
+      "status": "PASS",
+      "evidence": {
+        "initial": "PENDING",
+        "operationId": "d4444444-4444-4444-8444-444444444444",
+        "retrySelect": "STALE",
+        "recovered": "READY",
+        "commits": 1,
+        "actualApiParserExecuted": false,
+        "transport": "in-process synthetic, no network"
+      }
+    },
+    {
+      "id": "F03-INVALID_RESPONSE",
+      "title": "INVALID_RESPONSE after commit remains PENDING and recovers once",
+      "status": "PASS",
+      "evidence": {
+        "initial": "PENDING",
+        "operationId": "d4444444-4444-4444-8444-444444444444",
+        "retrySelect": "STALE",
+        "recovered": "READY",
+        "commits": 1,
+        "actualApiParserExecuted": false,
+        "transport": "in-process synthetic, no network"
+      }
+    },
+    {
+      "id": "F03-API_BAD_ACK",
+      "title": "API_BAD_ACK after commit remains PENDING and recovers once",
+      "status": "PASS",
+      "evidence": {
+        "initial": "PENDING",
+        "operationId": "d4444444-4444-4444-8444-444444444444",
+        "retrySelect": "STALE",
+        "recovered": "READY",
+        "commits": 1,
+        "actualApiParserExecuted": true,
+        "transport": "in-process synthetic, no network"
+      }
+    },
+    {
+      "id": "F03-BAD_RECEIPT",
+      "title": "BAD_RECEIPT after commit remains PENDING and recovers once",
+      "status": "PASS",
+      "evidence": {
+        "initial": "PENDING",
+        "operationId": "d4444444-4444-4444-8444-444444444444",
+        "retrySelect": "STALE",
+        "recovered": "READY",
+        "commits": 1,
+        "actualApiParserExecuted": false,
+        "transport": "in-process synthetic, no network"
+      }
+    },
+    {
+      "id": "F03-LOST_ACK",
+      "title": "LOST_ACK after commit remains PENDING and recovers once",
+      "status": "PASS",
+      "evidence": {
+        "initial": "PENDING",
+        "operationId": "d4444444-4444-4444-8444-444444444444",
+        "retrySelect": "STALE",
+        "recovered": "READY",
+        "commits": 1,
+        "actualApiParserExecuted": false,
+        "transport": "in-process synthetic, no network"
+      }
+    },
+    {
+      "id": "F01-PROGRESS-CONTROL",
+      "title": "Ordinary current-plan progress remains writable",
+      "status": "PASS",
+      "evidence": {
+        "result": "ACCOUNT",
+        "commits": 1,
+        "currentProgress": "SKIPPED"
+      }
+    },
+    {
+      "id": "F03-PRECOMMIT-CONTROL",
+      "title": "Definite INVALID before commit is not falsely completed",
+      "status": "PASS",
+      "evidence": {
+        "result": "INVALID",
+        "commits": 0,
+        "revision": 1
+      }
+    },
+    {
+      "id": "F03-SUCCESS-CONTROL",
+      "title": "Valid acknowledged selection still completes normally",
+      "status": "PASS",
+      "evidence": {
+        "result": "ACCOUNT",
+        "commits": 1
+      }
+    }
+  ],
+  "faultResults": [
+    {
+      "removedFix": "F01",
+      "id": "F01-DELETE",
+      "status": "EXPECTED_FAIL",
+      "error": "F01-DELETE: source guard accepted the forged archive\n\ntrue !== false\n"
+    },
+    {
+      "removedFix": "F01",
+      "id": "F01-CHANGE",
+      "status": "EXPECTED_FAIL",
+      "error": "F01-CHANGE: source guard accepted the forged archive\n\ntrue !== false\n"
+    },
+    {
+      "removedFix": "F01",
+      "id": "F01-UPDATED_AT",
+      "status": "EXPECTED_FAIL",
+      "error": "F01-UPDATED_AT: source guard accepted the forged archive\n\ntrue !== false\n"
+    },
+    {
+      "removedFix": "F03",
+      "id": "F03-INVALID",
+      "status": "EXPECTED_FAIL",
+      "error": "INVALID: INVALID after a committed write\n+ actual - expected\n\n+ 'INVALID'\n- 'PENDING'\n"
+    },
+    {
+      "removedFix": "F03",
+      "id": "F03-API_BAD_ACK",
+      "status": "EXPECTED_FAIL",
+      "error": "API_BAD_ACK: INVALID after a committed write\n+ actual - expected\n\n+ 'INVALID'\n- 'PENDING'\n"
+    }
+  ]
+}

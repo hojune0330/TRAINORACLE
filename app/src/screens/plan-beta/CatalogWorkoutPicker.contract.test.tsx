@@ -6,7 +6,7 @@ import { catalogRecommendationMethodKey } from "@impl/prescription/catalog-metho
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import { replaceCandidateCatalogWorkout } from "../../domain/catalog-plan-binding"
 import { createSelfReportedAthleteRecord } from "../../domain/athlete-records"
-import { CatalogWorkoutPicker } from "./CatalogWorkoutPicker"
+import { CatalogWorkoutPicker, CatalogWorkoutEditor } from "./CatalogWorkoutPicker"
 import { PlanCandidates } from "./PlanCandidates"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
@@ -122,6 +122,66 @@ describe("catalog picker actionable and truthful review", () => {
     expect(screen.getByRole("combobox", { name: "참고 페이스에 사용할 5km 기록" })).toHaveValue(record.id)
     expect(screen.getByRole("checkbox", { name: /준비·회복·정리까지 최대/u })).toBeChecked()
     expect(screen.queryByRole("spinbutton")).toBeNull()
+  })
+
+  it("treats a duration-only confirmation as an unapplied change", () => {
+    const source = fixture(), onPendingChange = vi.fn(), onSelect = vi.fn()
+    const easy = source.generated.candidates[0].sessions.find(s => s.role === "EASY")!
+    const session = { ...easy, prescription: { kind: "RPE_TIME_RANGE" as const,
+      rpe: { minimum: 3, maximum: 4 }, durationMinutes: { minimum: 10, maximum: 20 } } }
+    render(<CatalogWorkoutEditor intake={source.intake} records={[]} session={session}
+      drawHistory={new Map()} onPendingChange={onPendingChange} onCancel={vi.fn()} onSelect={onSelect} canSelect={() => true} />)
+    expect(onPendingChange).toHaveBeenLastCalledWith(false)
+    fireEvent.click(screen.getByRole("checkbox", { name: /준비·회복·정리까지 최대/u }))
+    expect(onPendingChange).toHaveBeenLastCalledWith(true)
+    expect(screen.getByRole("button", { name: "변경 취소" })).toBeVisible()
+    expect(onSelect).not.toHaveBeenCalled()
+  })
+
+  it("allows withdrawing the stored longer-duration confirmation until explicitly applied again", () => {
+    const source = fixture(), onChange = vi.fn(), onPendingChange = vi.fn()
+    const session = source.generated.candidates[0].sessions.find(s => s.role === "QUALITY")!
+    const changed = replaceCandidateCatalogWorkout(source.generated, session, "X-LT-01", {
+      eventDistanceM: 5000, experience: "EXPERIENCED", availableSeconds: null, confirmedRequirements: [], segmentPaces: [],
+      fiveK: { recordId: "synthetic-reference", seconds: 1111.7, achievedAt: "2026-09-01", evaluatedAt: "2026-09-30" },
+    }, true)
+    expect(changed).not.toBeNull()
+    render(<CatalogWorkoutPicker generated={changed!} intake={source.intake} records={[]}
+      onChange={onChange} onPendingChange={onPendingChange} />)
+    openPicker()
+    const checkbox = screen.getByRole("checkbox", { name: /준비·회복·정리까지 최대/u })
+    expect(checkbox).toBeChecked()
+    fireEvent.click(checkbox)
+    expect(checkbox).not.toBeChecked()
+    expect(onPendingChange).toHaveBeenLastCalledWith(true)
+    expect(screen.getByRole("button", { name: "이 구성으로 바꾸기" })).toBeDisabled()
+    expect(screen.queryByRole("spinbutton")).toBeNull()
+    expect(screen.queryByText(/기준 기록을 찾을 수 없어/u)).toBeNull()
+    expect(onChange).not.toHaveBeenCalled()
+    fireEvent.click(checkbox)
+    expect(checkbox).toBeChecked()
+    expect(screen.getByRole("button", { name: "이 구성으로 바꾸기" })).toBeEnabled()
+    expect(onChange).not.toHaveBeenCalled()
+    fireEvent.click(checkbox)
+    fireEvent.click(screen.getByRole("button", { name: "변경 취소" }))
+    expect(screen.getByRole("checkbox", { name: /준비·회복·정리까지 최대/u })).toBeChecked()
+    expect(onPendingChange).toHaveBeenLastCalledWith(false)
+  })
+
+  it("does not carry duration confirmation into a different configuration", () => {
+    const source = fixture(), onChange = vi.fn()
+    render(<CatalogWorkoutPicker generated={source.generated} intake={source.intake} records={[]}
+      onChange={onChange} />)
+    openPicker()
+    fireEvent.change(screen.getByRole("combobox", { name: "훈련 구성" }), { target: { value: "X-LT-01" } })
+    const seconds = screen.getByRole("spinbutton", { name: /1000m 운동 구간/u })
+    fireEvent.change(seconds, { target: { value: "300" } })
+    fireEvent.click(screen.getByRole("checkbox", { name: /준비·회복·정리까지 최대/u }))
+    expect(screen.getByRole("button", { name: "이 구성으로 바꾸기" })).toBeEnabled()
+    fireEvent.change(seconds, { target: { value: "301" } })
+    expect(screen.getByRole("checkbox", { name: /준비·회복·정리까지 최대/u })).not.toBeChecked()
+    expect(screen.getByRole("button", { name: "이 구성으로 바꾸기" })).toBeDisabled()
+    expect(onChange).not.toHaveBeenCalled()
   })
 
   it("blocks plan finalization for an unapplied workout draft and offers explicit discard", () => {
