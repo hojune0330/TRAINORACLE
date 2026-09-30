@@ -1,4 +1,5 @@
 export function planErrorMessage(errorCode: string): string {
+  if (errorCode === "PENDING_SUCCESSOR_EXISTS") return "이미 선택한 다음 계획이 있어요. 현재 계획으로 돌아가 선택한 계획을 확인해 주세요."
   if (errorCode.startsWith("ACCOUNT_PLAN_")) {
     if (errorCode === "ACCOUNT_PLAN_REJECTED") return "서버가 저장 요청을 받아들이지 않았어요. 기기 원본과 저장 요청은 삭제하지 않았으며 계정 저장 완료가 아니에요."
     if (errorCode === "ACCOUNT_PLAN_CAPACITY") return "계획 보관 공간이 가득 차 계정에 추가하지 못했어요. 기존 원본은 지우지 않았어요."

@@ -2064,4 +2064,38 @@ The retained original-plan chain remains useful for review, but this repair does
 not make unsupported cross-version or catalog next-frame transforms executable.
 Those transforms still require their own exact registered policy and tests.
 
+### 19.1 Current-Cycle Context And Ordinary Successor Entry
+
+The persona-remediation work order permits a read-only current-cycle context that
+is distinct from the two-candidate adaptation context. Validate the current V3
+snapshot and bind it to its exact content fingerprint. Replay each retained change
+back to the original in the same cycle; missing/invalid history remains an explicit
+provenance gap, not a reason to substitute an unrelated recent plan.
+
+An original candidate pair may be recovered only from the exact original account
+packet or the matching scoped guest context. Verify both candidate/pair identities
+and the selected candidate against the original snapshot. It is historical evidence,
+never a new sibling pair for the changed current prescription. Do not rewrite IDs,
+copy old rationale as current authority or clear pending proposals during this read.
+
+Once the current frame is eligible to end and has no pain hold, its record summary
+may link directly to the existing ordinary next-frame draft flow. This is an
+explicit request for new candidates using the current conditions, not a claim of
+automatic reduction, preserved manual substitutions or catalog NEXT_FRAME support.
+Missing historical pair context does not disable that existing ordinary flow.
+An already selected pending successor retains its own activation route.
+
+Use the exact displayed/current predecessor and recheck it at draft entry,
+generation and acceptance through the existing scoped storage/CAS boundaries.
+Opening, cancelling or leaving the draft preserves the active plan, history and
+periodization. Only acceptance advances the lineage. Existing safety confirmation,
+coach authority, completion rules and numerical transform limits remain unchanged.
+
+Bind pending-lookup readiness to both the displayed state and account scope. A scope
+change must invalidate and restart the read even if the state object is unchanged.
+Reread a matching pending successor at ordinary-draft entry and under the existing
+final selection lock. A newly accepted successor retains its activation route;
+unreadable pending storage is not absence and must not be erased by new selection.
+Coach-only plans keep a read-only summary without a self-selection shortcut.
+
 [DRAFT_COMPLETE]

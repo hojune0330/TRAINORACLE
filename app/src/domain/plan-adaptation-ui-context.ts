@@ -14,6 +14,8 @@ import {
 import { accountScopedStorageKey } from "./account/local-account-scope"
 import { contextSchema } from "./plan-adaptation-context-schema"
 import { accountPlanService, accountPlansEnabled } from "./account/account-plan-service"
+import { materializeAccountPlan } from "./account/account-plan-document-schema"
+import { canonicalJson } from "@impl/plan-generator/adaptation"
 
 export const PLAN_ADAPTATION_CONTEXT_STORAGE_KEY = "trainoracle.plan-adaptation-context.v1"
 export const LOCAL_ADAPTATION_ATHLETE_ID = "local-athlete"
@@ -194,6 +196,20 @@ function restoreStorageValue(storage: Storage, key: string, value: string | null
   } catch {
     return false
   }
+}
+
+/** Historical provenance only. Never returns an unrelated recent pair as current. */
+export function readOriginalPlanAdaptationContext(original: PlanBetaState) {
+  if (!accountPlansEnabled()) return loadPlanAdaptationContext(original.activePlan.candidateId)
+  const view = accountPlanService()?.snapshot()
+  if (!view?.confirmedDocument || !("historyLoaded" in view) || !view.historyLoaded) return null
+  const matches = view.confirmedDocument.data.plans.flatMap(entry => {
+    const packet = materializeAccountPlan(entry)
+    return packet.state.version === 3 && packet.evidence === null && packet.context
+      && canonicalJson(packet.state) === canonicalJson(original) ? [packet.context] : []
+  })
+  const first = matches[0]
+  return first && matches.every(context => canonicalJson(context) === canonicalJson(first)) ? first : null
 }
 
 export function eligiblePbSbRecords(

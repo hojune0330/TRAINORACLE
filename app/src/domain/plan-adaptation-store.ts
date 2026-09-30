@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
 import { accountPlanService, accountPlansEnabled } from "./account/account-plan-service"
 import {
   canonicalJson,
@@ -222,6 +223,13 @@ async function acceptNextFrameProposalUnchecked(
 
 export function loadPendingNextFrameSuccessor(strictRead = false): PendingNextFrameSuccessor | null {
   return loadEnvelope(undefined, strictRead)?.pending ?? null
+}
+
+/** Synchronous exact check for use inside the existing selection lock. */
+export function readMatchingPendingSuccessor(state: PlanBetaStateV3): PendingNextFrameSuccessor | null {
+  const pending = loadPendingNextFrameSuccessor(true)
+  return pending?.baseCandidateId === state.activePlan.candidateId
+    && pending.predecessorStateHash === canonicalJsonFingerprint("trainoracle.plan-beta-state.v1", state) ? pending : null
 }
 
 function loadEnvelope(accountScope = localAccountScopeSnapshot(), strictRead = false): PlanAdaptationEnvelope | null {

@@ -2,6 +2,7 @@ import { canonicalJson } from "@impl/plan-generator/adaptation"
 import { resolveRegisteredAdaptationTransform } from "@impl/plan-generator/adaptation-transform-registry"
 import { loadPlanAdaptationContext } from "./plan-adaptation-ui-context"
 import type { PlanBetaState } from "./plan-beta-schema"
+import { candidateMatchesCurrentSnapshot } from "./plan-current-cycle-context"
 
 /** Read-only entry check. Safety and acceptance still run at the actual operation. */
 export function inspectNextFrameAdaptation(state: PlanBetaState) {
@@ -20,12 +21,7 @@ export function inspectNextFrameAdaptation(state: PlanBetaState) {
     || state.activePlan.selectionActor !== "SELF") return unavailable("COACH_CONNECTION_REQUIRED")
   const plan = state.activePlan
   // IDs alone do not establish that an old comparison pair belongs to this snapshot.
-  if (baseCandidate.kind !== plan.candidateKind || baseCandidate.pairId !== plan.pairId
-    || baseCandidate.eventDistanceM !== plan.eventDistanceM || baseCandidate.sourceMode !== plan.sourceMode
-    || baseCandidate.selectedEnergyIntent !== plan.selectedEnergyIntent
-    || canonicalJson(baseCandidate.selectedDetailedTemplateRef) !== canonicalJson(plan.selectedDetailedTemplateRef)
-    || canonicalJson(baseCandidate.frame) !== canonicalJson(plan.frame)
-    || canonicalJson(baseCandidate.sessions) !== canonicalJson(plan.sessions)
+  if (!candidateMatchesCurrentSnapshot(baseCandidate, state)
     || scope.eventDistanceM !== plan.eventDistanceM || scope.pairId !== plan.pairId
     || canonicalJson(scope.selectedDetailedTemplateRef) !== canonicalJson(plan.selectedDetailedTemplateRef)) {
     return unavailable("ADAPTATION_CONTEXT_MISMATCH")

@@ -1,0 +1,125 @@
+{
+  "scope": "real PlanBeta; synthetic guest data; no provider or live account",
+  "results": [
+    {
+      "width": 320,
+      "enlarged": false,
+      "history": "yes",
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "cancelledStorageUnchanged": true,
+      "exactPredecessorRetained": true,
+      "nextTarget": {
+        "x": 36,
+        "y": 772.796875,
+        "width": 248,
+        "height": 108
+      },
+      "screenshots": [
+        "cycle-320-history-yes-summary.png",
+        "cycle-320-history-yes-selected.png"
+      ]
+    },
+    {
+      "width": 320,
+      "enlarged": false,
+      "history": "no",
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "cancelledStorageUnchanged": true,
+      "exactPredecessorRetained": true,
+      "nextTarget": {
+        "x": 36,
+        "y": 772.796875,
+        "width": 248,
+        "height": 108
+      },
+      "screenshots": [
+        "cycle-320-history-no-summary.png",
+        "cycle-320-history-no-selected.png"
+      ]
+    },
+    {
+      "width": 375,
+      "enlarged": false,
+      "history": "yes",
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "cancelledStorageUnchanged": true,
+      "exactPredecessorRetained": true,
+      "nextTarget": {
+        "x": 36,
+        "y": 711.75,
+        "width": 303,
+        "height": 89.15625
+      },
+      "screenshots": [
+        "cycle-375-history-yes-summary.png",
+        "cycle-375-history-yes-selected.png"
+      ]
+    },
+    {
+      "width": 375,
+      "enlarged": false,
+      "history": "no",
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "cancelledStorageUnchanged": true,
+      "exactPredecessorRetained": true,
+      "nextTarget": {
+        "x": 36,
+        "y": 711.75,
+        "width": 303,
+        "height": 89.15625
+      },
+      "screenshots": [
+        "cycle-375-history-no-summary.png",
+        "cycle-375-history-no-selected.png"
+      ]
+    },
+    {
+      "width": 320,
+      "enlarged": true,
+      "history": "yes",
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "cancelledStorageUnchanged": true,
+      "exactPredecessorRetained": true,
+      "nextTarget": {
+        "x": 36,
+        "y": 1229.609375,
+        "width": 248,
+        "height": 329.8125
+      },
+      "screenshots": [
+        "cycle-320-large-history-yes-summary.png",
+        "cycle-320-large-history-yes-selected.png"
+      ]
+    },
+    {
+      "width": 320,
+      "enlarged": true,
+      "history": "no",
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "cancelledStorageUnchanged": true,
+      "exactPredecessorRetained": true,
+      "nextTarget": {
+        "x": 36,
+        "y": 1229.609375,
+        "width": 248,
+        "height": 329.8125
+      },
+      "screenshots": [
+        "cycle-320-large-history-no-summary.png",
+        "cycle-320-large-history-no-selected.png"
+      ]
+    }
+  ]
+}

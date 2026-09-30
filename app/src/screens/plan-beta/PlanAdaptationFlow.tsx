@@ -34,6 +34,11 @@ import { inspectNextFrameAdaptation } from "../../domain/plan-adaptation-availab
 import { localAccountScopeSnapshot, localAccountScopeIsCurrent } from "../../domain/account/local-account-scope"
 import { usePlanEvidenceHistory } from "../../hooks/usePlanEvidenceHistory"
 import { PlanEvidenceHistoryNotice } from "../../components/PlanEvidenceHistoryNotice"
+import { InfoDisclosure } from "../../components/InfoDisclosure"
+import { resolveCurrentCycleContext } from "../../domain/plan-current-cycle-context"
+import { readOriginalPlanAdaptationContext } from "../../domain/plan-adaptation-ui-context"
+import { isPlanFrameCompletionEligible } from "../../domain/plan-successor-activation"
+import { todayISO } from "../../domain/journal-store"
 
 type Step = "closed" | "reason" | "cycle" | "record" | "safety" | "choice" | "review" | "result" | "pending"
 type Reason = "PB_SB" | "EXPLICIT_REQUEST"
@@ -48,6 +53,7 @@ type PlanAdaptationFlowProps = {
   readonly onLoadEntries?: () => readonly JournalEntry[]
   readonly onLoadHistory?: () => PlanJournalHistory
   readonly onPendingChange?: (hasPending: boolean) => void
+  readonly onPrepareNextFrame?: (() => void) | undefined
 }
 
 export function PlanAdaptationFlow({
@@ -60,6 +66,7 @@ export function PlanAdaptationFlow({
   onLoadEntries = loadEntries,
   onLoadHistory = readArchivedOriginalPlans,
   onPendingChange,
+  onPrepareNextFrame,
 }: PlanAdaptationFlowProps) {
   const [step, setStep] = React.useState<Step>("closed")
   const [reason, setReason] = React.useState<Reason | null>(null)
@@ -70,6 +77,8 @@ export function PlanAdaptationFlow({
   const [busy, setBusy] = React.useState(false)
   const [pending, setPending] = React.useState<PendingNextFrameSuccessor | null>(null)
   const [pendingState, setPendingState] = React.useState<PlanBetaState | null>(null)
+  const [pendingScope, setPendingScope] = React.useState<string | null | undefined>(undefined)
+  const [pendingFailed, setPendingFailed] = React.useState(false)
   const [pendingRevision, setPendingRevision] = React.useState(0)
   const openAfterRead = React.useRef(false)
   const activeStepRef = React.useRef<HTMLDivElement>(null)
@@ -80,13 +89,17 @@ export function PlanAdaptationFlow({
   const availability = inspectNextFrameAdaptation(state)
   const canRequest = availability.kind === "available" && availability.explicitRequest
   const canUseRecord = availability.kind === "available" && availability.pbSb
-  const pendingReady = pendingState === state
-  const matchingPending = pendingReady ? pending : null
+  const history = usePlanEvidenceHistory(step === "cycle", onLoadHistory)
+  const pendingReady = pendingState === state && pendingScope === history.scope
+  const matchingPending = pendingReady && !pendingFailed ? pending : null
   const records = React.useMemo(
     () => eligiblePbSbRecords(state, onLoadRecords()),
     [onLoadRecords, state],
   )
-  const history = usePlanEvidenceHistory(step === "cycle", onLoadHistory)
+  const currentContext = React.useMemo(() => resolveCurrentCycleContext(state, history.history, readOriginalPlanAdaptationContext), [state, history.history])
+  const canPrepareOrdinary = currentContext.kind === "current" && currentContext.current.activePlan.selectionActor === "SELF"
+    && isPlanFrameCompletionEligible(currentContext.current, todayISO())
+    && !currentContext.current.progress.some(progress => progress.state === "PAIN_CHECKIN")
   const cycleResponse = React.useMemo(
     () => derivePlanCycleResponse(onLoadEntries(), state, history.history),
     [onLoadEntries, history.history, state, step],
@@ -110,13 +123,19 @@ export function PlanAdaptationFlow({
   React.useEffect(() => {
     let current = true
     const scope = localAccountScopeSnapshot()
+    setPendingState(null)
+    setPendingScope(undefined)
+    setPendingFailed(false)
     const loadPending = async () => {
       try {
         const loaded = state.version === 3 ? await onLoadPending(state) : null
         if (!current || !localAccountScopeIsCurrent(scope)) return
         setPending(loaded)
         setPendingState(state)
+        setPendingScope(scope)
+        setPendingFailed(false)
         onPendingChange?.(loaded !== null)
+        if (loaded !== null) setStep(previous => previous === "cycle" ? "pending" : previous)
         if (openAfterRead.current) {
           openAfterRead.current = false
           setStep(loaded !== null ? "pending" : inspectNextFrameAdaptation(state).kind === "available" ? "reason" : "cycle")
@@ -125,6 +144,8 @@ export function PlanAdaptationFlow({
         if (!current || !localAccountScopeIsCurrent(scope)) return
         setPending(null)
         setPendingState(state)
+        setPendingScope(scope)
+        setPendingFailed(true)
         if (openAfterRead.current) {
           openAfterRead.current = false
           setMessage("선택해 둔 다음 계획을 확인하지 못했어요. 현재 계획은 그대로예요. 다시 열어 확인해 주세요.")
@@ -136,7 +157,32 @@ export function PlanAdaptationFlow({
     return () => {
       current = false
     }
-  }, [onLoadPending, onPendingChange, state, pendingRevision])
+  }, [onLoadPending, onPendingChange, state, pendingRevision, history.scope, history.revision])
+
+  const prepareOrdinary = async () => {
+    if (!onPrepareNextFrame || !canPrepareOrdinary || inFlight.current || state.version !== 3) return
+    const epoch = ++requestEpoch.current, scope = localAccountScopeSnapshot()
+    inFlight.current = true
+    setBusy(true)
+    try {
+      const loaded = await onLoadPending(state)
+      if (epoch !== requestEpoch.current || currentState.current !== state || !localAccountScopeIsCurrent(scope)) return
+      setPending(loaded); setPendingState(state); setPendingScope(scope); setPendingFailed(false)
+      onPendingChange?.(loaded !== null)
+      if (loaded !== null) setStep("pending")
+      else onPrepareNextFrame()
+    } catch {
+      if (epoch === requestEpoch.current && currentState.current === state && localAccountScopeIsCurrent(scope)) {
+        setPendingFailed(true)
+        setMessage("선택해 둔 다음 계획을 확인하지 못했어요. 현재 계획은 그대로예요. 다시 열어 확인해 주세요.")
+        setStep("result")
+      }
+    } finally {
+      if (epoch === requestEpoch.current && currentState.current === state && localAccountScopeIsCurrent(scope)) {
+        inFlight.current = false; setBusy(false)
+      }
+    }
+  }
 
   const chooseReason = (nextReason: Reason) => {
     setReason(nextReason)
@@ -283,6 +329,21 @@ export function PlanAdaptationFlow({
               {cycleResponse.historyReadIncomplete && <PlanEvidenceHistoryNotice status={history.status} onRetry={history.retry} />}
               {history.journalReadComplete ? <PlanCycleEvidence response={cycleResponse} />
                 : <p role="status">일지를 아직 모두 불러오지 못했어요. 조회가 끝나면 비교가 나타나요.</p>}
+              {availability.kind === "unavailable" && onPrepareNextFrame && canPrepareOrdinary && pendingReady && !pendingFailed && matchingPending === null && <PlanChoice
+                title="다음 주기 계획 만들기"
+                detail="지금 조건으로 새 계획안을 만들어요. 고르기 전까지 현재 계획은 그대로예요."
+                selected={false}
+                disabled={busy}
+                onClick={() => void prepareOrdinary()}
+              />}
+              {availability.kind === "unavailable" && currentContext.kind === "current" && <InfoDisclosure title="어떤 계획을 기준으로 하나요?">
+                <p>지금 화면의 계획과 완료·휴식·건너뜀·통증 확인 기록을 기준으로 다음 주기를 이어가요. 바꾼 상세 훈련을 그대로 복사하거나 자동으로 줄이는 기능은 아니에요.</p>
+                <p>{currentContext.origin.kind === "unavailable"
+                  ? "변경 전 계획을 모두 확인하지 못했어요. 지금 계획은 보존하며, 확인하지 못한 이전 구성은 새 계획의 근거로 사용하지 않아요."
+                  : currentContext.origin.changeCount > 0
+                    ? `이번 주기에 계획을 바꾼 기록 ${currentContext.origin.changeCount}건을 원래 계획까지 확인했어요.`
+                    : "현재 주기의 계획을 확인했어요."}</p>
+              </InfoDisclosure>}
               {history.journalReadComplete && cycleResponse.recommendation === "REDUCE_OR_REVIEW"
                 && canRequest
                 && state.activePlan.candidateKind === "BALANCED" && (

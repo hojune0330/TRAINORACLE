@@ -4,7 +4,8 @@ import { plannedSessionLinkSchema, resolveCurrentPlannedSession } from "./planne
 
 const fingerprint = (value: unknown) => canonicalJsonFingerprint("trainoracle.execution-replan.v1", value)
 
-function sameCycleChange(before: PlanBetaStateV3, after: PlanBetaStateV3) {
+/** Both inputs must first pass the replay-validating V3 stored-state schema. */
+export function isVerifiedSameCycleChange(before: PlanBetaStateV3, after: PlanBetaStateV3) {
   const receipt = after.executionReplan ?? after.catalogReplacement
   if (!receipt || before.activePlan.selectionActor !== "SELF" || after.activePlan.selectionActor !== "SELF"
     || receipt.baseStateFingerprint !== fingerprint(before) || receipt.baseCandidateId !== before.activePlan.candidateId
@@ -55,7 +56,7 @@ export function resolveExecutionReplanSource(currentValue: unknown, linkValue: u
     if (!receipt || visited.has(receipt.baseStateFingerprint)) return null
     visited.add(receipt.baseStateFingerprint)
     const previous = retained.get(receipt.baseStateFingerprint)
-    if (!previous || !sameCycleChange(previous, cursor)) return null
+    if (!previous || !isVerifiedSameCycleChange(previous, cursor)) return null
     const previousSession = previous.activePlan.sessions.find(s => s.day === link.data.sessionDay && s.slot === link.data.sessionSlot)
     if (!previousSession || fingerprint(previousSession) !== fingerprint(occurrence)) return null
     const original = resolveCurrentPlannedSession(previous, link.data)

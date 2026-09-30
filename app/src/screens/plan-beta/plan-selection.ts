@@ -26,6 +26,7 @@ import { planAnchorsStillCurrent } from "../../domain/plan-anchor-reconfirmation
 import { isValidIsoDate } from "../../domain/dates"
 import { mainDraftStillMatches, snapshotPlanMainDraft } from "../../domain/plan-main-draft"
 import { loadPlanAdaptationContext } from "../../domain/plan-adaptation-ui-context"
+import { readMatchingPendingSuccessor } from "../../domain/plan-adaptation-store"
 import {
   adaptationScopeForCandidate,
   savePlanAdaptationContext,
@@ -167,6 +168,9 @@ export async function saveSelectedPlanCandidate(
             }
             return { kind: "saved", state: previous } as const
           }
+          try {
+            if (readMatchingPendingSuccessor(predecessor) !== null) return { kind: "rejected", code: "PENDING_SUCCESSOR_EXISTS" } as const
+          } catch { return { kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" } as const }
           const context = adaptationScope === null ? undefined
             : contextSchema.parse({ version: 1, activeCandidateId: canonicalCandidate.candidateId, candidates: generated.candidates })
           if (accountWrite) {

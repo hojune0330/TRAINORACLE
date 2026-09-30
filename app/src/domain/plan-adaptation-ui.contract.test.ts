@@ -38,6 +38,7 @@ import {
 import { PLAN_BETA_MUTATION_LOCK_NAME } from "./plan-mutation-lock"
 import { inspectNextFrameAdaptation } from "./plan-adaptation-availability"
 import { replacedReplanFixture } from "./execution-replan-lineage.test-fixture"
+import { resolveCurrentCycleContext } from "./plan-current-cycle-context"
 
 const ACTIVE_KEY = "trainoracle.plan-beta.v1"
 const TEST_SYSTEM_TIME = new Date("2026-08-18T12:00:00.000Z")
@@ -76,6 +77,24 @@ afterEach(() => {
 })
 
 describe("next-frame adaptation UI adapter", () => {
+  it("verifies an original pair without promoting it to a changed-plan sibling", async () => {
+    const state = await createBoundState()
+    const context = loadPlanAdaptationContext(state.activePlan.candidateId)!
+    expect(resolveCurrentCycleContext(state, { kind: "loaded", plans: [] }, () => context)).toMatchObject({
+      kind: "current", origin: { kind: "verified", originalContext: context },
+    })
+    const forged = structuredClone(context)
+    forged.candidates[1]!.candidateId = "forged"
+    expect(resolveCurrentCycleContext(state, { kind: "loaded", plans: [] }, () => forged)).toMatchObject({
+      kind: "current", origin: { kind: "verified", originalContext: null },
+    })
+    const changed = structuredClone(state)
+    const session = changed.activePlan.sessions.find(item => item.prescription.kind === "RPE_TIME_RANGE")!
+    if (session.prescription.kind !== "RPE_TIME_RANGE") throw Error("Expected support session")
+    session.prescription.durationMinutes.maximum -= 1
+    expect(resolveCurrentCycleContext(changed, { kind: "loaded", plans: [] }, () => context)).toEqual({ kind: "invalid" })
+  })
+
   it.each(["BALANCED", "CONSERVATIVE"] as const)("offers only registered triggers for %s and preserves the valid sibling path", async kind => {
     const state = await createBoundState(kind)
     expect(inspectNextFrameAdaptation(state)).toMatchObject({ kind: "available", explicitRequest: true, pbSb: kind === "CONSERVATIVE" })

@@ -13,6 +13,8 @@ import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import { createInitialPeriodizationContext } from "../../domain/periodization-lineage"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 import { saveSelectedPlanCandidate } from "./plan-selection"
+import { readOriginalPlanAdaptationContext } from "../../domain/plan-adaptation-ui-context"
+import { resolveCurrentCycleContext } from "../../domain/plan-current-cycle-context"
 
 const runtime = vi.hoisted(() => ({ service: null as ReturnType<typeof createAccountPlanCollectionService> | null }))
 vi.mock("../../domain/account/account-plan-service", async original => ({
@@ -68,6 +70,25 @@ it("selects the next frame through one account transaction and retains the exact
   if (current.kind !== "read_only" || current.packet.state.version !== 3) throw Error("Missing current plan")
   expect(current.packet.state.periodization).toMatchObject({ programLineageId: base.periodization!.programLineageId, frameOrdinal: 2 })
   expect(Object.entries(localStorage)).toEqual(localBefore)
+})
+
+it("reads an exact historical account pair without selecting or copying its unrelated sibling", async () => {
+  const { base, server, service, select } = await fixture()
+  expect((await select()).kind).toBe("saved")
+  expect(await service.loadHistory()).toBe(true)
+  const current = service.snapshot().currentPlan!
+  if (current.kind !== "read_only" || current.packet.evidence !== null || current.packet.state.version !== 3) throw Error("Missing saved V3")
+  const original = current.packet.state
+  expect(await service.mutate({ kind: "ARCHIVE", planId: current.planId }, service.snapshot().fingerprint!)).toBe("ACCOUNT")
+  const before = server.commits.length
+  expect(readOriginalPlanAdaptationContext(original)).toEqual(current.packet.context)
+  expect(resolveCurrentCycleContext(original, { kind: "loaded", plans: [] }, readOriginalPlanAdaptationContext))
+    .toMatchObject({ kind: "current", origin: { kind: "verified", originalContext: current.packet.context } })
+  expect(readOriginalPlanAdaptationContext(base)).toBeNull()
+  expect(readOriginalPlanAdaptationContext({ ...original, generatedAt: "2026-09-01T03:00:00.000Z" })).toBeNull()
+  expect(server.commits).toHaveLength(before)
+  service.close()
+  expect(readOriginalPlanAdaptationContext(original)).toBeNull()
 })
 
 it("keeps the confirmed predecessor after a lost account response and recovers without a second commit", async () => {

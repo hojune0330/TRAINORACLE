@@ -1,4 +1,5 @@
 import React from "react"
+import { readMatchingPendingSuccessor } from "../../domain/plan-adaptation-store"
 import { planErrorMessage } from "./plan-feedback"
 import {
   readPlanBetaStateFromStorage,
@@ -102,6 +103,19 @@ export function PlanActiveState({
     if (!isPlanFrameCompletionEligible(current.state, todayISO())
         || current.state.progress.some(progress => progress.state === "PAIN_CHECKIN")) {
       setError("현재 훈련 기록과 몸 상태를 먼저 확인해 주세요. 계획은 그대로 두었어요.")
+      return
+    }
+    if (current.state.activePlan.selectionActor !== "SELF") {
+      setError("이 계획은 지도자가 선택한 계획이에요. 연결된 지도자와 다음 계획을 확인해 주세요.")
+      return
+    }
+    try {
+      if (readMatchingPendingSuccessor(current.state) !== null) {
+        setError("이미 선택한 다음 계획이 있어요. 이번 주기 기록을 다시 열어 확인해 주세요.")
+        return
+      }
+    } catch {
+      setError("선택해 둔 다음 계획을 확인하지 못했어요. 현재 계획은 그대로예요. 다시 열어 확인해 주세요.")
       return
     }
     setError(null)

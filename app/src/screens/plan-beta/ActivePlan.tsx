@@ -307,7 +307,7 @@ export function ActivePlan({
         renderAfterSchedule={(
           <>
             {frameComplete ? (
-              <PlanAdaptationFlow state={state} onPendingChange={setHasPendingSuccessor} />
+              <PlanAdaptationFlow state={state} onPendingChange={setHasPendingSuccessor} onPrepareNextFrame={onNextFrame} />
             ) : (
               <div className="plan-adaptation__notice" role="status">
                 각 훈련을 마친 뒤 완료·휴식·건너뜀·통증 확인 중 하나를 기록해 주세요.
@@ -492,6 +492,8 @@ export function ActivePlan({
               </div>
             )}
           </>
+        ) : state.activePlan.selectionActor !== "SELF" ? (
+          <p>이 계획은 지도자가 선택한 계획이에요. 연결된 지도자와 다음 계획을 확인해 주세요.</p>
         ) : (
           <button type="button" disabled={!frameComplete} onClick={onNextFrame}>
             {frameComplete ? "현재 기준으로 다음 계획안 만들기" : "현재 계획을 먼저 기록해 주세요"}

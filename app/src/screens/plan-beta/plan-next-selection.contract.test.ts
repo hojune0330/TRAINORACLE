@@ -97,7 +97,6 @@ describe("next selection retains exact predecessor until accepted", () => {
   it.each([HISTORY, INTAKE, CONTEXT, "trainoracle.plan-beta.v1", PENDING])("rolls back the full local selection if writing %s fails", async key => {
     const { select } = setup()
     localStorage.setItem(CONTEXT, "old-context")
-    localStorage.setItem(PENDING, "old-pending")
     sessionStorage.setItem(INTAKE, "old-intake")
     const before = Object.entries(localStorage), intakeBefore = Object.entries(sessionStorage)
     const originalSet = Storage.prototype.setItem, originalRemove = Storage.prototype.removeItem
@@ -110,5 +109,13 @@ describe("next selection retains exact predecessor until accepted", () => {
     expect(Object.fromEntries(Object.entries(localStorage))).toEqual(Object.fromEntries(before))
     expect(Object.fromEntries(Object.entries(sessionStorage))).toEqual(Object.fromEntries(intakeBefore))
     expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before.find(([name]) => name === activePlanBetaStorageKey())![1])
+  })
+
+  it("does not erase unreadable pending storage while accepting an ordinary successor", async () => {
+    const { select } = setup()
+    localStorage.setItem(PENDING, "unreadable-pending")
+    const before = Object.fromEntries(Object.entries(localStorage))
+    expect(await select()).toEqual({ kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" })
+    expect(Object.fromEntries(Object.entries(localStorage))).toEqual(before)
   })
 })

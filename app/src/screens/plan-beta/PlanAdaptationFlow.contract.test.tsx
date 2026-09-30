@@ -22,7 +22,11 @@ import type { PlanSession } from "@impl/plan-generator/types"
 import { PLAN_ADAPTATION_CONTEXT_STORAGE_KEY } from "../../domain/plan-adaptation-ui-context"
 import { replacedReplanFixture } from "../../domain/execution-replan-lineage.test-fixture"
 import type { PrepareNextFrameResult } from "../../domain/plan-adaptation-ui"
-import { acceptPreparedNextFrameAdaptation } from "../../domain/plan-adaptation-ui"
+import { acceptPreparedNextFrameAdaptation, prepareNextFrameAdaptation, evaluateActivePlanAdaptationSafety } from "../../domain/plan-adaptation-ui"
+import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
+import { planBetaStateV3Schema } from "../../domain/plan-beta-schema"
+import { deriveCandidateId } from "@impl/plan-generator/candidate-identity"
+import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 
 const APPROVAL_5000 = DETAILED_PRESCRIPTION_APPROVALS.find(
   (approval) => approval.targetEventDistanceM === 5000,
@@ -57,10 +61,79 @@ afterEach(() => {
   if (locksDescriptor === undefined) Reflect.deleteProperty(navigator, "locks")
   else Object.defineProperty(navigator, "locks", locksDescriptor)
   cleanup()
+  setActiveLocalAccount(null)
   vi.useRealTimers()
 })
 
 describe("next-frame adaptation flow", () => {
+  it.each(["incomplete", "pain", "coach"])("does not offer the ordinary next-frame shortcut for %s", async kind => {
+    vi.setSystemTime(new Date("2026-10-10T03:00:00.000Z"))
+    const source = planBetaStateV3Schema.parse(stateFixture())
+    if (kind === "coach") {
+      const plan = source.activePlan
+      if (!("formationKind" in plan.frame)) throw Error("Expected V3 frame")
+      plan.selectionActor = "COACH"
+      plan.candidateId = deriveCandidateId(plan.candidateId, { kind: plan.candidateKind,
+        eventDistanceM: plan.eventDistanceM, selectedDetailedTemplateRef: plan.selectedDetailedTemplateRef,
+        selectedEnergyIntent: plan.selectedEnergyIntent, sourceMode: plan.sourceMode,
+        selectionAuthority: "COACH_REQUIRED", frame: plan.frame, sessions: plan.sessions })
+    }
+    const state = planBetaStateV3Schema.parse({ ...source,
+      activePlan: { ...source.activePlan, selectionActor: kind === "coach" ? "COACH" : "SELF" },
+      progress: kind === "incomplete" ? [] : [{ sessionDay: 1, sessionSlot: "AM", state: kind === "pain" ? "PAIN_CHECKIN" : "COMPLETED" }],
+    })
+    const next = vi.fn(), user = userEvent.setup()
+    render(<PlanAdaptationFlow state={state} onPrepareNextFrame={next} onLoadPending={async () => null} />)
+    await user.click(await screen.findByRole("button", { name: "이번 주기 기록 확인" }))
+    expect(await screen.findByRole("heading", { name: "이번 주기 기록 요약" })).toBeVisible()
+    expect(screen.queryByRole("button", { name: /다음 주기 계획 만들기/ })).toBeNull()
+    expect(next).not.toHaveBeenCalled()
+  })
+
+  it("reloads pending in the new account even if the current state object stays identical", async () => {
+    const state = stateFixture(), user = userEvent.setup()
+    let resolve!: (value: null) => void
+    const load = vi.fn().mockImplementationOnce(() => new Promise<null>(done => { resolve = done })).mockResolvedValue(null)
+    render(<PlanAdaptationFlow state={state} onLoadPending={load} />)
+    expect(screen.getByRole("button", { name: "이번 주기 기록 확인" })).toBeDisabled()
+    await act(async () => setActiveLocalAccount("22222222-2222-4222-8222-222222222222"))
+    await waitFor(() => expect(load).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(screen.getByRole("button", { name: "이번 주기 기록 확인" })).toBeEnabled())
+    await act(async () => resolve(null))
+    await user.click(screen.getByRole("button", { name: "이번 주기 기록 확인" }))
+    expect(await screen.findByRole("heading", { name: "이번 주기 기록 요약" })).toBeVisible()
+  })
+
+  it("rechecks a successor accepted elsewhere at entry and at final ordinary selection", async () => {
+    const initial = await createBoundActivePlan()
+    const state = planBetaStateV3Schema.parse({ ...initial.state,
+      progress: initial.state.activePlan.sessions.map(session => ({ sessionDay: session.day, sessionSlot: session.slot, state: "COMPLETED" })),
+    })
+    savePlanBetaState(state)
+    vi.setSystemTime(new Date("2026-08-30T12:00:00.000Z"))
+    const generated = generatePlanFromDraft(state.intake, "NO_KNOWN_RISK", undefined, undefined, undefined, state)
+    if (generated.kind !== "generated") throw Error("Expected ordinary next draft")
+    const safety = evaluateActivePlanAdaptationSafety(state, "NO_KNOWN_RISK", new Date())
+    const result = await prepareNextFrameAdaptation({ state, reason: "EXPLICIT_REQUEST", record: null,
+      safety, operationAt: new Date().toISOString() })
+    if (result.kind !== "ready") throw Error(`Expected registered successor: ${result.code}`)
+    localStorage.removeItem(PLAN_ADAPTATION_CONTEXT_STORAGE_KEY)
+    const next = vi.fn(), user = userEvent.setup()
+    render(<PlanAdaptationFlow state={state} onPrepareNextFrame={next} />)
+    await openAdaptation(user)
+    const action = await screen.findByRole("button", { name: /다음 주기 계획 만들기/ })
+    expect((await acceptPreparedNextFrameAdaptation({ prepared: result.prepared, predecessorState: state,
+      safety, operationAt: new Date().toISOString() })).kind).toBe("accepted")
+    const before = Object.fromEntries(Object.entries(localStorage))
+    await user.click(action)
+    expect(await screen.findByRole("status")).toHaveTextContent("다음 주기에 사용할 계획안을 저장했어요")
+    expect(next).not.toHaveBeenCalled()
+    expect(await saveSelectedPlanCandidate({ candidateId: generated.generated.candidates[0].candidateId, startDate: "2026-08-30" },
+      generated.generated, generated.gate, generated.intake, generated.athleteEvidence, () => true, state))
+      .toEqual({ kind: "rejected", code: "PENDING_SUCCESSOR_EXISTS" })
+    expect(Object.fromEntries(Object.entries(localStorage))).toEqual(before)
+  })
+
   it("keeps archived same-cycle evidence visible in the real read-only flow and recovers after lookup fails", async () => {
     const f = replacedReplanFixture(), user = userEvent.setup()
     const entries = [{ ...f.entries[0]!, activityOutcome: "COMPLETED" as const, planExecutionRelation: "AS_PLANNED" as const,

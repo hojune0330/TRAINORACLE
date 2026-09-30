@@ -10,6 +10,7 @@ import { planHistorySnapshotContent } from "../../domain/plan-history-snapshot-c
 import { advancePeriodizationContext, createInitialPeriodizationContext } from "../../domain/periodization-lineage"
 import { runDraftSafeNavigation } from "../../domain/unsaved-draft-navigation"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
+import { replacedReplanFixture } from "../../domain/execution-replan-lineage.test-fixture"
 
 vi.mock("../../domain/account/plan-cloud-backup", () => ({
   planCloudBackupEnabled: () => false, archivePlanOnServer: async () => {},
@@ -43,6 +44,41 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals(); setActiveLocalAccount(null) })
 
 describe("ordinary next-plan draft preservation", () => {
+  it.each([true, false])("opens from a changed-cycle summary with original history %s and advances only on acceptance", async retainHistory => {
+    vi.setSystemTime(new Date("2026-10-10T03:00:00.000Z"))
+    const f = replacedReplanFixture()
+    const original = planBetaStateV3Schema.parse({ ...f.state, progress: f.state.activePlan.sessions.map(session => ({
+      sessionDay: session.day, sessionSlot: session.slot, state: "COMPLETED",
+    })) })
+    if (retainHistory) localStorage.setItem(HISTORY, JSON.stringify(f.archivedPlans.map((state, index) =>
+      planHistorySnapshotContent(state, `2026-09-29T0${index + 3}:00:00.000Z`, "REPLAN"))))
+    expect(savePlanBetaState(original).ok).toBe(true)
+    const active = localStorage.getItem(activePlanBetaStorageKey()), history = localStorage.getItem(HISTORY)
+    render(<PlanBeta />)
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole("button", { name: "이번 주기 기록 확인" }))
+    await user.click(await screen.findByRole("button", { name: /다음 주기 계획 만들기/ }))
+    await screen.findByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/ })
+    expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(active)
+    expect(localStorage.getItem(HISTORY)).toBe(history)
+    await user.click(screen.getByRole("button", { name: "현재 계획으로 돌아가기" }))
+    expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(active)
+    expect(localStorage.getItem(HISTORY)).toBe(history)
+    await user.click(await screen.findByRole("button", { name: "이번 주기 기록 확인" }))
+    await user.click(await screen.findByRole("button", { name: /다음 주기 계획 만들기/ }))
+    await user.click(await screen.findByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/ }))
+    await user.click(await screen.findByRole("button", { name: "이 일정으로 시작" }))
+    await waitFor(() => expect(readPlanBetaStateFromStorage()).not.toEqual({ kind: "loaded", state: original }))
+    const selected = readPlanBetaStateFromStorage()
+    if (selected.kind !== "loaded" || selected.state.version !== 3) throw Error("Missing saved successor")
+    expect(selected.state.intake.startDate).toBe("2026-10-10")
+    // A legacy predecessor without periodization starts an explicit lineage at one.
+    expect(selected.state.periodization?.frameOrdinal).toBe(1)
+    expect(selected.state.catalogReplacement).toBeUndefined()
+    const archived = planHistoryListSchema.parse(JSON.parse(localStorage.getItem(HISTORY)!))
+    expect(archived[0]).toMatchObject({ originalPlan: original })
+  })
+
   it("keeps the active plan and all eighteen originals while browsing, cancelling and reopening", async () => {
     seedHistory()
     expect(savePlanBetaState(completed()).ok).toBe(true)
