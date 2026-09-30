@@ -17,6 +17,7 @@ import type {
   PlanBetaState,
   StoredPlanProgress,
 } from "../../domain/plan-beta-store"
+import { readArchivedOriginalPlans } from "../../domain/plan-beta-store"
 import { TermHelp } from "../../components/TermHelp"
 import {
   candidateLabel,
@@ -117,7 +118,7 @@ export function ActivePlan({
   }
   const loadSessionEvidence = (session: PlanSession) => {
     const journal = loadEntriesForPlanSafety()
-    return journal.status === "complete" ? collectSessionExplanationEvidence(journal.entries, state, session) : null
+    return journal.status === "complete" ? collectSessionExplanationEvidence(journal.entries, state, session, readArchivedOriginalPlans()) : null
   }
   const recorded = new Map(
     state.progress.map((progress) => [

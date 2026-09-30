@@ -2,7 +2,12 @@ import type { PlanSession } from "@impl/plan-generator/types"
 import { FIELD_PROVENANCE } from "./field-provenance"
 import type { JournalEntry, PostSessionEntry } from "./journal-schema"
 import type { PlanBetaState } from "./plan-beta-schema"
-import { resolveCurrentPlannedSession } from "./planned-session-link"
+import { createPlannedSessionLogDraft, resolveCurrentPlannedSession } from "./planned-session-link"
+import { resolveExecutionReplanSource } from "./execution-replan-source"
+
+export type PlanJournalHistory =
+  | { readonly kind: "loaded"; readonly plans: readonly unknown[] }
+  | { readonly kind: "unavailable" }
 
 export type PlanJournalComparison =
   | "WITHIN_RANGE" | "ABOVE_RANGE" | "BELOW_RANGE"
@@ -11,6 +16,8 @@ export type PlanJournalComparison =
 
 export type PlanJournalEvidenceRow = {
   readonly plannedSessionId: string
+  readonly currentPlannedSessionId: string
+  readonly source: "ACTIVE" | "ARCHIVED"
   readonly date: string
   readonly day: number
   readonly slot: "AM" | "PM"
@@ -25,6 +32,8 @@ export type PlanJournalEvidence = {
   readonly rejectedLinkCount: number
   readonly duplicateCount: number
   readonly conflictCount: number
+  readonly archivedResultCount: number
+  readonly historyReadIncomplete: boolean
 }
 
 function explicitRpe(entry: PostSessionEntry): number | null {
@@ -67,7 +76,11 @@ function comparisonFor(entry: PostSessionEntry, session: PlanSession): PlanJourn
 export function collectPlanJournalEvidence(
   entries: readonly JournalEntry[],
   state: PlanBetaState,
+  history: PlanJournalHistory = { kind: "unavailable" },
 ): PlanJournalEvidence {
+  const originals = history.kind === "loaded" ? history.plans : []
+  const historyReadIncomplete = history.kind === "unavailable" && state.version === 3
+    && (state.catalogReplacement !== undefined || state.executionReplan !== undefined)
   const postSessions = entries.filter((entry): entry is PostSessionEntry => entry.kind === "post-session")
   const signaturesById = new Map<string, Set<string>>()
   for (const entry of postSessions) {
@@ -75,24 +88,28 @@ export function collectPlanJournalEvidence(
     signatures.add(resultSignature(entry))
     signaturesById.set(entry.id, signatures)
   }
-  const byOccurrence = new Map<string, { entry: PostSessionEntry; session: PlanSession }[]>()
+  const byOccurrence = new Map<string, { entry: PostSessionEntry; session: PlanSession; source: "ACTIVE" | "ARCHIVED" }[]>()
   let rejectedLinkCount = 0
   let duplicateCount = 0
   let conflictCount = 0
   for (const entry of postSessions) {
     if (entry.plannedSessionLink === undefined) continue
-    const session = resolveCurrentPlannedSession(state, entry.plannedSessionLink)
+    const resolved = state.version === 3
+      ? resolveExecutionReplanSource(state, entry.plannedSessionLink, originals) : null
+    const session = state.version === 3 ? resolved?.session ?? null
+      : resolveCurrentPlannedSession(state, entry.plannedSessionLink)
     if (session === null || entry.date !== entry.plannedSessionLink.plannedDate) {
       rejectedLinkCount += 1
       continue
     }
-    const id = entry.plannedSessionLink.plannedSessionId
+    // Exact source resolution precedes grouping; dates alone never create a link.
+    const id = `${entry.plannedSessionLink.plannedDate}:${session.day}:${session.slot}`
     const group = byOccurrence.get(id) ?? []
-    group.push({ entry, session })
+    group.push({ entry, session, source: resolved?.source ?? "ACTIVE" })
     byOccurrence.set(id, group)
   }
   const rows: PlanJournalEvidenceRow[] = []
-  for (const [plannedSessionId, group] of byOccurrence) {
+  for (const group of byOccurrence.values()) {
     const first = group[0]
     if (first === undefined) continue
     const { entry, session } = first
@@ -102,7 +119,9 @@ export function collectPlanJournalEvidence(
     else duplicateCount += group.length - 1
     const comparison = conflict ? "CONFLICTING_RESULT" : comparisonFor(entry, session)
     rows.push({
-      plannedSessionId,
+      plannedSessionId: entry.plannedSessionLink!.plannedSessionId,
+      currentPlannedSessionId: createPlannedSessionLogDraft(state, session, state.generatedAt)!.link.plannedSessionId,
+      source: group.some(item => item.source === "ARCHIVED") ? "ARCHIVED" : "ACTIVE",
       date: entry.date,
       day: session.day,
       slot: session.slot,
@@ -114,5 +133,6 @@ export function collectPlanJournalEvidence(
     })
   }
   rows.sort((a, b) => a.day - b.day || a.slot.localeCompare(b.slot))
-  return { rows, rejectedLinkCount, duplicateCount, conflictCount }
+  return { rows, rejectedLinkCount, duplicateCount, conflictCount,
+    archivedResultCount: rows.filter(row => row.source === "ARCHIVED").length, historyReadIncomplete }
 }

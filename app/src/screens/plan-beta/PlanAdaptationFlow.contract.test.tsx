@@ -61,6 +61,23 @@ afterEach(() => {
 })
 
 describe("next-frame adaptation flow", () => {
+  it("keeps archived same-cycle evidence visible in the real read-only flow and recovers after lookup fails", async () => {
+    const f = replacedReplanFixture(), user = userEvent.setup()
+    const entries = [{ ...f.entries[0]!, activityOutcome: "COMPLETED" as const, planExecutionRelation: "AS_PLANNED" as const,
+      rpe: 3, fieldProvenance: { rpe: { provenance: "EXPLICIT" as const } } }]
+    const props = { state: f.state, onLoadEntries: () => entries, onLoadPending: async () => null }
+    const view = render(<PlanAdaptationFlow {...props} onLoadHistory={() => ({ kind: "unavailable" })} />)
+    await user.click(screen.getByRole("button", { name: "이번 주기 기록 확인" }))
+    expect(await screen.findByText("이전 계획의 기록 연결을 확인하지 못했어요")).toBeVisible()
+    expect(screen.queryByText("현재 계획과 연결해 비교할 일지가 없어요")).toBeNull()
+    view.rerender(<PlanAdaptationFlow {...props} onLoadHistory={() => ({ kind: "loaded", plans: f.archivedPlans })} />)
+    expect(screen.getByText("현재 계획에 연결된 훈련 1건")).toBeVisible()
+    await user.click(screen.getByText("훈련별 비교 근거 1건"))
+    expect(screen.getByText("변경 전 계획의 같은 훈련 기준")).toBeVisible()
+    expect(screen.getByText(/직접 기록 RPE 3/u)).toBeVisible()
+    expect(screen.queryByRole("button", { name: "이 다음 계획 선택하기" })).toBeNull()
+  })
+
   it("does not offer a PB/SB route without an approved record-triggered transform", async () => {
     const user = userEvent.setup()
     const { state } = await createBoundActivePlan()

@@ -67,6 +67,7 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
   const dialog = React.useRef<HTMLDialogElement>(null)
   const close = useReaderDialog(dialog, onClose)
   const content = React.useRef<HTMLDivElement>(null)
+  const actualRecords = React.useRef<HTMLElement>(null)
   const scrollPositions = React.useRef<Record<Tab, number>>({ "방법": 0, "이유·근거": 0, "주기·기록": 0 })
   const tabs = React.useRef<(HTMLButtonElement | null)[]>([])
   const id = React.useId()
@@ -80,7 +81,7 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
   // A loader can retain another session from the same plan generation.
   const evidenceMatches = evidence !== null && context?.kind === "SAVED" && explanation.contextMatchesSession
     && evidence.candidateId === context.plan.candidateId && evidence.generatedAt === context.generatedAt
-    && evidence.rows.every(row => row.plannedSessionId === evidence.sessionId
+    && evidence.rows.every(row => row.currentPlannedSessionId === evidence.sessionId
       && row.day === session.day && row.slot === session.slot && row.role === session.role
       && (occurrence === undefined || row.date === occurrence.plannedDate))
     && (occurrence === undefined || (occurrence.plannedSessionId === evidence.sessionId
@@ -93,6 +94,15 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
   React.useLayoutEffect(() => {
     content.current?.scrollTo({ top: scrollPositions.current[tab], behavior: "instant" })
   }, [tab])
+
+  // Direct journal entry lands on records after the native dialog has opened.
+  React.useEffect(() => {
+    if (initialTab !== "주기·기록" || content.current === null || actualRecords.current === null) return
+    const region = content.current
+    const top = region.scrollTop + actualRecords.current.getBoundingClientRect().top - region.getBoundingClientRect().top
+    region.scrollTo({ top: Math.max(0, top), behavior: "instant" })
+    scrollPositions.current["주기·기록"] = Math.max(0, top)
+  }, [initialTab])
 
   function selectTab(next: Tab) {
     if (next === tab) return
@@ -191,7 +201,12 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
             <section><h3>주기 안의 위치</h3><ol>{explanation.cycle.map((line) => <li key={line}>{line}</li>)}</ol></section>
             {explanation.currentFrameLabel !== null && <section><h3>현재 장기 계획 연결</h3><p>{explanation.currentFrameLabel}</p></section>}
             <section><h3>계획한 자극</h3><p>{explanation.profile.purpose}</p><p>{prescriptionLabel(session)}</p></section>
-            <section><h3>실제 기록</h3>{!evidenceMatches ? <p>이 화면에서는 현재 훈련과 연결된 일지를 확인하지 못했어요. 조회하지 못한 상태를 일지가 없는 것으로 판단하지 않아요.</p> : methodObservation !== null ? <PlanMethodObservationDetails observation={methodObservation} comparison={rows[0] === undefined ? undefined : COMPARISON_LABELS[rows[0].comparison]} /> : rows.length === 0 ? <p>이 훈련과 연결된 일지가 아직 없어요. 미기록을 0이나 훈련 실패로 계산하지 않아요.</p> : rows.map((row) => (
+            <section ref={actualRecords}><h3>실제 기록</h3>
+              {evidenceMatches && evidence.historyReadIncomplete && <p>변경 전 계획을 불러오지 못해 일부 기록은 확인하지 못했어요.</p>}
+              {!evidenceMatches ? <p>이 화면에서는 현재 훈련과 연결된 일지를 확인하지 못했어요. 조회하지 못한 상태를 일지가 없는 것으로 판단하지 않아요.</p>
+                : evidence.historyReadIncomplete && rows.length === 0 ? <p>이전 기록의 연결을 다시 확인해 주세요.</p>
+                : methodObservation !== null ? <PlanMethodObservationDetails observation={methodObservation} comparison={rows[0] === undefined ? undefined : COMPARISON_LABELS[rows[0].comparison]} />
+                : rows.length === 0 ? <p>이 훈련과 연결된 일지가 아직 없어요. 미기록을 0이나 훈련 실패로 계산하지 않아요.</p> : rows.map((row) => (
               <div key={row.plannedSessionId}><p>{row.date} · {row.slot === "AM" ? "오전" : "오후"}</p><p>{row.actualRpe === null ? "비교할 수 있는 RPE 미기록" : `직접 기록한 RPE ${row.actualRpe}`}</p><p>계획 RPE와 비교: {COMPARISON_LABELS[row.comparison]}</p></div>
             ))}</section>
             <section><h3>관찰할 변화</h3><p>{explanation.profile.observationGuide}</p><p>계획의 자극과 실제 수행은 다를 수 있어요. 한 번의 기록이나 특정 훈련 횟수만으로 능력 부족·향상 원인·다음 경기 성적을 판단하지 않아요.</p><p>다음 주기에도 같은 방법을 선택할 수 있어요. 기록이 쌓였다는 이유만으로 강도·양·횟수를 자동으로 올리지 않아요.</p></section>

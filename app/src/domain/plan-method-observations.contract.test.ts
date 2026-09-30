@@ -69,12 +69,19 @@ describe("exact plan method observations", () => {
   })
 
   it.each([
-    { date: "2026-07-25" }, { activitySlot: "PM" as const },
+    { date: "2026-07-25" },
     { plannedSessionLink: { ...draft.link, sessionSlot: "PM" as const } },
     { plannedSessionLink: { ...draft.link, plannedDate: "2026-07-25" } },
   ])("excludes wrong date or slot %j", change => {
     expect(project([{ ...entry, ...change }])).toMatchObject({ rejectedLinkCount: 1,
       rows: [{ status: "MISSING", actual: empty }] })
+  })
+
+  it("preserves a changed actual slot without rewriting the original planned slot", () => {
+    const result = project([{ ...entry, activitySlot: "PM", planExecutionRelation: "MODIFIED" }])
+    expect(result).toMatchObject({ rejectedLinkCount: 0, rows: [{ status: "LINKED",
+      occurrence: { sessionSlot: "AM" }, results: [{ actualSlot: "PM", relation: "MODIFIED" }],
+      actual: { rpe: 7 }, measuredAdherence: null }] })
   })
 
   it("uses the original version, never today's plan or a date-only match", () => {

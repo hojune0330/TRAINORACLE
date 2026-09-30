@@ -10,6 +10,7 @@ import { FIELD_PROVENANCE } from "../../domain/field-provenance"
 import { createExplanationReceipt } from "../../domain/training-explanation-receipt"
 import { SessionExplanationEntry } from "./SessionExplanation"
 import { sessionExecutionSteps } from "./labels"
+import { replacedReplanFixture } from "../../domain/execution-replan-lineage.test-fixture"
 
 const originalShowModal = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const originalScrollTo = Object.getOwnPropertyDescriptor(Element.prototype, "scrollTo")
@@ -27,7 +28,7 @@ afterEach(() => {
 })
 
 function scope(candidateId: string, generatedAt: string, rpe: number): SessionExplanationEvidence {
-  return { candidateId, generatedAt, sessionId: `${candidateId}:${generatedAt}`, rows: [{ plannedSessionId: `${candidateId}:${generatedAt}`, date: generatedAt.slice(0, 10), day: 1, slot: "AM", role: "EASY", actualRpe: rpe, plannedRpe: { minimum: 2, maximum: 4 }, comparison: "WITHIN_RANGE" }] }
+  return { candidateId, generatedAt, sessionId: `${candidateId}:${generatedAt}`, rows: [{ plannedSessionId: `${candidateId}:${generatedAt}`, currentPlannedSessionId: `${candidateId}:${generatedAt}`, source: "ACTIVE", date: generatedAt.slice(0, 10), day: 1, slot: "AM", role: "EASY", actualRpe: rpe, plannedRpe: { minimum: 2, maximum: 4 }, comparison: "WITHIN_RANGE" }] }
 }
 
 function paceSession(): PlanSession {
@@ -64,6 +65,54 @@ function paceSession(): PlanSession {
 }
 
 describe("session explanation review regressions", () => {
+  it.each(["ACTIVE", "ARCHIVED"] as const)("shows planned and actual slots for %s changed execution without claiming no journal", async source => {
+    const f = replacedReplanFixture(), session = f.state.activePlan.sessions.find(s => s.day === 1)!
+    const entry = { ...f.entries[0]!, activitySlot: "PM" as const, planExecutionRelation: "MODIFIED" as const,
+      activityOutcome: "COMPLETED" as const, rpe: 3, fieldProvenance: { rpe: { provenance: FIELD_PROVENANCE.explicit } },
+      plannedSessionLink: source === "ACTIVE" ? createPlannedSessionLogDraft(f.state, session, "2026-09-29T05:00:00.000Z")!.link : f.entries[0]!.plannedSessionLink }
+    render(<SessionExplanationEntry session={session} initialTab="주기·기록"
+      context={{ kind: "SAVED", plan: f.state.activePlan, generatedAt: f.state.generatedAt }}
+      loadEvidence={() => collectSessionExplanationEvidence([entry], f.state, session, { kind: "loaded", plans: f.archivedPlans })} />)
+    await userEvent.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))
+    expect(screen.getByText(/계획 오전 · 실제 오후/u)).toBeVisible()
+    expect(screen.getByText("직접 기록한 RPE 3")).toBeVisible()
+    expect(screen.getByText(/일부만 하거나 바꾼 훈련이라 원래 계획과 비교하지 않음/u)).toBeVisible()
+    expect(screen.queryByText(/연결된 일지가 아직 없어요/u)).toBeNull()
+    expect(screen.queryByText("직접 기록한 거리")).toBeNull()
+    expect(screen.getByText("거리·시간·페이스 미기록")).not.toBeVisible()
+    await userEvent.click(screen.getByText("어떤 기록을 비교하나요?"))
+    expect(screen.getByText("거리·시간·페이스 미기록")).toBeVisible()
+  })
+
+  it("shows original journal measurements after later sessions change, and preserves unreadable-history state", async () => {
+    const f = replacedReplanFixture(), session = f.state.activePlan.sessions.find(s => s.day === 1)!
+    const entry = { ...f.entries[0]!, activityOutcome: "COMPLETED" as const, planExecutionRelation: "AS_PLANNED" as const,
+      rpe: 3, fieldProvenance: { rpe: { provenance: FIELD_PROVENANCE.explicit } } }
+    const context = { kind: "SAVED" as const, plan: f.state.activePlan, generatedAt: f.state.generatedAt }
+    const load = () => collectSessionExplanationEvidence([entry], f.state, session, { kind: "loaded", plans: f.archivedPlans })
+    const view = render(<SessionExplanationEntry session={session} context={context} initialTab="주기·기록" loadEvidence={load} />)
+    await userEvent.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))
+    expect(screen.getByText("직접 기록한 RPE 3")).toBeVisible()
+    expect(screen.queryByText(/연결된 일지가 아직 없어요/u)).toBeNull()
+    view.rerender(<SessionExplanationEntry session={session} context={context} initialTab="주기·기록"
+      loadEvidence={() => collectSessionExplanationEvidence([entry], f.state, session, { kind: "unavailable" })} />)
+    expect(screen.queryByText("직접 기록한 RPE 3")).toBeNull()
+    expect(screen.getByText("이전 기록의 연결을 다시 확인해 주세요.")).toBeVisible()
+    expect(screen.queryByText(/연결된 일지가 아직 없어요/u)).toBeNull()
+    view.rerender(<SessionExplanationEntry session={session} context={context} initialTab="주기·기록" loadEvidence={load} />)
+    expect(screen.getByText("직접 기록한 RPE 3")).toBeVisible()
+  })
+
+  it("rejects a lineage row projected to a different current occurrence", async () => {
+    const f = replacedReplanFixture(), session = f.state.activePlan.sessions.find(s => s.day === 1)!
+    const evidence = collectSessionExplanationEvidence(f.entries, f.state, session, { kind: "loaded", plans: f.archivedPlans })!
+    expect(evidence.rows).toHaveLength(1)
+    render(<SessionExplanationEntry session={session} context={{ kind: "SAVED", plan: f.state.activePlan, generatedAt: f.state.generatedAt }}
+      initialTab="주기·기록" loadEvidence={() => ({ ...evidence, rows: evidence.rows.map(row => ({ ...row, currentPlannedSessionId: "wrong-occurrence" })) })} />)
+    await userEvent.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))
+    expect(screen.getByText(/조회하지 못한 상태를 일지가 없는 것으로 판단하지 않아요/u)).toBeVisible()
+  })
+
   it("opens a linked journal directly on actual records without inventing missing evidence", async () => {
     const state = stateFixture()
     const session = state.activePlan.sessions[0]!

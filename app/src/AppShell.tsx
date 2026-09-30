@@ -18,7 +18,7 @@ import { requestJournalDecorationAutoOpen } from "./domain/journal-decoration-in
 import { createSavedFactReceipt } from "./domain/save-receipt"
 import { analysisNavigationForReceipt, type AnalysisNavigation, type AnalysisSection } from "./domain/analysis-navigation"
 import { buildOraclePersonalResult } from "./domain/oracle-personal-result"
-import { loadPlanBetaState } from "./domain/plan-beta-store"
+import { loadPlanBetaState, readArchivedOriginalPlans } from "./domain/plan-beta-store"
 import { loadAthleteRecords } from "./domain/athlete-records"
 import { recordOracleJournalParticipation } from "./domain/oracle-participation"
 import { trackProductEvent } from "./domain/account/product-analytics-service"
@@ -445,7 +445,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   })
   const oracleResult = overlay?.kind === "oracle" ? buildOraclePersonalResult({
     topicId: overlay.topic, entries: loadEntries(), planState: loadPlanBetaState(),
-    athleteRecords: loadAthleteRecords(), today: todayISO(),
+    athleteRecords: loadAthleteRecords(), today: todayISO(), planHistory: readArchivedOriginalPlans(),
   }) : undefined
 
   const accountEnabled = accountFeatureEnabled()

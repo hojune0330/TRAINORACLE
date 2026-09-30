@@ -4,7 +4,7 @@
 doc_id: PLAN_CYCLE_RESPONSE_AND_ADAPTATION_CONTRACT
 spec_id: TO-PLAN-CYCLE-RESPONSE-001
 title: TrainOracle Repeated Cycle Response And Adaptation Contract
-version: 1.2
+version: 1.3
 round: RT2_CORE_EVIDENCE_INTEGRITY
 status: DRAFT_FOR_REVIEW
 owner: TrainOracle Product Owner
@@ -24,7 +24,8 @@ does not redefine, `TRAINING_PLAN_FORMATION_AND_ADAPTATION_SPEC.md`.
 ## 2. Accepted Inputs
 
 Only a structured post-session entry may contribute when its immutable
-`plannedSessionLink` matches the active candidate and session identity. The first
+`plannedSessionLink` matches the active candidate and session identity, or the exact
+unchanged same-cycle original allowed by section 13. The first
 runtime version uses only an explicitly entered RPE and the stored planned RPE range.
 Quick capture is eligible under this same rule only when it stores one exact RPE with
 `EXPLICIT` provenance and the immutable planned-session link. A quick RPE band, missing
@@ -44,6 +45,8 @@ adaptation authority. The existing comparison rule is applied to trustworthy inp
 - Recompute the complete planned-session identity from the stored active plan,
   generation version, start date, session content, day and AM/PM slot. A matching
   candidate label or day alone is insufficient. Validate the stored link itself.
+  For section 13 recovery, retain this original identity and expose a separately
+  recomputed current occurrence reference only after exact chain validation.
 - A journal date different from the selected planned date is not silently aligned.
   Keep it as an excluded mismatch pending an explicit rescheduling contract.
 - Duplicate copies of one structured result count once. Conflicting copies of the
@@ -164,5 +167,41 @@ deviation into the existing PB_SB/EXPLICIT_REQUEST successor, infer adherence fr
 completion, or authorize runtime dose/schedule changes now. Existing observations
 and all section 7 issues keep their current meaning and status. Implementation is
 tracked separately in the linked contract's execution plan.
+
+## 13. Same-Cycle Evidence After A Plan Change (2026-10-01)
+
+The owner-approved persona-remediation work repairs evidence continuity without
+adopting a new dose or successor transform. A changed candidate identifier must not
+discard an unchanged, already-linked session in the same cycle.
+
+- Resolve the immutable journal link against an exact retained original through
+  replay-validated catalog-replacement/execution-replan receipts. Every intervening
+  original and cycle context must match. Do not search an unrelated recent plan or
+  rewrite a journal link to the current candidate.
+- The compared occurrence must remain unchanged throughout that chain. Compare its
+  original prescription, not a new slot's content. Missing originals, changed target
+  sessions, dates, stale recurrent content IDs and invalid chains remain excluded.
+- Group accepted links by the same-cycle date/day/AM-PM occurrence across candidate
+  versions. Multiple distinct records or conflicting copies remain one conflicting
+  occurrence, not repeated evidence. Identical copies count once; private text and
+  its existence remain outside matching and deduplication.
+- A valid original planned-slot link and a different explicit actual AM/PM slot
+  are not a missing journal. Preserve the actual slot and measurements, label the
+  changed execution, and exclude same-prescription RPE comparison. A forged planned
+  slot/date/content link still fails. Do not silently move the plan or the journal.
+- Mark comparisons recovered from an original as such inside the existing evidence
+  detail. An unreadable account/archive source is not an empty history. Preserve
+  directly verifiable results and disclose incomplete original lookup separately.
+- Apply the same evidence boundary to the cycle summary, personal Oracle and
+  saved-session explanation. Their read-only evidence does not authorize an
+  unregistered catalog successor, clear safety, or manufacture physiological change.
+- A direct linked-journal entry opens the actual-record section in the existing
+  reader. General method entry remains unchanged, and tab/return positions persist.
+  This is a viewport change, not a journal write or a new comparison rule.
+
+Required regressions: unchanged-target multi-hop recovery, missing/forged/wrong-cycle
+original rejection, cross-version duplicate/conflict accounting, source-read failure,
+unchanged private-text zero-signal and rendering through the real caller boundary.
+All existing open issues and the exact numerical transform registry remain unchanged.
 
 [DRAFT_COMPLETE]

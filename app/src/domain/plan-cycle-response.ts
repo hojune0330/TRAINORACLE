@@ -1,8 +1,8 @@
 import type { JournalEntry } from "./journal-schema"
 import type { PlanBetaState } from "./plan-beta-schema"
-import { collectPlanJournalEvidence, type PlanJournalEvidenceRow } from "./plan-journal-evidence"
+import { collectPlanJournalEvidence, type PlanJournalEvidenceRow, type PlanJournalHistory } from "./plan-journal-evidence"
 
-export const PLAN_CYCLE_RESPONSE_VERSION = "PLAN_CYCLE_RESPONSE_V2" as const
+export const PLAN_CYCLE_RESPONSE_VERSION = "PLAN_CYCLE_RESPONSE_V3" as const
 
 export type PlanCycleResponse = {
   readonly version: typeof PLAN_CYCLE_RESPONSE_VERSION
@@ -19,14 +19,17 @@ export type PlanCycleResponse = {
   readonly rejectedLinkCount: number
   readonly duplicateCount: number
   readonly conflictCount: number
+  readonly archivedResultCount: number
+  readonly historyReadIncomplete: boolean
   readonly evidence: readonly string[]
 }
 
 export function derivePlanCycleResponse(
   entries: readonly JournalEntry[],
   state: PlanBetaState,
+  history?: PlanJournalHistory,
 ): PlanCycleResponse {
-  const evidence = collectPlanJournalEvidence(entries, state)
+  const evidence = collectPlanJournalEvidence(entries, state, history)
   const withinRangeCount = evidence.rows.filter(row => row.comparison === "WITHIN_RANGE").length
   const higherThanRangeCount = evidence.rows.filter(row => row.comparison === "ABOVE_RANGE").length
   const lowerThanRangeCount = evidence.rows.filter(row => row.comparison === "BELOW_RANGE").length
@@ -75,9 +78,13 @@ export function derivePlanCycleResponse(
     rejectedLinkCount: evidence.rejectedLinkCount,
     duplicateCount: evidence.duplicateCount,
     conflictCount: evidence.conflictCount,
+    archivedResultCount: evidence.archivedResultCount,
+    historyReadIncomplete: evidence.historyReadIncomplete,
     evidence: [
       `현재 계획에 연결된 훈련 ${evidence.rows.length}건`,
       `직접 입력 RPE 비교 ${comparableRpeCount}건`,
+      ...(evidence.archivedResultCount > 0 ? [`같은 주기의 변경 전 계획에서 확인한 훈련 ${evidence.archivedResultCount}건 포함`] : []),
+      ...(evidence.historyReadIncomplete ? ["변경 전 계획을 불러오지 못해 일부 일지의 연결을 확인하지 못했어요."] : []),
       `계획 범위 안 ${withinRangeCount}건 · 높음 ${higherThanRangeCount}건 · 낮음 ${lowerThanRangeCount}건 · 비교 불가 ${unknownCount}건`,
       ...(evidence.rejectedLinkCount > 0 ? [`현재 계획·날짜와 연결이 맞지 않아 제외 ${evidence.rejectedLinkCount}건`] : []),
       ...(evidence.duplicateCount > 0 ? [`같은 기록의 중복 사본 제외 ${evidence.duplicateCount}건`] : []),

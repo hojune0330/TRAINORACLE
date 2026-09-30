@@ -4,6 +4,7 @@ import { projectStructuredJournalObservation } from "./journal-observation"
 import type { PlanBetaState } from "./plan-beta-schema"
 import { createPlannedSessionLogDraft, resolveCurrentPlannedSession } from "./planned-session-link"
 import type { PlannedSessionLink } from "./planned-session-link"
+import { resolveExecutionReplanSource } from "./execution-replan-source"
 
 type ActualMetrics = {
   readonly distanceKm: number | null
@@ -18,6 +19,7 @@ type ResultRelation = {
   readonly journalId: string
   readonly outcome: PostSessionEntry["activityOutcome"] | null
   readonly relation: PostSessionEntry["planExecutionRelation"] | null
+  readonly actualSlot: PostSessionEntry["activitySlot"] | null
 }
 
 export type PlanMethodObservation = {
@@ -57,7 +59,7 @@ function actualMetrics(entry: PostSessionEntry): ActualMetrics {
 
 function relation(entry: PostSessionEntry): ResultRelation {
   return { journalId: entry.id, outcome: entry.activityOutcome ?? null,
-    relation: entry.planExecutionRelation ?? null }
+    relation: entry.planExecutionRelation ?? null, actualSlot: entry.activitySlot ?? null }
 }
 
 function identity(link: PlannedSessionLink) {
@@ -79,6 +81,7 @@ function identity(link: PlannedSessionLink) {
 export function collectPlanMethodObservations(
   entries: readonly JournalEntry[],
   originalPlans: readonly PlanBetaState[],
+  currentPlan?: PlanBetaState,
 ): {
   readonly rows: readonly PlanMethodObservation[]
   readonly rejectedLinkCount: number
@@ -90,7 +93,7 @@ export function collectPlanMethodObservations(
     plans: PlanBetaState[]
     entries: PostSessionEntry[]
   }>()
-  for (const plan of originalPlans) {
+  for (const plan of currentPlan === undefined ? originalPlans : [currentPlan]) {
     for (const session of plan.activePlan.sessions) {
       const draft = createPlannedSessionLogDraft(plan, session, plan.generatedAt)
       if (draft === null) continue
@@ -125,11 +128,15 @@ export function collectPlanMethodObservations(
     versions.add(signature)
     signatures.set(entry.id, versions)
     if (link === undefined) continue
-    const occurrence = occurrences.get(link.plannedSessionId)
+    // A current projection needs an exact unchanged-session receipt chain first.
+    const resolved = currentPlan?.version === 3
+      ? resolveExecutionReplanSource(currentPlan, link, originalPlans) : null
+    const currentLink = resolved === null || currentPlan === undefined ? null
+      : createPlannedSessionLogDraft(currentPlan, resolved.session, currentPlan.generatedAt)?.link
+    const occurrence = occurrences.get(currentLink?.plannedSessionId ?? link.plannedSessionId)
     if (occurrence === undefined || entry.date !== link.plannedDate
-      || ((entry.activitySlot === "AM" || entry.activitySlot === "PM")
-        && entry.activitySlot !== link.sessionSlot)
-      || !occurrence.plans.some(plan => resolveCurrentPlannedSession(plan, link) !== null)) {
+      || (currentPlan?.version === 3 ? resolved === null
+        : !occurrence.plans.some(plan => resolveCurrentPlannedSession(plan, link) !== null))) {
       rejectedLinkCount += 1
       continue
     }

@@ -15,7 +15,9 @@ export const COMPARISON_LABELS: Record<PlanJournalComparison, string> = {
 export function PlanCycleEvidence({ response }: { readonly response: PlanCycleResponse }) {
   return (
     <div className="plan-adaptation__evidence">
-      <strong>{response.signal === "NO_LINKED_RESULTS"
+      <strong>{response.historyReadIncomplete && response.linkedResultCount === 0
+        ? "이전 계획의 기록 연결을 확인하지 못했어요"
+        : response.signal === "NO_LINKED_RESULTS"
         ? "현재 계획과 연결해 비교할 일지가 없어요"
         : response.headline}</strong>
       {response.evidence.map((item) => <p key={item}>{item}</p>)}
@@ -26,6 +28,7 @@ export function PlanCycleEvidence({ response }: { readonly response: PlanCycleRe
             {response.rows.map(row => (
               <li key={row.plannedSessionId}>
                 <strong>{row.date} · {row.slot === "AM" ? "오전" : "오후"}</strong>
+                {row.source === "ARCHIVED" && <small>변경 전 계획의 같은 훈련 기준</small>}
                 <p>
                   {row.plannedRpe === null ? "계획 RPE 없음" : `계획 RPE ${row.plannedRpe.minimum}-${row.plannedRpe.maximum}`}
                   {" · "}{row.actualRpe === null ? "비교용 RPE 없음" : `직접 기록 RPE ${row.actualRpe}`}

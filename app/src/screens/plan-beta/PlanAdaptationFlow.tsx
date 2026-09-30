@@ -6,6 +6,8 @@ import {
   recordPurposeLabel,
 } from "../../domain/athlete-records"
 import type { PlanBetaState } from "../../domain/plan-beta-store"
+import { readArchivedOriginalPlans } from "../../domain/plan-beta-store"
+import type { PlanJournalHistory } from "../../domain/plan-journal-evidence"
 import type { PlanCurrentCheck } from "../../domain/plan-beta-flow"
 import {
   acceptPreparedNextFrameAdaptation,
@@ -42,6 +44,7 @@ type PlanAdaptationFlowProps = {
   readonly onLoadPending?: typeof loadMatchingPendingSuccessor
   readonly onEvaluateSafety?: typeof evaluateActivePlanAdaptationSafety
   readonly onLoadEntries?: () => readonly JournalEntry[]
+  readonly onLoadHistory?: () => PlanJournalHistory
   readonly onPendingChange?: (hasPending: boolean) => void
 }
 
@@ -53,6 +56,7 @@ export function PlanAdaptationFlow({
   onLoadPending = loadMatchingPendingSuccessor,
   onEvaluateSafety = evaluateActivePlanAdaptationSafety,
   onLoadEntries = loadEntries,
+  onLoadHistory = readArchivedOriginalPlans,
   onPendingChange,
 }: PlanAdaptationFlowProps) {
   const [step, setStep] = React.useState<Step>("closed")
@@ -81,8 +85,8 @@ export function PlanAdaptationFlow({
     [onLoadRecords, state],
   )
   const cycleResponse = React.useMemo(
-    () => derivePlanCycleResponse(onLoadEntries(), state),
-    [onLoadEntries, state, step],
+    () => derivePlanCycleResponse(onLoadEntries(), state, onLoadHistory()),
+    [onLoadEntries, onLoadHistory, state, step],
   )
   useActiveContentScroll(step === "closed" ? null : step, activeStepRef)
 

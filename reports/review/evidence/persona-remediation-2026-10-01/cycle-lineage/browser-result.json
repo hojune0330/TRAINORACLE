@@ -1,0 +1,95 @@
+{
+  "scope": "real components with synthetic local-only fixtures",
+  "results": [
+    {
+      "width": 320,
+      "enlarged": false,
+      "view": "cycle",
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "localStorageUnchanged": true,
+      "screenshot": "cycle-320.png"
+    },
+    {
+      "width": 320,
+      "enlarged": false,
+      "view": "detail",
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "localStorageUnchanged": true,
+      "screenshot": "detail-320.png"
+    },
+    {
+      "width": 320,
+      "enlarged": false,
+      "view": "detail-changed",
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "localStorageUnchanged": true,
+      "screenshot": "detail-changed-320.png"
+    },
+    {
+      "width": 375,
+      "enlarged": false,
+      "view": "cycle",
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "localStorageUnchanged": true,
+      "screenshot": "cycle-375.png"
+    },
+    {
+      "width": 375,
+      "enlarged": false,
+      "view": "detail",
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "localStorageUnchanged": true,
+      "screenshot": "detail-375.png"
+    },
+    {
+      "width": 375,
+      "enlarged": false,
+      "view": "detail-changed",
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "localStorageUnchanged": true,
+      "screenshot": "detail-changed-375.png"
+    },
+    {
+      "width": 320,
+      "enlarged": true,
+      "view": "cycle",
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "localStorageUnchanged": true,
+      "screenshot": "cycle-320-large-reduced.png"
+    },
+    {
+      "width": 320,
+      "enlarged": true,
+      "view": "detail",
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "localStorageUnchanged": true,
+      "screenshot": "detail-320-large-reduced.png"
+    },
+    {
+      "width": 320,
+      "enlarged": true,
+      "view": "detail-changed",
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "localStorageUnchanged": true,
+      "screenshot": "detail-changed-320-large-reduced.png"
+    }
+  ]
+}

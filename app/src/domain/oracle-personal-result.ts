@@ -7,6 +7,7 @@ import { projectStructuredJournalObservations } from "./journal-observation"
 import type { JournalEntry } from "./journal-schema"
 import type { PlanBetaState } from "./plan-beta-schema"
 import { derivePlanCycleResponse } from "./plan-cycle-response"
+import type { PlanJournalHistory } from "./plan-journal-evidence"
 import { bucketByMonth, type TrendBucket, type TrendMetric } from "./trend-analysis"
 import type { OracleTopicId } from "./oracle-exploration"
 export type { OracleTopicId } from "./oracle-exploration"
@@ -38,6 +39,7 @@ export type OraclePersonalResultInput = {
   readonly topicId: OracleTopicId
   readonly entries: readonly JournalEntry[]
   readonly planState: PlanBetaState | null
+  readonly planHistory?: PlanJournalHistory
   readonly athleteRecords?: readonly AthleteRecord[]
   readonly metric?: "DISTANCE_KM" | "RPE"
   readonly today: string
@@ -226,6 +228,7 @@ function planResult(
   topicId: "focus" | "priority",
   entries: readonly JournalEntry[],
   planState: PlanBetaState | null,
+  planHistory?: PlanJournalHistory,
 ): OraclePersonalResult {
   if (planState === null) {
     return missingResult(
@@ -238,7 +241,7 @@ function planResult(
       "현재 계획 1개",
     )
   }
-  const response = derivePlanCycleResponse(entries, planState)
+  const response = derivePlanCycleResponse(entries, planState, planHistory)
   const rows = response.rows
     .filter((row) => row.actualRpe !== null)
     .slice(0, 8)
@@ -250,7 +253,8 @@ function planResult(
         : `실제 ${row.actualRpe}/10 · 계획 ${row.plannedRpe.minimum}~${row.plannedRpe.maximum}`,
     }))
   const missingComparison = response.signal === "NO_LINKED_RESULTS" || response.signal === "NO_COMPARABLE_RESULTS"
-  const status = response.signal === "NO_LINKED_RESULTS" ? "missing" : response.comparableRpeCount < 2 ? "partial" : "ready"
+  const status = response.historyReadIncomplete ? "partial"
+    : response.signal === "NO_LINKED_RESULTS" ? "missing" : response.comparableRpeCount < 2 ? "partial" : "ready"
   const action = response.signal === "NO_LINKED_RESULTS" ? "plan" : topicId === "priority" ? "plan" : "journal"
   const conciseHeadline: Record<typeof response.signal, string> = {
     NO_LINKED_RESULTS: "이번 계획의 훈련 기록이 아직 없어요",
@@ -277,24 +281,29 @@ function planResult(
           : "계획과 실제 느낌을 연결된 일지에서 확인했어요."
   return {
     status,
-    headline: conciseHeadline[response.signal],
-    summary,
+    headline: response.historyReadIncomplete && response.linkedResultCount === 0
+      ? "이전 계획의 기록 연결을 확인하지 못했어요" : conciseHeadline[response.signal],
+    summary: response.historyReadIncomplete && response.linkedResultCount === 0
+      ? "일지가 없는지 아직 판단할 수 없어요. 현재 계획에서 기록 연결을 다시 확인해요." : summary,
     source: `현재 계획 · 연결 ${response.linkedResultCount}건 · 비교 ${response.comparableRpeCount}건`,
     rows,
     unit: "RPE",
     detail: `${response.evidence.join(" / ")} 계획과 실제의 비교 설명만 제공하며, 같은 조건·향상 원인·자동 처방은 주장하지 않습니다.`,
     action,
-    actionLabel: response.signal === "NO_LINKED_RESULTS"
+    actionLabel: response.historyReadIncomplete && response.linkedResultCount === 0 ? "현재 계획 확인"
+      : response.signal === "NO_LINKED_RESULTS"
       ? "계획에서 훈련 기록하기"
       : action === "plan" ? "현재 계획 검토" : missingComparison ? "훈련 일지 보기" : "훈련 일지 보기",
-    ...(response.unknownCount > 0 || response.rejectedLinkCount > 0 || response.conflictCount > 0
+    ...(response.historyReadIncomplete
+      ? { notice: "변경 전 계획을 불러오지 못해 일부 기록은 비교하지 못했어요." }
+      : response.unknownCount > 0 || response.rejectedLinkCount > 0 || response.conflictCount > 0
       ? { notice: `강도 비교 불가 ${response.unknownCount}건 · 연결 불일치 ${response.rejectedLinkCount}건 · 기록 충돌 ${response.conflictCount}건` }
       : {}),
     requiredInput: status === "missing"
       ? response.signal === "NO_LINKED_RESULTS" ? "현재 계획에 연결된 훈련 일지 1건" : "계획 RPE가 있는 연결 일지 1건"
       : undefined,
     section: "summary",
-    fingerprint: status === "missing" ? null : fingerprint({
+    fingerprint: status === "missing" || response.historyReadIncomplete ? null : fingerprint({
       period: "current-plan",
       sourceCount: response.comparableRpeCount,
       rows: response.rows
@@ -383,8 +392,8 @@ export function buildOraclePersonalResult(input: OraclePersonalResultInput): Ora
   if (!isValidIsoDate(input.today)) return invalidDateResult()
   switch (input.topicId) {
     case "level": return levelResult(input.athleteRecords, input.today)
-    case "focus": return planResult("focus", input.entries, input.planState)
-    case "priority": return planResult("priority", input.entries, input.planState)
+    case "focus": return planResult("focus", input.entries, input.planState, input.planHistory)
+    case "priority": return planResult("priority", input.entries, input.planState, input.planHistory)
     case "mix": return mixResult(input.entries, input.today)
     case "compare": return trendResult("compare", input.entries, input.today, input.metric)
     case "change": return trendResult("change", input.entries, input.today, input.metric)
