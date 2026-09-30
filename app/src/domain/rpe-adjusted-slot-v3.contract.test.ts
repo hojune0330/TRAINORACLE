@@ -2,6 +2,7 @@ import { afterEach, beforeAll, beforeEach, expect, it, vi } from "vitest"
 import { createAdjustmentDraftV3, applyAdjustmentDraftV3 } from "@impl/prescription/prescription-adjustment-v3"
 import { sequenceV3ContentIdentity } from "@impl/prescription/sequence-v3-comparison"
 import { generatePlanFromDraft, selectPlanForActivation, generateMultiAdjustedNextFrameV3FromDraft } from "./plan-beta-flow"
+import * as planBetaFlow from "./plan-beta-flow"
 import { prepareMultiAdjustedNextFrameV3 } from "./adjusted-plan-continuity"
 import { draftFor, RUNTIME_CASES, TODAY } from "./prescription-quality-matrix.test-fixtures"
 import { activeLocalAccount, setActiveLocalAccount } from "./account/local-journal-ownership"
@@ -292,7 +293,7 @@ it("selects a uniquely reviewed source catalog and preserves history after curre
   const sources = { rpeBindings: reviewed.rpeBindings, policies: reviewed.policies,
     slots: reviewed.preparations.map(p => ({ address: p.address, source: p.source, experienceBand: p.experienceBand,
       initialReceipt: JSON.parse(p.rawSnapshot).receipt, explanations: [p.explanation] })) }
-  let current: ReviewedMultiRuntimeCatalogV3["current"] = [{ ...sources, policies: [] }, sources]
+  let current: ReviewedMultiRuntimeCatalogV3["current"] = [sources]
   const runtime = createCatalogMultiPlanRuntimeV3({ now: () => TODAY,
     readCatalog: () => ({ current, retained: reviewed.retained }) })
   const context = { generated: f.request.generated, gate: f.request.gate, intake: f.request.intake,
@@ -307,6 +308,27 @@ it("selects a uniquely reviewed source catalog and preserves history after curre
   expect(runtime.multiAdjustmentResolverV3!(context)).toBeNull()
   expect(() => entry!.readReview()).toThrow()
   expect(readPlanBetaStateFromStorage([], [], runtime.readMultiAdjustedEvidenceV3!()).kind).toBe("multi_adjusted_v3_loaded")
+})
+
+it("selects only the valid independently reviewed source from a mixed catalog without writing a plan", () => {
+  const f = storageFixture(), reviewed = f.readReview()
+  const sources = { rpeBindings: reviewed.rpeBindings, policies: reviewed.policies,
+    slots: reviewed.preparations.map(p => ({ address: p.address, source: p.source, experienceBand: p.experienceBand,
+      initialReceipt: JSON.parse(p.rawSnapshot).receipt, explanations: [p.explanation] })) }
+  const runtime = createCatalogMultiPlanRuntimeV3({ now: () => TODAY,
+    readCatalog: () => ({ current: [{ ...sources, policies: [] }, sources], retained: reviewed.retained }) })
+  const context = { generated: f.request.generated, gate: f.request.gate, intake: f.request.intake,
+    athleteEvidence: f.request.athleteEvidence, currentCheck: f.request.currentCheck,
+    candidateId: f.request.preparations[0]!.candidate.candidateId, startDate: f.request.preparations[0]!.startDate }
+  const writes = vi.spyOn(Storage.prototype, "setItem")
+  const entry = runtime.multiAdjustmentResolverV3!(context)
+  expect(entry).not.toBeNull()
+  expect(entry!.seed).toEqual(f.request)
+  const selectedReview = entry!.readReview()
+  expect(selectedReview.policies).toEqual(reviewed.policies)
+  expect(selectedReview.rpeBindings).toEqual(reviewed.rpeBindings)
+  expect(writes.mock.calls.every(([key]) => key === "__to_probe__")).toBe(true)
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
 })
 
 it("rejects ambiguous independently reviewed source catalogs without writing a plan", () => {
@@ -582,7 +604,6 @@ it("retains a multi-plan journal original and reads the exact slot after the act
   const slot = saved.state.selection.activePlan.sessions.find(s => s.prescription.kind === "ADJUSTED_METHOD_V3")!
   const draft = createPlannedSessionLogDraft(saved.state.selection, slot, TODAY.toISOString())!
   expect(await retainMultiAdjustedOriginalPlanV3(saved.state.contentFingerprint, { retained, locks: input.locks })).toEqual({ kind: "retained" })
-  expect(await retainMultiAdjustedOriginalPlanV3(saved.state.contentFingerprint, { retained, locks: input.locks })).toEqual({ kind: "retained" })
   expect(readMultiAdjustedOriginalPlansV3(retained, TODAY)).toMatchObject({ kind: "loaded", entries: [{ state: saved.state }] })
   const entry: PostSessionEntry = { id: "synthetic-multi-journal", kind: "post-session", date: draft.date,
     savedAt: TODAY.toISOString(), syncState: "local", activitySlot: slot.slot, plannedSessionLink: draft.link,
@@ -612,6 +633,23 @@ it("retains a multi-plan journal original and reads the exact slot after the act
   act(() => { setActiveLocalAccount("another-account") })
   expect(details.open).toBe(false)
   expect(readJournalOriginalPlan(loaded, [], [], retained).kind).toBe("unavailable")
+})
+
+it("retains the same multi-plan original idempotently without duplicating archived entries", async () => {
+  setActiveLocalAccount("journal-owner")
+  const input = storageFixture(), saved = await saveSelectedMultiAdjustedPlanV6(input)
+  if (saved.kind !== "saved") throw Error("Initial save failed")
+  const retained = input.readReview().retained
+  const activeBefore = localStorage.getItem(activePlanBetaStorageKey())
+  expect(await retainMultiAdjustedOriginalPlanV3(saved.state.contentFingerprint, { retained, locks: input.locks })).toEqual({ kind: "retained" })
+  const archivedBefore = { ...localStorage }
+  expect(await retainMultiAdjustedOriginalPlanV3(saved.state.contentFingerprint, { retained, locks: input.locks })).toEqual({ kind: "retained" })
+  expect({ ...localStorage }).toEqual(archivedBefore)
+  const archived = readMultiAdjustedOriginalPlansV3(retained, TODAY)
+  expect(archived).toMatchObject({ kind: "loaded", entries: [{ state: saved.state }] })
+  if (archived.kind !== "loaded") throw Error("Original missing")
+  expect(archived.entries).toHaveLength(1)
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(activeBefore)
 })
 
 it("opens the actual multi-plan schedule, records a slot and archives its original before handing off to the journal", async () => {
@@ -670,9 +708,6 @@ it("prepares the next frame from actual multi-plan history without inventing mis
   const retained = input.readReview().retained
   const base = { previous: saved.state, expectedFingerprint: saved.state.contentFingerprint,
     nextStartDate: "2026-09-30", currentCheck: "NO_KNOWN_RISK" as const }
-  expect(prepareMultiAdjustedNextFrameV3(base, retained, TODAY)).toMatchObject({ code: "FRAME_NOT_STARTED" })
-  expect(prepareMultiAdjustedNextFrameV3(base, retained,
-    new Date(`${saved.state.selection.intake.startDate}T12:00:00+09:00`))).toMatchObject({ code: "INCOMPLETE_FRAME" })
   const later = new Date("2026-09-30T12:00:00+09:00")
   vi.setSystemTime(later)
   const prepared = prepareMultiAdjustedNextFrameV3(base, retained, later)
@@ -698,11 +733,33 @@ it("prepares the next frame from actual multi-plan history without inventing mis
   expect(selectMultiAdjustedPlanSuccessorV3(successorInput.request, saved.state, "wrong", retained,
     review.rpeBindings, review.policies, later)).toMatchObject({ code: "STALE_BASE" })
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
-  const slot = saved.state.selection.activePlan.sessions.find(s => s.role === "QUALITY")!
-  const pain = await saveMultiAdjustedPlanProgressV3({ expectedFingerprint: saved.state.contentFingerprint,
-    progress: { sessionDay: slot.day, sessionSlot: slot.slot, state: "PAIN_CHECKIN" }, retained, locks: input.locks })
-  if (pain.kind !== "saved") throw Error(pain.code)
-  expect(prepareMultiAdjustedNextFrameV3({ ...base, previous: pain.state, expectedFingerprint: pain.state.contentFingerprint }, retained, later)).toMatchObject({ code: "ACTIVE_HOLD" })
+})
+
+it.each([
+  ["not-started", "FRAME_NOT_STARTED"],
+  ["incomplete", "INCOMPLETE_FRAME"],
+  ["pain-hold", "ACTIVE_HOLD"],
+] as const)("blocks multi-plan next-frame preparation for %s without saving a successor", async (scenario, code) => {
+  const input = storageFixture(), saved = await saveSelectedMultiAdjustedPlanV6(input)
+  if (saved.kind !== "saved") throw Error("Initial save failed")
+  const retained = input.readReview().retained
+  let previous = saved.state
+  const at = scenario === "not-started" ? TODAY : scenario === "incomplete"
+    ? new Date(`${previous.selection.intake.startDate}T12:00:00+09:00`)
+    : new Date("2026-09-30T12:00:00+09:00")
+  vi.setSystemTime(at)
+  if (scenario === "pain-hold") {
+    const slot = previous.selection.activePlan.sessions.find(s => s.role === "QUALITY")!
+    const pain = await saveMultiAdjustedPlanProgressV3({ expectedFingerprint: previous.contentFingerprint,
+      progress: { sessionDay: slot.day, sessionSlot: slot.slot, state: "PAIN_CHECKIN" }, retained, locks: input.locks })
+    if (pain.kind !== "saved") throw Error(pain.code)
+    previous = pain.state
+  }
+  const before = { ...localStorage }
+  expect(prepareMultiAdjustedNextFrameV3({ previous, expectedFingerprint: previous.contentFingerprint,
+    nextStartDate: "2026-09-30", currentCheck: "NO_KNOWN_RISK" }, retained, at)).toMatchObject({ code })
+  expect({ ...localStorage }).toEqual(before)
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before[activePlanBetaStorageKey()])
 })
 
 async function coldSuccessorStorageFixture() {
@@ -787,25 +844,54 @@ it("matches a cold predecessor with isolated seeded bytes while preserving expir
 })
 
 it("opens the next cycle from the schedule and saves through candidate, multi edit, and final confirmation", async () => {
-  const f = await coldSuccessorStorageFixture(), before = localStorage.getItem(activePlanBetaStorageKey())
-    const readSources = vi.fn(() => {
-      const reviewed = f.input.readReview()
-      return { rpeBindings: reviewed.rpeBindings, policies: reviewed.policies,
-        slots: reviewed.preparations.map(p => ({ address: p.address, source: p.source, experienceBand: p.experienceBand,
-          initialReceipt: JSON.parse(p.rawSnapshot).receipt, explanations: [p.explanation] })) }
-    })
-    const runtime = createAssembledMultiPlanRuntimeV3({ readSources, readRetained: () => f.retained })
-    const resolver = vi.fn(runtime.multiAdjustmentResolverV3!)
-    render(React.createElement(PlanBeta, { ...runtime, multiAdjustmentResolverV3: resolver }))
+  // The predecessor is genuinely generated and saved cold in this case. Only
+  // independently prepared JSON sources are cloned; the UI generates the next
+  // frame once and the real provider reconstructs/checks them on every read.
+  const first = withStorageControls(buildStorageMaterials(buildFixture()))
+  const previous = await saveSelectedMultiAdjustedPlanV6(first)
+  if (previous.kind !== "saved") throw Error("Initial save failed")
+  const before = localStorage.getItem(activePlanBetaStorageKey())
+  const materials = structuredClone(existingPredecessor)
+  expect(previous.state.contentFingerprint).toBe(materials.previous.contentFingerprint)
+  expect(previous.state).toEqual(materials.previous)
+  expect(before).toBe(materials.raw)
+  expect(first.readReview().retained[0]).toEqual(materials.retained[0])
+  expect(materials.materials.request).not.toBe(existingPredecessor.materials.request)
+  expect(materials.materials.review.preparations).toBe(materials.materials.request.preparations)
+  const later = new Date(materials.laterMs)
+  vi.setSystemTime(later)
+  const f = { previous: previous.state, retained: materials.retained }
+  const nextGeneration = vi.spyOn(planBetaFlow, "generateMultiAdjustedNextFrameV3FromDraft")
+  const readSources = vi.fn(() => {
+    const reviewed = materials.materials.review
+    return { rpeBindings: reviewed.rpeBindings, policies: reviewed.policies,
+      slots: reviewed.preparations.map(p => ({ address: p.address, source: p.source, experienceBand: p.experienceBand,
+        initialReceipt: JSON.parse(p.rawSnapshot).receipt, explanations: [p.explanation] })) }
+  })
+  const runtime = createAssembledMultiPlanRuntimeV3({ readSources, readRetained: () => f.retained })
+  const resolver = vi.fn(runtime.multiAdjustmentResolverV3!)
+  render(React.createElement(PlanBeta, { ...runtime, multiAdjustmentResolverV3: resolver }))
   fireEvent.click(screen.getByRole("button", { name: "다음 훈련 주기 준비" }))
   expect(screen.getByRole("button", { name: "다음 계획 비교하기" })).toBeDisabled()
   fireEvent.click(screen.getByRole("radio", { name: "알고 있는 통증이나 이상이 없어요" }))
   fireEvent.click(screen.getByRole("button", { name: "다음 계획 비교하기" }))
+  expect(nextGeneration).toHaveBeenCalledOnce()
+  expect(nextGeneration.mock.calls[0]![0].expectedPredecessorFingerprint).toBe(previous.state.contentFingerprint)
   expect(screen.getByRole("heading", { name: "다음 계획을 비교해 주세요" })).toBeTruthy()
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
   fireEvent.click(screen.getAllByRole("button", { name: /구성 확인$/ })[0]!)
   expect(resolver).toHaveBeenCalledOnce()
-    expect(readSources).toHaveBeenCalled()
+  const context = resolver.mock.calls[0]![0], request = materials.materials.request
+  // Exact equality binds independently prepared sources to the UI's actual
+  // generated frame (not merely to an equal predecessor hash).
+  expect(context.generated).toEqual(request.generated)
+  expect(context.gate).toEqual(request.gate)
+  expect(context.intake).toEqual(request.intake)
+  expect(context.athleteEvidence).toEqual(request.athleteEvidence)
+  expect(context.currentCheck).toBe(request.currentCheck)
+  expect(context.candidateId).toBe(request.preparations[0]!.candidate.candidateId)
+  expect(context.startDate).toBe(request.preparations[0]!.startDate)
+  expect(readSources).toHaveBeenCalled()
   expect(screen.getByRole("heading", { name: "이번 계획의 주요 훈련" })).toBeTruthy()
   fireEvent.click(screen.getByRole("button", { name: "전체 확인으로" }))
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
@@ -816,6 +902,7 @@ it("opens the next cycle from the schedule and saves through candidate, multi ed
     continuation: { predecessorFingerprint: f.previous.contentFingerprint } } } })
   expect(localStorage.getItem(activePlanBetaStorageKey())).not.toBe(before)
   expect(readMultiAdjustedOriginalPlansV3(f.retained)).toMatchObject({ kind: "loaded", entries: [{ state: f.previous }] })
+  expect(nextGeneration).toHaveBeenCalledOnce()
 // This includes predecessor creation, archival, generation, UI edits and locked save.
 // CI run 34164472896 exceeded the default 5s; retain all assertions with a bounded integration timeout.
 }, 15000)
