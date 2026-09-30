@@ -32,6 +32,7 @@ import * as mutationLocks from "./plan-mutation-lock"
 import { exportMultiAdjustedPlanBackupV3, readMultiAdjustedPlanBackupV3, importMultiAdjustedPlanHistoryV3 } from "./multi-adjusted-plan-backup-v3"
 import { AdjustedPlanImport } from "../screens/plan-beta/AdjustedPlanImport"
 import { saveSelectedMultiAdjustedSuccessorV3 } from "./multi-adjusted-plan-successor-v3"
+import * as multiPlanSuccessor from "./multi-adjusted-plan-successor-v3"
 import { MultiAdjustedPlanApplyReviewV3 } from "../screens/plan-beta/MultiAdjustedPlanApplyReviewV3"
 import { MultiAdjustedPlanEditFlowV3 } from "../screens/plan-beta/MultiAdjustedPlanEditFlowV3"
 import { stageMultiAdjustmentV3 } from "./stage-multi-adjustment-v3"
@@ -895,7 +896,16 @@ it("opens the next cycle from the schedule and saves through candidate, multi ed
   expect(screen.getByRole("heading", { name: "이번 계획의 주요 훈련" })).toBeTruthy()
   fireEvent.click(screen.getByRole("button", { name: "전체 확인으로" }))
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
-  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" })) })
+  // React does not await the promise discarded by an onClick handler. Observe
+  // the real locked save without mocking its result or skipping validation.
+  const successorSave = vi.spyOn(multiPlanSuccessor, "saveSelectedMultiAdjustedSuccessorV3")
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" }))
+    expect(successorSave).toHaveBeenCalledOnce()
+    const attempt = successorSave.mock.results[0]!
+    expect(attempt.type).toBe("return")
+    expect(await attempt.value).toMatchObject({ kind: "saved", predecessorFingerprint: f.previous.contentFingerprint })
+  })
   expect(screen.getByRole("heading", { name: "내 훈련 일정" })).toBeTruthy()
   const current = readPlanBetaStateFromStorage([], [], f.retained)
   expect(current).toMatchObject({ kind: "multi_adjusted_v3_loaded", state: { selection: {
