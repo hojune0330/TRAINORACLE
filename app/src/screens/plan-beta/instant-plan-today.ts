@@ -1,4 +1,5 @@
 import type { PlanSession } from "@impl/plan-generator/types"
+import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 import type { InstantPlanToday } from "../../domain/instant-plan-contract"
 import type { PlanBetaState } from "../../domain/plan-beta-store"
 import { isValidIsoDate, isoShift } from "../../domain/dates"
@@ -35,7 +36,8 @@ export function projectInstantToday(state: PlanBetaState, today: string, linkedS
     recorded: linkedSessionIds.includes(instantSessionId(session))
       || state.progress.some(item => item.sessionDay === session.day && item.sessionSlot === session.slot),
     steps: projectInstantExecutionSteps(session),
-    ...(session.role === "QUALITY" && session.prescription.kind === "RPE_TIME_RANGE" ? {
+    ...(session.role === "QUALITY" && session.prescription.kind === "RPE_TIME_RANGE"
+      && !(session.prescription.catalogWorkout && resolveCatalogBinding(session.prescription.catalogWorkout)) ? {
       guidanceNotice: "시간·체감 강도 안내예요. 반복 횟수와 회복 시간은 정해지지 않았어요. 총 시간을 계속 강하게 달리는 시간으로 쓰지 마세요.",
     } : {}),
   }))
@@ -49,6 +51,17 @@ export function projectInstantToday(state: PlanBetaState, today: string, linkedS
 
 export function projectInstantExecutionSteps(session: PlanSession): InstantPlanToday["sessions"][number]["steps"] {
   const prescription = session.prescription
+  const catalog = prescription.kind === "RPE_TIME_RANGE" && prescription.catalogWorkout
+    ? resolveCatalogBinding(prescription.catalogWorkout) : null
+  if (catalog?.totals.seconds) {
+    const total = catalog.totals.seconds
+    return [
+      { label: "본운동", instruction: prescriptionLabel(session) },
+      { label: "전체 예정시간", instruction: `준비·회복·정리 포함 ${formatTrainingSeconds(total.minimum)}${total.minimum === total.maximum ? "" : `~${formatTrainingSeconds(total.maximum)}`}` },
+      ...sessionExecutionSteps(session).filter(step => step.title !== "본운동")
+        .map(step => ({ label: step.title, instruction: step.detail })),
+    ]
+  }
   if (prescription.kind !== "PACE_TARGET") {
     return [{ label: "총 시간·강도", instruction: prescriptionLabel(session) },
       ...sessionExecutionSteps(session).map(step => ({ label: step.title, instruction: step.detail })),

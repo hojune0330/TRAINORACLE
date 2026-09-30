@@ -19,6 +19,7 @@ export type InstantPlanDaySummary = {
     readonly id: string
     readonly slotLabel: string
     readonly title: string
+    readonly notation?: string
     readonly role: "MAIN" | "BASE" | "REC" | "OFF" | "OTHER"
   }[]
 }
@@ -34,6 +35,7 @@ export type InstantPlanRecommendation = {
   readonly days: readonly InstantPlanDaySummary[]
   readonly source: InstantPlanSource
   readonly creatorLabel?: string
+  readonly guidanceNotice?: string
 }
 
 export type InstantPlanActionState =

@@ -113,23 +113,25 @@ export function PlanCandidates({
   const headingRef = React.useRef<HTMLHeadingElement>(null)
   const optionsRef = React.useRef<HTMLDivElement>(null)
   const methodRef = React.useRef<HTMLDivElement>(null)
+  const catalogRef = React.useRef<HTMLDivElement>(null)
   const dateRef = React.useRef<HTMLLabelElement>(null)
   const dateInputRef = React.useRef<HTMLInputElement>(null)
   const recoveryRef = React.useRef<HTMLElement>(null)
   const confirmationRequested = React.useRef(false)
-  const [navigation, setNavigation] = React.useState<{ kind: "result" | "options" | "date" | "method" | "recovery"; revision: number } | null>(null)
-  const reveal = React.useCallback((kind: "result" | "options" | "date" | "method" | "recovery") => {
+  const [navigation, setNavigation] = React.useState<{ kind: "result" | "options" | "date" | "method" | "catalog" | "recovery"; revision: number } | null>(null)
+  const reveal = React.useCallback((kind: "result" | "options" | "date" | "method" | "catalog" | "recovery") => {
     setNavigation(previous => ({ kind, revision: (previous?.revision ?? 0) + 1 }))
   }, [])
   useActiveContentScroll(navigation?.revision ?? null,
-    navigation?.kind === "recovery" ? recoveryRef : navigation?.kind === "method" ? methodRef : navigation?.kind === "options" ? optionsRef : navigation?.kind === "date" ? dateRef : resultRef,
-    navigation?.kind === "recovery" ? recoveryRef : navigation?.kind === "method" ? methodRef : navigation?.kind === "options" ? optionsRef : navigation?.kind === "date" ? dateInputRef : headingRef)
+    navigation?.kind === "catalog" ? catalogRef : navigation?.kind === "recovery" ? recoveryRef : navigation?.kind === "method" ? methodRef : navigation?.kind === "options" ? optionsRef : navigation?.kind === "date" ? dateRef : resultRef,
+    navigation?.kind === "catalog" ? catalogRef : navigation?.kind === "recovery" ? recoveryRef : navigation?.kind === "method" ? methodRef : navigation?.kind === "options" ? optionsRef : navigation?.kind === "date" ? dateInputRef : headingRef)
   React.useEffect(() => {
     if (saveError && !saving) reveal("recovery")
   }, [saveError, saveCode, saving, reveal])
   const [repeatPreference, setRepeatPreference] = React.useState<RepeatPreference>("NEUTRAL")
   const [targetDraftPending, setTargetDraftPending] = React.useState(false)
   const [methodDraftPending, setMethodDraftPending] = React.useState(false)
+  const [catalogDraftPending, setCatalogDraftPending] = React.useState(false)
   React.useEffect(() => {
     setRepeatPreference("NEUTRAL")
   }, [intake.eventGroup, intake.eventDistanceM, intake.trainingFocus, intake.experienceBand])
@@ -146,7 +148,7 @@ export function PlanCandidates({
   const canRevise = !saving && (saveCode === undefined || saveCode === null
     || !saveCode.startsWith("ACCOUNT_PLAN_")
     || ["ACCOUNT_PLAN_STALE", "ACCOUNT_PLAN_EVIDENCE_REQUIRED", "ACCOUNT_PLAN_REVIEW_REQUIRED"].includes(saveCode))
-  const canSelect = hasValidStartDate && !recordConfirmationPending && !detailedEvidencePending && !targetDraftPending && !methodDraftPending && !selectionUnavailable
+  const canSelect = hasValidStartDate && !recordConfirmationPending && !detailedEvidencePending && !targetDraftPending && !methodDraftPending && !catalogDraftPending && !selectionUnavailable
   const selectedRecord = athleteRecords.find((record) => record.id === selectedRecordId)
   const selectedEventLabel = selectedRecord === undefined
     ? "선택한 종목"
@@ -179,6 +181,7 @@ export function PlanCandidates({
         actionState={saving ? { kind: "SAVING" } : saveCode === "ACCOUNT_PLAN_PENDING" ? { kind: "PENDING", message: saveError ?? "계정 저장을 확인하고 있어요." }
           : selectionUnavailable ? { kind: "BLOCKED", message: saveError ?? "계정 저장 상태를 먼저 확인해 주세요." }
           : saveError ? { kind: "FAILED", message: saveError }
+          : catalogDraftPending ? { kind: "BLOCKED", message: "바꾼 훈련을 적용하거나 취소해 주세요." }
           : needsReview ? { kind: "BLOCKED", message: "아래에서 기준 기록이나 변경한 내용을 확인해 주세요." } : { kind: "READY" }}
         onStart={candidateId => {
           if (!canSelect) return
@@ -189,7 +192,8 @@ export function PlanCandidates({
         onRetry={saveCode === "PLAN_STORAGE_WRITE_FAILED" && canSelect ? onRetrySave : undefined}
         onShowAlternatives={() => { setShowOptions(true); reveal("options") }}
         onEditSchedule={() => { setShowOptions(true); reveal("date") }}
-        onEditWorkout={instantAdjustment ?? (detailedOptions.length > 0 ? () => reveal("method") : undefined)}
+        onEditWorkout={instantAdjustment ?? (onCatalogChange && intake.selectedDetailedTemplateRef === null
+          ? () => reveal("catalog") : detailedOptions.length > 0 ? () => reveal("method") : undefined)}
         workoutLabel={instantAdjustment ? "거리·시간·반복·회복을 확인하고 조절해요" : selectedDetailedOption?.mainSummary}
         workoutLabelTitle={instantAdjustment ? "상세 훈련" : undefined}
         startLabel={instantAdjustment ? "처방 훈련 확인" : undefined}
@@ -197,8 +201,10 @@ export function PlanCandidates({
           ? `${selectedEventLabel} ${formatRecordTime(selectedRecord.performanceSeconds)}` : undefined}
         goalLabel={instantEntry?.kind === "GOAL_ONLY" ? `${instantEntry.eventDistanceM}m ${formatRecordTime(instantEntry.performanceSeconds)}` : undefined}
       />}
-      {onCatalogChange && intake.selectedDetailedTemplateRef === null && <CatalogWorkoutPicker generated={generated} intake={intake}
-        records={athleteRecords} onChange={onCatalogChange} disabled={saving || recordConfirmationPending || selectionUnavailable} />}
+      {onCatalogChange && intake.selectedDetailedTemplateRef === null && <div ref={catalogRef} tabIndex={-1}>
+        <CatalogWorkoutPicker generated={generated} intake={intake} openRequest={navigation?.kind === "catalog" ? navigation.revision : null}
+          records={athleteRecords} onChange={onCatalogChange} onPendingChange={setCatalogDraftPending} disabled={saving || recordConfirmationPending || selectionUnavailable} />
+      </div>}
       {!recommendation && saveError && <p role="alert">{saveError}</p>}
       {instantAdjustment === undefined && onChangeMethod !== undefined && detailedOptions.length > 0 && <div ref={methodRef} tabIndex={-1}>
         <PlanMethodPicker

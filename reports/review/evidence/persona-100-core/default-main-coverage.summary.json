@@ -1,0 +1,304 @@
+{
+  "candidate": "first balanced candidate only; QUALITY denotes MAIN",
+  "safeGeneratedProfiles": 82,
+  "mainProfiles": 57,
+  "profilesWithIncompleteMain": 43,
+  "mainSlots": 85,
+  "incompleteMainSlots": 66,
+  "reasonCountBoundary": "overlapping excluded configuration checks, not distinct athletes or distinct failures",
+  "groups": [
+    {
+      "purpose": "BASE_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "profiles": 5,
+      "mainProfiles": 0,
+      "incompleteProfiles": 0,
+      "mainSlots": 0,
+      "incompleteSlots": 0,
+      "excludedOptionReasons": {}
+    },
+    {
+      "purpose": "BASE_INTENT",
+      "experience": "DEVELOPING",
+      "profiles": 5,
+      "mainProfiles": 0,
+      "incompleteProfiles": 0,
+      "mainSlots": 0,
+      "incompleteSlots": 0,
+      "excludedOptionReasons": {}
+    },
+    {
+      "purpose": "BASE_INTENT",
+      "experience": "EXPERIENCED",
+      "profiles": 3,
+      "mainProfiles": 0,
+      "incompleteProfiles": 0,
+      "mainSlots": 0,
+      "incompleteSlots": 0,
+      "excludedOptionReasons": {}
+    },
+    {
+      "purpose": "LT_INTENT",
+      "experience": "EXPERIENCED",
+      "profiles": 5,
+      "mainProfiles": 5,
+      "incompleteProfiles": 5,
+      "mainSlots": 9,
+      "incompleteSlots": 9,
+      "excludedOptionReasons": {
+        "AUTO_RPE_ENVELOPE_EXCEEDED": 180,
+        "TIME_BUDGET_EXCEEDED": 63,
+        "EXPERIENCE_SCOPE": 18,
+        "TIME_BUDGET_UNCONFIRMED": 63,
+        "INCOMPLETE_TOTAL_TIME": 63,
+        "RECENT_THRESHOLD_VOLUME": 9,
+        "HILL_SURFACE_GRADE_RETURN": 18
+      }
+    },
+    {
+      "purpose": "LT_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "profiles": 4,
+      "mainProfiles": 4,
+      "incompleteProfiles": 4,
+      "mainSlots": 4,
+      "incompleteSlots": 4,
+      "excludedOptionReasons": {
+        "EXPERIENCE_SCOPE": 72,
+        "TIME_BUDGET_EXCEEDED": 68,
+        "AUTO_RPE_ENVELOPE_EXCEEDED": 80,
+        "TIME_BUDGET_UNCONFIRMED": 28,
+        "INCOMPLETE_TOTAL_TIME": 28,
+        "RECENT_THRESHOLD_VOLUME": 4,
+        "HILL_SURFACE_GRADE_RETURN": 8
+      }
+    },
+    {
+      "purpose": "LT_INTENT",
+      "experience": "DEVELOPING",
+      "profiles": 3,
+      "mainProfiles": 3,
+      "incompleteProfiles": 3,
+      "mainSlots": 6,
+      "incompleteSlots": 6,
+      "excludedOptionReasons": {
+        "TIME_BUDGET_EXCEEDED": 72,
+        "AUTO_RPE_ENVELOPE_EXCEEDED": 120,
+        "EXPERIENCE_SCOPE": 96,
+        "TIME_BUDGET_UNCONFIRMED": 42,
+        "INCOMPLETE_TOTAL_TIME": 42,
+        "RECENT_THRESHOLD_VOLUME": 6,
+        "HILL_SURFACE_GRADE_RETURN": 12
+      }
+    },
+    {
+      "purpose": "VO2_INTENT",
+      "experience": "DEVELOPING",
+      "profiles": 3,
+      "mainProfiles": 3,
+      "incompleteProfiles": 3,
+      "mainSlots": 6,
+      "incompleteSlots": 6,
+      "excludedOptionReasons": {
+        "TIME_BUDGET_EXCEEDED": 78,
+        "EXPERIENCE_SCOPE": 96,
+        "TIME_BUDGET_UNCONFIRMED": 42,
+        "INCOMPLETE_TOTAL_TIME": 42,
+        "HILL_SURFACE_GRADE_RETURN": 12
+      }
+    },
+    {
+      "purpose": "VO2_INTENT",
+      "experience": "EXPERIENCED",
+      "profiles": 3,
+      "mainProfiles": 3,
+      "incompleteProfiles": 0,
+      "mainSlots": 5,
+      "incompleteSlots": 0,
+      "excludedOptionReasons": {}
+    },
+    {
+      "purpose": "VO2_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "profiles": 4,
+      "mainProfiles": 4,
+      "incompleteProfiles": 0,
+      "mainSlots": 4,
+      "incompleteSlots": 0,
+      "excludedOptionReasons": {}
+    },
+    {
+      "purpose": "GLY_INTENT",
+      "experience": "DEVELOPING",
+      "profiles": 4,
+      "mainProfiles": 4,
+      "incompleteProfiles": 4,
+      "mainSlots": 7,
+      "incompleteSlots": 7,
+      "excludedOptionReasons": {
+        "TIME_BUDGET_UNCONFIRMED": 77,
+        "INCOMPLETE_TOTAL_TIME": 77,
+        "AUTO_RPE_ENVELOPE_EXCEEDED": 91,
+        "TIME_BUDGET_EXCEEDED": 42,
+        "EXPERIENCE_SCOPE": 77,
+        "HIGH_INTENSITY_REPETITION_EXPERIENCE": 14,
+        "HILL_SURFACE_GRADE_RETURN": 7
+      }
+    },
+    {
+      "purpose": "GLY_INTENT",
+      "experience": "EXPERIENCED",
+      "profiles": 4,
+      "mainProfiles": 4,
+      "incompleteProfiles": 4,
+      "mainSlots": 6,
+      "incompleteSlots": 6,
+      "excludedOptionReasons": {
+        "TIME_BUDGET_UNCONFIRMED": 66,
+        "INCOMPLETE_TOTAL_TIME": 66,
+        "AUTO_RPE_ENVELOPE_EXCEEDED": 78,
+        "HIGH_INTENSITY_REPETITION_EXPERIENCE": 12,
+        "HILL_SURFACE_GRADE_RETURN": 6
+      }
+    },
+    {
+      "purpose": "GLY_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "profiles": 4,
+      "mainProfiles": 4,
+      "incompleteProfiles": 4,
+      "mainSlots": 4,
+      "incompleteSlots": 4,
+      "excludedOptionReasons": {
+        "EXPERIENCE_SCOPE": 52,
+        "TIME_BUDGET_EXCEEDED": 44,
+        "TIME_BUDGET_UNCONFIRMED": 44,
+        "INCOMPLETE_TOTAL_TIME": 44,
+        "AUTO_RPE_ENVELOPE_EXCEEDED": 52,
+        "HIGH_INTENSITY_REPETITION_EXPERIENCE": 8,
+        "HILL_SURFACE_GRADE_RETURN": 4
+      }
+    },
+    {
+      "purpose": "ATP_PC_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "profiles": 5,
+      "mainProfiles": 5,
+      "incompleteProfiles": 5,
+      "mainSlots": 5,
+      "incompleteSlots": 5,
+      "excludedOptionReasons": {
+        "EXPERIENCE_SCOPE": 80,
+        "ACCELERATION_AND_DECELERATION_SPACE": 90,
+        "TIME_BUDGET_EXCEEDED": 75,
+        "TIME_BUDGET_UNCONFIRMED": 75,
+        "INCOMPLETE_TOTAL_TIME": 75,
+        "HILL_SURFACE_GRADE_RETURN": 15
+      }
+    },
+    {
+      "purpose": "ATP_PC_INTENT",
+      "experience": "DEVELOPING",
+      "profiles": 4,
+      "mainProfiles": 4,
+      "incompleteProfiles": 4,
+      "mainSlots": 7,
+      "incompleteSlots": 7,
+      "excludedOptionReasons": {
+        "ACCELERATION_AND_DECELERATION_SPACE": 126,
+        "TIME_BUDGET_UNCONFIRMED": 105,
+        "INCOMPLETE_TOTAL_TIME": 105,
+        "EXPERIENCE_SCOPE": 98,
+        "TIME_BUDGET_EXCEEDED": 56,
+        "HILL_SURFACE_GRADE_RETURN": 21
+      }
+    },
+    {
+      "purpose": "ATP_PC_INTENT",
+      "experience": "EXPERIENCED",
+      "profiles": 3,
+      "mainProfiles": 3,
+      "incompleteProfiles": 3,
+      "mainSlots": 5,
+      "incompleteSlots": 5,
+      "excludedOptionReasons": {
+        "ACCELERATION_AND_DECELERATION_SPACE": 90,
+        "TIME_BUDGET_UNCONFIRMED": 75,
+        "INCOMPLETE_TOTAL_TIME": 75,
+        "EXPERIENCE_SCOPE": 10,
+        "HILL_SURFACE_GRADE_RETURN": 15
+      }
+    },
+    {
+      "purpose": "MIXED_INTENT",
+      "experience": "EXPERIENCED",
+      "profiles": 4,
+      "mainProfiles": 4,
+      "incompleteProfiles": 0,
+      "mainSlots": 7,
+      "incompleteSlots": 0,
+      "excludedOptionReasons": {}
+    },
+    {
+      "purpose": "MIXED_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "profiles": 3,
+      "mainProfiles": 3,
+      "incompleteProfiles": 0,
+      "mainSlots": 3,
+      "incompleteSlots": 0,
+      "excludedOptionReasons": {}
+    },
+    {
+      "purpose": "MIXED_INTENT",
+      "experience": "DEVELOPING",
+      "profiles": 4,
+      "mainProfiles": 4,
+      "incompleteProfiles": 4,
+      "mainSlots": 7,
+      "incompleteSlots": 7,
+      "excludedOptionReasons": {
+        "EXPERIENCE_SCOPE": 112,
+        "TIME_BUDGET_UNCONFIRMED": 70,
+        "INCOMPLETE_TOTAL_TIME": 70,
+        "EVENT_SCOPE": 7,
+        "TIME_BUDGET_EXCEEDED": 49,
+        "AUTO_RPE_ENVELOPE_EXCEEDED": 77,
+        "ACCELERATION_AND_DECELERATION_SPACE": 14,
+        "COMPOUND_TRAINING_EXPERIENCE": 14,
+        "HILL_SURFACE_GRADE_RETURN": 14,
+        "CONNECTED_HILL_FLAT_ROUTE": 7
+      }
+    },
+    {
+      "purpose": "RECOVERY_INTENT",
+      "experience": "EXPERIENCED",
+      "profiles": 5,
+      "mainProfiles": 0,
+      "incompleteProfiles": 0,
+      "mainSlots": 0,
+      "incompleteSlots": 0,
+      "excludedOptionReasons": {}
+    },
+    {
+      "purpose": "RECOVERY_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "profiles": 4,
+      "mainProfiles": 0,
+      "incompleteProfiles": 0,
+      "mainSlots": 0,
+      "incompleteSlots": 0,
+      "excludedOptionReasons": {}
+    },
+    {
+      "purpose": "RECOVERY_INTENT",
+      "experience": "DEVELOPING",
+      "profiles": 3,
+      "mainProfiles": 0,
+      "incompleteProfiles": 0,
+      "mainSlots": 0,
+      "incompleteSlots": 0,
+      "excludedOptionReasons": {}
+    }
+  ]
+}

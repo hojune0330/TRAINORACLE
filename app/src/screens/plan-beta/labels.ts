@@ -274,14 +274,17 @@ type CandidateSummarySource = {
   readonly frame?: { readonly projectionLengthDays?: 7 | 9 | 9.5 | 10 }
 }
 
-function formatTotalMinutes(totalMinutes: number): string {
-  if (totalMinutes < 60) {
-    return `${totalMinutes}분`
-  }
-
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
-  return minutes === 0 ? `${hours}시간` : `${hours}시간 ${minutes}분`
+export function formatTotalMinutes(totalMinutes: number): string {
+  // Format the overview only; keep the exact prescription values unchanged.
+  const totalSeconds = Math.round(totalMinutes * 60)
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  return [
+    hours > 0 ? `${hours}시간` : null,
+    minutes > 0 ? `${minutes}분` : null,
+    seconds > 0 ? `${seconds}초` : null,
+  ].filter(Boolean).join(" ") || "0분"
 }
 
 function candidateSessionFacts(candidate: CandidateSummarySource) {

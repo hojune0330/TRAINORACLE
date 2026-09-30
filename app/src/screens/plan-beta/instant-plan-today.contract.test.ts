@@ -16,8 +16,7 @@ describe("selected plan today projection", () => {
     const result = projectInstantToday(fixture(), "2026-09-20")
     expect(result.state).toBe("SCHEDULED")
     expect(result.sessions.map(item => [item.slotLabel, item.recorded])).toEqual([["오전", false], ["오후", false]])
-    expect(result.sessions[0]?.steps[0]?.instruction).toContain("20~30분")
-    expect(result.sessions[0]?.steps[0]?.instruction).toContain("RPE 2~4")
+    expect(result.sessions[0]?.steps[0]?.instruction).toBe("전체 20–30min @ RPE 2–4")
   })
   it.each(["COMPLETED", "RESTED", "SKIPPED"] as const)("%s in AM does not complete PM", progress => {
     const state = fixture()

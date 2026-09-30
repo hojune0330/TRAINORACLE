@@ -380,6 +380,9 @@ export function evaluatePlanSafety(
   currentCheck: PlanCurrentCheck,
   evaluatedAt: Date = new Date(),
 ): PlanSafetyEvaluation {
+  if (currentCheck !== "NO_KNOWN_RISK" && currentCheck !== "REVIEW_REQUIRED") {
+    return { kind: "blocked", code: "CURRENT_CHECK_REQUIRES_REVIEW" }
+  }
   const journal = loadEntriesForPlanSafety()
   if (
     journal.status === "uncertain"

@@ -1,0 +1,115 @@
+{
+  "packagedAt": "2026-09-30T13:13:36.206Z",
+  "baselineCommit": "9085282",
+  "currentSource": "isolated working-tree snapshot, not a commit",
+  "currentDevInstrumentationDisabledForFinalScreenshots": true,
+  "initialElevenChecksBeforeP042Fix": true,
+  "subsequentParentRandomFixesNotBrowserVerified": true,
+  "files": [
+    {
+      "path": "app/src/main.tsx",
+      "baselineSha256": "d21c1c21c7637793b95504293a4329e399367eda1dc57d80d736a4c38861907e",
+      "currentSnapshotSha256": "9ac5befe5a1cbc6f730baa436d7d6853c069d5fc3f000e3c08e16f8038e79188",
+      "workingTreeAtPackagingSha256": "9ac5befe5a1cbc6f730baa436d7d6853c069d5fc3f000e3c08e16f8038e79188",
+      "currentSnapshotMatchesWorkingTree": true
+    },
+    {
+      "path": "app/src/screens/PlanBeta.tsx",
+      "baselineSha256": "2f9a4879ef505112e92ddd1c142eb7483a1d024cec3053e725edb5c4ee1f277e",
+      "currentSnapshotSha256": "c8f7484515b141429faddddb4765e0564d88221403d66a8420312a991d572430",
+      "workingTreeAtPackagingSha256": "c8f7484515b141429faddddb4765e0564d88221403d66a8420312a991d572430",
+      "currentSnapshotMatchesWorkingTree": true
+    },
+    {
+      "path": "app/src/screens/plan-beta/PlanCandidates.tsx",
+      "baselineSha256": "11dc1774028ae4ce77458903b1f7375469fbddaf42a1cb10f09f8d2fd525a789",
+      "currentSnapshotSha256": "34b3556a9c0d0b0c644c0879f7d96e52ed905a25c8fdd130f03b5bdabf9740c1",
+      "workingTreeAtPackagingSha256": "34b3556a9c0d0b0c644c0879f7d96e52ed905a25c8fdd130f03b5bdabf9740c1",
+      "currentSnapshotMatchesWorkingTree": true
+    },
+    {
+      "path": "app/src/screens/plan-beta/CatalogWorkoutPicker.tsx",
+      "baselineSha256": "7a894ba34175ef8e604d66371034d16d496f71dc6d51c94e2c933e445559dc48",
+      "currentSnapshotSha256": "a0b6ff522864cf23ead708ffd3e4dd4c30b8e07045f1ae8456c8743bccb28e09",
+      "workingTreeAtPackagingSha256": "6b646f0e616fb30834a11150972c639ebb65f8fd71cf4208c9b81f31f5dc130c",
+      "currentSnapshotMatchesWorkingTree": false
+    },
+    {
+      "path": "app/src/screens/plan-beta/CatalogWorkoutDetail.tsx",
+      "baselineSha256": "17cb6dfa83f6c12c9e5d1b1cd8060ec7bc3f5235e82a289c8923f7690a1b6ce4",
+      "currentSnapshotSha256": "d76264aae311d231d08ca8e03d6fbf4e514a2239057ca62772ff9503bf59593c",
+      "workingTreeAtPackagingSha256": "3506da63ddaee0ddeb5bda652acef4aaf8b02191b6dbf15a3af594757ff5302c",
+      "currentSnapshotMatchesWorkingTree": false
+    },
+    {
+      "path": "app/src/screens/plan-beta/instant-plan-projection.ts",
+      "baselineSha256": "28fb028298c319c02120cd788b5ee11f3bdf0ea5395872e07f223accaec7d1fe",
+      "currentSnapshotSha256": "b87d504409f81bd3c6746feb23e5cce624a2c72943c62d7befcfedb72d5f1d55",
+      "workingTreeAtPackagingSha256": "b87d504409f81bd3c6746feb23e5cce624a2c72943c62d7befcfedb72d5f1d55",
+      "currentSnapshotMatchesWorkingTree": true
+    },
+    {
+      "path": "app/src/components/instant-plan/InstantPlanEntryForm.tsx",
+      "baselineSha256": "5ddc1f191f7f6d2f2512f6fadc7be429a71c2c4ca2b1ef57689ac384a4aa9c62",
+      "currentSnapshotSha256": "d89d91f2a65e0c2d931cfaed5a520502b685a10edfbec2d66de9dcdb960abc23",
+      "workingTreeAtPackagingSha256": "d89d91f2a65e0c2d931cfaed5a520502b685a10edfbec2d66de9dcdb960abc23",
+      "currentSnapshotMatchesWorkingTree": true
+    },
+    {
+      "path": "app/src/components/instant-plan/InstantPlanRecommendationView.tsx",
+      "baselineSha256": "1d94c9b63d63b82ea6dcef6be46ca1f311e9fe8a5d93886b61794ca6c87d048c",
+      "currentSnapshotSha256": "77c557188e793829b067c6dd52da973fdc262b2be2fbbc993921b62bf63cb020",
+      "workingTreeAtPackagingSha256": "77c557188e793829b067c6dd52da973fdc262b2be2fbbc993921b62bf63cb020",
+      "currentSnapshotMatchesWorkingTree": true
+    },
+    {
+      "path": "app/src/domain/catalog-plan-binding.ts",
+      "baselineSha256": "b03dc6da6539b889c52d3f3f91af038c46797351d05bd1c26fca38bdf596d629",
+      "currentSnapshotSha256": "719be8b9edfc53b8154a782ad5af4717647aed300169a5535f67802e310e41f0",
+      "workingTreeAtPackagingSha256": "719be8b9edfc53b8154a782ad5af4717647aed300169a5535f67802e310e41f0",
+      "currentSnapshotMatchesWorkingTree": true
+    },
+    {
+      "path": "impl/src/prescription/all-workout-calculator.ts",
+      "baselineSha256": "bb1832a14131ea27589ec0b1861ccb250f3149bc76f8d182a388dcc15e039d6d",
+      "currentSnapshotSha256": "7d9f4abb0823ef5f47a13c6b79eb78c21c1cc383a8dd438bb853545d285af231",
+      "workingTreeAtPackagingSha256": "c9786a5cde9f5241f27790bf4075355a46ac602dee9d6199c43bcd81514a0138",
+      "currentSnapshotMatchesWorkingTree": false
+    },
+    {
+      "path": "impl/src/prescription/catalog-session-binding.ts",
+      "baselineSha256": "3fb17f8b45244c85f3da8c5f77d59779bccf21fbf05f8aaeb67d2a713d449440",
+      "currentSnapshotSha256": "2b7302f3109876e6fa5417e492fea0b052d29198e8c7ad75b1c86dddc964b6b3",
+      "workingTreeAtPackagingSha256": "2b7302f3109876e6fa5417e492fea0b052d29198e8c7ad75b1c86dddc964b6b3",
+      "currentSnapshotMatchesWorkingTree": true
+    },
+    {
+      "path": "app/src/screens/plan-beta/labels.ts",
+      "baselineSha256": "0e97bac92a69071a9ba241b8d82469ae6504345d1e1047a34891219dd9f88732",
+      "currentSnapshotSha256": "bc74c67f03aca3876535a13207cfe3c428619349862eb87cce72525c2c71d511",
+      "workingTreeAtPackagingSha256": "bc74c67f03aca3876535a13207cfe3c428619349862eb87cce72525c2c71d511",
+      "currentSnapshotMatchesWorkingTree": true
+    },
+    {
+      "path": "app/src/styles/app.css",
+      "baselineSha256": "64d9361e6a01637d49fdfd43acdc5fcd7218fecec4f2d5f789d83b95a0ac667b",
+      "currentSnapshotSha256": "73644fb9b7824ed9323593bbcc1f15d14e5b7e781c31ef99386fe6925ad1303e",
+      "workingTreeAtPackagingSha256": "73644fb9b7824ed9323593bbcc1f15d14e5b7e781c31ef99386fe6925ad1303e",
+      "currentSnapshotMatchesWorkingTree": true
+    },
+    {
+      "path": "colors_and_type.css",
+      "baselineSha256": "6453304c0d1061b866d64d07c6e057ccf5bda5428b9fecf4bf1b3fb2ce247864",
+      "currentSnapshotSha256": "6453304c0d1061b866d64d07c6e057ccf5bda5428b9fecf4bf1b3fb2ce247864",
+      "workingTreeAtPackagingSha256": "6453304c0d1061b866d64d07c6e057ccf5bda5428b9fecf4bf1b3fb2ce247864",
+      "currentSnapshotMatchesWorkingTree": true
+    },
+    {
+      "path": "colors_and_type_journal.css",
+      "baselineSha256": "18b870aee9412cba4490e756d4185a6afcd5ae030b025a4c0a11df7ac1354897",
+      "currentSnapshotSha256": "18b870aee9412cba4490e756d4185a6afcd5ae030b025a4c0a11df7ac1354897",
+      "workingTreeAtPackagingSha256": "18b870aee9412cba4490e756d4185a6afcd5ae030b025a4c0a11df7ac1354897",
+      "currentSnapshotMatchesWorkingTree": true
+    }
+  ]
+}

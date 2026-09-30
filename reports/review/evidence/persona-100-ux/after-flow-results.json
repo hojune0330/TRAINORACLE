@@ -1,0 +1,119 @@
+{
+  "baseline": "9085282",
+  "syntheticOnly": true,
+  "userProfileUsed": false,
+  "externalRequests": [],
+  "probes": [
+    {
+      "kind": "F06-experience-copy",
+      "passed": true
+    },
+    {
+      "kind": "candidate-cta-position",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "box": {
+        "x": 21,
+        "y": 242.03125,
+        "width": 128.625,
+        "height": 47.015625
+      }
+    },
+    {
+      "kind": "F04-candidate-day-notation",
+      "passed": true,
+      "dialogText": "훈련 · 일지\n2026년 10월 4일 일요일\n\n아직 선택 전인 계획 후보예요.\n\n오전 · 핵심 훈련\n\n시간형 리듬 달리기\n\n6 × (2min @ RPE 6–7 → 종료 뒤 60s Jog)"
+    },
+    {
+      "kind": "F04-full-composition-notation",
+      "passed": true,
+      "notation": [
+        "22min @ RPE 3–4 → 종료 뒤 2min Walk → 23min @ RPE 3–4",
+        "6 × (2min @ RPE 6–7 → 종료 뒤 60s Jog)",
+        "22min @ RPE 3–4 → 종료 뒤 2min Walk → 23min @ RPE 3–4"
+      ]
+    },
+    {
+      "kind": "F06-refine-copy",
+      "passed": true,
+      "copy": "바꾸면 다시 만들어요. 새 훈련 구성과 강도를 확인해 주세요."
+    },
+    {
+      "kind": "synthetic-created-plan",
+      "sessions": [
+        {
+          "day": 1,
+          "slot": "AM",
+          "role": "EASY",
+          "rpe": {
+            "minimum": 3,
+            "maximum": 4
+          },
+          "catalog": "X-BASE-09"
+        },
+        {
+          "day": 2,
+          "slot": "AM",
+          "role": "REST"
+        },
+        {
+          "day": 3,
+          "slot": "AM",
+          "role": "REST"
+        },
+        {
+          "day": 4,
+          "slot": "AM",
+          "role": "REST"
+        },
+        {
+          "day": 5,
+          "slot": "AM",
+          "role": "QUALITY",
+          "rpe": {
+            "minimum": 7,
+            "maximum": 8
+          },
+          "catalog": "X-VO2-08"
+        },
+        {
+          "day": 6,
+          "slot": "AM",
+          "role": "REST"
+        },
+        {
+          "day": 7,
+          "slot": "AM",
+          "role": "REST"
+        },
+        {
+          "day": 8,
+          "slot": "AM",
+          "role": "REST"
+        },
+        {
+          "day": 9,
+          "slot": "AM",
+          "role": "EASY",
+          "rpe": {
+            "minimum": 3,
+            "maximum": 4
+          },
+          "catalog": "X-BASE-09"
+        },
+        {
+          "day": 10,
+          "slot": "AM",
+          "role": "REST"
+        }
+      ]
+    },
+    {
+      "kind": "F01-F02-calculated-today",
+      "passed": true,
+      "text": "2026-10-04\n\n오늘 훈련\n\n오전\n\n15/15 인터벌\n본운동\n3 sets × (6 × 15s @ RPE 7–8 · r15s Jog) · R3min Walk/Stand\n전체 예정시간\n준비·회복·정리 포함 43분 35초\n준비\n15min @ RPE 2–3 → 20s @ Build-up (전력질주 아님) → 종료 뒤 40s Walk → 20s @ Build-up (전력질주 아님) → 종료 뒤 40s Walk → 20s @ Build-up (전력질주 아님) → 종료 뒤 40s Walk → 20s @ Build-up (전력질주 아님) → 종료 뒤 60s Walk\n정리\n10min @ RPE 1–2\n훈련 방법·근거\n일지 쓰기\n휴식·건너뜀 기록"
+    }
+  ]
+}

@@ -56,7 +56,7 @@ export const STEP_META: Record<IntakeStep, {
     number: 2,
     eyebrow: "경험",
     title: "지금까지 어떻게 달려왔나요?",
-    copy: "점수가 아니에요. 한 번 운동 시간을 정하는 데만 써요.",
+    copy: "경험에 맞는 훈련 구성과 운동 시간을 정하는 데 써요.",
     helpTerm: "plan-experience",
   },
   focus: {

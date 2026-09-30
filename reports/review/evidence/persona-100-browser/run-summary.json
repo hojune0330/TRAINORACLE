@@ -1,0 +1,1058 @@
+{
+  "syntheticOnly": true,
+  "baselineCommit": "9085282",
+  "runtimeCommit": "8b80fa1",
+  "origin": "http://127.0.0.1:4419",
+  "baseline100Original": {
+    "attempted": 100,
+    "generated": 90,
+    "safetyBlocked": 10,
+    "finalized": 63,
+    "productExceptionPersonas": 0,
+    "harnessErrorPersonas": 27,
+    "pageExceptionPersonas": 0,
+    "findingPersonas": 83,
+    "observationOnlyPersonas": 7,
+    "findings": {
+      "GENERATED_DRAFT_LOST_ON_TAB_RETURN": 20,
+      "INCOMPATIBLE_POOL": 73,
+      "UNAPPLIED_DRAFT_FINALIZED": 13,
+      "START_ENABLED_WITH_UNAPPLIED_DRAFT": 77,
+      "CATALOG_APPLY_DEADEND": 5,
+      "HIDDEN_REQUIRED_NUMERIC": 30
+    },
+    "blockedNetworkRequests": 572,
+    "playwright": {
+      "startTime": "2026-09-30T12:27:53.153Z",
+      "duration": 525090.9480000001,
+      "expected": 10,
+      "skipped": 0,
+      "unexpected": 90,
+      "flaky": 0,
+      "testTimedOut": 0
+    }
+  },
+  "baselineRepairOnly": {
+    "attempted": 27,
+    "generated": 27,
+    "safetyBlocked": 0,
+    "finalized": 26,
+    "productExceptionPersonas": 1,
+    "harnessErrorPersonas": 0,
+    "pageExceptionPersonas": 1,
+    "findingPersonas": 27,
+    "observationOnlyPersonas": 0,
+    "findings": {
+      "INCOMPATIBLE_POOL": 22,
+      "HIDDEN_REQUIRED_NUMERIC": 27,
+      "START_ENABLED_WITH_UNAPPLIED_DRAFT": 20,
+      "APPLIED_INPUTS_LOST_ON_RETURN": 23,
+      "GENERATED_DRAFT_LOST_ON_TAB_RETURN": 7,
+      "CATALOG_APPLY_DEADEND": 3,
+      "SMALL_TAP_TARGET": 1,
+      "RUNTIME_PAGE_ERROR": 1
+    },
+    "blockedNetworkRequests": 181,
+    "playwright": {
+      "startTime": "2026-09-30T12:38:53.454Z",
+      "duration": 204703.30800000002,
+      "expected": 0,
+      "skipped": 0,
+      "unexpected": 27,
+      "flaky": 0,
+      "testTimedOut": 0
+    },
+    "ids": [
+      "synthetic-p005",
+      "synthetic-p008",
+      "synthetic-p012",
+      "synthetic-p019",
+      "synthetic-p021",
+      "synthetic-p022",
+      "synthetic-p026",
+      "synthetic-p031",
+      "synthetic-p035",
+      "synthetic-p036",
+      "synthetic-p042",
+      "synthetic-p043",
+      "synthetic-p047",
+      "synthetic-p054",
+      "synthetic-p058",
+      "synthetic-p059",
+      "synthetic-p061",
+      "synthetic-p064",
+      "synthetic-p068",
+      "synthetic-p071",
+      "synthetic-p072",
+      "synthetic-p075",
+      "synthetic-p078",
+      "synthetic-p082",
+      "synthetic-p083",
+      "synthetic-p092",
+      "synthetic-p096"
+    ],
+    "notAdditionalDistinctPersonas": true
+  },
+  "baseline100Combined": {
+    "attempted": 100,
+    "generated": 90,
+    "safetyBlocked": 10,
+    "finalized": 89,
+    "productExceptionPersonas": 1,
+    "harnessErrorPersonas": 0,
+    "pageExceptionPersonas": 1,
+    "findingPersonas": 83,
+    "observationOnlyPersonas": 7,
+    "findings": {
+      "GENERATED_DRAFT_LOST_ON_TAB_RETURN": 20,
+      "INCOMPATIBLE_POOL": 73,
+      "UNAPPLIED_DRAFT_FINALIZED": 13,
+      "START_ENABLED_WITH_UNAPPLIED_DRAFT": 70,
+      "CATALOG_APPLY_DEADEND": 8,
+      "HIDDEN_REQUIRED_NUMERIC": 30,
+      "APPLIED_INPUTS_LOST_ON_RETURN": 23,
+      "SMALL_TAP_TARGET": 1,
+      "RUNTIME_PAGE_ERROR": 1
+    },
+    "blockedNetworkRequests": 654
+  },
+  "numericBaseline": {
+    "savedSessions": 942,
+    "rest": 390,
+    "catalogBound": 512,
+    "paceTarget": 0,
+    "genericRpe": 40,
+    "genericQuality": 40,
+    "catalogMainEffortNoNumericPace": 2276,
+    "catalogMainDistanceWithoutSeconds": 0,
+    "catalogUserDirectSeconds": 81,
+    "catalogReferenceTargets": 28,
+    "savedCalculationInvalid": 0
+  },
+  "currentFiveOriginalPersonaRegressions": {
+    "attempted": 5,
+    "generated": 5,
+    "safetyBlocked": 0,
+    "finalized": 4,
+    "productExceptionPersonas": 0,
+    "harnessErrorPersonas": 0,
+    "pageExceptionPersonas": 0,
+    "findingPersonas": 1,
+    "observationOnlyPersonas": 0,
+    "findings": {
+      "CATALOG_APPLY_DEADEND": 1
+    },
+    "blockedNetworkRequests": 0,
+    "playwright": {
+      "startTime": "2026-09-30T12:58:31.648Z",
+      "duration": 50809.812999999995,
+      "expected": 4,
+      "skipped": 0,
+      "unexpected": 1,
+      "flaky": 0,
+      "testTimedOut": 0
+    },
+    "ids": [
+      "synthetic-p001",
+      "synthetic-p003",
+      "synthetic-p042",
+      "synthetic-p083",
+      "synthetic-p096"
+    ]
+  },
+  "numericCurrentFourSavedPlans": {
+    "savedSessions": 40,
+    "rest": 14,
+    "catalogBound": 23,
+    "paceTarget": 0,
+    "genericRpe": 3,
+    "genericQuality": 3,
+    "catalogMainEffortNoNumericPace": 59,
+    "catalogMainDistanceWithoutSeconds": 0,
+    "catalogUserDirectSeconds": 15,
+    "catalogReferenceTargets": 0,
+    "savedCalculationInvalid": 0
+  },
+  "currentChecksBeforeP042Fix": [
+    {
+      "id": "current-layout-320",
+      "width": 320,
+      "height": 568,
+      "zoom": 1,
+      "errors": [],
+      "pageErrors": [],
+      "blockedNetworkRequests": 4,
+      "dialogs": [],
+      "measurements": [
+        {
+          "label": "initial",
+          "startBox": {
+            "x": 21,
+            "y": 309.4375,
+            "width": 278,
+            "height": 47.015625
+          },
+          "calendarBox": {
+            "x": 2,
+            "y": 629.890625,
+            "width": 316,
+            "height": 382.78125
+          },
+          "navigation": {
+            "x": 1,
+            "y": 523,
+            "width": 318,
+            "height": 45
+          },
+          "startFullyInViewport": true,
+          "actionBeforeCalendar": true,
+          "metrics": {
+            "width": 320,
+            "client": 320,
+            "scrollWidth": 320,
+            "scrollContainers": [
+              {
+                "top": 0,
+                "height": 1745,
+                "client": 523
+              }
+            ]
+          },
+          "visibleSummary": [
+            "훈련 시간",
+            "9일 동안 표시된 시간 합계 3시간 21분~4시간 1분",
+            "주요 훈련 2회는 시간·체감 강도 안내예요. 반복·회복 구성은 아직 정하지 않았어요."
+          ]
+        },
+        {
+          "label": "start-scrolled",
+          "startBox": {
+            "x": 21,
+            "y": 309.4375,
+            "width": 278,
+            "height": 47.015625
+          },
+          "calendarBox": {
+            "x": 2,
+            "y": 629.890625,
+            "width": 316,
+            "height": 382.78125
+          },
+          "navigation": {
+            "x": 1,
+            "y": 523,
+            "width": 318,
+            "height": 45
+          },
+          "startFullyInViewport": true,
+          "actionBeforeCalendar": true,
+          "metrics": {
+            "width": 320,
+            "client": 320,
+            "scrollWidth": 320,
+            "scrollContainers": [
+              {
+                "top": 0,
+                "height": 1745,
+                "client": 523
+              }
+            ]
+          },
+          "visibleSummary": [
+            "훈련 시간",
+            "9일 동안 표시된 시간 합계 3시간 21분~4시간 1분",
+            "주요 훈련 2회는 시간·체감 강도 안내예요. 반복·회복 구성은 아직 정하지 않았어요."
+          ]
+        },
+        {
+          "label": "primary-catalog-action",
+          "open": "",
+          "box": {
+            "x": 21,
+            "y": -0.390625,
+            "width": 278,
+            "height": 807.640625
+          },
+          "focused": "<div tabindex=\"-1\"><details class=\"plan-session-guidance catalog-workout-picker\" open=\"\"><summary>다른 훈련으로 바꾸기</summary><label>바꿀 일정<select><option value=\"1:AM\">1일차 오전</option><option value=\"3:AM\">3일차 오전</option><option value=\"5:AM\">5일차 오전</option><option value=\"7:AM\">7일차 오전</option><option value=\"9:"
+        }
+      ]
+    },
+    {
+      "id": "current-layout-360",
+      "width": 360,
+      "height": 800,
+      "zoom": 1,
+      "errors": [],
+      "pageErrors": [],
+      "blockedNetworkRequests": 3,
+      "dialogs": [],
+      "measurements": [
+        {
+          "label": "initial",
+          "startBox": {
+            "x": 21,
+            "y": 309.4375,
+            "width": 128.625,
+            "height": 47.015625
+          },
+          "calendarBox": {
+            "x": 21,
+            "y": 511.859375,
+            "width": 318,
+            "height": 382.78125
+          },
+          "navigation": {
+            "x": 1,
+            "y": 755,
+            "width": 358,
+            "height": 45
+          },
+          "startFullyInViewport": true,
+          "actionBeforeCalendar": true,
+          "metrics": {
+            "width": 360,
+            "client": 360,
+            "scrollWidth": 360,
+            "scrollContainers": [
+              {
+                "top": 0,
+                "height": 1627,
+                "client": 755
+              }
+            ]
+          },
+          "visibleSummary": [
+            "훈련 시간",
+            "9일 동안 표시된 시간 합계 3시간 21분~4시간 1분",
+            "주요 훈련 2회는 시간·체감 강도 안내예요. 반복·회복 구성은 아직 정하지 않았어요."
+          ]
+        },
+        {
+          "label": "start-scrolled",
+          "startBox": {
+            "x": 21,
+            "y": 309.4375,
+            "width": 128.625,
+            "height": 47.015625
+          },
+          "calendarBox": {
+            "x": 21,
+            "y": 511.859375,
+            "width": 318,
+            "height": 382.78125
+          },
+          "navigation": {
+            "x": 1,
+            "y": 755,
+            "width": 358,
+            "height": 45
+          },
+          "startFullyInViewport": true,
+          "actionBeforeCalendar": true,
+          "metrics": {
+            "width": 360,
+            "client": 360,
+            "scrollWidth": 360,
+            "scrollContainers": [
+              {
+                "top": 0,
+                "height": 1627,
+                "client": 755
+              }
+            ]
+          },
+          "visibleSummary": [
+            "훈련 시간",
+            "9일 동안 표시된 시간 합계 3시간 21분~4시간 1분",
+            "주요 훈련 2회는 시간·체감 강도 안내예요. 반복·회복 구성은 아직 정하지 않았어요."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "current-layout-375",
+      "width": 375,
+      "height": 800,
+      "zoom": 1,
+      "errors": [],
+      "pageErrors": [],
+      "blockedNetworkRequests": 3,
+      "dialogs": [],
+      "measurements": [
+        {
+          "label": "initial",
+          "startBox": {
+            "x": 21,
+            "y": 309.4375,
+            "width": 128.625,
+            "height": 47.015625
+          },
+          "calendarBox": {
+            "x": 21,
+            "y": 511.859375,
+            "width": 333,
+            "height": 382.78125
+          },
+          "navigation": {
+            "x": 1,
+            "y": 755,
+            "width": 373,
+            "height": 45
+          },
+          "startFullyInViewport": true,
+          "actionBeforeCalendar": true,
+          "metrics": {
+            "width": 375,
+            "client": 375,
+            "scrollWidth": 375,
+            "scrollContainers": [
+              {
+                "top": 0,
+                "height": 1627,
+                "client": 755
+              }
+            ]
+          },
+          "visibleSummary": [
+            "훈련 시간",
+            "9일 동안 표시된 시간 합계 3시간 21분~4시간 1분",
+            "주요 훈련 2회는 시간·체감 강도 안내예요. 반복·회복 구성은 아직 정하지 않았어요."
+          ]
+        },
+        {
+          "label": "start-scrolled",
+          "startBox": {
+            "x": 21,
+            "y": 309.4375,
+            "width": 128.625,
+            "height": 47.015625
+          },
+          "calendarBox": {
+            "x": 21,
+            "y": 511.859375,
+            "width": 333,
+            "height": 382.78125
+          },
+          "navigation": {
+            "x": 1,
+            "y": 755,
+            "width": 373,
+            "height": 45
+          },
+          "startFullyInViewport": true,
+          "actionBeforeCalendar": true,
+          "metrics": {
+            "width": 375,
+            "client": 375,
+            "scrollWidth": 375,
+            "scrollContainers": [
+              {
+                "top": 0,
+                "height": 1627,
+                "client": 755
+              }
+            ]
+          },
+          "visibleSummary": [
+            "훈련 시간",
+            "9일 동안 표시된 시간 합계 3시간 21분~4시간 1분",
+            "주요 훈련 2회는 시간·체감 강도 안내예요. 반복·회복 구성은 아직 정하지 않았어요."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "current-layout-390",
+      "width": 390,
+      "height": 800,
+      "zoom": 1,
+      "errors": [],
+      "pageErrors": [],
+      "blockedNetworkRequests": 3,
+      "dialogs": [],
+      "measurements": [
+        {
+          "label": "initial",
+          "startBox": {
+            "x": 21,
+            "y": 286.96875,
+            "width": 128.625,
+            "height": 47.015625
+          },
+          "calendarBox": {
+            "x": 21,
+            "y": 489.390625,
+            "width": 348,
+            "height": 382.78125
+          },
+          "navigation": {
+            "x": 1,
+            "y": 755,
+            "width": 388,
+            "height": 45
+          },
+          "startFullyInViewport": true,
+          "actionBeforeCalendar": true,
+          "metrics": {
+            "width": 390,
+            "client": 390,
+            "scrollWidth": 390,
+            "scrollContainers": [
+              {
+                "top": 0,
+                "height": 1604,
+                "client": 755
+              }
+            ]
+          },
+          "visibleSummary": [
+            "훈련 시간",
+            "9일 동안 표시된 시간 합계 3시간 21분~4시간 1분",
+            "주요 훈련 2회는 시간·체감 강도 안내예요. 반복·회복 구성은 아직 정하지 않았어요."
+          ]
+        },
+        {
+          "label": "start-scrolled",
+          "startBox": {
+            "x": 21,
+            "y": 286.96875,
+            "width": 128.625,
+            "height": 47.015625
+          },
+          "calendarBox": {
+            "x": 21,
+            "y": 489.390625,
+            "width": 348,
+            "height": 382.78125
+          },
+          "navigation": {
+            "x": 1,
+            "y": 755,
+            "width": 388,
+            "height": 45
+          },
+          "startFullyInViewport": true,
+          "actionBeforeCalendar": true,
+          "metrics": {
+            "width": 390,
+            "client": 390,
+            "scrollWidth": 390,
+            "scrollContainers": [
+              {
+                "top": 0,
+                "height": 1604,
+                "client": 755
+              }
+            ]
+          },
+          "visibleSummary": [
+            "훈련 시간",
+            "9일 동안 표시된 시간 합계 3시간 21분~4시간 1분",
+            "주요 훈련 2회는 시간·체감 강도 안내예요. 반복·회복 구성은 아직 정하지 않았어요."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "current-layout-768",
+      "width": 768,
+      "height": 800,
+      "zoom": 1,
+      "errors": [],
+      "pageErrors": [],
+      "blockedNetworkRequests": 3,
+      "dialogs": [],
+      "measurements": [
+        {
+          "label": "initial",
+          "startBox": {
+            "x": 145,
+            "y": 215.5625,
+            "width": 128.625,
+            "height": 47.015625
+          },
+          "calendarBox": {
+            "x": 145,
+            "y": 417.984375,
+            "width": 478,
+            "height": 382.78125
+          },
+          "navigation": {
+            "x": 125,
+            "y": 755,
+            "width": 518,
+            "height": 45
+          },
+          "startFullyInViewport": true,
+          "actionBeforeCalendar": true,
+          "metrics": {
+            "width": 768,
+            "client": 768,
+            "scrollWidth": 768,
+            "scrollContainers": [
+              {
+                "top": 0,
+                "height": 1533,
+                "client": 755
+              }
+            ]
+          },
+          "visibleSummary": [
+            "훈련 시간",
+            "9일 동안 표시된 시간 합계 3시간 21분~4시간 1분",
+            "주요 훈련 2회는 시간·체감 강도 안내예요. 반복·회복 구성은 아직 정하지 않았어요."
+          ]
+        },
+        {
+          "label": "start-scrolled",
+          "startBox": {
+            "x": 145,
+            "y": 215.5625,
+            "width": 128.625,
+            "height": 47.015625
+          },
+          "calendarBox": {
+            "x": 145,
+            "y": 417.984375,
+            "width": 478,
+            "height": 382.78125
+          },
+          "navigation": {
+            "x": 125,
+            "y": 755,
+            "width": 518,
+            "height": 45
+          },
+          "startFullyInViewport": true,
+          "actionBeforeCalendar": true,
+          "metrics": {
+            "width": 768,
+            "client": 768,
+            "scrollWidth": 768,
+            "scrollContainers": [
+              {
+                "top": 0,
+                "height": 1533,
+                "client": 755
+              }
+            ]
+          },
+          "visibleSummary": [
+            "훈련 시간",
+            "9일 동안 표시된 시간 합계 3시간 21분~4시간 1분",
+            "주요 훈련 2회는 시간·체감 강도 안내예요. 반복·회복 구성은 아직 정하지 않았어요."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "current-layout-1280",
+      "width": 1280,
+      "height": 800,
+      "zoom": 1,
+      "errors": [],
+      "pageErrors": [],
+      "blockedNetworkRequests": 4,
+      "dialogs": [],
+      "measurements": [
+        {
+          "label": "initial",
+          "startBox": {
+            "x": 401,
+            "y": 215.5625,
+            "width": 128.625,
+            "height": 47.015625
+          },
+          "calendarBox": {
+            "x": 401,
+            "y": 417.984375,
+            "width": 478,
+            "height": 382.78125
+          },
+          "navigation": {
+            "x": 381,
+            "y": 755,
+            "width": 518,
+            "height": 45
+          },
+          "startFullyInViewport": true,
+          "actionBeforeCalendar": true,
+          "metrics": {
+            "width": 1280,
+            "client": 1280,
+            "scrollWidth": 1280,
+            "scrollContainers": [
+              {
+                "top": 0,
+                "height": 1533,
+                "client": 755
+              }
+            ]
+          },
+          "visibleSummary": [
+            "훈련 시간",
+            "9일 동안 표시된 시간 합계 3시간 21분~4시간 1분",
+            "주요 훈련 2회는 시간·체감 강도 안내예요. 반복·회복 구성은 아직 정하지 않았어요."
+          ]
+        },
+        {
+          "label": "start-scrolled",
+          "startBox": {
+            "x": 401,
+            "y": 215.5625,
+            "width": 128.625,
+            "height": 47.015625
+          },
+          "calendarBox": {
+            "x": 401,
+            "y": 417.984375,
+            "width": 478,
+            "height": 382.78125
+          },
+          "navigation": {
+            "x": 381,
+            "y": 755,
+            "width": 518,
+            "height": 45
+          },
+          "startFullyInViewport": true,
+          "actionBeforeCalendar": true,
+          "metrics": {
+            "width": 1280,
+            "client": 1280,
+            "scrollWidth": 1280,
+            "scrollContainers": [
+              {
+                "top": 0,
+                "height": 1533,
+                "client": 755
+              }
+            ]
+          },
+          "visibleSummary": [
+            "훈련 시간",
+            "9일 동안 표시된 시간 합계 3시간 21분~4시간 1분",
+            "주요 훈련 2회는 시간·체감 강도 안내예요. 반복·회복 구성은 아직 정하지 않았어요."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "current-zoom-200",
+      "width": 320,
+      "height": 568,
+      "zoom": 2,
+      "errors": [],
+      "pageErrors": [],
+      "blockedNetworkRequests": 3,
+      "dialogs": [],
+      "measurements": [
+        {
+          "clientWidth": 320,
+          "scrollWidth": 320,
+          "mainWidth": 237,
+          "zoom": "2"
+        },
+        {
+          "action": {
+            "x": 42,
+            "y": 0.46875,
+            "width": 236,
+            "height": 136.09375
+          },
+          "navigation": {
+            "x": 2,
+            "y": 592,
+            "width": 316,
+            "height": 90
+          }
+        }
+      ]
+    },
+    {
+      "id": "current-catalog-numeric",
+      "width": 375,
+      "height": 667,
+      "zoom": 1,
+      "errors": [],
+      "pageErrors": [],
+      "blockedNetworkRequests": 3,
+      "dialogs": [],
+      "measurements": [
+        {
+          "stage": "same-choice-not-dirty",
+          "originalChoice": "P-LT-C"
+        },
+        {
+          "stage": "reference-target",
+          "numericText": "다른 훈련으로 바꾸기\n바꿀 일정\n1일차 오전\n3일차 오전\n5일차 오전\n7일차 오전\n9일차 오전\n변경을 적용하거나 취소하면 다른 날짜를 고를 수 있어요.\n같은 목적의 다른 훈련\n훈련 구성\n템포런 · Tempo Run\n긴 구간 크루즈 인터벌\n짧은 구간 크루즈 인터벌\n긴 구간 크루즈 인터벌\n1km 크루즈 인터벌\n2km 크루즈 인터벌\n3km 크루즈 인터벌\n시간 피라미드 · Tempo Pyramid\n늘려가는 템포 · Ascending Ladder\n줄여가는 템포 · Descending Ladder\n세트형 크루즈 인터벌\n1km + 200m 플로트 · Cruise Float\n6분 + 2분 플로트 · Cruise Float\n강도 교대 템포 · Tempo Alternations\n10 + 5 + 5분 템포\n1200 + 800m 세트\n6분 언덕 템포\n10분 지속 언덕 템포\n참고 페이스에 사용할 5km 기록\n기록 없이 체감 강도로\n2026-09-10 · 18분 31.25초\n\n5개 운동 구간 · 본운동 5km\n\n크루즈 인터벌 · Cruise Intervals\n\n5 × 1km @ ≈237.16~≈240.89s/1000m · LT 참고 · r60s Jog\n?\n\n자세히 보기 · 준비부터 정리까지\n1km\n≈237.163~≈240.891초 · 237~241초/km · 5km 기록 기반 참고 범위, 측정 역치 아님\n\n준비·회복·정리 포함 약 53분 6초~53분 24초\n\n지금 훈련 RPE 5~6 → 새 훈련 RPE 6~7. 더 강한 구성이에요. 아래 버튼을 누르면 이 강도로 바뀌어요.\n\n준비·회복·정리까지 최대 53.4분 걸려요. 이 시간을 확인하고 직접 바꿀게요.\n\n처음 계획보다 긴 구성이에요. 아래에서 시간을 확인하거나 다른 구성을 골라 주세요.\n\n이 구성으로 바꾸기\n변경 취소\n\n아직 계획에 적용하지 않았어요."
+        },
+        {
+          "stage": "restored",
+          "numericText": "다른 훈련으로 바꾸기\n바꿀 일정\n1일차 오전\n3일차 오전\n5일차 오전\n7일차 오전\n9일차 오전\n같은 목적의 다른 훈련\n훈련 구성\n템포런 · Tempo Run\n긴 구간 크루즈 인터벌\n짧은 구간 크루즈 인터벌\n긴 구간 크루즈 인터벌\n1km 크루즈 인터벌\n2km 크루즈 인터벌\n3km 크루즈 인터벌\n시간 피라미드 · Tempo Pyramid\n늘려가는 템포 · Ascending Ladder\n줄여가는 템포 · Descending Ladder\n세트형 크루즈 인터벌\n1km + 200m 플로트 · Cruise Float\n6분 + 2분 플로트 · Cruise Float\n강도 교대 템포 · Tempo Alternations\n10 + 5 + 5분 템포\n1200 + 800m 세트\n6분 언덕 템포\n10분 지속 언덕 템포\n참고 페이스에 사용할 5km 기록\n기록 없이 체감 강도로\n2026-09-10 · 18분 31.25초\n\n5개 운동 구간 · 본운동 5km\n\n크루즈 인터벌 · Cruise Intervals\n\n5 × 1km @ ≈237.16~≈240.89s/1000m · LT 참고 · r60s Jog\n?\n\n자세히 보기 · 준비부터 정리까지\n1km\n≈237.163~≈240.891초 · 237~241초/km · 5km 기록 기반 참고 범위, 측정 역치 아님\n\n준비·회복·정리 포함 약 53분 6초~53분 24초\n\n준비·회복·정리까지 최대 53.4분 걸려요. 이 시간을 확인하고 직접 바꿀게요.\n이 구성으로 바꾸기"
+        },
+        {
+          "stage": "today",
+          "numericText": "9일 훈련 계획\n\n2026-09-30\n\n오늘 훈련\n\n오전\n\n중간 걷기 조깅 · Split Easy\n본운동\n22min @ RPE 3–4 → 종료 뒤 2min Walk → 23min @ RPE 3–4\n전체 예정시간\n준비·회복·정리 포함 47분\n훈련 방법·근거\n일지 쓰기\n휴식·건너뜀 기록\n전체 계획 구성\n9일 훈련 일정\n09/30 ~ 10/08\n2026년 9월\n오늘\n일\t월\t화\t수\t목\t금\t토\n\n30\n\t\n31\n\t\n1\n\t\n2\n\t\n3\n\t\n4\n\t\n5\n\n\n6\n\t\n7\n\t\n8\n\t\n9\n\t\n10\n\t\n11\n\t\n12\n\n\n13\n\t\n14\n\t\n15\n\t\n16\n\t\n17\n\t\n18\n\t\n19\n\n\n20\n\t\n21\n\t\n22\n\t\n23\n\t\n24\n\t\n25\n\t\n26\n\n\n27\n\t\n28\n\t\n29\n\t\n30\n오전\n기본\n\t\n1\n오전\n휴식\n\t\n2\n오전\n주요\n\t\n3\n오전\n휴식\n달력 색상\n훈련 구분·약어\n날짜별 카드 보기\n각 훈련을 마친 뒤 완료·휴식·건너뜀·통증 확인 중 하나를 기록해 주세요.\n계획 정보와 유의사항\n다음 계획에 반영되는 내용\n현재 계획을 먼저 기록해 주세요\n개인 계획 파일 불러오기"
+        }
+      ]
+    },
+    {
+      "id": "current-guard-cancel-discard",
+      "width": 390,
+      "height": 800,
+      "zoom": 1,
+      "errors": [],
+      "pageErrors": [],
+      "blockedNetworkRequests": 3,
+      "dialogs": [
+        {
+          "type": "confirm",
+          "message": "아직 저장하지 않은 계획이 있어요. 계획 만들기를 그만두고 이동할까요?\n계속 만들려면 취소를 눌러 주세요.",
+          "decision": "cancel"
+        },
+        {
+          "type": "confirm",
+          "message": "아직 저장하지 않은 계획이 있어요. 계획 만들기를 그만두고 이동할까요?\n계속 만들려면 취소를 눌러 주세요.",
+          "decision": "discard"
+        }
+      ],
+      "measurements": [
+        {
+          "stage": "cancel"
+        }
+      ]
+    },
+    {
+      "id": "current-guard-untouched-saved",
+      "width": 360,
+      "height": 800,
+      "zoom": 1,
+      "errors": [],
+      "pageErrors": [],
+      "blockedNetworkRequests": 3,
+      "dialogs": [],
+      "measurements": []
+    },
+    {
+      "id": "current-guard-raw-input",
+      "width": 320,
+      "height": 568,
+      "zoom": 1,
+      "errors": [],
+      "pageErrors": [],
+      "blockedNetworkRequests": 2,
+      "dialogs": [
+        {
+          "type": "confirm",
+          "message": "아직 저장하지 않은 계획이 있어요. 계획 만들기를 그만두고 이동할까요?\n계속 만들려면 취소를 눌러 주세요.",
+          "decision": "cancel"
+        }
+      ],
+      "measurements": [
+        {
+          "dialogs": 1
+        }
+      ]
+    }
+  ],
+  "currentCleanScreenshotsAfterP042Fix": [
+    {
+      "id": "current-layout-320",
+      "width": 320,
+      "height": 568,
+      "zoom": 1,
+      "errors": [],
+      "pageErrors": [],
+      "blockedNetworkRequests": 0,
+      "dialogs": [],
+      "measurements": [
+        {
+          "label": "initial",
+          "startBox": {
+            "x": 21,
+            "y": 309.4375,
+            "width": 278,
+            "height": 47.015625
+          },
+          "calendarBox": {
+            "x": 2,
+            "y": 629.890625,
+            "width": 316,
+            "height": 382.78125
+          },
+          "navigation": {
+            "x": 1,
+            "y": 523,
+            "width": 318,
+            "height": 45
+          },
+          "startFullyInViewport": true,
+          "actionBeforeCalendar": true,
+          "metrics": {
+            "width": 320,
+            "client": 320,
+            "scrollWidth": 320,
+            "scrollContainers": [
+              {
+                "top": 0,
+                "height": 1745,
+                "client": 523
+              }
+            ]
+          },
+          "visibleSummary": [
+            "훈련 시간",
+            "9일 동안 표시된 시간 합계 3시간 21분~4시간 1분",
+            "주요 훈련 2회는 시간·체감 강도 안내예요. 반복·회복 구성은 아직 정하지 않았어요."
+          ]
+        },
+        {
+          "label": "start-scrolled",
+          "startBox": {
+            "x": 21,
+            "y": 309.4375,
+            "width": 278,
+            "height": 47.015625
+          },
+          "calendarBox": {
+            "x": 2,
+            "y": 629.890625,
+            "width": 316,
+            "height": 382.78125
+          },
+          "navigation": {
+            "x": 1,
+            "y": 523,
+            "width": 318,
+            "height": 45
+          },
+          "startFullyInViewport": true,
+          "actionBeforeCalendar": true,
+          "metrics": {
+            "width": 320,
+            "client": 320,
+            "scrollWidth": 320,
+            "scrollContainers": [
+              {
+                "top": 0,
+                "height": 1745,
+                "client": 523
+              }
+            ]
+          },
+          "visibleSummary": [
+            "훈련 시간",
+            "9일 동안 표시된 시간 합계 3시간 21분~4시간 1분",
+            "주요 훈련 2회는 시간·체감 강도 안내예요. 반복·회복 구성은 아직 정하지 않았어요."
+          ]
+        },
+        {
+          "label": "primary-catalog-action",
+          "open": "",
+          "box": {
+            "x": 21,
+            "y": -0.390625,
+            "width": 278,
+            "height": 807.640625
+          },
+          "focused": "<div tabindex=\"-1\"><details class=\"plan-session-guidance catalog-workout-picker\" open=\"\"><summary>다른 훈련으로 바꾸기</summary><label>바꿀 일정<select><option value=\"1:AM\">1일차 오전</option><option value=\"3:AM\">3일차 오전</option><option value=\"5:AM\">5일차 오전</option><option value=\"7:AM\">7일차 오전</option><option value=\"9:"
+        }
+      ]
+    },
+    {
+      "id": "current-zoom-200",
+      "width": 320,
+      "height": 568,
+      "zoom": 2,
+      "errors": [],
+      "pageErrors": [],
+      "blockedNetworkRequests": 0,
+      "dialogs": [],
+      "measurements": [
+        {
+          "clientWidth": 320,
+          "scrollWidth": 320,
+          "mainWidth": 237,
+          "zoom": "2"
+        },
+        {
+          "action": {
+            "x": 42,
+            "y": 0.46875,
+            "width": 236,
+            "height": 136.09375
+          },
+          "navigation": {
+            "x": 2,
+            "y": 592,
+            "width": 316,
+            "height": 90
+          }
+        }
+      ]
+    },
+    {
+      "id": "current-catalog-numeric",
+      "width": 375,
+      "height": 667,
+      "zoom": 1,
+      "errors": [],
+      "pageErrors": [],
+      "blockedNetworkRequests": 0,
+      "dialogs": [],
+      "measurements": [
+        {
+          "stage": "same-choice-not-dirty",
+          "originalChoice": "P-LT-C"
+        },
+        {
+          "stage": "reference-target",
+          "numericText": "다른 훈련으로 바꾸기\n바꿀 일정\n1일차 오전\n3일차 오전\n5일차 오전\n7일차 오전\n9일차 오전\n변경을 적용하거나 취소하면 다른 날짜를 고를 수 있어요.\n같은 목적의 다른 훈련\n훈련 구성\n템포런 · Tempo Run\n긴 구간 크루즈 인터벌\n짧은 구간 크루즈 인터벌\n긴 구간 크루즈 인터벌\n1km 크루즈 인터벌\n2km 크루즈 인터벌\n3km 크루즈 인터벌\n시간 피라미드 · Tempo Pyramid\n늘려가는 템포 · Ascending Ladder\n줄여가는 템포 · Descending Ladder\n세트형 크루즈 인터벌\n1km + 200m 플로트 · Cruise Float\n6분 + 2분 플로트 · Cruise Float\n강도 교대 템포 · Tempo Alternations\n10 + 5 + 5분 템포\n1200 + 800m 세트\n6분 언덕 템포\n10분 지속 언덕 템포\n참고 페이스에 사용할 5km 기록\n기록 없이 체감 강도로\n2026-09-10 · 18분 31.25초\n\n5개 운동 구간 · 본운동 5km\n\n크루즈 인터벌 · Cruise Intervals\n\n5 × 1km @ ≈237.16~≈240.89s/1000m · LT 참고 · r60s Jog\n?\n\n자세히 보기 · 준비부터 정리까지\n1km\n≈237.163~≈240.891초 · 237~241초/km · 5km 기록 기반 참고 범위, 측정 역치 아님\n\n준비·회복·정리 포함 약 53분 6초~53분 24초\n\n지금 훈련 RPE 5~6 → 새 훈련 RPE 6~7. 더 강한 구성이에요. 아래 버튼을 누르면 이 강도로 바뀌어요.\n\n준비·회복·정리까지 최대 53.4분 걸려요. 이 시간을 확인하고 직접 바꿀게요.\n\n처음 계획보다 긴 구성이에요. 아래에서 시간을 확인하거나 다른 구성을 골라 주세요.\n\n이 구성으로 바꾸기\n변경 취소\n\n아직 계획에 적용하지 않았어요."
+        },
+        {
+          "stage": "restored",
+          "numericText": "다른 훈련으로 바꾸기\n바꿀 일정\n1일차 오전\n3일차 오전\n5일차 오전\n7일차 오전\n9일차 오전\n같은 목적의 다른 훈련\n훈련 구성\n템포런 · Tempo Run\n긴 구간 크루즈 인터벌\n짧은 구간 크루즈 인터벌\n긴 구간 크루즈 인터벌\n1km 크루즈 인터벌\n2km 크루즈 인터벌\n3km 크루즈 인터벌\n시간 피라미드 · Tempo Pyramid\n늘려가는 템포 · Ascending Ladder\n줄여가는 템포 · Descending Ladder\n세트형 크루즈 인터벌\n1km + 200m 플로트 · Cruise Float\n6분 + 2분 플로트 · Cruise Float\n강도 교대 템포 · Tempo Alternations\n10 + 5 + 5분 템포\n1200 + 800m 세트\n6분 언덕 템포\n10분 지속 언덕 템포\n참고 페이스에 사용할 5km 기록\n기록 없이 체감 강도로\n2026-09-10 · 18분 31.25초\n\n5개 운동 구간 · 본운동 5km\n\n크루즈 인터벌 · Cruise Intervals\n\n5 × 1km @ ≈237.16~≈240.89s/1000m · LT 참고 · r60s Jog\n?\n\n자세히 보기 · 준비부터 정리까지\n1km\n≈237.163~≈240.891초 · 237~241초/km · 5km 기록 기반 참고 범위, 측정 역치 아님\n\n준비·회복·정리 포함 약 53분 6초~53분 24초\n\n준비·회복·정리까지 최대 53.4분 걸려요. 이 시간을 확인하고 직접 바꿀게요.\n이 구성으로 바꾸기"
+        },
+        {
+          "stage": "today",
+          "numericText": "9일 훈련 계획\n\n2026-09-30\n\n오늘 훈련\n\n오전\n\n중간 걷기 조깅 · Split Easy\n본운동\n22min @ RPE 3–4 → 종료 뒤 2min Walk → 23min @ RPE 3–4\n전체 예정시간\n준비·회복·정리 포함 47분\n훈련 방법·근거\n일지 쓰기\n휴식·건너뜀 기록\n전체 계획 구성\n9일 훈련 일정\n09/30 ~ 10/08\n2026년 9월\n오늘\n일\t월\t화\t수\t목\t금\t토\n\n30\n\t\n31\n\t\n1\n\t\n2\n\t\n3\n\t\n4\n\t\n5\n\n\n6\n\t\n7\n\t\n8\n\t\n9\n\t\n10\n\t\n11\n\t\n12\n\n\n13\n\t\n14\n\t\n15\n\t\n16\n\t\n17\n\t\n18\n\t\n19\n\n\n20\n\t\n21\n\t\n22\n\t\n23\n\t\n24\n\t\n25\n\t\n26\n\n\n27\n\t\n28\n\t\n29\n\t\n30\n오전\n기본\n\t\n1\n오전\n휴식\n\t\n2\n오전\n주요\n\t\n3\n오전\n휴식\n달력 색상\n훈련 구분·약어\n날짜별 카드 보기\n각 훈련을 마친 뒤 완료·휴식·건너뜀·통증 확인 중 하나를 기록해 주세요.\n계획 정보와 유의사항\n다음 계획에 반영되는 내용\n현재 계획을 먼저 기록해 주세요\n개인 계획 파일 불러오기"
+        }
+      ]
+    }
+  ],
+  "currentP042AdditionalScreenshotProbe": [
+    {
+      "id": "current-p042-recovery",
+      "width": 1280,
+      "height": 800,
+      "zoom": 1,
+      "errors": [],
+      "pageErrors": [],
+      "blockedNetworkRequests": 0,
+      "dialogs": [],
+      "measurements": [
+        {
+          "stage": "explicit-distance-recovery"
+        }
+      ]
+    }
+  ],
+  "currentExecutionCount": 20,
+  "currentDistinctCaseIds": 17,
+  "boundaries": {
+    "baselineOriginalRecoverySelectorHarnessErrors": 27,
+    "originalRawFilesPreserved": true,
+    "startEnabledObservationNotConfirmedFinding": true,
+    "currentP003RejectedChoiceHasReasonAndCancel": true,
+    "currentCssZoom200TabBar": {
+      "viewportHeight": 568,
+      "measuredY": 592,
+      "measuredHeight": 90,
+      "nativeBrowserZoomNotVerified": true
+    },
+    "defaultPlaywrightListAuditTests": 0,
+    "optInBaselinePlaywrightListAuditTests": 100,
+    "browserRerunAfterRename": false
+  }
+}

@@ -36,6 +36,7 @@ export function RecommendationCalendar({ days, identity = "preview" }: { readonl
       notice={<p>아직 선택 전인 계획 후보예요.</p>}>
       {day?.sessions.length ? day.sessions.map(session => <section key={session.id} className="calendar-journal-detail">
         <h3>{session.slotLabel} · {labels[session.role]}</h3><p>{session.title}</p>
+        {session.notation && <p>{session.notation}</p>}
       </section>) : <p>이 후보에는 이날 예정된 훈련이 없어요.</p>}
     </PlanDayReader>}
   </>

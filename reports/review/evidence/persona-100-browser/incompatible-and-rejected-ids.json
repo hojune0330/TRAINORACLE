@@ -1,0 +1,1544 @@
+{
+  "incompatible": [
+    {
+      "id": "P-ATP-A",
+      "name": "서서 출발하는 가속 달리기",
+      "personas": [
+        "synthetic-p001",
+        "synthetic-p015",
+        "synthetic-p064",
+        "synthetic-p085",
+        "synthetic-p099"
+      ]
+    },
+    {
+      "id": "P-ATP-F",
+      "name": "플라잉 스프린트",
+      "personas": [
+        "synthetic-p001",
+        "synthetic-p008",
+        "synthetic-p015",
+        "synthetic-p029",
+        "synthetic-p043",
+        "synthetic-p064",
+        "synthetic-p078",
+        "synthetic-p085",
+        "synthetic-p092",
+        "synthetic-p099"
+      ]
+    },
+    {
+      "id": "P-ATP-T",
+      "name": "시간형 가속 달리기",
+      "personas": [
+        "synthetic-p001",
+        "synthetic-p015",
+        "synthetic-p064",
+        "synthetic-p085",
+        "synthetic-p099"
+      ]
+    },
+    {
+      "id": "P-ATP-A-4",
+      "name": "서서 출발하는 가속 달리기",
+      "personas": [
+        "synthetic-p001",
+        "synthetic-p015",
+        "synthetic-p064",
+        "synthetic-p085",
+        "synthetic-p099"
+      ]
+    },
+    {
+      "id": "P-ATP-A-5",
+      "name": "서서 출발하는 가속 달리기",
+      "personas": [
+        "synthetic-p001",
+        "synthetic-p015",
+        "synthetic-p064",
+        "synthetic-p085",
+        "synthetic-p099"
+      ]
+    },
+    {
+      "id": "X-ATP-01",
+      "name": "30m 가속 · Accelerations",
+      "personas": [
+        "synthetic-p001",
+        "synthetic-p008",
+        "synthetic-p015",
+        "synthetic-p029",
+        "synthetic-p043",
+        "synthetic-p064",
+        "synthetic-p078",
+        "synthetic-p085",
+        "synthetic-p092",
+        "synthetic-p099"
+      ]
+    },
+    {
+      "id": "X-ATP-02",
+      "name": "50m 가속 · Accelerations",
+      "personas": [
+        "synthetic-p001",
+        "synthetic-p008",
+        "synthetic-p015",
+        "synthetic-p029",
+        "synthetic-p043",
+        "synthetic-p064",
+        "synthetic-p078",
+        "synthetic-p085",
+        "synthetic-p092",
+        "synthetic-p099"
+      ]
+    },
+    {
+      "id": "X-ATP-03",
+      "name": "60m 가속 · Accelerations",
+      "personas": [
+        "synthetic-p001",
+        "synthetic-p008",
+        "synthetic-p015",
+        "synthetic-p029",
+        "synthetic-p043",
+        "synthetic-p064",
+        "synthetic-p078",
+        "synthetic-p085",
+        "synthetic-p092",
+        "synthetic-p099"
+      ]
+    },
+    {
+      "id": "X-ATP-04",
+      "name": "플라잉 20m · Flying Sprint",
+      "personas": [
+        "synthetic-p001",
+        "synthetic-p008",
+        "synthetic-p015",
+        "synthetic-p029",
+        "synthetic-p043",
+        "synthetic-p064",
+        "synthetic-p078",
+        "synthetic-p085",
+        "synthetic-p092",
+        "synthetic-p099"
+      ]
+    },
+    {
+      "id": "X-ATP-05",
+      "name": "20m 가속 세트",
+      "personas": [
+        "synthetic-p001",
+        "synthetic-p008",
+        "synthetic-p015",
+        "synthetic-p029",
+        "synthetic-p043",
+        "synthetic-p064",
+        "synthetic-p078",
+        "synthetic-p085",
+        "synthetic-p092",
+        "synthetic-p099"
+      ]
+    },
+    {
+      "id": "X-ATP-06",
+      "name": "5–7–5초 가속",
+      "personas": [
+        "synthetic-p001",
+        "synthetic-p008",
+        "synthetic-p015",
+        "synthetic-p029",
+        "synthetic-p043",
+        "synthetic-p064",
+        "synthetic-p078",
+        "synthetic-p085",
+        "synthetic-p092",
+        "synthetic-p099"
+      ]
+    },
+    {
+      "id": "X-ATP-07",
+      "name": "가속–빠른 구간–감속",
+      "personas": [
+        "synthetic-p001",
+        "synthetic-p008",
+        "synthetic-p015",
+        "synthetic-p029",
+        "synthetic-p043",
+        "synthetic-p064",
+        "synthetic-p078",
+        "synthetic-p085",
+        "synthetic-p092",
+        "synthetic-p099"
+      ]
+    },
+    {
+      "id": "X-ATP-08",
+      "name": "10 + 30m 가속 세트",
+      "personas": [
+        "synthetic-p001",
+        "synthetic-p008",
+        "synthetic-p015",
+        "synthetic-p029",
+        "synthetic-p043",
+        "synthetic-p064",
+        "synthetic-p078",
+        "synthetic-p085",
+        "synthetic-p092",
+        "synthetic-p099"
+      ]
+    },
+    {
+      "id": "X-HILL-01",
+      "name": "8초 언덕 가속 · Hill Sprint",
+      "personas": [
+        "synthetic-p001",
+        "synthetic-p008",
+        "synthetic-p015",
+        "synthetic-p029",
+        "synthetic-p043",
+        "synthetic-p064",
+        "synthetic-p078",
+        "synthetic-p085",
+        "synthetic-p092",
+        "synthetic-p099"
+      ]
+    },
+    {
+      "id": "X-HILL-02",
+      "name": "40m 언덕 가속",
+      "personas": [
+        "synthetic-p001",
+        "synthetic-p008",
+        "synthetic-p015",
+        "synthetic-p029",
+        "synthetic-p043",
+        "synthetic-p064",
+        "synthetic-p078",
+        "synthetic-p085",
+        "synthetic-p092",
+        "synthetic-p099"
+      ]
+    },
+    {
+      "id": "X-HILL-03",
+      "name": "6초 언덕 세트",
+      "personas": [
+        "synthetic-p001",
+        "synthetic-p008",
+        "synthetic-p015",
+        "synthetic-p029",
+        "synthetic-p043",
+        "synthetic-p064",
+        "synthetic-p078",
+        "synthetic-p085",
+        "synthetic-p092",
+        "synthetic-p099"
+      ]
+    },
+    {
+      "id": "P-VO2-2",
+      "name": "인터벌 · Intervals",
+      "personas": [
+        "synthetic-p002",
+        "synthetic-p016",
+        "synthetic-p037",
+        "synthetic-p051",
+        "synthetic-p086"
+      ]
+    },
+    {
+      "id": "P-VO2-3",
+      "name": "인터벌 · Intervals",
+      "personas": [
+        "synthetic-p002",
+        "synthetic-p016",
+        "synthetic-p037",
+        "synthetic-p051",
+        "synthetic-p086"
+      ]
+    },
+    {
+      "id": "P-VO2-4",
+      "name": "인터벌 · Intervals",
+      "personas": [
+        "synthetic-p002",
+        "synthetic-p016",
+        "synthetic-p037",
+        "synthetic-p051",
+        "synthetic-p086"
+      ]
+    },
+    {
+      "id": "P-VO2-2-4",
+      "name": "인터벌 · Intervals",
+      "personas": [
+        "synthetic-p002",
+        "synthetic-p016",
+        "synthetic-p037",
+        "synthetic-p051",
+        "synthetic-p086"
+      ]
+    },
+    {
+      "id": "P-VO2-2-5",
+      "name": "인터벌 · Intervals",
+      "personas": [
+        "synthetic-p002",
+        "synthetic-p016",
+        "synthetic-p037",
+        "synthetic-p051",
+        "synthetic-p086"
+      ]
+    },
+    {
+      "id": "X-VO2-01",
+      "name": "400m 인터벌",
+      "personas": [
+        "synthetic-p002",
+        "synthetic-p016",
+        "synthetic-p037",
+        "synthetic-p044",
+        "synthetic-p051",
+        "synthetic-p065",
+        "synthetic-p079",
+        "synthetic-p086"
+      ]
+    },
+    {
+      "id": "X-VO2-02",
+      "name": "800m 인터벌",
+      "personas": [
+        "synthetic-p002",
+        "synthetic-p016",
+        "synthetic-p037",
+        "synthetic-p044",
+        "synthetic-p051",
+        "synthetic-p065",
+        "synthetic-p079",
+        "synthetic-p086"
+      ]
+    },
+    {
+      "id": "X-VO2-03",
+      "name": "1km 인터벌",
+      "personas": [
+        "synthetic-p002",
+        "synthetic-p016",
+        "synthetic-p037",
+        "synthetic-p044",
+        "synthetic-p051",
+        "synthetic-p065",
+        "synthetic-p079",
+        "synthetic-p086"
+      ]
+    },
+    {
+      "id": "X-VO2-04",
+      "name": "200–800m 피라미드",
+      "personas": [
+        "synthetic-p002",
+        "synthetic-p016",
+        "synthetic-p037",
+        "synthetic-p044",
+        "synthetic-p051",
+        "synthetic-p065",
+        "synthetic-p079",
+        "synthetic-p086"
+      ]
+    },
+    {
+      "id": "X-VO2-05",
+      "name": "400 + 600m 세트",
+      "personas": [
+        "synthetic-p002",
+        "synthetic-p016",
+        "synthetic-p037",
+        "synthetic-p044",
+        "synthetic-p051",
+        "synthetic-p065",
+        "synthetic-p079",
+        "synthetic-p086"
+      ]
+    },
+    {
+      "id": "X-VO2-06",
+      "name": "1분 반복 세트",
+      "personas": [
+        "synthetic-p002",
+        "synthetic-p016",
+        "synthetic-p037",
+        "synthetic-p044",
+        "synthetic-p051",
+        "synthetic-p065",
+        "synthetic-p079",
+        "synthetic-p086"
+      ]
+    },
+    {
+      "id": "X-VO2-07",
+      "name": "30/30 인터벌",
+      "personas": [
+        "synthetic-p002",
+        "synthetic-p016",
+        "synthetic-p037",
+        "synthetic-p044",
+        "synthetic-p051",
+        "synthetic-p065",
+        "synthetic-p079",
+        "synthetic-p086"
+      ]
+    },
+    {
+      "id": "X-VO2-08",
+      "name": "15/15 인터벌",
+      "personas": [
+        "synthetic-p002",
+        "synthetic-p016",
+        "synthetic-p037",
+        "synthetic-p044",
+        "synthetic-p051",
+        "synthetic-p065",
+        "synthetic-p079",
+        "synthetic-p086"
+      ]
+    },
+    {
+      "id": "X-VO2-09",
+      "name": "2–4분 피라미드",
+      "personas": [
+        "synthetic-p002",
+        "synthetic-p016",
+        "synthetic-p037",
+        "synthetic-p044",
+        "synthetic-p051",
+        "synthetic-p065",
+        "synthetic-p079",
+        "synthetic-p086"
+      ]
+    },
+    {
+      "id": "X-VO2-10",
+      "name": "4–1분 사다리",
+      "personas": [
+        "synthetic-p002",
+        "synthetic-p016",
+        "synthetic-p037",
+        "synthetic-p044",
+        "synthetic-p051",
+        "synthetic-p065",
+        "synthetic-p079",
+        "synthetic-p086"
+      ]
+    },
+    {
+      "id": "X-VO2-11",
+      "name": "90–30초 사다리 세트",
+      "personas": [
+        "synthetic-p002",
+        "synthetic-p016",
+        "synthetic-p037",
+        "synthetic-p044",
+        "synthetic-p051",
+        "synthetic-p065",
+        "synthetic-p079",
+        "synthetic-p086"
+      ]
+    },
+    {
+      "id": "X-VO2-12",
+      "name": "분할 2분 인터벌 · Broken Intervals",
+      "personas": [
+        "synthetic-p002",
+        "synthetic-p016",
+        "synthetic-p037",
+        "synthetic-p044",
+        "synthetic-p051",
+        "synthetic-p065",
+        "synthetic-p079",
+        "synthetic-p086"
+      ]
+    },
+    {
+      "id": "X-HILL-05",
+      "name": "90초 언덕 인터벌",
+      "personas": [
+        "synthetic-p002",
+        "synthetic-p016",
+        "synthetic-p037",
+        "synthetic-p044",
+        "synthetic-p051",
+        "synthetic-p065",
+        "synthetic-p079",
+        "synthetic-p086"
+      ]
+    },
+    {
+      "id": "X-HILL-06",
+      "name": "3분 언덕 인터벌",
+      "personas": [
+        "synthetic-p002",
+        "synthetic-p016",
+        "synthetic-p037",
+        "synthetic-p044",
+        "synthetic-p051",
+        "synthetic-p065",
+        "synthetic-p079",
+        "synthetic-p086"
+      ]
+    },
+    {
+      "id": "X-BASE-01",
+      "name": "저강도 조깅 · Easy Run",
+      "personas": [
+        "synthetic-p003",
+        "synthetic-p038",
+        "synthetic-p052",
+        "synthetic-p073",
+        "synthetic-p087"
+      ]
+    },
+    {
+      "id": "X-BASE-02",
+      "name": "거리형 조깅 · Easy Run",
+      "personas": [
+        "synthetic-p003",
+        "synthetic-p038",
+        "synthetic-p052",
+        "synthetic-p073",
+        "synthetic-p087"
+      ]
+    },
+    {
+      "id": "X-BASE-03",
+      "name": "시간형 롱런 · Long Run",
+      "personas": [
+        "synthetic-p003",
+        "synthetic-p017",
+        "synthetic-p031",
+        "synthetic-p038",
+        "synthetic-p052",
+        "synthetic-p066",
+        "synthetic-p073",
+        "synthetic-p087"
+      ]
+    },
+    {
+      "id": "X-BASE-04",
+      "name": "거리형 롱런 · Long Run",
+      "personas": [
+        "synthetic-p003",
+        "synthetic-p017",
+        "synthetic-p031",
+        "synthetic-p038",
+        "synthetic-p052",
+        "synthetic-p066",
+        "synthetic-p073",
+        "synthetic-p087"
+      ]
+    },
+    {
+      "id": "X-BASE-05",
+      "name": "걷기를 섞는 조깅 · Run/Walk",
+      "personas": [
+        "synthetic-p003",
+        "synthetic-p038",
+        "synthetic-p052",
+        "synthetic-p073",
+        "synthetic-p087"
+      ]
+    },
+    {
+      "id": "X-BASE-06",
+      "name": "거리형 런워크 · Run/Walk",
+      "personas": [
+        "synthetic-p003",
+        "synthetic-p038",
+        "synthetic-p052",
+        "synthetic-p073",
+        "synthetic-p087"
+      ]
+    },
+    {
+      "id": "X-BASE-07",
+      "name": "점진 조깅 · Progressive Easy",
+      "personas": [
+        "synthetic-p003",
+        "synthetic-p038",
+        "synthetic-p052",
+        "synthetic-p073",
+        "synthetic-p087"
+      ]
+    },
+    {
+      "id": "X-BASE-08",
+      "name": "리듬 조깅 · Easy Waves",
+      "personas": [
+        "synthetic-p003",
+        "synthetic-p017",
+        "synthetic-p031",
+        "synthetic-p038",
+        "synthetic-p052",
+        "synthetic-p066",
+        "synthetic-p073",
+        "synthetic-p087"
+      ]
+    },
+    {
+      "id": "X-BASE-09",
+      "name": "중간 걷기 조깅 · Split Easy",
+      "personas": [
+        "synthetic-p003",
+        "synthetic-p017",
+        "synthetic-p031",
+        "synthetic-p038",
+        "synthetic-p052",
+        "synthetic-p066",
+        "synthetic-p073",
+        "synthetic-p087"
+      ]
+    },
+    {
+      "id": "X-BASE-10",
+      "name": "올렸다 내리는 조깅 · Easy Wave",
+      "personas": [
+        "synthetic-p003",
+        "synthetic-p038",
+        "synthetic-p052",
+        "synthetic-p073",
+        "synthetic-p087"
+      ]
+    },
+    {
+      "id": "X-HILL-09",
+      "name": "완만한 언덕 조깅 · Rolling Easy",
+      "personas": [
+        "synthetic-p003",
+        "synthetic-p038",
+        "synthetic-p052",
+        "synthetic-p073",
+        "synthetic-p087"
+      ]
+    },
+    {
+      "id": "X-HILL-10",
+      "name": "오르막 걷기 반복",
+      "personas": [
+        "synthetic-p003",
+        "synthetic-p038",
+        "synthetic-p052",
+        "synthetic-p073",
+        "synthetic-p087"
+      ]
+    },
+    {
+      "id": "X-REC-01",
+      "name": "회복 조깅 · Recovery Jog",
+      "personas": [
+        "synthetic-p004",
+        "synthetic-p025",
+        "synthetic-p039",
+        "synthetic-p074",
+        "synthetic-p088"
+      ]
+    },
+    {
+      "id": "X-REC-02",
+      "name": "걷기 중심 런워크",
+      "personas": [
+        "synthetic-p004",
+        "synthetic-p025",
+        "synthetic-p039",
+        "synthetic-p074",
+        "synthetic-p088"
+      ]
+    },
+    {
+      "id": "X-REC-03",
+      "name": "가벼운 자전거 · Easy Bike",
+      "personas": [
+        "synthetic-p004",
+        "synthetic-p025",
+        "synthetic-p039",
+        "synthetic-p074",
+        "synthetic-p088"
+      ]
+    },
+    {
+      "id": "X-REC-04",
+      "name": "가벼운 일립티컬",
+      "personas": [
+        "synthetic-p004",
+        "synthetic-p025",
+        "synthetic-p039",
+        "synthetic-p074",
+        "synthetic-p088"
+      ]
+    },
+    {
+      "id": "X-REC-05",
+      "name": "수중 달리기 · Aqua Jog",
+      "personas": [
+        "synthetic-p004",
+        "synthetic-p025",
+        "synthetic-p039",
+        "synthetic-p074",
+        "synthetic-p088"
+      ]
+    },
+    {
+      "id": "X-REC-06",
+      "name": "가벼운 수영 · Easy Swim",
+      "personas": [
+        "synthetic-p004",
+        "synthetic-p025",
+        "synthetic-p039",
+        "synthetic-p074",
+        "synthetic-p088"
+      ]
+    },
+    {
+      "id": "X-REC-07",
+      "name": "자전거 + 걷기",
+      "personas": [
+        "synthetic-p004",
+        "synthetic-p025",
+        "synthetic-p039",
+        "synthetic-p074",
+        "synthetic-p088"
+      ]
+    },
+    {
+      "id": "X-REC-08",
+      "name": "걷기–조깅–걷기",
+      "personas": [
+        "synthetic-p004",
+        "synthetic-p025",
+        "synthetic-p039",
+        "synthetic-p074",
+        "synthetic-p088"
+      ]
+    },
+    {
+      "id": "P-INTRO-GLY-D",
+      "name": "고강도 거리 반복",
+      "personas": [
+        "synthetic-p005",
+        "synthetic-p019",
+        "synthetic-p026",
+        "synthetic-p054",
+        "synthetic-p061",
+        "synthetic-p068",
+        "synthetic-p075",
+        "synthetic-p089"
+      ]
+    },
+    {
+      "id": "P-INTRO-GLY-S",
+      "name": "세트형 고강도 거리 반복",
+      "personas": [
+        "synthetic-p005",
+        "synthetic-p019",
+        "synthetic-p026",
+        "synthetic-p054",
+        "synthetic-p061",
+        "synthetic-p068",
+        "synthetic-p075",
+        "synthetic-p089"
+      ]
+    },
+    {
+      "id": "X-GLY-01",
+      "name": "150m 고강도 반복",
+      "personas": [
+        "synthetic-p005",
+        "synthetic-p019",
+        "synthetic-p026",
+        "synthetic-p054",
+        "synthetic-p061",
+        "synthetic-p068",
+        "synthetic-p075",
+        "synthetic-p089"
+      ]
+    },
+    {
+      "id": "X-GLY-02",
+      "name": "300m 고강도 반복",
+      "personas": [
+        "synthetic-p005",
+        "synthetic-p019",
+        "synthetic-p026",
+        "synthetic-p054",
+        "synthetic-p061",
+        "synthetic-p068",
+        "synthetic-p075",
+        "synthetic-p089"
+      ]
+    },
+    {
+      "id": "X-GLY-03",
+      "name": "400m 고강도 반복",
+      "personas": [
+        "synthetic-p005",
+        "synthetic-p019",
+        "synthetic-p026",
+        "synthetic-p054",
+        "synthetic-p061",
+        "synthetic-p068",
+        "synthetic-p075",
+        "synthetic-p089"
+      ]
+    },
+    {
+      "id": "X-GLY-04",
+      "name": "150 + 150m 분할 세트",
+      "personas": [
+        "synthetic-p005",
+        "synthetic-p019",
+        "synthetic-p026",
+        "synthetic-p054",
+        "synthetic-p061",
+        "synthetic-p068",
+        "synthetic-p075",
+        "synthetic-p089"
+      ]
+    },
+    {
+      "id": "X-GLY-05",
+      "name": "200 + 100m 분할 세트",
+      "personas": [
+        "synthetic-p005",
+        "synthetic-p019",
+        "synthetic-p026",
+        "synthetic-p054",
+        "synthetic-p061",
+        "synthetic-p068",
+        "synthetic-p075",
+        "synthetic-p089"
+      ]
+    },
+    {
+      "id": "X-GLY-06",
+      "name": "300–150m 사다리",
+      "personas": [
+        "synthetic-p005",
+        "synthetic-p019",
+        "synthetic-p026",
+        "synthetic-p054",
+        "synthetic-p061",
+        "synthetic-p068",
+        "synthetic-p075",
+        "synthetic-p089"
+      ]
+    },
+    {
+      "id": "X-GLY-07",
+      "name": "40초 고강도 반복",
+      "personas": [
+        "synthetic-p005",
+        "synthetic-p019",
+        "synthetic-p026",
+        "synthetic-p054",
+        "synthetic-p061",
+        "synthetic-p068",
+        "synthetic-p075",
+        "synthetic-p089"
+      ]
+    },
+    {
+      "id": "X-GLY-08",
+      "name": "20 + 20초 분할 세트",
+      "personas": [
+        "synthetic-p005",
+        "synthetic-p019",
+        "synthetic-p026",
+        "synthetic-p054",
+        "synthetic-p061",
+        "synthetic-p068",
+        "synthetic-p075",
+        "synthetic-p089"
+      ]
+    },
+    {
+      "id": "X-HILL-04",
+      "name": "30초 언덕 반복",
+      "personas": [
+        "synthetic-p005",
+        "synthetic-p019",
+        "synthetic-p026",
+        "synthetic-p054",
+        "synthetic-p061",
+        "synthetic-p068",
+        "synthetic-p075",
+        "synthetic-p089"
+      ]
+    },
+    {
+      "id": "P-INTRO-LT-C",
+      "name": "템포런 · Tempo Run",
+      "personas": [
+        "synthetic-p006",
+        "synthetic-p034",
+        "synthetic-p041",
+        "synthetic-p048",
+        "synthetic-p055",
+        "synthetic-p069",
+        "synthetic-p083"
+      ]
+    },
+    {
+      "id": "P-INTRO-LT-S",
+      "name": "짧은 구간 크루즈 인터벌",
+      "personas": [
+        "synthetic-p006",
+        "synthetic-p034",
+        "synthetic-p041",
+        "synthetic-p048",
+        "synthetic-p055",
+        "synthetic-p069",
+        "synthetic-p083"
+      ]
+    },
+    {
+      "id": "X-LT-01",
+      "name": "1km 크루즈 인터벌",
+      "personas": [
+        "synthetic-p006",
+        "synthetic-p013",
+        "synthetic-p027",
+        "synthetic-p041",
+        "synthetic-p055",
+        "synthetic-p062",
+        "synthetic-p076",
+        "synthetic-p097"
+      ]
+    },
+    {
+      "id": "X-LT-02",
+      "name": "2km 크루즈 인터벌",
+      "personas": [
+        "synthetic-p006",
+        "synthetic-p013",
+        "synthetic-p027",
+        "synthetic-p041",
+        "synthetic-p055",
+        "synthetic-p062",
+        "synthetic-p076",
+        "synthetic-p097"
+      ]
+    },
+    {
+      "id": "X-LT-03",
+      "name": "3km 크루즈 인터벌",
+      "personas": [
+        "synthetic-p006",
+        "synthetic-p013",
+        "synthetic-p027",
+        "synthetic-p041",
+        "synthetic-p055",
+        "synthetic-p062",
+        "synthetic-p076",
+        "synthetic-p097"
+      ]
+    },
+    {
+      "id": "X-LT-04",
+      "name": "시간 피라미드 · Tempo Pyramid",
+      "personas": [
+        "synthetic-p006",
+        "synthetic-p013",
+        "synthetic-p027",
+        "synthetic-p041",
+        "synthetic-p055",
+        "synthetic-p062",
+        "synthetic-p076",
+        "synthetic-p097"
+      ]
+    },
+    {
+      "id": "X-LT-05",
+      "name": "늘려가는 템포 · Ascending Ladder",
+      "personas": [
+        "synthetic-p006",
+        "synthetic-p013",
+        "synthetic-p027",
+        "synthetic-p041",
+        "synthetic-p055",
+        "synthetic-p062",
+        "synthetic-p076",
+        "synthetic-p097"
+      ]
+    },
+    {
+      "id": "X-LT-06",
+      "name": "줄여가는 템포 · Descending Ladder",
+      "personas": [
+        "synthetic-p006",
+        "synthetic-p013",
+        "synthetic-p027",
+        "synthetic-p041",
+        "synthetic-p055",
+        "synthetic-p062",
+        "synthetic-p076",
+        "synthetic-p097"
+      ]
+    },
+    {
+      "id": "X-LT-07",
+      "name": "세트형 크루즈 인터벌",
+      "personas": [
+        "synthetic-p006",
+        "synthetic-p013",
+        "synthetic-p027",
+        "synthetic-p041",
+        "synthetic-p055",
+        "synthetic-p062",
+        "synthetic-p076",
+        "synthetic-p097"
+      ]
+    },
+    {
+      "id": "X-LT-08",
+      "name": "1km + 200m 플로트 · Cruise Float",
+      "personas": [
+        "synthetic-p006",
+        "synthetic-p013",
+        "synthetic-p027",
+        "synthetic-p041",
+        "synthetic-p055",
+        "synthetic-p062",
+        "synthetic-p076",
+        "synthetic-p097"
+      ]
+    },
+    {
+      "id": "X-LT-09",
+      "name": "6분 + 2분 플로트 · Cruise Float",
+      "personas": [
+        "synthetic-p006",
+        "synthetic-p013",
+        "synthetic-p027",
+        "synthetic-p041",
+        "synthetic-p055",
+        "synthetic-p062",
+        "synthetic-p076",
+        "synthetic-p097"
+      ]
+    },
+    {
+      "id": "X-LT-10",
+      "name": "강도 교대 템포 · Tempo Alternations",
+      "personas": [
+        "synthetic-p006",
+        "synthetic-p013",
+        "synthetic-p027",
+        "synthetic-p041",
+        "synthetic-p055",
+        "synthetic-p062",
+        "synthetic-p076",
+        "synthetic-p097"
+      ]
+    },
+    {
+      "id": "X-LT-11",
+      "name": "10 + 5 + 5분 템포",
+      "personas": [
+        "synthetic-p006",
+        "synthetic-p013",
+        "synthetic-p027",
+        "synthetic-p041",
+        "synthetic-p055",
+        "synthetic-p062",
+        "synthetic-p076",
+        "synthetic-p097"
+      ]
+    },
+    {
+      "id": "X-LT-12",
+      "name": "1200 + 800m 세트",
+      "personas": [
+        "synthetic-p006",
+        "synthetic-p013",
+        "synthetic-p027",
+        "synthetic-p041",
+        "synthetic-p055",
+        "synthetic-p062",
+        "synthetic-p076",
+        "synthetic-p097"
+      ]
+    },
+    {
+      "id": "X-HILL-07",
+      "name": "6분 언덕 템포",
+      "personas": [
+        "synthetic-p006",
+        "synthetic-p013",
+        "synthetic-p027",
+        "synthetic-p041",
+        "synthetic-p055",
+        "synthetic-p062",
+        "synthetic-p076",
+        "synthetic-p097"
+      ]
+    },
+    {
+      "id": "X-HILL-08",
+      "name": "10분 지속 언덕 템포",
+      "personas": [
+        "synthetic-p006",
+        "synthetic-p013",
+        "synthetic-p027",
+        "synthetic-p041",
+        "synthetic-p055",
+        "synthetic-p062",
+        "synthetic-p076",
+        "synthetic-p097"
+      ]
+    },
+    {
+      "id": "P-RHYTHM-400",
+      "name": "거리형 리듬 달리기",
+      "personas": [
+        "synthetic-p007",
+        "synthetic-p014",
+        "synthetic-p021",
+        "synthetic-p028",
+        "synthetic-p035",
+        "synthetic-p042",
+        "synthetic-p049",
+        "synthetic-p056",
+        "synthetic-p063",
+        "synthetic-p077",
+        "synthetic-p084",
+        "synthetic-p091",
+        "synthetic-p098"
+      ]
+    },
+    {
+      "id": "P-INTRO-MIX-T",
+      "name": "시간형 리듬 달리기",
+      "personas": [
+        "synthetic-p007",
+        "synthetic-p021",
+        "synthetic-p035",
+        "synthetic-p042",
+        "synthetic-p056",
+        "synthetic-p077",
+        "synthetic-p084",
+        "synthetic-p091"
+      ]
+    },
+    {
+      "id": "P-INTRO-MIX-S",
+      "name": "세트형 시간 리듬 달리기",
+      "personas": [
+        "synthetic-p007",
+        "synthetic-p021",
+        "synthetic-p035",
+        "synthetic-p042",
+        "synthetic-p056",
+        "synthetic-p077",
+        "synthetic-p084",
+        "synthetic-p091"
+      ]
+    },
+    {
+      "id": "P-RHYTHM-400-2X6",
+      "name": "거리형 리듬 달리기",
+      "personas": [
+        "synthetic-p007",
+        "synthetic-p014",
+        "synthetic-p021",
+        "synthetic-p028",
+        "synthetic-p035",
+        "synthetic-p042",
+        "synthetic-p049",
+        "synthetic-p056",
+        "synthetic-p063",
+        "synthetic-p077",
+        "synthetic-p084",
+        "synthetic-p091",
+        "synthetic-p098"
+      ]
+    },
+    {
+      "id": "X-MIX-01",
+      "name": "1–3분 파틀렉 · Fartlek Pyramid",
+      "personas": [
+        "synthetic-p007",
+        "synthetic-p014",
+        "synthetic-p028",
+        "synthetic-p042",
+        "synthetic-p049",
+        "synthetic-p056",
+        "synthetic-p063",
+        "synthetic-p077",
+        "synthetic-p091",
+        "synthetic-p098"
+      ]
+    },
+    {
+      "id": "X-MIX-02",
+      "name": "템포 + 인터벌 세트",
+      "personas": [
+        "synthetic-p007",
+        "synthetic-p014",
+        "synthetic-p028",
+        "synthetic-p042",
+        "synthetic-p049",
+        "synthetic-p056",
+        "synthetic-p063",
+        "synthetic-p077",
+        "synthetic-p091",
+        "synthetic-p098"
+      ]
+    },
+    {
+      "id": "X-MIX-03",
+      "name": "1km 템포 + 200m 반복",
+      "personas": [
+        "synthetic-p007",
+        "synthetic-p014",
+        "synthetic-p028",
+        "synthetic-p042",
+        "synthetic-p049",
+        "synthetic-p056",
+        "synthetic-p063",
+        "synthetic-p077",
+        "synthetic-p091",
+        "synthetic-p098"
+      ]
+    },
+    {
+      "id": "X-MIX-04",
+      "name": "800m 인터벌 + 400m 템포",
+      "personas": [
+        "synthetic-p007",
+        "synthetic-p014",
+        "synthetic-p028",
+        "synthetic-p042",
+        "synthetic-p049",
+        "synthetic-p056",
+        "synthetic-p063",
+        "synthetic-p077",
+        "synthetic-p091",
+        "synthetic-p098"
+      ]
+    },
+    {
+      "id": "X-MIX-05",
+      "name": "2km 스테디 + 400m 인터벌",
+      "personas": [
+        "synthetic-p007",
+        "synthetic-p014",
+        "synthetic-p028",
+        "synthetic-p042",
+        "synthetic-p049",
+        "synthetic-p056",
+        "synthetic-p063",
+        "synthetic-p077",
+        "synthetic-p091",
+        "synthetic-p098"
+      ]
+    },
+    {
+      "id": "X-MIX-06",
+      "name": "조깅 + 10초 고출력",
+      "personas": [
+        "synthetic-p007",
+        "synthetic-p014",
+        "synthetic-p028",
+        "synthetic-p042",
+        "synthetic-p049",
+        "synthetic-p056",
+        "synthetic-p063",
+        "synthetic-p077",
+        "synthetic-p091",
+        "synthetic-p098"
+      ]
+    },
+    {
+      "id": "X-MIX-07",
+      "name": "템포 + 점진 가속",
+      "personas": [
+        "synthetic-p007",
+        "synthetic-p014",
+        "synthetic-p028",
+        "synthetic-p042",
+        "synthetic-p049",
+        "synthetic-p056",
+        "synthetic-p063",
+        "synthetic-p077",
+        "synthetic-p091",
+        "synthetic-p098"
+      ]
+    },
+    {
+      "id": "X-MIX-08",
+      "name": "200m 교대 · Alternating 200s",
+      "personas": [
+        "synthetic-p007",
+        "synthetic-p014",
+        "synthetic-p028",
+        "synthetic-p042",
+        "synthetic-p049",
+        "synthetic-p056",
+        "synthetic-p063",
+        "synthetic-p077",
+        "synthetic-p091",
+        "synthetic-p098"
+      ]
+    },
+    {
+      "id": "X-MIX-09",
+      "name": "템포–인터벌–고강도 세트",
+      "personas": [
+        "synthetic-p007",
+        "synthetic-p014",
+        "synthetic-p028",
+        "synthetic-p042",
+        "synthetic-p049",
+        "synthetic-p056",
+        "synthetic-p063",
+        "synthetic-p077",
+        "synthetic-p091",
+        "synthetic-p098"
+      ]
+    },
+    {
+      "id": "X-MIX-10",
+      "name": "1km–800m–400m 복합",
+      "personas": [
+        "synthetic-p007",
+        "synthetic-p014",
+        "synthetic-p028",
+        "synthetic-p042",
+        "synthetic-p049",
+        "synthetic-p056",
+        "synthetic-p063",
+        "synthetic-p077",
+        "synthetic-p091",
+        "synthetic-p098"
+      ]
+    },
+    {
+      "id": "X-HILL-11",
+      "name": "언덕 + 평지 변속",
+      "personas": [
+        "synthetic-p007",
+        "synthetic-p014",
+        "synthetic-p028",
+        "synthetic-p042",
+        "synthetic-p049",
+        "synthetic-p056",
+        "synthetic-p063",
+        "synthetic-p077",
+        "synthetic-p091",
+        "synthetic-p098"
+      ]
+    },
+    {
+      "id": "X-HILL-12",
+      "name": "언덕 인터벌 + 평지 템포",
+      "personas": [
+        "synthetic-p007",
+        "synthetic-p014",
+        "synthetic-p028",
+        "synthetic-p042",
+        "synthetic-p049",
+        "synthetic-p056",
+        "synthetic-p063",
+        "synthetic-p077",
+        "synthetic-p091",
+        "synthetic-p098"
+      ]
+    },
+    {
+      "id": "P-INTRO-ATP-A",
+      "name": "서서 출발하는 가속 달리기",
+      "personas": [
+        "synthetic-p008",
+        "synthetic-p022",
+        "synthetic-p029",
+        "synthetic-p036",
+        "synthetic-p043",
+        "synthetic-p057",
+        "synthetic-p071",
+        "synthetic-p078",
+        "synthetic-p092"
+      ]
+    },
+    {
+      "id": "P-INTRO-ATP-T",
+      "name": "시간형 가속 달리기",
+      "personas": [
+        "synthetic-p008",
+        "synthetic-p022",
+        "synthetic-p029",
+        "synthetic-p036",
+        "synthetic-p043",
+        "synthetic-p057",
+        "synthetic-p071",
+        "synthetic-p078",
+        "synthetic-p092"
+      ]
+    },
+    {
+      "id": "P-INTRO-VO2-2",
+      "name": "인터벌 · Intervals",
+      "personas": [
+        "synthetic-p009",
+        "synthetic-p023",
+        "synthetic-p044",
+        "synthetic-p058",
+        "synthetic-p065",
+        "synthetic-p072",
+        "synthetic-p079",
+        "synthetic-p093"
+      ]
+    },
+    {
+      "id": "P-INTRO-VO2-3",
+      "name": "인터벌 · Intervals",
+      "personas": [
+        "synthetic-p009",
+        "synthetic-p023",
+        "synthetic-p044",
+        "synthetic-p058",
+        "synthetic-p065",
+        "synthetic-p072",
+        "synthetic-p079",
+        "synthetic-p093"
+      ]
+    },
+    {
+      "id": "P-LT-C",
+      "name": "템포런 · Tempo Run",
+      "personas": [
+        "synthetic-p013",
+        "synthetic-p027",
+        "synthetic-p062",
+        "synthetic-p076",
+        "synthetic-p097"
+      ]
+    },
+    {
+      "id": "P-LT-B",
+      "name": "긴 구간 크루즈 인터벌",
+      "personas": [
+        "synthetic-p013",
+        "synthetic-p027",
+        "synthetic-p062",
+        "synthetic-p076",
+        "synthetic-p097"
+      ]
+    },
+    {
+      "id": "P-LT-S",
+      "name": "짧은 구간 크루즈 인터벌",
+      "personas": [
+        "synthetic-p013",
+        "synthetic-p027",
+        "synthetic-p062",
+        "synthetic-p076",
+        "synthetic-p097"
+      ]
+    },
+    {
+      "id": "P-LT-B-480",
+      "name": "긴 구간 크루즈 인터벌",
+      "personas": [
+        "synthetic-p013",
+        "synthetic-p027",
+        "synthetic-p062",
+        "synthetic-p076",
+        "synthetic-p097"
+      ]
+    },
+    {
+      "id": "P-RHYTHM-300",
+      "name": "세트형 거리 리듬 달리기",
+      "personas": [
+        "synthetic-p014",
+        "synthetic-p028",
+        "synthetic-p049",
+        "synthetic-p063",
+        "synthetic-p098"
+      ]
+    },
+    {
+      "id": "P-RHYTHM-T",
+      "name": "시간형 리듬 달리기",
+      "personas": [
+        "synthetic-p014",
+        "synthetic-p028",
+        "synthetic-p049",
+        "synthetic-p063",
+        "synthetic-p098"
+      ]
+    },
+    {
+      "id": "P-RHYTHM-TS",
+      "name": "세트형 시간 리듬 달리기",
+      "personas": [
+        "synthetic-p014",
+        "synthetic-p028",
+        "synthetic-p049",
+        "synthetic-p063",
+        "synthetic-p098"
+      ]
+    },
+    {
+      "id": "P-GLY-D",
+      "name": "고강도 거리 반복",
+      "personas": [
+        "synthetic-p026",
+        "synthetic-p061",
+        "synthetic-p075"
+      ]
+    },
+    {
+      "id": "P-GLY-S",
+      "name": "세트형 고강도 거리 반복",
+      "personas": [
+        "synthetic-p026",
+        "synthetic-p061",
+        "synthetic-p075"
+      ]
+    }
+  ],
+  "rejectedAfterSyntheticInput": [
+    {
+      "persona": "synthetic-p003",
+      "catalogId": "P-BASE-C-1500"
+    },
+    {
+      "persona": "synthetic-p024",
+      "catalogId": "X-BASE-01"
+    },
+    {
+      "persona": "synthetic-p026",
+      "catalogId": "P-GLY-D"
+    },
+    {
+      "persona": "synthetic-p052",
+      "catalogId": "P-BASE-C"
+    },
+    {
+      "persona": "synthetic-p061",
+      "catalogId": "P-GLY-D"
+    },
+    {
+      "persona": "synthetic-p066",
+      "catalogId": "X-BASE-05"
+    },
+    {
+      "persona": "synthetic-p075",
+      "catalogId": "P-GLY-D"
+    },
+    {
+      "persona": "synthetic-p087",
+      "catalogId": "P-BASE-C-1500"
+    }
+  ]
+}

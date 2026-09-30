@@ -1,0 +1,64 @@
+{
+  "baseline": "9085282",
+  "syntheticOnly": true,
+  "userProfileUsed": false,
+  "externalRequests": [],
+  "probes": [
+    {
+      "kind": "unsubmitted-entry-cancel-keeps-values",
+      "kept": {
+        "event": "5000",
+        "minutes": "21",
+        "seconds": "30.12",
+        "achievedOn": "2026-09-10"
+      },
+      "beforeUnloadBlocked": true,
+      "confirmShown": 1
+    },
+    {
+      "kind": "unsubmitted-entry-explicit-discard-clears",
+      "beforeUnloadBlocked": true,
+      "dialogCount": 2,
+      "returned": {
+        "event": "",
+        "minutes": "",
+        "seconds": "",
+        "achievedOn": ""
+      }
+    },
+    {
+      "kind": "generated-plan-cancel-and-hard-guard",
+      "beforeUnloadBlocked": true,
+      "candidateKept": true,
+      "unchanged": true,
+      "hardGuardBlocks": 1,
+      "hardGuardDialogDelta": 0
+    },
+    {
+      "kind": "explicit-discard-left",
+      "homeVisible": true,
+      "dialogs": [
+        {
+          "type": "confirm",
+          "message": "아직 저장하지 않은 계획이 있어요. 계획 만들기를 그만두고 이동할까요?\n계속 만들려면 취소를 눌러 주세요.",
+          "accepted": false
+        },
+        {
+          "type": "confirm",
+          "message": "아직 저장하지 않은 계획이 있어요. 계획 만들기를 그만두고 이동할까요?\n계속 만들려면 취소를 눌러 주세요.",
+          "accepted": true
+        },
+        {
+          "type": "confirm",
+          "message": "아직 저장하지 않은 계획이 있어요. 계획 만들기를 그만두고 이동할까요?\n계속 만들려면 취소를 눌러 주세요.",
+          "accepted": false
+        },
+        {
+          "type": "confirm",
+          "message": "아직 저장하지 않은 계획이 있어요. 계획 만들기를 그만두고 이동할까요?\n계속 만들려면 취소를 눌러 주세요.",
+          "accepted": true
+        }
+      ]
+    }
+  ]
+}

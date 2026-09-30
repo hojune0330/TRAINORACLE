@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from "react"
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react"
 import type { FormEvent } from "react"
 import type { InstantPlanEntry } from "../../domain/instant-plan-contract"
 import "./instant-plan.css"
@@ -11,6 +11,7 @@ export type InstantPlanEntryFormProps = {
   readonly initialEntry?: InstantPlanEntry
   readonly disabled?: boolean
   readonly sourceLabel?: string
+  readonly onDraftChange?: (dirty: boolean) => void
 }
 
 const EVENTS: readonly { value: InstantPlanEntry["eventDistanceM"]; label: string }[] = [
@@ -59,7 +60,7 @@ function initialTime(entry?: InstantPlanEntry): { minutes: string; seconds: stri
 
 /** Collects facts only. Eligibility, safety, generation and storage belong to the caller. */
 export function InstantPlanEntryForm({
-  onSubmit, today, initialEntry, disabled = false, sourceLabel,
+  onSubmit, today, initialEntry, disabled = false, sourceLabel, onDraftChange,
 }: InstantPlanEntryFormProps) {
   const id = useId()
   const [kind, setKind] = useState<InstantPlanEntry["kind"]>(initialEntry?.kind ?? "CURRENT_RECORD")
@@ -68,6 +69,10 @@ export function InstantPlanEntryForm({
   const [seconds, setSeconds] = useState(() => initialTime(initialEntry).seconds)
   const [achievedOn, setAchievedOn] = useState(initialEntry?.kind === "CURRENT_RECORD" ? initialEntry.achievedOn : "")
   const [errors, setErrors] = useState<Errors>({})
+  const formValue = JSON.stringify([kind, event, minutes, seconds, achievedOn])
+  const initialValue = useRef(formValue)
+  useLayoutEffect(() => { onDraftChange?.(formValue !== initialValue.current) }, [formValue, onDraftChange])
+  useEffect(() => () => onDraftChange?.(false), [onDraftChange])
   const timeDrafts = useRef<Partial<Record<"CURRENT_RECORD" | "GOAL_ONLY", { minutes: string; seconds: string }>>>({})
   const eventRef = useRef<HTMLSelectElement>(null)
   const minutesRef = useRef<HTMLInputElement>(null)

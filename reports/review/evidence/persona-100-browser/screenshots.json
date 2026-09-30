@@ -1,0 +1,38 @@
+[
+  {
+    "target": "baseline-p042-runtime-error.png",
+    "source": ".scratch/persona-100-browser/baseline-repair/synthetic-p042/failure.png",
+    "bytes": 31810,
+    "sha256": "0b62aa5ff7e5309172a63daba2361aa8eca8be2d2d9fbd3e7f5902aa629cfa68"
+  },
+  {
+    "target": "current-320-action-and-unbound-main.png",
+    "source": ".scratch/persona-100-browser/current-clean/current-layout-320-action.png",
+    "bytes": 42331,
+    "sha256": "00520afed7fa28c104b3a9dcea9c666a799706d2ec88c07c889eb758b57bc2f5"
+  },
+  {
+    "target": "current-375-required-seconds.png",
+    "source": ".scratch/persona-100-browser/current-clean/current-catalog-numeric-required.png",
+    "bytes": 39423,
+    "sha256": "a5ee64900f38fc76151eb418e201e85d0800efb1961f440dc7b3129f00e1519a"
+  },
+  {
+    "target": "current-375-restored-reference-target.png",
+    "source": ".scratch/persona-100-browser/current-clean/current-catalog-numeric-restored.png",
+    "bytes": 38589,
+    "sha256": "e34f7c7cae3be2d36b539b957f4c1f43f95d2e69ba09961fd422c1c31774d995"
+  },
+  {
+    "target": "current-320-css-zoom-200.png",
+    "source": ".scratch/persona-100-browser/current-clean/current-zoom-200-action.png",
+    "bytes": 15328,
+    "sha256": "5bfc2da520d7bfce04a9e13bae59374f295da1552ac800682bd455c370f3626b"
+  },
+  {
+    "target": "current-p042-distance-recovery-fixed.png",
+    "source": ".scratch/persona-100-browser/current-p042-probe/current-p042-recovery-applied-distance-recovery.png",
+    "bytes": 62713,
+    "sha256": "c00aa5e6652c9a7015186d50e6d5189fe39093ab92a6a1788f1166bfcfb1ea06"
+  }
+]

@@ -81,15 +81,7 @@ export function InstantPlanRecommendationView({
       {goalLabel && (
         <p className="instant-plan__hint">목표 기록은 현재 능력이나 이 기간 안의 달성 보장을 뜻하지 않아요.</p>
       )}
-
-      <section aria-label="이번 일정">
-        <h3>이번 일정</h3>
-        {recommendation.days.length === 0 ? (
-          <p className="instant-plan__status">표시할 일정이 없어요.</p>
-        ) : (
-          <RecommendationCalendar identity={recommendation.id} days={recommendation.days} />
-        )}
-      </section>
+      {recommendation.guidanceNotice && <p className="instant-plan__hint">{recommendation.guidanceNotice}</p>}
 
       {status !== null && (
         <section
@@ -137,6 +129,15 @@ export function InstantPlanRecommendationView({
         )}
       </div>
 
+      <section aria-label="이번 일정">
+        <h3>이번 일정</h3>
+        {recommendation.days.length === 0 ? (
+          <p className="instant-plan__status">표시할 일정이 없어요.</p>
+        ) : (
+          <RecommendationCalendar identity={recommendation.id} days={recommendation.days} />
+        )}
+      </section>
+
       {recommendation.days.length > 0 && (
         <details className="instant-plan__disclosure">
           <summary>전체 훈련 내용</summary>
@@ -149,6 +150,7 @@ export function InstantPlanRecommendationView({
                     {day.sessions.map(session => (
                       <li key={session.id}>
                         {session.slotLabel} · {roleLabels[session.role]} · {session.title}
+                        {session.notation && <p>{session.notation}</p>}
                       </li>
                     ))}
                   </ul>

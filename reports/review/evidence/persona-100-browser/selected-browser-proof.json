@@ -1,0 +1,1689 @@
+{
+  "baseline": [
+    {
+      "persona": {
+        "id": "synthetic-p001",
+        "n": 1,
+        "seed": 9641711,
+        "width": 320,
+        "height": 800,
+        "entry": "홈",
+        "event": 5000,
+        "experience": "NEW_TO_RUNNING",
+        "experienceIndex": 0,
+        "focusIndex": 5,
+        "days": 6,
+        "frame": 7,
+        "twice": false,
+        "safety": "NO_KNOWN_RISK",
+        "record": "stale",
+        "currentEntry": false,
+        "reducedMotion": false,
+        "zoom": 1,
+        "habit": "tab-return",
+        "recordSeconds": 1082.25,
+        "catalogChoiceIndex": 13
+      },
+      "source": "baseline/synthetic-p001/evidence.json",
+      "productErrors": [],
+      "pageErrors": [],
+      "comparisons": [
+        {
+          "code": "UNAPPLIED_DRAFT_FINALIZED",
+          "phase": "finalize-with-unapplied-draft",
+          "evidence": {
+            "previewCatalogId": "P-INTRO-ATP-T",
+            "savedCatalogId": null,
+            "address": "2:AM"
+          }
+        }
+      ],
+      "numeric": [
+        {
+          "kind": "catalog-preview",
+          "choice": "P-INTRO-ATP-T",
+          "missingCount": 0,
+          "hidden": false,
+          "applyEnabled": false,
+          "address": "2:AM"
+        }
+      ]
+    },
+    {
+      "persona": {
+        "id": "synthetic-p006",
+        "n": 6,
+        "seed": 9681306,
+        "width": 1280,
+        "height": 568,
+        "entry": "계획",
+        "event": 10000,
+        "experience": "DEVELOPING",
+        "experienceIndex": 1,
+        "focusIndex": 2,
+        "days": 6,
+        "frame": 7,
+        "twice": false,
+        "safety": "NO_KNOWN_RISK",
+        "record": "current",
+        "currentEntry": false,
+        "reducedMotion": false,
+        "zoom": 1,
+        "habit": "tab-return",
+        "recordSeconds": 1093.5,
+        "catalogChoiceIndex": 78
+      },
+      "source": "baseline/synthetic-p006/evidence.json",
+      "productErrors": [],
+      "pageErrors": [],
+      "comparisons": [],
+      "numeric": [
+        {
+          "kind": "catalog-preview",
+          "choice": "P-LT-S",
+          "missingCount": 0,
+          "hidden": false,
+          "applyEnabled": false,
+          "address": "2:AM"
+        },
+        {
+          "kind": "applied-input-restoration",
+          "submitted": [],
+          "restored": [],
+          "restoredRecord": "synthetic-record-6"
+        }
+      ]
+    },
+    {
+      "persona": {
+        "id": "synthetic-p009",
+        "n": 9,
+        "seed": 9705063,
+        "width": 375,
+        "height": 568,
+        "entry": "홈",
+        "event": 42195,
+        "experience": "EXPERIENCED",
+        "experienceIndex": 2,
+        "focusIndex": 3,
+        "days": 5,
+        "frame": 9,
+        "twice": true,
+        "safety": "NO_KNOWN_RISK",
+        "record": "current",
+        "currentEntry": false,
+        "reducedMotion": false,
+        "zoom": 1,
+        "habit": "reload",
+        "recordSeconds": 1100.25,
+        "catalogChoiceIndex": 117
+      },
+      "source": "baseline/synthetic-p009/evidence.json",
+      "productErrors": [],
+      "pageErrors": [],
+      "comparisons": [
+        {
+          "code": "UNAPPLIED_DRAFT_FINALIZED",
+          "phase": "finalize-with-unapplied-draft",
+          "evidence": {
+            "previewCatalogId": "X-VO2-06",
+            "savedCatalogId": "X-VO2-06",
+            "address": "3:AM"
+          }
+        }
+      ],
+      "numeric": [
+        {
+          "kind": "catalog-preview",
+          "choice": "X-VO2-06",
+          "missingCount": 0,
+          "hidden": false,
+          "applyEnabled": true,
+          "address": "3:AM"
+        }
+      ]
+    },
+    {
+      "persona": {
+        "id": "synthetic-p017",
+        "n": 17,
+        "seed": 9768415,
+        "width": 768,
+        "height": 667,
+        "entry": "홈",
+        "event": 3000,
+        "experience": "DEVELOPING",
+        "experienceIndex": 1,
+        "focusIndex": 1,
+        "days": 4,
+        "frame": 10,
+        "twice": false,
+        "safety": "NO_KNOWN_RISK",
+        "record": "none",
+        "currentEntry": false,
+        "reducedMotion": false,
+        "zoom": 1.25,
+        "habit": "scroll",
+        "recordSeconds": 1118.25,
+        "catalogChoiceIndex": 221
+      },
+      "source": "baseline/synthetic-p017/evidence.json",
+      "productErrors": [],
+      "pageErrors": [],
+      "comparisons": [
+        {
+          "code": "UNAPPLIED_DRAFT_FINALIZED",
+          "phase": "finalize-with-unapplied-draft",
+          "evidence": {
+            "previewCatalogId": "X-BASE-10",
+            "savedCatalogId": "X-BASE-01",
+            "address": "4:AM"
+          }
+        }
+      ],
+      "numeric": [
+        {
+          "kind": "catalog-preview",
+          "choice": "X-BASE-10",
+          "missingCount": 0,
+          "hidden": false,
+          "applyEnabled": false,
+          "address": "4:AM"
+        }
+      ]
+    },
+    {
+      "persona": {
+        "id": "synthetic-p025",
+        "n": 25,
+        "seed": 9831767,
+        "width": 320,
+        "height": 800,
+        "entry": "홈",
+        "event": 21097,
+        "experience": "NEW_TO_RUNNING",
+        "experienceIndex": 0,
+        "focusIndex": 6,
+        "days": 3,
+        "frame": 7,
+        "twice": false,
+        "safety": "NO_KNOWN_RISK",
+        "record": "stale",
+        "currentEntry": false,
+        "reducedMotion": false,
+        "zoom": 1,
+        "habit": "help-back",
+        "recordSeconds": 1136.25,
+        "catalogChoiceIndex": 325
+      },
+      "source": "baseline/synthetic-p025/evidence.json",
+      "productErrors": [],
+      "pageErrors": [],
+      "comparisons": [
+        {
+          "code": "UNAPPLIED_DRAFT_FINALIZED",
+          "phase": "finalize-with-unapplied-draft",
+          "evidence": {
+            "previewCatalogId": "P-REC-W",
+            "savedCatalogId": "P-REC-W",
+            "address": "4:AM"
+          }
+        }
+      ],
+      "numeric": [
+        {
+          "kind": "catalog-preview",
+          "choice": "P-REC-W",
+          "missingCount": 0,
+          "hidden": false,
+          "applyEnabled": true,
+          "address": "4:AM"
+        }
+      ]
+    },
+    {
+      "persona": {
+        "id": "synthetic-p033",
+        "n": 33,
+        "seed": 9895119,
+        "width": 375,
+        "height": 568,
+        "entry": "홈",
+        "event": 1500,
+        "experience": "EXPERIENCED",
+        "experienceIndex": 2,
+        "focusIndex": 4,
+        "days": "EVERY_DAY",
+        "frame": 9,
+        "twice": false,
+        "safety": "NO_KNOWN_RISK",
+        "record": "current",
+        "currentEntry": true,
+        "reducedMotion": false,
+        "zoom": 2,
+        "habit": "keyboard-cancel",
+        "recordSeconds": 1154.25,
+        "catalogChoiceIndex": 429
+      },
+      "source": "baseline/synthetic-p033/evidence.json",
+      "productErrors": [],
+      "pageErrors": [],
+      "comparisons": [
+        {
+          "code": "HIDDEN_REQUIRED_NUMERIC",
+          "phase": "open-catalog",
+          "evidence": {
+            "choice": "P-INTRO-GLY-D",
+            "missingCount": 1
+          }
+        },
+        {
+          "code": "UNAPPLIED_DRAFT_FINALIZED",
+          "phase": "finalize-with-unapplied-draft",
+          "evidence": {
+            "previewCatalogId": "P-INTRO-GLY-D",
+            "savedCatalogId": null,
+            "address": "2:AM"
+          }
+        }
+      ],
+      "numeric": [
+        {
+          "kind": "catalog-preview",
+          "choice": "P-INTRO-GLY-D",
+          "missingCount": 1,
+          "hidden": true,
+          "applyEnabled": false,
+          "address": "2:AM"
+        }
+      ]
+    },
+    {
+      "persona": {
+        "id": "synthetic-p041",
+        "n": 41,
+        "seed": 9958471,
+        "width": 768,
+        "height": 667,
+        "entry": "홈",
+        "event": 10000,
+        "experience": "DEVELOPING",
+        "experienceIndex": 1,
+        "focusIndex": 2,
+        "days": 6,
+        "frame": 10,
+        "twice": false,
+        "safety": "NO_KNOWN_RISK",
+        "record": "none",
+        "currentEntry": false,
+        "reducedMotion": false,
+        "zoom": 1,
+        "habit": "tab-return",
+        "recordSeconds": 1172.25,
+        "catalogChoiceIndex": 533
+      },
+      "source": "baseline/synthetic-p041/evidence.json",
+      "productErrors": [],
+      "pageErrors": [],
+      "comparisons": [
+        {
+          "code": "UNAPPLIED_DRAFT_FINALIZED",
+          "phase": "finalize-with-unapplied-draft",
+          "evidence": {
+            "previewCatalogId": "P-LT-B",
+            "savedCatalogId": null,
+            "address": "3:AM"
+          }
+        }
+      ],
+      "numeric": [
+        {
+          "kind": "catalog-preview",
+          "choice": "P-LT-B",
+          "missingCount": 0,
+          "hidden": false,
+          "applyEnabled": false,
+          "address": "3:AM"
+        }
+      ]
+    },
+    {
+      "persona": {
+        "id": "synthetic-p042",
+        "n": 42,
+        "seed": 9966390,
+        "width": 1280,
+        "height": 568,
+        "entry": "계획",
+        "event": 800,
+        "experience": "DEVELOPING",
+        "experienceIndex": 1,
+        "focusIndex": 0,
+        "days": 4,
+        "frame": 7,
+        "twice": false,
+        "safety": "NO_KNOWN_RISK",
+        "record": "current",
+        "currentEntry": false,
+        "reducedMotion": false,
+        "zoom": 1,
+        "habit": "scroll",
+        "recordSeconds": 1174.5,
+        "catalogChoiceIndex": 546
+      },
+      "source": "baseline-repair/synthetic-p042/evidence.json",
+      "productErrors": [
+        "picker: locator.isEnabled: Timeout 6000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.catalog-workout-picker').getByRole('button', { name: '이 구성으로 바꾸기', exact: true })\u001b[22m\n"
+      ],
+      "pageErrors": [
+        "INVALID_SEQUENCE_V3",
+        "INVALID_SEQUENCE_V3"
+      ],
+      "comparisons": [
+        {
+          "code": "HIDDEN_REQUIRED_NUMERIC",
+          "phase": "open-catalog",
+          "evidence": {
+            "choice": "P-RHYTHM-300",
+            "missingCount": 2
+          }
+        },
+        {
+          "code": "RUNTIME_PAGE_ERROR",
+          "phase": "picker",
+          "evidence": [
+            "INVALID_SEQUENCE_V3",
+            "INVALID_SEQUENCE_V3"
+          ]
+        }
+      ],
+      "numeric": [
+        {
+          "kind": "catalog-preview",
+          "choice": "P-RHYTHM-300",
+          "missingCount": 2,
+          "hidden": true,
+          "applyEnabled": false,
+          "address": "3:AM"
+        }
+      ]
+    },
+    {
+      "persona": {
+        "id": "synthetic-p049",
+        "n": 49,
+        "seed": 10021823,
+        "width": 320,
+        "height": 800,
+        "entry": "홈",
+        "event": 800,
+        "experience": "NEW_TO_RUNNING",
+        "experienceIndex": 0,
+        "focusIndex": 0,
+        "days": 5,
+        "frame": 9,
+        "twice": false,
+        "safety": "NO_KNOWN_RISK",
+        "record": "stale",
+        "currentEntry": false,
+        "reducedMotion": false,
+        "zoom": 1,
+        "habit": "reload",
+        "recordSeconds": 1190.25,
+        "catalogChoiceIndex": 637
+      },
+      "source": "baseline/synthetic-p049/evidence.json",
+      "productErrors": [],
+      "pageErrors": [],
+      "comparisons": [
+        {
+          "code": "UNAPPLIED_DRAFT_FINALIZED",
+          "phase": "finalize-with-unapplied-draft",
+          "evidence": {
+            "previewCatalogId": "P-INTRO-MIX-S",
+            "savedCatalogId": "P-INTRO-MIX-S",
+            "address": "3:AM"
+          }
+        }
+      ],
+      "numeric": [
+        {
+          "kind": "catalog-preview",
+          "choice": "P-INTRO-MIX-S",
+          "missingCount": 0,
+          "hidden": false,
+          "applyEnabled": true,
+          "address": "3:AM"
+        }
+      ]
+    },
+    {
+      "persona": {
+        "id": "synthetic-p057",
+        "n": 57,
+        "seed": 10085175,
+        "width": 375,
+        "height": 568,
+        "entry": "홈",
+        "event": 5000,
+        "experience": "EXPERIENCED",
+        "experienceIndex": 2,
+        "focusIndex": 5,
+        "days": 4,
+        "frame": 10,
+        "twice": false,
+        "safety": "NO_KNOWN_RISK",
+        "record": "current",
+        "currentEntry": false,
+        "reducedMotion": false,
+        "zoom": 1.25,
+        "habit": "scroll",
+        "recordSeconds": 1208.25,
+        "catalogChoiceIndex": 741
+      },
+      "source": "baseline/synthetic-p057/evidence.json",
+      "productErrors": [],
+      "pageErrors": [],
+      "comparisons": [
+        {
+          "code": "HIDDEN_REQUIRED_NUMERIC",
+          "phase": "open-catalog",
+          "evidence": {
+            "choice": "X-ATP-05",
+            "missingCount": 1
+          }
+        },
+        {
+          "code": "UNAPPLIED_DRAFT_FINALIZED",
+          "phase": "finalize-with-unapplied-draft",
+          "evidence": {
+            "previewCatalogId": "X-ATP-05",
+            "savedCatalogId": null,
+            "address": "4:AM"
+          }
+        }
+      ],
+      "numeric": [
+        {
+          "kind": "catalog-preview",
+          "choice": "X-ATP-05",
+          "missingCount": 1,
+          "hidden": true,
+          "applyEnabled": false,
+          "address": "4:AM"
+        }
+      ]
+    },
+    {
+      "persona": {
+        "id": "synthetic-p065",
+        "n": 65,
+        "seed": 10148527,
+        "width": 768,
+        "height": 667,
+        "entry": "홈",
+        "event": 42195,
+        "experience": "DEVELOPING",
+        "experienceIndex": 1,
+        "focusIndex": 3,
+        "days": 3,
+        "frame": 7,
+        "twice": false,
+        "safety": "NO_KNOWN_RISK",
+        "record": "none",
+        "currentEntry": false,
+        "reducedMotion": false,
+        "zoom": 1,
+        "habit": "help-back",
+        "recordSeconds": 1226.25,
+        "catalogChoiceIndex": 845
+      },
+      "source": "baseline/synthetic-p065/evidence.json",
+      "productErrors": [],
+      "pageErrors": [],
+      "comparisons": [
+        {
+          "code": "UNAPPLIED_DRAFT_FINALIZED",
+          "phase": "finalize-with-unapplied-draft",
+          "evidence": {
+            "previewCatalogId": "P-VO2-2",
+            "savedCatalogId": null,
+            "address": "4:AM"
+          }
+        }
+      ],
+      "numeric": [
+        {
+          "kind": "catalog-preview",
+          "choice": "P-VO2-2",
+          "missingCount": 0,
+          "hidden": false,
+          "applyEnabled": false,
+          "address": "4:AM"
+        }
+      ]
+    },
+    {
+      "persona": {
+        "id": "synthetic-p073",
+        "n": 73,
+        "seed": 10211879,
+        "width": 320,
+        "height": 800,
+        "entry": "홈",
+        "event": 3000,
+        "experience": "NEW_TO_RUNNING",
+        "experienceIndex": 0,
+        "focusIndex": 1,
+        "days": "EVERY_DAY",
+        "frame": 9,
+        "twice": false,
+        "safety": "NO_KNOWN_RISK",
+        "record": "stale",
+        "currentEntry": false,
+        "reducedMotion": false,
+        "zoom": 2,
+        "habit": "keyboard-cancel",
+        "recordSeconds": 1244.25,
+        "catalogChoiceIndex": 949
+      },
+      "source": "baseline/synthetic-p073/evidence.json",
+      "productErrors": [],
+      "pageErrors": [],
+      "comparisons": [
+        {
+          "code": "UNAPPLIED_DRAFT_FINALIZED",
+          "phase": "finalize-with-unapplied-draft",
+          "evidence": {
+            "previewCatalogId": "P-BASE-B",
+            "savedCatalogId": "P-BASE-B",
+            "address": "2:AM"
+          }
+        }
+      ],
+      "numeric": [
+        {
+          "kind": "catalog-preview",
+          "choice": "P-BASE-B",
+          "missingCount": 0,
+          "hidden": false,
+          "applyEnabled": false,
+          "address": "2:AM"
+        }
+      ]
+    },
+    {
+      "persona": {
+        "id": "synthetic-p081",
+        "n": 81,
+        "seed": 10275231,
+        "width": 375,
+        "height": 568,
+        "entry": "홈",
+        "event": 21097,
+        "experience": "EXPERIENCED",
+        "experienceIndex": 2,
+        "focusIndex": 6,
+        "days": 6,
+        "frame": 10,
+        "twice": true,
+        "safety": "NO_KNOWN_RISK",
+        "record": "current",
+        "currentEntry": false,
+        "reducedMotion": false,
+        "zoom": 1,
+        "habit": "tab-return",
+        "recordSeconds": 1262.25,
+        "catalogChoiceIndex": 1053
+      },
+      "source": "baseline/synthetic-p081/evidence.json",
+      "productErrors": [],
+      "pageErrors": [],
+      "comparisons": [
+        {
+          "code": "UNAPPLIED_DRAFT_FINALIZED",
+          "phase": "finalize-with-unapplied-draft",
+          "evidence": {
+            "previewCatalogId": "X-REC-06",
+            "savedCatalogId": "X-REC-02",
+            "address": "5:AM"
+          }
+        }
+      ],
+      "numeric": [
+        {
+          "kind": "catalog-preview",
+          "choice": "X-REC-06",
+          "missingCount": 0,
+          "hidden": false,
+          "applyEnabled": false,
+          "address": "5:AM"
+        }
+      ]
+    },
+    {
+      "persona": {
+        "id": "synthetic-p089",
+        "n": 89,
+        "seed": 10338583,
+        "width": 768,
+        "height": 667,
+        "entry": "홈",
+        "event": 1500,
+        "experience": "DEVELOPING",
+        "experienceIndex": 1,
+        "focusIndex": 4,
+        "days": 5,
+        "frame": 7,
+        "twice": false,
+        "safety": "NO_KNOWN_RISK",
+        "record": "none",
+        "currentEntry": false,
+        "reducedMotion": false,
+        "zoom": 1,
+        "habit": "reload",
+        "recordSeconds": 1280.25,
+        "catalogChoiceIndex": 1157
+      },
+      "source": "baseline/synthetic-p089/evidence.json",
+      "productErrors": [],
+      "pageErrors": [],
+      "comparisons": [
+        {
+          "code": "HIDDEN_REQUIRED_NUMERIC",
+          "phase": "open-catalog",
+          "evidence": {
+            "choice": "P-GLY-S",
+            "missingCount": 1
+          }
+        },
+        {
+          "code": "UNAPPLIED_DRAFT_FINALIZED",
+          "phase": "finalize-with-unapplied-draft",
+          "evidence": {
+            "previewCatalogId": "P-GLY-S",
+            "savedCatalogId": null,
+            "address": "3:AM"
+          }
+        }
+      ],
+      "numeric": [
+        {
+          "kind": "catalog-preview",
+          "choice": "P-GLY-S",
+          "missingCount": 1,
+          "hidden": true,
+          "applyEnabled": false,
+          "address": "3:AM"
+        }
+      ]
+    },
+    {
+      "persona": {
+        "id": "synthetic-p097",
+        "n": 97,
+        "seed": 10401935,
+        "width": 320,
+        "height": 800,
+        "entry": "홈",
+        "event": 10000,
+        "experience": "NEW_TO_RUNNING",
+        "experienceIndex": 0,
+        "focusIndex": 2,
+        "days": 4,
+        "frame": 9,
+        "twice": false,
+        "safety": "NO_KNOWN_RISK",
+        "record": "stale",
+        "currentEntry": false,
+        "reducedMotion": false,
+        "zoom": 1.25,
+        "habit": "scroll",
+        "recordSeconds": 1298.25,
+        "catalogChoiceIndex": 1261
+      },
+      "source": "baseline/synthetic-p097/evidence.json",
+      "productErrors": [],
+      "pageErrors": [],
+      "comparisons": [
+        {
+          "code": "UNAPPLIED_DRAFT_FINALIZED",
+          "phase": "finalize-with-unapplied-draft",
+          "evidence": {
+            "previewCatalogId": "P-INTRO-LT-S",
+            "savedCatalogId": null,
+            "address": "4:AM"
+          }
+        }
+      ],
+      "numeric": [
+        {
+          "kind": "catalog-preview",
+          "choice": "P-INTRO-LT-S",
+          "missingCount": 0,
+          "hidden": false,
+          "applyEnabled": true,
+          "address": "4:AM"
+        }
+      ]
+    }
+  ],
+  "unboundMainSessions": [
+    {
+      "persona": "synthetic-p001",
+      "day": 2,
+      "slot": "AM",
+      "intent": "ATP_PC_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 8,
+          "maximum": 9
+        },
+        "durationMinutes": {
+          "minimum": 20,
+          "maximum": 30
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p006",
+      "day": 7,
+      "slot": "AM",
+      "intent": "LT_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 5,
+          "maximum": 6
+        },
+        "durationMinutes": {
+          "minimum": 25,
+          "maximum": 40
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p007",
+      "day": 9,
+      "slot": "AM",
+      "intent": "MIXED_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 6,
+          "maximum": 7
+        },
+        "durationMinutes": {
+          "minimum": 25,
+          "maximum": 40
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p008",
+      "day": 9,
+      "slot": "AM",
+      "intent": "ATP_PC_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 8,
+          "maximum": 9
+        },
+        "durationMinutes": {
+          "minimum": 25,
+          "maximum": 40
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p012",
+      "day": 9,
+      "slot": "AM",
+      "intent": "GLY_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 7,
+          "maximum": 8
+        },
+        "durationMinutes": {
+          "minimum": 30,
+          "maximum": 50
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p019",
+      "day": 9,
+      "slot": "AM",
+      "intent": "GLY_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 7,
+          "maximum": 8
+        },
+        "durationMinutes": {
+          "minimum": 25,
+          "maximum": 40
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p022",
+      "day": 9,
+      "slot": "AM",
+      "intent": "ATP_PC_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 8,
+          "maximum": 9
+        },
+        "durationMinutes": {
+          "minimum": 30,
+          "maximum": 50
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p026",
+      "day": 2,
+      "slot": "AM",
+      "intent": "GLY_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 7,
+          "maximum": 8
+        },
+        "durationMinutes": {
+          "minimum": 20,
+          "maximum": 30
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p029",
+      "day": 9,
+      "slot": "AM",
+      "intent": "ATP_PC_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 8,
+          "maximum": 9
+        },
+        "durationMinutes": {
+          "minimum": 25,
+          "maximum": 40
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p033",
+      "day": 2,
+      "slot": "AM",
+      "intent": "GLY_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 7,
+          "maximum": 8
+        },
+        "durationMinutes": {
+          "minimum": 30,
+          "maximum": 50
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p033",
+      "day": 9,
+      "slot": "AM",
+      "intent": "GLY_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 7,
+          "maximum": 8
+        },
+        "durationMinutes": {
+          "minimum": 30,
+          "maximum": 50
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p034",
+      "day": 9,
+      "slot": "AM",
+      "intent": "LT_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 5,
+          "maximum": 6
+        },
+        "durationMinutes": {
+          "minimum": 30,
+          "maximum": 50
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p036",
+      "day": 10,
+      "slot": "AM",
+      "intent": "ATP_PC_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 8,
+          "maximum": 9
+        },
+        "durationMinutes": {
+          "minimum": 30,
+          "maximum": 50
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p041",
+      "day": 3,
+      "slot": "AM",
+      "intent": "LT_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 5,
+          "maximum": 6
+        },
+        "durationMinutes": {
+          "minimum": 25,
+          "maximum": 40
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p041",
+      "day": 10,
+      "slot": "AM",
+      "intent": "LT_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 5,
+          "maximum": 6
+        },
+        "durationMinutes": {
+          "minimum": 25,
+          "maximum": 40
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p043",
+      "day": 7,
+      "slot": "AM",
+      "intent": "ATP_PC_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 8,
+          "maximum": 9
+        },
+        "durationMinutes": {
+          "minimum": 25,
+          "maximum": 40
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p044",
+      "day": 9,
+      "slot": "AM",
+      "intent": "VO2_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 7,
+          "maximum": 8
+        },
+        "durationMinutes": {
+          "minimum": 25,
+          "maximum": 40
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p047",
+      "day": 7,
+      "slot": "AM",
+      "intent": "GLY_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 7,
+          "maximum": 8
+        },
+        "durationMinutes": {
+          "minimum": 30,
+          "maximum": 50
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p048",
+      "day": 7,
+      "slot": "AM",
+      "intent": "LT_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 5,
+          "maximum": 6
+        },
+        "durationMinutes": {
+          "minimum": 30,
+          "maximum": 50
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p054",
+      "day": 9,
+      "slot": "AM",
+      "intent": "GLY_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 7,
+          "maximum": 8
+        },
+        "durationMinutes": {
+          "minimum": 25,
+          "maximum": 40
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p056",
+      "day": 10,
+      "slot": "AM",
+      "intent": "MIXED_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 6,
+          "maximum": 7
+        },
+        "durationMinutes": {
+          "minimum": 25,
+          "maximum": 40
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p057",
+      "day": 4,
+      "slot": "AM",
+      "intent": "ATP_PC_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 8,
+          "maximum": 9
+        },
+        "durationMinutes": {
+          "minimum": 30,
+          "maximum": 50
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p057",
+      "day": 10,
+      "slot": "AM",
+      "intent": "ATP_PC_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 8,
+          "maximum": 9
+        },
+        "durationMinutes": {
+          "minimum": 30,
+          "maximum": 50
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p061",
+      "day": 3,
+      "slot": "AM",
+      "intent": "GLY_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 7,
+          "maximum": 8
+        },
+        "durationMinutes": {
+          "minimum": 20,
+          "maximum": 30
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p065",
+      "day": 4,
+      "slot": "AM",
+      "intent": "VO2_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 7,
+          "maximum": 8
+        },
+        "durationMinutes": {
+          "minimum": 25,
+          "maximum": 40
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p068",
+      "day": 7,
+      "slot": "AM",
+      "intent": "GLY_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 7,
+          "maximum": 8
+        },
+        "durationMinutes": {
+          "minimum": 25,
+          "maximum": 40
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p069",
+      "day": 7,
+      "slot": "AM",
+      "intent": "LT_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 5,
+          "maximum": 6
+        },
+        "durationMinutes": {
+          "minimum": 30,
+          "maximum": 50
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p071",
+      "day": 9,
+      "slot": "AM",
+      "intent": "ATP_PC_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 8,
+          "maximum": 9
+        },
+        "durationMinutes": {
+          "minimum": 30,
+          "maximum": 50
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p075",
+      "day": 5,
+      "slot": "AM",
+      "intent": "GLY_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 7,
+          "maximum": 8
+        },
+        "durationMinutes": {
+          "minimum": 20,
+          "maximum": 30
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p077",
+      "day": 9,
+      "slot": "AM",
+      "intent": "MIXED_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 6,
+          "maximum": 7
+        },
+        "durationMinutes": {
+          "minimum": 25,
+          "maximum": 40
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p078",
+      "day": 10,
+      "slot": "AM",
+      "intent": "ATP_PC_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 8,
+          "maximum": 9
+        },
+        "durationMinutes": {
+          "minimum": 25,
+          "maximum": 40
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p079",
+      "day": 9,
+      "slot": "AM",
+      "intent": "VO2_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 7,
+          "maximum": 8
+        },
+        "durationMinutes": {
+          "minimum": 25,
+          "maximum": 40
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p082",
+      "day": 10,
+      "slot": "AM",
+      "intent": "GLY_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 7,
+          "maximum": 8
+        },
+        "durationMinutes": {
+          "minimum": 30,
+          "maximum": 50
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p083",
+      "day": 10,
+      "slot": "AM",
+      "intent": "LT_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 5,
+          "maximum": 6
+        },
+        "durationMinutes": {
+          "minimum": 30,
+          "maximum": 50
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p089",
+      "day": 3,
+      "slot": "AM",
+      "intent": "GLY_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 7,
+          "maximum": 8
+        },
+        "durationMinutes": {
+          "minimum": 25,
+          "maximum": 40
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p089",
+      "day": 7,
+      "slot": "AM",
+      "intent": "GLY_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 7,
+          "maximum": 8
+        },
+        "durationMinutes": {
+          "minimum": 25,
+          "maximum": 40
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p091",
+      "day": 9,
+      "slot": "AM",
+      "intent": "MIXED_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 6,
+          "maximum": 7
+        },
+        "durationMinutes": {
+          "minimum": 25,
+          "maximum": 40
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p092",
+      "day": 9,
+      "slot": "AM",
+      "intent": "ATP_PC_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 8,
+          "maximum": 9
+        },
+        "durationMinutes": {
+          "minimum": 25,
+          "maximum": 40
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p096",
+      "day": 9,
+      "slot": "AM",
+      "intent": "GLY_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 7,
+          "maximum": 8
+        },
+        "durationMinutes": {
+          "minimum": 30,
+          "maximum": 50
+        }
+      }
+    },
+    {
+      "persona": "synthetic-p097",
+      "day": 4,
+      "slot": "AM",
+      "intent": "LT_INTENT",
+      "prescription": {
+        "kind": "RPE_TIME_RANGE",
+        "rpe": {
+          "minimum": 5,
+          "maximum": 6
+        },
+        "durationMinutes": {
+          "minimum": 20,
+          "maximum": 30
+        }
+      }
+    }
+  ],
+  "current": [
+    {
+      "persona": "synthetic-p001",
+      "generated": true,
+      "finalized": true,
+      "findings": [],
+      "pageErrors": [],
+      "productErrors": [],
+      "harnessErrors": [],
+      "draftComparisons": [
+        {
+          "phase": "draft-comparison",
+          "detail": {
+            "initialSelection": "P-INTRO-ATP-A",
+            "choice": "P-INTRO-ATP-T",
+            "initialRecordValue": null,
+            "currentRecordValue": null,
+            "visiblyChanged": true
+          }
+        }
+      ],
+      "numeric": [
+        {
+          "kind": "catalog-preview",
+          "choice": "P-INTRO-ATP-T",
+          "missingCount": 0,
+          "hidden": false,
+          "applyEnabled": false,
+          "text": "다른 훈련으로 바꾸기\n바꿀 일정\n1일차 오전\n2일차 오전\n3일차 오전\n5일차 오전\n6일차 오전\n7일차 오전\n변경을 적용하거나 취소하면 다른 날짜를 고를 수 있어요.\n같은 목적의 다른 훈련\n훈련 구성\n서서 출발하는 가속 달리기\n시간형 가속 달리기\n가속하고 속도를 줄일 충분한 공간이 있어요\n\n3개 운동 구간\n\n짧은 고출력 훈련 · ATP-PC\n\n3 × 6s @ 짧게 빠르게 · 동작이 무너지거나 속도가 떨어지면 중단 · r3min Walk/Stand\n?\n\n자세히 보기 · 준비부터 정리까지\n6s\n짧게 빠르게 · 동작이 무너지거나 속도가 떨어지면 중단\n\n준비·회복·정리 포함 약 18분 58초\n\n운동 환경·경험 확인이 필요해요.\n\n이 구성으로 바꾸기\n변경 취소\n\n아직 계획에 적용하지 않았어요.",
+          "address": "2:AM"
+        },
+        {
+          "kind": "applied-input-restoration",
+          "submitted": [],
+          "restored": [],
+          "restoredRecord": null
+        }
+      ]
+    },
+    {
+      "persona": "synthetic-p003",
+      "generated": true,
+      "finalized": false,
+      "findings": [
+        {
+          "code": "CATALOG_APPLY_DEADEND",
+          "severity": "P2",
+          "phase": "picker",
+          "evidence": {
+            "choice": "P-BASE-C-1500",
+            "text": "다른 훈련으로 바꾸기\n바꿀 일정\n1일차 오전\n2일차 오전\n3일차 오전\n4일차 오전\n5일차 오전\n6일차 오전\n7일차 오전\n변경을 적용하거나 취소하면 다른 날짜를 고를 수 있어요.\n같은 목적의 다른 훈련\n훈련 구성\n저강도 달리기 · Easy Run\n걷기를 섞은 달리기\n저강도 달리기 · Easy Run\n저강도 달리기 · Easy Run\n\n1개 운동 구간\n\n저강도 달리기 · Easy Run\n\n25min @ RPE 3–4\n?\n\n자세히 보기 · 준비부터 정리까지\n25min\n문장으로 대화할 수 있는 노력 본운동 체감 노력 제안 RPE 3~4\n\n준비·회복·정리 포함 약 25분\n\n이 일정에는 적용할 수 없는 구성이에요. 같은 목적의 다른 훈련을 골라 주세요.\n\n이 구성으로 바꾸기\n변경 취소\n\n아직 계획에 적용하지 않았어요."
+          }
+        }
+      ],
+      "pageErrors": [],
+      "productErrors": [],
+      "harnessErrors": [],
+      "draftComparisons": [
+        {
+          "phase": "draft-comparison",
+          "detail": {
+            "initialSelection": "P-BASE-B",
+            "choice": "P-BASE-C-1500",
+            "initialRecordValue": null,
+            "currentRecordValue": null,
+            "visiblyChanged": true
+          }
+        }
+      ],
+      "numeric": [
+        {
+          "kind": "catalog-preview",
+          "choice": "P-BASE-C-1500",
+          "missingCount": 0,
+          "hidden": false,
+          "applyEnabled": false,
+          "text": "다른 훈련으로 바꾸기\n바꿀 일정\n1일차 오전\n2일차 오전\n3일차 오전\n4일차 오전\n5일차 오전\n6일차 오전\n7일차 오전\n변경을 적용하거나 취소하면 다른 날짜를 고를 수 있어요.\n같은 목적의 다른 훈련\n훈련 구성\n저강도 달리기 · Easy Run\n걷기를 섞은 달리기\n저강도 달리기 · Easy Run\n저강도 달리기 · Easy Run\n\n1개 운동 구간\n\n저강도 달리기 · Easy Run\n\n25min @ RPE 3–4\n?\n\n자세히 보기 · 준비부터 정리까지\n25min\n문장으로 대화할 수 있는 노력 본운동 체감 노력 제안 RPE 3~4\n\n준비·회복·정리 포함 약 25분\n\n이 일정에는 적용할 수 없는 구성이에요. 같은 목적의 다른 훈련을 골라 주세요.\n\n이 구성으로 바꾸기\n변경 취소\n\n아직 계획에 적용하지 않았어요.",
+          "address": "4:AM"
+        },
+        {
+          "kind": "catalog-remains-blocked",
+          "choice": "P-BASE-C-1500",
+          "text": "다른 훈련으로 바꾸기\n바꿀 일정\n1일차 오전\n2일차 오전\n3일차 오전\n4일차 오전\n5일차 오전\n6일차 오전\n7일차 오전\n변경을 적용하거나 취소하면 다른 날짜를 고를 수 있어요.\n같은 목적의 다른 훈련\n훈련 구성\n저강도 달리기 · Easy Run\n걷기를 섞은 달리기\n저강도 달리기 · Easy Run\n저강도 달리기 · Easy Run\n\n1개 운동 구간\n\n저강도 달리기 · Easy Run\n\n25min @ RPE 3–4\n?\n\n자세히 보기 · 준비부터 정리까지\n25min\n문장으로 대화할 수 있는 노력 본운동 체감 노력 제안 RPE 3~4\n\n준비·회복·정리 포함 약 25분\n\n이 일정에는 적용할 수 없는 구성이에요. 같은 목적의 다른 훈련을 골라 주세요.\n\n이 구성으로 바꾸기\n변경 취소\n\n아직 계획에 적용하지 않았어요."
+        },
+        {
+          "kind": "finalize-blocked",
+          "visibleStatus": "계획이 준비됐어요\n?\n3000m · 7일 훈련\n기간\n2026-09-30 ~ 2026-10-06 · 7일\n이 기간의 훈련\n7회\n훈련 시간\n7일 동안 표시된 시간 합계 3시간 44분\n첫 훈련\n2026-09-30 오전 · 걷기를 섞은 달리기\n이 일정으로 시작\n시작일·훈련일 바꾸기\n다른 계획 보기\n처방 확인·조절\n이번 일정\n2026년 9월\n오늘\n일\t월\t화\t수\t목\t금\t토\n\n30\n\t\n31\n\t\n1\n\t\n2\n\t\n3\n\t\n4\n\t\n5\n\n\n6\n\t\n7\n\t\n8\n\t\n9\n\t\n10\n\t\n11\n\t\n12\n\n\n13\n\t\n14\n\t\n15\n\t\n16\n\t\n17\n\t\n18\n\t\n19\n\n\n20\n\t\n21\n\t\n22\n\t\n23\n\t\n24\n\t\n25\n\t\n26\n\n\n27\n\t\n28\n\t\n29\n\t\n30\n오전\n기본\n\t\n1\n오전\n기본\n\t\n2\n오전\n기본\n\t\n3\n오전\n기본\n달력 색상\n전체 훈련 내용\n추천 이유\n다른 훈련으로 바꾸기\n바꿀 일정\n1일차 오전\n2일차 오전\n3일차 오전\n4일차 오전\n5일차 오전\n6일차 오전\n7일차 오전\n같은 목적의 다른 훈련\n훈련 구성\n저강도 달리기 · Easy Run\n걷기를 섞은 달리기\n저강도 달리기 · Easy Run\n저강도 달리기 · Easy Run\n\n3개 운동 구간\n\n저강도 달리기 · Easy Run\n\n3 × 10min @ RPE 3–4 · r60s Walk\n?\n\n자세히 보기 · 준비부터 정리까지\n10min\n문장으로 대화할 수 있는 노력 본운동 체감 노력 제안 RPE 3~4\n\n준비·회복·정리 포함 약 32분\n\n이 일정에는 적용할 수 없는 구성이에요. 같은 목적의 다른 훈련을 골라 주세요.\n\n이 구성으로 바꾸기\n기록·시작일·다른 일정 확인\n계획 다듬기\n2개 바꿨어요\n경기 날짜는 어떻게 되나요?\nA와 B는 뭐가 달라요?\n이 계획은 어떤 정보로 만들었나요?\n기준 기록·참가 부문·이전 계획 확인\n개인 계획 파일 불러오기"
+        }
+      ]
+    },
+    {
+      "persona": "synthetic-p042",
+      "generated": true,
+      "finalized": true,
+      "findings": [],
+      "pageErrors": [],
+      "productErrors": [],
+      "harnessErrors": [],
+      "draftComparisons": [
+        {
+          "phase": "draft-comparison",
+          "detail": {
+            "initialSelection": "P-RHYTHM-300",
+            "choice": "P-RHYTHM-300",
+            "initialRecordValue": "",
+            "currentRecordValue": "synthetic-record-42",
+            "visiblyChanged": true
+          }
+        }
+      ],
+      "numeric": [
+        {
+          "kind": "catalog-preview",
+          "choice": "P-RHYTHM-300",
+          "missingCount": 2,
+          "hidden": false,
+          "applyEnabled": false,
+          "text": "다른 훈련으로 바꾸기\n바꿀 일정\n1일차 오전\n3일차 오전\n5일차 오전\n7일차 오전\n변경을 적용하거나 취소하면 다른 날짜를 고를 수 있어요.\n같은 목적의 다른 훈련\n훈련 구성\n세트형 거리 리듬 달리기\n시간형 리듬 달리기\n세트형 시간 리듬 달리기\n참고 페이스에 사용할 5km 기록\n기록 없이 체감 강도로\n2026-09-10 · 19분 34.5초\n이 훈련을 적용하려면 구간 시간을 정해 주세요\n\n같은 구간의 반복에 적용해요. 경기 기록으로 계산할 수 없는 구간은 직접 정해요.\n\n300m 운동 구간 · 초\n회복 100m · 초\n\n6개 운동 구간 · 본운동 1800m\n\n혼합 훈련 · Mixed Session\n\n3 sets × (2 × (300m @ RPE 6–7 → 종료 뒤 100m Roll-on)) · R2min Jog\n?\n\n자세히 보기 · 준비부터 정리까지\n300m\n빠른 구간에서 유지 가능한 강한 리듬, 느린 구간에서 분명한 속도 감소 본운동 체감 노력 제안 RPE 6~7\n\n구간 시간을 정하면 총시간을 보여드려요.\n\n미정 구간을 정하면 전체 시간을 계산해요.\n\n이 구성으로 바꾸기\n변경 취소\n\n아직 계획에 적용하지 않았어요.",
+          "address": "3:AM"
+        },
+        {
+          "kind": "applied-input-restoration",
+          "submitted": [
+            {
+              "label": "300m 운동 구간 · 초",
+              "value": "76.92"
+            },
+            {
+              "label": "회복 100m · 초",
+              "value": "77"
+            }
+          ],
+          "restored": [
+            "76.92",
+            "77"
+          ],
+          "restoredRecord": "synthetic-record-42"
+        }
+      ]
+    },
+    {
+      "persona": "synthetic-p083",
+      "generated": true,
+      "finalized": true,
+      "findings": [],
+      "pageErrors": [],
+      "productErrors": [],
+      "harnessErrors": [],
+      "draftComparisons": [
+        {
+          "phase": "draft-comparison",
+          "detail": {
+            "initialSelection": "P-LT-C",
+            "choice": "X-LT-02",
+            "initialRecordValue": "",
+            "currentRecordValue": "",
+            "visiblyChanged": true
+          }
+        }
+      ],
+      "numeric": [
+        {
+          "kind": "catalog-preview",
+          "choice": "X-LT-02",
+          "missingCount": 1,
+          "hidden": false,
+          "applyEnabled": false,
+          "text": "다른 훈련으로 바꾸기\n바꿀 일정\n1일차 오전\n2일차 오전\n3일차 오전\n4일차 오전\n5일차 오전\n6일차 오전\n7일차 오전\n8일차 오전\n9일차 오전\n10일차 오전\n변경을 적용하거나 취소하면 다른 날짜를 고를 수 있어요.\n같은 목적의 다른 훈련\n훈련 구성\n템포런 · Tempo Run\n긴 구간 크루즈 인터벌\n짧은 구간 크루즈 인터벌\n긴 구간 크루즈 인터벌\n1km 크루즈 인터벌\n2km 크루즈 인터벌\n3km 크루즈 인터벌\n시간 피라미드 · Tempo Pyramid\n늘려가는 템포 · Ascending Ladder\n줄여가는 템포 · Descending Ladder\n세트형 크루즈 인터벌\n1km + 200m 플로트 · Cruise Float\n6분 + 2분 플로트 · Cruise Float\n강도 교대 템포 · Tempo Alternations\n10 + 5 + 5분 템포\n1200 + 800m 세트\n6분 언덕 템포\n10분 지속 언덕 템포\n참고 페이스에 사용할 5km 기록\n기록 없이 체감 강도로\n이 훈련을 적용하려면 구간 시간을 정해 주세요\n\n같은 구간의 반복에 적용해요. 경기 기록으로 계산할 수 없는 구간은 직접 정해요.\n\n2000m 운동 구간 · 초\n\n3개 운동 구간 · 본운동 6km\n\n크루즈 인터벌 · Cruise Intervals\n\n3 × 2km @ RPE 6–7 · r2min Jog\n?\n\n자세히 보기 · 준비부터 정리까지\n2km\nRPE 6-7\n\n구간 시간을 정하면 총시간을 보여드려요.\n\n지금 훈련 RPE 5~6 → 새 훈련 RPE 6~7. 더 강한 구성이에요. 아래 버튼을 누르면 이 강도로 바뀌어요.\n\n미정 구간을 정하면 전체 시간을 계산해요.\n\n이 구성으로 바꾸기\n변경 취소\n\n아직 계획에 적용하지 않았어요.",
+          "address": "2:AM"
+        },
+        {
+          "kind": "applied-input-restoration",
+          "submitted": [
+            {
+              "label": "2000m 운동 구간 · 초",
+              "value": "487.8"
+            }
+          ],
+          "restored": [
+            "487.8"
+          ],
+          "restoredRecord": ""
+        }
+      ]
+    },
+    {
+      "persona": "synthetic-p096",
+      "generated": true,
+      "finalized": true,
+      "findings": [],
+      "pageErrors": [],
+      "productErrors": [],
+      "harnessErrors": [],
+      "draftComparisons": [
+        {
+          "phase": "draft-comparison",
+          "detail": {
+            "initialSelection": "P-GLY-D",
+            "choice": "X-GLY-04",
+            "initialRecordValue": null,
+            "currentRecordValue": null,
+            "visiblyChanged": true
+          }
+        }
+      ],
+      "numeric": [
+        {
+          "kind": "catalog-preview",
+          "choice": "X-GLY-04",
+          "missingCount": 2,
+          "hidden": false,
+          "applyEnabled": false,
+          "text": "다른 훈련으로 바꾸기\n바꿀 일정\n1일차 오전\n3일차 오전\n4일차 오전\n6일차 오전\n7일차 오전\n9일차 오전\n변경을 적용하거나 취소하면 다른 날짜를 고를 수 있어요.\n같은 목적의 다른 훈련\n훈련 구성\n고강도 거리 반복\n세트형 고강도 거리 반복\n고강도 거리 반복\n세트형 고강도 거리 반복\n150m 고강도 반복\n300m 고강도 반복\n400m 고강도 반복\n150 + 150m 분할 세트\n200 + 100m 분할 세트\n300–150m 사다리\n40초 고강도 반복\n20 + 20초 분할 세트\n30초 언덕 반복\n이 훈련을 적용하려면 구간 시간을 정해 주세요\n\n같은 구간의 반복에 적용해요. 경기 기록으로 계산할 수 없는 구간은 직접 정해요.\n\n150m 운동 구간 · 초\n150m 운동 구간 · 초\n\n6개 운동 구간 · 본운동 900m\n\n인터벌 · Intervals\n\n3 sets × (150m @ RPE 8–9 → 종료 뒤 45s Walk/Stand → 150m @ RPE 8–9) · R5min Walk/Stand\n?\n\n자세히 보기 · 준비부터 정리까지\n150m\nRPE 8-9\n150m\nRPE 8-9\n\n구간 시간을 정하면 총시간을 보여드려요.\n\n지금 훈련 RPE 7~8 → 새 훈련 RPE 8~9. 더 강한 구성이에요. 아래 버튼을 누르면 이 강도로 바뀌어요.\n\n미정 구간을 정하면 전체 시간을 계산해요.\n\n이 구성으로 바꾸기\n변경 취소\n\n아직 계획에 적용하지 않았어요.",
+          "address": "3:AM"
+        },
+        {
+          "kind": "applied-input-restoration",
+          "submitted": [
+            {
+              "label": "150m 운동 구간 · 초",
+              "value": "40.54"
+            },
+            {
+              "label": "150m 운동 구간 · 초",
+              "value": "40.54"
+            }
+          ],
+          "restored": [
+            "40.54",
+            "40.54"
+          ],
+          "restoredRecord": null
+        }
+      ]
+    }
+  ]
+}

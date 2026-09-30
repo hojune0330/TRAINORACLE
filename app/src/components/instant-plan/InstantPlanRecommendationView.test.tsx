@@ -27,6 +27,24 @@ const recommendation: InstantPlanRecommendation = {
 }
 
 describe("InstantPlanRecommendationView", () => {
+  it("shows the exact prescription in a day reader and the optional full contents", () => {
+    const notation = "2 sets x (10 x 400m) · r60s · R3min"
+    const days = recommendation.days.map(day => ({ ...day,
+      sessions: day.sessions.map(session => ({ ...session, notation })) }))
+    render(<InstantPlanRecommendationView recommendation={{ ...recommendation, days }} actionState={{ kind: "READY" }} onStart={vi.fn()} />)
+    fireEvent.click(screen.getByRole("button", { name: /2026년 9월 21일 월요일/ }))
+    expect(screen.getAllByText(notation).some(node => node.closest("dialog"))).toBe(true)
+    fireEvent.click(screen.getByText("전체 훈련 내용"))
+    expect(screen.getAllByText(notation).filter(node => node.closest("details[open]")).length).toBeGreaterThan(0)
+  })
+  it("shows incomplete prescription coverage before the start action", () => {
+    const guidanceNotice = "주요 훈련 2회는 시간·체감 강도 안내예요. 반복·회복 구성은 아직 정하지 않았어요."
+    render(<InstantPlanRecommendationView recommendation={{ ...recommendation, guidanceNotice }} actionState={{ kind: "READY" }} onStart={vi.fn()} />)
+    const notice = screen.getByText(guidanceNotice)
+    expect(notice).toBeVisible()
+    expect(notice.compareDocumentPosition(screen.getByRole("button", { name: "이 일정으로 시작" })))
+      .toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+  })
   it("shows the commitment and compact dated AM/PM roles before one explicit start", () => {
     const onStart = vi.fn()
     render(<InstantPlanRecommendationView recommendation={recommendation} actionState={{ kind: "READY" }} onStart={onStart} />)
@@ -36,6 +54,8 @@ describe("InstantPlanRecommendationView", () => {
     expect(screen.getByText(recommendation.durationLabel)).toBeVisible()
     expect(screen.getByText(recommendation.firstSessionLabel)).toBeVisible()
     const schedule = screen.getByRole("region", { name: "이번 일정" })
+    expect(screen.getByRole("button", { name: "이 일정으로 시작" }).compareDocumentPosition(schedule))
+      .toBe(Node.DOCUMENT_POSITION_FOLLOWING)
     expect(within(schedule).getByRole("button", { name: /2026년 9월 21일 월요일/ })).toBeVisible()
     expect(within(schedule).getByRole("button", { name: /2026년 9월 22일 화요일/ })).toBeVisible()
     expect(within(schedule).getByText("오전")).toBeVisible()

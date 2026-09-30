@@ -1,5 +1,10 @@
 .catalog-workout-picker { min-width: 0; overflow-wrap: anywhere; }
 .catalog-workout-picker > :not(summary) { margin-block: 12px; }
+.catalog-workout-picker__editor > * + * { margin-block-start: var(--space-3); }
+.catalog-workout-picker__required { min-width: 0; margin-inline: 0; padding: var(--space-3); border: 1px solid var(--line-2); }
+.catalog-workout-picker__required legend { font-weight: 600; }
+.catalog-workout-picker__required label + label { margin-block-start: var(--space-3); }
+.catalog-workout-picker__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .catalog-workout-picker label { display: grid; gap: 6px; min-width: 0; font-size: 14px; }
 .catalog-workout-picker :is(select, input[type="number"]) { width: 100%; min-width: 0; max-width: 100%; min-height: 44px; box-sizing: border-box; padding: 8px; font: inherit; font-size: 16px; color: var(--ink); background: var(--surface); border: 1px solid var(--line-2); border-radius: 4px; }
 .catalog-workout-picker label:has(input[type="checkbox"]) { grid-template-columns: 24px minmax(0, 1fr); align-items: start; padding-block: 8px; min-height: 44px; }

@@ -11,7 +11,7 @@ export type WorkoutCatalogEntry = {
   readonly eventDistances: readonly number[]; readonly experience: readonly string[]
   readonly requirements: readonly string[]; readonly hold: string | null
   readonly explanation: { readonly purpose: string; readonly energySupply: string; readonly work: string; readonly recovery: string
-    readonly tradeoff: string; readonly expected: string; readonly limitations: string; readonly observation: string }
+    readonly tradeoff: string; readonly expected: string; readonly limitations: readonly string[]; readonly observation: string }
   readonly sourceRefs: readonly string[]
 }
 export const ALL_WORKOUT_CATALOG = rawCatalog.rows as unknown as readonly WorkoutCatalogEntry[]
@@ -244,7 +244,8 @@ export function calculatedWorkoutSequence(workout: CalculatedWorkout): Prescript
   const nodes = (items: readonly SequenceNodeV3[]): readonly SequenceNodeV3[] => items.map(node => {
     const recovery = (items: readonly RecoveryStepV3[], position: string) => items.map((item, index) => {
       const calculated = workout.steps.find(s => s.segmentId === `${node.id}:${position}:recovery-${index}`)
-      return item.seconds === null && calculated?.seconds?.minimum === calculated?.seconds?.maximum && calculated?.seconds
+      // V3 distance recovery cannot also carry seconds; show its explicit time alongside the structure.
+      return !("distanceM" in item) && item.seconds === null && calculated?.seconds?.minimum === calculated?.seconds?.maximum && calculated?.seconds
         ? { ...item, seconds: calculated.seconds.minimum } : item
     })
     const rest = { recoveryBetweenRepeats: recovery(node.recoveryBetweenRepeats, "between"), recoveryAfter: recovery(node.recoveryAfter, "after") }

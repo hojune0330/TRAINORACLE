@@ -21,6 +21,21 @@ function setTime(minutes: string, seconds: string) {
 }
 
 describe("InstantPlanEntryForm", () => {
+  it("reports unsaved first-screen edits, reverting and unmounting without submitting", () => {
+    const onDraftChange = vi.fn()
+    const onSubmit = vi.fn()
+    const { unmount } = render(<InstantPlanEntryForm today={TODAY} onSubmit={onSubmit} onDraftChange={onDraftChange} />)
+    expect(onDraftChange).toHaveBeenLastCalledWith(false)
+    fireEvent.change(screen.getByLabelText("종목"), { target: { value: "5000" } })
+    expect(onDraftChange).toHaveBeenLastCalledWith(true)
+    fireEvent.change(screen.getByLabelText("종목"), { target: { value: "" } })
+    expect(onDraftChange).toHaveBeenLastCalledWith(false)
+    setTime("21", "30.12")
+    expect(onDraftChange).toHaveBeenLastCalledWith(true)
+    unmount()
+    expect(onDraftChange).toHaveBeenLastCalledWith(false)
+    expect(onSubmit).not.toHaveBeenCalled()
+  })
   it("does not invent a starting event, performance or achieved date and focuses the missing event", () => {
     const onSubmit = vi.fn()
     render(<InstantPlanEntryForm today={TODAY} onSubmit={onSubmit} />)

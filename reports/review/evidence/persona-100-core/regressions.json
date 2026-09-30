@@ -1,0 +1,921 @@
+{
+  "baseline": "9085282",
+  "runtimeBaseline": "8b80fa1",
+  "rootSeed": 154148902,
+  "fixedTime": "2026-09-30T03:00:00.000Z",
+  "proof": "synthetic isolated jsdom, not real-user browser or clinical proof",
+  "commandFromApp": "node ./node_modules/vitest/vitest.mjs run --config vitest.persona-100.config.ts",
+  "defaultUnitExcluded": "audit.ts does not match src/**/*.test.{ts,tsx}; only explicit audit config includes it",
+  "fullRun": {
+    "tests": 111,
+    "passed": 108,
+    "failed": 3,
+    "startTime": 1790771837605,
+    "personas": 100,
+    "distinctInputs": 100,
+    "checks": 1550902,
+    "baseCatalogRows": 11700,
+    "calculationsIncludingExplicitInputReplay": 23400,
+    "actionRows": 1562,
+    "seededSwapAttempts": 984,
+    "failedPersonas": [],
+    "generationCounts": {
+      "rejected": 6,
+      "generated": 82,
+      "blocked": 12
+    },
+    "networkCalls": 0
+  },
+  "supplementalConfirmation": {
+    "passed": 3,
+    "failed": 0,
+    "purpose": "current-check matrix, stale reader and 117 route plus exact default MAIN exclusion matrix after full run"
+  },
+  "latestNarrowVerification": {
+    "scope": "F1/F2/F5 only; full 100 not rerun",
+    "passed": 3,
+    "failed": 0,
+    "skipped": 109,
+    "discovered": 112,
+    "startTime": 1790773512060,
+    "namedRegressions": [
+      {
+        "name": "named adversarial contract counterexamples AUDIT-DRAW-NO-REPEAT seeded picker must exhaust unseen eligible methods before returning",
+        "status": "passed",
+        "durationMs": 2062.120499999999
+      },
+      {
+        "name": "named adversarial contract counterexamples AUDIT-DRAW-ELIGIBILITY empty eligible draw pool disables random choice with reason and preserves the manual choice",
+        "status": "passed",
+        "durationMs": 176.07740000000013
+      },
+      {
+        "name": "named adversarial contract counterexamples AUDIT-LIMITATIONS-LIST actual limitations arrays render as separate uncoerced list items",
+        "status": "passed",
+        "durationMs": 35.31850000000122
+      }
+    ],
+    "evidence": [
+      {
+        "name": "seeded-picker-draw",
+        "detail": {
+          "seed": 154148902,
+          "budget": 3000,
+          "methods": 6,
+          "eligible": [
+            "P-VO2-2",
+            "P-VO2-2-4",
+            "P-VO2-2-5",
+            "X-VO2-06",
+            "X-VO2-07",
+            "X-VO2-08",
+            "X-VO2-10",
+            "X-VO2-11"
+          ],
+          "trace": [
+            "X-VO2-07",
+            "X-VO2-10",
+            "X-VO2-08",
+            "X-VO2-11",
+            "X-VO2-06",
+            "P-VO2-2",
+            "X-VO2-11",
+            "X-VO2-10",
+            "X-VO2-07",
+            "X-VO2-08",
+            "X-VO2-06"
+          ],
+          "firstCycle": [
+            "X-VO2-07",
+            "X-VO2-10",
+            "X-VO2-08",
+            "X-VO2-11",
+            "X-VO2-06",
+            "P-VO2-2"
+          ],
+          "uniqueFirstCycleMethods": 6
+        }
+      },
+      {
+        "name": "unavailable-random-fallback",
+        "detail": {
+          "eligibleCount": 0,
+          "before": "P-INTRO-ATP-A",
+          "afterDisabledClick": "P-INTRO-ATP-A",
+          "disabled": true,
+          "reason": "지금 바로 바꿀 수 있는 다른 구성이 없어요. 아래 목록에서는 필요한 조건을 확인하고 직접 고를 수 있어요.",
+          "randomCalls": 0,
+          "appliedChanges": 0,
+          "manualListEnabled": true,
+          "manualChoice": "P-INTRO-ATP-T",
+          "invariantCorrection": "An unchanged manual choice may still need requirements; only an unavailable random transition is forbidden."
+        }
+      },
+      {
+        "name": "limitations-list",
+        "detail": {
+          "arrayEntries": 117,
+          "id": "P-LT-C",
+          "expected": [
+            "성인 남성 사이클 연구는 달리기 LT 처방이나 청소년의 효과를 직접 검증하지 않았어요.",
+            "계획의 페이스나 체감강도로 개인의 혈중 젖산·정확한 역치를 측정할 수 없어요."
+          ],
+          "items": [
+            "성인 남성 사이클 연구는 달리기 LT 처방이나 청소년의 효과를 직접 검증하지 않았어요.",
+            "계획의 페이스나 체감강도로 개인의 혈중 젖산·정확한 역치를 측정할 수 없어요."
+          ],
+          "exactSeparateItems": true
+        }
+      }
+    ],
+    "invariantCorrection": "An empty eligible draw pool must disable random draw, explain why, and preserve the existing choice; an unchanged manual choice may remain unavailable until confirmed.",
+    "resolvedFindings": [
+      "F1",
+      "F2",
+      "F5"
+    ],
+    "remainingFinding": "F3, historical red retained without rerun or runtime identity change"
+  },
+  "latestNarrowTypecheck": {
+    "commandFromApp": "node ./node_modules/typescript/bin/tsc --noEmit --incremental false",
+    "exitCode": 1,
+    "auditFileDiagnostics": 0,
+    "boundary": "Post F1/F2/F5 check in shared worktree; parent-owned test not edited by this reviewer.",
+    "diagnostics": [
+      {
+        "file": "app/src/screens/plan-beta/catalog-presentation.contract.test.tsx",
+        "line": 59,
+        "column": 41,
+        "code": "TS2345",
+        "reason": "activePlan.kind PlanCandidateKind is not assignable to BETA_ACTIVE_PLAN_SNAPSHOT"
+      },
+      {
+        "file": "app/src/screens/plan-beta/catalog-presentation.contract.test.tsx",
+        "line": 65,
+        "column": 42,
+        "code": "TS2322",
+        "reason": "activePlan.kind PlanCandidateKind is not assignable to BETA_ACTIVE_PLAN_SNAPSHOT"
+      }
+    ]
+  },
+  "namedRegressionsBoundary": "The following namedRegressions and fullRun counts are the earlier full-run snapshot, not the latest F1/F2/F5 status.",
+  "namedRegressions": [
+    {
+      "name": "named adversarial contract counterexamples AUDIT-MUTATION-CONTROL detects source-count, terminal-rest and decimal corruption without changing runtime",
+      "status": "passed",
+      "durationMs": 10.749400000000605
+    },
+    {
+      "name": "named adversarial contract counterexamples AUDIT-STALE-DISPLAY saved stale reference must remain visibly stale in the workout reader",
+      "status": "passed",
+      "durationMs": 33.57339999999385
+    },
+    {
+      "name": "named adversarial contract counterexamples AUDIT-DRAW-NO-REPEAT seeded picker must exhaust unseen eligible methods before returning",
+      "status": "failed",
+      "durationMs": 1225.2553999999946
+    },
+    {
+      "name": "named adversarial contract counterexamples AUDIT-DRAW-ELIGIBILITY no random fallback into unavailable equipment, experience or time",
+      "status": "failed",
+      "durationMs": 150.21689999999944
+    },
+    {
+      "name": "named adversarial contract counterexamples AUDIT-DURATION-VARIANTS continuous easy dose variants do not become different methods",
+      "status": "failed",
+      "durationMs": 4.562699999980396
+    },
+    {
+      "name": "named adversarial contract counterexamples AUDIT-RELOAD-CONFIRMATION picker preserves the stored record and exact target on reopening",
+      "status": "passed",
+      "durationMs": 188.8567000000039
+    },
+    {
+      "name": "named adversarial contract counterexamples AUDIT-REDUCE-CATALOG rejects a range clamp but replays a whole-slot low-intensity replacement",
+      "status": "passed",
+      "durationMs": 176.68969999998808
+    },
+    {
+      "name": "named adversarial contract counterexamples AUDIT-COMPATIBILITY catalog-free legacy snapshots are not backfilled on reload",
+      "status": "passed",
+      "durationMs": 153.87410000001546
+    },
+    {
+      "name": "named adversarial contract counterexamples AUDIT-CURRENT-CHECK-FAIL-CLOSED unknown/missing checks cannot generate, activate and save",
+      "status": "passed",
+      "durationMs": 167.96180000001914
+    },
+    {
+      "name": "named adversarial contract counterexamples AUDIT-ACTUAL-ROUTE-COVERAGE all 117 calculation IDs are measured against real generated slots",
+      "status": "passed",
+      "durationMs": 8712.867200000008
+    }
+  ],
+  "boundaryBefore": {
+    "failedPersonas": [
+      "P020",
+      "P039",
+      "P058",
+      "P077",
+      "P096"
+    ],
+    "failures": {
+      "MISSING_OR_RISK_GENERATED": 5
+    },
+    "reproducedMissingCheck": {
+      "rows": [
+        {
+          "input": "undefined",
+          "generated": true,
+          "gate": {
+            "kind": "passed",
+            "action": "CONTINUE_WITH_OTHER_GATES",
+            "planGenerationAllowed": true,
+            "nonSensitiveReasonCodes": [
+              "D9_COLLOQUIAL_NO_TEXT"
+            ],
+            "audit": {
+              "event": "PLAN_SAFETY_GATE_PASSED",
+              "privacy": "REASON_CODES_ONLY"
+            }
+          },
+          "selected": "selected",
+          "saved": true,
+          "reloaded": true
+        },
+        {
+          "input": "null",
+          "generated": true,
+          "gate": {
+            "kind": "passed",
+            "action": "CONTINUE_WITH_OTHER_GATES",
+            "planGenerationAllowed": true,
+            "nonSensitiveReasonCodes": [
+              "D9_COLLOQUIAL_NO_TEXT"
+            ],
+            "audit": {
+              "event": "PLAN_SAFETY_GATE_PASSED",
+              "privacy": "REASON_CODES_ONLY"
+            }
+          },
+          "selected": "selected",
+          "saved": true,
+          "reloaded": true
+        },
+        {
+          "input": "UNKNOWN",
+          "generated": true,
+          "gate": {
+            "kind": "passed",
+            "action": "CONTINUE_WITH_OTHER_GATES",
+            "planGenerationAllowed": true,
+            "nonSensitiveReasonCodes": [
+              "D9_COLLOQUIAL_NO_TEXT"
+            ],
+            "audit": {
+              "event": "PLAN_SAFETY_GATE_PASSED",
+              "privacy": "REASON_CODES_ONLY"
+            }
+          },
+          "selected": "selected",
+          "saved": true,
+          "reloaded": true
+        },
+        {
+          "input": "",
+          "generated": true,
+          "gate": {
+            "kind": "passed",
+            "action": "CONTINUE_WITH_OTHER_GATES",
+            "planGenerationAllowed": true,
+            "nonSensitiveReasonCodes": [
+              "D9_COLLOQUIAL_NO_TEXT"
+            ],
+            "audit": {
+              "event": "PLAN_SAFETY_GATE_PASSED",
+              "privacy": "REASON_CODES_ONLY"
+            }
+          },
+          "selected": "selected",
+          "saved": true,
+          "reloaded": true
+        }
+      ],
+      "explicitRiskControl": "blocked"
+    }
+  },
+  "boundaryAfter": {
+    "rows": [
+      {
+        "input": "undefined",
+        "generated": false,
+        "result": {
+          "kind": "blocked",
+          "code": "CURRENT_CHECK_REQUIRES_REVIEW"
+        }
+      },
+      {
+        "input": "null",
+        "generated": false,
+        "result": {
+          "kind": "blocked",
+          "code": "CURRENT_CHECK_REQUIRES_REVIEW"
+        }
+      },
+      {
+        "input": "UNKNOWN",
+        "generated": false,
+        "result": {
+          "kind": "blocked",
+          "code": "CURRENT_CHECK_REQUIRES_REVIEW"
+        }
+      },
+      {
+        "input": "",
+        "generated": false,
+        "result": {
+          "kind": "blocked",
+          "code": "CURRENT_CHECK_REQUIRES_REVIEW"
+        }
+      },
+      {
+        "input": false,
+        "generated": false,
+        "result": {
+          "kind": "blocked",
+          "code": "CURRENT_CHECK_REQUIRES_REVIEW"
+        }
+      }
+    ],
+    "explicitRiskControl": "blocked"
+  },
+  "historicalRedEvidence": [
+    {
+      "name": "seeded-picker-draw",
+      "detail": {
+        "seed": 154148902,
+        "methods": 6,
+        "eligible": [
+          "P-VO2-2",
+          "P-VO2-2-4",
+          "P-VO2-2-5",
+          "X-VO2-06",
+          "X-VO2-07",
+          "X-VO2-08",
+          "X-VO2-10",
+          "X-VO2-11"
+        ],
+        "trace": [
+          "X-VO2-07",
+          "X-VO2-08",
+          "X-VO2-07",
+          "X-VO2-11",
+          "X-VO2-06",
+          "X-VO2-08",
+          "X-VO2-11",
+          "X-VO2-10",
+          "P-VO2-2-5",
+          "X-VO2-10",
+          "X-VO2-11"
+        ],
+        "firstCycle": [
+          "X-VO2-07",
+          "X-VO2-08",
+          "X-VO2-07",
+          "X-VO2-11",
+          "X-VO2-06",
+          "X-VO2-08"
+        ]
+      }
+    },
+    {
+      "name": "unavailable-random-fallback",
+      "detail": {
+        "selected": "P-INTRO-ATP-T",
+        "unavailable": [
+          "ACCELERATION_AND_DECELERATION_SPACE"
+        ],
+        "rendered": "다른 훈련으로 바꾸기바꿀 일정1일차 오전3일차 오후5일차 오전7일차 오전9일차 오전변경을 적용하거나 취소하면 다른 날짜를 고를 수 있어요. 같은 목적의 다른 훈련훈련 구성서서 출발하는 가속 달리기시간형 가속 달리기가속하고 속도를 줄일 충분한 공간이 있어요3개 운동 구간짧은 고출력 훈련 · ATP-PC3 × 6s @ 짧게 빠르게 · 동작이 무너지거나 속도가 떨어지면 중단 · r3min Walk/Stand?자세히 보기 · 준비부터 정리까지준비준비 구간 · 1회5분 · RPE 2-3속도를 올리는 구간 · 1회20초 · 점차 속도를 올리되 전력질주는 하지 않아요.위 구성을 모두 마친 뒤 한 번걷기 · 1분속도를 올리는 구간 · 1회20초 · 점차 속도를 올리되 전력질주는 하지 않아요.위 구성을 모두 마친 뒤 한 번걷기 · 1분본운동반복 구성 · 3회운동 구간 · 1회6초 · 짧게 빠르게 · 동작이 무너지거나 속도가 떨어지면 중단반복 사이마다 아래 순서로 회복 · 2번걷기 또는 서서 쉬기 · 3분정리정리 구간 · 1회5분 · RPE 1-26s짧게 빠르게 · 동작이 무너지거나 속도가 떨어지면 중단준비·회복·정리 포함 약 18분 58초운동 환경·경험 확인이 필요해요.이 구성으로 바꾸기변경 취소아직 계획에 적용하지 않았어요."
+      }
+    },
+    {
+      "name": "method-dose-identity",
+      "detail": {
+        "one": {
+          "id": "X-BASE-01",
+          "methodGroup": "BASE:EASY_CONTINUOUS",
+          "identity": "sha256:e9b88310aca4f0b8dac82fc06a5c30dc5495a000f31c0148e10b8a3dd33a1326"
+        },
+        "two": {
+          "id": "X-BASE-03",
+          "methodGroup": "BASE:EASY_CONTINUOUS",
+          "identity": "sha256:f8d67b027db274297bf9c5179224ddcf20ce25fe3d9121a3371d7284bbab73a6"
+        }
+      }
+    }
+  ],
+  "remainingRedEvidence": [
+    {
+      "name": "method-dose-identity",
+      "detail": {
+        "one": {
+          "id": "X-BASE-01",
+          "methodGroup": "BASE:EASY_CONTINUOUS",
+          "identity": "sha256:e9b88310aca4f0b8dac82fc06a5c30dc5495a000f31c0148e10b8a3dd33a1326"
+        },
+        "two": {
+          "id": "X-BASE-03",
+          "methodGroup": "BASE:EASY_CONTINUOUS",
+          "identity": "sha256:f8d67b027db274297bf9c5179224ddcf20ce25fe3d9121a3371d7284bbab73a6"
+        }
+      }
+    }
+  ],
+  "actual117Route": {
+    "scope": "one declared compatible event/experience per ID, explicit synthetic targets and time acceptance",
+    "rows": [
+      {
+        "id": "P-BASE-C",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-BASE-B",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-LT-C",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-LT-B",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-LT-S",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-RHYTHM-400",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-RHYTHM-300",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-RHYTHM-T",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-RHYTHM-TS",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-VO2-2",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-VO2-3",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-VO2-4",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-ATP-A",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-ATP-F",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-ATP-T",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-GLY-D",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-GLY-S",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-REC-W",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-OFF",
+        "status": "PLANNED_OFF"
+      },
+      {
+        "id": "P-INTRO-LT-C",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-INTRO-LT-S",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-INTRO-VO2-2",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-INTRO-VO2-3",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-INTRO-ATP-A",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-INTRO-ATP-T",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-INTRO-GLY-D",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-INTRO-GLY-S",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-INTRO-MIX-T",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-INTRO-MIX-S",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-BASE-C-1200",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-BASE-C-1500",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-LT-B-480",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-VO2-2-4",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-VO2-2-5",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-ATP-A-4",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-ATP-A-5",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "P-RHYTHM-400-2X6",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-BASE-01",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-BASE-02",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-BASE-03",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-BASE-04",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-BASE-05",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-BASE-06",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-BASE-07",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-BASE-08",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-BASE-09",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-BASE-10",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-LT-01",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-LT-02",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-LT-03",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-LT-04",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-LT-05",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-LT-06",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-LT-07",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-LT-08",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-LT-09",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-LT-10",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-LT-11",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-LT-12",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-VO2-01",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-VO2-02",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-VO2-03",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-VO2-04",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-VO2-05",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-VO2-06",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-VO2-07",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-VO2-08",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-VO2-09",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-VO2-10",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-VO2-11",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-VO2-12",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-ATP-01",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-ATP-02",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-ATP-03",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-ATP-04",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-ATP-05",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-ATP-06",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-ATP-07",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-ATP-08",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-GLY-01",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-GLY-02",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-GLY-03",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-GLY-04",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-GLY-05",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-GLY-06",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-GLY-07",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-GLY-08",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-MIX-01",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-MIX-02",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-MIX-03",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-MIX-04",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-MIX-05",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-MIX-06",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-MIX-07",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-MIX-08",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-MIX-09",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-MIX-10",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-REC-01",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-REC-02",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-REC-03",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-REC-04",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-REC-05",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-REC-06",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-REC-07",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-REC-08",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-HILL-01",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-HILL-02",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-HILL-03",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-HILL-04",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-HILL-05",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-HILL-06",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-HILL-07",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-HILL-08",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-HILL-09",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-HILL-10",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-HILL-11",
+        "status": "BOUND_SAVED_RELOADED"
+      },
+      {
+        "id": "X-HILL-12",
+        "status": "BOUND_SAVED_RELOADED"
+      }
+    ]
+  },
+  "sourceSha256Boundary": "packaging snapshot after execution; shared-worktree parent edits may differ from the full-run snapshot",
+  "sourceSha256": {
+    "app/src/domain/plan-persona-100.audit.ts": "0eb42ce5e1f101161ec2148d2ec2e0dbc5f6258e6c0d1e0b3cb2f93582c84093",
+    "app/vitest.persona-100.config.ts": "6dcfbb96159f6821b9f6990c6bbdf0903ae0222d216f0874cf04e3bc5efc465a",
+    "impl/src/prescription/all-workout-calculator.ts": "c9786a5cde9f5241f27790bf4075355a46ac602dee9d6199c43bcd81514a0138",
+    "impl/src/prescription/all-workout-catalog.json": "6b0812e9d0cfe6b6d4868641f055a816ce90e34df595e6becab1071668362708",
+    "impl/src/prescription/catalog-session-binding.ts": "2b7302f3109876e6fa5417e492fea0b052d29198e8c7ad75b1c86dddc964b6b3",
+    "impl/src/plan-generator/session-builder.ts": "3ed84e9c56479ee7d4adf856cab352c14f9abc6a797e508d1491be15b10880f3",
+    "impl/src/d9/evaluator.ts": "70efde4299630d0487c9ddc526d2f31763deb47a1fe0ef2c0c167591857333e6",
+    "impl/src/rve/signal.ts": "468fad53dc5d33ec3afea44f7a09026ee5f0772e23a0e52d95b702905e271789",
+    "app/src/domain/plan-beta-flow.ts": "f8f4a0ff94252a2d18b6d79a4cbd046b6bb69c65dfd87449ab1bfa56eb2bd905",
+    "app/src/screens/plan-beta/CatalogWorkoutPicker.tsx": "6b646f0e616fb30834a11150972c639ebb65f8fd71cf4208c9b81f31f5dc130c",
+    "app/src/screens/plan-beta/CatalogWorkoutDetail.tsx": "3506da63ddaee0ddeb5bda652acef4aaf8b02191b6dbf15a3af594757ff5302c"
+  }
+}

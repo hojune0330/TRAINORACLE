@@ -34,6 +34,7 @@ import type {
 import type { JournalEntryType } from "./log-entry/shared"
 import { PlanActiveState } from "./plan-beta/PlanActiveState"
 import { PlanCandidates } from "./plan-beta/PlanCandidates"
+import { usePlanDraftNavigationGuard } from "./plan-beta/usePlanDraftNavigationGuard"
 import { PlanIntake } from "./plan-beta/PlanIntake"
 import type { IntakeStep } from "./plan-beta/PlanIntake"
 import { NotationReader } from "./plan-beta/NotationReader"
@@ -375,6 +376,7 @@ function LegacyPlanBeta({
   const previousIntake = React.useState(() => loadPreviousIntake())[0]
   const [instantEntryOpen, setInstantEntryOpen] = React.useState(previousIntake === null && stored === null)
   const [instantEntry, setInstantEntry] = React.useState<InstantPlanEntry | undefined>()
+  const [instantEntryDirty, setInstantEntryDirty] = React.useState(false)
   const [instantEntryError, setInstantEntryError] = React.useState<string | null>(null)
   const [draft, setDraft] = React.useState<Partial<PlanBetaIntake>>(
     previousIntake ?? {},
@@ -395,6 +397,10 @@ function LegacyPlanBeta({
   const [racePreview, setRacePreview] = React.useState<
     Extract<PlanDraftGeneration, { readonly kind: "preview_only" }> | null
   >(null)
+  usePlanDraftNavigationGuard(stored === null && (
+    generated !== null || racePreview !== null || instantEntry !== undefined || instantEntryDirty
+    || JSON.stringify(draft) !== JSON.stringify(previousIntake ?? {})
+  ))
   const [blocked, setBlocked] = React.useState(false)
   const [currentCheck, setCurrentCheck] = React.useState<PlanCurrentCheck | null>(null)
   const [errorCode, setErrorCode] = React.useState<string | null>(null)
@@ -862,7 +868,7 @@ function LegacyPlanBeta({
   }
 
   if (instantEntryOpen) return <>
-    <InstantPlanEntryForm today={todayISO()} initialEntry={instantEntry} onSubmit={value => {
+    <InstantPlanEntryForm today={todayISO()} initialEntry={instantEntry} onDraftChange={setInstantEntryDirty} onSubmit={value => {
       const prepared = prepareInstantPlanEntry(value)
       if (prepared.kind !== "ready") {
         setInstantEntryError(prepared.kind === "invalid" ? "입력한 종목·기록·날짜를 다시 확인해 주세요."

@@ -88,6 +88,19 @@ describe("two-a-day plan summary", () => {
     expect(twoADayTrainingDayCount([session(4, "PM")])).toBe(0)
   })
 
+  it.each([
+    [8480 / 60, "2시간 21분 20초"],
+    [59.9999999999, "1시간"],
+    [35 / 60, "35초"],
+    [0, "0분"],
+  ])("formats fractional catalog minutes without floating-point noise: %s", (minutes, label) => {
+    const result = candidateSessionSummary({
+      sessions: [session(1, "AM", { minimum: minutes, maximum: minutes })],
+    })
+    expect(result).toContain(`표시된 시간 합계 ${label}`)
+    expect(result).not.toMatch(/\d\.\d{4}/u)
+  })
+
   it("counts dates with two non-rest sessions, not afternoon slots", () => {
     expect(twoADayTrainingDayCount([
       session(4, "AM"),

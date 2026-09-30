@@ -34,6 +34,11 @@ afterEach(() => {
 })
 
 describe("plan journal safety read boundary", () => {
+  it.each([undefined, null, "", "UNKNOWN", false])("blocks a missing or malformed current check: %s", (value) => {
+    const result = generatePlanFromDraft(COMPLETE_DRAFT, value as Parameters<typeof generatePlanFromDraft>[1])
+    expect(result).toEqual({ kind: "blocked", code: "CURRENT_CHECK_REQUIRES_REVIEW" })
+  })
+
   it.each([
     ["corrupt JSON", "{"],
     ["a dropped malformed entry", JSON.stringify([{}])],

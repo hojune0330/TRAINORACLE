@@ -1,0 +1,35 @@
+{
+  "date": "2026-09-30",
+  "baselineCommit": "90852822765c2c67e58b1158ca082d9fceb62b7a",
+  "syntheticDataOnly": true,
+  "focusedFinal": {
+    "startedAtKst": "22:29:41",
+    "testFiles": 9,
+    "passed": 115,
+    "failed": 0,
+    "durationSeconds": 28.86,
+    "rawReceipt": ".scratch/persona-100-parent-focused-final.json"
+  },
+  "appShellNavigation": { "passed": 5, "failed": 0, "isolatedRun": true },
+  "lastP003Regression": {
+    "testName": "checks the shorter candidate budget before applying one workout to both candidates",
+    "before": "FAILED: required duration acceptance checkbox was absent",
+    "after": "PASSED: explicit acceptance enables apply; both candidates store exactly 25 minutes",
+    "independentBrowserRerunAfterThisPatch": false
+  },
+  "typecheckAfterLastPatch": "PASS",
+  "buildAfterLastPatch": {
+    "status": "PASS",
+    "durationSeconds": 8.76,
+    "modules": 2263,
+    "envDir": false,
+    "output": ".scratch/persona-100-parent-build-final",
+    "productionDeployArtifact": false,
+    "warningsRemain": ["runtime font path", "mixed static and dynamic imports", "large bundle"]
+  },
+  "all100BrowserJourneysRerunAfterAllFixes": false,
+  "fullDefaultSuite": "NOT_RUN",
+  "productionDataWrites": 0,
+  "productionDeploymentVerifiedByThisReceipt": false,
+  "scientificEffectivenessProven": false
+}
