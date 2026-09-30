@@ -47,5 +47,5 @@ it.each([
 it("does not display duplicate endpoints as 35~35 minutes", () => {
   expect(prescriptionLabel({ day: 1, slot: "AM", role: "EASY", plannedEnergyIntent: "BASE_INTENT",
     prescription: { kind: "RPE_TIME_RANGE", durationMinutes: { minimum: 35, maximum: 35 }, rpe: { minimum: 3, maximum: 4 } } }))
-    .toContain("총 35분 · RPE 3~4")
+    .toBe("전체 35min @ RPE 3–4")
 })

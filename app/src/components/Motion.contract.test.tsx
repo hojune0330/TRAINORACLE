@@ -1,5 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { readFileSync } from "node:fs"
+import { Profiler } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { AppShell, SavedToast } from "../AppShell"
 import { PopCard, usePopover } from "./Popover"
@@ -249,18 +250,40 @@ describe("app screen direction structure", () => {
     window.localStorage.clear()
     // Test navigation direction independently of lazy-module compilation latency.
     await import("../screens/PlanBeta")
-    const view = render(<AppShell />)
-    expect(view.container.querySelector(".app-flow-stage")).toHaveAttribute("data-motion", "initial")
+    const committedScreens: Array<{ element: Element; motion: string | null }> = []
+    const shell = () => (
+      <Profiler id="screen-motion" onRender={() => {
+        const element = document.querySelector(".app-flow-stage")
+        if (element) committedScreens.push({ element, motion: element.getAttribute("data-motion") })
+      }}>
+        <AppShell />
+      </Profiler>
+    )
+    // Same-screen updates may settle to "none" before render() returns.
+    // Inspect the committed first paint and each navigation, not a later rerender.
+    const view = render(shell())
+    expect(committedScreens[0]?.motion).toBe("initial")
+    const initialScreen = committedScreens[0]!
+    view.rerender(shell())
+    expect(view.container.querySelector(".app-flow-stage")).toBe(initialScreen.element)
+    expect(initialScreen.element).toHaveAttribute("data-motion", "none")
 
     const tabBar = screen.getByRole("navigation", { name: "주 탭" })
+    committedScreens.length = 0
     fireEvent.click(within(tabBar).getByRole("button", { name: "계획" }))
     await waitFor(() => {
-      expect(view.container.querySelector(".app-flow-stage")).toHaveAttribute("data-motion", "tab-forward")
+      expect(committedScreens.find(({ element }) => element !== initialScreen.element)?.motion).toBe("tab-forward")
     })
 
+    const planScreen = view.container.querySelector(".app-flow-stage")
+    view.rerender(shell())
+    expect(view.container.querySelector(".app-flow-stage")).toBe(planScreen)
+    expect(planScreen).toHaveAttribute("data-motion", "none")
+
+    committedScreens.length = 0
     fireEvent.click(within(tabBar).getByRole("button", { name: "홈" }))
     await waitFor(() => {
-      expect(view.container.querySelector(".app-flow-stage")).toHaveAttribute("data-motion", "tab-backward")
+      expect(committedScreens.find(({ element }) => element !== planScreen)?.motion).toBe("tab-backward")
     })
   })
 })

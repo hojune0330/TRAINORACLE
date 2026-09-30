@@ -48,8 +48,13 @@ vi.mock("./DeferredMobileScreens", async () => {
           <button type="button" onClick={() => onOpenOracle("compare")}>분석 훈련 비교 예시</button>
         </section>
       ),
-      AthleteRecords: ({ onSaved }: { onSaved?: (() => void) | undefined }) => <>
+      AthleteRecords: ({ onBack, onSaved, backLabel = "계획으로" }: {
+        onBack: () => void
+        onSaved?: (() => void) | undefined
+        backLabel?: string | undefined
+      }) => <>
         <h1>내 종목 기록</h1>
+        <button type="button" onClick={onBack}>{backLabel}</button>
         {onSaved && <button type="button" onClick={onSaved}>기록 저장 완료</button>}
       </>,
       JournalArchive: () => <h1>지난 일지</h1>,
@@ -62,6 +67,7 @@ vi.mock("./DeferredMobileScreens", async () => {
 import { AppShell } from "./AppShell"
 
 beforeEach(() => {
+  setActiveLocalAccount(null)
   window.localStorage.clear()
   window.sessionStorage.clear()
   window.history.replaceState(null, "", "/?app=1")
@@ -170,10 +176,15 @@ describe("AppShell oracle exploration navigation", () => {
     await user.click(screen.getByRole("button", { name: "내 기록으로 확인하기" }))
     await user.click(screen.getByRole("button", { name: "결과 행동" }))
     expect(screen.getByRole("heading", { name: "내 종목 기록" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "분석으로" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "기록 저장 완료" })).toBeVisible()
 
     act(() => setActiveLocalAccount("different-account"))
-    await user.click(screen.getByRole("button", { name: "기록 저장 완료" }))
+    expect(screen.queryByRole("button", { name: "기록 저장 완료" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "분석으로" })).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "계획으로" }))
     await waitFor(() => expect(screen.getByRole("heading", { name: "내 훈련 계획" })).toBeVisible())
+    expect(screen.queryByRole("heading", { name: "level 개인 결과" })).not.toBeInTheDocument()
     expect(screen.queryByText("필요한 입력: 필요한 구조화 기록")).not.toBeInTheDocument()
   })
 
