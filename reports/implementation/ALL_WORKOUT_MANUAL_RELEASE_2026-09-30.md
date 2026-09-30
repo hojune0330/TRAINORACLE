@@ -1,6 +1,6 @@
 # 전체 훈련 연결 수동 배포
 
-status: RELEASE_CANDIDATE
+status: MANUALLY_DEPLOYED_PUBLIC_ASSETS_VERIFIED
 date: 2026-09-30
 canonical_promotion: false
 
@@ -49,9 +49,28 @@ canonical_promotion: false
 
 ## 5. 배포 결과
 
-서버: 기존 인증의 공식 Supabase CLI로 두 함수 배포 완료. 새 비밀값 입력·생성 없음.
-배포 직전 카탈로그 117개 재현, 생성 검증기 바이트 재현 및 저장 계약 101/101 통과.
-웹: 소스 커밋 이후 게시 결과와 공개 확인을 추가한다.
+| 항목 | 결과 |
+|---|---|
+| 런타임 소스 | `b00588f6c49da52a3faa14556651d4ccd1ee2fd4`, main 정상 후속 푸시 |
+| 수동 Pages 커밋 | `272e3add73a060544306304785d6f0c265f7b9fc` |
+| 이전 Pages 부모 | `b1a67ef1ab87d3c3e749dffdb7b87dadd743884f`, force push 없음 |
+| 공개 주소 | https://hojune0330.github.io/TRAINORACLE/?app=1 |
+| Pages 상태 | `built`, 배포 오류 없음 |
+| 공개 확인 | `2026-09-30T09:43:45.141Z`, 영수증 sourceSha 및 HTML의 JS/CSS 5개 SHA-256 일치 |
+| 진입 파일 | `index-tJckqahx.js`, `index-xtOrbCFC.css` |
+| 계획·일지 서버 | 두 함수 모두 v6 → v7, `ACTIVE` |
+| 서버 인증 | 기존 verify_jwt 설정 및 핸들러 getUser 인증 유지. 인증 없는 빈 POST는 두 함수 모두 401 |
+| 배포 설정 | 기존 공개 VITE 설정 41개 재사용, 비밀 환경 파일 조회·설정 변경 없음 |
+| 배포 직전 검사 | 카탈로그 117개 재현, 생성 검증기 재현, 저장 계약 101/101 통과 |
+| 실제 계정 저장 왕복 | 이번 배포 턴에서는 미실행 |
+
+공식 Supabase CLI의 기존 로그인을 사용했다. DB 마이그레이션 및 기존 기록 변경은 하지 않았다.
+브라우저에서 공개 홈이 표시되는 것까지 확인했고 테스트를 위해 공개 탭을 열었다.
+GitHub CI 실행 `36697769405`는 별도 진행 중이며 배포 근거로 사용하지 않았다.
+전체 회귀 및 실제 두 기기 온라인 저장 성공을 주장하지 않는다.
+
+큰 공통 청크, 기존 정적/동적 import 혼재 및 폰트 상대 경로 빌드 경고가 남았다.
+이번 배포는 성공했지만 이 경고들을 해결한 것으로 표시하지 않는다.
 
 이전 검수 원문 일부의 Markdown 줄바꿈용 후행 두 칸은 증거 보존을 위해 수정하지 않는다.
 코드·스펙과 이번 배포 문서의 diff 공백 검사는 별도로 통과 여부를 확인한다.

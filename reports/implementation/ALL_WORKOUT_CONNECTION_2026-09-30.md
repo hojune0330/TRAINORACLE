@@ -2,7 +2,7 @@
 
 status: LOCAL_IMPLEMENTED_AND_TARGETED_VERIFIED
 date: 2026-09-30
-deployment: NOT_PERFORMED_THIS_TURN
+deployment: FOLLOWUP_MANUAL_RELEASE_COMPLETED
 canonical_promotion: false
 
 ## 1. 결론과 증거 범위
@@ -112,8 +112,10 @@ canonical_promotion: false
 
 ## 8. 배포와 남은 운영 절차
 
-이번 턴에서는 커밋·푸시·병합·공개 배포·운영 서버 변경을 하지 않았다.
-작업트리에는 이전 달력·훈련 변경 작업도 함께 있으므로 무차별 일괄 커밋하지 않았다.
+최초 구현 턴에서는 배포하지 않았다. 이후 오너 승인 수동 배포에서 선행 달력·훈련 변경을
+함께 검토해 main `b00588f` 및 Pages `272e3ad`로 게시했다.
+서버 두 함수도 v7로 먼저 업데이트했다. 상세 확인과 남은 실제 계정 검증은
+[수동 배포 보고서](ALL_WORKOUT_MANUAL_RELEASE_2026-09-30.md)를 따른다.
 
 배포 시 순서:
 
