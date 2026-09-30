@@ -21,22 +21,24 @@ export type OracleExploreProps = {
   readonly onModeChange?: (mode: "example" | "personal") => void
   readonly onPersonalResultSeen?: ((fingerprint: string) => void) | undefined
   readonly bookmarkControl?: ReactNode
+  readonly historyNotice?: ReactNode
+  readonly personalResultUnavailable?: boolean
 }
 
-export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction, personalResult, initialMode, onModeChange, onPersonalResultSeen, bookmarkControl }: OracleExploreProps) {
+export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction, personalResult, initialMode, onModeChange, onPersonalResultSeen, bookmarkControl, historyNotice, personalResultUnavailable = false }: OracleExploreProps) {
   const topic = getOracleTopic(topicId)
   const selectId = useId()
   const headlineId = useId()
   const [selection, setSelection] = useState<{ topic: OracleTopicId; mode: "example" | "personal" } | null>(null)
   const mode = selection?.topic === topicId ? selection.mode
-    : initialMode ?? (personalResult && personalResult.status !== "missing" ? "personal" : "example")
+    : initialMode ?? (personalResultUnavailable || personalResult && personalResult.status !== "missing" ? "personal" : "example")
   const selectMode = (next: "example" | "personal") => {
     setSelection({ topic: topicId, mode: next })
     onModeChange?.(next)
   }
   useEffect(() => {
-    if (mode === "personal" && personalResult?.fingerprint) onPersonalResultSeen?.(personalResult.fingerprint)
-  }, [mode, topicId, personalResult?.fingerprint, onPersonalResultSeen])
+    if (mode === "personal" && !personalResultUnavailable && personalResult?.fingerprint) onPersonalResultSeen?.(personalResult.fingerprint)
+  }, [mode, topicId, personalResult?.fingerprint, onPersonalResultSeen, personalResultUnavailable])
   const rows = topic.example.rows
   const maxValue = Math.max(...rows.map(row => row.value), 0)
   const chartLabel = `${topic.title} 예시. ${topic.example.source}. 단위 ${topic.example.unit}. ${rows.map(row => `${row.label} ${row.valueLabel}`).join(". ")}. 내 기록 분석이 아닙니다.`
@@ -71,7 +73,9 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
       </div>}
       </div>
 
-      {personalResult && mode === "personal" ? <OraclePersonalResult
+      {personalResult && mode === "personal" && historyNotice}
+      {personalResult && mode === "personal" ? personalResultUnavailable
+        ? <p role="status">일지를 아직 모두 불러오지 못했어요. 조회가 끝나면 비교가 나타나요.</p> : <OraclePersonalResult
         key={`personal-${topicId}`}
         result={personalResult}
         onAction={() => onPersonalAction(personalResult.action, personalResult.section, personalResult.metric)}
@@ -125,7 +129,7 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
         <span><small>이어서 살펴보기</small><strong>{topic.nextLabel}</strong></span><ArrowRight size={18} aria-hidden="true" />
       </button>}
       {bookmarkControl}
-      {personalResult && <OracleBookmark key={topicId} topicId={topicId} fingerprint={mode === "personal" ? personalResult.fingerprint : undefined} />}
+      {personalResult && <OracleBookmark key={topicId} topicId={topicId} fingerprint={mode === "personal" && !personalResultUnavailable ? personalResult.fingerprint : undefined} />}
     </div>
   </div>
 }

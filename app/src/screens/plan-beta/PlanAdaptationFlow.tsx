@@ -32,6 +32,8 @@ import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
 import { PlanCycleEvidence } from "./PlanCycleEvidence"
 import { inspectNextFrameAdaptation } from "../../domain/plan-adaptation-availability"
 import { localAccountScopeSnapshot, localAccountScopeIsCurrent } from "../../domain/account/local-account-scope"
+import { usePlanEvidenceHistory } from "../../hooks/usePlanEvidenceHistory"
+import { PlanEvidenceHistoryNotice } from "../../components/PlanEvidenceHistoryNotice"
 
 type Step = "closed" | "reason" | "cycle" | "record" | "safety" | "choice" | "review" | "result" | "pending"
 type Reason = "PB_SB" | "EXPLICIT_REQUEST"
@@ -84,9 +86,10 @@ export function PlanAdaptationFlow({
     () => eligiblePbSbRecords(state, onLoadRecords()),
     [onLoadRecords, state],
   )
+  const history = usePlanEvidenceHistory(step === "cycle", onLoadHistory)
   const cycleResponse = React.useMemo(
-    () => derivePlanCycleResponse(onLoadEntries(), state, onLoadHistory()),
-    [onLoadEntries, onLoadHistory, state, step],
+    () => derivePlanCycleResponse(onLoadEntries(), state, history.history),
+    [onLoadEntries, history.history, state, step],
   )
   useActiveContentScroll(step === "closed" ? null : step, activeStepRef)
 
@@ -102,7 +105,7 @@ export function PlanAdaptationFlow({
     setPrepared(null)
     setMessage(null)
     return () => { requestEpoch.current += 1 }
-  }, [state])
+  }, [state, history.scope])
 
   React.useEffect(() => {
     let current = true
@@ -277,8 +280,10 @@ export function PlanAdaptationFlow({
               {availability.kind === "unavailable" && (
                 <p className="plan-adaptation__notice" role="status">{unavailableMessage(availability.code)}</p>
               )}
-              <PlanCycleEvidence response={cycleResponse} />
-              {cycleResponse.recommendation === "REDUCE_OR_REVIEW"
+              {cycleResponse.historyReadIncomplete && <PlanEvidenceHistoryNotice status={history.status} onRetry={history.retry} />}
+              {history.journalReadComplete ? <PlanCycleEvidence response={cycleResponse} />
+                : <p role="status">일지를 아직 모두 불러오지 못했어요. 조회가 끝나면 비교가 나타나요.</p>}
+              {history.journalReadComplete && cycleResponse.recommendation === "REDUCE_OR_REVIEW"
                 && canRequest
                 && state.activePlan.candidateKind === "BALANCED" && (
                 <PlanChoice
@@ -395,7 +400,7 @@ export function PlanAdaptationFlow({
 
           {step === "pending" && matchingPending !== null && (
             <PlanAdaptationResult
-              message="다음 주기에 사용할 보수적인 계획을 이 기기에 저장했어요. 현재 활성 계획과 진행 기록은 바뀌지 않았습니다."
+              message="다음 주기에 사용할 계획안을 저장했어요. 현재 계획과 진행 기록은 그대로예요."
               onClose={reset}
             />
           )}

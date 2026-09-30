@@ -6,6 +6,8 @@ import * as catalog from "../domain/oracle-exploration"
 import type { OracleTopicId } from "../domain/oracle-exploration"
 import { OracleExplore } from "./OracleExplore"
 import { buildOraclePersonalResult } from "../domain/oracle-personal-result"
+import { createOracleReturnStore } from "../domain/oracle-return-state"
+import { replacedReplanFixture } from "../domain/execution-replan-lineage.test-fixture"
 
 afterEach(() => {
   cleanup()
@@ -31,6 +33,36 @@ function readWidths(chart: HTMLElement) {
 }
 
 describe("Oracle exploration examples", () => {
+  it("does not show or mark an unfinished personal comparison as read, then reveals the confirmed result", () => {
+    const store = createOracleReturnStore()
+    expect(store.enableOptIn().ok).toBe(true)
+    expect(store.saveInterest("focus").ok).toBe(true)
+    const f = replacedReplanFixture()
+    const entries = [{ ...f.entries[0]!, activityOutcome: "COMPLETED" as const, planExecutionRelation: "AS_PLANNED" as const,
+      rpe: 3, fieldProvenance: { rpe: { provenance: "EXPLICIT" as const } } }]
+    const result = buildOraclePersonalResult({ topicId: "focus", entries, planState: f.state,
+      planHistory: { kind: "loaded", plans: f.archivedPlans }, today: "2026-10-01" })
+    expect(result.fingerprint).not.toBeNull()
+    const onPersonalResultSeen = vi.fn()
+    const props = { topicId: "focus" as const, personalResult: result, onBack: vi.fn(), onSelectTopic: vi.fn(), onPersonalAction: vi.fn(), onPersonalResultSeen }
+    const view = render(<OracleExplore {...props} personalResultUnavailable />)
+    expect(screen.getByRole("button", { name: "내 기록" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByText("일지를 아직 모두 불러오지 못했어요. 조회가 끝나면 비교가 나타나요.")).toBeVisible()
+    expect(screen.queryByText(result.headline)).not.toBeInTheDocument()
+    expect(onPersonalResultSeen).not.toHaveBeenCalled()
+    expect(store.read().state.lastSeenAnalysisFingerprints.focus).toBeUndefined()
+    fireEvent.click(screen.getByRole("button", { name: "예시" }))
+    expect(screen.getByText("내 기록을 분석한 결과가 아니에요")).toBeVisible()
+    expect(onPersonalResultSeen).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole("button", { name: "내 기록" }))
+    view.rerender(<OracleExplore {...props} personalResultUnavailable={false} />)
+    expect(screen.queryByText("일지를 아직 모두 불러오지 못했어요. 조회가 끝나면 비교가 나타나요.")).toBeNull()
+    expect(screen.getByText(result.headline)).toBeVisible()
+    expect(onPersonalResultSeen).toHaveBeenCalledWith(result.fingerprint)
+    expect(store.read().state.lastSeenAnalysisFingerprints.focus).toBe(result.fingerprint)
+    view.unmount()
+    localStorage.clear()
+  })
   it("keeps the selected personal mode on topic navigation even without data", () => {
     const onSelectTopic = vi.fn()
     const result = buildOraclePersonalResult({ topicId: "level", entries: [], planState: null, today: "2026-09-27" })

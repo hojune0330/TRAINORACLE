@@ -90,7 +90,7 @@ for (const viewport of [
     })
 
     await page.getByRole("button", { name: "이 다음 계획 선택하기" }).click()
-    await expect(page.getByText("현재 활성 계획과 진행 기록은 바뀌지 않았습니다", { exact: false }))
+    await expect(page.getByText("현재 계획과 진행 기록은 그대로예요", { exact: false }))
       .toBeVisible()
     expect(await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(activeBefore)
     await page.reload()
@@ -98,7 +98,7 @@ for (const viewport of [
       .getByRole("button", { name: "계획" })
       .click()
     await page.getByRole("button", { name: "다음 계획 조정하기" }).click()
-    await expect(page.getByText("다음 주기에 사용할 보수적인 계획", { exact: false }))
+    await expect(page.getByText("다음 주기에 사용할 계획안을 저장했어요", { exact: false }))
       .toBeVisible()
     expect(await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(activeBefore)
 
@@ -117,12 +117,12 @@ for (const viewport of [
 
     await page.getByRole("button", { name: "다음 계획 조정하기" }).click()
     await expect(page.getByRole("heading", { name: "조정 이유를 선택해 주세요" })).toBeVisible()
-    await expect(page.getByText("다음 주기에 사용할 보수적인 계획")).toHaveCount(0)
+    await expect(page.getByText("다음 주기에 사용할 계획안을 저장했어요", { exact: false })).toHaveCount(0)
     await page.getByRole("button", { name: /다음 계획을 조정하고 싶어요/u }).click()
     await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
     await page.getByRole("button", { name: /훈련량을 조금 줄인 다음 계획/u }).click()
     await page.getByRole("button", { name: "이 다음 계획 선택하기" }).click()
-    await expect(page.getByText("현재 활성 계획과 진행 기록은 바뀌지 않았습니다", { exact: false }))
+    await expect(page.getByText("현재 계획과 진행 기록은 그대로예요", { exact: false }))
       .toBeVisible()
     expect(await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(laterActiveBytes)
 
@@ -131,7 +131,7 @@ for (const viewport of [
       .getByRole("button", { name: "계획" })
       .click()
     await page.getByRole("button", { name: "다음 계획 조정하기" }).click()
-    await expect(page.getByText("다음 주기에 사용할 보수적인 계획", { exact: false }))
+    await expect(page.getByText("다음 주기에 사용할 계획안을 저장했어요", { exact: false }))
       .toBeVisible()
     expect(await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(laterActiveBytes)
     await page.getByRole("button", { name: "현재 계획으로 돌아가기" }).click()

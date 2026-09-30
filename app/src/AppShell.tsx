@@ -18,7 +18,9 @@ import { requestJournalDecorationAutoOpen } from "./domain/journal-decoration-in
 import { createSavedFactReceipt } from "./domain/save-receipt"
 import { analysisNavigationForReceipt, type AnalysisNavigation, type AnalysisSection } from "./domain/analysis-navigation"
 import { buildOraclePersonalResult } from "./domain/oracle-personal-result"
-import { loadPlanBetaState, readArchivedOriginalPlans } from "./domain/plan-beta-store"
+import { loadPlanBetaState } from "./domain/plan-beta-store"
+import { usePlanEvidenceHistory } from "./hooks/usePlanEvidenceHistory"
+import { PlanEvidenceHistoryNotice } from "./components/PlanEvidenceHistoryNotice"
 import { loadAthleteRecords } from "./domain/athlete-records"
 import { recordOracleJournalParticipation } from "./domain/oracle-participation"
 import { trackProductEvent } from "./domain/account/product-analytics-service"
@@ -443,9 +445,11 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     oracleInputRef.current = null
     if (intent && intent.owner === activeLocalAccount()) openOverlay({ kind: "oracle", topic: intent.topic, mode: "personal" })
   })
+  const oracleUsesPlan = overlay?.kind === "oracle" && (overlay.topic === "focus" || overlay.topic === "priority")
+  const oracleHistory = usePlanEvidenceHistory(oracleUsesPlan && overlay?.mode !== "example")
   const oracleResult = overlay?.kind === "oracle" ? buildOraclePersonalResult({
     topicId: overlay.topic, entries: loadEntries(), planState: loadPlanBetaState(),
-    athleteRecords: loadAthleteRecords(), today: todayISO(), planHistory: readArchivedOriginalPlans(),
+    athleteRecords: loadAthleteRecords(), today: todayISO(), planHistory: oracleHistory.history,
   }) : undefined
 
   const accountEnabled = accountFeatureEnabled()
@@ -802,6 +806,9 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
               key={`${overlay.topic}-${overlay.mode ?? "auto"}-${accountScopeRevision}`}
               topicId={overlay.topic}
               personalResult={oracleResult}
+              personalResultUnavailable={oracleUsesPlan && !oracleHistory.journalReadComplete}
+              historyNotice={oracleUsesPlan && oracleHistory.status !== "ready"
+                ? <PlanEvidenceHistoryNotice status={oracleHistory.status} onRetry={oracleHistory.retry} /> : undefined}
               initialMode={overlay.mode}
               onModeChange={changeOracleMode}
               onBack={closeOverlay}

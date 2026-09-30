@@ -1,0 +1,149 @@
+{
+  "scope": "real components, synthetic account transport; no live account",
+  "results": [
+    {
+      "width": 320,
+      "enlarged": false,
+      "view": "cycle",
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "localStorageUnchanged": true,
+      "retryTarget": {
+        "x": 16,
+        "y": 268.875,
+        "width": 154.53125,
+        "height": 44
+      },
+      "screenshot": "cycle-320-ready.png"
+    },
+    {
+      "width": 320,
+      "enlarged": false,
+      "view": "detail",
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "localStorageUnchanged": true,
+      "retryTarget": {
+        "x": 16,
+        "y": 278.776611328125,
+        "width": 154.53125,
+        "height": 44
+      },
+      "screenshot": "detail-320-ready.png"
+    },
+    {
+      "width": 320,
+      "enlarged": false,
+      "view": "oracle",
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "localStorageUnchanged": true,
+      "retryTarget": {
+        "x": 36,
+        "y": 257.28125,
+        "width": 154.53125,
+        "height": 44
+      },
+      "screenshot": "oracle-320-ready.png"
+    },
+    {
+      "width": 375,
+      "enlarged": false,
+      "view": "cycle",
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "localStorageUnchanged": true,
+      "retryTarget": {
+        "x": 16,
+        "y": 288.875,
+        "width": 154.53125,
+        "height": 44
+      },
+      "screenshot": "cycle-375-ready.png"
+    },
+    {
+      "width": 375,
+      "enlarged": false,
+      "view": "detail",
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "localStorageUnchanged": true,
+      "retryTarget": {
+        "x": 16,
+        "y": 225.6996307373047,
+        "width": 154.53125,
+        "height": 44.00001525878906
+      },
+      "screenshot": "detail-375-ready.png"
+    },
+    {
+      "width": 375,
+      "enlarged": false,
+      "view": "oracle",
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "localStorageUnchanged": true,
+      "retryTarget": {
+        "x": 36,
+        "y": 201.28125,
+        "width": 154.53125,
+        "height": 44
+      },
+      "screenshot": "oracle-375-ready.png"
+    },
+    {
+      "width": 320,
+      "enlarged": true,
+      "view": "cycle",
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "localStorageUnchanged": true,
+      "retryTarget": {
+        "x": 16,
+        "y": 567.984375,
+        "width": 288,
+        "height": 115.1875
+      },
+      "screenshot": "cycle-320-large-ready.png"
+    },
+    {
+      "width": 320,
+      "enlarged": true,
+      "view": "detail",
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "localStorageUnchanged": true,
+      "retryTarget": {
+        "x": 16,
+        "y": 610.109375,
+        "width": 288,
+        "height": 115.1875
+      },
+      "screenshot": "detail-320-large-ready.png"
+    },
+    {
+      "width": 320,
+      "enlarged": true,
+      "view": "oracle",
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "localStorageUnchanged": true,
+      "retryTarget": {
+        "x": 36,
+        "y": 488.5625,
+        "width": 248,
+        "height": 115.1875
+      },
+      "screenshot": "oracle-320-large-ready.png"
+    }
+  ]
+}

@@ -153,7 +153,7 @@ describe("next-frame adaptation flow", () => {
     expect(await screen.findByRole("status")).toHaveTextContent("저장됐는지 확인하지 못했어요")
     await user.click(screen.getByRole("button", { name: "현재 계획으로 돌아가기" }))
     await openAdaptation(user)
-    expect(await screen.findByRole("status")).toHaveTextContent("다음 주기에 사용할 보수적인 계획")
+    expect(await screen.findByRole("status")).toHaveTextContent("다음 주기에 사용할 계획안을 저장했어요")
     expect(screen.queryByRole("heading", { name: "조정 이유를 선택해 주세요" })).not.toBeInTheDocument()
   })
 
@@ -179,7 +179,7 @@ describe("next-frame adaptation flow", () => {
       fail = false
       await user.click(screen.getByRole("button", { name: "현재 계획으로 돌아가기" }))
       await openAdaptation(user)
-      expect(await screen.findByRole("status")).toHaveTextContent("다음 주기에 사용할 보수적인 계획")
+      expect(await screen.findByRole("status")).toHaveTextContent("다음 주기에 사용할 계획안을 저장했어요")
     } finally { spy.mockRestore() }
   })
 
@@ -372,7 +372,7 @@ describe("next-frame adaptation flow", () => {
     expect(screen.queryByRole("list", { name: "날짜별 계획 미리보기" })).not.toBeInTheDocument()
 
     await user.click(screen.getByRole("button", { name: "이 다음 계획 선택하기" }))
-    expect(await screen.findByRole("status")).toHaveTextContent("현재 활성 계획과 진행 기록은 바뀌지 않았습니다")
+    expect(await screen.findByRole("status")).toHaveTextContent("현재 계획과 진행 기록은 그대로예요")
   })
 
   it("keeps coach-required context read-only until an authenticated coach connection exists", async () => {
@@ -436,12 +436,12 @@ describe("next-frame adaptation flow", () => {
 
     await openAdaptation(user)
     await chooseAndAcceptReduction(user)
-    expect(await screen.findByRole("status")).toHaveTextContent("현재 활성 계획과 진행 기록은 바뀌지 않았습니다")
+    expect(await screen.findByRole("status")).toHaveTextContent("현재 계획과 진행 기록은 그대로예요")
     firstRender.unmount()
 
     const sameFrameReload = render(<PlanAdaptationFlow state={stateA} />)
     await openAdaptation(user)
-    expect(await screen.findByRole("status")).toHaveTextContent("다음 주기에 사용할 보수적인 계획")
+    expect(await screen.findByRole("status")).toHaveTextContent("다음 주기에 사용할 계획안을 저장했어요")
     sameFrameReload.unmount()
 
     const laterFrame = { ...stateA, generatedAt: "2026-08-02T00:00:00.000Z" }
@@ -452,15 +452,15 @@ describe("next-frame adaptation flow", () => {
 
     await openAdaptation(user)
     expect(screen.getByRole("heading", { name: "조정 이유를 선택해 주세요" })).toBeVisible()
-    expect(screen.queryByText("다음 주기에 사용할 보수적인 계획")).not.toBeInTheDocument()
+    expect(screen.queryByText(/다음 주기에 사용할 계획안을 저장했어요/u)).not.toBeInTheDocument()
     await chooseAndAcceptReduction(user)
-    expect(await screen.findByRole("status")).toHaveTextContent("현재 활성 계획과 진행 기록은 바뀌지 않았습니다")
+    expect(await screen.findByRole("status")).toHaveTextContent("현재 계획과 진행 기록은 그대로예요")
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBe(activeBytes)
     laterRender.unmount()
 
     render(<PlanAdaptationFlow state={laterFrame} />)
     await openAdaptation(user)
-    expect(await screen.findByRole("status")).toHaveTextContent("다음 주기에 사용할 보수적인 계획")
+    expect(await screen.findByRole("status")).toHaveTextContent("다음 주기에 사용할 계획안을 저장했어요")
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBe(activeBytes)
   })
 })

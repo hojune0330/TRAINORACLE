@@ -1,0 +1,55 @@
+{
+  "method": "exact-once in-memory source transform; product files unchanged",
+  "results": [
+    {
+      "mutation": "historyLoad",
+      "file": "src/hooks/usePlanEvidenceHistory.contract.test.tsx",
+      "expectedTest": "loads exact originals on demand without writing plans or browser storage",
+      "exitCode": 1,
+      "failures": [
+        "loads exact originals on demand without writing plans or browser storage"
+      ],
+      "detected": true
+    },
+    {
+      "mutation": "historyRetry",
+      "file": "src/hooks/usePlanEvidenceHistory.contract.test.tsx",
+      "expectedTest": "an eventless guest retry refreshes the real reader evidence and preserves scroll",
+      "exitCode": 1,
+      "failures": [
+        "an eventless guest retry refreshes the real reader evidence and preserves scroll"
+      ],
+      "detected": true
+    },
+    {
+      "mutation": "journalArrival",
+      "file": "src/hooks/usePlanEvidenceHistory.contract.test.tsx",
+      "expectedTest": "late account journals update the open cycle without a second click and never claim an empty completed read",
+      "exitCode": 1,
+      "failures": [
+        "late account journals update the open cycle without a second click and never claim an empty completed read"
+      ],
+      "detected": true
+    },
+    {
+      "mutation": "stablePlan",
+      "file": "src/screens/plan-beta/plan-evidence-account.contract.test.tsx",
+      "expectedTest": "real account history progress does not close an open cycle review; actual plan changes still invalidate it",
+      "exitCode": 1,
+      "failures": [
+        "real account history progress does not close an open cycle review; actual plan changes still invalidate it"
+      ],
+      "detected": true
+    },
+    {
+      "mutation": "unreadBookmark",
+      "file": "src/screens/OracleExplore.contract.test.tsx",
+      "expectedTest": "does not show or mark an unfinished personal comparison as read, then reveals the confirmed result",
+      "exitCode": 1,
+      "failures": [
+        "does not show or mark an unfinished personal comparison as read, then reveals the confirmed result"
+      ],
+      "detected": true
+    }
+  ]
+}

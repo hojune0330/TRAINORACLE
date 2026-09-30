@@ -4,7 +4,7 @@
 doc_id: PLAN_CYCLE_RESPONSE_AND_ADAPTATION_CONTRACT
 spec_id: TO-PLAN-CYCLE-RESPONSE-001
 title: TrainOracle Repeated Cycle Response And Adaptation Contract
-version: 1.3
+version: 1.4
 round: RT2_CORE_EVIDENCE_INTEGRITY
 status: DRAFT_FOR_REVIEW
 owner: TrainOracle Product Owner
@@ -203,5 +203,38 @@ Required regressions: unchanged-target multi-hop recovery, missing/forged/wrong-
 original rejection, cross-version duplicate/conflict accounting, source-read failure,
 unchanged private-text zero-signal and rendering through the real caller boundary.
 All existing open issues and the exact numerical transform registry remain unchanged.
+
+### 13.1 Account History Readiness And View Continuity
+
+The current-plan account projection does not prove that archived originals were
+read. The cycle evidence view, saved-session actual-record reader and plan-based
+personal Oracle request those originals when the user opens the relevant view.
+An example-only view and the home return panel do not start a full-history request.
+
+- Keep directly verifiable records available while originals load. Loading or a
+  failed read must not become an empty-history claim or successful comparison.
+- A failed request offers an explicit retry, not an unbounded retry loop. Closing
+  one view does not cancel another view's shared request.
+- Initial account projection failure is separate: direct the user to the existing
+  account-plan recovery controls. Do not label a no-op as a history retry or call
+  hydration as though it were read-only; it may recover a pending write.
+- Journal readiness is separate from plan-history readiness. Until the relevant
+  journal read completes, do not display an empty/completed comparison. Observe
+  journal change events and refresh the open summary/reader when records arrive.
+- Do not mark an unfinished personal comparison as seen through either its view
+  callback or bookmark fingerprint. Example browsing remains available and separate.
+- An explicit retry also refreshes the reader evidence when no storage or network
+  event was emitted. Readiness alone must not remove the retry while leaving stale
+  comparison contents on screen.
+- Late responses cannot cross an account/service change or reopen a closed view.
+  Read each refreshed result from the current scoped store, never a retained
+  response containing another account's originals.
+- A history-only event must not reset the current plan flow, selected reader tab
+  or scroll position. A real prescription/progress change retains the existing
+  stale-proposal invalidation behavior.
+
+This is read-only evidence readiness, not a reconstructed A/B candidate pair,
+new numerical transform, server write or production verification. All open issues
+and existing dose/safety boundaries remain unchanged.
 
 [DRAFT_COMPLETE]

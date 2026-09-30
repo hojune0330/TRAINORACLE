@@ -364,7 +364,11 @@ function LegacyPlanBeta({
   const [nextPredecessor, setNextPredecessor] = React.useState<Extract<PlanBetaState, { version: 3 }> | null>(null)
   const pendingNextReceipt = React.useRef<Extract<PlanBetaState, { version: 3 }> | null>(null)
   React.useEffect(() => {
-    const refresh = () => setStored(loadPlanBetaState())
+    const refresh = () => {
+      const next = loadPlanBetaState()
+      // History progress is not a change to the active prescription or its UI flow.
+      setStored(previous => JSON.stringify(previous) === JSON.stringify(next) ? previous : next)
+    }
     window.addEventListener(ACCOUNT_PLAN_EVENT, refresh)
     return () => window.removeEventListener(ACCOUNT_PLAN_EVENT, refresh)
   }, [])

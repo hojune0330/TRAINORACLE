@@ -17,6 +17,9 @@ import "../../styles/session-explanation.css"
 import { useReaderDialog } from "../../hooks/useReaderDialog"
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 import { CatalogWorkoutDetail } from "./CatalogWorkoutDetail"
+import { usePlanEvidenceHistory } from "../../hooks/usePlanEvidenceHistory"
+import { PlanEvidenceHistoryNotice } from "../../components/PlanEvidenceHistoryNotice"
+import { onLocalJournalScopeChange } from "../../domain/account/local-journal-ownership"
 
 type Props = {
   readonly session: PlanSession
@@ -34,6 +37,10 @@ export function SessionExplanationEntry(props: Props) {
   const [open, setOpen] = React.useState(false)
   const opener = React.useRef<HTMLButtonElement>(null)
   const returnPosition = React.useRef<{ region: HTMLElement; top: number } | null>(null)
+  React.useEffect(() => onLocalJournalScopeChange(() => {
+    returnPosition.current = null
+    setOpen(false)
+  }), [])
   React.useLayoutEffect(() => {
     if (open || returnPosition.current === null) return
     const { region, top } = returnPosition.current
@@ -61,9 +68,10 @@ export function SessionExplanationEntry(props: Props) {
 function SessionExplanationReader({ session, context, loadEvidence, initialTab = "방법", returnLabel = "훈련 일정으로 돌아가기", onClose }: Props & { readonly onClose: () => void }) {
   const [tab, setTab] = React.useState<Tab>(initialTab)
   const [expert, setExpert] = React.useState(false)
+  const history = usePlanEvidenceHistory(context?.kind === "SAVED" && tab === "주기·기록")
   const evidence = React.useMemo(() => {
     try { return loadEvidence?.(session) ?? null } catch { return null }
-  }, [loadEvidence, session, context?.plan.candidateId, context?.generatedAt])
+  }, [loadEvidence, session, context?.plan.candidateId, context?.generatedAt, history.history, history.revision, history.scope])
   const dialog = React.useRef<HTMLDialogElement>(null)
   const close = useReaderDialog(dialog, onClose)
   const content = React.useRef<HTMLDivElement>(null)
@@ -79,7 +87,7 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
   const term = GLOSSARY[explanation.profile.termId]
   const occurrence = evidence?.methodObservation?.occurrence
   // A loader can retain another session from the same plan generation.
-  const evidenceMatches = evidence !== null && context?.kind === "SAVED" && explanation.contextMatchesSession
+  const evidenceMatches = history.journalReadComplete && evidence !== null && context?.kind === "SAVED" && explanation.contextMatchesSession
     && evidence.candidateId === context.plan.candidateId && evidence.generatedAt === context.generatedAt
     && evidence.rows.every(row => row.currentPlannedSessionId === evidence.sessionId
       && row.day === session.day && row.slot === session.slot && row.role === session.role
@@ -202,8 +210,9 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
             {explanation.currentFrameLabel !== null && <section><h3>현재 장기 계획 연결</h3><p>{explanation.currentFrameLabel}</p></section>}
             <section><h3>계획한 자극</h3><p>{explanation.profile.purpose}</p><p>{prescriptionLabel(session)}</p></section>
             <section ref={actualRecords}><h3>실제 기록</h3>
-              {evidenceMatches && evidence.historyReadIncomplete && <p>변경 전 계획을 불러오지 못해 일부 기록은 확인하지 못했어요.</p>}
-              {!evidenceMatches ? <p>이 화면에서는 현재 훈련과 연결된 일지를 확인하지 못했어요. 조회하지 못한 상태를 일지가 없는 것으로 판단하지 않아요.</p>
+              {evidenceMatches && evidence.historyReadIncomplete && <PlanEvidenceHistoryNotice status={history.status} onRetry={history.retry} />}
+              {!history.journalReadComplete ? <p role="status">일지를 아직 모두 불러오지 못했어요. 조회가 끝나면 실제 기록이 나타나요.</p>
+                : !evidenceMatches ? <p>이 화면에서는 현재 훈련과 연결된 일지를 확인하지 못했어요. 조회하지 못한 상태를 일지가 없는 것으로 판단하지 않아요.</p>
                 : evidence.historyReadIncomplete && rows.length === 0 ? <p>이전 기록의 연결을 다시 확인해 주세요.</p>
                 : methodObservation !== null ? <PlanMethodObservationDetails observation={methodObservation} comparison={rows[0] === undefined ? undefined : COMPARISON_LABELS[rows[0].comparison]} />
                 : rows.length === 0 ? <p>이 훈련과 연결된 일지가 아직 없어요. 미기록을 0이나 훈련 실패로 계산하지 않아요.</p> : rows.map((row) => (
