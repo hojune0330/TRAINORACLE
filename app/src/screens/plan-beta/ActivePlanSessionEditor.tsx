@@ -61,6 +61,7 @@ export function ActivePlanSessionEditor({ state, sourceOptions, entriesReady, in
   const [uncertain, setUncertain] = React.useState(false)
   const [message, setMessage] = React.useState("")
   const [applied, setApplied] = React.useState(false)
+  const [catalogEditorRevision, setCatalogEditorRevision] = React.useState(0)
   const headingRef = React.useRef<HTMLHeadingElement>(null)
   const openerRef = React.useRef<HTMLElement | null>(null)
   const requestRevision = React.useRef(0)
@@ -303,7 +304,7 @@ export function ActivePlanSessionEditor({ state, sourceOptions, entriesReady, in
               </label>}
               {action === "CATALOG" && selectedSession?.prescription.kind === "RPE_TIME_RANGE" && (
                   <CatalogWorkoutEditor
-                  key={`${contextKey}:${state.activePlan.candidateId}:${addressKey(selectedSession)}`}
+                  key={`${contextKey}:${state.activePlan.candidateId}:${addressKey(selectedSession)}:${catalogEditorRevision}`}
                   intake={state.intake as PlanBetaIntake}
                   records={records}
                   session={selectedSession}
@@ -311,7 +312,7 @@ export function ActivePlanSessionEditor({ state, sourceOptions, entriesReady, in
                   disabled={busy || disabled || !unstartedConfirmed}
                   applyDisabled={busy || disabled || !unstartedConfirmed}
                   onDraftChange={() => { setCatalogChoice(null); invalidatePreview() }}
-                  onCancel={() => { setCatalogChoice(null); invalidatePreview() }}
+                  onCancel={() => { setCatalogChoice(null); setCatalogEditorRevision(value => value + 1); invalidatePreview() }}
                   onSelect={(catalogId, inputs, acceptLonger, acceptStronger) => {
                     setCatalogChoice({ catalogId, inputs, acceptLonger, acceptStronger })
                     invalidatePreview()

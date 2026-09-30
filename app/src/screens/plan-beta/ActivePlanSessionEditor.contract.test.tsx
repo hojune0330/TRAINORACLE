@@ -9,13 +9,16 @@ import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
 import { ActivePlanSessionEditor } from "./ActivePlanSessionEditor"
 
 vi.mock("./CatalogWorkoutPicker", () => ({
-  CatalogWorkoutEditor: ({ onSelect, onDraftChange, disabled }: {
+  CatalogWorkoutEditor: ({ onSelect, onDraftChange, onCancel, disabled }: {
     onSelect?: (id: string, inputs: WorkoutCalculationInputs, acceptLonger: boolean, acceptStronger: boolean) => void
     onDraftChange?: () => void
+    onCancel?: () => void
     disabled?: boolean
   }) => <div>
+    <input aria-label="카탈로그 편집 테스트 값" defaultValue="saved binding" onChange={() => onDraftChange?.()} />
     <button type="button" disabled={disabled} onClick={() => onSelect?.("catalog-fixture", {} as WorkoutCalculationInputs, false, false)}>구성 선택 저장</button>
     <button type="button" disabled={disabled} onClick={() => onDraftChange?.()}>구성 입력 변경</button>
+    <button type="button" disabled={disabled} onClick={onCancel}>변경 취소</button>
   </div>,
 }))
 
@@ -188,6 +191,28 @@ describe("active plan session editor", () => {
     expect(screen.queryByRole("heading", { name: "변경안 미리보기" })).not.toBeInTheDocument()
     expect(screen.getByRole("button", { name: "변경안 미리보기" })).toBeDisabled()
     expect(onApply).not.toHaveBeenCalled()
+  })
+
+  it("resets the embedded catalog draft when its cancel action is used", async () => {
+    const user = userEvent.setup()
+    const state = fixture()
+    const option = sourceOption(state)
+    const onPrepare = vi.fn()
+
+    render(<ActivePlanSessionEditor state={state} sourceOptions={[option]} entriesReady intent="workout" contextKey="guest:catalog-cancel"
+      onRetryEntries={vi.fn()} onPrepare={onPrepare} onApply={vi.fn()} onClose={vi.fn()} onApplied={vi.fn()} records={[]} />)
+    await user.click(screen.getByRole("checkbox", { name: "이 훈련은 아직 시작하지 않았어요." }))
+    await user.click(screen.getByRole("button", { name: "훈련 구성 바꾸기" }))
+    await user.click(screen.getByRole("button", { name: "구성 선택 저장" }))
+    const draftInput = screen.getByRole("textbox", { name: "카탈로그 편집 테스트 값" })
+    await user.clear(draftInput)
+    await user.type(draftInput, "changed draft")
+    expect(screen.getByRole("button", { name: "변경안 미리보기" })).toBeDisabled()
+    await user.click(screen.getByRole("button", { name: "변경 취소" }))
+
+    expect(screen.getByRole("textbox", { name: "카탈로그 편집 테스트 값" })).toHaveValue("saved binding")
+    expect(screen.getByRole("button", { name: "변경안 미리보기" })).toBeDisabled()
+    expect(onPrepare).not.toHaveBeenCalled()
   })
 
   it("locks apply after an uncertain save until a fresh read context is supplied", async () => {

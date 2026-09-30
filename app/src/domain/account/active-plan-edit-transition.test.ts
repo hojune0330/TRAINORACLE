@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { deriveCandidateId } from "@impl/plan-generator/candidate-identity"
-import { activePlanEditEvidenceFingerprint } from "../active-plan-edit"
+import { activePlanEditEvidenceFingerprint, prepareActivePlanEdit } from "../active-plan-edit"
 import { activePlanEditFingerprint, replayActivePlanEdit, type ActivePlanEditReceipt } from "../active-plan-edit-policy"
 import { planBetaStateV3Schema, type PlanBetaStateV3 } from "../plan-beta-schema"
 import { stateFixture } from "../plan-beta-store.test-fixture"
@@ -60,6 +60,44 @@ it("accepts exact replay through the journal-guarded collection transition and r
   expect(next.data.plans[0]!.archivedAt).toBe(now.toISOString())
   expect(next.data.plans[0]!.snapshot).toEqual(previous.data.plans[0]!.snapshot)
   expect(next.data.plans[0]!.progress).toEqual(previous.data.plans[0]!.progress)
+})
+
+it("accepts a future-slot edit after an unrecorded past slot through the real preparation and account transition", () => {
+  const fixture = stateFixture()
+  if (fixture.version !== 3) throw Error("V3 required")
+  const pastSession = fixture.activePlan.sessions[0]!
+  const sessions = [pastSession, { ...structuredClone(pastSession), day: 3 }]
+  const activePlan = { ...fixture.activePlan, sessions }
+  if (!("formationKind" in activePlan.frame) || !("slotCount" in activePlan.frame)) throw Error("canonical V3 frame required")
+  activePlan.candidateId = deriveCandidateId(activePlan.candidateId, {
+    kind: activePlan.candidateKind, eventDistanceM: activePlan.eventDistanceM,
+    selectedDetailedTemplateRef: activePlan.selectedDetailedTemplateRef,
+    selectedEnergyIntent: activePlan.selectedEnergyIntent, sourceMode: activePlan.sourceMode,
+    selectionAuthority: "SELF", frame: activePlan.frame, sessions,
+  })
+  const before = planBetaStateV3Schema.parse({ ...fixture, activePlan,
+    intake: { ...fixture.intake, startDate: "2026-09-30" } })
+  const result = prepareActivePlanEdit({ state: before, entries: [], today, now: now.toISOString(),
+    timeZone: "Asia/Seoul", journalGuard: [], unstartedConfirmed: true, noFixedFutureCommitments: false,
+    action: "DURATION", source: { day: 3, slot: "AM" }, maximumMinutes: 25 })
+  expect(result.kind).toBe("ready")
+  if (result.kind !== "ready") throw Error(result.reasonCode)
+  const previous = emptyAccountPlanDocument()
+  const oldEntry = accountPlanEntry({ state: before, evidence: null }, now.toISOString())
+  previous.data.plans.push(oldEntry); previous.data.currentPlanId = oldEntry.planId
+  const next = structuredClone(previous)
+  next.data.plans[0]!.archivedAt = now.toISOString()
+  const newEntry = accountPlanEntry({ state: result.proposal.after, evidence: null }, now.toISOString())
+  next.data.plans.push(newEntry); next.data.currentPlanId = newEntry.planId
+  expect(validateAccountPlanCollectionUpdate(splitAccountPlanCollection(previous), splitAccountPlanCollection(next))).toBe(true)
+  expect(result.proposal.after.activePlanEdit?.protectedSlots).toContainEqual({ day: 1, slot: "AM" })
+  expect(result.proposal.after.activePlan.sessions[0]).toEqual(pastSession)
+  const missingProtection = structuredClone(result.proposal.after)
+  missingProtection.activePlanEdit!.protectedSlots = []
+  const forgedEntry = accountPlanEntry({ state: missingProtection, evidence: null }, now.toISOString())
+  const forgedNext = structuredClone(next)
+  forgedNext.data.plans[1] = forgedEntry; forgedNext.data.currentPlanId = forgedEntry.planId
+  expect(validateAccountPlanCollectionUpdate(splitAccountPlanCollection(previous), splitAccountPlanCollection(forgedNext))).toBe(false)
 })
 
 it("rejects a changed duration that is not the receipt replay", () => {

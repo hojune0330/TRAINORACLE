@@ -99,6 +99,10 @@ describe("manual active plan edit proposal", () => {
     if (kst.kind === "ready" && utc.kind === "ready") {
       expect(kst.proposal.after.activePlanEdit?.timeZone).toBe("Asia/Seoul")
       expect(utc.proposal.after.activePlanEdit?.timeZone).toBe("UTC")
+      expect(kst.proposal.after.activePlanEdit?.protectedSlots).toContainEqual({ day: 1, slot: "AM" })
+      expect(utc.proposal.after.activePlanEdit?.protectedSlots).toContainEqual({ day: 1, slot: "AM" })
+      expect(kst.proposal.after.activePlanEdit?.protectedSlots).not.toContainEqual(source)
+      expect(kst.proposal.after.activePlan.sessions[0]).toEqual(input.state.activePlan.sessions[0])
       expect(kst.proposal.baseStateFingerprint).not.toBe(utc.proposal.baseStateFingerprint)
     }
   })

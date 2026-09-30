@@ -116,11 +116,13 @@ export function journalProtectsActivePlanEditSlot(entries: readonly JournalEntry
   })
 }
 
-function protectedAddresses(state: PlanBetaStateV3, entries: readonly JournalEntry[]): Set<string> {
+function protectedAddresses(state: PlanBetaStateV3, entries: readonly JournalEntry[], today: string): Set<string> {
   const protectedKeys = new Set(state.progress.map(p => `${p.sessionDay}:${p.sessionSlot}`))
   for (const session of state.activePlan.sessions) {
     const address = { day: session.day, slot: session.slot }
-    if (journalProtectsActivePlanEditSlot(entries, state, address)) protectedKeys.add(key(address))
+    if (dateOf(state.intake.startDate!, address) < today || journalProtectsActivePlanEditSlot(entries, state, address)) {
+      protectedKeys.add(key(address))
+    }
   }
   return protectedKeys
 }
@@ -184,7 +186,7 @@ export function listPermittedActivePlanEditTargets(input: {
   const parsed = planBetaStateV3Schema.safeParse(input.state)
   if (!parsed.success || !isValidIsoDate(input.today) || !("formationKind" in parsed.data.activePlan.frame)
     || parsed.data.activePlan.selectionActor !== "SELF" || !parsed.data.intake.startDate) return []
-  return permitted(parsed.data, input.entries, input.today, protectedAddresses(parsed.data, input.entries), input.noFixedFutureCommitments)
+  return permitted(parsed.data, input.entries, input.today, protectedAddresses(parsed.data, input.entries, input.today), input.noFixedFutureCommitments)
 }
 
 /** Creates an immutable preview. Storage, archival, and the applied-edit receipt belong to the caller. */
@@ -201,7 +203,7 @@ export function prepareActivePlanEdit(input: PrepareActivePlanEditInput): Active
   if (state.activePlan.selectionActor !== "SELF") return block("NOT_SELF_SELECTED", "본인이 선택한 계획에서만 직접 수정할 수 있어요.")
   if (!input.unstartedConfirmed) return block("UNSTARTED_CONFIRMATION_REQUIRED", "대상 훈련이 시작되지 않았음을 확인해 주세요.")
 
-  const protectedKeys = protectedAddresses(state, input.entries)
+  const protectedKeys = protectedAddresses(state, input.entries, input.today)
   const permittedTargets = permitted(state, input.entries, input.today, protectedKeys, input.noFixedFutureCommitments)
   const projectionLengthDays = visibleProjectionLength(state)
   const source = state.activePlan.sessions.find(s => same(s, input.source))
