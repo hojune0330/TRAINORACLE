@@ -141,7 +141,8 @@ export function validateAccountPlanDocumentUpdate(previous: unknown, next: unkno
   if (!validateAccountPlanDocument(previous) || !validateAccountPlanDocument(next)) return false
   const current = next.data.plans.find(p => p.planId === next.data.currentPlanId)?.snapshot.state
   // Replanning needs the collection gateway's transactional journal-version guard.
-  if (previous.data.currentPlanId !== next.data.currentPlanId && current?.version === 3 && current.executionReplan) return false
+  if (previous.data.currentPlanId !== next.data.currentPlanId && current?.version === 3
+    && (current.executionReplan || current.catalogReplacement)) return false
   return previous.data.plans.every(old => {
     const newer = next.data.plans.find(p => p.planId === old.planId)
     return !!newer && accountPlanFingerprint(newer.snapshot) === accountPlanFingerprint(old.snapshot)
@@ -153,16 +154,18 @@ export function validateExecutionReplanTransition(previous: AccountPlanDocument,
   const selected = next.data.plans.find(p => p.planId === next.data.currentPlanId)
   if (!selected || next.data.currentPlanId === previous.data.currentPlanId) return true
   const after = materializeAccountPlan(selected).state
-  if (after.version !== 3 || !after.executionReplan) return true
+  if (after.version !== 3 || !(after.executionReplan || after.catalogReplacement)) return true
   const old = previous.data.plans.find(p => p.planId === previous.data.currentPlanId)
   if (!old || old.archivedAt !== null) return false
-  const before = materializeAccountPlan(old).state, r = after.executionReplan
+  const before = materializeAccountPlan(old).state, r = (after.executionReplan ?? after.catalogReplacement)!
   if (before.version !== 3 || before.activePlan.selectionActor !== "SELF" || !r.journalGuard) return false
+  if (after.catalogReplacement && before.progress.some(progress => progress.state === "PAIN_CHECKIN"
+    || progress.sessionDay === after.catalogReplacement!.source.day && progress.sessionSlot === after.catalogReplacement!.source.slot)) return false
   const fp = (v: unknown) => canonicalJsonFingerprint("trainoracle.execution-replan.v1", v)
   if (r.baseStateFingerprint !== fp(before) || r.baseCandidateId !== before.activePlan.candidateId
     || fp(r.baseSessions) !== fp(before.activePlan.sessions) || fp(before.progress) !== fp(after.progress)) return false
-  const { explanationReceipt: _oldExplanation, executionReplan: _oldReplan, activePlan: beforePlan, ...beforeRest } = before
-  const { explanationReceipt: unexpectedExplanation, executionReplan: _newReplan, activePlan: afterPlan, ...afterRest } = after
+  const { explanationReceipt: _oldExplanation, executionReplan: _oldReplan, catalogReplacement: _oldReplacement, activePlan: beforePlan, ...beforeRest } = before
+  const { explanationReceipt: unexpectedExplanation, executionReplan: _newReplan, catalogReplacement: _newReplacement, activePlan: afterPlan, ...afterRest } = after
   const { candidateId: _oldId, sessions: _oldSessions, ...beforeMeta } = beforePlan
   const { candidateId: _newId, sessions: _newSessions, ...afterMeta } = afterPlan
   return unexpectedExplanation === undefined && fp(beforeRest) === fp(afterRest) && fp(beforeMeta) === fp(afterMeta)

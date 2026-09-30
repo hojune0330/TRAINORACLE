@@ -9,7 +9,7 @@ const output = path.join(root, 'supabase/functions/_shared/account-plan-collecti
 const normalizeLineEndings = value => value.replace(/\r\n/gu, '\n')
 export async function buildAccountPlanCollectionValidator() {
   return build({ absWorkingDir: root,
-    stdin: { contents: 'export * from "./src/domain/account/account-plan-collection-schema.ts"',
+    stdin: { contents: 'export * from "./src/domain/account/account-plan-collection-schema.ts"; export * from "./src/domain/account/catalog-replacement-journal-guard.ts";',
       resolveDir: app, sourcefile: 'account-plan-collection-server-entry.ts', loader: 'ts' },
     tsconfig: 'app/tsconfig.json', bundle: true, write: false, platform: 'neutral', format: 'esm',
     target: 'es2022', supported: { 'template-literal': false },

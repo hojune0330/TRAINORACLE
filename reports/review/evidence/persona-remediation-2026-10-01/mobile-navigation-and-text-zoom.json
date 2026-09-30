@@ -1,0 +1,218 @@
+[
+  {
+    "width": 320,
+    "address": "2:AM",
+    "geometry": {
+      "width": 320,
+      "documentWidth": 320,
+      "tab": {
+        "x": 1,
+        "y": 622,
+        "width": 318,
+        "height": 45,
+        "top": 622,
+        "right": 319,
+        "bottom": 667,
+        "left": 1
+      }
+    },
+    "errors": [],
+    "rejectedBeforeSave": true,
+    "outcome": "saved-after-correction",
+    "futureReplacement": {
+      "choice": "X-VO2-08",
+      "protectedAbsent": true,
+      "reloaded": true
+    },
+    "textZoom": [
+      {
+        "screen": "홈",
+        "documentWidth": 320,
+        "width": 320,
+        "tab": {
+          "x": 1,
+          "y": 597,
+          "width": 318,
+          "height": 70,
+          "top": 597,
+          "right": 319,
+          "bottom": 667,
+          "left": 1
+        },
+        "clipped": []
+      },
+      {
+        "screen": "일지",
+        "documentWidth": 320,
+        "width": 320,
+        "tab": {
+          "x": 1,
+          "y": 597,
+          "width": 318,
+          "height": 70,
+          "top": 597,
+          "right": 319,
+          "bottom": 667,
+          "left": 1
+        },
+        "clipped": []
+      },
+      {
+        "screen": "기록하기",
+        "documentWidth": 320,
+        "width": 320,
+        "tab": {
+          "x": 1,
+          "y": 597,
+          "width": 318,
+          "height": 70,
+          "top": 597,
+          "right": 319,
+          "bottom": 667,
+          "left": 1
+        },
+        "clipped": []
+      },
+      {
+        "screen": "계획",
+        "documentWidth": 320,
+        "width": 320,
+        "tab": {
+          "x": 1,
+          "y": 597,
+          "width": 318,
+          "height": 70,
+          "top": 597,
+          "right": 319,
+          "bottom": 667,
+          "left": 1
+        },
+        "clipped": []
+      },
+      {
+        "screen": "분석",
+        "documentWidth": 320,
+        "width": 320,
+        "tab": {
+          "x": 1,
+          "y": 597,
+          "width": 318,
+          "height": 70,
+          "top": 597,
+          "right": 319,
+          "bottom": 667,
+          "left": 1
+        },
+        "clipped": []
+      }
+    ]
+  },
+  {
+    "width": 375,
+    "address": "2:AM",
+    "geometry": {
+      "width": 375,
+      "documentWidth": 375,
+      "tab": {
+        "x": 1,
+        "y": 622,
+        "width": 373,
+        "height": 45,
+        "top": 622,
+        "right": 374,
+        "bottom": 667,
+        "left": 1
+      }
+    },
+    "errors": [],
+    "rejectedBeforeSave": true,
+    "outcome": "saved-after-correction",
+    "futureReplacement": {
+      "choice": "X-VO2-10",
+      "protectedAbsent": true,
+      "reloaded": true
+    },
+    "textZoom": [
+      {
+        "screen": "홈",
+        "documentWidth": 375,
+        "width": 375,
+        "tab": {
+          "x": 1,
+          "y": 622,
+          "width": 373,
+          "height": 45,
+          "top": 622,
+          "right": 374,
+          "bottom": 667,
+          "left": 1
+        },
+        "clipped": []
+      },
+      {
+        "screen": "일지",
+        "documentWidth": 375,
+        "width": 375,
+        "tab": {
+          "x": 1,
+          "y": 622,
+          "width": 373,
+          "height": 45,
+          "top": 622,
+          "right": 374,
+          "bottom": 667,
+          "left": 1
+        },
+        "clipped": []
+      },
+      {
+        "screen": "기록하기",
+        "documentWidth": 375,
+        "width": 375,
+        "tab": {
+          "x": 1,
+          "y": 622,
+          "width": 373,
+          "height": 45,
+          "top": 622,
+          "right": 374,
+          "bottom": 667,
+          "left": 1
+        },
+        "clipped": []
+      },
+      {
+        "screen": "계획",
+        "documentWidth": 375,
+        "width": 375,
+        "tab": {
+          "x": 1,
+          "y": 622,
+          "width": 373,
+          "height": 45,
+          "top": 622,
+          "right": 374,
+          "bottom": 667,
+          "left": 1
+        },
+        "clipped": []
+      },
+      {
+        "screen": "분석",
+        "documentWidth": 375,
+        "width": 375,
+        "tab": {
+          "x": 1,
+          "y": 622,
+          "width": 373,
+          "height": 45,
+          "top": 622,
+          "right": 374,
+          "bottom": 667,
+          "left": 1
+        },
+        "clipped": []
+      }
+    ]
+  }
+]

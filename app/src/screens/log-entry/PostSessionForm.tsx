@@ -4,6 +4,8 @@ import { FormInputDraftBoundary, useFormInputDraft, useRecoveredFormInput } from
 import type { ObjectiveEditorDraft, ExerciseEditorDraft } from "./form-input-draft"
 import { hasExerciseLog, type ExerciseLog } from "../../domain/exercise-log"
 import { PlannedRepetitionEditor } from "./PlannedRepetitionEditor"
+import { PlannedWorkoutContext } from "./PlannedWorkoutContext"
+import { usePlannedNumberInputs } from "./planned-number-input"
 import { ExerciseLogEditor } from "./ExerciseLogEditor"
 import { accountJournalRecordsEnabled } from "../../domain/account/account-journal-record-service"
 import { FormFinalizationRecovery, useFormFinalization } from "./useFormFinalization"
@@ -109,6 +111,7 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
     objectiveComponents: input.objectiveComponents } : initial?.intensityAssessment)
   const [objectiveEditor, setObjectiveEditor] = React.useState<ObjectiveEditorDraft>(() => input?.objectiveEditor ?? { kind: "INTERVALS", fields: {} })
   const [exerciseLog, setExerciseLog] = React.useState<ExerciseLog>(() => input?.exerciseLog ?? initial?.exerciseLog ?? { version: 1, source: "SELF_REPORTED", components: [] })
+  const plannedInputs = usePlannedNumberInputs(input?.plannedInputs)
   const [exerciseEditor, setExerciseEditor] = React.useState<ExerciseEditorDraft | undefined>(input?.exerciseEditor)
   const [exerciseOpen, setExerciseOpen] = React.useState(() => Boolean(input?.exerciseEditor || (input?.exerciseLog ?? initial?.exerciseLog)?.components.length))
   const exercisePanelId = React.useId()
@@ -116,7 +119,7 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
   const draft = useFormInputDraft({ kind: "post-session", rpe, activityOutcome: activityOutcome ?? null,
     activitySlot: activitySlot ?? null, painCheckStatus, painParts, system, title, distanceKm, durationMin,
     avgPace, plannedRpe: intensity.plannedRpe, objectiveComponents: [...intensity.objectiveComponents],
-    objectiveEditor, exerciseLog, exerciseEditor, memo: memo.text, purpose: memo.purpose ?? null }, entryId, true, lastSavedAt.current)
+    objectiveEditor, exerciseLog, exerciseEditor, plannedInputs: plannedInputs.values, memo: memo.text, purpose: memo.purpose ?? null }, entryId, true, lastSavedAt.current)
   const didNotPerform = isNonPerformedOutcome(activityOutcome)
   const recordsPerformance = !didNotPerform
   const importedObjective = IMPORTED_OBJECTIVE_FIELDS.some((field) => isImportedField(field, initial?.fieldProvenance))
@@ -132,6 +135,12 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
 
   const persist = async () => {
     if (persistInFlight.current || !draft.current()) return
+    if (plannedInputs.invalidKeys.length > 0) {
+      plannedInputs.revealFirstInvalid()
+      setSaveError(true)
+      setAccountNotice("구간 기록에 고칠 숫자가 있어요. 수정하거나 입력한 구간 기록을 지운 뒤 저장해 주세요.")
+      return
+    }
     if (exerciseEditor || (didNotPerform && hasExerciseLog(exerciseLog))) {
       setSaveError(true)
       setAccountNotice(exerciseEditor ? "작성 중인 운동 내용을 반영하거나 지운 뒤 저장해 주세요." : "운동 내용이 남아 있어요. 운동 결과를 바꾸거나 운동 내용을 직접 정리해 주세요.")
@@ -263,6 +272,7 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
       {planLink !== undefined && (
         <div className="planned-session-link-note" role="status">
           <strong>계획의 DAY {planLink.sessionDay} {planLink.sessionSlot === "AM" ? "오전" : "오후"} 훈련</strong>
+          <PlannedWorkoutContext entryId={entryId} date={entryDate} link={planLink} />
           <span>이 일지를 선택한 훈련과 연결해 저장해요. 실제로 한 내용은 아래에 직접 적어 주세요.</span>
         </div>
       )}
@@ -330,7 +340,8 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
           <ExerciseLogEditor value={exerciseLog} onChange={setExerciseLog} draft={exerciseEditor} onDraftChange={setExerciseEditor} />
         </div>
       </FormSec>
-      {(recordsPerformance || exerciseLog.plannedRepetitions) && <PlannedRepetitionEditor entryId={entryId} date={entryDate} link={planLink} value={exerciseLog} onChange={setExerciseLog} />}
+      {(recordsPerformance || exerciseLog.plannedRepetitions || exerciseLog.plannedSegments || Object.keys(plannedInputs.values).length > 0) && <PlannedRepetitionEditor entryId={entryId} date={entryDate} link={planLink} value={exerciseLog} onChange={setExerciseLog} inputs={plannedInputs} />}
+      {plannedInputs.invalidKeys.length > 0 && <p>구간 기록 {plannedInputs.invalidKeys.length}곳의 숫자를 확인해 주세요. 확인 전에는 저장되지 않아요.</p>}
       {recordsPerformance && <FormSec compact lb="거리 · 시간 · 평균 페이스" help="pace">
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
           <input aria-label="거리 (km)" readOnly={isImportedField("distanceKm", initial?.fieldProvenance)} type="text" value={distanceKm} onChange={(event) => setDistanceKm(event.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />

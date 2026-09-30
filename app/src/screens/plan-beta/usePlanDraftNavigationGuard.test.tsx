@@ -40,3 +40,14 @@ it("removes its guard after unmount and never blocks a different account", () =>
   act(() => setActiveLocalAccount(null))
   expect(runDraftSafeNavigation(vi.fn())).toBe(true)
 })
+
+it("uses replacement-specific wording and never treats an in-flight save as discarded", () => {
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(true)
+  const navigate = vi.fn()
+  const { rerender } = renderHook(({ saving }) => usePlanDraftNavigationGuard(true, "변경을 취소하고 이동할까요?", saving), { initialProps: { saving: true } })
+  expect(runDraftSafeNavigation(navigate)).toBe(false)
+  expect(confirm).not.toHaveBeenCalled()
+  rerender({ saving: false })
+  expect(runDraftSafeNavigation(navigate)).toBe(true)
+  expect(confirm).toHaveBeenCalledWith("변경을 취소하고 이동할까요?")
+})

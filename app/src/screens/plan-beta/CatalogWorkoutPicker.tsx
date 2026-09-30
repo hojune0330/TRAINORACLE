@@ -1,7 +1,8 @@
 import React from "react"
 import { Shuffle } from "lucide-react"
-import { ALL_WORKOUT_CATALOG, calculateCatalogWorkout, catalogMethodIdentity, type WorkoutCalculationInputs } from "@impl/prescription/all-workout-calculator"
-import { catalogFamilyForIntent, catalogRpe } from "@impl/prescription/catalog-session-binding"
+import { ALL_WORKOUT_CATALOG, calculateCatalogWorkout, type WorkoutCalculationInputs } from "@impl/prescription/all-workout-calculator"
+import { catalogRecommendationMethodKey, drawUnseenCatalogMethod, groupEligibleCatalogMethods } from "@impl/prescription/catalog-method-selection"
+import { bindCatalogSession, catalogFamilyForIntent, catalogRpe } from "@impl/prescription/catalog-session-binding"
 import type { PlanGenerationSuccess } from "@impl/plan-generator/types"
 import type { PlanBetaIntake } from "../../domain/plan-beta-store"
 import type { AthleteRecord } from "../../domain/athlete-records"
@@ -65,11 +66,18 @@ export function CatalogWorkoutPicker(props: PickerProps) {
   </details>
 }
 
-function CatalogWorkoutEditor({ generated, intake, records, onChange, onPendingChange, session, onCancel, drawHistory, disabled = false }: PickerProps & {
+type EditorProps = Omit<PickerProps, "generated" | "onChange"> & {
+  readonly generated?: PlanGenerationSuccess
+  readonly onChange?: (next: PlanGenerationSuccess) => void
+  readonly onSelect?: (id: string, inputs: WorkoutCalculationInputs, acceptLonger: boolean) => void
+  readonly canSelect?: (id: string, inputs: WorkoutCalculationInputs, acceptLonger: boolean) => boolean
+  readonly applyDisabled?: boolean
   readonly session: PlanGenerationSuccess["candidates"][number]["sessions"][number]
   readonly onCancel: () => void
   readonly drawHistory: Map<string, Set<string>>
-}) {
+}
+export function CatalogWorkoutEditor({ generated, intake, records, onChange, onSelect, canSelect, applyDisabled,
+  onPendingChange, session, onCancel, drawHistory, disabled = false }: EditorProps) {
   const binding = session.prescription.kind === "RPE_TIME_RANGE" ? session.prescription.catalogWorkout : undefined
   const pool = ALL_WORKOUT_CATALOG.filter(e => e.family === catalogFamilyForIntent(session.plannedEnergyIntent)
     && e.eventDistances.includes(intake.eventDistanceM) && e.experience.includes(intake.experienceBand) && e.hold === null)
@@ -93,10 +101,10 @@ function CatalogWorkoutEditor({ generated, intake, records, onChange, onPendingC
   const entry = pool.find(e => e.id === choice)
   if (session.prescription.kind !== "RPE_TIME_RANGE") return null
   if (!entry) return null
-  const pairedPrescriptions = generated.candidates.flatMap(candidate => {
+  const pairedPrescriptions = generated?.candidates.flatMap(candidate => {
     const target = candidate.sessions.find(s => s.day === session.day && s.slot === session.slot)
     return target?.prescription.kind === "RPE_TIME_RANGE" ? [target.prescription] : []
-  })
+  }) ?? [session.prescription]
   const pairedBudgetSeconds = Math.min(...pairedPrescriptions.map(p =>
     (p.catalogWorkout?.originalEnvelope.durationMinutes.maximum ?? p.durationMinutes.maximum) * 60))
   const record = records.find(r => r.id === recordId && r.eventDistanceM === 5000 && r.purpose !== "RACE_GOAL" && r.verificationState !== "UNVERIFIED")
@@ -118,16 +126,20 @@ function CatalogWorkoutEditor({ generated, intake, records, onChange, onPendingC
       <= (p.catalogWorkout?.originalEnvelope.durationMinutes.maximum ?? p.durationMinutes.maximum) * 60
       || p.catalogWorkout?.acceptedDurationSeconds === preview.totals.seconds!.maximum))
   const unavailable = preview?.unavailable.filter(code => code !== "TIME_BUDGET_EXCEEDED" || !acceptLonger) ?? []
-  const next = preview ? replaceCandidateCatalogWorkout(generated, session, entry.id, inputs, !!acceptLonger) : null
+  const next = preview && generated ? replaceCandidateCatalogWorkout(generated, session, entry.id, inputs, !!acceptLonger) : null
+  const canApply = generated ? next !== null : !!preview && !!onSelect
+    && bindCatalogSession(session, entry.id, inputs, !!acceptLonger) !== null
+    && (canSelect?.(entry.id, inputs, !!acceptLonger) ?? false)
   const nextRpe = preview?.steps.some(s => s.phase === "main" && s.kind === "WORK") ? catalogRpe(preview) : null
   const stronger = nextRpe && nextRpe.maximum > session.prescription.rpe.maximum
   const eligibleDraws = pool.filter(e => {
     const immediateInputs = { ...inputs, confirmedRequirements: [], segmentPaces: [], segmentSeconds: [], recoverySeconds: [] }
     const calculation = calculateCatalogWorkout(e.id, immediateInputs)
     return calculation !== null && calculation.unavailable.length === 0
-      && replaceCandidateCatalogWorkout(generated, session, e.id, immediateInputs) !== null
-  }).filter((e, index, all) => all.findIndex(other => catalogMethodIdentity(other) === catalogMethodIdentity(e)) === index)
-  const alternatives = eligibleDraws.filter(e => catalogMethodIdentity(e) !== catalogMethodIdentity(entry))
+      && (generated ? replaceCandidateCatalogWorkout(generated, session, e.id, immediateInputs) !== null
+        : bindCatalogSession(session, e.id, immediateInputs) !== null && (canSelect?.(e.id, immediateInputs, false) ?? false))
+  })
+  const alternatives = [...groupEligibleCatalogMethods(eligibleDraws).keys()].filter(key => key !== catalogRecommendationMethodKey(entry))
   const drawScope = JSON.stringify([session.day, session.slot, intake.eventDistanceM, intake.experienceBand,
     inputs.availableSeconds, inputs.fiveK, eligibleDraws.map(e => e.id)])
   const reset = (id: string) => { setChoice(id); setConfirmed([]); setSeconds({}); setRecoveries({}); setAcceptedDuration(null) }
@@ -138,14 +150,10 @@ function CatalogWorkoutEditor({ generated, intake, records, onChange, onPendingC
   return <div className="catalog-workout-picker__editor">
     <button type="button" disabled={disabled || alternatives.length === 0} onClick={() => {
       if (!alternatives.length) return
-      const seen = drawHistory.get(drawScope) ?? new Set<string>()
-      seen.add(catalogMethodIdentity(entry))
-      let unseen = alternatives.filter(e => !seen.has(catalogMethodIdentity(e)))
-      if (!unseen.length) { seen.clear(); seen.add(catalogMethodIdentity(entry)); unseen = alternatives }
-      const selected = unseen[Math.floor(Math.random() * unseen.length)]!
-      seen.add(catalogMethodIdentity(selected))
-      drawHistory.set(drawScope, seen)
-      reset(selected.id)
+      const result = drawUnseenCatalogMethod(eligibleDraws, entry, drawHistory.get(drawScope) ?? new Set())
+      if (!result) return
+      drawHistory.set(drawScope, new Set(result.seen))
+      reset(result.entry.id)
     }}><Shuffle size={17} aria-hidden="true" /> 같은 목적의 다른 훈련</button>
     {alternatives.length === 0 && <p>지금 바로 바꿀 수 있는 다른 구성이 없어요. 아래 목록에서는 필요한 조건을 확인하고 직접 고를 수 있어요.</p>}
     <label>훈련 구성<select value={entry.id} disabled={disabled} onChange={e => reset(e.target.value)}>
@@ -170,13 +178,16 @@ function CatalogWorkoutEditor({ generated, intake, records, onChange, onPendingC
     {recordId && !record && pending && <p role="status">기준 기록을 찾을 수 없어 새 구성의 페이스 계산에 사용하지 않았어요.</p>}
     {stronger && nextRpe && <p role="status">지금 훈련 RPE {session.prescription.rpe.minimum}~{session.prescription.rpe.maximum} → 새 훈련 RPE {nextRpe.minimum}~{nextRpe.maximum}. 더 강한 구성이에요. 아래 버튼을 누르면 이 강도로 바뀌어요.</p>}
     {longer && preview?.totals.seconds && <label><input type="checkbox" checked={!!acceptLonger} disabled={disabled}
-      onChange={e => setAcceptedDuration(e.target.checked ? durationKey : null)} />준비·회복·정리까지 최대 {formatTotalMinutes(preview.totals.seconds.maximum / 60)} 걸려요. 더 짧았던 계획안도 이 시간으로 바꿀게요.</label>}
+      onChange={e => setAcceptedDuration(e.target.checked ? durationKey : null)} />준비·회복·정리까지 최대 {formatTotalMinutes(preview.totals.seconds.maximum / 60)} 걸려요. {generated ? "더 짧았던 계획안도 이 시간으로 바꿀게요." : "이 시간으로 바꿀게요."}</label>}
     {!preview && <p role="status">입력한 시간을 확인해 주세요. 0보다 큰 초 단위 숫자로 입력해요.</p>}
     {unavailable.length ? <p role="status">{[...new Set(unavailable.map(reason))].join(" ")}</p> : null}
-    {preview && !next && !unavailable.length && <p role="status">이 일정에는 적용할 수 없는 구성이에요. 같은 목적의 다른 훈련을 골라 주세요.</p>}
+    {preview && !canApply && !unavailable.length && (pending || !binding) && <p role="status">이 일정에는 적용할 수 없는 구성이에요. 같은 목적의 다른 훈련을 골라 주세요.</p>}
     {preview?.unresolved.includes("RECORD_NOT_CURRENT") && <p role="status">오래된 기록이라 참고 페이스에 사용하지 않았어요.</p>}
     <div className="catalog-workout-picker__actions">
-      <button type="button" disabled={disabled || !next || !pending && !!binding} onClick={() => { if (next) onChange(next) }}>이 구성으로 바꾸기</button>
+      <button type="button" disabled={disabled || applyDisabled || !canApply || !pending && !!binding} onClick={() => {
+        if (next) onChange?.(next)
+        else if (canApply) onSelect?.(entry.id, inputs, !!acceptLonger)
+      }}>이 구성으로 바꾸기</button>
       {pending && <button type="button" disabled={disabled} onClick={onCancel}>변경 취소</button>}
     </div>
     {pending && <p role="status">아직 계획에 적용하지 않았어요.</p>}

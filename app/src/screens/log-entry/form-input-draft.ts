@@ -39,7 +39,9 @@ export const exerciseEditorDraftSchema = exerciseDraftValues.extend({
   previousKinds: z.record(z.string().max(30), exerciseDraftValues).optional(),
 }).strict()
 export type ExerciseEditorDraft = z.infer<typeof exerciseEditorDraftSchema>
-const exerciseFields = { exerciseLog: exerciseLogSchema.optional(), exerciseEditor: exerciseEditorDraftSchema.optional() }
+const plannedInputs = z.record(z.string().max(400).regex(/^(segment:[A-Za-z0-9:_-]+|repeat:[1-9]\d*:[1-9]\d*):(distanceM|seconds|recoverySeconds|rpe)$/), z.string().max(64))
+  .refine(value => Object.keys(value).length <= 4000)
+const exerciseFields = { exerciseLog: exerciseLogSchema.optional(), exerciseEditor: exerciseEditorDraftSchema.optional(), plannedInputs: plannedInputs.optional() }
 
 // These are input schemas, not completed JournalEntry schemas: empty and partial
 // strings and the quick form's explicit skipped answer survive without coercion.

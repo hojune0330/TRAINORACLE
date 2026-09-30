@@ -15,6 +15,7 @@ import type {
   StoredPlanProgress,
 } from "../../domain/plan-beta-store"
 import { ActivePlan } from "./ActivePlan"
+import { ActiveCatalogWorkoutPicker } from "./ActiveCatalogWorkoutPicker"
 import { OraclePlanReviewButton } from "../../components/OraclePlanReviewButton"
 import { evaluatePlanSafety, type PlanCurrentCheck } from "../../domain/plan-beta-flow"
 import {
@@ -214,6 +215,12 @@ export function PlanActiveState({
         returnToSession={returnToSession}
         executionMessage={executionMessage}
         executionBlocked={executionBlocked}
+        futureTrainingEditor={state.version === 3 ? <ActiveCatalogWorkoutPicker key={state.activePlan.candidateId}
+          state={state} onApplied={next => {
+            setError(null); setRetry(null); setExecutionBlocked(false)
+            setExecutionMessage("선택한 훈련으로 바꿨어요. 이전 계획과 일지는 그대로 보관했어요.")
+            onStateChange(next)
+          }} /> : null}
       />
       {error !== null && (
         <div className="plan-inline-error" role="alert">{error}</div>

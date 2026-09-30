@@ -28,6 +28,8 @@ import { PurposeScopedMemoField, usePurposeScopedMemo } from "./PurposeScopedMem
 import { ExerciseLogEditor, ExerciseLogSummary } from "./ExerciseLogEditor"
 import { hasExerciseLog, type ExerciseLog } from "../../domain/exercise-log"
 import { PlannedRepetitionEditor } from "./PlannedRepetitionEditor"
+import { PlannedWorkoutContext } from "./PlannedWorkoutContext"
+import { usePlannedNumberInputs } from "./planned-number-input"
 import type { ExerciseEditorDraft } from "./form-input-draft"
 
 type QuickStep = "activity" | "effort" | "review" | "exercise" | "memo" | "saved"
@@ -125,6 +127,7 @@ function QuickSessionFormEditor({
   const [savedMessage, setSavedMessage] = React.useState<string | null>(null)
   const inheritedMemo = usePurposeScopedMemo(input?.memo ?? initial?.memo ?? "", input?.purpose ?? initial?.memoPurpose)
   const [exerciseLog, setExerciseLog] = React.useState<ExerciseLog>(() => input?.exerciseLog ?? initial?.exerciseLog ?? { version: 1, source: "SELF_REPORTED", components: [] })
+  const plannedInputs = usePlannedNumberInputs(input?.plannedInputs)
   const [exerciseEditor, setExerciseEditor] = React.useState<ExerciseEditorDraft | undefined>(input?.exerciseEditor)
   const [savedReviewMessage, setSavedReviewMessage] = React.useState<string | undefined>()
   const [savedStorageMessage, setSavedStorageMessage] = React.useState<string | undefined>()
@@ -133,7 +136,7 @@ function QuickSessionFormEditor({
   const lastSavedAt = React.useRef(recovered?.baseSavedAt ?? initial?.savedAt)
   const finalization = useFormFinalization(entryId, accountEnabled, lastSavedAt)
   const draft = useFormInputDraft({ kind: "quick", step: step === "saved" ? "activity" : step,
-    outcome, slot, rpe, effortAnswered, painStatus, painParts, exerciseLog, exerciseEditor,
+    outcome, slot, rpe, effortAnswered, painStatus, painParts, exerciseLog, exerciseEditor, plannedInputs: plannedInputs.values,
     memo: inheritedMemo.text, purpose: inheritedMemo.purpose ?? null }, entryId, step !== "saved", lastSavedAt.current)
   const stageRef = React.useRef<HTMLDivElement>(null)
   const stageHeadingRef = React.useRef<HTMLHeadingElement>(null)
@@ -156,6 +159,7 @@ function QuickSessionFormEditor({
     readonly answerTapCount: number
   }) => {
     if (persistInFlight.current || !draft.current()) return
+    if (plannedInputs.invalidKeys.length > 0) { setSaveError("구간 기록에 고칠 숫자가 있어요. 수정하거나 입력한 구간 기록을 지운 뒤 저장해 주세요."); setStep("review"); plannedInputs.revealFirstInvalid(); return }
     if (exerciseEditor) { setSaveError("작성하던 운동 내용을 반영하거나 지운 뒤 저장해 주세요."); setStep("exercise"); return }
     const base = savedEntry ?? initial
     const didPerform = performed(next.outcome)
@@ -398,6 +402,7 @@ function QuickSessionFormEditor({
             <small>1 / 3</small>
             {planLink !== undefined && <div className="quick-log__plan-source">계획 {planLink.sessionDay}일차 · {planLink.sessionSlot === "AM" ? "오전" : "오후"}</div>}
             <h1 id="quick-activity-title" ref={stageHeadingRef} tabIndex={-1}>{savedDateLabel(date)} 운동은 어떻게 됐나요?</h1>
+            {planLink && <PlannedWorkoutContext entryId={entryId} date={date} link={planLink} />}
             <div className="quick-log__choices">
               {outcomes.map((item) => <button key={item.value} type="button" aria-pressed={outcome === item.value} onClick={() => selectOutcome(item.value)}><span>{item.label}</span><ChevronRight aria-hidden="true" /></button>)}
             </div>
@@ -448,7 +453,8 @@ function QuickSessionFormEditor({
           <h1 id="quick-review-title" ref={stageHeadingRef} tabIndex={-1}>이 내용으로 남길까요?</h1>
           {!performed(outcome) && performed(savedEntry?.activityOutcome ?? null) && <p>쉬거나 건너뛴 기록으로 바꾸면 이 일지의 운동 시간·거리·RPE·몸 상태 응답은 제외돼요.</p>}
             <ExerciseLogSummary log={exerciseLog} />
-            {(performed(outcome) || exerciseLog.plannedRepetitions) && <PlannedRepetitionEditor entryId={entryId} date={date} link={planLink} value={exerciseLog} onChange={setExerciseLog} />}
+            {(performed(outcome) || exerciseLog.plannedRepetitions || exerciseLog.plannedSegments || Object.keys(plannedInputs.values).length > 0) && <PlannedRepetitionEditor entryId={entryId} date={date} link={planLink} value={exerciseLog} onChange={setExerciseLog} inputs={plannedInputs} />}
+          {plannedInputs.invalidKeys.length > 0 && <p className="quick-log__error">구간 기록 {plannedInputs.invalidKeys.length}곳의 숫자를 확인해 주세요. 확인 전에는 저장되지 않아요.</p>}
           {inheritedMemo.text.trim() !== "" && <p>{inheritedMemo.needsPrivateSetup
             ? "글은 아직 저장 전이에요. 비밀 메모 보관을 먼저 준비해요."
             : "저장 버튼을 누르면 글도 함께 저장돼요."}</p>}

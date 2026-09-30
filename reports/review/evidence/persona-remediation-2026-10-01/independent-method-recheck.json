@@ -1,0 +1,48 @@
+{
+  "recordedAt": "2026-09-30T14:55:11.931Z",
+  "exitCode": 0,
+  "scope": "Only the original six independent adversarial cases; W2 and journal work excluded.",
+  "expectedBehaviorControlUpdate": "One old defect-observation control now expects two groups and the returned alternative; attack structures and the other five assertions are unchanged.",
+  "tests": 6,
+  "passed": 6,
+  "failed": 0,
+  "recoveryTopologyDistinct": true,
+  "setBoundaryDistinct": true,
+  "originalEvidence": [
+    {
+      "file": "D:\\admin\\Documents\\ChatGPT\\트레인 오라클\\TRAINORACLE-oracle-exploration-20260921\\.scratch\\persona-remediation-review\\w3-adversarial.ts",
+      "sha256": "aac1c26dabb45233ce391553f68b5f2ed132e8fb891d01eb1ba85c3f541085d5",
+      "afterSha256": "aac1c26dabb45233ce391553f68b5f2ed132e8fb891d01eb1ba85c3f541085d5",
+      "preserved": true
+    },
+    {
+      "file": "D:\\admin\\Documents\\ChatGPT\\트레인 오라클\\TRAINORACLE-oracle-exploration-20260921\\.scratch\\persona-remediation-review\\w3-adversarial.tap",
+      "sha256": "70749dcc51c24b2d3504ebf0e3c5e0bd4916107b8f2b5742115819525d692743",
+      "afterSha256": "70749dcc51c24b2d3504ebf0e3c5e0bd4916107b8f2b5742115819525d692743",
+      "preserved": true
+    },
+    {
+      "file": "D:\\admin\\Documents\\ChatGPT\\트레인 오라클\\TRAINORACLE-oracle-exploration-20260921\\.scratch\\persona-remediation-review\\w3-adversarial-evidence.json",
+      "sha256": "b2dcc4c3730f40b3ef6ac58e8596bb187d60971faa0c7623cdb2fddd03e6412e",
+      "afterSha256": "b2dcc4c3730f40b3ef6ac58e8596bb187d60971faa0c7623cdb2fddd03e6412e",
+      "preserved": true
+    },
+    {
+      "file": "D:\\admin\\Documents\\ChatGPT\\트레인 오라클\\TRAINORACLE-oracle-exploration-20260921\\.scratch\\persona-remediation-review\\w3-adversarial.bundle.mjs",
+      "sha256": "479a41b916c2a20bcd0f69cf27685c2ec9ab785bab63c6f5adb34c02b044fb7b",
+      "afterSha256": "479a41b916c2a20bcd0f69cf27685c2ec9ab785bab63c6f5adb34c02b044fb7b",
+      "preserved": true
+    },
+    {
+      "file": "D:\\admin\\Documents\\ChatGPT\\트레인 오라클\\TRAINORACLE-oracle-exploration-20260921\\.scratch\\persona-remediation-review\\w3-run-adversarial.mjs",
+      "sha256": "e75ab7fcd5f97b9cf45b93d02679388308ff9d2fde16b7254333d57baf40da03",
+      "afterSha256": "e75ab7fcd5f97b9cf45b93d02679388308ff9d2fde16b7254333d57baf40da03",
+      "preserved": true
+    }
+  ],
+  "target": {
+    "file": "D:\\admin\\Documents\\ChatGPT\\트레인 오라클\\TRAINORACLE-oracle-exploration-20260921\\impl\\src\\prescription\\catalog-method-selection.ts",
+    "sha256": "144b3cfc1d4a2c82b7fbe027d20786bc8bbb7038ca7c8567d9e7190ea6d0f81f",
+    "unchangedDuringRun": true
+  }
+}

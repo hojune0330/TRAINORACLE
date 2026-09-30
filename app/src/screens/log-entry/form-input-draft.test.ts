@@ -9,6 +9,18 @@ beforeEach(() => vi.stubGlobal("crypto", webcrypto))
 afterEach(() => vi.unstubAllGlobals())
 
 describe("validated form input DRAFT adapter", () => {
+  it("roundtrips unaccepted segment numbers privately without promoting them to actual evidence", () => {
+    if (body.input.kind !== "quick") throw new Error("Expected quick draft fixture")
+    const quickInput = body.input
+    const input = { ...quickInput, plannedInputs: { "segment:main:X-VO2-08-1-1:WORK:1:seconds": "-1",
+      "repeat:1:2:seconds": "24.", "repeat:1:2:distanceM": "" } }
+    const envelope = encodeFormDraft("2026-09-30", { ...body, input })
+    expect(envelope.visibility).toBe("PRIVATE")
+    expect(decodeFormDraft(envelope).input).toEqual(input)
+    expect(decodeFormDraft(envelope).input).not.toHaveProperty("exerciseLog")
+    expect(() => encodeFormDraft("2026-09-30", { ...body, input: { ...quickInput,
+      plannedInputs: { "memo": "not-an-input-key" } } })).toThrow("Invalid form input draft")
+  })
   it("roundtrips skipped RPE independently of a missing answer without creating a journal record", () => {
     const envelope = encodeFormDraft("2026-09-08", body)
     expect(envelope.state).toBe("DRAFT")

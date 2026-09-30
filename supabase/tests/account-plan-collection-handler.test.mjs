@@ -33,10 +33,12 @@ if (process.env.PLAN_COLLECTION_MUTATION) {
     binding: ['receipt.requestFingerprint !== binding.requestFingerprint', 'false'],
     history: ['previous && validateAccountPlanCollectionUpdate(previous, next) !== true', 'false'],
     owner: ["input.action === 'commit' && input.request.ownerId !== ownerId", 'false'],
+    catalogJournals: ['replan && selected.catalogReplacement', 'false'],
+    catalogClock: ['!catalogReplacementClockIsCurrent(replan, now())', 'false'],
   };
   const change = mutations[process.env.PLAN_COLLECTION_MUTATION];
   assert.ok(change && source.includes(change[0]));
-  source = source.replace(...change);
+  source = process.env.PLAN_COLLECTION_MUTATION === 'catalogClock' ? source.replaceAll(...change) : source.replace(...change);
   for (const file of ['account-journal-crypto.mjs', 'account-journal-handler.mjs', 'account-plan-collection-validator.mjs'])
     source = source.replace(`'./${file}'`, JSON.stringify(new URL(file, url).href));
   handlerFactory = (await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`)).createAccountPlanCollectionHandler;
@@ -44,11 +46,12 @@ if (process.env.PLAN_COLLECTION_MUTATION) {
 
 const { build } = createRequire(new URL('../../app/package.json', import.meta.url))('esbuild');
 const built = await build({ stdin: {
-  contents: 'export { stateFixture } from "./src/domain/plan-beta-store.test-fixture.ts"; export { replanFixture } from "./src/domain/execution-replan.test-fixture.ts"; export { prepareExecutionReplan } from "./src/domain/execution-replan.ts"; export { accountPlanEntry } from "./src/domain/account/account-plan-document-schema.ts";',
+  contents: 'export { stateFixture } from "./src/domain/plan-beta-store.test-fixture.ts"; export { replanFixture } from "./src/domain/execution-replan.test-fixture.ts"; export { prepareExecutionReplan, executionReplanEvidence, replanFingerprint } from "./src/domain/execution-replan.ts"; export { accountPlanEntry } from "./src/domain/account/account-plan-document-schema.ts"; export { createPlannedSessionLogDraft } from "./src/domain/planned-session-link.ts"; export { prepareCatalogReplacement } from "./src/domain/catalog-replacement.ts"; export { ALL_WORKOUT_CATALOG } from "../impl/src/prescription/all-workout-calculator.ts";',
   resolveDir: fileURLToPath(new URL('../../app/', import.meta.url)), loader: 'ts',
 }, tsconfig: fileURLToPath(new URL('../../app/tsconfig.json', import.meta.url)),
 bundle: true, write: false, platform: 'neutral', format: 'esm' });
-const { stateFixture, replanFixture, prepareExecutionReplan, accountPlanEntry } = await import(`data:text/javascript;base64,${Buffer.from(built.outputFiles[0].text).toString('base64')}`);
+const { stateFixture, replanFixture, prepareExecutionReplan, accountPlanEntry, prepareCatalogReplacement, ALL_WORKOUT_CATALOG,
+  executionReplanEvidence, replanFingerprint, createPlannedSessionLogDraft } = await import(`data:text/javascript;base64,${Buffer.from(built.outputFiles[0].text).toString('base64')}`);
 function document(count = 1) {
   const plans = Array.from({ length: count }, (_, i) => {
     const snapshot = { state: { ...stateFixture(), generatedAt: `2026-07-24T00:00:${String(i).padStart(2, '0')}.000Z` }, evidence: null };
@@ -92,6 +95,7 @@ async function fixture(options = {}) {
     ...options.repo,
   };
   const handler = handlerFactory({ allowedOrigins: [ORIGIN, '*', `${ORIGIN}/path`],
+    now: () => new Date('2026-09-29T03:00:00.000Z'),
     authenticate: async token => { calls.auth++; return token === 'valid' ? { ownerId: OWNER, repo }
       : token === 'other' ? { ownerId: OTHER, repo } : null; },
     getMaterial: async () => { calls.material++; return material; }, ...options.dependencies });
@@ -153,6 +157,120 @@ test('replan SQL holds the journal owner lock before comparing all live journal 
   assert.match(sql, /expected is distinct from actual/u);
   assert.match(sql, /mutate_account_plan_collection_attested\(stripped,stripped_signature,key_id\)/u);
   assert.match(sql, /revoke all on function .* from public,anon,authenticated,service_role/u);
+});
+
+test('manual catalog replacement uses the same atomic journal guard and cannot bypass it', async () => {
+  const f = await fixture(), seed = replanFixture();
+  const documentId = seed.journalGuard[0].documentId;
+  const row = { user_id: OWNER, document_id: documentId, revision: 1, deleted_at: null,
+    encrypted_payload: await encryptAccountJournalDocument(JSON.stringify({ version: 2, state: 'FINALIZED', kind: 'JOURNAL', entry: { ...seed.entries[0], memo: '', title: '' } }),
+      { ownerId: OWNER, documentId }, f.material.active) };
+  f.repo.readJournals = async (owner, ids) => { assert.equal(owner, OWNER); assert.deepEqual(ids, [documentId]); return [row]; };
+  const prepared = ALL_WORKOUT_CATALOG.filter(e => e.family === 'BASE').map(entry => prepareCatalogReplacement({
+    ...seed, address: { day: 4, slot: 'AM' }, catalogId: entry.id, acceptStronger: false, acceptLonger: true,
+    inputs: { eventDistanceM: 5000, experience: seed.state.intake.experienceBand, availableSeconds: null,
+      confirmedRequirements: [], fiveK: null, segmentPaces: [] },
+  })).find(result => result.kind === 'ready');
+  assert.ok(prepared);
+  const old = accountPlanEntry({ state: seed.state, evidence: null }, seed.now);
+  const beforeDoc = { version: 3, state: 'ACCOUNT_STATE', kind: 'PLAN', data: { schemaVersion: 1, currentPlanId: old.planId, plans: [old] } };
+  const before = splitAccountPlanCollection(beforeDoc);
+  await f.stage(before);
+  await check(await f.request({ action: 'commit', request: command(before) }), 200);
+  const selected = accountPlanEntry({ state: prepared.proposal.after, evidence: null }, seed.now);
+  const after = splitAccountPlanCollection({ ...beforeDoc, data: { schemaVersion: 1, currentPlanId: selected.planId,
+    plans: [{ ...old, archivedAt: seed.now }, selected] } });
+  await f.stage(after);
+  const request = command(after, before, { operationId: OP2 });
+  await check(await f.request({ action: 'commit', request }), 422);
+  assert.equal(f.calls.commit, 1);
+  let stale = true, guarded = 0;
+  f.repo.commitReplan = async ({ journalGuard, ...input }) => {
+    guarded++;
+    assert.deepEqual(journalGuard, seed.journalGuard);
+    return stale ? { kind: 'conflict' } : f.repo.commit(input);
+  };
+  await check(await f.request({ action: 'commit', request }), 200, { kind: 'conflict' });
+  assert.equal(f.getIndex().index_document.currentPlanId, old.planId);
+  stale = false;
+  const committed = await check(await f.request({ action: 'commit', request }), 200);
+  assert.equal(committed.kind, 'committed');
+  assert.equal(f.getIndex().index_document.currentPlanId, selected.planId);
+  stale = true;
+  assert.deepEqual(await check(await f.request({ action: 'commit', request }), 200), committed);
+  assert.equal(guarded, 2);
+});
+
+test('catalog replacement checks stored journal contents rather than client protection claims', async () => {
+  for (const mode of ['recorded', 'unknown-slot', 'unspecified', 'single', 'linked-other-date', 'other-slot', 'wrong-owner', 'stale', 'missing', 'wrong-evidence']) {
+    const f = await fixture(), seed = replanFixture();
+    const prepared = ALL_WORKOUT_CATALOG.filter(e => e.family === 'BASE').map(entry => prepareCatalogReplacement({
+      ...seed, address: { day: 4, slot: 'AM' }, catalogId: entry.id, acceptStronger: false, acceptLonger: true,
+      inputs: { eventDistanceM: 5000, experience: seed.state.intake.experienceBand, availableSeconds: null,
+        confirmedRequirements: [], fiveK: null, segmentPaces: [] },
+    })).find(result => result.kind === 'ready');
+    assert.ok(prepared);
+    const { plannedSessionLink: _link, ...base } = seed.entries[0];
+    const entry = { ...base, memo: '', title: '', date: mode === 'linked-other-date' ? '2026-09-28' : '2026-10-01',
+      activitySlot: ['other-slot', 'wrong-evidence'].includes(mode) ? 'PM' : mode === 'unspecified' ? 'UNSPECIFIED' : mode === 'single' ? 'SINGLE' : 'AM' };
+    if (mode === 'unknown-slot') delete entry.activitySlot;
+    if (mode === 'linked-other-date') entry.plannedSessionLink = createPlannedSessionLogDraft(seed.state,
+      seed.state.activePlan.sessions.find(s => s.day === 4), seed.now).link;
+    const documentId = seed.journalGuard[0].documentId;
+    const row = { user_id: mode === 'wrong-owner' ? OTHER : OWNER, document_id: documentId,
+      revision: mode === 'stale' ? 2 : 1, deleted_at: null,
+      encrypted_payload: await encryptAccountJournalDocument(JSON.stringify({ version: 2, state: 'FINALIZED', kind: 'JOURNAL', entry }),
+        { ownerId: OWNER, documentId }, f.material.active) };
+    f.repo.readJournals = async () => mode === 'missing' ? [] : [row];
+    f.repo.commitReplan = ({ journalGuard: _guard, ...input }) => f.repo.commit(input);
+    const afterState = structuredClone(prepared.proposal.after);
+    if (mode !== 'wrong-evidence') afterState.catalogReplacement.evidenceFingerprint = replanFingerprint(executionReplanEvidence([entry]));
+    const old = accountPlanEntry({ state: seed.state, evidence: null }, seed.now);
+    const beforeDoc = { version: 3, state: 'ACCOUNT_STATE', kind: 'PLAN', data: { schemaVersion: 1, currentPlanId: old.planId, plans: [old] } };
+    const before = splitAccountPlanCollection(beforeDoc);
+    await f.stage(before);
+    await check(await f.request({ action: 'commit', request: command(before) }), 200);
+    const selected = accountPlanEntry({ state: afterState, evidence: null }, seed.now);
+    const after = splitAccountPlanCollection({ ...beforeDoc, data: { schemaVersion: 1, currentPlanId: selected.planId,
+      plans: [{ ...old, archivedAt: seed.now }, selected] } });
+    await f.stage(after);
+    const expected = ['wrong-owner', 'stale', 'missing', 'wrong-evidence'].includes(mode) ? 409 : mode === 'other-slot' ? 200 : 422;
+    await check(await f.request({ action: 'commit', request: command(after, before, { operationId: OP2 }) }), expected);
+    assert.equal(f.calls.commit, mode === 'other-slot' ? 2 : 1, mode);
+    assert.equal(f.getIndex().index_document.currentPlanId, mode === 'other-slot' ? selected.planId : old.planId, mode);
+  }
+});
+
+test('catalog replacement rejects stale calendar days with server time and preserves later receipt recovery', async () => {
+  let clock = new Date('2026-09-29T03:00:00.000Z');
+  const f = await fixture({ dependencies: { now: () => clock } }), seed = replanFixture();
+  const prepared = ALL_WORKOUT_CATALOG.filter(e => e.family === 'BASE').map(entry => prepareCatalogReplacement({
+    ...seed, entries: [], journalGuard: [], timeZone: 'Asia/Seoul', address: { day: 4, slot: 'AM' },
+    catalogId: entry.id, acceptStronger: false, acceptLonger: true,
+    inputs: { eventDistanceM: 5000, experience: seed.state.intake.experienceBand, availableSeconds: null,
+      confirmedRequirements: [], fiveK: null, segmentPaces: [] },
+  })).find(result => result.kind === 'ready');
+  assert.ok(prepared);
+  f.repo.readJournals = async () => [];
+  f.repo.commitReplan = ({ journalGuard: _guard, ...input }) => f.repo.commit(input);
+  const old = accountPlanEntry({ state: seed.state, evidence: null }, seed.now);
+  const beforeDoc = { version: 3, state: 'ACCOUNT_STATE', kind: 'PLAN', data: { schemaVersion: 1, currentPlanId: old.planId, plans: [old] } };
+  const before = splitAccountPlanCollection(beforeDoc);
+  await f.stage(before);
+  await check(await f.request({ action: 'commit', request: command(before) }), 200);
+  const selected = accountPlanEntry({ state: prepared.proposal.after, evidence: null }, seed.now);
+  const after = splitAccountPlanCollection({ ...beforeDoc, data: { schemaVersion: 1, currentPlanId: selected.planId,
+    plans: [{ ...old, archivedAt: seed.now }, selected] } });
+  await f.stage(after);
+  const request = command(after, before, { operationId: OP2 });
+  clock = new Date('2026-09-29T15:00:00.000Z');
+  await check(await f.request({ action: 'commit', request }), 409, { error: 'PLAN_DATE_CHANGED' });
+  assert.equal(f.calls.commit, 1);
+  clock = new Date('2026-09-29T03:00:00.000Z');
+  const committed = await check(await f.request({ action: 'commit', request }), 200);
+  clock = new Date('2026-10-05T03:00:00.000Z');
+  assert.deepEqual(await check(await f.request({ action: 'commit', request }), 200), committed);
+  assert.equal(f.calls.commit, 2);
 });
 
 test('stage rejects missing or mismatched intended owner before key access or storage', async () => {
@@ -420,7 +538,21 @@ test('real PGlite 0037 with gateway and authenticated repository round trips 18 
       read_account_plan_collection_index: [], read_account_plan_collection_part: ['part_kind', 'part_id'],
       read_account_plan_collection_receipt: ['operation_id'],
     };
-    const client = { rpc: async (name, args = {}) => {
+    const client = { from: table => {
+      assert.equal(table, 'account_journal_documents');
+      return { select: columns => {
+        assert.equal(columns, 'user_id,document_id,revision,encrypted_payload,deleted_at');
+        return { eq: (column, owner) => {
+          assert.equal(column, 'user_id');
+          return { in: async (key, ids) => {
+            assert.equal(key, 'document_id');
+            try { return { data: (await db.query(`select user_id,document_id,revision,encrypted_payload,deleted_at
+              from public.account_journal_documents where user_id=$1 and document_id=any($2::uuid[])`, [owner, ids])).rows, error: null }; }
+            catch (error) { return { data: null, error }; }
+          } };
+        } };
+      } };
+    }, rpc: async (name, args = {}) => {
       assert.ok(Object.hasOwn(signatures, name));
       const values = signatures[name].map(key => args[key]);
       try {
@@ -489,6 +621,29 @@ test('real PGlite 0037 with gateway and authenticated repository round trips 18 
     await db.query('update public.account_journal_documents set revision=3 where user_id=$1 and document_id=$2',[OWNER,sourceId]);
     assert.deepEqual(await check(await f.request({ action: 'commit', request }),200),accepted);
     assert.equal((await check(await f.request({action:'readIndex'}),200)).index.currentPlanId,selected.planId);
+    const realEntries = seed.entries.map(entry => ({ ...entry, memo: '', title: '' }));
+    const sourcePayload = await encryptAccountJournalDocument(JSON.stringify({ version: 2, state: 'FINALIZED', kind: 'JOURNAL', entry: realEntries[0] }),
+      { ownerId: OWNER, documentId: sourceId }, material.active);
+    await db.exec('reset role');
+    await db.query('update public.account_journal_documents set encrypted_payload=$3 where user_id=$1 and document_id=$2', [OWNER, sourceId, sourcePayload]);
+    const manual = ALL_WORKOUT_CATALOG.filter(e => e.family === 'BASE').map(entry => prepareCatalogReplacement({
+      ...seed, state: prepared.proposals[0].after, entries: realEntries, address: { day: 6, slot: 'AM' }, catalogId: entry.id,
+      acceptStronger: false, acceptLonger: true, journalGuard: [{ documentId: sourceId, revision: 3 }],
+      inputs: { eventDistanceM: 5000, experience: seed.state.intake.experienceBand, availableSeconds: null,
+        confirmedRequirements: [], fiveK: null, segmentPaces: [] },
+    })).find(result => result.kind === 'ready');
+    assert.ok(manual);
+    const manualEntry = accountPlanEntry({ state: manual.proposal.after, evidence: null }, seed.now);
+    const manualParts = splitAccountPlanCollection({ ...baselineDoc, data: { schemaVersion: 1, currentPlanId: manualEntry.planId,
+      plans: [...oldDocs, { ...original, archivedAt: seed.now }, { ...selected, archivedAt: seed.now }, manualEntry] } });
+    await f.stage(manualParts);
+    const manualRequest = command(manualParts, changed, { operationId: 'a7777777-7777-4777-8777-777777777777', expectedRevision: 3 });
+    const manualAccepted = await check(await f.request({ action: 'commit', request: manualRequest }), 200);
+    assert.equal(manualAccepted.kind, 'committed');
+    assert.equal((await check(await f.request({ action: 'readIndex' }), 200)).index.currentPlanId, manualEntry.planId);
+    await db.exec('reset role');
+    await db.query('update public.account_journal_documents set revision=4 where user_id=$1 and document_id=$2', [OWNER, sourceId]);
+    assert.deepEqual(await check(await f.request({ action: 'commit', request: manualRequest }), 200), manualAccepted);
     // One in-process PostgreSQL session, not proof of independent-session lock waiting or live JWT verification.
   } finally { await db.close(); }
 });

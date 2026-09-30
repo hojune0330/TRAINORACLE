@@ -100,7 +100,7 @@ export function prepareExecutionReplan(input: {
         if (!sessions || sessions.some(s => s.day > Math.ceil("projectionLengthDays" in state.activePlan.frame
           ? state.activePlan.frame.projectionLengthDays ?? state.activePlan.frame.lengthDays : state.activePlan.frame.lengthDays)
           && replanFingerprint(s) !== replanFingerprint(state.activePlan.sessions.find(old => replanKey(old) === replanKey(s))))) continue
-        const { explanationReceipt: _oldExplanation, ...base } = state
+        const { explanationReceipt: _oldExplanation, catalogReplacement: _oldReplacement, ...base } = state
         const activePlan = { ...state.activePlan, sessions }
         activePlan.candidateId = deriveCandidateId(state.activePlan.candidateId, {
           kind: activePlan.candidateKind, eventDistanceM: activePlan.eventDistanceM,

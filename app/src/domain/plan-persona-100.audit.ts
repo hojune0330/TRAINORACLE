@@ -4,8 +4,10 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vites
 import { mkdirSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { createRequire } from "node:module"
+import { execFileSync } from "node:child_process"
 import { ALL_WORKOUT_CATALOG, calculateCatalogWorkout, calculatedWorkoutSequence,
-  catalogMethodIdentity, compareCatalogPerformance, verifyCalculatedWorkout } from "@impl/prescription/all-workout-calculator"
+  compareCatalogPerformance, verifyCalculatedWorkout } from "@impl/prescription/all-workout-calculator"
+import { catalogRecommendationMethodKey } from "@impl/prescription/catalog-method-selection"
 import type { CalculatedWorkout, WorkoutCalculationInputs, WorkoutCatalogEntry } from "@impl/prescription/all-workout-calculator"
 import { bindCatalogSession, catalogFamilyForIntent, catalogRpe, resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 import type { PrescriptionSequenceV3, RecoveryStepV3, SequenceNodeV3 } from "@impl/prescription/sequence-v3"
@@ -27,11 +29,18 @@ import { CatalogWorkoutDetail } from "../screens/plan-beta/CatalogWorkoutDetail"
 vi.mock("./account/account-plan-service", () => ({ accountPlansEnabled: () => false, accountPlanService: () => null }))
 vi.mock("./account/plan-cloud-backup", () => ({ backupActivePlanToServer: vi.fn(), archivePlanOnServer: vi.fn() }))
 
-const BASELINE = "9085282"
-const RUNTIME = "8b80fa1"
+const configuredRepo = process.env.TRAINORACLE_PERSONA_AUDIT_REPO
+if (!configuredRepo) throw new Error("Run the persona audit with its explicit configuration")
+const repo = resolve(configuredRepo)
+const git = (...args: string[]) => execFileSync("git", ["-c", `safe.directory=${repo.replaceAll("\\", "/")}`, ...args], { cwd: repo, encoding: "utf8" }).trim()
+const BASELINE = git("rev-parse", "HEAD")
+const RUNTIME = "WORKING_TREE_NOT_DEPLOYED"
+const DIRTY = git("status", "--porcelain").length > 0
 const ROOT_SEED = 0x09302026
 const AT = new Date("2026-09-30T03:00:00.000Z")
-const OUT = `${resolve(process.cwd(), "../.scratch/persona-100-core")}/`
+const runId = process.env.TRAINORACLE_PERSONA_AUDIT_RUN ?? new Date().toISOString().replaceAll(/[:.]/gu, "-")
+if (!/^[a-zA-Z0-9_-]{1,80}$/u.test(runId)) throw new Error("Invalid persona audit run identifier")
+const OUT = `${resolve(repo, `.scratch/persona-100-core-${runId}`)}/`
 const EVENTS = [800, 1500, 3000, 5000, 10000, 21097, 42195] as const
 const FOCI = ["BASE_INTENT", "LT_INTENT", "VO2_INTENT", "GLY_INTENT", "ATP_PC_INTENT", "MIXED_INTENT", "RECOVERY_INTENT"] as const
 const EXPERIENCES = ["NEW_TO_RUNNING", "DEVELOPING", "EXPERIENCED"] as const
@@ -45,7 +54,7 @@ const audits: Audit[] = []
 const namedEvidence: { name: string; detail: unknown }[] = []
 let networkCalls = 0
 type IsolatedDom = { window: Window }
-const JSDOM = createRequire(resolve(process.cwd(), "package.json"))("jsdom").JSDOM as new (html: string, options: { url: string }) => IsolatedDom
+const JSDOM = createRequire(resolve(repo, "app/package.json"))("jsdom").JSDOM as new (html: string, options: { url: string }) => IsolatedDom
 let isolated: IsolatedDom | null = null
 const originalWindow = window
 
@@ -229,7 +238,7 @@ afterAll(() => {
   const failures = audits.flatMap(a => a.failures.map(f => ({ personaId: a.id, ...f })))
   const counts: Record<string, number> = {}
   for (const f of failures) counts[f.code] = (counts[f.code] ?? 0) + 1
-  const report = { baseline: BASELINE, runtime: RUNTIME, rootSeed: ROOT_SEED, fixedTime: AT.toISOString(),
+  const report = { baseline: BASELINE, runtime: RUNTIME, dirtyWorkingTree: DIRTY, rootSeed: ROOT_SEED, fixedTime: AT.toISOString(),
     syntheticOnly: true, browserBoundary: "fresh jsdom Window per persona; no user browser", networkCalls,
     personas: audits.length, distinctInputs: new Set(personas.map(p => JSON.stringify({ draft: p.draft, recordMode: p.recordMode, recordSeconds: p.recordSeconds, risk: p.risk, missing: p.missing }))).size,
     checks: audits.reduce((sum, a) => sum + a.checks, 0), catalogCalculations: audits.reduce((sum, a) => sum + a.catalog.length, 0),
@@ -507,9 +516,9 @@ describe("named adversarial contract counterexamples", () => {
       const p = calculateCatalogWorkout(e.id, inputsFor({ ...personas[3]!, draft: source.intake, recordMode: "absent" }, budget))
       return p !== null && !p.unavailable.length
     })
-    const methods = new Set(eligible.map(catalogMethodIdentity)).size
+    const methods = new Set(eligible.map(catalogRecommendationMethodKey)).size
     const firstCycle = trace.slice(0, methods)
-    const methodTrace = trace.map(id => catalogMethodIdentity(ALL_WORKOUT_CATALOG.find(e => e.id === id)!))
+    const methodTrace = trace.map(id => catalogRecommendationMethodKey(ALL_WORKOUT_CATALOG.find(e => e.id === id)!))
     evidence("seeded-picker-draw", { seed: ROOT_SEED, budget, methods, eligible: eligible.map(e => e.id), trace, firstCycle,
       uniqueFirstCycleMethods: new Set(methodTrace.slice(0, methods)).size })
     expect(new Set(methodTrace.slice(0, methods)).size).toBe(methods)
@@ -567,10 +576,10 @@ describe("named adversarial contract counterexamples", () => {
   it("AUDIT-DURATION-VARIANTS continuous easy dose variants do not become different methods", () => {
     const one = ALL_WORKOUT_CATALOG.find(e => e.id === "X-BASE-01")!
     const two = ALL_WORKOUT_CATALOG.find(e => e.id === "X-BASE-03")!
-    evidence("method-dose-identity", { one: { id: one.id, methodGroup: one.methodGroup, identity: catalogMethodIdentity(one) },
-      two: { id: two.id, methodGroup: two.methodGroup, identity: catalogMethodIdentity(two) } })
+    evidence("method-dose-identity", { one: { id: one.id, methodGroup: one.methodGroup, identity: catalogRecommendationMethodKey(one) },
+      two: { id: two.id, methodGroup: two.methodGroup, identity: catalogRecommendationMethodKey(two) } })
     expect(one.methodGroup).toBe(two.methodGroup)
-    expect(catalogMethodIdentity(one)).toBe(catalogMethodIdentity(two))
+    expect(catalogRecommendationMethodKey(one)).toBe(catalogRecommendationMethodKey(two))
   })
 
   it("AUDIT-RELOAD-CONFIRMATION picker preserves the stored record and exact target on reopening", () => {

@@ -1,7 +1,8 @@
 import React from "react"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { ALL_WORKOUT_CATALOG, calculateCatalogWorkout, catalogMethodIdentity } from "@impl/prescription/all-workout-calculator"
+import { ALL_WORKOUT_CATALOG, calculateCatalogWorkout } from "@impl/prescription/all-workout-calculator"
+import { catalogRecommendationMethodKey } from "@impl/prescription/catalog-method-selection"
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import { replaceCandidateCatalogWorkout } from "../../domain/catalog-plan-binding"
 import { createSelfReportedAthleteRecord } from "../../domain/athlete-records"
@@ -53,17 +54,17 @@ describe("catalog picker actionable and truthful review", () => {
     const inputs = { eventDistanceM: 5000, experience: "EXPERIENCED" as const, availableSeconds: (session.prescription.catalogWorkout?.originalEnvelope.durationMinutes.maximum ?? session.prescription.durationMinutes.maximum) * 60,
       confirmedRequirements: [], fiveK: null, segmentPaces: [] }
     const eligible = ALL_WORKOUT_CATALOG.filter(e => e.family === "VO2" && !calculateCatalogWorkout(e.id, inputs)?.unavailable.length)
-    const methodCount = new Set(eligible.map(catalogMethodIdentity)).size
+    const methodCount = new Set(eligible.map(catalogRecommendationMethodKey)).size
     expect(methodCount).toBeGreaterThan(2)
     vi.spyOn(Math, "random").mockReturnValue(0)
     render(<CatalogWorkoutPicker generated={generated.generated} intake={generated.intake} records={[]} onChange={vi.fn()} />)
     openPicker()
     const select = screen.getByRole("combobox", { name: "훈련 구성" }) as HTMLSelectElement
-    const seen = new Set([catalogMethodIdentity(ALL_WORKOUT_CATALOG.find(e => e.id === select.value)!)])
+    const seen = new Set([catalogRecommendationMethodKey(ALL_WORKOUT_CATALOG.find(e => e.id === select.value)!)])
     for (let index = 1; index < methodCount; index++) {
       fireEvent.click(screen.getByRole("button", { name: "같은 목적의 다른 훈련" }))
       const entry = ALL_WORKOUT_CATALOG.find(e => e.id === select.value)!
-      const identity = catalogMethodIdentity(entry)
+      const identity = catalogRecommendationMethodKey(entry)
       expect(seen.has(identity)).toBe(false)
       expect(calculateCatalogWorkout(entry.id, inputs)?.unavailable).toEqual([])
       seen.add(identity)

@@ -68,6 +68,7 @@ export function ActivePlan({
   returnToSession,
   executionMessage,
   executionBlocked = false,
+  futureTrainingEditor,
 }: {
   readonly state: PlanBetaState
   readonly cloudPersistence?: PlanCloudPersistenceState
@@ -85,6 +86,7 @@ export function ActivePlan({
   readonly returnToSession?: PlannedSessionLogDraft["link"]
   readonly executionMessage?: string | null
   readonly executionBlocked?: boolean
+  readonly futureTrainingEditor?: React.ReactNode
 }) {
   const [hasPendingSuccessor, setHasPendingSuccessor] = React.useState(false)
   const [readerRequest, setReaderRequest] = React.useState<PlanReaderRequest>()
@@ -229,6 +231,7 @@ export function ActivePlan({
           const session = activePlan.sessions.find(item => instantSessionId(item) === id)
           if (session && session.role !== "REST") onWriteSessionLog(session)
         }} />
+      {futureTrainingEditor}
       <details className="plan-detailed-options">
       <summary>전체 계획 구성</summary>
       <p className="active-plan__variant">

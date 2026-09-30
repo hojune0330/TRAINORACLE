@@ -10,4 +10,9 @@
 .planned-repetition-editor__pages button { min-width: 44px; min-height: 44px; display: grid; place-items: center; }
 .planned-repetition-editor__pages svg { width: 20px; height: 20px; }
 .planned-repetition-editor__clear { min-width: 44px; min-height: 44px; display: grid; place-items: center; margin-left: auto; }
+.planned-repetition-editor [aria-invalid="true"] { border-color: var(--err); }
+.planned-repetition-editor [role="alert"] { color: var(--err); font-size: var(--fs-caption); overflow-wrap: anywhere; }
+.planned-workout-context { padding-block: var(--space-2); overflow-wrap: anywhere; }
+.planned-workout-context strong { font-size: var(--fs-body); }
+.planned-workout-context p { margin: var(--space-1) 0 0; font-size: var(--fs-caption); line-height: 1.5; }
 @media (max-width: 340px) { .planned-repetition-editor__numbers { gap: 8px; } }
