@@ -1,0 +1,123 @@
+.active-plan-edit-hub {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+  border: var(--bw-line) solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--sans);
+  overflow-wrap: anywhere;
+}
+
+.active-plan-edit-hub__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.active-plan-edit-hub__header h2 {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: 1.45;
+  word-break: keep-all;
+}
+
+.active-plan-edit-hub__header p,
+.active-plan-edit-hub__unavailable p {
+  margin: var(--space-1) 0 0;
+  color: var(--ink-2);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+.active-plan-edit-hub__close {
+  display: grid;
+  flex: 0 0 var(--app-touch-min);
+  place-items: center;
+  width: var(--app-touch-min);
+  min-height: var(--app-touch-min);
+  border: var(--bw-line) solid var(--line);
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.active-plan-edit-hub__choices {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.active-plan-edit-hub__choice > button,
+.active-plan-edit-hub__unavailable > button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: var(--app-touch-min);
+  box-sizing: border-box;
+  padding: var(--space-2) var(--space-3);
+  border: var(--bw-line) solid var(--line);
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.active-plan-edit-hub__choice > button:hover,
+.active-plan-edit-hub__unavailable > button:hover,
+.active-plan-edit-hub__close:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.active-plan-edit-hub__choice > button:focus-visible,
+.active-plan-edit-hub__unavailable > button:focus-visible,
+.active-plan-edit-hub__close:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.active-plan-edit-hub__choice--secondary {
+  margin-block-start: var(--space-2);
+  padding-block-start: var(--space-3);
+  border-top: var(--bw-line) solid var(--line);
+}
+
+.active-plan-edit-hub__choice--secondary > button {
+  color: var(--ink-2);
+}
+
+.active-plan-edit-hub__unavailable {
+  display: grid;
+  gap: var(--space-1);
+  padding-block: var(--space-2);
+}
+
+.active-plan-edit-hub__choice-label {
+  font-weight: 600;
+  word-break: keep-all;
+}
+
+.active-plan-edit-hub__unavailable > button {
+  width: fit-content;
+  max-width: 100%;
+  margin-block-start: var(--space-1);
+  color: var(--brand);
+  word-break: keep-all;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .active-plan-edit-hub__choice > button,
+  .active-plan-edit-hub__unavailable > button,
+  .active-plan-edit-hub__close {
+    transition: border-color 200ms var(--ease-out-strong, ease-out), color 200ms var(--ease-out-strong, ease-out);
+  }
+}

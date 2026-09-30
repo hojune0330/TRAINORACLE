@@ -32,6 +32,7 @@ import { periodizationContextSchema } from "./periodization-lineage"
 import { explanationReceiptSchema } from "./training-explanation-receipt"
 import { planHistorySnapshotContent } from "./plan-history-snapshot-content"
 import { executionReplanReceiptSchema, executionReplanMatches } from "./execution-replan-policy"
+import { activePlanEditReceiptSchema, activePlanEditMatches } from "./active-plan-edit-policy"
 
 const planEventGroupSchema = z.enum([
   "MIDDLE_DISTANCE",
@@ -245,6 +246,7 @@ const activePlanV3Schema = activePlanSchema.extend({
 const planBetaStateV3BaseSchema = z.object({
   version: z.literal(3),
   executionReplan: executionReplanReceiptSchema.optional(),
+  activePlanEdit: activePlanEditReceiptSchema.optional(),
   // Corrupt or newer explanation metadata must not destroy a valid saved prescription.
   explanationReceipt: explanationReceiptSchema.optional().catch(undefined),
   intake: planIntakeSchema,
@@ -263,6 +265,10 @@ const planBetaStateV3BaseSchema = z.object({
   }
   if (state.executionReplan && !executionReplanMatches(state.executionReplan, state.activePlan.sessions, state.intake.startDate)) {
     addIssue(context, ["executionReplan"], "Remaining schedule must replay the accepted bounded transformation.")
+  }
+  if (state.activePlanEdit && (state.executionReplan
+    || !activePlanEditMatches(state.activePlanEdit, state.activePlan.sessions, state.intake.startDate))) {
+    addIssue(context, ["activePlanEdit"], "Manual plan edits must replay the exact accepted transformation.")
   }
   if (state.activePlan.eventDistanceM !== state.intake.eventDistanceM) {
     addIssue(context, ["activePlan", "eventDistanceM"], "Active target event must match intake.")

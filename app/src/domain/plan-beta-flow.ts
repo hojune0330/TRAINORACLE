@@ -145,6 +145,21 @@ export function generatePlanFromDraft(
     detailedSessionTarget, candidateSessionTargets, loadPreviousContinuity())
 }
 
+/** An explicit new start. It neither clears the active plan nor continues a completed frame. */
+export function generateReplacementPlanFromDraft(
+  draft: PlanDraftInput,
+  currentCheck: PlanCurrentCheck,
+  prescriptionSelection?: unknown,
+): PlanDraftGeneration {
+  const startDate = draft.startDate
+  if (typeof startDate !== "string" || !isValidIsoDate(startDate) || startDate < todayISO()) {
+    return { kind: "rejected", code: "INVALID_START_DATE" }
+  }
+  const result = generatePlanDraftWithContinuity(draft, currentCheck, prescriptionSelection,
+    undefined, undefined, undefined, startDate)
+  return result.kind === "generated" ? { ...result, intake: { ...result.intake, startDate } } : result
+}
+
 /** A preview leaves the predecessor active. Its distinct result cannot be
  * mistaken for an already accepted successor by the existing save flow. */
 export function generateAdjustedNextFrameFromDraft(input: {

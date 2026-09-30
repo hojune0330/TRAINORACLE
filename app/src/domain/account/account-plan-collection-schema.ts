@@ -3,9 +3,12 @@ import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identit
 import { hasCanonicalJsonTree, progressSchema } from "../plan-beta-schema"
 import {
   ACCOUNT_PLAN_MAX_BYTES, accountPlanDocumentSchema,
-  accountPlanFingerprint, validateAccountPlanPacket, validateExecutionReplanTransition,
+  accountPlanFingerprint, validateAccountPlanPacket, validateExecutionReplanTransition, validateActivePlanEditTransition,
   type AccountPlanDocument, type AccountPlanPacket, type AccountPlanEntry,
 } from "./account-plan-document-schema"
+
+export { activePlanEditClockIsCurrent, projectActivePlanEditJournal, validateActivePlanEditJournalFacts }
+  from "./active-plan-edit-journal-guard"
 
 const fingerprint = z.string().regex(/^sha256:[a-f0-9]{64}$/u)
 const snapshotSchema = z.object({
@@ -97,7 +100,8 @@ export function validateAccountPlanCollectionEntry(indexValue: unknown, snapshot
 
 export function validateAccountPlanCollectionUpdate(previous: unknown, next: unknown): boolean {
   const before = joinAccountPlanCollection(previous), after = joinAccountPlanCollection(next)
-  if (!before || !after || !validateExecutionReplanTransition(before, after)) return false
+  if (!before || !after || !validateExecutionReplanTransition(before, after)
+    || !validateActivePlanEditTransition(before, after)) return false
   if (!before.data.plans.every(old => {
     const newer = after.data.plans.find(p => p.planId === old.planId)
     return !!newer && accountPlanFingerprint(newer.snapshot) === accountPlanFingerprint(old.snapshot)
