@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
-import { createTrainOracleLoungeClient as createAdapter, LOUNGE_REQUEST_TIMEOUT_MS, parseLoungeGrant, parseLoungeStatus } from "./adapter"
+import { createTrainOracleLoungeClient as createAdapter, LOUNGE_REQUEST_TIMEOUT_MS, parseLoungeGrant, parseLoungeParticipation, parseLoungeStatus } from "./adapter"
 import { resolveLoungeConfig } from "./config"
 import { captureLoungeEntryIntent } from "./entry-intent"
 
@@ -105,7 +105,7 @@ describe("TrainOracle lounge auth adapter", () => {
     const fetchImpl = vi.fn().mockResolvedValue(reply(status))
     const client = createTrainOracleLoungeClient({ config, expectedUserId: "synthetic-A", getSession: session, fetchImpl })
     const signal = new AbortController().signal
-    await expect(client.status(signal)).resolves.toEqual({ noticeVersion: status.noticeVersion, prepared: true })
+    await expect(client.status(signal)).resolves.toEqual({ noticeVersion: status.noticeVersion, prepared: true, accepted: false })
     expect(fetchImpl).toHaveBeenCalledWith(new URL("/api/lounge/status", config.realtimeUrl), {
       method: "GET", credentials: "omit", redirect: "error", cache: "no-store", signal: expect.any(AbortSignal),
     })
@@ -119,6 +119,7 @@ describe("TrainOracle lounge auth adapter", () => {
     { ...status, noticeVersion: "untrusted notice text" }, { ...status, readiness: null },
     { ...status, readiness: { writesReady: "true", reason: null } }, { ...status, roomId: undefined },
     { ...status, trainoracleEntryEnabled: "true" },
+    { ...status, trainoracleParticipationVersion: null }, { ...status, trainoracleParticipationVersion: 2 },
   ])("rejects malformed status rather than enabling entry", malformed => {
     expect(() => parseLoungeStatus(malformed)).toThrow("LOUNGE_STATUS_INVALID")
   })
@@ -127,6 +128,71 @@ describe("TrainOracle lounge auth adapter", () => {
     const client = createTrainOracleLoungeClient({ config, expectedUserId: "synthetic-A", getSession: session, fetchImpl })
     await expect(client.enter({ accepted: false, noticeVersion: status.noticeVersion, signal: new AbortController().signal })).rejects.toThrow("NOTICE_REQUIRED")
     expect(fetchImpl).not.toHaveBeenCalled()
+  })
+  it("reads authenticated existing participation and reuses only the memory grant for server-checked reentry", async () => {
+    const getGrant = vi.fn(grant)
+    const fetchImpl = vi.fn<typeof fetch>(async url => reply(new URL(String(url)).pathname === "/api/lounge/status"
+      ? { ...status, trainoracleParticipationVersion: 1 } : new URL(String(url)).pathname === "/api/lounge/participation/trainoracle"
+        ? { version: 1, noticeVersion: status.noticeVersion, accepted: true } : { ticket: "t".repeat(43) }))
+    const client = createTrainOracleLoungeClient({ config, expectedUserId: "synthetic-A", getSession: session, getGrant, fetchImpl })
+    const signal = new AbortController().signal
+    await expect(client.status(signal)).resolves.toEqual({ noticeVersion: status.noticeVersion, prepared: true, accepted: true })
+    expect(fetchImpl.mock.calls[1]?.[1]?.body).toBe("{}")
+    await client.enter({ accepted: false, noticeVersion: status.noticeVersion, signal })
+    expect(getGrant).toHaveBeenCalledTimes(1)
+    expect(fetchImpl.mock.calls[2]?.[1]?.body).toBe(JSON.stringify({ noticeVersion: status.noticeVersion, resume: true }))
+    expect(fetchImpl.mock.calls[2]?.[1]?.headers).toEqual({ "Content-Type": "application/json", Authorization: "Bearer lg1_" + "a".repeat(64) })
+  })
+  it("does not turn a negative, legacy, or unprepared read into resume authority", async () => {
+    for (const runtimeStatus of [status, { ...status, trainoracleParticipationVersion: 1 }, { ...status, trainoracleParticipationVersion: 1, roomId: null }]) {
+      const getGrant = vi.fn(grant)
+      const fetchImpl = vi.fn<typeof fetch>(async url => reply(new URL(String(url)).pathname === "/api/lounge/status" ? runtimeStatus : { version: 1, noticeVersion: status.noticeVersion, accepted: false }))
+      const client = createTrainOracleLoungeClient({ config, expectedUserId: "synthetic-A", getSession: session, getGrant, fetchImpl })
+      const signal = new AbortController().signal
+      expect((await client.status(signal)).accepted).toBe(false)
+      await expect(client.enter({ accepted: false, noticeVersion: status.noticeVersion, signal })).rejects.toThrow("NOTICE_REQUIRED")
+      expect(fetchImpl.mock.calls.some(call => String(call[0]).includes("/entry/"))).toBe(false)
+      expect(getGrant).toHaveBeenCalledTimes(runtimeStatus === status || runtimeStatus.roomId === null ? 0 : 1)
+    }
+  })
+  it.each([null, [], {}, { version: 2, noticeVersion: status.noticeVersion, accepted: true },
+    { version: 1, noticeVersion: "changed-version", accepted: true }, { version: 1, noticeVersion: status.noticeVersion, accepted: "true" },
+    { version: 1, noticeVersion: status.noticeVersion, accepted: true, subject: "synthetic-A" },
+  ])("rejects malformed or mismatched authenticated acceptance %j", malformed => {
+    expect(() => parseLoungeParticipation(malformed, status.noticeVersion)).toThrow("LOUNGE_PARTICIPATION_INVALID")
+  })
+  it("refreshes acceptance on each status read and discards memory proof after a denial", async () => {
+    const getGrant = vi.fn(grant)
+    let reads = 0
+    const fetchImpl = vi.fn<typeof fetch>(async url => reply(new URL(String(url)).pathname === "/api/lounge/status" ? { ...status, trainoracleParticipationVersion: 1 }
+      : { version: 1, noticeVersion: status.noticeVersion, accepted: ++reads === 1 }))
+    const client = createTrainOracleLoungeClient({ config, expectedUserId: "synthetic-A", getSession: session, getGrant, fetchImpl })
+    const signal = new AbortController().signal
+    expect((await client.status(signal)).accepted).toBe(true)
+    expect((await client.status(signal)).accepted).toBe(false)
+    await expect(client.enter({ accepted: false, noticeVersion: status.noticeVersion, signal })).rejects.toThrow("NOTICE_REQUIRED")
+    await client.status(signal)
+    expect(reads).toBe(3)
+    expect(getGrant).toHaveBeenCalledTimes(2)
+  })
+  it("surfaces server notice races and requires a fresh read after invalidation or grant expiry", async () => {
+    const getGrant = vi.fn(grant)
+    const fetchImpl = vi.fn<typeof fetch>(async url => new URL(String(url)).pathname === "/api/lounge/status" ? reply({ ...status, trainoracleParticipationVersion: 1 })
+      : new URL(String(url)).pathname === "/api/lounge/participation/trainoracle" ? reply({ version: 1, noticeVersion: status.noticeVersion, accepted: true }) : reply({ code: "NOTICE_REQUIRED" }, 409))
+    const client = createTrainOracleLoungeClient({ config, expectedUserId: "synthetic-A", getSession: session, getGrant, fetchImpl })
+    const signal = new AbortController().signal
+    await client.status(signal)
+    await expect(client.enter({ accepted: false, noticeVersion: status.noticeVersion, signal })).rejects.toThrow("NOTICE_REQUIRED")
+    await client.status(signal)
+    expect(getGrant).toHaveBeenCalledTimes(2)
+    client.invalidate()
+    await expect(client.enter({ accepted: false, noticeVersion: status.noticeVersion, signal })).rejects.toThrow("NOTICE_REQUIRED")
+    await client.status(signal)
+    vi.useFakeTimers()
+    try {
+      vi.setSystemTime(Date.now() + 61_000)
+      await expect(client.enter({ accepted: false, noticeVersion: status.noticeVersion, signal })).rejects.toThrow("NOTICE_REQUIRED")
+    } finally { vi.useRealTimers() }
   })
   it("sends only noticeVersion with a scoped grant and returns a fragment-only ticket", async () => {
     const token = "t".repeat(43)

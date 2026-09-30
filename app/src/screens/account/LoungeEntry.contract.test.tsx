@@ -109,7 +109,7 @@ describe("existing-account lounge entry", () => {
     await userEvent.click(screen.getByRole("checkbox", { name: /현재 로그인한 TrainOracle 계정을/u }))
     await userEvent.click(screen.getByRole("button", { name: "확인하고 계정 연결" }))
     expect(await screen.findByText(/계정 연결을 마쳤어요/u)).toBeVisible()
-    expect(screen.getByRole("button", { name: "확인하고 라운지 열기" })).toBeDisabled()
+    expect(await screen.findByRole("button", { name: "확인하고 라운지 열기" })).toBeDisabled()
     const post = fetchMock.mock.calls.find(call => call[1].method === "POST")
     expect(post?.[1].body).toBe(JSON.stringify({ token }))
     expect(onNavigate).not.toHaveBeenCalled()
@@ -120,6 +120,88 @@ describe("existing-account lounge entry", () => {
     expect(await screen.findByText(/‘계정 연결’에서 다시 시작/u)).toBeVisible()
     expect(screen.queryByRole("button", { name: "확인하고 계정 연결" })).not.toBeInTheDocument()
     expect(fetchMock.mock.calls.every(call => call[1].method === "GET")).toBe(true)
+  })
+  it("skips the first participation notice only after a fresh server read and opens with resume", async () => {
+    fetchMock.mockImplementation(async (url: URL) => reply(url.pathname === "/api/lounge/status" ? { ...ready, trainoracleParticipationVersion: 1 }
+      : url.pathname === "/api/lounge/participation/trainoracle" ? { version: 1, noticeVersion: ready.noticeVersion, accepted: true } : { ticket: "t".repeat(43) }))
+    const onNavigate = vi.fn()
+    render(<LoungeEntry userId={owner} requested onNavigate={onNavigate} />)
+    expect(await screen.findByRole("button", { name: "라운지 열기" })).toBeEnabled()
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument()
+    expect(screen.getByText("기존 라운지 닉네임으로 다시 참여해요.")).toBeVisible()
+    expect(onNavigate).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole("button", { name: "라운지 열기" }))
+    await waitFor(() => expect(onNavigate).toHaveBeenCalledTimes(1))
+    expect(fetchMock.mock.calls[2]?.[1].body).toBe(JSON.stringify({ noticeVersion: ready.noticeVersion, resume: true }))
+    expect(mocks.rpc).toHaveBeenCalledTimes(1)
+  })
+  it("keeps first participation explicit when the server confirms no current notice", async () => {
+    fetchMock.mockImplementation(async (url: URL) => reply(url.pathname === "/api/lounge/status" ? { ...ready, trainoracleParticipationVersion: 1 }
+      : url.pathname === "/api/lounge/participation/trainoracle" ? { version: 1, noticeVersion: ready.noticeVersion, accepted: false } : { ticket: "t".repeat(43) }))
+    const onNavigate = vi.fn()
+    render(<LoungeEntry userId={owner} requested onNavigate={onNavigate} />)
+    expect(await screen.findByRole("button", { name: "확인하고 라운지 열기" })).toBeDisabled()
+    expect(onNavigate).not.toHaveBeenCalled()
+    await acceptEntry()
+    await waitFor(() => expect(onNavigate).toHaveBeenCalledTimes(1))
+    expect(fetchMock.mock.calls[2]?.[1].body).toBe(JSON.stringify({ noticeVersion: ready.noticeVersion }))
+    expect(mocks.rpc).toHaveBeenCalledTimes(1)
+  })
+  it("refreshes server acceptance after explicit linking without pretending linking was notice consent", async () => {
+    mocks.intent.mockReturnValue({ requested: true, linkRequested: true, linkToken: "l".repeat(43) })
+    let linked = false
+    fetchMock.mockImplementation(async (url: URL) => {
+      if (url.pathname === "/api/lounge/status") return reply({ ...ready, trainoracleParticipationVersion: 1 })
+      if (url.pathname === "/api/lounge/participation/trainoracle") return reply({ version: 1, noticeVersion: ready.noticeVersion, accepted: linked })
+      linked = true
+      return reply({ linked: true })
+    })
+    const onNavigate = vi.fn()
+    render(<LoungeEntry userId={owner} requested onNavigate={onNavigate} />)
+    await userEvent.click(await screen.findByRole("checkbox", { name: /현재 로그인한 TrainOracle 계정을/u }))
+    await userEvent.click(screen.getByRole("button", { name: "확인하고 계정 연결" }))
+    expect(await screen.findByRole("button", { name: "라운지 열기" })).toBeEnabled()
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument()
+    expect(fetchMock.mock.calls.filter(call => call[0].pathname === "/api/lounge/participation/trainoracle")).toHaveLength(2)
+    expect(onNavigate).not.toHaveBeenCalled()
+    expect(mocks.rpc).toHaveBeenCalledTimes(1)
+  })
+  it("refreshes a deleted participation or changed notice before asking for explicit consent again", async () => {
+    let accepted = true
+    fetchMock.mockImplementation(async (url: URL) => {
+      if (url.pathname === "/api/lounge/status") return reply({ ...ready, trainoracleParticipationVersion: 1 })
+      if (url.pathname === "/api/lounge/participation/trainoracle") return reply({ version: 1, noticeVersion: ready.noticeVersion, accepted })
+      accepted = false
+      return new Response(JSON.stringify({ code: "NOTICE_REQUIRED" }), { status: 409 })
+    })
+    const onNavigate = vi.fn()
+    render(<LoungeEntry userId={owner} requested onNavigate={onNavigate} />)
+    await userEvent.click(await screen.findByRole("button", { name: "라운지 열기" }))
+    expect(await screen.findByRole("checkbox", { name: /닉네임이 보이는 공개 대화/u })).not.toBeChecked()
+    expect(screen.getByRole("button", { name: "확인하고 라운지 열기" })).toBeDisabled()
+    expect(screen.getByText(/현재 안내를 다시 확인/u)).toBeVisible()
+    expect(onNavigate).not.toHaveBeenCalled()
+  })
+  it("discards a late authenticated acceptance after account switching", async () => {
+    let resolveParticipation!: (value: Response) => void
+    const pending = new Promise<Response>(resolve => { resolveParticipation = resolve })
+    fetchMock.mockImplementation(async (url: URL) => url.pathname === "/api/lounge/status" ? reply({ ...ready, trainoracleParticipationVersion: 1 }) : pending)
+    render(<LoungeEntry userId={owner} requested />)
+    await waitFor(() => expect(fetchMock.mock.calls.some(call => call[0].pathname === "/api/lounge/participation/trainoracle")).toBe(true))
+    act(() => { owner = "synthetic-B"; listener(user(owner)); owner = "synthetic-A"; listener(user(owner)) })
+    await act(async () => { resolveParticipation(reply({ version: 1, noticeVersion: ready.noticeVersion, accepted: true })); await pending })
+    expect(screen.queryByRole("button", { name: "라운지 열기" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument()
+    expect(screen.getByText(/로그인 계정이 바뀌었어요/u)).toBeVisible()
+  })
+  it("resets an unsubmitted notice choice when the rendered account changes", async () => {
+    const view = render(<LoungeEntry userId={owner} requested />)
+    await userEvent.click(await screen.findByRole("checkbox", { name: /닉네임이 보이는 공개 대화/u }))
+    expect(screen.getByRole("button", { name: "확인하고 라운지 열기" })).toBeEnabled()
+    owner = "synthetic-B"
+    view.rerender(<LoungeEntry userId={owner} requested />)
+    expect(await screen.findByRole("checkbox", { name: /닉네임이 보이는 공개 대화/u })).not.toBeChecked()
+    expect(screen.getByRole("button", { name: "확인하고 라운지 열기" })).toBeDisabled()
   })
   it("keeps unsubmitted link and confirmation when the same account refreshes", async () => {
     mocks.intent.mockReturnValue({ requested: true, linkRequested: true, linkToken: "l".repeat(43) })

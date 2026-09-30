@@ -33,6 +33,10 @@ export function LoungeEntry({ userId, requested = false, onNavigate = url => win
   const client = React.useMemo(() => config ? createTrainOracleLoungeClient({ config, expectedUserId: userId }) : null, [config, userId])
 
   React.useEffect(() => {
+    setAccepted(false)
+    setConfirmed(false)
+    setStatus(null)
+    noticeVersion.current = null
     clearPendingLoungeLink()
     const unsubscribe = onAuthChange(next => {
       if (next?.id === userId) {
@@ -48,7 +52,9 @@ export function LoungeEntry({ userId, requested = false, onNavigate = url => win
       }
       generation.current++
       request.current?.abort()
+      client?.invalidate()
       setBusy(false)
+      setStatus(null)
       setAccepted(false)
       setConfirmed(false)
       setLinkToken(null)
@@ -56,8 +62,8 @@ export function LoungeEntry({ userId, requested = false, onNavigate = url => win
       setBlocked(true)
       setNotice("로그인 계정이 바뀌었어요. 내 계정에서 다시 열어 주세요.")
     }, { ignoreInitialSession: true })
-    return () => { generation.current++; request.current?.abort(); unsubscribe() }
-  }, [userId])
+    return () => { generation.current++; request.current?.abort(); client?.invalidate(); unsubscribe() }
+  }, [userId, client])
 
   React.useEffect(() => {
     if (!client || !expanded || blocked) return
@@ -81,7 +87,7 @@ export function LoungeEntry({ userId, requested = false, onNavigate = url => win
   }, [client, expanded, blocked, retry])
 
   const act = async (kind: "enter" | "link") => {
-    if (!client || !status?.prepared || blocked || busy || kind === "enter" && !accepted || kind === "link" && (!confirmed || !linkToken)) return
+    if (!client || !status?.prepared || blocked || busy || kind === "enter" && !accepted && !status.accepted || kind === "link" && (!confirmed || !linkToken)) return
     request.current?.abort()
     const controller = new AbortController()
     request.current = controller
@@ -95,14 +101,23 @@ export function LoungeEntry({ userId, requested = false, onNavigate = url => win
         setLinkToken(null)
         setConfirmed(false)
         setAccepted(false)
-        setNotice("계정 연결을 마쳤어요. 입장 안내를 확인하고 라운지를 열어 주세요.")
+        setStatus(null)
+        setRetry(value => value + 1)
+        setNotice("계정 연결을 마쳤어요.")
       } else {
         const destination = await client.enter({ noticeVersion: status.noticeVersion, accepted, signal: controller.signal })
         if (generation.current !== epoch || controller.signal.aborted) return
         if (!runDraftSafeNavigation(() => onNavigate(destination))) setNotice("작성 중인 내용을 먼저 확인해 주세요.")
       }
-    } catch {
-      if (generation.current === epoch && !controller.signal.aborted) setNotice("처리 결과를 확인하지 못했어요. 잠시 후 상태를 다시 확인해 주세요.")
+    } catch (error) {
+      if (generation.current === epoch && !controller.signal.aborted) {
+        setAccepted(false)
+        setStatus(null)
+        if (error instanceof Error && error.message === "NOTICE_REQUIRED") {
+          setNotice("입장 안내가 바뀌었거나 참여 상태가 변경됐어요. 현재 안내를 다시 확인해 주세요.")
+          setRetry(value => value + 1)
+        } else setNotice("처리 결과를 확인하지 못했어요. 잠시 후 상태를 다시 확인해 주세요.")
+      }
     } finally {
       if (generation.current === epoch && !controller.signal.aborted) setBusy(false)
       if (request.current === controller) request.current = null
@@ -115,7 +130,9 @@ export function LoungeEntry({ userId, requested = false, onNavigate = url => win
       <h2 id="lounge-entry-heading" style={{ fontFamily: "var(--sans)", fontSize: "var(--fs-body)", margin: 0 }}>함께 이야기하는 라운지</h2>
       {!expanded ? <button type="button" style={secondaryBtn} onClick={() => setExpanded(true)}>라운지 입장 안내</button> : (
         <>
-          <p style={{ margin: 0, fontSize: "var(--fs-body)", lineHeight: 1.6, wordBreak: "keep-all" }}>공개 대화에서는 계속 사용하는 라운지 닉네임이 보여요. 익명 게시판이 아니며, 입장만으로 계정이 서로 연결되지 않아요. 일지와 건강 정보는 라운지에 보내지 않아요.</p>
+          <p style={{ margin: 0, fontSize: "var(--fs-body)", lineHeight: 1.6, wordBreak: "keep-all" }}>{status?.accepted
+            ? "기존 라운지 닉네임으로 다시 참여해요."
+            : "공개 대화에서는 계속 사용하는 라운지 닉네임이 보여요. 익명 게시판이 아니며, 입장만으로 계정이 서로 연결되지 않아요. 일지와 건강 정보는 라운지에 보내지 않아요."}</p>
           <details className="info-disclosure">
             <summary tabIndex={0}><span>계정 연결·정보 보관 안내</span><ChevronDown className="info-disclosure__chevron" size={16} aria-hidden="true" /></summary>
             <div className="info-disclosure__content">
@@ -133,8 +150,8 @@ export function LoungeEntry({ userId, requested = false, onNavigate = url => win
             </>
           ) : (
             <>
-              <label style={{ minHeight: 44, display: "flex", alignItems: "center", gap: "var(--space-2)" }}><input type="checkbox" checked={accepted} onChange={event => setAccepted(event.target.checked)} disabled={busy} />닉네임이 보이는 공개 대화라는 안내를 확인했어요.</label>
-              <button type="button" style={primaryBtn} disabled={busy || !accepted} onClick={() => void act("enter")}>{busy ? "입장 확인 중..." : "확인하고 라운지 열기"}</button>
+              {!status.accepted && <label style={{ minHeight: 44, display: "flex", alignItems: "center", gap: "var(--space-2)" }}><input type="checkbox" checked={accepted} onChange={event => setAccepted(event.target.checked)} disabled={busy} />닉네임이 보이는 공개 대화라는 안내를 확인했어요.</label>}
+              <button type="button" style={primaryBtn} disabled={busy || !accepted && !status.accepted} onClick={() => void act("enter")}>{busy ? "입장 확인 중..." : status.accepted ? "라운지 열기" : "확인하고 라운지 열기"}</button>
             </>
           ))}
           {!blocked && <button type="button" style={secondaryBtn} disabled={busy} onClick={() => { setNotice(null); setAccepted(false); setConfirmed(false); setRetry(value => value + 1) }}>상태 다시 확인</button>}
