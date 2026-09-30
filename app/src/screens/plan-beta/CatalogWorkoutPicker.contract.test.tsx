@@ -2,10 +2,11 @@ import React from "react"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ALL_WORKOUT_CATALOG, calculateCatalogWorkout, catalogMethodIdentity } from "@impl/prescription/all-workout-calculator"
+import { bindCatalogSession, catalogFamilyForIntent } from "@impl/prescription/catalog-session-binding"
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import { replaceCandidateCatalogWorkout } from "../../domain/catalog-plan-binding"
 import { createSelfReportedAthleteRecord } from "../../domain/athlete-records"
-import { CatalogWorkoutPicker } from "./CatalogWorkoutPicker"
+import { CatalogWorkoutEditor, CatalogWorkoutPicker } from "./CatalogWorkoutPicker"
 import { PlanCandidates } from "./PlanCandidates"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
@@ -22,6 +23,52 @@ function fixture(experienceBand: "NEW_TO_RUNNING" | "EXPERIENCED" = "EXPERIENCED
 function openPicker() { fireEvent.click(screen.getByText("다른 훈련으로 바꾸기", { exact: true })) }
 
 describe("catalog picker actionable and truthful review", () => {
+  it("requires active-plan consent when a replacement exceeds the current cap but stays inside the original envelope", () => {
+    const source = fixture()
+    const session = source.generated.candidates[0].sessions.find(s => s.role === "QUALITY" && s.prescription.kind === "RPE_TIME_RANGE")
+    if (!session || session.role !== "QUALITY" || session.prescription.kind !== "RPE_TIME_RANGE") throw Error("fixture")
+    const eligible = ALL_WORKOUT_CATALOG.filter(e => e.family === catalogFamilyForIntent(session.plannedEnergyIntent)
+      && e.eventDistances.includes(source.intake.eventDistanceM) && e.experience.includes(source.intake.experienceBand) && e.hold === null)
+    const baseInputs = { eventDistanceM: source.intake.eventDistanceM, experience: source.intake.experienceBand,
+      availableSeconds: session.prescription.durationMinutes.maximum * 60, confirmedRequirements: [], segmentPaces: [], fiveK: null }
+    const bound = eligible.map(entry => bindCatalogSession(session, entry.id, baseInputs)).filter(Boolean)
+      .sort((left, right) => left!.prescription.kind === "RPE_TIME_RANGE" && right!.prescription.kind === "RPE_TIME_RANGE"
+        ? left!.prescription.durationMinutes.maximum - right!.prescription.durationMinutes.maximum : 0)[0]
+    expect(bound?.prescription.kind).toBe("RPE_TIME_RANGE")
+    if (!bound || bound.role !== "QUALITY" || bound.prescription.kind !== "RPE_TIME_RANGE" || !bound.prescription.catalogWorkout) throw Error("catalog fixture")
+    const binding = bound.prescription.catalogWorkout
+    const originalMaximum = binding.originalEnvelope.durationMinutes.maximum
+    const currentMaximum = bound.prescription.durationMinutes.minimum
+    const currentSession = { ...bound, prescription: { ...bound.prescription,
+      durationMinutes: { ...bound.prescription.durationMinutes, maximum: currentMaximum } } }
+    const inputs = binding.inputs
+    const alternative = eligible.find(entry => {
+      if (entry.id === binding.catalogId) return false
+      const workout = calculateCatalogWorkout(entry.id, { ...inputs, availableSeconds: originalMaximum * 60 })
+      return !!workout && workout.unavailable.length === 0 && !!workout.totals.seconds
+        && workout.totals.seconds.maximum / 60 > currentMaximum
+        && workout.totals.seconds.maximum / 60 <= originalMaximum
+    })
+    expect(alternative).toBeDefined()
+    const onSelect = vi.fn()
+    const onDraftChange = vi.fn()
+    render(<CatalogWorkoutEditor intake={source.intake} records={[]} session={currentSession} drawHistory={new Map()}
+      disabled={false} onCancel={vi.fn()} onSelect={onSelect} onDraftChange={onDraftChange} />)
+
+    fireEvent.change(screen.getByRole("combobox", { name: "훈련 구성" }), { target: { value: alternative!.id } })
+    expect(onDraftChange).toHaveBeenCalled()
+    onDraftChange.mockClear()
+    const longerConsent = screen.getByRole("checkbox", { name: /현재 계획보다 긴 구성/u })
+    expect(longerConsent).not.toBeChecked()
+    expect(screen.getByRole("button", { name: "이 구성으로 바꾸기" })).toBeDisabled()
+    fireEvent.click(longerConsent)
+    expect(onDraftChange).toHaveBeenCalledOnce()
+    expect(screen.getByRole("button", { name: "이 구성으로 바꾸기" })).toBeEnabled()
+    fireEvent.click(screen.getByRole("button", { name: "이 구성으로 바꾸기" }))
+    expect(onSelect).toHaveBeenCalledOnce()
+    expect(onSelect.mock.calls[0]?.[2]).toBe(true)
+  })
+
   it("checks the shorter candidate budget before applying one workout to both candidates", () => {
     const source = generatePlanFromDraft({ ...fixture("NEW_TO_RUNNING").intake,
       eventGroup: "MIDDLE_DISTANCE", eventDistanceM: 3000, availableDayCount: "EVERY_DAY",

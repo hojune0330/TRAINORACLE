@@ -4,8 +4,33 @@ import { replanFixture } from "./execution-replan.test-fixture"
 import { prepareExecutionReplan, executionReplanEvidence, replanFingerprint } from "./execution-replan"
 import { replayExecutionReplan } from "./execution-replan-policy"
 import { accountPlanEntry, emptyAccountPlanDocument, validateExecutionReplanTransition } from "./account/account-plan-document-schema"
+import { prepareActivePlanEdit } from "./active-plan-edit"
+import { createPlannedSessionLogDraft } from "./planned-session-link"
 
 describe("remaining-schedule owner scope", () => {
+  it("can prepare a journal-triggered replan after a manual edit without conflicting receipts", () => {
+    const fixture = replanFixture()
+    const edit = prepareActivePlanEdit({ ...fixture, source: { day: 4, slot: "AM" }, action: "DURATION", maximumMinutes: 15,
+      unstartedConfirmed: true, timeZone: "Asia/Seoul" })
+    expect(edit.kind).toBe("ready")
+    if (edit.kind !== "ready") throw Error(edit.reasonCode)
+    const newEntry = { ...fixture.entries[0]!, id: "after-edit-log", plannedSessionLink:
+      createPlannedSessionLogDraft(edit.proposal.after, edit.proposal.after.activePlan.sessions[0]!, fixture.now)!.link }
+    const result = prepareExecutionReplan({ ...fixture, state: edit.proposal.after, entries: [newEntry], entryId: newEntry.id })
+    expect(result.kind).toBe("ready")
+    if (result.kind !== "ready") throw Error("replan required")
+    for (const proposal of result.proposals) {
+      expect(proposal.after.activePlanEdit).toBeUndefined()
+      expect(proposal.after.executionReplan).toBeDefined()
+      expect(planBetaStateV3Schema.safeParse(proposal.after).success).toBe(true)
+      const old = accountPlanEntry({ state: edit.proposal.after, evidence: null }, fixture.now)
+      const newer = accountPlanEntry({ state: proposal.after, evidence: null }, fixture.now)
+      const before = emptyAccountPlanDocument(), after = emptyAccountPlanDocument()
+      before.data.plans = [old]; before.data.currentPlanId = old.planId
+      after.data.plans = [{ ...old, archivedAt: fixture.now }, newer]; after.data.currentPlanId = newer.planId
+      expect(validateExecutionReplanTransition(before, after)).toBe(true)
+    }
+  })
   it("builds three exact bounded alternatives, never mutates original or progress", () => {
     const f = replanFixture(), before = JSON.stringify(f), result = prepareExecutionReplan(f)
     expect(result.kind).toBe("ready")

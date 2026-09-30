@@ -2,7 +2,8 @@ import { encryptAccountJournalDocument, decryptAccountJournalDocument } from './
 import { createAccountJournalRepository, validateAccountJournalDocument } from './account-journal-handler.mjs';
 import { validateAccountPlanCollectionIndex, validateAccountPlanCollectionPart,
   joinAccountPlanCollection, validateAccountPlanCollectionUpdate,
-  accountPlanCollectionPartHash, accountPlanFingerprint } from './account-plan-collection-validator.mjs';
+  accountPlanCollectionPartHash, accountPlanFingerprint, activePlanEditClockIsCurrent,
+  projectActivePlanEditJournal, validateActivePlanEditJournalFacts } from './account-plan-collection-validator.mjs';
 
 export const MAX_BODY_BYTES = 655_360;
 export const MAX_PART_BYTES = 500_000;
@@ -89,7 +90,7 @@ function validateReceipt(receipt, ownerId, operationId) {
 }
 
 /** Storage only. Neither hashes, staged evidence nor migration grant execution authority. */
-export function createAccountPlanCollectionHandler({ authenticate, getMaterial, allowedOrigins = [] }) {
+export function createAccountPlanCollectionHandler({ authenticate, getMaterial, allowedOrigins = [], now = () => new Date() }) {
   const origins = new Set(allowedOrigins.filter(origin => {
     try { return new URL(origin).origin === origin && /^https?:\/\//u.test(origin); } catch { return false; }
   }));
@@ -222,9 +223,36 @@ export function createAccountPlanCollectionHandler({ authenticate, getMaterial, 
       const previous = current ? await loadParts(current.index) : null;
       if (previous && validateAccountPlanCollectionUpdate(previous, next) !== true) fail(422, 'INVALID_DOCUMENT_UPDATE');
       const selected = next.snapshots.find(p => p.planId === next.index.currentPlanId)?.snapshot.state;
-      const replan = selected?.version === 3 && next.index.currentPlanId !== previous?.index.currentPlanId
-        ? selected.executionReplan : null;
-      if (replan && (!previous || !Array.isArray(replan.journalGuard) || typeof repo.commitReplan !== 'function')) fail(422, 'REPLAN_SOURCE_REQUIRED');
+      const changedSelection = selected?.version === 3 && next.index.currentPlanId !== previous?.index.currentPlanId;
+      const guardedKind = changedSelection && selected.executionReplan ? 'REPLAN'
+        : changedSelection && selected.activePlanEdit ? 'ACTIVE_PLAN_EDIT' : null;
+      const guardedReceipt = guardedKind === 'REPLAN' ? selected.executionReplan
+        : guardedKind === 'ACTIVE_PLAN_EDIT' ? selected.activePlanEdit : null;
+      if (guardedReceipt && (!previous || !Array.isArray(guardedReceipt.journalGuard)
+        || typeof repo.commitReplan !== 'function')) fail(422, guardedKind === 'REPLAN'
+          ? 'REPLAN_SOURCE_REQUIRED' : 'ACTIVE_PLAN_EDIT_SOURCE_REQUIRED');
+      if (guardedKind === 'ACTIVE_PLAN_EDIT') {
+        if (!activePlanEditClockIsCurrent(guardedReceipt, now())) fail(409, 'PLAN_DATE_CHANGED');
+        if (typeof repo.readJournals !== 'function') fail(503, 'UNAVAILABLE');
+        const facts = [], guard = guardedReceipt.journalGuard;
+        // Owner-scoped bounded reads expose only in-memory projections. The SQL commit below
+        // rejects any omitted, edited, added or deleted journal after this semantic check.
+        for (let offset = 0; offset < guard.length; offset += 25) {
+          const batch = guard.slice(offset, offset + 25), ids = new Set(batch.map(item => item.documentId));
+          const rows = await repo.readJournals(ownerId, [...ids]);
+          if (!Array.isArray(rows) || rows.length !== batch.length
+            || new Set(rows.map(row => row?.document_id)).size !== batch.length) fail(409, 'JOURNALS_CHANGED');
+          for (const row of rows) {
+            const expected = batch.find(item => item.documentId === row?.document_id);
+            if (!expected || row.user_id !== ownerId || row.deleted_at != null || row.revision !== expected.revision) fail(409, 'JOURNALS_CHANGED');
+            const fact = projectActivePlanEditJournal(await decode(row.encrypted_payload, row.document_id), guardedReceipt);
+            if (!fact) fail(503, 'INVALID_STORED_DATA');
+            if (fact.protectsSource || fact.protectsTarget) fail(422, 'RECORDED_SESSION_PROTECTED');
+            facts.push(fact);
+          }
+        }
+        if (!validateActivePlanEditJournalFacts(guardedReceipt, facts)) fail(409, 'JOURNALS_CHANGED');
+      }
       if (r.legacy) {
         if (r.legacy.documentId !== await legacyId(ownerId)) fail(422, 'INVALID_DOCUMENT');
         const row = await repo.readLegacy(ownerId, r.legacy.documentId);
@@ -240,7 +268,9 @@ export function createAccountPlanCollectionHandler({ authenticate, getMaterial, 
       let result;
       try {
         const commit = { ...commitInput, ...binding, payload: await encrypt(r.index, 'PLAN_COLLECTION', 'index') };
-        result = replan ? await repo.commitReplan({ ...commit, journalGuard: replan.journalGuard }) : await repo.commit(commit);
+        if (guardedKind === 'ACTIVE_PLAN_EDIT' && !activePlanEditClockIsCurrent(guardedReceipt, now())) fail(409, 'PLAN_DATE_CHANGED');
+        // This legacy RPC name enforces an exact journal revision-set guard under the owner lock.
+        result = guardedReceipt ? await repo.commitReplan({ ...commit, journalGuard: guardedReceipt.journalGuard }) : await repo.commit(commit);
       } catch (error) {
         if (error?.code !== '22023') throw error;
         const prior = await readReceipt(r.operationId);
@@ -283,6 +313,9 @@ export function createAccountPlanCollectionRepository(client, { ownerId, attest 
     attestationStatus: () => journal.attestationStatus(),
     enabled: owner => journal.enabled(owner),
     readLegacy: (owner, documentId) => journal.read(owner, documentId),
+    readJournals: (owner, documentIds) => result(client.from('account_journal_documents')
+      .select('user_id,document_id,revision,encrypted_payload,deleted_at')
+      .eq('user_id', owner).in('document_id', documentIds)),
     readIndex: () => result(client.rpc('read_account_plan_collection_index')),
     readPart: (kind, id) => result(client.rpc('read_account_plan_collection_part', { part_kind: kind, part_id: id })),
     receipt: operationId => result(client.rpc('read_account_plan_collection_receipt', { operation_id: operationId })),
