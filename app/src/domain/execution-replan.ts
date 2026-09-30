@@ -1,10 +1,11 @@
 import { canonicalJsonFingerprint, deriveCandidateId } from "@impl/plan-generator/candidate-identity"
-import { isoShift, isValidIsoDate } from "./dates"
+import { isValidIsoDate } from "./dates"
 import type { JournalEntry, PostSessionEntry } from "./journal-schema"
 import { planBetaStateV3Schema, type PlanBetaStateV3 } from "./plan-beta-schema"
 import { resolveCurrentPlannedSession } from "./planned-session-link"
 import { reviewPlanExecution } from "./plan-execution-review"
 import { EXECUTION_REPLAN_POLICY, replayExecutionReplan, replanKey, type ReplanAction, type ExecutionReplanReceipt } from "./execution-replan-policy"
+import { recordedPlanSlots } from "./recorded-plan-slots"
 
 export const replanFingerprint = (value: unknown) => canonicalJsonFingerprint("trainoracle.execution-replan.v1", value)
 export type ExecutionReplanProposal = {
@@ -67,11 +68,7 @@ export function prepareExecutionReplan(input: {
     || state.progress.some(p => p.state === "PAIN_CHECKIN")) return { kind: "blocked", message: review.next }
   if (review.repetitionComparison?.kind === "unavailable") return { kind: "blocked", message: "반복 기록과 원래 처방의 연결을 먼저 확인해 주세요." }
   if (!entry.activityOutcome) return { kind: "blocked", message: "운동을 했는지 먼저 기록해 주세요. 빈 기록을 건너뛴 훈련으로 보지 않아요." }
-  const protectedSlots = state.activePlan.sessions.filter(s => isoShift(startDate, s.day-1) <= input.today
-    || state.progress.some(p => p.sessionDay === s.day && p.sessionSlot === s.slot)
-    || input.entries.some(e => e.kind === "post-session" && e.plannedSessionLink
-      && e.plannedSessionLink.plannedDate === isoShift(startDate, s.day-1) && e.plannedSessionLink.sessionSlot === s.slot))
-    .map(s => ({ day: s.day, slot: s.slot }))
+  const protectedSlots = recordedPlanSlots(state, input.entries, input.today)
   const eligible = state.activePlan.sessions.filter(s => !protectedSlots.some(p => replanKey(p) === replanKey(s))
     && s.role !== "REST" && s.day <= Math.ceil("projectionLengthDays" in state.activePlan.frame
       ? state.activePlan.frame.projectionLengthDays ?? state.activePlan.frame.lengthDays : state.activePlan.frame.lengthDays))

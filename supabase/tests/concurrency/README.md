@@ -91,3 +91,33 @@ node supabase/tests/concurrency/account-plan-concurrency.test.mjs --run --pg-bin
 Record actual command results separately from opt-in availability. Never relabel a
 PGlite pass, a skipped test, or an expected mutation failure as a native race pass.
 See [2026-09-08 execution results](RESULTS_2026-09-08.md) for observed results.
+
+## Catalog Replacement Calendar Guard (0041)
+
+The separate opt-in suite loads the existing 0001-0037 fixture plus actual 0040 and
+0041 migrations. It uses the same fresh loopback-only cluster and independent
+connections. Only the two calendar clock reads in the loaded 0041 SQL are replaced
+with a controlled test clock; repository migration bytes are never changed.
+
+```powershell
+node supabase/tests/concurrency/catalog-replacement-calendar-concurrency.test.mjs --run --pg-bin "C:\Program Files\PostgreSQL\17\bin"
+```
+
+| Case | Required result |
+| --- | --- |
+| `wait-date` | A real writer waits on the owner lock; calendar rollover before lock release rejects the new commit with no index/receipt change; freshly prepared input succeeds |
+| `nested-date` | Rollover after the nested mutation rolls back its index and receipt; the normal-clock control succeeds |
+| `replay` | Two waiting identical operations produce one new revision and one receipt; next-day replay returns that receipt without recommitting |
+| `signature` | Unsigned calendar changes and missing signed calendar input are rejected; valid signed input succeeds |
+
+Without `--run`, these four cases are SKIPPED. The following injections must fail
+the selected named test; the other cases are deliberately skipped:
+
+```powershell
+node supabase/tests/concurrency/catalog-replacement-calendar-concurrency.test.mjs --run --pg-bin "C:\Program Files\PostgreSQL\17\bin" --case wait-date --mutation calendar-guards
+node supabase/tests/concurrency/catalog-replacement-calendar-concurrency.test.mjs --run --pg-bin "C:\Program Files\PostgreSQL\17\bin" --case nested-date --mutation post-calendar
+```
+
+This is real PostgreSQL lock/rollback/idempotency execution with a controlled
+calendar, not an actual wall-clock midnight, a real Supabase identity, a browser
+journey, or production verification. See [2026-10-01 execution results](RESULTS_2026-10-01.md).

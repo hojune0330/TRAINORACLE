@@ -2,7 +2,7 @@ import { encryptAccountJournalDocument, decryptAccountJournalDocument } from './
 import { createAccountJournalRepository, validateAccountJournalDocument } from './account-journal-handler.mjs';
 import { validateAccountPlanCollectionIndex, validateAccountPlanCollectionPart,
   joinAccountPlanCollection, validateAccountPlanCollectionUpdate,
-  accountPlanCollectionPartHash, accountPlanFingerprint, projectCatalogReplacementJournal,
+  accountPlanCollectionPartHash, accountPlanFingerprint, projectCatalogReplacementJournal, projectExecutionReplanJournal,
   validateCatalogReplacementJournalFacts, catalogReplacementClockIsCurrent } from './account-plan-collection-validator.mjs';
 
 export const MAX_BODY_BYTES = 655_360;
@@ -226,8 +226,8 @@ export function createAccountPlanCollectionHandler({ authenticate, getMaterial, 
       const replan = selected?.version === 3 && next.index.currentPlanId !== previous?.index.currentPlanId
         ? (selected.executionReplan ?? selected.catalogReplacement) : null;
       if (replan && (!previous || !Array.isArray(replan.journalGuard) || typeof repo.commitReplan !== 'function')) fail(422, 'REPLAN_SOURCE_REQUIRED');
-      if (replan && selected.catalogReplacement) {
-        if (!catalogReplacementClockIsCurrent(replan, now())) fail(409, 'PLAN_DATE_CHANGED');
+      if (replan && (selected.catalogReplacement || selected.executionReplan)) {
+        if (selected.catalogReplacement && !catalogReplacementClockIsCurrent(replan, now())) fail(409, 'PLAN_DATE_CHANGED');
         if (typeof repo.readJournals !== 'function') fail(503, 'UNAVAILABLE');
         const facts = [], guard = replan.journalGuard;
         // Bounded batches use existing owner-scoped reads. The atomic commit guard
@@ -240,7 +240,8 @@ export function createAccountPlanCollectionHandler({ authenticate, getMaterial, 
           for (const row of rows) {
             const expected = batch.find(item => item.documentId === row?.document_id);
             if (!expected || row.user_id !== ownerId || row.deleted_at != null || row.revision !== expected.revision) fail(409, 'JOURNALS_CHANGED');
-            const fact = projectCatalogReplacementJournal(await decode(row.encrypted_payload, row.document_id), replan);
+            const project = selected.catalogReplacement ? projectCatalogReplacementJournal : projectExecutionReplanJournal;
+            const fact = project(await decode(row.encrypted_payload, row.document_id), replan);
             if (!fact) fail(503, 'INVALID_STORED_DATA');
             if (fact.protectsSource) fail(422, 'RECORDED_SESSION_PROTECTED');
             facts.push(fact);

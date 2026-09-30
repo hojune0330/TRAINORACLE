@@ -1,26 +1,17 @@
 import { deriveCandidateId } from "@impl/plan-generator/candidate-identity"
 import { bindCatalogSession } from "@impl/prescription/catalog-session-binding"
 import type { WorkoutCalculationInputs } from "@impl/prescription/all-workout-calculator"
-import { isoShift, isValidIsoDate } from "./dates"
+import { isValidIsoDate } from "./dates"
 import type { JournalEntry } from "./journal-schema"
 import { planBetaStateV3Schema, type PlanBetaStateV3 } from "./plan-beta-schema"
 import { executionReplanEvidence, replanFingerprint } from "./execution-replan"
 import { replayCatalogReplacement, type CatalogReplacementReceipt } from "./catalog-replacement-policy"
+import { recordedPlanSlots } from "./recorded-plan-slots"
+export { journalProtectsPlanSlot as journalProtectsCatalogSlot } from "./recorded-plan-slots"
 
 export type CatalogReplacementProposal = { before: PlanBetaStateV3; after: PlanBetaStateV3 }
 export type CatalogReplacementPreparation = { kind: "ready"; proposal: CatalogReplacementProposal } | { kind: "blocked"; message: string }
-export function journalProtectsCatalogSlot(entry: JournalEntry, date: string, slot: "AM" | "PM") {
-  if (entry.kind !== "post-session") return false
-  return entry.date === date && (!["AM", "PM"].includes(entry.activitySlot ?? "") || entry.activitySlot === slot || entry.plannedSessionLink?.sessionSlot === slot)
-    || entry.plannedSessionLink?.plannedDate === date && entry.plannedSessionLink.sessionSlot === slot
-}
-export function catalogProtectedSlots(state: PlanBetaStateV3, entries: readonly JournalEntry[], today: string) {
-  return state.activePlan.sessions.filter(s => {
-    const date = isoShift(state.intake.startDate!, s.day - 1)
-    return date <= today || state.progress.some(p => p.sessionDay === s.day && p.sessionSlot === s.slot)
-      || entries.some(e => journalProtectsCatalogSlot(e, date, s.slot))
-  }).map(s => ({ day: s.day, slot: s.slot }))
-}
+export const catalogProtectedSlots = recordedPlanSlots
 export function prepareCatalogReplacement(input: {
   state: PlanBetaStateV3; entries: readonly JournalEntry[]; today: string; now: string;
   address: { day: number; slot: "AM" | "PM" }; catalogId: string; inputs: WorkoutCalculationInputs;

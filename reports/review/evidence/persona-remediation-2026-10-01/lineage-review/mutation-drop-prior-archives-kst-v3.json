@@ -1,0 +1,151 @@
+{
+  "scope": "Synthetic local public-function integration only; no account/SQL/network/production verification",
+  "timezone": "Asia/Seoul",
+  "node": "v24.11.1",
+  "mutation": "drop-prior-archives",
+  "mutationApplications": 1,
+  "networkAttempts": 0,
+  "sourceFingerprintBefore": "74251ead085d949f96d503f01b30177b4adbbdb145faba4a07b3eecda613348d",
+  "sourceFingerprintAfter": "74251ead085d949f96d503f01b30177b4adbbdb145faba4a07b3eecda613348d",
+  "sourceUnchanged": true,
+  "compiledCode": "Memory only; no generated bundle saved",
+  "summary": {
+    "uniqueBoundaries": 8,
+    "pass": 2,
+    "fail": 6
+  },
+  "results": [
+    {
+      "id": "B01",
+      "name": "Two manual replacements preserve first and intermediate journal originals",
+      "status": "FAIL",
+      "observations": {},
+      "error": {
+        "name": "AssertionError",
+        "message": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'missing'\n- 'matched'\n",
+        "expected": "matched",
+        "actual": "missing"
+      }
+    },
+    {
+      "id": "B02",
+      "name": "Execution replan then manual replacement preserves both originals and lineage",
+      "status": "FAIL",
+      "observations": {},
+      "error": {
+        "name": "AssertionError",
+        "message": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'missing'\n- 'matched'\n",
+        "expected": "matched",
+        "actual": "missing"
+      }
+    },
+    {
+      "id": "B03",
+      "name": "Manual replacement must not strand the unchanged original execution-review journal",
+      "status": "FAIL",
+      "observations": {
+        "originalLookup": "matched",
+        "replanResult": {
+          "kind": "blocked",
+          "message": "이 기록은 이전 계획에 연결되어 있어요. 현재 계획에서 남긴 기록을 선택해 주세요."
+        }
+      },
+      "error": {
+        "name": "AssertionError",
+        "message": "Exact archived source journal for an unchanged past slot should remain usable\n\n'blocked' !== 'ready'\n",
+        "expected": "ready",
+        "actual": "blocked"
+      }
+    },
+    {
+      "id": "B04",
+      "name": "Manual replacement then replan using a new current-version journal preserves prior catalog structure",
+      "status": "PASS",
+      "observations": {
+        "catalogBindingPreserved": "P-BASE-C"
+      }
+    },
+    {
+      "id": "B05",
+      "name": "Mixed replan must protect actual-date unlinked and unknown-slot journal entries",
+      "status": "FAIL",
+      "observations": {
+        "variants": [
+          {
+            "slot": "AM",
+            "manualProtected": true,
+            "replanProtected": false,
+            "apply": "applied",
+            "unchanged": false,
+            "beforeDuration": {
+              "minimum": 20,
+              "maximum": 30
+            },
+            "afterDuration": {
+              "minimum": 20,
+              "maximum": 20
+            }
+          },
+          {
+            "slot": "SINGLE",
+            "manualProtected": true,
+            "replanProtected": false,
+            "apply": "applied",
+            "unchanged": false,
+            "beforeDuration": {
+              "minimum": 20,
+              "maximum": 30
+            },
+            "afterDuration": {
+              "minimum": 20,
+              "maximum": 20
+            }
+          }
+        ]
+      },
+      "error": {
+        "name": "AssertionError",
+        "message": "Actual recorded future occurrence must not be rewritten by replan",
+        "expected": true,
+        "actual": false
+      }
+    },
+    {
+      "id": "B06",
+      "name": "Two manual replacements must keep explicit next-frame adaptation reachable",
+      "status": "FAIL",
+      "observations": {},
+      "error": {
+        "name": "AssertionError",
+        "message": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'missing'\n- 'matched'\n",
+        "expected": "matched",
+        "actual": "missing"
+      }
+    },
+    {
+      "id": "B07",
+      "name": "Ordinary next-frame archive and generation preserve original, results and program lineage",
+      "status": "FAIL",
+      "observations": {
+        "noReplacementControlAlsoResetsLineage": true
+      },
+      "error": {
+        "name": "AssertionError",
+        "message": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'missing'\n- 'matched'\n",
+        "expected": "matched",
+        "actual": "missing"
+      }
+    },
+    {
+      "id": "B08",
+      "name": "Accepted successor made before W2 is rejected without writes after replacement",
+      "status": "PASS",
+      "observations": {
+        "activation": {
+          "kind": "rejected",
+          "code": "CONTEXT_MISMATCH"
+        }
+      }
+    }
+  ]
+}

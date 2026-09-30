@@ -33,7 +33,8 @@ if (process.env.PLAN_COLLECTION_MUTATION) {
     binding: ['receipt.requestFingerprint !== binding.requestFingerprint', 'false'],
     history: ['previous && validateAccountPlanCollectionUpdate(previous, next) !== true', 'false'],
     owner: ["input.action === 'commit' && input.request.ownerId !== ownerId", 'false'],
-    catalogJournals: ['replan && selected.catalogReplacement', 'false'],
+    catalogJournals: ['replan && (selected.catalogReplacement || selected.executionReplan)', 'false'],
+    replanJournals: ['replan && (selected.catalogReplacement || selected.executionReplan)', 'false'],
     catalogClock: ['!catalogReplacementClockIsCurrent(replan, now())', 'false'],
   };
   const change = mutations[process.env.PLAN_COLLECTION_MUTATION];
@@ -139,6 +140,10 @@ test('execution replan uses a guarded commit, preserves originals, and recovers 
     assert.deepEqual(journalGuard, seed.journalGuard);
     return stale ? { kind: 'conflict' } : f.repo.commit(input);
   };
+  const documentId = seed.journalGuard[0].documentId;
+  f.repo.readJournals = async () => [{ user_id: OWNER, document_id: documentId, revision: 1, deleted_at: null,
+    encrypted_payload: await encryptAccountJournalDocument(JSON.stringify({ version: 2, state: 'FINALIZED', kind: 'JOURNAL',
+      entry: { ...seed.entries[0], memo: '', title: '' } }), { ownerId: OWNER, documentId }, f.material.active) }];
   await check(await f.request({ action: 'commit', request }), 200, { kind: 'conflict' });
   assert.equal(f.getIndex().index_document.currentPlanId, old.planId);
   stale = false;
@@ -148,6 +153,45 @@ test('execution replan uses a guarded commit, preserves originals, and recovers 
   stale = true;
   assert.deepEqual(await check(await f.request({ action: 'commit', request }), 200), committed);
   assert.equal(guarded, 2);
+});
+
+test('execution replan checks actual journal protection for both changed source and move destination', async () => {
+  for (const mode of ['source', 'unknown-slot', 'destination', 'other-slot', 'wrong-evidence']) {
+    const f = await fixture(), seed = replanFixture(), prepared = prepareExecutionReplan(seed);
+    assert.equal(prepared.kind, 'ready');
+    const proposal = prepared.proposals.find(p => p.action === (mode === 'destination' ? 'MOVE_LATER' : 'REDUCE'));
+    assert.ok(proposal);
+    const affected = mode === 'destination' ? proposal.after.executionReplan.target : proposal.after.executionReplan.source;
+    const date = new Date(`${seed.state.intake.startDate}T00:00:00Z`);
+    date.setUTCDate(date.getUTCDate() + affected.day - 1);
+    const entry = { ...seed.entries[0], id: 'unlinked-actual', memo: '', title: '', plannedSessionLink: undefined,
+      date: date.toISOString().slice(0, 10), activitySlot: mode === 'unknown-slot' ? 'SINGLE' : ['other-slot', 'wrong-evidence'].includes(mode) ? 'PM' : affected.slot };
+    const entries = [seed.entries[0], entry], ids = [seed.journalGuard[0].documentId, '22222222-2222-5222-8222-222222222222'];
+    const rows = await Promise.all(entries.map(async (e, i) => ({ user_id: OWNER, document_id: ids[i], revision: 1, deleted_at: null,
+      encrypted_payload: await encryptAccountJournalDocument(JSON.stringify({ version: 2, state: 'FINALIZED', kind: 'JOURNAL',
+        entry: { ...e, memo: '', title: '' } }), { ownerId: OWNER, documentId: ids[i] }, f.material.active) })));
+    f.repo.readJournals = async () => rows;
+    f.repo.commitReplan = ({ journalGuard: _guard, ...input }) => f.repo.commit(input);
+    // The attacker supplies the correct evidence fingerprint but omits the occupied slot from protection.
+    const afterState = structuredClone(proposal.after);
+    afterState.executionReplan.journalGuard = ids.map(documentId => ({ documentId, revision: 1 }));
+    if (mode !== 'wrong-evidence') afterState.executionReplan.evidenceFingerprint = replanFingerprint(executionReplanEvidence(entries));
+    const old = accountPlanEntry({ state: seed.state, evidence: null }, seed.now);
+    const beforeDoc = { version: 3, state: 'ACCOUNT_STATE', kind: 'PLAN', data: { schemaVersion: 1, currentPlanId: old.planId, plans: [old] } };
+    const before = splitAccountPlanCollection(beforeDoc);
+    await f.stage(before);
+    await check(await f.request({ action: 'commit', request: command(before) }), 200);
+    const selected = accountPlanEntry({ state: afterState, evidence: null }, seed.now);
+    const after = splitAccountPlanCollection({ ...beforeDoc, data: { schemaVersion: 1, currentPlanId: selected.planId,
+      plans: [{ ...old, archivedAt: seed.now }, selected] } });
+    await f.stage(after);
+    const response = await f.request({ action: 'commit', request: command(after, before, { operationId: OP2 }) });
+    const expectedStatus = mode === 'other-slot' ? 200 : mode === 'wrong-evidence' ? 409 : 422;
+    assert.equal(response.status, expectedStatus, mode);
+    await check(response, expectedStatus);
+    assert.equal(f.calls.commit, mode === 'other-slot' ? 2 : 1, mode);
+    assert.equal(f.getIndex().index_document.currentPlanId, mode === 'other-slot' ? selected.planId : old.planId, mode);
+  }
 });
 
 test('replan SQL holds the journal owner lock before comparing all live journal revisions', async () => {
@@ -650,14 +694,15 @@ test('real PGlite 0037 with gateway and authenticated repository round trips 18 
     const operationId = 'e5555555-5555-4555-8555-555555555555';
     const request = command(changed,baseline,{ operationId, expectedRevision: 2 });
     const sourceId = seed.journalGuard[0].documentId, otherJournalId = 'f6666666-6666-4666-8666-666666666666';
-    const payload = await encryptAccountJournalDocument('{}', { ownerId: OWNER, documentId: sourceId }, material.active);
+    const payload = await encryptAccountJournalDocument(JSON.stringify({ version: 2, state: 'FINALIZED', kind: 'JOURNAL',
+      entry: { ...seed.entries[0], memo: '', title: '' } }), { ownerId: OWNER, documentId: sourceId }, material.active);
     const addJournal = async (id, revision) => {
       await db.exec('reset role');
       await db.query(`insert into public.account_journal_documents(user_id,document_id,revision,encrypted_payload) values($1,$2,$3,$4)`, [OWNER,id,revision,payload]);
       await db.query(`insert into public.account_journal_identity(user_id,document_id,document_kind,journal_date,active) values($1,$2,'JOURNAL','2026-09-28',true)`, [OWNER,id]);
     };
     await addJournal(sourceId,2);
-    await check(await f.request({ action: 'commit', request }), 200, { kind: 'conflict' });
+    await check(await f.request({ action: 'commit', request }), 409, { error: 'JOURNALS_CHANGED' });
     await db.exec('reset role');
     await db.query('update public.account_journal_documents set revision=1 where user_id=$1 and document_id=$2',[OWNER,sourceId]);
     await addJournal(otherJournalId,1);

@@ -66,6 +66,26 @@ describe("remaining-schedule owner scope", () => {
     receipt.source.day = 1
     expect(replayExecutionReplan(receipt)).toBeNull()
   })
+  it.each(["AM", "SINGLE", "UNSPECIFIED", undefined] as const)("protects an actual-date journal without a plan link (%s)", slot => {
+    const f = replanFixture()
+    const entry = { ...f.entries[0]!, id: "unlinked-future", date: "2026-09-30", plannedSessionLink: undefined, activitySlot: slot }
+    const result = prepareExecutionReplan({ ...f, entries: [...f.entries, entry] })
+    expect(result.kind).toBe("ready")
+    if (result.kind !== "ready") throw Error("ready")
+    expect(result.proposals.length).toBeGreaterThan(0)
+    const original = f.state.activePlan.sessions.find(s => s.day === 3 && s.slot === "AM")!
+    for (const p of result.proposals) {
+      expect(p.after.executionReplan!.protectedSlots).toContainEqual({ day: 3, slot: "AM" })
+      expect(p.after.activePlan.sessions.find(s => s.day === 3 && s.slot === "AM")).toEqual(original)
+    }
+  })
+  it("does not mistake a known afternoon journal for an unlinked morning occurrence", () => {
+    const f = replanFixture()
+    const entry = { ...f.entries[0]!, id: "unlinked-pm", date: "2026-09-30", plannedSessionLink: undefined, activitySlot: "PM" as const }
+    const result = prepareExecutionReplan({ ...f, entries: [...f.entries, entry] })
+    if (result.kind !== "ready") throw Error("ready")
+    expect(result.proposals.find(p => p.action === "REDUCE")!.after.executionReplan!.source).toEqual({ day: 3, slot: "AM" })
+  })
   it("binds account activation to the current plan and immutable source progress", () => {
     const f = replanFixture(), r = prepareExecutionReplan(f)
     if (r.kind !== "ready") throw Error("ready")

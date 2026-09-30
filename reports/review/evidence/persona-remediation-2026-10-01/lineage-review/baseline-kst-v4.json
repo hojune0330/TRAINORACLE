@@ -1,0 +1,205 @@
+{
+  "scope": "Synthetic local public-function integration only; no account/SQL/network/production verification",
+  "timezone": "Asia/Seoul",
+  "node": "v24.11.1",
+  "mutation": "none",
+  "mutationApplications": 0,
+  "networkAttempts": 0,
+  "sourceFingerprintBefore": "e51e82a95c3eb34c377df3ff7511ddc3d6fc3e1fe3c6d4b30f01995d3d47f54b",
+  "sourceFingerprintAfter": "e51e82a95c3eb34c377df3ff7511ddc3d6fc3e1fe3c6d4b30f01995d3d47f54b",
+  "sourceUnchanged": true,
+  "compiledCode": "Memory only; no generated bundle saved",
+  "summary": {
+    "uniqueBoundaries": 8,
+    "pass": 5,
+    "fail": 3
+  },
+  "results": [
+    {
+      "id": "B01",
+      "name": "Two manual replacements preserve first and intermediate journal originals",
+      "status": "PASS",
+      "observations": {
+        "originalJournalStillPresent": true,
+        "replacementIds": [
+          "P-BASE-C",
+          "P-BASE-B"
+        ],
+        "archiveCount": 2
+      }
+    },
+    {
+      "id": "B02",
+      "name": "Execution replan then manual replacement preserves both originals and lineage",
+      "status": "PASS",
+      "observations": {
+        "oldReplanReceiptArchived": true,
+        "currentHasOnlyManualReceipt": true
+      }
+    },
+    {
+      "id": "B03",
+      "name": "Manual replacement must not strand the unchanged original execution-review journal",
+      "status": "FAIL",
+      "observations": {
+        "originalLookup": "matched",
+        "replanResult": {
+          "kind": "blocked",
+          "message": "이 기록은 이전 계획에 연결되어 있어요. 현재 계획에서 남긴 기록을 선택해 주세요."
+        }
+      },
+      "error": {
+        "name": "AssertionError",
+        "message": "Exact archived source journal for an unchanged past slot should remain usable\n\n'blocked' !== 'ready'\n",
+        "expected": "ready",
+        "actual": "blocked"
+      }
+    },
+    {
+      "id": "B04",
+      "name": "Manual replacement then replan using a new current-version journal preserves prior catalog structure",
+      "status": "PASS",
+      "observations": {
+        "catalogBindingPreserved": "P-BASE-C"
+      }
+    },
+    {
+      "id": "B05",
+      "name": "Mixed replan must protect actual-date unlinked and unknown-slot journal entries",
+      "status": "PASS",
+      "observations": {
+        "variants": [
+          {
+            "slot": "AM",
+            "manualProtected": true,
+            "replanProtected": true,
+            "apply": "applied",
+            "unchanged": true,
+            "beforeDuration": {
+              "minimum": 20,
+              "maximum": 30
+            },
+            "afterDuration": {
+              "minimum": 20,
+              "maximum": 30
+            }
+          },
+          {
+            "slot": "SINGLE",
+            "manualProtected": true,
+            "replanProtected": true,
+            "apply": "applied",
+            "unchanged": true,
+            "beforeDuration": {
+              "minimum": 20,
+              "maximum": 30
+            },
+            "afterDuration": {
+              "minimum": 20,
+              "maximum": 30
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "B06",
+      "name": "Two manual replacements must keep explicit next-frame adaptation reachable",
+      "status": "FAIL",
+      "observations": {
+        "before": "ready",
+        "after": {
+          "kind": "unavailable",
+          "code": "ADAPTATION_CONTEXT_UNAVAILABLE"
+        },
+        "contextUnchanged": true,
+        "contextCandidateMatchesCurrent": false
+      },
+      "error": {
+        "name": "AssertionError",
+        "message": "User-requested next frame must not lose its context after W2\n+ actual - expected\n\n+ 'unavailable'\n- 'ready'\n",
+        "expected": "ready",
+        "actual": "unavailable"
+      }
+    },
+    {
+      "id": "B07",
+      "name": "Ordinary next-frame archive and generation preserve original, results and program lineage",
+      "status": "FAIL",
+      "observations": {
+        "noReplacementControlAlsoResetsLineage": true,
+        "continuity": {
+          "previousCandidateKind": "BALANCED",
+          "progressStateCounts": [
+            {
+              "state": "COMPLETED",
+              "count": 1
+            },
+            {
+              "state": "RESTED",
+              "count": 0
+            },
+            {
+              "state": "SKIPPED",
+              "count": 0
+            },
+            {
+              "state": "PAIN_CHECKIN",
+              "count": 0
+            }
+          ]
+        },
+        "beforePeriodization": {
+          "schemaVersion": 1,
+          "programLineageId": "sha256:c11fbeaef3214cbfa2228a6b0c68443be6f2708ec1dc3a59ef0ade3e7a010bad",
+          "macrocycleOrdinal": 1,
+          "frameOrdinal": 1,
+          "mesocycleOrdinal": 1,
+          "phase": "BASE",
+          "frameLengthDays": 9.5,
+          "targetFrameCount": 18,
+          "startedAt": "2026-07-24T00:00:00.000Z",
+          "frameStartedAt": "2026-07-24T00:00:00.000Z",
+          "source": "NEW_PLAN"
+        },
+        "afterPeriodization": {
+          "schemaVersion": 1,
+          "programLineageId": "sha256:91c15103b760e37c8f9fad698274fecff18e4e8eb976f32c4729a973d8a9efc4",
+          "macrocycleOrdinal": 1,
+          "frameOrdinal": 1,
+          "mesocycleOrdinal": 1,
+          "phase": "BASE",
+          "frameLengthDays": 9.5,
+          "targetFrameCount": 18,
+          "startedAt": "2026-10-07T03:00:00.000Z",
+          "frameStartedAt": "2026-10-07T03:00:00.000Z",
+          "source": "NEW_PLAN"
+        },
+        "candidateCarriesPriorResults": true
+      },
+      "error": {
+        "name": "AssertionError",
+        "message": "Next-frame UI route must preserve the program identity\n+ actual - expected\n\n+ 'sha256:91c15103b760e37c8f9fad698274fecff18e4e8eb976f32c4729a973d8a9efc4'\n- 'sha256:c11fbeaef3214cbfa2228a6b0c68443be6f2708ec1dc3a59ef0ade3e7a010bad'\n",
+        "expected": "sha256:c11fbeaef3214cbfa2228a6b0c68443be6f2708ec1dc3a59ef0ade3e7a010bad",
+        "actual": "sha256:91c15103b760e37c8f9fad698274fecff18e4e8eb976f32c4729a973d8a9efc4"
+      }
+    },
+    {
+      "id": "B08",
+      "name": "Accepted successor made before W2 is rejected without writes after replacement",
+      "status": "PASS",
+      "observations": {
+        "positiveActivation": "activated",
+        "positiveActivationResult": {
+          "sameProgram": true,
+          "frameOrdinal": 2,
+          "historyCount": 1
+        },
+        "activation": {
+          "kind": "rejected",
+          "code": "CONTEXT_MISMATCH"
+        }
+      }
+    }
+  ]
+}
