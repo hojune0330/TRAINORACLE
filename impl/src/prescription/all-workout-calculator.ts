@@ -26,6 +26,17 @@ export type WorkoutCalculationInputs = {
   readonly segmentSeconds?: readonly { readonly segmentId: string; readonly seconds: number }[]
   readonly recoverySeconds?: readonly { readonly segmentId: string; readonly seconds: number }[]
 }
+/** Copy verified data without requiring browser or Node globals in the pure core. */
+export function copyWorkoutCalculationInputs(inputs: WorkoutCalculationInputs): WorkoutCalculationInputs {
+  return {
+    ...inputs,
+    confirmedRequirements: [...inputs.confirmedRequirements],
+    fiveK: inputs.fiveK === null ? null : { ...inputs.fiveK },
+    segmentPaces: inputs.segmentPaces.map(row => ({ ...row })),
+    ...(inputs.segmentSeconds === undefined ? {} : { segmentSeconds: inputs.segmentSeconds.map(row => ({ ...row })) }),
+    ...(inputs.recoverySeconds === undefined ? {} : { recoverySeconds: inputs.recoverySeconds.map(row => ({ ...row })) }),
+  }
+}
 export type WorkoutCalculatedStep = {
   readonly key: string; readonly phase: "warmup" | "main" | "cooldown"; readonly segmentId: string
   readonly kind: "WORK" | "BUILDUP" | "PREPARATION" | "RECOVERY"
@@ -187,7 +198,7 @@ export function calculateCatalogWorkout(id: string, inputs: WorkoutCalculationIn
     const knownSeconds = steps.reduce((n, s) => n + (s.seconds?.minimum ?? 0), 0)
     if (inputs.availableSeconds !== null && (seconds?.maximum ?? knownSeconds) > inputs.availableSeconds) unavailable.push("TIME_BUDGET_EXCEEDED")
     if (inputs.availableSeconds !== null && seconds === null) unavailable.push("TIME_BUDGET_UNCONFIRMED")
-    const content = { version: 1 as const, catalogId: id, catalogFingerprint: entry.fingerprint, inputs: structuredClone(inputs), steps,
+    const content = { version: 1 as const, catalogId: id, catalogFingerprint: entry.fingerprint, inputs: copyWorkoutCalculationInputs(inputs), steps,
       totals: { workOccurrences: mainWork.length, recoveryOccurrences: steps.filter(s => s.kind === "RECOVERY").length,
         mainDistanceM: mainWork.every(s => s.distanceM !== null) ? knownMainDistanceM : null, knownMainDistanceM, seconds, knownSeconds },
       unresolved: [...unresolved], unavailable }

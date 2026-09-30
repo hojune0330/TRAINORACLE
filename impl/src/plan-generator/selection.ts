@@ -3,6 +3,8 @@ import { isRecord, parseSafetyGate } from "./input-values"
 import { isVerifiedPlanCandidate } from "./adaptation"
 import { isReviewedMainPlacement } from "./main-placement-policy"
 import { isInitialCandidatePair } from "./support-only-candidate-pair"
+import { copyWorkoutCalculationInputs } from "../prescription/all-workout-calculator"
+import type { CatalogSessionBinding } from "../prescription/catalog-session-binding"
 import type {
   BetaActivePlanSnapshot,
   CanonicalPlanFrame,
@@ -41,6 +43,17 @@ function copyFrame(frame: CanonicalPlanFrame): CanonicalPlanFrame {
     : Object.freeze({ ...base, projectionLengthDays: frame.projectionLengthDays })
 }
 
+function copyCatalogBinding(binding: CatalogSessionBinding): CatalogSessionBinding {
+  return {
+    ...binding,
+    inputs: copyWorkoutCalculationInputs(binding.inputs),
+    originalEnvelope: {
+      rpe: { ...binding.originalEnvelope.rpe },
+      durationMinutes: { ...binding.originalEnvelope.durationMinutes },
+    },
+  }
+}
+
 function copySession(session: PlanSession): PlanSession {
   switch (session.role) {
     case "REST":
@@ -59,7 +72,7 @@ function copySession(session: PlanSession): PlanSession {
         plannedEnergyIntent: session.plannedEnergyIntent,
         prescription: Object.freeze({
           kind: "RPE_TIME_RANGE",
-          ...(session.prescription.catalogWorkout ? { catalogWorkout: structuredClone(session.prescription.catalogWorkout) } : {}),
+          ...(session.prescription.catalogWorkout ? { catalogWorkout: copyCatalogBinding(session.prescription.catalogWorkout) } : {}),
           rpe: Object.freeze({ ...session.prescription.rpe }),
           durationMinutes: Object.freeze({ ...session.prescription.durationMinutes }),
         }),
@@ -81,7 +94,7 @@ function copySession(session: PlanSession): PlanSession {
         plannedEnergyIntent: session.plannedEnergyIntent,
         prescription: Object.freeze({
           kind: "RPE_TIME_RANGE",
-          ...(session.prescription.catalogWorkout ? { catalogWorkout: structuredClone(session.prescription.catalogWorkout) } : {}),
+          ...(session.prescription.catalogWorkout ? { catalogWorkout: copyCatalogBinding(session.prescription.catalogWorkout) } : {}),
           rpe: Object.freeze({ ...session.prescription.rpe }),
           durationMinutes: Object.freeze({ ...session.prescription.durationMinutes }),
         }),
