@@ -1,21 +1,20 @@
 {
   "kind": "TRAINORACLE_PAGES_DEPLOYMENT",
-  "sourceSha": "d4b3680da6cf3ba065a389c8d8d1cfef8781c9d3",
-  "previousPagesSha": "569eea19ce3bd8796b94336f5053ccecfd587f5d",
+  "sourceSha": "b00588f6c49da52a3faa14556651d4ccd1ee2fd4",
+  "previousPagesSha": "b1a67ef1ab87d3c3e749dffdb7b87dadd743884f",
   "workflowRunId": null,
   "workflowAttempt": null,
   "deploymentMethod": "MANUAL_OWNER_APPROVED",
-  "deployedAt": "2026-09-29T11:46:39.758Z",
+  "deployedAt": "2026-09-30T09:42:27.711Z",
   "verification": {
-    "focusedDomainTests": 79,
-    "focusedUiTests": 6,
-    "gatewayAndSqlTests": 19,
-    "syntheticBrowserTests": 6,
+    "calculationAndBindingTests": 354,
+    "serverCodecTests": 101,
+    "syntheticBrowserTests": 3,
     "typecheck": "PASS",
     "productionBuild": "PASS",
     "fullRegression": "NOT_RUN",
     "githubCi": "NOT_USED_AS_DEPLOYMENT_EVIDENCE",
     "productionAccountRoundtrip": "NOT_RUN"
   },
-  "scope": "Athlete-confirmed bounded remainder adjustments for eligible V3 plans; no automatic load increases"
+  "scope": "117 workout configurations: calculation, plan binding, structured actual logs, calendar context and role colors; no automatic load increases"
 }
