@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react"
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { AthleteRecord } from "../../domain/athlete-records"
@@ -19,6 +19,10 @@ import { createPlannedSessionLogDraft } from "../../domain/planned-session-link"
 import { derivePlanCycleResponse } from "../../domain/plan-cycle-response"
 import type { PostSessionEntry } from "../../domain/journal-schema"
 import type { PlanSession } from "@impl/plan-generator/types"
+import { PLAN_ADAPTATION_CONTEXT_STORAGE_KEY } from "../../domain/plan-adaptation-ui-context"
+import { replacedReplanFixture } from "../../domain/execution-replan-lineage.test-fixture"
+import type { PrepareNextFrameResult } from "../../domain/plan-adaptation-ui"
+import { acceptPreparedNextFrameAdaptation } from "../../domain/plan-adaptation-ui"
 
 const APPROVAL_5000 = DETAILED_PRESCRIPTION_APPROVALS.find(
   (approval) => approval.targetEventDistanceM === 5000,
@@ -57,6 +61,173 @@ afterEach(() => {
 })
 
 describe("next-frame adaptation flow", () => {
+  it("does not offer a PB/SB route without an approved record-triggered transform", async () => {
+    const user = userEvent.setup()
+    const { state } = await createBoundActivePlan()
+    render(<PlanAdaptationFlow state={state} />)
+    await openAdaptation(user)
+    expect(screen.queryByRole("button", { name: /최근 기록이 좋아졌어요/u })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /다음 계획을 조정하고 싶어요/u })).toBeEnabled()
+  })
+
+  it("recovers from preparation errors without leaving the user waiting", async () => {
+    const user = userEvent.setup()
+    const { state } = await createBoundActivePlan()
+    const onPrepare = vi.fn(async () => { throw Error("synthetic preparation failure") })
+    render(<PlanAdaptationFlow state={state} onPrepare={onPrepare} />)
+    await openAdaptation(user)
+    await chooseReduction(user)
+    expect(await screen.findByRole("status")).toHaveTextContent("다음 계획안을 불러오지 못했어요")
+    expect(screen.queryByText("다음 계획안을 확인하고 있어요.")).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "다음 계획 조정하기" })).toBeEnabled()
+  })
+
+  it("ignores a late preparation response after going back and prevents double submissions", async () => {
+    const user = userEvent.setup()
+    const { state } = await createBoundActivePlan()
+    let resolve!: (result: PrepareNextFrameResult) => void
+    const onPrepare = vi.fn(() => new Promise<PrepareNextFrameResult>(done => { resolve = done }))
+    render(<PlanAdaptationFlow state={state} onPrepare={onPrepare} />)
+    await openAdaptation(user)
+    await user.click(screen.getByRole("button", { name: /다음 계획을 조정하고 싶어요/u }))
+    await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
+    await user.dblClick(screen.getByRole("button", { name: /훈련량을 조금 줄인 다음 계획/u }))
+    expect(onPrepare).toHaveBeenCalledTimes(1)
+    await user.click(screen.getByRole("button", { name: "이전 단계" }))
+    await act(async () => resolve({ kind: "unavailable", code: "TEST_LATE_RESPONSE" }))
+    expect(screen.getByRole("heading", { name: "현재 몸 상태를 확인해 주세요" })).toBeVisible()
+    expect(screen.queryByText(/다음 계획안을 만들지 못했어요/u)).not.toBeInTheDocument()
+  })
+
+  it("does not show an old preparation response after the current plan changes", async () => {
+    const user = userEvent.setup()
+    const { state } = await createBoundActivePlan()
+    let resolve!: (result: PrepareNextFrameResult) => void
+    const onPrepare = vi.fn(() => new Promise<PrepareNextFrameResult>(done => { resolve = done }))
+    const view = render(<PlanAdaptationFlow state={state} onPrepare={onPrepare} />)
+    await openAdaptation(user)
+    await chooseReduction(user)
+    view.rerender(<PlanAdaptationFlow state={{ ...state, generatedAt: "2026-08-19T00:00:00.000Z" }} onPrepare={onPrepare} />)
+    await act(async () => resolve({ kind: "unavailable", code: "TEST_LATE_RESPONSE" }))
+    expect(screen.queryByRole("heading", { name: "다음 계획 조정" })).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.getByRole("button", { name: "다음 계획 조정하기" })).toBeEnabled())
+  })
+
+  it("does not claim successful or failed storage when acceptance throws", async () => {
+    const user = userEvent.setup()
+    const { state } = await createBoundActivePlan()
+    render(<PlanAdaptationFlow state={state} onAccept={async () => { throw Error("synthetic unknown acknowledgement") }} />)
+    await openAdaptation(user)
+    await chooseReduction(user)
+    await user.click(await screen.findByRole("button", { name: "이 다음 계획 선택하기" }))
+    expect(await screen.findByRole("status")).toHaveTextContent("저장됐는지 확인하지 못했어요")
+    expect(screen.getByRole("button", { name: "다음 계획 조정하기" })).toBeEnabled()
+  })
+
+  it("reloads the saved pending plan on reopening after a lost acceptance response", async () => {
+    const user = userEvent.setup()
+    const { state } = await createBoundActivePlan()
+    render(<PlanAdaptationFlow state={state} onAccept={async request => {
+      expect((await acceptPreparedNextFrameAdaptation(request)).kind).toBe("accepted")
+      throw Error("synthetic lost response after saved result")
+    }} />)
+    await openAdaptation(user)
+    await chooseAndAcceptReduction(user)
+    expect(await screen.findByRole("status")).toHaveTextContent("저장됐는지 확인하지 못했어요")
+    await user.click(screen.getByRole("button", { name: "현재 계획으로 돌아가기" }))
+    await openAdaptation(user)
+    expect(await screen.findByRole("status")).toHaveTextContent("다음 주기에 사용할 보수적인 계획")
+    expect(screen.queryByRole("heading", { name: "조정 이유를 선택해 주세요" })).not.toBeInTheDocument()
+  })
+
+  it("does not treat a pending storage read failure as absence and retries on reopening", async () => {
+    const user = userEvent.setup()
+    const { state } = await createBoundActivePlan()
+    const first = render(<PlanAdaptationFlow state={state} />)
+    await openAdaptation(user)
+    await chooseAndAcceptReduction(user)
+    await screen.findByRole("status")
+    first.unmount()
+    const read = Storage.prototype.getItem
+    let fail = true
+    const spy = vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (this: Storage, key) {
+      if (fail && key === "trainoracle.plan-beta.adaptation.v1") throw Error("synthetic read failure")
+      return read.call(this, key)
+    })
+    try {
+      render(<PlanAdaptationFlow state={state} />)
+      await openAdaptation(user)
+      expect(await screen.findByRole("status")).toHaveTextContent("선택해 둔 다음 계획을 확인하지 못했어요")
+      expect(screen.queryByRole("heading", { name: "조정 이유를 선택해 주세요" })).not.toBeInTheDocument()
+      fail = false
+      await user.click(screen.getByRole("button", { name: "현재 계획으로 돌아가기" }))
+      await openAdaptation(user)
+      expect(await screen.findByRole("status")).toHaveTextContent("다음 주기에 사용할 보수적인 계획")
+    } finally { spy.mockRestore() }
+  })
+
+  it("releases the new plan summary while obsolete preparation is still unresolved", async () => {
+    const user = userEvent.setup()
+    const { state } = await createBoundActivePlan()
+    let resolve!: (result: PrepareNextFrameResult) => void
+    const onPrepare = vi.fn(() => new Promise<PrepareNextFrameResult>(done => { resolve = done }))
+    const view = render(<PlanAdaptationFlow state={state} onPrepare={onPrepare} />)
+    await openAdaptation(user)
+    await chooseReduction(user)
+    const changed = replacedReplanFixture().state
+    view.rerender(<PlanAdaptationFlow state={changed} onPrepare={onPrepare} />)
+    await openAdaptation(user)
+    expect(screen.getByRole("heading", { name: "이번 주기 기록 요약" })).toBeVisible()
+    await act(async () => resolve({ kind: "unavailable", code: "TEST_OBSOLETE" }))
+    expect(screen.getByRole("heading", { name: "이번 주기 기록 요약" })).toBeVisible()
+  })
+
+  it("does not let an obsolete request completion unlock a newer request", async () => {
+    const user = userEvent.setup()
+    const { state } = await createBoundActivePlan()
+    const resolve: Array<(result: PrepareNextFrameResult) => void> = []
+    const onPrepare = vi.fn(() => new Promise<PrepareNextFrameResult>(done => { resolve.push(done) }))
+    const view = render(<PlanAdaptationFlow state={state} onPrepare={onPrepare} />)
+    await openAdaptation(user)
+    await chooseReduction(user)
+    view.rerender(<PlanAdaptationFlow state={{ ...state, generatedAt: "2026-08-18T11:00:00.000Z" }} onPrepare={onPrepare} />)
+    await openAdaptation(user)
+    await chooseReduction(user)
+    expect(onPrepare).toHaveBeenCalledTimes(2)
+    await act(async () => resolve[0]!({ kind: "unavailable", code: "TEST_OBSOLETE" }))
+    expect(screen.getByRole("button", { name: /훈련량을 조금 줄인 다음 계획/u })).toBeDisabled()
+    await act(async () => resolve[1]!({ kind: "unavailable", code: "TEST_CURRENT" }))
+    expect(await screen.findByRole("status")).toHaveTextContent("현재 조건에 맞는 다음 계획안을 만들지 못했어요")
+  })
+
+  it("explains missing comparison context before asking questions and keeps cycle evidence accessible", async () => {
+    const user = userEvent.setup()
+    const { state } = await createBoundActivePlan()
+    window.localStorage.removeItem(PLAN_ADAPTATION_CONTEXT_STORAGE_KEY)
+    const onPrepare = vi.fn()
+    render(<PlanAdaptationFlow state={state} onPrepare={onPrepare} onLoadEntries={() => []} />)
+    await openAdaptation(user)
+    expect(screen.getByText(/비교할 다음 계획안을 불러오지 못했어요/u)).toBeVisible()
+    expect(screen.queryByRole("button", { name: /최근 기록이 좋아졌어요/u })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /다음 계획을 조정하고 싶어요/u })).not.toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "이번 주기 기록 요약" })).toBeVisible()
+    expect(onPrepare).not.toHaveBeenCalled()
+  })
+
+  it("does not promise a next-frame transform after manual replacements", async () => {
+    const user = userEvent.setup()
+    const { state } = replacedReplanFixture()
+    const before = JSON.stringify(state)
+    const onPrepare = vi.fn()
+    render(<PlanAdaptationFlow state={state} onPrepare={onPrepare} onLoadEntries={() => []} />)
+    await openAdaptation(user)
+    expect(screen.getByText(/바꾼 훈련을 반영한 다음 주기 조정은 아직 지원하지 않아요/u)).toBeVisible()
+    expect(screen.queryByRole("button", { name: /다음 계획을 조정하고 싶어요/u })).not.toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "이번 주기 기록 요약" })).toBeVisible()
+    expect(onPrepare).not.toHaveBeenCalled()
+    expect(JSON.stringify(state)).toBe(before)
+  })
+
   it("shows detailed-session RPE as an observation without inventing a planned RPE", async () => {
     const { state } = await createBoundActivePlan()
     const session = state.activePlan.sessions.find(item => item.prescription.kind === "PACE_TARGET")
@@ -99,7 +270,7 @@ describe("next-frame adaptation flow", () => {
     await user.click(screen.getByRole("button", { name: /이번 주기 수행 기록을 볼래요/u }))
 
     expect(screen.getByRole("heading", { name: "이번 주기 기록 요약" })).toBeVisible()
-    expect(screen.getByText(/계획에서 이어 쓴 일지가 아직 없/u)).toBeVisible()
+    expect(screen.getByText("현재 계획과 연결해 비교할 일지가 없어요")).toBeVisible()
     expect(screen.getByText(/일지 원문·비밀 메모·통증 문장은 읽지 않/u)).toBeVisible()
     expect(screen.getByText(/이 결과만으로 훈련량을 늘리지 않/u)).toBeVisible()
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument()
@@ -129,7 +300,7 @@ describe("next-frame adaptation flow", () => {
 
   it("shows only strictly eligible same-event PB/SB records before the volume choice", async () => {
     const user = userEvent.setup()
-    const { state } = await createBoundActivePlan()
+    const { state } = await createBoundActivePlan("CONSERVATIVE")
     const now = new Date("2026-08-18T12:00:00.000Z")
     const scopedState = { ...state, generatedAt: "2026-08-10T12:00:00.000Z" }
     const records = [
@@ -289,19 +460,24 @@ function cycleEntry(state: PlanBetaState, session: PlanSession, rpe: number): Po
 }
 
 async function openAdaptation(user: ReturnType<typeof userEvent.setup>): Promise<void> {
-  const action = screen.getByRole("button", { name: "다음 계획 조정하기" })
+  const action = screen.getByRole("button", { name: /^(다음 계획 조정하기|이번 주기 기록 확인)$/u })
   await waitFor(() => expect(action).toBeEnabled())
   await user.click(action)
+  await waitFor(() => expect(action).toHaveAttribute("aria-expanded", "true"))
 }
 
 async function chooseAndAcceptReduction(user: ReturnType<typeof userEvent.setup>): Promise<void> {
-  await user.click(screen.getByRole("button", { name: /다음 계획을 조정하고 싶어요/u }))
-  await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
-  await user.click(screen.getByRole("button", { name: /훈련량을 조금 줄인 다음 계획/u }))
+  await chooseReduction(user)
   await user.click(await screen.findByRole("button", { name: "이 다음 계획 선택하기" }))
 }
 
-async function createBoundActivePlan(): Promise<{ readonly state: PlanBetaState }> {
+async function chooseReduction(user: ReturnType<typeof userEvent.setup>): Promise<void> {
+  await user.click(screen.getByRole("button", { name: /다음 계획을 조정하고 싶어요/u }))
+  await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
+  await user.click(screen.getByRole("button", { name: /훈련량을 조금 줄인 다음 계획/u }))
+}
+
+async function createBoundActivePlan(kind: "BALANCED" | "CONSERVATIVE" = "BALANCED"): Promise<{ readonly state: PlanBetaState }> {
   const now = new Date()
   const anchor = athleteRecord("00000000-0000-4000-8000-000000000010", 5000, "2026-08-01", now)
   saveAthleteRecord(anchor, now)
@@ -318,8 +494,9 @@ async function createBoundActivePlan(): Promise<{ readonly state: PlanBetaState 
     selectedDetailedTemplateRef: TEMPLATE_5000,
   }, "NO_KNOWN_RISK", { selectedRecordId: anchor.id })
   if (generated.kind !== "generated") throw new Error(`Expected generated plan, got ${generated.kind}`)
+  const candidate = generated.generated.candidates.find(item => item.kind === kind)!
   const saved = await saveSelectedPlanCandidate(
-    { candidateId: generated.generated.candidates[0].candidateId, startDate: "2026-08-18" },
+    { candidateId: candidate.candidateId, startDate: "2026-08-18" },
     generated.generated,
     generated.gate,
     generated.intake,

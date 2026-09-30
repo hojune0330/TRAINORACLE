@@ -1,0 +1,218 @@
+{
+  "scope": "isolated real component with synthetic fixtures, not full app or production",
+  "cases": [
+    {
+      "mode": "changed",
+      "width": 320,
+      "enlarged": false,
+      "overflow": false,
+      "errors": [],
+      "adjustmentChoices": 0,
+      "cycleEvidenceReached": true,
+      "targets": [
+        {
+          "name": "이번 주기 기록 확인현재 계획은 그대로 두고 수행 기록 확인",
+          "height": 69.3125,
+          "width": 288
+        },
+        {
+          "name": "",
+          "height": 44,
+          "width": 44
+        }
+      ],
+      "screenshot": "changed-320.png"
+    },
+    {
+      "mode": "missing",
+      "width": 320,
+      "enlarged": false,
+      "overflow": false,
+      "errors": [],
+      "adjustmentChoices": 0,
+      "cycleEvidenceReached": true,
+      "targets": [
+        {
+          "name": "이번 주기 기록 확인현재 계획은 그대로 두고 수행 기록 확인",
+          "height": 69.3125,
+          "width": 288
+        },
+        {
+          "name": "",
+          "height": 44,
+          "width": 44
+        }
+      ],
+      "screenshot": "missing-320.png"
+    },
+    {
+      "mode": "supported",
+      "width": 320,
+      "enlarged": false,
+      "overflow": false,
+      "errors": [],
+      "adjustmentChoices": 1,
+      "cycleEvidenceReached": true,
+      "targets": [
+        {
+          "name": "다음 계획 조정하기현재 계획은 바꾸지 않고 다음 주기 계획안만 확인",
+          "height": 88.15625,
+          "width": 288
+        },
+        {
+          "name": "",
+          "height": 44,
+          "width": 44
+        },
+        {
+          "name": "현재 기준 유지새 계획안을 저장하지 않고 현재 계획과 다음 계획 기준을 유지해요. 다른 훈련법으로 자동 교체하지 않아요.",
+          "height": 108,
+          "width": 288
+        }
+      ],
+      "screenshot": "supported-320.png"
+    },
+    {
+      "mode": "changed",
+      "width": 375,
+      "enlarged": false,
+      "overflow": false,
+      "errors": [],
+      "adjustmentChoices": 0,
+      "cycleEvidenceReached": true,
+      "targets": [
+        {
+          "name": "이번 주기 기록 확인현재 계획은 그대로 두고 수행 기록 확인",
+          "height": 69.3125,
+          "width": 343
+        },
+        {
+          "name": "",
+          "height": 44,
+          "width": 44
+        }
+      ],
+      "screenshot": "changed-375.png"
+    },
+    {
+      "mode": "missing",
+      "width": 375,
+      "enlarged": false,
+      "overflow": false,
+      "errors": [],
+      "adjustmentChoices": 0,
+      "cycleEvidenceReached": true,
+      "targets": [
+        {
+          "name": "이번 주기 기록 확인현재 계획은 그대로 두고 수행 기록 확인",
+          "height": 69.3125,
+          "width": 343
+        },
+        {
+          "name": "",
+          "height": 44,
+          "width": 44
+        }
+      ],
+      "screenshot": "missing-375.png"
+    },
+    {
+      "mode": "supported",
+      "width": 375,
+      "enlarged": false,
+      "overflow": false,
+      "errors": [],
+      "adjustmentChoices": 1,
+      "cycleEvidenceReached": true,
+      "targets": [
+        {
+          "name": "다음 계획 조정하기현재 계획은 바꾸지 않고 다음 주기 계획안만 확인",
+          "height": 69.3125,
+          "width": 343
+        },
+        {
+          "name": "",
+          "height": 44,
+          "width": 44
+        },
+        {
+          "name": "현재 기준 유지새 계획안을 저장하지 않고 현재 계획과 다음 계획 기준을 유지해요. 다른 훈련법으로 자동 교체하지 않아요.",
+          "height": 108,
+          "width": 343
+        }
+      ],
+      "screenshot": "supported-375.png"
+    },
+    {
+      "mode": "changed",
+      "width": 320,
+      "enlarged": true,
+      "overflow": false,
+      "errors": [],
+      "adjustmentChoices": 0,
+      "cycleEvidenceReached": true,
+      "targets": [
+        {
+          "name": "이번 주기 기록 확인현재 계획은 그대로 두고 수행 기록 확인",
+          "height": 148.3125,
+          "width": 288
+        },
+        {
+          "name": "",
+          "height": 44,
+          "width": 44
+        }
+      ],
+      "screenshot": "changed-320-text200-reduced.png"
+    },
+    {
+      "mode": "missing",
+      "width": 320,
+      "enlarged": true,
+      "overflow": false,
+      "errors": [],
+      "adjustmentChoices": 0,
+      "cycleEvidenceReached": true,
+      "targets": [
+        {
+          "name": "이번 주기 기록 확인현재 계획은 그대로 두고 수행 기록 확인",
+          "height": 148.3125,
+          "width": 288
+        },
+        {
+          "name": "",
+          "height": 44,
+          "width": 44
+        }
+      ],
+      "screenshot": "missing-320-text200-reduced.png"
+    },
+    {
+      "mode": "supported",
+      "width": 320,
+      "enlarged": true,
+      "overflow": false,
+      "errors": [],
+      "adjustmentChoices": 1,
+      "cycleEvidenceReached": true,
+      "targets": [
+        {
+          "name": "다음 계획 조정하기현재 계획은 바꾸지 않고 다음 주기 계획안만 확인",
+          "height": 186,
+          "width": 288
+        },
+        {
+          "name": "",
+          "height": 44,
+          "width": 44
+        },
+        {
+          "name": "현재 기준 유지새 계획안을 저장하지 않고 현재 계획과 다음 계획 기준을 유지해요. 다른 훈련법으로 자동 교체하지 않아요.",
+          "height": 108,
+          "width": 288
+        }
+      ],
+      "screenshot": "supported-320-text200-reduced.png"
+    }
+  ]
+}

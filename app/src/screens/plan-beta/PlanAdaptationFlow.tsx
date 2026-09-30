@@ -28,6 +28,8 @@ import { derivePlanCycleResponse } from "../../domain/plan-cycle-response"
 import type { JournalEntry } from "../../domain/journal-schema"
 import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
 import { PlanCycleEvidence } from "./PlanCycleEvidence"
+import { inspectNextFrameAdaptation } from "../../domain/plan-adaptation-availability"
+import { localAccountScopeSnapshot, localAccountScopeIsCurrent } from "../../domain/account/local-account-scope"
 
 type Step = "closed" | "reason" | "cycle" | "record" | "safety" | "choice" | "review" | "result" | "pending"
 type Reason = "PB_SB" | "EXPLICIT_REQUEST"
@@ -62,7 +64,16 @@ export function PlanAdaptationFlow({
   const [busy, setBusy] = React.useState(false)
   const [pending, setPending] = React.useState<PendingNextFrameSuccessor | null>(null)
   const [pendingState, setPendingState] = React.useState<PlanBetaState | null>(null)
+  const [pendingRevision, setPendingRevision] = React.useState(0)
+  const openAfterRead = React.useRef(false)
   const activeStepRef = React.useRef<HTMLDivElement>(null)
+  const requestEpoch = React.useRef(0)
+  const inFlight = React.useRef(false)
+  const currentState = React.useRef(state)
+  currentState.current = state
+  const availability = inspectNextFrameAdaptation(state)
+  const canRequest = availability.kind === "available" && availability.explicitRequest
+  const canUseRecord = availability.kind === "available" && availability.pbSb
   const pendingReady = pendingState === state
   const matchingPending = pendingReady ? pending : null
   const records = React.useMemo(
@@ -76,30 +87,49 @@ export function PlanAdaptationFlow({
   useActiveContentScroll(step === "closed" ? null : step, activeStepRef)
 
   React.useEffect(() => {
+    requestEpoch.current += 1
+    inFlight.current = false
+    setBusy(false)
+    openAfterRead.current = false
+    setStep("closed")
+    setReason(null)
+    setRecord(null)
+    setCurrentCheck(null)
+    setPrepared(null)
+    setMessage(null)
+    return () => { requestEpoch.current += 1 }
+  }, [state])
+
+  React.useEffect(() => {
     let current = true
+    const scope = localAccountScopeSnapshot()
     const loadPending = async () => {
       try {
-        if (state.version !== 3) {
-          setPending(null)
-          setPendingState(state)
-          return
-        }
-        const loaded = await onLoadPending(state)
-        if (!current) return
+        const loaded = state.version === 3 ? await onLoadPending(state) : null
+        if (!current || !localAccountScopeIsCurrent(scope)) return
         setPending(loaded)
         setPendingState(state)
         onPendingChange?.(loaded !== null)
+        if (openAfterRead.current) {
+          openAfterRead.current = false
+          setStep(loaded !== null ? "pending" : inspectNextFrameAdaptation(state).kind === "available" ? "reason" : "cycle")
+        }
       } catch {
-        if (!current) return
+        if (!current || !localAccountScopeIsCurrent(scope)) return
         setPending(null)
         setPendingState(state)
+        if (openAfterRead.current) {
+          openAfterRead.current = false
+          setMessage("선택해 둔 다음 계획을 확인하지 못했어요. 현재 계획은 그대로예요. 다시 열어 확인해 주세요.")
+          setStep("result")
+        }
       }
     }
     void loadPending()
     return () => {
       current = false
     }
-  }, [onLoadPending, onPendingChange, state])
+  }, [onLoadPending, onPendingChange, state, pendingRevision])
 
   const chooseReason = (nextReason: Reason) => {
     setReason(nextReason)
@@ -109,46 +139,68 @@ export function PlanAdaptationFlow({
   }
 
   const prepareCandidate = async () => {
-    if (reason === null || currentCheck === null) return
-    const operationAt = new Date()
-    const safety = onEvaluateSafety(state, currentCheck, operationAt)
+    if (reason === null || currentCheck === null || inFlight.current) return
+    const epoch = ++requestEpoch.current
+    inFlight.current = true
     setBusy(true)
-    const result = await onPrepare({
-      state,
-      reason,
-      record,
-      safety,
-      operationAt: operationAt.toISOString(),
-    })
-    setBusy(false)
-    handlePrepared(result, setPrepared, setMessage, setStep)
+    try {
+      const operationAt = new Date()
+      const safety = onEvaluateSafety(state, currentCheck, operationAt)
+      const result = await onPrepare({ state, reason, record, safety, operationAt: operationAt.toISOString() })
+      if (epoch === requestEpoch.current && currentState.current === state) {
+        handlePrepared(result, setPrepared, setMessage, setStep)
+      }
+    } catch {
+      if (epoch === requestEpoch.current && currentState.current === state) {
+        setMessage("다음 계획안을 불러오지 못했어요. 현재 계획은 그대로예요. 잠시 후 다시 확인해 주세요.")
+        setStep("result")
+      }
+    } finally {
+      if (epoch === requestEpoch.current && currentState.current === state) {
+        inFlight.current = false
+        setBusy(false)
+      }
+    }
   }
 
   const accept = async () => {
-    if (prepared === null || currentCheck === null) return
+    if (prepared === null || currentCheck === null || inFlight.current) return
     if (state.version !== 3) {
       setMessage("이전 계획은 다음 계획 조정을 지원하지 않아요.")
       setStep("result")
       return
     }
-    const operationAt = new Date()
-    const safety = onEvaluateSafety(state, currentCheck, operationAt)
+    const epoch = ++requestEpoch.current
+    inFlight.current = true
     setBusy(true)
-    const result = await onAccept({
-      prepared,
-      predecessorState: state,
-      safety,
-      operationAt: operationAt.toISOString(),
-    })
-    setBusy(false)
-    if (result.kind === "accepted") {
-      setPendingState(state)
-      onPendingChange?.(true)
+    try {
+      const operationAt = new Date()
+      const safety = onEvaluateSafety(state, currentCheck, operationAt)
+      const result = await onAccept({ prepared, predecessorState: state, safety, operationAt: operationAt.toISOString() })
+      if (epoch !== requestEpoch.current || currentState.current !== state) return
+      if (result.kind === "accepted") {
+        setPendingState(state)
+        onPendingChange?.(true)
+      }
+      handleAccepted(result, setPending, setMessage, setStep)
+    } catch {
+      if (epoch === requestEpoch.current && currentState.current === state) {
+        setMessage("다음 계획안이 저장됐는지 확인하지 못했어요. 다시 열어 선택해 둔 계획이 있는지 확인해 주세요.")
+        setStep("result")
+      }
+    } finally {
+      if (epoch === requestEpoch.current && currentState.current === state) {
+        inFlight.current = false
+        setBusy(false)
+      }
     }
-    handleAccepted(result, setPending, setMessage, setStep)
   }
 
   const reset = () => {
+    requestEpoch.current += 1
+    inFlight.current = false
+    setBusy(false)
+    openAfterRead.current = false
     setReason(null)
     setRecord(null)
     setCurrentCheck(null)
@@ -157,46 +209,59 @@ export function PlanAdaptationFlow({
     setStep("closed")
   }
 
+  const entryLabel = matchingPending === null && !canRequest && !canUseRecord
+    ? "이번 주기 기록 확인" : "다음 계획 조정하기"
+
   return (
     <section className="plan-adaptation" aria-label="다음 계획 조정">
       <button
         className="plan-adaptation__entry"
         type="button"
-        aria-label="다음 계획 조정하기"
+        aria-label={entryLabel}
         aria-expanded={step !== "closed"}
-        aria-busy={!pendingReady}
-        disabled={!pendingReady}
-        onClick={() => setStep(matchingPending === null ? "reason" : "pending")}
+        aria-busy={!pendingReady || busy}
+        disabled={!pendingReady || busy}
+        onClick={() => {
+          if (step !== "closed") { reset(); return }
+          openAfterRead.current = true
+          setPendingState(null)
+          setPendingRevision(value => value + 1)
+        }}
       >
         <SlidersHorizontal aria-hidden="true" size={18} />
         <span>
-          <strong>다음 계획 조정하기</strong>
-          <small>{matchingPending === null ? "현재 계획은 바꾸지 않고 다음 주기 계획안만 확인" : "선택해 둔 다음 계획 확인"}</small>
+          <strong>{entryLabel}</strong>
+          <small>{matchingPending !== null ? "선택해 둔 다음 계획 확인"
+            : availability.kind === "available" ? "현재 계획은 바꾸지 않고 다음 주기 계획안만 확인"
+              : "현재 계획은 그대로 두고 수행 기록 확인"}</small>
         </span>
       </button>
 
       {step !== "closed" && (
         <div ref={activeStepRef} className="plan-adaptation__panel active-content-scroll-target" aria-live="polite">
           {step === "reason" && (
-            <DecisionStep title="조정 이유를 선택해 주세요" onBack={reset}>
-              <p className="plan-adaptation__term-help">
+            <DecisionStep title={availability.kind === "available" ? "조정 이유를 선택해 주세요" : "이번 주기 기록 확인"} onBack={reset}>
+              {availability.kind === "unavailable" && (
+                <p className="plan-adaptation__notice" role="status">{unavailableMessage(availability.code)}</p>
+              )}
+              {canUseRecord && <p className="plan-adaptation__term-help">
                 PB<TermHelp term="pb" /> · SB<TermHelp term="sb" /> 뜻 확인
-              </p>
-              <PlanChoice
+              </p>}
+              {canUseRecord && <PlanChoice
                 title="최근 기록이 좋아졌어요"
                 detail="계획 시작 뒤 달성한 같은 종목 PB 또는 SB를 확인해요."
                 selected={false}
                 onClick={() => chooseReason("PB_SB")}
-              />
-              <PlanChoice
+              />}
+              {canRequest && <PlanChoice
                 title="다음 계획을 조정하고 싶어요"
-                detail="메모를 쓰지 않고 다음 주기의 훈련량만 비교해요."
+                detail="다음 주기의 훈련량만 비교해요."
                 selected={false}
                 onClick={() => chooseReason("EXPLICIT_REQUEST")}
-              />
+              />}
               <PlanChoice
                 title="이번 주기 수행 기록을 볼래요"
-                detail="계획에서 이어 쓴 일지의 RPE만 비교해 유지·감량·확인 방향을 설명해요."
+                detail="계획과 실제 RPE를 비교해요."
                 selected={false}
                 onClick={() => setStep("cycle")}
               />
@@ -204,9 +269,13 @@ export function PlanAdaptationFlow({
           )}
 
           {step === "cycle" && (
-            <DecisionStep title="이번 주기 기록 요약" onBack={() => setStep("reason")}>
+            <DecisionStep title="이번 주기 기록 요약" onBack={availability.kind === "available" ? () => setStep("reason") : reset}>
+              {availability.kind === "unavailable" && (
+                <p className="plan-adaptation__notice" role="status">{unavailableMessage(availability.code)}</p>
+              )}
               <PlanCycleEvidence response={cycleResponse} />
               {cycleResponse.recommendation === "REDUCE_OR_REVIEW"
+                && canRequest
                 && state.activePlan.candidateKind === "BALANCED" && (
                 <PlanChoice
                   title="훈련량을 줄인 계획안 확인"
@@ -215,7 +284,7 @@ export function PlanAdaptationFlow({
                   onClick={() => chooseReason("EXPLICIT_REQUEST")}
                 />
               )}
-              <PlanChoice
+              {availability.kind === "available" && <PlanChoice
                 title="현재 기준 유지"
                 detail="새 계획안을 저장하지 않고 현재 계획과 다음 계획 기준을 유지해요. 다른 훈련법으로 자동 교체하지 않아요."
                 selected={false}
@@ -223,7 +292,7 @@ export function PlanAdaptationFlow({
                   setMessage("현재 기준을 유지해요. 강도·양·횟수와 훈련법은 바꾸지 않았습니다.")
                   setStep("result")
                 }}
-              />
+              />}
             </DecisionStep>
           )}
 
@@ -277,8 +346,14 @@ export function PlanAdaptationFlow({
           )}
 
           {step === "choice" && (
-            <DecisionStep title="다음 계획의 기준을 선택해 주세요" onBack={() => setStep("safety")}>
+            <DecisionStep title="다음 계획의 기준을 선택해 주세요" onBack={() => {
+              requestEpoch.current += 1
+              inFlight.current = false
+              setBusy(false)
+              setStep("safety")
+            }}>
               <PlanChoice
+                disabled={busy}
                 title={reason === "PB_SB"
                   ? "기록 갱신을 반영한 다음 계획안"
                   : state.activePlan.candidateKind === "BALANCED"
@@ -293,6 +368,7 @@ export function PlanAdaptationFlow({
                 onClick={() => void prepareCandidate()}
               />
               <PlanChoice
+                disabled={busy}
                 title="현재 계획과 같은 기준 유지"
                 detail="새 계획안을 만들지 않고 현재 계획과 다음 계획 기준을 유지해요."
                 selected={false}
@@ -360,10 +436,29 @@ function handlePrepared(
   }
   setMessage(result.kind === "blocked"
     ? "현재 안전 상태를 다시 확인해야 해서 다음 계획안을 만들지 않았어요. 현재 계획은 그대로예요."
-    : result.code === "COACH_CONNECTION_REQUIRED"
-      ? "이 계획은 지도자 확인이 필요해요. 인증된 지도자 연결이 없어 선수 화면에서는 선택할 수 없고 현재 계획은 그대로예요."
-      : "이 계획에는 정확한 종목과 비교할 계획안이 함께 저장되어 있지 않아 조정 계획안을 만들 수 없어요. 현재 계획은 그대로예요.")
+    : unavailableMessage(result.code))
   setStep("result")
+}
+
+function unavailableMessage(code: string): string {
+  switch (code) {
+    case "CHANGED_PLAN_TRANSFORM_UNAVAILABLE":
+      return "바꾼 훈련을 반영한 다음 주기 조정은 아직 지원하지 않아요. 수행 기록은 확인할 수 있어요."
+    case "CATALOG_TRANSFORM_UNAVAILABLE":
+      return "이 상세 훈련을 다음 주기용으로 조정하는 기능은 아직 지원하지 않아요. 수행 기록은 확인할 수 있어요."
+    case "COACH_CONNECTION_REQUIRED":
+      return "이 계획은 지도자 확인이 필요해요. 인증된 지도자 연결이 없어 선수 화면에서는 선택할 수 없고 현재 계획은 그대로예요."
+    case "ADAPTATION_CONTEXT_MISMATCH":
+      return "저장된 비교안이 현재 계획과 달라 사용할 수 없어요. 현재 계획과 기록은 그대로예요."
+    case "ADAPTATION_CONTEXT_UNAVAILABLE":
+      return "비교할 다음 계획안을 불러오지 못했어요. 현재 계획과 수행 기록은 그대로예요."
+    case "NO_REGISTERED_TRANSFORM":
+      return "이 계획에서 제안할 수 있는 다음 주기 조정안이 아직 없어요. 현재 계획과 기록은 그대로예요."
+    case "RECORD_NOT_ELIGIBLE":
+      return "이 기록은 이번 조정의 기준으로 사용할 수 없어요. 계획 시작 뒤의 같은 종목 기록인지 확인해 주세요."
+    default:
+      return "현재 조건에 맞는 다음 계획안을 만들지 못했어요. 현재 계획과 기록은 그대로예요."
+  }
 }
 
 function handleAccepted(

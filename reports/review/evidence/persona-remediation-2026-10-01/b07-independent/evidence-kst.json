@@ -1,0 +1,184 @@
+{
+  "syntheticOnly": true,
+  "scope": "B07 ordinary V3 device-local path",
+  "clock": "2026-10-01T03:00:00.000Z",
+  "timezone": "Asia/Seoul",
+  "evidence": {
+    "lineageControl": {
+      "initial": {
+        "schemaVersion": 1,
+        "programLineageId": "sha256:46ec1e6caa560ad9372d2d1501359b633d0446a0af05a2f56c44c24ff56db867",
+        "macrocycleOrdinal": 1,
+        "frameOrdinal": 1,
+        "mesocycleOrdinal": 1,
+        "phase": "BASE",
+        "frameLengthDays": 9.5,
+        "targetFrameCount": 18,
+        "startedAt": "2026-10-01T03:00:00.000Z",
+        "frameStartedAt": "2026-10-01T03:00:00.000Z",
+        "source": "NEW_PLAN"
+      },
+      "sixToSeven": {
+        "schemaVersion": 1,
+        "programLineageId": "sha256:af4fe22c1e714f722511c99afaf00e5069084447b2998bff6dccd04e603e04eb",
+        "macrocycleOrdinal": 1,
+        "frameOrdinal": 7,
+        "mesocycleOrdinal": 3,
+        "phase": "DEVELOPMENT",
+        "frameLengthDays": 9.5,
+        "targetFrameCount": 18,
+        "startedAt": "2026-07-24T00:00:00.000Z",
+        "frameStartedAt": "2026-10-01T03:00:00.000Z",
+        "source": "ROLLED_FORWARD"
+      },
+      "eighteenRollover": {
+        "schemaVersion": 1,
+        "programLineageId": "sha256:af4fe22c1e714f722511c99afaf00e5069084447b2998bff6dccd04e603e04eb",
+        "macrocycleOrdinal": 2,
+        "frameOrdinal": 1,
+        "mesocycleOrdinal": 1,
+        "phase": "BASE",
+        "frameLengthDays": 9.5,
+        "targetFrameCount": 18,
+        "startedAt": "2026-07-24T00:00:00.000Z",
+        "frameStartedAt": "2026-10-01T03:00:00.000Z",
+        "source": "ROLLED_FORWARD"
+      }
+    },
+    "ordinaryLineageFrom6": {
+      "result": "saved",
+      "predecessor": {
+        "schemaVersion": 1,
+        "programLineageId": "sha256:af4fe22c1e714f722511c99afaf00e5069084447b2998bff6dccd04e603e04eb",
+        "macrocycleOrdinal": 1,
+        "frameOrdinal": 6,
+        "mesocycleOrdinal": 2,
+        "phase": "BASE",
+        "frameLengthDays": 9.5,
+        "targetFrameCount": 18,
+        "startedAt": "2026-07-24T00:00:00.000Z",
+        "frameStartedAt": "2026-08-05T00:00:00.000Z",
+        "source": "ROLLED_FORWARD"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "programLineageId": "sha256:af4fe22c1e714f722511c99afaf00e5069084447b2998bff6dccd04e603e04eb",
+        "macrocycleOrdinal": 1,
+        "frameOrdinal": 7,
+        "mesocycleOrdinal": 3,
+        "phase": "DEVELOPMENT",
+        "frameLengthDays": 9.5,
+        "targetFrameCount": 18,
+        "startedAt": "2026-07-24T00:00:00.000Z",
+        "frameStartedAt": "2026-10-01T03:00:00.000Z",
+        "source": "ROLLED_FORWARD"
+      },
+      "actual": {
+        "schemaVersion": 1,
+        "programLineageId": "sha256:06c4c210eafac91c11fce41f3a7a2d773752fdbe54fd46b792960716066a1f07",
+        "macrocycleOrdinal": 1,
+        "frameOrdinal": 1,
+        "mesocycleOrdinal": 1,
+        "phase": "BASE",
+        "frameLengthDays": 9.5,
+        "targetFrameCount": 18,
+        "startedAt": "2026-10-01T03:00:00.000Z",
+        "frameStartedAt": "2026-10-01T03:00:00.000Z",
+        "source": "NEW_PLAN"
+      },
+      "expectedInvariantHolds": false,
+      "archivedOriginalPreserved": true
+    },
+    "ordinaryLineageFrom18": {
+      "result": "saved",
+      "predecessor": {
+        "schemaVersion": 1,
+        "programLineageId": "sha256:af4fe22c1e714f722511c99afaf00e5069084447b2998bff6dccd04e603e04eb",
+        "macrocycleOrdinal": 1,
+        "frameOrdinal": 18,
+        "mesocycleOrdinal": 6,
+        "phase": "TAPER_PEAK",
+        "frameLengthDays": 9.5,
+        "targetFrameCount": 18,
+        "startedAt": "2026-07-24T00:00:00.000Z",
+        "frameStartedAt": "2026-08-17T00:00:00.000Z",
+        "source": "ROLLED_FORWARD"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "programLineageId": "sha256:af4fe22c1e714f722511c99afaf00e5069084447b2998bff6dccd04e603e04eb",
+        "macrocycleOrdinal": 2,
+        "frameOrdinal": 1,
+        "mesocycleOrdinal": 1,
+        "phase": "BASE",
+        "frameLengthDays": 9.5,
+        "targetFrameCount": 18,
+        "startedAt": "2026-07-24T00:00:00.000Z",
+        "frameStartedAt": "2026-10-01T03:00:00.000Z",
+        "source": "ROLLED_FORWARD"
+      },
+      "actual": {
+        "schemaVersion": 1,
+        "programLineageId": "sha256:06c4c210eafac91c11fce41f3a7a2d773752fdbe54fd46b792960716066a1f07",
+        "macrocycleOrdinal": 1,
+        "frameOrdinal": 1,
+        "mesocycleOrdinal": 1,
+        "phase": "BASE",
+        "frameLengthDays": 9.5,
+        "targetFrameCount": 18,
+        "startedAt": "2026-10-01T03:00:00.000Z",
+        "frameStartedAt": "2026-10-01T03:00:00.000Z",
+        "source": "NEW_PLAN"
+      },
+      "expectedInvariantHolds": false,
+      "archivedOriginalPreserved": true
+    },
+    "archive17Control": {
+      "before": 17,
+      "after": 18,
+      "previousOriginalsPreserved": true
+    },
+    "archive18Saturation": {
+      "before": 18,
+      "after": 18,
+      "result": "archived",
+      "evictedOriginalFingerprint": "sha256:2e1cab1caf826f86d9c8d8eb82c2124e82702e212eeea5ba6dc7da97180482ae",
+      "evictedPeriodization": {
+        "schemaVersion": 1,
+        "programLineageId": "sha256:af4fe22c1e714f722511c99afaf00e5069084447b2998bff6dccd04e603e04eb",
+        "macrocycleOrdinal": 1,
+        "frameOrdinal": 18,
+        "mesocycleOrdinal": 6,
+        "phase": "TAPER_PEAK",
+        "frameLengthDays": 9.5,
+        "targetFrameCount": 18,
+        "startedAt": "2026-07-24T00:00:00.000Z",
+        "frameStartedAt": "2026-08-17T00:00:00.000Z",
+        "source": "ROLLED_FORWARD"
+      },
+      "oldestOriginalRetained": false,
+      "missingOriginalsReported": 0,
+      "activeAfterArchive": "missing"
+    },
+    "cancelBeforeStartControl": {
+      "activeBytePreserved": true,
+      "historyCount": 0
+    },
+    "cancelAfterStart": {
+      "discardDeclinedBlocksNavigation": true,
+      "confirmedDiscardNavigates": true,
+      "activeOriginalRestored": false,
+      "archivedOriginalPreserved": true,
+      "activeAfterReopen": "missing",
+      "expectedActivePreservationInvariantHolds": false
+    },
+    "cancelAtSaturation": {
+      "successorActivated": false,
+      "historyCount": 18,
+      "predecessorArchivedIntact": true,
+      "oldOriginalEvicted": true,
+      "evictedOriginalFingerprint": "sha256:2e1cab1caf826f86d9c8d8eb82c2124e82702e212eeea5ba6dc7da97180482ae",
+      "activeAfterAbandon": "missing"
+    }
+  }
+}

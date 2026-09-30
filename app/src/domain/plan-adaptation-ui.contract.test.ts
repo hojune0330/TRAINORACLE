@@ -36,6 +36,8 @@ import {
   PLAN_ADAPTATION_CONTEXT_STORAGE_KEY,
 } from "./plan-adaptation-ui-context"
 import { PLAN_BETA_MUTATION_LOCK_NAME } from "./plan-mutation-lock"
+import { inspectNextFrameAdaptation } from "./plan-adaptation-availability"
+import { replacedReplanFixture } from "./execution-replan-lineage.test-fixture"
 
 const ACTIVE_KEY = "trainoracle.plan-beta.v1"
 const TEST_SYSTEM_TIME = new Date("2026-08-18T12:00:00.000Z")
@@ -74,6 +76,33 @@ afterEach(() => {
 })
 
 describe("next-frame adaptation UI adapter", () => {
+  it.each(["BALANCED", "CONSERVATIVE"] as const)("offers only registered triggers for %s and preserves the valid sibling path", async kind => {
+    const state = await createBoundState(kind)
+    expect(inspectNextFrameAdaptation(state)).toMatchObject({ kind: "available", explicitRequest: true, pbSb: kind === "CONSERVATIVE" })
+  })
+
+  it("does not mistake manually changed plans for missing stored data or rebind their old siblings", async () => {
+    const { state } = replacedReplanFixture()
+    const before = JSON.stringify(state)
+    const checkedAt = new Date()
+    expect(inspectNextFrameAdaptation(state)).toEqual({ kind: "unavailable", code: "CHANGED_PLAN_TRANSFORM_UNAVAILABLE" })
+    expect(await prepareNextFrameAdaptation({ state, reason: "EXPLICIT_REQUEST", record: null,
+      safety: evaluateActivePlanAdaptationSafety(state, "NO_KNOWN_RISK", checkedAt), operationAt: checkedAt.toISOString(),
+    })).toEqual({ kind: "unavailable", code: "CHANGED_PLAN_TRANSFORM_UNAVAILABLE" })
+    expect(JSON.stringify(state)).toBe(before)
+  })
+
+  it("rejects stale comparison content even when the candidate ID is unchanged", async () => {
+    const state = await createBoundState()
+    const changed = structuredClone(state)
+    const session = changed.activePlan.sessions.find(item => item.prescription.kind === "RPE_TIME_RANGE")!
+    if (session.prescription.kind !== "RPE_TIME_RANGE") throw Error("Expected support session")
+    session.prescription.durationMinutes.maximum -= 1
+    expect(changed.activePlan.candidateId).toBe(state.activePlan.candidateId)
+    expect(inspectNextFrameAdaptation(changed)).toEqual({ kind: "unavailable", code: "ADAPTATION_CONTEXT_MISMATCH" })
+    expect(inspectNextFrameAdaptation(state)).toMatchObject({ kind: "available" })
+  })
+
   it.each([
     ["candidate symbol", (candidate: PlanCandidate) => {
       const copy = { ...candidate }

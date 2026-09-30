@@ -2029,4 +2029,39 @@ goal, allow catch-up/compression, chain single-dimension transforms to evade
 full-plan review, or authorize silent active-plan writes. Existing machine policies,
 canonical status and open issues are unchanged.
 
+## 19. Next-Frame Availability Before Questions (2026-10-01)
+
+This is a scoped repair of the existing beta projection, not a new numerical
+transform, canonical promotion, or permission to rewrite catalog workouts.
+
+- Before asking for PB/SB, adjustment intent or safety confirmation, distinguish
+  an available registered successor from unsupported catalog transforms, a changed
+  current plan, missing comparison context, and coach-only selection authority.
+- The saved base candidate must match the current plan's exact content and scope,
+  not merely its candidate ID. A previous candidate pair is not a current pair
+  after catalog replacement or remaining-plan correction. Do not rebind old
+  sibling candidates by changing an ID or inventing new doses.
+- Show only triggers with an existing registered transform. A PB/SB does not by
+  itself imply that a larger or otherwise different successor is available.
+- If no transform is available, explain this briefly at entry and keep the
+  read-only cycle record summary accessible. Do not send the user through several
+  questions before reporting a limitation already known at entry, and do not
+  describe every unsupported transform as missing stored data.
+- Recheck availability, current safety and acceptance constraints on the actual
+  operation. Entry availability is not execution authorization. A stale response
+  after closing the panel or changing the plan must not reopen an old proposal;
+  double taps must not start concurrent prepare/accept operations.
+- Failed asynchronous preparation or acceptance must end the waiting state and
+  explain whether the proposal was prepared or its storage needs confirmation.
+  Never claim account storage or successful acceptance from an exception.
+- Reopening must reread a matching pending successor in the current account scope.
+  An unreadable or invalid stored envelope is not evidence that no successor exists.
+  Offer a retry without presenting a new selection as though storage were empty.
+- Discarded prepare operations must not keep a new plan's summary busy. An old
+  operation's completion must not release a newer operation's waiting state.
+
+The retained original-plan chain remains useful for review, but this repair does
+not make unsupported cross-version or catalog next-frame transforms executable.
+Those transforms still require their own exact registered policy and tests.
+
 [DRAFT_COMPLETE]

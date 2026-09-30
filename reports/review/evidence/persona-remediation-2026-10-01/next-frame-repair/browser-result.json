@@ -1,0 +1,143 @@
+{
+  "scope": "Real PlanBeta screen; synthetic guest storage; not production/account/iOS",
+  "cases": [
+    {
+      "width": 320,
+      "enlarged": false,
+      "frame": 6,
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "preservedBeforeAcceptance": true,
+      "periodization": {
+        "schemaVersion": 1,
+        "programLineageId": "sha256:af4fe22c1e714f722511c99afaf00e5069084447b2998bff6dccd04e603e04eb",
+        "macrocycleOrdinal": 1,
+        "frameOrdinal": 7,
+        "mesocycleOrdinal": 3,
+        "phase": "DEVELOPMENT",
+        "frameLengthDays": 9.5,
+        "targetFrameCount": 18,
+        "startedAt": "2026-07-24T00:00:00.000Z",
+        "frameStartedAt": "2026-10-01T03:00:00.000Z",
+        "source": "ROLLED_FORWARD"
+      },
+      "screenshot": "next-frame-6-320.png"
+    },
+    {
+      "width": 320,
+      "enlarged": false,
+      "frame": 18,
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "preservedBeforeAcceptance": true,
+      "periodization": {
+        "schemaVersion": 1,
+        "programLineageId": "sha256:af4fe22c1e714f722511c99afaf00e5069084447b2998bff6dccd04e603e04eb",
+        "macrocycleOrdinal": 2,
+        "frameOrdinal": 1,
+        "mesocycleOrdinal": 1,
+        "phase": "BASE",
+        "frameLengthDays": 9.5,
+        "targetFrameCount": 18,
+        "startedAt": "2026-07-24T00:00:00.000Z",
+        "frameStartedAt": "2026-10-01T03:00:00.000Z",
+        "source": "ROLLED_FORWARD"
+      },
+      "screenshot": "next-frame-18-320.png"
+    },
+    {
+      "width": 375,
+      "enlarged": false,
+      "frame": 6,
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "preservedBeforeAcceptance": true,
+      "periodization": {
+        "schemaVersion": 1,
+        "programLineageId": "sha256:af4fe22c1e714f722511c99afaf00e5069084447b2998bff6dccd04e603e04eb",
+        "macrocycleOrdinal": 1,
+        "frameOrdinal": 7,
+        "mesocycleOrdinal": 3,
+        "phase": "DEVELOPMENT",
+        "frameLengthDays": 9.5,
+        "targetFrameCount": 18,
+        "startedAt": "2026-07-24T00:00:00.000Z",
+        "frameStartedAt": "2026-10-01T03:00:00.000Z",
+        "source": "ROLLED_FORWARD"
+      },
+      "screenshot": "next-frame-6-375.png"
+    },
+    {
+      "width": 375,
+      "enlarged": false,
+      "frame": 18,
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "preservedBeforeAcceptance": true,
+      "periodization": {
+        "schemaVersion": 1,
+        "programLineageId": "sha256:af4fe22c1e714f722511c99afaf00e5069084447b2998bff6dccd04e603e04eb",
+        "macrocycleOrdinal": 2,
+        "frameOrdinal": 1,
+        "mesocycleOrdinal": 1,
+        "phase": "BASE",
+        "frameLengthDays": 9.5,
+        "targetFrameCount": 18,
+        "startedAt": "2026-07-24T00:00:00.000Z",
+        "frameStartedAt": "2026-10-01T03:00:00.000Z",
+        "source": "ROLLED_FORWARD"
+      },
+      "screenshot": "next-frame-18-375.png"
+    },
+    {
+      "width": 320,
+      "enlarged": true,
+      "frame": 6,
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "preservedBeforeAcceptance": true,
+      "periodization": {
+        "schemaVersion": 1,
+        "programLineageId": "sha256:af4fe22c1e714f722511c99afaf00e5069084447b2998bff6dccd04e603e04eb",
+        "macrocycleOrdinal": 1,
+        "frameOrdinal": 7,
+        "mesocycleOrdinal": 3,
+        "phase": "DEVELOPMENT",
+        "frameLengthDays": 9.5,
+        "targetFrameCount": 18,
+        "startedAt": "2026-07-24T00:00:00.000Z",
+        "frameStartedAt": "2026-10-01T03:00:00.000Z",
+        "source": "ROLLED_FORWARD"
+      },
+      "screenshot": "next-frame-6-320-large-reduced.png"
+    },
+    {
+      "width": 320,
+      "enlarged": true,
+      "frame": 18,
+      "overflow": false,
+      "errors": [],
+      "external": [],
+      "preservedBeforeAcceptance": true,
+      "periodization": {
+        "schemaVersion": 1,
+        "programLineageId": "sha256:af4fe22c1e714f722511c99afaf00e5069084447b2998bff6dccd04e603e04eb",
+        "macrocycleOrdinal": 2,
+        "frameOrdinal": 1,
+        "mesocycleOrdinal": 1,
+        "phase": "BASE",
+        "frameLengthDays": 9.5,
+        "targetFrameCount": 18,
+        "startedAt": "2026-07-24T00:00:00.000Z",
+        "frameStartedAt": "2026-10-01T03:00:00.000Z",
+        "source": "ROLLED_FORWARD"
+      },
+      "screenshot": "next-frame-18-320-large-reduced.png"
+    }
+  ]
+}

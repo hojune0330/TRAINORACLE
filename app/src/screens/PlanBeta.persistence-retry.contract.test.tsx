@@ -83,7 +83,7 @@ describe("active plan persistence retry", () => {
       <PlanActiveState
         state={state}
         onStateChange={onStateChange}
-        onArchived={vi.fn()}
+        onPrepareNextFrame={vi.fn()}
       />,
     )
 
@@ -109,7 +109,7 @@ describe("active plan persistence retry", () => {
       <PlanActiveState
         state={state}
         onStateChange={onStateChange}
-        onArchived={vi.fn()}
+        onPrepareNextFrame={vi.fn()}
       />,
     )
 
@@ -123,7 +123,7 @@ describe("active plan persistence retry", () => {
     expect(onStateChange).not.toHaveBeenCalled()
   })
 
-  it("retries a failed next-frame archive without clearing the active plan early", async () => {
+  it("defers next-frame history writes until selection and preserves the active plan on failure", async () => {
     // Given: an active plan exists and archiving cannot first write its history.
     expect(savePlanBetaState(completedStateFixture())).toEqual({ ok: true })
     const realSetItem = Storage.prototype.setItem
@@ -141,67 +141,56 @@ describe("active plan persistence retry", () => {
     const user = userEvent.setup()
     render(<PlanBeta />)
 
-    // When: the athlete starts the next frame but history storage fails.
+    const active = localStorage.getItem("trainoracle.plan-beta.v1")
     await user.click(screen.getByRole("button", { name: "현재 기준으로 다음 계획안 만들기" }))
-
-    // Then: the active plan remains until the same action can be retried successfully.
-    expect(screen.getByRole("alert")).toHaveTextContent("지금 계획과 진행 기록은 그대로")
-    expect(screen.getByRole("button", { name: "다음 주기 다시 만들기" })).toBeVisible()
-    expect(screen.getByRole("heading", { name: /9일 훈련 계획/u })).toBeVisible()
-
+    expect(screen.queryByRole("alert")).toBeNull()
+    expect(localStorage.getItem("trainoracle.plan-beta.v1")).toBe(active)
+    await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
+    await user.click(await screen.findByRole("button", { name: "이 일정으로 시작" }))
+    expect(screen.getByRole("alert")).toBeVisible()
+    expect(localStorage.getItem("trainoracle.plan-beta.v1")).toBe(active)
+    expect(localStorage.getItem("trainoracle.plan-beta.history.v1")).toBeNull()
     historyWritesBlocked = false
-    await user.click(screen.getByRole("button", { name: "다음 주기 다시 만들기" }))
-
-    expect(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u })).toBeVisible()
-    expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
+    await user.click(screen.getByRole("button", { name: "저장 다시 시도" }))
+    expect(localStorage.getItem("trainoracle.plan-beta.v1")).not.toBe(active)
+    expect(JSON.parse(localStorage.getItem("trainoracle.plan-beta.history.v1")!)[0].originalPlan).toEqual(JSON.parse(active!))
   })
 
-  it("does not offer an archive retry when rollback itself could not restore the active plan", async () => {
-    // Given: the storage transaction failed and the store cannot confirm its rollback.
-    const onArchived = vi.fn()
-    vi.spyOn(planStore, "archiveAndClearActivePlanWithLock").mockResolvedValue({
-      kind: "failed",
-      code: "PLAN_ARCHIVE_WRITE_FAILED",
-      rollbackComplete: false,
-    })
+  it("does not open a successor draft when the current storage cannot be read", async () => {
+    const onPrepareNextFrame = vi.fn()
+    vi.spyOn(planStore, "readPlanBetaStateFromStorage").mockReturnValue({ kind: "storage_error" })
     const user = userEvent.setup()
     render(
       <PlanActiveState
         state={completedStateFixture()}
         onStateChange={vi.fn()}
-        onArchived={onArchived}
+        onPrepareNextFrame={onPrepareNextFrame}
       />,
     )
 
-    // When: the athlete starts a next-frame archive with an unknown rollback result.
     await user.click(screen.getByRole("button", { name: "현재 기준으로 다음 계획안 만들기" }))
-
-    // Then: retry is withheld because it could duplicate a partially archived plan.
-    expect(screen.getByRole("alert")).toHaveTextContent("저장 상태도 확인하지 못했어요")
+    expect(screen.getByRole("alert")).toHaveTextContent("현재 계획이 바뀌었거나 읽을 수 없어요")
     expect(screen.queryByRole("button", { name: "다음 주기 다시 만들기" })).not.toBeInTheDocument()
-    expect(onArchived).not.toHaveBeenCalled()
+    expect(onPrepareNextFrame).not.toHaveBeenCalled()
   })
 
   it("does not offer an archive retry for an invalid stored plan", async () => {
-    const onArchived = vi.fn()
-    vi.spyOn(planStore, "archiveAndClearActivePlanWithLock").mockResolvedValue({
-      kind: "rejected",
-      code: "INVALID_STORED_PLAN",
-    })
+    const onPrepareNextFrame = vi.fn()
+    vi.spyOn(planStore, "readPlanBetaStateFromStorage").mockReturnValue({ kind: "invalid" })
     const user = userEvent.setup()
     render(
       <PlanActiveState
         state={completedStateFixture()}
         onStateChange={vi.fn()}
-        onArchived={onArchived}
+        onPrepareNextFrame={onPrepareNextFrame}
       />,
     )
 
     await user.click(screen.getByRole("button", { name: "현재 기준으로 다음 계획안 만들기" }))
 
-    expect(screen.getByRole("alert")).toHaveTextContent("저장된 계획을 읽을 수 없어요")
+    expect(screen.getByRole("alert")).toHaveTextContent("현재 계획이 바뀌었거나 읽을 수 없어요")
     expect(screen.queryByRole("button", { name: "다음 주기 다시 만들기" })).not.toBeInTheDocument()
-    expect(onArchived).not.toHaveBeenCalled()
+    expect(onPrepareNextFrame).not.toHaveBeenCalled()
   })
 })
 

@@ -24,7 +24,7 @@ export function PlanAdaptationReview({
   return (
     <div className="plan-adaptation__review">
       <div className="plan-adaptation__step-head">
-        <button className="plan-adaptation__back" type="button" aria-label="이전 단계" onClick={onBack}>
+        <button className="plan-adaptation__back" type="button" aria-label="이전 단계" disabled={busy} onClick={onBack}>
           <ArrowLeft aria-hidden="true" size={18} />
         </button>
         <h2>다음 계획 비교</h2>

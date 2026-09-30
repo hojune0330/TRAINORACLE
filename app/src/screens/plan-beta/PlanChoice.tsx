@@ -8,6 +8,7 @@ export function PlanChoice({
   onClick,
   help,
   recommended = false,
+  disabled = false,
 }: {
   readonly title: string
   readonly detail: string
@@ -17,11 +18,13 @@ export function PlanChoice({
   readonly help?: ReactNode
   /** 첫 카드에 "추천" 배지. 고민 없이 한 번 탭하면 다음으로. */
   readonly recommended?: boolean
+  readonly disabled?: boolean
 }) {
   const button = (
     <button
       className="plan-choice"
       type="button"
+      disabled={disabled}
       aria-pressed={selected}
       data-recommended={recommended ? "true" : undefined}
       onClick={onClick}

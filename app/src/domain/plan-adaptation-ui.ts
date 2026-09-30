@@ -21,9 +21,9 @@ import type {
   PlanBetaStateV3,
 } from "./plan-beta-schema"
 import {
-  loadPlanAdaptationContext,
   parseActivePlanAdaptationSafety,
 } from "./plan-adaptation-ui-context"
+import { inspectNextFrameAdaptation } from "./plan-adaptation-availability"
 import type { ActivePlanAdaptationSafety } from "./plan-adaptation-ui-context"
 export {
   adaptationScopeForCandidate,
@@ -76,27 +76,15 @@ export async function prepareNextFrameAdaptation(
   if (input.state.version !== 3) {
     return { kind: "unavailable", code: "ADAPTATION_CONTEXT_UNAVAILABLE" }
   }
+  const availability = inspectNextFrameAdaptation(input.state)
+  if (availability.kind === "unavailable") return availability
   const scope = input.state.adaptationScope
-  const context = loadPlanAdaptationContext(input.state.activePlan.candidateId)
-  if (scope === undefined || context === null) {
+  if (scope === undefined) {
     return { kind: "unavailable", code: "ADAPTATION_CONTEXT_UNAVAILABLE" }
   }
-  const baseCandidate = context.candidates.find(
-    (candidate) => candidate.candidateId === context.activeCandidateId,
-  )
-  const proposedCandidate = context.candidates.find(
-    (candidate) => input.reason === "PB_SB"
-      ? candidate.kind === "BALANCED" && candidate.kind !== baseCandidate?.kind
-      : candidate.kind !== baseCandidate?.kind,
-  )
-  if (baseCandidate === undefined || proposedCandidate === undefined) {
-    return { kind: "unavailable", code: "ADAPTATION_CONTEXT_UNAVAILABLE" }
-  }
-  if (
-    baseCandidate.selectionAuthority !== "SELF"
-    || proposedCandidate.selectionAuthority !== "SELF"
-  ) {
-    return { kind: "unavailable", code: "COACH_CONNECTION_REQUIRED" }
+  const { baseCandidate, proposedCandidate } = availability
+  if (input.reason === "PB_SB" ? !availability.pbSb : !availability.explicitRequest) {
+    return { kind: "unavailable", code: "NO_REGISTERED_TRANSFORM" }
   }
   const trigger = triggerFor(input.reason, input.record, scope.athleteId)
   if (trigger === null) return { kind: "unavailable", code: "RECORD_NOT_ELIGIBLE" }
@@ -187,7 +175,7 @@ export async function acceptPreparedNextFrameAdaptation(input: {
 export async function loadMatchingPendingSuccessor(
   state: PlanBetaStateV3,
 ): Promise<PendingNextFrameSuccessor | null> {
-  const pending = loadPendingNextFrameSuccessor()
+  const pending = loadPendingNextFrameSuccessor(true)
   if (pending?.baseCandidateId !== state.activePlan.candidateId) return null
   const activeStateHash = await hashPlanBetaState(state)
   return pending.predecessorStateHash === activeStateHash ? pending : null

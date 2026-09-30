@@ -1,0 +1,22 @@
+[
+  {
+    "path": "app/src/screens/PlanBeta.tsx",
+    "sha256": "318e4b85b497944bec99cb41cfab2494d0e376e5555e67ac9978afad7c4d6714"
+  },
+  {
+    "path": "app/src/screens/plan-beta/PlanActiveState.tsx",
+    "sha256": "ab8b851678ec039f425e162bc8b0e2b4f7d0c3530cd46de453ef2e1960f6733b"
+  },
+  {
+    "path": "app/src/screens/plan-beta/plan-selection.ts",
+    "sha256": "5b246cdd33454db6e6176e60b1e37379a56dfc4b066acd3b3613fe86d782e697"
+  },
+  {
+    "path": "app/src/domain/plan-beta-flow.ts",
+    "sha256": "261b17d6c352afebb988f99c5377da977b47cc32d75a63295c25543038376b55"
+  },
+  {
+    "path": "app/src/domain/plan-beta-store.ts",
+    "sha256": "3d1bcac67f3e354876499f7041474bb0ed3d146490eb2b106f2f43406d559a36"
+  }
+]

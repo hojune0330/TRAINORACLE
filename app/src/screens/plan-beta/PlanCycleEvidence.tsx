@@ -15,7 +15,9 @@ export const COMPARISON_LABELS: Record<PlanJournalComparison, string> = {
 export function PlanCycleEvidence({ response }: { readonly response: PlanCycleResponse }) {
   return (
     <div className="plan-adaptation__evidence">
-      <strong>{response.headline}</strong>
+      <strong>{response.signal === "NO_LINKED_RESULTS"
+        ? "현재 계획과 연결해 비교할 일지가 없어요"
+        : response.headline}</strong>
       {response.evidence.map((item) => <p key={item}>{item}</p>)}
       {response.rows.length > 0 && (
         <details>

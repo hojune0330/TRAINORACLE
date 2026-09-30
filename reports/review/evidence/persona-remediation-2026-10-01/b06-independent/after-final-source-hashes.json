@@ -1,0 +1,26 @@
+[
+  {
+    "path": "D:\\admin\\Documents\\ChatGPT\\트레인 오라클\\TRAINORACLE-oracle-exploration-20260921\\app\\src\\domain\\plan-adaptation-availability.ts",
+    "sha256": "77f958fd67b8c16a4d31e431531ea2cca449b1bb5d83cbb704ec62fae331fff6"
+  },
+  {
+    "path": "D:\\admin\\Documents\\ChatGPT\\트레인 오라클\\TRAINORACLE-oracle-exploration-20260921\\app\\src\\domain\\plan-adaptation-ui.ts",
+    "sha256": "8ce4acdd0006ff73b60d2ae7d55e3ec4f3c0738c0f54b752f1d2dd38b833fa5f"
+  },
+  {
+    "path": "D:\\admin\\Documents\\ChatGPT\\트레인 오라클\\TRAINORACLE-oracle-exploration-20260921\\app\\src\\screens\\plan-beta\\PlanAdaptationFlow.tsx",
+    "sha256": "974df997ec8f5460bdcbbcfdcf059f1c5dd03b102ef4a605ab524c72d277748f"
+  },
+  {
+    "path": "D:\\admin\\Documents\\ChatGPT\\트레인 오라클\\TRAINORACLE-oracle-exploration-20260921\\app\\src\\screens\\plan-beta\\PlanAdaptationReview.tsx",
+    "sha256": "2b2c0e4c2322985710e2752a52f3c7fa210ac281bac66316308e9bb9560144de"
+  },
+  {
+    "path": "D:\\admin\\Documents\\ChatGPT\\트레인 오라클\\TRAINORACLE-oracle-exploration-20260921\\app\\src\\screens\\plan-beta\\PlanCycleEvidence.tsx",
+    "sha256": "cbfe4a7e66767628d424223359ca062139310e91592e76dd6071f19b5cd2d331"
+  },
+  {
+    "path": "D:\\admin\\Documents\\ChatGPT\\트레인 오라클\\TRAINORACLE-oracle-exploration-20260921\\app\\src\\screens\\plan-beta\\PlanChoice.tsx",
+    "sha256": "d4468407d9eec808562a1f5ee0de419aa7fe1503de2546ef3fa9f313a18b21a6"
+  }
+]

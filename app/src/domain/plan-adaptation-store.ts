@@ -220,19 +220,21 @@ async function acceptNextFrameProposalUnchecked(
   }
 }
 
-export function loadPendingNextFrameSuccessor(): PendingNextFrameSuccessor | null {
-  return loadEnvelope()?.pending ?? null
+export function loadPendingNextFrameSuccessor(strictRead = false): PendingNextFrameSuccessor | null {
+  return loadEnvelope(undefined, strictRead)?.pending ?? null
 }
 
-function loadEnvelope(accountScope = localAccountScopeSnapshot()): PlanAdaptationEnvelope | null {
+function loadEnvelope(accountScope = localAccountScopeSnapshot(), strictRead = false): PlanAdaptationEnvelope | null {
   if (typeof window === "undefined") return null
   try {
     const raw = window.localStorage.getItem(accountScopedStorageKeyFor(accountPlansEnabled() ? `${ADAPTATION_KEY}.account-draft` : ADAPTATION_KEY, accountScope))
     if (raw === null) return null
     const json: unknown = JSON.parse(raw)
     const parsed = planAdaptationEnvelopeSchema.safeParse(json)
+    if (strictRead && !parsed.success) throw Error("Pending plan storage is invalid")
     return parsed.success ? parsed.data : null
   } catch (error) {
+    if (strictRead) throw error
     if (error instanceof Error) return null
     throw error
   }

@@ -188,4 +188,30 @@ No issue is closed by this draft or by local unit tests.
 - reduced-motion, mobile-width, account isolation, backup, deletion, and server tests
   pass before production authority is claimed.
 
+## 11. 2026-10-01 Continuation Draft Preservation
+
+This is a corrective implementation boundary for the already approved forward-only
+lineage, not a new training-dose or adaptation authority.
+
+- Opening the ordinary next-plan builder is read-only. The current plan, progress,
+  original archive, and program position stay unchanged until a successor is selected.
+- The draft carries the exact predecessor shown when it was opened. A later archive
+  row is not a substitute for that predecessor. Cancelling, leaving, or reloading an
+  unaccepted draft preserves the current plan; it does not archive or advance it.
+- Acceptance rechecks the predecessor content and account scope under the existing
+  mutation lock, as well as completion, current safety and existing template authority.
+  A changed predecessor requires reopening the draft, never silent rebasing.
+- Successful acceptance archives the exact predecessor and advances its existing
+  periodization once. A genuinely new program still starts at frame 1. A legacy plan
+  without lineage is not assigned invented earlier frames.
+- Local archive retention remains the existing latest-18 policy. Trimming happens
+  only as part of successful successor storage, not on entry to the builder. A failed
+  multi-key local write restores all captured values or reports storage uncertainty.
+  This is not a claim of crash-atomic browser storage or permanent original retention.
+- Account continuation uses the existing confirmed account selection transaction,
+  retaining the previous current pointer until server acknowledgement. It does not
+  fall back to device-only success or create a second account store.
+- These rules neither enable an unregistered adaptation transform nor increase any
+  training quantity based on the phase ordinal. Existing numeric authority remains.
+
 [DRAFT_COMPLETE]

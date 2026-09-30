@@ -27,7 +27,8 @@ vi.mock("./plan-beta/PlanCandidates", () => ({ PlanCandidates: (props: React.Com
   <button onClick={() => props.onSelect({ candidateId: props.generated.candidates[0].candidateId, startDate: "2026-09-05" })}>저장</button>
 </> }))
 vi.mock("./plan-beta/PlanActiveState", () => ({ PlanActiveState: (props: React.ComponentProps<typeof PlanActiveState>) =>
-  <button onClick={() => props.onArchived({ ...stateFixture().intake, trainingTimePreference: "MORNING" })}>다음 계획</button>,
+  <button onClick={() => { if (props.state.version === 3) props.onPrepareNextFrame({ ...props.state,
+    intake: { ...props.state.intake, trainingTimePreference: "MORNING" } }) }}>다음 계획</button>,
 }))
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
