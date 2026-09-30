@@ -1,21 +1,10 @@
 {
   "kind": "TRAINORACLE_PAGES_DEPLOYMENT",
-  "sourceSha": "8b80fa111d0442c6a7856142a692782334feea64",
-  "previousPagesSha": "272e3add73a060544306304785d6f0c265f7b9fc",
-  "workflowRunId": null,
-  "workflowAttempt": null,
-  "deploymentMethod": "MANUAL_OWNER_APPROVED",
-  "deployedAt": "2026-09-30T09:52:53.283Z",
-  "verification": {
-    "coreTests": 893,
-    "calculationAndBindingTests": 370,
-    "serverCodecTests": 101,
-    "syntheticBrowserTestsBeforePortableCopy": 3,
-    "typecheck": "PASS",
-    "productionBuild": "PASS",
-    "fullRegression": "NOT_RUN",
-    "githubCi": "NOT_USED_AS_DEPLOYMENT_EVIDENCE",
-    "productionAccountRoundtrip": "NOT_RUN"
-  },
-  "scope": "117 workout configurations: calculation, plan binding, structured actual logs, calendar context and role colors; no automatic load increases"
+  "sourceSha": "c453ddbe22eaeae2f36a05d114367bccb4a58d3a",
+  "previousPagesSha": "25030234339678a7071c11f36e953933de067af1",
+  "publicConfigurationSourceSha": "25030234339678a7071c11f36e953933de067af1",
+  "deploymentMethod": "MANUAL_USER_APPROVED",
+  "ciStatus": "NOT_PASSED_OR_NOT_YET_KNOWN",
+  "ciRunId": null,
+  "builtAt": "2026-09-30T17:56:12.766Z"
 }
