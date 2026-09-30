@@ -15,6 +15,7 @@ import { resolveDetailedPrescriptionRuntimeAuthority } from "./detailed-prescrip
 import type { PlanBetaIntake } from "./plan-beta-schema"
 import { createStoredPaceTargetPrescription } from "./plan-session-schema"
 import { resolvePlanMethodPrescription } from "./plan-method-resolution"
+import { distancePrescriptionFits } from "./distance-prescription-adoption"
 import {
   deriveRecordCurrentness,
   toCurrentSnapshot,
@@ -54,6 +55,7 @@ export type CandidatePrescriptionFallbackCode =
   | "PACE_TARGET_FALLBACK_INCOMPLETE_TEMPLATE_REF"
   | "PACE_TARGET_FALLBACK_STORED_SCHEMA"
   | "PACE_TARGET_FALLBACK_NO_ELIGIBLE_QUALITY"
+  | "PACE_TARGET_FALLBACK_PARAMETER_SCOPE"
 
 export type CandidatePrescriptionBinding =
   | {
@@ -181,6 +183,13 @@ function preparePrescription(
     fallbackCode: "RPE_ONLY_CONTROLLED",
   })
   if (stored === null) return { kind: "fallback", code: "PACE_TARGET_FALLBACK_STORED_SCHEMA" }
+  const { warmup, cooldown } = stored.operationalComponents
+  const supportSeconds = (warmup.easyDurationMinutes + cooldown.easyDurationMinutes) * 60
+    + warmup.strides.repetitions * warmup.strides.durationSeconds
+    + (warmup.strides.repetitions - 1) * warmup.strides.recoverySeconds
+  const mainSeconds = stored.targetRepSeconds * stored.totals.totalRepetitions + (stored.totals.plannedRecoverySeconds ?? NaN)
+  if (!distancePrescriptionFits(selectedTemplate, stored.targetRepSeconds, stored.totals.qualityDistanceM ?? NaN,
+    mainSeconds + supportSeconds)) return { kind: "fallback", code: "PACE_TARGET_FALLBACK_PARAMETER_SCOPE" }
   if (resolvePlanMethodPrescription(stored) === null) {
     return { kind: "fallback", code: "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT" }
   }

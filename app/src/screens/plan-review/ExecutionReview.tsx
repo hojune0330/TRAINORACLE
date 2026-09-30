@@ -48,6 +48,13 @@ function ExerciseRows({ exercise }: { readonly exercise: Review["actualExercises
 
 function ReviewEvidence({ review }: { readonly review: Review }) {
   return <section><h3>실제로 남긴 기록</h3><ReviewMetrics review={review} />
+    {review.repetitionComparison?.kind === "compared" && <section>
+      <h4>반복·회복 비교</h4>
+      <ul>{review.repetitionComparison.facts.slice(0, 3).map(fact => <li key={fact}>{fact}</li>)}</ul>
+      {review.repetitionComparison.facts.length > 3 && <details><summary>구간별 차이 더 보기</summary>
+        <ul>{review.repetitionComparison.facts.slice(3).map(fact => <li key={fact}>{fact}</li>)}</ul>
+      </details>}
+    </section>}
     {review.actualExercises.slice(0, 2).map((exercise, index) => <ExerciseRows key={index} exercise={exercise} />)}
     {review.actualExercises.length > 2 && <details><summary>다른 운동 {review.actualExercises.length - 2}개</summary>{review.actualExercises.slice(2).map((exercise, index) => <ExerciseRows key={index} exercise={exercise} />)}</details>}
     {review.metrics.length === 0 && review.actualExercises.length === 0 && <p>{review.summary}</p>}

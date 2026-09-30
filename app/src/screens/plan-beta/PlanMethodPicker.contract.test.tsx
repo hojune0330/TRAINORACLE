@@ -7,17 +7,53 @@ import type { RepeatPreference } from "@impl/prescription/method-recommendation"
 
 const options = resolveDetailedPlanTemplateOptions({ eventDistanceM: 5000, trainingFocus: "VO2_INTENT", experienceBand: "EXPERIENCED" }, "2026-09-02T03:00:00.000Z")
 afterEach(cleanup)
+const openSettings = () => {
+  fireEvent.click(screen.getByText("처방 확인·조절"))
+  fireEvent.click(screen.getByText("훈련 목록·다른 설정"))
+}
 
 describe("candidate method picker", () => {
+  it("shows one prescription without requiring the optional method list", () => {
+    const onChange = vi.fn()
+    render(<PlanMethodPicker options={options} selected={options[0]!.ref} onChange={onChange} />)
+    fireEvent.click(screen.getByText("처방 확인·조절"))
+    expect(screen.getByRole("region", { name: "훈련 미리보기" })).toHaveTextContent(options[0]!.mainSummary)
+    expect(screen.getByText("훈련 목록·다른 설정").closest("details")).not.toHaveAttribute("open")
+    expect(onChange).not.toHaveBeenCalled()
+  })
+  it("never draws a method from another purpose or event, or on a render", () => {
+    const first = options[0]!, sequence = structuredClone(first.sequence!)
+    const group = sequence.main[0]!
+    if (group.kind !== "group" || group.children[0]?.kind !== "segment") throw Error("FIXTURE_SHAPE_CHANGED")
+    const alternate = { ...first, sequence: { ...sequence, main: [{ ...group, children: [{ ...group.children[0],
+      work: { kind: "duration" as const, durationSeconds: 120, distanceM: null } }] }] },
+      ref: { ...first.ref, templateId: "UI-DRAW-ONLY" }, mainSummary: "같은 목적의 다른 구성" }
+    const wrongFocus = { ...alternate, trainingFocus: "LT_INTENT" as const, ref: { ...alternate.ref, templateId: "WRONG-FOCUS" } }
+    const wrongEvent = { ...alternate, targetEventDistanceM: 800 as const, ref: { ...alternate.ref, templateId: "WRONG-EVENT" } }
+    const onChange = vi.fn(), random = vi.spyOn(Math, "random").mockReturnValue(0.99)
+    try {
+      const props = { options: [first, alternate, wrongFocus, wrongEvent], selected: first.ref, onChange }
+      const view = render(<PlanMethodPicker {...props} />)
+      fireEvent.click(screen.getByText("처방 확인·조절"))
+      random.mockClear()
+      view.rerender(<PlanMethodPicker {...props} />)
+      expect(random).not.toHaveBeenCalled()
+      fireEvent.click(screen.getByRole("button", { name: "다른 훈련" }))
+      expect(screen.getByRole("region", { name: "훈련 미리보기" })).toHaveTextContent("5 × 2min @ 5K RP · r150s Jog")
+      expect(onChange).not.toHaveBeenCalled()
+      fireEvent.click(screen.getByRole("button", { name: "이 훈련으로 변경" }))
+      expect(onChange).toHaveBeenCalledExactlyOnceWith(alternate.ref)
+    } finally { random.mockRestore() }
+  })
   it("does not label a storage read failure as zero completions", () => {
     render(<PlanMethodPicker options={options.map(option => ({ ...option, historyCoverage: null }))} selected={null} onChange={vi.fn()} />)
-    fireEvent.click(screen.getByText("훈련 방법 선택"))
+    openSettings()
     expect(screen.getByRole("status")).toHaveTextContent("이력을 읽지 못해")
     expect(screen.queryByText(/자기보고 완료 0회/u)).toBeNull()
   })
   it("keeps archive coverage behind a disclosure and distinguishes it from actual training dates", () => {
     render(<PlanMethodPicker options={options} selected={null} onChange={vi.fn()} />)
-    fireEvent.click(screen.getByText("훈련 방법 선택"))
+    openSettings()
     const summary = screen.getByText("추천에 참고한 이력")
     expect(summary.closest("details")).not.toHaveAttribute("open")
     fireEvent.click(summary)
@@ -28,10 +64,10 @@ describe("candidate method picker", () => {
   it("starts compact and tells the truth about the one detailed method", () => {
     const { container } = render(<PlanMethodPicker options={options} selected={null} onChange={vi.fn()} />)
     expect(container.querySelector("details")).not.toHaveAttribute("open")
-    fireEvent.click(screen.getByText("훈련 방법 선택"))
-    expect(screen.getByText(/지금 선택할 수 있는 상세 방법은 1개/u)).toBeVisible()
+    openSettings()
+    expect(screen.getByText(/현재 조건에서 검토가 끝난 상세 훈련이에요/u)).toBeVisible()
     expect(screen.getAllByRole("radio")).toHaveLength(2)
-    expect(screen.getByRole("radio", { name: /시간과 체감 강도로 안내받기/u })).toBeChecked()
+    expect(screen.getByRole("radio", { name: /기록 없이 시간·RPE로 받기/u })).toBeChecked()
     expect(screen.queryByRole("group", { name: "추천 선호 (선택)" })).toBeNull()
     expect(screen.getByText(/자기보고 완료 0회/u)).not.toBeVisible()
     fireEvent.click(screen.getByText("추천에 참고한 이력"))
@@ -40,25 +76,25 @@ describe("candidate method picker", () => {
   it("sends the exact reference and does not treat RPE as another detailed method", () => {
     const onChange = vi.fn()
     render(<PlanMethodPicker options={options} selected={null} onChange={onChange} />)
-    fireEvent.click(screen.getByText("훈련 방법 선택"))
-    fireEvent.click(screen.getByRole("radio", { name: /1000m 5회/u }))
+    openSettings()
+    fireEvent.click(screen.getByRole("radio", { name: /5 × 1km @ 5K RP/u }))
     expect(onChange).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole("button", { name: "이 훈련으로 변경" }))
     expect(onChange).toHaveBeenCalledWith(options[0]!.ref)
-    expect(screen.getByText(/다른 방법은 준비 중이에요/u)).toBeVisible()
+    expect(screen.queryByRole("button", { name: "다른 훈련" })).toBeNull()
   })
   it("lets the athlete return to RPE without a restart of intake", () => {
     const onChange = vi.fn()
     render(<PlanMethodPicker options={options} selected={options[0]!.ref} onChange={onChange} />)
-    fireEvent.click(screen.getByText("훈련 방법 선택"))
-    fireEvent.click(screen.getByRole("radio", { name: /시간과 체감 강도로 안내받기/u }))
+    openSettings()
+    fireEvent.click(screen.getByRole("radio", { name: /기록 없이 시간·RPE로 받기/u }))
     expect(onChange).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole("button", { name: "이 훈련으로 변경" }))
     expect(onChange).toHaveBeenCalledWith(null)
   })
   it("does not fill a missing method with a fake alternative", () => {
     render(<PlanMethodPicker options={[]} selected={null} onChange={vi.fn()} />)
-    fireEvent.click(screen.getByText("훈련 방법 선택"))
+    openSettings()
     expect(screen.getAllByRole("radio")).toHaveLength(1)
     expect(screen.getByText(/선택할 수 있는 상세 방법은 아직 없어요/u)).toBeVisible()
   })
@@ -70,12 +106,13 @@ describe("candidate method picker", () => {
     const alternate = { ...options[0]!, sequence: { ...sequence, main: [{ ...group, children: [{ ...group.children[0], work: { kind: "duration" as const, durationSeconds: 120, distanceM: null } }] }] }, ref: { ...options[0]!.ref, templateId: "UI-FIXTURE-ONLY" }, mainSummary: "시간형 구간", recoverySummary: "거리형 회복" }
     const onChange = vi.fn()
     render(<PlanMethodPicker options={[options[0]!, alternate]} selected={options[0]!.ref} onChange={onChange} />)
-    fireEvent.click(screen.getByText("훈련 방법 선택"))
+    openSettings()
     expect(screen.getAllByRole("radio")).toHaveLength(3)
     fireEvent.click(screen.getByRole("button", { name: "다른 훈련" }))
-    expect(screen.queryByRole("button", { name: "다른 훈련" })).toBeNull()
-    expect(screen.getByText(/선택 가능한 방법을 모두 봤어요/)).toBeVisible()
-    expect(screen.getByRole("button", { name: "본 방법 다시 보기" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "다른 훈련" })).toBeVisible()
+    expect(screen.queryByRole("button", { name: "본 방법 다시 보기" })).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "다른 훈련" }))
+    expect(screen.getByRole("radio", { name: /5 × 1km @ 5K RP/u })).toBeChecked()
     fireEvent.click(screen.getByRole("radio", { name: /시간형 구간/u }))
     expect(onChange).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole("button", { name: "이 훈련으로 변경" }))
@@ -86,7 +123,7 @@ describe("candidate method picker", () => {
     const extra = { ...options[0]!, recommended: false, ref: { ...options[0]!.ref, templateId: "UI-EXTRA-ONLY" }, mainSummary: "추가 방법 예시" }
     const props = { options: [...options, extra], onChange: vi.fn() }
     const view = render(<PlanMethodPicker {...props} selected={options[0]!.ref} />)
-    fireEvent.click(screen.getByText("훈련 방법 선택"))
+    openSettings()
     expect(screen.queryByRole("radio", { name: /추가 방법 예시/u })).toBeNull()
     fireEvent.click(screen.getByRole("button", { name: "다른 훈련 보기 (1)" }))
     fireEvent.click(screen.getByRole("radio", { name: /추가 방법 예시/u }))
@@ -107,12 +144,12 @@ describe("candidate method picker", () => {
         selected={first.ref} onChange={onChange} repeatPreference={preference} onRepeatPreferenceChange={setPreference} />
     }
     render(<Harness />)
-    fireEvent.click(screen.getByText("훈련 방법 선택"))
+    openSettings()
     expect(screen.getByRole("radio", { name: "선호 없음" })).toBeChecked()
     for (const name of ["덜 해본 방법 선호", "해본 방법 선호", "선호 없음"]) {
       fireEvent.click(screen.getByRole("radio", { name }))
       expect(screen.getByRole("radio", { name })).toBeChecked()
-      expect(screen.getByRole("radio", { name: /1000m 5회/u })).toBeChecked()
+      expect(screen.getByRole("radio", { name: /5 × 1km @ 5K RP/u })).toBeChecked()
       expect(onChange).not.toHaveBeenCalled()
     }
   })
@@ -122,7 +159,7 @@ describe("candidate method picker", () => {
     const sameFamily = { ...first, ref: { ...first.ref, templateId: "UI-CONFIG" } }
     const unmapped = { ...first, method: undefined, ref: { ...first.ref, templateId: "UI-UNKNOWN" } }
     render(<PlanMethodPicker options={[first, sameFamily, unmapped]} selected={null} onChange={vi.fn()} onRepeatPreferenceChange={vi.fn()} />)
-    fireEvent.click(screen.getByText("훈련 방법 선택"))
+    openSettings()
     expect(screen.queryByRole("group", { name: "추천 선호 (선택)" })).toBeNull()
     expect(screen.queryByRole("button", { name: "다른 훈련" })).toBeNull()
   })
@@ -134,15 +171,15 @@ describe("candidate method picker", () => {
       recoveryBetweenRepeats: { mode: "NOT_APPLICABLE" as const, seconds: null } }] },
       ref: { ...first.ref, templateId: "0-COUNT-ONLY" }, mainSummary: "반복 축소 시험" }
     render(<PlanMethodPicker options={[single, first]} selected={first.ref} onChange={vi.fn()} />)
-    fireEvent.click(screen.getByText("훈련 방법 선택"))
+    openSettings()
     expect(screen.queryByRole("button", { name: "다른 훈련" })).toBeNull()
   })
 
   it("preview, undo, redo and cancel do not call the parent; repeated apply is one request", () => {
     const onChange = vi.fn(), onPendingChange = vi.fn()
     render(<PlanMethodPicker options={options} selected={null} onChange={onChange} onPendingChange={onPendingChange} />)
-    fireEvent.click(screen.getByText("훈련 방법 선택"))
-    fireEvent.click(screen.getByRole("radio", { name: /1000m 5회/ }))
+    openSettings()
+    fireEvent.click(screen.getByRole("radio", { name: /5 × 1km @ 5K RP/ }))
     expect(onPendingChange).toHaveBeenLastCalledWith(true)
     fireEvent.click(screen.getByRole("button", { name: "되돌리기" }))
     expect(onPendingChange).toHaveBeenLastCalledWith(false)
@@ -165,17 +202,17 @@ describe("candidate method picker", () => {
     })
     const a = set("A-REST60", 2, 60), b = set("B-REST120", 2, 120)
     render(<PlanMethodPicker options={[set("0-SINGLE", 1, 0), a, b]} selected={a.ref} onChange={vi.fn()} />)
-    fireEvent.click(screen.getByText("훈련 방법 선택"))
+    openSettings()
     fireEvent.click(screen.getByRole("button", { name: "다른 훈련" }))
     expect(screen.getByRole("radio", { name: /B-REST120/ })).toBeChecked()
-    expect(screen.getByRole("button", { name: "본 방법 다시 보기" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "다른 훈련" })).toBeVisible()
   })
 
   it("invalidates a pending preview when the record content or plan context changes", () => {
     const onChange = vi.fn(), onPendingChange = vi.fn()
     const view = render(<PlanMethodPicker options={options} selected={null} contextKey="PB:1110" onChange={onChange} onPendingChange={onPendingChange} />)
-    fireEvent.click(screen.getByText("훈련 방법 선택"))
-    fireEvent.click(screen.getByRole("radio", { name: /1000m 5회/ }))
+    openSettings()
+    fireEvent.click(screen.getByRole("radio", { name: /5 × 1km @ 5K RP/ }))
     expect(onPendingChange).toHaveBeenLastCalledWith(true)
     view.rerender(<PlanMethodPicker options={options} selected={null} contextKey="PB:1111" onChange={onChange} onPendingChange={onPendingChange} />)
     expect(screen.queryByRole("button", { name: "이 훈련으로 변경" })).toBeNull()

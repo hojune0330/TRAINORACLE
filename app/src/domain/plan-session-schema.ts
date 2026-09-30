@@ -1,4 +1,6 @@
 import { z } from "zod"
+import { resolveCatalogBinding, isValidCatalogSession, type CatalogSessionBinding } from "@impl/prescription/catalog-session-binding"
+import type { PlanSession } from "@impl/plan-generator/session-types"
 import type { SafetyGateDecision } from "@impl/safety-gate/gate"
 import { parsePrescriptionNotation } from "@impl/prescription/notation"
 import { derivePrescriptionTotals } from "@impl/prescription/totals"
@@ -445,6 +447,9 @@ const rpeTimeRangeSchema = z.object({
   kind: z.literal("RPE_TIME_RANGE"),
   rpe: rpeRangeSchema,
   durationMinutes: durationRangeSchema,
+  catalogWorkout: z.custom<CatalogSessionBinding>(value => {
+    try { return resolveCatalogBinding(value as CatalogSessionBinding) !== null } catch { return false }
+  }).optional(),
 }).strict()
 
 const restSessionSchema = z.object({
@@ -492,7 +497,7 @@ export const planSessionSchema = z.discriminatedUnion("role", [
   restSessionSchema,
   easySessionSchema,
   detailedQualitySessionSchema,
-])
+]).refine(session => isValidCatalogSession(session as PlanSession), "Catalog calculation and stored session differ")
 
 const legacyPlanFrameSchema = z.object({
   lengthDays: frameLengthSchema,

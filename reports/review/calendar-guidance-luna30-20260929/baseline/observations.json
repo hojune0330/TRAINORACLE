@@ -1,0 +1,87 @@
+{
+  "scope": "current local UI, not proposed feature or live deployment",
+  "baseURL": "http://127.0.0.1:4194",
+  "devInstrumentationDisabled": [
+    "react-scan",
+    "react-grab"
+  ],
+  "fixedToday": "2026-09-29",
+  "observations": [
+    {
+      "kind": "empty",
+      "firstMonth": "2026년 9월 달력",
+      "viewport": "375x667",
+      "dimensions": {
+        "minDateTargetWidth": 51,
+        "minDateTargetHeight": 64,
+        "horizontalPageOverflow": false
+      },
+      "screenshot": "baseline/empty-375.png",
+      "journalUnchangedByNavigation": true
+    },
+    {
+      "kind": "old-record",
+      "firstMonth": "2026년 9월 달력",
+      "viewport": "375x667",
+      "dimensions": {
+        "minDateTargetWidth": 51,
+        "minDateTargetHeight": 64,
+        "horizontalPageOverflow": false
+      },
+      "screenshot": "baseline/old-record-375.png",
+      "oldRecordListPresent": true,
+      "detailOpens": true,
+      "returnMonth": "2025년 8월 달력",
+      "returnFocused": true,
+      "afterReaderNext": {
+        "selectedDate": "2025-08-19",
+        "focusedDate": "2025-08-18"
+      },
+      "crossTabReturnMonth": "2026년 9월 달력",
+      "originalReaderBrowserBack": {
+        "url": "http://127.0.0.1:4194/?app=1&uitest=1",
+        "calendarCount": 0,
+        "fullReaderCount": 1
+      },
+      "journalUnchangedByNavigation": true
+    },
+    {
+      "kind": "empty",
+      "firstMonth": "2026년 9월 달력",
+      "viewport": "320x667",
+      "dimensions": {
+        "minDateTargetWidth": 44.28125,
+        "minDateTargetHeight": 64,
+        "horizontalPageOverflow": false
+      },
+      "screenshot": "baseline/empty-320.png",
+      "journalUnchangedByNavigation": true
+    },
+    {
+      "kind": "old-record",
+      "firstMonth": "2026년 9월 달력",
+      "viewport": "320x667",
+      "dimensions": {
+        "minDateTargetWidth": 44.28125,
+        "minDateTargetHeight": 64,
+        "horizontalPageOverflow": false
+      },
+      "screenshot": "baseline/old-record-320.png",
+      "oldRecordListPresent": true,
+      "detailOpens": true,
+      "returnMonth": "2025년 8월 달력",
+      "returnFocused": true,
+      "afterReaderNext": {
+        "selectedDate": "2025-08-19",
+        "focusedDate": "2025-08-18"
+      },
+      "crossTabReturnMonth": "2026년 9월 달력",
+      "originalReaderBrowserBack": {
+        "url": "http://127.0.0.1:4194/?app=1&uitest=1",
+        "calendarCount": 0,
+        "fullReaderCount": 1
+      },
+      "journalUnchangedByNavigation": true
+    }
+  ]
+}

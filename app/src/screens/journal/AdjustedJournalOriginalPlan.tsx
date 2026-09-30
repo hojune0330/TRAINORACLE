@@ -3,6 +3,8 @@ import type { ResolvedAdjustedExplanation } from "../../domain/adjusted-method-s
 import { PrescriptionStructure } from "../plan-beta/PrescriptionStructure"
 import { DetailedPrescriptionView } from "../plan-beta/DetailedPrescriptionView"
 import { formatTrainingSeconds } from "../plan-beta/labels"
+import { WorkoutNotation } from "../plan-beta/WorkoutNotation"
+import { sessionWorkoutNotation } from "../../domain/workout-notation"
 
 /** Historical comparison only: no apply/start controls or inferred actual values. */
 export function AdjustedJournalOriginalPlan({ session, explanation, context = "journal" }: {
@@ -16,6 +18,8 @@ export function AdjustedJournalOriginalPlan({ session, explanation, context = "j
       : context === "preview" ? "선택한 변경안이에요. 아래 저장 버튼을 눌러야 계획에 적용돼요."
       : "저장할 때 선택한 훈련 구성이에요. 실제 수행 기록과는 별도로 표시해요."}</p>
     {prescription.kind === "ADJUSTED_METHOD" ? <>
+      <WorkoutNotation sequence={prescription.snapshot.projection.sequence} intent={session.plannedEnergyIntent} targets={prescription.snapshot.projection.segmentTargets} />
+      <details><summary>자세히 보기 · 방법과 근거</summary>
       <PrescriptionStructure sequence={prescription.snapshot.projection.sequence} />
       {prescription.snapshot.projection.segmentTargets.length > 0 && <div>
         <h4>당시 기록으로 계산한 참고 시간</h4>
@@ -28,16 +32,19 @@ export function AdjustedJournalOriginalPlan({ session, explanation, context = "j
         </li>)}</ul>
         <p>현재 몸 상태에 맞는 속도를 새로 판정한 값은 아니에요.</p>
       </div>}
-      <details><summary>이렇게 구성한 이유</summary>
+      <section aria-label="이렇게 구성한 이유"><h4>이렇게 구성한 이유</h4>
         <dl>{([
           ["훈련 목적", explanation.purpose], ["에너지 공급", explanation.energySupply],
           ["운동 구성", explanation.workRationale], ["회복 구성", explanation.recoveryRationale],
           ["주기 안에서의 역할", explanation.cycleRole], ["기대하는 변화", explanation.expectedAdaptation],
           ["한계", explanation.limitations], ["기록에서 확인할 점", explanation.observation],
         ] as const).map(([label, text]) => <div key={label}><dt>{label}</dt><dd>{text}</dd></div>)}</dl>
-      </details>
+        <details><summary>근거와 설명 버전</summary><p>설명 v{explanation.version} · 검토 {explanation.reviewRef}</p>
+          <ul>{explanation.evidenceRefs.map(ref => <li key={ref}>{ref}</li>)}</ul>
+        </details>
+      </section></details>
     </> : prescription.kind === "PACE_TARGET" ? <DetailedPrescriptionView prescription={prescription} />
       : prescription.kind === "REST" ? <p>운동을 쉬는 날로 계획했어요.</p>
-        : <p>예정 시간 {prescription.durationMinutes.minimum}~{prescription.durationMinutes.maximum}분 · RPE {prescription.rpe.minimum}~{prescription.rpe.maximum}</p>}
+        : <p>{sessionWorkoutNotation(session)}</p>}
   </section>
 }

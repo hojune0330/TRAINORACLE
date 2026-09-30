@@ -2,6 +2,8 @@ import type { PrescriptionSnapshotV3 } from "@impl/prescription/prescription-adj
 import { compareMainMethodsV3 } from "@impl/prescription/sequence-v3-comparison"
 import { deriveSequenceV3Totals } from "@impl/prescription/sequence-v3"
 import type { SequenceNodeV3, RecoveryStepV3, PrescriptionSequenceV3 } from "@impl/prescription/sequence-v3"
+import { drawWorkoutMethod } from "./workout-method-draw"
+import type { ConfigurationReference } from "@impl/prescription/prescription-adjustment"
 
 type Dimension = "repetitions" | "repDistance" | "workTime" | "repeatRecovery" | "setRecovery" | "sets"
 export type WorkoutTuningStepV3 = {
@@ -135,4 +137,33 @@ export function nextWorkoutMethodV3(current: PrescriptionSnapshotV3, snapshots: 
     if (next && nextIndex !== index && !seenIndices.has(nextIndex)) return next
   }
   return null
+}
+
+const sameConfiguration = (a: ConfigurationReference, b: ConfigurationReference) => JSON.stringify(a) === JSON.stringify(b)
+type TuningGroups = readonly (readonly ConfigurationReference[])[]
+
+/** Reviewed scalar siblings occupy one draw slot, regardless of the number of doses. */
+export function workoutMethodPoolV3(current: PrescriptionSnapshotV3, snapshots: readonly PrescriptionSnapshotV3[], groups: TuningGroups): readonly PrescriptionSnapshotV3[] {
+  return snapshots.filter(item => groups.every(group => {
+    if (!group.some(ref => sameConfiguration(ref, item.configuration))) return true
+    const representative = group.some(ref => sameConfiguration(ref, current.configuration))
+      ? snapshots.find(candidate => sameConfiguration(candidate.configuration, current.configuration))
+      : snapshots.find(candidate => group.some(ref => sameConfiguration(ref, candidate.configuration)))
+    return representative === item
+  }))
+}
+
+export function drawWorkoutMethodV3(current: PrescriptionSnapshotV3, snapshots: readonly PrescriptionSnapshotV3[],
+  seen: readonly PrescriptionSnapshotV3[], random: () => number = Math.random, groups: TuningGroups = []): {
+    readonly next: PrescriptionSnapshotV3; readonly seen: readonly PrescriptionSnapshotV3[];
+  } | null {
+  const methods = distinctWorkoutMethodsV3(workoutMethodPoolV3(current, snapshots, groups))
+  const indexOf = (snapshot: PrescriptionSnapshotV3) => {
+    const exact = methods.findIndex(item => JSON.stringify(item.configuration) === JSON.stringify(snapshot.configuration))
+    return exact >= 0 ? exact : methods.findIndex(item => groups.some(group =>
+      group.some(ref => sameConfiguration(ref, item.configuration)) && group.some(ref => sameConfiguration(ref, snapshot.configuration)))
+      || sameWorkoutMethodV3(item.sequence, snapshot.sequence))
+  }
+  const draw = drawWorkoutMethod(methods.length, indexOf(current), seen.map(indexOf), random)
+  return draw ? { next: methods[draw.index]!, seen: draw.seen.map(index => methods[index]!) } : null
 }

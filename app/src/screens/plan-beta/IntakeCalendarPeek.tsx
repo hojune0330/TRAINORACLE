@@ -2,7 +2,7 @@ import { CalendarDays } from "lucide-react"
 import type { PlanBetaIntake } from "../../domain/plan-beta-store"
 import { eventDistanceLabel } from "./plan-intake-navigation"
 import { EXPERIENCE_LABELS } from "./labels"
-import { useEffect, useState } from "react"
+import { useCalendarPosition } from "../../hooks/useCalendarPosition"
 import { MonthCalendar, calendarDayLabel } from "../../components/MonthCalendar"
 import { useLocalToday } from "../../hooks/useLocalToday"
 import { isValidIsoDate, isoShift } from "../../domain/dates"
@@ -21,9 +21,7 @@ export function IntakeCalendarPeek({
 }) {
   const today = useLocalToday()
   const start = draft.startDate && isValidIsoDate(draft.startDate) ? draft.startDate : today
-  const [month, setMonth] = useState(start.slice(0, 7))
-  const [selected, setSelected] = useState(start)
-  useEffect(() => { setMonth(start.slice(0, 7)); setSelected(start) }, [start])
+  const { month, date: selected, selectMonth: setMonth, selectDate: setSelected } = useCalendarPosition(`intake:${start}`, start)
   const activeDays = draft.availableDayCount === undefined
     ? new Set<number>()
     : new Set(previewTrainingDays(draft.availableDayCount, frameLengthDays))

@@ -38,6 +38,7 @@ import { formatRecordTime } from "../../domain/athlete-record-display"
 import { defaultInstantCandidate, projectInstantRecommendation } from "./instant-plan-projection"
 import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
 import { sameDetailedTemplateReference } from "../../domain/plan-method-selection"
+import { CatalogWorkoutPicker } from "./CatalogWorkoutPicker"
 
 export function PlanCandidates({
   generated,
@@ -71,6 +72,7 @@ export function PlanCandidates({
   saveError,
   saveCode,
   onRetrySave,
+  onCatalogChange,
 }: {
   readonly generated: PlanGenerationSuccess
   readonly intake: PlanBetaIntake
@@ -104,6 +106,7 @@ export function PlanCandidates({
   readonly saveError?: string | null
   readonly saveCode?: string | null
   readonly onRetrySave?: () => void
+  readonly onCatalogChange?: (next: PlanGenerationSuccess) => void
 }) {
   const [showOptions, setShowOptions] = React.useState(false)
   const resultRef = React.useRef<HTMLElement>(null)
@@ -150,7 +153,7 @@ export function PlanCandidates({
     : `${selectedRecord.eventDistanceM}m`
   const recommendation = projectInstantRecommendation(defaultInstantCandidate(generated), startDate)
   const instantAdjustment = recommendation === null ? undefined : adjustmentActions[recommendation.id]
-  const detailedOptions = resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference)
+  const detailedOptions = resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference, { anchor: selectedRecord })
   const selectedDetailedOption = detailedOptions.find(option => sameDetailedTemplateReference(option.ref, intake.selectedDetailedTemplateRef))
   const needsReview = recordConfirmationPending || detailedEvidencePending || targetDraftPending || methodDraftPending || !hasValidStartDate
   React.useEffect(() => {
@@ -187,17 +190,20 @@ export function PlanCandidates({
         onShowAlternatives={() => { setShowOptions(true); reveal("options") }}
         onEditSchedule={() => { setShowOptions(true); reveal("date") }}
         onEditWorkout={instantAdjustment ?? (detailedOptions.length > 0 ? () => reveal("method") : undefined)}
-        workoutLabel={instantAdjustment ? "검토된 상세 훈련을 고를 수 있어요" : selectedDetailedOption?.mainSummary}
+        workoutLabel={instantAdjustment ? "거리·시간·반복·회복을 확인하고 조절해요" : selectedDetailedOption?.mainSummary}
         workoutLabelTitle={instantAdjustment ? "상세 훈련" : undefined}
-        startLabel={instantAdjustment ? "상세 훈련 고르고 시작" : undefined}
+        startLabel={instantAdjustment ? "처방 훈련 확인" : undefined}
         anchorLabel={prescriptionBinding.kind === "bound" && selectedRecord
           ? `${selectedEventLabel} ${formatRecordTime(selectedRecord.performanceSeconds)}` : undefined}
         goalLabel={instantEntry?.kind === "GOAL_ONLY" ? `${instantEntry.eventDistanceM}m ${formatRecordTime(instantEntry.performanceSeconds)}` : undefined}
       />}
+      {onCatalogChange && intake.selectedDetailedTemplateRef === null && <CatalogWorkoutPicker generated={generated} intake={intake}
+        records={athleteRecords} onChange={onCatalogChange} disabled={saving || recordConfirmationPending || selectionUnavailable} />}
       {!recommendation && saveError && <p role="alert">{saveError}</p>}
       {instantAdjustment === undefined && onChangeMethod !== undefined && detailedOptions.length > 0 && <div ref={methodRef} tabIndex={-1}>
         <PlanMethodPicker
           options={detailedOptions}
+          openRequest={navigation?.kind === "method" ? navigation.revision : null}
           selected={intake.selectedDetailedTemplateRef}
           contextKey={JSON.stringify([intake, startDate, selectedRecordId, selectedRecord?.performanceSeconds, prescriptionBinding])}
           onPendingChange={setMethodDraftPending}
@@ -389,8 +395,9 @@ function CandidateComparison({
       </div>}
       <div className="plan-candidate-comparison__options">
         {candidates.map((candidate) => {
-          const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent)
-          const purposeStatus = candidatePurposeStatus(candidate.kind)
+          const hasCatalog = candidate.sessions.some(s => s.prescription.kind === "RPE_TIME_RANGE" && s.prescription.catalogWorkout)
+          const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent, hasCatalog)
+          const purposeStatus = candidatePurposeStatus(candidate.kind, hasCatalog)
           return (
             <article key={candidate.candidateId}>
               <span>계획안 {candidate.kind === "BALANCED" ? "A" : "B"}</span>

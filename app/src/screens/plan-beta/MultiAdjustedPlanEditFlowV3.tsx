@@ -55,7 +55,8 @@ export function MultiAdjustedPlanEditFlowV3({ seed, readReview, locks, readRevie
   const prepared = live === null ? null : prepareMultiAdjustedPlanCandidateV3(request.preparations, live.rpeBindings)
   const history = live ? readMultiPlanMethodHistoryV3(request.intake.eventDistanceM, live.retained) : null
   if (editing && live) {
-    const selected = prepared?.kind === "prepared" ? prepared.candidate.sessions.find(s => s.day === editing.day && s.slot === editing.slot)?.prescription : undefined
+    const selectedSession = prepared?.kind === "prepared" ? prepared.candidate.sessions.find(s => s.day === editing.day && s.slot === editing.slot) : undefined
+    const selected = selectedSession?.prescription
     const source = live.preparations.find(p => p.address.day === editing.day && p.address.slot === editing.slot)
     const offer = source === undefined ? null : "experienceBand" in source
       ? prepareUnanchoredAdjustmentOfferV3({ ...source.source, nowMs: Date.now() })
@@ -66,6 +67,7 @@ export function MultiAdjustedPlanEditFlowV3({ seed, readReview, locks, readRevie
       history: history?.kind === "read" ? history.history : [], repeatPreference }) : null
     if (offer?.kind === "available" && recommendations?.kind === "recommended") return <PrescriptionAdjustmentEditorV3 key={`${editing.day}:${editing.slot}`}
       sessionLabel={`${isoShift(request.preparations[0]!.startDate, editing.day - 1)} · ${editing.slot === "AM" ? "오전" : "오후"}`}
+      intent={selectedSession?.plannedEnergyIntent}
       authority={offer.authority} current={offer.current} policy={offer.policy} contextKey={offer.contextKey}
       initialConfiguration={selected?.kind === "ADJUSTED_METHOD_V3" ? selected.snapshot.receipt.after.configuration : undefined}
       now={Date.now} orderedChoices={orderedChoicesFor?.(editing)} onCancel={() => setEditing(null)}
@@ -89,7 +91,8 @@ export function MultiAdjustedPlanEditFlowV3({ seed, readReview, locks, readRevie
       confirmLabel="변경안 버리고 돌아가기" onCancel={() => setDiscarding(false)}
       onConfirm={() => { leaving.current = true; setDiscarding(false); onCancel(); return true }} />}
     <button type="button" onClick={() => hasUnsavedChanges ? setDiscarding(true) : onCancel()}><ArrowLeft size={18} aria-hidden="true" />후보로 돌아가기</button>
-    <h1>주요 훈련을 하나씩 확인해 주세요</h1>
+    <h1>이번 계획의 주요 훈련</h1>
+    <details><summary>추천에 참고한 이력</summary>
     <fieldset><legend>선택지 순서</legend>
       {([["NEUTRAL", "기본 순서"], ["PREFER_REPEAT", "완료 표시 많은 순"], ["PREFER_VARIETY", "완료 표시 적은 순"]] as const).map(([value, label]) =>
         <label key={value}><input type="radio" name="multi-method-order" checked={repeatPreference === value}
@@ -98,6 +101,7 @@ export function MultiAdjustedPlanEditFlowV3({ seed, readReview, locks, readRevie
     <p>{history?.kind !== "read" ? "훈련 이력을 확인하지 못해 기본 순서를 사용해요."
       : history.history.length ? "이 기기의 같은 종목 계획에서 직접 남긴 완료 표시 기준이에요."
         : "연결된 훈련 이력이 없어 기본 순서를 사용해요."}</p>
+    </details>
     <p role="status">{changes.length ? `변경한 주요 훈련 ${changes.length}개 · 아직 저장하지 않았어요.` : "아직 저장하지 않은 계획이에요."}</p>
     {prepared?.kind === "prepared" ? prepared.candidate.sessions.filter(s => prepared.candidate.changedSlots.some(c => c.day === s.day && c.slot === s.slot)).map(session => <section key={`${session.day}:${session.slot}`} aria-label="고른 주요 훈련">
       <h2>{isoShift(prepared.candidate.startDate, session.day - 1)} · {session.slot === "AM" ? "오전" : "오후"}</h2>

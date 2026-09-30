@@ -1,0 +1,30 @@
+{
+  "original": "PASS",
+  "sourceUnchanged": true,
+  "results": [
+    {
+      "name": "future record preferred",
+      "rejected": true
+    },
+    {
+      "name": "ended plan jumps to start",
+      "rejected": true
+    },
+    {
+      "name": "candidate jumps to today",
+      "rejected": true
+    },
+    {
+      "name": "failed read treated as ready empty",
+      "rejected": true
+    },
+    {
+      "name": "past cycle forced to zero",
+      "rejected": true
+    },
+    {
+      "name": "invalid date admitted",
+      "rejected": true
+    }
+  ]
+}

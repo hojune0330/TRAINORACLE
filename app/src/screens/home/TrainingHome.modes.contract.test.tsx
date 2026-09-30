@@ -69,7 +69,7 @@ describe("training home presentation", () => {
     const next = vi.fn(); const plan = vi.fn()
     render(<TrainingHome model={TRAINING} onOpenNextTraining={next} onOpenPlan={plan} />)
     const card = screen.getByRole("button", { name: /^다음 훈련 ·/u })
-    expect(card).toHaveTextContent(/총 25~40분.*RPE 5~6/u); fireEvent.click(card)
+    expect(card).toHaveTextContent(/전체 25–40min @ RPE 5–6/u); fireEvent.click(card)
     expect(next).toHaveBeenCalledOnce(); expect(plan).not.toHaveBeenCalled()
   })
   it("does not claim all training is complete when today has a record", () => {

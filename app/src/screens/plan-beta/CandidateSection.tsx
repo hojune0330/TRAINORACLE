@@ -44,8 +44,9 @@ export function CandidateSection({
   const [pendingTarget, setPendingTarget] = useState<PlanSessionTarget | null>(null)
   const currentTarget = detailedTarget ?? detailedTargets[0] ?? null
   useEffect(() => { setPendingTarget(null) }, [candidate, startDate, detailedTarget])
-  const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent)
-  const purposeStatus = candidatePurposeStatus(candidate.kind)
+  const hasCatalog = candidate.sessions.some(s => s.prescription.kind === "RPE_TIME_RANGE" && s.prescription.catalogWorkout)
+  const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent, hasCatalog)
+  const purposeStatus = candidatePurposeStatus(candidate.kind, hasCatalog)
   const optionLetter = candidate.kind === "BALANCED" ? "A" : "B"
   const frameLengthDays = candidate.frame.projectionLengthDays ?? candidate.frame.lengthDays
   const hasDetailedPrescription = candidate.sessions.some(

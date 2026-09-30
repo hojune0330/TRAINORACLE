@@ -16,6 +16,7 @@ export type AppViewState = {
   readonly journalMode: "CALENDAR" | "CYCLE"
   readonly cycleAnchor: string | null
   readonly cycleIndex: number
+  readonly cyclePositionSet?: boolean
   readonly returnToSession?: PlannedSessionLogDraft["link"]
   readonly journalDraft?: {
     readonly date: string
@@ -110,6 +111,7 @@ export function viewForJournalReturn(state: AppViewState): AppViewState {
     journalMode: state.journalMode,
     cycleAnchor: state.cycleAnchor,
     cycleIndex: state.cycleIndex,
+    cyclePositionSet: state.cyclePositionSet,
     ...(draft.returnTab === "plan" && draft.plannedSessionLink !== undefined
       ? { returnToSession: draft.plannedSessionLink }
       : {}),

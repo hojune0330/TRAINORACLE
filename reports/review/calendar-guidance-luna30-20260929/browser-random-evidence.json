@@ -1,0 +1,351 @@
+{
+  "status": "PASS",
+  "scope": "existing local UI in fresh anonymous contexts; not new feature, real accounts or mobile hardware",
+  "transitions": 80,
+  "runs": [
+    {
+      "width": 375,
+      "motion": "no-preference",
+      "seed": 9029,
+      "steps": [
+        {
+          "action": "open-escape",
+          "date": "2026-09-17"
+        },
+        {
+          "action": "이전 달",
+          "month": "2026년 8월 달력"
+        },
+        {
+          "action": "reader-next-return",
+          "month": "2026년 8월 달력"
+        },
+        {
+          "action": "오늘",
+          "month": "2026년 9월 달력"
+        },
+        {
+          "action": "reader-next-return",
+          "month": "2026년 9월 달력"
+        },
+        {
+          "action": "오늘",
+          "month": "2026년 9월 달력"
+        },
+        {
+          "action": "open-escape",
+          "date": "2026-09-08"
+        },
+        {
+          "action": "이전 달",
+          "month": "2026년 8월 달력"
+        },
+        {
+          "action": "다음 달",
+          "month": "2026년 9월 달력"
+        },
+        {
+          "action": "이전 달",
+          "month": "2026년 8월 달력"
+        },
+        {
+          "action": "keyboard",
+          "direction": "ArrowLeft"
+        },
+        {
+          "action": "open-escape",
+          "date": "2026-08-30"
+        },
+        {
+          "action": "open-escape",
+          "date": "2026-07-27"
+        },
+        {
+          "action": "open-escape",
+          "date": "2026-07-21"
+        },
+        {
+          "action": "오늘",
+          "month": "2026년 9월 달력"
+        },
+        {
+          "action": "이전 달",
+          "month": "2026년 8월 달력"
+        },
+        {
+          "action": "다음 달",
+          "month": "2026년 9월 달력"
+        },
+        {
+          "action": "이전 달",
+          "month": "2026년 8월 달력"
+        },
+        {
+          "action": "double-month",
+          "name": "이전 달",
+          "month": "2026년 6월 달력"
+        },
+        {
+          "action": "open-escape",
+          "date": "2026-07-01"
+        },
+        {
+          "action": "오늘",
+          "month": "2026년 9월 달력"
+        },
+        {
+          "action": "keyboard",
+          "direction": "ArrowRight"
+        },
+        {
+          "action": "다음 달",
+          "month": "2026년 10월 달력"
+        },
+        {
+          "action": "reader-next-return",
+          "month": "2026년 10월 달력"
+        },
+        {
+          "action": "keyboard",
+          "direction": "ArrowRight"
+        },
+        {
+          "action": "다음 달",
+          "month": "2026년 11월 달력"
+        },
+        {
+          "action": "reader-next-return",
+          "month": "2026년 11월 달력"
+        },
+        {
+          "action": "double-month",
+          "name": "다음 달",
+          "month": "2027년 1월 달력"
+        },
+        {
+          "action": "double-month",
+          "name": "다음 달",
+          "month": "2027년 3월 달력"
+        },
+        {
+          "action": "이전 달",
+          "month": "2027년 2월 달력"
+        },
+        {
+          "action": "다음 달",
+          "month": "2027년 3월 달력"
+        },
+        {
+          "action": "이전 달",
+          "month": "2027년 2월 달력"
+        },
+        {
+          "action": "reader-next-return",
+          "month": "2027년 2월 달력"
+        },
+        {
+          "action": "reader-next-return",
+          "month": "2027년 2월 달력"
+        },
+        {
+          "action": "open-escape",
+          "date": "2027-02-11"
+        },
+        {
+          "action": "오늘",
+          "month": "2026년 9월 달력"
+        },
+        {
+          "action": "이전 달",
+          "month": "2026년 8월 달력"
+        },
+        {
+          "action": "double-month",
+          "name": "이전 달",
+          "month": "2026년 6월 달력"
+        },
+        {
+          "action": "오늘",
+          "month": "2026년 9월 달력"
+        },
+        {
+          "action": "reader-next-return",
+          "month": "2026년 9월 달력"
+        }
+      ]
+    },
+    {
+      "width": 320,
+      "motion": "reduce",
+      "seed": 1701,
+      "steps": [
+        {
+          "action": "open-escape",
+          "date": "2026-09-17"
+        },
+        {
+          "action": "오늘",
+          "month": "2026년 9월 달력"
+        },
+        {
+          "action": "오늘",
+          "month": "2026년 9월 달력"
+        },
+        {
+          "action": "double-month",
+          "name": "이전 달",
+          "month": "2026년 7월 달력"
+        },
+        {
+          "action": "오늘",
+          "month": "2026년 9월 달력"
+        },
+        {
+          "action": "double-month",
+          "name": "다음 달",
+          "month": "2026년 11월 달력"
+        },
+        {
+          "action": "open-escape",
+          "date": "2026-11-12"
+        },
+        {
+          "action": "오늘",
+          "month": "2026년 9월 달력"
+        },
+        {
+          "action": "다음 달",
+          "month": "2026년 10월 달력"
+        },
+        {
+          "action": "keyboard",
+          "direction": "ArrowRight"
+        },
+        {
+          "action": "open-escape",
+          "date": "2026-10-17"
+        },
+        {
+          "action": "open-escape",
+          "date": "2026-10-30"
+        },
+        {
+          "action": "open-escape",
+          "date": "2026-10-08"
+        },
+        {
+          "action": "오늘",
+          "month": "2026년 9월 달력"
+        },
+        {
+          "action": "open-escape",
+          "date": "2026-09-16"
+        },
+        {
+          "action": "다음 달",
+          "month": "2026년 10월 달력"
+        },
+        {
+          "action": "다음 달",
+          "month": "2026년 11월 달력"
+        },
+        {
+          "action": "reader-next-return",
+          "month": "2026년 11월 달력"
+        },
+        {
+          "action": "다음 달",
+          "month": "2026년 12월 달력"
+        },
+        {
+          "action": "이전 달",
+          "month": "2026년 11월 달력"
+        },
+        {
+          "action": "double-month",
+          "name": "다음 달",
+          "month": "2027년 1월 달력"
+        },
+        {
+          "action": "keyboard",
+          "direction": "ArrowRight"
+        },
+        {
+          "action": "open-escape",
+          "date": "2026-12-27"
+        },
+        {
+          "action": "double-month",
+          "name": "다음 달",
+          "month": "2027년 2월 달력"
+        },
+        {
+          "action": "keyboard",
+          "direction": "ArrowRight"
+        },
+        {
+          "action": "double-month",
+          "name": "다음 달",
+          "month": "2027년 4월 달력"
+        },
+        {
+          "action": "double-month",
+          "name": "다음 달",
+          "month": "2027년 6월 달력"
+        },
+        {
+          "action": "keyboard",
+          "direction": "ArrowRight"
+        },
+        {
+          "action": "이전 달",
+          "month": "2027년 5월 달력"
+        },
+        {
+          "action": "reader-next-return",
+          "month": "2027년 5월 달력"
+        },
+        {
+          "action": "reader-next-return",
+          "month": "2027년 5월 달력"
+        },
+        {
+          "action": "keyboard",
+          "direction": "ArrowLeft"
+        },
+        {
+          "action": "오늘",
+          "month": "2026년 9월 달력"
+        },
+        {
+          "action": "open-escape",
+          "date": "2026-09-21"
+        },
+        {
+          "action": "reader-next-return",
+          "month": "2026년 9월 달력"
+        },
+        {
+          "action": "다음 달",
+          "month": "2026년 10월 달력"
+        },
+        {
+          "action": "reader-next-return",
+          "month": "2026년 10월 달력"
+        },
+        {
+          "action": "다음 달",
+          "month": "2026년 11월 달력"
+        },
+        {
+          "action": "open-escape",
+          "date": "2026-11-29"
+        },
+        {
+          "action": "open-escape",
+          "date": "2026-11-04"
+        }
+      ]
+    }
+  ]
+}

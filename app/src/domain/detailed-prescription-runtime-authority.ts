@@ -6,6 +6,7 @@ import {
   type SupportedPlanEventDistanceM,
 } from "@impl/plan-generator/types"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
+import { DISTANCE_ADOPTION, DISTANCE_ADOPTION_ACTIVE } from "./distance-prescription-adoption"
 import {
   DETAILED_PRESCRIPTION_APPROVALS,
   type DetailedPrescriptionApprovalRecord,
@@ -170,7 +171,23 @@ const ownerReviewedAuthoritySchema = z.object({
 export type OwnerReviewedDetailedPrescriptionAuthority = z.infer<typeof ownerReviewedAuthoritySchema>
 export const OWNER_APPROVAL_RECORD_FINGERPRINT_DOMAIN = "trainoracle.owner-reviewed-approval-record.v1"
 // Entries are reviewed repository artifacts, never supplied by browser storage or form input.
-const OWNER_REVIEWED_RUNTIME_AUTHORITIES: readonly OwnerReviewedDetailedPrescriptionAuthority[] = Object.freeze([])
+const OWNER_REVIEWED_RUNTIME_AUTHORITIES: readonly OwnerReviewedDetailedPrescriptionAuthority[] = Object.freeze(
+  DISTANCE_ADOPTION_ACTIVE ? DISTANCE_ADOPTION.manifest.approvals.flatMap(approval => {
+    const record = DISTANCE_ADOPTION.records.find(item => item.templateRef.templateId === approval.templateId)
+    if (!record) return []
+    const parsed = ownerReviewedAuthoritySchema.safeParse({ schemaVersion: 1, kind: "OWNER_REVIEWED_OPERATIONAL_ADOPTION",
+      processDecisionId: "TO-OWNER-TRAINING-REVIEW-ROUTE-2026-09-07", packetId: DISTANCE_ADOPTION.packet.decisionId,
+      packetVersion: "1.0.0", packetFingerprint: DISTANCE_ADOPTION.packetFingerprint,
+      sourceDigests: [approval.sportsScienceEvidence.canonicalEvidenceFingerprint],
+      implementationReviewRef: DISTANCE_ADOPTION.decisionRef, ownerDecisionId: approval.approvalDecisionId,
+      ownerEvidenceRef: DISTANCE_ADOPTION.decisionRef, ownerApprovedPacketFingerprint: DISTANCE_ADOPTION.packetFingerprint,
+      approvalRecordFingerprint: canonicalJsonFingerprint(OWNER_APPROVAL_RECORD_FINGERPRINT_DOMAIN, approval),
+      selectedTemplateRef: record.templateRef, targetEventDistanceM: 5000, compatibleIntent: record.compatibleIntent,
+      independentExternalReviewClaimed: false, verdict: "APPROVE", decidedAt: approval.decidedAt,
+      expiresAt: approval.expiresAt, revokedAt: null })
+    return parsed.success ? [parsed.data] : []
+  }) : [],
+)
 
 export type DetailedPrescriptionRuntimeAuthorityRequest = {
   readonly selectedTemplateRef: DetailedTemplateRef | null

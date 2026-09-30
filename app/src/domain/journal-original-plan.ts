@@ -16,7 +16,7 @@ import { readStoredMultiAdjustedPlanV6, RETAINED_MULTI_ADJUSTED_EVIDENCE_V3 } fr
 import { readMultiAdjustedOriginalPlansV3 } from "./multi-adjusted-plan-archive-v3"
 
 /** Lookup only: no current-plan substitution, writes, activation or memo access. */
-export function readJournalOriginalPlan(entry: PostSessionEntry,
+export function readJournalOriginalPlan(entry: Pick<PostSessionEntry, "id" | "date" | "plannedSessionLink"> & Partial<PostSessionEntry>,
   retained: readonly RetainedAdjustedPlanEvidence[] = RETAINED_ADJUSTED_PLAN_EVIDENCE,
   retainedV3: readonly RetainedAdjustedPlanEvidenceV3[] = RETAINED_ADJUSTED_PLAN_EVIDENCE_V3,
   retainedMultiV3: readonly RetainedMultiAdjustedEvidenceV3[] = RETAINED_MULTI_ADJUSTED_EVIDENCE_V3) {

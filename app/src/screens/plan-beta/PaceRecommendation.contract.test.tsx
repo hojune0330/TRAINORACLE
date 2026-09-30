@@ -36,7 +36,7 @@ describe("visible record-based pace recommendation", () => {
     expect(screen.getByText(/최근 경기 · 5000m 18분 31초 · 2026-09-01/u)).toBeVisible()
     expect(screen.getByText(/직접 입력한 기록/u)).toBeVisible()
     expect(screen.getByText("1,111초 × 1000m ÷ 5000m")).toBeVisible()
-    expect(screen.getByText(/계산값 약 222.2초 · 화면은 1초 단위로 반올림/u)).toBeVisible()
+    expect(screen.getByText(/계산값 약 222.2초 · 짧은 훈련 표기는 소수점 셋째 자리까지/u)).toBeVisible()
     expect(screen.getByText(/1000m당 약 3분 42초/u)).toBeVisible()
     expect(screen.getByText(/휴식은 개인 기록에서 계산한 시간이 아니라/u)).toBeVisible()
     expect(screen.getByText(/평균 속도를 반복 거리에 적용/u)).toBeVisible()

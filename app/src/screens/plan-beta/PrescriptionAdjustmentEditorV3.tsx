@@ -8,8 +8,11 @@ import type { AdjustmentPolicyReference, ConfigurationReference } from "@impl/pr
 import { deriveSequenceV3Totals, parsePrescriptionSequenceV3 } from "@impl/prescription/sequence-v3"
 import { hasCanonicalJsonTree } from "../../domain/plan-beta-schema"
 import { createWorkoutPreviewHistory, pushWorkoutPreview, undoWorkoutPreview, redoWorkoutPreview } from "../../domain/workout-preview-history"
-import { buildWorkoutTuningStepsV3, distinctWorkoutMethodsV3, nextWorkoutMethodV3, workoutTuningChangesV3 } from "../../domain/workout-tuning-v3"
+import { buildWorkoutTuningStepsV3, distinctWorkoutMethodsV3, drawWorkoutMethodV3, workoutMethodPoolV3, workoutTuningChangesV3 } from "../../domain/workout-tuning-v3"
 import { PrescriptionStructureV3 } from "./PrescriptionStructureV3"
+import type { PlannedEnergyIntent } from "@impl/plan-generator/types"
+import { sequenceNotation, sequenceWorkoutName } from "../../domain/workout-notation"
+import { formatTrainingSeconds } from "./labels"
 import "./PrescriptionAdjustmentEditor.css"
 
 export type AdjustmentOrderedChoicesV3 = {
@@ -17,6 +20,7 @@ export type AdjustmentOrderedChoicesV3 = {
   readonly configurations: readonly ConfigurationReference[]
 }
 type Props = {
+  readonly intent?: PlannedEnergyIntent
   readonly sessionLabel?: string
   readonly authority: AdjustmentAuthorityV3
   readonly current: PrescriptionSnapshotV3
@@ -82,7 +86,6 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
   const pending = React.useRef(false), completed = React.useRef(false), mounted = React.useRef(true)
   const latest = React.useRef(props); latest.current = props
   const dialog = React.useRef<HTMLDialogElement>(null), back = React.useRef<HTMLButtonElement>(null)
-  const choiceDetails = React.useRef<HTMLDetailsElement>(null)
   const keepEditing = React.useRef<HTMLButtonElement>(null), discardOpener = React.useRef<HTMLElement | null>(null)
   const id = React.useId()
   const changed = (live: Props) => opened.currentIdentity === null || identity(live.current) !== opened.currentIdentity
@@ -138,6 +141,7 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
       const seen = next?.after ?? opened.current
       setSeenMethods(previous => previous.some(item => same(item.configuration, seen.configuration)) ? previous : [...previous, seen])
       setError(null)
+      return true
     } catch { setError("구성을 확인하지 못했어요. 현재 훈련은 바뀌지 않았어요.") }
   }
   const choose = (target: ConfigurationReference) => select(target)
@@ -182,11 +186,9 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
   }) : []
   const preview = draft?.after ?? visibleBaseline
   const pool = visibleBaseline ? [visibleBaseline, ...authorized.filter(item => !same(item.configuration, visibleBaseline.configuration))] : authorized
-  const methodPool = props.primaryConfigurations?.length
-    ? pool.filter(item => same(item.configuration, visibleBaseline?.configuration)
-      || props.primaryConfigurations!.some(configuration => same(configuration, item.configuration))) : pool
-  const otherMethod = preview ? nextWorkoutMethodV3(preview, methodPool, seenMethods) : null
-  const methodsExhausted = !otherMethod && distinctWorkoutMethodsV3(methodPool).length > 1
+  const methodGroups = props.orderedChoices?.map(group => group.configurations) ?? []
+  const methodPool = preview ? workoutMethodPoolV3(preview, pool, methodGroups) : pool
+  const hasOtherMethod = distinctWorkoutMethodsV3(methodPool).length > 1
   const orderedGroup = preview ? props.orderedChoices?.find(group =>
     group.configurations.some(configuration => same(configuration, preview.configuration))) : undefined
   const orderedPool = orderedGroup
@@ -199,6 +201,10 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
     .filter(control => controlDimensions === null || (controlDimensions as readonly string[]).includes(control.dimension)) : []
   const changes = draft && visibleBaseline ? workoutTuningChangesV3(visibleBaseline, draft.after) : []
   const resetDisabled = same(selected, visibleBaseline?.configuration)
+  const choiceLabel = (configuration: ConfigurationReference, fallback: string) => {
+    const item = [visibleBaseline, ...authorized].find(value => value && same(value.configuration, configuration))
+    return props.intent && item ? `${sequenceWorkoutName(item.sequence, props.intent)} · ${sequenceNotation(item.sequence)}` : fallback
+  }
   return createPortal(<dialog ref={dialog} className="prescription-adjustment" role={discarding ? "alertdialog" : "dialog"}
     aria-modal="true" aria-busy={applying} aria-labelledby={`${id}-${discarding ? "discard" : "title"}`}
     aria-describedby={discarding ? `${id}-discard-description` : props.sessionLabel ? `${id}-session` : undefined}
@@ -225,46 +231,42 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
         {stale && <p role="alert">현재 훈련이나 적용 조건이 바뀌었어요. 닫은 뒤 다시 열어 주세요.</p>}
         {error && <p role="alert">{error}</p>}
         <div className="prescription-adjustment__preview-tools">
-          {(otherMethod || methodsExhausted) && <button type="button" disabled={blocked} onClick={() => {
-            if (otherMethod) choose(otherMethod.configuration)
-            else {
-              setShowAllChoices(true)
-              if (choiceDetails.current) { choiceDetails.current.open = true; choiceDetails.current.scrollIntoView({ block: "nearest" }) }
-            }
-          }}><RefreshCw size={18} aria-hidden="true" />{otherMethod ? "다른 훈련" : "본 방법 다시 보기"}</button>}
+          {hasOtherMethod && <button type="button" disabled={blocked} onClick={() => {
+            if (!preview || blocked || discarding || pending.current || completed.current) return
+            const draw = drawWorkoutMethodV3(preview, methodPool, seenMethods, Math.random, methodGroups)
+            if (draw && choose(draw.next.configuration)) setSeenMethods(draw.seen)
+          }}><RefreshCw size={18} aria-hidden="true" />다른 훈련</button>}
           <div role="group" aria-label="변경안 되돌리기" className="prescription-adjustment__history">
             <button type="button" className="prescription-adjustment__icon" title="되돌리기" aria-label="되돌리기" disabled={blocked || !history.past.length} onClick={() => travel("undo")}><Undo2 size={18} aria-hidden="true" /></button>
             <button type="button" className="prescription-adjustment__icon" title="다시 하기" aria-label="다시 하기" disabled={blocked || !history.future.length} onClick={() => travel("redo")}><Redo2 size={18} aria-hidden="true" /></button>
           </div>
         </div>
-        {methodsExhausted && <p className="prescription-adjustment__note">선택 가능한 방법을 모두 봤어요.</p>}
-        <p role="status" className="prescription-adjustment__note">{draft ? "바꾼 훈련을 미리 보고 있어요. 아직 계획에는 반영하지 않았어요." : "현재 훈련이에요. 바꿔 본 뒤 적용할 수 있어요."}</p>
+        <p role="status" className="prescription-adjustment__note">{draft ? "변경안 · 아직 저장 전" : "현재 처방"}</p>
         <section className="prescription-adjustment__preview" aria-label="훈련 미리보기" key={identity(selected)}>
-          {after && <PrescriptionStructureV3 sequence={after} compact />}
+          {after && <PrescriptionStructureV3 sequence={after} intent={props.intent} compact collapseSupport />}
         </section>
-        {changes.length > 0 && <ul className="prescription-adjustment__changes" aria-label="바뀐 값" aria-live="polite">
-          {changes.map(change => <li key={change}>{change}</li>)}
-        </ul>}
         {controls.slice(0, showAllControls ? undefined : 2).map(control => <div key={control.dimension}
           className="prescription-adjustment__stepper" role="group" aria-label={control.label}>
           <span>{control.label}</span>
           <button type="button" className="prescription-adjustment__icon" aria-label={control.decrease?.label ?? `${control.label} 줄이기`} title={control.decrease?.label ?? `${control.label} 줄이기`}
             disabled={blocked || !control.decrease} onClick={() => { if (control.decrease) choose(control.decrease.target.configuration) }}><Minus size={18} aria-hidden="true" /></button>
-          <output>{control.value}{control.unit}</output>
+          <output>{control.unit === "초" ? formatTrainingSeconds(control.value) : `${control.value}${control.unit}`}</output>
           <button type="button" className="prescription-adjustment__icon" aria-label={control.increase?.label ?? `${control.label} 늘리기`} title={control.increase?.label ?? `${control.label} 늘리기`}
             disabled={blocked || !control.increase} onClick={() => { if (control.increase) choose(control.increase.target.configuration) }}><Plus size={18} aria-hidden="true" /></button>
         </div>)}
+        {changes.length > 0 && <ul className="prescription-adjustment__changes" aria-label="바뀐 값" aria-live="polite">
+          {changes.map(change => <li key={change}>{change}</li>)}
+        </ul>}
         {controls.length > 2 && <button type="button" aria-expanded={showAllControls} onClick={() => setShowAllControls(value => !value)}>{showAllControls ? "조절 접기" : "더 조절"}</button>}
         {controls.length > 0 && <p className="prescription-adjustment__note">구성에 따라 다른 값도 함께 바뀔 수 있어요. 위 훈련 순서를 확인해 주세요.</p>}
-        <details><summary>준비부터 정리까지 순서 보기</summary>{after && <PrescriptionStructureV3 sequence={after} />}</details>
-        <details ref={choiceDetails}><summary>구성 목록에서 고르기</summary>
+        <details><summary>훈련 목록·다른 설정</summary>
         <fieldset disabled={blocked} className="prescription-adjustment__choices"><legend>훈련 구성</legend>
           {visibleBaseline && <label><input type="radio" name={`${id}-choice`} checked={same(selected, visibleBaseline.configuration)}
-            onChange={() => choose(visibleBaseline.configuration)} />{visibleBaseline.sequence.label ?? "현재 구성"}</label>}
+            onChange={() => choose(visibleBaseline.configuration)} />{choiceLabel(visibleBaseline.configuration, visibleBaseline.sequence.label ?? "현재 구성")}</label>}
           {props.choices.filter(c => !same(c.configuration, visibleBaseline?.configuration)
             && (showAllChoices || props.primaryConfigurations === undefined || same(c.configuration, selected)
               || props.primaryConfigurations.some(ref => same(ref, c.configuration)))).map((choice, i) => <label key={`${i}-${choice.configuration.configurationId}`}>
-            <input type="radio" name={`${id}-choice`} checked={same(selected, choice.configuration)} onChange={() => choose(choice.configuration)} />{choice.label}</label>)}
+            <input type="radio" name={`${id}-choice`} checked={same(selected, choice.configuration)} onChange={() => choose(choice.configuration)} />{choiceLabel(choice.configuration, choice.label)}</label>)}
         </fieldset>
         {props.primaryConfigurations && props.choices.some(c => !same(c.configuration, visibleBaseline?.configuration)
           && !props.primaryConfigurations!.some(ref => same(ref, c.configuration))) && <button type="button"

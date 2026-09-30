@@ -1,5 +1,7 @@
 import React from "react"
 import { READER_HISTORY_KEY } from "./hooks/useReaderDialog"
+import { useCalendarSnapshot } from "./hooks/useCalendarEntries"
+import { rememberCalendarDate } from "./hooks/useCalendarPosition"
 import { runDraftSafeNavigation } from "./domain/unsaved-draft-navigation"
 import type { AppTab } from "./components/AppChrome"
 import { AppShellFrame } from "./components/AppShellFrame"
@@ -98,6 +100,7 @@ export type AppShellMultiPlanRuntime = Pick<React.ComponentProps<typeof Deferred
   "multiAdjustmentResolverV3" | "readMultiAdjustedEvidenceV3">
 
 export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: AppShellMultiPlanRuntime } = {}) {
+  const calendarSnapshot = useCalendarSnapshot()
   const [accountScopeRevision, setAccountScopeRevision] = React.useState(0)
   const [, refreshAccountJournals] = React.useReducer((revision: number) => revision + 1, 0)
   const [v, setV] = React.useState(() => {
@@ -111,6 +114,15 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const oracleInputRef = React.useRef<{ topic: OracleTopicId; owner: string | null; inputKind: "log" | "records" | "plan"; mode: "example" | "personal"; scrollTop: number; view: ReturnType<typeof viewForTab> } | null>(null)
   const pendingReward = React.useRef<{ ownerId: string | null; date: string } | null>(null)
   const calendarDraftReturn = React.useRef<{ token: string; owner: string | null; view: typeof v } | null>(null)
+  const calendarOriginalReturn = React.useRef<{ token: string; owner: string | null; view: typeof v } | null>(null)
+  const lastJournalView = React.useRef<{ owner: string | null; view: typeof v } | null>(null)
+  React.useEffect(() => {
+    if (v.tab === "journal") lastJournalView.current = { owner: activeLocalAccount(), view: { ...v, detailDate: null, detailEntryId: undefined } }
+  }, [v])
+  React.useEffect(() => onLocalJournalScopeChange(() => {
+    lastJournalView.current = null; calendarOriginalReturn.current = null
+    setV(state => state.tab === "journal" ? { ...viewForTab("journal") } : state)
+  }), [])
   const [athleteRecordsOpen, setAthleteRecordsOpen] = React.useState(false)
   const [homeDetailOrigin, setHomeDetailOrigin] = React.useState<"home" | "rewards">("home")
   const scrollRegionRef = React.useRef<HTMLElement>(null)
@@ -186,6 +198,12 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           setV(calendarOrigin.owner === activeLocalAccount() ? calendarOrigin.view : INITIAL_VIEW_STATE)
         })
         if (!allowed) window.history.pushState({ ...window.history.state, calendarDraft: calendarOrigin.token }, "", window.location.href)
+        return
+      }
+      const originalOrigin = calendarOriginalReturn.current
+      if (originalOrigin && event.state?.calendarOriginalPage !== originalOrigin.token) {
+        calendarOriginalReturn.current = null
+        setV(originalOrigin.owner === activeLocalAccount() ? originalOrigin.view : INITIAL_VIEW_STATE)
         return
       }
       const intent = oracleInputRef.current
@@ -353,7 +371,8 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       setAthleteRecordsOpen(false)
       setUtilityView(null)
       setAnalysisContext(tab === "trends" ? analysis : undefined)
-      setV(viewForTab(tab))
+      calendarOriginalReturn.current = null
+      setV(tab === "journal" && lastJournalView.current?.owner === activeLocalAccount() ? lastJournalView.current.view : viewForTab(tab))
     })
   }
   const goTrendsFromReceipt = () => {
@@ -527,7 +546,10 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         {...common}
         backDestination={v.tab === "home" ? homeDetailOrigin : "journal"}
         entries={loadEntries()}
-        onDateChange={(detailDate) => runViewTransition("replace", () => setV(s => ({ ...s, detailDate, detailEntryId: undefined })))}
+        onDateChange={(detailDate) => runViewTransition("replace", () => {
+          if (v.tab === "journal") rememberCalendarDate(v.journalMode === "CYCLE" ? `cycle:${v.cycleAnchor ?? todayISO()}` : "journal", detailDate)
+          setV(s => ({ ...s, detailDate, detailEntryId: undefined }))
+        })}
       />
     ) : <DeferredMobileScreens.LogDetail {...common} />
   }
@@ -625,17 +647,21 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   } else if (v.tab === "journal") {
     const selection = v.archiveSelection ?? { selectedMonth: null, selectedWeekStart: null }
     screen = v.detailDate !== null
-      ? detailScreen(() => runViewTransition("pop", () => setV(s => ({ ...s, detailDate: null }))), true)
+      ? detailScreen(() => {
+        if (calendarOriginalReturn.current && window.history.state?.calendarOriginalPage === calendarOriginalReturn.current.token) window.history.back()
+        else runViewTransition("pop", () => setV(s => ({ ...s, detailDate: null })))
+      }, true)
       : (
         <DeferredMobileScreens.JournalArchive
-          entries={loadEntries()}
+          entries={calendarSnapshot.entries}
+          readiness={calendarSnapshot.status}
           selection={selection}
           mode={v.journalMode}
           cycleAnchor={v.cycleAnchor}
-          cycleIndex={v.cycleIndex}
+          cycleIndex={v.cyclePositionSet ? v.cycleIndex : undefined}
           onModeChange={(journalMode) => setV(s => ({ ...s, journalMode }))}
-          onCycleAnchorChange={(cycleAnchor) => setV(s => ({ ...s, cycleAnchor, cycleIndex: 0 }))}
-          onCycleIndexChange={(cycleIndex) => setV(s => ({ ...s, cycleIndex }))}
+          onCycleAnchorChange={(cycleAnchor) => setV(s => ({ ...s, cycleAnchor, cycleIndex: 0, cyclePositionSet: true }))}
+          onCycleIndexChange={(cycleIndex) => setV(s => ({ ...s, cycleIndex, cyclePositionSet: true }))}
           onWriteDate={(date) => runViewTransition("push", () => {
             const token = `calendar-draft-${Date.now()}`
             // Reuse the reader's history entry so one Back returns to its calendar.
@@ -647,7 +673,15 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
             setV(s => viewForJournalDraft(s, date))
           })}
           onSelectionChange={(archiveSelection) => setV(s => ({ ...s, archiveSelection }))}
-          onOpenDay={(detailDate) => runViewTransition("push", () => setV(s => ({ ...s, detailDate, detailEntryId: undefined })))}
+          onOpenDay={(detailDate) => runViewTransition("push", () => {
+            const token = `calendar-original-${Date.now()}`
+            const { [READER_HISTORY_KEY]: reader, ...rest } = window.history.state ?? {}
+            try {
+              window.history[reader ? "replaceState" : "pushState"]({ ...rest, calendarOriginalPage: token }, "", window.location.href)
+              calendarOriginalReturn.current = { token, owner: activeLocalAccount(), view: { ...v, detailDate: null } }
+            } catch { /* In-app Back still returns to the archive. */ }
+            setV(s => ({ ...s, detailDate, detailEntryId: undefined }))
+          })}
           onBack={goHome}
           onWriteLog={() => goTab("log")}
         />

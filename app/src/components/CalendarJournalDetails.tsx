@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from "react"
+import { lazy, Suspense, useEffect, useRef, useState } from "react"
 import { BookOpen, ChevronLeft, PenLine } from "lucide-react"
 import { useLocalToday } from "../hooks/useLocalToday"
 import type { JournalEntry } from "../domain/journal-schema"
@@ -6,6 +6,8 @@ import { EXERCISE_KINDS, describeExerciseRow } from "../domain/exercise-log"
 import { journalRpeLabel, quickOutcomeLabel } from "../domain/quick-journal"
 import { isImportedField } from "../domain/field-provenance"
 import { bodyPartLabel } from "./body-parts"
+import { CalendarTrainingMark } from "./CalendarTrainingMark"
+import { calendarMarksDescription, journalCalendarMarks } from "../domain/calendar-training-presentation"
 import "./CalendarJournalDetails.css"
 
 const OriginalJournal = lazy(() => import("../screens/LogDetail").then(module => ({ default: module.LogDetail })))
@@ -13,16 +15,17 @@ const OriginalJournal = lazy(() => import("../screens/LogDetail").then(module =>
 export function CalendarJournalBadge({ entries, date }: { entries: readonly JournalEntry[]; date: string }) {
   const day = entries.filter(entry => entry.date === date)
   if (day.length === 0) return null
-  const races = day.filter(entry => entry.kind === "race").length
+  const ordered = [...day].sort((a, b) => Number(b.kind === "race") - Number(a.kind === "race"))
   return <>
-    {races > 0 && <span className="month-calendar__event" data-kind="race">경기 {races}</span>}
-    {day.length > races && <span className="month-calendar__event" data-kind="journal">일지 {day.length - races}</span>}
+    {ordered.slice(0, 3).map(entry => journalCalendarMarks(entry).map((mark, index) =>
+      <CalendarTrainingMark key={`${entry.id}-${index}`} {...mark} slot={mark.slot ? `일지 · ${mark.slot}` : "일지"} />))}
+    {day.length > 3 && <span className="month-calendar__event">일지 +{day.length - 3}</span>}
   </>
 }
 
 export function calendarJournalDescription(entries: readonly JournalEntry[], date: string): string {
   const day = entries.filter(entry => entry.date === date)
-  return day.length === 0 ? "" : `일지 ${day.length}개${day.some(entry => entry.kind === "race") ? " · 경기 기록" : ""}`
+  return day.length === 0 ? "" : `일지 ${day.length}개 · ${calendarMarksDescription(day.flatMap(journalCalendarMarks))}`
 }
 
 export function CalendarJournalDetails({ entries, date, onOpenDay, onWriteDate }: {
@@ -32,12 +35,33 @@ export function CalendarJournalDetails({ entries, date, onOpenDay, onWriteDate }
   readonly onWriteDate?: (date: string) => void
 }) {
   const [original, setOriginal] = useState(false)
+  const originalEntryCreated = useRef(false)
+  const originalToken = useRef<string | null>(null)
+  const closeOriginal = () => { if (originalToken.current && window.history.state?.calendarOriginal === originalToken.current) window.history.back(); else setOriginal(false) }
+  useEffect(() => {
+    if (!original) { originalEntryCreated.current = false; originalToken.current = null; return }
+    const previous = window.history.state
+    const token = `original-${date}`
+    originalToken.current = token
+    try {
+      window.history[originalEntryCreated.current ? "replaceState" : "pushState"]({ ...previous, calendarOriginal: token }, "", window.location.href)
+      originalEntryCreated.current = true
+    } catch { /* The in-reader Back action remains available. */ }
+    const pop = () => { if (window.history.state?.calendarOriginal !== token) setOriginal(false) }
+    window.addEventListener("popstate", pop)
+    return () => {
+      window.removeEventListener("popstate", pop)
+      try {
+        if (window.history.state?.calendarOriginal === token) window.history.replaceState(previous, "", window.location.href)
+      } catch { /* History may be unavailable in embedded browsers. */ }
+    }
+  }, [original, date])
   const today = useLocalToday()
   useEffect(() => setOriginal(false), [date])
   const day = entries.filter(entry => entry.date === date)
   if (original) return <section className="calendar-journal-detail">
-    <button type="button" onClick={() => setOriginal(false)}><ChevronLeft size={18} aria-hidden="true" />날짜 요약으로</button>
-    <Suspense fallback={<p role="status">일지를 여는 중이에요.</p>}><OriginalJournal date={date} onBack={() => setOriginal(false)} /></Suspense>
+    <button type="button" onClick={closeOriginal}><ChevronLeft size={18} aria-hidden="true" />날짜 요약으로</button>
+    <Suspense fallback={<p role="status">일지를 여는 중이에요.</p>}><OriginalJournal date={date} onBack={closeOriginal} /></Suspense>
   </section>
   return <section className="calendar-journal-detail" aria-label="이날 남긴 기록">
     <h3>이날 남긴 기록</h3>

@@ -161,6 +161,7 @@ function fallbackMessage(code: string): string {
   if (code === "PACE_TARGET_FALLBACK_NO_ELIGIBLE_QUALITY") return "이번 두 계획안에는 상세 페이스를 넣을 주요 훈련이 없어요."
   if (code === "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT") return "선택한 기록에는 문제가 없어요. 상세 처방을 연결하는 중 문제가 생겨 안전하게 되돌렸어요."
   if (code === "PACE_TARGET_FALLBACK_STORED_SCHEMA") return "선택한 기록에는 문제가 없어요. 계산 결과를 계획 형식으로 저장하는 중 문제가 생겨 안전하게 되돌렸어요."
+  if (code === "PACE_TARGET_FALLBACK_PARAMETER_SCOPE") return "이 거리에서 계산된 반복 시간이 이 훈련의 검토 범위를 벗어나요. 기록을 바꾸지 말고 다른 거리의 훈련을 골라 주세요."
   return "기준 기록을 확인한 뒤 상세 페이스를 적용할 수 있어요."
 }
 

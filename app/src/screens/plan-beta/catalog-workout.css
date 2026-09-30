@@ -1,0 +1,11 @@
+.catalog-workout-picker { min-width: 0; overflow-wrap: anywhere; }
+.catalog-workout-picker > :not(summary) { margin-block: 12px; }
+.catalog-workout-picker label { display: grid; gap: 6px; min-width: 0; font-size: 14px; }
+.catalog-workout-picker :is(select, input[type="number"]) { width: 100%; min-width: 0; max-width: 100%; min-height: 44px; box-sizing: border-box; padding: 8px; font: inherit; font-size: 16px; color: var(--ink); background: var(--surface); border: 1px solid var(--line-2); border-radius: 4px; }
+.catalog-workout-picker label:has(input[type="checkbox"]) { grid-template-columns: 24px minmax(0, 1fr); align-items: start; padding-block: 8px; min-height: 44px; }
+.catalog-workout-picker input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--brand); }
+.catalog-workout-picker button { min-height: 44px; max-width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: normal; }
+.catalog-workout-picker :is(button, input, select, summary):focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.catalog-workout-picker code { white-space: normal; overflow-wrap: anywhere; }
+.catalog-workout-picker dl { margin-block: 12px; }
+.catalog-workout-picker dd { margin-inline-start: 0; }

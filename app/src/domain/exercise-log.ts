@@ -1,4 +1,6 @@
 import { z } from "zod"
+import { plannedSegmentEvidenceSchema } from "./planned-segment-evidence"
+import { plannedRepetitionEvidenceSchema } from "./planned-repetition-evidence"
 
 export const EXERCISE_KINDS = {
   RUNNING: "달리기", INTERVALS: "반복 달리기", STRENGTH: "근력 운동",
@@ -26,10 +28,13 @@ export const exerciseComponentSchema = z.object({
 export const exerciseLogSchema = z.object({
   version: z.literal(1), source: z.literal("SELF_REPORTED"),
   components: z.array(exerciseComponentSchema).max(24),
+  plannedRepetitions: plannedRepetitionEvidenceSchema.optional(),
+  plannedSegments: plannedSegmentEvidenceSchema.optional(),
 }).strict().refine(value => new Set(value.components.map(item => item.id)).size === value.components.length, "Duplicate component IDs")
 export type ExerciseComponent = z.infer<typeof exerciseComponentSchema>
 export type ExerciseRow = z.infer<typeof exerciseRowSchema>
 export type ExerciseLog = z.infer<typeof exerciseLogSchema>
+export const hasExerciseLog = (log: ExerciseLog) => log.components.length > 0 || log.plannedRepetitions !== undefined || log.plannedSegments !== undefined
 
 export function describeExerciseRow(row: ExerciseRow): string {
   const recovery = (value: ExerciseRow["recovery"]) => value?.kind === "NONE" ? "없음" : value?.kind === "TIMED" ? `${value.seconds}초` : null

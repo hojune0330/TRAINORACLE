@@ -7,6 +7,10 @@ import { useLocalToday } from "../../hooks/useLocalToday"
 import { useCalendarEntries } from "../../hooks/useCalendarEntries"
 import { PlanDayReader } from "./PlanDayReader"
 import { ENERGY_INTENT_LABELS } from "./labels"
+import { CalendarTrainingMark } from "../../components/CalendarTrainingMark"
+import { CALENDAR_TRAINING_LABELS, plannedCalendarTone } from "../../domain/calendar-training-presentation"
+import { useCalendarPosition } from "../../hooks/useCalendarPosition"
+import { calendarEntriesByDate } from "../../domain/calendar-context"
 
 type CalendarSession = {
   readonly day: number
@@ -16,7 +20,8 @@ type CalendarSession = {
 }
 
 /** Calendar-only adapter: adjusted prescription objects and write callbacks remain untouched. */
-export function DatedPlanPanel({ start, sessions, day, onDayChange, children, notice }: {
+export function DatedPlanPanel({ start, sessions, day, onDayChange, children, notice, identity }: {
+  readonly identity?: string
   readonly start: string
   readonly sessions: readonly CalendarSession[]
   readonly day: number
@@ -26,11 +31,24 @@ export function DatedPlanPanel({ start, sessions, day, onDayChange, children, no
 }) {
   const today = useLocalToday()
   const entries = useCalendarEntries()
+  const journalByDate = React.useMemo(() => calendarEntriesByDate(entries), [entries])
   const currentDate = isoShift(start, day - 1)
-  const [selected, setSelected] = React.useState(currentDate)
-  const [month, setMonth] = React.useState(currentDate.slice(0, 7))
+  const instance = React.useId()
+  const nav = useCalendarPosition(`adjusted:${identity ?? instance}:${start}`, currentDate)
+  const selected = nav.date, setSelected = nav.selectDate, month = nav.month, setMonth = nav.selectMonth
   const [open, setOpen] = React.useState(false)
-  React.useEffect(() => { setSelected(currentDate); setMonth(currentDate.slice(0, 7)) }, [currentDate])
+  const previousDay = React.useRef(currentDate)
+  React.useEffect(() => {
+    if (previousDay.current !== currentDate) setSelected(currentDate)
+    previousDay.current = currentDate
+  }, [currentDate, setSelected])
+  const restored = React.useRef(false)
+  React.useEffect(() => {
+    if (restored.current) return
+    restored.current = true
+    const session = sessions.find(item => isoShift(start, item.day - 1) === selected)
+    if (session && session.day !== day) onDayChange(session.day)
+  }, [sessions, start, selected, day, onDayChange])
   const sessionsAt = (date: string) => sessions.filter(session => isoShift(start, session.day - 1) === date)
   const selectedSessions = sessionsAt(selected)
   const select = (date: string, enlarge = true) => {
@@ -39,15 +57,15 @@ export function DatedPlanPanel({ start, sessions, day, onDayChange, children, no
     if (session) onDayChange(session.day)
     if (enlarge) setOpen(true)
   }
-  const label = (session: CalendarSession) => `${session.slot === "AM" ? "오전" : "오후"} ${session.role === "REST" ? "휴식" : ENERGY_INTENT_LABELS[session.plannedEnergyIntent].title}`
+  const label = (session: CalendarSession) => `${session.slot === "AM" ? "오전" : "오후"} ${CALENDAR_TRAINING_LABELS[plannedCalendarTone(session)]}${session.role === "REST" ? "" : ` · ${ENERGY_INTENT_LABELS[session.plannedEnergyIntent].title}`}`
   return <section className="dated-plan-panel" aria-label="훈련 달력">
-    <MonthCalendar month={month} today={today} selectedDate={selected} onMonthChange={setMonth}
+    <MonthCalendar trainingColors month={month} today={today} selectedDate={selected} onMonthChange={setMonth}
       onToday={date => select(date, false)} onSelectDate={date => select(date)}
       highlightedRange={{ start, end: isoShift(start, Math.max(1, ...sessions.map(session => session.day)) - 1) }}
-      dayDescription={date => [sessionsAt(date).map(label).join(" · ") || "이 계획의 일정 없음", calendarJournalDescription(entries, date)].filter(Boolean).join(" · ")}
-      renderDay={date => <>{sessionsAt(date).map(session => <span key={session.slot} className="month-calendar__event" data-kind={session.role === "QUALITY" ? "main" : session.role === "REST" ? "off" : "base"}>
-        {session.slot === "AM" ? "오전" : "오후"}<br />{session.role === "REST" ? "휴식" : ENERGY_INTENT_LABELS[session.plannedEnergyIntent].title.split(" · ").at(-1)}
-      </span>)}<CalendarJournalBadge entries={entries} date={date} /></>} />
+      dayDescription={date => [sessionsAt(date).map(label).join(" · ") || "이 계획의 일정 없음", calendarJournalDescription(journalByDate.get(date) ?? [], date)].filter(Boolean).join(" · ")}
+      renderDay={date => <>{sessionsAt(date).map(session => <CalendarTrainingMark key={session.slot}
+        tone={plannedCalendarTone(session)} slot={session.slot === "AM" ? "오전" : "오후"}
+        label={CALENDAR_TRAINING_LABELS[plannedCalendarTone(session)]} />)}<CalendarJournalBadge entries={journalByDate.get(date) ?? []} date={date} /></>} />
     <button className="plan-session-expand" type="button" onClick={() => setOpen(true)}>
       <Maximize2 size={18} aria-hidden="true" />{calendarDayLabel(selected)} · 크게 보기
     </button>

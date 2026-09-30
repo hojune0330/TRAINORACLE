@@ -1,4 +1,5 @@
 import type { PaceTargetPlanPrescription } from "@impl/plan-generator/session-types"
+import { DISTANCE_ADOPTION } from "./distance-prescription-adoption"
 
 type CompositionIdentity = Pick<PaceTargetPlanPrescription,
   "templateId" | "templateVersion" | "templateContentFingerprint" | "targetEventDistanceM"
@@ -57,7 +58,7 @@ export const TRAINING_TEMPLATE_EXPLANATIONS: readonly TemplateExplanation[] = [
 ]
 
 export function templateExplanation(prescription: PaceTargetPlanPrescription): TemplateExplanation | null {
-  return TRAINING_TEMPLATE_EXPLANATIONS.find((entry) => (
+  return [...TRAINING_TEMPLATE_EXPLANATIONS, ...DISTANCE_ADOPTION.records.map(record => record.explanation as TemplateExplanation)].find((entry) => (
     (Object.keys(entry.identity) as (keyof CompositionIdentity)[]).every((key) => prescription[key] === entry.identity[key])
   )) ?? null
 }

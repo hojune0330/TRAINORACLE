@@ -15,6 +15,10 @@ import { loadPlanMethodHistorySnapshot } from "../../domain/plan-beta-store"
 import type { PlanMethodCoverage } from "../../domain/plan-method-coverage"
 import { readPlanMethodDefinition } from "../../domain/plan-method-definition"
 import type { PrescriptionSequence } from "@impl/prescription/sequence"
+import { sequenceNotation } from "../../domain/workout-notation"
+import { distanceAdoptionRecord, distancePrescriptionFits } from "../../domain/distance-prescription-adoption"
+import type { AthleteRecord } from "../../domain/athlete-records"
+import { deriveRecordCurrentness } from "../../domain/pace-target-evidence"
 
 export type DetailedPlanTemplateOption = {
   readonly ref: PlanBetaIntake["selectedDetailedTemplateRef"] & object
@@ -46,6 +50,7 @@ export function resolveDetailedPlanTemplateOptions(
   evaluatedAt = new Date().toISOString(),
   history?: readonly MethodHistoryEntry[],
   repeatPreference: RepeatPreference = "NEUTRAL",
+  personalContext?: { readonly anchor?: AthleteRecord; readonly availableMinutes?: number },
 ): readonly DetailedPlanTemplateOption[] {
   if (draft.eventDistanceM === undefined || draft.trainingFocus === undefined || draft.experienceBand === undefined) return []
   const snapshot = history === undefined ? loadPlanMethodHistorySnapshot(draft.eventDistanceM) : null
@@ -77,6 +82,21 @@ export function resolveDetailedPlanTemplateOptions(
     const parsed = parsePrescriptionNotation(authority.approval.notation)
     if (parsed.kind !== "parsed") return []
     const notation = parsed.notation
+    if (distanceAdoptionRecord(ref)) {
+      const anchor = personalContext?.anchor
+      if (!anchor || anchor.purpose === "RACE_GOAL" || anchor.eventDistanceM !== eventDistanceM
+        || deriveRecordCurrentness(anchor, new Date(evaluatedAt)) !== "CURRENT" || notation.repetitionDistanceM === null) return []
+      const targetSeconds = anchor.performanceSeconds * notation.repetitionDistanceM / eventDistanceM
+      const total = notation.repetitionsPerSet * notation.setCount
+      const recovery = (notation.repetitionsPerSet - 1) * notation.setCount * (notation.repetitionRecoverySeconds ?? 0)
+        + (notation.setCount - 1) * (notation.setRecoverySeconds ?? 0)
+      const { warmup, cooldown } = approval.canonicalTemplateContent.operationalComponents
+      const support = (warmup.easyDurationMinutes + cooldown.easyDurationMinutes) * 60
+        + warmup.strides.repetitions * warmup.strides.durationSeconds
+        + (warmup.strides.repetitions - 1) * warmup.strides.recoverySeconds
+      if (!distancePrescriptionFits(ref, targetSeconds, total * notation.repetitionDistanceM,
+        targetSeconds * total + recovery + support, personalContext?.availableMinutes)) return []
+    }
     const configuration = definition.configuration
     const familyIndex = catalog.findIndex(family => family.familyId === mapping.method.familyId)
     if (familyIndex === -1) {
@@ -88,9 +108,6 @@ export function resolveDetailedPlanTemplateOptions(
     const components = authority.approval.canonicalTemplateContent.operationalComponents
     const warmup = components.warmup
     const cooldown = components.cooldown
-    const totalRepetitions = notation.setCount * notation.repetitionsPerSet
-    const work = notation.repetitionDistanceM === null
-      ? `${notation.repetitionDurationSeconds}초` : `${notation.repetitionDistanceM}m`
     const recovery = [
       ...(notation.repetitionRecoverySeconds === null ? [] : [
         `반복 사이 ${formatTrainingSeconds(notation.repetitionRecoverySeconds)} ${recoveryLabel(notation.repetitionRecoveryMode)}`,
@@ -107,7 +124,7 @@ export function resolveDetailedPlanTemplateOptions(
       notation: authority.approval.notation,
       targetEventDistanceM: eventDistanceM,
       trainingFocus,
-      mainSummary: `${work} ${notation.repetitionsPerSet}회${notation.setCount > 1 ? `씩 ${notation.setCount}세트 · 총 ${totalRepetitions}회` : ""}`,
+      mainSummary: sequenceNotation(configuration.sequence),
       recoverySummary: recovery.join(" · "),
       preparationSummary: `준비 ${warmup.easyDurationMinutes}분 RPE ${warmup.rpeMin}-${warmup.rpeMax}, ${warmup.strides.durationSeconds}초 점진 가속 ${warmup.strides.repetitions}회와 사이 ${warmup.strides.recoverySeconds}초 걷기/조깅 · 정리 ${cooldown.easyDurationMinutes}분 RPE ${cooldown.rpeMin}-${cooldown.rpeMax}`,
     }]

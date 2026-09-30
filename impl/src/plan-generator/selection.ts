@@ -59,6 +59,7 @@ function copySession(session: PlanSession): PlanSession {
         plannedEnergyIntent: session.plannedEnergyIntent,
         prescription: Object.freeze({
           kind: "RPE_TIME_RANGE",
+          ...(session.prescription.catalogWorkout ? { catalogWorkout: structuredClone(session.prescription.catalogWorkout) } : {}),
           rpe: Object.freeze({ ...session.prescription.rpe }),
           durationMinutes: Object.freeze({ ...session.prescription.durationMinutes }),
         }),
@@ -80,6 +81,7 @@ function copySession(session: PlanSession): PlanSession {
         plannedEnergyIntent: session.plannedEnergyIntent,
         prescription: Object.freeze({
           kind: "RPE_TIME_RANGE",
+          ...(session.prescription.catalogWorkout ? { catalogWorkout: structuredClone(session.prescription.catalogWorkout) } : {}),
           rpe: Object.freeze({ ...session.prescription.rpe }),
           durationMinutes: Object.freeze({ ...session.prescription.durationMinutes }),
         }),

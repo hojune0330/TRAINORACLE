@@ -17,8 +17,20 @@ registry_note: "Counts apply only to this registry document. Source SPEC issue c
 
 ## 0. Easy Start
 
+Calendar colors and AM/PM display: [달력 훈련 역할·색상 표시 계약](specs/active/CALENDAR_TRAINING_ROLE_PRESENTATION_CONTRACT.md).
+This is an owner-approved display contract, not a new training classifier or prescription authority.
+
 Current training-plan support, scoped adoption and remaining implementation gates:
 [`TRAINING_PLAN_CURRENT_SCOPE.md`](./TRAINING_PLAN_CURRENT_SCOPE.md).
+
+Purpose-based workout supply, exact structures, source limits and contextual review:
+[`METHOD_PURPOSE_SUPPLY_REVIEW_V3.md`](reports/review/METHOD_PURPOSE_SUPPLY_REVIEW_V3.md).
+This is a reproducible review package, not an expanded runtime activation.
+
+Expanded workout inventory (existing 37 + new 80 = 117 configurations):
+[`EXPANDED_WORKOUT_CATALOG_V3.md`](reports/review/EXPANDED_WORKOUT_CATALOG_V3.md).
+New entries cover 50 purpose/method groups; numerical variants are not new methods.
+Main-only structured drafts, source limits and deployment gaps are explicit. No new runtime activation.
 
 If this repository feels too dense, start with [`SPEC_OVERVIEW_FOR_HOJUNE.md`](./SPEC_OVERVIEW_FOR_HOJUNE.md).
 
@@ -336,5 +348,10 @@ Important starting points:
 - [홈·훈련 코칭 UX 구현안](reports/plans/PLAN_EXECUTION_HOME_AND_COACHING_UX_2026-09-28.md): 홈 상설 진입·공통 reader·일지 비교 부분 구현, 로컬 브라우저 확인. [구현 보고서](reports/implementation/PLAN_EXECUTION_COACHING_IMPLEMENTATION_2026-09-29.md)에 남은 교정·저장 범위를 별도 기록했다.
 
 이 문서 묶음의 추가는 위 역사적 목록의 이슈 집계, 정본 상태 또는 이전 실행 증거를 바꾸지 않는다.
+
+## 12. All Workout Calculation And Binding (2026-09-30)
+
+- [전체 훈련 계산·연결 계약](specs/reconstruct/ALL_WORKOUT_CALCULATION_AND_BINDING_CONTRACT.md): `OWNER_DIRECTED_IMPLEMENTATION`. 기존 37개와 확장 80개를 계산·계획·구간 기록에 연결한다. 계산 가능과 개인 적용 조건을 구분하며, 정본 승격이나 배포 완료 선언이 아니다.
+- [전체 연결 구현 및 검수 보고](reports/implementation/ALL_WORKOUT_CONNECTION_2026-09-30.md): 자동 계산 범위, 직접 확인할 값, 원본 보존, 저장 형식, 실행 결과와 배포 전 남은 작업.
 
 [DRAFT_COMPLETE]

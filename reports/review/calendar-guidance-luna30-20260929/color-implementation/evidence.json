@@ -1,0 +1,185 @@
+{
+  "scope": "local synthetic browser; not production or real athlete data",
+  "observations": [
+    {
+      "width": 375,
+      "journal": [
+        {
+          "tone": "base",
+          "text": "오후기본플라이오 포함",
+          "background": "rgb(255, 255, 255)"
+        },
+        {
+          "tone": "base",
+          "text": "오전기본",
+          "background": "rgb(255, 255, 255)"
+        },
+        {
+          "tone": "recovery",
+          "text": "오후회복",
+          "background": "rgb(217, 239, 250)"
+        },
+        {
+          "tone": "neural",
+          "text": "오후플라이오",
+          "background": "rgb(216, 237, 224)"
+        },
+        {
+          "tone": "unknown",
+          "text": "오전훈련",
+          "background": "rgb(250, 250, 247)"
+        },
+        {
+          "tone": "race",
+          "text": "경기 전",
+          "background": "rgb(255, 231, 122)"
+        }
+      ],
+      "dimensions": {
+        "minWidth": 46.421875,
+        "minHeight": 64,
+        "overflow": false,
+        "clippedLabels": 0
+      },
+      "mainAndRecoveryDate": "2026-10-01",
+      "journalActions": [
+        "이전 달",
+        "2026-08-14",
+        "오늘",
+        "이전 달",
+        "2026-07-31",
+        "다음 달",
+        "다음 달",
+        "2026-08-30",
+        "2026-08-11",
+        "이전 달",
+        "이전 달",
+        "2026-06-13",
+        "2026-06-08",
+        "2026-06-01",
+        "오늘",
+        "2026-10-03",
+        "다음 달",
+        "이전 달",
+        "이전 달",
+        "다음 달"
+      ],
+      "planActions": [
+        "이전 달",
+        "오늘",
+        "다음 달",
+        "이전 달",
+        "2026-10-03",
+        "다음 달",
+        "2026-11-19",
+        "이전 달",
+        "오늘",
+        "이전 달",
+        "다음 달",
+        "2026-09-11",
+        "2026-09-02",
+        "다음 달",
+        "이전 달",
+        "이전 달",
+        "오늘",
+        "2026-09-13",
+        "다음 달",
+        "다음 달"
+      ],
+      "reducedMotionAnimation": "none",
+      "doubledCalendarTextOverflow": false,
+      "recordAndPlanUnchangedByBrowsing": true,
+      "pageErrors": []
+    },
+    {
+      "width": 320,
+      "journal": [
+        {
+          "tone": "base",
+          "text": "오후기본플라이오 포함",
+          "background": "rgb(255, 255, 255)"
+        },
+        {
+          "tone": "base",
+          "text": "오전기본",
+          "background": "rgb(255, 255, 255)"
+        },
+        {
+          "tone": "recovery",
+          "text": "오후회복",
+          "background": "rgb(217, 239, 250)"
+        },
+        {
+          "tone": "neural",
+          "text": "오후플라이오",
+          "background": "rgb(216, 237, 224)"
+        },
+        {
+          "tone": "unknown",
+          "text": "오전훈련",
+          "background": "rgb(250, 250, 247)"
+        },
+        {
+          "tone": "race",
+          "text": "경기 전",
+          "background": "rgb(255, 231, 122)"
+        }
+      ],
+      "dimensions": {
+        "minWidth": 44,
+        "minHeight": 64,
+        "overflow": false,
+        "clippedLabels": 0
+      },
+      "mainAndRecoveryDate": "2026-10-01",
+      "journalActions": [
+        "이전 달",
+        "다음 달",
+        "2026-09-25",
+        "이전 달",
+        "다음 달",
+        "2026-09-16",
+        "2026-09-04",
+        "다음 달",
+        "오늘",
+        "다음 달",
+        "다음 달",
+        "오늘",
+        "2026-09-09",
+        "오늘",
+        "2026-09-19",
+        "이전 달",
+        "이전 달",
+        "2026-07-19",
+        "다음 달",
+        "다음 달"
+      ],
+      "planActions": [
+        "이전 달",
+        "이전 달",
+        "다음 달",
+        "이전 달",
+        "다음 달",
+        "2026-07-26",
+        "오늘",
+        "2026-08-30",
+        "2026-08-30",
+        "오늘",
+        "다음 달",
+        "이전 달",
+        "오늘",
+        "2026-09-19",
+        "오늘",
+        "2026-09-03",
+        "오늘",
+        "오늘",
+        "2026-09-16",
+        "이전 달"
+      ],
+      "reducedMotionAnimation": "none",
+      "doubledCalendarTextOverflow": false,
+      "recordAndPlanUnchangedByBrowsing": true,
+      "pageErrors": []
+    }
+  ]
+}

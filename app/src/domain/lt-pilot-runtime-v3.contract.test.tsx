@@ -10,6 +10,8 @@ import { readPlanBetaStateFromStorage } from "./plan-beta-store"
 import type { PlanMutationLockManager } from "./plan-mutation-lock"
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
 import { PlanBeta } from "../screens/PlanBeta"
+import { AdjustedPrescriptionV3 } from "../screens/plan-beta/AdjustedPrescriptionV3"
+import { nextTrainingPrescriptionLabel } from "../screens/home/TrainingHome"
 
 const NOW = new Date("2026-09-28T12:00:00.000Z")
 const show = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
@@ -77,13 +79,12 @@ it("separates another method from the split-method time adjustment", () => {
   render(<MultiAdjustedPlanEditFlowV3 {...entry} isCurrentDraft={() => true}
     onSaved={() => {}} onCancel={() => {}} />)
   fireEvent.click(screen.getByRole("button", { name: "이 훈련 구성 바꾸기" }))
-  expect(screen.getByRole("radio", { name: "20분 연속" })).toBeChecked()
+  expect(screen.getByRole("radio", { name: "템포런 · Tempo Run · 20min @ RPE 6–7" })).toBeChecked()
   fireEvent.click(screen.getByRole("button", { name: "다른 훈련" }))
-  expect(screen.getAllByText("10분×2 · 사이 1분 조깅").length).toBeGreaterThan(0)
-  expect(screen.getByRole("radio", { name: "10분×2 · 사이 1분 조깅" })).toBeChecked()
+  expect(screen.getByRole("radio", { name: "크루즈 인터벌 · Cruise Intervals · 2 × 10min @ RPE 6–7 · r60s Jog" })).toBeChecked()
   expect(screen.getByRole("button", { name: "1회 운동 시간 줄이기" })).toBeEnabled()
   fireEvent.click(screen.getByRole("button", { name: "1회 운동 시간 줄이기" }))
-  expect(screen.getAllByText("8분×2 · 사이 1분 조깅").length).toBeGreaterThan(0)
+  expect(screen.getByRole("radio", { name: "크루즈 인터벌 · Cruise Intervals · 2 × 8min @ RPE 6–7 · r60s Jog" })).toBeChecked()
 })
 
 it("saves and reloads the selected detailed pilot with retained evidence", async () => {
@@ -98,6 +99,33 @@ it("saves and reloads the selected detailed pilot with retained evidence", async
   await act(async () => Promise.resolve())
 })
 
+it("uses the same exact display on home and details while preserving historical source labels and explanation evidence", () => {
+  const entry = entryFor(), review = entry.readReview()
+  const prepared = prepareMultiAdjustedPlanCandidateV3(entry.seed.preparations, review.rpeBindings)
+  if (prepared.kind !== "prepared") throw Error(prepared.code)
+  const session = prepared.candidate.sessions.find(item => item.prescription.kind === "ADJUSTED_METHOD_V3")!
+  const explanation = entry.seed.preparations.find(item => item.address.day === session.day && item.address.slot === session.slot)!.explanation
+  const before = JSON.stringify({ session, explanation })
+  const homeText = nextTrainingPrescriptionLabel(session)
+  const view = render(<AdjustedPrescriptionV3 session={session} explanation={explanation} />)
+  expect(homeText).toBe("20min @ RPE 6–7")
+  expect(screen.getByText(homeText)).toBeVisible()
+  expect(screen.getByText("템포런 · Tempo Run")).toBeVisible()
+  expect(screen.getByText(explanation.purpose)).not.toBeVisible()
+  fireEvent.click(screen.getByText("자세히 보기 · 방법과 근거"))
+  expect(screen.getByText(explanation.purpose)).toBeVisible()
+  expect(screen.getByText(explanation.recoveryRationale)).toBeVisible()
+  expect(screen.getByRole("heading", { name: "준비" })).toBeVisible()
+  expect(screen.getByRole("heading", { name: "정리" })).toBeVisible()
+  fireEvent.click(screen.getByText("근거와 설명 버전"))
+  for (const ref of explanation.evidenceRefs) expect(screen.getByText(ref)).toBeVisible()
+  expect(JSON.stringify({ session, explanation })).toBe(before)
+  view.rerender(<AdjustedPrescriptionV3 session={session} />)
+  expect(screen.getByText(/연결된 설명을 읽지 못했어요/)).toBeVisible()
+  expect(screen.queryByText(explanation.purpose)).toBeNull()
+  expect(screen.getByText(homeText)).toBeVisible()
+})
+
 it("opens the detailed workout flow from the first plan result action", () => {
   sessionStorage.setItem("trainoracle.plan-beta.previous-intake.v1", JSON.stringify({
     eventGroup: "FIVE_K", eventDistanceM: 5000, competitionDivision: "NOT_PROVIDED",
@@ -108,8 +136,8 @@ it("opens the detailed workout flow from the first plan result action", () => {
   render(<PlanBeta {...LT_PILOT_MULTI_PLAN_RUNTIME_V3} />)
   fireEvent.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
   expect(screen.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
-  fireEvent.click(screen.getByRole("button", { name: "상세 훈련 고르고 시작" }))
-  expect(screen.getByRole("heading", { name: "주요 훈련을 하나씩 확인해 주세요" })).toBeVisible()
+  fireEvent.click(screen.getByRole("button", { name: "처방 훈련 확인" }))
+  expect(screen.getByRole("heading", { name: "이번 계획의 주요 훈련" })).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: "이 훈련 구성 바꾸기" }))
-  expect(screen.getByRole("radio", { name: "20분 연속" })).toBeChecked()
+  expect(screen.getByRole("radio", { name: "템포런 · Tempo Run · 20min @ RPE 6–7" })).toBeChecked()
 })

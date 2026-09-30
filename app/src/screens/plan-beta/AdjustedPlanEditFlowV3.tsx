@@ -31,6 +31,8 @@ export function AdjustedPlanEditFlowV3({ seed, readReview, readAdjustmentReview,
   const offer = prepareSourceAdjustmentOfferV3({ ...opened.seed.preparation.source, nowMs: Date.now() })
   if (offer.kind !== "available") return <section><p role="alert">현재 적용할 수 있는 조정 구성을 확인하지 못했어요. 계획은 바뀌지 않았어요.</p><button type="button" onClick={onCancel}>돌아가기</button></section>
   return <PrescriptionAdjustmentEditorV3 authority={offer.authority} current={offer.current} policy={offer.policy}
+    intent={opened.seed.preparation.candidate.sessions.find(session => session.day === opened.seed.preparation.address.day
+      && session.slot === opened.seed.preparation.address.slot)?.plannedEnergyIntent}
     contextKey={offer.contextKey} now={Date.now} onCancel={onCancel} orderedChoices={orderedChoices}
     choices={offer.targets.map(configuration => {
       const family = offer.authority.catalog.find(f => f.familyId === configuration.familyId)

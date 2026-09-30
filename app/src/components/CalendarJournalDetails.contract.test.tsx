@@ -74,9 +74,10 @@ describe("calendar structured actual records", () => {
       memo: { get() { throw Error("memo must not be read") } },
       title: { get() { throw Error("title must not be read") } },
     })
-    expect(calendarJournalDescription([guarded], date)).toBe("일지 1개")
+    expect(calendarJournalDescription([guarded], date)).toBe("일지 1개 · 훈련")
     render(<><CalendarJournalBadge entries={[guarded]} date={date} /><CalendarJournalDetails entries={[guarded]} date={date} /></>)
-    expect(screen.getByText("일지 1")).toBeVisible()
+    expect(screen.getByText("일지")).toBeVisible()
+    expect(document.querySelector('.calendar-training-mark')).toHaveAttribute("data-tone", "unknown")
     expect(screen.getByText("8 km")).toBeVisible()
   })
 
@@ -105,7 +106,8 @@ describe("calendar structured actual records", () => {
     const race: JournalEntry = { id: "r", kind: "race", date, savedAt: date, syncState: "local",
       stage: "post", record: "4:05.5", rank: "3", result: "PRIVATE RESULT", memo: "PRIVATE MEMO", memoPurpose: "PRIVATE_SELF_ONLY" }
     const { rerender } = render(<><CalendarJournalBadge entries={[race]} date={date} /><CalendarJournalDetails entries={[race]} date={date} /></>)
-    expect(screen.getByText("경기 1")).toBeVisible()
+    expect(document.querySelector('.calendar-training-mark')).toHaveTextContent("일지경기 결과")
+    expect(document.querySelector('.calendar-training-mark')).toHaveAttribute("data-tone", "race")
     expect(screen.getByText("4:05.5 · 입력 출처 미확인")).toBeVisible()
     expect(document.body.textContent).not.toContain("PRIVATE")
     rerender(<CalendarJournalDetails entries={[race]} date="2026-09-28" />)

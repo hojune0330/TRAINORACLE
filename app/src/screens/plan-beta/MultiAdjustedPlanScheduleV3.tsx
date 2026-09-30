@@ -10,7 +10,7 @@ import { saveMultiAdjustedPlanProgressV3 } from "../../domain/adjusted-plan-prog
 import { retainMultiAdjustedOriginalPlanV3 } from "../../domain/multi-adjusted-plan-archive-v3"
 import { createPlannedSessionLogDraft, resolveCurrentPlannedSession, type PlannedSessionLogDraft } from "../../domain/planned-session-link"
 import { AdjustedPrescriptionV3 } from "./AdjustedPrescriptionV3"
-import { ENERGY_INTENT_LABELS, PROGRESS_LABELS } from "./labels"
+import { sessionLabel, PROGRESS_LABELS } from "./labels"
 import { isoShift } from "../../domain/dates"
 import { todayISO } from "../../domain/journal-store"
 import "./AdjustedPlanSchedule.css"
@@ -28,7 +28,7 @@ export function MultiAdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChan
   const plan = loaded.state.selection, start = plan.intake.startDate ?? plan.generatedAt.slice(0, 10)
   const days = [...new Set(plan.activePlan.sessions.map(s => s.day))].sort((a, b) => a - b)
   const [day, setDay] = React.useState(() => resolveCurrentPlannedSession(plan, returnToSession)?.day
-    ?? days.find(d => isoShift(start, d - 1) === todayISO()) ?? days[0]!)
+    ?? days.find(d => isoShift(start, d - 1) === todayISO()) ?? (todayISO() > isoShift(start, days.at(-1)! - 1) ? days.at(-1)! : days[0]!))
   const [error, setError] = React.useState<string | null>(null), [saving, setSaving] = React.useState(false)
   const [exporting, setExporting] = React.useState(false), exportBusy = React.useRef(false)
   const mounted = React.useRef(true), exportEpoch = React.useRef(0)
@@ -42,14 +42,14 @@ export function MultiAdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChan
   const date = isoShift(start, day - 1)
   return <section className="plan-active adjusted-plan-schedule" aria-labelledby="multi-adjusted-title">
     <h1 id="multi-adjusted-title">내 훈련 일정</h1><p>{start} ~ {isoShift(start, days.at(-1)! - 1)}</p>
-    <DatedPlanPanel start={start} sessions={plan.activePlan.sessions} day={day} onDayChange={setDay} notice={error ? <p role="alert">{error}</p> : undefined}>
+    <DatedPlanPanel identity={plan.activePlan.candidateId} start={start} sessions={plan.activePlan.sessions} day={day} onDayChange={setDay} notice={error ? <p role="alert">{error}</p> : undefined}>
     <h2>{date} ({new Intl.DateTimeFormat("ko-KR", { weekday: "short" }).format(new Date(`${date}T12:00:00`))})</h2>
     {plan.activePlan.sessions.filter(s => s.day === day).sort((a, b) => a.slot.localeCompare(b.slot)).map(session => {
       const time = session.slot === "AM" ? "오전" : "오후"
       const recorded = loaded.state.progress.find(r => r.sessionDay === day && r.sessionSlot === session.slot)
       const explanation = loaded.explanations.find(e => e.address.day === day && e.address.slot === session.slot)?.explanation
-      return <section key={session.slot} tabIndex={-1} data-session-slot={session.slot} aria-label={`${time} 훈련`}><h3>{time} · {session.role === "REST" ? "휴식" : ENERGY_INTENT_LABELS[session.plannedEnergyIntent].title}</h3>
-        <AdjustedPrescriptionV3 session={session} explanation={explanation} />
+      return <section key={session.slot} tabIndex={-1} data-session-slot={session.slot} aria-label={`${time} 훈련`}><h3>{time} · {sessionLabel(session)}</h3>
+        <AdjustedPrescriptionV3 session={session} explanation={explanation} showName={false} />
         <p role="status">{recorded ? PROGRESS_LABELS[recorded.state] : "아직 진행 기록이 없어요."}</p>
         <div role="group" aria-label={`${time} 진행 기록`}>{([
           ["COMPLETED", Check], ["RESTED", CircleMinus], ["SKIPPED", RefreshCw], ["PAIN_CHECKIN", HeartPulse],

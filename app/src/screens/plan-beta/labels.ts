@@ -9,6 +9,9 @@ import type {
   RpeTimeRange,
 } from "@impl/plan-generator/types"
 import { PLANNED_ENERGY_INTENTS } from "@impl/plan-generator/types"
+import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
+import { calculatedWorkoutSequence } from "@impl/prescription/all-workout-calculator"
+import { sequenceNotation, sessionWorkoutName, sessionWorkoutNotation, type WorkoutDisplaySession } from "../../domain/workout-notation"
 
 export const EVENT_LABELS: Record<PlanEventGroup, {
   readonly title: string
@@ -101,10 +104,13 @@ export const ENERGY_INTENT_LABELS: Record<PlannedEnergyIntent, {
 export function candidateLabel(
   kind: PlanCandidateKind,
   selectedEnergyIntent: PlannedEnergyIntent,
+  hasCatalog = false,
 ): {
   readonly title: string
   readonly detail: string
 } {
+  if (hasCatalog) return { title: kind === "BALANCED" ? "기본 훈련 구성" : "기초·회복 운동을 짧게",
+    detail: `${ENERGY_INTENT_LABELS[selectedEnergyIntent].title.split(" · ")[0]} 목적 · 날짜별 거리·시간·회복 확인` }
   if (kind === "CONSERVATIVE") {
     return {
       title: "기초·회복 운동을 짧게",
@@ -124,36 +130,12 @@ export const PROGRESS_LABELS: Record<PlanProgressState, string> = {
   PAIN_CHECKIN: "통증 체크",
 }
 
-export function sessionLabel(session: Pick<PlanSession, "role" | "slot" | "plannedEnergyIntent">): string {
-  switch (session.role) {
-    case "REST":
-      return "휴식일"
-    case "EASY":
-      return session.plannedEnergyIntent === "RECOVERY_INTENT"
-        ? session.slot === "PM"
-          ? "오후 회복 운동"
-          : "가벼운 회복 움직임"
-        : "기초 지구력 달리기"
-    case "QUALITY":
-      return `${ENERGY_INTENT_LABELS[session.plannedEnergyIntent].title} 훈련`
-  }
+export function sessionLabel(session: WorkoutDisplaySession): string {
+  return sessionWorkoutName(session)
 }
 
 export function prescriptionLabel(session: PlanSession): string {
-  if (session.prescription.kind === "REST") {
-    return "달리기 일정 없음"
-  }
-  if (session.prescription.kind === "PACE_TARGET") {
-    return `총 ${session.prescription.totals.totalRepetitions}회 · 주요 구간 ${session.prescription.totals.qualityDistanceM}m · ${session.prescription.repetitionDistanceM}m당 ${formatTrainingSeconds(session.prescription.targetRepSeconds)}`
-  }
-  const range = (minimum: number, maximum: number) => minimum === maximum ? `${minimum}` : `${minimum}~${maximum}`
-  const duration = `${range(session.prescription.durationMinutes.minimum, session.prescription.durationMinutes.maximum)}분`
-  const rpe = `RPE ${range(session.prescription.rpe.minimum, session.prescription.rpe.maximum)}`
-  const intent = ENERGY_INTENT_LABELS[session.plannedEnergyIntent].title
-  if (session.role === "EASY") {
-    return `총 ${duration} · ${rpe} · ${intent}`
-  }
-  return `총 ${duration} · ${rpe} · ${intent} · 거리\u2060·\u2060목표\u00a0페이스는 지정하지 않음`
+  return sessionWorkoutNotation(session)
 }
 
 export function sessionIntentLabel(session: PlanSession): string {
@@ -172,6 +154,9 @@ export function sessionSlotLabel(slot: PlanSessionSlot): string {
 }
 
 export function sessionGuidance(session: PlanSession): string {
+  if (session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout) {
+    return "표시된 거리·시간과 반복 횟수를 따르고, 반복 사이와 세트 사이 회복을 구분하세요. 전체 시간에는 준비·회복·정리가 포함돼요."
+  }
   switch (session.role) {
     case "REST":
       return "놓친 훈련을 보충하지 않는 날입니다. 쉬거나 일상 수준으로 가볍게 움직이세요."
@@ -185,6 +170,10 @@ export function sessionGuidance(session: PlanSession): string {
 }
 
 export function sessionExecution(session: PlanSession): string {
+  if (session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout) {
+    const calculation = resolveCatalogBinding(session.prescription.catalogWorkout)
+    if (calculation) return `본운동 ${calculation.totals.workOccurrences}개 구간과 표시된 회복을 순서대로 진행하세요.`
+  }
   if (session.prescription.kind === "PACE_TARGET") {
     return `준비, ${session.prescription.totals.totalRepetitions}회 본운동과 ${session.prescription.totals.repetitionRecoveryOccurrences}번의 사이 회복, 정리 순서로 진행하세요.`
   }
@@ -214,6 +203,14 @@ export type SessionExecutionStep = {
 }
 
 export function sessionExecutionSteps(session: PlanSession): readonly SessionExecutionStep[] {
+  if (session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout) {
+    const calculation = resolveCatalogBinding(session.prescription.catalogWorkout)
+    const sequence = calculation && calculatedWorkoutSequence(calculation)
+    if (sequence) return ([['warmup', '준비'], ['main', '본운동'], ['cooldown', '정리']] as const)
+      .filter(([phase]) => sequence[phase].length > 0)
+      .map(([phase, title]) => ({ title, detail: sequenceNotation({ ...sequence, main: sequence[phase] }) }))
+    return []
+  }
   if (session.role !== "QUALITY" || session.prescription.kind !== "RPE_TIME_RANGE") return []
 
   return [

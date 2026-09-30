@@ -787,6 +787,7 @@ function LegacyPlanBeta({
       <>
         <PlanCandidates
           generated={generated}
+          onCatalogChange={next => { if (selectionWrite.current) return; draftRevision.current += 1; setRetrySelection(null); setErrorCode(null); setGenerated(next) }}
           adjustmentActions={adjustmentActions}
           intake={generatedIntake}
           athleteEvidence={generatedEvidence}

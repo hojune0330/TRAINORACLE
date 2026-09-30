@@ -4,6 +4,8 @@ import type { readJournalOriginalPlan } from "./journal-original-plan"
 import { plannedSessionLinkSchema } from "./planned-session-link"
 import { describeExerciseRow, EXERCISE_KINDS } from "./exercise-log"
 import { projectStructuredJournalObservation } from "./journal-observation"
+import { comparePlannedRepetitions } from "./planned-repetition-evidence"
+import { comparePlannedSegments } from "./planned-segment-evidence"
 
 export type OriginalPlanLookup = ReturnType<typeof readJournalOriginalPlan>
 export const EXECUTION_REVIEW_POLICY_VERSION = "descriptive-review-v2" as const
@@ -29,6 +31,7 @@ export type ExecutionReview = {
   readonly awaitingDeviceData?: boolean
   readonly timingChange?: string
   readonly recordLabel?: string
+  readonly repetitionComparison?: import("./planned-repetition-evidence").RepetitionComparison
 }
 
 const outcomeText = {
@@ -102,7 +105,14 @@ export function reviewPlanExecution(entry: PostSessionEntry, original: OriginalP
   const actualExercises = didNotPerform ? [] : (entry.exerciseLog?.components ?? []).map(component => ({
     kind: EXERCISE_KINDS[component.kind], rows: component.rows.map(describeExerciseRow),
   }))
-  if (!didNotPerform) unknowns.push("실제 운동의 각 구간과 계획 구간의 대응이 확인되지 않아 거리·반복·회복의 일치 여부는 아직 판단하지 않아요.")
+  const repetitionComparison = !didNotPerform && entry.planExecutionRelation !== "NOT_APPLICABLE" && entry.exerciseLog?.plannedRepetitions
+    ? comparePlannedRepetitions(entry.exerciseLog.plannedRepetitions, link.data, original.session)
+    : !didNotPerform && entry.planExecutionRelation !== "NOT_APPLICABLE" && entry.exerciseLog?.plannedSegments
+      ? comparePlannedSegments(entry.exerciseLog.plannedSegments, link.data, original.session) : undefined
+  if (repetitionComparison) {
+    facts.push(...repetitionComparison.facts)
+    unknowns.push(...repetitionComparison.unknowns)
+  } else if (!didNotPerform) unknowns.push("실제 운동의 각 구간과 계획 구간의 대응이 확인되지 않아 거리·반복·회복의 일치 여부는 아직 판단하지 않아요.")
   if (entry.objectiveDataState === "WAITING") unknowns.push("워치 등 추가 운동 자료를 기다리는 중이에요.")
   if (original.source === "ARCHIVED") facts.push("현재 계획이 아니라, 이 기록에 연결된 당시 계획과 비교했어요.")
   const outcomeTitle = entry.activityOutcome === "PARTIAL" ? "일부만 한 훈련"
@@ -115,14 +125,16 @@ export function reviewPlanExecution(entry: PostSessionEntry, original: OriginalP
     : entry.activityOutcome === "LIGHT_ACTIVITY"
       ? "가볍게 했다는 표현만으로 실제 운동량이나 에너지 자극을 계산하지 않아요. 원래 계획의 주요 훈련을 수행한 것으로 자동 집계하지도 않아요."
       : "운동 구성이나 느낀 강도가 달라지면 계획한 자극과 실제 경험이 다를 수 있어요. 이 기록만으로 회복 시간이나 체력 변화를 단정하지 않아요."
-  return { ...base, status: pain ? "SAFETY_REVIEW" : changed ? "CHANGED" : "REPORTED",
+  return { ...base, status: pain ? "SAFETY_REVIEW" : changed || repetitionComparison?.changed ? "CHANGED" : "REPORTED",
     title: pain ? "몸 상태 확인이 먼저예요" : outcomeTitle,
     summary: pain ? "이 기록에 통증 표시가 있어요. 다음 훈련 전에 몸 상태를 확인해 주세요."
       : entry.activityOutcome ? outcomeText[entry.activityOutcome] : "연결된 계획과 직접 남긴 기록을 나란히 확인해요.",
     facts, unknowns, actualExercises, metrics, ...(timingChange ? { timingChange } : {}),
+    ...(!pain && repetitionComparison ? { repetitionComparison } : {}),
     explanation: pain ? "통증 기록이 있어요. 수행 비교 결과가 괜찮아 보여도 안전 확인을 대신하지 않아요."
       : didNotPerform ? "이번 훈련의 자극을 받았다고 계산하지 않아요. 그렇다고 곧바로 체력이 떨어졌다는 뜻도 아니에요."
-        : changed ? changedExplanation
+        : repetitionComparison?.kind === "compared" ? repetitionComparison.interpretation
+          : changed ? changedExplanation
           : "완료 표시와 RPE만으로 거리·반복·회복까지 계획과 같았다고 판단하지 않아요. 계획한 자극과 실제 효과는 별개예요.",
     next: pain ? "일지에서 몸 상태를 확인해 주세요. 이 화면은 안전 제한을 해제하지 않아요."
       : changed ? "남은 일정부터 확인해 주세요. 빠진 운동을 자동으로 추가하지 않아요."

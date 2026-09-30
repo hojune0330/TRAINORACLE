@@ -76,7 +76,7 @@ export function InstantPlanRecommendationView({
         {anchorLabel && <div><dt>기준 기록</dt><dd>{anchorLabel}</dd></div>}
         {goalLabel && <div><dt>내 목표</dt><dd>{goalLabel}</dd></div>}
         {programPurposeLabel && <div><dt>이번 프로그램의 목적</dt><dd>{programPurposeLabel}</dd></div>}
-        {workoutLabel && <div><dt>{workoutLabelTitle ?? "고른 상세 훈련"}</dt><dd>{workoutLabel}</dd></div>}
+        {workoutLabel && <div><dt>{workoutLabelTitle ?? "처방 훈련"}</dt><dd>{workoutLabel}</dd></div>}
       </dl>
       {goalLabel && (
         <p className="instant-plan__hint">목표 기록은 현재 능력이나 이 기간 안의 달성 보장을 뜻하지 않아요.</p>
@@ -87,7 +87,7 @@ export function InstantPlanRecommendationView({
         {recommendation.days.length === 0 ? (
           <p className="instant-plan__status">표시할 일정이 없어요.</p>
         ) : (
-          <RecommendationCalendar days={recommendation.days} />
+          <RecommendationCalendar identity={recommendation.id} days={recommendation.days} />
         )}
       </section>
 
@@ -132,7 +132,7 @@ export function InstantPlanRecommendationView({
         )}
         {onEditWorkout && (
           <button className="instant-plan__secondary" type="button" disabled={waiting} onClick={onEditWorkout}>
-            훈련 방법 고르기
+            처방 확인·조절
           </button>
         )}
       </div>

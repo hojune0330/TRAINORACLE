@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { AppShell } from "./AppShell"
 import { ENGAGEMENT_STORAGE_KEY } from "./domain/engagement"
 import type { JournalEntry } from "./domain/journal-schema"
+import { setActiveLocalAccount } from "./domain/account/local-journal-ownership"
 
 const STORAGE_KEY = "trainoracle.journal.v1"
 
@@ -33,6 +34,7 @@ afterEach(cleanup)
 
 describe("AppShell journal archive routing", () => {
   beforeEach(() => {
+    setActiveLocalAccount("test-reset"); setActiveLocalAccount(null)
     window.localStorage.clear()
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify([ENTRY]))
   })
@@ -42,7 +44,7 @@ describe("AppShell journal archive routing", () => {
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "전체 일지" }))
-    await user.click(await screen.findByRole("button", { name: /2026년 7월/u }, { timeout: 5_000 }))
+    await user.click(await screen.findByRole("button", { name: /^2026년 7월 훈련 후/u }, { timeout: 5_000 }))
     await user.click(await screen.findByRole("button", { name: /2026년 7월 10일/u }))
     await user.click(screen.getByRole("button", { name: "일지·메모 원문 열기" }))
 
@@ -60,7 +62,7 @@ describe("AppShell journal archive routing", () => {
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "전체 일지" }))
-    await user.click(await screen.findByRole("button", { name: /2026년 7월/u }, { timeout: 5_000 }))
+    await user.click(await screen.findByRole("button", { name: /^2026년 7월 훈련 후/u }, { timeout: 5_000 }))
     await user.click(await screen.findByRole("button", { name: /2026년 7월 10일/u }))
     await user.click(screen.getByRole("button", { name: "일지·메모 원문 열기" }))
     await user.click(await screen.findByTestId("journal-manage-toggle"))
@@ -81,7 +83,7 @@ describe("AppShell journal archive routing", () => {
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "일지" }))
-    await user.click(await screen.findByRole("button", { name: /2026년 7월/u }))
+    await user.click(await screen.findByRole("button", { name: /^2026년 7월 훈련 후/u }))
     await user.click(screen.getByRole("button", { name: "일지" }))
 
     expect(await screen.findByRole("heading", { name: "2026년 7월", level: 1 })).toBeVisible()
@@ -97,7 +99,7 @@ describe("AppShell journal archive routing", () => {
     await user.click(await screen.findByRole("button", { name: /돌아가기/u }))
 
     expect(screen.getByRole("heading", {
-      name: "내 훈련, 무엇부터 개선할까요?",
+      name: "오늘 운동을 기록해요",
     })).toBeVisible()
   })
 
@@ -116,7 +118,7 @@ describe("AppShell journal archive routing", () => {
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "일지" }))
-    await user.click(await screen.findByRole("button", { name: "오늘 기록하기" }))
+    await user.click(await screen.findByRole("button", { name: "내 첫 기록 남기기" }))
 
     expect(await screen.findByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
   })
@@ -163,7 +165,7 @@ describe("AppShell journal archive routing", () => {
     render(<AppShell />)
 
     expect(screen.getByRole("heading", {
-      name: "내 훈련, 무엇부터 개선할까요?",
+      name: "오늘 운동을 기록해요",
     })).toBeVisible()
     expect(screen.getByRole("button", { name: "오늘 기록 남기기" })).toBeVisible()
     expect(screen.getByRole("button", { name: "일지" })).toBeVisible()

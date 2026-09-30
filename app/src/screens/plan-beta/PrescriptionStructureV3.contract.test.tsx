@@ -1,5 +1,5 @@
 import React from "react"
-import { cleanup, render, screen, within } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, expect, it } from "vitest"
 import type { PrescriptionSequenceV3, SequenceNodeV3 } from "@impl/prescription/sequence-v3"
 import { PrescriptionStructureV3 } from "./PrescriptionStructureV3"
@@ -22,4 +22,25 @@ it("keeps preparation, its repeat recovery, main and cooldown visible in compact
   expect(screen.getByText("2분")).toBeVisible()
   expect(within(screen.getByRole("region", { name: "정리운동" })).getByText("1분 30초")).toBeVisible()
   expect(screen.getByLabelText("계획된 전체 시간")).toHaveTextContent("총 6분")
+})
+
+it("shows main work first while preserving support, recoveries and the complete total behind a disclosure", () => {
+  const part = (id: string, seconds: number): SequenceNodeV3 => ({
+    kind: "segment", id, label: null, role: id === "main" ? "WORK" : "PREPARATION", repeatCount: 2,
+    work: { kind: "duration", durationSeconds: seconds, distanceM: null },
+    target: { kind: "EFFORT_GUIDANCE", cue: "합성 시험" },
+    recoveryBetweenRepeats: [{ mode: "WALK", seconds: 30 }], recoveryAfter: [],
+  })
+  const sequence: PrescriptionSequenceV3 = { kind: "PRESCRIPTION_SEQUENCE", version: 3, id: "SYNTHETIC", label: null,
+    warmup: [part("warm", 60)], main: [part("main", 120)], cooldown: [part("cool", 90)] }
+  render(<PrescriptionStructureV3 sequence={sequence} compact collapseSupport />)
+  expect(screen.getByText("2 × 2min @ 합성 시험 · r30s Walk")).toBeVisible()
+  expect(screen.getAllByLabelText("계획된 전체 시간")[0]).toHaveTextContent("총 10분 30초")
+  const support = screen.getByText("자세히 보기 · 준비부터 정리까지").closest("details")!
+  expect(support).not.toHaveAttribute("open")
+  expect(within(support).getByText(/1분 · 합성 시험/)).not.toBeVisible()
+  fireEvent.click(within(support).getByText("자세히 보기 · 준비부터 정리까지"))
+  expect(within(support).getByText(/1분 · 합성 시험/)).toBeVisible()
+  expect(within(support).getByText(/1분 30초 · 합성 시험/)).toBeVisible()
+  expect(within(support).getAllByText(/걷기 · 30초/)).toHaveLength(3)
 })

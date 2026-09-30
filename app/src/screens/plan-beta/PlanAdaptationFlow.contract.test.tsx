@@ -166,15 +166,15 @@ describe("next-frame adaptation flow", () => {
     if (changedSection === null) throw new Error("Changed-session section missing")
     const changedSessions = within(changedSection).getAllByRole("listitem")
     expect(changedSessions).toHaveLength(3)
-    expect(within(changedSection).getByText(/DAY 1 오전 · 기초 지구력 달리기/u)).toBeVisible()
-    expect(within(changedSection).getByText(/DAY 5 오전 · 기초 지구력 달리기/u)).toBeVisible()
-    expect(within(changedSection).getByText(/DAY 7 오전 · 기초 지구력 달리기/u)).toBeVisible()
+    expect(within(changedSection).getByText(/DAY 1 오전 · 저강도 달리기/u)).toBeVisible()
+    expect(within(changedSection).getByText(/DAY 5 오전 · 저강도 달리기/u)).toBeVisible()
+    expect(within(changedSection).getByText(/DAY 7 오전 · 저강도 달리기/u)).toBeVisible()
     expect(within(changedSection).queryByText(/DAY 9 오전 · 강한 유산소 반복 · VO₂ 훈련/u)).not.toBeInTheDocument()
     const metadataTokens = [...changedSection.querySelectorAll(".plan-adaptation__metadata-token")]
       .map((token) => token.textContent)
-    expect(metadataTokens).toContain("35분")
+    expect(metadataTokens).toContain("35min")
     for (const session of changedSessions) {
-      expect(session).toHaveTextContent(/총 35~60분 · RPE 3~4 · 편하게 오래 · BASE → 총 35분 · RPE 3~4 · 편하게 오래 · BASE/u)
+      expect(session).toHaveTextContent(/전체 35–60min @ RPE 3–4 → 전체 35min @ RPE 3–4/u)
     }
     const unchangedSection = screen.getByRole("heading", { name: "그대로인 것" }).parentElement
     if (unchangedSection === null) throw new Error("Unchanged-session section missing")

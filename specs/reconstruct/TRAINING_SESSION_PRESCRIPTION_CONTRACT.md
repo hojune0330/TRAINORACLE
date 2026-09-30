@@ -688,4 +688,23 @@ The owner-reviewed registry remains empty until exact packets receive final appr
 KEEP existing baseline values, original-plan compatibility, youth/self-use, D9,
 privacy, no automatic dose escalation and issue states. No new activation is implied.
 
+## 15. Distance Target and Execution Link (2026-09-30)
+
+The [exact distance review packet](../../reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md)
+prepares four bounded 5000m configurations. Preparation is not activation; use the
+owner-reviewed adoption lane only after an exact owner decision. Preserve the
+original four baseline identities and all existing safety/population checks.
+Distance alone is not a complete target: bind the current same-event record,
+unrounded target seconds, repeat/set recovery and full-session time. The new
+configurations' 60-300s repetition window is a product applicability limit, not a
+metabolic-system boundary. Longer recovery is a distinct reviewed configuration,
+not evidence of equivalent stimulus or permission to run faster.
+
+Execution evidence must refer to the immutable original prescription and occurrence.
+Store only explicitly entered repetition results and recovery; no prefilled actual
+targets, title inference, raw memo extraction or whole-session/main-work substitution.
+Missing results are unknown, not zero or failure. Separate observed pacing/repetition
+facts from possible explanations. Never diagnose an energy-system deficit or a
+superior capacity from a single result. No automatic dose escalation follows success.
+
 [DRAFT_COMPLETE]

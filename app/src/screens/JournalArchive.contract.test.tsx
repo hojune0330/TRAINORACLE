@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { JournalEntry } from "../domain/journal-schema"
 import type { ArchiveSelection } from "../domain/journal-archive"
 import { JournalArchive } from "./JournalArchive"
+import { setActiveLocalAccount } from "../domain/account/local-journal-ownership"
 
 const SECRET = "숨겨야 하는 개인 메모 원문"
 
@@ -82,6 +83,7 @@ const ENTRIES: readonly JournalEntry[] = [
 ]
 
 beforeEach(() => {
+  setActiveLocalAccount("test-reset"); setActiveLocalAccount(null)
   HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", "") }
 })
 afterEach(cleanup)
@@ -103,19 +105,21 @@ function ArchiveHarness() {
 }
 
 describe("journal archive surface", () => {
-  it("shows the current real month even with no entries and can browse an empty month", async () => {
+  it("offers a separate example before the empty real calendar", async () => {
     const user = userEvent.setup()
     const onSelectionChange = vi.fn()
     const onOpenDay = vi.fn()
     const now = new Date()
     render(<JournalArchive entries={[]} selection={{ selectedMonth: null, selectedWeekStart: null }}
       onSelectionChange={onSelectionChange} onOpenDay={onOpenDay} onBack={vi.fn()} />)
+    expect(screen.queryByRole("grid")).toBeNull()
+    await user.click(screen.getByRole("button", { name: "내 달력" }))
     expect(screen.getByRole("grid", { name: `${now.getFullYear()}년 ${now.getMonth() + 1}월 달력` })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "오늘" }))
     expect(onOpenDay).not.toHaveBeenCalled()
     expect(screen.getByRole("status")).toHaveTextContent("이날 작성한 일지가 없어요")
     await user.click(screen.getByRole("button", { name: "다음 달" }))
-    expect(onSelectionChange).toHaveBeenCalledTimes(2)
+    expect(onSelectionChange).not.toHaveBeenCalled()
   })
 
   it("drills from month to week to day without exposing private text", async () => {
@@ -141,7 +145,7 @@ describe("journal archive surface", () => {
     expect(document.body.textContent).not.toContain(SECRET)
     expect(screen.getByText("출처를 확인할 수 없어 제외된 기록 1건")).toBeVisible()
 
-    await user.click(screen.getByRole("button", { name: /2026년 7월/u }))
+    await user.click(screen.getByRole("button", { name: /^2026년 7월 훈련 후/u }))
     rerender(
       <JournalArchive
         entries={ENTRIES}
@@ -217,6 +221,7 @@ describe("journal archive surface", () => {
     const write = vi.fn()
     render(<JournalArchive entries={[]} selection={{ selectedMonth: "2025-07", selectedWeekStart: null }}
       onSelectionChange={vi.fn()} onOpenDay={vi.fn()} onBack={vi.fn()} onWriteDate={write} />)
+    await user.click(screen.getByRole("button", { name: "내 달력" }))
     await user.click(screen.getByRole("button", { name: /2025년 7월 10일 목요일/ }))
     expect(write).not.toHaveBeenCalled()
     await user.click(screen.getByRole("button", { name: "이날 일지 쓰기" }))

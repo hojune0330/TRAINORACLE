@@ -2,7 +2,8 @@ import React from "react"
 import { Plus, ChevronUp } from "lucide-react"
 import { FormInputDraftBoundary, useFormInputDraft, useRecoveredFormInput } from "./useFormInputDraft"
 import type { ObjectiveEditorDraft, ExerciseEditorDraft } from "./form-input-draft"
-import type { ExerciseLog } from "../../domain/exercise-log"
+import { hasExerciseLog, type ExerciseLog } from "../../domain/exercise-log"
+import { PlannedRepetitionEditor } from "./PlannedRepetitionEditor"
 import { ExerciseLogEditor } from "./ExerciseLogEditor"
 import { accountJournalRecordsEnabled } from "../../domain/account/account-journal-record-service"
 import { FormFinalizationRecovery, useFormFinalization } from "./useFormFinalization"
@@ -131,7 +132,7 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
 
   const persist = async () => {
     if (persistInFlight.current || !draft.current()) return
-    if (exerciseEditor || (didNotPerform && exerciseLog.components.length > 0)) {
+    if (exerciseEditor || (didNotPerform && hasExerciseLog(exerciseLog))) {
       setSaveError(true)
       setAccountNotice(exerciseEditor ? "작성 중인 운동 내용을 반영하거나 지운 뒤 저장해 주세요." : "운동 내용이 남아 있어요. 운동 결과를 바꾸거나 운동 내용을 직접 정리해 주세요.")
       return
@@ -173,7 +174,7 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
       avgPace: persistedAvgPace,
       rpe: persistedRpe,
       memo: memo.text,
-      ...(exerciseLog.components.length > 0 ? { exerciseLog } : {}),
+      ...(hasExerciseLog(exerciseLog) ? { exerciseLog } : {}),
       ...(recordsPerformance && intensity.assessment !== undefined
         ? { intensityAssessment: intensity.assessment }
         : {}),
@@ -329,6 +330,7 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
           <ExerciseLogEditor value={exerciseLog} onChange={setExerciseLog} draft={exerciseEditor} onDraftChange={setExerciseEditor} />
         </div>
       </FormSec>
+      {(recordsPerformance || exerciseLog.plannedRepetitions) && <PlannedRepetitionEditor entryId={entryId} date={entryDate} link={planLink} value={exerciseLog} onChange={setExerciseLog} />}
       {recordsPerformance && <FormSec compact lb="거리 · 시간 · 평균 페이스" help="pace">
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
           <input aria-label="거리 (km)" readOnly={isImportedField("distanceKm", initial?.fieldProvenance)} type="text" value={distanceKm} onChange={(event) => setDistanceKm(event.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />

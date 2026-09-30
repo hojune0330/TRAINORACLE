@@ -4,9 +4,13 @@ import type { PlanProgressState } from "@impl/plan-generator/types"
 import type { PlanSession } from "@impl/plan-generator/types"
 import { TermHelp } from "../../components/TermHelp"
 import { isValidIsoDate, isoShift, isoToDate } from "../../domain/dates"
-import { todayISO } from "../../domain/journal-store"
+import { calendarEntriesByDate, planCalendarDate } from "../../domain/calendar-context"
+import { useCalendarPosition } from "../../hooks/useCalendarPosition"
 import { useLocalToday } from "../../hooks/useLocalToday"
+import { calendarReducedMotion } from "../../hooks/useCalendarMotion"
 import { MonthCalendar } from "../../components/MonthCalendar"
+import { CalendarTrainingMark } from "../../components/CalendarTrainingMark"
+import { CALENDAR_TRAINING_LABELS, plannedCalendarTone } from "../../domain/calendar-training-presentation"
 import {
   ENERGY_INTENT_LABELS,
   prescriptionLabel,
@@ -94,9 +98,13 @@ export function PlanSchedulePreview({
   const focusedDayIndex = focusSession === undefined
     ? -1
     : days.findIndex((day) => day.day === focusSession.day && day.sessions.some((session) => session.slot === focusSession.slot))
-  const initialDayIndex = focusedDayIndex >= 0 ? focusedDayIndex : Math.max(0, days.findIndex((day) => day.date === today))
+  const localCalendarId = React.useId()
+  const calendarIdentity = `plan:${explanationContext?.kind ?? "SAVED"}:${explanationContext?.plan.candidateId ?? detailsId ?? localCalendarId}:${startDate}:${dayCount}`
+  const nav = useCalendarPosition(calendarIdentity, days[focusedDayIndex]?.date ?? planCalendarDate(startDate, dayCount, today, explanationContext?.kind === "CANDIDATE"))
+  const initialDayIndex = Math.max(0, days.findIndex(day => day.date === nav.date))
   const [activeDayIndex, setActiveDayIndex] = React.useState(initialDayIndex)
-  const [selectedDate, setSelectedDate] = React.useState(days[initialDayIndex]?.date ?? startDate)
+  const selectedDate = nav.date
+  const setSelectedDate = nav.selectDate
   const [calendarDetailsOpen, setCalendarDetailsOpen] = React.useState(false)
   const [reader, setReader] = React.useState<{ date: string; slot?: PlanSession["slot"]; section?: "records" } | null>(null)
   const readerIndex = days.findIndex(day => day.date === reader?.date)
@@ -108,12 +116,11 @@ export function PlanSchedulePreview({
   const handledReaderRequest = React.useRef<number>()
 
   React.useEffect(() => {
-    const nextIndex = Math.max(0, days.findIndex((day) => day.date === todayISO()))
+    const nextIndex = Math.max(0, days.findIndex((day) => day.date === nav.date))
     setActiveDayIndex(nextIndex)
-    setSelectedDate(days[nextIndex]?.date ?? startDate)
     setCalendarDetailsOpen(false)
     setReader(null)
-  }, [startDate, dayCount])
+  }, [calendarIdentity])
 
   React.useEffect(() => {
     if (!readerRequest || handledReaderRequest.current === readerRequest.sequence) return
@@ -136,14 +143,14 @@ export function PlanSchedulePreview({
     if (list === null || target === null) return
 
     if (displayMode === "swipe" && typeof list.scrollTo === "function") {
-      const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false
+      const reduceMotion = calendarReducedMotion()
       const first = list.children.item(0) as HTMLElement | null
       list.scrollTo({ left: target.offsetLeft - (first?.offsetLeft ?? 0), behavior: reduceMotion ? "auto" : "smooth" })
       return
     }
-    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false
+    const reduceMotion = calendarReducedMotion()
     target.scrollIntoView?.({ behavior: reduceMotion ? "auto" : "smooth", block: "start" })
-  }, [days, displayMode])
+  }, [days, displayMode, setSelectedDate])
 
   React.useLayoutEffect(() => {
     const list = scheduleRef.current
@@ -155,11 +162,15 @@ export function PlanSchedulePreview({
       ?.scrollIntoView?.({ behavior: "auto", block: "center", inline: "nearest" })
   }, [showDetails, startDate, displayMode, focusedDayIndex, focusSession?.slot])
 
+  const appliedFocus = React.useRef<string>()
   React.useEffect(() => {
     if (focusedDayIndex < 0) return
+    const key = `${calendarIdentity}:${focusedDayIndex}:${focusSession?.slot}`
+    if (appliedFocus.current === key) return
+    appliedFocus.current = key
     setCalendarDetailsOpen(true)
     moveToDay(focusedDayIndex)
-  }, [focusedDayIndex, focusSession?.slot, moveToDay])
+  }, [calendarIdentity, focusedDayIndex, focusSession?.slot, moveToDay])
 
   const syncActiveDay = React.useCallback(() => {
     if (displayMode !== "swipe") return
@@ -207,6 +218,7 @@ export function PlanSchedulePreview({
     <>
       {showRpeGuide && showDetails && <PlanRpeGuide />}
       <PlanTrainingFlow
+        month={nav.month} onMonthChange={nav.selectMonth}
         days={days}
         journalEntries={journalEntries}
         sessionProgress={sessionProgress}
@@ -466,6 +478,7 @@ export function PlanRpeGuide() {
 }
 
 function PlanTrainingFlow({
+  month, onMonthChange,
   days,
   today,
   frameLengthDays,
@@ -475,6 +488,8 @@ function PlanTrainingFlow({
   journalEntries,
   sessionProgress,
 }: {
+  readonly month: string
+  readonly onMonthChange: (month: string) => void
   readonly days: readonly ScheduleDay[]
   readonly today: string
   readonly frameLengthDays: FrameLengthDays
@@ -484,9 +499,9 @@ function PlanTrainingFlow({
   readonly journalEntries: readonly JournalEntry[]
   readonly sessionProgress?: (session: PlanSession) => PlanProgressState | undefined
 }) {
-  const [month, setMonth] = React.useState(selectedDate.slice(0, 7))
-  React.useEffect(() => setMonth(selectedDate.slice(0, 7)), [selectedDate])
+  const setMonth = onMonthChange
   const byDate = new Map(days.map(day => [day.date, day]))
+  const journalByDate = React.useMemo(() => calendarEntriesByDate(journalEntries), [journalEntries])
   const outsidePlanMonth = days.length > 0 && (month < days[0]!.date.slice(0, 7) || month > days.at(-1)!.date.slice(0, 7))
   return (
     <section className="plan-training-flow" aria-label={`${frameLengthDays}일 훈련 일정`}>
@@ -498,25 +513,23 @@ function PlanTrainingFlow({
         setMonth(days[0]!.date.slice(0, 7))
         onToday?.(days[0]!.date)
       }}>계획 시작일로</button>}
-      <MonthCalendar month={month} today={today} selectedDate={selectedDate}
+      <MonthCalendar trainingColors month={month} today={today} selectedDate={selectedDate}
         highlightedRange={days.length ? { start: days[0]!.date, end: days.at(-1)!.date } : undefined}
         onMonthChange={setMonth} onSelectDate={onSelectDate} onToday={onToday}
         dayDescription={date => {
           const day = byDate.get(date)
           const planned = day === undefined ? "이 계획의 일정 없음" : day.sessions.length === 0 ? "예정 훈련 없음" : day.sessions.map(session =>
             `${sessionSlotLabel(session.slot)} ${sessionFlowLabel(session).accessible}${sessionProgress?.(session) ? ` · ${PROGRESS_LABELS[sessionProgress(session)!]}` : ""}`).join(" · ")
-          return [planned, calendarJournalDescription(journalEntries, date)].filter(Boolean).join(" · ")
+          return [planned, calendarJournalDescription(journalByDate.get(date) ?? [], date)].filter(Boolean).join(" · ")
         }}
         renderDay={date => <>{byDate.get(date)?.sessions.map(session => {
-          const label = sessionFlowLabel(session)
           const progress = sessionProgress?.(session)
           const StatusIcon = progress === undefined ? null : PROGRESS_ICONS[progress]
-          return <span className="month-calendar__event month-calendar__plan-event" data-kind={label.kind} key={session.slot}
-            title={`${sessionSlotLabel(session.slot)} ${label.accessible}${progress ? ` · ${PROGRESS_LABELS[progress]}` : ""}`}>
-            <span>{session.slot}</span><span>{label.short}</span>
+          return <CalendarTrainingMark tone={plannedCalendarTone(session)} key={session.slot}
+            slot={sessionSlotLabel(session.slot)} label={CALENDAR_TRAINING_LABELS[plannedCalendarTone(session)]}>
             {StatusIcon && <StatusIcon size={12} aria-hidden="true" />}
-          </span>
-        })}<CalendarJournalBadge entries={journalEntries} date={date} /></>} />
+          </CalendarTrainingMark>
+        })}<CalendarJournalBadge entries={journalByDate.get(date) ?? []} date={date} /></>} />
       <details className="plan-session-guidance">
         <summary>훈련 구분·약어</summary>
         <p>AM 오전 · PM 오후. 주요 훈련의 종류와 방법은 날짜를 눌러 확인해요.</p>

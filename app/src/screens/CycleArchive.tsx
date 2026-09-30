@@ -9,8 +9,10 @@ import { JournalMonthCalendar } from "./JournalMonthCalendar"
 import { InfoDisclosure } from "../components/InfoDisclosure"
 import { GuidedEmptyState } from "../components/GuidedEmptyState"
 import "../components/CalendarJournalDetails.css"
+import { calendarCycleIndex, calendarRecordDates, recentCalendarDate, type CalendarReadiness } from "../domain/calendar-context"
+import { useCalendarPosition } from "../hooks/useCalendarPosition"
 
-export function CycleArchive({ entries, anchor, index, onAnchorChange, onIndexChange, onOpenDay, onWriteLog, onWriteDate }: {
+export function CycleArchive({ entries, anchor, index, onAnchorChange, onIndexChange, onOpenDay, onWriteLog, onWriteDate, readiness = "READY" }: {
   readonly entries: readonly JournalEntry[]
   readonly anchor?: string | null
   readonly index?: number
@@ -19,16 +21,28 @@ export function CycleArchive({ entries, anchor, index, onAnchorChange, onIndexCh
   readonly onOpenDay: (date: string) => void
   readonly onWriteLog?: (() => void) | undefined
   readonly onWriteDate?: (date: string) => void
+  readonly readiness?: CalendarReadiness
 }) {
   const [internalAnchor, setInternalAnchor] = React.useState(todayISO)
-  const [internalIndex, setInternalIndex] = React.useState(0)
+  const [internalIndex, setInternalIndex] = React.useState<number>()
   const effectiveAnchor = anchor ?? internalAnchor
-  const effectiveIndex = index ?? internalIndex
+  const latest = recentCalendarDate(calendarRecordDates(entries), todayISO())
+  const nav = useCalendarPosition(`cycle:${effectiveAnchor}`, latest ?? todayISO(), readiness === "READY")
+  const effectiveIndex = index ?? internalIndex ?? calendarCycleIndex(effectiveAnchor, nav.date)
   const changeAnchor = onAnchorChange ?? setInternalAnchor
   const changeIndex = onIndexChange ?? setInternalIndex
   const window = isValidIsoDate(effectiveAnchor) ? trainingCycleWindow(effectiveAnchor, effectiveIndex) : null
-  const [month, setMonth] = React.useState((window?.start ?? todayISO()).slice(0, 7))
-  React.useEffect(() => { if (window) setMonth(window.start.slice(0, 7)) }, [window?.start])
+  const month = nav.month
+  const setMonth = nav.selectMonth
+  const previousWindow = React.useRef(`${effectiveAnchor}:${effectiveIndex}`)
+  React.useEffect(() => {
+    const key = `${effectiveAnchor}:${effectiveIndex}`
+    if (previousWindow.current !== key && window && (nav.date < window.start || nav.date > window.end)) nav.selectDate(window.start)
+    previousWindow.current = key
+  }, [effectiveAnchor, effectiveIndex, window?.start, window?.end, nav.date, nav.selectDate])
+  React.useEffect(() => {
+    if (readiness === "READY" && index === undefined && internalIndex === undefined) changeIndex(effectiveIndex)
+  }, [readiness, index, internalIndex, effectiveIndex, changeIndex])
   const archive = React.useMemo(() => projectJournalArchive(entries), [entries])
   const calendarMonth = archive.months.find(item => item.month === month) ?? {
     month, entryCount: 0, kindCounts: { postSession: 0, evening: 0, race: 0 },
@@ -36,7 +50,8 @@ export function CycleArchive({ entries, anchor, index, onAnchorChange, onIndexCh
   }
 
   return (
-    <section className="cycle-calendar" aria-label="9.5일 주기 일지">
+    <section className="cycle-calendar" aria-label="9.5일 주기 일지" onWheel={nav.markManual} onTouchMove={nav.markManual}
+      onKeyDown={event => { if (["PageUp", "PageDown", "Home", "End", " "].includes(event.key)) nav.markManual() }}>
       <div className="cycle-calendar__controls">
         <button type="button" aria-label="이전 주기" disabled={window === null} onClick={() => changeIndex(effectiveIndex - 1)}><ChevronLeft size={18} aria-hidden="true" /></button>
         <strong>{window === null ? "시작일을 다시 골라 주세요" : `${window.start} ~ ${window.end} · ${window.lengthDays}일 구간`}</strong>
@@ -45,8 +60,10 @@ export function CycleArchive({ entries, anchor, index, onAnchorChange, onIndexCh
       {window && (month < window.start.slice(0, 7) || month > window.end.slice(0, 7)) && (
         <button type="button" className="calendar-range-return" onClick={() => setMonth(window.start.slice(0, 7))}>선택한 주기로 이동</button>
       )}
-      <JournalMonthCalendar month={calendarMonth} entries={entries} onOpenDay={onOpenDay} onWriteDate={onWriteDate} onMonthChange={setMonth} highlightedRange={window ?? undefined} />
-      {window && !entries.some(entry => entry.date >= window.start && entry.date <= window.end) && <GuidedEmptyState
+      {latest && <button type="button" className="calendar-range-return" onClick={() => { changeIndex(calendarCycleIndex(effectiveAnchor, latest)); nav.selectDate(latest) }}>최근 일지가 있는 주기</button>}
+      <JournalMonthCalendar month={calendarMonth} entries={entries} onOpenDay={onOpenDay} onWriteDate={onWriteDate} onMonthChange={setMonth} highlightedRange={window ?? undefined}
+        selectedDate={nav.date} onSelectedDateChange={nav.selectDate} />
+      {readiness === "READY" && window && !entries.some(entry => entry.date >= window.start && entry.date <= window.end) && <GuidedEmptyState
         title="이 주기에 기록이 없어요" description="날짜를 둘러보거나 오늘 기록을 남겨보세요."
         actionLabel="오늘 기록하기" onAction={onWriteLog} />}
       <InfoDisclosure title="주기 시작일과 표시 기준">

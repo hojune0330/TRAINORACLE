@@ -26,7 +26,8 @@ import { BodyDiagram, PainReviewBanner } from "./BodyDiagram"
 import { TopBar } from "./shared"
 import { PurposeScopedMemoField, usePurposeScopedMemo } from "./PurposeScopedMemoField"
 import { ExerciseLogEditor, ExerciseLogSummary } from "./ExerciseLogEditor"
-import type { ExerciseLog } from "../../domain/exercise-log"
+import { hasExerciseLog, type ExerciseLog } from "../../domain/exercise-log"
+import { PlannedRepetitionEditor } from "./PlannedRepetitionEditor"
 import type { ExerciseEditorDraft } from "./form-input-draft"
 
 type QuickStep = "activity" | "effort" | "review" | "exercise" | "memo" | "saved"
@@ -165,7 +166,7 @@ function QuickSessionFormEditor({
     }
     setPainStatus(next.painStatus)
     setPainParts({ ...next.painParts })
-    if (!didPerform && exerciseLog.components.length > 0) {
+    if (!didPerform && hasExerciseLog(exerciseLog)) {
       setSaveError("운동 내용이 남아 있어요. 운동 결과를 바꾸거나 운동 내용을 직접 정리해 주세요.")
       return
     }
@@ -212,7 +213,7 @@ function QuickSessionFormEditor({
       rpe: didPerform && next.effortAnswered ? next.rpe : 0,
       memo: inheritedMemo.text,
       ...(inheritedMemo.purpose === undefined ? {} : { memoPurpose: inheritedMemo.purpose }),
-      ...(exerciseLog.components.length > 0 ? { exerciseLog } : {}),
+      ...(hasExerciseLog(exerciseLog) ? { exerciseLog } : {}),
       ...(didPerform && base?.intensityAssessment !== undefined
         ? { intensityAssessment: base.intensityAssessment }
         : {}),
@@ -446,7 +447,8 @@ function QuickSessionFormEditor({
           <small>마지막 확인</small>
           <h1 id="quick-review-title" ref={stageHeadingRef} tabIndex={-1}>이 내용으로 남길까요?</h1>
           {!performed(outcome) && performed(savedEntry?.activityOutcome ?? null) && <p>쉬거나 건너뛴 기록으로 바꾸면 이 일지의 운동 시간·거리·RPE·몸 상태 응답은 제외돼요.</p>}
-          <ExerciseLogSummary log={exerciseLog} />
+            <ExerciseLogSummary log={exerciseLog} />
+            {(performed(outcome) || exerciseLog.plannedRepetitions) && <PlannedRepetitionEditor entryId={entryId} date={date} link={planLink} value={exerciseLog} onChange={setExerciseLog} />}
           {inheritedMemo.text.trim() !== "" && <p>{inheritedMemo.needsPrivateSetup
             ? "글은 아직 저장 전이에요. 비밀 메모 보관을 먼저 준비해요."
             : "저장 버튼을 누르면 글도 함께 저장돼요."}</p>}

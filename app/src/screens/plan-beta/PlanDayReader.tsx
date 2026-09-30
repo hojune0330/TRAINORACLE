@@ -5,6 +5,7 @@ import { calendarDayLabel } from "../../components/MonthCalendar"
 import { useReaderDialog } from "../../hooks/useReaderDialog"
 import { sessionSlotLabel } from "./labels"
 import "../../styles/plan-day-reader.css"
+import { useCalendarMotion } from "../../hooks/useCalendarMotion"
 
 export function PlanDayReader({ date, sessions, initialSlot, initialSection, canPrevious, canNext, onPrevious, onNext, onClose, notice, children }: {
   readonly date: string
@@ -22,12 +23,14 @@ export function PlanDayReader({ date, sessions, initialSlot, initialSection, can
   const dialog = React.useRef<HTMLDialogElement>(null)
   const content = React.useRef<HTMLDivElement>(null)
   const titleId = React.useId()
+  const motion = useCalendarMotion()
+  const calendar = React.useRef(document.activeElement?.closest<HTMLElement>(".month-calendar"))
   const [activeSlot, setActiveSlot] = React.useState(initialSlot ?? sessions[0]?.slot)
-  const close = useReaderDialog(dialog, onClose)
+  const close = useReaderDialog(dialog, onClose, () => calendar.current?.querySelector<HTMLElement>(`button[data-date="${date}"]`)
+    ?? calendar.current?.querySelector<HTMLElement>(".month-calendar__month") ?? null)
   const jumpToSlot = (slot: "AM" | "PM") => {
     const section = content.current?.querySelector<HTMLElement>(`[data-session-slot="${slot}"]`)
-    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false
-    section?.scrollIntoView?.({ block: "start", behavior: reduced ? "auto" : "smooth" })
+    section?.scrollIntoView?.({ block: "start", behavior: motion.reduced ? "auto" : "smooth" })
     section?.focus({ preventScroll: true })
     setActiveSlot(slot)
   }
@@ -57,7 +60,7 @@ export function PlanDayReader({ date, sessions, initialSlot, initialSection, can
     }
   }, [date, initialSlot, initialSection])
 
-  return createPortal(<dialog ref={dialog} className="plan-day-reader" aria-labelledby={titleId}
+  return createPortal(<dialog ref={dialog} className="plan-day-reader" data-reduced-motion={motion.reduced || undefined} aria-labelledby={titleId}
     onCancel={event => { event.preventDefault(); close() }}>
     <header className="plan-day-reader__header">
       <button type="button" onClick={close} aria-label="달력으로 돌아가기" title="달력으로 돌아가기"><ArrowLeft size={21} aria-hidden="true" /></button>
@@ -73,7 +76,7 @@ export function PlanDayReader({ date, sessions, initialSlot, initialSection, can
         onClick={() => jumpToSlot(session.slot)}>{sessionSlotLabel(session.slot)}</button>)}
     </nav>}
     <div className="plan-day-reader__body" ref={content} onScroll={syncSlot}>
-      <div className="plan-day-reader__content plan-schedule-preview__sessions">{children}</div>
+      <div key={date} className="plan-day-reader__content plan-schedule-preview__sessions calendar-reader-transition">{children}</div>
     </div>
   </dialog>, document.body)
 }

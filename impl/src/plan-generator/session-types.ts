@@ -15,6 +15,7 @@ export type PlanSessionSlot = (typeof PLAN_SESSION_SLOTS)[number]
 
 export type RpeTimeRange = {
   readonly kind: "RPE_TIME_RANGE"
+  readonly catalogWorkout?: import("../prescription/catalog-session-binding").CatalogSessionBinding
   readonly rpe: {
     readonly minimum: number
     readonly maximum: number

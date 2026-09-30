@@ -23,6 +23,21 @@ export function executionReplanEvidence(entries: readonly JournalEntry[]) {
       rpe: e.fieldProvenance?.rpe?.provenance === "EXPLICIT" ? e.rpe : null,
       distance: e.fieldProvenance?.distanceKm?.provenance === "EXPLICIT" ? e.distanceKm : null,
       duration: e.fieldProvenance?.durationMin?.provenance === "EXPLICIT" ? e.durationMin : null,
+      ...(e.exerciseLog?.plannedRepetitions ? { plannedRepetitions: {
+        version: e.exerciseLog.plannedRepetitions.version, source: e.exerciseLog.plannedRepetitions.source,
+        plannedSessionId: e.exerciseLog.plannedRepetitions.plannedSessionId,
+        sessionContentFingerprint: e.exerciseLog.plannedRepetitions.sessionContentFingerprint,
+        results: e.exerciseLog.plannedRepetitions.results.map(row => ({ set: row.set, repetition: row.repetition,
+          distanceM: row.distanceM ?? null, seconds: row.seconds ?? null, recoverySeconds: row.recoverySeconds ?? null,
+          recoveryMode: row.recoveryMode ?? null })).sort((a, b) => a.set - b.set || a.repetition - b.repetition),
+      } } : {}),
+      ...(e.exerciseLog?.plannedSegments ? { plannedSegments: {
+        version: 1, source: "SELF_REPORTED", plannedSessionId: e.exerciseLog.plannedSegments.plannedSessionId,
+        sessionContentFingerprint: e.exerciseLog.plannedSegments.sessionContentFingerprint,
+        calculationFingerprint: e.exerciseLog.plannedSegments.calculationFingerprint,
+        results: e.exerciseLog.plannedSegments.results.map(r => ({ key: r.key, distanceM: r.distanceM ?? null,
+          seconds: r.seconds ?? null, rpe: r.rpe ?? null })).sort((a, b) => a.key.localeCompare(b.key)),
+      } } : {}),
       exercises: e.exerciseLog?.components.map(c => ({ kind: c.kind, rows: c.rows.map(r => ({
         distanceM: r.distanceM ?? null, durationSeconds: r.durationSeconds ?? null,
         repetitions: r.repetitions ?? null, sets: r.sets ?? null, recovery: r.recovery ?? null,
@@ -50,6 +65,7 @@ export function prepareExecutionReplan(input: {
   const review = reviewPlanExecution(entry, { kind: "matched", session, state, source: "ACTIVE" }, conflict)
   if (["SAFETY_REVIEW", "CONFLICT", "SOURCE_UNAVAILABLE"].includes(review.status)
     || state.progress.some(p => p.state === "PAIN_CHECKIN")) return { kind: "blocked", message: review.next }
+  if (review.repetitionComparison?.kind === "unavailable") return { kind: "blocked", message: "반복 기록과 원래 처방의 연결을 먼저 확인해 주세요." }
   if (!entry.activityOutcome) return { kind: "blocked", message: "운동을 했는지 먼저 기록해 주세요. 빈 기록을 건너뛴 훈련으로 보지 않아요." }
   const protectedSlots = state.activePlan.sessions.filter(s => isoShift(startDate, s.day-1) <= input.today
     || state.progress.some(p => p.sessionDay === s.day && p.sessionSlot === s.slot)

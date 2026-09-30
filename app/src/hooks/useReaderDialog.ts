@@ -42,8 +42,9 @@ export function useReaderDialog(dialog: RefObject<HTMLDialogElement | null>, onC
       if (element?.open && typeof element.close === "function") element.close()
       document.body.style.overflow = overflow
       if (region?.isConnected) region.scrollTop = top
-      if (opener?.isConnected) opener.focus({ preventScroll: true })
-      else fallbackFocus.current?.()?.focus({ preventScroll: true })
+      const requestedFocus = fallbackFocus.current?.()
+      if (requestedFocus?.isConnected) requestedFocus.focus({ preventScroll: true })
+      else if (opener?.isConnected) opener.focus({ preventScroll: true })
     }
   }, [dialog, id])
 

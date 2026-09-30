@@ -7,7 +7,10 @@ export type CandidatePurposeStatus = {
   readonly detail: string
 }
 
-export function candidatePurposeStatus(kind: PlanCandidateKind): CandidatePurposeStatus {
+export function candidatePurposeStatus(kind: PlanCandidateKind, hasCatalog = false): CandidatePurposeStatus {
+  if (hasCatalog) return { tone: kind === "BALANCED" ? "included" : "conservative",
+    label: kind === "BALANCED" ? "기초·회복 운동은 기본 구성으로" : "기초·회복 운동은 짧은 구성으로",
+    detail: "주요 훈련의 횟수와 강도는 같은 기준을 사용해요" }
   switch (kind) {
     case "BALANCED":
       return {

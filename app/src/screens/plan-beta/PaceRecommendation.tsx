@@ -23,7 +23,7 @@ export function PaceRecommendation({ prescription }: { readonly prescription: Re
             <dt>반복당 추천 시간</dt>
             <dd>{prescription.repetitionDistanceM}m당 약 {formatTrainingSeconds(prescription.targetRepSeconds)}<br />같은 종목의 경기 평균 속도를 반복 거리에 적용했어요. 이 반복 거리의 최고기록을 예측한 값은 아니에요.</dd>
             <dt>계산식</dt>
-            <dd><code>{NUMBER.format(anchor.performanceSeconds)}초 × {prescription.repetitionDistanceM}m ÷ {anchor.eventDistanceM}m</code><br />계산값 약 {NUMBER.format(prescription.targetRepSeconds)}초 · 화면은 1초 단위로 반올림<br />저장된 계산값은 반올림하지 않아요.</dd>
+            <dd><code>{NUMBER.format(anchor.performanceSeconds)}초 × {prescription.repetitionDistanceM}m ÷ {anchor.eventDistanceM}m</code><br />계산값 약 {NUMBER.format(prescription.targetRepSeconds)}초 · 짧은 훈련 표기는 소수점 셋째 자리까지, 풀어 쓴 분·초는 1초 단위로 표시해요. 반올림한 표기에는 ≈ 또는 약을 붙여요.<br />저장된 계산값은 반올림하지 않아요.</dd>
             <dt>휴식 시간을 정한 기준</dt>
             <dd>휴식은 개인 기록에서 계산한 시간이 아니라 선택한 훈련 구성의 회복 기준이에요. 본운동 페이스가 달라져도 자동으로 줄이지 않아요.</dd>
             <dt>이 값에 포함되지 않은 것</dt>

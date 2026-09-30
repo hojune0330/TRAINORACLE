@@ -1,0 +1,62 @@
+{
+  "status": "PASS",
+  "scope": "standalone planning model, not application runtime",
+  "sourceCommit": "3e659d4",
+  "cases": 19,
+  "caseNames": [
+    "recent activity date, not upload timestamp",
+    "future, deleted, unaccepted, demo and invalid dates are excluded",
+    "today included in active plan, including an empty scheduled day",
+    "future active plan begins at first plan date",
+    "completed range ends at last date rather than suggesting catch-up",
+    "PLAN_CANDIDATE ignores recent journal",
+    "INTAKE_PREVIEW ignores recent journal",
+    "manual date during loading survives response",
+    "manual month without selection survives response",
+    "error is not authoritative empty",
+    "stale record remains available after load failure",
+    "old owner response rejected after account change",
+    "same owner stale epoch rejected after leave and return",
+    "midnight and deletion do not steal selected date",
+    "explicit new intent is allowed after manual selection",
+    "reader back restores date and never writes",
+    "empty demo is distinct and never writes",
+    "same account late response cannot erase newer snapshot",
+    "explicit example stays separate when actual data arrives"
+  ],
+  "seeds": [
+    20260929,
+    101,
+    8675309,
+    429496729
+  ],
+  "randomSequences": 1000,
+  "transitions": 50000,
+  "eventCounts": {
+    "DEMO": 3939,
+    "BACK": 3177,
+    "RECENT": 3221,
+    "READY": 14303,
+    "ERROR": 3930,
+    "MIDNIGHT": 3249,
+    "OPEN": 3936,
+    "MONTH": 3251,
+    "END_DEMO": 3208,
+    "ACCOUNT": 3828,
+    "SELECT": 3958
+  },
+  "killedMutations": [
+    "owner epoch guard removed",
+    "every response reanchors",
+    "load error treated as empty",
+    "same-owner response generation guard removed"
+  ],
+  "excluded": [
+    "actual React rendering",
+    "real accounts",
+    "cycle index mapping",
+    "actual network",
+    "browser gestures",
+    "performance"
+  ]
+}

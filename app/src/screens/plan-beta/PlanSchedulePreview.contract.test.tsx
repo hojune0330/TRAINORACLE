@@ -48,6 +48,14 @@ afterEach(() => {
 afterEach(() => vi.useRealTimers())
 
 describe("plan schedule preview", () => {
+  it("opens an ended saved plan at its last calendar day even when it has no workout", () => {
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date("2026-09-30T12:00:00+09:00"))
+    render(<PlanSchedulePreview startDate="2026-08-17" frameLengthDays={9} sessions={sessions} displayMode="swipe" />)
+    expect(screen.getByRole("button", { name: "다음 날짜" })).toBeDisabled()
+    expect(screen.getByText("9/9")).toBeVisible()
+    expect(document.querySelector('[data-date="2026-08-25"]')).toHaveAttribute("data-selected", "true")
+  })
   it("keeps the actual date and AM/PM overview visible when instructions collapse", () => {
     const { rerender } = render(<PlanSchedulePreview startDate="2026-08-17" frameLengthDays={9}
       sessions={sessions} detailsExpanded={false} detailsId="schedule-details" />)
@@ -96,7 +104,7 @@ describe("plan schedule preview", () => {
     }))
     expect(screen.getByRole("button", {
       name: "2026년 8월 17일 월요일 · 오전 주요 훈련 LT · 오후 회복 운동",
-    })).toHaveTextContent("AM주요PM회복")
+    })).toHaveTextContent("오전주요오후회복")
 
     const restFlowDay = screen.getByRole("button", {
       name: /8월 18일.*훈련 없음/u,
@@ -111,14 +119,16 @@ describe("plan schedule preview", () => {
     expect(screen.getByRole("group", { name: "8월 17일 월요일 오전 세션" })).toBeVisible()
     expect(screen.getByRole("group", { name: "8월 17일 월요일 오후 세션" })).toBeVisible()
     expect(firstDay).toHaveTextContent("지속 페이스")
-    expect(firstDay).toHaveTextContent("오후 회복 운동")
+    expect(firstDay).toHaveTextContent("회복 운동 · Recovery")
 
     expect(screen.getByRole("group", {
       name: "8월 18일 화요일 · 휴식",
-    })).toHaveTextContent("휴식일")
+    })).toHaveTextContent("휴식 · Rest")
   })
 
   it("keeps morning and afternoon in one swipe card and orders morning first", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date("2026-08-17T12:00:00+09:00"))
     const user = userEvent.setup()
     render(
       <PlanSchedulePreview
@@ -168,7 +178,7 @@ describe("plan schedule preview", () => {
     render(<PlanSchedulePreview startDate="2026-08-17" sessions={sessions.slice(0, 1)} />)
 
     const session = screen.getByRole("group", { name: "8월 17일 월요일 오전 세션" })
-    expect(session).toHaveTextContent("총 25~40분 · RPE 5~6")
+    expect(session).toHaveTextContent("전체 25–40min @ RPE 5–6")
     expect(session).toHaveTextContent("본운동")
     expect(session).toHaveTextContent(/숨은 차지만.*짧은 문장이 가능/u)
 

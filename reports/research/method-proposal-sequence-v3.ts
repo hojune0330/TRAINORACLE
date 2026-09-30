@@ -10,8 +10,8 @@ export type PendingMethodProtocol = {
 }
 
 /** Exact review sequence only; proposed cues do not grant execution authority. */
-export function representPendingCoachingWholeSessionV3(p: PendingMethodProtocol) {
-  const representation = representPendingWholeSessionV3(p)
+export function representPendingCoachingWholeSessionV3(p: PendingMethodProtocol, supportVariant: "EXISTING" | "INTRO_COMPARISON" = "EXISTING") {
+  const representation = representPendingWholeSessionV3(p, supportVariant)
   const guidance = proposeMethodExecutionGuidance(p)
   if (representation.kind !== "represented") return { ...representation, guidance }
   const mapNode = (node: SequenceNodeV3): SequenceNodeV3 => {
@@ -31,10 +31,10 @@ export function representPendingCoachingWholeSessionV3(p: PendingMethodProtocol)
 }
 
 /** Keep the existing support proposal separate from the still-unprescribed main intensity. */
-export function representPendingWholeSessionV3(p: PendingMethodProtocol) {
+export function representPendingWholeSessionV3(p: PendingMethodProtocol, supportVariant: "EXISTING" | "INTRO_COMPARISON" = "EXISTING") {
   const main = representPendingMethodV3(p)
   if (main.kind !== "represented") return main
-  const source = assembleProposalSession(p)
+  const source = assembleProposalSession(p, supportVariant)
   const phase = (parts: typeof source.warmup, prefix: string): SequenceNodeV3[] => {
     const nodes: SequenceNodeV3[] = []
     for (const [index, part] of parts.entries()) {

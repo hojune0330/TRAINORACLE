@@ -1,0 +1,93 @@
+{
+  "scope": "local synthetic browser, not production",
+  "observations": [
+    {
+      "width": 375,
+      "latestDate": "2026-08-09",
+      "originalBrowserBack": true,
+      "tabContext": true,
+      "savedScroll": 250,
+      "scrollRestored": true,
+      "cycleRecent": true,
+      "applicationReducedMotion": true,
+      "actions": [
+        "이전 달",
+        "2026-08-14",
+        "오늘",
+        "이전 달",
+        "2026-07-31",
+        "다음 달",
+        "다음 달",
+        "2026-09-27",
+        "2026-09-29",
+        "이전 달",
+        "이전 달",
+        "2026-07-11",
+        "2026-07-06",
+        "2026-06-29",
+        "오늘",
+        "2026-10-03",
+        "다음 달",
+        "이전 달",
+        "이전 달",
+        "다음 달",
+        "2026-10-04",
+        "2026-09-28",
+        "오늘",
+        "이전 달"
+      ],
+      "journalUnchanged": true,
+      "pageErrors": []
+    },
+    {
+      "width": 375,
+      "emptyExampleIsolated": true,
+      "allStorageUnchangedByExample": true,
+      "pageErrors": []
+    },
+    {
+      "width": 320,
+      "latestDate": "2026-08-09",
+      "originalBrowserBack": true,
+      "tabContext": true,
+      "savedScroll": 250,
+      "scrollRestored": true,
+      "cycleRecent": true,
+      "applicationReducedMotion": true,
+      "actions": [
+        "이전 달",
+        "다음 달",
+        "2026-09-25",
+        "이전 달",
+        "다음 달",
+        "2026-09-16",
+        "2026-09-04",
+        "다음 달",
+        "오늘",
+        "다음 달",
+        "다음 달",
+        "오늘",
+        "2026-09-09",
+        "오늘",
+        "2026-09-19",
+        "이전 달",
+        "이전 달",
+        "2026-07-19",
+        "다음 달",
+        "다음 달",
+        "이전 달",
+        "이전 달",
+        "2026-07-02",
+        "2026-07-18"
+      ],
+      "journalUnchanged": true,
+      "pageErrors": []
+    },
+    {
+      "width": 320,
+      "emptyExampleIsolated": true,
+      "allStorageUnchangedByExample": true,
+      "pageErrors": []
+    }
+  ]
+}

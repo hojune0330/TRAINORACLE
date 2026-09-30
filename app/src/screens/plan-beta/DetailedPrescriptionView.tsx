@@ -3,6 +3,7 @@ import { TermHelp } from "../../components/TermHelp"
 import { formatRecordTime } from "../../domain/athlete-record-display"
 import { formatTrainingSeconds } from "./labels"
 import { PaceRecommendation } from "./PaceRecommendation"
+import { pacePrescriptionNotation } from "../../domain/workout-notation"
 
 type Detailed = Extract<PlanSession["prescription"], { readonly kind: "PACE_TARGET" }>
 
@@ -21,7 +22,7 @@ export function DetailedPrescriptionView({ prescription, variant = "default" }: 
     return (
       <div className="plan-detailed-prescription plan-detailed-prescription--sequence-lead">
         <p className="plan-detailed-prescription__notation">
-          <code>{prescription.notation}</code>
+          <code>{pacePrescriptionNotation(prescription)}</code>
           <TermHelp term="training-notation" />
         </p>
         <p className="plan-detailed-prescription__lead">
@@ -36,9 +37,11 @@ export function DetailedPrescriptionView({ prescription, variant = "default" }: 
   return (
     <div className="plan-detailed-prescription">
       <p className="plan-detailed-prescription__notation">
-        <code>{prescription.notation}</code>
+        <code>{pacePrescriptionNotation(prescription)}</code>
         <TermHelp term="training-notation" />
       </p>
+      <PaceRecommendation prescription={prescription} />
+      <details><summary>자세히 보기 · 수행 순서</summary>
       <p className="plan-detailed-prescription__primary">
         <strong>본운동</strong>
         <span>
@@ -49,7 +52,6 @@ export function DetailedPrescriptionView({ prescription, variant = "default" }: 
           {" · "}주요 구간 거리 {prescription.totals.qualityDistanceM}m
         </span>
       </p>
-      <PaceRecommendation prescription={prescription} />
       {prescription.repetitionRecoverySeconds !== null && (
         <p className="plan-detailed-prescription__recovery" data-recovery-kind="repetition">
           <strong>반복 사이 회복</strong>
@@ -83,6 +85,7 @@ export function DetailedPrescriptionView({ prescription, variant = "default" }: 
         <strong>정리</strong>
         <span>{cooldown.easyDurationMinutes}분 RPE {cooldown.rpeMin}-{cooldown.rpeMax} 쉬운 움직임</span>
       </p>
+      </details>
       <details>
         <summary>기준 기록·중단·낮춤 규칙 보기</summary>
         <div>

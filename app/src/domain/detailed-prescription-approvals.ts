@@ -7,6 +7,7 @@ import {
 } from "@impl/plan-generator/types"
 import type { PrescriptionOperationalComponents } from "@impl/prescription/types"
 import manifestSource from "./detailed-prescription-manifest.json"
+import { DISTANCE_ADOPTION, DISTANCE_ADOPTION_ACTIVE } from "./distance-prescription-adoption"
 
 const COMPONENT_TYPES = ["WARMUP", "COOLDOWN", "DOWNSHIFT", "STOP_CONDITIONS"] as const
 const POPULATION_SCOPES = ["YOUTH_AND_ADULT", "ADULT_ONLY"] as const
@@ -242,7 +243,11 @@ export function parseDetailedPrescriptionManifest(value: unknown): DetailedPresc
 }
 
 const EMPTY_MANIFEST: DetailedPrescriptionManifest = Object.freeze({ schemaVersion: 1, trustedReviewerAuthorities: Object.freeze([]), approvals: Object.freeze([]) })
-const COMPILED_MANIFEST = parseDetailedPrescriptionManifest(manifestSource) ?? EMPTY_MANIFEST
+const COMPILED_MANIFEST = parseDetailedPrescriptionManifest(DISTANCE_ADOPTION_ACTIVE ? {
+  schemaVersion: 1,
+  trustedReviewerAuthorities: [...manifestSource.trustedReviewerAuthorities, ...DISTANCE_ADOPTION.manifest.trustedReviewerAuthorities],
+  approvals: [...manifestSource.approvals, ...DISTANCE_ADOPTION.manifest.approvals],
+} : manifestSource) ?? EMPTY_MANIFEST
 export const TRUSTED_REVIEWER_AUTHORITIES = COMPILED_MANIFEST.trustedReviewerAuthorities
 export const DETAILED_PRESCRIPTION_APPROVALS = COMPILED_MANIFEST.approvals
 

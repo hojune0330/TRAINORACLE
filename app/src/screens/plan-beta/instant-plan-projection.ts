@@ -20,7 +20,9 @@ export function projectInstantRecommendation(candidate: PlanCandidate, startDate
   return {
     id: candidate.candidateId,
     title: `${eventDistanceLabel(candidate.eventDistanceM)} · ${length}일 훈련`,
-    reason: candidate.kind === "BALANCED"
+    reason: projected.some(s => s.prescription.kind === "RPE_TIME_RANGE" && s.prescription.catalogWorkout)
+      ? "날짜별로 훈련 구성과 회복을 정했어요. 원하는 일정은 같은 목적의 다른 훈련으로 바꿀 수 있어요."
+      : candidate.kind === "BALANCED"
       ? "기초·회복 운동을 표시된 시간 범위 안에서 선택할 수 있는 안을 먼저 보여드려요."
       : "기초·회복 운동을 제시 범위의 짧은 시간으로 배치했어요.",
     periodLabel: `${startDate} ~ ${isoShift(startDate, length - 1)} · ${length}일`,

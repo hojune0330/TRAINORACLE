@@ -74,9 +74,9 @@ describe("two-a-day plan summary", () => {
     )
 
     expect(screen.getByRole("group", { name: "8월 26일 수요일 · 훈련 2개" }))
-      .toHaveTextContent("20~30분")
+      .toHaveTextContent("전체 20–30min")
     expect(screen.getByRole("group", { name: "8월 26일 수요일 · 훈련 2개" }))
-      .toHaveTextContent("15~25분")
+      .toHaveTextContent("전체 15–25min")
     expect(screen.queryByRole("group", { name: /8월 27일/u })).not.toBeInTheDocument()
     expect(candidateSessionSummary({
       sessions,
@@ -113,12 +113,12 @@ describe("two-a-day plan summary", () => {
     )
 
     const firstDay = screen.getByRole("group", { name: "8월 17일 월요일 · 훈련 1개" })
-    expect(firstDay).toHaveTextContent("총 30~50분 · RPE 7~8")
+    expect(firstDay).toHaveTextContent("전체 30–50min @ RPE 7–8")
     expect(firstDay).toHaveTextContent("준비")
     expect(firstDay).toHaveTextContent("본운동")
     expect(firstDay).toHaveTextContent("강한 구간과 천천히 움직이는 회복 구간을 번갈아")
     expect(firstDay).toHaveTextContent("정리")
-    expect(firstDay).toHaveTextContent("거리\u2060·\u2060목표 페이스는 지정하지 않음")
+    expect(firstDay).toHaveTextContent("목표 페이스·고정 횟수는 추정하지 않습니다.")
     expect(firstDay).toHaveTextContent("같은 강도로 한 번 더 달릴 여유가 없으면 본운동을 끝내세요")
   })
 

@@ -1,4 +1,5 @@
 import { assertNever } from "../shared/assert-never"
+import { isValidCatalogSession } from "../prescription/catalog-session-binding"
 import {
   matchesPacePrescriptionSequence,
   type PaceSequenceSource,
@@ -432,6 +433,9 @@ function isPlanCandidate(value: unknown): value is PlanCandidate {
       || !value["rationaleCodes"].every((code) => typeof code === "string" && PLAN_BETA_CODES.has(code))
       || !hasValidSessionLayout(value["sessions"])) return false
   const detailedSessionCount = value["sessions"].filter(session => session.prescription.kind === "PACE_TARGET").length
+  if (value["sessions"].some(session => session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout
+    && (session.prescription.catalogWorkout.inputs.eventDistanceM !== value["eventDistanceM"]
+      || typeof value["candidateId"] !== "string" || !value["candidateId"].includes(`:${session.prescription.catalogWorkout.inputs.experience.toLowerCase()}:`)))) return false
   const expectedDetailedFingerprint = detailedPrescriptionFingerprintFromSessions(value["sessions"])
   if (value["detailedPrescriptionFingerprint"] !== expectedDetailedFingerprint
       || !isCandidateId(value["candidateId"], expectedDetailedFingerprint)
@@ -501,9 +505,10 @@ function isPlanSession(value: unknown): value is PlanSession {
 
 function hasRpePrescription(session: Record<string, unknown>): boolean {
   const prescription = session["prescription"]
-  if (!hasExactKeys(session, ["day", "slot", "role", "plannedEnergyIntent", "prescription"]) || !isRecord(prescription) || !hasExactKeys(prescription, ["kind", "rpe", "durationMinutes"]) || prescription["kind"] !== "RPE_TIME_RANGE") return false
+  if (!hasExactKeys(session, ["day", "slot", "role", "plannedEnergyIntent", "prescription"]) || !isRecord(prescription) || !hasExactKeys(prescription, ["kind", "rpe", "durationMinutes", ...(prescription["catalogWorkout"] === undefined ? [] : ["catalogWorkout"])]) || prescription["kind"] !== "RPE_TIME_RANGE") return false
   return isBoundedRange(prescription["rpe"], 1, 10)
     && isBoundedRange(prescription["durationMinutes"], Number.MIN_VALUE, Number.POSITIVE_INFINITY)
+    && isValidCatalogSession(session as unknown as PlanSession)
 }
 
 function isFiniteRange(value: unknown): boolean {

@@ -47,6 +47,23 @@ export function isSupportOnlyCandidatePair(
  * Adaptation continues to use the strict support-only predicate above.
  */
 export function isInitialCandidatePair(balanced: PlanCandidate, conservative: PlanCandidate): boolean {
+  if (balanced.sessions.some(s => s.prescription.kind === "RPE_TIME_RANGE" && s.prescription.catalogWorkout)) {
+    // Initial catalog selection is not an adaptation edge. Compare its original
+    // envelopes only after both complete candidates have passed source validation.
+    const strip = (candidate: PlanCandidate): PlanCandidate => ({ ...candidate, sessions: candidate.sessions.map(s => {
+      if (s.role === "REST" || s.prescription.kind !== "RPE_TIME_RANGE" || !s.prescription.catalogWorkout) return s
+      return { ...s, prescription: { kind: "RPE_TIME_RANGE" as const, ...s.prescription.catalogWorkout.originalEnvelope } }
+    }) })
+    if (!hasValidCandidatePairIdentity(balanced, conservative)) return false
+    for (let i = 0; i < balanced.sessions.length; i++) {
+      const a = balanced.sessions[i], b = conservative.sessions[i]
+      if (!a || !b) return false
+      if (a.role === "QUALITY" && !sameJson(a, b)) return false
+      if (a.prescription.kind === "RPE_TIME_RANGE" && b.prescription.kind === "RPE_TIME_RANGE"
+        && b.prescription.durationMinutes.maximum > a.prescription.durationMinutes.maximum) return false
+    }
+    return checkCandidatePair(strip(balanced), strip(conservative), false, true)
+  }
   if (isSupportOnlyCandidatePair(balanced, conservative)) return true
   const main = (candidate: PlanCandidate) => candidate.sessions.filter(session => session.role === "QUALITY")
   const left = main(balanced)
@@ -60,12 +77,12 @@ export function isInitialCandidatePair(balanced: PlanCandidate, conservative: Pl
   return checkCandidatePair(balanced, conservative, true)
 }
 
-function checkCandidatePair(balanced: PlanCandidate, conservative: PlanCandidate, independentMain: boolean): boolean {
+function checkCandidatePair(balanced: PlanCandidate, conservative: PlanCandidate, independentMain: boolean, identityChecked = false): boolean {
   const shared = (candidate: PlanCandidate) => independentMain
     ? { ...sharedCandidateContent(candidate), detailedPrescriptionFingerprint: null }
     : sharedCandidateContent(candidate)
   if (
-    !hasValidCandidatePairIdentity(balanced, conservative)
+    (!identityChecked && !hasValidCandidatePairIdentity(balanced, conservative))
     || balanced.kind !== "BALANCED"
     || conservative.kind !== "CONSERVATIVE"
     || balanced.sessions.length !== conservative.sessions.length

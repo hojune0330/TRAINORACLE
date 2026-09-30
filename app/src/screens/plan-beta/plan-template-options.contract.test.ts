@@ -25,7 +25,7 @@ describe("explicit detailed plan template options", () => {
 
     expect(option?.ref.templateId).toBe(templateId)
     expect(option?.notation).toBe(notation)
-    expect(option?.mainSummary).toMatch(/^\d+m \d+회$/u)
+    expect(option?.mainSummary).toMatch(/^\d+ × \d+(?:m|km) @ \d+(?:m|K) RP · r/u)
     expect(option?.preparationSummary).toContain("준비 15분")
   })
 
@@ -46,7 +46,7 @@ describe("explicit detailed plan template options", () => {
       "2026-08-24T09:00:00.000Z",
     )
     expect(options.map(option => option.ref.templateId)).toEqual(["V2-SEED-05"])
-    expect(options[0]).toMatchObject({ mainSummary: "1000m 5회", recoverySummary: "반복 사이 2분 30초 조깅" })
+    expect(options[0]).toMatchObject({ mainSummary: "5 × 1km @ 5K RP · r150s Jog", recoverySummary: "반복 사이 2분 30초 조깅" })
   })
 
   it("passes observed selection and performance history into the live recommendation", () => {

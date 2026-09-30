@@ -2,6 +2,8 @@ import type { PrescriptionSequenceV3, SequenceNodeV3, RecoveryStepV3 } from "@im
 import { deriveSequenceV3Totals } from "@impl/prescription/sequence-v3"
 import { secondsText } from "../../domain/session-explanation"
 import { formatTrainingSeconds } from "./labels"
+import type { PlannedEnergyIntent } from "@impl/plan-generator/types"
+import { WorkoutNotation } from "./WorkoutNotation"
 
 const modes: Record<RecoveryStepV3["mode"], string> = { WALK: "걷기", JOG: "가벼운 조깅", STAND: "서서 쉬기",
   WALK_OR_JOG: "걷기 또는 조깅", WALK_OR_STAND: "걷기 또는 서서 쉬기", FULL_RECOVERY: "회복 상태에 맞춰 쉬기",
@@ -48,26 +50,36 @@ function Nodes({ nodes, phase }: { readonly nodes: readonly SequenceNodeV3[]; re
     {node.recoveryAfter.length > 0 && <div><span>위 구성을 모두 마친 뒤 한 번</span><Recovery steps={node.recoveryAfter} /></div>}
   </li>)}</ol>
 }
-export function PrescriptionStructureV3({ sequence, originalDurationMinutes, compact = false }: {
+export function PrescriptionStructureV3({ sequence, originalDurationMinutes, compact = false, collapseSupport = false, hideTotals = false, intent }: {
   readonly sequence: PrescriptionSequenceV3;
   readonly originalDurationMinutes?: { readonly minimum: number; readonly maximum: number };
   readonly compact?: boolean;
+  readonly collapseSupport?: boolean;
+  readonly hideTotals?: boolean;
+  readonly intent?: PlannedEnergyIntent;
 }) {
   const totals = deriveSequenceV3Totals(sequence)
   const phases = [totals.warmup, totals.main, totals.cooldown]
   const completeTime = phases.every(phase => phase.totalSeconds !== null)
   const totalSeconds = completeTime ? phases.reduce((sum, phase) => sum + phase.totalSeconds!, 0) : null
+  if (compact && collapseSupport) return <div className="prescription-structure">
+    <WorkoutNotation sequence={sequence} intent={intent} />
+    {!hideTotals && <p aria-label="계획된 전체 시간">{totalSeconds === null ? "전체 시간은 아직 계산할 수 없어요." : `총 ${durationText(totalSeconds)} · 준비·회복·정리 포함`}</p>}
+    <details><summary>자세히 보기 · 준비부터 정리까지</summary>
+      <PrescriptionStructureV3 sequence={sequence} originalDurationMinutes={originalDurationMinutes} hideTotals={hideTotals} />
+    </details>
+  </div>
   if (compact) return <div className="prescription-structure">
     {sequence.warmup.length > 0 && <section className="prescription-structure__support" aria-label="준비운동"><h4>준비운동</h4><CompactNodes nodes={sequence.warmup} /></section>}
     <h4>본운동</h4>
     <CompactNodes nodes={sequence.main} />
     {sequence.cooldown.length > 0 && <section className="prescription-structure__support" aria-label="정리운동"><h4>정리운동</h4><CompactNodes nodes={sequence.cooldown} /></section>}
-    <p aria-label="계획된 전체 시간">{totalSeconds === null ? "전체 시간은 아직 계산할 수 없어요." : `총 ${durationText(totalSeconds)}`}</p>
+    {!hideTotals && <p aria-label="계획된 전체 시간">{totalSeconds === null ? "전체 시간은 아직 계산할 수 없어요." : `총 ${durationText(totalSeconds)}`}</p>}
   </div>
   return <div className="prescription-structure">
-    <p aria-label="계획된 전체 시간">{totalSeconds === null
+    {!hideTotals && <p aria-label="계획된 전체 시간">{totalSeconds === null
       ? "전체 시간 미산출 · 시간이 정해지지 않은 구간이 있어요."
-      : `계획된 전체 시간 ${Number.isInteger(totalSeconds) ? "" : "약 "}${formatTrainingSeconds(totalSeconds)} · 준비·회복·정리 포함`}</p>
+      : `계획된 전체 시간 ${Number.isInteger(totalSeconds) ? "" : "약 "}${formatTrainingSeconds(totalSeconds)} · 준비·회복·정리 포함`}</p>}
     {originalDurationMinutes && <p aria-label="변경 전 시간과 비교">
       처음 예상한 시간 {originalDurationMinutes.minimum}~{originalDurationMinutes.maximum}분.
       {totalSeconds === null ? " 현재 구성의 전체 시간이 미산출이라 시간 차이는 아직 비교할 수 없어요."

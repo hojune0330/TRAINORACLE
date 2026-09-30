@@ -51,6 +51,15 @@
   --e-atp-strong:  #5A2D8A; --e-atp-mid:  #7A3FB5; --e-atp-text:  #5A2F8A; --e-atp-wash:  #EBE0F5;
   --e-rest-strong: #4A4A45; --e-rest-mid: #7A7A70; --e-rest-text: #5A5A55; --e-rest-wash: #EFEEEA;
 
+  /* Owner-approved calendar roles, 2026-09-30. Not energy intensity or safety scores. */
+  --calendar-race: #FFE77A;
+  --calendar-main: #FBE0D3;
+  --calendar-neural: #D8EDE0;
+  --calendar-base: var(--surface);
+  --calendar-recovery: #D9EFFA;
+  --calendar-off: var(--surface-2);
+  --calendar-unclassified: var(--bg);
+
   /* ============== TYPOGRAPHY ============== */
   --sans: "Pretendard Variable", "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   /* Korean labels historically used --mono too. Keep one glyph source across the app;

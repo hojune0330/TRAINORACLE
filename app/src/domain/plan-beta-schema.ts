@@ -255,6 +255,12 @@ const planBetaStateV3BaseSchema = z.object({
   periodization: periodizationContextSchema.optional(),
   activePlan: activePlanV3Schema,
 }).strict().superRefine((state, context) => {
+  for (const [index, session] of state.activePlan.sessions.entries()) {
+    if (session.prescription.kind !== "RPE_TIME_RANGE" || !session.prescription.catalogWorkout) continue
+    const inputs = session.prescription.catalogWorkout.inputs
+    if (inputs.eventDistanceM !== state.intake.eventDistanceM || inputs.experience !== state.intake.experienceBand)
+      addIssue(context, ["activePlan", "sessions", index], "Catalog applicability must match intake.")
+  }
   if (state.executionReplan && !executionReplanMatches(state.executionReplan, state.activePlan.sessions, state.intake.startDate)) {
     addIssue(context, ["executionReplan"], "Remaining schedule must replay the accepted bounded transformation.")
   }

@@ -1,0 +1,13 @@
+.planned-repetition-editor { border-block: 1px solid var(--line); padding-block: 12px; margin-block: 16px; }
+.planned-repetition-editor summary { cursor: pointer; min-height: 44px; align-content: center; font-weight: 600; }
+.planned-repetition-editor fieldset { min-width: 0; margin: 0; padding: 12px 0; border: 0; border-bottom: 1px solid var(--line); }
+.planned-repetition-editor legend { font-weight: 600; }
+.planned-repetition-editor__numbers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.planned-repetition-editor label { display: grid; gap: 6px; font-size: 14px; }
+.planned-repetition-editor input, .planned-repetition-editor select { box-sizing: border-box; width: 100%; min-width: 0; min-height: 44px; padding: 8px; font: inherit; font-size: 16px; color: var(--ink); background: var(--surface); border: 1px solid var(--line-2); border-radius: 4px; }
+.planned-repetition-editor :is(input, select, button, summary):focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.planned-repetition-editor__pages { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; }
+.planned-repetition-editor__pages button { min-width: 44px; min-height: 44px; display: grid; place-items: center; }
+.planned-repetition-editor__pages svg { width: 20px; height: 20px; }
+.planned-repetition-editor__clear { min-width: 44px; min-height: 44px; display: grid; place-items: center; margin-left: auto; }
+@media (max-width: 340px) { .planned-repetition-editor__numbers { gap: 8px; } }

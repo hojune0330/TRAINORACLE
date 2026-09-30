@@ -1630,17 +1630,23 @@
   display: flex !important;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-2);
 }
 
-.plan-detailed-prescription code {
+.plan-detailed-prescription code,
+.workout-notation code {
   min-width: 0;
   font-family: var(--code-mono);
-  font-size: var(--fs-body);
+  font-size: max(var(--fs-body), 1rem);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
+
+.workout-notation { min-width: 0; }
+.workout-notation .term-help { flex-shrink: 0; }
+.workout-notation details summary { min-height: 44px; }
 
 .plan-detailed-prescription details div {
   padding: var(--space-3);

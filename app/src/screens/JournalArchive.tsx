@@ -1,6 +1,5 @@
 import React from "react"
 import { ArrowLeft } from "lucide-react"
-import { GuidedEmptyState } from "../components/GuidedEmptyState"
 import {
   projectJournalArchive,
 } from "../domain/journal-archive"
@@ -22,6 +21,9 @@ import { JournalMonthCalendar } from "./JournalMonthCalendar"
 import { JournalThenNow } from "./home/JournalThenNow"
 import { InfoDisclosure } from "../components/InfoDisclosure"
 import { useLocalToday } from "../hooks/useLocalToday"
+import { useCalendarPosition, useCalendarScroll } from "../hooks/useCalendarPosition"
+import { calendarRecordDates, nearestCalendarDate, recentCalendarDate, type CalendarReadiness } from "../domain/calendar-context"
+import { CalendarEmptyExample } from "../components/CalendarEmptyExample"
 
 export type JournalArchiveProps = {
   readonly entries: readonly JournalEntry[]
@@ -31,6 +33,7 @@ export type JournalArchiveProps = {
   readonly onBack: () => void
   readonly onWriteLog?: (() => void) | undefined
   readonly onWriteDate?: (date: string) => void
+  readonly readiness?: CalendarReadiness
   readonly mode?: "CALENDAR" | "CYCLE"
   readonly cycleAnchor?: string | null
   readonly cycleIndex?: number
@@ -53,13 +56,20 @@ export function JournalArchive({
   onModeChange,
   onCycleAnchorChange,
   onCycleIndexChange,
+  readiness = "READY",
 }: JournalArchiveProps) {
   const [internalMode, setInternalMode] = React.useState<"CALENDAR" | "CYCLE">("CALENDAR")
   const activeMode = mode ?? internalMode
+  const calendarRoot = useCalendarScroll(`journal-scroll:${activeMode}`)
   const changeMode = onModeChange ?? setInternalMode
   const archive = React.useMemo(() => projectJournalArchive(entries), [entries])
   const today = useLocalToday()
-  const displayedMonth = selection.selectedMonth ?? today.slice(0, 7)
+  const dates = React.useMemo(() => calendarRecordDates(entries), [entries])
+  const latest = recentCalendarDate(dates, today)
+  const nav = useCalendarPosition("journal", selection.selectedMonth ? `${selection.selectedMonth}-01` : latest ?? today, readiness === "READY")
+  const displayedMonth = nav.month
+  const [emptyView, setEmptyView] = React.useState<"teaser" | "example" | "calendar">("teaser")
+  const exampleVisible = emptyView === "example" || (emptyView === "teaser" && readiness === "READY" && entries.length === 0)
   const selectedMonth = archive.months.find((month) => month.month === selection.selectedMonth) ?? null
   const calendarMonth = archive.months.find(month => month.month === displayedMonth) ?? {
     month: displayedMonth, entryCount: 0, kindCounts: { postSession: 0, evening: 0, race: 0 },
@@ -94,12 +104,15 @@ export function JournalArchive({
       : "지난 일지"
 
   return (
-    <div className="journal-archive" data-testid="journal-archive">
+    <div ref={calendarRoot} className="journal-archive" data-testid="journal-archive"
+      onWheel={activeMode === "CALENDAR" ? nav.markManual : undefined}
+      onTouchMove={activeMode === "CALENDAR" ? nav.markManual : undefined}
+      onKeyDown={event => { if (activeMode === "CALENDAR" && ["PageUp", "PageDown", "Home", "End", " "].includes(event.key)) nav.markManual() }}>
       <header className="journal-archive__header">
         <button
           type="button"
           onClick={goBack}
-          aria-label={activeMode === "CYCLE" || selectedWeek !== null ? "월간 달력으로" : selection.selectedMonth !== null ? "이번 달로" : "홈으로"}
+          aria-label={activeMode === "CYCLE" || selectedWeek !== null || selection.selectedMonth !== null ? "월간 달력으로" : "홈으로"}
           title="뒤로"
           className="journal-archive__back"
         >
@@ -123,6 +136,7 @@ export function JournalArchive({
           <span>9.5일 주기</span>
         </button>
       </div>
+      {readiness !== "READY" && <p className="calendar-guidance" role="status">{readiness === "LOADING" ? "일지를 불러오고 있어요." : readiness === "STALE" ? "저장된 일지를 보고 있어요. 최신 기록은 아직 확인하지 못했어요." : "일지를 불러오지 못했어요. 기록이 없는 것은 아니에요."}</p>}
 
       {entries.some(entry => entry.kind === "post-session" && entry.date === today)
         && entries.filter(entry => entry.kind === "post-session" && entry.date <= today).length > 1 && (
@@ -143,6 +157,7 @@ export function JournalArchive({
           onOpenDay={onOpenDay}
           onWriteLog={onWriteLog}
           onWriteDate={onWriteDate}
+          readiness={readiness}
         />
       ) : selectedWeek !== null ? (
         <SummaryList
@@ -160,14 +175,18 @@ export function JournalArchive({
         />
       ) : (
         <>
+          {exampleVisible ? <CalendarEmptyExample today={today} expanded={emptyView === "example"} onExpand={() => setEmptyView("example")}
+            onCalendar={() => setEmptyView("calendar")} onWrite={onWriteLog} hasRealRecords={entries.length > 0} /> : <>
+          <div className="calendar-guidance-actions">
+            {latest && <button type="button" onClick={() => nav.selectDate(latest)}>최근 일지 · {latest.slice(5).replace("-", "/")}</button>}
+            {!dates.includes(nav.date) && dates.length > 0 && <button type="button" onClick={() => { const date = nearestCalendarDate(dates, nav.date); if (date) nav.selectDate(date) }}>가까운 기록</button>}
+            {dates.length > 0 && !latest && <span>미래 날짜의 기록이 있어요.</span>}
+          </div>
           <JournalMonthCalendar month={calendarMonth} entries={entries} onOpenDay={onOpenDay} onWriteDate={onWriteDate}
-            onMonthChange={month => onSelectionChange({ selectedMonth: month, selectedWeekStart: null })} />
-          {archive.months.length === 0 ? (
-            <GuidedEmptyState
-              title="첫 일지를 남겨보세요"
-              description="훈련한 날도, 쉰 날도 기록할 수 있어요."
-              actionLabel="오늘 기록하기" onAction={onWriteLog} />
-          ) : (
+            selectedDate={nav.date} onSelectedDateChange={nav.selectDate} onMonthChange={nav.selectMonth} />
+          {entries.length === 0 && readiness === "READY" && <button type="button" className="calendar-range-return" onClick={() => setEmptyView("example")}>일지가 쌓인 예시 보기</button>}
+          </>}
+          {archive.months.length > 0 && !exampleVisible && (
             <SummaryList
               label="월별 기록"
               items={archive.months}
@@ -177,10 +196,10 @@ export function JournalArchive({
                   heading={monthLabel(month.month)}
                   summary={month}
                   ariaLabel={`${monthLabel(month.month)} ${summaryText(month)}`}
-                  onClick={() => onSelectionChange({
+                  onClick={() => { nav.selectDate(dates.filter(date => date.startsWith(month.month)).at(-1) ?? `${month.month}-01`); onSelectionChange({
                     selectedMonth: month.month,
                     selectedWeekStart: null,
-                  })}
+                  }) }}
                 />
               )}
             />

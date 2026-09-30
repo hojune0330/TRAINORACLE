@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { configurationReferenceV3, type PrescriptionSnapshotV3 } from "@impl/prescription/prescription-adjustment-v3"
 import type { PrescriptionSequenceV3 } from "@impl/prescription/sequence-v3"
-import { buildWorkoutTuningStepsV3, distinctWorkoutMethodsV3, nextWorkoutMethodV3, workoutTuningValuesV3, workoutTuningChangesV3 } from "./workout-tuning-v3"
+import { buildWorkoutTuningStepsV3, distinctWorkoutMethodsV3, nextWorkoutMethodV3, workoutTuningValuesV3, workoutTuningChangesV3, drawWorkoutMethodV3, workoutMethodPoolV3 } from "./workout-tuning-v3"
 
 // Synthetic configurations test representation and direction, not operating approval.
 function snapshot(id: string, repetitions: number, duration: number, recovery: number | null = 60): PrescriptionSnapshotV3 {
@@ -12,6 +12,24 @@ function snapshot(id: string, repetitions: number, duration: number, recovery: n
   return { sequence, configuration: configurationReferenceV3({ familyId: "TEST", configurationId: id, version: "1" }, sequence) }
 }
 describe("workout tuning over complete reviewed choices", () => {
+  it("draws from the full distinct pool and restarts after unseen methods are exhausted", () => {
+    const a = snapshot("A", 6, 20), b = snapshot("B", 4, 40), c = snapshot("C", 3, 90)
+    const first = drawWorkoutMethodV3(a, [a, b, c], [a], () => 0.99)!
+    expect(first.next).toBe(c)
+    const second = drawWorkoutMethodV3(c, [c, b, a], first.seen, () => 0.99)!
+    expect(second.next).toBe(b)
+    const third = drawWorkoutMethodV3(b, [a, b, c], second.seen, () => 0)!
+    expect(third.next).toBe(a)
+    expect(third.seen).toEqual([b, a])
+  })
+  it("does not inflate the draw with scalar siblings or resurface them after tuning", () => {
+    const a = snapshot("A", 1, 1200), b = snapshot("B", 2, 600), shorter = snapshot("C", 2, 480)
+    const groups = [[b.configuration, shorter.configuration]]
+    expect(workoutMethodPoolV3(a, [a, b, shorter], groups)).toEqual([a, b])
+    expect(drawWorkoutMethodV3(a, [a, b, shorter], [a], () => 0.99, groups)?.next).toBe(b)
+    expect(workoutMethodPoolV3(shorter, [a, b, shorter], groups)).toEqual([a, shorter])
+    expect(drawWorkoutMethodV3(shorter, [a, b, shorter], [a, b], () => 0, groups)?.next).toBe(a)
+  })
   it("uses numeric direction even when the catalog order is reversed", () => {
     const start = snapshot("A", 6, 20), lower = snapshot("B", 4, 20), upper = snapshot("C", 8, 20)
     const steps = buildWorkoutTuningStepsV3(start, [upper, lower])

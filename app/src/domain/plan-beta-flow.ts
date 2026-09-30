@@ -1,5 +1,7 @@
 import { evaluateD9ColloquialLayer } from "@impl/d9/evaluator"
 import { assertNever } from "@impl/shared/assert-never"
+import { bindDefaultCatalogSessions } from "@impl/prescription/catalog-session-binding"
+import { rebindCandidatePairIdentity } from "@impl/plan-generator/candidate-identity"
 import { createExplanationReceipt } from "./training-explanation-receipt"
 import {
   generatePlanCandidates,
@@ -337,9 +339,14 @@ function generatePlanDraftWithContinuity(
               detailedSessionTarget,
               candidateSessionTargets,
             )
+      const sourceCandidates = binding.generated.candidates
+      const seed = Number((formationStartDate ?? todayISO(evaluatedAt)).replaceAll("-", ""))
+      const candidates = effectiveIntake.selectedDetailedTemplateRef !== null ? sourceCandidates : rebindCandidatePairIdentity(sourceCandidates.map(candidate => ({ ...candidate,
+        sessions: bindDefaultCatalogSessions(candidate.sessions, effectiveIntake.eventDistanceM, effectiveIntake.experienceBand, seed),
+      })) as unknown as readonly [PlanCandidate, PlanCandidate])
       return {
         kind: "generated",
-        generated: binding.generated,
+        generated: { ...binding.generated, candidates, pairId: candidates[0].pairId },
         prescriptionBinding: { kind: binding.kind, code: binding.code },
         gate: safetyGate,
         // The preview can fall back, but the athlete's requested method must remain

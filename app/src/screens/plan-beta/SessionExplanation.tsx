@@ -15,6 +15,8 @@ import { PrescriptionStructure } from "./PrescriptionStructure"
 import { PlanMethodObservationDetails } from "./PlanMethodObservationDetails"
 import "../../styles/session-explanation.css"
 import { useReaderDialog } from "../../hooks/useReaderDialog"
+import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
+import { CatalogWorkoutDetail } from "./CatalogWorkoutDetail"
 
 type Props = {
   readonly session: PlanSession
@@ -70,6 +72,8 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
   const id = React.useId()
   const explanation = explainSession(session, context)
   const sequence = sessionPrescriptionSequence(session)
+  const catalogWorkout = session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout
+    ? resolveCatalogBinding(session.prescription.catalogWorkout) : null
   const executionGuidance = new Map(sessionExecutionSteps(session).map((step) => [step.title, step.detail]))
   const term = GLOSSARY[explanation.profile.termId]
   const occurrence = evidence?.methodObservation?.occurrence
@@ -124,7 +128,7 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
             <section className="session-explanation__method-flow"><h3>수행 순서</h3>
               <p className="session-explanation__metric">{sessionExecution(session)}</p>
               {session.prescription.kind === "PACE_TARGET" && <DetailedPrescriptionView prescription={session.prescription} variant="sequence-lead" />}
-              {sequence !== null ? <PrescriptionStructure sequence={sequence} /> : <ol className="session-explanation__sequence">
+              {catalogWorkout ? <CatalogWorkoutDetail workout={catalogWorkout} /> : sequence !== null ? <PrescriptionStructure sequence={sequence} /> : <ol className="session-explanation__sequence">
                 {explanation.components.map((component) => {
                   const guidance = executionGuidance.get(component.id === "main" ? "본운동" : component.label)
                   return <li key={component.id}><strong>{component.label}</strong><span>{component.method}</span>{guidance !== undefined && <span>{guidance}</span>}<small>{component.recovery}</small></li>
@@ -137,10 +141,11 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
                   : "저장된 처방을 순서도로 보여드려요. 이전 계획에 새 훈련을 추가하지 않아요."}</p>
               )}
             </section>
-            {session.prescription.kind === "RPE_TIME_RANGE" && session.role === "QUALITY" && <p className="session-explanation__notice">상세 반복·구간별 시간은 아직 정해지지 않은 RPE 안내예요. 총 시간을 고강도 본운동 시간으로 사용하지 마세요.</p>}
+            {session.prescription.kind === "RPE_TIME_RANGE" && !catalogWorkout && session.role === "QUALITY" && <p className="session-explanation__notice">상세 반복·구간별 시간은 아직 정해지지 않은 RPE 안내예요. 총 시간을 고강도 본운동 시간으로 사용하지 마세요.</p>}
             <button className="session-explanation__next" type="button" onClick={() => selectTab("이유·근거")}>이렇게 구성한 이유<ChevronRight size={18} aria-hidden="true" /></button>
         </div>
         <div className="session-explanation__tab-content" hidden={tab !== "이유·근거"}>
+            {catalogWorkout ? <><CatalogWorkoutDetail workout={catalogWorkout} evidence /><section><h3>이번 주기에서 맡는 역할</h3>{explanation.cycle.map(line => <p key={line}>{line}</p>)}</section></> : <>
             <p className="session-explanation__notice">{explanation.availability}</p>
             <section><h3>훈련 목적</h3><p>{explanation.profile.purpose}</p></section>
             <section><h3>몸이 에너지를 공급하는 방식</h3><p>{explanation.profile.energyContext}</p>
@@ -180,6 +185,7 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
               <small>설명 버전 {explanation.version} · 근거 확인과 개별 처방 채택은 별도 검토예요.</small>
               {expert && explanation.template !== null && <p className="session-explanation__note">템플릿 {explanation.template.id} · 버전 {explanation.template.version}<br />채택 결정 {explanation.template.decision}</p>}
             </section>
+            </>}
         </div>
         <div className="session-explanation__tab-content" hidden={tab !== "주기·기록"}>
             <section><h3>주기 안의 위치</h3><ol>{explanation.cycle.map((line) => <li key={line}>{line}</li>)}</ol></section>

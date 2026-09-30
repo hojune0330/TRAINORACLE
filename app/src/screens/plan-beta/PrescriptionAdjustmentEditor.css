@@ -78,6 +78,11 @@
 .prescription-adjustment__preview .prescription-structure > section { padding-top: var(--space-2); }
 .prescription-adjustment__preview .prescription-structure :is(h4, p) { margin-block: var(--space-2); }
 .prescription-adjustment__preview .prescription-structure__nodes { margin-block: var(--space-2); }
+.prescription-adjustment__content > p:first-child { margin-block: 0 var(--space-2); }
+.prescription-adjustment__content > .prescription-adjustment__note { margin-block: var(--space-2); }
+.prescription-adjustment__preview .prescription-structure { gap: var(--space-1); margin-top: 0; }
+.prescription-adjustment__preview .prescription-structure :is(h4, p) { margin-block: var(--space-1); }
+.prescription-adjustment__preview .prescription-structure__compact > li { padding-block: var(--space-1); }
 .prescription-adjustment__stepper { grid-template-columns: minmax(72px, 1fr) var(--app-touch-min) minmax(56px, 1fr) var(--app-touch-min); }
 .prescription-adjustment__stepper output { font-variant-numeric: tabular-nums; font-weight: 600; }
 .prescription-structure__compact { list-style: none; margin: 0; padding: 0; }

@@ -128,7 +128,7 @@ describe.skip("production detailed prescription experience", () => {
     expect(screen.queryByText(/5×1000m @5000m RP/u)).toBeNull()
     expect(screen.getByLabelText("계획 시작 날짜")).toHaveValue("2026-09-10")
     expect(screen.getByRole("button", { name: /기초·회복 운동 시간을 범위로 선택하기/u })).toBeEnabled()
-    await user.click(screen.getByRole("radio", { name: /1000m 5회/u }))
+    await user.click(screen.getByRole("radio", { name: /5 × 1km @ 5K RP/u }))
     await user.click(screen.getByRole("button", { name: "이 훈련으로 변경" }))
     expect(screen.getByRole("button", { name: /기초·회복 운동 시간을 범위로 선택하기/u })).toBeDisabled()
     expect(screen.queryByText(/5×1000m @5000m RP/u)).toBeNull()

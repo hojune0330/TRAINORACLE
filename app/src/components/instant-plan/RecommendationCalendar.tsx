@@ -4,21 +4,24 @@ import { MonthCalendar } from "../MonthCalendar"
 import { PlanDayReader } from "../../screens/plan-beta/PlanDayReader"
 import { useLocalToday } from "../../hooks/useLocalToday"
 import { isoShift } from "../../domain/dates"
+import { CalendarTrainingMark } from "../CalendarTrainingMark"
+import { CALENDAR_TRAINING_LABELS, plannedCalendarTone } from "../../domain/calendar-training-presentation"
 import "../CalendarJournalDetails.css"
+import { useCalendarPosition } from "../../hooks/useCalendarPosition"
 
 const labels = { MAIN: "핵심 훈련", BASE: "기초 지구력", REC: "회복", OFF: "휴식", OTHER: "훈련" }
 
-export function RecommendationCalendar({ days }: { readonly days: readonly InstantPlanDaySummary[] }) {
+export function RecommendationCalendar({ days, identity = "preview" }: { readonly days: readonly InstantPlanDaySummary[]; readonly identity?: string }) {
   const today = useLocalToday()
   const first = days[0]?.date ?? today
-  const [month, setMonth] = useState(first.slice(0, 7))
-  const [selected, setSelected] = useState(first)
+  const nav = useCalendarPosition(`candidate:${identity}:${first}`, first)
+  const { month, date: selected, selectMonth: setMonth, selectDate: setSelected } = nav
   const [open, setOpen] = useState(false)
-  useEffect(() => { setMonth(first.slice(0, 7)); setSelected(first); setOpen(false) }, [first])
+  useEffect(() => { setOpen(false) }, [identity, first])
   const day = days.find(item => item.date === selected)
   const select = (date: string) => { setSelected(date); setMonth(date.slice(0, 7)); setOpen(true) }
   return <>
-    <MonthCalendar month={month} today={today} selectedDate={selected} onMonthChange={setMonth} onSelectDate={select}
+    <MonthCalendar trainingColors month={month} today={today} selectedDate={selected} onMonthChange={setMonth} onSelectDate={select}
       onToday={date => { setSelected(date); setMonth(date.slice(0, 7)) }}
       highlightedRange={{ start: first, end: days.at(-1)?.date ?? first }}
       dayDescription={date => days.find(item => item.date === date)?.sessions.map(session => `${session.slotLabel} ${labels[session.role]}`).join(" · ") || "이 후보의 일정 없음"}
@@ -26,7 +29,7 @@ export function RecommendationCalendar({ days }: { readonly days: readonly Insta
         const item = days.find(day => day.date === date)
         if (!item) return null
         if (!item.sessions.length) return <span className="month-calendar__event">등록된 훈련 없음</span>
-        return item.sessions.map(session => <span key={session.id} className="month-calendar__event" data-kind={session.role.toLowerCase()}><span>{session.slotLabel}</span><br /><span>{labels[session.role]}</span></span>)
+        return item.sessions.map(session => <CalendarTrainingMark key={session.id} tone={plannedCalendarTone(session)} slot={session.slotLabel} label={CALENDAR_TRAINING_LABELS[plannedCalendarTone(session)]} />)
       }} />
     {open && <PlanDayReader date={selected} sessions={[]} canPrevious canNext onClose={() => setOpen(false)}
       onPrevious={() => select(isoShift(selected, -1))} onNext={() => select(isoShift(selected, 1))}

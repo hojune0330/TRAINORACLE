@@ -1,0 +1,1575 @@
+{
+  "schemaVersion": 1,
+  "status": "PREPARED_AWAITING_OWNER_DECISION",
+  "decisionRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+  "packetFingerprint": "sha256:cb1aca4a181f661f03629024e37f672cd0162b137d3151f86e45630e66aed36f",
+  "packet": {
+    "decisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+    "definitions": [
+      {
+        "id": "RP5K-800-05",
+        "count": 5,
+        "distance": 800,
+        "sets": 1,
+        "rest": 120,
+        "setRest": null,
+        "family": "race-pace-distance-repetitions",
+        "draftRefs": [
+          "X-VO2-02"
+        ],
+        "work": "현재 5000m 기록의 평균 속도로 800m를 5번 달려요. 1000m 반복보다 한 구간을 짧게 나눠 목표 속도를 다시 맞추는 구성이에요. 본운동은 총 4km이며, 5km 연속 달리기와 같은 부담이나 효과는 아니에요.",
+        "recovery": "반복 사이 120초 천천히 조깅해요. 다음 반복을 같은 목표 속도로 시작하기 위한 간격이며, 완전히 회복됐다고 판정하는 시간은 아니에요."
+      },
+      {
+        "id": "RP5K-400-08",
+        "count": 8,
+        "distance": 400,
+        "sets": 1,
+        "rest": 90,
+        "setRest": null,
+        "family": "race-pace-distance-repetitions",
+        "draftRefs": [
+          "X-VO2-01"
+        ],
+        "work": "현재 5000m 기록의 평균 속도로 트랙 한 바퀴인 400m를 8번 달려요. 본운동은 총 3.2km예요. 짧은 구간을 반복하므로 800m나 1000m 반복보다 속도를 자주 다시 맞추지만, 높은 산소 이용 상태를 같은 시간 유지한다고 단정하지 않아요.",
+        "recovery": "반복 사이 90초 천천히 조깅해요. 구간이 짧아도 더 빠르게 달리라는 뜻은 아니며, 목표 속도는 현재 5000m 기록을 그대로 사용해요."
+      },
+      {
+        "id": "RP5K-800-SPLIT",
+        "count": 3,
+        "distance": 800,
+        "sets": 2,
+        "rest": 120,
+        "setRest": 240,
+        "family": "race-pace-set-repetitions",
+        "draftRefs": [
+          "X-VO2-02",
+          "X-VO2-05"
+        ],
+        "work": "800m를 3번 달린 묶음을 2세트 진행해요. 총 6회·4.8km이고, 한 세트 안에서는 5000m 기록을 기준으로 같은 목표 시간을 반복해요. 세트 사이 긴 회복이 추가되므로 한 번에 6회 이어가는 구성과 다르게 취급해요.",
+        "recovery": "세트 안의 반복 사이에는 120초 조깅, 첫 세트가 끝나면 240초 조깅해요. 세트 경계에서는 120초를 더하지 않고 240초로 대체해요. 긴 회복은 다음 세트의 재시작을 돕지만 같은 자극이나 완전 회복을 보장하지 않아요."
+      },
+      {
+        "id": "RP5K-1000-REST",
+        "count": 4,
+        "distance": 1000,
+        "sets": 1,
+        "rest": 180,
+        "setRest": null,
+        "family": "race-pace-distance-repetitions",
+        "draftRefs": [
+          "X-VO2-03"
+        ],
+        "work": "현재 5000m 기록의 평균 속도로 1000m를 4번 달려요. 기존 5×1000m보다 본운동 거리를 1km 줄이고 반복 사이 회복을 늘린 대안이에요. 회복이 늘었다고 더 빠른 목표 시간을 요구하지 않아요.",
+        "recovery": "반복 사이 180초 천천히 조깅해요. 기존 150초보다 30초 더 주는 별도 구성이며, 연속적인 부담은 달라져요. 늘어난 회복으로도 몸 상태가 나쁘거나 통증이 있으면 훈련을 강행하지 않아요."
+      }
+    ],
+    "sourceRefs": [
+      "https://vdoto2.com/learn-more/training-definitions",
+      "https://pubmed.ncbi.nlm.nih.gov/16177614/",
+      "https://pubmed.ncbi.nlm.nih.gov/29842843/"
+    ],
+    "parameterLimits": [
+      {
+        "minimumRepSeconds": 60,
+        "maximumRepSeconds": 300,
+        "maximumQualityDistanceM": 5000
+      },
+      {
+        "minimumRepSeconds": 60,
+        "maximumRepSeconds": 300,
+        "maximumQualityDistanceM": 5000
+      },
+      {
+        "minimumRepSeconds": 60,
+        "maximumRepSeconds": 300,
+        "maximumQualityDistanceM": 5000
+      },
+      {
+        "minimumRepSeconds": 60,
+        "maximumRepSeconds": 300,
+        "maximumQualityDistanceM": 5000
+      }
+    ],
+    "approvals": [
+      {
+        "manifestVersion": "1",
+        "templateId": "RP5K-800-05",
+        "templateVersion": "1.0.0",
+        "templateContentFingerprint": "sha256:06f9ea5847de7500167feb8a43928b4ae610942d424b11934510e9bf7d95b2d8",
+        "canonicalTemplateContent": {
+          "notation": "5×800m @5000m RP · r120″ JOG",
+          "operationalComponents": {
+            "warmup": {
+              "componentRef": "WU-V2-5K-01",
+              "componentVersion": "1.0.0",
+              "authority": "OWNER_OPERATIONAL_ADAPTATION",
+              "easyDurationMinutes": 15,
+              "rpeMin": 2,
+              "rpeMax": 3,
+              "strides": {
+                "repetitions": 4,
+                "durationSeconds": 20,
+                "recoverySeconds": 40,
+                "recoveryMode": "WALK_OR_JOG",
+                "progression": "PROGRESSIVE"
+              }
+            },
+            "cooldown": {
+              "componentRef": "CD-V2-5K-01",
+              "componentVersion": "1.0.0",
+              "authority": "OWNER_OPERATIONAL_ADAPTATION",
+              "easyDurationMinutes": 10,
+              "rpeMin": 1,
+              "rpeMax": 2
+            },
+            "fallback": {
+              "componentRef": "RPE-ONLY-CONTROLLED-01",
+              "componentVersion": "1.0.0",
+              "code": "RPE_ONLY_CONTROLLED",
+              "behavior": "DELEGATE_TO_EXISTING_RPE_CANDIDATE",
+              "numericRepetitionVariant": null
+            },
+            "stopConditions": {
+              "componentRef": "STOP-V2-5K-01",
+              "componentVersion": "1.0.0",
+              "authority": "OWNER_PRECAUTIONARY_OPERATIONAL_RULE",
+              "diagnosticClaim": false,
+              "codes": [
+                "STOP_NEW_OR_WORSENING_PAIN",
+                "STOP_DIZZINESS_OR_FAINTNESS",
+                "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING",
+                "STOP_LOSS_OF_CONTROLLED_FORM"
+              ]
+            }
+          }
+        },
+        "notation": "5×800m @5000m RP · r120″ JOG",
+        "lifecycleStatus": "ACTIVE",
+        "eligibilityStatus": "ELIGIBLE",
+        "eligibleEventGroups": [
+          "FIVE_K"
+        ],
+        "eventScopeEvidence": {
+          "decisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "evidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "evidenceFingerprint": "sha256:06418bd0f29d6f43a547b604f5e28f77152fb02a103b40b323d9c4a35b7f1663"
+        },
+        "eligibleExperienceBands": [
+          "EXPERIENCED"
+        ],
+        "experienceScopeEvidence": {
+          "decisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "evidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "evidenceFingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
+        },
+        "populationApplicability": {
+          "scope": "YOUTH_AND_ADULT"
+        },
+        "sportsScienceEvidence": {
+          "evidenceId": "RP5K-800-05-SCIENCE-20260930",
+          "decisionRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "sourceRefs": [
+            "https://vdoto2.com/learn-more/training-definitions",
+            "https://pubmed.ncbi.nlm.nih.gov/16177614/",
+            "https://pubmed.ncbi.nlm.nih.gov/29842843/"
+          ],
+          "canonicalEvidence": {
+            "classification": "TRAINORACLE_ADAPTATION",
+            "sourceSupports": [
+              "WORK_BOUT_AND_RECOVERY_CHANGE_STIMULUS",
+              "INTERVAL_GUIDANCE",
+              "ACTIVE_RECOVERY_GUIDANCE"
+            ],
+            "sourceDoesNotPrescribe": [
+              "EXACT_COUNTS_DISTANCES_AND_RECOVERIES",
+              "FIVE_K_RP_IS_NOT_MEASURED_VO2MAX",
+              "YOUTH_SPECIFIC_DOSE",
+              "INDIVIDUAL_OPTIMALITY",
+              "WARMUP_OR_COOLDOWN"
+            ]
+          },
+          "canonicalEvidenceFingerprint": "sha256:06418bd0f29d6f43a547b604f5e28f77152fb02a103b40b323d9c4a35b7f1663"
+        },
+        "populationApplicabilityEvidence": {
+          "evidenceId": "RP5K-800-05-POPULATION-20260930",
+          "decisionRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "sourceRefs": [
+            "TO-YOUTH-TRAINING-ELIGIBILITY-2026-08-17",
+            "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md"
+          ],
+          "canonicalEvidence": {
+            "scope": "YOUTH_AND_ADULT",
+            "sameEligibilityCriteria": [
+              "FIVE_K",
+              "EXPERIENCED",
+              "CURRENT_SAME_EVENT_ANCHOR"
+            ],
+            "ageOnlyReject": false,
+            "ageOnlyDoseMultiplier": false
+          },
+          "canonicalEvidenceFingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
+        },
+        "componentRefs": [
+          {
+            "componentType": "WARMUP",
+            "componentRef": "WU-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1"
+          },
+          {
+            "componentType": "COOLDOWN",
+            "componentRef": "CD-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab"
+          },
+          {
+            "componentType": "DOWNSHIFT",
+            "componentRef": "RPE-ONLY-CONTROLLED-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5"
+          },
+          {
+            "componentType": "STOP_CONDITIONS",
+            "componentRef": "STOP-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29"
+          }
+        ],
+        "sourceDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+        "sourceEvidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+        "approvalDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+        "decidedAt": "2026-09-30T00:00:00.000Z",
+        "expiresAt": "2027-09-30T00:00:00.000Z",
+        "revokedAt": null,
+        "ownerDecision": {
+          "reviewerId": "COACH_HOJUNE",
+          "role": "PRODUCT_OWNER_COACH",
+          "authorityDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "authorityEvidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "authorityEvidenceFingerprint": "sha256:8e81c75705ea5bf98e8c4ba8749a9b9769c266a513194d3281a7f8a4ec963bde",
+          "decision": "APPROVED",
+          "independentReviewClaimed": false
+        },
+        "targetEventDistanceM": 5000
+      },
+      {
+        "manifestVersion": "1",
+        "templateId": "RP5K-400-08",
+        "templateVersion": "1.0.0",
+        "templateContentFingerprint": "sha256:b82908193f46f393de944b2b6d2d60e7103b36a786e07bcae2f39a612fd32d62",
+        "canonicalTemplateContent": {
+          "notation": "8×400m @5000m RP · r90″ JOG",
+          "operationalComponents": {
+            "warmup": {
+              "componentRef": "WU-V2-5K-01",
+              "componentVersion": "1.0.0",
+              "authority": "OWNER_OPERATIONAL_ADAPTATION",
+              "easyDurationMinutes": 15,
+              "rpeMin": 2,
+              "rpeMax": 3,
+              "strides": {
+                "repetitions": 4,
+                "durationSeconds": 20,
+                "recoverySeconds": 40,
+                "recoveryMode": "WALK_OR_JOG",
+                "progression": "PROGRESSIVE"
+              }
+            },
+            "cooldown": {
+              "componentRef": "CD-V2-5K-01",
+              "componentVersion": "1.0.0",
+              "authority": "OWNER_OPERATIONAL_ADAPTATION",
+              "easyDurationMinutes": 10,
+              "rpeMin": 1,
+              "rpeMax": 2
+            },
+            "fallback": {
+              "componentRef": "RPE-ONLY-CONTROLLED-01",
+              "componentVersion": "1.0.0",
+              "code": "RPE_ONLY_CONTROLLED",
+              "behavior": "DELEGATE_TO_EXISTING_RPE_CANDIDATE",
+              "numericRepetitionVariant": null
+            },
+            "stopConditions": {
+              "componentRef": "STOP-V2-5K-01",
+              "componentVersion": "1.0.0",
+              "authority": "OWNER_PRECAUTIONARY_OPERATIONAL_RULE",
+              "diagnosticClaim": false,
+              "codes": [
+                "STOP_NEW_OR_WORSENING_PAIN",
+                "STOP_DIZZINESS_OR_FAINTNESS",
+                "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING",
+                "STOP_LOSS_OF_CONTROLLED_FORM"
+              ]
+            }
+          }
+        },
+        "notation": "8×400m @5000m RP · r90″ JOG",
+        "lifecycleStatus": "ACTIVE",
+        "eligibilityStatus": "ELIGIBLE",
+        "eligibleEventGroups": [
+          "FIVE_K"
+        ],
+        "eventScopeEvidence": {
+          "decisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "evidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "evidenceFingerprint": "sha256:06418bd0f29d6f43a547b604f5e28f77152fb02a103b40b323d9c4a35b7f1663"
+        },
+        "eligibleExperienceBands": [
+          "EXPERIENCED"
+        ],
+        "experienceScopeEvidence": {
+          "decisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "evidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "evidenceFingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
+        },
+        "populationApplicability": {
+          "scope": "YOUTH_AND_ADULT"
+        },
+        "sportsScienceEvidence": {
+          "evidenceId": "RP5K-400-08-SCIENCE-20260930",
+          "decisionRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "sourceRefs": [
+            "https://vdoto2.com/learn-more/training-definitions",
+            "https://pubmed.ncbi.nlm.nih.gov/16177614/",
+            "https://pubmed.ncbi.nlm.nih.gov/29842843/"
+          ],
+          "canonicalEvidence": {
+            "classification": "TRAINORACLE_ADAPTATION",
+            "sourceSupports": [
+              "WORK_BOUT_AND_RECOVERY_CHANGE_STIMULUS",
+              "INTERVAL_GUIDANCE",
+              "ACTIVE_RECOVERY_GUIDANCE"
+            ],
+            "sourceDoesNotPrescribe": [
+              "EXACT_COUNTS_DISTANCES_AND_RECOVERIES",
+              "FIVE_K_RP_IS_NOT_MEASURED_VO2MAX",
+              "YOUTH_SPECIFIC_DOSE",
+              "INDIVIDUAL_OPTIMALITY",
+              "WARMUP_OR_COOLDOWN"
+            ]
+          },
+          "canonicalEvidenceFingerprint": "sha256:06418bd0f29d6f43a547b604f5e28f77152fb02a103b40b323d9c4a35b7f1663"
+        },
+        "populationApplicabilityEvidence": {
+          "evidenceId": "RP5K-400-08-POPULATION-20260930",
+          "decisionRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "sourceRefs": [
+            "TO-YOUTH-TRAINING-ELIGIBILITY-2026-08-17",
+            "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md"
+          ],
+          "canonicalEvidence": {
+            "scope": "YOUTH_AND_ADULT",
+            "sameEligibilityCriteria": [
+              "FIVE_K",
+              "EXPERIENCED",
+              "CURRENT_SAME_EVENT_ANCHOR"
+            ],
+            "ageOnlyReject": false,
+            "ageOnlyDoseMultiplier": false
+          },
+          "canonicalEvidenceFingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
+        },
+        "componentRefs": [
+          {
+            "componentType": "WARMUP",
+            "componentRef": "WU-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1"
+          },
+          {
+            "componentType": "COOLDOWN",
+            "componentRef": "CD-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab"
+          },
+          {
+            "componentType": "DOWNSHIFT",
+            "componentRef": "RPE-ONLY-CONTROLLED-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5"
+          },
+          {
+            "componentType": "STOP_CONDITIONS",
+            "componentRef": "STOP-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29"
+          }
+        ],
+        "sourceDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+        "sourceEvidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+        "approvalDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+        "decidedAt": "2026-09-30T00:00:00.000Z",
+        "expiresAt": "2027-09-30T00:00:00.000Z",
+        "revokedAt": null,
+        "ownerDecision": {
+          "reviewerId": "COACH_HOJUNE",
+          "role": "PRODUCT_OWNER_COACH",
+          "authorityDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "authorityEvidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "authorityEvidenceFingerprint": "sha256:8e81c75705ea5bf98e8c4ba8749a9b9769c266a513194d3281a7f8a4ec963bde",
+          "decision": "APPROVED",
+          "independentReviewClaimed": false
+        },
+        "targetEventDistanceM": 5000
+      },
+      {
+        "manifestVersion": "1",
+        "templateId": "RP5K-800-SPLIT",
+        "templateVersion": "1.0.0",
+        "templateContentFingerprint": "sha256:2b78c6a7e971e83ec39badea72bfb303011822cae6c7fe44dcc9a5c2ebf3f856",
+        "canonicalTemplateContent": {
+          "notation": "2×(3×800m) @5000m RP · r120″ JOG · R4′ JOG",
+          "operationalComponents": {
+            "warmup": {
+              "componentRef": "WU-V2-5K-01",
+              "componentVersion": "1.0.0",
+              "authority": "OWNER_OPERATIONAL_ADAPTATION",
+              "easyDurationMinutes": 15,
+              "rpeMin": 2,
+              "rpeMax": 3,
+              "strides": {
+                "repetitions": 4,
+                "durationSeconds": 20,
+                "recoverySeconds": 40,
+                "recoveryMode": "WALK_OR_JOG",
+                "progression": "PROGRESSIVE"
+              }
+            },
+            "cooldown": {
+              "componentRef": "CD-V2-5K-01",
+              "componentVersion": "1.0.0",
+              "authority": "OWNER_OPERATIONAL_ADAPTATION",
+              "easyDurationMinutes": 10,
+              "rpeMin": 1,
+              "rpeMax": 2
+            },
+            "fallback": {
+              "componentRef": "RPE-ONLY-CONTROLLED-01",
+              "componentVersion": "1.0.0",
+              "code": "RPE_ONLY_CONTROLLED",
+              "behavior": "DELEGATE_TO_EXISTING_RPE_CANDIDATE",
+              "numericRepetitionVariant": null
+            },
+            "stopConditions": {
+              "componentRef": "STOP-V2-5K-01",
+              "componentVersion": "1.0.0",
+              "authority": "OWNER_PRECAUTIONARY_OPERATIONAL_RULE",
+              "diagnosticClaim": false,
+              "codes": [
+                "STOP_NEW_OR_WORSENING_PAIN",
+                "STOP_DIZZINESS_OR_FAINTNESS",
+                "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING",
+                "STOP_LOSS_OF_CONTROLLED_FORM"
+              ]
+            }
+          }
+        },
+        "notation": "2×(3×800m) @5000m RP · r120″ JOG · R4′ JOG",
+        "lifecycleStatus": "ACTIVE",
+        "eligibilityStatus": "ELIGIBLE",
+        "eligibleEventGroups": [
+          "FIVE_K"
+        ],
+        "eventScopeEvidence": {
+          "decisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "evidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "evidenceFingerprint": "sha256:06418bd0f29d6f43a547b604f5e28f77152fb02a103b40b323d9c4a35b7f1663"
+        },
+        "eligibleExperienceBands": [
+          "EXPERIENCED"
+        ],
+        "experienceScopeEvidence": {
+          "decisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "evidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "evidenceFingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
+        },
+        "populationApplicability": {
+          "scope": "YOUTH_AND_ADULT"
+        },
+        "sportsScienceEvidence": {
+          "evidenceId": "RP5K-800-SPLIT-SCIENCE-20260930",
+          "decisionRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "sourceRefs": [
+            "https://vdoto2.com/learn-more/training-definitions",
+            "https://pubmed.ncbi.nlm.nih.gov/16177614/",
+            "https://pubmed.ncbi.nlm.nih.gov/29842843/"
+          ],
+          "canonicalEvidence": {
+            "classification": "TRAINORACLE_ADAPTATION",
+            "sourceSupports": [
+              "WORK_BOUT_AND_RECOVERY_CHANGE_STIMULUS",
+              "INTERVAL_GUIDANCE",
+              "ACTIVE_RECOVERY_GUIDANCE"
+            ],
+            "sourceDoesNotPrescribe": [
+              "EXACT_COUNTS_DISTANCES_AND_RECOVERIES",
+              "FIVE_K_RP_IS_NOT_MEASURED_VO2MAX",
+              "YOUTH_SPECIFIC_DOSE",
+              "INDIVIDUAL_OPTIMALITY",
+              "WARMUP_OR_COOLDOWN"
+            ]
+          },
+          "canonicalEvidenceFingerprint": "sha256:06418bd0f29d6f43a547b604f5e28f77152fb02a103b40b323d9c4a35b7f1663"
+        },
+        "populationApplicabilityEvidence": {
+          "evidenceId": "RP5K-800-SPLIT-POPULATION-20260930",
+          "decisionRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "sourceRefs": [
+            "TO-YOUTH-TRAINING-ELIGIBILITY-2026-08-17",
+            "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md"
+          ],
+          "canonicalEvidence": {
+            "scope": "YOUTH_AND_ADULT",
+            "sameEligibilityCriteria": [
+              "FIVE_K",
+              "EXPERIENCED",
+              "CURRENT_SAME_EVENT_ANCHOR"
+            ],
+            "ageOnlyReject": false,
+            "ageOnlyDoseMultiplier": false
+          },
+          "canonicalEvidenceFingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
+        },
+        "componentRefs": [
+          {
+            "componentType": "WARMUP",
+            "componentRef": "WU-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1"
+          },
+          {
+            "componentType": "COOLDOWN",
+            "componentRef": "CD-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab"
+          },
+          {
+            "componentType": "DOWNSHIFT",
+            "componentRef": "RPE-ONLY-CONTROLLED-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5"
+          },
+          {
+            "componentType": "STOP_CONDITIONS",
+            "componentRef": "STOP-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29"
+          }
+        ],
+        "sourceDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+        "sourceEvidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+        "approvalDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+        "decidedAt": "2026-09-30T00:00:00.000Z",
+        "expiresAt": "2027-09-30T00:00:00.000Z",
+        "revokedAt": null,
+        "ownerDecision": {
+          "reviewerId": "COACH_HOJUNE",
+          "role": "PRODUCT_OWNER_COACH",
+          "authorityDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "authorityEvidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "authorityEvidenceFingerprint": "sha256:8e81c75705ea5bf98e8c4ba8749a9b9769c266a513194d3281a7f8a4ec963bde",
+          "decision": "APPROVED",
+          "independentReviewClaimed": false
+        },
+        "targetEventDistanceM": 5000
+      },
+      {
+        "manifestVersion": "1",
+        "templateId": "RP5K-1000-REST",
+        "templateVersion": "1.0.0",
+        "templateContentFingerprint": "sha256:ad167afe49018700713098ecee9f76aa88e823d339bfb2c288c0023de2c9f4b9",
+        "canonicalTemplateContent": {
+          "notation": "4×1000m @5000m RP · r180″ JOG",
+          "operationalComponents": {
+            "warmup": {
+              "componentRef": "WU-V2-5K-01",
+              "componentVersion": "1.0.0",
+              "authority": "OWNER_OPERATIONAL_ADAPTATION",
+              "easyDurationMinutes": 15,
+              "rpeMin": 2,
+              "rpeMax": 3,
+              "strides": {
+                "repetitions": 4,
+                "durationSeconds": 20,
+                "recoverySeconds": 40,
+                "recoveryMode": "WALK_OR_JOG",
+                "progression": "PROGRESSIVE"
+              }
+            },
+            "cooldown": {
+              "componentRef": "CD-V2-5K-01",
+              "componentVersion": "1.0.0",
+              "authority": "OWNER_OPERATIONAL_ADAPTATION",
+              "easyDurationMinutes": 10,
+              "rpeMin": 1,
+              "rpeMax": 2
+            },
+            "fallback": {
+              "componentRef": "RPE-ONLY-CONTROLLED-01",
+              "componentVersion": "1.0.0",
+              "code": "RPE_ONLY_CONTROLLED",
+              "behavior": "DELEGATE_TO_EXISTING_RPE_CANDIDATE",
+              "numericRepetitionVariant": null
+            },
+            "stopConditions": {
+              "componentRef": "STOP-V2-5K-01",
+              "componentVersion": "1.0.0",
+              "authority": "OWNER_PRECAUTIONARY_OPERATIONAL_RULE",
+              "diagnosticClaim": false,
+              "codes": [
+                "STOP_NEW_OR_WORSENING_PAIN",
+                "STOP_DIZZINESS_OR_FAINTNESS",
+                "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING",
+                "STOP_LOSS_OF_CONTROLLED_FORM"
+              ]
+            }
+          }
+        },
+        "notation": "4×1000m @5000m RP · r180″ JOG",
+        "lifecycleStatus": "ACTIVE",
+        "eligibilityStatus": "ELIGIBLE",
+        "eligibleEventGroups": [
+          "FIVE_K"
+        ],
+        "eventScopeEvidence": {
+          "decisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "evidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "evidenceFingerprint": "sha256:06418bd0f29d6f43a547b604f5e28f77152fb02a103b40b323d9c4a35b7f1663"
+        },
+        "eligibleExperienceBands": [
+          "EXPERIENCED"
+        ],
+        "experienceScopeEvidence": {
+          "decisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "evidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "evidenceFingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
+        },
+        "populationApplicability": {
+          "scope": "YOUTH_AND_ADULT"
+        },
+        "sportsScienceEvidence": {
+          "evidenceId": "RP5K-1000-REST-SCIENCE-20260930",
+          "decisionRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "sourceRefs": [
+            "https://vdoto2.com/learn-more/training-definitions",
+            "https://pubmed.ncbi.nlm.nih.gov/16177614/",
+            "https://pubmed.ncbi.nlm.nih.gov/29842843/"
+          ],
+          "canonicalEvidence": {
+            "classification": "TRAINORACLE_ADAPTATION",
+            "sourceSupports": [
+              "WORK_BOUT_AND_RECOVERY_CHANGE_STIMULUS",
+              "INTERVAL_GUIDANCE",
+              "ACTIVE_RECOVERY_GUIDANCE"
+            ],
+            "sourceDoesNotPrescribe": [
+              "EXACT_COUNTS_DISTANCES_AND_RECOVERIES",
+              "FIVE_K_RP_IS_NOT_MEASURED_VO2MAX",
+              "YOUTH_SPECIFIC_DOSE",
+              "INDIVIDUAL_OPTIMALITY",
+              "WARMUP_OR_COOLDOWN"
+            ]
+          },
+          "canonicalEvidenceFingerprint": "sha256:06418bd0f29d6f43a547b604f5e28f77152fb02a103b40b323d9c4a35b7f1663"
+        },
+        "populationApplicabilityEvidence": {
+          "evidenceId": "RP5K-1000-REST-POPULATION-20260930",
+          "decisionRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "sourceRefs": [
+            "TO-YOUTH-TRAINING-ELIGIBILITY-2026-08-17",
+            "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md"
+          ],
+          "canonicalEvidence": {
+            "scope": "YOUTH_AND_ADULT",
+            "sameEligibilityCriteria": [
+              "FIVE_K",
+              "EXPERIENCED",
+              "CURRENT_SAME_EVENT_ANCHOR"
+            ],
+            "ageOnlyReject": false,
+            "ageOnlyDoseMultiplier": false
+          },
+          "canonicalEvidenceFingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
+        },
+        "componentRefs": [
+          {
+            "componentType": "WARMUP",
+            "componentRef": "WU-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1"
+          },
+          {
+            "componentType": "COOLDOWN",
+            "componentRef": "CD-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab"
+          },
+          {
+            "componentType": "DOWNSHIFT",
+            "componentRef": "RPE-ONLY-CONTROLLED-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5"
+          },
+          {
+            "componentType": "STOP_CONDITIONS",
+            "componentRef": "STOP-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29"
+          }
+        ],
+        "sourceDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+        "sourceEvidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+        "approvalDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+        "decidedAt": "2026-09-30T00:00:00.000Z",
+        "expiresAt": "2027-09-30T00:00:00.000Z",
+        "revokedAt": null,
+        "ownerDecision": {
+          "reviewerId": "COACH_HOJUNE",
+          "role": "PRODUCT_OWNER_COACH",
+          "authorityDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "authorityEvidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "authorityEvidenceFingerprint": "sha256:8e81c75705ea5bf98e8c4ba8749a9b9769c266a513194d3281a7f8a4ec963bde",
+          "decision": "APPROVED",
+          "independentReviewClaimed": false
+        },
+        "targetEventDistanceM": 5000
+      }
+    ]
+  },
+  "manifest": {
+    "schemaVersion": 1,
+    "trustedReviewerAuthorities": [
+      {
+        "reviewerId": "COACH_HOJUNE",
+        "role": "PRODUCT_OWNER_COACH",
+        "authorityDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+        "authorityEvidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+        "authorityEvidenceCanonical": {
+          "decisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "ownerId": "COACH_HOJUNE",
+          "approvedScope": "RP5K-800-05@1.0.0|RP5K-400-08@1.0.0|RP5K-800-SPLIT@1.0.0|RP5K-1000-REST@1.0.0"
+        },
+        "authorityEvidenceFingerprint": "sha256:8e81c75705ea5bf98e8c4ba8749a9b9769c266a513194d3281a7f8a4ec963bde"
+      }
+    ],
+    "approvals": [
+      {
+        "manifestVersion": "1",
+        "templateId": "RP5K-800-05",
+        "templateVersion": "1.0.0",
+        "templateContentFingerprint": "sha256:06f9ea5847de7500167feb8a43928b4ae610942d424b11934510e9bf7d95b2d8",
+        "canonicalTemplateContent": {
+          "notation": "5×800m @5000m RP · r120″ JOG",
+          "operationalComponents": {
+            "warmup": {
+              "componentRef": "WU-V2-5K-01",
+              "componentVersion": "1.0.0",
+              "authority": "OWNER_OPERATIONAL_ADAPTATION",
+              "easyDurationMinutes": 15,
+              "rpeMin": 2,
+              "rpeMax": 3,
+              "strides": {
+                "repetitions": 4,
+                "durationSeconds": 20,
+                "recoverySeconds": 40,
+                "recoveryMode": "WALK_OR_JOG",
+                "progression": "PROGRESSIVE"
+              }
+            },
+            "cooldown": {
+              "componentRef": "CD-V2-5K-01",
+              "componentVersion": "1.0.0",
+              "authority": "OWNER_OPERATIONAL_ADAPTATION",
+              "easyDurationMinutes": 10,
+              "rpeMin": 1,
+              "rpeMax": 2
+            },
+            "fallback": {
+              "componentRef": "RPE-ONLY-CONTROLLED-01",
+              "componentVersion": "1.0.0",
+              "code": "RPE_ONLY_CONTROLLED",
+              "behavior": "DELEGATE_TO_EXISTING_RPE_CANDIDATE",
+              "numericRepetitionVariant": null
+            },
+            "stopConditions": {
+              "componentRef": "STOP-V2-5K-01",
+              "componentVersion": "1.0.0",
+              "authority": "OWNER_PRECAUTIONARY_OPERATIONAL_RULE",
+              "diagnosticClaim": false,
+              "codes": [
+                "STOP_NEW_OR_WORSENING_PAIN",
+                "STOP_DIZZINESS_OR_FAINTNESS",
+                "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING",
+                "STOP_LOSS_OF_CONTROLLED_FORM"
+              ]
+            }
+          }
+        },
+        "notation": "5×800m @5000m RP · r120″ JOG",
+        "lifecycleStatus": "ACTIVE",
+        "eligibilityStatus": "ELIGIBLE",
+        "eligibleEventGroups": [
+          "FIVE_K"
+        ],
+        "eventScopeEvidence": {
+          "decisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "evidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "evidenceFingerprint": "sha256:06418bd0f29d6f43a547b604f5e28f77152fb02a103b40b323d9c4a35b7f1663"
+        },
+        "eligibleExperienceBands": [
+          "EXPERIENCED"
+        ],
+        "experienceScopeEvidence": {
+          "decisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "evidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "evidenceFingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
+        },
+        "populationApplicability": {
+          "scope": "YOUTH_AND_ADULT"
+        },
+        "sportsScienceEvidence": {
+          "evidenceId": "RP5K-800-05-SCIENCE-20260930",
+          "decisionRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "sourceRefs": [
+            "https://vdoto2.com/learn-more/training-definitions",
+            "https://pubmed.ncbi.nlm.nih.gov/16177614/",
+            "https://pubmed.ncbi.nlm.nih.gov/29842843/"
+          ],
+          "canonicalEvidence": {
+            "classification": "TRAINORACLE_ADAPTATION",
+            "sourceSupports": [
+              "WORK_BOUT_AND_RECOVERY_CHANGE_STIMULUS",
+              "INTERVAL_GUIDANCE",
+              "ACTIVE_RECOVERY_GUIDANCE"
+            ],
+            "sourceDoesNotPrescribe": [
+              "EXACT_COUNTS_DISTANCES_AND_RECOVERIES",
+              "FIVE_K_RP_IS_NOT_MEASURED_VO2MAX",
+              "YOUTH_SPECIFIC_DOSE",
+              "INDIVIDUAL_OPTIMALITY",
+              "WARMUP_OR_COOLDOWN"
+            ]
+          },
+          "canonicalEvidenceFingerprint": "sha256:06418bd0f29d6f43a547b604f5e28f77152fb02a103b40b323d9c4a35b7f1663"
+        },
+        "populationApplicabilityEvidence": {
+          "evidenceId": "RP5K-800-05-POPULATION-20260930",
+          "decisionRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "sourceRefs": [
+            "TO-YOUTH-TRAINING-ELIGIBILITY-2026-08-17",
+            "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md"
+          ],
+          "canonicalEvidence": {
+            "scope": "YOUTH_AND_ADULT",
+            "sameEligibilityCriteria": [
+              "FIVE_K",
+              "EXPERIENCED",
+              "CURRENT_SAME_EVENT_ANCHOR"
+            ],
+            "ageOnlyReject": false,
+            "ageOnlyDoseMultiplier": false
+          },
+          "canonicalEvidenceFingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
+        },
+        "componentRefs": [
+          {
+            "componentType": "WARMUP",
+            "componentRef": "WU-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1"
+          },
+          {
+            "componentType": "COOLDOWN",
+            "componentRef": "CD-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab"
+          },
+          {
+            "componentType": "DOWNSHIFT",
+            "componentRef": "RPE-ONLY-CONTROLLED-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5"
+          },
+          {
+            "componentType": "STOP_CONDITIONS",
+            "componentRef": "STOP-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29"
+          }
+        ],
+        "sourceDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+        "sourceEvidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+        "approvalDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+        "decidedAt": "2026-09-30T00:00:00.000Z",
+        "expiresAt": "2027-09-30T00:00:00.000Z",
+        "revokedAt": null,
+        "ownerDecision": {
+          "reviewerId": "COACH_HOJUNE",
+          "role": "PRODUCT_OWNER_COACH",
+          "authorityDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "authorityEvidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "authorityEvidenceFingerprint": "sha256:8e81c75705ea5bf98e8c4ba8749a9b9769c266a513194d3281a7f8a4ec963bde",
+          "decision": "APPROVED",
+          "independentReviewClaimed": false
+        },
+        "targetEventDistanceM": 5000
+      },
+      {
+        "manifestVersion": "1",
+        "templateId": "RP5K-400-08",
+        "templateVersion": "1.0.0",
+        "templateContentFingerprint": "sha256:b82908193f46f393de944b2b6d2d60e7103b36a786e07bcae2f39a612fd32d62",
+        "canonicalTemplateContent": {
+          "notation": "8×400m @5000m RP · r90″ JOG",
+          "operationalComponents": {
+            "warmup": {
+              "componentRef": "WU-V2-5K-01",
+              "componentVersion": "1.0.0",
+              "authority": "OWNER_OPERATIONAL_ADAPTATION",
+              "easyDurationMinutes": 15,
+              "rpeMin": 2,
+              "rpeMax": 3,
+              "strides": {
+                "repetitions": 4,
+                "durationSeconds": 20,
+                "recoverySeconds": 40,
+                "recoveryMode": "WALK_OR_JOG",
+                "progression": "PROGRESSIVE"
+              }
+            },
+            "cooldown": {
+              "componentRef": "CD-V2-5K-01",
+              "componentVersion": "1.0.0",
+              "authority": "OWNER_OPERATIONAL_ADAPTATION",
+              "easyDurationMinutes": 10,
+              "rpeMin": 1,
+              "rpeMax": 2
+            },
+            "fallback": {
+              "componentRef": "RPE-ONLY-CONTROLLED-01",
+              "componentVersion": "1.0.0",
+              "code": "RPE_ONLY_CONTROLLED",
+              "behavior": "DELEGATE_TO_EXISTING_RPE_CANDIDATE",
+              "numericRepetitionVariant": null
+            },
+            "stopConditions": {
+              "componentRef": "STOP-V2-5K-01",
+              "componentVersion": "1.0.0",
+              "authority": "OWNER_PRECAUTIONARY_OPERATIONAL_RULE",
+              "diagnosticClaim": false,
+              "codes": [
+                "STOP_NEW_OR_WORSENING_PAIN",
+                "STOP_DIZZINESS_OR_FAINTNESS",
+                "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING",
+                "STOP_LOSS_OF_CONTROLLED_FORM"
+              ]
+            }
+          }
+        },
+        "notation": "8×400m @5000m RP · r90″ JOG",
+        "lifecycleStatus": "ACTIVE",
+        "eligibilityStatus": "ELIGIBLE",
+        "eligibleEventGroups": [
+          "FIVE_K"
+        ],
+        "eventScopeEvidence": {
+          "decisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "evidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "evidenceFingerprint": "sha256:06418bd0f29d6f43a547b604f5e28f77152fb02a103b40b323d9c4a35b7f1663"
+        },
+        "eligibleExperienceBands": [
+          "EXPERIENCED"
+        ],
+        "experienceScopeEvidence": {
+          "decisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "evidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "evidenceFingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
+        },
+        "populationApplicability": {
+          "scope": "YOUTH_AND_ADULT"
+        },
+        "sportsScienceEvidence": {
+          "evidenceId": "RP5K-400-08-SCIENCE-20260930",
+          "decisionRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "sourceRefs": [
+            "https://vdoto2.com/learn-more/training-definitions",
+            "https://pubmed.ncbi.nlm.nih.gov/16177614/",
+            "https://pubmed.ncbi.nlm.nih.gov/29842843/"
+          ],
+          "canonicalEvidence": {
+            "classification": "TRAINORACLE_ADAPTATION",
+            "sourceSupports": [
+              "WORK_BOUT_AND_RECOVERY_CHANGE_STIMULUS",
+              "INTERVAL_GUIDANCE",
+              "ACTIVE_RECOVERY_GUIDANCE"
+            ],
+            "sourceDoesNotPrescribe": [
+              "EXACT_COUNTS_DISTANCES_AND_RECOVERIES",
+              "FIVE_K_RP_IS_NOT_MEASURED_VO2MAX",
+              "YOUTH_SPECIFIC_DOSE",
+              "INDIVIDUAL_OPTIMALITY",
+              "WARMUP_OR_COOLDOWN"
+            ]
+          },
+          "canonicalEvidenceFingerprint": "sha256:06418bd0f29d6f43a547b604f5e28f77152fb02a103b40b323d9c4a35b7f1663"
+        },
+        "populationApplicabilityEvidence": {
+          "evidenceId": "RP5K-400-08-POPULATION-20260930",
+          "decisionRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "sourceRefs": [
+            "TO-YOUTH-TRAINING-ELIGIBILITY-2026-08-17",
+            "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md"
+          ],
+          "canonicalEvidence": {
+            "scope": "YOUTH_AND_ADULT",
+            "sameEligibilityCriteria": [
+              "FIVE_K",
+              "EXPERIENCED",
+              "CURRENT_SAME_EVENT_ANCHOR"
+            ],
+            "ageOnlyReject": false,
+            "ageOnlyDoseMultiplier": false
+          },
+          "canonicalEvidenceFingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
+        },
+        "componentRefs": [
+          {
+            "componentType": "WARMUP",
+            "componentRef": "WU-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1"
+          },
+          {
+            "componentType": "COOLDOWN",
+            "componentRef": "CD-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab"
+          },
+          {
+            "componentType": "DOWNSHIFT",
+            "componentRef": "RPE-ONLY-CONTROLLED-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5"
+          },
+          {
+            "componentType": "STOP_CONDITIONS",
+            "componentRef": "STOP-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29"
+          }
+        ],
+        "sourceDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+        "sourceEvidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+        "approvalDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+        "decidedAt": "2026-09-30T00:00:00.000Z",
+        "expiresAt": "2027-09-30T00:00:00.000Z",
+        "revokedAt": null,
+        "ownerDecision": {
+          "reviewerId": "COACH_HOJUNE",
+          "role": "PRODUCT_OWNER_COACH",
+          "authorityDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "authorityEvidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "authorityEvidenceFingerprint": "sha256:8e81c75705ea5bf98e8c4ba8749a9b9769c266a513194d3281a7f8a4ec963bde",
+          "decision": "APPROVED",
+          "independentReviewClaimed": false
+        },
+        "targetEventDistanceM": 5000
+      },
+      {
+        "manifestVersion": "1",
+        "templateId": "RP5K-800-SPLIT",
+        "templateVersion": "1.0.0",
+        "templateContentFingerprint": "sha256:2b78c6a7e971e83ec39badea72bfb303011822cae6c7fe44dcc9a5c2ebf3f856",
+        "canonicalTemplateContent": {
+          "notation": "2×(3×800m) @5000m RP · r120″ JOG · R4′ JOG",
+          "operationalComponents": {
+            "warmup": {
+              "componentRef": "WU-V2-5K-01",
+              "componentVersion": "1.0.0",
+              "authority": "OWNER_OPERATIONAL_ADAPTATION",
+              "easyDurationMinutes": 15,
+              "rpeMin": 2,
+              "rpeMax": 3,
+              "strides": {
+                "repetitions": 4,
+                "durationSeconds": 20,
+                "recoverySeconds": 40,
+                "recoveryMode": "WALK_OR_JOG",
+                "progression": "PROGRESSIVE"
+              }
+            },
+            "cooldown": {
+              "componentRef": "CD-V2-5K-01",
+              "componentVersion": "1.0.0",
+              "authority": "OWNER_OPERATIONAL_ADAPTATION",
+              "easyDurationMinutes": 10,
+              "rpeMin": 1,
+              "rpeMax": 2
+            },
+            "fallback": {
+              "componentRef": "RPE-ONLY-CONTROLLED-01",
+              "componentVersion": "1.0.0",
+              "code": "RPE_ONLY_CONTROLLED",
+              "behavior": "DELEGATE_TO_EXISTING_RPE_CANDIDATE",
+              "numericRepetitionVariant": null
+            },
+            "stopConditions": {
+              "componentRef": "STOP-V2-5K-01",
+              "componentVersion": "1.0.0",
+              "authority": "OWNER_PRECAUTIONARY_OPERATIONAL_RULE",
+              "diagnosticClaim": false,
+              "codes": [
+                "STOP_NEW_OR_WORSENING_PAIN",
+                "STOP_DIZZINESS_OR_FAINTNESS",
+                "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING",
+                "STOP_LOSS_OF_CONTROLLED_FORM"
+              ]
+            }
+          }
+        },
+        "notation": "2×(3×800m) @5000m RP · r120″ JOG · R4′ JOG",
+        "lifecycleStatus": "ACTIVE",
+        "eligibilityStatus": "ELIGIBLE",
+        "eligibleEventGroups": [
+          "FIVE_K"
+        ],
+        "eventScopeEvidence": {
+          "decisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "evidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "evidenceFingerprint": "sha256:06418bd0f29d6f43a547b604f5e28f77152fb02a103b40b323d9c4a35b7f1663"
+        },
+        "eligibleExperienceBands": [
+          "EXPERIENCED"
+        ],
+        "experienceScopeEvidence": {
+          "decisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "evidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "evidenceFingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
+        },
+        "populationApplicability": {
+          "scope": "YOUTH_AND_ADULT"
+        },
+        "sportsScienceEvidence": {
+          "evidenceId": "RP5K-800-SPLIT-SCIENCE-20260930",
+          "decisionRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "sourceRefs": [
+            "https://vdoto2.com/learn-more/training-definitions",
+            "https://pubmed.ncbi.nlm.nih.gov/16177614/",
+            "https://pubmed.ncbi.nlm.nih.gov/29842843/"
+          ],
+          "canonicalEvidence": {
+            "classification": "TRAINORACLE_ADAPTATION",
+            "sourceSupports": [
+              "WORK_BOUT_AND_RECOVERY_CHANGE_STIMULUS",
+              "INTERVAL_GUIDANCE",
+              "ACTIVE_RECOVERY_GUIDANCE"
+            ],
+            "sourceDoesNotPrescribe": [
+              "EXACT_COUNTS_DISTANCES_AND_RECOVERIES",
+              "FIVE_K_RP_IS_NOT_MEASURED_VO2MAX",
+              "YOUTH_SPECIFIC_DOSE",
+              "INDIVIDUAL_OPTIMALITY",
+              "WARMUP_OR_COOLDOWN"
+            ]
+          },
+          "canonicalEvidenceFingerprint": "sha256:06418bd0f29d6f43a547b604f5e28f77152fb02a103b40b323d9c4a35b7f1663"
+        },
+        "populationApplicabilityEvidence": {
+          "evidenceId": "RP5K-800-SPLIT-POPULATION-20260930",
+          "decisionRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "sourceRefs": [
+            "TO-YOUTH-TRAINING-ELIGIBILITY-2026-08-17",
+            "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md"
+          ],
+          "canonicalEvidence": {
+            "scope": "YOUTH_AND_ADULT",
+            "sameEligibilityCriteria": [
+              "FIVE_K",
+              "EXPERIENCED",
+              "CURRENT_SAME_EVENT_ANCHOR"
+            ],
+            "ageOnlyReject": false,
+            "ageOnlyDoseMultiplier": false
+          },
+          "canonicalEvidenceFingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
+        },
+        "componentRefs": [
+          {
+            "componentType": "WARMUP",
+            "componentRef": "WU-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1"
+          },
+          {
+            "componentType": "COOLDOWN",
+            "componentRef": "CD-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab"
+          },
+          {
+            "componentType": "DOWNSHIFT",
+            "componentRef": "RPE-ONLY-CONTROLLED-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5"
+          },
+          {
+            "componentType": "STOP_CONDITIONS",
+            "componentRef": "STOP-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29"
+          }
+        ],
+        "sourceDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+        "sourceEvidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+        "approvalDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+        "decidedAt": "2026-09-30T00:00:00.000Z",
+        "expiresAt": "2027-09-30T00:00:00.000Z",
+        "revokedAt": null,
+        "ownerDecision": {
+          "reviewerId": "COACH_HOJUNE",
+          "role": "PRODUCT_OWNER_COACH",
+          "authorityDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "authorityEvidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "authorityEvidenceFingerprint": "sha256:8e81c75705ea5bf98e8c4ba8749a9b9769c266a513194d3281a7f8a4ec963bde",
+          "decision": "APPROVED",
+          "independentReviewClaimed": false
+        },
+        "targetEventDistanceM": 5000
+      },
+      {
+        "manifestVersion": "1",
+        "templateId": "RP5K-1000-REST",
+        "templateVersion": "1.0.0",
+        "templateContentFingerprint": "sha256:ad167afe49018700713098ecee9f76aa88e823d339bfb2c288c0023de2c9f4b9",
+        "canonicalTemplateContent": {
+          "notation": "4×1000m @5000m RP · r180″ JOG",
+          "operationalComponents": {
+            "warmup": {
+              "componentRef": "WU-V2-5K-01",
+              "componentVersion": "1.0.0",
+              "authority": "OWNER_OPERATIONAL_ADAPTATION",
+              "easyDurationMinutes": 15,
+              "rpeMin": 2,
+              "rpeMax": 3,
+              "strides": {
+                "repetitions": 4,
+                "durationSeconds": 20,
+                "recoverySeconds": 40,
+                "recoveryMode": "WALK_OR_JOG",
+                "progression": "PROGRESSIVE"
+              }
+            },
+            "cooldown": {
+              "componentRef": "CD-V2-5K-01",
+              "componentVersion": "1.0.0",
+              "authority": "OWNER_OPERATIONAL_ADAPTATION",
+              "easyDurationMinutes": 10,
+              "rpeMin": 1,
+              "rpeMax": 2
+            },
+            "fallback": {
+              "componentRef": "RPE-ONLY-CONTROLLED-01",
+              "componentVersion": "1.0.0",
+              "code": "RPE_ONLY_CONTROLLED",
+              "behavior": "DELEGATE_TO_EXISTING_RPE_CANDIDATE",
+              "numericRepetitionVariant": null
+            },
+            "stopConditions": {
+              "componentRef": "STOP-V2-5K-01",
+              "componentVersion": "1.0.0",
+              "authority": "OWNER_PRECAUTIONARY_OPERATIONAL_RULE",
+              "diagnosticClaim": false,
+              "codes": [
+                "STOP_NEW_OR_WORSENING_PAIN",
+                "STOP_DIZZINESS_OR_FAINTNESS",
+                "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING",
+                "STOP_LOSS_OF_CONTROLLED_FORM"
+              ]
+            }
+          }
+        },
+        "notation": "4×1000m @5000m RP · r180″ JOG",
+        "lifecycleStatus": "ACTIVE",
+        "eligibilityStatus": "ELIGIBLE",
+        "eligibleEventGroups": [
+          "FIVE_K"
+        ],
+        "eventScopeEvidence": {
+          "decisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "evidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "evidenceFingerprint": "sha256:06418bd0f29d6f43a547b604f5e28f77152fb02a103b40b323d9c4a35b7f1663"
+        },
+        "eligibleExperienceBands": [
+          "EXPERIENCED"
+        ],
+        "experienceScopeEvidence": {
+          "decisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "evidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "evidenceFingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
+        },
+        "populationApplicability": {
+          "scope": "YOUTH_AND_ADULT"
+        },
+        "sportsScienceEvidence": {
+          "evidenceId": "RP5K-1000-REST-SCIENCE-20260930",
+          "decisionRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "sourceRefs": [
+            "https://vdoto2.com/learn-more/training-definitions",
+            "https://pubmed.ncbi.nlm.nih.gov/16177614/",
+            "https://pubmed.ncbi.nlm.nih.gov/29842843/"
+          ],
+          "canonicalEvidence": {
+            "classification": "TRAINORACLE_ADAPTATION",
+            "sourceSupports": [
+              "WORK_BOUT_AND_RECOVERY_CHANGE_STIMULUS",
+              "INTERVAL_GUIDANCE",
+              "ACTIVE_RECOVERY_GUIDANCE"
+            ],
+            "sourceDoesNotPrescribe": [
+              "EXACT_COUNTS_DISTANCES_AND_RECOVERIES",
+              "FIVE_K_RP_IS_NOT_MEASURED_VO2MAX",
+              "YOUTH_SPECIFIC_DOSE",
+              "INDIVIDUAL_OPTIMALITY",
+              "WARMUP_OR_COOLDOWN"
+            ]
+          },
+          "canonicalEvidenceFingerprint": "sha256:06418bd0f29d6f43a547b604f5e28f77152fb02a103b40b323d9c4a35b7f1663"
+        },
+        "populationApplicabilityEvidence": {
+          "evidenceId": "RP5K-1000-REST-POPULATION-20260930",
+          "decisionRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "sourceRefs": [
+            "TO-YOUTH-TRAINING-ELIGIBILITY-2026-08-17",
+            "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md"
+          ],
+          "canonicalEvidence": {
+            "scope": "YOUTH_AND_ADULT",
+            "sameEligibilityCriteria": [
+              "FIVE_K",
+              "EXPERIENCED",
+              "CURRENT_SAME_EVENT_ANCHOR"
+            ],
+            "ageOnlyReject": false,
+            "ageOnlyDoseMultiplier": false
+          },
+          "canonicalEvidenceFingerprint": "sha256:dddff17cc298cd32ce7cbd6c2ccff6e38034b7e0ff5dd114e40b3893d55b4517"
+        },
+        "componentRefs": [
+          {
+            "componentType": "WARMUP",
+            "componentRef": "WU-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:d8da21478d2a44841122874ccf35c24aad1777ebaaeb018deda3e98a8f9cf6f1"
+          },
+          {
+            "componentType": "COOLDOWN",
+            "componentRef": "CD-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:8d1470171a5edb17a43aa1c21ca34bbfb77456347a68293d2ffe0a5bc52968ab"
+          },
+          {
+            "componentType": "DOWNSHIFT",
+            "componentRef": "RPE-ONLY-CONTROLLED-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:cd09b06359fcdfb422b421c31dd45a97beeccbdbecaabd1eb7274cdd67ecf3c5"
+          },
+          {
+            "componentType": "STOP_CONDITIONS",
+            "componentRef": "STOP-V2-5K-01",
+            "componentVersion": "1.0.0",
+            "componentFingerprint": "sha256:737ce6df7f7049530b72f3f52f20a2cbbd32bb83ccf6bfd93c29e25864b4bc29"
+          }
+        ],
+        "sourceDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+        "sourceEvidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+        "approvalDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+        "decidedAt": "2026-09-30T00:00:00.000Z",
+        "expiresAt": "2027-09-30T00:00:00.000Z",
+        "revokedAt": null,
+        "ownerDecision": {
+          "reviewerId": "COACH_HOJUNE",
+          "role": "PRODUCT_OWNER_COACH",
+          "authorityDecisionId": "TO-DISTANCE-ADOPTION-2026-09-30",
+          "authorityEvidenceRef": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+          "authorityEvidenceFingerprint": "sha256:8e81c75705ea5bf98e8c4ba8749a9b9769c266a513194d3281a7f8a4ec963bde",
+          "decision": "APPROVED",
+          "independentReviewClaimed": false
+        },
+        "targetEventDistanceM": 5000
+      }
+    ]
+  },
+  "records": [
+    {
+      "templateRef": {
+        "templateId": "RP5K-800-05",
+        "version": "1.0.0",
+        "fingerprint": "sha256:06f9ea5847de7500167feb8a43928b4ae610942d424b11934510e9bf7d95b2d8"
+      },
+      "method": {
+        "familyId": "race-pace-distance-repetitions",
+        "configurationId": "RP5K-800-05",
+        "version": "1.0.0"
+      },
+      "compatibleIntent": "VO2_INTENT",
+      "draftRefs": [
+        "X-VO2-02"
+      ],
+      "parameterLimits": {
+        "minimumRepSeconds": 60,
+        "maximumRepSeconds": 300,
+        "maximumQualityDistanceM": 5000
+      },
+      "explanation": {
+        "version": "1.0.0",
+        "identity": {
+          "templateId": "RP5K-800-05",
+          "templateVersion": "1.0.0",
+          "templateContentFingerprint": "sha256:06f9ea5847de7500167feb8a43928b4ae610942d424b11934510e9bf7d95b2d8",
+          "targetEventDistanceM": 5000,
+          "setCount": 1,
+          "repetitionsPerSet": 5,
+          "repetitionDistanceM": 800,
+          "repetitionRecoverySeconds": 120,
+          "repetitionRecoveryMode": "JOG",
+          "setRecoverySeconds": null,
+          "setRecoveryMode": "NOT_APPLICABLE"
+        },
+        "work": "현재 5000m 기록의 평균 속도로 800m를 5번 달려요. 1000m 반복보다 한 구간을 짧게 나눠 목표 속도를 다시 맞추는 구성이에요. 본운동은 총 4km이며, 5km 연속 달리기와 같은 부담이나 효과는 아니에요.",
+        "recovery": "반복 사이 120초 천천히 조깅해요. 다음 반복을 같은 목표 속도로 시작하기 위한 간격이며, 완전히 회복됐다고 판정하는 시간은 아니에요.",
+        "limitation": "개인 기록으로 계산하는 것은 반복별 목표 시간이에요. 거리·횟수·회복은 검토된 기본 구성이고, 개인에게 최적인 양이나 효과를 측정한 값은 아니에요. 성인 연구를 청소년의 효과 보장으로 사용하지 않아요.",
+        "decisionPath": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+        "sourceRecordPath": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md"
+      }
+    },
+    {
+      "templateRef": {
+        "templateId": "RP5K-400-08",
+        "version": "1.0.0",
+        "fingerprint": "sha256:b82908193f46f393de944b2b6d2d60e7103b36a786e07bcae2f39a612fd32d62"
+      },
+      "method": {
+        "familyId": "race-pace-distance-repetitions",
+        "configurationId": "RP5K-400-08",
+        "version": "1.0.0"
+      },
+      "compatibleIntent": "VO2_INTENT",
+      "draftRefs": [
+        "X-VO2-01"
+      ],
+      "parameterLimits": {
+        "minimumRepSeconds": 60,
+        "maximumRepSeconds": 300,
+        "maximumQualityDistanceM": 5000
+      },
+      "explanation": {
+        "version": "1.0.0",
+        "identity": {
+          "templateId": "RP5K-400-08",
+          "templateVersion": "1.0.0",
+          "templateContentFingerprint": "sha256:b82908193f46f393de944b2b6d2d60e7103b36a786e07bcae2f39a612fd32d62",
+          "targetEventDistanceM": 5000,
+          "setCount": 1,
+          "repetitionsPerSet": 8,
+          "repetitionDistanceM": 400,
+          "repetitionRecoverySeconds": 90,
+          "repetitionRecoveryMode": "JOG",
+          "setRecoverySeconds": null,
+          "setRecoveryMode": "NOT_APPLICABLE"
+        },
+        "work": "현재 5000m 기록의 평균 속도로 트랙 한 바퀴인 400m를 8번 달려요. 본운동은 총 3.2km예요. 짧은 구간을 반복하므로 800m나 1000m 반복보다 속도를 자주 다시 맞추지만, 높은 산소 이용 상태를 같은 시간 유지한다고 단정하지 않아요.",
+        "recovery": "반복 사이 90초 천천히 조깅해요. 구간이 짧아도 더 빠르게 달리라는 뜻은 아니며, 목표 속도는 현재 5000m 기록을 그대로 사용해요.",
+        "limitation": "개인 기록으로 계산하는 것은 반복별 목표 시간이에요. 거리·횟수·회복은 검토된 기본 구성이고, 개인에게 최적인 양이나 효과를 측정한 값은 아니에요. 성인 연구를 청소년의 효과 보장으로 사용하지 않아요.",
+        "decisionPath": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+        "sourceRecordPath": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md"
+      }
+    },
+    {
+      "templateRef": {
+        "templateId": "RP5K-800-SPLIT",
+        "version": "1.0.0",
+        "fingerprint": "sha256:2b78c6a7e971e83ec39badea72bfb303011822cae6c7fe44dcc9a5c2ebf3f856"
+      },
+      "method": {
+        "familyId": "race-pace-set-repetitions",
+        "configurationId": "RP5K-800-SPLIT",
+        "version": "1.0.0"
+      },
+      "compatibleIntent": "VO2_INTENT",
+      "draftRefs": [
+        "X-VO2-02",
+        "X-VO2-05"
+      ],
+      "parameterLimits": {
+        "minimumRepSeconds": 60,
+        "maximumRepSeconds": 300,
+        "maximumQualityDistanceM": 5000
+      },
+      "explanation": {
+        "version": "1.0.0",
+        "identity": {
+          "templateId": "RP5K-800-SPLIT",
+          "templateVersion": "1.0.0",
+          "templateContentFingerprint": "sha256:2b78c6a7e971e83ec39badea72bfb303011822cae6c7fe44dcc9a5c2ebf3f856",
+          "targetEventDistanceM": 5000,
+          "setCount": 2,
+          "repetitionsPerSet": 3,
+          "repetitionDistanceM": 800,
+          "repetitionRecoverySeconds": 120,
+          "repetitionRecoveryMode": "JOG",
+          "setRecoverySeconds": 240,
+          "setRecoveryMode": "JOG"
+        },
+        "work": "800m를 3번 달린 묶음을 2세트 진행해요. 총 6회·4.8km이고, 한 세트 안에서는 5000m 기록을 기준으로 같은 목표 시간을 반복해요. 세트 사이 긴 회복이 추가되므로 한 번에 6회 이어가는 구성과 다르게 취급해요.",
+        "recovery": "세트 안의 반복 사이에는 120초 조깅, 첫 세트가 끝나면 240초 조깅해요. 세트 경계에서는 120초를 더하지 않고 240초로 대체해요. 긴 회복은 다음 세트의 재시작을 돕지만 같은 자극이나 완전 회복을 보장하지 않아요.",
+        "limitation": "개인 기록으로 계산하는 것은 반복별 목표 시간이에요. 거리·횟수·회복은 검토된 기본 구성이고, 개인에게 최적인 양이나 효과를 측정한 값은 아니에요. 성인 연구를 청소년의 효과 보장으로 사용하지 않아요.",
+        "decisionPath": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+        "sourceRecordPath": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md"
+      }
+    },
+    {
+      "templateRef": {
+        "templateId": "RP5K-1000-REST",
+        "version": "1.0.0",
+        "fingerprint": "sha256:ad167afe49018700713098ecee9f76aa88e823d339bfb2c288c0023de2c9f4b9"
+      },
+      "method": {
+        "familyId": "race-pace-distance-repetitions",
+        "configurationId": "RP5K-1000-REST",
+        "version": "1.0.0"
+      },
+      "compatibleIntent": "VO2_INTENT",
+      "draftRefs": [
+        "X-VO2-03"
+      ],
+      "parameterLimits": {
+        "minimumRepSeconds": 60,
+        "maximumRepSeconds": 300,
+        "maximumQualityDistanceM": 5000
+      },
+      "explanation": {
+        "version": "1.0.0",
+        "identity": {
+          "templateId": "RP5K-1000-REST",
+          "templateVersion": "1.0.0",
+          "templateContentFingerprint": "sha256:ad167afe49018700713098ecee9f76aa88e823d339bfb2c288c0023de2c9f4b9",
+          "targetEventDistanceM": 5000,
+          "setCount": 1,
+          "repetitionsPerSet": 4,
+          "repetitionDistanceM": 1000,
+          "repetitionRecoverySeconds": 180,
+          "repetitionRecoveryMode": "JOG",
+          "setRecoverySeconds": null,
+          "setRecoveryMode": "NOT_APPLICABLE"
+        },
+        "work": "현재 5000m 기록의 평균 속도로 1000m를 4번 달려요. 기존 5×1000m보다 본운동 거리를 1km 줄이고 반복 사이 회복을 늘린 대안이에요. 회복이 늘었다고 더 빠른 목표 시간을 요구하지 않아요.",
+        "recovery": "반복 사이 180초 천천히 조깅해요. 기존 150초보다 30초 더 주는 별도 구성이며, 연속적인 부담은 달라져요. 늘어난 회복으로도 몸 상태가 나쁘거나 통증이 있으면 훈련을 강행하지 않아요.",
+        "limitation": "개인 기록으로 계산하는 것은 반복별 목표 시간이에요. 거리·횟수·회복은 검토된 기본 구성이고, 개인에게 최적인 양이나 효과를 측정한 값은 아니에요. 성인 연구를 청소년의 효과 보장으로 사용하지 않아요.",
+        "decisionPath": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md",
+        "sourceRecordPath": "reports/review/DISTANCE_PRESCRIPTION_ADOPTION_2026-09-30.md"
+      }
+    }
+  ]
+}

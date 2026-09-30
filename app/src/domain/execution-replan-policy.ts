@@ -36,6 +36,8 @@ export function replayExecutionReplan(receipt: ExecutionReplanReceipt): readonly
   if (r.action === "REDUCE") {
     if (r.target !== null || source.prescription.kind !== "RPE_TIME_RANGE") return null
     const p = source.prescription
+    // A calculated range can represent reference pace uncertainty, not removable work.
+    if (p.catalogWorkout) return null
     if (p.durationMinutes.minimum >= p.durationMinutes.maximum) return null
     result = sessions.map(s => s === source ? { ...s, prescription: { ...p,
       durationMinutes: { minimum: p.durationMinutes.minimum, maximum: p.durationMinutes.minimum } } } as Session : s)
@@ -74,7 +76,7 @@ export function replayExecutionReplan(receipt: ExecutionReplanReceipt): readonly
     if (slots.some(s => s.role === "QUALITY") && slots.some(s => s.role === "EASY"
       && s.prescription.kind === "RPE_TIME_RANGE" && s.prescription.rpe.maximum > 3)) return null
   }
-  return result
+  return result.every(s => planSessionSchema.safeParse(s).success) ? result : null
 }
 
 export function executionReplanMatches(receipt: ExecutionReplanReceipt, sessions: readonly Session[], startDate: string | undefined): boolean {

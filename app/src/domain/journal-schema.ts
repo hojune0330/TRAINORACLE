@@ -233,6 +233,14 @@ const journalEntryWriteSchema = journalEntrySchema.superRefine((entry, context) 
   }
 
   if (entry.kind === "post-session") {
+    const repetitions = entry.exerciseLog?.plannedRepetitions ?? entry.exerciseLog?.plannedSegments
+    if (entry.exerciseLog?.plannedRepetitions && entry.exerciseLog.plannedSegments) context.addIssue({ code: "custom", path: ["exerciseLog"], message: "Use only the matching planned structure." })
+    if (repetitions && (!entry.plannedSessionLink
+      || repetitions.plannedSessionId !== entry.plannedSessionLink.plannedSessionId
+      || repetitions.sessionContentFingerprint !== entry.plannedSessionLink.sessionContentFingerprint)) {
+      context.addIssue({ code: "custom", path: ["exerciseLog", "plannedRepetitions"],
+        message: "Repetition evidence must refer to this journal's immutable planned session." })
+    }
     if (entry.comparisonRelations !== undefined && (!entry.fileObservation
       || entry.comparisonRelations.some(relation => relation.journalId !== entry.id)
       || new Set(entry.comparisonRelations.map(relation => relation.relationId)).size !== entry.comparisonRelations.length)) {
@@ -312,7 +320,8 @@ const journalEntryWriteSchema = journalEntrySchema.superRefine((entry, context) 
         || entry.durationMin.trim() !== ""
         || entry.avgPace.trim() !== ""
         || entry.intensityAssessment !== undefined
-        || (entry.exerciseLog?.components.length ?? 0) > 0) {
+        || (entry.exerciseLog?.components.length ?? 0) > 0
+        || repetitions !== undefined) {
         context.addIssue({
           code: "custom",
           message: "Rested or skipped entries cannot retain performed-session facts.",

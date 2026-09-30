@@ -1,5 +1,6 @@
 import type { DetailedTemplateRef } from "@impl/plan-generator/types"
 import type { MethodReference } from "@impl/prescription/method-recommendation"
+import { DISTANCE_ADOPTION, DISTANCE_ADOPTION_ACTIVE } from "./distance-prescription-adoption"
 
 export const PLAN_METHOD_MAPPING_VERSION = "1.0.0"
 
@@ -12,7 +13,7 @@ export type PlanMethodMapping = {
 // Identity crosswalk only, not runtime authority or a claim of equivalent effects.
 // These straight distance repetitions at race pace share an approach; event, dose
 // and recovery remain independently reviewed configurations, not new families.
-export const PLAN_METHOD_REGISTRY: readonly PlanMethodMapping[] = Object.freeze(([
+const baseline = ([
   ["V2-SEED-05", "sha256:ad4a8c436a5a6e7a9c81342d79b359d84b1b8ea1034f9589141429eea8d0e42a"],
   ["MD-800-01", "sha256:8aa917947277883df94a9de665accd59a028b6753cec22d8fecf06795d28b149"],
   ["MD-1500-01", "sha256:dd82bb01baa7b34e163f9148b76eae3956285dc5d1bd7e5217cd39373d966fab"],
@@ -25,7 +26,12 @@ export const PLAN_METHOD_REGISTRY: readonly PlanMethodMapping[] = Object.freeze(
     configurationId: templateId,
     version: "1.0.0",
   }),
-})))
+}))
+export const PLAN_METHOD_REGISTRY: readonly PlanMethodMapping[] = Object.freeze([
+  ...baseline, ...(DISTANCE_ADOPTION_ACTIVE ? DISTANCE_ADOPTION.records.map(item => Object.freeze({
+  mappingVersion: PLAN_METHOD_MAPPING_VERSION, templateRef: Object.freeze({ ...item.templateRef }),
+  method: Object.freeze({ ...item.method }),
+})) : [])])
 
 export function resolvePlanMethodMapping(reference: DetailedTemplateRef): PlanMethodMapping | null {
   return PLAN_METHOD_REGISTRY.find(({ templateRef }) => (

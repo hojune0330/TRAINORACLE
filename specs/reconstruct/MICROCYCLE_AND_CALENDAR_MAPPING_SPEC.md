@@ -663,4 +663,24 @@ No calendar placement, cycle position, elapsed interval or recommendation implie
 recovery, efficacy or automatic progression. Existing timezone, safety, youth,
 privacy, accepted-only projection, issue rows/counts and historical checks remain.
 
+## 23. Calendar Role Colors (2026-09-30)
+
+[Calendar training-role presentation](../active/CALENDAR_TRAINING_ROLE_PRESENTATION_CONTRACT.md)
+adopts the owner's calendar color direction for display only. Each AM/PM slot retains its
+source role. A main session is not necessarily high intensity, and a race journal is not
+a newly scheduled race. Missing purpose is not rest. Color cannot classify fatigue,
+clear safety, imply completion, or mutate a plan. This narrow adoption does not promote
+this draft, change issue counts, or claim that navigation-context work is complete.
+
+## 24. Calendar Navigation Context (2026-09-30)
+
+The [guided-context plan](../../reports/plans/CALENDAR_GUIDED_CONTEXT_AND_MOTION_PLAN_2026-09-29.md)
+defines display-only initial dates, manual-navigation ownership, readiness and isolated examples.
+Journal views may start at the latest real activity date, while plan candidates keep their start
+date and active plans clamp to their full saved date range. The existing archive cycle anchor
+is not changed; its inverse date-to-index helper supports past windows. Account changes clear
+ephemeral navigation state. Calendar navigation never writes training, safety or journal facts.
+Local implementation evidence is linked from that plan. No issue is closed or canonical state
+promoted by this addition, and operating-system calendar synchronization remains separate.
+
 [DRAFT_COMPLETE]

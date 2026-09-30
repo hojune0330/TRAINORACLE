@@ -115,7 +115,7 @@ describe("home hub destinations and information", () => {
     } } } satisfies TrainingHomeViewModel
     render(<TrainingHome model={model} onOpenNextTraining={openNext} onOpenPlan={openPlan} />)
     const next = screen.getByRole("button", { name: /^다음 훈련 ·/ })
-    expect(next).toHaveAccessibleName(/7월 14일.*오후.*총 25~40분.*RPE 5~6/)
+    expect(next).toHaveAccessibleName(/7월 14일.*오후.*전체 25–40min @ RPE 5–6/)
     expect(next).toHaveTextContent("같은 날 오후")
     fireEvent.click(next)
     expect(openNext).toHaveBeenCalledOnce()

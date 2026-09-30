@@ -1,8 +1,9 @@
 import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react"
-import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronDown, ChevronLeft, ChevronRight, CircleHelp } from "lucide-react"
 import { isValidIsoDate, isoShift, isoToDate } from "../domain/dates"
 import { projectJournalMonthCalendar } from "../domain/journal-calendar"
 import "./MonthCalendar.css"
+import { useCalendarMotion } from "../hooks/useCalendarMotion"
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"] as const
 
@@ -27,10 +28,12 @@ type Props = {
   readonly dayDescription: (date: string) => string
   readonly renderDay: (date: string) => ReactNode
   readonly highlightedRange?: { readonly start: string; readonly end: string }
+  readonly trainingColors?: boolean
 }
 
-export function MonthCalendar({ month, today, selectedDate, onMonthChange, onSelectDate, onToday, dayDescription, renderDay, highlightedRange }: Props) {
+export function MonthCalendar({ month, today, selectedDate, onMonthChange, onSelectDate, onToday, dayDescription, renderDay, highlightedRange, trainingColors = false }: Props) {
   const headingId = useId()
+  const motion = useCalendarMotion()
   const [jumpOpen, setJumpOpen] = useState(false)
   const [focusedDate, setFocusedDate] = useState<string | null>(null)
   const grid = useRef<HTMLTableElement>(null)
@@ -57,7 +60,7 @@ export function MonthCalendar({ month, today, selectedDate, onMonthChange, onSel
     }
   }
 
-  return <section className="month-calendar" aria-labelledby={headingId}>
+  return <section className="month-calendar" data-reduced-motion={motion.reduced || undefined} aria-labelledby={headingId}>
     <header className="month-calendar__toolbar">
       <h3 id={headingId} aria-live="polite"><button type="button" className="month-calendar__month" aria-label={`${label} · 년월과 날짜 이동`} aria-expanded={jumpOpen} onClick={() => setJumpOpen(value => !value)}>{label}<ChevronDown size={16} aria-hidden="true" /></button></h3>
       <div>
@@ -89,13 +92,14 @@ export function MonthCalendar({ month, today, selectedDate, onMonthChange, onSel
     </div>}
     <table ref={grid} role="grid" aria-label={`${label} 달력`} className="month-calendar__grid">
       <thead><tr>{WEEKDAYS.map((day, index) => <th scope="col" key={day} data-weekday={index} aria-label={`${day}요일`}>{day}</th>)}</tr></thead>
-      <tbody>{weeks.map((week) => <tr key={week[0]!.date}>
+      <tbody key={month}>{weeks.map((week) => <tr key={week[0]!.date}>
         {week.map((cell) => {
           const outside = cell.kind === "OUTSIDE_MONTH"
           const current = cell.date === today
           const selected = cell.date === selectedDate
           const inRange = highlightedRange !== undefined && cell.date >= highlightedRange.start && cell.date <= highlightedRange.end
-          const name = `${calendarDayLabel(cell.date)}${dayDescription(cell.date) ? ` · ${dayDescription(cell.date)}` : ""}`
+          const description = dayDescription(cell.date)
+          const name = `${calendarDayLabel(cell.date)}${description ? ` · ${description}` : ""}`
           return <td key={cell.date} role="gridcell" aria-selected={selected} data-outside={outside || undefined} data-in-range={inRange || undefined} data-weekday={isoToDate(cell.date).getDay()}>
             <button
               ref={element => {
@@ -119,5 +123,15 @@ export function MonthCalendar({ month, today, selectedDate, onMonthChange, onSel
         })}
       </tr>)}</tbody>
     </table>
+    {trainingColors && <details className="calendar-color-guide">
+      <summary><CircleHelp size={16} aria-hidden="true" />달력 색상</summary>
+      <ul aria-label="달력 색상 범례">
+        {([['race', '경기'], ['main', '주요 훈련'], ['neural', '플라이오'], ['base', '기본 운동'], ['recovery', '회복 운동'], ['off', '휴식']] as const).map(([tone, label]) =>
+          <li key={tone}><span className="calendar-color-guide__swatch" data-tone={tone} aria-hidden="true" />{label}</li>)}
+      </ul>
+      <p>색은 훈련의 역할을 나타내요. 주요 훈련이 모두 고강도인 것은 아니며, 플라이오도 부담이 클 수 있어요.</p>
+      <p>기록에 없는 분류는 추측하지 않아요. 빈 칸은 휴식이나 회복을 뜻하지 않아요.</p>
+      <label className="calendar-motion-choice"><input type="checkbox" checked={motion.chosen} onChange={event => motion.setReduced(event.target.checked)} />달력 움직임 줄이기</label>
+    </details>}
   </section>
 }

@@ -7,6 +7,8 @@ import type { RepeatPreference } from "@impl/prescription/method-recommendation"
 import { deriveSequenceTotals } from "@impl/prescription/sequence"
 import { activeWorkoutRepeatLevels, sameWorkoutMethod } from "../../domain/workout-method-identity"
 import { createWorkoutPreviewHistory, pushWorkoutPreview, undoWorkoutPreview, redoWorkoutPreview } from "../../domain/workout-preview-history"
+import { drawWorkoutMethod } from "../../domain/workout-method-draw"
+import { WorkoutNotation } from "./WorkoutNotation"
 
 type Props = {
   readonly options: readonly DetailedPlanTemplateOption[]
@@ -16,9 +18,13 @@ type Props = {
   readonly onRepeatPreferenceChange?: (preference: RepeatPreference) => void
   readonly contextKey?: string
   readonly onPendingChange?: (pending: boolean) => void
+  readonly openRequest?: number | null
 }
 export function PlanMethodPicker(props: Props) {
   const [expanded, setExpanded] = React.useState(false)
+  React.useEffect(() => {
+    if (props.openRequest !== undefined && props.openRequest !== null) setExpanded(true)
+  }, [props.openRequest])
   const key = JSON.stringify([props.contextKey ?? "", props.selected, props.options.map(o => [o.ref, o.sequence ?? null])
     .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)))])
   return <MethodPreview key={key} {...props} expanded={expanded} onExpandedChange={setExpanded} />
@@ -30,7 +36,6 @@ function MethodPreview({ options, selected, onChange, repeatPreference = "NEUTRA
   const [showAll, setShowAll] = React.useState(false)
   const [history, setHistory] = React.useState(() => createWorkoutPreviewHistory(selected))
   const [seen, setSeen] = React.useState(() => selected ? [selected] : [])
-  const methodChoices = React.useRef<HTMLFieldSetElement>(null)
   const previewRef = history.present
   const dirty = !sameDetailedTemplateReference(previewRef, selected) && !(previewRef === null && selected === null)
   const current = options.find(option => sameDetailedTemplateReference(option.ref, previewRef))
@@ -42,7 +47,10 @@ function MethodPreview({ options, selected, onChange, repeatPreference = "NEUTRA
   const submitted = React.useRef(false)
   const [submitError, setSubmitError] = React.useState(false)
   React.useLayoutEffect(() => { onPendingChange?.(dirty); return () => onPendingChange?.(false) }, [dirty, onPendingChange])
-  const distinct = options.flatMap(option => {
+  const selectedOption = options.find(option => sameDetailedTemplateReference(option.ref, selected))
+  const contextOption = selectedOption ?? options[0]
+  const distinct = options.filter(option => option.trainingFocus === contextOption?.trainingFocus
+    && option.targetEventDistanceM === contextOption?.targetEventDistanceM).flatMap(option => {
     try {
       if (!option.sequence) return []
       deriveSequenceTotals(option.sequence)
@@ -61,15 +69,12 @@ function MethodPreview({ options, selected, onChange, repeatPreference = "NEUTRA
     return exact >= 0 ? exact : item?.sequence
       ? distinct.findIndex(option => option.sequence && sameWorkoutMethod(item.sequence!, option.sequence)) : -1
   }
-  const seenIndices = new Set(seen.map(methodIndex)), currentIndex = methodIndex(previewRef)
-  const next = distinct.length > 1 ? distinct.find((_, index) => index !== currentIndex && !seenIndices.has(index)) : undefined
-  const exhausted = distinct.length > 1 && !next
   const coverage = options[0]?.historyCoverage
   const initialOptions = options.filter((option, index) => option.recommended ?? index < 2)
   const shownOptions = showAll ? options : options.filter(option => initialOptions.includes(option) || option === current)
   const eligibleFamilyCount = new Set(options.flatMap(option => option.method === undefined ? [] : [option.method.familyId])).size
   const hasMultipleMethods = distinct.length > 1
-  const summaryTitle = hasMultipleMethods ? "상세 훈련 고르기" : "상세 훈련 확인"
+  const summaryTitle = "처방 확인·조절"
   return (
     <details className="plan-method-picker" open={expanded} onToggle={event => onExpandedChange(event.currentTarget.open)}>
       <summary>
@@ -78,21 +83,22 @@ function MethodPreview({ options, selected, onChange, repeatPreference = "NEUTRA
         <ChevronDown className="plan-method-picker__chevron" size={16} aria-hidden="true" />
       </summary>
       {current && <section className="plan-method-picker__preview" aria-label="훈련 미리보기" key={JSON.stringify(current.ref)}>
-        <strong>{current.mainSummary}</strong><p>{current.recoverySummary}</p>
+        {current.sequence ? <WorkoutNotation sequence={current.sequence} intent={current.trainingFocus} /> : <><strong>{current.mainSummary}</strong><p>{current.recoverySummary}</p></>}
         <p>현재 {current.targetEventDistanceM}m 기록을 확인하면 목표 시간을 계산해요.</p>
-        <details><summary>준비·정리와 추천 이유</summary><p>{current.preparationSummary}</p>
+        <details><summary>자세히 보기 · 준비·정리와 추천 이유</summary><p>{current.preparationSummary}</p>
           {current.recommendationReason && <p>{current.recommendationReason}</p>}</details>
       </section>}
+      {previewRef === null && options[0] && <button type="button" className="plan-text-action"
+        onClick={() => choose(options[0]!.ref)}>기록으로 페이스 받기</button>}
       {(hasMultipleMethods || dirty || history.past.length > 0 || history.future.length > 0) && <div className="plan-method-picker__tools">
-        {(next || exhausted) && <button type="button" onClick={() => {
-          if (next) choose(next.ref)
-          else { setShowAll(true); methodChoices.current?.scrollIntoView({ block: "nearest" }) }
-        }}><RefreshCw size={18} aria-hidden="true" />{next ? "다른 훈련" : "본 방법 다시 보기"}</button>}
+        {hasMultipleMethods && <button type="button" onClick={() => {
+          const draw = drawWorkoutMethod(distinct.length, methodIndex(previewRef), seen.map(methodIndex))
+          if (draw) { choose(distinct[draw.index]!.ref); setSeen(draw.seen.map(index => distinct[index]!.ref)) }
+        }}><RefreshCw size={18} aria-hidden="true" />다른 훈련</button>}
         <button type="button" title="되돌리기" aria-label="되돌리기" disabled={!history.past.length} onClick={() => setHistory(undoWorkoutPreview)}><Undo2 size={18} aria-hidden="true" /><span>되돌리기</span></button>
         <button type="button" title="다시 하기" aria-label="다시 하기" disabled={!history.future.length} onClick={() => setHistory(redoWorkoutPreview)}><Redo2 size={18} aria-hidden="true" /><span>다시</span></button>
         <button type="button" title="처음 선택으로" aria-label="처음 선택으로" disabled={!dirty} onClick={() => choose(selected)}><RotateCcw size={18} aria-hidden="true" /><span>처음</span></button>
       </div>}
-      {exhausted && <p className="plan-method-picker__limit">선택 가능한 방법을 모두 봤어요.</p>}
       {dirty && <div className="plan-method-picker__pending">
         <p role="status">미리보기예요. 아직 계획은 바뀌지 않았어요.</p>
         <button type="button" className="plan-primary" onClick={() => {
@@ -102,6 +108,7 @@ function MethodPreview({ options, selected, onChange, repeatPreference = "NEUTRA
         }}>이 훈련으로 변경</button>
         {submitError && <p role="alert">훈련을 변경하지 못했어요. 미리보기는 남아 있으니 다시 눌러 주세요.</p>}
       </div>}
+      <details><summary>훈련 목록·다른 설정</summary>
       {eligibleFamilyCount > 1 && onRepeatPreferenceChange !== undefined && <fieldset>
         <legend>추천 선호 (선택)</legend>
         {([
@@ -114,7 +121,7 @@ function MethodPreview({ options, selected, onChange, repeatPreference = "NEUTRA
           <span>{label}</span>
         </label>)}
       </fieldset>}
-      <fieldset ref={methodChoices} aria-describedby={`${id}-help`}>
+      <fieldset aria-describedby={`${id}-help`}>
         <legend>{hasMultipleMethods ? "받고 싶은 훈련" : "안내 방식"}</legend>
         <label className="plan-method-picker__option">
           <input type="radio" name={`${id}-method`} checked={previewRef === null} onChange={() => choose(null)} />
@@ -132,6 +139,7 @@ function MethodPreview({ options, selected, onChange, repeatPreference = "NEUTRA
       {options.length > initialOptions.length && <button type="button" className="plan-text-action" onClick={() => setShowAll(value => !value)}>
         {showAll ? "추천 훈련만 보기" : `다른 훈련 보기 (${options.length - initialOptions.length})`}
       </button>}
+      </details>
       {coverage === null && <p role="status">보관된 계획 이력을 읽지 못해 추천 횟수를 표시하지 않았어요. 저장된 원본은 변경하지 않았어요.</p>}
       {coverage !== undefined && coverage !== null && <details className="plan-method-picker__history">
         <summary>추천에 참고한 이력</summary>

@@ -6,19 +6,13 @@ import { OracleTopicGrid } from "../../components/OracleTopicGrid"
 import { OracleResume } from "../../components/OracleResume"
 import type { OracleTopicId } from "../../domain/oracle-exploration"
 import { loadAthleteRecords } from "../../domain/athlete-records"
-import { deriveSequenceTotals } from "@impl/prescription/sequence"
-import type { PlanSession } from "@impl/plan-generator/types"
-import { prescriptionLabel, sessionLabel, sessionSlotLabel } from "../plan-beta/labels"
+import { sessionWorkoutNotation } from "../../domain/workout-notation"
+import { sessionLabel, sessionSlotLabel } from "../plan-beta/labels"
 import type { LogEntryType } from "../log-entry/shared"
 import "../../styles/home-hub.css"
 
 export function nextTrainingPrescriptionLabel(session: HomeSession): string {
-  if (session.prescription.kind === "ADJUSTED_METHOD_V3") return "저장한 조정 구성 · 원본 확인"
-  if (session.prescription.kind === "ADJUSTED_METHOD") {
-    const totals = deriveSequenceTotals(session.prescription.snapshot.projection.sequence)
-    return ["선택한 조정 구성", totals.totalRepetitions === null ? null : `본운동 ${totals.totalRepetitions}회`, totals.qualityDistanceM === null ? null : `${totals.qualityDistanceM}m`, "구간별 시간·회복 확인"].filter(Boolean).join(" · ")
-  }
-  return prescriptionLabel(session as PlanSession).replace(/\s*·\s*거리⁠·⁠목표\s페이스는 지정하지 않음$/u, "")
+  return sessionWorkoutNotation(session)
 }
 
 type TrainingHomeProps = {

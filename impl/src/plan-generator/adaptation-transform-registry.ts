@@ -99,6 +99,7 @@ export function resolveRegisteredAdaptationTransform(
   successor: PlanCandidate,
   triggerClass: "EXPLICIT_REQUEST" | "SAME_EVENT_PB_SB_AFTER_ACTIVE_PLAN_START",
 ): RegisteredAdaptationTransform | null {
+  if ([...base.sessions, ...successor.sessions].some(s => s.prescription.kind === "RPE_TIME_RANGE" && s.prescription.catalogWorkout)) return null
   if (!validateAdaptationTransformRegistry(ADAPTATION_TRANSFORM_REGISTRY)) return null
   const edge = ADAPTATION_TRANSFORM_REGISTRY.activeEdges.find((candidate) =>
     candidate.fromCandidateKind === base.kind

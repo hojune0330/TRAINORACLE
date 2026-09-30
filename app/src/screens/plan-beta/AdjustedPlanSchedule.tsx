@@ -33,7 +33,7 @@ export function AdjustedPlanSchedule({ loaded, onWritePlannedSessionLog, returnT
   const days = [...new Set(plan.activePlan.sessions.map(session => session.day))].sort((a, b) => a - b)
   const [day, setDay] = React.useState(() => {
     const linked = resolveCurrentPlannedSession(plan, returnToSession)
-    return linked?.day ?? days.find(value => isoShift(start, value - 1) === todayISO()) ?? days[0]!
+    return linked?.day ?? days.find(value => isoShift(start, value - 1) === todayISO()) ?? (todayISO() > isoShift(start, days.at(-1)! - 1) ? days.at(-1)! : days[0]!)
   })
   const [error, setError] = React.useState<string | null>(null)
   const [saving, setSaving] = React.useState(false)
@@ -50,7 +50,7 @@ export function AdjustedPlanSchedule({ loaded, onWritePlannedSessionLog, returnT
   return <section className="plan-active adjusted-plan-schedule" aria-labelledby="adjusted-plan-title">
     <h1 id="adjusted-plan-title">내 훈련 일정</h1>
     <p>{start} ~ {isoShift(start, days.at(-1)! - 1)}</p>
-    <DatedPlanPanel start={start} sessions={plan.activePlan.sessions} day={day} onDayChange={setDay} notice={error ? <p role="alert">{error}</p> : undefined}>
+    <DatedPlanPanel identity={plan.activePlan.candidateId} start={start} sessions={plan.activePlan.sessions} day={day} onDayChange={setDay} notice={error ? <p role="alert">{error}</p> : undefined}>
     <h2>{date} ({new Intl.DateTimeFormat("ko-KR", { weekday: "short" }).format(new Date(`${date}T12:00:00`))})</h2>
     {plan.activePlan.sessions.filter(session => session.day === day)
       .sort((a, b) => a.slot.localeCompare(b.slot)).map(session => {
