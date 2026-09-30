@@ -1,10 +1,10 @@
-import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { afterEach, beforeAll, beforeEach, expect, it, vi } from "vitest"
 import { createAdjustmentDraftV3, applyAdjustmentDraftV3 } from "@impl/prescription/prescription-adjustment-v3"
 import { sequenceV3ContentIdentity } from "@impl/prescription/sequence-v3-comparison"
 import { generatePlanFromDraft, selectPlanForActivation, generateMultiAdjustedNextFrameV3FromDraft } from "./plan-beta-flow"
 import { prepareMultiAdjustedNextFrameV3 } from "./adjusted-plan-continuity"
 import { draftFor, RUNTIME_CASES, TODAY } from "./prescription-quality-matrix.test-fixtures"
-import { setActiveLocalAccount } from "./account/local-journal-ownership"
+import { activeLocalAccount, setActiveLocalAccount } from "./account/local-journal-ownership"
 import { unanchoredAdjustmentFixtureV3 } from "./unanchored-adjustment-v3.test-fixtures"
 import { prepareUnanchoredAdjustmentOfferV3 } from "./unanchored-adjustment-offer-v3"
 import { createAdjustedMethodSnapshotV3 } from "./adjusted-method-snapshot-v3"
@@ -61,7 +61,7 @@ afterEach(() => {
     else Reflect.deleteProperty(HTMLDialogElement.prototype, key)
   }
 })
-function fixture(supplied?: Extract<ReturnType<typeof generatePlanFromDraft>, { kind: "generated" }>, at = TODAY, startDate = "2026-09-08", includeSets = false) {
+function buildFixture(supplied?: Extract<ReturnType<typeof generatePlanFromDraft>, { kind: "generated" }>, at = TODAY, startDate = "2026-09-08", includeSets = false) {
   const intake = { ...draftFor(RUNTIME_CASES[3]), selectedDetailedTemplateRef: null }
   const generated = supplied ?? generatePlanFromDraft(intake, "NO_KNOWN_RISK", {})
   if (generated.kind !== "generated") throw Error("No generated candidate")
@@ -96,6 +96,27 @@ function fixture(supplied?: Extract<ReturnType<typeof generatePlanFromDraft>, { 
   return { inputs, bindings, generated }
 }
 
+// Only fixed, empty-history JSON preparation is shared. Runtime reads, locks,
+// selection, authority checks and writes always execute against case-local data.
+function freezeJson<T>(value: T): T {
+  if (value !== null && typeof value === "object") {
+    for (const child of Object.values(value)) freezeJson(child)
+    Object.freeze(value)
+  }
+  return value
+}
+let defaultFixture: ReturnType<typeof buildFixture>
+let defaultStorageMaterials: ReturnType<typeof buildStorageMaterials>
+function fixedEmptyHistory(supplied: unknown, at: Date, startDate: string, includeSets: boolean) {
+  return supplied === undefined && at.getTime() === TODAY.getTime() && new Date().getTime() === TODAY.getTime()
+    && startDate === "2026-09-08" && !includeSets
+    && localStorage.getItem(activePlanBetaStorageKey()) === null && loadEntries().length === 0
+}
+function fixture(supplied?: Parameters<typeof buildFixture>[0], at = TODAY, startDate = "2026-09-08", includeSets = false) {
+  return defaultFixture && fixedEmptyHistory(supplied, at, startDate, includeSets)
+    ? structuredClone(defaultFixture) : buildFixture(supplied, at, startDate, includeSets)
+}
+
 it("connects every real generated RPE MAIN to independently scoped detailed content without any athlete record", () => {
   const { inputs, bindings } = fixture()
   expect(inputs.length).toBeGreaterThanOrEqual(2)
@@ -112,8 +133,8 @@ it("connects every real generated RPE MAIN to independently scoped detailed cont
   expect(result.candidate.selectionAuthority).toBe("NONE")
 })
 
-function storageFixture(supplied?: Extract<ReturnType<typeof generatePlanFromDraft>, { kind: "generated" }>, at = TODAY, startDate = "2026-09-08", includeSets = false) {
-  const { inputs, bindings, generated } = fixture(supplied, at, startDate, includeSets)
+function buildStorageMaterials(f = fixture(), at = TODAY) {
+  const { inputs, bindings, generated } = f
   const scope = multiAdjustedPlanReviewScopeV3(inputs, inputs[0]!.experienceBand, bindings)
   if (scope.kind !== "scope") throw Error(scope.code)
   const policy = { scopeVersion: "MULTI_STRUCTURAL_V3" as const, policyId: "TEST", version: "1", scopeFingerprint: scope.scopeFingerprint,
@@ -124,10 +145,44 @@ function storageFixture(supplied?: Extract<ReturnType<typeof generatePlanFromDra
     expectedCandidateFingerprint: scope.candidate.contentFingerprint }
   const retained = [{ slots: inputs.map(i => ({ address: i.address, authority: i.source.authority, explanation: i.explanation })),
     rpeBindings: bindings, policies: [policy] }]
-  const locks: PlanMutationLockManager = { request: async (_n, _o, callback) => callback({}) }
-  return { request, locks, isCurrentDraft: () => true,
-    readReview: () => ({ preparations: inputs, rpeBindings: bindings, policies: [policy], retained }) }
+  return { request, review: { preparations: inputs, rpeBindings: bindings, policies: [policy], retained } }
 }
+function withStorageControls(materials: ReturnType<typeof buildStorageMaterials>) {
+  const locks: PlanMutationLockManager = { request: async (_n, _o, callback) => callback({}) }
+  return { request: materials.request, locks, isCurrentDraft: () => true,
+    readReview: () => ({ ...materials.review, policies: [...materials.review.policies] }) }
+}
+function storageFixture(supplied?: Parameters<typeof buildFixture>[0], at = TODAY, startDate = "2026-09-08", includeSets = false) {
+  const materials = defaultStorageMaterials && fixedEmptyHistory(supplied, at, startDate, includeSets)
+    ? structuredClone(defaultStorageMaterials) : buildStorageMaterials(fixture(supplied, at, startDate, includeSets), at)
+  return withStorageControls(materials)
+}
+
+it("clones fixed RPE fixture materials without sharing mutable plans, source scopes or reviews", () => {
+  const first = storageFixture(), second = storageFixture()
+  expect(first.request).toEqual(second.request)
+  expect(first.readReview()).toEqual(second.readReview())
+  expect(first.request).not.toBe(second.request)
+  expect(first.readReview).not.toBe(second.readReview)
+  expect(first.locks).not.toBe(second.locks)
+  const readA = first.readReview(), readB = first.readReview()
+  expect(readA).not.toBe(readB)
+  expect(readA.policies).not.toBe(readB.policies)
+  expect(readA.policies[0]).toBe(readB.policies[0])
+  readA.policies.pop()
+  expect(first.readReview().policies).toHaveLength(1)
+  expect(first.request.preparations).toBe(first.readReview().preparations)
+  expect(first.request.preparations[0]!.candidate).toBe(first.request.generated.candidates[0])
+  expect(first.request.preparations[0]!.candidate).not.toBe(second.request.preparations[0]!.candidate)
+  expect(first.readReview().retained[0]!.rpeBindings).toBe(first.readReview().rpeBindings)
+  Reflect.set(first.request.preparations[0]!.candidate, "candidateId", "CASE-LOCAL-MUTATION")
+  Reflect.set(first.readReview().policies[0]!, "revokedAtMs", TODAY.getTime())
+  first.readReview().retained.pop()
+  const third = storageFixture()
+  expect(third.request).toEqual(second.request)
+  expect(third.readReview()).toEqual(second.readReview())
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
+})
 
 it("reuses structural review scope across start dates while retaining distinct session snapshots", () => {
   const first = storageFixture(undefined, TODAY, "2026-09-08")
@@ -248,12 +303,26 @@ it("selects a uniquely reviewed source catalog and preserves history after curre
   const saved = await saveSelectedMultiAdjustedPlanV6({ request: entry!.seed,
     readReview: entry!.readReview, isCurrentDraft: () => true, locks: f.locks })
   expect(saved.kind).toBe("saved")
-  current = [sources, sources]
-  expect(runtime.multiAdjustmentResolverV3!(context)).toBeNull()
   current = []
   expect(runtime.multiAdjustmentResolverV3!(context)).toBeNull()
   expect(() => entry!.readReview()).toThrow()
   expect(readPlanBetaStateFromStorage([], [], runtime.readMultiAdjustedEvidenceV3!()).kind).toBe("multi_adjusted_v3_loaded")
+})
+
+it("rejects ambiguous independently reviewed source catalogs without writing a plan", () => {
+  const f = storageFixture(), reviewed = f.readReview()
+  const sources = { rpeBindings: reviewed.rpeBindings, policies: reviewed.policies,
+    slots: reviewed.preparations.map(p => ({ address: p.address, source: p.source, experienceBand: p.experienceBand,
+      initialReceipt: JSON.parse(p.rawSnapshot).receipt, explanations: [p.explanation] })) }
+  const runtime = createCatalogMultiPlanRuntimeV3({ now: () => TODAY,
+    readCatalog: () => ({ current: [sources, sources], retained: reviewed.retained }) })
+  const context = { generated: f.request.generated, gate: f.request.gate, intake: f.request.intake,
+    athleteEvidence: f.request.athleteEvidence, currentCheck: f.request.currentCheck,
+    candidateId: f.request.preparations[0]!.candidate.candidateId, startDate: f.request.preparations[0]!.startDate }
+  const writes = vi.spyOn(Storage.prototype, "setItem")
+  expect(runtime.multiAdjustmentResolverV3!(context)).toBeNull()
+  expect(writes.mock.calls.every(([key]) => key === "__to_probe__")).toBe(true)
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
 })
 
 it("opens a saved multi-plan through real application navigation with independent retained evidence", async () => {
@@ -636,8 +705,8 @@ it("prepares the next frame from actual multi-plan history without inventing mis
   expect(prepareMultiAdjustedNextFrameV3({ ...base, previous: pain.state, expectedFingerprint: pain.state.contentFingerprint }, retained, later)).toMatchObject({ code: "ACTIVE_HOLD" })
 })
 
-async function successorStorageFixture() {
-  const first = storageFixture(), previous = await saveSelectedMultiAdjustedPlanV6(first)
+async function coldSuccessorStorageFixture() {
+  const first = withStorageControls(buildStorageMaterials(buildFixture())), previous = await saveSelectedMultiAdjustedPlanV6(first)
   if (previous.kind !== "saved") throw Error("Initial save failed")
   const later = new Date("2026-09-30T12:00:00+09:00")
   vi.setSystemTime(later)
@@ -650,8 +719,75 @@ async function successorStorageFixture() {
     readReview: () => ({ ...review, retained }) }, retained, later }
 }
 
+let existingPredecessor: {
+  previous: Awaited<ReturnType<typeof coldSuccessorStorageFixture>>["previous"]
+  materials: ReturnType<typeof buildStorageMaterials>
+  retained: Awaited<ReturnType<typeof coldSuccessorStorageFixture>>["retained"]
+  laterMs: number
+  raw: string
+}
+beforeAll(async () => {
+  localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null)
+  vi.useFakeTimers(); vi.setSystemTime(TODAY)
+  try {
+    defaultFixture = freezeJson(buildFixture())
+    defaultStorageMaterials = freezeJson(buildStorageMaterials(structuredClone(defaultFixture)))
+    const cold = await coldSuccessorStorageFixture()
+    existingPredecessor = freezeJson({ previous: cold.previous,
+      materials: { request: cold.input.request, review: cold.input.readReview() },
+      retained: cold.retained, laterMs: cold.later.getTime(), raw: localStorage.getItem(activePlanBetaStorageKey())! })
+  } finally {
+    localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useRealTimers()
+  }
+})
+function seededExistingPredecessorFixture() {
+  // These cases start from an existing guest plan, not from an initial save.
+  // Install independent bytes, then exercise the real successor transaction.
+  if (activeLocalAccount() !== null || localStorage.getItem(activePlanBetaStorageKey()) !== null) {
+    throw Error("Existing predecessor fixture requires an empty guest scope")
+  }
+  const seeded = structuredClone(existingPredecessor)
+  const later = new Date(seeded.laterMs)
+  localStorage.setItem(activePlanBetaStorageKey(), seeded.raw)
+  vi.setSystemTime(later)
+  const next = withStorageControls(seeded.materials)
+  return { previous: seeded.previous, input: { ...next, expectedPredecessorFingerprint: seeded.previous.contentFingerprint,
+    readReview: () => ({ ...seeded.materials.review }) },
+    retained: seeded.retained, later }
+}
+
+it("matches a cold predecessor with isolated seeded bytes while preserving expiry and account boundaries", async () => {
+  const cold = await coldSuccessorStorageFixture(), raw = localStorage.getItem(activePlanBetaStorageKey())
+  localStorage.clear(); sessionStorage.clear(); vi.setSystemTime(TODAY)
+  const seeded = seededExistingPredecessorFixture()
+  expect(seeded.previous).toEqual(cold.previous)
+  expect(seeded.input.request).toEqual(cold.input.request)
+  expect(seeded.input.readReview()).toEqual(cold.input.readReview())
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(raw)
+  expect(seeded.input.request.preparations).toBe(seeded.input.readReview().preparations)
+  expect(seeded.input.request.preparations[0]!.candidate).toBe(seeded.input.request.generated.candidates[0])
+  expect(seeded.previous).not.toBe(cold.previous)
+  expect(seeded.input.readReview().retained).not.toBe(cold.input.readReview().retained)
+  seeded.later.setTime(0)
+  Reflect.set(seeded.input.readReview().policies[0]!, "revokedAtMs", 1)
+  localStorage.clear(); vi.setSystemTime(TODAY)
+  const fresh = seededExistingPredecessorFixture()
+  expect(fresh.input.request).not.toBe(seeded.input.request)
+  expect(fresh.input.readReview()).not.toBe(seeded.input.readReview())
+  expect(fresh.later).toEqual(cold.later)
+  expect(fresh.input.readReview()).toEqual(cold.input.readReview())
+  vi.setSystemTime(new Date(fresh.later.getTime() + 100))
+  expect((await saveSelectedMultiAdjustedSuccessorV3(fresh.input)).kind).toBe("rejected")
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(raw)
+  setActiveLocalAccount("isolated-owner")
+  expect(readPlanBetaStateFromStorage([], [], fresh.retained).kind).toBe("missing")
+  expect(() => seededExistingPredecessorFixture()).toThrow("empty guest scope")
+  setActiveLocalAccount(null)
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(raw)
+})
+
 it("opens the next cycle from the schedule and saves through candidate, multi edit, and final confirmation", async () => {
-  const f = await successorStorageFixture(), before = localStorage.getItem(activePlanBetaStorageKey())
+  const f = await coldSuccessorStorageFixture(), before = localStorage.getItem(activePlanBetaStorageKey())
     const readSources = vi.fn(() => {
       const reviewed = f.input.readReview()
       return { rpeBindings: reviewed.rpeBindings, policies: reviewed.policies,
@@ -685,7 +821,7 @@ it("opens the next cycle from the schedule and saves through candidate, multi ed
 }, 15000)
 
 it.each(["missing-provider", "invalid-provider", "review-required"])("preserves the current schedule when the next UI has %s", async scenario => {
-  const f = await successorStorageFixture(), before = localStorage.getItem(activePlanBetaStorageKey())
+  const f = seededExistingPredecessorFixture(), before = localStorage.getItem(activePlanBetaStorageKey())
   render(React.createElement(PlanBeta, { readMultiAdjustedEvidenceV3: () => f.retained,
     multiAdjustmentResolverV3: scenario === "missing-provider" ? undefined : () => null }))
   fireEvent.click(screen.getByRole("button", { name: "다음 훈련 주기 준비" }))
@@ -707,7 +843,7 @@ it.each(["missing-provider", "invalid-provider", "review-required"])("preserves 
 })
 
 it("archives the actual predecessor before saving a multi-plan successor and preserves both readable originals", async () => {
-  const f = await successorStorageFixture()
+  const f = seededExistingPredecessorFixture()
   const saved = await saveSelectedMultiAdjustedSuccessorV3(f.input)
   if (saved.kind !== "saved") throw Error(saved.code)
   expect(saved.state.selection.continuation?.predecessorFingerprint).toBe(f.previous.contentFingerprint)
@@ -778,7 +914,7 @@ it("keeps available time when going back to edit and asks before discarding it",
 })
 
 it.each(["initial", "successor"])("requires explicit final confirmation in the %s multi-plan review screen", async mode => {
-  const successor = mode === "successor" ? await successorStorageFixture() : null
+  const successor = mode === "successor" ? seededExistingPredecessorFixture() : null
   const input = successor?.input ?? storageFixture()
   const before = localStorage.getItem(activePlanBetaStorageKey()), onSaved = vi.fn(), onCancel = vi.fn()
   const props = { seed: input.request, readReview: input.readReview, locks: input.locks,
@@ -913,7 +1049,7 @@ it("stages one addressed editor receipt without replacing the other MAIN and sav
 })
 
 it.each(["archive-expiry", "active-expiry", "active-other-writer"])("rolls back own successor writes for %s", async scenario => {
-  const f = await successorStorageFixture(), key = activePlanBetaStorageKey(), before = localStorage.getItem(key)
+  const f = seededExistingPredecessorFixture(), key = activePlanBetaStorageKey(), before = localStorage.getItem(key)
   const original = Storage.prototype.setItem
   let injected = false
   vi.spyOn(Storage.prototype, "setItem").mockImplementation(function(this: Storage, name, value) {
