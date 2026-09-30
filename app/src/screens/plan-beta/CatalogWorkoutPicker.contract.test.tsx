@@ -23,6 +23,24 @@ function fixture(experienceBand: "NEW_TO_RUNNING" | "EXPERIENCED" = "EXPERIENCED
 function openPicker() { fireEvent.click(screen.getByText("다른 훈련으로 바꾸기", { exact: true })) }
 
 describe("catalog picker actionable and truthful review", () => {
+  it("explains an empty eligible pool and keeps another date reachable without changing the plan", () => {
+    const source = generatePlanFromDraft({ ...fixture("NEW_TO_RUNNING").intake,
+      eventGroup: "MIDDLE_DISTANCE", eventDistanceM: 1500, availableDayCount: 6,
+      requestedFrameLength: 7, trainingFocus: "GLY_INTENT" }, "NO_KNOWN_RISK")
+    if (source.kind !== "generated") throw Error(source.kind)
+    const snapshot = JSON.stringify(source.generated), onChange = vi.fn()
+    render(<CatalogWorkoutPicker generated={source.generated} intake={source.intake} records={[]} onChange={onChange} />)
+    openPicker()
+    expect(screen.getByRole("status")).toHaveTextContent("이 종목·경험 수준에 맞는 대체 훈련이 아직 없어요. 현재 훈련은 그대로예요.")
+    expect(screen.queryByRole("combobox", { name: "훈련 구성" })).toBeNull()
+    const easy = source.generated.candidates[0].sessions.find(s => s.role === "EASY")!
+    expect(screen.getByRole("combobox", { name: "바꿀 일정" })).toBeEnabled()
+    fireEvent.change(screen.getByRole("combobox", { name: "바꿀 일정" }), { target: { value: `${easy.day}:${easy.slot}` } })
+    expect(screen.getByRole("combobox", { name: "훈련 구성" })).toBeVisible()
+    expect(onChange).not.toHaveBeenCalled()
+    expect(JSON.stringify(source.generated)).toBe(snapshot)
+  })
+
   it("checks the shorter candidate budget before applying one workout to both candidates", () => {
     const source = generatePlanFromDraft({ ...fixture("NEW_TO_RUNNING").intake,
       eventGroup: "MIDDLE_DISTANCE", eventDistanceM: 3000, availableDayCount: "EVERY_DAY",

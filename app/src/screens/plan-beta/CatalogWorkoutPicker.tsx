@@ -101,7 +101,9 @@ export function CatalogWorkoutEditor({ generated, intake, records, onChange, onS
   React.useEffect(() => () => onPendingChange?.(false), [onPendingChange])
   const entry = pool.find(e => e.id === choice)
   if (session.prescription.kind !== "RPE_TIME_RANGE") return null
-  if (!entry) return null
+  if (!entry) return <p role="status">{pool.length === 0
+    ? "이 종목·경험 수준에 맞는 대체 훈련이 아직 없어요. 현재 훈련은 그대로예요."
+    : "이 구성은 현재 조건에서 고를 수 없어요. 현재 훈련은 그대로예요. 다른 날짜를 확인해 주세요."}</p>
   const pairedPrescriptions = generated?.candidates.flatMap(candidate => {
     const target = candidate.sessions.find(s => s.day === session.day && s.slot === session.slot)
     return target?.prescription.kind === "RPE_TIME_RANGE" ? [target.prescription] : []

@@ -1,0 +1,282 @@
+{
+  "head": "eb2e4caf99e219b090cd490d51b1c754db1f680b",
+  "totalDistinctPersonas": 100,
+  "sameUtcKstResults": true,
+  "runs": {
+    "utc-v3": {
+      "testCounts": {
+        "registered": 112,
+        "passed": 107,
+        "failed": 0,
+        "skippedUi": 5
+      },
+      "startUtc": "2026-09-30T23:01:57.582Z",
+      "endUtc": "2026-09-30T23:04:21.449Z",
+      "summary": {
+        "baseline": "eb2e4caf99e219b090cd490d51b1c754db1f680b",
+        "personas": 100,
+        "distinctInputs": 100,
+        "checks": 1550902,
+        "catalogRows": 11700,
+        "explicitAndBaseCalculationInvocations": 23400,
+        "actions": 1562,
+        "generationCounts": {
+          "rejected": 6,
+          "generated": 82,
+          "blocked": 12
+        },
+        "failureCounts": {},
+        "networkCalls": 0
+      },
+      "actions": {
+        "swaps": 984,
+        "changed": 419,
+        "held": 565,
+        "saveReload": 578
+      },
+      "catalog": {
+        "presentIds": 117,
+        "boundSavedReloaded": 116,
+        "plannedOff": 1,
+        "notBindable": []
+      },
+      "main": {
+        "generatedProfiles": 82,
+        "mainProfiles": 57,
+        "noMainProfiles": 25,
+        "profilesWithIncompleteMain": 43,
+        "slots": 85,
+        "detailed": 19,
+        "envelopeOnly": 66,
+        "byFocus": {
+          "BASE_INTENT": {
+            "profiles": 13,
+            "mainProfiles": 0,
+            "mainSlots": 0,
+            "detailed": 0,
+            "envelopeOnly": 0
+          },
+          "LT_INTENT": {
+            "profiles": 12,
+            "mainProfiles": 12,
+            "mainSlots": 19,
+            "detailed": 0,
+            "envelopeOnly": 19
+          },
+          "VO2_INTENT": {
+            "profiles": 10,
+            "mainProfiles": 10,
+            "mainSlots": 15,
+            "detailed": 9,
+            "envelopeOnly": 6
+          },
+          "GLY_INTENT": {
+            "profiles": 12,
+            "mainProfiles": 12,
+            "mainSlots": 17,
+            "detailed": 0,
+            "envelopeOnly": 17
+          },
+          "ATP_PC_INTENT": {
+            "profiles": 12,
+            "mainProfiles": 12,
+            "mainSlots": 17,
+            "detailed": 0,
+            "envelopeOnly": 17
+          },
+          "MIXED_INTENT": {
+            "profiles": 11,
+            "mainProfiles": 11,
+            "mainSlots": 17,
+            "detailed": 10,
+            "envelopeOnly": 7
+          },
+          "RECOVERY_INTENT": {
+            "profiles": 12,
+            "mainProfiles": 0,
+            "mainSlots": 0,
+            "detailed": 0,
+            "envelopeOnly": 0
+          }
+        },
+        "byExperience": {
+          "NEW_TO_RUNNING": {
+            "profiles": 29,
+            "mainProfiles": 20,
+            "mainSlots": 20,
+            "detailed": 7,
+            "envelopeOnly": 13
+          },
+          "DEVELOPING": {
+            "profiles": 26,
+            "mainProfiles": 18,
+            "mainSlots": 33,
+            "detailed": 0,
+            "envelopeOnly": 33
+          },
+          "EXPERIENCED": {
+            "profiles": 27,
+            "mainProfiles": 19,
+            "mainSlots": 32,
+            "detailed": 12,
+            "envelopeOnly": 20
+          }
+        }
+      }
+    },
+    "kst-v3": {
+      "testCounts": {
+        "registered": 112,
+        "passed": 107,
+        "failed": 0,
+        "skippedUi": 5
+      },
+      "startUtc": "2026-09-30T23:05:21.000Z",
+      "endUtc": "2026-09-30T23:07:43.344Z",
+      "summary": {
+        "baseline": "eb2e4caf99e219b090cd490d51b1c754db1f680b",
+        "personas": 100,
+        "distinctInputs": 100,
+        "checks": 1550902,
+        "catalogRows": 11700,
+        "explicitAndBaseCalculationInvocations": 23400,
+        "actions": 1562,
+        "generationCounts": {
+          "rejected": 6,
+          "generated": 82,
+          "blocked": 12
+        },
+        "failureCounts": {},
+        "networkCalls": 0
+      },
+      "actions": {
+        "swaps": 984,
+        "changed": 419,
+        "held": 565,
+        "saveReload": 578
+      },
+      "catalog": {
+        "presentIds": 117,
+        "boundSavedReloaded": 116,
+        "plannedOff": 1,
+        "notBindable": []
+      },
+      "main": {
+        "generatedProfiles": 82,
+        "mainProfiles": 57,
+        "noMainProfiles": 25,
+        "profilesWithIncompleteMain": 43,
+        "slots": 85,
+        "detailed": 19,
+        "envelopeOnly": 66,
+        "byFocus": {
+          "BASE_INTENT": {
+            "profiles": 13,
+            "mainProfiles": 0,
+            "mainSlots": 0,
+            "detailed": 0,
+            "envelopeOnly": 0
+          },
+          "LT_INTENT": {
+            "profiles": 12,
+            "mainProfiles": 12,
+            "mainSlots": 19,
+            "detailed": 0,
+            "envelopeOnly": 19
+          },
+          "VO2_INTENT": {
+            "profiles": 10,
+            "mainProfiles": 10,
+            "mainSlots": 15,
+            "detailed": 9,
+            "envelopeOnly": 6
+          },
+          "GLY_INTENT": {
+            "profiles": 12,
+            "mainProfiles": 12,
+            "mainSlots": 17,
+            "detailed": 0,
+            "envelopeOnly": 17
+          },
+          "ATP_PC_INTENT": {
+            "profiles": 12,
+            "mainProfiles": 12,
+            "mainSlots": 17,
+            "detailed": 0,
+            "envelopeOnly": 17
+          },
+          "MIXED_INTENT": {
+            "profiles": 11,
+            "mainProfiles": 11,
+            "mainSlots": 17,
+            "detailed": 10,
+            "envelopeOnly": 7
+          },
+          "RECOVERY_INTENT": {
+            "profiles": 12,
+            "mainProfiles": 0,
+            "mainSlots": 0,
+            "detailed": 0,
+            "envelopeOnly": 0
+          }
+        },
+        "byExperience": {
+          "NEW_TO_RUNNING": {
+            "profiles": 29,
+            "mainProfiles": 20,
+            "mainSlots": 20,
+            "detailed": 7,
+            "envelopeOnly": 13
+          },
+          "DEVELOPING": {
+            "profiles": 26,
+            "mainProfiles": 18,
+            "mainSlots": 33,
+            "detailed": 0,
+            "envelopeOnly": 33
+          },
+          "EXPERIENCED": {
+            "profiles": 27,
+            "mainProfiles": 19,
+            "mainSlots": 32,
+            "detailed": 12,
+            "envelopeOnly": 20
+          }
+        }
+      }
+    }
+  },
+  "extraProofTests": {
+    "passed": 11,
+    "failed": 0,
+    "notAdditionalPersonas": true
+  },
+  "actualCallPath": {
+    "negativeSafetyControls": 2,
+    "generationCalls": 1,
+    "defaultBindingCalls": 2,
+    "explicitBindingCalls": 2,
+    "selectionCalls": 1,
+    "saveValidationCalls": 2,
+    "validSaveAccepted": true,
+    "invalidSaveRejected": true,
+    "reloadParserCalls": 1,
+    "savedReloadedExact": true,
+    "mutatedSource": false,
+    "accountService": "disabled mock",
+    "network": "forbidden"
+  },
+  "families": {
+    "BASE": 16,
+    "LT": 20,
+    "MIX": 19,
+    "VO2": 21,
+    "ATP-PC": 18,
+    "GLY": 13,
+    "REC": 9,
+    "OFF": 1
+  },
+  "sourceRawDirectory": ".scratch/persona-100-core-final-20261001",
+  "syntheticOnly": true,
+  "productionVerified": false
+}

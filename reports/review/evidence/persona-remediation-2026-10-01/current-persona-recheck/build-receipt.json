@@ -1,0 +1,6 @@
+{
+  "sourceHead": "eb2e4caf99e219b090cd490d51b1c754db1f680b",
+  "trackedChanges": "app/e2e/catalog-workout.spec.ts\napp/e2e/fixtures/catalog-workout.tsx\napp/e2e/persona-100-adversarial.audit.ts\napp/e2e/planned-repetition.spec.ts\napp/playwright.persona-100.config.ts\napp/src/screens/plan-beta/CatalogWorkoutPicker.contract.test.tsx\napp/src/screens/plan-beta/CatalogWorkoutPicker.tsx\napp/src/styles/plan-beta.css\nspecs/reconstruct/ALL_WORKOUT_CALCULATION_AND_BINDING_CONTRACT.md",
+  "localOnly": true,
+  "envFilesRead": false
+}

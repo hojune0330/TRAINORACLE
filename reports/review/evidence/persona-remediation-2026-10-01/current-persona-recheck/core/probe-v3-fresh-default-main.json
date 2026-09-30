@@ -1,0 +1,1035 @@
+{
+  "counts": {
+    "samePersonasRepeated": true,
+    "safeGeneratedProfiles": 82,
+    "mainProfiles": 57,
+    "noMainProfiles": 25,
+    "mainSlots": 85,
+    "detailed": 19,
+    "envelopeOnly": 66
+  },
+  "byFocus": {
+    "BASE_INTENT": {
+      "profiles": 13,
+      "mainProfiles": 0,
+      "mainSlots": 0,
+      "detailed": 0,
+      "envelopeOnly": 0
+    },
+    "LT_INTENT": {
+      "profiles": 12,
+      "mainProfiles": 12,
+      "mainSlots": 19,
+      "detailed": 0,
+      "envelopeOnly": 19
+    },
+    "VO2_INTENT": {
+      "profiles": 10,
+      "mainProfiles": 10,
+      "mainSlots": 15,
+      "detailed": 9,
+      "envelopeOnly": 6
+    },
+    "GLY_INTENT": {
+      "profiles": 12,
+      "mainProfiles": 12,
+      "mainSlots": 17,
+      "detailed": 0,
+      "envelopeOnly": 17
+    },
+    "ATP_PC_INTENT": {
+      "profiles": 12,
+      "mainProfiles": 12,
+      "mainSlots": 17,
+      "detailed": 0,
+      "envelopeOnly": 17
+    },
+    "MIXED_INTENT": {
+      "profiles": 11,
+      "mainProfiles": 11,
+      "mainSlots": 17,
+      "detailed": 10,
+      "envelopeOnly": 7
+    },
+    "RECOVERY_INTENT": {
+      "profiles": 12,
+      "mainProfiles": 0,
+      "mainSlots": 0,
+      "detailed": 0,
+      "envelopeOnly": 0
+    }
+  },
+  "rows": [
+    {
+      "id": "P002",
+      "focus": "BASE_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 1500,
+      "main": []
+    },
+    {
+      "id": "P003",
+      "focus": "BASE_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 3000,
+      "main": []
+    },
+    {
+      "id": "P004",
+      "focus": "BASE_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 5000,
+      "main": []
+    },
+    {
+      "id": "P005",
+      "focus": "BASE_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 10000,
+      "main": []
+    },
+    {
+      "id": "P006",
+      "focus": "BASE_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 21097,
+      "main": []
+    },
+    {
+      "id": "P007",
+      "focus": "BASE_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 42195,
+      "main": []
+    },
+    {
+      "id": "P008",
+      "focus": "LT_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 800,
+      "main": [
+        {
+          "slot": "3:AM",
+          "catalogId": null
+        },
+        {
+          "slot": "9:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P009",
+      "focus": "LT_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 1500,
+      "main": [
+        {
+          "slot": "3:PM",
+          "catalogId": null
+        },
+        {
+          "slot": "10:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P010",
+      "focus": "LT_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 3000,
+      "main": [
+        {
+          "slot": "2:PM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P011",
+      "focus": "LT_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 5000,
+      "main": [
+        {
+          "slot": "5:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P012",
+      "focus": "LT_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 10000,
+      "main": [
+        {
+          "slot": "4:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P013",
+      "focus": "LT_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 21097,
+      "main": [
+        {
+          "slot": "3:AM",
+          "catalogId": null
+        },
+        {
+          "slot": "7:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P015",
+      "focus": "VO2_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 800,
+      "main": [
+        {
+          "slot": "2:PM",
+          "catalogId": null
+        },
+        {
+          "slot": "10:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P016",
+      "focus": "VO2_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 1500,
+      "main": [
+        {
+          "slot": "4:PM",
+          "catalogId": "X-VO2-08"
+        }
+      ]
+    },
+    {
+      "id": "P017",
+      "focus": "VO2_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 3000,
+      "main": [
+        {
+          "slot": "4:AM",
+          "catalogId": "X-VO2-07"
+        },
+        {
+          "slot": "9:AM",
+          "catalogId": "X-VO2-06"
+        }
+      ]
+    },
+    {
+      "id": "P019",
+      "focus": "VO2_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 10000,
+      "main": [
+        {
+          "slot": "2:AM",
+          "catalogId": "P-INTRO-VO2-2"
+        }
+      ]
+    },
+    {
+      "id": "P021",
+      "focus": "VO2_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 42195,
+      "main": [
+        {
+          "slot": "5:PM",
+          "catalogId": "P-INTRO-VO2-2"
+        }
+      ]
+    },
+    {
+      "id": "P022",
+      "focus": "GLY_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 800,
+      "main": [
+        {
+          "slot": "3:PM",
+          "catalogId": null
+        },
+        {
+          "slot": "7:PM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P023",
+      "focus": "GLY_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 1500,
+      "main": [
+        {
+          "slot": "3:AM",
+          "catalogId": null
+        },
+        {
+          "slot": "9:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P024",
+      "focus": "GLY_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 3000,
+      "main": [
+        {
+          "slot": "3:AM",
+          "catalogId": null
+        },
+        {
+          "slot": "10:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P025",
+      "focus": "GLY_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 5000,
+      "main": [
+        {
+          "slot": "2:AM",
+          "catalogId": null
+        },
+        {
+          "slot": "7:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P026",
+      "focus": "GLY_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 10000,
+      "main": [
+        {
+          "slot": "5:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P028",
+      "focus": "GLY_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 42195,
+      "main": [
+        {
+          "slot": "3:PM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P029",
+      "focus": "ATP_PC_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 800,
+      "main": [
+        {
+          "slot": "3:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P030",
+      "focus": "ATP_PC_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 1500,
+      "main": [
+        {
+          "slot": "2:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P031",
+      "focus": "ATP_PC_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 3000,
+      "main": [
+        {
+          "slot": "4:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P032",
+      "focus": "ATP_PC_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 5000,
+      "main": [
+        {
+          "slot": "4:AM",
+          "catalogId": null
+        },
+        {
+          "slot": "9:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P033",
+      "focus": "ATP_PC_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 10000,
+      "main": [
+        {
+          "slot": "3:PM",
+          "catalogId": null
+        },
+        {
+          "slot": "9:PM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P034",
+      "focus": "ATP_PC_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 21097,
+      "main": [
+        {
+          "slot": "2:PM",
+          "catalogId": null
+        },
+        {
+          "slot": "7:PM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P036",
+      "focus": "MIXED_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 800,
+      "main": [
+        {
+          "slot": "5:AM",
+          "catalogId": "P-RHYTHM-T"
+        }
+      ]
+    },
+    {
+      "id": "P037",
+      "focus": "MIXED_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 1500,
+      "main": [
+        {
+          "slot": "3:AM",
+          "catalogId": "P-INTRO-MIX-S"
+        }
+      ]
+    },
+    {
+      "id": "P038",
+      "focus": "MIXED_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 3000,
+      "main": [
+        {
+          "slot": "3:AM",
+          "catalogId": "P-INTRO-MIX-S"
+        }
+      ]
+    },
+    {
+      "id": "P041",
+      "focus": "MIXED_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 21097,
+      "main": [
+        {
+          "slot": "5:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P042",
+      "focus": "MIXED_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 42195,
+      "main": [
+        {
+          "slot": "4:AM",
+          "catalogId": null
+        },
+        {
+          "slot": "10:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P043",
+      "focus": "RECOVERY_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 800,
+      "main": []
+    },
+    {
+      "id": "P044",
+      "focus": "RECOVERY_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 1500,
+      "main": []
+    },
+    {
+      "id": "P045",
+      "focus": "RECOVERY_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 3000,
+      "main": []
+    },
+    {
+      "id": "P046",
+      "focus": "RECOVERY_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 5000,
+      "main": []
+    },
+    {
+      "id": "P047",
+      "focus": "RECOVERY_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 10000,
+      "main": []
+    },
+    {
+      "id": "P048",
+      "focus": "RECOVERY_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 21097,
+      "main": []
+    },
+    {
+      "id": "P049",
+      "focus": "RECOVERY_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 42195,
+      "main": []
+    },
+    {
+      "id": "P050",
+      "focus": "BASE_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 800,
+      "main": []
+    },
+    {
+      "id": "P051",
+      "focus": "BASE_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 1500,
+      "main": []
+    },
+    {
+      "id": "P054",
+      "focus": "BASE_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 10000,
+      "main": []
+    },
+    {
+      "id": "P055",
+      "focus": "BASE_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 21097,
+      "main": []
+    },
+    {
+      "id": "P056",
+      "focus": "BASE_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 42195,
+      "main": []
+    },
+    {
+      "id": "P057",
+      "focus": "LT_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 800,
+      "main": [
+        {
+          "slot": "4:PM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P059",
+      "focus": "LT_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 3000,
+      "main": [
+        {
+          "slot": "3:AM",
+          "catalogId": null
+        },
+        {
+          "slot": "9:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P060",
+      "focus": "LT_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 5000,
+      "main": [
+        {
+          "slot": "2:AM",
+          "catalogId": null
+        },
+        {
+          "slot": "10:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P061",
+      "focus": "LT_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 10000,
+      "main": [
+        {
+          "slot": "4:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P062",
+      "focus": "LT_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 21097,
+      "main": [
+        {
+          "slot": "4:AM",
+          "catalogId": null
+        },
+        {
+          "slot": "9:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P063",
+      "focus": "LT_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 42195,
+      "main": [
+        {
+          "slot": "3:PM",
+          "catalogId": null
+        },
+        {
+          "slot": "9:PM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P064",
+      "focus": "VO2_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 800,
+      "main": [
+        {
+          "slot": "2:PM",
+          "catalogId": "P-INTRO-VO2-3"
+        }
+      ]
+    },
+    {
+      "id": "P065",
+      "focus": "VO2_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 1500,
+      "main": [
+        {
+          "slot": "2:AM",
+          "catalogId": "P-INTRO-VO2-2"
+        }
+      ]
+    },
+    {
+      "id": "P067",
+      "focus": "VO2_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 5000,
+      "main": [
+        {
+          "slot": "3:AM",
+          "catalogId": null
+        },
+        {
+          "slot": "7:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P068",
+      "focus": "VO2_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 10000,
+      "main": [
+        {
+          "slot": "3:AM",
+          "catalogId": null
+        },
+        {
+          "slot": "9:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P070",
+      "focus": "VO2_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 42195,
+      "main": [
+        {
+          "slot": "2:PM",
+          "catalogId": "X-VO2-06"
+        },
+        {
+          "slot": "7:PM",
+          "catalogId": "P-VO2-2"
+        }
+      ]
+    },
+    {
+      "id": "P071",
+      "focus": "GLY_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 800,
+      "main": [
+        {
+          "slot": "5:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P072",
+      "focus": "GLY_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 1500,
+      "main": [
+        {
+          "slot": "4:AM",
+          "catalogId": null
+        },
+        {
+          "slot": "10:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P073",
+      "focus": "GLY_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 3000,
+      "main": [
+        {
+          "slot": "3:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P074",
+      "focus": "GLY_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 5000,
+      "main": [
+        {
+          "slot": "3:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P075",
+      "focus": "GLY_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 10000,
+      "main": [
+        {
+          "slot": "2:PM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P076",
+      "focus": "GLY_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 21097,
+      "main": [
+        {
+          "slot": "4:PM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P078",
+      "focus": "ATP_PC_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 800,
+      "main": [
+        {
+          "slot": "3:AM",
+          "catalogId": null
+        },
+        {
+          "slot": "9:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P080",
+      "focus": "ATP_PC_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 3000,
+      "main": [
+        {
+          "slot": "2:AM",
+          "catalogId": null
+        },
+        {
+          "slot": "9:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P081",
+      "focus": "ATP_PC_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 5000,
+      "main": [
+        {
+          "slot": "5:PM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P082",
+      "focus": "ATP_PC_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 10000,
+      "main": [
+        {
+          "slot": "3:PM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P083",
+      "focus": "ATP_PC_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 21097,
+      "main": [
+        {
+          "slot": "3:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P084",
+      "focus": "ATP_PC_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 42195,
+      "main": [
+        {
+          "slot": "3:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P085",
+      "focus": "MIXED_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 800,
+      "main": [
+        {
+          "slot": "2:AM",
+          "catalogId": null
+        },
+        {
+          "slot": "7:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P087",
+      "focus": "MIXED_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 3000,
+      "main": [
+        {
+          "slot": "4:PM",
+          "catalogId": null
+        },
+        {
+          "slot": "10:AM",
+          "catalogId": null
+        }
+      ]
+    },
+    {
+      "id": "P088",
+      "focus": "MIXED_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 5000,
+      "main": [
+        {
+          "slot": "3:PM",
+          "catalogId": "P-RHYTHM-T"
+        },
+        {
+          "slot": "7:PM",
+          "catalogId": "P-RHYTHM-T"
+        }
+      ]
+    },
+    {
+      "id": "P089",
+      "focus": "MIXED_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 10000,
+      "main": [
+        {
+          "slot": "3:AM",
+          "catalogId": "P-RHYTHM-T"
+        },
+        {
+          "slot": "9:AM",
+          "catalogId": "P-RHYTHM-T"
+        }
+      ]
+    },
+    {
+      "id": "P090",
+      "focus": "MIXED_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 21097,
+      "main": [
+        {
+          "slot": "2:AM",
+          "catalogId": "P-RHYTHM-T"
+        },
+        {
+          "slot": "10:AM",
+          "catalogId": "P-RHYTHM-T"
+        }
+      ]
+    },
+    {
+      "id": "P091",
+      "focus": "MIXED_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 42195,
+      "main": [
+        {
+          "slot": "4:AM",
+          "catalogId": "P-INTRO-MIX-T"
+        }
+      ]
+    },
+    {
+      "id": "P093",
+      "focus": "RECOVERY_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 1500,
+      "main": []
+    },
+    {
+      "id": "P094",
+      "focus": "RECOVERY_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 3000,
+      "main": []
+    },
+    {
+      "id": "P095",
+      "focus": "RECOVERY_INTENT",
+      "experience": "DEVELOPING",
+      "eventDistanceM": 5000,
+      "main": []
+    },
+    {
+      "id": "P097",
+      "focus": "RECOVERY_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 21097,
+      "main": []
+    },
+    {
+      "id": "P098",
+      "focus": "RECOVERY_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 42195,
+      "main": []
+    },
+    {
+      "id": "P099",
+      "focus": "BASE_INTENT",
+      "experience": "EXPERIENCED",
+      "eventDistanceM": 800,
+      "main": []
+    },
+    {
+      "id": "P100",
+      "focus": "BASE_INTENT",
+      "experience": "NEW_TO_RUNNING",
+      "eventDistanceM": 1500,
+      "main": []
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "negativeSafetyControls": 2,
+  "generationCalls": 1,
+  "defaultBindingCalls": 2,
+  "explicitBindingCalls": 2,
+  "selectionCalls": 1,
+  "saveValidationCalls": 2,
+  "validSaveAccepted": true,
+  "invalidSaveRejected": true,
+  "reloadParserCalls": 1,
+  "savedReloadedExact": true,
+  "mutatedSource": false,
+  "accountService": "disabled mock",
+  "network": "forbidden"
+}

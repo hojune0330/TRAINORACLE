@@ -2,11 +2,17 @@
 import { expect, test, type Locator, type Page, type TestInfo } from "@playwright/test"
 import { mkdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
+import { execFileSync } from "node:child_process"
 import { enterPlanWithoutRecord, refinePlan } from "./plan-flow"
 import { undersizedInteractiveTargets } from "./touch-audit"
 
-const ROOT = path.resolve(import.meta.dirname, "../../.scratch/persona-100-browser")
-const ORIGIN = "http://127.0.0.1:4419"
+const REPO = path.resolve(import.meta.dirname, "../..")
+const RUN_ID = process.env.TRAINORACLE_PERSONA_BROWSER_RUN
+if (!RUN_ID || !/^[a-zA-Z0-9_-]{1,80}$/u.test(RUN_ID)) throw new Error("Use the opt-in browser audit configuration")
+const ROOT = path.join(REPO, `.scratch/persona-100-browser-${RUN_ID}`)
+const ORIGIN = process.env.TRAINORACLE_PERSONA_BROWSER_ORIGIN ?? "http://127.0.0.1:4419"
+const git = (...args: string[]) => execFileSync("git", ["-c", `safe.directory=${REPO.replaceAll("\\", "/")}`, ...args], { cwd: REPO, encoding: "utf8" }).trim()
+const SOURCE = { head: git("rev-parse", "HEAD"), trackedChanges: git("diff", "--name-only", "HEAD"), runId: RUN_ID }
 const WIDTHS = [320, 360, 375, 390, 768, 1280]
 const EVENTS = [800, 1500, 3000, 5000, 10000, 21097, 42195]
 const EXPERIENCE = ["NEW_TO_RUNNING", "DEVELOPING", "EXPERIENCED"]
@@ -62,11 +68,25 @@ async function audit(page: Page, e: Evidence, label: string) {
     clipped: [...document.querySelectorAll<HTMLElement>("button,input,select,summary,[role=dialog]")].filter(el => el.checkVisibility())
       .flatMap(el => { const r = el.getBoundingClientRect(); return r.right > innerWidth + 1 || r.left < -1
         ? [{ name: el.getAttribute("aria-label") ?? el.textContent?.trim().slice(0, 70), left: r.left, right: r.right }] : [] }).slice(0, 20),
+    headingCollisions: [...document.querySelectorAll<HTMLElement>(".plan-result-header")].flatMap(header => {
+      const heading = header.querySelector("h1")
+      if (!heading || !heading.checkVisibility()) return []
+      const range = document.createRange()
+      range.selectNodeContents(heading)
+      const lines = [...range.getClientRects()]
+      return [...header.querySelectorAll("button")].filter(button => button.checkVisibility()).flatMap(button => {
+        const rect = button.getBoundingClientRect()
+        return lines.some(line => Math.min(line.right, rect.right) - Math.max(line.left, rect.left) > 1
+          && Math.min(line.bottom, rect.bottom) - Math.max(line.top, rect.top) > 1)
+          ? [{ heading: heading.textContent, button: button.getAttribute("aria-label") }] : []
+      })
+    }),
   }))
   // Ignore subpixel rounding of a specified 44px target, not genuinely small hit areas.
   const smallTargets = (await undersizedInteractiveTargets(page.locator("body"))).filter(t => t.width < 43.5 || t.height < 43.5)
   e.audits.push({ label, geometry, smallTargets })
   if (geometry.width > geometry.layout + 1) add(e, "HORIZONTAL_OVERFLOW", geometry)
+  if (geometry.headingCollisions.length) add(e, "HEADING_CONTROL_OVERLAP", geometry.headingCollisions)
   if (smallTargets.length) add(e, "SMALL_TAP_TARGET", smallTargets)
   if ((e.persona.n <= 6 && ["entry", "generated", "picker", "active"].includes(label)) || label === "numeric-gap") await capture(page, e, label)
 }
@@ -89,11 +109,23 @@ async function picker(page: Page, e: Evidence) {
     await address.selectOption(addresses[e.persona.n % addresses.length]!)
   }
   const select = root.getByRole("combobox", { name: "훈련 구성", exact: true })
+  if (!await select.count()) {
+    await expect(root.getByRole("status")).toContainText("맞는 대체 훈련이 아직 없어요")
+    await expect(address).toBeEnabled()
+    e.numeric.push({ kind: "no-eligible-catalog-configuration", text: await root.innerText() })
+    return
+  }
   const initialSelection = await select.inputValue()
   const initialRecord = root.getByRole("combobox", { name: "참고 페이스에 사용할 5km 기록" })
   const initialRecordValue = await initialRecord.count() ? await initialRecord.inputValue() : null
+  const inputSnapshot = () => root.locator("input,select").evaluateAll(nodes => nodes.map(node => ({
+    name: node.getAttribute("aria-label") ?? (node as HTMLInputElement).name,
+    value: (node as HTMLInputElement).value,
+    checked: node instanceof HTMLInputElement ? node.checked : null,
+  })))
+  const initialInputs = await inputSnapshot()
   const options = await select.locator("option").evaluateAll(nodes => nodes.map(n => ({ id: (n as HTMLOptionElement).value, name: n.textContent })))
-  const catalog = JSON.parse(await readFile(path.join(ROOT, "baseline/impl/src/prescription/all-workout-catalog.json"), "utf8")).rows as { id: string; eventDistances: number[]; experience: string[] }[]
+  const catalog = JSON.parse(await readFile(path.join(REPO, "impl/src/prescription/all-workout-catalog.json"), "utf8")).rows as { id: string; eventDistances: number[]; experience: string[] }[]
   const incompatible = options.filter(o => {
     const entry = catalog.find(r => r.id === o.id)
     return entry && (!entry.eventDistances.includes(e.persona.event) || !entry.experience.includes(e.persona.experience))
@@ -157,6 +189,10 @@ async function picker(page: Page, e: Evidence) {
   for (let i = 0; i < await confirmations.count(); i++) await confirmations.nth(i).check()
   await audit(page, e, "picker")
   if (!await apply.isEnabled()) {
+    if (JSON.stringify(await inputSnapshot()) === JSON.stringify(initialInputs) && await start.isEnabled()) {
+      e.numeric.push({ kind: "already-applied-unchanged", choice: choice.id })
+      return
+    }
     e.numeric.push({ kind: "catalog-remains-blocked", choice: choice.id, text: await root.innerText() })
     add(e, "CATALOG_APPLY_DEADEND", { choice: choice.id, text: await root.innerText() })
     // The parent fix supplies an explicit cancel. Baseline fallback is logged, not a pass.
@@ -189,11 +225,15 @@ for (let n = 1; n <= 100; n++) {
   const p = persona(n)
   test(`${p.id} ${p.width}px ${p.entry} ${p.experience} ${p.event}m ${p.habit}`, async ({ page, context }, info) => {
     const run = info.project.name || "baseline"
-    const e: Evidence = { persona: p, run, source: run === "current" ? "working-tree" : "9085282-frozen", phase: "setup",
+    const e: Evidence = { persona: p, run, source: JSON.stringify(SOURCE), phase: "setup",
       attempted: false, generated: false, safetyBlocked: false, finalized: false, productErrors: [], harnessErrors: [],
       findings: [], steps: [], audits: [], networkBlocked: [], pageErrors: [], screenshots: [], numeric: [] }
     await mkdir(path.join(ROOT, run, p.id), { recursive: true })
     page.on("pageerror", error => e.pageErrors.push(error.message))
+    page.on("dialog", async dialog => {
+      e.steps.push({ phase: "navigation-confirmation", detail: { kind: dialog.type(), decision: "cancel" } })
+      await dialog.dismiss()
+    })
     await context.route("**/*", async route => {
       const req = route.request(), url = new URL(req.url())
       if (url.origin !== ORIGIN || !["GET", "HEAD"].includes(req.method()) || /\/(?:api|auth|rest)\//u.test(url.pathname)) {
@@ -204,7 +244,7 @@ for (let n = 1; n <= 100; n++) {
     })
     await context.routeWebSocket("**/*", route => {
       const url = new URL(route.url())
-      if (url.hostname === "127.0.0.1" && url.port === "4419") route.connectToServer()
+      if (url.hostname === "127.0.0.1" && url.port === new URL(ORIGIN).port) route.connectToServer()
       else { e.networkBlocked.push({ method: "WEBSOCKET", destination: "external" }); route.close() }
     })
     await page.setViewportSize({ width: p.width, height: p.height })
