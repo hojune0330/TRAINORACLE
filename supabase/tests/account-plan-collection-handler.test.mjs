@@ -35,6 +35,7 @@ if (process.env.PLAN_COLLECTION_MUTATION) {
     owner: ["input.action === 'commit' && input.request.ownerId !== ownerId", 'false'],
     catalogJournals: ['replan && (selected.catalogReplacement || selected.executionReplan)', 'false'],
     replanJournals: ['replan && (selected.catalogReplacement || selected.executionReplan)', 'false'],
+    replanSource: ['selected.executionReplan && !validateExecutionReplanJournalFacts(replan, facts, sourceContext)', 'false'],
     catalogClock: ['!catalogReplacementClockIsCurrent(replan, now())', 'false'],
   };
   const change = mutations[process.env.PLAN_COLLECTION_MUTATION];
@@ -47,11 +48,11 @@ if (process.env.PLAN_COLLECTION_MUTATION) {
 
 const { build } = createRequire(new URL('../../app/package.json', import.meta.url))('esbuild');
 const built = await build({ stdin: {
-  contents: 'export { stateFixture } from "./src/domain/plan-beta-store.test-fixture.ts"; export { replanFixture } from "./src/domain/execution-replan.test-fixture.ts"; export { prepareExecutionReplan, executionReplanEvidence, replanFingerprint } from "./src/domain/execution-replan.ts"; export { accountPlanEntry } from "./src/domain/account/account-plan-document-schema.ts"; export { createPlannedSessionLogDraft } from "./src/domain/planned-session-link.ts"; export { prepareCatalogReplacement } from "./src/domain/catalog-replacement.ts"; export { ALL_WORKOUT_CATALOG } from "../impl/src/prescription/all-workout-calculator.ts";',
+  contents: 'export { stateFixture } from "./src/domain/plan-beta-store.test-fixture.ts"; export { replanFixture } from "./src/domain/execution-replan.test-fixture.ts"; export { replacedReplanFixture } from "./src/domain/execution-replan-lineage.test-fixture.ts"; export { prepareExecutionReplan, executionReplanEvidence, replanFingerprint } from "./src/domain/execution-replan.ts"; export { accountPlanEntry } from "./src/domain/account/account-plan-document-schema.ts"; export { createPlannedSessionLogDraft } from "./src/domain/planned-session-link.ts"; export { prepareCatalogReplacement } from "./src/domain/catalog-replacement.ts"; export { ALL_WORKOUT_CATALOG } from "../impl/src/prescription/all-workout-calculator.ts";',
   resolveDir: fileURLToPath(new URL('../../app/', import.meta.url)), loader: 'ts',
 }, tsconfig: fileURLToPath(new URL('../../app/tsconfig.json', import.meta.url)),
 bundle: true, write: false, platform: 'neutral', format: 'esm' });
-const { stateFixture, replanFixture, prepareExecutionReplan, accountPlanEntry, prepareCatalogReplacement, ALL_WORKOUT_CATALOG,
+const { stateFixture, replanFixture, replacedReplanFixture, prepareExecutionReplan, accountPlanEntry, prepareCatalogReplacement, ALL_WORKOUT_CATALOG,
   executionReplanEvidence, replanFingerprint, createPlannedSessionLogDraft } = await import(`data:text/javascript;base64,${Buffer.from(built.outputFiles[0].text).toString('base64')}`);
 function document(count = 1) {
   const plans = Array.from({ length: count }, (_, i) => {
@@ -191,6 +192,62 @@ test('execution replan checks actual journal protection for both changed source 
     await check(response, expectedStatus);
     assert.equal(f.calls.commit, mode === 'other-slot' ? 2 : 1, mode);
     assert.equal(f.getIndex().index_document.currentPlanId, mode === 'other-slot' ? selected.planId : old.planId, mode);
+  }
+});
+
+test('execution replan authenticates archived source lineage and rejects forged or duplicate journal sources', async () => {
+  for (const mode of ['valid', 'missing-source', 'foreign-cycle', 'cross-version-duplicate', 'pain']) {
+    const f = await fixture(), seed = replacedReplanFixture();
+    let entries = seed.entries, ids = seed.journalGuard.map(item => item.documentId);
+    f.repo.readJournals = async () => Promise.all(entries.map(async (entry, i) => ({
+      user_id: OWNER, document_id: ids[i], revision: 1, deleted_at: null,
+      encrypted_payload: await encryptAccountJournalDocument(JSON.stringify({ version: 2, state: 'FINALIZED', kind: 'JOURNAL',
+        entry: { ...entry, title: '', memo: '' } }), { ownerId: OWNER, documentId: ids[i] }, f.material.active),
+    })));
+    f.repo.commitReplan = ({ journalGuard: _guard, ...input }) => f.repo.commit(input);
+    let prior = null, plans = [];
+    const operations = [OP, OP2, 'e5555555-5555-4555-8555-555555555555'];
+    for (const [index, state] of [...seed.archivedPlans, seed.state].entries()) {
+      const entry = accountPlanEntry({ state, evidence: null }, seed.now);
+      plans = [...plans.map(p => ({ ...p, archivedAt: p.archivedAt ?? seed.now })), entry];
+      const parts = splitAccountPlanCollection({ version: 3, state: 'ACCOUNT_STATE', kind: 'PLAN',
+        data: { schemaVersion: 1, currentPlanId: entry.planId, plans } });
+      await f.stage(parts);
+      await check(await f.request({ action: 'commit', request: command(parts, prior,
+        { operationId: operations[index], expectedRevision: index }) }), 200);
+      prior = parts;
+    }
+    const preparation = prepareExecutionReplan(seed);
+    assert.equal(preparation.kind, 'ready');
+    const afterState = structuredClone(preparation.proposals.find(p => p.action === 'REDUCE').after);
+    if (mode === 'missing-source') afterState.executionReplan.sourceJournalId = 'nonexistent';
+    if (mode === 'foreign-cycle') {
+      const foreign = structuredClone(seed.archivedPlans[0]);
+      foreign.generatedAt = '2026-09-28T01:00:00.000Z';
+      entries = [{ ...entries[0], plannedSessionLink: createPlannedSessionLogDraft(foreign, foreign.activePlan.sessions[0], seed.now).link }];
+    }
+    if (mode === 'cross-version-duplicate') {
+      const linkedAt = '2026-09-29T03:00:01.000Z';
+      entries = [...entries, { ...entries[0], id: 'duplicate-current', savedAt: linkedAt,
+        plannedSessionLink: createPlannedSessionLogDraft(seed.state, seed.state.activePlan.sessions[0], linkedAt).link }];
+      afterState.executionReplan.acceptedAt = '2026-09-29T03:00:02.000Z';
+      ids = [...ids, '22222222-2222-5222-8222-222222222222'];
+    }
+    if (mode === 'pain') entries = [{ ...entries[0], painCheckStatus: 'SIGNAL_REPORTED', painParts: { knee: 2 } }];
+    afterState.executionReplan.evidenceFingerprint = replanFingerprint(executionReplanEvidence(entries));
+    afterState.executionReplan.journalGuard = ids.map(documentId => ({ documentId, revision: 1 }));
+    const selected = accountPlanEntry({ state: afterState, evidence: null }, afterState.executionReplan.acceptedAt);
+    const after = splitAccountPlanCollection({ version: 3, state: 'ACCOUNT_STATE', kind: 'PLAN', data: {
+      schemaVersion: 1, currentPlanId: selected.planId, plans: [...plans.map(p => ({ ...p, archivedAt: p.archivedAt ?? seed.now })), selected],
+    } });
+    await f.stage(after);
+    const response = await f.request({ action: 'commit', request: command(after, prior,
+      { operationId: 'f6666666-6666-4666-8666-666666666666', expectedRevision: 3 }) });
+    const expected = mode === 'valid' ? 200 : 422;
+    assert.equal(response.status, expected, mode);
+    await check(response, expected, mode === 'valid' ? undefined : { error: 'REPLAN_SOURCE_REQUIRED' });
+    assert.equal(f.calls.commit, mode === 'valid' ? 4 : 3, mode);
+    assert.equal(f.getIndex().index_document.currentPlanId, mode === 'valid' ? selected.planId : prior.index.currentPlanId, mode);
   }
 });
 

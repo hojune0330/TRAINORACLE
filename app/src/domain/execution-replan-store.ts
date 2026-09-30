@@ -6,7 +6,7 @@ import { accountJournalDocumentId } from "./account/account-journal-record-servi
 import { localAccountScopeSnapshot, localAccountScopeIsCurrent, accountScopedStorageKey } from "./account/local-account-scope"
 import { onLocalJournalScopeChange } from "./account/local-journal-ownership"
 import { loadEntriesForPlanSafety, todayISO } from "./journal-store"
-import { loadVersionedPlanBetaState, activePlanBetaStorageKey } from "./plan-beta-store"
+import { loadVersionedPlanBetaState, activePlanBetaStorageKey, readArchivedOriginalPlans } from "./plan-beta-store"
 import { evaluatePlanSafety } from "./plan-beta-flow"
 import { planHistoryListSchema, planHistorySchema } from "./plan-beta-schema"
 import { planHistorySnapshotContent } from "./plan-history-snapshot-content"
@@ -28,7 +28,9 @@ export async function prepareCurrentExecutionReplan(entryId: string, today: stri
     if (online && (!scope || !versions || read.entries.some(e => !versions.some(v => v.entryId === e.id)))) return { kind: "blocked", message: "계정에 저장된 최신 기록인지 확인이 필요해요." }
     const journalGuard = versions && scope ? await Promise.all(versions.map(async v => ({ documentId: await accountJournalDocumentId(scope, v.entryId), revision: v.revision }))) : null
     if (changed || !localAccountScopeIsCurrent(scope)) return { kind: "blocked", message: "계정이 바뀌었어요. 다시 열어 주세요." }
+    const archive = readArchivedOriginalPlans()
     return prepareExecutionReplan({ state, entries: read.entries, entryId, today, now: new Date().toISOString(),
+      archivedPlans: archive.kind === "loaded" ? archive.plans : [],
       journalGuard: journalGuard?.sort((a,b) => a.documentId.localeCompare(b.documentId)) ?? null, noFixedFutureCommitments })
   } finally { unsubscribe() }
 }
@@ -61,7 +63,9 @@ export async function applyExecutionReplan(proposal: ExecutionReplanProposal, to
       if (!fresh()) return blocked("기록·계획·몸 상태가 바뀌었어요. 최신 내용으로 다시 확인해 주세요.")
       const read = loadEntriesForPlanSafety()
       if (read.status !== "complete") return blocked("기록을 다시 불러와 주세요.")
+      const archive = readArchivedOriginalPlans()
       const rebuilt = prepareExecutionReplan({ state: proposal.before, entries: read.entries, entryId: receipt.sourceJournalId,
+        archivedPlans: archive.kind === "loaded" ? archive.plans : [],
         today, now: receipt.acceptedAt, noFixedFutureCommitments: receipt.noFixedFutureCommitments, journalGuard: receipt.journalGuard })
       if (rebuilt.kind !== "ready" || !rebuilt.proposals.some(p => p.id === proposal.id && replanFingerprint(p.after) === replanFingerprint(proposal.after))) return blocked("변경안이 달라졌어요. 다시 선택해 주세요.")
       if (accountPlansEnabled()) {

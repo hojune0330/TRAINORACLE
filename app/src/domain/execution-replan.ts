@@ -2,7 +2,7 @@ import { canonicalJsonFingerprint, deriveCandidateId } from "@impl/plan-generato
 import { isValidIsoDate } from "./dates"
 import type { JournalEntry, PostSessionEntry } from "./journal-schema"
 import { planBetaStateV3Schema, type PlanBetaStateV3 } from "./plan-beta-schema"
-import { resolveCurrentPlannedSession } from "./planned-session-link"
+import { resolveExecutionReplanSource } from "./execution-replan-source"
 import { reviewPlanExecution } from "./plan-execution-review"
 import { EXECUTION_REPLAN_POLICY, replayExecutionReplan, replanKey, type ReplanAction, type ExecutionReplanReceipt } from "./execution-replan-policy"
 import { recordedPlanSlots } from "./recorded-plan-slots"
@@ -51,6 +51,7 @@ export function executionReplanEvidence(entries: readonly JournalEntry[]) {
 export function prepareExecutionReplan(input: {
   state: PlanBetaStateV3; entries: readonly JournalEntry[]; entryId: string; today: string; now: string;
   noFixedFutureCommitments: boolean; journalGuard: ExecutionReplanReceipt["journalGuard"];
+  archivedPlans?: readonly unknown[];
 }): ReplanPreparation {
   const parsed = planBetaStateV3Schema.safeParse(input.state)
   if (!parsed.success || !isValidIsoDate(input.today) || !Number.isFinite(Date.parse(input.now))) return { kind: "blocked", message: "현재 계획을 다시 불러와 주세요." }
@@ -60,10 +61,15 @@ export function prepareExecutionReplan(input: {
   if (!startDate || state.activePlan.selectionActor !== "SELF") return { kind: "blocked", message: "시작 날짜와 계획 선택 권한을 먼저 확인해 주세요." }
   const entry = input.entries.find((e): e is PostSessionEntry => e.id === input.entryId && e.kind === "post-session")
   if (!entry || entry.date > input.today || !entry.plannedSessionLink) return { kind: "blocked", message: "실제로 남긴 훈련 기록이 필요해요." }
-  const session = resolveCurrentPlannedSession(state, entry.plannedSessionLink)
-  if (!session) return { kind: "blocked", message: "이 기록은 이전 계획에 연결되어 있어요. 현재 계획에서 남긴 기록을 선택해 주세요." }
-  const conflict = input.entries.filter(e => e.kind === "post-session" && e.plannedSessionLink?.plannedSessionId === entry.plannedSessionLink!.plannedSessionId).length !== 1
-  const review = reviewPlanExecution(entry, { kind: "matched", session, state, source: "ACTIVE" }, conflict)
+  const original = resolveExecutionReplanSource(state, entry.plannedSessionLink, input.archivedPlans)
+  if (!original) return { kind: "blocked", message: "이 일지와 현재 일정의 연결을 확인하지 못했어요. 원래 기록과 계획은 그대로 있어요." }
+  const link = entry.plannedSessionLink
+  const conflict = input.entries.filter(e => e.kind === "post-session" && e.plannedSessionLink
+    && (e.plannedSessionLink.plannedSessionId === link.plannedSessionId
+      || e.plannedSessionLink.plannedDate === link.plannedDate && e.plannedSessionLink.sessionDay === link.sessionDay
+        && e.plannedSessionLink.sessionSlot === link.sessionSlot
+        && resolveExecutionReplanSource(state, e.plannedSessionLink, input.archivedPlans))).length !== 1
+  const review = reviewPlanExecution(entry, original, conflict)
   if (["SAFETY_REVIEW", "CONFLICT", "SOURCE_UNAVAILABLE"].includes(review.status)
     || state.progress.some(p => p.state === "PAIN_CHECKIN")) return { kind: "blocked", message: review.next }
   if (review.repetitionComparison?.kind === "unavailable") return { kind: "blocked", message: "반복 기록과 원래 처방의 연결을 먼저 확인해 주세요." }

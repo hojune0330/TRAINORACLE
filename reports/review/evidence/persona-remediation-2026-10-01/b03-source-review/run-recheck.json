@@ -1,0 +1,178 @@
+{
+  "startedAt": "2026-09-30T18:19:29.894Z",
+  "finishedAt": "2026-09-30T18:19:32.067Z",
+  "pid": 7536,
+  "node": "v24.11.1",
+  "mode": "recheck",
+  "sourceManifest": [
+    {
+      "file": "app/src/domain/execution-replan-source.ts",
+      "testedSha256": "025906206e1634aa80b99a5df8ed2c701532eb8f506cd66d0316c8b171d66a9f",
+      "endSha256": "025906206e1634aa80b99a5df8ed2c701532eb8f506cd66d0316c8b171d66a9f",
+      "changedDuringReview": false
+    },
+    {
+      "file": "app/src/domain/execution-replan.ts",
+      "testedSha256": "6edd4de659268cca08de0b3dc04c5543b74e3265a64b6f2af794c5ead76acbf7",
+      "endSha256": "6edd4de659268cca08de0b3dc04c5543b74e3265a64b6f2af794c5ead76acbf7",
+      "changedDuringReview": false
+    }
+  ],
+  "dependenciesCaptured": 58,
+  "results": [
+    {
+      "id": "B01-mixed-multiple-manual-and-execution",
+      "status": "PASS",
+      "trace": {
+        "actions": [
+          "manual(day4)",
+          "manual(day8)",
+          "execution(REDUCE)",
+          "manual(day9)"
+        ],
+        "proposalActions": [
+          "REDUCE",
+          "REPLACE",
+          "MOVE_LATER"
+        ],
+        "originalPreserved": true,
+        "strictlyOrderedChangeTimes": true
+      }
+    },
+    {
+      "id": "B02-exact-original-with-missing-or-tampered-middle",
+      "status": "PASS",
+      "trace": {
+        "variants": [
+          "missing",
+          "tampered-progress",
+          "tampered-receipt",
+          "tampered-candidate"
+        ],
+        "chronologyProposalProbe": {
+          "previousAcceptedAt": "2026-10-06T03:03:00.000Z",
+          "afterAcceptedAt": "2026-10-06T03:01:00.000Z",
+          "schemaValid": true,
+          "acceptedByCurrentSourceResolver": false
+        },
+        "equalEdgeTimeAccepted": true
+      }
+    },
+    {
+      "id": "B03-same-date-slot-different-cycle",
+      "status": "PASS",
+      "trace": {
+        "sameCandidateDifferentGenerationRejected": true,
+        "unrelatedCycleNotCountedAsOverlap": true
+      }
+    },
+    {
+      "id": "B04-performed-slot-changed-and-restored",
+      "status": "PASS",
+      "trace": {
+        "schemaValid": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "sameCandidateAfterRoundtrip": true,
+        "sameLinkAfterRoundtrip": true,
+        "changedIntermediateSession": true,
+        "source": null,
+        "actualKind": "blocked",
+        "proposalActions": [],
+        "normalControlActions": [
+          "REDUCE",
+          "REPLACE",
+          "MOVE_LATER"
+        ],
+        "missingAllArchivesSource": null,
+        "missingAllArchivesPreparation": "blocked",
+        "tamperedMiddleSource": null,
+        "unrelatedFurtherChange": {
+          "source": null,
+          "kind": "blocked",
+          "returnedVersionUsedInsteadOfExactOriginal": false,
+          "fullStateDifferentFromOriginal": false,
+          "proposalActions": []
+        },
+        "chronology": {
+          "originalAcceptedAt": "2026-10-06T03:00:00.000Z",
+          "linkedAt": "2026-10-06T03:00:30.000Z",
+          "middleAcceptedAt": "2026-10-06T03:01:00.000Z",
+          "returnedAcceptedAt": "2026-10-06T03:02:00.000Z",
+          "datePerformed": "2026-10-09",
+          "journalSavedAt": "2026-10-09T03:00:00.000Z",
+          "reviewAt": "2026-10-09T04:00:00.000Z"
+        },
+        "temporalProposalProbe": {
+          "savedOriginalLinkUnchanged": true,
+          "savedOriginalPassesLastChangeTimeGate": false,
+          "clientOnlyTimestampEdit": {
+            "schemaValid": true,
+            "samePlannedSessionId": true,
+            "passesProposedLastChangeTimeGate": true,
+            "source": "ACTIVE",
+            "preparationKind": "ready"
+          },
+          "equalTimePassesStrictGate": false,
+          "equalTimeAcceptedByCurrentResolver": false,
+          "genuineCurrentPassesStrictGate": true,
+          "genuineCurrentPreparationKind": "ready",
+          "note": "Actual revised resolver tested. Client-only timestamp alteration is not proof that a stored original journal can be altered."
+        },
+        "rootTimeBoundary": {
+          "exactGenerationMatched": true,
+          "beforeGenerationMatched": false
+        }
+      }
+    },
+    {
+      "id": "B05-overlapping-journals-across-three-versions",
+      "status": "PASS",
+      "trace": {
+        "twoEntryOrderVariants": 6,
+        "threeVersionOverlapBlocked": true
+      }
+    }
+  ],
+  "sensitivity": [
+    {
+      "mutation": "reject-all-sources",
+      "results": [
+        {
+          "id": "B01-mixed-multiple-manual-and-execution",
+          "status": "FAIL",
+          "trace": {},
+          "error": "AssertionError [ERR_ASSERTION]: 이 일지와 현재 일정의 연결을 확인하지 못했어요. 원래 기록과 계획은 그대로 있어요.\n\n'blocked' !== 'ready'\n"
+        }
+      ]
+    },
+    {
+      "mutation": "ignore-overlap",
+      "results": [
+        {
+          "id": "B05-overlapping-journals-across-three-versions",
+          "status": "FAIL",
+          "trace": {},
+          "error": "AssertionError [ERR_ASSERTION]: version-only overlap must be blocked from either selected entry\n\n'ready' !== 'blocked'\n"
+        }
+      ]
+    }
+  ],
+  "cleanup": {
+    "esbuildStopped": true,
+    "ownedChildren": [
+      {
+        "pid": 15672,
+        "file": "D:\\admin\\Documents\\ChatGPT\\트레인 오라클\\TRAINORACLE-device-integration-20260829\\app\\node_modules\\@esbuild\\win32-x64\\esbuild.exe",
+        "exited": true,
+        "exitCode": null,
+        "signal": "SIGTERM"
+      }
+    ],
+    "residualChildren": [],
+    "systemWideProcessInspection": "not available: CIM access denied; own spawn handles tracked instead"
+  }
+}

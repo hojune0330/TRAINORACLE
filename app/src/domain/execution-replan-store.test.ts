@@ -1,9 +1,11 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest"
 import { replanFixture } from "./execution-replan.test-fixture"
 import { prepareExecutionReplan } from "./execution-replan"
-import { applyExecutionReplan } from "./execution-replan-store"
+import { applyExecutionReplan, prepareCurrentExecutionReplan } from "./execution-replan-store"
 import { loadVersionedPlanBetaState, readArchivedOriginalPlans, loadPlanMethodHistorySnapshot } from "./plan-beta-store"
 import { readJournalOriginalPlan } from "./journal-original-plan"
+import { replacedReplanFixture } from "./execution-replan-lineage.test-fixture"
+import { planHistorySnapshotContent } from "./plan-history-snapshot-content"
 
 vi.mock("./plan-mutation-lock", () => ({ PLAN_BETA_MUTATION_LOCK_NAME: "test-plan-lock", getPlanMutationLockManager: () => ({
   request: async (_name: string, _options: unknown, run: (lock: object) => unknown) => run({}),
@@ -19,6 +21,34 @@ function prepared() {
   return { ...f, proposal: result.proposals[0]! }
 }
 describe("execution replan writes", () => {
+  it("prepares and applies from an archived journal after repeated manual changes", async () => {
+    const f = replacedReplanFixture()
+    localStorage.setItem("trainoracle.plan-beta.v1", JSON.stringify(f.state))
+    localStorage.setItem("trainoracle.plan-beta.history.v1", JSON.stringify(f.archivedPlans.map(state => planHistorySnapshotContent(state, f.now, "REPLAN"))))
+    localStorage.setItem("trainoracle.journal.v1", JSON.stringify(f.entries))
+    const journal = localStorage.getItem("trainoracle.journal.v1")
+    const result = await prepareCurrentExecutionReplan(f.entryId, f.today, true)
+    if (result.kind !== "ready") throw Error(result.message)
+    const proposal = result.proposals.find(p => p.action === "REDUCE")!
+    expect(await applyExecutionReplan(proposal, f.today, true)).toEqual({ kind: "applied" })
+    expect(localStorage.getItem("trainoracle.journal.v1")).toBe(journal)
+    expect(readJournalOriginalPlan(f.entries[0]!)).toMatchObject({ kind: "matched", source: "ARCHIVED", state: f.archivedPlans[0] })
+    const history = readArchivedOriginalPlans()
+    expect(history.kind === "loaded" && history.plans.length).toBe(3)
+    expect((await prepareCurrentExecutionReplan(f.entryId, f.today, true)).kind).toBe("ready")
+  })
+  it("rejects a prepared change if its intermediate original disappears before apply", async () => {
+    const f = replacedReplanFixture()
+    localStorage.setItem("trainoracle.plan-beta.v1", JSON.stringify(f.state))
+    localStorage.setItem("trainoracle.journal.v1", JSON.stringify(f.entries))
+    localStorage.setItem("trainoracle.plan-beta.history.v1", JSON.stringify(f.archivedPlans.map(state => planHistorySnapshotContent(state, f.now, "REPLAN"))))
+    const result = await prepareCurrentExecutionReplan(f.entryId, f.today, true)
+    if (result.kind !== "ready") throw Error(result.message)
+    localStorage.setItem("trainoracle.plan-beta.history.v1", JSON.stringify([planHistorySnapshotContent(f.archivedPlans[0]!, f.now, "REPLAN")]))
+    const before = { ...localStorage }
+    expect((await applyExecutionReplan(result.proposals[0]!, f.today, true)).kind).toBe("blocked")
+    expect({ ...localStorage }).toEqual(before)
+  })
   it("reports an uncertain acknowledgement without rolling back an already written plan", async () => {
     const f = prepared(), write = Storage.prototype.setItem, read = Storage.prototype.getItem
     let written = false
