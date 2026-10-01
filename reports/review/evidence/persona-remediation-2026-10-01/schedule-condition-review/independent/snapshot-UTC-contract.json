@@ -1,0 +1,25 @@
+{
+  "zone": "UTC",
+  "mutation": null,
+  "mutationApplied": false,
+  "capturedAt": "2026-10-01T00:51:44.780Z",
+  "before": {
+    "app/src/domain/catalog-schedule-conditions.ts": "853f47e64e7688ab660e7351362389c79dbc3767dfc5b30c7bab683cc4510324",
+    "app/src/screens/plan-beta/CatalogScheduleReview.tsx": "86ff1a8237d59c4b01caf317d5dbd14d60669189421f5bd395f4db977790ac2d",
+    "app/src/screens/plan-beta/CatalogWorkoutPicker.tsx": "ccc3d3584ffd9f06746a07e96d5cc481837949ed34e132a9803e6f314dd73129",
+    "app/src/screens/plan-beta/PlanCandidates.tsx": "f8d122d76537d53c54e4fa9bd23cfce11222f8de82c3aff7f9957fbcc2cfd798",
+    "app/src/components/instant-plan/InstantPlanRecommendationView.tsx": "fa6af506ec84142ddb1b509303dbe4ce5cce590f70d047ad4d608a8eee915377",
+    "app/src/screens/plan-beta/catalog-workout.css": "1eee944b3a35511e4604a306dc06e3f8dec9b215d860836d52187aa79ee53276",
+    "specs/reconstruct/ALL_WORKOUT_CALCULATION_AND_BINDING_CONTRACT.md": "a1a5a13857de003c25b48aacdafb3b8339b7b9618b414b777a8a9efd5ffaffb1"
+  },
+  "after": {
+    "app/src/domain/catalog-schedule-conditions.ts": "853f47e64e7688ab660e7351362389c79dbc3767dfc5b30c7bab683cc4510324",
+    "app/src/screens/plan-beta/CatalogScheduleReview.tsx": "86ff1a8237d59c4b01caf317d5dbd14d60669189421f5bd395f4db977790ac2d",
+    "app/src/screens/plan-beta/CatalogWorkoutPicker.tsx": "ccc3d3584ffd9f06746a07e96d5cc481837949ed34e132a9803e6f314dd73129",
+    "app/src/screens/plan-beta/PlanCandidates.tsx": "f8d122d76537d53c54e4fa9bd23cfce11222f8de82c3aff7f9957fbcc2cfd798",
+    "app/src/components/instant-plan/InstantPlanRecommendationView.tsx": "fa6af506ec84142ddb1b509303dbe4ce5cce590f70d047ad4d608a8eee915377",
+    "app/src/screens/plan-beta/catalog-workout.css": "1eee944b3a35511e4604a306dc06e3f8dec9b215d860836d52187aa79ee53276",
+    "specs/reconstruct/ALL_WORKOUT_CALCULATION_AND_BINDING_CONTRACT.md": "a1a5a13857de003c25b48aacdafb3b8339b7b9618b414b777a8a9efd5ffaffb1"
+  },
+  "unchangedDuringRun": true
+}

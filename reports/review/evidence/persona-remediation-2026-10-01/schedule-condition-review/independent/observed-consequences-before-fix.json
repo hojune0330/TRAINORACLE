@@ -1,0 +1,50 @@
+{
+  "evidenceKind": "PRE_FIX_BUG_OBSERVATION_NOT_ACCEPTANCE",
+  "meaning": "These assertions prove the former defects existed. They are excluded from post-fix acceptance.",
+  "receipts": [
+    {
+      "zone": "UTC",
+      "source": "results-UTC.json",
+      "sourceSnapshot": "snapshot-UTC.json",
+      "assertions": [
+        {
+          "fullName": "observed consequence receipts (assert present bug, not acceptance) O01 stale date answer actually permits applying on the restored date",
+          "status": "passed",
+          "duration": 318.5643999999993
+        },
+        {
+          "fullName": "observed consequence receipts (assert present bug, not acceptance) O02 failed withdrawal leaves plan start enabled and actually calls onSelect",
+          "status": "passed",
+          "duration": 990.0885000000017
+        },
+        {
+          "fullName": "observed consequence receipts (assert present bug, not acceptance) O03 edited numeric input is applied and reviewed for start without a fresh environment answer",
+          "status": "passed",
+          "duration": 1611.0226999999995
+        }
+      ]
+    },
+    {
+      "zone": "KST",
+      "source": "results-KST.json",
+      "sourceSnapshot": "snapshot-KST.json",
+      "assertions": [
+        {
+          "fullName": "observed consequence receipts (assert present bug, not acceptance) O01 stale date answer actually permits applying on the restored date",
+          "status": "passed",
+          "duration": 262.0686999999998
+        },
+        {
+          "fullName": "observed consequence receipts (assert present bug, not acceptance) O02 failed withdrawal leaves plan start enabled and actually calls onSelect",
+          "status": "passed",
+          "duration": 719.2896000000001
+        },
+        {
+          "fullName": "observed consequence receipts (assert present bug, not acceptance) O03 edited numeric input is applied and reviewed for start without a fresh environment answer",
+          "status": "passed",
+          "duration": 1257.280999999999
+        }
+      ]
+    }
+  ]
+}

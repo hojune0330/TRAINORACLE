@@ -1,0 +1,15 @@
+{
+  "capturedAt": "2026-10-01T01:06:42.755Z",
+  "files": {
+    "app/src/domain/catalog-schedule-conditions.ts": "853f47e64e7688ab660e7351362389c79dbc3767dfc5b30c7bab683cc4510324",
+    "app/src/domain/catalog-schedule-conditions.test.ts": "1e74d5b6d425fa1b1533989bd0bb751f43b67b8fb9b98795e4e0c886b879109e",
+    "app/src/screens/plan-beta/CatalogScheduleReview.tsx": "86ff1a8237d59c4b01caf317d5dbd14d60669189421f5bd395f4db977790ac2d",
+    "app/src/screens/plan-beta/CatalogWorkoutPicker.tsx": "ccc3d3584ffd9f06746a07e96d5cc481837949ed34e132a9803e6f314dd73129",
+    "app/src/screens/plan-beta/PlanCandidates.tsx": "f8d122d76537d53c54e4fa9bd23cfce11222f8de82c3aff7f9957fbcc2cfd798",
+    "app/src/screens/plan-beta/catalog-workout.css": "1eee944b3a35511e4604a306dc06e3f8dec9b215d860836d52187aa79ee53276",
+    "app/src/screens/plan-beta/CatalogConditionReview.contract.test.tsx": "cf2f6469bbcc7b7f4935fd4b0cf3e346f957767ffb5bbf9b4252e61bec430b02",
+    "app/src/components/instant-plan/InstantPlanRecommendationView.tsx": "fa6af506ec84142ddb1b509303dbe4ce5cce590f70d047ad4d608a8eee915377",
+    "app/e2e/catalog-schedule-review.audit.ts": "fcb47f8371c6d256027d23f75967514bd8c12a502e813324fd0a4a96facb80c0",
+    "specs/reconstruct/ALL_WORKOUT_CALCULATION_AND_BINDING_CONTRACT.md": "dc9d92315b9a14a25f77b1378dd74b5c7f1d32fb7d64c0aaa3fb42b0463de7a2"
+  }
+}

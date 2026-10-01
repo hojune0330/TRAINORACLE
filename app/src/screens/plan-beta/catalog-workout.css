@@ -14,3 +14,9 @@
 .catalog-workout-picker code { white-space: normal; overflow-wrap: anywhere; }
 .catalog-workout-picker dl { margin-block: 12px; }
 .catalog-workout-picker dd { margin-inline-start: 0; }
+.catalog-schedule-review { margin-block: var(--space-3); }
+.catalog-schedule-review label { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--space-2); align-items: start; min-height: 44px; padding-block: var(--space-2); }
+.catalog-schedule-review input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--brand); }
+.catalog-schedule-review small { display: block; margin-block-start: var(--space-1); overflow-wrap: anywhere; }
+.catalog-schedule-review button { min-height: 44px; max-width: 100%; white-space: normal; }
+.catalog-schedule-review :is(button, input):focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }

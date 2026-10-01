@@ -1,5 +1,5 @@
 import { useId } from "react"
-import type { Ref } from "react"
+import type { ReactNode, Ref } from "react"
 import type {
   InstantPlanActionState,
   InstantPlanDaySummary,
@@ -25,6 +25,7 @@ export type InstantPlanRecommendationViewProps = {
   readonly startLabel?: string
   readonly conditionReviewLabel?: string
   readonly onReviewCondition?: () => void
+  readonly scheduleReview?: ReactNode
 }
 
 const roleLabels: Record<InstantPlanDaySummary["sessions"][number]["role"], string> = {
@@ -53,6 +54,7 @@ export function InstantPlanRecommendationView({
   startLabel,
   conditionReviewLabel,
   onReviewCondition,
+  scheduleReview,
 }: InstantPlanRecommendationViewProps) {
   const headingId = useId()
   const actionStatusId = useId()
@@ -110,6 +112,7 @@ export function InstantPlanRecommendationView({
           )}
         </section>
       )}
+      {scheduleReview}
       <div className="instant-plan__actions">
         <button
           className="instant-plan__button"

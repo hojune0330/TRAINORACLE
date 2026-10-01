@@ -11,30 +11,20 @@ import { todayISO } from "../../domain/journal-store"
 import { replaceCandidateCatalogWorkout } from "../../domain/catalog-plan-binding"
 import { findCatalogConditionReview, type CatalogConditionRequest } from "../../domain/catalog-condition-review"
 import { isValidIsoDate, isoShift } from "../../domain/dates"
-import { localAccountScopeIsCurrent } from "../../domain/account/local-account-scope"
+import { localAccountScopeIsCurrent, localAccountScopeSnapshot } from "../../domain/account/local-account-scope"
+import { catalogRequirementLabels as requirementLabels, catalogScheduleConditions, isCatalogEnvironmentRequirement } from "../../domain/catalog-schedule-conditions"
 import { CatalogWorkoutDetail } from "./CatalogWorkoutDetail"
 import { formatTotalMinutes } from "./labels"
 import "./catalog-workout.css"
 
-const requirementLabels: Record<string, string> = {
-  ACCELERATION_AND_DECELERATION_SPACE: "가속하고 속도를 줄일 충분한 공간이 있어요",
-  RECENT_LONG_RUN_BASELINE: "최근에도 이 정도 길이의 장거리 달리기를 해봤어요",
-  RECENT_THRESHOLD_VOLUME: "최근에도 이 정도 시간의 템포 훈련을 해봤어요",
-  BIKE_AVAILABLE: "자전거를 사용할 수 있어요", ELLIPTICAL_AVAILABLE: "일립티컬을 사용할 수 있어요",
-  WATER_SAFETY_AND_EQUIPMENT: "수중 운동 장비와 안전한 환경이 있어요",
-  SWIMMING_ABILITY_AND_WATER_SAFETY: "이 훈련을 할 수 있는 수영 능력과 안전한 환경이 있어요",
-  HILL_SURFACE_GRADE_RETURN: "언덕의 경사·노면과 안전한 복귀 길을 확인했어요",
-  CONNECTED_HILL_FLAT_ROUTE: "언덕과 평지를 이어 달릴 안전한 코스가 있어요",
-  COMPOUND_TRAINING_EXPERIENCE: "서로 다른 강도를 묶은 복합 훈련 경험이 있어요",
-  HIGH_INTENSITY_REPETITION_EXPERIENCE: "짧고 강한 반복 훈련 경험이 있어요",
-}
 type PickerProps = {
   readonly generated: PlanGenerationSuccess; readonly intake: PlanBetaIntake; readonly records: readonly AthleteRecord[]
-  readonly onChange: (next: PlanGenerationSuccess) => void; readonly disabled?: boolean
+  readonly onChange: (next: PlanGenerationSuccess, reviewedAddress?: { day: number; slot: "AM" | "PM" }) => void; readonly disabled?: boolean
   readonly onPendingChange?: (pending: boolean) => void
   readonly openRequest?: number | null
   readonly conditionRequest?: CatalogConditionRequest | null
   readonly startDate?: string
+  readonly reviewedConditionKeys?: readonly string[]
 }
 export function CatalogWorkoutPicker(props: PickerProps) {
   const { generated, disabled = false } = props
@@ -80,12 +70,15 @@ export function CatalogWorkoutPicker(props: PickerProps) {
     </select></label>
     {pending && <small>변경을 적용하거나 취소하면 다른 날짜를 고를 수 있어요.</small>}
     <CatalogWorkoutEditor key={`${generated.pairId}:${actualAddress}:${resetRevision}`} {...props} session={session}
+      environmentReviewRequired={props.reviewedConditionKeys === undefined || props.startDate === undefined ? undefined
+        : catalogScheduleConditions(generated, props.startDate, localAccountScopeSnapshot()).some(condition =>
+          condition.day === session.day && condition.slot === session.slot && !props.reviewedConditionKeys!.includes(condition.key))}
       preferredCatalogId={preferredReview?.pairId === generated.pairId && `${preferredReview.day}:${preferredReview.slot}` === actualAddress
         && preferredReview.startDate === props.startDate && localAccountScopeIsCurrent(preferredReview.accountScope) ? preferredReview.catalogId : null}
       drawHistory={drawHistory.current}
       onPendingChange={handlePendingChange}
       onCancel={() => { setResetRevision(n => n + 1); setMessage("") }}
-      onChange={next => { props.onChange(next); setMessage("계획안에 반영했어요. 날짜와 훈련 횟수는 그대로예요.") }} />
+      onChange={next => { props.onChange(next, { day: session.day, slot: session.slot }); setResetRevision(value => value + 1); setMessage("계획안에 반영했어요. 날짜와 훈련 횟수는 그대로예요.") }} />
     {message && <p role="status">{message}</p>}
   </details>
 }
@@ -100,9 +93,10 @@ type EditorProps = Omit<PickerProps, "generated" | "onChange"> & {
   readonly onCancel: () => void
   readonly drawHistory: Map<string, Set<string>>
   readonly preferredCatalogId?: string | null
+  readonly environmentReviewRequired?: boolean
 }
 export function CatalogWorkoutEditor({ generated, intake, records, onChange, onSelect, canSelect, applyDisabled,
-  onPendingChange, session, onCancel, drawHistory, preferredCatalogId, disabled = false }: EditorProps) {
+  onPendingChange, session, onCancel, drawHistory, preferredCatalogId, startDate, environmentReviewRequired, disabled = false }: EditorProps) {
   const binding = session.prescription.kind === "RPE_TIME_RANGE" ? session.prescription.catalogWorkout : undefined
   const pool = ALL_WORKOUT_CATALOG.filter(e => e.family === catalogFamilyForIntent(session.plannedEnergyIntent)
     && e.eventDistances.includes(intake.eventDistanceM) && e.experience.includes(intake.experienceBand) && e.hold === null)
@@ -114,13 +108,31 @@ export function CatalogWorkoutEditor({ generated, intake, records, onChange, onS
     })
   const [choice, setChoice] = React.useState(binding?.catalogId ?? pool.find(e => e.id === preferredCatalogId)?.id ?? pool[0]?.id ?? "")
   const [recordId, setRecordId] = React.useState(binding?.inputs.fiveK?.recordId ?? "")
-  const [confirmed, setConfirmed] = React.useState<string[]>([...(binding?.inputs.confirmedRequirements ?? [])])
+  const accountScope = localAccountScopeSnapshot()
   const [seconds, setSeconds] = React.useState<Record<string, string>>(() => Object.fromEntries((binding?.inputs.segmentSeconds ?? []).map(s => [s.segmentId, String(s.seconds)])))
   const [recoveries, setRecoveries] = React.useState<Record<string, string>>(() => Object.fromEntries((binding?.inputs.recoverySeconds ?? []).map(s => [s.segmentId, String(s.seconds)])))
   const [durationDecision, setDurationDecision] = React.useState<{ key: string; accepted: boolean } | null>(null)
-  const draft = JSON.stringify([choice, recordId, confirmed, seconds, recoveries])
+  const draft = JSON.stringify([choice, recordId, seconds, recoveries])
   const originalDraft = React.useRef(draft)
-  const configurationChanged = draft !== originalDraft.current
+  const confirmationContext = JSON.stringify([startDate ?? null, accountScope, session.day, session.slot,
+    binding?.calculationFingerprint ?? null, intake.eventDistanceM, intake.experienceBand, draft])
+  const [confirmation, setConfirmation] = React.useState(() => ({
+    context: confirmationContext, requirements: [...(binding?.inputs.confirmedRequirements ?? [])]
+      .filter(requirement => !environmentReviewRequired || !isCatalogEnvironmentRequirement(requirement)),
+    userEdited: false, needsRecheck: environmentReviewRequired === true,
+  }))
+  // Revoke the answer on a context change, rather than hiding it until an old date returns.
+  if (confirmation.context !== confirmationContext) setConfirmation({ ...confirmation, context: confirmationContext,
+    requirements: confirmation.requirements.filter(requirement => !isCatalogEnvironmentRequirement(requirement)),
+    needsRecheck: confirmation.needsRecheck || confirmation.requirements.some(isCatalogEnvironmentRequirement),
+  })
+  const configurationChanged = draft !== originalDraft.current || confirmation.userEdited
+  const parentReviewedBinding = !!binding && !configurationChanged && environmentReviewRequired === false
+  const confirmed = parentReviewedBinding ? [...binding.inputs.confirmedRequirements]
+    : confirmation.context === confirmationContext ? confirmation.requirements
+      : confirmation.requirements.filter(requirement => !isCatalogEnvironmentRequirement(requirement))
+  const setConfirmed = (requirements: string[]) => setConfirmation({ context: confirmationContext, requirements, userEdited: true, needsRecheck: false })
+  const environmentDateChanged = confirmation.needsRecheck && !parentReviewedBinding
   const pending = configurationChanged || durationDecision !== null
   React.useEffect(() => { onPendingChange?.(pending) }, [pending, onPendingChange])
   React.useEffect(() => () => onPendingChange?.(false), [onPendingChange])
@@ -195,6 +207,7 @@ export function CatalogWorkoutEditor({ generated, intake, records, onChange, onS
     </select></label>}
     {entry.requirements.map(r => <label key={r}><input type="checkbox" checked={confirmed.includes(r)} disabled={disabled}
       onChange={e => setConfirmed(e.target.checked ? [...confirmed, r] : confirmed.filter(x => x !== r))} />{requirementLabels[r] ?? "별도 운동 조건을 확인해 주세요."}</label>)}
+    {environmentDateChanged && <p role="status">날짜나 훈련 조건을 다시 확인해야 해요. 입력한 시간은 그대로 남아 있어요.</p>}
     {missing.length > 0 && <fieldset className="catalog-workout-picker__required"><legend>이 훈련을 적용하려면 구간 시간을 정해 주세요</legend>
       <p>같은 구간의 반복에 적용해요. 경기 기록으로 계산할 수 없는 구간은 직접 정해요.</p>
       {missing.map(s => <label key={s.segmentId}>{s.kind === "RECOVERY" ? `회복 ${s.distanceM ? `${s.distanceM}m` : "구간"}` : `${s.distanceM}m 운동 구간`} · 초
@@ -214,6 +227,8 @@ export function CatalogWorkoutEditor({ generated, intake, records, onChange, onS
     {preview?.unresolved.includes("RECORD_NOT_CURRENT") && <p role="status">오래된 기록이라 참고 페이스에 사용하지 않았어요.</p>}
     <div className="catalog-workout-picker__actions">
       <button type="button" disabled={disabled || applyDisabled || !canApply || !pending && !!binding} onClick={() => {
+        if (disabled || applyDisabled || !canApply || !localAccountScopeIsCurrent(accountScope)
+          || startDate !== undefined && !isValidIsoDate(startDate)) return
         if (next) onChange?.(next)
         else if (canApply) onSelect?.(entry.id, inputs, !!acceptLonger)
       }}>이 구성으로 바꾸기</button>

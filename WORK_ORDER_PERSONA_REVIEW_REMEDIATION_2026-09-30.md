@@ -203,4 +203,15 @@ W1의 기준판은 MAIN 85회 중 상세 연결 19회/범위 안내 66회였으�
 - [현재 문맥 후속 증거](reports/review/evidence/persona-remediation-2026-10-01/current-cycle-context/README.md).
   카탈로그 NEXT_FRAME 수치 변환·W1 결정·운영 DB/서버/앱 반영은 계속 미완으로 둔다.
 
+### 첫 계획의 날짜 변경·조건 확인 보완
+
+- 적용한 환경 응답은 현재 실제 날짜·슬롯·정확한 구성·계정에 연결한다. 시작일을
+  바꾸면 환경만 재확인하고 숫자·경험은 유지한다. 동일 조건은 날짜들을 묶어 한 번 묻는다.
+- 독립 GPT-6.1 Sol ultra가 날짜 왕복·응답 해제·수치 변경·제거 구성 재호출 네 P2를
+  재현했고 수정 후 동일 수용 단언 11개를 UTC/KST에서 통과했다. 부모 관련 45개,
+  브라우저 3조합과 결함 주입은 별도 증거이며 100명 전체 재실행과 합산하지 않는다.
+- [수정과 독립 근거](reports/review/evidence/persona-remediation-2026-10-01/schedule-condition-review/README.md).
+  UI의 임시 확인이며 영구 환경 증명이나 새 수치 정책은 아니다. 합성 200% 하단 탭
+  가시성, W1/B06 실제 처방 정책과 운영 DB/서버/앱 반영은 후속으로 유지한다.
+
 [DRAFT_COMPLETE]
