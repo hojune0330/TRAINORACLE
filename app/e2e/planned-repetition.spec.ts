@@ -37,8 +37,11 @@ for (const width of [320, 375, 1280]) test(`explicit repetitions, decimal typing
   await page.emulateMedia({ reducedMotion: "reduce" })
   await page.evaluate(() => {
     const elements = [...document.querySelectorAll<HTMLElement>("main h1, main h2, main p, main summary, main label, main legend, main input, main select, main span")]
-    const sizes = elements.map(element => Number.parseFloat(getComputedStyle(element).fontSize))
-    elements.forEach((element, index) => { element.style.fontSize = `${sizes[index] * 2}px` })
+    const measured = elements.map(element => ({
+      element,
+      size: Number.parseFloat(getComputedStyle(element).fontSize),
+    }))
+    measured.forEach(({ element, size }) => { element.style.fontSize = `${size * 2}px` })
   })
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: info.outputPath(`repetitions-${width}-text200.png`), fullPage: true })
