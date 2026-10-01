@@ -34,6 +34,8 @@ import type {
 import type { JournalEntryType } from "./log-entry/shared"
 import { PlanActiveState } from "./plan-beta/PlanActiveState"
 import { PlanCandidates } from "./plan-beta/PlanCandidates"
+import type { CatalogCycleDraftContext } from "../domain/catalog-cycle-draft"
+import type { CatalogCycleSuccessorSummary } from "../domain/catalog-cycle-successor"
 import { usePlanDraftNavigationGuard } from "./plan-beta/usePlanDraftNavigationGuard"
 import { PlanIntake } from "./plan-beta/PlanIntake"
 import type { IntakeStep } from "./plan-beta/PlanIntake"
@@ -362,6 +364,8 @@ function LegacyPlanBeta({
     () => loadPlanBetaState(),
   )
   const [nextPredecessor, setNextPredecessor] = React.useState<Extract<PlanBetaState, { version: 3 }> | null>(null)
+  const [cycleDraft, setCycleDraft] = React.useState<CatalogCycleDraftContext | null>(null)
+  const [cycleSummary, setCycleSummary] = React.useState<CatalogCycleSuccessorSummary | null>(null)
   const pendingNextReceipt = React.useRef<Extract<PlanBetaState, { version: 3 }> | null>(null)
   React.useEffect(() => {
     const refresh = () => {
@@ -557,6 +561,8 @@ function LegacyPlanBeta({
         setGenerated(result.generated)
         setGeneratedIntake(result.intake)
         setGeneratedEvidence(result.athleteEvidence)
+        setCycleDraft(result.cycleDraft ?? null)
+        setCycleSummary(result.cycleSummary ?? null)
         setPrescriptionBinding(result.prescriptionBinding)
         return
       case "preview_only":
@@ -651,6 +657,7 @@ function LegacyPlanBeta({
       generatedEvidence,
       () => draftRevision.current === revision,
       nextPredecessor,
+      cycleDraft,
     )
     if (draftRevision.current !== revision) return
     switch (result.kind) {
@@ -842,7 +849,9 @@ function LegacyPlanBeta({
         {nextDraftHeader}
         <PlanCandidates
           generated={generated}
-          onCatalogChange={next => { if (selectionWrite.current) return; draftRevision.current += 1; setRetrySelection(null); setErrorCode(null); setGenerated(next) }}
+          cycleSummary={cycleSummary}
+          onRebuildCycle={() => generateCandidates(generatedIntake)}
+          onCatalogChange={next => { if (selectionWrite.current) return; draftRevision.current += 1; setRetrySelection(null); setErrorCode(null); setCycleSummary(null); setGenerated(next) }}
           adjustmentActions={adjustmentActions}
           intake={generatedIntake}
           athleteEvidence={generatedEvidence}
@@ -1059,6 +1068,8 @@ function LegacyPlanBeta({
               setGenerated(result.generated)
               setGeneratedIntake(result.intake)
               setGeneratedEvidence(result.athleteEvidence)
+              setCycleDraft(result.cycleDraft ?? null)
+              setCycleSummary(result.cycleSummary ?? null)
               setPrescriptionBinding(result.prescriptionBinding)
               setRecordConfirmationPending(result.prescriptionBinding.kind === "bound" && instantEntry?.kind === "CURRENT_RECORD")
               return

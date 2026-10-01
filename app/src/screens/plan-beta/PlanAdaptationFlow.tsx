@@ -331,13 +331,15 @@ export function PlanAdaptationFlow({
                 : <p role="status">일지를 아직 모두 불러오지 못했어요. 조회가 끝나면 비교가 나타나요.</p>}
               {availability.kind === "unavailable" && onPrepareNextFrame && canPrepareOrdinary && pendingReady && !pendingFailed && matchingPending === null && <PlanChoice
                 title="다음 주기 계획 만들기"
-                detail="지금 조건으로 새 계획안을 만들어요. 고르기 전까지 현재 계획은 그대로예요."
+                detail="연결된 수행 기록을 확인해 상세 훈련을 이어가요. 시작하기 전까지 현재 계획은 그대로예요."
                 selected={false}
                 disabled={busy}
                 onClick={() => void prepareOrdinary()}
               />}
               {availability.kind === "unavailable" && currentContext.kind === "current" && <InfoDisclosure title="어떤 계획을 기준으로 하나요?">
-                <p>지금 화면의 계획과 완료·휴식·건너뜀·통증 확인 기록을 기준으로 다음 주기를 이어가요. 바꾼 상세 훈련을 그대로 복사하거나 자동으로 줄이는 기능은 아니에요.</p>
+                <p>{state.version === 3
+                  ? "같은 종목·목적·주기 조건에서는 확인 가능한 상세 훈련을 이어가요. 같은 목적의 직접 기록 RPE가 반복해서 높으면, 검토된 짧은 구성으로 다음 계획안을 조정해요. 줄일 수 있는 구성이 없으면 그 이유를 알려드려요."
+                  : "현재 화면의 계획과 수행 여부를 기준으로 다음 주기를 이어가요. 변경 이력이 있는 이 계획의 상세 훈련을 그대로 복사하거나 자동으로 줄이지는 않아요."}</p>
                 <p>{currentContext.origin.kind === "unavailable"
                   ? "변경 전 계획을 모두 확인하지 못했어요. 지금 계획은 보존하며, 확인하지 못한 이전 구성은 새 계획의 근거로 사용하지 않아요."
                   : currentContext.origin.changeCount > 0
@@ -515,7 +517,7 @@ function unavailableMessage(code: string): string {
     case "CHANGED_PLAN_TRANSFORM_UNAVAILABLE":
       return "바꾼 훈련을 반영한 다음 주기 조정은 아직 지원하지 않아요. 수행 기록은 확인할 수 있어요."
     case "CATALOG_TRANSFORM_UNAVAILABLE":
-      return "이 상세 훈련을 다음 주기용으로 조정하는 기능은 아직 지원하지 않아요. 수행 기록은 확인할 수 있어요."
+      return "상세 훈련은 연결된 수행 기록을 확인해 다음 주기로 이어가요. 자동으로 더 강하게 만들지는 않아요."
     case "COACH_CONNECTION_REQUIRED":
       return "이 계획은 지도자 확인이 필요해요. 인증된 지도자 연결이 없어 선수 화면에서는 선택할 수 없고 현재 계획은 그대로예요."
     case "ADAPTATION_CONTEXT_MISMATCH":

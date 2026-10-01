@@ -129,7 +129,7 @@ describe("next-frame adaptation flow", () => {
     expect(await screen.findByRole("status")).toHaveTextContent("다음 주기에 사용할 계획안을 저장했어요")
     expect(next).not.toHaveBeenCalled()
     expect(await saveSelectedPlanCandidate({ candidateId: generated.generated.candidates[0].candidateId, startDate: "2026-08-30" },
-      generated.generated, generated.gate, generated.intake, generated.athleteEvidence, () => true, state))
+      generated.generated, generated.gate, generated.intake, generated.athleteEvidence, () => true, state, generated.cycleDraft))
       .toEqual({ kind: "rejected", code: "PENDING_SUCCESSOR_EXISTS" })
     expect(Object.fromEntries(Object.entries(localStorage))).toEqual(before)
   })

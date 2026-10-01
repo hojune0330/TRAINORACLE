@@ -26,9 +26,14 @@ describe("catalog -> plan -> selection -> saved structure", () => {
         if (selected.kind === "selected") expect(parsePlanBetaState(selected.state)).not.toBeNull()
         for (const s of result.generated.candidates[0].sessions) if (s.prescription.kind === "RPE_TIME_RANGE" && s.prescription.catalogWorkout) {
           expect(s.prescription.catalogWorkout.inputs).toMatchObject({ eventDistanceM, experience: experienceBand })
-          expect(s.prescription.catalogWorkout.acceptedDurationSeconds).toBeUndefined()
-          expect(s.prescription.rpe.maximum).toBeLessThanOrEqual(s.prescription.catalogWorkout.originalEnvelope.rpe.maximum)
-          expect(s.prescription.durationMinutes.maximum).toBeLessThanOrEqual(s.prescription.catalogWorkout.originalEnvelope.durationMinutes.maximum)
+          const exact = resolveCatalogBinding(s.prescription.catalogWorkout)
+          expect(exact).not.toBeNull()
+          expect(s.prescription.durationMinutes.maximum * 60).toBe(exact!.totals.seconds!.maximum)
+          if (s.role !== "QUALITY") {
+            expect(s.prescription.catalogWorkout.acceptedDurationSeconds).toBeUndefined()
+            expect(s.prescription.rpe.maximum).toBeLessThanOrEqual(s.prescription.catalogWorkout.originalEnvelope.rpe.maximum)
+            expect(s.prescription.durationMinutes.maximum).toBeLessThanOrEqual(s.prescription.catalogWorkout.originalEnvelope.durationMinutes.maximum)
+          }
         }
       }
     }
@@ -46,6 +51,17 @@ describe("catalog -> plan -> selection -> saved structure", () => {
     const connected = selected.state.activePlan.sessions.filter(s => s.prescription.kind === "RPE_TIME_RANGE" && s.prescription.catalogWorkout)
     expect(connected.length).toBeGreaterThan(0)
     for (const s of connected) if (s.prescription.kind === "RPE_TIME_RANGE") expect(resolveCatalogBinding(s.prescription.catalogWorkout!)).not.toBeNull()
+  })
+  it.each(["NEW_TO_RUNNING", "DEVELOPING", "EXPERIENCED"] as const)("first generation gives exact MAIN without a record for %s", experienceBand => {
+    for (const trainingFocus of ["LT_INTENT", "VO2_INTENT", "MIXED_INTENT"] as const) {
+      const result = generatePlanFromDraft({ ...base, experienceBand, trainingFocus, availableDayCount: "EVERY_DAY", startDate: "2026-10-01" }, "NO_KNOWN_RISK")
+      if (result.kind !== "generated") throw Error(result.kind)
+      const main = result.generated.candidates[0].sessions.filter(s => s.role === "QUALITY")
+      expect(main.length).toBeGreaterThan(0)
+      expect(main.every(s => s.prescription.kind === "RPE_TIME_RANGE" && resolveCatalogBinding(s.prescription.catalogWorkout!))).toBe(true)
+      expect(result.generated.candidates[1].sessions.filter(s => s.role === "QUALITY")).toEqual(main)
+      expect(localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
+    }
   })
   it("explicit same-purpose replacement keeps day, slot and exposure ledger", () => {
     const result = generatePlanFromDraft(base, "NO_KNOWN_RISK")

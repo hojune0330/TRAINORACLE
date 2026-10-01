@@ -1,0 +1,161 @@
+{
+  "capturedAt": "2026-10-01T02:40:01.204Z",
+  "boundary": "LOCAL_SYNTHETIC_NOT_DEPLOYED",
+  "sourceHashes": {
+    "app/scripts/account-journal-record-validator.test.mjs": "a48e5f9965d61c092d865cd03db0d778c49927f443facde584b0cf0f21b82afd",
+    "app/src/domain/catalog-plan-binding.test.ts": "7d778e4f7040c012a753154cedb08676b62ab6e68f6dc4f4a7527bd9ef881cb9",
+    "app/src/domain/plan-beta-flow.ts": "6551701e742441467c14b8785be0a13e871bb0df15003b4554b26b9040f2eb94",
+    "app/src/domain/plan-persona-100.audit.ts": "7fa31c3708f821447d9a979de7e91f9c5c44b24bed639cba13fa2f4222b8d7ee",
+    "app/src/screens/PlanBeta.tsx": "9df446df63c9e11492310567af8696935d9bd0fa4008239170b4c631bd2c5fc4",
+    "app/src/screens/plan-beta/ActivePlan.evidence-read.contract.test.tsx": "ccbb4a0883eebb96c62659b5e717d1821fdb8029546fc801132671552cb5b294",
+    "app/src/screens/plan-beta/ActivePlan.tsx": "6901feafbed14d462a63dc243f17b868b00efa580f8925720222456a57377387",
+    "app/src/screens/plan-beta/PlanAdaptationFlow.contract.test.tsx": "95d5c30023cbc663550440c998df8d9f090a29a8d3ced177b720c4a28a796146",
+    "app/src/screens/plan-beta/PlanAdaptationFlow.tsx": "d9379bc8a0fb8132ac3d216386677dc506229a92cc23ca4547a9aa4ce997ebd3",
+    "app/src/screens/plan-beta/PlanCandidates.tsx": "caecfe28158dc5b2c2d3e95cb52dbc585e50e6a89df0a08019c2f9c02ba01baa",
+    "app/src/screens/plan-beta/plan-feedback.ts": "f2f992b25297d37aa29da459b7ac704e90bf70c35d1a6cac6371d271fdfd53e0",
+    "app/src/screens/plan-beta/plan-next-selection.contract.test.ts": "048b3d70b6bc788e01d050064c013c5788b41d9e059cc3bd632feb9604482a8b",
+    "app/src/screens/plan-beta/plan-selection.ts": "8abf38f24402d62f14e24ffbb43a439fabbc1ac0f3545b70e36c29c50bebd70d",
+    "impl/src/prescription/catalog-session-binding.ts": "2726b9154bd1a1372a4ca0d2309c969f9e8137fdfc7615d606dbb4db9533b424",
+    "specs/reconstruct/ALL_WORKOUT_CALCULATION_AND_BINDING_CONTRACT.md": "b559c8c3a879010ed5f987a17f6fe53d66ed133fea1cdf833485e1db9b6ca140",
+    "specs/reconstruct/PLAN_CYCLE_RESPONSE_AND_ADAPTATION_CONTRACT.md": "0143e7089121af50b0b246eb7970c7d5ff414c72b5a579ce90b37ca881f7257a",
+    "supabase/functions/_shared/account-journal-record-validator.mjs": "980fb66d17acbe4430cba563a4f3f5a47561ff98a8eaf66a2ffa1041942bc746",
+    "app/src/domain/catalog-cycle-successor.ts": "e24bda0e33b7fb5ff59f7c70d7534bebdb53c615c1dca5ba5ebdc55921c6b66e",
+    "app/src/domain/catalog-cycle-successor.contract.test.ts": "b4318b8d3a6b70710de1bfaec315bf208a44f8363b2f6f40e57a33c6baa0692d",
+    "app/src/domain/catalog-cycle-draft.ts": "400fa2d8fd631bbe7bad4f2499a8c37e4babb58377bb9af4d0e507fb427cf30a",
+    "app/src/domain/catalog-cycle-draft.test.ts": "c32e91fd1172a14c014285b38b3647982d04611fce90acf7d0de583c9aa23d38",
+    "app/src/domain/catalog-cycle-independent.contract.test.tsx": "cd7de1d0548f42228ed956873a20b55d10e249d59ee5f66b7ecaf073dd410d12",
+    "app/src/screens/plan-beta/CatalogCycleSummary.tsx": "e76ce0b448229dfad89666a80f804901dade29166b7af87f6c5652a2aa6bb811",
+    "app/e2e/catalog-cycle-flow.audit.ts": "11d4b713f9593619e0139ce972644a0e63ec934f1cc2f16f8c8f0f7b4b41e764"
+  },
+  "coverage": {
+    "candidate": "first balanced candidate only; QUALITY denotes MAIN",
+    "safeGeneratedProfiles": 82,
+    "mainProfiles": 57,
+    "profilesWithIncompleteMain": 20,
+    "mainSlots": 85,
+    "incompleteMainSlots": 28,
+    "groups": [
+      {
+        "focus": "BASE_INTENT",
+        "profiles": 13,
+        "main": 0,
+        "detailed": 0,
+        "missing": 0
+      },
+      {
+        "focus": "LT_INTENT",
+        "profiles": 12,
+        "main": 19,
+        "detailed": 19,
+        "missing": 0
+      },
+      {
+        "focus": "VO2_INTENT",
+        "profiles": 10,
+        "main": 15,
+        "detailed": 15,
+        "missing": 0
+      },
+      {
+        "focus": "GLY_INTENT",
+        "profiles": 12,
+        "main": 17,
+        "detailed": 6,
+        "missing": 11
+      },
+      {
+        "focus": "ATP_PC_INTENT",
+        "profiles": 12,
+        "main": 17,
+        "detailed": 0,
+        "missing": 17
+      },
+      {
+        "focus": "MIXED_INTENT",
+        "profiles": 11,
+        "main": 17,
+        "detailed": 17,
+        "missing": 0
+      },
+      {
+        "focus": "RECOVERY_INTENT",
+        "profiles": 12,
+        "main": 0,
+        "detailed": 0,
+        "missing": 0
+      }
+    ]
+  },
+  "personas": {
+    "count": 100,
+    "distinctInputs": 100,
+    "checks": 1553492,
+    "catalogCalculations": 11700,
+    "networkCalls": 0,
+    "failures": []
+  },
+  "runs": [
+    {
+      "source": ".scratch/persona-100-core-first-main-cycle-20261001/vitest-results.json",
+      "total": 112,
+      "passed": 105,
+      "failed": 0,
+      "pending": 7,
+      "success": true
+    },
+    {
+      "source": ".scratch/first-main-cycle-20261001/RELEASE.json",
+      "total": 69,
+      "passed": 69,
+      "failed": 0,
+      "pending": 0,
+      "success": true
+    },
+    {
+      "source": ".scratch/first-main-cycle-20261001/FINAL.json",
+      "total": 31,
+      "passed": 31,
+      "failed": 0,
+      "pending": 0,
+      "success": true
+    },
+    {
+      "source": ".scratch/first-main-cycle-independent-20261001/UTC.json",
+      "total": 18,
+      "passed": 15,
+      "failed": 3,
+      "pending": 0,
+      "success": false
+    },
+    {
+      "source": ".scratch/first-main-cycle-independent-20261001/RECHECK.json",
+      "total": 18,
+      "passed": 18,
+      "failed": 0,
+      "pending": 0,
+      "success": true
+    }
+  ],
+  "browser": {
+    "startTime": "2026-10-01T02:38:49.148Z",
+    "duration": 19449.168,
+    "expected": 3,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "screenshots": [
+    "first-main-320.png",
+    "cycle-response-375.png",
+    "cycle-response-200pct.png",
+    "cycle-response-1280.png"
+  ],
+  "build": {
+    "builtAt": "2026-10-01T02:33:10.800Z",
+    "synthetic": true,
+    "production": false,
+    "htmlSha256": "eead5b52761a105b8b2e8f05dfdf05a01e7a0ab249554c93738e7af67bff5fef"
+  },
+  "externalRuntimeVerified": false,
+  "providerWrites": 0
+}

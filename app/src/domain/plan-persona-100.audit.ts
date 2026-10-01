@@ -336,8 +336,17 @@ describe("seeded independent 100-persona domain audit", () => {
           if (session.prescription.kind !== "RPE_TIME_RANGE" || !session.prescription.catalogWorkout) continue
           const b = session.prescription.catalogWorkout, result = resolveCatalogBinding(b)
           check(a, result !== null, "GENERATED_BINDING_UNREADABLE", session)
-          check(a, session.prescription.rpe.maximum <= b.originalEnvelope.rpe.maximum
-            && session.prescription.durationMinutes.maximum <= b.originalEnvelope.durationMinutes.maximum, "AUTO_ENVELOPE_ESCALATION", session)
+          if (session.role !== "QUALITY") check(a, session.prescription.rpe.maximum <= b.originalEnvelope.rpe.maximum
+            && session.prescription.durationMinutes.maximum <= b.originalEnvelope.durationMinutes.maximum, "AUTO_SUPPORT_ENVELOPE_ESCALATION", session)
+          if (result?.totals.seconds) {
+            const rpe = catalogRpe(result)
+            check(a, session.prescription.rpe.minimum === rpe.minimum && session.prescription.rpe.maximum === rpe.maximum
+              && session.prescription.durationMinutes.minimum === result.totals.seconds.minimum / 60
+              && session.prescription.durationMinutes.maximum === result.totals.seconds.maximum / 60,
+            "AUTO_REVIEWED_DETAIL_MISMATCH", session)
+            check(a, result.totals.seconds.maximum <= b.originalEnvelope.durationMinutes.maximum * 60
+              || b.acceptedDurationSeconds === result.totals.seconds.maximum, "AUTO_TOTAL_TIME_UNDECLARED", session)
+          }
           check(a, b.inputs.confirmedRequirements.length === 0 && b.inputs.fiveK === null, "AUTO_INVENTED_CONFIRMATION_OR_RECORD", session)
         }
       }
@@ -445,12 +454,12 @@ function measureDefaultMainCoverage() {
       const input: WorkoutCalculationInputs = { eventDistanceM: p.draft.eventDistanceM, experience: p.draft.experienceBand,
         availableSeconds: envelope.durationMinutes.maximum * 60, confirmedRequirements: [], fiveK: null, segmentPaces: [] }
       const options = ALL_WORKOUT_CATALOG.filter(e => e.family === catalogFamilyForIntent(session.plannedEnergyIntent)).map(entry => {
-        const result = calculateCatalogWorkout(entry.id, input)!
+        const bound = bindCatalogSession(original, entry.id, input, true)
+        const result = bound?.prescription.kind === "RPE_TIME_RANGE" && bound.prescription.catalogWorkout
+          ? resolveCatalogBinding(bound.prescription.catalogWorkout)! : calculateCatalogWorkout(entry.id, input)!
         const reasons = [...result.unavailable]
         if (!result.totals.seconds) reasons.push("INCOMPLETE_TOTAL_TIME")
-        if (catalogRpe(result).maximum > envelope.rpe.maximum) reasons.push("AUTO_RPE_ENVELOPE_EXCEEDED")
-        const bound = bindCatalogSession(original, entry.id, input)
-        const eligible = bound !== null && catalogRpe(result).maximum <= envelope.rpe.maximum
+        const eligible = bound !== null
         return { id: entry.id, eligible, reasons: [...new Set(reasons)], unresolved: result.unresolved,
           calculatedTime: result.totals.seconds, rpe: catalogRpe(result) }
       })
@@ -469,6 +478,7 @@ function measureDefaultMainCoverage() {
 }
 
 describe("named adversarial contract counterexamples", () => {
+  it("AUDIT-FIRST-MAIN-COVERAGE measures reviewed first-generation MAIN eligibility", measureDefaultMainCoverage)
   it("AUDIT-MUTATION-CONTROL detects source-count, terminal-rest and decimal corruption without changing runtime", () => {
     const entry = ALL_WORKOUT_CATALOG.find(e => e.id === "X-LT-01")!
     const result = calculateCatalogWorkout(entry.id, inputsFor(personas[3]!))!
@@ -707,6 +717,5 @@ describe("named adversarial contract counterexamples", () => {
     }
     evidence("all-117-real-slot-binding", { scope: "one declared compatible event/experience per ID, explicit synthetic targets and time acceptance", rows })
     expect(rows).toHaveLength(117)
-    measureDefaultMainCoverage()
   })
 })

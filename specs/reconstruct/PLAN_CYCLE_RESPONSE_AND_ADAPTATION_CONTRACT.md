@@ -237,4 +237,49 @@ This is read-only evidence readiness, not a reconstructed A/B candidate pair,
 new numerical transform, server write or production verification. All open issues
 and existing dose/safety boundaries remain unchanged.
 
+## 14. Owner-Directed Detailed Successor Preview (2026-10-01)
+
+The owner explicitly directed implementation of actual-result linkage into the
+next cycle's detailed composition. This adds a bounded new-draft path, not a silent
+mutation of the active frame or a removal of the legacy adaptation registry guard.
+
+- Use the exact current predecessor and the section 2/13 structured linked-result
+  evaluator. No memo content, completion-only inference, imported effort or missing
+  values become successful execution or evidence for progression.
+- Match detailed MAINs by purpose and occurrence order only within compatible
+  event/experience/focus contexts. Preserve exact reviewed source and inputs for
+  maintenance. Re-evaluate time-sensitive record references; do not revive stale
+  pace evidence or claim that a former environment answer certifies future dates.
+- Repeated above-range eligible RPE for a purpose may prepare an already-reviewed
+  lower-dose configuration from the same method group. Do not invent percentages,
+  remove recovery, or multiply arbitrary repeats. Target RPE, work duration,
+  distance and repeats cannot increase, and recovery cannot become shorter.
+- When no such exact configuration is available, preserve the current detailed
+  workout with an explicit review reason. A different method is not automatically
+  a lower burden simply because its total time is shorter.
+- Missing/single/conflicting/incomplete observations do not authorize reduction
+  or increase. Easier or in-range reports never produce automatic progression.
+  Preserve the distinction between maintenance and insufficient evidence.
+- The initial trigger requires at least two distinct eligible above-range results
+  in the same purpose, with the source purpose's MAIN observations complete.
+  This is a bounded product rule, not a validated physiological threshold.
+- This feature prepares a candidate only. Show a brief result and optional source
+  comparison before the athlete starts the next plan. Use the existing explicit
+  successor activation, predecessor/CAS protection and periodization lineage.
+  Cancel or failed storage must leave the predecessor and original journals intact.
+- Every new successor write must carry the preview's scoped structured-evidence
+  fingerprint and recheck it inside the save lock and the account pre-write callback.
+  Omitting this context is not a legacy bypass. An exact already-committed retry
+  may acknowledge the existing state without a new write after journals change.
+- This implementation covers the ordinary version-3 next-frame path. Adjusted
+  version-4/5/6 continuation and legacy registered transforms keep their separate
+  limits; this section does not declare them implemented.
+- Do not add MAIN exposure or modify availability, safety disposition, or AM/PM
+  scheduling through this projection. The existing future-environment check remains
+  required where applicable. Old saved plans and explanation versions remain readable.
+
+Existing section 7 issues stay OPEN. This is an owner-approved bounded implementation
+direction using existing reviewed catalogue numbers, not scientific efficacy proof,
+a new physiological threshold, or authorization of unrestricted NEXT_FRAME transforms.
+
 [DRAFT_COMPLETE]

@@ -43,6 +43,8 @@ import { findCatalogConditionReview, type CatalogConditionRequest } from "../../
 import { localAccountScopeIsCurrent, localAccountScopeSnapshot } from "../../domain/account/local-account-scope"
 import { catalogScheduleConditions } from "../../domain/catalog-schedule-conditions"
 import { CatalogScheduleReview } from "./CatalogScheduleReview"
+import { CatalogCycleSummary } from "./CatalogCycleSummary"
+import type { CatalogCycleSuccessorSummary } from "../../domain/catalog-cycle-successor"
 
 export function PlanCandidates({
   generated,
@@ -77,6 +79,8 @@ export function PlanCandidates({
   saveCode,
   onRetrySave,
   onCatalogChange,
+  cycleSummary = null,
+  onRebuildCycle,
 }: {
   readonly generated: PlanGenerationSuccess
   readonly intake: PlanBetaIntake
@@ -111,6 +115,8 @@ export function PlanCandidates({
   readonly saveCode?: string | null
   readonly onRetrySave?: () => void
   readonly onCatalogChange?: (next: PlanGenerationSuccess) => void
+  readonly cycleSummary?: CatalogCycleSuccessorSummary | null
+  readonly onRebuildCycle?: () => void
 }) {
   const [showOptions, setShowOptions] = React.useState(false)
   const resultRef = React.useRef<HTMLElement>(null)
@@ -169,7 +175,7 @@ export function PlanCandidates({
   const canRevise = !saving && (saveCode === undefined || saveCode === null
     || !saveCode.startsWith("ACCOUNT_PLAN_")
     || ["ACCOUNT_PLAN_STALE", "ACCOUNT_PLAN_EVIDENCE_REQUIRED", "ACCOUNT_PLAN_REVIEW_REQUIRED"].includes(saveCode))
-  const canSelect = hasValidStartDate && !recordConfirmationPending && !detailedEvidencePending && !targetDraftPending && !methodDraftPending && !catalogDraftPending && !selectionUnavailable && unreviewedConditions.length === 0
+  const canSelect = hasValidStartDate && !recordConfirmationPending && !detailedEvidencePending && !targetDraftPending && !methodDraftPending && !catalogDraftPending && !selectionUnavailable && unreviewedConditions.length === 0 && saveCode !== "CYCLE_EVIDENCE_CHANGED"
   const selectedRecord = athleteRecords.find((record) => record.id === selectedRecordId)
   const selectedEventLabel = selectedRecord === undefined
     ? "선택한 종목"
@@ -200,6 +206,7 @@ export function PlanCandidates({
         <TermHelp term="plan-option" />
       </div>
       </div>
+      {cycleSummary && <CatalogCycleSummary summary={cycleSummary} startDate={startDate} />}
       {recommendation && <InstantPlanRecommendationView recommendation={recommendation}
         recoveryRef={recoveryRef}
         actionState={saving ? { kind: "SAVING" } : saveCode === "ACCOUNT_PLAN_PENDING" ? { kind: "PENDING", message: saveError ?? "계정 저장을 확인하고 있어요." }
@@ -244,6 +251,8 @@ export function PlanCandidates({
           ? `${selectedEventLabel} ${formatRecordTime(selectedRecord.performanceSeconds)}` : undefined}
         goalLabel={instantEntry?.kind === "GOAL_ONLY" ? `${instantEntry.eventDistanceM}m ${formatRecordTime(instantEntry.performanceSeconds)}` : undefined}
       />}
+      {saveCode === "CYCLE_EVIDENCE_CHANGED" && onRebuildCycle && <button type="button" className="plan-text-action"
+        disabled={saving} onClick={onRebuildCycle}>일지를 반영해 다시 만들기</button>}
       {onCatalogChange && intake.selectedDetailedTemplateRef === null && <div ref={catalogRef} tabIndex={-1}>
         <CatalogWorkoutPicker generated={generated} intake={intake} openRequest={navigation?.kind === "catalog" ? navigation.revision : null}
           conditionRequest={conditionRequest} startDate={startDate} reviewedConditionKeys={reviewedConditionKeys}

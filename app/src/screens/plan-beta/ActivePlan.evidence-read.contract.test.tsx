@@ -31,7 +31,7 @@ it.each([null, "[]", "{broken", '[{"invalid":"entry"}]'])
     await userEvent.click(screen.getByRole("tab", { name: "주기·기록" }))
     const complete = raw === null || raw === "[]"
     expect(screen.queryByText(/이 훈련과 연결된 일지가 아직 없어요/u) !== null).toBe(complete)
-    expect(screen.queryByText(/조회하지 못한 상태를 일지가 없는 것으로 판단하지 않아요/u) !== null).toBe(!complete)
+    expect(screen.queryByText(/일지를 아직 모두 불러오지 못했어요/u) !== null).toBe(!complete)
     expect(localStorage.getItem("trainoracle.journal.v1")).toBe(raw)
   })
 
@@ -46,6 +46,6 @@ it("does not turn a storage exception into an empty journal", async () => {
   await userEvent.click(screen.getByRole("button", { name: "날짜별 카드 보기" }))
   await userEvent.click(screen.getAllByRole("button", { name: "훈련 방법과 이유" })[0]!)
   await userEvent.click(screen.getByRole("tab", { name: "주기·기록" }))
-  expect(screen.getByText(/조회하지 못한 상태를 일지가 없는 것으로 판단하지 않아요/u)).toBeVisible()
+  expect(screen.getByText(/일지를 아직 모두 불러오지 못했어요/u)).toBeVisible()
   expect(screen.queryByText(/이 훈련과 연결된 일지가 아직 없어요/u)).toBeNull()
 })

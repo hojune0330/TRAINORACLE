@@ -23,6 +23,7 @@ import { advancePeriodizationContext } from "../../domain/periodization-lineage"
 import { isPlanFrameCompletionEligible } from "../../domain/plan-successor-activation"
 import { todayISO } from "../../domain/journal-store"
 import { planAnchorsStillCurrent } from "../../domain/plan-anchor-reconfirmation"
+import { catalogCycleDraftSourceStillCurrent, type CatalogCycleDraftContext } from "../../domain/catalog-cycle-draft"
 import { isValidIsoDate } from "../../domain/dates"
 import { mainDraftStillMatches, snapshotPlanMainDraft } from "../../domain/plan-main-draft"
 import { loadPlanAdaptationContext } from "../../domain/plan-adaptation-ui-context"
@@ -57,6 +58,7 @@ export async function saveSelectedPlanCandidate(
   athleteEvidence: PlanAthleteEvidence,
   isCurrentDraft: () => boolean = () => true,
   predecessor: PlanBetaStateV3 | null = null,
+  cycleDraft: CatalogCycleDraftContext | null = null,
 ): Promise<CandidateSaveResult> {
   if (!isCurrentDraft()) return { kind: "rejected", code: "STALE_CANDIDATE_SELECTION" }
   if (intake === null || !isValidIsoDate(selection.startDate)) {
@@ -65,7 +67,7 @@ export async function saveSelectedPlanCandidate(
   const draftSnapshot = snapshotPlanMainDraft(generated, intake, selection.startDate)
   if (draftSnapshot === null) return { kind: "rejected", code: "STALE_CANDIDATE_SELECTION" }
   const requestFingerprint = () => {
-    const request = { selection, intake, athleteEvidence, gate, predecessor }
+    const request = { selection, intake, athleteEvidence, gate, predecessor, cycleDraft }
     return hasCanonicalJsonTree(request) ? canonicalJsonFingerprint("plan-save-request-v1", request) : null
   }
   const originalRequest = requestFingerprint()
@@ -168,6 +170,11 @@ export async function saveSelectedPlanCandidate(
             }
             return { kind: "saved", state: previous } as const
           }
+          // A replay above acknowledges an existing write. Every new successor
+          // write must carry and recheck the evidence used for its preview.
+          if (cycleDraft === null || !catalogCycleDraftSourceStillCurrent(predecessor, cycleDraft)) {
+            return { kind: "rejected", code: "CYCLE_EVIDENCE_CHANGED" } as const
+          }
           try {
             if (readMatchingPendingSuccessor(predecessor) !== null) return { kind: "rejected", code: "PENDING_SUCCESSOR_EXISTS" } as const
           } catch { return { kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" } as const }
@@ -180,6 +187,7 @@ export async function saveSelectedPlanCandidate(
                 && current.kind === "loaded" && sameStoredContent(current.state, predecessor)
                 && requestFingerprint() === originalRequest
                 && mainDraftStillMatches(draftSnapshot, generated, intake, selection.startDate)
+                && catalogCycleDraftSourceStillCurrent(predecessor, cycleDraft)
                 && planAnchorsStillCurrent(canonicalCandidate, new Date())
                 && evaluatePlanSafety("NO_KNOWN_RISK").kind === "passed"
                 && selectPlanForActivation(selection.candidateId, generated, gate,

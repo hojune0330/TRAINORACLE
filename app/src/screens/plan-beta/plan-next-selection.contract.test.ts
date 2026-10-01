@@ -24,7 +24,7 @@ function setup() {
   const plan = generatePlanFromDraft(base.intake, "NO_KNOWN_RISK", undefined, undefined, undefined, base)
   if (plan.kind !== "generated") throw Error(`Missing fixture: ${plan.kind}`)
   const select = () => saveSelectedPlanCandidate({ candidateId: plan.generated.candidates[0].candidateId, startDate: "2026-10-01" },
-    plan.generated, plan.gate, plan.intake, plan.athleteEvidence, () => true, base)
+    plan.generated, plan.gate, plan.intake, plan.athleteEvidence, () => true, base, plan.cycleDraft)
   return { base, plan, select }
 }
 beforeEach(() => {

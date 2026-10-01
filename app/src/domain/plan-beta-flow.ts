@@ -3,6 +3,8 @@ import { assertNever } from "@impl/shared/assert-never"
 import { bindDefaultCatalogSessions } from "@impl/prescription/catalog-session-binding"
 import { rebindCandidatePairIdentity } from "@impl/plan-generator/candidate-identity"
 import { createExplanationReceipt } from "./training-explanation-receipt"
+import { readCatalogCycleDraftSource, type CatalogCycleDraftContext } from "./catalog-cycle-draft"
+import { resolveCatalogCycleSuccessor, type CatalogCycleSuccessorSummary } from "./catalog-cycle-successor"
 import {
   generatePlanCandidates,
   selectPlanCandidate,
@@ -99,6 +101,8 @@ export type PlanDraftGeneration =
       readonly gate: SafetyGateDecision
       readonly intake: PlanBetaIntake
       readonly athleteEvidence: PlanAthleteEvidence
+      readonly cycleDraft?: CatalogCycleDraftContext
+      readonly cycleSummary?: CatalogCycleSuccessorSummary
     }
   | {
       readonly kind: "preview_only"
@@ -148,8 +152,14 @@ export function generatePlanFromDraft(
       return { kind: "rejected", code: "STALE_BASE" }
     }
   }
-  return generatePlanDraftWithContinuity(draft, currentCheck, prescriptionSelection,
+  const result = generatePlanDraftWithContinuity(draft, currentCheck, prescriptionSelection,
     detailedSessionTarget, candidateSessionTargets, loadPreviousContinuity(predecessor))
+  if (predecessor === undefined || result.kind !== "generated") return result
+  const source = readCatalogCycleDraftSource(predecessor)
+  if (source === null) return { kind: "rejected", code: "CYCLE_EVIDENCE_UNAVAILABLE" }
+  const next = resolveCatalogCycleSuccessor({ generated: result.generated, predecessor,
+    response: source.response, evaluatedAt: new Date() })
+  return { ...result, generated: next.generated, cycleDraft: source.context, cycleSummary: next.summary }
 }
 
 /** A preview leaves the predecessor active. Its distinct result cannot be

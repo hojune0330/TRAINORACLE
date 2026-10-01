@@ -10,6 +10,10 @@ export function planErrorMessage(errorCode: string): string {
     return "계정의 현재 계획이 달라졌거나 저장을 확인하지 못했어요. 현재 계획을 다시 확인해 주세요."
   }
   switch (errorCode) {
+    case "CYCLE_EVIDENCE_CHANGED":
+      return "일지가 바뀌어 다음 계획을 다시 계산해야 해요. 현재 계획은 그대로예요."
+    case "CYCLE_EVIDENCE_UNAVAILABLE":
+      return "수행 기록을 아직 확인하지 못했어요. 현재 계획은 그대로 두고, 기록을 불러온 뒤 다시 시도해 주세요."
     case "INCOMPLETE_FRAME":
       return "현재 주기의 진행 기록이 아직 남아 있어요. 일정에서 완료·휴식·건너뜀을 기록하거나, 표시된 일정이 끝난 뒤 다시 확인해 주세요."
     case "FRAME_NOT_STARTED":

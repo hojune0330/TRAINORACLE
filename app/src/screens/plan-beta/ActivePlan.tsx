@@ -329,7 +329,7 @@ export function ActivePlan({
                       <span className="plan-source-strip__title">
                         {activePlan.sourceMode === "PROFILE_ONLY"
                           ? "내가 고른 조건 · 베타 계획"
-                          : "최근 일지 확인 · 계획 수치에는 미반영"}
+                          : "최근 일지 확인 · 베타 계획"}
                       </span>
                       <TermHelp term="plan-beta-basis" />
                     </strong>
@@ -339,8 +339,9 @@ export function ActivePlan({
                         저장된 경기 기록 {state.athleteEvidence.storedRecordCount}개
                         {" · "}최근 일지 {state.athleteEvidence.recentJournalSessionCount}개 연결
                         {" · "}{hasDetailedPrescription
-                            ? `확인한 ${detailedPrescription.targetEventDistanceM}m 기록은 상세 세션 페이스에 사용 · 연결된 일지 값은 이번 계획 계산에 사용하지 않았어요`
-                          : "연결된 기록과 일지 값은 이번 계획 계산에 사용하지 않았어요"}
+                            ? `확인한 ${detailedPrescription.targetEventDistanceM}m 기록은 상세 세션 페이스에 사용`
+                          : "개인 기록에 근거한 페이스는 해당 훈련에 기준 기록과 함께 표시해요"}
+                        {" · "}일지 개수 자체로 훈련량이나 강도를 정하지 않아요
                       </small>
                     )}
                     {state.intake.competitionDivision !== undefined
@@ -466,9 +467,11 @@ export function ActivePlan({
         <details className="plan-session-guidance">
         <summary>다음 계획에 반영되는 내용</summary>
         <p>
-          다음 계획에는 어떤 계획을 골랐는지와 완료·휴식·건너뜀·통증 체크 횟수만 남겨요.
-          이번 훈련의 거리·페이스·메모는 넘기지 않고 강도도 자동으로 올리지 않습니다.
-          새 계획을 만들기 전에 몸 상태를 다시 확인합니다.
+          {state.version === 3
+            ? "다음 주기는 현재 일정과 연결된 수행 기록을 확인해 만들어요. 같은 목적의 상세 훈련은 유지하고, 직접 기록한 RPE가 반복해서 높으면 검토된 짧은 구성으로 조정할 수 있어요."
+            : "현재 일정과 수행 여부를 기준으로 다음 주기를 이어가요. 변경 이력이 있는 이 계획의 상세 구성을 그대로 복사하거나 자동으로 줄이는 경로는 아직 지원하지 않아요."}
+          기록이 부족하거나 비교가 어려우면 임의로 줄이지 않아요. 강도·훈련량을 자동으로 늘리거나 메모 원문을 분석하지 않아요.
+          새 계획을 시작하기 전에 몸 상태와 바뀐 내용을 다시 확인해 주세요.
         </p>
         </details>
         {frameComplete && hasPendingSuccessor ? (
