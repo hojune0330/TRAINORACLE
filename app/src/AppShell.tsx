@@ -10,6 +10,7 @@ import { Home } from "./screens/Home"
 import { LogEntry } from "./screens/LogEntry"
 import { DeferredMobileScreens } from "./DeferredMobileScreens"
 import { accountFeatureEnabled } from "./domain/account/config"
+import { loungeEntryIntent } from "./domain/lounge/entry-intent"
 import { loadEntries, localOnlyCount, todayISO } from "./domain/journal-store"
 import type { JournalEntry } from "./domain/journal-store"
 import { awardJournalEntry, type EngagementAwardResult } from "./domain/engagement"
@@ -107,7 +108,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const [, refreshAccountJournals] = React.useReducer((revision: number) => revision + 1, 0)
   const [v, setV] = React.useState(() => {
     if (!accountFeatureEnabled() || typeof window === "undefined") return INITIAL_VIEW_STATE
-    return new URLSearchParams(window.location.search).get("account") === "1"
+    return new URLSearchParams(window.location.search).get("account") === "1" || loungeEntryIntent().requested
       ? { ...INITIAL_VIEW_STATE, accountOpen: true }
       : INITIAL_VIEW_STATE
   })
@@ -569,6 +570,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   } else if (v.tab === "home" && v.accountOpen && accountEnabled) {
     screen = (
       <DeferredMobileScreens.Account
+        loungeRequested={loungeEntryIntent().requested}
         onBack={() => runViewTransition("pop", () => setV(s => ({ ...s, accountOpen: false })))}
         onOpenImport={openImport}
         onOpenRestore={openRestore}

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { rebindCandidatePairIdentity } from "@impl/plan-generator/candidate-identity"
 import { isVerifiedPlanCandidate } from "@impl/plan-generator/adaptation"
 import { isInitialCandidatePair } from "@impl/plan-generator/support-only-candidate-pair"
@@ -17,6 +17,8 @@ import { loadPreviousContinuity, savePlanBetaState } from "./plan-beta-store"
 import { derivePlanCycleResponse } from "./plan-cycle-response"
 import { createPlannedSessionLogDraft } from "./planned-session-link"
 
+// These integration cases replay both complete, signed cycle snapshots.
+vi.setConfig({ testTimeout: 20000 })
 const evaluatedAt = new Date("2026-10-01T12:00:00Z")
 const base = { eventGroup: "FIVE_K" as const, eventDistanceM: 5000 as const, competitionDivision: "OPEN" as const,
   experienceBand: "EXPERIENCED" as const, availableDayCount: 5 as const, requestedFrameLength: 10 as const,

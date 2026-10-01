@@ -6,6 +6,7 @@ import { adjustedPlanSelectionV3Fixture } from "./adjusted-plan-selection-v3.tes
 import { selectAdjustedPlanForActivationV3, type RetainedAdjustedPlanEvidenceV3 } from "./selected-adjusted-plan-v3"
 import { encodeStoredAdjustedPlanStateV5, readStoredAdjustedPlanStateV5, type StoredAdjustedPlanStateV5 } from "./adjusted-plan-storage-v5"
 import { saveSelectedAdjustedSuccessorV3 } from "./adjusted-plan-successor-v3"
+import * as successorModule from "./adjusted-plan-successor-v3"
 import { generateAdjustedNextFrameV3FromDraft } from "./plan-beta-flow"
 import { activePlanBetaStorageKey, readPlanBetaStateFromStorage } from "./plan-beta-store"
 import { ADJUSTED_PLAN_ARCHIVE_V3_KEY, readAdjustedOriginalPlansV3 } from "./adjusted-plan-archive-v3"
@@ -21,6 +22,8 @@ import type { PostSessionEntry } from "./journal-schema"
 import { readJournalOriginalPlan } from "./journal-original-plan"
 import { readCatalogCycleDraftSource } from "./catalog-cycle-draft"
 
+// These integration cases replay and validate retained originals as well as the new plan.
+vi.setConfig({ testTimeout: 20000 })
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers() })
 
@@ -242,7 +245,12 @@ it("takes the real schedule through comparison and explicit save, then renders t
   expect(screen.getByRole("region", { name: "적용할 훈련" })).toBeInTheDocument()
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(old.raw)
   fireEvent.click(screen.getByRole("checkbox", { name: "다음 날짜에도 이 훈련에 필요한 장소와 시간을 확보했어요" }))
-  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" })) })
+  const save = vi.spyOn(successorModule, "saveSelectedAdjustedSuccessorV3")
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" }))
+    expect(save).toHaveBeenCalledOnce()
+    expect(await save.mock.results[0]!.value).toMatchObject({ kind: "saved" })
+  })
   expect(screen.getByRole("heading", { name: "내 훈련 일정" })).toBeInTheDocument()
   const current = readPlanBetaStateFromStorage([], retained)
   if (current.kind !== "adjusted_v3_loaded") throw Error("saved plan")
@@ -281,7 +289,12 @@ it("refuses a stale current plan when final confirmation is clicked", async () =
   fireEvent.click(screen.getAllByRole("button", { name: /구성 확인$/u })[0]!)
   localStorage.setItem(activePlanBetaStorageKey(), "OTHER_WRITER")
   fireEvent.click(screen.getByRole("checkbox", { name: "다음 날짜에도 이 훈련에 필요한 장소와 시간을 확보했어요" }))
-  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" })) })
+  const save = vi.spyOn(successorModule, "saveSelectedAdjustedSuccessorV3")
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" }))
+    expect(save).toHaveBeenCalledOnce()
+    expect(await save.mock.results[0]!.value).toMatchObject({ kind: "rejected" })
+  })
   expect(screen.getByRole("alert")).toBeInTheDocument()
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe("OTHER_WRITER")
   expect(localStorage.getItem(accountScopedStorageKey(ADJUSTED_PLAN_ARCHIVE_V3_KEY))).toBeNull()

@@ -35,7 +35,7 @@ export function AdjustedPlanApplyReview({ request, readReview, isCurrentDraft, l
   const [saving, setSaving] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   React.useEffect(() => { valid.current = true; return () => { valid.current = false } }, [])
-  const prepared = prepareAdjustedPlanCandidate(opened.request.preparation)
+  const prepared = React.useMemo(() => prepareAdjustedPlanCandidate(opened.request.preparation), [opened])
   const current = () => valid.current && live.current.isCurrentDraft()
     && identity(live.current.request) === opened.fingerprint
     && live.current.expectedPredecessorFingerprint === opened.expectedPredecessorFingerprint

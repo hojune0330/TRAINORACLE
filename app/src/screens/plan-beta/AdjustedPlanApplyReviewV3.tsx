@@ -37,7 +37,7 @@ export function AdjustedPlanApplyReviewV3({ seed, readReview, locks, isCurrentDr
     && live.current.expectedPredecessorFingerprint === opened.expectedPredecessorFingerprint
     && identity(live.current.cycleDraft ?? null) === identity(opened.cycleDraft ?? null)
     && (opened.expectedPredecessorFingerprint === undefined || environment.current)
-  const prepared = prepareAdjustedPlanCandidateV3(opened.request.preparation)
+  const prepared = React.useMemo(() => prepareAdjustedPlanCandidateV3(opened.request.preparation), [opened])
   const apply = async () => {
     if (pending.current || !valid.current) return
     pending.current = true; setSaving(true); setError(null)

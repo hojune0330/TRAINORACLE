@@ -9,6 +9,7 @@ import {
   HeartPulse,
   Info,
   RefreshCw,
+  Pencil,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import type { PlanProgressState } from "@impl/plan-generator/types"
@@ -69,6 +70,8 @@ export function ActivePlan({
   returnToSession,
   executionMessage,
   executionBlocked = false,
+  onEditPlan,
+  onEditSession,
   futureTrainingEditor,
 }: {
   readonly state: PlanBetaState
@@ -87,6 +90,8 @@ export function ActivePlan({
   readonly returnToSession?: PlannedSessionLogDraft["link"]
   readonly executionMessage?: string | null
   readonly executionBlocked?: boolean
+  readonly onEditPlan?: () => void
+  readonly onEditSession?: (session: PlanSession) => void
   readonly futureTrainingEditor?: React.ReactNode
 }) {
   const [hasPendingSuccessor, setHasPendingSuccessor] = React.useState(false)
@@ -187,7 +192,12 @@ export function ActivePlan({
           </span>
         </div>
       )}
-      <h1 id="active-plan-title">{frameLengthDays}일 훈련 계획</h1>
+      <div className="active-plan__edit-heading">
+        <h1 id="active-plan-title">{frameLengthDays}일 훈련 계획</h1>
+        {onEditPlan && <button type="button" className="plan-text-action" data-plan-edit-button onClick={onEditPlan}><Pencil aria-hidden="true" size={16} />계획 수정</button>}
+      </div>
+      {futureTrainingEditor}
+      {state.version === 3 && state.activePlanEdit && <p className="active-plan__journal-return" role="status">수정한 계획이에요. 이전 계획과 일지는 보관되어 있어요.</p>}
       {state.version === 3 && state.executionReplan && <details className="plan-detailed-options">
         <summary>수행 기록을 확인하고 바꾼 일정</summary>
         <p>오늘과 이미 기록한 훈련은 그대로 두었어요. 이전 계획은 해당 일지에서 확인할 수 있어요.</p>
@@ -232,7 +242,11 @@ export function ActivePlan({
           const session = activePlan.sessions.find(item => instantSessionId(item) === id)
           if (session && session.role !== "REST") onWriteSessionLog(session)
         }} />
-      {futureTrainingEditor}
+      {onEditSession && activePlan.sessions.filter(session => todayIds.has(instantSessionId(session))
+        && session.role !== "REST" && !recorded.has(`${session.day}:${session.slot}`)).map(session => <button
+          type="button" className="plan-text-action" key={`edit-today:${session.day}:${session.slot}`} onClick={() => onEditSession(session)}>
+          <Pencil aria-hidden="true" size={16} />{sessionSlotLabel(session.slot)} 훈련 수정
+        </button>)}
       <details className="plan-detailed-options">
       <summary>전체 계획 구성</summary>
       <p className="active-plan__variant">
@@ -425,6 +439,12 @@ export function ActivePlan({
                   onClick={() => onWriteSessionLog(session)}
                 >
                   이 훈련 일지 쓰기
+                </button>
+              )}
+              {onEditSession && session.role !== "REST" && current === undefined
+                && isoShift(startDate, session.day - 1) >= today && session.day <= frameDayCount && (
+                <button type="button" className="plan-text-action" onClick={() => onEditSession(session)}>
+                  <Pencil aria-hidden="true" size={16} />이 훈련 수정
                 </button>
               )}
               {isReturnedSession && returnedJournal !== undefined && (

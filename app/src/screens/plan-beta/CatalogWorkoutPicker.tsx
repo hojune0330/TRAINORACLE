@@ -26,6 +26,20 @@ type PickerProps = {
   readonly startDate?: string
   readonly reviewedConditionKeys?: readonly string[]
 }
+export type CatalogWorkoutEditorProps = Omit<PickerProps, "generated" | "onChange"> & {
+  readonly generated?: PlanGenerationSuccess
+  readonly onChange?: (next: PlanGenerationSuccess) => void
+  readonly onSelect?: (id: string, inputs: WorkoutCalculationInputs, acceptLonger: boolean, acceptStronger: boolean) => void
+  readonly canSelect?: (id: string, inputs: WorkoutCalculationInputs, acceptLonger: boolean, acceptStronger: boolean) => boolean
+  readonly preferredCatalogId?: string | null
+  readonly environmentReviewRequired?: boolean
+  readonly onDraftChange?: () => void
+  readonly selectionMode?: "DRAFT" | "SAVED_PLAN"
+  readonly applyDisabled?: boolean
+  readonly session: PlanGenerationSuccess["candidates"][number]["sessions"][number]
+  readonly onCancel: () => void
+  readonly drawHistory: Map<string, Set<string>>
+}
 export function CatalogWorkoutPicker(props: PickerProps) {
   const { generated, disabled = false } = props
   const sessions = generated.candidates[0].sessions.filter(s => s.role !== "REST" && s.prescription.kind === "RPE_TIME_RANGE")
@@ -83,20 +97,9 @@ export function CatalogWorkoutPicker(props: PickerProps) {
   </details>
 }
 
-type EditorProps = Omit<PickerProps, "generated" | "onChange"> & {
-  readonly generated?: PlanGenerationSuccess
-  readonly onChange?: (next: PlanGenerationSuccess) => void
-  readonly onSelect?: (id: string, inputs: WorkoutCalculationInputs, acceptLonger: boolean) => void
-  readonly canSelect?: (id: string, inputs: WorkoutCalculationInputs, acceptLonger: boolean) => boolean
-  readonly applyDisabled?: boolean
-  readonly session: PlanGenerationSuccess["candidates"][number]["sessions"][number]
-  readonly onCancel: () => void
-  readonly drawHistory: Map<string, Set<string>>
-  readonly preferredCatalogId?: string | null
-  readonly environmentReviewRequired?: boolean
-}
-export function CatalogWorkoutEditor({ generated, intake, records, onChange, onSelect, canSelect, applyDisabled,
-  onPendingChange, session, onCancel, drawHistory, preferredCatalogId, startDate, environmentReviewRequired, disabled = false }: EditorProps) {
+export function CatalogWorkoutEditor({ generated, intake, records, onChange, onSelect, canSelect, onDraftChange, applyDisabled,
+  onPendingChange, session, onCancel, drawHistory, preferredCatalogId, startDate, environmentReviewRequired, selectionMode, disabled = false }: CatalogWorkoutEditorProps) {
+  const editingSavedPlan = !generated && selectionMode !== "DRAFT"
   const binding = session.prescription.kind === "RPE_TIME_RANGE" ? session.prescription.catalogWorkout : undefined
   const pool = ALL_WORKOUT_CATALOG.filter(e => e.family === catalogFamilyForIntent(session.plannedEnergyIntent)
     && e.eventDistances.includes(intake.eventDistanceM) && e.experience.includes(intake.experienceBand) && e.hold === null)
@@ -133,8 +136,18 @@ export function CatalogWorkoutEditor({ generated, intake, records, onChange, onS
       : confirmation.requirements.filter(requirement => !isCatalogEnvironmentRequirement(requirement))
   const setConfirmed = (requirements: string[]) => setConfirmation({ context: confirmationContext, requirements, userEdited: true, needsRecheck: false })
   const environmentDateChanged = confirmation.needsRecheck && !parentReviewedBinding
+  const [acceptStronger, setAcceptStronger] = React.useState(false)
+  const calculationDraft = JSON.stringify([draft, confirmed, confirmationContext])
+  const decisionDraft = JSON.stringify([calculationDraft, durationDecision, acceptStronger])
+  const reportedDraft = React.useRef(decisionDraft)
   const pending = configurationChanged || durationDecision !== null
+  React.useEffect(() => { setAcceptStronger(false) }, [calculationDraft])
   React.useEffect(() => { onPendingChange?.(pending) }, [pending, onPendingChange])
+  React.useEffect(() => {
+    if (reportedDraft.current === decisionDraft) return
+    reportedDraft.current = decisionDraft
+    onDraftChange?.()
+  }, [decisionDraft, onDraftChange])
   React.useEffect(() => () => onPendingChange?.(false), [onPendingChange])
   const entry = pool.find(e => e.id === choice)
   if (session.prescription.kind !== "RPE_TIME_RANGE") return null
@@ -160,25 +173,31 @@ export function CatalogWorkoutEditor({ generated, intake, records, onChange, onS
   const withoutTimes = calculateCatalogWorkout(entry.id, { ...inputs, segmentSeconds: [], recoverySeconds: [] })
   const missing = withoutTimes?.steps.filter(s => s.seconds === null).filter((s, i, all) => all.findIndex(x => x.segmentId === s.segmentId) === i) ?? []
   const durationKey = preview?.totals.seconds ? `${entry.id}:${preview.fingerprint}` : null
-  const longer = preview?.totals.seconds && preview.totals.seconds.maximum > inputs.availableSeconds!
+  const currentSessionMaximum = session.prescription.durationMinutes.maximum
+  const originalMaximum = binding?.originalEnvelope.durationMinutes.maximum ?? currentSessionMaximum
+  const activeConsentLimit = Math.min(currentSessionMaximum, originalMaximum) * 60
+  const longer = preview?.totals.seconds && preview.totals.seconds.maximum > (editingSavedPlan ? activeConsentLimit : inputs.availableSeconds!)
   const acceptLonger = longer && durationKey !== null && (durationDecision?.key === durationKey
     ? durationDecision.accepted
-    : durationDecision === null && !configurationChanged && pairedPrescriptions.every(p => preview.totals.seconds!.maximum
+    : durationDecision === null && !!generated && !configurationChanged && pairedPrescriptions.every(p => preview.totals.seconds!.maximum
       <= (p.catalogWorkout?.originalEnvelope.durationMinutes.maximum ?? p.durationMinutes.maximum) * 60
       || p.catalogWorkout?.acceptedDurationSeconds === preview.totals.seconds!.maximum))
   const unavailable = preview?.unavailable.filter(code => code !== "TIME_BUDGET_EXCEEDED" || !acceptLonger) ?? []
   const next = preview && generated ? replaceCandidateCatalogWorkout(generated, session, entry.id, inputs, !!acceptLonger) : null
-  const canApply = generated ? next !== null : !!preview && !!onSelect
-    && bindCatalogSession(session, entry.id, inputs, !!acceptLonger) !== null
-    && (canSelect?.(entry.id, inputs, !!acceptLonger) ?? false)
   const nextRpe = preview?.steps.some(s => s.phase === "main" && s.kind === "WORK") ? catalogRpe(preview) : null
   const stronger = nextRpe && nextRpe.maximum > session.prescription.rpe.maximum
+  const acceptedStronger = !stronger || !editingSavedPlan || acceptStronger
+  const canApply = generated ? next !== null : !!preview && !!onSelect
+    && bindCatalogSession(session, entry.id, inputs, !!acceptLonger) !== null
+    && (!longer || !!acceptLonger)
+    && acceptedStronger
+    && (canSelect?.(entry.id, inputs, !!acceptLonger, !!stronger) ?? false)
   const eligibleDraws = pool.filter(e => {
     const immediateInputs = { ...inputs, confirmedRequirements: [], segmentPaces: [], segmentSeconds: [], recoverySeconds: [] }
     const calculation = calculateCatalogWorkout(e.id, immediateInputs)
     return calculation !== null && calculation.unavailable.length === 0
       && (generated ? replaceCandidateCatalogWorkout(generated, session, e.id, immediateInputs) !== null
-        : bindCatalogSession(session, e.id, immediateInputs) !== null && (canSelect?.(e.id, immediateInputs, false) ?? false))
+        : bindCatalogSession(session, e.id, immediateInputs) !== null && (canSelect?.(e.id, immediateInputs, false, false) ?? false))
   })
   const alternatives = [...groupEligibleCatalogMethods(eligibleDraws).keys()].filter(key => key !== catalogRecommendationMethodKey(entry))
   const drawScope = JSON.stringify([session.day, session.slot, intake.eventDistanceM, intake.experienceBand,
@@ -218,9 +237,11 @@ export function CatalogWorkoutEditor({ generated, intake, records, onChange, onS
     </fieldset>}
     {preview && <CatalogWorkoutDetail workout={preview} />}
     {recordId && !record && configurationChanged && <p role="status">기준 기록을 찾을 수 없어 새 구성의 페이스 계산에 사용하지 않았어요.</p>}
-    {stronger && nextRpe && <p role="status">지금 훈련 RPE {session.prescription.rpe.minimum}~{session.prescription.rpe.maximum} → 새 훈련 RPE {nextRpe.minimum}~{nextRpe.maximum}. 더 강한 구성이에요. 아래 버튼을 누르면 이 강도로 바뀌어요.</p>}
+    {stronger && nextRpe && (editingSavedPlan ? <label><input type="checkbox" checked={acceptStronger} disabled={disabled}
+      onChange={e => setAcceptStronger(e.target.checked)} />지금 훈련 RPE {session.prescription.rpe.minimum}~{session.prescription.rpe.maximum}에서 새 훈련 RPE {nextRpe.minimum}~{nextRpe.maximum}으로 더 강해지는 변경을 확인하고 동의해요.</label>
+      : <p role="status">지금 훈련 RPE {session.prescription.rpe.minimum}~{session.prescription.rpe.maximum} → 새 훈련 RPE {nextRpe.minimum}~{nextRpe.maximum}. 더 강한 구성이에요. 아래 버튼을 누르면 이 강도로 바뀌어요.</p>)}
     {longer && preview?.totals.seconds && <label><input type="checkbox" checked={!!acceptLonger} disabled={disabled}
-      onChange={e => durationKey !== null && setDurationDecision({ key: durationKey, accepted: e.target.checked })} />준비·회복·정리까지 최대 {formatTotalMinutes(preview.totals.seconds.maximum / 60)} 걸려요. {generated ? "더 짧았던 계획안도 이 시간으로 바꿀게요." : "이 시간으로 바꿀게요."}</label>}
+      onChange={e => durationKey !== null && setDurationDecision({ key: durationKey, accepted: e.target.checked })} />준비·회복·정리까지 최대 {formatTotalMinutes(preview.totals.seconds.maximum / 60)} 걸려요. {generated ? "더 짧았던 계획안도 이 시간으로 바꿀게요." : currentSessionMaximum <= originalMaximum ? "현재 계획보다 긴 구성임을 확인하고 동의해요." : "처음 안내한 시간보다 긴 구성임을 확인하고 동의해요."}</label>}
     {!preview && <p role="status">입력한 시간을 확인해 주세요. 0보다 큰 초 단위 숫자로 입력해요.</p>}
     {unavailable.length ? <p role="status">{[...new Set(unavailable.map(reason))].join(" ")}</p> : null}
     {preview && !canApply && !unavailable.length && (pending || !binding) && <p role="status">이 일정에는 적용할 수 없는 구성이에요. 같은 목적의 다른 훈련을 골라 주세요.</p>}
@@ -230,7 +251,7 @@ export function CatalogWorkoutEditor({ generated, intake, records, onChange, onS
         if (disabled || applyDisabled || !canApply || !localAccountScopeIsCurrent(accountScope)
           || startDate !== undefined && !isValidIsoDate(startDate)) return
         if (next) onChange?.(next)
-        else if (canApply) onSelect?.(entry.id, inputs, !!acceptLonger)
+        else if (canApply) onSelect?.(entry.id, inputs, !!acceptLonger, !!stronger)
       }}>이 구성으로 바꾸기</button>
       {pending && <button type="button" disabled={disabled} onClick={onCancel}>변경 취소</button>}
     </div>

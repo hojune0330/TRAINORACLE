@@ -25,13 +25,15 @@ import { AccountJournalHistory } from "./account/AccountJournalHistory"
 import { AccountJournalMigration } from "./account/AccountJournalMigration"
 import { mono, primaryBtn, secondaryBtn } from "./account/styles"
 import { InstallShortcutSuggestion } from "../components/InstallShortcut"
+import { LoungeEntry } from "./account/LoungeEntry"
 
 type SetupState = "checking" | "not-required" | "saving" | "needs-profile" | "ready" | "failed"
 
-export function Account({ onBack, onOpenImport, onOpenRestore }: {
+export function Account({ onBack, onOpenImport, onOpenRestore, loungeRequested = false }: {
   readonly onBack?: () => void
   readonly onOpenImport?: () => void
   readonly onOpenRestore?: () => void
+  readonly loungeRequested?: boolean
 }) {
   const config = accountConfig()
   const today = koreaServiceDate()
@@ -228,6 +230,7 @@ export function Account({ onBack, onOpenImport, onOpenRestore }: {
 
           {setupNotice !== null && <p role="status" style={{ ...mono, fontSize: 11, margin: 0 }}>{setupNotice}</p>}
           <InstallShortcutSuggestion eligible={setupState === "ready"} returnFocusTo={() => document.querySelector<HTMLElement>('[data-install-shortcut-return="account"]')} />
+          {profileSetupComplete && <LoungeEntry key={user.id} userId={user.id} requested={loungeRequested} />}
 
           <AccountNetworkSettings
             userId={user.id}

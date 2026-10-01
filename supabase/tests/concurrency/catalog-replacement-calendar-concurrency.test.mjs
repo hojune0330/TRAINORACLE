@@ -27,6 +27,7 @@ before(async () => {
   admin = cluster.connect(); left = cluster.connect(); right = cluster.connect();
   await bootstrap(admin);
   await admin.query(await readFile(new URL('../../migrations/0040_execution_replan_journal_guard.sql', import.meta.url), 'utf8'));
+  await admin.query(await readFile(new URL('../../migrations/0044_plan_successor_guard_binding.sql', import.meta.url), 'utf8'));
   let sql = await readFile(new URL('../../migrations/0043_catalog_replacement_calendar_guard.sql', import.meta.url), 'utf8');
   const guard = "to_char(clock_timestamp() at time zone (calendar->>'timeZone'),'YYYY-MM-DD') is distinct from calendar->>'today'";
   assert.equal(sql.split(guard).length - 1, 2, 'Both production clock guards must be located before modifying in-memory bytes');

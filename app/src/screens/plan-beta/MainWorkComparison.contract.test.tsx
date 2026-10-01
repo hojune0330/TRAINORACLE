@@ -32,7 +32,7 @@ describe("MAIN comparison presentation", () => {
     expect(screen.getByText(view.work)).toBeVisible()
     expect(screen.getAllByText(view.intensity)).toHaveLength(1)
     expect(screen.getByRole("heading", { name: "2일차 · 오후" })).toBeVisible()
-    expect(screen.getByText("본운동 방법과 목표값이 같아요. 다른 방법 두 개가 아니에요.")).toBeVisible()
+    expect(screen.getByText("같은 핵심 훈련을 날짜와 전체 일정만 다르게 배치한 계획이에요. 서로 다른 훈련 두 개가 아니에요.")).toBeVisible()
     expect(screen.getAllByRole("term").map((node) => node.textContent)).toEqual(["운동 구간", "회복", "목표 강도", "시간 정보", "알 수 있는 것과 한계"])
   })
 

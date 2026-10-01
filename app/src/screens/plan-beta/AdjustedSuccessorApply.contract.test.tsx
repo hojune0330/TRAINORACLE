@@ -9,7 +9,9 @@ import { setActiveLocalAccount } from "../../domain/account/local-journal-owners
 import { TODAY } from "../../domain/prescription-quality-matrix.test-fixtures"
 import { PlanBeta } from "../PlanBeta"
 import { loadAthleteRecords } from "../../domain/athlete-records"
+import * as successorStore from "../../domain/adjusted-plan-store"
 
+vi.setConfig({ testTimeout: 20000 })
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers() })
 
@@ -27,7 +29,12 @@ it("V4 schedule opens the real next-flow resolver, rebinds detail and saves only
   expect(screen.getByRole("button", { name: "이 구성으로 계획 저장" })).toBeDisabled()
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(old.raw)
   fireEvent.click(screen.getByRole("checkbox", { name: "다음 날짜에도 이 훈련에 필요한 장소와 시간을 확보했어요" }))
-  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" })) })
+  const save = vi.spyOn(successorStore, "saveSelectedAdjustedSuccessor")
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" }))
+    expect(save).toHaveBeenCalledOnce()
+    expect(await save.mock.results[0]!.value).toMatchObject({ kind: "saved" })
+  })
   expect(screen.getByRole("heading", { name: "내 훈련 일정" })).toBeInTheDocument()
   expect(readPlanBetaStateFromStorage(retained)).toMatchObject({ kind: "adjusted_loaded", state: { selection: { periodization: { frameOrdinal: 2 } } } })
 }, 20000)
@@ -51,7 +58,12 @@ it("final confirmation archives and advances using the actual successor store", 
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(old.raw)
   expect(screen.getByRole("button", { name: "이 구성으로 계획 저장" }).hasAttribute("disabled")).toBe(true)
   fireEvent.click(screen.getByRole("checkbox", { name: "다음 날짜에도 이 훈련에 필요한 장소와 시간을 확보했어요" }))
-  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" })) })
+  const save = vi.spyOn(successorStore, "saveSelectedAdjustedSuccessor")
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" }))
+    expect(save).toHaveBeenCalledOnce()
+    expect(await save.mock.results[0]!.value).toMatchObject({ kind: "saved" })
+  })
   expect(saved).toHaveBeenCalledTimes(1)
   expect(readPlanBetaStateFromStorage(retained)).toMatchObject({ kind: "adjusted_loaded",
     state: { selection: { periodization: { frameOrdinal: 2 }, continuation: { predecessorFingerprint: old.state.contentFingerprint } } } })

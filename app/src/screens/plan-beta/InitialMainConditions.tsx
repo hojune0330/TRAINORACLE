@@ -108,7 +108,7 @@ export function InitialMainConditions({ input, disabled = false, onApply, onAppl
             </option>)}
           </select></label>
           <CatalogWorkoutEditor key={`${input.generated.pairId}:${fallback.day}:${fallback.slot}:${cancelRevision}`}
-            intake={input.intake} records={[]} session={session} startDate={input.context.startDate}
+            intake={input.intake} records={[]} session={session} startDate={input.context.startDate} selectionMode="DRAFT"
             disabled={disabled || checked.length > 0} drawHistory={drawHistory.current}
             preferredCatalogId={fallback.manualCatalogIds[0]} onPendingChange={reportManualPending}
             onCancel={() => { setCancelRevision(value => value + 1); setManualPending(false) }}

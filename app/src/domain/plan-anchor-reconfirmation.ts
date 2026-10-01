@@ -6,8 +6,13 @@ import { resolveCatalogBinding } from "@impl/prescription/catalog-session-bindin
 
 /** Reconfirm the chosen source, never recalculate a saved prescription from a newer record. */
 export function planAnchorsStillCurrent(candidate: PlanCandidate, evaluatedAt: Date): boolean {
-  const detailed = candidate.sessions.flatMap(session => session.prescription.kind === "PACE_TARGET" ? [session.prescription] : [])
-  const catalogRecords = candidate.sessions.flatMap(s => {
+  return planSessionAnchorsStillCurrent(candidate.sessions, evaluatedAt)
+}
+
+/** The same evidence recheck is required for saved-plan edits, not only new candidates. */
+export function planSessionAnchorsStillCurrent(sessions: PlanCandidate["sessions"], evaluatedAt: Date): boolean {
+  const detailed = sessions.flatMap(session => session.prescription.kind === "PACE_TARGET" ? [session.prescription] : [])
+  const catalogRecords = sessions.flatMap(s => {
     if (s.prescription.kind !== "RPE_TIME_RANGE" || !s.prescription.catalogWorkout?.inputs.fiveK) return []
     const calculated = resolveCatalogBinding(s.prescription.catalogWorkout)
     return calculated?.steps.some(step => step.referenceRecordId) ? [s.prescription.catalogWorkout.inputs.fiveK] : []

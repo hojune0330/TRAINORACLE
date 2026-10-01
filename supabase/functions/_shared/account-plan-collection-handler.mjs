@@ -3,6 +3,7 @@ import { createAccountJournalRepository, validateAccountJournalDocument, account
 import { validateAccountPlanCollectionIndex, validateAccountPlanCollectionPart,
   joinAccountPlanCollection, validateAccountPlanCollectionUpdate,
   accountPlanCollectionPartHash, accountPlanFingerprint, projectCatalogReplacementJournal, projectExecutionReplanJournal,
+  activePlanEditClockIsCurrent, projectActivePlanEditJournal, validateActivePlanEditJournalFacts,
   validateCatalogReplacementJournalFacts, catalogReplacementClockIsCurrent,
   executionReplanSourceContext, validateExecutionReplanJournalFacts } from './account-plan-collection-validator.mjs';
 
@@ -230,7 +231,7 @@ export function createAccountPlanCollectionHandler({ authenticate, getMaterial, 
       if (previous && validateAccountPlanCollectionUpdate(previous, next) !== true) fail(422, 'INVALID_DOCUMENT_UPDATE');
       const selected = next.snapshots.find(p => p.planId === next.index.currentPlanId)?.snapshot.state;
       const replan = selected?.version === 3 && next.index.currentPlanId !== previous?.index.currentPlanId
-        ? (selected.executionReplan ?? selected.catalogReplacement) : null;
+        ? (selected.executionReplan ?? selected.catalogReplacement ?? selected.activePlanEdit) : null;
       const selectionChanged = next.index.currentPlanId !== null && next.index.currentPlanId !== previous?.index.currentPlanId;
       // The stored snapshot omits candidate.continuityContext; its validated
       // candidate identity retains the exact continuity segment, including legacy frames.
@@ -246,8 +247,9 @@ export function createAccountPlanCollectionHandler({ authenticate, getMaterial, 
       }
       const journalGuard = r.journalGuard ?? replan?.journalGuard;
       if (!replan && journalGuard !== undefined && typeof repo.commitReplan !== 'function') fail(503, 'UNAVAILABLE');
-      if (replan && (!previous || !Array.isArray(replan.journalGuard) || typeof repo.commitReplan !== 'function')) fail(422, 'REPLAN_SOURCE_REQUIRED');
-      if (replan && (selected.catalogReplacement || selected.executionReplan)) {
+      if (replan && (!previous || !Array.isArray(replan.journalGuard) || typeof repo.commitReplan !== 'function')) fail(422, selected.activePlanEdit ? 'ACTIVE_PLAN_EDIT_SOURCE_REQUIRED' : 'REPLAN_SOURCE_REQUIRED');
+      if (replan && (selected.catalogReplacement || selected.executionReplan || selected.activePlanEdit)) {
+        if (selected.activePlanEdit && !activePlanEditClockIsCurrent(replan, now())) fail(409, 'PLAN_DATE_CHANGED');
         if (selected.catalogReplacement && !catalogReplacementClockIsCurrent(replan, now())) fail(409, 'PLAN_DATE_CHANGED');
         if (typeof repo.readJournals !== 'function') fail(503, 'UNAVAILABLE');
         const facts = [], guard = replan.journalGuard;
@@ -263,14 +265,17 @@ export function createAccountPlanCollectionHandler({ authenticate, getMaterial, 
             const expected = batch.find(item => item.documentId === row?.document_id);
             if (!expected || row.user_id !== ownerId || row.deleted_at != null || row.revision !== expected.revision) fail(409, 'JOURNALS_CHANGED');
             const journal = await decode(row.encrypted_payload, row.document_id);
-            const fact = selected.catalogReplacement ? projectCatalogReplacementJournal(journal, replan)
+            const fact = selected.activePlanEdit ? projectActivePlanEditJournal(journal, replan)
+              : selected.catalogReplacement ? projectCatalogReplacementJournal(journal, replan)
               : projectExecutionReplanJournal(journal, replan, sourceContext);
             if (!fact) fail(503, 'INVALID_STORED_DATA');
-            if (fact.protectsSource) fail(422, 'RECORDED_SESSION_PROTECTED');
+            if (fact.protectsSource || selected.activePlanEdit && fact.protectsTarget) fail(422, 'RECORDED_SESSION_PROTECTED');
             facts.push(fact);
           }
         }
-        if (!validateCatalogReplacementJournalFacts(replan, facts)) fail(409, 'JOURNALS_CHANGED');
+        if (selected.activePlanEdit
+          ? !validateActivePlanEditJournalFacts(replan, facts)
+          : !validateCatalogReplacementJournalFacts(replan, facts)) fail(409, 'JOURNALS_CHANGED');
         if (selected.executionReplan && !validateExecutionReplanJournalFacts(replan, facts, sourceContext)) fail(422, 'REPLAN_SOURCE_REQUIRED');
       }
       if (r.legacy) {
@@ -288,6 +293,7 @@ export function createAccountPlanCollectionHandler({ authenticate, getMaterial, 
       let result;
       try {
         const commit = { ...commitInput, ...binding, payload: await encrypt(r.index, 'PLAN_COLLECTION', 'index') };
+        if (selected?.activePlanEdit && replan && !activePlanEditClockIsCurrent(replan, now())) fail(409, 'PLAN_DATE_CHANGED');
         if (replan?.policy === 'manual-catalog-replacement-v1' && !catalogReplacementClockIsCurrent(replan, now())) fail(409, 'PLAN_DATE_CHANGED');
         result = journalGuard !== undefined ? await repo.commitReplan({ ...commit, journalGuard,
           ...(replan?.policy === 'manual-catalog-replacement-v1'

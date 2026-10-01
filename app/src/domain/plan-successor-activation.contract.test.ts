@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { generatePlanCandidates } from "@impl/plan-generator/generator"
 import {
   acceptPreparedNextFrameAdaptation,
   evaluateActivePlanAdaptationSafety,
@@ -29,6 +30,7 @@ import {
   saveAthleteRecord,
 } from "./athlete-records"
 import { DETAILED_PRESCRIPTION_APPROVALS } from "./detailed-prescription-approvals"
+import { createPlanFormation } from "./plan-beta-formation"
 
 const ACTIVE_KEY = "trainoracle.plan-beta.v1"
 const HISTORY_KEY = "trainoracle.plan-beta.history.v1"
@@ -65,6 +67,24 @@ afterEach(() => {
 })
 
 describe("accepted successor activation", () => {
+  it.each([false, true])("rejects a new catalog-bound plan's legacy successor transform (PB/SB: %s) without storage writes", async (withPbTrigger) => {
+    const fixture = await activeFixture(9, true, false, withPbTrigger, false)
+    expect(fixture.state.activePlan.sessions.some((session) => (
+      session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout !== undefined
+    ))).toBe(true)
+    const before = storageSnapshot()
+
+    await expect(prepareNextFrameAdaptation({
+      state: fixture.state,
+      reason: withPbTrigger ? "PB_SB" : "EXPLICIT_REQUEST",
+      record: fixture.triggerRecord,
+      safety: fixture.safety,
+      operationAt: ACTIVATED_AT,
+    })).resolves.toEqual({ kind: "unavailable", code: "UNAPPROVED_TRANSFORM" })
+    expect(storageSnapshot()).toStrictEqual(before)
+    expect(window.localStorage.getItem(PENDING_KEY)).toBeNull()
+  })
+
   it.each([7, 9, 10] as const)("activates a completed %s-day projection exactly once", async (projectionLength) => {
     const fixture = await acceptedFixture(projectionLength, true)
     const before = storageSnapshot()
@@ -374,6 +394,43 @@ async function acceptedFixture(
   withDetailedPrescription = false,
   withPbTrigger = false,
 ) {
+  const { state, safety, triggerRecord } = await activeFixture(
+    projectionLength, complete, withDetailedPrescription, withPbTrigger,
+  )
+  const prepared = await prepareNextFrameAdaptation({
+    state,
+    reason: withPbTrigger ? "PB_SB" : "EXPLICIT_REQUEST",
+    record: triggerRecord,
+    safety,
+    operationAt: ACTIVATED_AT,
+  })
+  if (prepared.kind !== "ready") throw new Error(`Expected a prepared successor, got ${prepared.code}`)
+  const proposalParsed = planAdaptationProposalSchema.safeParse(prepared.prepared.proposal)
+  if (!proposalParsed.success) throw new Error(`Invalid prepared proposal: ${JSON.stringify(proposalParsed.error.issues)}`)
+  const successorParsed = planBetaStateV3Schema.safeParse(prepared.prepared.successorState)
+  if (!successorParsed.success) throw new Error(`Invalid successor state: ${JSON.stringify(successorParsed.error.issues)}`)
+  const accepted = await acceptPreparedNextFrameAdaptation({
+    prepared: prepared.prepared,
+    predecessorState: state,
+    safety,
+    operationAt: ACTIVATED_AT,
+  })
+  if (accepted.kind !== "accepted") throw new Error(`Expected accepted successor, got ${JSON.stringify(accepted)}`)
+  return {
+    state,
+    safety,
+    successorCandidateId: prepared.prepared.successorState.activePlan.candidateId,
+    triggerRecordId: triggerRecord?.id,
+  }
+}
+
+async function activeFixture(
+  projectionLength: 7 | 9 | 10,
+  complete: boolean,
+  withDetailedPrescription = false,
+  withPbTrigger = false,
+  historicalRpeOnly = true,
+) {
   const selectedDetailedTemplateRef = withDetailedPrescription ? {
     templateId: APPROVAL_5000.templateId,
     version: APPROVAL_5000.templateVersion,
@@ -406,11 +463,43 @@ async function acceptedFixture(
     selectedDetailedTemplateRef,
   }, "NO_KNOWN_RISK", selectedRecordId === undefined ? undefined : { selectedRecordId })
   if (generated.kind !== "generated") throw new Error(`Expected generated plan, got ${generated.kind}`)
-  const base = generated.generated.candidates[withPbTrigger ? 1 : 0]
+  let generatedPlan = generated.generated
+  if (!withDetailedPrescription && historicalRpeOnly) {
+    // Historical plain-RPE plans predate the app's automatic catalog binding.
+    // Exercise their approved existing-sibling transform through the real core,
+    // without stripping a calculated prescription or mocking its safety gate.
+    const availableTrainingDays = projectionLength === 10 ? [1, 3, 5, 7, 9] : Array.from(
+      { length: 5 }, (_, index) => Math.round(1 + index * (projectionLength - 1) / 4),
+    )
+    const historical = generatePlanCandidates({
+      kind: "PLAN_BETA_GENERATION_REQUEST",
+      safetyGate: generated.gate,
+      profile: {
+        eventGroup: generated.intake.eventGroup,
+        eventDistanceM: generated.intake.eventDistanceM,
+        experienceBand: generated.intake.experienceBand,
+        availableTrainingDays,
+        secondSessionMode: generated.intake.secondSessionMode,
+        trainingTimePreference: generated.intake.trainingTimePreference,
+      },
+      formation: createPlanFormation(LOCAL_DATE, availableTrainingDays, generated.intake.experienceBand),
+      requestedFrameLength: projectionLength,
+      selectedEnergyIntent: generated.intake.trainingFocus,
+      selectedDetailedTemplateRef: null,
+      journalSource: { kind: "NO_USABLE_JOURNAL" },
+      selectionAuthority: "SELF",
+    })
+    if (historical.kind !== "generated") throw new Error(`Expected historical RPE plan, got ${historical.kind}`)
+    generatedPlan = historical
+    expect(generatedPlan.candidates.every((candidate) => candidate.sessions.every((session) => (
+      session.prescription.kind !== "RPE_TIME_RANGE" || session.prescription.catalogWorkout === undefined
+    )))).toBe(true)
+  }
+  const base = generatedPlan.candidates[withPbTrigger ? 1 : 0]
   if (base === undefined) throw new Error("Expected a base candidate")
   const selected = selectPlanForActivation(
     base.candidateId,
-    generated.generated,
+    generatedPlan,
     generated.gate,
     generated.intake,
     generated.athleteEvidence,
@@ -435,7 +524,7 @@ async function acceptedFixture(
   } : scoped
   expect(savePlanBetaState(state)).toEqual({ ok: true })
   expect(savePlanAdaptationContext(
-    generated.generated.candidates as [typeof generated.generated.candidates[0], typeof generated.generated.candidates[1]],
+    generatedPlan.candidates as [typeof generatedPlan.candidates[0], typeof generatedPlan.candidates[1]],
     state.activePlan.candidateId,
   )).toEqual({ ok: true })
 
@@ -452,31 +541,7 @@ async function acceptedFixture(
 
   const safety = evaluateActivePlanAdaptationSafety(state, "NO_KNOWN_RISK", new Date(ACTIVATED_AT))
   if (safety.kind !== "evaluated") throw new Error("Expected fresh passed safety")
-  const prepared = await prepareNextFrameAdaptation({
-    state,
-    reason: withPbTrigger ? "PB_SB" : "EXPLICIT_REQUEST",
-    record: triggerRecord,
-    safety,
-    operationAt: ACTIVATED_AT,
-  })
-  if (prepared.kind !== "ready") throw new Error(`Expected a prepared successor, got ${prepared.code}`)
-  const proposalParsed = planAdaptationProposalSchema.safeParse(prepared.prepared.proposal)
-  if (!proposalParsed.success) throw new Error(`Invalid prepared proposal: ${JSON.stringify(proposalParsed.error.issues)}`)
-  const successorParsed = planBetaStateV3Schema.safeParse(prepared.prepared.successorState)
-  if (!successorParsed.success) throw new Error(`Invalid successor state: ${JSON.stringify(successorParsed.error.issues)}`)
-  const accepted = await acceptPreparedNextFrameAdaptation({
-    prepared: prepared.prepared,
-    predecessorState: state,
-    safety,
-    operationAt: ACTIVATED_AT,
-  })
-  if (accepted.kind !== "accepted") throw new Error(`Expected accepted successor, got ${JSON.stringify(accepted)}`)
-  return {
-    state,
-    safety,
-    successorCandidateId: prepared.prepared.successorState.activePlan.candidateId,
-    triggerRecordId: triggerRecord?.id,
-  }
+  return { state, safety, triggerRecord }
 }
 
 function storageSnapshot() {

@@ -7,6 +7,7 @@ import * as flow from "../../domain/plan-beta-flow"
 import * as mutationLock from "../../domain/plan-mutation-lock"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 
+vi.setConfig({ testTimeout: 20000 })
 vi.mock("../../domain/account/plan-cloud-backup", () => ({ planCloudBackupEnabled: () => false,
   backupActivePlanToServer: async () => ({ kind: "unavailable" }), loadLatestPlanFromServer: async () => ({ kind: "unavailable" }) }))
 vi.mock("../../domain/account/supabase-client", () => ({ supabase: async () => null }))

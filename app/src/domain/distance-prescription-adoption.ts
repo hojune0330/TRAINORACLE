@@ -1,4 +1,4 @@
-import artifact from "./distance-prescription-adoption.json"
+import artifact from "./distance-prescription-adoption.json" with { type: "json" }
 import type { DetailedTemplateRef } from "@impl/plan-generator/types"
 
 export const DISTANCE_ADOPTION = artifact

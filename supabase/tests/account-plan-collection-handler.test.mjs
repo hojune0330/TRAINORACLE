@@ -33,8 +33,8 @@ if (process.env.PLAN_COLLECTION_MUTATION) {
     binding: ['receipt.requestFingerprint !== binding.requestFingerprint', 'false'],
     history: ['previous && validateAccountPlanCollectionUpdate(previous, next) !== true', 'false'],
     owner: ["input.action === 'commit' && input.request.ownerId !== ownerId", 'false'],
-    catalogJournals: ['replan && (selected.catalogReplacement || selected.executionReplan)', 'false'],
-    replanJournals: ['replan && (selected.catalogReplacement || selected.executionReplan)', 'false'],
+    catalogJournals: ['replan && (selected.catalogReplacement || selected.executionReplan || selected.activePlanEdit)', 'false'],
+    replanJournals: ['replan && (selected.catalogReplacement || selected.executionReplan || selected.activePlanEdit)', 'false'],
     replanSource: ['selected.executionReplan && !validateExecutionReplanJournalFacts(replan, facts, sourceContext)', 'false'],
     catalogClock: ['!catalogReplacementClockIsCurrent(replan, now())', 'false'],
     successorGuard: ["if (successor && r.journalGuard === undefined && !replan) fail(422, 'JOURNAL_GUARD_REQUIRED');", ''],
@@ -57,19 +57,19 @@ bundle: true, write: false, platform: 'neutral', format: 'esm' });
 const { stateFixture, replanFixture, replacedReplanFixture, prepareExecutionReplan, accountPlanEntry, prepareCatalogReplacement, ALL_WORKOUT_CATALOG,
   executionReplanEvidence, replanFingerprint, createPlannedSessionLogDraft } = await import(`data:text/javascript;base64,${Buffer.from(built.outputFiles[0].text).toString('base64')}`);
 const continuityBuilt = await build({ stdin: {
-  contents: 'export { deriveCandidateId, derivePairId, candidateBaseId, pairBaseId } from "../impl/src/plan-generator/candidate-identity.ts";',
+  contents: 'export { deriveCandidateId, derivePairId } from "../impl/src/plan-generator/candidate-identity.ts";',
   resolveDir: fileURLToPath(new URL('../../app/', import.meta.url)), loader: 'ts',
 }, tsconfig: fileURLToPath(new URL('../../app/tsconfig.json', import.meta.url)), bundle: true, write: false, platform: 'neutral', format: 'esm' });
-const { deriveCandidateId, derivePairId, candidateBaseId, pairBaseId } = await import(`data:text/javascript;base64,${Buffer.from(continuityBuilt.outputFiles[0].text).toString('base64')}`);
+const { deriveCandidateId, derivePairId } = await import(`data:text/javascript;base64,${Buffer.from(continuityBuilt.outputFiles[0].text).toString('base64')}`);
 function successorDocument() {
   const state = stateFixture(), plan = state.activePlan;
   const continuity = 'balanced:completed-1-rested-0-skipped-0-pain_checkin-0';
-  const base = candidateBaseId(plan.candidateId).replace('no-continuity', continuity);
+  const base = plan.candidateId.replace('no-continuity', continuity);
   const projection = { kind: plan.candidateKind, eventDistanceM: plan.eventDistanceM,
     selectedDetailedTemplateRef: plan.selectedDetailedTemplateRef, selectedEnergyIntent: plan.selectedEnergyIntent,
     sourceMode: plan.sourceMode, selectionAuthority: plan.selectionActor, frame: plan.frame, sessions: plan.sessions };
   plan.candidateId = deriveCandidateId(base, projection);
-  plan.pairId = derivePairId(pairBaseId(plan.pairId).replace('no-continuity', continuity), plan.candidateId,
+  plan.pairId = derivePairId(plan.pairId.replace('no-continuity', continuity), plan.candidateId,
     deriveCandidateId(base.replace('beta:balanced:', 'beta:conservative:'), { ...projection, kind: 'CONSERVATIVE' }));
   const entry = accountPlanEntry({ state, evidence: null });
   return { version: 3, state: 'ACCOUNT_STATE', kind: 'PLAN', data: { schemaVersion: 1, currentPlanId: entry.planId, plans: [entry] } };
@@ -744,6 +744,7 @@ test('real PGlite 0037 with gateway and authenticated repository round trips 18 
       calendarSql = calendarSql.replaceAll(expression, 'false');
     }
     await db.exec(calendarSql);
+    await db.exec(await readFile(new URL('0044_plan_successor_guard_binding.sql', directory), 'utf8'));
     for (const owner of [OWNER, OTHER]) {
       await db.query('insert into auth.users(id) values($1)', [owner]);
       await db.query(`insert into public.user_private_profiles(user_id,birth_date,privacy_policy_version,terms_of_service_version,legal_consented_at)
@@ -762,7 +763,7 @@ test('real PGlite 0037 with gateway and authenticated repository round trips 18 
       read_account_plan_collection_index: [], read_account_plan_collection_part: ['part_kind', 'part_id'],
       read_account_plan_collection_receipt: ['operation_id'],
     };
-    let calendarDateOverride = null, lastCalendarInput = null;
+    let calendarDateOverride = null, lastCalendarInput = null, lastReplanInput = null;
     const client = { from: table => {
       assert.equal(table, 'account_journal_documents');
       return { select: columns => {
@@ -779,6 +780,10 @@ test('real PGlite 0037 with gateway and authenticated repository round trips 18 
       } };
     }, rpc: async (name, args = {}) => {
       assert.ok(Object.hasOwn(signatures, name));
+      if (name === 'mutate_account_plan_replan_attested') {
+        const { domain: _domain, ownerId: _owner, action: _action, expiresAt: _expiry, ...input } = JSON.parse(args.request_text);
+        lastReplanInput = input;
+      }
       if (name === 'mutate_account_plan_catalog_replacement_attested') {
         const { domain: _domain, ownerId, action, expiresAt: _expiry, ...input } = JSON.parse(args.request_text);
         lastCalendarInput = input;
@@ -915,10 +920,11 @@ test('real PGlite 0037 with gateway and authenticated repository round trips 18 
     await db.query('update public.account_journal_documents set revision=5 where user_id=$1 and document_id=$2', [OWNER, sourceId]);
     await check(await f.request({ action: 'commit', request: ordinaryRequest }), 200, { kind: 'conflict' });
     await db.exec('reset role');
-    await db.query('update public.account_journal_documents set revision=4,deleted_at=clock_timestamp() where user_id=$1 and document_id=$2', [OWNER, sourceId]);
+    const guardedSourcePayload = (await db.query('select encrypted_payload from public.account_journal_documents where user_id=$1 and document_id=$2', [OWNER, sourceId])).rows[0].encrypted_payload;
+    await db.query('update public.account_journal_documents set revision=4,deleted_at=clock_timestamp(),encrypted_payload=null where user_id=$1 and document_id=$2', [OWNER, sourceId]);
     await check(await f.request({ action: 'commit', request: ordinaryRequest }), 200, { kind: 'conflict' });
     await db.exec('reset role');
-    await db.query('update public.account_journal_documents set deleted_at=null where user_id=$1 and document_id=$2', [OWNER, sourceId]);
+    await db.query('update public.account_journal_documents set deleted_at=null,encrypted_payload=$3 where user_id=$1 and document_id=$2', [OWNER, sourceId, guardedSourcePayload]);
     await db.query('update public.account_journal_documents set deleted_at=null,encrypted_payload=$3 where user_id=$1 and document_id=$2', [OWNER, otherJournalId, payload]);
     await check(await f.request({ action: 'commit', request: ordinaryRequest }), 200, { kind: 'conflict' });
     assert.equal((await check(await f.request({ action: 'readIndex' }), 200)).revision, 4);
@@ -926,10 +932,17 @@ test('real PGlite 0037 with gateway and authenticated repository round trips 18 
     await db.query('update public.account_journal_documents set deleted_at=clock_timestamp(),encrypted_payload=null where user_id=$1 and document_id=$2', [OWNER, otherJournalId]);
     const ordinaryAccepted = await check(await f.request({ action: 'commit', request: ordinaryRequest }), 200);
     assert.equal(ordinaryAccepted.kind, 'committed');
+    const ordinarySqlInput = structuredClone(lastReplanInput);
     await db.exec('reset role');
     await db.query('update public.account_journal_documents set revision=6 where user_id=$1 and document_id=$2', [OWNER, sourceId]);
+    await check(await f.request({ action: 'readIndex' }), 200);
+    assert.deepEqual(await replayRepo.commitReplan(ordinarySqlInput), ordinaryAccepted);
+    const changedGuardRequest = { ...ordinaryRequest, journalGuard: [] };
+    await assert.rejects(replayRepo.commitReplan({ ...ordinarySqlInput, journalGuard: [],
+      requestFingerprint: accountPlanFingerprint(changedGuardRequest) }), { code: '22023' });
     keysAvailable = false;
     assert.deepEqual(await check(await f.request({ action: 'commit', request: ordinaryRequest }), 200), ordinaryAccepted);
+    await check(await f.request({ action: 'commit', request: { ...ordinaryRequest, journalGuard: [] } }), 409, { error: 'OPERATION_REUSED' });
     // One in-process PostgreSQL session, not proof of independent-session lock waiting or live JWT verification.
   } finally { await db.close(); }
 });

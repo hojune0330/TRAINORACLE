@@ -17,7 +17,6 @@ import type {
   StoredPlanProgress,
 } from "../../domain/plan-beta-store"
 import { ActivePlan } from "./ActivePlan"
-import { ActiveCatalogWorkoutPicker } from "./ActiveCatalogWorkoutPicker"
 import { OraclePlanReviewButton } from "../../components/OraclePlanReviewButton"
 import { evaluatePlanSafety, type PlanCurrentCheck } from "../../domain/plan-beta-flow"
 import {
@@ -30,6 +29,20 @@ import {
 } from "../../domain/planned-session-link"
 import type { PlanSession } from "@impl/plan-generator/types"
 import type { PlanCloudPersistenceState } from "../../domain/account/plan-cloud-backup"
+import { ActivePlanEditHub, type ActivePlanEditIntent } from "./ActivePlanEditHub"
+import { ActivePlanSessionEditor } from "./ActivePlanSessionEditor"
+import { ActivePlanRebuildEditor } from "./ActivePlanRebuildEditor"
+import { loadEntriesForPlanSafety } from "../../domain/journal-store"
+import { listPermittedActivePlanEditTargets } from "../../domain/active-plan-edit"
+import { prepareCurrentActivePlanEdit, applyActivePlanEdit, type ActivePlanEditSelection } from "../../domain/active-plan-edit-store"
+import { loadAthleteRecords } from "../../domain/athlete-records"
+import { LOCAL_JOURNALS_CHANGED } from "../../domain/journal-change-events"
+import { onLocalJournalScopeChange } from "../../domain/account/local-journal-ownership"
+import { localAccountScopeSnapshot } from "../../domain/account/local-account-scope"
+import { useLocalToday } from "../../hooks/useLocalToday"
+import { accountPlansEnabled } from "../../domain/account/account-plan-service"
+import { ensureAccountPlanHistory } from "../../domain/account/account-plan-domain"
+import { loadVersionedPlanBetaState } from "../../domain/plan-beta-store"
 
 type PersistenceRetry =
   | { readonly kind: "progress"; readonly progress: StoredPlanProgress }
@@ -58,6 +71,39 @@ export function PlanActiveState({
   const [retry, setRetry] = React.useState<PersistenceRetry | null>(null)
   const [executionMessage, setExecutionMessage] = React.useState<string | null>(null)
   const [executionBlocked, setExecutionBlocked] = React.useState(false)
+  const [editing, setEditing] = React.useState<ActivePlanEditIntent | "hub" | null>(null)
+  const [editTarget, setEditTarget] = React.useState<{ day: number; slot: "AM" | "PM" } | undefined>()
+  const editHeading = React.useRef<HTMLDivElement>(null)
+  const [editContextRevision, refreshEditContext] = React.useReducer(value => value + 1, 0)
+  const today = useLocalToday()
+  const wasEditing = React.useRef(false)
+  React.useLayoutEffect(() => {
+    if (editing === null && wasEditing.current) editHeading.current?.querySelector<HTMLElement>("[data-plan-edit-button]")?.focus({ preventScroll: true })
+    wasEditing.current = editing !== null
+  }, [editing])
+  React.useEffect(() => {
+    const unsubscribe = onLocalJournalScopeChange(() => { setEditing(null); setEditTarget(undefined); refreshEditContext() })
+    const events = [LOCAL_JOURNALS_CHANGED, "trainoracle:account-journals-changed", "storage", "focus"]
+    events.forEach(event => window.addEventListener(event, refreshEditContext))
+    return () => { unsubscribe(); events.forEach(event => window.removeEventListener(event, refreshEditContext)) }
+  }, [])
+  const closeEditor = () => { setEditing(null); setEditTarget(undefined) }
+  const editApplied = (next: typeof state) => { closeEditor(); setExecutionMessage("계획을 수정했어요. 이전 계획과 일지는 남겨두었어요."); onStateChange(next) }
+  const retryEditRead = async () => {
+    const openingScope = localAccountScopeSnapshot()
+    if (accountPlansEnabled() && !await ensureAccountPlanHistory()) return
+    if (localAccountScopeSnapshot() !== openingScope) return
+    const latest = loadVersionedPlanBetaState()
+    if (latest) onStateChange(latest)
+    refreshEditContext()
+  }
+  const editRead = loadEntriesForPlanSafety()
+  const editOptions = state.version === 3 && editRead.status === "complete"
+    ? listPermittedActivePlanEditTargets({ state, entries: editRead.entries, today, noFixedFutureCommitments: true }) : []
+  const editSelection: ActivePlanEditSelection | undefined = editTarget === undefined ? undefined : {
+    source: editTarget, action: editOptions.find(option => option.address.day === editTarget.day && option.address.slot === editTarget.slot)?.actions.includes("DURATION") ? "DURATION" : "CATALOG",
+    unstartedConfirmed: false, noFixedFutureCommitments: false,
+  }
 
   const saveProgress = async (progress: StoredPlanProgress) => {
     setExecutionMessage(null)
@@ -204,7 +250,15 @@ export function PlanActiveState({
   }
 
   return (
-    <>
+    <div ref={editHeading}>
+      {editing === "new-plan" && state.version === 3 ? <ActivePlanRebuildEditor state={state} onCancel={closeEditor} onApplied={editApplied} />
+        : (editing === "workout" || editing === "schedule") && state.version === 3 ? <ActivePlanSessionEditor
+          state={state} intent={editing} selection={editSelection} onClose={closeEditor} onApplied={editApplied}
+          sourceOptions={editOptions} entriesReady={editRead.status === "complete"}
+          contextKey={`${localAccountScopeSnapshot() ?? "guest"}:${editContextRevision}:${today}`}
+          onRetryEntries={() => void retryEditRead()} onPrepare={prepareCurrentActivePlanEdit} onApply={applyActivePlanEdit}
+          records={loadAthleteRecords()} />
+        : <>
       <ActivePlan
         state={state}
         cloudPersistence={cloudPersistence}
@@ -218,12 +272,15 @@ export function PlanActiveState({
         returnToSession={returnToSession}
         executionMessage={executionMessage}
         executionBlocked={executionBlocked}
-        futureTrainingEditor={state.version === 3 ? <ActiveCatalogWorkoutPicker key={state.activePlan.candidateId}
-          state={state} onApplied={next => {
-            setError(null); setRetry(null); setExecutionBlocked(false)
-            setExecutionMessage("선택한 훈련으로 바꿨어요. 이전 계획과 일지는 그대로 보관했어요.")
-            onStateChange(next)
-          }} /> : null}
+        onEditPlan={state.version === 3 ? () => { setEditTarget(undefined); setEditing("hub") } : undefined}
+        onEditSession={state.version === 3 ? session => { setEditTarget({ day: session.day, slot: session.slot }); setEditing("workout") } : undefined}
+        futureTrainingEditor={editing === "hub" ? <ActivePlanEditHub onClose={closeEditor} onChoose={intent => setEditing(intent)}
+          availability={{
+            schedule: { available: state.version === 3, reason: "이전 형식의 계획은 원본을 그대로 보관해요." },
+            workout: { available: state.version === 3, reason: "이전 형식의 계획은 원본을 그대로 보관해요." },
+            remaining: { available: false, hidden: true },
+            "new-plan": { available: state.version === 3, reason: "이전 형식의 계획은 먼저 보관해 주세요." },
+          }} /> : undefined}
       />
       {error !== null && (
         <div className="plan-inline-error" role="alert">{error}</div>
@@ -236,7 +293,8 @@ export function PlanActiveState({
             : "선택한 다음 계획 다시 시작하기"}
         </button>
       )}
-    </>
+      </>}
+    </div>
   )
 }
 

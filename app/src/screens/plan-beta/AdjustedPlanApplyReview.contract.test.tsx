@@ -18,6 +18,8 @@ function setup() {
 it("saves the exact reviewed plan only after the final explicit button", async () => {
   const props = setup()
   render(<AdjustedPlanApplyReview {...props} />)
+  expect(screen.getByText(/400m당 약/)).not.toBeVisible()
+  fireEvent.click(screen.getByText("자세히 보기 · 방법과 근거"))
   expect(screen.getByText(/400m당 약/)).toBeVisible()
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
   await act(async () => { fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" })) })

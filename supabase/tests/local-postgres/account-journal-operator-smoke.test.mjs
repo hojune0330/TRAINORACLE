@@ -10,6 +10,8 @@ test('operator synthetic role smoke executes and rolls back every identity, flag
     await db.exec(`create role anon; create role authenticated; create role service_role bypassrls;
       create schema auth; create schema extensions;
       create table auth.users(id uuid primary key,aud text,role text,email text,created_at timestamptz,updated_at timestamptz);
+      -- Supabase owns this table; 0042 references it without replacing it.
+      create table auth.sessions(id uuid primary key,user_id uuid references auth.users(id) on delete cascade,not_after timestamptz);
       create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
       create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb $$;
       grant usage on schema auth to anon,authenticated,service_role;

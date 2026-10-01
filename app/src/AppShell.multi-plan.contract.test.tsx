@@ -17,6 +17,10 @@ it.each([false, true].flatMap(supplied => [App, AppShell].map(Component => ({ su
   render(<Component multiPlanRuntime={supplied ? {
     multiAdjustmentResolverV3: resolver, readMultiAdjustedEvidenceV3: readEvidence,
   } : undefined} />)
+  // Home reads retained evidence before navigation; forwarding itself must not invoke either service.
+  expect(readEvidence.mock.calls).toEqual(supplied ? [[]] : [])
+  expect(resolver).not.toHaveBeenCalled()
+  readEvidence.mockClear()
   fireEvent.click(screen.getByRole("button", { name: "계획" }))
   expect(screen.getByRole("heading", { name: "계획 연결 검수" })).toBeTruthy()
   const forwarded = planProps.mock.calls.at(-1)![0]

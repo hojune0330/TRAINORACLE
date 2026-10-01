@@ -263,7 +263,7 @@ describe("exact event and explicit detail selection", () => {
     expect(rpe).toBeVisible()
     expect(rpe).toHaveAccessibleName(/기록 없이 바로.*힘든 정도\(1~10\)와 시간/u)
     const detailed = screen.getByRole("button", { name: /1500m 경기 페이스 상세 훈련 포함/u, pressed: false })
-    expect(detailed).toHaveAccessibleName(/500m 3회.*내 기록으로 목표 시간 계산/u)
+    expect(detailed).toHaveAccessibleName(/3 × 500m @ 1500m RP · r3min Stand.*내 기록으로 목표 시간 계산/u)
     expect(detailed).toBeVisible()
     expect(screen.getByText("준비·정리와 훈련 표기 보기").closest("details")).not.toHaveAttribute("open")
     await user.click(screen.getByText("준비·정리와 훈련 표기 보기"))

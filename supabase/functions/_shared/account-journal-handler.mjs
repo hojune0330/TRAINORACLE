@@ -668,6 +668,8 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
 
 /** Only inspect fully validated states; snapshots retain continuity in their canonical identity. */
 export function accountPlanStateNeedsJournalGuard(state) {
+  if ([4, 5, 6].includes(state?.version)) return Boolean(state.selection?.continuation
+    || state.selection?.periodization?.frameOrdinal > 1);
   return state?.version === 3 && (state.periodization?.frameOrdinal > 1
     || !state.activePlan.candidateId.includes(':no-continuity:template-'));
 }

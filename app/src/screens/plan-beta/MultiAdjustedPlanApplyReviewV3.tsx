@@ -63,7 +63,7 @@ export function MultiAdjustedPlanApplyReviewV3({ seed, readReview, locks, isCurr
     && live.current.expectedPredecessorFingerprint === opened.expectedPredecessorFingerprint
     && identity(live.current.cycleDraft ?? null) === identity(opened.cycleDraft ?? null)
     && (opened.expectedPredecessorFingerprint === undefined || environment.current)
-  const prepared = prepareMultiAdjustedPlanCandidateV3(opened.request.preparations, opened.bindings)
+  const prepared = React.useMemo(() => prepareMultiAdjustedPlanCandidateV3(opened.request.preparations, opened.bindings), [opened])
   const limits = readLimits(availableMinutes)
   const availability = prepared.kind === "prepared" ? checkSessionAvailabilityV3(prepared.candidate.sessions, limits) : null
   const apply = async () => {

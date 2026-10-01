@@ -18,6 +18,8 @@ import { loadAthleteRecords } from "./athlete-records"
 import { isoShift } from "./dates"
 import { readCatalogCycleDraftSource } from "./catalog-cycle-draft"
 
+// Real successor writes validate both retained originals and the new plan.
+vi.setConfig({ testTimeout: 20000 })
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 

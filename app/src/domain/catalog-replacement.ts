@@ -45,7 +45,8 @@ export function prepareCatalogReplacement(input: {
   const candidateId = deriveCandidateId(active.candidateId, { kind: active.candidateKind, eventDistanceM: active.eventDistanceM,
     selectedDetailedTemplateRef: active.selectedDetailedTemplateRef, selectedEnergyIntent: active.selectedEnergyIntent,
     sourceMode: active.sourceMode, selectionAuthority: "SELF", frame: active.frame, sessions })
-  const { executionReplan: _oldReplan, catalogReplacement: _oldReplacement, explanationReceipt: _oldExplanation, ...base } = state
+  const { executionReplan: _oldReplan, catalogReplacement: _oldReplacement, activePlanEdit: _oldEdit,
+    explanationReceipt: _oldExplanation, ...base } = state
   const next = planBetaStateV3Schema.safeParse({ ...base, activePlan: { ...active, candidateId, sessions }, catalogReplacement: receipt })
   return next.success ? { kind: "ready", proposal: { before: state, after: next.data } } : blocked("현재 계획 전체와 맞지 않아 변경하지 않았어요.")
 }

@@ -36,6 +36,8 @@ it("runs the real editor through final confirmation to actual active storage", a
   await stage()
   expect(screen.getByRole("heading", { name: "변경한 훈련을 계획에 적용할까요?" })).toBeVisible()
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
+  expect(screen.getByText(/400m당 약/)).not.toBeVisible()
+  fireEvent.click(screen.getByText("자세히 보기 · 방법과 근거"))
   expect(screen.getByText(/400m당 약/)).toBeVisible()
   await act(async () => { fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" })) })
   expect(props.onSaved).toHaveBeenCalledOnce()
