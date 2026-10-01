@@ -34,6 +34,12 @@ export function PlanCycleEvidence({ response }: { readonly response: PlanCycleRe
                   {" · "}{row.actualRpe === null ? "비교용 RPE 없음" : `직접 기록 RPE ${row.actualRpe}`}
                 </p>
                 <p>{COMPARISON_LABELS[row.comparison]}</p>
+                {row.executionComparison && <details>
+                  <summary>거리·구간·회복 기록</summary>
+                  {row.executionComparison.facts.map((fact, index) => <p key={`fact-${index}`}>{fact}</p>)}
+                  {row.executionComparison.interpretation && <p>{row.executionComparison.interpretation}</p>}
+                  {row.executionComparison.unknowns.map((fact, index) => <p key={`unknown-${index}`}>{fact}</p>)}
+                </details>}
               </li>
             ))}
           </ul>

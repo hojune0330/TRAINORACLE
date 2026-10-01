@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-01",
+  "scope": "synthetic local execution, not production account roundtrip",
+  "structuredActualAndSummary": {
+    "files": ["plan-cycle-segment-response.contract.test.ts", "CatalogCycleSummary.test.tsx"],
+    "passed": 10,
+    "failed": 0
+  },
+  "mutation": {
+    "change": "Disable recovery/time-based MAIN duration change detection",
+    "expectedFailuresObserved": [
+      "excludes known changed recovery from same-prescription RPE response",
+      "excludes a shorter time-based MAIN from same-prescription RPE response"
+    ],
+    "restored": true
+  },
+  "browser": {
+    "file": "app/e2e/catalog-cycle-flow.audit.ts",
+    "passed": 4,
+    "failed": 0,
+    "widths": [320, 375, 1280],
+    "initialAtpConditionsSavedAndReloaded": true,
+    "linkedLtReducedSuccessorSavedAndReloaded": true,
+    "textScale200PercentAt375": true,
+    "externalRequestsBlocked": true,
+    "syntheticDataOnly": true
+  },
+  "isolatedPostgresCalendar": {
+    "file": "supabase/tests/concurrency/catalog-replacement-calendar-concurrency.test.mjs",
+    "passed": 4,
+    "failed": 0,
+    "databaseVersion": "17.6",
+    "productionDataAccess": false,
+    "initialSandboxAttempt": "initdb restricted-token failure; tests did not start",
+    "authorizedNativeRerun": "passed"
+  },
+  "appTypecheck": "PASS before final main integration",
+  "browserTypecheck": "PASS before final main integration",
+  "finalIntegration": "Tracked separately in final release receipt"
+}

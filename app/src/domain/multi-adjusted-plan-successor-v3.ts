@@ -10,6 +10,8 @@ import { MULTI_ADJUSTED_PLAN_ARCHIVE_V3_KEY, prepareMultiAdjustedOriginalArchive
 import { planAnchorsStillCurrent } from "./plan-anchor-reconfirmation"
 import { evaluatePlanSafety } from "./plan-beta-flow"
 import { checkMultiAdjustedPlanReviewV3 } from "./adjusted-plan-multi-review-v3"
+import { catalogCycleDraftSourceStillCurrent, type CatalogCycleDraftContext } from "./catalog-cycle-draft"
+import { adjustedCycleSelectionMaintainsDetail, prepareAdjustedCycleSuccessor } from "./adjusted-cycle-successor"
 
 const reject = (code: string) => ({ kind: "rejected" as const, code })
 const hash = (value: unknown) => canonicalJsonFingerprint("trainoracle.multi-adjusted-successor-save.v3", value)
@@ -20,11 +22,14 @@ export async function saveSelectedMultiAdjustedSuccessorV3(input: {
   readonly request: MultiAdjustedPlanSelectionRequestV3; readonly expectedPredecessorFingerprint: string;
   readonly readReview: () => MultiAdjustedLiveReviewV3; readonly isCurrentDraft: () => boolean;
   readonly locks?: PlanMutationLockManager | null;
+  readonly cycleDraft?: CatalogCycleDraftContext;
+  readonly futureEnvironmentConfirmed?: boolean;
 }) {
   try {
     if (!input.isCurrentDraft() || !hasCanonicalJsonTree(input.request)) return reject("STALE_CANDIDATE_SELECTION")
     const openingHash = hash(input.request), request = structuredClone(input.request)
     const expected = input.expectedPredecessorFingerprint, account = localAccountScopeSnapshot()
+    const cycleDraft = input.cycleDraft && structuredClone(input.cycleDraft)
     const activeKey = activePlanBetaStorageKey(), archiveKey = accountScopedStorageKey(MULTI_ADJUSTED_PLAN_ARCHIVE_V3_KEY)
     const accountWrite = captureAccountPlanWrite(activeKey)
     const locks = input.locks === undefined ? getPlanMutationLockManager() : input.locks
@@ -44,12 +49,25 @@ export async function saveSelectedMultiAdjustedSuccessorV3(input: {
         const previous = readStoredMultiAdjustedPlanV6(beforeActive === null ? null : JSON.parse(beforeActive), live.retained, at)
         if (previous.kind !== "loaded") return reject("INVALID_STORED_PLAN")
         if (previous.state.contentFingerprint !== expected) return reject("STALE_BASE")
+        const evidence = { version: 6 as const, retained: live.retained }
+        const cycleCurrent = () => cycleDraft !== undefined && input.cycleDraft !== undefined
+          && hash(cycleDraft) === hash(input.cycleDraft)
+          && catalogCycleDraftSourceStillCurrent(previous.state, cycleDraft, evidence)
+        if (!cycleCurrent()) return reject("CYCLE_EVIDENCE_CHANGED")
+        if (input.futureEnvironmentConfirmed !== true) return reject("FUTURE_ENVIRONMENT_CONFIRMATION_REQUIRED")
+        const preparation = request.preparations[0]
+        if (!preparation) return reject("INVALID_ADJUSTED_SELECTION")
+        const scope = prepareAdjustedCycleSuccessor({ previous: previous.state, evidence,
+          expectedPredecessorFingerprint: expected, candidate: preparation.candidate,
+          nextStartDate: preparation.startDate, currentCheck: request.currentCheck, entries: [], evaluatedAt: at })
+        if (scope.kind !== "prepared") return scope
         const selected = selectMultiAdjustedPlanSuccessorV3({ ...request, preparations: live.preparations }, previous.state,
           expected, live.retained, live.rpeBindings, live.policies, at)
         if (selected.kind !== "selected_multi_adjusted") return selected
+        if (!adjustedCycleSelectionMaintainsDetail(previous.state, selected.state)) return reject("ADJUSTED_DETAIL_CHANGED")
         const originalReview = reviewIdentity(live)
         const authorized = () => {
-          if (!current()) return false
+          if (!current() || !cycleCurrent() || input.futureEnvironmentConfirmed !== true) return false
           const fresh = input.readReview(), checkedAt = new Date()
           if (!hasCanonicalJsonTree(fresh) || reviewIdentity(fresh) !== originalReview
             || !fresh.preparations.every(p => planAnchorsStillCurrent(p.candidate, checkedAt))

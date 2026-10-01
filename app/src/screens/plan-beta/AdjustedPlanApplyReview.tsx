@@ -7,13 +7,14 @@ import type { AdjustedPlanSelectionRequest } from "../../domain/adjusted-plan-se
 import type { StoredAdjustedPlanState } from "../../domain/adjusted-plan-storage-schema"
 import { AdjustedJournalOriginalPlan } from "../journal/AdjustedJournalOriginalPlan"
 import { isoShift } from "../../domain/dates"
+import type { CatalogCycleDraftContext } from "../../domain/catalog-cycle-draft"
 
 type SaveInput = Parameters<typeof saveSelectedAdjustedPlan>[0]
 const identity = (value: unknown) => canonicalJsonFingerprint("trainoracle.adjusted-apply-ui.v1", value)
 
 /** Final whole-plan confirmation after the editor, not an editor draft commit.
  * The owning flow supplies current trusted review data, never local-storage authority. */
-export function AdjustedPlanApplyReview({ request, readReview, isCurrentDraft, locks, onSaved, onCancel, expectedPredecessorFingerprint }: {
+export function AdjustedPlanApplyReview({ request, readReview, isCurrentDraft, locks, onSaved, onCancel, expectedPredecessorFingerprint, cycleDraft }: {
   readonly request: AdjustedPlanSelectionRequest
   readonly readReview: SaveInput["readReview"]
   readonly isCurrentDraft: () => boolean
@@ -21,10 +22,14 @@ export function AdjustedPlanApplyReview({ request, readReview, isCurrentDraft, l
   readonly onSaved: (state: StoredAdjustedPlanState) => void
   readonly onCancel: () => void
   readonly expectedPredecessorFingerprint?: string
+  readonly cycleDraft?: CatalogCycleDraftContext
 }) {
-  const [opened] = React.useState(() => ({ request: structuredClone(request), fingerprint: identity(request), expectedPredecessorFingerprint }))
-  const live = React.useRef({ request, isCurrentDraft, onSaved, readReview, expectedPredecessorFingerprint })
-  live.current = { request, isCurrentDraft, onSaved, readReview, expectedPredecessorFingerprint }
+  const [opened] = React.useState(() => ({ request: structuredClone(request), fingerprint: identity(request), expectedPredecessorFingerprint,
+    cycleDraft: structuredClone(cycleDraft) }))
+  const live = React.useRef({ request, isCurrentDraft, onSaved, readReview, expectedPredecessorFingerprint, cycleDraft })
+  live.current = { request, isCurrentDraft, onSaved, readReview, expectedPredecessorFingerprint, cycleDraft }
+  const [environmentConfirmed, setEnvironmentConfirmed] = React.useState(false)
+  const environment = React.useRef(false)
   const valid = React.useRef(true)
   const inFlight = React.useRef(false)
   const [saving, setSaving] = React.useState(false)
@@ -34,6 +39,8 @@ export function AdjustedPlanApplyReview({ request, readReview, isCurrentDraft, l
   const current = () => valid.current && live.current.isCurrentDraft()
     && identity(live.current.request) === opened.fingerprint
     && live.current.expectedPredecessorFingerprint === opened.expectedPredecessorFingerprint
+    && identity(live.current.cycleDraft ?? null) === identity(opened.cycleDraft ?? null)
+    && (opened.expectedPredecessorFingerprint === undefined || environment.current)
   const apply = async () => {
     if (inFlight.current || !valid.current) return
     inFlight.current = true; setSaving(true); setError(null)
@@ -41,7 +48,8 @@ export function AdjustedPlanApplyReview({ request, readReview, isCurrentDraft, l
       const save = { request: opened.request, readReview: () => live.current.readReview(), isCurrentDraft: current, locks }
       const result = opened.expectedPredecessorFingerprint === undefined
         ? await saveSelectedAdjustedPlan(save)
-        : await saveSelectedAdjustedSuccessor({ ...save, expectedPredecessorFingerprint: opened.expectedPredecessorFingerprint })
+        : await saveSelectedAdjustedSuccessor({ ...save, expectedPredecessorFingerprint: opened.expectedPredecessorFingerprint,
+          cycleDraft: opened.cycleDraft, futureEnvironmentConfirmed: environment.current })
       if (!valid.current) return
       if (result.kind === "saved") { valid.current = false; live.current.onSaved(result.state) }
       else setError(result.code === "PLAN_STORAGE_STATE_UNCERTAIN"
@@ -63,7 +71,10 @@ export function AdjustedPlanApplyReview({ request, readReview, isCurrentDraft, l
           <AdjustedJournalOriginalPlan session={session} explanation={opened.request.preparation.explanation} context="preview" />
         </section>) : <p role="alert">변경안의 수치와 근거를 확인하지 못했어요. 돌아가서 다시 선택해 주세요.</p>}
     {error !== null && <p role="alert">{error}</p>}
-    <button type="button" disabled={saving || prepared.kind !== "prepared"} onClick={() => void apply()}>
+    {opened.expectedPredecessorFingerprint !== undefined && <label><input type="checkbox" checked={environmentConfirmed} disabled={saving}
+      onChange={event => { environment.current = event.target.checked; setEnvironmentConfirmed(event.target.checked) }} />
+      다음 날짜에도 이 훈련에 필요한 장소와 시간을 확보했어요</label>}
+    <button type="button" disabled={saving || prepared.kind !== "prepared" || opened.expectedPredecessorFingerprint !== undefined && !environmentConfirmed} onClick={() => void apply()}>
       <Check size={18} aria-hidden="true" />{saving ? "저장 중" : "이 구성으로 계획 저장"}
     </button>
   </section>

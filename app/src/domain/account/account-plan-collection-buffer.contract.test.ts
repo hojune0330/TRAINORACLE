@@ -22,6 +22,20 @@ function setup() {
   return { stores, open }
 }
 
+it.each([{ journalGuard: [] }, { journalGuard: [{ documentId: "55555555-5555-4555-8555-555555555555", revision: 2 }] }])("reopens the exact journal guard in the durable outbox", async ({ journalGuard }) => {
+  const { open } = setup(), buffer = open(), op = transfer()
+  op.next.index.currentPlanId = op.next.snapshots[0]!.planId
+  const guarded = prepareAccountPlanCollectionTransfer({ ownerId: COLLECTION_OWNER, operationId: op.operationId,
+    expectedRevision: 0, previous: null, next: { version: 3, state: "ACCOUNT_STATE", kind: "PLAN", data: {
+      schemaVersion: 1, currentPlanId: op.next.snapshots[0]!.planId,
+      plans: [accountPlanEntry(accountPlanPacketFixture(3))],
+    } }, journalGuard })!
+  expect(guarded).not.toBeNull()
+  await buffer.save(guarded, 0)
+  buffer.close()
+  expect((await open().pending())?.journalGuard).toEqual(journalGuard)
+})
+
 it("recovers the entire prepared intent when a physical staging transaction fails", async () => {
   const { stores, open } = setup(), buffer = open(), op = transfer()
   vi.mocked(stores.parts.buffer.saveDraft).mockImplementationOnce(async () => { throw Error("Quota") })

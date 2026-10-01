@@ -5,6 +5,7 @@ import { rebindCandidatePairIdentity } from "@impl/plan-generator/candidate-iden
 import { createExplanationReceipt } from "./training-explanation-receipt"
 import { readCatalogCycleDraftSource, type CatalogCycleDraftContext } from "./catalog-cycle-draft"
 import { resolveCatalogCycleSuccessor, type CatalogCycleSuccessorSummary } from "./catalog-cycle-successor"
+import { prepareAdjustedCycleSuccessor } from "./adjusted-cycle-successor"
 import {
   generatePlanCandidates,
   selectPlanCandidate,
@@ -195,8 +196,17 @@ export function generateAdjustedNextFrameFromDraft(input: {
     const current = readPlanBetaStateFromStorage(retained)
     if (!localAccountScopeIsCurrent(account) || current.kind !== "adjusted_loaded"
       || current.state.contentFingerprint !== previous.state.contentFingerprint) return reject("STALE_BASE")
+    const source = readCatalogCycleDraftSource(previous.state, { version: 4, retained })
+    const journal = loadEntriesForPlanSafety()
+    if (!source || journal.status !== "complete") return reject("CYCLE_EVIDENCE_UNAVAILABLE")
+    const detailedContinuity = draft.generated.candidates.map(candidate => prepareAdjustedCycleSuccessor({
+      previous: previous.state, evidence: { version: 4, retained }, candidate, nextStartDate,
+      currentCheck: input.currentCheck, expectedPredecessorFingerprint: previous.state.contentFingerprint,
+      entries: journal.entries, evaluatedAt }))
+    if (detailedContinuity.some(p => p.kind !== "prepared")) return reject("INCOMPATIBLE_ADJUSTED_SUCCESSOR_SCOPE")
     return { kind: "adjusted_next_frame_draft" as const,
       draft: { ...draft, intake: { ...draft.intake, startDate: nextStartDate } }, continuity: prepared.context,
+      cycleDraft: source.context, cycleResponse: source.response, detailedContinuity,
       requiredNextGate: "REVIEWED_SUCCESSOR_TRANSACTION" as const }
   } catch { return reject("INVALID_CONTINUITY_INPUT") }
 }
@@ -225,8 +235,17 @@ export function generateAdjustedNextFrameV3FromDraft(input: Parameters<typeof ge
     const current = readPlanBetaStateFromStorage([], retained)
     if (!localAccountScopeIsCurrent(account) || current.kind !== "adjusted_v3_loaded"
       || current.state.contentFingerprint !== previous.state.contentFingerprint) return reject("STALE_BASE")
+    const source = readCatalogCycleDraftSource(previous.state, { version: 5, retained })
+    const journal = loadEntriesForPlanSafety()
+    if (!source || journal.status !== "complete") return reject("CYCLE_EVIDENCE_UNAVAILABLE")
+    const detailedContinuity = draft.generated.candidates.map(candidate => prepareAdjustedCycleSuccessor({
+      previous: previous.state, evidence: { version: 5, retained }, candidate, nextStartDate,
+      currentCheck: input.currentCheck, expectedPredecessorFingerprint: previous.state.contentFingerprint,
+      entries: journal.entries, evaluatedAt: at }))
+    if (detailedContinuity.some(p => p.kind !== "prepared")) return reject("INCOMPATIBLE_ADJUSTED_SUCCESSOR_SCOPE")
     return { kind: "adjusted_next_frame_v3_draft" as const,
       draft: { ...draft, intake: { ...draft.intake, startDate: nextStartDate } }, continuity: prepared.context,
+      cycleDraft: source.context, cycleResponse: source.response, detailedContinuity,
       requiredNextGate: "REVIEWED_SUCCESSOR_V3_TRANSACTION" as const }
   } catch { return reject("INVALID_CONTINUITY_INPUT") }
 }
@@ -252,8 +271,17 @@ export function generateMultiAdjustedNextFrameV3FromDraft(input: Parameters<type
     const current = readPlanBetaStateFromStorage([], [], retained)
     if (!localAccountScopeIsCurrent(account) || current.kind !== "multi_adjusted_v3_loaded"
       || current.state.contentFingerprint !== previous.state.contentFingerprint) return reject("STALE_BASE")
+    const source = readCatalogCycleDraftSource(previous.state, { version: 6, retained })
+    const journal = loadEntriesForPlanSafety()
+    if (!source || journal.status !== "complete") return reject("CYCLE_EVIDENCE_UNAVAILABLE")
+    const detailedContinuity = draft.generated.candidates.map(candidate => prepareAdjustedCycleSuccessor({
+      previous: previous.state, evidence: { version: 6, retained }, candidate, nextStartDate,
+      currentCheck: input.currentCheck, expectedPredecessorFingerprint: previous.state.contentFingerprint,
+      entries: journal.entries, evaluatedAt: at }))
+    if (detailedContinuity.some(p => p.kind !== "prepared")) return reject("INCOMPATIBLE_ADJUSTED_SUCCESSOR_SCOPE")
     return { kind: "multi_adjusted_next_frame_v3_draft" as const,
       draft: { ...draft, intake: { ...draft.intake, startDate: nextStartDate } }, continuity: prepared.context,
+      cycleDraft: source.context, cycleResponse: source.response, detailedContinuity,
       requiredNextGate: "REVIEWED_MULTI_SUCCESSOR_V3_TRANSACTION" as const }
   } catch { return reject("INVALID_CONTINUITY_INPUT") }
 }

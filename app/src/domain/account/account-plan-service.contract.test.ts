@@ -72,6 +72,16 @@ function server() {
 beforeEach(() => { vi.stubGlobal("crypto", webcrypto); localStorage.clear() })
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks() })
 
+it("legacy service refuses SELECT journal guards without queueing or a server write", async () => {
+  const remote = server(), local = memoryBuffer()
+  const service = createAccountPlanService({ ownerId: owner, isCurrent: () => true, buffer: local.buffer, send: remote.send })
+  await service.hydrate()
+  expect(await service.mutate({ kind: "SELECT", packet: accountPlanPacketFixture(3), confirmsSelection: true,
+    freshReview: () => true, journalGuard: [] }, service.snapshot().fingerprint!)).toBe("REVIEW_REQUIRED")
+  expect(remote.revision()).toBe(0)
+  expect(local.view()?.pending ?? null).toBeNull()
+})
+
 it("uses deterministic owner-isolated fixed pointer IDs", async () => {
   expect(await accountPlanDocumentId(owner)).toBe(await accountPlanDocumentId(owner))
   expect(await accountPlanDocumentId(owner)).not.toBe(await accountPlanDocumentId("22222222-2222-4222-8222-222222222222"))

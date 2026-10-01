@@ -26,7 +26,8 @@ export async function adjustedSuccessorFixture(setTime: (date: Date) => void) {
   if (generated.kind !== "adjusted_next_frame_draft") throw Error(generated.code)
   const next = adjustedPlanSelectionFixture({}, generated.draft, now)
   const retained = [...initial.retained, ...next.retained]
-  return { old, next, retained, now, input: { request: next.request,
+  return { old, next, retained, now, generated, input: { request: next.request,
     expectedPredecessorFingerprint: old.state.contentFingerprint,
+    cycleDraft: generated.cycleDraft, futureEnvironmentConfirmed: true,
     readReview: () => ({ ...next.review, retained }), isCurrentDraft: () => true, locks } }
 }

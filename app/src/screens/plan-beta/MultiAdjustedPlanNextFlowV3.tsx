@@ -8,8 +8,12 @@ import { loadAthleteRecords } from "../../domain/athlete-records"
 import { todayISO } from "../../domain/journal-store"
 import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
 import { matchingMultiAdjustmentEntryV3, type MultiAdjustmentEditorEntryV3, type PlanMultiAdjustmentResolverV3 } from "./multi-adjustment-entry-v3"
-import { MultiAdjustedPlanEditFlowV3 } from "./MultiAdjustedPlanEditFlowV3"
-import { candidateLabel, candidateDurationSummary, candidateSharedSessionSummary } from "./labels"
+import { MultiAdjustedPlanApplyReviewV3 } from "./MultiAdjustedPlanApplyReviewV3"
+import { rebindMultiAdjustedCycleRequestV3 } from "../../domain/adjusted-cycle-rebind"
+import { catalogCycleDraftSourceStillCurrent } from "../../domain/catalog-cycle-draft"
+import { PlanCycleEvidence } from "./PlanCycleEvidence"
+import { candidateLabel, candidateSharedSessionSummary } from "./labels"
+import { isoShift } from "../../domain/dates"
 import { planErrorMessage } from "./plan-feedback"
 import "./AdjustedPlanNextFlow.css"
 
@@ -36,8 +40,10 @@ export function MultiAdjustedPlanNextFlowV3({ loaded, resolver, readEvidence, on
     const read = readPlanBetaStateFromStorage([], [], readEvidence())
     return read.kind === "multi_adjusted_v3_loaded" && read.state.contentFingerprint === predecessor
   }
-  if (entry) return <MultiAdjustedPlanEditFlowV3 {...entry} expectedPredecessorFingerprint={predecessor}
-    isCurrentDraft={currentView} onCancel={() => setEntry(null)} onSaved={onSaved} />
+  const evidenceCurrent = () => currentView() && draft !== null
+    && catalogCycleDraftSourceStillCurrent(loaded.state, draft.cycleDraft, { version: 6, retained: readEvidence() })
+  if (entry) return <MultiAdjustedPlanApplyReviewV3 {...entry} expectedPredecessorFingerprint={predecessor}
+    cycleDraft={draft?.cycleDraft} isCurrentDraft={evidenceCurrent} onCancel={() => setEntry(null)} onSaved={onSaved} />
   return <section className="adjusted-next-flow" aria-labelledby={`${id}-title`}>
     <button type="button" onClick={onBack}><ArrowLeft size={18} aria-hidden="true" />현재 일정으로</button>
     <h1 ref={heading} tabIndex={-1} id={`${id}-title`}>{draft ? "다음 계획을 비교해 주세요" : "다음 훈련 주기 준비"}</h1>
@@ -69,12 +75,21 @@ export function MultiAdjustedPlanNextFlowV3({ loaded, resolver, readEvidence, on
       <button type="submit" disabled={check === null}><ArrowRight size={18} aria-hidden="true" />다음 계획 비교하기</button>
     </form> : <>
       <p>{draft.continuity.nextStartDate} 시작 · 이전 주기 미기록 {draft.continuity.missingRequiredOutcomes}회</p>
+      <p>연결된 일지 {draft.cycleResponse.linkedResultCount}건 · 겹친 기록 {draft.cycleResponse.conflictCount}건 · 연결 미확인 {draft.cycleResponse.rejectedLinkCount}건</p>
+      <PlanCycleEvidence response={draft.cycleResponse} />
+      <p>각 MAIN의 현재 수정 구성을 유지해요. 일지의 RPE를 처방 목표로 바꾸지 않아요.</p>
       <p>미기록은 완료로 계산하지 않아요. 이전 기록만으로 강도·양·횟수를 자동으로 늘리지 않아요.</p>
       <button type="button" onClick={() => { setDraft(null); setError(null) }}><ArrowLeft size={18} aria-hidden="true" />시작일·기록 다시 선택</button>
-      {draft.draft.generated.candidates.map(candidate => {
+      {draft.draft.generated.candidates.map((candidate, index) => {
         const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent)
+        const continuity = draft.detailedContinuity[index]
         return <section key={candidate.candidateId} aria-label={label.title} className="adjusted-next-candidate">
-          <h2>{label.title}</h2><p>{label.detail}</p><p>{candidateSharedSessionSummary(candidate)}</p><p>{candidateDurationSummary(candidate)}</p>
+          <h2>{label.title}</h2><p>{label.detail}</p><p>{candidateSharedSessionSummary(candidate)}</p>
+          {continuity?.kind === "prepared" && <details><summary>주요 훈련 확인</summary>{continuity.rows.map(row =>
+            <section key={`${row.target.day}-${row.target.slot}`}>
+              <h3>{isoShift(draft.continuity.nextStartDate, row.target.day - 1)} · {row.target.slot === "AM" ? "오전" : "오후"}</h3>
+              <p>{row.targetNotation}</p>
+            </section>)}</details>}
           <button type="button" disabled={!resolver} onClick={() => {
             try {
               if (!current()) { setError(planErrorMessage("STALE_BASE")); return }
@@ -82,7 +97,12 @@ export function MultiAdjustedPlanNextFlowV3({ loaded, resolver, readEvidence, on
               const matched = matchingMultiAdjustmentEntryV3(resolver, { ...draft.draft, currentCheck: check,
                 candidateId: candidate.candidateId, startDate: draft.continuity.nextStartDate })
               if (!matched) { setError("이 후보에 적용할 훈련 구성과 근거를 확인하지 못했어요. 현재 일정은 그대로예요."); return }
-              setError(null); setEntry(matched)
+              const prepared = draft.detailedContinuity[draft.draft.generated.candidates.findIndex(c => c.candidateId === candidate.candidateId)]
+              if (prepared?.kind !== "prepared" || !evidenceCurrent()) { setError(planErrorMessage("CYCLE_EVIDENCE_CHANGED")); return }
+              const rebound = rebindMultiAdjustedCycleRequestV3(prepared, matched.seed, matched.readReviewForEdits)
+              if (rebound.kind !== "rebound") { setError("이전 수정 구성의 현재 검토 근거를 확인하지 못했어요. 다른 훈련으로 대신 저장하지 않아요."); return }
+              setError(null); setEntry({ ...matched, seed: rebound.request,
+                readReview: () => matched.readReviewForEdits(rebound.request, rebound.changes) })
             } catch { setError("현재 계획과 근거를 확인하지 못했어요. 저장된 일정은 그대로예요.") }
           }}><ListChecks size={18} aria-hidden="true" />{label.title} 구성 확인</button>
         </section>

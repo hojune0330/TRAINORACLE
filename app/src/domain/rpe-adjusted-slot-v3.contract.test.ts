@@ -647,10 +647,11 @@ async function successorStorageFixture() {
   const next = storageFixture(generated.draft, later, "2026-09-30")
   const review = next.readReview(), retained = [...first.readReview().retained, ...review.retained]
   return { previous: previous.state, input: { ...next, expectedPredecessorFingerprint: previous.state.contentFingerprint,
+    cycleDraft: generated.cycleDraft, futureEnvironmentConfirmed: true,
     readReview: () => ({ ...review, retained }) }, retained, later }
 }
 
-it("opens the next cycle from the schedule and saves through candidate, multi edit, and final confirmation", async () => {
+it("opens the next cycle from the schedule and saves the exact current detail through final confirmation", async () => {
   const f = await successorStorageFixture(), before = localStorage.getItem(activePlanBetaStorageKey())
     const readSources = vi.fn(() => {
       const reviewed = f.input.readReview()
@@ -670,8 +671,9 @@ it("opens the next cycle from the schedule and saves through candidate, multi ed
   fireEvent.click(screen.getAllByRole("button", { name: /구성 확인$/ })[0]!)
   expect(resolver).toHaveBeenCalledOnce()
     expect(readSources).toHaveBeenCalled()
-  expect(screen.getByRole("heading", { name: "이번 계획의 주요 훈련" })).toBeTruthy()
-  fireEvent.click(screen.getByRole("button", { name: "전체 확인으로" }))
+  expect(screen.getByRole("heading", { name: "고른 훈련들로 다음 계획을 저장할까요?" })).toBeTruthy()
+  expect(screen.getByRole("button", { name: "이 구성으로 계획 저장" })).toBeDisabled()
+  fireEvent.click(screen.getByRole("checkbox", { name: "다음 날짜에도 이 훈련에 필요한 장소와 시간을 확보했어요" }))
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
   await act(async () => { fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" })) })
   expect(screen.getByRole("heading", { name: "내 훈련 일정" })).toBeTruthy()
@@ -680,9 +682,9 @@ it("opens the next cycle from the schedule and saves through candidate, multi ed
     continuation: { predecessorFingerprint: f.previous.contentFingerprint } } } })
   expect(localStorage.getItem(activePlanBetaStorageKey())).not.toBe(before)
   expect(readMultiAdjustedOriginalPlansV3(f.retained)).toMatchObject({ kind: "loaded", entries: [{ state: f.previous }] })
-// This includes predecessor creation, archival, generation, UI edits and locked save.
+// This includes predecessor creation, archival, generation, exact rebind and locked save.
 // CI run 34164472896 exceeded the default 5s; retain all assertions with a bounded integration timeout.
-}, 15000)
+}, 30000)
 
 it.each(["missing-provider", "invalid-provider", "review-required"])("preserves the current schedule when the next UI has %s", async scenario => {
   const f = await successorStorageFixture(), before = localStorage.getItem(activePlanBetaStorageKey())
@@ -783,7 +785,8 @@ it.each(["initial", "successor"])("requires explicit final confirmation in the %
   const before = localStorage.getItem(activePlanBetaStorageKey()), onSaved = vi.fn(), onCancel = vi.fn()
   const props = { seed: input.request, readReview: input.readReview, locks: input.locks,
     isCurrentDraft: input.isCurrentDraft, onSaved, onCancel,
-    expectedPredecessorFingerprint: successor?.previous.contentFingerprint }
+    expectedPredecessorFingerprint: successor?.previous.contentFingerprint,
+    cycleDraft: successor?.input.cycleDraft }
   render(React.createElement(MultiAdjustedPlanApplyReviewV3, props))
   expect(screen.getAllByRole("region", { name: "적용할 훈련" })).toHaveLength(input.request.preparations.length)
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
@@ -793,6 +796,7 @@ it.each(["initial", "successor"])("requires explicit final confirmation in the %
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
   cleanup()
   render(React.createElement(MultiAdjustedPlanApplyReviewV3, props))
+  if (successor) fireEvent.click(screen.getByRole("checkbox", { name: "다음 날짜에도 이 훈련에 필요한 장소와 시간을 확보했어요" }))
   await act(async () => { fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" })) })
   expect(onSaved).toHaveBeenCalledOnce()
   expect(readPlanBetaStateFromStorage([], [], input.readReview().retained)).toMatchObject({ kind: "multi_adjusted_v3_loaded", state: onSaved.mock.calls[0]![0] })
@@ -840,11 +844,12 @@ it("changes one MAIN to a structurally different set method and preserves its ex
       return latestReview
     }, isCurrentDraft: () => true, onSaved, onCancel: vi.fn() }))
   fireEvent.click(screen.getAllByRole("button", { name: "이 훈련 구성 바꾸기" })[0]!)
-  expect(screen.queryByRole("radio", { name: "시험용 세트 구성" })).toBeNull()
+  expect(screen.queryByRole("radio", { name: /30s.*Walk/u })).toBeNull()
+  fireEvent.click(screen.getByText("훈련 목록·다른 설정"))
   fireEvent.click(screen.getByRole("button", { name: "다른 검토된 구성 보기" }))
-  fireEvent.click(screen.getByRole("radio", { name: "시험용 세트 구성" }))
+  fireEvent.click(screen.getByRole("radio", { name: /30s.*Walk/u }))
   fireEvent.click(screen.getByRole("button", { name: "기본 선택지만 보기" }))
-  expect(screen.getByRole("radio", { name: "시험용 세트 구성" })).toBeChecked()
+  expect(screen.getByRole("radio", { name: /30s.*Walk/u })).toBeChecked()
   expect(screen.getByRole("dialog", { name: "훈련 바꾸기" })).toHaveAccessibleDescription(/\d{4}-\d{2}-\d{2} · (오전|오후)/)
   await act(async () => { fireEvent.click(screen.getByRole("button", { name: "변경안 적용" })) })
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
@@ -891,11 +896,13 @@ it("stages one addressed editor receipt without replacing the other MAIN and sav
     isCurrentDraft: () => true, onSaved, onCancel: vi.fn() }))
   expect(screen.getAllByRole("region", { name: "고른 주요 훈련" })).toHaveLength(input.request.preparations.length)
   fireEvent.click(screen.getAllByRole("button", { name: "이 훈련 구성 바꾸기" })[0]!)
-  expect(screen.getByRole("radio", { name: "현재 구성" })).toBeChecked()
-  fireEvent.click(screen.getByRole("radio", { name: "현재 구성" }))
+  fireEvent.click(screen.getByText("훈련 목록·다른 설정"))
+  expect(screen.getByRole("radio", { name: /3 × 40s/u })).toBeChecked()
+  fireEvent.click(screen.getByRole("radio", { name: /3 × 40s/u }))
   await act(async () => { fireEvent.click(screen.getByRole("button", { name: "변경안 적용" })) })
   fireEvent.click(screen.getAllByRole("button", { name: "이 훈련 구성 바꾸기" })[0]!)
-  expect(screen.getByRole("radio", { name: "현재 구성" })).toBeChecked()
+  fireEvent.click(screen.getByText("훈련 목록·다른 설정"))
+  expect(screen.getByRole("radio", { name: /3 × 40s/u })).toBeChecked()
   await act(async () => { fireEvent.click(screen.getByRole("button", { name: "변경안 적용" })) })
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
   fireEvent.click(screen.getByRole("button", { name: "전체 확인으로" }))

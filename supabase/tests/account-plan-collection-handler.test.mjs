@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { readFile, readdir } from 'node:fs/promises';
 import { createAccountPlanCollectionHandler, createAccountPlanCollectionRepository,
   accountPlanCollectionDocumentId, MAX_BODY_BYTES } from '../functions/_shared/account-plan-collection-handler.mjs';
-import { importJournalKeyring, importJournalAttestor } from '../functions/_shared/account-journal-handler.mjs';
+import { importJournalKeyring, importJournalAttestor, createAccountJournalHandler, validateAccountJournalDocument } from '../functions/_shared/account-journal-handler.mjs';
 import { encryptAccountJournalDocument, decryptAccountJournalDocument } from '../functions/_shared/account-journal-crypto.mjs';
 import { splitAccountPlanCollection, accountPlanFingerprint, accountPlanCollectionPartHash } from '../functions/_shared/account-plan-collection-validator.mjs';
 
@@ -37,6 +37,8 @@ if (process.env.PLAN_COLLECTION_MUTATION) {
     replanJournals: ['replan && (selected.catalogReplacement || selected.executionReplan)', 'false'],
     replanSource: ['selected.executionReplan && !validateExecutionReplanJournalFacts(replan, facts, sourceContext)', 'false'],
     catalogClock: ['!catalogReplacementClockIsCurrent(replan, now())', 'false'],
+    successorGuard: ["if (successor && r.journalGuard === undefined && !replan) fail(422, 'JOURNAL_GUARD_REQUIRED');", ''],
+    selectionAtomic: ['journalGuard !== undefined ? await repo.commitReplan(', 'false ? await repo.commitReplan('],
   };
   const change = mutations[process.env.PLAN_COLLECTION_MUTATION];
   assert.ok(change && source.includes(change[0]));
@@ -54,6 +56,25 @@ const built = await build({ stdin: {
 bundle: true, write: false, platform: 'neutral', format: 'esm' });
 const { stateFixture, replanFixture, replacedReplanFixture, prepareExecutionReplan, accountPlanEntry, prepareCatalogReplacement, ALL_WORKOUT_CATALOG,
   executionReplanEvidence, replanFingerprint, createPlannedSessionLogDraft } = await import(`data:text/javascript;base64,${Buffer.from(built.outputFiles[0].text).toString('base64')}`);
+const continuityBuilt = await build({ stdin: {
+  contents: 'export { deriveCandidateId, derivePairId, candidateBaseId, pairBaseId } from "../impl/src/plan-generator/candidate-identity.ts";',
+  resolveDir: fileURLToPath(new URL('../../app/', import.meta.url)), loader: 'ts',
+}, tsconfig: fileURLToPath(new URL('../../app/tsconfig.json', import.meta.url)), bundle: true, write: false, platform: 'neutral', format: 'esm' });
+const { deriveCandidateId, derivePairId, candidateBaseId, pairBaseId } = await import(`data:text/javascript;base64,${Buffer.from(continuityBuilt.outputFiles[0].text).toString('base64')}`);
+function successorDocument() {
+  const state = stateFixture(), plan = state.activePlan;
+  const continuity = 'balanced:completed-1-rested-0-skipped-0-pain_checkin-0';
+  const base = candidateBaseId(plan.candidateId).replace('no-continuity', continuity);
+  const projection = { kind: plan.candidateKind, eventDistanceM: plan.eventDistanceM,
+    selectedDetailedTemplateRef: plan.selectedDetailedTemplateRef, selectedEnergyIntent: plan.selectedEnergyIntent,
+    sourceMode: plan.sourceMode, selectionAuthority: plan.selectionActor, frame: plan.frame, sessions: plan.sessions };
+  plan.candidateId = deriveCandidateId(base, projection);
+  plan.pairId = derivePairId(pairBaseId(plan.pairId).replace('no-continuity', continuity), plan.candidateId,
+    deriveCandidateId(base.replace('beta:balanced:', 'beta:conservative:'), { ...projection, kind: 'CONSERVATIVE' }));
+  const entry = accountPlanEntry({ state, evidence: null });
+  return { version: 3, state: 'ACCOUNT_STATE', kind: 'PLAN', data: { schemaVersion: 1, currentPlanId: entry.planId, plans: [entry] } };
+}
+
 function document(count = 1) {
   const plans = Array.from({ length: count }, (_, i) => {
     const snapshot = { state: { ...stateFixture(), generatedAt: `2026-07-24T00:00:${String(i).padStart(2, '0')}.000Z` }, evidence: null };
@@ -118,6 +139,67 @@ async function check(response, status, expected) {
   if (expected !== undefined) assert.deepEqual(value, expected);
   return value;
 }
+
+test('ordinary successor requires a guard, uses atomic commit without a replan receipt, and binds replay first', async () => {
+  const f = await fixture(), parts = splitAccountPlanCollection(successorDocument());
+  assert.ok(parts, 'canonical continuity fixture must be accepted');
+  await f.stage(parts);
+  const request = command(parts);
+  await check(await f.request({ action: 'commit', request }), 422, { error: 'JOURNAL_GUARD_REQUIRED' });
+  assert.equal(f.calls.commit, 0);
+  await check(await f.request({ action: 'commit', request: { ...request, journalGuard: [] } }), 503);
+  assert.equal(f.calls.commit, 0);
+  let guarded = 0;
+  f.repo.commitReplan = async input => { guarded++; assert.deepEqual(input.journalGuard, []); return f.repo.commit(input); };
+  const exact = { ...request, journalGuard: [] };
+  const accepted = await check(await f.request({ action: 'commit', request: exact }), 200);
+  assert.equal(accepted.kind, 'committed'); assert.equal(guarded, 1);
+  f.repo.commitReplan = async () => { throw Error('changed journals'); };
+  f.parts.clear();
+  assert.deepEqual(await check(await f.request({ action: 'commit', request: exact }), 200), accepted);
+  await check(await f.request({ action: 'commit', request }), 409, { error: 'OPERATION_REUSED' });
+  await check(await f.request({ action: 'commit', request: { ...exact, journalGuard: [{ documentId: OTHER, revision: 1 }] } }), 409, { error: 'OPERATION_REUSED' });
+  for (const journalGuard of [null, [{ documentId: OTHER, revision: 0 }], [{ documentId: OTHER, revision: 1 }, { documentId: OTHER, revision: 1 }]])
+    await check(await f.request({ action: 'commit', request: { ...exact, journalGuard } }), 400, { error: 'INVALID_REQUEST' });
+})
+
+test('legacy PLAN gateway rejects new successor selection but preserves saved successor progress and receipt replay', async () => {
+  const material = await importJournalKeyring(serialized);
+  const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(['trainoracle.account.plan.v1', OWNER]))));
+  bytes[6] = (bytes[6] & 15) | 80; bytes[8] = (bytes[8] & 63) | 128;
+  const h = Buffer.from(bytes.slice(0, 16)).toString('hex');
+  const documentId = `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+  let current = null, commits = 0;
+  const operations = new Map();
+  const repo = { enabled: async () => true, read: async () => current,
+    operation: async (_owner, id) => operations.get(id) ?? null,
+    commit: async input => {
+      commits++;
+      const result = { kind: 'saved', documentId, operationId: input.operationId, revision: input.expectedRevision + 1 };
+      current = { user_id: OWNER, document_id: documentId, revision: result.revision, encrypted_payload: input.encryptedPayload };
+      operations.set(input.operationId, { user_id: OWNER, document_id: documentId, operation_id: input.operationId,
+        expected_revision: input.expectedRevision, operation_kind: 'commit', proposed_encrypted_payload: input.encryptedPayload, result });
+      return result;
+    } };
+  const handler = createAccountJournalHandler({ authenticate: async () => ({ ownerId: OWNER, repo }),
+    getMaterial: async () => material, validateDocument: validateAccountJournalDocument });
+  const request = input => handler(new Request('https://edge.example.test/account-journal', { method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' }, body: JSON.stringify(input) }));
+  const successor = successorDocument();
+  const command = { action: 'save', documentId, operationId: OP, expectedRevision: 0, document: successor };
+  await check(await request(command), 422, { error: 'JOURNAL_GUARD_REQUIRED' });
+  assert.equal(commits, 0);
+  await check(await request({ ...command, document: document() }), 200);
+  const stored = await encryptAccountJournalDocument(JSON.stringify(successor), { ownerId: OWNER, documentId }, material.active);
+  current = { user_id: OWNER, document_id: documentId, revision: 1, encrypted_payload: stored };
+  const progress = structuredClone(successor);
+  progress.data.plans[0].progress = [{ sessionDay: 1, sessionSlot: 'AM', state: 'COMPLETED' }];
+  const samePointer = { ...command, operationId: OP2, expectedRevision: 1, document: progress };
+  const accepted = await check(await request(samePointer), 200);
+  current = null;
+  assert.deepEqual(await check(await request(samePointer), 200), accepted);
+  assert.equal(commits, 2);
+})
 
 test('execution replan uses a guarded commit, preserves originals, and recovers its exact receipt', async () => {
   const f = await fixture(), seed = replanFixture(), prepared = prepareExecutionReplan(seed);
@@ -655,7 +737,7 @@ test('real PGlite 0037 with gateway and authenticated repository round trips 18 
     for (const name of (await readdir(directory)).filter(name => /^\d+_.+\.sql$/u.test(name) && name < '0038').sort())
       await db.exec(await readFile(new URL(name, directory), 'utf8'));
     await db.exec(await readFile(new URL('0040_execution_replan_journal_guard.sql', directory), 'utf8'));
-    let calendarSql = await readFile(new URL('0041_catalog_replacement_calendar_guard.sql', directory), 'utf8');
+    let calendarSql = await readFile(new URL('0043_catalog_replacement_calendar_guard.sql', directory), 'utf8');
     if (process.env.PLAN_COLLECTION_SQL_MUTATION === 'calendarClock') {
       const expression = "to_char(clock_timestamp() at time zone (calendar->>'timeZone'),'YYYY-MM-DD') is distinct from calendar->>'today'";
       assert.equal(calendarSql.split(expression).length - 1, 2);
@@ -818,6 +900,36 @@ test('real PGlite 0037 with gateway and authenticated repository round trips 18 
     await db.exec('reset role');
     await db.query('update public.account_journal_documents set revision=4 where user_id=$1 and document_id=$2', [OWNER, sourceId]);
     assert.deepEqual(await check(await f.request({ action: 'commit', request: manualRequest }), 200), manualAccepted);
+    // Ordinary SELECT has no replan receipt: its transport guard still uses the
+    // existing atomic SQL, including additions, edits, deletions and empty guards.
+    const nextEntry = successorDocument().data.plans[0];
+    const ordinary = splitAccountPlanCollection({ ...baselineDoc, data: { schemaVersion: 1, currentPlanId: nextEntry.planId,
+      plans: [...oldDocs, { ...original, archivedAt: seed.now }, { ...selected, archivedAt: seed.now },
+        { ...manualEntry, archivedAt: seed.now }, nextEntry] } });
+    assert.ok(ordinary);
+    await f.stage(ordinary);
+    const ordinaryRequest = command(ordinary, manualParts, { operationId: 'b8888888-8888-4888-8888-888888888888', expectedRevision: 4,
+      journalGuard: [{ documentId: sourceId, revision: 4 }] });
+    await check(await f.request({ action: 'commit', request: { ...ordinaryRequest, journalGuard: [] } }), 200, { kind: 'conflict' });
+    await db.exec('reset role');
+    await db.query('update public.account_journal_documents set revision=5 where user_id=$1 and document_id=$2', [OWNER, sourceId]);
+    await check(await f.request({ action: 'commit', request: ordinaryRequest }), 200, { kind: 'conflict' });
+    await db.exec('reset role');
+    await db.query('update public.account_journal_documents set revision=4,deleted_at=clock_timestamp() where user_id=$1 and document_id=$2', [OWNER, sourceId]);
+    await check(await f.request({ action: 'commit', request: ordinaryRequest }), 200, { kind: 'conflict' });
+    await db.exec('reset role');
+    await db.query('update public.account_journal_documents set deleted_at=null where user_id=$1 and document_id=$2', [OWNER, sourceId]);
+    await db.query('update public.account_journal_documents set deleted_at=null,encrypted_payload=$3 where user_id=$1 and document_id=$2', [OWNER, otherJournalId, payload]);
+    await check(await f.request({ action: 'commit', request: ordinaryRequest }), 200, { kind: 'conflict' });
+    assert.equal((await check(await f.request({ action: 'readIndex' }), 200)).revision, 4);
+    await db.exec('reset role');
+    await db.query('update public.account_journal_documents set deleted_at=clock_timestamp(),encrypted_payload=null where user_id=$1 and document_id=$2', [OWNER, otherJournalId]);
+    const ordinaryAccepted = await check(await f.request({ action: 'commit', request: ordinaryRequest }), 200);
+    assert.equal(ordinaryAccepted.kind, 'committed');
+    await db.exec('reset role');
+    await db.query('update public.account_journal_documents set revision=6 where user_id=$1 and document_id=$2', [OWNER, sourceId]);
+    keysAvailable = false;
+    assert.deepEqual(await check(await f.request({ action: 'commit', request: ordinaryRequest }), 200), ordinaryAccepted);
     // One in-process PostgreSQL session, not proof of independent-session lock waiting or live JWT verification.
   } finally { await db.close(); }
 });

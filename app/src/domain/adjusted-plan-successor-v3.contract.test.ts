@@ -19,6 +19,7 @@ import { createPlannedSessionLogDraft } from "./planned-session-link"
 import { saveEntry, loadEntries } from "./journal-store"
 import type { PostSessionEntry } from "./journal-schema"
 import { readJournalOriginalPlan } from "./journal-original-plan"
+import { readCatalogCycleDraftSource } from "./catalog-cycle-draft"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers() })
@@ -37,6 +38,7 @@ function nextInput(previous: StoredAdjustedPlanStateV5, retained: readonly Retai
   const allEvidence = [...retained, next.retained]
   const input: Parameters<typeof saveSelectedAdjustedSuccessorV3>[0] = {
     request: next.request, expectedPredecessorFingerprint: previous.contentFingerprint, isCurrentDraft: () => true,
+    cycleDraft: generated.cycleDraft, futureEnvironmentConfirmed: true,
     readReview: () => ({ source: next.request.preparation.source, explanation: next.retained.explanation,
       policies: [next.policy], retained: allEvidence }), locks: { request: async (_n, _o, callback) => callback({}) },
   }
@@ -65,7 +67,8 @@ it("generates and saves a real V3 successor while retaining both old and new jou
     syncState: "local", activitySlot: oldSession.slot, plannedSessionLink: oldLink.link,
     system: "", title: "", memo: "", distanceKm: "", durationMin: "", avgPace: "", rpe: 0 }
   expect(saveEntry(entry).ok).toBe(true)
-  const result = await saveSelectedAdjustedSuccessorV3(input)
+  const result = await saveSelectedAdjustedSuccessorV3({ ...input,
+    cycleDraft: readCatalogCycleDraftSource(old.state, { version: 5, retained })!.context })
   if (result.kind !== "saved") throw Error(result.code)
   expect(result.state.selection.periodization).toMatchObject({ frameOrdinal: 2, source: "ROLLED_FORWARD",
     programLineageId: old.state.selection.periodization.programLineageId })
@@ -238,6 +241,7 @@ it("takes the real schedule through comparison and explicit save, then renders t
   expect(screen.getByRole("heading", { name: "이 구성으로 다음 계획을 저장할까요?" })).toBeInTheDocument()
   expect(screen.getByRole("region", { name: "적용할 훈련" })).toBeInTheDocument()
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(old.raw)
+  fireEvent.click(screen.getByRole("checkbox", { name: "다음 날짜에도 이 훈련에 필요한 장소와 시간을 확보했어요" }))
   await act(async () => { fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" })) })
   expect(screen.getByRole("heading", { name: "내 훈련 일정" })).toBeInTheDocument()
   const current = readPlanBetaStateFromStorage([], retained)
@@ -276,6 +280,7 @@ it("refuses a stale current plan when final confirmation is clicked", async () =
   openComparison()
   fireEvent.click(screen.getAllByRole("button", { name: /구성 확인$/u })[0]!)
   localStorage.setItem(activePlanBetaStorageKey(), "OTHER_WRITER")
+  fireEvent.click(screen.getByRole("checkbox", { name: "다음 날짜에도 이 훈련에 필요한 장소와 시간을 확보했어요" }))
   await act(async () => { fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" })) })
   expect(screen.getByRole("alert")).toBeInTheDocument()
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe("OTHER_WRITER")

@@ -53,5 +53,12 @@ export function comparePlannedSegments(value: unknown, link: PlannedSessionLink,
     unknowns: [`미기록 ${comparison.unrecordedSteps}개 구간은 실패나 0초가 아니에요.`, "코스·회복 방식·당일 상태가 같았는지 별도 확인이 필요해요."],
     interpretation: comparison.interpretation, completeDistanceCount: comparison.rows.filter(r => r.sameDistance && plan.steps.find(s => s.key === r.key)?.distanceM !== null).length,
     timedCount: comparison.rows.filter(r => r.timeDifference !== null).length,
-    changed: comparison.rows.some(r => r.distanceStatus === "different" || r.kind === "RECOVERY" && r.timeDifference && (r.timeDifference.minimum > 0 || r.timeDifference.maximum < 0)) }
+    changed: comparison.rows.some(row => {
+      if (row.distanceStatus === "different") return true
+      const step = plan.steps.find(item => item.key === row.key)
+      const durationDefinesDose = row.kind === "RECOVERY"
+        || step?.phase === "main" && step.kind === "WORK" && step.distanceM === null
+      return durationDefinesDose && row.timeDifference !== null
+        && (row.timeDifference.minimum > 0 || row.timeDifference.maximum < 0)
+    }) }
 }

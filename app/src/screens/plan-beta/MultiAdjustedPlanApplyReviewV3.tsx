@@ -14,6 +14,7 @@ import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
 import { checkSessionAvailabilityV3, exactSessionSecondsV3, type SessionAvailabilityLimitV3 } from "../../domain/prescription-availability-v3"
 import { formatTrainingSeconds } from "./labels"
 import "./AdjustedPlanNextFlow.css"
+import type { CatalogCycleDraftContext } from "../../domain/catalog-cycle-draft"
 
 export type MultiAdjustmentEntryV3 = {
   readonly seed: MultiAdjustedPlanSelectionRequestV3;
@@ -32,21 +33,24 @@ function readLimits(values: Readonly<Record<string, string>>): SessionAvailabili
   })
 }
 export function MultiAdjustedPlanApplyReviewV3({ seed, readReview, locks, isCurrentDraft, onSaved, onCancel, expectedPredecessorFingerprint,
-  availabilityDraft, onAvailabilityDraftChange }: MultiAdjustmentEntryV3 & {
+  availabilityDraft, onAvailabilityDraftChange, cycleDraft }: MultiAdjustmentEntryV3 & {
   readonly isCurrentDraft: () => boolean; readonly onSaved: (state: StoredMultiAdjustedPlanStateV6) => void;
   readonly onCancel: () => void; readonly expectedPredecessorFingerprint?: string;
   readonly availabilityDraft?: Readonly<Record<string, string>>;
   readonly onAvailabilityDraftChange?: (draft: Record<string, string>) => void;
+  readonly cycleDraft?: CatalogCycleDraftContext;
 }) {
   const [opened] = React.useState(() => {
     const request = structuredClone(seed)
     let bindings: MultiAdjustedLiveReviewV3["rpeBindings"] = []
     try { bindings = structuredClone(readReview().rpeBindings) } catch { /* Missing review keeps the preview unavailable. */ }
-    return { request, fingerprint: identity(seed), bindings, expectedPredecessorFingerprint }
+    return { request, fingerprint: identity(seed), bindings, expectedPredecessorFingerprint, cycleDraft: structuredClone(cycleDraft) }
   })
-  const live = React.useRef({ seed, readReview, isCurrentDraft, onSaved, expectedPredecessorFingerprint })
-  live.current = { seed, readReview, isCurrentDraft, onSaved, expectedPredecessorFingerprint }
+  const live = React.useRef({ seed, readReview, isCurrentDraft, onSaved, expectedPredecessorFingerprint, cycleDraft })
+  live.current = { seed, readReview, isCurrentDraft, onSaved, expectedPredecessorFingerprint, cycleDraft }
   const valid = React.useRef(true), pending = React.useRef(false)
+  const [environmentConfirmed, setEnvironmentConfirmed] = React.useState(false)
+  const environment = React.useRef(false)
   const [saving, setSaving] = React.useState(false), [error, setError] = React.useState<string | null>(null)
   const [availableMinutes, setAvailableMinutes] = React.useState<Record<string, string>>(() => availabilityDraft ? { ...availabilityDraft } : Object.fromEntries(
     (opened.request.availabilityLimits ?? []).map(limit => [`${limit.day}:${limit.slot}`, String(limit.maximumSeconds / 60)])))
@@ -57,6 +61,8 @@ export function MultiAdjustedPlanApplyReviewV3({ seed, readReview, locks, isCurr
   const current = () => valid.current && live.current.isCurrentDraft()
     && identity(live.current.seed) === opened.fingerprint
     && live.current.expectedPredecessorFingerprint === opened.expectedPredecessorFingerprint
+    && identity(live.current.cycleDraft ?? null) === identity(opened.cycleDraft ?? null)
+    && (opened.expectedPredecessorFingerprint === undefined || environment.current)
   const prepared = prepareMultiAdjustedPlanCandidateV3(opened.request.preparations, opened.bindings)
   const limits = readLimits(availableMinutes)
   const availability = prepared.kind === "prepared" ? checkSessionAvailabilityV3(prepared.candidate.sessions, limits) : null
@@ -73,7 +79,8 @@ export function MultiAdjustedPlanApplyReviewV3({ seed, readReview, locks, isCurr
         readReview: () => live.current.readReview(), isCurrentDraft: () => current() && identity(availableRef.current) === timeIdentity, locks }
       const result = opened.expectedPredecessorFingerprint === undefined
         ? await saveSelectedMultiAdjustedPlanV6(input)
-        : await saveSelectedMultiAdjustedSuccessorV3({ ...input, expectedPredecessorFingerprint: opened.expectedPredecessorFingerprint })
+        : await saveSelectedMultiAdjustedSuccessorV3({ ...input, expectedPredecessorFingerprint: opened.expectedPredecessorFingerprint,
+          cycleDraft: opened.cycleDraft, futureEnvironmentConfirmed: environment.current })
       if (!valid.current) return
       if (result.kind === "saved") { valid.current = false; live.current.onSaved(result.state) }
       else setError(planErrorMessage(result.code))
@@ -116,6 +123,10 @@ export function MultiAdjustedPlanApplyReviewV3({ seed, readReview, locks, isCurr
     </> : <p role="alert">구성과 설명의 연결을 확인하지 못했어요. 후보로 돌아가 다시 선택해 주세요.</p>}
     {error && <p role="alert">{error}</p>}
     {availability?.kind === "rejected" && <p role="alert">{availabilityMessage(availability.code)}</p>}
-    <button type="button" disabled={saving || prepared.kind !== "prepared" || availability?.kind !== "checked"} onClick={() => void apply()}><Check size={18} aria-hidden="true" />{saving ? "저장 중" : "이 구성으로 계획 저장"}</button>
+    {opened.expectedPredecessorFingerprint !== undefined && <label><input type="checkbox" checked={environmentConfirmed} disabled={saving}
+      onChange={event => { environment.current = event.target.checked; setEnvironmentConfirmed(event.target.checked) }} />
+      다음 날짜에도 이 훈련에 필요한 장소와 시간을 확보했어요</label>}
+    <button type="button" disabled={saving || prepared.kind !== "prepared" || availability?.kind !== "checked"
+      || opened.expectedPredecessorFingerprint !== undefined && !environmentConfirmed} onClick={() => void apply()}><Check size={18} aria-hidden="true" />{saving ? "저장 중" : "이 구성으로 계획 저장"}</button>
   </section>
 }

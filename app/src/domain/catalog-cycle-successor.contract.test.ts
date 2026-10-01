@@ -142,7 +142,7 @@ describe("bounded catalog cycle successor", () => {
     expect(next.summary).toMatchObject({ status: "REVIEW_REQUIRED", reducedCount: 0, maintainedCount: 2, reviewCount: 2 })
     expect(next.summary.rows.every(r => r.reason === "NO_REVIEWED_LOWER_CONFIGURATION")).toBe(true)
     expect(main(next.generated.candidates[0].sessions).map(idOf)).toEqual(["P-LT-C", "P-LT-C"])
-    expect(next.summary.rows[0]!.explanation).toContain("같은 방법")
+    expect(next.summary.rows[0]!.explanation).toContain("같은 방식")
     expect(next.summary.appliedCount).toBe(next.summary.maintainedCount + next.summary.reducedCount)
     expect(next.summary.rows.every(r => r.applied && r.status === "REVIEW_REQUIRED")).toBe(true)
   })

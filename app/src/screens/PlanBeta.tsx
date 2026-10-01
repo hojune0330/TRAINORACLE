@@ -34,6 +34,10 @@ import type {
 import type { JournalEntryType } from "./log-entry/shared"
 import { PlanActiveState } from "./plan-beta/PlanActiveState"
 import { PlanCandidates } from "./plan-beta/PlanCandidates"
+import type { InitialMainCandidateReview } from "./plan-beta/PlanCandidates"
+import { applyInitialMainConditions, applyInitialMainManual, reviewInitialMainConditions } from "../domain/initial-main-conditions"
+import type { InitialMainInput } from "../domain/initial-main-conditions"
+import { getPlanMutationLockManager, PLAN_BETA_MUTATION_LOCK_NAME } from "../domain/plan-mutation-lock"
 import type { CatalogCycleDraftContext } from "../domain/catalog-cycle-draft"
 import type { CatalogCycleSuccessorSummary } from "../domain/catalog-cycle-successor"
 import { usePlanDraftNavigationGuard } from "./plan-beta/usePlanDraftNavigationGuard"
@@ -73,7 +77,7 @@ import { useOrderedStepMotion } from "../hooks/useOrderedStepMotion"
 import { resolvePlanMethodChange } from "../domain/plan-method-selection"
 import { todayISO } from "../domain/journal-store"
 import { onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
-import { localAccountScopeSnapshot } from "../domain/account/local-account-scope"
+import { localAccountScopeIsCurrent, localAccountScopeSnapshot } from "../domain/account/local-account-scope"
 import { AdjustedPlanSchedule } from "./plan-beta/AdjustedPlanSchedule"
 import { AdjustedPlanEditFlow } from "./plan-beta/AdjustedPlanEditFlow"
 import { matchingAdjustmentEntry } from "./plan-beta/adjustment-entry"
@@ -445,6 +449,14 @@ function LegacyPlanBeta({
   const [comparisonRecordId, setComparisonRecordId] = React.useState<string | null>(null)
   const [recordConfirmationPending, setRecordConfirmationPending] = React.useState(false)
   const draftRevision = React.useRef(0)
+  const [, refreshInitialRevision] = React.useState(0)
+  const [initialApplying, setInitialApplying] = React.useState(false)
+  const [initialConfirmed, setInitialConfirmed] = React.useState<InitialMainCandidateReview["confirmed"]>(null)
+  const draftAccountScope = React.useState(localAccountScopeSnapshot)[0]
+  const initialSource = React.useRef({ generated, intake: generatedIntake, currentCheck, startDate: candidateStartDate,
+    stored, nextPredecessor, errorCode, recordConfirmationPending })
+  initialSource.current = { generated, intake: generatedIntake, currentCheck, startDate: candidateStartDate,
+    stored, nextPredecessor, errorCode, recordConfirmationPending }
   React.useEffect(() => () => { draftRevision.current += 1 }, [])
   const [prescriptionBinding, setPrescriptionBinding] = React.useState<
     Omit<CandidatePrescriptionBinding, "generated">
@@ -530,6 +542,7 @@ function LegacyPlanBeta({
     candidateTargets: CandidateSessionTargets = candidateSessionTargets,
   ) => {
     draftRevision.current += 1
+    setInitialConfirmed(null)
     setRetrySelection(null)
     if (currentCheck === null) {
       setErrorCode(null)
@@ -703,6 +716,45 @@ function LegacyPlanBeta({
     finally { selectionWrite.current = false; setSelectionSaving(false) }
   }
 
+  const applyInitialReview = async (reviewKey: string, resolve: (input: InitialMainInput) => {
+    readonly generated: PlanGenerationSuccess; readonly reviewedConditionKeys: readonly string[]
+  } | null) => {
+    if (selectionWrite.current) return
+    const revision = draftRevision.current, expected = initialSource.current
+    const locks = getPlanMutationLockManager()
+    if (!locks) { setErrorCode("MUTATION_LOCK_UNAVAILABLE"); return }
+    selectionWrite.current = true
+    setInitialApplying(true)
+    try {
+      await locks.request(PLAN_BETA_MUTATION_LOCK_NAME, { mode: "exclusive", ifAvailable: true }, lock => {
+        const latest = initialSource.current
+        if (!lock) { if (draftRevision.current === revision) setErrorCode("MUTATION_LOCK_UNAVAILABLE"); return }
+        if (draftRevision.current !== revision || latest.generated !== expected.generated || latest.intake !== expected.intake
+          || latest.startDate !== expected.startDate || latest.currentCheck !== expected.currentCheck || latest.stored !== null
+          || latest.nextPredecessor !== null || latest.generated === null || latest.intake === null
+          || latest.currentCheck === null || latest.recordConfirmationPending
+          || latest.errorCode?.startsWith("ACCOUNT_PLAN_") || !localAccountScopeIsCurrent(draftAccountScope)
+          || readPlanBetaStateFromStorage().kind !== "missing") return
+        const safety = evaluatePlanSafety(latest.currentCheck)
+        if (safety.kind === "blocked") {
+          draftRevision.current += 1
+          setGenerated(null); setGate(null); setCurrentCheck(null); setBlocked(true); setRetrySelection(null)
+          return
+        }
+        const input: InitialMainInput = { generated: latest.generated, intake: latest.intake, gate: safety.gate,
+          context: { mode: "newplan", startDate: latest.startDate, accountScope: draftAccountScope, revision } }
+        if (reviewInitialMainConditions(input)?.key !== reviewKey) return
+        const next = resolve(input)
+        if (!next || draftRevision.current !== revision || !localAccountScopeIsCurrent(draftAccountScope)) return
+        draftRevision.current += 1
+        setInitialConfirmed({ pairId: next.generated.pairId, startDate: latest.startDate, accountScope: draftAccountScope,
+          revision: draftRevision.current, keys: next.reviewedConditionKeys })
+        setRetrySelection(null); setErrorCode(null); setGate(safety.gate); setGenerated(next.generated)
+      })
+    } catch { setErrorCode("MUTATION_LOCK_UNAVAILABLE") }
+    finally { selectionWrite.current = false; setInitialApplying(false) }
+  }
+
   if (recordsOpen) {
     return <React.Suspense fallback={<p role="status">경기 기록을 열고 있어요.</p>}>
       <AthleteRecords onBack={() => {
@@ -844,14 +896,37 @@ function LegacyPlanBeta({
         }
       }
     }
+    const initialInput: InitialMainInput = { generated, intake: generatedIntake, gate,
+      context: { mode: "newplan", startDate: candidateStartDate, accountScope: draftAccountScope, revision: draftRevision.current } }
+    const initialMain: InitialMainCandidateReview | undefined = stored === null && nextPredecessor === null && cycleDraft === null
+      && cycleSummary === null && generatedIntake.selectedDetailedTemplateRef === null ? {
+        input: initialInput, applying: initialApplying, confirmed: initialConfirmed,
+        onApply: (key, requirements) => { void applyInitialReview(key, input => applyInitialMainConditions(input, key, requirements)) },
+        onApplyManual: (key, address, id, inputs, longer) => { void applyInitialReview(key, input => {
+          const next = applyInitialMainManual(input, key, address, id, inputs, longer)
+          return next ? { generated: next, reviewedConditionKeys: [] } : null
+        }) },
+        onChooseAlternative: alternative => {
+          if (selectionWrite.current || draftRevision.current !== initialInput.context.revision
+            || initialSource.current.generated !== generated || initialSource.current.stored !== null
+            || initialSource.current.nextPredecessor !== null || !localAccountScopeIsCurrent(draftAccountScope)) return
+          const review = reviewInitialMainConditions(initialInput)
+          if (!review?.fallbacks.some(row => row.alternatives.some(option => option.trainingFocus === alternative.trainingFocus
+            && option.catalogId === alternative.catalogId))) return
+          const next = { ...generatedIntake, trainingFocus: alternative.trainingFocus, selectedDetailedTemplateRef: null }
+          setDraft(next); setSelectedRecordId(null); setComparisonRecordId(null); setRecordConfirmationPending(false)
+          generateCandidates(next, null, targetRaceDate || undefined)
+        },
+      } : undefined
     return (
       <>
         {nextDraftHeader}
         <PlanCandidates
           generated={generated}
+          initialMain={initialMain}
           cycleSummary={cycleSummary}
           onRebuildCycle={() => generateCandidates(generatedIntake)}
-          onCatalogChange={next => { if (selectionWrite.current) return; draftRevision.current += 1; setRetrySelection(null); setErrorCode(null); setCycleSummary(null); setGenerated(next) }}
+          onCatalogChange={next => { if (selectionWrite.current) return; draftRevision.current += 1; setInitialConfirmed(null); setRetrySelection(null); setErrorCode(null); setCycleSummary(null); setGenerated(next) }}
           adjustmentActions={adjustmentActions}
           intake={generatedIntake}
           athleteEvidence={generatedEvidence}
@@ -894,6 +969,8 @@ function LegacyPlanBeta({
           }}
           onSelectionDetailsChange={() => {
             draftRevision.current += 1
+            setInitialConfirmed(null)
+            refreshInitialRevision(draftRevision.current)
             setRetrySelection(null)
           }}
           onConfirmRecord={() => {

@@ -8,9 +8,12 @@ import type { RetainedAdjustedPlanEvidence } from "../../domain/adjusted-plan-se
 import { localAccountScopeSnapshot } from "../../domain/account/local-account-scope"
 import { loadAthleteRecords } from "../../domain/athlete-records"
 import { todayISO } from "../../domain/journal-store"
-import { AdjustedPlanEditFlow } from "./AdjustedPlanEditFlow"
+import { AdjustedPlanApplyReview } from "./AdjustedPlanApplyReview"
+import { rebindAdjustedCycleRequest } from "../../domain/adjusted-cycle-rebind"
+import { catalogCycleDraftSourceStillCurrent } from "../../domain/catalog-cycle-draft"
+import { PlanCycleEvidence } from "./PlanCycleEvidence"
 import { matchingAdjustmentEntry } from "./adjustment-entry"
-import { candidateLabel, candidateDurationSummary, candidateSharedSessionSummary } from "./labels"
+import { candidateLabel, candidateSharedSessionSummary } from "./labels"
 import { planErrorMessage } from "./plan-feedback"
 import { AdjustedJournalOriginalPlan } from "../journal/AdjustedJournalOriginalPlan"
 import { isoShift } from "../../domain/dates"
@@ -35,7 +38,7 @@ export function AdjustedPlanNextFlow({ loaded, adjustmentResolver, readEvidence 
   const [recordId, setRecordId] = React.useState("")
   const [records] = React.useState(() => loadAthleteRecords())
   const [draft, setDraft] = React.useState<NextDraft | null>(null)
-  const [entry, setEntry] = React.useState<ReturnType<typeof matchingAdjustmentEntry>>(null)
+  const [entry, setEntry] = React.useState<Pick<React.ComponentProps<typeof AdjustedPlanApplyReview>, "request" | "readReview" | "locks"> | null>(null)
   const [error, setError] = React.useState<string | null>(null)
   const heading = React.useRef<HTMLHeadingElement>(null)
   useActiveContentScroll(entry ? null : draft ? "compare" : "prepare", heading, heading)
@@ -48,8 +51,10 @@ export function AdjustedPlanNextFlow({ loaded, adjustmentResolver, readEvidence 
     const read = readPlanBetaStateFromStorage(readEvidence())
     return read.kind === "adjusted_loaded" && read.state.contentFingerprint === predecessor
   }
-  if (entry !== null) return <AdjustedPlanEditFlow {...entry} expectedPredecessorFingerprint={predecessor}
-    isCurrentDraft={currentView} onCancel={() => setEntry(null)} onSaved={onSaved} />
+  const evidenceCurrent = () => currentView() && draft !== null
+    && catalogCycleDraftSourceStillCurrent(loaded.state, draft.cycleDraft, { version: 4, retained: readEvidence() })
+  if (entry !== null) return <AdjustedPlanApplyReview {...entry} expectedPredecessorFingerprint={predecessor}
+    cycleDraft={draft?.cycleDraft} isCurrentDraft={evidenceCurrent} onCancel={() => setEntry(null)} onSaved={onSaved} />
 
   const openEditor = (candidateId: string) => {
     if (!current()) { setError(planErrorMessage("STALE_BASE")); return }
@@ -57,7 +62,11 @@ export function AdjustedPlanNextFlow({ loaded, adjustmentResolver, readEvidence 
     const result = matchingAdjustmentEntry(adjustmentResolver, { ...draft.draft, currentCheck: check,
       candidateId, startDate: draft.continuity.nextStartDate })
     if (!result) { setError("이 후보의 조정 구성과 검토 근거를 확인하지 못했어요. 현재 계획은 그대로예요."); return }
-    setError(null); setEntry(result)
+    const prepared = draft.detailedContinuity[draft.draft.generated.candidates.findIndex(c => c.candidateId === candidateId)]
+    if (prepared?.kind !== "prepared" || !evidenceCurrent()) { setError(planErrorMessage("CYCLE_EVIDENCE_CHANGED")); return }
+    const rebound = rebindAdjustedCycleRequest(prepared, result.seed, result.readReview)
+    if (rebound.kind !== "rebound") { setError("이전 수정 구성의 현재 검토 근거를 확인하지 못했어요. 다른 훈련으로 대신 저장하지 않아요."); return }
+    setError(null); setEntry({ request: rebound.request, readReview: () => result.readReview(rebound.receipt), locks: result.locks })
   }
   return <section className="adjusted-next-flow" aria-labelledby="adjusted-next-title">
     <button type="button" className="plan-back" onClick={onBack}><ArrowLeft size={18} aria-hidden="true" />현재 일정으로</button>
@@ -90,18 +99,25 @@ export function AdjustedPlanNextFlow({ loaded, adjustmentResolver, readEvidence 
       <button type="submit" disabled={check === null}><ArrowRight size={18} aria-hidden="true" />다음 계획 비교하기</button>
     </form> : <>
       <p>{draft.continuity.nextStartDate} 시작 · 이전 주기에서 미기록 {draft.continuity.missingRequiredOutcomes}회</p>
+      <p>연결된 일지 {draft.cycleResponse.linkedResultCount}건 · 겹친 기록 {draft.cycleResponse.conflictCount}건 · 연결 미확인 {draft.cycleResponse.rejectedLinkCount}건</p>
+      <PlanCycleEvidence response={draft.cycleResponse} />
+      <p>현재 수정된 MAIN을 유지해요. 일지의 RPE를 처방 목표로 바꾸거나 훈련을 자동으로 늘리지 않아요.</p>
       <button type="button" onClick={() => { setDraft(null); setError(null) }}><ArrowLeft size={18} aria-hidden="true" />시작일·기록 다시 선택</button>
-      {draft.draft.generated.candidates.map(candidate => {
+      {draft.draft.generated.candidates.map((candidate, index) => {
         const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent)
+        const continuity = draft.detailedContinuity[index]
         return <section key={candidate.candidateId} aria-label={label.title} className="adjusted-next-candidate">
           <h2>{label.title}</h2><p>{label.detail}</p>
-          <p>{candidateSharedSessionSummary(candidate)}</p><p>{candidateDurationSummary(candidate)}</p>
+          <p>{candidateSharedSessionSummary(candidate)}</p>
           <details><summary>날짜별 훈련 확인</summary>{candidate.sessions.map(session => <section key={`${session.day}-${session.slot}`}>
             <h3>{isoShift(draft.continuity.nextStartDate, session.day - 1)} · {session.slot === "AM" ? "오전" : "오후"}</h3>
-            <AdjustedJournalOriginalPlan session={session} explanation={loaded.explanation} context="preview" />
+            <AdjustedJournalOriginalPlan session={continuity?.kind === "prepared"
+              ? loaded.state.selection.activePlan.sessions.find(s => continuity.rows.some(r => r.target.day === session.day
+                && r.target.slot === session.slot && r.source.day === s.day && r.source.slot === s.slot)) ?? session : session}
+              explanation={loaded.explanation} context="preview" />
           </section>)}</details>
           <button type="button" onClick={() => openEditor(candidate.candidateId)} disabled={!adjustmentResolver}>
-            <SlidersHorizontal size={18} aria-hidden="true" />{label.title} 조정하기</button>
+            <SlidersHorizontal size={18} aria-hidden="true" />{label.title} 구성 확인</button>
         </section>
       })}
       {!adjustmentResolver && <p role="status">다음 계획의 조정 기능은 검토된 구성 연결을 준비 중이에요. 비교해도 현재 계획은 바뀌지 않아요.</p>}

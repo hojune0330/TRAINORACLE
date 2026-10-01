@@ -628,6 +628,13 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
             fail(422, observationOf(current.document) || observationOf(input.document) ? 'INVALID_FILE_OBSERVATION' : 'INVALID_DOCUMENT_UPDATE');
           }
         }
+        const nextPlanId = input.document.kind === 'PLAN' ? input.document.data.currentPlanId : null;
+        const selectedPlan = input.document.kind === 'PLAN'
+          ? input.document.data.plans.find(plan => plan.planId === nextPlanId)?.snapshot.state : null;
+        // Legacy PLAN writes have no atomic all-journal CAS. Same-pointer progress
+        // and old receipts remain supported; new successors use the collection.
+        if (nextPlanId !== null && nextPlanId !== currentDocument?.data?.currentPlanId
+          && accountPlanStateNeedsJournalGuard(selectedPlan)) fail(422, 'JOURNAL_GUARD_REQUIRED');
         if (!sameObservation(currentDocument, input.document)
           || input.writePurpose === 'MIGRATION' && observationOf(input.document)) await checkFileGate();
         const encryptedPayload = await encryptAccountJournalDocument(canonical(input.document),
@@ -657,6 +664,12 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
       return respond(503, { error: 'SERVICE_UNAVAILABLE' });
     }
   };
+}
+
+/** Only inspect fully validated states; snapshots retain continuity in their canonical identity. */
+export function accountPlanStateNeedsJournalGuard(state) {
+  return state?.version === 3 && (state.periodization?.frameOrdinal > 1
+    || !state.activePlan.candidateId.includes(':no-continuity:template-'));
 }
 
 /** Official SDK adapter. The supplied client MUST use the verified user's JWT. */

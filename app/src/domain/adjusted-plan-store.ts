@@ -10,6 +10,8 @@ import { ADJUSTED_PLAN_ARCHIVE_KEY, prepareAdjustedOriginalArchive } from "./adj
 import type { AdjustedPlanSelectionRequest, RetainedAdjustedPlanEvidence, SelectedAdjustedPlanState } from "./adjusted-plan-selection"
 import { encodeStoredAdjustedPlanState, readStoredAdjustedPlanState } from "./adjusted-plan-storage-schema"
 import type { ReviewedAdjustedPlanPolicy } from "./adjusted-plan-review-policy"
+import { catalogCycleDraftSourceStillCurrent, type CatalogCycleDraftContext } from "./catalog-cycle-draft"
+import { adjustedCycleSelectionMaintainsDetail, prepareAdjustedCycleSuccessor } from "./adjusted-cycle-successor"
 
 type LiveReview = {
   readonly source: AdjustedPlanSelectionRequest["preparation"]["source"]
@@ -106,12 +108,15 @@ export async function saveSelectedAdjustedSuccessor(input: {
   readonly readReview: () => LiveReview
   readonly isCurrentDraft: () => boolean
   readonly locks?: PlanMutationLockManager | null
+  readonly cycleDraft?: CatalogCycleDraftContext
+  readonly futureEnvironmentConfirmed?: boolean
 }) {
   try {
     if (!input.isCurrentDraft() || !hasCanonicalJsonTree(input.request)) return reject("STALE_CANDIDATE_SELECTION")
     const openingHash = hash(input.request)
     const request = structuredClone(input.request)
     const expected = input.expectedPredecessorFingerprint
+    const cycleDraft = input.cycleDraft && structuredClone(input.cycleDraft)
     const account = localAccountScopeSnapshot()
     const activeKey = activePlanBetaStorageKey()
     const accountWrite = captureAccountPlanWrite(activeKey)
@@ -137,35 +142,47 @@ export async function saveSelectedAdjustedSuccessor(input: {
         const predecessor = readStoredAdjustedPlanState(beforeActive === null ? null : JSON.parse(beforeActive), live.retained, now)
         if (predecessor.kind !== "loaded") return reject("INVALID_STORED_PLAN")
         if (predecessor.state.contentFingerprint !== expected) return reject("STALE_BASE")
+        const evidence = { version: 4 as const, retained: live.retained }
+        const cycleCurrent = () => cycleDraft !== undefined && input.cycleDraft !== undefined
+          && hash(cycleDraft) === hash(input.cycleDraft)
+          && catalogCycleDraftSourceStillCurrent(predecessor.state, cycleDraft, evidence)
+        if (!cycleCurrent()) return reject("CYCLE_EVIDENCE_CHANGED")
+        if (input.futureEnvironmentConfirmed !== true) return reject("FUTURE_ENVIRONMENT_CONFIRMATION_REQUIRED")
+        const scope = prepareAdjustedCycleSuccessor({ previous: predecessor.state, evidence,
+          expectedPredecessorFingerprint: expected, candidate: request.preparation.candidate,
+          nextStartDate: request.preparation.startDate, currentCheck: request.currentCheck, entries: [], evaluatedAt: now })
+        if (scope.kind !== "prepared") return scope
         const selected = selectAdjustedPlanSuccessor({ ...request, preparation: { ...request.preparation,
           source: live.source, explanation: live.explanation } }, predecessor.state, expected, live.retained, live.policies, now)
         if (selected.kind !== "selected_adjusted") return selected
+        if (!adjustedCycleSelectionMaintainsDetail(predecessor.state, selected.state)) return reject("ADJUSTED_DETAIL_CHANGED")
+        const authorized = () => {
+          if (!current() || !cycleCurrent() || input.futureEnvironmentConfirmed !== true) return false
+          const fresh = input.readReview()
+          const checked = selectAdjustedPlanSuccessor({ ...request, preparation: { ...request.preparation,
+            source: fresh.source, explanation: fresh.explanation } }, predecessor.state, expected, fresh.retained, fresh.policies, new Date())
+          return hash(fresh.retained) === hash(live.retained) && checked.kind === "selected_adjusted"
+            && sameChoice(checked.state) === sameChoice(selected.state)
+            && adjustedCycleSelectionMaintainsDetail(predecessor.state, checked.state)
+        }
         const encoded = encodeStoredAdjustedPlanState(selected.state, [], now.toISOString(), live.retained, now)
         if (encoded.kind !== "encoded") return reject("ADJUSTED_PLAN_STORAGE_VALIDATION_FAILED")
         if (accountWrite) {
-          const review = () => {
-            if (!current()) return false
-            const fresh = input.readReview()
-            const checked = selectAdjustedPlanSuccessor({ ...request, preparation: { ...request.preparation,
-              source: fresh.source, explanation: fresh.explanation } }, predecessor.state, expected, fresh.retained, fresh.policies, new Date())
-            return hash(fresh.retained) === hash(live.retained) && checked.kind === "selected_adjusted"
-              && sameChoice(checked.state) === sameChoice(selected.state)
-          }
-          const code = await accountWrite.save(encoded.state, live.retained, review)
+          const code = await accountWrite.save(encoded.state, live.retained, authorized)
           return code ? reject(code) : { kind: "saved" as const, state: encoded.state, predecessorFingerprint: expected }
         }
         const archive = prepareAdjustedOriginalArchive(beforeArchive, predecessor.state, live.retained, now)
         if (archive.kind !== "prepared") return reject("INVALID_STORED_ARCHIVE")
-        if (!current() || storage.getItem(activeKey) !== beforeActive || storage.getItem(archiveKey) !== beforeArchive) return reject("STALE_BASE")
+        if (!authorized() || storage.getItem(activeKey) !== beforeActive || storage.getItem(archiveKey) !== beforeArchive) return reject("STALE_BASE")
         for (const write of [{ key: archiveKey, before: beforeArchive, after: archive.raw },
           { key: activeKey, before: beforeActive, after: encoded.raw }]) {
-          if (!current() || storage.getItem(write.key) !== write.before
+          if (!authorized() || storage.getItem(write.key) !== write.before
             || writes.some(saved => storage.getItem(saved.key) !== saved.after)) throw Error("Changed successor transaction")
           writes.push(write)
           storage.setItem(write.key, write.after)
-          if (storage.getItem(write.key) !== write.after || !current()) throw Error("Unconfirmed successor write")
+          if (storage.getItem(write.key) !== write.after || !authorized()) throw Error("Unconfirmed successor write")
         }
-        if (writes.some(write => storage.getItem(write.key) !== write.after) || !current()) throw Error("Changed successor transaction")
+        if (writes.some(write => storage.getItem(write.key) !== write.after) || !authorized()) throw Error("Changed successor transaction")
         return { kind: "saved" as const, state: encoded.state, predecessorFingerprint: expected }
       } catch {
         try {

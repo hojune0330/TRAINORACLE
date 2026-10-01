@@ -1,6 +1,9 @@
 import { accountPlanService, accountPlansEnabled } from "./account-plan-service"
 import { accountPlanEntry, materializeAccountPlan, validateAccountPlanPacket, type AccountPlanPacket } from "./account-plan-document-schema"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
+import { activeLocalAccount } from "./local-journal-ownership"
+import { currentConfirmedAccountJournalVersions } from "./account-journal-projection"
+import { accountJournalDocumentId } from "./account-journal-record-service"
 
 /** Full-history consumers must explicitly wait; a current-only projection is not an empty archive. */
 export async function ensureAccountPlanHistory(): Promise<boolean> {
@@ -15,6 +18,7 @@ export async function ensureAccountPlanHistory(): Promise<boolean> {
 export function captureAccountPlanWrite(activeKey: string) {
   if (!accountPlansEnabled()) return null
   const service = accountPlanService(), opening = service?.snapshot()
+  const ownerId = activeLocalAccount()
   const ready = !!opening?.fingerprint && ["READY", "EMPTY"].includes(opening.status)
   const read = () => {
     const selected = service?.snapshot().currentPlan
@@ -28,11 +32,20 @@ export function captureAccountPlanWrite(activeKey: string) {
       setItem: () => { throw Error("Account plan requires CAS") }, removeItem: () => { throw Error("Account plan requires CAS") } },
     async save(state: unknown, retained: readonly NonNullable<AccountPlanPacket["evidence"]>[], freshReview?: () => boolean,
       context?: Extract<AccountPlanPacket, { evidence: null }>["context"]): Promise<`ACCOUNT_PLAN_${string}` | null> {
-      if (!service || !ready || !opening?.fingerprint || read() !== raw) return "ACCOUNT_PLAN_STALE"
+      if (!service || !ready || !opening?.fingerprint || read() !== raw
+        || accountPlanService() !== service || activeLocalAccount() !== ownerId) return "ACCOUNT_PLAN_STALE"
+      // Capture complete, confirmed revisions before hashing IDs or queued/auth work.
+      const versions = freshReview ? currentConfirmedAccountJournalVersions() : undefined
+      if (freshReview && (!("loadHistory" in service) || !ownerId || versions === null)) return "ACCOUNT_PLAN_REVIEW_REQUIRED"
       const packets = [null, ...retained].map(evidence => ({ state, evidence, ...(context ? { context } : {}) })).filter(validateAccountPlanPacket)
       if (packets.length !== 1) return "ACCOUNT_PLAN_EVIDENCE_REQUIRED"
+      const journalGuard = versions ? (await Promise.all(versions.map(async row => ({
+        documentId: await accountJournalDocumentId(ownerId!, row.entryId), revision: row.revision,
+      })))).sort((a, b) => a.documentId.localeCompare(b.documentId)) : undefined
+      if (accountPlanService() !== service || activeLocalAccount() !== ownerId || read() !== raw) return "ACCOUNT_PLAN_STALE"
+      if (freshReview && JSON.stringify(currentConfirmedAccountJournalVersions()) !== JSON.stringify(versions)) return "ACCOUNT_PLAN_REVIEW_REQUIRED"
       const result = await service.mutate(freshReview
-        ? { kind: "SELECT", packet: packets[0]!, confirmsSelection: true, freshReview }
+        ? { kind: "SELECT", packet: packets[0]!, confirmsSelection: true, freshReview, journalGuard }
         : { kind: "PROGRESS", packet: packets[0]! }, opening.fingerprint)
       return result === "ACCOUNT" ? null : `ACCOUNT_PLAN_${result}`
     },

@@ -1,5 +1,5 @@
 import { encryptAccountJournalDocument, decryptAccountJournalDocument } from './account-journal-crypto.mjs';
-import { createAccountJournalRepository, validateAccountJournalDocument } from './account-journal-handler.mjs';
+import { createAccountJournalRepository, validateAccountJournalDocument, accountPlanStateNeedsJournalGuard } from './account-journal-handler.mjs';
 import { validateAccountPlanCollectionIndex, validateAccountPlanCollectionPart,
   joinAccountPlanCollection, validateAccountPlanCollectionUpdate,
   accountPlanCollectionPartHash, accountPlanFingerprint, projectCatalogReplacementJournal, projectExecutionReplanJournal,
@@ -14,6 +14,9 @@ const keys = (v, names) => object(v) && Object.keys(v).length === names.length &
 const uuid = v => typeof v === 'string' && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/u.test(v);
 const hash = v => typeof v === 'string' && /^sha256:[a-f0-9]{64}$/u.test(v);
 const revision = v => Number.isSafeInteger(v) && v >= 0 && v <= Number.MAX_SAFE_INTEGER - 2;
+const validJournalGuard = v => Array.isArray(v) && v.length <= 5000
+  && v.every(row => keys(row, ['documentId', 'revision']) && uuid(row.documentId) && revision(row.revision) && row.revision > 0)
+  && new Set(v.map(row => row.documentId)).size === v.length;
 const partKind = v => ['PLAN_SNAPSHOT', 'PLAN_PROGRESS'].includes(v);
 const fits = v => encoder.encode(JSON.stringify(v)).byteLength <= MAX_PART_BYTES;
 class GatewayError extends Error {
@@ -61,7 +64,9 @@ async function bodyJson(request) {
 }
 
 function validCommit(r) {
-  return keys(r, ['ownerId', 'operationId', 'expectedRevision', 'previousIndexFingerprint', 'previousCurrentPlanId', 'index', 'legacy'])
+  return keys(r, ['ownerId', 'operationId', 'expectedRevision', 'previousIndexFingerprint', 'previousCurrentPlanId', 'index', 'legacy',
+    ...(object(r) && Object.hasOwn(r, 'journalGuard') ? ['journalGuard'] : [])])
+    && (!Object.hasOwn(r, 'journalGuard') || validJournalGuard(r.journalGuard))
     && uuid(r.ownerId) && uuid(r.operationId) && revision(r.expectedRevision)
     && (r.previousIndexFingerprint === null || hash(r.previousIndexFingerprint))
     && (r.previousCurrentPlanId === null || hash(r.previousCurrentPlanId))
@@ -226,6 +231,21 @@ export function createAccountPlanCollectionHandler({ authenticate, getMaterial, 
       const selected = next.snapshots.find(p => p.planId === next.index.currentPlanId)?.snapshot.state;
       const replan = selected?.version === 3 && next.index.currentPlanId !== previous?.index.currentPlanId
         ? (selected.executionReplan ?? selected.catalogReplacement) : null;
+      const selectionChanged = next.index.currentPlanId !== null && next.index.currentPlanId !== previous?.index.currentPlanId;
+      // The stored snapshot omits candidate.continuityContext; its validated
+      // candidate identity retains the exact continuity segment, including legacy frames.
+      const successor = selectionChanged && !r.legacy && accountPlanStateNeedsJournalGuard(selected);
+      // Existing replan receipts already carry their exact atomic guard. A new
+      // ordinary successor cannot omit the transport guard to use the plain CAS.
+      if (successor && r.journalGuard === undefined && !replan) fail(422, 'JOURNAL_GUARD_REQUIRED');
+      if (r.journalGuard !== undefined && (!selectionChanged || r.legacy)) fail(422, 'INVALID_JOURNAL_GUARD');
+      if (r.journalGuard !== undefined && replan) {
+        const ordered = rows => [...rows].sort((a, b) => a.documentId.localeCompare(b.documentId));
+        if (!validJournalGuard(replan.journalGuard)
+          || accountPlanFingerprint(ordered(r.journalGuard)) !== accountPlanFingerprint(ordered(replan.journalGuard))) fail(409, 'JOURNALS_CHANGED');
+      }
+      const journalGuard = r.journalGuard ?? replan?.journalGuard;
+      if (!replan && journalGuard !== undefined && typeof repo.commitReplan !== 'function') fail(503, 'UNAVAILABLE');
       if (replan && (!previous || !Array.isArray(replan.journalGuard) || typeof repo.commitReplan !== 'function')) fail(422, 'REPLAN_SOURCE_REQUIRED');
       if (replan && (selected.catalogReplacement || selected.executionReplan)) {
         if (selected.catalogReplacement && !catalogReplacementClockIsCurrent(replan, now())) fail(409, 'PLAN_DATE_CHANGED');
@@ -269,8 +289,8 @@ export function createAccountPlanCollectionHandler({ authenticate, getMaterial, 
       try {
         const commit = { ...commitInput, ...binding, payload: await encrypt(r.index, 'PLAN_COLLECTION', 'index') };
         if (replan?.policy === 'manual-catalog-replacement-v1' && !catalogReplacementClockIsCurrent(replan, now())) fail(409, 'PLAN_DATE_CHANGED');
-        result = replan ? await repo.commitReplan({ ...commit, journalGuard: replan.journalGuard,
-          ...(replan.policy === 'manual-catalog-replacement-v1'
+        result = journalGuard !== undefined ? await repo.commitReplan({ ...commit, journalGuard,
+          ...(replan?.policy === 'manual-catalog-replacement-v1'
             ? { calendarGuard: { today: replan.today, timeZone: replan.timeZone } } : {}) }) : await repo.commit(commit);
       } catch (error) {
         if (error?.code !== '22023') throw error;

@@ -41,7 +41,8 @@ export async function accountPlanDocumentId(ownerId: string) {
 
 export type AccountPlanMutation =
   | { kind: "SAVE_HISTORY"; packet: AccountPlanPacket }
-  | { kind: "SELECT"; packet: AccountPlanPacket; confirmsSelection: true; freshReview: () => boolean }
+  | { kind: "SELECT"; packet: AccountPlanPacket; confirmsSelection: true; freshReview: () => boolean;
+    journalGuard?: import("./account-plan-collection-transfer").AccountPlanJournalGuard }
   | { kind: "PROGRESS"; packet: AccountPlanPacket }
   | { kind: "ARCHIVE"; planId: string }
 export type AccountPlanResult = "ACCOUNT" | "PENDING" | "CONFLICT" | "STALE" | "FAILED" | "INVALID" | "REVIEW_REQUIRED" | "HISTORY_CONFLICT" | "CAPACITY" | "REJECTED"
@@ -133,6 +134,8 @@ export function createAccountPlanService(input: {
       currentPlan: selected ? { planId: selected.planId, ...readAccountPlanEntry(selected, trusted) } : null }
   }
   function mutate(command: AccountPlanMutation, expectedFingerprint: string): Promise<AccountPlanResult> {
+    // The retired monolithic writer cannot provide the collection's atomic journal guard.
+    if (command?.kind === "SELECT" && command.journalGuard !== undefined) return Promise.resolve("REVIEW_REQUIRED")
     if (!["SAVE_HISTORY", "SELECT", "PROGRESS", "ARCHIVE"].includes(command?.kind)
       || command.kind !== "ARCHIVE" && !validateAccountPlanPacket(command.packet)) return Promise.resolve("INVALID")
     // Capture data now; a caller's mutation during IDB/auth awaits cannot rewrite an operation.

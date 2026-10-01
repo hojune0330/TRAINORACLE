@@ -16,6 +16,7 @@ import { generateAdjustedNextFrameFromDraft } from "./plan-beta-flow"
 import { adjustedPlanSelectionFixture } from "./adjusted-plan-selection.test-fixtures"
 import { loadAthleteRecords } from "./athlete-records"
 import { isoShift } from "./dates"
+import { readCatalogCycleDraftSource } from "./catalog-cycle-draft"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
@@ -32,6 +33,7 @@ it("atomically retains the old original and stores a readable successor with for
     savedAt: now.toISOString(), syncState: "local", activitySlot: oldSession.slot, plannedSessionLink: link.link,
     system: "", title: "", memo: "", distanceKm: "", durationMin: "", avgPace: "", rpe: 0 }
   expect(saveEntry(entry).ok).toBe(true)
+  input.cycleDraft = readCatalogCycleDraftSource(old.state, { version: 4, retained })!.context
   const result = await saveSelectedAdjustedSuccessor(input)
   expect(result.kind).toBe("saved")
   if (result.kind !== "saved") throw Error(result.code)
@@ -144,6 +146,7 @@ it("continues twice without resetting lineage and retains both earlier originals
   const next = adjustedPlanSelectionFixture({}, generated.draft, nextTime)
   const allEvidence = [...retained, ...next.retained]
   const third = await saveSelectedAdjustedSuccessor({ ...input, request: next.request,
+    cycleDraft: generated.cycleDraft,
     expectedPredecessorFingerprint: completed.state.contentFingerprint,
     readReview: () => ({ ...next.review, retained: allEvidence }) })
   expect(third.kind).toBe("saved")

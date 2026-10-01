@@ -1,0 +1,23 @@
+{
+  "kind": "TRAINORACLE_DATABASE_MIGRATION_OBSERVATION",
+  "date": "2026-10-01",
+  "projectRef": "texspxlpjungyarkvtkc",
+  "migration": "0041_catalog_replacement_calendar_guard.sql",
+  "currentRepositoryPath": "supabase/migrations/0043_catalog_replacement_calendar_guard.sql",
+  "renumbering": "Same SQL body; parallel main already uses 0041 and 0042 for lounge. Applied once before renumbering, not re-executed.",
+  "method": "AUTHENTICATED_OFFICIAL_DASHBOARD_SQL_EDITOR",
+  "before": { "prerequisite0040": true, "calendarGuard0041": false },
+  "apply": { "result": "Success. No rows returned", "transactionCommitted": true },
+  "after": {
+    "sourceMatchesIgnoringCommentsAndWhitespace": true,
+    "normalizedFunctionBodyMd5": "4231d88b49880c6d86d5b7c4e388d8b6",
+    "securityDefiner": true,
+    "authenticatedExecute": true,
+    "anonymousExecute": false,
+    "serviceRoleExecute": false
+  },
+  "athleteRecordsRead": false,
+  "athleteRecordsWritten": false,
+  "secretValuesRead": false,
+  "authenticatedAccountRoundtrip": "NOT_EXECUTED"
+}

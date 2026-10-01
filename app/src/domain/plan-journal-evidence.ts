@@ -1,9 +1,12 @@
 import type { PlanSession } from "@impl/plan-generator/types"
+import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
 import { FIELD_PROVENANCE } from "./field-provenance"
 import type { JournalEntry, PostSessionEntry } from "./journal-schema"
 import type { PlanBetaState } from "./plan-beta-schema"
 import { createPlannedSessionLogDraft, resolveCurrentPlannedSession } from "./planned-session-link"
 import { resolveExecutionReplanSource } from "./execution-replan-source"
+import { comparePlannedSegments, plannedSegmentEvidenceSchema } from "./planned-segment-evidence"
+import { comparePlannedRepetitions, plannedRepetitionEvidenceSchema, type RepetitionComparison } from "./planned-repetition-evidence"
 
 export type PlanJournalHistory =
   | { readonly kind: "loaded"; readonly plans: readonly unknown[] }
@@ -25,6 +28,8 @@ export type PlanJournalEvidenceRow = {
   readonly actualRpe: number | null
   readonly plannedRpe: { readonly minimum: number; readonly maximum: number } | null
   readonly comparison: PlanJournalComparison
+  readonly executionComparison?: RepetitionComparison
+  readonly executionFingerprint?: string
 }
 
 export type PlanJournalEvidence = {
@@ -53,16 +58,47 @@ function resultSignature(entry: PostSessionEntry): string {
     outcome: entry.activityOutcome ?? null,
     relation: entry.planExecutionRelation ?? null,
     slot: entry.activitySlot ?? null,
+    segments: structuredSegments(entry),
+    repetitions: structuredRepetitions(entry),
   })
 }
 
-function comparisonFor(entry: PostSessionEntry, session: PlanSession): PlanJournalComparison {
+function structuredSegments(entry: PostSessionEntry) {
+  if (entry.exerciseLog?.plannedSegments === undefined) return null
+  const parsed = plannedSegmentEvidenceSchema.safeParse(entry.exerciseLog.plannedSegments)
+  return parsed.success ? { ...parsed.data, results: [...parsed.data.results].sort((a, b) => a.key.localeCompare(b.key)) } : "INVALID"
+}
+
+function structuredRepetitions(entry: PostSessionEntry) {
+  if (entry.exerciseLog?.plannedRepetitions === undefined) return null
+  const parsed = plannedRepetitionEvidenceSchema.safeParse(entry.exerciseLog.plannedRepetitions)
+  return parsed.success ? { ...parsed.data, results: [...parsed.data.results].sort((a, b) => a.set - b.set || a.repetition - b.repetition) } : "INVALID"
+}
+
+function executionFor(entry: PostSessionEntry, session: PlanSession): RepetitionComparison | undefined {
+  if (!entry.plannedSessionLink || entry.activityOutcome === "RESTED" || entry.activityOutcome === "SKIPPED"
+      || entry.planExecutionRelation === "NOT_APPLICABLE") return undefined
+  if (entry.exerciseLog?.plannedSegments !== undefined && entry.exerciseLog.plannedRepetitions !== undefined) {
+    return { kind: "unavailable", facts: [], unknowns: ["구간 기록과 반복 기록이 함께 있어 어느 기록이 맞는지 확인이 필요해요."],
+      interpretation: "", completeDistanceCount: 0, timedCount: 0, changed: false }
+  }
+  if (entry.exerciseLog?.plannedSegments !== undefined) {
+    return comparePlannedSegments(entry.exerciseLog.plannedSegments, entry.plannedSessionLink, session)
+  }
+  if (entry.exerciseLog?.plannedRepetitions !== undefined) {
+    return comparePlannedRepetitions(entry.exerciseLog.plannedRepetitions, entry.plannedSessionLink, session)
+  }
+  return undefined
+}
+
+function comparisonFor(entry: PostSessionEntry, session: PlanSession, execution?: RepetitionComparison): PlanJournalComparison {
   if (session.role === "REST" || entry.activityOutcome === "RESTED" || entry.activityOutcome === "SKIPPED") {
     return "NOT_PERFORMED"
   }
   if (entry.activityOutcome === "PARTIAL" || entry.activityOutcome === "LIGHT_ACTIVITY"
     || entry.planExecutionRelation === "MODIFIED" || entry.planExecutionRelation === "NOT_APPLICABLE"
-    || (entry.activitySlot === "AM" || entry.activitySlot === "PM") && entry.activitySlot !== session.slot) {
+    || (entry.activitySlot === "AM" || entry.activitySlot === "PM") && entry.activitySlot !== session.slot
+    || execution?.changed || execution?.kind === "unavailable") {
     return "CHANGED_SESSION"
   }
   const rpe = explicitRpe(entry)
@@ -117,7 +153,8 @@ export function collectPlanJournalEvidence(
       || group.some(item => (signaturesById.get(item.entry.id)?.size ?? 0) > 1)
     if (conflict) conflictCount += 1
     else duplicateCount += group.length - 1
-    const comparison = conflict ? "CONFLICTING_RESULT" : comparisonFor(entry, session)
+    const execution = conflict ? undefined : executionFor(entry, session)
+    const comparison = conflict ? "CONFLICTING_RESULT" : comparisonFor(entry, session, execution)
     rows.push({
       plannedSessionId: entry.plannedSessionLink!.plannedSessionId,
       currentPlannedSessionId: createPlannedSessionLogDraft(state, session, state.generatedAt)!.link.plannedSessionId,
@@ -130,6 +167,10 @@ export function collectPlanJournalEvidence(
       plannedRpe: session.prescription.kind === "RPE_TIME_RANGE"
         ? { ...session.prescription.rpe } : null,
       comparison,
+      ...(execution ? { executionComparison: execution,
+        executionFingerprint: canonicalJsonFingerprint("plan-actual-execution-v1", {
+          segments: structuredSegments(entry), repetitions: structuredRepetitions(entry),
+        }) } : {}),
     })
   }
   rows.sort((a, b) => a.day - b.day || a.slot.localeCompare(b.slot))

@@ -3,6 +3,46 @@ import { completeQuickPlan, refinePlan } from "./plan-flow"
 import { createPlannedSessionLogDraft } from "../src/domain/planned-session-link"
 import type { PlanBetaStateV3 } from "../src/domain/plan-beta-schema"
 
+test("first ATP MAIN confirms real environment and saves detailed work on mobile", async ({ page, context }, info) => {
+  const errors: string[] = [], blocked: string[] = []
+  page.on("pageerror", error => errors.push(error.message))
+  await context.route("**/*", route => {
+    const request = route.request(), url = new URL(request.url())
+    if (url.origin !== "http://127.0.0.1:4430" || !["GET", "HEAD"].includes(request.method())) {
+      blocked.push(`${request.method()} ${url.origin}`); return route.abort()
+    }
+    return route.continue()
+  })
+  await page.setViewportSize({ width: 375, height: 812 })
+  await page.emulateMedia({ reducedMotion: "reduce" })
+  await page.clock.setFixedTime(new Date("2026-10-01T03:00:00Z"))
+  await page.goto("/?app=1&uitest=1")
+  const planTab = () => page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true })
+  await planTab().click()
+  await completeQuickPlan(page, { event: "1500", experience: /구조화된 훈련과 경기 경험/u, days: /^5일/u })
+  await refinePlan(page, "훈련 종류", /ATP/u)
+  const review = page.getByRole("region", { name: "첫 주요 훈련 조건" })
+  await expect(review).toBeVisible()
+  expect(await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBeNull()
+  const checks = review.getByRole("checkbox")
+  expect(await checks.count()).toBeGreaterThan(0)
+  for (let index = 0; index < await checks.count(); index++) await checks.nth(index).check()
+  await review.getByRole("button", { name: "이 훈련으로 적용" }).click()
+  await expect(review).toHaveCount(0)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true)
+  await page.screenshot({ path: info.outputPath("initial-atp-confirmed.png") })
+  await page.getByRole("button", { name: "이 일정으로 시작", exact: true }).click()
+  await expect(page.getByRole("heading", { name: "오늘 훈련", exact: true })).toBeVisible()
+  const stored = JSON.parse((await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1")))!) as PlanBetaStateV3
+  const main = stored.activePlan.sessions.filter(session => session.role === "QUALITY")
+  expect(main.length).toBeGreaterThan(0)
+  expect(main.every(session => session.prescription.kind === "RPE_TIME_RANGE"
+    && session.prescription.catalogWorkout?.inputs.confirmedRequirements.length)).toBe(true)
+  await page.reload(); await planTab().click()
+  expect(JSON.parse((await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1")))!)).toEqual(stored)
+  expect(errors).toEqual([]); expect(blocked).toEqual([])
+})
+
 for (const [width, reduced] of [[320, true], [375, false], [1280, true]] as const) {
   test(`first exact MAIN and journal-linked successor ${width}`, async ({ page, context }, info) => {
     const errors: string[] = [], blocked: string[] = []

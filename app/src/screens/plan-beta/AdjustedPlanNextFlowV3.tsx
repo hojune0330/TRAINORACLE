@@ -11,9 +11,12 @@ import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
 import { matchingAdjustmentEntryV3, type AdjustmentEntryV3, type PlanAdjustmentResolverV3 } from "./adjustment-entry-v3"
 import { AdjustedPlanApplyReviewV3 } from "./AdjustedPlanApplyReviewV3"
 import { AdjustedPrescriptionV3 } from "./AdjustedPrescriptionV3"
-import { candidateLabel, candidateDurationSummary, candidateSharedSessionSummary } from "./labels"
+import { candidateLabel, candidateSharedSessionSummary } from "./labels"
 import { planErrorMessage } from "./plan-feedback"
 import "./AdjustedPlanNextFlow.css"
+import { rebindAdjustedCycleRequestV3 } from "../../domain/adjusted-cycle-rebind"
+import { catalogCycleDraftSourceStillCurrent } from "../../domain/catalog-cycle-draft"
+import { PlanCycleEvidence } from "./PlanCycleEvidence"
 
 type NextDraft = Extract<ReturnType<typeof generateAdjustedNextFrameV3FromDraft>, { kind: "adjusted_next_frame_v3_draft" }>
 export function AdjustedPlanNextFlowV3({ loaded, resolver, readEvidence, onBack, onSaved }: {
@@ -39,15 +42,22 @@ export function AdjustedPlanNextFlowV3({ loaded, resolver, readEvidence, onBack,
     const read = readPlanBetaStateFromStorage([], readEvidence())
     return read.kind === "adjusted_v3_loaded" && read.state.contentFingerprint === predecessor
   }
+  const evidenceCurrent = () => currentView() && draft !== null
+    && catalogCycleDraftSourceStillCurrent(loaded.state, draft.cycleDraft, { version: 5, retained: readEvidence() })
   if (entry !== null) return <AdjustedPlanApplyReviewV3 {...entry} expectedPredecessorFingerprint={predecessor}
-    isCurrentDraft={currentView} onCancel={() => setEntry(null)} onSaved={onSaved} />
+    cycleDraft={draft?.cycleDraft} isCurrentDraft={evidenceCurrent} onCancel={() => setEntry(null)} onSaved={onSaved} />
   const open = (candidateId: string) => {
     if (!current()) { setError(planErrorMessage("STALE_BASE")); return }
     if (!draft || check === null) return
     const matched = matchingAdjustmentEntryV3(resolver, { ...draft.draft, currentCheck: check,
       candidateId, startDate: draft.continuity.nextStartDate })
     if (!matched) { setError("이 후보에 적용할 훈련 구성과 근거를 확인하지 못했어요. 현재 일정은 그대로예요."); return }
-    setError(null); setEntry(matched)
+    const prepared = draft.detailedContinuity[draft.draft.generated.candidates.findIndex(c => c.candidateId === candidateId)]
+    if (prepared?.kind !== "prepared" || !evidenceCurrent()) { setError(planErrorMessage("CYCLE_EVIDENCE_CHANGED")); return }
+    const readReview = matched.readAdjustmentReview ?? (() => matched.readReview())
+    const rebound = rebindAdjustedCycleRequestV3(prepared, matched.seed, readReview)
+    if (rebound.kind !== "rebound") { setError("이전 수정 구성의 현재 검토 근거를 확인하지 못했어요. 다른 훈련으로 대신 저장하지 않아요."); return }
+    setError(null); setEntry({ ...matched, seed: rebound.request, readReview: () => readReview(rebound.receipt) })
   }
   return <section className="adjusted-next-flow" aria-labelledby={`${id}-title`}>
     <button type="button" onClick={onBack}><ArrowLeft size={18} aria-hidden="true" />현재 일정으로</button>
@@ -80,15 +90,22 @@ export function AdjustedPlanNextFlowV3({ loaded, resolver, readEvidence, onBack,
       <button type="submit" disabled={check === null}><ArrowRight size={18} aria-hidden="true" />다음 계획 비교하기</button>
     </form> : <>
       <p>{draft.continuity.nextStartDate} 시작 · 이전 주기 미기록 {draft.continuity.missingRequiredOutcomes}회</p>
+      <p>연결된 일지 {draft.cycleResponse.linkedResultCount}건 · 겹친 기록 {draft.cycleResponse.conflictCount}건 · 연결 미확인 {draft.cycleResponse.rejectedLinkCount}건</p>
+      <PlanCycleEvidence response={draft.cycleResponse} />
+      <p>현재 수정된 MAIN을 유지해요. 일지의 RPE를 처방 목표로 바꾸지 않아요.</p>
       <p>미기록은 완료로 계산하지 않아요. 이전 기록만으로 강도·양·횟수를 자동으로 늘리지 않아요.</p>
       <button type="button" onClick={() => { setDraft(null); setError(null) }}><ArrowLeft size={18} aria-hidden="true" />시작일·기록 다시 선택</button>
-      {draft.draft.generated.candidates.map(candidate => {
+      {draft.draft.generated.candidates.map((candidate, index) => {
         const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent)
+        const continuity = draft.detailedContinuity[index]
         return <section key={candidate.candidateId} aria-label={label.title} className="adjusted-next-candidate">
-          <h2>{label.title}</h2><p>{label.detail}</p><p>{candidateSharedSessionSummary(candidate)}</p><p>{candidateDurationSummary(candidate)}</p>
+          <h2>{label.title}</h2><p>{label.detail}</p><p>{candidateSharedSessionSummary(candidate)}</p>
           <details><summary>날짜별 훈련 확인</summary>{candidate.sessions.map(session => <section key={`${session.day}-${session.slot}`}>
             <h3>{isoShift(draft.continuity.nextStartDate, session.day - 1)} · {session.slot === "AM" ? "오전" : "오후"}</h3>
-            <AdjustedPrescriptionV3 session={session} explanation={loaded.explanation} />
+            <AdjustedPrescriptionV3 session={continuity?.kind === "prepared"
+              ? loaded.state.selection.activePlan.sessions.find(s => continuity.rows.some(r => r.target.day === session.day
+                && r.target.slot === session.slot && r.source.day === s.day && r.source.slot === s.slot)) ?? session : session}
+              explanation={loaded.explanation} />
           </section>)}</details>
           <button type="button" disabled={!resolver} onClick={() => open(candidate.candidateId)}>
             <ListChecks size={18} aria-hidden="true" />{label.title} 구성 확인</button>

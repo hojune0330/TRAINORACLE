@@ -1,5 +1,8 @@
 # 첫 상세 MAIN 및 수행 결과 기반 다음 주기 구현
 
+후속: 아래 내용은 첫 구현 당시의 기록이다. 잔여 구현과 배포는
+[상세 MAIN과 다음 주기 완료 보고](DETAILED_MAIN_AND_CYCLE_COMPLETION_2026-10-01.md)를 확인한다.
+
 - 날짜: 2026-10-01
 - 상태: LOCAL_IMPLEMENTED_AND_TESTED / NOT_DEPLOYED
 - 범위: 첫 생성의 상세 MAIN, 일반 저장 계획(version 3)의 다음 주기 상세 구성

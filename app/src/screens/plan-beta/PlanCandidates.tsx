@@ -45,6 +45,14 @@ import { catalogScheduleConditions } from "../../domain/catalog-schedule-conditi
 import { CatalogScheduleReview } from "./CatalogScheduleReview"
 import { CatalogCycleSummary } from "./CatalogCycleSummary"
 import type { CatalogCycleSuccessorSummary } from "../../domain/catalog-cycle-successor"
+import { InitialMainConditions } from "./InitialMainConditions"
+import type { InitialMainConditionsProps } from "./InitialMainConditions"
+
+export type InitialMainCandidateReview = Omit<InitialMainConditionsProps, "disabled" | "onPendingChange"> & {
+  readonly applying: boolean
+  readonly confirmed?: { readonly pairId: string; readonly startDate: string; readonly accountScope: string | null;
+    readonly revision: number; readonly keys: readonly string[] } | null
+}
 
 export function PlanCandidates({
   generated,
@@ -81,6 +89,7 @@ export function PlanCandidates({
   onCatalogChange,
   cycleSummary = null,
   onRebuildCycle,
+  initialMain,
 }: {
   readonly generated: PlanGenerationSuccess
   readonly intake: PlanBetaIntake
@@ -117,6 +126,7 @@ export function PlanCandidates({
   readonly onCatalogChange?: (next: PlanGenerationSuccess) => void
   readonly cycleSummary?: CatalogCycleSuccessorSummary | null
   readonly onRebuildCycle?: () => void
+  readonly initialMain?: InitialMainCandidateReview
 }) {
   const [showOptions, setShowOptions] = React.useState(false)
   const resultRef = React.useRef<HTMLElement>(null)
@@ -142,6 +152,7 @@ export function PlanCandidates({
   const [targetDraftPending, setTargetDraftPending] = React.useState(false)
   const [methodDraftPending, setMethodDraftPending] = React.useState(false)
   const [catalogDraftPending, setCatalogDraftPending] = React.useState(false)
+  const [initialMainPending, setInitialMainPending] = React.useState(false)
   const [conditionRequest, setConditionRequest] = React.useState<CatalogConditionRequest | null>(null)
   const [reviewedConditionContext, setReviewedConditionContext] = React.useState<string | null>(null)
   React.useEffect(() => {
@@ -159,9 +170,23 @@ export function PlanCandidates({
   const accountScope = localAccountScopeSnapshot()
   const scheduleReviewScope = JSON.stringify([intake, startDate, accountScope])
   const [scheduleReview, setScheduleReview] = React.useState<{ scope: string; keys: readonly string[] }>({ scope: scheduleReviewScope, keys: [] })
-  const reviewedConditionKeys = scheduleReview.scope === scheduleReviewScope ? scheduleReview.keys : []
+  const initialMainActive = initialMain !== undefined && cycleSummary === null && initialMain.input.context.mode === "newplan"
+    && initialMain.input.generated.pairId === generated.pairId
+    && initialMain.input.context.startDate === startDate && initialMain.input.context.accountScope === accountScope
+  const initialApplying = initialMainActive && initialMain.applying
+  const initialConfirmed = initialMainActive && initialMain.confirmed?.pairId === generated.pairId
+    && initialMain.confirmed.startDate === startDate && initialMain.confirmed.accountScope === accountScope
+    && initialMain.confirmed.revision === initialMain.input.context.revision ? initialMain.confirmed.keys : []
+  const reviewedConditionKeys = [...new Set([...(scheduleReview.scope === scheduleReviewScope ? scheduleReview.keys : []), ...initialConfirmed])]
   const scheduleConditions = catalogScheduleConditions(generated, startDate, accountScope)
   const currentConditionIdentity = JSON.stringify(scheduleConditions.map(condition => condition.key))
+  const initialConfirmedIdentity = JSON.stringify(initialConfirmed)
+  React.useEffect(() => {
+    const keys = JSON.parse(initialConfirmedIdentity) as string[]
+    if (!keys.length) return
+    setScheduleReview(previous => ({ scope: scheduleReviewScope,
+      keys: [...new Set([...(previous.scope === scheduleReviewScope ? previous.keys : []), ...keys])] }))
+  }, [scheduleReviewScope, initialConfirmedIdentity])
   React.useEffect(() => {
     const currentKeys = JSON.parse(currentConditionIdentity) as string[]
     setScheduleReview(previous => {
@@ -172,10 +197,11 @@ export function PlanCandidates({
   }, [scheduleReviewScope, currentConditionIdentity])
   const unreviewedConditions = scheduleConditions.filter(condition => !reviewedConditionKeys.includes(condition.key))
   // A rejected review may be corrected; an in-flight/uncertain write must not fork.
-  const canRevise = !saving && (saveCode === undefined || saveCode === null
+  const canRevise = !saving && !initialApplying && (saveCode === undefined || saveCode === null
     || !saveCode.startsWith("ACCOUNT_PLAN_")
     || ["ACCOUNT_PLAN_STALE", "ACCOUNT_PLAN_EVIDENCE_REQUIRED", "ACCOUNT_PLAN_REVIEW_REQUIRED"].includes(saveCode))
-  const canSelect = hasValidStartDate && !recordConfirmationPending && !detailedEvidencePending && !targetDraftPending && !methodDraftPending && !catalogDraftPending && !selectionUnavailable && unreviewedConditions.length === 0 && saveCode !== "CYCLE_EVIDENCE_CHANGED"
+  const canSelect = hasValidStartDate && !recordConfirmationPending && !detailedEvidencePending && !targetDraftPending && !methodDraftPending && !catalogDraftPending
+    && !initialMainPending && !initialApplying && !selectionUnavailable && unreviewedConditions.length === 0 && saveCode !== "CYCLE_EVIDENCE_CHANGED"
   const selectedRecord = athleteRecords.find((record) => record.id === selectedRecordId)
   const selectedEventLabel = selectedRecord === undefined
     ? "선택한 종목"
@@ -183,8 +209,8 @@ export function PlanCandidates({
   const recommendation = projectInstantRecommendation(defaultInstantCandidate(generated), startDate)
   const instantAdjustment = recommendation === null ? undefined : adjustmentActions[recommendation.id]
   const conditionContext = JSON.stringify([intake, startDate, accountScope])
-  const conditionReview = React.useMemo(() => onCatalogChange && instantAdjustment === undefined && reviewedConditionContext !== conditionContext && unreviewedConditions.length === 0
-    ? findCatalogConditionReview(generated, intake) : null, [generated, intake, onCatalogChange, instantAdjustment, reviewedConditionContext, conditionContext, unreviewedConditions.length])
+  const conditionReview = React.useMemo(() => !initialMainActive && onCatalogChange && instantAdjustment === undefined && reviewedConditionContext !== conditionContext && unreviewedConditions.length === 0
+    ? findCatalogConditionReview(generated, intake) : null, [initialMainActive, generated, intake, onCatalogChange, instantAdjustment, reviewedConditionContext, conditionContext, unreviewedConditions.length])
   const detailedOptions = resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference, { anchor: selectedRecord })
   const selectedDetailedOption = detailedOptions.find(option => sameDetailedTemplateReference(option.ref, intake.selectedDetailedTemplateRef))
   const needsReview = recordConfirmationPending || detailedEvidencePending || targetDraftPending || methodDraftPending || !hasValidStartDate
@@ -198,7 +224,7 @@ export function PlanCandidates({
   return (
     <section ref={resultRef} className="plan-candidates" aria-labelledby="plan-candidates-title">
       <div className="plan-result-header">
-      <button className="plan-back" type="button" onClick={onBack} disabled={!canRevise} aria-label="질문 다시 보기" title="질문 다시 보기">
+      <button className="plan-back" type="button" onClick={onBack} disabled={!canRevise || initialMainPending} aria-label="질문 다시 보기" title="질문 다시 보기">
         <ArrowLeft aria-hidden="true" size={17} />
       </button>
       <div className="plan-heading-row">
@@ -212,7 +238,8 @@ export function PlanCandidates({
         actionState={saving ? { kind: "SAVING" } : saveCode === "ACCOUNT_PLAN_PENDING" ? { kind: "PENDING", message: saveError ?? "계정 저장을 확인하고 있어요." }
           : selectionUnavailable ? { kind: "BLOCKED", message: saveError ?? "계정 저장 상태를 먼저 확인해 주세요." }
           : saveError ? { kind: "FAILED", message: saveError }
-          : catalogDraftPending ? { kind: "BLOCKED", message: "바꾼 훈련을 적용하거나 취소해 주세요." }
+          : initialApplying ? { kind: "BLOCKED", message: "확인한 구성을 계획안에 반영하고 있어요." }
+          : catalogDraftPending || initialMainPending ? { kind: "BLOCKED", message: "바꾼 훈련을 적용하거나 취소해 주세요." }
           : unreviewedConditions.length ? { kind: "BLOCKED", message: "새 날짜에 사용할 운동 환경을 확인해 주세요." }
           : needsReview ? { kind: "BLOCKED", message: "아래에서 기준 기록이나 변경한 내용을 확인해 주세요." } : { kind: "READY" }}
         onStart={candidateId => {
@@ -224,9 +251,9 @@ export function PlanCandidates({
         onRetry={saveCode === "PLAN_STORAGE_WRITE_FAILED" && canSelect ? onRetrySave : undefined}
         scheduleReview={unreviewedConditions.length > 0 && <CatalogScheduleReview
           key={JSON.stringify(unreviewedConditions.map(condition => condition.key))}
-          conditions={unreviewedConditions} disabled={selectionUnavailable || catalogDraftPending || methodDraftPending || targetDraftPending || recordConfirmationPending}
+          conditions={unreviewedConditions} disabled={selectionUnavailable || catalogDraftPending || initialMainPending || initialApplying || methodDraftPending || targetDraftPending || recordConfirmationPending}
           onConfirm={() => {
-            if (selectionUnavailable || catalogDraftPending || methodDraftPending || targetDraftPending || recordConfirmationPending
+            if (selectionUnavailable || catalogDraftPending || initialMainPending || initialApplying || methodDraftPending || targetDraftPending || recordConfirmationPending
               || !localAccountScopeIsCurrent(accountScope)) return
             setScheduleReview({ scope: scheduleReviewScope, keys: scheduleConditions.map(condition => condition.key) })
             setReviewedConditionContext(conditionContext)
@@ -251,6 +278,9 @@ export function PlanCandidates({
           ? `${selectedEventLabel} ${formatRecordTime(selectedRecord.performanceSeconds)}` : undefined}
         goalLabel={instantEntry?.kind === "GOAL_ONLY" ? `${instantEntry.eventDistanceM}m ${formatRecordTime(instantEntry.performanceSeconds)}` : undefined}
       />}
+      {initialMainActive && instantAdjustment === undefined && <InitialMainConditions {...initialMain}
+        disabled={!canRevise || selectionUnavailable || catalogDraftPending || methodDraftPending || targetDraftPending || recordConfirmationPending}
+        onPendingChange={setInitialMainPending} />}
       {saveCode === "CYCLE_EVIDENCE_CHANGED" && onRebuildCycle && <button type="button" className="plan-text-action"
         disabled={saving} onClick={onRebuildCycle}>일지를 반영해 다시 만들기</button>}
       {onCatalogChange && intake.selectedDetailedTemplateRef === null && <div ref={catalogRef} tabIndex={-1}>
@@ -270,7 +300,7 @@ export function PlanCandidates({
               return target?.prescription.kind === "RPE_TIME_RANGE" && target.prescription.catalogWorkout !== undefined
             })) setReviewedConditionContext(conditionContext)
             onCatalogChange(next)
-          }} onPendingChange={setCatalogDraftPending} disabled={saving || recordConfirmationPending || selectionUnavailable} />
+          }} onPendingChange={setCatalogDraftPending} disabled={saving || recordConfirmationPending || selectionUnavailable || initialMainPending || initialApplying} />
       </div>}
       {!recommendation && saveError && <p role="alert">{saveError}</p>}
       {instantAdjustment === undefined && onChangeMethod !== undefined && detailedOptions.length > 0 && <div ref={methodRef} tabIndex={-1}>
@@ -288,7 +318,7 @@ export function PlanCandidates({
       <details className="plan-detailed-options" open={showOptions || needsReview}
         onToggle={event => { if (!needsReview) setShowOptions(event.currentTarget.open) }}>
       <summary>기록·시작일·다른 일정 확인</summary>
-      <fieldset disabled={selectionUnavailable} style={{ border: 0, padding: 0, minWidth: 0 }}>
+      <fieldset disabled={selectionUnavailable || initialMainPending || initialApplying} style={{ border: 0, padding: 0, minWidth: 0 }}>
       {intake.selectedDetailedTemplateRef !== null
         && (intake.eventGroup === "FIVE_K" || intake.eventGroup === "MIDDLE_DISTANCE")
         && intake.experienceBand === "EXPERIENCED"
@@ -379,12 +409,14 @@ export function PlanCandidates({
       </fieldset>
       </details>
       {onRefine !== undefined && canRevise && (
+        <fieldset disabled={initialMainPending} style={{ border: 0, padding: 0, minWidth: 0 }}>
         <PlanRefinePanel
           intake={intake}
           targetRaceDate={targetRaceDate}
           onRefine={onRefine}
           detailedTemplateAvailable={resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference).length > 0}
         />
+        </fieldset>
       )}
       {generated.racePlacement.kind === "NO_TARGET_RACE"
         ? <InfoDisclosure title="경기 날짜는 어떻게 되나요?"><RacePlacementNotice state={generated.racePlacement} /></InfoDisclosure>

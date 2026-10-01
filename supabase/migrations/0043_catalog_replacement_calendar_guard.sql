@@ -1,4 +1,5 @@
 -- Bind manual replacement calendar checks to the same transaction as the existing journal/plan guard.
+-- Renumbered from 0041 during parallel-main integration; SQL body is unchanged.
 begin;
 create function public.mutate_account_plan_catalog_replacement_attested(request_text text, signature text, key_id text)
 returns jsonb language plpgsql security definer set search_path = pg_catalog as $$

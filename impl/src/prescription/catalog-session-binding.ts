@@ -77,38 +77,52 @@ export function bindCatalogSession(session: PlanSession, id: string, inputs: Wor
   return isValidCatalogSession(bound) ? bound : null
 }
 
+/** Exact, record-free choices for one unbound MAIN. Confirmation belongs to this slot,
+ * not a global generation flag. No experience, work time or recovery is inferred. */
+export function initialCatalogMainOptions(session: PlanSession, eventDistanceM: number, experience: ExperienceBand,
+  confirmedRequirements: readonly string[] = []): readonly PlanSession[] {
+  if (session.role !== "QUALITY" || session.prescription.kind !== "RPE_TIME_RANGE" || session.prescription.catalogWorkout) return []
+  const inputs: WorkoutCalculationInputs = { eventDistanceM, experience, availableSeconds: null,
+    confirmedRequirements, fiveK: null, segmentPaces: [] }
+  const methods = new Map<string, PlanSession>()
+  for (const entry of ALL_WORKOUT_CATALOG.filter(e => e.family === family[session.plannedEnergyIntent])) {
+    const bound = bindCatalogSession(session, entry.id, inputs, true)
+    if (!bound || bound.prescription.kind !== "RPE_TIME_RANGE") continue
+    const identity = catalogMethodIdentity(entry), existing = methods.get(identity)
+    if (existing?.prescription.kind === "RPE_TIME_RANGE"
+      && existing.prescription.durationMinutes.maximum <= bound.prescription.durationMinutes.maximum) continue
+    methods.set(identity, bound)
+  }
+  const options = [...methods.values()], durationMaximum = session.prescription.durationMinutes.maximum
+  const withinEnvelope = options.filter(option => option.prescription.kind === "RPE_TIME_RANGE"
+    && option.prescription.durationMinutes.maximum <= durationMaximum)
+  const shortest = Math.min(...options.map(option => (option.prescription as RpeTimeRange).durationMinutes.maximum))
+  return withinEnvelope.length ? withinEnvelope : options.filter(option =>
+    (option.prescription as RpeTimeRange).durationMinutes.maximum === shortest)
+}
+
 /** Only new plans. Existing saved plans are never upgraded or rewritten on read. */
 export function bindDefaultCatalogSessions(sessions: readonly PlanSession[], eventDistanceM: number, experience: ExperienceBand,
   seed: number): readonly PlanSession[] {
   return sessions.map(session => {
-    if (session.prescription.kind !== "RPE_TIME_RANGE") return session
+    if (session.prescription.kind !== "RPE_TIME_RANGE" || session.prescription.catalogWorkout) return session
+    if (session.role === "QUALITY") {
+      const options = initialCatalogMainOptions(session, eventDistanceM, experience)
+      return options.length ? options[(seed + session.day + (session.slot === "PM" ? 1 : 0)) % options.length]! : session
+    }
     const originalRpeMaximum = session.prescription.rpe.maximum
-    const originalDurationMaximum = session.prescription.durationMinutes.maximum
     const input: WorkoutCalculationInputs = { eventDistanceM, experience, availableSeconds: session.prescription.durationMinutes.maximum * 60,
       confirmedRequirements: [], fiveK: null, segmentPaces: [] }
-    const methods = new Map<string, PlanSession>()
     const options = ALL_WORKOUT_CATALOG.filter(e => e.family === family[session.plannedEnergyIntent])
       .flatMap(e => {
-        const bound = bindCatalogSession(session, e.id, input, session.role === "QUALITY"), identity = catalogMethodIdentity(e)
+        const bound = bindCatalogSession(session, e.id, input)
         if (!bound || bound.prescription.kind !== "RPE_TIME_RANGE"
-          || session.role !== "QUALITY" && bound.prescription.rpe.maximum > originalRpeMaximum) return []
-        const existing = methods.get(identity)
-        if (existing?.prescription.kind === "RPE_TIME_RANGE"
-          && existing.prescription.durationMinutes.maximum <= bound.prescription.durationMinutes.maximum) return []
-        methods.set(identity, bound)
+          || bound.prescription.rpe.maximum > originalRpeMaximum) return []
         return [bound]
       })
     // Same-day companion recovery remains short; no extra session or MAIN slot is added.
     if (!options.length) return session
-    if (session.role === "EASY") return [...options].sort((a, b) =>
+    return [...options].sort((a, b) =>
       (b.prescription as RpeTimeRange).durationMinutes.maximum - (a.prescription as RpeTimeRange).durationMinutes.maximum)[0]!
-    const reviewed = [...methods.values()]
-    const withinEnvelope = reviewed.filter(option => option.prescription.kind === "RPE_TIME_RANGE"
-      && option.prescription.durationMinutes.maximum <= originalDurationMaximum)
-    // A new draft shows the exact reviewed total; the athlete still chooses whether to start it.
-    const shortest = Math.min(...reviewed.map(option => (option.prescription as RpeTimeRange).durationMinutes.maximum))
-    const eligible = withinEnvelope.length ? withinEnvelope : reviewed.filter(option =>
-      (option.prescription as RpeTimeRange).durationMinutes.maximum === shortest)
-    return eligible[(seed + session.day + (session.slot === "PM" ? 1 : 0)) % eligible.length]!
   })
 }

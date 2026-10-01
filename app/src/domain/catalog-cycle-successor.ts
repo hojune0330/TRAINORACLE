@@ -11,6 +11,7 @@ import { planBetaStateV3Schema, type PlanBetaStateV3 } from "./plan-beta-schema"
 import { PLAN_CYCLE_RESPONSE_VERSION, type PlanCycleResponse } from "./plan-cycle-response"
 import type { PlanJournalEvidenceRow } from "./plan-journal-evidence"
 import { createPlannedSessionLogDraft } from "./planned-session-link"
+import { sessionWorkoutNotation } from "./workout-notation"
 
 export type CatalogCycleEvidenceStatus = "MISSING_RESPONSE" | "NO_LINKED_RESULTS" | "NO_COMPARABLE_RESULTS"
   | "SINGLE_SIGNAL" | "COMPLETE_RESPONSE" | "INCOMPLETE_RESPONSE" | "CONFLICTING_RESPONSE" | "RESPONSE_MISMATCH"
@@ -20,6 +21,8 @@ export type CatalogCycleSuccessorRow = {
   readonly explanation: string
   readonly purpose: PlanSession["plannedEnergyIntent"]
   readonly ordinal: number
+  readonly sourceNotation?: string
+  readonly targetNotation?: string
   readonly source: { readonly day: number; readonly slot: "AM" | "PM"; readonly catalogId: string | null } | null
   readonly target: { readonly day: number; readonly slot: "AM" | "PM"; readonly catalogId: string | null }
   readonly sourceActualRpe: number | null
@@ -201,10 +204,10 @@ export function resolveCatalogCycleSuccessor(input: {
       : reducedCount ? "APPLIED" : "MAINTAINED", reason: noMain ? "NO_MAIN_SESSIONS" : reason, responseStatus,
       headline: incompatible ? "이전 계획과 새 계획의 조건이 달라 상세 훈련을 이어오지 않았어요."
         : noMain ? "이번 목적에는 MAIN 훈련이 없어 상세 MAIN 조정은 하지 않았어요."
-        : reviewCount ? maintainedCount + reducedCount === 0 ? "이전 상세 훈련을 이어올 수 없어 새 초안은 바꾸지 않았어요. 다시 확인해 주세요."
-          : reducedCount > 0 ? "반복해서 높게 기록된 RPE를 반영해 검토된 낮은 구성을 제안해요. 일부 훈련은 다시 확인해 주세요."
+        : reviewCount ? maintainedCount + reducedCount === 0 ? "이전 상세 훈련을 이어오지 못했어요. 다음 계획안을 다시 확인해 주세요."
+          : reducedCount > 0 ? "반복된 RPE를 반영해 훈련량이 적은 구성을 제안해요. 일부 훈련은 다시 확인해 주세요."
             : "확인된 이전 상세 훈련은 유지했어요. 일부 훈련은 다시 확인해 주세요."
-          : reducedCount ? "반복해서 높게 기록된 RPE를 반영해 검토된 낮은 구성을 제안해요."
+          : reducedCount ? "반복된 RPE를 반영해 훈련량이 적은 구성을 제안해요."
             : "이전 상세 훈련을 유지했어요. 실제 기록만으로 훈련을 늘리지 않아요.",
       appliedCount: maintainedCount + reducedCount, maintainedCount, reducedCount, reviewCount,
       requiresEnvironmentConfirmation: rows.some(r => r.environmentRequirements.length > 0),
@@ -236,6 +239,8 @@ export function resolveCatalogCycleSuccessor(input: {
               : comparisons.length < previous.filter(s => s.plannedEnergyIntent === purpose).length ? "INCOMPLETE_RESPONSE" : "COMPLETE_RESPONSE"
     const row = (status: CatalogCycleSuccessorRow["status"], reason: string, explanation: string, replacement?: PlanSession) => {
       rows.push({ status, reason, explanation, purpose, ordinal,
+        sourceNotation: source ? sessionWorkoutNotation(source) : undefined,
+        targetNotation: sessionWorkoutNotation(replacement ?? target),
         source: source ? { day: source.day, slot: source.slot, catalogId: binding?.catalogId ?? null } : null,
         target: { day: target.day, slot: target.slot, catalogId: bindingOf(replacement ?? target)?.catalogId ?? null },
         sourceActualRpe: direct?.actualRpe ?? null, sourceComparison: direct?.comparison ?? "NO_LINKED_RESULT",
@@ -244,7 +249,7 @@ export function resolveCatalogCycleSuccessor(input: {
         applied: replacement !== undefined })
     }
     if (!source || !binding) {
-      row("REVIEW_REQUIRED", "SOURCE_NOT_DETAILED", "이 순서의 이전 상세 훈련을 확인할 수 없어 새 초안을 유지했어요.")
+      row("REVIEW_REQUIRED", "SOURCE_NOT_DETAILED", "이전 상세 훈련을 확인하지 못해 다음 계획안에 이어오지 않았어요.")
       continue
     }
     const prior = resolveCatalogBinding(binding), entry = ALL_WORKOUT_CATALOG.find(e => e.id === binding.catalogId)
@@ -289,11 +294,11 @@ export function resolveCatalogCycleSuccessor(input: {
     }
     replacements.set(`${target.day}:${target.slot}`, chosen)
     if (mayReduce && !reduced) row("REVIEW_REQUIRED", "NO_REVIEWED_LOWER_CONFIGURATION",
-      "RPE가 반복해서 높았지만 조건에 맞는 같은 방법의 낮은 구성이 없어 이전 상세 훈련을 유지했어요. 다시 확인해 주세요.", chosen)
+      "힘들었다는 기록이 반복됐지만 양이 적은 같은 방식의 훈련을 확인하지 못해 이전 상세 훈련을 유지했어요. 다시 확인해 주세요.", chosen)
     else if (["CONFLICTING_RESPONSE", "INCOMPLETE_RESPONSE", "RESPONSE_MISMATCH"].includes(purposeStatus))
       row("REVIEW_REQUIRED", purposeStatus, "기록이 불완전하거나 서로 맞지 않아 훈련량을 바꾸지 않고 이전 상세 훈련을 유지했어요.", chosen)
     else row(reduced ? "REDUCED" : "MAINTAINED", reduced ? "REPEATED_ABOVE_REVIEWED_LOWER" : purposeStatus,
-      reduced ? "같은 목적의 RPE가 반복해서 높아 같은 방법의 검토된 낮은 구성을 새 초안에 담았어요."
+      reduced ? "같은 목적의 훈련에서 힘들었다는 기록이 반복돼, 양이 적은 같은 방식의 훈련을 다음 계획안에 넣었어요."
         : "이전 상세 훈련을 유지했어요. 기록 누락·한 번의 기록·낮거나 범위 안인 RPE로 훈련을 늘리지 않아요.", chosen)
   }
   const first = generated.candidates[0], second = generated.candidates[1]

@@ -8,6 +8,7 @@ import { validateAccountPlanCollectionIndex, validateAccountPlanCollectionEntry,
   type AccountPlanCollectionIndex, type AccountPlanSnapshotPart, type AccountPlanProgressPart } from "./account-plan-collection-schema"
 import { prepareAccountPlanCollectionTransfer, transferAccountPlanCollection,
   } from "./account-plan-collection-transfer"
+import { accountPlanJournalGuardSchema, type AccountPlanJournalGuard } from "./account-plan-collection-transfer"
 import { accountPlanEntry, accountPlanFingerprint, emptyAccountPlanDocument, validateAccountPlanDocument,
   validateAccountPlanPacket, type AccountPlanDocument, type AccountPlanEntry, type AccountPlanPacket } from "./account-plan-document-schema"
 import { readAccountPlanEntry, createAccountPlanService, accountPlanDocumentId, type AccountPlanService,
@@ -338,13 +339,14 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
   }
   async function save(base: AccountPlanDocument, next: AccountPlanDocument, sequence: number,
     review: () => boolean = () => false, migration?: AccountPlanCollectionLegacy,
-    guard: () => boolean = () => true, allowedLegacySource?: string): Promise<AccountPlanResult> {
+    guard: () => boolean = () => true, allowedLegacySource?: string, journalGuard?: AccountPlanJournalGuard): Promise<AccountPlanResult> {
     if (next.data.plans.length > 100) return "CAPACITY"
     await yieldTask(); check()
     if (!guard()) return "STALE"
     const transfer = prepareAccountPlanCollectionTransfer({ ownerId: input.ownerId,
       operationId: input.operationId?.() ?? crypto.randomUUID(), expectedRevision: revision,
-      previous: index ? base : null, next, ...(migration ? { legacy: migration } : {}) })
+      previous: index ? base : null, next, ...(migration ? { legacy: migration } : {}),
+      ...(journalGuard === undefined || next.data.currentPlanId === base.data.currentPlanId ? {} : { journalGuard }) })
     if (!transfer) return "INVALID"
     await local().save(transfer, sequence); check(); change("PENDING")
     if (!guard()) return "STALE"
@@ -398,9 +400,12 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
     return completeLegacyHandoff(source, "HISTORY")
   }
   function mutate(command: AccountPlanMutation, expectedFingerprint: string): Promise<AccountPlanResult> {
+    if (command?.kind === "SELECT" && command.journalGuard !== undefined
+      && !accountPlanJournalGuardSchema.safeParse(command.journalGuard).success) return Promise.resolve("INVALID")
     if (!["SAVE_HISTORY", "SELECT", "PROGRESS", "ARCHIVE"].includes(command?.kind)
       || command.kind !== "ARCHIVE" && !validateAccountPlanPacket(command.packet)) return Promise.resolve("INVALID")
-    const captured = command.kind === "ARCHIVE" ? { ...command } : { ...command, packet: structuredClone(command.packet) }
+    const captured = command.kind === "ARCHIVE" ? { ...command } : { ...command, packet: structuredClone(command.packet),
+      ...(command.kind !== "SELECT" || command.journalGuard === undefined ? {} : { journalGuard: structuredClone(command.journalGuard) }) }
     return serialize(async () => {
       const ready = await writable(expectedFingerprint)
       if (!ready) return "STALE"
@@ -435,7 +440,8 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
         }
       }
       check()
-      return save(base, next, sequence, () => captured.kind === "SELECT" && captured.freshReview())
+      return save(base, next, sequence, () => captured.kind === "SELECT" && captured.freshReview(), undefined, () => true,
+        undefined, captured.kind === "SELECT" ? captured.journalGuard : undefined)
     }, "FAILED", failure)
   }
   return {

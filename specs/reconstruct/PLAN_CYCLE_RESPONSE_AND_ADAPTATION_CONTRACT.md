@@ -271,9 +271,16 @@ mutation of the active frame or a removal of the legacy adaptation registry guar
   fingerprint and recheck it inside the save lock and the account pre-write callback.
   Omitting this context is not a legacy bypass. An exact already-committed retry
   may acknowledge the existing state without a new write after journals change.
-- This implementation covers the ordinary version-3 next-frame path. Adjusted
-  version-4/5/6 continuation and legacy registered transforms keep their separate
-  limits; this section does not declare them implemented.
+- Ordinary version-3 next frames use the bounded catalogue projection above.
+  Adjusted version-4/5/6 paths use their version-aware readers and independently
+  retained review evidence to reissue the exact selected AFTER configuration.
+  Do not cast adjusted storage to version 3 or fall back to original-template
+  numbers. No adopted RPE target exists for an adjusted MAIN: retain its actual
+  observations, but do not borrow an old RPE target to calculate a reduction.
+  Exact detail preservation, current review authority and future-environment
+  confirmation are required before explicit successor storage. If the exact
+  configuration is no longer available, reject rather than substitute a dose.
+  Legacy registered transforms retain their separate limits.
 - Do not add MAIN exposure or modify availability, safety disposition, or AM/PM
   scheduling through this projection. The existing future-environment check remains
   required where applicable. Old saved plans and explanation versions remain readable.
@@ -281,5 +288,36 @@ mutation of the active frame or a removal of the legacy adaptation registry guar
 Existing section 7 issues stay OPEN. This is an owner-approved bounded implementation
 direction using existing reviewed catalogue numbers, not scientific efficacy proof,
 a new physiological threshold, or authorization of unrestricted NEXT_FRAME transforms.
+
+### 14.1 Structured Actual Work Is Part Of The Comparison
+
+When an exact linked journal supplies structured segment or repetition results,
+compare those results with the immutable prescription before using its RPE as a
+same-prescription observation. A changed distance, changed prescribed recovery,
+or changed time-based MAIN duration is changed execution, even if the user did
+not separately choose a modified-outcome label. A pace difference over the same
+distance remains an observed pace difference, not an invented dose tolerance.
+
+Invalid calculation links and competing segment/repetition formats are unavailable
+comparisons, not successful completion. Keep known actual facts visible separately;
+do not feed changed or unverifiable execution into the repeated-RPE reduction rule.
+Missing steps remain missing, not zero or evidence that every step was performed.
+Copies with different structured actual values conflict rather than counting once
+as identical. Matching and deduplication read no memo, title or free-text exercise
+names. The user can inspect numeric comparison in a collapsed evidence disclosure.
+
+### 14.2 Account Journal Freshness At Successor Commit
+
+The scoped preview identity includes the complete confirmed account journal
+revision list. Pending or incomplete account projection is not an empty history.
+A new account successor selection carries that exact revision guard through its
+durable transfer and request identity. Use the existing owner-scoped atomic
+journal-guarded commit to reject journals added, edited or deleted after review.
+Do not substitute a newer revision list while retrying an older proposal.
+
+This guard protects freshness, not physiological validity. It does not grant
+new dose authority or use private text. Previously acknowledged exact operations
+retain receipt-first replay; a response retry must not write a second plan or fail
+merely because a journal changed after the original committed transaction.
 
 [DRAFT_COMPLETE]

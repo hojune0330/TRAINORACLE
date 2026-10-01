@@ -10,19 +10,24 @@ import { isoShift } from "../../domain/dates"
 import { planErrorMessage } from "./plan-feedback"
 import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
 import "./AdjustedPlanNextFlow.css"
+import type { CatalogCycleDraftContext } from "../../domain/catalog-cycle-draft"
 
 const identity = (value: unknown) => canonicalJsonFingerprint("trainoracle.adjusted-apply-ui.v3", value)
 
-export function AdjustedPlanApplyReviewV3({ seed, readReview, locks, isCurrentDraft, onSaved, onCancel, expectedPredecessorFingerprint }: AdjustmentEntryV3 & {
+export function AdjustedPlanApplyReviewV3({ seed, readReview, locks, isCurrentDraft, onSaved, onCancel, expectedPredecessorFingerprint, cycleDraft }: AdjustmentEntryV3 & {
   readonly isCurrentDraft: () => boolean
   readonly onSaved: (state: StoredAdjustedPlanStateV5) => void
   readonly onCancel: () => void
   readonly expectedPredecessorFingerprint?: string
+  readonly cycleDraft?: CatalogCycleDraftContext
 }) {
-  const [opened] = React.useState(() => ({ request: structuredClone(seed), fingerprint: identity(seed), expectedPredecessorFingerprint }))
-  const live = React.useRef({ seed, readReview, isCurrentDraft, onSaved, expectedPredecessorFingerprint })
-  live.current = { seed, readReview, isCurrentDraft, onSaved, expectedPredecessorFingerprint }
+  const [opened] = React.useState(() => ({ request: structuredClone(seed), fingerprint: identity(seed), expectedPredecessorFingerprint,
+    cycleDraft: structuredClone(cycleDraft) }))
+  const live = React.useRef({ seed, readReview, isCurrentDraft, onSaved, expectedPredecessorFingerprint, cycleDraft })
+  live.current = { seed, readReview, isCurrentDraft, onSaved, expectedPredecessorFingerprint, cycleDraft }
   const valid = React.useRef(true), pending = React.useRef(false)
+  const [environmentConfirmed, setEnvironmentConfirmed] = React.useState(false)
+  const environment = React.useRef(false)
   const [saving, setSaving] = React.useState(false), [error, setError] = React.useState<string | null>(null)
   const heading = React.useRef<HTMLHeadingElement>(null), id = React.useId()
   useActiveContentScroll("review-v3", heading, heading)
@@ -30,6 +35,8 @@ export function AdjustedPlanApplyReviewV3({ seed, readReview, locks, isCurrentDr
   const current = () => valid.current && live.current.isCurrentDraft()
     && identity(live.current.seed) === opened.fingerprint
     && live.current.expectedPredecessorFingerprint === opened.expectedPredecessorFingerprint
+    && identity(live.current.cycleDraft ?? null) === identity(opened.cycleDraft ?? null)
+    && (opened.expectedPredecessorFingerprint === undefined || environment.current)
   const prepared = prepareAdjustedPlanCandidateV3(opened.request.preparation)
   const apply = async () => {
     if (pending.current || !valid.current) return
@@ -38,7 +45,8 @@ export function AdjustedPlanApplyReviewV3({ seed, readReview, locks, isCurrentDr
       const input = { request: opened.request, readReview: () => live.current.readReview(), isCurrentDraft: current, locks }
       const result = opened.expectedPredecessorFingerprint === undefined
         ? await saveSelectedAdjustedPlanV3(input)
-        : await saveSelectedAdjustedSuccessorV3({ ...input, expectedPredecessorFingerprint: opened.expectedPredecessorFingerprint })
+        : await saveSelectedAdjustedSuccessorV3({ ...input, expectedPredecessorFingerprint: opened.expectedPredecessorFingerprint,
+          cycleDraft: opened.cycleDraft, futureEnvironmentConfirmed: environment.current })
       if (!valid.current) return
       if (result.kind === "saved") { valid.current = false; live.current.onSaved(result.state) }
       else setError(planErrorMessage(result.code))
@@ -64,7 +72,10 @@ export function AdjustedPlanApplyReviewV3({ seed, readReview, locks, isCurrentDr
       </section>)}</details>
     </> : <p role="alert">구성과 설명의 연결을 확인하지 못했어요. 후보로 돌아가 다시 선택해 주세요.</p>}
     {error && <p role="alert">{error}</p>}
-    <button type="button" disabled={saving || prepared.kind !== "prepared"} onClick={() => void apply()}>
+    {opened.expectedPredecessorFingerprint !== undefined && <label><input type="checkbox" checked={environmentConfirmed} disabled={saving}
+      onChange={event => { environment.current = event.target.checked; setEnvironmentConfirmed(event.target.checked) }} />
+      다음 날짜에도 이 훈련에 필요한 장소와 시간을 확보했어요</label>}
+    <button type="button" disabled={saving || prepared.kind !== "prepared" || opened.expectedPredecessorFingerprint !== undefined && !environmentConfirmed} onClick={() => void apply()}>
       <Check size={18} aria-hidden="true" />{saving ? "저장 중" : "이 구성으로 계획 저장"}</button>
   </section>
 }

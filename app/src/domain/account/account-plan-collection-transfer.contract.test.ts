@@ -74,6 +74,23 @@ function run(transfer: AccountPlanCollectionTransfer, port: AccountPlanCollectio
   return transferAccountPlanCollection({ transfer, port, scope: () => ({ ownerId: OWNER, epoch: 1 }), freshSelectionReview: () => true, ...overrides })
 }
 
+it("captures journal guard bytes in the request fingerprint and recovers only that exact receipt", async () => {
+  const guard = [{ documentId: LEGACY, revision: 2 }]
+  const transfer = prepareAccountPlanCollectionTransfer({ ownerId: OWNER, operationId: OP, expectedRevision: 0,
+    previous: null, next: document(), journalGuard: guard })!
+  guard[0]!.revision = 9
+  expect(transfer.journalGuard).toEqual([{ documentId: LEGACY, revision: 2 }])
+  const server = repository(), commit = server.port.commit
+  server.port.commit = vi.fn(async request => { await commit(request); throw Error("lost ACK") })
+  expect((await run(transfer, server.port)).kind).toBe("outcome_unknown")
+  expect((await run(transfer, server.port, { freshSelectionReview: () => false })).kind).toBe("committed")
+  expect((await run({ ...transfer, journalGuard: [] }, server.port)).kind).toBe("invalid")
+  expect(accountPlanCollectionCommit(transfer).journalGuard).toEqual([{ documentId: LEGACY, revision: 2 }])
+  expect(server.port.commit).toHaveBeenCalledTimes(1)
+  expect(readAccountPlanCollectionTransfer({ ...transfer, journalGuard: null })).toBeNull()
+  expect(readAccountPlanCollectionTransfer({ ...transfer, journalGuard: [transfer.journalGuard![0], transfer.journalGuard![0]] })).toBeNull()
+})
+
 it("copies and reads back before committing an exact current pointer; transferred evidence remains data", async () => {
   const source = document(2), transfer = prepared(source), server = repository()
   expect((await run(transfer, server.port)).kind).toBe("committed")
