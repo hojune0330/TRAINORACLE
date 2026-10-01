@@ -80,7 +80,7 @@ describe("accepted successor activation", () => {
       record: fixture.triggerRecord,
       safety: fixture.safety,
       operationAt: ACTIVATED_AT,
-    })).resolves.toEqual({ kind: "unavailable", code: "UNAPPROVED_TRANSFORM" })
+    })).resolves.toEqual({ kind: "unavailable", code: "CATALOG_TRANSFORM_UNAVAILABLE" })
     expect(storageSnapshot()).toStrictEqual(before)
     expect(window.localStorage.getItem(PENDING_KEY)).toBeNull()
   })

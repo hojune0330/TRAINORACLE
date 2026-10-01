@@ -1,0 +1,33 @@
+{
+  "sourceSha": "da5ee9f8a78ae5e404bb4dbe7a855806126bd09f",
+  "releaseMode": "OWNER_APPROVED_MANUAL_WITH_FOCUSED_CHECKS",
+  "appTypecheck": "PASS",
+  "browserTypecheck": "PASS",
+  "generatedValidators": { "passed": 3 },
+  "serverFocused": { "passed": 32, "failed": 0 },
+  "isolatedPostgresConcurrency": { "passed": 4, "failed": 0 },
+  "browserFocused": { "passed": 4, "failed": 0, "syntheticDataOnly": true, "widths": [320, 375, 1280] },
+  "focusedTimeoutRerun": { "passed": 4, "failed": 0, "notAFullSuiteRun": true },
+  "productionSql": {
+    "migration": "0044_plan_successor_guard_binding.sql",
+    "appliedOnce": true,
+    "bodyMatches": true,
+    "collectionBodyMd5": "07078f77935c63f4231adf098a001a71",
+    "replanBodyMd5": "ae2b19af21e85b4eab109cd56eb17c6c",
+    "authenticatedExecute": true,
+    "anonExecute": false,
+    "serviceRoleExecute": false,
+    "athleteRowsReadOrWrittenByMigration": false
+  },
+  "edgeFunctions": {
+    "sourceSha": "da5ee9f8a78ae5e404bb4dbe7a855806126bd09f",
+    "deployed": ["account-plan-collection", "account-journal"],
+    "unauthenticatedBoth": "401 AUTH_REQUIRED; Cache-Control no-store",
+    "realAccountRoundtrip": "NOT_RUN"
+  },
+  "githubCi": {
+    "runId": 36819502373,
+    "lastObserved": "contract-tests PASS; app-quality IN_PROGRESS; app-browser NOT_STARTED",
+    "claimedPassed": false
+  }
+}

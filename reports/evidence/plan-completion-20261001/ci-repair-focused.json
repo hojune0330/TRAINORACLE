@@ -1,0 +1,215 @@
+{
+  "kind": "SYNTHETIC_FOCUSED_CI_REPAIR",
+  "checkedAt": "2026-10-01T06:22:29.809Z",
+  "runtimeSource": "da5ee9f8a78ae5e404bb4dbe7a855806126bd09f",
+  "passed": 35,
+  "failed": 0,
+  "files": [
+    {
+      "file": "app/src/AppShell.guest-rewards.test.tsx",
+      "status": "passed",
+      "tests": [
+        {
+          "title": "connects the guest ledger only after successful initial auth and invalidates it on unmount",
+          "status": "passed",
+          "durationMs": 682.0936999999994
+        },
+        {
+          "title": "does not interpret failed authentication as signed-out or alter the guest ledger",
+          "status": "passed",
+          "durationMs": 164.22229999999945
+        },
+        {
+          "title": "does not let a late failed initial lookup revoke a newer authenticated owner",
+          "status": "passed",
+          "durationMs": 104.76339999999982
+        }
+      ]
+    },
+    {
+      "file": "app/src/domain/plan-successor-activation.contract.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "title": "rejects a new catalog-bound plan's legacy successor transform (PB/SB: false) without storage writes",
+          "status": "passed",
+          "durationMs": 460.6708000000003
+        },
+        {
+          "title": "rejects a new catalog-bound plan's legacy successor transform (PB/SB: true) without storage writes",
+          "status": "passed",
+          "durationMs": 313.009
+        },
+        {
+          "title": "activates a completed 7-day projection exactly once",
+          "status": "passed",
+          "durationMs": 346.9235000000008
+        },
+        {
+          "title": "activates a completed 9-day projection exactly once",
+          "status": "passed",
+          "durationMs": 327.28240000000005
+        },
+        {
+          "title": "activates a completed 10-day projection exactly once",
+          "status": "passed",
+          "durationMs": 324.6238000000003
+        },
+        {
+          "title": "activates a completed plan with an approved detailed 5000m prescription",
+          "status": "passed",
+          "durationMs": 277.7988999999998
+        },
+        {
+          "title": "rejects activation when the PB/SB performance changes after acceptance",
+          "status": "passed",
+          "durationMs": 308.1232
+        },
+        {
+          "title": "activates a replacement successor after terminal progress changes",
+          "status": "passed",
+          "durationMs": 299.0104000000001
+        },
+        {
+          "title": "rejects a predecessor before all visible non-rest sessions are terminal",
+          "status": "passed",
+          "durationMs": 287.16939999999977
+        },
+        {
+          "title": "rejects unavailable locks without touching storage",
+          "status": "passed",
+          "durationMs": 329.1939999999995
+        },
+        {
+          "title": "rejects an unavailable Web Lock without touching storage",
+          "status": "passed",
+          "durationMs": 327.4314999999997
+        },
+        {
+          "title": "rejects malformed pending bytes without touching active state",
+          "status": "passed",
+          "durationMs": 308.70840000000044
+        },
+        {
+          "title": "rejects a stale predecessor hash without changing any stored bytes",
+          "status": "passed",
+          "durationMs": 272.8011000000006
+        },
+        {
+          "title": "rejects fresh D9/hold failures with zero net writes",
+          "status": "passed",
+          "durationMs": 285.7477000000008
+        },
+        {
+          "title": "rejects a fresh pain hold before it can consume the pending successor",
+          "status": "passed",
+          "durationMs": 358.0528999999988
+        },
+        {
+          "title": "restores byte-identical storage when every transaction stage silently drops once",
+          "status": "passed",
+          "durationMs": 2105.1978
+        },
+        {
+          "title": "rejects a caller-supplied future local date and extra input fields",
+          "status": "passed",
+          "durationMs": 342.03979999999865
+        },
+        {
+          "title": "rejects an activation timestamp beyond the allowed runtime clock skew",
+          "status": "passed",
+          "durationMs": 296.9519999999993
+        }
+      ]
+    },
+    {
+      "file": "app/src/screens/plan-beta/plan-next-account.contract.test.tsx",
+      "status": "passed",
+      "tests": [
+        {
+          "title": "selects the next frame through one account transaction and retains the exact predecessor",
+          "status": "passed",
+          "durationMs": 1177.799
+        },
+        {
+          "title": "reads an exact historical account pair without selecting or copying its unrelated sibling",
+          "status": "passed",
+          "durationMs": 1836.0209999999997
+        },
+        {
+          "title": "keeps the confirmed predecessor after a lost account response and recovers without a second commit",
+          "status": "passed",
+          "durationMs": 1029.9676
+        },
+        {
+          "title": "leaves the pending next-plan screen when the server receipt confirms the new current plan (reopen: false)",
+          "status": "passed",
+          "durationMs": 4729.2551
+        },
+        {
+          "title": "leaves the pending next-plan screen when the server receipt confirms the new current plan (reopen: true)",
+          "status": "passed",
+          "durationMs": 4655.6155
+        }
+      ]
+    },
+    {
+      "file": "app/src/screens/plan-beta/PlanBeta.account.contract.test.tsx",
+      "status": "passed",
+      "tests": [
+        {
+          "title": "V4 actual apply, schedule progress, account archive and unverified new-device original display",
+          "status": "passed",
+          "durationMs": 23719.240700000002
+        },
+        {
+          "title": "V5 actual apply, schedule progress, account archive and unverified new-device original display",
+          "status": "passed",
+          "durationMs": 20004.089499999995
+        },
+        {
+          "title": "V6 actual apply, schedule progress, account archive and unverified new-device original display",
+          "status": "passed",
+          "durationMs": 25351.4899
+        }
+      ]
+    },
+    {
+      "file": "app/src/screens/plan-beta/PlanBeta.adjusted-next.contract.test.tsx",
+      "status": "passed",
+      "tests": [
+        {
+          "title": "uses the mounted schedule, detailed successor and confirmation to advance the real stored plan",
+          "status": "passed",
+          "durationMs": 8746.0853
+        },
+        {
+          "title": "cancel returns to the actual old schedule without storing or archiving a draft",
+          "status": "passed",
+          "durationMs": 2637.3199999999997
+        },
+        {
+          "title": "rejects a predecessor changed after the detailed successor confirmation opened",
+          "status": "passed",
+          "durationMs": 3925.982500000002
+        },
+        {
+          "title": "does not turn absent or mismatched review providers into legacy selection",
+          "status": "passed",
+          "durationMs": 3239.465
+        },
+        {
+          "title": "makes the missing operating connection explicit without changing the old plan",
+          "status": "passed",
+          "durationMs": 2762.0767000000014
+        },
+        {
+          "title": "rejects current risk and storage changes, and clears an open draft on account change",
+          "status": "passed",
+          "durationMs": 3130.055500000002
+        }
+      ]
+    }
+  ],
+  "notEvidenceOf": "Actual user-account production roundtrip or athlete training efficacy"
+}

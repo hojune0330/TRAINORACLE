@@ -1,0 +1,30 @@
+{
+  "checkedAt": "2026-10-01T05:37:48.882Z",
+  "url": "https://hojune0330.github.io/TRAINORACLE/",
+  "sourceSha": "da5ee9f8a78ae5e404bb4dbe7a855806126bd09f",
+  "pagesSha": "32aaa96b6f126c15e61452791ee1eee4711f0a4a",
+  "receiptMatches": true,
+  "assets": [
+    {
+      "file": "assets/index-BNXm5a1W.js",
+      "sha256Matches": true
+    },
+    {
+      "file": "assets/vendor-react-oS_qnrG8.js",
+      "sha256Matches": true
+    },
+    {
+      "file": "assets/vendor-validation-Ci-G08ww.js",
+      "sha256Matches": true
+    },
+    {
+      "file": "assets/vendor-icons-DknHiEWL.js",
+      "sha256Matches": true
+    },
+    {
+      "file": "assets/index-DiPJ16Sj.css",
+      "sha256Matches": true
+    }
+  ],
+  "productionAccountRoundtrip": "NOT_RUN"
+}

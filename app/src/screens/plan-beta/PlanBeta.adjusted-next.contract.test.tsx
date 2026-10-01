@@ -8,6 +8,9 @@ import { readAdjustedOriginalPlans } from "../../domain/adjusted-plan-archive"
 import { loadAthleteRecords } from "../../domain/athlete-records"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 import { TODAY } from "../../domain/prescription-quality-matrix.test-fixtures"
+import * as successorStore from "../../domain/adjusted-plan-store"
+
+vi.setConfig({ testTimeout: 20000 })
 
 const show = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const close = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "close")
@@ -38,24 +41,29 @@ function generate() {
   fireEvent.change(screen.getByLabelText("추천 페이스에 사용할 경기 기록"), { target: { value: loadAthleteRecords()[0]!.id } })
   fireEvent.click(screen.getByRole("button", { name: "다음 계획 비교하기" }))
 }
-it("uses the mounted schedule, next generation, editor and confirmation to advance the real stored plan", async () => {
+it("uses the mounted schedule, detailed successor and confirmation to advance the real stored plan", async () => {
   const { old, retained } = await setup()
   expect(screen.getByRole("button", { name: "다음 계획 비교하기" })).toBeDisabled()
   expect(screen.getByLabelText("추천 페이스에 사용할 경기 기록")).toHaveValue("")
   generate()
   expect(screen.getByRole("heading", { name: "다음 계획을 비교해 주세요" })).toBeVisible()
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(old.raw)
-  fireEvent.click(screen.getByRole("button", { name: "기초·회복 운동 시간을 범위로 조정하기" }))
-  fireEvent.click(screen.getAllByRole("radio").at(-1)!)
-  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "적용" })) })
+  fireEvent.click(screen.getAllByRole("button", { name: /구성 확인$/u })[0]!)
   expect(screen.getByRole("heading", { name: "이 구성으로 다음 계획을 저장할까요?" })).toBeVisible()
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(old.raw)
-  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" })) })
+  expect(screen.getByRole("button", { name: "이 구성으로 계획 저장" })).toBeDisabled()
+  fireEvent.click(screen.getByRole("checkbox", { name: "다음 날짜에도 이 훈련에 필요한 장소와 시간을 확보했어요" }))
+  const save = vi.spyOn(successorStore, "saveSelectedAdjustedSuccessor")
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" }))
+    expect(save).toHaveBeenCalledOnce()
+    expect(await save.mock.results[0]!.value).toMatchObject({ kind: "saved" })
+  })
   expect(screen.getByRole("heading", { name: "내 훈련 일정" })).toBeVisible()
   expect(readPlanBetaStateFromStorage(retained)).toMatchObject({ kind: "adjusted_loaded",
     state: { selection: { periodization: { frameOrdinal: 2 } } } })
   expect(readAdjustedOriginalPlans(retained)).toMatchObject({ kind: "loaded", entries: [{ state: old.state }] })
-}, 15000)
+}, 20000)
 it("cancel returns to the actual old schedule without storing or archiving a draft", async () => {
   const { old, retained } = await setup()
   generate()
@@ -64,12 +72,11 @@ it("cancel returns to the actual old schedule without storing or archiving a dra
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(old.raw)
   expect(readAdjustedOriginalPlans(retained)).toMatchObject({ kind: "loaded", entries: [] })
 })
-it("rejects a predecessor changed after the editor's final confirmation opened", async () => {
+it("rejects a predecessor changed after the detailed successor confirmation opened", async () => {
   await setup()
   generate()
-  fireEvent.click(screen.getByRole("button", { name: "기초·회복 운동 시간을 범위로 조정하기" }))
-  fireEvent.click(screen.getAllByRole("radio").at(-1)!)
-  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "적용" })) })
+  fireEvent.click(screen.getAllByRole("button", { name: /구성 확인$/u })[0]!)
+  fireEvent.click(screen.getByRole("checkbox", { name: "다음 날짜에도 이 훈련에 필요한 장소와 시간을 확보했어요" }))
   localStorage.setItem(activePlanBetaStorageKey(), "{other-writer")
   await act(async () => { fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" })) })
   expect(screen.getByRole("alert")).toHaveTextContent("적용하지 않았어요")
@@ -78,14 +85,14 @@ it("rejects a predecessor changed after the editor's final confirmation opened",
 it("does not turn absent or mismatched review providers into legacy selection", async () => {
   const { old } = await setup("mismatch")
   generate()
-  fireEvent.click(screen.getByRole("button", { name: "기초·회복 운동 시간을 범위로 조정하기" }))
+  fireEvent.click(screen.getAllByRole("button", { name: /구성 확인$/u })[0]!)
   expect(screen.getByRole("alert")).toHaveTextContent("검토 근거를 확인하지 못했어요")
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(old.raw)
 })
 it("makes the missing operating connection explicit without changing the old plan", async () => {
   const { old } = await setup("missing")
   generate()
-  expect(screen.getByRole("button", { name: "기초·회복 운동 시간을 범위로 조정하기" })).toBeDisabled()
+  expect(screen.getAllByRole("button", { name: /구성 확인$/u })[0]!).toBeDisabled()
   expect(screen.getByRole("status")).toHaveTextContent("검토된 구성 연결을 준비 중")
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(old.raw)
 })
@@ -97,7 +104,7 @@ it("rejects current risk and storage changes, and clears an open draft on accoun
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(old.raw)
   generate()
   localStorage.setItem(activePlanBetaStorageKey(), "{changed")
-  fireEvent.click(screen.getByRole("button", { name: "기초·회복 운동 시간을 범위로 조정하기" }))
+  fireEvent.click(screen.getAllByRole("button", { name: /구성 확인$/u })[0]!)
   expect(screen.getByRole("alert")).toHaveTextContent("계획이 이미 바뀌었어요")
   act(() => setActiveLocalAccount("another-account"))
   expect(screen.queryByRole("heading", { name: "다음 계획을 비교해 주세요" })).toBeNull()

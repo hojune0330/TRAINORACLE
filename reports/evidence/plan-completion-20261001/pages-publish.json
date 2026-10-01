@@ -1,0 +1,91 @@
+{
+  "kind": "TRAINORACLE_PAGES_DEPLOYMENT",
+  "sourceSha": "da5ee9f8a78ae5e404bb4dbe7a855806126bd09f",
+  "previousPagesSha": "eb2e0a2a66ee3bedd3cc2109f0da4d9905cc4e9b",
+  "workflowRunId": null,
+  "workflowAttempt": null,
+  "deploymentMethod": "MANUAL_OWNER_APPROVED",
+  "deployedAt": "2026-10-01T05:37:03.446Z",
+  "verification": {
+    "sourceSha": "da5ee9f8a78ae5e404bb4dbe7a855806126bd09f",
+    "releaseMode": "OWNER_APPROVED_MANUAL_WITH_FOCUSED_CHECKS",
+    "appTypecheck": "PASS",
+    "browserTypecheck": "PASS",
+    "generatedValidators": {
+      "passed": 3
+    },
+    "serverFocused": {
+      "passed": 32,
+      "failed": 0
+    },
+    "isolatedPostgresConcurrency": {
+      "passed": 4,
+      "failed": 0
+    },
+    "browserFocused": {
+      "passed": 4,
+      "failed": 0,
+      "syntheticDataOnly": true,
+      "widths": [
+        320,
+        375,
+        1280
+      ]
+    },
+    "focusedTimeoutRerun": {
+      "passed": 4,
+      "failed": 0,
+      "notAFullSuiteRun": true
+    },
+    "productionSql": {
+      "migration": "0044_plan_successor_guard_binding.sql",
+      "appliedOnce": true,
+      "bodyMatches": true,
+      "collectionBodyMd5": "07078f77935c63f4231adf098a001a71",
+      "replanBodyMd5": "ae2b19af21e85b4eab109cd56eb17c6c",
+      "authenticatedExecute": true,
+      "anonExecute": false,
+      "serviceRoleExecute": false,
+      "athleteRowsReadOrWrittenByMigration": false
+    },
+    "edgeFunctions": {
+      "sourceSha": "da5ee9f8a78ae5e404bb4dbe7a855806126bd09f",
+      "deployed": [
+        "account-plan-collection",
+        "account-journal"
+      ],
+      "unauthenticatedBoth": "401 AUTH_REQUIRED; Cache-Control no-store",
+      "realAccountRoundtrip": "NOT_RUN"
+    },
+    "githubCi": {
+      "runId": 36819502373,
+      "lastObserved": "contract-tests PASS; app-quality IN_PROGRESS; app-browser NOT_STARTED",
+      "claimedPassed": false
+    }
+  },
+  "scope": "First detailed MAIN, explicit environment and segment inputs, actual-result next-cycle continuity, and current main integration",
+  "pagesSha": "32aaa96b6f126c15e61452791ee1eee4711f0a4a",
+  "artifactFileCount": 132,
+  "entryAssets": [
+    {
+      "file": "assets/index-BNXm5a1W.js",
+      "sha256": "9f1dbaad7845cea3080937567a144972421bfc559fe177cd18717125c455f90b"
+    },
+    {
+      "file": "assets/vendor-react-oS_qnrG8.js",
+      "sha256": "6db034d152bf39f5993bbef8a0108a9383ec641633c51b5e115ab3086fd4b922"
+    },
+    {
+      "file": "assets/vendor-validation-Ci-G08ww.js",
+      "sha256": "ebda8cbc13bc523c2f3d6e6b8a581c31a7a03cd26ac18a8caaeb50fac6b7862b"
+    },
+    {
+      "file": "assets/vendor-icons-DknHiEWL.js",
+      "sha256": "0193994ea34a451f0ef940e8a9800ac03768c5eba55bf2dda7828a53575b0470"
+    },
+    {
+      "file": "assets/index-DiPJ16Sj.css",
+      "sha256": "af34b432789dcc06cdf23856284fec868bd3402e67b92d195880322bcdbc718a"
+    }
+  ]
+}

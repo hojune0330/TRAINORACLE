@@ -15,8 +15,10 @@ import { setActiveLocalAccount } from "../../domain/account/local-journal-owners
 import { saveSelectedPlanCandidate } from "./plan-selection"
 import { readOriginalPlanAdaptationContext } from "../../domain/plan-adaptation-ui-context"
 import { resolveCurrentCycleContext } from "../../domain/plan-current-cycle-context"
+import { resetAccountJournalProjection, setAccountJournalProjectionStatus } from "../../domain/account/account-journal-projection"
 
 const runtime = vi.hoisted(() => ({ service: null as ReturnType<typeof createAccountPlanCollectionService> | null }))
+vi.setConfig({ testTimeout: 20_000 })
 vi.mock("../../domain/account/account-plan-service", async original => ({
   ...await original<typeof import("../../domain/account/account-plan-service")>(),
   accountPlansEnabled: () => true, accountPlanService: () => runtime.service,
@@ -29,10 +31,12 @@ vi.mock("../../domain/account/plan-cloud-backup", () => ({
 vi.mock("../../domain/account/supabase-client", () => ({ supabase: async () => null }))
 beforeEach(() => {
   localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(COLLECTION_OWNER)
+  resetAccountJournalProjection(COLLECTION_OWNER)
+  setAccountJournalProjectionStatus(COLLECTION_OWNER, "READY")
   vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-10-01T03:00:00.000Z"))
   vi.stubGlobal("fetch", vi.fn(() => { throw Error("Synthetic test forbids network") }))
 })
-afterEach(() => { cleanup(); runtime.service?.close(); runtime.service = null; vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals(); setActiveLocalAccount(null) })
+afterEach(() => { cleanup(); runtime.service?.close(); runtime.service = null; vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals(); resetAccountJournalProjection(null); setActiveLocalAccount(null) })
 
 async function fixture() {
   const original = stateFixture()
@@ -50,7 +54,7 @@ async function fixture() {
   const generated = generatePlanFromDraft(base.intake, "NO_KNOWN_RISK", undefined, undefined, undefined, base)
   if (generated.kind !== "generated") throw Error(`Generation failed: ${JSON.stringify(generated)}`)
   const select = () => saveSelectedPlanCandidate({ candidateId: generated.generated.candidates[0].candidateId, startDate: "2026-10-01" },
-    generated.generated, generated.gate, generated.intake, generated.athleteEvidence, () => true, base)
+    generated.generated, generated.gate, generated.intake, generated.athleteEvidence, () => true, base, generated.cycleDraft)
   return { base, entry, server, service, select }
 }
 

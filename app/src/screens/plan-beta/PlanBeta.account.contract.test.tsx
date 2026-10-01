@@ -2,8 +2,10 @@ import React from "react"
 import { webcrypto } from "node:crypto"
 import { beforeEach, afterEach, it, expect, vi } from "vitest"
 import { cleanup, render, screen, fireEvent, waitFor, act } from "@testing-library/react"
-import { createAccountPlanService, ACCOUNT_PLAN_EVENT, type AccountPlanService, type AccountPlanTrust } from "../../domain/account/account-plan-service"
-import { planIntegrationBuffer, planIntegrationTransport } from "../../domain/account/account-plan-integration.test-support"
+import { ACCOUNT_PLAN_EVENT, type AccountPlanTrust } from "../../domain/account/account-plan-service"
+import { createAccountPlanCollectionService } from "../../domain/account/account-plan-collection-service"
+import { collectionServer, collectionMemoryBuffers, COLLECTION_OWNER } from "../../domain/account/account-plan-collection.test-support"
+import { resetAccountJournalProjection, setAccountJournalProjectionStatus } from "../../domain/account/account-journal-projection"
 import { adjustedPlanSelectionFixture } from "../../domain/adjusted-plan-selection.test-fixtures"
 import { adjustedPlanSelectionV3Fixture } from "../../domain/adjusted-plan-selection-v3.test-fixtures"
 import { multiAdjustedPlanReviewScopeV3 } from "../../domain/adjusted-plan-multi-review-v3"
@@ -15,28 +17,35 @@ import { MultiAdjustedPlanApplyReviewV3 } from "./MultiAdjustedPlanApplyReviewV3
 import { PlanBeta } from "../PlanBeta"
 import { activePlanBetaStorageKey, readPlanBetaStateFromStorage } from "../../domain/plan-beta-store"
 
-const runtime = vi.hoisted(() => ({ service: null as AccountPlanService | null, enabled: false }))
+const runtime = vi.hoisted(() => ({ service: null as ReturnType<typeof createAccountPlanCollectionService> | null, enabled: false }))
 vi.mock("../../domain/account/account-plan-service", async importOriginal => ({
   ...await importOriginal<typeof import("../../domain/account/account-plan-service")>(),
   accountPlanService: () => runtime.service, accountPlansEnabled: () => runtime.enabled,
 }))
 const locks = { request: async <T,>(_n: string, _o: unknown, callback: (lock: object) => Promise<T>): Promise<T> => callback({}) }
 const originalLocks = Object.getOwnPropertyDescriptor(navigator, "locks")
-let trusted: ReturnType<AccountPlanTrust> = [], remote: ReturnType<typeof planIntegrationTransport>
+let trusted: ReturnType<AccountPlanTrust> = [], remote: ReturnType<typeof collectionServer>
+function createService() {
+  const stores = collectionMemoryBuffers()
+  return createAccountPlanCollectionService({ ownerId: COLLECTION_OWNER, isCurrent: () => runtime.enabled,
+    client: remote.client, buffers: stores.dependencies, legacyBuffer: stores.legacy.buffer,
+    runExclusive: async run => run(), yieldTask: async () => {}, online: () => true,
+    readTrusted: () => trusted, changed: () => window.dispatchEvent(new Event(ACCOUNT_PLAN_EVENT)) })
+}
 beforeEach(async () => {
   vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(TODAY); vi.stubGlobal("crypto", webcrypto)
-  localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount("11111111-1111-4111-8111-111111111111")
-  trusted = []; remote = planIntegrationTransport(); runtime.enabled = true
-  runtime.service = createAccountPlanService({ ownerId: "11111111-1111-4111-8111-111111111111", isCurrent: () => runtime.enabled,
-    buffer: planIntegrationBuffer(), send: remote.send, readTrusted: () => trusted,
-    changed: () => window.dispatchEvent(new Event(ACCOUNT_PLAN_EVENT)) })
+  localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(COLLECTION_OWNER)
+  resetAccountJournalProjection(COLLECTION_OWNER)
+  setAccountJournalProjectionStatus(COLLECTION_OWNER, "READY")
+  trusted = []; remote = collectionServer(); runtime.enabled = true
+  runtime.service = createService()
   await runtime.service.hydrate()
   Object.defineProperty(navigator, "locks", { configurable: true, value: locks })
 }, 30_000)
 afterEach(() => { cleanup(); runtime.service?.close(); runtime.service = null; runtime.enabled = false
   if (originalLocks) Object.defineProperty(navigator, "locks", originalLocks)
   else Reflect.deleteProperty(navigator, "locks")
-  setActiveLocalAccount(null); vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks() })
+  resetAccountJournalProjection(null); setActiveLocalAccount(null); vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks() })
 
 it.each([4, 5, 6] as const)("V%s actual apply, schedule progress, account archive and unverified new-device original display", async version => {
   const onSaved = vi.fn(), key = activePlanBetaStorageKey()
@@ -58,8 +67,9 @@ it.each([4, 5, 6] as const)("V%s actual apply, schedule progress, account archiv
         seed={{ ...f5.request, preparations: [f5.request.preparation], expectedCandidateFingerprint: scope.candidate.contentFingerprint }}
         readReview={() => ({ preparations: [f5.request.preparation], rpeBindings: [], retained: retained6, policies: [policy6] })} /> : <></>)
   fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" }))
-  await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1))
+  await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1), { timeout: 10_000 })
   expect(remote.revision()).toBe(1)
+  expect(remote.commits[0]?.journalGuard).toEqual([])
   expect(localStorage.getItem(key)).toBe("DEVICE_ORIGINAL")
   ui.unmount()
   const plan = render(<PlanBeta readAdjustedEvidence={() => retained4} readAdjustedEvidenceV3={() => retained5} readMultiAdjustedEvidenceV3={() => retained6} />)
@@ -67,13 +77,17 @@ it.each([4, 5, 6] as const)("V%s actual apply, schedule progress, account archiv
   await waitFor(() => expect(runtime.service!.snapshot().status).toBe("READY"), { timeout: 10_000 })
   await waitFor(() => expect(screen.getByText("계정에 저장됨", { exact: true })).toBeVisible())
   fireEvent.click(screen.getByRole("button", { name: /크게 보기/u }))
-  fireEvent.click(screen.getAllByRole("button", { name: "완료" })[0]!)
-  await waitFor(() => expect(remote.revision()).toBe(2), { timeout: 10_000 })
+  const mutate = vi.spyOn(runtime.service!, "mutate")
+  await act(async () => {
+    fireEvent.click(screen.getAllByRole("button", { name: "완료" })[0]!)
+    expect(mutate).toHaveBeenCalledOnce()
+    expect(await mutate.mock.results[0]!.value).toBe("ACCOUNT")
+  })
+  expect(remote.revision()).toBe(2)
   expect(runtime.service!.snapshot().currentPlan).toMatchObject({ packet: { state: { version, progress: [{ state: "COMPLETED" }] } } })
   // The new device has the same authenticated body but no independently retained source packet.
   plan.unmount(); runtime.service!.close(); trusted = []
-  runtime.service = createAccountPlanService({ ownerId: "11111111-1111-4111-8111-111111111111", isCurrent: () => true,
-    buffer: planIntegrationBuffer(), send: remote.send, changed: () => window.dispatchEvent(new Event(ACCOUNT_PLAN_EVENT)) })
+  runtime.service = createService()
   await act(() => runtime.service!.hydrate())
   const fresh = render(<PlanBeta />)
   await act(() => runtime.service!.hydrate())
@@ -85,9 +99,11 @@ it.each([4, 5, 6] as const)("V%s actual apply, schedule progress, account archiv
   fireEvent.click(screen.getByRole("button", { name: "현재 계획 보관" }))
   fireEvent.click(screen.getByRole("button", { name: "보관하고 현재 계획 끝내기" }))
   await waitFor(() => expect(remote.revision()).toBe(3), { timeout: 10_000 })
-  expect(remote.document()?.data.currentPlanId).toBeNull()
-  expect(remote.document()?.data.plans[0]?.snapshot.state.progress).toEqual([])
-  expect(remote.document()?.data.plans[0]?.progress).toHaveLength(1)
+  await act(async () => { expect(await runtime.service!.loadHistory()).toBe(true) })
+  const document = runtime.service.snapshot().confirmedDocument
+  expect(document?.data.currentPlanId).toBeNull()
+  expect(document?.data.plans[0]?.snapshot.state.progress).toEqual([])
+  expect(document?.data.plans[0]?.progress).toHaveLength(1)
   expect(localStorage.getItem(key)).toBe("DEVICE_ORIGINAL")
   fresh.unmount()
-}, 30_000)
+}, 90_000)

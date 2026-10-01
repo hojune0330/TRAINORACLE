@@ -5,7 +5,10 @@ vi.mock("./domain/account/auth", () => ({ currentUser: mocks.current, onAuthChan
 vi.mock("./domain/account/config", () => ({ accountFeatureEnabled: () => true }))
 vi.mock("./domain/account/product-analytics-service", () => ({ trackProductEvent: vi.fn() }))
 vi.mock("./domain/account/account-reward-client", () => ({ requestAccountRewards: mocks.reward }))
-vi.mock("./domain/plan-beta-store", () => ({ readPlanBetaStateFromStorage: () => ({ kind: "missing" }) }))
+vi.mock("./domain/plan-beta-store", () => ({
+  readPlanBetaStateFromStorage: () => ({ kind: "missing" }),
+  readArchivedOriginalPlans: () => ({ kind: "loaded", plans: [] }),
+}))
 import { AppShell } from "./AppShell"
 import { accountAuthState, setAccountAuthState } from "./domain/account/account-auth-state"
 import { activeLocalAccount, setActiveLocalAccount } from "./domain/account/local-journal-ownership"
