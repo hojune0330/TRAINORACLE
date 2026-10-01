@@ -53,6 +53,7 @@ import { MultiPlanEvidenceContext } from "./components/MultiPlanEvidenceContext"
 import { AppOverlayNavigationProvider } from "./components/AppOverlayNavigation"
 import { isTermId, type TermId } from "./domain/glossary"
 import { isOracleTopicId, type OracleTopicId } from "./domain/oracle-exploration"
+import { isReadingStage, type ReadingStage } from "./domain/record-reading-oracle"
 const JOURNAL_REWARD_MESSAGE = {
   AWARDED: "기록한 날 +4P가 반영됐어요.",
   ALREADY_AWARDED: "오늘의 다른 기록도 함께 모였어요. 이 날짜의 4P는 이미 반영돼 있어요.",
@@ -66,6 +67,7 @@ const TOAST_EXIT_MS = 150
 const OVERLAY_HISTORY_KEY = "trainoracleOverlay"
 
 type AppOverlay =
+  | { readonly kind: "record-reading"; readonly stage: ReadingStage }
   | { readonly kind: "term"; readonly term: TermId }
   | { readonly kind: "feedback" }
   | { readonly kind: "oracle"; readonly topic: OracleTopicId; readonly mode?: "example" | "personal"; readonly scrollTop?: number }
@@ -89,6 +91,7 @@ function overlayHistoryMarker(state: unknown, owner: string): AppOverlay | null 
   const value = marker as Record<string, unknown>
   if (value.version !== 1 || value.owner !== owner) return null
   if (value.kind === "feedback") return { kind: "feedback" }
+  if (value.kind === "record-reading" && isReadingStage(value.stage)) return { kind: "record-reading", stage: value.stage }
   if (value.kind === "oracle" && isOracleTopicId(value.topic)) return {
     kind: "oracle", topic: value.topic,
     ...(value.mode === "example" || value.mode === "personal" ? { mode: value.mode } : {}),
@@ -172,7 +175,9 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       && overlayRef.current.term !== next.term
     const addsOracleHistory = overlayRef.current?.kind === "oracle"
       && next.kind === "oracle" && overlayRef.current.topic !== next.topic
-    const method = overlayRef.current === null || addsTermHistory || addsOracleHistory ? "pushState" : "replaceState"
+    const addsReadingHistory = overlayRef.current?.kind === "record-reading"
+      && next.kind === "record-reading" && overlayRef.current.stage !== next.stage
+    const method = overlayRef.current === null || addsTermHistory || addsOracleHistory || addsReadingHistory ? "pushState" : "replaceState"
     if (addsOracleHistory && overlayRef.current?.kind === "oracle") {
       window.history.replaceState({ ...currentState, [OVERLAY_HISTORY_KEY]: {
         ...overlayRef.current, owner: overlayHistoryOwnerRef.current, version: 1,
@@ -393,7 +398,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     // Leaving the exploration invalidates its older history entries too.
     // Otherwise Back could reopen a sample over a different destination tab.
     overlayHistoryOwnerRef.current = `shell-${Date.now()}-${Math.random().toString(36).slice(2)}`
-    if (overlayRef.current?.kind !== "oracle") return
+    if (overlayRef.current?.kind !== "oracle" && overlayRef.current?.kind !== "record-reading") return
     const currentState = window.history.state
     if (typeof currentState === "object" && currentState !== null) {
       const { [OVERLAY_HISTORY_KEY]: _marker, ...rest } = currentState as Record<string, unknown>
@@ -754,6 +759,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         onWriteLog={() => goTab("log")}
         onOpenPlan={() => goTab("plan")}
         onOpenOracle={openOracle}
+        onOpenRecordReading={() => openOverlay({ kind: "record-reading", stage: "own-event" })}
       />
     )
   }
@@ -800,6 +806,19 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         {overlay?.kind === "feedback" && (
           <div className="app-flow-stage" data-motion="push" data-overlay="feedback">
             <DeferredMobileScreens.FeedbackBoard onBack={closeOverlay} />
+          </div>
+        )}
+        {overlay?.kind === "record-reading" && (
+          <div className="app-flow-stage" data-overlay="record-reading">
+            <DeferredMobileScreens.RecordReadingOracle
+              key={`record-reading-${accountScopeRevision}`}
+              stage={overlay.stage}
+              today={todayISO()}
+              onStageChange={stage => openOverlay({ kind: "record-reading", stage })}
+              onBack={closeOverlay}
+              onClose={dismissOracle}
+              onOpenPlan={() => goTab("plan")}
+            />
           </div>
         )}
         {overlay?.kind === "oracle" && (

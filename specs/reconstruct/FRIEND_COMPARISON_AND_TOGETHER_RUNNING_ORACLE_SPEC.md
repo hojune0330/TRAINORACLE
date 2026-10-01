@@ -72,4 +72,12 @@ language, and zero raw-text or sensitive-field storage.
 | `OI-FRIEND-GROUP-001` | NO | OPEN | Separate consent and deletion contract before group comparison. |
 | `OI-FRIEND-EFFECT-001` | NO | OPEN | No causal claim until prospective evidence exists. |
 
+## Scoped owner amendment: 2026-10-01
+
+[Record reading Oracle](RECORD_READING_ORACLE_CONTRACT.md) adds an ephemeral,
+explicitly consented manual comparison. It reads no public profile or account and
+publishes no comparison row, so profile publication is not its prerequisite.
+The account-sharing and withdrawal rules above remain unchanged. Same-event facts
+and together-running principles are reused without scores, ranking, or plan writes.
+
 [DRAFT_COMPLETE]

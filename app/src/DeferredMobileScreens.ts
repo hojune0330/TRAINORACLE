@@ -6,6 +6,7 @@ export const DeferredMobileScreens = {
   JournalDayReader: React.lazy(() => import("./screens/JournalDayReader").then(module => ({ default: module.JournalDayReader }))),
   Trends: React.lazy(() => import("./screens/Trends").then(module => ({ default: module.Trends }))),
   OracleExplore: React.lazy(() => import("./screens/OracleExplore").then(module => ({ default: module.OracleExplore }))),
+  RecordReadingOracle: React.lazy(() => import("./screens/RecordReadingOracle").then(module => ({ default: module.RecordReadingOracle }))),
   Guide: React.lazy(() => import("./screens/Guide").then(module => ({ default: module.Guide }))),
   PlanBeta: React.lazy(() => import("./screens/PlanBeta").then(module => ({ default: module.PlanBeta }))),
   PlanProposalInbox: React.lazy(() => import("./screens/plan-beta/PlanProposalInbox").then(module => ({ default: module.PlanProposalInbox }))),

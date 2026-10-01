@@ -1,5 +1,5 @@
 import React from "react"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, ArrowRight } from "lucide-react"
 import { projectStructuredJournalObservations } from "../domain/journal-observation"
 import { analysisExclusionSummary, loadEntries, todayISO } from "../domain/journal-store"
 import { MonthlyTrendSection } from "./trends/MonthlyTrendSection"
@@ -30,11 +30,12 @@ const ANALYSIS_SECTIONS = [
   { id: "files", label: "파일 분석" },
 ] as const
 
-export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, initialContext }: {
+export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRecordReading, initialContext }: {
   readonly onBack?: (() => void) | undefined
   readonly onWriteLog?: (() => void) | undefined
   readonly onOpenPlan?: (() => void) | undefined
   readonly onOpenOracle?: ((topic: OracleTopicId) => void) | undefined
+  readonly onOpenRecordReading?: (() => void) | undefined
   readonly initialContext?: AnalysisNavigation | undefined
 }) {
   const [section, setSection] = React.useState<AnalysisSection>(initialContext?.section ?? "summary")
@@ -117,15 +118,22 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, initialCo
             )}
           </>
         )}
+        {section === "summary" && onOpenRecordReading && <section className="trends-record-reading">
+          <div><p>나의 러닝 풀이 · 친구와 러닝 궁합</p><h2>최고기록에 담긴 이야기를 읽어요</h2></div>
+          <button type="button" onClick={onOpenRecordReading}>최고기록으로 풀이하기<ArrowRight size={18} aria-hidden="true" /></button>
+        </section>}
         {section === "summary" && isEmpty && (
           <>
             <div style={{ padding: "0 20px" }}>
-              <GuidedEmptyState
+              {onOpenRecordReading ? <div className="trends-record-reading__journal">
+                <p>훈련 일지도 남기면 계획과 실제 느낌을 함께 볼 수 있어요.</p>
+                <button type="button" onClick={onWriteLog}>{entries.length > 0 ? "기록 더 남기기" : "첫 기록 남기기"}<ArrowRight size={16} aria-hidden="true" /></button>
+              </div> : <GuidedEmptyState
                 title={entries.length > 0 ? "분석 가능한 기록이 아직 없어요" : "분석할 기록이 아직 없어요"}
                 description={<>거리·시간·RPE<TermHelp term="rpe" />가 있는 기록이 필요해요.</>}
                 actionLabel={entries.length > 0 ? "기록 더 남기기" : "첫 기록 남기기"}
                 onAction={onWriteLog}
-              />
+              />}
               <InfoDisclosure title="어떤 기록을 분석하나요?">
                 <PersonalOraclePanel observations={observations} today={today} planState={planState} />
               </InfoDisclosure>
