@@ -38,9 +38,9 @@ test("offers a rest-day path without pressuring the athlete to log more", async 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
   await expect(page.getByRole("button", { name: /회복 · 하루 마무리.*수면·기분·몸 상태/u })).toBeVisible()
 
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클" }).click()
   const distance = page.getByRole("region", { name: "누적 거리와 변화" })
-  await page.getByRole("group", { name: "내 기록 분석 항목" }).getByRole("button", { name: "훈련량", exact: true }).click()
+  await page.getByRole("group", { name: "오라클 항목" }).getByRole("button", { name: "훈련량", exact: true }).click()
   await expect(distance.getByLabel(/이번 주, 집계 가능한 거리 기록 없음/u)).toBeVisible()
   await expect(distance.getByText(/집계 기준에 맞지 않아 제외한 기록 1건/u).first()).toBeVisible()
   await page.locator("summary", { hasText: "분석 기준" }).click()

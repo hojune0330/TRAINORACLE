@@ -32,7 +32,7 @@ test("keeps decoration and oracle motion brief, directional, and optional", asyn
   await page.goto("/?app=1&uitest=1")
 
   const mainTabs = page.getByRole("navigation", { name: "주 탭" })
-  await mainTabs.getByRole("button", { name: "분석" }).click()
+  await mainTabs.getByRole("button", { name: "오라클" }).click()
   const oracle = page.getByRole("region", { name: "내 훈련 요약" })
   await expect(oracle).toBeVisible()
 

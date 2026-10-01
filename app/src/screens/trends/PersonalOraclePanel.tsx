@@ -25,7 +25,7 @@ export function PersonalOraclePanel({
       <header className="personal-oracle__header">
         <div className="personal-oracle__mark" aria-hidden="true"><Sparkles size={18} /></div>
         <div>
-          <span className="personal-oracle__eyebrow">내 기록 분석</span>
+          <span className="personal-oracle__eyebrow">오라클</span>
           <h2 id="personal-oracle-title">내 훈련 요약</h2>
         </div>
         <span className="personal-oracle__status">{MATURITY_LABEL[oracle.maturity]}</span>

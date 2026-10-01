@@ -81,7 +81,7 @@ describe("home hub destinations and information", () => {
     expect(screen.getByRole("button", { name: "오늘 기록하기" })).toBeVisible()
     expect(screen.getByRole("button", { name: "하루 마무리 기록하기" })).toBeVisible()
     expect(screen.getByRole("button", { name: /훈련 계획 만들기/ })).toBeVisible()
-    const analysis = screen.getByRole("button", { name: /훈련 분석 보기/ })
+    const analysis = screen.getByRole("button", { name: /훈련 기록 살펴보기/ })
     const recent = screen.getByRole("region", { name: "최근 하루 기록" })
     expect(recent.compareDocumentPosition(analysis) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     fireEvent.click(screen.getByRole("button", { name: "훈련 배우기" }))

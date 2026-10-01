@@ -17,7 +17,7 @@ for (const width of [320, 375]) {
   test(`shows the primary action and plan entry without requiring a fixed first viewport at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: width === 320 ? 568 : 667 })
     await page.evaluate(() => document.fonts.ready)
-    await expect(page.getByRole("button", { name: "분석 결과 먼저 보기", exact: true })).toBeInViewport({ ratio: 1 })
+    await expect(page.getByRole("button", { name: "예시 결과 보기", exact: true })).toBeInViewport({ ratio: 1 })
     for (const name of ["오늘 기록 남기기", "훈련 계획 만들기"]) {
       const button = page.getByRole("button", { name, exact: true })
       await button.scrollIntoViewIfNeeded()
@@ -54,8 +54,8 @@ for (const width of [320, 375]) {
 
 test("keeps empty analysis focused and opens examples and help with the keyboard", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 375, height: 667 })
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석", exact: true }).click()
-  const exploration = page.getByRole("region", { name: "어떤 분석이 궁금하세요?" })
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클", exact: true }).click()
+  const exploration = page.getByRole("region", { name: "어떤 훈련 정보가 궁금하세요?" })
   const record = page.getByRole("button", { name: "첫 기록 남기기", exact: true })
   await expect(record).toBeInViewport({ ratio: 1 })
   const examples = page.locator("summary", { hasText: "예시로 먼저 둘러보기" })
@@ -128,7 +128,7 @@ test("wraps text at double size without horizontal clipping and respects reduced
     expect(await button.evaluate(el => el.scrollWidth <= el.clientWidth && el.scrollHeight <= el.clientHeight)).toBe(true)
   }
   await page.screenshot({ path: testInfo.outputPath("home-double-text.png") })
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석", exact: true }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클", exact: true }).click()
   const summary = page.locator("summary", { hasText: "어떤 기록을 분석하나요?" })
   await expect(summary.locator(".info-disclosure__chevron")).toHaveCSS("transition-property", "none")
 })

@@ -225,7 +225,7 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
       </div>
       <div style={{ ...mono, fontSize: 10, color: "var(--ink-4)", lineHeight: 1.65 }}>
         기존 일지를 보완하면 RPE<TermHelp term="rpe" />와 메모는 계속 수정할 수 있어요.
-        {analysisEnabled ? "파일 기록은 분석에서 정정할 수 있어요. " : "새 일지로 가져온 활동은 현재 읽기 전용이에요. "}
+        {analysisEnabled ? "파일 기록은 오라클의 파일 분석에서 수정할 수 있어요. " : "새 일지로 가져온 활동은 현재 읽기 전용이에요. "}
         {analysisEnabled
           ? "계정에 저장된 달리기 거리는 누적 거리에 포함해요. 시간과 페이스는 시간의 뜻을 확인한 항목끼리만 비교해요. 이 파일만으로 개인 최고기록이나 훈련 강도를 바꾸지는 않아요."
           : <>가져온 숫자는 <b>주간 통계·추이·훈련계획에는 들어가지 않아요</b> (직접 확인한 값만 분석에 쓰는 원칙).</>}

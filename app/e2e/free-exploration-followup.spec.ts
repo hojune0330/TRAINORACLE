@@ -64,14 +64,14 @@ test("does not ask to discard a blank or successfully saved guest journal", asyn
 })
 
 test("keeps personal mode when another analysis topic has no personal evidence", async ({ page }) => {
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "분석", exact: true }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클", exact: true }).click()
   await page.locator("summary", { hasText: "예시로 먼저 둘러보기" }).click()
-  await page.getByRole("region", { name: "어떤 분석이 궁금하세요?" }).getByRole("button").first().click()
+  await page.getByRole("region", { name: "어떤 훈련 정보가 궁금하세요?" }).getByRole("button").first().click()
   await page.getByRole("button", { name: "내 기록", exact: true }).click()
   await page.getByRole("button", { name: /이어서 살펴보기/ }).click()
   await expect(page.getByRole("button", { name: "내 기록", exact: true })).toHaveAttribute("aria-pressed", "true")
   await expect(page.locator(".oracle-explore__example-label")).toHaveCount(0)
-  await page.getByRole("combobox", { name: "분석 주제" }).selectOption("level")
+  await page.getByRole("combobox", { name: "살펴볼 주제" }).selectOption("level")
   await expect(page.getByRole("button", { name: "내 기록", exact: true })).toHaveAttribute("aria-pressed", "true")
   await expect(page.locator(".oracle-explore__example-label")).toHaveCount(0)
 })

@@ -19,7 +19,7 @@ describe("OracleReturnPanel contract", () => {
     store.enableOptIn()
     store.saveInterest("level")
     render(<OracleReturnPanel compact onOpenTopic={vi.fn()} />)
-    expect(screen.getByTestId("oracle-return-panel")).toHaveTextContent("저장한 분석")
+    expect(screen.getByTestId("oracle-return-panel")).toHaveTextContent("저장한 주제")
     expect(screen.queryByText("기록할 요일")).toBeNull()
     expect(screen.queryByRole("button", { name: /일지 저장|계획 확인|휴식 기록/ })).toBeNull()
   })

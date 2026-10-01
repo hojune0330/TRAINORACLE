@@ -29,7 +29,7 @@ const TAB_ITEMS: readonly TabItem[] = [
   { id: "journal", label: "일지", icon: BookOpen },
   { id: "log", label: "기록하기", icon: Plus },
   { id: "plan", label: "계획", icon: CalendarDays },
-  { id: "trends", label: "분석", icon: TrendingUp },
+  { id: "trends", label: "오라클", icon: TrendingUp },
 ] as const
 
 const APP_SHELL_TAB_BAR_HEIGHT = "--app-shell-tab-bar-height"

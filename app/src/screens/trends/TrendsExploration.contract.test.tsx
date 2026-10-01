@@ -90,12 +90,16 @@ describe("Trends exploration hub", () => {
     const onOpenOracle = vi.fn<(topic: OracleTopicId) => void>()
     render(<Trends onOpenOracle={onOpenOracle} />)
 
-    const topicButtons = screen.getAllByRole("button", { name: /분석 열기/u })
+    expect(screen.getByRole("heading", { name: "오라클", level: 1 })).toBeVisible()
+    expect(screen.getByRole("group", { name: "오라클 항목" })).toBeVisible()
+    expect(screen.getByText("확인된 기록만 분석해요. 개인 메모는 읽지 않아요.")).toBeInTheDocument()
+
+    const topicButtons = screen.getAllByRole("button", { name: /결과 보기/u })
     expect(topicButtons).toHaveLength(ORACLE_TOPICS.length)
 
     for (const topic of ORACLE_TOPICS) {
       await user.click(screen.getByRole("button", {
-        name: `${topic.title} · ${topic.question} · 분석 열기`,
+        name: `${topic.title} · ${topic.question} · 결과 보기`,
       }))
     }
 

@@ -96,7 +96,7 @@ test("counts an imported journal without treating its numbers as analysis eviden
   await expect(page.getByTestId("imported-chip").first()).toBeVisible()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "홈", exact: true }).click()
   await expect(page.getByRole("button", { name: /기록 1개 보기/u })).toContainText("가져온 기록 포함")
-  await page.getByRole("button", { name: "훈련 분석 보기", exact: true }).click()
+  await page.getByRole("button", { name: "훈련 기록 살펴보기", exact: true }).click()
   await expect(page.getByTestId("trends-analysis-exclusion").locator("summary")).toContainText("가져온 기록 1개")
   await page.getByTestId("trends-analysis-exclusion").locator("summary").click()
   await expect(page.getByTestId("trends-excluded-imported")).toContainText("외부 수치는 아직 분석에 넣지 않았어요")

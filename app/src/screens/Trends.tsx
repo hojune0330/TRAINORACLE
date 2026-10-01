@@ -81,7 +81,7 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, initialCo
     <div style={{ paddingBottom: 30 }}>
       <TrendsHeader onBack={onBack} />
       <div className="trends-motion-stage">
-        <div className="trends-hub__sections" role="group" aria-label="내 기록 분석 항목">
+        <div className="trends-hub__sections" role="group" aria-label="오라클 항목">
           {ANALYSIS_SECTIONS.map(item => (
             <button key={item.id} type="button" aria-pressed={section === item.id}
               onClick={() => setSection(item.id)}>{item.label}</button>
@@ -130,7 +130,7 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, initialCo
                 <PersonalOraclePanel observations={observations} today={today} planState={planState} />
               </InfoDisclosure>
               {onOpenOracle && <InfoDisclosure title="예시로 먼저 둘러보기">
-                <OracleTopicGrid onSelectTopic={onOpenOracle} title="어떤 분석이 궁금하세요?" compact />
+                <OracleTopicGrid onSelectTopic={onOpenOracle} title="어떤 훈련 정보가 궁금하세요?" compact />
               </InfoDisclosure>}
             </div>
           </>
@@ -139,7 +139,7 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, initialCo
           <>
             <PersonalOraclePanel observations={observations} today={today} planState={planState} />
             {onOpenOracle && <div className="trends-hub__explore">
-              <OracleTopicGrid onSelectTopic={onOpenOracle} title="다른 분석 둘러보기" compact />
+              <OracleTopicGrid onSelectTopic={onOpenOracle} title="다른 주제 살펴보기" compact />
             </div>}
           </>
         )}
@@ -253,7 +253,7 @@ function TrendsHeader({ onBack }: { readonly onBack?: (() => void) | undefined }
         color: "var(--ink)",
         textAlign: "center",
         margin: 0,
-      }}>분석</h1>
+      }}>오라클</h1>
       <div aria-hidden="true" />
     </div>
   )

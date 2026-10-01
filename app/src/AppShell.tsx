@@ -697,7 +697,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       <DeferredMobileScreens.AthleteRecords
         onBack={returnToOracleAfterRecord}
         onSaved={oracleInputRef.current ? returnToOracleAfterRecord : undefined}
-        backLabel={oracleInputRef.current ? "분석으로" : "계획으로"}
+        backLabel={oracleInputRef.current ? "오라클로" : "계획으로"}
       />
     ) : (
       <>

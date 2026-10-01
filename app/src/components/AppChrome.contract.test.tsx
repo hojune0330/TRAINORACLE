@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { SavedToast, TabBar } from "./AppChrome"
 
@@ -8,6 +8,18 @@ afterEach(() => vi.useRealTimers())
 beforeEach(() => vi.useFakeTimers())
 
 describe("AppChrome tab labels", () => {
+  it("brands the existing analysis route as Oracle without renaming the plan action", () => {
+    const onTab = vi.fn()
+    render(<TabBar tab="trends" onTab={onTab} />)
+    const tabBar = screen.getByRole("navigation", { name: "주 탭" })
+    const oracle = within(tabBar).getByRole("button", { name: "오라클" })
+    expect(oracle).toHaveAttribute("aria-current", "page")
+    expect(within(tabBar).queryByRole("button", { name: "분석" })).not.toBeInTheDocument()
+    expect(within(tabBar).getByRole("button", { name: "계획" })).toBeVisible()
+    fireEvent.click(oracle)
+    expect(onTab).toHaveBeenCalledWith("trends")
+  })
+
   it("distinguishes the race-record tab from the journal tab", () => {
     render(<TabBar tab="home" onTab={() => undefined} />)
 

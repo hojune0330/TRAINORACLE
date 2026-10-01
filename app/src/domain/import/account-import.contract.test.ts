@@ -296,11 +296,11 @@ describe("explicit file identity choices", () => {
       intents: new Map<number, ImportSaveIntent>([[0, { kind: "SAVE_SEPARATE" }]]),
       onIntent: vi.fn(), onToggle: vi.fn(), onSave: vi.fn(), onRestart: vi.fn() }
     const view = render(createElement(ReviewStage, props))
-    expect(screen.getByText(/파일 기록은 분석에서 정정할 수 있어요/u)).toBeInTheDocument()
+    expect(screen.getByText(/파일 기록은 오라클의 파일 분석에서 수정할 수 있어요/u)).toBeInTheDocument()
     expect(screen.queryByText(/현재 읽기 전용이에요/u)).not.toBeInTheDocument()
     vi.stubEnv("VITE_FEATURE_FILE_ANALYSIS_TCX", "false")
     view.rerender(createElement(ReviewStage, props))
-    expect(screen.queryByText(/파일 기록은 분석에서 정정할 수 있어요/u)).not.toBeInTheDocument()
+    expect(screen.queryByText(/파일 기록은 오라클의 파일 분석에서 수정할 수 있어요/u)).not.toBeInTheDocument()
     expect(screen.getByText(/현재 읽기 전용이에요/u)).toBeInTheDocument()
   })
 })

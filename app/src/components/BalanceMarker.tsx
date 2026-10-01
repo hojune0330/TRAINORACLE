@@ -71,7 +71,7 @@ export function BalanceMarker({ hint }: { hint: BalanceHintData | null }) {
           fontFamily: "var(--mono)", fontSize: 9, lineHeight: 1.5,
           color: "var(--ink-3)", letterSpacing: "0.03em", whiteSpace: "normal",
         }}>
-          자세한 건 분석 탭에서 · 참고용이에요 — 훈련 판단은 코치와 함께
+          자세한 건 오라클 탭에서 · 참고용이에요 — 훈련 판단은 코치와 함께
         </div>
       </PopCard>
     </span>

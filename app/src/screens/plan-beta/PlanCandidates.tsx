@@ -223,6 +223,7 @@ export function PlanCandidates({
 
   return (
     <section ref={resultRef} className="plan-candidates" aria-labelledby="plan-candidates-title">
+      <p className="plan-eyebrow">오라클 · 훈련 계획</p>
       <div className="plan-result-header">
       <button className="plan-back" type="button" onClick={onBack} disabled={!canRevise || initialMainPending} aria-label="질문 다시 보기" title="질문 다시 보기">
         <ArrowLeft aria-hidden="true" size={17} />

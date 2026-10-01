@@ -192,6 +192,7 @@ export function ActivePlan({
           </span>
         </div>
       )}
+      <p className="plan-eyebrow">오라클 · 훈련 계획</p>
       <div className="active-plan__edit-heading">
         <h1 id="active-plan-title">{frameLengthDays}일 훈련 계획</h1>
         {onEditPlan && <button type="button" className="plan-text-action" data-plan-edit-button onClick={onEditPlan}><Pencil aria-hidden="true" size={16} />계획 수정</button>}

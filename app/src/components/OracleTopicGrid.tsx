@@ -12,7 +12,7 @@ const topicIcons: Record<OracleTopicId, LucideIcon> = {
   change: ScanLine,
 }
 
-export function OracleTopicGrid({ onSelectTopic, compact = false, title = "훈련 분석" }: {
+export function OracleTopicGrid({ onSelectTopic, compact = false, title = "오라클" }: {
   readonly onSelectTopic: (id: OracleTopicId) => void
   readonly compact?: boolean
   readonly title?: string
@@ -32,7 +32,7 @@ export function OracleTopicGrid({ onSelectTopic, compact = false, title = "훈�
           type="button"
           className="oracle-topic-grid__tile"
           onClick={() => onSelectTopic(topic.id)}
-          aria-label={`${topic.title} · ${topic.question} · 분석 열기`}
+          aria-label={`${topic.title} · ${topic.question} · 결과 보기`}
         >
           <span className="oracle-topic-grid__tile-top" aria-hidden="true">
             <Icon size={20} />

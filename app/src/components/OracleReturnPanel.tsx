@@ -102,8 +102,8 @@ export function OracleReturnPanel({ currentFingerprints = {}, onOpenTopic, compa
   return <section className={`oracle-return-panel${compact ? " oracle-return-panel--compact" : ""}`} data-testid="oracle-return-panel" aria-labelledby="oracle-return-heading">
     <div className="oracle-return-panel__heading">
       <div>
-        <h2 id="oracle-return-heading">{compact ? "저장한 분석" : "관심 주제 이어보기"}</h2>
-        {!compact && <p className="oracle-return-panel__muted">저장한 주제에 실제 분석 자료가 바뀐 경우에만 새 표시가 나타납니다.</p>}
+        <h2 id="oracle-return-heading">{compact ? "저장한 주제" : "관심 주제 이어보기"}</h2>
+        {!compact && <p className="oracle-return-panel__muted">저장한 주제의 근거 자료가 바뀌면 새 표시가 나타나요.</p>}
       </div>
       <Bookmark size={18} aria-hidden="true" />
     </div>

@@ -48,14 +48,14 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
       <button type="button" className="oracle-explore__back" onClick={onBack} aria-label="이전 화면으로 돌아가기">
         <ArrowLeft size={20} aria-hidden="true" />
       </button>
-      <span>훈련 분석</span>
+      <span>오라클</span>
       <span className="oracle-explore__header-note">탐색</span>
     </header>
 
     <div className="oracle-explore__body">
       <div className={personalResult ? "oracle-explore__controls" : undefined}>
       <div className="oracle-explore__picker">
-        <label htmlFor={selectId}>분석 주제</label>
+        <label htmlFor={selectId}>살펴볼 주제</label>
         <div className="oracle-explore__select-wrap">
           <select id={selectId} value={topicId} onChange={event => {
             const selectedTopic = ORACLE_TOPICS.find(item => item.id === event.target.value)

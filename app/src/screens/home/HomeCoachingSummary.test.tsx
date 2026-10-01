@@ -49,7 +49,7 @@ it("keeps recording and coaching before the six analysis topics", () => {
   const explore = screen.getByRole("heading", { name: "더 살펴보기" })
   expect(write.compareDocumentPosition(coaching) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   expect(coaching.compareDocumentPosition(explore) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-  expect(screen.getAllByRole("button", { name: /분석 열기$/ })).toHaveLength(6)
+  expect(screen.getAllByRole("button", { name: /결과 보기$/ })).toHaveLength(6)
   expect(screen.queryByText("내 훈련, 무엇부터 개선할까요?")).toBeNull()
 })
 

@@ -47,9 +47,9 @@ it("restores personal mode after next topic and browser back", async () => {
   render(<AppShell />)
   await user.click(screen.getByRole("button",{name:"Open review topic"}))
   await user.click(screen.getByRole("button",{name:"내 기록"}))
-  await user.selectOptions(screen.getByRole("combobox",{name:"분석 주제"}),"change")
+  await user.selectOptions(screen.getByRole("combobox",{name:"살펴볼 주제"}),"change")
   act(() => window.history.back())
-  await waitFor(() => expect(screen.getByRole("combobox",{name:"분석 주제"})).toHaveValue("compare"))
+  await waitFor(() => expect(screen.getByRole("combobox",{name:"살펴볼 주제"})).toHaveValue("compare"))
   expect(screen.getByRole("button",{name:"내 기록"})).toHaveAttribute("aria-pressed","true")
 })
 

@@ -62,10 +62,10 @@ export function TrainingHome({
       {safetyNotice}
 
       {coaching ? <section className="home-hub__intro" aria-labelledby="home-hub-title"><h1 id="home-hub-title">{model.homeMode === "WELCOME" ? "오늘 운동을 기록해요" : model.homeMode === "TRAINING" ? "오늘의 훈련" : "내 기록"}</h1></section> : <section className="home-hub__intro" aria-labelledby="home-hub-title">
-        <p className="home-hub__eyebrow">{onOpenOracle ? "훈련 분석" : model.homeMode === "WELCOME" ? "처음 기록하기" : model.homeMode === "TRAINING" ? "오늘 할 일" : "최근 기록"}</p>
+        <p className="home-hub__eyebrow">{onOpenOracle ? "오라클" : model.homeMode === "WELCOME" ? "처음 기록하기" : model.homeMode === "TRAINING" ? "오늘 할 일" : "최근 기록"}</p>
         <h1 id="home-hub-title">{onOpenOracle ? "내 훈련, 무엇부터 개선할까요?" : model.homeMode === "WELCOME" ? "오늘 운동을 기록해요" : model.homeMode === "TRAINING" ? "오늘의 훈련" : "내 기록"}</h1>
         {onOpenOracle && <div className="home-hub__oracle-start">
-          <button className="home-hub__primary" type="button" onClick={showOwnAnalysis ? onOpenTrends : () => onOpenOracle(hasPerformanceRecord ? "level" : "focus")}>{showOwnAnalysis || hasPerformanceRecord ? "내 훈련 분석 보기" : "분석 결과 먼저 보기"}<ChevronRight aria-hidden="true" size={18} /></button>
+          <button className="home-hub__primary" type="button" onClick={showOwnAnalysis ? onOpenTrends : () => onOpenOracle(hasPerformanceRecord ? "level" : "focus")}>{showOwnAnalysis || hasPerformanceRecord ? "내 훈련 살펴보기" : "예시 결과 보기"}<ChevronRight aria-hidden="true" size={18} /></button>
           <span className="home-hub__oracle-caption">{showOwnAnalysis ? model.analysisSummary : hasPerformanceRecord ? "저장한 경기 기록을 확인해요." : "기록 없이도 예시로 체험해요."}</span>
         </div>}
       </section>}
@@ -86,7 +86,7 @@ export function TrainingHome({
         <h2 id="home-hub-summary-title">기록과 계획</h2>
         {recentJournal}
         {!recentJournal && <SummaryRow label="최근 기록" detail={model.journalSummary} onClick={onOpenArchive} />}
-        <SummaryRow label="훈련 분석 보기" detail={model.analysisSummary} onClick={onOpenTrends} icon={<ChartNoAxesCombined aria-hidden="true" size={19} />} />
+        <SummaryRow label="훈련 기록 살펴보기" detail={model.analysisSummary} onClick={onOpenTrends} icon={<ChartNoAxesCombined aria-hidden="true" size={19} />} />
         {resolvedHasPlan && next === null && <SummaryRow label="내 훈련 계획" detail={model.planSummary} onClick={onOpenPlan} />}
         {!resolvedHasPlan && <SummaryRow label="훈련 계획 만들기" detail={model.planSummary} onClick={onOpenPlan} />}
       </section>}

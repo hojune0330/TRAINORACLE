@@ -163,6 +163,7 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
             <button className="session-explanation__next" type="button" onClick={() => selectTab("이유·근거")}>이렇게 구성한 이유<ChevronRight size={18} aria-hidden="true" /></button>
         </div>
         <div className="session-explanation__tab-content" hidden={tab !== "이유·근거"}>
+            <p className="session-explanation__note">오라클 · 훈련의 이유와 근거</p>
             {catalogWorkout ? <><CatalogWorkoutDetail workout={catalogWorkout} evidence /><section><h3>이번 주기에서 맡는 역할</h3>{explanation.cycle.map(line => <p key={line}>{line}</p>)}</section></> : <>
             <p className="session-explanation__notice">{explanation.availability}</p>
             <section><h3>훈련 목적</h3><p>{explanation.profile.purpose}</p></section>

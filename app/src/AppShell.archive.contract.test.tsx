@@ -128,8 +128,8 @@ describe("AppShell journal archive routing", () => {
     const user = userEvent.setup()
     render(<AppShell />)
 
-    await user.click(screen.getByRole("button", { name: "분석" }))
-    expect(await screen.findByRole("heading", { name: "분석" })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "오라클" }))
+    expect(await screen.findByRole("heading", { name: "오라클" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "첫 기록 남기기" }))
 
     expect(await screen.findByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()

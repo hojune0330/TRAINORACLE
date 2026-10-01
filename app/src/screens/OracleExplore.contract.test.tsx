@@ -71,7 +71,7 @@ describe("Oracle exploration examples", () => {
     fireEvent.click(screen.getByRole("button", { name: "내 기록" }))
     fireEvent.click(screen.getByRole("button", { name: /이어서 살펴보기/ }))
     expect(onSelectTopic).toHaveBeenLastCalledWith("focus", "personal")
-    fireEvent.change(screen.getByRole("combobox", { name: "분석 주제" }), { target: { value: "mix" } })
+    fireEvent.change(screen.getByRole("combobox", { name: "살펴볼 주제" }), { target: { value: "mix" } })
     expect(onSelectTopic).toHaveBeenLastCalledWith("mix", "personal")
     expect(screen.queryByText("내 기록을 분석한 결과가 아니에요")).toBeNull()
   })
@@ -117,7 +117,7 @@ describe("Oracle exploration examples", () => {
 
   it("offers all six topics in a labelled native picker and emits the selected topic", async () => {
     const { onSelectTopic } = mountExplore()
-    const picker = screen.getByRole("combobox", { name: "분석 주제" })
+    const picker = screen.getByRole("combobox", { name: "살펴볼 주제" })
     expect(picker).toHaveValue("level")
     expect(within(picker).getAllByRole("option")).toHaveLength(6)
 
@@ -213,7 +213,7 @@ describe("Oracle exploration examples", () => {
     expect(screen.getByText(first.example.detail)).toBeVisible()
 
     view.rerender(<OracleExplore topicId="mix" {...callbacks} />)
-    expect(screen.getByRole("combobox", { name: "분석 주제" })).toHaveValue("mix")
+    expect(screen.getByRole("combobox", { name: "살펴볼 주제" })).toHaveValue("mix")
     expect(screen.queryByRole("heading", { name: first.example.headline })).not.toBeInTheDocument()
     expect(screen.getByRole("heading", { name: next.example.headline })).toBeVisible()
     expect(screen.getByText(next.example.detail)).not.toBeVisible()
@@ -232,7 +232,7 @@ describe("Oracle exploration examples", () => {
       view.rerender(<OracleExplore topicId={id} {...callbacks} />)
       fireEvent.click(screen.getByText("예시의 기준과 읽는 방법"))
       if (id !== "priority") fireEvent.click(screen.getByText("표로 보기"))
-      fireEvent.change(screen.getByRole("combobox", { name: "분석 주제" }), { target: { value: topic.nextId } })
+      fireEvent.change(screen.getByRole("combobox", { name: "살펴볼 주제" }), { target: { value: topic.nextId } })
       fireEvent.click(screen.getByRole("button", { name: topic.personalLabel }))
       fireEvent.click(screen.getByRole("button", { name: name => name.startsWith("이어서 살펴보기") && name.endsWith(topic.nextLabel) }))
       fireEvent.click(screen.getByRole("button", { name: "이전 화면으로 돌아가기" }))
@@ -255,7 +255,7 @@ describe("Oracle six-topic entry grid", () => {
     expect(within(grid).getAllByRole("button")).toHaveLength(6)
     routes.forEach(({ id, title }, index) => {
       const topic = catalog.getOracleTopic(id)
-      const button = within(grid).getByRole("button", { name: `${title} · ${topic.question} · 분석 열기` })
+      const button = within(grid).getByRole("button", { name: `${title} · ${topic.question} · 결과 보기` })
       expect(button).toBeEnabled()
       expect(within(button).getByText(title)).toBeVisible()
       if (compact) expect(within(button).queryByText(topic.teaser)).not.toBeInTheDocument()
