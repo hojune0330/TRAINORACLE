@@ -1,0 +1,61 @@
+{
+  "sourceSha": "9e8e746fc81fc212e732a5ce0fc9b2aaf8af4500",
+  "pagesSha": "dd585b7fa32bcded110e61eb1bedbd966852e887",
+  "checkedAt": "2026-10-01T12:24:40.784Z",
+  "publicUrl": "https://hojune0330.github.io/TRAINORACLE/?app=1",
+  "publicReceiptMatches": true,
+  "assets": [
+    {
+      "file": "assets/index-CYSNOVej.js",
+      "sha256": "fe704f3f6907c6fe1389960667792bf0cc6a4f0f861059176d7f74af3af14aac",
+      "matched": true
+    },
+    {
+      "file": "assets/vendor-react-oS_qnrG8.js",
+      "sha256": "6db034d152bf39f5993bbef8a0108a9383ec641633c51b5e115ab3086fd4b922",
+      "matched": true
+    },
+    {
+      "file": "assets/vendor-validation-Ci-G08ww.js",
+      "sha256": "ebda8cbc13bc523c2f3d6e6b8a581c31a7a03cd26ac18a8caaeb50fac6b7862b",
+      "matched": true
+    },
+    {
+      "file": "assets/vendor-icons-DknHiEWL.js",
+      "sha256": "0193994ea34a451f0ef940e8a9800ac03768c5eba55bf2dda7828a53575b0470",
+      "matched": true
+    },
+    {
+      "file": "assets/index-DiPJ16Sj.css",
+      "sha256": "af34b432789dcc06cdf23856284fec868bd3402e67b92d195880322bcdbc718a",
+      "matched": true
+    }
+  ],
+  "scenarios": [
+    {
+      "width": 320,
+      "oracleNavigation": "PASS",
+      "exampleBoundary": "PASS",
+      "returnNavigation": "PASS",
+      "horizontalOverflow": false,
+      "pageErrors": 0
+    },
+    {
+      "width": 375,
+      "oracleNavigation": "PASS",
+      "exampleBoundary": "PASS",
+      "returnNavigation": "PASS",
+      "horizontalOverflow": false,
+      "pageErrors": 0
+    },
+    {
+      "width": 1440,
+      "oracleNavigation": "PASS",
+      "exampleBoundary": "PASS",
+      "returnNavigation": "PASS",
+      "horizontalOverflow": false,
+      "pageErrors": 0
+    }
+  ],
+  "accountLoginOrOnlineWriteTested": false
+}

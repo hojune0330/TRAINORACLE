@@ -1,0 +1,32 @@
+{
+  "kind": "TRAINORACLE_PAGES_DEPLOYMENT",
+  "sourceSha": "9e8e746fc81fc212e732a5ce0fc9b2aaf8af4500",
+  "previousPagesSha": "32aaa96b6f126c15e61452791ee1eee4711f0a4a",
+  "deploymentMethod": "MANUAL_OWNER_APPROVED",
+  "deployedAt": "2026-10-01T12:20:00.656Z",
+  "scope": "Oracle branding and familiar training actions; no prescription, account, or privacy policy changes",
+  "verification": {
+    "releaseMode": "OWNER_APPROVED_MANUAL_WITH_FOCUSED_CHECKS",
+    "productionBuild": "PASS",
+    "publicConfigurationPreserved": true,
+    "publicSettingCount": 41,
+    "browserFocused": {
+      "passed": 3,
+      "failed": 0,
+      "widths": [
+        320,
+        375,
+        1440
+      ],
+      "syntheticDataOnly": true
+    },
+    "githubCi": {
+      "runId": 36855388991,
+      "lastObserved": "app-quality PASS; contract-tests PASS; app-browser IN_PROGRESS",
+      "claimedFullSuitePassed": false
+    }
+  },
+  "pagesSha": "dd585b7fa32bcded110e61eb1bedbd966852e887",
+  "status": "PUSHED",
+  "artifactFileCount": 132
+}
