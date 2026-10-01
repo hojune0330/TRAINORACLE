@@ -1,0 +1,807 @@
+{
+  "sourceHead": "872d841b651b9bb0efcb5cc205461b7c4a953f1b",
+  "syntheticOnly": true,
+  "productionVerified": false,
+  "sourceHashes": {
+    "app/src/domain/catalog-condition-review.ts": "ed59061a736f6e87a50e1323c013678861b7eeaddf6cfc1adf5491066d8e4221",
+    "app/src/domain/catalog-condition-review.test.ts": "0196df6280f344f504a75c28483d263ccdb8f45fd11958608d91c451271326b3",
+    "app/src/screens/plan-beta/CatalogConditionReview.contract.test.tsx": "44b90dcb0fd7ced4ee8882b93568f64e1aa7d48b9a904b46dda8fd77d7d96ae7",
+    "app/src/screens/plan-beta/PlanCandidates.tsx": "c44fbd4f32f19c61e427914dce6d3e93ea7ab34a2b0291d89d982d0addff44b7",
+    "app/src/screens/plan-beta/CatalogWorkoutPicker.tsx": "a7675362bed949d45e672a5d56cdce514ead8586224521b889ada7ece1e21e3f",
+    "app/src/components/instant-plan/InstantPlanRecommendationView.tsx": "6e569144d0c1bcaa0f9b1243af129506537889cc08e20a0d6a3970fed1e11306",
+    "app/e2e/catalog-condition-review.audit.ts": "8064b80966a8708ed02f6d7b612e8c1308eb3e94a429c0232818ad72ccae1214"
+  },
+  "parent": {
+    "utc": {
+      "passed": 33,
+      "failed": 0,
+      "success": true,
+      "tests": [
+        {
+          "name": "first-plan condition discovery finds a real eligible MAIN but never manufactures confirmation or modifies the source",
+          "status": "passed"
+        },
+        {
+          "name": "first-plan condition discovery rejects inconsistent A/B QUALITY rpe envelopes",
+          "status": "passed"
+        },
+        {
+          "name": "first-plan condition discovery rejects inconsistent A/B QUALITY duration envelopes",
+          "status": "passed"
+        },
+        {
+          "name": "first-plan condition discovery rejects matching valid pairs whose rpe ceiling cannot fit any offered workout",
+          "status": "passed"
+        },
+        {
+          "name": "first-plan condition discovery rejects matching valid pairs whose duration ceiling cannot fit any offered workout",
+          "status": "passed"
+        },
+        {
+          "name": "first-plan condition discovery does not present LT cap conflicts as an environment-only question",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application opens the exact slot with no preconfirmation and only applies after the user's actual answer",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application keeps the general plan reachable without making the environment question compulsory",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application does not erase an in-progress answer when another condition request arrives",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale pairId request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale catalogId request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale catalogFingerprint request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale day request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale startDate request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale accountScope request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application updates the displayed date and blocks the shortcut during uncertain account storage",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review explains an empty eligible pool and keeps another date reachable without changing the plan",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review checks the shorter candidate budget before applying one workout to both candidates",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review exhausts eligible unseen methods before repeating and never draws an unconfirmed alternative",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review explains an empty immediate draw pool without inventing equipment confirmation",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review never offers a workout outside the selected event or experience",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review keeps required unresolved targets visible instead of hiding why apply is disabled",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review restores the exact applied record and duration acceptance when revisiting a workout",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review treats a duration-only confirmation as an unapplied change",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review allows withdrawing the stored longer-duration confirmation until explicitly applied again",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review does not carry duration confirmation into a different configuration",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review blocks plan finalization for an unapplied workout draft and offers explicit discard",
+          "status": "passed"
+        },
+        {
+          "name": "candidate-owned optional recommendation preference starts neutral and changes ranking without changing the selected method or confirmation",
+          "status": "passed"
+        },
+        {
+          "name": "candidate-owned optional recommendation preference resets preference to neutral when intake context changes {\"eventDistanceM\":3000}",
+          "status": "passed"
+        },
+        {
+          "name": "candidate-owned optional recommendation preference resets preference to neutral when intake context changes {\"eventGroup\":\"MIDDLE_DISTANCE\"}",
+          "status": "passed"
+        },
+        {
+          "name": "candidate-owned optional recommendation preference resets preference to neutral when intake context changes {\"trainingFocus\":\"LT_INTENT\"}",
+          "status": "passed"
+        },
+        {
+          "name": "candidate-owned optional recommendation preference resets preference to neutral when intake context changes {\"experienceBand\":\"DEVELOPING\"}",
+          "status": "passed"
+        },
+        {
+          "name": "candidate-owned optional recommendation preference keeps preference on an unrelated start-date rerender",
+          "status": "passed"
+        }
+      ]
+    },
+    "kst": {
+      "passed": 33,
+      "failed": 0,
+      "success": true,
+      "tests": [
+        {
+          "name": "first-plan condition discovery finds a real eligible MAIN but never manufactures confirmation or modifies the source",
+          "status": "passed"
+        },
+        {
+          "name": "first-plan condition discovery rejects inconsistent A/B QUALITY rpe envelopes",
+          "status": "passed"
+        },
+        {
+          "name": "first-plan condition discovery rejects inconsistent A/B QUALITY duration envelopes",
+          "status": "passed"
+        },
+        {
+          "name": "first-plan condition discovery rejects matching valid pairs whose rpe ceiling cannot fit any offered workout",
+          "status": "passed"
+        },
+        {
+          "name": "first-plan condition discovery rejects matching valid pairs whose duration ceiling cannot fit any offered workout",
+          "status": "passed"
+        },
+        {
+          "name": "first-plan condition discovery does not present LT cap conflicts as an environment-only question",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application opens the exact slot with no preconfirmation and only applies after the user's actual answer",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application keeps the general plan reachable without making the environment question compulsory",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application does not erase an in-progress answer when another condition request arrives",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale pairId request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale catalogId request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale catalogFingerprint request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale day request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale startDate request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale accountScope request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application updates the displayed date and blocks the shortcut during uncertain account storage",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review explains an empty eligible pool and keeps another date reachable without changing the plan",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review checks the shorter candidate budget before applying one workout to both candidates",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review exhausts eligible unseen methods before repeating and never draws an unconfirmed alternative",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review explains an empty immediate draw pool without inventing equipment confirmation",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review never offers a workout outside the selected event or experience",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review keeps required unresolved targets visible instead of hiding why apply is disabled",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review restores the exact applied record and duration acceptance when revisiting a workout",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review treats a duration-only confirmation as an unapplied change",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review allows withdrawing the stored longer-duration confirmation until explicitly applied again",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review does not carry duration confirmation into a different configuration",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review blocks plan finalization for an unapplied workout draft and offers explicit discard",
+          "status": "passed"
+        },
+        {
+          "name": "candidate-owned optional recommendation preference starts neutral and changes ranking without changing the selected method or confirmation",
+          "status": "passed"
+        },
+        {
+          "name": "candidate-owned optional recommendation preference resets preference to neutral when intake context changes {\"eventDistanceM\":3000}",
+          "status": "passed"
+        },
+        {
+          "name": "candidate-owned optional recommendation preference resets preference to neutral when intake context changes {\"eventGroup\":\"MIDDLE_DISTANCE\"}",
+          "status": "passed"
+        },
+        {
+          "name": "candidate-owned optional recommendation preference resets preference to neutral when intake context changes {\"trainingFocus\":\"LT_INTENT\"}",
+          "status": "passed"
+        },
+        {
+          "name": "candidate-owned optional recommendation preference resets preference to neutral when intake context changes {\"experienceBand\":\"DEVELOPING\"}",
+          "status": "passed"
+        },
+        {
+          "name": "candidate-owned optional recommendation preference keeps preference on an unrelated start-date rerender",
+          "status": "passed"
+        }
+      ]
+    }
+  },
+  "independent": {
+    "utc": {
+      "passed": 25,
+      "failed": 0,
+      "success": true,
+      "tests": [
+        {
+          "name": "first-plan condition discovery finds a real eligible MAIN but never manufactures confirmation or modifies the source",
+          "status": "passed"
+        },
+        {
+          "name": "first-plan condition discovery does not use only candidate A when B's rpe ceiling is lower",
+          "status": "passed"
+        },
+        {
+          "name": "first-plan condition discovery does not use only candidate A when B's duration ceiling is lower",
+          "status": "passed"
+        },
+        {
+          "name": "first-plan condition discovery does not present LT cap conflicts as an environment-only question",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application opens the exact slot with no preconfirmation and only applies after the user's actual answer",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application keeps the general plan reachable without making the environment question compulsory",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application does not erase an in-progress answer when another condition request arrives",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale pairId request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale catalogId request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale catalogFingerprint request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale day request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale startDate request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale accountScope request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application updates the displayed date and blocks the shortcut during uncertain account storage",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review explains an empty eligible pool and keeps another date reachable without changing the plan",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review checks the shorter candidate budget before applying one workout to both candidates",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review exhausts eligible unseen methods before repeating and never draws an unconfirmed alternative",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review explains an empty immediate draw pool without inventing equipment confirmation",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review never offers a workout outside the selected event or experience",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review keeps required unresolved targets visible instead of hiding why apply is disabled",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review restores the exact applied record and duration acceptance when revisiting a workout",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review treats a duration-only confirmation as an unapplied change",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review allows withdrawing the stored longer-duration confirmation until explicitly applied again",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review does not carry duration confirmation into a different configuration",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review blocks plan finalization for an unapplied workout draft and offers explicit discard",
+          "status": "passed"
+        }
+      ]
+    },
+    "kst": {
+      "passed": 25,
+      "failed": 0,
+      "success": true,
+      "tests": [
+        {
+          "name": "first-plan condition discovery finds a real eligible MAIN but never manufactures confirmation or modifies the source",
+          "status": "passed"
+        },
+        {
+          "name": "first-plan condition discovery does not use only candidate A when B's rpe ceiling is lower",
+          "status": "passed"
+        },
+        {
+          "name": "first-plan condition discovery does not use only candidate A when B's duration ceiling is lower",
+          "status": "passed"
+        },
+        {
+          "name": "first-plan condition discovery does not present LT cap conflicts as an environment-only question",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application opens the exact slot with no preconfirmation and only applies after the user's actual answer",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application keeps the general plan reachable without making the environment question compulsory",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application does not erase an in-progress answer when another condition request arrives",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale pairId request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale catalogId request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale catalogFingerprint request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale day request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale startDate request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale accountScope request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application updates the displayed date and blocks the shortcut during uncertain account storage",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review explains an empty eligible pool and keeps another date reachable without changing the plan",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review checks the shorter candidate budget before applying one workout to both candidates",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review exhausts eligible unseen methods before repeating and never draws an unconfirmed alternative",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review explains an empty immediate draw pool without inventing equipment confirmation",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review never offers a workout outside the selected event or experience",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review keeps required unresolved targets visible instead of hiding why apply is disabled",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review restores the exact applied record and duration acceptance when revisiting a workout",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review treats a duration-only confirmation as an unapplied change",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review allows withdrawing the stored longer-duration confirmation until explicitly applied again",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review does not carry duration confirmation into a different configuration",
+          "status": "passed"
+        },
+        {
+          "name": "catalog picker actionable and truthful review blocks plan finalization for an unapplied workout draft and offers explicit discard",
+          "status": "passed"
+        }
+      ]
+    }
+  },
+  "mutations": {
+    "precheck": {
+      "passed": 8,
+      "failed": 2,
+      "success": false,
+      "tests": [
+        {
+          "name": "condition review to explicit detail application opens the exact slot with no preconfirmation and only applies after the user's actual answer",
+          "status": "failed"
+        },
+        {
+          "name": "condition review to explicit detail application keeps the general plan reachable without making the environment question compulsory",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application does not erase an in-progress answer when another condition request arrives",
+          "status": "failed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale pairId request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale catalogId request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale catalogFingerprint request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale day request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale startDate request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale accountScope request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application updates the displayed date and blocks the shortcut during uncertain account storage",
+          "status": "passed"
+        }
+      ]
+    },
+    "pending": {
+      "passed": 9,
+      "failed": 1,
+      "success": false,
+      "tests": [
+        {
+          "name": "condition review to explicit detail application opens the exact slot with no preconfirmation and only applies after the user's actual answer",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application keeps the general plan reachable without making the environment question compulsory",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application does not erase an in-progress answer when another condition request arrives",
+          "status": "failed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale pairId request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale catalogId request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale catalogFingerprint request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale day request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale startDate request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale accountScope request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application updates the displayed date and blocks the shortcut during uncertain account storage",
+          "status": "passed"
+        }
+      ]
+    },
+    "cascade": {
+      "passed": 9,
+      "failed": 1,
+      "success": false,
+      "tests": [
+        {
+          "name": "condition review to explicit detail application opens the exact slot with no preconfirmation and only applies after the user's actual answer",
+          "status": "failed"
+        },
+        {
+          "name": "condition review to explicit detail application keeps the general plan reachable without making the environment question compulsory",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application does not erase an in-progress answer when another condition request arrives",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale pairId request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale catalogId request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale catalogFingerprint request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale day request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale startDate request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application rejects a stale accountScope request without applying or prechecking",
+          "status": "passed"
+        },
+        {
+          "name": "condition review to explicit detail application updates the displayed date and blocks the shortcut during uncertain account storage",
+          "status": "passed"
+        }
+      ]
+    },
+    "rpe": {
+      "passed": 5,
+      "failed": 1,
+      "success": false,
+      "tests": [
+        {
+          "name": "first-plan condition discovery finds a real eligible MAIN but never manufactures confirmation or modifies the source",
+          "status": "passed"
+        },
+        {
+          "name": "first-plan condition discovery rejects inconsistent A/B QUALITY rpe envelopes",
+          "status": "passed"
+        },
+        {
+          "name": "first-plan condition discovery rejects inconsistent A/B QUALITY duration envelopes",
+          "status": "passed"
+        },
+        {
+          "name": "first-plan condition discovery rejects matching valid pairs whose rpe ceiling cannot fit any offered workout",
+          "status": "failed"
+        },
+        {
+          "name": "first-plan condition discovery rejects matching valid pairs whose duration ceiling cannot fit any offered workout",
+          "status": "passed"
+        },
+        {
+          "name": "first-plan condition discovery does not present LT cap conflicts as an environment-only question",
+          "status": "passed"
+        }
+      ]
+    }
+  },
+  "browser": {
+    "stats": {
+      "startTime": "2026-10-01T00:01:09.404Z",
+      "duration": 13115.095,
+      "expected": 3,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "errors": [],
+    "suites": [
+      {
+        "title": "catalog-condition-review.audit.ts",
+        "file": "catalog-condition-review.audit.ts",
+        "column": 0,
+        "line": 0,
+        "specs": [
+          {
+            "title": "condition review 320px zoom 1",
+            "ok": true,
+            "tags": [],
+            "tests": [
+              {
+                "timeout": 90000,
+                "annotations": [],
+                "expectedStatus": "passed",
+                "projectId": "",
+                "projectName": "",
+                "results": [
+                  {
+                    "workerIndex": 0,
+                    "parallelIndex": 0,
+                    "status": "passed",
+                    "duration": 5578,
+                    "errors": [],
+                    "stdout": [],
+                    "stderr": [],
+                    "retry": 0,
+                    "startTime": "2026-10-01T00:01:09.991Z",
+                    "annotations": [],
+                    "attachments": []
+                  }
+                ],
+                "status": "expected"
+              }
+            ],
+            "id": "8c70a14ac78d0e0ef01f-9d974b38ca7535eaf125",
+            "file": "catalog-condition-review.audit.ts",
+            "line": 5,
+            "column": 3
+          },
+          {
+            "title": "condition review 375px zoom 2",
+            "ok": true,
+            "tags": [],
+            "tests": [
+              {
+                "timeout": 90000,
+                "annotations": [],
+                "expectedStatus": "passed",
+                "projectId": "",
+                "projectName": "",
+                "results": [
+                  {
+                    "workerIndex": 0,
+                    "parallelIndex": 0,
+                    "status": "passed",
+                    "duration": 2970,
+                    "errors": [],
+                    "stdout": [],
+                    "stderr": [],
+                    "retry": 0,
+                    "startTime": "2026-10-01T00:01:16.319Z",
+                    "annotations": [],
+                    "attachments": []
+                  }
+                ],
+                "status": "expected"
+              }
+            ],
+            "id": "8c70a14ac78d0e0ef01f-5f7445e220cc71858803",
+            "file": "catalog-condition-review.audit.ts",
+            "line": 5,
+            "column": 3
+          },
+          {
+            "title": "condition review 1280px zoom 1",
+            "ok": true,
+            "tags": [],
+            "tests": [
+              {
+                "timeout": 90000,
+                "annotations": [],
+                "expectedStatus": "passed",
+                "projectId": "",
+                "projectName": "",
+                "results": [
+                  {
+                    "workerIndex": 0,
+                    "parallelIndex": 0,
+                    "status": "passed",
+                    "duration": 3000,
+                    "errors": [],
+                    "stdout": [],
+                    "stderr": [],
+                    "retry": 0,
+                    "startTime": "2026-10-01T00:01:19.302Z",
+                    "annotations": [],
+                    "attachments": []
+                  }
+                ],
+                "status": "expected"
+              }
+            ],
+            "id": "8c70a14ac78d0e0ef01f-c2c1c6bbc38ff2fdebde",
+            "file": "catalog-condition-review.audit.ts",
+            "line": 5,
+            "column": 3
+          }
+        ]
+      }
+    ]
+  }
+}

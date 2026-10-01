@@ -9,6 +9,9 @@ import type { AthleteRecord } from "../../domain/athlete-records"
 import { formatRecordTime } from "../../domain/athlete-record-display"
 import { todayISO } from "../../domain/journal-store"
 import { replaceCandidateCatalogWorkout } from "../../domain/catalog-plan-binding"
+import { findCatalogConditionReview, type CatalogConditionRequest } from "../../domain/catalog-condition-review"
+import { isValidIsoDate, isoShift } from "../../domain/dates"
+import { localAccountScopeIsCurrent } from "../../domain/account/local-account-scope"
 import { CatalogWorkoutDetail } from "./CatalogWorkoutDetail"
 import { formatTotalMinutes } from "./labels"
 import "./catalog-workout.css"
@@ -30,6 +33,8 @@ type PickerProps = {
   readonly onChange: (next: PlanGenerationSuccess) => void; readonly disabled?: boolean
   readonly onPendingChange?: (pending: boolean) => void
   readonly openRequest?: number | null
+  readonly conditionRequest?: CatalogConditionRequest | null
+  readonly startDate?: string
 }
 export function CatalogWorkoutPicker(props: PickerProps) {
   const { generated, disabled = false } = props
@@ -39,11 +44,27 @@ export function CatalogWorkoutPicker(props: PickerProps) {
   const [message, setMessage] = React.useState("")
   const [pending, setPending] = React.useState(false)
   const [resetRevision, setResetRevision] = React.useState(0)
+  const [preferredReview, setPreferredReview] = React.useState<CatalogConditionRequest | null>(null)
+  const handledConditionRequest = React.useRef<CatalogConditionRequest | null>(null)
   const panelRef = React.useRef<HTMLDetailsElement>(null)
   const drawHistory = React.useRef(new Map<string, Set<string>>())
   React.useEffect(() => {
     if (props.openRequest != null && panelRef.current) panelRef.current.open = true
   }, [props.openRequest])
+  React.useEffect(() => {
+    const request = props.conditionRequest
+    if (!request || request === handledConditionRequest.current) return
+    handledConditionRequest.current = request
+    if (disabled || pending || request.startDate !== props.startDate || !localAccountScopeIsCurrent(request.accountScope)) return
+    const current = findCatalogConditionReview(generated, props.intake)
+    if (!current || current.pairId !== request.pairId || current.day !== request.day
+      || current.slot !== request.slot || current.catalogId !== request.catalogId || current.catalogFingerprint !== request.catalogFingerprint) return
+    setAddress(`${request.day}:${request.slot}`)
+    setPreferredReview(request)
+    setResetRevision(value => value + 1)
+    setMessage("")
+    if (panelRef.current) panelRef.current.open = true
+  }, [props.conditionRequest, props.startDate, generated, props.intake, disabled, pending])
   const handlePendingChange = React.useCallback((value: boolean) => {
     setPending(value)
     props.onPendingChange?.(value)
@@ -53,11 +74,14 @@ export function CatalogWorkoutPicker(props: PickerProps) {
   const actualAddress = `${session.day}:${session.slot}`
   return <details ref={panelRef} className="plan-session-guidance catalog-workout-picker">
     <summary>다른 훈련으로 바꾸기</summary>
-    <label>바꿀 일정<select value={actualAddress} disabled={disabled || pending} onChange={e => { setAddress(e.target.value); setMessage("") }}>
-      {sessions.map(s => <option key={`${s.day}:${s.slot}`} value={`${s.day}:${s.slot}`}>{s.day}일차 {s.slot === "AM" ? "오전" : "오후"}</option>)}
+    <label>바꿀 일정<select value={actualAddress} disabled={disabled || pending} onChange={e => { setAddress(e.target.value); setPreferredReview(null); setMessage("") }}>
+      {sessions.map(s => <option key={`${s.day}:${s.slot}`} value={`${s.day}:${s.slot}`}>{props.startDate && isValidIsoDate(props.startDate)
+        ? `${isoShift(props.startDate, s.day - 1)} · ` : ""}{s.day}일차 {s.slot === "AM" ? "오전" : "오후"}</option>)}
     </select></label>
     {pending && <small>변경을 적용하거나 취소하면 다른 날짜를 고를 수 있어요.</small>}
     <CatalogWorkoutEditor key={`${generated.pairId}:${actualAddress}:${resetRevision}`} {...props} session={session}
+      preferredCatalogId={preferredReview?.pairId === generated.pairId && `${preferredReview.day}:${preferredReview.slot}` === actualAddress
+        && preferredReview.startDate === props.startDate && localAccountScopeIsCurrent(preferredReview.accountScope) ? preferredReview.catalogId : null}
       drawHistory={drawHistory.current}
       onPendingChange={handlePendingChange}
       onCancel={() => { setResetRevision(n => n + 1); setMessage("") }}
@@ -75,9 +99,10 @@ type EditorProps = Omit<PickerProps, "generated" | "onChange"> & {
   readonly session: PlanGenerationSuccess["candidates"][number]["sessions"][number]
   readonly onCancel: () => void
   readonly drawHistory: Map<string, Set<string>>
+  readonly preferredCatalogId?: string | null
 }
 export function CatalogWorkoutEditor({ generated, intake, records, onChange, onSelect, canSelect, applyDisabled,
-  onPendingChange, session, onCancel, drawHistory, disabled = false }: EditorProps) {
+  onPendingChange, session, onCancel, drawHistory, preferredCatalogId, disabled = false }: EditorProps) {
   const binding = session.prescription.kind === "RPE_TIME_RANGE" ? session.prescription.catalogWorkout : undefined
   const pool = ALL_WORKOUT_CATALOG.filter(e => e.family === catalogFamilyForIntent(session.plannedEnergyIntent)
     && e.eventDistances.includes(intake.eventDistanceM) && e.experience.includes(intake.experienceBand) && e.hold === null)
@@ -87,7 +112,7 @@ export function CatalogWorkoutEditor({ generated, intake, records, onChange, onS
         availableSeconds: null, confirmedRequirements: [], segmentPaces: [], fiveK: null })
       return workout && catalogRpe(workout).maximum <= (binding?.originalEnvelope.rpe.maximum ?? session.prescription.rpe.maximum)
     })
-  const [choice, setChoice] = React.useState(binding?.catalogId ?? pool[0]?.id ?? "")
+  const [choice, setChoice] = React.useState(binding?.catalogId ?? pool.find(e => e.id === preferredCatalogId)?.id ?? pool[0]?.id ?? "")
   const [recordId, setRecordId] = React.useState(binding?.inputs.fiveK?.recordId ?? "")
   const [confirmed, setConfirmed] = React.useState<string[]>([...(binding?.inputs.confirmedRequirements ?? [])])
   const [seconds, setSeconds] = React.useState<Record<string, string>>(() => Object.fromEntries((binding?.inputs.segmentSeconds ?? []).map(s => [s.segmentId, String(s.seconds)])))

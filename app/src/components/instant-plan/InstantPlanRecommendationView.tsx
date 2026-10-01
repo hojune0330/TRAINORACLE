@@ -23,6 +23,8 @@ export type InstantPlanRecommendationViewProps = {
   readonly workoutLabelTitle?: string
   readonly onEditWorkout?: () => void
   readonly startLabel?: string
+  readonly conditionReviewLabel?: string
+  readonly onReviewCondition?: () => void
 }
 
 const roleLabels: Record<InstantPlanDaySummary["sessions"][number]["role"], string> = {
@@ -49,6 +51,8 @@ export function InstantPlanRecommendationView({
   workoutLabelTitle,
   onEditWorkout,
   startLabel,
+  conditionReviewLabel,
+  onReviewCondition,
 }: InstantPlanRecommendationViewProps) {
   const headingId = useId()
   const actionStatusId = useId()
@@ -82,6 +86,8 @@ export function InstantPlanRecommendationView({
         <p className="instant-plan__hint">목표 기록은 현재 능력이나 이 기간 안의 달성 보장을 뜻하지 않아요.</p>
       )}
       {recommendation.guidanceNotice && <p className="instant-plan__hint">{recommendation.guidanceNotice}</p>}
+      {conditionReviewLabel && onReviewCondition && <button className="instant-plan__secondary"
+        type="button" disabled={!ready} onClick={onReviewCondition}>{conditionReviewLabel}</button>}
 
       {status !== null && (
         <section

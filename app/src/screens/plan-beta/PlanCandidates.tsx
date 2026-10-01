@@ -5,7 +5,7 @@ import type {
 } from "@impl/plan-generator/types"
 import { TermHelp } from "../../components/TermHelp"
 import { InfoDisclosure } from "../../components/InfoDisclosure"
-import { isValidIsoDate } from "../../domain/dates"
+import { isValidIsoDate, isoShift } from "../../domain/dates"
 import { todayISO } from "../../domain/journal-store"
 import type { PlanBetaIntake } from "../../domain/plan-beta-store"
 import type { PlanAthleteEvidence } from "../../domain/plan-beta-flow"
@@ -39,6 +39,8 @@ import { defaultInstantCandidate, projectInstantRecommendation } from "./instant
 import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
 import { sameDetailedTemplateReference } from "../../domain/plan-method-selection"
 import { CatalogWorkoutPicker } from "./CatalogWorkoutPicker"
+import { findCatalogConditionReview, type CatalogConditionRequest } from "../../domain/catalog-condition-review"
+import { localAccountScopeIsCurrent, localAccountScopeSnapshot } from "../../domain/account/local-account-scope"
 
 export function PlanCandidates({
   generated,
@@ -132,6 +134,8 @@ export function PlanCandidates({
   const [targetDraftPending, setTargetDraftPending] = React.useState(false)
   const [methodDraftPending, setMethodDraftPending] = React.useState(false)
   const [catalogDraftPending, setCatalogDraftPending] = React.useState(false)
+  const [conditionRequest, setConditionRequest] = React.useState<CatalogConditionRequest | null>(null)
+  const [reviewedConditionContext, setReviewedConditionContext] = React.useState<string | null>(null)
   React.useEffect(() => {
     setRepeatPreference("NEUTRAL")
   }, [intake.eventGroup, intake.eventDistanceM, intake.trainingFocus, intake.experienceBand])
@@ -155,6 +159,10 @@ export function PlanCandidates({
     : `${selectedRecord.eventDistanceM}m`
   const recommendation = projectInstantRecommendation(defaultInstantCandidate(generated), startDate)
   const instantAdjustment = recommendation === null ? undefined : adjustmentActions[recommendation.id]
+  const accountScope = localAccountScopeSnapshot()
+  const conditionContext = JSON.stringify([intake, startDate, accountScope])
+  const conditionReview = React.useMemo(() => onCatalogChange && instantAdjustment === undefined && reviewedConditionContext !== conditionContext
+    ? findCatalogConditionReview(generated, intake) : null, [generated, intake, onCatalogChange, instantAdjustment, reviewedConditionContext, conditionContext])
   const detailedOptions = resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference, { anchor: selectedRecord })
   const selectedDetailedOption = detailedOptions.find(option => sameDetailedTemplateReference(option.ref, intake.selectedDetailedTemplateRef))
   const needsReview = recordConfirmationPending || detailedEvidencePending || targetDraftPending || methodDraftPending || !hasValidStartDate
@@ -197,13 +205,27 @@ export function PlanCandidates({
         workoutLabel={instantAdjustment ? "거리·시간·반복·회복을 확인하고 조절해요" : selectedDetailedOption?.mainSummary}
         workoutLabelTitle={instantAdjustment ? "상세 훈련" : undefined}
         startLabel={instantAdjustment ? "처방 훈련 확인" : undefined}
+        conditionReviewLabel={conditionReview && hasValidStartDate
+          ? `${isoShift(startDate, conditionReview.day - 1)} ${conditionReview.slot === "AM" ? "오전" : "오후"} · 공간 확인하고 상세 훈련 보기` : undefined}
+        onReviewCondition={conditionReview ? () => {
+          if (!canSelect || !localAccountScopeIsCurrent(accountScope)) return
+          setConditionRequest(previous => ({ ...conditionReview, startDate, accountScope, revision: (previous?.revision ?? 0) + 1 }))
+          reveal("catalog")
+        } : undefined}
         anchorLabel={prescriptionBinding.kind === "bound" && selectedRecord
           ? `${selectedEventLabel} ${formatRecordTime(selectedRecord.performanceSeconds)}` : undefined}
         goalLabel={instantEntry?.kind === "GOAL_ONLY" ? `${instantEntry.eventDistanceM}m ${formatRecordTime(instantEntry.performanceSeconds)}` : undefined}
       />}
       {onCatalogChange && intake.selectedDetailedTemplateRef === null && <div ref={catalogRef} tabIndex={-1}>
         <CatalogWorkoutPicker generated={generated} intake={intake} openRequest={navigation?.kind === "catalog" ? navigation.revision : null}
-          records={athleteRecords} onChange={onCatalogChange} onPendingChange={setCatalogDraftPending} disabled={saving || recordConfirmationPending || selectionUnavailable} />
+          conditionRequest={conditionRequest} startDate={startDate}
+          records={athleteRecords} onChange={next => {
+            if (conditionReview && next.candidates.every(candidate => {
+              const target = candidate.sessions.find(s => s.day === conditionReview.day && s.slot === conditionReview.slot)
+              return target?.prescription.kind === "RPE_TIME_RANGE" && target.prescription.catalogWorkout !== undefined
+            })) setReviewedConditionContext(conditionContext)
+            onCatalogChange(next)
+          }} onPendingChange={setCatalogDraftPending} disabled={saving || recordConfirmationPending || selectionUnavailable} />
       </div>}
       {!recommendation && saveError && <p role="alert">{saveError}</p>}
       {instantAdjustment === undefined && onChangeMethod !== undefined && detailedOptions.length > 0 && <div ref={methodRef} tabIndex={-1}>
