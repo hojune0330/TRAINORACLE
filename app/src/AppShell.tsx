@@ -5,6 +5,8 @@ import { rememberCalendarDate } from "./hooks/useCalendarPosition"
 import { runDraftSafeNavigation } from "./domain/unsaved-draft-navigation"
 import type { AppTab } from "./components/AppChrome"
 import { AppShellFrame } from "./components/AppShellFrame"
+import { ErrorBoundary } from "./components/ErrorBoundary"
+import { clearRecoveryTab, readRecoveryTab } from "./domain/screen-recovery"
 import type { ShellToastState } from "./components/AppShellFrame"
 import { Home } from "./screens/Home"
 import { LogEntry } from "./screens/LogEntry"
@@ -110,11 +112,16 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const [accountScopeRevision, setAccountScopeRevision] = React.useState(0)
   const [, refreshAccountJournals] = React.useReducer((revision: number) => revision + 1, 0)
   const [v, setV] = React.useState(() => {
+    const recoveryTab = readRecoveryTab()
+    const accountEntry = accountFeatureEnabled() && typeof window !== "undefined"
+      && (new URLSearchParams(window.location.search).get("account") === "1" || loungeEntryIntent().requested)
+    if (recoveryTab && !accountEntry) return viewForTab(recoveryTab)
     if (!accountFeatureEnabled() || typeof window === "undefined") return INITIAL_VIEW_STATE
     return new URLSearchParams(window.location.search).get("account") === "1" || loungeEntryIntent().requested
       ? { ...INITIAL_VIEW_STATE, accountOpen: true }
       : INITIAL_VIEW_STATE
   })
+  React.useEffect(() => { clearRecoveryTab() }, [])
   const [savedToast, setSavedToast] = React.useState<ShellToastState | null>(null)
   const [analysisContext, setAnalysisContext] = React.useState<AnalysisNavigation | undefined>()
   const oracleInputRef = React.useRef<{ topic: OracleTopicId; owner: string | null; inputKind: "log" | "records" | "plan"; mode: "example" | "personal"; scrollTop: number; view: ReturnType<typeof viewForTab> } | null>(null)
@@ -790,8 +797,11 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           data-motion={currentScreenMotion}
           hidden={overlay !== null}
         >
-          {screen}
+          <ErrorBoundary key={`${screenKey}:account-scope-${accountScopeRevision}`} region recoveryTab={tabForChrome(v)}>
+            {screen}
+          </ErrorBoundary>
         </div>
+        <ErrorBoundary key={`overlay-${overlay?.kind ?? "none"}-${accountScopeRevision}`} region onExit={closeOverlay} recoveryTab={tabForChrome(v)}>
         {overlay?.kind === "term" && (
           <div className="app-flow-stage" data-motion="push" data-overlay="training-term">
             <DeferredMobileScreens.TrainingLexicon
@@ -838,6 +848,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
             />
           </div>
         )}
+        </ErrorBoundary>
       </React.Suspense>
     </AppShellFrame>
     </AppOverlayNavigationProvider>

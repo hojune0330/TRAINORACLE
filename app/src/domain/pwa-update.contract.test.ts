@@ -6,13 +6,13 @@ const serviceWorker = readFileSync("public/sw.js", "utf8")
 const main = readFileSync("src/main.tsx", "utf8")
 
 describe("PWA update handoff", () => {
-  // 오너 결정(2026-08-29): 베타 단계에는 실사용자가 없으므로 이전 버전 화면을
-  // 보여 주지 않는다. 새 버전이 설치되면 묻지 않고 즉시 교체한다.
-  it("replaces the running app immediately so nobody sees a stale version", () => {
+  // 2026-10-02: automatic updates remain, but volatile input postpones the swap.
+  it("automatically activates only through the draft-safe update path", () => {
     expect(serviceWorker).toContain('e.data?.type === "SKIP_WAITING"')
     expect(updateModule).toContain('postMessage({ type: "SKIP_WAITING" })')
-    expect(updateModule).toContain("if (next.waiting !== null) activateImmediately(next.waiting)")
-    expect(updateModule).toContain("activateImmediately(next.waiting ?? installing)")
+    expect(updateModule).toContain("if (next.waiting !== null) activateWhenSafe(next.waiting)")
+    expect(updateModule).toContain("activateWhenSafe(next.waiting ?? installing)")
+    expect(updateModule).toContain("isReloadBlocked()")
   })
 
   it("keeps checking for updates on return and reloads only after a real swap", () => {

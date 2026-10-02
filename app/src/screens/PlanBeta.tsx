@@ -333,6 +333,9 @@ function PlanBetaContent(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
     }} returnToSession={props.returnToSession} />
   if (read.kind === "invalid" || read.kind === "storage_error") return <section>
     <h1>저장된 계획을 확인하지 못했어요</h1>
+    <p>{read.kind === "storage_error"
+      ? "저장 공간에 접근하지 못했어요. 브라우저의 저장 허용 상태를 확인해 주세요."
+      : "저장된 계획의 형식을 읽지 못했어요. 이전 버전의 계획이거나 일부 내용이 누락됐을 수 있어요."}</p>
     <p role="alert">계획을 지우거나 새 계획으로 바꾸지 않았어요. 다시 확인해 주세요.</p>
     <button type="button" onClick={() => setRead(readCurrent())}>다시 확인</button>
   </section>

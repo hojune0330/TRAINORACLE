@@ -7,6 +7,12 @@ type DraftGuard = {
 
 const guards = new Set<DraftGuard>()
 
+/** Automatic recovery must never ask to discard input or infer safety after a guard fails. */
+export function hasUnsafeDrafts(): boolean {
+  try { return [...guards].some(guard => guard.isUnsafe()) }
+  catch { return true }
+}
+
 /** Only volatile input blocks navigation; durable offline drafts can be left safely. */
 export function registerUnsavedDraftGuard(guard: DraftGuard) {
   guards.add(guard)

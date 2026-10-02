@@ -3,8 +3,8 @@
 // 핵심 계약: 화면이 깨져도 사용자가 **자기 일지에 닿을 수 있어야 한다.**
 // 흰 화면이 되면 기기에만 있는 기록에 접근할 방법이 사라진다.
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
-import { cleanup, render, screen } from "@testing-library/react"
-import { ErrorBoundary, emergencyJournalBackupRaw } from "./ErrorBoundary"
+import { cleanup, render, screen, fireEvent } from "@testing-library/react"
+import { ErrorBoundary, emergencyJournalBackupRaw, readEmergencyJournalBackup } from "./ErrorBoundary"
 import { setActiveLocalAccount } from "../domain/account/local-journal-ownership"
 
 const JOURNAL_KEY = "trainoracle.journal.v1"
@@ -42,7 +42,7 @@ describe("ErrorBoundary", () => {
     window.localStorage.setItem(JOURNAL_KEY, JSON.stringify([{ id: "a" }, { id: "b" }, { id: "c" }]))
     render(<ErrorBoundary><Boom /></ErrorBoundary>)
     // 사용자가 가장 먼저 걱정하는 것은 "내 기록이 날아갔나"다
-    expect(screen.getByText(/일지 3개는 이 기기에 그대로 있어요/u)).toBeTruthy()
+    expect(screen.getByText(/읽을 수 있는 일지 3개/u)).toBeTruthy()
   })
 
   it("오류 화면에서 바로 백업을 받을 수 있다", () => {
@@ -69,7 +69,7 @@ describe("ErrorBoundary", () => {
       { id: "mine", title: "내 일지" },
     ])
     render(<ErrorBoundary><Boom /></ErrorBoundary>)
-    expect(screen.getByText(/일지 2개는 이 기기에 그대로 있어요/u)).toBeTruthy()
+    expect(screen.getByText(/읽을 수 있는 일지 2개/u)).toBeTruthy()
   })
 
   it("소유권 장부가 손상되면 공용 원문을 내보내지 않는다", () => {
@@ -82,6 +82,41 @@ describe("ErrorBoundary", () => {
   it("다시 열어 보기 경로를 제공한다", () => {
     render(<ErrorBoundary><Boom /></ErrorBoundary>)
     expect(screen.getByTestId("error-retry")).toBeTruthy()
+  })
+
+  it("actually retries a transient render error", () => {
+    let fail = true
+    function Transient() { if (fail) throw new Error("render failed"); return <p>복구된 화면</p> }
+    render(<ErrorBoundary region><Transient /></ErrorBoundary>)
+    fail = false
+    fireEvent.click(screen.getByTestId("error-retry"))
+    expect(screen.getByText("복구된 화면")).toBeTruthy()
+  })
+
+  it("keeps navigation and a sibling screen mounted when one region fails", () => {
+    const exit = vi.fn()
+    render(<><button onClick={exit}>다른 탭</button><input aria-label="작성 중" defaultValue="kept" />
+      <ErrorBoundary region><Boom /></ErrorBoundary></>)
+    fireEvent.click(screen.getByText("다른 탭"))
+    expect(exit).toHaveBeenCalledOnce()
+    expect(screen.getByLabelText("작성 중")).toHaveValue("kept")
+  })
+
+  it("does not claim a malformed or unreadable backup is empty or safe", () => {
+    localStorage.setItem(JOURNAL_KEY, "{broken")
+    expect(readEmergencyJournalBackup()).toEqual({ kind: "unavailable" })
+    render(<ErrorBoundary><Boom /></ErrorBoundary>)
+    expect(screen.getByTestId("error-download-backup")).toBeDisabled()
+    expect(screen.getByText(/확인하지 못해 백업/u)).toBeTruthy()
+    expect(localStorage.getItem(JOURNAL_KEY)).toBe("{broken")
+  })
+
+  it("reports a download failure instead of silently claiming success", () => {
+    localStorage.setItem(JOURNAL_KEY, JSON.stringify([{ id: "a" }]))
+    vi.spyOn(URL, "createObjectURL").mockImplementation(() => { throw new Error("blocked") })
+    render(<ErrorBoundary><Boom /></ErrorBoundary>)
+    fireEvent.click(screen.getByTestId("error-download-backup"))
+    expect(screen.getByRole("status")).toHaveTextContent("백업 파일을 만들지 못했어요")
   })
 
   it("오류 내용을 외부로 보내지 않는다고 명시한다", () => {
