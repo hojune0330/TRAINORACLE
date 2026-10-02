@@ -33,6 +33,8 @@
 .home-hub__recent { margin-top:12px; }
 .home-hub__recent .home-hub__summary-row { min-height:72px; }
 .home-hub__summary-copy { min-width:0; display:flex; flex:1 1 auto; flex-direction:column; gap:4px; }
+.home-hub__latest-heading { display:flex; align-items:center; gap:8px; min-width:0; }
+.home-hub__latest-heading strong { min-width:0; }
 .home-hub__summary-copy span { color:var(--ink-2); line-height:1.45; }
 .home-hub__notices { display:grid; gap:8px; margin-top:16px; }
 .home-hub__notice { display:block; padding:12px 0; border-block:1px solid var(--line); }

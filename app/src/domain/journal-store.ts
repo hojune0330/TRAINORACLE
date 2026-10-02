@@ -20,6 +20,10 @@ import {
 } from "./private-memo-vault"
 import { loadSessionRecoveryCode } from "./account/private-note-sync"
 import { loadDecorationState } from "./decorations"
+import { calendarDecorationStateSchema, createEmptyCalendarDecorationState } from "./calendar-decoration-schema"
+import { calendarDecorationReadStatus, readCalendarDecorationStateSerialized } from "./calendar-decoration-store"
+import { accountDecorationsEnabled } from "./account/account-decoration-service"
+import { accountCalendarDecorationStatus } from "./account/account-calendar-decoration-service"
 import {
   activeLocalAccount,
   assignJournalsToAccount,
@@ -474,15 +478,32 @@ export function restoreDeletedEntry(id: string): RestoreDeletedResult {
 export function exportEntriesJSON(options: JournalExportOptions = {}): string {
   if (options.includeRawMemos === true) {
     const entries = entriesForOwnerFullBackup()
+    const accountCalendar = accountDecorationsEnabled() && !!activeLocalAccount()
+    const calendarUnsupported = accountCalendar && accountCalendarDecorationStatus() === "UNSUPPORTED"
+    if (!calendarUnsupported && accountCalendar && !["READY", "EMPTY"].includes(accountCalendarDecorationStatus())) {
+      throw new Error("CALENDAR_BACKUP_NOT_READY")
+    }
+    const localCalendarStatus = accountCalendar ? null : calendarDecorationReadStatus()
+    if (localCalendarStatus !== null && !["READY", "EMPTY"].includes(localCalendarStatus)) throw new Error("CALENDAR_BACKUP_NOT_READY")
+    const rawCalendar = readCalendarDecorationStateSerialized()
+    // A failed read must not masquerade as a genuinely absent local calendar.
+    if (localCalendarStatus === "READY" && rawCalendar === null) throw new Error("CALENDAR_BACKUP_NOT_READY")
+    const calendar = calendarUnsupported ? undefined : rawCalendar === null ? createEmptyCalendarDecorationState() : (() => {
+      try {
+        const parsed = calendarDecorationStateSchema.safeParse(JSON.parse(rawCalendar))
+        if (parsed.success) return parsed.data
+      } catch { /* Keep the unknown original; never export a replacement as its contents. */ }
+      throw new Error("CALENDAR_BACKUP_NOT_READY")
+    })()
     return JSON.stringify(
       {
         app: "TRAINORACLE",
-        format: entries.some(entry => entry.kind === "post-session" && entry.fileObservation !== undefined)
-          ? "trainoracle.journal.full-backup.v4" : "trainoracle.journal.full-backup.v3",
+        format: calendarUnsupported ? "trainoracle.journal.full-backup.v4" : "trainoracle.journal.full-backup.v5",
         exportMode: "OWNER_FULL_BACKUP",
         exportedAt: new Date().toISOString(),
         entries,
         decorations: loadDecorationState(),
+        ...(calendar === undefined ? { excludedSections: ["calendarDecorations"] } : { calendarDecorations: calendar }),
       },
       null,
       2,

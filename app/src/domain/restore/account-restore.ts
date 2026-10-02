@@ -2,6 +2,7 @@ import { accountJournalEntryFingerprint, accountJournalRecordsEnabled, hydrateAc
 import { readAccountJournalPrivateEntry } from "../account/account-journal-projection"
 import { validateAccountJournalRecordUpdate } from "../account/account-journal-record-schema"
 import { accountDecorationStatus, hydrateAccountDecorations, persistAccountDecorations, readAccountDecorationState } from "../account/account-decoration-service"
+import { accountCalendarDecorationStatus, hydrateAccountCalendarDecorations, persistAccountCalendarDecorations, readAccountCalendarDecorationState } from "../account/account-calendar-decoration-service"
 import { createAccountImportScope, isAccountImportDeleted } from "../import/account-import"
 import { parseJournalEntryForWrite, type JournalEntry } from "../journal-schema"
 import { buildRestorePlan, type BackupReadResult, type DecorationRestoreMode, type RestoreMode, type RestorePlan } from "./backup-file"
@@ -11,6 +12,8 @@ export type AccountRestoreOutcome = {
   keptExisting: number; blockedByDeletion: number; total: number
   decorationRestore: "NOT_INCLUDED" | "INVALID_SKIPPED" | "KEPT_EXISTING" | "ACCOUNT" | "PENDING" | "CONFLICT" | "FAILED"
   decorationFailure: "NONE" | "READ_FAILED" | "STATE_CHANGED" | "OWNERSHIP_UNVERIFIED"
+  calendarDecorationRestore?: AccountRestoreOutcome["decorationRestore"]
+  calendarDecorationFailure?: AccountRestoreOutcome["decorationFailure"]
   commit: "COMPLETE" | "PARTIAL" | "PENDING" | "FAILED"
 }
 
@@ -51,6 +54,18 @@ export async function createAccountBackupRestoration(source: BackupReadResult) {
   let running: Promise<AccountRestoreOutcome | null> | null = null
   let confirmedMode: RestoreMode | null = null
   let confirmedDecorationMode: DecorationRestoreMode | null = null
+  let confirmedCalendarMode: DecorationRestoreMode | null = null
+  let calendarBase: string | null = null
+  let calendarAttempted = false
+  if (read.calendarDecorationStatus === "included" && read.calendarDecorations) {
+    try {
+      if (await hydrateAccountCalendarDecorations() && scope.current()) {
+        const state = readAccountCalendarDecorationState()
+        if (state) calendarBase = JSON.stringify(state)
+      }
+    } catch { /* Other documents can still be restored. */ }
+    if (!scope.current()) { scope.dispose(); return null }
+  }
   let decorationAttempted = false
   const restoreDecorations = async (mode: DecorationRestoreMode): Promise<Pick<AccountRestoreOutcome, "decorationRestore" | "decorationFailure">> => {
     if (read.decorationStatus === "not-included") return { decorationRestore: "NOT_INCLUDED", decorationFailure: "NONE" }
@@ -82,7 +97,33 @@ export async function createAccountBackupRestoration(source: BackupReadResult) {
         : { decorationRestore: "FAILED", decorationFailure: "OWNERSHIP_UNVERIFIED" }
     } catch { return { decorationRestore: "FAILED", decorationFailure: "OWNERSHIP_UNVERIFIED" } }
   }
-  const run = async (mode: RestoreMode, decorationMode: DecorationRestoreMode): Promise<AccountRestoreOutcome | null> => {
+  const restoreCalendar = async (mode: DecorationRestoreMode, decorationResult: AccountRestoreOutcome["decorationRestore"]): Promise<Pick<AccountRestoreOutcome, "calendarDecorationRestore" | "calendarDecorationFailure">> => {
+    const result = (status: AccountRestoreOutcome["decorationRestore"], failure: AccountRestoreOutcome["decorationFailure"] = "NONE") => ({ calendarDecorationRestore: status, calendarDecorationFailure: failure })
+    if (!read.calendarDecorationStatus || read.calendarDecorationStatus === "not-included") return result("NOT_INCLUDED")
+    if (read.calendarDecorationStatus === "invalid" || !read.calendarDecorations) return result("INVALID_SKIPPED")
+    if (mode !== "replace") return result("KEPT_EXISTING")
+    if (lastResult?.calendarDecorationRestore === "ACCOUNT") return result("ACCOUNT")
+    if (calendarBase === null) return result("FAILED", "READ_FAILED")
+    // Calendar references cannot precede a selected ownership document restore.
+    if (confirmedDecorationMode === "replace" && read.decorationStatus === "included" && decorationResult !== "ACCOUNT") return result("FAILED", "OWNERSHIP_UNVERIFIED")
+    try {
+      const hydrated = await hydrateAccountCalendarDecorations()
+      if (!scope.current()) return result("FAILED", "READ_FAILED")
+      if (!hydrated) return accountCalendarDecorationStatus() === "CONFLICT" ? result("CONFLICT", "STATE_CHANGED")
+        : lastResult?.calendarDecorationRestore === "PENDING" && accountCalendarDecorationStatus() === "PENDING" ? result("PENDING") : result("FAILED", "READ_FAILED")
+      const current = readAccountCalendarDecorationState()
+      const serialized = current ? JSON.stringify(current) : null
+      if (calendarAttempted && serialized === JSON.stringify(read.calendarDecorations)) return result("ACCOUNT")
+      if (serialized !== calendarBase) return result("CONFLICT", "STATE_CHANGED")
+      if (!scope.current()) return result("FAILED", "READ_FAILED")
+      calendarAttempted = true
+      const saved = await persistAccountCalendarDecorations(read.calendarDecorations, calendarBase)
+      if (!scope.current()) return result("FAILED", "READ_FAILED")
+      if (saved.ok) return result(saved.storage)
+      return saved.code === "STALE_STATE" || saved.code === "OWNERSHIP_STATE_CHANGED" ? result("CONFLICT", "STATE_CHANGED") : result("FAILED", "OWNERSHIP_UNVERIFIED")
+    } catch { return result("FAILED", "OWNERSHIP_UNVERIFIED") }
+  }
+  const run = async (mode: RestoreMode, decorationMode: DecorationRestoreMode, calendarMode: DecorationRestoreMode): Promise<AccountRestoreOutcome | null> => {
     if (!scope.current() || !accountJournalRecordsEnabled()) return null
     const result: AccountRestoreOutcome = { account: 0, pending: 0, conflicts: 0, failed: 0,
       keptExisting: 0, blockedByDeletion: 0, total: plan.items.length,
@@ -155,20 +196,23 @@ export async function createAccountBackupRestoration(source: BackupReadResult) {
     if (!scope.current()) return null
     Object.assign(result, await restoreDecorations(decorationMode))
     if (!scope.current()) return null
-    const successes = result.account + (result.decorationRestore === "ACCOUNT" ? 1 : 0)
-    const waiting = result.pending + (result.decorationRestore === "PENDING" ? 1 : 0)
-    const errors = result.failed + result.conflicts + (["FAILED", "CONFLICT", "INVALID_SKIPPED"].includes(result.decorationRestore) ? 1 : 0)
+    Object.assign(result, await restoreCalendar(calendarMode, result.decorationRestore))
+    if (!scope.current()) return null
+    const successes = result.account + (result.decorationRestore === "ACCOUNT" ? 1 : 0) + (result.calendarDecorationRestore === "ACCOUNT" ? 1 : 0)
+    const waiting = result.pending + (result.decorationRestore === "PENDING" ? 1 : 0) + (result.calendarDecorationRestore === "PENDING" ? 1 : 0)
+    const errors = result.failed + result.conflicts + (["FAILED", "CONFLICT", "INVALID_SKIPPED"].includes(result.decorationRestore) ? 1 : 0) + (["FAILED", "CONFLICT", "INVALID_SKIPPED"].includes(result.calendarDecorationRestore ?? "NOT_INCLUDED") ? 1 : 0)
     result.commit = errors === 0 && waiting === 0 ? "COMPLETE"
       : successes > 0 ? "PARTIAL" : waiting > 0 && errors === 0 ? "PENDING" : "FAILED"
     lastResult = { ...result }
     return result
   }
-  return { plan, read, decorationReady: decorationBase !== null,
-    confirm: (mode: RestoreMode = "keep-existing", decorationMode: DecorationRestoreMode = "keep-existing") => {
+  return { plan, read, decorationReady: decorationBase !== null, calendarReady: calendarBase !== null,
+    confirm: (mode: RestoreMode = "keep-existing", decorationMode: DecorationRestoreMode = "keep-existing", calendarMode: DecorationRestoreMode = "replace") => {
       if (running) return running
       confirmedMode ??= mode
       confirmedDecorationMode ??= decorationMode
-      running = run(confirmedMode, confirmedDecorationMode).finally(() => { running = null })
+      confirmedCalendarMode ??= calendarMode
+      running = run(confirmedMode, confirmedDecorationMode, confirmedCalendarMode).finally(() => { running = null })
       return running
     },
     dispose: scope.dispose,

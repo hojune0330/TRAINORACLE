@@ -111,6 +111,7 @@ async function namespacedId(parts) {
 async function stateIdentityValid(ownerId, documentId, document) {
   if (document.state !== 'ACCOUNT_STATE') return true;
   if (document.kind === 'DECORATIONS') return documentId === await namespacedId(['trainoracle.account.decorations.v1',ownerId]);
+  if (document.kind === 'CALENDAR_DECORATIONS') return documentId === await namespacedId(['trainoracle.account.calendar-decorations.v1',ownerId]);
   if (document.kind === 'PLAN') return documentId === await namespacedId(['trainoracle.account.plan.v1',ownerId]);
   // Plan worker supplies a bound identity helper with its schema; no guessed IDs.
   return typeof accountState.accountStateDocumentId === 'function'
@@ -177,6 +178,7 @@ function parseAction(input, validateDocument) {
   const { action } = input;
   let valid = false;
   if (action === 'status') valid = keys(input, ['action']);
+  if (action === 'calendarDecorationSupport') valid = keys(input, ['action']);
   if (action === 'rewardSummary' || action === 'visit') valid = keys(input, ['action']);
   if (action === 'list') valid = keys(input, ['action'], ['limit', 'cursor', 'collection'])
     && (!Object.hasOwn(input, 'collection') || input.collection === 'JOURNAL')
@@ -335,6 +337,21 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         }
         return respond(200, { kind: 'ready' });
       }
+      if (input.action === 'calendarDecorationSupport') {
+        if (typeof repo.calendarDecorationSupport !== 'function'
+          || typeof accountState.accountCalendarDecorationOwnershipMetadata !== 'function') fail(503, 'UNAVAILABLE');
+        let support;
+        try { support = await repo.calendarDecorationSupport(); }
+        catch (error) {
+          // An older attested SQL function rejects only this new action with 22023.
+          // Do not downgrade auth, data-read, or database outages to an empty calendar.
+          if (error?.code === '22023') fail(400, 'CALENDAR_DECORATION_UNSUPPORTED');
+          throw error;
+        }
+        await checkGate();
+        if (!keys(support, ['kind', 'version']) || support.kind !== 'calendar-decoration-support' || support.version !== 1) fail(503, 'UNAVAILABLE');
+        return respond(200, support);
+      }
       const decode = async (payload, documentId) => {
         const key = material.get(payload?.keyId);
         if (!key) fail(503, 'KEY_UNAVAILABLE');
@@ -417,6 +434,19 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
           previous = row.revision;
         }
         return values;
+      };
+      const calendarOwnershipMetadata = async document => {
+        if (document?.kind !== 'CALENDAR_DECORATIONS') return {};
+        const ownershipDocumentId = await namespacedId(['trainoracle.account.decorations.v1', ownerId]);
+        const row = await repo.read(ownerId, ownershipDocumentId);
+        if (!row || row.document_id !== ownershipDocumentId) fail(409, 'OWNERSHIP_STATE_CHANGED');
+        const ownership = await entry(row);
+        if (!ownership.document || ownership.document.kind !== 'DECORATIONS'
+          || typeof accountState.accountCalendarDecorationOwnershipMetadata !== 'function') fail(409, 'OWNERSHIP_STATE_CHANGED');
+        try {
+          return { ownershipDocumentId, ownershipRevision: ownership.revision,
+            ...accountState.accountCalendarDecorationOwnershipMetadata(document, ownership.document) };
+        } catch { fail(409, 'OWNERSHIP_STATE_CHANGED'); }
       };
       if (input.action === 'history') {
         const values = await versions();
@@ -530,7 +560,7 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
             receipt = receiptFor(await repo[input.action]({ documentId: input.documentId,
               operationId: input.operationId, expectedRevision: input.expectedRevision,
               ...(input.action === 'restore' ? { sourceRevision: input.sourceRevision,
-                metadata: accountJournalMetadata(restoredDocument) } : {}) }), input);
+                metadata: { ...accountJournalMetadata(restoredDocument), ...await calendarOwnershipMetadata(restoredDocument) } } : {}) }), input);
           } catch (error) {
             if (error?.code !== '22023') throw error;
             const winner = await repo.operation(ownerId, input.operationId);
@@ -641,7 +671,7 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
           { ownerId, documentId: input.documentId }, material.active);
         try { receipt = receiptFor(await repo.commit({ documentId: input.documentId,
           operationId: input.operationId, expectedRevision: input.expectedRevision, encryptedPayload,
-          metadata: { ...accountJournalMetadata(input.document), ...(input.document.state === 'FINALIZED'
+          metadata: { ...accountJournalMetadata(input.document), ...await calendarOwnershipMetadata(input.document), ...(input.document.state === 'FINALIZED'
             ? { awardAllowed: awardAllowed(input) } : {}),
             ...(input.document.kind === 'DECORATIONS' && input.writePurpose === 'MIGRATION' && input.expectedRevision === 0
               ? { legacyInitialGrant: true } : {}) } }), input); }
@@ -661,6 +691,7 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
       if (error?.code === '42501') return respond(403, { error: 'ACCESS_DENIED' });
       if (error?.code === '23505') return respond(409, { error: 'PLANNED_SESSION_ALREADY_RECORDED' });
       if (error?.code === 'P0001') return respond(409, { error: 'INSUFFICIENT_POINTS' });
+      if (error?.code === 'TD001') return respond(409, { error: 'OWNERSHIP_STATE_CHANGED' });
       return respond(503, { error: 'SERVICE_UNAVAILABLE' });
     }
   };
@@ -680,7 +711,7 @@ export function createAccountJournalRepository(client, { ownerId, attest } = {})
     const { data, error } = await query;
     if (error) {
       const safe = new Error('ACCOUNT_JOURNAL_DATABASE_ERROR');
-      if (['22023', '42501', '23505', 'P0001'].includes(error.code)) safe.code = error.code;
+      if (['22023', '42501', '23505', 'P0001', 'TD001'].includes(error.code)) safe.code = error.code;
       throw safe;
     }
     return data;
@@ -691,6 +722,7 @@ export function createAccountJournalRepository(client, { ownerId, attest } = {})
   };
   return {
     attestationStatus: () => mutate('status', {}),
+    calendarDecorationSupport: () => mutate('calendarDecorationSupport', {}),
     rewardSummary: () => result(client.rpc('account_reward_summary')),
     visit: () => result(client.rpc('record_account_reward_visit')),
     fileEvidenceEnabled: () => result(client.rpc('service_feature_enabled', { feature_key_input: 'FILE_ANALYSIS_WRITE' })),

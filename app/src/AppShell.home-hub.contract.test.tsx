@@ -50,7 +50,7 @@ vi.mock("./DeferredMobileScreens", () => ({
       <main><h1>더보기 화면</h1><button onClick={onOpenContent}>더보기 콘텐츠 열기</button><button onClick={onOpenRewards}>더보기 보상 열기</button><button onClick={onBack}>더보기 뒤로</button></main>
     ),
     TrainingContent: ({ onBack }: { onBack: () => void }) => <main><h1>훈련 콘텐츠</h1><button onClick={onBack}>콘텐츠 뒤로</button></main>,
-    JournalRewards: ({ onBack, onDecorateToday }: { onBack: () => void; onDecorateToday: () => void }) => <main><h1>일지 꾸미기·포인트</h1><button onClick={onBack}>보상 뒤로</button><button onClick={onDecorateToday}>오늘 꾸미기</button></main>,
+    JournalRewards: ({ onBack }: { onBack: () => void }) => <main><h1>일지 꾸미기</h1><button onClick={onBack}>보상 뒤로</button><button>일지</button><button>달력</button></main>,
     JournalDayReader: ({ onBack }: { onBack: () => void }) => <main><h1>오늘 일지</h1><button onClick={onBack}>일지 뒤로</button></main>,
     PlanBeta: ({ returnToSession }: { returnToSession?: PlannedSessionLink }) => <main><h1>계획</h1><output data-testid="return-session">{returnToSession?.plannedSessionId ?? "none"}</output></main>,
     PlanProposalInbox: () => null,
@@ -85,19 +85,21 @@ describe("AppShell home hub secondary destinations", () => {
       await user.click(screen.getByRole("button", { name: "홈 더보기 열기" }))
     }
     await user.click(screen.getByRole("button", { name: openLabel }))
-    expect(screen.getByRole("heading", { name: "일지 꾸미기·포인트" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "일지 꾸미기" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "보상 뒤로" }))
     expect(screen.getByRole("heading", { name: expected })).toBeVisible()
   })
 
-  it("opens today's journal detail when rewards asks to decorate today", async () => {
+  it("opens one unified studio from the old rewards destination without a shop-first step", async () => {
     const user = userEvent.setup()
     render(<AppShell />)
     await user.click(screen.getByRole("button", { name: "홈 보상 열기" }))
-    await user.click(screen.getByRole("button", { name: "오늘 꾸미기" }))
-    expect(screen.getByRole("heading", { name: "오늘 일지" })).toBeVisible()
-    await user.click(screen.getByRole("button", { name: "일지 뒤로" }))
-    expect(screen.getByRole("heading", { name: "일지 꾸미기·포인트" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "일지 꾸미기" })).toBeVisible()
+    expect(screen.getByRole("button", { name: /^일지$/ })).toBeVisible()
+    expect(screen.getByRole("button", { name: /^달력$/ })).toBeVisible()
+    expect(screen.queryByRole("button", { name: "오늘 꾸미기" })).toBeNull()
+    await user.click(screen.getByRole("button", { name: "보상 뒤로" }))
+    expect(screen.getByRole("heading", { name: "홈" })).toBeVisible()
   })
 
   it("forwards the immutable next-training link to PlanBeta", async () => {

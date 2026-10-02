@@ -31,6 +31,17 @@ describe("AppChrome tab labels", () => {
 })
 
 describe("saved receipt date wording", () => {
+  it("offers decoration after a real dated save without opening it automatically", () => {
+    const decorate = vi.fn()
+    render(<SavedToast count={0} phase="enter" receipt={{ kind: "generic", savedDate: "2026-10-02" }} onDecorateSaved={decorate} />)
+    expect(decorate).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole("button", { name: "일지 꾸미기" }))
+    expect(decorate).toHaveBeenCalledOnce()
+  })
+  it.each([undefined, "검토가 필요한 기록이에요."])("does not advertise decoration without a saved date or ahead of review guidance", reviewMessage => {
+    render(<SavedToast count={0} phase="enter" receipt={reviewMessage ? { kind: "generic", savedDate: "2026-10-02" } : { kind: "generic" }} reviewMessage={reviewMessage} onDecorateSaved={vi.fn()} />)
+    expect(screen.queryByRole("button", { name: "일지 꾸미기" })).toBeNull()
+  })
   it("names the selected future journal date instead of calling it today", () => {
     vi.setSystemTime(new Date("2026-09-04T12:00:00"))
     render(<SavedToast count={0} phase="enter" receipt={{ kind: "generic", savedDate: "2026-09-08" }} />)

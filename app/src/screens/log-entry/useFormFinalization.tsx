@@ -12,6 +12,7 @@ const rejected: Record<AccountJournalWriteRejection, string> = {
   PLANNED_SESSION_ALREADY_RECORDED: "연결된 계획 세션이 이미 기록되어 저장이 거절됐어요. 계정의 기존 기록을 먼저 확인해 주세요.",
   INSUFFICIENT_POINTS: "포인트가 부족해 저장 요청이 거절됐어요. 계정의 포인트와 요청 내용을 확인해 주세요.",
   OPERATION_REPLAY_UNAVAILABLE: "이전 저장 요청의 결과를 다시 확인할 수 없어요. 계정 기록을 먼저 확인해 주세요.",
+  OWNERSHIP_STATE_CHANGED: "꾸미기 보유 목록이 바뀌어 저장을 멈췄어요. 입력과 이전 요청은 보관했어요. 계정의 보유 목록을 확인해 주세요.",
 }
 const editedPending = "이전 저장 요청이 남아 있어 변경한 내용을 전송하지 않았어요. 현재 입력은 유지합니다. 이전 요청부터 그대로 확인해 주세요."
 const unavailable = "계정 저장을 완료하지 못했어요. 입력은 유지했어요. 이전 저장 상태를 확인한 뒤 다시 시도해 주세요."

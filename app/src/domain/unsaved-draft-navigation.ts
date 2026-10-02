@@ -3,6 +3,7 @@ type DraftGuard = {
   onBlocked: () => void
   confirmDiscard?: () => boolean
   discard?: () => void
+  requestNavigation?: (resume: () => void) => void
 }
 
 const guards = new Set<DraftGuard>()
@@ -23,12 +24,17 @@ export function runDraftSafeNavigation(navigate: () => void): boolean {
   const unsafe = [...guards].filter(guard => guard.isUnsafe())
   let blocked = false
   for (const guard of unsafe) {
-    if (!guard.confirmDiscard) {
+    if (!guard.confirmDiscard && !guard.requestNavigation) {
       blocked = true
       guard.onBlocked()
     }
   }
   if (blocked) return false
+  const interactive = unsafe.find(guard => guard.requestNavigation)
+  if (interactive) {
+    interactive.requestNavigation?.(() => { runDraftSafeNavigation(navigate) })
+    return false
+  }
   // Never discard volatile input while another owner/storage guard blocks leaving.
   if (unsafe.some(guard => !guard.confirmDiscard?.())) return false
   unsafe.forEach(guard => guard.discard?.())

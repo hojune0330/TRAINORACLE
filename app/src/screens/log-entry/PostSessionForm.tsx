@@ -1,4 +1,5 @@
 import React from "react"
+import { JournalWritingDecorationPreview } from "../journal/JournalDecorationPreview"
 import { Plus, ChevronUp } from "lucide-react"
 import { FormInputDraftBoundary, useFormInputDraft, useRecoveredFormInput } from "./useFormInputDraft"
 import type { ObjectiveEditorDraft, ExerciseEditorDraft } from "./form-input-draft"
@@ -68,11 +69,12 @@ function isNonPerformedOutcome(outcome: DetailedOutcome | undefined): boolean {
 }
 
 export function PostSessionForm(props: EntryFormProps) {
-  return <FormInputDraftBoundary kind="post-session" date={props.initialEntry?.date ?? props.targetDate ?? todayISO()}
+  const date = props.initialEntry?.date ?? props.targetDate ?? todayISO()
+  return <JournalWritingDecorationPreview date={date}><FormInputDraftBoundary kind="post-session" date={date}
     hasInitialContext={props.initialEntry !== undefined || props.plannedSessionLink !== undefined}
     identity={JSON.stringify([props.initialEntry?.id, props.initialEntry?.savedAt, props.plannedSessionLink])}>
     <PostSessionFormEditor {...props} />
-  </FormInputDraftBoundary>
+  </FormInputDraftBoundary></JournalWritingDecorationPreview>
 }
 
 function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plannedSessionLink }: EntryFormProps) {

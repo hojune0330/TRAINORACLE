@@ -94,6 +94,21 @@ describe("shared civil-date calendar", () => {
     expect(select).toHaveBeenCalledWith("2026-10-01")
   })
 
+  it("keeps an optional picture beside the date in the same single date button", () => {
+    const select = vi.fn()
+    render(<MonthCalendar month="2026-09" today="2026-09-27" onMonthChange={() => undefined} onSelectDate={select}
+      dayDescription={() => "일지 있음"} dayAdornmentDescription={date => date === "2026-09-27" ? "일지에 그림 장식 있음" : undefined}
+      renderDay={() => null} renderDayAdornment={date => date === "2026-09-27" ? <span data-testid="picture">☀</span> : null} />)
+
+    const dateButton = screen.getByRole("button", { name: "2026년 9월 27일 일요일 · 일지 있음 · 일지에 그림 장식 있음" })
+    expect(dateButton.querySelector(".month-calendar__date-heading--with-adornment")).toBeTruthy()
+    expect(dateButton.querySelector("[aria-hidden='true'] [data-testid='picture']")).toBeTruthy()
+    expect(within(screen.getByRole("grid", { name: "2026년 9월 달력" })).getAllByRole("button")).toHaveLength(35)
+    fireEvent.click(dateButton)
+    expect(select).toHaveBeenCalledTimes(1)
+    expect(select).toHaveBeenCalledWith("2026-09-27")
+  })
+
   it("refreshes today at local midnight and when a suspended browser resumes", () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date(2026, 8, 27, 23, 59, 59))

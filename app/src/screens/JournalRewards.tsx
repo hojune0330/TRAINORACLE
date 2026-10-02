@@ -1,5 +1,4 @@
 import React from "react"
-import { ArrowLeft } from "lucide-react"
 import { InfoDisclosure } from "../components/InfoDisclosure"
 import { loadEntries, todayISO } from "../domain/journal-store"
 import {
@@ -10,7 +9,8 @@ import {
   type EngagementAwardResult,
 } from "../domain/engagement"
 import { buildEngagementSharePayload } from "../domain/engagement-rewards"
-import { DECORATION_CATALOG, loadDecorationState } from "../domain/decorations"
+import { DECORATION_CATALOG, createEmptyDecorationState, loadDecorationState, type DecorationState } from "../domain/decorations"
+import { DECORATION_STATE_EVENT } from "../domain/decoration-store"
 import {
   ACCOUNT_REWARD_EVENT,
   accountRewardsEnabled,
@@ -21,7 +21,7 @@ import {
 } from "../domain/account/account-reward-service"
 import { activeLocalAccount, onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
 import { ACCOUNT_AUTH_STATE_EVENT, accountAuthState } from "../domain/account/account-auth-state"
-import { DecorationShop } from "./home/DecorationShop"
+import { LogDetail } from "./LogDetail"
 import { EngagementStrip } from "./home/EngagementStrip"
 import "../styles/home-menu.css"
 
@@ -33,13 +33,55 @@ const VISIT_NOTICE = {
   PENDING: "계정 방문 포인트를 확인하고 있어요.",
 } satisfies Record<EngagementAwardResult["kind"], string>
 
+const EMPTY_DECORATION_STATE = createEmptyDecorationState()
+
+/** Load/migrate decoration data after commit and never publish another owner's snapshot. */
+function useRewardDecorationState(): DecorationState {
+  const owner = React.useSyncExternalStore(onLocalJournalScopeChange, activeLocalAccount, () => null)
+  const [snapshot, setSnapshot] = React.useState<{ readonly owner: string | null; readonly state: DecorationState } | null>(null)
+
+  React.useEffect(() => {
+    const refresh = () => {
+      if (activeLocalAccount() !== owner) return
+      const state = loadDecorationState()
+      setSnapshot({ owner, state })
+    }
+    refresh()
+    window.addEventListener(DECORATION_STATE_EVENT, refresh)
+    window.addEventListener("storage", refresh)
+    window.addEventListener("trainoracle:account-decorations-changed", refresh)
+    window.addEventListener(ACCOUNT_AUTH_STATE_EVENT, refresh)
+    return () => {
+      window.removeEventListener(DECORATION_STATE_EVENT, refresh)
+      window.removeEventListener("storage", refresh)
+      window.removeEventListener("trainoracle:account-decorations-changed", refresh)
+      window.removeEventListener(ACCOUNT_AUTH_STATE_EVENT, refresh)
+    }
+  }, [owner])
+
+  return snapshot?.owner === owner ? snapshot.state : EMPTY_DECORATION_STATE
+}
+
 export type JournalRewardsProps = {
   readonly onBack: () => void
   readonly onOpenMore?: () => void
   readonly onDecorateToday?: () => void
+  readonly initialDate?: string
+  readonly previewMonth?: string
 }
 
-export function JournalRewards({ onBack, onOpenMore, onDecorateToday }: JournalRewardsProps) {
+export function JournalRewards({ onBack, onOpenMore, initialDate, previewMonth }: JournalRewardsProps) {
+  const owner = React.useSyncExternalStore(onLocalJournalScopeChange, activeLocalAccount, () => null)
+  const [date] = React.useState(() => {
+    if (initialDate) return initialDate
+    const today = todayISO()
+    const dates = loadEntries().map(entry => entry.date).filter(day => day <= today).sort().reverse()
+    return dates.includes(today) ? today : dates[0] ?? today
+  })
+  return <LogDetail key={`${owner ?? "device"}:${date}`} date={date} onBack={onBack} decorationStudio={{ onDone: onBack, previewMonth, materialsFooter: <InfoDisclosure title="포인트와 활동 보상"><JournalRewardDetails onOpenMore={onOpenMore} /></InfoDisclosure> }} />
+}
+
+function JournalRewardDetails({ onOpenMore }: Pick<JournalRewardsProps, "onOpenMore">) {
   const [revision, setRevision] = React.useState(0)
   const entries = React.useMemo(() => loadEntries(), [revision])
   const today = todayISO()
@@ -53,8 +95,9 @@ export function JournalRewards({ onBack, onOpenMore, onDecorateToday }: JournalR
   const [engagement, setEngagement] = React.useState(() => loadEngagementSummary(today))
   const [engagementNotice, setEngagementNotice] = React.useState<string | null>(null)
   const [shareNotice, setShareNotice] = React.useState<string | null>(null)
-  const [spentPoints, setSpentPoints] = React.useState(() => loadDecorationState().spentPoints)
-  const decorationState = loadDecorationState()
+  const [accountSpentPoints, setAccountSpentPoints] = React.useState(() => readAccountRewardSummary()?.spentPoints ?? 0)
+  const decorationState = useRewardDecorationState()
+  const spentPoints = accountRewardsEnabled() ? accountSpentPoints : decorationState.spentPoints
   const availablePoints = accountRewardsEnabled() ? readAccountRewardSummary()?.availablePoints ?? 0
     : Math.max(0, engagement.points - spentPoints)
   const nextRewardItem = DECORATION_CATALOG
@@ -78,7 +121,7 @@ export function JournalRewards({ onBack, onOpenMore, onDecorateToday }: JournalR
   React.useEffect(() => {
     const refresh = () => {
       setEngagement(loadEngagementSummary(today))
-      setSpentPoints(accountRewardsEnabled() ? readAccountRewardSummary()?.spentPoints ?? 0 : loadDecorationState().spentPoints)
+      if (accountRewardsEnabled()) setAccountSpentPoints(readAccountRewardSummary()?.spentPoints ?? 0)
       setRevision((value) => value + 1)
     }
     const hydrate = () => { if (accountRewardsEnabled()) void hydrateAccountRewards(); else refresh() }
@@ -146,16 +189,6 @@ export function JournalRewards({ onBack, onOpenMore, onDecorateToday }: JournalR
 
   return (
     <div className="more-screen journal-rewards-screen">
-      <header className="utility-header">
-        <button type="button" onClick={onBack} aria-label="뒤로가기" title="뒤로"><ArrowLeft aria-hidden="true" size={19} /></button>
-        <div><div className="utility-header__eyebrow">TRAINORACLE</div><h1>일지 꾸미기·포인트</h1></div>
-      </header>
-      <DecorationShop
-        earnedPoints={engagement.points}
-        hasJournalEntries={entries.length > 0}
-        onSpentPointsChange={setSpentPoints}
-        onDecorateToday={onDecorateToday}
-      />
       {accountAuthState() === "GUEST" && <div className="training-home__support-note"><InfoDisclosure title="게스트 포인트는 어디에 보관되나요?"><p>로그인하지 않고 모은 포인트는 이 기기에 남아요. 계정 포인트와는 별도로 보관해요.</p></InfoDisclosure></div>}
       <EngagementStrip
         summary={engagement}

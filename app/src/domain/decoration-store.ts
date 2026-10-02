@@ -30,6 +30,7 @@ import { accountDecorationsEnabled, readAccountDecorationState } from "./account
 export const DECORATION_STORAGE_KEY_V1 = "trainoracle.decorations.v1"
 export const DECORATION_STORAGE_KEY_V2 = "trainoracle.decorations.v2"
 export const DECORATION_STORAGE_KEY_V3 = "trainoracle.decorations.v3"
+export const DECORATION_STATE_EVENT = "trainoracle:decorations-changed"
 /* v2 → v3 자동 마이그레이션 시 원본 v2 문자열을 1회 보존한다 (계약 §3). */
 export const DECORATION_STORAGE_KEY_V2_BACKUP = "trainoracle.decorations.v2-backup"
 
@@ -181,7 +182,10 @@ export function saveDecorationStateIfCurrent(
     return rollback() ? { ok: false, code: "READBACK_MISMATCH" } : { ok: false, code: "ROLLBACK_FAILED" }
   }
   const verified = parseStoredDecorationStateV3(readback.value)
-  if (verified !== null) return { ok: true }
+  if (verified !== null) {
+    if (typeof window !== "undefined") window.dispatchEvent(new Event(DECORATION_STATE_EVENT))
+    return { ok: true }
+  }
   return rollback() ? { ok: false, code: "READBACK_MISMATCH" } : { ok: false, code: "ROLLBACK_FAILED" }
 }
 

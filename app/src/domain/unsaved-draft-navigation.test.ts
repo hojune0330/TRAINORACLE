@@ -1,6 +1,20 @@
 import { expect, it, vi } from "vitest"
 import { registerUnsavedDraftGuard, runDraftSafeNavigation } from "./unsaved-draft-navigation"
 
+it("resumes an interactive draft decision only after it becomes safe and retains other blockers", () => {
+  let unsafe = true
+  let resume: (() => void) | undefined
+  const navigate = vi.fn()
+  const remove = registerUnsavedDraftGuard({ isUnsafe: () => unsafe, onBlocked: vi.fn(), requestNavigation: next => { resume = next } })
+  const blocked = vi.fn()
+  const hard = registerUnsavedDraftGuard({ isUnsafe: () => true, onBlocked: blocked })
+  try {
+    expect(runDraftSafeNavigation(navigate)).toBe(false); expect(resume).toBeUndefined()
+    hard(); expect(runDraftSafeNavigation(navigate)).toBe(false); expect(resume).toBeTypeOf("function")
+    unsafe = false; resume?.(); expect(navigate).toHaveBeenCalledOnce()
+  } finally { remove(); hard() }
+})
+
 it("confirms volatile discard only after all hard storage guards permit leaving", () => {
   const confirm = vi.fn(() => true), discard = vi.fn(), navigate = vi.fn()
   const removeGuest = registerUnsavedDraftGuard({ isUnsafe: () => true, onBlocked: vi.fn(), confirmDiscard: confirm, discard })

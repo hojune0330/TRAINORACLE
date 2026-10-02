@@ -84,7 +84,7 @@ describe("explicit full backup decoration section", () => {
     const full = exportEntriesJSON({ includeRawMemos: true })
 
     expect(safe).not.toMatch(/"decorations"\s*:/u)
-    expect(full).toContain('"format": "trainoracle.journal.full-backup.v3"')
+    expect(full).toContain('"format": "trainoracle.journal.full-backup.v5"')
     expect(full).toContain('"decorations": {')
     expect(full).toContain('"version": 3')
     expect(full).toContain('"itemId": "STICKER_WEATHER_SUN"')

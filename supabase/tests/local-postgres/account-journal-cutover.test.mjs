@@ -62,6 +62,9 @@ before(async()=>{
   if(process.env.CUTOVER_MUTATION==='uniqueness') sql=sql.replace('create unique index account_journal_occurrence_unique','create index account_journal_occurrence_unique');
   await db.exec(sql);
   preservedAfter=await snapshot();
+  let calendarSql=readFileSync(new URL('0045_calendar_decoration_account_storage.sql',migrations),'utf8');
+  if(process.env.CALENDAR_SQL_MUTATION==='ownership') calendarSql=calendarSql.replace('perform public.verify_account_calendar_decoration_ownership(owner_id,metadata);','null;');
+  await db.exec(calendarSql);
   // Model the platform's normal table DML grants; RLS/triggers must do the work.
   await db.exec('grant select,insert,update,delete on public.journal_entries,public.journal_tombstones to authenticated');
   await db.query('insert into public.account_journal_gateway_keys(key_id,secret) values($1,$2)',['fixture',secret]);
@@ -75,6 +78,47 @@ beforeEach(async()=>{
   await login();
 });
 after(()=>db.close());
+
+test('calendar SQL support is attested and keeps existing DECORATIONS writes compatible',async()=>{
+  assert.deepEqual(await mutate({},'calendarDecorationSupport'),{kind:'calendar-decoration-support',version:1});
+  const inventory=input({metadata:{...draft,kind:'DECORATIONS',purchases:[],spentPoints:0}});
+  assert.equal((await mutate(inventory)).kind,'saved');
+  const calendar=input({metadata:{...draft,kind:'CALENDAR_DECORATIONS',ownershipDocumentId:inventory.documentId,
+    ownershipRevision:1,paidReferenceItemIds:[]}});
+  assert.equal((await mutate(calendar)).kind,'saved');
+  const before=await rpc('account_reward_summary');
+  assert.equal(before.points,0); assert.equal(before.spentPoints,0);
+  assert.equal((await mutate({...inventory,operationId:randomUUID(),expectedRevision:1})).kind,'saved');
+  assert.equal((await mutate(calendar)).kind,'saved'); // Receipt replay is not a new write.
+  const stale={...calendar,operationId:randomUUID(),expectedRevision:1};
+  await denied(()=>mutate(stale),'TD001');
+  assert.equal((await db.query('select revision from public.account_journal_documents where document_id=$1',[calendar.documentId])).rows[0].revision,1);
+  const latest={...stale,operationId:randomUUID(),metadata:{...calendar.metadata,ownershipRevision:2}};
+  assert.equal((await mutate(latest)).kind,'saved');
+});
+
+test('calendar SQL ownership binds live inventory owner and checks paid purchase or legacy grant without awarding',async()=>{
+  const inventory=input({metadata:{...draft,kind:'DECORATIONS',purchases:[{itemId:'legacy-sticker',cost:20}],spentPoints:20,legacyInitialGrant:true}});
+  await mutate(inventory);
+  const metadata={...draft,kind:'CALENDAR_DECORATIONS',ownershipDocumentId:inventory.documentId,ownershipRevision:1,
+    paidReferenceItemIds:['legacy-sticker']};
+  assert.equal((await mutate(input({metadata}))).kind,'saved');
+  await denied(()=>mutate(input({metadata:{...metadata,paidReferenceItemIds:['unowned-paid']}})),'TD001');
+  const summary=await rpc('account_reward_summary');
+  assert.equal(summary.points,0); assert.equal(summary.spentPoints,0); assert.equal(summary.legacySpentPoints,20);
+  await login(B); await denied(()=>mutate(input({metadata}),'commit',B),'TD001'); await login();
+  await mutate({documentId:inventory.documentId,operationId:randomUUID(),expectedRevision:1},'delete');
+  await denied(()=>mutate(input({metadata})),'TD001');
+});
+
+test('calendar SQL keeps commercial and ownership metadata in their original document domains',async()=>{
+  const inventory=input({metadata:{...draft,kind:'DECORATIONS',purchases:[],spentPoints:0}}); await mutate(inventory);
+  const metadata={...draft,kind:'CALENDAR_DECORATIONS',ownershipDocumentId:inventory.documentId,ownershipRevision:1,paidReferenceItemIds:[]};
+  for(const extra of [{spentPoints:0},{purchases:[]},{awardAllowed:true},{legacyInitialGrant:true}])
+    await denied(()=>mutate(input({metadata:{...metadata,...extra}})),'22023');
+  await denied(()=>mutate(input({metadata:{...inventory.metadata,ownershipDocumentId:inventory.documentId}})),'22023');
+  await denied(()=>db.query('select public.verify_account_calendar_decoration_ownership($1,$2)',[A,JSON.stringify(metadata)]));
+});
 
 test('0035 preserves existing ciphertext, receipts, legacy rows and feature values',()=>assert.deepEqual(preservedAfter,preservedBefore));
 test('one-time unverified legacy import preserves ownership without credit; expansion and restore cannot bypass purchases',async()=>{

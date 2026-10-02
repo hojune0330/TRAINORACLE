@@ -39,11 +39,16 @@ import { z } from "zod"
 import { decorationStateSchema, decorationPlacementTransformSchema, V2_SLOT_DEFAULT_TRANSFORMS } from "../decoration-schema"
 import { isDecorationSlot, STARTER_DECORATION_IDS } from "../decoration-catalog"
 import type { DecorationSlot } from "../decoration-catalog"
+import { calendarDecorationStateSchema, type CalendarDecorationState } from "../calendar-decoration-schema"
+import { CALENDAR_DECORATION_STORAGE_KEY, readCalendarDecorationStateSerialized, saveCalendarDecorationStateIfCurrent } from "../calendar-decoration-store"
+import { loadDecorationState } from "../decorations"
+import { accountScopedStorageKey } from "../account/local-account-scope"
 
 /** 인식하는 내보내기 형식 — journal-store.exportEntriesJSON이 쓰는 값들 */
 export const SAFE_FORMAT = "trainoracle.journal.v1"
 export const FULL_FORMAT_V3 = "trainoracle.journal.full-backup.v3"
 export const FULL_FORMAT_V4 = "trainoracle.journal.full-backup.v4"
+export const FULL_FORMAT_V5 = "trainoracle.journal.full-backup.v5"
 export const FULL_FORMAT = "trainoracle.journal.full-backup.v2"
 export const LEGACY_FULL_FORMAT = "trainoracle.journal.full-backup.v1"
 
@@ -64,6 +69,8 @@ export type BackupReadResult = {
   readonly decorationStatus: "included" | "not-included" | "invalid"
   readonly decorationItemCount: number
   readonly decorationPlacementCount: number
+  readonly calendarDecorations?: CalendarDecorationState | null
+  readonly calendarDecorationStatus?: "included" | "not-included" | "invalid"
 }
 
 const UNRECOGNIZED: BackupReadResult = {
@@ -96,7 +103,7 @@ export function readBackupFile(text: string): BackupReadResult {
   if (root.app !== "TRAINORACLE") return UNRECOGNIZED
 
   const format = root.format
-  const kind: BackupKind | null = format === FULL_FORMAT_V4 || format === FULL_FORMAT_V3 || format === FULL_FORMAT || format === LEGACY_FULL_FORMAT
+  const kind: BackupKind | null = format === FULL_FORMAT_V5 || format === FULL_FORMAT_V4 || format === FULL_FORMAT_V3 || format === FULL_FORMAT || format === LEGACY_FULL_FORMAT
     ? "full"
     : format === SAFE_FORMAT ? "safe" : null
   if (kind === null) return UNRECOGNIZED
@@ -105,7 +112,7 @@ export function readBackupFile(text: string): BackupReadResult {
   if (!Array.isArray(rawEntries)) return { ...UNRECOGNIZED, recognized: true, kind }
 
   // A legacy/safe envelope may not smuggle newly adopted evidence into an old format.
-  const formatEntries = format === FULL_FORMAT_V4 ? rawEntries : rawEntries.filter(entry => {
+  const formatEntries = format === FULL_FORMAT_V5 || format === FULL_FORMAT_V4 ? rawEntries : rawEntries.filter(entry => {
     const record = asRecord(entry)
     return record?.fileObservation === undefined && record?.comparisonRelations === undefined
   })
@@ -118,6 +125,7 @@ export function readBackupFile(text: string): BackupReadResult {
     return true
   })
   const decoration = readDecorationSection(format, root.decorations)
+  const calendar = format === FULL_FORMAT_V5 ? calendarDecorationStateSchema.safeParse(root.calendarDecorations) : null
   return {
     entries,
     skipped: rawEntries.length - entries.length,
@@ -128,6 +136,8 @@ export function readBackupFile(text: string): BackupReadResult {
     decorationStatus: decoration.status,
     decorationItemCount: decoration.state?.ownedItemIds.length ?? 0,
     decorationPlacementCount: decoration.state?.pages.reduce((total, page) => total + page.items.length, 0) ?? 0,
+    calendarDecorations: calendar?.success ? calendar.data : null,
+    calendarDecorationStatus: calendar === null ? "not-included" : calendar.success ? "included" : "invalid",
   }
 }
 
@@ -135,7 +145,7 @@ function readDecorationSection(
   format: unknown,
   candidate: unknown,
 ): { readonly state: DecorationState | null; readonly status: BackupReadResult["decorationStatus"] } {
-  if (format !== FULL_FORMAT_V4 && format !== FULL_FORMAT_V3 && format !== FULL_FORMAT) return { state: null, status: "not-included" }
+  if (format !== FULL_FORMAT_V5 && format !== FULL_FORMAT_V4 && format !== FULL_FORMAT_V3 && format !== FULL_FORMAT) return { state: null, status: "not-included" }
   if (typeof candidate !== "object" || candidate === null) return { state: null, status: "invalid" }
   const normalized = readLosslessDecorationState(candidate)
   return normalized === null
@@ -258,8 +268,9 @@ export type RestoreOutcome = {
   readonly failed: number
   readonly total: number
   readonly decorationRestore: "RESTORED" | "KEPT_EXISTING" | "NOT_INCLUDED" | "INVALID_SKIPPED" | "SAVE_FAILED" | "ROLLED_BACK"
+  readonly calendarDecorationRestore?: RestoreOutcome["decorationRestore"]
   readonly commit: "COMMITTED" | "FAILED" | "ROLLED_BACK"
-  readonly failureReason: "NONE" | "DECORATION_SAVE_FAILED" | "JOURNAL_SAVE_FAILED" | "RECOVERY_CODE_REQUIRED"
+  readonly failureReason: "NONE" | "DECORATION_SAVE_FAILED" | "CALENDAR_DECORATION_SAVE_FAILED" | "JOURNAL_SAVE_FAILED" | "RECOVERY_CODE_REQUIRED"
 }
 
 export async function restoreBackupFile(
@@ -267,15 +278,31 @@ export async function restoreBackupFile(
   plan: RestorePlan,
   mode: RestoreMode = "keep-existing",
   decorationMode: DecorationRestoreMode = "keep-existing",
+  calendarMode: DecorationRestoreMode = "replace",
 ): Promise<RestoreOutcome> {
   if (legacyJournalWritesBlocked()) return {
     ...emptyRestoreOutcome(plan, "NOT_INCLUDED", "FAILED", "JOURNAL_SAVE_FAILED"),
     failed: requestedRestoreCount(plan, mode),
   }
-  if (read.decorationStatus === "included" && read.decorations !== null && decorationMode === "replace") {
-    const snapshot = takeLocalStorageSnapshot()
-    const saved = saveDecorationState(read.decorations)
-    if (!saved.ok) return emptyRestoreOutcome(plan, "SAVE_FAILED", "FAILED", "DECORATION_SAVE_FAILED")
+  const replaceDecorations = read.decorationStatus === "included" && read.decorations !== null && decorationMode === "replace"
+  const ownership = replaceDecorations ? read.decorations! : loadDecorationState()
+  const calendar = read.calendarDecorations
+  const referencesOwned = calendar !== null && calendar !== undefined
+    && (calendar.paperThemeId === null || ownership.ownedItemIds.includes(calendar.paperThemeId))
+    && calendar.items.every(item => ownership.ownedItemIds.includes(item.itemId))
+  const calendarStatus: RestoreOutcome["decorationRestore"] = read.calendarDecorationStatus === "invalid"
+    || calendarMode === "replace" && read.calendarDecorationStatus === "included" && !referencesOwned ? "INVALID_SKIPPED"
+    : read.calendarDecorationStatus === "included" ? "KEPT_EXISTING" : "NOT_INCLUDED"
+  const replaceCalendar = calendarMode === "replace" && read.calendarDecorationStatus === "included" && referencesOwned
+  if (replaceDecorations || replaceCalendar) {
+    const snapshot = takeLocalStorageSnapshot(replaceDecorations, replaceCalendar)
+    if (snapshot === null) return { ...emptyRestoreOutcome(plan, replaceDecorations ? "SAVE_FAILED" : read.decorationStatus === "included" ? "KEPT_EXISTING" : "NOT_INCLUDED", "FAILED", replaceDecorations ? "DECORATION_SAVE_FAILED" : "CALENDAR_DECORATION_SAVE_FAILED"), calendarDecorationRestore: replaceCalendar ? "SAVE_FAILED" : calendarStatus }
+    const calendarBase = readCalendarDecorationStateSerialized()
+    if (replaceDecorations && !saveDecorationState(read.decorations!).ok) return { ...emptyRestoreOutcome(plan, "SAVE_FAILED", "FAILED", "DECORATION_SAVE_FAILED"), calendarDecorationRestore: calendarStatus }
+    if (replaceCalendar && !saveCalendarDecorationStateIfCurrent(calendar!, calendarBase).ok) {
+      const rolledBack = restoreLocalStorageSnapshot(snapshot)
+      return { ...emptyRestoreOutcome(plan, replaceDecorations ? rolledBack ? "ROLLED_BACK" : "SAVE_FAILED" : "NOT_INCLUDED", rolledBack ? "ROLLED_BACK" : "FAILED", "CALENDAR_DECORATION_SAVE_FAILED"), calendarDecorationRestore: "SAVE_FAILED" }
+    }
     const outcome = await restoreEntries(plan, mode)
     if (outcome.failed > 0 || outcome.restored !== requestedRestoreCount(plan, mode)) {
       const rolledBack = snapshot !== null && restoreLocalStorageSnapshot(snapshot)
@@ -283,11 +310,12 @@ export async function restoreBackupFile(
         ...outcome,
         restored: 0,
         failed: Math.max(outcome.failed, requestedRestoreCount(plan, mode)),
-        decorationRestore: rolledBack ? "ROLLED_BACK" : "SAVE_FAILED",
+        decorationRestore: replaceDecorations ? rolledBack ? "ROLLED_BACK" : "SAVE_FAILED" : read.decorationStatus === "included" ? "KEPT_EXISTING" : "NOT_INCLUDED",
+        calendarDecorationRestore: replaceCalendar ? rolledBack ? "ROLLED_BACK" : "SAVE_FAILED" : calendarStatus,
         commit: rolledBack ? "ROLLED_BACK" : "FAILED",
       }
     }
-    return { ...outcome, decorationRestore: "RESTORED" }
+    return { ...outcome, decorationRestore: replaceDecorations ? "RESTORED" : read.decorationStatus === "invalid" ? "INVALID_SKIPPED" : read.decorationStatus === "included" ? "KEPT_EXISTING" : "NOT_INCLUDED", calendarDecorationRestore: replaceCalendar ? "RESTORED" : calendarStatus }
   }
   const outcome = await restoreEntries(plan, mode)
   return {
@@ -296,6 +324,7 @@ export async function restoreBackupFile(
       ? "INVALID_SKIPPED"
       : read.decorationStatus === "included" ? "KEPT_EXISTING" : "NOT_INCLUDED",
     commit: outcome.restored === 0 && outcome.failed > 0 ? "FAILED" : outcome.commit,
+    calendarDecorationRestore: calendarStatus,
   }
 }
 
@@ -317,19 +346,16 @@ function emptyRestoreOutcome(
   }
 }
 
-const RESTORE_STORAGE_KEYS = Object.freeze([
-  JOURNAL_STORAGE_KEY,
-  PRIVATE_MEMO_VAULT_STORAGE_KEY,
-  DECORATION_STORAGE_KEY_V3,
-])
-
 type LocalStorageSnapshot = readonly (readonly [key: string, value: string | null])[]
 
-function takeLocalStorageSnapshot(): LocalStorageSnapshot | null {
+function takeLocalStorageSnapshot(includeDecorations: boolean, includeCalendar: boolean): LocalStorageSnapshot | null {
   const storage = journalStorage()
   if (storage === null) return null
   try {
-    return RESTORE_STORAGE_KEYS.map((key) => [key, storage.getItem(key)] as const)
+    const keys = [JOURNAL_STORAGE_KEY, PRIVATE_MEMO_VAULT_STORAGE_KEY,
+      ...(includeDecorations ? [DECORATION_STORAGE_KEY_V3, accountScopedStorageKey(DECORATION_STORAGE_KEY_V3)] : []),
+      ...(includeCalendar ? [accountScopedStorageKey(CALENDAR_DECORATION_STORAGE_KEY)] : [])]
+    return [...new Set(keys)].map((key) => [key, storage.getItem(key)] as const)
   } catch {
     return null
   }

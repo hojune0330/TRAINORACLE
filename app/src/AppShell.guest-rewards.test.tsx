@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 const mocks = vi.hoisted(() => ({ current: vi.fn(), change: vi.fn(), reward: vi.fn() }))
 vi.mock("./domain/account/auth", () => ({ currentUser: mocks.current, onAuthChange: mocks.change }))
@@ -35,14 +35,20 @@ it("connects the guest ledger only after successful initial auth and invalidates
   mocks.current.mockImplementation(options => options?.throwOnFailure ? pending : Promise.resolve(null))
   const view = render(<AppShell />)
   fireEvent.click(screen.getByRole("button", { name: "일지 꾸미기" }))
-  expect(await screen.findByText(/로그인 상태를 확인하고 있어요/)).toBeVisible()
+  await screen.findByRole("dialog", { name: "일지 꾸미기" }, { timeout: 10_000 })
+  expect(await screen.findByText("로그인 상태를 확인하고 있어요.")).toBeVisible()
   expect(screen.queryByText("5P")).not.toBeInTheDocument()
   await act(async () => resolve(null))
+  const launcher = screen.queryByRole("button", { name: "일지 꾸미기 열기" })
+  if (launcher) fireEvent.click(launcher)
+  fireEvent.click(screen.getByRole("button", { name: "꾸미기 재료 도구" }))
+  fireEvent.click(screen.getByText("포인트와 활동 보상"))
+  const rewardDetails = screen.getByText("포인트와 활동 보상").closest("details")!
   const help = screen.getByText("게스트 포인트는 어디에 보관되나요?")
   expect(help.closest("details")).not.toHaveAttribute("open")
   fireEvent.click(help)
   expect(screen.getByText("로그인하지 않고 모은 포인트는 이 기기에 남아요. 계정 포인트와는 별도로 보관해요.")).toBeVisible()
-  expect(screen.getByText("5P")).toBeVisible()
+  expect(within(rewardDetails).getByText("5P")).toBeVisible()
   expect(mocks.current).toHaveBeenCalledWith({ throwOnFailure: true })
   expect(mocks.change.mock.calls.some(call => call[1]?.ignoreInitialSession === true)).toBe(true)
   expect(mocks.reward).not.toHaveBeenCalled()
@@ -56,7 +62,8 @@ it("does not interpret failed authentication as signed-out or alter the guest le
     ? Promise.reject(new Error("AUTH_UNAVAILABLE")) : Promise.resolve(null))
   render(<AppShell />)
   fireEvent.click(screen.getByRole("button", { name: "일지 꾸미기" }))
-  expect(await screen.findByText(/게스트 장부로 전환하지 않았어요/)).toBeVisible()
+  await screen.findByRole("dialog", { name: "일지 꾸미기" }, { timeout: 10_000 })
+  expect(await screen.findByText("로그인 상태를 확인하지 못했어요. 게스트 장부로 전환하지 않았어요.")).toBeVisible()
   expect(accountAuthState()).toBe("FAILED")
   expect(screen.queryByText("5P")).not.toBeInTheDocument()
   expect(localStorage.getItem(ENGAGEMENT_STORAGE_KEY)).toBe(raw)

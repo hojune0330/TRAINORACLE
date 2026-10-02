@@ -1,11 +1,12 @@
 import React from "react"
-import { cleanup, render, screen } from "@testing-library/react"
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { AppShell } from "./AppShell"
 import { ENGAGEMENT_STORAGE_KEY } from "./domain/engagement"
 import type { JournalEntry } from "./domain/journal-schema"
 import { setActiveLocalAccount } from "./domain/account/local-journal-ownership"
+import { registerUnsavedDraftGuard } from "./domain/unsaved-draft-navigation"
 
 const STORAGE_KEY = "trainoracle.journal.v1"
 
@@ -44,16 +45,39 @@ describe("AppShell journal archive routing", () => {
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "전체 일지" }))
-    await user.click(await screen.findByRole("button", { name: /^2026년 7월 훈련 후/u }, { timeout: 5_000 }))
+    await user.click(await screen.findByRole("button", { name: /^2026년 7월 훈련 후/u }))
     await user.click(await screen.findByRole("button", { name: /2026년 7월 10일/u }))
     await user.click(screen.getByRole("button", { name: "일지·메모 원문 열기" }))
 
-    expect(await screen.findByText("아카이브 복귀 훈련")).toBeVisible()
+    expect(await screen.findByText("아카이브 복귀 훈련", {}, { timeout: 5_000 })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "일지 목록으로 돌아가기" }))
 
     expect(await screen.findByRole("heading", { name: "2026년 7월", level: 1 })).toBeVisible()
     expect(screen.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
     expect(screen.getByRole("button", { name: /2026년 7월 10일/u })).toBeVisible()
+  })
+
+  it("does not let browser Back bypass an unsafe decoration draft from a calendar original page", async () => {
+    const user = userEvent.setup()
+    render(<AppShell />)
+
+    await user.click(screen.getByRole("button", { name: "전체 일지" }))
+    await user.click(await screen.findByRole("button", { name: /^2026년 7월 훈련 후/u }, { timeout: 5_000 }))
+    await user.click(await screen.findByRole("button", { name: /2026년 7월 10일/u }))
+    await user.click(screen.getByRole("button", { name: "일지·메모 원문 열기" }))
+    expect(await screen.findByText("아카이브 복귀 훈련", {}, { timeout: 5_000 })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "일지 꾸미기 열기" }))
+    expect(await screen.findByRole("dialog", { name: "일지 꾸미기" })).toBeVisible()
+
+    const blocked = vi.fn()
+    const unregister = registerUnsavedDraftGuard({ isUnsafe: () => true, onBlocked: blocked })
+    try {
+      act(() => window.dispatchEvent(new PopStateEvent("popstate", { state: null })))
+      await waitFor(() => expect(blocked).toHaveBeenCalledOnce())
+      expect(screen.getByText("아카이브 복귀 훈련")).toBeVisible()
+    } finally {
+      unregister()
+    }
   })
 
   it("returns from editing an archived entry to the same selected month", async () => {

@@ -107,6 +107,7 @@ export function SavedToast({
   onDismiss,
   onOpenTrends,
   onOpenBackup,
+  onDecorateSaved,
 }: {
   readonly count: number
   readonly phase: ToastPhase
@@ -117,6 +118,7 @@ export function SavedToast({
   readonly onDismiss?: () => void
   readonly onOpenTrends?: () => void
   readonly onOpenBackup?: () => void
+  readonly onDecorateSaved?: () => void
 }) {
   const presentation = receiptPresentation(receipt)
   const needsReview = reviewMessage !== undefined
@@ -154,6 +156,7 @@ export function SavedToast({
             <ArrowRight aria-hidden="true" size={15} />
           </button>
         )}
+        {!needsReview && receipt.savedDate !== undefined && onDecorateSaved && <button className="saved-toast__action" type="button" onClick={onDecorateSaved}>일지 꾸미기<ArrowRight aria-hidden="true" size={15} /></button>}
       </div>
     </div>
   )

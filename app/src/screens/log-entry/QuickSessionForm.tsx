@@ -1,4 +1,5 @@
 import React from "react"
+import { JournalWritingDecorationPreview } from "../journal/JournalDecorationPreview"
 import { FormInputDraftBoundary, useFormInputDraft, useRecoveredFormInput } from "./useFormInputDraft"
 import { InfoDisclosure } from "../../components/InfoDisclosure"
 import { accountJournalRecordsEnabled } from "../../domain/account/account-journal-record-service"
@@ -83,11 +84,12 @@ function slotFromEntry(entry: PostSessionEntry | undefined): Slot | null {
 }
 
 export function QuickSessionForm(props: React.ComponentProps<typeof QuickSessionFormEditor>) {
-  return <FormInputDraftBoundary kind="quick" date={props.initialEntry?.date ?? props.targetDate ?? todayISO()}
+  const date = props.initialEntry?.date ?? props.targetDate ?? todayISO()
+  return <JournalWritingDecorationPreview date={date}><FormInputDraftBoundary kind="quick" date={date}
     hasInitialContext={props.initialEntry !== undefined || props.plannedSessionLink !== undefined}
     identity={JSON.stringify([props.initialEntry?.id, props.initialEntry?.savedAt, props.plannedSessionLink])}>
     <QuickSessionFormEditor {...props} />
-  </FormInputDraftBoundary>
+  </FormInputDraftBoundary></JournalWritingDecorationPreview>
 }
 
 function QuickSessionFormEditor({

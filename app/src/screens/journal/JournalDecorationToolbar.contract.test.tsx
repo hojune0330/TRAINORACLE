@@ -1,5 +1,6 @@
-import { fireEvent, render, screen, within } from "@testing-library/react"
-import { describe, expect, it, vi } from "vitest"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
+import type { ReactNode } from "react"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { DECORATION_CATALOG } from "../../domain/decoration-catalog"
 import { OPEN_CUTE_V1 } from "../../domain/decoration-collections"
@@ -9,11 +10,17 @@ const collectionItems = DECORATION_CATALOG.filter((item) => item.collection === 
 const purchasableItemIds = new Set(collectionItems.map((item) => item.id))
 const noop = vi.fn()
 
-function renderToolbar(bundlePurchasesEnabled: boolean) {
+afterEach(() => cleanup())
+
+function renderToolbar(
+  bundlePurchasesEnabled: boolean,
+  options: { calendarMode?: boolean; materialsFooter?: ReactNode; items?: typeof collectionItems } = {},
+) {
+  const items = options.items ?? collectionItems
   return render(
     <JournalDecorationToolbar
       hasEntries
-      items={collectionItems}
+      items={items}
       open
       drawerOpen
       activeItemIds={new Set()}
@@ -46,6 +53,8 @@ function renderToolbar(bundlePurchasesEnabled: boolean) {
       onMoveForward={noop}
       onCopySelected={noop}
       onPaste={noop}
+      calendarMode={options.calendarMode}
+      materialsFooter={options.materialsFooter}
     />,
   )
 }
@@ -74,5 +83,27 @@ describe("JournalDecorationToolbar material presentation", () => {
     )
     expect(collectionPreviews).toHaveLength(collectionItems.length)
     expect(within(container).getByRole("button", { name: /콧노래 친구 4P로 받기/u })).toBeInTheDocument()
+  })
+
+  it("limits calendar materials to margin-safe categories and keeps the footer after the catalog", () => {
+    const allCalendarCandidateItems = DECORATION_CATALOG.filter((item) =>
+      ["THEME", "STICKER", "STAMP", "TAPE", "EMOJI_STICKER", "AVATAR", "INK"].includes(item.category),
+    )
+    const footer = <p data-testid="calendar-materials-footer">달력 꾸미기 적용 안내</p>
+    const { container } = renderToolbar(true, {
+      calendarMode: true,
+      items: allCalendarCandidateItems,
+      materialsFooter: footer,
+    })
+
+    expect(screen.queryByRole("navigation", { name: /^일지 꾸미기 도구$/u })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /^테마$/u })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /^스티커$/u })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /^아바타$/u })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /^글자색$/u })).not.toBeInTheDocument()
+    expect(screen.getByTestId("calendar-materials-footer")).toBeInTheDocument()
+
+    const drawer = container.querySelector(".journal-decoration-toolbar")
+    expect(drawer?.lastElementChild).toHaveAttribute("data-testid", "calendar-materials-footer")
   })
 })

@@ -3,12 +3,13 @@ import type { ArchiveKindCounts, ArchiveMonthSummary } from "../domain/journal-a
 import { MonthCalendar } from "../components/MonthCalendar"
 import { useLocalToday } from "../hooks/useLocalToday"
 import type { JournalEntry } from "../domain/journal-schema"
-import { isoShift } from "../domain/dates"
+import { isValidIsoDate, isoShift } from "../domain/dates"
 import { CalendarJournalDetails } from "../components/CalendarJournalDetails"
 import { PlanDayReader } from "./plan-beta/PlanDayReader"
 import { CalendarTrainingMark } from "../components/CalendarTrainingMark"
 import { calendarMarksDescription, journalCalendarMarks, type CalendarTrainingMarkData } from "../domain/calendar-training-presentation"
 import { calendarRecordDates } from "../domain/calendar-context"
+import { JournalDecorationPreview, useJournalDecorationPreviews } from "./journal/JournalDecorationPreview"
 
 type JournalMonthCalendarProps = {
   readonly month: ArchiveMonthSummary
@@ -30,6 +31,11 @@ export function JournalMonthCalendar({ month, onOpenDay, onMonthChange, entries 
   const openDate = (date: string) => { setSelectedDate(date); setReaderDate(date); onMonthChange(date.slice(0, 7)) }
   const summaryId = React.useId()
   const recordDates = React.useMemo(() => calendarRecordDates(entries), [entries])
+  const activeDates = React.useMemo(
+    () => new Set(entries.map((entry) => entry.date).filter(isValidIsoDate)),
+    [entries],
+  )
+  const decorationPreviews = useJournalDecorationPreviews(activeDates)
   const days = React.useMemo(
     () => month.weeks.flatMap((week) => week.days),
     [month.weeks],
@@ -71,6 +77,8 @@ export function JournalMonthCalendar({ month, onOpenDay, onMonthChange, entries 
           const day = byDate.get(date)
           return day ? [kindText(day.kindCounts), calendarMarksDescription(marksByDate.get(date) ?? []), "일지 열기"].filter(Boolean).join(" · ") : "일지 없음"
         }}
+        dayAdornmentDescription={date => decorationPreviews.has(date) ? "일지에 그림 장식 있음" : undefined}
+        renderDayAdornment={date => <JournalDecorationPreview item={decorationPreviews.get(date)} />}
         renderDay={date => {
           const day = byDate.get(date)
           if (!day) return null

@@ -32,6 +32,7 @@ if (process.env.JOURNAL_HANDLER_MUTATION) {
     'journal-capability': ["if (document?.state === 'FINALIZED' && !input.supportedJournalVersions.includes(document.version)) fail(426, 'UPGRADE_REQUIRED');", ''],
     'exercise-capability': ["if (document?.state === 'FINALIZED' && document.entry?.exerciseLog !== undefined && !input.supportsExerciseLogV1) fail(426, 'UPGRADE_REQUIRED');", ''],
     'comparison-binding': ["if (!validateAccountJournalComparisonConfirmation(current.document, request, original)) fail(422, 'INVALID_COMPARISON_RELATION');", ''],
+    'calendar-ownership': ["...accountState.accountCalendarDecorationOwnershipMetadata(document, ownership.document)", 'paidReferenceItemIds: []'],
   };
   const change = mutations[process.env.JOURNAL_HANDLER_MUTATION];
   assert.ok(change && source.includes(change[0]), 'mutation must change an observed guard');
@@ -1093,6 +1094,83 @@ test('FinalRecord deterministic identity, default Draft filter and JOURNAL colle
   let restored = false; f.repo.restore = async () => { restored = true; };
   await response(await f.request(lifecycle('restore', { operationId: crypto.randomUUID() })), 503, { error: 'SERVICE_UNAVAILABLE' });
   assert.equal(restored, false);
+});
+
+async function calendarFixture() {
+  const { build } = createRequire(new URL('../../app/package.json', import.meta.url))('esbuild');
+  const output = await build({ stdin: { contents: 'export { createEmptyDecorationState } from "./src/domain/decoration-schema.ts";',
+    resolveDir: fileURLToPath(new URL('../../app/',import.meta.url)), loader: 'ts' }, bundle: true, write: false, platform: 'node', format: 'esm' });
+  const module = await import(`data:text/javascript;base64,${Buffer.from(output.outputFiles[0].contents).toString('base64')}`);
+  const f = await fixture({ dependencies: { validateDocument: validateAccountJournalDocument },
+    repo: { calendarDecorationSupport: async () => ({ kind: 'calendar-decoration-support', version: 1 }) } });
+  const id = async namespace => {
+    const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify([namespace,OWNER]))));
+    bytes[6]=(bytes[6]&15)|80; bytes[8]=(bytes[8]&63)|128;
+    const h=Buffer.from(bytes.slice(0,16)).toString('hex');
+    return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`;
+  };
+  const ownershipId=await id('trainoracle.account.decorations.v1'), calendarId=await id('trainoracle.account.calendar-decorations.v1');
+  const ownership={version:3,state:'ACCOUNT_STATE',kind:'DECORATIONS',data:module.createEmptyDecorationState()};
+  const calendar={version:3,state:'ACCOUNT_STATE',kind:'CALENDAR_DECORATIONS',data:{version:1,paperThemeId:null,items:[{
+    placementId:OP,itemId:'EMOJI_SUN',region:'HEADER_MARGIN',transform:{xPercent:50,yPercent:50,scale:1,rotationDeg:0}}]}};
+  const put = async (documentId, document, revision=1) => f.docs.set(f.key(OWNER,documentId),{
+    user_id:OWNER,document_id:documentId,revision,encrypted_payload:await encrypt(JSON.stringify(document),{ownerId:OWNER,documentId},f.material.active)});
+  await put(ownershipId,ownership);
+  return {...f,ownershipId,calendarId,ownership,calendar,put,proposal:save({documentId:calendarId,document:calendar})};
+}
+
+test('calendar support probes the additive SQL capability without blocking existing journal writes', async () => {
+  const f=await calendarFixture();
+  await response(await f.request({action:'calendarDecorationSupport'}),200,{kind:'calendar-decoration-support',version:1});
+  delete f.repo.calendarDecorationSupport;
+  await response(await f.request({action:'calendarDecorationSupport'}),503,{error:'SERVICE_UNAVAILABLE'});
+  await response(await f.request(save({documentId:await finalizedId(),document:finalized})),200);
+  assert.equal(f.calls.commit,1);
+});
+
+test('calendar capability distinguishes old SQL 22023 from real outages and keeps journals usable', async () => {
+  const f=await calendarFixture();
+  f.repo.calendarDecorationSupport=async()=>{throw Object.assign(new Error('synthetic old SQL action'),{code:'22023'});};
+  await response(await f.request({action:'calendarDecorationSupport'}),400,{error:'CALENDAR_DECORATION_UNSUPPORTED'});
+  await response(await f.request(save({documentId:await finalizedId(),document:finalized})),200);
+  assert.equal(f.calls.commit,1);
+  f.repo.calendarDecorationSupport=async()=>{throw new Error('synthetic database outage');};
+  await response(await f.request({action:'calendarDecorationSupport'}),503,{error:'SERVICE_UNAVAILABLE'});
+  f.repo.calendarDecorationSupport=async()=>{throw Object.assign(new Error('synthetic denied'),{code:'42501'});};
+  await response(await f.request({action:'calendarDecorationSupport'}),403,{error:'ACCESS_DENIED'});
+});
+
+test('calendar save binds the same-owner canonical inventory, no client ownership and no commerce metadata', async () => {
+  const f=await calendarFixture();
+  await response(await f.request(save({...f.proposal,documentId:DOC2})),422,{error:'INVALID_DOCUMENT'});
+  const paid={...f.calendar,data:{...f.calendar.data,items:[{...f.calendar.data.items[0],itemId:'STICKER_FINISH_LINE'}]}};
+  await response(await f.request({...f.proposal,document:paid}),409,{error:'OWNERSHIP_STATE_CHANGED'});
+  assert.equal(f.calls.commit,0);
+  await response(await f.request(f.proposal),200);
+  const metadata=f.operations.get(f.key(OWNER,OP)).trusted_metadata;
+  assert.deepEqual(metadata,{kind:'CALENDAR_DECORATIONS',occurrenceId:null,journalDate:null,eligible:false,
+    ownershipDocumentId:f.ownershipId,ownershipRevision:1,paidReferenceItemIds:[]});
+  f.docs.delete(f.key(OWNER,f.ownershipId));
+  await response(await f.request(f.proposal),200); // A fixed receipt replays without new ownership checks.
+  assert.equal(f.calls.commit,1);
+  await response(await f.request({action:'read',documentId:f.calendarId},{headers:{Authorization:'Bearer other-token'}}),404);
+});
+
+test('calendar SQL ownership race is a safe rejection and preserves prior calendar ciphertext', async () => {
+  const f=await calendarFixture(); await response(await f.request(f.proposal),200);
+  const previous=structuredClone(f.docs.get(f.key(OWNER,f.calendarId)));
+  f.repo.commit=async()=>{ throw Object.assign(new Error('synthetic detail'),{code:'TD001'}); };
+  await response(await f.request({...f.proposal,expectedRevision:1,operationId:OP2}),409,{error:'OWNERSHIP_STATE_CHANGED'});
+  assert.deepEqual(f.docs.get(f.key(OWNER,f.calendarId)),previous);
+});
+
+test('calendar documents coexist with JOURNAL and default draft listing without appearing in either', async () => {
+  const f=await calendarFixture(); await response(await f.request(f.proposal),200);
+  const journalId=await finalizedId(); await f.put(journalId,finalized); await f.put(DOC,draft);
+  await response(await f.request({action:'list',collection:'JOURNAL'}),200,
+    {kind:'list',documents:[{documentId:journalId,revision:1,document:finalized}],nextCursor:null});
+  await response(await f.request({action:'list'}),200,
+    {kind:'list',documents:[{documentId:DOC,revision:1,document:draft}],nextCursor:null});
 });
 
 test('delete and restore call exact lifecycle methods and return validated success receipts', async () => {

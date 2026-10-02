@@ -21,6 +21,7 @@ const messages = {
   PLANNED_SESSION_ALREADY_RECORDED: "연결된 계획 세션이 이미 기록되어 저장이 거절됐어요. 기존 기록을 확인해 주세요. 입력과 이전 요청은 유지하며 새 요청을 만들지 않습니다.",
   INSUFFICIENT_POINTS: "포인트가 부족해 저장 요청이 거절됐어요. 입력과 이전 요청은 유지하며 새 요청을 만들지 않습니다.",
   OPERATION_REPLAY_UNAVAILABLE: "이전 저장 요청의 결과를 다시 확인할 수 없어요. 계정 기록을 먼저 확인해 주세요. 입력과 이전 요청은 유지하며 새 요청을 만들지 않습니다.",
+  OWNERSHIP_STATE_CHANGED: "꾸미기 보유 목록이 바뀌어 저장을 멈췄어요. 입력과 이전 요청은 보관했어요. 보유 목록을 확인한 뒤 다시 시도해 주세요.",
 }
 
 type DraftNoticeTone = "info" | "pending" | "success" | "warning" | "error" | "conflict"
@@ -40,6 +41,7 @@ const messageTones: Record<keyof typeof messages, DraftNoticeTone> = {
   PLANNED_SESSION_ALREADY_RECORDED: "error",
   INSUFFICIENT_POINTS: "error",
   OPERATION_REPLAY_UNAVAILABLE: "error",
+  OWNERSHIP_STATE_CHANGED: "warning",
 }
 
 export function AccountJournalDraftPanel({ userId }: { readonly userId: string }) {

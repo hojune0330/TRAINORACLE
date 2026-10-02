@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react"
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react"
 import { BookOpen, ChevronLeft, PenLine } from "lucide-react"
 import { useLocalToday } from "../hooks/useLocalToday"
 import type { JournalEntry } from "../domain/journal-schema"
@@ -8,6 +8,8 @@ import { isImportedField } from "../domain/field-provenance"
 import { bodyPartLabel } from "./body-parts"
 import { CalendarTrainingMark } from "./CalendarTrainingMark"
 import { calendarMarksDescription, journalCalendarMarks } from "../domain/calendar-training-presentation"
+import { isValidIsoDate } from "../domain/dates"
+import { JournalDecorationPreview, useJournalDecorationPreviews } from "../screens/journal/JournalDecorationPreview"
 import "./CalendarJournalDetails.css"
 
 const OriginalJournal = lazy(() => import("../screens/LogDetail").then(module => ({ default: module.LogDetail })))
@@ -57,6 +59,8 @@ export function CalendarJournalDetails({ entries, date, onOpenDay, onWriteDate }
     }
   }, [original, date])
   const today = useLocalToday()
+  const activeDates = useMemo(() => new Set(entries.map((entry) => entry.date).filter(isValidIsoDate)), [entries])
+  const decorationPreviews = useJournalDecorationPreviews(activeDates)
   useEffect(() => setOriginal(false), [date])
   const day = entries.filter(entry => entry.date === date)
   if (original) return <section className="calendar-journal-detail">
@@ -64,7 +68,10 @@ export function CalendarJournalDetails({ entries, date, onOpenDay, onWriteDate }
     <Suspense fallback={<p role="status">일지를 여는 중이에요.</p>}><OriginalJournal date={date} onBack={closeOriginal} /></Suspense>
   </section>
   return <section className="calendar-journal-detail" aria-label="이날 남긴 기록">
-    <h3>이날 남긴 기록</h3>
+    <h3 style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+      이날 남긴 기록
+      <JournalDecorationPreview item={decorationPreviews.get(date)} />
+    </h3>
     {day.length === 0 ? <>
       <p className="calendar-journal-detail__empty">이날 작성한 일지가 없어요.</p>
       {onWriteDate && date <= today && <button type="button" onClick={() => onWriteDate(date)}>

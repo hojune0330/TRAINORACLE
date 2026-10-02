@@ -101,6 +101,37 @@ describe("account record compatibility API", () => {
     }
   })
 })
+describe("additive calendar capability API", () => {
+  it.each([400, 404, 501])("classifies older capability HTTP %s without weakening data failures", async status => {
+    const missing = () => dependencies(null, { context: new Response(null, { status }) })
+    expect(await requestAccountJournal(ownerId, { action: "calendarDecorationSupport" }, () => true, missing()))
+      .toEqual({ ok: false, code: "CALENDAR_DECORATION_UNSUPPORTED" })
+    expect(await requestAccountJournal(ownerId, { action: "list" }, () => true, missing()))
+      .toEqual({ ok: false, code: "UNAVAILABLE" })
+    expect(await requestAccountJournal(ownerId, { action: "read", documentId }, () => true, missing()))
+      .toEqual({ ok: false, code: status === 404 ? "NOT_FOUND" : "UNAVAILABLE" })
+  })
+  it.each([[401, "AUTH_REQUIRED"], [403, "ACCESS_DENIED"], [426, "UPGRADE_REQUIRED"], [503, "UNAVAILABLE"]] as const)(
+    "preserves capability auth and outage semantics for HTTP %s", async (status, code) => {
+      expect(await requestAccountJournal(ownerId, { action: "calendarDecorationSupport" }, () => true,
+        dependencies(null, { context: new Response(null, { status }) }))).toEqual({ ok: false, code })
+    },
+  )
+  it("requires exact support version and never reports an offline or stale owner as unsupported", async () => {
+    const response = { kind: "calendar-decoration-support", version: 1 }
+    expect(await requestAccountJournal(ownerId, { action: "calendarDecorationSupport" }, () => true, dependencies(response)))
+      .toEqual({ ok: true, data: response })
+    expect(await requestAccountJournal(ownerId, { action: "calendarDecorationSupport" }, () => true, dependencies({ ...response, version: 2 })))
+      .toEqual({ ok: false, code: "INVALID_RESPONSE" })
+    expect(await requestAccountJournal(ownerId, { action: "calendarDecorationSupport" }, () => true, dependencies(null, new Error("offline"))))
+      .toEqual({ ok: false, code: "UNAVAILABLE" })
+    const stale = dependencies(null, { context: new Response(null, { status: 400 }) })
+    stale.invoke.mockImplementation(async () => ({ data: null, error: stale.owner() === ownerId ? { context: new Response(null, { status: 400 }) } : null }))
+    expect(await requestAccountJournal(ownerId, { action: "calendarDecorationSupport" }, () => false, stale))
+      .toEqual({ ok: false, code: "STALE_RESPONSE" })
+    expect(stale.invoke).not.toHaveBeenCalled()
+  })
+})
 describe("account draft API", () => {
   it.each(["PLANNED_SESSION_ALREADY_RECORDED", "INSUFFICIENT_POINTS", "OPERATION_REPLAY_UNAVAILABLE"] as const)(
     "preserves controlled rejection %s without inventing a revision", async error => {

@@ -1,4 +1,5 @@
 import React from "react"
+import { JournalWritingDecorationPreview } from "../journal/JournalDecorationPreview"
 import { FormInputDraftBoundary, useFormInputDraft, useRecoveredFormInput } from "./useFormInputDraft"
 import { accountJournalRecordsEnabled } from "../../domain/account/account-journal-record-service"
 import { FormFinalizationRecovery, useFormFinalization } from "./useFormFinalization"
@@ -29,11 +30,12 @@ import { useOrderedStepMotion } from "../../hooks/useOrderedStepMotion"
 type RaceStage = "pre" | "post"
 
 export function RaceForm(props: EntryFormProps) {
-  return <FormInputDraftBoundary kind="race" date={props.initialEntry?.date ?? props.targetDate ?? todayISO()}
+  const date = props.initialEntry?.date ?? props.targetDate ?? todayISO()
+  return <JournalWritingDecorationPreview date={date}><FormInputDraftBoundary kind="race" date={date}
     hasInitialContext={props.initialEntry !== undefined}
     identity={JSON.stringify([props.initialEntry?.id, props.initialEntry?.savedAt])}>
     <RaceFormEditor {...props} />
-  </FormInputDraftBoundary>
+  </FormInputDraftBoundary></JournalWritingDecorationPreview>
 }
 
 function RaceFormEditor({ onBack, onDone, targetDate, initialEntry }: EntryFormProps) {

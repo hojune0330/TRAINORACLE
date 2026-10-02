@@ -11,8 +11,13 @@ import { GuidedEmptyState } from "../components/GuidedEmptyState"
 import "../components/CalendarJournalDetails.css"
 import { calendarCycleIndex, calendarRecordDates, recentCalendarDate, type CalendarReadiness } from "../domain/calendar-context"
 import { useCalendarPosition } from "../hooks/useCalendarPosition"
+import { CalendarDecorationFrame } from "../components/CalendarDecorationFrame"
+import type { CalendarDecorationState } from "../domain/calendar-decoration-schema"
+import type { DecorationId } from "../domain/decoration-catalog"
 
-export function CycleArchive({ entries, anchor, index, onAnchorChange, onIndexChange, onOpenDay, onWriteLog, onWriteDate, readiness = "READY" }: {
+const EMPTY_ALLOWED_DECORATIONS: ReadonlySet<DecorationId> = new Set()
+
+export function CycleArchive({ entries, anchor, index, onAnchorChange, onIndexChange, onOpenDay, onWriteLog, onWriteDate, readiness = "READY", calendarDecorationState = null, allowedCalendarDecorationIds = EMPTY_ALLOWED_DECORATIONS }: {
   readonly entries: readonly JournalEntry[]
   readonly anchor?: string | null
   readonly index?: number
@@ -22,6 +27,8 @@ export function CycleArchive({ entries, anchor, index, onAnchorChange, onIndexCh
   readonly onWriteLog?: (() => void) | undefined
   readonly onWriteDate?: (date: string) => void
   readonly readiness?: CalendarReadiness
+  readonly calendarDecorationState?: CalendarDecorationState | null
+  readonly allowedCalendarDecorationIds?: ReadonlySet<DecorationId>
 }) {
   const [internalAnchor, setInternalAnchor] = React.useState(todayISO)
   const [internalIndex, setInternalIndex] = React.useState<number>()
@@ -61,8 +68,11 @@ export function CycleArchive({ entries, anchor, index, onAnchorChange, onIndexCh
         <button type="button" className="calendar-range-return" onClick={() => setMonth(window.start.slice(0, 7))}>선택한 주기로 이동</button>
       )}
       {latest && <button type="button" className="calendar-range-return" onClick={() => { changeIndex(calendarCycleIndex(effectiveAnchor, latest)); nav.selectDate(latest) }}>최근 일지가 있는 주기</button>}
-      <JournalMonthCalendar month={calendarMonth} entries={entries} onOpenDay={onOpenDay} onWriteDate={onWriteDate} onMonthChange={setMonth} highlightedRange={window ?? undefined}
-        selectedDate={nav.date} onSelectedDateChange={nav.selectDate} />
+      {calendarDecorationState === null ? <JournalMonthCalendar month={calendarMonth} entries={entries} onOpenDay={onOpenDay} onWriteDate={onWriteDate} onMonthChange={setMonth} highlightedRange={window ?? undefined}
+      selectedDate={nav.date} onSelectedDateChange={nav.selectDate} /> : <CalendarDecorationFrame state={calendarDecorationState} allowedItemIds={allowedCalendarDecorationIds}>
+        <JournalMonthCalendar month={calendarMonth} entries={entries} onOpenDay={onOpenDay} onWriteDate={onWriteDate} onMonthChange={setMonth} highlightedRange={window ?? undefined}
+          selectedDate={nav.date} onSelectedDateChange={nav.selectDate} />
+      </CalendarDecorationFrame>}
       {readiness === "READY" && window && !entries.some(entry => entry.date >= window.start && entry.date <= window.end) && <GuidedEmptyState
         title="이 주기에 기록이 없어요" description="날짜를 둘러보거나 오늘 기록을 남겨보세요."
         actionLabel="오늘 기록하기" onAction={onWriteLog} />}

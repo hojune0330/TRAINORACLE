@@ -24,6 +24,10 @@ import { useLocalToday } from "../hooks/useLocalToday"
 import { useCalendarPosition, useCalendarScroll } from "../hooks/useCalendarPosition"
 import { calendarRecordDates, nearestCalendarDate, recentCalendarDate, type CalendarReadiness } from "../domain/calendar-context"
 import { CalendarEmptyExample } from "../components/CalendarEmptyExample"
+import { CalendarDecorationFrame } from "../components/CalendarDecorationFrame"
+import { useCalendarDecorationState } from "../components/calendar/useCalendarDecorationState"
+import type { DecorationId } from "../domain/decoration-catalog"
+import { useJournalDecorationSnapshot } from "./journal/JournalDecorationPreview"
 
 export type JournalArchiveProps = {
   readonly entries: readonly JournalEntry[]
@@ -59,6 +63,12 @@ export function JournalArchive({
   readiness = "READY",
 }: JournalArchiveProps) {
   const [internalMode, setInternalMode] = React.useState<"CALENDAR" | "CYCLE">("CALENDAR")
+  const calendarDecorationState = useCalendarDecorationState()
+  const journalDecorationSnapshot = useJournalDecorationSnapshot()
+  const allowedCalendarDecorationIds = React.useMemo<ReadonlySet<DecorationId>>(
+    () => new Set(journalDecorationSnapshot?.ownedItemIds ?? []),
+    [journalDecorationSnapshot?.ownedItemIds],
+  )
   const activeMode = mode ?? internalMode
   const calendarRoot = useCalendarScroll(`journal-scroll:${activeMode}`)
   const changeMode = onModeChange ?? setInternalMode
@@ -158,6 +168,8 @@ export function JournalArchive({
           onWriteLog={onWriteLog}
           onWriteDate={onWriteDate}
           readiness={readiness}
+          calendarDecorationState={calendarDecorationState}
+          allowedCalendarDecorationIds={allowedCalendarDecorationIds}
         />
       ) : selectedWeek !== null ? (
         <SummaryList
@@ -182,8 +194,12 @@ export function JournalArchive({
             {!dates.includes(nav.date) && dates.length > 0 && <button type="button" onClick={() => { const date = nearestCalendarDate(dates, nav.date); if (date) nav.selectDate(date) }}>가까운 기록</button>}
             {dates.length > 0 && !latest && <span>미래 날짜의 기록이 있어요.</span>}
           </div>
-          <JournalMonthCalendar month={calendarMonth} entries={entries} onOpenDay={onOpenDay} onWriteDate={onWriteDate}
-            selectedDate={nav.date} onSelectedDateChange={nav.selectDate} onMonthChange={nav.selectMonth} />
+          {calendarDecorationState === null ? <JournalMonthCalendar month={calendarMonth} entries={entries} onOpenDay={onOpenDay} onWriteDate={onWriteDate}
+            selectedDate={nav.date} onSelectedDateChange={nav.selectDate} onMonthChange={nav.selectMonth} /> :
+            <CalendarDecorationFrame state={calendarDecorationState} allowedItemIds={allowedCalendarDecorationIds}>
+              <JournalMonthCalendar month={calendarMonth} entries={entries} onOpenDay={onOpenDay} onWriteDate={onWriteDate}
+                selectedDate={nav.date} onSelectedDateChange={nav.selectDate} onMonthChange={nav.selectMonth} />
+            </CalendarDecorationFrame>}
           {entries.length === 0 && readiness === "READY" && <button type="button" className="calendar-range-return" onClick={() => setEmptyView("example")}>일지가 쌓인 예시 보기</button>}
           </>}
           {archive.months.length > 0 && !exampleVisible && (

@@ -17,7 +17,6 @@ import { loadEntries, localOnlyCount, todayISO } from "./domain/journal-store"
 import type { JournalEntry } from "./domain/journal-store"
 import { awardJournalEntry, type EngagementAwardResult } from "./domain/engagement"
 import { ACCOUNT_REWARD_EVENT, accountRewardsEnabled, accountRewardStatus, readAccountRewardSummary } from "./domain/account/account-reward-service"
-import { requestJournalDecorationAutoOpen } from "./domain/journal-decoration-intent"
 import { createSavedFactReceipt } from "./domain/save-receipt"
 import { analysisNavigationForReceipt, type AnalysisNavigation, type AnalysisSection } from "./domain/analysis-navigation"
 import { buildOraclePersonalResult } from "./domain/oracle-personal-result"
@@ -141,6 +140,8 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const scrollRegionRef = React.useRef<HTMLElement>(null)
   const [utilityView, setUtilityView] = React.useState<"more" | "guide" | "minji" | "content" | "rewards" | null>(null)
   const [utilityOrigin, setUtilityOrigin] = React.useState<"home" | "more">("more")
+  const [decorationInitialDate, setDecorationInitialDate] = React.useState<string | undefined>()
+  const decorationReturn = React.useRef<{ owner: string | null; view: typeof v; utility: typeof utilityView; scroll: number; focusLabel: string | null; focusText: string | null } | null>(null)
   const [overlay, setOverlay] = React.useState<AppOverlay | null>(null)
   const overlayRef = React.useRef<AppOverlay | null>(null)
   const overlayScrollTopRef = React.useRef(0)
@@ -217,8 +218,11 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       }
       const originalOrigin = calendarOriginalReturn.current
       if (originalOrigin && event.state?.calendarOriginalPage !== originalOrigin.token) {
-        calendarOriginalReturn.current = null
-        setV(originalOrigin.owner === activeLocalAccount() ? originalOrigin.view : INITIAL_VIEW_STATE)
+        const allowed = runDraftSafeNavigation(() => {
+          calendarOriginalReturn.current = null
+          setV(originalOrigin.owner === activeLocalAccount() ? originalOrigin.view : INITIAL_VIEW_STATE)
+        })
+        if (!allowed) window.history.pushState({ ...window.history.state, calendarOriginalPage: originalOrigin.token }, "", window.location.href)
         return
       }
       const intent = oracleInputRef.current
@@ -268,7 +272,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       setSavedToast(current => current?.rewardMessage === JOURNAL_REWARD_MESSAGE.PENDING ? { ...current, rewardMessage } : current)
       pendingReward.current = null
     }
-    const scope = () => { pendingReward.current = null; oracleInputRef.current = null; setSavedToast(null); setAnalysisContext(undefined) }
+    const scope = () => { pendingReward.current = null; oracleInputRef.current = null; decorationReturn.current = null; setDecorationInitialDate(undefined); setSavedToast(null); setAnalysisContext(undefined) }
     window.addEventListener(ACCOUNT_REWARD_EVENT, refresh)
     const unsubscribe = onLocalJournalScopeChange(scope)
     return () => { window.removeEventListener(ACCOUNT_REWARD_EVENT, refresh); unsubscribe() }
@@ -401,6 +405,27 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       setV(viewForTab("trends"))
     })
   }
+  const openDecorationStudio = (date?: string) => runViewTransition("push", () => {
+    const active = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    decorationReturn.current = { owner: activeLocalAccount(), view: v, utility: utilityView, scroll: scrollRegionRef.current?.scrollTop ?? 0, focusLabel: active?.getAttribute("aria-label") ?? null, focusText: active?.textContent?.trim() ?? null }
+    setDecorationInitialDate(date)
+    setUtilityOrigin(utilityView === "more" ? "more" : "home")
+    setUtilityView("rewards")
+    setV({ ...viewForTab("home"), detailDate: null })
+    setSavedToast(null)
+  })
+  const closeDecorationStudio = () => runViewTransition("pop", () => {
+    const origin = decorationReturn.current
+    decorationReturn.current = null; setDecorationInitialDate(undefined)
+    if (!origin || origin.owner !== activeLocalAccount()) { setUtilityView(utilityOrigin === "home" ? null : "more"); return }
+    setV(origin.view); setUtilityView(origin.utility)
+    window.requestAnimationFrame(() => {
+      if (origin.owner !== activeLocalAccount()) return
+      if (scrollRegionRef.current) scrollRegionRef.current.scrollTop = origin.scroll
+      if (origin.focusLabel) scrollRegionRef.current?.querySelector<HTMLElement>(`[aria-label=${JSON.stringify(origin.focusLabel)}]`)?.focus({ preventScroll: true })
+      else if (origin.focusText) [...(scrollRegionRef.current?.querySelectorAll<HTMLButtonElement>("button") ?? [])].find(button => button.textContent?.trim() === origin.focusText)?.focus({ preventScroll: true })
+    })
+  })
   const dismissOracle = () => {
     // Leaving the exploration invalidates its older history entries too.
     // Otherwise Back could reopen a sample over a different destination tab.
@@ -595,7 +620,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         onOpenMinji={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("minji") })}
         onOpenGuide={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("guide") })}
         onOpenContent={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("content") })}
-        onOpenRewards={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("rewards") })}
+        onOpenRewards={() => openDecorationStudio()}
         onOpenFeedback={() => openOverlay({ kind: "feedback" })}
         onOpenAccount={accountEnabled ? () => runViewTransition("push", () => setV(s => ({ ...s, accountOpen: true }))) : undefined}
         onOpenRestore={openRestore}
@@ -605,17 +630,10 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     screen = <DeferredMobileScreens.TrainingContent onBack={() => runViewTransition("pop", () => setUtilityView(utilityOrigin === "home" ? null : "more"))} />
   } else if (v.tab === "home" && utilityView === "rewards") {
     screen = <DeferredMobileScreens.JournalRewards
-      onBack={() => runViewTransition("pop", () => setUtilityView(utilityOrigin === "home" ? null : "more"))}
+      onBack={closeDecorationStudio}
+      initialDate={decorationInitialDate}
+      previewMonth={decorationReturn.current?.view.archiveSelection?.selectedMonth ?? undefined}
       onOpenMore={() => runViewTransition("push", () => { setUtilityOrigin("home"); setUtilityView("more") })}
-      onDecorateToday={() => {
-        const date = todayISO()
-        requestJournalDecorationAutoOpen(date)
-        runViewTransition("push", () => {
-          setHomeDetailOrigin("rewards")
-          setUtilityView(null)
-          setV(s => ({ ...s, detailDate: date }))
-        })
-      }}
     />
   } else if (v.tab === "home" && (utilityView === "guide" || utilityView === "minji")) {
     screen = <DeferredMobileScreens.Guide
@@ -638,12 +656,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
             setHomeDetailOrigin("home")
             setV(s => ({ ...s, detailDate: date, detailEntryId: entryId }))
           })}
-          onDecorateToday={() => {
-            /* 홈 꾸미기 카드: 오늘 일지 상세로 이동하며 편집기 자동 열기를 예약한다. */
-            const date = todayISO()
-            requestJournalDecorationAutoOpen(date)
-            runViewTransition("push", () => setV(s => ({ ...s, detailDate: date })))
-          }}
+          onDecorateToday={() => openDecorationStudio()}
           onOpenArchive={() => {
             runViewTransition("tab-forward", () => setV({ ...viewForTab("journal"), journalMode: "CALENDAR" }))
           }}
@@ -654,7 +667,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           onOpenMore={() => runViewTransition("push", () => setUtilityView("more"))}
           onOpenAccount={accountEnabled ? () => runViewTransition("push", () => setV(s => ({ ...s, accountOpen: true }))) : undefined}
           onOpenContent={() => runViewTransition("push", () => { setUtilityOrigin("home"); setUtilityView("content") })}
-          onOpenRewards={() => runViewTransition("push", () => { setUtilityOrigin("home"); setUtilityView("rewards") })}
+          onOpenRewards={() => openDecorationStudio()}
           onOpenNextTraining={(link: PlannedSessionLink) => runViewTransition("tab-forward", () => {
             setAthleteRecordsOpen(false)
             setUtilityView(null)
@@ -783,6 +796,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       tab={tabForChrome(v)}
       onDismissToast={() => setSavedToast(null)}
       onOpenTrends={goTrendsFromReceipt}
+      onDecorateSaved={() => { const date = savedToast?.receipt.savedDate; if (date && loadEntries().some(entry => entry.date === date)) openDecorationStudio(date) }}
       onOpenBackup={() => {
         setSavedToast(null)
         openRestore()

@@ -27,11 +27,16 @@ type Props = {
   readonly onToday?: (date: string) => void
   readonly dayDescription: (date: string) => string
   readonly renderDay: (date: string) => ReactNode
+  /** Read-only visual cue reserved beside the date number; never creates a separate hit target. */
+  readonly renderDayAdornment?: (date: string) => ReactNode
+  /** Short assistive description corresponding to renderDayAdornment. */
+  readonly dayAdornmentDescription?: (date: string) => string | undefined
   readonly highlightedRange?: { readonly start: string; readonly end: string }
   readonly trainingColors?: boolean
 }
 
-export function MonthCalendar({ month, today, selectedDate, onMonthChange, onSelectDate, onToday, dayDescription, renderDay, highlightedRange, trainingColors = false }: Props) {
+export function MonthCalendar({ month, today, selectedDate, onMonthChange, onSelectDate, onToday, dayDescription, renderDay,
+  renderDayAdornment, dayAdornmentDescription, highlightedRange, trainingColors = false }: Props) {
   const headingId = useId()
   const motion = useCalendarMotion()
   const [jumpOpen, setJumpOpen] = useState(false)
@@ -99,7 +104,8 @@ export function MonthCalendar({ month, today, selectedDate, onMonthChange, onSel
           const selected = cell.date === selectedDate
           const inRange = highlightedRange !== undefined && cell.date >= highlightedRange.start && cell.date <= highlightedRange.end
           const description = dayDescription(cell.date)
-          const name = `${calendarDayLabel(cell.date)}${description ? ` · ${description}` : ""}`
+          const adornmentDescription = dayAdornmentDescription?.(cell.date)
+          const name = [calendarDayLabel(cell.date), description, adornmentDescription].filter(Boolean).join(" · ")
           return <td key={cell.date} role="gridcell" aria-selected={selected} data-outside={outside || undefined} data-in-range={inRange || undefined} data-weekday={isoToDate(cell.date).getDay()}>
             <button
               ref={element => {
@@ -116,7 +122,10 @@ export function MonthCalendar({ month, today, selectedDate, onMonthChange, onSel
                 if (outside) onMonthChange(cell.date.slice(0, 7))
                 onSelectDate(cell.date)
               }}>
-              <time dateTime={cell.date} className="month-calendar__number">{cell.day}</time>
+              <span className={`month-calendar__date-heading${renderDayAdornment === undefined ? "" : " month-calendar__date-heading--with-adornment"}`}>
+                <time dateTime={cell.date} className="month-calendar__number">{cell.day}</time>
+                {renderDayAdornment !== undefined && <span className="month-calendar__day-adornment" aria-hidden="true">{renderDayAdornment(cell.date)}</span>}
+              </span>
               <span className="month-calendar__events" aria-hidden="true">{renderDay(cell.date)}</span>
             </button>
           </td>

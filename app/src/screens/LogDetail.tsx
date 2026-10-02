@@ -35,6 +35,7 @@ export type LogDetailProps = {
   readonly readerControls?: React.ReactNode
   readonly pageTopRef?: React.RefObject<HTMLDivElement>
   readonly initialEntryId?: string
+  readonly decorationStudio?: { readonly onDone: () => void; readonly previewMonth?: string; readonly materialsFooter?: React.ReactNode }
 }
 
 export function LogDetail(props: LogDetailProps) {
@@ -199,7 +200,7 @@ function JournalEntryDisclosure({
 }
 
 // ───────── A. Journal-page (실데이터) ─────────
-function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControls, pageTopRef, initialEntryId }: LogDetailProps) {
+function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControls, pageTopRef, initialEntryId, decorationStudio }: LogDetailProps) {
   const [rev, setRev] = React.useState(0)
   // 방금 지운 것 — 되돌리기 버튼을 그 자리에서 띄우기 위해 들고 있는다.
   // 휴지통(30일)에 남아 있으므로 이 상태가 사라져도 복구는 가능하다.
@@ -309,8 +310,8 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
 
   return (
     <div className="paper-grid journal-detail-page">
-      {readerControls === undefined ? <TopBar2 onBack={onBack}>일지</TopBar2> : readerControls}
-      <JournalDecorationSurface key={date} date={date} hasEntries={entries.length > 0} pageTopRef={pageTopRef}>
+      {!decorationStudio && (readerControls === undefined ? <TopBar2 onBack={onBack}>일지</TopBar2> : readerControls)}
+      <JournalDecorationSurface key={date} date={date} hasEntries={entries.length > 0} pageTopRef={pageTopRef} initiallyOpen={decorationStudio !== undefined} onDone={decorationStudio?.onDone} previewMonth={decorationStudio?.previewMonth} materialsFooter={decorationStudio?.materialsFooter}>
 
       <div className="journal-detail-page__date">
         <IndexCard date={cardDate(date)} dow={dowOf(date)} season={seasonOf(date)} />
@@ -369,8 +370,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
             이 날의 일지는 아직 비어 있어요.
           </div>
           <div style={{ marginTop: 12, fontFamily: "var(--mono)", fontSize: "var(--fs-mono-sm)", color: "var(--ink-3)", letterSpacing: "0.04em", lineHeight: 1.6 }}>
-            오늘 일지는 홈 → 일지 쓰기에서 1분이면 남길 수 있어요.<br />
-            어떤 모습으로 쌓이는지 궁금하면 가이드 탭의 예시 일지를 봐 주세요.
+            {decorationStudio ? <>일지를 저장한 뒤 그림을 붙일 수 있어요.<br />달력은 지금 꾸밀 수 있어요.</> : <>오늘 일지는 홈 → 일지 쓰기에서 1분이면 남길 수 있어요.<br />어떤 모습으로 쌓이는지 궁금하면 가이드 탭의 예시 일지를 봐 주세요.</>}
           </div>
           {onAddEntry !== undefined && (
             <button type="button" className="journal-empty-state__add" onClick={() => onAddEntry(date)}>

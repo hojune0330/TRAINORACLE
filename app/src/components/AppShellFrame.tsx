@@ -21,6 +21,7 @@ export function AppShellFrame({
   onDismissToast,
   onOpenTrends,
   onOpenBackup,
+  onDecorateSaved,
   onTab,
   hideTabBar = false,
 }: {
@@ -31,6 +32,7 @@ export function AppShellFrame({
   readonly onDismissToast: () => void
   readonly onOpenTrends: () => void
   readonly onOpenBackup?: () => void
+  readonly onDecorateSaved?: () => void
   readonly onTab: (tab: AppTab) => void
   readonly hideTabBar?: boolean
 }) {
@@ -56,6 +58,7 @@ export function AppShellFrame({
               onDismiss={onDismissToast}
               onOpenTrends={onOpenTrends}
               onOpenBackup={onOpenBackup}
+              onDecorateSaved={onDecorateSaved}
             />
           </ShellToastOutlet>
         )}

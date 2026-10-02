@@ -296,6 +296,10 @@ type JournalDecorationToolbarProps = {
   readonly onCopySelected: () => void
   readonly onPaste: () => void
   readonly onOpenTextSticker?: () => void
+  /** Restrict the shared materials drawer to assets that can decorate calendar margins. */
+  readonly calendarMode?: boolean
+  /** Optional calendar-editor actions rendered after the catalog inside the drawer. */
+  readonly materialsFooter?: React.ReactNode
 }
 
 export function JournalDecorationLauncher({ onOpen }: { readonly onOpen: () => void }) {
@@ -318,6 +322,19 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
   const [pendingPurchaseId, setPendingPurchaseId] = React.useState<string | null>(null)
   const [pendingBundleId, setPendingBundleId] = React.useState<string | null>(null)
   const wasOpenRef = React.useRef(false)
+  const calendarMaterialCategories = new Set(["THEME", "STICKER", "STAMP", "TAPE", "EMOJI_STICKER"])
+  const visibleItems = props.calendarMode
+    ? props.items.filter((item) => calendarMaterialCategories.has(item.category))
+    : props.items
+
+  React.useEffect(() => {
+    if (props.calendarMode) {
+      setToolFilter("ALL")
+      setOpenCollectionId(null)
+      setPendingPurchaseId(null)
+      setPendingBundleId(null)
+    }
+  }, [props.calendarMode])
 
   React.useEffect(() => {
     if (props.open && !wasOpenRef.current) closeButtonRef.current?.focus()
@@ -362,7 +379,7 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
     props.onDrawerOpen()
   }
 
-  const placementBlockedReason = !props.hasEntries
+  const placementBlockedReason = props.calendarMode ? props.placementCount >= 6 ? "달력 여백에는 장식을 6개까지 둘 수 있어요." : null : !props.hasEntries
     ? "기록을 먼저 남기면 붙일 수 있어요."
     : props.placementCount >= MAX_DECORATION_ITEMS_PER_PAGE
       ? `한 페이지에 ${MAX_DECORATION_ITEMS_PER_PAGE}개까지 붙일 수 있어요.`
@@ -370,7 +387,7 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
 
   const blockedReasonFor = (item: DecorationCatalogItem): string | null => {
     if (item.compatibleSlots.length > 0) return placementBlockedReason
-    if (!props.hasEntries && item.category !== "THEME") return "기록을 먼저 남기면 사용할 수 있어요."
+    if (!props.calendarMode && !props.hasEntries && item.category !== "THEME") return "기록을 먼저 남기면 사용할 수 있어요."
     return null
   }
 
@@ -384,7 +401,7 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
       setPendingPurchaseId(item.id)
       return
     }
-    if (!props.hasEntries) {
+    if (!props.hasEntries && !props.calendarMode) {
       props.onPreview(item)
       return
     }
@@ -430,11 +447,12 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
   const renderMaterialCategory = (category: MaterialCategory): React.ReactNode => {
     const partOfMaterialDrawer = category === "STICKER" || category === "STAMP" || category === "TAPE"
     if (toolFilter !== "ALL" && toolFilter !== category && !(toolFilter === "MATERIALS" && partOfMaterialDrawer)) return null
-    const categoryItems = props.items.filter((item) => item.category === category && item.collection === undefined)
+    const categoryItems = visibleItems.filter((item) => item.category === category && item.collection === undefined)
     if (categoryItems.length === 0) return null
     return (
       <React.Fragment key={category}>
         {(toolFilter === "ALL" || toolFilter === "MATERIALS") && <h3 className="journal-decoration-toolbar__section-title">{MATERIAL_CATEGORY_LABELS[category]}</h3>}
+        {(category === "THEME" || category === "INK") && <p className="journal-decoration-toolbar__scope">{props.calendarMode ? "모든 달에 공통으로 적용돼요." : "모든 일지에 공통으로 적용돼요."}</p>}
         {category === "AVATAR" && props.hasEntries && (
           <button
             type="button"
@@ -475,7 +493,7 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
     )
   }
 
-  const emojiItems = props.items.filter((item) => item.category === "EMOJI_STICKER")
+  const emojiItems = visibleItems.filter((item) => item.category === "EMOJI_STICKER")
   const showEmoji = toolFilter === "ALL" || toolFilter === "EMOJI_STICKER"
   const showCollectionEntries = toolFilter === "ALL" || toolFilter === "MATERIALS" || toolFilter === "STICKER"
   /*
@@ -483,7 +501,7 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
    * (retire-never-delete) 계속 붙일 수 있게 들어가는 길을 남건다. Surface가 은퇴·미보유 아이템은 items에서 이미 걸렀다.
    */
   const collectionsWithItems = DECORATION_COLLECTIONS
-    .map((collection) => ({ collection, items: props.items.filter((item) => item.collection === collection.id) }))
+    .map((collection) => ({ collection, items: visibleItems.filter((item) => item.collection === collection.id) }))
     .filter(({ items }) => items.length > 0)
   const openCollection = collectionsWithItems.find(({ collection }) => collection.id === openCollectionId)
 
@@ -599,7 +617,7 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
 
   return (
     <>
-      <header className="journal-decoration-editor__topbar" data-decoration-interaction="true">
+      {!props.calendarMode && <header className="journal-decoration-editor__topbar" data-decoration-interaction="true">
         <button ref={closeButtonRef} type="button" onClick={props.onClose} aria-label="꾸미기 편집기 닫기" title="닫기"><X aria-hidden="true" size={18} /></button>
         <span><strong>이 일지 꾸미기</strong><small>장식을 눌러 옮기고 모서리로 크기를 바꿔요.</small></span>
         <div className="journal-decoration-editor__topbar-actions">
@@ -611,11 +629,11 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
           )}
           <button type="button" onClick={props.onClose} aria-label="꾸미기 완료" title="완료"><Check aria-hidden="true" size={18} /></button>
         </div>
-      </header>
+      </header>}
 
       {props.notice !== "" && <p className="journal-decoration-editor__notice" role="status" aria-live="polite">{props.notice}</p>}
 
-      <nav className="journal-decoration-editor__dock" aria-label="일지 꾸미기 도구" data-decoration-interaction="true">
+      {!props.calendarMode && <nav className="journal-decoration-editor__dock" aria-label="일지 꾸미기 도구" data-decoration-interaction="true">
         <button type="button" aria-label="모든 꾸미기 도구" aria-pressed={props.drawerOpen && toolFilter === "ALL"} onClick={() => chooseTool("ALL")}><LayoutGrid aria-hidden="true" size={19} /><span>전체</span></button>
         <button type="button" aria-label="꾸미기 재료 도구" aria-pressed={props.drawerOpen && toolFilter === "MATERIALS"} onClick={() => chooseTool("MATERIALS")}><Sticker aria-hidden="true" size={19} /><span>재료</span></button>
         <button type="button" aria-label="이모지 스티커 도구" aria-pressed={props.drawerOpen && toolFilter === "EMOJI_STICKER"} onClick={() => chooseTool("EMOJI_STICKER")}><Smile aria-hidden="true" size={19} /><span>이모지</span></button>
@@ -624,9 +642,9 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
         )}
         <button type="button" aria-label="페이지 테마 도구" aria-pressed={props.drawerOpen && toolFilter === "THEME"} onClick={() => chooseTool("THEME")}><BookOpen aria-hidden="true" size={19} /><span>테마</span></button>
         <button type="button" aria-label="글자색 도구" aria-pressed={props.drawerOpen && toolFilter === "INK"} onClick={() => chooseTool("INK")}><PenLine aria-hidden="true" size={19} /><span>글자색</span></button>
-      </nav>
+      </nav>}
 
-      {!props.drawerOpen && (props.selectedIndex !== null || props.clipboardAvailable) && (
+      {!props.calendarMode && !props.drawerOpen && (props.selectedIndex !== null || props.clipboardAvailable) && (
         <div className="journal-decoration-editor__selection-actions" role="toolbar" aria-label="선택한 장식 편집">
           {props.selectedIndex !== null && (
             <>
@@ -649,14 +667,15 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
         aria-hidden={props.drawerOpen ? undefined : "true"}
         data-decoration-interaction="true"
       >
+        {props.drawerOpen && <>
         <div className="journal-decoration-toolbar__drawer-header">
           <div className="journal-decoration-toolbar__grabber" aria-hidden="true" />
           <header>
             <div>
-              <strong>재료 서랍</strong>
+              <strong>{props.calendarMode ? "달력에 쓸 재료" : "재료 서랍"}</strong>
               {/* 포인트를 제목 줄에 붙여 서랍 헤더를 두 줄로 줄인다 — 타일 그리드 노출 면적 확보. */}
               <small className="journal-decoration-toolbar__points">베타 포인트 · 사용 가능 <b>{props.availablePoints}P</b></small>
-              <span>{props.hasEntries ? "재료를 눌러 바로 붙여 보세요." : "기록을 남기기 전에는 테마만 미리 볼 수 있어요."}</span>
+              <span>{props.calendarMode ? "달력 여백을 미리 보고 적용할 수 있어요." : props.hasEntries ? "재료를 눌러 바로 붙여 보세요." : "기록을 남기기 전에는 테마만 미리 볼 수 있어요."}</span>
             </div>
             <button type="button" className="journal-decoration-toolbar__icon" onClick={props.onDrawerClose} aria-label="재료 서랍 숨기기"><ChevronDown aria-hidden="true" size={19} /></button>
           </header>
@@ -664,7 +683,7 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
 
         {openCollection === undefined && (
           <div className="journal-decoration-toolbar__filters" role="group" aria-label="꾸미기 재료 종류">
-            {DRAWER_FILTERS.map((filter) => (
+            {DRAWER_FILTERS.filter((filter) => !props.calendarMode || filter.id === "ALL" || calendarMaterialCategories.has(filter.id)).map((filter) => (
               <button
                 key={filter.id}
                 type="button"
@@ -734,6 +753,8 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
                 )}
               </>
             )}
+        {props.materialsFooter}
+        </>}
       </section>
     </>
   )

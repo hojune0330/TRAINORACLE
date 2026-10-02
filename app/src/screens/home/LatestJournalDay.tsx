@@ -1,7 +1,9 @@
 import { BookOpen, ChevronRight } from "lucide-react"
+import { useMemo } from "react"
 import type { JournalEntry } from "../../domain/journal-schema"
 import { isValidIsoDate } from "../../domain/dates"
 import { hasImportedField } from "../../domain/field-provenance"
+import { JournalDecorationPreview, useJournalDecorationPreviews } from "../journal/JournalDecorationPreview"
 
 const KIND_LABELS = [
   ["post-session", "훈련"], ["race", "경기"], ["evening", "하루 마무리"],
@@ -16,6 +18,8 @@ export function LatestJournalDay({ entries, today, onOpenDay, onOpenArchive }: {
 }) {
   const latest = entries.filter(entry => isValidIsoDate(entry.date) && entry.date <= today)
     .map(entry => entry.date).sort().at(-1)
+  const activeDates = useMemo(() => new Set(latest === undefined ? [] : [latest]), [latest])
+  const decorationPreviews = useJournalDecorationPreviews(activeDates)
   if (latest === undefined) return null
   const dayEntries = entries.filter(entry => entry.date === latest)
   const kinds = KIND_LABELS.flatMap(([kind, label]) => {
@@ -36,7 +40,10 @@ export function LatestJournalDay({ entries, today, onOpenDay, onOpenArchive }: {
       aria-label={`${year}년 ${dateLabel} 기록 ${dayEntries.length}개 보기 · ${kinds}`}>
       <BookOpen size={20} aria-hidden="true" />
       <span className="home-hub__summary-copy">
-        <strong>{latest === today ? "오늘" : dateLabel} 기록 {dayEntries.length}개</strong>
+        <span className="home-hub__latest-heading">
+          <strong>{latest === today ? "오늘" : dateLabel} 기록 {dayEntries.length}개</strong>
+          <JournalDecorationPreview item={decorationPreviews.get(latest)} />
+        </span>
         <span>{kinds}</span>
         <small>{localCount > 0 ? `이 기기에만 있는 기록 ${localCount}개` : "계정 보관"}{imported ? " · 가져온 기록 포함" : ""}</small>
       </span>

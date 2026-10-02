@@ -1,4 +1,5 @@
 import React from "react"
+import { JournalWritingDecorationPreview } from "../journal/JournalDecorationPreview"
 import { FormInputDraftBoundary, useFormInputDraft, useRecoveredFormInput } from "./useFormInputDraft"
 import { accountJournalRecordsEnabled } from "../../domain/account/account-journal-record-service"
 import { FormFinalizationRecovery, useFormFinalization } from "./useFormFinalization"
@@ -27,11 +28,12 @@ const MOOD_LABELS = ["흐림", "무덤덤", "보통", "좋음", "최고"] as con
 const SLEEP_QUALITY_LABELS = ["최악", "나쁨", "보통", "좋음", "최고"] as const
 
 export function EveningCheckin(props: EntryFormProps) {
-  return <FormInputDraftBoundary kind="evening" date={props.initialEntry?.date ?? props.targetDate ?? todayISO()}
+  const date = props.initialEntry?.date ?? props.targetDate ?? todayISO()
+  return <JournalWritingDecorationPreview date={date}><FormInputDraftBoundary kind="evening" date={date}
     hasInitialContext={props.initialEntry !== undefined}
     identity={JSON.stringify([props.initialEntry?.id, props.initialEntry?.savedAt])}>
     <EveningCheckinEditor {...props} />
-  </FormInputDraftBoundary>
+  </FormInputDraftBoundary></JournalWritingDecorationPreview>
 }
 
 function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: EntryFormProps) {

@@ -109,6 +109,7 @@ export type {
   DecorationTextPageItem,
 } from "./decoration-schema"
 export {
+  DECORATION_STATE_EVENT,
   DECORATION_STORAGE_KEY_V1,
   DECORATION_STORAGE_KEY_V2,
   DECORATION_STORAGE_KEY_V2_BACKUP,

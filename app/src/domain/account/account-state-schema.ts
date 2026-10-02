@@ -1,13 +1,16 @@
 import { accountDecorationDocumentSchema, validateAccountDecorationDocument } from "./account-decoration-schema"
 import { decorationCatalogItem } from "../decoration-catalog"
 import { validateAccountPlanDocument, validateAccountPlanDocumentUpdate } from "./account-plan-document-schema"
+import { validateAccountCalendarDecorationDocument } from "./account-calendar-decoration-schema"
+export { accountCalendarDecorationOwnershipMetadata } from "./account-calendar-decoration-schema"
 
 export function validateAccountStateDocument(value: unknown): boolean {
-  return validateAccountDecorationDocument(value) || validateAccountPlanDocument(value)
+  return validateAccountDecorationDocument(value) || validateAccountCalendarDecorationDocument(value) || validateAccountPlanDocument(value)
 }
 
 export function validateAccountStateDocumentUpdate(previous: unknown, next: unknown): boolean {
   if (validateAccountDecorationDocument(previous)) return validateAccountDecorationDocument(next)
+  if (validateAccountCalendarDecorationDocument(previous)) return validateAccountCalendarDecorationDocument(next)
   return validateAccountPlanDocumentUpdate(previous, next)
 }
 

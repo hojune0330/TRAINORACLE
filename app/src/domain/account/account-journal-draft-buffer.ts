@@ -3,6 +3,7 @@ import { isValidIsoDate } from "../dates"
 import { fileObservationSchema } from "../import/file-observation"
 import { accountJournalRecordSchema, correctAccountJournalImportedObservation, FILE_OBSERVATION_CORRECTION_FIELDS, applyAccountJournalComparisonMutation } from "./account-journal-record-schema"
 import { comparisonRelationSchema, releaseComparisonRelationRequestSchema } from "../import/comparison-relation"
+import { accountCalendarDecorationDocumentSchema } from "./account-calendar-decoration-schema"
 
 /** Local draft protection only, not authentication or server/account storage.
  * Callers must verify the current authenticated scope before every call and discard
@@ -157,6 +158,10 @@ export interface AccountJournalDraftBuffer<T = AccountJournalDraft> {
   importRemote(owner: string, doc: string, draft: T, serverRevision: number): Promise<"IMPORTED" | "UNCHANGED" | "CONFLICT">
   clear(owner: string, doc: string): Promise<boolean>
   reject?(owner: string, doc: string, operationId: string, reason: AccountJournalWriteRejection): Promise<boolean>
+  retryOwnershipChanged?(owner: string, doc: string, operationId: string, isCurrent?: () => boolean): Promise<boolean>
+  replaceOwnershipRejectedDraft?(owner: string, doc: string, draft: T, operationId: string,
+    expectedLocalSequence: number, verifiedServerRevision: number, verifiedRemote: T | null,
+    replacementOperationId: string, isCurrent?: () => boolean): Promise<boolean>
   logout(owner: string): void
   close(): void
 }
@@ -458,6 +463,59 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
       })
     },
 
+    async retryOwnershipChanged(owner, doc, id, isCurrent = () => true) {
+      const { ownerId, documentId } = scope(owner, doc)
+      const operationId = uuid.parse(id).toLowerCase()
+      return update(ownerId, documentId!, old => {
+        const record = required(old), operation = record.operation
+        if (!isCurrent() || record.blocked || !operation || operation.operationId !== operationId
+          || operation.rejection !== "OWNERSHIP_STATE_CHANGED") return { record, result: false }
+        const { rejection: _rejection, ...fixed } = operation
+        return { record: { ...record, operation: fixed }, result: true }
+      })
+    },
+
+    async replaceOwnershipRejectedDraft(owner, doc, input, id, expectedLocalSequence, verifiedServerRevision,
+      remoteInput, replacementId, isCurrent = () => true) {
+      const { ownerId, documentId } = scope(owner, doc)
+      const operationId = uuid.parse(id).toLowerCase(), replacementOperationId = uuid.parse(replacementId).toLowerCase()
+      sequence.parse(expectedLocalSequence); revision.parse(verifiedServerRevision)
+      // This recovery primitive is not a general JOURNAL, migration, or file-operation retirement API.
+      parseDocument(input, accountCalendarDecorationDocumentSchema)
+      if (remoteInput !== null) parseDocument(remoteInput, accountCalendarDecorationDocumentSchema)
+      const draft = parseDocument(input, schema), remote = remoteInput === null ? null : parseDocument(remoteInput, schema)
+      if ((remote === null) !== (verifiedServerRevision === 0)) throw new Error("Invalid verified replacement base")
+      const before = required(await get(ownerId, documentId!)), operation = before.operation
+      if (!isCurrent() || before.blocked || before.resolvedDeletion || before.encryptedMutation || before.writePurpose
+        || !operation || operation.operationId !== operationId || operation.rejection !== "OWNERSHIP_STATE_CHANGED"
+        || operation.expectedRevision !== verifiedServerRevision || before.serverRevision !== verifiedServerRevision
+        || before.localSequence !== expectedLocalSequence || replacementOperationId === operationId
+        || before.retiredOperationIds.includes(replacementOperationId)) return false
+      const key = await keyFor(ownerId, false)
+      const rejected = await decrypt(key, ownerId, documentId!, operation.encryptedSnapshot, schema, databaseName)
+      parseDocument(rejected, accountCalendarDecorationDocumentSchema)
+      // An unchanged Apply must retry the original fixed operation, never retire it.
+      if (JSON.stringify(rejected) === JSON.stringify(draft)) return false
+      const encrypted = await encrypt(key, ownerId, documentId!, draft, databaseName)
+      const encryptedRemote = remote === null ? null : await encrypt(key, ownerId, documentId!, remote, databaseName)
+      return update(ownerId, documentId!, old => {
+        if (!isCurrent() || JSON.stringify(old) !== JSON.stringify(before)) return { record: old, result: false }
+        if (before.conflictArchive.length >= MAX_CONFLICT_ARCHIVE_ENTRIES) throw new Error("Conflict archive full; existing versions retained")
+        const localSequence = before.localSequence + 1
+        // The original encrypted current version AND fixed rejected snapshot/reason
+        // survive this atomic explicit replacement. No acknowledgement is invented.
+        return { record: { ...before, localSequence, encryptedCurrent: encrypted,
+          conflictArchive: [...before.conflictArchive, { version: 1 as const, createdAt: new Date().toISOString(),
+            localServerRevision: before.serverRevision, localSequence: before.localSequence,
+            remoteRevision: verifiedServerRevision, encryptedLocal: before.encryptedCurrent, encryptedRemote,
+            operation, deleted: false, choice: "LOCAL" as const }],
+          retiredOperationIds: [...before.retiredOperationIds, operationId],
+          operation: { operationId: replacementOperationId, expectedRevision: verifiedServerRevision,
+            sequence: localSequence, encryptedSnapshot: encrypted },
+        }, result: true }
+      })
+    },
+
     async ack(owner: string, doc: string, id: string, serverRevision: number) {
       const { ownerId, documentId } = scope(owner, doc)
       const operationId = uuid.parse(id).toLowerCase()
@@ -639,6 +697,7 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
           pending: op ? { operationId: op.operationId, expectedRevision: op.expectedRevision, sequence: op.sequence,
             ...(envelope ? { mutation: envelope.mutation, originalDraft: parseDocument(envelope.original, schema) } : {}),
             ...(op.writePurpose ? { writePurpose: op.writePurpose } : {}),
+            ...(op.rejection ? { rejection: op.rejection } : {}),
             draft: pendingDraft! } : null,
         })
       }

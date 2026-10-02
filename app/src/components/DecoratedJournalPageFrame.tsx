@@ -51,6 +51,7 @@ type DecoratedJournalPageFrameProps = {
   readonly pageTopRef?: React.Ref<HTMLDivElement>
   readonly frameTopRef?: React.Ref<HTMLElement>
   readonly editable?: boolean
+  readonly hideDecorations?: boolean
   readonly selectedIndex?: number | null
   readonly onSelectPlacement?: (index: number) => void
   readonly onTransformPlacement?: (index: number, transform: DecorationPlacementTransform) => void
@@ -608,6 +609,7 @@ export function DecoratedJournalPageFrame({
   pageTopRef,
   frameTopRef,
   editable = false,
+  hideDecorations = false,
   selectedIndex = null,
   onSelectPlacement,
   onTransformPlacement,
@@ -656,6 +658,7 @@ export function DecoratedJournalPageFrame({
       className="decorated-journal-page"
       data-theme-id={state.equipped.themeId}
       data-ink-id={state.equipped.inkId}
+      data-decorations-hidden={hideDecorations || undefined}
       onPointerDown={editable && onDeselectPlacement !== undefined
         ? (event) => {
           /* 빈 곳 탭 = 선택 해제 (상용 편집기 관례). 장식이나 손잡이 위는 제외한다. */
@@ -664,12 +667,12 @@ export function DecoratedJournalPageFrame({
         }
         : undefined}
     >
-      {theme !== undefined && (
+      {!hideDecorations && theme !== undefined && (
         <DecorationAsset item={theme} className="decorated-journal-page__theme" testId="journal-page-theme" />
       )}
       {avatar !== undefined && (
         <div className="decorated-journal-page__top-rail" aria-hidden="true">
-          <span><DecorationAsset item={avatar} className="decorated-journal-page__avatar" testId="journal-page-avatar" /></span>
+          <span style={hideDecorations ? { visibility: "hidden" } : undefined}><DecorationAsset item={avatar} className="decorated-journal-page__avatar" testId="journal-page-avatar" /></span>
         </div>
       )}
       <div ref={contentBodyRef} className="decorated-journal-page__body">
@@ -688,7 +691,7 @@ export function DecoratedJournalPageFrame({
           {guides.horizontal && <span className="decorated-journal-page__guide decorated-journal-page__guide--horizontal" />}
         </div>
       )}
-      {placements.length > 0 && (
+      {!hideDecorations && placements.length > 0 && (
         <div className="decorated-journal-page__free-layer" data-editable={editable ? "true" : undefined}>
           {placements.map((placement) => {
             if (!editable || onSelectPlacement === undefined || onTransformPlacement === undefined) {
