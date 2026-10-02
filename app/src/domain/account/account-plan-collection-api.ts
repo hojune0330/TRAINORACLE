@@ -62,7 +62,7 @@ export function createAccountPlanCollectionClient(ownerId: string, isCurrent: ()
           if ((value as { kind?: unknown })?.kind !== "conflict") throw new AccountPlanCollectionError("REJECTED")
         } else throw new AccountPlanCollectionError(status === 401 ? "AUTH_REQUIRED"
           : [400, 405, 413, 415, 422].includes(status) ? "INVALID"
-            : [403, 409].includes(status) ? "REJECTED" : "UNAVAILABLE")
+            : [403, 409, 507].includes(status) ? "REJECTED" : "UNAVAILABLE")
       }
       const parsed = responseSchema.safeParse(value)
       if (!parsed.success) throw new AccountPlanCollectionError("INVALID")

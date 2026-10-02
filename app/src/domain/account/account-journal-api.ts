@@ -100,6 +100,13 @@ export async function requestAccountDocument<T>(
     if (error) {
       const status = error.context instanceof Response ? error.context.status : 0
       if (status === 426) return { ok: false, code: "UPGRADE_REQUIRED" }
+      if (status === 507) {
+        const quota = await error.context.clone().json().catch(() => null)
+        if (!current()) return { ok: false, code: "STALE_RESPONSE" }
+        if ((quota as { error?: unknown } | null)?.error === "CONFLICT_STORAGE_LIMIT_REACHED") {
+          return { ok: false, code: "CONFLICT_STORAGE_LIMIT_REACHED" }
+        }
+      }
       // Only this additive capability probe may interpret an older route/action as unsupported.
       // Data reads and writes must retain their ordinary failure semantics.
       if (request.action === "calendarDecorationSupport" && [400, 404, 501].includes(status)) {

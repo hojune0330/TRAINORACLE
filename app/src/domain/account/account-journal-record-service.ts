@@ -7,7 +7,7 @@ import type { FileObservationV1 } from "../import/file-observation"
 import type { ComparisonRelationV1 } from "../import/comparison-relation"
 import { activeLocalAccount, onLocalJournalScopeChange } from "./local-journal-ownership"
 import { flushAccountJournalDraft } from "./account-journal-sync"
-import { putAccountJournalProjection, confirmAccountJournalProjection, removeAccountJournalProjection, resetAccountJournalProjection, setAccountJournalProjectionStatus, suppressAccountJournalLocalCopy } from "./account-journal-projection"
+import { putAccountJournalProjection, confirmAccountJournalProjection, markAccountJournalFullListConfirmed, removeAccountJournalProjection, resetAccountJournalProjection, setAccountJournalProjectionStatus, suppressAccountJournalLocalCopy } from "./account-journal-projection"
 import type { JournalEntry } from "../journal-schema"
 import { markCurrentConfirmedAccountJournalProjection, currentConfirmedAccountJournalRevision } from "./account-journal-projection"
 import { canEditJournalEntry, keepsImportedObjectiveFacts, preserveJournalProvenance } from "../journal-edit-policy"
@@ -558,6 +558,25 @@ export async function hydrateAccountJournalRecords() {
   try { return await run } finally { if (hydration === run) hydration = null }
 }
 
+/**
+ * Export-time freshness gate. Unlike the runtime hydration entry point, this
+ * always queues a new authenticated list read after any work already in
+ * flight. That prevents an export click from merely reusing a hydration that
+ * began before the click. The shared queue and context generation preserve
+ * dirty local drafts and revoke an A -> B -> A account-switch response.
+ */
+export async function refreshAccountJournalRecordsForExport(): Promise<boolean> {
+  if (!accountJournalRecordsEnabled()) return true
+  let ctx: ReturnType<typeof context>
+  try { ctx = context() } catch { return false }
+  if (!ctx) return false
+  const current = ctx
+  // Revoke the previous completeness proof immediately, even while this read
+  // is waiting behind another hydration or mutation in the service queue.
+  setAccountJournalProjectionStatus(current.ownerId, "LOADING")
+  return serialize(current, () => hydrate(current), false)
+}
+
 async function hydrate(ctx: Context) {
   try {
     setAccountJournalProjectionStatus(ctx.ownerId, "LOADING")
@@ -625,6 +644,7 @@ async function hydrate(ctx: Context) {
     const retained = await ctx.buffer.list(ctx.ownerId)
     if (!ctx.current()) return false
     setAccountJournalProjectionStatus(ctx.ownerId, retainedStatus(retained))
+    markAccountJournalFullListConfirmed(ctx.ownerId)
     return true
   } catch { if (ctx.current()) setAccountJournalProjectionStatus(ctx.ownerId, "FAILED"); return false }
 }

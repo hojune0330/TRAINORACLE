@@ -12,6 +12,7 @@ import type { JournalEntry } from "../../domain/journal-store"
 import { hasImportedField } from "../../domain/field-provenance"
 import { journalRpeLabel, quickOutcomeLabel } from "../../domain/quick-journal"
 import { activeLocalAccount, onLocalJournalScopeChange } from "../../domain/account/local-journal-ownership"
+import { refreshAccountJournalRecordsForExport } from "../../domain/account/account-journal-record-service"
 
 type DeviceJournalProps = {
   readonly onOpenDay?: (date: string) => void
@@ -193,6 +194,12 @@ async function downloadJournalExport(mode: "SAFE" | "OWNER_FULL_BACKUP"): Promis
   const current = () => !revoked && activeLocalAccount() === owner
   try {
     const isFullBackup = mode === "OWNER_FULL_BACKUP"
+    if (!await refreshAccountJournalRecordsForExport() || !current()) {
+      if (!current()) return
+      throw new Error("JOURNAL_BACKUP_NOT_READY")
+    }
+    // Read private content only after the click-time server list has replaced
+    // any older projection, so the full backup hydrates the latest remote memo.
     if (isFullBackup) await loadEntriesWithPrivateMemos()
     if (!current()) return
     const blob = new Blob([exportEntriesJSON({ includeRawMemos: isFullBackup })], { type: "application/json" })
@@ -213,6 +220,14 @@ async function downloadJournalExport(mode: "SAFE" | "OWNER_FULL_BACKUP"): Promis
     }
     if (!(error instanceof Error)) throw error
     if (window.location.search.includes("uitest")) console.log("[JEXPORT] ok=false")
+    if (error.message === "JOURNAL_BACKUP_NOT_READY") {
+      window.alert("일지 전체를 확인할 수 없어 파일을 만들지 않았어요. 기기 초안은 그대로 보관돼요. 계정 내용 확인이나 저장 대기·충돌 해결 후 다시 시도해 주세요.")
+      return
+    }
+    if (error.message === "DECORATION_BACKUP_NOT_READY") {
+      window.alert("꾸미기 자료를 확인할 수 없어 파일을 만들지 않았어요. 계정 저장 상태를 확인한 뒤 다시 시도해 주세요.")
+      return
+    }
     window.alert("내보내기에 실패했어요. 잠시 후 다시 시도해 주세요.")
   } finally {
     unsubscribe()

@@ -38,7 +38,8 @@ function enabled(
 export function resolveProductFeatures(env: Readonly<Record<string, unknown>>): ProductFeatures {
   return {
     sync: enabled(env, "SYNC"),
-    sharing: enabled(env, "SHARING"),
+    // Direct recipient sharing remains closed until its privacy contract is adopted.
+    sharing: false,
     planProposals: enabled(env, "PLAN_PROPOSALS"),
     planBackup: enabled(env, "PLAN_BACKUP"),
     publicProfile: enabled(env, "PUBLIC_PROFILE"),

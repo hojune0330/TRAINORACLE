@@ -2,7 +2,7 @@ export const ACCOUNT_WRITE_REJECTIONS = [
   "PLANNED_SESSION_ALREADY_RECORDED", "INSUFFICIENT_POINTS", "OPERATION_REPLAY_UNAVAILABLE",
   "UPGRADE_REQUIRED", "FILE_EVIDENCE_DISABLED", "INVALID_FILE_OBSERVATION", "FILE_OBSERVATION_CONFLICT",
   "COMPARISON_ORIGINAL_UNAVAILABLE", "INVALID_COMPARISON_RELATION", "COMPARISON_CAPACITY_EXCEEDED",
-  "OWNERSHIP_STATE_CHANGED",
+  "OWNERSHIP_STATE_CHANGED", "CONFLICT_STORAGE_LIMIT_REACHED",
 ] as const
 export type AccountJournalWriteRejection = (typeof ACCOUNT_WRITE_REJECTIONS)[number]
 export const FILE_WRITE_REJECTION_MESSAGES = {
@@ -13,6 +13,7 @@ export const FILE_WRITE_REJECTION_MESSAGES = {
   COMPARISON_ORIGINAL_UNAVAILABLE: "계정에 저장된 원래 계획을 확인하지 못해 비교를 저장하지 않았어요. 운동 기록은 그대로예요.",
   INVALID_COMPARISON_RELATION: "비교할 구간과 원본 기록을 다시 확인해 주세요. 기존 기록을 덮어쓰지 않았어요.",
   COMPARISON_CAPACITY_EXCEEDED: "이 기록에 보관할 수 있는 비교 수를 넘었어요. 기존 비교는 삭제하지 않고 유지했어요.",
+  CONFLICT_STORAGE_LIMIT_REACHED: "계정에 보관 중인 미해결 수정본이 많아 새 저장을 받지 못했어요. 이 기기의 입력은 보관돼 있어요. 계정 기록을 확인하거나 지원을 요청해 주세요.",
 } as const
 export function isAccountJournalWriteRejection(value: unknown): value is AccountJournalWriteRejection {
   return ACCOUNT_WRITE_REJECTIONS.some(reason => reason === value)

@@ -33,7 +33,7 @@ function mutateRequired(
   return mutated
 }
 
-describe("supporter shared-fields boundary", () => {
+describe("historical supporter shared-fields migration before the final RPC closure", () => {
   it("projects a redacted journal DTO on the server from shared_fields", () => {
     assertSharedProjectionBoundary(migration)
     expect(migration).toMatch(/returns table \(\s*entry_id text,\s*saved_at text,\s*shared_entry jsonb/iu)
@@ -115,7 +115,7 @@ describe("supporter shared-fields boundary", () => {
     expect(() => assertSharedProjectionBoundary(mutated)).toThrow()
   })
 
-  it("shares training text only for the explicit training-note purpose", () => {
+  it("historically limited training text to the explicit training-note purpose", () => {
     expect(migration).toContain("'trainingNote'")
     expect(migration).toContain("journal.entry ->> 'memoPurpose' = 'ANALYZABLE_TRAINING_NOTE'")
     expect(migration).toContain("coalesce(journal.entry -> 'memo', journal.entry -> 'note')")

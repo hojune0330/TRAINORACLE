@@ -14,7 +14,7 @@
 import React from "react"
 import { SectionLb } from "../components/JournalPrimitives"
 import {
-  buildRestorePlan, readBackupFile, restoreBackupFile,
+  buildRestorePlan, readBackupBlob, restoreBackupFile,
 } from "../domain/restore/backup-file"
 import type {
   BackupReadResult, DecorationRestoreMode, RestoreMode, RestoreOutcome, RestorePlan,
@@ -52,6 +52,7 @@ export function RestoreBackup({ onBack, onOpenHome }: {
   const [failure, setFailure] = React.useState<"unreadable" | "empty" | "account-unavailable" | null>(null)
   const [mode, setMode] = React.useState<RestoreMode>("keep-existing")
   const [decorationMode, setDecorationMode] = React.useState<DecorationRestoreMode>("keep-existing")
+  const [calendarMode, setCalendarMode] = React.useState<DecorationRestoreMode>("keep-existing")
   const [busy, setBusy] = React.useState(false)
   const busyRef = React.useRef(false)
   const accountRestore = React.useRef<Awaited<ReturnType<typeof createAccountBackupRestoration>>>(null)
@@ -71,19 +72,8 @@ export function RestoreBackup({ onBack, onOpenHome }: {
     busyRef.current = true
     setBusy(true)
     setFailure(null)
-    let text: string
-    try {
-      text = await file.text()
-    } catch {
-      if (!current()) return
-      busyRef.current = false
-      setBusy(false)
-      setFailure("unreadable")
-      return
-    }
-
+    const read = await readBackupBlob(file, current)
     if (!current()) return
-    const read = readBackupFile(text)
     const account = accountJournalRecordsEnabled()
     const restoration = account && read.recognized ? await createAccountBackupRestoration(read) : null
     if (!current()) { restoration?.dispose(); return }
@@ -96,13 +86,14 @@ export function RestoreBackup({ onBack, onOpenHome }: {
       return
     }
     if (account && !restoration) { setFailure("account-unavailable"); return }
-    if (read.entries.length === 0 && read.decorationStatus !== "included") {
+    if (read.entries.length === 0 && read.decorationStatus !== "included" && read.calendarDecorationStatus !== "included") {
       setFailure("empty")
       setStage({ step: "pick" })
       return
     }
     setMode("keep-existing")
     setDecorationMode("keep-existing")
+    setCalendarMode("keep-existing")
     setStage({ step: "review", read, plan: restoration?.plan ?? buildRestorePlan(read.entries) })
   }
 
@@ -112,13 +103,13 @@ export function RestoreBackup({ onBack, onOpenHome }: {
     setBusy(true)
     const current = captureScope()
     if (accountJournalRecordsEnabled()) {
-      const outcome = await accountRestore.current?.confirm(mode, decorationMode)
+      const outcome = await accountRestore.current?.confirm(mode, decorationMode, calendarMode)
       if (!current()) return
       busyRef.current = false; setBusy(false)
       if (outcome) setStage({ step: "account-result", outcome })
       return
     }
-    const outcome = await restoreBackupFile(stage.read, stage.plan, mode, decorationMode)
+    const outcome = await restoreBackupFile(stage.read, stage.plan, mode, decorationMode, calendarMode)
     if (!current()) return
     busyRef.current = false
     setBusy(false)
@@ -168,12 +159,15 @@ export function RestoreBackup({ onBack, onOpenHome }: {
         {stage.step === "review" && (
           <ReviewStage
             accountDecorationReady={accountRestore.current?.decorationReady ?? false}
+            accountCalendarReady={accountRestore.current?.calendarReady ?? false}
             read={stage.read}
             plan={stage.plan}
             mode={mode}
             onModeChange={setMode}
             decorationMode={decorationMode}
             onDecorationModeChange={setDecorationMode}
+            calendarMode={calendarMode}
+            onCalendarModeChange={setCalendarMode}
             onRestore={handleRestore}
             onRestart={restart}
             busy={busy}
@@ -193,7 +187,7 @@ export function RestoreBackup({ onBack, onOpenHome }: {
           <RestoreFailedStage outcome={stage.outcome} onRestart={restart} />
         )}
         {stage.step === "account-result" && <div data-testid="restore-account-result" role="status">
-          <h2>계정 일지 복원 결과</h2>
+          <h2>계정 백업 복원 결과</h2>
           <p>{stage.outcome.commit === "COMPLETE" ? "선택한 항목 복원 완료" : stage.outcome.commit === "PARTIAL" ? "일부 복원 (PARTIAL)" : stage.outcome.commit === "PENDING" ? "계정 저장 확인 대기" : "복원을 완료하지 못했어요"}</p>
           <p>계정에 저장됨 {stage.outcome.account}건 · 연결 대기 {stage.outcome.pending}건 · 충돌 확인 {stage.outcome.conflicts}건 · 실패 {stage.outcome.failed}건</p>
           <p>기존 기록 유지 {stage.outcome.keptExisting}건 · 삭제 표식으로 제외 {stage.outcome.blockedByDeletion}건</p>
@@ -202,15 +196,23 @@ export function RestoreBackup({ onBack, onOpenHome }: {
           {stage.outcome.decorationRestore === "KEPT_EXISTING" && <p>꾸미기: 기존 상태 유지</p>}
           {stage.outcome.decorationRestore === "CONFLICT" && <p>꾸미기: 충돌 확인. 검토 이후 바뀐 계정 상태를 자동으로 덮어쓰지 않았어요.</p>}
           {stage.outcome.decorationRestore === "FAILED" && <p>{stage.outcome.decorationFailure === "READ_FAILED"
-            ? "꾸미기: 계정 최신 상태를 조회하지 못해 복원을 확인하지 못했어요."
+            ? "꾸미기 또는 현재 달력: 계정 최신 상태를 조회하지 못해 복원을 확인하지 못했어요."
             : "꾸미기: 소유권 또는 저장 조건을 확인하지 못해 복원을 확인하지 못했어요. 백업 원본은 계속 보관해 주세요."}</p>}
           {stage.outcome.decorationRestore === "INVALID_SKIPPED" && <p>꾸미기는 형식이 맞지 않거나 지원하지 않는 항목이 있어 복원하지 않았어요. 기존 꾸미기와 백업 원본은 변경하지 않았어요.</p>}
+          {stage.outcome.calendarDecorationRestore === "ACCOUNT" && <p>달력 꾸미기: 계정에 저장됨</p>}
+          {stage.outcome.calendarDecorationRestore === "PENDING" && <p>달력 꾸미기: 연결·서버 확인 대기. 계정 저장 완료는 아직 확인되지 않았어요.</p>}
+          {stage.outcome.calendarDecorationRestore === "KEPT_EXISTING" && <p>달력 꾸미기: 기존 상태 유지</p>}
+          {stage.outcome.calendarDecorationRestore === "CONFLICT" && <p>달력 꾸미기: 검토 이후 바뀐 계정 상태를 덮어쓰지 않았어요.</p>}
+          {stage.outcome.calendarDecorationRestore === "FAILED" && <p>{stage.outcome.calendarDecorationFailure === "READ_FAILED"
+            ? "달력 꾸미기: 계정 최신 상태를 조회하지 못해 복원을 확인하지 못했어요."
+            : "달력 꾸미기: 소유권 또는 저장 조건을 확인하지 못했어요. 백업 원본을 보관해 주세요."}</p>}
+          {stage.outcome.calendarDecorationRestore === "INVALID_SKIPPED" && <p>달력 꾸미기: 형식이 맞지 않거나 지원하지 않아 제외했어요. 다른 복원 항목은 별도로 처리했어요.</p>}
           <p>이미 계정에 저장된 기록은 취소하지 않아요. 연결 대기는 저장 완료가 아니며 원본 파일을 보관해 주세요.</p>
           <button type="button" style={primaryBtn} disabled={busy} onClick={async () => {
             if (busyRef.current || !accountRestore.current) return
             const current = captureScope()
             busyRef.current = true; setBusy(true)
-            const outcome = await accountRestore.current.confirm(mode, decorationMode)
+            const outcome = await accountRestore.current.confirm(mode, decorationMode, calendarMode)
             if (!current()) return
             busyRef.current = false; setBusy(false)
             if (outcome) setStage({ step: "account-result", outcome })
@@ -231,7 +233,7 @@ function PickStage({ busy, failure, onFile }: {
   return (
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
       <p style={{ fontFamily: "var(--sans)", fontSize: 13, lineHeight: 1.65, color: "var(--ink-2)", margin: 0 }}>
-        전에 <b>내려받아 둔 일지 백업 파일(JSON)</b>을 고르면 {accountJournalRecordsEnabled() ? "현재 로그인한 계정의 일지로" : "이 기기의 일지로"}
+        전에 <b>내려받아 둔 백업 파일(JSON)</b>을 고르면 {accountJournalRecordsEnabled() ? "현재 로그인한 계정으로" : "이 기기로"}
         되돌려요. 브라우저 데이터를 지웠거나 기기를 바꿨을 때 쓰세요.
       </p>
 
@@ -274,7 +276,7 @@ function PickStage({ busy, failure, onFile }: {
         <div role="alert" data-testid="restore-failure" style={{ border: "1px solid var(--pain-5)", background: "var(--surface)", padding: "10px 13px" }}>
           <div style={{ ...mono, fontSize: 10.5, color: "var(--ink)", lineHeight: 1.6 }}>
             {failure === "account-unavailable" ? "계정 기록을 조회하지 못했어요. 연결과 로그인을 확인한 뒤 다시 시도해 주세요." : failure === "empty"
-              ? "백업 파일은 맞는데 되돌릴 일지를 찾지 못했어요. 빈 백업일 수 있어요."
+              ? "백업 파일은 맞는데 되돌릴 수 있는 항목을 찾지 못했어요. 빈 백업일 수 있어요."
               : "이 파일을 트레인오라클 백업으로 읽지 못했어요. 앱에서 내려받은 .json 파일인지 확인해 주세요."}
             <br />기존 일지는 그대로 있어요.
           </div>
@@ -284,19 +286,25 @@ function PickStage({ busy, failure, onFile }: {
   )
 }
 
-function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorationModeChange, onRestore, onRestart, busy, accountDecorationReady = false }: {
+function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorationModeChange, calendarMode, onCalendarModeChange, onRestore, onRestart, busy, accountDecorationReady = false, accountCalendarReady = false }: {
   readonly accountDecorationReady?: boolean
+  readonly accountCalendarReady?: boolean
   readonly read: BackupReadResult
   readonly plan: RestorePlan
   readonly mode: RestoreMode
   readonly onModeChange: (mode: RestoreMode) => void
   readonly decorationMode: DecorationRestoreMode
   readonly onDecorationModeChange: (mode: DecorationRestoreMode) => void
+  readonly calendarMode: DecorationRestoreMode
+  readonly onCalendarModeChange: (mode: DecorationRestoreMode) => void
   readonly onRestore: () => void
   readonly onRestart: () => void
   readonly busy: boolean
 }) {
   const willRestore = mode === "keep-existing" ? plan.fresh : plan.fresh + plan.conflicts
+  const account = accountJournalRecordsEnabled()
+  const replaceDecorations = read.decorationStatus === "included" && decorationMode === "replace" && (!account || accountDecorationReady)
+  const replaceCalendar = read.calendarDecorationStatus === "included" && calendarMode === "replace" && (!account || accountCalendarReady)
 
   return (
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
@@ -328,7 +336,42 @@ function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorat
           <br />{accountJournalRecordsEnabled()
             ? "꾸미기는 교체를 직접 선택한 경우에만 계정에 복원해요. 일지와 따로 저장되므로 일부만 완료될 수 있고, 서버에서 소유권이 확인되지 않으면 복원되지 않을 수 있어요. 백업 원본은 보관해 주세요."
             : "일지와 분리된 꾸미기 구획으로 되돌려요."}
-          {accountJournalRecordsEnabled() && !accountDecorationReady && <p role="alert">계정 꾸미기를 조회하지 못했어요. 꾸미기 교체는 잠겨 있으며 일지는 따로 복원할 수 있어요.</p>}
+          {accountJournalRecordsEnabled() && !accountDecorationReady && <p role="alert">계정 꾸미기 또는 현재 달력을 조회하지 못했어요. 꾸미기 교체는 잠겨 있으며 일지는 따로 복원할 수 있어요.</p>}
+        </div>
+      )}
+
+      {read.calendarDecorationStatus === "included" && read.calendarDecorations && (
+        <div data-testid="restore-calendar-summary" style={{ ...mono, fontSize: 10.5, color: "var(--ink-2)", lineHeight: 1.7, border: "1px solid var(--line)", padding: "10px 12px" }}>
+          <b>달력 꾸미기</b> · 종이 테마 {read.calendarDecorations.paperThemeId === null ? "없음" : "설정됨"} · 그림 배치 {read.calendarDecorations.items.length}개
+          <br />기존 달력 꾸미기는 기본적으로 유지해요. 교체를 고르면 백업의 달력 전체 설정으로 바꿔요.
+          {account && !accountCalendarReady && <p role="alert">계정 달력 꾸미기를 조회하지 못했어요. 달력 교체는 잠겨 있으며 다른 항목은 따로 복원할 수 있어요.</p>}
+        </div>
+      )}
+
+      {read.calendarDecorationStatus === "invalid" && (
+        <div role="alert" data-testid="restore-calendar-invalid" style={{ ...mono, fontSize: 10.5, color: "var(--pain-5)", lineHeight: 1.65, border: "1px solid var(--pain-5)", padding: "10px 12px" }}>
+          달력 꾸미기는 형식이 맞지 않거나 지원하지 않아 복원할 수 없어요. 다른 항목은 별도로 검토할 수 있어요.
+        </div>
+      )}
+
+      {read.calendarDecorationStatus === "included" && (
+        <div data-testid="restore-calendar-choice" role="radiogroup" aria-label="달력 꾸미기 처리" style={{ ...mono, display: "grid", gap: 8 }}>
+          <strong>달력 꾸미기는 어떻게 할까요?</strong>
+          <ModeChoice
+            checked={calendarMode === "keep-existing"}
+            onSelect={() => { if (!busy) onCalendarModeChange("keep-existing") }}
+            title={account ? "현재 계정 달력을 지켜요" : "이 기기 달력을 지켜요"}
+            detail="권장 · 지금 달력의 종이 테마와 그림 배치를 그대로 둬요."
+          />
+          <ModeChoice
+            disabled={busy || (account && !accountCalendarReady)}
+            checked={calendarMode === "replace"}
+            onSelect={() => { if (!busy) onCalendarModeChange("replace") }}
+            title="백업의 달력 꾸미기로 바꿔요"
+            detail={account
+              ? "현재 계정의 달력 전체 설정을 백업 내용으로 교체해요. 항목 소유권과 계정 상태를 다시 확인해요."
+              : "이 기기의 달력 종이 테마와 그림 배치를 백업 내용으로 교체해요. 보유하지 않은 항목은 복원되지 않아요."}
+          />
         </div>
       )}
 
@@ -404,12 +447,13 @@ function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorat
         type="button"
         data-testid="restore-submit"
         style={primaryBtn}
-        disabled={busy || (willRestore === 0 && (read.decorationStatus !== "included" || (accountJournalRecordsEnabled() && (decorationMode !== "replace" || !accountDecorationReady))))}
+        disabled={busy || (willRestore === 0 && !replaceDecorations && !replaceCalendar)}
         onClick={onRestore}
       >
         {willRestore > 0
           ? `${willRestore}건 되돌리기`
-          : read.decorationStatus === "included" ? "꾸미기 되돌리기" : "되돌릴 일지가 없어요"}
+          : replaceDecorations && replaceCalendar ? "꾸미기와 달력 되돌리기"
+            : replaceDecorations ? "꾸미기 되돌리기" : replaceCalendar ? "달력 꾸미기 되돌리기" : "되돌릴 항목이 없어요"}
       </button>
       <button type="button" style={secondaryBtn} disabled={busy} onClick={onRestart}>다른 파일 고르기</button>
     </div>
@@ -453,7 +497,9 @@ function DoneStage({ outcome, onOpenHome, onRestart, busy }: {
       <div data-testid="restore-done" style={{ border: "1px solid var(--ink)", background: "var(--surface)", padding: "14px 16px" }}>
         <div style={{ ...mono, fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.1em" }}>되돌리기 완료</div>
         <div style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500, marginTop: 5 }}>
-          {outcome.restored}건을 일지에 되돌렸어요
+          {outcome.restored > 0 ? `${outcome.restored}건을 일지에 되돌렸어요`
+            : outcome.calendarDecorationRestore === "RESTORED" ? "달력 꾸미기를 되돌렸어요"
+              : outcome.decorationRestore === "RESTORED" ? "꾸미기를 되돌렸어요" : "선택한 항목을 확인했어요"}
         </div>
         <ul style={{ ...mono, fontSize: 10.5, color: "var(--ink-2)", lineHeight: 1.8, margin: "8px 0 0", paddingLeft: 16 }}>
           {outcome.keptExisting > 0 && <li>겹쳐서 지금 것을 지킨 일지 {outcome.keptExisting}건</li>}
@@ -471,6 +517,11 @@ function DoneStage({ outcome, onOpenHome, onRestart, busy }: {
           {outcome.decorationRestore === "SAVE_FAILED" && (
             <li style={{ color: "var(--pain-5)" }}>꾸미기를 저장하지 못해 일지도 바꾸지 않았어요</li>
           )}
+          {outcome.calendarDecorationRestore === "RESTORED" && <li>백업의 달력 꾸미기를 되돌렸어요</li>}
+          {outcome.calendarDecorationRestore === "KEPT_EXISTING" && <li>기존 달력 꾸미기는 그대로 두었어요</li>}
+          {outcome.calendarDecorationRestore === "INVALID_SKIPPED" && (
+            <li style={{ color: "var(--pain-5)" }}>달력 꾸미기는 형식이 맞지 않거나 보유하지 않은 항목이 있어 제외했어요</li>
+          )}
         </ul>
       </div>
 
@@ -487,14 +538,20 @@ function RestoreFailedStage({ outcome, onRestart }: {
   readonly onRestart: () => void
 }) {
   const message = outcome.failureReason === "RECOVERY_CODE_REQUIRED"
-    ? "비공개 메모를 되돌리려면 먼저 복구 코드를 준비해야 해요. 저장된 일지와 꾸미기는 바꾸지 않았어요."
-    : "저장 공간 문제로 되돌리기를 완료하지 못했어요. 저장된 일지와 꾸미기는 바꾸지 않았어요."
+    ? "비공개 메모를 되돌리려면 먼저 복구 코드를 준비해야 해요. 백업 원본을 보관해 주세요."
+    : outcome.failureReason === "CALENDAR_DEPENDENCY_UNVERIFIED"
+      ? "꾸미기를 바꾸면 현재 달력의 그림을 그대로 사용할 수 없어 중단했어요. 달력과 백업 원본은 그대로 보관해 주세요."
+    : outcome.failureReason === "CALENDAR_DECORATION_SAVE_FAILED"
+      ? "달력 꾸미기를 저장하지 못했어요. 현재 상태를 확인하고 백업 원본을 보관해 주세요."
+      : "저장 공간 문제로 되돌리기를 완료하지 못했어요. 현재 상태를 확인하고 백업 원본을 보관해 주세요."
 
   return (
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
       <div role="alert" data-testid="restore-commit-failure" style={{ border: "1px solid var(--pain-5)", background: "var(--surface)", padding: "14px 16px" }}>
         <div style={{ ...mono, fontSize: 10, color: "var(--pain-5)", letterSpacing: "0.1em" }}>되돌리기 실패</div>
         <div style={{ fontFamily: "var(--sans)", fontSize: 15, fontWeight: 500, marginTop: 5 }}>{message}</div>
+        {outcome.calendarDecorationRestore === "ROLLED_BACK" && <p>달력 꾸미기는 이전 상태로 되돌렸어요.</p>}
+        {outcome.calendarDecorationRestore === "SAVE_FAILED" && <p>달력 꾸미기 저장을 확인하지 못했어요.</p>}
       </div>
       <button type="button" style={secondaryBtn} onClick={onRestart}>다른 파일 고르기</button>
     </div>

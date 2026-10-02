@@ -53,6 +53,18 @@ describe("account record compatibility API", () => {
       dependencies(null, { context: new Response(JSON.stringify({ error: code }), { status }) })))
       .toEqual({ ok: false, code })
   })
+  it("keeps a conflict-storage quota rejection terminal instead of retrying it as an outage", async () => {
+    expect(await requestAccountDocument(ownerId, { ...request, document }, () => true, accountJournalRecordSchema,
+      dependencies(null, { context: new Response(JSON.stringify({ error: "CONFLICT_STORAGE_LIMIT_REACHED" }), { status: 507 }) })))
+      .toEqual({ ok: false, code: "CONFLICT_STORAGE_LIMIT_REACHED" })
+    expect(await requestAccountDocument(ownerId, { action: "restore", documentId, operationId, expectedRevision: 1, sourceRevision: 1 },
+      () => true, accountJournalRecordSchema,
+      dependencies(null, { context: new Response(JSON.stringify({ error: "CONFLICT_STORAGE_LIMIT_REACHED" }), { status: 507 }) })))
+      .toEqual({ ok: false, code: "CONFLICT_STORAGE_LIMIT_REACHED" })
+    expect(await requestAccountDocument(ownerId, { ...request, document }, () => true, accountJournalRecordSchema,
+      dependencies(null, { context: new Response(JSON.stringify({ error: "OTHER" }), { status: 507 }) })))
+      .toEqual({ ok: false, code: "UNAVAILABLE" })
+  })
   it("checks the active owner again after asynchronous error decoding", async () => {
     let active = true
     const context = new Response(null, { status: 422 })

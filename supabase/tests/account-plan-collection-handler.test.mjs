@@ -140,6 +140,23 @@ async function check(response, status, expected) {
   return value;
 }
 
+test('stage quota and stage expiry have distinct gateway responses', async () => {
+  const collection = splitAccountPlanCollection(document());
+  assert.ok(collection);
+  const f = await fixture({ repo: { stage: async () => {
+    throw Object.assign(new Error('private SQL detail'), { code: 'PZ002' });
+  } } });
+  await check(await f.request({ action: 'stage', ownerId: OWNER, part: collection.snapshots[0] }),
+    507, { error: 'STAGED_STORAGE_LIMIT_REACHED' });
+  const retry = await fixture();
+  await retry.stage(collection);
+  retry.repo.commit = async () => {
+    throw Object.assign(new Error('private SQL detail'), { code: 'PZ003' });
+  };
+  await check(await retry.request({ action: 'commit', request: command(collection) }),
+    409, { error: 'STAGED_PART_EXPIRED' });
+});
+
 test('ordinary successor requires a guard, uses atomic commit without a replan receipt, and binds replay first', async () => {
   const f = await fixture(), parts = splitAccountPlanCollection(successorDocument());
   assert.ok(parts, 'canonical continuity fixture must be accepted');

@@ -19,7 +19,7 @@ import {
   savePrivateMemosWithJournalShells,
 } from "./private-memo-vault"
 import { loadSessionRecoveryCode } from "./account/private-note-sync"
-import { loadDecorationState } from "./decorations"
+import { loadDecorationStateForFullBackup } from "./decorations"
 import { calendarDecorationStateSchema, createEmptyCalendarDecorationState } from "./calendar-decoration-schema"
 import { calendarDecorationReadStatus, readCalendarDecorationStateSerialized } from "./calendar-decoration-store"
 import { accountDecorationsEnabled } from "./account/account-decoration-service"
@@ -36,7 +36,7 @@ import {
   unboundJournalIds,
 } from "./account/local-journal-ownership"
 import { samePlannedSessionLink } from "./planned-session-link"
-import { readAccountJournalProjection, readCurrentConfirmedAccountJournalProjection, readAccountJournalPrivateEntry, accountJournalProjectionStatus, isAccountJournalLocalCopyShadowed } from "./account/account-journal-projection"
+import { readAccountJournalProjection, readCurrentConfirmedAccountJournalProjection, readAccountJournalPrivateEntry, accountJournalProjectionStatus, accountJournalBackupReady, isAccountJournalLocalCopyShadowed } from "./account/account-journal-projection"
 import { accountJournalPreviewEnabled } from "./account/account-journal-api"
 import { buildFileAnalysisReport } from "./import/file-analysis"
 
@@ -476,8 +476,15 @@ export function restoreDeletedEntry(id: string): RestoreDeletedResult {
 }
 
 export function exportEntriesJSON(options: JournalExportOptions = {}): string {
+  const localSnapshot = loadJournalEntriesSnapshot()
+  if (localSnapshot.readStatus !== "complete"
+    || localSnapshot.entries.some((entry) => journalOwner(entry.id) === undefined)
+    || (accountJournalPreviewEnabled() && activeLocalAccount() !== null && !accountJournalBackupReady())) {
+    throw new Error("JOURNAL_BACKUP_NOT_READY")
+  }
   if (options.includeRawMemos === true) {
     const entries = entriesForOwnerFullBackup()
+    const decorations = loadDecorationStateForFullBackup()
     const accountCalendar = accountDecorationsEnabled() && !!activeLocalAccount()
     const calendarUnsupported = accountCalendar && accountCalendarDecorationStatus() === "UNSUPPORTED"
     if (!calendarUnsupported && accountCalendar && !["READY", "EMPTY"].includes(accountCalendarDecorationStatus())) {
@@ -502,7 +509,7 @@ export function exportEntriesJSON(options: JournalExportOptions = {}): string {
         exportMode: "OWNER_FULL_BACKUP",
         exportedAt: new Date().toISOString(),
         entries,
-        decorations: loadDecorationState(),
+        decorations,
         ...(calendar === undefined ? { excludedSections: ["calendarDecorations"] } : { calendarDecorations: calendar }),
       },
       null,

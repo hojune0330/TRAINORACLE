@@ -1,8 +1,9 @@
 import type { JournalEntry } from "../journal-schema"
-import { activeLocalAccount } from "./local-journal-ownership"
+import { activeLocalAccount, localJournalScopeGeneration } from "./local-journal-ownership"
 
 let scope: string | null = null
 let status: "IDLE" | "LOADING" | "READY" | "PENDING" | "REJECTED" | "FAILED" | "CONFLICT" = "IDLE"
+let fullListConfirmedGeneration: number | null = null
 const entries = new Map<string, JournalEntry>()
 const confirmedEntries = new Map<string, JournalEntry>()
 const currentConfirmations = new Map<string, { entry: JournalEntry; revision: number }>()
@@ -10,13 +11,23 @@ const shadowedIds = new Set<string>()
 
 function notify() { if (typeof window !== "undefined") window.dispatchEvent(new Event("trainoracle:account-journals-changed")) }
 export function resetAccountJournalProjection(ownerId: string | null) {
-  entries.clear(); confirmedEntries.clear(); currentConfirmations.clear(); shadowedIds.clear(); scope = ownerId; status = ownerId ? "LOADING" : "IDLE"; notify()
+  entries.clear(); confirmedEntries.clear(); currentConfirmations.clear(); shadowedIds.clear(); scope = ownerId; status = ownerId ? "LOADING" : "IDLE"; fullListConfirmedGeneration = null; notify()
 }
 export function setAccountJournalProjectionStatus(ownerId: string, next: typeof status) {
   if (scope === ownerId && activeLocalAccount() === ownerId) {
-    if (next === "LOADING" || next === "FAILED") currentConfirmations.clear()
+    if (next === "LOADING" || next === "FAILED") { currentConfirmations.clear(); fullListConfirmedGeneration = null }
     status = next; notify()
   }
+}
+/** A single-document receipt may set READY but cannot prove the list is complete. */
+export function markAccountJournalFullListConfirmed(ownerId: string) {
+  if (scope !== ownerId || activeLocalAccount() !== ownerId) return false
+  fullListConfirmedGeneration = localJournalScopeGeneration()
+  return true
+}
+export function accountJournalBackupReady() {
+  return scope !== null && scope === activeLocalAccount() && status === "READY"
+    && fullListConfirmedGeneration === localJournalScopeGeneration()
 }
 export function accountJournalProjectionStatus() {
   return scope === activeLocalAccount() ? status : "IDLE"

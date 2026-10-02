@@ -6,12 +6,19 @@ import { putAccountJournalProjection, readAccountJournalPrivateEntry, resetAccou
 import { parseAccountJournalRecord } from "../account/account-journal-record-schema"
 import type { PostSessionEntry } from "../journal-schema"
 import { createEmptyDecorationState, V2_SLOT_DEFAULT_TRANSFORMS } from "../decoration-schema"
+import { createEmptyCalendarDecorationState } from "../calendar-decoration-schema"
 import { TEXT_STICKER_ITEM_ID, TEXT_INK_IDS } from "../decoration-catalog"
 
-const api = vi.hoisted(() => ({ hydrate: vi.fn(), persist: vi.fn(), deleted: vi.fn(), decorHydrate: vi.fn(), decorPersist: vi.fn(), decorRead: vi.fn(), decorStatus: vi.fn(), base: vi.fn(), fingerprint: vi.fn() }))
+const api = vi.hoisted(() => ({ hydrate: vi.fn(), persist: vi.fn(), deleted: vi.fn(), decorHydrate: vi.fn(), decorPersist: vi.fn(), decorRead: vi.fn(), decorStatus: vi.fn(), calendarHydrate: vi.fn(), calendarRead: vi.fn(), calendarStatus: vi.fn(), calendarPersist: vi.fn(), base: vi.fn(), fingerprint: vi.fn() }))
 vi.mock("../account/account-decoration-service", () => ({
   hydrateAccountDecorations: api.decorHydrate, persistAccountDecorations: api.decorPersist,
   readAccountDecorationState: api.decorRead, accountDecorationStatus: api.decorStatus,
+}))
+vi.mock("../account/account-calendar-decoration-service", () => ({
+  hydrateAccountCalendarDecorations: api.calendarHydrate,
+  readAccountCalendarDecorationState: api.calendarRead,
+  accountCalendarDecorationStatus: api.calendarStatus,
+  persistAccountCalendarDecorations: api.calendarPersist,
 }))
 vi.mock("../account/account-journal-record-service", () => ({
   accountJournalRecordsEnabled: () => true, hydrateAccountJournalRecords: api.hydrate,
@@ -43,6 +50,8 @@ beforeEach(() => {
   })
   api.decorHydrate.mockResolvedValue(true); api.decorRead.mockReturnValue(createEmptyDecorationState())
   api.decorStatus.mockReturnValue("READY"); api.decorPersist.mockResolvedValue({ ok: true, storage: "ACCOUNT", state: createEmptyDecorationState() })
+  api.calendarHydrate.mockResolvedValue(true); api.calendarRead.mockReturnValue(createEmptyCalendarDecorationState())
+  api.calendarStatus.mockReturnValue("READY"); api.calendarPersist.mockResolvedValue({ ok: true, storage: "ACCOUNT", state: createEmptyCalendarDecorationState() })
 })
 afterEach(() => { sessions.splice(0).forEach(session => session.dispose()); setActiveLocalAccount(null); vi.unstubAllEnvs() })
 

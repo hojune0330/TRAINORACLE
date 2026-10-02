@@ -39,10 +39,11 @@ import { z } from "zod"
 import { decorationStateSchema, decorationPlacementTransformSchema, V2_SLOT_DEFAULT_TRANSFORMS } from "../decoration-schema"
 import { isDecorationSlot, STARTER_DECORATION_IDS } from "../decoration-catalog"
 import type { DecorationSlot } from "../decoration-catalog"
-import { calendarDecorationStateSchema, type CalendarDecorationState } from "../calendar-decoration-schema"
-import { CALENDAR_DECORATION_STORAGE_KEY, readCalendarDecorationStateSerialized, saveCalendarDecorationStateIfCurrent } from "../calendar-decoration-store"
+import { calendarDecorationStateSchema, calendarDecorationsOwnedBy, createEmptyCalendarDecorationState, parseStoredCalendarDecorationState, type CalendarDecorationState } from "../calendar-decoration-schema"
+import { CALENDAR_DECORATION_STORAGE_KEY, calendarDecorationReadStatus, readCalendarDecorationStateSerialized, saveCalendarDecorationStateIfCurrent } from "../calendar-decoration-store"
 import { loadDecorationState } from "../decorations"
 import { accountScopedStorageKey } from "../account/local-account-scope"
+import { readBackupJsonBlob } from "./backup-json-stream"
 
 /** 인식하는 내보내기 형식 — journal-store.exportEntriesJSON이 쓰는 값들 */
 export const SAFE_FORMAT = "trainoracle.journal.v1"
@@ -97,7 +98,19 @@ export function readBackupFile(text: string): BackupReadResult {
   } catch {
     return UNRECOGNIZED
   }
+  return readParsedBackup(parsed)
+}
 
+/** Read a selected file without holding its entire source JSON string in memory. */
+export async function readBackupBlob(blob: Blob, current: () => boolean = () => true): Promise<BackupReadResult> {
+  try {
+    return readParsedBackup(await readBackupJsonBlob(blob, current))
+  } catch {
+    return UNRECOGNIZED
+  }
+}
+
+function readParsedBackup(parsed: unknown): BackupReadResult {
   const root = asRecord(parsed)
   if (root === null) return UNRECOGNIZED
   if (root.app !== "TRAINORACLE") return UNRECOGNIZED
@@ -146,6 +159,9 @@ function readDecorationSection(
   candidate: unknown,
 ): { readonly state: DecorationState | null; readonly status: BackupReadResult["decorationStatus"] } {
   if (format !== FULL_FORMAT_V5 && format !== FULL_FORMAT_V4 && format !== FULL_FORMAT_V3 && format !== FULL_FORMAT) return { state: null, status: "not-included" }
+  // A v5 file may contain only calendar decorations. An absent journal-decoration
+  // section has no replacement authority; a present but malformed one is invalid.
+  if (format === FULL_FORMAT_V5 && candidate === undefined) return { state: null, status: "not-included" }
   if (typeof candidate !== "object" || candidate === null) return { state: null, status: "invalid" }
   const normalized = readLosslessDecorationState(candidate)
   return normalized === null
@@ -270,7 +286,7 @@ export type RestoreOutcome = {
   readonly decorationRestore: "RESTORED" | "KEPT_EXISTING" | "NOT_INCLUDED" | "INVALID_SKIPPED" | "SAVE_FAILED" | "ROLLED_BACK"
   readonly calendarDecorationRestore?: RestoreOutcome["decorationRestore"]
   readonly commit: "COMMITTED" | "FAILED" | "ROLLED_BACK"
-  readonly failureReason: "NONE" | "DECORATION_SAVE_FAILED" | "CALENDAR_DECORATION_SAVE_FAILED" | "JOURNAL_SAVE_FAILED" | "RECOVERY_CODE_REQUIRED"
+  readonly failureReason: "NONE" | "DECORATION_SAVE_FAILED" | "CALENDAR_DECORATION_SAVE_FAILED" | "CALENDAR_DEPENDENCY_UNVERIFIED" | "JOURNAL_SAVE_FAILED" | "RECOVERY_CODE_REQUIRED"
 }
 
 export async function restoreBackupFile(
@@ -278,11 +294,13 @@ export async function restoreBackupFile(
   plan: RestorePlan,
   mode: RestoreMode = "keep-existing",
   decorationMode: DecorationRestoreMode = "keep-existing",
-  calendarMode: DecorationRestoreMode = "replace",
+  calendarMode: DecorationRestoreMode = "keep-existing",
 ): Promise<RestoreOutcome> {
   if (legacyJournalWritesBlocked()) return {
     ...emptyRestoreOutcome(plan, "NOT_INCLUDED", "FAILED", "JOURNAL_SAVE_FAILED"),
     failed: requestedRestoreCount(plan, mode),
+    calendarDecorationRestore: read.calendarDecorationStatus === "invalid" ? "INVALID_SKIPPED"
+      : read.calendarDecorationStatus === "included" ? "KEPT_EXISTING" : "NOT_INCLUDED",
   }
   const replaceDecorations = read.decorationStatus === "included" && read.decorations !== null && decorationMode === "replace"
   const ownership = replaceDecorations ? read.decorations! : loadDecorationState()
@@ -294,6 +312,20 @@ export async function restoreBackupFile(
     || calendarMode === "replace" && read.calendarDecorationStatus === "included" && !referencesOwned ? "INVALID_SKIPPED"
     : read.calendarDecorationStatus === "included" ? "KEPT_EXISTING" : "NOT_INCLUDED"
   const replaceCalendar = calendarMode === "replace" && read.calendarDecorationStatus === "included" && referencesOwned
+  if (replaceDecorations) {
+    const currentCalendarStatus = calendarDecorationReadStatus()
+    const currentCalendarRaw = readCalendarDecorationStateSerialized()
+    const currentCalendar = currentCalendarStatus === "EMPTY" && currentCalendarRaw === null
+      ? createEmptyCalendarDecorationState()
+      : currentCalendarStatus === "READY" && currentCalendarRaw !== null
+        ? parseStoredCalendarDecorationState(currentCalendarRaw) : null
+    const calendarAfterRestore = replaceCalendar ? calendar : currentCalendar
+    if (calendarAfterRestore === null || calendarAfterRestore === undefined
+      || !calendarDecorationsOwnedBy(calendarAfterRestore, read.decorations!)) {
+      return { ...emptyRestoreOutcome(plan, "SAVE_FAILED", "FAILED", "CALENDAR_DEPENDENCY_UNVERIFIED"),
+        calendarDecorationRestore: replaceCalendar ? "SAVE_FAILED" : calendarStatus }
+    }
+  }
   if (replaceDecorations || replaceCalendar) {
     const snapshot = takeLocalStorageSnapshot(replaceDecorations, replaceCalendar)
     if (snapshot === null) return { ...emptyRestoreOutcome(plan, replaceDecorations ? "SAVE_FAILED" : read.decorationStatus === "included" ? "KEPT_EXISTING" : "NOT_INCLUDED", "FAILED", replaceDecorations ? "DECORATION_SAVE_FAILED" : "CALENDAR_DECORATION_SAVE_FAILED"), calendarDecorationRestore: replaceCalendar ? "SAVE_FAILED" : calendarStatus }

@@ -45,6 +45,10 @@ describe("product feature kill switches", () => {
     }).sharing).toBe(false)
   })
 
+  it("keeps direct recipient sharing closed even if an old release flag is present", () => {
+    expect(resolveProductFeatures({ VITE_FEATURE_SHARING: "true" }).sharing).toBe(false)
+  })
+
   it("opens and closes the feedback board independently from account features", () => {
     expect(resolveProductFeatures({ VITE_FEATURE_FEEDBACK_BOARD: "true" }).feedbackBoard).toBe(true)
     expect(resolveProductFeatures({

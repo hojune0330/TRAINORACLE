@@ -16,6 +16,9 @@ export type AccountLegalDocument = {
   readonly version: string
 }
 
+// Update with both published legal documents and the server admission gate.
+export const CURRENT_ACCOUNT_LEGAL_VERSION = "2026-08-26"
+
 function textValue(env: Readonly<Record<string, unknown>>, name: string): string {
   const value = env[name]
   return typeof value === "string" ? value.trim() : ""
@@ -37,8 +40,8 @@ export function resolveAccountConfig(env: Readonly<Record<string, unknown>>): Ac
   }
   if (
     url === "" || anonKey === ""
-    || privacyPolicy.url === "" || privacyPolicy.version === ""
-    || termsOfService.url === "" || termsOfService.version === ""
+    || privacyPolicy.url === "" || privacyPolicy.version !== CURRENT_ACCOUNT_LEGAL_VERSION
+    || termsOfService.url === "" || termsOfService.version !== CURRENT_ACCOUNT_LEGAL_VERSION
   ) return null
   if (!url.startsWith("https://")) return null
   if (!privacyPolicy.url.startsWith("https://") || !termsOfService.url.startsWith("https://")) return null
