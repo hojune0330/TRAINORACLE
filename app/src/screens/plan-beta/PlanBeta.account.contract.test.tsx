@@ -16,6 +16,8 @@ import { AdjustedPlanApplyReviewV3 } from "./AdjustedPlanApplyReviewV3"
 import { MultiAdjustedPlanApplyReviewV3 } from "./MultiAdjustedPlanApplyReviewV3"
 import { PlanBeta } from "../PlanBeta"
 import { activePlanBetaStorageKey, readPlanBetaStateFromStorage } from "../../domain/plan-beta-store"
+import { loadAthleteRecords } from "../../domain/athlete-records"
+import * as athleteRecordsService from "../../domain/account/account-athlete-record-service"
 
 const runtime = vi.hoisted(() => ({ service: null as ReturnType<typeof createAccountPlanCollectionService> | null, enabled: false }))
 vi.mock("../../domain/account/account-plan-service", async importOriginal => ({
@@ -25,6 +27,8 @@ vi.mock("../../domain/account/account-plan-service", async importOriginal => ({
 const locks = { request: async <T,>(_n: string, _o: unknown, callback: (lock: object) => Promise<T>): Promise<T> => callback({}) }
 const originalLocks = Object.getOwnPropertyDescriptor(navigator, "locks")
 let trusted: ReturnType<AccountPlanTrust> = [], remote: ReturnType<typeof collectionServer>
+let recordsConfirmed = false
+const RECORD_DOCUMENT_ID = "44444444-4444-4444-8444-444444444444"
 function createService() {
   const stores = collectionMemoryBuffers()
   return createAccountPlanCollectionService({ ownerId: COLLECTION_OWNER, isCurrent: () => runtime.enabled,
@@ -38,6 +42,12 @@ beforeEach(async () => {
   resetAccountJournalProjection(COLLECTION_OWNER)
   setAccountJournalProjectionStatus(COLLECTION_OWNER, "READY")
   trusted = []; remote = collectionServer(); runtime.enabled = true
+  recordsConfirmed = false
+  // Synthetic server-confirmed source uses the exact records created by the existing fixture.
+  vi.spyOn(athleteRecordsService, "readAccountAthleteRecordsState").mockImplementation(() => ({
+    ownerId: COLLECTION_OWNER, status: recordsConfirmed ? "READY" : "PENDING", confirmed: recordsConfirmed,
+    documentId: RECORD_DOCUMENT_ID, serverRevision: 1, records: loadAthleteRecords(TODAY),
+  }))
   runtime.service = createService()
   await runtime.service.hydrate()
   Object.defineProperty(navigator, "locks", { configurable: true, value: locks })
@@ -67,9 +77,17 @@ it.each([4, 5, 6] as const)("V%s actual apply, schedule progress, account archiv
         seed={{ ...f5.request, preparations: [f5.request.preparation], expectedCandidateFingerprint: scope.candidate.contentFingerprint }}
         readReview={() => ({ preparations: [f5.request.preparation], rpeBindings: [], retained: retained6, policies: [policy6] })} /> : <></>)
   fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" }))
+  await screen.findByRole("alert")
+  expect(onSaved).not.toHaveBeenCalled()
+  expect(remote.revision()).toBe(0)
+  expect(localStorage.getItem(key)).toBe("DEVICE_ORIGINAL")
+  recordsConfirmed = true
+  fireEvent.click(screen.getByRole("button", { name: "이 구성으로 계획 저장" }))
   await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1), { timeout: 10_000 })
   expect(remote.revision()).toBe(1)
   expect(remote.commits[0]?.journalGuard).toEqual([])
+  // V4-V6 adjusted prescriptions use their retained review contract, not a new PACE_TARGET receipt.
+  expect(remote.commits[0]?.paceRecordGuard).toBeUndefined()
   expect(localStorage.getItem(key)).toBe("DEVICE_ORIGINAL")
   ui.unmount()
   const plan = render(<PlanBeta readAdjustedEvidence={() => retained4} readAdjustedEvidenceV3={() => retained5} readMultiAdjustedEvidenceV3={() => retained6} />)
