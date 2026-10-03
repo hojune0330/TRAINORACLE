@@ -8,6 +8,7 @@ const JOURNAL_DAY_POINTS = 4
 const DAILY_VISIT_POINTS = 1
 const POINT_MEANING = "NON_ECONOMIC_NON_TRANSFERABLE_BETA" as const
 export const ENGAGEMENT_STORAGE_KEY = "trainoracle.engagement.v2"
+export const ENGAGEMENT_EVENT = "trainoracle:engagement-changed"
 
 const isoDateSchema = z.string()
   .regex(/^\d{4}-\d{2}-\d{2}$/u)
@@ -181,7 +182,9 @@ function saveState(state: EngagementState): boolean {
   const serialized = JSON.stringify(state)
   try {
     target.setItem(ENGAGEMENT_STORAGE_KEY, serialized)
-    return target.getItem(ENGAGEMENT_STORAGE_KEY) === serialized
+    const saved = target.getItem(ENGAGEMENT_STORAGE_KEY) === serialized
+    if (saved && typeof window !== "undefined") window.dispatchEvent(new Event(ENGAGEMENT_EVENT))
+    return saved
   } catch (error) {
     if (error instanceof Error) return false
     throw error

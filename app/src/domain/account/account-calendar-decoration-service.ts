@@ -19,6 +19,7 @@ let projection: CalendarDecorationState | null = null
 let status: AccountCalendarDecorationStatus = "IDLE"
 let baseKnown = false
 let supported = false
+let supportDisposition: "UNKNOWN" | "SUPPORTED" | "EXPLICITLY_UNSUPPORTED" = "UNKNOWN"
 let work: Promise<unknown> = Promise.resolve()
 let hydration: Promise<boolean> | null = null
 let unsubscribe: (() => void) | null = null
@@ -36,6 +37,23 @@ export function readAccountCalendarDecorationState(): CalendarDecorationState | 
   return accountDecorationsEnabled() && owner !== null && owner === activeLocalAccount() && projection
     ? structuredClone(projection) : null
 }
+/**
+ * A full backup may only serialize a calendar that the freshly-read decoration
+ * inventory owns. The sole omission path is a positive legacy capability
+ * response saying calendar documents are unsupported; malformed responses and
+ * all other unreadable states fail closed.
+ */
+export function accountCalendarDecorationExportReady(): boolean {
+  if (!accountDecorationsEnabled()) return true
+  const currentOwner = activeLocalAccount()
+  if (!currentOwner || owner !== currentOwner) return false
+  if (status === "UNSUPPORTED") return supportDisposition === "EXPLICITLY_UNSUPPORTED"
+  if (!projection || !["READY", "EMPTY"].includes(status)) return false
+  const decorations = readAccountDecorationState()
+  return decorations !== null
+    && ["READY", "EMPTY"].includes(accountDecorationStatus())
+    && calendarDecorationsOwnedBy(projection, decorations)
+}
 export async function accountCalendarDecorationDocumentId(ownerId: string) {
   const bytes = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(
     JSON.stringify(["trainoracle.account.calendar-decorations.v1", ownerId]))))
@@ -45,7 +63,8 @@ export async function accountCalendarDecorationDocumentId(ownerId: string) {
 }
 export function disposeAccountCalendarDecorations() {
   epoch += 1; buffer?.close(); buffer = null; owner = null; projection = null; hydration = null
-  baseKnown = false; supported = false; work = Promise.resolve(); unsubscribe?.(); unsubscribe = null; setStatus("IDLE")
+  baseKnown = false; supported = false; supportDisposition = "UNKNOWN"
+  work = Promise.resolve(); unsubscribe?.(); unsubscribe = null; setStatus("IDLE")
 }
 function context() {
   const user = activeLocalAccount()
@@ -76,6 +95,8 @@ async function confirmSupport(ctx: Context) {
     accountCalendarDecorationDocumentSchema)
   if (!ctx.current()) return false
   supported = result.ok && result.data.kind === "calendar-decoration-support" && result.data.version === 1
+  supportDisposition = supported ? "SUPPORTED"
+    : !result.ok && result.code === "CALENDAR_DECORATION_UNSUPPORTED" ? "EXPLICITLY_UNSUPPORTED" : "UNKNOWN"
   if (!supported) setStatus(!result.ok && (result.code === "INVALID_RESPONSE" || result.code === "CALENDAR_DECORATION_UNSUPPORTED") ? "UNSUPPORTED" : "FAILED")
   return supported
 }
@@ -94,16 +115,14 @@ async function flush(ctx: Context, id: string) {
     request => requestAccountDocument(ctx.owner, request, ctx.current, accountCalendarDecorationDocumentSchema), ctx.current)
 }
 
-export async function hydrateAccountCalendarDecorations(): Promise<boolean> {
-  const ctx = context(); if (!ctx) return false
-  if (hydration) return hydration
-  const run = serialize(ctx, async () => {
+async function hydrate(ctx: Context, publishCached = true): Promise<boolean> {
+  return serialize(ctx, async () => {
     setStatus("LOADING")
     if (!await confirmSupport(ctx)) return false
     const id = await accountCalendarDecorationDocumentId(ctx.owner)
     let local = await ctx.buffer.read(ctx.owner, id)
     if (!ctx.current()) return false
-    if (local) await publish(ctx, id)
+    if (local && publishCached) await publish(ctx, id)
     const remote = await requestAccountDocument(ctx.owner, { action: "read", documentId: id }, ctx.current, accountCalendarDecorationDocumentSchema)
     if (!ctx.current()) return false
     if (!remote.ok) {
@@ -153,8 +172,28 @@ export async function hydrateAccountCalendarDecorations(): Promise<boolean> {
     if (!ctx.current()) return false
     return (await publish(ctx, id))?.state === "DRAFT_ACKNOWLEDGED"
   }, false)
+}
+
+export async function hydrateAccountCalendarDecorations(): Promise<boolean> {
+  const ctx = context(); if (!ctx) return false
+  if (hydration) return hydration
+  const run = hydrate(ctx)
   hydration = run
   try { return await run } finally { if (hydration === run) hydration = null }
+}
+
+/**
+ * Export-time freshness gate. This deliberately bypasses the shared hydration
+ * promise so a pre-click READY state cannot authorize a full backup. A server
+ * that explicitly reports no calendar-document support may still produce the
+ * established v4 backup with an exclusion marker; malformed or unavailable
+ * responses fail closed.
+ */
+export async function refreshAccountCalendarDecorationsForExport(): Promise<boolean> {
+  if (!accountDecorationsEnabled()) return true
+  const ctx = context(); if (!ctx) return false
+  const refreshed = await hydrate(ctx, false)
+  return refreshed || (ctx.current() && status === "UNSUPPORTED" && supportDisposition === "EXPLICITLY_UNSUPPORTED")
 }
 
 export type AccountCalendarDecorationSaveResult =

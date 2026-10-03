@@ -1,6 +1,6 @@
 import { beforeEach, afterEach, describe, it, expect, vi } from "vitest"
 import { setActiveLocalAccount } from "../account/local-journal-ownership"
-import { createEmptyDecorationState, loadDecorationState, saveDecorationState } from "../decorations"
+import { DECORATION_STORAGE_KEY_V3, createEmptyDecorationState, loadDecorationState, saveDecorationState } from "../decorations"
 import { createEmptyCalendarDecorationState, calendarDecorationStateSchema } from "../calendar-decoration-schema"
 import { decorationStateSchema } from "../decoration-schema"
 import { CALENDAR_DECORATION_STORAGE_KEY, loadCalendarDecorationState, saveCalendarDecorationStateIfCurrent } from "../calendar-decoration-store"
@@ -56,6 +56,31 @@ describe("calendar full backup v5", () => {
     expect(loadCalendarDecorationState()).toEqual(currentCalendar)
   })
 
+  it("rolls inventory back if the kept calendar changes to an unowned item during restore", async () => {
+    const owned = decorationStateSchema.parse({ ...createEmptyDecorationState(), spentPoints: 12,
+      ownedItemIds: [...createEmptyDecorationState().ownedItemIds, "THEME_SKY_JOURNAL"] })
+    const safeCalendar = createEmptyCalendarDecorationState()
+    const concurrentCalendar = calendarDecorationStateSchema.parse({ version: 1, paperThemeId: "THEME_SKY_JOURNAL", items: [] })
+    expect(saveDecorationState(owned).ok).toBe(true)
+    expect(saveCalendarDecorationStateIfCurrent(safeCalendar).ok).toBe(true)
+    const parsed = readBackupFile(JSON.stringify({ app: "TRAINORACLE", format: FULL_FORMAT_V5,
+      entries: [], decorations: createEmptyDecorationState(), calendarDecorations: safeCalendar }))
+    const original = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function(this: Storage, key, value) {
+      original.call(this, key, value)
+      if (key === DECORATION_STORAGE_KEY_V3 && value === JSON.stringify(createEmptyDecorationState())) {
+        original.call(this, CALENDAR_DECORATION_STORAGE_KEY, JSON.stringify(concurrentCalendar))
+      }
+    })
+
+    const outcome = await restoreBackupFile(parsed, buildRestorePlan([]), "keep-existing", "replace", "keep-existing")
+
+    expect(outcome).toMatchObject({ commit: "ROLLED_BACK", failureReason: "STATE_CHANGED", decorationRestore: "ROLLED_BACK" })
+    expect(loadDecorationState().spentPoints).toBe(owned.spentPoints)
+    expect([...loadDecorationState().ownedItemIds].sort()).toEqual([...owned.ownedItemIds].sort())
+    expect(loadCalendarDecorationState()).toEqual(concurrentCalendar)
+  })
+
   it("exports only into explicit full backup and round trips the entire global setting", async () => {
     expect(saveCalendarDecorationStateIfCurrent(calendar).ok).toBe(true)
     const raw = exportEntriesJSON({ includeRawMemos: true })
@@ -105,6 +130,13 @@ describe("calendar full backup v5", () => {
     localStorage.setItem(CALENDAR_DECORATION_STORAGE_KEY, '{"version":99,"items":[]}')
     expect(() => exportEntriesJSON({ includeRawMemos: true })).toThrow("CALENDAR_BACKUP_NOT_READY")
     expect(localStorage.getItem(CALENDAR_DECORATION_STORAGE_KEY)).toContain('"version":99')
+  })
+  it("refuses a valid-looking device calendar that references an unowned material", () => {
+    const unowned = { ...calendar, items: [{ ...calendar.items[0]!, itemId: "STICKER_FINISH_LINE" as const }] }
+    localStorage.setItem(CALENDAR_DECORATION_STORAGE_KEY, JSON.stringify(unowned))
+
+    expect(() => exportEntriesJSON({ includeRawMemos: true })).toThrow("CALENDAR_BACKUP_NOT_READY")
+    expect(JSON.parse(localStorage.getItem(CALENDAR_DECORATION_STORAGE_KEY) ?? "{}")).toEqual(unowned)
   })
   it("guest calendar read failure cannot become an empty full backup or change the preserved bytes", () => {
     expect(saveCalendarDecorationStateIfCurrent(calendar).ok).toBe(true)

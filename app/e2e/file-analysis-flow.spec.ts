@@ -322,7 +322,7 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
   } else {
     expect(eligibility.familyCount).toBe(1)
     await expect(preference).toHaveCount(0)
-    await expect(method.getByText(/선택할 수 있는 상세 방법은 1개/u)).toBeVisible()
+    await expect(method.getByText(/현재 조건에서 검토가 끝난 상세 훈련이에요/u)).toBeVisible()
   }
   await testInfo.attach("workorder-6.4-method-preference", { contentType: "application/json", body: Buffer.from(JSON.stringify({
     eligibleFamilyCount: eligibility.familyCount, browserToggleExercised: eligibility.familyCount > 1,
@@ -331,8 +331,10 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
   })) })
   await method.evaluate(node => node.scrollIntoView({ block: "start" }))
   await page.screenshot({ path: testInfo.outputPath("method-preference-eligibility.png"), animations: "disabled" })
-  await method.getByRole("radio", { name: /1000m 5회/u }).check()
-  const choose = page.getByRole("article", { name: "기초·회복 운동 시간을 범위로" }).getByRole("button", { name: "이 계획으로 시작하기" })
+  await method.getByRole("button", { name: "기록으로 페이스 받기", exact: true }).click()
+  const choose = page.locator("article.plan-candidate")
+    .filter({ has: page.getByRole("button", { name: /^계획안 A 일정/u }) })
+    .getByRole("button", { name: "이 계획으로 시작하기" })
   await expect(choose).toBeDisabled()
   await assertNoAutomaticPlanWrite()
   await method.getByRole("button", { name: "이 훈련으로 변경", exact: true }).click()
@@ -376,9 +378,9 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
     expect(JSON.stringify([...account.plan.parts.values()])).toBe(persisted)
     await next.getByRole("heading", { name: "오늘 훈련", exact: true }).evaluate(node => node.scrollIntoView({ block: "start" }))
     await next.screenshot({ path: testInfo.outputPath("account-plan-reopened.png") })
-    const active = await openActiveSessionDetails(next, /5×1000m/u)
-    await expect(active.getByText(/5×1000m/u).first()).toBeVisible()
-    await active.getByText(/5×1000m/u).first().scrollIntoViewIfNeeded()
+    const active = await openActiveSessionDetails(next, /5 × 1km @ 222\.25s\/1km · 5K RP/u)
+    await expect(active.getByText(/5 × 1km @ 222\.25s\/1km · 5K RP/u).first()).toBeVisible()
+    await active.getByText(/5 × 1km @ 222\.25s\/1km · 5K RP/u).first().scrollIntoViewIfNeeded()
     await next.screenshot({ path: testInfo.outputPath("account-plan-reopened-prescription.png") })
 
     await next.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클" }).click()

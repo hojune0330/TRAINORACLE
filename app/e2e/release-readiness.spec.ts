@@ -6,11 +6,15 @@ test("keeps the local diary usable after the network goes offline", async ({ con
   test.skip(!RELEASE_QA_PROJECTS.has(testInfo.project.name), "Release QA uses desktop and 320px")
 
   // Given: the static shell has been installed and controlled once online.
-  await page.goto("/?app=1&uitest=1")
-  await page.evaluate(async () => {
-    await navigator.serviceWorker.ready
-  })
+  await page.goto("/?app=1&uitest=1&pwa-test=1")
+  await expect.poll(async () => page.evaluate(async () => {
+    const registration = await navigator.serviceWorker.getRegistration()
+    return registration?.active?.state ?? "missing"
+  }), { message: "the release shell service worker should activate" }).toBe("activated")
   await page.reload()
+  await expect.poll(() => page.evaluate(() => navigator.serviceWorker.controller?.state ?? "missing"), {
+    message: "the release shell should be controlled before going offline",
+  }).toBe("activated")
   await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
 
   // When: the athlete loses the network and records a completed session.

@@ -55,16 +55,11 @@ test("routes the home decoration card into the real journal editor with points",
   })
 
   await page.goto("/?app=1")
-  /* 보상·상점은 홈에 펼치지 않고 일지 꾸미기 진입 뒤 확인한다. */
+  /* 홈의 통합 꾸미기 진입은 실제 오늘 일지 편집기를 바로 연다. */
   await page.getByRole("button", { name: "일지 꾸미기" }).click()
-  await expect(page.getByRole("heading", { name: "꾸미기 보관함 · 사용 가능 8P" })).toBeVisible()
-  await expect(page.getByRole("region", { name: "꾸미기 미리보기" })).toHaveCount(0)
-  await expect(page.getByRole("dialog")).toHaveCount(0)
-  await page.getByRole("button", { name: "꾸미기 열기" }).click()
-
-  /* 오늘 일지 상세로 이동해 진짜 페이지 위에서 편집기가 자동으로 열린다. */
-  const editor = page.getByRole("dialog", { name: "이 일지 꾸미기" })
+  const editor = page.getByRole("dialog", { name: "일지 꾸미기", exact: true })
   await expect(editor).toBeVisible()
+  await expect(editor.getByRole("button", { name: "일지", exact: true })).toHaveAttribute("aria-pressed", "true")
   await expect(page.getByText("꾸미기 화면 점검")).toBeVisible()
 
   await expect(page.locator(".journal-decoration-toolbar")).toHaveAttribute("data-open", "false")
@@ -115,10 +110,10 @@ test("routes the home decoration card into the real journal editor with points",
   await expect(page.getByRole("button", { name: "결승선 스티커 붙이기" })).toBeVisible()
   await expect(page.getByText("베타 포인트 · 사용 가능 0P")).toBeVisible()
 
-  /* 자동-열기 인텐트는 1회용 — 새로고침 뒤에는 저절로 열리지 않는다. */
+  /* 편집기 열림 상태는 일회성 UI 상태 — 새로고침 뒤에는 저절로 열리지 않는다. */
   await page.reload()
   await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
-  await expect(page.getByRole("dialog", { name: "이 일지 꾸미기" })).toHaveCount(0)
+  await expect(page.getByRole("dialog", { name: "일지 꾸미기", exact: true })).toHaveCount(0)
   await expect(page.getByRole("button", { name: "일지 꾸미기 열기" })).toBeVisible()
 
   expect(consoleErrors).toEqual([])

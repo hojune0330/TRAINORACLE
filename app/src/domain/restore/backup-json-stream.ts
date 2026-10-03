@@ -3,6 +3,53 @@
 const DEFAULT_CHUNK_BYTES = 128 * 1024
 const MAX_JSON_DEPTH = 256
 
+/**
+ * Import budgets are deliberately higher than ordinary TrainOracle exports, but
+ * low enough that a user-selected file cannot make a mobile tab retain an
+ * effectively unbounded JSON tree. The whole-file limit is measured in bytes;
+ * the kept-value limit is measured in decoded UTF-16 code units because that is
+ * the allocation this parser controls.
+ */
+export type BackupJsonReadLimits = Readonly<{
+  blobBytes: number
+  entries: number
+  keptValueChars: number
+}>
+
+export const BACKUP_JSON_IMPORT_LIMITS: BackupJsonReadLimits = Object.freeze({
+  blobBytes: 32 * 1024 * 1024,
+  entries: 20_000,
+  keptValueChars: 8 * 1024 * 1024,
+})
+
+export type BackupJsonImportLimit = keyof typeof BACKUP_JSON_IMPORT_LIMITS
+
+export class BackupJsonLimitError extends Error {
+  readonly limit: BackupJsonImportLimit
+
+  constructor(limit: BackupJsonImportLimit) {
+    super(`BACKUP_JSON_${limit.toUpperCase()}_LIMIT`)
+    this.name = "BackupJsonLimitError"
+    this.limit = limit
+  }
+}
+
+/**
+ * A same-version export must never promise a backup that this importer refuses.
+ * This is separate from BackupJsonLimitError so callers can distinguish an
+ * oversized trusted export from a rejected user-selected input.
+ */
+export class BackupJsonExportLimitError extends Error {
+  readonly code = "BACKUP_EXPORT_EXCEEDS_IMPORT_LIMIT"
+  readonly limit: BackupJsonImportLimit
+
+  constructor(limit: BackupJsonImportLimit) {
+    super("BACKUP_EXPORT_EXCEEDS_IMPORT_LIMIT")
+    this.name = "BackupJsonExportLimitError"
+    this.limit = limit
+  }
+}
+
 async function readChunk(blob: Blob): Promise<ArrayBuffer> {
   if (typeof blob.arrayBuffer === "function") return blob.arrayBuffer()
   return new Promise<ArrayBuffer>((resolve, reject) => {
@@ -27,7 +74,15 @@ class JsonBlobCursor {
     private readonly blob: Blob,
     private readonly current: () => boolean,
     private readonly chunkBytes: number,
+    private readonly limits: BackupJsonReadLimits,
   ) {}
+
+  private append(raw: string, value: string): string {
+    if (raw.length + value.length > this.limits.keptValueChars) {
+      throw new BackupJsonLimitError("keptValueChars")
+    }
+    return raw + value
+  }
 
   async peek(): Promise<string | null> {
     while (this.index >= this.text.length) {
@@ -71,7 +126,7 @@ class JsonBlobCursor {
     while (true) {
       const value = await this.take()
       if (value === null) throw new Error("INVALID_BACKUP_JSON")
-      if (collect) raw += value
+      if (collect) raw = this.append(raw, value)
       if (value === '"') return raw
       if (value.charCodeAt(0) < 0x20) throw new Error("INVALID_BACKUP_JSON")
       if (value !== "\\") continue
@@ -79,12 +134,12 @@ class JsonBlobCursor {
       if (escaped === null || !['"', "\\", "/", "b", "f", "n", "r", "t", "u"].includes(escaped)) {
         throw new Error("INVALID_BACKUP_JSON")
       }
-      if (collect) raw += escaped
+      if (collect) raw = this.append(raw, escaped)
       if (escaped !== "u") continue
       for (let index = 0; index < 4; index += 1) {
         const hex = await this.take()
         if (hex === null || !/[0-9a-fA-F]/u.test(hex)) throw new Error("INVALID_BACKUP_JSON")
-        if (collect) raw += hex
+        if (collect) raw = this.append(raw, hex)
       }
     }
   }
@@ -112,7 +167,7 @@ class JsonBlobCursor {
     const take = async () => {
       const value = await this.take()
       if (value === null) throw new Error("INVALID_BACKUP_JSON")
-      if (collect) raw += value
+      if (collect) raw = this.append(raw, value)
     }
     if (await this.peek() === "-") await take()
     const first = await this.peek()
@@ -157,12 +212,12 @@ class JsonBlobCursor {
       return collect ? "[]" : ""
     }
     while (true) {
-      raw += await this.value(collect, depth)
+      raw = this.append(raw, await this.value(collect, depth))
       await this.whitespace()
       const separator = await this.take()
-      if (separator === "]") return collect ? raw + "]" : ""
+      if (separator === "]") return collect ? this.append(raw, "]") : ""
       if (separator !== ",") throw new Error("INVALID_BACKUP_JSON")
-      if (collect) raw += ","
+      if (collect) raw = this.append(raw, ",")
       await this.whitespace()
       if (await this.peek() === "]") throw new Error("INVALID_BACKUP_JSON")
     }
@@ -178,16 +233,16 @@ class JsonBlobCursor {
     }
     while (true) {
       if (await this.peek() !== '"') throw new Error("INVALID_BACKUP_JSON")
-      raw += await this.string(collect)
+      raw = this.append(raw, await this.string(collect))
       await this.whitespace()
       await this.expect(":")
-      if (collect) raw += ":"
-      raw += await this.value(collect, depth)
+      if (collect) raw = this.append(raw, ":")
+      raw = this.append(raw, await this.value(collect, depth))
       await this.whitespace()
       const separator = await this.take()
-      if (separator === "}") return collect ? raw + "}" : ""
+      if (separator === "}") return collect ? this.append(raw, "}") : ""
       if (separator !== ",") throw new Error("INVALID_BACKUP_JSON")
-      if (collect) raw += ","
+      if (collect) raw = this.append(raw, ",")
       await this.whitespace()
       if (await this.peek() === "}") throw new Error("INVALID_BACKUP_JSON")
     }
@@ -202,6 +257,9 @@ class JsonBlobCursor {
       return entries
     }
     while (true) {
+      if (entries.length >= this.limits.entries) {
+        throw new BackupJsonLimitError("entries")
+      }
       entries.push(JSON.parse(await this.value(true)))
       await this.whitespace()
       const separator = await this.take()
@@ -215,13 +273,51 @@ class JsonBlobCursor {
 
 const KEPT_FIELDS = new Set(["app", "format", "exportedAt", "entries", "decorations", "calendarDecorations"])
 
+export type BackupJsonExportEnvelope = Readonly<Record<string, unknown>> & {
+  readonly entries: readonly unknown[]
+}
+
+function assertExportValueFits(value: unknown, limits: BackupJsonReadLimits): void {
+  const serialized = JSON.stringify(value)
+  if (serialized !== undefined && serialized.length > limits.keptValueChars) {
+    throw new BackupJsonExportLimitError("keptValueChars")
+  }
+}
+
+/**
+ * Serialize an app-owned backup only when the same parser budgets can read it.
+ * Entry values are checked independently because readBackupJsonBlob deliberately
+ * parses that array one entry at a time; other retained fields are checked as a
+ * whole, matching the streaming reader.
+ */
+export function stringifyBackupJsonForExport(
+  envelope: BackupJsonExportEnvelope,
+  limits: BackupJsonReadLimits = BACKUP_JSON_IMPORT_LIMITS,
+): string {
+  if (envelope.entries.length > limits.entries) {
+    throw new BackupJsonExportLimitError("entries")
+  }
+  for (const entry of envelope.entries) assertExportValueFits(entry, limits)
+  for (const key of KEPT_FIELDS) {
+    if (key !== "entries" && Object.hasOwn(envelope, key)) assertExportValueFits(envelope[key], limits)
+  }
+
+  const serialized = JSON.stringify(envelope, null, 2)
+  if (new TextEncoder().encode(serialized).byteLength > limits.blobBytes) {
+    throw new BackupJsonExportLimitError("blobBytes")
+  }
+  return serialized
+}
+
 /** Read the existing v1-v5 JSON envelope in chunks, parsing entries one at a time. */
 export async function readBackupJsonBlob(
   blob: Blob,
   current: () => boolean = () => true,
   chunkBytes = DEFAULT_CHUNK_BYTES,
+  limits: BackupJsonReadLimits = BACKUP_JSON_IMPORT_LIMITS,
 ): Promise<Record<string, unknown>> {
-  const cursor = new JsonBlobCursor(blob, current, Math.max(1, Math.floor(chunkBytes)))
+  if (blob.size > limits.blobBytes) throw new BackupJsonLimitError("blobBytes")
+  const cursor = new JsonBlobCursor(blob, current, Math.max(1, Math.floor(chunkBytes)), limits)
   await cursor.whitespace()
   await cursor.expect("{")
   const root: Record<string, unknown> = Object.create(null) as Record<string, unknown>

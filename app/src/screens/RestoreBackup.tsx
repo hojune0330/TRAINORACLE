@@ -17,15 +17,20 @@ import {
   buildRestorePlan, readBackupBlob, restoreBackupFile,
 } from "../domain/restore/backup-file"
 import type {
-  BackupReadResult, DecorationRestoreMode, RestoreMode, RestoreOutcome, RestorePlan,
+  BackupReadFailure, BackupReadResult, DecorationRestoreMode, RestoreMode, RestoreOutcome, RestorePlan,
 } from "../domain/restore/backup-file"
 import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
 import { useOrderedStepMotion } from "../hooks/useOrderedStepMotion"
 import { accountJournalRecordsEnabled } from "../domain/account/account-journal-record-service"
 import { createAccountBackupRestoration, type AccountRestoreOutcome } from "../domain/restore/account-restore"
 import { useImportOwnerScope } from "./import-activities/useImportOwnerScope"
+import { BACKUP_JSON_IMPORT_LIMITS } from "../domain/restore/backup-json-stream"
 
 const mono: React.CSSProperties = { fontFamily: "var(--mono)" }
+const backupFileLimitMb = BACKUP_JSON_IMPORT_LIMITS.blobBytes / (1024 * 1024)
+const backupEntryLimitLabel = BACKUP_JSON_IMPORT_LIMITS.entries % 10_000 === 0
+  ? `${BACKUP_JSON_IMPORT_LIMITS.entries / 10_000}만`
+  : BACKUP_JSON_IMPORT_LIMITS.entries.toLocaleString("ko-KR")
 
 const primaryBtn: React.CSSProperties = {
   width: "100%", minHeight: 48, fontSize: 15, fontWeight: 600,
@@ -49,7 +54,7 @@ export function RestoreBackup({ onBack, onOpenHome }: {
   readonly onOpenHome?: () => void
 }) {
   const [stage, setStage] = React.useState<Stage>({ step: "pick" })
-  const [failure, setFailure] = React.useState<"unreadable" | "empty" | "account-unavailable" | null>(null)
+  const [failure, setFailure] = React.useState<"unreadable" | "empty" | "account-unavailable" | BackupReadFailure | null>(null)
   const [mode, setMode] = React.useState<RestoreMode>("keep-existing")
   const [decorationMode, setDecorationMode] = React.useState<DecorationRestoreMode>("keep-existing")
   const [calendarMode, setCalendarMode] = React.useState<DecorationRestoreMode>("keep-existing")
@@ -81,7 +86,7 @@ export function RestoreBackup({ onBack, onOpenHome }: {
     busyRef.current = false
     setBusy(false)
     if (!read.recognized) {
-      setFailure("unreadable")
+      setFailure(read.readFailure ?? "unreadable")
       setStage({ step: "pick" })
       return
     }
@@ -227,7 +232,7 @@ export function RestoreBackup({ onBack, onOpenHome }: {
 
 function PickStage({ busy, failure, onFile }: {
   readonly busy: boolean
-  readonly failure: "unreadable" | "empty" | "account-unavailable" | null
+  readonly failure: "unreadable" | "empty" | "account-unavailable" | BackupReadFailure | null
   readonly onFile: (file: File) => void | Promise<void>
 }) {
   return (
@@ -253,7 +258,7 @@ function PickStage({ busy, failure, onFile }: {
       </div>
 
       <label htmlFor="restore-file" style={{ ...mono, fontSize: 11, color: "var(--ink-3)" }}>
-        백업 파일 (.json)
+        백업 파일 (.json · {backupFileLimitMb}MB 이하)
       </label>
       <input
         id="restore-file"
@@ -277,6 +282,9 @@ function PickStage({ busy, failure, onFile }: {
           <div style={{ ...mono, fontSize: 10.5, color: "var(--ink)", lineHeight: 1.6 }}>
             {failure === "account-unavailable" ? "계정 기록을 조회하지 못했어요. 연결과 로그인을 확인한 뒤 다시 시도해 주세요." : failure === "empty"
               ? "백업 파일은 맞는데 되돌릴 수 있는 항목을 찾지 못했어요. 빈 백업일 수 있어요."
+              : failure === "FILE_TOO_LARGE" ? `파일이 너무 커서 안전하게 읽지 않았어요. ${backupFileLimitMb}MB 이하의 백업 파일을 골라 주세요.`
+              : failure === "TOO_MANY_ENTRIES" ? `한 파일에 든 일지가 너무 많아 안전하게 읽지 않았어요. ${backupEntryLimitLabel} 건 이하의 백업 파일을 골라 주세요.`
+              : failure === "VALUE_TOO_LARGE" ? "백업 안의 일지 한 건이나 꾸미기 자료가 너무 커서 안전하게 읽지 않았어요."
               : "이 파일을 트레인오라클 백업으로 읽지 못했어요. 앱에서 내려받은 .json 파일인지 확인해 주세요."}
             <br />기존 일지는 그대로 있어요.
           </div>
@@ -539,6 +547,8 @@ function RestoreFailedStage({ outcome, onRestart }: {
 }) {
   const message = outcome.failureReason === "RECOVERY_CODE_REQUIRED"
     ? "비공개 메모를 되돌리려면 먼저 복구 코드를 준비해야 해요. 백업 원본을 보관해 주세요."
+    : outcome.failureReason === "STATE_CHANGED"
+      ? "확인하는 동안 일지가 바뀌었어요. 파일을 다시 골라 현재 상태를 확인해 주세요."
     : outcome.failureReason === "CALENDAR_DEPENDENCY_UNVERIFIED"
       ? "꾸미기를 바꾸면 현재 달력의 그림을 그대로 사용할 수 없어 중단했어요. 달력과 백업 원본은 그대로 보관해 주세요."
     : outcome.failureReason === "CALENDAR_DECORATION_SAVE_FAILED"

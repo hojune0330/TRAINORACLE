@@ -431,7 +431,7 @@
   border-radius: var(--r-sm);
   background: var(--line);
 }
-/* 제목·안내·포인트를 한 덩어리로 — 서랍 높이(44dvh)에서 타일 그리드가 최대한 보이게 한다. */
+/* 제목·안내·포인트를 한 덩어리로 — 서랍 높이 안에서 타일 그리드가 최대한 보이게 한다. */
 .journal-decoration-toolbar__drawer-header > header div {
   min-width: 0;
   display: flex;
@@ -1051,7 +1051,8 @@
   left: 0;
   z-index: 75;
   width: auto;
-  max-height: min(44dvh, 380px);
+  /* 통합 일지/달력 헤더가 생겨도 375×667에서 종이 캔버스를 220px 넘게 남긴다. */
+  max-height: min(40dvh, 380px);
   margin: 0;
   padding: 0 12px;
   border: 0;

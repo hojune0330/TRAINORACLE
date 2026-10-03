@@ -22,17 +22,16 @@ import { tombstonedIds } from "../account/tombstone"
 import { loadSessionRecoveryCode } from "../account/private-note-sync"
 import { parseJournalEntryForWrite, parseJournalEntryList } from "../journal-schema"
 import type { JournalEntry } from "../journal-schema"
-import { JOURNAL_STORAGE_KEY, journalStorage } from "../journal-local-storage"
-import { PRIVATE_MEMO_VAULT_STORAGE_KEY } from "../journal-storage-keys"
+import { JOURNAL_STORAGE_KEY, journalStorage, writeJournalEntries } from "../journal-local-storage"
 import {
   hasPrivateMemoText,
   savePrivateMemosWithJournalShells,
 } from "../private-memo-vault"
-import { legacyJournalWritesBlocked, loadEntries, replaceAllEntries } from "../journal-store"
+import { legacyJournalWritesBlocked, loadEntries, loadJournalEntriesSnapshot } from "../journal-store"
 import {
-  DECORATION_STORAGE_KEY_V3,
+  activeDecorationStorageKeyV3,
   parseStoredDecorationState,
-  saveDecorationState,
+  saveDecorationStateIfCurrent,
 } from "../decorations"
 import type { DecorationState } from "../decorations"
 import { z } from "zod"
@@ -40,10 +39,16 @@ import { decorationStateSchema, decorationPlacementTransformSchema, V2_SLOT_DEFA
 import { isDecorationSlot, STARTER_DECORATION_IDS } from "../decoration-catalog"
 import type { DecorationSlot } from "../decoration-catalog"
 import { calendarDecorationStateSchema, calendarDecorationsOwnedBy, createEmptyCalendarDecorationState, parseStoredCalendarDecorationState, type CalendarDecorationState } from "../calendar-decoration-schema"
-import { CALENDAR_DECORATION_STORAGE_KEY, calendarDecorationReadStatus, readCalendarDecorationStateSerialized, saveCalendarDecorationStateIfCurrent } from "../calendar-decoration-store"
+import { activeCalendarDecorationStorageKey, calendarDecorationReadStatus, readCalendarDecorationStateSerialized, saveCalendarDecorationStateIfCurrent } from "../calendar-decoration-store"
 import { loadDecorationState } from "../decorations"
-import { accountScopedStorageKey } from "../account/local-account-scope"
-import { readBackupJsonBlob } from "./backup-json-stream"
+import { localAccountScopeSnapshot } from "../account/local-account-scope"
+import { localJournalScopeGeneration } from "../account/local-journal-ownership"
+import {
+  BACKUP_JSON_IMPORT_LIMITS,
+  BackupJsonLimitError,
+  readBackupJsonBlob,
+  type BackupJsonReadLimits,
+} from "./backup-json-stream"
 
 /** 인식하는 내보내기 형식 — journal-store.exportEntriesJSON이 쓰는 값들 */
 export const SAFE_FORMAT = "trainoracle.journal.v1"
@@ -54,6 +59,7 @@ export const FULL_FORMAT = "trainoracle.journal.full-backup.v2"
 export const LEGACY_FULL_FORMAT = "trainoracle.journal.full-backup.v1"
 
 export type BackupKind = "safe" | "full"
+export type BackupReadFailure = "FILE_TOO_LARGE" | "TOO_MANY_ENTRIES" | "VALUE_TOO_LARGE"
 
 export type BackupReadResult = {
   /** 스키마 검증을 통과한 항목 */
@@ -72,6 +78,8 @@ export type BackupReadResult = {
   readonly decorationPlacementCount: number
   readonly calendarDecorations?: CalendarDecorationState | null
   readonly calendarDecorationStatus?: "included" | "not-included" | "invalid"
+  /** Present only when a user-selected Blob crossed an explicit local safety budget. */
+  readonly readFailure?: BackupReadFailure
 }
 
 const UNRECOGNIZED: BackupReadResult = {
@@ -102,10 +110,20 @@ export function readBackupFile(text: string): BackupReadResult {
 }
 
 /** Read a selected file without holding its entire source JSON string in memory. */
-export async function readBackupBlob(blob: Blob, current: () => boolean = () => true): Promise<BackupReadResult> {
+export async function readBackupBlob(
+  blob: Blob,
+  current: () => boolean = () => true,
+  limits: BackupJsonReadLimits = BACKUP_JSON_IMPORT_LIMITS,
+): Promise<BackupReadResult> {
   try {
-    return readParsedBackup(await readBackupJsonBlob(blob, current))
-  } catch {
+    return readParsedBackup(await readBackupJsonBlob(blob, current, undefined, limits))
+  } catch (error) {
+    if (error instanceof BackupJsonLimitError) {
+      const readFailure: BackupReadFailure = error.limit === "blobBytes"
+        ? "FILE_TOO_LARGE"
+        : error.limit === "entries" ? "TOO_MANY_ENTRIES" : "VALUE_TOO_LARGE"
+      return { ...UNRECOGNIZED, readFailure }
+    }
     return UNRECOGNIZED
   }
 }
@@ -231,6 +249,8 @@ export type RestorePlanItem = {
   readonly conflictsWithExisting: boolean
   /** 사용자가 지운 id — 복원 대상에서 제외된다 */
   readonly previouslyDeleted: boolean
+  /** 검토할 때 있던 같은 id 기록의 정확한 값. 적용 직전 변경을 덮지 않기 위한 토큰. */
+  readonly reviewedExistingSerialized: string | null
 }
 
 export type RestorePlan = {
@@ -252,11 +272,12 @@ export function buildRestorePlan(
   existing: readonly JournalEntry[] = loadEntries(),
   deletedIds: ReadonlySet<string> = tombstonedIds(),
 ): RestorePlan {
-  const existingIds = new Set(existing.map((entry) => entry.id))
+  const existingById = new Map(existing.map((entry) => [entry.id, JSON.stringify(entry)]))
   const items = entries.map((entry) => ({
     entry,
-    conflictsWithExisting: existingIds.has(entry.id),
+    conflictsWithExisting: existingById.has(entry.id),
     previouslyDeleted: deletedIds.has(entry.id),
+    reviewedExistingSerialized: existingById.get(entry.id) ?? null,
   }))
   return {
     items,
@@ -286,7 +307,7 @@ export type RestoreOutcome = {
   readonly decorationRestore: "RESTORED" | "KEPT_EXISTING" | "NOT_INCLUDED" | "INVALID_SKIPPED" | "SAVE_FAILED" | "ROLLED_BACK"
   readonly calendarDecorationRestore?: RestoreOutcome["decorationRestore"]
   readonly commit: "COMMITTED" | "FAILED" | "ROLLED_BACK"
-  readonly failureReason: "NONE" | "DECORATION_SAVE_FAILED" | "CALENDAR_DECORATION_SAVE_FAILED" | "CALENDAR_DEPENDENCY_UNVERIFIED" | "JOURNAL_SAVE_FAILED" | "RECOVERY_CODE_REQUIRED"
+  readonly failureReason: "NONE" | "DECORATION_SAVE_FAILED" | "CALENDAR_DECORATION_SAVE_FAILED" | "CALENDAR_DEPENDENCY_UNVERIFIED" | "JOURNAL_SAVE_FAILED" | "RECOVERY_CODE_REQUIRED" | "STATE_CHANGED"
 }
 
 export async function restoreBackupFile(
@@ -296,12 +317,40 @@ export async function restoreBackupFile(
   decorationMode: DecorationRestoreMode = "keep-existing",
   calendarMode: DecorationRestoreMode = "keep-existing",
 ): Promise<RestoreOutcome> {
-  if (legacyJournalWritesBlocked()) return {
-    ...emptyRestoreOutcome(plan, "NOT_INCLUDED", "FAILED", "JOURNAL_SAVE_FAILED"),
+  const scope = captureRestoreScope()
+  const failed = () => ({
+    ...emptyRestoreOutcome(plan, "NOT_INCLUDED" as const, "FAILED" as const, "STATE_CHANGED" as const),
     failed: requestedRestoreCount(plan, mode),
-    calendarDecorationRestore: read.calendarDecorationStatus === "invalid" ? "INVALID_SKIPPED"
-      : read.calendarDecorationStatus === "included" ? "KEPT_EXISTING" : "NOT_INCLUDED",
+    calendarDecorationRestore: read.calendarDecorationStatus === "invalid" ? "INVALID_SKIPPED" as const
+      : read.calendarDecorationStatus === "included" ? "KEPT_EXISTING" as const : "NOT_INCLUDED" as const,
+  })
+  try {
+    return await withLocalRestoreLock(scope, async () => {
+      if (!restoreScopeIsCurrent(scope)) return failed()
+      if (legacyJournalWritesBlocked()) return {
+        ...emptyRestoreOutcome(plan, "NOT_INCLUDED", "FAILED", "JOURNAL_SAVE_FAILED"),
+        failed: requestedRestoreCount(plan, mode),
+        calendarDecorationRestore: read.calendarDecorationStatus === "invalid" ? "INVALID_SKIPPED"
+          : read.calendarDecorationStatus === "included" ? "KEPT_EXISTING" : "NOT_INCLUDED",
+      }
+      const prepared = revalidateRestorePlan(plan)
+      if (prepared === null || !restoreScopeIsCurrent(scope)) return failed()
+      return restoreBackupFileUnlocked(read, prepared, mode, decorationMode, calendarMode, scope)
+    })
+  } catch {
+    return failed()
   }
+}
+
+async function restoreBackupFileUnlocked(
+  read: BackupReadResult,
+  prepared: PreparedRestorePlan,
+  mode: RestoreMode,
+  decorationMode: DecorationRestoreMode,
+  calendarMode: DecorationRestoreMode,
+  scope: RestoreScope,
+): Promise<RestoreOutcome> {
+  const plan = prepared.plan
   const replaceDecorations = read.decorationStatus === "included" && read.decorations !== null && decorationMode === "replace"
   const ownership = replaceDecorations ? read.decorations! : loadDecorationState()
   const calendar = read.calendarDecorations
@@ -327,17 +376,50 @@ export async function restoreBackupFile(
     }
   }
   if (replaceDecorations || replaceCalendar) {
-    const snapshot = takeLocalStorageSnapshot(replaceDecorations, replaceCalendar)
+    const decorationKey = replaceDecorations ? activeDecorationStorageKeyV3() : null
+    const calendarKey = replaceCalendar ? activeCalendarDecorationStorageKey() : null
+    const snapshot = takeLocalStorageSnapshot([decorationKey, calendarKey].filter((key): key is string => key !== null))
     if (snapshot === null) return { ...emptyRestoreOutcome(plan, replaceDecorations ? "SAVE_FAILED" : read.decorationStatus === "included" ? "KEPT_EXISTING" : "NOT_INCLUDED", "FAILED", replaceDecorations ? "DECORATION_SAVE_FAILED" : "CALENDAR_DECORATION_SAVE_FAILED"), calendarDecorationRestore: replaceCalendar ? "SAVE_FAILED" : calendarStatus }
-    const calendarBase = readCalendarDecorationStateSerialized()
-    if (replaceDecorations && !saveDecorationState(read.decorations!).ok) return { ...emptyRestoreOutcome(plan, "SAVE_FAILED", "FAILED", "DECORATION_SAVE_FAILED"), calendarDecorationRestore: calendarStatus }
-    if (replaceCalendar && !saveCalendarDecorationStateIfCurrent(calendar!, calendarBase).ok) {
-      const rolledBack = restoreLocalStorageSnapshot(snapshot)
-      return { ...emptyRestoreOutcome(plan, replaceDecorations ? rolledBack ? "ROLLED_BACK" : "SAVE_FAILED" : "NOT_INCLUDED", rolledBack ? "ROLLED_BACK" : "FAILED", "CALENDAR_DECORATION_SAVE_FAILED"), calendarDecorationRestore: "SAVE_FAILED" }
+    const applied: LocalStorageMutation[] = []
+    if (!restoreScopeIsCurrent(scope)) return { ...emptyRestoreOutcome(plan, "SAVE_FAILED", "FAILED", "STATE_CHANGED"), calendarDecorationRestore: calendarStatus }
+    if (replaceDecorations && decorationKey !== null) {
+      const before = snapshotValue(snapshot, decorationKey)
+      const after = JSON.stringify(read.decorations!)
+      if (!saveDecorationStateIfCurrent(read.decorations!, before).ok) return { ...emptyRestoreOutcome(plan, "SAVE_FAILED", "FAILED", "DECORATION_SAVE_FAILED"), calendarDecorationRestore: calendarStatus }
+      applied.push({ key: decorationKey, before, after })
     }
-    const outcome = await restoreEntries(plan, mode)
-    if (outcome.failed > 0 || outcome.restored !== requestedRestoreCount(plan, mode)) {
-      const rolledBack = snapshot !== null && restoreLocalStorageSnapshot(snapshot)
+    if (replaceDecorations && !replaceCalendar) {
+      const currentStatus = calendarDecorationReadStatus()
+      const currentRaw = readCalendarDecorationStateSerialized()
+      const current = currentStatus === "EMPTY" && currentRaw === null
+        ? createEmptyCalendarDecorationState()
+        : currentStatus === "READY" && currentRaw !== null
+          ? parseStoredCalendarDecorationState(currentRaw) : null
+      if (current === null || !calendarDecorationsOwnedBy(current, read.decorations!)) {
+        const rollback = rollbackLocalStorageMutations(applied)
+        const rolledBack = rollback.complete && !rollback.stateChanged
+        return { ...emptyRestoreOutcome(plan, rolledBack ? "ROLLED_BACK" : "SAVE_FAILED", rolledBack ? "ROLLED_BACK" : "FAILED", "STATE_CHANGED"), calendarDecorationRestore: "SAVE_FAILED" }
+      }
+    }
+    if (replaceCalendar && calendarKey !== null) {
+      const before = snapshotValue(snapshot, calendarKey)
+      const after = JSON.stringify(calendar!)
+      if (!saveCalendarDecorationStateIfCurrent(calendar!, before).ok) {
+        const rollback = rollbackLocalStorageMutations(applied)
+        const rolledBack = rollback.complete && !rollback.stateChanged
+        return { ...emptyRestoreOutcome(plan, replaceDecorations ? rolledBack ? "ROLLED_BACK" : "SAVE_FAILED" : "NOT_INCLUDED", rolledBack ? "ROLLED_BACK" : "FAILED", rollback.stateChanged ? "STATE_CHANGED" : "CALENDAR_DECORATION_SAVE_FAILED"), calendarDecorationRestore: "SAVE_FAILED" }
+      }
+      applied.push({ key: calendarKey, before, after })
+    }
+    if (!restoreScopeIsCurrent(scope)) {
+      const rollback = rollbackLocalStorageMutations(applied)
+      const rolledBack = rollback.complete && !rollback.stateChanged
+      return { ...emptyRestoreOutcome(plan, replaceDecorations ? rolledBack ? "ROLLED_BACK" : "SAVE_FAILED" : "NOT_INCLUDED", rolledBack ? "ROLLED_BACK" : "FAILED", "STATE_CHANGED"), calendarDecorationRestore: "SAVE_FAILED" }
+    }
+    const outcome = await applyRestoreEntries(prepared, mode, scope, true)
+    if (outcome.failed > 0 || outcome.commit !== "COMMITTED") {
+      const rollback = rollbackLocalStorageMutations(applied)
+      const rolledBack = rollback.complete && !rollback.stateChanged
       return {
         ...outcome,
         restored: 0,
@@ -345,11 +427,12 @@ export async function restoreBackupFile(
         decorationRestore: replaceDecorations ? rolledBack ? "ROLLED_BACK" : "SAVE_FAILED" : read.decorationStatus === "included" ? "KEPT_EXISTING" : "NOT_INCLUDED",
         calendarDecorationRestore: replaceCalendar ? rolledBack ? "ROLLED_BACK" : "SAVE_FAILED" : calendarStatus,
         commit: rolledBack ? "ROLLED_BACK" : "FAILED",
+        failureReason: rollback.stateChanged ? "STATE_CHANGED" : outcome.failureReason,
       }
     }
     return { ...outcome, decorationRestore: replaceDecorations ? "RESTORED" : read.decorationStatus === "invalid" ? "INVALID_SKIPPED" : read.decorationStatus === "included" ? "KEPT_EXISTING" : "NOT_INCLUDED", calendarDecorationRestore: replaceCalendar ? "RESTORED" : calendarStatus }
   }
-  const outcome = await restoreEntries(plan, mode)
+  const outcome = await applyRestoreEntries(prepared, mode, scope)
   return {
     ...outcome,
     decorationRestore: read.decorationStatus === "invalid"
@@ -378,37 +461,108 @@ function emptyRestoreOutcome(
   }
 }
 
-type LocalStorageSnapshot = readonly (readonly [key: string, value: string | null])[]
+type EffectiveRestorePlanItem = RestorePlanItem & {
+  readonly currentExists: boolean
+  readonly changedSinceReview: boolean
+}
 
-function takeLocalStorageSnapshot(includeDecorations: boolean, includeCalendar: boolean): LocalStorageSnapshot | null {
+type EffectiveRestorePlan = Omit<RestorePlan, "items"> & {
+  readonly items: readonly EffectiveRestorePlanItem[]
+}
+
+type PreparedRestorePlan = {
+  readonly plan: EffectiveRestorePlan
+  readonly snapshot: ReturnType<typeof loadJournalEntriesSnapshot>
+}
+
+function revalidateRestorePlan(reviewed: RestorePlan): PreparedRestorePlan | null {
+  const snapshot = loadJournalEntriesSnapshot()
+  if (snapshot.readStatus !== "complete") return null
+  const existingById = new Map(snapshot.entries.map((entry) => [entry.id, JSON.stringify(entry)]))
+  const deletedIds = tombstonedIds()
+  const items = reviewed.items.map((item): EffectiveRestorePlanItem => {
+    const currentSerialized = existingById.get(item.entry.id) ?? null
+    return {
+      ...item,
+      currentExists: currentSerialized !== null,
+      changedSinceReview: item.reviewedExistingSerialized !== currentSerialized,
+      conflictsWithExisting: item.conflictsWithExisting || currentSerialized !== null,
+      previouslyDeleted: item.previouslyDeleted || deletedIds.has(item.entry.id),
+    }
+  })
+  return {
+    snapshot,
+    plan: {
+      items,
+      blockedByDeletion: items.filter((item) => item.previouslyDeleted).length,
+      conflicts: items.filter((item) => !item.previouslyDeleted && item.conflictsWithExisting).length,
+      fresh: items.filter((item) => !item.previouslyDeleted && !item.conflictsWithExisting).length,
+    },
+  }
+}
+
+type RestoreScope = { readonly owner: string | null; readonly generation: number }
+
+function captureRestoreScope(): RestoreScope {
+  return { owner: localAccountScopeSnapshot(), generation: localJournalScopeGeneration() }
+}
+
+function restoreScopeIsCurrent(scope: RestoreScope): boolean {
+  return localAccountScopeSnapshot() === scope.owner && localJournalScopeGeneration() === scope.generation
+}
+
+async function withLocalRestoreLock<T>(_scope: RestoreScope, run: () => T | Promise<T>): Promise<T> {
+  const locks = globalThis.navigator?.locks
+  if (!locks) return await run()
+  return await locks.request(
+    "trainoracle-local-profile-restore:v1",
+    { mode: "exclusive" },
+    run,
+  )
+}
+
+type LocalStorageSnapshot = readonly (readonly [key: string, value: string | null])[]
+type LocalStorageMutation = { readonly key: string; readonly before: string | null; readonly after: string }
+
+function takeLocalStorageSnapshot(keys: readonly string[]): LocalStorageSnapshot | null {
   const storage = journalStorage()
   if (storage === null) return null
   try {
-    const keys = [JOURNAL_STORAGE_KEY, PRIVATE_MEMO_VAULT_STORAGE_KEY,
-      ...(includeDecorations ? [DECORATION_STORAGE_KEY_V3, accountScopedStorageKey(DECORATION_STORAGE_KEY_V3)] : []),
-      ...(includeCalendar ? [accountScopedStorageKey(CALENDAR_DECORATION_STORAGE_KEY)] : [])]
     return [...new Set(keys)].map((key) => [key, storage.getItem(key)] as const)
   } catch {
     return null
   }
 }
 
-function restoreLocalStorageSnapshot(snapshot: LocalStorageSnapshot): boolean {
-  const storage = journalStorage()
-  if (storage === null) return false
-  try {
-    for (const [key, value] of snapshot) {
-      if (value === null) storage.removeItem(key)
-      else if (storage.getItem(key) !== value) storage.setItem(key, value)
-    }
-    return storageMatchesSnapshot(storage, snapshot)
-  } catch {
-    return false
-  }
+function snapshotValue(snapshot: LocalStorageSnapshot, key: string): string | null {
+  return snapshot.find(([snapshotKey]) => snapshotKey === key)?.[1] ?? null
 }
 
-function storageMatchesSnapshot(storage: Storage, snapshot: LocalStorageSnapshot): boolean {
-  return snapshot.every(([key, value]) => storage.getItem(key) === value)
+/** Revert only values this restore still owns; a newer tab/account value always wins. */
+function rollbackLocalStorageMutations(mutations: readonly LocalStorageMutation[]): {
+  readonly complete: boolean
+  readonly stateChanged: boolean
+} {
+  const storage = journalStorage()
+  if (storage === null) return { complete: false, stateChanged: false }
+  try {
+    let complete = true
+    let stateChanged = false
+    for (const { key, before, after } of [...mutations].reverse()) {
+      const current = storage.getItem(key)
+      if (current === before) continue
+      if (current !== after) {
+        stateChanged = true
+        continue
+      }
+      if (before === null) storage.removeItem(key)
+      else storage.setItem(key, before)
+      if (storage.getItem(key) !== before) complete = false
+    }
+    return { complete, stateChanged }
+  } catch {
+    return { complete: false, stateChanged: false }
+  }
 }
 
 function requestedRestoreCount(plan: RestorePlan, mode: RestoreMode): number {
@@ -428,10 +582,33 @@ export async function restoreEntries(
   plan: RestorePlan,
   mode: RestoreMode = "keep-existing",
 ): Promise<RestoreOutcome> {
-  if (legacyJournalWritesBlocked()) return {
-    ...emptyRestoreOutcome(plan, "NOT_INCLUDED", "FAILED", "JOURNAL_SAVE_FAILED"),
+  const scope = captureRestoreScope()
+  const failed = () => ({
+    ...emptyRestoreOutcome(plan, "NOT_INCLUDED" as const, "FAILED" as const, "STATE_CHANGED" as const),
     failed: requestedRestoreCount(plan, mode),
+  })
+  try {
+    return await withLocalRestoreLock(scope, async () => {
+      if (!restoreScopeIsCurrent(scope)) return failed()
+      if (legacyJournalWritesBlocked()) return {
+        ...emptyRestoreOutcome(plan, "NOT_INCLUDED", "FAILED", "JOURNAL_SAVE_FAILED"),
+        failed: requestedRestoreCount(plan, mode),
+      }
+      const prepared = revalidateRestorePlan(plan)
+      return prepared === null ? failed() : applyRestoreEntries(prepared, mode, scope)
+    })
+  } catch {
+    return failed()
   }
+}
+
+async function applyRestoreEntries(
+  prepared: PreparedRestorePlan,
+  mode: RestoreMode,
+  scope: RestoreScope,
+  requireAll = false,
+): Promise<RestoreOutcome> {
+  const { plan, snapshot } = prepared
   let keptExisting = 0
   let failed = 0
   let failureReason: RestoreOutcome["failureReason"] = "NONE"
@@ -439,6 +616,15 @@ export async function restoreEntries(
 
   for (const item of plan.items) {
     if (item.previouslyDeleted) continue
+
+    if (item.changedSinceReview) {
+      if (mode === "keep-existing" && item.currentExists) keptExisting += 1
+      else {
+        failed += 1
+        failureReason = "STATE_CHANGED"
+      }
+      continue
+    }
 
     if (item.conflictsWithExisting && mode === "keep-existing") {
       keptExisting += 1
@@ -465,42 +651,52 @@ export async function restoreEntries(
     accepted.push(candidate)
   }
 
+  if (requireAll && failed > 0) return {
+    restored: 0, keptExisting, blockedByDeletion: plan.blockedByDeletion, failed,
+    total: plan.items.length, decorationRestore: "NOT_INCLUDED", commit: "FAILED", failureReason,
+  }
+
   const privateEntries = accepted.filter(hasPrivateMemoText)
-  const nonPrivateEntries = accepted.filter((entry) => !hasPrivateMemoText(entry))
   let restored = 0
+  const storage = journalStorage()
+  const acceptedIds = new Set(accepted.map((entry) => entry.id))
+  const commitGuard = () => restoreScopeIsCurrent(scope)
+    && [...tombstonedIds()].every((id) => !acceptedIds.has(id))
+  const next = buildRestoredEntries(snapshot.entries, accepted)
 
   if (privateEntries.length > 0) {
-    const storage = journalStorage()
     const recoveryCode = loadSessionRecoveryCode()
     if (storage !== null && recoveryCode !== null) {
-      const allAccepted = buildRestoredEntries(loadEntries(), accepted)
       const written = await savePrivateMemosWithJournalShells(
         storage,
-        allAccepted,
+        next,
         privateEntries,
         recoveryCode,
+        snapshot.raw,
+        commitGuard,
       )
       if (written !== null) restored = accepted.length
       else {
-        failed += privateEntries.length
-        failureReason = "JOURNAL_SAVE_FAILED"
+        failed += accepted.length
+        failureReason = commitGuard() ? "JOURNAL_SAVE_FAILED" : "STATE_CHANGED"
       }
     } else {
-      failed += privateEntries.length
+      failed += accepted.length
       failureReason = recoveryCode === null ? "RECOVERY_CODE_REQUIRED" : "JOURNAL_SAVE_FAILED"
     }
-  }
-
-  if (restored === 0 && nonPrivateEntries.length > 0) {
-    const next = buildRestoredEntries(loadEntries(), nonPrivateEntries)
-    const written = replaceAllEntries(next)
-    if (written.ok) restored = nonPrivateEntries.length
+  } else if (accepted.length > 0 && storage !== null && commitGuard()) {
+    const after = JSON.stringify(next)
+    if (writeJournalEntries(storage, next, snapshot.raw) && commitGuard()) restored = accepted.length
     else {
-      failed += nonPrivateEntries.length
-      failureReason = "JOURNAL_SAVE_FAILED"
+      if (storage.getItem(JOURNAL_STORAGE_KEY) === after) {
+        writeJournalEntries(storage, snapshot.entries, after)
+      }
+      failed += accepted.length
+      failureReason = commitGuard() ? "JOURNAL_SAVE_FAILED" : "STATE_CHANGED"
     }
-  } else if (privateEntries.length === 0 && accepted.length === 0) {
-    restored = 0
+  } else if (accepted.length > 0) {
+    failed += accepted.length
+    failureReason = "STATE_CHANGED"
   }
 
   return {
@@ -510,7 +706,7 @@ export async function restoreEntries(
     failed,
     total: plan.items.length,
     decorationRestore: "NOT_INCLUDED",
-    commit: "COMMITTED",
+    commit: restored === 0 && failed > 0 ? "FAILED" : "COMMITTED",
     failureReason,
   }
 }

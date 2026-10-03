@@ -161,9 +161,9 @@ jobs:
         working-directory: app
         run: npx playwright install --with-deps chromium
 
-      - name: Run app browser scenarios
+      - name: Verify calendar decoration interaction
         working-directory: app
-        run: npm run test:e2e
+        run: npm run test:e2e:calendar-decoration
 
       - name: Verify encrypted account journal buffer and record recovery
         working-directory: app
@@ -173,8 +173,14 @@ jobs:
           npm run test:e2e:account-record-service
           npm run test:e2e:account-conflict
           npm run test:e2e:account-decoration
+          npm run test:e2e:account-calendar-decoration
           npm run test:e2e:account-plan-service
           npm run test:e2e:form-input-autosave
+          npm run test:e2e:file-analysis
+
+      - name: Run app browser scenarios
+        working-directory: app
+        run: npm run test:e2e:generic
 
   deploy-pages:
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'

@@ -24,7 +24,8 @@ export function setup() {
     }
     next.data.currentPlanId = next.data.plans.at(-1)!.planId
     const transfer = prepareAccountPlanCollectionTransfer({ ownerId: owner, operationId: crypto.randomUUID(),
-      expectedRevision: 1, previous, next })
+      expectedRevision: 1, previous, next,
+      journalGuard: [{ documentId: "55555555-5555-4555-8555-555555555555", revision: 2 }] })
     if (!transfer) throw Error("Invalid synthetic preparation fixture")
     return { previous, transfer, expectedSequence: 1 }
   }

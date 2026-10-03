@@ -15,11 +15,14 @@ import {
   loadAnalysisEntries,
   loadEntries,
   loadEntriesWithPrivateMemos,
+  replaceAllEntries,
   saveEntry,
   savePrivateEntry,
 } from "../journal-store"
+import { recordTombstone, removeTombstone } from "../account/tombstone"
 import { createRecoveryCode } from "../account/private-note-crypto"
 import { saveSessionRecoveryCode } from "../account/private-note-sync"
+import { setActiveLocalAccount } from "../account/local-journal-ownership"
 import { toUploadPayload } from "../account/sync-local"
 import {
   FULL_FORMAT_V5, SAFE_FORMAT, buildRestorePlan, readBackupFile, restoreEntries,
@@ -71,6 +74,7 @@ function backupOf(entries: readonly unknown[], format: string = SAFE_FORMAT): st
 }
 
 beforeEach(() => {
+  setActiveLocalAccount(null)
   window.localStorage.clear()
   window.sessionStorage.clear()
 })
@@ -194,6 +198,53 @@ describe("복원 실행 — 기존 데이터를 날리지 않는다", () => {
     expect(loadEntries()).toHaveLength(0)
   })
 
+  it("검토 뒤 생긴 같은 id 기록은 기본 복원이 덮어쓰지 않는다", async () => {
+    const plan = buildRestorePlan([post("late", { title: "백업판" })])
+    expect(saveEntry(post("late", { title: "검토 뒤 작성" })).ok).toBe(true)
+
+    const outcome = await restoreEntries(plan)
+
+    expect(outcome).toMatchObject({ restored: 0, keptExisting: 1, failed: 0 })
+    expect((loadEntries()[0] as PostSessionEntry).title).toBe("검토 뒤 작성")
+  })
+
+  it("명시적 덮어쓰기라도 검토 뒤 바뀐 기록은 다시 확인하게 한다", async () => {
+    expect(saveEntry(post("changed", { title: "검토 당시" })).ok).toBe(true)
+    const plan = buildRestorePlan([post("changed", { title: "백업판" })])
+    expect(replaceAllEntries([post("changed", {
+      title: "다른 탭의 최신 기록",
+      savedAt: "2026-07-20T10:01:00.000Z",
+    })]).ok).toBe(true)
+
+    const outcome = await restoreEntries(plan, "overwrite-conflicts")
+
+    expect(outcome).toMatchObject({ restored: 0, failed: 1, commit: "FAILED", failureReason: "STATE_CHANGED" })
+    expect((loadEntries()[0] as PostSessionEntry).title).toBe("다른 탭의 최신 기록")
+  })
+
+  it("검토 뒤 생긴 삭제 표식은 덮어쓰기 모드에서도 되살리지 않는다", async () => {
+    const plan = buildRestorePlan([post("deleted-after-review")])
+    expect(saveEntry(post("deleted-after-review")).ok).toBe(true)
+    expect(deleteEntry("deleted-after-review").ok).toBe(true)
+
+    const outcome = await restoreEntries(plan, "overwrite-conflicts")
+
+    expect(outcome).toMatchObject({ restored: 0, blockedByDeletion: 1, failed: 0 })
+    expect(loadEntries()).toHaveLength(0)
+  })
+
+  it("검토 때 확인한 삭제 표식은 적용 전에 사라져도 복원을 막는다", async () => {
+    expect(saveEntry(post("reviewed-deletion")).ok).toBe(true)
+    expect(deleteEntry("reviewed-deletion").ok).toBe(true)
+    const plan = buildRestorePlan([post("reviewed-deletion")])
+    expect(removeTombstone("reviewed-deletion")).toBe(true)
+
+    const outcome = await restoreEntries(plan, "overwrite-conflicts")
+
+    expect(outcome).toMatchObject({ restored: 0, blockedByDeletion: 1, failed: 0 })
+    expect(loadEntries()).toHaveLength(0)
+  })
+
   it("복원한 일지는 이 기기 소유(local)로 되돌아간다", async () => {
     // Given — 서버에 있었던 것처럼 표시된 백업
     const plan = buildRestorePlan([post("a", { syncState: "synced" } as Partial<PostSessionEntry>)])
@@ -258,6 +309,59 @@ describe("전체 왕복 — 내보내고 지우고 되돌린다", () => {
     await expect(loadEntriesWithPrivateMemos()).resolves.toEqual([
       expect.objectContaining({ id: "private-backup", memo: "복원 뒤에도 비공개인 원문" }),
     ])
+  })
+
+  it("비공개 메모 암호화 중 생긴 삭제 표식도 마지막 저장을 막는다", async () => {
+    expect(saveSessionRecoveryCode(createRecoveryCode())).toBe(true)
+    const entry = post("private-race", {
+      memo: "복원하면 안 되는 비공개 메모",
+      memoPurpose: "PRIVATE_SELF_ONLY",
+    })
+    const work = restoreEntries(buildRestorePlan([entry]))
+    expect(recordTombstone(entry.id, "2026-07-20T10:00:01.000Z")).toBe(true)
+
+    const outcome = await work
+
+    expect(outcome).toMatchObject({ restored: 0, failed: 1, commit: "FAILED", failureReason: "STATE_CHANGED" })
+    expect(loadEntries()).toHaveLength(0)
+    const storedValues = Array.from({ length: window.localStorage.length }, (_, index) => {
+      const key = window.localStorage.key(index)
+      return key === null ? "" : window.localStorage.getItem(key) ?? ""
+    }).join("\n")
+    expect(storedValues).not.toContain("복원하면 안 되는 비공개 메모")
+  })
+
+  it("비공개 메모 복원 중 A-B-A 전환도 이전 작업을 되살리지 않는다", async () => {
+    setActiveLocalAccount("account-a")
+    expect(saveSessionRecoveryCode(createRecoveryCode())).toBe(true)
+    const entry = post("owner-race", {
+      memo: "이전 계정 요청",
+      memoPurpose: "PRIVATE_SELF_ONLY",
+    })
+    const work = restoreEntries(buildRestorePlan([entry]))
+    setActiveLocalAccount("account-b")
+    setActiveLocalAccount("account-a")
+
+    const outcome = await work
+
+    expect(outcome).toMatchObject({ restored: 0, failed: 1, commit: "FAILED", failureReason: "STATE_CHANGED" })
+    expect(loadEntries()).toHaveLength(0)
+  })
+
+  it("비공개 메모 복원이 화면에서 숨은 다른 계정 일지를 지우지 않는다", async () => {
+    setActiveLocalAccount("account-b")
+    expect(saveEntry(post("account-b-entry", { title: "B 기록" })).ok).toBe(true)
+    setActiveLocalAccount("account-a")
+    expect(saveSessionRecoveryCode(createRecoveryCode())).toBe(true)
+    const entry = post("account-a-private", {
+      memo: "A의 비공개 메모",
+      memoPurpose: "PRIVATE_SELF_ONLY",
+    })
+
+    expect(await restoreEntries(buildRestorePlan([entry]))).toMatchObject({ restored: 1, failed: 0 })
+    setActiveLocalAccount("account-b")
+
+    expect(loadEntries().some((current) => current.id === "account-b-entry")).toBe(true)
   })
 
   it("메모 포함 백업으로 브라우저 초기화 상황을 복구할 수 있다", async () => {

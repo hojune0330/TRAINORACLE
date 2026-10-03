@@ -10,6 +10,7 @@ import {
 } from "./journal-store"
 import { createRecoveryCode } from "./account/private-note-crypto"
 import { saveSessionRecoveryCode } from "./account/private-note-sync"
+import { readBackupBlob } from "./restore/backup-file"
 
 const STORAGE_KEY = "trainoracle.journal.v1"
 
@@ -277,5 +278,20 @@ describe("safe journal export", () => {
     expect(exported).not.toContain(secret)
     expect(exported).not.toContain("ANALYZABLE_TRAINING_NOTE")
     expect(exported).not.toMatch(/"(?:memo|note|memoPurpose)"\s*:/u)
+  })
+
+  it.each([
+    ["safe", false],
+    ["full", true],
+  ] as const)("keeps every successful %s export inside the same-version importer", async (_label, includeRawMemos) => {
+    const source = validRaceEntry(`round-trip-${includeRawMemos ? "full" : "safe"}`)
+    expect(saveEntry(source).ok).toBe(true)
+
+    const exported = exportEntriesJSON({ includeRawMemos })
+    const imported = await readBackupBlob(new Blob([new TextEncoder().encode(exported)]))
+
+    expect(imported.recognized).toBe(true)
+    expect(imported.entries.map(entry => entry.id)).toEqual([source.id])
+    if (includeRawMemos) expect(imported.entries[0]).toEqual(source)
   })
 })

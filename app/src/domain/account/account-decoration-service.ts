@@ -86,15 +86,13 @@ async function flush(ctx: Context, id: string) {
     request => requestAccountDocument(ctx.owner, request, ctx.current, accountDecorationDocumentSchema), ctx.current)
 }
 
-export async function hydrateAccountDecorations(): Promise<boolean> {
-  const ctx = context(); if (!ctx) return false
-  if (hydration) return hydration
-  const run = serialize(ctx, async () => {
+async function hydrate(ctx: Context, publishCached = true): Promise<boolean> {
+  return serialize(ctx, async () => {
     setStatus("LOADING")
     const id = await accountDecorationDocumentId(ctx.owner)
     let local = await ctx.buffer.read(ctx.owner, id)
     if (!ctx.current()) return false
-    if (local) await publish(ctx, id)
+    if (local && publishCached) await publish(ctx, id)
     const remote = await requestAccountDocument(ctx.owner, { action: "read", documentId: id }, ctx.current, accountDecorationDocumentSchema)
     if (!ctx.current()) return false
     if (!remote.ok) {
@@ -145,8 +143,26 @@ export async function hydrateAccountDecorations(): Promise<boolean> {
     const view = await publish(ctx, id)
     return view?.state === "DRAFT_ACKNOWLEDGED"
   }, false)
+}
+
+export async function hydrateAccountDecorations(): Promise<boolean> {
+  const ctx = context(); if (!ctx) return false
+  if (hydration) return hydration
+  const run = hydrate(ctx)
   hydration = run
   try { return await run } finally { if (hydration === run) hydration = null }
+}
+
+/**
+ * Export-time freshness gate. A full backup must not accept a READY projection
+ * that was hydrated before the user clicked export. Queue a new authenticated
+ * read after any in-flight work, while retaining the encrypted local
+ * draft/pending/conflict buffer and the context epoch's A -> B -> A guard.
+ */
+export async function refreshAccountDecorationsForExport(): Promise<boolean> {
+  if (!accountDecorationsEnabled()) return true
+  const ctx = context(); if (!ctx) return false
+  return hydrate(ctx, false)
 }
 
 export type AccountDecorationSaveResult =

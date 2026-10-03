@@ -39,10 +39,12 @@ test("native SELECT preparation survives first-snapshot scope close and page rel
     prep.close()
     return { error, intercepted, isolated, operationId: input.transfer.operationId, previous: input.transfer.previous!,
       expected: h.fingerprint(input.transfer), recovered: h.fingerprint(recovered?.transfer),
+      journalGuard: recovered?.transfer.journalGuard,
       rows: raw.rows.length, encrypted: raw.rows.every(row => row.ciphertext instanceof Uint8Array && row.iv.length === 12),
       keys: raw.keys.map(v => ({ native: v.key instanceof CryptoKey, extractable: v.key.extractable })) }
   })
   expect(before).toMatchObject({ error: "STALE", intercepted: true, isolated: null, encrypted: true,
+    journalGuard: [{ documentId: "55555555-5555-4555-8555-555555555555", revision: 2 }],
     keys: [{ native: true, extractable: false }] })
   expect(before.rows).toBe(6)
   expect(before.recovered).toBe(before.expected)
@@ -61,10 +63,12 @@ test("native SELECT preparation survives first-snapshot scope close and page rel
     const view = await buffer.read(), pending = await buffer.pending()
     const serviceStatus = service.snapshot().status
     service.close()
-    return { serviceStatus, state: view?.state, operationId: pending?.operationId, transfer: h.fingerprint(pending),
+    return { serviceStatus, state: view?.state, operationId: pending?.operationId,
+      journalGuard: pending?.journalGuard, transfer: h.fingerprint(pending),
       rows: (await h.raw()).rows.length }
   }, before.previous)
-  expect(after).toEqual({ serviceStatus: "PENDING", state: "PENDING", operationId: before.operationId, transfer: before.expected, rows: 0 })
+  expect(after).toEqual({ serviceStatus: "PENDING", state: "PENDING", operationId: before.operationId,
+    journalGuard: before.journalGuard, transfer: before.expected, rows: 0 })
 })
 
 for (const fault of ["quota", "abort", "scope-close"] as const) {

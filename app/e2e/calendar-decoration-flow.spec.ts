@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { test, expect, type Locator, type Page } from "@playwright/test"
 
 test.beforeEach(async ({ page }) => {
   await page.route("**/*", route => {
@@ -25,6 +25,35 @@ async function seed(page: import("@playwright/test").Page) {
   return date
 }
 
+async function waitForDrawerMotion(drawer: Locator) {
+  await drawer.evaluate(async (element) => {
+    const finiteAnimations = element.getAnimations({ subtree: true }).filter((animation) => {
+      const endTime = animation.effect?.getComputedTiming().endTime
+      return typeof endTime === "number" && Number.isFinite(endTime)
+    })
+    await Promise.all(finiteAnimations.map(async (animation) => {
+      try { await animation.finished } catch { /* A replaced child animation is no longer relevant. */ }
+    }))
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+  })
+}
+
+async function openMaterialsDrawer(page: Page) {
+  const drawer = page.locator('.journal-decoration-toolbar[data-open="true"]')
+  await page.getByRole("button", { name: "재료 서랍 열기", exact: true }).click()
+  await expect(drawer).toBeVisible()
+  await waitForDrawerMotion(drawer)
+  await expect(drawer).toHaveAttribute("data-open", "true")
+  await expect(drawer.getByRole("group", { name: "꾸미기 재료 종류" })).toBeVisible()
+  return drawer
+}
+
+async function expectMaterialsDrawerClosed(page: Page) {
+  // Calendar mode unmounts the shared toolbar after applying a material.
+  // Waiting for that commit prevents the next open from racing the old drawer.
+  await expect(page.locator(".journal-decoration-toolbar")).toHaveCount(0)
+}
+
 for (const width of [320, 375, 1440]) test(`unified studio and protected calendar at ${width}px`, async ({ page }, testInfo) => {
   const errors: string[] = []
   page.on("pageerror", error => errors.push(error.message))
@@ -36,12 +65,17 @@ for (const width of [320, 375, 1440]) test(`unified studio and protected calenda
   const before = await page.evaluate(() => localStorage.getItem("trainoracle.decorations.v3"))
   await page.getByRole("button", { name: "달력", exact: true }).click()
   await expect(page.getByRole("grid")).toBeVisible()
-  await page.getByRole("button", { name: "재료 서랍 열기", exact: true }).click()
-  await page.getByRole("button", { name: "테마", exact: true }).click()
-  await page.getByRole("button", { name: /^모눈 연습장/ }).click()
-  await page.getByRole("button", { name: "재료 서랍 열기", exact: true }).click()
-  await page.getByRole("button", { name: "스티커", exact: true }).click()
-  await page.getByRole("button", { name: /^맑은 날/ }).first().click()
+  let drawer = await openMaterialsDrawer(page)
+  let filters = drawer.getByRole("group", { name: "꾸미기 재료 종류" })
+  await filters.getByRole("button", { name: "테마", exact: true }).click()
+  await drawer.getByRole("button", { name: /^모눈 연습장/ }).click()
+  await expectMaterialsDrawerClosed(page)
+  drawer = await openMaterialsDrawer(page)
+  filters = drawer.getByRole("group", { name: "꾸미기 재료 종류" })
+  const stickerFilter = filters.getByRole("button", { name: "스티커", exact: true })
+  await stickerFilter.click()
+  await expect(stickerFilter).toHaveAttribute("aria-pressed", "true")
+  await drawer.getByRole("button", { name: /^맑은 날/ }).first().click()
   await expect(page.locator(".calendar-decoration-frame__band")).toHaveCount(1)
   const contentBounds = await page.locator(".calendar-decoration-frame__content").boundingBox()
   const gridBounds = await page.getByRole("grid").boundingBox()
@@ -85,12 +119,12 @@ test("large text, keyboard and browser back preserve draft and preview", async (
   await page.getByRole("button", { name: "일지 꾸미기", exact: true }).click()
   await page.getByRole("button", { name: "달력", exact: true }).click()
   await page.addStyleTag({ content: ":root { --fs-body:20px; --fs-body-sm:18px; --fs-caption:16px; --fs-h3:24px; } .journal-decoration-workspace { font-size:20px; }" })
-  await page.getByRole("button", { name: "재료 서랍 열기", exact: true }).click()
-  const drawer = page.locator('.journal-decoration-toolbar[data-open="true"]')
+  const drawer = await openMaterialsDrawer(page)
   const drawerBox = await drawer.boundingBox()
   expect(drawerBox!.height).toBeLessThanOrEqual(812 / 2 + 1)
-  await page.getByRole("button", { name: "스티커", exact: true }).click()
-  await page.getByRole("button", { name: /^맑은 날/ }).first().click()
+  const filters = drawer.getByRole("group", { name: "꾸미기 재료 종류" })
+  await filters.getByRole("button", { name: "스티커", exact: true }).click()
+  await drawer.getByRole("button", { name: /^맑은 날/ }).first().click()
   const target = page.locator(".calendar-decoration-frame__item").first()
   await target.focus(); await page.keyboard.press("+"); await page.keyboard.press("]")
   const band = await page.locator(".calendar-decoration-frame__band").boundingBox()
@@ -112,9 +146,11 @@ test("empty calendar creates no fake journals and cancel discards only the draft
   await page.setViewportSize({ width: 375, height: 812 }); await page.goto("/?app=1")
   await page.getByRole("button", { name: "일지 꾸미기", exact: true }).click()
   await page.getByRole("button", { name: "달력", exact: true }).click()
-  await page.getByRole("button", { name: "재료 서랍 열기", exact: true }).click()
-  await page.getByRole("button", { name: "테마", exact: true }).click()
-  await page.getByRole("button", { name: /^모눈 연습장/ }).click()
+  const drawer = await openMaterialsDrawer(page)
+  const filters = drawer.getByRole("group", { name: "꾸미기 재료 종류" })
+  await filters.getByRole("button", { name: "테마", exact: true }).click()
+  await drawer.getByRole("button", { name: /^모눈 연습장/ }).click()
+  await expectMaterialsDrawerClosed(page)
   await page.getByRole("button", { name: "취소", exact: true }).click()
   expect(await page.evaluate(() => localStorage.getItem("trainoracle.calendar-decorations.v1"))).toBeNull()
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.journal.v1") ?? "[]"))).toEqual([])

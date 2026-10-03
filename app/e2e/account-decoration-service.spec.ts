@@ -256,7 +256,7 @@ test("fetch failure is not empty state and UI remains noneditable", async ({ pag
   await mount(page)
   await expect(page.getByText("꾸미기 조회에 실패했어요. 기기의 보관 내용은 지우지 않았어요.")).toBeVisible()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
-  await expect(page.getByRole("dialog", { name: "이 일지 꾸미기", exact: true })).toHaveCount(0)
+  await expect(page.getByRole("dialog", { name: "일지 꾸미기", exact: true })).toHaveCount(0)
 })
 
 test("unavailable native IDB fails visibly without an unhandled rejection or plaintext fallback", async ({ page }) => {

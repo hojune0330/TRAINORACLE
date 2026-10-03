@@ -197,7 +197,7 @@ export function saveDecorationStateIfCurrent(
     return { ok: false, code: "INVALID_STATE" }
   }
 
-  const rollback = (): boolean => restoreStorageValue(storage, storageKey, previous.value)
+  const rollback = (): boolean => restoreStorageValue(storage, storageKey, previous.value, serialized)
 
   try {
     storage.setItem(storageKey, serialized)
@@ -220,9 +220,16 @@ export function saveDecorationStateIfCurrent(
   return rollback() ? { ok: false, code: "READBACK_MISMATCH" } : { ok: false, code: "ROLLBACK_FAILED" }
 }
 
-function restoreStorageValue(storage: Storage, storageKey: string, previous: string | null): boolean {
+function restoreStorageValue(
+  storage: Storage,
+  storageKey: string,
+  previous: string | null,
+  attempted: string,
+): boolean {
   const current = readStorage(storage, storageKey)
   if (current.ok && current.value === previous) return true
+  if (current.ok && current.value !== attempted
+    && (current.value === null || parseStoredDecorationStateV3(current.value) !== null)) return false
   try {
     if (previous === null) storage.removeItem(storageKey)
     else storage.setItem(storageKey, previous)

@@ -16,13 +16,18 @@ vi.mock("./local-journal-ownership", () => ({ activeLocalAccount: () => mocks.ow
 vi.mock("./account-decoration-service", () => ({ accountDecorationsEnabled: () => mocks.enabled,
   accountDecorationStatus: () => mocks.inventoryStatus, readAccountDecorationState: () => mocks.owned,
   hydrateAccountDecorations: mocks.hydrate, persistAccountDecorations: mocks.persist }))
-import { accountCalendarDecorationStatus, readAccountCalendarDecorationState, accountCalendarDecorationDocumentId,
-  hydrateAccountCalendarDecorations, persistAccountCalendarDecorations, disposeAccountCalendarDecorations } from "./account-calendar-decoration-service"
+import { accountCalendarDecorationExportReady, accountCalendarDecorationStatus,
+  readAccountCalendarDecorationState, accountCalendarDecorationDocumentId,
+  hydrateAccountCalendarDecorations, refreshAccountCalendarDecorationsForExport,
+  persistAccountCalendarDecorations, disposeAccountCalendarDecorations } from "./account-calendar-decoration-service"
 
 const A = "a1111111-1111-4111-8111-111111111111", B = "b2222222-2222-4222-8222-222222222222"
 const empty = createEmptyCalendarDecorationState()
 const decorated = { ...empty, items: [{ placementId: "11111111-1111-4111-8111-111111111111", itemId: "EMOJI_SUN" as const,
   region: "HEADER_MARGIN" as const, transform: { xPercent: 50, yPercent: 50, scale: 1, rotationDeg: 0 } }] }
+const calendarDocument = (data = empty): AccountCalendarDecorationDocument => ({
+  version: 3, state: "ACCOUNT_STATE", kind: "CALENDAR_DECORATIONS", data,
+})
 // Protocol/CAS double only: encryption, IndexedDB reopen and real tabs are not proven here.
 function memoryBuffer() {
   let view: AccountJournalDraftView<AccountCalendarDecorationDocument> | null = null
@@ -264,4 +269,112 @@ it("late A hydration and signed-out gaps never publish another owner's calendar"
   server(); await hydrateAccountCalendarDecorations(); expect(readAccountCalendarDecorationState()).toEqual(empty)
   expect(await accountCalendarDecorationDocumentId(A)).not.toBe(await accountCalendarDecorationDocumentId(B))
   mocks.owner = null; mocks.changed?.(); expect(readAccountCalendarDecorationState()).toBeNull(); expect(accountCalendarDecorationStatus()).toBe("AUTH_REQUIRED")
+})
+
+it("does not let a stale pre-click READY calendar authorize a full backup", async () => {
+  const local = memoryBuffer(); mocks.create.mockReturnValue(local.local)
+  mocks.request.mockImplementation(async (_owner, request) => request.action === "calendarDecorationSupport"
+    ? { ok: true, data: { kind: "calendar-decoration-support", version: 1 } }
+    : { ok: true, data: { kind: "document", documentId: request.documentId, document: calendarDocument(decorated), revision: 1 } })
+  await expect(hydrateAccountCalendarDecorations()).resolves.toBe(true)
+  expect(accountCalendarDecorationStatus()).toBe("READY")
+
+  let release!: () => void
+  mocks.request.mockImplementation(async (_owner, request) => request.action === "calendarDecorationSupport"
+    ? { ok: true, data: { kind: "calendar-decoration-support", version: 1 } }
+    : new Promise(resolve => { release = () => resolve({ ok: false, code: "UNAVAILABLE" }) }))
+  const refreshing = refreshAccountCalendarDecorationsForExport()
+  await vi.waitFor(() => expect(release).toBeTypeOf("function"))
+  expect(accountCalendarDecorationStatus()).toBe("LOADING")
+  release()
+  await expect(refreshing).resolves.toBe(false)
+  expect(accountCalendarDecorationStatus()).toBe("FAILED")
+})
+
+it("rejects a late calendar export refresh after an A-B-A account switch", async () => {
+  const local = memoryBuffer(); mocks.create.mockReturnValue(local.local)
+  let release!: () => void
+  mocks.request.mockImplementationOnce(() => new Promise(resolve => {
+    release = () => resolve({ ok: true, data: { kind: "calendar-decoration-support", version: 1 } })
+  }))
+  const refreshing = refreshAccountCalendarDecorationsForExport()
+  await vi.waitFor(() => expect(release).toBeTypeOf("function"))
+  mocks.owner = B; mocks.changed?.()
+  mocks.owner = A; mocks.changed?.()
+  release()
+  await expect(refreshing).resolves.toBe(false)
+  expect(readAccountCalendarDecorationState()).toBeNull()
+})
+
+it("publishes a fresh calendar snapshot for full-backup serialization", async () => {
+  const local = memoryBuffer(); mocks.create.mockReturnValue(local.local)
+  let remote = calendarDocument(empty), revision = 1
+  mocks.request.mockImplementation(async (_owner, request) => request.action === "calendarDecorationSupport"
+    ? { ok: true, data: { kind: "calendar-decoration-support", version: 1 } }
+    : { ok: true, data: { kind: "document", documentId: request.documentId, document: remote, revision } })
+  await expect(hydrateAccountCalendarDecorations()).resolves.toBe(true)
+  expect(readAccountCalendarDecorationState()).toEqual(empty)
+
+  remote = calendarDocument(decorated); revision = 2
+  await expect(refreshAccountCalendarDecorationsForExport()).resolves.toBe(true)
+  expect(accountCalendarDecorationStatus()).toBe("READY")
+  expect(readAccountCalendarDecorationState()).toEqual(decorated)
+})
+
+it("lets an already queued calendar save finish before the export refresh changes status", async () => {
+  const local = memoryBuffer(); mocks.create.mockReturnValue(local.local); const remote = server()
+  await expect(hydrateAccountCalendarDecorations()).resolves.toBe(true)
+
+  const saving = persistAccountCalendarDecorations(decorated, JSON.stringify(empty))
+  const refreshing = refreshAccountCalendarDecorationsForExport()
+
+  await expect(saving).resolves.toMatchObject({ ok: true, storage: "ACCOUNT", state: decorated })
+  await expect(refreshing).resolves.toBe(true)
+  expect(remote.revision()).toBe(1)
+  expect(accountCalendarDecorationStatus()).toBe("READY")
+  expect(readAccountCalendarDecorationState()).toEqual(decorated)
+})
+
+it("allows only an explicit unsupported capability to produce the established v4 exclusion", async () => {
+  const local = memoryBuffer(); mocks.create.mockReturnValue(local.local)
+  mocks.request.mockResolvedValueOnce({ ok: false, code: "CALENDAR_DECORATION_UNSUPPORTED" })
+  await expect(refreshAccountCalendarDecorationsForExport()).resolves.toBe(true)
+  expect(accountCalendarDecorationStatus()).toBe("UNSUPPORTED")
+  expect(accountCalendarDecorationExportReady()).toBe(true)
+
+  disposeAccountCalendarDecorations(); mocks.create.mockReturnValue(memoryBuffer().local)
+  mocks.request.mockResolvedValueOnce({ ok: false, code: "INVALID_RESPONSE" })
+  await expect(refreshAccountCalendarDecorationsForExport()).resolves.toBe(false)
+  expect(accountCalendarDecorationStatus()).toBe("UNSUPPORTED")
+  expect(accountCalendarDecorationExportReady()).toBe(false)
+
+  disposeAccountCalendarDecorations(); mocks.create.mockReturnValue(memoryBuffer().local)
+  mocks.request.mockImplementation(async (_owner, request) => request.action === "calendarDecorationSupport"
+    ? { ok: true, data: { kind: "calendar-decoration-support", version: 1 } }
+    : { ok: false, code: "INVALID_RESPONSE" })
+  await expect(refreshAccountCalendarDecorationsForExport()).resolves.toBe(false)
+  expect(accountCalendarDecorationStatus()).toBe("UNSUPPORTED")
+  expect(accountCalendarDecorationExportReady()).toBe(false)
+})
+
+it("requires every fresh calendar reference to be owned by the fresh decoration projection", async () => {
+  const local = memoryBuffer(); mocks.create.mockReturnValue(local.local)
+  const paidCalendar = { ...empty, items: [{ ...decorated.items[0]!, itemId: "STICKER_FINISH_LINE" as const }] }
+  mocks.request.mockImplementation(async (_owner, request) => request.action === "calendarDecorationSupport"
+    ? { ok: true, data: { kind: "calendar-decoration-support", version: 1 } }
+    : { ok: true, data: { kind: "document", documentId: request.documentId, document: calendarDocument(paidCalendar), revision: 1 } })
+  await expect(refreshAccountCalendarDecorationsForExport()).resolves.toBe(true)
+  expect(accountCalendarDecorationExportReady()).toBe(false)
+
+  mocks.owned = { ...createEmptyDecorationState(), spentPoints: 100_000,
+    ownedItemIds: [...createEmptyDecorationState().ownedItemIds, "STICKER_FINISH_LINE"] }
+  expect(accountCalendarDecorationExportReady()).toBe(true)
+})
+
+it("leaves the device-only calendar backup path free of account reads", async () => {
+  mocks.enabled = false
+  await expect(refreshAccountCalendarDecorationsForExport()).resolves.toBe(true)
+  expect(accountCalendarDecorationExportReady()).toBe(true)
+  expect(mocks.create).not.toHaveBeenCalled()
+  expect(mocks.request).not.toHaveBeenCalled()
 })

@@ -59,24 +59,25 @@ test(`uses the diary flow with ${hasEarnedHistory ? "previously earned" : "no ba
   await expect(page.getByText("위치정보를 사용하지 않아요.")).toBeVisible()
 
   // Historical entries stay visible; only a stored award history supplies past points.
-  const balanceHeading = `꾸미기 보관함 · 사용 가능 ${hasEarnedHistory ? 32 : 0}P`
+  const balance = `베타 포인트 · 사용 가능 ${hasEarnedHistory ? 32 : 0}P`
   await page.getByRole("button", { name: "일지 꾸미기" }).click()
-  await expect(page.getByRole("heading", { name: balanceHeading })).toBeVisible()
-  /* 홈 카드는 이제 오늘 일지 상세로 이동해 진짜 편집기를 바로 연다. */
-  await page.getByRole("button", { name: "꾸미기 열기" }).click()
-  await expect(page.getByRole("dialog", { name: "이 일지 꾸미기" })).toBeVisible()
-  await expect(page.getByRole("button", { name: "일지 꾸미기·포인트로 돌아가기" })).toHaveCount(0)
-  await page.getByRole("button", { name: "꾸미기 완료" }).click()
-  await page.getByRole("button", { name: "일지 꾸미기·포인트로 돌아가기" }).click()
-  await expect(page.getByRole("heading", { name: balanceHeading })).toBeVisible()
+  const editor = page.getByRole("dialog", { name: "일지 꾸미기", exact: true })
+  await expect(editor).toBeVisible()
+  await expect(editor.getByRole("button", { name: "일지", exact: true })).toHaveAttribute("aria-pressed", "true")
+  await editor.getByRole("button", { name: "꾸미기 재료 도구" }).click()
+  await expect(editor.getByText(balance, { exact: true })).toBeVisible()
+  await editor.getByRole("button", { name: "꾸미기 완료" }).click()
+  await expect(page.getByRole("heading", { name: "내 기록", exact: true })).toBeVisible()
 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "일지", exact: true }).click()
   await page.getByRole("button", { name: "9.5일 주기" }).click()
   await expect(page.getByRole("heading", { name: "9.5일 주기 일지" })).toBeVisible()
   await page.getByText("주기 시작일과 표시 기준", { exact: true }).click()
   await expect(page.getByText(/계획을 자동으로 바꾸지 않아요/u)).toBeVisible()
+  const cycleRange = page.getByText(/· (?:9|10)일 구간$/u)
+  const previousRange = await cycleRange.textContent()
   await page.getByRole("button", { name: "이전 주기" }).click()
-  await expect(page.getByText(/· 9일 구간$/u)).toBeVisible()
+  await expect(cycleRange).not.toHaveText(previousRange ?? "")
 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "홈" }).click()
   await page.getByRole("button", { name: "더보기" }).click()

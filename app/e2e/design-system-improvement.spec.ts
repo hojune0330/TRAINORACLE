@@ -101,7 +101,7 @@ test("review receipt has one modal-owned copy and a keyboard reachable dismissal
   await page.screenshot({ path: test.info().outputPath("review-receipt-journal.png") })
   await page.getByRole("button", { name: "일지 꾸미기 열기", exact: true }).click()
 
-  const editor = page.getByRole("dialog", { name: "이 일지 꾸미기", exact: true })
+  const editor = page.getByRole("dialog", { name: "일지 꾸미기", exact: true })
   const dismiss = editor.getByRole("button", { name: "검토 안내 닫기", exact: true })
   await expect(dismiss).toBeVisible()
   await expect(page.locator(".saved-toast")).toHaveCount(1)
