@@ -11,7 +11,7 @@ begin
     insert into auth.users(id, aud, role, email, created_at, updated_at)
       values(target,'authenticated','authenticated',target::text || '@example.invalid',clock_timestamp(),clock_timestamp());
     insert into public.user_private_profiles(user_id,birth_date,privacy_policy_version,terms_of_service_version,legal_consented_at)
-      values(target,'1990-01-01','SYNTHETIC_REHEARSAL','SYNTHETIC_REHEARSAL',clock_timestamp());
+      values(target,'1990-01-01','2026-08-26','2026-08-26',clock_timestamp());
     insert into public.beta_enrollments(user_id) values(target);
   end loop;
   update public.service_feature_controls set enabled=true

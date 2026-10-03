@@ -92,6 +92,13 @@ async function response(response, status, value) {
   return body;
 }
 
+test('conflict ciphertext quota has a distinct non-retryable gateway response', async () => {
+  const f = await fixture({ repo: { commit: async () => {
+    throw Object.assign(new Error('private SQL detail'), { code: 'PZ001' });
+  } } });
+  await response(await f.request(save()), 507, { error: 'CONFLICT_STORAGE_LIMIT_REACHED' });
+});
+
 test('status verifies identity, gates and nonextractable runtime key before ready', async () => {
   const f = await fixture();
   await response(await f.request({ action: 'status' }), 200, { kind: 'ready' });

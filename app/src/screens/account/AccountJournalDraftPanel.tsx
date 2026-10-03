@@ -42,6 +42,7 @@ const messageTones: Record<keyof typeof messages, DraftNoticeTone> = {
   INSUFFICIENT_POINTS: "error",
   OPERATION_REPLAY_UNAVAILABLE: "error",
   OWNERSHIP_STATE_CHANGED: "warning",
+  CONFLICT_STORAGE_LIMIT_REACHED: "error",
 }
 
 export function AccountJournalDraftPanel({ userId }: { readonly userId: string }) {

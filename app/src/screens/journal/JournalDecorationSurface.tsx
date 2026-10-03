@@ -359,6 +359,7 @@ function JournalDecorationSurfaceSession({
         if (textSheet) { setTextSheet(null); return }
         if (drawerOpen) { setDrawerOpen(false); clearPreview(); return }
         if (target === "CALENDAR" && calendarRef.current?.closeTopLayer()) return
+        if (target === "JOURNAL" && selectedIndex !== null) { setSelectedIndex(null); return }
         requestLeaveRef.current(close)
         return
       }

@@ -7,11 +7,17 @@ import { setActiveLocalAccount } from "../../domain/account/local-journal-owners
 import { resetAccountJournalProjection } from "../../domain/account/account-journal-projection"
 import { FULL_FORMAT } from "../../domain/restore/backup-file"
 import { createEmptyDecorationState } from "../../domain/decoration-schema"
+import { createEmptyCalendarDecorationState } from "../../domain/calendar-decoration-schema"
 
-const api = vi.hoisted(() => ({ hydrate: vi.fn(), persist: vi.fn(), decorHydrate: vi.fn(), decorPersist: vi.fn(), decorRead: vi.fn() }))
+const api = vi.hoisted(() => ({ hydrate: vi.fn(), persist: vi.fn(), decorHydrate: vi.fn(), decorPersist: vi.fn(), decorRead: vi.fn(),
+  calendarHydrate: vi.fn(), calendarPersist: vi.fn(), calendarRead: vi.fn() }))
 vi.mock("../../domain/account/account-decoration-service", () => ({
   hydrateAccountDecorations: api.decorHydrate, persistAccountDecorations: api.decorPersist,
   readAccountDecorationState: api.decorRead, accountDecorationStatus: () => "READY",
+}))
+vi.mock("../../domain/account/account-calendar-decoration-service", () => ({
+  hydrateAccountCalendarDecorations: api.calendarHydrate, persistAccountCalendarDecorations: api.calendarPersist,
+  readAccountCalendarDecorationState: api.calendarRead, accountCalendarDecorationStatus: () => "READY",
 }))
 vi.mock("../../domain/account/account-journal-record-service", () => ({
   accountJournalRecordsEnabled: () => true, hydrateAccountJournalRecords: api.hydrate,
@@ -27,6 +33,8 @@ beforeEach(() => {
   api.hydrate.mockResolvedValue(true); api.persist.mockResolvedValue({ ok: true, storage: "ACCOUNT" })
   api.decorHydrate.mockResolvedValue(true); api.decorRead.mockReturnValue(createEmptyDecorationState())
   api.decorPersist.mockResolvedValue({ ok: true, storage: "ACCOUNT", state: createEmptyDecorationState() })
+  api.calendarHydrate.mockResolvedValue(true); api.calendarRead.mockReturnValue(createEmptyCalendarDecorationState())
+  api.calendarPersist.mockResolvedValue({ ok: true, storage: "ACCOUNT", state: createEmptyCalendarDecorationState() })
 })
 afterEach(() => { cleanup(); setActiveLocalAccount(null); vi.unstubAllEnvs() })
 

@@ -12,12 +12,13 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { RestoreBackup } from "./RestoreBackup"
 import { loadEntries, saveEntry, deleteEntry } from "../domain/journal-store"
-import { FULL_FORMAT, SAFE_FORMAT } from "../domain/restore/backup-file"
+import { FULL_FORMAT, FULL_FORMAT_V5, SAFE_FORMAT } from "../domain/restore/backup-file"
 import type { PostSessionEntry } from "../domain/journal-schema"
 import { loadDecorationState } from "../domain/decoration-store"
 import { JOURNAL_STORAGE_KEY } from "../domain/journal-local-storage"
 import { createRecoveryCode } from "../domain/account/private-note-crypto"
 import { saveSessionRecoveryCode } from "../domain/account/private-note-sync"
+import { loadCalendarDecorationState } from "../domain/calendar-decoration-store"
 
 afterEach(cleanup)
 
@@ -41,6 +42,7 @@ function backupFile(
   format: string = FULL_FORMAT,
   name = "trainoracle-full-backup-2026-07-25.json",
   decorations?: unknown,
+  calendarDecorations?: unknown,
 ): File {
   const body = JSON.stringify({
     app: "TRAINORACLE",
@@ -48,6 +50,7 @@ function backupFile(
     exportedAt: "2026-07-25T00:00:00.000Z",
     entries,
     ...(decorations === undefined ? {} : { decorations }),
+    ...(calendarDecorations === undefined ? {} : { calendarDecorations }),
   })
   return new File([body], name, { type: "application/json" })
 }
@@ -96,6 +99,7 @@ describe("RestoreBackup — 고르기 단계", () => {
       expect(screen.getByTestId("restore-failure").textContent).toMatch(/빈 백업일 수 있어요/u)
     })
   })
+
 })
 
 describe("RestoreBackup — 검토 단계", () => {
@@ -213,7 +217,7 @@ describe("RestoreBackup — 되돌리기 실행", () => {
     await pick(user, backupFile([postSession("dup", "2026-07-20", { title: "백업 제목" })]))
     await waitFor(() => screen.getByTestId("restore-summary"))
     // 되돌릴 것이 없다 — 버튼이 잠겨 있다
-    const button = screen.getByRole("button", { name: /되돌릴 일지가 없어요/u })
+    const button = screen.getByRole("button", { name: /되돌릴 항목이 없어요/u })
     expect(button.hasAttribute("disabled")).toBe(true)
 
     const kept = loadEntries()[0]
@@ -328,6 +332,46 @@ describe("restore backup decorations preview", () => {
       expect(screen.getByTestId("restore-decoration-invalid").textContent).toContain("백업 원본은 변경하지 않아요")
     })
     expect(screen.getByRole("button", { name: /1건 되돌리기/u })).toBeTruthy()
+  })
+})
+
+describe("restore backup calendar decorations", () => {
+  beforeEach(() => { window.localStorage.clear() })
+
+  const calendar = {
+    version: 1,
+    paperThemeId: null,
+    items: [{ placementId: "4b4a2f50-321a-49cd-b413-4290dbcb7992", itemId: "STICKER_WEATHER_SUN",
+      region: "HEADER_MARGIN", transform: { xPercent: 50, yPercent: 50, scale: 1, rotationDeg: 0 } }],
+  }
+
+  it("previews a calendar-only v5 backup and replaces it only after an explicit choice", async () => {
+    const user = userEvent.setup()
+    render(<RestoreBackup />)
+    await pick(user, backupFile([], FULL_FORMAT_V5, undefined, undefined, calendar))
+
+    await waitFor(() => expect(screen.getByTestId("restore-calendar-summary").textContent).toMatch(/그림 배치 1개/u))
+    expect(screen.getByRole("radio", { name: /이 기기 달력을 지켜요/u }).getAttribute("aria-checked")).toBe("true")
+    expect(screen.getByTestId("restore-submit").hasAttribute("disabled")).toBe(true)
+    await user.click(screen.getByRole("radio", { name: /백업의 달력 꾸미기로 바꿔요/u }))
+    await user.click(screen.getByRole("button", { name: "달력 꾸미기 되돌리기" }))
+
+    expect(screen.getByTestId("restore-done").textContent).toMatch(/달력 꾸미기를 되돌렸어요/u)
+    expect(loadCalendarDecorationState()).toEqual(calendar)
+    expect(loadEntries()).toHaveLength(0)
+  })
+
+  it("warns about an unsupported calendar section while still restoring a valid journal", async () => {
+    const user = userEvent.setup()
+    render(<RestoreBackup />)
+    await pick(user, backupFile([postSession("journal", "2026-07-21")], FULL_FORMAT_V5, undefined, undefined,
+      { version: 99, paperThemeId: null, items: [] }))
+
+    await waitFor(() => expect(screen.getByTestId("restore-calendar-invalid")).toBeTruthy())
+    expect(screen.getByTestId("restore-submit").hasAttribute("disabled")).toBe(false)
+    await user.click(screen.getByTestId("restore-submit"))
+    expect(loadEntries().map(entry => entry.id)).toEqual(["journal"])
+    expect(screen.getByTestId("restore-done").textContent).toMatch(/달력 꾸미기는 형식이 맞지/u)
   })
 })
 

@@ -77,7 +77,7 @@ before(async()=>{
   }
   await db.query("insert into auth.users(id,created_at) values($1,'2020-01-01')",[owner]);
   await db.query(`insert into public.user_private_profiles(user_id,birth_date,privacy_policy_version,terms_of_service_version,legal_consented_at)
-    values($1,'1990-01-01','fixture','fixture',clock_timestamp())`,[owner]);
+    values($1,'1990-01-01','2026-08-26','2026-08-26',clock_timestamp())`,[owner]);
   await db.query('insert into public.beta_enrollments(user_id) values($1)',[owner]);
   await db.exec("update public.service_feature_controls set enabled=true where feature_key in ('ACCOUNT','ACCOUNT_JOURNAL_V2','SYNC')");
   await db.query('insert into public.account_journal_gateway_keys(key_id,secret) values($1,$2)',['fixture',key]);

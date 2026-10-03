@@ -94,6 +94,12 @@ it("an immutable-part conflict is a rejection, not an outage", async () => {
   const deps = dependencies(null, { context: new Response(null, { status: 409 }) })
   await expect(createAccountPlanCollectionClient(OWNER, () => true, deps).stage(OWNER, part)).rejects.toMatchObject({ code: "REJECTED" })
 })
+it("treats staged-storage quota as a terminal rejection, not a retryable outage", async () => {
+  const document = emptyAccountPlanDocument(); document.data.plans.push(accountPlanEntry(accountPlanPacketFixture(3)))
+  const part = splitAccountPlanCollection(document).snapshots[0]!
+  const deps = dependencies(null, { context: new Response(JSON.stringify({ error: "STAGED_STORAGE_LIMIT_REACHED" }), { status: 507 }) })
+  await expect(createAccountPlanCollectionClient(OWNER, () => true, deps).stage(OWNER, part)).rejects.toMatchObject({ code: "REJECTED" })
+})
 
 it.each([false, true])("actual SDK keeps the captured stage owner and token when a later session changes (local change: %s)", async localChanged => {
   const document = emptyAccountPlanDocument(); document.data.plans.push(accountPlanEntry(accountPlanPacketFixture(3)))

@@ -5,6 +5,7 @@ import { accountDecorationStatus, hydrateAccountDecorations, persistAccountDecor
 import { accountCalendarDecorationStatus, hydrateAccountCalendarDecorations, persistAccountCalendarDecorations, readAccountCalendarDecorationState } from "../account/account-calendar-decoration-service"
 import { createAccountImportScope, isAccountImportDeleted } from "../import/account-import"
 import { parseJournalEntryForWrite, type JournalEntry } from "../journal-schema"
+import { calendarDecorationsOwnedBy } from "../calendar-decoration-schema"
 import { buildRestorePlan, type BackupReadResult, type DecorationRestoreMode, type RestoreMode, type RestorePlan } from "./backup-file"
 
 export type AccountRestoreOutcome = {
@@ -57,7 +58,8 @@ export async function createAccountBackupRestoration(source: BackupReadResult) {
   let confirmedCalendarMode: DecorationRestoreMode | null = null
   let calendarBase: string | null = null
   let calendarAttempted = false
-  if (read.calendarDecorationStatus === "included" && read.calendarDecorations) {
+  if (read.calendarDecorationStatus === "included" && read.calendarDecorations
+    || read.decorationStatus === "included" && read.decorations) {
     try {
       if (await hydrateAccountCalendarDecorations() && scope.current()) {
         const state = readAccountCalendarDecorationState()
@@ -67,13 +69,26 @@ export async function createAccountBackupRestoration(source: BackupReadResult) {
     if (!scope.current()) { scope.dispose(); return null }
   }
   let decorationAttempted = false
-  const restoreDecorations = async (mode: DecorationRestoreMode): Promise<Pick<AccountRestoreOutcome, "decorationRestore" | "decorationFailure">> => {
+  const restoreDecorations = async (mode: DecorationRestoreMode, calendarMode: DecorationRestoreMode): Promise<Pick<AccountRestoreOutcome, "decorationRestore" | "decorationFailure">> => {
     if (read.decorationStatus === "not-included") return { decorationRestore: "NOT_INCLUDED", decorationFailure: "NONE" }
     if (read.decorationStatus === "invalid" || !read.decorations) return { decorationRestore: "INVALID_SKIPPED", decorationFailure: "NONE" }
     if (mode !== "replace") return { decorationRestore: "KEPT_EXISTING", decorationFailure: "NONE" }
     if (lastResult?.decorationRestore === "ACCOUNT") return { decorationRestore: "ACCOUNT", decorationFailure: "NONE" }
     if (decorationBase === null) return { decorationRestore: "FAILED", decorationFailure: "READ_FAILED" }
+    if (calendarBase === null) return { decorationRestore: "FAILED", decorationFailure: "READ_FAILED" }
     try {
+      // Replacing ownership must not strand a calendar the user chose to keep.
+      // A selected calendar replacement must also be owned by the new inventory.
+      const calendarHydrated = await hydrateAccountCalendarDecorations()
+      if (!scope.current() || !calendarHydrated) return { decorationRestore: "FAILED", decorationFailure: "READ_FAILED" }
+      const currentCalendar = readAccountCalendarDecorationState()
+      if (!currentCalendar) return { decorationRestore: "FAILED", decorationFailure: "READ_FAILED" }
+      if (JSON.stringify(currentCalendar) !== calendarBase) return { decorationRestore: "CONFLICT", decorationFailure: "STATE_CHANGED" }
+      const calendarAfterRestore = calendarMode === "replace" && read.calendarDecorationStatus === "included" && read.calendarDecorations
+        ? read.calendarDecorations : currentCalendar
+      if (!calendarDecorationsOwnedBy(calendarAfterRestore, read.decorations)) {
+        return { decorationRestore: "FAILED", decorationFailure: "OWNERSHIP_UNVERIFIED" }
+      }
       const hydrated = await hydrateAccountDecorations()
       if (!scope.current()) return { decorationRestore: "FAILED", decorationFailure: "READ_FAILED" }
       if (!hydrated) {
@@ -194,7 +209,7 @@ export async function createAccountBackupRestoration(source: BackupReadResult) {
       } catch { if (!scope.current()) return null; result.failed++ }
     }
     if (!scope.current()) return null
-    Object.assign(result, await restoreDecorations(decorationMode))
+    Object.assign(result, await restoreDecorations(decorationMode, calendarMode))
     if (!scope.current()) return null
     Object.assign(result, await restoreCalendar(calendarMode, result.decorationRestore))
     if (!scope.current()) return null
@@ -206,8 +221,8 @@ export async function createAccountBackupRestoration(source: BackupReadResult) {
     lastResult = { ...result }
     return result
   }
-  return { plan, read, decorationReady: decorationBase !== null, calendarReady: calendarBase !== null,
-    confirm: (mode: RestoreMode = "keep-existing", decorationMode: DecorationRestoreMode = "keep-existing", calendarMode: DecorationRestoreMode = "replace") => {
+  return { plan, read, decorationReady: decorationBase !== null && calendarBase !== null, calendarReady: calendarBase !== null,
+    confirm: (mode: RestoreMode = "keep-existing", decorationMode: DecorationRestoreMode = "keep-existing", calendarMode: DecorationRestoreMode = "keep-existing") => {
       if (running) return running
       confirmedMode ??= mode
       confirmedDecorationMode ??= decorationMode

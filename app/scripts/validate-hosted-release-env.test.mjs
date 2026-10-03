@@ -13,9 +13,9 @@ const connection = {
 
 const legalDocuments = {
   VITE_PRIVACY_POLICY_URL: "https://trainoracle.example/privacy",
-  VITE_PRIVACY_POLICY_VERSION: "2026-08-14",
+  VITE_PRIVACY_POLICY_VERSION: "2026-08-26",
   VITE_TERMS_OF_SERVICE_URL: "https://trainoracle.example/terms",
-  VITE_TERMS_OF_SERVICE_VERSION: "2026-08-14",
+  VITE_TERMS_OF_SERVICE_VERSION: "2026-08-26",
 }
 
 test("keeps the local-only release valid when every network feature is closed", () => {
@@ -63,6 +63,26 @@ test("requires public legal documents and versions before opening accounts", () 
   }), ["ACCOUNT_REQUIRES_PUBLIC_LEGAL_DOCUMENTS"])
 })
 
+test("rejects an older legal version before an account release", () => {
+  const account = { ...connection, ...legalDocuments, VITE_ACCOUNT_PUBLIC_ENABLED: "true" }
+  assert.deepEqual(validateHostedReleaseEnvironment({
+    ...account, VITE_PRIVACY_POLICY_VERSION: "2026-08-25",
+  }), ["ACCOUNT_REQUIRES_PUBLIC_LEGAL_DOCUMENTS"])
+  assert.deepEqual(validateHostedReleaseEnvironment({
+    ...account, VITE_TERMS_OF_SERVICE_VERSION: "2026-08-25",
+  }), ["ACCOUNT_REQUIRES_PUBLIC_LEGAL_DOCUMENTS"])
+})
+
+test("keeps direct recipient sharing closed pending its privacy review", () => {
+  const account = { ...connection, ...legalDocuments, VITE_ACCOUNT_PUBLIC_ENABLED: "true" }
+  assert.deepEqual(validateHostedReleaseEnvironment({
+    ...account, VITE_FEATURE_SHARING: "true",
+  }), ["SHARING_PRIVACY_REVIEW_REQUIRED"])
+  assert.deepEqual(validateHostedReleaseEnvironment({
+    ...account, VITE_FEATURE_SHARING: "true", VITE_KILL_SHARING: "true",
+  }), [])
+})
+
 test("requires the account gate before opening account-backed features", () => {
   assert.deepEqual(validateHostedReleaseEnvironment({
     ...connection,
@@ -73,6 +93,7 @@ test("requires the account gate before opening account-backed features", () => {
     VITE_FEATURE_PUBLIC_PROFILE: "true",
     VITE_FEATURE_PRODUCT_ANALYTICS: "true",
   }), [
+    "SHARING_PRIVACY_REVIEW_REQUIRED",
     "SYNC_REQUIRES_ACCOUNT",
     "SHARING_REQUIRES_ACCOUNT",
     "PLAN_PROPOSALS_REQUIRES_ACCOUNT",

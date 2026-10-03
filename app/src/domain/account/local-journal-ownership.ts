@@ -21,6 +21,7 @@ export type OwnershipReservation = {
 export const LOCAL_JOURNAL_OWNERSHIP_KEY = OWNERSHIP_KEY
 
 let activeAccountId: string | null = null
+let scopeGeneration = 0
 
 function storage(): Storage | null {
   try {
@@ -81,11 +82,17 @@ export function setActiveLocalAccount(userId: string | null): void {
   const next = userId === "" ? null : userId
   if (activeAccountId === next) return
   activeAccountId = next
+  scopeGeneration += 1
   announceScopeChange()
 }
 
 export function activeLocalAccount(): string | null {
   return activeAccountId
+}
+
+/** Monotonic session proof so an A -> B -> A switch cannot revive stale reads. */
+export function localJournalScopeGeneration(): number {
+  return scopeGeneration
 }
 
 export function onLocalJournalScopeChange(listener: () => void): () => void {

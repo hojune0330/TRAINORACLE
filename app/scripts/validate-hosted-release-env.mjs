@@ -8,6 +8,8 @@ const ACCOUNT_BACKED_FEATURES = [
   "PRODUCT_ANALYTICS",
 ]
 
+const CURRENT_ACCOUNT_LEGAL_VERSION = "2026-08-26"
+
 function textValue(environment, name) {
   const value = environment[name]
   return typeof value === "string" ? value.trim() : ""
@@ -35,9 +37,9 @@ function hasPublicConnection(environment) {
 
 function hasPublicLegalDocuments(environment) {
   return textValue(environment, "VITE_PRIVACY_POLICY_URL").startsWith("https://")
-    && textValue(environment, "VITE_PRIVACY_POLICY_VERSION") !== ""
+    && textValue(environment, "VITE_PRIVACY_POLICY_VERSION") === CURRENT_ACCOUNT_LEGAL_VERSION
     && textValue(environment, "VITE_TERMS_OF_SERVICE_URL").startsWith("https://")
-    && textValue(environment, "VITE_TERMS_OF_SERVICE_VERSION") !== ""
+    && textValue(environment, "VITE_TERMS_OF_SERVICE_VERSION") === CURRENT_ACCOUNT_LEGAL_VERSION
 }
 
 export function validateHostedReleaseEnvironment(environment) {
@@ -51,6 +53,9 @@ export function validateHostedReleaseEnvironment(environment) {
   }
   if (accountOpen && !hasPublicLegalDocuments(environment)) {
     errors.push("ACCOUNT_REQUIRES_PUBLIC_LEGAL_DOCUMENTS")
+  }
+  if (isFeatureEnabled(environment, "SHARING")) {
+    errors.push("SHARING_PRIVACY_REVIEW_REQUIRED")
   }
   if (phoneAuthOpen && !accountOpen) {
     errors.push("PHONE_AUTH_REQUIRES_ACCOUNT")

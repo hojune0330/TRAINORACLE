@@ -5,10 +5,11 @@ import { createRecoveryCode } from "./account/private-note-crypto"
 import { saveSessionRecoveryCode } from "./account/private-note-sync"
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
 import { resetAccountJournalProjection, putAccountJournalProjection, removeAccountJournalProjection,
-  setAccountJournalProjectionStatus } from "./account/account-journal-projection"
+  setAccountJournalProjectionStatus, markAccountJournalFullListConfirmed } from "./account/account-journal-projection"
 import { buildRestorePlan, restoreEntries } from "./restore/backup-file"
 import { buildImportDrafts, confirmImportDrafts } from "./import/import-draft"
 import { waitingJournal, watchActivity, addToJournal } from "../test/progressive-journal-fixture"
+import * as decorationService from "./account/account-decoration-service"
 
 const local = () => ({ ...privateEntry("a", ""), memoPurpose: "ANALYZABLE_TRAINING_NOTE" as const, distanceKm: "1" })
 const enable = () => vi.stubEnv("VITE_FEATURE_ACCOUNT_JOURNAL", "true")
@@ -22,6 +23,7 @@ beforeEach(() => {
   resetAccountJournalProjection(null)
 })
 afterEach(() => {
+  vi.restoreAllMocks()
   resetAccountJournalProjection(null)
   setActiveLocalAccount(null)
   vi.unstubAllEnvs()
@@ -95,6 +97,8 @@ it("suppresses a shadowed local fallback after deletion without removing origina
 })
 
 it("never hydrates or exports stale legacy vault/cache text over the online private record", async () => {
+  // This test isolates journal freshness; decoration backup readiness has its own contract suite.
+  vi.spyOn(decorationService, "accountDecorationsEnabled").mockReturnValue(false)
   expect(saveSessionRecoveryCode(createRecoveryCode())).toBe(true)
   expect((await store.savePrivateEntry(privateEntry("p", "SYNTHETIC_OLD"))).ok).toBe(true)
   await store.loadEntriesWithPrivateMemos()
@@ -104,6 +108,8 @@ it("never hydrates or exports stale legacy vault/cache text over the online priv
   resetAccountJournalProjection("owner")
   const online = privateEntry("p", "SYNTHETIC_ACCOUNT_NEW")
   putAccountJournalProjection("owner", online)
+  setAccountJournalProjectionStatus("owner", "READY")
+  expect(markAccountJournalFullListConfirmed("owner")).toBe(true)
   expect(store.loadEntries()).toMatchObject([{ memo: "" }])
   expect(await store.loadEntriesWithPrivateMemos()).toEqual([online])
   expect(JSON.parse(store.exportEntriesJSON({ includeRawMemos: true })).entries).toEqual([online])

@@ -832,6 +832,7 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
       if (error instanceof GatewayError) return respond(error.status, { error: error.status === 503
         ? 'SERVICE_UNAVAILABLE' : error.status === 403 ? 'ACCESS_DENIED' : error.code });
       if (error?.code === '42501') return respond(403, { error: 'ACCESS_DENIED' });
+      if (error?.code === 'PZ001') return respond(507, { error: 'CONFLICT_STORAGE_LIMIT_REACHED' });
       if (error?.code === '23505') return respond(409, { error: 'PLANNED_SESSION_ALREADY_RECORDED' });
       if (error?.code === 'P0001') return respond(409, { error: 'INSUFFICIENT_POINTS' });
       if (error?.code === 'TD001') return respond(409, { error: 'OWNERSHIP_STATE_CHANGED' });
@@ -854,7 +855,7 @@ export function createAccountJournalRepository(client, { ownerId, attest } = {})
     const { data, error } = await query;
     if (error) {
       const safe = new Error('ACCOUNT_JOURNAL_DATABASE_ERROR');
-      if (['22023', '42501', '23505', 'P0001', 'TD001'].includes(error.code)) safe.code = error.code;
+      if (['22023', '42501', '23505', 'P0001', 'TD001', 'PZ001'].includes(error.code)) safe.code = error.code;
       throw safe;
     }
     return data;

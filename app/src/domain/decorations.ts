@@ -121,6 +121,7 @@ export {
   claimRewardDecorations,
   decorationItemOwned,
   loadDecorationState,
+  loadDecorationStateForFullBackup,
   readDecorationStateSerialized,
   purchaseCollectionBundle,
   purchaseDecoration,

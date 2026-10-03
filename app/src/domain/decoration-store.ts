@@ -25,7 +25,7 @@ import {
 import type { DecorationState } from "./decoration-schema"
 import { accountScopedStorageKey, accountScopedStorageKeyFor } from "./account/local-account-scope"
 import { activeLocalAccount } from "./account/local-journal-ownership"
-import { accountDecorationsEnabled, readAccountDecorationState } from "./account/account-decoration-service"
+import { accountDecorationStatus, accountDecorationsEnabled, readAccountDecorationState } from "./account/account-decoration-service"
 
 export const DECORATION_STORAGE_KEY_V1 = "trainoracle.decorations.v1"
 export const DECORATION_STORAGE_KEY_V2 = "trainoracle.decorations.v2"
@@ -59,6 +59,37 @@ export function readDecorationStateSerialized(): string | null {
   if (storage === null) return null
   const result = readStorage(storage, activeDecorationStorageKeyV3())
   return result.ok ? result.value : null
+}
+
+/** A full backup must distinguish a verified empty section from a failed read. */
+export function loadDecorationStateForFullBackup(): DecorationState {
+  if (accountDecorationsEnabled()) {
+    const status = accountDecorationStatus()
+    const state = readAccountDecorationState()
+    if ((status !== "READY" && status !== "EMPTY") || state === null) {
+      throw new Error("DECORATION_BACKUP_NOT_READY")
+    }
+    return state
+  }
+
+  const storage = currentStorage()
+  if (storage === null) throw new Error("DECORATION_BACKUP_NOT_READY")
+  const sources = [
+    [activeDecorationStorageKeyV3(), parseStoredDecorationStateV3],
+    [activeDecorationStorageKeyV2(), parseStoredDecorationStateV2],
+    [activeDecorationStorageKeyV1(), migrateLegacyDecorationState],
+  ] as const
+  for (const [key, parse] of sources) {
+    let read: StorageReadResult
+    try { read = readStorage(storage, key) }
+    catch { throw new Error("DECORATION_BACKUP_NOT_READY") }
+    if (!read.ok) throw new Error("DECORATION_BACKUP_NOT_READY")
+    if (read.value === null) continue
+    const state = parse(read.value)
+    if (state === null) throw new Error("DECORATION_BACKUP_NOT_READY")
+    return state
+  }
+  return createEmptyDecorationState()
 }
 
 export type DecorationSaveFailureCode = "INVALID_STATE" | "STORAGE_UNAVAILABLE" | "STALE_STATE" | "WRITE_FAILED" | "READBACK_MISMATCH" | "ROLLBACK_FAILED"

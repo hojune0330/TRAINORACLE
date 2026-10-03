@@ -5,8 +5,10 @@ import { privateEntry } from "./private-memo-test-fixtures"
 import { createRecoveryCode } from "./account/private-note-crypto"
 import { saveSessionRecoveryCode } from "./account/private-note-sync"
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
-import { putAccountJournalProjection, resetAccountJournalProjection } from "./account/account-journal-projection"
+import { markAccountJournalFullListConfirmed, putAccountJournalProjection, resetAccountJournalProjection,
+  setAccountJournalProjectionStatus } from "./account/account-journal-projection"
 import { restorePrivateMemo } from "./private-memo-vault"
+import * as decorationService from "./account/account-decoration-service"
 
 vi.mock("./private-memo-vault", async original => ({
   ...await original<typeof import("./private-memo-vault")>(),
@@ -24,6 +26,7 @@ beforeEach(() => {
   expect(saveSessionRecoveryCode(createRecoveryCode())).toBe(true)
 })
 afterEach(() => {
+  vi.restoreAllMocks()
   resetAccountJournalProjection(null)
   setActiveLocalAccount(null)
   vi.unstubAllEnvs()
@@ -58,10 +61,14 @@ it.each(["B", "logout", "ABA", "guestABA"])("revokes the entire private read and
 })
 
 it("keeps same-owner legacy and account private reads working", async () => {
+  // This test isolates private journal scope; decoration readiness is tested separately.
+  vi.spyOn(decorationService, "accountDecorationsEnabled").mockReturnValue(false)
   const shell = privateEntry("s", ""), full = { ...shell, memo: "SYNTHETIC_STABLE_PRIVATE" }
   const online = privateEntry("a", "SYNTHETIC_ACCOUNT_PRIVATE")
   window.localStorage.setItem(JOURNAL_STORAGE_KEY, JSON.stringify([shell]))
   putAccountJournalProjection("A", online)
+  setAccountJournalProjectionStatus("A", "READY")
+  expect(markAccountJournalFullListConfirmed("A")).toBe(true)
   vi.mocked(restorePrivateMemo).mockResolvedValueOnce(full)
   expect(await loadEntriesWithPrivateMemos()).toEqual([full, online])
   expect(JSON.parse(exportEntriesJSON({ includeRawMemos: true })).entries).toEqual([full, online])

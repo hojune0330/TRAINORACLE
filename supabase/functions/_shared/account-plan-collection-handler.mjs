@@ -338,6 +338,8 @@ export function createAccountPlanCollectionHandler({ authenticate, getMaterial, 
       if (error instanceof GatewayError) return respond(error.status,
         { error: error.status === 503 ? 'SERVICE_UNAVAILABLE' : error.code });
       if (error?.code === '42501') return respond(403, { error: 'ACCESS_DENIED' });
+      if (error?.code === 'PZ002') return respond(507, { error: 'STAGED_STORAGE_LIMIT_REACHED' });
+      if (error?.code === 'PZ003') return respond(409, { error: 'STAGED_PART_EXPIRED' });
       if (error?.code === '22023') return respond(409, { error: 'OPERATION_REUSED' });
       if (error?.code === 'PT409') return respond(409, { error: 'PLAN_DATE_CHANGED' });
       if (error?.code === 'TD001') return respond(409, { error: 'PACE_RECORD_SOURCE_CHANGED' });
@@ -353,7 +355,7 @@ export function createAccountPlanCollectionRepository(client, { ownerId, attest 
     const { data, error } = await query;
     if (error) {
       const safe = new Error('ACCOUNT_PLAN_COLLECTION_DATABASE_ERROR');
-      if (['22023', '42501', 'PT409', 'TD001'].includes(error.code)) safe.code = error.code;
+      if (['22023', '42501', 'PT409', 'TD001', 'PZ002', 'PZ003'].includes(error.code)) safe.code = error.code;
       throw safe;
     }
     return data;

@@ -1,7 +1,8 @@
 import { beforeEach, afterEach, describe, it, expect, vi } from "vitest"
 import { setActiveLocalAccount } from "../account/local-journal-ownership"
-import { createEmptyDecorationState, saveDecorationState } from "../decorations"
-import { createEmptyCalendarDecorationState } from "../calendar-decoration-schema"
+import { createEmptyDecorationState, loadDecorationState, saveDecorationState } from "../decorations"
+import { createEmptyCalendarDecorationState, calendarDecorationStateSchema } from "../calendar-decoration-schema"
+import { decorationStateSchema } from "../decoration-schema"
 import { CALENDAR_DECORATION_STORAGE_KEY, loadCalendarDecorationState, saveCalendarDecorationStateIfCurrent } from "../calendar-decoration-store"
 import { exportEntriesJSON, saveEntry, loadEntries } from "../journal-store"
 import { JOURNAL_STORAGE_KEY } from "../journal-local-storage"
@@ -17,6 +18,44 @@ afterEach(() => { vi.restoreAllMocks(); localStorage.clear() })
 const read = (cal: unknown = calendar, entries: unknown[] = []) => readBackupFile(JSON.stringify({ app: "TRAINORACLE", format: FULL_FORMAT_V5, entries, decorations: createEmptyDecorationState(), calendarDecorations: cal }))
 
 describe("calendar full backup v5", () => {
+  it("accepts a calendar-only v5 file without a journal-decoration section", async () => {
+    const parsed = readBackupFile(JSON.stringify({
+      app: "TRAINORACLE", format: FULL_FORMAT_V5, entries: [], calendarDecorations: calendar,
+    }))
+    expect(parsed.recognized).toBe(true)
+    expect(parsed.decorationStatus).toBe("not-included")
+    expect(parsed.calendarDecorationStatus).toBe("included")
+
+    const outcome = await restoreBackupFile(parsed, buildRestorePlan(parsed.entries), "keep-existing", "keep-existing", "replace")
+    expect(outcome).toMatchObject({ restored: 0, decorationRestore: "NOT_INCLUDED", calendarDecorationRestore: "RESTORED", commit: "COMMITTED" })
+    expect(loadCalendarDecorationState()).toEqual(calendar)
+  })
+
+  it("keeps an existing calendar by default even when v5 includes a different setting", async () => {
+    expect(saveCalendarDecorationStateIfCurrent(calendar).ok).toBe(true)
+    const parsed = read(createEmptyCalendarDecorationState())
+    const outcome = await restoreBackupFile(parsed, buildRestorePlan(parsed.entries))
+    expect(outcome.calendarDecorationRestore).toBe("KEPT_EXISTING")
+    expect(loadCalendarDecorationState()).toEqual(calendar)
+  })
+
+  it("refuses an inventory replacement that would unown the calendar being kept", async () => {
+    const owned = decorationStateSchema.parse({ ...createEmptyDecorationState(), spentPoints: 12,
+      ownedItemIds: [...createEmptyDecorationState().ownedItemIds, "THEME_SKY_JOURNAL"] })
+    const currentCalendar = calendarDecorationStateSchema.parse({ version: 1, paperThemeId: "THEME_SKY_JOURNAL", items: [] })
+    expect(saveDecorationState(owned).ok).toBe(true)
+    expect(saveCalendarDecorationStateIfCurrent(currentCalendar).ok).toBe(true)
+    const parsed = readBackupFile(JSON.stringify({ app: "TRAINORACLE", format: FULL_FORMAT_V5,
+      entries: [], decorations: createEmptyDecorationState(), calendarDecorations: createEmptyCalendarDecorationState() }))
+
+    const outcome = await restoreBackupFile(parsed, buildRestorePlan([]), "keep-existing", "replace", "keep-existing")
+    expect(outcome).toMatchObject({ commit: "FAILED", failureReason: "CALENDAR_DEPENDENCY_UNVERIFIED",
+      decorationRestore: "SAVE_FAILED", calendarDecorationRestore: "KEPT_EXISTING" })
+    expect(loadDecorationState().spentPoints).toBe(owned.spentPoints)
+    expect([...loadDecorationState().ownedItemIds].sort()).toEqual([...owned.ownedItemIds].sort())
+    expect(loadCalendarDecorationState()).toEqual(currentCalendar)
+  })
+
   it("exports only into explicit full backup and round trips the entire global setting", async () => {
     expect(saveCalendarDecorationStateIfCurrent(calendar).ok).toBe(true)
     const raw = exportEntriesJSON({ includeRawMemos: true })
@@ -24,7 +63,7 @@ describe("calendar full backup v5", () => {
     expect(exportEntriesJSON()).not.toContain("calendarDecorations")
     localStorage.clear()
     const parsed = readBackupFile(raw)
-    const outcome = await restoreBackupFile(parsed, buildRestorePlan(parsed.entries))
+    const outcome = await restoreBackupFile(parsed, buildRestorePlan(parsed.entries), "keep-existing", "keep-existing", "replace")
     expect(outcome.calendarDecorationRestore).toBe("RESTORED")
     expect(loadCalendarDecorationState()).toEqual(calendar)
     expect(loadEntries()).toHaveLength(0)
@@ -46,7 +85,7 @@ describe("calendar full backup v5", () => {
   it("skips damaged calendar alone and still restores valid journals", async () => {
     saveCalendarDecorationStateIfCurrent(calendar)
     const parsed = read({ ...calendar, version: 99 }, [entry])
-    const outcome = await restoreBackupFile(parsed, buildRestorePlan(parsed.entries))
+    const outcome = await restoreBackupFile(parsed, buildRestorePlan(parsed.entries), "keep-existing", "keep-existing", "replace")
     expect(outcome.calendarDecorationRestore).toBe("INVALID_SKIPPED")
     expect(outcome.restored).toBe(1)
     expect(loadCalendarDecorationState()).toEqual(calendar)
@@ -57,7 +96,7 @@ describe("calendar full backup v5", () => {
     const parsed = read(createEmptyCalendarDecorationState(), [entry])
     const original = Storage.prototype.setItem
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(function(this: Storage, key, value) { if (key === JOURNAL_STORAGE_KEY) throw new DOMException("quota"); original.call(this, key, value) })
-    const outcome = await restoreBackupFile(parsed, buildRestorePlan(parsed.entries))
+    const outcome = await restoreBackupFile(parsed, buildRestorePlan(parsed.entries), "keep-existing", "keep-existing", "replace")
     expect(outcome.calendarDecorationRestore).toBe("ROLLED_BACK")
     expect(localStorage.getItem(CALENDAR_DECORATION_STORAGE_KEY)).toBe(before)
     expect(loadEntries().map(item => item.id)).toEqual(["keep"])
@@ -86,6 +125,7 @@ describe("calendar full backup v5", () => {
     const unsupported = '{"version":99,"items":[],"future":"preserve"}'
     localStorage.setItem(CALENDAR_DECORATION_STORAGE_KEY, unsupported)
     vi.spyOn(decorationService, "accountDecorationsEnabled").mockReturnValue(true)
+    vi.spyOn(decorationService, "accountDecorationStatus").mockReturnValue("READY")
     vi.spyOn(decorationService, "readAccountDecorationState").mockReturnValue(decorations)
     const status = vi.spyOn(calendarService, "accountCalendarDecorationStatus").mockReturnValue("UNSUPPORTED")
     const source = vi.spyOn(calendarStore, "readCalendarDecorationStateSerialized").mockReturnValue(unsupported)

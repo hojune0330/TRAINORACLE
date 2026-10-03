@@ -1,13 +1,14 @@
 import { deriveCandidateId } from "@impl/plan-generator/candidate-identity"
 import { describe, expect, it } from "vitest"
 import { prepareActivePlanEdit, type ActivePlanEditAddress } from "./active-plan-edit"
+import { activePlanEditDurationConsentRequired } from "./active-plan-edit-policy"
 import { planBetaStateV3Schema, type PlanBetaStateV3 } from "./plan-beta-schema"
 import type { JournalEntry } from "./journal-schema"
 import type { VersionedStoredPlanSession } from "./plan-session-schema"
 import { createPlannedSessionLogDraft } from "./planned-session-link"
 import { stateFixture } from "./plan-beta-store.test-fixture"
-import { bindCatalogSession } from "@impl/prescription/catalog-session-binding"
-import { activePlanEditDurationConsentRequired } from "./active-plan-edit-policy"
+import { ALL_WORKOUT_CATALOG, catalogMethodIdentity } from "@impl/prescription/all-workout-calculator"
+import { bindCatalogSession, catalogFamilyForIntent } from "@impl/prescription/catalog-session-binding"
 import { generatePlanFromDraft, selectPlanForActivation } from "./plan-beta-flow"
 
 function fixture() {
@@ -131,10 +132,19 @@ describe("manual active plan edit proposal", () => {
     if (selected.kind !== "selected" || selected.state.version !== 3) throw Error("V3 required")
     const state = selected.state
     const old = state.activePlan.sessions.find(session => session.role === "QUALITY")!
-    const replacement = bindCatalogSession(old, "P-LT-C", { eventDistanceM: 5000, experience: "EXPERIENCED",
-      availableSeconds: null, confirmedRequirements: [], fiveK: null, segmentPaces: [] })!
+    if (old.prescription.kind !== "RPE_TIME_RANGE" || !old.prescription.catalogWorkout) throw Error("Catalog RPE required")
+    const currentCatalogId = old.prescription.catalogWorkout.catalogId
+    const current = ALL_WORKOUT_CATALOG.find(entry => entry.id === currentCatalogId)!
+    const inputs = { eventDistanceM: 5000, experience: "EXPERIENCED" as const,
+      availableSeconds: null, confirmedRequirements: [], fiveK: null, segmentPaces: [] }
+    const replacement = ALL_WORKOUT_CATALOG
+      .filter(entry => entry.family === catalogFamilyForIntent(old.plannedEnergyIntent)
+        && entry.id !== current.id && catalogMethodIdentity(entry) !== catalogMethodIdentity(current))
+      .map(entry => bindCatalogSession(old, entry.id, inputs, true))
+      .find(candidate => candidate?.prescription.kind === "RPE_TIME_RANGE") ?? null
     expect(replacement).not.toBeNull()
-    if (old.prescription.kind !== "RPE_TIME_RANGE" || replacement.prescription.kind !== "RPE_TIME_RANGE") throw Error("RPE required")
+    if (!replacement || replacement.prescription.kind !== "RPE_TIME_RANGE") throw Error("RPE required")
+    expect(replacement.prescription.catalogWorkout?.catalogId).not.toBe(current.id)
     const acceptedRpeMaximum = replacement.prescription.rpe.maximum > old.prescription.rpe.maximum ? replacement.prescription.rpe.maximum : null
     const result = prepareActivePlanEdit({ ...fixture(), state, action: "CATALOG", source: { day: old.day, slot: old.slot },
       replacement, acceptedRpeMaximum, acceptedLongerDuration: activePlanEditDurationConsentRequired(old, replacement) })

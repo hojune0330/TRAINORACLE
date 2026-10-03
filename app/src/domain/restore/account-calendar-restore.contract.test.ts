@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { setActiveLocalAccount } from "../account/local-journal-ownership"
 import { createEmptyDecorationState } from "../decoration-schema"
-import { createEmptyCalendarDecorationState } from "../calendar-decoration-schema"
+import { calendarDecorationStateSchema, createEmptyCalendarDecorationState } from "../calendar-decoration-schema"
+import { decorationStateSchema } from "../decoration-schema"
 import { FULL_FORMAT_V5, readBackupFile } from "./backup-file"
 import { createAccountBackupRestoration } from "./account-restore"
 
@@ -76,6 +77,39 @@ afterEach(() => {
 })
 
 describe("account v5 calendar-decoration restoration", () => {
+  it("blocks inventory replacement when the kept calendar would lose an owned theme", async () => {
+    const owned = decorationStateSchema.parse({ ...decorationState, spentPoints: 12,
+      ownedItemIds: [...decorationState.ownedItemIds, "THEME_SKY_JOURNAL"] })
+    const currentCalendar = calendarDecorationStateSchema.parse({ version: 1, paperThemeId: "THEME_SKY_JOURNAL", items: [] })
+    api.decorationsRead.mockReturnValue(owned)
+    api.calendarRead.mockReturnValue(currentCalendar)
+    const session = await prepare()
+
+    expect(await session.confirm("keep-existing", "replace", "keep-existing")).toMatchObject({
+      decorationRestore: "FAILED", decorationFailure: "OWNERSHIP_UNVERIFIED", calendarDecorationRestore: "KEPT_EXISTING",
+    })
+    expect(api.decorationsPersist).not.toHaveBeenCalled()
+    expect(api.calendarPersist).not.toHaveBeenCalled()
+  })
+
+  it("blocks inventory replacement when current calendar data could not be read", async () => {
+    api.calendarHydrate.mockResolvedValue(false)
+    const session = await prepare()
+    expect(session.decorationReady).toBe(false)
+    expect(await session.confirm("keep-existing", "replace", "keep-existing")).toMatchObject({
+      decorationRestore: "FAILED", decorationFailure: "READ_FAILED",
+    })
+    expect(api.decorationsPersist).not.toHaveBeenCalled()
+  })
+
+  it("keeps account calendar data by default until replacement is explicitly selected", async () => {
+    const session = await prepare()
+    expect(await session.confirm()).toMatchObject({
+      decorationRestore: "KEPT_EXISTING", calendarDecorationRestore: "KEPT_EXISTING", calendarDecorationFailure: "NONE",
+    })
+    expect(api.calendarPersist).not.toHaveBeenCalled()
+  })
+
   it("accepts a valid calendar-only v5 backup with zero journal entries", async () => {
     const read = backup()
     expect(read.recognized).toBe(true)
