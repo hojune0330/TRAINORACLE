@@ -1,10 +1,12 @@
 {
   "kind": "TRAINORACLE_PAGES_DEPLOYMENT",
-  "sourceSha": "64774e30bae96e9cda41368a190eadc7386f5661",
-  "previousPagesSha": "dd585b7fa32bcded110e61eb1bedbd966852e887",
-  "publicConfigurationSourceSha": "dd585b7fa32bcded110e61eb1bedbd966852e887",
+  "sourceSha": "ec611da606d54e66d706655a8beefccf99cfe3bf",
+  "previousPagesSha": "6ff9bce4a07a872901e81ed565f9b46b6f016dc9",
+  "publicConfigurationSourceSha": "6ff9bce4a07a872901e81ed565f9b46b6f016dc9",
   "deploymentMethod": "MANUAL_USER_APPROVED",
   "ciStatus": "NOT_PASSED_OR_NOT_YET_KNOWN",
   "ciRunId": null,
-  "builtAt": "2026-10-02T10:00:04.524Z"
+  "observedCiRunId": "37078938598",
+  "observedCiUrl": "https://github.com/hojune0330/TRAINORACLE/actions/runs/37078938598",
+  "builtAt": "2026-10-03T01:29:40.542Z"
 }
