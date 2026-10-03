@@ -28,7 +28,11 @@
 
 ## 최종 공개 확인
 
-PENDING: Pages 게시, 공개 receipt/hash 대조, 새 익명 브라우저의 합성 기록 기반 계획 생성/재열기.
-실제 사용자 로그인 저장 왕복은 별도 미확인 범위다.
+- 후속 시험 수정 PR #348 병합. 최종 배포 소스: `a8cf6a7d75b2854eecdb1f2c6090a834ba273d9d`.
+- 수동 Pages 게시 커밋: `9598ff21ab4a94b9c1629cffa16305f6bf0dc837`. Pages run `37099554604` success.
+- 공개 receipt의 소스 일치와 `assets/index-DL2f3sco.js`의 로컬/공개 SHA-256 일치를 확인했다: `70ca42ae6f47808255464ceffeee33b6cc00e1cd199c87ab40724842cdc5b811`.
+- 2026-10-03 05:22:51 UTC, 격리된 익명 375px 브라우저에서 합성 경기 기록 800m 2:01.5를 입력했다. 200m 반복 목표 원본 30.375초, 계획 저장 및 새로고침 후 동일 저장값을 확인했다. 페이지 오류 0, 가로 넘침 없음.
+- 증거: 무시되는 `app/test-results/pace-release/live-smoke.json` 및 화면 캡처. 실제 사용자 계정 쓰기는 수행하지 않았다. 로그인 계정의 운영 저장 왕복은 별도 미확인 범위다.
+- 최종 소스 전체 CI run `37099446128`은 기록 시점 contract-tests success, app-quality 진행 중이다. Pages 게시 성공과 전체 CI 완료를 구분한다.
 
 [DEPLOYMENT_RECORD]
