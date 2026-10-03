@@ -5,7 +5,7 @@ import { validateAccountPlanCollectionIndex, validateAccountPlanCollectionPart,
   type AccountPlanCollectionIndex, type AccountPlanSnapshotPart, type AccountPlanProgressPart,
   type AccountPlanCollectionParts, splitAccountPlanCollection } from "./account-plan-collection-schema"
 import { readAccountPlanCollectionTransfer, type AccountPlanCollectionTransfer } from "./account-plan-collection-transfer"
-import { accountPlanJournalGuardSchema } from "./account-plan-collection-transfer"
+import { accountPlanJournalGuardSchema, accountPlanPaceRecordGuardSchema } from "./account-plan-collection-transfer"
 import { createAccountPlanCollectionPreparationStore, type AccountPlanCollectionPreparationStore,
   type AccountPlanCollectionPreparation } from "./account-plan-collection-preparation"
 
@@ -15,7 +15,8 @@ export type AccountPlanCollectionManifest = {
   previous: AccountPlanCollectionIndex | null
   next: AccountPlanCollectionIndex
   operation: { ownerId: string; operationId: string; expectedRevision: number;
-    legacy: AccountPlanCollectionTransfer["legacy"]; journalGuard?: AccountPlanCollectionTransfer["journalGuard"] } | null
+    legacy: AccountPlanCollectionTransfer["legacy"]; journalGuard?: AccountPlanCollectionTransfer["journalGuard"];
+    paceRecordGuard?: AccountPlanCollectionTransfer["paceRecordGuard"] } | null
   /** Actual collection revision for an observed baseline; the local journal has its own counter. */
   revision?: number
 }
@@ -27,6 +28,7 @@ export const accountPlanCollectionManifestSchema = z.object({
     legacy: z.object({ documentId: z.uuid(), revision: revision.refine(n => n > 0),
       fingerprint: z.string().regex(/^sha256:[a-f0-9]{64}$/u) }).strict().nullable(),
     journalGuard: accountPlanJournalGuardSchema.optional(),
+    paceRecordGuard: accountPlanPaceRecordGuardSchema.optional(),
   }).strict().nullable(),
   revision: revision.optional(),
 }).strict().refine(m => m.operation ? (m.previous === null) === (m.operation.expectedRevision === 0) : m.revision !== undefined)
@@ -125,7 +127,8 @@ export function createAccountPlanCollectionBuffer(ownerId: string, isCurrent: ()
     const manifest: AccountPlanCollectionManifest = { version: 1, previous: captured.previous?.index ?? null,
       next: captured.next.index, operation: { ownerId, operationId: captured.operationId,
         expectedRevision: captured.expectedRevision, legacy: captured.legacy,
-        ...(captured.journalGuard === undefined ? {} : { journalGuard: captured.journalGuard }) } }
+        ...(captured.journalGuard === undefined ? {} : { journalGuard: captured.journalGuard }),
+        ...(captured.paceRecordGuard === undefined ? {} : { paceRecordGuard: captured.paceRecordGuard }) } }
     const same = (v: Awaited<ReturnType<typeof readManifest>>) => v
       && accountPlanFingerprint(v.draft) === accountPlanFingerprint(manifest)
     const writable = (v: Awaited<ReturnType<typeof readManifest>>) => {

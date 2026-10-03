@@ -11,6 +11,7 @@ import { replaceCandidateCatalogWorkout } from "./catalog-plan-binding"
 import { catalogScheduleConditions, isCatalogEnvironmentRequirement } from "./catalog-schedule-conditions"
 import { localAccountScopeIsCurrent } from "./account/local-account-scope"
 import { isValidIsoDate, isoShift } from "./dates"
+import { canonicalPaceDistance } from "@impl/prescription/record-pace"
 
 export type InitialMainContext = {
   readonly mode: "newplan" | "saved-plan"
@@ -75,7 +76,8 @@ export function reviewInitialMainConditions(input: InitialMainInput): InitialMai
       if (session.role !== "QUALITY" || session.prescription.kind !== "RPE_TIME_RANGE" || session.prescription.catalogWorkout) continue
       const date = isoShift(context.startDate, session.day - 1)
       const requirements = [...new Set(ALL_WORKOUT_CATALOG.filter(entry => entry.family === catalogFamilyForIntent(session.plannedEnergyIntent)
-        && entry.hold === null && entry.eventDistances.includes(intake.eventDistanceM) && entry.experience.includes(intake.experienceBand)
+        && entry.hold === null && entry.eventDistances.some(distance => canonicalPaceDistance(distance) === canonicalPaceDistance(intake.eventDistanceM))
+        && entry.experience.includes(intake.experienceBand)
         && entry.requirements.length > 0 && entry.requirements.every(isCatalogEnvironmentRequirement))
         .map(entry => JSON.stringify([...entry.requirements].sort())))].map(value => JSON.parse(value) as string[])
       const options = requirements.flatMap(confirmed => initialCatalogMainOptions(session, intake.eventDistanceM, intake.experienceBand, confirmed))
@@ -96,7 +98,7 @@ export function reviewInitialMainConditions(input: InitialMainInput): InitialMai
       } else {
         const beginnerGly = session.plannedEnergyIntent === "GLY_INTENT" && intake.experienceBand === "NEW_TO_RUNNING"
         const manualCatalogIds = ALL_WORKOUT_CATALOG.filter(entry => entry.family === catalogFamilyForIntent(session.plannedEnergyIntent)
-          && entry.hold === null && entry.eventDistances.includes(intake.eventDistanceM)
+          && entry.hold === null && entry.eventDistances.some(distance => canonicalPaceDistance(distance) === canonicalPaceDistance(intake.eventDistanceM))
           && entry.experience.includes(intake.experienceBand) && entry.requirements.length === 0)
           .filter(entry => {
             const workout = calculateCatalogWorkout(entry.id, { eventDistanceM: intake.eventDistanceM, experience: intake.experienceBand,

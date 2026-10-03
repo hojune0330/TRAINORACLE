@@ -1,8 +1,10 @@
 import React from "react"
+import { canonicalPaceDistance } from "@impl/prescription/record-pace"
 import { Check, Copy, Share2 } from "lucide-react"
 import { SectionLb } from "../../components/JournalPrimitives"
 import { loadPlanBetaState } from "../../domain/plan-beta-store"
-import { loadAthleteRecords, formatRecordTime } from "../../domain/athlete-records"
+import { formatRecordTime } from "../../domain/athlete-records"
+import { readAthleteRecordsSnapshot, useAthleteRecordsSnapshot } from "../../hooks/useAthleteRecordsSnapshot"
 import { loadEntries, todayISO } from "../../domain/journal-store"
 import { projectStructuredJournalObservations } from "../../domain/journal-observation"
 import { buildOracleComparisonSnapshot } from "../../domain/friend-running-oracle"
@@ -21,6 +23,10 @@ import type { PublicProfileTag } from "../../domain/account/public-profile"
 import { inputStyle, primaryBtn, secondaryBtn } from "./styles"
 
 export function PublicProfileSettings({ userId }: { readonly userId: string }) {
+  return <PublicProfileSettingsContent key={userId} userId={userId} />
+}
+
+function PublicProfileSettingsContent({ userId }: { readonly userId: string }) {
   const [handle, setHandle] = React.useState("")
   const [displayName, setDisplayName] = React.useState("")
   const [profileTag, setProfileTag] = React.useState<PublicProfileTag>("TRAINING_CONSISTENTLY")
@@ -30,7 +36,10 @@ export function PublicProfileSettings({ userId }: { readonly userId: string }) {
   const [busy, setBusy] = React.useState(false)
   const [notice, setNotice] = React.useState<string | null>(null)
   const [noticeTone, setNoticeTone] = React.useState<"success" | "warning" | "error">("success")
-  const [records] = React.useState(() => loadAthleteRecords())
+  const recordState = useAthleteRecordsSnapshot()
+  const records = recordState.ownerId === userId ? recordState.records : []
+  const [savedRecord, setSavedRecord] = React.useState<{ eventDistanceM: number; bestSeconds: number } | null>(null)
+  const selectionTouched = React.useRef(false)
   const [friendOracleEnabled, setFriendOracleEnabled] = React.useState(false)
   const [shareRecord, setShareRecord] = React.useState(false)
   const [shareDistance, setShareDistance] = React.useState(false)
@@ -54,17 +63,17 @@ export function PublicProfileSettings({ userId }: { readonly userId: string }) {
       setShareRecord(snapshot.sharedFields.includes("BEST_RECORD"))
       setShareDistance(snapshot.sharedFields.includes("RECENT_DISTANCE"))
       setShareEnergy(snapshot.sharedFields.includes("ENERGY_HISTORY"))
-      if (snapshot.record !== null) {
-        const matched = records.find(record => (
-          record.purpose !== "RACE_GOAL"
-          && record.eventDistanceM === snapshot.record?.eventDistanceM
-          && record.performanceSeconds === snapshot.record.bestSeconds
-        ))
-        if (matched !== undefined) setSelectedRecordId(matched.id)
-      }
+      setSavedRecord(snapshot.record)
     })
     return () => { cancelled = true }
-  }, [records, userId])
+  }, [userId])
+
+  React.useEffect(() => {
+    if (selectionTouched.current || savedRecord === null) return
+    const matched = records.find(record => record.purpose !== "RACE_GOAL"
+      && canonicalPaceDistance(record.eventDistanceM) === canonicalPaceDistance(savedRecord.eventDistanceM) && record.performanceSeconds === savedRecord.bestSeconds)
+    if (matched) setSelectedRecordId(matched.id)
+  }, [recordState, savedRecord, userId])
 
   const save = async () => {
     setBusy(true)
@@ -86,6 +95,8 @@ export function PublicProfileSettings({ userId }: { readonly userId: string }) {
   }
 
   const saveFriendOracle = async () => {
+    const current = readAthleteRecordsSnapshot()
+    if (current.ownerId !== userId) return
     if (!friendOracleEnabled) {
       setBusy(true)
       const result = await saveOwnOracleComparisonSnapshot(userId, null)
@@ -94,9 +105,14 @@ export function PublicProfileSettings({ userId }: { readonly userId: string }) {
       setNoticeTone(result.ok ? "success" : "error")
       return
     }
+    if (shareRecord && (current.status !== "READY" || !current.records.some(record => record.id === selectedRecordId && record.purpose !== "RACE_GOAL"))) {
+      setNotice("공개할 경기 기록을 다시 확인해 주세요.")
+      setNoticeTone("error")
+      return
+    }
     const snapshot = buildOracleComparisonSnapshot({
       observations: projectStructuredJournalObservations(loadEntries()),
-      records,
+      records: current.records,
       selection: {
         recordId: selectedRecordId === "" ? null : selectedRecordId,
         shareRecord,
@@ -211,13 +227,14 @@ export function PublicProfileSettings({ userId }: { readonly userId: string }) {
               <span>내가 고른 경기 기록 1개</span>
             </label>
             {shareRecord && (
-              <select aria-label="비교에 공개할 경기 기록" value={selectedRecordId} onChange={event => setSelectedRecordId(event.target.value)} style={inputStyle}>
+              <select aria-label="비교에 공개할 경기 기록" value={selectedRecordId} onChange={event => { selectionTouched.current = true; setSelectedRecordId(event.target.value) }} style={inputStyle}>
                 <option value="">기록을 선택해 주세요</option>
                 {records.filter(record => record.purpose !== "RACE_GOAL").map(record => (
                   <option key={record.id} value={record.id}>{record.eventDistanceM}m · {formatRecordTime(record.performanceSeconds)}</option>
                 ))}
               </select>
             )}
+            {shareRecord && recordState.message && <p role="status">{recordState.message}</p>}
             <label className="account-panel__check">
               <input type="checkbox" checked={shareDistance} onChange={event => setShareDistance(event.target.checked)} />
               <span>최근 8주 거리 합계</span>

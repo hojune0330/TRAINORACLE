@@ -1,4 +1,6 @@
 import React from "react"
+import { formatPaceSeconds } from "@impl/prescription/record-pace"
+import { InitialRecordPaceOffer } from "./InitialRecordPaceOffer"
 import { ArrowLeft, ShieldCheck } from "lucide-react"
 import type {
   PlanGenerationSuccess,
@@ -44,6 +46,7 @@ import { localAccountScopeIsCurrent, localAccountScopeSnapshot } from "../../dom
 import { catalogScheduleConditions } from "../../domain/catalog-schedule-conditions"
 import { CatalogScheduleReview } from "./CatalogScheduleReview"
 import { CatalogCycleSummary } from "./CatalogCycleSummary"
+import { PlanPrescriptionBasis } from "./PlanPrescriptionBasis"
 import type { CatalogCycleSuccessorSummary } from "../../domain/catalog-cycle-successor"
 import { InitialMainConditions } from "./InitialMainConditions"
 import type { InitialMainConditionsProps } from "./InitialMainConditions"
@@ -133,18 +136,19 @@ export function PlanCandidates({
   const headingRef = React.useRef<HTMLHeadingElement>(null)
   const optionsRef = React.useRef<HTMLDivElement>(null)
   const methodRef = React.useRef<HTMLDivElement>(null)
+  const recordRef = React.useRef<HTMLDivElement>(null)
   const catalogRef = React.useRef<HTMLDivElement>(null)
   const dateRef = React.useRef<HTMLLabelElement>(null)
   const dateInputRef = React.useRef<HTMLInputElement>(null)
   const recoveryRef = React.useRef<HTMLElement>(null)
   const confirmationRequested = React.useRef(false)
-  const [navigation, setNavigation] = React.useState<{ kind: "result" | "options" | "date" | "method" | "catalog" | "recovery"; revision: number } | null>(null)
-  const reveal = React.useCallback((kind: "result" | "options" | "date" | "method" | "catalog" | "recovery") => {
+  const [navigation, setNavigation] = React.useState<{ kind: "result" | "options" | "date" | "method" | "catalog" | "recovery" | "record"; revision: number } | null>(null)
+  const reveal = React.useCallback((kind: "result" | "options" | "date" | "method" | "catalog" | "recovery" | "record") => {
     setNavigation(previous => ({ kind, revision: (previous?.revision ?? 0) + 1 }))
   }, [])
   useActiveContentScroll(navigation?.revision ?? null,
-    navigation?.kind === "catalog" ? catalogRef : navigation?.kind === "recovery" ? recoveryRef : navigation?.kind === "method" ? methodRef : navigation?.kind === "options" ? optionsRef : navigation?.kind === "date" ? dateRef : resultRef,
-    navigation?.kind === "catalog" ? catalogRef : navigation?.kind === "recovery" ? recoveryRef : navigation?.kind === "method" ? methodRef : navigation?.kind === "options" ? optionsRef : navigation?.kind === "date" ? dateInputRef : headingRef)
+    navigation?.kind === "record" ? recordRef : navigation?.kind === "catalog" ? catalogRef : navigation?.kind === "recovery" ? recoveryRef : navigation?.kind === "method" ? methodRef : navigation?.kind === "options" ? optionsRef : navigation?.kind === "date" ? dateRef : resultRef,
+    navigation?.kind === "record" ? recordRef : navigation?.kind === "catalog" ? catalogRef : navigation?.kind === "recovery" ? recoveryRef : navigation?.kind === "method" ? methodRef : navigation?.kind === "options" ? optionsRef : navigation?.kind === "date" ? dateInputRef : headingRef)
   React.useEffect(() => {
     if (saveError && !saving) reveal("recovery")
   }, [saveError, saveCode, saving, reveal])
@@ -213,6 +217,10 @@ export function PlanCandidates({
     ? findCatalogConditionReview(generated, intake) : null, [initialMainActive, generated, intake, onCatalogChange, instantAdjustment, reviewedConditionContext, conditionContext, unreviewedConditions.length])
   const detailedOptions = resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference, { anchor: selectedRecord })
   const selectedDetailedOption = detailedOptions.find(option => sameDetailedTemplateReference(option.ref, intake.selectedDetailedTemplateRef))
+  const pacePrescription = defaultInstantCandidate(generated).sessions.find(session => session.prescription.kind === "PACE_TARGET")?.prescription
+  const workoutSummary = selectedDetailedOption?.mainSummary && pacePrescription?.kind === "PACE_TARGET"
+    ? `${selectedDetailedOption.mainSummary} · ${pacePrescription.repetitionDistanceM}m당 ${formatPaceSeconds(pacePrescription.targetRepSeconds)}`
+    : selectedDetailedOption?.mainSummary
   const needsReview = recordConfirmationPending || detailedEvidencePending || targetDraftPending || methodDraftPending || !hasValidStartDate
   React.useEffect(() => {
     if (!confirmationRequested.current || needsReview || selectionUnavailable) return
@@ -234,8 +242,18 @@ export function PlanCandidates({
       </div>
       </div>
       {cycleSummary && <CatalogCycleSummary summary={cycleSummary} startDate={startDate} />}
+      <PlanPrescriptionBasis sessions={defaultInstantCandidate(generated).sessions}
+        confirmationPending={recordConfirmationPending || detailedEvidencePending} />
+      {onCatalogChange && intake.selectedDetailedTemplateRef === null && <InitialRecordPaceOffer
+        generated={generated} records={athleteRecords} disabled={!canRevise || !canSelect}
+        onChange={onCatalogChange} />}
       {recommendation && <InstantPlanRecommendationView recommendation={recommendation}
         recoveryRef={recoveryRef}
+        blockedAction={!selectionUnavailable && !saveError && !initialApplying && !catalogDraftPending && !initialMainPending
+          && !methodDraftPending && !targetDraftPending && hasValidStartDate && unreviewedConditions.length === 0
+          && intake.selectedDetailedTemplateRef !== null && intake.experienceBand === "EXPERIENCED"
+          && (recordConfirmationPending || detailedEvidencePending)
+          ? { label: "기준 기록 확인하기", onClick: () => { setShowOptions(true); reveal("record") } } : undefined}
         actionState={saving ? { kind: "SAVING" } : saveCode === "ACCOUNT_PLAN_PENDING" ? { kind: "PENDING", message: saveError ?? "계정 저장을 확인하고 있어요." }
           : selectionUnavailable ? { kind: "BLOCKED", message: saveError ?? "계정 저장 상태를 먼저 확인해 주세요." }
           : saveError ? { kind: "FAILED", message: saveError }
@@ -265,7 +283,7 @@ export function PlanCandidates({
         onEditSchedule={() => { setShowOptions(true); reveal("date") }}
         onEditWorkout={instantAdjustment ?? (onCatalogChange && intake.selectedDetailedTemplateRef === null
           ? () => reveal("catalog") : detailedOptions.length > 0 ? () => reveal("method") : undefined)}
-        workoutLabel={instantAdjustment ? "거리·시간·반복·회복을 확인하고 조절해요" : selectedDetailedOption?.mainSummary}
+        workoutLabel={instantAdjustment ? "거리·시간·반복·회복을 확인하고 조절해요" : workoutSummary}
         workoutLabelTitle={instantAdjustment ? "상세 훈련" : undefined}
         startLabel={instantAdjustment ? "처방 훈련 확인" : undefined}
         conditionReviewLabel={conditionReview && hasValidStartDate
@@ -329,6 +347,7 @@ export function PlanCandidates({
           targets={listDetailedSessionTargets(generated)} selected={detailedSessionTarget}
           onPendingChange={setTargetDraftPending}
           startDate={startDate} onChange={onChangeSessionTarget} />}
+        <div ref={recordRef} tabIndex={-1}>
         <PaceEvidenceFlow
           records={athleteRecords}
           eventDistanceM={intake.eventDistanceM}
@@ -342,6 +361,7 @@ export function PlanCandidates({
           onUseRpe={onChangeMethod === undefined ? undefined : () => onChangeMethod(null)}
           recordReturnCount={recordReturnCount}
         />
+        </div>
         </>
       )}
       {!hasValidStartDate && (
@@ -361,7 +381,7 @@ export function PlanCandidates({
       )}
       {detailedEvidencePending && !recordConfirmationPending && (
         <p className="plan-start-date-error" role="alert">
-          같은 종목의 현재 기록을 고르고 확인해 주세요. 기록 없이 받으려면 상세 훈련에서 ‘기록 없이 시간·RPE로 받기’를 고르세요.
+          같은 종목의 경기 기록 또는 목표기록을 고르고 확인해 주세요. 기록 없이 받으려면 상세 훈련에서 ‘기록 없이 시간·RPE로 받기’를 고르세요.
         </p>
       )}
       <label ref={dateRef} className="plan-start-date" htmlFor="plan-start-date">
@@ -455,7 +475,9 @@ export function PlanCandidates({
               ? `선택하고 확인한 ${selectedEventLabel} 기록만 상세 페이스 계산에 사용 · 연결된 일지 값은 이번 계획 계산에 사용하지 않았어요`
               : "확인한 기준 기록이 없어 개인 기록과 일지 수치는 이번 계획 계산에 사용하지 않았어요"}
           </small>
-          {athleteEvidence.goalRecordCount > 0 && (
+          {athleteEvidence.goalRecordCount > 0 && prescriptionBinding.kind === "bound" && selectedRecord?.purpose === "RACE_GOAL" ? (
+            <small>확인한 목표기록으로 페이스를 계산했어요. 달성한 기록이나 현재 실력을 뜻하지 않아요.</small>
+          ) : athleteEvidence.goalRecordCount > 0 && (
             <small>목표 기록 {athleteEvidence.goalRecordCount}개 포함 · 현재 수치 계산에는 사용하지 않았어요</small>
           )}
           {intake.competitionDivision !== "NOT_PROVIDED" && (

@@ -40,6 +40,8 @@ import { PERIODIZATION_PHASE_LABELS } from "../../domain/periodization-lineage"
 import type { PlanCloudPersistenceState } from "../../domain/account/plan-cloud-backup"
 import type { PlannedSessionLogDraft } from "../../domain/planned-session-link"
 import { resolveCurrentPlannedSession, samePlannedSessionLink } from "../../domain/planned-session-link"
+import { journalResultLabel } from "../../domain/journal-plan-progress"
+import { PlanPrescriptionBasis } from "./PlanPrescriptionBasis"
 import { InstantPlanTodayView } from "../../components/instant-plan/InstantPlanTodayView"
 import { instantSessionId } from "./instant-plan-today"
 import { projectCurrentInstantToday } from "./instant-plan-today-context"
@@ -71,6 +73,7 @@ export function ActivePlan({
   executionMessage,
   executionBlocked = false,
   onEditPlan,
+  onManagePaceRecords,
   onEditSession,
   futureTrainingEditor,
 }: {
@@ -91,6 +94,7 @@ export function ActivePlan({
   readonly executionMessage?: string | null
   readonly executionBlocked?: boolean
   readonly onEditPlan?: () => void
+  readonly onManagePaceRecords?: () => void
   readonly onEditSession?: (session: PlanSession) => void
   readonly futureTrainingEditor?: React.ReactNode
 }) {
@@ -131,6 +135,15 @@ export function ActivePlan({
       progress.state,
     ]),
   )
+  const linkedResults = new Map<string, PostSessionEntry[]>()
+  const journalRead = loadEntriesForPlanSafety()
+  if (journalRead.status === "complete") for (const entry of journalRead.entries) {
+    if (entry.kind !== "post-session" || !entry.plannedSessionLink || entry.date !== entry.plannedSessionLink.plannedDate) continue
+    const session = resolveCurrentPlannedSession(state, entry.plannedSessionLink)
+    if (!session) continue
+    const key = `${session.day}:${session.slot}`
+    linkedResults.set(key, [...(linkedResults.get(key) ?? []), entry])
+  }
   const label = candidateLabel(
     activePlan.candidateKind,
     activePlan.selectedEnergyIntent,
@@ -198,6 +211,7 @@ export function ActivePlan({
         {onEditPlan && <button type="button" className="plan-text-action" data-plan-edit-button onClick={onEditPlan}><Pencil aria-hidden="true" size={16} />계획 수정</button>}
       </div>
       {futureTrainingEditor}
+      {onManagePaceRecords && <button type="button" className="plan-text-action" onClick={onManagePaceRecords}>기준 기록·페이스 바꾸기</button>}
       {state.version === 3 && state.activePlanEdit && <p className="active-plan__journal-return" role="status">수정한 계획이에요. 이전 계획과 일지는 보관되어 있어요.</p>}
       {state.version === 3 && state.executionReplan && <details className="plan-detailed-options">
         <summary>수행 기록을 확인하고 바꾼 일정</summary>
@@ -248,6 +262,7 @@ export function ActivePlan({
           type="button" className="plan-text-action" key={`edit-today:${session.day}:${session.slot}`} onClick={() => onEditSession(session)}>
           <Pencil aria-hidden="true" size={16} />{sessionSlotLabel(session.slot)} 훈련 수정
         </button>)}
+      <PlanPrescriptionBasis sessions={activePlan.sessions} />
       <details className="plan-detailed-options">
       <summary>전체 계획 구성</summary>
       <p className="active-plan__variant">
@@ -374,6 +389,9 @@ export function ActivePlan({
         )}
         renderSessionFooter={(session) => {
           const current = recorded.get(`${session.day}:${session.slot}`)
+          const results = linkedResults.get(`${session.day}:${session.slot}`) ?? []
+          const resultLabels = [...new Set(results.map(journalResultLabel))]
+          const journalLabel = resultLabels.length > 1 ? "여러 수행 기록 확인 필요" : resultLabels[0]
           const detailedPrescription = session.prescription.kind === "PACE_TARGET"
             ? session.prescription
             : null
@@ -429,8 +447,9 @@ export function ActivePlan({
                 </details>
               )}
               <em className="active-plan__status">
-                {current === undefined ? "예정" : PROGRESS_LABELS[current]}
+                {current === undefined ? journalLabel ?? "예정" : PROGRESS_LABELS[current]}
               </em>
+              {current !== undefined && journalLabel && <small>{journalLabel}</small>}
               <SessionExplanationEntry session={session} context={explanationContext} loadEvidence={loadSessionEvidence}
                 initialTab="주기·기록" entryLabel="연결된 일지 기록 보기" showPurpose={false} returnLabel="훈련과 일지로 돌아가기" />
               {session.role !== "REST" && onWriteSessionLog !== undefined && (
@@ -450,7 +469,7 @@ export function ActivePlan({
               )}
               {isReturnedSession && returnedJournal !== undefined && (
                 <p className="active-plan__journal-return" role="status">
-                  일지를 저장했어요. 계획의 진행 기록은 별도예요.
+                  일지를 연결했어요. 수행 결과와 계획을 함께 확인할 수 있어요.
                 </p>
               )}
               <div

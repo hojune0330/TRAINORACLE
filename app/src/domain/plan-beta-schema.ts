@@ -600,7 +600,13 @@ export const planAdaptationCandidateSchema = canonicalJsonTreeSchema.pipe(planCa
       addIssue(context, ["sessions", index, "prescription", "selectedAnchor", "sourceRef"], "Anchor source identity mismatch.")
     }
     const anchor = prescription.selectedAnchor
-    if (!isValidIsoDate(anchor.achievedAt)
+    if (anchor.kind === "GOAL") {
+      if (anchor.achievedAt !== null || anchor.seasonId !== null
+        || anchor.purpose !== "ASPIRATIONAL_TARGET" || anchor.freshnessState !== "UNKNOWN"
+        || anchor.elapsedLabel !== "목표 기록 · 현재 실력 아님") {
+        addIssue(context, ["sessions", index, "prescription", "selectedAnchor"], "Goal metadata must remain explicitly aspirational.")
+      }
+    } else if (!isValidIsoDate(anchor.achievedAt)
       || !currentElapsedLabels.has(anchor.elapsedLabel)
       || (anchor.kind === "SB" && anchor.seasonId !== anchor.achievedAt.slice(0, 4))) {
       addIssue(context, ["sessions", index, "prescription", "selectedAnchor"], "Anchor display metadata must be deterministically derived.")

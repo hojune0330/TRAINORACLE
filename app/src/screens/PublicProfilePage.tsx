@@ -1,4 +1,5 @@
 import React from "react"
+import { canonicalPaceDistance } from "@impl/prescription/record-pace"
 import { ArrowLeft, CalendarDays, Gauge, Sparkles, Trophy } from "lucide-react"
 import { loadPublicProfile } from "../domain/account/public-profile"
 import type { PublicProfilePageData } from "../domain/account/public-profile"
@@ -6,15 +7,49 @@ import { PUBLIC_PROFILE_TAG_LABELS } from "../domain/account/public-profile"
 import { loadEntries } from "../domain/journal-store"
 import { todayISO } from "../domain/journal-store"
 import { projectStructuredJournalObservations } from "../domain/journal-observation"
-import { loadAthleteRecords } from "../domain/athlete-records"
+import { useAthleteRecordsSnapshot } from "../hooks/useAthleteRecordsSnapshot"
+import { currentUser, onAuthChange } from "../domain/account/auth"
+import { accountFeatureEnabled } from "../domain/account/config"
+import { activeLocalAccount, journalOwner, setActiveLocalAccount } from "../domain/account/local-journal-ownership"
+import { setAccountAuthState } from "../domain/account/account-auth-state"
 import {
   buildOracleComparisonSnapshot,
   deriveFriendRunningOracle,
 } from "../domain/friend-running-oracle"
 
 export function PublicProfilePage({ handle }: { readonly handle: string }) {
+  return <PublicProfileContent key={handle} handle={handle} />
+}
+
+function PublicProfileContent({ handle }: { readonly handle: string }) {
   const [data, setData] = React.useState<PublicProfilePageData | null | undefined>(undefined)
   const [showComparison, setShowComparison] = React.useState(false)
+  const [authStatus, setAuthStatus] = React.useState<"LOADING" | "READY" | "FAILED">("LOADING")
+  const ownRecords = useAthleteRecordsSnapshot()
+
+  React.useEffect(() => {
+    let mounted = true
+    let authEventSeen = false
+    const accept = (user: { id: string } | null) => {
+      if (!mounted) return
+      setShowComparison(false)
+      setActiveLocalAccount(user?.id ?? null)
+      setAccountAuthState(user ? "RESOLVING" : "GUEST")
+      setAuthStatus("READY")
+    }
+    if (!accountFeatureEnabled()) { accept(null); return }
+    setAccountAuthState("RESOLVING")
+    const stop = onAuthChange(user => { authEventSeen = true; accept(user) }, { ignoreInitialSession: true })
+    void currentUser({ throwOnFailure: true }).then(user => {
+      if (!authEventSeen) accept(user)
+    }).catch(() => {
+      if (!mounted || authEventSeen) return
+      setActiveLocalAccount(null)
+      setAccountAuthState("FAILED")
+      setAuthStatus("FAILED")
+    })
+    return () => { mounted = false; stop() }
+  }, [])
 
   React.useEffect(() => {
     let cancelled = false
@@ -40,17 +75,19 @@ export function PublicProfilePage({ handle }: { readonly handle: string }) {
   )
 
   const publicSnapshot = data.oracleSnapshot ?? null
-  const ownSnapshot = buildOracleComparisonSnapshot({
-    observations: projectStructuredJournalObservations(loadEntries()),
-    records: loadAthleteRecords(),
+  const ownReady = authStatus === "READY" && ownRecords.status === "READY"
+  const ownObservations = ownReady ? projectStructuredJournalObservations(loadEntries().filter(entry => journalOwner(entry.id) === activeLocalAccount())) : []
+  const ownSnapshot = ownReady ? buildOracleComparisonSnapshot({
+    observations: ownObservations,
+    records: ownRecords.records,
     selection: {
       recordId: bestComparableRecordId(publicSnapshot?.record?.eventDistanceM ?? null),
       shareRecord: true,
-      shareDistance: true,
-      shareEnergy: true,
+      shareDistance: ownObservations.length > 0,
+      shareEnergy: ownObservations.length > 0,
     },
     today: todayISO(),
-  })
+  }) : null
   const comparison = publicSnapshot !== null && ownSnapshot !== null
     ? deriveFriendRunningOracle(ownSnapshot, publicSnapshot)
     : null
@@ -92,10 +129,13 @@ export function PublicProfilePage({ handle }: { readonly handle: string }) {
         </div>
         {publicSnapshot === null ? (
           <p style={bodyStyle}>이 사용자는 친구 비교용 기록을 공개하지 않았어요.</p>
+        ) : !ownReady ? (
+          <p role="status" style={bodyStyle}>{authStatus === "LOADING" ? "내 기록의 로그인 상태를 확인하고 있어요." : authStatus === "FAILED" ? "로그인 상태를 확인하지 못했어요. TrainOracle로 돌아가 다시 확인해 주세요." : ownRecords.message}</p>
         ) : comparison === null ? (
           <p style={bodyStyle}>내 경기 기록이나 거리·시간을 남긴 일지가 있으면, 상대가 공개한 항목과 비교할 수 있어요.</p>
         ) : (
           <>
+            <p style={bodyStyle}>{ownRecords.ownerId === null ? "게스트 · 이 기기의 내 기록" : "내 계정 기록"}</p>
             <p style={bodyStyle}>{comparison.headline}</p>
             <button type="button" style={oracleButtonStyle} onClick={() => setShowComparison(value => !value)}>
               {showComparison ? "비교 결과 접기" : "내 기록과 비교하기"}
@@ -117,10 +157,10 @@ export function PublicProfilePage({ handle }: { readonly handle: string }) {
   )
 
   function bestComparableRecordId(friendEventDistanceM: number | null): string | null {
-    const achieved = loadAthleteRecords().filter(record => record.purpose !== "RACE_GOAL")
+    const achieved = ownRecords.records.filter(record => record.purpose !== "RACE_GOAL")
     const sameEvent = friendEventDistanceM === null
       ? achieved
-      : achieved.filter(record => record.eventDistanceM === friendEventDistanceM)
+      : achieved.filter(record => canonicalPaceDistance(record.eventDistanceM) === canonicalPaceDistance(friendEventDistanceM))
     const pool = sameEvent.length > 0 ? sameEvent : achieved
     const candidate = pool.sort((left, right) => {
       const purposeOrder = (value: typeof left.purpose) => value === "PERSONAL_BEST" ? 0 : value === "SEASON_BEST" ? 1 : 2

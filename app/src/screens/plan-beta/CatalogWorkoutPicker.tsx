@@ -16,6 +16,8 @@ import { catalogRequirementLabels as requirementLabels, catalogScheduleCondition
 import { CatalogWorkoutDetail } from "./CatalogWorkoutDetail"
 import { formatTotalMinutes } from "./labels"
 import "./catalog-workout.css"
+import { CatalogPaceReferences } from "./CatalogPaceReferences"
+import { canonicalPaceDistance, type SegmentPaceReference } from "@impl/prescription/record-pace"
 
 type PickerProps = {
   readonly generated: PlanGenerationSuccess; readonly intake: PlanBetaIntake; readonly records: readonly AthleteRecord[]
@@ -102,7 +104,8 @@ export function CatalogWorkoutEditor({ generated, intake, records, onChange, onS
   const editingSavedPlan = !generated && selectionMode !== "DRAFT"
   const binding = session.prescription.kind === "RPE_TIME_RANGE" ? session.prescription.catalogWorkout : undefined
   const pool = ALL_WORKOUT_CATALOG.filter(e => e.family === catalogFamilyForIntent(session.plannedEnergyIntent)
-    && e.eventDistances.includes(intake.eventDistanceM) && e.experience.includes(intake.experienceBand) && e.hold === null)
+    && e.eventDistances.some(distance => canonicalPaceDistance(distance) === canonicalPaceDistance(intake.eventDistanceM))
+    && e.experience.includes(intake.experienceBand) && e.hold === null)
     .filter(e => {
       if (session.role !== "EASY" || session.prescription.kind !== "RPE_TIME_RANGE") return true
       const workout = calculateCatalogWorkout(e.id, { eventDistanceM: intake.eventDistanceM, experience: intake.experienceBand,
@@ -111,11 +114,12 @@ export function CatalogWorkoutEditor({ generated, intake, records, onChange, onS
     })
   const [choice, setChoice] = React.useState(binding?.catalogId ?? pool.find(e => e.id === preferredCatalogId)?.id ?? pool[0]?.id ?? "")
   const [recordId, setRecordId] = React.useState(binding?.inputs.fiveK?.recordId ?? "")
+  const [paceReferences, setPaceReferences] = React.useState<readonly SegmentPaceReference[] | undefined>(binding?.inputs.paceReferences)
   const accountScope = localAccountScopeSnapshot()
   const [seconds, setSeconds] = React.useState<Record<string, string>>(() => Object.fromEntries((binding?.inputs.segmentSeconds ?? []).map(s => [s.segmentId, String(s.seconds)])))
   const [recoveries, setRecoveries] = React.useState<Record<string, string>>(() => Object.fromEntries((binding?.inputs.recoverySeconds ?? []).map(s => [s.segmentId, String(s.seconds)])))
   const [durationDecision, setDurationDecision] = React.useState<{ key: string; accepted: boolean } | null>(null)
-  const draft = JSON.stringify([choice, recordId, seconds, recoveries])
+  const draft = JSON.stringify([choice, recordId, seconds, recoveries, paceReferences])
   const originalDraft = React.useRef(draft)
   const confirmationContext = JSON.stringify([startDate ?? null, accountScope, session.day, session.slot,
     binding?.calculationFingerprint ?? null, intake.eventDistanceM, intake.experienceBand, draft])
@@ -163,11 +167,13 @@ export function CatalogWorkoutEditor({ generated, intake, records, onChange, onS
   const record = records.find(r => r.id === recordId && r.eventDistanceM === 5000 && r.purpose !== "RACE_GOAL" && r.verificationState !== "UNVERIFIED")
   const inputs: WorkoutCalculationInputs = { eventDistanceM: intake.eventDistanceM, experience: intake.experienceBand,
     availableSeconds: pairedBudgetSeconds,
-    confirmedRequirements: confirmed, segmentPaces: choice === binding?.catalogId ? binding.inputs.segmentPaces : [],
+    confirmedRequirements: confirmed, segmentPaces: choice === binding?.catalogId
+      ? binding.inputs.segmentPaces.filter(p => !paceReferences?.some(r => r.segmentId === p.segmentId)) : [],
     fiveK: !configurationChanged && binding?.inputs.fiveK ? binding.inputs.fiveK
       : record?.achievedOn ? { recordId: record.id, seconds: record.performanceSeconds, achievedAt: record.achievedOn, evaluatedAt: todayISO() } : null,
     segmentSeconds: Object.entries(seconds).filter(([, v]) => v !== "").map(([segmentId, v]) => ({ segmentId, seconds: Number(v) })),
     recoverySeconds: Object.entries(recoveries).filter(([, v]) => v !== "").map(([segmentId, v]) => ({ segmentId, seconds: Number(v) })),
+    ...(paceReferences === undefined ? {} : { paceReferences }),
   }
   const preview = calculateCatalogWorkout(entry.id, inputs)
   const withoutTimes = calculateCatalogWorkout(entry.id, { ...inputs, segmentSeconds: [], recoverySeconds: [] })
@@ -193,7 +199,7 @@ export function CatalogWorkoutEditor({ generated, intake, records, onChange, onS
     && acceptedStronger
     && (canSelect?.(entry.id, inputs, !!acceptLonger, !!stronger) ?? false)
   const eligibleDraws = pool.filter(e => {
-    const immediateInputs = { ...inputs, confirmedRequirements: [], segmentPaces: [], segmentSeconds: [], recoverySeconds: [] }
+    const immediateInputs = { ...inputs, confirmedRequirements: [], segmentPaces: [], segmentSeconds: [], recoverySeconds: [], paceReferences: [] }
     const calculation = calculateCatalogWorkout(e.id, immediateInputs)
     return calculation !== null && calculation.unavailable.length === 0
       && (generated ? replaceCandidateCatalogWorkout(generated, session, e.id, immediateInputs) !== null
@@ -202,7 +208,7 @@ export function CatalogWorkoutEditor({ generated, intake, records, onChange, onS
   const alternatives = [...groupEligibleCatalogMethods(eligibleDraws).keys()].filter(key => key !== catalogRecommendationMethodKey(entry))
   const drawScope = JSON.stringify([session.day, session.slot, intake.eventDistanceM, intake.experienceBand,
     inputs.availableSeconds, inputs.fiveK, eligibleDraws.map(e => e.id)])
-  const reset = (id: string) => { setChoice(id); setConfirmed([]); setSeconds({}); setRecoveries({}); setDurationDecision(null) }
+  const reset = (id: string) => { setChoice(id); setConfirmed([]); setSeconds({}); setRecoveries({}); setPaceReferences(undefined); setDurationDecision(null) }
   const reason = (code: string) => requirementLabels[code] ? "운동 환경·경험 확인이 필요해요."
     : code === "TIME_BUDGET_EXCEEDED" ? "처음 계획보다 긴 구성이에요. 아래에서 시간을 확인하거나 다른 구성을 골라 주세요."
       : code === "TIME_BUDGET_UNCONFIRMED" ? "미정 구간을 정하면 전체 시간을 계산해요."
@@ -219,11 +225,16 @@ export function CatalogWorkoutEditor({ generated, intake, records, onChange, onS
     <label>훈련 구성<select value={entry.id} disabled={disabled} onChange={e => reset(e.target.value)}>
       {pool.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
     </select></label>
-    {["LT", "VO2", "MIX"].includes(entry.family) && <label>참고 페이스에 사용할 5km 기록<select value={recordId} disabled={disabled} onChange={e => { setRecordId(e.target.value); setSeconds({}); setDurationDecision(null) }}>
+    {["LT", "VO2", "MIX"].includes(entry.family) && <details><summary>전체 구간의 공통 기록 바꾸기</summary><label>참고 페이스에 사용할 5km 기록<select value={recordId} disabled={disabled} onChange={e => { setRecordId(e.target.value); setPaceReferences([]); setSeconds({}); setDurationDecision(null) }}>
       <option value="">기록 없이 체감 강도로</option>
       {recordId && !record && <option value={recordId}>이 계획에 저장된 기준 기록</option>}
       {records.filter(r => r.eventDistanceM === 5000 && r.purpose !== "RACE_GOAL" && r.verificationState !== "UNVERIFIED").map(r => <option key={r.id} value={r.id}>{r.achievedOn} · {formatRecordTime(r.performanceSeconds)}</option>)}
-    </select></label>}
+    </select></label><p>구간별로 고른 기준은 해제되고, 적용 가능한 구간에 이 기록을 사용해요.</p></details>}
+    <CatalogPaceReferences catalogId={entry.id} inputs={inputs} records={records} disabled={disabled} onChange={(segmentId, value) => {
+      setPaceReferences(previous => [...(previous ?? []).filter(r => r.segmentId !== segmentId), ...(value ? [value] : [])])
+      setSeconds(previous => Object.fromEntries(Object.entries(previous).filter(([key]) => key !== segmentId)))
+      setDurationDecision(null)
+    }} />
     {entry.requirements.map(r => <label key={r}><input type="checkbox" checked={confirmed.includes(r)} disabled={disabled}
       onChange={e => setConfirmed(e.target.checked ? [...confirmed, r] : confirmed.filter(x => x !== r))} />{requirementLabels[r] ?? "별도 운동 조건을 확인해 주세요."}</label>)}
     {environmentDateChanged && <p role="status">날짜나 훈련 조건을 다시 확인해야 해요. 입력한 시간은 그대로 남아 있어요.</p>}

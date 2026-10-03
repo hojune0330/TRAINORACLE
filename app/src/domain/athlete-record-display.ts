@@ -1,6 +1,8 @@
 import type { AthleteRecord, RecordPurpose } from "./athlete-records"
 
-export const SEASON_WINDOW_MONTHS = 18
+export const RECORD_REFERENCE_MAX_AGE_MONTHS = 18
+/** Legacy code alias, not a calendar season or rolling-best window. */
+export const SEASON_WINDOW_MONTHS = RECORD_REFERENCE_MAX_AGE_MONTHS
 
 export function elapsedSinceAchieved(
   record: AthleteRecord,
@@ -25,13 +27,13 @@ export function seasonWindowLabel(
 ): { readonly withinWindow: boolean; readonly label: string } {
   const elapsed = elapsedSinceAchieved(record, today)
   const withinWindow = elapsed !== null && elapsed.months <= SEASON_WINDOW_MONTHS
-  const prefix = withinWindow ? "시즌 범위 안" : "시즌 범위 밖"
-  return { withinWindow, label: `${prefix} (${elapsed?.label ?? "날짜 확인 필요"})` }
+  return { withinWindow, label: `기존 시즌 ${record.seasonId} · ${elapsed?.label ?? "날짜 확인 필요"}` }
 }
 
 export function formatRecordTime(performanceSeconds: number): string {
-  const minutes = Math.floor(performanceSeconds / 60)
-  const seconds = Number((performanceSeconds - minutes * 60).toFixed(2))
+  const ticks = Math.round(performanceSeconds * 100)
+  const minutes = Math.floor(ticks / 6000)
+  const seconds = (ticks % 6000) / 100
   return `${minutes}분 ${seconds}초`
 }
 

@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "decision": "OWNER_DIRECTED_ALL_WORKOUT_CONNECTION_20260930",
+  "version": "1.1.0",
+  "decision": "OWNER_DIRECTED_MULTI_EVENT_PACE_20261002",
   "rows": [
     {
       "id": "P-BASE-C",
@@ -23868,6 +23868,1854 @@
       "version": "1.0.0",
       "reviewRef": "specs/reconstruct/ALL_WORKOUT_CALCULATION_AND_BINDING_CONTRACT.md",
       "fingerprint": "sha256:d3a1d907095167df3c0c96ec6dc3a036c5a79eebfa913876137189aae5904cf1"
+    },
+    {
+      "id": "RP-10000-INTRO",
+      "name": "10km 페이스 연습 · 2 × 4min",
+      "family": "MIX",
+      "methodGroup": "MIX:RACE_PACE:INTRO",
+      "sourceFingerprint": "sha256:13df1b7a0fdd1bc43caed10506f8569ee730dec36b149d88cd503375ee445b9f",
+      "sequence": {
+        "kind": "PRESCRIPTION_SEQUENCE",
+        "version": 3,
+        "id": "RP-10000-INTRO",
+        "label": null,
+        "warmup": [
+          {
+            "kind": "segment",
+            "id": "warmup-0",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [],
+            "role": "PREPARATION",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 300
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "RPE 2-3"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-1",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 60
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-3",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 60
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          }
+        ],
+        "main": [
+          {
+            "kind": "group",
+            "id": "repetitions",
+            "label": null,
+            "repeatCount": 2,
+            "recoveryBetweenRepeats": [
+              {
+                "mode": "JOG",
+                "seconds": 60
+              }
+            ],
+            "recoveryAfter": [],
+            "repeatUnit": "REPETITION",
+            "children": [
+              {
+                "kind": "segment",
+                "id": "part-0",
+                "label": null,
+                "repeatCount": 1,
+                "recoveryBetweenRepeats": [],
+                "recoveryAfter": [],
+                "role": "WORK",
+                "work": {
+                  "kind": "duration",
+                  "distanceM": null,
+                  "durationSeconds": 240
+                },
+                "target": {
+                  "kind": "EFFORT_GUIDANCE",
+                  "cue": "10km 경기 평균 페이스 연습. 힘들면 낮추거나 중단하며 체감 강도는 따로 기록해요."
+                }
+              }
+            ]
+          }
+        ],
+        "cooldown": [
+          {
+            "kind": "segment",
+            "id": "cooldown-0",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [],
+            "role": "PREPARATION",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 300
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "RPE 1-2"
+            }
+          }
+        ]
+      },
+      "segments": [
+        {
+          "segmentId": "part-0",
+          "intent": "RACE_PACE",
+          "modality": "RUN",
+          "terrain": "FLAT",
+          "referenceEventDistanceM": 10000
+        }
+      ],
+      "eventDistances": [
+        10000
+      ],
+      "experience": [
+        "NEW_TO_RUNNING"
+      ],
+      "requirements": [],
+      "hold": null,
+      "explanation": {
+        "purpose": "10km에서 사용할 평균 속도를 구간별로 고르게 맞추는 연습이에요. 별도의 역치 측정이나 경기력 검사가 아니에요.",
+        "energySupply": "산화 대사와 해당과정 등은 함께 작동해요. 경기 평균 페이스만으로 개인의 역치나 에너지 기여율을 알 수 없어요.",
+        "work": "2 × 4min 구성은 기존 P-INTRO-LT-S의 운동 길이와 반복 수를 그대로 사용해요. 달리는 속도만 같은 종목의 선택한 기록에서 계산해요. 시간형은 시간이 끝나면 구간을 마쳐요.",
+        "recovery": "기존 구성의 반복 사이 60초 조깅을 유지해요. 다음 구간을 준비하는 구분이며 완전 회복을 보장하지 않아요. 기록이 빨라져도 회복을 줄이지 않아요.",
+        "tradeoff": "익숙한 경기 속도를 확인하기 쉽지만, 이 구성을 했다는 사실만으로 해당 경기 거리를 완주하거나 목표를 달성할 수 있다고 판단할 수 없어요.",
+        "expected": "정해진 구간에서 목표 속도를 고르게 유지하는 연습이 목적이에요. 역치 향상이나 특정 기록 단축을 보장하지 않아요.",
+        "limitations": [
+          "실제 기록과 목표기록은 구분해요. 목표는 현재 능력을 뜻하지 않아요.",
+          "RPE 안내는 경기 기록에서 측정한 값이 아니에요. 실제 체감 강도와 수행 결과를 별도로 남겨요.",
+          "다른 종목 예상 기록, 언덕, 가속 구간에는 이 환산을 적용하지 않아요."
+        ],
+        "observation": "당시 목표 페이스, 실제 구간 시간, 반복·회복의 변경과 체감 강도를 비교해요. 차이만으로 특정 능력이 부족하다고 진단하지 않아요."
+      },
+      "sourceRefs": [
+        "specs/reconstruct/SAME_EVENT_RACE_PACE_BINDING_CONTRACT.md",
+        "https://pubmed.ncbi.nlm.nih.gov/10562610/",
+        "specs/reconstruct/TRAINING_TERMINOLOGY_AND_EXPLANATION_SPEC.md",
+        "specs/reconstruct/TRAINING_SESSION_PRESCRIPTION_CONTRACT.md"
+      ],
+      "version": "1.0.0",
+      "reviewRef": "specs/reconstruct/SAME_EVENT_RACE_PACE_BINDING_CONTRACT.md",
+      "fingerprint": "sha256:7632d7304b3252ab8e36d9266f208eba1a1e1586f541478117810f4cd90340c4"
+    },
+    {
+      "id": "RP-10000-TIMED",
+      "name": "10km 페이스 연습 · 3 × 7min",
+      "family": "MIX",
+      "methodGroup": "MIX:RACE_PACE:TIMED",
+      "sourceFingerprint": "sha256:e17bb584fbf8fc1421921f28ba68eaca4231d7e4a25c876809aa00f14da991af",
+      "sequence": {
+        "kind": "PRESCRIPTION_SEQUENCE",
+        "version": 3,
+        "id": "RP-10000-TIMED",
+        "label": null,
+        "warmup": [
+          {
+            "kind": "segment",
+            "id": "warmup-0",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [],
+            "role": "PREPARATION",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 900
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "RPE 2-3"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-1",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 40
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-3",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 40
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-5",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 40
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-7",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 60
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          }
+        ],
+        "main": [
+          {
+            "kind": "group",
+            "id": "repetitions",
+            "label": null,
+            "repeatCount": 3,
+            "recoveryBetweenRepeats": [
+              {
+                "mode": "JOG",
+                "seconds": 60
+              }
+            ],
+            "recoveryAfter": [],
+            "repeatUnit": "REPETITION",
+            "children": [
+              {
+                "kind": "segment",
+                "id": "part-0",
+                "label": null,
+                "repeatCount": 1,
+                "recoveryBetweenRepeats": [],
+                "recoveryAfter": [],
+                "role": "WORK",
+                "work": {
+                  "kind": "duration",
+                  "distanceM": null,
+                  "durationSeconds": 420
+                },
+                "target": {
+                  "kind": "EFFORT_GUIDANCE",
+                  "cue": "10km 경기 평균 페이스 연습. 힘들면 낮추거나 중단하며 체감 강도는 따로 기록해요."
+                }
+              }
+            ]
+          }
+        ],
+        "cooldown": [
+          {
+            "kind": "segment",
+            "id": "cooldown-0",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [],
+            "role": "PREPARATION",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 600
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "RPE 1-2"
+            }
+          }
+        ]
+      },
+      "segments": [
+        {
+          "segmentId": "part-0",
+          "intent": "RACE_PACE",
+          "modality": "RUN",
+          "terrain": "FLAT",
+          "referenceEventDistanceM": 10000
+        }
+      ],
+      "eventDistances": [
+        10000
+      ],
+      "experience": [
+        "DEVELOPING",
+        "EXPERIENCED"
+      ],
+      "requirements": [],
+      "hold": null,
+      "explanation": {
+        "purpose": "10km에서 사용할 평균 속도를 구간별로 고르게 맞추는 연습이에요. 별도의 역치 측정이나 경기력 검사가 아니에요.",
+        "energySupply": "산화 대사와 해당과정 등은 함께 작동해요. 경기 평균 페이스만으로 개인의 역치나 에너지 기여율을 알 수 없어요.",
+        "work": "3 × 7min 구성은 기존 P-LT-S의 운동 길이와 반복 수를 그대로 사용해요. 달리는 속도만 같은 종목의 선택한 기록에서 계산해요. 시간형은 시간이 끝나면 구간을 마쳐요.",
+        "recovery": "기존 구성의 반복 사이 60초 조깅을 유지해요. 다음 구간을 준비하는 구분이며 완전 회복을 보장하지 않아요. 기록이 빨라져도 회복을 줄이지 않아요.",
+        "tradeoff": "익숙한 경기 속도를 확인하기 쉽지만, 이 구성을 했다는 사실만으로 해당 경기 거리를 완주하거나 목표를 달성할 수 있다고 판단할 수 없어요.",
+        "expected": "정해진 구간에서 목표 속도를 고르게 유지하는 연습이 목적이에요. 역치 향상이나 특정 기록 단축을 보장하지 않아요.",
+        "limitations": [
+          "실제 기록과 목표기록은 구분해요. 목표는 현재 능력을 뜻하지 않아요.",
+          "RPE 안내는 경기 기록에서 측정한 값이 아니에요. 실제 체감 강도와 수행 결과를 별도로 남겨요.",
+          "다른 종목 예상 기록, 언덕, 가속 구간에는 이 환산을 적용하지 않아요."
+        ],
+        "observation": "당시 목표 페이스, 실제 구간 시간, 반복·회복의 변경과 체감 강도를 비교해요. 차이만으로 특정 능력이 부족하다고 진단하지 않아요."
+      },
+      "sourceRefs": [
+        "specs/reconstruct/SAME_EVENT_RACE_PACE_BINDING_CONTRACT.md",
+        "https://pubmed.ncbi.nlm.nih.gov/10562610/",
+        "specs/reconstruct/TRAINING_TERMINOLOGY_AND_EXPLANATION_SPEC.md",
+        "specs/reconstruct/TRAINING_SESSION_PRESCRIPTION_CONTRACT.md"
+      ],
+      "version": "1.0.0",
+      "reviewRef": "specs/reconstruct/SAME_EVENT_RACE_PACE_BINDING_CONTRACT.md",
+      "fingerprint": "sha256:f0c9635768b86b4febcf916b7eb13d331041aa72934951e9a17a7e67b24837e2"
+    },
+    {
+      "id": "RP-10000-DISTANCE",
+      "name": "10km 페이스 연습 · 5 × 1km",
+      "family": "MIX",
+      "methodGroup": "MIX:RACE_PACE:DISTANCE",
+      "sourceFingerprint": "sha256:30190ae228a0af74588c07aca3aa61a97b3f6bae45389660f29df210480e4927",
+      "sequence": {
+        "kind": "PRESCRIPTION_SEQUENCE",
+        "version": 3,
+        "id": "RP-10000-DISTANCE",
+        "label": null,
+        "warmup": [
+          {
+            "kind": "segment",
+            "id": "warmup-0",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [],
+            "role": "PREPARATION",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 900
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "RPE 2-3"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-1",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 40
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-3",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 40
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-5",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 40
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-7",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 60
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          }
+        ],
+        "main": [
+          {
+            "kind": "group",
+            "id": "X-LT-01-1",
+            "label": null,
+            "repeatCount": 5,
+            "recoveryBetweenRepeats": [
+              {
+                "mode": "JOG",
+                "seconds": 60
+              }
+            ],
+            "recoveryAfter": [],
+            "repeatUnit": "REPETITION",
+            "children": [
+              {
+                "kind": "segment",
+                "id": "X-LT-01-1-1",
+                "label": null,
+                "repeatCount": 1,
+                "recoveryBetweenRepeats": [],
+                "recoveryAfter": [],
+                "role": "WORK",
+                "work": {
+                  "kind": "distance",
+                  "distanceM": 1000,
+                  "durationSeconds": null
+                },
+                "target": {
+                  "kind": "EFFORT_GUIDANCE",
+                  "cue": "10km 경기 평균 페이스 연습. 힘들면 낮추거나 중단하며 체감 강도는 따로 기록해요."
+                }
+              }
+            ]
+          }
+        ],
+        "cooldown": [
+          {
+            "kind": "segment",
+            "id": "cooldown-0",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [],
+            "role": "PREPARATION",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 600
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "RPE 1-2"
+            }
+          }
+        ]
+      },
+      "segments": [
+        {
+          "segmentId": "X-LT-01-1-1",
+          "intent": "RACE_PACE",
+          "modality": "RUN",
+          "terrain": "FLAT",
+          "referenceEventDistanceM": 10000
+        }
+      ],
+      "eventDistances": [
+        10000
+      ],
+      "experience": [
+        "EXPERIENCED"
+      ],
+      "requirements": [],
+      "hold": null,
+      "explanation": {
+        "purpose": "10km에서 사용할 평균 속도를 구간별로 고르게 맞추는 연습이에요. 별도의 역치 측정이나 경기력 검사가 아니에요.",
+        "energySupply": "산화 대사와 해당과정 등은 함께 작동해요. 경기 평균 페이스만으로 개인의 역치나 에너지 기여율을 알 수 없어요.",
+        "work": "5 × 1km 구성은 기존 X-LT-01의 운동 길이와 반복 수를 그대로 사용해요. 달리는 속도만 같은 종목의 선택한 기록에서 계산해요. 시간형은 시간이 끝나면 구간을 마쳐요.",
+        "recovery": "기존 구성의 반복 사이 60초 조깅을 유지해요. 다음 구간을 준비하는 구분이며 완전 회복을 보장하지 않아요. 기록이 빨라져도 회복을 줄이지 않아요.",
+        "tradeoff": "익숙한 경기 속도를 확인하기 쉽지만, 이 구성을 했다는 사실만으로 해당 경기 거리를 완주하거나 목표를 달성할 수 있다고 판단할 수 없어요.",
+        "expected": "정해진 구간에서 목표 속도를 고르게 유지하는 연습이 목적이에요. 역치 향상이나 특정 기록 단축을 보장하지 않아요.",
+        "limitations": [
+          "실제 기록과 목표기록은 구분해요. 목표는 현재 능력을 뜻하지 않아요.",
+          "RPE 안내는 경기 기록에서 측정한 값이 아니에요. 실제 체감 강도와 수행 결과를 별도로 남겨요.",
+          "다른 종목 예상 기록, 언덕, 가속 구간에는 이 환산을 적용하지 않아요."
+        ],
+        "observation": "당시 목표 페이스, 실제 구간 시간, 반복·회복의 변경과 체감 강도를 비교해요. 차이만으로 특정 능력이 부족하다고 진단하지 않아요."
+      },
+      "sourceRefs": [
+        "specs/reconstruct/SAME_EVENT_RACE_PACE_BINDING_CONTRACT.md",
+        "https://support.vdoto2.com/2017/12/whats-threshold-pace/"
+      ],
+      "version": "1.0.0",
+      "reviewRef": "specs/reconstruct/SAME_EVENT_RACE_PACE_BINDING_CONTRACT.md",
+      "fingerprint": "sha256:6b18353561f84fbf72a79c57dac175a3650baff0451ccc945dd6311886f3cd56"
+    },
+    {
+      "id": "RP-HALF-INTRO",
+      "name": "하프 페이스 연습 · 2 × 4min",
+      "family": "MIX",
+      "methodGroup": "MIX:RACE_PACE:INTRO",
+      "sourceFingerprint": "sha256:13df1b7a0fdd1bc43caed10506f8569ee730dec36b149d88cd503375ee445b9f",
+      "sequence": {
+        "kind": "PRESCRIPTION_SEQUENCE",
+        "version": 3,
+        "id": "RP-HALF-INTRO",
+        "label": null,
+        "warmup": [
+          {
+            "kind": "segment",
+            "id": "warmup-0",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [],
+            "role": "PREPARATION",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 300
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "RPE 2-3"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-1",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 60
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-3",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 60
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          }
+        ],
+        "main": [
+          {
+            "kind": "group",
+            "id": "repetitions",
+            "label": null,
+            "repeatCount": 2,
+            "recoveryBetweenRepeats": [
+              {
+                "mode": "JOG",
+                "seconds": 60
+              }
+            ],
+            "recoveryAfter": [],
+            "repeatUnit": "REPETITION",
+            "children": [
+              {
+                "kind": "segment",
+                "id": "part-0",
+                "label": null,
+                "repeatCount": 1,
+                "recoveryBetweenRepeats": [],
+                "recoveryAfter": [],
+                "role": "WORK",
+                "work": {
+                  "kind": "duration",
+                  "distanceM": null,
+                  "durationSeconds": 240
+                },
+                "target": {
+                  "kind": "EFFORT_GUIDANCE",
+                  "cue": "하프 경기 평균 페이스 연습. 힘들면 낮추거나 중단하며 체감 강도는 따로 기록해요."
+                }
+              }
+            ]
+          }
+        ],
+        "cooldown": [
+          {
+            "kind": "segment",
+            "id": "cooldown-0",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [],
+            "role": "PREPARATION",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 300
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "RPE 1-2"
+            }
+          }
+        ]
+      },
+      "segments": [
+        {
+          "segmentId": "part-0",
+          "intent": "RACE_PACE",
+          "modality": "RUN",
+          "terrain": "FLAT",
+          "referenceEventDistanceM": 21097.5
+        }
+      ],
+      "eventDistances": [
+        21097.5
+      ],
+      "experience": [
+        "NEW_TO_RUNNING"
+      ],
+      "requirements": [],
+      "hold": null,
+      "explanation": {
+        "purpose": "하프에서 사용할 평균 속도를 구간별로 고르게 맞추는 연습이에요. 별도의 역치 측정이나 경기력 검사가 아니에요.",
+        "energySupply": "산화 대사와 해당과정 등은 함께 작동해요. 경기 평균 페이스만으로 개인의 역치나 에너지 기여율을 알 수 없어요.",
+        "work": "2 × 4min 구성은 기존 P-INTRO-LT-S의 운동 길이와 반복 수를 그대로 사용해요. 달리는 속도만 같은 종목의 선택한 기록에서 계산해요. 시간형은 시간이 끝나면 구간을 마쳐요.",
+        "recovery": "기존 구성의 반복 사이 60초 조깅을 유지해요. 다음 구간을 준비하는 구분이며 완전 회복을 보장하지 않아요. 기록이 빨라져도 회복을 줄이지 않아요.",
+        "tradeoff": "익숙한 경기 속도를 확인하기 쉽지만, 이 구성을 했다는 사실만으로 해당 경기 거리를 완주하거나 목표를 달성할 수 있다고 판단할 수 없어요.",
+        "expected": "정해진 구간에서 목표 속도를 고르게 유지하는 연습이 목적이에요. 역치 향상이나 특정 기록 단축을 보장하지 않아요.",
+        "limitations": [
+          "실제 기록과 목표기록은 구분해요. 목표는 현재 능력을 뜻하지 않아요.",
+          "RPE 안내는 경기 기록에서 측정한 값이 아니에요. 실제 체감 강도와 수행 결과를 별도로 남겨요.",
+          "다른 종목 예상 기록, 언덕, 가속 구간에는 이 환산을 적용하지 않아요."
+        ],
+        "observation": "당시 목표 페이스, 실제 구간 시간, 반복·회복의 변경과 체감 강도를 비교해요. 차이만으로 특정 능력이 부족하다고 진단하지 않아요."
+      },
+      "sourceRefs": [
+        "specs/reconstruct/SAME_EVENT_RACE_PACE_BINDING_CONTRACT.md",
+        "https://pubmed.ncbi.nlm.nih.gov/10562610/",
+        "specs/reconstruct/TRAINING_TERMINOLOGY_AND_EXPLANATION_SPEC.md",
+        "specs/reconstruct/TRAINING_SESSION_PRESCRIPTION_CONTRACT.md"
+      ],
+      "version": "1.0.0",
+      "reviewRef": "specs/reconstruct/SAME_EVENT_RACE_PACE_BINDING_CONTRACT.md",
+      "fingerprint": "sha256:1913374abc9a152004e1afb489c90e3f0539b7067e23690d91e27a48451756b6"
+    },
+    {
+      "id": "RP-HALF-TIMED",
+      "name": "하프 페이스 연습 · 3 × 7min",
+      "family": "MIX",
+      "methodGroup": "MIX:RACE_PACE:TIMED",
+      "sourceFingerprint": "sha256:e17bb584fbf8fc1421921f28ba68eaca4231d7e4a25c876809aa00f14da991af",
+      "sequence": {
+        "kind": "PRESCRIPTION_SEQUENCE",
+        "version": 3,
+        "id": "RP-HALF-TIMED",
+        "label": null,
+        "warmup": [
+          {
+            "kind": "segment",
+            "id": "warmup-0",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [],
+            "role": "PREPARATION",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 900
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "RPE 2-3"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-1",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 40
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-3",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 40
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-5",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 40
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-7",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 60
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          }
+        ],
+        "main": [
+          {
+            "kind": "group",
+            "id": "repetitions",
+            "label": null,
+            "repeatCount": 3,
+            "recoveryBetweenRepeats": [
+              {
+                "mode": "JOG",
+                "seconds": 60
+              }
+            ],
+            "recoveryAfter": [],
+            "repeatUnit": "REPETITION",
+            "children": [
+              {
+                "kind": "segment",
+                "id": "part-0",
+                "label": null,
+                "repeatCount": 1,
+                "recoveryBetweenRepeats": [],
+                "recoveryAfter": [],
+                "role": "WORK",
+                "work": {
+                  "kind": "duration",
+                  "distanceM": null,
+                  "durationSeconds": 420
+                },
+                "target": {
+                  "kind": "EFFORT_GUIDANCE",
+                  "cue": "하프 경기 평균 페이스 연습. 힘들면 낮추거나 중단하며 체감 강도는 따로 기록해요."
+                }
+              }
+            ]
+          }
+        ],
+        "cooldown": [
+          {
+            "kind": "segment",
+            "id": "cooldown-0",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [],
+            "role": "PREPARATION",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 600
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "RPE 1-2"
+            }
+          }
+        ]
+      },
+      "segments": [
+        {
+          "segmentId": "part-0",
+          "intent": "RACE_PACE",
+          "modality": "RUN",
+          "terrain": "FLAT",
+          "referenceEventDistanceM": 21097.5
+        }
+      ],
+      "eventDistances": [
+        21097.5
+      ],
+      "experience": [
+        "DEVELOPING",
+        "EXPERIENCED"
+      ],
+      "requirements": [],
+      "hold": null,
+      "explanation": {
+        "purpose": "하프에서 사용할 평균 속도를 구간별로 고르게 맞추는 연습이에요. 별도의 역치 측정이나 경기력 검사가 아니에요.",
+        "energySupply": "산화 대사와 해당과정 등은 함께 작동해요. 경기 평균 페이스만으로 개인의 역치나 에너지 기여율을 알 수 없어요.",
+        "work": "3 × 7min 구성은 기존 P-LT-S의 운동 길이와 반복 수를 그대로 사용해요. 달리는 속도만 같은 종목의 선택한 기록에서 계산해요. 시간형은 시간이 끝나면 구간을 마쳐요.",
+        "recovery": "기존 구성의 반복 사이 60초 조깅을 유지해요. 다음 구간을 준비하는 구분이며 완전 회복을 보장하지 않아요. 기록이 빨라져도 회복을 줄이지 않아요.",
+        "tradeoff": "익숙한 경기 속도를 확인하기 쉽지만, 이 구성을 했다는 사실만으로 해당 경기 거리를 완주하거나 목표를 달성할 수 있다고 판단할 수 없어요.",
+        "expected": "정해진 구간에서 목표 속도를 고르게 유지하는 연습이 목적이에요. 역치 향상이나 특정 기록 단축을 보장하지 않아요.",
+        "limitations": [
+          "실제 기록과 목표기록은 구분해요. 목표는 현재 능력을 뜻하지 않아요.",
+          "RPE 안내는 경기 기록에서 측정한 값이 아니에요. 실제 체감 강도와 수행 결과를 별도로 남겨요.",
+          "다른 종목 예상 기록, 언덕, 가속 구간에는 이 환산을 적용하지 않아요."
+        ],
+        "observation": "당시 목표 페이스, 실제 구간 시간, 반복·회복의 변경과 체감 강도를 비교해요. 차이만으로 특정 능력이 부족하다고 진단하지 않아요."
+      },
+      "sourceRefs": [
+        "specs/reconstruct/SAME_EVENT_RACE_PACE_BINDING_CONTRACT.md",
+        "https://pubmed.ncbi.nlm.nih.gov/10562610/",
+        "specs/reconstruct/TRAINING_TERMINOLOGY_AND_EXPLANATION_SPEC.md",
+        "specs/reconstruct/TRAINING_SESSION_PRESCRIPTION_CONTRACT.md"
+      ],
+      "version": "1.0.0",
+      "reviewRef": "specs/reconstruct/SAME_EVENT_RACE_PACE_BINDING_CONTRACT.md",
+      "fingerprint": "sha256:d6dfb13d80263107df90579eefe0135e11e181311eaa1478d2c23f4701579221"
+    },
+    {
+      "id": "RP-HALF-DISTANCE",
+      "name": "하프 페이스 연습 · 5 × 1km",
+      "family": "MIX",
+      "methodGroup": "MIX:RACE_PACE:DISTANCE",
+      "sourceFingerprint": "sha256:30190ae228a0af74588c07aca3aa61a97b3f6bae45389660f29df210480e4927",
+      "sequence": {
+        "kind": "PRESCRIPTION_SEQUENCE",
+        "version": 3,
+        "id": "RP-HALF-DISTANCE",
+        "label": null,
+        "warmup": [
+          {
+            "kind": "segment",
+            "id": "warmup-0",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [],
+            "role": "PREPARATION",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 900
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "RPE 2-3"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-1",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 40
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-3",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 40
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-5",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 40
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-7",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 60
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          }
+        ],
+        "main": [
+          {
+            "kind": "group",
+            "id": "X-LT-01-1",
+            "label": null,
+            "repeatCount": 5,
+            "recoveryBetweenRepeats": [
+              {
+                "mode": "JOG",
+                "seconds": 60
+              }
+            ],
+            "recoveryAfter": [],
+            "repeatUnit": "REPETITION",
+            "children": [
+              {
+                "kind": "segment",
+                "id": "X-LT-01-1-1",
+                "label": null,
+                "repeatCount": 1,
+                "recoveryBetweenRepeats": [],
+                "recoveryAfter": [],
+                "role": "WORK",
+                "work": {
+                  "kind": "distance",
+                  "distanceM": 1000,
+                  "durationSeconds": null
+                },
+                "target": {
+                  "kind": "EFFORT_GUIDANCE",
+                  "cue": "하프 경기 평균 페이스 연습. 힘들면 낮추거나 중단하며 체감 강도는 따로 기록해요."
+                }
+              }
+            ]
+          }
+        ],
+        "cooldown": [
+          {
+            "kind": "segment",
+            "id": "cooldown-0",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [],
+            "role": "PREPARATION",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 600
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "RPE 1-2"
+            }
+          }
+        ]
+      },
+      "segments": [
+        {
+          "segmentId": "X-LT-01-1-1",
+          "intent": "RACE_PACE",
+          "modality": "RUN",
+          "terrain": "FLAT",
+          "referenceEventDistanceM": 21097.5
+        }
+      ],
+      "eventDistances": [
+        21097.5
+      ],
+      "experience": [
+        "EXPERIENCED"
+      ],
+      "requirements": [],
+      "hold": null,
+      "explanation": {
+        "purpose": "하프에서 사용할 평균 속도를 구간별로 고르게 맞추는 연습이에요. 별도의 역치 측정이나 경기력 검사가 아니에요.",
+        "energySupply": "산화 대사와 해당과정 등은 함께 작동해요. 경기 평균 페이스만으로 개인의 역치나 에너지 기여율을 알 수 없어요.",
+        "work": "5 × 1km 구성은 기존 X-LT-01의 운동 길이와 반복 수를 그대로 사용해요. 달리는 속도만 같은 종목의 선택한 기록에서 계산해요. 시간형은 시간이 끝나면 구간을 마쳐요.",
+        "recovery": "기존 구성의 반복 사이 60초 조깅을 유지해요. 다음 구간을 준비하는 구분이며 완전 회복을 보장하지 않아요. 기록이 빨라져도 회복을 줄이지 않아요.",
+        "tradeoff": "익숙한 경기 속도를 확인하기 쉽지만, 이 구성을 했다는 사실만으로 해당 경기 거리를 완주하거나 목표를 달성할 수 있다고 판단할 수 없어요.",
+        "expected": "정해진 구간에서 목표 속도를 고르게 유지하는 연습이 목적이에요. 역치 향상이나 특정 기록 단축을 보장하지 않아요.",
+        "limitations": [
+          "실제 기록과 목표기록은 구분해요. 목표는 현재 능력을 뜻하지 않아요.",
+          "RPE 안내는 경기 기록에서 측정한 값이 아니에요. 실제 체감 강도와 수행 결과를 별도로 남겨요.",
+          "다른 종목 예상 기록, 언덕, 가속 구간에는 이 환산을 적용하지 않아요."
+        ],
+        "observation": "당시 목표 페이스, 실제 구간 시간, 반복·회복의 변경과 체감 강도를 비교해요. 차이만으로 특정 능력이 부족하다고 진단하지 않아요."
+      },
+      "sourceRefs": [
+        "specs/reconstruct/SAME_EVENT_RACE_PACE_BINDING_CONTRACT.md",
+        "https://support.vdoto2.com/2017/12/whats-threshold-pace/"
+      ],
+      "version": "1.0.0",
+      "reviewRef": "specs/reconstruct/SAME_EVENT_RACE_PACE_BINDING_CONTRACT.md",
+      "fingerprint": "sha256:190fd8336bed10efdc247e4eb680ca8212999806a35ebed8ceb6fe2a93cf3d8f"
+    },
+    {
+      "id": "RP-42195-INTRO",
+      "name": "마라톤 페이스 연습 · 2 × 4min",
+      "family": "MIX",
+      "methodGroup": "MIX:RACE_PACE:INTRO",
+      "sourceFingerprint": "sha256:13df1b7a0fdd1bc43caed10506f8569ee730dec36b149d88cd503375ee445b9f",
+      "sequence": {
+        "kind": "PRESCRIPTION_SEQUENCE",
+        "version": 3,
+        "id": "RP-42195-INTRO",
+        "label": null,
+        "warmup": [
+          {
+            "kind": "segment",
+            "id": "warmup-0",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [],
+            "role": "PREPARATION",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 300
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "RPE 2-3"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-1",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 60
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-3",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 60
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          }
+        ],
+        "main": [
+          {
+            "kind": "group",
+            "id": "repetitions",
+            "label": null,
+            "repeatCount": 2,
+            "recoveryBetweenRepeats": [
+              {
+                "mode": "JOG",
+                "seconds": 60
+              }
+            ],
+            "recoveryAfter": [],
+            "repeatUnit": "REPETITION",
+            "children": [
+              {
+                "kind": "segment",
+                "id": "part-0",
+                "label": null,
+                "repeatCount": 1,
+                "recoveryBetweenRepeats": [],
+                "recoveryAfter": [],
+                "role": "WORK",
+                "work": {
+                  "kind": "duration",
+                  "distanceM": null,
+                  "durationSeconds": 240
+                },
+                "target": {
+                  "kind": "EFFORT_GUIDANCE",
+                  "cue": "마라톤 경기 평균 페이스 연습. 힘들면 낮추거나 중단하며 체감 강도는 따로 기록해요."
+                }
+              }
+            ]
+          }
+        ],
+        "cooldown": [
+          {
+            "kind": "segment",
+            "id": "cooldown-0",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [],
+            "role": "PREPARATION",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 300
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "RPE 1-2"
+            }
+          }
+        ]
+      },
+      "segments": [
+        {
+          "segmentId": "part-0",
+          "intent": "RACE_PACE",
+          "modality": "RUN",
+          "terrain": "FLAT",
+          "referenceEventDistanceM": 42195
+        }
+      ],
+      "eventDistances": [
+        42195
+      ],
+      "experience": [
+        "NEW_TO_RUNNING"
+      ],
+      "requirements": [],
+      "hold": null,
+      "explanation": {
+        "purpose": "마라톤에서 사용할 평균 속도를 구간별로 고르게 맞추는 연습이에요. 별도의 역치 측정이나 경기력 검사가 아니에요.",
+        "energySupply": "산화 대사와 해당과정 등은 함께 작동해요. 경기 평균 페이스만으로 개인의 역치나 에너지 기여율을 알 수 없어요.",
+        "work": "2 × 4min 구성은 기존 P-INTRO-LT-S의 운동 길이와 반복 수를 그대로 사용해요. 달리는 속도만 같은 종목의 선택한 기록에서 계산해요. 시간형은 시간이 끝나면 구간을 마쳐요.",
+        "recovery": "기존 구성의 반복 사이 60초 조깅을 유지해요. 다음 구간을 준비하는 구분이며 완전 회복을 보장하지 않아요. 기록이 빨라져도 회복을 줄이지 않아요.",
+        "tradeoff": "익숙한 경기 속도를 확인하기 쉽지만, 이 구성을 했다는 사실만으로 해당 경기 거리를 완주하거나 목표를 달성할 수 있다고 판단할 수 없어요.",
+        "expected": "정해진 구간에서 목표 속도를 고르게 유지하는 연습이 목적이에요. 역치 향상이나 특정 기록 단축을 보장하지 않아요.",
+        "limitations": [
+          "실제 기록과 목표기록은 구분해요. 목표는 현재 능력을 뜻하지 않아요.",
+          "RPE 안내는 경기 기록에서 측정한 값이 아니에요. 실제 체감 강도와 수행 결과를 별도로 남겨요.",
+          "다른 종목 예상 기록, 언덕, 가속 구간에는 이 환산을 적용하지 않아요."
+        ],
+        "observation": "당시 목표 페이스, 실제 구간 시간, 반복·회복의 변경과 체감 강도를 비교해요. 차이만으로 특정 능력이 부족하다고 진단하지 않아요."
+      },
+      "sourceRefs": [
+        "specs/reconstruct/SAME_EVENT_RACE_PACE_BINDING_CONTRACT.md",
+        "https://pubmed.ncbi.nlm.nih.gov/10562610/",
+        "specs/reconstruct/TRAINING_TERMINOLOGY_AND_EXPLANATION_SPEC.md",
+        "specs/reconstruct/TRAINING_SESSION_PRESCRIPTION_CONTRACT.md"
+      ],
+      "version": "1.0.0",
+      "reviewRef": "specs/reconstruct/SAME_EVENT_RACE_PACE_BINDING_CONTRACT.md",
+      "fingerprint": "sha256:bfc88a246c6477f3e0ccc1d273a0c63f0c85519f38eec550fd90e1b499983367"
+    },
+    {
+      "id": "RP-42195-TIMED",
+      "name": "마라톤 페이스 연습 · 3 × 7min",
+      "family": "MIX",
+      "methodGroup": "MIX:RACE_PACE:TIMED",
+      "sourceFingerprint": "sha256:e17bb584fbf8fc1421921f28ba68eaca4231d7e4a25c876809aa00f14da991af",
+      "sequence": {
+        "kind": "PRESCRIPTION_SEQUENCE",
+        "version": 3,
+        "id": "RP-42195-TIMED",
+        "label": null,
+        "warmup": [
+          {
+            "kind": "segment",
+            "id": "warmup-0",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [],
+            "role": "PREPARATION",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 900
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "RPE 2-3"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-1",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 40
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-3",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 40
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-5",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 40
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-7",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 60
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          }
+        ],
+        "main": [
+          {
+            "kind": "group",
+            "id": "repetitions",
+            "label": null,
+            "repeatCount": 3,
+            "recoveryBetweenRepeats": [
+              {
+                "mode": "JOG",
+                "seconds": 60
+              }
+            ],
+            "recoveryAfter": [],
+            "repeatUnit": "REPETITION",
+            "children": [
+              {
+                "kind": "segment",
+                "id": "part-0",
+                "label": null,
+                "repeatCount": 1,
+                "recoveryBetweenRepeats": [],
+                "recoveryAfter": [],
+                "role": "WORK",
+                "work": {
+                  "kind": "duration",
+                  "distanceM": null,
+                  "durationSeconds": 420
+                },
+                "target": {
+                  "kind": "EFFORT_GUIDANCE",
+                  "cue": "마라톤 경기 평균 페이스 연습. 힘들면 낮추거나 중단하며 체감 강도는 따로 기록해요."
+                }
+              }
+            ]
+          }
+        ],
+        "cooldown": [
+          {
+            "kind": "segment",
+            "id": "cooldown-0",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [],
+            "role": "PREPARATION",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 600
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "RPE 1-2"
+            }
+          }
+        ]
+      },
+      "segments": [
+        {
+          "segmentId": "part-0",
+          "intent": "RACE_PACE",
+          "modality": "RUN",
+          "terrain": "FLAT",
+          "referenceEventDistanceM": 42195
+        }
+      ],
+      "eventDistances": [
+        42195
+      ],
+      "experience": [
+        "DEVELOPING",
+        "EXPERIENCED"
+      ],
+      "requirements": [],
+      "hold": null,
+      "explanation": {
+        "purpose": "마라톤에서 사용할 평균 속도를 구간별로 고르게 맞추는 연습이에요. 별도의 역치 측정이나 경기력 검사가 아니에요.",
+        "energySupply": "산화 대사와 해당과정 등은 함께 작동해요. 경기 평균 페이스만으로 개인의 역치나 에너지 기여율을 알 수 없어요.",
+        "work": "3 × 7min 구성은 기존 P-LT-S의 운동 길이와 반복 수를 그대로 사용해요. 달리는 속도만 같은 종목의 선택한 기록에서 계산해요. 시간형은 시간이 끝나면 구간을 마쳐요.",
+        "recovery": "기존 구성의 반복 사이 60초 조깅을 유지해요. 다음 구간을 준비하는 구분이며 완전 회복을 보장하지 않아요. 기록이 빨라져도 회복을 줄이지 않아요.",
+        "tradeoff": "익숙한 경기 속도를 확인하기 쉽지만, 이 구성을 했다는 사실만으로 해당 경기 거리를 완주하거나 목표를 달성할 수 있다고 판단할 수 없어요.",
+        "expected": "정해진 구간에서 목표 속도를 고르게 유지하는 연습이 목적이에요. 역치 향상이나 특정 기록 단축을 보장하지 않아요.",
+        "limitations": [
+          "실제 기록과 목표기록은 구분해요. 목표는 현재 능력을 뜻하지 않아요.",
+          "RPE 안내는 경기 기록에서 측정한 값이 아니에요. 실제 체감 강도와 수행 결과를 별도로 남겨요.",
+          "다른 종목 예상 기록, 언덕, 가속 구간에는 이 환산을 적용하지 않아요."
+        ],
+        "observation": "당시 목표 페이스, 실제 구간 시간, 반복·회복의 변경과 체감 강도를 비교해요. 차이만으로 특정 능력이 부족하다고 진단하지 않아요."
+      },
+      "sourceRefs": [
+        "specs/reconstruct/SAME_EVENT_RACE_PACE_BINDING_CONTRACT.md",
+        "https://pubmed.ncbi.nlm.nih.gov/10562610/",
+        "specs/reconstruct/TRAINING_TERMINOLOGY_AND_EXPLANATION_SPEC.md",
+        "specs/reconstruct/TRAINING_SESSION_PRESCRIPTION_CONTRACT.md"
+      ],
+      "version": "1.0.0",
+      "reviewRef": "specs/reconstruct/SAME_EVENT_RACE_PACE_BINDING_CONTRACT.md",
+      "fingerprint": "sha256:292b864d07f620d30ad6c92899a2ab4f3ccb74148e2bfc2cf18cf5ae0ff241fd"
+    },
+    {
+      "id": "RP-42195-DISTANCE",
+      "name": "마라톤 페이스 연습 · 5 × 1km",
+      "family": "MIX",
+      "methodGroup": "MIX:RACE_PACE:DISTANCE",
+      "sourceFingerprint": "sha256:30190ae228a0af74588c07aca3aa61a97b3f6bae45389660f29df210480e4927",
+      "sequence": {
+        "kind": "PRESCRIPTION_SEQUENCE",
+        "version": 3,
+        "id": "RP-42195-DISTANCE",
+        "label": null,
+        "warmup": [
+          {
+            "kind": "segment",
+            "id": "warmup-0",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [],
+            "role": "PREPARATION",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 900
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "RPE 2-3"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-1",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 40
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-3",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 40
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-5",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 40
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          },
+          {
+            "kind": "segment",
+            "id": "warmup-7",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [
+              {
+                "mode": "WALK",
+                "seconds": 60
+              }
+            ],
+            "role": "BUILDUP",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 20
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "PROGRESSIVE_NOT_ALL_OUT"
+            }
+          }
+        ],
+        "main": [
+          {
+            "kind": "group",
+            "id": "X-LT-01-1",
+            "label": null,
+            "repeatCount": 5,
+            "recoveryBetweenRepeats": [
+              {
+                "mode": "JOG",
+                "seconds": 60
+              }
+            ],
+            "recoveryAfter": [],
+            "repeatUnit": "REPETITION",
+            "children": [
+              {
+                "kind": "segment",
+                "id": "X-LT-01-1-1",
+                "label": null,
+                "repeatCount": 1,
+                "recoveryBetweenRepeats": [],
+                "recoveryAfter": [],
+                "role": "WORK",
+                "work": {
+                  "kind": "distance",
+                  "distanceM": 1000,
+                  "durationSeconds": null
+                },
+                "target": {
+                  "kind": "EFFORT_GUIDANCE",
+                  "cue": "마라톤 경기 평균 페이스 연습. 힘들면 낮추거나 중단하며 체감 강도는 따로 기록해요."
+                }
+              }
+            ]
+          }
+        ],
+        "cooldown": [
+          {
+            "kind": "segment",
+            "id": "cooldown-0",
+            "label": null,
+            "repeatCount": 1,
+            "recoveryBetweenRepeats": [],
+            "recoveryAfter": [],
+            "role": "PREPARATION",
+            "work": {
+              "kind": "duration",
+              "distanceM": null,
+              "durationSeconds": 600
+            },
+            "target": {
+              "kind": "EFFORT_GUIDANCE",
+              "cue": "RPE 1-2"
+            }
+          }
+        ]
+      },
+      "segments": [
+        {
+          "segmentId": "X-LT-01-1-1",
+          "intent": "RACE_PACE",
+          "modality": "RUN",
+          "terrain": "FLAT",
+          "referenceEventDistanceM": 42195
+        }
+      ],
+      "eventDistances": [
+        42195
+      ],
+      "experience": [
+        "EXPERIENCED"
+      ],
+      "requirements": [],
+      "hold": null,
+      "explanation": {
+        "purpose": "마라톤에서 사용할 평균 속도를 구간별로 고르게 맞추는 연습이에요. 별도의 역치 측정이나 경기력 검사가 아니에요.",
+        "energySupply": "산화 대사와 해당과정 등은 함께 작동해요. 경기 평균 페이스만으로 개인의 역치나 에너지 기여율을 알 수 없어요.",
+        "work": "5 × 1km 구성은 기존 X-LT-01의 운동 길이와 반복 수를 그대로 사용해요. 달리는 속도만 같은 종목의 선택한 기록에서 계산해요. 시간형은 시간이 끝나면 구간을 마쳐요.",
+        "recovery": "기존 구성의 반복 사이 60초 조깅을 유지해요. 다음 구간을 준비하는 구분이며 완전 회복을 보장하지 않아요. 기록이 빨라져도 회복을 줄이지 않아요.",
+        "tradeoff": "익숙한 경기 속도를 확인하기 쉽지만, 이 구성을 했다는 사실만으로 해당 경기 거리를 완주하거나 목표를 달성할 수 있다고 판단할 수 없어요.",
+        "expected": "정해진 구간에서 목표 속도를 고르게 유지하는 연습이 목적이에요. 역치 향상이나 특정 기록 단축을 보장하지 않아요.",
+        "limitations": [
+          "실제 기록과 목표기록은 구분해요. 목표는 현재 능력을 뜻하지 않아요.",
+          "RPE 안내는 경기 기록에서 측정한 값이 아니에요. 실제 체감 강도와 수행 결과를 별도로 남겨요.",
+          "다른 종목 예상 기록, 언덕, 가속 구간에는 이 환산을 적용하지 않아요."
+        ],
+        "observation": "당시 목표 페이스, 실제 구간 시간, 반복·회복의 변경과 체감 강도를 비교해요. 차이만으로 특정 능력이 부족하다고 진단하지 않아요."
+      },
+      "sourceRefs": [
+        "specs/reconstruct/SAME_EVENT_RACE_PACE_BINDING_CONTRACT.md",
+        "https://support.vdoto2.com/2017/12/whats-threshold-pace/"
+      ],
+      "version": "1.0.0",
+      "reviewRef": "specs/reconstruct/SAME_EVENT_RACE_PACE_BINDING_CONTRACT.md",
+      "fingerprint": "sha256:5fa5c3bb143a04b30d5d9d6ccee9c2626337bef82b9e50fe55b249a8d76b60b1"
     }
   ]
 }

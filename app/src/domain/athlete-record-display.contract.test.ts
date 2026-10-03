@@ -163,9 +163,9 @@ describe("athlete-record-display / 시즌 창 (스펙 §5)", () => {
 
     expect(SEASON_WINDOW_MONTHS).toBe(18)
     expect(exactly18.withinWindow).toBe(true)
-    expect(exactly18.label).toBe("시즌 범위 안 (1년 6개월 전)")
+    expect(exactly18.label).toBe("기존 시즌 2026 · 1년 6개월 전")
     expect(at19.withinWindow).toBe(false)
-    expect(at19.label).toBe("시즌 범위 밖 (1년 7개월 전)")
+    expect(at19.label).toBe("기존 시즌 2026 · 1년 7개월 전")
   })
 
   // A-9. 스펙 §5: "저장, 선택, 계산 가능 여부를 반환하지 않는다."
@@ -185,7 +185,7 @@ describe("athlete-record-display / 시즌 창 (스펙 §5)", () => {
     const broken = seasonWindowLabel(seasonBest("2025-13-99"), TODAY)
 
     expect(broken.withinWindow).toBe(false)
-    expect(broken.label).toBe("시즌 범위 밖 (날짜 확인 필요)")
+    expect(broken.label).toBe("기존 시즌 2026 · 날짜 확인 필요")
   })
 })
 

@@ -9,6 +9,8 @@ import { validateAccountPlanCollectionIndex, validateAccountPlanCollectionEntry,
 import { prepareAccountPlanCollectionTransfer, transferAccountPlanCollection,
   } from "./account-plan-collection-transfer"
 import { accountPlanJournalGuardSchema, type AccountPlanJournalGuard } from "./account-plan-collection-transfer"
+import { accountPlanPaceRecordGuardSchema, type AccountPlanPaceRecordGuard } from "./account-plan-collection-transfer"
+import { captureAccountPlanPaceSource, accountPlanPaceSourceStillCurrent } from "./account-plan-pace-source"
 import { accountPlanEntry, accountPlanFingerprint, emptyAccountPlanDocument, validateAccountPlanDocument,
   validateAccountPlanPacket, type AccountPlanDocument, type AccountPlanEntry, type AccountPlanPacket } from "./account-plan-document-schema"
 import { readAccountPlanEntry, createAccountPlanService, accountPlanDocumentId, type AccountPlanService,
@@ -339,14 +341,16 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
   }
   async function save(base: AccountPlanDocument, next: AccountPlanDocument, sequence: number,
     review: () => boolean = () => false, migration?: AccountPlanCollectionLegacy,
-    guard: () => boolean = () => true, allowedLegacySource?: string, journalGuard?: AccountPlanJournalGuard): Promise<AccountPlanResult> {
+    guard: () => boolean = () => true, allowedLegacySource?: string, journalGuard?: AccountPlanJournalGuard,
+    paceRecordGuard?: AccountPlanPaceRecordGuard): Promise<AccountPlanResult> {
     if (next.data.plans.length > 100) return "CAPACITY"
     await yieldTask(); check()
     if (!guard()) return "STALE"
     const transfer = prepareAccountPlanCollectionTransfer({ ownerId: input.ownerId,
       operationId: input.operationId?.() ?? crypto.randomUUID(), expectedRevision: revision,
       previous: index ? base : null, next, ...(migration ? { legacy: migration } : {}),
-      ...(journalGuard === undefined || next.data.currentPlanId === base.data.currentPlanId ? {} : { journalGuard }) })
+      ...(journalGuard === undefined || next.data.currentPlanId === base.data.currentPlanId ? {} : { journalGuard }),
+      ...(paceRecordGuard === undefined || next.data.currentPlanId === base.data.currentPlanId ? {} : { paceRecordGuard }) })
     if (!transfer) return "INVALID"
     await local().save(transfer, sequence); check(); change("PENDING")
     if (!guard()) return "STALE"
@@ -400,12 +404,21 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
     return completeLegacyHandoff(source, "HISTORY")
   }
   function mutate(command: AccountPlanMutation, expectedFingerprint: string): Promise<AccountPlanResult> {
+    if (command?.kind === "SELECT" && command.paceRecordGuard !== undefined
+      && !accountPlanPaceRecordGuardSchema.safeParse(command.paceRecordGuard).success) return Promise.resolve("INVALID")
     if (command?.kind === "SELECT" && command.journalGuard !== undefined
       && !accountPlanJournalGuardSchema.safeParse(command.journalGuard).success) return Promise.resolve("INVALID")
     if (!["SAVE_HISTORY", "SELECT", "PROGRESS", "ARCHIVE"].includes(command?.kind)
       || command.kind !== "ARCHIVE" && !validateAccountPlanPacket(command.packet)) return Promise.resolve("INVALID")
     const captured = command.kind === "ARCHIVE" ? { ...command } : { ...command, packet: structuredClone(command.packet),
+      ...(command.kind !== "SELECT" || command.paceRecordGuard === undefined ? {} : { paceRecordGuard: structuredClone(command.paceRecordGuard) }),
       ...(command.kind !== "SELECT" || command.journalGuard === undefined ? {} : { journalGuard: structuredClone(command.journalGuard) }) }
+    const paceSource = captured.kind === "SELECT" ? captureAccountPlanPaceSource(captured.packet, input.ownerId) : { kind: "none" as const }
+    if (paceSource.kind === "unavailable") return Promise.resolve("REVIEW_REQUIRED")
+    if (captured.kind === "SELECT" && captured.paceRecordGuard !== undefined
+      && (paceSource.kind !== "ready" || captured.paceRecordGuard.documentId !== paceSource.guard.documentId
+        || captured.paceRecordGuard.revision !== paceSource.guard.revision)) return Promise.resolve("REVIEW_REQUIRED")
+    const sourceCurrent = () => captured.kind !== "SELECT" || accountPlanPaceSourceStillCurrent(captured.packet, input.ownerId, paceSource)
     return serialize(async () => {
       const ready = await writable(expectedFingerprint)
       if (!ready) return "STALE"
@@ -431,7 +444,7 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
           if (captured.kind === "SAVE_HISTORY" && previous) previous.archivedAt = at
           else if (!previous) next.data.plans.push(entry)
           if (captured.kind === "SELECT") {
-            if (captured.confirmsSelection !== true || !online() || !captured.freshReview()
+            if (captured.confirmsSelection !== true || !online() || !sourceCurrent() || !captured.freshReview()
               || readAccountPlanEntry(entry, input.readTrusted).kind !== "read_only") return "REVIEW_REQUIRED"
             const old = next.data.plans.find(p => p.planId === next.data.currentPlanId)
             if (old && old.planId !== entry.planId) old.archivedAt = at
@@ -440,8 +453,8 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
         }
       }
       check()
-      return save(base, next, sequence, () => captured.kind === "SELECT" && captured.freshReview(), undefined, () => true,
-        undefined, captured.kind === "SELECT" ? captured.journalGuard : undefined)
+      return save(base, next, sequence, () => captured.kind === "SELECT" && sourceCurrent() && captured.freshReview(), undefined, sourceCurrent,
+        undefined, captured.kind === "SELECT" ? captured.journalGuard : undefined, paceSource.kind === "ready" ? paceSource.guard : undefined)
     }, "FAILED", failure)
   }
   return {

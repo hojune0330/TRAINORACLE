@@ -24,6 +24,7 @@ describe("visible record-based pace recommendation", () => {
     const { container } = render(<PaceRecommendation prescription={fixture()} />)
     expect(screen.getByText("추천 기준")).toBeVisible()
     expect(screen.getByText("개인 기록 기반")).toBeVisible()
+    expect(screen.getByText("기준: 5000m 최근 경기 18분 31초")).toBeVisible()
     expect(screen.getByText(/오늘 컨디션·날씨에 따라 조절/u)).toBeVisible()
     expect(container.querySelector("details")).not.toHaveAttribute("open")
   })
@@ -36,8 +37,8 @@ describe("visible record-based pace recommendation", () => {
     expect(screen.getByText(/최근 경기 · 5000m 18분 31초 · 2026-09-01/u)).toBeVisible()
     expect(screen.getByText(/직접 입력한 기록/u)).toBeVisible()
     expect(screen.getByText("1,111초 × 1000m ÷ 5000m")).toBeVisible()
-    expect(screen.getByText(/계산값 약 222.2초 · 짧은 훈련 표기는 소수점 셋째 자리까지/u)).toBeVisible()
-    expect(screen.getByText(/1000m당 약 3분 42초/u)).toBeVisible()
+    expect(screen.getByText(/계산값 약 222.2초 · 구간 목표는 0.1초/u)).toBeVisible()
+    expect(screen.getByText(/1000m당 약 3분 42.2초/u)).toBeVisible()
     expect(screen.getByText(/휴식은 개인 기록에서 계산한 시간이 아니라/u)).toBeVisible()
     expect(screen.getByText(/평균 속도를 반복 거리에 적용/u)).toBeVisible()
     expect(screen.getByText(/훈련 구성 V2-SEED-05 v1.0.0/u)).toBeVisible()
@@ -53,7 +54,7 @@ describe("visible record-based pace recommendation", () => {
       repetitionDistanceM: 200, targetRepSeconds: 30.375, templateId: "MD-800-01", templateVersion: "1.0.0",
     }} />)
     expect(screen.getByText("121.5초 × 200m ÷ 800m")).toBeVisible()
-    expect(screen.getByText(/200m당 약 30초/u)).toBeVisible()
+    expect(screen.getByText(/200m당 약 30.4초/u)).toBeVisible()
     expect(screen.getByText(/계산값 약 30.375초/u)).toBeVisible()
     expect(screen.queryByText(/222.2초|V2-SEED-05/u)).toBeNull()
     expect(screen.getByText(/MD-800-01 v1.0.0/u)).toBeVisible()
@@ -61,6 +62,7 @@ describe("visible record-based pace recommendation", () => {
 
   it("labels SB and verification honestly and never exposes raw identifiers", async () => {
     const input = fixture(1140)
+    if (input.selectedAnchor.kind === "GOAL") throw new Error("Expected an actual-record fixture")
     render(<PaceRecommendation prescription={{ ...input, selectedAnchor: {
       ...input.selectedAnchor, kind: "SB", purpose: "SEASON_CONTEXT", seasonId: "2026",
       verificationState: "UNVERIFIED", sourceRef: "PRIVATE_SOURCE_SENTINEL", anchorId: "PRIVATE_ID_SENTINEL",

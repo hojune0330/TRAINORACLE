@@ -114,8 +114,11 @@ export function PlanSchedulePreview({
   const scheduleId = React.useId()
   const scheduleRef = React.useRef<HTMLOListElement>(null)
   const handledReaderRequest = React.useRef<number>()
+  const previousCalendarIdentity = React.useRef(calendarIdentity)
 
   React.useEffect(() => {
+    if (previousCalendarIdentity.current === calendarIdentity) return
+    previousCalendarIdentity.current = calendarIdentity
     const nextIndex = Math.max(0, days.findIndex((day) => day.date === nav.date))
     setActiveDayIndex(nextIndex)
     setCalendarDetailsOpen(false)

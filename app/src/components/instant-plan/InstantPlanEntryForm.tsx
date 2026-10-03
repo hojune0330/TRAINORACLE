@@ -67,7 +67,7 @@ export function InstantPlanEntryForm({
   const [event, setEvent] = useState(initialEntry ? String(initialEntry.eventDistanceM) : "")
   const [minutes, setMinutes] = useState(() => initialTime(initialEntry).minutes)
   const [seconds, setSeconds] = useState(() => initialTime(initialEntry).seconds)
-  const [achievedOn, setAchievedOn] = useState(initialEntry?.kind === "CURRENT_RECORD" ? initialEntry.achievedOn : "")
+  const [achievedOn, setAchievedOn] = useState(initialEntry?.kind === "CURRENT_RECORD" ? initialEntry.achievedOn ?? "" : "")
   const [errors, setErrors] = useState<Errors>({})
   const formValue = JSON.stringify([kind, event, minutes, seconds, achievedOn])
   const initialValue = useRef(formValue)
@@ -117,7 +117,7 @@ export function InstantPlanEntryForm({
         nextErrors.minutes = "0초보다 긴 시간을 분과 초로 입력해 주세요."
       }
     }
-    if (kind === "CURRENT_RECORD") {
+    if (kind === "CURRENT_RECORD" && achievedOn !== "") {
       if (!isCalendarDate(achievedOn)) {
         nextErrors.achievedOn = "기록을 달성한 날짜를 올바르게 입력해 주세요."
       } else if (!isCalendarDate(today)) {
@@ -136,7 +136,7 @@ export function InstantPlanEntryForm({
     }
     if (!selectedEvent) return
     if (kind === "CURRENT_RECORD") {
-      onSubmit({ kind, eventDistanceM: selectedEvent.value, performanceSeconds, achievedOn })
+      onSubmit({ kind, eventDistanceM: selectedEvent.value, performanceSeconds, achievedOn: achievedOn || null })
     } else if (kind === "GOAL_ONLY") {
       onSubmit({ kind, eventDistanceM: selectedEvent.value, performanceSeconds })
     } else {
@@ -205,11 +205,12 @@ export function InstantPlanEntryForm({
         {kind === "CURRENT_RECORD" && (
           <div className="instant-plan__field">
             <label htmlFor={`${id}-achievedOn`}>기록 달성일</label>
-            <input id={`${id}-achievedOn`} ref={dateRef} type="date" min="0001-01-01" required
+            <input id={`${id}-achievedOn`} ref={dateRef} type="date" min="0001-01-01"
               max={isCalendarDate(today) ? today : undefined} value={achievedOn}
               onChange={e => setAchievedOn(e.target.value)} aria-invalid={Boolean(errors.achievedOn)}
               aria-describedby={errors.achievedOn ? `${id}-achievedOn-error` : undefined} />
             {fieldError("achievedOn")}
+            <p className="instant-plan__hint">모르면 비워 두세요. 날짜가 없으면 최근 12개월 기록에서는 제외돼요.</p>
           </div>
         )}
         {kind === "CURRENT_RECORD" && <p className="instant-plan__hint">입력한 현재 기록은 내 기록에도 남아요.</p>}

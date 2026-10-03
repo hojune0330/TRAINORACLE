@@ -2,15 +2,17 @@ import { accountDecorationDocumentSchema, validateAccountDecorationDocument } fr
 import { decorationCatalogItem } from "../decoration-catalog"
 import { validateAccountPlanDocument, validateAccountPlanDocumentUpdate } from "./account-plan-document-schema"
 import { validateAccountCalendarDecorationDocument } from "./account-calendar-decoration-schema"
+import { validateAccountAthleteRecordDocument, validateAccountAthleteRecordDocumentUpdate } from "./account-athlete-record-schema"
 export { accountCalendarDecorationOwnershipMetadata } from "./account-calendar-decoration-schema"
 
 export function validateAccountStateDocument(value: unknown): boolean {
-  return validateAccountDecorationDocument(value) || validateAccountCalendarDecorationDocument(value) || validateAccountPlanDocument(value)
+  return validateAccountDecorationDocument(value) || validateAccountCalendarDecorationDocument(value) || validateAccountAthleteRecordDocument(value) || validateAccountPlanDocument(value)
 }
 
 export function validateAccountStateDocumentUpdate(previous: unknown, next: unknown): boolean {
   if (validateAccountDecorationDocument(previous)) return validateAccountDecorationDocument(next)
   if (validateAccountCalendarDecorationDocument(previous)) return validateAccountCalendarDecorationDocument(next)
+  if (validateAccountAthleteRecordDocument(previous)) return validateAccountAthleteRecordDocumentUpdate(previous, next)
   return validateAccountPlanDocumentUpdate(previous, next)
 }
 

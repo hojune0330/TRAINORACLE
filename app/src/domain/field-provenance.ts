@@ -27,7 +27,7 @@ export type ProvenanceEntryKind = "post-session" | "evening" | "race"
 const ENTRY_PROVENANCE_FIELDS: Readonly<Record<ProvenanceEntryKind, readonly string[]>> = {
   "post-session": [
     "system", "distanceKm", "durationMin", "avgPace", "rpe", "rpeBand",
-    "activityOutcome", "activitySlot", "planExecutionRelation", "painCheckStatus",
+    "activityOutcome", "activitySlot", "planExecutionRelation", "planExecutionChange", "painCheckStatus",
     "painParts", "plannedSessionLink", "plannedRpe", "objectiveComponents",
   ],
   evening: ["sleepH", "sleepQuality", "weightKg", "restingHr", "painParts", "mood"],

@@ -1,4 +1,5 @@
 import type { PlanSession } from "@impl/plan-generator/types"
+import { formatPaceSeconds } from "@impl/prescription/record-pace"
 import { TermHelp } from "../../components/TermHelp"
 import { formatRecordTime } from "../../domain/athlete-record-display"
 import { formatTrainingSeconds } from "./labels"
@@ -27,7 +28,7 @@ export function DetailedPrescriptionView({ prescription, variant = "default" }: 
         </p>
         <p className="plan-detailed-prescription__lead">
           <strong>개인 추천 시간</strong>
-          <span className="plan-detailed-prescription__lead-value">{prescription.repetitionDistanceM}m당 약 {formatTrainingSeconds(prescription.targetRepSeconds)} · 직접 선택한 {anchor.eventDistanceM}m {formatRecordTime(anchor.performanceSeconds)} 기준</span>
+          <span className="plan-detailed-prescription__lead-value">{prescription.repetitionDistanceM}m당 약 {formatPaceSeconds(prescription.targetRepSeconds)} · 직접 선택한 {anchor.eventDistanceM}m {formatRecordTime(anchor.performanceSeconds)} 기준</span>
         </p>
         <PaceRecommendation prescription={prescription} />
       </div>
@@ -90,7 +91,7 @@ export function DetailedPrescriptionView({ prescription, variant = "default" }: 
         <summary>기준 기록·중단·낮춤 규칙 보기</summary>
         <div>
           <p>
-            기준 기록 · {anchor.eventDistanceM}m {formatRecordTime(anchor.performanceSeconds)} · {anchor.achievedAt}
+            {anchor.kind === "GOAL" ? "목표 기준 · 현재 실력 아님" : "기준 기록"} · {anchor.eventDistanceM}m {formatRecordTime(anchor.performanceSeconds)} · {anchor.achievedAt ?? "미달성 목표"}
           </p>
           <p>낮춤 · 숫자 반복을 임의로 줄이지 않고 기존 RPE 계획안으로 돌아갑니다.</p>
           <ul>

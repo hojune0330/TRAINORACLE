@@ -39,10 +39,19 @@ if (process.env.PLAN_COLLECTION_MUTATION) {
     catalogClock: ['!catalogReplacementClockIsCurrent(replan, now())', 'false'],
     successorGuard: ["if (successor && r.journalGuard === undefined && !replan) fail(422, 'JOURNAL_GUARD_REQUIRED');", ''],
     selectionAtomic: ['journalGuard !== undefined ? await repo.commitReplan(', 'false ? await repo.commitReplan('],
+    paceDelta: ['...(replan ? { previousState } : {}), guard: r.paceRecordGuard,', 'guard: r.paceRecordGuard,'],
+    batchJournal: ['fact.protectsReplacement', 'fact.protectsReplacement'],
   };
   const change = mutations[process.env.PLAN_COLLECTION_MUTATION];
   assert.ok(change && source.includes(change[0]));
   source = process.env.PLAN_COLLECTION_MUTATION === 'catalogClock' ? source.replaceAll(...change) : source.replace(...change);
+  if (process.env.PLAN_COLLECTION_MUTATION === 'batchJournal') {
+    const validator = await readFile(new URL('./account-plan-collection-validator.mjs', url), 'utf8');
+    assert.equal(validator.split('protectsReplacement:').length - 1, 1);
+    const broken = validator.replace('protectsReplacement:', 'protectsReplacement:!1&&');
+    source = source.replace("'./account-plan-collection-validator.mjs'",
+      JSON.stringify(`data:text/javascript;base64,${Buffer.from(broken).toString('base64')}`));
+  }
   for (const file of ['account-journal-crypto.mjs', 'account-journal-handler.mjs', 'account-plan-collection-validator.mjs'])
     source = source.replace(`'./${file}'`, JSON.stringify(new URL(file, url).href));
   handlerFactory = (await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`)).createAccountPlanCollectionHandler;
@@ -140,6 +149,144 @@ async function check(response, status, expected) {
   return value;
 }
 
+const paceFixtures = build({ mainFields: ['module', 'main'], stdin: {
+  contents: 'export { paceMutationFixture, paceBatchJournalFixture } from "./src/domain/account/account-plan-pace-mutations.test-fixture.ts";',
+  resolveDir: fileURLToPath(new URL('../../app/', import.meta.url)), loader: 'ts',
+}, tsconfig: fileURLToPath(new URL('../../app/tsconfig.json', import.meta.url)),
+bundle: true, write: false, platform: 'neutral', format: 'esm' }).then(result =>
+  import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString('base64')}`));
+
+for (const undo of [false, true]) for (const protectedJournal of [false, true]) {
+  test(`pace batch ${undo ? 'undo' : 'forward'} ${protectedJournal ? 'rejects later-slot journal' : 'accepts unrelated journal'}`, async t => {
+    const { paceBatchJournalFixture } = await paceFixtures;
+    const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(
+      JSON.stringify(['trainoracle.account.athlete-records.v1', OWNER]))));
+    bytes[6] = (bytes[6] & 15) | 80; bytes[8] = (bytes[8] & 63) | 128;
+    const h = Buffer.from(bytes.slice(0, 16)).toString('hex');
+    const documentId = `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+    const seed = paceBatchJournalFixture(undo, protectedJournal, { documentId, revision: 1 });
+    t.mock.timers.enable({ apis: ['Date'], now: new Date(seed.now) });
+    const f = await fixture({ dependencies: { now: () => new Date(seed.now) } });
+    f.repo.readAthleteRecords = async () => ({ user_id: OWNER, document_id: documentId, revision: 1, deleted_at: null,
+      encrypted_payload: await encryptAccountJournalDocument(JSON.stringify({ version: 3, state: 'ACCOUNT_STATE',
+        kind: 'ATHLETE_RECORDS', data: { records: [seed.record, seed.historical] } }), { ownerId: OWNER, documentId }, f.material.active) });
+    let entries = seed.originalEntries.map(entry => ({ ...entry, title: '', memo: '' }));
+    f.repo.readJournals = async () => Promise.all(entries.map(async entry => {
+      const id = seed.journalGuard[0].documentId;
+      return { user_id: OWNER, document_id: id, revision: 1, deleted_at: null,
+        encrypted_payload: await encryptAccountJournalDocument(JSON.stringify({ version: 2, state: 'FINALIZED',
+          kind: 'JOURNAL', entry }), { ownerId: OWNER, documentId: id }, f.material.active) };
+    }));
+    f.repo.commitReplan = input => f.repo.commit(input);
+    let old = accountPlanEntry({ state: seed.initial, evidence: null }, seed.now);
+    let oldDoc = { version: 3, state: 'ACCOUNT_STATE', kind: 'PLAN', data: {
+      schemaVersion: 1, currentPlanId: old.planId, plans: [old] } };
+    let before = splitAccountPlanCollection(oldDoc);
+    await f.stage(before);
+    await check(await f.request({ action: 'commit', request: command(before, null,
+      { paceRecordGuard: { documentId, revision: 1 } }) }), 200);
+    if (undo) {
+      const forward = accountPlanEntry({ state: seed.forward, evidence: null }, seed.now);
+      oldDoc = { ...oldDoc, data: { schemaVersion: 1, currentPlanId: forward.planId,
+        plans: [{ ...old, archivedAt: seed.now }, forward] } };
+      const parts = splitAccountPlanCollection(oldDoc);
+      await f.stage(parts);
+      await check(await f.request({ action: 'commit', request: command(parts, before, { operationId: OP2 }) }), 200);
+      before = parts; old = forward;
+    }
+    entries = seed.entries;
+    const selected = accountPlanEntry({ state: seed.after, evidence: null }, seed.now);
+    const after = splitAccountPlanCollection({ ...oldDoc, data: { schemaVersion: 1, currentPlanId: selected.planId,
+      plans: [...oldDoc.data.plans.map(plan => plan.planId === old.planId ? { ...plan, archivedAt: seed.now } : plan), selected] } });
+    assert.ok(after, 'complete batch document must pass structural validation');
+    await f.stage(after);
+    const commits = f.calls.commit;
+    const response = await f.request({ action: 'commit', request: command(after, before,
+      { operationId: 'e5555555-5555-4555-8555-555555555555', expectedRevision: undo ? 2 : 1 }) });
+    if (protectedJournal) {
+      await check(response, 422, { error: 'RECORDED_SESSION_PROTECTED' });
+      assert.equal(f.calls.commit, commits);
+      assert.equal(f.getIndex().index_document.currentPlanId, old.planId);
+    } else {
+      assert.equal((await check(response, 200)).kind, 'committed');
+    }
+  });
+}
+
+for (const kind of ['catalog', 'edit', 'swap', 'replan']) for (const goal of [false, true]) {
+  test(`guarded record sources: ${kind} ${goal ? 'goal' : 'actual'} accepts exact sources and preserves history`, async t => {
+    const { paceMutationFixture } = await paceFixtures;
+    const seed = paceMutationFixture(kind, goal), f = await fixture({ dependencies: { now: () => new Date(seed.now) } });
+    // The document transition validator also reads Date outside the injected gateway clock.
+    t.mock.timers.enable({ apis: ['Date'], now: new Date(seed.now) });
+    const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(
+      JSON.stringify(['trainoracle.account.athlete-records.v1', OWNER]))));
+    bytes[6] = (bytes[6] & 15) | 80; bytes[8] = (bytes[8] & 63) | 128;
+    const h = Buffer.from(bytes.slice(0, 16)).toString('hex');
+    const documentId = `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+    const sourceRow = async (records, revision = 4) => ({ user_id: OWNER, document_id: documentId, revision, deleted_at: null,
+      encrypted_payload: await encryptAccountJournalDocument(JSON.stringify({ version: 3, state: 'ACCOUNT_STATE',
+        kind: 'ATHLETE_RECORDS', data: { records } }), { ownerId: OWNER, documentId }, f.material.active) });
+    let row = await sourceRow([seed.record, seed.historical], 3);
+    f.repo.readAthleteRecords = async (owner, id) => {
+      assert.equal(owner, OWNER); assert.equal(id, documentId); return row;
+    };
+    f.repo.commitReplan = input => f.repo.commit(input);
+    const old = accountPlanEntry({ state: seed.before, evidence: null }, seed.now);
+    const beforeDoc = { version: 3, state: 'ACCOUNT_STATE', kind: 'PLAN', data: {
+      schemaVersion: 1, currentPlanId: old.planId, plans: [old] } };
+    const before = splitAccountPlanCollection(beforeDoc);
+    await f.stage(before);
+    await check(await f.request({ action: 'commit', request: command(before, null,
+      { paceRecordGuard: { documentId, revision: 3 } }) }), 200);
+    const selected = accountPlanEntry({ state: seed.after, evidence: null }, seed.now);
+    const after = splitAccountPlanCollection({ ...beforeDoc, data: { schemaVersion: 1, currentPlanId: selected.planId,
+      plans: [{ ...old, archivedAt: seed.now }, selected] } });
+    await f.stage(after);
+    const receipt = seed.after.catalogReplacement ?? seed.after.executionReplan ?? seed.after.activePlanEdit;
+    let journalRevision = 1;
+    f.repo.readJournals = async () => Promise.all(seed.entries.map(async (entry, index) => ({ user_id: OWNER,
+      document_id: seed.journalGuard[index].documentId, revision: journalRevision, deleted_at: null,
+      encrypted_payload: await encryptAccountJournalDocument(JSON.stringify({ version: 2, state: 'FINALIZED', kind: 'JOURNAL',
+        entry: { ...entry, title: '', memo: '' } }), { ownerId: OWNER, documentId: seed.journalGuard[index].documentId }, f.material.active) })));
+    let race = false, guarded = 0;
+    f.repo.commitReplan = async input => {
+      guarded++;
+      assert.deepEqual(input.paceRecordGuard, { documentId, revision: 4 });
+      assert.deepEqual(input.journalGuard, receipt.journalGuard);
+      if (kind === 'catalog') assert.deepEqual(input.calendarGuard, { today: seed.today, timeZone: 'UTC' });
+      if (race) row.revision++;
+      return row.revision !== input.paceRecordGuard.revision ? { kind: 'conflict' } : f.repo.commit(input);
+    };
+    const unguarded = command(after, before, { operationId: OP2 });
+    const request = { ...unguarded, paceRecordGuard: { documentId, revision: 4 } };
+    row = await sourceRow([seed.record]);
+    await check(await f.request({ action: 'commit', request: unguarded }), 422, { error: 'PACE_RECORD_SOURCE_REQUIRED' });
+    for (const changed of [null, { ...row, revision: 5 }, { ...row, deleted_at: seed.now }, { ...row, user_id: OTHER },
+      await sourceRow([]), await sourceRow([{ ...seed.record, performanceSeconds: seed.record.performanceSeconds + 1 }]),
+      await sourceRow([{ ...seed.record, savedAt: '2026-09-29T04:00:00.000Z' }]),
+      await sourceRow([{ ...seed.record, purpose: goal ? 'RECENT_RESULT' : 'RACE_GOAL', achievedOn: goal ? '2026-09-28' : null }])]) {
+      const current = row; row = changed;
+      await check(await f.request({ action: 'commit', request }), 409, { error: 'PACE_RECORD_SOURCE_CHANGED' });
+      row = current;
+    }
+    journalRevision = 2;
+    await check(await f.request({ action: 'commit', request }), 409, { error: 'JOURNALS_CHANGED' });
+    journalRevision = 1;
+    race = true;
+    await check(await f.request({ action: 'commit', request }), 200, { kind: 'conflict' });
+    assert.equal(f.getIndex().index_document.currentPlanId, old.planId);
+    race = false; row = await sourceRow([seed.record]);
+    const accepted = await check(await f.request({ action: 'commit', request }), 200);
+    assert.equal(accepted.kind, 'committed'); assert.equal(guarded, 2);
+    assert.equal(f.getIndex().index_document.currentPlanId, selected.planId);
+    row = null; journalRevision = 8; f.parts.clear();
+    assert.deepEqual(await check(await f.request({ action: 'commit', request }), 200), accepted);
+    assert.equal(guarded, 2);
+    await check(await f.request({ action: 'commit', request: { ...request, paceRecordGuard: { documentId, revision: 5 } } }),
+      409, { error: 'OPERATION_REUSED' });
+  });
+}
 test('stage quota and stage expiry have distinct gateway responses', async () => {
   const collection = splitAccountPlanCollection(document());
   assert.ok(collection);

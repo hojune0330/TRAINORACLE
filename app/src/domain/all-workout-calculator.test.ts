@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { ALL_WORKOUT_CATALOG, calculateCatalogWorkout, calculatedWorkoutSequence, compareCatalogPerformance, verifyCalculatedWorkout } from "@impl/prescription/all-workout-calculator"
-import type { WorkoutCalculationInputs } from "@impl/prescription/all-workout-calculator"
+import type { CalculatedWorkout, WorkoutCalculationInputs } from "@impl/prescription/all-workout-calculator"
 import { deriveSequenceV3Totals } from "@impl/prescription/sequence-v3"
 import { bindCatalogSession, isValidCatalogSession, resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 import { rpeForIntent, rangesFor } from "@impl/plan-generator/session-builder"
@@ -8,6 +8,15 @@ import type { PlanSession, PlannedEnergyIntent } from "@impl/plan-generator/type
 
 const input: WorkoutCalculationInputs = { eventDistanceM: 5000, experience: "EXPERIENCED", availableSeconds: null,
   confirmedRequirements: [], fiveK: { recordId: "current-5k", seconds: 1111.7, achievedAt: "2026-09-01", evaluatedAt: "2026-09-30" }, segmentPaces: [] }
+
+// Fixed-duration RP work still needs an explicit pace; its prescribed time is not a pace input.
+function timedRacePaceInputs(workout: CalculatedWorkout): WorkoutCalculationInputs["segmentPaces"] {
+  return workout.steps.filter(step => step.phase === "main" && step.kind === "WORK" && step.intent === "RACE_PACE"
+    && step.distanceM === null && step.seconds !== null)
+    .filter((step, index, steps) => steps.findIndex(other => other.segmentId === step.segmentId) === index)
+    .map(step => ({ segmentId: step.segmentId, secondsPerKm: 300 }))
+}
+
 describe("every catalog workout has a deterministic calculation and evidence connection", () => {
   it.each(ALL_WORKOUT_CATALOG.map(e => [e.id, e] as const))("%s expands and independently reconciles the sequence", (id, entry) => {
     const result = calculateCatalogWorkout(id, input)
@@ -54,6 +63,7 @@ describe("every catalog workout has a deterministic calculation and evidence con
     const missing = first.steps.filter(s => s.seconds === null).filter((s, i, all) => all.findIndex(other => other.segmentId === s.segmentId) === i)
     // Synthetic inputs exercise plumbing, not a recommended pace or recovery policy.
     const result = calculateCatalogWorkout(id, { ...context,
+      segmentPaces: timedRacePaceInputs(first),
       segmentSeconds: missing.filter(s => s.kind !== "RECOVERY").map(s => ({ segmentId: s.segmentId, seconds: 45 })),
       recoverySeconds: missing.filter(s => s.kind === "RECOVERY").map(s => ({ segmentId: s.segmentId, seconds: 180 })),
     })!
@@ -77,6 +87,7 @@ describe("every catalog workout has a deterministic calculation and evidence con
     const first = calculateCatalogWorkout(id, context)!
     const missing = first.steps.filter(s => s.seconds === null).filter((s, i, all) => all.findIndex(other => other.segmentId === s.segmentId) === i)
     const inputs = { ...context,
+      segmentPaces: timedRacePaceInputs(first),
       segmentSeconds: missing.filter(s => s.kind !== "RECOVERY").map(s => ({ segmentId: s.segmentId, seconds: s.distanceM ? s.distanceM * 0.3 : 45 })),
       recoverySeconds: missing.filter(s => s.kind === "RECOVERY").map(s => ({ segmentId: s.segmentId, seconds: 180 })),
     }
@@ -84,6 +95,10 @@ describe("every catalog workout has a deterministic calculation and evidence con
     const intent = intents[entry.family]!, easy = ["BASE", "REC"].includes(entry.family)
     const session = { day: 1, slot: "AM", role: easy ? "EASY" : "QUALITY", plannedEnergyIntent: intent,
       prescription: { kind: "RPE_TIME_RANGE", rpe: rpeForIntent(intent), durationMinutes: rangesFor(context.experience)[easy ? "easy" : "quality"] } } as PlanSession
+    if (inputs.segmentPaces.length > 0) {
+      expect(first.unavailable).toContain("RACE_PACE_REFERENCE_REQUIRED")
+      expect(bindCatalogSession(session, id, { ...inputs, segmentPaces: [] }, true)).toBeNull()
+    }
     // Explicit time fixtures test every connection; these are not recommended athlete targets.
     const bound = bindCatalogSession(session, id, inputs, true)
     expect(bound).not.toBeNull()
@@ -92,4 +107,37 @@ describe("every catalog workout has a deterministic calculation and evidence con
     expect(resolveCatalogBinding(JSON.parse(JSON.stringify(bound!.prescription.catalogWorkout)))?.catalogId).toBe(id)
     expect(bound).toMatchObject({ day: session.day, slot: session.slot, role: session.role, plannedEnergyIntent: intent })
   })
+  for (const [eventDistanceM, eventId] of [[10000, "10000"], [21097.5, "HALF"], [42195, "42195"]] as const) {
+    for (const [format, experience, repetitions, seconds] of [
+      ["INTRO", "NEW_TO_RUNNING", 2, 240], ["TIMED", "DEVELOPING", 3, 420],
+    ] as const) {
+      it(`RP-${eventId}-${format} requires explicit pace and retains the approved timed dose`, () => {
+        const id = `RP-${eventId}-${format}`
+        const context = { ...input, eventDistanceM, experience }
+        const first = calculateCatalogWorkout(id, context)!
+        expect(first.unavailable).toEqual(Array(repetitions).fill("RACE_PACE_REFERENCE_REQUIRED"))
+        const segmentPaces = timedRacePaceInputs(first)
+        expect(segmentPaces).toHaveLength(1)
+        const result = calculateCatalogWorkout(id, { ...context, segmentPaces })!
+        expect(result.unavailable).toEqual([])
+        expect(result.unresolved).toEqual([])
+        const work = result.steps.filter(step => step.phase === "main" && step.kind === "WORK")
+        expect(work).toHaveLength(repetitions)
+        for (const step of work) {
+          expect(step).toMatchObject({ distanceM: null, seconds: { minimum: seconds, maximum: seconds },
+            paceSecondsPerKm: { minimum: 300, maximum: 300 }, targetModel: "EXPLICIT_SEGMENT_PACE", referenceRecordId: null })
+        }
+        expect(result.steps.filter(step => step.phase === "main" && step.kind === "RECOVERY").map(step => step.seconds))
+          .toEqual(Array.from({ length: repetitions - 1 }, () => ({ minimum: 60, maximum: 60 })))
+        expect(result.steps.filter(step => step.phase !== "main" || step.kind === "RECOVERY"))
+          .toEqual(first.steps.filter(step => step.phase !== "main" || step.kind === "RECOVERY"))
+        expect(result.totals).toEqual(first.totals)
+        expect(verifyCalculatedWorkout(result)).toBe(true)
+        // A time override must not replace the contract's fixed 4/7-minute work.
+        expect(calculateCatalogWorkout(id, { ...context,
+          segmentSeconds: segmentPaces.map(({ segmentId }) => ({ segmentId, seconds: 45 })),
+        })).toBeNull()
+      })
+    }
+  }
 })

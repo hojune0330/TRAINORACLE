@@ -1,13 +1,21 @@
 import React from "react"
 import { ArrowLeft, Save } from "lucide-react"
+import { canonicalPaceDistance } from "@impl/prescription/record-pace"
 import {
   achievedDateError,
   createSelfReportedAthleteRecord,
   loadAthleteRecords,
   saveAthleteRecord,
+  cacheConfirmedAthleteRecords,
 } from "../domain/athlete-records"
-import type { RecordPurpose } from "../domain/athlete-records"
+import type { AthleteRecord, RecordPurpose } from "../domain/athlete-records"
 import { AthleteRecordRow } from "./athlete-records/AthleteRecordRow"
+import { PacePlanUpdateNotice } from "./athlete-records/PacePlanUpdateNotice"
+import { loadVersionedPlanBetaState } from "../domain/plan-beta-store"
+import { prepareCurrentPaceUpdate } from "../domain/active-plan-edit-store"
+import { isEligiblePaceRecordCurrent } from "../domain/account/eligible-account-pace-records"
+import { localAccountScopeSnapshot, localAccountScopeIsCurrent } from "../domain/account/local-account-scope"
+import { ACCOUNT_ATHLETE_RECORD_EVENT, accountAthleteRecordsEnabled, addAccountAthleteRecord, loadAccountAthleteRecords, readAccountAthleteRecordsState } from "../domain/account/account-athlete-record-service"
 
 const DISTANCE_OPTIONS = [
   ["800", "800m"],
@@ -15,14 +23,13 @@ const DISTANCE_OPTIONS = [
   ["3000", "3000m"],
   ["5000", "5000m"],
   ["10000", "10000m"],
-  ["21097", "하프마라톤 · 21097m"],
+  ["21097.5", "하프마라톤 · 21.0975km"],
   ["42195", "마라톤 · 42195m"],
   ["CUSTOM", "직접 입력"],
 ] as const
 
 const PURPOSE_OPTIONS: ReadonlyArray<readonly [RecordPurpose, string]> = [
   ["PERSONAL_BEST", "개인 최고"],
-  ["SEASON_BEST", "시즌 최고"],
   ["RECENT_RESULT", "최근 경기"],
   ["RACE_GOAL", "경기 목표"],
 ]
@@ -33,14 +40,34 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로" }: 
   readonly backLabel?: string | undefined
 }) {
   const [records, setRecords] = React.useState(() => loadAthleteRecords(new Date()))
-  const [purpose, setPurpose] = React.useState<RecordPurpose>("PERSONAL_BEST")
-  const [distanceOption, setDistanceOption] = React.useState("5000")
+  const [purpose, setPurpose] = React.useState<RecordPurpose>("RECENT_RESULT")
+  const [distanceOption, setDistanceOption] = React.useState(() => {
+    if (backLabel !== "계획으로") return "5000"
+    const plan = loadVersionedPlanBetaState()
+    const distance = plan?.version === 3 ? String(canonicalPaceDistance(plan.activePlan.eventDistanceM)) : "5000"
+    return DISTANCE_OPTIONS.some(([value]) => value === distance) ? distance : "5000"
+  })
   const [customDistance, setCustomDistance] = React.useState("")
   const [minutes, setMinutes] = React.useState("")
   const [seconds, setSeconds] = React.useState("")
   const [achievedOn, setAchievedOn] = React.useState("")
   const [seasonId, setSeasonId] = React.useState("")
   const [error, setError] = React.useState<string | null>(null)
+  const [updateRecord, setUpdateRecord] = React.useState<AthleteRecord | null>(null)
+  const [saving, setSaving] = React.useState(false)
+  const [pendingRecord, setPendingRecord] = React.useState<AthleteRecord | null>(null)
+  const [storageMessage, setStorageMessage] = React.useState("")
+  const saveLock = React.useRef(false)
+  React.useEffect(() => {
+    const refresh = () => {
+      const current = readAccountAthleteRecordsState()
+      if (current.confirmed && current.ownerId) cacheConfirmedAthleteRecords(current.records, current.ownerId)
+      setRecords(loadAthleteRecords())
+    }
+    window.addEventListener(ACCOUNT_ATHLETE_RECORD_EVENT, refresh)
+    if (localAccountScopeSnapshot() && accountAthleteRecordsEnabled()) void loadAccountAthleteRecords().then(refresh).catch(() => undefined)
+    return () => window.removeEventListener(ACCOUNT_ATHLETE_RECORD_EVENT, refresh)
+  }, [])
   const [errorField, setErrorField] = React.useState<string | null>(null)
   const formRef = React.useRef<HTMLFormElement>(null)
   const errorId = React.useId()
@@ -58,8 +85,9 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로" }: 
     "aria-describedby": errorField === name ? errorId : undefined })
   const fieldError = (name: string) => errorField === name && <span id={errorId} className="athlete-record-error" role="alert">{error}</span>
 
-  const handleSave = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSave = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (saveLock.current || pendingRecord) return
     const now = new Date()
     const distance = Number(
       distanceOption === "CUSTOM" ? customDistance : distanceOption,
@@ -82,7 +110,7 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로" }: 
         !Number.isFinite(parsedSeconds) || parsedSeconds < 0 || parsedSeconds >= 60 ? "seconds" : "minutes")
       return
     }
-    if (purpose !== "RACE_GOAL") {
+    if (purpose !== "RACE_GOAL" && achievedOn !== "") {
       const dateError = achievedDateError(achievedOn, now)
       if (dateError === "FUTURE_DATE") {
         showError("미래 달성일은 저장할 수 없어요.", "date")
@@ -103,18 +131,46 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로" }: 
       purpose,
       eventDistanceM: distance,
       performanceSeconds: parsedMinutes * 60 + parsedSeconds,
-      achievedOn: purpose === "RACE_GOAL" ? null : achievedOn,
+      achievedOn: purpose === "RACE_GOAL" || achievedOn === "" ? null : achievedOn,
       seasonId: purpose === "SEASON_BEST" ? seasonId.trim() : null,
     }, now)
     if (record === null) {
       showError("입력 내용을 다시 확인해 주세요.")
       return
     }
-    const result = saveAthleteRecord(record, now)
-    if (!result.ok) {
-      showError("기록을 저장하지 못했어요. 저장 공간을 확인해 주세요.")
-      return
-    }
+    saveLock.current = true; setSaving(true)
+    const scope = localAccountScopeSnapshot()
+    try {
+      if (scope) {
+        if (!accountAthleteRecordsEnabled()) { showError("계정 저장에 연결되지 않았어요. 입력한 내용은 그대로 두었어요."); return }
+        const current = await loadAccountAthleteRecords()
+        if (!localAccountScopeIsCurrent(scope)) return
+        if (!["READY", "EMPTY"].includes(current.status) || current.serverRevision === null) {
+          showError("계정의 경기 기록을 확인하지 못했어요. 연결 후 다시 저장해 주세요."); return
+        }
+        const result = await addAccountAthleteRecord(record, current.serverRevision)
+        if (!localAccountScopeIsCurrent(scope)) return
+        if (!result.ok) { showError("계정 저장을 확인하지 못했어요. 입력 내용은 그대로예요."); return }
+        if (result.storage === "PENDING") {
+          setPendingRecord(record); setStorageMessage("전송 대기로 보관했어요. 아직 계정에 저장됐다고 확인되지는 않았어요."); return
+        }
+        if (!cacheConfirmedAthleteRecords(result.state.records, scope, now)) {
+          setPendingRecord(record)
+          setStorageMessage("계정에는 저장했지만 이 기기의 목록을 갱신하지 못했어요. 입력 내용은 그대로 두었어요.")
+          return
+        }
+        setStorageMessage("계정에 경기 기록을 저장했어요.")
+      } else {
+        if (!saveAthleteRecord(record, now).ok) { showError("기록을 저장하지 못했어요. 저장 공간을 확인해 주세요."); return }
+        setStorageMessage("이 기기에 경기 기록을 저장했어요.")
+      }
+      await finishSaved(record)
+    } catch { showError("저장 결과를 확인하지 못했어요. 입력 내용은 그대로예요.") }
+    finally { saveLock.current = false; setSaving(false) }
+  }
+
+  const finishSaved = async (record: AthleteRecord) => {
+    const now = new Date(), distance = record.eventDistanceM
     setRecords(loadAthleteRecords(now))
     setMinutes("")
     setSeconds("")
@@ -122,7 +178,48 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로" }: 
     setSeasonId("")
     setError(null)
     setErrorField(null)
+    const plan = loadVersionedPlanBetaState()
+    const usesRecord = plan?.version === 3 && plan.activePlan.sessions.some(session => session.prescription.kind === "PACE_TARGET"
+      ? session.prescription.targetEventDistanceM === distance
+      : session.prescription.kind === "RPE_TIME_RANGE"
+      && session.prescription.catalogWorkout && (session.prescription.catalogWorkout.inputs.paceReferences?.some(reference =>
+        (reference.eventDistanceM === 21097 ? 21097.5 : reference.eventDistanceM) === distance)
+        || distance === 5000 && session.prescription.catalogWorkout.inputs.fiveK !== null))
+    if (usesRecord) {
+      const currentScope = localAccountScopeSnapshot()
+      try {
+        const preview = await prepareCurrentPaceUpdate(record)
+        if (!localAccountScopeIsCurrent(currentScope)) return
+        if (preview.kind === "ready" || preview.excluded?.some(row => row.reasonCode === "PROPOSAL_INVALID")) {
+          setUpdateRecord(record)
+          return
+        }
+      } catch {
+        if (!localAccountScopeIsCurrent(currentScope)) return
+        setStorageMessage("경기 기록은 저장했어요. 계획 변경안은 불러오지 못했어요. 저장한 기록에서 다시 확인할 수 있어요.")
+        return
+      }
+    }
     onSaved?.()
+  }
+
+  const retryPending = async () => {
+    if (!pendingRecord || saveLock.current) return
+    saveLock.current = true; setSaving(true)
+    const scope = localAccountScopeSnapshot()
+    try {
+      const current = await loadAccountAthleteRecords()
+      if (scope && localAccountScopeIsCurrent(scope) && current.confirmed
+        && current.records.some(record => JSON.stringify(record) === JSON.stringify(pendingRecord))) {
+        if (!cacheConfirmedAthleteRecords(current.records, scope)) {
+          setStorageMessage("계정 저장은 확인했지만 이 기기의 목록을 갱신하지 못했어요. 입력 내용은 그대로예요.")
+          return
+        }
+        const saved = pendingRecord
+        setPendingRecord(null); setStorageMessage("계정에 경기 기록을 저장했어요."); await finishSaved(saved)
+      } else setStorageMessage("아직 계정 저장을 확인하지 못했어요. 전송 대기 내용은 보관돼 있어요.")
+    } catch { setStorageMessage("연결을 확인하지 못했어요. 전송 대기 내용은 보관돼 있어요.") }
+    finally { saveLock.current = false; setSaving(false) }
   }
 
   return (
@@ -137,7 +234,13 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로" }: 
         <p>실제 경기 기록과 앞으로의 목표를 서로 다른 역할로 보관해요.</p>
       </header>
 
+      {updateRecord && <PacePlanUpdateNotice record={updateRecord} onDone={() => { setUpdateRecord(null); onBack() }} />}
+      {storageMessage && <p role="status">{storageMessage}</p>}
+      {pendingRecord && <button type="button" disabled={saving} onClick={() => void retryPending()}>계정 저장 다시 확인</button>}
+
+      {updateRecord === null && <>
       <form ref={formRef} className="athlete-record-form" onSubmit={handleSave}>
+        <fieldset disabled={saving || pendingRecord !== null} style={{ display: "contents" }}>
         <label>
           <span>기록 역할</span>
           <select
@@ -201,7 +304,7 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로" }: 
         </div>
         {purpose !== "RACE_GOAL" && (
           <label>
-            <span>달성일</span>
+            <span>달성일 · 모르면 비워 두세요</span>
             <input
               aria-label="달성일"
               {...fieldProps("date")}
@@ -211,6 +314,7 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로" }: 
               onChange={(event) => setAchievedOn(event.target.value)}
             />
             {fieldError("date")}
+            {achievedOn === "" && <small>날짜가 없으면 최근 12개월 최고 계산에는 넣지 않아요.</small>}
           </label>
         )}
         {purpose === "SEASON_BEST" && (
@@ -229,10 +333,11 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로" }: 
           선수 직접 입력 · 아직 별도 검증되지 않음
         </p>
         {error !== null && errorField === null && <p className="athlete-record-error" role="alert">{error}</p>}
-        <button className="athlete-record-save" type="submit">
+        <button className="athlete-record-save" type="submit" disabled={saving || pendingRecord !== null}>
           <Save aria-hidden="true" size={17} />
           기록 저장
         </button>
+        </fieldset>
       </form>
 
       <section
@@ -248,11 +353,14 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로" }: 
         ) : (
           <ol>
             {records.map((record) => (
-              <AthleteRecordRow key={record.id} record={record} />
+              <AthleteRecordRow key={record.id} record={record}
+                onUsePace={!saving && !pendingRecord && loadVersionedPlanBetaState()?.version === 3 && isEligiblePaceRecordCurrent(record)
+                  ? () => { if (isEligiblePaceRecordCurrent(record)) setUpdateRecord(record) } : undefined} />
             ))}
           </ol>
         )}
       </section>
+      </>}
     </section>
   )
 }

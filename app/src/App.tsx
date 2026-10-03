@@ -5,6 +5,7 @@ import { AppLoadingState } from "./components/AppLoadingState"
 import { useAccountJournalRuntime } from "./domain/account/useAccountJournalRuntime"
 import { AccountJournalStorageStatus } from "./components/AccountJournalStorageStatus"
 import { InstallShortcutProvider } from "./components/InstallShortcut"
+import { useAccountAthleteRecordsRuntime } from "./domain/account/useAccountAthleteRecordsRuntime"
 
 const DesktopWorkspace = React.lazy(() => import("./DesktopWorkspace"))
 const PublicProfilePage = React.lazy(async () => {
@@ -16,15 +17,17 @@ export default function App({ multiPlanRuntime }: { readonly multiPlanRuntime?: 
   const publicProfileHandle = typeof window === "undefined"
     ? null
     : new URLSearchParams(window.location.search).get("profile")
-  useAccountJournalRuntime(publicProfileHandle === null)
-  if (publicProfileHandle !== null && productFeatures().publicProfile) {
+  const publicEntry = publicProfileHandle !== null && productFeatures().publicProfile
+  useAccountJournalRuntime(!publicEntry)
+  useAccountAthleteRecordsRuntime()
+  const appShell = useIsMobileShell()
+  if (publicEntry) {
     return (
       <React.Suspense fallback={<AppLoadingState fullScreen label="공개 프로필을 준비하고 있어요." />}>
         <PublicProfilePage handle={publicProfileHandle} />
       </React.Suspense>
     )
   }
-  const appShell = useIsMobileShell()
   if (appShell) return <InstallShortcutProvider><AccountJournalStorageStatus /><AppShell multiPlanRuntime={multiPlanRuntime} /></InstallShortcutProvider>
   return (
     <InstallShortcutProvider><AccountJournalStorageStatus />

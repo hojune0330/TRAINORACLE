@@ -23,6 +23,7 @@ export type InstantPlanRecommendationViewProps = {
   readonly workoutLabelTitle?: string
   readonly onEditWorkout?: () => void
   readonly startLabel?: string
+  readonly blockedAction?: { readonly label: string; readonly onClick: () => void }
   readonly conditionReviewLabel?: string
   readonly onReviewCondition?: () => void
   readonly scheduleReview?: ReactNode
@@ -52,6 +53,7 @@ export function InstantPlanRecommendationView({
   workoutLabelTitle,
   onEditWorkout,
   startLabel,
+  blockedAction,
   conditionReviewLabel,
   onReviewCondition,
   scheduleReview,
@@ -117,10 +119,13 @@ export function InstantPlanRecommendationView({
         <button
           className="instant-plan__button"
           type="button"
-          disabled={!ready}
+          disabled={!ready && !(actionState.kind === "BLOCKED" && blockedAction)}
           aria-describedby={status !== null ? actionStatusId : undefined}
-          onClick={() => { if (ready) onStart(recommendation.id) }}
-        >{saving ? "저장 중" : startLabel ?? "이 일정으로 시작"}</button>
+          onClick={() => {
+            if (ready) onStart(recommendation.id)
+            else if (actionState.kind === "BLOCKED") blockedAction?.onClick()
+          }}
+        >{saving ? "저장 중" : actionState.kind === "BLOCKED" && blockedAction ? blockedAction.label : startLabel ?? "이 일정으로 시작"}</button>
         {onEditSchedule && (
           <button className="instant-plan__secondary" type="button" disabled={waiting} onClick={onEditSchedule}>
             시작일·훈련일 바꾸기

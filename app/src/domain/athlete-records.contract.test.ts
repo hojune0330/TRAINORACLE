@@ -83,7 +83,6 @@ describe("athlete record schema and storage", () => {
   })
 
   it.each([
-    ["PB without achieved date", personalBest({ achievedOn: null })],
     ["goal with achieved date", raceGoal({ achievedOn: "2026-07-01" })],
     ["SB without season", seasonBest({ seasonId: "" })],
     ["PB with season", personalBest({ seasonId: "2026 outdoor" })],
@@ -91,6 +90,11 @@ describe("athlete record schema and storage", () => {
   ])("rejects invalid purpose/date pairing: %s", (_label, candidate) => {
     expect(saveAthleteRecord(candidate, TODAY).ok).toBe(false)
     expect(loadAthleteRecords(TODAY)).toEqual([])
+  })
+
+  it("preserves an unknown actual date without inventing a calendar date", () => {
+    expect(saveAthleteRecord(personalBest({ achievedOn: null }), TODAY).ok).toBe(true)
+    expect(loadAthleteRecords(TODAY)[0]?.achievedOn).toBeNull()
   })
 
   it.each([59, 0, -1, Number.POSITIVE_INFINITY, Number.NaN])(

@@ -4,6 +4,8 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { getOracleTopic, ORACLE_TOPICS, type OracleTopicId } from "./domain/oracle-exploration"
 import { setActiveLocalAccount } from "./domain/account/local-journal-ownership"
+import * as athleteService from "./domain/account/account-athlete-record-service"
+import * as oracleResults from "./domain/oracle-personal-result"
 
 vi.mock("./screens/Home", () => ({
   Home: ({ onOpenOracle }: { onOpenOracle: (topic: OracleTopicId) => void }) => (
@@ -87,6 +89,26 @@ function storageSnapshot(storage: Storage) {
 }
 
 describe("AppShell oracle exploration navigation", () => {
+  it("refreshes an open level result after online records arrive without navigation", async () => {
+    const user = userEvent.setup()
+    vi.spyOn(athleteService, "accountAthleteRecordsEnabled").mockReturnValue(true)
+    const read = vi.spyOn(athleteService, "readAccountAthleteRecordsState").mockReturnValue({
+      status: "LOADING", ownerId: "account-a", records: [], confirmed: false, documentId: null, serverRevision: null,
+    })
+    const build = vi.spyOn(oracleResults, "buildOraclePersonalResult")
+    render(<AppShell />)
+    act(() => setActiveLocalAccount("account-a"))
+    await user.click(screen.getByRole("button", { name: "홈 현재 수준 예시" }))
+    expect(screen.getByText("계정의 경기 기록을 불러오고 있어요.")).toBeVisible()
+    const record = { schemaVersion: 1 as const, id: "late", purpose: "PERSONAL_BEST" as const, eventDistanceM: 5000,
+      performanceSeconds: 1000, achievedOn: "2024-03-10", seasonId: null, enteredBy: "ATHLETE" as const,
+      verificationState: "SELF_REPORTED" as const, sourceRef: "athlete-record:late", savedAt: "2026-07-27T03:00:00.000Z" }
+    read.mockReturnValue({ status: "READY", ownerId: "account-a", records: [record], confirmed: true, documentId: "synthetic", serverRevision: 1 })
+    act(() => window.dispatchEvent(new Event(athleteService.ACCOUNT_ATHLETE_RECORD_EVENT)))
+    expect(screen.queryByText("계정의 경기 기록을 불러오고 있어요.")).toBeNull()
+    expect(build).toHaveBeenLastCalledWith(expect.objectContaining({ athleteRecords: [record] }))
+    expect(screen.getByRole("combobox", { name: "살펴볼 주제" })).toBeVisible()
+  })
   it.each([
     { origin: "홈", heading: "홈 출발 화면", openLabel: "홈 현재 수준 예시", topic: "level", next: "focus" },
     { origin: "분석", heading: "분석 출발 화면", openLabel: "분석 훈련 비교 예시", topic: "compare", next: "change" },

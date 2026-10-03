@@ -1,8 +1,9 @@
 import type { PaceAnchorRecord } from "@impl/prescription/types"
+import type { PaceTargetGoalAnchor } from "@impl/plan-generator/session-types"
 import type { AthleteRecord } from "./athlete-records"
 import {
   elapsedSinceAchieved,
-  SEASON_WINDOW_MONTHS,
+  RECORD_REFERENCE_MAX_AGE_MONTHS,
 } from "./athlete-record-display"
 import type {
   GoalReferenceEvidenceSnapshot,
@@ -16,7 +17,7 @@ export function deriveRecordCurrentness(
 ): PaceSelectionFreshness {
   const elapsed = elapsedSinceAchieved(record, evaluatedAt)
   if (elapsed === null) return "UNKNOWN"
-  return elapsed.months <= SEASON_WINDOW_MONTHS ? "CURRENT" : "STALE"
+  return elapsed.months <= RECORD_REFERENCE_MAX_AGE_MONTHS ? "CURRENT" : "STALE"
 }
 
 export function toRuntimeAnchor(
@@ -70,6 +71,19 @@ export function toGoalSnapshot(
   })
 }
 
+export function toSelectedGoalSnapshot(
+  record: Extract<AthleteRecord, { readonly purpose: "RACE_GOAL" }>,
+  evaluatedAt: Date,
+): PaceTargetGoalAnchor {
+  const evaluatedOn = `${evaluatedAt.getFullYear()}-${String(evaluatedAt.getMonth() + 1).padStart(2, "0")}-${String(evaluatedAt.getDate()).padStart(2, "0")}`
+  return Object.freeze({
+    ...toGoalSnapshot(record), achievedAt: null, seasonId: null, elapsedLabel: "목표 기록 · 현재 실력 아님",
+    selectionEvidence: Object.freeze({ version: 1, kind: "EXPLICIT_GOAL", confirmed: true,
+      recordSchemaVersion: record.schemaVersion, recordPurpose: record.purpose, recordVersion: record.savedAt,
+      evaluatedOn, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
+  })
+}
+
 function baseAnchor(
   record: AthleteRecord,
   freshnessState: PaceSelectionFreshness,
@@ -103,10 +117,9 @@ function snapshot(
     purpose,
     eventDistanceM: record.eventDistanceM,
     performanceSeconds: record.performanceSeconds,
-    achievedAt: record.achievedOn,
-    seasonId: record.purpose === "SEASON_BEST"
-      ? record.achievedOn.slice(0, 4)
-      : null,
+    achievedAt: record.achievedOn!,
+    // The legacy PACE_TARGET envelope requires a calendar-year identifier. The source record retains its original season name.
+    seasonId: record.purpose === "SEASON_BEST" ? record.achievedOn.slice(0, 4) : null,
     enteredBy: record.enteredBy,
     verificationState: record.verificationState,
     freshnessState: "CURRENT",

@@ -3,7 +3,7 @@ import type { SupportedPlanEventDistanceM } from "@impl/plan-generator/types"
 /** Display/input boundary only. It cannot authorize, calculate, or persist a plan. */
 export type InstantPlanEntry =
   | { readonly kind: "CURRENT_RECORD"; readonly eventDistanceM: SupportedPlanEventDistanceM;
-      readonly performanceSeconds: number; readonly achievedOn: string }
+      readonly performanceSeconds: number; readonly achievedOn: string | null }
   | { readonly kind: "GOAL_ONLY"; readonly eventDistanceM: SupportedPlanEventDistanceM;
       readonly performanceSeconds: number }
   | { readonly kind: "NO_RECORD"; readonly eventDistanceM: SupportedPlanEventDistanceM }

@@ -2,8 +2,9 @@ import rawCatalog from "./all-workout-catalog.json"
 import { canonicalJsonFingerprint } from "../plan-generator/candidate-identity"
 import { parsePrescriptionSequenceV3 } from "./sequence-v3"
 import type { PrescriptionSequenceV3, SequenceNodeV3, RecoveryStepV3 } from "./sequence-v3"
+import { canonicalPaceDistance, catalogRecordPaceModel, isSegmentPaceReference, paceReferenceRange, formatPaceSeconds, roundedPaceSeconds, type SegmentPaceReference } from "./record-pace"
 
-export type WorkoutSegmentContext = { readonly segmentId: string; readonly intent: string; readonly modality: string; readonly terrain: string }
+export type WorkoutSegmentContext = { readonly segmentId: string; readonly intent: string; readonly modality: string; readonly terrain: string; readonly referenceEventDistanceM?: number }
 export type WorkoutCatalogEntry = {
   readonly id: string; readonly name: string; readonly family: string; readonly methodGroup: string
   readonly version: string; readonly fingerprint: string; readonly sourceFingerprint: string; readonly reviewRef: string
@@ -25,6 +26,7 @@ export type WorkoutCalculationInputs = {
   readonly segmentPaces: readonly { readonly segmentId: string; readonly secondsPerKm: number }[]
   readonly segmentSeconds?: readonly { readonly segmentId: string; readonly seconds: number }[]
   readonly recoverySeconds?: readonly { readonly segmentId: string; readonly seconds: number }[]
+  readonly paceReferences?: readonly SegmentPaceReference[]
 }
 /** Copy verified data without requiring browser or Node globals in the pure core. */
 export function copyWorkoutCalculationInputs(inputs: WorkoutCalculationInputs): WorkoutCalculationInputs {
@@ -35,6 +37,7 @@ export function copyWorkoutCalculationInputs(inputs: WorkoutCalculationInputs): 
     segmentPaces: inputs.segmentPaces.map(row => ({ ...row })),
     ...(inputs.segmentSeconds === undefined ? {} : { segmentSeconds: inputs.segmentSeconds.map(row => ({ ...row })) }),
     ...(inputs.recoverySeconds === undefined ? {} : { recoverySeconds: inputs.recoverySeconds.map(row => ({ ...row })) }),
+    ...(inputs.paceReferences === undefined ? {} : { paceReferences: inputs.paceReferences.map(row => ({ ...row })) }),
   }
 }
 export type WorkoutCalculatedStep = {
@@ -44,8 +47,9 @@ export type WorkoutCalculatedStep = {
   readonly distanceM: number | null; readonly seconds: { readonly minimum: number; readonly maximum: number } | null
   readonly paceSecondsPerKm: { readonly minimum: number; readonly maximum: number } | null
   readonly intent: string; readonly modality: string; readonly terrain: string; readonly instruction: string
-  readonly targetModel: "FIXED_DURATION" | "EXPLICIT_SEGMENT_PACE" | "EXPLICIT_SEGMENT_SECONDS" | "FIVE_K_REFERENCE" | "THRESHOLD_REFERENCE" | "EFFORT" | "RECOVERY"
+  readonly targetModel: "FIXED_DURATION" | "EXPLICIT_SEGMENT_PACE" | "EXPLICIT_SEGMENT_SECONDS" | "FIVE_K_REFERENCE" | "THRESHOLD_REFERENCE" | "EFFORT" | "RECOVERY" | "ACTUAL_RACE_REFERENCE" | "GOAL_RACE_REFERENCE"
   readonly referenceRecordId: string | null
+  readonly referenceEventDistanceM?: number
 }
 export type CalculatedWorkout = {
   readonly version: 1; readonly catalogId: string; readonly catalogFingerprint: string
@@ -57,16 +61,22 @@ export type CalculatedWorkout = {
 }
 const range = (value: number) => ({ minimum: value, maximum: value })
 const finitePositive = (n: unknown): n is number => typeof n === "number" && Number.isFinite(n) && n > 0 && n <= 86400
+const MIN_SUPPORTED_PACE_SECONDS_PER_KM = 120
+const MAX_SUPPORTED_PACE_SECONDS_PER_KM = 1800
 const date = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s) && Number.isFinite(Date.parse(`${s}T00:00:00Z`))
   && new Date(`${s}T00:00:00Z`).toISOString().slice(0, 10) === s
 function validInputs(value: WorkoutCalculationInputs): boolean {
   if (!value || Object.keys(value).sort().join() !== ["availableSeconds", "confirmedRequirements", "eventDistanceM", "experience", "fiveK", "segmentPaces",
-    ...(value.segmentSeconds === undefined ? [] : ["segmentSeconds"]), ...(value.recoverySeconds === undefined ? [] : ["recoverySeconds"])].sort().join()) return false
+    ...(value.segmentSeconds === undefined ? [] : ["segmentSeconds"]), ...(value.recoverySeconds === undefined ? [] : ["recoverySeconds"]),
+    ...(value.paceReferences === undefined ? [] : ["paceReferences"])].sort().join()) return false
+  if (value.paceReferences !== undefined && (!Array.isArray(value.paceReferences) || value.paceReferences.length > 100
+    || !value.paceReferences.every(isSegmentPaceReference)
+    || new Set(value.paceReferences.map(r => r.segmentId)).size !== value.paceReferences.length)) return false
   for (const rows of [value.segmentSeconds ?? [], value.recoverySeconds ?? []]) {
     if (!Array.isArray(rows) || rows.length > 100 || new Set(rows.map(r => r.segmentId)).size !== rows.length
       || !rows.every(r => Object.keys(r).sort().join() === "seconds,segmentId" && typeof r.segmentId === "string" && finitePositive(r.seconds))) return false
   }
-  if (![800, 1500, 3000, 5000, 10000, 21097, 42195].includes(value.eventDistanceM)
+  if (![800, 1500, 3000, 5000, 10000, 21097.5, 42195].includes(canonicalPaceDistance(value.eventDistanceM))
     || !["NEW_TO_RUNNING", "DEVELOPING", "EXPERIENCED"].includes(value.experience)
     || (value.availableSeconds !== null && !finitePositive(value.availableSeconds))
     || !Array.isArray(value.confirmedRequirements) || value.confirmedRequirements.length > 20
@@ -75,7 +85,8 @@ function validInputs(value: WorkoutCalculationInputs): boolean {
     || !Array.isArray(value.segmentPaces) || value.segmentPaces.length > 100
     || new Set(value.segmentPaces.map(p => p.segmentId)).size !== value.segmentPaces.length
     || !value.segmentPaces.every(p => Object.keys(p).sort().join() === "secondsPerKm,segmentId"
-      && typeof p.segmentId === "string" && finitePositive(p.secondsPerKm) && p.secondsPerKm >= 120 && p.secondsPerKm <= 1800)) return false
+      && typeof p.segmentId === "string" && finitePositive(p.secondsPerKm)
+      && p.secondsPerKm >= MIN_SUPPORTED_PACE_SECONDS_PER_KM && p.secondsPerKm <= MAX_SUPPORTED_PACE_SECONDS_PER_KM)) return false
   const record = value.fiveK
   if (record === null) return true
   return Object.keys(record).sort().join() === "achievedAt,evaluatedAt,recordId,seconds"
@@ -107,10 +118,12 @@ export function calculateCatalogWorkout(id: string, inputs: WorkoutCalculationIn
     const entry = ALL_WORKOUT_CATALOG.find(e => e.id === id)
     if (!entry || (entry.sequence && parsePrescriptionSequenceV3(entry.sequence).kind !== "parsed")) return null
     const knownIds = entry.segments.map(s => s.segmentId)
-    if (inputs.segmentPaces.some(p => !knownIds.includes(p.segmentId)) || inputs.segmentSeconds?.some(p => !knownIds.includes(p.segmentId))) return null
+    if (inputs.segmentPaces.some(p => !knownIds.includes(p.segmentId)) || inputs.segmentSeconds?.some(p => !knownIds.includes(p.segmentId))
+      || inputs.paceReferences?.some(p => !knownIds.includes(p.segmentId)
+        || inputs.segmentPaces.some(s => s.segmentId === p.segmentId) || inputs.segmentSeconds?.some(s => s.segmentId === p.segmentId))) return null
     const acceptedOverrides = new Set<string>()
     const unavailable: string[] = [], unresolved = new Set<string>()
-    if (!entry.eventDistances.includes(inputs.eventDistanceM)) unavailable.push("EVENT_SCOPE")
+    if (!entry.eventDistances.some(d => canonicalPaceDistance(d) === canonicalPaceDistance(inputs.eventDistanceM))) unavailable.push("EVENT_SCOPE")
     if (!entry.experience.includes(inputs.experience)) unavailable.push("EXPERIENCE_SCOPE")
     if (entry.hold) unavailable.push(entry.hold)
     for (const requirement of entry.requirements) if (!inputs.confirmedRequirements.includes(requirement)) unavailable.push(requirement)
@@ -141,7 +154,7 @@ export function calculateCatalogWorkout(id: string, inputs: WorkoutCalculationIn
         for (let r = 1; r <= node.repeatCount; r++) {
           if (node.kind === "group") visit(node.children, phase, node.repeatUnit === "SET" ? r : set)
           else {
-            const context = entry.segments.find(s => s.segmentId === node.id)
+            const context: WorkoutSegmentContext = entry.segments.find(s => s.segmentId === node.id)
               ?? { segmentId: node.id, intent: node.role === "BUILDUP" ? "TECHNIQUE" : "REC", modality: "RUN", terrain: "FLAT" }
             const numericEligible = context.modality === "RUN" && context.terrain === "FLAT"
               && !["ATP-PC", "ATP_PC", "TECHNIQUE"].includes(context.intent)
@@ -150,6 +163,21 @@ export function calculateCatalogWorkout(id: string, inputs: WorkoutCalculationIn
             const record = freshFiveK(inputs) ? inputs.fiveK : null
             let pace: { minimum: number; maximum: number } | null = explicit ? range(explicit.secondsPerKm) : null
             let targetModel: WorkoutCalculatedStep["targetModel"] = explicit ? "EXPLICIT_SEGMENT_PACE" : "EFFORT"
+            const reference = inputs.paceReferences?.find(p => p.segmentId === node.id)
+            if (reference) {
+              // Reference selection cannot attach flat race pace to recovery, easy running or sprint mechanics.
+              if (!numericEligible || phase !== "main" || node.role !== "WORK"
+                || catalogRecordPaceModel(context.intent, reference.eventDistanceM, context.referenceEventDistanceM) !== reference.model) throw Error("REFERENCE_NOT_APPLICABLE")
+              pace = paceReferenceRange(reference)
+              if (context.intent === "RACE_PACE" && (!pace
+                || pace.minimum < MIN_SUPPORTED_PACE_SECONDS_PER_KM || pace.maximum > MAX_SUPPORTED_PACE_SECONDS_PER_KM)) {
+                unavailable.push("RACE_PACE_REFERENCE_OUT_OF_RANGE")
+              }
+              acceptedOverrides.add(`reference:${node.id}`)
+              targetModel = reference.kind === "GOAL" ? "GOAL_RACE_REFERENCE" : "ACTUAL_RACE_REFERENCE"
+            }
+            if (context.referenceEventDistanceM !== undefined && !reference && !explicit
+              && !inputs.segmentSeconds?.some(row => row.segmentId === node.id)) unavailable.push("RACE_PACE_REFERENCE_REQUIRED")
             if (!pace && numericEligible && record && context.intent === "LT"
               && (node.work.durationSeconds === null || node.work.durationSeconds <= 1200)) {
               pace = { minimum: record.seconds / 5 + 24 * 1000 / 1609.344, maximum: record.seconds / 5 + 30 * 1000 / 1609.344 }
@@ -162,6 +190,9 @@ export function calculateCatalogWorkout(id: string, inputs: WorkoutCalculationIn
             let seconds = duration === null && pace && node.work.distanceM !== null
               ? { minimum: node.work.distanceM * pace.minimum / 1000, maximum: node.work.distanceM * pace.maximum / 1000 }
               : duration === null ? null : range(duration)
+            if (reference && (pace === null || pace.minimum < 120 || pace.maximum > 1800
+              || context.intent === "LT" && seconds && seconds.maximum > 1200
+              || context.intent === "VO2" && seconds && seconds.maximum > 300)) unavailable.push("REFERENCE_OUTSIDE_CONFIGURATION")
             // Long threshold/interval repetitions need their own pace model, not this short-repetition reference.
             if (targetModel === "THRESHOLD_REFERENCE" && seconds && seconds.maximum > 1200
               || targetModel === "FIVE_K_REFERENCE" && seconds && seconds.maximum > 300) {
@@ -175,12 +206,14 @@ export function calculateCatalogWorkout(id: string, inputs: WorkoutCalculationIn
             if (seconds === null) unresolved.add("WORK_DURATION_NOT_FIXED")
             const cue = node.target.kind === "EFFORT_GUIDANCE" ? node.target.cue : null
             const instruction = pace
-              ? `${Math.round(pace.minimum)}${pace.maximum === pace.minimum ? "" : `~${Math.round(pace.maximum)}`}초/km${targetModel === "THRESHOLD_REFERENCE" ? " · 5km 기록 기반 참고 범위, 측정 역치 아님" : targetModel === "FIVE_K_REFERENCE" ? " · 현재 5km 평균 페이스, 산소섭취량 측정값 아님" : " · 직접 정한 훈련 페이스"}`
+              ? reference ? `${formatPaceSeconds(pace.minimum, 0)}${pace.maximum === pace.minimum ? "" : `~${formatPaceSeconds(pace.maximum, 0)}`}/km · ${reference.eventDistanceM === 21097 || reference.eventDistanceM === 21097.5 ? "하프" : `${reference.eventDistanceM}m`} ${reference.kind === "GOAL" ? "목표" : "기록"} 기준${reference.achievedOn ? ` (${reference.achievedOn})` : reference.kind === "ACTUAL" ? " · 날짜 미입력" : ""}${reference.model === "FIVE_K_THRESHOLD_V1" ? " · 참고 범위, 측정 역치 아님" : " RP"}`
+                : `${Math.round(pace.minimum)}${pace.maximum === pace.minimum ? "" : `~${Math.round(pace.maximum)}`}초/km${targetModel === "THRESHOLD_REFERENCE" ? " · 5km 기록 기반 참고 범위, 측정 역치 아님" : targetModel === "FIVE_K_REFERENCE" ? " · 현재 5km 평균 페이스, 산소섭취량 측정값 아님" : " · 직접 정한 훈련 페이스"}`
               : `${cue && (node.role !== "WORK" || /RPE\s*\d/.test(cue) || ["MIX", "MIXED"].includes(context.intent)) ? cue : effort[context.intent] ?? cue ?? "표시된 구간의 노력 기준을 따르세요."}${explicitSeconds ? " · 직접 정한 구간 시간, 경기 기록 환산 아님" : ""}`
             add({ phase, segmentId: node.id, kind: node.role, set, distanceM: node.work.distanceM,
               seconds, paceSecondsPerKm: pace, intent: context.intent, modality: context.modality, terrain: context.terrain, instruction,
               targetModel: targetModel === "EFFORT" && duration !== null ? "FIXED_DURATION" : targetModel,
-              referenceRecordId: targetModel === "FIVE_K_REFERENCE" || targetModel === "THRESHOLD_REFERENCE" ? record!.recordId : null })
+              referenceRecordId: reference?.recordId ?? (targetModel === "FIVE_K_REFERENCE" || targetModel === "THRESHOLD_REFERENCE" ? record!.recordId : null),
+              ...(context.referenceEventDistanceM === undefined ? {} : { referenceEventDistanceM: context.referenceEventDistanceM }) })
           }
           if (r < node.repeatCount) recovery(node.recoveryBetweenRepeats, `${node.id}:between`, phase, set)
         }
@@ -189,7 +222,8 @@ export function calculateCatalogWorkout(id: string, inputs: WorkoutCalculationIn
     }
     if (entry.sequence) for (const phase of ["warmup", "main", "cooldown"] as const) visit(entry.sequence[phase], phase, null)
     if (inputs.segmentSeconds?.some(s => !acceptedOverrides.has(`segment:${s.segmentId}`))
-      || inputs.recoverySeconds?.some(s => !acceptedOverrides.has(`recovery:${s.segmentId}`))) return null
+      || inputs.recoverySeconds?.some(s => !acceptedOverrides.has(`recovery:${s.segmentId}`))
+      || inputs.paceReferences?.some(s => !acceptedOverrides.has(`reference:${s.segmentId}`))) return null
     const mainWork = steps.filter(s => s.phase === "main" && s.kind === "WORK")
     const knownMainDistanceM = mainWork.reduce((n, s) => n + (s.distanceM ?? 0), 0)
     const seconds = steps.every(s => s.seconds !== null) ? {
@@ -231,7 +265,8 @@ export function catalogMethodIdentity(entry: WorkoutCatalogEntry): string {
     }
     const context = entry.segments.find(s => s.segmentId === node.id)
     return { kind: node.kind, role: node.role, work: node.work, recovery,
-      context: context ? { intent: context.intent, modality: context.modality, terrain: context.terrain } : null }
+      context: context ? { intent: context.intent, modality: context.modality, terrain: context.terrain,
+        ...(context.referenceEventDistanceM === undefined ? {} : { referenceEventDistanceM: context.referenceEventDistanceM }) } : null }
   }
   return canonicalJsonFingerprint("trainoracle.catalog-method.v1", entry.sequence?.main.map(project) ?? [])
 }
@@ -240,7 +275,7 @@ export function catalogMethodIdentity(entry: WorkoutCatalogEntry): string {
 export function calculatedWorkoutSequence(workout: CalculatedWorkout): PrescriptionSequenceV3 | null {
   const source = ALL_WORKOUT_CATALOG.find(e => e.id === workout.catalogId && e.fingerprint === workout.catalogFingerprint)?.sequence
   if (!source) return null
-  const number = (n: number) => `${Number(n.toFixed(2)) === n ? "" : "≈"}${Number(n.toFixed(2))}`
+  const number = (n: number, decimals: 0 | 1) => `${roundedPaceSeconds(n, decimals) === n ? "" : "≈"}${roundedPaceSeconds(n, decimals)}`
   const nodes = (items: readonly SequenceNodeV3[]): readonly SequenceNodeV3[] => items.map(node => {
     const recovery = (items: readonly RecoveryStepV3[], position: string) => items.map((item, index) => {
       const calculated = workout.steps.find(s => s.segmentId === `${node.id}:${position}:recovery-${index}`)
@@ -251,10 +286,14 @@ export function calculatedWorkoutSequence(workout: CalculatedWorkout): Prescript
     const rest = { recoveryBetweenRepeats: recovery(node.recoveryBetweenRepeats, "between"), recoveryAfter: recovery(node.recoveryAfter, "after") }
     if (node.kind === "group") return { ...node, ...rest, children: nodes(node.children) }
     const step = workout.steps.find(s => s.segmentId === node.id && s.kind !== "RECOVERY")
-    const model = step?.targetModel === "THRESHOLD_REFERENCE" ? "LT 참고" : step?.targetModel === "FIVE_K_REFERENCE" ? "5K RP 참고" : "직접 정한 목표"
-    const range = (v: { minimum: number; maximum: number }) => `${number(v.minimum)}${v.minimum === v.maximum ? "" : `~${number(v.maximum)}`}`
-    const cue = step?.distanceM !== null && step?.seconds ? `${range(step.seconds)}s/${step.distanceM}m · ${model}`
-      : step?.paceSecondsPerKm ? `${range(step.paceSecondsPerKm)}초/km · ${model}` : step?.instruction
+    const reference = workout.inputs.paceReferences?.find(row => row.segmentId === node.id)
+    const model = reference ? `${reference.kind === "GOAL" ? "목표기록" : "실제 기록"} 기준 · ${reference.model === "FIVE_K_THRESHOLD_V1" ? "LT 참고" : "RP"}`
+      : step?.targetModel === "THRESHOLD_REFERENCE" ? "LT 참고" : step?.targetModel === "FIVE_K_REFERENCE" ? "5K RP 참고"
+        : step?.targetModel === "EXPLICIT_SEGMENT_PACE" || step?.targetModel === "EXPLICIT_SEGMENT_SECONDS" ? "직접 정한 목표"
+          : step?.targetModel === "FIXED_DURATION" ? "정해진 시간" : "체감 강도 기준"
+    const range = (v: { minimum: number; maximum: number }, decimals: 0 | 1) => `${number(v.minimum, decimals)}${v.minimum === v.maximum ? "" : `~${number(v.maximum, decimals)}`}`
+    const cue = step?.distanceM !== null && step?.seconds ? `${range(step.seconds, 1)}s/${step.distanceM}m · ${model}`
+      : step?.paceSecondsPerKm ? `${range(step.paceSecondsPerKm, 0)}초/km · ${model}` : step?.instruction
     const target = step ? { kind: "EFFORT_GUIDANCE" as const, cue: cue ?? step.instruction } : node.target
     return { ...node, ...rest, target }
   })

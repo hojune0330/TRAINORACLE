@@ -66,7 +66,8 @@ describe("display-only workout notation", () => {
       target: { kind: "RACE_PACE", eventDistanceM: 800, anchorRef: "synthetic" } })])
     const target = { kind: "CURRENT_SAME_EVENT_RACE_PACE" as const, segmentId: "main", secondsPerKm: 171.25,
       targetRepSeconds: 34.25, distanceM: 200, fixedWorkSeconds: null, missing: null }
-    expect(sequenceNotation(source, [target])).toBe("200m @ 34.25s/200m · 800m RP")
+    expect(sequenceNotation(source, [target])).toBe("200m @ 34.3s/200m · 800m RP")
+    expect(sequenceNotation(source, [{ ...target, targetRepSeconds: 59.999999 }])).toBe("200m @ 60s/200m · 800m RP")
     expect(sequenceNotation(source, [{ ...target, segmentId: "elsewhere" }])).toBe("200m @ 800m RP")
     expect(sequenceNotation(source, [{ ...target, distanceM: 400 }])).toBe("200m @ 800m RP")
     expect(notationNumber(34.25123)).toBe("≈34.251")

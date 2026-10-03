@@ -10,10 +10,10 @@ beforeEach(() => { localStorage.clear(); sessionStorage.clear(); vi.useFakeTimer
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks() })
 
 it.each([
-  { event: 800, seconds: 121.5, template: "MD-800-01", focus: "GLY_INTENT", work: "200m를 약 30초에 10회", rest: "반복 사이 1분 서서 쉬기" },
-  { event: 1500, seconds: 245, template: "MD-1500-01", focus: "MIXED_INTENT", work: "500m를 약 1분 22초에 3회", rest: "반복 사이 3분 서서 쉬기" },
-  { event: 3000, seconds: 611, template: "MD-3000-01", focus: "VO2_INTENT", work: "800m를 약 2분 43초에 4회", rest: "반복 사이 3분 걷기" },
-  { event: 5000, seconds: 1111, template: "V2-SEED-05", focus: "VO2_INTENT", work: "1000m를 약 3분 42초에 5회", rest: "반복 사이 2분 30초 조깅" },
+  { event: 800, seconds: 121.5, template: "MD-800-01", focus: "GLY_INTENT", work: "200m를 약 30.4초에 10회", rest: "반복 사이 1분 서서 쉬기" },
+  { event: 1500, seconds: 245, template: "MD-1500-01", focus: "MIXED_INTENT", work: "500m를 약 1분 21.7초에 3회", rest: "반복 사이 3분 서서 쉬기" },
+  { event: 3000, seconds: 611, template: "MD-3000-01", focus: "VO2_INTENT", work: "800m를 약 2분 42.9초에 4회", rest: "반복 사이 3분 걷기" },
+  { event: 5000, seconds: 1111, template: "V2-SEED-05", focus: "VO2_INTENT", work: "1000m를 약 3분 42.2초에 5회", rest: "반복 사이 2분 30초 조깅" },
 ] as const)("projects the actual $event prescription without modifying dose or unrounded targets", c => {
   const record = createSelfReportedAthleteRecord({ id: `synthetic-${c.event}`, purpose: "RECENT_RESULT",
     eventDistanceM: c.event, performanceSeconds: c.seconds, achievedOn: "2026-09-20", seasonId: null }, now)!

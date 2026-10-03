@@ -50,10 +50,12 @@ import {
 } from "./plan-beta/plan-selection"
 import type { CandidateSelection } from "./plan-beta/plan-selection"
 import { planErrorMessage } from "./plan-beta/plan-feedback"
-import { loadAthleteRecords } from "../domain/athlete-records"
+import { cacheConfirmedAthleteRecords } from "../domain/athlete-records"
+import { readEligibleAccountPaceRecords } from "../domain/account/eligible-account-pace-records"
+import { ACCOUNT_ATHLETE_RECORD_EVENT, readAccountAthleteRecordsState } from "../domain/account/account-athlete-record-service"
 import { InstantPlanEntryForm } from "../components/instant-plan/InstantPlanEntryForm"
 import type { InstantPlanEntry } from "../domain/instant-plan-contract"
-import { prepareInstantPlanEntry } from "../domain/instant-plan-entry"
+import { prepareAccountInstantPlanEntry } from "../domain/account/instant-plan-record-save"
 import { prepareInstantIntake } from "./plan-beta/instant-plan-intake"
 import type { CandidatePrescriptionBinding } from "../domain/plan-candidate-prescription"
 import { samePlanSessionTarget, type PlanSessionTarget, type CandidateSessionTargets } from "../domain/plan-session-target"
@@ -442,7 +444,18 @@ function LegacyPlanBeta({
   const selectionWrite = React.useRef(false)
   const [notationReaderOpen, setNotationReaderOpen] = React.useState(false)
   const [celebrateActivePlan, setCelebrateActivePlan] = React.useState(false)
-  const [athleteRecords, setAthleteRecords] = React.useState(() => loadAthleteRecords())
+  const [athleteRecords, setAthleteRecords] = React.useState(() => [...readEligibleAccountPaceRecords()])
+  const [instantRecordSaving, setInstantRecordSaving] = React.useState(false)
+  const instantRecordSaveLock = React.useRef(false)
+  React.useEffect(() => {
+    const refresh = () => {
+      const current = readAccountAthleteRecordsState()
+      if (current.confirmed && current.ownerId) cacheConfirmedAthleteRecords(current.records, current.ownerId)
+      setAthleteRecords([...readEligibleAccountPaceRecords()])
+    }
+    window.addEventListener(ACCOUNT_ATHLETE_RECORD_EVENT, refresh)
+    return () => window.removeEventListener(ACCOUNT_ATHLETE_RECORD_EVENT, refresh)
+  }, [])
   const [recordsOpen, setRecordsOpen] = React.useState(false)
   const [recordReturnCount, setRecordReturnCount] = React.useState(0)
   const [candidateStartDate, setCandidateStartDate] = React.useState(todayISO)
@@ -698,7 +711,7 @@ function LegacyPlanBeta({
           return
         }
         if (result.code === "PACE_ANCHOR_RECONFIRMATION_REQUIRED") {
-          setAthleteRecords(loadAthleteRecords())
+          setAthleteRecords([...readEligibleAccountPaceRecords()])
           setSelectedRecordId(null)
           setComparisonRecordId(null)
           setRecordConfirmationPending(true)
@@ -761,12 +774,13 @@ function LegacyPlanBeta({
   if (recordsOpen) {
     return <React.Suspense fallback={<p role="status">경기 기록을 열고 있어요.</p>}>
       <AthleteRecords onBack={() => {
-        setAthleteRecords(loadAthleteRecords())
+        setAthleteRecords([...readEligibleAccountPaceRecords()])
         setSelectedRecordId(null)
         setComparisonRecordId(null)
         setRecordConfirmationPending(false)
         setRecordsOpen(false)
         setRecordReturnCount(count => count + 1)
+        if (stored !== null) { setStored(loadPlanBetaState()); return }
         // Re-evaluate current safety and authority; never reuse the old bound numbers.
         if (generatedIntake !== null) generateCandidates(generatedIntake, null, targetRaceDate || undefined)
       }} />
@@ -785,6 +799,7 @@ function LegacyPlanBeta({
     return (
       <PlanActiveState
         state={stored}
+        onManagePaceRecords={() => setRecordsOpen(true)}
         cloudPersistence={cloudPersistence}
         onRetryCloudBackup={retryCloudBackup}
         celebrateOnMount={celebrateActivePlan}
@@ -1006,16 +1021,20 @@ function LegacyPlanBeta({
   }
 
   if (instantEntryOpen) return <>
-    <InstantPlanEntryForm today={todayISO()} initialEntry={instantEntry} onDraftChange={setInstantEntryDirty} onSubmit={value => {
-      const prepared = prepareInstantPlanEntry(value)
+    <InstantPlanEntryForm today={todayISO()} initialEntry={instantEntry} disabled={instantRecordSaving} onDraftChange={setInstantEntryDirty} onSubmit={async value => {
+      if (instantRecordSaveLock.current) return
+      instantRecordSaveLock.current = true; setInstantRecordSaving(true)
+      const prepared = await prepareAccountInstantPlanEntry(value)
+      instantRecordSaveLock.current = false; setInstantRecordSaving(false)
       if (prepared.kind !== "ready") {
         setInstantEntryError(prepared.kind === "invalid" ? "입력한 종목·기록·날짜를 다시 확인해 주세요."
+          : prepared.kind === "pending" ? "기록 전송을 기다리고 있어요. 연결 후 다시 누르면 저장 여부를 확인해요."
           : "기록을 저장하지 못했어요. 입력은 그대로 남아 있어요. 다시 시도해 주세요.")
         return
       }
       draftRevision.current += 1
       setInstantEntry(prepared.entry); setInstantEntryError(null); setInstantEntryOpen(false)
-      setAthleteRecords(loadAthleteRecords()); setSelectedRecordId(prepared.recordId)
+      setAthleteRecords([...readEligibleAccountPaceRecords()]); setSelectedRecordId(prepared.recordId)
       setComparisonRecordId(null); setRecordConfirmationPending(false)
       const nextDraft: Partial<PlanBetaIntake> = { ...draft, eventDistanceM: prepared.entry.eventDistanceM,
         eventGroup: eventGroupForDistance(prepared.entry.eventDistanceM) }

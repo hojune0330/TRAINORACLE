@@ -14,6 +14,7 @@ import {
 } from "./detailed-prescription-approvals"
 import { formatElapsedMonths, SEASON_WINDOW_MONTHS } from "./athlete-record-display"
 import { isValidIsoDate } from "./dates"
+import { isExplicitGoalPaceTemplate } from "@impl/prescription/anchor"
 
 export const plannedEnergyIntentSchema = z.enum([
   "RECOVERY_INTENT",
@@ -61,6 +62,18 @@ const currentAnchorSchema = z.discriminatedUnion("kind", [
   }).strict(),
 ])
 const fingerprintSchema = z.string().regex(/^sha256:[a-f0-9]{64}$/)
+const selectedGoalAnchorSchema = z.object({
+  ...currentAnchorBase,
+  kind: z.literal("GOAL"), purpose: z.literal("ASPIRATIONAL_TARGET"),
+  achievedAt: z.null(), seasonId: z.null(), freshnessState: z.literal("UNKNOWN"),
+  elapsedLabel: z.string().min(1),
+  verificationState: verificationStateSchema,
+  selectionEvidence: z.object({
+    version: z.literal(1), kind: z.literal("EXPLICIT_GOAL"), confirmed: z.literal(true),
+    recordSchemaVersion: z.literal(1), recordPurpose: z.literal("RACE_GOAL"), recordVersion: z.string().datetime(),
+    evaluatedOn: z.string().refine(isValidIsoDate), timeZone: z.string().min(1),
+  }).strict(),
+}).strict()
 const componentRefSchema = z.object({
   componentType: z.enum(["WARMUP", "COOLDOWN", "DOWNSHIFT", "STOP_CONDITIONS"]),
   componentRef: z.string().min(1),
@@ -173,7 +186,7 @@ const paceTargetContentShape = {
   repetitionDistanceM: z.number().int().positive(),
   targetEventDistanceM: z.number().int().positive(),
   targetRepSeconds: z.number().finite().positive(),
-  selectedAnchor: currentAnchorSchema,
+  selectedAnchor: z.union([currentAnchorSchema, selectedGoalAnchorSchema]),
   displayRoundingPolicyVersion: z.string().min(1),
   repetitionRecoverySeconds: z.number().int().positive().nullable(),
   repetitionRecoveryMode: z.enum(["WALK", "JOG", "STAND", "NOT_APPLICABLE"]),
@@ -226,7 +239,13 @@ function validateStoredPaceTargetContent(
   const elapsedLabels = new Set(
     Array.from({ length: SEASON_WINDOW_MONTHS + 1 }, (_, months) => formatElapsedMonths(months)),
   )
-  if (!isValidIsoDate(anchor.achievedAt)
+  if (anchor.kind === "GOAL") {
+    if (!isExplicitGoalPaceTemplate(value.templateId, value.templateVersion, value.targetEventDistanceM)
+      || anchor.verificationState === "UNVERIFIED" || anchor.elapsedLabel !== "목표 기록 · 현재 실력 아님"
+      || anchor.sourceRef !== `athlete-record:${anchor.anchorId}`) {
+      addStoredIssue(context, ["selectedAnchor"], "Explicit goal reference requires its exact adopted same-event template.")
+    }
+  } else if (!isValidIsoDate(anchor.achievedAt)
       || anchor.sourceRef !== `athlete-record:${anchor.anchorId}`
       || !elapsedLabels.has(anchor.elapsedLabel)
       || (anchor.kind === "SB" && anchor.seasonId !== anchor.achievedAt.slice(0, 4))) {

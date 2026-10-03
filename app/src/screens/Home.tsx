@@ -1,4 +1,5 @@
 import React from "react"
+import { useAthleteRecordsSnapshot } from "../hooks/useAthleteRecordsSnapshot"
 import { ACCOUNT_PLAN_EVENT, accountPlanService, accountPlansEnabled } from "../domain/account/account-plan-service"
 import { TermHelp } from "../components/TermHelp"
 import { InstallShortcutSuggestion } from "../components/InstallShortcut"
@@ -45,6 +46,7 @@ export function Home({
   onOpenNextTraining, onOpenTrends, onOpenOracle, onOpenMore, onOpenAccount, onOpenContent, onOpenRewards,
 }: HomeProps) {
   const [revision, setRevision] = React.useState(0)
+  const athleteRecords = useAthleteRecordsSnapshot()
   React.useEffect(() => {
     const refresh = () => setRevision(value => value + 1)
     const unsubscribe = onLocalJournalScopeChange(refresh)
@@ -99,8 +101,9 @@ export function Home({
     : storageStatus === "PENDING" ? "계정 저장을 기다리는 기록이 있어요. 아직 계정 저장이 완료되지 않았어요."
     : null
   const needsPlanReview = accountCurrent?.kind === "evidence_required"
-  const safetyNotice = needsPainCheck || painReviewDates.length > 0 || storageMessage !== null || needsPlanReview ? (
+  const safetyNotice = needsPainCheck || painReviewDates.length > 0 || storageMessage !== null || needsPlanReview || athleteRecords.message !== null ? (
     <div className="home-hub__notices">
+      {athleteRecords.message && <p role="status">{athleteRecords.message}</p>}
       {needsPainCheck && <p role="alert" className="home-hub__notice">
         계획에 통증 확인 기록이 있어요. 다음 훈련 전에 몸 상태를 확인하고 지도자·보호자와 상의해 주세요.
       </p>}

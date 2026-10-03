@@ -7,6 +7,7 @@ import { bindCatalogSession, catalogFamilyForIntent } from "@impl/prescription/c
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import { replaceCandidateCatalogWorkout } from "../../domain/catalog-plan-binding"
 import { createSelfReportedAthleteRecord } from "../../domain/athlete-records"
+import { prepareInitialRecordPaces } from "../../domain/initial-record-pace"
 import { CatalogWorkoutEditor, CatalogWorkoutPicker } from "./CatalogWorkoutPicker"
 import { PlanCandidates } from "./PlanCandidates"
 
@@ -24,6 +25,27 @@ function fixture(experienceBand: "NEW_TO_RUNNING" | "EXPERIENCED" = "EXPERIENCED
 function openPicker() { fireEvent.click(screen.getByText("다른 훈련으로 바꾸기", { exact: true })) }
 
 describe("catalog picker actionable and truthful review", () => {
+  it("opens a canonical half-marathon RP binding from a legacy 21097m plan without changing it", () => {
+    const today = "2026-10-02"
+    const result = generatePlanFromDraft({ eventGroup: "GENERAL_ENDURANCE", eventDistanceM: 21097,
+      competitionDivision: "OPEN", experienceBand: "EXPERIENCED", availableDayCount: 3,
+      requestedFrameLength: 9, trainingFocus: "MIXED_INTENT", secondSessionMode: "SINGLE_SESSION_ONLY",
+      trainingTimePreference: "MORNING", selectedDetailedTemplateRef: null, startDate: today }, "NO_KNOWN_RISK")
+    if (result.kind !== "generated") throw Error(result.kind)
+    const record = createSelfReportedAthleteRecord({ id: "half-reference", purpose: "RECENT_RESULT",
+      eventDistanceM: 21097.5, performanceSeconds: 5400, achievedOn: today, seasonId: null }, new Date(`${today}T03:00:00Z`))
+    if (!record) throw Error("record fixture")
+    const offer = prepareInitialRecordPaces(result.generated, [record], today)
+    if (!offer) throw Error("half pace offer")
+    const snapshot = JSON.stringify(offer.generated), onChange = vi.fn()
+    render(<CatalogWorkoutPicker generated={offer.generated} intake={result.intake} records={[record]} onChange={onChange} />)
+    openPicker()
+    expect(screen.getByRole("combobox", { name: /^훈련 구성$/ })).toHaveValue("RP-HALF-DISTANCE")
+    expect(screen.queryByText(/이 구성은 현재 조건에서 고를 수 없어요/)).toBeNull()
+    expect(JSON.stringify(offer.generated)).toBe(snapshot)
+    expect(onChange).not.toHaveBeenCalled()
+  })
+
   it("explains an empty eligible pool and keeps another date reachable without changing the plan", () => {
     const source = generatePlanFromDraft({ ...fixture("NEW_TO_RUNNING").intake,
       eventGroup: "MIDDLE_DISTANCE", eventDistanceM: 1500, availableDayCount: 6,

@@ -59,6 +59,22 @@ const orderedMain = (sessions: readonly PlanSession[]) => sessions.filter(s => s
   .sort((a, b) => a.day - b.day || a.slot.localeCompare(b.slot))
 const bindingOf = (s: PlanSession) => s.prescription.kind === "RPE_TIME_RANGE" ? s.prescription.catalogWorkout : undefined
 
+function maintenanceExplanation(status: CatalogCycleEvidenceStatus, rows: readonly PlanJournalEvidenceRow[]): string {
+  if (status === "RESPONSE_MISMATCH") return "기록이 이 계획과 맞는지 확인되지 않아 이전 구성을 유지했어요."
+  if (status === "CONFLICTING_RESPONSE") return "같은 훈련의 기록이 서로 달라 이전 구성을 유지했어요. 기록을 확인해 주세요."
+  if (status === "INCOMPLETE_RESPONSE") return "비교에 필요한 기록을 모두 확인하지 못해 이전 구성을 유지했어요."
+  if (rows.length > 0 && rows.every(row => row.comparison === "CHANGED_SESSION"))
+    return "다르게 수행한 기록은 원래 훈련의 체감 강도와 바로 비교하지 않아, 이번에는 구성을 유지했어요."
+  if (rows.length > 0 && rows.every(row => row.comparison === "NOT_PERFORMED"))
+    return "휴식·건너뜀 기록만으로 훈련량을 다시 정하지 않고 이전 구성을 유지했어요."
+  if (status === "NO_COMPARABLE_RESULTS") return "체감 강도를 비교할 수 있는 기록이 없어 이전 구성을 유지했어요."
+  if (status === "MISSING_RESPONSE" || status === "NO_LINKED_RESULTS") return "이 훈련에 연결된 수행 기록이 없어 이전 구성을 유지했어요."
+  if (status === "SINGLE_SIGNAL") return "비교할 수 있는 수행 기록이 한 번뿐이라 이전 구성을 유지했어요."
+  return rows.some(row => row.comparison === "ABOVE_RANGE")
+    ? "계획보다 높은 체감 강도가 반복되지는 않아 이전 구성을 유지했어요."
+    : "기록한 체감 강도가 계획 범위 안이거나 낮아 구성을 유지했어요. 훈련량을 자동으로 늘리지는 않아요."
+}
+
 function compatible(candidate: PlanCandidate, predecessor: PlanBetaStateV3): boolean {
   const active = predecessor.activePlan
   const frame = active.frame
@@ -105,7 +121,9 @@ function evidenceFor(response: PlanCycleResponse | null | undefined, predecessor
     // Project only structured evidence. Never read the response's headline/evidence or extra text.
     rows.push({ plannedSessionId: row.plannedSessionId, currentPlannedSessionId: row.currentPlannedSessionId,
       source: row.source, date: row.date, day: row.day, slot: row.slot, role: row.role,
-      actualRpe: row.actualRpe, plannedRpe: row.plannedRpe === null ? null : { ...row.plannedRpe }, comparison: row.comparison })
+      actualRpe: row.actualRpe, plannedRpe: row.plannedRpe === null ? null : { ...row.plannedRpe }, comparison: row.comparison,
+      adaptationEligibility: row.adaptationEligibility === "CONFIRMED" || row.adaptationEligibility === "PAIN_SIGNAL"
+        ? row.adaptationEligibility : "UNCONFIRMED" })
   }
   const within = rows.filter(r => r.comparison === "WITHIN_RANGE").length
   const above = rows.filter(r => r.comparison === "ABOVE_RANGE").length
@@ -200,10 +218,13 @@ export function resolveCatalogCycleSuccessor(input: {
     const reducedCount = rows.filter(r => r.applied && r.status === "REDUCED").length
     const reviewCount = rows.filter(r => r.status === "REVIEW_REQUIRED").length
     const noMain = !incompatible && rows.length === 0
+    const sharedExplanation = rows.length > 0 && rows.every(row => row.applied && row.explanation === rows[0]!.explanation)
+      ? rows[0]!.explanation : null
     return { generated: copy(next), summary: { status: incompatible ? "INCOMPATIBLE" : noMain ? "NOT_APPLICABLE" : reviewCount ? "REVIEW_REQUIRED"
       : reducedCount ? "APPLIED" : "MAINTAINED", reason: noMain ? "NO_MAIN_SESSIONS" : reason, responseStatus,
       headline: incompatible ? "이전 계획과 새 계획의 조건이 달라 상세 훈련을 이어오지 않았어요."
         : noMain ? "이번 목적에는 MAIN 훈련이 없어 상세 MAIN 조정은 하지 않았어요."
+        : sharedExplanation ? sharedExplanation
         : reviewCount ? maintainedCount + reducedCount === 0 ? "이전 상세 훈련을 이어오지 못했어요. 다음 계획안을 다시 확인해 주세요."
           : reducedCount > 0 ? "반복된 RPE를 반영해 훈련량이 적은 구성을 제안해요. 일부 훈련은 다시 확인해 주세요."
             : "확인된 이전 상세 훈련은 유지했어요. 일부 훈련은 다시 확인해 주세요."
@@ -275,7 +296,10 @@ export function resolveCatalogCycleSuccessor(input: {
       continue
     }
     let chosen = maintained, reduced = false
-    const mayReduce = purposeStatus === "COMPLETE_RESPONSE" && above >= 2
+    const repeatedHigh = purposeStatus === "COMPLETE_RESPONSE" && above >= 2
+    const adaptationReview = comparisons.some(r => r.adaptationEligibility === "PAIN_SIGNAL") ? "PAIN_SIGNAL"
+      : comparisons.some(r => r.adaptationEligibility !== "CONFIRMED") ? "UNCONFIRMED" : null
+    const mayReduce = repeatedHigh && adaptationReview === null
     if (mayReduce) {
       const lower = ALL_WORKOUT_CATALOG.filter(e => e.id !== entry.id && e.methodGroup === entry.methodGroup && e.family === entry.family)
         .flatMap(option => {
@@ -293,13 +317,17 @@ export function resolveCatalogCycleSuccessor(input: {
       if (lower) { chosen = lower.session; reduced = true }
     }
     replacements.set(`${target.day}:${target.slot}`, chosen)
-    if (mayReduce && !reduced) row("REVIEW_REQUIRED", "NO_REVIEWED_LOWER_CONFIGURATION",
+    if (repeatedHigh && adaptationReview) row("REVIEW_REQUIRED", `ADAPTATION_${adaptationReview}`,
+      adaptationReview === "PAIN_SIGNAL"
+        ? "통증을 남긴 기록이 포함돼, 높은 체감 강도만으로 다음 훈련량을 정하지 않았어요. 몸 상태를 먼저 확인해 주세요."
+        : "실제 수행과 오전·오후, 통증 응답을 모두 확인하지 못해 훈련량을 바꾸지 않았어요. 기록을 확인해 주세요.", chosen)
+    else if (mayReduce && !reduced) row("REVIEW_REQUIRED", "NO_REVIEWED_LOWER_CONFIGURATION",
       "힘들었다는 기록이 반복됐지만 양이 적은 같은 방식의 훈련을 확인하지 못해 이전 상세 훈련을 유지했어요. 다시 확인해 주세요.", chosen)
     else if (["CONFLICTING_RESPONSE", "INCOMPLETE_RESPONSE", "RESPONSE_MISMATCH"].includes(purposeStatus))
-      row("REVIEW_REQUIRED", purposeStatus, "기록이 불완전하거나 서로 맞지 않아 훈련량을 바꾸지 않고 이전 상세 훈련을 유지했어요.", chosen)
+      row("REVIEW_REQUIRED", purposeStatus, maintenanceExplanation(purposeStatus, comparisons), chosen)
     else row(reduced ? "REDUCED" : "MAINTAINED", reduced ? "REPEATED_ABOVE_REVIEWED_LOWER" : purposeStatus,
-      reduced ? "같은 목적의 훈련에서 힘들었다는 기록이 반복돼, 양이 적은 같은 방식의 훈련을 다음 계획안에 넣었어요."
-        : "이전 상세 훈련을 유지했어요. 기록 누락·한 번의 기록·낮거나 범위 안인 RPE로 훈련을 늘리지 않아요.", chosen)
+      reduced ? `같은 목적에서 계획보다 높은 체감 강도가 ${above}회 기록돼, 양이 적은 같은 방식의 훈련을 제안해요.`
+        : maintenanceExplanation(purposeStatus, comparisons), chosen)
   }
   const first = generated.candidates[0], second = generated.candidates[1]
   const replace = (candidate: PlanCandidate): PlanCandidate => ({ ...candidate, sessions: candidate.sessions.map(s =>
