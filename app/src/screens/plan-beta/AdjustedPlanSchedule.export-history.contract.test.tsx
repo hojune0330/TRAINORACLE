@@ -5,7 +5,7 @@ import { AdjustedPlanSchedule } from "./AdjustedPlanSchedule"
 import { AdjustedPlanScheduleV3 } from "./AdjustedPlanScheduleV3"
 import { MultiAdjustedPlanScheduleV3 } from "./MultiAdjustedPlanScheduleV3"
 import { accountPlanPacketFixture } from "../../domain/account/account-plan.test-fixtures"
-import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
+import { activeLocalAccount, setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 import { ACCOUNT_PLAN_EVENT } from "../../domain/account/account-plan-service"
 import { readStoredAdjustedPlanState } from "../../domain/adjusted-plan-storage-schema"
 import { readStoredAdjustedPlanStateV5 } from "../../domain/adjusted-plan-storage-v5-schema"
@@ -45,7 +45,13 @@ function pending() {
   return { resolve, reject }
 }
 function element(version: 4 | 5 | 6) {
-  const packet = accountPlanPacketFixture(version)
+  // This suite exercises exporting an existing plan, not approving online pace records.
+  // Construct its historical plan in guest scope before mounting the account export UI.
+  const owner = activeLocalAccount()
+  setActiveLocalAccount(null)
+  let packet: ReturnType<typeof accountPlanPacketFixture>
+  try { packet = accountPlanPacketFixture(version) }
+  finally { setActiveLocalAccount(owner) }
   const onStoredChange = vi.fn()
   if (version === 4) {
     const evidence = [packet.evidence] as Parameters<typeof readStoredAdjustedPlanState>[1]

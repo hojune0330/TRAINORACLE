@@ -32,8 +32,9 @@ describe("integrated minimal entry to selected plan", () => {
       fireEvent.change(screen.getByLabelText("기록 달성일"), { target: { value: todayISO() } })
       await user.click(screen.getByRole("button", { name: "내 계획 받기" }))
       await safetyAndExperience()
-      expect(screen.getByRole("button", { name: "이 일정으로 시작" })).toBeDisabled()
+      expect(screen.queryByRole("button", { name: "이 일정으로 시작" })).toBeNull()
       expect(loadPlanBetaState()).toBeNull()
+      await user.click(screen.getByRole("button", { name: "기준 기록 확인하기" }))
       await user.click(screen.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }))
       await user.click(screen.getByRole("button", { name: "이 일정으로 시작" }))
       const stored = loadPlanBetaState()
@@ -55,7 +56,7 @@ describe("integrated minimal entry to selected plan", () => {
       }
     }, 20_000)
 
-  it("goal-only remains a goal and can start a non-pace plan", async () => {
+  it("goal-only remains aspirational when explicitly applied to a marathon pace plan", async () => {
     const user = userEvent.setup()
     render(<PlanBeta />)
     await user.click(screen.getByRole("radio", { name: "목표만 있어요" }))
@@ -64,10 +65,24 @@ describe("integrated minimal entry to selected plan", () => {
     await user.type(screen.getByLabelText("초"), "0")
     await user.click(screen.getByRole("button", { name: "내 계획 받기" }))
     await safetyAndExperience()
-    expect(loadAthleteRecords()).toEqual([])
+    expect(loadAthleteRecords()).toMatchObject([{ purpose: "RACE_GOAL", eventDistanceM: 42195,
+      performanceSeconds: 10800, achievedOn: null }])
     expect(screen.getByText("내 목표")).toBeVisible()
+    expect(loadPlanBetaState()).toBeNull()
+    expect(screen.getByRole("button", { name: "이 기록으로 목표 페이스 보기" })).toBeDisabled()
+    await user.click(screen.getByText("기준 바꾸기", { exact: true }))
+    await user.selectOptions(screen.getByRole("combobox", { name: "기준 기록" }), loadAthleteRecords()[0]!.id)
+    expect(screen.getByRole("button", { name: "이 기록으로 목표 페이스 보기" })).toBeEnabled()
+    await user.click(screen.getByRole("button", { name: "이 기록으로 목표 페이스 보기" }))
     await user.click(screen.getByRole("button", { name: "이 일정으로 시작" }))
-    expect(loadPlanBetaState()?.activePlan.sessions.some(item => item.prescription.kind === "PACE_TARGET")).toBe(false)
+    const stored = loadPlanBetaState()
+    expect(stored).not.toBeNull()
+    const references = stored!.activePlan.sessions.flatMap(item => item.prescription.kind === "RPE_TIME_RANGE"
+      ? item.prescription.catalogWorkout?.inputs.paceReferences ?? [] : [])
+    expect(references.length).toBeGreaterThan(0)
+    expect(references.every(reference => reference.kind === "GOAL" && reference.eventDistanceM === 42195
+      && reference.performanceSeconds === 10800 && reference.achievedOn === null)).toBe(true)
+    expect(stored!.activePlan.sessions.some(item => item.prescription.kind === "PACE_TARGET")).toBe(false)
   })
 
   it("a pending server write cannot be repeated or presented as an activated plan", async () => {
