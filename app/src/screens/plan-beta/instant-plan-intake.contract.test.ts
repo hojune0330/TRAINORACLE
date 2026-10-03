@@ -21,10 +21,21 @@ describe("instant intake proposals", () => {
     expect(result.availableDayCount).toBe("EVERY_DAY")
     expect(result.secondSessionMode).toBe("SINGLE_SESSION_ONLY")
   })
-  it.each(["NO_RECORD", "GOAL_ONLY"] as const)("does not treat %s as a current record", kind => {
-    const entry = kind === "NO_RECORD" ? { kind, eventDistanceM: 5000 as const }
-      : { kind, eventDistanceM: 5000 as const, performanceSeconds: 1111 }
-    expect(prepareInstantIntake({ eventDistanceM: 5000, experienceBand: "EXPERIENCED" }, entry, evaluatedAt)
+  it("does not invent a pace method without a record", () => {
+    expect(prepareInstantIntake({ eventDistanceM: 5000, experienceBand: "EXPERIENCED" },
+      { kind: "NO_RECORD", eventDistanceM: 5000 }, evaluatedAt)
+      .selectedDetailedTemplateRef).toBeNull()
+  })
+  it.each([800, 1500, 3000, 5000] as const)("offers an approved method for a %sm goal without confirming its pace", distance => {
+    const draft = { eventDistanceM: distance, experienceBand: "EXPERIENCED" as const }
+    const goal = { kind: "GOAL_ONLY" as const, eventDistanceM: distance, performanceSeconds: 121.5 }
+    const result = prepareInstantIntake(draft, goal, evaluatedAt)
+    expect(result.selectedDetailedTemplateRef).not.toBeNull()
+    expect(resolveDetailedPlanTemplateOptions(result, evaluatedAt).some(option =>
+      option.ref.templateId === result.selectedDetailedTemplateRef?.templateId)).toBe(true)
+    expect(result).not.toHaveProperty("selectedRecordId")
+    expect(goal.kind).toBe("GOAL_ONLY")
+    expect(prepareInstantIntake({ ...draft, selectedDetailedTemplateRef: null }, goal, evaluatedAt)
       .selectedDetailedTemplateRef).toBeNull()
   })
   it.each(["NEW_TO_RUNNING", "DEVELOPING"] as const)("preserves %s eligibility", experienceBand => {

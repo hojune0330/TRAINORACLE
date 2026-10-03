@@ -105,11 +105,12 @@ function levelResult(
   records: readonly AthleteRecord[] | undefined,
   today: string,
 ): OraclePersonalResult {
-  type UsableAthleteRecord = Exclude<AthleteRecord, { purpose: "RACE_GOAL" }>
+  type UsableAthleteRecord = Exclude<AthleteRecord, { purpose: "RACE_GOAL" }> & { achievedOn: string }
   const usable = (value: unknown): value is UsableAthleteRecord => {
     if (typeof value !== "object" || value === null) return false
     const candidate = value as Partial<UsableAthleteRecord>
     return candidate.purpose !== undefined
+      && candidate.purpose !== ("RACE_GOAL" as string)
       && typeof candidate.achievedOn === "string"
       && isValidIsoDate(candidate.achievedOn)
       && candidate.achievedOn <= today

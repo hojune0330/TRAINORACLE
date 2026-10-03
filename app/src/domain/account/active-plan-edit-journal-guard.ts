@@ -28,12 +28,14 @@ export function projectActivePlanEditJournal(value: unknown, receipt: ActivePlan
     evidence: executionReplanEvidence([record.entry])[0]!,
     protectsSource: protectsSlot(record.entry, sourceDate, receipt.source.slot),
     protectsTarget: !!receipt.target && targetDate !== null && protectsSlot(record.entry, targetDate, receipt.target.slot),
+    protectsReplacement: receipt.action === "PACE_REFERENCE" && (receipt.replacements ?? []).some(session =>
+      protectsSlot(record.entry, isoShift(receipt.startDate, session.day - 1), session.slot)),
   }
 }
 
 export function validateActivePlanEditJournalFacts(receipt: ActivePlanEditReceipt,
   facts: readonly NonNullable<ReturnType<typeof projectActivePlanEditJournal>>[]) {
-  if (facts.some(fact => fact.protectsSource || fact.protectsTarget)) return false
+  if (facts.some(fact => fact.protectsSource || fact.protectsTarget || fact.protectsReplacement)) return false
   const evidence = facts.map(fact => fact.evidence).sort((a, b) => a.id.localeCompare(b.id))
   return new Set(evidence.map(entry => entry.id)).size === evidence.length
     && activePlanEditFingerprint(evidence) === receipt.evidenceFingerprint

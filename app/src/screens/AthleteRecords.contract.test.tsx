@@ -30,11 +30,24 @@ describe("athlete record entry surface", () => {
     expect(minutes).toHaveAttribute("aria-invalid", "true")
     expect(minutes).toHaveAccessibleDescription("기록의 분과 초를 다시 확인해 주세요.")
     await fillTime("18", "31")
+    await user.type(screen.getByRole("textbox", { name: "달성일" }), "2024-02-30")
     await user.click(screen.getByRole("button", { name: "기록 저장" }))
     expect(screen.getByRole("textbox", { name: "달성일" })).toHaveFocus()
     expect(screen.getByRole("textbox", { name: "달성일" })).toHaveAccessibleDescription("달성일을 YYYY-MM-DD로 입력해 주세요.")
     expect(minutes).not.toHaveAttribute("aria-invalid")
     expect(loadAthleteRecords(new Date())).toHaveLength(0)
+  })
+  it("stores an unknown date without inventing today and preserves the exact half distance", async () => {
+    const user = userEvent.setup()
+    render(<AthleteRecords onBack={() => undefined} />)
+    await user.selectOptions(screen.getByRole("combobox", { name: "종목 거리" }), "21097.5")
+    await fillTime("90", "1.5")
+    await user.click(screen.getByRole("button", { name: "기록 저장" }))
+    expect(loadAthleteRecords()).toEqual([expect.objectContaining({
+      eventDistanceM: 21097.5, achievedOn: null, performanceSeconds: 5401.5,
+      purpose: "RECENT_RESULT",
+    })])
+    expect(screen.getByRole("status")).toHaveTextContent("이 기기에 경기 기록을 저장했어요")
   })
   it("opens from the plan flow without creating a record", async () => {
     const onManageRecords = vi.fn()

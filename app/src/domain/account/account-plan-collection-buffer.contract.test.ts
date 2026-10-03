@@ -22,18 +22,19 @@ function setup() {
   return { stores, open }
 }
 
-it.each([{ journalGuard: [] }, { journalGuard: [{ documentId: "55555555-5555-4555-8555-555555555555", revision: 2 }] }])("reopens the exact journal guard in the durable outbox", async ({ journalGuard }) => {
+it.each([{ journalGuard: [] }, { journalGuard: [{ documentId: "55555555-5555-4555-8555-555555555555", revision: 2 }] }])("reopens exact source and journal guards in the durable outbox", async ({ journalGuard }) => {
   const { open } = setup(), buffer = open(), op = transfer()
   op.next.index.currentPlanId = op.next.snapshots[0]!.planId
   const guarded = prepareAccountPlanCollectionTransfer({ ownerId: COLLECTION_OWNER, operationId: op.operationId,
     expectedRevision: 0, previous: null, next: { version: 3, state: "ACCOUNT_STATE", kind: "PLAN", data: {
       schemaVersion: 1, currentPlanId: op.next.snapshots[0]!.planId,
       plans: [accountPlanEntry(accountPlanPacketFixture(3))],
-    } }, journalGuard })!
+    } }, journalGuard, paceRecordGuard: { documentId: "55555555-5555-4555-8555-555555555555", revision: 3 } })!
   expect(guarded).not.toBeNull()
   await buffer.save(guarded, 0)
   buffer.close()
   expect((await open().pending())?.journalGuard).toEqual(journalGuard)
+  expect((await open().pending())?.paceRecordGuard).toEqual(guarded.paceRecordGuard)
 })
 
 it("recovers the entire prepared intent when a physical staging transaction fails", async () => {

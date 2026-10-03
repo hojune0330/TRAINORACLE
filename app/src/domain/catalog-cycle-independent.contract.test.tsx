@@ -56,12 +56,13 @@ function fixture(id = 'P-LT-B', changes = {}) {
     return { id: `synthetic-${s.day}-${s.slot}`, kind: 'post-session', date: draft.date,
       savedAt: '2026-09-29T03:00:00Z', syncState: 'local', system: 'lt', title: '', memo: '',
       distanceKm: '', durationMin: '', avgPace: '', rpe: 10, activityOutcome: 'COMPLETED',
-      planExecutionRelation: 'AS_PLANNED', activitySlot: s.slot,
+      planExecutionRelation: 'AS_PLANNED', activitySlot: s.slot, painCheckStatus: 'NO_SIGNAL_REPORTED',
       plannedSessionLink: draft.link, fieldProvenance: {
         rpe: { provenance: FIELD_PROVENANCE.explicit },
         plannedSessionLink: { provenance: FIELD_PROVENANCE.explicit },
         activityOutcome: { provenance: FIELD_PROVENANCE.explicit },
         activitySlot: { provenance: FIELD_PROVENANCE.explicit },
+        painCheckStatus: { provenance: FIELD_PROVENANCE.explicit },
         planExecutionRelation: { provenance: FIELD_PROVENANCE.derived,
           derivationRuleId: 'QUICK_PLAN_EXECUTION_RELATION_V2', derivedFrom: ['activityOutcome', 'activitySlot', 'plannedSessionLink'] },
       } }

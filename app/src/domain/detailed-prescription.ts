@@ -1,4 +1,4 @@
-import { preparePrescriptionRuntime } from "@impl/prescription/runtime"
+import { prepareExplicitGoalPrescriptionRuntime, preparePrescriptionRuntime } from "@impl/prescription/runtime"
 import type {
   PaceAnchorRecord,
   PrescriptionDerivedTotals,
@@ -20,6 +20,7 @@ type DetailedPrescriptionInput = DetailedPrescriptionApprovalRequest & {
   readonly anchor: PaceAnchorRecord
   readonly displayRoundingPolicyVersion: string
   readonly safetyGate: SafetyGateDecision
+  readonly explicitGoalSelection?: true
 }
 
 export type DetailedPrescription = {
@@ -48,7 +49,9 @@ export function prepareDetailedPrescription(
   const approval = resolveDetailedPrescriptionApproval(input)
   if (approval === undefined || approval !== runtimeAuthority.approval) return null
 
-  const prepared = preparePrescriptionRuntime({
+  const prepared = (input.explicitGoalSelection === true ? prepareExplicitGoalPrescriptionRuntime : preparePrescriptionRuntime)({
+    ...(input.explicitGoalSelection === true ? { goalSelection: { confirmed: true, templateId: approval.templateId,
+      templateVersion: approval.templateVersion, eventDistanceM: approval.targetEventDistanceM } } : {}),
     notation: approval.notation,
     anchor: input.anchor,
     displayRoundingPolicyVersion: input.displayRoundingPolicyVersion,

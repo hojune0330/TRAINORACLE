@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { canonicalPaceDistance } from "@impl/prescription/record-pace"
 import { buildEnergySystemLedger, energyLedgerWindow } from "./energy-system-ledger"
 import { ENERGY_SYSTEM_KEYS, ENERGY_SYSTEM_META } from "./energy-system-taxonomy"
 import type { EnergySystemKey } from "./energy-system-taxonomy"
@@ -16,7 +17,7 @@ export const oracleComparisonSnapshotSchema = z.object({
   schemaVersion: z.literal(1),
   sharedFields: z.array(z.enum(["BEST_RECORD", "RECENT_DISTANCE", "ENERGY_HISTORY"])).max(3),
   record: z.object({
-    eventDistanceM: z.number().int().min(60),
+    eventDistanceM: z.union([z.number().int().min(60), z.literal(21097.5)]),
     bestSeconds: z.number().positive(),
   }).strict().nullable(),
   recent8WeekDistanceKm: z.number().nonnegative().nullable(),
@@ -91,7 +92,7 @@ export function buildOracleComparisonSnapshot({
     schemaVersion: 1,
     sharedFields,
     record: selectedRecord === null ? null : {
-      eventDistanceM: selectedRecord.eventDistanceM,
+      eventDistanceM: canonicalPaceDistance(selectedRecord.eventDistanceM),
       bestSeconds: selectedRecord.performanceSeconds,
     },
     recent8WeekDistanceKm,
@@ -112,10 +113,11 @@ export function deriveFriendRunningOracle(
     "시간 기준 반복을 사용하고 회복 구간에서 다시 모이면 수준 차이가 있어도 함께할 수 있어요.",
   ]
 
-  if (own.record !== null && friend.record !== null && own.record.eventDistanceM === friend.record.eventDistanceM) {
+  if (own.record !== null && friend.record !== null
+    && canonicalPaceDistance(own.record.eventDistanceM) === canonicalPaceDistance(friend.record.eventDistanceM)) {
     const gap = Math.abs(own.record.bestSeconds - friend.record.bestSeconds)
       / Math.max(own.record.bestSeconds, friend.record.bestSeconds) * 100
-    facts.push(`${own.record.eventDistanceM}m 기록 차이는 ${round1(gap)}%예요. 빠르기 순위가 아니라 함께 달릴 방법을 정하는 참고값이에요.`)
+    facts.push(`${canonicalPaceDistance(own.record.eventDistanceM)}m 기록 차이는 ${round1(gap)}%예요. 빠르기 순위가 아니라 함께 달릴 방법을 정하는 참고값이에요.`)
   } else {
     unknowns.push("같은 종목의 공개 기록이 없어 절대 페이스는 비교하지 않았어요.")
   }

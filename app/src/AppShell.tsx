@@ -23,7 +23,7 @@ import { buildOraclePersonalResult } from "./domain/oracle-personal-result"
 import { loadPlanBetaState } from "./domain/plan-beta-store"
 import { usePlanEvidenceHistory } from "./hooks/usePlanEvidenceHistory"
 import { PlanEvidenceHistoryNotice } from "./components/PlanEvidenceHistoryNotice"
-import { loadAthleteRecords } from "./domain/athlete-records"
+import { useAthleteRecordsSnapshot } from "./hooks/useAthleteRecordsSnapshot"
 import { recordOracleJournalParticipation } from "./domain/oracle-participation"
 import { trackProductEvent } from "./domain/account/product-analytics-service"
 import { currentUser, onAuthChange } from "./domain/account/auth"
@@ -485,9 +485,10 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   })
   const oracleUsesPlan = overlay?.kind === "oracle" && (overlay.topic === "focus" || overlay.topic === "priority")
   const oracleHistory = usePlanEvidenceHistory(oracleUsesPlan && overlay?.mode !== "example")
+  const athleteRecords = useAthleteRecordsSnapshot()
   const oracleResult = overlay?.kind === "oracle" ? buildOraclePersonalResult({
     topicId: overlay.topic, entries: loadEntries(), planState: loadPlanBetaState(),
-    athleteRecords: loadAthleteRecords(), today: todayISO(), planHistory: oracleHistory.history,
+    athleteRecords: athleteRecords.records, today: todayISO(), planHistory: oracleHistory.history,
   }) : undefined
 
   const accountEnabled = accountFeatureEnabled()
@@ -847,6 +848,10 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         )}
         {overlay?.kind === "oracle" && (
           <div className="app-flow-stage" data-motion="push" data-overlay="oracle">
+            {overlay.topic === "level" && overlay.mode !== "example" && athleteRecords.status !== "READY" ? <>
+              <button type="button" onClick={closeOverlay}>돌아가기</button>
+              <p role="status">{athleteRecords.message}</p>
+            </> :
             <DeferredMobileScreens.OracleExplore
               key={`${overlay.topic}-${overlay.mode ?? "auto"}-${accountScopeRevision}`}
               topicId={overlay.topic}
@@ -860,6 +865,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
               onSelectTopic={openOracle}
               onPersonalAction={openOraclePersonal}
             />
+            }
           </div>
         )}
         </ErrorBoundary>

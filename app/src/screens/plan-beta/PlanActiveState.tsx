@@ -35,7 +35,8 @@ import { ActivePlanRebuildEditor } from "./ActivePlanRebuildEditor"
 import { loadEntriesForPlanSafety } from "../../domain/journal-store"
 import { listPermittedActivePlanEditTargets } from "../../domain/active-plan-edit"
 import { prepareCurrentActivePlanEdit, applyActivePlanEdit, type ActivePlanEditSelection } from "../../domain/active-plan-edit-store"
-import { loadAthleteRecords } from "../../domain/athlete-records"
+import { useEligibleAccountPaceRecords } from "../../hooks/useEligibleAccountPaceRecords"
+import { areCatalogPaceSourcesCurrent } from "../../domain/account/eligible-account-pace-records"
 import { LOCAL_JOURNALS_CHANGED } from "../../domain/journal-change-events"
 import { onLocalJournalScopeChange } from "../../domain/account/local-journal-ownership"
 import { localAccountScopeSnapshot } from "../../domain/account/local-account-scope"
@@ -56,6 +57,7 @@ export function PlanActiveState({
   onStateChange,
   onPrepareNextFrame,
   onWritePlannedSessionLog,
+  onManagePaceRecords,
   returnToSession,
 }: {
   readonly state: PlanBetaState
@@ -65,9 +67,11 @@ export function PlanActiveState({
   readonly onStateChange: (state: PlanBetaState) => void
   readonly onPrepareNextFrame: (predecessor: PlanBetaStateV3) => void
   readonly onWritePlannedSessionLog?: (draft: PlannedSessionLogDraft) => void
+  readonly onManagePaceRecords?: () => void
   readonly returnToSession?: PlannedSessionLogDraft["link"]
 }) {
   const [error, setError] = React.useState<string | null>(null)
+  const { records } = useEligibleAccountPaceRecords()
   const [retry, setRetry] = React.useState<PersistenceRetry | null>(null)
   const [executionMessage, setExecutionMessage] = React.useState<string | null>(null)
   const [executionBlocked, setExecutionBlocked] = React.useState(false)
@@ -256,8 +260,20 @@ export function PlanActiveState({
           state={state} intent={editing} selection={editSelection} onClose={closeEditor} onApplied={editApplied}
           sourceOptions={editOptions} entriesReady={editRead.status === "complete"}
           contextKey={`${localAccountScopeSnapshot() ?? "guest"}:${editContextRevision}:${today}`}
-          onRetryEntries={() => void retryEditRead()} onPrepare={prepareCurrentActivePlanEdit} onApply={applyActivePlanEdit}
-          records={loadAthleteRecords()} />
+          onRetryEntries={() => void retryEditRead()} onPrepare={selection => {
+            if (selection.inputs && !areCatalogPaceSourcesCurrent(selection.inputs)) return Promise.resolve({
+              kind: "blocked" as const, reasonCode: "INVALID_INPUT" as const, permittedTargets: [],
+              message: "기준 기록이 바뀌었어요. 최신 기록을 다시 선택해 주세요.",
+            })
+            return prepareCurrentActivePlanEdit(selection)
+          }} onApply={(proposal, confirmed) => {
+            const changed = proposal.after.activePlan.sessions.find(session => session.day === proposal.source.day && session.slot === proposal.source.slot)
+            const inputs = changed?.prescription.kind === "RPE_TIME_RANGE" ? changed.prescription.catalogWorkout?.inputs : undefined
+            if (proposal.action === "CATALOG" && inputs && !areCatalogPaceSourcesCurrent(inputs)) return Promise.resolve({
+              kind: "blocked" as const, message: "기준 기록이 바뀌었어요. 최신 기록을 다시 선택해 주세요.",
+            })
+            return applyActivePlanEdit(proposal, confirmed)
+          }} records={records} />
         : <>
       <ActivePlan
         state={state}
@@ -273,6 +289,7 @@ export function PlanActiveState({
         executionMessage={executionMessage}
         executionBlocked={executionBlocked}
         onEditPlan={state.version === 3 ? () => { setEditTarget(undefined); setEditing("hub") } : undefined}
+        onManagePaceRecords={onManagePaceRecords}
         onEditSession={state.version === 3 ? session => { setEditTarget({ day: session.day, slot: session.slot }); setEditing("workout") } : undefined}
         futureTrainingEditor={editing === "hub" ? <ActivePlanEditHub onClose={closeEditor} onChoose={intent => setEditing(intent)}
           availability={{

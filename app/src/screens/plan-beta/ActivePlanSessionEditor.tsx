@@ -45,7 +45,7 @@ export function ActivePlanSessionEditor({ state, sourceOptions, entriesReady, in
   onRetryEntries, onPrepare, onApply, onClose, onApplied, records, disabled = false }: ActivePlanSessionEditorProps) {
   const initialSource = selection?.source ?? sourceOptions[0]?.address
   const [source, setSource] = React.useState<ActivePlanEditAddress | undefined>(initialSource)
-  const [action, setAction] = React.useState<ActivePlanEditAction>(selection?.action ?? (intent === "schedule" ? "SWAP" : "DURATION"))
+  const [action, setAction] = React.useState<Exclude<ActivePlanEditAction, "PACE_REFERENCE">>(selection?.action ?? (intent === "schedule" ? "SWAP" : "DURATION"))
   const [target, setTarget] = React.useState<ActivePlanEditAddress | undefined>(selection?.target)
   const [maximumMinutes, setMaximumMinutes] = React.useState(selection?.maximumMinutes?.toString() ?? "")
   const [catalogChoice, setCatalogChoice] = React.useState<CatalogChoice | null>(selection?.catalogId && selection.inputs
@@ -308,11 +308,16 @@ export function ActivePlanSessionEditor({ state, sourceOptions, entriesReady, in
                   intake={state.intake as PlanBetaIntake}
                   records={records}
                   session={selectedSession}
+                  selectionMode="SAVED_PLAN"
                   drawHistory={drawHistory.current}
                   disabled={busy || disabled || !unstartedConfirmed}
                   applyDisabled={busy || disabled || !unstartedConfirmed}
                   onDraftChange={() => { setCatalogChoice(null); invalidatePreview() }}
                   onCancel={() => { setCatalogChoice(null); setCatalogEditorRevision(value => value + 1); invalidatePreview() }}
+                  // Stage only: the picker checks the binding and consents; onPrepare/onApply
+                  // re-read the plan and journal guards before any stored plan changes.
+                  canSelect={() => entriesReady && !busy && !disabled && !uncertain
+                    && unstartedConfirmed && (selectedOption?.actions.includes("CATALOG") ?? false)}
                   onSelect={(catalogId, inputs, acceptLonger, acceptStronger) => {
                     setCatalogChoice({ catalogId, inputs, acceptLonger, acceptStronger })
                     invalidatePreview()

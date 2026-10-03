@@ -13,7 +13,7 @@ export type SafeRaceEntry = Omit<RaceEntry, "memo" | "memoPurpose">
 
 export type SafeJournalEntry = SafePostSessionEntry | SafeEveningEntry | SafeRaceEntry
 
-export type AnalysisPostSessionEntry = Omit<SafePostSessionEntry, "exerciseLog">
+export type AnalysisPostSessionEntry = Omit<SafePostSessionEntry, "exerciseLog" | "planExecutionChange">
 export type AnalysisEveningEntry = SafeEveningEntry
 export type AnalysisRaceEntry = Omit<SafeRaceEntry, "tension" | "condition" | "mood" | "goalPace">
 export type AnalysisJournalEntry = AnalysisPostSessionEntry | AnalysisEveningEntry | AnalysisRaceEntry
@@ -52,6 +52,7 @@ function toSafeJournalEntry(entry: JournalEntry): SafeJournalEntry {
         syncState: "local",
         ...(entry.captureDepth === undefined ? {} : { captureDepth: entry.captureDepth }),
         ...(entry.activityOutcome === undefined ? {} : { activityOutcome: entry.activityOutcome }),
+        ...(entry.planExecutionChange === undefined ? {} : { planExecutionChange: entry.planExecutionChange }),
         ...(entry.activitySlot === undefined ? {} : { activitySlot: entry.activitySlot }),
         ...(entry.rpeBand === undefined ? {} : { rpeBand: entry.rpeBand }),
         ...(entry.objectiveDataState === undefined ? {} : { objectiveDataState: entry.objectiveDataState }),

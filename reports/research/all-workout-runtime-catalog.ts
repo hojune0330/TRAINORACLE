@@ -3,6 +3,7 @@ import { buildExpandedWorkoutCatalog, EXPANDED_SOURCES } from "./expanded-workou
 import { representPendingCoachingWholeSessionV3 } from "./method-proposal-sequence-v3"
 import { canonicalJsonFingerprint } from "../../impl/src/plan-generator/candidate-identity"
 import type { SequenceNodeV3 } from "../../impl/src/prescription/sequence-v3"
+import { buildSameEventRacePaceCatalog } from "./same-event-race-pace-catalog"
 
 const leaves = (nodes: readonly SequenceNodeV3[]): Extract<SequenceNodeV3, { kind: "segment" }>[] =>
   nodes.flatMap(n => n.kind === "group" ? leaves(n.children) : [n])
@@ -50,5 +51,7 @@ export function buildAllWorkoutRuntimeCatalog() {
   ].map(row => ({ ...row, version: "1.0.0", reviewRef: "specs/reconstruct/ALL_WORKOUT_CALCULATION_AND_BINDING_CONTRACT.md",
     fingerprint: canonicalJsonFingerprint("trainoracle.all-workout-catalog.v1", row) }))
   if (rows.length !== 117 || new Set(rows.map(r => r.id)).size !== rows.length) throw Error("CATALOG_COVERAGE_CHANGED")
-  return { version: "1.0.0", decision: "OWNER_DIRECTED_ALL_WORKOUT_CONNECTION_20260930", rows }
+  const racePace = buildSameEventRacePaceCatalog(rows)
+  if (racePace.length !== 9 || new Set([...rows, ...racePace].map(row => row.id)).size !== 126) throw Error("RACE_PACE_COVERAGE_CHANGED")
+  return { version: "1.1.0", decision: "OWNER_DIRECTED_MULTI_EVENT_PACE_20261002", rows: [...rows, ...racePace] }
 }

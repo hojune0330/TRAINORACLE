@@ -303,6 +303,7 @@ export function commitNextPlanBetaStateInsideLock(
 export async function savePlanProgressWithLock(
   expectedCandidateId: string,
   progress: StoredPlanProgress,
+  evidenceStillCurrent?: () => boolean,
 ): Promise<PlanProgressStorageResult> {
   const accountWrite = captureAccountPlanWrite(activePlanBetaStorageKey())
   const accountScope = localAccountScopeSnapshot()
@@ -329,6 +330,7 @@ export async function savePlanProgressWithLock(
           return { kind: "rejected", code: "STALE_BASE" } as const
         }
         const current = currentRead.state
+        if (evidenceStillCurrent && !evidenceStillCurrent()) return { kind: "rejected", code: "STALE_BASE" } as const
         if (current.version !== 3 || current.activePlan.candidateId !== expectedCandidateId) {
           return { kind: "rejected", code: "STALE_BASE" } as const
         }
@@ -345,7 +347,7 @@ export async function savePlanProgressWithLock(
         const next = updateStoredProgress(current, progress)
         if (accountWrite) {
           const context = accountWrite.packet?.evidence === null ? accountWrite.packet.context : undefined
-          const code = await accountWrite.save(next, [], undefined, context)
+          const code = await accountWrite.save(next, [], evidenceStillCurrent, context)
           return code ? { kind: "rejected", code } as const : { kind: "saved", state: next } as const
         }
         const saved = savePlanBetaState(next)

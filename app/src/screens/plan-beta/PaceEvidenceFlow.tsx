@@ -11,6 +11,8 @@ import {
 import type { CandidatePrescriptionBinding } from "../../domain/plan-candidate-prescription"
 import type { PlanBetaIntake } from "../../domain/plan-beta-store"
 import { PlanChoice } from "./PlanChoice"
+import { derivePaceRecordOptions } from "../../domain/pace-record-options"
+import { todayISO } from "../../domain/journal-store"
 
 type Props = {
   readonly records: readonly AthleteRecord[]
@@ -49,14 +51,16 @@ export function PaceEvidenceFlow({
     shouldFocusResult.current = false
   }, [binding])
   const usable = records.filter((record) => (
-    record.purpose !== "RACE_GOAL" && record.eventDistanceM === eventDistanceM
+    record.eventDistanceM === eventDistanceM
   ))
   const selected = usable.find((record) => record.id === selectedRecordId)
+  const choices = derivePaceRecordOptions(usable, eventDistanceM, todayISO())
+  const shownRecords = [...usable].sort((a, b) => Number(b.id === choices.recommendedRecordId) - Number(a.id === choices.recommendedRecordId))
   const comparison = usable.find((record) => record.id === comparisonRecordId)
   const comparisonOptions = selected === undefined
     ? []
     : usable.filter((record) => (
-      record.id !== selected.id && record.eventDistanceM === selected.eventDistanceM
+      record.purpose !== "RACE_GOAL" && record.id !== selected.id && record.eventDistanceM === selected.eventDistanceM
     ))
 
   return (
@@ -64,18 +68,18 @@ export function PaceEvidenceFlow({
       <header>
         <span>상세 페이스를 위한 기록 선택</span>
         <h2>개인 페이스 기준 기록</h2>
-        <p>기록이 하나여도 자동으로 고르지 않아요. 선택한 기록만 계획의 기준이 됩니다.</p>
+        <p>최근 경기를 먼저 추천해요. 다른 기록으로 바꿀 수도 있어요.</p>
       </header>
       {usable.length === 0 ? (
         <p className="pace-evidence-fallback">이 종목의 경기 기록이 아직 없어요. 기록을 추가하면 고른 조건과 시작 날짜를 유지한 채 돌아옵니다. 기록 없이 시간·RPE 계획을 받을 수도 있어요.</p>
       ) : (
         <>
           <div className="plan-choice-list" role="group" aria-label="기준 기록 선택">
-            {usable.map((record) => (
+            {shownRecords.map((record) => (
               <PlanChoice
                 key={record.id}
-                title={recordTitle(record)}
-                detail={`${recordDetail(record)} · ${currentnessLabel(record)}`}
+                title={`${record.id === choices.recommendedRecordId ? "추천 · " : ""}${recordTitle(record)}`}
+                detail={`${recordDetail(record)} · ${choices.options.find(option => option.recordId === record.id)?.badges.map(b => b === "RECENT_ACTUAL" ? "최근 경기" : b === "ROLLING_12_BEST" ? "최근 12개월 최고" : b === "LIFETIME_BEST" ? "입력된 개인 최고" : "목표").join(" · ") || "경기 기록"} · ${currentnessLabel(record)}`}
                 selected={record.id === selectedRecordId}
                 onClick={() => {
                   onSelectRecord(record.id)
@@ -84,11 +88,13 @@ export function PaceEvidenceFlow({
               />
             ))}
           </div>
+          {choices.latestStatus === "AMBIGUOUS" && <p>같은 날 서로 다른 기록이 있어요. 사용할 기록을 골라 주세요.</p>}
           {selected !== undefined && (
             <div className="pace-evidence-confirmation">
               <strong>기준 기록 · {recordTitle(selected)}</strong>
               <span>{selected.achievedOn} · {athleteRecordAuthorityCopy(selected)}</span>
-              {deriveRecordCurrentness(selected, new Date()) !== "CURRENT" && <p>이 기록은 현재 페이스 계산에 사용하지 않아요. 최근 기록을 추가하거나 시간·RPE 계획을 선택해 주세요.</p>}
+              {selected.purpose === "RACE_GOAL" ? <p>목표 기록을 기준으로 계산해요. 달성한 기록이나 현재 실력을 뜻하지 않아요.</p>
+                : deriveRecordCurrentness(selected, new Date()) !== "CURRENT" && <p>이 기록은 현재 페이스 계산에 사용하지 않아요. 최근 기록을 추가하거나 시간·RPE 계획을 선택해 주세요.</p>}
               {comparisonOptions.length > 0 && (
                 <details>
                   <summary>다른 같은 종목 기록과 비교</summary>
@@ -117,7 +123,7 @@ export function PaceEvidenceFlow({
                 }}
               >
                 <Check aria-hidden="true" size={18} />
-                이 기록으로 개인 페이스 적용
+                {selected.purpose === "RACE_GOAL" ? "이 목표 기록으로 페이스 적용" : "이 기록으로 개인 페이스 적용"}
               </button>
             </div>
           )}
@@ -140,7 +146,7 @@ function BindingStatus({
   readonly statusRef: React.RefObject<HTMLParagraphElement>
 }) {
   if (binding.kind === "bound") {
-    return <p ref={statusRef} className="pace-evidence-status" role="status" tabIndex={-1}><Check aria-hidden="true" size={16} /><span className="pace-evidence-copy">선택한 기록으로 두 계획안에 같은 상세 훈련 수치를 적용했어요.</span></p>
+    return <p ref={statusRef} className="pace-evidence-status" role="status" tabIndex={-1}><Check aria-hidden="true" size={16} /><span className="pace-evidence-copy">선택한 기록으로 상세 훈련 수치를 계산했어요.</span></p>
   }
   if (binding.code === "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR") return null
   return (
@@ -170,10 +176,11 @@ function recordTitle(record: AthleteRecord): string {
 }
 
 function recordDetail(record: AthleteRecord): string {
-  return `${record.achievedOn ?? "달성일 없음"} · ${athleteRecordAuthorityCopy(record)}`
+  return `${record.purpose === "RACE_GOAL" ? "미달성 목표" : record.achievedOn ?? "달성일 없음"} · ${athleteRecordAuthorityCopy(record)}`
 }
 
 function currentnessLabel(record: AthleteRecord): string {
+  if (record.purpose === "RACE_GOAL") return "목표 기준 · 현재 실력 아님"
   const currentness = deriveRecordCurrentness(record, new Date())
   return currentness === "CURRENT" ? "기록일 기준 범위 안" : currentness === "STALE"
     ? "오래된 기록 · 현재 페이스 계산 제외" : "기록일 확인 필요 · 현재 페이스 계산 제외"

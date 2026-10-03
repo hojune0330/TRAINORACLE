@@ -19,6 +19,7 @@ import {
   type PostSessionEntry,
 } from "../../domain/journal-store"
 import type { PlannedSessionLink } from "../../domain/planned-session-link"
+import { PLAN_EXECUTION_CHANGE_LABELS, type PlanExecutionChange } from "../../domain/journal-schema"
 import { derivePlanExecutionRelation } from "../../domain/plan-execution-relation"
 import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
 import { useOrderedStepMotion } from "../../hooks/useOrderedStepMotion"
@@ -32,6 +33,8 @@ import { PlannedRepetitionEditor } from "./PlannedRepetitionEditor"
 import { PlannedWorkoutContext } from "./PlannedWorkoutContext"
 import { usePlannedNumberInputs } from "./planned-number-input"
 import type { ExerciseEditorDraft } from "./form-input-draft"
+import { JournalPlanProgressAction } from "./JournalPlanProgressAction"
+import "./QuickSessionChanges.css"
 
 type QuickStep = "activity" | "effort" | "review" | "exercise" | "memo" | "saved"
 type Outcome = NonNullable<PostSessionEntry["activityOutcome"]>
@@ -115,6 +118,8 @@ function QuickSessionFormEditor({
   const outcomes = planLink === undefined ? GENERIC_OUTCOMES : PLANNED_OUTCOMES
   const [step, setStep] = React.useState<QuickStep>(input?.step ?? "activity")
   const [outcome, setOutcome] = React.useState<Outcome | null>(() => input ? input.outcome : initial?.activityOutcome ?? null)
+  const [planExecutionChange, setPlanExecutionChange] = React.useState<PlanExecutionChange | null>(() => input
+    ? input.planExecutionChange ?? null : initial?.planExecutionChange ?? null)
   const [slot, setSlot] = React.useState<Slot | null>(() => input ? input.slot : slotFromEntry(initial))
   const [rpe, setRpe] = React.useState(() => input?.rpe ?? initial?.rpe ?? 0)
   const [effortAnswered, setEffortAnswered] = React.useState(() => input?.effortAnswered ?? (initial?.rpe ?? 0) > 0)
@@ -138,7 +143,7 @@ function QuickSessionFormEditor({
   const lastSavedAt = React.useRef(recovered?.baseSavedAt ?? initial?.savedAt)
   const finalization = useFormFinalization(entryId, accountEnabled, lastSavedAt)
   const draft = useFormInputDraft({ kind: "quick", step: step === "saved" ? "activity" : step,
-    outcome, slot, rpe, effortAnswered, painStatus, painParts, exerciseLog, exerciseEditor, plannedInputs: plannedInputs.values,
+    outcome, slot, rpe, effortAnswered, painStatus, painParts, exerciseLog, exerciseEditor, plannedInputs: plannedInputs.values, planExecutionChange,
     memo: inheritedMemo.text, purpose: inheritedMemo.purpose ?? null }, entryId, step !== "saved", lastSavedAt.current)
   const stageRef = React.useRef<HTMLDivElement>(null)
   const stageHeadingRef = React.useRef<HTMLHeadingElement>(null)
@@ -191,6 +196,7 @@ function QuickSessionFormEditor({
       rpeBand: _legacyRpeBand,
       activitySlot: _previousSlot,
       planExecutionRelation: _previousRelation,
+      planExecutionChange: _previousChange,
       plannedSessionLink: _previousPlanLink,
       painCheckStatus: _previousPainStatus,
       painParts: _previousPainParts,
@@ -206,6 +212,7 @@ function QuickSessionFormEditor({
       syncState: "local",
       captureDepth: "QUICK",
       activityOutcome: next.outcome,
+      ...(next.outcome === "PARTIAL" && planLink && planExecutionChange ? { planExecutionChange } : {}),
       ...(didPerform && next.slot !== null ? { activitySlot: next.slot } : {}),
       objectiveDataState,
       planExecutionRelation: relation,
@@ -229,6 +236,7 @@ function QuickSessionFormEditor({
       fieldProvenance: {
         ...previousProvenance,
         activityOutcome: explicitOrMissing(true),
+        ...(next.outcome === "PARTIAL" && planLink && planExecutionChange ? { planExecutionChange: explicitOrMissing(true) } : {}),
         ...(didPerform ? { activitySlot: explicitOrMissing(next.slot !== null) } : {}),
         plannedSessionLink: explicitOrMissing(planLink !== undefined),
         planExecutionRelation: derivedProvenance(
@@ -310,6 +318,7 @@ function QuickSessionFormEditor({
     const nextTapCount = taps + 1
     setTaps(nextTapCount)
     setOutcome(value)
+    if (value !== "PARTIAL") setPlanExecutionChange(null)
     setSaveError(null)
     if (!performed(value)) {
       setStep("review")
@@ -465,6 +474,15 @@ function QuickSessionFormEditor({
             {(performed(outcome) || exerciseLog.components.length > 0) && <button type="button" onClick={() => setStep("exercise")}>운동 추가·수정<ChevronRight aria-hidden="true" /></button>}
             <button type="button" onClick={() => setStep("memo")}>{inheritedMemo.text ? "글 수정" : "글 추가"}<FilePenLine aria-hidden="true" /></button>
           </div>
+          {outcome === "PARTIAL" && planLink && <fieldset>
+            <legend>무엇이 달랐나요? · 선택</legend>
+            <div className="quick-log__choices quick-log__change-choices">
+              {(Object.entries(PLAN_EXECUTION_CHANGE_LABELS) as [PlanExecutionChange, string][]).map(([value, label]) =>
+                <button key={value} type="button" aria-pressed={planExecutionChange === value}
+                  onClick={() => setPlanExecutionChange(current => current === value ? null : value)}>{label}</button>)}
+              <button type="button" aria-pressed={planExecutionChange === null} onClick={() => setPlanExecutionChange(null)}>간단히만 남길게요</button>
+            </div>
+          </fieldset>}
           {exerciseEditor && <p role="status">작성 중인 운동이 있어요. 반영 여부를 확인해 주세요.</p>}
           {saveError && <p role="alert">{saveError}</p>}
           <button type="button" className="quick-log__primary" onClick={() => {
@@ -496,6 +514,8 @@ function QuickSessionFormEditor({
               ? "거리와 시간은 워치 기록이 들어오면 확인한 뒤 같은 일지에 더할 수 있어요."
               : "쉬거나 건너뛴 내용도 선택한 날짜에 저장했어요."}</p>
             <ExerciseLogSummary log={savedEntry.exerciseLog} />
+            {savedEntry.planExecutionChange && <p>{PLAN_EXECUTION_CHANGE_LABELS[savedEntry.planExecutionChange]}</p>}
+            <JournalPlanProgressAction entry={savedEntry} />
             <button className="quick-log__primary" type="button" onClick={() => savedStorageMessage !== undefined
               ? onDone?.(savedEntry, savedReviewMessage, savedStorageMessage)
               : savedReviewMessage !== undefined ? onDone?.(savedEntry, savedReviewMessage) : onDone?.(savedEntry)}>완료</button>

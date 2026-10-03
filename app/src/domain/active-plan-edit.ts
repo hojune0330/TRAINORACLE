@@ -1,14 +1,15 @@
 import { deriveCandidateId } from "@impl/plan-generator/candidate-identity"
 import { isoShift, isValidIsoDate } from "./dates"
 import { executionReplanEvidence } from "./execution-replan"
+import type { AthleteRecord } from "./athlete-records"
 import type { JournalEntry } from "./journal-schema"
 import { planBetaStateV3Schema, type PlanBetaStateV3 } from "./plan-beta-schema"
 import { planSessionSchema, type VersionedStoredPlanSession as Session } from "./plan-session-schema"
-import { ACTIVE_PLAN_EDIT_POLICY, activePlanEditFingerprint, activePlanEditReceiptSchema, activePlanEditDurationConsentRequired, type ActivePlanEditReceipt } from "./active-plan-edit-policy"
+import { ACTIVE_PLAN_EDIT_POLICY, activePlanEditFingerprint, activePlanEditReceiptSchema, activePlanEditDurationConsentRequired, isPaceOnlyCatalogReplacement, isExactPaceUndoReplacement, replayActivePlanEdit, type ActivePlanEditReceipt } from "./active-plan-edit-policy"
 
 export { ACTIVE_PLAN_EDIT_POLICY } from "./active-plan-edit-policy"
 export type ActivePlanEditAddress = Readonly<{ day: number; slot: "AM" | "PM" }>
-export type ActivePlanEditAction = "DURATION" | "SWAP" | "CATALOG"
+export type ActivePlanEditAction = "DURATION" | "SWAP" | "CATALOG" | "PACE_REFERENCE"
 export type ActivePlanEditReasonCode =
   | "INVALID_INPUT"
   | "UNSUPPORTED_PLAN"
@@ -16,6 +17,7 @@ export type ActivePlanEditReasonCode =
   | "UNSTARTED_CONFIRMATION_REQUIRED"
   | "TARGET_PROTECTED"
   | "TARGET_UNAVAILABLE"
+  | "NO_PACE_CHANGE"
   | "DURATION_OUT_OF_RANGE"
   | "FIXED_COMMITMENT_UNCONFIRMED"
   | "SCHEDULE_GATE_FAILED"
@@ -43,11 +45,14 @@ export type ActivePlanEditProposal = Readonly<{
   after: PlanBetaStateV3
   beforeSessions: readonly Session[]
   afterSessions: readonly Session[]
+  paceSourceRecord?: AthleteRecord
 }>
 
-export type ActivePlanEditPreparation =
+export type ActivePlanEditExclusion = Readonly<ActivePlanEditAddress & { reasonCode: ActivePlanEditReasonCode; reason: string }>
+export type ActivePlanEditPreparation = (
   | { kind: "ready"; proposal: ActivePlanEditProposal; permittedTargets: readonly ActivePlanEditTarget[] }
   | { kind: "blocked"; reasonCode: ActivePlanEditReasonCode; message: string; permittedTargets: readonly ActivePlanEditTarget[] }
+) & { excluded?: readonly ActivePlanEditExclusion[] }
 
 export type PrepareActivePlanEditInput = {
   state: PlanBetaStateV3
@@ -65,6 +70,9 @@ export type PrepareActivePlanEditInput = {
   /** New maximum only. It must stay inside the stored range and above its original minimum. */
   maximumMinutes?: number
   replacement?: Session
+  replacements?: readonly Session[]
+  undoOf?: NonNullable<ActivePlanEditReceipt["undoOf"]>
+  paceRecordGuard?: NonNullable<ActivePlanEditReceipt["paceRecordGuard"]>
   acceptedRpeMaximum?: number | null
   acceptedLongerDuration?: boolean
 }
@@ -75,6 +83,25 @@ export function activePlanEditEvidenceFingerprint(entries: readonly JournalEntry
   return activePlanEditFingerprint(executionReplanEvidence(entries))
 }
 const index = (session: Session) => (session.day - 1) * 2 + (session.slot === "AM" ? 0 : 1)
+
+function editCandidateId(state: PlanBetaStateV3, sessions: readonly Session[], baseCandidateId = state.activePlan.candidateId): string {
+  const plan = state.activePlan
+  return deriveCandidateId(baseCandidateId, {
+    kind: plan.candidateKind, eventDistanceM: plan.eventDistanceM,
+    selectedDetailedTemplateRef: plan.selectedDetailedTemplateRef, selectedEnergyIntent: plan.selectedEnergyIntent,
+    sourceMode: plan.sourceMode, selectionAuthority: "SELF",
+    frame: plan.frame as Extract<typeof plan.frame, { formationKind: "LOCAL_CIVIL_9_5" }>, sessions,
+  })
+}
+
+/** Progress may advance, but a different plan or later edit cannot borrow the old undo source. */
+export function latestPaceUpdateMatches(state: PlanBetaStateV3): boolean {
+  const receipt = state.activePlanEdit
+  if (!receipt || receipt.action !== "PACE_REFERENCE" || receipt.undoOf || receipt.startDate !== state.intake.startDate) return false
+  const applied = replayActivePlanEdit(receipt)
+  return applied !== null && activePlanEditFingerprint(applied) === activePlanEditFingerprint(state.activePlan.sessions)
+    && editCandidateId(state, applied, receipt.baseCandidateId) === state.activePlan.candidateId
+}
 
 function block(reasonCode: ActivePlanEditReasonCode, message: string, permittedTargets: readonly ActivePlanEditTarget[] = []): ActivePlanEditPreparation {
   return { kind: "blocked", reasonCode, message, permittedTargets }
@@ -155,9 +182,13 @@ function permitted(state: PlanBetaStateV3, entries: readonly JournalEntry[], tod
   const sessions = state.activePlan.sessions
   const maxDay = visibleProjectionLength(state)
   return sessions.filter(source => source.day <= maxDay && eligible(state, entries, source, today, protectedKeys)
-    && source.role !== "REST" && source.prescription.kind === "RPE_TIME_RANGE")
+    && source.role !== "REST" && ["RPE_TIME_RANGE", "PACE_TARGET"].includes(source.prescription.kind))
     .map(source => {
       const address = { day: source.day, slot: source.slot } as const
+      if (source.prescription.kind === "PACE_TARGET") return {
+        address, date: dateOf(state.intake.startDate!, address), role: source.role,
+        actions: ["PACE_REFERENCE"] as ActivePlanEditAction[], swapTargets: [],
+      }
       const swapTargets = noFixedFutureCommitments ? sessions.filter(target => target.day !== source.day
         && target.day <= maxDay
         && target.slot === source.slot && (target.role === "REST" || target.role === "EASY")
@@ -191,6 +222,7 @@ export function listPermittedActivePlanEditTargets(input: {
 
 /** Creates an immutable preview. Storage, archival, and the applied-edit receipt belong to the caller. */
 export function prepareActivePlanEdit(input: PrepareActivePlanEditInput): ActivePlanEditPreparation {
+  if (input.action !== "PACE_REFERENCE" && ("replacements" in input || "undoOf" in input || "paceRecordGuard" in input)) return block("INVALID_INPUT", "여러 훈련의 교체 목록은 페이스 갱신에서만 사용할 수 있어요.")
   const parsed = planBetaStateV3Schema.safeParse(input.state)
   if (!parsed.success || !isValidIsoDate(input.today) || !Number.isFinite(Date.parse(input.now))
     || input.now !== new Date(input.now).toISOString() || !Number.isInteger(input.source.day) || input.source.day < 1
@@ -210,13 +242,15 @@ export function prepareActivePlanEdit(input: PrepareActivePlanEditInput): Active
   if (!source || input.source.day > projectionLengthDays || !eligible(state, input.entries, input.source, input.today, protectedKeys)) {
     return block("TARGET_PROTECTED", "과거 날짜이거나 진행·연결 기록이 있는 훈련은 수정할 수 없어요.", permittedTargets)
   }
-  if (source.role === "REST" || source.prescription.kind !== "RPE_TIME_RANGE") {
+  if (source.role === "REST" || (source.prescription.kind !== "RPE_TIME_RANGE"
+    && !(input.action === "PACE_REFERENCE" && source.prescription.kind === "PACE_TARGET"))) {
     return block("TARGET_UNAVAILABLE", "이 훈련은 직접 시간 조정 대상이 아니에요.", permittedTargets)
   }
 
   let target: Session | undefined
   let sessions: Session[]
   if (input.action === "DURATION") {
+    if (source.prescription.kind !== "RPE_TIME_RANGE") return block("TARGET_UNAVAILABLE", "시간 범위 훈련만 조정할 수 있어요.", permittedTargets)
     if (source.prescription.catalogWorkout) return block("TARGET_UNAVAILABLE", "계산 카탈로그 훈련은 검토된 구성 교체로 수정해 주세요.", permittedTargets)
     const { minimum, maximum } = source.prescription.durationMinutes
     const nextMaximum = input.maximumMinutes
@@ -245,9 +279,30 @@ export function prepareActivePlanEdit(input: PrepareActivePlanEditInput): Active
     if (!withinExistingScheduleGates(state.activePlan.sessions, sessions, state)) {
       return block("SCHEDULE_GATE_FAILED", "기존 주요 훈련 간격이나 하루 슬롯 조건을 지키는 이동 자리가 없어요.", permittedTargets)
     }
+  } else if (input.action === "PACE_REFERENCE") {
+    const replacements = input.replacements
+    if (input.undoOf && (!latestPaceUpdateMatches(state)
+      || activePlanEditFingerprint(input.undoOf) !== activePlanEditFingerprint(state.activePlanEdit))) {
+      return block("PROPOSAL_INVALID", "마지막 페이스 변경의 현재 계획에서만 되돌릴 수 있어요.", permittedTargets)
+    }
+    if (!replacements?.length || replacements.length > 38 || new Set(replacements.map(key)).size !== replacements.length
+      || !replacements.some(s => same(s, input.source)) || input.target !== undefined || input.replacement !== undefined
+      || input.maximumMinutes !== undefined || input.acceptedRpeMaximum != null || input.acceptedLongerDuration === true) {
+      return block("INVALID_INPUT", "페이스를 갱신할 기존 훈련 목록을 다시 확인해 주세요.", permittedTargets)
+    }
+    for (const replacement of replacements) {
+      const old = state.activePlan.sessions.find(s => same(s, replacement))
+      if (!old || old.day > projectionLengthDays || !eligible(state, input.entries, replacement, input.today, protectedKeys)) {
+        return block("TARGET_PROTECTED", "진행·연결 기록이 있거나 지난 날짜의 훈련은 바꿀 수 없어요.", permittedTargets)
+      }
+      if (input.undoOf ? !isExactPaceUndoReplacement(input.undoOf, old, replacement) : !isPaceOnlyCatalogReplacement(old, replacement)) {
+        return block("PROPOSAL_INVALID", "기존 페이스 기준만 갱신할 수 있어요. 훈련 구성과 확인한 시간 범위는 유지해야 해요.", permittedTargets)
+      }
+    }
+    sessions = state.activePlan.sessions.map(s => replacements.find(replacement => same(s, replacement)) ?? s)
   } else {
     const replacement = input.replacement
-    if (!replacement || replacement.day !== source.day || replacement.slot !== source.slot
+    if (source.prescription.kind !== "RPE_TIME_RANGE" || !replacement || replacement.day !== source.day || replacement.slot !== source.slot
       || replacement.role !== source.role || replacement.plannedEnergyIntent !== source.plannedEnergyIntent
       || replacement.prescription.kind !== "RPE_TIME_RANGE" || !replacement.prescription.catalogWorkout) {
       return block("TARGET_UNAVAILABLE", "같은 훈련 목적에 연결된 계산 카탈로그 구성을 선택해 주세요.", permittedTargets)
@@ -272,12 +327,7 @@ export function prepareActivePlanEdit(input: PrepareActivePlanEditInput): Active
   const journalGuard = input.journalGuard ?? null
   const baseStateFingerprint = activePlanEditFingerprint({ state, evidenceFingerprint, journalGuard, today: input.today, timeZone: input.timeZone })
   const activePlan = { ...state.activePlan, sessions }
-  activePlan.candidateId = deriveCandidateId(state.activePlan.candidateId, {
-    kind: activePlan.candidateKind, eventDistanceM: activePlan.eventDistanceM,
-    selectedDetailedTemplateRef: activePlan.selectedDetailedTemplateRef, selectedEnergyIntent: activePlan.selectedEnergyIntent,
-    sourceMode: activePlan.sourceMode, selectionAuthority: "SELF",
-    frame: activePlan.frame as Extract<typeof activePlan.frame, { formationKind: "LOCAL_CIVIL_9_5" }>, sessions,
-  })
+  activePlan.candidateId = editCandidateId(state, sessions)
   const { executionReplan: _executionReplan, catalogReplacement: _catalogReplacement,
     explanationReceipt: _explanationReceipt, ...stateWithoutStaleReceipts } = state
   const targetAddress = target ? { day: target.day, slot: target.slot } as const : null
@@ -294,6 +344,9 @@ export function prepareActivePlanEdit(input: PrepareActivePlanEditInput): Active
     noFixedFutureCommitments: input.noFixedFutureCommitments,
     maximumMinutes: input.action === "DURATION" ? input.maximumMinutes ?? null : null,
     replacement: input.action === "CATALOG" ? input.replacement ?? null : null,
+    ...(input.action === "PACE_REFERENCE" ? { replacements: structuredClone([...(input.replacements ?? [])]) } : {}),
+    ...(input.undoOf === undefined ? {} : { undoOf: structuredClone(input.undoOf) }),
+    ...(input.paceRecordGuard === undefined ? {} : { paceRecordGuard: structuredClone(input.paceRecordGuard) }),
     acceptedRpeMaximum: input.action === "CATALOG" && input.acceptedRpeMaximum != null ? input.acceptedRpeMaximum : null,
     acceptedLongerDuration: input.action === "CATALOG" ? input.acceptedLongerDuration ?? false : false,
     acceptedAt: input.now,

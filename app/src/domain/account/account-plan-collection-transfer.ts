@@ -13,11 +13,14 @@ export const accountPlanJournalGuardSchema = z.array(z.object({
   revision: revision.refine(n => n > 0),
 }).strict()).max(5000).refine(rows => new Set(rows.map(row => row.documentId)).size === rows.length)
 export type AccountPlanJournalGuard = z.infer<typeof accountPlanJournalGuardSchema>
+export const accountPlanPaceRecordGuardSchema = z.object({ documentId: z.uuid(), revision: revision.refine(n => n > 0) }).strict()
+export type AccountPlanPaceRecordGuard = z.infer<typeof accountPlanPaceRecordGuardSchema>
 const legacySchema = z.object({ documentId: z.uuid(), revision: revision.refine(n => n > 0), fingerprint }).strict()
 const transferSchema = z.object({
   version: z.literal(1), ownerId: z.uuid(), operationId: z.uuid(), expectedRevision: revision,
   previous: z.unknown(), next: z.unknown(), legacy: legacySchema.nullable(),
   journalGuard: accountPlanJournalGuardSchema.optional(),
+  paceRecordGuard: accountPlanPaceRecordGuardSchema.optional(),
 }).strict()
 export type AccountPlanCollectionTransfer = Omit<z.infer<typeof transferSchema>, "previous" | "next"> & {
   previous: AccountPlanCollectionParts | null; next: AccountPlanCollectionParts;
@@ -28,6 +31,7 @@ export type AccountPlanCollectionCommit = {
   previousIndexFingerprint: string | null; previousCurrentPlanId: string | null;
   index: AccountPlanCollectionIndex; legacy: z.infer<typeof legacySchema> | null;
   journalGuard?: AccountPlanJournalGuard;
+  paceRecordGuard?: AccountPlanPaceRecordGuard;
 }
 export type AccountPlanCollectionReceipt = {
   ownerId: string; operationId: string; revision: number; indexFingerprint: string; requestFingerprint: string;
@@ -70,6 +74,8 @@ export function readAccountPlanCollectionTransfer(value: unknown): AccountPlanCo
     if (!next || (transfer.previous === null) !== (transfer.expectedRevision === 0)) return null
     if (transfer.journalGuard !== undefined && (transfer.legacy || next.data.currentPlanId === null
       || next.data.currentPlanId === (transfer.previous as AccountPlanCollectionParts | null)?.index.currentPlanId)) return null
+    if (transfer.paceRecordGuard !== undefined && (transfer.legacy || next.data.currentPlanId === null
+      || next.data.currentPlanId === (transfer.previous as AccountPlanCollectionParts | null)?.index.currentPlanId)) return null
     if (transfer.previous !== null) {
       const previous = joinAccountPlanCollection(transfer.previous)
       if (!previous || transfer.legacy || !preservesHistory(previous, next)) return null
@@ -92,6 +98,7 @@ export function prepareAccountPlanCollectionTransfer(input: {
   previous: AccountPlanDocument | null; next: AccountPlanDocument;
   legacy?: { documentId: string; revision: number; document: AccountPlanDocument };
   journalGuard?: AccountPlanJournalGuard;
+  paceRecordGuard?: AccountPlanPaceRecordGuard;
 }): AccountPlanCollectionTransfer | null {
   try {
     return readAccountPlanCollectionTransfer({ version: 1, ownerId: input.ownerId, operationId: input.operationId,
@@ -100,7 +107,8 @@ export function prepareAccountPlanCollectionTransfer(input: {
       next: splitAccountPlanCollection(input.next), legacy: input.legacy ? {
         documentId: input.legacy.documentId, revision: input.legacy.revision,
         fingerprint: accountPlanFingerprint(input.legacy.document),
-      } : null, ...(input.journalGuard === undefined ? {} : { journalGuard: input.journalGuard }) })
+      } : null, ...(input.journalGuard === undefined ? {} : { journalGuard: input.journalGuard }),
+      ...(input.paceRecordGuard === undefined ? {} : { paceRecordGuard: input.paceRecordGuard }) })
   } catch { return null }
 }
 
@@ -109,7 +117,8 @@ export function accountPlanCollectionCommit(transfer: AccountPlanCollectionTrans
     previousIndexFingerprint: transfer.previous ? accountPlanFingerprint(transfer.previous.index) : null,
     previousCurrentPlanId: transfer.previous?.index.currentPlanId ?? null,
     index: structuredClone(transfer.next.index), legacy: transfer.legacy ? { ...transfer.legacy } : null,
-    ...(transfer.journalGuard === undefined ? {} : { journalGuard: structuredClone(transfer.journalGuard) }) }
+    ...(transfer.journalGuard === undefined ? {} : { journalGuard: structuredClone(transfer.journalGuard) }),
+    ...(transfer.paceRecordGuard === undefined ? {} : { paceRecordGuard: structuredClone(transfer.paceRecordGuard) }) }
 }
 
 /** Copy, read back, then atomically switch. A missing ACK is UNKNOWN, never a false rollback.

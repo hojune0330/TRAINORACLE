@@ -109,7 +109,8 @@ describe("active plan journal action", () => {
       />,
     )
 
-    expect(screen.getByText("일지를 저장했어요. 계획의 진행 기록은 별도예요.")).toBeVisible()
+    expect(screen.getByText("일지를 연결했어요. 수행 결과와 계획을 함께 확인할 수 있어요.")).toBeVisible()
+    expect(screen.getByText("수행 기록 있음")).toBeVisible()
     expect(screen.getAllByRole("button", { name: "계획에도 완료 표시" })).toHaveLength(1)
     await user.click(screen.getByRole("button", { name: "계획에도 완료 표시" }))
     expect(onProgress).toHaveBeenCalledWith({
@@ -135,7 +136,8 @@ describe("active plan journal action", () => {
       />,
     )
 
-    expect(screen.getByText("일지를 저장했어요. 계획의 진행 기록은 별도예요.")).toBeVisible()
+    expect(screen.getByText("일지를 연결했어요. 수행 결과와 계획을 함께 확인할 수 있어요.")).toBeVisible()
+    expect(screen.getByText(input.pain === "SIGNAL" ? "몸 상태 확인 기록 있음" : "일부 수행·변경 기록 있음")).toBeVisible()
     expect(screen.queryByRole("button", { name: "계획에도 완료 표시" })).toBeNull()
   })
 })

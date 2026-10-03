@@ -5,7 +5,7 @@ import { buildOraclePersonalResult } from "../domain/oracle-personal-result"
 import { loadEntries, todayISO } from "../domain/journal-store"
 import { loadPlanBetaState } from "../domain/plan-beta-store"
 import { usePlanEvidenceHistory } from "../hooks/usePlanEvidenceHistory"
-import { loadAthleteRecords } from "../domain/athlete-records"
+import { useAthleteRecordsSnapshot } from "../hooks/useAthleteRecordsSnapshot"
 import type { OracleTopicId } from "../domain/oracle-exploration"
 
 export function OracleResume({ onOpenTopic, compact = false }: {
@@ -25,11 +25,13 @@ export function OracleResume({ onOpenTopic, compact = false }: {
     }
   }, [store])
   const snapshot = store.read()
+  const athleteRecords = useAthleteRecordsSnapshot()
   const history = usePlanEvidenceHistory(false)
   const currentFingerprints: Partial<Record<OracleTopicId, string | null>> = {}
   if (snapshot.status === "ready" && snapshot.state.savedTopicIds.length > 0) {
-    const inputs = { entries: loadEntries(), planState: loadPlanBetaState(), planHistory: history.history, athleteRecords: loadAthleteRecords(), today: todayISO() }
+    const inputs = { entries: loadEntries(), planState: loadPlanBetaState(), planHistory: history.history, athleteRecords: athleteRecords.records, today: todayISO() }
     for (const topicId of snapshot.state.savedTopicIds) currentFingerprints[topicId] = !history.journalReadComplete && (topicId === "focus" || topicId === "priority")
+      || athleteRecords.status !== "READY" && topicId === "level"
       ? null : buildOraclePersonalResult({ ...inputs, topicId }).fingerprint
   }
   return <OracleReturnPanel currentFingerprints={currentFingerprints} onOpenTopic={onOpenTopic} compact={compact} />

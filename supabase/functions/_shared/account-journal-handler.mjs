@@ -77,6 +77,126 @@ export function accountJournalMetadata(document) {
     journalDate: e.date, eligible };
 }
 
+const validPaceRecordGuard = guard => keys(guard, ['documentId', 'revision'])
+  && isUuid(guard.documentId) && guard.documentId === guard.documentId.toLowerCase()
+  && revision(guard.revision) && guard.revision > 0;
+const planSessions = state => (state?.version === 3 ? state.activePlan : state?.selection?.activePlan)?.sessions ?? [];
+const paceSourceFacts = session => {
+  const prescription = session?.prescription;
+  if (prescription?.kind === 'PACE_TARGET') {
+    const { elapsedLabel: ignoredElapsed, ...anchor } = prescription.selectedAnchor;
+    return [{ kind: 'PACE_TARGET', anchor }];
+  }
+  const inputs = prescription?.catalogWorkout?.inputs;
+  return [...(inputs?.fiveK ? [{ kind: 'FIVE_K', reference: inputs.fiveK }] : []),
+    ...(inputs?.paceReferences ?? []).map(reference => ({ kind: 'CATALOG_REFERENCE', reference }))];
+};
+
+/** Keep unchanged historical sources readable; moving or replacing a source is a new use. */
+export function accountPlanIntroducesPaceRecordSources(previousState, nextState) {
+  return introducedPaceSourceFacts(previousState, nextState).length > 0;
+}
+
+function introducedPaceSourceFacts(previousState, nextState) {
+  const previous = planSessions(previousState);
+  return planSessions(nextState).flatMap(session => {
+    const old = previous.find(value => value.day === session.day && value.slot === session.slot);
+    const remaining = paceSourceFacts(old).map(canonical);
+    return paceSourceFacts(session).filter(reference => {
+      const index = remaining.indexOf(canonical(reference));
+      if (index < 0) return true;
+      remaining.splice(index, 1);
+      return false;
+    });
+  });
+}
+
+/** Only call with fully validated plan states. SQL must recheck the returned revision atomically. */
+export async function verifyAccountPaceRecordEdit({ ownerId, nextState, previousState, read, decode }) {
+  const receipt = nextState?.activePlanEdit;
+  const denied = code => ({ ok: false, code });
+  if (!receipt || receipt.action !== 'PACE_REFERENCE') {
+    return receipt && Object.hasOwn(receipt, 'paceRecordGuard') ? denied('INVALID_PACE_RECORD_GUARD_SCOPE') : { ok: true, guard: null };
+  }
+  if (!previousState) return denied('PACE_RECORD_SOURCE_REQUIRED');
+  if (receipt.undoOf) {
+    const original = previousState.activePlanEdit;
+    if (Object.hasOwn(receipt, 'paceRecordGuard') || !original || original.action !== 'PACE_REFERENCE'
+      || original.undoOf || canonical(receipt.undoOf) !== canonical(original)
+      || !Array.isArray(receipt.replacements) || !receipt.replacements.length) return denied('PACE_RECORD_UNDO_SOURCE_REQUIRED');
+    for (const replacement of receipt.replacements) {
+      const sameSlot = session => session.day === replacement.day && session.slot === replacement.slot;
+      const old = original.baseSessions?.find(sameSlot), applied = original.replacements?.find(sameSlot);
+      const current = previousState.activePlan?.sessions?.find(sameSlot);
+      if (!old || !applied || !current || canonical(old) !== canonical(replacement)
+        || canonical(applied) !== canonical(current)) return denied('PACE_RECORD_UNDO_SOURCE_REQUIRED');
+    }
+    return { ok: true, guard: null };
+  }
+  return verifyAccountPaceRecordSessions({ ownerId, sessions: receipt.replacements, guard: receipt.paceRecordGuard, read, decode });
+}
+
+/** New selections use only source references actually present in the validated plan. */
+export async function verifyAccountPlanPaceRecordSources({ ownerId, nextState, previousState, guard, read, decode }) {
+  const facts = introducedPaceSourceFacts(previousState, nextState);
+  if (!facts.length) return guard === undefined ? { ok: true, guard: null } : { ok: false, code: 'INVALID_PACE_RECORD_GUARD_SCOPE' };
+  return verifyAccountPaceRecordFacts({ ownerId, facts, guard, read, decode });
+}
+
+async function verifyAccountPaceRecordSessions({ ownerId, sessions, guard, read, decode }) {
+  return verifyAccountPaceRecordFacts({ ownerId, facts: sessions?.flatMap(paceSourceFacts), guard, read, decode });
+}
+
+async function verifyAccountPaceRecordFacts({ ownerId, facts, guard, read, decode }) {
+  const denied = code => ({ ok: false, code });
+  const documentId = await namespacedId(['trainoracle.account.athlete-records.v1', ownerId]);
+  if (!validPaceRecordGuard(guard) || guard.documentId !== documentId || typeof read !== 'function') {
+    return denied('PACE_RECORD_SOURCE_REQUIRED');
+  }
+  const row = await read(ownerId, documentId);
+  if (!row || row.user_id !== ownerId || row.document_id !== documentId || row.deleted_at != null
+    || !revision(row.revision) || row.revision < 1 || row.revision !== guard.revision) return denied('PACE_RECORD_SOURCE_CHANGED');
+  const document = await decode(row.encrypted_payload, documentId);
+  if (document?.state !== 'ACCOUNT_STATE' || document.kind !== 'ATHLETE_RECORDS'
+    || !validateAccountJournalDocument(document)) return denied('PACE_RECORD_SOURCE_REQUIRED');
+  if (!Array.isArray(facts) || !facts.length) return denied('PACE_RECORD_SOURCE_REQUIRED');
+  const selfRecord = id => document.data.records.find(value => value.id === id
+    && value.enteredBy === 'ATHLETE' && value.verificationState === 'SELF_REPORTED');
+  for (const fact of facts) {
+    if (fact.kind === 'PACE_TARGET') {
+      const anchor = fact.anchor, record = selfRecord(anchor?.anchorId);
+      const goal = record?.purpose === 'RACE_GOAL';
+      const kind = goal ? 'GOAL' : record?.purpose === 'PERSONAL_BEST' ? 'PB' : record?.purpose === 'SEASON_BEST' ? 'SB' : 'RECENT_RESULT';
+      if (!record || !goal && record.achievedOn === null
+        || anchor.kind !== kind || anchor.purpose !== (goal ? 'ASPIRATIONAL_TARGET' : kind === 'SB' ? 'SEASON_CONTEXT' : 'CURRENT_CAPABILITY')
+        || anchor.eventDistanceM !== record.eventDistanceM || anchor.performanceSeconds !== record.performanceSeconds
+        || anchor.achievedAt !== record.achievedOn || anchor.enteredBy !== record.enteredBy
+        || anchor.verificationState !== record.verificationState || anchor.sourceRef !== record.sourceRef
+        || anchor.seasonId !== (kind === 'SB' ? record.achievedOn.slice(0, 4) : null)
+        || goal && (anchor.achievedAt !== null || anchor.freshnessState !== 'UNKNOWN'
+          || anchor.selectionEvidence?.kind !== 'EXPLICIT_GOAL' || anchor.selectionEvidence.confirmed !== true
+          || anchor.selectionEvidence.recordSchemaVersion !== record.schemaVersion
+          || anchor.selectionEvidence.recordPurpose !== 'RACE_GOAL'
+          || anchor.selectionEvidence.recordVersion !== record.savedAt)) return denied('PACE_RECORD_SOURCE_CHANGED');
+      continue;
+    }
+    const reference = fact.reference;
+    if (fact.kind === 'FIVE_K') {
+      const record = selfRecord(reference.recordId);
+      if (!record || record.purpose === 'RACE_GOAL' || record.eventDistanceM !== 5000 || record.achievedOn === null
+        || reference.seconds !== record.performanceSeconds || reference.achievedAt !== record.achievedOn) return denied('PACE_RECORD_SOURCE_CHANGED');
+    } else {
+      const record = selfRecord(reference.recordId);
+      const distance = record?.eventDistanceM === 21097 ? 21097.5 : record?.eventDistanceM;
+      if (!record
+        || reference.recordVersion !== record.savedAt || reference.eventDistanceM !== distance
+        || reference.performanceSeconds !== record.performanceSeconds || reference.achievedOn !== record.achievedOn
+        || reference.kind !== (record.purpose === 'RACE_GOAL' ? 'GOAL' : 'ACTUAL')) return denied('PACE_RECORD_SOURCE_CHANGED');
+    }
+  }
+  return { ok: true, guard: { documentId, revision: row.revision } };
+}
+
 /** Separate runtime-only signing key, never the journal encryption key or user JWT. */
 export async function importJournalAttestor(serialized) {
   try {
@@ -112,6 +232,7 @@ async function stateIdentityValid(ownerId, documentId, document) {
   if (document.state !== 'ACCOUNT_STATE') return true;
   if (document.kind === 'DECORATIONS') return documentId === await namespacedId(['trainoracle.account.decorations.v1',ownerId]);
   if (document.kind === 'CALENDAR_DECORATIONS') return documentId === await namespacedId(['trainoracle.account.calendar-decorations.v1',ownerId]);
+  if (document.kind === 'ATHLETE_RECORDS') return documentId === await namespacedId(['trainoracle.account.athlete-records.v1',ownerId]);
   if (document.kind === 'PLAN') return documentId === await namespacedId(['trainoracle.account.plan.v1',ownerId]);
   // Plan worker supplies a bound identity helper with its schema; no guessed IDs.
   return typeof accountState.accountStateDocumentId === 'function'
@@ -179,6 +300,7 @@ function parseAction(input, validateDocument) {
   let valid = false;
   if (action === 'status') valid = keys(input, ['action']);
   if (action === 'calendarDecorationSupport') valid = keys(input, ['action']);
+  if (action === 'athleteRecordSupport') valid = keys(input, ['action']);
   if (action === 'rewardSummary' || action === 'visit') valid = keys(input, ['action']);
   if (action === 'list') valid = keys(input, ['action'], ['limit', 'cursor', 'collection'])
     && (!Object.hasOwn(input, 'collection') || input.collection === 'JOURNAL')
@@ -350,6 +472,17 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         }
         await checkGate();
         if (!keys(support, ['kind', 'version']) || support.kind !== 'calendar-decoration-support' || support.version !== 1) fail(503, 'UNAVAILABLE');
+        return respond(200, support);
+      }
+      if (input.action === 'athleteRecordSupport') {
+        if (typeof repo.athleteRecordSupport !== 'function' || !accountState.validateAccountStateDocument({
+          version: 3, state: 'ACCOUNT_STATE', kind: 'ATHLETE_RECORDS', data: { records: [] },
+        })) fail(503, 'UNAVAILABLE');
+        let support;
+        try { support = await repo.athleteRecordSupport(); }
+        catch (error) { if (error?.code === '22023') fail(400, 'ATHLETE_RECORD_UNSUPPORTED'); throw error; }
+        await checkGate();
+        if (!keys(support, ['kind', 'version']) || support.kind !== 'athlete-record-support' || support.version !== 1) fail(503, 'UNAVAILABLE');
         return respond(200, support);
       }
       const decode = async (payload, documentId) => {
@@ -661,10 +794,20 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         const nextPlanId = input.document.kind === 'PLAN' ? input.document.data.currentPlanId : null;
         const selectedPlan = input.document.kind === 'PLAN'
           ? input.document.data.plans.find(plan => plan.planId === nextPlanId)?.snapshot.state : null;
+        if (nextPlanId !== null && nextPlanId !== currentDocument?.data?.currentPlanId
+          && selectedPlan?.activePlanEdit?.action === 'PACE_REFERENCE') {
+          // Legacy PLAN cannot atomically protect journals; use the guarded collection commit.
+          fail(422, 'JOURNAL_GUARD_REQUIRED');
+        }
         // Legacy PLAN writes have no atomic all-journal CAS. Same-pointer progress
         // and old receipts remain supported; new successors use the collection.
         if (nextPlanId !== null && nextPlanId !== currentDocument?.data?.currentPlanId
           && accountPlanStateNeedsJournalGuard(selectedPlan)) fail(422, 'JOURNAL_GUARD_REQUIRED');
+        if (nextPlanId !== null && nextPlanId !== currentDocument?.data?.currentPlanId && selectedPlan) {
+          // New source-bound selections require the collection's explicit source-CAS transport.
+          const paceSource = await verifyAccountPlanPaceRecordSources({ ownerId, nextState: selectedPlan });
+          if (!paceSource.ok) fail(422, 'PACE_RECORD_SOURCE_REQUIRED');
+        }
         if (!sameObservation(currentDocument, input.document)
           || input.writePurpose === 'MIGRATION' && observationOf(input.document)) await checkFileGate();
         const encryptedPayload = await encryptAccountJournalDocument(canonical(input.document),
@@ -723,6 +866,7 @@ export function createAccountJournalRepository(client, { ownerId, attest } = {})
   return {
     attestationStatus: () => mutate('status', {}),
     calendarDecorationSupport: () => mutate('calendarDecorationSupport', {}),
+    athleteRecordSupport: () => mutate('athleteRecordSupport', {}),
     rewardSummary: () => result(client.rpc('account_reward_summary')),
     visit: () => result(client.rpc('record_account_reward_visit')),
     fileEvidenceEnabled: () => result(client.rpc('service_feature_enabled', { feature_key_input: 'FILE_ANALYSIS_WRITE' })),

@@ -4,8 +4,27 @@ import { createAccountPlanCollectionClient } from "./account-plan-collection-api
 import { emptyAccountPlanDocument, accountPlanEntry } from "./account-plan-document-schema"
 import { splitAccountPlanCollection } from "./account-plan-collection-schema"
 import { accountPlanPacketFixture } from "./account-plan.test-fixtures"
+import { accountPlanCollectionCommit, prepareAccountPlanCollectionTransfer } from "./account-plan-collection-transfer"
 const OWNER = "11111111-1111-4111-8111-111111111111", OTHER = "22222222-2222-4222-8222-222222222222"
 afterEach(() => vi.restoreAllMocks())
+it("freezes commit source metadata before awaiting authentication", async () => {
+  const doc = emptyAccountPlanDocument(), entry = accountPlanEntry(accountPlanPacketFixture(3))
+  doc.data.plans.push(entry); doc.data.currentPlanId = entry.planId
+  const request = accountPlanCollectionCommit(prepareAccountPlanCollectionTransfer({ ownerId: OWNER,
+    operationId: OTHER, expectedRevision: 0, previous: null, next: doc,
+    paceRecordGuard: { documentId: OTHER, revision: 3 } })!)
+  const deps = dependencies({ kind: "conflict" })
+  deps.client.mockImplementation(async () => {
+    request.paceRecordGuard!.revision = 99
+    return { auth: deps.auth, functions: { invoke: deps.invoke } } as unknown as SupabaseClient
+  })
+  await createAccountPlanCollectionClient(OWNER, () => true, deps).commit(request)
+  expect(deps.invoke).toHaveBeenCalledWith("account-plan-collection", expect.objectContaining({
+    body: expect.objectContaining({ action: "commit", request: expect.objectContaining({
+      paceRecordGuard: { documentId: OTHER, revision: 3 },
+    }) }),
+  }))
+})
 function dependencies(data: unknown, error: unknown = null) {
   const invoke = vi.fn().mockResolvedValue({ data, error })
   const auth = { getSession: vi.fn().mockResolvedValue({ data: { session: { access_token: "synthetic-token-A", user: { id: OWNER } } }, error: null }) }

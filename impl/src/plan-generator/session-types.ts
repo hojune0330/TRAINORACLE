@@ -67,6 +67,7 @@ export type PaceTargetPlanPrescription = {
   readonly targetEventDistanceM: number
   readonly targetRepSeconds: number
   readonly selectedAnchor:
+    | PaceTargetGoalAnchor
     | PaceTargetCurrentAnchorBase & {
         readonly kind: "RECENT_RESULT" | "PB"
         readonly purpose: "CURRENT_CAPABILITY"
@@ -103,6 +104,24 @@ export type PaceTargetPlanPrescription = {
   readonly fallbackCode: "RPE_ONLY_CONTROLLED"
   readonly prescriptionFingerprint: string
   readonly sequence?: PrescriptionSequence
+}
+
+export type PaceTargetGoalAnchor = Omit<PaceTargetCurrentAnchorBase, "achievedAt" | "freshnessState"> & {
+  readonly kind: "GOAL"
+  readonly purpose: "ASPIRATIONAL_TARGET"
+  readonly achievedAt: null
+  readonly seasonId: null
+  readonly freshnessState: "UNKNOWN"
+  readonly selectionEvidence: {
+    readonly version: 1
+    readonly kind: "EXPLICIT_GOAL"
+    readonly confirmed: true
+    readonly recordSchemaVersion: 1
+    readonly recordPurpose: "RACE_GOAL"
+    readonly recordVersion: string
+    readonly evaluatedOn: string
+    readonly timeZone: string
+  }
 }
 
 type PaceTargetCurrentAnchorBase = {

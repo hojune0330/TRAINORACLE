@@ -1,4 +1,5 @@
 import { assertNever } from "../shared/assert-never"
+import { isExplicitGoalPaceTemplate } from "../prescription/anchor"
 import { isValidCatalogSession } from "../prescription/catalog-session-binding"
 import {
   matchesPacePrescriptionSequence,
@@ -649,13 +650,14 @@ function isPaceTargetPrescription(value: Record<string, unknown>): boolean {
       || !isPaceScope(value["scope"]) || !isComponentRefs(value["componentRefs"]) || !isOperationalComponents(value["operationalComponents"])
       || !isPositiveInteger(value["setCount"]) || !isPositiveInteger(value["repetitionsPerSet"]) || !isPositiveInteger(value["repetitionDistanceM"])
       || !isPositiveInteger(value["targetEventDistanceM"]) || !isPositiveNumber(value["targetRepSeconds"])
-      || !isCurrentAnchor(value["selectedAnchor"]) || !isRecovery(value["repetitionRecoverySeconds"], value["repetitionRecoveryMode"])
+      || !(isCurrentAnchor(value["selectedAnchor"]) || isExplicitGoalAnchor(value["selectedAnchor"])) || !isRecovery(value["repetitionRecoverySeconds"], value["repetitionRecoveryMode"])
       || !isRecovery(value["setRecoverySeconds"], value["setRecoveryMode"]) || !isTotals(value["totals"])
       || !Array.isArray(value["stopCodes"]) || !isDenseArray(value["stopCodes"])
       || value["stopCodes"].length !== 4 || !value["stopCodes"].every(isStopCode)
       || value["fallbackCode"] !== "RPE_ONLY_CONTROLLED") return false
   const anchor = value["selectedAnchor"]
   return isRecord(anchor) && anchor["eventDistanceM"] === value["targetEventDistanceM"]
+    && (anchor["kind"] !== "GOAL" || isExplicitGoalPaceTemplate(value["templateId"] as string, value["templateVersion"] as string, value["targetEventDistanceM"] as number))
     && hasApprovedPrescriptionReferenceBinding(value)
     && isConsistentPaceTarget(value)
     // Source fields have passed the exact operational/number checks above.
@@ -760,6 +762,23 @@ function isOperationalComponents(value: unknown): boolean {
     && isRecord(cooldown) && hasExactKeys(cooldown, ["componentRef", "componentVersion", "authority", "easyDurationMinutes", "rpeMin", "rpeMax"]) && (cooldown["componentRef"] === "CD-V2-5K-01" || cooldown["componentRef"] === "CD-MD-01") && cooldown["componentVersion"] === "1.0.0" && cooldown["authority"] === "OWNER_OPERATIONAL_ADAPTATION" && cooldown["easyDurationMinutes"] === 10 && cooldown["rpeMin"] === 1 && cooldown["rpeMax"] === 2
     && isRecord(fallback) && hasExactKeys(fallback, ["componentRef", "componentVersion", "code", "behavior", "numericRepetitionVariant"]) && fallback["componentRef"] === "RPE-ONLY-CONTROLLED-01" && fallback["componentVersion"] === "1.0.0" && fallback["code"] === "RPE_ONLY_CONTROLLED" && fallback["behavior"] === "DELEGATE_TO_EXISTING_RPE_CANDIDATE" && fallback["numericRepetitionVariant"] === null
     && isRecord(stop) && hasExactKeys(stop, ["componentRef", "componentVersion", "authority", "diagnosticClaim", "codes"]) && (stop["componentRef"] === "STOP-V2-5K-01" || stop["componentRef"] === "STOP-MD-01") && stop["componentVersion"] === "1.0.0" && stop["authority"] === "OWNER_PRECAUTIONARY_OPERATIONAL_RULE" && stop["diagnosticClaim"] === false && Array.isArray(stop["codes"]) && isDenseArray(stop["codes"]) && stop["codes"].length === 4 && stop["codes"].every(isStopCode)
+}
+
+function isExplicitGoalAnchor(value: unknown): boolean {
+  if (!isRecord(value) || !hasExactKeys(value, ["anchorId", "eventDistanceM", "performanceSeconds", "achievedAt", "enteredBy", "verificationState", "freshnessState", "sourceRef", "elapsedLabel", "kind", "purpose", "seasonId", "selectionEvidence"])) return false
+  const evidence = value["selectionEvidence"]
+  return value["kind"] === "GOAL" && value["purpose"] === "ASPIRATIONAL_TARGET"
+    && value["achievedAt"] === null && value["seasonId"] === null && value["freshnessState"] === "UNKNOWN"
+    && value["elapsedLabel"] === "목표 기록 · 현재 실력 아님"
+    && isRecordId(value["anchorId"]) && value["sourceRef"] === `athlete-record:${value["anchorId"]}`
+    && isPositiveNumber(value["eventDistanceM"]) && isPositiveNumber(value["performanceSeconds"])
+    && (value["enteredBy"] === "ATHLETE" || value["enteredBy"] === "COACH" || value["enteredBy"] === "VERIFIED_IMPORT")
+    && (value["verificationState"] === "VERIFIED" || value["verificationState"] === "SELF_REPORTED")
+    && isRecord(evidence) && hasExactKeys(evidence, ["version", "kind", "confirmed", "recordSchemaVersion", "recordPurpose", "recordVersion", "evaluatedOn", "timeZone"])
+    && evidence["version"] === 1 && evidence["kind"] === "EXPLICIT_GOAL" && evidence["confirmed"] === true
+    && evidence["recordSchemaVersion"] === 1 && evidence["recordPurpose"] === "RACE_GOAL"
+    && isIsoTimestamp(evidence["recordVersion"]) && isIsoDate(evidence["evaluatedOn"])
+    && typeof evidence["timeZone"] === "string" && evidence["timeZone"].trim().length > 0
 }
 
 function isCurrentAnchor(value: unknown): boolean {
@@ -1005,6 +1024,10 @@ function candidateAnchorLabelsMatch(candidate: PlanCandidate, evaluatedAt: strin
   const evaluated = new Date(evaluatedAt)
   return candidate.sessions.every((session) => {
     if (session.prescription.kind !== "PACE_TARGET") return true
+    if (session.prescription.selectedAnchor.kind === "GOAL") {
+      return isExplicitGoalAnchor(session.prescription.selectedAnchor)
+        && isExplicitGoalPaceTemplate(session.prescription.templateId, session.prescription.templateVersion, session.prescription.targetEventDistanceM)
+    }
     const achievedAt = session.prescription.selectedAnchor.achievedAt
     if (!isIsoDate(achievedAt)) return false
     const year = Number(achievedAt.slice(0, 4))

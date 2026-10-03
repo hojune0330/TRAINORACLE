@@ -1,5 +1,5 @@
 import { encryptAccountJournalDocument, decryptAccountJournalDocument } from './account-journal-crypto.mjs';
-import { createAccountJournalRepository, validateAccountJournalDocument, accountPlanStateNeedsJournalGuard } from './account-journal-handler.mjs';
+import { createAccountJournalRepository, validateAccountJournalDocument, accountPlanStateNeedsJournalGuard, verifyAccountPaceRecordEdit, verifyAccountPlanPaceRecordSources } from './account-journal-handler.mjs';
 import { validateAccountPlanCollectionIndex, validateAccountPlanCollectionPart,
   joinAccountPlanCollection, validateAccountPlanCollectionUpdate,
   accountPlanCollectionPartHash, accountPlanFingerprint, projectCatalogReplacementJournal, projectExecutionReplanJournal,
@@ -18,6 +18,7 @@ const revision = v => Number.isSafeInteger(v) && v >= 0 && v <= Number.MAX_SAFE_
 const validJournalGuard = v => Array.isArray(v) && v.length <= 5000
   && v.every(row => keys(row, ['documentId', 'revision']) && uuid(row.documentId) && revision(row.revision) && row.revision > 0)
   && new Set(v.map(row => row.documentId)).size === v.length;
+const validPaceRecordGuard = v => keys(v, ['documentId', 'revision']) && uuid(v.documentId) && revision(v.revision) && v.revision > 0;
 const partKind = v => ['PLAN_SNAPSHOT', 'PLAN_PROGRESS'].includes(v);
 const fits = v => encoder.encode(JSON.stringify(v)).byteLength <= MAX_PART_BYTES;
 class GatewayError extends Error {
@@ -66,8 +67,10 @@ async function bodyJson(request) {
 
 function validCommit(r) {
   return keys(r, ['ownerId', 'operationId', 'expectedRevision', 'previousIndexFingerprint', 'previousCurrentPlanId', 'index', 'legacy',
-    ...(object(r) && Object.hasOwn(r, 'journalGuard') ? ['journalGuard'] : [])])
+    ...(object(r) && Object.hasOwn(r, 'journalGuard') ? ['journalGuard'] : []),
+    ...(object(r) && Object.hasOwn(r, 'paceRecordGuard') ? ['paceRecordGuard'] : [])])
     && (!Object.hasOwn(r, 'journalGuard') || validJournalGuard(r.journalGuard))
+    && (!Object.hasOwn(r, 'paceRecordGuard') || validPaceRecordGuard(r.paceRecordGuard))
     && uuid(r.ownerId) && uuid(r.operationId) && revision(r.expectedRevision)
     && (r.previousIndexFingerprint === null || hash(r.previousIndexFingerprint))
     && (r.previousCurrentPlanId === null || hash(r.previousCurrentPlanId))
@@ -233,6 +236,24 @@ export function createAccountPlanCollectionHandler({ authenticate, getMaterial, 
       const replan = selected?.version === 3 && next.index.currentPlanId !== previous?.index.currentPlanId
         ? (selected.executionReplan ?? selected.catalogReplacement ?? selected.activePlanEdit) : null;
       const selectionChanged = next.index.currentPlanId !== null && next.index.currentPlanId !== previous?.index.currentPlanId;
+      const paceEdit = replan && selected?.activePlanEdit?.action === 'PACE_REFERENCE';
+      if (r.paceRecordGuard !== undefined && (!selectionChanged || r.legacy || paceEdit)) fail(422, 'INVALID_PACE_RECORD_GUARD_SCOPE');
+      const previousState = previous?.snapshots.find(part => part.planId === previous.index.currentPlanId)?.snapshot.state;
+      let paceRecordGuard = null;
+      if (selectionChanged && paceEdit) {
+        if (r.legacy || typeof repo.readAthleteRecords !== 'function'
+          && selected.activePlanEdit.action === 'PACE_REFERENCE' && !selected.activePlanEdit.undoOf) fail(422, 'PACE_RECORD_SOURCE_REQUIRED');
+        const verified = await verifyAccountPaceRecordEdit({ ownerId, nextState: selected, previousState,
+          read: (owner, id) => repo.readAthleteRecords(owner, id), decode });
+        if (!verified.ok) fail(verified.code === 'PACE_RECORD_SOURCE_CHANGED' ? 409 : 422, verified.code);
+        paceRecordGuard = verified.guard;
+      } else if (selectionChanged && !r.legacy) {
+        const verified = await verifyAccountPlanPaceRecordSources({ ownerId, nextState: selected,
+          ...(replan ? { previousState } : {}), guard: r.paceRecordGuard,
+          read: typeof repo.readAthleteRecords === 'function' ? (owner, id) => repo.readAthleteRecords(owner, id) : undefined, decode });
+        if (!verified.ok) fail(verified.code === 'PACE_RECORD_SOURCE_CHANGED' ? 409 : 422, verified.code);
+        paceRecordGuard = verified.guard;
+      }
       // The stored snapshot omits candidate.continuityContext; its validated
       // candidate identity retains the exact continuity segment, including legacy frames.
       const successor = selectionChanged && !r.legacy && accountPlanStateNeedsJournalGuard(selected);
@@ -246,7 +267,7 @@ export function createAccountPlanCollectionHandler({ authenticate, getMaterial, 
           || accountPlanFingerprint(ordered(r.journalGuard)) !== accountPlanFingerprint(ordered(replan.journalGuard))) fail(409, 'JOURNALS_CHANGED');
       }
       const journalGuard = r.journalGuard ?? replan?.journalGuard;
-      if (!replan && journalGuard !== undefined && typeof repo.commitReplan !== 'function') fail(503, 'UNAVAILABLE');
+      if ((paceRecordGuard || !replan && journalGuard !== undefined) && typeof repo.commitReplan !== 'function') fail(503, 'UNAVAILABLE');
       if (replan && (!previous || !Array.isArray(replan.journalGuard) || typeof repo.commitReplan !== 'function')) fail(422, selected.activePlanEdit ? 'ACTIVE_PLAN_EDIT_SOURCE_REQUIRED' : 'REPLAN_SOURCE_REQUIRED');
       if (replan && (selected.catalogReplacement || selected.executionReplan || selected.activePlanEdit)) {
         if (selected.activePlanEdit && !activePlanEditClockIsCurrent(replan, now())) fail(409, 'PLAN_DATE_CHANGED');
@@ -269,7 +290,7 @@ export function createAccountPlanCollectionHandler({ authenticate, getMaterial, 
               : selected.catalogReplacement ? projectCatalogReplacementJournal(journal, replan)
               : projectExecutionReplanJournal(journal, replan, sourceContext);
             if (!fact) fail(503, 'INVALID_STORED_DATA');
-            if (fact.protectsSource || selected.activePlanEdit && fact.protectsTarget) fail(422, 'RECORDED_SESSION_PROTECTED');
+            if (fact.protectsSource || selected.activePlanEdit && (fact.protectsTarget || fact.protectsReplacement)) fail(422, 'RECORDED_SESSION_PROTECTED');
             facts.push(fact);
           }
         }
@@ -295,9 +316,12 @@ export function createAccountPlanCollectionHandler({ authenticate, getMaterial, 
         const commit = { ...commitInput, ...binding, payload: await encrypt(r.index, 'PLAN_COLLECTION', 'index') };
         if (selected?.activePlanEdit && replan && !activePlanEditClockIsCurrent(replan, now())) fail(409, 'PLAN_DATE_CHANGED');
         if (replan?.policy === 'manual-catalog-replacement-v1' && !catalogReplacementClockIsCurrent(replan, now())) fail(409, 'PLAN_DATE_CHANGED');
-        result = journalGuard !== undefined ? await repo.commitReplan({ ...commit, journalGuard,
+        const guardedCommit = { ...commit,
+          ...(paceRecordGuard ? { paceRecordGuard } : {}),
           ...(replan?.policy === 'manual-catalog-replacement-v1'
-            ? { calendarGuard: { today: replan.today, timeZone: replan.timeZone } } : {}) }) : await repo.commit(commit);
+            ? { calendarGuard: { today: replan.today, timeZone: replan.timeZone } } : {}) };
+        result = journalGuard !== undefined ? await repo.commitReplan({ ...guardedCommit, journalGuard })
+          : paceRecordGuard ? await repo.commitReplan(guardedCommit) : await repo.commit(commit);
       } catch (error) {
         if (error?.code !== '22023') throw error;
         const prior = await readReceipt(r.operationId);
@@ -316,6 +340,7 @@ export function createAccountPlanCollectionHandler({ authenticate, getMaterial, 
       if (error?.code === '42501') return respond(403, { error: 'ACCESS_DENIED' });
       if (error?.code === '22023') return respond(409, { error: 'OPERATION_REUSED' });
       if (error?.code === 'PT409') return respond(409, { error: 'PLAN_DATE_CHANGED' });
+      if (error?.code === 'TD001') return respond(409, { error: 'PACE_RECORD_SOURCE_CHANGED' });
       return respond(503, { error: 'SERVICE_UNAVAILABLE' });
     }
   };
@@ -328,7 +353,7 @@ export function createAccountPlanCollectionRepository(client, { ownerId, attest 
     const { data, error } = await query;
     if (error) {
       const safe = new Error('ACCOUNT_PLAN_COLLECTION_DATABASE_ERROR');
-      if (['22023', '42501', 'PT409'].includes(error.code)) safe.code = error.code;
+      if (['22023', '42501', 'PT409', 'TD001'].includes(error.code)) safe.code = error.code;
       throw safe;
     }
     return data;
@@ -341,6 +366,7 @@ export function createAccountPlanCollectionRepository(client, { ownerId, attest 
     attestationStatus: () => journal.attestationStatus(),
     enabled: owner => journal.enabled(owner),
     readLegacy: (owner, documentId) => journal.read(owner, documentId),
+    readAthleteRecords: (owner, documentId) => journal.read(owner, documentId),
     readJournals: (owner, documentIds) => result(client.from('account_journal_documents')
       .select('user_id,document_id,revision,encrypted_payload,deleted_at')
       .eq('user_id', owner).in('document_id', documentIds)),

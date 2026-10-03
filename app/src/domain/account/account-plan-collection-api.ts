@@ -59,6 +59,7 @@ export function createAccountPlanCollectionClient(ownerId: string, isCurrent: ()
         const status = error.context instanceof Response ? error.context.status : 0
         if (status === 409 && "action" in captured && captured.action === "commit") {
           value = await error.context.clone().json(); check()
+          if ((value as { error?: unknown })?.error === "PACE_RECORD_SOURCE_CHANGED") return { kind: "conflict" as const }
           if ((value as { kind?: unknown })?.kind !== "conflict") throw new AccountPlanCollectionError("REJECTED")
         } else throw new AccountPlanCollectionError(status === 401 ? "AUTH_REQUIRED"
           : [400, 405, 413, 415, 422].includes(status) ? "INVALID"

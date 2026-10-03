@@ -1,4 +1,5 @@
 import React from "react"
+import { formatPaceSeconds } from "@impl/prescription/record-pace"
 import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react"
 import type { ExerciseLog } from "../../domain/exercise-log"
 import type { PlannedSessionLink } from "../../domain/planned-session-link"
@@ -72,7 +73,7 @@ function LegacyRepetitionEditor({ p, saved, link, value, onChange, inputs, clear
   return <details className="planned-repetition-editor">
     <summary>반복별 기록 남기기{results.length ? ` · ${results.length}회 입력` : ""}</summary>
     {(results.length > 0 || Object.keys(inputs.values).length > 0) && clearButton}
-    <p>계획 {p.repetitionDistanceM}m · 목표 {Number(p.targetRepSeconds.toFixed(2))}초</p>
+    <p>계획 {p.repetitionDistanceM}m · 목표 {formatPaceSeconds(p.targetRepSeconds)}</p>
     {pages > 1 && <label>세트·반복 바로 이동<select value={currentPage} onChange={event => setPage(Number(event.target.value))}>
       {Array.from({ length: pages }, (_, index) => {
         const first = index * 3, last = Math.min(total - 1, first + 2)

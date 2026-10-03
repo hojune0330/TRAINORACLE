@@ -7,6 +7,7 @@ import type { VersionedStoredPlanSession } from "./plan-session-schema"
 import { createPlannedSessionLogDraft } from "./planned-session-link"
 import { stateFixture } from "./plan-beta-store.test-fixture"
 import { bindCatalogSession } from "@impl/prescription/catalog-session-binding"
+import { activePlanEditDurationConsentRequired } from "./active-plan-edit-policy"
 import { generatePlanFromDraft, selectPlanForActivation } from "./plan-beta-flow"
 
 function fixture() {
@@ -130,14 +131,14 @@ describe("manual active plan edit proposal", () => {
     if (selected.kind !== "selected" || selected.state.version !== 3) throw Error("V3 required")
     const state = selected.state
     const old = state.activePlan.sessions.find(session => session.role === "QUALITY")!
-    const replacement = bindCatalogSession(old, "P-LT-B-480", { eventDistanceM: 5000, experience: "EXPERIENCED",
+    const replacement = bindCatalogSession(old, "P-LT-C", { eventDistanceM: 5000, experience: "EXPERIENCED",
       availableSeconds: null, confirmedRequirements: [], fiveK: null, segmentPaces: [] })!
     expect(replacement).not.toBeNull()
     if (old.prescription.kind !== "RPE_TIME_RANGE" || replacement.prescription.kind !== "RPE_TIME_RANGE") throw Error("RPE required")
     const acceptedRpeMaximum = replacement.prescription.rpe.maximum > old.prescription.rpe.maximum ? replacement.prescription.rpe.maximum : null
     const result = prepareActivePlanEdit({ ...fixture(), state, action: "CATALOG", source: { day: old.day, slot: old.slot },
-      replacement, acceptedRpeMaximum, acceptedLongerDuration: replacement.prescription.durationMinutes.maximum > old.prescription.durationMinutes.maximum })
-    expect(result.kind, result.kind === "blocked" ? result.reasonCode : "").toBe("ready")
+      replacement, acceptedRpeMaximum, acceptedLongerDuration: activePlanEditDurationConsentRequired(old, replacement) })
+    expect(result.kind, result.kind === "blocked" ? `${result.reasonCode}: ${result.message}` : "").toBe("ready")
     if (result.kind !== "ready") throw Error(result.reasonCode)
     expect(result.proposal.after.activePlan.sessions.find(session => session.day === old.day && session.slot === old.slot)).toEqual(replacement)
     expect(planBetaStateV3Schema.safeParse(result.proposal.after).success).toBe(true)

@@ -35,6 +35,7 @@ function provenanceValues(entry: JournalEntry): Readonly<Record<string, unknown>
     activityOutcome: entry.activityOutcome,
     activitySlot: entry.activitySlot,
     planExecutionRelation: entry.planExecutionRelation,
+    planExecutionChange: entry.planExecutionChange,
     painCheckStatus: entry.painCheckStatus,
     painParts: entry.painParts,
     plannedSessionLink: entry.plannedSessionLink,
