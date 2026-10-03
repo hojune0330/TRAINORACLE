@@ -3,6 +3,7 @@ import { ACCOUNT_PLAN_MAX_BYTES, accountPlanFingerprint } from "./account-plan-d
 import { validateAccountPlanCollectionIndex, type AccountPlanCollectionParts } from "./account-plan-collection-schema"
 import {
   accountPlanJournalGuardSchema,
+  accountPlanPaceRecordGuardSchema,
   readAccountPlanCollectionTransfer,
   type AccountPlanCollectionTransfer,
 } from "./account-plan-collection-transfer"
@@ -28,6 +29,7 @@ const headerSchema = z.object({
   previous: collection.nullable(), next: collection,
   legacy: z.object({ documentId: uuid, revision: z.number().int().positive(), fingerprint: hash }).strict().nullable(),
   journalGuard: accountPlanJournalGuardSchema.optional(),
+  paceRecordGuard: accountPlanPaceRecordGuardSchema.optional(),
 }).strict()
 type Row = { ownerId: string; slot: string; operationId: string; fingerprint: string; iv: Uint8Array; ciphertext: Uint8Array }
 type Key = { id: string; key: CryptoKey }

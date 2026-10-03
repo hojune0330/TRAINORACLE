@@ -40,11 +40,13 @@ test("native SELECT preparation survives first-snapshot scope close and page rel
     return { error, intercepted, isolated, operationId: input.transfer.operationId, previous: input.transfer.previous!,
       expected: h.fingerprint(input.transfer), recovered: h.fingerprint(recovered?.transfer),
       journalGuard: recovered?.transfer.journalGuard,
+      paceRecordGuard: recovered?.transfer.paceRecordGuard,
       rows: raw.rows.length, encrypted: raw.rows.every(row => row.ciphertext instanceof Uint8Array && row.iv.length === 12),
       keys: raw.keys.map(v => ({ native: v.key instanceof CryptoKey, extractable: v.key.extractable })) }
   })
   expect(before).toMatchObject({ error: "STALE", intercepted: true, isolated: null, encrypted: true,
     journalGuard: [{ documentId: "55555555-5555-4555-8555-555555555555", revision: 2 }],
+    paceRecordGuard: { documentId: "66666666-6666-4666-8666-666666666666", revision: 3 },
     keys: [{ native: true, extractable: false }] })
   expect(before.rows).toBe(6)
   expect(before.recovered).toBe(before.expected)
@@ -64,11 +66,13 @@ test("native SELECT preparation survives first-snapshot scope close and page rel
     const serviceStatus = service.snapshot().status
     service.close()
     return { serviceStatus, state: view?.state, operationId: pending?.operationId,
-      journalGuard: pending?.journalGuard, transfer: h.fingerprint(pending),
+      journalGuard: pending?.journalGuard, paceRecordGuard: pending?.paceRecordGuard,
+      transfer: h.fingerprint(pending),
       rows: (await h.raw()).rows.length }
   }, before.previous)
   expect(after).toEqual({ serviceStatus: "PENDING", state: "PENDING", operationId: before.operationId,
-    journalGuard: before.journalGuard, transfer: before.expected, rows: 0 })
+    journalGuard: before.journalGuard, paceRecordGuard: before.paceRecordGuard,
+    transfer: before.expected, rows: 0 })
 })
 
 for (const fault of ["quota", "abort", "scope-close"] as const) {
