@@ -1,9 +1,12 @@
 {
   "kind": "TRAINORACLE_PAGES_DEPLOYMENT",
-  "sourceSha": "a8cf6a7d75b2854eecdb1f2c6090a834ba273d9d",
-  "previousPagesSha": "958ba28d062133eb8a7372d6be3c6dbcbb02d4ad",
-  "mode": "OWNER_APPROVED_MANUAL",
-  "deployedAt": "2026-10-03T05:20:04.846Z",
-  "publicConfigSource": "assets/index-DAN5-fFh.js",
-  "checks": "focused tests and 24 synthetic journeys passed; full CI tracked separately, not claimed green"
+  "sourceSha": "367cfa7d1ccac47c19d0747b8ad1164d09c92ab5",
+  "previousPagesSha": "9598ff21ab4a94b9c1629cffa16305f6bf0dc837",
+  "publicConfigurationSourceSha": "9598ff21ab4a94b9c1629cffa16305f6bf0dc837",
+  "deploymentMethod": "MANUAL_USER_APPROVED",
+  "ciStatus": "NOT_PASSED_OR_NOT_YET_KNOWN",
+  "ciRunId": null,
+  "observedCiRunId": "37102246680",
+  "observedCiUrl": "https://github.com/hojune0330/TRAINORACLE/actions/runs/37102246680",
+  "builtAt": "2026-10-03T06:14:26.749Z"
 }
