@@ -170,6 +170,8 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
       savedAt: nextJournalSavedAt(lastSavedAt.current), syncState: "local",
       captureDepth: "DETAILED",
       ...(activityOutcome === undefined ? {} : { activityOutcome }),
+      ...(activityOutcome === "PARTIAL" && planLink && initial?.planExecutionChange
+        ? { planExecutionChange: initial.planExecutionChange } : {}),
       ...(didPerform && activitySlot !== undefined ? { activitySlot } : {}),
       ...(recordsPerformance && persistedRpe === 0 && initial?.rpeBand !== undefined
         ? { rpeBand: initial.rpeBand }
@@ -194,6 +196,8 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
       ...(initial?.comparisonRelations === undefined ? {} : { comparisonRelations: initial.comparisonRelations }),
       fieldProvenance: {
         ...(activityOutcome === undefined ? {} : { activityOutcome: explicitOrMissing(true) }),
+        ...(activityOutcome === "PARTIAL" && planLink && initial?.planExecutionChange
+          ? { planExecutionChange: explicitOrMissing(true) } : {}),
         ...(didPerform && activitySlot !== undefined ? { activitySlot: explicitOrMissing(true) } : {}),
         plannedSessionLink: explicitOrMissing(planLink !== undefined),
         ...(planExecutionRelation === undefined ? {} : {

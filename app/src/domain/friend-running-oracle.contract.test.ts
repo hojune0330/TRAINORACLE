@@ -58,6 +58,44 @@ function observation(id: string, key: "BASE" | "LT", distanceKm: number): Struct
 }
 
 describe("friend running oracle", () => {
+  const sharedRecord = (eventDistanceM: number) => ({
+    schemaVersion: 1, sharedFields: ["BEST_RECORD"], record: { eventDistanceM, bestSeconds: 5400 },
+    recent8WeekDistanceKm: null, structuredSessionCount: null, energySessionCounts: [],
+  })
+
+  it.each([21097, 21097.5])("creates canonical half snapshots from %s without mutating the record", eventDistanceM => {
+    const source = { ...record("half", 5400), eventDistanceM }
+    const snapshot = buildOracleComparisonSnapshot({ observations: [], records: [source], today,
+      selection: { recordId: "half", shareRecord: true, shareDistance: false, shareEnergy: false } })
+    expect(snapshot).toEqual(sharedRecord(21097.5))
+    expect(source.eventDistanceM).toBe(eventDistanceM)
+  })
+
+  it("reads legacy half payloads losslessly and compares them with canonical half records", () => {
+    const legacy = oracleComparisonSnapshotSchema.parse(sharedRecord(21097))
+    const canonical = oracleComparisonSnapshotSchema.parse(sharedRecord(21097.5))
+    expect(legacy.record?.eventDistanceM).toBe(21097)
+    for (const [own, friend] of [[legacy, canonical], [canonical, legacy]] as const) {
+      expect(deriveFriendRunningOracle(own, friend).facts).toContain(
+        "21097.5m 기록 차이는 0%예요. 빠르기 순위가 아니라 함께 달릴 방법을 정하는 참고값이에요.")
+    }
+    expect(deriveFriendRunningOracle(legacy, oracleComparisonSnapshotSchema.parse(sharedRecord(21000))).facts).toEqual([])
+  })
+
+  it.each([59, 59.5, 800.5, 21097.4, 21097.6, NaN, Infinity])("rejects unsupported distance %s", distance => {
+    expect(oracleComparisonSnapshotSchema.safeParse(sharedRecord(distance)).success).toBe(false)
+  })
+
+  it("preserves record consent and excludes goals from public actual records", () => {
+    expect(oracleComparisonSnapshotSchema.safeParse({ ...sharedRecord(21097.5), sharedFields: [] }).success).toBe(false)
+    expect(oracleComparisonSnapshotSchema.safeParse({ ...sharedRecord(21097.5), record: null }).success).toBe(false)
+    expect(oracleComparisonSnapshotSchema.safeParse({ ...sharedRecord(21097.5), sharedFields: ["BEST_RECORD", "BEST_RECORD"] }).success).toBe(false)
+    for (const [purpose, shareRecord] of [["RACE_GOAL", true], ["PERSONAL_BEST", false]] as const) {
+      expect(buildOracleComparisonSnapshot({ observations: [], records: [{ ...record("half", 5400), eventDistanceM: 21097.5, purpose, achievedOn: null, seasonId: null }], today,
+        selection: { recordId: "half", shareRecord, shareDistance: false, shareEnergy: false } })).toBeNull()
+    }
+  })
+
   it("publishes only explicitly selected aggregate fields", () => {
     const snapshot = buildOracleComparisonSnapshot({
       observations: [observation("a", "BASE", 8), observation("b", "LT", 6)],

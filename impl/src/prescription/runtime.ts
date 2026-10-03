@@ -1,6 +1,6 @@
 import { parseSafetyGate } from "../plan-generator/input-values"
 import type { SafetyGateDecision } from "../safety-gate/gate"
-import { validatePrescriptionAnchorReference, validateRacePaceAnchor } from "./anchor"
+import { isExplicitGoalPaceTemplate, validateGoalPaceAnchor, validatePrescriptionAnchorReference, validateRacePaceAnchor } from "./anchor"
 import { parsePrescriptionNotation } from "./notation"
 import { calculateRacePaceSeconds } from "./race-pace"
 import { derivePrescriptionTotals } from "./totals"
@@ -222,7 +222,11 @@ function parseRuntimeRequest(input: unknown): {
 export function createStructuredPrescription(
   input: StructuredPrescriptionInput,
 ): StructuredPrescriptionResult {
-  const anchorError = validateRacePaceAnchor({
+  return createReferencePrescription(input, false)
+}
+
+function createReferencePrescription(input: StructuredPrescriptionInput, explicitGoal: boolean): StructuredPrescriptionResult {
+  const anchorError = (explicitGoal ? validateGoalPaceAnchor : validateRacePaceAnchor)({
     anchor: input.anchor,
     targetEventDistanceM: input.notation.paceTargetEventDistanceM,
   })
@@ -259,7 +263,14 @@ export function calculateSameEventRacePace(
     readonly anchor: PaceAnchorRecord
   },
 ): RacePaceCalculationResult {
-  const anchorError = validatePrescriptionAnchorReference(input)
+  return calculateReferencePace(input, false)
+}
+
+function calculateReferencePace(input: { readonly prescription: StructuredPrescription; readonly anchor: PaceAnchorRecord }, explicitGoal: boolean): RacePaceCalculationResult {
+  const anchorError = explicitGoal
+    ? input.prescription.paceAnchorRef !== input.anchor.anchorId ? "ANCHOR_REFERENCE_MISMATCH"
+      : validateGoalPaceAnchor({ anchor: input.anchor, targetEventDistanceM: input.prescription.paceTargetEventDistanceM })
+    : validatePrescriptionAnchorReference(input)
   if (anchorError !== undefined) return { kind: "rejected", code: anchorError }
   if (input.prescription.repetitionDistanceM === null || input.anchor.eventDistanceM === null || input.anchor.performanceSeconds === null) {
     return { kind: "rejected", code: "ANCHOR_INCOMPLETE" }
@@ -283,7 +294,22 @@ export function preparePrescriptionRuntime(input: unknown): RuntimePreparationRe
   }
 }
 
-function preparePrescriptionRuntimeUnchecked(input: unknown): RuntimePreparationResult {
+export function prepareExplicitGoalPrescriptionRuntime(input: unknown): RuntimePreparationResult {
+  try {
+    if (!isRecord(input) || !isRecord(input["goalSelection"])) return reject("GOAL_ANCHOR_FORBIDDEN")
+    const selection = input["goalSelection"]
+    if (selection["confirmed"] !== true || typeof selection["templateId"] !== "string"
+      || typeof selection["templateVersion"] !== "string" || typeof selection["eventDistanceM"] !== "number"
+      || !isExplicitGoalPaceTemplate(selection["templateId"], selection["templateVersion"], selection["eventDistanceM"])) return reject("GOAL_ANCHOR_FORBIDDEN")
+    const request = parseRuntimeRequest(input)
+    if (!request || request.anchor.eventDistanceM !== selection["eventDistanceM"]) return reject("ANCHOR_PROVENANCE_INCOMPLETE")
+    return preparePrescriptionRuntimeUnchecked(input, true)
+  } catch {
+    return reject("MALFORMED_RUNTIME_INPUT")
+  }
+}
+
+function preparePrescriptionRuntimeUnchecked(input: unknown, explicitGoal = false): RuntimePreparationResult {
   const request = parseRuntimeRequest(input)
   if (request === undefined) return reject("MALFORMED_RUNTIME_INPUT")
   if (request.safetyGate.kind === "blocked") return reject("SAFETY_GATE_BLOCKED")
@@ -292,14 +318,14 @@ function preparePrescriptionRuntimeUnchecked(input: unknown): RuntimePreparation
 
   const parsed = parsePrescriptionNotation(request.notation)
   if (parsed.kind === "rejected") return reject(parsed.code)
-  const created = createStructuredPrescription({
+  const created = createReferencePrescription({
     notation: parsed.notation,
     anchor: request.anchor,
     displayRoundingPolicyVersion: request.displayRoundingPolicyVersion,
     operationalComponents: request.operationalComponents,
-  })
+  }, explicitGoal)
   if (created.kind === "rejected") return reject(created.code)
-  const pace = calculateSameEventRacePace({ prescription: created.prescription, anchor: request.anchor })
+  const pace = calculateReferencePace({ prescription: created.prescription, anchor: request.anchor }, explicitGoal)
   if (pace.kind === "rejected") return reject(pace.code)
 
   return Object.freeze({

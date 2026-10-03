@@ -2,9 +2,10 @@ import React from "react"
 import { ArrowLeft, SlidersHorizontal } from "lucide-react"
 import type { AthleteRecord } from "../../domain/athlete-records"
 import {
-  loadAthleteRecords,
   recordPurposeLabel,
 } from "../../domain/athlete-records"
+import { useEligibleAccountPaceRecords } from "../../hooks/useEligibleAccountPaceRecords"
+import { isEligiblePaceRecordCurrent } from "../../domain/account/eligible-account-pace-records"
 import type { PlanBetaState } from "../../domain/plan-beta-store"
 import { readArchivedOriginalPlans } from "../../domain/plan-beta-store"
 import type { PlanJournalHistory } from "../../domain/plan-journal-evidence"
@@ -60,7 +61,7 @@ export function PlanAdaptationFlow({
   state,
   onPrepare = prepareNextFrameAdaptation,
   onAccept = acceptPreparedNextFrameAdaptation,
-  onLoadRecords = loadAthleteRecords,
+  onLoadRecords,
   onLoadPending = loadMatchingPendingSuccessor,
   onEvaluateSafety = evaluateActivePlanAdaptationSafety,
   onLoadEntries = loadEntries,
@@ -92,10 +93,9 @@ export function PlanAdaptationFlow({
   const history = usePlanEvidenceHistory(step === "cycle", onLoadHistory)
   const pendingReady = pendingState === state && pendingScope === history.scope
   const matchingPending = pendingReady && !pendingFailed ? pending : null
-  const records = React.useMemo(
-    () => eligiblePbSbRecords(state, onLoadRecords()),
-    [onLoadRecords, state],
-  )
+  const { records: paceRecords, readRecords } = useEligibleAccountPaceRecords(onLoadRecords)
+  const records = eligiblePbSbRecords(state, paceRecords)
+  const recordCurrent = () => reason !== "PB_SB" || record !== null && isEligiblePaceRecordCurrent(record, readRecords())
   const currentContext = React.useMemo(() => resolveCurrentCycleContext(state, history.history, readOriginalPlanAdaptationContext), [state, history.history])
   const canPrepareOrdinary = currentContext.kind === "current" && currentContext.current.activePlan.selectionActor === "SELF"
     && isPlanFrameCompletionEligible(currentContext.current, todayISO())
@@ -193,6 +193,7 @@ export function PlanAdaptationFlow({
 
   const prepareCandidate = async () => {
     if (reason === null || currentCheck === null || inFlight.current) return
+    if (!recordCurrent()) { setMessage("기준 기록이 바뀌었어요. 최신 기록을 다시 선택해 주세요."); setStep("record"); return }
     const epoch = ++requestEpoch.current
     inFlight.current = true
     setBusy(true)
@@ -200,7 +201,7 @@ export function PlanAdaptationFlow({
       const operationAt = new Date()
       const safety = onEvaluateSafety(state, currentCheck, operationAt)
       const result = await onPrepare({ state, reason, record, safety, operationAt: operationAt.toISOString() })
-      if (epoch === requestEpoch.current && currentState.current === state) {
+      if (epoch === requestEpoch.current && currentState.current === state && recordCurrent()) {
         handlePrepared(result, setPrepared, setMessage, setStep)
       }
     } catch {
@@ -218,6 +219,7 @@ export function PlanAdaptationFlow({
 
   const accept = async () => {
     if (prepared === null || currentCheck === null || inFlight.current) return
+    if (!recordCurrent()) { setMessage("기준 기록이 바뀌었어요. 최신 기록을 다시 선택해 주세요."); setStep("record"); return }
     if (state.version !== 3) {
       setMessage("이전 계획은 다음 계획 조정을 지원하지 않아요.")
       setStep("result")

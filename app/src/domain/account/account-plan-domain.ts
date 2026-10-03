@@ -4,6 +4,7 @@ import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identit
 import { activeLocalAccount } from "./local-journal-ownership"
 import { currentConfirmedAccountJournalVersions } from "./account-journal-projection"
 import { accountJournalDocumentId } from "./account-journal-record-service"
+import { captureAccountPlanPaceSource, accountPlanPaceSourceStillCurrent } from "./account-plan-pace-source"
 
 /** Full-history consumers must explicitly wait; a current-only projection is not an empty archive. */
 export async function ensureAccountPlanHistory(): Promise<boolean> {
@@ -39,14 +40,20 @@ export function captureAccountPlanWrite(activeKey: string) {
       if (freshReview && (!("loadHistory" in service) || !ownerId || versions === null)) return "ACCOUNT_PLAN_REVIEW_REQUIRED"
       const packets = [null, ...retained].map(evidence => ({ state, evidence, ...(context ? { context } : {}) })).filter(validateAccountPlanPacket)
       if (packets.length !== 1) return "ACCOUNT_PLAN_EVIDENCE_REQUIRED"
+      const packet = packets[0]!
+      const paceSource = freshReview ? captureAccountPlanPaceSource(packet, ownerId) : { kind: "none" as const }
+      if (paceSource.kind === "unavailable") return "ACCOUNT_PLAN_REVIEW_REQUIRED"
       const journalGuard = versions ? (await Promise.all(versions.map(async row => ({
         documentId: await accountJournalDocumentId(ownerId!, row.entryId), revision: row.revision,
       })))).sort((a, b) => a.documentId.localeCompare(b.documentId)) : undefined
       if (accountPlanService() !== service || activeLocalAccount() !== ownerId || read() !== raw) return "ACCOUNT_PLAN_STALE"
       if (freshReview && JSON.stringify(currentConfirmedAccountJournalVersions()) !== JSON.stringify(versions)) return "ACCOUNT_PLAN_REVIEW_REQUIRED"
+      if (freshReview && !accountPlanPaceSourceStillCurrent(packet, ownerId, paceSource)) return "ACCOUNT_PLAN_REVIEW_REQUIRED"
       const result = await service.mutate(freshReview
-        ? { kind: "SELECT", packet: packets[0]!, confirmsSelection: true, freshReview, journalGuard }
-        : { kind: "PROGRESS", packet: packets[0]! }, opening.fingerprint)
+        ? { kind: "SELECT", packet, confirmsSelection: true,
+          freshReview: () => accountPlanPaceSourceStillCurrent(packet, ownerId, paceSource) && freshReview(), journalGuard,
+          ...(paceSource.kind === "ready" ? { paceRecordGuard: paceSource.guard } : {}) }
+        : { kind: "PROGRESS", packet }, opening.fingerprint)
       return result === "ACCOUNT" ? null : `ACCOUNT_PLAN_${result}`
     },
     async archive(): Promise<`ACCOUNT_PLAN_${string}` | null> {

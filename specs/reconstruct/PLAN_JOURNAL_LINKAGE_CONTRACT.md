@@ -56,6 +56,51 @@ this derivation is clarified.
 
 ## 3. Link Record
 
+### 2026-10-02 Owner-Approved Lifecycle UX Addendum
+
+The owner approved review follow-ups 1-5: repair saved-session editing, make record
+confirmation reachable from the primary action, connect the journal receipt to plan
+progress, capture an optional short change description, and distinguish prescription
+basis while explaining next-cycle maintenance or reduction from actual evidence.
+Verify the edited-session journey through the next cycle. This does not promote this
+entire draft or new dosing.
+
+- A confirmed journal save may offer an explicit progress action on its receipt,
+  without requiring a separate trip to the plan. Journal save and progress save remain
+  distinct transactions; a progress failure must not invalidate or hide the saved journal.
+- Recheck the active occurrence and the saved journal revision when acting. Never
+  overwrite an existing progress mark or apply an old journal to a replaced plan.
+- `COMPLETED` retains the exact occurrence, matching AM/PM and explicit no-pain
+  conditions above. Explicit rest/skip can be reflected as rest/skip. A pain report
+  can only offer pain review, never completion. Partial or different exercise must not
+  be collapsed into completed or skipped; display its linked journal outcome instead.
+- Linked journal result labels are read-only projections, not progress writes or proof
+  of compliance. They survive return/reload, show ambiguity when multiple results
+  disagree, and disappear when their source is deleted or no longer resolves exactly.
+- Optional `planExecutionChange` is a self-reported qualitative field on a linked
+  partial journal: `FEWER_REPETITIONS`, `SHORTER_DURATION`, or `DIFFERENT_WORKOUT`.
+  Omission means unspecified. It creates no numeric volume, energy classification,
+  physiological deficit or adaptive prescription authority. It is preserved in owner
+  backup/account storage but not automatically shared publicly.
+- The quick form offers these choices at review without an obligatory extra page.
+  Returning to a non-partial outcome clears the saved change field; detailed editing
+  preserves it only while the linked partial outcome remains.
+- Prescription basis describes inputs used in calculated workout segments, not merely
+  records present in storage. Pending record confirmation is a draft, not an applied
+  personal prescription. Other segments retain their displayed time/RPE basis.
+- Next-cycle explanations distinguish missing, changed, conflicting, single and repeated
+  comparable results. A partial workout alone does not prove a physiological deficit.
+  Existing reviewed reduction rules remain unchanged; explanations grant no automatic
+  increase in intensity, volume or frequency.
+- Progress reflection requires exactly one saved record for the journal ID and planned
+  occurrence, even when duplicate results happen to agree. No duplicate is deleted.
+- Numeric next-cycle reduction additionally requires explicit completed outcome, matching
+  actual AM/PM and explicit no-pain response. A recorded RPE may remain a descriptive
+  comparison without meeting this dose-change requirement. Pain-associated RPE is not
+  ordinary effort evidence, including when its date is outside the current safety window.
+  Missing legacy fields remain unknown; do not backfill answers or clear safety checks.
+
+
 ```yaml
 PlannedSessionLinkV1:
   schemaVersion: 1

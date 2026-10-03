@@ -2,6 +2,7 @@ import React from "react"
 import { ACCOUNT_PLAN_EVENT, accountPlansEnabled } from "../../domain/account/account-plan-service"
 import { ensureAccountPlanHistory } from "../../domain/account/account-plan-domain"
 import type { PostSessionEntry } from "../../domain/journal-schema"
+import { PLAN_EXECUTION_CHANGE_LABELS } from "../../domain/journal-schema"
 import { readJournalOriginalPlan } from "../../domain/journal-original-plan"
 import { onLocalJournalScopeChange } from "../../domain/account/local-journal-ownership"
 import { loadEntriesForPlanSafety } from "../../domain/journal-store"
@@ -75,6 +76,7 @@ export function JournalOriginalPlan({ entry }: { readonly entry: PostSessionEntr
     catch { setLookup({ kind: "unavailable" }) }
   }}>
     <summary>계획한 훈련과 비교하기</summary>
+    {entry.planExecutionChange && <p>내가 남긴 변경: {PLAN_EXECUTION_CHANGE_LABELS[entry.planExecutionChange]}</p>}
     {loading && <p role="status">이 일지와 연결된 과거 계획을 확인하고 있어요.</p>}
     {source && source.status !== "complete" && !loading && <p role="status">기록을 모두 읽지 못해 비교를 잠시 보류했어요. 저장 상태를 확인해 주세요.</p>}
     {review && !loading ? <><h3>{review.title}</h3><ExecutionReviewContent review={review} originalMethod={originalMethod} /></> : originalMethod}

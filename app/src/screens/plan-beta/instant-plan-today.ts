@@ -1,5 +1,6 @@
 import type { PlanSession } from "@impl/plan-generator/types"
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
+import { formatPaceSeconds } from "@impl/prescription/record-pace"
 import type { InstantPlanToday } from "../../domain/instant-plan-contract"
 import type { PlanBetaState } from "../../domain/plan-beta-store"
 import { isValidIsoDate, isoShift } from "../../domain/dates"
@@ -71,7 +72,7 @@ export function projectInstantExecutionSteps(session: PlanSession): InstantPlanT
   const recoveryMode = { WALK: "걷기", JOG: "조깅", STAND: "서서 쉬기", NOT_APPLICABLE: "지정 없음" }
   return [
     { label: "준비", instruction: `${warmup.easyDurationMinutes}분 가볍게 움직이기 (RPE ${warmup.rpeMin}~${warmup.rpeMax}) → ${warmup.strides.durationSeconds}초씩 점점 빠르게 ${warmup.strides.repetitions}회. 가속 사이 ${warmup.strides.recoverySeconds}초 걷기·조깅.` },
-    { label: "본운동", instruction: `${prescription.repetitionDistanceM}m를 약 ${formatTrainingSeconds(prescription.targetRepSeconds)}에 ${prescription.repetitionsPerSet}회${prescription.setCount > 1 ? `씩 · ${prescription.setCount}세트 (총 ${prescription.totals.totalRepetitions}회)` : ""}.` },
+    { label: "본운동", instruction: `${prescription.repetitionDistanceM}m를 약 ${formatPaceSeconds(prescription.targetRepSeconds)}에 ${prescription.repetitionsPerSet}회${prescription.setCount > 1 ? `씩 · ${prescription.setCount}세트 (총 ${prescription.totals.totalRepetitions}회)` : ""}.` },
     { label: "회복", instruction: [
       prescription.repetitionRecoverySeconds === null ? "반복 회복 시간 지정 없음" : `반복 사이 ${formatTrainingSeconds(prescription.repetitionRecoverySeconds)} ${recoveryMode[prescription.repetitionRecoveryMode]}`,
       ...(prescription.setCount > 1 ? [prescription.setRecoverySeconds === null ? "세트 회복 시간 지정 없음" : `세트 사이 ${formatTrainingSeconds(prescription.setRecoverySeconds)} ${recoveryMode[prescription.setRecoveryMode]}`] : []),

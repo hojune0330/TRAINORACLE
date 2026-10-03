@@ -7,6 +7,7 @@ import { createPlannedSessionLogDraft, resolveCurrentPlannedSession } from "./pl
 import { resolveExecutionReplanSource } from "./execution-replan-source"
 import { comparePlannedSegments, plannedSegmentEvidenceSchema } from "./planned-segment-evidence"
 import { comparePlannedRepetitions, plannedRepetitionEvidenceSchema, type RepetitionComparison } from "./planned-repetition-evidence"
+import { painLevelsRequireReview } from "../safety/memo-safety"
 
 export type PlanJournalHistory =
   | { readonly kind: "loaded"; readonly plans: readonly unknown[] }
@@ -28,6 +29,7 @@ export type PlanJournalEvidenceRow = {
   readonly actualRpe: number | null
   readonly plannedRpe: { readonly minimum: number; readonly maximum: number } | null
   readonly comparison: PlanJournalComparison
+  readonly adaptationEligibility?: "CONFIRMED" | "PAIN_SIGNAL" | "UNCONFIRMED"
   readonly executionComparison?: RepetitionComparison
   readonly executionFingerprint?: string
 }
@@ -58,6 +60,10 @@ function resultSignature(entry: PostSessionEntry): string {
     outcome: entry.activityOutcome ?? null,
     relation: entry.planExecutionRelation ?? null,
     slot: entry.activitySlot ?? null,
+    painSignal: entry.painCheckStatus === "SIGNAL_REPORTED" || painLevelsRequireReview(entry.painParts ?? {}),
+    performanceProvenance: [entry.fieldProvenance?.activityOutcome?.provenance ?? null,
+      entry.fieldProvenance?.activitySlot?.provenance ?? null, entry.fieldProvenance?.painCheckStatus?.provenance ?? null],
+    painCheckStatus: entry.painCheckStatus ?? null,
     segments: structuredSegments(entry),
     repetitions: structuredRepetitions(entry),
   })
@@ -107,6 +113,15 @@ function comparisonFor(entry: PostSessionEntry, session: PlanSession, execution?
   if (rpe > session.prescription.rpe.maximum) return "ABOVE_RANGE"
   if (rpe < session.prescription.rpe.minimum) return "BELOW_RANGE"
   return "WITHIN_RANGE"
+}
+
+function adaptationEligibility(entry: PostSessionEntry, session: PlanSession): NonNullable<PlanJournalEvidenceRow["adaptationEligibility"]> {
+  if (entry.painCheckStatus === "SIGNAL_REPORTED" || painLevelsRequireReview(entry.painParts ?? {})) return "PAIN_SIGNAL"
+  return entry.activityOutcome === "COMPLETED" && entry.activitySlot === session.slot
+    && entry.painCheckStatus === "NO_SIGNAL_REPORTED"
+    && entry.fieldProvenance?.activityOutcome?.provenance === "EXPLICIT"
+    && entry.fieldProvenance?.activitySlot?.provenance === "EXPLICIT"
+    && entry.fieldProvenance?.painCheckStatus?.provenance === "EXPLICIT" ? "CONFIRMED" : "UNCONFIRMED"
 }
 
 export function collectPlanJournalEvidence(
@@ -167,6 +182,7 @@ export function collectPlanJournalEvidence(
       plannedRpe: session.prescription.kind === "RPE_TIME_RANGE"
         ? { ...session.prescription.rpe } : null,
       comparison,
+      adaptationEligibility: conflict ? "UNCONFIRMED" : adaptationEligibility(entry, session),
       ...(execution ? { executionComparison: execution,
         executionFingerprint: canonicalJsonFingerprint("plan-actual-execution-v1", {
           segments: structuredSegments(entry), repetitions: structuredRepetitions(entry),

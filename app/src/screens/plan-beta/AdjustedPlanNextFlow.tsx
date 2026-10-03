@@ -6,7 +6,8 @@ import { readPlanBetaStateFromStorage, type PlanBetaStateReadResult } from "../.
 import { RETAINED_ADJUSTED_PLAN_EVIDENCE } from "../../domain/adjusted-plan-storage-schema"
 import type { RetainedAdjustedPlanEvidence } from "../../domain/adjusted-plan-selection"
 import { localAccountScopeSnapshot } from "../../domain/account/local-account-scope"
-import { loadAthleteRecords } from "../../domain/athlete-records"
+import { useEligibleAccountPaceRecords } from "../../hooks/useEligibleAccountPaceRecords"
+import { isEligiblePaceRecordCurrent } from "../../domain/account/eligible-account-pace-records"
 import { todayISO } from "../../domain/journal-store"
 import { AdjustedPlanApplyReview } from "./AdjustedPlanApplyReview"
 import { rebindAdjustedCycleRequest } from "../../domain/adjusted-cycle-rebind"
@@ -36,7 +37,9 @@ export function AdjustedPlanNextFlow({ loaded, adjustmentResolver, readEvidence 
   const [startDate, setStartDate] = React.useState(todayISO)
   const [check, setCheck] = React.useState<PlanCurrentCheck | null>(null)
   const [recordId, setRecordId] = React.useState("")
-  const [records] = React.useState(() => loadAthleteRecords())
+  const { records } = useEligibleAccountPaceRecords()
+  const selectedRecord = React.useRef<(typeof records)[number] | null>(null)
+  const recordCurrent = () => !recordId || selectedRecord.current?.id === recordId && isEligiblePaceRecordCurrent(selectedRecord.current)
   const [draft, setDraft] = React.useState<NextDraft | null>(null)
   const [entry, setEntry] = React.useState<Pick<React.ComponentProps<typeof AdjustedPlanApplyReview>, "request" | "readReview" | "locks"> | null>(null)
   const [error, setError] = React.useState<string | null>(null)
@@ -47,11 +50,11 @@ export function AdjustedPlanNextFlow({ loaded, adjustmentResolver, readEvidence 
   const currentView = () => mounted.current && account === localAccountScopeSnapshot()
     && loaded.state.contentFingerprint === predecessor
   const current = () => {
-    if (!currentView()) return false
+    if (!currentView() || !recordCurrent()) return false
     const read = readPlanBetaStateFromStorage(readEvidence())
     return read.kind === "adjusted_loaded" && read.state.contentFingerprint === predecessor
   }
-  const evidenceCurrent = () => currentView() && draft !== null
+  const evidenceCurrent = () => currentView() && recordCurrent() && draft !== null
     && catalogCycleDraftSourceStillCurrent(loaded.state, draft.cycleDraft, { version: 4, retained: readEvidence() })
   if (entry !== null) return <AdjustedPlanApplyReview {...entry} expectedPredecessorFingerprint={predecessor}
     cycleDraft={draft?.cycleDraft} isCurrentDraft={evidenceCurrent} onCancel={() => setEntry(null)} onSaved={onSaved} />
@@ -91,7 +94,9 @@ export function AdjustedPlanNextFlow({ loaded, adjustmentResolver, readEvidence 
           onChange={() => setCheck("REVIEW_REQUIRED")} />통증·이상이 있거나 잘 모르겠어요</label>
       </fieldset>
       <label htmlFor="adjusted-next-record">추천 페이스에 사용할 경기 기록</label>
-      <select id="adjusted-next-record" value={recordId} onChange={event => setRecordId(event.target.value)}>
+      <select id="adjusted-next-record" value={recordId} onChange={event => {
+        setRecordId(event.target.value); selectedRecord.current = records.find(record => record.id === event.target.value) ?? null
+      }}>
         <option value="">기록을 사용하지 않음</option>
         {records.map(record => <option key={record.id} value={record.id}>{record.eventDistanceM}m · {record.performanceSeconds}초</option>)}
       </select>

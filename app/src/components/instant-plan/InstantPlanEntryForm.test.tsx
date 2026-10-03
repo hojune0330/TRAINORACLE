@@ -167,7 +167,14 @@ describe("InstantPlanEntryForm", () => {
     },
   )
 
-  it.each(["", "2026-09-21", "2023-02-29", "2026-04-31", "0000-01-01", "2026-13-01"])(
+  it("accepts an unknown date without inventing today", () => {
+    const onSubmit = vi.fn()
+    render(<InstantPlanEntryForm today={TODAY} initialEntry={{ ...record, achievedOn: null }} onSubmit={onSubmit} />)
+    submit()
+    expect(onSubmit).toHaveBeenCalledExactlyOnceWith({ ...record, achievedOn: null })
+  })
+
+  it.each(["2026-09-21", "2023-02-29", "2026-04-31", "0000-01-01", "2026-13-01"])(
     "rejects the invalid or future record date %s even in a prefilled entry", achievedOn => {
       const onSubmit = vi.fn()
       render(<InstantPlanEntryForm today={TODAY} initialEntry={{ ...record, achievedOn }} onSubmit={onSubmit} />)
@@ -196,7 +203,7 @@ describe("InstantPlanEntryForm", () => {
 
   it("clears obsolete record errors when explicitly switching to NO_RECORD", () => {
     const onSubmit = vi.fn()
-    render(<InstantPlanEntryForm today={TODAY} initialEntry={{ ...record, achievedOn: "" }} onSubmit={onSubmit} />)
+    render(<InstantPlanEntryForm today={TODAY} initialEntry={{ ...record, achievedOn: "2026-09-21" }} onSubmit={onSubmit} />)
     submit()
     expect(screen.getByRole("alert")).toBeVisible()
     fireEvent.click(screen.getByRole("radio", { name: "기록 없이" }))

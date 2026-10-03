@@ -8,7 +8,7 @@ import { resolveDetailedPlanTemplateOptions } from "./plan-template-options"
 export function prepareInstantIntake(draft: Partial<PlanBetaIntake>, entry?: InstantPlanEntry,
   evaluatedAt = new Date().toISOString()): Partial<PlanBetaIntake> {
   const completed = withQuickDefaults(draft)
-  if (entry?.kind !== "CURRENT_RECORD" || entry.eventDistanceM !== draft.eventDistanceM
+  if (entry === undefined || entry.kind === "NO_RECORD" || entry.eventDistanceM !== draft.eventDistanceM
     || draft.selectedDetailedTemplateRef !== undefined) return completed
   const purposes = draft.trainingFocus === undefined ? PLANNED_ENERGY_INTENTS : [draft.trainingFocus]
   const options = purposes.flatMap(trainingFocus => resolveDetailedPlanTemplateOptions({ ...completed, trainingFocus }, evaluatedAt))

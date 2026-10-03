@@ -4,6 +4,10 @@ import { deriveCandidateId, derivePairId } from "@impl/plan-generator/candidate-
 import { stateFixture } from "../src/domain/plan-beta-store.test-fixture"
 import { openActivePlanCards } from "./active-plan-flow"
 
+test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(new Date("2026-07-24T03:00:00Z"))
+})
+
 const dayFivePm: PlanSession = {
   day: 5,
   slot: "PM",
@@ -64,7 +68,7 @@ test("returning from a cancelled DAY 5 PM journal restores its slot without a sa
   const returnedSession = page.getByRole("group", { name: /오후 세션 · 일지에서 돌아온 세션/u })
   await expect(returnedSession).toBeVisible()
   await expect(returnedSession).toBeInViewport()
-  await expect(page.getByText("일지를 저장했어요. 계획의 진행 기록은 별도예요.")).not.toBeVisible()
+  await expect(page.getByText("일지를 연결했어요. 수행 결과와 계획을 함께 확인할 수 있어요.")).not.toBeVisible()
   await expect.poll(() => page.evaluate(() => ({
     journal: JSON.parse(window.localStorage.getItem("trainoracle.journal.v1") ?? "[]"),
     progress: JSON.parse(window.localStorage.getItem("trainoracle.plan-beta.v1") ?? "null")?.progress,
@@ -104,7 +108,7 @@ test(`returning from a ${detailed ? "detailed" : "quick"} DAY 5 PM journal keeps
   const returnedSession = page.getByRole("group", { name: /오후 세션 · 일지에서 돌아온 세션/u })
   await expect(returnedSession).toBeVisible()
   await expect(returnedSession).toBeInViewport()
-  await expect(page.getByText("일지를 저장했어요. 계획의 진행 기록은 별도예요.")).toBeVisible()
+  await expect(page.getByText("일지를 연결했어요. 수행 결과와 계획을 함께 확인할 수 있어요.")).toBeVisible()
   await expect(page.getByRole("button", { name: "계획에도 완료 표시" })).toBeVisible()
   await expect.poll(() => page.evaluate(() => ({
     journal: JSON.parse(window.localStorage.getItem("trainoracle.journal.v1") ?? "[]"),

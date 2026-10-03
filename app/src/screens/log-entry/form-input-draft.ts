@@ -58,6 +58,7 @@ export const formInputSchema = z.discriminatedUnion("kind", [
     objectiveEditor: objectiveEditorDraftSchema, ...exerciseFields, ...memo }).strict(),
   z.object({ kind: z.literal("quick"), step: z.enum(["activity", "effort", "review", "exercise", "memo"]),
     outcome: outcome.nullable(), slot: slot.nullable(), rpe, effortAnswered: z.boolean(),
+    planExecutionChange: z.enum(["FEWER_REPETITIONS", "SHORTER_DURATION", "DIFFERENT_WORKOUT"]).nullable().optional(),
     painStatus, painParts: pain, ...exerciseFields,
     memo: z.string().max(50_000).optional(), purpose: purpose.optional() }).strict(),
 ])

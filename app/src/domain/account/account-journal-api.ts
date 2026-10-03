@@ -19,6 +19,7 @@ const document = z.object({ documentId: z.uuid(), revision, document: schema }).
 return z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("ready") }).strict(),
   z.object({ kind: z.literal("calendar-decoration-support"), version: z.literal(1) }).strict(),
+  z.object({ kind: z.literal("athlete-record-support"), version: z.literal(1) }).strict(),
   document.extend({ kind: z.literal("document") }),
   z.object({ kind: z.literal("list"), documents: z.array(document).max(50), nextCursor: z.uuid().nullable(),
     deletedDocuments: z.array(z.object({ documentId: z.uuid(), revision }).strict()).max(50).optional() }).strict(),
@@ -36,6 +37,7 @@ return z.discriminatedUnion("kind", [
 export type AccountJournalResponse<T = AccountJournalDraft> =
   | { kind: "ready" }
   | { kind: "calendar-decoration-support"; version: 1 }
+  | { kind: "athlete-record-support"; version: 1 }
   | { kind: "document"; documentId: string; revision: number; document: T }
   | { kind: "list"; documents: { documentId: string; revision: number; document: T }[]; nextCursor: string | null; deletedDocuments?: { documentId: string; revision: number }[] }
   | { kind: "deleted"; documentId: string; revision: number; operationId?: string }
@@ -47,6 +49,7 @@ export type AccountJournalRequest<T = AccountJournalDraft> =
   | ConfirmComparisonRelationRequest | ReleaseComparisonRelationRequest
   | { action: "status" }
   | { action: "calendarDecorationSupport" }
+  | { action: "athleteRecordSupport" }
   | { action: "list"; cursor?: string; collection?: "JOURNAL" }
   | { action: "read"; documentId: string }
   | { action: "history"; documentId: string; collection?: "JOURNAL" }
@@ -60,7 +63,7 @@ export type AccountJournalRequest<T = AccountJournalDraft> =
 
 export type AccountJournalResult<T = AccountJournalDraft> =
   | { ok: true; data: AccountJournalResponse<T> }
-  | { ok: false; code: "AUTH_REQUIRED" | "ACCESS_DENIED" | "NOT_FOUND" | "UNAVAILABLE" | "INVALID_RESPONSE" | "CALENDAR_DECORATION_UNSUPPORTED" | "STALE_RESPONSE" | "CONFLICT" | "UPGRADE_REQUIRED" | "FILE_EVIDENCE_DISABLED" | "INVALID_FILE_OBSERVATION" | "FILE_OBSERVATION_CONFLICT" | "COMPARISON_ORIGINAL_UNAVAILABLE" | "INVALID_COMPARISON_RELATION" | "COMPARISON_CAPACITY_EXCEEDED" | AccountJournalWriteRejection }
+  | { ok: false; code: "AUTH_REQUIRED" | "ACCESS_DENIED" | "NOT_FOUND" | "UNAVAILABLE" | "INVALID_RESPONSE" | "CALENDAR_DECORATION_UNSUPPORTED" | "ATHLETE_RECORD_UNSUPPORTED" | "STALE_RESPONSE" | "CONFLICT" | "UPGRADE_REQUIRED" | "FILE_EVIDENCE_DISABLED" | "INVALID_FILE_OBSERVATION" | "FILE_OBSERVATION_CONFLICT" | "COMPARISON_ORIGINAL_UNAVAILABLE" | "INVALID_COMPARISON_RELATION" | "COMPARISON_CAPACITY_EXCEEDED" | AccountJournalWriteRejection }
 
 export type CorrectImportedObservationRequest = Extract<AccountJournalRequest, { action: "correctImportedObservation" }>
 
@@ -112,6 +115,9 @@ export async function requestAccountDocument<T>(
       if (request.action === "calendarDecorationSupport" && [400, 404, 501].includes(status)) {
         return { ok: false, code: "CALENDAR_DECORATION_UNSUPPORTED" }
       }
+      if (request.action === "athleteRecordSupport" && [400, 404, 501].includes(status)) {
+        return { ok: false, code: "ATHLETE_RECORD_UNSUPPORTED" }
+      }
       if ([409, 422].includes(status) && ["save", "delete", "restore", "correctImportedObservation", "confirmComparisonRelation", "releaseComparisonRelation"].includes(request.action)) {
         responseData = await error.context.clone().json()
         if (!current()) return { ok: false, code: "STALE_RESPONSE" }
@@ -130,6 +136,7 @@ export async function requestAccountDocument<T>(
     const result = parsed.data as AccountJournalResponse<T>
     const correctKind = request.action === "status" ? result.kind === "ready"
       : request.action === "calendarDecorationSupport" ? result.kind === "calendar-decoration-support"
+      : request.action === "athleteRecordSupport" ? result.kind === "athlete-record-support"
       : request.action === "list" ? result.kind === "list"
       : request.action === "read" ? (result.kind === "document" || result.kind === "deleted") && result.documentId === request.documentId
       : request.action === "history" ? result.kind === "history" && result.documentId === request.documentId

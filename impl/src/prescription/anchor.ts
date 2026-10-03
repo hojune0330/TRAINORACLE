@@ -16,6 +16,24 @@ function hasRequiredCoreFacts(anchor: PaceAnchorRecord): boolean {
     && hasPositiveNumber(anchor.performanceSeconds)
 }
 
+export function isExplicitGoalPaceTemplate(templateId: string, version: string, eventDistanceM: number): boolean {
+  const events: Readonly<Record<string, number>> = { "MD-800-01": 800, "MD-1500-01": 1500, "MD-3000-01": 3000, "V2-SEED-05": 5000 }
+  return version === "1.0.0" && events[templateId] === eventDistanceM
+}
+
+/** Separate aspirational lane; the current-capability validator below stays actual-only. */
+export function validateGoalPaceAnchor(input: {
+  readonly anchor: PaceAnchorRecord
+  readonly targetEventDistanceM: number
+}): PrescriptionErrorCode | undefined {
+  if (input.targetEventDistanceM < 60) return "SPRINT_RACE_PACE_FORBIDDEN"
+  if (!hasRequiredCoreFacts(input.anchor)) return "ANCHOR_INCOMPLETE"
+  if (input.anchor.kind !== "GOAL" || input.anchor.purpose !== "ASPIRATIONAL_TARGET"
+    || input.anchor.achievedAt !== null || input.anchor.seasonId !== null
+    || input.anchor.freshnessState !== "UNKNOWN" || input.anchor.verificationState === "UNVERIFIED") return "ANCHOR_PROVENANCE_INCOMPLETE"
+  return input.anchor.eventDistanceM === input.targetEventDistanceM ? undefined : "CROSS_EVENT_MODEL_REQUIRED"
+}
+
 function currentAnchorError(anchor: PaceAnchorRecord): PrescriptionErrorCode | undefined {
   if (!hasRequiredCoreFacts(anchor)) {
     return "ANCHOR_INCOMPLETE"

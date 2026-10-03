@@ -29,6 +29,26 @@ function postSession(date: string, activitySlot: "AM" | "PM" | "SINGLE" | "UNSPE
 }
 
 describe("active-plan-edit account journal guard", () => {
+  for (const undo of [false, true]) {
+    for (const slot of ["AM", "PM", "UNSPECIFIED"] as const) {
+      it(`protects every pace replacement with a ${slot} journal during ${undo ? "undo" : "forward"}`, () => {
+        const record = postSession("2026-10-07", slot)!
+        const batch = { ...receipt, action: "PACE_REFERENCE", target: null,
+          replacements: [{ day: 1, slot: "AM" }, { day: 3, slot: "AM" }, { day: 3, slot: "PM" }],
+          ...(undo ? { undoOf: "test-origin" } : {}),
+          evidenceFingerprint: activePlanEditEvidenceFingerprint([record.entry]),
+        } as ActivePlanEditReceipt
+        const fact = projectActivePlanEditJournal(record, batch)!
+        expect(fact.protectsSource).toBe(false)
+        expect(fact.protectsTarget).toBe(false)
+        expect(fact.protectsReplacement).toBe(true)
+        expect(validateActivePlanEditJournalFacts(batch, [fact])).toBe(false)
+        const unrelated = postSession("2026-10-08", slot)!
+        const clear = { ...batch, evidenceFingerprint: activePlanEditEvidenceFingerprint([unrelated.entry]) }
+        expect(validateActivePlanEditJournalFacts(clear, [projectActivePlanEditJournal(unrelated, clear)!])).toBe(true)
+      })
+    }
+  }
   it("protects actual-date source/target slots and returns no raw journal text", () => {
     const sourceRecord = postSession("2026-10-05", "AM")!
     const targetRecord = postSession("2026-10-06", "PM")!
@@ -79,6 +99,14 @@ describe("active-plan-edit account journal guard", () => {
     } })
     expect(linked).not.toBeNull()
     expect(projectActivePlanEditJournal(linked, receipt)?.protectsTarget).toBe(true)
+    const batch = { ...receipt, action: "PACE_REFERENCE", target: null,
+      replacements: [{ day: 1, slot: "AM" }, { day: 2, slot: "PM" }],
+      evidenceFingerprint: activePlanEditEvidenceFingerprint([linked!.entry]),
+    } as ActivePlanEditReceipt
+    const fact = projectActivePlanEditJournal(linked, batch)!
+    expect(fact.protectsSource).toBe(false)
+    expect(fact.protectsReplacement).toBe(true)
+    expect(validateActivePlanEditJournalFacts(batch, [fact])).toBe(false)
   })
 
   it("rejects a stale timezone date before journal reads or commit", () => {

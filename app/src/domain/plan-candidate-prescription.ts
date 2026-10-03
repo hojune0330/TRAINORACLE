@@ -9,7 +9,7 @@ import { rebindCandidatePairIdentity } from "@impl/plan-generator/candidate-iden
 import type { PlanGenerationSuccess } from "@impl/plan-generator/types"
 import type { DetailedTemplateRef, PaceTargetPlanPrescription } from "@impl/plan-generator/types"
 import type { SafetyGateDecision } from "@impl/safety-gate/gate"
-import { loadAthleteRecords } from "./athlete-records"
+import { loadAthleteRecords, type AthleteRecord } from "./athlete-records"
 import { prepareDetailedPrescription } from "./detailed-prescription"
 import { resolveDetailedPrescriptionRuntimeAuthority } from "./detailed-prescription-runtime-authority"
 import type { PlanBetaIntake } from "./plan-beta-schema"
@@ -19,6 +19,7 @@ import { distancePrescriptionFits } from "./distance-prescription-adoption"
 import {
   deriveRecordCurrentness,
   toCurrentSnapshot,
+  toSelectedGoalSnapshot,
   toRuntimeAnchor,
 } from "./pace-target-evidence"
 
@@ -80,22 +81,26 @@ type PreparedPrescription =
   | { readonly kind: "prepared"; readonly prescription: PaceTargetPlanPrescription }
   | { readonly kind: "fallback"; readonly code: CandidatePrescriptionFallbackCode }
 
-function preparePrescription(
+export function preparePrescription(
   intake: PlanBetaIntake,
   safetyGate: SafetyGateDecision,
   selection: unknown,
   evaluatedAt: Date,
   selectedTemplate: DetailedTemplateRef | null,
+  records?: readonly AthleteRecord[],
 ): PreparedPrescription {
   if (safetyGate.kind === "blocked") return { kind: "fallback", code: "PACE_TARGET_FALLBACK_SAFETY_GATE" }
   if (selectedTemplate === null) return { kind: "fallback", code: "PACE_TARGET_FALLBACK_NO_EXPLICIT_TEMPLATE" }
   if (selection === undefined) return { kind: "fallback", code: "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR" }
   const parsedSelection = selectionSchema.safeParse(selection)
   if (!parsedSelection.success) return { kind: "fallback", code: "PACE_TARGET_FALLBACK_INVALID_SELECTION" }
-  const record = loadAthleteRecords(evaluatedAt).find(candidate => candidate.id === parsedSelection.data.selectedRecordId)
-  if (record === undefined || record.purpose === "RACE_GOAL") return { kind: "fallback", code: "PACE_TARGET_FALLBACK_ANCHOR_UNAVAILABLE" }
-  const freshness = deriveRecordCurrentness(record, evaluatedAt)
-  if (freshness !== "CURRENT") return { kind: "fallback", code: "PACE_TARGET_FALLBACK_ANCHOR_NOT_CURRENT" }
+  const matches = (records ?? loadAthleteRecords(evaluatedAt)).filter(candidate => candidate.id === parsedSelection.data.selectedRecordId)
+  const record = matches.length === 1 ? matches[0] : undefined
+  if (record === undefined) return { kind: "fallback", code: "PACE_TARGET_FALLBACK_ANCHOR_UNAVAILABLE" }
+  const isGoal = record.purpose === "RACE_GOAL"
+  if (isGoal && (record.achievedOn !== null || record.seasonId !== null || record.verificationState === "UNVERIFIED")) return { kind: "fallback", code: "PACE_TARGET_FALLBACK_ANCHOR_UNAVAILABLE" }
+  const freshness = isGoal ? "UNKNOWN" : deriveRecordCurrentness(record, evaluatedAt)
+  if (!isGoal && freshness !== "CURRENT") return { kind: "fallback", code: "PACE_TARGET_FALLBACK_ANCHOR_NOT_CURRENT" }
   if (record.eventDistanceM !== intake.eventDistanceM) return { kind: "fallback", code: "PACE_TARGET_FALLBACK_EVENT_SCOPE" }
   if (intake.experienceBand !== "EXPERIENCED") return { kind: "fallback", code: "PACE_TARGET_FALLBACK_EXPERIENCE_SCOPE" }
   const authority = resolveDetailedPrescriptionRuntimeAuthority({
@@ -111,9 +116,10 @@ function preparePrescription(
     return { kind: "fallback", code: "PACE_TARGET_FALLBACK_AUTHORITY_OR_COMPONENT" }
   }
   const anchor = toRuntimeAnchor(record, freshness)
-  const snapshot = toCurrentSnapshot(record, freshness, evaluatedAt)
+  const snapshot = record.purpose === "RACE_GOAL" ? toSelectedGoalSnapshot(record, evaluatedAt) : toCurrentSnapshot(record, freshness, evaluatedAt)
   if (snapshot === null) return { kind: "fallback", code: "PACE_TARGET_FALLBACK_ANCHOR_UNAVAILABLE" }
   const detailed = prepareDetailedPrescription({
+    ...(isGoal ? { explicitGoalSelection: true as const } : {}),
     detailedPrescriptionEnabled: true,
     selectedEnergyIntent: intake.trainingFocus,
     templateId: approval.templateId,

@@ -2,6 +2,7 @@ import { z } from "zod"
 import {
   accountScopedStorageKey,
   accountScopedStorageKeyFor,
+  localAccountScopeIsCurrent,
 } from "./account/local-account-scope"
 
 export const ATHLETE_RECORDS_STORAGE_KEY = "trainoracle.athlete-records.v1"
@@ -46,7 +47,7 @@ type AthleteRecordBase = {
 export type AthleteRecord =
   | AthleteRecordBase & {
       readonly purpose: "PERSONAL_BEST" | "RECENT_RESULT"
-      readonly achievedOn: string
+      readonly achievedOn: string | null
       readonly seasonId: null
     }
   | AthleteRecordBase & {
@@ -114,13 +115,13 @@ function recordSchema(today: Date) {
     z.object({
       ...base,
       purpose: z.literal("PERSONAL_BEST"),
-      achievedOn: achievedOnSchema,
+      achievedOn: achievedOnSchema.nullable(),
       seasonId: z.null(),
     }).strict(),
     z.object({
       ...base,
       purpose: z.literal("RECENT_RESULT"),
-      achievedOn: achievedOnSchema,
+      achievedOn: achievedOnSchema.nullable(),
       seasonId: z.null(),
     }).strict(),
     z.object({
@@ -233,6 +234,27 @@ export function saveAthleteRecord(
   }
 }
 
+/** Cache only confirmed account data. Never erase older device-only records. */
+export function cacheConfirmedAthleteRecords(records: readonly AthleteRecord[], ownerId: string, today = new Date()): boolean {
+  const storage = getStorage()
+  if (!storage || !localAccountScopeIsCurrent(ownerId)) return false
+  const key = accountScopedStorageKeyFor(ATHLETE_RECORDS_STORAGE_KEY, ownerId)
+  const previous = readRecords(storage, key, today)
+  if (!previous.ok || records.some(record => parseAthleteRecord(record, today) === null)) return false
+  const merged = new Map(previous.records.map(record => [record.id, record]))
+  for (const record of records) {
+    const old = merged.get(record.id)
+    if (old && JSON.stringify(old) !== JSON.stringify(record)) return false
+    merged.set(record.id, record)
+  }
+  if (!localAccountScopeIsCurrent(ownerId)) return false
+  try {
+    const raw = JSON.stringify([...merged.values()])
+    storage.setItem(key, raw)
+    return localAccountScopeIsCurrent(ownerId) && storage.getItem(key) === raw
+  } catch { return false }
+}
+
 export function achievedDateError(
   value: string,
   today: Date,
@@ -241,7 +263,7 @@ export function achievedDateError(
   return compareCalendarDateToToday(value, today) > 0 ? "FUTURE_DATE" : null
 }
 
-function parseAthleteRecord(candidate: unknown, today: Date): AthleteRecord | null {
+export function parseAthleteRecord(candidate: unknown, today: Date): AthleteRecord | null {
   const result = recordSchema(today).safeParse(candidate)
   return result.success ? result.data : null
 }

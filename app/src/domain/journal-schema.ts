@@ -32,6 +32,11 @@ export type JournalKind = "post-session" | "evening" | "race"
 
 export type JournalCaptureDepth = "QUICK" | "DETAILED"
 export type ActivityOutcome = "COMPLETED" | "PARTIAL" | "LIGHT_ACTIVITY" | "RESTED" | "SKIPPED"
+export const PLAN_EXECUTION_CHANGES = ["FEWER_REPETITIONS", "SHORTER_DURATION", "DIFFERENT_WORKOUT"] as const
+export type PlanExecutionChange = typeof PLAN_EXECUTION_CHANGES[number]
+export const PLAN_EXECUTION_CHANGE_LABELS: Record<PlanExecutionChange, string> = {
+  FEWER_REPETITIONS: "횟수를 줄였어요", SHORTER_DURATION: "시간을 줄였어요", DIFFERENT_WORKOUT: "다른 운동을 했어요",
+}
 export type ActivitySlot = "UNSPECIFIED" | "AM" | "PM" | "SINGLE"
 export type RpeBand = "RPE_1_2" | "RPE_3_4" | "RPE_5_6" | "RPE_7_8" | "RPE_9_10" | "UNKNOWN"
 export type ObjectiveDataState = "NONE" | "WAITING" | "REVIEW_REQUIRED" | "CONFIRMED" | "CONFLICT"
@@ -55,6 +60,7 @@ export type PostSessionEntry = JournalEntryBase & PurposeScopedMemo & {
   readonly kind: "post-session"
   readonly captureDepth?: JournalCaptureDepth
   readonly activityOutcome?: ActivityOutcome
+  readonly planExecutionChange?: PlanExecutionChange
   readonly activitySlot?: ActivitySlot
   readonly rpeBand?: RpeBand
   readonly objectiveDataState?: ObjectiveDataState
@@ -154,6 +160,7 @@ const postSessionSchema: z.ZodType<PostSessionEntry> = z.object({
   kind: z.literal("post-session"),
   captureDepth: z.enum(["QUICK", "DETAILED"]).optional(),
   activityOutcome: z.enum(["COMPLETED", "PARTIAL", "LIGHT_ACTIVITY", "RESTED", "SKIPPED"]).optional(),
+  planExecutionChange: z.enum(PLAN_EXECUTION_CHANGES).optional(),
   activitySlot: z.enum(["UNSPECIFIED", "AM", "PM", "SINGLE"]).optional(),
   rpeBand: z.enum(["RPE_1_2", "RPE_3_4", "RPE_5_6", "RPE_7_8", "RPE_9_10", "UNKNOWN"]).optional(),
   objectiveDataState: z.enum(["NONE", "WAITING", "REVIEW_REQUIRED", "CONFIRMED", "CONFLICT"]).optional(),
@@ -215,6 +222,11 @@ const journalEntrySchema: z.ZodType<JournalEntry> = z.union([
 ])
 
 const journalEntryWriteSchema = journalEntrySchema.superRefine((entry, context) => {
+  if (entry.kind === "post-session" && entry.planExecutionChange !== undefined
+    && (entry.activityOutcome !== "PARTIAL" || !entry.plannedSessionLink
+      || entry.fieldProvenance?.planExecutionChange?.provenance !== "EXPLICIT")) {
+    context.addIssue({ code: "custom", path: ["planExecutionChange"], message: "A change description requires an explicit linked partial result." })
+  }
   if (entry.syncState !== "local") {
     context.addIssue({
       code: "custom",

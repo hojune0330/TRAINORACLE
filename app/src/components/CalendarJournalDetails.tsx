@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react"
 import { BookOpen, ChevronLeft, PenLine } from "lucide-react"
 import { useLocalToday } from "../hooks/useLocalToday"
 import type { JournalEntry } from "../domain/journal-schema"
+import { PLAN_EXECUTION_CHANGE_LABELS } from "../domain/journal-schema"
 import { EXERCISE_KINDS, describeExerciseRow } from "../domain/exercise-log"
 import { journalRpeLabel, quickOutcomeLabel } from "../domain/quick-journal"
 import { isImportedField } from "../domain/field-provenance"
@@ -114,6 +115,7 @@ function facts(entry: JournalEntry): [string, string][] {
   if (entry.kind === "post-session") {
     const outcome = quickOutcomeLabel(entry)
     if (outcome) add("수행", "activityOutcome", outcome)
+    if (entry.planExecutionChange) add("바꾼 내용", "planExecutionChange", PLAN_EXECUTION_CHANGE_LABELS[entry.planExecutionChange])
     add("거리", "distanceKm", entry.distanceKm, " km")
     add("시간", "durationMin", entry.durationMin, "분")
     add("평균 페이스", "avgPace", entry.avgPace, "/km")

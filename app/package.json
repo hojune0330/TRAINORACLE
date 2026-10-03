@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/check-build-runtime.mjs",
     "build": "tsc --noEmit && vite build --emptyOutDir=false",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",

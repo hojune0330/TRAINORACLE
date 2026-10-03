@@ -33,6 +33,24 @@ function setup() {
 }
 
 describe("candidate-owned optional recommendation preference", () => {
+  it("takes the blocked primary action to record confirmation without selecting or confirming silently", () => {
+    const { props } = setup()
+    render(<PlanCandidates {...props} recordConfirmationPending />)
+    const review = screen.getByRole("button", { name: "기준 기록 확인하기" })
+    expect(review).toBeEnabled()
+    fireEvent.click(review)
+    expect(screen.getByRole("region", { name: "개인 페이스 기준 기록" })).toBeVisible()
+    expect(props.onSelect).not.toHaveBeenCalled()
+    expect(props.onConfirmRecord).not.toHaveBeenCalled()
+  })
+
+  it("does not offer record confirmation while an account write is pending", () => {
+    const { props } = setup()
+    render(<PlanCandidates {...props} recordConfirmationPending saveCode="ACCOUNT_PLAN_PENDING" />)
+    expect(screen.queryByRole("button", { name: "기준 기록 확인하기" })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "이 일정으로 시작" })).toBeDisabled()
+  })
+
   it("starts neutral and changes ranking without changing the selected method or confirmation", () => {
     const { props, resolver } = setup()
     render(<PlanCandidates {...props} />)

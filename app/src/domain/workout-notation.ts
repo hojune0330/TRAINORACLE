@@ -3,6 +3,7 @@ import type { PrescriptionSequence, PrescriptionSequenceNode, SequenceRecovery, 
 import type { PrescriptionSequenceV3, SequenceNodeV3, RecoveryStepV3 } from "@impl/prescription/sequence-v3"
 import type { AdjustedSegmentTarget } from "./adjusted-method-resolution"
 import { ALL_WORKOUT_CATALOG, calculatedWorkoutSequence, calculateCatalogWorkout } from "../../../impl/src/prescription/all-workout-calculator"
+import { roundedPaceSeconds } from "@impl/prescription/record-pace"
 
 type Sequence = PrescriptionSequence | PrescriptionSequenceV3
 type PacePrescription = Extract<PlanSession["prescription"], { kind: "PACE_TARGET" }>
@@ -59,7 +60,7 @@ function targetText(target: SequenceTarget, id: string, distance: number | null,
   if (target.kind === "SPRINT_REFERENCE") return "단거리 기준 · 목표 속도 별도 확인"
   const rp = target.eventDistanceM === null ? "기준 페이스 미지정" : `${notationEvent(target.eventDistanceM)} RP`
   const calculated = targets.find(item => item.segmentId === id && item.distanceM === distance)
-  if (calculated?.targetRepSeconds != null && distance !== null) return `${notationNumber(calculated.targetRepSeconds)}s/${notationDistance(distance)} · ${rp}`
+  if (calculated?.targetRepSeconds != null && distance !== null) return `${notationNumber(roundedPaceSeconds(calculated.targetRepSeconds))}s/${notationDistance(distance)} · ${rp}`
   if (calculated?.fixedWorkSeconds != null) return `${notationPace(calculated.secondsPerKm)} · ${rp}`
   return rp
 }
@@ -123,7 +124,7 @@ export function pacePrescriptionNotation(p: PacePrescription): string {
   const sets = p.setCount > 1 ? `${p.setCount} sets × (${work})` : work
   const recovery = (value: number | null, mode: PacePrescription["repetitionRecoveryMode"], mark: string) =>
     value !== null && mode !== "NOT_APPLICABLE" ? ` · ${mark}${notationRecovery({ mode, seconds: value })}` : ""
-  return `${sets} @ ${notationNumber(p.targetRepSeconds)}s/${notationDistance(p.repetitionDistanceM)} · ${notationEvent(p.targetEventDistanceM)} RP`
+  return `${sets} @ ${notationNumber(roundedPaceSeconds(p.targetRepSeconds))}s/${notationDistance(p.repetitionDistanceM)} · ${notationEvent(p.targetEventDistanceM)} RP`
     + (p.repetitionsPerSet > 1 ? recovery(p.repetitionRecoverySeconds, p.repetitionRecoveryMode, "r") : "")
     + (p.setCount > 1 ? recovery(p.setRecoverySeconds, p.setRecoveryMode, "R") : "")
 }

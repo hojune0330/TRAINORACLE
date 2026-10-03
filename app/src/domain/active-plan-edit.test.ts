@@ -148,7 +148,7 @@ describe("manual active plan edit proposal", () => {
     const acceptedRpeMaximum = replacement.prescription.rpe.maximum > old.prescription.rpe.maximum ? replacement.prescription.rpe.maximum : null
     const result = prepareActivePlanEdit({ ...fixture(), state, action: "CATALOG", source: { day: old.day, slot: old.slot },
       replacement, acceptedRpeMaximum, acceptedLongerDuration: activePlanEditDurationConsentRequired(old, replacement) })
-    expect(result.kind, result.kind === "blocked" ? result.reasonCode : "").toBe("ready")
+    expect(result.kind, result.kind === "blocked" ? `${result.reasonCode}: ${result.message}` : "").toBe("ready")
     if (result.kind !== "ready") throw Error(result.reasonCode)
     expect(result.proposal.after.activePlan.sessions.find(session => session.day === old.day && session.slot === old.slot)).toEqual(replacement)
     expect(planBetaStateV3Schema.safeParse(result.proposal.after).success).toBe(true)

@@ -1,4 +1,5 @@
 import { cleanup, render, screen, within, waitFor } from "@testing-library/react"
+import { StrictMode } from "react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { PlanSession } from "@impl/plan-generator/types"
@@ -48,6 +49,13 @@ afterEach(() => {
 afterEach(() => vi.useRealTimers())
 
 describe("plan schedule preview", () => {
+  it("keeps a returned journal slot open when StrictMode replays initialization", async () => {
+    render(<StrictMode><PlanSchedulePreview startDate="2026-08-17" frameLengthDays={9}
+      sessions={sessions} displayMode="swipe" detailsExpanded={false}
+      focusSession={{ day: 1, slot: "PM" }} /></StrictMode>)
+    await waitFor(() => expect(screen.getByRole("group", { name: /오후 세션 · 일지에서 돌아온 세션/u })).toBeVisible())
+    expect(screen.getByRole("button", { name: "날짜별 카드 접기" })).toHaveAttribute("aria-expanded", "true")
+  })
   it("opens an ended saved plan at its last calendar day even when it has no workout", () => {
     vi.useFakeTimers({ toFake: ["Date"] })
     vi.setSystemTime(new Date("2026-09-30T12:00:00+09:00"))

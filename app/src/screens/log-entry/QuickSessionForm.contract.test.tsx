@@ -16,6 +16,26 @@ function finishPerformedSession(rpe = 6): void {
 }
 
 describe("quick session journal contract", () => {
+  it("retains optional qualitative changes without inventing performed quantities", () => {
+    const state = stateFixture()
+    const draft = createPlannedSessionLogDraft(state, state.activePlan.sessions[0]!, new Date().toISOString())!
+    render(<QuickSessionForm plannedSessionLink={draft.link} targetDate={draft.date} />)
+    fireEvent.click(screen.getByRole("button", { name: "일부만 했거나 내용을 바꿨어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "오전" }))
+    fireEvent.click(screen.getByRole("button", { name: /^RPE 8,/ }))
+    fireEvent.click(screen.getByRole("button", { name: "없어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "횟수를 줄였어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
+    const entry = loadEntries()[0]
+    expect(entry).toMatchObject({ activityOutcome: "PARTIAL", planExecutionChange: "FEWER_REPETITIONS",
+      distanceKm: "", durationMin: "", fieldProvenance: { planExecutionChange: { provenance: "EXPLICIT" } } })
+    expect(screen.queryByRole("button", { name: "이 결과를 계획에도 반영" })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "방금 기록 수정" }))
+    fireEvent.click(screen.getByRole("button", { name: "계획 대신 쉬었어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
+    expect(loadEntries()[0]).not.toHaveProperty("planExecutionChange")
+  })
+
   it("protects unsaved guest input without writing it and leaves freely after save", () => {
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
     const navigate = vi.fn()

@@ -62,7 +62,10 @@ function entryAt(state: PlanBetaStateV3, session: PlanSession, rpe: number): Pos
   if (!draft) throw Error("Missing fixture link")
   return { id: `actual-${session.day}-${session.slot}`, kind: "post-session", date: draft.date,
     savedAt: "2026-09-30T12:00:00Z", syncState: "local", system: "base", title: "", memo: "",
-    distanceKm: "", durationMin: "", avgPace: "", rpe, fieldProvenance: { rpe: { provenance: FIELD_PROVENANCE.explicit } },
+    distanceKm: "", durationMin: "", avgPace: "", rpe,
+    activityOutcome: "COMPLETED", activitySlot: session.slot, painCheckStatus: "NO_SIGNAL_REPORTED",
+    fieldProvenance: { rpe: { provenance: FIELD_PROVENANCE.explicit }, activityOutcome: { provenance: FIELD_PROVENANCE.explicit },
+      activitySlot: { provenance: FIELD_PROVENANCE.explicit }, painCheckStatus: { provenance: FIELD_PROVENANCE.explicit } },
     plannedSessionLink: draft.link }
 }
 
@@ -74,6 +77,21 @@ function result(f: ReturnType<typeof fixture>, entries: readonly PostSessionEntr
 beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
 
 describe("bounded catalog cycle successor", () => {
+  it.each(["pain", "pain-parts", "slot", "outcome", "provenance"] as const)("does not reduce from repeated high RPE with %s uncertainty", reason => {
+    const f = fixture()
+    const journals = [entry(f.predecessor, 0, 10), entry(f.predecessor, 1, 10)].map(item => {
+      if (reason === "pain") return { ...item, painCheckStatus: "SIGNAL_REPORTED" as const }
+      if (reason === "pain-parts") return { ...item, painParts: { knee: 4 } }
+      if (reason === "slot") return { ...item, activitySlot: undefined }
+      if (reason === "outcome") return { ...item, activityOutcome: undefined }
+      return { ...item, fieldProvenance: { rpe: { provenance: FIELD_PROVENANCE.explicit } } }
+    })
+    const next = result(f, journals)
+    expect(next.summary.reducedCount).toBe(0)
+    expect(next.summary.reviewCount).toBe(2)
+    expect(main(next.generated.candidates[0].sessions).map(idOf)).toEqual(["P-LT-B", "P-LT-B"])
+    expect(next.summary.headline).toContain(reason.startsWith("pain") ? "통증을 남긴 기록" : "모두 확인하지 못해")
+  })
   it.each([
     ["P-LT-B", "LT_INTENT", "P-LT-B-480"],
     ["P-VO2-2", "VO2_INTENT", "P-VO2-2-5"],
@@ -108,6 +126,8 @@ describe("bounded catalog cycle successor", () => {
     if (mode === "missing") expect(next.summary.rows.every(r => r.sourceActualRpe === null && r.sourceComparison === "NO_LINKED_RESULT")).toBe(true)
     expect(next.summary.responseStatus).toBe(mode === "missing" ? "NO_LINKED_RESULTS"
       : ["single", "duplicates"].includes(mode) ? "SINGLE_SIGNAL" : "COMPLETE_RESPONSE")
+    expect(next.summary.headline).toContain(mode === "missing" ? "연결된 수행 기록이 없어"
+      : ["single", "duplicates"].includes(mode) ? "한 번뿐이라" : "계획 범위 안이거나 낮아")
   })
 
   it("explicitly reports a missing response while preserving the prior detail", () => {
@@ -122,6 +142,17 @@ describe("bounded catalog cycle successor", () => {
     const next = result(f, missing)
     expect(next.summary).toMatchObject({ responseStatus: "NO_COMPARABLE_RESULTS", reducedCount: 0, maintainedCount: 2 })
     expect(next.summary.rows.every(r => r.sourceActualRpe === null && r.sourceComparison === "RPE_MISSING")).toBe(true)
+    expect(next.summary.headline).toContain("비교할 수 있는 기록이 없어")
+  })
+
+  it("explains changed sessions without inventing a missing distance or a capacity deficit", () => {
+    const f = fixture()
+    const entries = [entry(f.predecessor, 0, 8), entry(f.predecessor, 1, 8)]
+      .map(e => ({ ...e, activityOutcome: "PARTIAL" as const, planExecutionRelation: "MODIFIED" as const }))
+    const next = result(f, entries)
+    expect(next.summary.headline).toContain("다르게 수행한 기록")
+    expect(next.summary.headline).not.toMatch(/능력|거리.*없|향상|부족/)
+    expect(next.summary.reducedCount).toBe(0)
   })
 
   it.each(["conflict", "changed", "partial", "missing-rpe", "incomplete-history"] as const)("never reduces with %s evidence", mode => {

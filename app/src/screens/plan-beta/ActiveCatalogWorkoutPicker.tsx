@@ -4,7 +4,9 @@ import { catalogProtectedSlots, prepareCatalogReplacement } from "../../domain/c
 import { prepareCurrentCatalogReplacement, applyCatalogReplacement } from "../../domain/catalog-replacement-store"
 import { replanFingerprint } from "../../domain/execution-replan"
 import { loadEntriesForPlanSafety, todayISO } from "../../domain/journal-store"
-import { loadAthleteRecords } from "../../domain/athlete-records"
+import { useEligibleAccountPaceRecords } from "../../hooks/useEligibleAccountPaceRecords"
+import { areCatalogPaceSourcesCurrent } from "../../domain/account/eligible-account-pace-records"
+import { localAccountScopeSnapshot, localAccountScopeIsCurrent } from "../../domain/account/local-account-scope"
 import type { PlanBetaStateV3 } from "../../domain/plan-beta-schema"
 import { sessionWorkoutName } from "../../domain/workout-notation"
 import { isoShift } from "../../domain/dates"
@@ -12,7 +14,8 @@ import { usePlanDraftNavigationGuard } from "./usePlanDraftNavigationGuard"
 
 export function ActiveCatalogWorkoutPicker({ state, onApplied }: { state: PlanBetaStateV3; onApplied: (state: PlanBetaStateV3) => void }) {
   const [read, setRead] = React.useState(loadEntriesForPlanSafety)
-  const [records, setRecords] = React.useState(loadAthleteRecords)
+  const { records, refresh: refreshRecords } = useEligibleAccountPaceRecords()
+  const scope = React.useRef(localAccountScopeSnapshot()).current
   const [address, setAddress] = React.useState("")
   const [pending, setPending] = React.useState(false)
   const [revision, setRevision] = React.useState(0)
@@ -30,7 +33,7 @@ export function ActiveCatalogWorkoutPicker({ state, onApplied }: { state: PlanBe
     && s.prescription.kind === "RPE_TIME_RANGE" && !protectedSlots.some(p => p.day === s.day && p.slot === s.slot))
   const session = sessions.find(s => `${s.day}:${s.slot}` === address) ?? sessions[0]
   return <details className="plan-session-guidance catalog-workout-picker" onToggle={e => {
-    if (e.currentTarget.open) { setRead(loadEntriesForPlanSafety()); setRecords(loadAthleteRecords()) }
+    if (e.currentTarget.open) { setRead(loadEntriesForPlanSafety()); refreshRecords() }
   }}>
     <summary>앞으로 할 훈련 바꾸기</summary>
     {session ? <>
@@ -46,11 +49,15 @@ export function ActiveCatalogWorkoutPicker({ state, onApplied }: { state: PlanBe
         intake={state.intake} records={records} session={session} drawHistory={history.current}
         disabled={busy || uncertain} applyDisabled={!noRisk} onPendingChange={setPending}
         onCancel={() => { setRevision(n => n + 1); setNoRisk(false); setMessage("") }}
-        canSelect={(id, inputs, acceptLonger) => read.status === "complete" && prepareCatalogReplacement({ state,
+        canSelect={(id, inputs, acceptLonger) => localAccountScopeIsCurrent(scope) && areCatalogPaceSourcesCurrent(inputs)
+          && read.status === "complete" && prepareCatalogReplacement({ state,
           entries: read.entries, today: todayISO(), now: new Date().toISOString(), address: { day: session.day, slot: session.slot },
           catalogId: id, inputs, acceptStronger: true, acceptLonger, journalGuard: null }).kind === "ready"}
         onSelect={(catalogId, inputs, acceptLonger) => {
           if (busy || uncertain || !noRisk) return
+          if (!localAccountScopeIsCurrent(scope) || !areCatalogPaceSourcesCurrent(inputs)) {
+            setMessage("기준 기록이 바뀌었어요. 최신 기록을 다시 선택해 주세요."); return
+          }
           setBusy(true); setMessage("")
           void (async () => {
             try {
@@ -60,6 +67,9 @@ export function ActiveCatalogWorkoutPicker({ state, onApplied }: { state: PlanBe
               if (replanFingerprint(prepared.proposal.before) !== replanFingerprint(state)) {
                 setMessage("다른 화면에서 계획이 바뀌었어요. 현재 계획을 다시 열어 주세요.")
                 return
+              }
+              if (!localAccountScopeIsCurrent(scope) || !areCatalogPaceSourcesCurrent(inputs)) {
+                setMessage("기준 기록이 바뀌었어요. 최신 기록을 다시 선택해 주세요."); return
               }
               const result = await applyCatalogReplacement(prepared.proposal, noRisk)
               if (result.kind === "applied") onApplied(prepared.proposal.after)
