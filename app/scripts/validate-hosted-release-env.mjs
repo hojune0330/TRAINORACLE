@@ -30,9 +30,28 @@ function isPhoneAuthEnabled(environment) {
     && textValue(environment, "VITE_KILL_PHONE_AUTH") !== "true"
 }
 
+function isAuthProviderEnabled(environment, provider) {
+  return textValue(environment, `VITE_${provider}_AUTH_ENABLED`) === "true"
+    && textValue(environment, `VITE_KILL_${provider}_AUTH`) !== "true"
+}
+
+function isSupabasePublicClientKey(value) {
+  const key = value.trim()
+  if (/^sb_publishable_[A-Za-z0-9_-]{20,}$/u.test(key)) return true
+  if (key.startsWith("sb_secret_")) return false
+  const parts = key.split(".")
+  if (parts.length !== 3) return false
+  try {
+    const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"))
+    return payload?.role === "anon"
+  } catch {
+    return false
+  }
+}
+
 function hasPublicConnection(environment) {
   return textValue(environment, "VITE_SUPABASE_URL").startsWith("https://")
-    && textValue(environment, "VITE_SUPABASE_ANON_KEY") !== ""
+    && isSupabasePublicClientKey(textValue(environment, "VITE_SUPABASE_ANON_KEY"))
 }
 
 function hasPublicLegalDocuments(environment) {
@@ -44,9 +63,17 @@ function hasPublicLegalDocuments(environment) {
 
 export function validateHostedReleaseEnvironment(environment) {
   const errors = []
+  const configuredPublicKey = textValue(environment, "VITE_SUPABASE_ANON_KEY")
   const accountOpen = isAccountEnabled(environment)
   const connectionReady = hasPublicConnection(environment)
+  const kakaoAuthOpen = isAuthProviderEnabled(environment, "KAKAO")
+  const googleAuthOpen = isAuthProviderEnabled(environment, "GOOGLE")
+  const emailAuthOpen = isAuthProviderEnabled(environment, "EMAIL")
   const phoneAuthOpen = isPhoneAuthEnabled(environment)
+
+  if (configuredPublicKey !== "" && !isSupabasePublicClientKey(configuredPublicKey)) {
+    errors.push("UNSAFE_SUPABASE_PUBLIC_CLIENT_KEY")
+  }
 
   if (accountOpen && !connectionReady) {
     errors.push("ACCOUNT_REQUIRES_PUBLIC_CONNECTION")
@@ -56,6 +83,18 @@ export function validateHostedReleaseEnvironment(environment) {
   }
   if (isFeatureEnabled(environment, "SHARING")) {
     errors.push("SHARING_PRIVACY_REVIEW_REQUIRED")
+  }
+  if (kakaoAuthOpen && !accountOpen) {
+    errors.push("KAKAO_AUTH_REQUIRES_ACCOUNT")
+  }
+  if (googleAuthOpen && !accountOpen) {
+    errors.push("GOOGLE_AUTH_REQUIRES_ACCOUNT")
+  }
+  if (emailAuthOpen && !accountOpen) {
+    errors.push("EMAIL_AUTH_REQUIRES_ACCOUNT")
+  }
+  if (emailAuthOpen && textValue(environment, "VITE_EMAIL_AUTH_PKCE_OPERATIONS_APPROVED") !== "true") {
+    errors.push("EMAIL_AUTH_REQUIRES_PKCE_OPERATIONS_APPROVAL")
   }
   if (phoneAuthOpen && !accountOpen) {
     errors.push("PHONE_AUTH_REQUIRES_ACCOUNT")

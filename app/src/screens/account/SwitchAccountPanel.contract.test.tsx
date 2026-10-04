@@ -10,9 +10,11 @@
 //   1. 잠금이 실제로 풀린다 (안 풀리면 아무 문제도 해결되지 않음)
 //   2. 일지가 남는다 (지우면 '전부 지우기'와 같아져 존재 의미가 없음)
 //   3. 동의가 꺼진다 (안 끄면 새 계정으로 자동 업로드 — 동의 없는 업로드)
-//   4. 로그아웃한다 (안 하면 원래 계정에 다시 묶임)
-//   5. 실패하면 로그아웃하지 않고 실패를 말한다 (상태 불명 방지)
-//   6. 묶여 있지 않으면 나타나지 않는다 (없는 문제로 불안하게 만들지 않음)
+//   4. 로그아웃 성공 뒤에만 owner를 푼다 (안 하면 원래 계정에 다시 묶임)
+//   5. 로그아웃 실패면 동의를 복구하고 owner를 유지한다 (부분 성공 가장 금지)
+//   6. owner 해제가 실패하면 로그아웃만 된 상태를 명확히 말한다
+//   7. 묶여 있지 않으면 나타나지 않는다 (없는 문제로 불안하게 만들지 않음)
+import React from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
@@ -40,6 +42,8 @@ function store(entry: PostSessionEntry): void {
   if (!result.ok) throw new Error(`픽스처가 스키마에 거부됐다: ${entry.id}`)
 }
 
+const successfulSignOut = () => ({ ok: true, message: "로그아웃되었어요." })
+
 beforeEach(() => {
   window.localStorage.clear()
 })
@@ -51,7 +55,7 @@ afterEach(() => {
 
 describe("SwitchAccountPanel — 나타나는 조건", () => {
   it("이 기기가 어떤 계정과도 묶여 있지 않으면 아예 보이지 않는다", () => {
-    render(<SwitchAccountPanel onSignOut={() => {}} />)
+    render(<SwitchAccountPanel onSignOut={successfulSignOut} />)
 
     // 없는 문제를 위한 버튼은 사용자를 불안하게 만든다.
     expect(screen.queryByTestId("switch-account-panel")).toBeNull()
@@ -60,7 +64,7 @@ describe("SwitchAccountPanel — 나타나는 조건", () => {
   it("묶여 있으면 '일지를 지우지 않는다'는 사실을 먼저 알린다", () => {
     window.localStorage.setItem(OWNER_KEY, "user-1")
 
-    render(<SwitchAccountPanel onSignOut={() => {}} />)
+    render(<SwitchAccountPanel onSignOut={successfulSignOut} />)
 
     expect(screen.getByTestId("switch-account-panel")).toBeTruthy()
     expect(document.body.textContent).toContain("일지를 지우지 않고")
@@ -70,7 +74,7 @@ describe("SwitchAccountPanel — 나타나는 조건", () => {
 describe("SwitchAccountPanel — 연결 끊기", () => {
   it("확인을 눌러야 실제로 끊는다 — 한 번 눌러 바로 끊지 않는다", async () => {
     window.localStorage.setItem(OWNER_KEY, "user-1")
-    render(<SwitchAccountPanel onSignOut={() => {}} />)
+    render(<SwitchAccountPanel onSignOut={successfulSignOut} />)
 
     await userEvent.click(screen.getByTestId("switch-account-start"))
 
@@ -81,19 +85,19 @@ describe("SwitchAccountPanel — 연결 끊기", () => {
 
   it("그만두면 아무것도 바뀌지 않는다", async () => {
     window.localStorage.setItem(OWNER_KEY, "user-1")
-    saveSyncConsent({ enabled: true, shareTrainingNotes: false })
-    render(<SwitchAccountPanel onSignOut={() => {}} />)
+    saveSyncConsent({ enabled: true, shareTrainingNotes: false }, "user-1")
+    render(<SwitchAccountPanel onSignOut={successfulSignOut} />)
 
     await userEvent.click(screen.getByTestId("switch-account-start"))
     await userEvent.click(screen.getByTestId("switch-account-cancel"))
 
     expect(window.localStorage.getItem(OWNER_KEY)).toBe("user-1")
-    expect(loadSyncConsent().enabled).toBe(true)
+    expect(loadSyncConsent("user-1").enabled).toBe(true)
   })
 
   it("확인하면 잠금이 실제로 풀린다", async () => {
     window.localStorage.setItem(OWNER_KEY, "user-1")
-    render(<SwitchAccountPanel onSignOut={() => {}} />)
+    render(<SwitchAccountPanel onSignOut={successfulSignOut} />)
 
     await userEvent.click(screen.getByTestId("switch-account-start"))
     await userEvent.click(screen.getByTestId("switch-account-confirm"))
@@ -107,7 +111,7 @@ describe("SwitchAccountPanel — 연결 끊기", () => {
     store(post("B"))
     recordTombstone("gone", "2026-07-21T00:00:00.000Z")
     window.localStorage.setItem(OWNER_KEY, "user-1")
-    render(<SwitchAccountPanel onSignOut={() => {}} />)
+    render(<SwitchAccountPanel onSignOut={successfulSignOut} />)
 
     await userEvent.click(screen.getByTestId("switch-account-start"))
     await userEvent.click(screen.getByTestId("switch-account-confirm"))
@@ -118,18 +122,18 @@ describe("SwitchAccountPanel — 연결 끊기", () => {
   })
 
   it("동기화 동의를 끈다 — 새 계정으로 말없이 올라가면 안 된다", async () => {
-    saveSyncConsent({ enabled: true, shareTrainingNotes: true })
+    saveSyncConsent({ enabled: true, shareTrainingNotes: true }, "user-1")
     window.localStorage.setItem(OWNER_KEY, "user-1")
-    render(<SwitchAccountPanel onSignOut={() => {}} />)
+    render(<SwitchAccountPanel onSignOut={successfulSignOut} />)
 
     await userEvent.click(screen.getByTestId("switch-account-start"))
     await userEvent.click(screen.getByTestId("switch-account-confirm"))
 
-    expect(loadSyncConsent().enabled).toBe(false)
+    expect(loadSyncConsent("user-1").enabled).toBe(false)
   })
 
   it("로그아웃까지 한다 — 안 하면 원래 계정에 다시 묶인다", async () => {
-    const signOut = vi.fn()
+    const signOut = vi.fn().mockResolvedValue({ ok: true, message: "로그아웃되었어요." })
     window.localStorage.setItem(OWNER_KEY, "user-1")
     render(<SwitchAccountPanel onSignOut={signOut} />)
 
@@ -141,7 +145,7 @@ describe("SwitchAccountPanel — 연결 끊기", () => {
 
   it("끝난 뒤 일지가 남아 있다는 사실을 화면이 말한다", async () => {
     window.localStorage.setItem(OWNER_KEY, "user-1")
-    render(<SwitchAccountPanel onSignOut={() => {}} />)
+    render(<SwitchAccountPanel onSignOut={successfulSignOut} />)
 
     await userEvent.click(screen.getByTestId("switch-account-start"))
     await userEvent.click(screen.getByTestId("switch-account-confirm"))
@@ -153,8 +157,47 @@ describe("SwitchAccountPanel — 연결 끊기", () => {
 })
 
 describe("SwitchAccountPanel — 실패를 숨기지 않는다", () => {
-  it("끊기에 실패하면 실패를 말하고 로그아웃하지 않는다", async () => {
-    const signOut = vi.fn()
+  it("로그아웃에 실패하면 동의를 복구하고 owner를 해제하지 않는다", async () => {
+    const signOut = vi.fn().mockResolvedValue({ ok: false, message: "로그아웃에 실패했어요." })
+    const release = vi.fn().mockReturnValue({ ok: true, message: "연결을 끊었어요." })
+    const outcome = vi.fn()
+    saveSyncConsent({ enabled: true, shareTrainingNotes: true }, "user-1")
+    window.localStorage.setItem(OWNER_KEY, "user-1")
+    render(<SwitchAccountPanel onSignOut={signOut} onRelease={release} onOutcome={outcome} />)
+
+    await userEvent.click(screen.getByTestId("switch-account-start"))
+    await userEvent.click(screen.getByTestId("switch-account-confirm"))
+
+    expect(screen.getByTestId("switch-account-result").textContent).toContain("로그아웃에 실패했어요")
+    expect(screen.getByTestId("switch-account-result")).toHaveAttribute("data-state", "error")
+    expect(loadSyncConsent("user-1")).toEqual({ enabled: true, shareTrainingNotes: true })
+    expect(window.localStorage.getItem(OWNER_KEY)).toBe("user-1")
+    expect(release).not.toHaveBeenCalled()
+    expect(outcome).toHaveBeenCalledWith({ ok: false, message: "로그아웃에 실패했어요." })
+  })
+
+  it("로그아웃 성공 뒤에만 owner를 해제한다", async () => {
+    const order: string[] = []
+    const signOut = vi.fn().mockImplementation(async () => {
+      order.push("sign-out")
+      return { ok: true, message: "로그아웃되었어요." }
+    })
+    const release = vi.fn().mockImplementation(() => {
+      order.push("release-owner")
+      window.localStorage.removeItem(OWNER_KEY)
+      return { ok: true, message: "연결을 끊었어요. 일지는 그대로 있어요." }
+    })
+    window.localStorage.setItem(OWNER_KEY, "user-1")
+    render(<SwitchAccountPanel onSignOut={signOut} onRelease={release} />)
+
+    await userEvent.click(screen.getByTestId("switch-account-start"))
+    await userEvent.click(screen.getByTestId("switch-account-confirm"))
+
+    expect(order).toEqual(["sign-out", "release-owner"])
+  })
+
+  it("owner 해제에 실패하면 로그아웃만 된 상태를 오류로 말한다", async () => {
+    const signOut = vi.fn().mockResolvedValue({ ok: true, message: "로그아웃되었어요." })
     window.localStorage.setItem(OWNER_KEY, "user-1")
     render(
       <SwitchAccountPanel
@@ -166,9 +209,44 @@ describe("SwitchAccountPanel — 실패를 숨기지 않는다", () => {
     await userEvent.click(screen.getByTestId("switch-account-start"))
     await userEvent.click(screen.getByTestId("switch-account-confirm"))
 
-    expect(screen.getByTestId("switch-account-result").textContent).toContain("끊지 못했어요")
-    // 잠금이 그대로인데 로그아웃까지 하면 사용자는 상태를 알 수 없게 된다.
-    expect(signOut).not.toHaveBeenCalled()
+    expect(screen.getByTestId("switch-account-result").textContent)
+      .toContain("로그아웃은 됐지만 계정 연결을 끊지 못했어요")
+    expect(screen.getByTestId("switch-account-result")).toHaveAttribute("data-state", "error")
+    expect(window.localStorage.getItem(OWNER_KEY)).toBe("user-1")
+    expect(loadSyncConsent("user-1").enabled).toBe(false)
+    expect(signOut).toHaveBeenCalledTimes(1)
+  })
+
+  it("로그아웃으로 패널이 사라져도 상위 화면에 부분 실패 결과를 남긴다", async () => {
+    function Harness() {
+      const [visible, setVisible] = React.useState(true)
+      const [outcome, setOutcome] = React.useState<{ ok: boolean; message: string } | null>(null)
+      return (
+        <>
+          {visible && (
+            <SwitchAccountPanel
+              onSignOut={async () => {
+                setVisible(false)
+                return { ok: true, message: "로그아웃되었어요." }
+              }}
+              onRelease={() => ({ ok: false, message: "계정 연결을 끊지 못했어요. 일지는 그대로 있어요." })}
+              onOutcome={setOutcome}
+            />
+          )}
+          {outcome !== null && <p data-testid="durable-switch-outcome">{outcome.message}</p>}
+        </>
+      )
+    }
+
+    window.localStorage.setItem(OWNER_KEY, "user-1")
+    render(<Harness />)
+
+    await userEvent.click(screen.getByTestId("switch-account-start"))
+    await userEvent.click(screen.getByTestId("switch-account-confirm"))
+
+    expect(screen.queryByTestId("switch-account-panel")).toBeNull()
+    expect(await screen.findByTestId("durable-switch-outcome"))
+      .toHaveTextContent("로그아웃은 됐지만 계정 연결을 끊지 못했어요")
   })
 })
 
@@ -176,7 +254,7 @@ describe("SwitchAccountPanel — 백업 권유", () => {
   it("백업 경로가 있으면 끊기 전에 권한다 (강요하지 않는다)", async () => {
     const openBackup = vi.fn()
     window.localStorage.setItem(OWNER_KEY, "user-1")
-    render(<SwitchAccountPanel onSignOut={() => {}} onOpenBackup={openBackup} />)
+    render(<SwitchAccountPanel onSignOut={successfulSignOut} onOpenBackup={openBackup} />)
 
     await userEvent.click(screen.getByTestId("switch-account-start"))
     // 백업은 권유일 뿐이므로 끊기 버튼이 함께 보여야 한다(백업 강제 아님).
@@ -188,7 +266,7 @@ describe("SwitchAccountPanel — 백업 권유", () => {
 
   it("백업 경로가 없으면 권유 버튼을 만들지 않는다", async () => {
     window.localStorage.setItem(OWNER_KEY, "user-1")
-    render(<SwitchAccountPanel onSignOut={() => {}} />)
+    render(<SwitchAccountPanel onSignOut={successfulSignOut} />)
 
     await userEvent.click(screen.getByTestId("switch-account-start"))
 

@@ -13,6 +13,8 @@ const config = {
   url: "https://example.supabase.co",
   anonKey: "synthetic-public-key",
   kakaoAuthEnabled: false,
+  googleAuthEnabled: false,
+  emailAuthEnabled: true,
   phoneAuthEnabled: true,
   privacyPolicy: { url: "https://trainoracle.example/privacy", version: "2026-09-12" },
   termsOfService: { url: "https://trainoracle.example/terms", version: "2026-09-12" },
@@ -57,14 +59,32 @@ describe("DS-06 account presentation fixtures", () => {
     await user.type(screen.getByLabelText("이메일"), "runner@example.com")
     await user.click(screen.getByRole("button", { name: "확인 이메일 받기" }))
 
-    expect(send).toHaveBeenCalledWith("runner@example.com")
+    expect(send).toHaveBeenCalledWith(
+      "runner@example.com",
+      expect.stringMatching(/^[a-f0-9]{32}$/u),
+    )
     expect(screen.getByLabelText("이메일")).toHaveValue("runner@example.com")
     expect(screen.getByRole("status")).toHaveAttribute("data-state", "error")
   })
 
   it("marks synthetic phone delivery success and verification handoff as distinct states", async () => {
     const send = vi.fn().mockResolvedValue({ ok: true, message: "합성 문자 전송 완료" })
-    const verify = vi.fn().mockResolvedValue({ ok: true, message: "합성 로그인 완료" })
+    const verify = vi.fn().mockImplementation(async (_phone: string, _code: string, attemptId: string) => {
+      const pending = JSON.parse(sessionStorage.getItem("trainoracle.account.pending-setup.v1") ?? "{}") as Record<string, unknown>
+      sessionStorage.setItem("trainoracle.account.pending-setup.v1", JSON.stringify({
+        ...pending,
+        phase: "AUTH_VERIFIED",
+        verifiedUserId: "synthetic-phone-user",
+        verifiedMethod: "phone",
+        verifiedSessionId: "11111111-1111-4111-8111-111111111111",
+      }))
+      return {
+        ok: true,
+        message: "합성 로그인 완료",
+        verifiedUserId: "synthetic-phone-user",
+        attemptId,
+      }
+    })
     const user = userEvent.setup()
     render(
       <AccountAuthGateway
@@ -85,7 +105,11 @@ describe("DS-06 account presentation fixtures", () => {
 
     await user.type(screen.getByLabelText(/010-\*{4}-5678로 보낸 번호/u), "123456")
     await user.click(screen.getByRole("button", { name: "로그인 완료하기" }))
-    expect(verify).toHaveBeenCalledWith("010-1234-5678", "123456")
+    expect(verify).toHaveBeenCalledWith(
+      "010-1234-5678",
+      "123456",
+      expect.stringMatching(/^[a-f0-9]{32}$/u),
+    )
     expect(screen.getByRole("status")).toHaveAttribute("data-state", "pending")
   })
 
@@ -155,7 +179,7 @@ describe("DS-06 account presentation fixtures", () => {
     const user = userEvent.setup()
     render(
       <SwitchAccountPanel
-        onSignOut={vi.fn()}
+        onSignOut={vi.fn().mockResolvedValue({ ok: true, message: "로그아웃되었어요." })}
         onRelease={() => ({ ok: false, message: "합성 연결 해제 오류" })}
       />,
     )

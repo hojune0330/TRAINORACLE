@@ -3,7 +3,7 @@ import { resolveFeedbackConfig } from "./feedback-config"
 
 const credentials = {
   VITE_SUPABASE_URL: "https://example.supabase.co",
-  VITE_SUPABASE_ANON_KEY: "anon-key",
+  VITE_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYW5vbiJ9.synthetic-signature",
 }
 
 describe("feedback board configuration", () => {
@@ -23,6 +23,14 @@ describe("feedback board configuration", () => {
       ...credentials,
       VITE_FEATURE_FEEDBACK_BOARD: "true",
       VITE_KILL_FEEDBACK_BOARD: "true",
+    })).toBeNull()
+  })
+
+  it("never accepts a secret key in the public feedback bundle", () => {
+    expect(resolveFeedbackConfig({
+      ...credentials,
+      VITE_FEATURE_FEEDBACK_BOARD: "true",
+      VITE_SUPABASE_ANON_KEY: ["sb", "secret", "this", "must", "not", "be", "bundled", "123456"].join("_"),
     })).toBeNull()
   })
 })

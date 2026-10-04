@@ -3,6 +3,7 @@ import { CoachSupportPanel } from "./CoachSupportPanel"
 import { ProductAnalyticsConsentPanel } from "./ProductAnalyticsConsentPanel"
 import { productFeatures } from "../../domain/product-features"
 import type { AccountLegalDocument } from "../../domain/account/config"
+import type { AccountActionResult } from "../../domain/account/account-service"
 import { PublicProfileSettings } from "./PublicProfileSettings"
 import { PlanCloudBackupNotice } from "./PlanCloudBackupNotice"
 
@@ -13,6 +14,7 @@ export function AccountNetworkSettings({
   initialPrivacyAcknowledged,
   initialTermsAcknowledged,
   profileSetupComplete = false,
+  onDeletionCompleted,
 }: {
   readonly userId: string
   readonly today: string
@@ -23,6 +25,7 @@ export function AccountNetworkSettings({
   readonly initialPrivacyAcknowledged?: boolean
   readonly initialTermsAcknowledged?: boolean
   readonly profileSetupComplete?: boolean
+  readonly onDeletionCompleted?: (() => AccountActionResult | Promise<AccountActionResult>) | undefined
 }) {
   const features = productFeatures()
   return (
@@ -34,6 +37,7 @@ export function AccountNetworkSettings({
         initialPrivacyAcknowledged={initialPrivacyAcknowledged}
         initialTermsAcknowledged={initialTermsAcknowledged}
         profileSetupComplete={profileSetupComplete}
+        onDeletionCompleted={onDeletionCompleted}
       />
       {features.planBackup && <PlanCloudBackupNotice />}
       {features.productAnalytics && <ProductAnalyticsConsentPanel userId={userId} />}

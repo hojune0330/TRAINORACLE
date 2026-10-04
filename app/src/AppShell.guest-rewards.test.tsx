@@ -3,6 +3,9 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest"
 const mocks = vi.hoisted(() => ({ current: vi.fn(), change: vi.fn(), reward: vi.fn() }))
 vi.mock("./domain/account/auth", () => ({ currentUser: mocks.current, onAuthChange: mocks.change }))
 vi.mock("./domain/account/config", () => ({ accountFeatureEnabled: () => true }))
+vi.mock("./domain/account/account-service", () => ({
+  loadPrivateProfileSetupStatus: vi.fn().mockResolvedValue({ ok: true, ready: true }),
+}))
 vi.mock("./domain/account/product-analytics-service", () => ({ trackProductEvent: vi.fn() }))
 vi.mock("./domain/account/account-reward-client", () => ({ requestAccountRewards: mocks.reward }))
 vi.mock("./domain/plan-beta-store", () => ({
@@ -50,7 +53,7 @@ it("connects the guest ledger only after successful initial auth and invalidates
   expect(screen.getByText("로그인하지 않고 모은 포인트는 이 기기에 남아요. 계정 포인트와는 별도로 보관해요.")).toBeVisible()
   expect(within(rewardDetails).getByText("5P")).toBeVisible()
   expect(mocks.current).toHaveBeenCalledWith({ throwOnFailure: true })
-  expect(mocks.change.mock.calls.some(call => call[1]?.ignoreInitialSession === true)).toBe(true)
+  expect(mocks.change).toHaveBeenCalledWith(expect.any(Function))
   expect(mocks.reward).not.toHaveBeenCalled()
   view.unmount()
   expect(accountAuthState()).toBe("RESOLVING")
@@ -74,7 +77,9 @@ it("does not let a late failed initial lookup revoke a newer authenticated owner
   const pending = new Promise((_done, fail) => { reject = fail })
   mocks.current.mockImplementation(options => options?.throwOnFailure ? pending : Promise.resolve(null))
   render(<AppShell />)
-  act(() => mocks.change.mock.calls.find(call => call[1]?.ignoreInitialSession === true)![0]({ id: "a1111111-1111-4111-8111-111111111111" }))
+  mocks.current.mockResolvedValue({ id: "a1111111-1111-4111-8111-111111111111", email: null, phone: null, provider: null })
+  act(() => mocks.change.mock.calls.at(-1)![0]({ id: "a1111111-1111-4111-8111-111111111111", email: null, phone: null, provider: null }))
+  await vi.waitFor(() => expect(activeLocalAccount()).toBe("a1111111-1111-4111-8111-111111111111"))
   await act(async () => reject(new Error("AUTH_UNAVAILABLE")))
   expect(activeLocalAccount()).toBe("a1111111-1111-4111-8111-111111111111")
   expect(accountAuthState()).toBe("ACCOUNT")

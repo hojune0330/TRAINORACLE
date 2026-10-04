@@ -13,6 +13,9 @@ vi.mock("../domain/account/auth", () => ({
   currentUser: mocks.currentUser,
   onAuthChange: (listener: typeof mocks.authChange) => { mocks.authChange = listener; return () => { mocks.authChange = undefined } },
 }))
+vi.mock("../domain/account/account-service", () => ({
+  loadPrivateProfileSetupStatus: vi.fn().mockResolvedValue({ ok: true, ready: true }),
+}))
 vi.mock("../domain/account/account-athlete-record-service", () => ({
   ACCOUNT_ATHLETE_RECORD_EVENT: "trainoracle:account-athlete-records-changed",
   accountAthleteRecordsEnabled: () => true,
@@ -30,7 +33,7 @@ vi.mock("../domain/account/oracle-comparison-sharing", () => ({
 import { PublicProfilePage } from "./PublicProfilePage"
 import { PublicProfileSettings } from "./account/PublicProfileSettings"
 import { ATHLETE_RECORDS_STORAGE_KEY } from "../domain/athlete-records"
-import { setActiveLocalAccount } from "../domain/account/local-journal-ownership"
+import { activeLocalAccount, setActiveLocalAccount } from "../domain/account/local-journal-ownership"
 
 const record = (id: string, seconds: number): AthleteRecord => ({
   schemaVersion: 1, id, purpose: "PERSONAL_BEST", eventDistanceM: 5000, performanceSeconds: seconds,
@@ -62,14 +65,17 @@ it("waits for direct-entry auth and late account records, never comparing guest 
   expect(screen.getByRole("status")).toHaveTextContent("로그인 상태")
   expect(screen.queryByRole("button", { name: "내 기록과 비교하기" })).toBeNull()
   await act(async () => resolve(user("account-a")))
+  await vi.waitFor(() => expect(activeLocalAccount()).toBe("account-a"))
   expect(screen.getByRole("status")).toHaveTextContent("경기 기록을 불러오고")
   publish("account-a", [record("account", 900)])
   fireEvent.click(screen.getByRole("button", { name: "내 기록과 비교하기" }))
   expect(screen.getByText(/기록 차이는 10%/)).toBeVisible()
   expect(screen.queryByText(/기록 차이는 50%/)).toBeNull()
+  mocks.currentUser.mockResolvedValue(user("account-b"))
   act(() => mocks.authChange?.(user("account-b")))
   expect(screen.queryByRole("region", { name: "친구와 함께 달리기 비교 결과" })).toBeNull()
   publish("account-b", [], "EMPTY")
+  await vi.waitFor(() => expect(activeLocalAccount()).toBe("account-b"))
   expect(screen.getByText(/내 경기 기록이나 거리/)).toBeVisible()
   expect(mocks.save).not.toHaveBeenCalled()
 })
@@ -92,8 +98,10 @@ it("ignores stale initial authentication after a newer account event and separat
   mocks.currentUser.mockReturnValue(new Promise<AccountUser | null>(done => { resolve = done }))
   render(<PublicProfilePage handle="friend" />)
   await screen.findByText("Friend")
+  mocks.currentUser.mockResolvedValue(user("account-b"))
   act(() => mocks.authChange?.(user("account-b")))
   await act(async () => resolve(user("account-a")))
+  await vi.waitFor(() => expect(activeLocalAccount()).toBe("account-b"))
   publish("account-b", [], "FAILED")
   expect(screen.getByRole("status")).toHaveTextContent("경기 기록을 확인하지 못했어요")
   expect(screen.queryByText(/내 경기 기록이나 거리/)).toBeNull()

@@ -8,10 +8,10 @@ import { loadEntries } from "../domain/journal-store"
 import { todayISO } from "../domain/journal-store"
 import { projectStructuredJournalObservations } from "../domain/journal-observation"
 import { useAthleteRecordsSnapshot } from "../hooks/useAthleteRecordsSnapshot"
-import { currentUser, onAuthChange } from "../domain/account/auth"
 import { accountFeatureEnabled } from "../domain/account/config"
 import { activeLocalAccount, journalOwner, setActiveLocalAccount } from "../domain/account/local-journal-ownership"
 import { setAccountAuthState } from "../domain/account/account-auth-state"
+import { startVerifiedAccountScope } from "../domain/account/verified-account-scope"
 import {
   buildOracleComparisonSnapshot,
   deriveFriendRunningOracle,
@@ -28,27 +28,17 @@ function PublicProfileContent({ handle }: { readonly handle: string }) {
   const ownRecords = useAthleteRecordsSnapshot()
 
   React.useEffect(() => {
-    let mounted = true
-    let authEventSeen = false
-    const accept = (user: { id: string } | null) => {
-      if (!mounted) return
-      setShowComparison(false)
-      setActiveLocalAccount(user?.id ?? null)
-      setAccountAuthState(user ? "RESOLVING" : "GUEST")
-      setAuthStatus("READY")
+    const updateStatus = (status: "LOADING" | "READY" | "FAILED") => {
+      if (status !== "READY") setShowComparison(false)
+      setAuthStatus(status)
     }
-    if (!accountFeatureEnabled()) { accept(null); return }
-    setAccountAuthState("RESOLVING")
-    const stop = onAuthChange(user => { authEventSeen = true; accept(user) }, { ignoreInitialSession: true })
-    void currentUser({ throwOnFailure: true }).then(user => {
-      if (!authEventSeen) accept(user)
-    }).catch(() => {
-      if (!mounted || authEventSeen) return
+    if (!accountFeatureEnabled()) {
       setActiveLocalAccount(null)
       setAccountAuthState("FAILED")
       setAuthStatus("FAILED")
-    })
-    return () => { mounted = false; stop() }
+      return
+    }
+    return startVerifiedAccountScope(updateStatus)
   }, [])
 
   React.useEffect(() => {

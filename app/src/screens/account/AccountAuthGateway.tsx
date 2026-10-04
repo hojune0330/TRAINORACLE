@@ -1,6 +1,6 @@
 import React from "react"
 import { ArrowLeft, ChevronRight, Mail, Phone, ShieldCheck } from "lucide-react"
-import type { AuthResult, SocialAuthProvider } from "../../domain/account/auth"
+import type { AuthResult, AuthVerificationResult, SocialAuthProvider } from "../../domain/account/auth"
 import {
   maskPhoneNumber,
   PHONE_OTP_RESEND_SECONDS,
@@ -12,13 +12,19 @@ import {
 import type { AccountConfig } from "../../domain/account/config"
 import {
   clearPendingAccountSetup,
+  clearPendingAccountSetupForAttempt,
   createPendingAccountSetup,
+  markPendingAccountAuthStarted,
+  normalizeAuthEmail,
   onlineAccountEligibility,
+  readPendingAccountSetup,
   writePendingAccountSetup,
 } from "../../domain/account/auth-onboarding"
 import type { AuthMethod } from "../../domain/account/auth-onboarding"
 import { formatBirthDateInput } from "./birth-date-input"
 import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
+import { consumeCapturedEmailAuthCallback } from "../../domain/account/email-auth-callback"
+import type { EmailAuthCallbackResult } from "../../domain/account/email-auth-callback"
 
 type GatewayStep = "method" | "eligibility" | "email" | "email-sent" | "phone" | "phone-code" | "under14"
 type NoticeTone = "pending" | "success" | "error"
@@ -26,10 +32,14 @@ type NoticeTone = "pending" | "success" | "error"
 export type AccountAuthGatewayProps = {
   readonly config: AccountConfig
   readonly today: string
-  readonly onSocialSignIn?: (provider: SocialAuthProvider) => Promise<AuthResult>
-  readonly onRequestEmailOtp?: (email: string) => Promise<AuthResult>
-  readonly onRequestPhoneOtp?: (phone: string) => Promise<AuthResult>
-  readonly onVerifyPhoneOtp?: (phone: string, code: string) => Promise<AuthResult>
+  readonly onSocialSignIn?: (provider: SocialAuthProvider, attemptId: string) => Promise<AuthResult>
+  readonly onRequestEmailOtp?: (email: string, attemptId: string) => Promise<AuthResult>
+  readonly onRequestPhoneOtp?: (phone: string, attemptId: string) => Promise<AuthResult>
+  readonly onVerifyPhoneOtp?: (phone: string, code: string, attemptId: string) => Promise<AuthVerificationResult>
+  readonly emailCallbackAttemptId?: string | null
+  readonly onConsumeEmailCallback?: () => Promise<EmailAuthCallbackResult>
+  readonly onEmailCallbackFinished?: (result: EmailAuthCallbackResult) => void
+  readonly onUnsafeSessionDetected?: () => void
 }
 
 export function AccountAuthGateway({
@@ -39,9 +49,13 @@ export function AccountAuthGateway({
   onRequestEmailOtp: sendEmailOtp = requestEmailOtp,
   onRequestPhoneOtp: sendPhoneOtp = requestPhoneOtp,
   onVerifyPhoneOtp: checkPhoneOtp = verifyPhoneOtp,
+  emailCallbackAttemptId = null,
+  onConsumeEmailCallback: consumeEmailCallback = consumeCapturedEmailAuthCallback,
+  onEmailCallbackFinished,
+  onUnsafeSessionDetected,
 }: AccountAuthGatewayProps) {
-  const [step, setStep] = React.useState<GatewayStep>("method")
-  const [method, setMethod] = React.useState<AuthMethod | null>(null)
+  const [step, setStep] = React.useState<GatewayStep>(() => emailCallbackAttemptId === null ? "method" : "eligibility")
+  const [method, setMethod] = React.useState<AuthMethod | null>(() => emailCallbackAttemptId === null ? null : "email")
   const [birthDate, setBirthDate] = React.useState("")
   const [legalAcknowledged, setLegalAcknowledged] = React.useState(false)
   const [email, setEmail] = React.useState("")
@@ -68,6 +82,7 @@ export function AccountAuthGateway({
   }, [phoneResendSeconds])
 
   const chooseMethod = (nextMethod: AuthMethod) => {
+    clearPendingAccountSetup()
     setMethod(nextMethod)
     setNotice(null)
     setStep("eligibility")
@@ -98,7 +113,37 @@ export function AccountAuthGateway({
       return
     }
 
-    writePendingAccountSetup(createPendingAccountSetup({ method, birthDate, config }))
+    if (method === "email" && emailCallbackAttemptId !== null) {
+      const expectedEmail = normalizeAuthEmail(email)
+      if (expectedEmail === null) {
+        showNotice("확인 링크를 받은 내 이메일을 정확히 입력해 주세요.", "error")
+        return
+      }
+      setBusy(true)
+      setNotice(null)
+      const pending = createPendingAccountSetup({
+        method: "email",
+        birthDate,
+        config,
+        attemptId: emailCallbackAttemptId,
+        expectedEmail,
+      })
+      writePendingAccountSetup(pending)
+      markPendingAccountAuthStarted(pending.attemptId)
+      try {
+        const result = await consumeEmailCallback()
+        if (result.handled && result.unsafeSessionOpen) onUnsafeSessionDetected?.()
+        if (!result.handled || !result.ok) clearPendingAccountSetupForAttempt(pending.attemptId)
+        showNotice(result.handled ? result.message : "확인 링크가 만료됐어요. 이메일을 다시 받아 주세요.", result.handled && result.ok ? "pending" : "error")
+        if (!result.handled || !result.requiresPreAuth) onEmailCallbackFinished?.(result)
+      } catch {
+        clearPendingAccountSetupForAttempt(pending.attemptId)
+        showNotice("이메일 확인을 마치지 못했어요. 잠시 후 다시 시도해 주세요.", "error")
+      } finally {
+        setBusy(false)
+      }
+      return
+    }
     if (method === "email") {
       setStep("email")
       setNotice(null)
@@ -111,10 +156,17 @@ export function AccountAuthGateway({
     }
     setBusy(true)
     setNotice(null)
+    const pending = createPendingAccountSetup({ method, birthDate, config })
+    writePendingAccountSetup(pending)
+    markPendingAccountAuthStarted(pending.attemptId)
     try {
-      const result = await onSocialSignIn(method)
-      if (!result.ok) showNotice(result.message, "error")
+      const result = await onSocialSignIn(method, pending.attemptId)
+      if (!result.ok) {
+        clearPendingAccountSetupForAttempt(pending.attemptId)
+        showNotice(result.message, "error")
+      }
     } catch {
+      clearPendingAccountSetupForAttempt(pending.attemptId)
       showNotice("간편 로그인을 시작하지 못했어요. 잠시 후 다시 시도해 주세요.", "error")
     } finally {
       setBusy(false)
@@ -122,13 +174,23 @@ export function AccountAuthGateway({
   }
 
   const sendEmailLink = async () => {
+    const expectedEmail = normalizeAuthEmail(email)
+    if (expectedEmail === null) {
+      showNotice("이메일 주소를 확인해 주세요.", "error")
+      return
+    }
     setBusy(true)
     setNotice(null)
+    const pending = createPendingAccountSetup({ method: "email", birthDate, config, expectedEmail })
+    writePendingAccountSetup(pending)
+    markPendingAccountAuthStarted(pending.attemptId)
     try {
-      const result = await sendEmailOtp(email)
+      const result = await sendEmailOtp(email, pending.attemptId)
       showNotice(result.message, result.ok ? "success" : "error")
       if (result.ok) setStep("email-sent")
+      else clearPendingAccountSetupForAttempt(pending.attemptId)
     } catch {
+      clearPendingAccountSetupForAttempt(pending.attemptId)
       showNotice("확인 이메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요.", "error")
     } finally {
       setBusy(false)
@@ -139,14 +201,18 @@ export function AccountAuthGateway({
     if (phoneResendSeconds > 0) return
     setBusy(true)
     setNotice(null)
+    const pending = createPendingAccountSetup({ method: "phone", birthDate, config })
+    writePendingAccountSetup(pending)
+    markPendingAccountAuthStarted(pending.attemptId)
     try {
-      const result = await sendPhoneOtp(phone)
+      const result = await sendPhoneOtp(phone, pending.attemptId)
       showNotice(result.message, result.ok ? "success" : "error")
       if (result.ok) {
         setPhoneResendSeconds(PHONE_OTP_RESEND_SECONDS)
         setStep("phone-code")
-      }
+      } else clearPendingAccountSetupForAttempt(pending.attemptId)
     } catch {
+      clearPendingAccountSetupForAttempt(pending.attemptId)
       showNotice("인증번호를 보내지 못했어요. 잠시 후 다시 시도해 주세요.", "error")
     } finally {
       setBusy(false)
@@ -154,12 +220,26 @@ export function AccountAuthGateway({
   }
 
   const verifyPhoneCode = async () => {
+    const pending = readPendingAccountSetup()
+    if (pending?.method !== "phone" || pending.phase !== "AUTH_STARTED") {
+      showNotice("인증번호를 다시 받아 주세요.", "error")
+      return
+    }
     setBusy(true)
     setNotice(null)
     try {
-      const result = await checkPhoneOtp(phone, phoneCode)
-      showNotice(result.ok ? "로그인 정보를 확인하고 있어요." : result.message, result.ok ? "pending" : "error")
+      const result = await checkPhoneOtp(phone, phoneCode, pending.attemptId)
+      if (result.unsafeSessionOpen) onUnsafeSessionDetected?.()
+      const verifiedPending = readPendingAccountSetup()
+      const verified = result.ok
+        && typeof result.verifiedUserId === "string"
+        && verifiedPending?.attemptId === pending.attemptId
+        && verifiedPending.phase === "AUTH_VERIFIED"
+        && verifiedPending.verifiedUserId === result.verifiedUserId
+      if (!verified) clearPendingAccountSetupForAttempt(pending.attemptId)
+      showNotice(verified ? "로그인 정보를 확인하고 있어요." : result.ok ? "로그인한 계정을 확인하지 못했어요. 처음부터 다시 진행해 주세요." : result.message, verified ? "pending" : "error")
     } catch {
+      clearPendingAccountSetupForAttempt(pending.attemptId)
       showNotice("인증번호를 확인하지 못했어요. 잠시 후 다시 시도해 주세요.", "error")
     } finally {
       setBusy(false)
@@ -179,18 +259,32 @@ export function AccountAuthGateway({
             {config.kakaoAuthEnabled && (
               <MethodButton className="account-auth__method--kakao" mark="K" label="카카오로 계속하기" onClick={() => chooseMethod("kakao")} />
             )}
-            <MethodButton mark="G" label="Google로 계속하기" onClick={() => chooseMethod("google")} />
-            <MethodButton icon={<Mail aria-hidden="true" size={19} />} label="이메일로 계속하기" onClick={() => chooseMethod("email")} />
+            {config.googleAuthEnabled && (
+              <MethodButton mark="G" label="Google로 계속하기" onClick={() => chooseMethod("google")} />
+            )}
+            {config.emailAuthEnabled && (
+              <MethodButton icon={<Mail aria-hidden="true" size={19} />} label="이메일로 계속하기" onClick={() => chooseMethod("email")} />
+            )}
             {config.phoneAuthEnabled && (
               <MethodButton icon={<Phone aria-hidden="true" size={19} />} label="휴대전화로 계속하기" onClick={() => chooseMethod("phone")} />
             )}
           </div>
+          {!config.kakaoAuthEnabled && !config.googleAuthEnabled && !config.emailAuthEnabled && !config.phoneAuthEnabled && (
+            <p className="account-auth__notice" data-state="pending" role="status">
+              로그인이 잠시 닫혀 있어요. 이 기기에서는 일지와 훈련 계획을 계속 사용할 수 있어요.
+            </p>
+          )}
         </>
       )}
 
       {step === "eligibility" && (
         <>
-          <StepHeader step="1 / 2" title="가입 전에 두 가지만 확인해요" onBack={resetMethod} />
+          <StepHeader
+            step={emailCallbackAttemptId === null ? "1 / 2" : "가입 확인"}
+            title={emailCallbackAttemptId === null ? "가입 전에 두 가지만 확인해요" : "이메일 확인 전에 두 가지만 다시 확인해요"}
+            onBack={resetMethod}
+            disabled={busy}
+          />
           <div className="account-auth__field-group">
             <label htmlFor="account-signup-birth-date">생년월일</label>
             <input
@@ -201,15 +295,33 @@ export function AccountAuthGateway({
               maxLength={10}
               placeholder="예: 2000-01-01"
               value={birthDate}
-              onChange={(event) => { setBirthDate(formatBirthDateInput(event.target.value)); setNotice(null) }}
+              disabled={busy}
+              onChange={(event) => { clearPendingAccountSetup(); setBirthDate(formatBirthDateInput(event.target.value)); setNotice(null) }}
             />
             <small>숫자 8자리를 입력하면 날짜로 정리돼요. 만 14세 이상인지 확인하는 데만 사용하고 코치·분석·포인트에는 보내지 않아요.</small>
           </div>
+          {emailCallbackAttemptId !== null && (
+            <div className="account-auth__field-group">
+              <label htmlFor="account-callback-email">확인 링크를 받은 내 이메일</label>
+              <input
+                id="account-callback-email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                value={email}
+                disabled={busy}
+                onChange={(event) => { clearPendingAccountSetup(); setEmail(event.target.value); setNotice(null) }}
+                placeholder="you@example.com"
+              />
+              <small>링크를 요청한 내 이메일과 정확히 같아야 해요. 다른 사람이 보낸 링크라면 이 화면을 닫아 주세요.</small>
+            </div>
+          )}
           <label className="account-auth__legal-check">
             <input
               type="checkbox"
               checked={legalAcknowledged}
-              onChange={(event) => { setLegalAcknowledged(event.target.checked); setNotice(null) }}
+              disabled={busy}
+              onChange={(event) => { clearPendingAccountSetup(); setLegalAcknowledged(event.target.checked); setNotice(null) }}
             />
             <span>
               <b>필수 약관에 모두 동의</b>
@@ -223,13 +335,13 @@ export function AccountAuthGateway({
           <button
             className="account-auth__primary"
             type="button"
-            disabled={busy || birthDate.length !== 10}
+            disabled={busy || birthDate.length !== 10 || emailCallbackAttemptId !== null && normalizeAuthEmail(email) === null}
             onClick={() => void continueAfterEligibility()}
           >
             {busy
               ? "연결하는 중..."
               : method === "email"
-                ? "이메일 입력하기"
+                ? emailCallbackAttemptId === null ? "이메일 입력하기" : "확인하고 로그인하기"
                 : method === "phone"
                   ? "휴대전화 번호 입력하기"
                   : `${method === "kakao" ? "카카오" : "Google"}로 계속하기`}
@@ -240,7 +352,7 @@ export function AccountAuthGateway({
 
       {step === "email" && (
         <>
-          <StepHeader step="2 / 2" title="확인 링크를 받을 이메일을 적어 주세요" onBack={() => setStep("eligibility")} />
+          <StepHeader step="2 / 2" title="확인 링크를 받을 이메일을 적어 주세요" onBack={() => { clearPendingAccountSetup(); setStep("eligibility") }} />
           <div className="account-auth__field-group">
             <label htmlFor="account-email">이메일</label>
             <input
@@ -249,7 +361,7 @@ export function AccountAuthGateway({
               inputMode="email"
               autoComplete="email"
               value={email}
-              onChange={(event) => { setEmail(event.target.value); setNotice(null) }}
+              onChange={(event) => { clearPendingAccountSetup(); setEmail(event.target.value); setNotice(null) }}
               placeholder="you@example.com"
             />
             <small>비밀번호 대신 메일로 확인 링크를 보내드려요.</small>
@@ -262,7 +374,7 @@ export function AccountAuthGateway({
 
       {step === "email-sent" && (
         <>
-          <StepHeader step="마지막" title="이메일에서 확인 링크를 열어 주세요" onBack={() => setStep("email")} />
+          <StepHeader step="마지막" title="이메일에서 확인 링크를 열어 주세요" onBack={() => { clearPendingAccountSetup(); setStep("email") }} />
           <div className="account-auth__under14" role="status">
             <span className="account-auth__trust">확인 이메일 전송</span>
             <h2>{email}</h2>
@@ -271,13 +383,13 @@ export function AccountAuthGateway({
           <button className="account-auth__primary" type="button" disabled={busy} onClick={() => void sendEmailLink()}>
             {busy ? "보내는 중..." : "확인 이메일 다시 받기"}
           </button>
-          <button className="account-auth__text-action" type="button" disabled={busy} onClick={() => setStep("email")}>이메일 주소 바꾸기</button>
+          <button className="account-auth__text-action" type="button" disabled={busy} onClick={() => { clearPendingAccountSetup(); setStep("email") }}>이메일 주소 바꾸기</button>
         </>
       )}
 
       {step === "phone" && (
         <>
-          <StepHeader step="2 / 2" title="인증번호를 받을 휴대전화 번호를 적어 주세요" onBack={() => setStep("eligibility")} />
+          <StepHeader step="2 / 2" title="인증번호를 받을 휴대전화 번호를 적어 주세요" onBack={() => { clearPendingAccountSetup(); setStep("eligibility") }} />
           <div className="account-auth__field-group">
             <label htmlFor="account-phone">휴대전화 번호</label>
             <input
@@ -286,7 +398,7 @@ export function AccountAuthGateway({
               inputMode="tel"
               autoComplete="tel"
               value={phone}
-              onChange={(event) => { setPhone(event.target.value); setNotice(null) }}
+              onChange={(event) => { clearPendingAccountSetup(); setPhone(event.target.value); setNotice(null) }}
               placeholder="010-1234-5678"
             />
             <small>국내 010 번호만 지원해요. 비밀번호 대신 문자로 6자리 번호를 보내드려요.</small>
@@ -299,7 +411,7 @@ export function AccountAuthGateway({
 
       {step === "phone-code" && (
         <>
-          <StepHeader step="마지막" title="문자로 받은 6자리 번호를 입력해 주세요" onBack={() => { setStep("phone"); setPhoneCode("") }} />
+          <StepHeader step="마지막" title="문자로 받은 6자리 번호를 입력해 주세요" onBack={() => { clearPendingAccountSetup(); setStep("phone"); setPhoneCode("") }} />
           <div className="account-auth__field-group">
             <label htmlFor="account-phone-code">{maskPhoneNumber(phone)}로 보낸 번호</label>
             <input
@@ -355,14 +467,15 @@ function MethodButton({ mark, icon, label, className = "", onClick }: {
   )
 }
 
-function StepHeader({ step, title, onBack }: {
+function StepHeader({ step, title, onBack, disabled = false }: {
   readonly step: string
   readonly title: string
   readonly onBack: () => void
+  readonly disabled?: boolean
 }) {
   return (
     <div className="account-auth__step-header">
-      <button type="button" onClick={onBack} aria-label="이전 단계"><ArrowLeft aria-hidden="true" size={19} /></button>
+      <button type="button" onClick={onBack} disabled={disabled} aria-label="이전 단계"><ArrowLeft aria-hidden="true" size={19} /></button>
       <div><span>{step}</span><h2>{title}</h2></div>
     </div>
   )

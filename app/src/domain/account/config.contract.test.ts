@@ -3,7 +3,7 @@ import { resolveAccountConfig } from "./config"
 
 const credentials = {
   VITE_SUPABASE_URL: "https://example.supabase.co",
-  VITE_SUPABASE_ANON_KEY: "public-anon-key",
+  VITE_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYW5vbiJ9.synthetic-signature",
 }
 
 const legalDocuments = {
@@ -31,6 +31,8 @@ describe("account public release gate", () => {
       url: credentials.VITE_SUPABASE_URL,
       anonKey: credentials.VITE_SUPABASE_ANON_KEY,
       kakaoAuthEnabled: false,
+      googleAuthEnabled: false,
+      emailAuthEnabled: false,
       phoneAuthEnabled: false,
       privacyPolicy: {
         url: legalDocuments.VITE_PRIVACY_POLICY_URL,
@@ -41,6 +43,46 @@ describe("account public release gate", () => {
         version: legalDocuments.VITE_TERMS_OF_SERVICE_VERSION,
       },
     })
+  })
+
+  it("keeps Google hidden until that provider is separately released", () => {
+    expect(resolveAccountConfig({
+      ...credentials,
+      ...legalDocuments,
+      VITE_ACCOUNT_PUBLIC_ENABLED: "true",
+      VITE_GOOGLE_AUTH_ENABLED: "true",
+    })?.googleAuthEnabled).toBe(true)
+    expect(resolveAccountConfig({
+      ...credentials,
+      ...legalDocuments,
+      VITE_ACCOUNT_PUBLIC_ENABLED: "true",
+      VITE_GOOGLE_AUTH_ENABLED: "true",
+      VITE_KILL_GOOGLE_AUTH: "true",
+    })?.googleAuthEnabled).toBe(false)
+  })
+
+  it("keeps email hidden until its PKCE callback and hosted template are approved together", () => {
+    expect(resolveAccountConfig({
+      ...credentials,
+      ...legalDocuments,
+      VITE_ACCOUNT_PUBLIC_ENABLED: "true",
+      VITE_EMAIL_AUTH_ENABLED: "true",
+    })?.emailAuthEnabled).toBe(false)
+    expect(resolveAccountConfig({
+      ...credentials,
+      ...legalDocuments,
+      VITE_ACCOUNT_PUBLIC_ENABLED: "true",
+      VITE_EMAIL_AUTH_ENABLED: "true",
+      VITE_EMAIL_AUTH_PKCE_OPERATIONS_APPROVED: "true",
+    })?.emailAuthEnabled).toBe(true)
+    expect(resolveAccountConfig({
+      ...credentials,
+      ...legalDocuments,
+      VITE_ACCOUNT_PUBLIC_ENABLED: "true",
+      VITE_EMAIL_AUTH_ENABLED: "true",
+      VITE_EMAIL_AUTH_PKCE_OPERATIONS_APPROVED: "true",
+      VITE_KILL_EMAIL_AUTH: "true",
+    })?.emailAuthEnabled).toBe(false)
   })
 
   it("keeps Kakao hidden until its provider is separately released", () => {
@@ -113,6 +155,21 @@ describe("account public release gate", () => {
       VITE_ACCOUNT_PUBLIC_ENABLED: "true",
       VITE_SUPABASE_URL: "http://example.supabase.co",
     })).toBeNull()
+  })
+
+  it("rejects secret, service-role, and malformed browser keys", () => {
+    for (const key of [
+      ["sb", "secret", "this", "must", "not", "be", "bundled", "123456"].join("_"),
+      "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.synthetic-signature",
+      "public-anon-key",
+    ]) {
+      expect(resolveAccountConfig({
+        ...credentials,
+        ...legalDocuments,
+        VITE_ACCOUNT_PUBLIC_ENABLED: "true",
+        VITE_SUPABASE_ANON_KEY: key,
+      })).toBeNull()
+    }
   })
 
   it("rejects a non-HTTPS legal-document link", () => {

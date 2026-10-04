@@ -12,7 +12,7 @@ function enablePublicAccountForTest() {
   vi.stubEnv("VITE_ACCOUNT_PUBLIC_ENABLED", "true")
   vi.stubEnv("VITE_KILL_ACCOUNT", "false")
   vi.stubEnv("VITE_SUPABASE_URL", "https://project.supabase.co")
-  vi.stubEnv("VITE_SUPABASE_ANON_KEY", "public-anon-key")
+  vi.stubEnv("VITE_SUPABASE_ANON_KEY", "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYW5vbiJ9.synthetic-signature")
   vi.stubEnv("VITE_PRIVACY_POLICY_URL", "https://example.com/privacy")
   vi.stubEnv("VITE_PRIVACY_POLICY_VERSION", "2026-08-26")
   vi.stubEnv("VITE_TERMS_OF_SERVICE_URL", "https://example.com/terms")
