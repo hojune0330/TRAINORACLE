@@ -1,12 +1,25 @@
 {
   "kind": "TRAINORACLE_PAGES_DEPLOYMENT",
-  "sourceSha": "367cfa7d1ccac47c19d0747b8ad1164d09c92ab5",
-  "previousPagesSha": "9598ff21ab4a94b9c1629cffa16305f6bf0dc837",
-  "publicConfigurationSourceSha": "9598ff21ab4a94b9c1629cffa16305f6bf0dc837",
-  "deploymentMethod": "MANUAL_USER_APPROVED",
-  "ciStatus": "NOT_PASSED_OR_NOT_YET_KNOWN",
-  "ciRunId": null,
-  "observedCiRunId": "37102246680",
-  "observedCiUrl": "https://github.com/hojune0330/TRAINORACLE/actions/runs/37102246680",
-  "builtAt": "2026-10-03T06:14:26.749Z"
+  "sourceSha": "fb6991c2eb0b6f33c14a6a7c542655cd5f8c06d8",
+  "previousPagesSha": "3df60ce854833223f2528c468e3c6c92a1797f04",
+  "deploymentMethod": "MANUAL_OWNER_APPROVED",
+  "deployedAt": "2026-10-04T06:23:54.298Z",
+  "publicConfigSource": "assets/index-D-F2x_9B.js",
+  "scope": "Account authentication boundary hardening with shared-origin account access kept closed",
+  "verification": {
+    "releaseMode": "OWNER_APPROVED_MANUAL_AFTER_CI_BLOCK",
+    "appTypecheck": "PASS",
+    "productionBuild": "PASS",
+    "focusedAccountSync": "54/54 PASS",
+    "secretLiteralRegression": "21/21 PASS",
+    "localPostgresFocused": "26/26 PASS",
+    "fullAppSuite": "NOT_COMPLETED",
+    "githubActions": {
+      "runId": 37182279711,
+      "contractTests": "FAILURE",
+      "automaticPagesJob": "BLOCKED"
+    },
+    "productionDatabaseMigrations0051To0056": "NOT_APPLIED_UNVERIFIED_TARGET",
+    "realAccountRoundtrip": "NOT_RUN"
+  }
 }
