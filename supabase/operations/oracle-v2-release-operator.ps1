@@ -1,3 +1,4 @@
+#Requires -Version 7.0
 param(
   [Parameter(Mandatory)][ValidateSet('inventory','apply','verify','provision-key')][string]$Action,
   [Parameter(Mandatory)][string]$Config,
