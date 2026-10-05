@@ -30,12 +30,13 @@ const ANALYSIS_SECTIONS = [
   { id: "files", label: "파일 분석" },
 ] as const
 
-export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRecordReading, initialContext }: {
+export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRecordReading, onOpenRunningProfile, initialContext }: {
   readonly onBack?: (() => void) | undefined
   readonly onWriteLog?: (() => void) | undefined
   readonly onOpenPlan?: (() => void) | undefined
   readonly onOpenOracle?: ((topic: OracleTopicId) => void) | undefined
   readonly onOpenRecordReading?: (() => void) | undefined
+  readonly onOpenRunningProfile?: (() => void) | undefined
   readonly initialContext?: AnalysisNavigation | undefined
 }) {
   const [section, setSection] = React.useState<AnalysisSection>(initialContext?.section ?? "summary")
@@ -118,6 +119,10 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
             )}
           </>
         )}
+        {section === "summary" && onOpenRunningProfile && <section className="trends-record-reading">
+          <div><p>오라클 · 러닝 프로필</p><h2>나는 어떻게 달리는 사람일까?</h2></div>
+          <button type="button" onClick={onOpenRunningProfile}>내 러닝 프로필<ArrowRight size={18} aria-hidden="true" /></button>
+        </section>}
         {section === "summary" && onOpenRecordReading && <section className="trends-record-reading">
           <div><p>나의 러닝 풀이 · 친구와 러닝 궁합</p><h2>최고기록에 담긴 이야기를 읽어요</h2></div>
           <button type="button" onClick={onOpenRecordReading}>최고기록으로 풀이하기<ArrowRight size={18} aria-hidden="true" /></button>

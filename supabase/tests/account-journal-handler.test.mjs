@@ -25,6 +25,8 @@ if (process.env.JOURNAL_HANDLER_MUTATION) {
   const url = new URL('../functions/_shared/account-journal-handler.mjs',import.meta.url);
   let source = await readFile(url,'utf8');
   const mutations = {
+    'oracle-v2-capability': ["if (document?.kind === 'RUNNING_PROFILE' && document.data.version === 'RUNNING_PROFILE_V2' && !input.supportedRunningProfileVersions.includes(2)) fail(426, 'UPGRADE_REQUIRED');", ''],
+    'running-profile-identity': ["if (document.kind === 'RUNNING_PROFILE') return documentId === await namespacedId(['trainoracle.account.running-profile.v1',ownerId]);", "if (document.kind === 'RUNNING_PROFILE') return true;"],
     'history-record-identity': ["if (doc.state === 'FINALIZED' && await recordId(ownerId, doc.entry.id) !== documentId) throw 0;", ''],
     'history-collection-filter': ["input.collection !== 'JOURNAL' || value.document.state === 'FINALIZED'", 'true'],
     'purged-operation-guard': ["if (prior.proposed_encrypted_payload === null) fail(409, 'OPERATION_REPLAY_UNAVAILABLE');", ''],
@@ -946,12 +948,163 @@ test('P4 concurrent identical relation nonces replay while distinct stale writer
 });
 
 async function fixedStateId(kind,owner=OWNER) {
-  const namespace = kind === 'PLAN' ? 'trainoracle.account.plan.v1' : 'trainoracle.account.decorations.v1';
+  const namespace = kind === 'RUNNING_PROFILE' ? 'trainoracle.account.running-profile.v1' : kind === 'PLAN' ? 'trainoracle.account.plan.v1' : 'trainoracle.account.decorations.v1';
   const bytes=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify([namespace,owner]))));
   bytes[6]=(bytes[6]&15)|80;bytes[8]=(bytes[8]&63)|128;
   const h=Buffer.from(bytes.slice(0,16)).toString('hex');
   return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`;
 }
+
+test('running profile requires support and protects identity, privacy and reward metadata',async()=>{
+  const document={version:3,state:'ACCOUNT_STATE',kind:'RUNNING_PROFILE',data:{version:'RUNNING_PROFILE_V1',answeredAt:'2026-10-04T00:00:00.000Z',answers:{motives:['health'],intensity:['unknown']}}};
+  const f=await fixture({dependencies:{validateDocument:validateAccountJournalDocument},repo:{runningProfileSupport:async()=>({kind:'running-profile-support',version:1})}});
+  await response(await f.request({action:'runningProfileSupport'}),200,{kind:'running-profile-support',version:1});
+  const documentId=await fixedStateId('RUNNING_PROFILE');
+  await response(await f.request(save({documentId,document})),200);
+  const read=await response(await f.request({action:'read',documentId}),200);
+  assert.deepEqual(read.document,document);
+  const stored=f.operations.get(f.key(OWNER,OP));
+  assert.deepEqual(stored.trusted_metadata,{kind:'RUNNING_PROFILE',occurrenceId:null,journalDate:null,eligible:false});
+  assert.equal(JSON.stringify(stored.proposed_encrypted_payload).includes('motives'),false);
+  await response(await f.request({action:'read',documentId},{headers:{Authorization:'Bearer other-token'}}),404);
+  await response(await f.request(save({documentId:await fixedStateId('RUNNING_PROFILE',OTHER),operationId:OP2,document})),422);
+  await response(await f.request(save({documentId,operationId:OP2,expectedRevision:1,document:{...document,data:{...document.data,answers:{...document.data.answers,memo:'private'}}}})),422);
+  assert.equal(f.calls.commit,1);
+});
+test('running profile capability fails closed on old SQL or gated account',async()=>{
+  for(const repo of [{},{runningProfileSupport:async()=>({kind:'running-profile-support',version:2})}]) {
+    const f=await fixture({repo}); await response(await f.request({action:'runningProfileSupport'}),503);
+  }
+  const f=await fixture({repo:{enabled:async()=>false,runningProfileSupport:async()=>({kind:'running-profile-support',version:1})}});
+  await response(await f.request({action:'runningProfileSupport'}),403);
+});
+
+const oracleV2 = () => ({ version:3,state:'ACCOUNT_STATE',kind:'RUNNING_PROFILE',data:{
+  version:'RUNNING_PROFILE_V2',status:'ACTIVE',legacyAnswers:{},legacyAnsweredAt:null,current:null,readings:[],
+} });
+const oracleV2Repo = { oracleV2Support:async()=>({kind:'oracle-v2-support',version:2}) };
+const oracleCapabilities = { supportedRunningProfileVersions:[1,2] };
+const oracleRevision = revision => ({ version:'ORACLE_PROFILE_REVISION_V2',revision,answeredAt:'2026-10-04T00:00:00.000Z',
+  questionVersion:'ORACLE_QUESTIONS_V2_1',scoreVersion:'SELF_RESPONSE_INDEX_V1',characterVersion:'RESPONSE_NICKNAME_V1',
+  answers:{STRUCTURE_1:5,STRUCTURE_2:5,STRUCTURE_3:5},selectedCharacter:'STRUCTURE' });
+
+test('Oracle V2 separate capability verifies SQL, gates and exact version without changing V1',async()=>{
+  const f=await fixture({repo:{...oracleV2Repo,runningProfileSupport:async()=>({kind:'running-profile-support',version:1})}});
+  await response(await f.request({action:'oracleV2Support'}),200,{kind:'oracle-v2-support',version:2});
+  await response(await f.request({action:'runningProfileSupport'}),200,{kind:'running-profile-support',version:1});
+  for(const repo of [{},{oracleV2Support:async()=>({kind:'running-profile-support',version:1})},
+    {oracleV2Support:async()=>({kind:'oracle-v2-support',version:2,extra:true})},
+    {oracleV2Support:async()=>{throw Error('unavailable')}}]) {
+    const old=await fixture({repo,dependencies:{validateDocument:validateAccountJournalDocument}});
+    await response(await old.request({action:'oracleV2Support'}),503);
+    await response(await old.request(save({...oracleCapabilities,documentId:await fixedStateId('RUNNING_PROFILE'),document:oracleV2()})),503);
+    assert.equal(old.calls.commit,0);
+  }
+  let gateCalls=0;
+  const revoked=await fixture({repo:{...oracleV2Repo,enabled:async()=>++gateCalls===1}});
+  await response(await revoked.request({action:'oracleV2Support'}),403);
+  for(const versions of [null,[],[2,2],['2'],[3],true])
+    await response(await f.request({action:'oracleV2Support',supportedRunningProfileVersions:versions}),400);
+});
+
+test('Oracle V2 old-client reads, writes and deletes require upgrade and capable downgrade is refused',async()=>{
+  const f=await fixture({repo:oracleV2Repo,dependencies:{validateDocument:validateAccountJournalDocument}});
+  const documentId=await fixedStateId('RUNNING_PROFILE'), document=oracleV2(); document.data.current=oracleRevision(1);
+  await response(await f.request(save({documentId,document})),426);
+  const first=await response(await f.request(save({...oracleCapabilities,documentId,document})),200);
+  await response(await f.request(save({...oracleCapabilities,documentId,document})),200,first);
+  await response(await f.request({action:'read',documentId}),426,{error:'UPGRADE_REQUIRED'});
+  const read=await response(await f.request({action:'read',documentId,...oracleCapabilities}),200);
+  assert.deepEqual(read.document,document);
+  assert.equal(JSON.stringify([...f.docs.values()]).includes('STRUCTURE'),false);
+  const v1={version:3,state:'ACCOUNT_STATE',kind:'RUNNING_PROFILE',data:{version:'RUNNING_PROFILE_V1',answeredAt:'2026-10-04T00:00:00.000Z',answers:{}}};
+  await response(await f.request(save({documentId,document:v1,operationId:OP2,expectedRevision:1})),426);
+  await response(await f.request(save({...oracleCapabilities,documentId,document:v1,operationId:OP2,expectedRevision:1})),422);
+  await response(await f.request({action:'delete',documentId,operationId:OP2,expectedRevision:1}),426);
+  assert.equal(f.calls.commit,1);
+});
+
+test('Oracle V2 migration is explicit, source-faithful and cannot invent old scores or history',async()=>{
+  const f=await fixture({repo:oracleV2Repo,dependencies:{validateDocument:validateAccountJournalDocument}});
+  const documentId=await fixedStateId('RUNNING_PROFILE');
+  const v1={version:3,state:'ACCOUNT_STATE',kind:'RUNNING_PROFILE',data:{version:'RUNNING_PROFILE_V1',answeredAt:'2026-10-04T00:00:00.000Z',answers:{intensity:['hard']}}};
+  await response(await f.request(save({documentId,document:v1})),200);
+  const next=oracleV2();next.data.legacyAnswers=v1.data.answers;next.data.legacyAnsweredAt=v1.data.answeredAt;
+  const request=save({...oracleCapabilities,documentId,operationId:OP2,expectedRevision:1,document:next});
+  await response(await f.request(request),422);
+  await response(await f.request({...request,writePurpose:'MIGRATION',document:{...next,data:{...next.data,current:oracleRevision(1)}}}),422);
+  await response(await f.request({...request,writePurpose:'MIGRATION'}),200);
+  const fresh=await fixture({repo:oracleV2Repo,dependencies:{validateDocument:validateAccountJournalDocument}});
+  await response(await fresh.request(save({...oracleCapabilities,documentId,document:next})),422);
+  const initial=oracleV2();initial.data.current=oracleRevision(3);
+  await response(await fresh.request(save({...oracleCapabilities,documentId,document:initial})),422);
+});
+
+test('Oracle V2 forbids history rollback, deleted-answer resurrection and tombstone replacement',async()=>{
+  const f=await fixture({repo:oracleV2Repo,dependencies:{validateDocument:validateAccountJournalDocument}});
+  const documentId=await fixedStateId('RUNNING_PROFILE'), one=oracleV2();one.data.current=oracleRevision(1);
+  await response(await f.request(save({...oracleCapabilities,documentId,document:one})),200);
+  const payload=f.docs.get(f.key(OWNER,documentId)).encrypted_payload;
+  f.repo.history=async()=>[{revision:1,encryptedPayload:payload,replacedAt:'2026-10-04T00:00:00.000Z',expiresAt:'2026-11-03T00:00:00.000Z',reason:'replaced'}];
+  const deleted=oracleV2();deleted.data.status='DELETED';
+  await response(await f.request(save({...oracleCapabilities,documentId,document:deleted,operationId:OP2,expectedRevision:1})),200);
+  const operationId='a1111111-2222-4333-8444-555555555555';
+  await response(await f.request(save({...oracleCapabilities,documentId,document:one,operationId,expectedRevision:2})),422);
+  await response(await f.request({action:'restore',...oracleCapabilities,documentId,operationId,expectedRevision:2,sourceRevision:1}),422);
+  const current=f.docs.get(f.key(OWNER,documentId));current.encrypted_payload=null;current.deleted_at='2026-10-04T00:00:00.000Z';
+  await response(await f.request(save({...oracleCapabilities,documentId,document:one,operationId,expectedRevision:2})),422);
+  await response(await f.request({action:'restore',...oracleCapabilities,documentId,operationId,expectedRevision:2,sourceRevision:1}),422);
+  assert.equal(f.calls.commit,2);
+});
+
+test('Oracle V2 context is optional, remains separate from score history and is removed on deletion',async()=>{
+  const f=await fixture({repo:oracleV2Repo,dependencies:{validateDocument:validateAccountJournalDocument}});
+  const documentId=await fixedStateId('RUNNING_PROFILE'), document=oracleV2();
+  document.data.context={version:'ORACLE_CONTEXT_V1',answeredAt:'2026-10-04T00:00:00.000Z',answers:{company:'ALONE'},conditions:{availableMinutes:30}};
+  await response(await f.request(save({...oracleCapabilities,documentId,document})),200);
+  const scored=structuredClone(document);scored.data.current=oracleRevision(1);
+  await response(await f.request(save({...oracleCapabilities,documentId,document:scored,operationId:OP2,expectedRevision:1})),200);
+  const changed=structuredClone(scored);changed.data.context.answers.company='TOGETHER';
+  const operationId='a1111111-2222-4333-8444-555555555555';
+  await response(await f.request(save({...oracleCapabilities,documentId,document:changed,operationId,expectedRevision:2})),200);
+  assert.deepEqual((await response(await f.request({action:'read',...oracleCapabilities,documentId}),200)).document.data.current,scored.data.current);
+  const deleted=oracleV2();deleted.data.status='DELETED';deleted.data.context=document.data.context;
+  await response(await f.request(save({...oracleCapabilities,documentId,document:deleted,operationId:crypto.randomUUID(),expectedRevision:3})),422);
+  delete deleted.data.context;
+  await response(await f.request(save({...oracleCapabilities,documentId,document:deleted,operationId:crypto.randomUUID(),expectedRevision:3})),200);
+});
+
+test('Oracle V2 restart requires explicit confirmation and exact deleted revision, creates only empty material and replays safely',async()=>{
+  for(const sqlTombstone of [false,true]) {
+    const f=await fixture({repo:{...oracleV2Repo,oracleV2RestartSupport:async()=>({kind:'oracle-v2-restart-support',version:1})},dependencies:{validateDocument:validateAccountJournalDocument}});
+    const documentId=await fixedStateId('RUNNING_PROFILE'), deleted=oracleV2();deleted.data.status='DELETED';
+    await response(await f.request(save({...oracleCapabilities,documentId,document:deleted})),200);
+    if(sqlTombstone) { const row=f.docs.get(f.key(OWNER,documentId));row.encrypted_payload=null;row.deleted_at='2026-10-04T00:00:00.000Z'; }
+    f.repo.restartOracleV2=async input=>{
+      const result=await f.repo.commit(input);
+      f.operations.get(f.key(OWNER,input.operationId)).operation_kind='restartOracleV2';
+      return result;
+    };
+    const request={action:'restartOracleV2',...oracleCapabilities,documentId,operationId:OP2,expectedRevision:1,confirmation:'START_NEW_ORACLE_V2'};
+    await response(await f.request({...request,confirmation:false}),400);
+    await response(await f.request({...request,document:oracleV2()}),400);
+    await response(await f.request({...request,expectedRevision:0}),400);
+    await response(await f.request({...request,supportedRunningProfileVersions:[1]}),426);
+    await response(await f.request({...request,documentId:DOC}),422);
+    await response(await f.request({...request,expectedRevision:2}),409);
+    await response(await f.request(save({...oracleCapabilities,documentId,operationId:OP2,expectedRevision:1,document:oracleV2()})),422);
+    const first=await response(await f.request(request),200);assert.equal(first.revision,2);
+    await response(await f.request(request),200,first);
+    const read=await response(await f.request({action:'read',...oracleCapabilities,documentId}),200);assert.deepEqual(read.document,oracleV2());
+    await response(await f.request({...request,operationId:crypto.randomUUID(),expectedRevision:2}),422);
+    await response(await f.request(save({...oracleCapabilities,documentId,operationId:OP2,expectedRevision:1,document:oracleV2()})),409);
+    const answered=oracleV2();answered.data.current=oracleRevision(1);
+    await response(await f.request(save({...oracleCapabilities,documentId,operationId:crypto.randomUUID(),expectedRevision:2,document:answered})),200);
+    assert.equal(f.calls.commit,3);
+  }
+  const old=await fixture({repo:oracleV2Repo});
+  await response(await old.request({action:'oracleV2RestartSupport'}),503);
+});
 
 test('ACCOUNT_STATE fixed owner identity, stable nonDraft canonical replay, kind guard and collection exclusion',async()=>{
   const { createEmptyDecorationState }=await decorationFixtures();

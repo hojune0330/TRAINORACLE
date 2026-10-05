@@ -1,0 +1,9 @@
+{
+  "projectRef": "REPLACE_WITH_CONFIRMED_PROJECT_REF",
+  "host": "aws-1-ap-northeast-2.pooler.supabase.com",
+  "port": 5432,
+  "database": "postgres",
+  "user": "postgres.REPLACE_WITH_CONFIRMED_PROJECT_REF",
+  "pgModule": "D:/admin/Documents/ChatGPT/트레인 오라클/backup-tools/runtime-deps/node_modules/pg",
+  "caFile": "D:/admin/Documents/ChatGPT/트레인 오라클/backup-tools/supabase-ca.crt"
+}

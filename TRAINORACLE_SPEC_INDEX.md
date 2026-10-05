@@ -17,6 +17,19 @@ registry_note: "Counts apply only to this registry document. Source SPEC issue c
 
 ## 0. Easy Start
 
+Oracle running profile: [러닝 프로필 계약](specs/reconstruct/RUNNING_PROFILE_CONTRACT.md)
+and [근거 검토·채택 범위](reports/research/RUNNING_PROFILE_EVIDENCE_2026-10-04.md).
+Self-reported preferences and descriptive records remain separate. No psychometric score,
+physiological classification, prescription change, or production proof is implied for V1.
+The owner's score/character extension is prepared separately in
+[점수·캐릭터 구현 준비](reports/plans/ORACLE_RUNNING_PROFILE_SCORE_CHARACTER_PLAN_2026-10-04.md)
+and [점수화 근거 검토](reports/research/RUNNING_PROFILE_SCORING_EVIDENCE_2026-10-04.md).
+Preparation does not activate scoring or validate the custom questionnaire.
+
+V2 implementation approval: [오라클 V2 구현 계약](specs/reconstruct/ORACLE_V2_IMPLEMENTATION_CONTRACT.md).
+The versioned response-index core is being implemented separately from V1. Public activation,
+account migration, full personalized content delivery and production verification remain separate gates.
+
 Calendar colors and AM/PM display: [달력 훈련 역할·색상 표시 계약](specs/active/CALENDAR_TRAINING_ROLE_PRESENTATION_CONTRACT.md).
 This is an owner-approved display contract, not a new training classifier or prescription authority.
 

@@ -23,6 +23,8 @@ import { JournalDetailActions } from "./journal-detail-actions"
 import { JournalDecorationSurface } from "./journal/JournalDecorationSurface"
 import { JournalOriginalPlan } from "./journal/JournalOriginalPlan"
 import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
+import { DecoratedJournalPageFrame } from "../components/DecoratedJournalPageFrame"
+import { useJournalDecorationSnapshot } from "./journal/JournalDecorationPreview"
 
 export type LogDetailVariant = "A" | "B"
 
@@ -35,6 +37,8 @@ export type LogDetailProps = {
   readonly readerControls?: React.ReactNode
   readonly pageTopRef?: React.RefObject<HTMLDivElement>
   readonly initialEntryId?: string
+  readonly readOnly?: boolean
+  readonly entries?: readonly JournalEntry[]
   readonly decorationStudio?: { readonly onDone: () => void; readonly previewMonth?: string; readonly materialsFooter?: React.ReactNode }
 }
 
@@ -200,7 +204,13 @@ function JournalEntryDisclosure({
 }
 
 // ───────── A. Journal-page (실데이터) ─────────
-function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControls, pageTopRef, initialEntryId, decorationStudio }: LogDetailProps) {
+function ReadOnlyJournalFrame({ date, children }: React.ComponentProps<typeof JournalDecorationSurface>) {
+  const state = useJournalDecorationSnapshot()
+  return state ? <DecoratedJournalPageFrame date={date} state={state}>{children}</DecoratedJournalPageFrame> : <>{children}</>
+}
+
+function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControls, pageTopRef, initialEntryId, decorationStudio, readOnly = false, entries: suppliedEntries }: LogDetailProps) {
+  const PageFrame = readOnly ? ReadOnlyJournalFrame : JournalDecorationSurface
   const [rev, setRev] = React.useState(0)
   // 방금 지운 것 — 되돌리기 버튼을 그 자리에서 띄우기 위해 들고 있는다.
   // 휴지통(30일)에 남아 있으므로 이 상태가 사라져도 복구는 가능하다.
@@ -211,12 +221,14 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
     { readonly id: string; readonly label: string } | null
   >(null)
   const undoRef = React.useRef<HTMLButtonElement>(null)
-  const entries = React.useMemo(() => entriesForDate(date).map(entry => readAccountJournalPrivateEntry(entry.id) ?? entry), [date, rev])
+  const entries = React.useMemo(() => (suppliedEntries ?? entriesForDate(date)).filter(entry => entry.date === date)
+    .map(entry => readAccountJournalPrivateEntry(entry.id) ?? entry), [date, rev, suppliedEntries])
   const renderedOwner = activeLocalAccount()
   // ACK is presentation state; only current-account records get a local policy copy.
   const actionEntries = entries.map(entry => accountJournalRecordsEnabled() && readAccountJournalPrivateEntry(entry.id)
     ? { ...entry, syncState: "local" as const } : entry)
   const edit = (candidate: JournalEntry) => {
+    if (readOnly) return
     if (renderedOwner !== activeLocalAccount()) return
     const original = entries.find(entry => entry.id === candidate.id)
     if (!original) return
@@ -231,7 +243,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
     return () => window.removeEventListener("trainoracle:account-journals-changed", refresh)
   }, [])
   const remove = async (): Promise<boolean> => {
-    if (!pendingDelete) return false
+    if (readOnly || !pendingDelete) return false
     const { id, label } = pendingDelete
     const account = readAccountJournalPrivateEntry(id) !== null
     const accountDeleted = account ? await deleteAccountJournalRecord(id) : false
@@ -252,6 +264,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
     if (justDeleted?.trashed) undoRef.current?.focus()
   }, [justDeleted])
   const undoRemove = async (id: string) => {
+    if (readOnly) return
     const r = justDeleted?.account ? { ok: await undoAccountJournalDeletion(id) } : restoreDeletedEntry(id)
     if (window.location.search.includes("uitest")) console.log(`[JUNDO] ok=${r.ok}`)
     if (!r.ok) {
@@ -311,7 +324,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
   return (
     <div className="paper-grid journal-detail-page">
       {!decorationStudio && (readerControls === undefined ? <TopBar2 onBack={onBack}>일지</TopBar2> : readerControls)}
-      <JournalDecorationSurface key={date} date={date} hasEntries={entries.length > 0} pageTopRef={pageTopRef} initiallyOpen={decorationStudio !== undefined} onDone={decorationStudio?.onDone} previewMonth={decorationStudio?.previewMonth} materialsFooter={decorationStudio?.materialsFooter}>
+      <PageFrame key={date} date={date} hasEntries={entries.length > 0} pageTopRef={pageTopRef} initiallyOpen={decorationStudio !== undefined} onDone={decorationStudio?.onDone} previewMonth={decorationStudio?.previewMonth} materialsFooter={decorationStudio?.materialsFooter}>
 
       <div className="journal-detail-page__date">
         <IndexCard date={cardDate(date)} dow={dowOf(date)} season={seasonOf(date)} />
@@ -334,7 +347,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
         </div>
       )}
 
-      {justDeleted && (
+      {!readOnly && justDeleted && (
         <div data-testid="delete-undo" style={{
           margin: "14px 20px 0", padding: "11px 13px",
           border: "1px solid var(--ink)", background: "var(--surface)",
@@ -372,7 +385,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
           <div style={{ marginTop: 12, fontFamily: "var(--mono)", fontSize: "var(--fs-mono-sm)", color: "var(--ink-3)", letterSpacing: "0.04em", lineHeight: 1.6 }}>
             {decorationStudio ? <>일지를 저장한 뒤 그림을 붙일 수 있어요.<br />달력은 지금 꾸밀 수 있어요.</> : <>오늘 일지는 홈 → 일지 쓰기에서 1분이면 남길 수 있어요.<br />어떤 모습으로 쌓이는지 궁금하면 가이드 탭의 예시 일지를 봐 주세요.</>}
           </div>
-          {onAddEntry !== undefined && (
+          {!readOnly && onAddEntry !== undefined && (
             <button type="button" className="journal-empty-state__add" onClick={() => onAddEntry(date)}>
               첫 일지 쓰기
             </button>
@@ -431,8 +444,8 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
                 </div>
                 <SavedMemo entry={entry} text={entry.memo} fontSize={19} />
                 <JournalOriginalPlan entry={entry} />
-                <EntryDeleteRow entryId={entry.id} onDelete={() => setPendingDelete({ id: entry.id, label: "훈련" })} />
-                <AccountJournalHistory entryId={entry.id} />
+                {!readOnly && <EntryDeleteRow entryId={entry.id} onDelete={() => setPendingDelete({ id: entry.id, label: "훈련" })} />}
+                {!readOnly && <AccountJournalHistory entryId={entry.id} />}
               </div>
             </JournalEntryDisclosure>
           )
@@ -463,8 +476,8 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
                 )}
                 <RaceSelfCheckSummary entry={entry} />
                 <SavedMemo entry={entry} text={entry.memo} fontSize={18} />
-                <EntryDeleteRow entryId={entry.id} onDelete={() => setPendingDelete({ id: entry.id, label: "경기" })} />
-                <AccountJournalHistory entryId={entry.id} />
+                {!readOnly && <EntryDeleteRow entryId={entry.id} onDelete={() => setPendingDelete({ id: entry.id, label: "경기" })} />}
+                {!readOnly && <AccountJournalHistory entryId={entry.id} />}
               </div>
             </JournalEntryDisclosure>
           )
@@ -498,8 +511,8 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
                 <SavedMemo entry={entry} text={entry.note} fontSize={17} />
               </div>
               <div style={{ padding: "0 14px" }}>
-                <EntryDeleteRow entryId={entry.id} onDelete={() => setPendingDelete({ id: entry.id, label: "하루 마무리" })} />
-                <AccountJournalHistory entryId={entry.id} />
+                {!readOnly && <EntryDeleteRow entryId={entry.id} onDelete={() => setPendingDelete({ id: entry.id, label: "하루 마무리" })} />}
+                {!readOnly && <AccountJournalHistory entryId={entry.id} />}
               </div>
             </div>
             {needsReview && (
@@ -518,20 +531,20 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
 
       {entries.length > 0 && (
         <>
-          <div className="journal-detail-page__storage-note">
+          {!readOnly && <div className="journal-detail-page__storage-note">
             이 페이지는 이 기기에만 저장돼 있어요. 온라인 보관·기기 이동은 계정 연동 후에 할 수 있어요.
-          </div>
+          </div>}
           <div className="journal-day-end" data-testid="journal-day-end" aria-hidden="true"><span>오늘 기록 끝</span></div>
-          <JournalDetailActions
+          {!readOnly && <JournalDetailActions
             date={date}
             entries={actionEntries}
             onAddEntry={onAddEntry}
             onEditEntry={onEditEntry ? edit : undefined}
-          />
+          />}
         </>
       )}
 
-      {pendingDelete && (
+      {!readOnly && pendingDelete && (
         <JournalConfirmationDialog
           title={`${pendingDelete.label} 일지를 지울까요?`}
           description={`${TRASH_RETENTION_DAYS}일 안에는 휴지통에서 되돌릴 수 있어요. 이후에는 완전히 삭제돼요.`}
@@ -541,7 +554,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
           onConfirm={remove}
         />
       )}
-      </JournalDecorationSurface>
+      </PageFrame>
     </div>
   )
 }

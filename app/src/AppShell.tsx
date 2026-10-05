@@ -55,6 +55,7 @@ import { AppOverlayNavigationProvider } from "./components/AppOverlayNavigation"
 import { isTermId, type TermId } from "./domain/glossary"
 import { isOracleTopicId, type OracleTopicId } from "./domain/oracle-exploration"
 import { isReadingStage, type ReadingStage } from "./domain/record-reading-oracle"
+import { isRunningProfileStage, type RunningProfileStage } from "./domain/running-profile"
 const JOURNAL_REWARD_MESSAGE = {
   AWARDED: "기록한 날 +4P가 반영됐어요.",
   ALREADY_AWARDED: "오늘의 다른 기록도 함께 모였어요. 이 날짜의 4P는 이미 반영돼 있어요.",
@@ -66,8 +67,34 @@ const JOURNAL_REWARD_MESSAGE = {
 const TOAST_READABLE_MS = 4000
 const TOAST_EXIT_MS = 150
 const OVERLAY_HISTORY_KEY = "trainoracleOverlay"
+const ORACLE_INVITATION_RETURN_KEY = "trainoracle.oracle-v2.invitation-return"
+
+function oracleV2Enabled(): boolean {
+  return import.meta.env.VITE_FEATURE_ORACLE_V2 === "true" && import.meta.env.VITE_KILL_ORACLE_V2 !== "true"
+}
+function oracleInvitationFragment(): string | null {
+  const values = new URLSearchParams(window.location.hash.slice(1)).getAll("oracle-compare-invite")
+  return values.length === 1 && /^[A-Za-z0-9_-]{43}$/u.test(values[0]!) ? values[0]! : null
+}
+function clearOracleInvitationReturn(): void {
+  try { window.sessionStorage.removeItem(ORACLE_INVITATION_RETURN_KEY) } catch { /* Fragment entry still works without storage. */ }
+}
+function initialOracleEntry(): { requested: boolean; invitation: string | null } {
+  if (!oracleV2Enabled() || typeof window === "undefined") return { requested: false, invitation: null }
+  let invitation = oracleInvitationFragment()
+  const query = new URLSearchParams(window.location.search)
+  // Only the existing account return path may resume this tab's pending invitation.
+  if (!invitation && !new URLSearchParams(window.location.hash.slice(1)).has("oracle-compare-invite") && query.get("account") === "1") {
+    try {
+      const pending = window.sessionStorage.getItem(ORACLE_INVITATION_RETURN_KEY)
+      if (pending && /^[A-Za-z0-9_-]{43}$/u.test(pending)) invitation = pending
+    } catch { /* No persistent or query-string fallback for invitation codes. */ }
+  }
+  return { requested: invitation !== null || query.get("oracleV2") === "1", invitation }
+}
 
 type AppOverlay =
+  | { readonly kind: "running-profile"; readonly stage: RunningProfileStage }
   | { readonly kind: "record-reading"; readonly stage: ReadingStage }
   | { readonly kind: "term"; readonly term: TermId }
   | { readonly kind: "feedback" }
@@ -93,6 +120,7 @@ function overlayHistoryMarker(state: unknown, owner: string): AppOverlay | null 
   if (value.version !== 1 || value.owner !== owner) return null
   if (value.kind === "feedback") return { kind: "feedback" }
   if (value.kind === "record-reading" && isReadingStage(value.stage)) return { kind: "record-reading", stage: value.stage }
+  if (value.kind === "running-profile" && isRunningProfileStage(value.stage)) return { kind: "running-profile", stage: value.stage }
   if (value.kind === "oracle" && isOracleTopicId(value.topic)) return {
     kind: "oracle", topic: value.topic,
     ...(value.mode === "example" || value.mode === "personal" ? { mode: value.mode } : {}),
@@ -108,6 +136,9 @@ export type AppShellMultiPlanRuntime = Pick<React.ComponentProps<typeof Deferred
 
 export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: AppShellMultiPlanRuntime } = {}) {
   const calendarSnapshot = useCalendarSnapshot()
+  const [oracleEntry, setOracleEntry] = React.useState(initialOracleEntry)
+  const [oracleEntryRevision, refreshOracleEntry] = React.useReducer((revision: number) => revision + 1, 0)
+  const [oracleAuthResolved, setOracleAuthResolved] = React.useState(() => !accountFeatureEnabled())
   const [accountScopeRevision, setAccountScopeRevision] = React.useState(0)
   const [, refreshAccountJournals] = React.useReducer((revision: number) => revision + 1, 0)
   const [v, setV] = React.useState(() => {
@@ -185,7 +216,11 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       && next.kind === "oracle" && overlayRef.current.topic !== next.topic
     const addsReadingHistory = overlayRef.current?.kind === "record-reading"
       && next.kind === "record-reading" && overlayRef.current.stage !== next.stage
-    const method = overlayRef.current === null || addsTermHistory || addsOracleHistory || addsReadingHistory ? "pushState" : "replaceState"
+    const resultStages = ["preferences", "records", "training", "changes"]
+    const addsProfileHistory = overlayRef.current?.kind === "running-profile"
+      && (next.kind !== "running-profile" || overlayRef.current.stage !== next.stage
+        && !(resultStages.includes(overlayRef.current.stage) && resultStages.includes(next.stage)))
+    const method = overlayRef.current === null || addsTermHistory || addsOracleHistory || addsReadingHistory || addsProfileHistory ? "pushState" : "replaceState"
     if (addsOracleHistory && overlayRef.current?.kind === "oracle") {
       window.history.replaceState({ ...currentState, [OVERLAY_HISTORY_KEY]: {
         ...overlayRef.current, owner: overlayHistoryOwnerRef.current, version: 1,
@@ -204,6 +239,46 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     }
     applyOverlay(null)
   }, [applyOverlay])
+
+  React.useEffect(() => {
+    if (!oracleV2Enabled()) { clearOracleInvitationReturn(); return }
+    if (!oracleEntry.invitation) clearOracleInvitationReturn()
+    const onHashChange = () => {
+      // Auth callbacks may clear their own fragment while the pending entry is still resolving.
+      if (!new URLSearchParams(window.location.hash.slice(1)).has("oracle-compare-invite")) return
+      const invitation = oracleInvitationFragment()
+      if (!invitation) { clearOracleInvitationReturn(); setOracleEntry({ requested: false, invitation: null }); return }
+      setOracleEntry({ requested: true, invitation })
+    }
+    window.addEventListener("hashchange", onHashChange)
+    return () => window.removeEventListener("hashchange", onHashChange)
+  }, [])
+
+  React.useEffect(() => {
+    if (!oracleV2Enabled() || !oracleEntry.requested) return
+    if (oracleEntry.invitation && accountFeatureEnabled()) {
+      // Preserve only the validated invitation, never an OAuth hash, profile or consent.
+      try { window.sessionStorage.setItem(ORACLE_INVITATION_RETURN_KEY, oracleEntry.invitation) } catch { /* In-page login can still resume. */ }
+      if (!oracleAuthResolved) return
+      if (!activeLocalAccount()) {
+        runDraftSafeNavigation(() => { applyOverlay(null); setV({ ...INITIAL_VIEW_STATE, accountOpen: true }); setUtilityView(null) })
+        return
+      }
+    }
+    runDraftSafeNavigation(() => {
+      if (oracleEntry.invitation) {
+        const url = new URL(window.location.href), fragment = new URLSearchParams(url.hash.slice(1))
+        fragment.set("oracle-compare-invite", oracleEntry.invitation)
+        url.hash = fragment.toString()
+        window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash)
+      }
+      setV(state => ({ ...state, accountOpen: false }))
+      refreshOracleEntry()
+      openOverlay({ kind: "running-profile", stage: "overview" })
+      setOracleEntry({ requested: false, invitation: null })
+      clearOracleInvitationReturn()
+    })
+  }, [oracleEntry, oracleAuthResolved, accountScopeRevision, applyOverlay, openOverlay])
 
   React.useEffect(() => {
     const onPopState = (event: PopStateEvent) => {
@@ -243,7 +318,11 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       if (next !== null) {
         applyOverlay(next)
       } else if (overlayRef.current !== null) {
-        applyOverlay(null)
+        if (overlayRef.current.kind === "running-profile") {
+          const previous = overlayRef.current
+          if (!runDraftSafeNavigation(() => applyOverlay(null))) window.history.pushState({ ...window.history.state,
+            [OVERLAY_HISTORY_KEY]: { ...previous, owner: overlayHistoryOwnerRef.current, version: 1 } }, "", window.location.href)
+        } else applyOverlay(null)
       }
     }
     window.addEventListener("popstate", onPopState)
@@ -295,17 +374,20 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       if (mounted && !authEventSeen) {
         setActiveLocalAccount(user?.id ?? null)
         setAccountAuthState(user ? "RESOLVING" : "GUEST")
+        setOracleAuthResolved(true)
       }
     }).catch(() => {
       if (mounted && !authEventSeen) {
         setAccountAuthState("FAILED")
         setActiveLocalAccount(null)
+        setOracleAuthResolved(true)
       }
     })
     const unsubscribeAuth = onAuthChange((user) => {
       authEventSeen = true
       setActiveLocalAccount(user?.id ?? null)
       setAccountAuthState(user ? "RESOLVING" : "GUEST")
+      setOracleAuthResolved(true)
     }, { ignoreInitialSession: true })
     return () => {
       mounted = false
@@ -321,7 +403,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     const url = new URL(window.location.href)
     if (url.searchParams.get("account") === "1") {
       url.searchParams.delete("account")
-      window.history.replaceState(null, "", url)
+      window.history.replaceState(window.history.state, "", url)
     }
   }, [])
 
@@ -430,7 +512,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     // Leaving the exploration invalidates its older history entries too.
     // Otherwise Back could reopen a sample over a different destination tab.
     overlayHistoryOwnerRef.current = `shell-${Date.now()}-${Math.random().toString(36).slice(2)}`
-    if (overlayRef.current?.kind !== "oracle" && overlayRef.current?.kind !== "record-reading") return
+    if (overlayRef.current?.kind !== "oracle" && overlayRef.current?.kind !== "record-reading" && overlayRef.current?.kind !== "running-profile") return
     const currentState = window.history.state
     if (typeof currentState === "object" && currentState !== null) {
       const { [OVERLAY_HISTORY_KEY]: _marker, ...rest } = currentState as Record<string, unknown>
@@ -609,7 +691,10 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     screen = (
       <DeferredMobileScreens.Account
         loungeRequested={loungeEntryIntent().requested}
-        onBack={() => runViewTransition("pop", () => setV(s => ({ ...s, accountOpen: false })))}
+        onBack={() => runViewTransition("pop", () => {
+          setOracleEntry({ requested: false, invitation: null }); clearOracleInvitationReturn()
+          setV(s => ({ ...s, accountOpen: false }))
+        })}
         onOpenImport={openImport}
         onOpenRestore={openRestore}
       />
@@ -781,6 +866,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         onOpenPlan={() => goTab("plan")}
         onOpenOracle={openOracle}
         onOpenRecordReading={() => openOverlay({ kind: "record-reading", stage: "own-event" })}
+        onOpenRunningProfile={() => openOverlay({ kind: "running-profile", stage: "overview" })}
       />
     )
   }
@@ -831,6 +917,21 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         {overlay?.kind === "feedback" && (
           <div className="app-flow-stage" data-motion="push" data-overlay="feedback">
             <DeferredMobileScreens.FeedbackBoard onBack={closeOverlay} />
+          </div>
+        )}
+        {overlay?.kind === "running-profile" && (
+          <div className="app-flow-stage" data-overlay="running-profile">
+            {oracleV2Enabled() ?
+              <DeferredMobileScreens.OracleProfileV2 key={`oracle-v2-${accountScopeRevision}-${oracleEntryRevision}`} today={todayISO()} onBack={closeOverlay}
+                onNavigate={destination => runDraftSafeNavigation(() => {
+                  if (destination === "RECORDS") openOraclePersonal("records")
+                  else if (destination === "JOURNAL") openOraclePersonal("journal")
+                  else if (destination === "METHODS") { dismissOracle(); setUtilityOrigin("home"); setUtilityView("content") }
+                  else openOraclePersonal("plan")
+                })} /> : <DeferredMobileScreens.RunningProfile key={`running-profile-${accountScopeRevision}`}
+              stage={overlay.stage} today={todayISO()}
+              onStageChange={stage => openOverlay({ kind: "running-profile", stage })}
+              onBack={closeOverlay} onClose={() => runDraftSafeNavigation(dismissOracle)} />}
           </div>
         )}
         {overlay?.kind === "record-reading" && (

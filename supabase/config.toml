@@ -52,3 +52,7 @@ verify_jwt = false
 # Same explicit auth.getUser verification and owner-scoped RPC gates as account-journal.
 [functions.account-plan-collection]
 verify_jwt = false
+
+# Exact bearer verification plus session-bound, separately attested bilateral grants.
+[functions.oracle-profile-comparison]
+verify_jwt = false
