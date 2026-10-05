@@ -46,6 +46,7 @@ export type ActivePlanEditProposal = Readonly<{
   beforeSessions: readonly Session[]
   afterSessions: readonly Session[]
   paceSourceRecord?: AthleteRecord
+  explicitPaceBasis?: boolean
 }>
 
 export type ActivePlanEditExclusion = Readonly<ActivePlanEditAddress & { reasonCode: ActivePlanEditReasonCode; reason: string }>

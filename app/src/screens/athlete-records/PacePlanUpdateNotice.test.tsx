@@ -15,6 +15,16 @@ beforeEach(() => { vi.clearAllMocks(); vi.mocked(prepareCurrentPaceUpdate).mockR
 afterEach(cleanup)
 
 describe("pace update confirmation", () => {
+  it("never offers another mutation after an uncertain write", async () => {
+    vi.mocked(applyActivePlanEdit).mockResolvedValue({ kind: "uncertain", message: "저장 상태 확인 중" })
+    render(<PacePlanUpdateNotice record={record} onDone={vi.fn()} />)
+    const button = await screen.findByRole("button", { name: "남은 훈련에 적용" })
+    fireEvent.click(screen.getByRole("checkbox")); fireEvent.click(button)
+    expect(await screen.findByText("저장 상태 확인 중")).toBeVisible()
+    expect(screen.queryByRole("button", { name: "변경안 다시 확인" })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "계획으로 돌아가 저장 확인" })).toBeVisible()
+    expect(applyActivePlanEdit).toHaveBeenCalledTimes(1)
+  })
   it("rechecks protected slots before undo and never reports a rejected undo as saved", async () => {
     vi.mocked(applyActivePlanEdit).mockResolvedValue({ kind: "applied" } as Awaited<ReturnType<typeof applyActivePlanEdit>>)
     vi.mocked(prepareCurrentPaceUndo).mockResolvedValue({ kind: "blocked", reasonCode: "TARGET_UNAVAILABLE", message: "새 일지가 있어 되돌릴 수 없어요.", permittedTargets: [] })

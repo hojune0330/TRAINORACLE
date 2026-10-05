@@ -38,15 +38,15 @@ export async function prepareCurrentActivePlanEdit(selection: ActivePlanEditSele
 }
 
 /** Explicit review of unstarted slots; applying still requires the normal safety confirmation. */
-export async function prepareCurrentPaceUpdate(record: AthleteRecord): Promise<ActivePlanEditPreparation> {
-  return prepareCurrentEdit({ action: "PACE_REFERENCE", record })
+export async function prepareCurrentPaceUpdate(record: AthleteRecord, explicitPaceBasis = false): Promise<ActivePlanEditPreparation> {
+  return prepareCurrentEdit({ action: "PACE_REFERENCE", record, explicitPaceBasis })
 }
 
 export async function prepareCurrentPaceUndo(): Promise<ActivePlanEditPreparation> {
   return prepareCurrentEdit({ action: "PACE_UNDO" })
 }
 
-async function prepareCurrentEdit(selection: ActivePlanEditSelection | { action: "PACE_REFERENCE"; record: AthleteRecord } | { action: "PACE_UNDO" }): Promise<ActivePlanEditPreparation> {
+async function prepareCurrentEdit(selection: ActivePlanEditSelection | { action: "PACE_REFERENCE"; record: AthleteRecord; explicitPaceBasis?: boolean } | { action: "PACE_UNDO" }): Promise<ActivePlanEditPreparation> {
   const scope = localAccountScopeSnapshot(), online = accountPlansEnabled()
   let changed = false
   const unsubscribe = onLocalJournalScopeChange(() => { changed = true })
@@ -77,7 +77,7 @@ async function prepareCurrentEdit(selection: ActivePlanEditSelection | { action:
     const context = { state, entries: read.entries, today: todayISO(), now: new Date().toISOString(),
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       journalGuard: journalGuard?.sort((a, b) => a.documentId.localeCompare(b.documentId)) ?? null }
-    if (selection.action === "PACE_REFERENCE") return preparePacePlanUpdate({ ...context, record: selection.record,
+    if (selection.action === "PACE_REFERENCE") return preparePacePlanUpdate({ ...context, record: selection.record, explicitPaceBasis: selection.explicitPaceBasis,
       ...(paceRecordGuard ? { paceRecordGuard } : {}) }, paceRecords)
     if (selection.action === "PACE_UNDO") return preparePacePlanUndo(context)
     let catalog: Pick<Parameters<typeof prepareActivePlanEdit>[0], "replacement" | "acceptedRpeMaximum" | "acceptedLongerDuration"> = {}
@@ -191,7 +191,7 @@ export async function applyActivePlanEdit(proposal: ActivePlanEditProposal, conf
       const rebuilt = receipt.undoOf ? preparePacePlanUndo({ state: proposal.before, entries: read.entries,
         today: receipt.today, now: receipt.acceptedAt, timeZone: receipt.timeZone, journalGuard: receipt.journalGuard })
         : receipt.action === "PACE_REFERENCE" ? preparePacePlanUpdate({ state: proposal.before, entries: read.entries,
-        record: proposal.paceSourceRecord!, today: receipt.today, now: receipt.acceptedAt, timeZone: receipt.timeZone,
+        record: proposal.paceSourceRecord!, explicitPaceBasis: proposal.explicitPaceBasis, today: receipt.today, now: receipt.acceptedAt, timeZone: receipt.timeZone,
         journalGuard: receipt.journalGuard, ...(receipt.paceRecordGuard ? { paceRecordGuard: receipt.paceRecordGuard } : {}) },
         accountPlansEnabled() ? readAccountAthleteRecordsState().records : undefined) : prepareActivePlanEdit({ state: proposal.before, entries: read.entries, source: receipt.source,
         action: receipt.action, target: receipt.target ?? undefined, maximumMinutes: receipt.maximumMinutes ?? undefined,

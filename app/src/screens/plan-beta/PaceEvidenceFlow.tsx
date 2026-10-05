@@ -1,5 +1,8 @@
 import React from "react"
-import { Check, Plus, RefreshCw } from "lucide-react"
+import { Calculator, Check, Plus, RefreshCw } from "lucide-react"
+import { useAppOverlayNavigation } from "../../components/AppOverlayNavigation"
+import { localAccountScopeSnapshot, localAccountScopeIsCurrent } from "../../domain/account/local-account-scope"
+import { isEligiblePaceRecordCurrent } from "../../domain/account/eligible-account-pace-records"
 import { deriveRecordCurrentness } from "../../domain/pace-target-evidence"
 import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
 import type { AthleteRecord } from "../../domain/athlete-records"
@@ -41,6 +44,12 @@ export function PaceEvidenceFlow({
   onUseRpe,
   recordReturnCount = 0,
 }: Props) {
+  const navigation = useAppOverlayNavigation()
+  const live = React.useRef(true)
+  const contextFingerprint = JSON.stringify({ eventDistanceM, selectedRecordId, comparisonRecordId, binding })
+  const currentContext = React.useRef(contextFingerprint)
+  currentContext.current = contextFingerprint
+  React.useEffect(() => { live.current = true; return () => { live.current = false } }, [])
   const sectionRef = React.useRef<HTMLElement>(null)
   useActiveContentScroll(recordReturnCount > 0 ? recordReturnCount : null, sectionRef, sectionRef)
   const shouldFocusResult = React.useRef(false)
@@ -70,6 +79,21 @@ export function PaceEvidenceFlow({
         <h2>개인 페이스 기준 기록</h2>
         <p>최근 경기를 먼저 추천해요. 다른 기록으로 바꿀 수도 있어요.</p>
       </header>
+      {navigation?.openPaceCalculator && <button type="button" className="plan-text-action" onClick={() => {
+        const scope = localAccountScopeSnapshot()
+        navigation.openPaceCalculator?.({
+          record: selected ?? usable.find(record => record.id === choices.recommendedRecordId),
+          allowedEvents: [eventDistanceM],
+          selectionLabel: "계획의 페이스 기준",
+          onSelectRecord: record => {
+            if (!live.current || !localAccountScopeIsCurrent(scope) || currentContext.current !== contextFingerprint
+              || !isEligiblePaceRecordCurrent(record) || record.eventDistanceM !== eventDistanceM) return false
+            onSelectRecord(record.id)
+            onCompareRecord(null)
+            return true
+          },
+        })
+      }}><Calculator aria-hidden="true" size={18} />페이스 계산 · 기준 바꾸기</button>}
       {usable.length === 0 ? (
         <p className="pace-evidence-fallback">이 종목의 경기 기록이 아직 없어요. 기록을 추가하면 고른 조건과 시작 날짜를 유지한 채 돌아옵니다. 기록 없이 시간·RPE 계획을 받을 수도 있어요.</p>
       ) : (

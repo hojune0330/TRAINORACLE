@@ -56,6 +56,8 @@ import { isTermId, type TermId } from "./domain/glossary"
 import { isOracleTopicId, type OracleTopicId } from "./domain/oracle-exploration"
 import { isReadingStage, type ReadingStage } from "./domain/record-reading-oracle"
 import { isRunningProfileStage, type RunningProfileStage } from "./domain/running-profile"
+import { isPaceToolStage, type PaceToolRequest } from "./domain/pace-tools"
+import { isEligiblePaceRecordCurrent } from "./domain/account/eligible-account-pace-records"
 const JOURNAL_REWARD_MESSAGE = {
   AWARDED: "기록한 날 +4P가 반영됐어요.",
   ALREADY_AWARDED: "오늘의 다른 기록도 함께 모였어요. 이 날짜의 4P는 이미 반영돼 있어요.",
@@ -94,6 +96,7 @@ function initialOracleEntry(): { requested: boolean; invitation: string | null }
 }
 
 type AppOverlay =
+  | { readonly kind: "pace"; readonly stage: import("./domain/pace-tools").PaceToolStage; readonly token: string; readonly depth: number; readonly scrollTop?: number }
   | { readonly kind: "running-profile"; readonly stage: RunningProfileStage }
   | { readonly kind: "record-reading"; readonly stage: ReadingStage }
   | { readonly kind: "term"; readonly term: TermId }
@@ -118,6 +121,11 @@ function overlayHistoryMarker(state: unknown, owner: string): AppOverlay | null 
   if (typeof marker !== "object" || marker === null) return null
   const value = marker as Record<string, unknown>
   if (value.version !== 1 || value.owner !== owner) return null
+  if (value.kind === "pace" && isPaceToolStage(value.stage) && typeof value.token === "string"
+    && Number.isInteger(value.depth) && (value.depth as number) > 0 && (value.depth as number) <= 100) return {
+    kind: "pace", stage: value.stage, token: value.token, depth: value.depth as number,
+    ...(typeof value.scrollTop === "number" && Number.isFinite(value.scrollTop) && value.scrollTop >= 0 ? { scrollTop: value.scrollTop } : {}),
+  }
   if (value.kind === "feedback") return { kind: "feedback" }
   if (value.kind === "record-reading" && isReadingStage(value.stage)) return { kind: "record-reading", stage: value.stage }
   if (value.kind === "running-profile" && isRunningProfileStage(value.stage)) return { kind: "running-profile", stage: value.stage }
@@ -175,6 +183,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const decorationReturn = React.useRef<{ owner: string | null; view: typeof v; utility: typeof utilityView; scroll: number; focusLabel: string | null; focusText: string | null } | null>(null)
   const [overlay, setOverlay] = React.useState<AppOverlay | null>(null)
   const overlayRef = React.useRef<AppOverlay | null>(null)
+  const paceRequestRef = React.useRef<{ token: string; owner: string | null; request: PaceToolRequest; opener: HTMLElement | null; consumed: boolean } | null>(null)
   const overlayScrollTopRef = React.useRef(0)
   const overlayHistoryOwnerRef = React.useRef(`shell-${Date.now()}-${Math.random().toString(36).slice(2)}`)
   const restoreReturnRef = React.useRef<ShellReturnPoint | null>(null)
@@ -193,13 +202,17 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   }, [])
 
   const applyOverlay = React.useCallback((next: AppOverlay | null) => {
+    const pace = paceRequestRef.current
+    if (next?.kind === "pace" && (!pace || pace.token !== next.token || pace.owner !== activeLocalAccount() || pace.consumed)) next = null
+    const leavingPace = overlayRef.current?.kind === "pace" && next?.kind !== "pace"
     overlayRef.current = next
     setOverlay(next)
     window.requestAnimationFrame(() => {
       const scrollRegion = scrollRegionRef.current
       if (scrollRegion === null) return
-      scrollRegion.scrollTop = next === null ? overlayScrollTopRef.current : next.kind === "oracle" ? next.scrollTop ?? 0 : 0
+      scrollRegion.scrollTop = next === null ? overlayScrollTopRef.current : next.kind === "oracle" || next.kind === "pace" ? next.scrollTop ?? 0 : 0
       scrollRegion.scrollLeft = 0
+      if (leavingPace && pace?.opener?.isConnected) pace.opener.focus({ preventScroll: true })
     })
   }, [])
 
@@ -216,12 +229,13 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       && next.kind === "oracle" && overlayRef.current.topic !== next.topic
     const addsReadingHistory = overlayRef.current?.kind === "record-reading"
       && next.kind === "record-reading" && overlayRef.current.stage !== next.stage
+    const addsPaceHistory = next.kind === "pace" && (overlayRef.current?.kind !== "pace" || overlayRef.current.stage !== next.stage)
     const resultStages = ["preferences", "records", "training", "changes"]
     const addsProfileHistory = overlayRef.current?.kind === "running-profile"
       && (next.kind !== "running-profile" || overlayRef.current.stage !== next.stage
         && !(resultStages.includes(overlayRef.current.stage) && resultStages.includes(next.stage)))
-    const method = overlayRef.current === null || addsTermHistory || addsOracleHistory || addsReadingHistory || addsProfileHistory ? "pushState" : "replaceState"
-    if (addsOracleHistory && overlayRef.current?.kind === "oracle") {
+    const method = overlayRef.current === null || addsTermHistory || addsOracleHistory || addsReadingHistory || addsProfileHistory || addsPaceHistory ? "pushState" : "replaceState"
+    if ((addsOracleHistory && overlayRef.current?.kind === "oracle") || (addsPaceHistory && overlayRef.current !== null)) {
       window.history.replaceState({ ...currentState, [OVERLAY_HISTORY_KEY]: {
         ...overlayRef.current, owner: overlayHistoryOwnerRef.current, version: 1,
         scrollTop: scrollRegionRef.current?.scrollTop ?? 0,
@@ -351,7 +365,14 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       setSavedToast(current => current?.rewardMessage === JOURNAL_REWARD_MESSAGE.PENDING ? { ...current, rewardMessage } : current)
       pendingReward.current = null
     }
-    const scope = () => { pendingReward.current = null; oracleInputRef.current = null; decorationReturn.current = null; setDecorationInitialDate(undefined); setSavedToast(null); setAnalysisContext(undefined) }
+    const scope = () => {
+      pendingReward.current = null; oracleInputRef.current = null; decorationReturn.current = null; setDecorationInitialDate(undefined); setSavedToast(null); setAnalysisContext(undefined)
+      paceRequestRef.current = null
+      if (overlayRef.current?.kind === "pace") {
+        overlayHistoryOwnerRef.current = `shell-${Date.now()}-${Math.random().toString(36).slice(2)}`
+        applyOverlay(null)
+      }
+    }
     window.addEventListener(ACCOUNT_REWARD_EVENT, refresh)
     const unsubscribe = onLocalJournalScopeChange(scope)
     return () => { window.removeEventListener(ACCOUNT_REWARD_EVENT, refresh); unsubscribe() }
@@ -492,7 +513,8 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     // Leaving the exploration invalidates its older history entries too.
     // Otherwise Back could reopen a sample over a different destination tab.
     overlayHistoryOwnerRef.current = `shell-${Date.now()}-${Math.random().toString(36).slice(2)}`
-    if (overlayRef.current?.kind !== "oracle" && overlayRef.current?.kind !== "record-reading" && overlayRef.current?.kind !== "running-profile") return
+    paceRequestRef.current = null
+    if (overlayRef.current?.kind !== "oracle" && overlayRef.current?.kind !== "record-reading" && overlayRef.current?.kind !== "running-profile" && overlayRef.current?.kind !== "pace") return
     const currentState = window.history.state
     if (typeof currentState === "object" && currentState !== null) {
       const { [OVERLAY_HISTORY_KEY]: _marker, ...rest } = currentState as Record<string, unknown>
@@ -854,6 +876,12 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   return (
     <MultiPlanEvidenceContext.Provider value={multiPlanRuntime?.readMultiAdjustedEvidenceV3}>
     <AppOverlayNavigationProvider
+      openPaceCalculator={(request = {}) => {
+        const token = `pace-${Date.now()}-${Math.random().toString(36).slice(2)}`
+        paceRequestRef.current = { token, owner: activeLocalAccount(), request, consumed: false,
+          opener: document.activeElement instanceof HTMLElement ? document.activeElement : null }
+        openOverlay({ kind: "pace", stage: request.record ? "result" : "event", token, depth: 1 })
+      }}
       openTrainingTerm={(term) => openOverlay({ kind: "term", term })}
       openFeedback={() => openOverlay({ kind: "feedback" })}
     >
@@ -883,6 +911,21 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           </ErrorBoundary>
         </div>
         <ErrorBoundary key={`overlay-${overlay?.kind ?? "none"}-${accountScopeRevision}`} region onExit={closeOverlay} recoveryTab={tabForChrome(v)}>
+        {overlay?.kind === "pace" && paceRequestRef.current?.token === overlay.token && (
+          <DeferredMobileScreens.PaceCalculator key={overlay.token} stage={overlay.stage}
+            request={{ ...paceRequestRef.current.request, ...(paceRequestRef.current.request.onSelectRecord ? {
+              onSelectRecord: record => {
+                const context = paceRequestRef.current
+                if (!context || context.token !== overlay.token || context.consumed || context.owner !== activeLocalAccount() || !isEligiblePaceRecordCurrent(record)) return false
+                if (context.request.onSelectRecord?.(record) === false) return false
+                context.consumed = true
+                window.history.go(-overlay.depth)
+                return true
+              },
+            } : {}) }}
+            onStageChange={stage => { if (stage !== overlay.stage) openOverlay({ kind: "pace", stage, token: overlay.token, depth: overlay.depth + 1 }) }}
+            onBack={closeOverlay} />
+        )}
         {overlay?.kind === "term" && (
           <div className="app-flow-stage" data-motion="push" data-overlay="training-term">
             <DeferredMobileScreens.TrainingLexicon

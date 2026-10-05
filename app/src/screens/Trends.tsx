@@ -1,5 +1,6 @@
 import React from "react"
-import { ArrowLeft, ArrowRight } from "lucide-react"
+import { ArrowLeft, ArrowRight, Calculator } from "lucide-react"
+import { useAppOverlayNavigation } from "../components/AppOverlayNavigation"
 import { projectStructuredJournalObservations } from "../domain/journal-observation"
 import { analysisExclusionSummary, loadEntries, todayISO } from "../domain/journal-store"
 import { MonthlyTrendSection } from "./trends/MonthlyTrendSection"
@@ -39,6 +40,7 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
   readonly onOpenRunningProfile?: (() => void) | undefined
   readonly initialContext?: AnalysisNavigation | undefined
 }) {
+  const navigation = useAppOverlayNavigation()
   const [section, setSection] = React.useState<AnalysisSection>(initialContext?.section ?? "summary")
   const fileAnalysisEnabled = fileAnalysisFormats().length > 0
   const [entryRevision, setEntryRevision] = React.useState(0)
@@ -82,6 +84,9 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
   return (
     <div style={{ paddingBottom: 30 }}>
       <TrendsHeader onBack={onBack} />
+      {navigation?.openPaceCalculator && <button type="button" className="plan-text-action" onClick={() => navigation.openPaceCalculator?.()}>
+        <Calculator size={18} aria-hidden="true" /> 페이스 계산
+      </button>}
       <div className="trends-motion-stage">
         <div className="trends-hub__sections" role="group" aria-label="오라클 항목">
           {ANALYSIS_SECTIONS.map(item => (
