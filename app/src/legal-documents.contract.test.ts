@@ -3,7 +3,7 @@ import { resolve } from "node:path"
 import { describe, expect, it } from "vitest"
 
 const PUBLIC_LEGAL_DIR = resolve(process.cwd(), "public", "legal")
-const VERSION = "2026-08-26"
+const VERSION = "2026-10-05"
 
 function readLegalDocument(filename: string) {
   return readFileSync(resolve(PUBLIC_LEGAL_DIR, filename), "utf8")
@@ -22,13 +22,14 @@ describe("public legal documents", () => {
     }
   })
 
-  it("keeps the local free-memo boundary explicit", () => {
+  it("distinguishes local text from optional decryptable server storage", () => {
     const privacy = readLegalDocument("privacy.html")
     const terms = readLegalDocument("terms.html")
 
-    expect(privacy).toContain("자유 메모 원문은 기본적으로 기기 안에만 저장됩니다")
-    expect(privacy).toContain("자동 분석이나 온라인 동기화 대상으로 보내지 않습니다")
-    expect(terms).toContain("자유 메모 원문은 기본적으로 온라인 동기화와 자동 분석에서 제외합니다")
+    expect(privacy).toContain("계정 보관을 선택하지 않은 자유 메모 원문은 기기에 저장됩니다")
+    expect(privacy).toContain("종단간 암호화는 아닙니다")
+    expect(privacy).toContain("기존 가입·동기화 동의는 새 목적 동의로 대체되지 않습니다")
+    expect(terms).toContain("비밀 글은 분석·공유에서 제외하고 원문을 외부 AI로 전송하지 않습니다")
   })
 
   it("keeps training plans distinct from medical clearance", () => {

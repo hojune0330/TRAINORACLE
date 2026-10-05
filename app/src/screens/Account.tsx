@@ -36,6 +36,7 @@ import {
 } from "./account/index"
 import { AccountAuthGateway } from "./account/AccountAuthGateway"
 import { BetaAccountSettings } from "./account/BetaAccountSettings"
+import { AccountDataRightsPanel } from "./account/AccountDataRightsPanel"
 import { AccountJournalDraftPanel } from "./account/AccountJournalDraftPanel"
 import { accountJournalPreviewEnabled } from "../domain/account/account-journal-api"
 import { AccountJournalHistory } from "./account/AccountJournalHistory"
@@ -547,6 +548,15 @@ export function Account({ onBack, onOpenImport, onOpenRestore, loungeRequested =
           <p role="status" style={{ fontFamily: "var(--sans)", fontSize: 14, lineHeight: 1.65, margin: 0 }}>
             가입 정보를 다시 확인하고 있어요. 확인이 끝나기 전에는 계정 기록을 열지 않아요.
           </p>
+        </div>
+      )}
+
+      {!loading && user !== null && !unverifiedAccountSessionOpen && !deletedAccountSessionOpen
+        && (setupState === "needs-profile" || setupState === "failed") && (
+        <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+          <AccountDataRightsPanel key={`rights-${user.id}`} userId={user.id} />
+          <BetaAccountSettings key={`delete-${user.id}`} userId={user.id} today={today}
+            legalDocuments={config} dataRightsOnly onDeletionCompleted={handleDeletionCompleted} />
         </div>
       )}
 

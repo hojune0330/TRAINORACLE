@@ -39,10 +39,11 @@ describe("verified local account scope", () => {
     loadSetup = vi.fn().mockResolvedValue({ ok: true, ready: true })
   })
 
-  const start = () => startVerifiedAccountScope(status => statuses.push(status), {
+  const start = (loadStorageConsent?: (userId: string) => Promise<unknown>) => startVerifiedAccountScope(status => statuses.push(status), {
     currentUser,
     onAuthChange: listener => { authListener = listener; return () => { authListener = null } },
     loadPrivateProfileSetupStatus: loadSetup,
+    loadStorageConsent,
     setActiveLocalAccount: setScope,
     setAccountAuthState: setAuthState,
     isQuarantined: () => quarantined,
@@ -63,6 +64,25 @@ describe("verified local account scope", () => {
     expect(statuses.at(-1)).toBe("READY")
     dispose()
     expect(activeScope).toBeNull()
+  })
+
+  it("keeps local scope usable when storage consent is refused", async () => {
+    currentUser.mockResolvedValue(account("account-a"))
+    const load = vi.fn().mockResolvedValue({ ok: true, consent: { healthStorage: false } })
+    const dispose = start(load)
+    await vi.waitFor(() => expect(activeScope).toBe("account-a"))
+    expect(load).toHaveBeenCalledWith("account-a")
+    expect(statuses.at(-1)).toBe("READY")
+    dispose()
+  })
+
+  it("rechecks identity after the asynchronous consent lookup", async () => {
+    currentUser.mockResolvedValueOnce(account("account-a")).mockResolvedValueOnce(account("account-a"))
+      .mockResolvedValue(account("account-b"))
+    const dispose = start(vi.fn().mockResolvedValue({ ok: false }))
+    await vi.waitFor(() => expect(statuses.at(-1)).toBe("FAILED"))
+    expect(activeScope).toBeNull()
+    dispose()
   })
 
   it.each([

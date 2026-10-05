@@ -24,6 +24,7 @@ type BetaAccountSettingsProps = {
   readonly initialTermsAcknowledged?: boolean
   readonly profileSetupComplete?: boolean
   readonly completionOnly?: boolean
+  readonly dataRightsOnly?: boolean
   readonly onCompleted?: () => void
   readonly onSaveProfile?: (input: SaveProfileInput) => Promise<AccountActionResult>
   readonly onRequestDeletion?: (userId: string) => Promise<AccountActionResult>
@@ -38,6 +39,7 @@ export function BetaAccountSettings({
   initialTermsAcknowledged = false,
   profileSetupComplete = false,
   completionOnly = false,
+  dataRightsOnly = false,
   onCompleted,
   onSaveProfile = savePrivateProfile,
   onRequestDeletion = requestServerAccountDeletion,
@@ -106,8 +108,8 @@ export function BetaAccountSettings({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <SectionLb>{completionOnly ? "가입 마무리" : "계정 정보와 개인정보"}</SectionLb>
-      {profileSetupComplete ? (
+      <SectionLb>{dataRightsOnly ? "기존 계정 삭제 요청" : completionOnly ? "가입 마무리" : "계정 정보와 개인정보"}</SectionLb>
+      {dataRightsOnly ? null : profileSetupComplete ? (
         <p style={{ fontFamily: "var(--sans)", fontSize: 12.5, lineHeight: 1.6, color: "var(--ink-2)", margin: 0 }}>
           가입에 필요한 나이 확인과 필수 약관 동의를 저장했어요. 생년월일은 나이 확인에만 쓰고 코치, 분석, 포인트에는 보내지 않아요.
         </p>
@@ -147,7 +149,7 @@ export function BetaAccountSettings({
         <>
           <SectionLb>계정 삭제</SectionLb>
           <p style={{ fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.6, color: "var(--ink-2)", margin: 0 }}>
-            요청하는 즉시 계정 접근을 막고 서버와 백업 데이터는 30일 안에 삭제해요.
+            요청이 서버에 저장되면 계정 접근을 막아요. 계정 데이터는 요청 30일 후부터 정리 작업으로 삭제하며, 완료 결과는 문의로 확인할 수 있어요. 백업의 별도 보유·만료 조건은 개인정보처리방침을 확인해 주세요.
           </p>
           {deletionConfirming ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>

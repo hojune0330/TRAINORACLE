@@ -52,3 +52,7 @@ verify_jwt = false
 # Same explicit auth.getUser verification and owner-scoped RPC gates as account-journal.
 [functions.account-plan-collection]
 verify_jwt = false
+
+# Manual data-subject export: auth.getUser plus exact active session RPC checks.
+[functions.account-data-rights]
+verify_jwt = false

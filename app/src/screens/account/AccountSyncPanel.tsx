@@ -105,9 +105,10 @@ export function AccountSyncPanel({
           checked={consent.enabled}
           onChange={(event) => updateConsent({ ...consent, enabled: event.target.checked })}
         />
-        <span>동기화 켜기</span>
+        <span>이 기기 동기화 켜기</span>
       </label>
       <p className="account-panel__privacy">
+        이 스위치를 끄면 이 기기의 전송만 멈춰요. 서버의 온라인 보관 동의 철회와 계정 삭제는 위 개인정보 설정에서 따로 요청해 주세요.
         거리·시간·RPE<TermHelp term="rpe" /> 같은 입력값만 백업해요. 훈련 메모와 나만의 메모 원문은 보내지 않아요.
         {sharingEnabled ? " 코치 공유는 동기화와 따로 선택해요." : " 코치 연결은 아직 열지 않았어요."}
       </p>
