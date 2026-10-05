@@ -25,7 +25,7 @@ describe("sync feature switch", () => {
     const onPreview = vi.fn().mockResolvedValue({ ok: true, message: "Ready", localCount: 1, remoteJournalCount: 0, remotePrivateCount: 0 })
     const onSync = vi.fn()
     render(<AccountSyncPanel userId="athlete-a" enabled onPreview={onPreview} onSync={onSync} />)
-    await user.click(screen.getByRole("checkbox", { name: "동기화 켜기" }))
+    await user.click(screen.getByRole("checkbox", { name: "이 기기 동기화 켜기" }))
     await user.click(screen.getByRole("button", { name: "합칠 내용 미리보기" }))
     const merge = await screen.findByRole("button", { name: "확인한 내용 합치기" })
     vi.stubEnv("VITE_FEATURE_ACCOUNT_JOURNAL", "true")
@@ -58,11 +58,11 @@ describe("sync feature switch", () => {
     saveSyncConsent({ enabled: true, shareTrainingNotes: true }, "athlete-a")
     const view = render(<AccountSyncPanel userId="athlete-a" enabled />)
 
-    expect(screen.getByRole("checkbox", { name: "동기화 켜기" })).toBeChecked()
+    expect(screen.getByRole("checkbox", { name: "이 기기 동기화 켜기" })).toBeChecked()
 
     view.rerender(<AccountSyncPanel userId="athlete-b" enabled />)
 
-    expect(screen.getByRole("checkbox", { name: "동기화 켜기" })).not.toBeChecked()
+    expect(screen.getByRole("checkbox", { name: "이 기기 동기화 켜기" })).not.toBeChecked()
   })
 
   it("shows a server preview before it allows the merge", async () => {
@@ -84,7 +84,7 @@ describe("sync feature switch", () => {
     })
     render(<AccountSyncPanel userId="athlete-a" enabled onPreview={onPreview} onSync={onSync} />)
 
-    await user.click(screen.getByRole("checkbox", { name: "동기화 켜기" }))
+    await user.click(screen.getByRole("checkbox", { name: "이 기기 동기화 켜기" }))
     expect(screen.queryByRole("button", { name: /합치기/u })).not.toBeInTheDocument()
 
     await user.click(screen.getByRole("button", { name: "합칠 내용 미리보기" }))

@@ -22,7 +22,7 @@ export type AccountLegalDocument = {
 }
 
 // Update with both published legal documents and the server admission gate.
-export const CURRENT_ACCOUNT_LEGAL_VERSION = "2026-08-26"
+export const CURRENT_ACCOUNT_LEGAL_VERSION = "2026-10-05"
 
 function textValue(env: Readonly<Record<string, unknown>>, name: string): string {
   const value = env[name]

@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { supabase } from "./supabase-client"
 import { activeLocalAccount } from "./local-journal-ownership"
+import { isAccountStoragePaused } from "./storage-consent"
 import { accountJournalDraftSchema } from "./account-journal-draft-buffer"
 import { isAccountJournalWriteRejection, type AccountJournalWriteRejection } from "./account-write-rejection"
 import type { AccountJournalDraft } from "./account-journal-draft-buffer"
@@ -11,6 +12,7 @@ export type { ConfirmComparisonRelationRequest, ReleaseComparisonRelationRequest
 
 export function accountJournalPreviewEnabled(env: Readonly<Record<string, unknown>> = import.meta.env) {
   return env.VITE_FEATURE_ACCOUNT_JOURNAL === "true" && env.VITE_KILL_ACCOUNT_JOURNAL !== "true"
+    && !isAccountStoragePaused(activeLocalAccount())
 }
 
 const revision = z.number().int().positive().max(Number.MAX_SAFE_INTEGER - 1)

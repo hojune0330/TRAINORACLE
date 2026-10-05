@@ -7,6 +7,7 @@ import {
   subscribeAuthSessionQuarantine,
 } from "./auth-session-quarantine"
 import { setActiveLocalAccount } from "./local-journal-ownership"
+import { loadAccountStorageConsent } from "./storage-consent"
 
 export type VerifiedAccountScopeStatus = "LOADING" | "READY" | "FAILED"
 
@@ -29,6 +30,7 @@ export function requestVerifiedAccountScopeRefresh(): void {
 }
 
 type VerifiedAccountScopeDependencies = {
+  readonly loadStorageConsent?: (userId: string) => Promise<unknown>
   readonly currentUser: (options: { readonly throwOnFailure: true }) => Promise<AccountUser | null>
   readonly onAuthChange: (listener: (user: AccountUser | null) => void) => () => void
   readonly loadPrivateProfileSetupStatus: (input: { readonly userId: string }) => Promise<{
@@ -42,6 +44,7 @@ type VerifiedAccountScopeDependencies = {
 }
 
 const defaultDependencies: VerifiedAccountScopeDependencies = {
+  loadStorageConsent: loadAccountStorageConsent,
   currentUser,
   onAuthChange,
   loadPrivateProfileSetupStatus,
@@ -110,6 +113,15 @@ export function startVerifiedAccountScope(
         return
       }
 
+      // Consent refusal affects online storage only; keep this user's local scope.
+      if (dependencies.loadStorageConsent) {
+        await dependencies.loadStorageConsent(hintedUserId)
+        if (!stillCurrent()) return
+        const storageIdentity = await dependencies.currentUser({ throwOnFailure: true })
+        if (!stillCurrent()) return
+        if (storageIdentity?.id !== hintedUserId) { revoke("FAILED", "FAILED"); return }
+      }
+      if (!stillCurrent()) return
       dependencies.setActiveLocalAccount(hintedUserId)
       dependencies.setAccountAuthState("RESOLVING")
       onStatus("READY")

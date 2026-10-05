@@ -6,6 +6,8 @@ import type { AccountLegalDocument } from "../../domain/account/config"
 import type { AccountActionResult } from "../../domain/account/account-service"
 import { PublicProfileSettings } from "./PublicProfileSettings"
 import { PlanCloudBackupNotice } from "./PlanCloudBackupNotice"
+import { StorageConsentPanel } from "./StorageConsentPanel"
+import { AccountDataRightsPanel } from "./AccountDataRightsPanel"
 
 export function AccountNetworkSettings({
   userId,
@@ -39,6 +41,8 @@ export function AccountNetworkSettings({
         profileSetupComplete={profileSetupComplete}
         onDeletionCompleted={onDeletionCompleted}
       />
+      {profileSetupComplete && <StorageConsentPanel key={userId} userId={userId} />}
+      <AccountDataRightsPanel key={`rights-${userId}`} userId={userId} />
       {features.planBackup && <PlanCloudBackupNotice />}
       {features.productAnalytics && <ProductAnalyticsConsentPanel userId={userId} />}
       {features.publicProfile && <PublicProfileSettings userId={userId} />}

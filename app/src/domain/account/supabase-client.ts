@@ -3,6 +3,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { accountConfig } from "./config"
 import { isAuthSessionQuarantined } from "./auth-session-quarantine"
+import { createConsentCheckedFetch } from "./consent-checked-fetch"
 
 let clientPromise: Promise<SupabaseClient | null> | null = null
 
@@ -17,6 +18,7 @@ export function supabase(options?: { readonly allowQuarantined?: boolean }): Pro
   clientPromise = import("@supabase/supabase-js")
     .then(({ createClient }) =>
       createClient(config.url, config.anonKey, {
+        global: { fetch: createConsentCheckedFetch(config.url) },
         auth: {
           persistSession: true,
           autoRefreshToken: true,

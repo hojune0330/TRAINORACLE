@@ -11,15 +11,35 @@ const connection = {
   VITE_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYW5vbiJ9.synthetic-signature",
 }
 
+const storagePrivacyRelease = {
+  VITE_ACCOUNT_STORAGE_PRIVACY_RELEASE_APPROVED: "true",
+  VITE_ACCOUNT_STORAGE_PRIVACY_MIGRATION: "0057_purpose_scoped_storage_consent",
+}
+
 const legalDocuments = {
   VITE_PRIVACY_POLICY_URL: "https://trainoracle.example/privacy",
-  VITE_PRIVACY_POLICY_VERSION: "2026-08-26",
+  VITE_PRIVACY_POLICY_VERSION: "2026-10-05",
   VITE_TERMS_OF_SERVICE_URL: "https://trainoracle.example/terms",
-  VITE_TERMS_OF_SERVICE_VERSION: "2026-08-26",
+  VITE_TERMS_OF_SERVICE_VERSION: "2026-10-05",
 }
 
 test("keeps the local-only release valid when every network feature is closed", () => {
   assert.deepEqual(validateHostedReleaseEnvironment({}), [])
+})
+
+test("requires explicit current storage privacy release acknowledgement before account deployment", () => {
+  const account = { ...connection, ...legalDocuments, VITE_ACCOUNT_PUBLIC_ENABLED: "true" }
+  for (const proof of [
+    {},
+    { VITE_ACCOUNT_STORAGE_PRIVACY_RELEASE_APPROVED: "true" },
+    { ...storagePrivacyRelease, VITE_ACCOUNT_STORAGE_PRIVACY_RELEASE_APPROVED: "false" },
+    { ...storagePrivacyRelease, VITE_ACCOUNT_STORAGE_PRIVACY_MIGRATION: "0056" },
+  ]) {
+    assert.deepEqual(validateHostedReleaseEnvironment({ ...account, ...proof }),
+      ["ACCOUNT_REQUIRES_STORAGE_PRIVACY_RELEASE_APPROVAL"])
+  }
+  assert.deepEqual(validateHostedReleaseEnvironment({ ...account, ...storagePrivacyRelease }), [])
+  assert.deepEqual(validateHostedReleaseEnvironment({ ...account, VITE_KILL_ACCOUNT: "true" }), [])
 })
 
 for (const format of ["TCX", "CSV", "JSON", "GPX"]) {
@@ -28,7 +48,7 @@ for (const format of ["TCX", "CSV", "JSON", "GPX"]) {
     assert.deepEqual(validateHostedReleaseEnvironment({ [flag]: "true" }), [
       `FILE_ANALYSIS_${format}_REQUIRES_ACCOUNT`, `FILE_ANALYSIS_${format}_REQUIRES_ACCOUNT_JOURNAL`,
     ])
-    const account = { ...connection, ...legalDocuments, VITE_ACCOUNT_PUBLIC_ENABLED: "true" }
+    const account = { ...connection, ...legalDocuments, ...storagePrivacyRelease, VITE_ACCOUNT_PUBLIC_ENABLED: "true" }
     assert.deepEqual(validateHostedReleaseEnvironment({ ...account, [flag]: "true" }), [
       `FILE_ANALYSIS_${format}_REQUIRES_ACCOUNT_JOURNAL`,
     ])
@@ -43,7 +63,7 @@ for (const format of ["TCX", "CSV", "JSON", "GPX"]) {
 test("account journal cannot be published without account access", () => {
   assert.deepEqual(validateHostedReleaseEnvironment({ VITE_FEATURE_ACCOUNT_JOURNAL: "true" }), ["ACCOUNT_JOURNAL_REQUIRES_ACCOUNT"])
   assert.deepEqual(validateHostedReleaseEnvironment({ VITE_FEATURE_ACCOUNT_JOURNAL: "true", VITE_KILL_ACCOUNT_JOURNAL: "true" }), [])
-  assert.deepEqual(validateHostedReleaseEnvironment({ ...connection, ...legalDocuments,
+  assert.deepEqual(validateHostedReleaseEnvironment({ ...connection, ...legalDocuments, ...storagePrivacyRelease,
     VITE_ACCOUNT_PUBLIC_ENABLED: "true", VITE_FEATURE_ACCOUNT_JOURNAL: "true" }), [])
 })
 
@@ -53,6 +73,7 @@ test("requires a public client connection before opening accounts", () => {
   }), [
     "ACCOUNT_REQUIRES_PUBLIC_CONNECTION",
     "ACCOUNT_REQUIRES_PUBLIC_LEGAL_DOCUMENTS",
+    "ACCOUNT_REQUIRES_STORAGE_PRIVACY_RELEASE_APPROVAL",
   ])
 })
 
@@ -60,11 +81,11 @@ test("requires public legal documents and versions before opening accounts", () 
   assert.deepEqual(validateHostedReleaseEnvironment({
     ...connection,
     VITE_ACCOUNT_PUBLIC_ENABLED: "true",
-  }), ["ACCOUNT_REQUIRES_PUBLIC_LEGAL_DOCUMENTS"])
+  }), ["ACCOUNT_REQUIRES_PUBLIC_LEGAL_DOCUMENTS", "ACCOUNT_REQUIRES_STORAGE_PRIVACY_RELEASE_APPROVAL"])
 })
 
 test("rejects an older legal version before an account release", () => {
-  const account = { ...connection, ...legalDocuments, VITE_ACCOUNT_PUBLIC_ENABLED: "true" }
+  const account = { ...connection, ...legalDocuments, ...storagePrivacyRelease, VITE_ACCOUNT_PUBLIC_ENABLED: "true" }
   assert.deepEqual(validateHostedReleaseEnvironment({
     ...account, VITE_PRIVACY_POLICY_VERSION: "2026-08-25",
   }), ["ACCOUNT_REQUIRES_PUBLIC_LEGAL_DOCUMENTS"])
@@ -74,7 +95,7 @@ test("rejects an older legal version before an account release", () => {
 })
 
 test("keeps direct recipient sharing closed pending its privacy review", () => {
-  const account = { ...connection, ...legalDocuments, VITE_ACCOUNT_PUBLIC_ENABLED: "true" }
+  const account = { ...connection, ...legalDocuments, ...storagePrivacyRelease, VITE_ACCOUNT_PUBLIC_ENABLED: "true" }
   assert.deepEqual(validateHostedReleaseEnvironment({
     ...account, VITE_FEATURE_SHARING: "true",
   }), ["SHARING_PRIVACY_REVIEW_REQUIRED"])
@@ -113,7 +134,7 @@ test("keeps phone auth closed without both the account and operations approval",
 
   assert.deepEqual(validateHostedReleaseEnvironment({
     ...connection,
-    ...legalDocuments,
+    ...legalDocuments, ...storagePrivacyRelease,
     VITE_ACCOUNT_PUBLIC_ENABLED: "true",
     VITE_PHONE_AUTH_ENABLED: "true",
   }), ["PHONE_AUTH_REQUIRES_OPERATIONAL_APPROVAL"])
@@ -132,7 +153,7 @@ test("requires the account gate before releasing any social provider", () => {
 test("requires PKCE callback and hosted-template approval before releasing email", () => {
   assert.deepEqual(validateHostedReleaseEnvironment({
     ...connection,
-    ...legalDocuments,
+    ...legalDocuments, ...storagePrivacyRelease,
     VITE_ACCOUNT_PUBLIC_ENABLED: "true",
     VITE_EMAIL_AUTH_ENABLED: "true",
   }), ["EMAIL_AUTH_REQUIRES_PKCE_OPERATIONS_APPROVAL"])
@@ -148,7 +169,7 @@ test("requires PKCE callback and hosted-template approval before releasing email
 test("accepts separately released Google and PKCE-ready email providers", () => {
   assert.deepEqual(validateHostedReleaseEnvironment({
     ...connection,
-    ...legalDocuments,
+    ...legalDocuments, ...storagePrivacyRelease,
     VITE_ACCOUNT_PUBLIC_ENABLED: "true",
     VITE_GOOGLE_AUTH_ENABLED: "true",
     VITE_EMAIL_AUTH_ENABLED: "true",
@@ -170,7 +191,7 @@ test("provider kill switches close their own release without blocking the deploy
 test("allows phone auth only after its separate operations approval", () => {
   assert.deepEqual(validateHostedReleaseEnvironment({
     ...connection,
-    ...legalDocuments,
+    ...legalDocuments, ...storagePrivacyRelease,
     VITE_ACCOUNT_PUBLIC_ENABLED: "true",
     VITE_PHONE_AUTH_ENABLED: "true",
     VITE_PHONE_AUTH_OPERATIONS_APPROVED: "true",
@@ -201,7 +222,7 @@ test("uses the account emergency switch instead of inventing an account-public s
 test("accepts a staged account and sync release without exposing configuration values", () => {
   const errors = validateHostedReleaseEnvironment({
     ...connection,
-    ...legalDocuments,
+    ...legalDocuments, ...storagePrivacyRelease,
     VITE_ACCOUNT_PUBLIC_ENABLED: "true",
     VITE_FEATURE_SYNC: "true",
   })
@@ -234,7 +255,7 @@ test("rejects secret and service-role keys without echoing them", () => {
     "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.synthetic-signature",
   ]) {
     const errors = validateHostedReleaseEnvironment({
-      ...legalDocuments,
+      ...legalDocuments, ...storagePrivacyRelease,
       VITE_ACCOUNT_PUBLIC_ENABLED: "true",
       VITE_SUPABASE_URL: "https://example.supabase.co",
       VITE_SUPABASE_ANON_KEY: key,
@@ -246,7 +267,7 @@ test("rejects secret and service-role keys without echoing them", () => {
 
 test("accepts the new publishable-key shape for browser clients", () => {
   assert.deepEqual(validateHostedReleaseEnvironment({
-    ...legalDocuments,
+    ...legalDocuments, ...storagePrivacyRelease,
     VITE_ACCOUNT_PUBLIC_ENABLED: "true",
     VITE_SUPABASE_URL: "https://example.supabase.co",
     VITE_SUPABASE_ANON_KEY: "sb_publishable_synthetic_public_key_123456",

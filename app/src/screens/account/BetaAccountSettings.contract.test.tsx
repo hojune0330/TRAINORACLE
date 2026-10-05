@@ -11,6 +11,16 @@ const legalDocuments = {
 }
 
 describe("beta account settings", () => {
+  it("allows an existing-account deletion request without accepting a new legal version", async () => {
+    const deletion = vi.fn().mockResolvedValue({ ok: true, message: "합성 삭제 접수" })
+    render(<BetaAccountSettings userId="athlete-a" today="2026-10-05"
+      legalDocuments={legalDocuments} dataRightsOnly onRequestDeletion={deletion}/>)
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument()
+    expect(screen.queryByLabelText("생년월일")).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "계정 삭제 요청" }))
+    await userEvent.click(screen.getByRole("button", { name: "네, 계정 삭제를 요청할게요" }))
+    expect(deletion).toHaveBeenCalledWith("athlete-a")
+  })
   it("does not save an under-14 online profile", async () => {
     const saveProfile = vi.fn().mockResolvedValue({ ok: true, message: "저장했어요." })
     render(

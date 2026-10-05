@@ -56,3 +56,7 @@ verify_jwt = false
 # Exact bearer verification plus session-bound, separately attested bilateral grants.
 [functions.oracle-profile-comparison]
 verify_jwt = false
+
+# Manual data-subject export: auth.getUser plus exact active session RPC checks.
+[functions.account-data-rights]
+verify_jwt = false

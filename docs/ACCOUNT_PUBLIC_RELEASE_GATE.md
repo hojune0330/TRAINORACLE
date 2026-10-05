@@ -7,7 +7,7 @@ product: TrainOracle
 service_provider_working_name: aaclub
 service_operator_target: FREE_BETA_UP_TO_200
 service_operator_scope_decision: ACCOUNT_FIRST_SYNC_LATER
-current_status: SECURITY_REVIEW_REOPENED_DEDICATED_ORIGIN_AND_0056_RUNTIME_OPEN
+current_status: SECURITY_AND_PRIVACY_REVIEW_REOPENED_ORIGIN_0057_AND_OPERATIONS_FACTS_OPEN
 contact_path: TrainOracle in-app feedback board
 owner_preparation_approved_at: 2026-08-14
 legal_clearance_claimed: false
@@ -17,8 +17,36 @@ legal_clearance_claimed: false
 
 일반 사용자가 계정을 만들 수 있는 공개 베타를 먼저 목표로 한다. 계정 공개가
 안정된 뒤 동기화를 별도 기능으로 연다. 로그인만으로 일지를 업로드하지 않으며,
-사용자가 동기화를 직접 켜야 한다. 나만의 메모는 기기에서 암호화하고 서버에는
-암호문만 저장한다. 훈련 메모만 동기화와 선택 공유에 사용할 수 있다.
+사용자가 온라인 보관 목적을 각각 선택해야 한다. 2026-10-05 승인 범위의 계정
+정본은 건강정보와 직접 작성한 글을 서버에서 암호화하여 보관·복구하며 서비스가
+기술적으로 복호화할 수 있다. 종단간 암호화라고 표시하지 않는다. 비밀 글의
+분석·공유와 원문 외부 AI 전송은 금지하고, 이 변경으로 코치·외부 제공자 기능을 열지 않는다.
+
+## 2026-10-05 목적별 동의·열람 권리 게이트
+
+- 0057은 가입 확인과 별개인 건강정보·메모 보관 동의를 버전
+  `2026-10-05`로 기록한다. 기존 동의를 승계하지 않고, 모든 기존 자료도 새
+  일반 동기화/복구에는 새 동의를 요구한다. 거부·철회 시 기기 일지·훈련 기능은 유지한다.
+- 동의 수정은 expected user/session/revision을 확인하며, 철회 이후 예전
+  허용 요청 재전송은 실패한다. 최종 저장 trigger는 게이트 검사 후 도착한 쓰기도 다시 확인한다.
+- `account_storage_operation_reviews`는 **빈 상태**로 생성된다.
+  실제 처리업체·국가·연락처·이전 항목/목적/방법/시기·근거·거부 영향,
+  보안 로그 및 사업자 백업의 보유/만료/삭제 조건을 확인하고 고지한 증거의
+  reference, reviewed_at, purpose_version을 DB 소유자의 별도 승인 작업으로
+  기록하기 전에는 새 보관 동의를 승인하거나 건강정보를 저장할 수 없다.
+  클라이언트 설정·합성 시험·이 문서는 그 증거가 아니다. 애플리케이션 역할은
+  이 테이블과 동의 이력을 직접 수정할 수 없다.
+- 운영 승인 차단은 가입, 철회, 삭제 요청, 본인 열람 권리를 차단하는 근거가 아니다.
+  별도 `account-data-rights` 수동 내보내기는 현재 본인 세션만 검증하며
+  동의/운영 승인과 독립적이다. 자동 복구·새 저장·AI·공유 호출은 없다.
+  서버 암호화 일지·계획은 읽을 수 있는 사본으로, 기존 기기 암호화 메모와
+  별도 제공자 암호문은 보유 형태 그대로 제공한다. 키가 없거나 만료·삭제된
+  자료는 복구를 보장하지 않는다.
+- 기기 동기화 OFF, 서버 동의 철회, 삭제 요청을 구분한다. 삭제 RPC의 현재
+  계약은 접근 차단 후 30일이 지나면 정기 정리 대상이 되는 것이며 모든 백업의
+  30일 안 삭제 완료가 아니다. 실제 정리 성공·재시도·백업 만료는 계속 OPEN이다.
+- 신규 법률 문서는 시행 예정 버전이다. 적용일/변경 고지 및 운영 사실 확정 후에만
+  게시·적용한다. 현재 실행되지 않은 배포·DB 적용·실계정 검증을 완료로 표시하지 않는다.
 
 1차 공개 인증은 Supabase Auth의 Google과 이메일 확인 링크만 제공한다.
 TrainOracle은 비밀번호를 만들거나 저장하지 않는다. 만 14세 미만에게는 온라인
@@ -37,7 +65,7 @@ TrainOracle 전용 도메인 또는 전용 서브도메인으로 옮겨야 한�
 확정되지 않은 동안 Google·이메일 공개 게이트는 닫힌 상태를 유지한다.
 
 또한 서버 입장 판정·expected-user 바인딩·COROS 수집 차단·허용 인증 방식 검사를
-추가한 현재 마이그레이션 0051~0056을
+추가한 현재 마이그레이션 0051~0057을
 시험·운영 DB에 적용하고 새 클라이언트와의 왕복을 확인해야 한다. 과거 공개 기록은
 당시의 영수증이며, 이 재검토에서 새로 열린 게이트를 대신하지 않는다.
 
@@ -75,18 +103,20 @@ PASS로 바꾸지 않는다.
 |---|---|---|
 | G1 개인정보처리방침 | 공개 URL, 수집 항목·목적·보유 기간·삭제·문의 절차 확정 | OPEN |
 | G2 이용약관 | 공개 URL과 적용 버전 확정 | OPEN |
-| G3 운영자 정보 | aaclub의 법적 표기, 주소, 개인정보 문의 연락처 확정 | OPEN |
+| G3 운영자 정보 | 인피니트 오퍼튜니티/aaclub, 주소·개인정보 문의 연락처 | OWNER_CONFIRMED_2026_10_05_PUBLIC_DOCUMENT_CODE_PRESENT |
 | G4 미성년자 | 가입 전 나이 확인, 만 14세 미만 외부 인증 미호출, 서버 프로필 차단 실측 | PARTIAL_STAGING_SERVER_REHEARSAL_PASS_EXTERNAL_CALL_OPEN |
-| G5 보유·탈퇴 | 즉시 접근 차단·30일 삭제 경로 구현과 실제 정리 영수증 | CODE_READY_TEST_OPEN |
+| G5 보유·탈퇴 | 접근 차단·30일 후 정리 대상 경로와 실제 성공·재시도·백업 만료 증거 | CODE_READY_RUNTIME_AND_BACKUP_TERMS_OPEN |
 | G6 처리업체 | 실제 Supabase 프로젝트 지역과 처리위탁 고지 확정 | OPEN |
-| G7 DB 안전 | 시험 DB에 현재 전체 마이그레이션(최소 0056) 실행, RLS·입장 RPC·사용자별 정책 실측 | REOPENED_0051_TO_0056_STAGING_AND_PRODUCTION_OPEN |
+| G7 DB 안전 | 시험 DB에 현재 전체 마이그레이션(최소 0057) 실행, RLS·입장 RPC·사용자별 정책 실측 | REOPENED_0051_TO_0057_STAGING_AND_PRODUCTION_OPEN |
 | G8 교차 계정 시험 | 두 계정 격리, 두 기기 동기화, 삭제·복구·재로그인 시험 | PARTIAL_STAGING_TWO_USERS_RLS_PASS_UI_HARNESS_READY_TWO_BROWSER_OPEN |
-| G9 가입 동의 | 가입 전에 방침·약관 링크와 버전 동의를 저장하는 UI·계약 | RUNTIME_PASS_VERSION_2026_08_26 |
-| G10 배포 스위치 | G7·G12·G13·G14와 실제 환경을 확인한 뒤 계정만 공개하고 동기화·공유는 계속 닫음 | REOPENED_BLOCKED_BY_G7_G12_G13_G14 |
+| G9 가입 동의 | 가입 방침 확인·약관 동의와 선택 보관 목적 분리, 2026-10-05 실제 재확인 | CODE_READY_NEW_VERSION_RUNTIME_OPEN |
+| G10 배포 스위치 | G7·G12·G13·G14·G15와 실제 환경을 확인한 뒤 계정만 공개하고 동기화·공유는 계속 닫음 | REOPENED_BLOCKED_BY_G7_G12_G13_G14_G15_AND_RELEASE_ACK |
 | G11 휴대전화 선택 출시 | SMS 공급자·한국 발신 조건·CAPTCHA·요율 제한·비용 경보·실수신 왕복 | CODE_READY_PROVIDER_OPEN |
 | G12 전용 origin | 지속 로그인 토큰과 계정별 로컬 데이터를 다른 Pages 프로젝트와 공유하지 않는 전용 도메인·서브도메인 | OPEN_GITHUB_PAGES_SHARED_ORIGIN |
 | G13 이메일 남용 방지 | Hosted Auth CAPTCHA·발송 요율 제한·사용자/IP 기준 감시·custom SMTP 쿼터와 비용·평판 경보 실측 | OPEN_PROVIDER_ABUSE_CONTROLS |
 | G14 인증 표면 제한 | 미사용 OAuth·익명·SSO를 Hosted Auth에서 끄고, 비밀번호 가입·로그인 세션과 비밀번호 자격 증명 보유 계정이 0053에서 거부되는지 실측 | OPEN_HOSTED_AUTH_ALLOWLIST_AND_PASSWORD_PROBE |
+| G15 목적 동의·철회 | 0057 전체 적용, 두 브라우저 철회/재시도·실제 병렬 쓰기 경합·수동 권리열람/삭제 검증 | LOCAL_SYNTHETIC_ONLY_RUNTIME_OPEN |
+| G16 운영 사실 | 실제 위탁/국외 처리/로그/백업 조건 고지와 검토 증거 DB 등록 | CLOSED_EMPTY_REVIEW_TABLE |
 
 G8에는 같은 브라우저에서 계정을 바꿨을 때 이전 사용자의 로컬 일지가 보이지
 않고 새 계정으로 업로드되지 않는 시험을 반드시 포함한다. 현재는 잘못된
@@ -128,24 +158,23 @@ Hosted Auth 왕복을 확인한 인증 종류만 서버에서 연 뒤 `ACCOUNT`�
 | 구분 | 동작 |
 |---|---|
 | 로그인 식별자 | Supabase Auth의 Google 또는 이메일 확인 링크 |
-| 일지 동기화 | 사용자가 `동기화 켜기`를 직접 선택한 뒤 실행 |
-| 나만의 메모 | 기기에서 암호화하고 서버에는 암호문만 저장, 코치·분석 제외 |
-| 훈련 메모 | 동기화 가능, 사용자가 선택한 공유 범위에서만 코치·지원자에게 표시 |
+| 일지 동기화 | 별도 건강정보·글 목적 동의 및 서버 운영 검토 후 사용자가 선택, 기기 스위치 OFF는 서버 삭제가 아님 |
+| 나만의 메모 | 기기 보관 또는 선택한 계정 암호화 보관, 서버 복호화 가능, 코치·분석 제외 |
+| 훈련 메모 | 선택한 계정 보관 범위에 포함될 수 있음. 이번 변경은 공유·외부 AI를 열지 않음 |
 | 삭제 기록 | 일지 ID와 삭제 시각만 서버에 저장, 본문·날짜·수치 제외 |
 | 로컬 사용 | 가입 화면은 로그인·온라인 기록을 권장하고 별도 로컬 선택 버튼은 제공하지 않음. 로그인하지 않은 상태에서도 기존 화면(뒤로 가기)으로 앱 사용은 가능 |
 
 ## 아직 확정하면 안 되는 값
 
-- aaclub이 법적 사업자명인지 여부
-- 주소와 개인정보 문의용 이메일 또는 전화번호
+- 운영사업자는 인피니트 오퍼튜니티, 브랜드는 aaclub이며 동일 등록 사업자라는 소유자 확인을 받았다. 공개 문서의 주소·문의 정보를 유지했다. 사업자 등록 증명서 실사는 수행하지 않았다.
 - 시험 Supabase 지역은 서울(`ap-northeast-2`)로 확인됐지만 공개 고지는 미확정
-- 30일 삭제 작업의 실제 시험 실행 결과
+- 30일 후 정리 작업의 실제 성공·실패 재시도·백업 만료 결과
 - 만 14세 미만 외부 인증 미호출과 서버 프로필 차단의 실제 시험 결과
 - 운영 DB 마이그레이션 및 실제 두 기기 동기화 결과
 
 ## 공개 전 실행 순서
 
-1. 운영과 분리된 시험 Supabase에 현재 마이그레이션 전체(최소 0056)를 적용하고 영수증을 남긴다.
+1. 운영과 분리된 시험 Supabase에 현재 마이그레이션 전체(최소 0057)를 적용하고 영수증을 남긴다. `account-data-rights`도 배포하고 전용 origin의 허용 목록·세션 검증을 확인한다.
 2. 시험 빌드에서 계정만 켜고 카카오·Google·이메일 로그인, 14세 경계, 전달된 이메일
    링크의 계정 바꿔치기 차단, 직접 비밀번호 가입·로그인의 서버 거부, 로그아웃,
    삭제 요청과 실패 경로를 확인한다.
@@ -162,10 +191,69 @@ Hosted Auth 왕복을 확인한 인증 종류만 서버에서 연 뒤 `ACCOUNT`�
    별도 시험하고, 그 결과를 확인한 뒤 동기화를 연다.
 6. main 배포 후 로그인·삭제·로그아웃을 실서비스에서 다시 확인한다.
 
+### 프론트가 서버보다 먼저 공개되는 순서 실수 방지
+
+계정을 여는 hosted 빌드는 `validate-hosted-release-env.mjs`에서
+`VITE_ACCOUNT_STORAGE_PRIVACY_RELEASE_APPROVED=true` 및
+`VITE_ACCOUNT_STORAGE_PRIVACY_MIGRATION=0057_purpose_scoped_storage_consent`를
+명시하지 않으면 거절한다. 계정을 끈 로컬 전용 빌드와 `VITE_KILL_ACCOUNT=true`인
+빌드는 이 확인을 요구하지 않으며, 이 값이 신규 저장을 켜지도 않는다.
+
+두 값은 마이그레이션 적용·Edge 배포·전용 origin·실제 시험을 **증명하지 않는**
+공개 배포 순서 확인 표시다. 담당자가 위 증거를 직접 확인한 후에만 설정한다.
+서버 저장은 이와 별개로 0057의 검토 기록과 사용자별 현재 목적 동의를 계속 검증한다.
+이번 작업은 운영 승인 값을 설정하거나 `.github/workflows/`를 수정하지 않았다.
+현재 workflow는 두 새 값을 전달하지 않으므로 계정 open 배포가 차단되는 것이
+의도된 미완료 상태다. 실제 운영 확인과 별도 승인된 변수 전달 없이는 계정 배포 NO-GO다.
+
+서버 `account-data-rights`는 동의·운영 검토와 독립된 본인 세션 전용 수동 조회지만,
+앱 전체 `ACCOUNT` kill 설정으로 계정 UI 자체를 숨긴 빌드에서는 다운로드 버튼도
+표시되지 않는다. 그런 사고 대응 중에도 신원 확인된 열람·삭제 요청을 처리할 운영
+경로를 유지해야 하며, endpoint가 있다는 이유로 화면 접근까지 검증됐다고 표시하지 않는다.
+
 휴대전화 로그인은 위 계정 공개 순서와 별개로 G11을 통과한 뒤
 `TRAINORACLE_PHONE_AUTH_ENABLED=true`와
 `TRAINORACLE_PHONE_AUTH_OPERATIONS_APPROVED=true`를 함께 설정한다. 둘 중 하나라도
 없으면 버튼은 보이지 않는다.
+
+## 2026-10-05 로컬 후보 검증 기록
+
+기준 HEAD는 `fb6991c2eb0b6f33c14a6a7c542655cd5f8c06d8`이며 이 기록은 그 위의
+변경 후보에 대한 로컬 검증이다. 운영 DB·배포·실사용자 왕복 증거가 아니다.
+Node `v24.11.1`에서 아래를 확인했다.
+
+- `storage-consent.test.mjs`: PGlite 전체 0001~0057 적용 후 9/9 통과.
+  가입 동의와 보관 동의 분리, 타인·다른 세션·옛 버전, 단일 목적 불충분,
+  철회·오래된 재시도·retention 삭제, 운영 검토 닫힘·직접 조회 차단,
+  예외적인 본인 권리 조회, 탈퇴와 최종 저장 거절을 포함한다.
+- `account-data-rights-handler.test.mjs`: 합성 암호문·본인 재확인·no-store,
+  타인·폐기 세션·외부 origin, 저장 입력·과대 본문 거절 3/3 통과.
+- 저장 최종 검사 / 오래된 revision 검사 / 권리 열람 소유자 검사를 각각
+  실행 메모리 안에서 제거하자 해당 이름의 시험이 실패했다. migration 파일
+  SHA-256 `A6C2B18322796EDEEB8078F3199AEC99629EC718E2CFF1C044166D6C3113DE4B`
+  불변 확인 후 정상 9/9를 재실행했다. 실제 파일에 결함을 남기지 않았다.
+- `consent-checked-fetch`, `account-data-rights`, `StorageConsentPanel`,
+  `AccountDataRightsPanel`, `verified-account-scope`, `BetaAccountSettings`,
+  `AccountNetworkSettings`, `AccountSyncPanel`, `Account.session-exit`의
+  계약 시험 9파일 59건 통과. 첫 실행의 구문구 selector 3건을 새 접근성 이름에
+  맞췄으며, forks worker 시작 timeout 1건은 단일 threads worker 재검사에서
+  해당 화면과 Sync 14/14 통과로 재확인했다. 실행 실패를 통과로 계산하지 않았다.
+- 최신 `tsc --noEmit`: exit 0. 배포 환경 검사 25/25 통과: 계정 open 승인 누락,
+  false, 옛 migration 값 거절 및 정확한 승인 대조군·계정 OFF 통과 포함.
+- 위 작성자 검사의 `git diff --check`는 추적 파일 대상이었다. root의 추가
+  staged 검사에서 새 0057 파일 끝의 빈 줄을 발견해 제거했다. SQL 구문은
+  변경하지 않았고 최종 파일 SHA-256은
+  `F62AF313C41EF7CB5CDBC04608523113669900E525F37E295F98FD8985034FB6`이다.
+  최종 파일의 정상 PGlite 재검사와 account-off build는 후속 실행 기록으로
+  구분한다. 커밋·원격 저장 상태는 공통 실행 문서를 참조한다.
+  운영 DB·배포·운영 승인 값 설정은 하지 않았다.
+
+실제 PostgreSQL 두 연결의 철회/탈퇴와 쓰기 경합, 시험 및 운영 Supabase 최신
+마이그레이션·Edge 적용, 전용 origin, 실계정 두 브라우저 화면 격리·권리 행사,
+실제 정리 작업의 성공·재시도·백업 만료, 위탁/국외 처리 조건은 여전히 OPEN이다.
+SQL의 같은 잠금과 순차 시험은 실제 병렬 스케줄의 증거를 대신하지 않는다.
+독립 소스 재검토에서 전송 직전 철회 hold·운영 검토 철회·탈퇴 잠금 경계의
+지적 3건은 보완 확인했지만, 전체 hosted release gate는 이번에 실행하지 않았다.
 
 ## 즉시 끄기
 

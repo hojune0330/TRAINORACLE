@@ -57,7 +57,9 @@ export function AccountAuthGateway({
   const [step, setStep] = React.useState<GatewayStep>(() => emailCallbackAttemptId === null ? "method" : "eligibility")
   const [method, setMethod] = React.useState<AuthMethod | null>(() => emailCallbackAttemptId === null ? null : "email")
   const [birthDate, setBirthDate] = React.useState("")
-  const [legalAcknowledged, setLegalAcknowledged] = React.useState(false)
+  const [privacyAcknowledged, setPrivacyAcknowledged] = React.useState(false)
+  const [termsAcknowledged, setTermsAcknowledged] = React.useState(false)
+  const legalAcknowledged = privacyAcknowledged && termsAcknowledged
   const [email, setEmail] = React.useState("")
   const [phone, setPhone] = React.useState("")
   const [phoneCode, setPhoneCode] = React.useState("")
@@ -252,7 +254,7 @@ export function AccountAuthGateway({
         <>
           <div className="account-auth__intro">
             <span className="account-auth__trust"><ShieldCheck aria-hidden="true" size={15} /> 로그인하고 기록을 지키세요</span>
-            <h2>로그인하면 기록이 안전하게 남아요</h2>
+          <h2>로그인 후 온라인 보관을 선택할 수 있어요</h2>
             <p>로그인해 두면 일지와 훈련 계획을 계정과 연결해 기기를 바꾸거나 잃어버려도 지킬 수 있어요. 가장 편한 방법으로 시작하세요.</p>
           </div>
           <div className="account-auth__methods" aria-label="로그인 방법 선택">
@@ -319,19 +321,20 @@ export function AccountAuthGateway({
           <label className="account-auth__legal-check">
             <input
               type="checkbox"
-              checked={legalAcknowledged}
+              checked={privacyAcknowledged}
               disabled={busy}
-              onChange={(event) => { clearPendingAccountSetup(); setLegalAcknowledged(event.target.checked); setNotice(null) }}
+              onChange={(event) => { clearPendingAccountSetup(); setPrivacyAcknowledged(event.target.checked); setNotice(null) }}
             />
             <span>
-              <b>필수 약관에 모두 동의</b>
-              <small>
-                <a href={config.privacyPolicy.url} target="_blank" rel="noreferrer">개인정보 처리방침</a>
-                {" · "}
-                <a href={config.termsOfService.url} target="_blank" rel="noreferrer">이용약관</a>
-              </small>
+              <a href={config.privacyPolicy.url} target="_blank" rel="noreferrer">개인정보 처리방침</a>을 확인했어요.
             </span>
           </label>
+          <label className="account-auth__legal-check">
+            <input type="checkbox" checked={termsAcknowledged} disabled={busy}
+              onChange={event => { clearPendingAccountSetup(); setTermsAcknowledged(event.target.checked); setNotice(null) }} />
+            <span><a href={config.termsOfService.url} target="_blank" rel="noreferrer">이용약관</a>에 동의해요.</span>
+          </label>
+          <p className="account-panel__privacy">가입 확인은 건강정보·메모의 온라인 보관 동의가 아니에요. 온라인 보관은 계정 화면에서 따로 선택해요.</p>
           <button
             className="account-auth__primary"
             type="button"
@@ -446,7 +449,7 @@ export function AccountAuthGateway({
           {notice}
         </p>
       )}
-      <p className="account-auth__privacy-note">기록을 안전하게 남기려면 로그인한 상태로 쓰는 걸 권해요. 업로드 항목은 로그인 뒤 계정 설정에서 확인할 수 있어요.</p>
+      <p className="account-auth__privacy-note">가입만으로 기록이 업로드되지는 않아요. 온라인 보관은 로그인 뒤 별도로 동의해 주세요. 동의하지 않아도 기기 기록은 사용할 수 있어요.</p>
     </div>
   )
 }

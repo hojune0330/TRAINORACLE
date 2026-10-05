@@ -8,7 +8,8 @@ const ACCOUNT_BACKED_FEATURES = [
   "PRODUCT_ANALYTICS",
 ]
 
-const CURRENT_ACCOUNT_LEGAL_VERSION = "2026-08-26"
+const CURRENT_ACCOUNT_LEGAL_VERSION = "2026-10-05"
+const REQUIRED_ACCOUNT_STORAGE_MIGRATION = "0057_purpose_scoped_storage_consent"
 
 function textValue(environment, name) {
   const value = environment[name]
@@ -80,6 +81,14 @@ export function validateHostedReleaseEnvironment(environment) {
   }
   if (accountOpen && !hasPublicLegalDocuments(environment)) {
     errors.push("ACCOUNT_REQUIRES_PUBLIC_LEGAL_DOCUMENTS")
+  }
+  // Deployment-order acknowledgement only: this does not prove an applied DB migration,
+  // a deployed rights endpoint, a dedicated origin, or the DB's separate operations review.
+  if (accountOpen && (
+    textValue(environment, "VITE_ACCOUNT_STORAGE_PRIVACY_RELEASE_APPROVED") !== "true"
+    || textValue(environment, "VITE_ACCOUNT_STORAGE_PRIVACY_MIGRATION") !== REQUIRED_ACCOUNT_STORAGE_MIGRATION
+  )) {
+    errors.push("ACCOUNT_REQUIRES_STORAGE_PRIVACY_RELEASE_APPROVAL")
   }
   if (isFeatureEnabled(environment, "SHARING")) {
     errors.push("SHARING_PRIVACY_REVIEW_REQUIRED")

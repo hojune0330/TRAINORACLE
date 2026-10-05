@@ -8,9 +8,9 @@ const credentials = {
 
 const legalDocuments = {
   VITE_PRIVACY_POLICY_URL: "https://trainoracle.example/privacy",
-  VITE_PRIVACY_POLICY_VERSION: "2026-08-26",
+  VITE_PRIVACY_POLICY_VERSION: "2026-10-05",
   VITE_TERMS_OF_SERVICE_URL: "https://trainoracle.example/terms",
-  VITE_TERMS_OF_SERVICE_VERSION: "2026-08-26",
+  VITE_TERMS_OF_SERVICE_VERSION: "2026-10-05",
 }
 
 describe("account public release gate", () => {

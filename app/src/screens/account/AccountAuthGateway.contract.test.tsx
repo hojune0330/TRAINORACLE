@@ -39,8 +39,8 @@ describe("mobile-first account authentication gateway", () => {
     expect(screen.getByRole("button", { name: "이메일로 계속하기" })).toBeVisible()
     expect(screen.queryByRole("button", { name: "휴대전화로 계속하기" })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "계정 없이 계속 사용" })).not.toBeInTheDocument()
-    expect(screen.getByText(/로그인하면 기록이 안전하게 남아요/u)).toBeVisible()
-    expect(screen.getByText(/로그인한 상태로 쓰는 걸 권해요/u)).toBeVisible()
+    expect(screen.getByText(/로그인 후 온라인 보관을 선택할 수 있어요/u)).toBeVisible()
+    expect(screen.getByText(/가입만으로 기록이 업로드되지는 않아요/u)).toBeVisible()
   })
 
   it("hides Kakao when the provider has not been released", () => {
@@ -83,7 +83,8 @@ describe("mobile-first account authentication gateway", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "휴대전화로 계속하기" }))
     fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2000-01-01" } })
-    await userEvent.click(screen.getByRole("checkbox", { name: /필수 약관에 모두 동의/u }))
+    await userEvent.click(screen.getByRole("checkbox", { name: /개인정보 처리방침.*확인/u }))
+    await userEvent.click(screen.getByRole("checkbox", { name: /이용약관.*동의/u }))
     await userEvent.click(screen.getByRole("button", { name: "휴대전화 번호 입력하기" }))
     await userEvent.type(screen.getByLabelText("휴대전화 번호"), "010-1234-5678")
     await userEvent.click(screen.getByRole("button", { name: "문자로 인증번호 받기" }))
@@ -116,7 +117,8 @@ describe("mobile-first account authentication gateway", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "카카오로 계속하기" }))
     fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2000-01-01" } })
-    await userEvent.click(screen.getByRole("checkbox", { name: /필수 약관에 모두 동의/u }))
+    await userEvent.click(screen.getByRole("checkbox", { name: /개인정보 처리방침.*확인/u }))
+    await userEvent.click(screen.getByRole("checkbox", { name: /이용약관.*동의/u }))
     await userEvent.click(screen.getByRole("button", { name: "카카오로 계속하기" }))
 
     expect(socialSignIn).toHaveBeenCalledWith("kakao", expect.stringMatching(/^[a-f0-9]{32}$/u))
@@ -135,7 +137,8 @@ describe("mobile-first account authentication gateway", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Google로 계속하기" }))
     fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2000-01-01" } })
-    await userEvent.click(screen.getByRole("checkbox", { name: /필수 약관에 모두 동의/u }))
+    await userEvent.click(screen.getByRole("checkbox", { name: /개인정보 처리방침.*확인/u }))
+    await userEvent.click(screen.getByRole("checkbox", { name: /이용약관.*동의/u }))
     await userEvent.click(screen.getByRole("button", { name: "Google로 계속하기" }))
     expect(sessionStorage.length).toBe(1)
 
@@ -155,7 +158,8 @@ describe("mobile-first account authentication gateway", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "이메일로 계속하기" }))
     fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2000-01-01" } })
-    await userEvent.click(screen.getByRole("checkbox", { name: /필수 약관에 모두 동의/u }))
+    await userEvent.click(screen.getByRole("checkbox", { name: /개인정보 처리방침.*확인/u }))
+    await userEvent.click(screen.getByRole("checkbox", { name: /이용약관.*동의/u }))
     await userEvent.click(screen.getByRole("button", { name: "이메일 입력하기" }))
     await userEvent.type(screen.getByLabelText("이메일"), "runner@example.com")
     await userEvent.click(screen.getByRole("button", { name: "확인 이메일 받기" }))
@@ -201,7 +205,8 @@ describe("mobile-first account authentication gateway", () => {
     )
     fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2000-01-01" } })
     await userEvent.type(screen.getByLabelText("확인 링크를 받은 내 이메일"), "runner@example.com")
-    await userEvent.click(screen.getByRole("checkbox", { name: /필수 약관에 모두 동의/u }))
+    await userEvent.click(screen.getByRole("checkbox", { name: /개인정보 처리방침.*확인/u }))
+    await userEvent.click(screen.getByRole("checkbox", { name: /이용약관.*동의/u }))
     await userEvent.click(screen.getByRole("button", { name: "확인하고 로그인하기" }))
     expect(consume).toHaveBeenCalledOnce()
     expect(JSON.parse(sessionStorage.getItem("trainoracle.account.pending-setup.v1") ?? "{}")).toMatchObject({
@@ -216,7 +221,8 @@ describe("mobile-first account authentication gateway", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Google로 계속하기" }))
     fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2000-01-01" } })
-    await userEvent.click(screen.getByRole("checkbox", { name: /필수 약관에 모두 동의/u }))
+    await userEvent.click(screen.getByRole("checkbox", { name: /개인정보 처리방침.*확인/u }))
+    await userEvent.click(screen.getByRole("checkbox", { name: /이용약관.*동의/u }))
     await userEvent.click(screen.getByRole("button", { name: "Google로 계속하기" }))
 
     expect(screen.getByRole("status")).toHaveTextContent("간편 로그인을 시작하지 못했어요")
@@ -230,7 +236,8 @@ describe("mobile-first account authentication gateway", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "이메일로 계속하기" }))
     fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2000-01-01" } })
-    await userEvent.click(screen.getByRole("checkbox", { name: /필수 약관에 모두 동의/u }))
+    await userEvent.click(screen.getByRole("checkbox", { name: /개인정보 처리방침.*확인/u }))
+    await userEvent.click(screen.getByRole("checkbox", { name: /이용약관.*동의/u }))
     await userEvent.click(screen.getByRole("button", { name: "이메일 입력하기" }))
     await userEvent.type(screen.getByLabelText("이메일"), "runner@example.com")
     await userEvent.click(screen.getByRole("button", { name: "확인 이메일 받기" }))
@@ -253,7 +260,8 @@ describe("mobile-first account authentication gateway", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "휴대전화로 계속하기" }))
     fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2000-01-01" } })
-    await userEvent.click(screen.getByRole("checkbox", { name: /필수 약관에 모두 동의/u }))
+    await userEvent.click(screen.getByRole("checkbox", { name: /개인정보 처리방침.*확인/u }))
+    await userEvent.click(screen.getByRole("checkbox", { name: /이용약관.*동의/u }))
     await userEvent.click(screen.getByRole("button", { name: "휴대전화 번호 입력하기" }))
     await userEvent.type(screen.getByLabelText("휴대전화 번호"), "010-1234-5678")
     await userEvent.click(screen.getByRole("button", { name: "문자로 인증번호 받기" }))
