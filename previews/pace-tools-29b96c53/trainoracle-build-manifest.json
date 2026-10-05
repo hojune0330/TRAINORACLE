@@ -1,0 +1,11 @@
+{
+  "kind": "TRAINORACLE_LOCAL_PREVIEW_BUILD",
+  "sourceSha": "29b96c539f638fd3bfb03c0aa2fa7c627df8be10",
+  "previousPagesSha": "9f3f493b52fbc2c069a4b1b5a2b17e8d51cad3d5",
+  "deploymentStatus": "NOT_PUBLISHED",
+  "previewOnly": true,
+  "publicConfigurationSourceSha": "9f3f493b52fbc2c069a4b1b5a2b17e8d51cad3d5",
+  "oracleV2Enabled": true,
+  "backendVerification": "NOT_CONFIRMED",
+  "builtAt": "2026-10-05T15:28:16.280Z"
+}
