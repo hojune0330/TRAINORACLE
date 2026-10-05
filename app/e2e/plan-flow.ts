@@ -65,7 +65,7 @@ export async function completeDetailedPlan(page: Page, options: {
 }
 
 export async function openPlanOptions(page: Page, expandA = false): Promise<void> {
-  const options = page.locator(".plan-detailed-options").filter({ has: page.locator("summary", { hasText: "기록 확인·다른 계획·상세 훈련 보기" }) })
+  const options = page.locator(".plan-detailed-options").filter({ has: page.locator("summary", { hasText: "기록·시작일·다른 일정 확인" }) })
   if (await options.getAttribute("open") === null) await options.locator(":scope > summary").click()
   const toggle = page.getByRole("button", { name: "계획안 A 일정 펼치기" })
   if (expandA && await toggle.count()) await toggle.click()

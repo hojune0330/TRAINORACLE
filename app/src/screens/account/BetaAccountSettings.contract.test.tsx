@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { BetaAccountSettings } from "./BetaAccountSettings"
@@ -74,6 +74,69 @@ describe("beta account settings", () => {
     expect(requestDeletion).not.toHaveBeenCalled()
     await userEvent.click(screen.getByRole("button", { name: "네, 계정 삭제를 요청할게요" }))
     expect(requestDeletion).toHaveBeenCalledWith("athlete-a")
+  })
+
+  it("runs session cleanup only after the server accepts deletion", async () => {
+    const requestDeletion = vi.fn().mockResolvedValue({ ok: true, message: "삭제를 요청했어요." })
+    const deletionCompleted = vi.fn().mockResolvedValue({
+      ok: false,
+      message: "계정 삭제 요청은 저장했어요. 이 기기에서는 로그아웃했지만 다른 기기의 로그아웃은 확인하지 못했어요.",
+    })
+    render(
+      <BetaAccountSettings
+        userId="athlete-a"
+        today="2026-08-01"
+        legalDocuments={legalDocuments}
+        onSaveProfile={vi.fn()}
+        onRequestDeletion={requestDeletion}
+        onDeletionCompleted={deletionCompleted}
+      />,
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: "계정 삭제 요청" }))
+    await userEvent.click(screen.getByRole("button", { name: "네, 계정 삭제를 요청할게요" }))
+
+    await waitFor(() => expect(deletionCompleted).toHaveBeenCalledOnce())
+    expect(screen.getByRole("status")).toHaveTextContent("다른 기기의 로그아웃은 확인하지 못했어요")
+  })
+
+  it("does not sign out when the server rejects deletion", async () => {
+    const deletionCompleted = vi.fn()
+    render(
+      <BetaAccountSettings
+        userId="athlete-a"
+        today="2026-08-01"
+        legalDocuments={legalDocuments}
+        onSaveProfile={vi.fn()}
+        onRequestDeletion={vi.fn().mockResolvedValue({ ok: false, message: "삭제 요청에 실패했어요." })}
+        onDeletionCompleted={deletionCompleted}
+      />,
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: "계정 삭제 요청" }))
+    await userEvent.click(screen.getByRole("button", { name: "네, 계정 삭제를 요청할게요" }))
+
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("삭제 요청에 실패했어요"))
+    expect(deletionCompleted).not.toHaveBeenCalled()
+  })
+
+  it("keeps the deletion success visible when session cleanup throws", async () => {
+    render(
+      <BetaAccountSettings
+        userId="athlete-a"
+        today="2026-08-01"
+        legalDocuments={legalDocuments}
+        onSaveProfile={vi.fn()}
+        onRequestDeletion={vi.fn().mockResolvedValue({ ok: true, message: "삭제를 요청했어요." })}
+        onDeletionCompleted={vi.fn().mockRejectedValue(new Error("session cleanup failed"))}
+      />,
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: "계정 삭제 요청" }))
+    await userEvent.click(screen.getByRole("button", { name: "네, 계정 삭제를 요청할게요" }))
+
+    await waitFor(() => expect(screen.getByRole("status"))
+      .toHaveTextContent("계정 삭제 요청은 저장했지만 로그아웃 상태를 확인하지 못했어요"))
   })
 
   it("requires a checked privacy and terms acknowledgement before profile data can be saved", async () => {

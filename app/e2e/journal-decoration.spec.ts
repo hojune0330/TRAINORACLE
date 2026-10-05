@@ -250,11 +250,15 @@ test("keeps the mobile canvas visible, traps focus, and keeps all topbar actions
   await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
 
-  await expect(page.getByRole("button", { name: "꾸미기 편집기 닫기" })).toBeFocused()
+  const editor = page.getByRole("dialog", { name: "일지 꾸미기", exact: true })
+  await expect(editor.getByRole("button", { name: "꾸미기 편집기 닫기" })).toBeFocused()
   await expect(page.locator(".journal-decoration-toolbar")).toHaveAttribute("inert", "")
-  await page.getByRole("button", { name: "글자색 도구" }).focus()
+  const lastFocusable = editor.getByRole("button", { name: "글자색 도구" })
+  await lastFocusable.focus()
   await page.keyboard.press("Tab")
-  await expect(page.getByRole("button", { name: "꾸미기 편집기 닫기" })).toBeFocused()
+  await expect(editor.getByRole("button", { name: "일지", exact: true })).toBeFocused()
+  await page.keyboard.press("Shift+Tab")
+  await expect(lastFocusable).toBeFocused()
 
   await page.getByRole("button", { name: "이모지 스티커 도구" }).click()
   const drawerGeometry = await page.evaluate(() => {

@@ -105,6 +105,13 @@ const SESSION_KEYS = [
 /** 계정·동기화 관련 키 — 기기를 넘길 때 남으면 안 된다 */
 const ACCOUNT_KEYS = [
   "trainoracle.auth.v1",
+  // Supabase PKCE와 가입 확인 보호 상태도 인증 정보의 일부다. 공유 기기에서
+  // 남겨 두면 다음 사용자가 이전 로그인 흐름을 이어받거나 계정 화면이 잠길 수 있다.
+  "trainoracle.auth.v1-code-verifier",
+  "trainoracle.auth.quarantine.v1",
+  "trainoracle.account.email-browser-proof.v1",
+  // 신원 정보는 없지만 '전부 지우기' 뒤 다른 탭에 오래된 새로고침 신호를 남기지 않는다.
+  "trainoracle.auth.scope-refresh.v1",
   "trainoracle.account.setup-receipt.v1",
   "trainoracle.sync.consent.v1",
   // 이 키에는 **계정 userId가 평문으로** 들어 있다(`sync.ts`의 claimSyncOwner).

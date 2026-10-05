@@ -19,6 +19,7 @@ import { JOURNAL_STORAGE_KEY } from "../domain/journal-local-storage"
 import { createRecoveryCode } from "../domain/account/private-note-crypto"
 import { saveSessionRecoveryCode } from "../domain/account/private-note-sync"
 import { loadCalendarDecorationState } from "../domain/calendar-decoration-store"
+import { BACKUP_JSON_IMPORT_LIMITS } from "../domain/restore/backup-json-stream"
 
 afterEach(cleanup)
 
@@ -98,6 +99,21 @@ describe("RestoreBackup — 고르기 단계", () => {
     await waitFor(() => {
       expect(screen.getByTestId("restore-failure").textContent).toMatch(/빈 백업일 수 있어요/u)
     })
+  })
+
+  it("크기 제한 파일은 내용을 읽지 않고 원인을 따로 알린다", async () => {
+    const user = userEvent.setup()
+    saveEntry(postSession("keep-me", "2026-07-20"))
+    render(<RestoreBackup />)
+    const oversized = new File(["{}"], "oversized.json", { type: "application/json" })
+    Object.defineProperty(oversized, "size", { value: BACKUP_JSON_IMPORT_LIMITS.blobBytes + 1 })
+
+    await pick(user, oversized)
+
+    await waitFor(() => {
+      expect(screen.getByTestId("restore-failure").textContent).toMatch(/32MB 이하/u)
+    })
+    expect(loadEntries().map(entry => entry.id)).toEqual(["keep-me"])
   })
 
 })

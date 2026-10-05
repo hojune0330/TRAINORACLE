@@ -27,6 +27,7 @@ type BetaAccountSettingsProps = {
   readonly onCompleted?: () => void
   readonly onSaveProfile?: (input: SaveProfileInput) => Promise<AccountActionResult>
   readonly onRequestDeletion?: (userId: string) => Promise<AccountActionResult>
+  readonly onDeletionCompleted?: (() => AccountActionResult | Promise<AccountActionResult>) | undefined
 }
 
 export function BetaAccountSettings({
@@ -40,6 +41,7 @@ export function BetaAccountSettings({
   onCompleted,
   onSaveProfile = savePrivateProfile,
   onRequestDeletion = requestServerAccountDeletion,
+  onDeletionCompleted,
 }: BetaAccountSettingsProps) {
   const [birthDate, setBirthDate] = React.useState("")
   const [ageMessage, setAgeMessage] = React.useState<string | null>(null)
@@ -79,10 +81,27 @@ export function BetaAccountSettings({
 
   const requestDeletion = async () => {
     setBusy(true)
-    const result = await onRequestDeletion(userId)
-    setBusy(false)
-    setDeletionConfirming(false)
-    setNotice(result.message)
+    try {
+      let result: AccountActionResult
+      try {
+        result = await onRequestDeletion(userId)
+      } catch {
+        result = { ok: false, message: "계정 삭제 요청을 보내지 못했어요." }
+      }
+      if (!result.ok || onDeletionCompleted === undefined) {
+        setNotice(result.message)
+        return
+      }
+      try {
+        const exitResult = await onDeletionCompleted()
+        setNotice(exitResult.message)
+      } catch {
+        setNotice("계정 삭제 요청은 저장했지만 로그아웃 상태를 확인하지 못했어요.")
+      }
+    } finally {
+      setBusy(false)
+      setDeletionConfirming(false)
+    }
   }
 
   return (

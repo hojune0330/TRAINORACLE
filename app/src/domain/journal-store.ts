@@ -20,7 +20,7 @@ import {
 } from "./private-memo-vault"
 import { loadSessionRecoveryCode } from "./account/private-note-sync"
 import { loadDecorationStateForFullBackup } from "./decorations"
-import { calendarDecorationStateSchema, createEmptyCalendarDecorationState } from "./calendar-decoration-schema"
+import { calendarDecorationStateSchema, calendarDecorationsOwnedBy, createEmptyCalendarDecorationState } from "./calendar-decoration-schema"
 import { calendarDecorationReadStatus, readCalendarDecorationStateSerialized } from "./calendar-decoration-store"
 import { accountDecorationsEnabled } from "./account/account-decoration-service"
 import { accountCalendarDecorationStatus } from "./account/account-calendar-decoration-service"
@@ -39,6 +39,9 @@ import { samePlannedSessionLink } from "./planned-session-link"
 import { readAccountJournalProjection, readCurrentConfirmedAccountJournalProjection, readAccountJournalPrivateEntry, accountJournalProjectionStatus, accountJournalBackupReady, isAccountJournalLocalCopyShadowed } from "./account/account-journal-projection"
 import { accountJournalPreviewEnabled } from "./account/account-journal-api"
 import { buildFileAnalysisReport } from "./import/file-analysis"
+import { stringifyBackupJsonForExport } from "./restore/backup-json-stream"
+
+export { BackupJsonExportLimitError } from "./restore/backup-json-stream"
 
 const privateMemoCache = new Map<string, { readonly recoveryCode: string; readonly memo: string }>()
 
@@ -502,19 +505,20 @@ export function exportEntriesJSON(options: JournalExportOptions = {}): string {
       } catch { /* Keep the unknown original; never export a replacement as its contents. */ }
       throw new Error("CALENDAR_BACKUP_NOT_READY")
     })()
-    return JSON.stringify(
-      {
-        app: "TRAINORACLE",
-        format: calendarUnsupported ? "trainoracle.journal.full-backup.v4" : "trainoracle.journal.full-backup.v5",
-        exportMode: "OWNER_FULL_BACKUP",
-        exportedAt: new Date().toISOString(),
-        entries,
-        decorations,
-        ...(calendar === undefined ? { excludedSections: ["calendarDecorations"] } : { calendarDecorations: calendar }),
-      },
-      null,
-      2,
-    )
+    // Keep device-only storage corruption and any last-moment account projection
+    // change from producing a v5 file that the restore boundary must reject.
+    if (calendar !== undefined && !calendarDecorationsOwnedBy(calendar, decorations)) {
+      throw new Error("CALENDAR_BACKUP_NOT_READY")
+    }
+    return stringifyBackupJsonForExport({
+      app: "TRAINORACLE",
+      format: calendarUnsupported ? "trainoracle.journal.full-backup.v4" : "trainoracle.journal.full-backup.v5",
+      exportMode: "OWNER_FULL_BACKUP",
+      exportedAt: new Date().toISOString(),
+      entries,
+      decorations,
+      ...(calendar === undefined ? { excludedSections: ["calendarDecorations"] } : { calendarDecorations: calendar }),
+    })
   }
 
   const entries: SafeJournalEntry[] = []
@@ -522,16 +526,12 @@ export function exportEntriesJSON(options: JournalExportOptions = {}): string {
     const projected = toExportJournalEntry(entry)
     if (projected !== null) entries.push(projected)
   }
-  return JSON.stringify(
-    {
-      app: "TRAINORACLE",
-      format: "trainoracle.journal.v1",
-      exportedAt: new Date().toISOString(),
-      entries,
-    },
-    null,
-    2,
-  )
+  return stringifyBackupJsonForExport({
+    app: "TRAINORACLE",
+    format: "trainoracle.journal.v1",
+    exportedAt: new Date().toISOString(),
+    entries,
+  })
 }
 
 function entriesForOwnerFullBackup(): JournalEntry[] {

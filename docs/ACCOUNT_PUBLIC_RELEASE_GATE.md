@@ -7,7 +7,7 @@ product: TrainOracle
 service_provider_working_name: aaclub
 service_operator_target: FREE_BETA_UP_TO_200
 service_operator_scope_decision: ACCOUNT_FIRST_SYNC_LATER
-current_status: OWNER_APPROVED_ACCOUNT_ONLY_PUBLIC_SYNC_CLOSED
+current_status: SECURITY_REVIEW_REOPENED_DEDICATED_ORIGIN_AND_0056_RUNTIME_OPEN
 contact_path: TrainOracle in-app feedback board
 owner_preparation_approved_at: 2026-08-14
 legal_clearance_claimed: false
@@ -26,6 +26,20 @@ TrainOracle은 비밀번호를 만들거나 저장하지 않는다. 만 14세 �
 카카오, 전화·문자, 토스, 네이버, Apple, AthleteTime SSO는 이번 공개의 선행조건이 아니다.
 휴대전화 OTP 화면과 코드는 별도 닫힌 게이트로 준비하지만, SMS 공급자·CAPTCHA·
 비용 경보를 실측하기 전에는 공개 버튼이 나타나지 않는다.
+
+## 2026-10-03 보안 재검토
+
+GitHub Pages의 프로젝트 경로는 별도 보안 origin이 아니다. 같은
+`https://hojune0330.github.io` 아래의 다른 프로젝트도 TrainOracle의 localStorage와
+IndexedDB에 있는 지속 로그인 토큰, 기기 일지, 훈련 계획, 건강성 입력을 읽을 수
+있으므로, 민감 계정 기능을 다시 공개하기 전에
+TrainOracle 전용 도메인 또는 전용 서브도메인으로 옮겨야 한다. 별도 origin이
+확정되지 않은 동안 Google·이메일 공개 게이트는 닫힌 상태를 유지한다.
+
+또한 서버 입장 판정·expected-user 바인딩·COROS 수집 차단·허용 인증 방식 검사를
+추가한 현재 마이그레이션 0051~0056을
+시험·운영 DB에 적용하고 새 클라이언트와의 왕복을 확인해야 한다. 과거 공개 기록은
+당시의 영수증이며, 이 재검토에서 새로 열린 게이트를 대신하지 않는다.
 
 이 문서는 법률 준수 확정서가 아니다. 2026-08-26 소유자는 실제 이메일·Google
 왕복과 서버 계정 확정을 확인한 뒤 **계정 생성·로그인만** 공개하도록 승인했다.
@@ -65,11 +79,14 @@ PASS로 바꾸지 않는다.
 | G4 미성년자 | 가입 전 나이 확인, 만 14세 미만 외부 인증 미호출, 서버 프로필 차단 실측 | PARTIAL_STAGING_SERVER_REHEARSAL_PASS_EXTERNAL_CALL_OPEN |
 | G5 보유·탈퇴 | 즉시 접근 차단·30일 삭제 경로 구현과 실제 정리 영수증 | CODE_READY_TEST_OPEN |
 | G6 처리업체 | 실제 Supabase 프로젝트 지역과 처리위탁 고지 확정 | OPEN |
-| G7 DB 안전 | 시험 DB에 0001~0028 실행, RLS 활성, 사용자별 정책 실측 | PARTIAL_STAGING_0001_0028_SYNTHETIC_PASS |
+| G7 DB 안전 | 시험 DB에 현재 전체 마이그레이션(최소 0056) 실행, RLS·입장 RPC·사용자별 정책 실측 | REOPENED_0051_TO_0056_STAGING_AND_PRODUCTION_OPEN |
 | G8 교차 계정 시험 | 두 계정 격리, 두 기기 동기화, 삭제·복구·재로그인 시험 | PARTIAL_STAGING_TWO_USERS_RLS_PASS_UI_HARNESS_READY_TWO_BROWSER_OPEN |
 | G9 가입 동의 | 가입 전에 방침·약관 링크와 버전 동의를 저장하는 UI·계약 | RUNTIME_PASS_VERSION_2026_08_26 |
-| G10 배포 스위치 | 소유자 승인 범위에서 계정만 공개하고 동기화·공유는 계속 닫음 | OWNER_APPROVED_ACCOUNT_ONLY_PUBLIC |
+| G10 배포 스위치 | G7·G12·G13·G14와 실제 환경을 확인한 뒤 계정만 공개하고 동기화·공유는 계속 닫음 | REOPENED_BLOCKED_BY_G7_G12_G13_G14 |
 | G11 휴대전화 선택 출시 | SMS 공급자·한국 발신 조건·CAPTCHA·요율 제한·비용 경보·실수신 왕복 | CODE_READY_PROVIDER_OPEN |
+| G12 전용 origin | 지속 로그인 토큰과 계정별 로컬 데이터를 다른 Pages 프로젝트와 공유하지 않는 전용 도메인·서브도메인 | OPEN_GITHUB_PAGES_SHARED_ORIGIN |
+| G13 이메일 남용 방지 | Hosted Auth CAPTCHA·발송 요율 제한·사용자/IP 기준 감시·custom SMTP 쿼터와 비용·평판 경보 실측 | OPEN_PROVIDER_ABUSE_CONTROLS |
+| G14 인증 표면 제한 | 미사용 OAuth·익명·SSO를 Hosted Auth에서 끄고, 비밀번호 가입·로그인 세션과 비밀번호 자격 증명 보유 계정이 0053에서 거부되는지 실측 | OPEN_HOSTED_AUTH_ALLOWLIST_AND_PASSWORD_PROBE |
 
 G8에는 같은 브라우저에서 계정을 바꿨을 때 이전 사용자의 로컬 일지가 보이지
 않고 새 계정으로 업로드되지 않는 시험을 반드시 포함한다. 현재는 잘못된
@@ -83,6 +100,28 @@ rollback-only 합성 시험에서 만 14세 미만 프로필 차단을 확인했
 로그인 제공자 요청이 가입 전 차단되는지는 확인하지 않았으므로 G4는 닫지 않는다.
 G9도 버전 저장 스키마는 시험 DB에 적용됐지만 실제 공개 문서와 가입 전 표시 순서의
 브라우저 실측이 없어 닫지 않는다.
+
+G13은 화면의 재전송 대기 시간만으로 닫을 수 없다. 공개 anon key를 사용하면 앱 UI를
+거치지 않고 Auth 이메일 발송 API를 호출할 수 있다. Hosted Supabase에서 CAPTCHA와
+서버 요율 제한을 켜고, custom SMTP의 일·시간 쿼터, 비용·반송·스팸 평판 경보를 실제로
+확인하기 전까지 이메일 로그인을 공개하지 않는다.
+
+0053은 JWT의 AMR뿐 아니라 `auth.users.encrypted_password` 존재 여부도 서버에서
+확인한다. Supabase의 `email/signup` 표시는 비밀번호 가입 확인과 비밀번호 없는 첫
+이메일 가입을 구분하지 못하기 때문이다. 앱은 비밀번호를 제공하지 않으며, 공개
+Auth API로 비밀번호 사용자를 만들어도 TrainOracle 입장·데이터 접근은 거부한다.
+OAuth AMR만으로 Google과 다른 OAuth 제공자를 구분할 수 없으므로, G14에서 미사용
+Hosted provider가 실제로 꺼져 있는지도 별도로 확인한다.
+비밀번호 해시가 한 번이라도 생긴 계정은 이후 Google이나 진짜 magic link로 다시
+인증해도 입장을 허용하지 않는 것이 현재 정책이다. 공개 전 전용 시험 프로젝트에서
+신규 magic link, 기존 magic link, Google, 직접 비밀번호 가입 네 계정의 실제 AMR과
+해시 존재 판정을 비교한다. 합성 DB의 빈 문자열 가정만으로 G14를 닫지 않는다.
+또한 `AUTH_OAUTH`와 `AUTH_PASSWORDLESS` 서버 스위치는 기본값이 `false`다. 실제
+Hosted Auth 왕복을 확인한 인증 종류만 서버에서 연 뒤 `ACCOUNT`를 마지막에 연다.
+브라우저의 provider별 값은 화면 노출 제어이고, 이 두 서버 스위치가 공개 Auth API
+직접 호출 뒤의 계정 입장을 막는 경계다. OAuth AMR만으로 현재 Google·Kakao 중 어느
+제공자로 로그인했는지 확실히 구분할 수 없으므로 제공자 하나의 사고라도
+`AUTH_OAUTH=false`로 OAuth 전체를 보수적으로 닫는다.
 
 ## 현재 확인된 데이터 범위
 
@@ -106,14 +145,18 @@ G9도 버전 저장 스키마는 시험 DB에 적용됐지만 실제 공개 문�
 
 ## 공개 전 실행 순서
 
-1. 운영과 분리된 시험 Supabase에 0001~0028을 적용하고 영수증을 남긴다.
-2. 시험 빌드에서 계정만 켜고 카카오·Google·이메일 로그인, 14세 경계, 로그아웃,
-   삭제 요청과 실패 경로를 확인한다. 동기화·공유·계획·분석은 계속 끈다.
+1. 운영과 분리된 시험 Supabase에 현재 마이그레이션 전체(최소 0056)를 적용하고 영수증을 남긴다.
+2. 시험 빌드에서 계정만 켜고 카카오·Google·이메일 로그인, 14세 경계, 전달된 이메일
+   링크의 계정 바꿔치기 차단, 직접 비밀번호 가입·로그인의 서버 거부, 로그아웃,
+   삭제 요청과 실패 경로를 확인한다.
+   동기화·공유·계획·분석은 계속 끈다.
 3. G1~G6의 실제 운영 정보를 확정하고 공개 문서를 게시한다.
    공개 배포 변수 `TRAINORACLE_PRIVACY_POLICY_URL`,
    `TRAINORACLE_PRIVACY_POLICY_VERSION`, `TRAINORACLE_TERMS_OF_SERVICE_URL`,
    `TRAINORACLE_TERMS_OF_SERVICE_VERSION`도 같은 승인본으로 등록한다.
-4. 서비스 운영자가 시험 결과와 정확한 배포 SHA를 확인한 뒤 계정 변수만
+4. TrainOracle 전용 origin과 Auth redirect allowlist를 확정하고 G13의 Auth·SMTP
+   남용 방지와 G14의 Hosted provider 제한을 실측한 뒤, 서비스 운영자가
+   시험 결과와 정확한 배포 SHA를 확인한 뒤 계정 변수만
    `true`로 바꾼다.
 5. 계정 공개가 안정된 뒤 서로 다른 두 계정과 두 브라우저로 동기화 G8을
    별도 시험하고, 그 결과를 확인한 뒤 동기화를 연다.
@@ -133,5 +176,14 @@ G9도 버전 저장 스키마는 시험 DB에 적용됐지만 실제 공개 문�
 진입점도 사라진다. 이 조치는 이미 서버에 저장된 데이터의 삭제나 보유 정책을
 대신하지 않는다. 자세한 순서는
 `reports/operations/BETA_FEATURE_INCIDENT_LOG.md`를 따른다.
-SMS만 문제가 생기면 `TRAINORACLE_KILL_PHONE_AUTH=true`로 전화 버튼만 닫고 카카오,
-Google, 이메일 경로는 유지한다.
+특정 인증 방법만 문제가 생겨도 먼저 서버의 `ACCOUNT`와 해당 인증 종류 스위치를
+닫은 다음 Hosted Supabase의 provider 또는 발송 경로를 비활성화한다. 그다음 해당
+`TRAINORACLE_KILL_*` 값을 넣은 새 번들을 배포한다.
+프론트 kill 값과 UI 숨김만으로는 공개 Auth API 직접 호출이나 기존 정적 번들을
+즉시 차단할 수 없다.
+인증 사고에서는 `ACCOUNT=false` 뒤 해당 종류의 `AUTH_OAUTH` 또는
+`AUTH_PASSWORDLESS`도 닫는다. Hosted provider·발송 경로를 끄고, Supabase의 지원되는
+관리 절차로 영향받은 Auth 세션을 폐기한 뒤 `auth.sessions`에 대상 세션이 남지 않은
+것을 확인한다. access token 자체는 만료 전까지 남을 수 있지만, 0053은 JWT의
+`session_id`가 활성 서버 세션과 일치하지 않으면 계정 RPC와 데이터 접근을 거부한다.
+이 확인이 끝날 때까지 `ACCOUNT`를 다시 열지 않는다.

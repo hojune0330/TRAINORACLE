@@ -41,7 +41,7 @@ import {
   clearJournalDecorationAutoOpen,
   pendingJournalDecorationAutoOpenDate,
 } from "../../domain/journal-decoration-intent"
-import { loadEngagementSummary } from "../../domain/engagement"
+import { ENGAGEMENT_EVENT, loadEngagementSummary, reconcileJournalAwards, toEngagementJournalRef } from "../../domain/engagement"
 import { todayISO } from "../../domain/journal-store"
 import { withJosa } from "../../domain/korean-josa"
 import { JournalDecorationLauncher, JournalDecorationToolbar } from "./JournalDecorationToolbar"
@@ -227,11 +227,15 @@ function JournalDecorationSurfaceSession({
   React.useEffect(() => {
     const refresh = () => setEarnedPoints(loadEngagementSummary(today).points)
     if (open) {
-      refresh()
       if (accountDecorationsEnabled()) {
         void hydrateAccountRewards()
       } else {
-        const summary = loadEngagementSummary(today)
+        const journalRefs = loadEntries().flatMap((entry) => {
+          const ref = toEngagementJournalRef(entry)
+          return ref === null ? [] : [ref]
+        })
+        const summary = reconcileJournalAwards(journalRefs, today)
+        setEarnedPoints(summary.points)
         /* 계정 보상은 서버가 소유권을 검증한다. 기기 모드에서만 로컬 규칙으로 자동 지급한다. */
         const claim = claimRewardDecorations(
           canonical,
@@ -249,7 +253,11 @@ function JournalDecorationSurfaceSession({
       }
     }
     window.addEventListener(ACCOUNT_REWARD_EVENT, refresh)
-    return () => window.removeEventListener(ACCOUNT_REWARD_EVENT, refresh)
+    window.addEventListener(ENGAGEMENT_EVENT, refresh)
+    return () => {
+      window.removeEventListener(ACCOUNT_REWARD_EVENT, refresh)
+      window.removeEventListener(ENGAGEMENT_EVENT, refresh)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 열릴 때 현재 저장 스냅샷을 한 번 판정한다.
   }, [open])
   const availablePoints = accountDecorationsEnabled() ? readAccountRewardSummary()?.availablePoints ?? 0

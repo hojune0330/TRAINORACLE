@@ -26,8 +26,8 @@ import { PlanEvidenceHistoryNotice } from "./components/PlanEvidenceHistoryNotic
 import { useAthleteRecordsSnapshot } from "./hooks/useAthleteRecordsSnapshot"
 import { recordOracleJournalParticipation } from "./domain/oracle-participation"
 import { trackProductEvent } from "./domain/account/product-analytics-service"
-import { currentUser, onAuthChange } from "./domain/account/auth"
 import { setAccountAuthState } from "./domain/account/account-auth-state"
+import { startVerifiedAccountScope } from "./domain/account/verified-account-scope"
 import type { PlannedSessionLink } from "./domain/planned-session-link"
 import {
   onLocalJournalScopeChange,
@@ -363,38 +363,18 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       setActiveLocalAccount(null)
       return
     }
-    let mounted = true
-    let authEventSeen = false
     setAccountAuthState("RESOLVING")
     const refresh = () => setAccountScopeRevision((value) => value + 1)
     // Hydration refreshes readers without remounting a volatile account draft.
     window.addEventListener("trainoracle:account-journals-changed", refreshAccountJournals)
     const unsubscribeScope = onLocalJournalScopeChange(refresh)
-    void currentUser({ throwOnFailure: true }).then((user) => {
-      if (mounted && !authEventSeen) {
-        setActiveLocalAccount(user?.id ?? null)
-        setAccountAuthState(user ? "RESOLVING" : "GUEST")
-        setOracleAuthResolved(true)
-      }
-    }).catch(() => {
-      if (mounted && !authEventSeen) {
-        setAccountAuthState("FAILED")
-        setActiveLocalAccount(null)
-        setOracleAuthResolved(true)
-      }
+    const unsubscribeAuth = startVerifiedAccountScope(status => {
+      setOracleAuthResolved(status !== "LOADING")
     })
-    const unsubscribeAuth = onAuthChange((user) => {
-      authEventSeen = true
-      setActiveLocalAccount(user?.id ?? null)
-      setAccountAuthState(user ? "RESOLVING" : "GUEST")
-      setOracleAuthResolved(true)
-    }, { ignoreInitialSession: true })
     return () => {
-      mounted = false
       window.removeEventListener("trainoracle:account-journals-changed", refreshAccountJournals)
       unsubscribeScope()
       unsubscribeAuth()
-      setAccountAuthState("RESOLVING")
     }
   }, [])
 

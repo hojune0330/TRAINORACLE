@@ -1,4 +1,5 @@
 import { resolveProductFeatures } from "../product-features"
+import { isSupabasePublicClientKey } from "../supabase-public-key"
 
 export type FeedbackConfig = {
   readonly url: string
@@ -14,7 +15,7 @@ export function resolveFeedbackConfig(env: Readonly<Record<string, unknown>>): F
   if (!resolveProductFeatures(env).feedbackBoard) return null
   const url = textValue(env, "VITE_SUPABASE_URL")
   const anonKey = textValue(env, "VITE_SUPABASE_ANON_KEY")
-  if (!url.startsWith("https://") || anonKey === "") return null
+  if (!url.startsWith("https://") || !isSupabasePublicClientKey(anonKey)) return null
   return { url, anonKey }
 }
 

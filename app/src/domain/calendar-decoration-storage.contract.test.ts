@@ -66,6 +66,22 @@ it("write and readback failure preserve the exact previous local calendar", () =
   expect(readCalendarDecorationStateSerialized()).toBe(previous)
 })
 
+it("readback rollback never overwrites a newer valid same-key calendar", () => {
+  const candidate = { ...empty, items: [item(1)] }
+  const newer = { ...empty, items: [item(2, "FOOTER_MARGIN")] }
+  const original = Storage.prototype.setItem
+  vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, key, value) {
+    if (key === CALENDAR_DECORATION_STORAGE_KEY && value === JSON.stringify(candidate)) {
+      original.call(this, key, JSON.stringify(newer))
+      return
+    }
+    original.call(this, key, value)
+  })
+
+  expect(saveCalendarDecorationStateIfCurrent(candidate, null)).toEqual({ ok: false, code: "ROLLBACK_FAILED" })
+  expect(readCalendarDecorationStateSerialized()).toBe(JSON.stringify(newer))
+})
+
 it("device and both local account calendars remain separate and erase discovers every scoped new key", () => {
   expect(saveCalendarDecorationStateIfCurrent(empty, null).ok).toBe(true)
   setActiveLocalAccount("account-a")

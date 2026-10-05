@@ -243,13 +243,13 @@ describe("feature flag OFF — 계정 기능 완전 비활성", () => {
   })
 
   it("OTP 요청은 안전한 실패값을 돌려준다", async () => {
-    const result = await requestEmailOtp("runner@example.com")
+    const result = await requestEmailOtp("runner@example.com", "a".repeat(32))
     expect(result.ok).toBe(false)
-    expect(result.message).toContain("꺼져")
+    expect(result.message).toContain("닫혀")
   })
 
   it("Google 로그인도 안전한 실패값을 돌려준다", async () => {
-    const result = await signInWithGoogle()
+    const result = await signInWithGoogle("a".repeat(32))
     expect(result.ok).toBe(false)
   })
 

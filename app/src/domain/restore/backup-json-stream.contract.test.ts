@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest"
-import { readBackupJsonBlob } from "./backup-json-stream"
+import {
+  BackupJsonExportLimitError,
+  BackupJsonLimitError,
+  readBackupJsonBlob,
+  stringifyBackupJsonForExport,
+} from "./backup-json-stream"
 import {
   FULL_FORMAT, FULL_FORMAT_V3, FULL_FORMAT_V4, FULL_FORMAT_V5, LEGACY_FULL_FORMAT,
   SAFE_FORMAT, readBackupBlob, readBackupFile,
@@ -76,5 +81,115 @@ describe("chunked backup JSON reading", () => {
     const blob = jsonBlob(source)
     Object.defineProperty(blob, "text", { value: vi.fn(() => Promise.reject(new Error("whole file read"))) })
     expect((await readBackupBlob(blob)).entries).toHaveLength(1)
+  })
+
+  it("rejects a selected file before reading when its byte budget is exceeded", async () => {
+    const blob = jsonBlob('{"app":"TRAINORACLE"}')
+    const error = await readBackupJsonBlob(blob, () => true, 4, {
+      blobBytes: blob.size - 1, entries: 10, keptValueChars: 1024,
+    }).catch(value => value)
+
+    expect(error).toBeInstanceOf(BackupJsonLimitError)
+    expect(error).toMatchObject({ limit: "blobBytes" })
+  })
+
+  it("bounds every raw entry before retaining or parsing an unbounded value", async () => {
+    const source = JSON.stringify({ app: "TRAINORACLE", format: SAFE_FORMAT, entries: [
+      { ...entry, memo: "x".repeat(400) },
+    ] })
+    const error = await readBackupJsonBlob(jsonBlob(source), () => true, 7, {
+      blobBytes: 4096, entries: 10, keptValueChars: 256,
+    }).catch(value => value)
+
+    expect(error).toBeInstanceOf(BackupJsonLimitError)
+    expect(error).toMatchObject({ limit: "keptValueChars" })
+  })
+
+  it("counts invalid and valid entry candidates toward one bounded review", async () => {
+    const source = JSON.stringify({ app: "TRAINORACLE", format: SAFE_FORMAT, entries: [
+      entry, { id: "invalid" }, { ...entry, id: "third" },
+    ] })
+    const limits = { blobBytes: 4096, entries: 2, keptValueChars: 2048 }
+    const error = await readBackupJsonBlob(jsonBlob(source), () => true, 5, limits).catch(value => value)
+
+    expect(error).toBeInstanceOf(BackupJsonLimitError)
+    expect(error).toMatchObject({ limit: "entries" })
+  })
+
+  it.each([
+    ["FILE_TOO_LARGE", { blobBytes: 1, entries: 10, keptValueChars: 1024 }],
+    ["TOO_MANY_ENTRIES", { blobBytes: 4096, entries: 0, keptValueChars: 1024 }],
+    ["VALUE_TOO_LARGE", { blobBytes: 4096, entries: 10, keptValueChars: 8 }],
+  ] as const)("reports %s separately from malformed JSON", async (readFailure, limits) => {
+    const source = JSON.stringify({ app: "TRAINORACLE", format: SAFE_FORMAT, entries: [entry] })
+    expect(await readBackupBlob(jsonBlob(source), () => true, limits)).toMatchObject({
+      recognized: false, readFailure,
+    })
+  })
+
+  it("serializes an exact-budget export that the same streaming limits accept", async () => {
+    const envelope = {
+      app: "TRAINORACLE",
+      format: SAFE_FORMAT,
+      exportedAt: "2026-07-14T00:00:00.000Z",
+      entries: [entry],
+    }
+    const expected = JSON.stringify(envelope, null, 2)
+    const limits = {
+      blobBytes: new TextEncoder().encode(expected).byteLength,
+      entries: envelope.entries.length,
+      keptValueChars: Math.max(
+        JSON.stringify(envelope.app).length,
+        JSON.stringify(envelope.format).length,
+        JSON.stringify(envelope.exportedAt).length,
+        ...envelope.entries.map(value => JSON.stringify(value).length),
+      ),
+    }
+
+    const exported = stringifyBackupJsonForExport(envelope, limits)
+    const parsed = await readBackupJsonBlob(jsonBlob(exported), () => true, 7, limits)
+
+    expect(exported).toBe(expected)
+    expect(parsed).toMatchObject(envelope)
+  })
+
+  it("refuses an export exactly one byte over the import budget", () => {
+    const envelope = { app: "TRAINORACLE", format: SAFE_FORMAT, entries: [entry] }
+    const bytes = new TextEncoder().encode(JSON.stringify(envelope, null, 2)).byteLength
+    const error = (() => {
+      try {
+        stringifyBackupJsonForExport(envelope, {
+          blobBytes: bytes - 1,
+          entries: 1,
+          keptValueChars: JSON.stringify(entry).length,
+        })
+        return null
+      } catch (value) {
+        return value
+      }
+    })()
+
+    expect(error).toBeInstanceOf(BackupJsonExportLimitError)
+    expect(error).toMatchObject({
+      code: "BACKUP_EXPORT_EXCEEDS_IMPORT_LIMIT",
+      limit: "blobBytes",
+    })
+  })
+
+  it.each([
+    ["entries", { blobBytes: 4096, entries: 0, keptValueChars: 2048 }],
+    ["keptValueChars", { blobBytes: 4096, entries: 1, keptValueChars: 8 }],
+  ] as const)("fails export preflight on the %s budget", (limit, limits) => {
+    const error = (() => {
+      try {
+        stringifyBackupJsonForExport({ app: "TRAINORACLE", format: SAFE_FORMAT, entries: [entry] }, limits)
+        return null
+      } catch (value) {
+        return value
+      }
+    })()
+
+    expect(error).toBeInstanceOf(BackupJsonExportLimitError)
+    expect(error).toMatchObject({ code: "BACKUP_EXPORT_EXCEEDS_IMPORT_LIMIT", limit })
   })
 })

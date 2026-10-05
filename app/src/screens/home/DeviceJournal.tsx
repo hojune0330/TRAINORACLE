@@ -1,6 +1,7 @@
 import React from "react"
 import { SectionLb } from "../../components/JournalPrimitives"
 import {
+  BackupJsonExportLimitError,
   exportEntriesJSON,
   loadEntriesWithPrivateMemos,
   PrivateMemoUnlockRequiredError,
@@ -13,6 +14,11 @@ import { hasImportedField } from "../../domain/field-provenance"
 import { journalRpeLabel, quickOutcomeLabel } from "../../domain/quick-journal"
 import { activeLocalAccount, onLocalJournalScopeChange } from "../../domain/account/local-journal-ownership"
 import { refreshAccountJournalRecordsForExport } from "../../domain/account/account-journal-record-service"
+import { refreshAccountDecorationsForExport } from "../../domain/account/account-decoration-service"
+import {
+  accountCalendarDecorationExportReady,
+  refreshAccountCalendarDecorationsForExport,
+} from "../../domain/account/account-calendar-decoration-service"
 
 type DeviceJournalProps = {
   readonly onOpenDay?: (date: string) => void
@@ -113,6 +119,7 @@ export function DeviceJournal({ onOpenDay, onOpenArchive }: DeviceJournalProps) 
 }
 
 const EXPORT_DESCRIPTION_ID = "safe-journal-export-description"
+const FULL_BACKUP_DECORATION_REFRESH_ATTEMPTS = 2
 
 export function SafeJournalExport({ onOpenRestore }: {
   /** 내려받은 백업을 다시 일지로 되돌리는 경로 — 백업을 권하면 복원도 있어야 한다 */
@@ -198,10 +205,34 @@ async function downloadJournalExport(mode: "SAFE" | "OWNER_FULL_BACKUP"): Promis
       if (!current()) return
       throw new Error("JOURNAL_BACKUP_NOT_READY")
     }
+    if (isFullBackup) {
+      let decorationSnapshotReady = false
+      for (let attempt = 0; attempt < FULL_BACKUP_DECORATION_REFRESH_ATTEMPTS; attempt += 1) {
+        if (!await refreshAccountDecorationsForExport() || !current()) {
+          if (!current()) return
+          throw new Error("DECORATION_BACKUP_NOT_READY")
+        }
+        if (!await refreshAccountCalendarDecorationsForExport() || !current()) {
+          if (!current()) return
+          throw new Error("CALENDAR_BACKUP_NOT_READY")
+        }
+        if (accountCalendarDecorationExportReady()) {
+          decorationSnapshotReady = true
+          break
+        }
+      }
+      if (!decorationSnapshotReady) throw new Error("CALENDAR_BACKUP_NOT_READY")
+    }
     // Read private content only after the click-time server list has replaced
-    // any older projection, so the full backup hydrates the latest remote memo.
+    // older journal and decoration projections, so one click cannot serialize
+    // a stale pre-click READY state.
     if (isFullBackup) await loadEntriesWithPrivateMemos()
     if (!current()) return
+    // Private memo decryption may yield to other same-account work. Re-check the
+    // exact projections that exportEntriesJSON is about to serialize.
+    if (isFullBackup && !accountCalendarDecorationExportReady()) {
+      throw new Error("CALENDAR_BACKUP_NOT_READY")
+    }
     const blob = new Blob([exportEntriesJSON({ includeRawMemos: isFullBackup })], { type: "application/json" })
     const url = URL.createObjectURL(blob)
     const anchor = document.createElement("a")
@@ -218,6 +249,12 @@ async function downloadJournalExport(mode: "SAFE" | "OWNER_FULL_BACKUP"): Promis
       window.alert("나만의 메모 복구 코드를 열어야 메모 포함 파일을 만들 수 있어요.")
       return
     }
+    if (error instanceof BackupJsonExportLimitError) {
+      window.alert(mode === "OWNER_FULL_BACKUP"
+        ? "메모 포함 백업이 한 파일로 만들 수 있는 크기를 넘었어요. 메모 제외 파일도 내려받아 보관해 주세요."
+        : "일지 백업이 한 파일로 만들 수 있는 크기를 넘었어요. 기록을 지우지 말고 계정 저장을 유지해 주세요.")
+      return
+    }
     if (!(error instanceof Error)) throw error
     if (window.location.search.includes("uitest")) console.log("[JEXPORT] ok=false")
     if (error.message === "JOURNAL_BACKUP_NOT_READY") {
@@ -226,6 +263,10 @@ async function downloadJournalExport(mode: "SAFE" | "OWNER_FULL_BACKUP"): Promis
     }
     if (error.message === "DECORATION_BACKUP_NOT_READY") {
       window.alert("꾸미기 자료를 확인할 수 없어 파일을 만들지 않았어요. 계정 저장 상태를 확인한 뒤 다시 시도해 주세요.")
+      return
+    }
+    if (error.message === "CALENDAR_BACKUP_NOT_READY") {
+      window.alert("달력 꾸미기 자료를 확인할 수 없어 파일을 만들지 않았어요. 계정 저장 상태를 확인한 뒤 다시 시도해 주세요.")
       return
     }
     window.alert("내보내기에 실패했어요. 잠시 후 다시 시도해 주세요.")

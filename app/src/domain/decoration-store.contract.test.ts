@@ -313,6 +313,25 @@ describe("decoration V3 verified writes", () => {
     expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)).toBe(before)
   })
 
+  it("preserves a newer valid same-key value when readback detects another writer", () => {
+    loadDecorationState()
+    const candidate = { ...EMPTY_V3, spentPoints: 1 }
+    const newer = { ...EMPTY_V3, spentPoints: 4 }
+    const setItem = window.localStorage.setItem.bind(window.localStorage)
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation((key, value) => {
+      if (key === DECORATION_STORAGE_KEY_V3 && value === JSON.stringify(candidate)) {
+        setItem(key, JSON.stringify(newer))
+        return
+      }
+      setItem(key, value)
+    })
+
+    const result = saveDecorationState(candidate)
+
+    expect(result).toEqual({ ok: false, code: "ROLLBACK_FAILED" })
+    expect(window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)).toBe(JSON.stringify(newer))
+  })
+
   it("rejects a stale snapshot instead of overwriting a newer tab state", () => {
     loadDecorationState()
     const expected = window.localStorage.getItem(DECORATION_STORAGE_KEY_V3)

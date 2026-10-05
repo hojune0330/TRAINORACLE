@@ -53,12 +53,12 @@ test("keeps decoration and oracle motion brief, directional, and optional", asyn
     expect(oracleAnimations.every((animation) => animation.duration === "0.3s")).toBe(true)
   }
 
-  /* 홈의 꾸미기 진입에서 보관함을 거쳐 오늘 일지 편집기를 연다. */
+  /* 홈의 통합 꾸미기 진입은 오늘 일지 편집기를 바로 열고 일지를 기본 대상으로 둔다. */
   await mainTabs.getByRole("button", { name: "홈" }).click()
   await page.getByRole("button", { name: "일지 꾸미기", exact: true }).click()
-  await expect(page.getByRole("heading", { name: "일지 꾸미기·포인트", exact: true })).toBeVisible()
-  await page.getByRole("button", { name: "꾸미기 열기" }).click()
-  await expect(page.getByRole("dialog", { name: "이 일지 꾸미기" })).toBeVisible()
+  const editor = page.getByRole("dialog", { name: "일지 꾸미기", exact: true })
+  await expect(editor).toBeVisible()
+  await expect(editor.getByRole("button", { name: "일지", exact: true })).toHaveAttribute("aria-pressed", "true")
 
   const canvasAnimation = await page.locator(".journal-decoration-workspace--open > .decorated-journal-page")
     .evaluate((element) => getComputedStyle(element).animationName)

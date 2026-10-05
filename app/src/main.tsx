@@ -7,6 +7,9 @@ import { registerAppServiceWorker } from "./domain/pwa-update"
 import { FeedbackBoardRoute } from "./screens/FeedbackBoardRoute"
 import { TrainingLexiconRoute } from "./screens/TrainingLexiconRoute"
 import { LT_PILOT_MULTI_PLAN_RUNTIME_V3 } from "./domain/lt-pilot-runtime-v3"
+import { captureEmailAuthCallbackFromUrl } from "./domain/account/email-auth-callback"
+import { captureOAuthAuthCallbackFromUrl } from "./domain/account/oauth-auth-callback"
+import { retireSharedOriginAuthCredentials } from "./domain/account/auth-origin"
 
 // 토큰 단일 소스: 저장소 루트 CSS를 직접 import (이중 정의 금지)
 import "../../colors_and_type.css"
@@ -29,6 +32,20 @@ const showP3PaceHarness = import.meta.env.DEV
   && new URLSearchParams(window.location.search).get("p3-pace-fixture") === "1"
 const showFeedbackBoard = new URLSearchParams(window.location.search).get("feedback") === "1"
 const showTrainingLexicon = new URLSearchParams(window.location.search).get("terms") === "1"
+
+// Email confirmation links contain a one-time token hash. Remove it from the
+// visible URL/history before rendering, then let the account screen exchange the
+// in-memory value exactly once.
+captureEmailAuthCallbackFromUrl()
+captureOAuthAuthCallbackFromUrl()
+
+// GitHub Pages project paths share one origin with every other project under
+// the account. Retire credentials from that origin; journals/plans are retained.
+try {
+  retireSharedOriginAuthCredentials(window.localStorage, window.sessionStorage, window.location.hostname)
+} catch {
+  // Storage denial must not stop the local-only app from opening.
+}
 
 if (import.meta.env.DEV && !showP3PaceHarness) {
   void import("react-grab")

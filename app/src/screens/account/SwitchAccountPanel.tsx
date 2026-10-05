@@ -1,7 +1,8 @@
 import React from "react"
 import { SectionLb } from "../../components/JournalPrimitives"
 import { currentSyncOwner, loadSyncConsent, releaseSyncOwner, saveSyncConsent } from "../../domain/account/sync"
-import type { ReleaseOwnerResult } from "../../domain/account/sync"
+import type { ReleaseOwnerResult, SyncConsent } from "../../domain/account/sync"
+import type { AuthResult } from "../../domain/account/auth"
 import { loadEntries } from "../../domain/journal-store"
 import { secondaryBtn } from "./styles"
 
@@ -28,32 +29,90 @@ export function SwitchAccountPanel({
   onSignOut,
   onRelease = releaseSyncOwner,
   onOpenBackup,
+  onOutcome,
 }: {
   /** 로그아웃 — 잠금만 풀고 로그인 상태를 남기면 원래 계정에 다시 묶인다 */
-  readonly onSignOut: () => void | Promise<void>
+  readonly onSignOut: () => AuthResult | Promise<AuthResult>
   readonly onRelease?: () => ReleaseOwnerResult
   /** 백업 화면으로 보내기 — 없으면 권유 버튼을 숨긴다 */
   readonly onOpenBackup?: (() => void) | undefined
+  /** 로그아웃으로 이 패널이 사라져도 최종 결과를 상위 화면에 남긴다. */
+  readonly onOutcome?: ((result: ReleaseOwnerResult) => void) | undefined
 }) {
   const [confirming, setConfirming] = React.useState(false)
   const [result, setResult] = React.useState<ReleaseOwnerResult | null>(null)
+  const [working, setWorking] = React.useState(false)
   const owner = React.useMemo(() => currentSyncOwner(), [result])
+
+  const publishResult = (outcome: ReleaseOwnerResult) => {
+    setResult(outcome)
+    try {
+      onOutcome?.(outcome)
+    } catch {
+      // 결과 표시 콜백이 실패해도 이미 완료된 로그아웃/연결 해제를 되돌리지 않는다.
+    }
+  }
 
   // 이 기기가 아무 계정과도 묶여 있지 않으면 보여줄 이유가 없다.
   // 없는 문제를 위한 버튼은 사용자를 불안하게 만든다.
   if (owner === null && result === null) return null
 
   const release = async () => {
-    // 순서가 중요하다. 동의를 먼저 끈다 — 잠금이 풀린 순간과 동의가 꺼지는
-    // 순간 사이에 자동 동기화가 끼어들 틈을 주지 않는다.
-    const consent = loadSyncConsent()
-    saveSyncConsent({ ...consent, enabled: false })
-    const outcome = onRelease()
-    setResult(outcome)
-    setConfirming(false)
-    // 실패했으면 로그아웃하지 않는다. 잠금이 그대로인데 로그아웃까지 하면
-    // 사용자는 상태를 알 수 없게 된다.
-    if (outcome.ok) await onSignOut()
+    if (working || owner === null) return
+    setWorking(true)
+
+    try {
+      // 순서가 중요하다. 현재 owner의 동의를 먼저 보관하고 끈다. 로그아웃
+      // 실패 시 이 값을 되돌리고, 성공한 뒤에만 계정 잠금을 푼다.
+      let consent: SyncConsent
+      try {
+        consent = loadSyncConsent(owner)
+      } catch {
+        publishResult({ ok: false, message: "동기화 설정을 확인하지 못해 계정을 바꾸지 않았어요." })
+        return
+      }
+      if (!saveSyncConsent({ ...consent, enabled: false }, owner)) {
+        const restored = saveSyncConsent(consent, owner)
+        publishResult({
+          ok: false,
+          message: restored
+            ? "동기화를 끄지 못해 계정을 바꾸지 않았어요."
+            : "동기화 설정을 안전하게 바꾸지 못해 계정을 바꾸지 않았어요.",
+        })
+        return
+      }
+
+      let signOutResult: AuthResult
+      try {
+        signOutResult = await onSignOut()
+      } catch {
+        signOutResult = { ok: false, message: "로그아웃에 실패했어요." }
+      }
+      if (!signOutResult.ok) {
+        const restored = saveSyncConsent(consent, owner)
+        publishResult({
+          ok: false,
+          message: restored
+            ? signOutResult.message
+            : `${signOutResult.message} 동기화 설정도 되돌리지 못했어요.`,
+        })
+        return
+      }
+
+      let outcome: ReleaseOwnerResult
+      try {
+        outcome = onRelease()
+      } catch {
+        outcome = { ok: false, message: "계정 연결을 끊지 못했어요. 일지는 그대로 있어요." }
+      }
+      publishResult(outcome.ok ? outcome : {
+        ok: false,
+        message: `로그아웃은 됐지만 ${outcome.message}`,
+      })
+    } finally {
+      setConfirming(false)
+      setWorking(false)
+    }
   }
 
   return (
@@ -91,14 +150,16 @@ export function SwitchAccountPanel({
               type="button"
               data-testid="switch-account-confirm"
               style={secondaryBtn}
+              disabled={working}
               onClick={() => void release()}
             >
-              연결 끊기
+              {working ? "처리 중" : "연결 끊기"}
             </button>
             <button
               type="button"
               data-testid="switch-account-cancel"
               style={secondaryBtn}
+              disabled={working}
               onClick={() => setConfirming(false)}
             >
               그만두기

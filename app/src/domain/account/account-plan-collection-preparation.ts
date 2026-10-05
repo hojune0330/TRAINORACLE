@@ -1,7 +1,12 @@
 import { z } from "zod"
 import { ACCOUNT_PLAN_MAX_BYTES, accountPlanFingerprint } from "./account-plan-document-schema"
 import { validateAccountPlanCollectionIndex, type AccountPlanCollectionParts } from "./account-plan-collection-schema"
-import { readAccountPlanCollectionTransfer, type AccountPlanCollectionTransfer } from "./account-plan-collection-transfer"
+import {
+  accountPlanJournalGuardSchema,
+  accountPlanPaceRecordGuardSchema,
+  readAccountPlanCollectionTransfer,
+  type AccountPlanCollectionTransfer,
+} from "./account-plan-collection-transfer"
 
 export const COLLECTION_PREPARATION_DB = "trainoracle-account-plan-collection-preparations-v1"
 export type AccountPlanCollectionPreparation = { transfer: AccountPlanCollectionTransfer; expectedSequence: number }
@@ -23,6 +28,8 @@ const headerSchema = z.object({
   expectedSequence: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER - 1),
   previous: collection.nullable(), next: collection,
   legacy: z.object({ documentId: uuid, revision: z.number().int().positive(), fingerprint: hash }).strict().nullable(),
+  journalGuard: accountPlanJournalGuardSchema.optional(),
+  paceRecordGuard: accountPlanPaceRecordGuardSchema.optional(),
 }).strict()
 type Row = { ownerId: string; slot: string; operationId: string; fingerprint: string; iv: Uint8Array; ciphertext: Uint8Array }
 type Key = { id: string; key: CryptoKey }

@@ -51,7 +51,10 @@ export function saveCalendarDecorationStateIfCurrent(candidate: unknown, expecte
   const serialized = JSON.stringify(parsed.data)
   const rollback = () => {
     try {
-      if (target.getItem(key) === previous) return true
+      const current = target.getItem(key)
+      if (current === previous) return true
+      if (current !== serialized
+        && (current === null || parseStoredCalendarDecorationState(current) !== null)) return false
       if (previous === null) target.removeItem(key)
       else target.setItem(key, previous)
       return target.getItem(key) === previous

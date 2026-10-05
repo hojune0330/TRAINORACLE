@@ -16,6 +16,10 @@ import { LOCAL_JOURNAL_OWNERSHIP_KEY } from "./account/local-journal-ownership"
 const JOURNAL = "trainoracle.journal.v1"
 const TOMBSTONES = "trainoracle.sync.tombstones.v1"
 const AUTH = "trainoracle.auth.v1"
+const AUTH_CODE_VERIFIER = "trainoracle.auth.v1-code-verifier"
+const AUTH_QUARANTINE = "trainoracle.auth.quarantine.v1"
+const EMAIL_BROWSER_PROOF = "trainoracle.account.email-browser-proof.v1"
+const AUTH_SCOPE_REFRESH = "trainoracle.auth.scope-refresh.v1"
 const PLAN = "trainoracle.plan-beta.v1"
 const PLAN_ADAPTATION = "trainoracle.plan-beta.adaptation.v1"
 const PLAN_ADAPTATION_CONTEXT = "trainoracle.plan-adaptation-context.v1"
@@ -54,6 +58,10 @@ function seed(): void {
   window.localStorage.setItem(PLAN_ADAPTATION, JSON.stringify({ pending: "next-frame" }))
   window.localStorage.setItem(PLAN_ADAPTATION_CONTEXT, JSON.stringify({ candidates: [] }))
   window.localStorage.setItem(AUTH, JSON.stringify({ token: "secret" }))
+  window.localStorage.setItem(AUTH_CODE_VERIFIER, "pkce-secret")
+  window.localStorage.setItem(AUTH_QUARANTINE, JSON.stringify({ attemptId: "a".repeat(32) }))
+  window.localStorage.setItem(EMAIL_BROWSER_PROOF, JSON.stringify({ attemptId: "a".repeat(32) }))
+  window.localStorage.setItem(AUTH_SCOPE_REFRESH, "old-refresh-nonce")
   window.localStorage.setItem(CONSENT, JSON.stringify({ enabled: true }))
   window.localStorage.setItem(SYNC_OWNER, "athlete-a")
   window.localStorage.setItem(SYNC_RECOVERY, JSON.stringify({
@@ -91,6 +99,16 @@ function seed(): void {
 }
 
 describe("eraseAllLocalData", () => {
+  it("로그인 토큰과 진행 중이던 인증 보호 상태를 모두 지운다", () => {
+    seed()
+    const result = eraseAllLocalData()
+    expect(result.ok).toBe(true)
+    for (const key of [AUTH, AUTH_CODE_VERIFIER, AUTH_QUARANTINE, EMAIL_BROWSER_PROOF, AUTH_SCOPE_REFRESH]) {
+      expect(erasableKeys()).toContain(key)
+      expect(window.localStorage.getItem(key)).toBeNull()
+    }
+  })
+
   it("일지와 계획을 지운다", () => {
     seed()
     const result = eraseAllLocalData()

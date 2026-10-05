@@ -25,10 +25,12 @@ export function writeVaultAndJournalAtomically(
   vault: PrivateMemoVault,
   entries: readonly JournalEntry[],
   expected?: VaultJournalStorageSnapshot,
+  commitGuard: () => boolean = () => true,
 ): boolean {
   const previous = expected ?? readVaultJournalStorageSnapshot(storage)
   if (previous === null) return false
   if (expected !== undefined && !snapshotMatches(storage, expected)) return false
+  if (!guardAllowsCommit(commitGuard)) return false
   const nextVault = JSON.stringify(vault)
   const nextJournal = JSON.stringify(entries)
 
@@ -36,7 +38,8 @@ export function writeVaultAndJournalAtomically(
     storage.setItem(PRIVATE_MEMO_VAULT_STORAGE_KEY, nextVault)
     storage.setItem(JOURNAL_STORAGE_KEY, nextJournal)
     if (storage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY) === nextVault
-      && storage.getItem(JOURNAL_STORAGE_KEY) === nextJournal) {
+      && storage.getItem(JOURNAL_STORAGE_KEY) === nextJournal
+      && guardAllowsCommit(commitGuard)) {
       announceLocalJournalChange()
       return true
     }
@@ -46,6 +49,14 @@ export function writeVaultAndJournalAtomically(
   }
   restoreUnconfirmedStorageSnapshot(storage, previous, nextVault, nextJournal)
   return false
+}
+
+function guardAllowsCommit(commitGuard: () => boolean): boolean {
+  try {
+    return commitGuard()
+  } catch {
+    return false
+  }
 }
 
 function snapshotMatches(storage: Storage, expected: VaultJournalStorageSnapshot): boolean {

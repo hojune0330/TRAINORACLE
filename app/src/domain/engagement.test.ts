@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest"
 import {
   ENGAGEMENT_STORAGE_KEY,
+  ENGAGEMENT_EVENT,
   awardJournalEntry,
   engagementSummary,
   loadEngagementSummary,
@@ -30,6 +31,8 @@ describe("safe local engagement", () => {
   })
 
   it("awards one explicit visit point per calendar date", () => {
+    let changes = 0
+    window.addEventListener(ENGAGEMENT_EVENT, () => { changes += 1 }, { once: true })
     expect(recordDailyVisit("2026-07-24")).toMatchObject({
       kind: "AWARDED", awardedPoints: 1,
       summary: { points: 1, visitDays: 1, visitedToday: true },
@@ -38,6 +41,7 @@ describe("safe local engagement", () => {
       kind: "ALREADY_AWARDED", awardedPoints: 0,
       summary: { points: 1, visitDays: 1, visitedToday: true },
     })
+    expect(changes).toBe(1)
   })
 
   it("counts each journal date once regardless of entry count or kind", () => {

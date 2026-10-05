@@ -128,6 +128,7 @@ export async function savePrivateMemosWithJournalShells(
   privateEntries: readonly JournalEntry[],
   recoveryCode: string,
   expectedJournal: string | null | undefined = undefined,
+  commitGuard: () => boolean = () => true,
 ): Promise<JournalEntry[] | null> {
   if (privateEntries.length === 0 || !isValidRecoveryCode(recoveryCode)) return null
   const snapshot = readVaultJournalStorageSnapshot(storage)
@@ -158,7 +159,7 @@ export async function savePrivateMemosWithJournalShells(
       records,
     }
     if (nextEntries.some(hasPrivateMemoText)) return null
-    return writeVaultAndJournalAtomically(storage, nextVault, nextEntries, snapshot) ? nextEntries : null
+    return writeVaultAndJournalAtomically(storage, nextVault, nextEntries, snapshot, commitGuard) ? nextEntries : null
   } catch {
     return null
   }

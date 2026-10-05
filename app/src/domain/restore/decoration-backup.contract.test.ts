@@ -1,6 +1,6 @@
 import { evaluateD9ColloquialLayer } from "@impl/d9/evaluator"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { createEmptyDecorationState, loadDecorationState, saveDecorationState } from "../decorations"
+import { activeDecorationStorageKeyV3, createEmptyDecorationState, loadDecorationState, saveDecorationState } from "../decorations"
 import { JOURNAL_STORAGE_KEY } from "../journal-local-storage"
 import { loadAnalysisEntries, loadEntries, exportEntriesJSON, saveEntry } from "../journal-store"
 import type { PostSessionEntry } from "../journal-schema"
@@ -275,6 +275,54 @@ describe("explicit full backup decoration section", () => {
     expect(storageBytes()).toEqual(before)
     expect(loadEntries().map((entry) => entry.id)).toEqual(["keep"])
     expect(loadDecorationState()).toEqual(decoratedState())
+  })
+
+  it("uses the apply-time journal plan when a same-id record appears after review", async () => {
+    expect(saveDecorationState(decoratedState()).ok).toBe(true)
+    const backup = JSON.stringify({
+      app: "TRAINORACLE",
+      format: "trainoracle.journal.full-backup.v3",
+      exportedAt: "2026-08-03T10:00:00.000Z",
+      entries: [post("late")],
+      decorations: createEmptyDecorationState(),
+    })
+    const read = readBackupFile(backup)
+    const plan = buildRestorePlan(read.entries)
+    expect(saveEntry({ ...post("late"), title: "검토 뒤 작성" }).ok).toBe(true)
+
+    const outcome = await restoreBackupFile(read, plan, "keep-existing", "replace")
+
+    expect(outcome).toMatchObject({ restored: 0, keptExisting: 1, failed: 0, commit: "COMMITTED", decorationRestore: "RESTORED" })
+    expect((loadEntries()[0] as PostSessionEntry).title).toBe("검토 뒤 작성")
+    expect(loadDecorationState()).toEqual(createEmptyDecorationState())
+  })
+
+  it("never rolls a newer same-key decoration write back after journal failure", async () => {
+    expect(saveDecorationState(decoratedState()).ok).toBe(true)
+    const newer = { ...decoratedState(), library: { ...decoratedState().library, favoriteItemIds: [] } }
+    const backup = JSON.stringify({
+      app: "TRAINORACLE",
+      format: "trainoracle.journal.full-backup.v3",
+      exportedAt: "2026-08-03T10:00:00.000Z",
+      entries: [post("restored")],
+      decorations: createEmptyDecorationState(),
+    })
+    const read = readBackupFile(backup)
+    const setItem = window.localStorage.setItem.bind(window.localStorage)
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation((key, value) => {
+      if (key === JOURNAL_STORAGE_KEY) {
+        setItem(activeDecorationStorageKeyV3(), JSON.stringify(newer))
+        throw new DOMException("quota")
+      }
+      setItem(key, value)
+    })
+
+    const outcome = await restoreBackupFile(read, buildRestorePlan(read.entries), "keep-existing", "replace")
+
+    expect(outcome.commit).toBe("FAILED")
+    expect(outcome.failureReason).toBe("STATE_CHANGED")
+    expect(loadDecorationState()).toEqual(newer)
+    expect(loadEntries()).toHaveLength(0)
   })
 
   it("does not roll back an unrelated key changed concurrently with restore", async () => {

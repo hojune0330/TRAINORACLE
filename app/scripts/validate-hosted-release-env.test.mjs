@@ -8,7 +8,7 @@ const scriptPath = fileURLToPath(new URL("./validate-hosted-release-env.mjs", im
 
 const connection = {
   VITE_SUPABASE_URL: "https://example.supabase.co",
-  VITE_SUPABASE_ANON_KEY: "public-anon-key",
+  VITE_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYW5vbiJ9.synthetic-signature",
 }
 
 const legalDocuments = {
@@ -119,6 +119,54 @@ test("keeps phone auth closed without both the account and operations approval",
   }), ["PHONE_AUTH_REQUIRES_OPERATIONAL_APPROVAL"])
 })
 
+test("requires the account gate before releasing any social provider", () => {
+  assert.deepEqual(validateHostedReleaseEnvironment({
+    VITE_KAKAO_AUTH_ENABLED: "true",
+    VITE_GOOGLE_AUTH_ENABLED: "true",
+  }), [
+    "KAKAO_AUTH_REQUIRES_ACCOUNT",
+    "GOOGLE_AUTH_REQUIRES_ACCOUNT",
+  ])
+})
+
+test("requires PKCE callback and hosted-template approval before releasing email", () => {
+  assert.deepEqual(validateHostedReleaseEnvironment({
+    ...connection,
+    ...legalDocuments,
+    VITE_ACCOUNT_PUBLIC_ENABLED: "true",
+    VITE_EMAIL_AUTH_ENABLED: "true",
+  }), ["EMAIL_AUTH_REQUIRES_PKCE_OPERATIONS_APPROVAL"])
+
+  assert.deepEqual(validateHostedReleaseEnvironment({
+    VITE_EMAIL_AUTH_ENABLED: "true",
+  }), [
+    "EMAIL_AUTH_REQUIRES_ACCOUNT",
+    "EMAIL_AUTH_REQUIRES_PKCE_OPERATIONS_APPROVAL",
+  ])
+})
+
+test("accepts separately released Google and PKCE-ready email providers", () => {
+  assert.deepEqual(validateHostedReleaseEnvironment({
+    ...connection,
+    ...legalDocuments,
+    VITE_ACCOUNT_PUBLIC_ENABLED: "true",
+    VITE_GOOGLE_AUTH_ENABLED: "true",
+    VITE_EMAIL_AUTH_ENABLED: "true",
+    VITE_EMAIL_AUTH_PKCE_OPERATIONS_APPROVED: "true",
+  }), [])
+})
+
+test("provider kill switches close their own release without blocking the deploy", () => {
+  assert.deepEqual(validateHostedReleaseEnvironment({
+    VITE_GOOGLE_AUTH_ENABLED: "true",
+    VITE_KILL_GOOGLE_AUTH: "true",
+    VITE_EMAIL_AUTH_ENABLED: "true",
+    VITE_KILL_EMAIL_AUTH: "true",
+    VITE_KAKAO_AUTH_ENABLED: "true",
+    VITE_KILL_KAKAO_AUTH: "true",
+  }), [])
+})
+
 test("allows phone auth only after its separate operations approval", () => {
   assert.deepEqual(validateHostedReleaseEnvironment({
     ...connection,
@@ -178,4 +226,29 @@ test("fails the executable deployment check without echoing a configured key", (
   assert.equal(result.status, 1)
   assert.match(output, /ACCOUNT_REQUIRES_PUBLIC_CONNECTION/u)
   assert.equal(output.includes(key), false)
+})
+
+test("rejects secret and service-role keys without echoing them", () => {
+  for (const key of [
+    "sb_secret_this_must_never_reach_a_browser_bundle",
+    "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.synthetic-signature",
+  ]) {
+    const errors = validateHostedReleaseEnvironment({
+      ...legalDocuments,
+      VITE_ACCOUNT_PUBLIC_ENABLED: "true",
+      VITE_SUPABASE_URL: "https://example.supabase.co",
+      VITE_SUPABASE_ANON_KEY: key,
+    })
+    assert.deepEqual(errors, ["UNSAFE_SUPABASE_PUBLIC_CLIENT_KEY", "ACCOUNT_REQUIRES_PUBLIC_CONNECTION"])
+    assert.equal(errors.join(" ").includes(key), false)
+  }
+})
+
+test("accepts the new publishable-key shape for browser clients", () => {
+  assert.deepEqual(validateHostedReleaseEnvironment({
+    ...legalDocuments,
+    VITE_ACCOUNT_PUBLIC_ENABLED: "true",
+    VITE_SUPABASE_URL: "https://example.supabase.co",
+    VITE_SUPABASE_ANON_KEY: "sb_publishable_synthetic_public_key_123456",
+  }), [])
 })

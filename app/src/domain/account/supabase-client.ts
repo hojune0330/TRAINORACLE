@@ -2,10 +2,12 @@
 // 라이브러리 자체를 내려받지 않는다: 기존 사용자 번들 영향 0).
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { accountConfig } from "./config"
+import { isAuthSessionQuarantined } from "./auth-session-quarantine"
 
 let clientPromise: Promise<SupabaseClient | null> | null = null
 
-export function supabase(): Promise<SupabaseClient | null> {
+export function supabase(options?: { readonly allowQuarantined?: boolean }): Promise<SupabaseClient | null> {
+  if (!options?.allowQuarantined && isAuthSessionQuarantined()) return Promise.resolve(null)
   if (clientPromise !== null) return clientPromise
   const config = accountConfig()
   if (config === null) {
@@ -18,6 +20,12 @@ export function supabase(): Promise<SupabaseClient | null> {
         auth: {
           persistSession: true,
           autoRefreshToken: true,
+          // OAuth callbacks are captured and scrubbed before React starts. The
+          // app explicitly exchanges the code and binds that exact result to the
+          // matching signup attempt; an unrelated cached session must never be
+          // mistaken for a successful callback.
+          flowType: "pkce",
+          detectSessionInUrl: false,
           storageKey: "trainoracle.auth.v1",
         },
       }),

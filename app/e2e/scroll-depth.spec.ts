@@ -126,7 +126,11 @@ test("WELCOME은 빈 꾸미기·성취 점수판을 숨기고 유용한 기록 �
   expect(height).toBeLessThan(HOME_BEFORE[project])
 
   await page.getByRole("button", { name: "일지 꾸미기" }).click()
-  const strip = page.getByLabel("기록 습관")
+  const editor = page.getByRole("dialog", { name: "일지 꾸미기", exact: true })
+  await expect(editor).toBeVisible()
+  await editor.getByRole("button", { name: "꾸미기 재료 도구" }).click()
+  await editor.getByText("포인트와 활동 보상", { exact: true }).click()
+  const strip = editor.getByLabel("기록 습관")
   await expect(strip).toBeVisible()
   await expect(strip.getByText("누적 획득 · BETA")).toHaveCount(0)
   await expect(strip.getByText("기록 연속")).toHaveCount(0)
@@ -172,13 +176,17 @@ test("기록이 하나 생기면 꾸미기 진입 뒤 포인트 보관함을 확
   await page.goto("/?app=1")
 
   await page.getByRole("button", { name: "일지 꾸미기" }).click()
-  const strip = page.getByLabel("기록 습관")
+  const editor = page.getByRole("dialog", { name: "일지 꾸미기", exact: true })
+  await expect(editor).toBeVisible()
+  await editor.getByRole("button", { name: "꾸미기 재료 도구" }).click()
+  await editor.getByText("포인트와 활동 보상", { exact: true }).click()
+  const strip = editor.getByLabel("기록 습관")
   await expect(strip.getByText("남긴 기록 1건", { exact: true })).toBeVisible()
   await expect(strip.getByLabel("식물 상태: 새싹이 자라고 있어요")).toBeVisible()
   await expect(strip.getByText("기록한 날", { exact: true })).toBeVisible()
   await expect(strip.getByText("1일", { exact: true })).toBeVisible()
-  await expect(page.getByRole("heading", { name: "꾸미기 보관함 · 사용 가능 4P" })).toBeVisible()
-  await expect(page.getByRole("button", { name: "꾸미기 열기" })).toBeVisible()
+  await expect(editor.getByText("베타 포인트 · 사용 가능 4P", { exact: true })).toBeVisible()
+  await expect(editor.getByRole("button", { name: "일지", exact: true })).toHaveAttribute("aria-pressed", "true")
 })
 
 test("훈련 후 일지가 빈 상태에서 길지 않다", async ({ page }, testInfo) => {

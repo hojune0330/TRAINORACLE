@@ -14,6 +14,7 @@ const read = (path) => readFileSync(resolve(repositoryRoot, path), "utf8")
 
 const spec = read("specs/reconstruct/EXTERNAL_RECORD_INTEGRATION_SPEC.md")
 const migration = read("supabase/migrations/0030_device_integration_readiness.sql")
+const accountGateMigration = read("supabase/migrations/0052_coros_ingestion_account_gate.sql")
 const config = read("supabase/config.toml")
 const pushFunction = read("supabase/functions/coros-workout-push/index.ts")
 const callbackFunction = read("supabase/functions/coros-oauth-callback/index.ts")
@@ -112,6 +113,25 @@ test("ingestion SQL requires an active linked COROS user and stays pending confi
   assert.match(migration, /DEVICE_INTEGRATION_DISABLED/u)
   assert.match(migration, /PENDING_USER_CONFIRMATION/u)
   assert.match(migration, /on conflict \(connection_id, provider_record_id\) do nothing/u)
+})
+
+test("COROS ingestion applies current account admission while remaining service-only", () => {
+  assert.match(accountGateMigration, /service_feature_enabled\('ACCOUNT'\) is distinct from true/u)
+  assert.match(accountGateMigration, /message = 'ACCOUNT_DISABLED'/u)
+  assert.match(accountGateMigration, /join public\.user_private_profiles profile[\s\S]+profile\.user_id = connection\.user_id/u)
+  assert.match(accountGateMigration, /join public\.beta_enrollments enrollment[\s\S]+enrollment\.user_id = connection\.user_id/u)
+  assert.match(accountGateMigration, /profile\.birth_date <=[\s\S]+time zone 'Asia\/Seoul'[\s\S]+interval '14 years'/u)
+  assert.match(accountGateMigration, /profile\.deletion_requested_at is null/u)
+  assert.match(accountGateMigration, /profile\.privacy_policy_version = '2026-08-26'/u)
+  assert.match(accountGateMigration, /profile\.terms_of_service_version = '2026-08-26'/u)
+  assert.match(accountGateMigration, /profile\.legal_consented_at is not null/u)
+  assert.match(accountGateMigration, /profile\.legal_consented_at <= clock_timestamp\(\)/u)
+  assert.match(accountGateMigration, /not exists \([\s\S]+public\.account_deletion_requests request[\s\S]+request\.user_id = connection\.user_id/u)
+  assert.match(accountGateMigration, /with admitted_connection as materialized[\s\S]+insert into public\.external_activity_inbox/u)
+  assert.match(accountGateMigration, /set search_path = pg_catalog/u)
+  assert.match(accountGateMigration, /grant execute on function public\.ingest_coros_activity_batch\(jsonb\) to service_role/u)
+  assert.doesNotMatch(accountGateMigration, /auth\.uid\(\)/u)
+  assert.doesNotMatch(accountGateMigration, /public\.account_network_access_allowed\(/u)
 })
 
 test("public endpoints are configured without JWT but push authentication remains mandatory", () => {
