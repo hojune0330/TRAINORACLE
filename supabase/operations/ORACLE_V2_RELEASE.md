@@ -3,7 +3,10 @@
 SOURCE PREPARATION ONLY. No remote inventory, production SQL, key registration,
 function deployment, or authenticated production verification was performed.
 
-## Parent Read-Only Inventory, 2026-10-05
+## Historical Parent Read-Only Inventory, 2026-10-05
+
+This snapshot predates the local merge of main d7f719f6. It is not a new query
+of production after the purpose-consent integration or the Oracle renumbering.
 
 The signed-in dashboard for `texspxlpjungyarkvtkc` was reached after the owner
 completed GitHub login. The project display name is `trainoracle-beta-staging`;
@@ -24,7 +27,9 @@ separate signing key. Login completion alone is not that approval. Browser tools
 refused the production function-edit step while that request was unanswered.
 Do not retry through a different execution channel without resolving approval.
 
-The integrated local 0001-0060 chain now exercises real session and AMR fixtures.
+The integrated local 0001-0061 chain now exercises real session and AMR fixtures,
+current 2026-10-05 legal admission and explicit per-user health/text storage consent.
+The operations-review evidence row is synthetic and exists only in disposable PGlite.
 Comparison captures the issuing channel from the validated JWT; closing a party's
 channel denies its previous grants even when the reader uses another open channel.
 For a provider incident, keep that channel OFF until affected sessions are revoked;
@@ -42,9 +47,10 @@ existing journal keys. Preserve remote Edge secrets without extracting them.
 
 ## Candidate
 
-Integrate main's auth migrations 0051-0056. Oracle SQL has moved unchanged to
-0057 running_profile_account_storage, 0058 oracle_v2_account_compatibility,
-0059 oracle_v2_explicit_restart, 0060 oracle_profile_comparison_grants.
+Integrate main's auth migrations 0051-0056 and purpose-scoped storage consent 0057.
+Oracle migration identities are now 0058 running_profile_account_storage,
+0059 oracle_v2_account_compatibility, 0060 oracle_v2_explicit_restart,
+0061 oracle_profile_comparison_grants. Renumbering does not change SQL semantics.
 Never push the old colliding migration directory or repair history to it.
 
 Use PowerShell 7. Copy only the NON-SECRET metadata fields from
@@ -64,7 +70,7 @@ schema fingerprint and capability flags, not source definitions, user data or
 key bytes. Passwords enter through private stdin, not arguments or secret files.
 
 LIMITATION: automated staging currently requires baseline ledger evidence for
-0001-0056. Missing manual migration ledger rows do NOT prove missing SQL. In
+0001-0057. Missing manual migration ledger rows do NOT prove missing SQL. In
 that case stop automated staging and prove the current schema against main;
 do not replay the baseline or invent ledger rows. A schema-only approval path
 is not implemented. PostgreSQL execution of the generated release SQL has NOT

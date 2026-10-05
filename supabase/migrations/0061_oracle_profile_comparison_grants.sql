@@ -69,20 +69,14 @@ $$;
 -- Internal helper: not a callable arbitrary-user eligibility oracle.
 create function public.oracle_profile_comparison_subject_allowed(subject uuid, session_id uuid)
 returns boolean language sql volatile security definer set search_path = pg_catalog as $$
-  select exists (
+  select public.account_storage_subject_allowed(subject) is true and exists (
     select 1 from auth.users u join auth.sessions s on s.user_id=u.id
-    join public.beta_enrollments e on e.user_id=u.id
-    join public.user_private_profiles p on p.user_id=u.id
     where u.id=subject and s.id=session_id
       and (s.not_after is null or s.not_after>clock_timestamp())
       and u.email_confirmed_at is not null and u.deleted_at is null and coalesce(u.is_anonymous,false)=false
       and nullif(u.encrypted_password,'') is null
       and (u.banned_until is null or u.banned_until<=clock_timestamp())
-      and p.deletion_requested_at is null
-      and p.birth_date <= (clock_timestamp() at time zone 'Asia/Seoul')::date-interval '14 years'
-      and p.privacy_policy_version='2026-08-26' and p.terms_of_service_version='2026-08-26'
-      and p.legal_consented_at is not null and p.legal_consented_at<=clock_timestamp()
-  ) and not exists(select 1 from public.account_deletion_requests d where d.user_id=subject);
+  );
 $$;
 
 -- All requests are signed by the dedicated gateway AND executed with the caller JWT.
@@ -216,6 +210,15 @@ begin
     end if;
     doc := (req->>'documentId')::uuid;
     perform pg_advisory_xact_lock(hashtextextended('account_journal_v2:'||actor::text,0));
+    if public.current_jwt_auth_method_allowed() is distinct from true
+      or not public.oracle_profile_comparison_subject_allowed(actor,sid)
+      or not public.oracle_profile_comparison_channels_allowed(invitation.owner_auth_channels)
+      or not public.oracle_profile_comparison_subject_allowed(invitation.owner_id,invitation.owner_session_id)
+      or not exists(select 1 from public.oracle_profile_comparison_controls c where c.singleton and c.enabled)
+      or public.service_feature_enabled('ACCOUNT_JOURNAL_V2') is distinct from true
+      or public.service_feature_enabled('SHARING') is distinct from true then
+      raise exception 'COMPARISON_DENIED' using errcode='42501';
+    end if;
     select d.* into current_doc from public.account_journal_documents d
       join public.account_journal_identity i on i.user_id=d.user_id and i.document_id=d.document_id
       where d.user_id=actor and d.document_id=doc and d.deleted_at is null and i.active and i.document_kind='RUNNING_PROFILE';
@@ -266,6 +269,19 @@ begin
   for lock_owner in select unnest(array[actor,a.peer_id]) order by 1 loop
     perform pg_advisory_xact_lock(hashtextextended('account_journal_v2:'||lock_owner::text,0));
   end loop;
+  -- Storage withdrawal uses these same locks. Re-read consent after waiting,
+  -- before any source can leave the database.
+  if public.current_jwt_auth_method_allowed() is distinct from true
+    or not public.oracle_profile_comparison_subject_allowed(a.owner_id,a.consent_session_id)
+    or not public.oracle_profile_comparison_subject_allowed(b.owner_id,b.consent_session_id)
+    or not public.oracle_profile_comparison_channels_allowed(invitation.owner_auth_channels)
+    or not public.oracle_profile_comparison_channels_allowed(a.consent_auth_channels)
+    or not public.oracle_profile_comparison_channels_allowed(b.consent_auth_channels)
+    or not exists(select 1 from public.oracle_profile_comparison_controls c where c.singleton and c.enabled)
+    or public.service_feature_enabled('ACCOUNT_JOURNAL_V2') is distinct from true
+    or public.service_feature_enabled('SHARING') is distinct from true then
+    raise exception 'COMPARISON_DENIED' using errcode='42501';
+  end if;
   select d.* into own_doc from public.account_journal_documents d join public.account_journal_identity i
     on i.user_id=d.user_id and i.document_id=d.document_id
     where d.user_id=actor and d.document_id=a.document_id and d.revision=a.document_revision

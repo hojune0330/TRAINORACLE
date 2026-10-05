@@ -46,6 +46,16 @@ if (!key.startsWith('sb_publishable_') && JSON.parse(Buffer.from(key.split('.')[
   throw Error('NON_PUBLIC_KEY_REJECTED');
 }
 const enabled = process.argv.includes('--oracle-v2=enabled');
+const previewOnly = process.argv.includes('--preview-only');
+if (previewOnly) {
+  configuration.VITE_ACCOUNT_PUBLIC_ENABLED = 'false';
+  configuration.VITE_KILL_ACCOUNT = 'true';
+  for (const name of Object.keys(configuration)) {
+    if (name.startsWith('VITE_FEATURE_') || /^VITE_(KAKAO|GOOGLE|EMAIL|PHONE)_AUTH_ENABLED$/.test(name)) {
+      configuration[name] = 'false';
+    }
+  }
+}
 configuration.VITE_FEATURE_ORACLE_V2 = String(enabled);
 configuration.VITE_KILL_ORACLE_V2 = 'false';
 for (const name of Object.keys(process.env)) if (name.startsWith('VITE_')) delete process.env[name];
@@ -56,23 +66,27 @@ if (issues.length) throw Error(`PUBLIC_CONFIGURATION_REJECTED:${issues.join(',')
 if (process.argv.includes('--inspect-only')) {
   const claims = key.startsWith('sb_publishable_') ? null : JSON.parse(Buffer.from(key.split('.')[1], 'base64url').toString());
   console.log(JSON.stringify({ sourceSha, previousPagesSha, settingCount: Object.keys(configuration).length,
-    publicKey: claims?.role ?? 'publishable', oracleV2Enabled: enabled,
+    publicKey: claims?.role ?? 'publishable', oracleV2Enabled: enabled, previewOnly,
     accountEnabled: configuration.VITE_ACCOUNT_PUBLIC_ENABLED === 'true',
     emailEnabled: configuration.VITE_EMAIL_AUTH_ENABLED === 'true',
     kakaoEnabled: configuration.VITE_KAKAO_AUTH_ENABLED === 'true',
     googleEnabled: configuration.VITE_GOOGLE_AUTH_ENABLED === 'true' }));
 } else {
-  const outDir = resolve(process.argv.find(arg => arg.startsWith('--out='))?.slice(6) ?? resolve(repo, '../.scratch/oracle-mari-release-20261005/dist'));
+  if (git('diff', '--name-only', 'HEAD', '--', 'app', '.tools/build-oracle-pages-release.mjs')) {
+    throw Error('BUILD_SOURCE_NOT_COMMITTED');
+  }
+  const outDir = resolve(process.argv.find(arg => arg.startsWith('--out='))?.slice(6)
+    ?? resolve(repo, `../.scratch/oracle-mari-${sourceSha.slice(0, 8)}${previewOnly ? '-preview' : ''}/dist`));
   mkdirSync(outDir, { recursive: true });
   execFileSync(process.execPath, ['scripts/check-build-runtime.mjs'], { cwd: app, stdio: 'inherit', env: process.env });
   const { build } = await import(pathToFileURL(require.resolve('vite')).href);
   await build({ root: app, envFile: false, build: { outDir, emptyOutDir: false } });
   writeFileSync(resolve(outDir, '.nojekyll'), '');
-  writeFileSync(resolve(outDir, 'trainoracle-deploy-receipt.json'), JSON.stringify({
-    kind: 'TRAINORACLE_PAGES_DEPLOYMENT', sourceSha, previousPagesSha,
-    deploymentMethod: 'manual-user-approved', workflowRunId: 'manual',
+  writeFileSync(resolve(outDir, 'trainoracle-build-manifest.json'), JSON.stringify({
+    kind: previewOnly ? 'TRAINORACLE_LOCAL_PREVIEW_BUILD' : 'TRAINORACLE_RELEASE_BUILD_PACKAGE', sourceSha, previousPagesSha,
+    deploymentStatus: 'NOT_PUBLISHED', previewOnly,
     publicConfigurationSourceSha: previousPagesSha, oracleV2Enabled: enabled,
-    backendVerification: 'NOT_CONFIRMED', deployedAt: new Date().toISOString(),
+    backendVerification: 'NOT_CONFIRMED', builtAt: new Date().toISOString(),
   }, null, 2) + '\n');
   console.log(`Package ready: ${sourceSha}; Oracle V2 ${enabled ? 'enabled' : 'held'}.`);
 }

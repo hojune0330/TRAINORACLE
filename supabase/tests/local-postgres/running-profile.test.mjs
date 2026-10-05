@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createHmac, randomUUID } from 'node:crypto';
 import { PGlite } from '@electric-sql/pglite';
 import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
-import { loadOracleMigrationChain, setOracleAuth } from './oracle-auth-fixture.mjs';
+import { loadOracleMigrationChain, setOracleAuth, approveSyntheticOracleStorage, admitOracleStorage } from './oracle-auth-fixture.mjs';
 
 // Disposable single-session PostgreSQL, never a production connection.
 const db=new PGlite({extensions:{pgcrypto}});
@@ -18,15 +18,14 @@ before(async()=>{
   await loadOracleMigrationChain(db);
   await db.query("insert into auth.users(id,created_at,email_confirmed_at,encrypted_password) values($1,'2020-01-01',clock_timestamp(),null)",[owner]);
   await db.query("insert into auth.sessions(id,user_id,not_after) values($1,$2,clock_timestamp()+interval '1 hour')",[sessionId,owner]);
-  await db.query(`insert into public.user_private_profiles(user_id,birth_date,privacy_policy_version,terms_of_service_version,legal_consented_at)
-    values($1,'1990-01-01','2026-08-26','2026-08-26',clock_timestamp())`,[owner]);
-  await db.query('insert into public.beta_enrollments(user_id) values($1)',[owner]);
   await db.exec("update public.service_feature_controls set enabled=true where feature_key in ('ACCOUNT','ACCOUNT_JOURNAL_V2','SYNC','AUTH_OAUTH')");
   await db.query('insert into public.account_journal_gateway_keys(key_id,secret) values($1,$2)',['fixture',key]);
-  await setOracleAuth(db,owner,sessionId);
+  await approveSyntheticOracleStorage(db);
+  await admitOracleStorage(db,owner,sessionId);
 },{timeout:120000});
 after(()=>db.close());
 test('running profile SQL support, encrypted-state CAS and no reward eligibility',async()=>{
+  assert.equal((await db.query('select public.get_current_account_admission_status($1) status',[owner])).rows[0].status,'ADMITTED');
   assert.deepEqual(await submit({},'runningProfileSupport'),{kind:'running-profile-support',version:1});
   assert.deepEqual(await submit({},'oracleV2Support'),{kind:'oracle-v2-support',version:2});
   assert.deepEqual(await submit({},'oracleV2RestartSupport'),{kind:'oracle-v2-restart-support',version:1});
