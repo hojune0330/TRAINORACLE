@@ -26,7 +26,8 @@ describe("auth provider operations packet", () => {
     expect(config).toContain("[auth.email.template.confirmation]")
 
     for (const template of [magicLinkTemplate, confirmationTemplate]) {
-      expect(template.match(/\{\{ \.ConfirmationURL \}\}/gu)).toHaveLength(1)
+      expect(template.match(/\{\{ \.RedirectTo \}\}#token_hash=\{\{ \.TokenHash \}\}&amp;type=email/gu)).toHaveLength(1)
+      expect(template).not.toContain("{{ .ConfirmationURL }}")
       expect(template).not.toContain("{{ .Token }}")
       expect(template).not.toMatch(/6자리|인증번호/gu)
       expect(template).not.toMatch(/client[_-]?secret|service[_-]?role|auth[_-]?token/iu)

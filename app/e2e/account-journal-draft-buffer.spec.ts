@@ -24,6 +24,49 @@ test.beforeEach(async ({ context, page }) => {
   await load(page)
 })
 
+test("dirty pre-withdrawal draft never borrows a later consent when queued after reload", async ({page})=>{
+  await page.evaluate(async()=>{
+    const path="/src/domain/account/storage-consent-revision.ts"
+    const revisions=await import(/* @vite-ignore */ path)
+    const h=window.accountDraftHarness
+    revisions.rememberStorageConsentRevision(h.owner,1)
+    await h.buffer.saveDraft(h.owner,h.doc,h.draft)
+    revisions.rememberStorageConsentRevision(h.owner,3)
+  })
+  await page.reload();await load(page)
+  const result=await page.evaluate(async()=>{
+    const path="/src/domain/account/storage-consent-revision.ts"
+    const revisions=await import(/* @vite-ignore */ path)
+    const h=window.accountDraftHarness
+    await h.buffer.queue(h.owner,h.doc,h.op)
+    const old=revisions.pinStorageOperationRevision(h.owner,h.op)
+    const freshDoc="55555555-5555-4555-8555-555555555555"
+    await h.buffer.saveDraft(h.owner,freshDoc,h.draft)
+    await h.buffer.queue(h.owner,freshDoc,h.otherOp)
+    return {old,fresh:revisions.pinStorageOperationRevision(h.owner,h.otherOp),body:(await h.buffer.read(h.owner,h.doc))?.draft.body}
+  })
+  expect(result).toEqual({old:1,fresh:3,body:"SYNTHETIC_BODY_ONLY"})
+})
+
+test("existing pending retry without its pin remains local after regrant without a prior read",async({page})=>{
+  const result=await page.evaluate(async()=>{
+    const path="/src/domain/account/storage-consent-revision.ts"
+    const revisions=await import(/* @vite-ignore */ path)
+    const h=window.accountDraftHarness
+    revisions.rememberStorageConsentRevision(h.owner,1)
+    await h.buffer.saveDraft(h.owner,h.doc,h.draft)
+    await h.buffer.queue(h.owner,h.doc,h.op)
+    const before=JSON.stringify(await h.raw())
+    localStorage.clear()
+    revisions.rememberStorageConsentRevision(h.owner,3)
+    // Deliberately no read/list: exercise queue's existing-operation fast path.
+    await h.buffer.queue(h.owner,h.doc,h.op)
+    return {revision:revisions.pinStorageOperationRevision(h.owner,h.op),
+      unchanged:before===JSON.stringify(await h.raw())}
+  })
+  expect(result).toEqual({revision:0,unchanged:true})
+})
+
 test("MIGRATION purpose survives reload, later edit, conflict archive and actual sync transport", async ({ page }) => {
   await page.evaluate(async () => {
     const h = window.accountDraftHarness

@@ -5,17 +5,17 @@ import { currentUser, onAuthChange } from "./auth"
 
 beforeEach(() => {
   vi.clearAllMocks()
-  mocks.client.mockResolvedValue({ auth: { getSession: mocks.session, onAuthStateChange: mocks.subscribe } })
-  mocks.session.mockResolvedValue({ data: { session: null }, error: null })
+  mocks.client.mockResolvedValue({ auth: { getUser: mocks.session, onAuthStateChange: mocks.subscribe } })
+  mocks.session.mockResolvedValue({ data: { user: null }, error: null })
   mocks.subscribe.mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } })
 })
 
-it("returns guest only after a successful session read", async () => {
+it("returns guest only after a successful verified user read", async () => {
   expect(await currentUser({ throwOnFailure: true })).toBeNull()
 })
 
 it.each(["response", "rejected", "client", "disabled"])("strict reads fail closed on %s failure while old callers remain compatible", async kind => {
-  if (kind === "response") mocks.session.mockResolvedValue({ data: { session: null }, error: { message: "private error" } })
+  if (kind === "response") mocks.session.mockResolvedValue({ data: { user: null }, error: { message: "private error" } })
   if (kind === "rejected") mocks.session.mockRejectedValue(new Error("private error"))
   if (kind === "client") mocks.client.mockRejectedValue(new Error("private error"))
   if (kind === "disabled") mocks.client.mockResolvedValue(null)

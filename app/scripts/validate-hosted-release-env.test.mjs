@@ -13,7 +13,7 @@ const connection = {
 
 const storagePrivacyRelease = {
   VITE_ACCOUNT_STORAGE_PRIVACY_RELEASE_APPROVED: "true",
-  VITE_ACCOUNT_STORAGE_PRIVACY_MIGRATION: "0057_purpose_scoped_storage_consent",
+  VITE_ACCOUNT_STORAGE_PRIVACY_MIGRATION: "0058_storage_withdrawal_erasure",
 }
 
 const legalDocuments = {
@@ -34,6 +34,7 @@ test("requires explicit current storage privacy release acknowledgement before a
     { VITE_ACCOUNT_STORAGE_PRIVACY_RELEASE_APPROVED: "true" },
     { ...storagePrivacyRelease, VITE_ACCOUNT_STORAGE_PRIVACY_RELEASE_APPROVED: "false" },
     { ...storagePrivacyRelease, VITE_ACCOUNT_STORAGE_PRIVACY_MIGRATION: "0056" },
+      { ...storagePrivacyRelease, VITE_ACCOUNT_STORAGE_PRIVACY_MIGRATION: "0057_purpose_scoped_storage_consent" },
   ]) {
     assert.deepEqual(validateHostedReleaseEnvironment({ ...account, ...proof }),
       ["ACCOUNT_REQUIRES_STORAGE_PRIVACY_RELEASE_APPROVAL"])
@@ -237,6 +238,7 @@ test("fails the executable deployment check without echoing a configured key", (
     env: {
       ...process.env,
       VITE_ACCOUNT_PUBLIC_ENABLED: "true",
+      VITE_KILL_ACCOUNT: "false",
       VITE_SUPABASE_ANON_KEY: key,
       VITE_SUPABASE_URL: "",
     },

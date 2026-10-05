@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { supabase } from "./supabase-client"
 import { activeLocalAccount } from "./local-journal-ownership"
+import { currentStorageConsentRevision, pinStorageOperationRevision } from "./storage-consent-revision"
 import { requestAccountDocument } from "./account-journal-api"
 import { accountPlanDocumentId } from "./account-plan-service"
 import { validateAccountPlanDocument, type AccountPlanDocument } from "./account-plan-document-schema"
@@ -39,10 +40,14 @@ export function createAccountPlanCollectionClient(ownerId: string, isCurrent: ()
   const check = (requestedOwner = ownerId) => {
     if (requestedOwner !== ownerId || !current()) throw new AccountPlanCollectionError("STALE")
   }
-  async function invoke(body: object, signal?: AbortSignal) {
+  async function invoke(body: object, signal?: AbortSignal, pinnedStorageRevision?: number) {
     const checkRequest = () => { check(); if (signal?.aborted) throw new AccountPlanCollectionError("STALE") }
     checkRequest()
     const captured = structuredClone(body)
+    const operation = captured as { action?: string; request?: { operationId?: string } }
+    const storageRevision = pinnedStorageRevision ?? (operation.action === "commit" && operation.request?.operationId
+      ? pinStorageOperationRevision(ownerId, operation.request.operationId, 0)
+      : currentStorageConsentRevision(ownerId))
     try {
       const client = await dependencies.client(); checkRequest()
       if (!client) throw new AccountPlanCollectionError("UNAVAILABLE")
@@ -51,7 +56,7 @@ export function createAccountPlanCollectionClient(ownerId: string, isCurrent: ()
       if (session.error || session.data.session?.user.id !== ownerId || typeof token !== "string" || !token.trim())
         throw new AccountPlanCollectionError("AUTH_REQUIRED")
       const { data, error } = await client.functions.invoke("account-plan-collection", {
-        body: captured, headers: { Authorization: `Bearer ${token}` }, timeout: 30_000,
+        body: captured, headers: { Authorization: `Bearer ${token}`, "x-trainoracle-storage-revision": String(storageRevision) }, timeout: 30_000,
         ...(signal ? { signal } : {}),
       }); checkRequest()
       let value: unknown = data
@@ -93,10 +98,10 @@ export function createAccountPlanCollectionClient(ownerId: string, isCurrent: ()
       return result.kind === "missing" ? null : result.kind === "receipt"
         && result.receipt.ownerId === ownerId && result.receipt.operationId === operationId ? result.receipt : invalid()
     },
-    async stage(requestedOwner, part) {
+    async stage(requestedOwner, part, storageConsentRevision) {
       check(requestedOwner)
       if (!validateAccountPlanCollectionPart(part)) invalid()
-      if ((await invoke({ action: "stage", ownerId, part })).kind !== "staged") invalid()
+      if ((await invoke({ action: "stage", ownerId, part }, undefined, storageConsentRevision)).kind !== "staged") invalid()
     },
     async commit(request) {
       check(request.ownerId)

@@ -54,7 +54,8 @@ describe("DS-06 account presentation fixtures", () => {
 
     await user.click(screen.getByRole("button", { name: "이메일로 계속하기" }))
     fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2000-01-01" } })
-    await user.click(screen.getByRole("checkbox", { name: /필수 약관에 모두 동의/u }))
+    await user.click(screen.getByRole("checkbox", { name: /개인정보 처리방침/u }))
+    await user.click(screen.getByRole("checkbox", { name: /이용약관/u }))
     await user.click(screen.getByRole("button", { name: "이메일 입력하기" }))
     await user.type(screen.getByLabelText("이메일"), "runner@example.com")
     await user.click(screen.getByRole("button", { name: "확인 이메일 받기" }))
@@ -97,7 +98,8 @@ describe("DS-06 account presentation fixtures", () => {
 
     await user.click(screen.getByRole("button", { name: "휴대전화로 계속하기" }))
     fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2000-01-01" } })
-    await user.click(screen.getByRole("checkbox", { name: /필수 약관에 모두 동의/u }))
+    await user.click(screen.getByRole("checkbox", { name: /개인정보 처리방침/u }))
+    await user.click(screen.getByRole("checkbox", { name: /이용약관/u }))
     await user.click(screen.getByRole("button", { name: "휴대전화 번호 입력하기" }))
     await user.type(screen.getByLabelText("휴대전화 번호"), "010-1234-5678")
     await user.click(screen.getByRole("button", { name: "문자로 인증번호 받기" }))
@@ -121,7 +123,7 @@ describe("DS-06 account presentation fixtures", () => {
     const preview = vi.fn().mockResolvedValue({ ok: false, message: "합성 미리보기 오류" })
     const user = userEvent.setup()
     render(<AccountSyncPanel userId="synthetic-athlete" enabled onPreview={preview} />)
-    await user.click(screen.getByRole("checkbox", { name: "동기화 켜기" }))
+    await user.click(screen.getByRole("checkbox", { name: "이 기기 동기화 켜기" }))
     await user.click(screen.getByRole("button", { name: "합칠 내용 미리보기" }))
     expect(screen.getByRole("status")).toHaveAttribute("data-state", "error")
     cleanup()
@@ -143,7 +145,7 @@ describe("DS-06 account presentation fixtures", () => {
       total: 3,
     })
     render(<AccountSyncPanel userId="synthetic-athlete" enabled onPreview={successfulPreview} onSync={sync} />)
-    await user.click(screen.getByRole("checkbox", { name: "동기화 켜기" }))
+    await user.click(screen.getByRole("checkbox", { name: "이 기기 동기화 켜기" }))
     await user.click(screen.getByRole("button", { name: "합칠 내용 미리보기" }))
     await user.click(await screen.findByRole("button", { name: "확인한 내용 합치기" }))
     expect(screen.getByRole("status")).toHaveAttribute("data-state", "success")

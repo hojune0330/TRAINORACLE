@@ -2,6 +2,7 @@ import { z } from "zod"
 import { supabase } from "./supabase-client"
 import { activeLocalAccount } from "./local-journal-ownership"
 import { isAccountStoragePaused } from "./storage-consent"
+import { currentStorageConsentRevision, pinStorageOperationRevision } from "./storage-consent-revision"
 import { accountJournalDraftSchema } from "./account-journal-draft-buffer"
 import { isAccountJournalWriteRejection, type AccountJournalWriteRejection } from "./account-write-rejection"
 import type { AccountJournalDraft } from "./account-journal-draft-buffer"
@@ -83,6 +84,8 @@ export async function requestAccountDocument<T>(
 ): Promise<AccountJournalResult<T>> {
   const current = () => isCurrent() && dependencies.owner() === ownerId
   if (!current()) return { ok: false, code: "STALE_RESPONSE" }
+  const storageRevision = "operationId" in request
+    ? pinStorageOperationRevision(ownerId, request.operationId, 0) : currentStorageConsentRevision(ownerId)
   try {
     const client = await dependencies.client()
     if (!current()) return { ok: false, code: "STALE_RESPONSE" }
@@ -98,7 +101,7 @@ export async function requestAccountDocument<T>(
       || (request.action === "save" && (request.document as { kind?: unknown })?.kind === "JOURNAL")
     const { data, error } = await client.functions.invoke("account-journal", {
       body: journalCall ? { ...request, supportedJournalVersions: [2, 3], supportsExerciseLogV1: true } : request,
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${token}`, "x-trainoracle-storage-revision": String(storageRevision) },
     })
     let responseData: unknown = data
     if (!current()) return { ok: false, code: "STALE_RESPONSE" }

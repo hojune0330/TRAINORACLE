@@ -1,13 +1,33 @@
-import { describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { createConsentCheckedFetch } from "./consent-checked-fetch"
 import { holdStorageTransmission, releaseStorageTransmissionHold } from "./storage-transmission-hold"
+import { pinStorageOperationRevision, rememberStorageConsentRevision } from "./storage-consent-revision"
 const A="a1111111-1111-4111-8111-111111111111"
 const B="b2222222-2222-4222-8222-222222222222"
 const origin="https://synthetic.supabase.co"
 const authorization=`Bearer x.${btoa(JSON.stringify({sub:A}))}.x`
-const receipt={userId:A,purposeVersion:"2026-10-05",healthStorage:true,journalTextStorage:true,operationsReady:true}
+const receipt={userId:A,revision:1,purposeVersion:"2026-10-05",healthStorage:true,journalTextStorage:true,operationsReady:true}
 const init={method:"POST",headers:{Authorization:authorization,apikey:"synthetic-public"},body:'{"private":"synthetic-health"}'}
 describe("consent body transport boundary",()=>{
+  beforeEach(()=>{localStorage.clear();rememberStorageConsentRevision(A,1)})
+  it("does not upgrade a pre-withdrawal new operation on a later regrant or page reload",async()=>{
+    const operation="synthetic-new-operation"
+    expect(pinStorageOperationRevision(A,operation)).toBe(1)
+    rememberStorageConsentRevision(A,3)
+    expect(pinStorageOperationRevision(A,operation)).toBe(1)
+    const transport=vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({...receipt,revision:3})))
+    const old={...init,headers:{...init.headers,"x-trainoracle-storage-revision":String(pinStorageOperationRevision(A,operation))}}
+    expect((await createConsentCheckedFetch(origin,transport)(origin+"/functions/v1/account-journal",old)).status).toBe(403)
+    expect(transport).toHaveBeenCalledTimes(1)
+  })
+  it("pins the pre-await revision even if a new grant is observed during the check",async()=>{
+    const transport=vi.fn<typeof fetch>().mockImplementation(async()=>{
+      rememberStorageConsentRevision(A,3)
+      return new Response(JSON.stringify({...receipt,revision:3}))
+    })
+    expect((await createConsentCheckedFetch(origin,transport)(origin+"/functions/v1/account-journal",init)).status).toBe(403)
+    expect(transport).toHaveBeenCalledTimes(1)
+  })
   it("does not send an in-flight body's stale positive receipt after withdrawal is selected",async()=>{
     let resolve!: (value:Response)=>void
     const pending=new Promise<Response>(done=>{resolve=done})
@@ -48,6 +68,7 @@ describe("consent body transport boundary",()=>{
     const fetcher=createConsentCheckedFetch(origin,transport)
     expect((await fetcher(origin+"/rest/v1/journal_entries",init)).status).toBe(200)
     expect(new Headers(transport.mock.calls[1]?.[1]?.headers).get("Authorization")).toBe(authorization)
+    expect(new Headers(transport.mock.calls[1]?.[1]?.headers).get("x-trainoracle-storage-revision")).toBe("1")
     expect((await fetcher(origin+"/rest/v1/journal_entries",init)).status).toBe(403)
     expect(transport).toHaveBeenCalledTimes(3)
   })

@@ -9,7 +9,8 @@ test('operator synthetic role smoke executes and rolls back every identity, flag
   try {
     await db.exec(`create role anon; create role authenticated; create role service_role bypassrls;
       create schema auth; create schema extensions;
-      create table auth.users(id uuid primary key,aud text,role text,email text,created_at timestamptz,updated_at timestamptz);
+      create table auth.users(id uuid primary key,aud text,role text,email text,created_at timestamptz,updated_at timestamptz,
+        encrypted_password text,email_confirmed_at timestamptz,deleted_at timestamptz,is_anonymous boolean,banned_until timestamptz);
       -- Supabase owns this table; 0042 references it without replacing it.
       create table auth.sessions(id uuid primary key,user_id uuid references auth.users(id) on delete cascade,not_after timestamptz);
       create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
@@ -22,7 +23,8 @@ test('operator synthetic role smoke executes and rolls back every identity, flag
     const before = (await db.query('select * from public.service_feature_controls order by feature_key')).rows
     const result = await db.exec(await readFile(new URL('../../operations/account-journal-rls-rollback-smoke.sql', import.meta.url), 'utf8'))
     assert.equal(result.at(-1).rows[0].result, 'SYNTHETIC_RLS_ROLLED_BACK')
-    for (const table of ['auth.users','public.user_private_profiles','public.beta_enrollments','public.account_journal_documents'])
+    for (const table of ['auth.users','auth.sessions','public.user_private_profiles','public.beta_enrollments','public.account_journal_documents',
+      'public.account_storage_operation_reviews','public.account_storage_consents','public.account_storage_consent_events'])
       assert.equal((await db.query(`select count(*)::integer as count from ${table}`)).rows[0].count, 0)
     assert.deepEqual((await db.query('select * from public.service_feature_controls order by feature_key')).rows, before)
   } finally { await db.close() }

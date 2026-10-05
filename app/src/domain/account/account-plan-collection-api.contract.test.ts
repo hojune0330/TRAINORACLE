@@ -36,7 +36,7 @@ it("reads the compact index without downloading all plan bodies", async () => {
   const deps = dependencies({ kind: "index", revision: 1, index })
   expect(await createAccountPlanCollectionClient(OWNER, () => true, deps).readIndex()).toEqual({ revision: 1, index })
   expect(deps.invoke).toHaveBeenCalledExactlyOnceWith("account-plan-collection", {
-    body: { action: "readIndex" }, headers: { Authorization: "Bearer synthetic-token-A" }, timeout: 30_000 })
+    body: { action: "readIndex" }, headers: { Authorization: "Bearer synthetic-token-A", "x-trainoracle-storage-revision": "0" }, timeout: 30_000 })
 })
 it("only explicit missing is empty; outages and wrong success shapes are not", async () => {
   expect(await createAccountPlanCollectionClient(OWNER, () => true, dependencies({ kind: "missing" })).readIndex()).toBeNull()
@@ -77,7 +77,7 @@ it("freezes stage content before session acquisition awaits", async () => {
   part.planId = "changed"
   await write
   expect(deps.invoke).toHaveBeenCalledWith("account-plan-collection", {
-    body: { action: "stage", ownerId: OWNER, part: original }, headers: { Authorization: "Bearer synthetic-token-A" }, timeout: 30_000 })
+    body: { action: "stage", ownerId: OWNER, part: original }, headers: { Authorization: "Bearer synthetic-token-A", "x-trainoracle-storage-revision": "0" }, timeout: 30_000 })
 })
 it("does not treat a missing receipt property as an acknowledged write", async () => {
   const deps = dependencies({ kind: "receipt" })

@@ -7,7 +7,7 @@ product: TrainOracle
 service_provider_working_name: aaclub
 service_operator_target: FREE_BETA_UP_TO_200
 service_operator_scope_decision: ACCOUNT_FIRST_SYNC_LATER
-current_status: SECURITY_AND_PRIVACY_REVIEW_REOPENED_ORIGIN_0057_AND_OPERATIONS_FACTS_OPEN
+current_status: SECURITY_AND_PRIVACY_REVIEW_REOPENED_ORIGIN_0058_AND_OPERATIONS_FACTS_OPEN
 contact_path: TrainOracle in-app feedback board
 owner_preparation_approved_at: 2026-08-14
 legal_clearance_claimed: false
@@ -42,9 +42,15 @@ legal_clearance_claimed: false
   서버 암호화 일지·계획은 읽을 수 있는 사본으로, 기존 기기 암호화 메모와
   별도 제공자 암호문은 보유 형태 그대로 제공한다. 키가 없거나 만료·삭제된
   자료는 복구를 보장하지 않는다.
-- 기기 동기화 OFF, 서버 동의 철회, 삭제 요청을 구분한다. 삭제 RPC의 현재
-  계약은 접근 차단 후 30일이 지나면 정기 정리 대상이 되는 것이며 모든 백업의
-  30일 안 삭제 완료가 아니다. 실제 정리 성공·재시도·백업 만료는 계속 OPEN이다.
+- 기기 동기화 OFF는 해당 기기 전송만 중단한다. 0058에서 서버 동의 철회는
+  건강·글 혼합 목적 자료 18개 저장소와 관련 일지 식별/완료 outbox를 같은
+  잠금·트랜잭션으로 삭제한다. 부분 목적 철회도 분리 불가능한 자료 전체를 삭제한다.
+  본인 권리 조회는 계속 가능하며 삭제한 자료는 빈 결과다. 기기 파일·프로필·인증·
+  독립 구매/포인트 원장은 보관 동의 철회의 삭제 대상이 아니다.
+- 탈퇴 요청도 목적 소거를 수행하며 나머지 계정 정리는 즉시 대상이 된다.
+  30일은 탈퇴의 일괄 보유 근거가 아니다. 본문 없는 최소 동의/소거 원장의
+  별도 근거·상한 기간·정리 기한과 사업자 백업의 기한·재시도·복원 시 재소거가
+  미확정이므로 전체 준수/전체 삭제 완료와 온라인 공개는 NO-GO다.
 - 신규 법률 문서는 시행 예정 버전이다. 적용일/변경 고지 및 운영 사실 확정 후에만
   게시·적용한다. 현재 실행되지 않은 배포·DB 적용·실계정 검증을 완료로 표시하지 않는다.
 
@@ -65,7 +71,7 @@ TrainOracle 전용 도메인 또는 전용 서브도메인으로 옮겨야 한�
 확정되지 않은 동안 Google·이메일 공개 게이트는 닫힌 상태를 유지한다.
 
 또한 서버 입장 판정·expected-user 바인딩·COROS 수집 차단·허용 인증 방식 검사를
-추가한 현재 마이그레이션 0051~0057을
+추가한 현재 마이그레이션 0051~0058을
 시험·운영 DB에 적용하고 새 클라이언트와의 왕복을 확인해야 한다. 과거 공개 기록은
 당시의 영수증이며, 이 재검토에서 새로 열린 게이트를 대신하지 않는다.
 
@@ -105,9 +111,9 @@ PASS로 바꾸지 않는다.
 | G2 이용약관 | 공개 URL과 적용 버전 확정 | OPEN |
 | G3 운영자 정보 | 인피니트 오퍼튜니티/aaclub, 주소·개인정보 문의 연락처 | OWNER_CONFIRMED_2026_10_05_PUBLIC_DOCUMENT_CODE_PRESENT |
 | G4 미성년자 | 가입 전 나이 확인, 만 14세 미만 외부 인증 미호출, 서버 프로필 차단 실측 | PARTIAL_STAGING_SERVER_REHEARSAL_PASS_EXTERNAL_CALL_OPEN |
-| G5 보유·탈퇴 | 접근 차단·30일 후 정리 대상 경로와 실제 성공·재시도·백업 만료 증거 | CODE_READY_RUNTIME_AND_BACKUP_TERMS_OPEN |
+| G5 보유·탈퇴 | 목적 자료 원자 소거·잔여 계정 즉시 정리 대상, 최소 원장 근거/기한·실제 성공/재시도·백업 만료 | CODE_CANDIDATE_RUNTIME_LEDGER_BASIS_AND_BACKUP_TERMS_OPEN |
 | G6 처리업체 | 실제 Supabase 프로젝트 지역과 처리위탁 고지 확정 | OPEN |
-| G7 DB 안전 | 시험 DB에 현재 전체 마이그레이션(최소 0057) 실행, RLS·입장 RPC·사용자별 정책 실측 | REOPENED_0051_TO_0057_STAGING_AND_PRODUCTION_OPEN |
+| G7 DB 안전 | 시험 DB에 현재 전체 마이그레이션(최소 0058) 실행, RLS·입장 RPC·사용자별 정책 실측 | REOPENED_0051_TO_0058_STAGING_AND_PRODUCTION_OPEN |
 | G8 교차 계정 시험 | 두 계정 격리, 두 기기 동기화, 삭제·복구·재로그인 시험 | PARTIAL_STAGING_TWO_USERS_RLS_PASS_UI_HARNESS_READY_TWO_BROWSER_OPEN |
 | G9 가입 동의 | 가입 방침 확인·약관 동의와 선택 보관 목적 분리, 2026-10-05 실제 재확인 | CODE_READY_NEW_VERSION_RUNTIME_OPEN |
 | G10 배포 스위치 | G7·G12·G13·G14·G15와 실제 환경을 확인한 뒤 계정만 공개하고 동기화·공유는 계속 닫음 | REOPENED_BLOCKED_BY_G7_G12_G13_G14_G15_AND_RELEASE_ACK |
@@ -115,7 +121,7 @@ PASS로 바꾸지 않는다.
 | G12 전용 origin | 지속 로그인 토큰과 계정별 로컬 데이터를 다른 Pages 프로젝트와 공유하지 않는 전용 도메인·서브도메인 | OPEN_GITHUB_PAGES_SHARED_ORIGIN |
 | G13 이메일 남용 방지 | Hosted Auth CAPTCHA·발송 요율 제한·사용자/IP 기준 감시·custom SMTP 쿼터와 비용·평판 경보 실측 | OPEN_PROVIDER_ABUSE_CONTROLS |
 | G14 인증 표면 제한 | 미사용 OAuth·익명·SSO를 Hosted Auth에서 끄고, 비밀번호 가입·로그인 세션과 비밀번호 자격 증명 보유 계정이 0053에서 거부되는지 실측 | OPEN_HOSTED_AUTH_ALLOWLIST_AND_PASSWORD_PROBE |
-| G15 목적 동의·철회 | 0057 전체 적용, 두 브라우저 철회/재시도·실제 병렬 쓰기 경합·수동 권리열람/삭제 검증 | LOCAL_SYNTHETIC_ONLY_RUNTIME_OPEN |
+| G15 목적 동의·철회 | 0058 전체 적용, 두 브라우저 철회/재시도·재동의 이전작업 거절·실제 병렬 경합·수동 권리열람/삭제 검증 | LOCAL_CANDIDATE_ONLY_RUNTIME_OPEN |
 | G16 운영 사실 | 실제 위탁/국외 처리/로그/백업 조건 고지와 검토 증거 DB 등록 | CLOSED_EMPTY_REVIEW_TABLE |
 
 G8에는 같은 브라우저에서 계정을 바꿨을 때 이전 사용자의 로컬 일지가 보이지
@@ -168,13 +174,13 @@ Hosted Auth 왕복을 확인한 인증 종류만 서버에서 연 뒤 `ACCOUNT`�
 
 - 운영사업자는 인피니트 오퍼튜니티, 브랜드는 aaclub이며 동일 등록 사업자라는 소유자 확인을 받았다. 공개 문서의 주소·문의 정보를 유지했다. 사업자 등록 증명서 실사는 수행하지 않았다.
 - 시험 Supabase 지역은 서울(`ap-northeast-2`)로 확인됐지만 공개 고지는 미확정
-- 30일 후 정리 작업의 실제 성공·실패 재시도·백업 만료 결과
+- 목적 소거 및 잔여 계정 정리 작업의 실제 성공·실패 재시도·최소 원장 근거/상한·백업 만료 결과
 - 만 14세 미만 외부 인증 미호출과 서버 프로필 차단의 실제 시험 결과
 - 운영 DB 마이그레이션 및 실제 두 기기 동기화 결과
 
 ## 공개 전 실행 순서
 
-1. 운영과 분리된 시험 Supabase에 현재 마이그레이션 전체(최소 0057)를 적용하고 영수증을 남긴다. `account-data-rights`도 배포하고 전용 origin의 허용 목록·세션 검증을 확인한다.
+1. 운영과 분리된 시험 Supabase에 현재 마이그레이션 전체(최소 0058)를 적용하고 영수증을 남긴다. `account-data-rights`와 revision 헤더를 전달하는 일지/계획 Edge도 배포하고 전용 origin의 허용 목록·세션 검증을 확인한다.
 2. 시험 빌드에서 계정만 켜고 카카오·Google·이메일 로그인, 14세 경계, 전달된 이메일
    링크의 계정 바꿔치기 차단, 직접 비밀번호 가입·로그인의 서버 거부, 로그아웃,
    삭제 요청과 실패 경로를 확인한다.
@@ -195,7 +201,7 @@ Hosted Auth 왕복을 확인한 인증 종류만 서버에서 연 뒤 `ACCOUNT`�
 
 계정을 여는 hosted 빌드는 `validate-hosted-release-env.mjs`에서
 `VITE_ACCOUNT_STORAGE_PRIVACY_RELEASE_APPROVED=true` 및
-`VITE_ACCOUNT_STORAGE_PRIVACY_MIGRATION=0057_purpose_scoped_storage_consent`를
+`VITE_ACCOUNT_STORAGE_PRIVACY_MIGRATION=0058_storage_withdrawal_erasure`를
 명시하지 않으면 거절한다. 계정을 끈 로컬 전용 빌드와 `VITE_KILL_ACCOUNT=true`인
 빌드는 이 확인을 요구하지 않으며, 이 값이 신규 저장을 켜지도 않는다.
 
@@ -254,6 +260,74 @@ Node `v24.11.1`에서 아래를 확인했다.
 SQL의 같은 잠금과 순차 시험은 실제 병렬 스케줄의 증거를 대신하지 않는다.
 독립 소스 재검토에서 전송 직전 철회 hold·운영 검토 철회·탈퇴 잠금 경계의
 지적 3건은 보완 확인했지만, 전체 hosted release gate는 이번에 실행하지 않았다.
+
+## 0058 추가 후보: 철회 목적 소거와 늦은 작업
+
+`d7f719f68c63ec1c468830677e6de72fc2dfc893` 위의 추가 후보이며 0057은 수정하지 않았다.
+0058은 실제 목적 철회와 같은 계정 잠금·트랜잭션에서 혼합 암호문, 교체본, 휴지통,
+연동 자료 및 목적 파생 저장소를 소거한다. 기기 파일, 독립 계정 프로필, 구매·보상
+원장을 목적 철회로 지우지 않는다. 최소 receipt는 본문 없이 남으며 `backup_status=PENDING`은
+백업 삭제 완료가 아니다. 그 원장의 별도 보존 근거·기한 및 백업 정리 상한은 아직
+승인되지 않았으므로 계정/건강 보관 공개 NO-GO다.
+
+새 탈퇴 요청은 목적 소거와 잔여 정리 대상 등록을 즉시 수행하며 30일 보유를
+법정 허용 기간으로 주장하지 않는다. 0057에서 실제 철회한 기존 receipt는 목적 소거로
+보완한다. 그러나 **0057 이전 동의 receipt 없이 이미 존재하던 탈퇴 요청**을 위해
+가짜 동의·세션 이벤트를 만들지 않는다. 해당 기존 미완료 요청의 운영 catalog/집계,
+기존 삭제 요청 근거, 별도 보존 예외 및 정리 결과를 확인하기 전 공개는 NO-GO다.
+그 기존 요청 전체 정리나 Auth 계정·백업 삭제 완료를 이번 코드의 성과로 계산하지 않는다.
+
+기기 작업은 Edge가 처음 관측한 connection ID/owner/epoch를 복사하고 SQL의 계정 잠금과
+connection 행 잠금 뒤 재검증한다. 철회 전 관측한 in-flight/queue 작업은 재동의·재연결로
+살아나지 않는다. 반면 제공업체에서 오래전에 발생했으나 **재연결 뒤 처음 수신한 retry**는
+새 연결로 관측될 수 있어, 이 코드만으로 과거 이벤트와 새 이벤트를 구분하지 못한다.
+임의 활동 시각 cutoff나 새 history import 정책은 만들지 않았다. G15 및
+`DEVICE_INTEGRATION`은 OFF를 유지하며, 제공업체 재전송/가져오기 정책의 별도 검증이 필요하다.
+
+Node 24.19.0 합성 검사 기록(운영 DB 연결 없음):
+
+- 0058 최초 후보의 유지된 전체 Supabase 계약: 296/296 통과. 이후 workout epoch 및
+  CORS preflight 보완을 했으므로 이 숫자를 최종 후보 전체 재실행으로 표시하지 않는다.
+- 보완 후 0058·전송 경계·일지/계획 Edge 영향 4파일: 128/128 통과.
+- 소거 누락, 늦은 revision 재사용, private context 위조, workout epoch 검사 누락을
+  각각 실행 메모리에 주입하자 해당 이름의 시험이 실패했다. 정상 9/9 재통과와
+  0058 SHA-256 `78c72cb9317801af033aea9d5607d4f3ddc8149722cb769fa8031074bef3a683`
+  불변을 확인했다. 실제 migration 파일을 변조하거나 DB에 적용하지 않았다.
+- 기존 service-role retention DELETE 예외의 정상 동작, end-user GUC 위조 거절,
+  임의 탈퇴 취소·기한 연장 권한 거절, 철회 후 수동 권리 조회의 빈 결과를 포함한다.
+- activation receipt의 실제 CASCADE 소거 fixture 추가 후에도 SQL 9/9 및 결함4 검출/
+  정상 원상 확인을 반복했다. migration SHA는 위와 같다. 두 CORS 검사 및 Edge의
+  connection snapshot을 메모리에서 훼손한 추가 결함3도 지정 이름으로 검출했고,
+  정상 전송 경계 4/4와 shared source SHA 불변을 확인했다.
+- 앱 최초 영향 22파일 302/302 통과 뒤, 기존 IDB 작업의 pin이 없을 때 재동의 값을
+  빌릴 수 있는 조기 반환 경로를 추가 보완했다. 그 최종 변경의 영향 5파일 195/195
+  통과를 별도로 기록하며 302건을 보완 후 전체 재검사라고 표시하지 않는다.
+- native IndexedDB/Web Crypto 브라우저 2/2 통과: 철회 전 dirty 초안의 reload 후
+  queue, 기존 pending 작업의 pin 유실 후 read/list 없는 queue 모두 원문 보존과
+  옛 작업 재승인 차단을 확인했다. 메모리 결함2를 지정 assertion 실패로 검출한 뒤
+  정상 2/2 재통과 및 buffer/API/service 파일 SHA 불변을 확인했다.
+- 신규 delete/restore의 revision=3 정상 pin과 불확실한 응답의 동일 operation 재시도는
+  별도 lifecycle 브라우저 3/3 통과했다. 외부 요청을 차단한 localhost:4381의
+  합성 HTTP/인증 경계이며 실제 Supabase 브라우저 왕복으로 계산하지 않는다.
+- 첫 native 실행은 cold module 로딩 중 beforeEach 30초 timeout 1건, 최초 lifecycle
+  실행은 낡은 feature-return 치환 fixture 실패 3건이었다. CLI 준비 시간 90초,
+  feature 표현식만 치환하고 실제 privacy pause를 보존하는 fixture로 각각 재검사했다.
+  assertion을 완화하지 않았으며 이 실패들을 통과 건수에 합산하지 않았다.
+- app/e2e `tsc --noEmit` 모두 exit 0, server validator 3종 생성물 `--check` 통과.
+  hosted release 환경 검사 25/25 통과(0058 승인 누락 기본 거절·OFF 정상 대조군 포함).
+  OFF 환경을 상속해 잘못 닫히던 executable-negative fixture는 그 합성 child의
+  KILL_ACCOUNT=false만 명시하여 원래 open-invalid-key 거절 검사를 되살렸다.
+- Node 24.19.0 runtime 검사 → 공개 배포 환경 확인 → `tsc --noEmit` → Vite production
+  build가 exit 0으로 완료됐다. 빌드 child에는 OS 실행 경로만 allowlist로 상속하고
+  `NODE_ENV=production`, `VITE_ACCOUNT_PUBLIC_ENABLED=false`, `VITE_KILL_ACCOUNT=true`를
+  지정했다. 승인 flag·Supabase 연결 값은 넣지 않았고 env 파일을 읽지 않았다.
+  Vite는 source node_modules에 쓰지 않도록 `--configLoader runner`를 사용했다.
+  폰트 런타임 해석·혼합 dynamic/static import·큰 chunk 경고는 남았으며 화면 검증이나
+  account-open 배포 성공으로 계산하지 않는다. 검사 후 localhost:4381 listener가
+  없음을 확인했고 별도 서버를 남기지 않았다.
+
+실제 PostgreSQL 두 연결 경합, 운영 최신 migration/Edge, 전용 origin, 기존 미완료
+탈퇴 정리, 최소 원장·백업 기한·완료 증빙은 위 로컬 합성 검사와 별개로 미검증이다.
 
 ## 즉시 끄기
 

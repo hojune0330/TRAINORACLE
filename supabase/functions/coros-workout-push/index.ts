@@ -2,8 +2,8 @@ import {
   MAX_COROS_BODY_BYTES,
   normalizeCorosPush,
   secureSecretMatch,
-  withPayloadDigests,
 } from "../_shared/coros.mjs"
+import { prepareCorosWorkoutStorage, corosWorkoutConnectionResolver } from "../_shared/coros-workout-storage.mjs"
 
 const jsonHeaders = {
   "content-type": "application/json; charset=utf-8",
@@ -46,9 +46,15 @@ Deno.serve(async (request) => {
 
   let normalized
   try {
-    normalized = await withPayloadDigests(normalizeCorosPush(JSON.parse(bodyText)))
+    normalized = normalizeCorosPush(JSON.parse(bodyText))
   } catch {
     return response(400, "4002", "invalid activity payload")
+  }
+
+  try {
+    normalized = await prepareCorosWorkoutStorage(normalized, corosWorkoutConnectionResolver(supabaseUrl, serviceRoleKey))
+  } catch {
+    return response(503, "5002", "ingestion unavailable")
   }
 
   const databaseResponse = await fetch(`${supabaseUrl}/rest/v1/rpc/ingest_coros_activity_batch`, {
@@ -59,6 +65,8 @@ Deno.serve(async (request) => {
       "content-type": "application/json",
     },
     body: JSON.stringify({ p_items: normalized }),
+    cache: "no-store",
+    redirect: "error",
   })
   if (!databaseResponse.ok) return response(503, "5002", "ingestion unavailable")
 

@@ -1,6 +1,7 @@
 // Prevent a body containing health/journal data from leaving the browser before
 // a fresh server consent check. The database remains the authorization boundary.
 import { isStorageTransmissionHeld } from "./storage-transmission-hold"
+import { currentStorageConsentRevision } from "./storage-consent-revision"
 const META_ROUTES = new Set([
   "rpc/claim_beta_seat", "rpc/get_current_account_admission_status", "rpc/request_account_deletion",
   "rpc/get_account_storage_consent", "rpc/set_account_storage_consent",
@@ -34,6 +35,10 @@ export function createConsentCheckedFetch(serviceUrl: string, transport: typeof 
       status: 403, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
     })
     if (!subject || isStorageTransmissionHeld(subject) || init?.signal?.aborted) return denied()
+    // Capture before the server check awaits. Never upgrade a pinned old job to
+    // a new grant, including an operation whose first write never reached SQL.
+    const revision = headers.get("x-trainoracle-storage-revision") ?? String(currentStorageConsentRevision(subject))
+    headers.set("x-trainoracle-storage-revision", revision)
     try {
       const checkHeaders = new Headers({ "Content-Type": "application/json" })
       for (const name of ["Authorization", "apikey"]) {
@@ -46,8 +51,10 @@ export function createConsentCheckedFetch(serviceUrl: string, transport: typeof 
         signal: init?.signal, cache: "no-store",
       })
       const value: unknown = response.ok ? await response.json() : null
-      const consent = value as { userId?: unknown; purposeVersion?: unknown; healthStorage?: unknown; journalTextStorage?: unknown; operationsReady?: unknown } | null
+      const consent = value as { userId?: unknown; revision?: unknown; purposeVersion?: unknown; healthStorage?: unknown; journalTextStorage?: unknown; operationsReady?: unknown } | null
       if (consent?.userId !== subject || consent.purposeVersion !== "2026-10-05"
+        || typeof consent.revision !== "number" || !Number.isSafeInteger(consent.revision) || consent.revision <= 0
+        || String(consent.revision) !== revision
         || consent.healthStorage !== true || consent.journalTextStorage !== true || consent.operationsReady !== true
         || isStorageTransmissionHeld(subject) || init?.signal?.aborted) return denied()
       // Pin the exact Authorization used for the consent check.

@@ -7,6 +7,7 @@ const migration = readFileSync(
   join(process.cwd(), "..", "supabase", "migrations", "0051_current_account_admission.sql"),
   "utf8",
 ).replaceAll("\r\n", "\n")
+const currentMigration = readFileSync(join(process.cwd(), "..", "supabase", "migrations", "0057_purpose_scoped_storage_consent.sql"), "utf8").replaceAll("\r\n", "\n")
 
 function between(start: string, end: string): string {
   const startIndex = migration.indexOf(start)
@@ -49,10 +50,7 @@ describe("current-account server admission migration", () => {
   })
 
   it("checks every admission boundary before returning ADMITTED", () => {
-    const admission = between(
-      "create or replace function public.get_current_account_admission_status(expected_user_id_input uuid)",
-      "revoke all on function public.get_current_account_admission_status(uuid)",
-    )
+    const admission = currentMigration.split("create or replace function public.get_current_account_admission_status(expected_user_id_input uuid)")[1]!.split("create or replace function public.account_subject_public_data_allowed")[0]!
 
     for (const status of [
       "LOGIN_REQUIRED",
@@ -69,7 +67,7 @@ describe("current-account server admission migration", () => {
     expect(admission).toContain("public.service_feature_enabled('ACCOUNT') is distinct from true")
     expect(admission).toContain("from public.account_deletion_requests")
     expect(admission).toContain("from public.beta_enrollments")
-    expect(admission).toContain("public.account_network_access_allowed(actor) is distinct from true")
+    expect(admission).toContain("public.account_admission_access_allowed(actor) is distinct from true")
     expect(admission).toContain("clock_timestamp() at time zone 'Asia/Seoul'")
     expect(admission).toContain(`profile.privacy_policy_version is distinct from '${CURRENT_ACCOUNT_LEGAL_VERSION}'`)
     expect(admission).toContain(`profile.terms_of_service_version is distinct from '${CURRENT_ACCOUNT_LEGAL_VERSION}'`)

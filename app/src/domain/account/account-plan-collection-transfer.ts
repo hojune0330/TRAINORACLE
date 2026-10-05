@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { pinStorageOperationRevision } from "./storage-consent-revision"
 import { hasCanonicalJsonTree } from "../plan-beta-schema"
 import { accountPlanFingerprint, type AccountPlanDocument } from "./account-plan-document-schema"
 import { joinAccountPlanCollection, splitAccountPlanCollection,
@@ -45,7 +46,7 @@ const receiptSchema = z.object({ ownerId: z.uuid(), operationId: z.uuid(),
  * Staged immutable parts confer neither a current pointer nor execution authority. */
 export interface AccountPlanCollectionPort {
   receipt(ownerId: string, operationId: string): Promise<unknown | null>
-  stage(ownerId: string, part: Part): Promise<void>
+  stage(ownerId: string, part: Part, storageConsentRevision?: number): Promise<void>
   readPart(ownerId: string, kind: Part["kind"], id: string): Promise<unknown | null>
   commit(request: AccountPlanCollectionCommit): Promise<
     { kind: "committed"; receipt: unknown } | { kind: "conflict" }>
@@ -101,10 +102,12 @@ export function prepareAccountPlanCollectionTransfer(input: {
   paceRecordGuard?: AccountPlanPaceRecordGuard;
 }): AccountPlanCollectionTransfer | null {
   try {
+    pinStorageOperationRevision(input.ownerId, input.operationId)
+    const next = splitAccountPlanCollection(input.next)
     return readAccountPlanCollectionTransfer({ version: 1, ownerId: input.ownerId, operationId: input.operationId,
       expectedRevision: input.expectedRevision,
       previous: input.previous ? splitAccountPlanCollection(input.previous) : null,
-      next: splitAccountPlanCollection(input.next), legacy: input.legacy ? {
+      next, legacy: input.legacy ? {
         documentId: input.legacy.documentId, revision: input.legacy.revision,
         fingerprint: accountPlanFingerprint(input.legacy.document),
       } : null, ...(input.journalGuard === undefined ? {} : { journalGuard: input.journalGuard }),
@@ -129,6 +132,7 @@ export async function transferAccountPlanCollection(input: {
 }): Promise<AccountPlanCollectionTransferResult> {
   const transfer = readAccountPlanCollectionTransfer(input.transfer)
   if (!transfer) return { kind: "invalid" }
+  const storageRevision = pinStorageOperationRevision(transfer.ownerId, transfer.operationId, 0)
   const opening = input.scope()
   if (!opening || opening.ownerId !== transfer.ownerId || !Number.isSafeInteger(opening.epoch)) return { kind: "stale" }
   const epoch = opening.epoch, ownerId = opening.ownerId
@@ -162,7 +166,7 @@ export async function transferAccountPlanCollection(input: {
       let stored = await input.port.readPart(ownerId, part.kind, part.id)
       if (!current()) return { kind: "stale" }
       if (stored === null) {
-        await input.port.stage(ownerId, structuredClone(part))
+        await input.port.stage(ownerId, structuredClone(part), storageRevision)
         if (!current()) return { kind: "stale" }
         stored = await input.port.readPart(ownerId, part.kind, part.id)
         if (!current()) return { kind: "stale" }

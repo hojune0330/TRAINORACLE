@@ -1,6 +1,7 @@
 import { beforeEach, afterEach, expect, it, vi } from "vitest"
 import { TODAY } from "../prescription-quality-matrix.test-fixtures"
 import { accountPlanPacketFixture } from "./account-plan.test-fixtures"
+import { rememberStorageConsentRevision } from "./storage-consent-revision"
 import { accountPlanEntry, accountPlanFingerprint, emptyAccountPlanDocument, type AccountPlanDocument } from "./account-plan-document-schema"
 import { joinAccountPlanCollection, splitAccountPlanCollection, type AccountPlanCollectionParts } from "./account-plan-collection-schema"
 import { accountPlanCollectionCommit, prepareAccountPlanCollectionTransfer, readAccountPlanCollectionTransfer,
@@ -73,6 +74,17 @@ function repository(previous: AccountPlanCollectionParts | null = null) {
 function run(transfer: AccountPlanCollectionTransfer, port: AccountPlanCollectionPort, overrides: Partial<Parameters<typeof transferAccountPlanCollection>[0]> = {}) {
   return transferAccountPlanCollection({ transfer, port, scope: () => ({ ownerId: OWNER, epoch: 1 }), freshSelectionReview: () => true, ...overrides })
 }
+
+it("stages a prepared collection with its original consent revision after a later regrant",async()=>{
+  const next=document()
+  rememberStorageConsentRevision(OWNER,1)
+  const transfer=prepared(next)
+  rememberStorageConsentRevision(OWNER,3)
+  const {port}=repository()
+  expect((await run(transfer,port)).kind).toBe("committed")
+  expect(port.stage).toHaveBeenCalled()
+  for(const call of vi.mocked(port.stage).mock.calls) expect(call[2]).toBe(1)
+})
 
 it("binds source guard bytes to the commit and exact replay receipt", async () => {
   const guard = { documentId: LEGACY, revision: 2 }

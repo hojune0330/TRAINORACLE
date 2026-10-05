@@ -115,9 +115,9 @@ export function createAccountPlanCollectionHandler({ authenticate, getMaterial, 
       if (request.method === 'OPTIONS') {
         if (!origin || request.headers.get('access-control-request-method') !== 'POST') fail(403, 'ACCESS_DENIED');
         const requested = (request.headers.get('access-control-request-headers') ?? '').toLowerCase().split(',').map(v => v.trim()).filter(Boolean);
-        if (requested.some(v => !['authorization', 'content-type', 'apikey', 'x-client-info'].includes(v))) fail(403, 'ACCESS_DENIED');
+        if (requested.some(v => !['authorization', 'content-type', 'apikey', 'x-client-info', 'x-trainoracle-storage-revision'].includes(v))) fail(403, 'ACCESS_DENIED');
         headers.set('Access-Control-Allow-Methods', 'POST');
-        headers.set('Access-Control-Allow-Headers', 'authorization, content-type, apikey, x-client-info');
+        headers.set('Access-Control-Allow-Headers', 'authorization, content-type, apikey, x-client-info, x-trainoracle-storage-revision');
         return respond(204, null);
       }
       if (request.method !== 'POST') { headers.set('Allow', 'POST, OPTIONS'); fail(405, 'METHOD_NOT_ALLOWED'); }

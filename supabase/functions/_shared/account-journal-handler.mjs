@@ -392,9 +392,9 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
       if (request.method === 'OPTIONS') {
         if (!origin || request.headers.get('access-control-request-method') !== 'POST') fail(403, 'ORIGIN_DENIED');
         const requested = (request.headers.get('access-control-request-headers') ?? '').toLowerCase().split(',').map(x => x.trim()).filter(Boolean);
-        if (requested.some(x => !['authorization', 'content-type', 'apikey', 'x-client-info'].includes(x))) fail(403, 'ORIGIN_DENIED');
+        if (requested.some(x => !['authorization', 'content-type', 'apikey', 'x-client-info', 'x-trainoracle-storage-revision'].includes(x))) fail(403, 'ORIGIN_DENIED');
         headers.set('Access-Control-Allow-Methods', 'POST');
-        headers.set('Access-Control-Allow-Headers', 'authorization, content-type, apikey, x-client-info');
+        headers.set('Access-Control-Allow-Headers', 'authorization, content-type, apikey, x-client-info, x-trainoracle-storage-revision');
         return respond(204, null);
       }
       if (request.method !== 'POST') { headers.set('Allow', 'POST, OPTIONS'); fail(405, 'METHOD_NOT_ALLOWED'); }

@@ -19,7 +19,7 @@ describe("DS-05 journal decoration visual contract", () => {
 
     expect(dock).toContain("58px")
     expect(drawer).toContain("bottom: calc(58px + env(safe-area-inset-bottom))")
-    expect(drawer).toContain("max-height: min(44dvh, 380px)")
+    expect(drawer).toContain("max-height: min(40dvh, 380px)")
     expect(desktopDrawer).toContain("width: min(440px, 42vw)")
     expect(desktopDrawer).toContain("box-sizing: border-box")
   })

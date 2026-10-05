@@ -14,6 +14,8 @@ const currentVersionMigration = readFileSync(
 const privacyDocument = readFileSync(join(process.cwd(), "public", "legal", "privacy.html"), "utf8")
 const termsDocument = readFileSync(join(process.cwd(), "public", "legal", "terms.html"), "utf8")
 const hostedReleaseValidator = readFileSync(join(process.cwd(), "scripts", "validate-hosted-release-env.mjs"), "utf8")
+const latestVersionMigration = readFileSync(join(process.cwd(), "..", "supabase", "migrations", "0057_purpose_scoped_storage_consent.sql"), "utf8")
+  + readFileSync(join(process.cwd(), "..", "supabase", "migrations", "0058_storage_withdrawal_erasure.sql"), "utf8")
 
 describe("account legal-consent migration", () => {
   it("records only document versions and the server consent time with the private profile", () => {
@@ -53,10 +55,10 @@ describe("account legal-consent migration", () => {
   it("keeps client, hosted release check, server gate, and both public documents on one version", () => {
     const version = CURRENT_ACCOUNT_LEGAL_VERSION
     expect(hostedReleaseValidator).toContain(`const CURRENT_ACCOUNT_LEGAL_VERSION = "${version}"`)
-    expect(currentVersionMigration).toContain(`new.privacy_policy_version is distinct from '${version}'`)
-    expect(currentVersionMigration).toContain(`new.terms_of_service_version is distinct from '${version}'`)
-    expect(currentVersionMigration).toContain(`profile.privacy_policy_version = '${version}'`)
-    expect(currentVersionMigration).toContain(`profile.terms_of_service_version = '${version}'`)
+    expect(latestVersionMigration).toContain(`new.privacy_policy_version is distinct from '${version}'`)
+    expect(latestVersionMigration).toContain(`new.terms_of_service_version is distinct from '${version}'`)
+    expect(latestVersionMigration).toContain(`profile.privacy_policy_version = '${version}'`)
+    expect(latestVersionMigration).toContain(`profile.terms_of_service_version = '${version}'`)
     expect(privacyDocument).toContain(`문서 버전: ${version}`)
     expect(termsDocument).toContain(`문서 버전: ${version}`)
   })

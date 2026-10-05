@@ -44,7 +44,7 @@ export function StorageConsentPanel({ userId, load = loadAccountStorageConsent, 
     if (!result.ok) { setReceipt(null); setNotice(result.message); return }
     setReceipt(result.consent); setHealth(result.consent.healthStorage); setText(result.consent.journalTextStorage)
     setNotice(withdraw || !result.consent.healthStorage || !result.consent.journalTextStorage
-      ? "서버에서 온라인 처리를 중단했어요. 기존 자료를 지우려면 아래 계정 삭제를 별도로 요청해 주세요."
+      ? "온라인 처리를 중단하고 서버의 해당 보관 자료·교체본·휴지통을 삭제했어요. 기기 기록은 그대로이며, 사업자 백업 정리는 별도 확인 중이에요."
       : "선택한 목적의 동의를 저장했어요. 기존 기기 기록은 별도로 선택해야 계정으로 옮겨져요.")
   }
   return <section className="account-panel" aria-busy={busy} aria-label="온라인 보관 동의">
@@ -60,7 +60,7 @@ export function StorageConsentPanel({ userId, load = loadAccountStorageConsent, 
       <span>메모·글의 계정 보관·복구에 동의해요 (선택)</span>
     </label>
     <p className="account-panel__privacy">항목: 일반·비밀 메모, 초안, 글 스티커 등 직접 작성한 글. 서버에서 암호화하며 서비스는 복구를 위해 복호화할 수 있어요. 비밀 글은 분석·공유에서 제외하고, 원문을 외부 AI에 보내지 않아요.</p>
-    <p className="account-panel__privacy">하나의 일지에 두 종류가 함께 들어갈 수 있어 둘 다 동의한 때만 온라인 보관을 시작해요. 동의 버전 {STORAGE_CONSENT_VERSION}과 선택·시각을 서버에 기록해요. 현재 기록은 사용자가 삭제하거나 탈퇴 정리가 완료될 때까지, 교체본·휴지통은 서버 반영 시각부터 30일 보관해요. 철회는 온라인 처리 중단이며 즉시 삭제와 달라요. 삭제·백업 보유 조건은 개인정보처리방침에서 확인할 수 있어요.</p>
+    <p className="account-panel__privacy">한 자료에 두 종류가 함께 들어갈 수 있어 둘 다 동의한 때만 보관해요. 동의 버전 {STORAGE_CONSENT_VERSION}과 선택·시각을 기록해요. 철회하면 해당 서버 보관 자료와 교체본·휴지통을 함께 삭제하며, 다시 동의해도 이전 전송 작업은 자동 재개하지 않아요. 기기 기록과 계정·구매 정보는 지우지 않아요. 필요한 자료는 철회 전에 내려받아 주세요. 백업 정리와 최소 처리기록의 보유 조건은 운영 확인 항목이며 개인정보처리방침에서 확인할 수 있어요.</p>
     <div className="account-panel__actions">
       <button type="button" style={primaryBtn} disabled={busy || !receipt?.operationsReady || !health || !text} onClick={() => void update(false)}>선택한 동의 저장</button>
       <button type="button" style={secondaryBtn} disabled={busy || !receipt} onClick={() => void update(true)}>온라인 보관 동의 철회</button>
