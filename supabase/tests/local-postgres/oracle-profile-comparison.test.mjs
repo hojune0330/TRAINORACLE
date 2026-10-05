@@ -1,26 +1,25 @@
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
 import { randomUUID, createHmac } from 'node:crypto';
 import { PGlite } from '@electric-sql/pglite';
 import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
 import { createProfileComparisonHandler, createProfileComparisonRepository, importProfileComparisonAttestor } from '../../functions/_shared/oracle-profile-comparison-handler.mjs';
 import { encryptAccountJournalDocument } from '../../functions/_shared/account-journal-crypto.mjs';
+import { loadOracleMigrationChain, setOracleAuth } from './oracle-auth-fixture.mjs';
 
 // Real SQL + gateway + crypto with synthetic auth fixtures. No Supabase/network credentials.
 const db = new PGlite({ extensions: { pgcrypto } });
-const root = new URL('../../migrations/', import.meta.url);
 const A=randomUUID(), B=randomUUID(), C=randomUUID(), SA=randomUUID(), SB=randomUUID(), SC=randomUUID();
 const DA=randomUUID(), DB=randomUUID(), DC=randomUUID();
 const identities = new Map([['A-token',{ownerId:A,sessionId:SA}],['B-token',{ownerId:B,sessionId:SB}],['C-token',{ownerId:C,sessionId:SC}]]);
+const claimOverrides = new Map();
 const signing=Buffer.alloc(32,51); let material, attest, hook=null;
 const future=()=>new Date(Date.now()+3600000).toISOString();
 const fields=['CHALLENGE_1','CHALLENGE_2','SOCIAL_1'];
 const profile=(answers)=>({version:3,state:'ACCOUNT_STATE',kind:'RUNNING_PROFILE',data:{version:'RUNNING_PROFILE_V2',status:'ACTIVE',legacyAnswers:{},legacyAnsweredAt:null,readings:[],current:{version:'ORACLE_PROFILE_REVISION_V2',revision:1,answeredAt:'2026-10-04T00:00:00.000Z',questionVersion:'ORACLE_QUESTIONS_V2_1',scoreVersion:'SELF_RESPONSE_INDEX_V1',characterVersion:'RESPONSE_NICKNAME_V1',selectedCharacter:null,answers}}});
 async function admin(sql,params=[]) {await db.exec('reset role');return db.query(sql,params)}
 async function auth(ownerId,sessionId,patch={}) {
-  await db.exec('reset role;set role authenticated');
-  await db.query("select set_config('request.jwt.claim.sub',$1,false),set_config('request.jwt.claims',$2,false)",[ownerId,JSON.stringify({sub:ownerId,role:'authenticated',session_id:sessionId,exp:Math.floor(Date.now()/1000)+3600,...patch})]);
+  await setOracleAuth(db,ownerId,sessionId,{...claimOverrides.get(ownerId),...patch});
 }
 function repo(identity) {
   return createProfileComparisonRepository({rpc:async(name,proof)=>{
@@ -55,18 +54,12 @@ async function pair() {
 }
 async function share(cid,token='A-token',selected=fields) {return call(token,{action:'allowExternal',comparisonId:cid,fields:selected,expiresAt:new Date(Date.now()+600000).toISOString()})}
 before(async()=>{
-  await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create schema extensions;
-    create table auth.users(id uuid primary key,aud text,role text,email text,created_at timestamptz,updated_at timestamptz,email_confirmed_at timestamptz,deleted_at timestamptz,banned_until timestamptz,is_anonymous boolean default false);
-    create table auth.sessions(id uuid primary key,user_id uuid references auth.users(id) on delete cascade,not_after timestamptz);
-    create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
-    create function auth.jwt() returns jsonb language sql stable as $$select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb$$;
-    grant usage on schema auth to anon,authenticated,service_role;grant execute on all functions in schema auth to anon,authenticated,service_role;`);
-  for(const name of readdirSync(root).filter(n=>/^\d{4}_.*\.sql$/.test(n)&&n<'0061'&&!/^(0038|0039|0041|0042|005[1-6])_/.test(n)).sort())await db.exec(readFileSync(new URL(name,root),'utf8'));
+  await loadOracleMigrationChain(db);
   material={keyId:'synthetic',key:await crypto.subtle.importKey('raw',Buffer.alloc(32,23),'AES-GCM',false,['encrypt','decrypt'])};
   attest=await importProfileComparisonAttestor(JSON.stringify({keyId:'synthetic',key:signing.toString('base64')}));
   for(const [owner,sid,doc] of [[A,SA,DA],[B,SB,DB],[C,SC,DC]]) {
-    await admin('insert into auth.users(id,email_confirmed_at) values($1,clock_timestamp())',[owner]);
-    await admin('insert into auth.sessions(id,user_id) values($1,$2)',[sid,owner]);
+    await admin('insert into auth.users(id,email_confirmed_at,encrypted_password) values($1,clock_timestamp(),null)',[owner]);
+    await admin("insert into auth.sessions(id,user_id,not_after) values($1,$2,clock_timestamp()+interval '1 hour')",[sid,owner]);
     await admin("insert into public.user_private_profiles(user_id,birth_date,privacy_policy_version,terms_of_service_version,legal_consented_at) values($1,'1990-01-01','2026-08-26','2026-08-26',clock_timestamp())",[owner]);
     await admin('insert into public.beta_enrollments(user_id) values($1)',[owner]);
     const encrypted=await encryptAccountJournalDocument(JSON.stringify(profile({CHALLENGE_1:1,CHALLENGE_2:owner===B?2:1,SOCIAL_1:'UNKNOWN',WE_1:5})),{ownerId:owner,documentId:doc},material);
@@ -74,7 +67,7 @@ before(async()=>{
     await admin("insert into public.account_journal_identity(user_id,document_id,document_kind,active) values($1,$2,'RUNNING_PROFILE',true)",[owner,doc]);
   }
   await admin('insert into public.oracle_profile_comparison_keys(key_id,secret) values($1,$2)',['synthetic',signing]);
-  await admin("update public.service_feature_controls set enabled=true where feature_key in('ACCOUNT','ACCOUNT_JOURNAL_V2','SHARING')");
+  await admin("update public.service_feature_controls set enabled=true where feature_key in('ACCOUNT','ACCOUNT_JOURNAL_V2','SHARING','AUTH_OAUTH')");
 },{timeout:120000});
 after(()=>db.close());
 
@@ -93,6 +86,59 @@ test('default OFF, then bilateral consent yields numeric selected facts without 
   assert.ok(!JSON.stringify(result.data).includes('encryptedPayload'));assert.ok(!JSON.stringify(result.data).includes('WE_1'));
   assert.equal((await call('C-token',{action:'compare',comparisonId:input.comparisonId})).status,403);
 });
+test('unsupported password AMR cannot create a comparison invitation or read an existing comparison',async()=>{
+  const cid=await pair();
+  let denied;
+  try {
+    claimOverrides.set(A,{amr:[{method:'password',timestamp:Math.floor(Date.now()/1000)}]});
+    await auth(A,SA);
+    assert.equal((await db.query('select public.account_network_access_allowed($1) allowed',[A])).rows[0].allowed,false);
+    denied={
+      createInvite:(await call('A-token',{action:'createInvite',expiresAt:future()})).status,
+      compare:(await call('A-token',{action:'compare',comparisonId:cid})).status,
+    };
+  } finally {claimOverrides.delete(A);}
+  assert.equal((await call('A-token',{action:'compare',comparisonId:cid})).status,200);
+  assert.deepEqual(denied,{createInvite:403,compare:403});
+});
+
+test('missing origin, refresh-only AMR and closed auth channel cannot expose comparison facts',async()=>{
+  const cid=await pair();
+  try {
+    for(const amr of [null,[],[{method:'token_refresh',timestamp:Math.floor(Date.now()/1000)}]]) {
+      claimOverrides.set(A,{amr});
+      assert.equal((await call('A-token',{action:'createInvite',expiresAt:future()})).status,403);
+      assert.equal((await call('A-token',{action:'compare',comparisonId:cid})).status,403);
+    }
+    claimOverrides.delete(A);
+    await admin("update public.service_feature_controls set enabled=false where feature_key='AUTH_OAUTH'");
+    assert.equal((await call('A-token',{action:'compare',comparisonId:cid})).status,403);
+    assert.equal((await call('A-token',{action:'revoke',comparisonId:cid})).status,200);
+  } finally {
+    claimOverrides.delete(A);
+    await admin("update public.service_feature_controls set enabled=true where feature_key='AUTH_OAUTH'");
+  }
+});
+
+test('closing the peer consent channel denies a reader using a different still-open channel',async()=>{
+  try {
+    await admin("update public.service_feature_controls set enabled=true where feature_key='AUTH_PASSWORDLESS'");
+    claimOverrides.set(A,{amr:[{method:'otp',timestamp:Math.floor(Date.now()/1000)}]});
+    const cid=await pair();
+    await admin("update public.service_feature_controls set enabled=false where feature_key='AUTH_OAUTH'");
+    assert.equal((await call('A-token',{action:'compare',comparisonId:cid})).status,403);
+    await admin("update public.service_feature_controls set enabled=true where feature_key='AUTH_OAUTH'");
+    assert.equal((await call('A-token',{action:'compare',comparisonId:cid})).status,200);
+    await admin("update public.service_feature_controls set enabled=false where feature_key='AUTH_PASSWORDLESS'");
+    assert.equal((await call('B-token',{action:'compare',comparisonId:cid})).status,403);
+    assert.equal((await call('B-token',{action:'revoke',comparisonId:cid})).status,200);
+  } finally {
+    claimOverrides.delete(A);
+    await admin("update public.service_feature_controls set enabled=true where feature_key='AUTH_OAUTH'");
+    await admin("update public.service_feature_controls set enabled=false where feature_key='AUTH_PASSWORDLESS'");
+  }
+});
+
 test('invitation binds one authenticated recipient, never grants consent, and stores no raw code',async()=>{
   const invitation=await invite(),cid=invitation.comparisonId,accept={action:'acceptInvite',invitationCode:invitation.invitationCode};
   assert.equal((await call('bad-token',accept)).status,401);
@@ -148,7 +194,7 @@ test('revocation between source read and response verification suppresses all co
 });
 test('removed peer session and banned/deleted account cannot be treated as valid grants',async()=>{
   const cid=await pair();
-  for(const [column,value,restore] of [['banned_until',new Date(Date.now()+3600000).toISOString(),null],['deleted_at',new Date().toISOString(),null],['is_anonymous',true,false]]) {
+  for(const [column,value,restore] of [['banned_until',new Date(Date.now()+3600000).toISOString(),null],['deleted_at',new Date().toISOString(),null],['is_anonymous',true,false],['encrypted_password','synthetic-password-hash',null]]) {
     await admin(`update auth.users set ${column}=$1 where id=$2`,[value,B]);
     assert.equal((await call('A-token',{action:'compare',comparisonId:cid})).status,403);
     await admin(`update auth.users set ${column}=$1 where id=$2`,[restore,B]);

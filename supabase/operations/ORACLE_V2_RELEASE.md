@@ -3,6 +3,33 @@
 SOURCE PREPARATION ONLY. No remote inventory, production SQL, key registration,
 function deployment, or authenticated production verification was performed.
 
+## Parent Read-Only Inventory, 2026-10-05
+
+The signed-in dashboard for `texspxlpjungyarkvtkc` was reached after the owner
+completed GitHub login. The project display name is `trainoracle-beta-staging`;
+this is the existing backend target, not evidence of a newly isolated staging DB.
+The ledger contains 0001-0038, 0040 and 0045-0050. Auth-method gating, session-bound
+admission and Oracle comparison capability are absent. ACCOUNT and
+ACCOUNT_JOURNAL_V2 are ON; SHARING is OFF. No production mutation was made.
+
+Do not use automated baseline staging against this inventory. The missing
+0039/0041-0044 ledger rows concern deferred work and must not be manufactured or
+replayed to satisfy the tool. Review the actual schema and apply only the approved
+new migration scope. Do not turn on general sharing to work around comparison's
+SHARING prerequisite. Other publication controls and existing consent paths must
+be inspected before any sharing activation.
+
+An action-time request covers new profile storage, comparison access and its
+separate signing key. Login completion alone is not that approval. Browser tools
+refused the production function-edit step while that request was unanswered.
+Do not retry through a different execution channel without resolving approval.
+
+The integrated local 0001-0060 chain now exercises real session and AMR fixtures.
+Comparison captures the issuing channel from the validated JWT; closing a party's
+channel denies its previous grants even when the reader uses another open channel.
+For a provider incident, keep that channel OFF until affected sessions are revoked;
+re-enabling it earlier restores still-valid grants. Withdrawals remain available.
+
 ## Access Block
 
 This session has no DB password, management access token, or Supabase CLI on

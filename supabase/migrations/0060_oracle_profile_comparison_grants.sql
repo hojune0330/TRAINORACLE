@@ -12,6 +12,7 @@ create table public.oracle_profile_comparison_keys (
 create table public.oracle_profile_comparison_invitations (
   comparison_id uuid primary key, owner_id uuid not null references auth.users(id) on delete cascade,
   owner_session_id uuid not null, recipient_id uuid references auth.users(id) on delete cascade,
+  owner_auth_channels text[] not null,
   token_hash bytea not null unique check(octet_length(token_hash)=32),
   expires_at timestamptz not null check(isfinite(expires_at)), revoked_at timestamptz,
   check(recipient_id is null or recipient_id<>owner_id)
@@ -26,6 +27,7 @@ $$;
 create table public.oracle_profile_comparison_grants (
   comparison_id uuid not null, owner_id uuid not null references auth.users(id) on delete cascade,
   peer_id uuid not null references auth.users(id) on delete cascade, consent_session_id uuid not null,
+  consent_auth_channels text[] not null,
   document_id uuid not null, document_revision bigint not null check(document_revision between 1 and 9007199254740990),
   profile_revision bigint not null check(profile_revision between 1 and 9007199254740990),
   question_version text not null check(question_version = 'ORACLE_QUESTIONS_V2_1'),
@@ -55,6 +57,15 @@ revoke all on public.oracle_profile_comparison_controls, public.oracle_profile_c
   public.oracle_profile_comparison_grants, public.oracle_profile_comparison_withdrawals,
   public.oracle_profile_comparison_invitations from public, anon, authenticated, service_role;
 
+create function public.oracle_profile_comparison_channels_allowed(channels text[])
+returns boolean language sql volatile security definer set search_path = pg_catalog as $$
+  select channels is not null and cardinality(channels) between 1 and 2
+    and array_position(channels,null) is null
+    and channels <@ array['AUTH_OAUTH','AUTH_PASSWORDLESS']::text[]
+    and not exists(select 1 from unnest(channels) channel
+      where public.service_feature_enabled(channel) is distinct from true);
+$$;
+
 -- Internal helper: not a callable arbitrary-user eligibility oracle.
 create function public.oracle_profile_comparison_subject_allowed(subject uuid, session_id uuid)
 returns boolean language sql volatile security definer set search_path = pg_catalog as $$
@@ -65,6 +76,7 @@ returns boolean language sql volatile security definer set search_path = pg_cata
     where u.id=subject and s.id=session_id
       and (s.not_after is null or s.not_after>clock_timestamp())
       and u.email_confirmed_at is not null and u.deleted_at is null and coalesce(u.is_anonymous,false)=false
+      and nullif(u.encrypted_password,'') is null
       and (u.banned_until is null or u.banned_until<=clock_timestamp())
       and p.deletion_requested_at is null
       and p.birth_date <= (clock_timestamp() at time zone 'Asia/Seoul')::date-interval '14 years'
@@ -85,6 +97,7 @@ declare
   a public.oracle_profile_comparison_grants%rowtype; b public.oracle_profile_comparison_grants%rowtype;
   own_doc public.account_journal_documents%rowtype; peer_doc public.account_journal_documents%rowtype;
   purpose text; manifest jsonb; until_at timestamptz; now_at timestamptz; expiry timestamptz;
+  auth_channels text[];
 begin
   if actor is null or claims->>'sub' is distinct from actor::text or claims->>'role' is distinct from 'authenticated'
     or coalesce(claims->>'session_id','') !~* '^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$'
@@ -145,13 +158,19 @@ begin
     end if;
     return jsonb_build_object('kind',case when action='revoke' then 'revoked' else 'external-revoked' end,'comparisonId',cid);
   end if;
-  if not exists(select 1 from public.oracle_profile_comparison_controls c where c.singleton and c.enabled)
+  if public.current_jwt_auth_method_allowed() is distinct from true
+    or not exists(select 1 from public.oracle_profile_comparison_controls c where c.singleton and c.enabled)
     or public.service_feature_enabled('ACCOUNT') is distinct from true
     or public.service_feature_enabled('ACCOUNT_JOURNAL_V2') is distinct from true
     or public.service_feature_enabled('SHARING') is distinct from true
     or not public.oracle_profile_comparison_subject_allowed(actor,sid) then
     raise exception 'COMPARISON_DENIED' using errcode='42501';
   end if;
+  -- Bind both parties to the channel that issued each capability, not the
+  -- current reader's channel. Closing one provider class also closes its grants.
+  select array_agg(distinct case method->>'method' when 'oauth' then 'AUTH_OAUTH' else 'AUTH_PASSWORDLESS' end)
+    into auth_channels from jsonb_array_elements(claims->'amr') method
+    where method->>'method' in('oauth','otp','magiclink','email/signup');
   if action='createInvite' then
     expiry := (req->>'expiresAt')::timestamptz;
     if expiry is null or not isfinite(expiry) or expiry<=clock_timestamp() or expiry>clock_timestamp()+interval '7 days'
@@ -159,11 +178,12 @@ begin
       or exists(select 1 from public.oracle_profile_comparison_withdrawals w where w.comparison_id=cid) then
       raise exception 'COMPARISON_DENIED' using errcode='42501';
     end if;
-    insert into public.oracle_profile_comparison_invitations(comparison_id,owner_id,owner_session_id,token_hash,expires_at)
-      values(cid,actor,sid,decode(req->>'tokenHash','hex'),expiry);
+    insert into public.oracle_profile_comparison_invitations(comparison_id,owner_id,owner_session_id,owner_auth_channels,token_hash,expires_at)
+      values(cid,actor,sid,auth_channels,decode(req->>'tokenHash','hex'),expiry);
     return jsonb_build_object('kind','invitation-created','comparisonId',cid,'expiresAt',expiry);
   end if;
   if invitation.comparison_id is null or invitation.revoked_at is not null or invitation.expires_at<=clock_timestamp()
+    or not public.oracle_profile_comparison_channels_allowed(invitation.owner_auth_channels)
     or not public.oracle_profile_comparison_subject_allowed(invitation.owner_id,invitation.owner_session_id) then
     raise exception 'COMPARISON_DENIED' using errcode='42501';
   end if;
@@ -218,13 +238,13 @@ begin
       raise exception 'COMPARISON_DENIED' using errcode='42501';
     end if;
     if a.owner_id is not null then
-      if a.revoked_at is not null or a.consent_session_id<>sid or a.peer_id<>peer or a.document_id<>doc
+      if a.revoked_at is not null or a.consent_session_id<>sid or a.consent_auth_channels<>auth_channels or a.peer_id<>peer or a.document_id<>doc
         or a.document_revision<>current_doc.revision or a.profile_revision<>(req->>'profileRevision')::bigint
         or a.fields<>selected or a.expires_at<>expiry then raise exception 'COMPARISON_DENIED' using errcode='42501'; end if;
     else
-      insert into public.oracle_profile_comparison_grants(comparison_id,owner_id,peer_id,consent_session_id,
+      insert into public.oracle_profile_comparison_grants(comparison_id,owner_id,peer_id,consent_session_id,consent_auth_channels,
         document_id,document_revision,profile_revision,question_version,score_version,fields,expires_at)
-      values(cid,actor,peer,sid,doc,current_doc.revision,(req->>'profileRevision')::bigint,req->>'questionVersion',req->>'scoreVersion',selected,expiry);
+      values(cid,actor,peer,sid,auth_channels,doc,current_doc.revision,(req->>'profileRevision')::bigint,req->>'questionVersion',req->>'scoreVersion',selected,expiry);
     end if;
     return jsonb_build_object('kind','consented','comparisonId',cid);
   end if;
@@ -237,6 +257,8 @@ begin
     or a.expires_at<=clock_timestamp() or b.expires_at<=clock_timestamp()
     or not public.oracle_profile_comparison_subject_allowed(a.owner_id,a.consent_session_id)
     or not public.oracle_profile_comparison_subject_allowed(b.owner_id,b.consent_session_id)
+    or not public.oracle_profile_comparison_channels_allowed(a.consent_auth_channels)
+    or not public.oracle_profile_comparison_channels_allowed(b.consent_auth_channels)
     or a.question_version<>b.question_version or a.score_version<>b.score_version then
     raise exception 'COMPARISON_DENIED' using errcode='42501';
   end if;
@@ -298,6 +320,7 @@ begin
 end;
 $$;
 revoke all on function public.oracle_profile_comparison_fields_valid(text[]),
+  public.oracle_profile_comparison_channels_allowed(text[]),
   public.oracle_profile_comparison_subject_allowed(uuid,uuid),public.oracle_profile_comparison_attested(text,text,text)
   from public,anon,authenticated,service_role;
 grant execute on function public.oracle_profile_comparison_attested(text,text,text) to authenticated;

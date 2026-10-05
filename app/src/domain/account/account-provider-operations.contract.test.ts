@@ -18,7 +18,7 @@ const isolationRehearsal = readFileSync(
 )
 
 describe("auth provider operations packet", () => {
-  it("uses branded confirmation links for signup and returning email login", () => {
+  it("uses branded app token-hash callbacks for signup and returning email login", () => {
     expect(config).toContain("otp_length = 6")
     expect(config).toContain("otp_expiry = 600")
     expect(config).toContain('max_frequency = "1m"')
@@ -26,7 +26,13 @@ describe("auth provider operations packet", () => {
     expect(config).toContain("[auth.email.template.confirmation]")
 
     for (const template of [magicLinkTemplate, confirmationTemplate]) {
-      expect(template.match(/\{\{ \.ConfirmationURL \}\}/gu)).toHaveLength(1)
+      const document = new DOMParser().parseFromString(template, "text/html")
+      expect(document.title).toContain("TrainOracle")
+      expect([...document.querySelectorAll("a[href]")].map(link => link.getAttribute("href")))
+        .toEqual(["{{ .RedirectTo }}#token_hash={{ .TokenHash }}&type=email"])
+      expect(template.match(/\{\{ \.RedirectTo \}\}/gu)).toHaveLength(1)
+      expect(template.match(/\{\{ \.TokenHash \}\}/gu)).toHaveLength(1)
+      expect(template).not.toContain("{{ .ConfirmationURL }}")
       expect(template).not.toContain("{{ .Token }}")
       expect(template).not.toMatch(/6자리|인증번호/gu)
       expect(template).not.toMatch(/client[_-]?secret|service[_-]?role|auth[_-]?token/iu)

@@ -1,13 +1,13 @@
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
 import { createHmac, randomUUID } from 'node:crypto';
 import { PGlite } from '@electric-sql/pglite';
 import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
+import { loadOracleMigrationChain, setOracleAuth } from './oracle-auth-fixture.mjs';
 
 // Disposable single-session PostgreSQL, never a production connection.
-const db=new PGlite({extensions:{pgcrypto}}), root=new URL('../../migrations/',import.meta.url);
-const owner='a1111111-1111-4111-8111-111111111111', key=Buffer.alloc(32,59);
+const db=new PGlite({extensions:{pgcrypto}});
+const owner='a1111111-1111-4111-8111-111111111111', sessionId=randomUUID(), key=Buffer.alloc(32,59);
 const payload={version:1,algorithm:'AES-GCM',keyId:'fixture',iv:Buffer.alloc(12).toString('base64'),ciphertext:Buffer.alloc(16).toString('base64')};
 async function submit(body={},action='commit') {
   const raw=JSON.stringify({domain:'trainoracle.account-journal.gateway.v1',ownerId:owner,action,expiresAt:Math.floor(Date.now()/1000)+90,...body});
@@ -15,24 +15,15 @@ async function submit(body={},action='commit') {
   return (await db.query('select public.mutate_account_journal_attested($1,$2,$3) result',[raw,signature,'fixture'])).rows[0].result;
 }
 before(async()=>{
-  await db.exec(`create role anon; create role authenticated; create role service_role bypassrls;
-    create schema auth; create schema extensions;
-    create table auth.users(id uuid primary key,aud text,role text,email text,created_at timestamptz,updated_at timestamptz);
-    create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
-    create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb $$;
-    grant usage on schema auth to anon,authenticated,service_role;
-    grant execute on all functions in schema auth to anon,authenticated,service_role;`);
-  for(const file of readdirSync(root).filter(name=>/^\d+_.+\.sql$/.test(name)&&name<'0060'&&!/^(0038|0039|0041|0042|005[1-6])_/.test(name)).sort()) {
-    await db.exec(readFileSync(new URL(file,root),'utf8'));
-  }
-  await db.query("insert into auth.users(id,created_at) values($1,'2020-01-01')",[owner]);
+  await loadOracleMigrationChain(db);
+  await db.query("insert into auth.users(id,created_at,email_confirmed_at,encrypted_password) values($1,'2020-01-01',clock_timestamp(),null)",[owner]);
+  await db.query("insert into auth.sessions(id,user_id,not_after) values($1,$2,clock_timestamp()+interval '1 hour')",[sessionId,owner]);
   await db.query(`insert into public.user_private_profiles(user_id,birth_date,privacy_policy_version,terms_of_service_version,legal_consented_at)
     values($1,'1990-01-01','2026-08-26','2026-08-26',clock_timestamp())`,[owner]);
   await db.query('insert into public.beta_enrollments(user_id) values($1)',[owner]);
-  await db.exec("update public.service_feature_controls set enabled=true where feature_key in ('ACCOUNT','ACCOUNT_JOURNAL_V2','SYNC')");
+  await db.exec("update public.service_feature_controls set enabled=true where feature_key in ('ACCOUNT','ACCOUNT_JOURNAL_V2','SYNC','AUTH_OAUTH')");
   await db.query('insert into public.account_journal_gateway_keys(key_id,secret) values($1,$2)',['fixture',key]);
-  await db.exec('set role authenticated');
-  await db.query("select set_config('request.jwt.claim.sub',$1,false),set_config('request.jwt.claims',$2,false)",[owner,JSON.stringify({sub:owner,role:'authenticated'})]);
+  await setOracleAuth(db,owner,sessionId);
 },{timeout:120000});
 after(()=>db.close());
 test('running profile SQL support, encrypted-state CAS and no reward eligibility',async()=>{
@@ -64,6 +55,41 @@ test('explicit attested profile restart preserves ordinary tombstone protection 
   await assert.rejects(()=>submit({...request,documentId:other,operationId:randomUUID(),expectedRevision:1,metadata:otherMetadata},'restartOracleV2'),error=>error.code==='22023');
   await assert.rejects(()=>db.query("select public.mutate_account_journal_lifecycle($1,$2,2,$3,'restartOracleV2',null)",[documentId,randomUUID(),payload]),error=>error.code==='42501');
 });
+test('unsupported AMR, missing session and password-bearing identities cannot save profiles',async()=>{
+  const request={documentId:randomUUID(),operationId:randomUUID(),expectedRevision:0,encryptedPayload:payload,
+    metadata:{kind:'RUNNING_PROFILE',occurrenceId:null,journalDate:null,eligible:false}};
+  try {
+    for(const patch of [{amr:[{method:'password',timestamp:Math.floor(Date.now()/1000)}]},
+      {amr:undefined},{session_id:randomUUID()}]) {
+      await setOracleAuth(db,owner,sessionId,patch);
+      await assert.rejects(()=>submit({},'oracleV2Support'),error=>error.code==='42501');
+      await assert.rejects(()=>submit(request),error=>error.code==='42501');
+    }
+    await db.exec('reset role');
+    await db.query("update auth.users set encrypted_password='synthetic-not-a-real-password-hash' where id=$1",[owner]);
+    await setOracleAuth(db,owner,sessionId);
+    await assert.rejects(()=>submit(request),error=>error.code==='42501');
+  } finally {
+    await db.exec('reset role');
+    await db.query('update auth.users set encrypted_password=null where id=$1',[owner]);
+    await setOracleAuth(db,owner,sessionId);
+  }
+  // The same operation can now succeed: all rejected attempts left CAS state untouched.
+  assert.equal((await submit(request)).revision,1);
+});
+
+test('OAuth switch denies capability while OFF and restores access when explicitly ON',async()=>{
+  try {
+    await db.exec("reset role;update public.service_feature_controls set enabled=false where feature_key='AUTH_OAUTH'");
+    await setOracleAuth(db,owner,sessionId);
+    await assert.rejects(()=>submit({},'oracleV2Support'),error=>error.code==='42501');
+  } finally {
+    await db.exec("reset role;update public.service_feature_controls set enabled=true where feature_key='AUTH_OAUTH'");
+    await setOracleAuth(db,owner,sessionId);
+  }
+  assert.deepEqual(await submit({},'oracleV2Support'),{kind:'oracle-v2-support',version:2});
+});
+
 test('anonymous callers cannot access profile capability',async()=>{
   await db.exec('reset role; set role anon');
   await assert.rejects(()=>submit({},'runningProfileSupport'),error=>error.code==='42501');
