@@ -75,7 +75,9 @@ it("selects the next frame through one account transaction and retains the exact
   expect(current.packet.state.periodization).toMatchObject({ programLineageId: base.periodization!.programLineageId, frameOrdinal: 2 })
   // Only this operation's body-free consent pin may be added; no plan or other
   // local content may be copied as a side effect of selecting an account plan.
-  const consentPinKey = `trainoracle.storage-consent-revision.v1:${COLLECTION_OWNER}:${server.commits[0].operationId}`
+  const commit = server.commits[0]
+  if (!commit) throw Error("Missing account commit")
+  const consentPinKey = `trainoracle.storage-consent-revision.v1:${COLLECTION_OWNER}:${commit.operationId}`
   expect(Object.entries(localStorage)).toEqual([...localBefore, [consentPinKey, "0"]])
 })
 

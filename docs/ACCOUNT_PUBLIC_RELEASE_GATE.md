@@ -354,6 +354,20 @@ Node 24.19.0 단일 파일 5/5 통과 후, 실행 메모리에서만 계획 본�
 검사용 새 설치나 원본 소스 변경은 없었다. 이 기록은 후속 후보의 focused 검증이며
 새 커밋의 전체 CI·배포·실서비스 검증은 별도로 확인해야 한다. 위 공개 NO-GO는 유지한다.
 
+`1778087cb8bbd3f18b01c5fc38ccab59af92e417`의 CI 37272008420 attempt 1은
+변경하지 않은 CatalogConditionReview 시험의 5초 제한 초과로 실패했다. 같은 소스의
+단독 기본 시간제한 검사에서는 19/19 통과했고, 승인된 app-quality job만 한 번 재실행했다.
+attempt 2에서는 UTC/KST 각각 일반군 6,624 통과·33 skipped와 중량군 113 통과·2 skipped,
+release 환경 25/25, device integration 11/11 및 공유 record/state 검증기 99/99·2/2가
+통과했다. 이후 이번 fixture의 `server.commits[0]`에 TS2532가 발생하여 타입 검사에서
+실패했으므로 전체 CI 성공이나 Pages 배포로 표시하지 않는다. 브라우저·게시 단계는
+skipped이며 서버 계약 성공은 attempt 1 결과를 재사용했다.
+
+후속 후보는 commit 존재의 명시적 가드만 추가했다. 단언·timeout·생산 코드는 그대로이며,
+Node 24.19.0 focused 5/5와 app/e2e 두 `tsc --noEmit` 모두 exit 0으로 확인했다.
+이 수정 후 새 커밋 CI는 별도이며, 운영 배포 요청을 실제 DB·Edge 적용·origin 확정·
+처리/백업 조건 검증 완료로 대신하지 않는다.
+
 ## 즉시 끄기
 
 문제가 발견되면 서버의 `ACCOUNT` 스위치를 먼저 끄고 이유를 기록한다. 그다음
