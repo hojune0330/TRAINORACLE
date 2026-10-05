@@ -405,6 +405,46 @@ timeout, CI 설정, migration 및 배포 승인 flag는 바꾸지 않는다.
 확인한다. 계정-OFF 정적 화면 게시와 온라인 계정보관·DB/Edge 적용·운영 보유 조건의
 승인은 구분하며, 위 온라인 출시 NO-GO를 로컬 시험 통과로 해제하지 않는다.
 
+### 5457 필수 CI와 합성 계정 브라우저 fixture 정합성
+
+`5457e74a044d55b8b98bcc4c80a0b02817b4d355`의
+[CI 37288189659](https://github.com/hojune0330/TRAINORACLE/actions/runs/37288189659)는
+`contract-tests`와 `app-quality`가 성공했다. UTC/KST 각각 일반군 6,624 통과·33 skipped,
+중량군 113 통과·2 skipped이며 app/e2e 타입 검사와 production build도 성공했다.
+`app-browser`는 모바일 계정 fixture 6건에서 `Feature flag route no longer matches`로
+실패했다. `deploy-pages`는 skipped이고 배포 환경 guard는 실행되지 않았다.
+
+후속 후보는 합성 브라우저 fixture 두 파일만 현재 계약에 맞춘다.
+
+- 모바일 fixture는 기능 flag 표현식만 켜고 새 owner별 전송 중단 조건은 그대로 둔다.
+  기존 6개와 추가 owner/철회/다른 계정/복귀/해제 대조군 1개가 로컬에서 7/7 통과했다.
+  실행 메모리에서 중단 조건만 제거하면 새 시험의 `paused`와 `returned` 단언이 실패했다.
+  정상 대조군 1/1 재통과 후 생산 API SHA-256
+  `6370dfe6dcb4887661f15628198d84c271d7b8205849d622dbb2d85b695a1130` 불변을 확인했다.
+- 파일 분석 fixture는 가짜 publishable key 형식, 현 약관 버전, 검증된 사용자와
+  현 동의 RPC의 합성 응답을 준비한다. 잘못된 owner와 알 수 없는 RPC는 계속 거절한다.
+  별도 자가신고 경기 기록은 실제 계정 서비스의 ACK를 통해 준비하고 파일 기록과는
+  분리한다. 저장 원본 `222.25`와 비교 차이 `77.75` 단언을 유지하면서 표시만 기존
+  한 자리 반올림 `222.3`에 맞췄다. 새 기기 복구·원본 계획 불변·ACK 없는 분석 배제와
+  TCX/CSV/JSON/GPX 및 접근성 시나리오를 포함한 해당 파일 9/9가 로컬 통과했다.
+
+설치된 Node 24.19.0/TypeScript의 e2e `tsc --noEmit`은 exit 0이었다. 서버 SQL,
+제품 코드, CI workflow, 공개 승인 flag는 이 후속 수정에서 바꾸지 않았다.
+
+이와 별개로 선검사한 기존 `form-input-autosave`는 로컬 12 통과·2 실패다. 두 실패는
+두 탭 시나리오의 첫 winner 입력 저장 poll이며 아직 loser CAS 단계에 도달하지 않았다.
+form 시험·fixture·제품 훅은 기준 `fb6991c2`부터 변경되지 않았다. foreground 전환이나
+초기화 대기로 통과하지 않았고 설치 Chromium 대조에서도 재현됐다. 합성 단계 진단에서
+동일 owner와 활성 preview를 확인했으며 한 실행에서는 native IndexedDB ownerKeys
+readonly 완료가 24,712ms 지연됐다. 이를 제품 결함 없음이나 단순 flake로 확정하지 않는다.
+모든 임시 form 진단/대기 변경은 제거했고 시간 제한·기존 단언·생산 코드는 변경하지 않았다.
+
+위 검사는 localhost에서 계정 실험 경로를 합성으로 켠 검사이며, 공개 shared-origin의
+계정-OFF 실행 상태나 운영 DB 적용을 뜻하지 않는다. 기존 workflow가 요구하는
+`contract-tests`, `app-quality`, `app-browser` 세 단계는 후속 exact head에서 모두
+성공해야 한다. 로컬 통과나 미실행을 필수 CI 성공으로 대신하지 않으며, 새 정적 게시와
+실제 receipt/index/bundle 확인 전에는 배포 완료로 표시하지 않는다. 온라인 NO-GO는 유지한다.
+
 ## 즉시 끄기
 
 문제가 발견되면 서버의 `ACCOUNT` 스위치를 먼저 끄고 이유를 기록한다. 그다음

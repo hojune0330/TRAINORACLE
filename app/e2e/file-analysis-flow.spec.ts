@@ -3,8 +3,9 @@ import { fileURLToPath } from "node:url"
 import { writeFile } from "node:fs/promises"
 import { createServer, type ViteDevServer } from "vite"
 import type { AccountJournalRecord } from "../src/domain/account/account-journal-record-schema"
+import type { AccountAthleteRecordDocument } from "../src/domain/account/account-athlete-record-schema"
 import { mockPlanCollectionServer } from "./fixtures/account-plan-collection-server"
-import { openActiveSessionDetails } from "./active-plan-flow"
+import { openActivePlanCards, openActiveSessionDetails } from "./active-plan-flow"
 import { completeQuickPlan, openPlanOptions } from "./plan-flow"
 
 const origin = "http://127.0.0.1:4497"
@@ -34,15 +35,16 @@ const additionalFiles = [
 
 let vite: ViteDevServer
 let schema: typeof import("../src/domain/account/account-journal-record-schema")
+let athleteSchema: typeof import("../src/domain/account/account-athlete-record-schema")
 let comparison: typeof import("../src/domain/import/file-plan-comparison")
 
 test.beforeAll(async () => {
   // Own the in-process loopback server. Do not read a developer's .env or reuse another server.
   const env = {
     VITE_ACCOUNT_PUBLIC_ENABLED: "true", VITE_KILL_ACCOUNT: "false",
-    VITE_SUPABASE_URL: "https://synthetic.invalid", VITE_SUPABASE_ANON_KEY: "synthetic-public-placeholder",
-    VITE_PRIVACY_POLICY_URL: "https://synthetic.invalid/privacy", VITE_PRIVACY_POLICY_VERSION: "2026-08-26",
-    VITE_TERMS_OF_SERVICE_URL: "https://synthetic.invalid/terms", VITE_TERMS_OF_SERVICE_VERSION: "2026-08-26",
+    VITE_SUPABASE_URL: "https://synthetic.invalid", VITE_SUPABASE_ANON_KEY: "sb_publishable_synthetic_file_analysis_test_only",
+    VITE_PRIVACY_POLICY_URL: "https://synthetic.invalid/privacy", VITE_PRIVACY_POLICY_VERSION: "2026-10-05",
+    VITE_TERMS_OF_SERVICE_URL: "https://synthetic.invalid/terms", VITE_TERMS_OF_SERVICE_VERSION: "2026-10-05",
     VITE_FEATURE_ACCOUNT_JOURNAL: "true", VITE_KILL_ACCOUNT_JOURNAL: "false",
     VITE_FEATURE_FILE_ANALYSIS_TCX: "true", VITE_KILL_FILE_ANALYSIS_TCX: "false",
     VITE_FEATURE_FILE_ANALYSIS_CSV: "true", VITE_KILL_FILE_ANALYSIS_CSV: "false",
@@ -51,12 +53,14 @@ test.beforeAll(async () => {
   }
   vite = await createServer({
     root: fileURLToPath(new URL("..", import.meta.url)), envFile: false, clearScreen: false,
+    configLoader: "runner", cacheDir: "test-results/file-analysis-vite-cache",
     define: { "import.meta.env.DEV": "false", ...Object.fromEntries(Object.entries(env).map(([key, value]) => [`import.meta.env.${key}`, JSON.stringify(value)])) },
     server: { host: "127.0.0.1", port: 4497, strictPort: true, watch: null, hmr: false },
   })
   try {
     await vite.listen()
     schema = await vite.ssrLoadModule("/src/domain/account/account-journal-record-schema.ts") as typeof schema
+    athleteSchema = await vite.ssrLoadModule("/src/domain/account/account-athlete-record-schema.ts") as typeof athleteSchema
     comparison = await vite.ssrLoadModule("/src/domain/import/file-plan-comparison.ts") as typeof comparison
   } catch (error) { await vite.close(); throw error }
 })
@@ -64,6 +68,7 @@ test.afterAll(async () => { await vite?.close() })
 
 async function mockAccount() {
   const documents = new Map<string, { documentId: string; revision: number; document: AccountJournalRecord }>()
+  const athleteDocuments = new Map<string, { documentId: string; revision: number; document: AccountAthleteRecordDocument }>()
   const calls: { action: string; writePurpose?: string; supportedJournalVersions?: number[]; document?: AccountJournalRecord }[] = []
   const plan = await mockPlanCollectionServer()
   const comparisonOriginalReads: { ownerId: string; planId: string; verified: boolean }[] = []
@@ -81,8 +86,19 @@ async function mockAccount() {
           return route.fulfill({ contentType: "application/javascript", body: `
             export async function supabase() { return {
               auth: {
+                getUser: async () => ({ data: { user: { id: '${owner}' } }, error: null }),
                 getSession: async () => ({ data: { session: { user: { id: '${owner}' }, access_token: 'synthetic-token' } }, error: null }),
                 onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
+              },
+              rpc: async (name, input) => {
+                if (input?.expected_user_id_input !== '${owner}') return { data: null, error: { code: 'IDENTITY_MISMATCH' } };
+                if (name === 'get_current_account_admission_status') return { data: 'ADMITTED', error: null };
+                if (name === 'get_account_storage_consent') return { data: {
+                  userId: '${owner}', revision: 1, purposeVersion: '2026-10-05',
+                  healthStorage: true, journalTextStorage: true, decidedAt: '2026-10-05T00:00:00.000Z',
+                  operationsReady: true, liveErasedAt: null, backupStatus: null,
+                }, error: null };
+                return { data: null, error: { code: 'UNSUPPORTED_SYNTHETIC_RPC' } };
               },
               functions: { invoke: async (name, options) => {
                 const response = await fetch(name === 'account-plan-collection' ? '/__collection_api__' : '/__record_api__', {
@@ -99,6 +115,25 @@ async function mockAccount() {
         const { ownerId, request } = route.request().postDataJSON()
         const answer = (body: unknown, status = 200) => route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) })
         if (ownerId !== owner) return answer({ code: "AUTH_REQUIRED" }, 401)
+        // A separately self-reported race is confirmed through the real account
+        // service. Imported workout bytes never create this authority or storage.
+        if (request.action === "athleteRecordSupport") return answer({ kind: "athlete-record-support", version: 1 })
+        if (request.action === "read" && athleteDocuments.has(request.documentId)) {
+          return answer({ kind: "document", ...athleteDocuments.get(request.documentId) })
+        }
+        if (request.action === "save" && request.document?.kind === "ATHLETE_RECORDS") {
+          if (offline) return answer({ code: "UNAVAILABLE" }, 503)
+          const previous = athleteDocuments.get(request.documentId)
+          if (!athleteSchema.validateAccountAthleteRecordDocument(request.document)
+            || previous && !athleteSchema.validateAccountAthleteRecordDocumentUpdate(previous.document, request.document)) {
+            return answer({ code: "INVALID_ATHLETE_RECORDS" }, 422)
+          }
+          if (request.expectedRevision !== (previous?.revision ?? 0)) return answer({ kind: "conflict",
+            documentId: request.documentId, operationId: request.operationId, currentRevision: previous?.revision ?? 0 }, 409)
+          const revision = (previous?.revision ?? 0) + 1
+          athleteDocuments.set(request.documentId, { documentId: request.documentId, revision, document: request.document })
+          return answer({ kind: "saved", documentId: request.documentId, operationId: request.operationId, revision })
+        }
         calls.push(structuredClone(request))
         if (failReads && (request.action === "read" || request.action === "list")) return answer({ code: "UNAVAILABLE" }, 503)
         if (request.action === "list") return answer({ kind: "list", documents: [...documents.values()], deletedDocuments: [], nextCursor: null })
@@ -268,11 +303,14 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
   // A separate explicitly self-reported race fixture is needed; file distance/time must not create PB authority.
   expect(await page.evaluate(async now => {
     const path = "/src/domain/athlete-records.ts", records = await import(/* @vite-ignore */ path)
-    const before = records.loadAthleteRecords(new Date(now))
+    const servicePath = "/src/domain/account/account-athlete-record-service.ts"
+    const service = await import(/* @vite-ignore */ servicePath)
+    const current = await service.loadAccountAthleteRecords()
+    const before = current.records
     const fixture = records.createSelfReportedAthleteRecord({ id: "00000000-0000-4000-8000-000000005001", purpose: "RECENT_RESULT",
       eventDistanceM: 5000, performanceSeconds: 1111.25, achievedOn: "2026-08-15", seasonId: null }, new Date(now))
-    const result = records.saveAthleteRecord(fixture, new Date(now))
-    return { before, ok: result.ok }
+    const result = await service.addAccountAthleteRecord(fixture, current.serverRevision ?? 0)
+    return { before, ok: result.ok && result.storage === "ACCOUNT" }
   }, now)).toEqual({ before: [], ok: true })
   const currentPlanBeforeSelection = await confirmedPlan(page)
   const collectionBeforeSelection = JSON.stringify({ indexes: [...account.plan.indexes], parts: [...account.plan.parts] })
@@ -378,9 +416,16 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
     expect(JSON.stringify([...account.plan.parts.values()])).toBe(persisted)
     await next.getByRole("heading", { name: "오늘 훈련", exact: true }).evaluate(node => node.scrollIntoView({ block: "start" }))
     await next.screenshot({ path: testInfo.outputPath("account-plan-reopened.png") })
-    const active = await openActiveSessionDetails(next, /5 × 1km @ 222\.25s\/1km · 5K RP/u)
-    await expect(active.getByText(/5 × 1km @ 222\.25s\/1km · 5K RP/u).first()).toBeVisible()
-    await active.getByText(/5 × 1km @ 222\.25s\/1km · 5K RP/u).first().scrollIntoViewIfNeeded()
+    await openActivePlanCards(next)
+    // Compact workout notation rounds to one decimal; the canonical stored
+    // prescription and comparison arithmetic above/below retain 222.25 seconds.
+    const displayedPrescription = /5 × 1km @ 222\.3s\/1km · 5K RP/u
+    expect(await next.locator(".plan-session-metric").allTextContents()).toEqual(expect.arrayContaining([
+      expect.stringMatching(displayedPrescription),
+    ]))
+    const active = await openActiveSessionDetails(next, displayedPrescription)
+    await expect(active.getByText(displayedPrescription).first()).toBeVisible()
+    await active.getByText(displayedPrescription).first().scrollIntoViewIfNeeded()
     await next.screenshot({ path: testInfo.outputPath("account-plan-reopened-prescription.png") })
 
     await next.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클" }).click()
