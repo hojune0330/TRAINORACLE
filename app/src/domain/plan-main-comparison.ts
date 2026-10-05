@@ -5,7 +5,7 @@ import { secondsText } from "./session-explanation-content"
 
 type ComparisonPlan = Pick<PlanCandidate, "eventDistanceM" | "eventGroup" | "selectedEnergyIntent" | "frame" | "sessions">
 type QualitySession = Extract<PlanSession, { role: "QUALITY" }>
-export type MainMethodRelation = "SAME" | "DIFFERENT_REQUIRES_REVIEW" | "UNSPECIFIED" | "CONTEXT_MISMATCH"
+export type MainMethodRelation = "SAME" | "DIFFERENT_REQUIRES_REVIEW" | "UNSPECIFIED" | "UNSUPPORTED" | "CONTEXT_MISMATCH"
 export type MainPrescriptionView = {
   readonly kind: "PACE_TARGET" | "RPE_TIME_RANGE"
   readonly work: string
@@ -28,6 +28,8 @@ export type MainComparisonRow = {
 const slotKey = (session: PlanSession) => `${session.day}:${session.slot}`
 const range = (minimum: number, maximum: number) => minimum === maximum ? `${minimum}` : `${minimum}~${maximum}`
 const recoveryModes = { WALK: "걷기", JOG: "가벼운 조깅", STAND: "서서 쉬기", NOT_APPLICABLE: "별도 회복 없음" } as const
+const hasCatalogPrescription = (session: PlanSession) => session.prescription.kind === "RPE_TIME_RANGE"
+  && session.prescription.catalogWorkout !== undefined
 
 function prescribedValues(session: PlanSession) {
   const p = session.prescription
@@ -47,6 +49,9 @@ function isUnique(sessions: readonly PlanSession[]) {
 
 function mainView(session: QualitySession): MainPrescriptionView | null {
   const p = session.prescription
+  // Catalog V3 has its own exact reader. Its envelope is not the full structure,
+  // and this V1/V2 comparison must not describe that structure as unspecified.
+  if (hasCatalogPrescription(session)) return null
   if (p.kind === "RPE_TIME_RANGE") return {
     kind: p.kind,
     work: "반복 거리·운동 구간·횟수 미지정",
@@ -85,6 +90,7 @@ function methodComparison(a: QualitySession, b: QualitySession): Pick<MainCompar
 
 /** Read-only comparison. No IDs, athlete records, notes, new dose or activation authority. */
 export function comparePlanMainWork(a: ComparisonPlan, b: ComparisonPlan) {
+  const hasUnsupportedCatalog = [...a.sessions, ...b.sessions].some(hasCatalogPrescription)
   const contextMatches = a.eventDistanceM === b.eventDistanceM && a.eventGroup === b.eventGroup
     && a.selectedEnergyIntent === b.selectedEnergyIntent
     && a.frame.lengthDays === b.frame.lengthDays && a.frame.projectionLengthDays === b.frame.projectionLengthDays
@@ -101,16 +107,19 @@ export function comparePlanMainWork(a: ComparisonPlan, b: ComparisonPlan) {
     const right = bMap.get(key)
     const aView = left === undefined ? null : mainView(left)
     const bView = right === undefined ? null : mainView(right)
-    const comparable = contextMatches && left !== undefined && right !== undefined && aView !== null && bView !== null && sameContext(left, right)
+    const matchingSlot = contextMatches && left !== undefined && right !== undefined && sameContext(left, right)
+    const comparable = matchingSlot && aView !== null && bView !== null
+    const unsupported = matchingSlot && (hasCatalogPrescription(left) || hasCatalogPrescription(right))
     return {
       key, day: position.day, slot: position.slot, a: aView, b: bView,
       samePrescribedValues: comparable && JSON.stringify(prescribedValues(left)) === JSON.stringify(prescribedValues(right)),
-      ...(!comparable ? { methodRelation: "CONTEXT_MISMATCH" as const, methodDifferences: [] } : methodComparison(left, right)),
+      ...(unsupported ? { methodRelation: "UNSUPPORTED" as const, methodDifferences: [] }
+        : !comparable ? { methodRelation: "CONTEXT_MISMATCH" as const, methodDifferences: [] } : methodComparison(left, right)),
     }
   })
   // The global easy-time-only sentence also requires identical support and operational components.
   const bSessions = new Map(b.sessions.map((session) => [slotKey(session), session]))
-  const onlyEasyDurationCanDiffer = contextMatches && a.sessions.length === b.sessions.length && a.sessions.every((left) => {
+  const onlyEasyDurationCanDiffer = !hasUnsupportedCatalog && contextMatches && a.sessions.length === b.sessions.length && a.sessions.every((left) => {
     const right = bSessions.get(slotKey(left))
     if (right === undefined || !sameContext(left, right)) return false
     const p = left.prescription
@@ -135,7 +144,7 @@ export function comparePlanMainWork(a: ComparisonPlan, b: ComparisonPlan) {
       && left.prescription.durationMinutes.maximum !== right.prescription.durationMinutes.maximum
   })
   return {
-    contextMatches, rows, easyDurationOnly,
+    contextMatches, rows, easyDurationOnly, hasUnsupportedCatalog,
     sameMainValues: contextMatches && rows.length > 0 && rows.every((row) => row.samePrescribedValues),
     sameMainPrescription: contextMatches && rows.length > 0 && rows.every((row) => row.samePrescribedValues && row.methodRelation === "SAME"),
     hasDetailed: rows.some((row) => row.a?.kind === "PACE_TARGET" || row.b?.kind === "PACE_TARGET"),

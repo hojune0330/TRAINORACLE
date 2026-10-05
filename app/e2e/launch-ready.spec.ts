@@ -3,6 +3,14 @@ import type { Page } from "@playwright/test"
 import { completeDetailedPlan, completeQuickPlan, enterPlanWithoutRecord } from "./plan-flow"
 import { expectActivePlanHeading, openActiveSessionDetails } from "./active-plan-flow"
 
+test.use({ serviceWorkers: "block" })
+
+test.beforeEach(async ({ page, baseURL }) => {
+  const appOrigin = new URL(baseURL!).origin
+  await page.route("**/*", route => new URL(route.request().url()).origin === appOrigin
+    ? route.continue() : route.abort())
+})
+
 async function answerMinimumPlanQuestions(page: Page): Promise<void> {
   await completeDetailedPlan(page, { division: /고등부/u })
 }
@@ -54,7 +62,7 @@ test("keeps plan help inside the narrow scroll region", async ({ page }) => {
 test("moves a first visitor from WELCOME to JOURNAL after a real first save", async ({ page }) => {
   await page.goto("/")
   await expect(page.getByRole("heading", {
-    name: "내 훈련, 무엇부터 개선할까요?",
+    name: "오늘 운동을 기록해요",
   })).toBeVisible()
 
   await page.getByRole("button", { name: "오늘 기록 남기기" }).click()
@@ -74,7 +82,7 @@ test("moves a first visitor from WELCOME to JOURNAL after a real first save", as
     const parsed: unknown = JSON.parse(stored)
     return Array.isArray(parsed) ? parsed.length : -1
   })).toBe(1)
-  await expect(page.getByRole("heading", { name: "내 훈련, 무엇부터 개선할까요?" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "내 기록", exact: true })).toBeVisible()
   await expect(page.getByText("오늘 기록을 남겼어요.", { exact: true })).toBeVisible()
   await expect(page.getByRole("button", { name: "오늘 기록하기" })).toHaveCount(0)
   await expect(page.getByRole("button", { name: "하루 마무리 기록하기" })).toHaveCount(0)

@@ -55,7 +55,7 @@ for (const width of [375, 320, 1024]) test(`coaching reader preserves original p
   await page.screenshot({ path: testInfo.outputPath(`coaching-${width}.png`) })
   await page.goBack()
   await expect(dialog).toHaveCount(0)
-  await expect(open).toBeFocused()
+  await expect(page.getByRole("heading", { name: "훈련 코칭", exact: true })).toBeFocused()
   expect(await page.locator(".app-scroll-region").evaluate(el => Math.abs(el.scrollTop))).toBeCloseTo(scroll, 0)
   expect(await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(before)
   expect(errors).toEqual([])

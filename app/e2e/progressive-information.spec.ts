@@ -3,10 +3,11 @@ import { enterPlanWithoutRecord } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page, baseURL }) => {
+  const appOrigin = new URL(baseURL!).origin
   await page.route("**/*", route => {
     const url = new URL(route.request().url())
-    return url.hostname === "127.0.0.1" || url.hostname === "localhost"
+    return url.origin === appOrigin
       ? route.continue() : route.abort()
   })
   await page.goto("/?app=1&uitest=1")
@@ -17,7 +18,7 @@ for (const width of [320, 375]) {
   test(`shows the primary action and plan entry without requiring a fixed first viewport at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: width === 320 ? 568 : 667 })
     await page.evaluate(() => document.fonts.ready)
-    await expect(page.getByRole("button", { name: "예시 결과 보기", exact: true })).toBeInViewport({ ratio: 1 })
+    await expect(page.getByRole("button", { name: "오늘 기록 남기기", exact: true })).toBeInViewport({ ratio: 1 })
     for (const name of ["오늘 기록 남기기", "훈련 계획 만들기"]) {
       const button = page.getByRole("button", { name, exact: true })
       await button.scrollIntoViewIfNeeded()

@@ -212,14 +212,15 @@ async function assertBoundSuccessor(page: Page, persona: Persona, source: Athlet
   for (const event of events) expect(personas.filter(row => row.event === event.event && row.goal)).toHaveLength(1)
 }
 
-for (const persona of personas) test(`${persona.id} ${persona.name}`, async ({ page, context }, info) => {
+for (const persona of personas) test(`${persona.id} ${persona.name}`, async ({ page, context, baseURL }, info) => {
   const completed: string[] = [], errors: string[] = []
   let overBudgetVerified = false
   const step = async <T>(name: string, work: () => Promise<T>) => test.step(name, async () => {
     const result = await work(); completed.push(name); return result
   })
   page.on("pageerror", error => errors.push(error.message))
-  await context.route("**/*", route => new URL(route.request().url()).origin === "http://127.0.0.1:4597"
+  const appOrigin = new URL(baseURL ?? "").origin
+  await context.route("**/*", route => new URL(route.request().url()).origin === appOrigin
     ? route.continue() : route.abort())
   await page.setViewportSize({ width: persona.width ?? 1280, height: 900 })
   await page.clock.setFixedTime(new Date(`${TODAY}T03:00:00Z`))

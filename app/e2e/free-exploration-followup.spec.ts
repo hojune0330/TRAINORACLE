@@ -3,7 +3,10 @@ import { completeDetailedPlan } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page, baseURL }) => {
+  const appOrigin = new URL(baseURL!).origin
+  await page.route("**/*", route => new URL(route.request().url()).origin === appOrigin
+    ? route.continue() : route.abort())
   await page.goto("/?app=1&uitest=1")
   await page.evaluate(() => localStorage.clear())
   await page.reload()
@@ -103,7 +106,7 @@ test("shows an executable record-based workout and opens its same stored method"
   await page.reload()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
   const overview = page.locator(".instant-plan--today-compact")
-  await expect(overview).toContainText("1000m를 약 3분 42초에 5회")
+  await expect(overview).toContainText("1000m를 약 3분 42.2초에 5회")
   await expect(overview).toContainText("반복 사이 2분 30초 조깅")
   await expect(overview).toContainText("15분 가볍게 움직이기")
   await expect(overview).toContainText("10분 가볍게 움직이기")
@@ -112,7 +115,7 @@ test("shows an executable record-based workout and opens its same stored method"
   const before = await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))
   await overview.getByRole("button", { name: /훈련 방법·근거/ }).click()
   const reader = page.getByRole("dialog")
-  await expect(reader.getByText(/5×1000m @5000m RP.*r150.*JOG/).first()).toBeVisible()
+  await expect(reader.getByText("5 × 1km @ 222.2s/1km · 5K RP · r150s Jog", { exact: true }).first()).toBeVisible()
   await reader.screenshot({ path: info.outputPath("same-workout-reader-375.png") })
   await reader.getByRole("button", { name: "달력으로 돌아가기" }).click()
   expect(await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(before)

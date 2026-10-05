@@ -50,8 +50,10 @@ test("links one explicitly selected plan session to its journal without copying 
     window.localStorage.getItem("trainoracle.plan-beta.v1") ?? "null",
   )?.progress)).toEqual([{ sessionDay: 1, sessionSlot: "AM", state: "COMPLETED" }])
   const beforeReview = await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))
-  await page.getByRole("button", { name: "다음 계획 조정하기" }).click()
-  await page.getByRole("button", { name: /이번 주기 수행 기록을 볼래요/u }).click()
+  // One completed session permits reviewing this cycle, not adjusting an unfinished frame.
+  await expect(page.getByRole("button", { name: "다음 계획 조정하기", exact: true })).toHaveCount(0)
+  await page.getByRole("button", { name: "이번 주기 기록 확인", exact: true }).click()
+  await expect(page.getByRole("heading", { name: "이번 주기 기록 요약", exact: true })).toBeVisible()
   await expect(page.getByText("계획 RPE와 비교할 수 있는 기록은 1건이에요")).toBeVisible()
   const disclosure = page.getByText("훈련별 비교 근거 1건")
   await disclosure.click()

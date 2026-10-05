@@ -511,7 +511,11 @@ function CandidateComparison({
     <section className="plan-candidate-comparison" aria-label="두 계획 핵심 비교">
       <h2>{comparison.easyDurationOnly ? "고른 목표는 같고, 쉬운 훈련 시간만 달라요" : "두 계획의 본운동 구성을 확인하세요"}</h2>
       <p className="plan-candidate-comparison__intro">
-        {comparison.sameMainValues ? <>
+        {comparison.hasUnsupportedCatalog ? <>
+          {comparison.contextMatches && <>두 계획 모두 주요 훈련 목적은 &lsquo;{selectedIntentLabel}&rsquo;
+            <TermHelp term={ENERGY_INTENT_LABELS[sharedCandidate.selectedEnergyIntent].term} />이에요. </>}
+          카탈로그 상세 구성은 이 비교에서 공통 여부를 확인할 수 없어요. 각 일정의 훈련 방법을 확인해 주세요.
+        </> : comparison.sameMainValues ? <>
           두 계획 모두 주요 훈련 목적은 &lsquo;{selectedIntentLabel}&rsquo;
           <TermHelp term={ENERGY_INTENT_LABELS[sharedCandidate.selectedEnergyIntent].term} />이에요.
           {comparison.hasDetailed

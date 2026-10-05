@@ -480,6 +480,52 @@ unmount 해제를 유지한다. 동의 revision, CAS, 암호화, IndexedDB 완�
 필수 세 job 성공 후에만 기존 effective 계정-OFF 상태를 유지하는 정적 배포를 준비한다.
 온라인 보관·0057/0058 운영 적용·Edge 배포·백업·기존 삭제 요청 관문은 여전히 별도 NO-GO다.
 
+### 7f10e684 이후 일반 브라우저 게이트 정합성 보완
+
+정확한 `7f10e684275119be4e334975b0a88957ac4e0b77`의 CI
+`37303156679`는 contract-tests/app-quality 성공, app-browser 실패,
+deploy-pages skipped다. 원래 app-browser 최종 로그는 desktop 시나리오
+75 failed / 159 passed / 28 skipped이며 후행 세 프로젝트가 완료됐다는 뜻이 아니다.
+기존 화면 이름·접힌 설명·명시적 기록 선택·draft/수락 경계와 현재 코드/명세를
+대조하여 해당 시험만 보완한다. 기존 개인정보·원본 수치·계획 저장·포커스·44px·
+확대·모션 감소·취소·실패·재접속 단언은 유지한다.
+
+빌드 산출물에 없는 dev-only MEP/catalog/역사 LT fixture는 동일한 필수
+full-suite의 두 번째 loopback Vite lane으로 분리한다. fixture 서버는 .env를 읽지
+않고 배포/인증 flag·비밀값 없이 실제 모듈 그래프를 사용한다. 현재 LT catalog
+계획을 과거 pilot으로 변조하지 않는다. 현재 서비스 진입과 기존 승인된 과거 LT
+편집 경계를 각각 확인하며 fixture의 저장 callback은 항상 거절한다.
+
+- 목록 대조: local 및 CI의 원래 1,048 case/project = built936 + fixture112,
+  중복·누락·추가 skip0. 원래 네 프로젝트, generic 60초, local retry0/CI retry2 유지.
+- 실행기의 두 lane과 네 프로젝트씩 모두 성공하고 두 서버가 종료돼야 exit0이다.
+  narrowing 인수는 거절하고 실패·시작 오류·중단·cleanup 오류는 nonzero다.
+  필수 runner 단위14/14와 e2e TypeScript는 통과했다. UUID별 lane/project 출력으로
+  이전 검증 증거를 덮어쓰거나 Playwright가 기존 증거 폴더를 지우지 않게 한다.
+- root의 개인 페이스/기록/일지/목적 흐름 여섯 spec은 92/92 case/project 통과했다.
+  다른 검증 묶음과 중복 합산하거나 최신 전체 hosted 성공으로 보고하지 않는다.
+- 별도 실제 표시 결함: catalog에 반복·회복 상세가 있어도 기존 V1/V2 MAIN 비교가
+  envelope만 읽고 '구체적 구성 미지정'·'쉬운 훈련 시간만 다름'이라고 단정했다.
+  catalog를 기존 비교 미지원으로 명시하고 실제 일정의 상세 읽기로 안내한다.
+  훈련 생성·dose·활성화 권한·기존 저장 내용·PACE 비교는 변경하지 않는다.
+  새5계약의 수정 전 실패, 수정 후 원래 포함31/31, 기존 UI 포함38/38,
+  새 account-OFF 빌드와 원래 candidate-purpose 네 프로젝트 통과를 확인했다.
+
+- 마지막 youth 전환/저장 시험은 현재 `flow-stage-enter` 및 reduced-motion none을
+  정확히 검사한다. 미저장 계획의 나가기 confirm을 명시적으로 확인한 후 합성 일지를
+  저장하며, 성공 안내/체크 표시와 실제 journal 1건·거리8·계획 저장 없음까지 확인한다.
+  네 프로젝트에서 6 PASS/원래 모바일 전용6 skip, e2e 타입·차이 검사가 통과했다.
+  확인창을 없애거나 새 skip·시간 제한·재시도를 추가하지 않았다.
+- 지원표는 정상 배율 전체행 100% 가시성, 200% 실제 글자 확대와 세로 스크롤의
+  모든 텍스트 100% 읽기·누락 없음·가로 넘침 없음·44px를 유지한 네 프로젝트4/4다.
+- 제품 비교와 fixture/실행기는 서로 작성하지 않은 담당자의 소스 교차검토에서
+  범위 GO였다. 최종 exact commit blob 및 필수 CI와 운영 게시 증거는 별도 확인한다.
+
+이 기록은 후속 로컬 후보의 검사이며 exact-head 전체 CI나 Pages 게시 완료가 아니다.
+새 커밋의 필수 contract-tests/app-quality/app-browser 성공 후에만 기존 effective
+계정-OFF 정적 배포를 진행한다. 운영 0057/0058·Edge·건강정보 보관·provider·
+백업 파기와 실제 회원 왕복은 별도 NO-GO로 유지한다.
+
 ## 즉시 끄기
 
 문제가 발견되면 서버의 `ACCOUNT` 스위치를 먼저 끄고 이유를 기록한다. 그다음

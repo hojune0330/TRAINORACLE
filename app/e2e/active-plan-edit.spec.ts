@@ -4,13 +4,12 @@ import type { PlanBetaStateV3 } from "../src/domain/plan-beta-schema"
 
 test.use({ serviceWorkers: "block" })
 
-const appOrigin = "http://127.0.0.1:4496"
-
 for (const viewport of [
   { name: "mobile", width: 390, height: 844 },
   { name: "desktop", width: 1280, height: 800 },
 ] as const) {
-  test(`active plan edit applies, persists, and cancels a new-plan draft at ${viewport.width}px`, async ({ page }) => {
+  test(`active plan edit applies, persists, and cancels a new-plan draft at ${viewport.width}px`, async ({ page, baseURL }) => {
+    const appOrigin = new URL(baseURL ?? "").origin
     await page.setViewportSize({ width: viewport.width, height: viewport.height })
     await page.clock.install({ time: new Date("2026-10-01T03:00:00.000Z") })
     await page.route("**/*", route => {
@@ -91,7 +90,8 @@ for (const viewport of [
   })
 }
 
-test("catalog edit prepares, previews, applies, and persists at 390px", async ({ page }) => {
+test("catalog edit prepares, previews, applies, and persists at 390px", async ({ page, baseURL }) => {
+  const appOrigin = new URL(baseURL ?? "").origin
   await page.setViewportSize({ width: 390, height: 844 })
   await page.clock.install({ time: new Date("2026-10-01T03:00:00.000Z") })
   await page.route("**/*", route => {

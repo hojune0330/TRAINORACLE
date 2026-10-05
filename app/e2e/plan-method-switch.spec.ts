@@ -31,7 +31,13 @@ test("switches method in place and saves only the reconfirmed prescription", asy
   await supportToggle.press("Enter")
   await expect(support).toHaveAttribute("open")
   await expect(support.getByRole("row")).toHaveCount(8)
-  await expect(support.getByText("상세 훈련 준비 중", { exact: true })).toHaveCount(3)
+  for (const event of ["10km", "하프마라톤", "마라톤"]) {
+    const row = support.getByRole("row").filter({ has: page.getByRole("rowheader", { name: event, exact: true }) })
+    await expect(row.getByText("훈련 구성 109개 · 목적·시간·환경 확인 후 적용", { exact: true })).toBeVisible()
+    await expect(row.getByText(`기록 기반 페이스 계산 구성 45개 · 기준 종목: 5km · ${event}`, { exact: true })).toBeVisible()
+  }
+  await expect(support.getByText(/지금 모두 적용할 수 있다는 뜻은 아니에요/u)).toBeVisible()
+  await expect(support.getByText(/목표는 현재 능력이 아니에요/u)).toBeVisible()
   await expect(support.getByText("5 × 1km @ 5K RP · r150s Jog", { exact: true })).toBeVisible()
   expect((await supportToggle.boundingBox())!.height).toBeGreaterThanOrEqual(44)
   await supportToggle.scrollIntoViewIfNeeded()
@@ -47,8 +53,36 @@ test("switches method in place and saves only the reconfirmed prescription", asy
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
   await supportToggle.scrollIntoViewIfNeeded()
   await page.screenshot({ path: testInfo.outputPath("support-coverage-200pct.png") })
-  await middleSupportRow.scrollIntoViewIfNeeded()
-  await expect(middleSupportRow).toBeInViewport({ ratio: 1 })
+  // At 200%, the current catalog metadata may make one row taller than the
+  // viewport. Verify every text part is readable by vertical scrolling, without
+  // omitting text or shrinking it to force the whole row onto one screen.
+  const rowParts = middleSupportRow.locator("th, p, strong, span")
+  await expect(rowParts).toHaveCount(6)
+  const withoutWhitespace = (value: string) => value.replace(/\s/gu, "")
+  expect(withoutWhitespace((await rowParts.allTextContents()).join("")))
+    .toBe(withoutWhitespace((await middleSupportRow.textContent()) ?? ""))
+  for (const part of await rowParts.all()) {
+    if (await part.evaluate(node => node.tagName === "TH")) {
+      // A table header's box stretches to the entire row. Measure its actual
+      // rendered text, not the empty cell area below it.
+      await expect(part).toBeVisible()
+      await expect(part).toHaveText("3000m")
+      await part.evaluate(node => node.scrollIntoView({ block: "start" }))
+      await expect.poll(() => part.evaluate(node => {
+        if (!node.textContent?.trim()) return 0
+        const range = document.createRange()
+        range.selectNodeContents(node)
+        const rects = [...range.getClientRects()].filter(rect => rect.width > 0 && rect.height > 0)
+        if (rects.length === 0) return 0
+        return Math.min(...rects.map(rect =>
+          Math.max(0, Math.min(rect.right, innerWidth) - Math.max(rect.left, 0)) / rect.width
+          * Math.max(0, Math.min(rect.bottom, innerHeight) - Math.max(rect.top, 0)) / rect.height))
+      })).toBe(1)
+    } else {
+      await part.evaluate(node => node.scrollIntoView({ block: "center", inline: "nearest" }))
+      await expect(part).toBeInViewport({ ratio: 1 })
+    }
+  }
   await page.screenshot({ path: testInfo.outputPath("support-table-row-200pct.png") })
   await page.evaluate(() => document.documentElement.style.removeProperty("--fs-body"))
   await supportToggle.press("Space")
@@ -57,18 +91,24 @@ test("switches method in place and saves only the reconfirmed prescription", asy
   await openPlanOptions(page, true)
   const method = page.locator(".plan-method-picker")
   const summary = method.locator(":scope > summary")
+  const openMethodChoices = async () => {
+    const choices = method.getByText("훈련 목록·다른 설정", { exact: true }).locator("..")
+    if (await choices.getAttribute("open") === null) await choices.locator(":scope > summary").click()
+  }
   await expect(method).not.toHaveAttribute("open")
   await summary.focus()
   await summary.press("Enter")
   await expect(method).toHaveAttribute("open")
+  await openMethodChoices()
   await expect(method.getByRole("radio")).toHaveCount(2)
   expect(await undersizedInteractiveTargets(method)).toEqual([])
-  await expect(method.getByText(/선택할 수 있는 상세 방법은 1개/u)).toBeVisible()
+  await expect(method.getByText("현재 조건에서 검토가 끝난 상세 훈련이에요. 기록 없이 받는 방식과 비교해 고를 수 있어요.", { exact: true })).toBeVisible()
   expect((await method.locator("legend").boundingBox())!.height).toBeLessThanOrEqual(1)
   await summary.scrollIntoViewIfNeeded()
   await page.screenshot({ path: testInfo.outputPath("method-picker-normal.png") })
   const date = page.getByLabel("계획 시작 날짜", { exact: true })
   await date.fill("2026-09-10")
+  await openMethodChoices()
   await method.getByRole("radio", { name: /5 × 1km @ 5K RP/u }).click()
   await expect(method.getByRole("radio", { name: /5 × 1km @ 5K RP/u })).toBeChecked()
   const save = page.getByRole("button", { name: /이 계획으로 시작하기/u })
@@ -80,12 +120,14 @@ test("switches method in place and saves only the reconfirmed prescription", asy
   await expect(page.getByRole("heading", { name: "계획이 준비됐어요", exact: true })).toBeFocused()
   await openPlanOptions(page, true)
   await expect(save).toBeEnabled()
-  await method.getByRole("radio", { name: /시간과 체감 강도로 안내받기/u }).click()
-  await expect(method.getByRole("radio", { name: /시간과 체감 강도로 안내받기/u })).toBeChecked()
+  await openMethodChoices()
+  await method.getByRole("radio", { name: /기록 없이 시간·RPE로 받기/u }).click()
+  await expect(method.getByRole("radio", { name: /기록 없이 시간·RPE로 받기/u })).toBeChecked()
   await expect(save).toBeDisabled()
   await method.getByRole("button", { name: "이 훈련으로 변경" }).click()
   await expect(record).toHaveCount(0)
   await expect(save).toBeEnabled()
+  await openMethodChoices()
   await method.getByRole("radio", { name: /5 × 1km @ 5K RP/u }).check()
   await expect(save).toBeDisabled()
   await method.getByRole("button", { name: "이 훈련으로 변경" }).click()
@@ -93,12 +135,13 @@ test("switches method in place and saves only the reconfirmed prescription", asy
   await record.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
   await expect(page.getByRole("heading", { name: "계획이 준비됐어요", exact: true })).toBeFocused()
   await openPlanOptions(page, true)
+  await openMethodChoices()
   await expect(save).toBeEnabled()
   await expect(date).toHaveValue("2026-09-10")
   await page.locator("summary", { hasText: "A와 B는 뭐가 달라요?" }).click()
   const mainComparison = page.locator(".plan-main-comparison")
   await mainComparison.locator("summary").click()
-  await expect(mainComparison.getByText("본운동 방법과 목표값이 같아요. 다른 방법 두 개가 아니에요.")).toBeVisible()
+  await expect(mainComparison.getByText("같은 핵심 훈련을 날짜와 전체 일정만 다르게 배치한 계획이에요. 서로 다른 훈련 두 개가 아니에요.")).toBeVisible()
   await expect(mainComparison.getByText(/^다른 부분:/u)).toHaveCount(0)
   await mainComparison.locator("section").first().scrollIntoViewIfNeeded()
   await page.screenshot({ path: testInfo.outputPath("main-method-comparison.png") })

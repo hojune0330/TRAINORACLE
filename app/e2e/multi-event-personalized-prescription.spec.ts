@@ -29,8 +29,12 @@ const cases = [
   {
     eventDistanceM: 800,
     focus: /짧고 세게.*GLY/u,
-    notation: /10×200m @800m RP.*r60.*STAND/u,
-    summary: "총 10회 · 주요 구간 2000m · 200m당 31초",
+    notation: /10 × 200m @ (?:30\.5s\/200m · )?800m RP · r60s Stand/u,
+    paceBasis: "기준: 800m 최근 경기 2분 2초",
+    expectedPrescription: { targetEventDistanceM: 800, targetRepSeconds: 30.5,
+      repetitionsPerSet: 10, repetitionDistanceM: 200, repetitionRecoverySeconds: 60,
+      repetitionRecoveryMode: "STAND", totals: { qualityDistanceM: 2000,
+        repetitionRecoveryOccurrences: 9, repetitionRecoveryTotalSeconds: 540 } },
     execution: "준비, 10회 본운동과 9번의 사이 회복, 정리 순서로 진행하세요.",
     work: "200m를 약 31초 기준으로 10회 · 주요 구간 거리 2000m",
     recovery: "9번 · 매번 60초 서서 쉬기 · 총 540초",
@@ -38,8 +42,12 @@ const cases = [
   {
     eventDistanceM: 1500,
     focus: /골고루.*MIX/u,
-    notation: /3×500m @1500m RP.*r180.*STAND/u,
-    summary: "총 3회 · 주요 구간 1500m · 500m당 1분 22초",
+    notation: /3 × 500m @ (?:81\.7s\/500m · )?1500m RP · r3min Stand/u,
+    paceBasis: "기준: 1500m 최근 경기 4분 5초",
+    expectedPrescription: { targetEventDistanceM: 1500, targetRepSeconds: 245 * 500 / 1500,
+      repetitionsPerSet: 3, repetitionDistanceM: 500, repetitionRecoverySeconds: 180,
+      repetitionRecoveryMode: "STAND", totals: { qualityDistanceM: 1500,
+        repetitionRecoveryOccurrences: 2, repetitionRecoveryTotalSeconds: 360 } },
     execution: "준비, 3회 본운동과 2번의 사이 회복, 정리 순서로 진행하세요.",
     work: "500m를 약 1분 22초 기준으로 3회 · 주요 구간 거리 1500m",
     recovery: "2번 · 매번 180초 서서 쉬기 · 총 360초",
@@ -47,8 +55,12 @@ const cases = [
   {
     eventDistanceM: 3000,
     focus: /숨차게 반복.*VO₂/u,
-    notation: /4×800m @3000m RP.*r180.*WALK/u,
-    summary: "총 4회 · 주요 구간 3200m · 800m당 2분 43초",
+    notation: /4 × 800m @ (?:162\.9s\/800m · )?3K RP · r3min Walk/u,
+    paceBasis: "기준: 3000m 최근 경기 10분 11초",
+    expectedPrescription: { targetEventDistanceM: 3000, targetRepSeconds: 611 * 800 / 3000,
+      repetitionsPerSet: 4, repetitionDistanceM: 800, repetitionRecoverySeconds: 180,
+      repetitionRecoveryMode: "WALK", totals: { qualityDistanceM: 3200,
+        repetitionRecoveryOccurrences: 3, repetitionRecoveryTotalSeconds: 540 } },
     execution: "준비, 4회 본운동과 3번의 사이 회복, 정리 순서로 진행하세요.",
     work: "800m를 약 2분 43초 기준으로 4회 · 주요 구간 거리 3200m",
     recovery: "3번 · 매번 180초 걷기 · 총 540초",
@@ -128,7 +140,7 @@ for (const fixture of cases) {
     await expect(page.getByRole("heading", { name: "계획이 준비됐어요", exact: true })).toBeFocused()
     await openPlanOptions(page, true)
     await expect(picker.getByRole("status")).toBeVisible()
-    await expect(picker.getByRole("status")).toContainText("상세 훈련 수치를 적용")
+    await expect(picker.getByRole("status")).toHaveText("선택한 기록으로 상세 훈련 수치를 계산했어요.")
 
     await expect(page.getByText(fixture.notation).first()).toBeVisible()
     if (process.env.CAPTURE_PLAN_QA === "1") {
@@ -139,8 +151,16 @@ for (const fixture of cases) {
     }
     await page.getByRole("button", { name: /이 계획으로 시작하기/u }).click()
     await expectActivePlanHeading(page)
+    const storedPrescription = await page.evaluate(() => {
+      const state = JSON.parse(localStorage.getItem("trainoracle.plan-beta.v1")!)
+      const detailed = state.activePlan.sessions.filter((session: { prescription: { kind: string } }) => session.prescription.kind === "PACE_TARGET")
+      if (detailed.length !== 1) throw new Error("Expected exactly one confirmed detailed session")
+      return detailed[0].prescription
+    })
+    expect(storedPrescription).toMatchObject(fixture.expectedPrescription)
     const selectedSession = await openActiveSessionDetails(page, fixture.notation)
-    await expect(selectedSession.getByText(fixture.summary).first()).toBeVisible()
+    await expect(selectedSession.getByText(fixture.paceBasis, { exact: true }).first()).toBeVisible()
+    await selectedSession.getByText("자세히 보기 · 수행 순서", { exact: true }).click()
     await expect(selectedSession.getByText(fixture.execution).first()).toBeVisible()
     await expect(selectedSession.getByText(fixture.work).first()).toBeVisible()
     await expect(selectedSession.getByText(fixture.recovery).first()).toBeVisible()
@@ -151,7 +171,7 @@ for (const fixture of cases) {
     await explanation.getByRole("tab", { name: "이유·근거" }).click()
     await expect(explanation.getByText("저장된 처방과 설명 버전이 일치해요.")).toBeVisible()
     await expect(explanation.getByRole("heading", { name: "회복을 이렇게 넣은 이유", exact: true })).toBeAttached()
-    await expect(explanation.getByText(new RegExp(`실제로 사용한 기준 기록: ${fixture.eventDistanceM}m`, "u"))).toBeAttached()
+    await expect(explanation.getByText(new RegExp(`계산에 사용한 기준 기록: ${fixture.eventDistanceM}m`, "u"))).toBeAttached()
     if (process.env.CAPTURE_PLAN_QA === "1") {
       await page.screenshot({ path: testInfo.outputPath(`explanation-${fixture.eventDistanceM}m.png`) })
     }
@@ -162,6 +182,10 @@ for (const fixture of cases) {
       .getByRole("button", { name: "계획" })
       .click()
     const activeSession = await openActiveSessionDetails(page, fixture.notation)
+    expect(await page.evaluate(() => {
+      const state = JSON.parse(localStorage.getItem("trainoracle.plan-beta.v1")!)
+      return state.activePlan.sessions.find((session: { prescription: { kind: string } }) => session.prescription.kind === "PACE_TARGET").prescription
+    })).toEqual(storedPrescription)
     await activeSession.getByText("시작 전 확인").click()
     await expect(page.getByRole("button", {
       name: "통증 없고 평소와 같음 · 다시 시작 확인",

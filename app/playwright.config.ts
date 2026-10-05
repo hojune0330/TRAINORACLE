@@ -3,10 +3,13 @@ import { defineConfig, devices } from "@playwright/test"
 const previewPort = Number(process.env.PLAYWRIGHT_PORT ?? "4173")
 const previewUrl = process.env.PLAYWRIGHT_BASE_URL ?? `http://127.0.0.1:${previewPort}`
 const usesExternalServer = process.env.PLAYWRIGHT_EXTERNAL_SERVER === "1"
+// run-full-suite runs these in the same four projects against the test-only Vite
+// lane. Its fixtures import the app's actual module instances, not copied bundles.
+export const browserFixtureTests = ["**/multi-event-pace-lifecycle.spec.ts", "**/catalog-workout.spec.ts", "**/prescription-first-draw.spec.ts"]
 export default defineConfig({
   testDir: "./e2e",
   // Native-IDB and draft-panel tests require their dedicated Vite configs, not built preview.
-  testIgnore: ["**/account-journal-draft-buffer.spec.ts", "**/account-journal-draft-panel.spec.ts", "**/account-journal-record-service.spec.ts", "**/account-journal-conflict.spec.ts", "**/account-decoration-service.spec.ts", "**/account-calendar-decoration-service.spec.ts", "**/calendar-decoration-flow.spec.ts", "**/form-input-autosave.spec.ts", "**/account-plan-service.spec.ts", "**/account-plan-collection-preparation.spec.ts", "**/account-plan-lock.spec.ts", "**/account-plan-service-mobile.spec.ts", "**/file-analysis-flow.spec.ts", "**/planned-repetition.spec.ts"],
+  testIgnore: ["**/account-journal-draft-buffer.spec.ts", "**/account-journal-draft-panel.spec.ts", "**/account-journal-record-service.spec.ts", "**/account-journal-conflict.spec.ts", "**/account-decoration-service.spec.ts", "**/account-calendar-decoration-service.spec.ts", "**/calendar-decoration-flow.spec.ts", "**/form-input-autosave.spec.ts", "**/account-plan-service.spec.ts", "**/account-plan-collection-preparation.spec.ts", "**/account-plan-lock.spec.ts", "**/account-plan-service-mobile.spec.ts", "**/file-analysis-flow.spec.ts", "**/planned-repetition.spec.ts", "**/run-full-suite.test.mjs", ...browserFixtureTests],
   outputDir: "./test-results",
   fullyParallel: true,
   timeout: 60_000,

@@ -26,7 +26,7 @@ test("opens a recorded day directly from the monthly journal calendar", async ({
 
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "일지" }).click()
-  await page.getByRole("button", { name: /2026년 7월/u }).click()
+  await page.getByRole("button", { name: "2026년 7월 · 년월과 날짜 이동", exact: true }).click()
 
   const calendar = page.getByRole("grid", { name: "2026년 7월 달력" })
   await expect(calendar).toBeVisible()

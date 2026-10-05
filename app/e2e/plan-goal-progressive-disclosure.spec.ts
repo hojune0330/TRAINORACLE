@@ -45,7 +45,18 @@ test("creates a mobile marathon beta plan without inventing pace numbers", async
   const reader = page.getByRole("dialog")
   await reader.getByRole("tab", { name: "이유·근거" }).click()
   await expect(reader.getByRole("paragraph").filter({ hasText: /대상 종목은 42195m/u })).toBeAttached()
-  await expect(reader.getByText(/개인 경기 기록으로 시간·RPE·페이스를 계산한 처방은 아니에요/u)).toBeAttached()
+  await reader.getByText("사용한 기록과 출처", { exact: true }).click()
+  await expect(reader.getByText("선택한 목적·경험 수준과 훈련 구성을 사용했어요. 개인 경기 기록으로 페이스를 계산하지는 않았어요.", { exact: true })).toBeVisible()
+  // A catalog's time/RPE guidance is not an invented personal race-pace calculation.
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.plan-beta.v1")!).activePlan)
+  expect(saved.sessions.some((session: { prescription: { kind: string } }) => session.prescription.kind === "PACE_TARGET")).toBe(false)
+  const catalogBindings = saved.sessions.flatMap((session: { prescription: { catalogWorkout?: { inputs: { fiveK: unknown; segmentPaces: unknown[]; paceReferences?: unknown[] } } } }) => session.prescription.catalogWorkout ? [session.prescription.catalogWorkout] : [])
+  expect(catalogBindings.length).toBeGreaterThan(0)
+  for (const binding of catalogBindings) {
+    expect(binding.inputs.fiveK).toBeNull()
+    expect(binding.inputs.segmentPaces).toEqual([])
+    expect(binding.inputs.paceReferences ?? []).toEqual([])
+  }
   await reader.getByRole("tab", { name: "주기·기록" }).click()
   await expect(reader.getByText(/미기록을 0이나 훈련 실패로 계산하지 않아요/u)).toBeAttached()
   await reader.getByRole("button", { name: "훈련 일정으로 돌아가기" }).click()

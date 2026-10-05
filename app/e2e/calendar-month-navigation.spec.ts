@@ -20,8 +20,8 @@ test("real month navigation, today, AM/PM and narrow layout", async ({ page }, i
   await expect(calendar.getByRole("columnheader", { name: "일요일" })).toBeVisible()
   const today = calendar.getByRole("button", { name: /2026년 9월 27일 일요일/u })
   await expect(today).toHaveAttribute("aria-current", "date")
-  await expect(today).toContainText("AM")
-  await expect(today).toContainText("PM")
+  await expect(today).toContainText("오전")
+  await expect(today).toContainText("오후")
   await expect(today).toHaveAccessibleName(/오전.*오후/u)
 
   for (const width of [320, 375, 1024]) {
