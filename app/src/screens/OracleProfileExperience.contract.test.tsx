@@ -63,7 +63,7 @@ it("does not invent a personal training analysis for an empty or loading profile
 })
 it("keeps the manager's preference explanation tied to the selected result", () => {
   render(<OracleProfileExperience {...props({ answers: { STRUCTURE_1: 5, STRUCTURE_2: 5, STRUCTURE_3: 5 }, selectedCharacter: "STRUCTURE" })} />)
-  fireEvent.click(within(screen.getByRole("region", { name: "나의 러닝 프로필" })).getByRole("button", { name: "계획 선호", exact: true }))
+  fireEvent.click(within(screen.getByRole("region", { name: "나의 러닝 프로필" })).getByRole("button", { name: "계획 선호" }))
   expect(dialog()).toHaveAttribute("aria-label", "마리의 응답 해설")
   expect(within(dialog()).getByText("마리 매니저 · 내 응답 기준")).toBeInTheDocument()
   expect(within(dialog()).getByText(/세 문항의 응답을 정리한 100점/)).toBeInTheDocument()
