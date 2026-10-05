@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { PlanBeta } from "./PlanBeta"
@@ -69,12 +69,26 @@ describe("integrated minimal entry to selected plan", () => {
       performanceSeconds: 10800, achievedOn: null }])
     expect(screen.getByText("내 목표")).toBeVisible()
     expect(loadPlanBetaState()).toBeNull()
-    expect(screen.getByRole("button", { name: "이 기록으로 목표 페이스 보기" })).toBeDisabled()
-    await user.click(screen.getByText("기준 바꾸기", { exact: true }))
-    await user.selectOptions(screen.getByRole("combobox", { name: "기준 기록" }), loadAthleteRecords()[0]!.id)
-    expect(screen.getByRole("button", { name: "이 기록으로 목표 페이스 보기" })).toBeEnabled()
-    await user.click(screen.getByRole("button", { name: "이 기록으로 목표 페이스 보기" }))
-    await user.click(screen.getByRole("button", { name: "이 일정으로 시작" }))
+    // Scope pace controls to their named region, not every calendar button.
+    // Check attachment/visibility after each rerender instead of retaining a
+    // detached control or rescanning all calendar buttons for every action.
+    const paceRegion = screen.getByRole("region", { name: "최근 기록으로 페이스 추천" })
+    const paceOffer = () => {
+      expect(paceRegion).toBeInTheDocument()
+      expect(paceRegion).toBeVisible()
+      expect(paceRegion).toHaveAccessibleName("최근 기록으로 페이스 추천")
+      return within(paceRegion)
+    }
+    expect(paceOffer().getByRole("button", { name: "이 기록으로 목표 페이스 보기" })).toBeDisabled()
+    await user.click(paceOffer().getByText("기준 바꾸기", { exact: true }))
+    await user.selectOptions(paceOffer().getByRole("combobox", { name: "기준 기록" }), loadAthleteRecords()[0]!.id)
+    expect(paceOffer().getByRole("button", { name: "이 기록으로 목표 페이스 보기" })).toBeEnabled()
+    await user.click(paceOffer().getByRole("button", { name: "이 기록으로 목표 페이스 보기" }))
+    const start = screen.getByText("이 일정으로 시작", { selector: "button", exact: true })
+    expect(start).toBeVisible()
+    expect(start).toHaveRole("button")
+    expect(start).toHaveAccessibleName("이 일정으로 시작")
+    await user.click(start)
     const stored = loadPlanBetaState()
     expect(stored).not.toBeNull()
     const references = stored!.activePlan.sessions.flatMap(item => item.prescription.kind === "RPE_TIME_RANGE"
