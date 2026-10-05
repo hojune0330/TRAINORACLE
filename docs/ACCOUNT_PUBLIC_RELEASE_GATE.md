@@ -329,6 +329,31 @@ Node 24.19.0 합성 검사 기록(운영 DB 연결 없음):
 실제 PostgreSQL 두 연결 경합, 운영 최신 migration/Edge, 전용 origin, 기존 미완료
 탈퇴 정리, 최소 원장·백업 기한·완료 증빙은 위 로컬 합성 검사와 별개로 미검증이다.
 
+### 610c 전체 CI와 후속 fixture 검증
+
+`610c63142574463654e3f1e560f44d187d79a904`의
+[CI 37268459905](https://github.com/hojune0330/TRAINORACLE/actions/runs/37268459905)는
+`contract-tests` 성공, `app-quality` 실패, `app-browser`/`deploy-pages` 미실행이다.
+앱 unit 결과는 6,623 통과·1 실패·33 skipped(총 6,657)이며 전체 CI 통과가 아니다.
+유일 실패는 `plan-next-account.contract.test.tsx`의
+`selects the next frame through one account transaction and retains the exact predecessor`다.
+
+기존 fixture는 localStorage 전체가 그대로여야 한다고 기대했지만, 새 동의 경계는
+해당 작업의 본문 없는 revision pin 한 쌍을 저장한다. 후속 시험 수정은 실제 서버
+commit의 operation ID와 합성 계정에 결속된 정확한 키·값 `0`만 기대 목록에 추가한다.
+prefix 단위로 검사를 제외하지 않으며 그 밖의 localStorage 전체 동일, 이전 계획의
+원문 동일, 현재 프레임 계보 및 단일 서버 commit 단언을 유지한다. 생산 코드와
+0057/0058 migration, workflow 및 공개 승인 flag는 변경하지 않았다.
+
+Node 24.19.0 단일 파일 5/5 통과 후, 실행 메모리에서만 계획 본문 복사 결함을
+주입하자 위 시험이 정확한 이름으로 실패했다(다른 4건은 지정 범위 밖이라 skipped).
+임시 설정 제거 후 정상 5/5 재통과했고 transfer 소스 SHA-256
+`01bf4fcffe2ec1e7e31b6a70c59e35bd0325da7f095ad670d1c96775027d8ddf` 불변을 확인했다.
+샌드박스의 의존성 junction 해석 오류로 끝난 최초 두 실행은 시험 통과에 포함하지
+않았다. 같은 단일 명령의 권한 검토 후 기존 읽기전용 의존성으로 재검사했으며,
+검사용 새 설치나 원본 소스 변경은 없었다. 이 기록은 후속 후보의 focused 검증이며
+새 커밋의 전체 CI·배포·실서비스 검증은 별도로 확인해야 한다. 위 공개 NO-GO는 유지한다.
+
 ## 즉시 끄기
 
 문제가 발견되면 서버의 `ACCOUNT` 스위치를 먼저 끄고 이유를 기록한다. 그다음
