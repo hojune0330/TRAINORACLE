@@ -445,6 +445,41 @@ readonly 완료가 24,712ms 지연됐다. 이를 제품 결함 없음이나 단�
 성공해야 한다. 로컬 통과나 미실행을 필수 CI 성공으로 대신하지 않으며, 새 정적 게시와
 실제 receipt/index/bundle 확인 전에는 배포 완료로 표시하지 않는다. 온라인 NO-GO는 유지한다.
 
+### 7e26469f 필수 CI와 두 탭 저장소 탐침 반복 수정
+
+`7e26469fde487000ea8aeb606e07bbf864d4d027`의
+[CI 37296891719](https://github.com/hojune0330/TRAINORACLE/actions/runs/37296891719)는
+`contract-tests`와 `app-quality`가 성공했으나 `app-browser`에서 기존 form 14건 중
+12건 통과·2건 실패였다. 두 실패는 위와 같은 첫 winner 저장 poll이며, 모바일 계정
+fixture 7건은 통과했다. `deploy-pages`는 skipped, 배포 환경 guard는 미실행이다.
+
+후속 합성 native 브라우저 계측으로 실제 원인을 확인했다. 꾸미기 작성 화면이 모든
+`storage` 이벤트마다 일지를 다시 읽고, 그 읽기의 `journalStorage()` 가용성 검사가
+`__to_probe__`를 쓰고 지웠다. 두 탭이 이 내부 신호를 서로 다시 읽으며 이벤트가
+1·2·4배로 늘어나 한 탭에서 131,072회까지 관측됐고 첫 저장 5초 단언이 실패했다.
+두 탭 모두 visible이었으며 이 증거에는 원문·키 값이 없다. IndexedDB 요청/완료 지연은
+관측 증상이었고, 이후 실행되는 operation revision pin을 원인으로 확정하지 않는다.
+
+최소 수정은 `JournalDecorationPreview`의 두 storage listener에서 이 정확한 내부
+탐침 키만 제외한다. 저장소 쓰기 가능성 검사는 삭제·캐시하지 않는다. 다른 모든 키,
+`clear()`의 null 키, 일반 storage 이벤트, 실제 일지·꾸미기·계정·scope 이벤트와
+unmount 해제를 유지한다. 동의 revision, CAS, 암호화, IndexedDB 완료 경계는 바꾸지 않는다.
+
+- 같은 두 복구 시험은 수정 후 통과했고 probe 신호는 초기 8회 이후 증폭되지 않았다.
+  계측과 임시 준비 대기를 모두 제거한 원래 form 파일 14건도 14/14 통과했다(48.5초).
+- 화면 갱신과 저장소 가용성 계약 두 파일 20/20 통과. 메모리에서 필터만 제거하면
+  `ignores only the internal storage probe while retaining data, consent, clear and account refresh events`
+  시험의 무조회 단언이 4회 조회를 검출하여 실패했다. 정상 소스 20/20 재통과를 확인했다.
+- Native/단위 시험은 설치된 Node 24.19.0과 합성 로컬 저장소를 사용했다. 실제 계정,
+  외부 provider, 운영 DB/Edge와 개인정보 자료는 사용하지 않았다. 모든 진단용 출력은
+  후보 코드에서 제거했고 원래 e2e 파일·시간 제한·기존 단언은 불변이다.
+- 설치된 TypeScript의 app `tsc --noEmit`은 exit 0이다. 변경 없는 e2e 타입·전체 앱
+  로컬 모음·production build는 중복 실행하지 않고 새 exact-head 필수 CI에서 확인한다.
+
+이는 후속 후보의 로컬 영향 검사이며 새 exact-head 필수 CI 성공 또는 게시 완료가 아니다.
+필수 세 job 성공 후에만 기존 effective 계정-OFF 상태를 유지하는 정적 배포를 준비한다.
+온라인 보관·0057/0058 운영 적용·Edge 배포·백업·기존 삭제 요청 관문은 여전히 별도 NO-GO다.
+
 ## 즉시 끄기
 
 문제가 발견되면 서버의 `ACCOUNT` 스위치를 먼저 끄고 이유를 기록한다. 그다음

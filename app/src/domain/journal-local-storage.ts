@@ -5,12 +5,13 @@ import { JOURNAL_STORAGE_KEY } from "./journal-storage-keys"
 import { announceLocalJournalChange } from "./journal-change-events"
 
 export { JOURNAL_STORAGE_KEY }
+export const JOURNAL_STORAGE_PROBE_KEY = "__to_probe__"
 
 export function journalStorage(): Storage | null {
   try {
     if (typeof window === "undefined") return null
     const localStorage = window.localStorage
-    const probe = "__to_probe__"
+    const probe = JOURNAL_STORAGE_PROBE_KEY
     localStorage.setItem(probe, "1")
     localStorage.removeItem(probe)
     return localStorage

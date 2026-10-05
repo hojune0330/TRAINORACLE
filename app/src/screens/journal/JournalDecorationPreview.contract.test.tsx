@@ -1,13 +1,14 @@
 import { act, cleanup, fireEvent, render } from "@testing-library/react"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { createEmptyDecorationState } from "../../domain/decoration-schema"
 import { decorationCatalogItem } from "../../domain/decoration-catalog"
 import { appendJournalDecoration, appendJournalTextSticker } from "../../domain/journal-decoration-state"
 import { activeDecorationStorageKeyV3 } from "../../domain/decorations"
 import { saveEntry } from "../../domain/journal-store"
+import { JOURNAL_STORAGE_KEY, JOURNAL_STORAGE_PROBE_KEY } from "../../domain/journal-local-storage"
 import { JournalDecorationPreview, JournalWritingDecorationPreview, selectJournalDecorationPreview } from "./JournalDecorationPreview"
 
-afterEach(cleanup)
+afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 const DATE = "2026-10-02"
 
@@ -49,6 +50,31 @@ describe("selectJournalDecorationPreview", () => {
 })
 
 describe("JournalDecorationPreview", () => {
+  it("ignores only the internal storage probe while retaining data, consent, clear and account refresh events", () => {
+    const { unmount } = render(<JournalWritingDecorationPreview date={DATE}><p>작성 중</p></JournalWritingDecorationPreview>)
+    const read = vi.spyOn(Storage.prototype, "getItem")
+    const write = vi.spyOn(Storage.prototype, "setItem")
+    act(() => window.dispatchEvent(new StorageEvent("storage", { key: JOURNAL_STORAGE_PROBE_KEY })))
+    expect(read).not.toHaveBeenCalled()
+    expect(write).not.toHaveBeenCalled()
+
+    for (const key of [JOURNAL_STORAGE_KEY, activeDecorationStorageKeyV3(), "trainoracle.journal.ownership.v1",
+      "trainoracle.storage-consent-revision.v1:synthetic-owner", "trainoracle.account.storage-withdrawal-pending.synthetic-owner", null]) {
+      read.mockClear(); write.mockClear()
+      act(() => window.dispatchEvent(new StorageEvent("storage", { key })))
+      expect(read).toHaveBeenCalled()
+      expect(write).toHaveBeenCalledWith(JOURNAL_STORAGE_PROBE_KEY, "1")
+    }
+    for (const event of ["storage", "trainoracle:account-journals-changed", "trainoracle:journal-scope-changed"]) {
+      read.mockClear()
+      act(() => window.dispatchEvent(new Event(event)))
+      expect(read).toHaveBeenCalled()
+    }
+    unmount(); read.mockClear()
+    act(() => window.dispatchEvent(new StorageEvent("storage", { key: JOURNAL_STORAGE_KEY })))
+    expect(read).not.toHaveBeenCalled()
+  })
+
   it("hides a broken 16px image without changing or replacing the underlying item", () => {
     const item = decorationCatalogItem("STICKER_WEATHER_SUN")
     expect(item).toBeDefined()

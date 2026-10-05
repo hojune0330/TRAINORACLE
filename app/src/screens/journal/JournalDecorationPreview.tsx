@@ -21,6 +21,7 @@ import {
 import { onLocalJournalScopeChange } from "../../domain/account/local-journal-ownership"
 import { LOCAL_JOURNALS_CHANGED } from "../../domain/journal-change-events"
 import { loadEntries } from "../../domain/journal-store"
+import { JOURNAL_STORAGE_PROBE_KEY } from "../../domain/journal-local-storage"
 import "./journal-decoration-preview.css"
 
 function readTrustedDecorationState(): DecorationState | null {
@@ -72,13 +73,14 @@ export function useJournalDecorationSnapshot(): DecorationState | null {
   const [state, setState] = React.useState<DecorationState | null>(readTrustedDecorationState)
   React.useEffect(() => {
     const refresh = () => setState(readTrustedDecorationState())
+    const storage = (event: StorageEvent) => { if (event.key !== JOURNAL_STORAGE_PROBE_KEY) refresh() }
     refresh()
-    window.addEventListener("storage", refresh)
+    window.addEventListener("storage", storage)
     window.addEventListener(DECORATION_STATE_EVENT, refresh)
     window.addEventListener(ACCOUNT_DECORATION_EVENT, refresh)
     const unsubscribe = onLocalJournalScopeChange(refresh)
     return () => {
-      window.removeEventListener("storage", refresh)
+      window.removeEventListener("storage", storage)
       window.removeEventListener(DECORATION_STATE_EVENT, refresh)
       window.removeEventListener(ACCOUNT_DECORATION_EVENT, refresh)
       unsubscribe()
@@ -127,13 +129,17 @@ function useActiveSavedDates(): ReadonlySet<string> {
   const [dates, setDates] = React.useState<ReadonlySet<string>>(loadActiveSavedDates)
   React.useEffect(() => {
     const refresh = () => setDates(loadActiveSavedDates())
+    // Reading journals probes storage writability. Echoing that internal probe
+    // into another read makes two tabs continually wake each other up.
+    // Keep all real keys, clear(), and same-tab/account events responsive.
+    const storage = (event: StorageEvent) => { if (event.key !== JOURNAL_STORAGE_PROBE_KEY) refresh() }
     refresh()
-    window.addEventListener("storage", refresh)
+    window.addEventListener("storage", storage)
     window.addEventListener(LOCAL_JOURNALS_CHANGED, refresh)
     window.addEventListener("trainoracle:account-journals-changed", refresh)
     const unsubscribe = onLocalJournalScopeChange(refresh)
     return () => {
-      window.removeEventListener("storage", refresh)
+      window.removeEventListener("storage", storage)
       window.removeEventListener(LOCAL_JOURNALS_CHANGED, refresh)
       window.removeEventListener("trainoracle:account-journals-changed", refresh)
       unsubscribe()
