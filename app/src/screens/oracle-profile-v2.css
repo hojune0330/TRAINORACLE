@@ -16,8 +16,15 @@
 .oracle-v2__tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
 .oracle-v2__status, .oracle-v2__eyebrow { font-size: 12px; color: var(--ink-muted, var(--ink)); }
 .oracle-v2__identity { display: flex; align-items: center; gap: 12px; margin-block: 24px; }
-.oracle-v2__portrait { width: 96px; height: 112px; overflow: hidden; position: relative; flex-shrink: 0; }
-.oracle-v2__portrait img { width: 100%; height: auto; max-width: none; display: block; }
+.oracle-v2__identity > svg { flex-shrink: 0; color: var(--ink-muted, var(--ink)); }
+.oracle-v2__manager { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: var(--space-3); margin-block: var(--space-6); padding-block: var(--space-4); border-block: var(--bw-line) solid var(--line); }
+.oracle-v2__manager-portrait { width: 64px; height: 80px; overflow: hidden; }
+.oracle-v2__manager-portrait img { display: block; width: 100%; height: auto; max-width: none; }
+.oracle-v2__manager-copy { min-width: 0; }
+.oracle-v2__manager h2 { font-size: var(--fs-body); margin: 0; }
+.oracle-v2__manager p { margin-block: var(--space-2); }
+.oracle-v2__manager-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.oracle-v2__manager-actions button { font-size: var(--fs-caption); }
 .oracle-v2__guide { display: block; width: 64px; height: 72px; object-fit: cover; object-position: top; margin-bottom: 12px; }
 .oracle-v2__identity > div { min-width: 0; }
 .oracle-v2__scores, .oracle-v2__facts { margin: 16px 0; }
@@ -48,4 +55,4 @@
 .oracle-v2__question, .oracle-v2__article { animation: oracle-v2-enter 160ms ease-out; }
 @keyframes oracle-v2-enter { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) { .oracle-v2__question, .oracle-v2__article { animation: none; } }
-@media (max-width: 340px) { .oracle-v2__body, .oracle-v2__reader-body { padding-inline: 12px; } .oracle-v2__portrait { width: 80px; } }
+@media (max-width: 340px) { .oracle-v2__body, .oracle-v2__reader-body { padding-inline: 12px; } }
