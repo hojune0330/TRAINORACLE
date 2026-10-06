@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { holdSharedOriginAccount, publishedModuleNames } from './oracle-public-release-config.mjs';
+import { canonicalOracleEnabled, holdSharedOriginAccount, publishedModuleNames } from './oracle-public-release-config.mjs';
 import { validateHostedReleaseEnvironment } from '../app/scripts/validate-hosted-release-env.mjs';
 
 test('configuration is read from the active published HTML entry, not retained obsolete bundles', () => {
@@ -23,4 +23,23 @@ test('account hold closes dependent gates, preserves feedback and does not inven
     'VITE_FEATURE_SHARING', 'VITE_FEATURE_FILE_ANALYSIS_TCX', 'VITE_EMAIL_AUTH_ENABLED']) assert.equal(held[name], 'false');
   assert.equal(held.VITE_ACCOUNT_STORAGE_PRIVACY_RELEASE_APPROVED, undefined);
   assert.deepEqual(validateHostedReleaseEnvironment(held), []);
+});
+
+test('canonical guest packages default to the approved UI without changing account settings', () => {
+  const config = Object.freeze({ VITE_ACCOUNT_PUBLIC_ENABLED: 'false', VITE_KILL_ACCOUNT: 'true' });
+  assert.equal(canonicalOracleEnabled(config), true);
+  assert.deepEqual(config, { VITE_ACCOUNT_PUBLIC_ENABLED: 'false', VITE_KILL_ACCOUNT: 'true' });
+});
+
+test('opening accounts later does not implicitly activate the Oracle account rollout', () => {
+  assert.equal(canonicalOracleEnabled({ VITE_ACCOUNT_PUBLIC_ENABLED: 'true' }), false);
+  assert.equal(canonicalOracleEnabled({ VITE_ACCOUNT_PUBLIC_ENABLED: 'true', VITE_KILL_ACCOUNT: 'true' }), true);
+  assert.equal(canonicalOracleEnabled({ VITE_ACCOUNT_PUBLIC_ENABLED: 'true' }, '--oracle-v2=enabled'), true);
+});
+
+test('explicit disabled packages and the published Oracle kill switch remain authoritative', () => {
+  assert.equal(canonicalOracleEnabled({}, '--oracle-v2=disabled'), false);
+  assert.equal(canonicalOracleEnabled({ VITE_KILL_ORACLE_V2: 'true' }, '--oracle-v2=enabled'), false);
+  assert.equal(canonicalOracleEnabled({ VITE_KILL_ORACLE_V2: 'true' }), false);
+  assert.throws(() => canonicalOracleEnabled({}, '--oracle-v2=typo'), /INVALID_ORACLE_ROLLOUT_OPTION/);
 });

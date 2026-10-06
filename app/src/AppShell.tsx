@@ -1,4 +1,5 @@
 import React from "react"
+import { oracleV2FeatureEnabled } from "./domain/oracle-rollout"
 import { READER_HISTORY_KEY } from "./hooks/useReaderDialog"
 import { useCalendarSnapshot } from "./hooks/useCalendarEntries"
 import { rememberCalendarDate } from "./hooks/useCalendarPosition"
@@ -75,7 +76,7 @@ const OVERLAY_HISTORY_KEY = "trainoracleOverlay"
 const ORACLE_INVITATION_RETURN_KEY = "trainoracle.oracle-v2.invitation-return"
 
 function oracleV2Enabled(): boolean {
-  return import.meta.env.VITE_FEATURE_ORACLE_V2 === "true" && import.meta.env.VITE_KILL_ORACLE_V2 !== "true"
+  return oracleV2FeatureEnabled(import.meta.env)
 }
 function oracleInvitationFragment(): string | null {
   const values = new URLSearchParams(window.location.hash.slice(1)).getAll("oracle-compare-invite")
