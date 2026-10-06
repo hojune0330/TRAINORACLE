@@ -34,9 +34,9 @@ describe("OracleReturnPanel contract", () => {
     render(<OracleReturnPanel compact onOpenTopic={vi.fn()} />)
     const topicButtons = screen.getAllByRole("button")
     expect(topicButtons).toHaveLength(2)
-    expect(topicButtons[0]).toHaveTextContent("우선 훈련")
-    expect(topicButtons[1]).toHaveTextContent("현재 수준")
-    expect(screen.queryByText("다음 훈련의 초점은 무엇으로 잡을까?")).toBeNull()
+    expect(topicButtons[0]).toHaveTextContent("다음 훈련 검토")
+    expect(topicButtons[1]).toHaveTextContent("경기 기록 비교")
+    expect(screen.queryByText("다음 훈련 전에 무엇을 확인할까?")).toBeNull()
     expect(screen.queryByRole("button", { name: /관심 해제/ })).toBeNull()
   })
 
@@ -46,8 +46,8 @@ describe("OracleReturnPanel contract", () => {
     store.enableOptIn()
     store.saveInterest("level")
     render(<OracleReturnPanel onOpenTopic={onOpenTopic} />)
-    expect(screen.getByTestId("oracle-return-panel")).toHaveTextContent("현재 수준")
-    fireEvent.click(screen.getByRole("button", { name: /현재 수준지금 내 기록/ }))
+    expect(screen.getByTestId("oracle-return-panel")).toHaveTextContent("경기 기록 비교")
+    fireEvent.click(screen.getByRole("button", { name: /경기 기록 비교.*지난 경기 기록과 얼마나 달라졌을까\?/u }))
     expect(onOpenTopic).toHaveBeenCalledWith("level")
   })
 

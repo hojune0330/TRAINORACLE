@@ -9,6 +9,7 @@ vi.mock("./domain/account/account-service", () => ({
 vi.mock("./domain/account/product-analytics-service", () => ({ trackProductEvent: vi.fn() }))
 vi.mock("./domain/account/account-reward-client", () => ({ requestAccountRewards: mocks.reward }))
 vi.mock("./domain/plan-beta-store", () => ({
+  loadPlanBetaState: () => null,
   readPlanBetaStateFromStorage: () => ({ kind: "missing" }),
   readArchivedOriginalPlans: () => ({ kind: "loaded", plans: [] }),
 }))

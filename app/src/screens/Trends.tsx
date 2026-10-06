@@ -211,8 +211,10 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
         {section === "training" && detail === "mix" && <EnergySystemLedgerPanel observations={observations} today={today} planState={planState} mode="full" />}
         {section === "training" && detail === "monthly" && <MonthlyTrendSection observations={observations} today={today} initialMetric={initialContext?.metric} />}
         {section === "training" && detail === "summary" && onOpenOracle && <div className="trends-hub__explore"><OracleResume onOpenTopic={onOpenOracle} /></div>}
-        {section === "training" && detail === "summary" && <div style={{ padding: "0 20px" }}>
+        {section === "training" && detail !== "files" && <div style={{ padding: "0 20px" }}>
           <AnalysisExclusionNotice summary={exclusion} />
+        </div>}
+        {section === "training" && detail === "summary" && <div style={{ padding: "0 20px" }}>
           <InfoDisclosure title="분석 기준">
             <p>확인된 기록만 분석해요. 개인 메모는 읽지 않아요.</p>
             <p>기록을 정리한 결과이며, 계획·안전 판단은 자동으로 바꾸지 않아요.</p>

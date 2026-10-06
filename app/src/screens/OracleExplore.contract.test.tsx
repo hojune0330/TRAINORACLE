@@ -15,12 +15,12 @@ afterEach(() => {
 })
 
 const routes = [
-  { id: "level", title: "현재 수준", next: "focus", action: "records" },
-  { id: "focus", title: "강점·보완점", next: "priority", action: "journal" },
-  { id: "compare", title: "훈련 비교", next: "change", action: "journal" },
-  { id: "mix", title: "훈련 구성", next: "compare", action: "trends" },
-  { id: "priority", title: "우선 훈련", next: "mix", action: "plan" },
-  { id: "change", title: "훈련 후 변화", next: "level", action: "trends" },
+  { id: "level", title: "경기 기록 비교", question: "지난 경기 기록과 얼마나 달라졌을까?", next: "focus", action: "records" },
+  { id: "focus", title: "계획과 실제 강도", question: "계획보다 더 힘들게 느껴진 훈련은?", next: "priority", action: "journal" },
+  { id: "compare", title: "월별 훈련 거리 비교", question: "최근 두 달, 한 번에 달린 거리는?", next: "change", action: "journal" },
+  { id: "mix", title: "훈련 구성", question: "최근에는 어떤 훈련을 많이 했을까?", next: "compare", action: "trends" },
+  { id: "priority", title: "다음 훈련 검토", question: "다음 훈련 전에 무엇을 확인할까?", next: "mix", action: "plan" },
+  { id: "change", title: "월별 기록 비교", question: "최근 두 달에 남긴 기록은 어떻게 달랐을까?", next: "level", action: "trends" },
 ] as const
 
 function mountExplore(topicId: OracleTopicId = "level") {
@@ -253,9 +253,9 @@ describe("Oracle six-topic entry grid", () => {
     const grid = screen.getByRole("region", { name: "궁금한 항목부터" })
     expect(within(grid).getByText("내 기록 · 결과 예시")).toBeVisible()
     expect(within(grid).getAllByRole("button")).toHaveLength(6)
-    routes.forEach(({ id, title }, index) => {
+    routes.forEach(({ id, title, question }, index) => {
       const topic = catalog.getOracleTopic(id)
-      const button = within(grid).getByRole("button", { name: `${title} · ${topic.question} · 결과 보기` })
+      const button = within(grid).getByRole("button", { name: `${title} · ${question} · 결과 보기` })
       expect(button).toBeEnabled()
       expect(within(button).getByText(title)).toBeVisible()
       if (compact) expect(within(button).queryByText(topic.teaser)).not.toBeInTheDocument()

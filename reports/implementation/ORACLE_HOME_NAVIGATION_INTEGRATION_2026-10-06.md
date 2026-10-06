@@ -32,4 +32,16 @@ No production database migration, function deployment, real-account write, new t
 - Final recording focus repair includes the bottom navigation in the return-target lookup; mounted-plan cancel and browser Back both assert restored focus. Navigation follow-up: 8/8 passed.
 - These figures are separate runs with overlap and must not be added together or labelled a full suite.
 
-Packaging, publication, hosted checks and GitHub Actions status are separate evidence levels and will be reported after publication. No authenticated real-user round trip has been performed.
+## Post-publication focused follow-up
+
+Manual Pages publication of `81dba67d` was hosted successfully at Pages commit `62d3549a` on 2026-10-06. Public basic and V2-preview manifests both matched the source; browser review confirmed the result-first Home and eight-group reading library. This first publication is superseded by the exclusion-notice repair below.
+
+GitHub run `37398189408` completed contract-tests successfully, but the main app unit group reported 7,195 passed, nine failed and 33 skipped. Its browser and automatic deployment jobs did not run. Four failing files were retained as real failures: a missing mock export, old topic-label expectations in two files, and an exclusion-notice visibility regression.
+
+- Actual UI repair: the existing imported/no-provenance explanation remains available on every selected training analysis, not only the summary. The file panel retains its existing notice without duplicate rendering.
+- Test repair: preserve all existing guest-scope, count, route and callback assertions while supplying the honest empty-plan mock and current literal topic labels.
+- Provenance/exploration/navigation follow-up: 19/19 passed sequentially. An earlier parallel local run had a five-second training-step timeout (18 passed, one failed); the sequential run kept the same assertions and timeout.
+- Guest-reward mock follow-up: 3/3 passed. Full remote gate status remains separate from these focused repair checks; no failed or skipped gate is represented as successful.
+- Current-label fixtures in OracleReturnPanel and OracleExplore were verified in a two-file focused run. Final typecheck passed after the notice repair.
+
+Final packaging, publication and the new exact-commit GitHub Actions status are reported in the deployment receipt and handoff. No authenticated real-user round trip has been performed.
