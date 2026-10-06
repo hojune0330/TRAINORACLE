@@ -3,7 +3,7 @@ import { createRequire } from 'node:module';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { holdSharedOriginAccount, publishedModuleNames } from './oracle-public-release-config.mjs';
+import { canonicalOracleEnabled, holdSharedOriginAccount, publishedModuleNames } from './oracle-public-release-config.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const app = resolve(repo, 'app');
@@ -46,7 +46,8 @@ const key = configuration.VITE_SUPABASE_ANON_KEY;
 if (!key.startsWith('sb_publishable_') && JSON.parse(Buffer.from(key.split('.')[1], 'base64url').toString()).role !== 'anon') {
   throw Error('NON_PUBLIC_KEY_REJECTED');
 }
-const enabled = process.argv.includes('--oracle-v2=enabled');
+// Canonical guest UI is approved; explicit disabled builds remain available.
+const oracleOption = process.argv.find(arg => arg.startsWith('--oracle-v2='));
 const previewOnly = process.argv.includes('--preview-only');
 const accountHeld = process.argv.includes('--account-held');
 if (accountHeld) configuration = holdSharedOriginAccount(configuration);
@@ -59,8 +60,10 @@ if (previewOnly) {
     }
   }
 }
+// A published emergency hold is never cleared by repackaging the same source.
+const enabled = canonicalOracleEnabled(configuration, oracleOption);
 configuration.VITE_FEATURE_ORACLE_V2 = String(enabled);
-configuration.VITE_KILL_ORACLE_V2 = 'false';
+configuration.VITE_KILL_ORACLE_V2 ??= 'false';
 for (const name of Object.keys(process.env)) if (name.startsWith('VITE_')) delete process.env[name];
 Object.assign(process.env, configuration);
 const { validateHostedReleaseEnvironment } = await import('../app/scripts/validate-hosted-release-env.mjs');

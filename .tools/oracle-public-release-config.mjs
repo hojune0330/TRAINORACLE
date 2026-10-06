@@ -14,3 +14,13 @@ export function holdSharedOriginAccount(configuration) {
   for (const provider of ['KAKAO', 'GOOGLE', 'EMAIL', 'PHONE']) result[`VITE_${provider}_AUTH_ENABLED`] = 'false';
   return result;
 }
+
+export function canonicalOracleEnabled(configuration, option) {
+  if (option && !['--oracle-v2=enabled', '--oracle-v2=disabled'].includes(option)) {
+    throw Error('INVALID_ORACLE_ROLLOUT_OPTION');
+  }
+  const accountOpen = configuration.VITE_ACCOUNT_PUBLIC_ENABLED === 'true'
+    && configuration.VITE_KILL_ACCOUNT !== 'true';
+  const requested = option === '--oracle-v2=enabled' || (option === undefined && !accountOpen);
+  return requested && configuration.VITE_KILL_ORACLE_V2 !== 'true';
+}

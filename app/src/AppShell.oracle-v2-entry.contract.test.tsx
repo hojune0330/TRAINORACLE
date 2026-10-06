@@ -107,6 +107,14 @@ it("production flag opens V2 from the normal profile entry without a preview que
   expect(await screen.findByRole("heading", { name: "V2 profile" })).toBeVisible()
   expect(window.location.search).toBe("?app=1")
 })
+it("canonical default opens guest V2 without a rollout flag, preview query or account request", async () => {
+  vi.stubEnv("VITE_FEATURE_ORACLE_V2", undefined)
+  render(<AppShell />); await openProfile()
+  expect(await screen.findByRole("heading", { name: "V2 profile" })).toBeVisible()
+  expect(window.location.search).toBe("?app=1")
+  expect(runtime.comparison).not.toHaveBeenCalled()
+  expect(fetch).not.toHaveBeenCalled()
+})
 it.each(["false", "", "1", "TRUE"])("flag %s preserves V1 despite development mode, preview query and invitation", async flag => {
   vi.stubEnv("DEV", true); vi.stubEnv("PROD", false); vi.stubEnv("VITE_FEATURE_ORACLE_V2", flag)
   window.history.replaceState(null, "", `?app=1&oracleV2=1#oracle-compare-invite=${code}`)
