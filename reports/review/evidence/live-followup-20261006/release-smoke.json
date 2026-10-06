@@ -1,0 +1,12 @@
+{
+  "source": "7f106efaca8d33ef7ac43410fea6f237cad6b3f9",
+  "checks": [
+    "live manifest and receipt agree; account hold retained",
+    "home optional feature is discoverable by button role; Enter and Space work",
+    "pace reason shows representative time; exact value retained; Back returns to result",
+    "synthetic consent enables comparison; closes to origin; reopened input is empty",
+    "seeded synthetic exercise rows read in original journal without empty aggregate cells; no aggregate pace invented"
+  ],
+  "errors": [],
+  "status": "PASS"
+}
