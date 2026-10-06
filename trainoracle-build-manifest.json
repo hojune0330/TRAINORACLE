@@ -1,12 +1,12 @@
 {
   "kind": "TRAINORACLE_RELEASE_BUILD_PACKAGE",
-  "sourceSha": "7db5b04d74347df2bb8aa2e8f5c94a3cfdb07cec",
-  "previousPagesSha": "081fc0e6e35d54d5967dd0746e82c07b39bf60b4",
-  "deploymentStatus": "NOT_PUBLISHED",
+  "sourceSha": "22de3679a594b80bdc5961bb75347babe353f476",
+  "previousPagesSha": "9f3f493b52fbc2c069a4b1b5a2b17e8d51cad3d5",
+  "deploymentStatus": "PUBLICATION_REQUESTED",
   "previewOnly": false,
   "accountHeld": true,
-  "publicConfigurationSourceSha": "081fc0e6e35d54d5967dd0746e82c07b39bf60b4",
+  "publicConfigurationSourceSha": "9f3f493b52fbc2c069a4b1b5a2b17e8d51cad3d5",
   "oracleV2Enabled": true,
   "backendVerification": "NOT_CONFIRMED",
-  "builtAt": "2026-10-06T06:03:59.096Z"
+  "builtAt": "2026-10-06T06:08:11.336Z"
 }
