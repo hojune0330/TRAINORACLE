@@ -77,8 +77,8 @@
 
 /* The persistent five-tab bar is shared by every app screen. */
 .app-tab-bar__button svg {
-  width: 13px;
-  height: 13px;
+  width: 20px;
+  height: 20px;
 }
 
 /* Compact the top rails used by journal examples and decoration tools. */

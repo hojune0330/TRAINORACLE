@@ -36,17 +36,19 @@ this_change: DOCUMENTATION_ONLY
 
 2026-10-05 릴리스 정합화: main 인증 강화 0051~0056과 목적별 저장 동의 0057을 보존한다.
 이전 Oracle 후보 0051~0054, 이후 0057~0060은 충돌을 피하도록 0058~0061로 이동했다.
+2026-10-06 main 26c86a9a 통합: main의 저장 철회·파기 0058을 보존하고,
+아직 적용하지 않은 Oracle 후보만 0059~0062로 이동했다. 운영 migration 이력은 변경하지 않았다.
 [실행 도구와 사전 점검](../../supabase/operations/ORACLE_V2_RELEASE.md)을 먼저 따른다.
 이후 추가 migration은 반드시 다음 순서로 적용한다.
 
 | 순서 | 정확한 파일 | 역할 |
 |---|---|---|
-| 1 | [0058_running_profile_account_storage.sql](../../supabase/migrations/0058_running_profile_account_storage.sql) | 기존 암호화 계정 경로의 RUNNING_PROFILE 종류와 지원 확인 |
-| 2 | [0059_oracle_v2_account_compatibility.sql](../../supabase/migrations/0059_oracle_v2_account_compatibility.sql) | V2 지원 확인 |
-| 3 | [0060_oracle_v2_explicit_restart.sql](../../supabase/migrations/0060_oracle_v2_explicit_restart.sql) | 삭제 후 명시적 새 시작; 과거 답 복원 아님 |
-| 4 | [0061_oracle_profile_comparison_grants.sql](../../supabase/migrations/0061_oracle_profile_comparison_grants.sql) | 초대, 양측 비교/외부 공유 grant, 철회, 별도 서명 검증 |
+| 1 | [0059_running_profile_account_storage.sql](../../supabase/migrations/0059_running_profile_account_storage.sql) | 기존 암호화 계정 경로의 RUNNING_PROFILE 종류와 지원 확인 |
+| 2 | [0060_oracle_v2_account_compatibility.sql](../../supabase/migrations/0060_oracle_v2_account_compatibility.sql) | V2 지원 확인 |
+| 3 | [0061_oracle_v2_explicit_restart.sql](../../supabase/migrations/0061_oracle_v2_explicit_restart.sql) | 삭제 후 명시적 새 시작; 과거 답 복원 아님 |
+| 4 | [0062_oracle_profile_comparison_grants.sql](../../supabase/migrations/0062_oracle_profile_comparison_grants.sql) | 초대, 양측 비교/외부 공유 grant, 철회, 별도 서명 검증 |
 
-0058~0060의 기존 함수 anchor 검사 실패는 중지 사유다. 임의 문자열 치환이나
+0059~0061의 기존 함수 anchor 검사 실패는 중지 사유다. 임의 문자열 치환이나
 검사 제거로 통과시키지 않는다. 다른 checkout의 번호가 같은 migration을 섞지 않는다.
 새 환경은 저장소 migration 전체를 정식 순서로 적용한다.
 아래 PGlite 시험의 일부 migration 제외 목록을 배포 목록으로 사용하지 않는다.
@@ -54,7 +56,7 @@ this_change: DOCUMENTATION_ONLY
 ### 서버/클라이언트 배포 단위
 
 1. 기능 노출을 닫고 비교 전용 제어를 OFF로 유지한다. 적용 대상과 이력, 변경 묶음을 기록한다.
-2. 위 migration을 적용한다. 0061은 `oracle_profile_comparison_controls.enabled=false`로 시작하며 키를 만들지 않는다.
+2. 위 migration을 적용한다. 0062는 `oracle_profile_comparison_controls.enabled=false`로 시작하며 키를 만들지 않는다.
 3. 계정 저장 담당자의 V2 호환 `account-journal` 함수와 생성 validator를 함께 준비한다.
    DB 지원 확인만 새롭고 실제 validator가 오래된 조합은 허용하지 않는다.
 4. 새 `supabase/functions/oracle-profile-comparison/index.ts`, 전용 handler/validator 및
@@ -193,7 +195,7 @@ node --test oracle-profile-comparison.test.mjs
 시험 파일은 메모리 PGlite에 A/B 합성 계정·세션·암호화 현재 프로필을 만들고,
 침입 대조군 C도 만든다. 실제 SQL, HMAC, 암호화/복호화, handler를 실행하지만
 Supabase Auth와 Edge HTTP 배포는 합성 어댑터로 대체한다.
-현재 로컬 harness는 main 목적 동의 0057을 포함하여 실제 0001~0061 SQL을 제외 없이 로드한다.
+현재 로컬 harness는 main 목적 동의 0057과 저장 철회·파기 0058을 포함하여 실제 0001~0062 SQL을 제외 없이 로드한다.
 OAuth 세션과 2026-10-05 법적 동의, 사용자별 health/text 목적 동의를 실제 RPC로 준비한다.
 운영 검토 행은 폐기되는 PGlite DB에서만 합성 자료로 생성하며 운영 증거가 아니다.
 운영에서 보류된 0039/0041~0044의 자동 적용을 뜻하지 않으며 실제 JWT 로그인 검증의 증거도 아니다.

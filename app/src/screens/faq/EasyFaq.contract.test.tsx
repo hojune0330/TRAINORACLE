@@ -14,9 +14,9 @@ function enablePublicAccountForTest() {
   vi.stubEnv("VITE_SUPABASE_URL", "https://project.supabase.co")
   vi.stubEnv("VITE_SUPABASE_ANON_KEY", "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYW5vbiJ9.synthetic-signature")
   vi.stubEnv("VITE_PRIVACY_POLICY_URL", "https://example.com/privacy")
-  vi.stubEnv("VITE_PRIVACY_POLICY_VERSION", "2026-08-26")
+  vi.stubEnv("VITE_PRIVACY_POLICY_VERSION", "2026-10-05")
   vi.stubEnv("VITE_TERMS_OF_SERVICE_URL", "https://example.com/terms")
-  vi.stubEnv("VITE_TERMS_OF_SERVICE_VERSION", "2026-08-26")
+  vi.stubEnv("VITE_TERMS_OF_SERVICE_VERSION", "2026-10-05")
 }
 
 describe("easy FAQ", () => {
@@ -57,6 +57,7 @@ describe("easy FAQ", () => {
 
     expect(screen.getByText("나만의 메모는 서비스 운영자도 볼 수 없나요?")).toBeVisible()
     expect(screen.getByText(/복구 코드를 가진 사용자만/u)).toBeInTheDocument()
+    expect(screen.getByText(/서비스가 복호화할 수 있는 방식/u)).toBeInTheDocument()
     expect(screen.getByText("만 14세 미만도 사용할 수 있나요?")).toBeVisible()
     expect(screen.getByText(/온라인 계정은 만 14세부터 제공해요/u)).toBeInTheDocument()
   })

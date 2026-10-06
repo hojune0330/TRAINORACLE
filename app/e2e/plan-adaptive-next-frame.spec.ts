@@ -95,7 +95,7 @@ for (const viewport of [
     expect(await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(activeBefore)
     await page.reload()
     await page.getByRole("navigation", { name: "주 탭" })
-      .getByRole("button", { name: "계획" })
+      .getByRole("button", { name: "훈련" })
       .click()
     await page.getByRole("button", { name: "다음 계획 조정하기" }).click()
     await expect(page.getByText("다음 주기에 사용할 계획안을 저장했어요", { exact: false }))
@@ -128,7 +128,7 @@ for (const viewport of [
 
     await page.reload()
     await page.getByRole("navigation", { name: "주 탭" })
-      .getByRole("button", { name: "계획" })
+      .getByRole("button", { name: "훈련" })
       .click()
     await page.getByRole("button", { name: "다음 계획 조정하기" }).click()
     await expect(page.getByText("다음 주기에 사용할 계획안을 저장했어요", { exact: false }))
@@ -152,7 +152,7 @@ for (const viewport of [
 
     await page.reload()
     await page.getByRole("navigation", { name: "주 탭" })
-      .getByRole("button", { name: "계획" })
+      .getByRole("button", { name: "훈련" })
       .click()
     expect(await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(activatedBytes)
     expect(await page.evaluate(() => JSON.parse(
@@ -209,7 +209,7 @@ async function seedRecords(page: Page): Promise<void> {
 async function openPlan(page: Page): Promise<void> {
   await page.goto(`${appPath}?app=1`)
   await page.getByRole("navigation", { name: "주 탭" })
-    .getByRole("button", { name: "계획" })
+    .getByRole("button", { name: "훈련" })
     .click()
 }
 

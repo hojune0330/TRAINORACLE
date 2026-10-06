@@ -363,7 +363,7 @@ it("opens a saved multi-plan through real application navigation with independen
       readMultiAdjustedEvidenceV3: () => reviewed.retained,
     } }))
   })
-  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "계획" })) })
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "훈련" })) })
   expect(await screen.findByRole("heading", { name: "내 훈련 일정" }, { timeout: 5000 })).toBeTruthy()
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
   expect(readPlanBetaStateFromStorage([], [], reviewed.retained).kind).toBe("multi_adjusted_v3_loaded")
@@ -379,7 +379,8 @@ it("opens a saved multi-plan through real application navigation with independen
   expect(loadEntries()).toEqual([])
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
   fireEvent.click(screen.getByRole("button", { name: "계획대로 마쳤어요" }))
-  fireEvent.click(screen.getByRole("button", { name: slotName }))
+  const activityRegion = screen.getByRole("region", { name: /운동은 어떻게 됐나요\?/u })
+  fireEvent.click(within(activityRegion).getByRole("button", { name: slotName }))
   fireEvent.click(screen.getByRole("button", { name: /RPE 6,/ }))
   fireEvent.click(screen.getByRole("button", { name: "없어요" }))
   expect(loadEntries()).toHaveLength(0)
@@ -389,6 +390,8 @@ it("opens a saved multi-plan through real application navigation with independen
   expect(loadEntries()[0]).toMatchObject({ activityOutcome: "COMPLETED", rpe: 6,
     plannedSessionLink: { sessionDay: address.day, sessionSlot: address.slot } })
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
+  expect(readPlanBetaStateFromStorage([], [], reviewed.retained)).toMatchObject({ kind: "multi_adjusted_v3_loaded", state: saved.state })
+  expect(readPlanBetaStateFromStorage().kind).toBe("invalid")
 }, 15_000)
 
 it.each(["absent", "withdrawn-after-write"])("does not save a plan using transient evidence absent from the independent journal reader: %s", async mode => {

@@ -2,6 +2,12 @@ import { expect, test } from "@playwright/test"
 
 test.use({ serviceWorkers: "block" })
 
+test.beforeEach(async ({ page, baseURL }) => {
+  const appOrigin = new URL(baseURL!).origin
+  await page.route("**/*", route => new URL(route.request().url()).origin === appOrigin
+    ? route.continue() : route.abort())
+})
+
 test("explains the first free beta places without implying that account sync is open", async ({ page }) => {
   // Given: a new athlete is using the public local-journal app.
   await page.goto("/")
@@ -31,17 +37,22 @@ test("keeps the welcome home clear and usable on narrow phones", async ({ page }
     await page.goto("/")
 
     await expect(page.getByRole("heading", {
-      name: "내 훈련, 무엇부터 개선할까요?",
+      name: "오늘 운동을 기록해요",
     })).toBeVisible()
     await expect(page.getByText("모든 데이터는 이 기기에만 저장돼요.")).toHaveCount(0)
     await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "예시 결과 보기", exact: true })).toBeInViewport({ ratio: 1 })
+    await expect(page.getByRole("button", { name: "오늘 기록 남기기", exact: true })).toBeInViewport({ ratio: 1 })
     await page.getByRole("button", { name: "오늘 기록 남기기" }).scrollIntoViewIfNeeded()
     await expect(page.getByRole("button", { name: "오늘 기록 남기기" })).toBeInViewport({ ratio: 1 })
+    const result = page.getByRole("region", { name: "오라클 · 예시 결과", exact: true })
+    await expect(result).toBeVisible()
+    await expect(result).toContainText("예시")
+    await expect(page.getByRole("region", { name: "더 살펴보기", exact: true })).toHaveCount(0)
     const services = page.getByRole("navigation", { name: "훈련 도움말과 일지 꾸미기" })
-    for (const name of ["훈련 배우기", "일지 꾸미기", "일지 예시 보기"]) {
+    for (const name of ["훈련 배우기", "일지 꾸미기"]) {
       await expect(services.getByRole("button", { name })).toBeVisible()
     }
+    await expect(page.getByRole("button", { name: "일지 예시 보기" })).toBeVisible()
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
     await page.screenshot({
       path: testInfo.outputPath(`first-screen-${viewport.width}x${viewport.height}.png`),

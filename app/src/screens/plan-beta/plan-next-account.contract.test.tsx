@@ -73,7 +73,12 @@ it("selects the next frame through one account transaction and retains the exact
   expect(current.kind).toBe("read_only")
   if (current.kind !== "read_only" || current.packet.state.version !== 3) throw Error("Missing current plan")
   expect(current.packet.state.periodization).toMatchObject({ programLineageId: base.periodization!.programLineageId, frameOrdinal: 2 })
-  expect(Object.entries(localStorage)).toEqual(localBefore)
+  // Only this operation's body-free consent pin may be added; no plan or other
+  // local content may be copied as a side effect of selecting an account plan.
+  const commit = server.commits[0]
+  if (!commit) throw Error("Missing account commit")
+  const consentPinKey = `trainoracle.storage-consent-revision.v1:${COLLECTION_OWNER}:${commit.operationId}`
+  expect(Object.entries(localStorage)).toEqual([...localBefore, [consentPinKey, "0"]])
 })
 
 it("reads an exact historical account pair without selecting or copying its unrelated sibling", async () => {

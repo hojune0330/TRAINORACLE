@@ -9,7 +9,7 @@ const ACCOUNT_BACKED_FEATURES = [
 ]
 
 const CURRENT_ACCOUNT_LEGAL_VERSION = "2026-10-05"
-const REQUIRED_ACCOUNT_STORAGE_MIGRATION = "0057_purpose_scoped_storage_consent"
+const REQUIRED_ACCOUNT_STORAGE_MIGRATION = "0058_storage_withdrawal_erasure"
 
 function textValue(environment, name) {
   const value = environment[name]

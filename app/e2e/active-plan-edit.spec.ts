@@ -4,13 +4,12 @@ import type { PlanBetaStateV3 } from "../src/domain/plan-beta-schema"
 
 test.use({ serviceWorkers: "block" })
 
-const appOrigin = "http://127.0.0.1:4496"
-
 for (const viewport of [
   { name: "mobile", width: 390, height: 844 },
   { name: "desktop", width: 1280, height: 800 },
 ] as const) {
-  test(`active plan edit applies, persists, and cancels a new-plan draft at ${viewport.width}px`, async ({ page }) => {
+  test(`active plan edit applies, persists, and cancels a new-plan draft at ${viewport.width}px`, async ({ page, baseURL }) => {
+    const appOrigin = new URL(baseURL ?? "").origin
     await page.setViewportSize({ width: viewport.width, height: viewport.height })
     await page.clock.install({ time: new Date("2026-10-01T03:00:00.000Z") })
     await page.route("**/*", route => {
@@ -31,7 +30,7 @@ for (const viewport of [
     const pageErrors: string[] = []
     page.on("pageerror", error => pageErrors.push(error.message))
     await page.goto("/?app=1&uitest=1")
-    const planTab = page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" })
+    const planTab = page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" })
     await planTab.click()
     await expect(page.getByRole("heading", { name: "9일 훈련 계획" })).toBeVisible()
 
@@ -74,7 +73,7 @@ for (const viewport of [
     expect(applied.progress).toEqual(fixture.state.progress)
 
     await page.reload()
-    await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
+    await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
     await expect(page.getByRole("heading", { name: "9일 훈련 계획" })).toBeVisible()
     expect(await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(appliedBytes)
 
@@ -91,7 +90,8 @@ for (const viewport of [
   })
 }
 
-test("catalog edit prepares, previews, applies, and persists at 390px", async ({ page }) => {
+test("catalog edit prepares, previews, applies, and persists at 390px", async ({ page, baseURL }) => {
+  const appOrigin = new URL(baseURL ?? "").origin
   await page.setViewportSize({ width: 390, height: 844 })
   await page.clock.install({ time: new Date("2026-10-01T03:00:00.000Z") })
   await page.route("**/*", route => {
@@ -110,7 +110,7 @@ test("catalog edit prepares, previews, applies, and persists at 390px", async ({
   const pageErrors: string[] = []
   page.on("pageerror", error => pageErrors.push(error.message))
   await page.goto("/?app=1&uitest=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
   await page.locator("[data-plan-edit-button]").click()
   await page.getByRole("button", { name: "훈련 내용 바꾸기" }).click()
   const editor = page.getByRole("region", { name: "이 훈련 수정" })
@@ -133,7 +133,7 @@ test("catalog edit prepares, previews, applies, and persists at 390px", async ({
   expect(applied.activePlan.sessions.find(session => session.day === 3 && session.slot === "AM")?.prescription)
     .toMatchObject({ kind: "RPE_TIME_RANGE", catalogWorkout: { catalogId: fixture.alternateCatalogId } })
   await page.reload()
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
   expect(await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(appliedBytes)
   expect(pageErrors).toEqual([])
 })

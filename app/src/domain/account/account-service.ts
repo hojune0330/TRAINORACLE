@@ -189,6 +189,6 @@ export async function requestServerAccountDeletion(userId: string): Promise<Acco
     expected_user_id_input: userId,
   })
   return error === null
-    ? { ok: true, message: "계정 접근을 막았어요. 요청 30일 후부터 계정 데이터 정리 대상으로 처리해요. 삭제 완료와 백업 처리 결과는 문의로 확인할 수 있어요." }
+    ? { ok: true, message: "계정 삭제 요청을 접수하고 접근을 막았어요. 온라인 건강·일지 자료 삭제와 나머지 계정 정보 정리는 별도 완료 상태를 확인해 주세요. 기기 기록은 그대로이며 백업 정리 완료를 뜻하지 않아요." }
     : { ok: false, message: "계정 삭제를 요청하지 못했어요. 잠시 후 다시 시도해 주세요." }
 }

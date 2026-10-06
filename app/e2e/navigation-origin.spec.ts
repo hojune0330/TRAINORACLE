@@ -3,10 +3,16 @@ import { enterPlanWithoutRecord } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
+test.beforeEach(async ({ page, baseURL }) => {
+  const appOrigin = new URL(baseURL!).origin
+  await page.route("**/*", route => new URL(route.request().url()).origin === appOrigin
+    ? route.continue() : route.abort())
+})
+
 test("returns every audited child screen to the screen that opened it", async ({ page }) => {
   await page.goto("/?app=1")
 
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
   await enterPlanWithoutRecord(page)
   await expect(page.getByRole("heading", { name: "지금까지 어떻게 달려왔나요?" })).toBeVisible()
 
@@ -16,7 +22,16 @@ test("returns every audited child screen to the screen that opened it", async ({
   await page.evaluate(() => window.history.back())
   await expect(page.getByRole("heading", { name: "지금까지 어떻게 달려왔나요?" })).toBeVisible()
 
+  let discardedPlanDraft = false
+  page.once("dialog", async dialog => {
+    expect(dialog.type()).toBe("confirm")
+    expect(dialog.message()).toContain("아직 저장하지 않은 계획")
+    discardedPlanDraft = true
+    await dialog.accept()
+  })
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "홈", exact: true }).click()
+  expect(discardedPlanDraft).toBe(true)
+  await expect(page.getByRole("heading", { name: "오늘 운동을 기록해요", exact: true })).toBeVisible()
   await page.getByRole("button", { name: "더보기" }).click()
   await page.getByRole("button", { name: "요즘 주목받는 훈련법" }).click()
   await expect(page.getByRole("heading", { name: "어떤 훈련이 궁금한가요?" })).toBeVisible()

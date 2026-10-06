@@ -20,6 +20,18 @@ const future=()=>new Date(Date.now()+3600000).toISOString();
 const fields=['CHALLENGE_1','CHALLENGE_2','SOCIAL_1'];
 const profile=(answers)=>({version:3,state:'ACCOUNT_STATE',kind:'RUNNING_PROFILE',data:{version:'RUNNING_PROFILE_V2',status:'ACTIVE',legacyAnswers:{},legacyAnsweredAt:null,readings:[],current:{version:'ORACLE_PROFILE_REVISION_V2',revision:1,answeredAt:'2026-10-04T00:00:00.000Z',questionVersion:'ORACLE_QUESTIONS_V2_1',scoreVersion:'SELF_RESPONSE_INDEX_V1',characterVersion:'RESPONSE_NICKNAME_V1',selectedCharacter:null,answers}}});
 async function admin(sql,params=[]) {await db.exec('reset role');return db.query(sql,params)}
+async function pinFixtureStorageRevision(ownerId) {
+  const observed=(await admin('select revision from public.account_storage_consents where user_id=$1',[ownerId])).rows[0].revision;
+  await admin("select set_config('request.headers',$1,false)",
+    [JSON.stringify({'x-trainoracle-storage-revision':String(observed)})]);
+}
+async function seedProfileFixture(ownerId,documentId) {
+  await pinFixtureStorageRevision(ownerId);
+  const encrypted=await encryptAccountJournalDocument(JSON.stringify(profile({CHALLENGE_1:1,CHALLENGE_2:ownerId===B?2:1,SOCIAL_1:'UNKNOWN',WE_1:5})),
+    {ownerId,documentId},material);
+  await admin('insert into public.account_journal_documents(user_id,document_id,revision,encrypted_payload) values($1,$2,1,$3)',[ownerId,documentId,encrypted]);
+  await admin("insert into public.account_journal_identity(user_id,document_id,document_kind,active) values($1,$2,'RUNNING_PROFILE',true)",[ownerId,documentId]);
+}
 async function auth(ownerId,sessionId,patch={}) {
   await setOracleAuth(db,ownerId,sessionId,{...claimOverrides.get(ownerId),...patch});
 }
@@ -78,9 +90,7 @@ before(async()=>{
     await admin('insert into auth.users(id,email_confirmed_at,encrypted_password) values($1,clock_timestamp(),null)',[owner]);
     await admin("insert into auth.sessions(id,user_id,not_after) values($1,$2,clock_timestamp()+interval '1 hour')",[sid,owner]);
     await admitOracleStorage(db,owner,sid);
-    const encrypted=await encryptAccountJournalDocument(JSON.stringify(profile({CHALLENGE_1:1,CHALLENGE_2:owner===B?2:1,SOCIAL_1:'UNKNOWN',WE_1:5})),{ownerId:owner,documentId:doc},material);
-    await admin('insert into public.account_journal_documents(user_id,document_id,revision,encrypted_payload) values($1,$2,1,$3)',[owner,doc,encrypted]);
-    await admin("insert into public.account_journal_identity(user_id,document_id,document_kind,active) values($1,$2,'RUNNING_PROFILE',true)",[owner,doc]);
+    await seedProfileFixture(owner,doc);
   }
   await admin('insert into public.oracle_profile_comparison_keys(key_id,secret) values($1,$2)',['synthetic',signing]);
 },{timeout:120000});
@@ -177,10 +187,17 @@ test('withdrawing either peer storage purpose denies comparison and export but k
     assert.equal((await call('A-token',{action:'export',comparisonId:cid})).status,200);
     try {
       await storageConsent(B,SB,health,text);
+      assert.equal((await admin('select count(*)::int n from public.account_journal_documents where user_id=$1',[B])).rows[0].n,0);
+      assert.equal((await admin('select count(*)::int n from public.account_journal_identity where user_id=$1',[B])).rows[0].n,0);
       assert.equal((await call('A-token',{action:'compare',comparisonId:cid})).status,403);
       assert.equal((await call('A-token',{action:'export',comparisonId:cid})).status,403);
       assert.equal((await call('B-token',{action:'revoke',comparisonId:cid})).status,200);
-    } finally {await storageConsent(B,SB,true,true);}
+    } finally {
+      await storageConsent(B,SB,true,true);
+      // Regrant never revives erased data. Seed an explicitly new synthetic profile
+      // for the next independent scenario, keeping the old comparison revoked.
+      await seedProfileFixture(B,DB);
+    }
     assert.equal((await call('A-token',{action:'compare',comparisonId:cid})).status,403);
   }
 });
@@ -198,6 +215,7 @@ test('closed storage operations deny comparison but preserve storage and compari
   } finally {
     await admin('update public.account_storage_operation_reviews set approved=true');
     await storageConsent(B,SB,true,true);
+    await seedProfileFixture(B,DB);
   }
   assert.equal((await call('A-token',{action:'compare',comparisonId:cid})).status,403);
 });
@@ -240,6 +258,7 @@ test('comparison withdrawal is terminal, including withdrawal before the initial
 });
 test('source changes, deletion and grant expiry deny, rather than serving stale results',async()=>{
   const cid=await pair();
+  await pinFixtureStorageRevision(B);
   await admin('update public.account_journal_documents set revision=2 where user_id=$1',[B]);
   assert.equal((await call('A-token',{action:'compare',comparisonId:cid})).status,403);
   await admin('update public.account_journal_documents set revision=1 where user_id=$1',[B]);

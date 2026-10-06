@@ -149,7 +149,7 @@ export function BetaAccountSettings({
         <>
           <SectionLb>계정 삭제</SectionLb>
           <p style={{ fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.6, color: "var(--ink-2)", margin: 0 }}>
-            요청이 서버에 저장되면 계정 접근을 막아요. 계정 데이터는 요청 30일 후부터 정리 작업으로 삭제하며, 완료 결과는 문의로 확인할 수 있어요. 백업의 별도 보유·만료 조건은 개인정보처리방침을 확인해 주세요.
+            요청이 서버에 저장되면 계정 접근을 막고 온라인 건강·일지 보관 자료와 교체본·휴지통을 함께 삭제해요. 나머지 계정 정보도 지체 없이 정리할 대상으로 접수하며, 모든 계정·백업 사본의 삭제 완료를 뜻하지는 않아요. 기기 기록은 그대로예요. 남은 정리 항목과 백업 조건은 개인정보처리방침을 확인해 주세요.
           </p>
           {deletionConfirming ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>

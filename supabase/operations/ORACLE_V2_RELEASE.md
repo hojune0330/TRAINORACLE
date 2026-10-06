@@ -27,7 +27,7 @@ separate signing key. Login completion alone is not that approval. Browser tools
 refused the production function-edit step while that request was unanswered.
 Do not retry through a different execution channel without resolving approval.
 
-The integrated local 0001-0061 chain now exercises real session and AMR fixtures,
+The integrated local 0001-0062 chain now exercises real session and AMR fixtures,
 current 2026-10-05 legal admission and explicit per-user health/text storage consent.
 The operations-review evidence row is synthetic and exists only in disposable PGlite.
 Comparison captures the issuing channel from the validated JWT; closing a party's
@@ -47,10 +47,12 @@ existing journal keys. Preserve remote Edge secrets without extracting them.
 
 ## Candidate
 
-Integrate main's auth migrations 0051-0056 and purpose-scoped storage consent 0057.
-Oracle migration identities are now 0058 running_profile_account_storage,
-0059 oracle_v2_account_compatibility, 0060 oracle_v2_explicit_restart,
-0061 oracle_profile_comparison_grants. Renumbering does not change SQL semantics.
+Integrate main's auth migrations 0051-0056, purpose-scoped storage consent 0057
+and storage withdrawal erasure 0058. After main 26c86a9a integration on 2026-10-06,
+unapplied Oracle candidate identities are 0059 running_profile_account_storage,
+0060 oracle_v2_account_compatibility, 0061 oracle_v2_explicit_restart,
+0062 oracle_profile_comparison_grants. Renumbering does not change SQL semantics
+or the production migration ledger.
 Never push the old colliding migration directory or repair history to it.
 
 Use PowerShell 7. Copy only the NON-SECRET metadata fields from
@@ -70,7 +72,7 @@ schema fingerprint and capability flags, not source definitions, user data or
 key bytes. Passwords enter through private stdin, not arguments or secret files.
 
 LIMITATION: automated staging currently requires baseline ledger evidence for
-0001-0057. Missing manual migration ledger rows do NOT prove missing SQL. In
+0001-0058. Missing manual migration ledger rows do NOT prove missing SQL. In
 that case stop automated staging and prove the current schema against main;
 do not replay the baseline or invent ledger rows. A schema-only approval path
 is not implemented. PostgreSQL execution of the generated release SQL has NOT

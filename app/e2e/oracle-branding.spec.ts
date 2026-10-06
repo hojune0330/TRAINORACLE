@@ -7,7 +7,7 @@ for (const width of [320, 375, 1440]) {
     await page.setViewportSize({ width, height: width === 1440 ? 900 : 740 })
     await page.goto("/?app=1")
     const tabs = page.getByRole("navigation", { name: "주 탭" })
-    await expect(tabs.getByRole("button", { name: "계획", exact: true })).toBeVisible()
+    await expect(tabs.getByRole("button", { name: "훈련", exact: true })).toBeVisible()
     const oracle = tabs.getByRole("button", { name: "오라클", exact: true })
     await oracle.click()
     await expect(page.getByRole("heading", { name: "오라클", exact: true })).toBeVisible()

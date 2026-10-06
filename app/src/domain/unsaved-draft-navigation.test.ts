@@ -1,5 +1,23 @@
 import { expect, it, vi } from "vitest"
-import { registerUnsavedDraftGuard, runDraftSafeNavigation } from "./unsaved-draft-navigation"
+import { hasUnsafeDrafts, registerUnsavedDraftGuard, runDraftSafeNavigation } from "./unsaved-draft-navigation"
+
+it("preserves a still-mounted plan without bypassing storage blockers or reload protection", () => {
+  const discard = vi.fn(), confirm = vi.fn(() => true), navigate = vi.fn()
+  const plan = registerUnsavedDraftGuard({ isUnsafe: () => true, onBlocked: vi.fn(), confirmDiscard: confirm, discard,
+    canPreserveMountedDraft: () => true })
+  const blocked = vi.fn()
+  const storage = registerUnsavedDraftGuard({ isUnsafe: () => true, onBlocked: blocked })
+  try {
+    expect(runDraftSafeNavigation(navigate, true)).toBe(false)
+    expect(discard).not.toHaveBeenCalled()
+    storage()
+    expect(runDraftSafeNavigation(navigate, true)).toBe(true)
+    expect(confirm).not.toHaveBeenCalled()
+    expect(hasUnsafeDrafts()).toBe(true)
+    expect(runDraftSafeNavigation(navigate)).toBe(true)
+    expect(discard).toHaveBeenCalledOnce()
+  } finally { plan(); storage() }
+})
 
 it("resumes an interactive draft decision only after it becomes safe and retains other blockers", () => {
   let unsafe = true

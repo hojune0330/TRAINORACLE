@@ -30,31 +30,51 @@ async function expectActiveQuestionAtReadingPosition(page: import("@playwright/t
 test("moves from a choice to the next question and gives a clear journal save confirmation", async ({ page }, testInfo) => {
   await resetLocalState(page)
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
 
   await expect(page.getByRole("combobox", { name: "종목" })).toBeVisible()
   await enterPlanWithoutRecord(page)
   await expect(page.getByRole("heading", { name: "지금까지 어떻게 달려왔나요?" })).toBeVisible()
   await expectActiveQuestionAtReadingPosition(page)
   const nextAnimation = await page.locator(".plan-intake").evaluate((element) => getComputedStyle(element).animationName)
-  expect(nextAnimation).toBe(testInfo.project.name === "reduced-motion" ? "none" : "flow-stage-forward")
+  expect(nextAnimation).toBe(testInfo.project.name === "reduced-motion" ? "none" : "flow-stage-enter")
+  const activePlanBefore = await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))
+  expect(activePlanBefore).toBeNull()
 
+  let discardDialog: { type: string; message: string } | undefined
+  page.once("dialog", (dialog) => {
+    discardDialog = { type: dialog.type(), message: dialog.message() }
+    void dialog.accept()
+  })
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
-  await page.getByRole("button", { name: /훈련 후/u }).click()
-  await expect(page.getByRole("heading", { name: /훈련 후/u })).toBeVisible()
+  expect(discardDialog).toEqual({
+    type: "confirm",
+    message: "아직 저장하지 않은 계획이 있어요. 계획 만들기를 그만두고 이동할까요?\n계속 만들려면 취소를 눌러 주세요.",
+  })
+  await expect(page.getByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
+  await page.getByRole("button", { name: /훈련 후.*거리·시간·훈련 내용을 모두 기록/u }).click()
+  await expect(page.getByRole("heading", { name: "훈련 후 · 기록" })).toBeVisible()
+  await page.getByRole("textbox", { name: "거리 (km)" }).fill("8")
   await page.getByRole("button", { name: /^저장/u }).click()
 
   const receipt = page.locator(".saved-toast")
   await expect(receipt).toBeVisible()
   await expect(receipt.locator(".saved-toast__check")).toHaveCount(1)
   await expect(receipt).toContainText("저장")
+  const savedEntries = await page.evaluate(() => {
+    const raw = window.localStorage.getItem("trainoracle.journal.v1")
+    return raw === null ? [] : JSON.parse(raw)
+  })
+  expect(savedEntries).toHaveLength(1)
+  expect(savedEntries[0]).toMatchObject({ kind: "post-session", distanceKm: "8" })
+  expect(await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(activePlanBefore)
 })
 
 test("a high-school athlete can make a ten-day two-a-day plan without prior records", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "mobile-chromium", "375px release persona")
   await resetLocalState(page)
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
 await completeDetailedPlan(page, { frame: /^10일 계획 받기/u, event: /^1500m/u, division: /고등부/u, experience: /구조화된 훈련과 경기 경험이 많아요/u, days: /^매일/u, focus: /조금 힘들게 꾸준히.*LT/u, time: /날마다 달라요/u, twice: true })
 
   await expect(page.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
@@ -69,7 +89,7 @@ test("a self-directed runner with no journal can still reach an RPE plan", async
   test.skip(testInfo.project.name !== "mobile-chromium", "375px release persona")
   await resetLocalState(page)
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
   await completeDetailedPlan(page, { frame: /^7일만 먼저 받기/u, event: /^5000m/u, division: /일반부/u, experience: /훈련 계획에 맞춰 달려 본 경험이 있어요/u, days: /^3일/u, focus: /편하게 오래.*BASE/u, time: /저녁에 운동해요/u })
 
   await expect(page.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()

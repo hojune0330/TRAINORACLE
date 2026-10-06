@@ -3,7 +3,7 @@ import { loadCatalogReductionFixture } from "./fixtures/catalog-cycle-reduction-
 import { JOURNAL_STORAGE_KEY } from "../src/domain/journal-storage-keys"
 
 async function openPlan(page: Page) {
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
 }
 async function storedPlan(page: Page) {
   return page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.plan-beta.v1") ?? "null"))

@@ -28,6 +28,7 @@ begin
       'amr',jsonb_build_array(jsonb_build_object('method','oauth','timestamp',extract(epoch from clock_timestamp())::bigint)))::text,true);
     perform public.set_account_storage_consent(target,sid,0,'2026-10-05',true,true);
   end loop;
+  perform set_config('request.headers','{"x-trainoracle-storage-revision":"1"}',true);
   insert into public.account_journal_documents(user_id,document_id,revision,encrypted_payload)
     values(a,gen_random_uuid(),1,jsonb_build_object('version',1,'algorithm','AES-GCM','keyId','SYNTHETIC_ONLY',
       'iv','AAAAAAAAAAAAAAAA','ciphertext','AAAAAAAAAAAAAAAAAAAAAA=='));

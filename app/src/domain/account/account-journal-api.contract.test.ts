@@ -4,6 +4,7 @@ import { accountJournalPreviewEnabled, requestAccountJournal, requestAccountDocu
 import { accountJournalRecordSchema, type AccountJournalRecord } from "./account-journal-record-schema"
 import { waitingJournal } from "../../test/progressive-journal-fixture"
 import { buildFileObservation } from "../import/file-observation"
+import { rememberStorageConsentRevision, pinStorageOperationRevision } from "./storage-consent-revision"
 import { accountOracleCompatibleDocumentSchema, emptyOracleV2Document } from "./account-oracle-v2-schema"
 
 const ownerId = "a1111111-1111-4111-8111-111111111111"
@@ -20,6 +21,21 @@ function dependencies(data: unknown, error: unknown = null) {
     functions: { invoke } }
   return { client: vi.fn().mockResolvedValue(client as unknown as SupabaseClient), owner: () => ownerId, invoke, auth: client.auth }
 }
+
+it("unpinned retries cannot borrow a regrant while explicitly pinned new operations retain their revision",async()=>{
+  localStorage.clear()
+  try {
+    rememberStorageConsentRevision(ownerId,3)
+    const old=dependencies({kind:"saved",documentId,operationId,revision:1})
+    await requestAccountJournal(ownerId,request,()=>true,old)
+    expect(old.invoke.mock.calls[0]?.[1].headers["x-trainoracle-storage-revision"]).toBe("0")
+    const freshId="e5555555-5555-4555-8555-555555555555"
+    pinStorageOperationRevision(ownerId,freshId)
+    const fresh=dependencies({kind:"saved",documentId,operationId:freshId,revision:1})
+    await requestAccountJournal(ownerId,{...request,operationId:freshId},()=>true,fresh)
+    expect(fresh.invoke.mock.calls[0]?.[1].headers["x-trainoracle-storage-revision"]).toBe("3")
+  } finally { localStorage.clear() }
+})
 it("keeps V1 and V2 support distinct, advertises V2 reads and fails closed on mismatched responses", async () => {
   const request = { action: "oracleV2Support", supportedRunningProfileVersions: [1, 2] } as const
   const call = { ...request, supportedRunningProfileVersions: [1, 2] as (1 | 2)[] }
@@ -72,7 +88,7 @@ describe("account record compatibility API", () => {
     expect(await requestAccountDocument(ownerId, request, () => true, accountJournalRecordSchema, deps))
       .toEqual({ ok: true, data: response })
     expect(deps.invoke).toHaveBeenCalledWith("account-journal", {
-      body: { ...request, supportedJournalVersions: [2, 3], supportsExerciseLogV1: true }, headers: { Authorization: `Bearer ${accessToken}` },
+      body: { ...request, supportedJournalVersions: [2, 3], supportsExerciseLogV1: true }, headers: { Authorization: `Bearer ${accessToken}`, "x-trainoracle-storage-revision": "0" },
     })
     expect(document.version).toBe(2)
   })
@@ -125,7 +141,7 @@ describe("account record compatibility API", () => {
     const deps = dependencies(receipt)
     expect(await requestAccountDocument(ownerId, correction, () => true, accountJournalRecordSchema, deps)).toEqual({ ok: true, data: receipt })
     expect(deps.invoke).toHaveBeenCalledWith("account-journal", { body: { ...correction, supportedJournalVersions: [2, 3], supportsExerciseLogV1: true },
-      headers: { Authorization: `Bearer ${accessToken}` } })
+      headers: { Authorization: `Bearer ${accessToken}`, "x-trainoracle-storage-revision": "0" } })
     expect(await requestAccountDocument(ownerId, correction, () => true, accountJournalRecordSchema,
       dependencies({ ...receipt, revision: 3 }))).toEqual({ ok: false, code: "INVALID_RESPONSE" })
     const conflict = { kind: "conflict", documentId, operationId, currentRevision: 2 }
@@ -139,7 +155,7 @@ describe("account record compatibility API", () => {
     const deps = dependencies(receipt)
     expect(await requestAccountDocument(ownerId, release, () => true, accountJournalRecordSchema, deps)).toEqual({ ok: true, data: receipt })
     expect(deps.invoke).toHaveBeenCalledWith("account-journal", { body: { ...release, supportedJournalVersions: [2, 3], supportsExerciseLogV1: true },
-      headers: { Authorization: `Bearer ${accessToken}` } })
+      headers: { Authorization: `Bearer ${accessToken}`, "x-trainoracle-storage-revision": "0" } })
     for (const changed of [{ revision: 4 }, { operationId: otherOwnerId }, { documentId: otherOwnerId }]) {
       expect(await requestAccountDocument(ownerId, release, () => true, accountJournalRecordSchema,
         dependencies({ ...receipt, ...changed }))).toEqual({ ok: false, code: "INVALID_RESPONSE" })
@@ -198,7 +214,7 @@ describe("account draft API", () => {
     const deps = dependencies({ kind: "saved", documentId, operationId, revision: 1 })
     expect((await requestAccountJournal(ownerId, request, () => true, deps)).ok).toBe(true)
     expect(deps.invoke).toHaveBeenCalledWith("account-journal", {
-      body: request, headers: { Authorization: `Bearer ${accessToken}` },
+      body: request, headers: { Authorization: `Bearer ${accessToken}`, "x-trainoracle-storage-revision": "0" },
     })
   })
   it.each([

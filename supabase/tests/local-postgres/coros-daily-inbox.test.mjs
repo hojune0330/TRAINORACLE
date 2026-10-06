@@ -56,7 +56,7 @@ test('encrypted daily database ownership, replay, revocation and all-or-nothing 
 
 test('synthetic HTTP to encryption to real SQL preserves idempotence and fails after disconnect', async () => {
   await db.query("update public.external_provider_connections set connection_status='ACTIVE',revoked_at=null,connection_epoch=$1 where id=$2",[E,C])
-  const keyMaterial={keyId:'synthetic-only',encryptionKey:await crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt']),digestKey:await crypto.subtle.generateKey({name:'HMAC',hash:'SHA-256',length:256},false,['sign'])}
+  const keyMaterial={keyId:'synthetic-only',encryptionKey:await crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']),digestKey:await crypto.subtle.generateKey({name:'HMAC',hash:'SHA-256',length:256},false,['sign'])}
   const storage=createCorosDailyStorage({keyMaterial,resolveConnection:async providerUserId=>{
     if(providerUserId!=='synthetic') return null
     const {rows}=await db.query('select * from public.external_provider_connections where id=$1',[C])
@@ -70,7 +70,18 @@ test('synthetic HTTP to encryption to real SQL preserves idempotence and fails a
   assert.equal((await handler(req())).status,200)
   const {rows}=await db.query("select * from public.external_daily_observations where provider_day='2026-09-11'")
   assert.equal(rows.length,1)
-  assert.ok(!JSON.stringify(rows).includes('777'))
+  // Random ciphertext/digest can contain the three-character string "777".
+  // Assert the storage shape and authenticate/decrypt the synthetic payload instead.
+  const encrypted=rows[0].encrypted_payload
+  assert.deepEqual(Object.keys(encrypted).sort(),['algorithm','ciphertext','iv','keyId','version'])
+  assert.equal(rows[0].steps,undefined); assert.equal(rows[0].step,undefined)
+  const plaintext=await crypto.subtle.decrypt({name:'AES-GCM',iv:Buffer.from(encrypted.iv,'base64'),
+    additionalData:new TextEncoder().encode(JSON.stringify(['trainoracle.coros-daily.v1',A,C,E,'2026-09-11']))},
+    keyMaterial.encryptionKey,Buffer.from(encrypted.ciphertext,'base64'))
+  assert.equal(JSON.parse(new TextDecoder().decode(plaintext)).steps,777)
+  await assert.rejects(crypto.subtle.decrypt({name:'AES-GCM',iv:Buffer.from(encrypted.iv,'base64'),
+    additionalData:new TextEncoder().encode(JSON.stringify(['trainoracle.coros-daily.v1',B,C,E,'2026-09-11']))},
+    keyMaterial.encryptionKey,Buffer.from(encrypted.ciphertext,'base64')))
   assert.equal(rows[0].review_state,'PENDING_SOURCE_REVIEW')
   await db.query("select set_config('request.jwt.claim.sub',$1,false)",[A])
   await db.query('select public.disconnect_coros_connection()')

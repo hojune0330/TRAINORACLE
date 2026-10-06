@@ -24,8 +24,8 @@ export interface OracleTopic {
 const TOPICS_BY_ID: Record<OracleTopicId, OracleTopic> = {
   level: {
     id: "level",
-    title: "현재 수준",
-    question: "지금 내 기록은 어디쯤일까?",
+    title: "경기 기록 비교",
+    question: "지난 경기 기록과 얼마나 달라졌을까?",
     teaser: "같은 종목의 기록을 나란히",
     example: {
       headline: "최근 5km 기록은 24분 10초",
@@ -45,7 +45,7 @@ const TOPICS_BY_ID: Record<OracleTopicId, OracleTopic> = {
   },
   focus: {
     id: "focus",
-    title: "강점·보완점",
+    title: "계획과 실제 강도",
     question: "계획보다 더 힘들게 느껴진 훈련은?",
     teaser: "계획 강도와 실제 느낌을 나란히",
     example: {
@@ -66,7 +66,7 @@ const TOPICS_BY_ID: Record<OracleTopicId, OracleTopic> = {
   },
   compare: {
     id: "compare",
-    title: "훈련 비교",
+    title: "월별 훈련 거리 비교",
     question: "최근 두 달, 한 번에 달린 거리는?",
     teaser: "월별 훈련 거리의 중간값 비교",
     example: {
@@ -109,8 +109,8 @@ const TOPICS_BY_ID: Record<OracleTopicId, OracleTopic> = {
   },
   priority: {
     id: "priority",
-    title: "우선 훈련",
-    question: "다음 훈련의 초점은 무엇으로 잡을까?",
+    title: "다음 훈련 검토",
+    question: "다음 훈련 전에 무엇을 확인할까?",
     teaser: "살펴본 기록에서 연습 목표로",
     example: {
       headline: "다음 계획 전에 실제 느낌을 확인해요",
@@ -127,9 +127,9 @@ const TOPICS_BY_ID: Record<OracleTopicId, OracleTopic> = {
   },
   change: {
     id: "change",
-    title: "훈련 후 변화",
-    question: "최근 두 달의 체감강도는 어땠을까?",
-    teaser: "월별 RPE의 중간값 비교",
+    title: "월별 기록 비교",
+    question: "최근 두 달에 남긴 기록은 어떻게 달랐을까?",
+    teaser: "체감강도 또는 거리의 중간값 비교",
     example: {
       headline: "월별 체감강도 중간값은 7과 5",
       summary: "지난달과 이번 달의 RPE 중앙값을 비교한 가상 기록이에요. 같은 훈련끼리의 비교는 아니에요.",

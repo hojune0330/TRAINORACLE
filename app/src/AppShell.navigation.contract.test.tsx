@@ -14,11 +14,50 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe("AppShell origin-preserving navigation", () => {
+  it("opens existing training reading from the V1 Oracle library and returns to that section", async () => {
+    const user = userEvent.setup()
+    render(<AppShell />)
+    await user.click(screen.getByRole("button", { name: "오라클" }))
+    await user.click(await screen.findByRole("button", { name: "읽을거리" }))
+    await user.click(screen.getByRole("button", { name: "훈련 배우기" }))
+    expect(await screen.findByRole("heading", { name: "어떤 훈련이 궁금한가요?" })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "이전 화면" }))
+    expect(await screen.findByRole("button", { name: "읽을거리" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("button", { name: "오라클" })).toHaveAttribute("aria-current", "page")
+  })
+  it("keeps the selected training step mounted while recording and returns without a reset", async () => {
+    const user = userEvent.setup()
+    render(<AppShell />)
+    await user.click(screen.getByRole("button", { name: "훈련" }))
+    await screen.findByRole("button", { name: "내 계획 받기" }, { timeout: 5000 })
+    await enterPlanWithoutRecord()
+    expect(await screen.findByRole("heading", { name: "지금까지 어떻게 달려왔나요?" })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "기록하기" }))
+    expect(await screen.findByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "훈련" })).toHaveAttribute("aria-current", "page")
+    await user.click(screen.getByRole("button", { name: "← 뒤로" }))
+    expect(await screen.findByRole("heading", { name: "지금까지 어떻게 달려왔나요?" })).toBeVisible()
+    await waitFor(() => expect(screen.getByRole("button", { name: "기록하기" })).toHaveFocus())
+  })
+
+  it("returns browser Back from recording to the same Oracle section", async () => {
+    const user = userEvent.setup()
+    render(<AppShell />)
+    await user.click(screen.getByRole("button", { name: "오라클" }))
+    await user.click(await screen.findByRole("button", { name: "러닝 취향" }))
+    await user.click(screen.getByRole("button", { name: "기록하기" }))
+    expect(await screen.findByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
+    act(() => window.history.back())
+    await waitFor(() => expect(screen.getByRole("button", { name: "러닝 취향" })).toHaveAttribute("aria-pressed", "true"))
+    expect(screen.queryByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeNull()
+    await waitFor(() => expect(screen.getByRole("button", { name: "기록하기" })).toHaveFocus())
+  })
+
   it("returns from a directly opened glossary term to the exact plan step", async () => {
     const user = userEvent.setup()
     render(<AppShell />)
 
-    await user.click(screen.getByRole("button", { name: "계획" }))
+    await user.click(screen.getByRole("button", { name: "훈련" }))
     await screen.findByRole("button", { name: "내 계획 받기" }, { timeout: 5000 })
     await enterPlanWithoutRecord()
     expect(await screen.findByRole("heading", { name: "지금까지 어떻게 달려왔나요?" })).toBeVisible()
@@ -28,7 +67,7 @@ describe("AppShell origin-preserving navigation", () => {
 
     expect(await screen.findByRole("heading", { name: "훈련 경험" })).toBeVisible()
     expect(window.location.search).toBe("?app=1")
-    expect(screen.queryByRole("button", { name: "계획" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "훈련" })).not.toBeInTheDocument()
 
     await user.click(screen.getByRole("button", { name: "이전 화면" }))
     expect(await screen.findByRole("heading", { name: "지금까지 어떻게 달려왔나요?" })).toBeVisible()
@@ -38,7 +77,7 @@ describe("AppShell origin-preserving navigation", () => {
     const user = userEvent.setup()
     render(<AppShell />)
 
-    await user.click(screen.getByRole("button", { name: "계획" }))
+    await user.click(screen.getByRole("button", { name: "훈련" }))
     await screen.findByRole("button", { name: "내 계획 받기" }, { timeout: 5000 })
     await enterPlanWithoutRecord()
     await user.click(screen.getByRole("button", { name: /훈련 경험 설명 보기/u }))
@@ -55,7 +94,7 @@ describe("AppShell origin-preserving navigation", () => {
   it("opens non-destructive glossary help without treating it as leaving a draft", async () => {
     const user = userEvent.setup()
     render(<AppShell />)
-    await user.click(screen.getByRole("button", { name: "계획" }))
+    await user.click(screen.getByRole("button", { name: "훈련" }))
     await screen.findByRole("button", { name: "내 계획 받기" }, { timeout: 5000 })
     await enterPlanWithoutRecord()
 

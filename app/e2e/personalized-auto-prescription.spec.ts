@@ -6,6 +6,7 @@ import { undersizedInteractiveTargets } from "./touch-audit"
 
 test.use({ serviceWorkers: "block" })
 const appPath = process.env.PLAYWRIGHT_APP_PATH ?? "/"
+const fiveKNotation = /5 × 1km @ (?:\d+(?:\.\d+)?s\/1km · )?5K RP · r150s Jog/u
 const currentRecords = [
   {
     schemaVersion: 1,
@@ -44,7 +45,7 @@ async function seedRecords(page: Page, records: unknown): Promise<void> {
 async function openPlan(page: Page): Promise<void> {
   await page.goto(`${appPath}?app=1`)
   await page.getByRole("navigation", { name: "주 탭" })
-    .getByRole("button", { name: "계획" })
+    .getByRole("button", { name: "훈련" })
     .click()
 }
 
@@ -126,7 +127,7 @@ async function bindFirstRecord(page: Page): Promise<void> {
   await picker.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
   await expect(page.getByRole("heading", { name: "계획이 준비됐어요", exact: true })).toBeFocused()
   await openPlanOptions(page, true)
-  await expect(picker.getByRole("status")).toContainText("상세 훈련 수치를 적용")
+  await expect(picker.getByRole("status")).toHaveText("선택한 기록으로 상세 훈련 수치를 계산했어요.")
 }
 
 for (const viewport of [
@@ -146,7 +147,8 @@ for (const viewport of [
     await reachExperiencedFiveKCandidates(page)
     await bindFirstRecord(page)
 
-    await expect(page.getByText(/5×1000m @5000m RP.*r150.*JOG/u).first()).toBeVisible()
+    await expect(page.getByText(fiveKNotation).first()).toBeVisible()
+    await page.getByText("자세히 보기 · 수행 순서", { exact: true }).first().click()
     await expect(page.getByText(/4번.*150초.*조깅.*600초/u).first()).toBeVisible()
     await page.getByText("기준 기록·중단·낮춤 규칙 보기").first().click()
     await expect(page.getByText(/기준 기록.*18분 30초.*2026-05-10/u).first()).toBeVisible()
@@ -165,13 +167,17 @@ for (const viewport of [
       const state = JSON.parse(localStorage.getItem("trainoracle.plan-beta.v1")!)
       const p = state.activePlan.sessions.find((s: { prescription: { kind: string } }) => s.prescription.kind === "PACE_TARGET").prescription
       if (p.sequence?.version !== 2) throw new Error("Expected stored V2 sequence")
+      if (p.targetRepSeconds !== 222 || p.repetitionsPerSet !== 5 || p.repetitionDistanceM !== 1000
+        || p.repetitionRecoverySeconds !== 150 || p.repetitionRecoveryMode !== "JOG") {
+        throw new Error("Expected the exact confirmed 5K prescription")
+      }
       return JSON.stringify(p.sequence)
     })
     await page.reload()
     await page.getByRole("navigation", { name: "주 탭" })
-      .getByRole("button", { name: "계획" })
+      .getByRole("button", { name: "훈련" })
       .click()
-    const activeSession = await openActiveSessionDetails(page, /5×1000m @5000m RP.*r150.*JOG/u)
+    const activeSession = await openActiveSessionDetails(page, fiveKNotation)
     await activeSession.getByRole("button", { name: "훈련 방법과 이유", exact: true }).click()
     const reader = page.getByRole("dialog")
     await expect(reader.getByText("계획을 만들 때 저장한 운동·회복 순서예요.", { exact: true })).toBeVisible()
@@ -213,7 +219,7 @@ test("keeps youth and adult 5K eligibility and dose identical", async ({ browser
     await page.locator("summary", { hasText: "기준 기록·참가 부문·이전 계획 확인" }).click()
     await expect(page.getByText(new RegExp(`참가 부문: ${divisionName.source}`, "u"))).toBeVisible()
     await bindFirstRecord(page)
-    await expect(page.getByText(/5×1000m @5000m RP.*r150.*JOG/u).first()).toBeVisible()
+    await expect(page.getByText(fiveKNotation).first()).toBeVisible()
     await page.getByRole("button", { name: /이 계획으로 시작하기/u }).click()
     await expectActivePlanHeading(page)
 
@@ -236,9 +242,9 @@ test("keeps youth and adult 5K eligibility and dose identical", async ({ browser
 
     await page.reload()
     await page.getByRole("navigation", { name: "주 탭" })
-      .getByRole("button", { name: "계획" })
+      .getByRole("button", { name: "훈련" })
       .click()
-    await openActiveSessionDetails(page, /5×1000m @5000m RP.*r150.*JOG/u)
+    await openActiveSessionDetails(page, fiveKNotation)
     await context.close()
   }
 
@@ -256,11 +262,14 @@ test("requires reconfirmation after replacing the selected record", async ({ pag
   await picker.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
   await expect(page.getByRole("heading", { name: "계획이 준비됐어요", exact: true })).toBeFocused()
   await openPlanOptions(page, true)
-  await expect(page.getByText(/5×1000m @5000m RP.*r150.*JOG/u).first()).toBeVisible()
+  await expect(page.getByText(fiveKNotation).first()).toBeVisible()
 
   await picker.getByRole("button", { name: /^시즌 최고.*19분/u }).click()
   await expect(page.getByRole("button", { name: /이 계획으로 시작하기/u })).toBeDisabled()
-  await expect(page.getByText(/5×1000m @5000m RP/u)).toHaveCount(0)
+  // A catalog's uncalculated pattern may remain, but no confirmed numeric
+  // prescription or previous record's target may survive this change.
+  await expect(page.locator(".plan-detailed-prescription")).toHaveCount(0)
+  await expect(page.getByText(/5 × 1km @ \d+(?:\.\d+)?s\/1km/u)).toHaveCount(0)
   await expect(page.getByText("새로 고른 기준 기록을 확인한 뒤 계획을 선택해 주세요.")).toBeVisible()
 
   await picker.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
@@ -284,7 +293,8 @@ test("keeps stale evidence RPE-only", async ({ page }) => {
   await picker.getByRole("button", { name: /개인 최고.*18분 30초/u }).click()
   await picker.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
   await expect(picker).toContainText("선택한 기록일이 현재 기준 범위를 벗어났어요")
-  await expect(page.getByText(/5×1000m @5000m RP/u)).toHaveCount(0)
+  await expect(page.locator(".plan-detailed-prescription")).toHaveCount(0)
+  await expect(page.getByText(/5 × 1km @ \d+(?:\.\d+)?s\/1km/u)).toHaveCount(0)
   await page.screenshot({ path: test.info().outputPath("mobile-375x667-stale.png"), fullPage: true })
 })
 
@@ -293,7 +303,8 @@ test("keeps missing evidence RPE-only", async ({ page }) => {
   await openPlan(page)
   await reachExperiencedFiveKCandidates(page)
   await expect(page.getByText(/이 종목의 경기 기록이 아직 없어요/u)).toBeVisible()
-  await expect(page.getByText(/5×1000m @5000m RP/u)).toHaveCount(0)
+  await expect(page.locator(".plan-detailed-prescription")).toHaveCount(0)
+  await expect(page.getByText(/5 × 1km @ \d+(?:\.\d+)?s\/1km/u)).toHaveCount(0)
 })
 
 test("D9 blocks before candidates", async ({ page }) => {

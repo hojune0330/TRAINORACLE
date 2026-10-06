@@ -2,7 +2,10 @@ import { expect, test } from "@playwright/test"
 
 test.use({ serviceWorkers: "block" })
 
-test("one prescribed workout, immediate alternatives and bounded tuning without saving", async ({ page }, testInfo) => {
+test("current plans use catalog while the historical LT pilot keeps bounded alternatives without saving", async ({ page, baseURL }, testInfo) => {
+  if (!baseURL) throw Error("A configured local browser origin is required")
+  const origin = new URL(baseURL).origin
+  await page.route("**/*", route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort())
   if (testInfo.project.name === "mobile-chromium") await page.setViewportSize({ width: 375, height: 667 })
   await page.clock.setFixedTime(new Date("2026-09-28T12:00:00.000Z"))
   await page.addInitScript(() => {
@@ -16,9 +19,16 @@ test("one prescribed workout, immediate alternatives and bounded tuning without 
   const errors: string[] = []
   page.on("pageerror", error => errors.push(error.message))
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
-  await page.getByRole("button", { name: "처방 훈련 확인", exact: true }).click()
+  await expect(page.getByRole("button", { name: "처방 훈련 확인", exact: true })).toHaveCount(0)
+  await page.getByRole("button", { name: "처방 확인·조절", exact: true }).click()
+  await expect(page.getByRole("combobox", { name: "바꿀 일정", exact: true })).toHaveValue("5:AM")
+  await expect(page.getByRole("combobox", { name: "훈련 구성", exact: true })).toBeVisible()
+  expect(await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBeNull()
+
+  // Retained historical raw-RPE scope, not a current catalog plan stripped of its binding.
+  await page.goto("/e2e/fixtures/historical-lt-first-draw.html")
   await expect(page.getByRole("heading", { name: "이번 계획의 주요 훈련" })).toBeVisible()
   const history = page.locator("summary", { hasText: "추천에 참고한 이력" })
   await expect(history.locator("..")).not.toHaveAttribute("open")

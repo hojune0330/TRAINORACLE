@@ -854,6 +854,9 @@ test("privacy assertion detects a route-only projection redaction mutation", asy
 test("lifecycle private history, delete and restore preserve identity and protected body", async ({ page }) => {
   const result = await page.evaluate(async () => {
     const h = window.accountRecordHarness
+    const path="/src/domain/account/storage-consent-revision.ts"
+    const revisions=await import(/* @vite-ignore */ path)
+    revisions.rememberStorageConsentRevision(h.owner,3)
     await h.persistAccountJournalRecord(h.privateRecord)
     await h.persistAccountJournalRecord({ ...h.privateRecord, memo: "PRIVATE_REVISION_TWO", savedAt: "2026-09-02T03:00:00.000Z" }, h.privateRecord.savedAt)
     const documentId = await h.accountJournalDocumentId(h.owner, "private")
@@ -872,6 +875,16 @@ test("lifecycle private history, delete and restore preserve identity and protec
   expect(result.privateRead).toMatchObject({ memo: "PRIVATE_REVISION_TWO" })
   expect(JSON.stringify(result.entries)).not.toContain("PRIVATE_REVISION_TWO")
   expect(result.tombstones).toEqual([])
+  const lifecycle=server.calls.filter(call=>call.request.action==="delete"||call.request.action==="restore")
+  expect(lifecycle).toHaveLength(2)
+  for(const call of lifecycle) {
+    const operationId="operationId" in call.request?call.request.operationId:""
+    expect(await page.evaluate(async id=>{
+      const path="/src/domain/account/storage-consent-revision.ts"
+      const revisions=await import(/* @vite-ignore */ path)
+      return revisions.pinStorageOperationRevision(window.accountRecordHarness.owner,id,0)
+    },operationId)).toBe(3)
+  }
 })
 
 test("lifecycle restore is rejected before server mutation when a local edit is pending", async ({ page }) => {

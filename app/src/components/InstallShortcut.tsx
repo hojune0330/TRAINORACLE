@@ -18,7 +18,9 @@ import "./InstallShortcut.css"
 // Edge: https://support.microsoft.com/en-us/microsoft-edge/install-manage-or-uninstall-apps-in-microsoft-edge-0c156575-a94a-45e4-a54f-3a84846f6113
 
 const STORAGE_KEY = "trainoracle:install-shortcut:v1"
+const SUPPRESSION_STORAGE_KEY = "trainoracle:install-shortcut:suppression:v1"
 const DISMISS_FOR_MS = 7 * 24 * 60 * 60 * 1000
+type InstallShortcutSuppression = "manual" | "confirmed" | null
 
 type InstallChoice = {
   readonly outcome: "accepted" | "dismissed"
@@ -49,6 +51,7 @@ type BrowserGuide = {
 
 type InstallShortcutContextValue = {
   readonly installed: boolean
+  readonly suppression: InstallShortcutSuppression
   readonly dismissed: boolean
   readonly nativeAvailable: boolean
   readonly busy: boolean
@@ -57,6 +60,8 @@ type InstallShortcutContextValue = {
   readonly openDialog: (opener: HTMLElement, returnFocusTo?: () => HTMLElement | null) => void
   readonly closeDialog: () => void
   readonly dismissSuggestion: () => void
+  readonly hideInstallShortcut: () => void
+  readonly restoreInstallShortcut: () => void
   readonly requestNativeInstall: () => void
 }
 
@@ -90,6 +95,16 @@ function rememberDismissal(): number {
     // The current provider state remains the preference source when storage is unavailable.
   }
   return dismissedAt
+}
+
+function readSuppressionPreference(): InstallShortcutSuppression {
+  if (typeof window === "undefined") return null
+  try {
+    const value = window.localStorage.getItem(SUPPRESSION_STORAGE_KEY)
+    return value === "manual" || value === "confirmed" ? value : null
+  } catch {
+    return null
+  }
 }
 
 function navigatorHints(): NavigatorWithInstallHints | null {
@@ -200,6 +215,7 @@ function detectBrowserGuide(): BrowserGuide {
 
 export function InstallShortcutProvider({ children }: { readonly children: ReactNode }) {
   const [installed, setInstalled] = React.useState(() => standaloneObserved())
+  const [suppression, setSuppression] = React.useState<InstallShortcutSuppression>(() => readSuppressionPreference())
   const [dismissedAt, setDismissedAt] = React.useState<number | null>(() => readDismissedAt())
   const [nativeAvailable, setNativeAvailable] = React.useState(false)
   const [busy, setBusy] = React.useState(false)
@@ -209,9 +225,11 @@ export function InstallShortcutProvider({ children }: { readonly children: React
   const deferredPrompt = React.useRef<BeforeInstallPromptEvent | null>(null)
   const busyRef = React.useRef(false)
   const installedRef = React.useRef(installed)
+  const suppressionRef = React.useRef(suppression)
   const openerRef = React.useRef<HTMLElement | null>(null)
   const returnFocusToRef = React.useRef<(() => HTMLElement | null) | undefined>(undefined)
   installedRef.current = installed
+  suppressionRef.current = suppression
 
   const markInstalled = React.useCallback(() => {
     installedRef.current = true
@@ -221,6 +239,15 @@ export function InstallShortcutProvider({ children }: { readonly children: React
     setBusy(false)
     busyRef.current = false
     setPromptState("idle")
+    if (suppressionRef.current !== "manual") {
+      suppressionRef.current = "confirmed"
+      setSuppression("confirmed")
+      try {
+        window.localStorage.setItem(SUPPRESSION_STORAGE_KEY, "confirmed")
+      } catch {
+        // The current app session remains confirmed even when browser storage is unavailable.
+      }
+    }
   }, [])
 
   React.useEffect(() => {
@@ -235,16 +262,24 @@ export function InstallShortcutProvider({ children }: { readonly children: React
       setNativeAvailable(true)
       setPromptState("idle")
     }
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== SUPPRESSION_STORAGE_KEY) return
+      const next = event.newValue === "manual" || event.newValue === "confirmed" ? event.newValue : null
+      suppressionRef.current = next
+      setSuppression(next)
+    }
 
     onStandaloneChange()
     window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt)
     window.addEventListener("appinstalled", markInstalled)
+    window.addEventListener("storage", onStorage)
     if (typeof query?.addEventListener === "function") query.addEventListener("change", onStandaloneChange)
     else query?.addListener?.(onStandaloneChange)
 
     return () => {
       window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt)
       window.removeEventListener("appinstalled", markInstalled)
+      window.removeEventListener("storage", onStorage)
       if (typeof query?.removeEventListener === "function") query.removeEventListener("change", onStandaloneChange)
       else query?.removeListener?.(onStandaloneChange)
       deferredPrompt.current = null
@@ -272,6 +307,26 @@ export function InstallShortcutProvider({ children }: { readonly children: React
 
   const dismissSuggestion = React.useCallback(() => {
     setDismissedAt(rememberDismissal())
+  }, [])
+
+  const hideInstallShortcut = React.useCallback(() => {
+    suppressionRef.current = "manual"
+    setSuppression("manual")
+    try {
+      window.localStorage.setItem(SUPPRESSION_STORAGE_KEY, "manual")
+    } catch {
+      // Keep this mounted provider's preference when browser storage is unavailable.
+    }
+  }, [])
+
+  const restoreInstallShortcut = React.useCallback(() => {
+    suppressionRef.current = null
+    setSuppression(null)
+    try {
+      window.localStorage.removeItem(SUPPRESSION_STORAGE_KEY)
+    } catch {
+      // The preference is restored for this mounted provider when storage is unavailable.
+    }
   }, [])
 
   const requestNativeInstall = React.useCallback(() => {
@@ -307,6 +362,7 @@ export function InstallShortcutProvider({ children }: { readonly children: React
   const dismissed = validDismissedAt(dismissedAt) !== null
   const value = React.useMemo<InstallShortcutContextValue>(() => ({
     installed,
+    suppression,
     dismissed,
     nativeAvailable,
     busy,
@@ -315,6 +371,8 @@ export function InstallShortcutProvider({ children }: { readonly children: React
     openDialog,
     closeDialog,
     dismissSuggestion,
+    hideInstallShortcut,
+    restoreInstallShortcut,
     requestNativeInstall,
   }), [
     busy,
@@ -322,11 +380,14 @@ export function InstallShortcutProvider({ children }: { readonly children: React
     dismissSuggestion,
     dismissed,
     guide,
+    hideInstallShortcut,
     installed,
+    suppression,
     nativeAvailable,
     openDialog,
     promptState,
     requestNativeInstall,
+    restoreInstallShortcut,
   ])
 
   return (
@@ -355,7 +416,7 @@ export function InstallShortcutSuggestion({
 }) {
   const titleId = React.useId()
   const controller = React.useContext(InstallShortcutContext)
-  if (controller === null || !eligible || controller.dismissed || controller.installed) return null
+  if (controller === null || !eligible || controller.dismissed || controller.installed || controller.suppression !== null) return null
 
   const label = controller.guide.mobile ? "홈 화면에 추가" : "앱 바로가기 만들기"
   return (
@@ -395,26 +456,45 @@ export function InstallShortcutSuggestion({
 
 export function InstallShortcutMenuEntry() {
   const controller = React.useContext(InstallShortcutContext)
-  if (controller === null) return null
+  if (controller === null || controller.installed) return null
+
+  if (controller.suppression !== null) {
+    return (
+      <button
+        key="install-shortcut-restore"
+        className="install-shortcut-restore"
+        type="button"
+        data-testid="install-shortcut-restore"
+        aria-label="바로가기 안내 다시 보기"
+        onClick={() => {
+          const fallback = document.querySelector<HTMLElement>(".more-screen .utility-header button")
+          controller.restoreInstallShortcut()
+          fallback?.focus({ preventScroll: true })
+        }}
+      >
+        바로가기 안내 다시 보기
+      </button>
+    )
+  }
 
   const label = controller.guide.mobile ? "홈 화면에 추가" : "앱 바로가기 만들기"
-  const Icon = controller.installed ? BadgeCheck : controller.guide.mobile ? Smartphone : MonitorDown
+  const Icon = controller.guide.mobile ? Smartphone : MonitorDown
   return (
     <button
+      key="install-shortcut-menu"
       className="more-screen__row install-shortcut-menu"
       type="button"
       data-testid="install-shortcut-menu"
       aria-label={label}
-      onClick={(event) => controller.openDialog(event.currentTarget)}
+      onClick={(event) => controller.openDialog(
+        event.currentTarget,
+        () => document.querySelector<HTMLElement>(".more-screen .utility-header button"),
+      )}
     >
       <Icon aria-hidden="true" size={19} />
       <span>
         <strong>{label}</strong>
-        <small>
-          {controller.installed
-            ? "이 브라우저에서는 바로가기 아이콘을 이미 사용 중이에요"
-            : "브라우저에 맞는 추가 방법을 확인해요"}
-        </small>
+        <small>브라우저에 맞는 추가 방법을 확인해요</small>
       </span>
     </button>
   )
@@ -528,6 +608,30 @@ function InstallShortcutDialog({
                 설치창을 열지 못했어요. 아래 수동 방법을 사용해 주세요.
               </p>
             )}
+
+            <div className="install-shortcut-dialog__hide-option">
+              <button
+                type="button"
+                className="install-shortcut-dialog__hide"
+                onClick={() => {
+                  controller.hideInstallShortcut()
+                  controller.closeDialog()
+                  // Wait until the install entry has been replaced before returning focus.
+                  queueMicrotask(() => {
+                    try {
+                      const fallback = returnFocusTo?.()
+                        ?? document.querySelector<HTMLElement>(".install-shortcut-restore")
+                      if (fallback?.isConnected) fallback.focus({ preventScroll: true })
+                    } catch {
+                      // A missing return target must not undo the user's preference.
+                    }
+                  })
+                }}
+              >
+                이미 추가했어요
+              </button>
+              <p>설치 여부를 확인하지 않고 이 브라우저에서 안내만 숨겨요.</p>
+            </div>
 
             {controller.nativeAvailable && (
               <div className="install-shortcut-dialog__native">

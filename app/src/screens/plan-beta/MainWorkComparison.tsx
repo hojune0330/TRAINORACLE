@@ -12,7 +12,7 @@ const FIELDS = [
   ["time", "시간 정보"], ["limitation", "알 수 있는 것과 한계"],
 ] as const
 
-export function MainWorkComparison({ comparison }: { readonly comparison: ReturnType<typeof comparePlanMainWork> }) {
+export function MainWorkComparison({ comparison }: { readonly comparison: Pick<ReturnType<typeof comparePlanMainWork>, "rows"> }) {
   if (comparison.rows.length === 0) return <p className="plan-candidate-comparison__note">비교할 본운동 구간이 없어요.</p>
   return (
     <details className="plan-main-comparison">
@@ -28,8 +28,8 @@ export function MainWorkComparison({ comparison }: { readonly comparison: Return
             <MethodValues label={row.a.kind === "RPE_TIME_RANGE" ? "A·B 시간·RPE 공통" : "A·B 공통"} view={row.a} />
           ) : (
             <div className="plan-main-comparison__pair">
-              <MethodValues label="계획안 A" view={row.a} />
-              <MethodValues label="계획안 B" view={row.b} />
+              <MethodValues label="계획안 A" view={row.a} unsupported={row.methodRelation === "UNSUPPORTED"} />
+              <MethodValues label="계획안 B" view={row.b} unsupported={row.methodRelation === "UNSUPPORTED"} />
             </div>
           )}
         </section>
@@ -39,6 +39,7 @@ export function MainWorkComparison({ comparison }: { readonly comparison: Return
 }
 
 function statusText(row: MainComparisonRow) {
+  if (row.methodRelation === "UNSUPPORTED") return "카탈로그 상세 구성은 이 비교에서 공통 여부를 확인할 수 없어요."
   if (row.methodRelation === "CONTEXT_MISMATCH") return "같은 일정·목적의 구간으로 비교할 수 없어요."
   if (row.methodRelation === "UNSPECIFIED" && row.a?.kind !== row.b?.kind) return "한쪽만 구간별 상세 처방이 있어 두 본운동 방법을 비교할 수 없어요."
   if (row.methodRelation === "UNSPECIFIED") return row.samePrescribedValues
@@ -50,10 +51,14 @@ function statusText(row: MainComparisonRow) {
     : "같은 본운동 방법에서 횟수나 목표값이 달라요. 별개의 방법으로 세지 않아요."
 }
 
-function MethodValues({ label, view }: { readonly label: string; readonly view: MainPrescriptionView | null }) {
+function MethodValues({ label, view, unsupported = false }: {
+  readonly label: string; readonly view: MainPrescriptionView | null; readonly unsupported?: boolean
+}) {
   return <div className="plan-main-comparison__values">
     <strong>{label}</strong>
-    {view === null ? <p>대응하는 본운동이 없거나 구성을 읽을 수 없어요.</p> : (
+    {view === null ? <p>{unsupported
+      ? "각 일정의 ‘훈련 방법과 이유’에서 상세 구성을 확인해 주세요."
+      : "대응하는 본운동이 없거나 구성을 읽을 수 없어요."}</p> : (
       <dl>{FIELDS.map(([field, title]) => <div data-field={field} key={field}><dt>{title}</dt><dd>{view[field]}</dd></div>)}</dl>
     )}
   </div>

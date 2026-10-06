@@ -2,6 +2,7 @@ import { z } from "zod"
 import { supabase } from "./supabase-client"
 import { verifyReturnedAuthSession } from "./verified-auth-session"
 import { holdStorageTransmission, releaseStorageTransmissionHold, isStorageTransmissionHeld } from "./storage-transmission-hold"
+import { rememberStorageConsentRevision } from "./storage-consent-revision"
 
 export const STORAGE_CONSENT_VERSION = "2026-10-05"
 export const storageConsentSchema = z.object({
@@ -9,6 +10,7 @@ export const storageConsentSchema = z.object({
   purposeVersion: z.literal(STORAGE_CONSENT_VERSION),
   healthStorage: z.boolean(), journalTextStorage: z.boolean(),
   decidedAt: z.string().nullable(), operationsReady: z.boolean(),
+  liveErasedAt: z.string().datetime({ offset: true }).nullable(), backupStatus: z.enum(["PENDING", "VERIFIED"]).nullable(),
 }).strict()
 export type StorageConsent = z.infer<typeof storageConsentSchema>
 export type StorageConsentResult = { ok: true; consent: StorageConsent } | { ok: false; message: string }
@@ -20,6 +22,7 @@ export function isAccountStoragePaused(userId: string | null): boolean {
   return userId !== null && (pausedAccounts.get(userId) === true || isStorageTransmissionHeld(userId))
 }
 function remember(consent: StorageConsent) {
+  rememberStorageConsentRevision(consent.userId, consent.revision)
   pausedAccounts.set(consent.userId, !consent.healthStorage || !consent.journalTextStorage || !consent.operationsReady)
 }
 
@@ -62,11 +65,12 @@ export async function saveAccountStorageConsent(
     const parsed = storageConsentSchema.safeParse(data)
     if (error || !parsed.success || parsed.data.userId !== previous.userId
       || parsed.data.revision !== previous.revision + 1
+      || ((!healthStorage || !journalTextStorage) && parsed.data.liveErasedAt === null)
       || parsed.data.healthStorage !== healthStorage || parsed.data.journalTextStorage !== journalTextStorage) throw new Error("changed")
     releaseStorageTransmissionHold(previous.userId)
     remember(parsed.data)
     return { ok: true, consent: parsed.data }
   } catch {
-    return { ok: false, message: "서버에서 동의 변경을 확인하지 못했어요. 현재 상태를 다시 확인해 주세요. 삭제 요청은 별도로 할 수 있어요." }
+    return { ok: false, message: "서버에서 동의 변경과 자료 삭제 결과를 확인하지 못했어요. 기기 전송은 멈춰 있으며, 현재 상태를 확인하고 철회를 다시 요청해 주세요." }
   }
 }

@@ -356,7 +356,7 @@ lucide를 유지한다. 폰트·색·44px 터치 영역·고정 그림 크기를
 | `account-running-profile-schema.ts` | V1 읽기 호환 + 버전 구분. 범주형에서 점수형으로 자동 이전 금지 |
 | `account-running-profile-service.ts` | 암호화 보관·수정 충돌·계정 분리·재시도 유지 |
 | `account-journal-handler.mjs`와 검증기 | 새로운 내부 자료 버전을 지원하는 기능 확인 후 쓰기 허용 |
-| `0058_running_profile_account_storage.sql` | 기존 변경분을 점수 문서만으로 운영 적용하지 않음. 새 DB 작업 필요성은 구현 때 확인; main의 인증·목적 동의 이력 충돌로 0051/0057에서 이동 |
+| `0059_running_profile_account_storage.sql` | 기존 변경분을 점수 문서만으로 운영 적용하지 않음. 새 DB 작업 필요성은 구현 때 확인; main의 인증·목적 동의·철회 파기 이력 충돌로 0051/0057/0058에서 이동 |
 | 기존 오라클·기록 비교 | 출처·모델·기간 관문 재사용. 원본 일지·계획을 프로필 때문에 수정하지 않음 |
 
 제안 파일은 `running-profile-items.ts`, `running-profile-scoring.ts`,

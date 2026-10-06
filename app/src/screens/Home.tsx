@@ -1,4 +1,5 @@
 import React from "react"
+import type { ReactNode } from "react"
 import { useAthleteRecordsSnapshot } from "../hooks/useAthleteRecordsSnapshot"
 import { ACCOUNT_PLAN_EVENT, accountPlanService, accountPlansEnabled } from "../domain/account/account-plan-service"
 import { TermHelp } from "../components/TermHelp"
@@ -17,7 +18,6 @@ import { AccountEntryButton } from "../components/AccountEntryButton"
 import { DailyContextTags } from "./home/DailyContextTags"
 import { TrainingHome } from "./home/TrainingHome"
 import { LatestJournalDay } from "./home/LatestJournalDay"
-import { HomeCoachingSummary } from "./home/HomeCoachingSummary"
 import { LOCAL_JOURNALS_CHANGED } from "../domain/journal-change-events"
 import type { LogEntryType } from "./log-entry/shared"
 import type { OracleTopicId } from "../domain/oracle-exploration"
@@ -34,6 +34,7 @@ export type HomeProps = {
   readonly onOpenNextTraining?: (link: PlannedSessionLink) => void
   readonly onOpenTrends?: () => void
   readonly onOpenOracle?: (topic: OracleTopicId) => void
+  readonly oraclePreview?: ReactNode
   readonly onOpenMore?: () => void
   readonly onOpenAccount?: () => void
   readonly onOpenContent?: () => void
@@ -43,7 +44,7 @@ export type HomeProps = {
 
 export function Home({
   onWriteLog, onOpenDay, onOpenArchive, onOpenGuide, onOpenPlan,
-  onOpenNextTraining, onOpenTrends, onOpenOracle, onOpenMore, onOpenAccount, onOpenContent, onOpenRewards,
+  onOpenNextTraining, onOpenTrends, onOpenOracle, oraclePreview, onOpenMore, onOpenAccount, onOpenContent, onOpenRewards,
 }: HomeProps) {
   const [revision, setRevision] = React.useState(0)
   const athleteRecords = useAthleteRecordsSnapshot()
@@ -135,17 +136,16 @@ export function Home({
     <div className="training-home-screen">
       <TrainingHome
         model={model}
-        hasPlan={homePlan !== null}
         safetyNotice={safetyNotice}
-        coaching={<HomeCoachingSummary revision={revision} onOpenDay={onOpenDay} onOpenPlan={onOpenPlan} />}
+        oraclePreview={oraclePreview}
         onWriteLog={onWriteLog}
         onOpenArchive={onOpenArchive}
         onOpenToday={onOpenDay === undefined ? onOpenArchive : () => onOpenDay(today)}
         onOpenGuide={onOpenGuide}
         onOpenPlan={onOpenPlan}
         onOpenNextTraining={openNextTraining}
-        onOpenTrends={onOpenTrends}
         onOpenOracle={onOpenOracle}
+        onOpenTrends={onOpenTrends}
         onOpenMore={onOpenMore}
         onOpenContent={onOpenContent}
         onOpenRewards={onOpenRewards}

@@ -17,9 +17,9 @@ export async function loadOracleMigrationChain(db,{beforeStorageConsentMigration
     grant usage on schema auth to anon,authenticated,service_role;
     grant execute on all functions in schema auth to anon,authenticated,service_role;`);
   const root=new URL('../../migrations/',import.meta.url);
-  const files=readdirSync(root).filter(name=>/^\d{4}_.+\.sql$/.test(name)&&name<'0062').sort();
-  assert.deepEqual(files.map(file=>file.slice(0,4)),Array.from({length:61},(_,i)=>String(i+1).padStart(4,'0')),
-    'Oracle fixture must execute every integrated migration from 0001 through 0061 exactly once');
+  const files=readdirSync(root).filter(name=>/^\d{4}_.+\.sql$/.test(name)&&name<'0063').sort();
+  assert.deepEqual(files.map(file=>file.slice(0,4)),Array.from({length:62},(_,i)=>String(i+1).padStart(4,'0')),
+    'Oracle fixture must execute every integrated migration from 0001 through 0062 exactly once');
   for(const file of files) {
     if(file==='0057_purpose_scoped_storage_consent.sql' && beforeStorageConsentMigration) {
       await beforeStorageConsentMigration(db);
@@ -59,4 +59,8 @@ export async function admitOracleStorage(db,ownerId,sessionId) {
   assert.equal(saved.healthStorage,true);
   assert.equal(saved.journalTextStorage,true);
   assert.equal(saved.revision,1);
+  // A fresh synthetic write carries the exact grant observed before its work.
+  // Authentication alone must never manufacture a newer revision for an old job.
+  await db.query("select set_config('request.headers',$1,false)",
+    [JSON.stringify({'x-trainoracle-storage-revision':String(saved.revision)})]);
 }

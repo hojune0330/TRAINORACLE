@@ -110,34 +110,44 @@ describe("condition review to explicit detail application", () => {
 
   it("requires a new calendar review after changing dates, without changing the applied workout or writing storage", () => {
     const initial = props(), view = render(<PlanCandidates {...initial} />)
-    fireEvent.click(screen.getByRole("button", { name: /공간 확인하고 상세 훈련 보기/u }))
+    // The calendar has many buttons. Find this exact visible action without
+    // recomputing every calendar button's accessible name on each rerender.
+    const visibleButton = (name: string | RegExp) => {
+      const button = screen.getByText(name, { selector: "button", exact: true })
+      expect(button).toBeVisible()
+      expect(button).toHaveRole("button")
+      expect(button).toHaveAccessibleName(name)
+      return button
+    }
+    const startButton = () => visibleButton("이 일정으로 시작")
+    fireEvent.click(visibleButton(/공간 확인하고 상세 훈련 보기/u))
     fireEvent.click(screen.getByRole("checkbox", { name: spaceLabel }))
-    fireEvent.click(screen.getByRole("button", { name: "이 구성으로 바꾸기" }))
+    fireEvent.click(visibleButton("이 구성으로 바꾸기"))
     const changed = vi.mocked(initial.onCatalogChange!).mock.calls[0]![0]
     const snapshot = JSON.stringify(changed)
     view.rerender(<PlanCandidates {...initial} generated={changed} />)
     expect(screen.queryByRole("group", { name: "이 날짜에도 운동할 환경이 갖춰져 있나요?" })).toBeNull()
-    expect(screen.getByRole("button", { name: "이 일정으로 시작" })).toBeEnabled()
+    expect(startButton()).toBeEnabled()
 
     view.rerender(<PlanCandidates {...initial} generated={changed} startDateValue="2026-11-02" />)
     const review = screen.getByRole("group", { name: "이 날짜에도 운동할 환경이 갖춰져 있나요?" })
     expect(within(review).getByRole("checkbox")).not.toBeChecked()
-    expect(screen.queryByRole("button", { name: /공간 확인하고 상세 훈련 보기/u })).toBeNull()
+    expect(screen.queryByText(/공간 확인하고 상세 훈련 보기/u, { selector: "button" })).toBeNull()
     expect(review).toHaveTextContent("2026-11-")
-    expect(screen.getByRole("button", { name: "이 일정으로 시작" })).toBeDisabled()
-    fireEvent.click(screen.getByRole("button", { name: "다른 계획 보기" }))
-    expect(screen.getByRole("button", { name: "이 계획으로 시작하기" })).toBeDisabled()
+    expect(startButton()).toBeDisabled()
+    fireEvent.click(visibleButton("다른 계획 보기"))
+    expect(visibleButton("이 계획으로 시작하기")).toBeDisabled()
     for (const action of screen.getAllByRole("button", { name: /선택하기$/u })) expect(action).toBeDisabled()
     fireEvent.click(within(review).getByRole("checkbox"))
-    expect(screen.getByRole("button", { name: "이 일정으로 시작" })).toBeDisabled()
+    expect(startButton()).toBeDisabled()
     fireEvent.click(within(review).getByRole("button", { name: "이 날짜의 조건 확인" }))
-    expect(screen.getByRole("button", { name: "이 일정으로 시작" })).toBeEnabled()
+    expect(startButton()).toBeEnabled()
     expect(JSON.stringify(changed)).toBe(snapshot)
-    expect(screen.queryByRole("button", { name: /공간 확인하고 상세 훈련 보기/u })).toBeNull()
+    expect(screen.queryByText(/공간 확인하고 상세 훈련 보기/u, { selector: "button" })).toBeNull()
     expect(initial.onCatalogChange).toHaveBeenCalledOnce()
     expect(initial.onSelect).not.toHaveBeenCalled()
     expect(localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
-    fireEvent.click(screen.getByRole("button", { name: "이 일정으로 시작" }))
+    fireEvent.click(startButton())
     expect(initial.onSelect).toHaveBeenCalledWith({ candidateId: changed.candidates[0].candidateId, startDate: "2026-11-02" })
   })
 

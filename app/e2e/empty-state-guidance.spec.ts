@@ -2,7 +2,10 @@ import { expect, test } from "@playwright/test"
 
 test.use({ serviceWorkers: "block" })
 
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page, baseURL }) => {
+  const appOrigin = new URL(baseURL!).origin
+  await page.route("**/*", route => new URL(route.request().url()).origin === appOrigin
+    ? route.continue() : route.abort())
   await page.goto("/?app=1")
   await page.evaluate(() => window.localStorage.clear())
   await page.reload()
@@ -12,7 +15,8 @@ test("starts a journal directly from the empty archive", async ({ page }) => {
   await page.getByRole("button", { name: "일지", exact: true }).click()
 
   await expect(page.getByRole("heading", { name: "첫 일지를 남겨보세요" })).toBeVisible()
-  await page.getByRole("button", { name: "오늘 기록하기" }).click()
+  await expect(page.getByText("예시 · 내 기록에 저장되지 않아요", { exact: true })).toBeVisible()
+  await page.getByRole("button", { name: "내 첫 기록 남기기", exact: true }).click()
 
   await expect(page.getByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
 })
@@ -21,7 +25,8 @@ test("starts a journal directly from the empty analysis screen", async ({ page }
   await page.getByRole("button", { name: "오라클", exact: true }).click()
 
   await expect(page.getByRole("heading", { name: "오라클", exact: true })).toBeVisible()
-  await expect(page.getByRole("heading", { name: "분석할 기록이 아직 없어요" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "최고기록에 담긴 이야기를 읽어요" })).toBeVisible()
+  await expect(page.getByText("훈련 일지도 남기면 계획과 실제 느낌을 함께 볼 수 있어요.", { exact: true })).toBeVisible()
   await page.getByRole("button", { name: "첫 기록 남기기" }).click()
 
   await expect(page.getByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()

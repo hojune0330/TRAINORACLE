@@ -39,9 +39,11 @@ export function mockRecordServer<T = AccountJournalRecord>() {
         if (url.pathname === "/src/domain/account/account-journal-api.ts") {
           const response = await route.fetch()
           const body = await response.text()
-          const flag = 'return env.VITE_FEATURE_ACCOUNT_JOURNAL === "true" && env.VITE_KILL_ACCOUNT_JOURNAL !== "true";'
+          const flag = 'env.VITE_FEATURE_ACCOUNT_JOURNAL === "true" && env.VITE_KILL_ACCOUNT_JOURNAL !== "true"'
           if (body.split(flag).length !== 2) throw new Error("Feature flag route no longer matches; do not silently bypass the real API")
-          return route.fulfill({ response, body: body.replace(flag, "return globalThis.__accountRecordFeatureEnabled !== false;") })
+          // Substitute only feature configuration, preserving the real storage
+          // pause predicate that follows it in the current production module.
+          return route.fulfill({ response, body: body.replace(flag, "globalThis.__accountRecordFeatureEnabled !== false") })
         }
         if (url.pathname === "/src/domain/account/supabase-client.ts") {
           return route.fulfill({ contentType: "application/javascript", body: `

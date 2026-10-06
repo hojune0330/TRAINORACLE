@@ -126,7 +126,7 @@ describe("AppShell oracle exploration navigation", () => {
     expect(screen.queryByRole("heading", { name: heading })).not.toBeInTheDocument()
     expect(window.location.search).toBe("?app=1")
     expect(mainTabs().getAllByRole("button").map(button => button.textContent)).toEqual([
-      "홈", "일지", "기록하기", "계획", "오라클",
+      "홈", "일지", "기록", "훈련", "오라클",
     ])
     expect(mainTabs().getByRole("button", { name: tabLabel })).toHaveAttribute("aria-current", "page")
 
@@ -145,9 +145,9 @@ describe("AppShell oracle exploration navigation", () => {
   })
 
   it.each([
-    { topicId: "level", action: "records", heading: "내 종목 기록", tab: "계획" },
+    { topicId: "level", action: "records", heading: "내 종목 기록", tab: "훈련" },
     { topicId: "focus", action: "journal", heading: "지난 일지", tab: "일지" },
-    { topicId: "priority", action: "plan", heading: "내 훈련 계획", tab: "계획" },
+    { topicId: "priority", action: "plan", heading: "내 훈련 계획", tab: "훈련" },
     { topicId: "mix", action: "trends", heading: "분석 출발 화면", tab: "오라클" },
   ] as const)("routes the $action personal action to its actual destination", async ({ topicId, action, heading, tab }) => {
     const user = userEvent.setup()

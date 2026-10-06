@@ -9,6 +9,7 @@ import {
 } from "./InstallShortcut"
 
 const STORAGE_KEY = "trainoracle:install-shortcut:v1"
+const SUPPRESSION_STORAGE_KEY = "trainoracle:install-shortcut:suppression:v1"
 const DAY_MS = 24 * 60 * 60 * 1000
 const originalShowModal = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const originalClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "close")
@@ -218,6 +219,7 @@ describe("native install capability", () => {
 
     expect(await screen.findByText("설치 요청을 보냈어요. 브라우저에서 설치를 마쳐 주세요.")).toBeVisible()
     expect(screen.queryByText("바로가기 아이콘을 이미 사용 중이에요")).not.toBeInTheDocument()
+    expect(window.localStorage.getItem(SUPPRESSION_STORAGE_KEY)).toBeNull()
   })
 })
 
@@ -282,13 +284,62 @@ describe("dismissal preference", () => {
     await user.click(menu)
     expect(screen.getByTestId("install-shortcut-dialog")).toBeVisible()
   })
+
+  it("stores 'already added' separately, survives remount, and can be restored from More", async () => {
+    const user = userEvent.setup()
+    const fallback = React.createRef<HTMLButtonElement>()
+    const renderMore = () => render(
+      <InstallShortcutProvider>
+        <div className="more-screen">
+          <header className="utility-header"><button ref={fallback} type="button">뒤로</button></header>
+          <InstallShortcutSuggestion eligible />
+          <InstallShortcutMenuEntry />
+        </div>
+      </InstallShortcutProvider>,
+    )
+    const first = renderMore()
+
+    await user.click(screen.getByTestId("install-shortcut-menu"))
+    await user.click(screen.getByRole("button", { name: "이미 추가했어요" }))
+
+    expect(screen.queryByTestId("install-shortcut-suggestion")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("install-shortcut-menu")).not.toBeInTheDocument()
+    expect(screen.getByTestId("install-shortcut-restore")).toBeVisible()
+    expect(window.localStorage.getItem(SUPPRESSION_STORAGE_KEY)).toBe("manual")
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull()
+    expect(fallback.current).toHaveFocus()
+
+    first.unmount()
+    renderMore()
+    expect(screen.queryByTestId("install-shortcut-suggestion")).not.toBeInTheDocument()
+    await user.click(screen.getByTestId("install-shortcut-restore"))
+    expect(window.localStorage.getItem(SUPPRESSION_STORAGE_KEY)).toBeNull()
+    expect(fallback.current).toHaveFocus()
+    expect(screen.getByTestId("install-shortcut-menu")).toBeVisible()
+    expect(screen.getByTestId("install-shortcut-suggestion")).toBeVisible()
+  })
+
+  it("keeps manual hiding for the mounted session when localStorage throws", async () => {
+    const user = userEvent.setup()
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("blocked") })
+    render(
+      <InstallShortcutProvider>
+        <InstallShortcutSuggestion eligible />
+        <InstallShortcutMenuEntry />
+      </InstallShortcutProvider>,
+    )
+
+    await user.click(screen.getByTestId("install-shortcut-menu"))
+    await user.click(screen.getByRole("button", { name: "이미 추가했어요" }))
+    expect(screen.queryByTestId("install-shortcut-suggestion")).not.toBeInTheDocument()
+    expect(screen.getByTestId("install-shortcut-restore")).toBeVisible()
+  })
 })
 
 describe("installed observation and dialog accessibility", () => {
-  it("hides the suggestion and native prompt after appinstalled but keeps manual status", async () => {
-    const user = userEvent.setup()
+  it("hides both install entries after confirmed appinstalled", async () => {
     const { event } = deferredInstallEvent()
-    render(
+    const view = render(
       <InstallShortcutProvider>
         <InstallShortcutSuggestion eligible />
         <InstallShortcutMenuEntry />
@@ -298,9 +349,35 @@ describe("installed observation and dialog accessibility", () => {
     act(() => window.dispatchEvent(new Event("appinstalled")))
 
     expect(screen.queryByTestId("install-shortcut-suggestion")).not.toBeInTheDocument()
-    await user.click(screen.getByTestId("install-shortcut-menu"))
-    expect(screen.queryByTestId("install-shortcut-install")).not.toBeInTheDocument()
-    expect(screen.getByText("바로가기 아이콘을 이미 사용 중이에요")).toBeVisible()
+    expect(screen.queryByTestId("install-shortcut-menu")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("install-shortcut-restore")).not.toBeInTheDocument()
+    expect(screen.queryByText("바로가기 아이콘을 이미 사용 중이에요")).not.toBeInTheDocument()
+    expect(window.localStorage.getItem(SUPPRESSION_STORAGE_KEY)).toBe("confirmed")
+
+    view.unmount()
+    render(
+      <InstallShortcutProvider>
+        <InstallShortcutSuggestion eligible />
+        <InstallShortcutMenuEntry />
+      </InstallShortcutProvider>,
+    )
+    expect(screen.queryByTestId("install-shortcut-suggestion")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("install-shortcut-menu")).not.toBeInTheDocument()
+    expect(screen.getByTestId("install-shortcut-restore")).toBeVisible()
+    expect(screen.queryByText("바로가기 아이콘을 이미 사용 중이에요")).not.toBeInTheDocument()
+  })
+
+  it("hides both install entries when this app is opened in standalone mode", () => {
+    setNavigator({ standalone: true })
+    render(
+      <InstallShortcutProvider>
+        <InstallShortcutSuggestion eligible />
+        <InstallShortcutMenuEntry />
+      </InstallShortcutProvider>,
+    )
+    expect(screen.queryByTestId("install-shortcut-suggestion")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("install-shortcut-menu")).not.toBeInTheDocument()
+    expect(window.localStorage.getItem(SUPPRESSION_STORAGE_KEY)).toBe("confirmed")
   })
 
   it("observes standalone changes and removes its media listener on cleanup", () => {

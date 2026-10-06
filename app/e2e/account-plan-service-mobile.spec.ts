@@ -16,9 +16,11 @@ async function install(context: BrowserContext) {
       body: '<!doctype html><html lang="ko"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Synthetic mobile history</title><body></body></html>' })
     if (url.pathname === "/src/domain/account/account-journal-api.ts") {
       const response = await route.fetch(), body = await response.text()
-      const flag = 'return env.VITE_FEATURE_ACCOUNT_JOURNAL === "true" && env.VITE_KILL_ACCOUNT_JOURNAL !== "true";'
+      const flag = 'env.VITE_FEATURE_ACCOUNT_JOURNAL === "true" && env.VITE_KILL_ACCOUNT_JOURNAL !== "true"'
       if (body.split(flag).length !== 2) throw Error("Feature flag route no longer matches")
-      return route.fulfill({ response, body: body.replace(flag, "return true;") })
+      // Enable only synthetic feature configuration; keep the real owner-scoped
+      // storage withdrawal hold in the production preview predicate.
+      return route.fulfill({ response, body: body.replace(flag, "true") })
     }
     if (url.pathname === "/src/domain/account/supabase-client.ts") return route.fulfill({ contentType: "application/javascript", body: `
       import { activeLocalAccount } from '/src/domain/account/local-journal-ownership.ts';
@@ -41,6 +43,31 @@ async function install(context: BrowserContext) {
     return route.continue()
   })
 }
+
+test("mobile feature fixture preserves the real owner-scoped storage pause", async ({ page, context }) => {
+  await install(context)
+  await page.goto("/__account_record_test__")
+  const states = await page.evaluate(async ({ owner, otherOwner }) => {
+    const apiPath = "/src/domain/account/account-journal-api.ts"
+    const ownerPath = "/src/domain/account/local-journal-ownership.ts"
+    const holdPath = "/src/domain/account/storage-transmission-hold.ts"
+    const api = await import(/* @vite-ignore */ apiPath)
+    const ownership = await import(/* @vite-ignore */ ownerPath)
+    const hold = await import(/* @vite-ignore */ holdPath)
+    ownership.setActiveLocalAccount(owner)
+    const before = api.accountJournalPreviewEnabled()
+    hold.holdStorageTransmission(owner)
+    const paused = api.accountJournalPreviewEnabled()
+    ownership.setActiveLocalAccount(otherOwner)
+    const other = api.accountJournalPreviewEnabled()
+    ownership.setActiveLocalAccount(owner)
+    const returned = api.accountJournalPreviewEnabled()
+    hold.releaseStorageTransmissionHold(owner)
+    const released = api.accountJournalPreviewEnabled()
+    return { before, paused, other, returned, released }
+  }, { owner, otherOwner })
+  expect(states).toEqual({ before: true, paused: false, other: true, returned: false, released: true })
+})
 
 async function prepare(page: Page, context: BrowserContext, count: number, hasCurrent = true) {
   await install(context)

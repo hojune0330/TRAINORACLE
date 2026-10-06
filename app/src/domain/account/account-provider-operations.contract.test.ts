@@ -26,6 +26,7 @@ describe("auth provider operations packet", () => {
     expect(config).toContain("[auth.email.template.confirmation]")
 
     for (const template of [magicLinkTemplate, confirmationTemplate]) {
+      expect(template.match(/\{\{ \.RedirectTo \}\}#token_hash=\{\{ \.TokenHash \}\}&amp;type=email/gu)).toHaveLength(1)
       const document = new DOMParser().parseFromString(template, "text/html")
       expect(document.title).toContain("TrainOracle")
       expect([...document.querySelectorAll("a[href]")].map(link => link.getAttribute("href")))

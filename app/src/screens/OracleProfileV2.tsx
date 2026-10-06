@@ -27,24 +27,44 @@ const initial: OracleV2Store = { status: "LOADING", document: null, legacyDocume
   sequence: 0, remote: null, remoteRevision: null, error: null }
 
 /** Not publicly enabled until the complete V2 release gate is satisfied. */
-export function OracleProfileV2({ today, onBack, onNavigate }: {
-  today: string; onBack: () => void; onNavigate: (destination: OracleDestination) => void
-}) {
-  const owner = activeLocalAccount()
-  return <OracleProfileV2ForOwner key={owner ?? "guest"} owner={owner} today={today} onBack={onBack} onNavigate={onNavigate} />
+export type GuestOracleSession = {
+  readonly ownerKey: "guest"
+  readonly answers: OracleResponses
+  readonly selectedCharacter: OracleAxisId | null
+  readonly context?: OracleProfileContext
 }
 
-function OracleProfileV2ForOwner({ owner, today, onBack, onNavigate }: {
+export function OracleProfileV2({ today, onBack, onNavigate, initialView = "result", backLabel, guestSession, onGuestSessionChange }: {
+  today: string; onBack: () => void; onNavigate: (destination: OracleDestination) => void
+  initialView?: "result" | "library"
+  backLabel?: string
+  guestSession?: GuestOracleSession | null
+  onGuestSessionChange?: (session: GuestOracleSession | null) => void
+}) {
+  const owner = activeLocalAccount()
+  return <OracleProfileV2ForOwner key={owner ?? "guest"} owner={owner} today={today} onBack={onBack} onNavigate={onNavigate} initialView={initialView} backLabel={backLabel} guestSession={guestSession} onGuestSessionChange={onGuestSessionChange} />
+}
+
+function OracleProfileV2ForOwner({ owner, today, onBack, onNavigate, initialView, backLabel, guestSession, onGuestSessionChange }: {
   owner: string | null; today: string; onBack: () => void; onNavigate: (destination: OracleDestination) => void
+  initialView: "result" | "library"; backLabel?: string; guestSession?: GuestOracleSession | null; onGuestSessionChange?: (session: GuestOracleSession | null) => void
 }) {
   const [store, setStore] = React.useState(initial)
   const [resetVersion, setResetVersion] = React.useState(0)
-  const [guest, setGuest] = React.useState<OracleResponses>({})
-  const [guestCharacter, setGuestCharacter] = React.useState<OracleAxisId | null>(null)
+  const [localGuestSession, setLocalGuestSession] = React.useState<GuestOracleSession | null>(null)
   const [notice, setNotice] = React.useState("")
   const [contextOpen, setContextOpen] = React.useState(false)
   const [contextDraft, setContextDraft] = React.useState<OracleProfileContext>()
-  const [guestContext, setGuestContext] = React.useState<OracleProfileContext>()
+  const scopedGuestSession = !owner
+    ? guestSession === undefined ? localGuestSession : guestSession?.ownerKey === "guest" ? guestSession : null
+    : null
+  const guest = scopedGuestSession?.answers ?? {}
+  const guestCharacter = scopedGuestSession?.selectedCharacter ?? null
+  const setGuestSession = (session: GuestOracleSession | null) => {
+    if (owner) return
+    setLocalGuestSession(session)
+    onGuestSessionChange?.(session)
+  }
   const invited = /^[A-Za-z0-9_-]{43}$/u.test(new URLSearchParams(window.location.hash.slice(1)).get("oracle-compare-invite") ?? "")
   const [friendsOpen, setFriendsOpen] = React.useState(invited)
   const [friendMode, setFriendMode] = React.useState<"choose" | "connected" | "manual">(invited ? "connected" : "choose")
@@ -61,7 +81,7 @@ function OracleProfileV2ForOwner({ owner, today, onBack, onNavigate }: {
     if (owner) void runningProfileDocumentId(owner).then(id => { if (alive) setDocumentId(id) }).catch(() => { if (alive) setDocumentId(null) })
     return () => { alive = false }
   }, [owner])
-  React.useEffect(() => { if (store.status === "DELETED") { setContextDraft(undefined); setContextOpen(false); setFriendsOpen(false); setGuestContext(undefined); unsafe.current = false; scoreUnsafe.current = false } }, [store.status])
+  React.useEffect(() => { if (store.status === "DELETED") { setContextDraft(undefined); setContextOpen(false); setFriendsOpen(false); unsafe.current = false; scoreUnsafe.current = false } }, [store.status])
   const evidence = usePlanEvidenceHistory(true)
   const sources = useOracleReadingSources(today)
   const journal = loadEntriesForPlanSafety()
@@ -113,7 +133,7 @@ function OracleProfileV2ForOwner({ owner, today, onBack, onNavigate }: {
   const current = store.confirmedDocument?.data.current
   const profileReadable = !owner || store.status === "EMPTY" || (["READY", "PENDING"].includes(store.status) && Boolean(store.confirmedDocument))
   const unavailableProfile = { state: store.status === "DELETED" ? "REVOKED" as const : "UNAVAILABLE" as const }
-  const context = owner ? store.confirmedDocument?.data.context : guestContext
+  const context = owner ? store.confirmedDocument?.data.context : scopedGuestSession?.context
   const contextEditing = Boolean(contextDraft || store.draftDocument?.data.context && JSON.stringify(store.draftDocument.data.context) !== JSON.stringify(context))
   const hasScoreDraft = Boolean(store.draftDocument?.data.current && JSON.stringify(store.draftDocument.data.current) !== JSON.stringify(current ?? null))
   React.useEffect(() => { if (hasScoreDraft || contextEditing) unsafe.current = true }, [hasScoreDraft, contextEditing])
@@ -124,7 +144,7 @@ function OracleProfileV2ForOwner({ owner, today, onBack, onNavigate }: {
   }
   const comparisonProfile = React.useMemo(() => owner ? current ?? null : Object.keys(guest).length ? makeOracleProfileRevision({ revision: 1, answeredAt: new Date().toISOString(), answers: guest, selectedCharacter: guestCharacter }) : null, [owner, current, guest, guestCharacter])
   const commit = async (answers: OracleResponses, character: OracleAxisId | null) => {
-    if (!owner) { setGuest(answers); setGuestCharacter(character); scoreUnsafe.current = false; unsafe.current = contextEditing; return true }
+    if (!owner) { setGuestSession({ ownerKey: "guest", answers, selectedCharacter: character, ...(context ? { context } : {}) }); scoreUnsafe.current = false; unsafe.current = contextEditing; return true }
     const ok = await enqueue(next => next.commitAnswers(answers, character, oracleV2EditToken(next.snapshot())))
     scoreUnsafe.current = !ok; unsafe.current = !ok || contextEditing
     if (!ok) setNotice("계정 저장이 끝나지 않았어요. 응답은 그대로 두고 다시 확인해 주세요.")
@@ -137,7 +157,7 @@ function OracleProfileV2ForOwner({ owner, today, onBack, onNavigate }: {
     {store.status === "MIGRATION_REQUIRED" && <section className="oracle-v2 oracle-v2__body"><h2>이전 응답을 보관하고 새 프로필 시작</h2><p>기존 답은 그대로 보관해요. 새 점수는 새 질문에 답한 내용으로만 계산해요.</p><button type="button" onClick={() => { void enqueue(next => next.migrateV1(oracleV2EditToken(next.snapshot()))) }}>이전 응답 보관하고 시작</button></section>}
     {store.status === "LEGACY_DRAFT" && <p role="alert">이전 화면에 아직 계정으로 보내지 않은 응답이 있어요. 기존 프로필에서 먼저 저장해 주세요.</p>}
     {store.status === "CONFLICT" && <section className="oracle-v2 oracle-v2__body"><p role="alert">다른 곳에서 응답이 바뀌었어요. 어떤 응답을 사용할까요?</p><button type="button" onClick={() => { void resolveConflict("REMOTE") }}>계정의 응답 사용</button><button type="button" onClick={() => { void resolveConflict("LOCAL") }}>이 화면의 응답 사용</button></section>}
-    <OracleProfileExperience key={resetVersion} answers={owner ? current?.answers ?? {} : guest}
+    <OracleProfileExperience key={resetVersion} initialView={initialView} backLabel={backLabel} answers={owner ? current?.answers ?? {} : guest}
       draftAnswers={owner ? store.draftDocument?.data.current?.answers : undefined}
       selectedCharacter={owner ? current?.selectedCharacter ?? null : guestCharacter}
       revision={current?.revision ?? 0} readings={owner ? store.confirmedDocument?.data.readings ?? [] : []}
@@ -158,7 +178,7 @@ function OracleProfileV2ForOwner({ owner, today, onBack, onNavigate }: {
         updated.data.readings.push(saveOracleProfileReading(document.data.current, new Date().toISOString()))
         return next.save(updated, oracleV2EditToken(snapshot))
       })}
-      onDelete={async () => { if (!owner) { setGuest({}); setGuestCharacter(null); setGuestContext(undefined); setContextDraft(undefined); unsafe.current = false; scoreUnsafe.current = false; return true }
+      onDelete={async () => { if (!owner) { setGuestSession(null); setContextDraft(undefined); unsafe.current = false; scoreUnsafe.current = false; return true }
         const ok = await enqueue(next => next.deleteProfile(oracleV2EditToken(next.snapshot()))); if (ok) { unsafe.current = false; scoreUnsafe.current = false }; return ok }}
       renderTopicControls={id => <>
         {["B04", "F02", "F08"].includes(id) && sources.fileOptions.length > 0 && <label>어느 운동의 구간을 볼까요?
@@ -203,7 +223,7 @@ function OracleProfileV2ForOwner({ owner, today, onBack, onNavigate }: {
         if (owner) void enqueue(next => { const snapshot = next.snapshot(); if (snapshot.draftDocument?.data.current && JSON.stringify(snapshot.draftDocument.data.current) !== JSON.stringify(snapshot.confirmedDocument?.data.current ?? null)) return Promise.resolve(false); const document = structuredClone(snapshot.confirmedDocument ?? emptyOracleV2Document()); document.data.context = draft; return next.saveDraft(document, oracleV2EditToken(snapshot)) })
       }}
       onSave={async draft => {
-        if (!owner) { setGuestContext(draft); setContextDraft(undefined); unsafe.current = false; return true }
+        if (!owner) { setGuestSession({ ownerKey: "guest", answers: guest, selectedCharacter: guestCharacter, context: draft }); setContextDraft(undefined); unsafe.current = false; return true }
         const ok = await enqueue(next => { const snapshot = next.snapshot(); if (snapshot.draftDocument?.data.current && JSON.stringify(snapshot.draftDocument.data.current) !== JSON.stringify(snapshot.confirmedDocument?.data.current ?? null)) return Promise.resolve(false); const document = structuredClone(snapshot.confirmedDocument ?? emptyOracleV2Document()); document.data.context = draft; return next.save(document, oracleV2EditToken(snapshot)) })
         if (ok) { unsafe.current = false; setContextDraft(undefined) }
         return ok

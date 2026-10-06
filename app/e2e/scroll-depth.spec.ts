@@ -143,6 +143,91 @@ test("WELCOME은 빈 꾸미기·성취 점수판을 숨기고 유용한 기록 �
   await expect(strip.getByText(/몸 상태·회복 체크/u)).toBeVisible()
 })
 
+test("WELCOME keeps its height and readable actions with a reserved scrollbar gutter", async ({ page, baseURL }, testInfo) => {
+  await page.setViewportSize({ width: 320, height: 568 })
+  const origin = new URL(baseURL!).origin
+  await page.route("**/*", route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort())
+  await page.goto("/?app=1")
+  const originalHeight = await scrollHeightPx(page)
+  expect(originalHeight).toBeLessThanOrEqual(HOME_LIMIT["touch-narrow"])
+
+  // Reserve only the missing width: overlay and classic scrollbars both leave
+  // at least 15px unavailable, without changing the original 320px viewport.
+  // This reproduces constrained content width, not the CI runner's actual OS.
+  const existingGutter = await page.locator(SCROLL_REGION).evaluate(el => (el as HTMLElement).offsetWidth - el.clientWidth)
+  await page.addStyleTag({ content: `${SCROLL_REGION} { padding-right: ${Math.max(0, 15 - existingGutter)}px; box-sizing: border-box; }` })
+  const height = await scrollHeightPx(page)
+  console.log(`[SCROLL-GUTTER] ${testInfo.project.name} original=${originalHeight} reserved=${height} existingGutter=${existingGutter}`)
+  expect(height).toBeLessThanOrEqual(HOME_LIMIT["touch-narrow"])
+  expect(await page.evaluate(() => innerWidth)).toBe(320)
+  const region = page.locator(SCROLL_REGION)
+  expect(await region.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
+  const first = page.getByRole("button", { name: "오늘 기록 남기기", exact: true })
+  const second = page.getByRole("button", { name: "훈련 계획 만들기", exact: true })
+  await expect(first).toBeVisible()
+  await expect(second).toBeVisible()
+  const firstBox = await first.boundingBox()
+  const secondBox = await second.boundingBox()
+  expect(firstBox).not.toBeNull()
+  expect(secondBox).not.toBeNull()
+  expect(firstBox!.height).toBeGreaterThanOrEqual(44)
+  expect(secondBox!.height).toBeGreaterThanOrEqual(44)
+  expect(firstBox!.width).toBeGreaterThanOrEqual(44)
+  expect(secondBox!.width).toBeGreaterThanOrEqual(44)
+  expect(firstBox!.y).toBe(secondBox!.y)
+  await first.focus()
+  await page.keyboard.press("Tab")
+  await expect(second).toBeFocused()
+  expect(await second.evaluate(el => el.matches(":focus-visible"))).toBe(true)
+  expect(await second.evaluate(el => parseFloat(getComputedStyle(el).outlineWidth))).toBeGreaterThan(0)
+  await expect(second).toBeInViewport({ ratio: 1 })
+  await page.screenshot({ path: testInfo.outputPath("home-gutter-320.png"), animations: "disabled" })
+
+  const actions = page.locator(".home-hub button:visible, .home-hub summary:visible")
+  const labels = await actions.allTextContents()
+  expect(labels.length).toBeGreaterThanOrEqual(5)
+  expect(labels.every(label => label.trim().length > 0)).toBe(true)
+  const firstSize = await first.evaluate(el => parseFloat(getComputedStyle(el).fontSize))
+  await page.evaluate(() => {
+    const nodes = [...document.querySelectorAll<HTMLElement>(".home-hub, .home-hub *")].filter(el => el instanceof HTMLElement)
+    const sizes = nodes.map(el => parseFloat(getComputedStyle(el).fontSize))
+    nodes.forEach((el, index) => el.style.setProperty("font-size", `${sizes[index]! * 2}px`, "important"))
+  })
+  expect(await first.evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBe(firstSize * 2)
+  expect(await actions.allTextContents()).toEqual(labels)
+  expect(await region.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
+  await first.focus()
+  await page.keyboard.press("Tab")
+  await expect(second).toBeFocused()
+  expect(await second.evaluate(el => el.matches(":focus-visible"))).toBe(true)
+  expect(await second.evaluate(el => parseFloat(getComputedStyle(el).outlineWidth))).toBeGreaterThan(0)
+  // At 200% text, vertical scrolling is allowed; every action remains readable.
+  for (const action of await actions.all()) {
+    await action.evaluate(el => el.scrollIntoView({ block: "center", inline: "nearest", behavior: "instant" }))
+    await expect(action).toBeInViewport({ ratio: 1 })
+    const geometry = await action.evaluate(el => {
+      const box = el.getBoundingClientRect()
+      const range = document.createRange()
+      range.selectNodeContents(el)
+      const rects = [...range.getClientRects()].filter(rect => rect.width > 0 && rect.height > 0)
+      return { width: box.width, height: box.height, fits: el.scrollWidth <= el.clientWidth && el.scrollHeight <= el.clientHeight,
+        rects: rects.map(rect => ({ left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom })), viewportHeight: innerHeight, viewportWidth: innerWidth }
+    })
+    expect(geometry.width).toBeGreaterThanOrEqual(44)
+    expect(geometry.height).toBeGreaterThanOrEqual(44)
+    expect(geometry.fits).toBe(true)
+    expect(geometry.rects.length).toBeGreaterThan(0)
+    for (const rect of geometry.rects) {
+      expect(rect.left).toBeGreaterThanOrEqual(0)
+      expect(rect.right).toBeLessThanOrEqual(geometry.viewportWidth)
+      expect(rect.top).toBeGreaterThanOrEqual(0)
+      expect(rect.bottom).toBeLessThanOrEqual(geometry.viewportHeight)
+    }
+  }
+  await second.scrollIntoViewIfNeeded()
+  await page.screenshot({ path: testInfo.outputPath("home-gutter-320-double-text.png"), animations: "disabled" })
+})
+
 test("기록이 하나 생기면 꾸미기 진입 뒤 포인트 보관함을 확인할 수 있다", async ({ page }, testInfo) => {
   limitsFor(testInfo.project.name)
   await page.addInitScript(() => {

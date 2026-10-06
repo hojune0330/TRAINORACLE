@@ -273,7 +273,7 @@ it.each([false, true])("cannot submit an unfinished score draft through the cont
   draft.data.current = makeOracleProfileRevision({ revision: 1, answeredAt: DATE, answers: { STRUCTURE_1: 5 } })
   const fixture = mount(reloaded ? { ...ready(), status: "PENDING", draftDocument: draft, draftState: "EDITING", sequence: 1 } : ready())
   if (!reloaded) {
-    fireEvent.click(screen.getByRole("button", { name: "3문항으로 알아보기" }))
+    fireEvent.click(screen.getByRole("button", { name: "계획 선호 3문항 시작" }))
     fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "매우 그래요" }))
     await waitFor(() => expect(fixture.service.saveDraft).toHaveBeenCalledTimes(1))
     closeDialog()
@@ -387,13 +387,13 @@ it("clears results, readings and context on deletion and restarts only through t
   await waitFor(() => expect(fixture.service.restartProfile).toHaveBeenCalledWith(tombstoneToken, "START_NEW_ORACLE_V2"))
   expect(fixture.service.snapshot().confirmedDocument).toEqual(emptyOracleV2Document())
   fireEvent.click(screen.getByRole("button", { name: "내 결과" }))
-  expect(screen.getByRole("button", { name: "3문항으로 알아보기" })).toBeEnabled()
+  expect(screen.getByRole("button", { name: "계획 선호 3문항 시작" })).toBeEnabled()
   expect(resultScore(fixture.container)).toBeNull()
   fireEvent.click(contextButton())
   fireEvent.click(within(screen.getByRole("dialog", { name: "추가 응답" })).getByRole("button", { name: /^어떤 달리기 방식이 더 좋은가요\?/ }))
   expect(within(screen.getByRole("dialog")).getByRole("button", { name: "쉬었다 반복해서 달리기" })).toHaveAttribute("aria-pressed", "false")
   closeDialog()
-  fireEvent.click(screen.getByRole("button", { name: "3문항으로 알아보기" }))
+  fireEvent.click(screen.getByRole("button", { name: "계획 선호 3문항 시작" }))
   for (let index = 0; index < 3; index++) fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "매우 그래요" }))
   await waitFor(() => expect(fixture.service.commitAnswers).toHaveBeenCalledTimes(1))
   expect(fixture.service.snapshot().confirmedDocument?.data.current?.revision).toBe(1)
@@ -410,7 +410,7 @@ it.each([{ native: false, strict: false }, { native: true, strict: false }, { na
   const back = vi.spyOn(window.history, "back")
   const view = () => strict ? <React.StrictMode><OracleProfileV2 {...props} /></React.StrictMode> : <OracleProfileV2 {...props} />
   const mounted = render(view())
-  fireEvent.click(screen.getByRole("button", { name: "3문항으로 알아보기" }))
+  fireEvent.click(screen.getByRole("button", { name: "계획 선호 3문항 시작" }))
   for (let index = 0; index < 3; index++) {
     fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "매우 그래요" }))
   }
@@ -419,7 +419,7 @@ it.each([{ native: false, strict: false }, { native: true, strict: false }, { na
   fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "결과로" }))
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull())
   expect(resultScore(mounted.container)).toHaveTextContent("100")
-  expect(screen.queryByRole("button", { name: "3문항으로 알아보기" })).toBeNull()
+  expect(screen.queryByRole("button", { name: "계획 선호 3문항 시작" })).toBeNull()
   if (native) { expect(back).toHaveBeenCalledTimes(1); expect(window.history.state).toEqual(baseHistory) }
   mounted.rerender(view())
   expect(resultScore(mounted.container)).toHaveTextContent("100")

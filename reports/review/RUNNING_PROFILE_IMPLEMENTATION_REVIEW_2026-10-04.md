@@ -105,7 +105,7 @@ and protects identity, privacy and reward metadata`가 **200 != 422**로 실패�
 아직 커밋/푸시/PR/CI/운영 DB 변경/Edge Function 배포/Pages 배포를 하지 않았다.
 
 1. 문서·코드 변경 묶음 리뷰와 커밋. 현재 다른 작업트리 작업은 건드리지 않음.
-2. 기존 운영 변경 절차로 `0058_running_profile_account_storage.sql` 적용 (main 인증·목적 동의 이력 충돌로 0051/0057에서 이동).
+2. 기존 운영 변경 절차로 `0059_running_profile_account_storage.sql` 적용 (main 인증·목적 동의·철회 파기 이력 충돌로 0051/0057/0058에서 이동).
 3. 새 검증기를 포함한 account-journal 서버 배포, 지원 응답 확인.
 4. 프런트 배포, 실제 로그인 계정에서 응답 저장/재열기/계정 전환 확인.
 5. iPhone Safari·다른 실제 기기 간 응답 수정 확인. Chromium 모의 모바일과 구분.

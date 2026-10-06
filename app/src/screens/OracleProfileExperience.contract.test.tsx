@@ -34,6 +34,11 @@ it("chooses Mari's work portrait by context, not by the user's preference type",
     expect(within(screen.getByRole("complementary")).getByRole("img")).toHaveAttribute("src", expect.stringContaining("mari-analysis.png"))
   }
 })
+it("opens the requested library view with a contextual return label", () => {
+  render(<OracleProfileExperience {...props({ initialView: "library", backLabel: "읽을거리로 돌아가기" })} />)
+  expect(screen.getByRole("group", { name: "읽을거리 주제" })).toBeVisible()
+  expect(screen.getByRole("button", { name: "읽을거리로 돌아가기" })).toBeVisible()
+})
 it("opens real record and plan readings from the manager and returns to the same profile", () => {
   const readTopic = vi.fn((id: string) => ({ state: "READY" as const, facts: [{ label: "확인한 자료", value: id === "B02" ? "800m · 2:08" : id === "C02" ? "기록된 훈련 · 3회" : "당시 목표 · 200m 32초", source: "합성 시험 자료" }], paragraphs: [], limitations: [] }))
   render(<OracleProfileExperience {...props({ readTopic, answers: { STRUCTURE_1: 5, STRUCTURE_2: 5, STRUCTURE_3: 5 }, selectedCharacter: "STRUCTURE" })} />)
@@ -71,7 +76,8 @@ it("keeps the manager's preference explanation tied to the selected result", () 
 
 it("asks one question at a time and only commits after the third response", async () => {
   const p = props(); render(<OracleProfileExperience {...p} />)
-  fireEvent.click(screen.getByRole("button", { name: "3문항으로 알아보기" }))
+  fireEvent.click(screen.getByRole("button", { name: "계획 선호 3문항 시작" }))
+  expect(screen.getByText(/선택 사항이에요/u)).toBeVisible()
   for (let n = 0; n < 3; n++) {
     expect(within(dialog()).getAllByRole("heading", { hidden: true })).toHaveLength(1)
     fireEvent.click(within(dialog()).getByRole("button", { name: "매우 그래요", hidden: true }))
@@ -81,9 +87,26 @@ it("asks one question at a time and only commits after the third response", asyn
   expect(p.onDraft).toHaveBeenCalledTimes(3)
   expect(p.onCommit).toHaveBeenCalledWith({ STRUCTURE_1: 5, STRUCTURE_2: 5, STRUCTURE_3: 5 }, "STRUCTURE")
 })
+it("announces nonnumeric and skipped answers as selected when revisiting a question", () => {
+  render(<OracleProfileExperience {...props()} />)
+  fireEvent.click(screen.getByRole("button", { name: "계획 선호 3문항 시작" }))
+
+  const answerWithoutCertainty = () => {
+    fireEvent.click(within(dialog()).getByText("답하기 어려워요"))
+    return within(dialog()).getByRole("button", { name: "상황마다 달라요", hidden: true })
+  }
+  fireEvent.click(answerWithoutCertainty())
+  fireEvent.click(within(dialog()).getByRole("button", { name: "이전 질문", hidden: true }))
+  expect(answerWithoutCertainty()).toHaveAttribute("aria-pressed", "true")
+
+  fireEvent.click(within(dialog()).getByRole("button", { name: "건너뛰기", hidden: true }))
+  fireEvent.click(within(dialog()).getByRole("button", { name: "이전 질문", hidden: true }))
+  expect(within(dialog()).getByRole("button", { name: "건너뛰기", hidden: true })).toHaveAttribute("aria-pressed", "true")
+  expect(answerWithoutCertainty()).toHaveAttribute("aria-pressed", "false")
+})
 it("preserves answers on save rejection and exposes the failure instead of success", async () => {
   const p = props({ account: true, onCommit: vi.fn(async () => false) }); render(<OracleProfileExperience {...p} />)
-  fireEvent.click(screen.getByRole("button", { name: "3문항으로 알아보기" }))
+  fireEvent.click(screen.getByRole("button", { name: "계획 선호 3문항 시작" }))
   for (let n = 0; n < 3; n++) fireEvent.click(within(dialog()).getByRole("button", { name: "매우 그래요", hidden: true }))
   await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("입력한 답은"))
   expect(within(dialog()).getByText("100")).toBeInTheDocument()
@@ -107,7 +130,7 @@ it("lets a user keep a neutral character despite an eligible candidate", async (
 })
 it("does not offer a fake zero score for skipped responses", async () => {
   render(<OracleProfileExperience {...props()} />)
-  fireEvent.click(screen.getByRole("button", { name: "3문항으로 알아보기" }))
+  fireEvent.click(screen.getByRole("button", { name: "계획 선호 3문항 시작" }))
   for (let n = 0; n < 3; n++) fireEvent.click(within(dialog()).getByRole("button", { name: "건너뛰기", hidden: true }))
   await waitFor(() => expect(within(dialog()).getByText("아직 점수로 정리하지 않은 응답")).toBeInTheDocument())
   expect(within(dialog()).queryByText("0")).toBeNull()

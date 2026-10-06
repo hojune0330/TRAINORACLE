@@ -16,10 +16,11 @@ import { isWithinTrailingDays, isoToDate } from "../domain/dates"
 import { todayISO } from "../domain/journal-store"
 
 export type AppTab = "home" | "journal" | "log" | "plan" | "trends"
+export type AppDestination = Exclude<AppTab, "log">
 export type ToastPhase = "enter" | "exit"
 
 type TabItem = {
-  readonly id: AppTab
+  readonly id: AppDestination
   readonly label: string
   readonly icon: LucideIcon
 }
@@ -27,8 +28,7 @@ type TabItem = {
 const TAB_ITEMS: readonly TabItem[] = [
   { id: "home", label: "홈", icon: House },
   { id: "journal", label: "일지", icon: BookOpen },
-  { id: "log", label: "기록하기", icon: Plus },
-  { id: "plan", label: "계획", icon: CalendarDays },
+  { id: "plan", label: "훈련", icon: CalendarDays },
   { id: "trends", label: "오라클", icon: TrendingUp },
 ] as const
 
@@ -69,17 +69,18 @@ function useMeasuredTabBarHeight() {
   return navRef
 }
 
-export function TabBar({ tab, onTab }: {
+export function TabBar({ tab, onTab, onStartRecording }: {
   readonly tab: AppTab
-  readonly onTab: (tab: AppTab) => void
+  readonly onTab: (tab: AppDestination) => void
+  readonly onStartRecording: () => void
 }) {
   const navRef = useMeasuredTabBarHeight()
 
   return (
     <nav ref={navRef} className="app-tab-bar" aria-label="주 탭">
-      {TAB_ITEMS.map(({ id, label, icon: Icon }) => {
+      {TAB_ITEMS.flatMap(({ id, label, icon: Icon }, index) => {
         const active = tab === id
-        return (
+        const destination = (
           <button
             className="app-tab-bar__button"
             type="button"
@@ -88,10 +89,13 @@ export function TabBar({ tab, onTab }: {
             aria-current={active ? "page" : undefined}
             data-active={active ? "true" : "false"}
           >
-            <Icon aria-hidden="true" size={13} strokeWidth={1.9} />
+            <Icon aria-hidden="true" size={20} />
             <span>{label}</span>
           </button>
         )
+        return index === 1 ? [destination, <button key="record-action" className="app-tab-bar__button app-tab-bar__record" type="button" aria-label="기록하기" onClick={onStartRecording}>
+          <Plus aria-hidden="true" size={20} /><span>기록</span>
+        </button>] : [destination]
       })}
     </nav>
   )
@@ -108,6 +112,7 @@ export function SavedToast({
   onOpenTrends,
   onOpenBackup,
   onDecorateSaved,
+  onOpenSaved,
 }: {
   readonly count: number
   readonly phase: ToastPhase
@@ -119,6 +124,7 @@ export function SavedToast({
   readonly onOpenTrends?: () => void
   readonly onOpenBackup?: () => void
   readonly onDecorateSaved?: () => void
+  readonly onOpenSaved?: () => void
 }) {
   const presentation = receiptPresentation(receipt)
   const needsReview = reviewMessage !== undefined
@@ -156,6 +162,7 @@ export function SavedToast({
             <ArrowRight aria-hidden="true" size={15} />
           </button>
         )}
+        {!needsReview && receipt.savedDate !== undefined && onOpenSaved && <button className="saved-toast__action" type="button" onClick={onOpenSaved}>기록 보기<ArrowRight aria-hidden="true" size={15} /></button>}
         {!needsReview && receipt.savedDate !== undefined && onDecorateSaved && <button className="saved-toast__action" type="button" onClick={onDecorateSaved}>일지 꾸미기<ArrowRight aria-hidden="true" size={15} /></button>}
       </div>
     </div>

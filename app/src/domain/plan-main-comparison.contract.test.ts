@@ -18,6 +18,17 @@ function pair(fixture: MatrixCase = RUNTIME_CASES[0]): readonly [PlanCandidate, 
   return result.generated.candidates
 }
 
+function catalogPair(): readonly [PlanCandidate, PlanCandidate] {
+  const result = generatePlanFromDraft({ ...draftFor(RUNTIME_CASES[1]), trainingFocus: "LT_INTENT",
+    selectedDetailedTemplateRef: null }, "NO_KNOWN_RISK")
+  if (result.kind !== "generated") throw new Error("Expected real catalog candidates")
+  for (const candidate of result.generated.candidates) {
+    expect(candidate.sessions.some(session => session.role === "QUALITY"
+      && session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout)).toBe(true)
+  }
+  return result.generated.candidates
+}
+
 function changePace(candidate: PlanCandidate, change: (p: PaceTargetPlanPrescription) => PaceTargetPlanPrescription): PlanCandidate {
   return { ...candidate, sessions: candidate.sessions.map((session) => session.prescription.kind === "PACE_TARGET"
     ? { ...session, prescription: withoutStoredSequence(change(session.prescription)) } as PlanSession : session) }
@@ -183,6 +194,64 @@ describe("actual MAIN comparison, not candidate-label comparison", () => {
       expect(row.a?.recovery).toContain("미지정")
       expect(row.a?.time).toContain("준비·회복·정리 포함")
     }
+  })
+
+  it("does not call real catalog MAIN structures unspecified or identical and leaves them untouched", () => {
+    const [a, b] = catalogPair()
+    const before = JSON.stringify([a, b])
+    const result = comparePlanMainWork(a, b)
+    expect(result.sameMainValues).toBe(false)
+    expect(result.sameMainPrescription).toBe(false)
+    expect(result.easyDurationOnly).toBe(false)
+    expect(result.hasUnsupportedCatalog).toBe(true)
+    for (const row of result.rows) {
+      expect(row.methodRelation).toBe("UNSUPPORTED")
+      expect(row.samePrescribedValues).toBe(false)
+      expect(row.methodDifferences).toEqual([])
+      expect(row.a).toBeNull()
+      expect(row.b).toBeNull()
+    }
+    expect(JSON.stringify(result)).not.toMatch(/미지정|catalogFingerprint|calculationFingerprint|inputs/u)
+    expect(JSON.stringify([a, b])).toBe(before)
+  })
+
+  it.each(["left", "right"] as const)("keeps %s-only catalog MAIN distinct from an unspecified envelope", (side) => {
+    const [a, b] = catalogPair()
+    const envelopeOnly = (candidate: PlanCandidate): PlanCandidate => ({ ...candidate,
+      sessions: candidate.sessions.map(session => {
+        if (session.role === "REST" || session.prescription.kind !== "RPE_TIME_RANGE") return session
+        const { catalogWorkout: _catalog, ...prescription } = session.prescription
+        return { ...session, prescription }
+      }) })
+    const result = comparePlanMainWork(side === "left" ? a : envelopeOnly(a), side === "right" ? b : envelopeOnly(b))
+    expect(result.sameMainValues).toBe(false)
+    expect(result.sameMainPrescription).toBe(false)
+    expect(result.easyDurationOnly).toBe(false)
+    for (const row of result.rows) {
+      expect(row.methodRelation).toBe("UNSUPPORTED")
+      expect(row.methodDifferences).toEqual([])
+      expect(side === "left" ? row.a : row.b).toBeNull()
+      expect((side === "left" ? row.b : row.a)?.work).toContain("미지정")
+    }
+  })
+
+  it.each(["left", "right"] as const)("blocks the global easy-time-only claim for a %s support catalog without changing PACE comparison", (side) => {
+    const [a, b] = pair()
+    expect(comparePlanMainWork(a, b).easyDurationOnly).toBe(true)
+    const [catalog] = catalogPair()
+    const main = catalog.sessions.find(session => session.role === "QUALITY" && session.prescription.kind === "RPE_TIME_RANGE")!
+    if (main.prescription.kind !== "RPE_TIME_RANGE" || !main.prescription.catalogWorkout) throw new Error("Expected catalog binding")
+    const binding = main.prescription.catalogWorkout
+    // Non-activatable comparison fixture: a catalog field must never be ignored just
+    // because the envelope still matches. No binding inputs are read or approved here.
+    const withSupportCatalog = (candidate: PlanCandidate): PlanCandidate => ({ ...candidate,
+      sessions: candidate.sessions.map(session => session.role === "EASY"
+        ? { ...session, prescription: { ...session.prescription, catalogWorkout: binding } } : session) })
+    const result = comparePlanMainWork(side === "left" ? withSupportCatalog(a) : a, side === "right" ? withSupportCatalog(b) : b)
+    expect(result.easyDurationOnly).toBe(false)
+    expect(result.hasUnsupportedCatalog).toBe(true)
+    expect(result.sameMainValues).toBe(true)
+    expect(result.rows.find(row => row.a?.kind === "PACE_TARGET")?.methodRelation).toBe("SAME")
   })
 
   it("an unreadable numeric structure never becomes an identical prescription", () => {

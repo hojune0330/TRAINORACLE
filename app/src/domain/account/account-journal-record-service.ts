@@ -1,5 +1,6 @@
 import { createAccountDocumentBuffer, type AccountJournalConflictBuffer, type AccountJournalDraftView } from "./account-journal-draft-buffer"
 import { accountJournalPreviewEnabled, requestAccountDocument } from "./account-journal-api"
+import { currentStorageConsentRevision, pinStorageOperationRevision } from "./storage-consent-revision"
 import type { AccountJournalRequest } from "./account-journal-api"
 import { accountJournalRecordSchema, validateAccountJournalRecordUpdate, correctAccountJournalImportedObservation, applyAccountJournalComparisonMutation, type AccountJournalRecord } from "./account-journal-record-schema"
 import type { AccountJournalMutation, ConflictChoice } from "./account-journal-draft-buffer"
@@ -663,6 +664,7 @@ export async function accountJournalRecordHistory(documentId: string) {
 export async function deleteAccountJournalRecord(entryId: string) {
   const ctx = context()
   if (!ctx) return false
+  const storageRevision = currentStorageConsentRevision(ctx.ownerId)
   return serialize(ctx, async () => {
     const documentId = await accountJournalDocumentId(ctx.ownerId, entryId)
     let view = await ctx.buffer.read(ctx.ownerId, documentId)
@@ -679,6 +681,7 @@ export async function deleteAccountJournalRecord(entryId: string) {
       view = await ctx.buffer.read(ctx.ownerId, documentId)
       if (!view || view.state !== "DRAFT_ACKNOWLEDGED" || !ctx.current()) return false
       request = { action: "delete", documentId, operationId: crypto.randomUUID(), expectedRevision: view.serverRevision }
+      pinStorageOperationRevision(ctx.ownerId, request.operationId, storageRevision)
       lifecycleRequests.set(documentId, request)
     }
     const result = await requestAccountDocument(ctx.ownerId, request, ctx.current, accountJournalRecordSchema)
@@ -698,6 +701,7 @@ export async function deleteAccountJournalRecord(entryId: string) {
 export async function restoreAccountJournalVersion(documentId: string, sourceRevision: number, expectedRevision: number) {
   const ctx = context()
   if (!ctx) return false
+  const storageRevision = currentStorageConsentRevision(ctx.ownerId)
   return serialize(ctx, async () => {
     const cached = await ctx.buffer.read(ctx.ownerId, documentId)
     if ((cached && cached.state !== "DRAFT_ACKNOWLEDGED") || !ctx.current()) return false
@@ -711,6 +715,7 @@ export async function restoreAccountJournalVersion(documentId: string, sourceRev
       const history = await accountJournalRecordHistory(documentId)
       if (!history?.versions.some(version => version.revision === sourceRevision) || !ctx.current()) return false
       request = { action: "restore", documentId, sourceRevision, expectedRevision, operationId: crypto.randomUUID() }
+      pinStorageOperationRevision(ctx.ownerId, request.operationId, storageRevision)
       lifecycleRequests.set(documentId, request)
     }
     const result = await requestAccountDocument(ctx.ownerId, request, ctx.current, accountJournalRecordSchema)

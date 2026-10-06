@@ -4,7 +4,7 @@ import { AUTH_MIGRATIONS, loadMigrations, planRelease, renderApplySql, provision
 
 const projectRef='abcdefghijklmnopqrst';
 const migrations=loadMigrations();
-const source=migrations.filter(m=>m.version>='0058' && m.version<='0061');
+const source=migrations.filter(m=>m.version>='0059' && m.version<='0062');
 function inventory(applied=0) {
   return {projectRef,snapshot:{ledger:[
     ...migrations.filter(m=>m.version<='0050').map(({version,name})=>({version,name,sourceHash:null})),
@@ -13,9 +13,9 @@ function inventory(applied=0) {
   ],functions:[],schemaHash:'a'.repeat(32),capabilities:source.map((_,i)=>i<applied),comparisonTables:applied===4?5:0}};
 }
 
-test('preserves auth and purpose consent 0051 through 0057 and stages only Oracle 0058 through 0061',()=>{
+test('preserves auth, purpose consent and withdrawal erasure 0051 through 0058 and stages only Oracle 0059 through 0062',()=>{
   const plan=planRelease(inventory(),projectRef);
-  assert.deepEqual(plan.migrations.map(m=>m.targetVersion),['0058','0059','0060','0061']);
+  assert.deepEqual(plan.migrations.map(m=>m.targetVersion),['0059','0060','0061','0062']);
   const sql=renderApplySql(plan);
   assert.match(sql,/ORACLE_RELEASE_INVENTORY_DRIFT/);
   assert.match(sql,/lock table supabase_migrations.schema_migrations/);
@@ -24,16 +24,18 @@ test('preserves auth and purpose consent 0051 through 0057 and stages only Oracl
   assert.doesNotMatch(sql,/create or replace function public.claim_beta_seat/);
 });
 test('partial prefix stages exact missing SQL, fully applied stages no migration',()=>{
-  assert.deepEqual(planRelease(inventory(2),projectRef).migrations.map(m=>m.version),['0060','0061']);
+  assert.deepEqual(planRelease(inventory(2),projectRef).migrations.map(m=>m.version),['0061','0062']);
   assert.equal(planRelease(inventory(4),projectRef).migrations.length,0);
 });
 test('refuses collisions, missing auth, unknown applied contents and missing ledger evidence',()=>{
-  const collision=inventory(); collision.snapshot.ledger.push({version:'0058',name:'other'});
+  const collision=inventory(); collision.snapshot.ledger.push({version:'0059',name:'other'});
   assert.throws(()=>planRelease(collision,projectRef),/MIGRATION_VERSION_COLLISION/);
   const missing=inventory(); missing.snapshot.ledger=missing.snapshot.ledger.filter(r=>r.version!=='0055');
   assert.throws(()=>planRelease(missing,projectRef),/AUTH_MIGRATIONS_REQUIRED/);
   const noConsent=inventory(); noConsent.snapshot.ledger=noConsent.snapshot.ledger.filter(r=>r.version!=='0057');
   assert.throws(()=>planRelease(noConsent,projectRef),/AUTH_MIGRATIONS_REQUIRED/);
+  const noErasure=inventory(); noErasure.snapshot.ledger=noErasure.snapshot.ledger.filter(r=>r.version!=='0058');
+  assert.throws(()=>planRelease(noErasure,projectRef),/AUTH_MIGRATIONS_REQUIRED/);
   const changed=inventory(1); changed.snapshot.ledger.at(-1).sourceHash='b'.repeat(32);
   assert.throws(()=>planRelease(changed,projectRef),/APPLIED_SOURCE_UNPROVEN/);
   const noLedger=inventory(); noLedger.snapshot.capabilities[0]=true;

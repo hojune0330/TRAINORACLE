@@ -11,7 +11,7 @@ test.describe("screen asset recovery", () => {
     const nav = page.getByRole("navigation", { name: "주 탭" })
     await expect(nav).toBeVisible()
     await page.screenshot({ path: testInfo.outputPath("guide-failure-tabs-retained.png") })
-    await nav.getByRole("button", { name: "계획", exact: true }).click()
+    await nav.getByRole("button", { name: "훈련", exact: true }).click()
     await expect(page.getByTestId("error-boundary")).toHaveCount(0)
     await nav.getByRole("button", { name: "홈", exact: true }).click()
     await page.getByRole("button", { name: "일지 예시 보기", exact: true }).click()
@@ -29,7 +29,7 @@ test.describe("screen asset recovery", () => {
     await page.route("**/assets/PlanBeta-*.js", route => route.abort())
     await page.goto("/?app=1")
     await page.evaluate(() => localStorage.setItem("screen-recovery-test-sentinel", "unchanged"))
-    await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
+    await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
     await expect(page.getByTestId("error-boundary")).toBeVisible()
     await page.unroute("**/assets/PlanBeta-*.js")
     await page.getByTestId("error-retry").click()
@@ -40,7 +40,7 @@ test.describe("screen asset recovery", () => {
   test("failed recovery probe stays put instead of looping reloads", async ({ page }) => {
     await page.route("**/assets/PlanBeta-*.js", route => route.abort())
     await page.goto("/?app=1")
-    await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
+    await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
     await expect(page.getByTestId("error-boundary")).toBeVisible()
     await page.route("**/*screen-recovery-check=1*", route => route.abort())
     let reloads = 0

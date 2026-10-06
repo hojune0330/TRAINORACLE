@@ -9,7 +9,7 @@ test("missing-record journey resumes the same choices and explicitly binds a non
   page.on("pageerror", error => errors.push(error.message))
   await page.clock.setFixedTime(new Date("2026-09-04T03:00:00Z"))
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
   await completeDetailedPlan(page, { event: /^5000m\b/u, division: /고등부/u,
     experience: /구조화된 훈련과 경기 경험이 많아요/u, focus: /숨차게 반복.*VO₂/u,
     template: /5000m 경기 페이스 상세 훈련 포함/u, time: /아침에 운동해요/u })
@@ -17,6 +17,8 @@ test("missing-record journey resumes the same choices and explicitly binds a non
   await expect(page.getByRole("button", { name: "이 계획으로 시작하기" })).toBeDisabled()
   await expect(page.getByRole("button", { name: "계획안 A 일정 접기" })).toBeEnabled()
   await page.getByRole("button", { name: "경기 기록 추가·관리" }).click()
+  await page.getByLabel("기록 역할", { exact: true }).selectOption("PERSONAL_BEST")
+  await expect(page.getByLabel("기록 역할", { exact: true })).toHaveValue("PERSONAL_BEST")
   await page.getByLabel("기록 분", { exact: true }).fill("18")
   await page.getByLabel("기록 초", { exact: true }).fill("31")
   await page.getByLabel("달성일", { exact: true }).fill("2026-09-01")
@@ -39,7 +41,7 @@ test("missing-record journey resumes the same choices and explicitly binds a non
   await expect(page.getByRole("heading", { name: "계획이 준비됐어요", exact: true })).toBeFocused()
   await openPlanOptions(page)
   await expect(evidence.getByRole("status")).toBeVisible()
-  await expect(evidence.getByRole("status")).toContainText("상세 훈련 수치를 적용")
+  await expect(evidence.getByRole("status")).toHaveText("선택한 기록으로 상세 훈련 수치를 계산했어요.")
   await page.getByRole("button", { name: "이 계획으로 시작하기" }).click()
   await expect(page.getByRole("heading", { name: "9일 훈련 계획", exact: true })).toBeVisible()
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.plan-beta.v1")!))

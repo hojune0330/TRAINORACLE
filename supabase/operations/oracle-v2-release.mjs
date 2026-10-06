@@ -15,6 +15,7 @@ export const AUTH_MIGRATIONS = [
   '0053_supported_auth_method_gate', '0054_public_profile_admission_policies',
   '0055_session_bound_account_admission', '0056_remaining_auth_surface_gates',
   '0057_purpose_scoped_storage_consent',
+  '0058_storage_withdrawal_erasure',
 ];
 
 // No source definitions, user rows, ciphertext, credentials, or secret bytes leave this query.
@@ -71,7 +72,7 @@ export function planRelease(inventory, projectRef, migrations = loadMigrations()
   for (const identity of AUTH_MIGRATIONS) {
     if (!snapshot.ledger.some(r=>r.version===identity.slice(0,4) && r.name===identity.slice(5))) fail('AUTH_MIGRATIONS_REQUIRED');
   }
-  const oracle = migrations.filter(m => m.version >= '0058' && m.version <= '0061');
+  const oracle = migrations.filter(m => m.version >= '0059' && m.version <= '0062');
   if (oracle.length !== 4) fail('ORACLE_SOURCE_INCOMPLETE');
   let missing = false;
   const pending = [];

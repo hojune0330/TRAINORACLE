@@ -8,7 +8,7 @@ async function prepare(page: Page, startDate: string) {
   await page.bringToFront()
   await page.clock.setFixedTime(new Date("2026-09-06T03:00:00Z"))
   await page.goto(`${process.env.PLAYWRIGHT_APP_PATH ?? "/"}?app=1`)
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
 await completeDetailedPlan(page, { event: /^5000m/u, division: /일반부/u, experience: /구조화된 훈련과 경기 경험이 많아요/u, days: /^3일/u, focus: /숨차게 반복.*VO₂/u, time: /저녁에 운동해요/u, twice: true })
   await page.getByLabel("계획 시작 날짜", { exact: true }).fill(startDate)
   await expect(page.getByRole("button", { name: /이 계획으로 시작하기/u })).toBeEnabled()
@@ -40,7 +40,7 @@ for (const changedDate of [false, true]) test(`two real tabs: ${changedDate ? "r
   } else {
     await expectActivePlanHeading(other)
     await other.reload()
-    await other.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
+    await other.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
     await expectActivePlanHeading(other)
   }
   expect(await snapshot()).toEqual(before)

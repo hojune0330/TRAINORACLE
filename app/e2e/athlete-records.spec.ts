@@ -4,7 +4,7 @@ import type { Page } from "@playwright/test"
 async function openAthleteRecords(page: Page): Promise<void> {
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" })
-    .getByRole("button", { name: "계획" })
+    .getByRole("button", { name: "훈련" })
     .click()
   await page.locator("summary", { hasText: "기록 관리·훈련표 읽기" }).click()
   await page.getByRole("button", { name: "내 경기 기록", exact: true }).click()
@@ -193,6 +193,8 @@ test("keeps an existing record after a partial save and allows a later retry", a
   })
   await openAthleteRecords(page)
 
+  await page.getByRole("combobox", { name: "기록 역할" }).selectOption("PERSONAL_BEST")
+  await expect(page.getByRole("combobox", { name: "기록 역할" })).toHaveValue("PERSONAL_BEST")
   await page.locator(".athlete-record-form input").nth(0).fill("17")
   await page.locator(".athlete-record-form input").nth(1).fill("30")
   await page.locator(".athlete-record-form input").nth(2).fill("2024-03-10")
@@ -209,6 +211,8 @@ test("keeps an existing record after a partial save and allows a later retry", a
     window.localStorage.getItem("trainoracle.athlete-records.v1") ?? "[]",
   ).map((record: { id: string }) => record.id))).toEqual(["existing-pb"])
 
+  await page.getByRole("combobox", { name: "기록 역할" }).selectOption("PERSONAL_BEST")
+  await expect(page.getByRole("combobox", { name: "기록 역할" })).toHaveValue("PERSONAL_BEST")
   await page.locator(".athlete-record-form input").nth(0).fill("17")
   await page.locator(".athlete-record-form input").nth(1).fill("30")
   await page.locator(".athlete-record-form input").nth(2).fill("2024-03-10")

@@ -665,6 +665,19 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   overflow-y: auto;
 }
 
+/* The standalone plan flow owns its gutter; embedded Home and legacy readers do not. */
+.app-flow-stage > .account-plan-runtime:has(> .instant-plan) {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: var(--space-5);
+}
+
+@media (max-width: 380px) {
+  .app-flow-stage > .account-plan-runtime:has(> .instant-plan) {
+    padding: var(--space-4);
+  }
+}
+
 .app-loading-state {
   min-height: min(62dvh, 520px);
   padding: var(--space-8) var(--space-5);
@@ -1219,7 +1232,7 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
 .app-tab-bar__button {
   min-width: 0;
   min-height: var(--app-tab-height);
-  padding: 2px 0 1px;
+  padding: var(--space-2) 0;
   border: 0;
   background: transparent;
   color: var(--ink-2);
@@ -1228,7 +1241,11 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
+  gap: var(--space-1);
+}
+
+.app-tab-bar__record {
+  color: var(--brand);
 }
 
 .app-tab-bar__button[data-active="true"] {

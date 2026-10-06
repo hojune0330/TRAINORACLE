@@ -1,9 +1,10 @@
 import { expect, test } from "@playwright/test"
-test.beforeEach(async ({ context, page }) => {
+test.beforeEach(async ({ context, page, baseURL }) => {
+  const appOrigin = new URL(baseURL ?? "").origin
   await page.clock.setFixedTime(new Date("2026-09-30T03:00:00Z"))
   await context.route("**/*", route => {
     const url = new URL(route.request().url())
-    if (url.origin !== "http://127.0.0.1:4397") return route.abort()
+    if (url.origin !== appOrigin) return route.abort()
     if (url.pathname === "/__catalog__") return route.fulfill({ contentType: "text/html", body: `<!doctype html>
       <meta name="viewport" content="width=device-width, initial-scale=1"><div id="root"></div>
       <script type="module">import RefreshRuntime from '/@react-refresh';
@@ -20,6 +21,7 @@ for (const width of [320, 375, 1280]) test(`catalog selection, precise targets a
   await page.goto("/__catalog__")
   await page.getByText("다른 훈련으로 바꾸기", { exact: true }).click()
   await page.getByRole("combobox", { name: "훈련 구성", exact: true }).selectOption("X-LT-01")
+  await page.getByText("전체 구간의 공통 기록 바꾸기", { exact: true }).click()
   await page.getByRole("combobox", { name: "참고 페이스에 사용할 5km 기록" }).selectOption("catalog-browser-5k")
   await expect(page.getByRole("button", { name: "이 구성으로 바꾸기" })).toBeDisabled()
   await page.getByRole("checkbox", { name: /준비·회복·정리까지 최대/ }).check()

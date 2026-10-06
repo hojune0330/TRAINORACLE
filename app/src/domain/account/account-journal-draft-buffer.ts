@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { currentStorageConsentRevision, pinStorageOperationRevision } from "./storage-consent-revision"
 import { isValidIsoDate } from "../dates"
 import { fileObservationSchema } from "../import/file-observation"
 import { accountJournalRecordSchema, correctAccountJournalImportedObservation, FILE_OBSERVATION_CORRECTION_FIELDS, applyAccountJournalComparisonMutation } from "./account-journal-record-schema"
@@ -83,6 +84,7 @@ const archiveSchema = z.object({
 }).strict()
 export const MAX_CONFLICT_ARCHIVE_ENTRIES = 128
 const recordSchema = z.object({
+  storageConsentRevision: revision.optional(),
   encryptedMutation: cipherSchema.optional(),
   acknowledgedWritePurpose: z.literal("FILE_OBSERVATION").optional(),
   writePurpose: z.enum(["MIGRATION", "FILE_OBSERVATION"]).optional(),
@@ -359,6 +361,9 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
     const key = await keyFor(ownerId, false)
     const draft = await decrypt(key, ownerId, documentId, record.encryptedCurrent, schema, databaseName)
     const op = record.operation
+    // Older persisted jobs have no consent pin and remain local; loading them
+    // after a new grant must not silently authorize an automatic upload.
+    if (op) pinStorageOperationRevision(ownerId, op.operationId, 0)
     const pending: AccountJournalDraftPending<T> | null = op ? { operationId: op.operationId, expectedRevision: op.expectedRevision,
       ...(op.writePurpose ? { writePurpose: op.writePurpose } : {}),
       sequence: op.sequence, ...(op.rejection ? { rejection: op.rejection } : {}), draft: await decrypt(key, ownerId, documentId, op.encryptedSnapshot, schema, databaseName) } : null
@@ -386,6 +391,7 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
   return {
     async saveDraft(owner: string, doc: string, input: T, expectedLocalSequence?: number, writePurpose?: "MIGRATION" | "FILE_OBSERVATION") {
       const { ownerId, documentId } = scope(owner, doc)
+      const storageConsentRevision = currentStorageConsentRevision(ownerId)
       z.enum(["MIGRATION", "FILE_OBSERVATION"]).optional().parse(writePurpose)
       const draft = parseDocument(input, schema)
       if (expectedLocalSequence !== undefined) sequence.parse(expectedLocalSequence)
@@ -401,6 +407,7 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
         }
         const record = old ? { ...old, localSequence: old.localSequence + 1, encryptedCurrent: encrypted }
           : initial(ownerId, documentId!, encrypted)
+        record.storageConsentRevision = storageConsentRevision
         if (writePurpose) record.writePurpose = writePurpose
         else if (record.writePurpose === "FILE_OBSERVATION") delete record.writePurpose
         delete record.acknowledgedWritePurpose
@@ -411,6 +418,7 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
     async saveMutation(owner, doc, input, mutationInput, id, expectedLocalSequence, expectedRevision, isCurrent = () => true) {
       const { ownerId, documentId } = scope(owner, doc)
       const operationId = uuid.parse(id).toLowerCase()
+      pinStorageOperationRevision(ownerId, operationId)
       sequence.parse(expectedLocalSequence); revision.refine(value => value > 0).parse(expectedRevision)
       const draft = parseDocument(input, schema)
       const mutation = parseDocument(mutationInput, mutationSchema)
@@ -441,10 +449,14 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
         if (record.blocked) throw new Error("Draft conflict blocked")
         if (record.operation) {
           if (record.operation.operationId !== operationId) throw new Error("Another operation pending")
+          pinStorageOperationRevision(ownerId, operationId, 0)
           return { record, result: record.operation }
         }
         if (record.retiredOperationIds.includes(operationId)) throw new Error("Operation ID already used")
         if (record.localSequence === record.acknowledgedSequence) throw new Error("No local changes")
+        // A dirty draft written before withdrawal must not acquire the new
+        // consent merely because an automatic flush creates its job later.
+        pinStorageOperationRevision(ownerId, operationId, record.storageConsentRevision ?? 0)
         const operation = operationSchema.parse({ operationId, expectedRevision: record.serverRevision,
           ...(record.writePurpose ? { writePurpose: record.writePurpose } : {}),
           sequence: record.localSequence, encryptedSnapshot: record.encryptedCurrent })
@@ -479,6 +491,7 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
       remoteInput, replacementId, isCurrent = () => true) {
       const { ownerId, documentId } = scope(owner, doc)
       const operationId = uuid.parse(id).toLowerCase(), replacementOperationId = uuid.parse(replacementId).toLowerCase()
+      pinStorageOperationRevision(ownerId, replacementOperationId)
       sequence.parse(expectedLocalSequence); revision.parse(verifiedServerRevision)
       // This recovery primitive is not a general JOURNAL, migration, or file-operation retirement API.
       parseDocument(input, accountCalendarDecorationDocumentSchema)

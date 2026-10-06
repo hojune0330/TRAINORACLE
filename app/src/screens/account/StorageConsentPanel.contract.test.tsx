@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { StorageConsentPanel } from "./StorageConsentPanel"
 import type { StorageConsent } from "../../domain/account/storage-consent"
 const A="a1111111-1111-4111-8111-111111111111"
-const receipt:StorageConsent={userId:A,revision:0,purposeVersion:"2026-10-05",healthStorage:false,journalTextStorage:false,decidedAt:null,operationsReady:true}
+const receipt:StorageConsent={userId:A,revision:0,purposeVersion:"2026-10-05",healthStorage:false,journalTextStorage:false,decidedAt:null,operationsReady:true,liveErasedAt:null,backupStatus:null}
 afterEach(cleanup)
 describe("separate optional online storage consent",()=>{
   it("starts unchecked, keeps local use explicit and requires both independent choices",async()=>{
@@ -20,15 +20,16 @@ describe("separate optional online storage consent",()=>{
     await userEvent.click(screen.getByRole("button",{name:"선택한 동의 저장"}))
     expect(save).toHaveBeenCalledWith(receipt,true,true)
   })
-  it("withdraws server purposes without claiming the stored data is deleted",async()=>{
+  it("reports live purpose erasure without claiming device or backup erasure",async()=>{
     const previous={...receipt,revision:3,healthStorage:true,journalTextStorage:true}
-    const save=vi.fn().mockResolvedValue({ok:true,consent:{...receipt,revision:4}})
+    const save=vi.fn().mockResolvedValue({ok:true,consent:{...receipt,revision:4,liveErasedAt:"2026-10-05T00:00:00Z",backupStatus:"PENDING"}})
     render(<StorageConsentPanel userId={A} load={async()=>({ok:true,consent:previous})} save={save}/>)
     await waitFor(()=>expect(screen.getByRole("button",{name:"온라인 보관 동의 철회"})).toBeEnabled())
     await userEvent.click(screen.getByRole("button",{name:"온라인 보관 동의 철회"}))
     expect(save).toHaveBeenCalledWith(previous,false,false)
-    expect(screen.getByRole("status")).toHaveTextContent("기존 자료를 지우려면")
-    expect(screen.getByRole("status")).not.toHaveTextContent("삭제했어요")
+    expect(screen.getByRole("status")).toHaveTextContent("보관 자료·교체본·휴지통을 삭제했어요")
+    expect(screen.getByRole("status")).toHaveTextContent("기기 기록은 그대로")
+    expect(screen.getByRole("status")).toHaveTextContent("백업 정리는 별도 확인 중")
   })
   it("does not call failed withdrawal successful and offers a current-state retry",async()=>{
     render(<StorageConsentPanel userId={A} load={async()=>({ok:true,consent:receipt})}
