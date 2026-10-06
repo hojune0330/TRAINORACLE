@@ -89,7 +89,7 @@ test("blocks review-risk before any preview or candidates", async ({ page }) => 
   await openPlan(page)
   await answerFirstThree(page, true)
 
-  await expect(page.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "계획안은 먼저 만들 수 있어요" })).toBeVisible()
   await expect(page.getByRole("heading", { name: "계획 형태 미리보기" })).toHaveCount(0)
   await expect(page.locator(".plan-candidate")).toHaveCount(0)
   await expect(page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u })).toHaveCount(0)

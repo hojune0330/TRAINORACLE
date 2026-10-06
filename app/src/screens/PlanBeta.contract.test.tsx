@@ -146,12 +146,12 @@ describe("plan beta user flow", () => {
 
     await answerQuickPlanQuestions("review", { event: /^10km/u, experience: /달리기를 막 시작했어요/u, days: /^3일/u })
 
-    expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "계획안은 먼저 만들 수 있어요" })).toBeVisible()
     expect(screen.getByText("10km · 처음 · 9일 중 3일")).toBeVisible()
     expect(screen.queryByRole("button", { name: /선택하기|이 계획으로 시작하기|이 일정으로 시작/u })).not.toBeInTheDocument()
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
 
-    await user.click(screen.getByRole("button", { name: "다시 확인하기" }))
+    await user.click(screen.getByRole("button", { name: "몸 상태 다시 확인하기" }))
     expect(screen.getByRole("heading", { name: "지금 몸은 어때요?" })).toBeVisible()
     // 이전 답은 남아 있으므로 안전 확인 한 번으로 계획이 나온다.
     await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
@@ -229,7 +229,7 @@ describe("plan beta user flow", () => {
     await openRefinement("훈련 종류")
     await user.click(screen.getByRole("button", { name: /조금 힘들게 꾸준히.*LT/u }))
 
-    expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "계획안은 먼저 만들 수 있어요" })).toBeVisible()
     expect(screen.queryByRole("heading", { name: "계획이 준비됐어요" }))
       .not.toBeInTheDocument()
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
@@ -518,7 +518,7 @@ describe("plan beta user flow", () => {
     await user.click(choice)
 
     // Then: PlanBeta fails safe before activation or persistence.
-    expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "계획안은 먼저 만들 수 있어요" })).toBeVisible()
     expect(screen.queryByRole("heading", { name: "계획이 준비됐어요" }))
       .not.toBeInTheDocument()
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
@@ -530,15 +530,15 @@ describe("plan beta user flow", () => {
 
     await answerMinimumPlanQuestions("review")
 
-    expect(screen.getByText("계획을 만들 수 없음", { selector: ".plan-eyebrow" })).toBeVisible()
-    expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
-    expect(screen.getByText(/앱은 사람에게 자동으로 연결하거나 몸 상태를 확인할 수 없어요/u)).toBeVisible()
-    expect(screen.getByText(/지도자·보호자 또는 의료진과 직접 상의해 주세요/u)).toBeVisible()
+    expect(screen.getByText("통증·몸 상태 확인 필요", { selector: ".plan-eyebrow" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "계획안은 먼저 만들 수 있어요" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "계획안 만들기" })).toBeDisabled()
+    expect(screen.getByRole("checkbox", { name: /계획안은 미리보기/u })).not.toBeChecked()
     expect(screen.queryByRole("heading", {
       name: "지속 페이스 포함",
     })).toBeNull()
     await userEvent.setup().click(
-      screen.getByRole("button", { name: "지도자와 상의한 내용을 일지에 남기기" }),
+      screen.getByRole("button", { name: "통증 기록 남기기" }),
     )
     expect(onWriteLog).toHaveBeenCalledWith("evening")
   })
@@ -566,7 +566,7 @@ describe("plan beta user flow", () => {
 
     await answerMinimumPlanQuestions("clear")
 
-    expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "계획안은 먼저 만들 수 있어요" })).toBeVisible()
     expect(screen.queryByRole("heading", { name: "계획 형태 미리보기" }))
       .not.toBeInTheDocument()
     expect(screen.queryByRole("heading", {
@@ -584,7 +584,7 @@ describe("plan beta user flow", () => {
 
     await answerMinimumPlanQuestions("clear")
 
-    expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "계획안은 먼저 만들 수 있어요" })).toBeVisible()
     expect(screen.queryByRole("heading", { name: "계획 형태 미리보기" }))
       .not.toBeInTheDocument()
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
@@ -680,7 +680,7 @@ describe("plan beta user flow", () => {
     await user.click(choice)
 
     // Then
-    expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "계획안은 먼저 만들 수 있어요" })).toBeVisible()
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
   })
 
@@ -740,7 +740,7 @@ describe("plan beta user flow", () => {
     await user.click(screen.getByRole("button", { name: "저장 다시 시도" }))
 
     // Then: fresh D9 risk blocks before another write and raw memo text stays private.
-    expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "계획안은 먼저 만들 수 있어요" })).toBeVisible()
     expect(screen.queryByRole("button", { name: "저장 다시 시도" }))
       .not.toBeInTheDocument()
     expect(planWriteCount).toBe(1)
@@ -783,7 +783,7 @@ describe("plan beta user flow", () => {
     await user.click(screen.getByRole("button", { name: "저장 다시 시도" }))
 
     // Then
-    expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "계획안은 먼저 만들 수 있어요" })).toBeVisible()
     expect(planWriteCount).toBe(1)
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
   })

@@ -364,7 +364,7 @@ export function PlanIntake({
             />
             <Choice
               title="통증·부상·몸 이상이 있거나 잘 모르겠어요"
-              detail="계획 대신 쉬는 안내와 다음 할 일을 보여드려요"
+              detail="확인 체크 후 계획안을 볼 수 있어요"
               selected={false}
               onClick={() => onSafety("REVIEW_REQUIRED")}
             />

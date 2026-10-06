@@ -72,6 +72,7 @@ export function PlanSchedulePreview({
   journalEntries = [],
   readerRequest,
   sessionProgress,
+  allowMemoExport = true,
 }: {
   readonly startDate: string
   readonly frameLengthDays?: FrameLengthDays
@@ -90,6 +91,7 @@ export function PlanSchedulePreview({
   readonly journalEntries?: readonly JournalEntry[]
   readonly readerRequest?: PlanReaderRequest
   readonly sessionProgress?: (session: PlanSession) => PlanProgressState | undefined
+  readonly allowMemoExport?: boolean
 }) {
   const validStartDate = isValidIsoDate(startDate)
   const dayCount = Math.ceil(frameLengthDays)
@@ -332,6 +334,7 @@ export function PlanSchedulePreview({
                       footer={renderSessionFooter?.(session)}
                       returnedFromJournal={focusSession?.day === session.day && focusSession.slot === session.slot}
                       onExpand={() => openDayReader(index, session.slot)}
+                      allowMemoExport={allowMemoExport}
                     />
                   ))}
                   {daySessions.length === 0 && (
@@ -358,7 +361,8 @@ export function PlanSchedulePreview({
           date={reader.date} session={session} compact={false} expanded
           explanationContext={explanationContext} loadEvidence={loadEvidence}
           footer={renderSessionFooter?.(session)}
-          returnedFromJournal={focusSession?.day === session.day && focusSession.slot === session.slot} />)}
+          returnedFromJournal={focusSession?.day === session.day && focusSession.slot === session.slot}
+          allowMemoExport={allowMemoExport} />)}
         {!readerDay?.sessions.length && <p>이 계획에는 이날 예정된 훈련이 없어요.</p>}
         <CalendarJournalDetails date={reader.date} entries={journalEntries} />
       </PlanDayReader>}
@@ -377,6 +381,7 @@ function PlanSessionPreview({
   returnedFromJournal = false,
   expanded = false,
   onExpand,
+  allowMemoExport = true,
 }: {
   readonly date: string
   readonly session: PlanSession
@@ -387,6 +392,7 @@ function PlanSessionPreview({
   readonly returnedFromJournal?: boolean
   readonly expanded?: boolean
   readonly onExpand?: () => void
+  readonly allowMemoExport?: boolean
 }) {
   const flow = sessionFlowLabel(session)
   const details = (
@@ -447,7 +453,7 @@ function PlanSessionPreview({
         {expanded && footer && <details className="plan-session-records" data-session-records>
           <summary>일지·진행 기록</summary>{footer}
         </details>}
-        {expanded && <WorkoutMemoTool session={session} date={date} state={explanationContext?.kind === "CANDIDATE" ? "PREVIEW" : "PLAN"} />}
+        {expanded && allowMemoExport && <WorkoutMemoTool session={session} date={date} state={explanationContext?.kind === "CANDIDATE" ? "PREVIEW" : "PLAN"} />}
         <SessionExplanationEntry session={session} date={date} context={explanationContext} loadEvidence={loadEvidence} showPurpose={false} />
         {compact ? (
           <details className="plan-day-card__details" open={returnedFromJournal}>

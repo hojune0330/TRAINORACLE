@@ -847,7 +847,7 @@ function LegacyPlanBeta({
     return (
       <>{nextDraftHeader}
       <PlanBlockedGuide
-        draft={draft}
+        draft={withQuickDefaults(draft)}
         onWriteLog={() => onWriteLog?.("evening")}
         onRecheck={() => {
           setBlocked(false)

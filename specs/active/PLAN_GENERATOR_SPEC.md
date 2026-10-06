@@ -487,6 +487,17 @@ The old short labels `BASE`, `LT`, `VO2`, `GLY`, `ATP_PC`, `RECOVERY`, and `MIXE
 
 Before creating options, the generator must pass all pre-generation checks.
 
+2026-10-06 bounded owner amendment: the athlete may acknowledge the body-state
+notice and create a separate `safety_review_preview` of the general schedule.
+This is not a `PlanGenerationSuccess`, selectable candidate, active plan, or
+personalized pain/rehabilitation prescription. It carries no candidate identity,
+selection authority, personal record, continuity, or passed safety gate. The
+blocked gate stays blocked. Preview-only sessions never enter activation,
+account storage, journal links, pace application, or memo export. Rechecking the
+body state uses the normal generator and all existing checks again. This narrow
+exception supersedes the prohibition on visible general preview output below,
+not the prohibition on actionable recommendations or safety-hard-stop overrides.
+
 ```yaml
 safety_gate:
   gate_name: PLAN_GENERATION_PRECHECK

@@ -150,6 +150,32 @@ export function generatePlanCandidates(input: unknown): PlanGenerationResult {
   }
 }
 
+/** A blocked athlete can inspect a general schedule without receiving an
+ * activation-capable result or turning acknowledgement into safety clearance. */
+export function generateSafetyReviewPreview(input: unknown) {
+  try {
+    const parsed = parsePlanGenerationRequest(input)
+    if (parsed.kind !== "parsed") return { kind: "unavailable" as const }
+    const request = parsed.request
+    if (request.safetyGate.kind !== "blocked" || request.selectedDetailedTemplateRef !== null
+      || request.targetRaceDate !== undefined || request.continuity !== undefined
+      || request.journalSource.kind !== "NO_USABLE_JOURNAL") return { kind: "unavailable" as const }
+    const ledger = compileExposureLedger(request.formation)
+    if (ledger.kind !== "valid" || !hasSelectableMainExposureCount(ledger)
+      || !mainExposureDaysAreAvailable(request, ledger.countedExposureIds)) return { kind: "unavailable" as const }
+    const general = createDeterministicCandidates(request, ledger)[0]
+    return Object.freeze({
+      kind: "safety_review_preview" as const,
+      requiresBodyReview: true as const,
+      activationAllowed: false as const,
+      frameLengthDays: request.requestedFrameLength,
+      sessions: general.sessions,
+    })
+  } catch {
+    return { kind: "unavailable" as const }
+  }
+}
+
 function generatePlanCandidatesUnchecked(input: unknown): PlanGenerationResult {
   const parsed = parsePlanGenerationRequest(input)
   switch (parsed.kind) {

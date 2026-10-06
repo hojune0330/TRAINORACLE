@@ -337,7 +337,7 @@ describe.skip("production detailed prescription experience", () => {
     await user.click(screen.getByRole("button", { name: /구조화된 훈련과 경기 경험이 많아요/u }))
     await user.click(screen.getByRole("button", { name: /통증.*부상.*몸 이상/u }))
 
-    expect(screen.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "계획안은 먼저 만들 수 있어요" })).toBeVisible()
     expect(screen.queryByText("선택 가능한 계획 2가지")).toBeNull()
   })
 })

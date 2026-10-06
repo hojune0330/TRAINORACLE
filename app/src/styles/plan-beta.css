@@ -2718,7 +2718,7 @@
 }
 
 .plan-select-action,
-.plan-blocked > button:first-of-type,
+.plan-blocked__create,
 .active-plan__continuity button {
   width: 100%;
   min-height: var(--app-action-height);
@@ -3447,7 +3447,24 @@
   gap: var(--space-1);
   color: var(--ink-3);
   font-size: var(--fs-caption);
+  flex-wrap: wrap;
 }
+
+.plan-blocked__acknowledgement {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--app-touch-min);
+  margin-top: var(--space-4);
+  text-align: left;
+  font-size: var(--fs-body-sm);
+  line-height: 1.5;
+}
+
+.plan-blocked__acknowledgement input { flex: 0 0 auto; accent-color: var(--brand); }
+.plan-blocked__acknowledgement span { min-width: 0; overflow-wrap: anywhere; }
+.plan-blocked__create:disabled { opacity: 0.5; cursor: not-allowed; }
+.plan-blocked__review-status { color: var(--warn); font-size: var(--fs-body-sm); line-height: 1.5; }
 
 /* RPE 쉬운 표 */
 .plan-rpe-guide__scale {

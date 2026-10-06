@@ -258,7 +258,7 @@ test("does not let a favorable current answer override recent high pain", async 
 
   await completeQuickPlan(page)
 
-  await expect(page.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "계획안은 먼저 만들 수 있어요" })).toBeVisible()
   await expect(page.getByRole("heading", {
     name: "지속 페이스 포함",
   })).toHaveCount(0)

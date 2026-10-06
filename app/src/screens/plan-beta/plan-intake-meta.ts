@@ -98,7 +98,7 @@ export const STEP_META: Record<IntakeStep, {
     number: 4,
     eyebrow: "몸 상태",
     title: "지금 몸은 어때요?",
-    copy: "아픈 곳이 있으면 계획 대신 쉬는 안내를 보여드려요.",
+    copy: "통증이 있어도 체크 후 계획안을 볼 수 있어요. 시작 전 몸 상태는 따로 확인해요.",
     helpTerm: "review",
   },
 }

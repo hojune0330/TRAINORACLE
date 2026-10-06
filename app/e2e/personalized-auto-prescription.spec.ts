@@ -312,7 +312,7 @@ test("D9 blocks before candidates", async ({ page }) => {
   await seedRecords(page, currentRecords)
   await openPlan(page)
   await completeQuickPlan(page, { event: /^5000m\b/u, experience: /구조화된 훈련과 경기 경험이 많아요/u, review: true })
-  await expect(page.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "계획안은 먼저 만들 수 있어요" })).toBeVisible()
   await expect(page.getByText("선택 가능한 계획 2가지")).toHaveCount(0)
   await page.screenshot({ path: test.info().outputPath("mobile-375x667-d9-blocked.png"), fullPage: true })
   await assertViewportIntegrity(page)

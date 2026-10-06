@@ -157,7 +157,7 @@ test("safety remains before activation and the small screen works at enlarged te
   await page.getByRole("button", { name: /달리기를 막 시작했어요/u }).click()
   await page.getByRole("button", { name: /^3일/u }).click()
   await page.getByRole("button", { name: /통증.*부상.*몸 이상이 있거나 잘 모르겠어요/u }).click()
-  await expect(page.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "계획안은 먼저 만들 수 있어요" })).toBeVisible()
   expect(await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBeNull()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: info.outputPath("safety-large-text.png"), fullPage: true })

@@ -8,6 +8,7 @@ import { resolveCatalogCycleSuccessor, type CatalogCycleSuccessorSummary } from 
 import { prepareAdjustedCycleSuccessor } from "./adjusted-cycle-successor"
 import {
   generatePlanCandidates,
+  generateSafetyReviewPreview,
   selectPlanCandidate,
 } from "@impl/plan-generator/generator"
 import type {
@@ -137,6 +138,37 @@ export type PlanSelection =
 type PlanDraftInput = Omit<Partial<PlanBetaIntake>, "selectedDetailedTemplateRef"> & {
   readonly selectedDetailedTemplateRef?: unknown
   readonly targetRaceDate?: unknown
+}
+
+const PLAN_DRAFT_KEYS = new Set([
+  "eventGroup", "eventDistanceM", "competitionDivision", "experienceBand",
+  "availableDayCount", "requestedFrameLength", "trainingFocus", "secondSessionMode",
+  "trainingTimePreference", "selectedDetailedTemplateRef", "startDate", "targetRaceDate",
+])
+
+export function createBodyReviewPlanPreview(draft: Partial<PlanBetaIntake>, acknowledged: boolean) {
+  if (acknowledged !== true || !hasCanonicalJsonTree(draft)
+    || !Reflect.ownKeys(draft).every(key => typeof key === "string" && PLAN_DRAFT_KEYS.has(key))) return { kind: "unavailable" as const }
+  const intake = completeIntake(draft)
+  if (intake === null) return { kind: "unavailable" as const }
+  const startDate = todayISO()
+  const availableTrainingDays = spreadTrainingDays(intake.availableDayCount, intake.requestedFrameLength)
+  const preview = generateSafetyReviewPreview({
+    kind: "PLAN_BETA_GENERATION_REQUEST",
+    safetyGate: currentCheckGate("REVIEW_REQUIRED"),
+    profile: {
+      eventGroup: intake.eventGroup, eventDistanceM: intake.eventDistanceM,
+      experienceBand: intake.experienceBand, availableTrainingDays,
+      secondSessionMode: intake.secondSessionMode, trainingTimePreference: intake.trainingTimePreference,
+    },
+    formation: createPlanFormation(startDate, availableTrainingDays, intake.experienceBand),
+    requestedFrameLength: intake.requestedFrameLength,
+    selectedEnergyIntent: intake.trainingFocus,
+    selectedDetailedTemplateRef: null,
+    journalSource: { kind: "NO_USABLE_JOURNAL" },
+    selectionAuthority: "SELF",
+  })
+  return preview.kind === "safety_review_preview" ? { ...preview, startDate } : preview
 }
 
 export function generatePlanFromDraft(
@@ -310,13 +342,8 @@ function generatePlanDraftWithContinuity(
   continuity: PlanContinuityInput | undefined,
   formationStartDate?: string,
 ): PlanDraftGeneration {
-  const draftKeys = new Set([
-    "eventGroup", "eventDistanceM", "competitionDivision", "experienceBand",
-    "availableDayCount", "requestedFrameLength", "trainingFocus", "secondSessionMode",
-    "trainingTimePreference", "selectedDetailedTemplateRef", "startDate", "targetRaceDate",
-  ])
   if (!hasCanonicalJsonTree(draft)
-      || !Reflect.ownKeys(draft).every((key) => typeof key === "string" && draftKeys.has(key))) {
+      || !Reflect.ownKeys(draft).every((key) => typeof key === "string" && PLAN_DRAFT_KEYS.has(key))) {
     return { kind: "rejected", code: "MALFORMED_INPUT" }
   }
   const normalizedTemplateRef = normalizeDraftTemplateRef(draft.selectedDetailedTemplateRef)

@@ -309,7 +309,7 @@ for (let n = 1; n <= 100; n++) {
         ? /통증.*부상.*몸 이상이 있거나 잘 모르겠어요/u : /통증은 없고 몸 상태는 평소와 같아요/u }).click()
       if (p.safety === "REVIEW_REQUIRED") {
         e.phase = "intentional-safety-block"
-        await expect(page.getByRole("heading", { name: "지금은 계획을 멈췄어요" })).toBeVisible()
+        await expect(page.getByRole("heading", { name: "계획안은 먼저 만들 수 있어요" })).toBeVisible()
         expect(await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBeNull()
         e.safetyBlocked = true
         await audit(page, e, "safety-block")
