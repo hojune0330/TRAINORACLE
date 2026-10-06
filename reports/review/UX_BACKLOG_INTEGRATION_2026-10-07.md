@@ -67,4 +67,14 @@
 
 ## 배포
 
-최소 검증 후 공개 웹에 수동 통합 배포한다. 기존 프리뷰와 에셋은 보존하며, 공개 버전과 소스 SHA를 배포 영수증으로 연결한다. 결과는 아래에 추가한다.
+최소 검증 후 공개 웹에 수동 통합 배포했다. 기존 프리뷰와 에셋은 삭제하지 않았으며, 공개 버전과 소스 SHA를 배포 영수증으로 연결했다.
+
+- 통합 앱 소스: `e6ee1add9e787e99d24c75568d3caff6b8f742bb`, main으로 fast-forward push 완료.
+- 수동 Pages 커밋: `54fc4931d5576afe6e41a74381e2993245731451`.
+- Pages API 결과: 해당 커밋 `built`, 오류 메시지 없음.
+- 공개 주소: <https://hojune0330.github.io/TRAINORACLE/?app=1>.
+- 라이브 매니페스트와 배포 영수증 모두 앱 소스 `e6ee1add`와 일치, `accountHeld: true` 유지.
+- 새 임시 브라우저에서 `훈련 → 800m → 기록 없이` 진입 확인: 현재 질문이 수정 메뉴·달력보다 먼저 배치, 수정 메뉴는 처음에 닫힘, 375px 가로 넘침 없음, pageerror 없음.
+- 공개 스크린샷: [질문 우선 화면](evidence/ux-backlog-20261007/live-question-first.png).
+- 배포 파일의 `PUBLICATION_REQUESTED`/`PENDING_AT_PUBLICATION`은 발행 당시 상태다. 위의 사후 확인은 이 보고서에 별도로 기록했으며, 상태 문구만 바꾸려고 두 번째 배포를 만들지 않았다.
+- 이 배포 결과 문서를 포함한 후속 커밋은 문서·증거만 갱신하며, 앱 런타임의 소스 SHA는 `e6ee1add`다.
