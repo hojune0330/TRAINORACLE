@@ -3,7 +3,7 @@ import { createRequire } from 'node:module';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { holdSharedOriginAccount } from './oracle-public-release-config.mjs';
+import { holdSharedOriginAccount, publishedModuleNames } from './oracle-public-release-config.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const app = resolve(repo, 'app');
@@ -14,7 +14,7 @@ const previousPagesSha = git('rev-parse', 'origin/gh-pages');
 const { parseAst } = await import(pathToFileURL(require.resolve('rollup/parseAst')).href);
 const configs = [];
 // Only reuse configuration already published in the browser, not local secret files.
-for (const name of git('ls-tree', '--name-only', 'origin/gh-pages:assets').split('\n').filter(name => name.endsWith('.js'))) {
+for (const name of publishedModuleNames(git('show', 'origin/gh-pages:index.html'))) {
   const source = git('show', `origin/gh-pages:assets/${name}`);
   if (!source.includes('VITE_SUPABASE_ANON_KEY')) continue;
   const stack = [parseAst(source)];

@@ -10,6 +10,7 @@ const runtime = vi.hoisted(() => ({ account: false,
   currentUser: vi.fn<() => Promise<{ id: string } | null>>(),
   auth: null as ((user: { id: string } | null) => void) | null,
   comparison: vi.fn(),
+  guestCallback: undefined as ((session: GuestOracleSession | null) => void) | undefined,
 }))
 vi.mock("./domain/account/config", () => ({ accountFeatureEnabled: () => runtime.account, accountConfig: () => null }))
 vi.mock("./domain/account/auth", async original => ({
@@ -25,16 +26,19 @@ vi.mock("./screens/Home", () => ({ Home: () => <h1>Entry home</h1> }))
 vi.mock("./DeferredMobileScreens", () => ({ DeferredMobileScreens: {
   Trends: ({ onOpenRunningProfile }: { onOpenRunningProfile: () => void }) => <button onClick={onOpenRunningProfile}>Open profile</button>,
   RunningProfile: () => <h1>V1 profile</h1>,
-  OracleProfileV2: ({ guestSession, onGuestSessionChange, onBack }: {
-    guestSession?: GuestOracleSession | null; onGuestSessionChange?: (session: GuestOracleSession | null) => void; onBack: () => void
+  OracleProfileV2: ({ guestSession, onGuestSessionChange, onBack, onNavigate }: {
+    guestSession?: GuestOracleSession | null; onGuestSessionChange?: (session: GuestOracleSession | null) => void; onBack: () => void; onNavigate: (destination: "METHODS") => void
   }) => {
+    runtime.guestCallback = onGuestSessionChange
     const [invitation] = React.useState(() => new URLSearchParams(window.location.hash.slice(1)).get("oracle-compare-invite"))
     return <><h1>V2 profile</h1><output aria-label="invitation">{invitation ?? "none"}</output>
       <output aria-label="guest memory">{guestSession?.selectedCharacter ?? "none"}</output>
       <button onClick={() => onGuestSessionChange?.({ ownerKey: "guest", answers: { STRUCTURE_1: 5, STRUCTURE_2: 5, STRUCTURE_3: 5 }, selectedCharacter: "STRUCTURE" })}>Complete guest</button>
       <button onClick={onBack}>Close profile</button>
+      <button onClick={() => onNavigate("METHODS")}>Read methods</button>
     </>
   },
+  TrainingContent: ({ onBack }: { onBack: () => void }) => <><h1>Training reading</h1><button onClick={onBack}>Close reading</button></>,
   Account: ({ onBack }: { onBack: () => void }) => <><h1>Account entry</h1><button onClick={onBack}>Cancel login</button></>,
 } }))
 import { AppShell } from "./AppShell"
@@ -70,7 +74,10 @@ it("retains a completed guest result within the app only and clears it on scope 
   expect({ ...localStorage }).toEqual(localBefore)
   expect({ ...sessionStorage }).toEqual(sessionBefore)
   expect(JSON.stringify(window.history.state)).not.toContain("STRUCTURE")
+  const staleCallback = runtime.guestCallback
   act(() => { setActiveLocalAccount("synthetic-scope"); setActiveLocalAccount(null) })
+  act(() => staleCallback?.({ ownerKey: "guest", answers: { STRUCTURE_1: 5 }, selectedCharacter: "STRUCTURE" }))
+  expect(screen.getByLabelText("guest memory")).toHaveTextContent("none")
   await user.click(screen.getByRole("button", { name: "Close profile" }))
   await openProfile()
   expect(screen.getByLabelText("guest memory")).toHaveTextContent("none")
@@ -81,6 +88,19 @@ it("retains a completed guest result within the app only and clears it on scope 
   await openProfile()
   expect(screen.getByLabelText("guest memory")).toHaveTextContent("none")
 })
+it("opens V2 training reading from Oracle and restores the original overlay and guest result", async () => {
+  vi.stubEnv("VITE_FEATURE_ORACLE_V2", "true")
+  const user = userEvent.setup()
+  render(<AppShell />)
+  await openProfile()
+  await user.click(screen.getByRole("button", { name: "Complete guest" }))
+  await user.click(screen.getByRole("button", { name: "Read methods" }))
+  expect(await screen.findByRole("heading", { name: "Training reading" })).toBeVisible()
+  await user.click(screen.getByRole("button", { name: "Close reading" }))
+  expect(await screen.findByRole("heading", { name: "V2 profile" })).toBeVisible()
+  expect(screen.getByLabelText("guest memory")).toHaveTextContent("STRUCTURE")
+})
+
 it("production flag opens V2 from the normal profile entry without a preview query", async () => {
   vi.stubEnv("VITE_FEATURE_ORACLE_V2", "true")
   render(<AppShell />); await openProfile()

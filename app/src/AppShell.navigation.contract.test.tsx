@@ -14,6 +14,17 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe("AppShell origin-preserving navigation", () => {
+  it("opens existing training reading from the V1 Oracle library and returns to that section", async () => {
+    const user = userEvent.setup()
+    render(<AppShell />)
+    await user.click(screen.getByRole("button", { name: "오라클" }))
+    await user.click(await screen.findByRole("button", { name: "읽을거리" }))
+    await user.click(screen.getByRole("button", { name: "훈련 배우기" }))
+    expect(await screen.findByRole("heading", { name: "어떤 훈련이 궁금한가요?" })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "이전 화면" }))
+    expect(await screen.findByRole("button", { name: "읽을거리" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("button", { name: "오라클" })).toHaveAttribute("aria-current", "page")
+  })
   it("keeps the selected training step mounted while recording and returns without a reset", async () => {
     const user = userEvent.setup()
     render(<AppShell />)

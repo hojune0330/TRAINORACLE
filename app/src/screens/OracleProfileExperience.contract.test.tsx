@@ -87,6 +87,23 @@ it("asks one question at a time and only commits after the third response", asyn
   expect(p.onDraft).toHaveBeenCalledTimes(3)
   expect(p.onCommit).toHaveBeenCalledWith({ STRUCTURE_1: 5, STRUCTURE_2: 5, STRUCTURE_3: 5 }, "STRUCTURE")
 })
+it("announces nonnumeric and skipped answers as selected when revisiting a question", () => {
+  render(<OracleProfileExperience {...props()} />)
+  fireEvent.click(screen.getByRole("button", { name: "계획 선호 3문항 시작" }))
+
+  const answerWithoutCertainty = () => {
+    fireEvent.click(within(dialog()).getByText("답하기 어려워요"))
+    return within(dialog()).getByRole("button", { name: "상황마다 달라요", hidden: true })
+  }
+  fireEvent.click(answerWithoutCertainty())
+  fireEvent.click(within(dialog()).getByRole("button", { name: "이전 질문", hidden: true }))
+  expect(answerWithoutCertainty()).toHaveAttribute("aria-pressed", "true")
+
+  fireEvent.click(within(dialog()).getByRole("button", { name: "건너뛰기", hidden: true }))
+  fireEvent.click(within(dialog()).getByRole("button", { name: "이전 질문", hidden: true }))
+  expect(within(dialog()).getByRole("button", { name: "건너뛰기", hidden: true })).toHaveAttribute("aria-pressed", "true")
+  expect(answerWithoutCertainty()).toHaveAttribute("aria-pressed", "false")
+})
 it("preserves answers on save rejection and exposes the failure instead of success", async () => {
   const p = props({ account: true, onCommit: vi.fn(async () => false) }); render(<OracleProfileExperience {...p} />)
   fireEvent.click(screen.getByRole("button", { name: "계획 선호 3문항 시작" }))

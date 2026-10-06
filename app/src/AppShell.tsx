@@ -34,6 +34,7 @@ import type { PlannedSessionLink } from "./domain/planned-session-link"
 import {
   onLocalJournalScopeChange,
   activeLocalAccount,
+  localJournalScopeGeneration,
   setActiveLocalAccount,
 } from "./domain/account/local-journal-ownership"
 import {
@@ -159,6 +160,7 @@ export type AppShellMultiPlanRuntime = Pick<React.ComponentProps<typeof Deferred
   "multiAdjustmentResolverV3" | "readMultiAdjustedEvidenceV3">
 
 export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: AppShellMultiPlanRuntime } = {}) {
+  const guestScopeGeneration = localJournalScopeGeneration()
   const calendarSnapshot = useCalendarSnapshot()
   const [oracleEntry, setOracleEntry] = React.useState(initialOracleEntry)
   const [oracleEntryRevision, refreshOracleEntry] = React.useReducer((revision: number) => revision + 1, 0)
@@ -748,6 +750,12 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     setUtilityOrigin(point.utilityOrigin)
     setAthleteRecordsOpen(point.athleteRecordsOpen)
   }
+  const openTrainingReading = () => runViewTransition("push", () => {
+    trainingContentOrigin.current = captureRecordingOrigin(false)
+    dismissOracle()
+    setUtilityView("content")
+    setV(viewForTab("home"))
+  }, false)
   const openRestore = () => runViewTransition("push", () => {
     restoreReturnRef.current = captureReturnPoint()
     setUtilityView(null)
@@ -1011,10 +1019,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         onOpenRecordReading={() => openOverlay({ kind: "record-reading", stage: "own-event" })}
         onOpenRunningProfile={() => openOverlay({ kind: "running-profile", stage: "overview" })}
         onOpenOracleLibrary={oracleV2Enabled() ? () => openOverlay({ kind: "running-profile", stage: "overview", initialView: "library" }) : undefined}
-        onOpenTrainingContent={() => runViewTransition("push", () => {
-          trainingContentOrigin.current = captureRecordingOrigin(false)
-          setUtilityView("content")
-        })}
+        onOpenTrainingContent={openTrainingReading}
       />
     )
   }
@@ -1110,14 +1115,15 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
               <DeferredMobileScreens.OracleProfileV2 key={`oracle-v2-${accountScopeRevision}-${oracleEntryRevision}`} today={todayISO()} onBack={closeOverlay}
                 initialView={overlay.initialView}
                 backLabel={v.tab === "trends" ? "오라클로 돌아가기" : v.tab === "plan" ? "훈련으로 돌아가기" : v.tab === "journal" ? "일지로 돌아가기" : "홈으로 돌아가기"}
-                guestSession={activeLocalAccount() === null ? guestOracleSession ?? undefined : undefined}
+                guestSession={activeLocalAccount() === null ? guestOracleSession : undefined}
                 onGuestSessionChange={session => {
-                  if (activeLocalAccount() === null && (session === null || session.ownerKey === "guest")) setGuestOracleSession(session)
+                  if (guestScopeGeneration === localJournalScopeGeneration() && activeLocalAccount() === null
+                    && (session === null || session.ownerKey === "guest")) setGuestOracleSession(session)
                 }}
                 onNavigate={destination => runDraftSafeNavigation(() => {
                   if (destination === "RECORDS") openOraclePersonal("records")
                   else if (destination === "JOURNAL") openOraclePersonal("journal")
-                  else if (destination === "METHODS") { dismissOracle(); setUtilityOrigin("home"); setUtilityView("content") }
+                  else if (destination === "METHODS") openTrainingReading()
                   else openOraclePersonal("plan")
                 })} /> : <DeferredMobileScreens.RunningProfile key={`running-profile-${accountScopeRevision}`}
               stage={overlay.stage} today={todayISO()}
