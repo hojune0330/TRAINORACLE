@@ -288,6 +288,12 @@ export function PlanActiveState({
         returnToSession={returnToSession}
         executionMessage={executionMessage}
         executionBlocked={executionBlocked}
+        saveNotice={error !== null ? <div className="plan-inline-error" role="alert">
+          <p>{error}</p>
+          {retry?.kind === "progress" && <button className="plan-text-action" type="button" onClick={retryPendingWrite}>
+            진행 상태 다시 저장하기
+          </button>}
+        </div> : undefined}
         onEditPlan={state.version === 3 ? () => { setEditTarget(undefined); setEditing("hub") } : undefined}
         onManagePaceRecords={onManagePaceRecords}
         onEditSession={state.version === 3 ? session => { setEditTarget({ day: session.day, slot: session.slot }); setEditing("workout") } : undefined}

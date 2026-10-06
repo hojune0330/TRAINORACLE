@@ -74,7 +74,7 @@ describe("workout memo snapshot contract", () => {
       ] } } }
     const text = workoutMemoText(buildWorkoutMemo(source)!)
     expect(text).toContain("32초/200m · 800m 경기 평균 페이스")
-    expect(text).toContain("2분 @ 4:00/km · 10K 경기 평균 페이스")
+    expect(text).toContain("2분 · 4:00/km · 10K 경기 평균 페이스")
     expect(text).toContain("종료 뒤 17초 서서 쉬기")
     expect(text).toContain("종료 뒤 31초 조깅")
     expect(text).not.toContain("500m")
@@ -146,7 +146,7 @@ describe("workout memo snapshot contract", () => {
         target: { kind: "EFFORT_GUIDANCE", cue: "RPE 3–4" }, recoveryBetweenRepeats: [{ mode: "WALK", seconds: 60 }], recoveryAfter: [] },
     ] }
     expect(sequencePhaseNotation(sequence, "main")).toBe("2 × 2min @ RPE 3–4 · r60s Walk")
-    expect(sequencePhaseNotation(sequence, "main", [], "PLAIN")).toBe("2 × 2분 @ 힘든 정도 3–4/10 · 반복 사이 60초 걷기")
+    expect(sequencePhaseNotation(sequence, "main", [], "PLAIN")).toBe("2 × 2분 · 힘든 정도 3–4/10 · 반복 사이 60초 걷기")
   })
   it("validates adjusted sequences and computed targets using the established parsers before presentation", () => {
     const sequence: PrescriptionSequenceV3 = { kind: "PRESCRIPTION_SEQUENCE", version: 3, id: "validated", label: null, warmup: [], cooldown: [], main: [

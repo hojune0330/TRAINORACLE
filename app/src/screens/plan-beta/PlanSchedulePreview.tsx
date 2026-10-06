@@ -408,15 +408,18 @@ function PlanSessionPreview({
   readonly allowMemoExport?: boolean
 }) {
   const flow = sessionFlowLabel(session)
+  const executionSteps = sessionExecutionSteps(session)
   const details = (
     <>
-      <p className="plan-session-execution">{sessionExecution(session)}</p>
+      {executionSteps.length === 0 && session.prescription.kind !== "PACE_TARGET" && (
+        <p className="plan-session-execution">{sessionExecution(session)}</p>
+      )}
       {session.prescription.kind === "PACE_TARGET" && (
         <DetailedPrescriptionView prescription={session.prescription} />
       )}
-      {sessionExecutionSteps(session).length > 0 && (
+      {executionSteps.length > 0 && (
         <ol className="plan-session-steps" aria-label="훈련 실행 순서">
-          {sessionExecutionSteps(session).map((step) => (
+          {executionSteps.map((step) => (
             <li key={step.title}>
               <strong>{step.title}</strong>
               <span>{step.detail}</span>
@@ -461,7 +464,7 @@ function PlanSessionPreview({
       <div className="plan-session-content">
         <strong>{sessionLabel(session)}</strong>
         <small className={session.role === "REST" ? "plan-session-help" : "plan-session-metric"}>
-          {prescriptionLabel(session)}
+          {prescriptionLabel(session, expanded)}
         </small>
         {action}
         {expanded && footer && <details className="plan-session-records" data-session-records>

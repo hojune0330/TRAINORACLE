@@ -11,7 +11,7 @@ import type {
 import { PLANNED_ENERGY_INTENTS } from "@impl/plan-generator/types"
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 import { calculatedWorkoutSequence } from "@impl/prescription/all-workout-calculator"
-import { sequenceNotation, sessionWorkoutName, sessionWorkoutNotation, type WorkoutDisplaySession } from "../../domain/workout-notation"
+import { sequencePhaseNotation, sessionWorkoutName, sessionWorkoutNotation, type WorkoutDisplaySession } from "../../domain/workout-notation"
 
 export const EVENT_LABELS: Record<PlanEventGroup, {
   readonly title: string
@@ -134,8 +134,8 @@ export function sessionLabel(session: WorkoutDisplaySession): string {
   return sessionWorkoutName(session)
 }
 
-export function prescriptionLabel(session: PlanSession): string {
-  return sessionWorkoutNotation(session)
+export function prescriptionLabel(session: PlanSession, plain = false): string {
+  return sessionWorkoutNotation(session, plain ? "PLAIN" : "COACH")
 }
 
 export function sessionIntentLabel(session: PlanSession): string {
@@ -208,7 +208,7 @@ export function sessionExecutionSteps(session: PlanSession): readonly SessionExe
     const sequence = calculation && calculatedWorkoutSequence(calculation)
     if (sequence) return ([['warmup', '준비'], ['main', '본운동'], ['cooldown', '정리']] as const)
       .filter(([phase]) => sequence[phase].length > 0)
-      .map(([phase, title]) => ({ title, detail: sequenceNotation({ ...sequence, main: sequence[phase] }) }))
+      .map(([phase, title]) => ({ title, detail: sequencePhaseNotation(sequence, phase, [], "PLAIN") }))
     return []
   }
   if (session.role !== "QUALITY" || session.prescription.kind !== "RPE_TIME_RANGE") return []

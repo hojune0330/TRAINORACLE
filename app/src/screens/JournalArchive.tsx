@@ -110,7 +110,7 @@ export function JournalArchive({
     : selectedWeek !== null
     ? weekHeading(selectedWeek)
     : selectedMonth !== null
-      ? monthLabel(selectedMonth.month)
+      ? monthLabel(displayedMonth)
       : "지난 일지"
 
   return (
@@ -152,7 +152,7 @@ export function JournalArchive({
       {entries.some(entry => entry.kind === "post-session" && entry.date === today)
         && entries.filter(entry => entry.kind === "post-session" && entry.date <= today).length > 1 && (
         <div style={{ padding: "0 20px 16px" }}>
-          <InfoDisclosure title="최근 훈련 비교">
+          <InfoDisclosure title="최근 훈련 비교" purpose="actions" preview="지난 훈련과 오늘 기록 나란히 보기">
             <JournalThenNow onOpenDay={onOpenDay} />
           </InfoDisclosure>
         </div>
@@ -204,7 +204,7 @@ export function JournalArchive({
           {entries.length === 0 && readiness === "READY" && <button type="button" className="calendar-range-return" onClick={() => setEmptyView("example")}>일지가 쌓인 예시 보기</button>}
           </>}
           {archive.months.length > 0 && !exampleVisible && (
-            <InfoDisclosure title="월별 기록 모아보기">
+            <InfoDisclosure title="월별 기록 모아보기" purpose="actions" preview="다른 달의 일지 찾기">
             <SummaryList
               label="월별 기록"
               items={archive.months}

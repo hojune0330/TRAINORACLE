@@ -80,7 +80,7 @@ function v3NodesText(nodes: readonly SequenceNodeV3[], targets: readonly Adjuste
     if (node.kind === "segment") {
       const work = node.work.kind === "distance" ? node.work.distanceM === null ? "거리 미지정" : notationDistance(node.work.distanceM)
         : node.work.durationSeconds === null ? "시간 미지정" : notationTime(node.work.durationSeconds, style)
-      body = `${node.repeatCount > 1 ? `${node.repeatCount} × ` : ""}${work} @ ${targetText(node.target, node.id, node.work.distanceM, targets, style)}`
+      body = `${node.repeatCount > 1 ? `${node.repeatCount} × ` : ""}${work}${style === "PLAIN" ? " · " : " @ "}${targetText(node.target, node.id, node.work.distanceM, targets, style)}`
     } else {
       const inner = v3NodesText(node.children, targets, style)
       const simple = node.children.length === 1 && node.children[0]!.kind === "segment"
@@ -135,21 +135,23 @@ export function sequenceWorkoutName(sequence: Sequence, intent?: PlannedEnergyIn
   if (intent === "ATP_PC_INTENT") return "짧은 고출력 훈련 · ATP-PC"
   return repeated(sequence.main) ? "인터벌 · Intervals" : "달리기 · Run"
 }
-export function pacePrescriptionNotation(p: PacePrescription): string {
+export function pacePrescriptionNotation(p: PacePrescription, style: WorkoutNotationStyle = "COACH"): string {
   const work = `${p.repetitionsPerSet} × ${notationDistance(p.repetitionDistanceM)}`
-  const sets = p.setCount > 1 ? `${p.setCount} sets × (${work})` : work
+  const sets = p.setCount > 1 ? `${p.setCount} ${style === "PLAIN" ? "세트" : "sets"} × (${work})` : work
   const recovery = (value: number | null, mode: PacePrescription["repetitionRecoveryMode"], mark: string) =>
-    value !== null && mode !== "NOT_APPLICABLE" ? ` · ${mark}${notationRecovery({ mode, seconds: value })}` : ""
-  return `${sets} @ ${notationNumber(roundedPaceSeconds(p.targetRepSeconds))}s/${notationDistance(p.repetitionDistanceM)} · ${notationEvent(p.targetEventDistanceM)} RP`
-    + (p.repetitionsPerSet > 1 ? recovery(p.repetitionRecoverySeconds, p.repetitionRecoveryMode, "r") : "")
-    + (p.setCount > 1 ? recovery(p.setRecoverySeconds, p.setRecoveryMode, "R") : "")
+    value !== null && mode !== "NOT_APPLICABLE" ? ` · ${mark}${notationRecovery({ mode, seconds: value }, style)}` : ""
+  return `${sets}${style === "PLAIN" ? " · " : " @ "}${notationNumber(roundedPaceSeconds(p.targetRepSeconds))}${style === "PLAIN" ? "초" : "s"}/${notationDistance(p.repetitionDistanceM)} · ${notationEvent(p.targetEventDistanceM)} ${style === "PLAIN" ? "경기 평균 페이스" : "RP"}`
+    + (p.repetitionsPerSet > 1 ? recovery(p.repetitionRecoverySeconds, p.repetitionRecoveryMode, style === "PLAIN" ? "반복 사이 " : "r") : "")
+    + (p.setCount > 1 ? recovery(p.setRecoverySeconds, p.setRecoveryMode, style === "PLAIN" ? "세트 사이 " : "R") : "")
 }
-export function rpePrescriptionNotation(p: RpePrescription): string {
+export function rpePrescriptionNotation(p: RpePrescription, style: WorkoutNotationStyle = "COACH"): string {
   const calculated = p.catalogWorkout ? calculateCatalogWorkout(p.catalogWorkout.catalogId, p.catalogWorkout.inputs) : null
   const sequence = calculated && calculated.fingerprint === p.catalogWorkout?.calculationFingerprint ? calculatedWorkoutSequence(calculated) : null
-  if (sequence) return sequenceNotation(sequence)
+  if (sequence) return sequenceNotation(sequence, [], style)
   const range = (min: number, max: number) => min === max ? `${min}` : `${min}–${max}`
-  return `전체 ${range(p.durationMinutes.minimum, p.durationMinutes.maximum)}min @ RPE ${range(p.rpe.minimum, p.rpe.maximum)}`
+  return style === "PLAIN"
+    ? `전체 ${range(p.durationMinutes.minimum, p.durationMinutes.maximum)}분 · 힘든 정도 ${range(p.rpe.minimum, p.rpe.maximum)}/10`
+    : `전체 ${range(p.durationMinutes.minimum, p.durationMinutes.maximum)}min @ RPE ${range(p.rpe.minimum, p.rpe.maximum)}`
 }
 export function sessionWorkoutName(session: WorkoutDisplaySession): string {
   const p = session.prescription
@@ -169,14 +171,14 @@ export function sessionWorkoutName(session: WorkoutDisplaySession): string {
   }
   return names[session.plannedEnergyIntent]
 }
-export function sessionWorkoutNotation(session: WorkoutDisplaySession): string {
+export function sessionWorkoutNotation(session: WorkoutDisplaySession, style: WorkoutNotationStyle = "COACH"): string {
   const p = session.prescription
   if (!p) return ""
   switch (p.kind) {
     case "REST": return "훈련 없음"
-    case "RPE_TIME_RANGE": return rpePrescriptionNotation(p)
-    case "PACE_TARGET": return pacePrescriptionNotation(p)
-    case "ADJUSTED_METHOD_V3": return sequenceNotation(p.projection.sequence, p.projection.segmentTargets)
-    case "ADJUSTED_METHOD": return sequenceNotation(p.snapshot.projection.sequence, p.snapshot.projection.segmentTargets)
+    case "RPE_TIME_RANGE": return rpePrescriptionNotation(p, style)
+    case "PACE_TARGET": return pacePrescriptionNotation(p, style)
+    case "ADJUSTED_METHOD_V3": return sequenceNotation(p.projection.sequence, p.projection.segmentTargets, style)
+    case "ADJUSTED_METHOD": return sequenceNotation(p.snapshot.projection.sequence, p.snapshot.projection.segmentTargets, style)
   }
 }

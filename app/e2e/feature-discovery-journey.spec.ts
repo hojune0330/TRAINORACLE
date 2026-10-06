@@ -75,6 +75,8 @@ test("plan session exposes writing directly and does not confuse journal save wi
   date.setUTCDate(date.getUTCDate() + session.day - 1)
   await page.locator(`button[data-date="${date.toISOString().slice(0, 10)}"]`).click()
   const selected = page.getByRole("dialog").locator(`[data-session-slot="${session.slot}"]`)
+  await expect(selected.locator(".plan-session-metric")).toContainText("힘든 정도")
+  await expect(selected.locator(".plan-session-metric")).not.toContainText("RPE")
   const write = selected.getByRole("button", { name: "이 훈련 일지 쓰기", exact: true })
   await expect(write).toBeVisible()
   expect(await write.evaluate(node => node.closest("details") === null)).toBe(true)

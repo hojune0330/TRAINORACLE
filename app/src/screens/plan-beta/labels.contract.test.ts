@@ -2,6 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react"
 import { createElement } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 import type { PlanSession } from "@impl/plan-generator/types"
+import { bindDefaultCatalogSessions } from "@impl/prescription/catalog-session-binding"
 import { PlanSchedulePreview } from "./PlanSchedulePreview"
 import {
   candidateSessionSummary,
@@ -56,6 +57,17 @@ function qualitySession(
 
 describe("two-a-day plan summary", () => {
   afterEach(cleanup)
+
+  it("reads catalog execution in plain units without duplicating the step count or changing the prescription", () => {
+    const bound = bindDefaultCatalogSessions([session(1, "AM", { minimum: 35, maximum: 35 })], 5000, "EXPERIENCED", 0)[0]!
+    const before = JSON.stringify(bound)
+    const steps = sessionExecutionSteps(bound)
+    expect(steps.find(step => step.title === "본운동")?.detail).toBe("20분 · 힘든 정도 3/10 → 15분 · 힘든 정도 4/10")
+    render(createElement(PlanSchedulePreview, { startDate: "2026-08-17", frameLengthDays: 7, sessions: [bound] }))
+    expect(screen.getByRole("list", { name: "훈련 실행 순서" })).toHaveTextContent("20분 · 힘든 정도 3/10 → 15분 · 힘든 정도 4/10")
+    expect(screen.queryByText(/본운동 \d+개 구간과/)).not.toBeInTheDocument()
+    expect(JSON.stringify(bound)).toBe(before)
+  })
 
   it("matches the 9.5-day preview total when day 10 has two sessions", () => {
     const sessions: readonly PlanSession[] = [

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it } from "vitest"
 import type { PrescriptionSequenceV3, SequenceNodeV3 } from "@impl/prescription/sequence-v3"
 import type { PrescriptionSequence, PrescriptionSequenceSegment } from "@impl/prescription/sequence"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
@@ -6,6 +6,9 @@ import { notationEffort, notationNumber, notationPace, sequenceNotation, sequenc
 import { adjustedPlanSelectionFixture } from "./adjusted-plan-selection.test-fixtures"
 import { selectAdjustedPlanForActivation } from "./adjusted-plan-selection"
 import { TODAY } from "./prescription-quality-matrix.test-fixtures"
+import { memoSessionFixture } from "./workout-memo.test-fixtures"
+
+afterEach(() => localStorage.clear())
 
 const segment = (overrides: Partial<Extract<SequenceNodeV3, { kind: "segment" }>> = {}): Extract<SequenceNodeV3, { kind: "segment" }> => ({
   kind: "segment", id: "main", label: "SOURCE LABEL MUST NOT CHANGE", role: "WORK", repeatCount: 1,
@@ -18,6 +21,22 @@ const sequence = (main: readonly SequenceNodeV3[]): PrescriptionSequenceV3 => ({
 })
 
 describe("display-only workout notation", () => {
+  it("offers plain first-read units while keeping the same pace, repeats, rest and compact notation", () => {
+    const source = memoSessionFixture()
+    const before = JSON.stringify(source)
+    const coach = sessionWorkoutNotation(source)
+    const plain = sessionWorkoutNotation(source, "PLAIN")
+    expect(coach).toContain(" RP")
+    expect(plain).toContain("경기 평균 페이스")
+    expect(plain).toContain("반복 사이")
+    expect(plain).toContain("초/")
+    expect(plain).not.toMatch(/\b(min|RPE|RP|Jog|Walk)\b/)
+    expect(sessionWorkoutNotation(source)).toBe(coach)
+    expect(JSON.stringify(source)).toBe(before)
+    expect(sessionWorkoutNotation({ role: "EASY", plannedEnergyIntent: "BASE_INTENT", prescription: {
+      kind: "RPE_TIME_RANGE", durationMinutes: { minimum: 35, maximum: 35 }, rpe: { minimum: 3, maximum: 4 },
+    } }, "PLAIN")).toBe("전체 35분 · 힘든 정도 3–4/10")
+  })
   it("names the actual LT method and retains total versus main duration", () => {
     const continuous = sequence([segment()])
     expect(sequenceWorkoutName(continuous, "LT_INTENT")).toBe("템포런 · Tempo Run")

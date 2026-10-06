@@ -72,6 +72,7 @@ export function ActivePlan({
   returnToSession,
   executionMessage,
   executionBlocked = false,
+  saveNotice,
   onEditPlan,
   onManagePaceRecords,
   onEditSession,
@@ -93,6 +94,7 @@ export function ActivePlan({
   readonly returnToSession?: PlannedSessionLogDraft["link"]
   readonly executionMessage?: string | null
   readonly executionBlocked?: boolean
+  readonly saveNotice?: React.ReactNode
   readonly onEditPlan?: () => void
   readonly onManagePaceRecords?: () => void
   readonly onEditSession?: (session: PlanSession) => void
@@ -336,10 +338,13 @@ export function ActivePlan({
         timelineHeading="날짜별 훈련"
         displayMode="swipe"
         detailsExpanded={false}
-        readerNotice={executionMessage || executionBlocked ? <div role="status">
-          {executionMessage && <p>{executionMessage}</p>}
-          {executionBlocked && <p>몸 상태와 처방을 먼저 확인해 주세요.</p>}
-        </div> : undefined}
+        readerNotice={saveNotice || executionMessage || executionBlocked ? <>
+          {saveNotice}
+          {(executionMessage || executionBlocked) && <div role="status">
+            {executionMessage && <p>{executionMessage}</p>}
+            {executionBlocked && <p>몸 상태와 처방을 먼저 확인해 주세요.</p>}
+          </div>}
+        </> : undefined}
         renderAfterSchedule={(
           <>
             {!frameComplete && (

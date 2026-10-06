@@ -364,7 +364,7 @@ describe("seeded independent 100-persona domain audit", () => {
         check(a, loaded !== null && stable(loaded) === before, "SAVE_RELOAD_CONTENT_DRIFT", step)
         if (loaded !== null && stable(loaded) !== before) artifact(`${p.id}-state-difference-${step}`, { expected: selected.state, loaded })
         if (loaded) {
-          check(a, same(loaded.activePlan.sessions.map(sessionWorkoutNotation), selected.state.activePlan.sessions.map(sessionWorkoutNotation)), "SAVE_RELOAD_NOTATION_DRIFT", step)
+          check(a, same(loaded.activePlan.sessions.map(session => sessionWorkoutNotation(session)), selected.state.activePlan.sessions.map(session => sessionWorkoutNotation(session))), "SAVE_RELOAD_NOTATION_DRIFT", step)
           const raw = window.localStorage.getItem(activePlanBetaStorageKey())
           loadPlanBetaState()
           check(a, window.localStorage.getItem(activePlanBetaStorageKey()) === raw, "RELOAD_REWRITES_HISTORY", step)

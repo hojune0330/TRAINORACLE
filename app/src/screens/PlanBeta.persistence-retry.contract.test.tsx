@@ -97,6 +97,34 @@ describe("active plan persistence retry", () => {
     expect(onStateChange).not.toHaveBeenCalled()
   })
 
+  it("shows a failed save and retry inside the enlarged workout instead of behind the dialog", async () => {
+    const state = stateFixture()
+    const save = vi.spyOn(planStore, "savePlanProgressWithLock").mockResolvedValue({
+      kind: "failed", code: "PLAN_STORAGE_WRITE_FAILED", rollbackComplete: true,
+    })
+    const originalShowModal = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
+    Object.defineProperty(HTMLDialogElement.prototype, "showModal", {
+      configurable: true, value: function (this: HTMLDialogElement) { this.setAttribute("open", "") },
+    })
+    try {
+      const user = userEvent.setup()
+      const onStateChange = vi.fn()
+      render(<PlanActiveState state={state} onStateChange={onStateChange} onPrepareNextFrame={vi.fn()} />)
+      await user.click(screen.getByRole("button", { name: "이전 달" }))
+      await user.click(document.querySelector<HTMLButtonElement>('button[data-date="2026-07-24"]')!)
+      const reader = within(await screen.findByRole("dialog"))
+      await user.click(reader.getByText("일지·진행 기록", { exact: true }))
+      await user.click(within(reader.getByLabelText(/DAY 1.*진행 기록/u)).getByRole("button", { name: "완료" }))
+      expect(await reader.findByRole("alert")).toHaveTextContent("계획을 이 기기에 저장하지 못했어요")
+      await user.click(reader.getByRole("button", { name: "진행 상태 다시 저장하기" }))
+      expect(save).toHaveBeenCalledTimes(2)
+      expect(onStateChange).not.toHaveBeenCalled()
+    } finally {
+      if (originalShowModal) Object.defineProperty(HTMLDialogElement.prototype, "showModal", originalShowModal)
+      else Reflect.deleteProperty(HTMLDialogElement.prototype, "showModal")
+    }
+  })
+
   it("withholds progress retry when the active-plan storage state cannot be read", async () => {
     const state = stateFixture()
     const onStateChange = vi.fn()
