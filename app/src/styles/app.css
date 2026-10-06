@@ -665,6 +665,19 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   overflow-y: auto;
 }
 
+/* The standalone plan flow owns its gutter; embedded Home and legacy readers do not. */
+.app-flow-stage > .account-plan-runtime:has(> .instant-plan) {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: var(--space-5);
+}
+
+@media (max-width: 380px) {
+  .app-flow-stage > .account-plan-runtime:has(> .instant-plan) {
+    padding: var(--space-4);
+  }
+}
+
 .app-loading-state {
   min-height: min(62dvh, 520px);
   padding: var(--space-8) var(--space-5);
