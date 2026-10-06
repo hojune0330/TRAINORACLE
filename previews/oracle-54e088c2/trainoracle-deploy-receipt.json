@@ -1,0 +1,19 @@
+{
+  "kind": "TRAINORACLE_PAGES_PREVIEW_DEPLOYMENT",
+  "sourceSha": "54e088c2c6c2b5a50a99cdac621dfdfcb3cc0930",
+  "previousPagesSha": "0762b65521aa8c765df1ae82efdca3b25c9e22ae",
+  "deploymentMethod": "MANUAL_OWNER_APPROVED",
+  "publicationRequestedAt": "2026-10-06T02:46:51Z",
+  "scope": "Install hint suppression and plan-entry gutters on the isolated Oracle preview",
+  "previewOnly": true,
+  "oracleV2Enabled": true,
+  "accountAndShareEnabled": false,
+  "verification": {
+    "focusedContracts": "31/31 PASS",
+    "appTypecheck": "PASS",
+    "previewBuild": "PASS",
+    "fullGithubReleaseGate": "NOT_COMPLETED",
+    "realAccountRoundtrip": "NOT_RUN",
+    "realMobileInstallation": "NOT_RUN"
+  }
+}
