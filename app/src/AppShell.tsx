@@ -713,7 +713,10 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     window.requestAnimationFrame(() => {
       if (origin.owner !== activeLocalAccount()) return
       if (scrollRegionRef.current) scrollRegionRef.current.scrollTop = origin.scroll
-      const buttons = [...(scrollRegionRef.current?.querySelectorAll<HTMLElement>("button, a") ?? [])]
+      const buttons = [
+        ...(scrollRegionRef.current?.querySelectorAll<HTMLElement>("button, a") ?? []),
+        ...document.querySelectorAll<HTMLElement>(".app-tab-bar button, .app-tab-bar a"),
+      ]
       const target = origin.focusLabel ? buttons.find(button => button.getAttribute("aria-label") === origin.focusLabel)
         : buttons.find(button => button.textContent?.trim() === origin.focusText)
       target?.focus({ preventScroll: true })

@@ -29,6 +29,7 @@ No production database migration, function deployment, real-account write, new t
 - Release operator tests: 7/7 passed. Public configuration selection/hold: 2/2 passed.
 - Independent Luna maximum-reasoning source review identified the V2 METHODS link and nonnumeric/skip accessibility states. Both were corrected; experience follow-up 17/17 and entry/navigation follow-up 26/26 passed. Browser review also caught and corrected the V1 reading-link route.
 - Guest callbacks reject a changed scope generation, including guest → account → guest. An explicit null keeps the child controlled and prevents a stale component-local result from returning.
+- Final recording focus repair includes the bottom navigation in the return-target lookup; mounted-plan cancel and browser Back both assert restored focus. Navigation follow-up: 8/8 passed.
 - These figures are separate runs with overlap and must not be added together or labelled a full suite.
 
 Packaging, publication, hosted checks and GitHub Actions status are separate evidence levels and will be reported after publication. No authenticated real-user round trip has been performed.

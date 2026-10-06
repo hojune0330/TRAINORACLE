@@ -37,6 +37,7 @@ describe("AppShell origin-preserving navigation", () => {
     expect(screen.getByRole("button", { name: "훈련" })).toHaveAttribute("aria-current", "page")
     await user.click(screen.getByRole("button", { name: "← 뒤로" }))
     expect(await screen.findByRole("heading", { name: "지금까지 어떻게 달려왔나요?" })).toBeVisible()
+    await waitFor(() => expect(screen.getByRole("button", { name: "기록하기" })).toHaveFocus())
   })
 
   it("returns browser Back from recording to the same Oracle section", async () => {
@@ -49,6 +50,7 @@ describe("AppShell origin-preserving navigation", () => {
     act(() => window.history.back())
     await waitFor(() => expect(screen.getByRole("button", { name: "러닝 취향" })).toHaveAttribute("aria-pressed", "true"))
     expect(screen.queryByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeNull()
+    await waitFor(() => expect(screen.getByRole("button", { name: "기록하기" })).toHaveFocus())
   })
 
   it("returns from a directly opened glossary term to the exact plan step", async () => {
