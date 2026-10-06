@@ -1,5 +1,5 @@
 import React from "react"
-import { cleanup, render, screen, within } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { RecordReadingOracle } from "./RecordReadingOracle"
@@ -37,10 +37,14 @@ describe("record reading flow", () => {
     await user.click(screen.getByRole("button", { name: "친구와 러닝 궁합 보기" }))
     await user.click(screen.getByRole("button", { name: "5000m" }))
     await user.type(screen.getByRole("textbox", { name: "최고기록" }), "21:40")
-    await user.click(screen.getByRole("button", { name: "우리 러닝 궁합 보기" }))
+    const compare = screen.getByRole("button", { name: "친구 기록과 비교하기" })
+    expect(compare).toBeDisabled()
+    expect(screen.getByText("동의를 확인하면 풀이를 볼 수 있어요.")).toBeVisible()
+    fireEvent.submit(compare.closest("form")!)
     expect(screen.getByRole("alert")).toHaveTextContent("동의")
     await user.click(screen.getByRole("checkbox"))
-    await user.click(screen.getByRole("button", { name: "우리 러닝 궁합 보기" }))
+    expect(compare).toBeEnabled()
+    await user.click(compare)
     expect(screen.getByRole("heading", { name: "같은 거리, 서로 다른 리듬" })).toBeVisible()
     expect(screen.getByText(/차이는 1분 10초예요/u)).toBeVisible()
     await user.click(within(screen.getByRole("group", { name: "풀이 내용" })).getByRole("button", { name: "러닝 궁합" }))
@@ -63,7 +67,9 @@ describe("record reading flow", () => {
     await user.click(screen.getByRole("button", { name: "친구 기록" }))
     await user.click(screen.getByRole("button", { name: "5000m" }))
     await user.type(screen.getByRole("textbox", { name: "최고기록" }), "21:40")
-    await user.click(screen.getByRole("button", { name: "친구의 러닝 풀이 보기" }))
+    const readFriend = screen.getByRole("button", { name: "친구의 러닝 풀이 보기" })
+    expect(readFriend).toBeDisabled()
+    fireEvent.submit(readFriend.closest("form")!)
     expect(screen.getByRole("alert")).toHaveTextContent("동의")
     await user.click(screen.getByRole("checkbox"))
     await user.click(screen.getByRole("button", { name: "친구의 러닝 풀이 보기" }))
@@ -72,7 +78,7 @@ describe("record reading flow", () => {
     await user.click(screen.getByRole("button", { name: "5000m" }))
     await user.type(screen.getByRole("textbox", { name: "최고기록" }), "20:30")
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument()
-    await user.click(screen.getByRole("button", { name: "우리 러닝 궁합 보기" }))
+    await user.click(screen.getByRole("button", { name: "친구 기록과 비교하기" }))
     const self = screen.getByText("나 · 5000m").parentElement!
     const other = screen.getByText("친구 · 5000m").parentElement!
     expect(within(self).getByText("20분 30초")).toBeVisible()

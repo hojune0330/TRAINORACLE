@@ -53,6 +53,9 @@ function SessionDetail({
   readonly onChangeSchedule?: (id: string) => void
   readonly changeScheduleLabel?: string
 }) {
+  const primarySteps = session.steps.filter(step => ["총 시간·강도", "본운동", "회복", "사이 회복"].includes(step.label))
+  const visibleSteps = primarySteps.length > 0 ? primarySteps : session.steps.slice(0, 1)
+  const otherSteps = session.steps.filter(step => !visibleSteps.includes(step))
   const steps = (items: TodaySession["steps"]) => <dl className="instant-plan__steps">
     {items.map((step, index) => <div key={`${index}-${step.label}`}>
       <dt>{step.label}</dt><dd>{step.instruction}</dd>
@@ -66,10 +69,10 @@ function SessionDetail({
         {session.recorded ? "남긴 기록 있음" : "아직 기록 없음"}
       </p>}
       {session.guidanceNotice && <p className="instant-plan__hint" role="note">{session.guidanceNotice}</p>}
-      {compact && session.steps[0]?.label === "총 시간·강도" ? <>
-        {steps(session.steps.slice(0, 1))}
-        {session.steps.length > 1 && <details className="instant-plan__disclosure">
-          <summary>훈련 방법</summary>{steps(session.steps.slice(1))}
+      {compact ? <>
+        {steps(visibleSteps)}
+        {otherSteps.length > 0 && <details className="instant-plan__disclosure">
+          <summary>훈련 방법</summary>{steps(otherSteps)}
         </details>}
       </> : steps(session.steps)}
       {onViewSession && <button className="instant-plan__secondary" type="button"

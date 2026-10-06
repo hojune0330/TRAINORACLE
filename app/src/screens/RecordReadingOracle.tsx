@@ -33,6 +33,7 @@ export function RecordReadingOracle({ stage, today, onStageChange, onBack, onClo
     : stage === "pair-result" && !pair ? "friend-time" : stage
   const isFriend = visibleStage === "friend-event" || visibleStage === "friend-time"
   const entryIsFriend = isFriend ? subject === "self" : subject === "friend"
+  const consentRequired = entryIsFriend && !(isFriend ? consent : firstFriendConsent)
   const draft = isFriend ? friendDraft : ownDraft
   const event = READING_EVENTS.find(item => item.id === draft.eventId)
   const isResult = visibleStage === "self-result" || visibleStage === "pair-result"
@@ -118,7 +119,8 @@ export function RecordReadingOracle({ stage, today, onStageChange, onBack, onClo
           </InfoDisclosure>
           {entryIsFriend && <label className="record-reading__consent"><input type="checkbox" checked={isFriend ? consent : firstFriendConsent} onChange={e => isFriend ? setConsent(e.target.checked) : setFirstFriendConsent(e.target.checked)} /><span>친구가 이 기록의 풀이와 비교에 동의했어요.</span></label>}
           {error && <p role="alert" className="record-reading__error">{error}</p>}
-          <button type="submit" className="record-reading__primary">{isFriend ? "우리 러닝 궁합 보기" : subject === "self" ? "나의 러닝 풀이 보기" : "친구의 러닝 풀이 보기"}<ArrowRight size={18} aria-hidden="true" /></button>
+          <button type="submit" className="record-reading__primary" disabled={consentRequired} aria-describedby={consentRequired ? "reading-consent-hint" : undefined}>{isFriend ? "친구 기록과 비교하기" : subject === "self" ? "나의 러닝 풀이 보기" : "친구의 러닝 풀이 보기"}<ArrowRight size={18} aria-hidden="true" /></button>
+          {consentRequired && <p id="reading-consent-hint" className="record-reading__muted">동의를 확인하면 풀이를 볼 수 있어요.</p>}
         </form>}
         <p className="record-reading__privacy">입력은 이 풀이에서만 사용해요. 닫거나 새로고침하면 사라지며, 계정이나 서버에 저장하지 않아요.</p>
       </>}

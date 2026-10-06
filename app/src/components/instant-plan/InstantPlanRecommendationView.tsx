@@ -123,7 +123,7 @@ export function InstantPlanRecommendationView({
           <RecommendationCalendar identity={recommendation.id} days={recommendation.days} />
         )}
       </section>
-      <div className="instant-plan__actions">
+      <div className="instant-plan__actions instant-plan__start-action">
         <button
           className="instant-plan__button"
           type="button"

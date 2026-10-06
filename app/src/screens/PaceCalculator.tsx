@@ -147,9 +147,13 @@ export function PaceCalculator({ request = {}, stage, onStageChange, onBack }: {
         {stage === "table" && <><p className="pace-tool__caption">현재 기록의 평균 페이스 ±5·10초/km · 훈련 강도 추천이 아니에요.</p><table><thead><tr><th scope="col">/km</th><th scope="col">200m</th><th scope="col">400m</th><th scope="col">{paceEventLabel(event)}</th></tr></thead><tbody>
           {nearbyPaceTable(total, event).map(row => <tr key={row.offset} data-current={row.offset === 0}><th scope="row">{paceClock(row.secondsPerKm, 0)}</th><td>{paceClock(row.seconds200)}</td><td>{paceClock(row.seconds400)}</td><td>{paceClock(row.eventSeconds)}</td></tr>)}</tbody></table></>}
         {stage === "track" && <><p>트랙 1바퀴와 출발선이 같은 레인 주행은 거리 기준이 달라요.</p><p>레인·장애물 경기 계산은 공식 시설 기준 확인 후 제공할 예정이에요. 현재는 임의의 거리값을 쓰지 않아요.</p></>}
-        {stage === "evidence" && <><h2>기록의 평균 속도를 환산해요</h2><p>구간 시간 = 경기 기록 초 × 구간 거리 ÷ 경기 거리</p>
-          <p>{total}초 × 400m ÷ {event}m = {directPaceSeconds(total, event, 400)}초</p>
+        {stage === "evidence" && <><h2>기록의 평균 속도를 환산해요</h2>
+          <p>400m = <strong>{paceClock(directPaceSeconds(total, event, 400)!)}</strong> <small>(분:초 · 반올림 표시)</small></p>
           <p>반복 횟수와 휴식은 이 계산에 들어가지 않아요. 짧은 구간을 이 속도로 반복할 수 있다는 뜻은 아니에요.</p>
+          <details><summary>계산식·정밀한 값</summary>
+            <p>구간 시간 = 경기 기록 초 × 구간 거리 ÷ 경기 거리</p>
+            <p>{total}초 × 400m ÷ {event}m = {directPaceSeconds(total, event, 400)}초</p>
+          </details>
           {request.calculationModel === "FIVE_K_THRESHOLD_V1" && <p>훈련의 LT 참고 범위는 기존 5km 전용 모델로 별도 계산해요. 위 평균 속도 표와 같지 않으며 측정한 개인 역치가 아니에요.</p>}
           <p>목표는 현재 실력과 구분해요. 하프 계산 거리는 21,097.5m예요. 표시는 마지막에 반올림하며 구간 합계는 전체 기록에 맞춰요.</p></>}
       </>}

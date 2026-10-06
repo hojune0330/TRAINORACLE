@@ -1,0 +1,51 @@
+import { expect, test } from "@playwright/test"
+import { completeQuickPlan } from "./plan-flow"
+
+for (const width of [320, 375]) {
+  test(`ready plan action stays reachable without scrolling at ${width}px`, async ({ page }, info) => {
+    await page.setViewportSize({ width, height: 740 })
+    await page.clock.setFixedTime(new Date("2026-10-06T03:00:00Z"))
+    await page.route("**/*", route => new URL(route.request().url()).hostname === "127.0.0.1" ? route.continue() : route.abort())
+    await page.goto("/?app=1")
+    await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
+    await completeQuickPlan(page, { event: "800m" })
+    const start = page.getByRole("button", { name: "이 일정으로 시작", exact: true })
+    await expect(start).toBeInViewport()
+    const navigation = page.getByRole("navigation", { name: "주 탭" })
+    expect((await start.boundingBox())!.y + (await start.boundingBox())!.height).toBeLessThanOrEqual((await navigation.boundingBox())!.y)
+    await page.screenshot({ path: info.outputPath("start-visible.png") })
+    await page.evaluate(() => {
+      const sizes = [...document.querySelectorAll<HTMLElement>("main *")].map(element => ({ element, size: parseFloat(getComputedStyle(element).fontSize) }))
+      for (const { element, size } of sizes) element.style.setProperty("font-size", `${size * 2}px`, "important")
+    })
+    await expect(start).toBeInViewport()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
+    await page.screenshot({ path: info.outputPath("start-double-text.png") })
+    await start.click()
+    await expect(page.getByRole("heading", { name: "9일 훈련 계획", exact: true })).toBeVisible()
+    const today = page.getByRole("region", { name: "오늘 훈련", exact: true })
+    await expect(today.locator(".instant-plan__steps").first()).toContainText("분")
+    await expect(today.locator(".instant-plan__steps").first()).toContainText("힘든 정도")
+    await expect(today.locator(".instant-plan__steps").first()).not.toContainText("min")
+    await expect(today.locator(".instant-plan__steps").first()).not.toContainText("RPE")
+    const method = today.locator("summary", { hasText: "훈련 방법" })
+    await expect(method).toBeVisible()
+    await method.focus()
+    await page.keyboard.press("Enter")
+    await expect(method.locator("..")).toHaveAttribute("open")
+  })
+}
+
+test("optional home content exposes its state and works without a pointer", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 740 })
+  await page.emulateMedia({ reducedMotion: "reduce" })
+  await page.route("**/*", route => new URL(route.request().url()).hostname === "127.0.0.1" ? route.continue() : route.abort())
+  await page.goto("/?app=1")
+  const example = page.getByRole("button", { name: /오라클 결과 예시 보기/ })
+  await expect(example).toHaveAttribute("aria-expanded", "false")
+  await example.focus()
+  await page.keyboard.press("Enter")
+  await expect(example).toHaveAttribute("aria-expanded", "true")
+  await page.keyboard.press("Space")
+  await expect(example).toHaveAttribute("aria-expanded", "false")
+})

@@ -290,6 +290,11 @@ export function ActivePlanSessionEditor({ state, sourceOptions, entriesReady, in
             </>
           ) : (
             <>
+              <label className="active-plan-session-editor__check">
+                <input type="checkbox" checked={sourceUnstartedConfirmed} disabled={busy || disabled}
+                  onChange={event => { setSourceUnstartedConfirmed(event.target.checked); invalidatePreview() }} />
+                이 훈련은 아직 시작하지 않았어요.
+              </label>
               <div className="active-plan-session-editor__mode" role="group" aria-label="훈련 변경 방법">
                 {selectedOption?.actions.includes("DURATION") && <button type="button" aria-pressed={action === "DURATION"} disabled={busy || disabled || !unstartedConfirmed}
                   onClick={() => { setAction("DURATION"); setCatalogChoice(null); invalidatePreview() }}>시간 줄이기</button>}
@@ -327,11 +332,6 @@ export function ActivePlanSessionEditor({ state, sourceOptions, entriesReady, in
               {action === "CATALOG" && (!selectedSession || selectedSession.prescription.kind !== "RPE_TIME_RANGE") && (
                 <p role="status">이 훈련의 내용을 바꾸는 경로를 열 수 없어요.</p>
               )}
-              <label className="active-plan-session-editor__check">
-                <input type="checkbox" checked={sourceUnstartedConfirmed} disabled={busy || disabled}
-                  onChange={event => { setSourceUnstartedConfirmed(event.target.checked); invalidatePreview() }} />
-                이 훈련은 아직 시작하지 않았어요.
-              </label>
             </>
           )}
 
