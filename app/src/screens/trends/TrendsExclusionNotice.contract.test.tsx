@@ -65,6 +65,9 @@ describe("추이 화면 · 반영되지 않은 일지 안내", () => {
     expect(notice.textContent).toContain("가져온 일지 1개")
     // 일지가 사라진 게 아니라는 사실을 반드시 함께 말한다
     expect(notice.textContent).toContain("일지에는 그대로 남아 있어요")
+    expect(screen.getByRole("region", { name: "가져온 운동 기록 미리보기" })).toBeVisible()
+    expect(screen.getByText("8km")).toBeVisible()
+    expect(screen.getByRole("region", { name: "내 훈련 요약", hidden: true })).not.toBeVisible()
   })
 
   it("출처 정보가 없어 빠진 일지는 **다른 문구로** 알린다", () => {

@@ -1,0 +1,10 @@
+.recovery-record { margin: var(--space-6) var(--space-5) 0; padding-block: var(--space-4); border-top: 1px solid var(--line); font-family: var(--sans); }
+.recovery-record h2 { margin: 0 0 var(--space-3); font-size: var(--fs-h3); }
+.recovery-record__action { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); width: 100%; min-height: 48px; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.recovery-record__action span { min-width: 0; overflow-wrap: anywhere; }
+.recovery-record__action svg { flex-shrink: 0; }
+.recovery-record__last { display: grid; gap: var(--space-1); padding-block: var(--space-3); }
+.recovery-record__last small { font-size: var(--fs-caption); color: var(--ink-3); }
+.recovery-record__last button { display: inline-flex; align-items: center; gap: var(--space-2); justify-self: start; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--brand); font: inherit; cursor: pointer; }
+.recovery-record button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.recovery-record .fatigue-experiment { margin: 0; border: 0; }

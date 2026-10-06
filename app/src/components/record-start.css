@@ -1,0 +1,26 @@
+.record-start {
+  padding-block: var(--space-4);
+  font-family: var(--sans);
+}
+.record-start h2 { margin: 0 0 var(--space-3); font-size: var(--fs-h3); }
+.record-start nav { display: grid; }
+.record-start nav > button {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) 20px;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 64px;
+  padding: var(--space-3) 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.record-start strong, .record-start small { display: block; overflow-wrap: anywhere; }
+.record-start strong { font-size: var(--fs-body); }
+.record-start small { margin-top: var(--space-1); color: var(--ink-3); font-size: var(--fs-caption); }
+.record-start button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.record-start nav > button:hover { color: var(--brand); }

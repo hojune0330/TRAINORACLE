@@ -1,0 +1,4 @@
+.imported-record-preview dl { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); font: 500 var(--fs-body) / 1.5 var(--sans); }
+.imported-record-preview dt { color: var(--ink-2); overflow-wrap: anywhere; }
+.imported-record-preview dd { margin: 0; color: var(--ink); font-variant-numeric: tabular-nums; }
+.imported-record-preview > .info-disclosure { margin-top: var(--space-3); }

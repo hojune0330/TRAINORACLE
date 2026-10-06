@@ -27,6 +27,7 @@ type TrainingHomeProps = {
   readonly onOpenNextTraining?: () => void
   readonly safetyNotice?: ReactNode
   readonly oraclePreview?: ReactNode
+  readonly recordStart?: ReactNode
   readonly accountEntry?: ReactNode
   readonly todayContext?: ReactNode
   readonly recentJournal?: ReactNode
@@ -36,7 +37,7 @@ type TrainingHomeProps = {
 export function TrainingHome({
   model, onWriteLog, onOpenArchive, onOpenToday, onOpenGuide, onOpenPlan, onOpenTrends,
   onOpenOracle, onOpenMore, onOpenContent, onOpenRewards, onOpenNextTraining,
-  safetyNotice, oraclePreview, accountEntry, todayContext, recentJournal, installSuggestion,
+  safetyNotice, oraclePreview, recordStart, accountEntry, todayContext, recentJournal, installSuggestion,
 }: TrainingHomeProps) {
   const next = model.nextTraining
   const nextAction = onOpenNextTraining ?? onOpenPlan
@@ -64,6 +65,7 @@ export function TrainingHome({
         <TodaySection model={model} onWriteLog={onWriteLog} onOpenToday={onOpenToday} todayContext={todayContext} />
       </>}
 
+      {recordStart}
       {oraclePreview ? <InfoDisclosure purpose="actions" preview="기록 비교 · 훈련 구성 · 다음 훈련" title={model.homeMode === "WELCOME" ? "오라클 결과 예시 보기" : "내 오라클 살펴보기"}>{oraclePreview}</InfoDisclosure>
         : onOpenOracle && <button className="home-hub__text-action" type="button" onClick={() => onOpenOracle("level")}>오라클 결과 보기<ChevronRight aria-hidden="true" size={17} /></button>}
 

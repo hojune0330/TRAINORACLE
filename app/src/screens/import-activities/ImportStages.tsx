@@ -12,7 +12,7 @@ import { FileObservationReview } from "./FileObservationReview"
 import type { ImportedActivity } from "../../domain/import/activity-file"
 import "./file-analysis.css"
 
-export type ReadFailure = "unreadable" | "empty" | "too-large" | "too-many-records" | "too-many-segments" | "cancelled" | "account-unavailable" | null
+export type ReadFailure = "unreadable" | "unsupported-format" | "empty" | "too-large" | "too-many-records" | "too-many-segments" | "cancelled" | "account-unavailable" | null
 
 export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
   readonly busy: boolean
@@ -24,8 +24,8 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
   return (
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
       <p style={{ fontFamily: "var(--sans)", fontSize: 13, lineHeight: 1.65, color: "var(--ink-2)", margin: 0 }}>
-        활동을 <b>CSV 또는 JSON 파일로 내보내면</b> 여기서 먼저 확인한 뒤
-        일지로 옮길 수 있어요. TCX·GPX 파일도 읽을 수 있어요.
+        운동 파일을 고르면 <b>거리·시간을 먼저 확인</b>할 수 있어요.
+        원하는 운동만 일지로 옮겨요.
       </p>
 
       <div
@@ -75,7 +75,7 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
       {failure !== null && (
         <div role="alert" data-testid="import-failure" style={{ border: "1px solid var(--pain-5)", background: "var(--surface)", padding: "10px 13px" }}>
           <div style={{ ...mono, fontSize: 10.5, color: "var(--ink)", lineHeight: 1.6 }}>
-            {failure === "account-unavailable" ? "계정 기록을 조회하지 못했어요. 연결과 로그인을 확인한 뒤 다시 시도해 주세요." : failure === "empty"
+            {failure === "unsupported-format" ? "아직 지원하지 않는 파일 형식이에요. 건강앱의 전체 ZIP·XML 백업이나 FIT 대신 운동 기록의 TCX·GPX 또는 지원하는 CSV·JSON을 골라 주세요." : failure === "account-unavailable" ? "계정 기록을 조회하지 못했어요. 연결과 로그인을 확인한 뒤 다시 시도해 주세요." : failure === "empty"
               ? "파일은 읽었지만 일지로 옮길 활동을 찾지 못했어요. 날짜·거리·시간이 비어 있는 파일일 수 있어요."
               : failure === "too-many-records" ? "한 파일에서 읽을 수 있는 운동은 1,000개까지예요. 기간을 나눠 내보내 주세요."
                 : failure === "too-many-segments" ? "구간이나 위치 기록이 너무 많아요. 운동을 나눈 파일로 다시 골라 주세요."
@@ -88,6 +88,12 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
           </div>
         </div>
       )}
+
+      <InfoDisclosure title="가민·코로스·건강앱 파일 준비하기">
+        <p>가민·코로스 등의 서비스에서 운동을 TCX·GPX 파일로 내보낸 뒤 골라 주세요. 파일에서 읽은 값은 저장 전에 확인할 수 있어요.</p>
+        <p>CSV·JSON은 날짜·거리·시간이 있는 지원 형식만 읽어요. 모든 건강앱의 파일 형식이 서로 같지는 않아요.</p>
+        <p>애플 건강·삼성 헬스의 전체 ZIP·XML 백업은 아직 읽지 못해요. 수면·HRV를 자동으로 받는 기능도 이번 파일 가져오기와 별개예요.</p>
+      </InfoDisclosure>
 
       <div data-testid="oauth-status" style={{ border: "1px dashed var(--line)", padding: "12px 14px" }}>
         <InfoDisclosure title="가민·WHOOP·스트라바 자동 연동은 준비 중이에요">
@@ -121,7 +127,7 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
   return (
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
       <p style={{ fontFamily: "var(--sans)", fontSize: 13, lineHeight: 1.65, color: "var(--ink-2)", margin: 0 }}>
-        활동 <b>{drafts.length}건</b>을 읽었어요. 저장할 것만 골라 주세요 — 고르지 않은 건 저장되지 않아요.
+        운동 <b>{drafts.length}건</b>을 읽었어요. 저장할 것만 골라 주세요.
       </p>
       {result.skipped > 0 && (
         <div data-testid="import-skipped" style={{ ...mono, fontSize: 10.5, color: "var(--ink-3)", lineHeight: 1.6, border: "1px solid var(--line)", padding: "9px 12px" }}>
@@ -223,13 +229,16 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
           )
         })}
       </div>
-      <div style={{ ...mono, fontSize: 10, color: "var(--ink-4)", lineHeight: 1.65 }}>
-        기존 일지를 보완하면 RPE<TermHelp term="rpe" />와 메모는 계속 수정할 수 있어요.
-        {analysisEnabled ? "파일 기록은 오라클의 파일 분석에서 수정할 수 있어요. " : "새 일지로 가져온 활동은 현재 읽기 전용이에요. "}
-        {analysisEnabled
+      <p style={{ fontFamily: "var(--sans)", fontSize: 12, color: "var(--ink-2)", lineHeight: 1.6, margin: 0 }}>
+        {analysisEnabled ? "가져오기만으로 최고기록·훈련 목표는 바뀌지 않아요." : "새 일지는 읽기 전용이에요. 가져온 숫자는 주간 통계·추이·훈련계획에는 들어가지 않아요."}
+      </p>
+      <InfoDisclosure title="저장 후 수정·분석은 어떻게 되나요?">
+        <p>기존 일지를 보완하면 힘든 정도(RPE<TermHelp term="rpe" />)와 메모는 계속 수정할 수 있어요.</p>
+        <p>{analysisEnabled ? "파일 기록은 오라클의 파일 분석에서 수정할 수 있어요. " : "새 일지로 가져온 활동은 현재 읽기 전용이에요. "}</p>
+        <p>{analysisEnabled
           ? "계정에 저장된 달리기 거리는 누적 거리에 포함해요. 시간과 페이스는 시간의 뜻을 확인한 항목끼리만 비교해요. 이 파일만으로 개인 최고기록이나 훈련 강도를 바꾸지는 않아요."
-          : <>가져온 숫자는 <b>주간 통계·추이·훈련계획에는 들어가지 않아요</b> (직접 확인한 값만 분석에 쓰는 원칙).</>}
-      </div>
+          : "가져온 숫자를 다시 입력해서 분석에 넣을 필요는 없어요. 저장한 거리·시간은 오라클의 가져온 기록에서 먼저 볼 수 있어요."}</p>
+      </InfoDisclosure>
       <button type="button" style={primaryBtn} disabled={busy || chosenCount === 0 || missingIntent} onClick={onSave}>
         {chosenCount === 0 ? "저장할 활동을 골라 주세요" : missingIntent ? "저장 방식을 골라 주세요"
           : saveCount === 0 ? `고른 ${excludedCount}건 가져오기에서 제외`
@@ -241,12 +250,13 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
   )
 }
 
-export function SavedStage({ outcome, onOpenLog, onOpenAnalysis, onRestart, onRetry, busy = false }: {
+export function SavedStage({ outcome, onOpenLog, onOpenAnalysis, onOpenSummary, onRestart, onRetry, busy = false }: {
   readonly busy?: boolean
   readonly onRetry?: () => void
   readonly outcome: ImportSaveResult
   readonly onOpenLog?: () => void
   readonly onOpenAnalysis?: () => void
+  readonly onOpenSummary?: (() => void) | undefined
   readonly onRestart: () => void
 }) {
   if (outcome.account !== undefined) return <div data-testid="import-saved" role="status">
@@ -256,6 +266,7 @@ export function SavedStage({ outcome, onOpenLog, onOpenAnalysis, onRestart, onRe
     <p>원본 파일은 그대로 보관해 주세요. 연결 대기는 계정 저장 완료가 아니에요.</p>
     {outcome.stopReason && <p role="alert">나머지 저장을 멈췄어요. 이미 저장된 기록은 그대로 있어요. 연결·로그인·앱 업데이트 상태를 확인한 뒤 다시 시도해 주세요.</p>}
     {onOpenAnalysis && (outcome.account ?? 0) > 0 && <button type="button" style={primaryBtn} disabled={busy} onClick={onOpenAnalysis}>가져온 기록 분석하기</button>}
+    {onOpenSummary && (outcome.account ?? 0) > 0 && <button type="button" style={secondaryBtn} disabled={busy} onClick={onOpenSummary}>가져온 기록 보기</button>}
     {onRetry && <button type="button" style={primaryBtn} disabled={busy} onClick={onRetry}>저장 상태 다시 확인</button>}
     {onOpenLog && <button type="button" style={secondaryBtn} disabled={busy} onClick={onOpenLog}>일지에서 확인하기</button>}
     <button type="button" style={secondaryBtn} disabled={busy} onClick={onRestart}>파일 더 가져오기</button>
@@ -294,7 +305,8 @@ export function SavedStage({ outcome, onOpenLog, onOpenAnalysis, onRestart, onRe
           {outcome.saved > 0 && " 새 일지로 가져온 활동은 현재 읽기 전용이에요."}
         </div>}
       </div>
-      {onOpenLog && <button type="button" style={primaryBtn} onClick={onOpenLog}>일지에서 확인하기</button>}
+      {onOpenSummary && completed > 0 && <button type="button" style={primaryBtn} onClick={onOpenSummary}>가져온 기록 보기</button>}
+      {onOpenLog && <button type="button" style={onOpenSummary && completed > 0 ? secondaryBtn : primaryBtn} onClick={onOpenLog}>일지에서 확인하기</button>}
       <button type="button" style={secondaryBtn} onClick={onRestart}>파일 더 가져오기</button>
     </div>
   )

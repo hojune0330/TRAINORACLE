@@ -23,6 +23,7 @@ import type { LogEntryType } from "./log-entry/shared"
 import type { OracleTopicId } from "../domain/oracle-exploration"
 import { onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
 import { accountJournalProjectionStatus } from "../domain/account/account-journal-projection"
+import { RecordStartActions } from "../components/RecordStartActions"
 import { createPlannedSessionLogDraft, type PlannedSessionLink } from "../domain/planned-session-link"
 
 export type HomeProps = {
@@ -33,6 +34,8 @@ export type HomeProps = {
   readonly onOpenPlan?: () => void
   readonly onOpenNextTraining?: (link: PlannedSessionLink) => void
   readonly onOpenTrends?: () => void
+  readonly onOpenImport?: () => void
+  readonly onOpenRecords?: () => void
   readonly onOpenOracle?: (topic: OracleTopicId) => void
   readonly oraclePreview?: ReactNode
   readonly onOpenMore?: () => void
@@ -44,7 +47,7 @@ export type HomeProps = {
 
 export function Home({
   onWriteLog, onOpenDay, onOpenArchive, onOpenGuide, onOpenPlan,
-  onOpenNextTraining, onOpenTrends, onOpenOracle, oraclePreview, onOpenMore, onOpenAccount, onOpenContent, onOpenRewards,
+  onOpenNextTraining, onOpenTrends, onOpenImport, onOpenRecords, onOpenOracle, oraclePreview, onOpenMore, onOpenAccount, onOpenContent, onOpenRewards,
 }: HomeProps) {
   const [revision, setRevision] = React.useState(0)
   const athleteRecords = useAthleteRecordsSnapshot()
@@ -138,6 +141,7 @@ export function Home({
         model={model}
         safetyNotice={safetyNotice}
         oraclePreview={oraclePreview}
+        recordStart={entries.length === 0 ? <RecordStartActions onImport={onOpenImport} onRecords={onOpenRecords} /> : undefined}
         onWriteLog={onWriteLog}
         onOpenArchive={onOpenArchive}
         onOpenToday={onOpenDay === undefined ? onOpenArchive : () => onOpenDay(today)}

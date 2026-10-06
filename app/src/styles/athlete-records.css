@@ -64,6 +64,14 @@
   gap: 10px;
 }
 
+.athlete-record-preview, .athlete-record-help { grid-column: 1 / -1; }
+.athlete-record-preview { display: grid; gap: var(--space-1); padding-block: var(--space-2); font-family: var(--mono); font-size: var(--fs-h3); }
+.athlete-record-preview small { font-family: var(--sans); color: var(--ink-3); font-size: var(--fs-caption); }
+.athlete-record-date { display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: var(--space-2); }
+.athlete-record-date button { display: grid; place-items: center; min-height: 44px; border: 1px solid var(--line); border-radius: var(--r-md); color: var(--ink); background: var(--surface); cursor: pointer; }
+.athlete-record-next { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); width: 100%; min-height: 48px; margin-block: var(--space-3); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); color: var(--brand); padding: var(--space-3); font: inherit; cursor: pointer; }
+.athlete-record-next svg { flex-shrink: 0; }
+
 .athlete-record-provenance,
 .athlete-record-error {
   grid-column: 1 / -1;

@@ -20,25 +20,45 @@ const WEATHER = [
   { value: "HOT", label: "더움" },
 ] as const
 
-export function DailyContextTags({ date }: { readonly date: string }) {
-  const [context, setContext] = React.useState<DailyContext>(() => loadDailyContext(date) ?? {
-    date,
-    mood: null,
-    body: null,
-    weather: null,
-  })
+export function DailyContextTags({ date, bodyOnly = false }: { readonly date: string; readonly bodyOnly?: boolean }) {
+  const empty = (): DailyContext => ({ date, mood: null, body: null, weather: null })
+  const read = () => { try { return loadDailyContext(date) ?? empty() } catch { return empty() } }
+  const [context, setContext] = React.useState<DailyContext>(read)
+  const [saveMessage, setSaveMessage] = React.useState("")
+  const [saveFailed, setSaveFailed] = React.useState(false)
+  React.useEffect(() => {
+    setContext(read()); setSaveMessage(""); setSaveFailed(false)
+    const refresh = () => setContext(read())
+    window.addEventListener("storage", refresh)
+    window.addEventListener("trainoracle:daily-context-changed", refresh)
+    return () => {
+      window.removeEventListener("storage", refresh)
+      window.removeEventListener("trainoracle:daily-context-changed", refresh)
+    }
+  }, [date])
 
   const update = (patch: Partial<Pick<DailyContext, "mood" | "body" | "weather">>) => {
-    const next = { ...context, ...patch }
-    if (saveDailyContext(next)) setContext(next)
+    // Another view may have saved mood or weather since this view was opened.
+    let current: DailyContext
+    try { current = loadDailyContext(date) ?? empty() }
+    catch { setSaveFailed(true); setSaveMessage("저장 공간을 열지 못했어요. 선택은 바꾸지 않았어요."); return }
+    const next = { ...current, ...patch }
+    if (saveDailyContext(next)) {
+      setContext(next); setSaveFailed(false); setSaveMessage("이 기기에 오늘의 상태를 저장했어요.")
+      window.dispatchEvent(new Event("trainoracle:daily-context-changed"))
+    } else {
+      setSaveFailed(true); setSaveMessage("저장하지 못했어요. 선택을 다시 눌러 주세요.")
+    }
   }
 
   return (
-    <section className="daily-context" aria-label="오늘의 기분 몸 상태 날씨">
-      <TagGroup title="기분" values={MOODS} selected={context.mood} onSelect={(mood) => update({ mood })} />
+    <section className="daily-context" aria-label={bodyOnly ? "오늘의 몸 상태" : "오늘의 기분 몸 상태 날씨"}>
+      {!bodyOnly && <TagGroup title="기분" values={MOODS} selected={context.mood} onSelect={(mood) => update({ mood })} />}
       <TagGroup title="몸 상태" values={BODIES} selected={context.body} onSelect={(body) => update({ body })} />
-      <TagGroup title="날씨" values={WEATHER} selected={context.weather} onSelect={(weather) => update({ weather })} />
-      <p>날씨는 직접 골라요. 위치정보를 사용하지 않아요.</p>
+      {bodyOnly && <button type="button" onClick={() => update({ body: null })} aria-pressed={context.body === null}>모르겠어요 · 비워 두기</button>}
+      {!bodyOnly && <TagGroup title="날씨" values={WEATHER} selected={context.weather} onSelect={(weather) => update({ weather })} />}
+      {saveMessage && <p role={saveFailed ? "alert" : "status"}>{saveMessage}</p>}
+      {!bodyOnly && <p>날씨는 직접 골라요. 위치정보를 사용하지 않아요.</p>}
     </section>
   )
 }

@@ -2,9 +2,17 @@ import React from "react"
 import { ArrowLeft, ArrowRight, Calculator } from "lucide-react"
 import { useAppOverlayNavigation } from "../components/AppOverlayNavigation"
 import { projectStructuredJournalObservations } from "../domain/journal-observation"
-import { analysisExclusionSummary, loadEntries, todayISO } from "../domain/journal-store"
+import { analysisExclusionSummary, loadEntries } from "../domain/journal-store"
 import { MonthlyTrendSection } from "./trends/MonthlyTrendSection"
-import { FatigueExperimentPanel } from "./trends/FatigueExperimentPanel"
+import { RecoveryRecordPanel } from "./trends/RecoveryRecordPanel"
+import { RecordStartActions } from "../components/RecordStartActions"
+import { useAthleteRecordsSnapshot } from "../hooks/useAthleteRecordsSnapshot"
+import { paceClock, paceEventLabel } from "../domain/pace-tools"
+import { athleteRecordAuthorityCopy } from "../domain/athlete-record-display"
+import { LOCAL_JOURNALS_CHANGED } from "../domain/journal-change-events"
+import { useLocalToday } from "../hooks/useLocalToday"
+import { ImportedRecordPreview } from "./trends/ImportedRecordPreview"
+import { derivePersonalOracle } from "../domain/personal-oracle"
 import { productFeatures } from "../domain/product-features"
 import { GuidedEmptyState } from "../components/GuidedEmptyState"
 import { TermHelp } from "../components/TermHelp"
@@ -38,9 +46,12 @@ const ORACLE_SECTIONS = [
 ] as const
 export type OracleHubSection = (typeof ORACLE_SECTIONS)[number]["id"]
 
-export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRecordReading, onOpenRunningProfile, onOpenOracleLibrary, onOpenTrainingContent, onOpenCoachingDay, oracleV2Enabled = false, initialContext, initialOracleSection, onOracleSectionChange, onContextChange }: {
+export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWriteRecovery, onOpenPlan, onOpenOracle, onOpenRecordReading, onOpenRunningProfile, onOpenOracleLibrary, onOpenTrainingContent, onOpenCoachingDay, oracleV2Enabled = false, initialContext, initialOracleSection, onOracleSectionChange, onContextChange }: {
   readonly onBack?: (() => void) | undefined
   readonly onWriteLog?: (() => void) | undefined
+  readonly onOpenImport?: (() => void) | undefined
+  readonly onOpenRecords?: (() => void) | undefined
+  readonly onWriteRecovery?: (() => void) | undefined
   readonly onOpenPlan?: (() => void) | undefined
   readonly onOpenOracle?: ((topic: OracleTopicId) => void) | undefined
   readonly onOpenRecordReading?: (() => void) | undefined
@@ -55,6 +66,9 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
   readonly onContextChange?: ((context: AnalysisNavigation) => void) | undefined
 }) {
   const navigation = useAppOverlayNavigation()
+  const raceRecords = useAthleteRecordsSnapshot()
+  const savedRace = raceRecords.records.filter(record => record.purpose !== "RACE_GOAL")
+    .sort((a, b) => b.savedAt.localeCompare(a.savedAt))[0]
   const [section, setSection] = React.useState<OracleHubSection>(initialOracleSection ?? "training")
   const [detail, setDetail] = React.useState<AnalysisSection>(initialContext?.section ?? "summary")
   const [detailMenuOpen, setDetailMenuOpen] = React.useState(false)
@@ -70,7 +84,13 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
   React.useEffect(() => {
     const refresh = () => setEntryRevision(value => value + 1)
     window.addEventListener("trainoracle:account-journals-changed", refresh)
-    return () => window.removeEventListener("trainoracle:account-journals-changed", refresh)
+    window.addEventListener(LOCAL_JOURNALS_CHANGED, refresh)
+    window.addEventListener("storage", refresh)
+    return () => {
+      window.removeEventListener("trainoracle:account-journals-changed", refresh)
+      window.removeEventListener(LOCAL_JOURNALS_CHANGED, refresh)
+      window.removeEventListener("storage", refresh)
+    }
   }, [])
   const entries = React.useMemo(() => loadEntries(), [entryRevision])
   const accountEntries = React.useMemo(() => readCurrentConfirmedAccountJournalProjection(), [entryRevision])
@@ -80,7 +100,7 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
       && !currentIds.has(entry.id)).length
   }, [accountEntries])
   const observations = React.useMemo(() => projectStructuredJournalObservations(entries), [entries])
-  const today = todayISO()
+  const today = useLocalToday()
   const planState = loadPlanBetaState()
   const planFrame = planState?.activePlan.frame
   const planVisibleLength = planFrame === undefined
@@ -90,6 +110,7 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
       : planFrame.lengthDays
   const planWindow = activePlanDateWindow(planState?.intake.startDate, planVisibleLength)
   const isEmpty = observations.length === 0
+  const hasSummary = derivePersonalOracle({ observations, today, planState }).maturity !== "EMPTY"
   /**
    * 값을 적었는데도 추이에 못 들어간 일지 개수 (Q1).
    * 화면이 침묵하면 사용자는 자기가 적은 값이 왜 그래프에 없는지 알 수 없다.
@@ -114,6 +135,17 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
               onClick={() => { setSection(item.id); onOracleSectionChange?.(item.id) }}>{item.label}</button>
           ))}
         </div>
+        {section === "training" && detail === "summary" && <ImportedRecordPreview entries={entries} today={today} onOpenDay={onOpenCoachingDay} />}
+        {section === "training" && detail === "summary" && !hasSummary && <div className="trends-hub__explore">
+          {raceRecords.message && <p role="status">{raceRecords.message}</p>}
+          {savedRace && <section className="trends-record-reading" aria-label="최근 저장한 경기 기록">
+            <div><p>최근 저장한 경기 기록</p><h2>{paceEventLabel(savedRace.eventDistanceM)} · {paceClock(savedRace.performanceSeconds)}</h2><p>{savedRace.achievedOn ?? "달성일 미입력"} · {athleteRecordAuthorityCopy(savedRace)}</p></div>
+            {navigation?.openPaceCalculator && <button type="button" onClick={() => navigation.openPaceCalculator?.({ record: savedRace })}>이 기록으로 페이스 보기<ArrowRight size={18} aria-hidden="true" /></button>}
+          </section>}
+          {entries.length > 0 || savedRace
+            ? (onOpenImport || onOpenRecords) && <InfoDisclosure purpose="actions" title="운동 파일·최고기록 추가"><RecordStartActions onImport={onOpenImport} onRecords={onOpenRecords} /></InfoDisclosure>
+            : <RecordStartActions onImport={onOpenImport} onRecords={onOpenRecords} />}
+        </div>}
         {section === "training" && <details ref={detailMenu} className="trends-hub__detail-menu" open={detailMenuOpen}
           onToggle={event => setDetailMenuOpen(event.currentTarget.open)}>
           <summary><span>{detail === "summary" ? "훈련량·구성·변화 보기" : `${ANALYSIS_SECTIONS.find(item => item.id === detail)?.label} · 다른 항목 보기`}</span><small>거리 · 훈련 강도 · 월별 변화 · 파일 기록</small></summary>
@@ -178,7 +210,7 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
             {onOpenTrainingContent && <button type="button" onClick={onOpenTrainingContent}>훈련법 읽기<ArrowRight size={18} aria-hidden="true" /></button>}
           </>}
         </section>}
-        {section === "training" && detail === "summary" && isEmpty && (
+        {section === "training" && detail === "summary" && !hasSummary && (
           <>
             <div style={{ padding: "0 20px" }}>
               <div className="trends-record-reading__journal">
@@ -200,7 +232,7 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
             </div>
           </>
         )}
-        {section === "training" && detail === "summary" && !isEmpty && (
+        {section === "training" && detail === "summary" && hasSummary && (
           <>
             <PersonalOraclePanel observations={observations} today={today} planState={planState} />
             {onOpenOracle && <div className="trends-hub__explore">
@@ -208,7 +240,7 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
             </div>}
           </>
         )}
-        {section === "training" && detail === "summary" && !isEmpty && <div className="trends-hub__coaching">
+        {section === "training" && detail === "summary" && hasSummary && <div className="trends-hub__coaching">
           <HomeCoachingSummary revision={entryRevision} onOpenDay={onOpenCoachingDay} onOpenPlan={onOpenPlan} />
         </div>}
         {section === "training" && detail === "distance" && <CumulativeDistancePanel observations={observations} today={today} planWindow={planWindow} mode="full" />}
@@ -218,13 +250,14 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
         {section === "training" && detail !== "files" && <div style={{ padding: "0 20px" }}>
           <AnalysisExclusionNotice summary={exclusion} />
         </div>}
-        {section === "training" && detail === "summary" && !isEmpty && <div style={{ padding: "0 20px" }}>
+        {section === "training" && detail === "summary" && hasSummary && <div style={{ padding: "0 20px" }}>
           <InfoDisclosure title="분석 기준">
             <p>확인된 기록만 분석해요. 개인 메모는 읽지 않아요.</p>
             <p>기록을 정리한 결과이며, 계획·안전 판단은 자동으로 바꾸지 않아요.</p>
           </InfoDisclosure>
         </div>}
-        {section === "training" && detail === "summary" && productFeatures().experimentalFatigue && <FatigueExperimentPanel />}
+        {section === "training" && detail === "summary" && <RecoveryRecordPanel today={today} entries={entries} observations={observations}
+          onWriteRecovery={onWriteRecovery} onOpenDay={onOpenCoachingDay} experimentalFatigue={productFeatures().experimentalFatigue} />}
       </div>
     </div>
   )

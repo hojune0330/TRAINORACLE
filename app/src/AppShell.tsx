@@ -105,7 +105,7 @@ type AppOverlay =
   | { readonly kind: "record-reading"; readonly stage: ReadingStage }
   | { readonly kind: "term"; readonly term: TermId }
   | { readonly kind: "feedback" }
-  | { readonly kind: "athlete-records" }
+  | { readonly kind: "athlete-records"; readonly initialPurpose?: "PERSONAL_BEST" }
   | { readonly kind: "oracle"; readonly topic: OracleTopicId; readonly mode?: "example" | "personal"; readonly scrollTop?: number }
 
 type OverlayHistoryMarker = AppOverlay & {
@@ -145,7 +145,7 @@ function overlayHistoryMarker(state: unknown, owner: string): AppOverlay | null 
     ...(typeof value.scrollTop === "number" && Number.isFinite(value.scrollTop) && value.scrollTop >= 0 ? { scrollTop: value.scrollTop } : {}),
   }
   if (value.kind === "feedback") return { kind: "feedback" }
-  if (value.kind === "athlete-records") return { kind: "athlete-records" }
+  if (value.kind === "athlete-records") return { kind: "athlete-records", ...(value.initialPurpose === "PERSONAL_BEST" ? { initialPurpose: "PERSONAL_BEST" } : {}) }
   if (value.kind === "record-reading" && isReadingStage(value.stage)) return { kind: "record-reading", stage: value.stage }
   if (value.kind === "running-profile" && isRunningProfileStage(value.stage)) return { kind: "running-profile", stage: value.stage,
     ...(value.initialView === "library" ? { initialView: "library" as const } : {}) }
@@ -889,6 +889,8 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       : (
         <Home
           oraclePreview={homeOraclePreview}
+          onOpenImport={openImport}
+          onOpenRecords={() => openOverlay({ kind: "athlete-records", initialPurpose: "PERSONAL_BEST" })}
           onWriteLog={(entryType) => startRecording(entryType)}
           onOpenDay={(date, entryId) => runViewTransition("push", () => {
             setHomeDetailOrigin("home")
@@ -990,6 +992,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         onBack={closeImport}
         onOpenLog={() => goTab("journal")}
         onOpenAnalysis={() => goTab("trends", { section: "files" })}
+        onOpenSummary={() => goTab("trends", { section: "summary" })}
       />
     )
   } else if (v.tab === "log") {
@@ -1033,6 +1036,9 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         })}
         onBack={goHome}
         onWriteLog={() => goTab("log")}
+        onOpenImport={openImport}
+        onOpenRecords={() => openOverlay({ kind: "athlete-records", initialPurpose: "PERSONAL_BEST" })}
+        onWriteRecovery={() => startRecording("evening")}
         onOpenPlan={() => goTab("plan")}
         onOpenOracle={openOracle}
         onOpenRecordReading={() => openOverlay({ kind: "record-reading", stage: "own-event" })}
@@ -1099,7 +1105,8 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           </div>
         )}
         <ErrorBoundary key={`overlay-${overlay?.kind ?? "none"}-${accountScopeRevision}`} region onExit={closeOverlay} recoveryTab={tabForChrome(v)}>
-        {overlay?.kind === "athlete-records" && <DeferredMobileScreens.AthleteRecords backLabel="더보기로" onBack={closeOverlay} />}
+        {overlay?.kind === "athlete-records" && <DeferredMobileScreens.AthleteRecords initialPurpose={overlay.initialPurpose}
+          backLabel={utilityView === "more" ? "더보기로" : v.tab === "trends" ? "오라클로" : "홈으로"} onBack={closeOverlay} />}
         {overlay?.kind === "pace" && paceRequestRef.current?.token === overlay.token && (
           <DeferredMobileScreens.PaceCalculator key={overlay.token} stage={overlay.stage}
             request={{ ...paceRequestRef.current.request, ...(paceRequestRef.current.request.onSelectRecord ? {

@@ -1,4 +1,5 @@
 import React from "react"
+import { InfoDisclosure } from "../../components/InfoDisclosure"
 import { experimentalFatigueComposite, fatigueEvidence } from "../../domain/fatigue-vector"
 import type { FatigueVector } from "../../domain/fatigue-vector"
 import {
@@ -19,9 +20,13 @@ export function FatigueExperimentPanel({ now = () => new Date().toISOString() }:
   readonly now?: () => string
 } = {}) {
   const [state, setState] = React.useState(loadFatigueExperiment)
-  const [draftVector, setDraftVector] = React.useState(state.vector)
+  const [draftVector, setDraftVector] = React.useState<Record<keyof FatigueVector, number | null>>(() =>
+    state.evidence ? { ...state.vector } : { neural: null, metabolic: null, muscular: null, impact: null, subjective: null })
   const [saveError, setSaveError] = React.useState(false)
-  const isDirty = FIELDS.some((field) => draftVector[field.key] !== state.vector[field.key])
+  const isDirty = state.evidence
+    ? FIELDS.some(field => draftVector[field.key] !== state.vector[field.key])
+    : FIELDS.some(field => draftVector[field.key] !== null)
+  const allAnswered = FIELDS.every(field => draftVector[field.key] !== null)
   const composite = isDirty
     ? null
     : experimentalFatigueComposite(state.vector, state.evidence, state.optedIn)
@@ -35,15 +40,16 @@ export function FatigueExperimentPanel({ now = () => new Date().toISOString() }:
     setSaveError(true)
   }
 
-  const updateVector = (key: keyof FatigueVector, value: number) => {
+  const updateVector = (key: keyof FatigueVector, value: number | null) => {
     setSaveError(false)
     setDraftVector((current) => ({ ...current, [key]: value }))
   }
 
   const recordVector = () => {
+    if (!allAnswered) return
     const next = {
       ...state,
-      vector: draftVector,
+      vector: Object.fromEntries(FIELDS.map(field => [field.key, draftVector[field.key]])) as FatigueVector,
       evidence: fatigueEvidence({
         observedAt: now(),
         source: "SELF_REPORTED_SLIDERS",
@@ -56,7 +62,7 @@ export function FatigueExperimentPanel({ now = () => new Date().toISOString() }:
 
   return (
     <section className="fatigue-experiment" aria-labelledby="fatigue-experiment-title">
-      <h2 id="fatigue-experiment-title">피로도 나눠 보기</h2>
+      <h3 id="fatigue-experiment-title">피로도 항목별 기록</h3>
       <p className="fatigue-experiment__intro">
         다섯 항목 모두 지금 느끼는 정도를 직접 고르는 값이에요. 센서 측정값이나 진단이 아니에요.
       </p>
@@ -67,21 +73,15 @@ export function FatigueExperimentPanel({ now = () => new Date().toISOString() }:
             <span id={`fatigue-${field.key}-description`} className="fatigue-experiment__field-description">
               {field.description}
             </span>
-            <span className="fatigue-experiment__slider-row">
-              <span aria-hidden="true">0</span>
-              <input
-                type="range"
-                min="0"
-                max="10"
-                step="1"
+              <select
                 aria-label={field.label}
                 aria-describedby={`fatigue-${field.key}-description`}
-                value={draftVector[field.key]}
-                onChange={(event) => updateVector(field.key, Number(event.target.value))}
-              />
-              <output>{draftVector[field.key]}</output>
-              <span aria-hidden="true">10</span>
-            </span>
+                value={draftVector[field.key] ?? ""}
+                onChange={(event) => updateVector(field.key, event.target.value === "" ? null : Number(event.target.value))}
+              >
+                <option value="">아직 고르지 않음</option>
+                {Array.from({ length: 11 }, (_, value) => <option key={value} value={value}>{value} / 10</option>)}
+              </select>
           </label>
         ))}
       </div>
@@ -93,6 +93,7 @@ export function FatigueExperimentPanel({ now = () => new Date().toISOString() }:
       <button
         type="button"
         onClick={recordVector}
+        disabled={!allAnswered}
         className="fatigue-experiment__save"
       >
         지금 값 기록하기
@@ -103,20 +104,23 @@ export function FatigueExperimentPanel({ now = () => new Date().toISOString() }:
         </p>
       )}
       <EvidenceReceipt evidence={state.evidence} />
-      <p className="fatigue-experiment__composite-note">
-        통합 참고값은 다섯 값을 단순히 평균해 보여줘요. 정확한 측정값이나 다음 훈련 지시가 아니에요.
-      </p>
+      {!allAnswered && <p className="fatigue-experiment__empty-evidence">이 실험 기록은 다섯 값을 모두 고른 뒤 저장해요. 모르면 입력하지 않아도 돼요.</p>}
+      <InfoDisclosure title="이 항목과 평균은 어떤 뜻인가요?">
+        <p>기존 항목 이름을 그대로 보존했어요. 실제 신경계·대사계 측정이나 검증된 설문 점수가 아니라 직접 고른 느낌이에요.</p>
+        <p className="fatigue-experiment__composite-note">입력값의 평균은 다섯 값을 단순히 평균해 보여줘요. 정확한 측정값이나 다음 훈련 지시가 아니에요.</p>
+        <p>이 실험은 이 기기의 마지막 기록 한 건을 보관해요. 새로 저장하면 이전 실험 값 대신 표시해요.</p>
+      </InfoDisclosure>
       <label className="fatigue-experiment__opt-in">
         <input
           type="checkbox"
           checked={state.optedIn}
           onChange={(event) => update({ ...state, optedIn: event.target.checked })}
         />
-        통합 참고값 보기 · 실험 기능
+        입력값의 평균 보기 · 실험 기능
       </label>
       {composite !== null && (
         <div role="status" style={{ padding: 12, border: "1px solid var(--line)", fontFamily: "var(--sans)", fontSize: 13, lineHeight: 1.6 }}>
-          <strong>통합 참고값 {composite.score}/10</strong>
+          <strong>입력값의 평균 {composite.score}/10</strong>
           <br />{composite.uncertainty}
         </div>
       )}

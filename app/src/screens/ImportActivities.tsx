@@ -19,10 +19,11 @@ type Stage =
   | { readonly step: "review"; readonly drafts: readonly ImportDraft[]; readonly result: ActivityParseResult }
   | { readonly step: "saved"; readonly outcome: ImportSaveResult }
 
-export function ImportActivities({ onBack, onOpenLog, onOpenAnalysis }: {
+export function ImportActivities({ onBack, onOpenLog, onOpenAnalysis, onOpenSummary }: {
   readonly onBack?: () => void
   readonly onOpenLog?: () => void
   readonly onOpenAnalysis?: () => void
+  readonly onOpenSummary?: () => void
 }) {
   const [stage, setStage] = React.useState<Stage>({ step: "pick" })
   const [failure, setFailure] = React.useState<ReadFailure>(null)
@@ -60,6 +61,9 @@ export function ImportActivities({ onBack, onOpenLog, onOpenAnalysis }: {
       setFailure("too-large")
       return
     }
+    if (/\.(zip|fit)$/i.test(file.name)) {
+      busyRef.current = false; setBusy(false); setFailure("unsupported-format"); return
+    }
 
     readControllerRef.current?.abort()
     const controller = new AbortController()
@@ -87,6 +91,7 @@ export function ImportActivities({ onBack, onOpenLog, onOpenAnalysis }: {
         setFailure(codes.includes("FILE_TOO_LARGE") ? "too-large"
           : codes.includes("ACTIVITY_LIMIT_EXCEEDED") ? "too-many-records"
             : codes.includes("POINT_LIMIT_EXCEEDED") || codes.includes("LAP_LIMIT_EXCEEDED") ? "too-many-segments"
+              : codes.includes("UNSUPPORTED_FORMAT") ? "unsupported-format"
               : result.skipped > 0 ? "empty" : "unreadable")
         setStage({ step: "pick" }); return
       }
@@ -185,7 +190,7 @@ export function ImportActivities({ onBack, onOpenLog, onOpenAnalysis }: {
         )}
         <div>
           <div style={{ ...mono, fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>
-            IMPORT · 기기 데이터 가져오기
+            워치·건강앱 운동 기록
           </div>
           <h1 style={{ fontFamily: "var(--sans)", fontSize: 20, fontWeight: 500, margin: "4px 0 0" }}>
             워치 기록 불러오기
@@ -246,6 +251,7 @@ export function ImportActivities({ onBack, onOpenLog, onOpenAnalysis }: {
             outcome={stage.outcome}
             onOpenLog={onOpenLog}
             onOpenAnalysis={fileAnalysisFormats().length > 0 ? onOpenAnalysis : undefined}
+            onOpenSummary={onOpenSummary}
             onRestart={() => { setStage({ step: "pick" }); setSelected(new Set()); setFailure(null) }}
           />
         )}

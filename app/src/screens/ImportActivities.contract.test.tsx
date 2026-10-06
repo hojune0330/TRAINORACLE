@@ -44,9 +44,28 @@ async function pickFile(user: ReturnType<typeof userEvent.setup>, file: File) {
   await user.upload(input, file)
 }
 
+it("opens the imported facts after a confirmed device save without claiming analysis or exposing a success action on failure", async () => {
+  const user = userEvent.setup()
+  const summary = vi.fn()
+  const view = render(<SavedStage outcome={{ total: 1, saved: 1, failed: 0 }} onOpenSummary={summary} onRestart={() => undefined} />)
+  await user.click(screen.getByRole("button", { name: "가져온 기록 보기" }))
+  expect(summary).toHaveBeenCalledOnce()
+  expect(screen.queryByRole("button", { name: "가져온 기록 분석하기" })).not.toBeInTheDocument()
+  view.rerender(<SavedStage outcome={{ total: 1, saved: 0, failed: 1 }} onOpenSummary={summary} onRestart={() => undefined} />)
+  expect(screen.queryByRole("button", { name: "가져온 기록 보기" })).not.toBeInTheDocument()
+})
+
 describe("ImportActivities — 고르기 단계", () => {
   beforeEach(() => {
     window.localStorage.clear()
+  })
+
+  it("explains unsupported native health XML instead of pretending it was imported", async () => {
+    const user = userEvent.setup()
+    render(<ImportActivities />)
+    await pickFile(user, upload('<HealthData locale="ko_KR"><Record type="steps" value="100" /></HealthData>', "export.xml"))
+    expect(await screen.findByTestId("import-failure")).toHaveTextContent("건강앱의 전체 ZIP·XML 백업")
+    expect(loadEntries()).toEqual([])
   })
 
   it("파일을 고르기 전에 기기 내 처리 안내를 보여준다", () => {
@@ -215,7 +234,10 @@ describe("ImportActivities — 확인 단계", () => {
     await pickFile(user, upload(tcxFile([tcxLap("2026-07-20T06:00:00Z", 10000, 3000)])))
 
     // Then
-    await waitFor(() => expect(screen.getByText(/기존 일지를 보완하면 RPE/u)).toBeVisible())
+    await waitFor(() => expect(screen.getByText(/새 일지는 읽기 전용/u)).toBeVisible())
+    expect(screen.getByText(/기존 일지를 보완하면 힘든 정도/u)).not.toBeVisible()
+    await user.click(screen.getByRole("button", { name: "저장 후 수정·분석은 어떻게 되나요?" }))
+    expect(screen.getByText(/기존 일지를 보완하면 힘든 정도/u)).toBeVisible()
     expect(screen.getByText(/새 일지로 가져온 활동은 현재 읽기 전용이에요/u)).toBeVisible()
     expect(screen.getByText(/주간 통계·추이·훈련계획에는 들어가지 않아요/u)).toBeVisible()
   })
