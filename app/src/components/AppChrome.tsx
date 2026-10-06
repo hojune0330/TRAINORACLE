@@ -146,8 +146,8 @@ export function SavedToast({
             {storageMessage ?? (needsReview ? LOCAL_SAVE_NOTICE : presentation.title)}
             {count > 0 ? ` · 총 ${count}건` : ""}
           </strong>
-          {needsReview && (
-            <button type="button" aria-label="검토 안내 닫기" title="닫기" onClick={onDismiss}>
+          {(needsReview || onDismiss !== undefined) && (
+            <button type="button" aria-label={needsReview ? "검토 안내 닫기" : "저장 안내 닫기"} title="닫기" onClick={onDismiss}>
               <X aria-hidden="true" size={19} />
             </button>
           )}

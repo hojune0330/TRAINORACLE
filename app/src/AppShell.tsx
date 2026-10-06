@@ -225,6 +225,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     // Native document snapshots block rapid follow-up taps on mobile.
     runDraftSafeNavigation(() => {
       pendingScreenMotionRef.current = motion
+      setSavedToast(current => current?.reviewMessage === undefined ? null : current)
       update()
     }, preserveMountedDrafts)
   }, [])

@@ -15,7 +15,7 @@ afterEach(() => {
 })
 
 const routes = [
-  { id: "level", title: "경기 기록 비교", question: "지난 경기 기록과 얼마나 달라졌을까?", next: "focus", action: "records" },
+  { id: "level", title: "내 경기 기록 비교", question: "지난 경기 기록과 얼마나 달라졌을까?", next: "focus", action: "records" },
   { id: "focus", title: "계획과 실제 강도", question: "계획보다 더 힘들게 느껴진 훈련은?", next: "priority", action: "journal" },
   { id: "compare", title: "월별 훈련 거리 비교", question: "최근 두 달, 한 번에 달린 거리는?", next: "change", action: "journal" },
   { id: "mix", title: "훈련 구성", question: "최근에는 어떤 훈련을 많이 했을까?", next: "compare", action: "trends" },

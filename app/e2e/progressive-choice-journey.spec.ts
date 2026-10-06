@@ -48,7 +48,7 @@ for (const persona of personas) {
       await click(page.getByText("훈련량 · 다른 항목 보기", { exact: true }))
       await click(page.getByRole("button", { name: "훈련 요약", exact: true }))
       await click(page.getByText("오라클 예시 보기", { exact: true }))
-      await expect(page.getByRole("button", { name: /^경기 기록 비교.*결과 보기/u })).toBeVisible()
+      await expect(page.getByRole("button", { name: /^내 경기 기록 비교.*결과 보기/u })).toBeVisible()
       await click(nav.getByRole("button", { name: "일지", exact: true }))
       await expect(page.getByRole("heading", { name: "지난 일지", exact: true })).toBeVisible()
       await click(nav.getByRole("button", { name: "홈", exact: true }))

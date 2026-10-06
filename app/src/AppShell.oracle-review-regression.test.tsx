@@ -40,6 +40,9 @@ it.each([undefined, "일지를 계정에 저장했어요."])("returns to result 
   await user.click(screen.getByRole("button",{name:"Add synthetic entry"}))
   await user.click(screen.getByRole("button",{name:"Complete synthetic save"}))
   await waitFor(() => expect(screen.getByRole("heading",{name:"compare result"})).toBeVisible())
+  expect(document.querySelector('[data-toast-priority="receipt"]')).not.toBeNull()
+  await user.click(screen.getByRole("button", { name: "기록하기" }))
+  expect(document.querySelector('[data-toast-priority="receipt"]')).toBeNull()
 })
 
 it("restores personal mode after next topic and browser back", async () => {
@@ -72,6 +75,8 @@ it("does not hide a real safety review behind the result", async () => {
   await user.click(screen.getByRole("button", { name: "Save with review" }))
   expect(screen.getByRole("alert")).toHaveTextContent("안전 검토 필요")
   expect(screen.queryByRole("heading", { name: "compare result" })).toBeNull()
+  await user.click(screen.getByRole("button", { name: "기록하기" }))
+  expect(screen.getByRole("alert")).toHaveTextContent("안전 검토 필요")
 })
 
 it("restores the originating topic on browser Back from input", async () => {

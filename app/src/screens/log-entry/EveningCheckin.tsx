@@ -128,6 +128,15 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
         <IndexCard date={compactDate(entryDate)} dow={`${dowOf(entryDate)} · ${nowClock()}`} />
       </div>
 
+      <FormSec lb="오늘의 한 줄">
+        <PurposeScopedMemoField
+          controller={note}
+          fieldId="evening-note"
+          label="오늘의 메모"
+          placeholder="메모만 남겨도 괜찮아요"
+        />
+      </FormSec>
+
       <FormSec lb={`수면 · ${sleep > 0 ? `${sleep}h` : "미기록 (움직여서 기록)"}`}>
         <div style={{ position: "relative", height: 44, display: "flex", alignItems: "center" }}>
           <div aria-hidden="true" style={{
@@ -216,14 +225,6 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
         </div>
       </FormSec>
 
-      <FormSec lb="오늘의 한 줄">
-        <PurposeScopedMemoField
-          controller={note}
-          fieldId="evening-note"
-          label="오늘의 메모"
-          placeholder="자유롭게..."
-        />
-      </FormSec>
       {accountEnabled && saveError && <p role="alert">{accountNotice ?? "계정 저장을 완료하지 못했어요. 입력은 그대로 남아 있어요. 연결과 로그인 상태를 확인한 뒤 다시 저장해 주세요."}</p>}
       <StickyBar onSave={persist} error={saveError && !accountEnabled} label={saving ? "저장 중" : isEditing ? "수정 저장" : undefined} />
       </fieldset>

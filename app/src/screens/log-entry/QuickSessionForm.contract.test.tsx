@@ -16,6 +16,34 @@ function finishPerformedSession(rpe = 6): void {
 }
 
 describe("quick session journal contract", () => {
+  it("accepts a note and two exercises first without saving or bypassing the activity and body check", () => {
+    render(<QuickSessionForm />)
+    const click = (name: string) => fireEvent.click(screen.getByRole("button", { name }))
+    const additions = screen.getByText("메모·운동 내용 먼저 쓰기").closest("details")!
+    additions.open = true
+    click("메모 먼저 쓰기")
+    fireEvent.click(screen.getByRole("radio", { name: "훈련 메모" }))
+    fireEvent.change(screen.getByLabelText("일지 내용"), { target: { value: "합성 메모 먼저" } })
+    click("운동 내용"); click("운동 추가"); click("반복 달리기"); click("내용 반영")
+    click("운동 추가"); click("근력 운동"); click("내용 반영")
+    click("운동 결과 선택으로")
+    expect(screen.getByRole("heading", { name: "오늘 운동은 어떻게 됐나요?" })).toBeVisible()
+    expect(screen.queryByRole("button", { name: "이대로 저장" })).toBeNull()
+    expect(loadEntries()).toEqual([])
+    click("운동을 마쳤어요"); click("오전")
+    click("모르겠어요 · RPE는 비워 둘게요")
+    expect(screen.getByRole("heading", { name: "운동 후 불편하거나 아픈 곳이 있나요?" })).toBeVisible()
+    expect(screen.queryByRole("button", { name: "이대로 저장" })).toBeNull()
+    click("없어요"); click("글 수정")
+    expect(screen.getByLabelText("일지 내용")).toHaveValue("합성 메모 먼저")
+    click("내용 반영"); click("이대로 저장")
+    expect(loadEntries()).toHaveLength(1)
+    expect(loadEntries()[0]).toMatchObject({ memo: "합성 메모 먼저", rpe: 0,
+      painCheckStatus: "NO_SIGNAL_REPORTED", exerciseLog: { components: [
+        { kind: "INTERVALS", rows: [] }, { kind: "STRENGTH", rows: [] },
+      ] }, fieldProvenance: { rpe: { provenance: "MISSING" } } })
+  })
+
   it("retains optional qualitative changes without inventing performed quantities", () => {
     const state = stateFixture()
     const draft = createPlannedSessionLogDraft(state, state.activePlan.sessions[0]!, new Date().toISOString())!

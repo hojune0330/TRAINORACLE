@@ -366,6 +366,7 @@ function QuickSessionFormEditor({
   const outcomeLabel = outcomes.find((candidate) => candidate.value === outcome)?.ink
   const slotLabel = ACTIVITY_SLOTS.find((candidate) => candidate.value === slot)?.label
   const rpeDetail = RPE_OPTIONS.find((candidate) => candidate.value === rpe)?.detail
+  const returnToRecord = () => setStep(outcome === null ? "activity" : "review")
 
   const recordSummary = (
       <section className={`quick-log__paper${step === "review" ? " quick-log__paper--review" : ""}`} aria-label="지금까지 기록한 내용">
@@ -390,7 +391,8 @@ function QuickSessionFormEditor({
       <fieldset disabled={saving} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
       <TopBar onBack={step === "activity" || step === "saved" ? draft.back(onBack) : () => {
         setSaveError(null)
-        setStep(step === "memo" || step === "exercise" ? "review" : step === "review" && performed(outcome) ? "effort" : "activity")
+        if (step === "memo" || step === "exercise") returnToRecord()
+        else setStep(step === "review" && performed(outcome) ? "effort" : "activity")
       }}>빠르게 기록</TopBar>
       <FormFinalizationRecovery recovery={finalization} onBack={draft.back(onBack)} />
       {step === "saved" || step === "review" ? recordSummary : outcome !== null && (
@@ -417,6 +419,12 @@ function QuickSessionFormEditor({
             <div className="quick-log__choices">
               {outcomes.map((item) => <button key={item.value} type="button" aria-pressed={outcome === item.value} onClick={() => selectOutcome(item.value)}><span>{item.label}</span><ChevronRight aria-hidden="true" /></button>)}
             </div>
+            <InfoDisclosure purpose="actions" title="메모·운동 내용 먼저 쓰기">
+              <div className="quick-log__choices">
+                <button type="button" onClick={() => setStep("memo")}>메모 먼저 쓰기<FilePenLine aria-hidden="true" /></button>
+                <button type="button" onClick={() => setStep("exercise")}>달리기·근력 등 운동 추가<ChevronRight aria-hidden="true" /></button>
+              </div>
+            </InfoDisclosure>
             {performed(outcome) && (
               <div ref={slotRef} className="quick-log__slot active-content-scroll-target" aria-labelledby="quick-slot-title">
                 <span id="quick-slot-title" ref={slotHeadingRef} tabIndex={-1}>언제 했나요?</span>
@@ -497,12 +505,12 @@ function QuickSessionFormEditor({
           <ExerciseLogEditor value={exerciseLog} onChange={setExerciseLog} draft={exerciseEditor} onDraftChange={setExerciseEditor}
             recent={loadEntries().filter(entry => entry.id !== entryId).flatMap(entry => entry.kind === "post-session" ? entry.exerciseLog?.components ?? [] : []).slice(0, 6)} />
           {saveError && <p role="alert">{saveError}</p>}
-          <button type="button" className="quick-log__primary" onClick={() => { setSaveError(null); setStep("review") }}>기록 요약으로</button>
+          <button type="button" className="quick-log__primary" onClick={() => { setSaveError(null); returnToRecord() }}>{outcome === null ? "운동 결과 선택으로" : "기록 요약으로"}</button>
         </section>}
         {step === "memo" && <section aria-labelledby="quick-memo-title">
           <h1 id="quick-memo-title" ref={stageHeadingRef} tabIndex={-1}>오늘 남길 말</h1>
           <PurposeScopedMemoField controller={inheritedMemo} fieldId="quick-memo" label="일지 내용" rows={4} />
-          <button type="button" className="quick-log__primary" onClick={() => { setSaveError(null); setStep("review") }}>내용 반영</button>
+          <button type="button" className="quick-log__primary" onClick={() => { setSaveError(null); returnToRecord() }}>내용 반영</button>
         </section>}
         {step === "saved" && savedEntry !== null && (
           <section className="quick-log__complete" aria-labelledby="quick-saved-title">

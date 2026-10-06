@@ -24,7 +24,7 @@ export interface OracleTopic {
 const TOPICS_BY_ID: Record<OracleTopicId, OracleTopic> = {
   level: {
     id: "level",
-    title: "경기 기록 비교",
+    title: "내 경기 기록 비교",
     question: "지난 경기 기록과 얼마나 달라졌을까?",
     teaser: "같은 종목의 기록을 나란히",
     example: {

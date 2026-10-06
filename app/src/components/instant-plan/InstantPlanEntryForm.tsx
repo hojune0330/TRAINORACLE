@@ -218,7 +218,7 @@ export function InstantPlanEntryForm({
 
   return (
     <form className="instant-plan" aria-label="계획 시작 정보" noValidate onSubmit={submit}>
-      <p className="instant-plan__entry-context">계획 준비 · 기록 입력</p>
+      <p className="instant-plan__entry-context">계획 준비 · {step === "event" ? "종목 선택" : step === "basis" ? "기록 선택" : "기록 입력"}</p>
       {sourceLabel && <p className="instant-plan__hint">선택한 프로그램: {sourceLabel}</p>}
       {step === "event" && (
         <section className="instant-plan__step" aria-labelledby={`${id}-event-heading`}>

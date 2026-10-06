@@ -1,0 +1,48 @@
+import { expect, test } from "@playwright/test"
+
+for (const width of [320, 375]) {
+  test.describe(`write first ${width}px`, () => {
+    test.use({ viewport: { width, height: 740 }, reducedMotion: "reduce" })
+    test("keeps an early note and two exercise types through safety checks and explicit save", async ({ page }, info) => {
+      const errors: string[] = []
+      page.on("pageerror", error => errors.push(error.message))
+      await page.route("**/*", route => new URL(route.request().url()).hostname === "127.0.0.1" ? route.continue() : route.abort())
+      await page.goto("/?app=1&uitest=1")
+      const click = (name: string) => page.getByRole("button", { name, exact: true }).click()
+      await click("오늘 기록 남기기")
+      await page.getByText("메모·운동 내용 먼저 쓰기", { exact: true }).click()
+      await click("메모 먼저 쓰기")
+      await page.getByRole("radio", { name: "훈련 메모", exact: true }).check()
+      await page.getByLabel("일지 내용", { exact: true }).fill("SYNTHETIC_NOTE_FIRST")
+      await click("운동 내용")
+      await click("운동 추가"); await click("반복 달리기"); await click("내용 반영")
+      await click("운동 추가"); await click("근력 운동"); await click("내용 반영")
+      await click("운동 결과 선택으로")
+      await expect(page.getByRole("heading", { name: "오늘 운동은 어떻게 됐나요?", exact: true })).toBeVisible()
+      await expect(page.getByRole("button", { name: "이대로 저장", exact: true })).toHaveCount(0)
+      await click("운동을 마쳤어요"); await click("오전")
+      await click("모르겠어요 · RPE는 비워 둘게요")
+      await expect(page.getByRole("heading", { name: "운동 후 불편하거나 아픈 곳이 있나요?", exact: true })).toBeVisible()
+      await click("없어요")
+      await click("글 수정")
+      await expect(page.getByLabel("일지 내용", { exact: true })).toHaveValue("SYNTHETIC_NOTE_FIRST")
+      await click("내용 반영")
+      await page.screenshot({ path: info.outputPath("two-exercises-before-save.png"), fullPage: true })
+      await click("이대로 저장")
+      await expect(page.getByRole("heading", { name: "오늘 기록을 남겼어요.", exact: true })).toBeVisible()
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
+
+      await click("완료")
+      await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기", exact: true }).click()
+      await expect(page.locator('[data-toast-priority="receipt"]')).toHaveCount(0)
+      await page.getByTestId("entry-choice-evening").click()
+      await expect(page.getByRole("textbox", { name: "오늘의 메모", exact: true })).toBeInViewport()
+      await page.screenshot({ path: info.outputPath("note-first.png") })
+      await page.getByRole("radio", { name: "훈련 메모", exact: true }).check()
+      await page.getByRole("textbox", { name: "오늘의 메모", exact: true }).fill("SYNTHETIC_NOTE_ONLY")
+      await page.getByRole("button", { name: /^저장/ }).click()
+      await expect(page.getByRole("textbox", { name: "오늘의 메모", exact: true })).toHaveCount(0)
+      expect(errors).toEqual([])
+    })
+  })
+}

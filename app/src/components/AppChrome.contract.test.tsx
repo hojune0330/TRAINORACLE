@@ -37,6 +37,12 @@ describe("AppChrome tab labels", () => {
 })
 
 describe("saved receipt date wording", () => {
+  it("lets the user dismiss an ordinary receipt immediately", () => {
+    const dismiss = vi.fn()
+    render(<SavedToast count={1} phase="enter" receipt={{ kind: "generic", savedDate: "2026-10-06" }} onDismiss={dismiss} />)
+    fireEvent.click(screen.getByRole("button", { name: "저장 안내 닫기" }))
+    expect(dismiss).toHaveBeenCalledOnce()
+  })
   it("offers decoration after a real dated save without opening it automatically", () => {
     const decorate = vi.fn()
     render(<SavedToast count={0} phase="enter" receipt={{ kind: "generic", savedDate: "2026-10-02" }} onDecorateSaved={decorate} />)
