@@ -19,7 +19,7 @@ test("keeps analysis view tabs compact and touchable", async ({ page }) => {
   await seedTouchAuditEntries(page)
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클" }).click()
-  await page.getByRole("group", { name: "오라클 항목" }).getByRole("button", { name: "월별 변화", exact: true }).click()
+  await page.getByRole("group", { name: "훈련 분석 자세히 보기" }).getByRole("button", { name: "월별 변화", exact: true }).click()
 
   const tabs = page.getByRole("region", { name: "최근 4개월 추이" }).getByRole("button")
   await expect(tabs).toHaveCount(4)
