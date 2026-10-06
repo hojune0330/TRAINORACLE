@@ -191,7 +191,7 @@ export function JournalArchive({
             onCalendar={() => setEmptyView("calendar")} onWrite={onWriteLog} hasRealRecords={entries.length > 0} /> : <>
           <div className="calendar-guidance-actions">
             {latest && <button type="button" onClick={() => nav.selectDate(latest)}>최근 일지 · {latest.slice(5).replace("-", "/")}</button>}
-            {!dates.includes(nav.date) && dates.length > 0 && <button type="button" onClick={() => { const date = nearestCalendarDate(dates, nav.date); if (date) nav.selectDate(date) }}>가까운 기록</button>}
+            {!dates.includes(nav.date) && dates.length > 0 && nearestCalendarDate(dates, nav.date) !== latest && <button type="button" onClick={() => { const date = nearestCalendarDate(dates, nav.date); if (date) nav.selectDate(date) }}>가까운 기록</button>}
             {dates.length > 0 && !latest && <span>미래 날짜의 기록이 있어요.</span>}
           </div>
           {calendarDecorationState === null ? <JournalMonthCalendar month={calendarMonth} entries={entries} onOpenDay={onOpenDay} onWriteDate={onWriteDate}
@@ -203,6 +203,7 @@ export function JournalArchive({
           {entries.length === 0 && readiness === "READY" && <button type="button" className="calendar-range-return" onClick={() => setEmptyView("example")}>일지가 쌓인 예시 보기</button>}
           </>}
           {archive.months.length > 0 && !exampleVisible && (
+            <InfoDisclosure title="월별 기록 모아보기">
             <SummaryList
               label="월별 기록"
               items={archive.months}
@@ -219,6 +220,7 @@ export function JournalArchive({
                 />
               )}
             />
+            </InfoDisclosure>
           )}
         </>
       )}

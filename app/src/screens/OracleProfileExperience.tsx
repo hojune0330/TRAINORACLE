@@ -106,6 +106,9 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
   const question = currentOracleQuestion(flow)
   React.useEffect(() => { if (questionOpen) questionHeading.current?.focus({ preventScroll: true }) }, [question?.id, questionOpen])
   const accountBlocked = props.account && ["LOADING", "CONFLICT", "DELETED"].includes(props.status)
+  const managerDescription = accountBlocked ? "계정의 응답을 확인하는 중이에요." : managerScore ? describeOracleAxis(managerScore)
+    : visibleScores.length ? `답한 ${visibleScores.length}개 항목을 정리했어요. 취향과 실제 훈련은 따로 살펴봐요.`
+      : "응답은 취향을, 실제 훈련은 기록으로 나눠 살펴봐요."
   const blocked = busy || accountBlocked || props.responsesDisabled === true
   const commit = async (answers: OracleResponses, selection: OracleAxisId | null) => {
     setBusy(true); setLocalMessage("")
@@ -142,13 +145,13 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
     const next = peers[peers.findIndex(item => item.id === topic.id) + direction]
     if (next) setTopicId(next.id)
   }
-  const sourceMessage = props.message || (props.account ? props.draftState === "EDITING" && props.status === "PENDING" ? "작성 중 · 이 기기에 임시 보관했어요. 응답을 마치면 계정에 저장해요." : ({ LOADING: "계정에서 불러오는 중", READY: "계정에 저장됨", PENDING: "계정으로 보내는 중", CONFLICT: "다른 곳에서 바뀐 응답을 확인해 주세요", FAILED: "계정 저장을 확인하지 못했어요", DELETED: "삭제된 프로필이에요" }[props.status]) : "게스트 · 완료한 응답은 이 앱을 사용하는 동안 임시로 유지돼요. 앱을 닫거나 새로고침하면 사라져요.")
+  const sourceMessage = props.message || (props.account ? props.draftState === "EDITING" && props.status === "PENDING" ? "작성 중 · 이 기기에 임시 보관했어요. 응답을 마치면 계정에 저장해요." : ({ LOADING: "계정에서 불러오는 중", READY: "계정에 저장됨", PENDING: "계정으로 보내는 중", CONFLICT: "다른 곳에서 바뀐 응답을 확인해 주세요", FAILED: "계정 저장을 확인하지 못했어요", DELETED: "삭제된 프로필이에요" }[props.status]) : "게스트 · 임시 응답은 새로고침하면 사라져요.")
   return <section className="oracle-v2">
     <header className="oracle-v2__chrome"><button type="button" aria-label={props.backLabel ?? "오라클로 돌아가기"} title={props.backLabel ?? "오라클로 돌아가기"} onClick={props.onBack}><ArrowLeft size={18} /></button><strong>내 러닝 프로필</strong><span>오라클</span></header>
     <div className="oracle-v2__body">
       <nav className="oracle-v2__tabs" aria-label="러닝 프로필 보기">{([["result", "내 결과"], ["library", "읽을거리"], ["saved", "보관함"]] as const).map(([id, label]) => <button type="button" key={id} aria-current={view === id ? "page" : undefined} onClick={() => setView(id)}>{label}</button>)}</nav>
       <p className="oracle-v2__status" role="status">{sourceMessage}</p>
-      {props.onContext && <button type="button" disabled={busy || accountBlocked} onClick={props.onContext}>{props.responsesDisabled ? "작성하던 추가 응답 이어가기" : "취향과 여건 더 알려주기"}<ChevronRight size={16} /></button>}
+      {props.onContext && props.responsesDisabled && <button type="button" disabled={busy || accountBlocked} onClick={props.onContext}>작성하던 추가 맥락 이어가기<ChevronRight size={16} /></button>}
       {(dirty.current || props.hasPendingScore || props.draftAnswers && JSON.stringify(props.draftAnswers) !== JSON.stringify(props.answers)) && <button type="button" disabled={blocked} onClick={() => {
         if (dirty.current) { setQuestionOpen(true); return }
         const axis = ORACLE_AXES.find(item => item.questions.some((_text, index) => props.draftAnswers?.[`${item.id}_${index + 1}` as keyof OracleResponses] !== props.answers[`${item.id}_${index + 1}` as keyof OracleResponses]))
@@ -174,14 +177,20 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
         <aside className="oracle-v2__manager" aria-label="마리 매니저">
           <div className="oracle-v2__manager-portrait"><img src={`${import.meta.env.BASE_URL}${managerPortrait.src.slice(1)}`} alt={managerPortrait.alt} width={managerPortrait.width} height={managerPortrait.height} /></div>
           <div className="oracle-v2__manager-copy"><h2>마리 매니저</h2><p className="oracle-v2__eyebrow">{visibleScores.length ? "내 응답 해설" : "오라클 안내"}</p>
-            <p>{accountBlocked ? "계정의 응답을 확인하는 중이에요." : managerScore ? describeOracleAxis(managerScore) : visibleScores.length ? `답한 ${visibleScores.length}개 항목을 정리했어요. 좋아하는 방식과 실제로 한 훈련은 따로 살펴볼게요.` : "마리예요. 취향은 응답으로, 훈련은 실제 기록으로 나눠 살펴볼게요."}</p>
           </div>
-          <div className="oracle-v2__manager-actions">
-            <button type="button" onClick={() => setTopicId("C02")}>내 훈련 해설<ChevronRight size={16} /></button>
-            <button type="button" onClick={() => setTopicId("B02")}>내 기록 해설<ChevronRight size={16} /></button>
-            <button type="button" onClick={() => setTopicId("C07")}>계획·수행 비교<ChevronRight size={16} /></button>
-          </div>
+          <InfoDisclosure className="oracle-v2__manager-details" title="마리 안내와 다른 풀이">
+            <p>{managerDescription}</p>
+            <div className="oracle-v2__manager-actions">
+              <button type="button" onClick={() => setTopicId("C02")}>내 훈련 해설<ChevronRight size={16} /></button>
+              <button type="button" onClick={() => setTopicId("B02")}>내 기록 해설<ChevronRight size={16} /></button>
+              <button type="button" onClick={() => setTopicId("C07")}>계획·수행 비교<ChevronRight size={16} /></button>
+            </div>
+          </InfoDisclosure>
         </aside>
+        {props.onContext && !props.responsesDisabled && <InfoDisclosure className="oracle-v2__context-disclosure" title="훈련·대회 맥락 추가">
+          <p>선택한 내용은 취향 점수에 더하지 않고, 관련 풀이에만 반영해요.</p>
+          <button type="button" disabled={busy || accountBlocked} onClick={props.onContext}>추가 맥락 입력<ChevronRight size={16} /></button>
+        </InfoDisclosure>}
         <InfoDisclosure title="다른 모습도 알아보기"><div className="oracle-v2__axis-list">{ORACLE_AXES.map(axis => <button type="button" key={axis.id} disabled={blocked} onClick={() => openQuestions(axis.id)}><span>{axis.label}</span><ChevronRight size={16} /></button>)}</div></InfoDisclosure>
         <InfoDisclosure title="내 응답 관리"><p>응답을 바꿔도 훈련 강도나 양이 자동으로 늘어나지 않아요.</p>{confirmDelete ? <><p>응답과 보관한 프로필 풀이를 삭제할까요?</p><button type="button" disabled={busy} onClick={async () => { setBusy(true); try { if (await props.onDelete()) { dirty.current = false; const empty = startOracleQuestionFlow(); flowRef.current = empty; setFlow(empty); setCharacter(null); setConfirmDelete(false) } else setLocalMessage("delete") } catch { setLocalMessage("delete") } finally { setBusy(false) } }}>삭제하기</button><button type="button" onClick={() => setConfirmDelete(false)}>취소</button></> : <button type="button" disabled={blocked} onClick={() => setConfirmDelete(true)}><Trash2 size={16} />응답 삭제</button>}</InfoDisclosure>
       </>}

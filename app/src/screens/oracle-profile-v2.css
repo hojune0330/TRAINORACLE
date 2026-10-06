@@ -23,8 +23,12 @@
 .oracle-v2__manager-copy { min-width: 0; }
 .oracle-v2__manager h2 { font-size: var(--fs-body); margin: 0; }
 .oracle-v2__manager p { margin-block: var(--space-2); }
-.oracle-v2__manager-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.oracle-v2__manager-actions button { font-size: var(--fs-caption); }
+.oracle-v2__manager > .oracle-v2__manager-details { grid-column: 1 / -1; }
+.oracle-v2__manager-details > p { margin-top: 0; }
+.oracle-v2__manager-actions { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
+.oracle-v2__manager-actions button { width: 100%; justify-content: space-between; text-align: left; font-size: var(--fs-caption); }
+.oracle-v2__context-disclosure { margin-block: var(--space-4); }
+.oracle-v2__context-disclosure > p { margin-top: 0; }
 .oracle-v2__guide { display: block; width: 64px; height: 72px; object-fit: cover; object-position: top; margin-bottom: 12px; }
 .oracle-v2__identity > div { min-width: 0; }
 .oracle-v2__scores, .oracle-v2__facts { margin: 16px 0; }

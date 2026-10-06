@@ -439,13 +439,12 @@ export function PlanCandidates({
         />
         </fieldset>
       )}
-      {generated.racePlacement.kind === "NO_TARGET_RACE"
-        ? <InfoDisclosure title="경기 날짜는 어떻게 되나요?"><RacePlacementNotice state={generated.racePlacement} /></InfoDisclosure>
-        : <RacePlacementNotice state={generated.racePlacement} />}
-      <InfoDisclosure title="A와 B는 뭐가 달라요?">
+      {generated.racePlacement.kind !== "NO_TARGET_RACE" && <RacePlacementNotice state={generated.racePlacement} />}
+      <InfoDisclosure title="추천 이유·계획 기준">
+      {generated.racePlacement.kind === "NO_TARGET_RACE" && <RacePlacementNotice state={generated.racePlacement} />}
+      <h2>A와 B는 뭐가 달라요?</h2>
         <CandidateComparison candidates={generated.candidates} />
-      </InfoDisclosure>
-      <InfoDisclosure title="이 계획은 어떤 정보로 만들었나요?">
+      <h2>이 계획은 어떤 정보로 만들었나요?</h2>
       <p className="plan-copy">
         {prescriptionBinding.kind === "bound"
           ? `직접 고르고 확인한 현재 ${selectedEventLabel} 기록으로 한 강도 세션의 상세 페이스를 계산했어요. 다른 훈련과 일지 값은 시간이나 RPE를 바꾸지 않습니다.`
@@ -453,8 +452,7 @@ export function PlanCandidates({
           ? "고른 목표·경험·운동할 날로 만들었어요. 아래에서 조금씩 다듬을 수 있어요."
           : "최근 일지가 있는지만 확인했어요. 일지의 거리, RPE, 메모는 계획의 시간이나 강도를 바꾸지 않아요."}
       </p>
-      </InfoDisclosure>
-      <InfoDisclosure title="기준 기록·참가 부문·이전 계획 확인">
+      <h2>기준 기록·참가 부문·이전 계획</h2>
       <div className="plan-source-strip">
         <ShieldCheck aria-hidden="true" size={17} />
         <span>

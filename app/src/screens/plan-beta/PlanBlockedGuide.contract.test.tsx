@@ -18,6 +18,12 @@ beforeEach(() => { window.localStorage.clear(); window.sessionStorage.clear() })
 afterEach(cleanup)
 
 describe("body-review plan preview", () => {
+  it("explains an unresolved recheck without granting clearance", () => {
+    render(<PlanBlockedGuide draft={draft} recheckAttempted onWriteLog={() => {}} onRecheck={() => {}} />)
+    expect(screen.getByRole("status")).toHaveTextContent("다시 확인했지만 아직 시작 전 확인이 필요해요")
+    expect(screen.getByRole("button", { name: "계획안 만들기" })).toBeDisabled()
+    expect(loadPlanBetaState()).toBeNull()
+  })
   it("requires an explicit check before showing the calendar and keeps activation unavailable", () => {
     render(<PlanBlockedGuide draft={draft} onWriteLog={() => {}} onRecheck={() => {}} />)
     const create = screen.getByRole("button", { name: "계획안 만들기" })

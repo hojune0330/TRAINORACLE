@@ -421,6 +421,7 @@ function LegacyPlanBeta({
     || JSON.stringify(draft) !== JSON.stringify(previousIntake ?? {})
   ))
   const [blocked, setBlocked] = React.useState(false)
+  const [bodyRecheckRequested, setBodyRecheckRequested] = React.useState(false)
   const [currentCheck, setCurrentCheck] = React.useState<PlanCurrentCheck | null>(null)
   const [errorCode, setErrorCode] = React.useState<string | null>(null)
   React.useEffect(() => {
@@ -848,8 +849,10 @@ function LegacyPlanBeta({
       <>{nextDraftHeader}
       <PlanBlockedGuide
         draft={withQuickDefaults(draft)}
+        recheckAttempted={bodyRecheckRequested}
         onWriteLog={() => onWriteLog?.("evening")}
         onRecheck={() => {
+          setBodyRecheckRequested(true)
           setBlocked(false)
           setRefining(false)
           setStep("safety")
@@ -1034,6 +1037,7 @@ function LegacyPlanBeta({
       }
       draftRevision.current += 1
       setInstantEntry(prepared.entry); setInstantEntryError(null); setInstantEntryOpen(false)
+      setBodyRecheckRequested(false)
       setAthleteRecords([...readEligibleAccountPaceRecords()]); setSelectedRecordId(prepared.recordId)
       setComparisonRecordId(null); setRecordConfirmationPending(false)
       const nextDraft: Partial<PlanBetaIntake> = { ...draft, eventDistanceM: prepared.entry.eventDistanceM,

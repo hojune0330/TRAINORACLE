@@ -1,0 +1,80 @@
+.instant-plan__step {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.instant-plan__step-heading {
+  margin: 0;
+  font-size: var(--fs-app-section-title);
+  line-height: 1.4;
+}
+
+.instant-plan__step-heading:focus {
+  outline: none;
+}
+
+.instant-plan__step-heading:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+}
+
+.instant-plan__step-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
+  gap: var(--space-2);
+}
+
+.instant-plan__step-choice {
+  min-width: 0;
+  min-height: var(--app-touch-min);
+  padding: var(--space-3);
+  border: var(--bw-line) solid var(--line-2);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  text-align: center;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.instant-plan__step-choice[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--surface-2);
+}
+
+.instant-plan__step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.instant-plan__date-disclosure {
+  min-width: 0;
+  border-block-start: var(--bw-line) solid var(--line);
+}
+
+.instant-plan__date-disclosure > summary {
+  min-height: var(--app-touch-min);
+  padding-block: var(--space-3);
+  color: var(--ink);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.instant-plan__date-fields {
+  display: grid;
+  gap: var(--space-2);
+  padding-block-end: var(--space-3);
+}
+
+@media (max-width: 359px) {
+  .instant-plan__step-actions > * {
+    flex: 1 1 100%;
+  }
+}

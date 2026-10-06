@@ -12,10 +12,12 @@ export function PlanBlockedGuide({
   draft,
   onWriteLog,
   onRecheck,
+  recheckAttempted = false,
 }: {
   readonly draft: Partial<PlanBetaIntake>
   readonly onWriteLog: () => void
   readonly onRecheck: () => void
+  readonly recheckAttempted?: boolean
 }) {
   const [acknowledged, setAcknowledged] = React.useState(false)
   const [preview, setPreview] = React.useState<Extract<ReturnType<typeof createBodyReviewPlanPreview>, { kind: "safety_review_preview" }> | null>(null)
@@ -34,6 +36,7 @@ export function PlanBlockedGuide({
       <div className="plan-eyebrow">통증·몸 상태 확인 필요</div>
       <h1 id="plan-blocked-title">{preview ? "계획안을 만들었어요" : "계획안은 먼저 만들 수 있어요"}</h1>
       <p>{preview ? "지금은 미리보기예요. 통증에 맞춘 재활 훈련이나 시작 허가는 아니에요." : "통증이 있어도 계획안을 볼 수 있어요. 시작 전 몸 상태는 따로 확인해요."}</p>
+      {recheckAttempted && <p role="status">다시 확인했지만 아직 시작 전 확인이 필요해요. 최근 통증 기록이 남아 있으면 지금 응답만으로 풀리지 않아요. 고른 종목과 일정은 그대로예요.</p>}
       {!preview && kept.length > 0 && (
         <div className="plan-blocked__kept" aria-label="고른 내용은 그대로 남아 있어요">
           <strong>고른 내용은 남겨둘게요</strong>

@@ -115,6 +115,14 @@ export function InstantPlanRecommendationView({
         </section>
       )}
       {scheduleReview}
+      <section aria-label="이번 일정">
+        <h3>이번 일정</h3>
+        {recommendation.days.length === 0 ? (
+          <p className="instant-plan__status">표시할 일정이 없어요.</p>
+        ) : (
+          <RecommendationCalendar identity={recommendation.id} days={recommendation.days} />
+        )}
+      </section>
       <div className="instant-plan__actions">
         <button
           className="instant-plan__button"
@@ -126,6 +134,10 @@ export function InstantPlanRecommendationView({
             else if (actionState.kind === "BLOCKED") blockedAction?.onClick()
           }}
         >{saving ? "저장 중" : actionState.kind === "BLOCKED" && blockedAction ? blockedAction.label : startLabel ?? "이 일정으로 시작"}</button>
+      </div>
+      {(onEditSchedule || onShowAlternatives || onEditWorkout) && <details className="instant-plan__disclosure">
+        <summary>일정·훈련 바꾸기</summary>
+        <div className="instant-plan__actions">
         {onEditSchedule && (
           <button className="instant-plan__secondary" type="button" disabled={waiting} onClick={onEditSchedule}>
             시작일·훈련일 바꾸기
@@ -141,16 +153,8 @@ export function InstantPlanRecommendationView({
             처방 확인·조절
           </button>
         )}
-      </div>
-
-      <section aria-label="이번 일정">
-        <h3>이번 일정</h3>
-        {recommendation.days.length === 0 ? (
-          <p className="instant-plan__status">표시할 일정이 없어요.</p>
-        ) : (
-          <RecommendationCalendar identity={recommendation.id} days={recommendation.days} />
-        )}
-      </section>
+        </div>
+      </details>}
 
       {recommendation.days.length > 0 && (
         <details className="instant-plan__disclosure">

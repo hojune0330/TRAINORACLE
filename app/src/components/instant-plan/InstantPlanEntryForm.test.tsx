@@ -11,8 +11,21 @@ const record: InstantPlanEntry = {
   kind: "CURRENT_RECORD", eventDistanceM: 5000, performanceSeconds: 1500.125, achievedOn: "2026-09-01",
 }
 
-function submit() {
-  fireEvent.click(screen.getByRole("button", { name: "내 계획 받기" }))
+function chooseEvent(label = "5km") {
+  fireEvent.click(screen.getByRole("button", { name: label }))
+}
+
+function chooseBasis(label: "내 기록" | "목표만 있어요" | "기록 없이" = "내 기록") {
+  fireEvent.click(screen.getByRole("button", { name: label }))
+}
+
+function enterCurrent(eventLabel = "5km") {
+  chooseEvent(eventLabel)
+  chooseBasis("내 기록")
+}
+
+function submit(kind: "CURRENT_RECORD" | "GOAL_ONLY" = "CURRENT_RECORD") {
+  fireEvent.click(screen.getByRole("button", { name: kind === "CURRENT_RECORD" ? "기록 입력 완료" : "목표 입력 완료" }))
 }
 
 function setTime(minutes: string, seconds: string) {
@@ -20,49 +33,74 @@ function setTime(minutes: string, seconds: string) {
   fireEvent.change(screen.getByLabelText("초"), { target: { value: seconds } })
 }
 
+function openDate() {
+  fireEvent.click(screen.getByText("기록 날짜 추가"))
+}
+
 describe("InstantPlanEntryForm", () => {
-  it("reports unsaved first-screen edits, reverting and unmounting without submitting", () => {
+  it("reports changed values but not step navigation, and unmounting without submitting", () => {
     const onDraftChange = vi.fn()
     const onSubmit = vi.fn()
-    const { unmount } = render(<InstantPlanEntryForm today={TODAY} onSubmit={onSubmit} onDraftChange={onDraftChange} />)
+    const { unmount } = render(<InstantPlanEntryForm today={TODAY} initialEntry={record}
+      onSubmit={onSubmit} onDraftChange={onDraftChange} />)
     expect(onDraftChange).toHaveBeenLastCalledWith(false)
-    fireEvent.change(screen.getByLabelText("종목"), { target: { value: "5000" } })
-    expect(onDraftChange).toHaveBeenLastCalledWith(true)
-    fireEvent.change(screen.getByLabelText("종목"), { target: { value: "" } })
+    fireEvent.click(screen.getByRole("button", { name: "기준 다시 선택" }))
     expect(onDraftChange).toHaveBeenLastCalledWith(false)
+    fireEvent.click(screen.getByRole("button", { name: "종목 다시 선택" }))
+    expect(onDraftChange).toHaveBeenLastCalledWith(false)
+    chooseEvent("5km")
+    expect(onDraftChange).toHaveBeenLastCalledWith(false)
+    chooseBasis("내 기록")
     setTime("21", "30.12")
     expect(onDraftChange).toHaveBeenLastCalledWith(true)
     unmount()
     expect(onDraftChange).toHaveBeenLastCalledWith(false)
     expect(onSubmit).not.toHaveBeenCalled()
   })
-  it("does not invent a starting event, performance or achieved date and focuses the missing event", () => {
+
+  it("advances from event to basis to details and preserves values while going back", () => {
+    const onSubmit = vi.fn()
+    render(<InstantPlanEntryForm today={TODAY} initialEntry={record} onSubmit={onSubmit} />)
+    expect(screen.getByRole("heading", { name: "현재 기록을 입력하세요" })).toBeVisible()
+    setTime("24", "10.25")
+    fireEvent.click(screen.getByRole("button", { name: "기준 다시 선택" }))
+    expect(screen.getByRole("button", { name: "내 기록" })).toHaveAttribute("aria-pressed", "true")
+    fireEvent.click(screen.getByRole("button", { name: "종목 다시 선택" }))
+    expect(screen.getByRole("button", { name: "5km" })).toHaveAttribute("aria-pressed", "true")
+    chooseEvent("5km")
+    chooseBasis("내 기록")
+    expect(screen.getByLabelText("분")).toHaveValue("24")
+    expect(screen.getByLabelText("초")).toHaveValue("10.25")
+    submit()
+    expect(onSubmit).toHaveBeenCalledExactlyOnceWith({ ...record, performanceSeconds: 1450.25 })
+  })
+
+  it("does not invent a starting event and focuses the event choice on a malformed form submit", () => {
     const onSubmit = vi.fn()
     render(<InstantPlanEntryForm today={TODAY} onSubmit={onSubmit} />)
-    expect(screen.getByLabelText("종목")).toHaveValue("")
-    expect(screen.getByLabelText("분")).toHaveValue("")
-    expect(screen.getByLabelText("초")).toHaveValue("")
-    expect(screen.getByLabelText("기록 달성일")).toHaveValue("")
-    submit()
+    fireEvent.submit(screen.getByRole("form", { name: "계획 시작 정보" }))
     expect(onSubmit).not.toHaveBeenCalled()
-    expect(screen.getByLabelText("종목")).toHaveFocus()
-    expect(screen.getByLabelText("종목")).toHaveAccessibleDescription("훈련할 종목을 선택해 주세요.")
+    expect(screen.getByRole("button", { name: "800m" })).toHaveFocus()
+    expect(screen.getByRole("button", { name: "800m" })).toHaveAccessibleDescription("훈련할 종목을 선택해 주세요.")
+    expect(screen.queryByLabelText("분")).not.toBeInTheDocument()
   })
 
   it("submits a real current record without losing fractional seconds", () => {
     const onSubmit = vi.fn()
     render(<InstantPlanEntryForm today={TODAY} onSubmit={onSubmit} />)
-    fireEvent.change(screen.getByLabelText("종목"), { target: { value: "5000" } })
+    enterCurrent()
     setTime("25", "0.125")
+    openDate()
     fireEvent.change(screen.getByLabelText("기록 달성일"), { target: { value: TODAY } })
     submit()
     expect(onSubmit).toHaveBeenCalledExactlyOnceWith({ ...record, achievedOn: TODAY })
   })
 
-  it("prefills the exact decimal display and permits immediate submission", () => {
+  it("prefills exact decimal values and opens directly at the current-record details", () => {
     const onSubmit = vi.fn()
     const initialEntry: InstantPlanEntry = { ...record, performanceSeconds: 90.12 }
     render(<InstantPlanEntryForm today={TODAY} initialEntry={initialEntry} onSubmit={onSubmit} sourceLabel="허용된 테스트 프로그램" />)
+    expect(screen.getByRole("heading", { name: "현재 기록을 입력하세요" })).toBeVisible()
     expect(screen.getByLabelText("분")).toHaveValue("1")
     expect(screen.getByLabelText("초")).toHaveValue("30.12")
     expect(screen.getByText("선택한 프로그램: 허용된 테스트 프로그램")).toBeVisible()
@@ -79,61 +117,66 @@ describe("InstantPlanEntryForm", () => {
     expect(onSubmit).toHaveBeenCalledExactlyOnceWith(initialEntry)
   })
 
-  it("does not turn a goal into a current record or carry over the achieved date", () => {
-    const onSubmit = vi.fn()
-    render(<InstantPlanEntryForm today={TODAY} initialEntry={record} onSubmit={onSubmit} />)
-    fireEvent.click(screen.getByRole("radio", { name: "목표만 있어요" }))
-    setTime("22", "30.5")
-    expect(screen.queryByLabelText("기록 달성일")).not.toBeInTheDocument()
-    expect(screen.getByText("목표는 현재 실력과 구분해서 사용해요.")).toBeVisible()
-    submit()
-    expect(onSubmit).toHaveBeenCalledExactlyOnceWith({ kind: "GOAL_ONLY", eventDistanceM: 5000, performanceSeconds: 1350.5 })
-  })
-
-  it("supports NO_RECORD with only the event and no hidden inferred time", () => {
-    const onSubmit = vi.fn()
-    render(<InstantPlanEntryForm today={TODAY} initialEntry={record} onSubmit={onSubmit} />)
-    fireEvent.click(screen.getByRole("radio", { name: "기록 없이" }))
-    expect(screen.queryByLabelText("분")).not.toBeInTheDocument()
-    expect(screen.queryByLabelText("초")).not.toBeInTheDocument()
-    expect(screen.queryByLabelText("기록 달성일")).not.toBeInTheDocument()
-    submit()
-    expect(onSubmit).toHaveBeenCalledExactlyOnceWith({ kind: "NO_RECORD", eventDistanceM: 5000 })
-  })
-
-  it("keeps current and goal drafts separate when switching input modes", () => {
+  it("keeps goal and current drafts separate and does not carry a current date into a goal", () => {
     const onSubmit = vi.fn()
     render(<InstantPlanEntryForm today={TODAY} initialEntry={record} onSubmit={onSubmit} />)
     expect(screen.getByText("입력한 현재 기록은 내 기록에도 남아요.")).toBeVisible()
-    fireEvent.click(screen.getByRole("radio", { name: "목표만 있어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "기준 다시 선택" }))
+    chooseBasis("목표만 있어요")
     expect(screen.getByLabelText("분")).toHaveValue("")
     expect(screen.queryByText("입력한 현재 기록은 내 기록에도 남아요.")).not.toBeInTheDocument()
-    setTime("22", "30")
-    fireEvent.click(screen.getByRole("radio", { name: "내 기록" }))
+    expect(screen.queryByLabelText("기록 달성일")).not.toBeInTheDocument()
+    setTime("22", "30.5")
+    fireEvent.click(screen.getByRole("button", { name: "기준 다시 선택" }))
+    chooseBasis("내 기록")
     expect(screen.getByLabelText("분")).toHaveValue("25")
     expect(screen.getByLabelText("초")).toHaveValue("0.125")
     submit()
     expect(onSubmit).toHaveBeenCalledExactlyOnceWith(record)
-    fireEvent.click(screen.getByRole("radio", { name: "목표만 있어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "기준 다시 선택" }))
+    chooseBasis("목표만 있어요")
     expect(screen.getByLabelText("분")).toHaveValue("22")
-    expect(screen.getByLabelText("초")).toHaveValue("30")
+    expect(screen.getByLabelText("초")).toHaveValue("30.5")
+    submit("GOAL_ONLY")
+    expect(onSubmit).toHaveBeenCalledTimes(2)
+    expect(onSubmit).toHaveBeenLastCalledWith({ kind: "GOAL_ONLY", eventDistanceM: 5000, performanceSeconds: 1350.5 })
   })
 
-  it("does not convert an initial goal into a current performance when the mode changes", () => {
+  it("starts an initial goal at its detail step and does not convert it to a current performance", () => {
     const onSubmit = vi.fn()
-    render(<InstantPlanEntryForm today={TODAY} initialEntry={{ kind: "GOAL_ONLY", eventDistanceM: 5000, performanceSeconds: 1200 }} onSubmit={onSubmit} />)
-    fireEvent.click(screen.getByRole("radio", { name: "내 기록" }))
+    render(<InstantPlanEntryForm today={TODAY}
+      initialEntry={{ kind: "GOAL_ONLY", eventDistanceM: 5000, performanceSeconds: 1200 }} onSubmit={onSubmit} />)
+    expect(screen.getByRole("heading", { name: "목표 기록을 입력하세요" })).toBeVisible()
+    fireEvent.click(screen.getByRole("button", { name: "기준 다시 선택" }))
+    chooseBasis("내 기록")
     expect(screen.getByLabelText("분")).toHaveValue("")
+    openDate()
     expect(screen.getByLabelText("기록 달성일")).toHaveValue("")
     submit()
     expect(onSubmit).not.toHaveBeenCalled()
   })
 
-  it.each([800, 1500, 3000, 5000, 10000, 21097, 42195] as const)("accepts the existing %i m input without claiming prescription eligibility", eventDistanceM => {
+  it("submits NO_RECORD immediately when chosen without a redundant submit button", () => {
     const onSubmit = vi.fn()
+    render(<InstantPlanEntryForm today={TODAY} initialEntry={record} onSubmit={onSubmit} />)
+    fireEvent.click(screen.getByRole("button", { name: "기준 다시 선택" }))
+    expect(screen.queryByLabelText("분")).not.toBeInTheDocument()
+    expect(screen.queryByLabelText("초")).not.toBeInTheDocument()
+    expect(screen.queryByLabelText("기록 달성일")).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "기록 입력 완료" })).not.toBeInTheDocument()
+    chooseBasis("기록 없이")
+    expect(onSubmit).toHaveBeenCalledExactlyOnceWith({ kind: "NO_RECORD", eventDistanceM: 5000 })
+  })
+
+  it.each([
+    [800, "800m"], [1500, "1500m"], [3000, "3000m"], [5000, "5km"],
+    [10000, "10km"], [21097, "하프 마라톤"], [42195, "마라톤"],
+  ] as const)("accepts the existing %i m event without claiming prescription eligibility", (eventDistanceM, label) => {
+    const onSubmit = vi.fn()
+    render(<InstantPlanEntryForm today={TODAY} onSubmit={onSubmit} />)
+    chooseEvent(label)
+    chooseBasis("기록 없이")
     const entry: InstantPlanEntry = { kind: "NO_RECORD", eventDistanceM }
-    render(<InstantPlanEntryForm today={TODAY} initialEntry={entry} onSubmit={onSubmit} />)
-    submit()
     expect(onSubmit).toHaveBeenCalledExactlyOnceWith(entry)
   })
 
@@ -167,19 +210,22 @@ describe("InstantPlanEntryForm", () => {
     },
   )
 
-  it("accepts an unknown date without inventing today", () => {
+  it("keeps an unknown date optional and hidden without inventing today", () => {
     const onSubmit = vi.fn()
     render(<InstantPlanEntryForm today={TODAY} initialEntry={{ ...record, achievedOn: null }} onSubmit={onSubmit} />)
+    expect(screen.getByLabelText("기록 달성일")).not.toBeVisible()
+    expect(screen.getByText("기록 날짜 추가")).toBeVisible()
     submit()
     expect(onSubmit).toHaveBeenCalledExactlyOnceWith({ ...record, achievedOn: null })
   })
 
   it.each(["2026-09-21", "2023-02-29", "2026-04-31", "0000-01-01", "2026-13-01"])(
-    "rejects the invalid or future record date %s even in a prefilled entry", achievedOn => {
+    "opens the optional date and rejects the invalid or future record date %s", achievedOn => {
       const onSubmit = vi.fn()
       render(<InstantPlanEntryForm today={TODAY} initialEntry={{ ...record, achievedOn }} onSubmit={onSubmit} />)
       submit()
       expect(onSubmit).not.toHaveBeenCalled()
+      expect(screen.getByLabelText("기록 달성일")).toBeVisible()
       expect(screen.getByLabelText("기록 달성일")).toHaveFocus()
       expect(screen.getByLabelText("기록 달성일")).toHaveAttribute("aria-invalid", "true")
     },
@@ -198,26 +244,28 @@ describe("InstantPlanEntryForm", () => {
     render(<InstantPlanEntryForm today="2026-02-30" initialEntry={record} onSubmit={onSubmit} />)
     submit()
     expect(onSubmit).not.toHaveBeenCalled()
+    expect(screen.getByLabelText("기록 달성일")).toHaveFocus()
     expect(screen.getByRole("alert")).toHaveTextContent("오늘 날짜를 확인하지 못했어요")
   })
 
-  it("clears obsolete record errors when explicitly switching to NO_RECORD", () => {
+  it("clears record errors when NO_RECORD is explicitly selected", () => {
     const onSubmit = vi.fn()
-    render(<InstantPlanEntryForm today={TODAY} initialEntry={{ ...record, achievedOn: "2026-09-21" }} onSubmit={onSubmit} />)
+    render(<InstantPlanEntryForm today={TODAY}
+      initialEntry={{ ...record, achievedOn: "2026-09-21" }} onSubmit={onSubmit} />)
     submit()
     expect(screen.getByRole("alert")).toBeVisible()
-    fireEvent.click(screen.getByRole("radio", { name: "기록 없이" }))
+    fireEvent.click(screen.getByRole("button", { name: "기준 다시 선택" }))
+    chooseBasis("기록 없이")
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
-    submit()
     expect(onSubmit).toHaveBeenCalledExactlyOnceWith({ kind: "NO_RECORD", eventDistanceM: 5000 })
   })
 
   it("prevents callback submission while disabled even if a form submit is dispatched", () => {
     const onSubmit = vi.fn()
     render(<InstantPlanEntryForm today={TODAY} initialEntry={record} disabled onSubmit={onSubmit} />)
-    expect(screen.getByLabelText("종목")).toBeDisabled()
-    expect(screen.getByRole("button", { name: "내 계획 받기" })).toBeDisabled()
-    fireEvent.submit(screen.getByRole("form", { name: "내 계획 받기" }))
+    expect(screen.getByLabelText("분")).toBeDisabled()
+    expect(screen.getByRole("button", { name: "기록 입력 완료" })).toBeDisabled()
+    fireEvent.submit(screen.getByRole("form", { name: "계획 시작 정보" }))
     expect(onSubmit).not.toHaveBeenCalled()
   })
 

@@ -143,6 +143,8 @@ describe("journal archive surface", () => {
 
     expect(screen.queryByText(SECRET)).toBeNull()
     expect(document.body.textContent).not.toContain(SECRET)
+    expect(screen.getByText("출처를 확인할 수 없어 제외된 기록 1건")).not.toBeVisible()
+    await user.click(screen.getByText("월별 기록 모아보기"))
     expect(screen.getByText("출처를 확인할 수 없어 제외된 기록 1건")).toBeVisible()
 
     await user.click(screen.getByRole("button", { name: /^2026년 7월 훈련 후/u }))

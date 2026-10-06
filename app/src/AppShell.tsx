@@ -726,7 +726,13 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const startRecording = (entryType: import("./screens/LogEntry").EntryType = "choose", plannedView?: typeof v) => {
     if (v.tab === "log" && entryType === "choose" && v.entryType === "choose") return
     runViewTransition(tabMotion(v.tab, "log"), () => {
-      if (v.tab !== "log") recordingOrigin.current = captureRecordingOrigin(entryType !== "choose")
+      if (v.tab !== "log") {
+        const origin = captureRecordingOrigin(entryType !== "choose")
+        const plannedLink = plannedView?.journalDraft?.returnTab === "plan" ? plannedView.journalDraft.plannedSessionLink : undefined
+        recordingOrigin.current = plannedLink
+          ? { ...origin, view: { ...origin.view, returnToSession: plannedLink } }
+          : origin
+      }
       dismissOracle()
       if (recordingOrigin.current && window.history.state?.recordingDraft !== recordingOrigin.current.token) {
         window.history.pushState({ ...window.history.state, recordingDraft: recordingOrigin.current.token }, "", window.location.href)

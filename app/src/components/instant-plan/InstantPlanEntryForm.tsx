@@ -1,7 +1,8 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react"
-import type { FormEvent } from "react"
+import type { FormEvent, SyntheticEvent } from "react"
 import type { InstantPlanEntry } from "../../domain/instant-plan-contract"
 import "./instant-plan.css"
+import "./instant-plan-entry-steps.css"
 
 export type InstantPlanEntryFormProps = {
   readonly onSubmit: (entry: InstantPlanEntry) => void
@@ -24,6 +25,7 @@ const EVENTS: readonly { value: InstantPlanEntry["eventDistanceM"]; label: strin
   { value: 42195, label: "마라톤" },
 ]
 
+type Step = "event" | "basis" | "details"
 type Field = "event" | "minutes" | "seconds" | "achievedOn"
 type Errors = Partial<Record<Field, string>>
 
@@ -58,6 +60,18 @@ function initialTime(entry?: InstantPlanEntry): { minutes: string; seconds: stri
   return { minutes: decimalText(minutes), seconds }
 }
 
+function entryFromCurrentOrGoal(
+  kind: "CURRENT_RECORD" | "GOAL_ONLY",
+  eventDistanceM: InstantPlanEntry["eventDistanceM"],
+  performanceSeconds: number,
+  achievedOn: string,
+): InstantPlanEntry {
+  if (kind === "CURRENT_RECORD") {
+    return { kind, eventDistanceM, performanceSeconds, achievedOn: achievedOn || null }
+  }
+  return { kind, eventDistanceM, performanceSeconds }
+}
+
 /** Collects facts only. Eligibility, safety, generation and storage belong to the caller. */
 export function InstantPlanEntryForm({
   onSubmit, today, initialEntry, disabled = false, sourceLabel, onDraftChange,
@@ -68,34 +82,78 @@ export function InstantPlanEntryForm({
   const [minutes, setMinutes] = useState(() => initialTime(initialEntry).minutes)
   const [seconds, setSeconds] = useState(() => initialTime(initialEntry).seconds)
   const [achievedOn, setAchievedOn] = useState(initialEntry?.kind === "CURRENT_RECORD" ? initialEntry.achievedOn ?? "" : "")
+  const [step, setStep] = useState<Step>(() => {
+    if (!initialEntry) return "event"
+    return initialEntry.kind === "NO_RECORD" ? "basis" : "details"
+  })
+  const [dateOpen, setDateOpen] = useState(false)
   const [errors, setErrors] = useState<Errors>({})
   const formValue = JSON.stringify([kind, event, minutes, seconds, achievedOn])
   const initialValue = useRef(formValue)
   useLayoutEffect(() => { onDraftChange?.(formValue !== initialValue.current) }, [formValue, onDraftChange])
   useEffect(() => () => onDraftChange?.(false), [onDraftChange])
+
   const timeDrafts = useRef<Partial<Record<"CURRENT_RECORD" | "GOAL_ONLY", { minutes: string; seconds: string }>>>({})
-  const eventRef = useRef<HTMLSelectElement>(null)
+  const eventButtonRef = useRef<HTMLButtonElement>(null)
   const minutesRef = useRef<HTMLInputElement>(null)
   const secondsRef = useRef<HTMLInputElement>(null)
   const dateRef = useRef<HTMLInputElement>(null)
-  const refs = { event: eventRef, minutes: minutesRef, seconds: secondsRef, achievedOn: dateRef }
+  const stepHeadingRef = useRef<HTMLHeadingElement>(null)
+  const lastStep = useRef(step)
 
-  function changeKind(next: InstantPlanEntry["kind"]) {
-    if (next === kind) return
-    if (kind !== "NO_RECORD") timeDrafts.current[kind] = { minutes, seconds }
-    const draft = next === "NO_RECORD" ? undefined : timeDrafts.current[next]
-    setMinutes(draft?.minutes ?? "")
-    setSeconds(draft?.seconds ?? "")
-    setKind(next)
+  useLayoutEffect(() => {
+    if (lastStep.current === step) return
+    lastStep.current = step
+    stepHeadingRef.current?.focus()
+  }, [step])
+
+  useEffect(() => {
+    const firstError = (["event", "minutes", "seconds", "achievedOn"] as const)
+      .find(field => errors[field])
+    if (!firstError) return
+    if (firstError === "event") eventButtonRef.current?.focus()
+    else if (firstError === "minutes") minutesRef.current?.focus()
+    else if (firstError === "seconds") secondsRef.current?.focus()
+    else dateRef.current?.focus()
+  }, [errors, step, dateOpen])
+
+  const selectedEvent = EVENTS.find(option => String(option.value) === event)
+  const selectedEventLabel = selectedEvent?.label ?? ""
+
+  function chooseBasis(next: InstantPlanEntry["kind"]) {
+    if (next === "NO_RECORD") {
+      if (kind !== "NO_RECORD") timeDrafts.current[kind] = { minutes, seconds }
+      setKind("NO_RECORD")
+      setErrors({})
+      if (!selectedEvent) {
+        setStep("event")
+        setErrors({ event: "훈련할 종목을 선택해 주세요." })
+        return
+      }
+      onSubmit({ kind: "NO_RECORD", eventDistanceM: selectedEvent.value })
+      return
+    }
+
+    if (kind !== next) {
+      if (kind !== "NO_RECORD") timeDrafts.current[kind] = { minutes, seconds }
+      const draft = timeDrafts.current[next]
+      setMinutes(draft?.minutes ?? "")
+      setSeconds(draft?.seconds ?? "")
+      setKind(next)
+    }
     setErrors({})
+    setStep("details")
   }
 
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (disabled) return
+    if (step !== "details") {
+      if (step === "event" && !selectedEvent) setErrors({ event: "훈련할 종목을 선택해 주세요." })
+      return
+    }
 
     const nextErrors: Errors = {}
-    const selectedEvent = EVENTS.find(option => String(option.value) === event)
     if (!selectedEvent) nextErrors.event = "훈련할 종목을 선택해 주세요."
 
     let performanceSeconds = 0
@@ -128,20 +186,13 @@ export function InstantPlanEntryForm({
     }
 
     setErrors(nextErrors)
+    if (nextErrors.achievedOn) setDateOpen(true)
+    if (nextErrors.event) setStep("event")
     const firstError = (["event", "minutes", "seconds", "achievedOn"] as const)
       .find(field => nextErrors[field])
-    if (firstError) {
-      refs[firstError].current?.focus()
-      return
-    }
-    if (!selectedEvent) return
-    if (kind === "CURRENT_RECORD") {
-      onSubmit({ kind, eventDistanceM: selectedEvent.value, performanceSeconds, achievedOn: achievedOn || null })
-    } else if (kind === "GOAL_ONLY") {
-      onSubmit({ kind, eventDistanceM: selectedEvent.value, performanceSeconds })
-    } else {
-      onSubmit({ kind, eventDistanceM: selectedEvent.value })
-    }
+    if (firstError) return
+    if (!selectedEvent || kind === "NO_RECORD") return
+    onSubmit(entryFromCurrentOrGoal(kind, selectedEvent.value, performanceSeconds, achievedOn))
   }
 
   function fieldError(field: Field) {
@@ -150,76 +201,118 @@ export function InstantPlanEntryForm({
       : null
   }
 
+  function handleDateToggle(e: SyntheticEvent<HTMLDetailsElement>) {
+    setDateOpen(e.currentTarget.open)
+  }
+
   return (
-    <form className="instant-plan" aria-labelledby={`${id}-heading`} noValidate onSubmit={submit}>
-      <h2 id={`${id}-heading`} className="instant-plan__heading">내 계획 받기</h2>
+    <form className="instant-plan" aria-label="계획 시작 정보" noValidate onSubmit={submit}>
       {sourceLabel && <p className="instant-plan__hint">선택한 프로그램: {sourceLabel}</p>}
-      <fieldset disabled={disabled} className="instant-plan__fields">
-        <legend>어떤 기준으로 시작할까요?</legend>
-        <div className="instant-plan__choices">
-          {([
-            ["CURRENT_RECORD", "내 기록"],
-            ["GOAL_ONLY", "목표만 있어요"],
-            ["NO_RECORD", "기록 없이"],
-          ] as const).map(([value, label]) => (
-            <label key={value} className="instant-plan__choice">
-              <input type="radio" name={`${id}-kind`} value={value} checked={kind === value}
-                onChange={() => changeKind(value)} />
-              {label}
-            </label>
-          ))}
-        </div>
-        <div className="instant-plan__field">
-          <label htmlFor={`${id}-event`}>종목</label>
-          <select id={`${id}-event`} ref={eventRef} value={event} onChange={e => setEvent(e.target.value)} required
-            aria-invalid={Boolean(errors.event)} aria-describedby={errors.event ? `${id}-event-error` : undefined}>
-            <option value="">종목 선택</option>
-            {EVENTS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-          </select>
-          {fieldError("event")}
-        </div>
-        {kind !== "NO_RECORD" && (
-          <fieldset className="instant-plan__fields">
-            <legend>{kind === "CURRENT_RECORD" ? "현재 기록" : "목표 기록"}</legend>
-            <div className="instant-plan__time-fields">
-              <div className="instant-plan__field">
-                <label htmlFor={`${id}-minutes`}>분</label>
-                <input id={`${id}-minutes`} ref={minutesRef} type="text" inputMode="numeric" autoComplete="off"
-                  value={minutes} placeholder="0" onChange={e => setMinutes(e.target.value)}
-                  aria-invalid={Boolean(errors.minutes)}
-                  aria-describedby={errors.minutes ? `${id}-minutes-error` : `${id}-time-hint`} />
-                {fieldError("minutes")}
-              </div>
-              <div className="instant-plan__field">
-                <label htmlFor={`${id}-seconds`}>초</label>
-                <input id={`${id}-seconds`} ref={secondsRef} type="text" inputMode="decimal" autoComplete="off"
-                  value={seconds} placeholder="0" onChange={e => setSeconds(e.target.value)}
-                  aria-invalid={Boolean(errors.seconds)}
-                  aria-describedby={errors.seconds ? `${id}-seconds-error` : `${id}-time-hint`} />
-                {fieldError("seconds")}
-              </div>
-            </div>
-            <p id={`${id}-time-hint`} className="instant-plan__hint">초는 소수까지 입력할 수 있어요. 빈칸은 0으로 계산해요.</p>
-          </fieldset>
-        )}
-        {kind === "CURRENT_RECORD" && (
-          <div className="instant-plan__field">
-            <label htmlFor={`${id}-achievedOn`}>기록 달성일</label>
-            <input id={`${id}-achievedOn`} ref={dateRef} type="date" min="0001-01-01"
-              max={isCalendarDate(today) ? today : undefined} value={achievedOn}
-              onChange={e => setAchievedOn(e.target.value)} aria-invalid={Boolean(errors.achievedOn)}
-              aria-describedby={errors.achievedOn ? `${id}-achievedOn-error` : undefined} />
-            {fieldError("achievedOn")}
-            <p className="instant-plan__hint">모르면 비워 두세요. 날짜가 없으면 최근 12개월 기록에서는 제외돼요.</p>
+      {step === "event" && (
+        <section className="instant-plan__step" aria-labelledby={`${id}-event-heading`}>
+          <h2 id={`${id}-event-heading`} ref={stepHeadingRef} tabIndex={-1} className="instant-plan__step-heading">
+            어떤 종목을 준비하세요?
+          </h2>
+          <div className="instant-plan__step-choices" role="group" aria-labelledby={`${id}-event-heading`}
+            aria-describedby={errors.event ? `${id}-event-error` : undefined}>
+            {EVENTS.map((option, index) => (
+              <button key={option.value} ref={index === 0 ? eventButtonRef : undefined}
+                className="instant-plan__step-choice" type="button" disabled={disabled}
+                aria-pressed={event === String(option.value)}
+                aria-describedby={errors.event ? `${id}-event-error` : undefined}
+                onClick={() => { setEvent(String(option.value)); setErrors({}); setStep("basis") }}>
+                {option.label}
+              </button>
+            ))}
           </div>
-        )}
-        {kind === "CURRENT_RECORD" && <p className="instant-plan__hint">입력한 현재 기록은 내 기록에도 남아요.</p>}
-        {kind === "GOAL_ONLY" && <p className="instant-plan__hint">목표는 현재 실력과 구분해서 사용해요.</p>}
-        {kind === "NO_RECORD" && <p className="instant-plan__hint">기록을 추정하지 않고 시작할 수 있는 계획을 확인해요.</p>}
-      </fieldset>
-      <div className="instant-plan__actions">
-        <button className="instant-plan__button" type="submit" disabled={disabled}>내 계획 받기</button>
-      </div>
+          {fieldError("event")}
+        </section>
+      )}
+      {step === "basis" && (
+        <section className="instant-plan__step" aria-labelledby={`${id}-basis-heading`}>
+          <h2 id={`${id}-basis-heading`} ref={stepHeadingRef} tabIndex={-1} className="instant-plan__step-heading">
+            어떤 기준으로 시작할까요?
+          </h2>
+          <p className="instant-plan__hint">선택한 종목: {selectedEventLabel}</p>
+          <div className="instant-plan__step-choices" role="group" aria-labelledby={`${id}-basis-heading`}>
+            {([
+              ["CURRENT_RECORD", "내 기록"],
+              ["GOAL_ONLY", "목표만 있어요"],
+              ["NO_RECORD", "기록 없이"],
+            ] as const).map(([value, label]) => (
+              <button key={value} className="instant-plan__step-choice" type="button" disabled={disabled}
+                aria-pressed={kind === value} onClick={() => chooseBasis(value)}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="instant-plan__step-actions">
+            <button className="instant-plan__secondary" type="button" disabled={disabled}
+              onClick={() => { setErrors({}); setStep("event") }}>
+              종목 다시 선택
+            </button>
+          </div>
+        </section>
+      )}
+      {step === "details" && (
+        <section className="instant-plan__step" aria-labelledby={`${id}-details-heading`}>
+          <h2 id={`${id}-details-heading`} ref={stepHeadingRef} tabIndex={-1} className="instant-plan__step-heading">
+            {kind === "CURRENT_RECORD" ? "현재 기록을 입력하세요" : "목표 기록을 입력하세요"}
+          </h2>
+          <p className="instant-plan__hint">선택한 종목: {selectedEventLabel}</p>
+          {kind !== "NO_RECORD" && (
+            <fieldset className="instant-plan__fields" disabled={disabled}>
+              <legend>{kind === "CURRENT_RECORD" ? "현재 기록" : "목표 기록"}</legend>
+              <div className="instant-plan__time-fields">
+                <div className="instant-plan__field">
+                  <label htmlFor={`${id}-minutes`}>분</label>
+                  <input id={`${id}-minutes`} ref={minutesRef} type="text" inputMode="numeric" autoComplete="off"
+                    value={minutes} placeholder="0" onChange={e => setMinutes(e.target.value)}
+                    aria-invalid={Boolean(errors.minutes)}
+                    aria-describedby={errors.minutes ? `${id}-minutes-error` : `${id}-time-hint`} />
+                  {fieldError("minutes")}
+                </div>
+                <div className="instant-plan__field">
+                  <label htmlFor={`${id}-seconds`}>초</label>
+                  <input id={`${id}-seconds`} ref={secondsRef} type="text" inputMode="decimal" autoComplete="off"
+                    value={seconds} placeholder="0" onChange={e => setSeconds(e.target.value)}
+                    aria-invalid={Boolean(errors.seconds)}
+                    aria-describedby={errors.seconds ? `${id}-seconds-error` : `${id}-time-hint`} />
+                  {fieldError("seconds")}
+                </div>
+              </div>
+              <p id={`${id}-time-hint`} className="instant-plan__hint">초는 소수까지 입력할 수 있어요. 빈칸은 0으로 계산해요.</p>
+            </fieldset>
+          )}
+          {kind === "CURRENT_RECORD" && (
+            <details className="instant-plan__date-disclosure" open={dateOpen} onToggle={handleDateToggle}>
+              <summary>기록 날짜 추가</summary>
+              <div className="instant-plan__date-fields">
+                <div className="instant-plan__field">
+                  <label htmlFor={`${id}-achievedOn`}>기록 달성일</label>
+                  <input id={`${id}-achievedOn`} ref={dateRef} type="date" min="0001-01-01"
+                    max={isCalendarDate(today) ? today : undefined} value={achievedOn}
+                    onChange={e => setAchievedOn(e.target.value)} aria-invalid={Boolean(errors.achievedOn)}
+                    aria-describedby={errors.achievedOn ? `${id}-achievedOn-error` : undefined} />
+                  {fieldError("achievedOn")}
+                </div>
+                <p className="instant-plan__hint">모르면 비워 두세요. 날짜가 없으면 최근 12개월 기록에서는 제외돼요.</p>
+              </div>
+            </details>
+          )}
+          {kind === "CURRENT_RECORD" && <p className="instant-plan__hint">입력한 현재 기록은 내 기록에도 남아요.</p>}
+          {kind === "GOAL_ONLY" && <p className="instant-plan__hint">목표는 현재 실력과 구분해서 사용해요.</p>}
+          <div className="instant-plan__step-actions">
+            <button className="instant-plan__secondary" type="button" disabled={disabled}
+              onClick={() => { setErrors({}); setStep("basis") }}>
+              기준 다시 선택
+            </button>
+            <button className="instant-plan__button" type="submit" disabled={disabled}>
+              {kind === "CURRENT_RECORD" ? "기록 입력 완료" : "목표 입력 완료"}
+            </button>
+          </div>
+        </section>
+      )}
     </form>
   )
 }

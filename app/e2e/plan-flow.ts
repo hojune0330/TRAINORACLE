@@ -34,13 +34,12 @@ export async function completeQuickPlan(page: Page, options: {
 }
 
 export async function enterPlanWithoutRecord(page: Page, event: string | RegExp = /^1500m/u): Promise<void> {
-  await page.getByRole("radio", { name: "기록 없이" }).click()
   const match = typeof event === "string" ? event : event.source
-  const distance = /하프|21097/u.test(match) ? "21097" : /마라톤|42195/u.test(match) ? "42195"
-    : /10km|10000/u.test(match) ? "10000" : /5km|5000/u.test(match) ? "5000"
-    : /3000/u.test(match) ? "3000" : /800/u.test(match) ? "800" : "1500"
-  await page.getByRole("combobox", { name: "종목" }).selectOption(distance)
-  await page.getByRole("button", { name: "내 계획 받기" }).click()
+  const label = /하프|21097/u.test(match) ? "하프 마라톤" : /마라톤|42195/u.test(match) ? "마라톤"
+    : /10km|10000/u.test(match) ? "10km" : /5km|5000/u.test(match) ? "5km"
+    : /3000/u.test(match) ? "3000m" : /800/u.test(match) ? "800m" : "1500m"
+  await page.getByRole("button", { name: label, exact: true }).click()
+  await page.getByRole("button", { name: "기록 없이", exact: true }).click()
 }
 
 export async function completeDetailedPlan(page: Page, options: {

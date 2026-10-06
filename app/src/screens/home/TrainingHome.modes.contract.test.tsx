@@ -31,6 +31,8 @@ describe("training home presentation", () => {
       sourceLabel="출처 · 경기 기록 · 2026.09.12 / 2026.09.28"
       onOpen={open}
     />} />)
+    expect(screen.getByRole("region", { name: "오라클 · 내 기록 결과" })).not.toBeVisible()
+    fireEvent.click(screen.getByText("내 오라클 살펴보기"))
     const preview = screen.getByRole("region", { name: "오라클 · 내 기록 결과" })
     expect(preview).toHaveAttribute("data-oracle-kind", "personal")
     expect(within(preview).getByText(/2026\.09\.12 \/ 2026\.09\.28/u)).toBeVisible()
@@ -59,6 +61,8 @@ describe("training home presentation", () => {
       sourceLabel="출처 · 예시 데이터"
       onOpen={vi.fn()}
     />} />)
+    expect(screen.getByText("출처 · 예시 데이터")).not.toBeVisible()
+    fireEvent.click(screen.getByText("오라클 결과 예시 보기"))
     expect(screen.getByRole("region", { name: "오라클 · 예시 결과" })).toBeVisible()
     expect(screen.getByText("출처 · 예시 데이터")).toBeVisible()
   })
@@ -66,7 +70,7 @@ describe("training home presentation", () => {
     render(<TrainingHome model={BASE} safetyNotice={<div data-testid="safety">안전 안내</div>} />)
     expect(screen.getByRole("banner").nextElementSibling).toBe(screen.getByTestId("safety"))
   })
-  it("orders the prepared Oracle result before training actions and recent journal", () => {
+  it("keeps today's action before optional Oracle detail and recent journal", () => {
     render(<TrainingHome
       model={TRAINING}
       safetyNotice={<div data-testid="safety">안전 안내</div>}
@@ -74,12 +78,13 @@ describe("training home presentation", () => {
       recentJournal={<div data-testid="recent-journal">하루 기록 1개</div>}
     />)
     const safety = screen.getByTestId("safety")
-    const preview = screen.getByRole("region", { name: "오라클 · 기록 일부로 확인" })
+    const preview = screen.getByText("내 오라클 살펴보기")
     const next = screen.getByRole("region", { name: "다음 훈련" })
     const today = screen.getByLabelText("오늘")
     const journal = screen.getByTestId("recent-journal")
     expect(safety.compareDocumentPosition(preview) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
-    expect(preview.compareDocumentPosition(next) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    expect(next.compareDocumentPosition(preview) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    expect(today.compareDocumentPosition(preview) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     expect(next.compareDocumentPosition(today) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     expect(today.compareDocumentPosition(journal) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
   })

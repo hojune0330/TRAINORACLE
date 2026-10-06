@@ -59,15 +59,13 @@ export function TrainingHome({
         <h1 id="home-hub-title">{model.homeMode === "WELCOME" ? "오늘 운동을 기록해요" : model.homeMode === "TRAINING" ? "오늘의 훈련" : "내 기록"}</h1>
       </section>
 
-      {oraclePreview ?? (onOpenOracle && <section className="home-hub__oracle-fallback" aria-label="오라클">
-        <p>오라클에서 결과를 살펴볼 수 있어요.</p>
-        <button className="home-hub__text-action" type="button" onClick={() => onOpenOracle("level")}>오라클 결과 보기<ChevronRight aria-hidden="true" size={17} /></button>
-      </section>)}
-
       {model.homeMode === "WELCOME" ? <WelcomeToday model={model} onWriteLog={onWriteLog} onOpenPlan={onOpenPlan} onOpenGuide={onOpenGuide} /> : <>
         {next !== null && <NextTrainingCard next={next} onOpen={nextAction} />}
         <TodaySection model={model} onWriteLog={onWriteLog} onOpenToday={onOpenToday} todayContext={todayContext} />
       </>}
+
+      {oraclePreview ? <InfoDisclosure title={model.homeMode === "WELCOME" ? "오라클 결과 예시 보기" : "내 오라클 살펴보기"}>{oraclePreview}</InfoDisclosure>
+        : onOpenOracle && <button className="home-hub__text-action" type="button" onClick={() => onOpenOracle("level")}>오라클 결과 보기<ChevronRight aria-hidden="true" size={17} /></button>}
 
       {model.homeMode !== "WELCOME" && <section className="home-hub__summary">
         <div className="home-hub__section-heading">

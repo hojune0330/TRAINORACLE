@@ -47,7 +47,8 @@ try {
   // Storage denial must not stop the local-only app from opening.
 }
 
-if (import.meta.env.DEV && !showP3PaceHarness) {
+// Diagnostic overlays can cover mobile navigation; enable only on request.
+if (import.meta.env.DEV && !showP3PaceHarness && new URLSearchParams(window.location.search).get("devtools") === "1") {
   void import("react-grab")
   void import("react-scan").then(({ scan }) => scan({ enabled: true, showToolbar: true }))
 }

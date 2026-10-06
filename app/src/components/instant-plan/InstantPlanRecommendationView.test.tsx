@@ -55,7 +55,7 @@ describe("InstantPlanRecommendationView", () => {
     expect(screen.getByText(recommendation.firstSessionLabel)).toBeVisible()
     const schedule = screen.getByRole("region", { name: "이번 일정" })
     expect(screen.getByRole("button", { name: "이 일정으로 시작" }).compareDocumentPosition(schedule))
-      .toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+      .toBe(Node.DOCUMENT_POSITION_PRECEDING)
     expect(within(schedule).getByRole("button", { name: /2026년 9월 21일 월요일/ })).toBeVisible()
     expect(within(schedule).getByRole("button", { name: /2026년 9월 22일 화요일/ })).toBeVisible()
     expect(within(schedule).getByText("오전")).toBeVisible()
@@ -162,6 +162,8 @@ describe("InstantPlanRecommendationView", () => {
     expect(screen.queryByRole("button", { name: "다른 계획 보기" })).not.toBeInTheDocument()
     rerender(<InstantPlanRecommendationView recommendation={recommendation} actionState={{ kind: "READY" }} onStart={vi.fn()}
       onEditSchedule={onEditSchedule} onShowAlternatives={onShowAlternatives} />)
+    expect(screen.getByRole("button", { name: "다른 계획 보기" })).not.toBeVisible()
+    fireEvent.click(screen.getByText("일정·훈련 바꾸기"))
     fireEvent.click(screen.getByRole("button", { name: "시작일·훈련일 바꾸기" }))
     fireEvent.click(screen.getByRole("button", { name: "다른 계획 보기" }))
     expect(onEditSchedule).toHaveBeenCalledTimes(1)

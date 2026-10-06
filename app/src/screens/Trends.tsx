@@ -57,6 +57,8 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
   const navigation = useAppOverlayNavigation()
   const [section, setSection] = React.useState<OracleHubSection>(initialOracleSection ?? "training")
   const [detail, setDetail] = React.useState<AnalysisSection>(initialContext?.section ?? "summary")
+  const [detailMenuOpen, setDetailMenuOpen] = React.useState(false)
+  const detailMenu = React.useRef<HTMLDetailsElement>(null)
   React.useEffect(() => { if (initialOracleSection) setSection(initialOracleSection) }, [initialOracleSection])
   React.useEffect(() => {
     if (!initialContext) return
@@ -115,13 +117,19 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
               onClick={() => { setSection(item.id); onOracleSectionChange?.(item.id) }}>{item.label}</button>
           ))}
         </div>
-        {section === "training" && <div className="trends-hub__drilldowns" role="group" aria-label="훈련 분석 자세히 보기">
+        {section === "training" && <details ref={detailMenu} className="trends-hub__detail-menu" open={detailMenuOpen}
+          onToggle={event => setDetailMenuOpen(event.currentTarget.open)}>
+          <summary>{detail === "summary" ? "훈련량·구성·변화 보기" : `${ANALYSIS_SECTIONS.find(item => item.id === detail)?.label} · 다른 항목 보기`}</summary>
+          <div className="trends-hub__drilldowns" role="group" aria-label="훈련 분석 자세히 보기">
           {ANALYSIS_SECTIONS.map(item => <button key={item.id} type="button" aria-pressed={detail === item.id}
             onClick={() => {
               setDetail(item.id)
+              setDetailMenuOpen(false)
               onContextChange?.({ ...initialContext, section: item.id })
+              detailMenu.current?.querySelector("summary")?.focus()
             }}>{item.label}</button>)}
-        </div>}
+          </div>
+        </details>}
         {initialContext?.savedDate && section === "training" && detail === initialContext.section && (
           <p className="trends-hub__saved-context" role="status">
             {initialContext.savedDate}에 저장한 {initialContext.metric === "PAIN_MAX" ? "통증을" : initialContext.metric === "MOOD" ? "기분을" : "거리를"} 월별 기록과 함께 볼 수 있어요.
@@ -155,9 +163,7 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
         )}
         {section === "profile" && <section className="trends-record-reading" aria-labelledby="trends-preferences-title">
           <div><p>러닝 취향 · 선택 사항</p><h2 id="trends-preferences-title">내가 좋아하는 달리기</h2>
-            <p>{oracleV2Enabled
-              ? "계획 선호 3문항에 답하면 취향을 정리해 볼 수 있어요. 답하지 않아도 훈련 요약과 읽을거리를 둘러볼 수 있어요."
-              : "기존 러닝 프로필을 확인할 수 있어요. 훈련 분석과 읽을거리도 함께 둘러볼 수 있어요."}</p></div>
+            <p>{oracleV2Enabled ? "질문 3개로 시작해요." : "내 러닝 프로필을 살펴봐요."}</p></div>
           {onOpenRunningProfile && <button type="button" onClick={onOpenRunningProfile}>러닝 취향 보기<ArrowRight size={18} aria-hidden="true" /></button>}
         </section>}
         {section === "profile" && onOpenRecordReading && <section className="trends-record-reading">
@@ -167,7 +173,6 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
         {section === "library" && <section className="trends-record-reading" aria-labelledby="trends-library-title">
           {oracleV2Enabled && onOpenOracleLibrary ? <>
             <div><p>훈련 · 기록 · 대회 · 돌아보기 · 배우기</p><h2 id="trends-library-title">궁금한 주제를 골라 읽어요</h2>
-              <p>개인 자료가 있으면 확인한 사실과 출처를 보여주고, 없거나 확인할 수 없으면 그 상태와 일반 안내를 구분해요.</p>
               <p className="trends-record-reading__meta">읽을거리 56편 · 8개 주제 묶음</p></div>
             <button type="button" onClick={onOpenOracleLibrary}>읽을거리 살펴보기<ArrowRight size={18} aria-hidden="true" /></button>
           </> : <>
@@ -180,7 +185,7 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
           <>
             <div style={{ padding: "0 20px" }}>
               <div className="trends-record-reading__journal">
-                <p>훈련 일지도 남기면 계획과 실제 느낌을 함께 볼 수 있어요.</p>
+                <h2>{entries.length > 0 ? "다음 운동도 남겨볼까요?" : "첫 운동부터 남겨볼까요?"}</h2>
                 <button type="button" onClick={onWriteLog}>{entries.length > 0 ? "기록 더 남기기" : "첫 기록 남기기"}<ArrowRight size={16} aria-hidden="true" /></button>
               </div>
               {!onOpenRecordReading && <GuidedEmptyState
@@ -192,7 +197,7 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
               <InfoDisclosure title="어떤 기록을 분석하나요?">
                 <PersonalOraclePanel observations={observations} today={today} planState={planState} />
               </InfoDisclosure>
-              {onOpenOracle && <OracleTopicGrid onSelectTopic={onOpenOracle} title="기록으로 알아보기" compact />}
+              {onOpenOracle && <InfoDisclosure title="기록이 쌓이면 어떤 결과를 볼까요?"><OracleTopicGrid onSelectTopic={onOpenOracle} title="기록으로 알아보기" compact /></InfoDisclosure>}
             </div>
           </>
         )}
@@ -200,17 +205,17 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
           <>
             <PersonalOraclePanel observations={observations} today={today} planState={planState} />
             {onOpenOracle && <div className="trends-hub__explore">
-              <OracleTopicGrid onSelectTopic={onOpenOracle} title="다른 주제 살펴보기" compact />
+              <InfoDisclosure title="경기·계획·훈련 비교하기"><OracleTopicGrid onSelectTopic={onOpenOracle} title="다른 주제 살펴보기" compact /></InfoDisclosure>
             </div>}
           </>
         )}
-        {section === "training" && detail === "summary" && <div className="trends-hub__coaching">
+        {section === "training" && detail === "summary" && !isEmpty && <div className="trends-hub__coaching">
           <HomeCoachingSummary revision={entryRevision} onOpenDay={onOpenCoachingDay} onOpenPlan={onOpenPlan} />
         </div>}
         {section === "training" && detail === "distance" && <CumulativeDistancePanel observations={observations} today={today} planWindow={planWindow} mode="full" />}
         {section === "training" && detail === "mix" && <EnergySystemLedgerPanel observations={observations} today={today} planState={planState} mode="full" />}
         {section === "training" && detail === "monthly" && <MonthlyTrendSection observations={observations} today={today} initialMetric={initialContext?.metric} />}
-        {section === "training" && detail === "summary" && onOpenOracle && <div className="trends-hub__explore"><OracleResume onOpenTopic={onOpenOracle} /></div>}
+        {section === "training" && detail === "summary" && onOpenOracle && <div className="trends-hub__explore"><InfoDisclosure title="관심 주제·기록할 요일"><OracleResume onOpenTopic={onOpenOracle} /></InfoDisclosure></div>}
         {section === "training" && detail !== "files" && <div style={{ padding: "0 20px" }}>
           <AnalysisExclusionNotice summary={exclusion} />
         </div>}

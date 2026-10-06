@@ -336,9 +336,7 @@ export function ActivePlan({
         </div> : undefined}
         renderAfterSchedule={(
           <>
-            {frameComplete ? (
-              <PlanAdaptationFlow state={state} onPendingChange={setHasPendingSuccessor} onPrepareNextFrame={onNextFrame} />
-            ) : (
+            {!frameComplete && (
               <div className="plan-adaptation__notice" role="status">
                 각 훈련을 마친 뒤 완료·휴식·건너뜀·통증 확인 중 하나를 기록해 주세요.
               </div>
@@ -504,6 +502,8 @@ export function ActivePlan({
       />
       </div>
       <div className="active-plan__continuity">
+        <h2>{frameComplete ? "다음 주기" : "이번 주기 이어가기"}</h2>
+        {frameComplete && <PlanAdaptationFlow state={state} onPendingChange={setHasPendingSuccessor} onPrepareNextFrame={onNextFrame} />}
         <details className="plan-session-guidance">
         <summary>다음 계획에 반영되는 내용</summary>
         <p>
@@ -538,9 +538,13 @@ export function ActivePlan({
         ) : state.activePlan.selectionActor !== "SELF" ? (
           <p>이 계획은 지도자가 선택한 계획이에요. 연결된 지도자와 다음 계획을 확인해 주세요.</p>
         ) : (
+          <details className="plan-session-guidance">
+          <summary>{frameComplete ? "현재 기준으로 새 계획안 받기" : "다음 계획은 언제 받나요?"}</summary>
+          <p>현재 일정과 기록을 기준으로 새 계획안을 보여줘요. 확인하고 선택하기 전에는 시작하지 않아요.</p>
           <button type="button" disabled={!frameComplete} onClick={onNextFrame}>
             {frameComplete ? "현재 기준으로 다음 계획안 만들기" : "현재 계획을 먼저 기록해 주세요"}
           </button>
+          </details>
         )}
       </div>
     </section>
