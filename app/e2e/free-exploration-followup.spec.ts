@@ -104,7 +104,7 @@ test("shows an executable record-based workout and opens its same stored method"
   expect(target.targetSeconds).toBe(222.2)
   await page.clock.setFixedTime(new Date(target.timestamp))
   await page.reload()
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
   const overview = page.locator(".instant-plan--today-compact")
   await expect(overview).toContainText("1000m를 약 3분 42.2초에 5회")
   await expect(overview).toContainText("반복 사이 2분 30초 조깅")

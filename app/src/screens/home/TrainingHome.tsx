@@ -1,11 +1,8 @@
-import { BookOpen, ChartNoAxesCombined, CheckCircle2, ChevronRight, Ellipsis, NotebookPen, PencilLine } from "lucide-react"
+import { BookOpen, CheckCircle2, ChevronRight, Ellipsis, NotebookPen, PencilLine } from "lucide-react"
 import { useId, type ReactNode } from "react"
 import type { HomeSession, TrainingHomeViewModel } from "../../domain/home-view-model"
 import { InfoDisclosure } from "../../components/InfoDisclosure"
-import { OracleTopicGrid } from "../../components/OracleTopicGrid"
-import { OracleResume } from "../../components/OracleResume"
 import type { OracleTopicId } from "../../domain/oracle-exploration"
-import { loadAthleteRecords } from "../../domain/athlete-records"
 import { sessionWorkoutNotation } from "../../domain/workout-notation"
 import { sessionLabel, sessionSlotLabel } from "../plan-beta/labels"
 import type { LogEntryType } from "../log-entry/shared"
@@ -29,24 +26,20 @@ type TrainingHomeProps = {
   readonly onOpenRewards?: () => void
   readonly onOpenNextTraining?: () => void
   readonly safetyNotice?: ReactNode
-  readonly hasPlan?: boolean
+  readonly oraclePreview?: ReactNode
   readonly accountEntry?: ReactNode
   readonly todayContext?: ReactNode
   readonly recentJournal?: ReactNode
   readonly installSuggestion?: ReactNode
-  readonly coaching?: ReactNode
 }
 
 export function TrainingHome({
-  model, onWriteLog, onOpenArchive, onOpenToday, onOpenGuide, onOpenPlan,
-  onOpenTrends, onOpenOracle, onOpenMore, onOpenContent, onOpenRewards, onOpenNextTraining,
-  safetyNotice, hasPlan, accountEntry, todayContext, recentJournal, installSuggestion, coaching,
+  model, onWriteLog, onOpenArchive, onOpenToday, onOpenGuide, onOpenPlan, onOpenTrends,
+  onOpenOracle, onOpenMore, onOpenContent, onOpenRewards, onOpenNextTraining,
+  safetyNotice, oraclePreview, accountEntry, todayContext, recentJournal, installSuggestion,
 }: TrainingHomeProps) {
-  const resolvedHasPlan = hasPlan ?? !model.planSummary.startsWith("저장된 계획 없음")
   const next = model.nextTraining
   const nextAction = onOpenNextTraining ?? onOpenPlan
-  const showOwnAnalysis = !model.showMinjiPrompt && onOpenTrends !== undefined
-  const hasPerformanceRecord = onOpenOracle !== undefined && loadAthleteRecords().some(record => record.purpose !== "RACE_GOAL")
 
   return (
     <div className="home-hub">
@@ -61,34 +54,32 @@ export function TrainingHome({
       </header>
       {safetyNotice}
 
-      {coaching ? <section className="home-hub__intro" aria-labelledby="home-hub-title"><h1 id="home-hub-title">{model.homeMode === "WELCOME" ? "오늘 운동을 기록해요" : model.homeMode === "TRAINING" ? "오늘의 훈련" : "내 기록"}</h1></section> : <section className="home-hub__intro" aria-labelledby="home-hub-title">
-        <p className="home-hub__eyebrow">{onOpenOracle ? "오라클" : model.homeMode === "WELCOME" ? "처음 기록하기" : model.homeMode === "TRAINING" ? "오늘 할 일" : "최근 기록"}</p>
-        <h1 id="home-hub-title">{onOpenOracle ? "내 훈련, 무엇부터 개선할까요?" : model.homeMode === "WELCOME" ? "오늘 운동을 기록해요" : model.homeMode === "TRAINING" ? "오늘의 훈련" : "내 기록"}</h1>
-        {onOpenOracle && <div className="home-hub__oracle-start">
-          <button className="home-hub__primary" type="button" onClick={showOwnAnalysis ? onOpenTrends : () => onOpenOracle(hasPerformanceRecord ? "level" : "focus")}>{showOwnAnalysis || hasPerformanceRecord ? "내 훈련 살펴보기" : "예시 결과 보기"}<ChevronRight aria-hidden="true" size={18} /></button>
-          <span className="home-hub__oracle-caption">{showOwnAnalysis ? model.analysisSummary : hasPerformanceRecord ? "저장한 경기 기록을 확인해요." : "기록 없이도 예시로 체험해요."}</span>
-        </div>}
-      </section>}
+      <section className="home-hub__intro" aria-labelledby="home-hub-title">
+        <p className="home-hub__eyebrow">{model.homeMode === "WELCOME" ? "처음 기록하기" : model.homeMode === "TRAINING" ? "오늘 할 일" : "최근 기록"}</p>
+        <h1 id="home-hub-title">{model.homeMode === "WELCOME" ? "오늘 운동을 기록해요" : model.homeMode === "TRAINING" ? "오늘의 훈련" : "내 기록"}</h1>
+      </section>
 
-      {!coaching && onOpenOracle && <OracleTopicGrid title="궁금한 항목부터" compact onSelectTopic={onOpenOracle} />}
-      {!coaching && onOpenOracle && <OracleResume onOpenTopic={onOpenOracle} compact />}
+      {oraclePreview ?? (onOpenOracle && <section className="home-hub__oracle-fallback" aria-label="오라클">
+        <p>오라클에서 결과를 살펴볼 수 있어요.</p>
+        <button className="home-hub__text-action" type="button" onClick={() => onOpenOracle("level")}>오라클 결과 보기<ChevronRight aria-hidden="true" size={17} /></button>
+      </section>)}
 
-      {model.homeMode === "WELCOME" ? <WelcomeToday model={model} onWriteLog={onWriteLog} onOpenPlan={onOpenPlan} compact={onOpenOracle !== undefined} /> : <>
+      {model.homeMode === "WELCOME" ? <WelcomeToday model={model} onWriteLog={onWriteLog} onOpenPlan={onOpenPlan} onOpenGuide={onOpenGuide} /> : <>
         {next !== null && <NextTrainingCard next={next} onOpen={nextAction} />}
         <TodaySection model={model} onWriteLog={onWriteLog} onOpenToday={onOpenToday} todayContext={todayContext} />
       </>}
 
-      {coaching}
-      {coaching && onOpenOracle && <OracleTopicGrid title="더 살펴보기" compact onSelectTopic={onOpenOracle} />}
-      {coaching && onOpenOracle && <OracleResume onOpenTopic={onOpenOracle} compact />}
-
-      {model.homeMode !== "WELCOME" && <section className="home-hub__summary" aria-labelledby="home-hub-summary-title">
-        <h2 id="home-hub-summary-title">기록과 계획</h2>
+      {model.homeMode !== "WELCOME" && <section className="home-hub__summary">
+        <div className="home-hub__section-heading">
+          <h2 id="home-hub-summary-title">최근 하루 기록</h2>
+          {onOpenArchive && <button type="button" onClick={onOpenArchive}>전체 기록 보기<ChevronRight aria-hidden="true" size={16} /></button>}
+        </div>
         {recentJournal}
         {!recentJournal && <SummaryRow label="최근 기록" detail={model.journalSummary} onClick={onOpenArchive} />}
-        <SummaryRow label="훈련 기록 살펴보기" detail={model.analysisSummary} onClick={onOpenTrends} icon={<ChartNoAxesCombined aria-hidden="true" size={19} />} />
-        {resolvedHasPlan && next === null && <SummaryRow label="내 훈련 계획" detail={model.planSummary} onClick={onOpenPlan} />}
-        {!resolvedHasPlan && <SummaryRow label="훈련 계획 만들기" detail={model.planSummary} onClick={onOpenPlan} />}
+      </section>}
+
+      {model.homeMode !== "WELCOME" && onOpenTrends && <section className="home-hub__summary" aria-label="훈련 기록 분석">
+        <SummaryRow label="훈련 기록 살펴보기" detail={model.analysisSummary} onClick={onOpenTrends} />
       </section>}
 
       {installSuggestion}
@@ -96,19 +87,19 @@ export function TrainingHome({
       <nav className="home-hub__explore" aria-label="훈련 도움말과 일지 꾸미기">
         {onOpenContent && <button type="button" onClick={onOpenContent}><BookOpen aria-hidden="true" size={18} /><span>훈련 배우기</span></button>}
         {onOpenRewards && <button type="button" onClick={onOpenRewards}><NotebookPen aria-hidden="true" size={18} /><span>일지 꾸미기</span></button>}
-        {model.homeMode === "WELCOME" && onOpenGuide && <button type="button" onClick={onOpenGuide}><NotebookPen aria-hidden="true" size={18} /><span>일지 예시 보기</span></button>}
       </nav>
     </div>
   )
 }
 
-function WelcomeToday({ model, onWriteLog, onOpenPlan, compact = false }: { model: TrainingHomeViewModel; onWriteLog?: (entryType?: LogEntryType) => void; onOpenPlan?: () => void; compact?: boolean }) {
+function WelcomeToday({ model, onWriteLog, onOpenPlan, onOpenGuide }: { model: TrainingHomeViewModel; onWriteLog?: (entryType?: LogEntryType) => void; onOpenPlan?: () => void; onOpenGuide?: () => void }) {
   return <section className="home-hub__today home-hub__today--welcome" aria-labelledby="home-hub-today">
     <div id="home-hub-today" className="home-hub__section-label">오늘</div>
-    {!compact && <p>{model.todayMessage}</p>}
+    <p>{model.todayMessage}</p>
     <nav aria-label="오늘 기록 또는 계획 만들기">
-    <button className={compact ? "home-hub__text-action" : "home-hub__primary"} type="button" onClick={() => onWriteLog?.("quick-session")}><PencilLine aria-hidden="true" size={19} /><span>오늘 기록 남기기</span><ChevronRight aria-hidden="true" size={18} /></button>
+    <button className="home-hub__primary" type="button" onClick={() => onWriteLog?.("quick-session")}><PencilLine aria-hidden="true" size={19} /><span>오늘 기록 남기기</span><ChevronRight aria-hidden="true" size={18} /></button>
     <button className="home-hub__text-action" type="button" onClick={onOpenPlan}>훈련 계획 만들기<ChevronRight aria-hidden="true" size={17} /></button>
+    {onOpenGuide && <button className="home-hub__text-action" type="button" onClick={onOpenGuide}>일지 예시 보기<ChevronRight aria-hidden="true" size={17} /></button>}
     </nav>
   </section>
 }
@@ -136,9 +127,9 @@ function TodaySection({ model, onWriteLog, onOpenToday, todayContext }: { model:
   </section>
 }
 
-function SummaryRow({ label, detail, onClick, icon }: { label: string; detail: string; onClick?: () => void; icon?: ReactNode }) {
+function SummaryRow({ label, detail, onClick }: { label: string; detail: string; onClick?: () => void }) {
   const descriptionId = useId()
-  return <button className="home-hub__summary-row" type="button" onClick={onClick} aria-label={label} aria-describedby={descriptionId}><span className="home-hub__summary-copy"><strong>{label}</strong><small id={descriptionId}>{detail}</small></span>{icon ?? <ChevronRight aria-hidden="true" size={18} />}</button>
+  return <button className="home-hub__summary-row" type="button" onClick={onClick} aria-label={label} aria-describedby={descriptionId}><span className="home-hub__summary-copy"><strong>{label}</strong><small id={descriptionId}>{detail}</small></span><ChevronRight aria-hidden="true" size={18} /></button>
 }
 
 function nextTrainingDateLabel(iso: string): string {

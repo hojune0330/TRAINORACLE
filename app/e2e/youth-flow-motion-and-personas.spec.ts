@@ -30,7 +30,7 @@ async function expectActiveQuestionAtReadingPosition(page: import("@playwright/t
 test("moves from a choice to the next question and gives a clear journal save confirmation", async ({ page }, testInfo) => {
   await resetLocalState(page)
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
 
   await expect(page.getByRole("combobox", { name: "종목" })).toBeVisible()
   await enterPlanWithoutRecord(page)
@@ -74,7 +74,7 @@ test("a high-school athlete can make a ten-day two-a-day plan without prior reco
   test.skip(testInfo.project.name !== "mobile-chromium", "375px release persona")
   await resetLocalState(page)
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
 await completeDetailedPlan(page, { frame: /^10일 계획 받기/u, event: /^1500m/u, division: /고등부/u, experience: /구조화된 훈련과 경기 경험이 많아요/u, days: /^매일/u, focus: /조금 힘들게 꾸준히.*LT/u, time: /날마다 달라요/u, twice: true })
 
   await expect(page.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
@@ -89,7 +89,7 @@ test("a self-directed runner with no journal can still reach an RPE plan", async
   test.skip(testInfo.project.name !== "mobile-chromium", "375px release persona")
   await resetLocalState(page)
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
   await completeDetailedPlan(page, { frame: /^7일만 먼저 받기/u, event: /^5000m/u, division: /일반부/u, experience: /훈련 계획에 맞춰 달려 본 경험이 있어요/u, days: /^3일/u, focus: /편하게 오래.*BASE/u, time: /저녁에 운동해요/u })
 
   await expect(page.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()

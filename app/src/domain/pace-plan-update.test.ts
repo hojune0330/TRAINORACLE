@@ -107,6 +107,20 @@ beforeEach(() => { localStorage.clear(); setActiveLocalAccount(null); vi.mocked(
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); setActiveLocalAccount(null); localStorage.clear() })
 
 describe("bounded pace update receipt", () => {
+  it("keeps automatic numeric no-ops but retains an explicitly chosen actual record basis", async () => {
+    const input = seeded()
+    input.record = { ...record, performanceSeconds: oldRecord.performanceSeconds }
+    localStorage.setItem(activeAthleteRecordsStorageKey(), JSON.stringify([oldRecord, input.record]))
+    expect(preparePacePlanUpdate(input).kind).toBe("blocked")
+    const explicit = preparePacePlanUpdate({ ...input, explicitPaceBasis: true })
+    if (explicit.kind !== "ready") throw Error(explicit.message)
+    expect(explicit.proposal.explicitPaceBasis).toBe(true)
+    expect(binding(explicit.proposal.after.activePlan.sessions[1]!).inputs.paceReferences?.[0]?.recordId).toBe(input.record.id)
+    expect(isPaceOnlyCatalogReplacement(input.state.activePlan.sessions[1]!, explicit.proposal.after.activePlan.sessions[1]!)).toBe(true)
+    vi.useFakeTimers(); vi.setSystemTime(new Date(now))
+    const result = await applyActivePlanEdit(explicit.proposal, true)
+    expect(result.kind).toBe("applied")
+  })
   it("keeps an explicitly selected goal distinct when its numeric pace equals the actual record", () => {
     const input = fixture()
     input.record = { ...record, purpose: "RACE_GOAL", achievedOn: null, performanceSeconds: oldRecord.performanceSeconds }

@@ -4,7 +4,7 @@ import type { Page } from "@playwright/test"
 async function openAthleteRecords(page: Page): Promise<void> {
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" })
-    .getByRole("button", { name: "계획" })
+    .getByRole("button", { name: "훈련" })
     .click()
   await page.locator("summary", { hasText: "기록 관리·훈련표 읽기" }).click()
   await page.getByRole("button", { name: "내 경기 기록", exact: true }).click()

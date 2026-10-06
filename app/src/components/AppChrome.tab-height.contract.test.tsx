@@ -55,7 +55,7 @@ describe("TabBar measured shell height", () => {
     tabHeight.value = 70
     const { container, unmount } = render(
       <div className="app-shell" style={{ "--app-shell-tab-bar-height": "47px" } as React.CSSProperties}>
-        <TabBar tab="home" onTab={vi.fn()} />
+        <TabBar tab="home" onTab={vi.fn()} onStartRecording={vi.fn()} />
       </div>,
     )
     const nav = container.querySelector(".app-tab-bar") as HTMLElement
@@ -75,7 +75,7 @@ describe("TabBar measured shell height", () => {
   })
 
   it("does not write a zero measurement and removes a newly-added value on cleanup", () => {
-    const { container, unmount } = render(<div className="app-shell"><TabBar tab="home" onTab={vi.fn()} /></div>)
+    const { container, unmount } = render(<div className="app-shell"><TabBar tab="home" onTab={vi.fn()} onStartRecording={vi.fn()} /></div>)
     const shell = (container.querySelector(".app-tab-bar") as HTMLElement).closest(".app-shell") as HTMLElement
     expect(shell.style.getPropertyValue("--app-shell-tab-bar-height")).toBe("")
 
@@ -90,7 +90,7 @@ describe("TabBar measured shell height", () => {
   it("takes an initial measurement when ResizeObserver is unavailable", () => {
     setResizeObserver(undefined)
     tabHeight.value = 54
-    const { container, unmount } = render(<div className="app-shell"><TabBar tab="home" onTab={vi.fn()} /></div>)
+    const { container, unmount } = render(<div className="app-shell"><TabBar tab="home" onTab={vi.fn()} onStartRecording={vi.fn()} /></div>)
     const shell = (container.querySelector(".app-tab-bar") as HTMLElement).closest(".app-shell") as HTMLElement
 
     expect(shell.style.getPropertyValue("--app-shell-tab-bar-height")).toBe("44px")

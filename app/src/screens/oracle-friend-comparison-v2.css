@@ -1,0 +1,30 @@
+.oracle-friend { color: var(--ink); background: var(--paper, var(--surface)); font-family: inherit; letter-spacing: 0; }
+.oracle-friend *, .oracle-friend *::before, .oracle-friend *::after { box-sizing: border-box; min-width: 0; }
+.oracle-friend__header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+.oracle-friend__header > span { flex: 1; }
+.oracle-friend__body { max-width: 720px; margin-inline: auto; padding: 16px; }
+.oracle-friend h1 { display: flex; align-items: center; gap: 8px; font-size: 22px; line-height: 1.4; }
+.oracle-friend h1 svg { flex-shrink: 0; }
+.oracle-friend h2 { font-size: 18px; line-height: 1.4; }
+.oracle-friend p, .oracle-friend label, .oracle-friend legend, .oracle-friend dt, .oracle-friend dd { line-height: 1.6; overflow-wrap: anywhere; }
+.oracle-friend button, .oracle-friend select, .oracle-friend input:not([type="checkbox"]) { min-height: 44px; max-width: 100%; font: inherit; color: inherit; background: var(--surface, var(--paper)); border: 1px solid var(--line); border-radius: 4px; padding: 8px; }
+.oracle-friend button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 44px; cursor: pointer; overflow-wrap: anywhere; }
+.oracle-friend button:disabled { opacity: .5; cursor: default; }
+.oracle-friend :is(button, input, select, summary):focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
+.oracle-friend fieldset { margin: 16px 0; padding: 8px 0; border: 0; }
+.oracle-friend legend { font-weight: 600; }
+.oracle-friend__choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 12px; }
+.oracle-friend__choices label, .oracle-friend__permission { display: flex; align-items: flex-start; gap: 8px; min-height: 44px; padding-block: 8px; }
+.oracle-friend input[type="checkbox"] { flex: 0 0 20px; width: 20px; height: 20px; margin-top: 3px; accent-color: var(--brand); }
+.oracle-friend__field { display: grid; gap: 4px; margin-block: 12px; }
+.oracle-friend__field input, .oracle-friend__field select { width: 100%; }
+.oracle-friend details { border-top: 1px solid var(--line); padding-block: 8px; }
+.oracle-friend summary { min-height: 44px; padding-block: 12px; cursor: pointer; overflow-wrap: anywhere; }
+.oracle-friend__topics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; margin-block: 20px; }
+.oracle-friend__topics button[aria-pressed="true"] { background: var(--ink); color: var(--paper, var(--surface)); }
+.oracle-friend__reading, .oracle-friend__sharing { border-top: 1px solid var(--line); padding-block: 16px; }
+.oracle-friend dl > div { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 12px; padding-block: 12px; border-bottom: 1px solid var(--line); }
+.oracle-friend dd { margin: 0; text-align: right; }
+.oracle-friend__notice { font-size: 12px; color: var(--ink-muted, var(--ink)); }
+.oracle-friend__export { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; margin-block: 16px; padding-block: 16px; border-block: 1px solid var(--line); }
+@media (max-width: 360px) { .oracle-friend__body { padding-inline: 12px; } .oracle-friend__choices { grid-template-columns: minmax(0, 1fr); } .oracle-friend dl > div { grid-template-columns: minmax(0, 1fr); } .oracle-friend dd { text-align: left; } }

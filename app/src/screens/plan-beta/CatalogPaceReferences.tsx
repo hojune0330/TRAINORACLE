@@ -4,6 +4,10 @@ import type { AthleteRecord } from "../../domain/athlete-records"
 import { createSegmentRecordReference, recordPaceSegments } from "../../domain/catalog-pace-reference"
 import { todayISO } from "../../domain/journal-store"
 import { derivePaceRecordOptions, type PaceRecordSelectionBadge } from "../../domain/pace-record-options"
+import React from "react"
+import { useAppOverlayNavigation } from "../../components/AppOverlayNavigation"
+import { localAccountScopeSnapshot, localAccountScopeIsCurrent } from "../../domain/account/local-account-scope"
+import { isEligiblePaceRecordCurrent } from "../../domain/account/eligible-account-pace-records"
 
 const badgeLabel: Record<PaceRecordSelectionBadge, string> = {
   RECENT_ACTUAL: "최근 경기", ROLLING_12_BEST: "최근 12개월 최고", LIFETIME_BEST: "입력된 개인 최고", GOAL: "목표",
@@ -13,6 +17,11 @@ export function CatalogPaceReferences({ catalogId, inputs, records, disabled, on
   catalogId: string; inputs: WorkoutCalculationInputs; records: readonly AthleteRecord[]; disabled: boolean;
   onChange: (segmentId: string, value: SegmentPaceReference | null) => void;
 }) {
+  const navigation = useAppOverlayNavigation()
+  const live = React.useRef(true)
+  const currentInputs = React.useRef(inputs)
+  currentInputs.current = inputs
+  React.useEffect(() => { live.current = true; return () => { live.current = false } }, [])
   const segments = recordPaceSegments(catalogId, inputs)
   const available = records.filter(r => r.verificationState !== "UNVERIFIED"
     && PACE_EVENT_METERS.some(d => d === canonicalPaceDistance(r.eventDistanceM)))
@@ -38,6 +47,21 @@ export function CatalogPaceReferences({ catalogId, inputs, records, disabled, on
             }))}
           </select>
         </label>
+        {navigation?.openPaceCalculator && <button type="button" disabled={disabled} onClick={() => {
+          const scope = localAccountScopeSnapshot()
+          const fingerprint = JSON.stringify(inputs)
+          navigation.openPaceCalculator?.({ record: available.find(record => record.id === selected?.recordId) ?? recommended,
+            allowedEvents: eligibleGroups.map(group => group.eventDistanceM), selectionLabel: `${segment.distanceM ? `${segment.distanceM}m` : "시간형"} 구간의 기준`,
+            calculationModel: eligibleGroups.length ? catalogRecordPaceModel(segment.intent, eligibleGroups[0]!.eventDistanceM, segment.referenceEventDistanceM)! : undefined,
+            onSelectRecord: record => {
+              if (!live.current || !localAccountScopeIsCurrent(scope) || JSON.stringify(currentInputs.current) !== fingerprint || !isEligiblePaceRecordCurrent(record)) return false
+              const model = catalogRecordPaceModel(segment.intent, record.eventDistanceM, segment.referenceEventDistanceM)
+              if (!model) return false
+              onChange(segment.segmentId, createSegmentRecordReference(segment.segmentId, record, todayISO(), model))
+              return true
+            },
+          })
+        }}>페이스 계산 · 기준 바꾸기</button>}
         {!selected && recommended && <button type="button" disabled={disabled} onClick={() => choose(recommended)}>최근 경기 {formatPaceSeconds(recommended.performanceSeconds)} 사용</button>}
         {selected && <p role="status">{selected.kind === "GOAL" ? "목표기록 기준이에요. 현재 경기력을 뜻하지 않아요." : selected.achievedOn === null ? "날짜 미입력 기록이에요. 최근 기록인지 확인해 주세요." : selected.model === "FIVE_K_THRESHOLD_V1" ? `${selected.achievedOn} 5km 기록에서 계산한 참고 범위예요. 측정한 개인 역치는 아니에요.` : `${selected.achievedOn} 경기의 평균 속도예요.`} 반복과 회복은 그대로예요.</p>}
       </div>

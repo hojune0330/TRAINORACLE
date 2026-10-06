@@ -44,13 +44,15 @@ test("keeps the welcome home clear and usable on narrow phones", async ({ page }
     await expect(page.getByRole("button", { name: "오늘 기록 남기기", exact: true })).toBeInViewport({ ratio: 1 })
     await page.getByRole("button", { name: "오늘 기록 남기기" }).scrollIntoViewIfNeeded()
     await expect(page.getByRole("button", { name: "오늘 기록 남기기" })).toBeInViewport({ ratio: 1 })
-    const topics = page.getByRole("region", { name: "더 살펴보기", exact: true })
-    await expect(topics.getByRole("button", { name: /결과 보기$/u })).toHaveCount(6)
-    await expect(topics).toBeVisible()
+    const result = page.getByRole("region", { name: "오라클 · 예시 결과", exact: true })
+    await expect(result).toBeVisible()
+    await expect(result).toContainText("예시")
+    await expect(page.getByRole("region", { name: "더 살펴보기", exact: true })).toHaveCount(0)
     const services = page.getByRole("navigation", { name: "훈련 도움말과 일지 꾸미기" })
-    for (const name of ["훈련 배우기", "일지 꾸미기", "일지 예시 보기"]) {
+    for (const name of ["훈련 배우기", "일지 꾸미기"]) {
       await expect(services.getByRole("button", { name })).toBeVisible()
     }
+    await expect(page.getByRole("button", { name: "일지 예시 보기" })).toBeVisible()
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
     await page.screenshot({
       path: testInfo.outputPath(`first-screen-${viewport.width}x${viewport.height}.png`),

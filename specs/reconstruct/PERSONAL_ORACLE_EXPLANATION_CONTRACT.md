@@ -27,6 +27,21 @@ distance, energy-system, and active-plan progress contracts. It does not create 
 performance score, training-method compatibility score, medical statement, training
 prescription, friend comparison, or automatic adaptation authority.
 
+### Scoped Extension: Running Profile (2026-10-04)
+
+[RUNNING_PROFILE_CONTRACT.md](./RUNNING_PROFILE_CONTRACT.md) adds a separate
+self-reported preference screen alongside existing eligible record, training and RPE
+views. Preference answers are not inputs to the V1 calculations below, and cannot
+change prescription, safety gates or training volume. This extension does not promote
+this draft's unresolved scientific or canonical questions. Its implementation and
+production evidence are reported separately.
+
+The later owner request to prepare meaningful scores and characters is covered by
+[the score and character preparation plan](../../reports/plans/ORACLE_RUNNING_PROFILE_SCORE_CHARACTER_PLAN_2026-10-04.md).
+It proposes separately labeled self-report indices and record metrics; it does not
+activate scores in this V1 explanation or grant prescription authority. The earlier
+scope restriction is not a permanent product-wide ban on preparing such features.
+
 ---
 
 ## 2. Eligible Inputs

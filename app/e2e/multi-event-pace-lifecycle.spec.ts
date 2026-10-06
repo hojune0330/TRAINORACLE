@@ -53,7 +53,7 @@ async function plan(page: Page) {
   expect(result?.version, "An actual accepted plan must exist").toBe(3)
   return result
 }
-async function tab(page: Page, name = "계획") {
+async function tab(page: Page, name = "훈련") {
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name, exact: true }).click()
 }
 function timeText(seconds: number) {

@@ -45,7 +45,7 @@ async function seedRecords(page: Page, records: unknown): Promise<void> {
 async function openPlan(page: Page): Promise<void> {
   await page.goto(`${appPath}?app=1`)
   await page.getByRole("navigation", { name: "주 탭" })
-    .getByRole("button", { name: "계획" })
+    .getByRole("button", { name: "훈련" })
     .click()
 }
 
@@ -175,7 +175,7 @@ for (const viewport of [
     })
     await page.reload()
     await page.getByRole("navigation", { name: "주 탭" })
-      .getByRole("button", { name: "계획" })
+      .getByRole("button", { name: "훈련" })
       .click()
     const activeSession = await openActiveSessionDetails(page, fiveKNotation)
     await activeSession.getByRole("button", { name: "훈련 방법과 이유", exact: true }).click()
@@ -242,7 +242,7 @@ test("keeps youth and adult 5K eligibility and dose identical", async ({ browser
 
     await page.reload()
     await page.getByRole("navigation", { name: "주 탭" })
-      .getByRole("button", { name: "계획" })
+      .getByRole("button", { name: "훈련" })
       .click()
     await openActiveSessionDetails(page, fiveKNotation)
     await context.close()

@@ -23,6 +23,9 @@ return z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("ready") }).strict(),
   z.object({ kind: z.literal("calendar-decoration-support"), version: z.literal(1) }).strict(),
   z.object({ kind: z.literal("athlete-record-support"), version: z.literal(1) }).strict(),
+  z.object({ kind: z.literal("running-profile-support"), version: z.literal(1) }).strict(),
+  z.object({ kind: z.literal("oracle-v2-support"), version: z.literal(2) }).strict(),
+  z.object({ kind: z.literal("oracle-v2-restart-support"), version: z.literal(1) }).strict(),
   document.extend({ kind: z.literal("document") }),
   z.object({ kind: z.literal("list"), documents: z.array(document).max(50), nextCursor: z.uuid().nullable(),
     deletedDocuments: z.array(z.object({ documentId: z.uuid(), revision }).strict()).max(50).optional() }).strict(),
@@ -41,6 +44,9 @@ export type AccountJournalResponse<T = AccountJournalDraft> =
   | { kind: "ready" }
   | { kind: "calendar-decoration-support"; version: 1 }
   | { kind: "athlete-record-support"; version: 1 }
+  | { kind: "running-profile-support"; version: 1 }
+  | { kind: "oracle-v2-support"; version: 2 }
+  | { kind: "oracle-v2-restart-support"; version: 1 }
   | { kind: "document"; documentId: string; revision: number; document: T }
   | { kind: "list"; documents: { documentId: string; revision: number; document: T }[]; nextCursor: string | null; deletedDocuments?: { documentId: string; revision: number }[] }
   | { kind: "deleted"; documentId: string; revision: number; operationId?: string }
@@ -48,11 +54,15 @@ export type AccountJournalResponse<T = AccountJournalDraft> =
   | { kind: "history"; documentId: string; versions: { revision: number; document: T; replacedAt: string; expiresAt: string; reason: "replaced" | "trash" }[] }
   | { kind: "saved"; documentId: string; operationId: string; revision: number }
   | { kind: "conflict"; documentId: string; operationId: string; currentRevision: number }
-export type AccountJournalRequest<T = AccountJournalDraft> =
+export type AccountJournalRequest<T = AccountJournalDraft> = { supportedRunningProfileVersions?: (1 | 2)[] } & (
   | ConfirmComparisonRelationRequest | ReleaseComparisonRelationRequest
   | { action: "status" }
   | { action: "calendarDecorationSupport" }
   | { action: "athleteRecordSupport" }
+  | { action: "runningProfileSupport" }
+  | { action: "oracleV2Support" }
+  | { action: "oracleV2RestartSupport" }
+  | { action: "restartOracleV2"; documentId: string; operationId: string; expectedRevision: number; confirmation: "START_NEW_ORACLE_V2" }
   | { action: "list"; cursor?: string; collection?: "JOURNAL" }
   | { action: "read"; documentId: string }
   | { action: "history"; documentId: string; collection?: "JOURNAL" }
@@ -62,7 +72,7 @@ export type AccountJournalRequest<T = AccountJournalDraft> =
       document: T; writePurpose?: AccountJournalWritePurpose }
   | { action: "correctImportedObservation"; documentId: string; operationId: string; expectedRevision: number;
       previousContentRevisionFingerprint: string; replacementObservation: FileObservationV1;
-      confirmedChangedFields: readonly string[] }
+      confirmedChangedFields: readonly string[] })
 
 export type AccountJournalResult<T = AccountJournalDraft> =
   | { ok: true; data: AccountJournalResponse<T> }
@@ -123,7 +133,7 @@ export async function requestAccountDocument<T>(
       if (request.action === "athleteRecordSupport" && [400, 404, 501].includes(status)) {
         return { ok: false, code: "ATHLETE_RECORD_UNSUPPORTED" }
       }
-      if ([409, 422].includes(status) && ["save", "delete", "restore", "correctImportedObservation", "confirmComparisonRelation", "releaseComparisonRelation"].includes(request.action)) {
+      if ([409, 422].includes(status) && ["save", "delete", "restore", "restartOracleV2", "correctImportedObservation", "confirmComparisonRelation", "releaseComparisonRelation"].includes(request.action)) {
         responseData = await error.context.clone().json()
         if (!current()) return { ok: false, code: "STALE_RESPONSE" }
         const rejection = (responseData as { error?: unknown })?.error
@@ -142,6 +152,9 @@ export async function requestAccountDocument<T>(
     const correctKind = request.action === "status" ? result.kind === "ready"
       : request.action === "calendarDecorationSupport" ? result.kind === "calendar-decoration-support"
       : request.action === "athleteRecordSupport" ? result.kind === "athlete-record-support"
+      : request.action === "runningProfileSupport" ? result.kind === "running-profile-support"
+      : request.action === "oracleV2Support" ? result.kind === "oracle-v2-support"
+      : request.action === "oracleV2RestartSupport" ? result.kind === "oracle-v2-restart-support"
       : request.action === "list" ? result.kind === "list"
       : request.action === "read" ? (result.kind === "document" || result.kind === "deleted") && result.documentId === request.documentId
       : request.action === "history" ? result.kind === "history" && result.documentId === request.documentId

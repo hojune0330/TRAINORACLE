@@ -1,0 +1,1677 @@
+{
+  "status": "AUDIT_COMPLETED_SOURCE_DEFECTS_FOUND",
+  "checkedAt": "2026-10-05T09:11:17.060Z",
+  "inputScope": "SYNTHETIC_ONLY",
+  "sourceRoot": "D:/admin/Documents/athletetime-codex",
+  "sourceFileSha256": "ca6fb973c198460d5886eb050038984ba84fd643552e34092bcb3a77e7cc6dfd",
+  "sourceEdited": false,
+  "runtimeIntegrated": false,
+  "passed": 388,
+  "failed": 0,
+  "observationsWithDiscrepancy": 14,
+  "sourceDefectCases": 10,
+  "targetPolicyDifferences": 1,
+  "reuseBoundaryRisks": 3,
+  "checks": [
+    {
+      "name": "direct arithmetic 800/121.5/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/121.5/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/121.5/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/121.5/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/121.5/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/121.5/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/121.5/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/128/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/128/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/128/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/128/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/128/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/128/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/128/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/240/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/240/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/240/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/240/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/240/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/240/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/240/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/1200/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/1200/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/1200/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/1200/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/1200/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/1200/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/1200/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/2400/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/2400/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/2400/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/2400/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/2400/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/2400/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/2400/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/5400/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/5400/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/5400/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/5400/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/5400/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/5400/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/5400/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/14400/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/14400/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/14400/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/14400/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/14400/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/14400/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 800/14400/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/121.5/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/121.5/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/121.5/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/121.5/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/121.5/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/121.5/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/121.5/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/128/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/128/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/128/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/128/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/128/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/128/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/128/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/240/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/240/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/240/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/240/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/240/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/240/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/240/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/1200/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/1200/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/1200/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/1200/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/1200/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/1200/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/1200/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/2400/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/2400/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/2400/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/2400/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/2400/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/2400/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/2400/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/5400/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/5400/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/5400/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/5400/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/5400/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/5400/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/5400/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/14400/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/14400/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/14400/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/14400/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/14400/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/14400/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 1500/14400/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/121.5/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/121.5/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/121.5/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/121.5/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/121.5/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/121.5/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/121.5/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/128/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/128/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/128/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/128/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/128/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/128/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/128/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/240/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/240/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/240/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/240/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/240/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/240/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/240/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/1200/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/1200/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/1200/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/1200/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/1200/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/1200/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/1200/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/2400/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/2400/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/2400/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/2400/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/2400/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/2400/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/2400/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/5400/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/5400/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/5400/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/5400/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/5400/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/5400/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/5400/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/14400/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/14400/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/14400/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/14400/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/14400/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/14400/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 3000/14400/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/121.5/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/121.5/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/121.5/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/121.5/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/121.5/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/121.5/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/121.5/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/128/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/128/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/128/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/128/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/128/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/128/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/128/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/240/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/240/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/240/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/240/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/240/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/240/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/240/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/1200/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/1200/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/1200/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/1200/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/1200/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/1200/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/1200/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/2400/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/2400/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/2400/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/2400/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/2400/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/2400/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/2400/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/5400/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/5400/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/5400/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/5400/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/5400/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/5400/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/5400/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/14400/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/14400/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/14400/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/14400/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/14400/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/14400/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 5000/14400/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/121.5/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/121.5/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/121.5/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/121.5/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/121.5/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/121.5/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/121.5/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/128/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/128/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/128/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/128/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/128/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/128/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/128/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/240/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/240/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/240/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/240/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/240/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/240/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/240/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/1200/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/1200/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/1200/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/1200/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/1200/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/1200/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/1200/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/2400/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/2400/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/2400/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/2400/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/2400/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/2400/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/2400/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/5400/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/5400/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/5400/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/5400/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/5400/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/5400/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/5400/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/14400/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/14400/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/14400/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/14400/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/14400/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/14400/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 10000/14400/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/121.5/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/121.5/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/121.5/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/121.5/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/121.5/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/121.5/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/121.5/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/128/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/128/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/128/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/128/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/128/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/128/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/128/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/240/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/240/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/240/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/240/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/240/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/240/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/240/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/1200/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/1200/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/1200/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/1200/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/1200/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/1200/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/1200/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/2400/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/2400/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/2400/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/2400/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/2400/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/2400/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/2400/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/5400/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/5400/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/5400/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/5400/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/5400/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/5400/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/5400/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/14400/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/14400/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/14400/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/14400/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/14400/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/14400/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 21097.5/14400/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/121.5/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/121.5/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/121.5/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/121.5/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/121.5/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/121.5/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/121.5/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/128/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/128/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/128/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/128/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/128/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/128/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/128/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/240/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/240/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/240/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/240/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/240/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/240/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/240/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/1200/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/1200/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/1200/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/1200/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/1200/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/1200/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/1200/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/2400/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/2400/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/2400/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/2400/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/2400/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/2400/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/2400/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/5400/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/5400/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/5400/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/5400/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/5400/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/5400/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/5400/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/14400/60",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/14400/100",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/14400/200",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/14400/300",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/14400/400",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/14400/800",
+      "status": "PASS"
+    },
+    {
+      "name": "direct arithmetic 42195/14400/1000",
+      "status": "PASS"
+    },
+    {
+      "name": "even splits conserve distance/time 0.1",
+      "status": "PASS"
+    },
+    {
+      "name": "even splits conserve distance/time 0.8",
+      "status": "PASS"
+    },
+    {
+      "name": "even splits conserve distance/time 1.5",
+      "status": "PASS"
+    },
+    {
+      "name": "even splits conserve distance/time 5",
+      "status": "PASS"
+    },
+    {
+      "name": "even splits conserve distance/time 10",
+      "status": "PASS"
+    },
+    {
+      "name": "even splits conserve distance/time 21.0975",
+      "status": "PASS"
+    },
+    {
+      "name": "even splits conserve distance/time 42.195",
+      "status": "PASS"
+    },
+    {
+      "name": "track splits conserve 800",
+      "status": "PASS"
+    },
+    {
+      "name": "track splits conserve 1500",
+      "status": "PASS"
+    },
+    {
+      "name": "SC arithmetic conserves INSIDE",
+      "status": "PASS"
+    },
+    {
+      "name": "SC arithmetic conserves OUTSIDE",
+      "status": "PASS"
+    },
+    {
+      "name": "lane section conservation 1",
+      "status": "PASS"
+    },
+    {
+      "name": "lane section conservation 2",
+      "status": "PASS"
+    },
+    {
+      "name": "lane section conservation 3",
+      "status": "PASS"
+    },
+    {
+      "name": "lane section conservation 4",
+      "status": "PASS"
+    },
+    {
+      "name": "lane section conservation 5",
+      "status": "PASS"
+    },
+    {
+      "name": "lane section conservation 6",
+      "status": "PASS"
+    },
+    {
+      "name": "lane section conservation 7",
+      "status": "PASS"
+    },
+    {
+      "name": "lane section conservation 8",
+      "status": "PASS"
+    },
+    {
+      "name": "canonical fractional 800m reference",
+      "status": "PASS"
+    },
+    {
+      "name": "canonical decimal carry",
+      "status": "PASS"
+    },
+    {
+      "name": "canonical half compatibility",
+      "status": "PASS"
+    },
+    {
+      "name": "canonical rejects source NaN",
+      "status": "PASS"
+    },
+    {
+      "name": "canonical rejects source Infinity",
+      "status": "PASS"
+    },
+    {
+      "name": "canonical rejects source -1",
+      "status": "PASS"
+    },
+    {
+      "name": "canonical rejects source 0",
+      "status": "PASS"
+    },
+    {
+      "name": "canonical blocks under-60m conversion",
+      "status": "PASS"
+    },
+    {
+      "name": "repair design normalized conservation even/0.8",
+      "status": "PASS"
+    },
+    {
+      "name": "repair design normalized conservation even/1.5",
+      "status": "PASS"
+    },
+    {
+      "name": "repair design normalized conservation even/5",
+      "status": "PASS"
+    },
+    {
+      "name": "repair design normalized conservation even/10",
+      "status": "PASS"
+    },
+    {
+      "name": "repair design normalized conservation even/21.0975",
+      "status": "PASS"
+    },
+    {
+      "name": "repair design normalized conservation even/42.195",
+      "status": "PASS"
+    },
+    {
+      "name": "repair design normalized conservation negative/0.8",
+      "status": "PASS"
+    },
+    {
+      "name": "repair design normalized conservation negative/1.5",
+      "status": "PASS"
+    },
+    {
+      "name": "repair design normalized conservation negative/5",
+      "status": "PASS"
+    },
+    {
+      "name": "repair design normalized conservation negative/10",
+      "status": "PASS"
+    },
+    {
+      "name": "repair design normalized conservation negative/21.0975",
+      "status": "PASS"
+    },
+    {
+      "name": "repair design normalized conservation negative/42.195",
+      "status": "PASS"
+    },
+    {
+      "name": "repair design normalized conservation positive/0.8",
+      "status": "PASS"
+    },
+    {
+      "name": "repair design normalized conservation positive/1.5",
+      "status": "PASS"
+    },
+    {
+      "name": "repair design normalized conservation positive/5",
+      "status": "PASS"
+    },
+    {
+      "name": "repair design normalized conservation positive/10",
+      "status": "PASS"
+    },
+    {
+      "name": "repair design normalized conservation positive/21.0975",
+      "status": "PASS"
+    },
+    {
+      "name": "repair design normalized conservation positive/42.195",
+      "status": "PASS"
+    }
+  ],
+  "findings": [
+    {
+      "name": "negative final time 10km",
+      "actual": 2397.6,
+      "expected": 2400,
+      "classification": "SOURCE_DEFECT",
+      "status": "DISCREPANCY_REPRODUCED"
+    },
+    {
+      "name": "negative final time 21.0975km",
+      "actual": 5397.429779644025,
+      "expected": 5400,
+      "classification": "SOURCE_DEFECT",
+      "status": "DISCREPANCY_REPRODUCED"
+    },
+    {
+      "name": "negative final time 42.195km",
+      "actual": 14396.574577254123,
+      "expected": 14400,
+      "classification": "SOURCE_DEFECT",
+      "status": "DISCREPANCY_REPRODUCED"
+    },
+    {
+      "name": "negative final time 0.8km",
+      "actual": 126.08,
+      "expected": 128,
+      "classification": "SOURCE_DEFECT",
+      "status": "DISCREPANCY_REPRODUCED"
+    },
+    {
+      "name": "positive final time 10km",
+      "actual": 2402.4,
+      "expected": 2400,
+      "classification": "SOURCE_DEFECT",
+      "status": "DISCREPANCY_REPRODUCED"
+    },
+    {
+      "name": "positive final time 21.0975km",
+      "actual": 5402.570220355976,
+      "expected": 5400,
+      "classification": "SOURCE_DEFECT",
+      "status": "DISCREPANCY_REPRODUCED"
+    },
+    {
+      "name": "positive final time 42.195km",
+      "actual": 14403.425422745875,
+      "expected": 14400,
+      "classification": "SOURCE_DEFECT",
+      "status": "DISCREPANCY_REPRODUCED"
+    },
+    {
+      "name": "positive final time 0.8km",
+      "actual": 129.92,
+      "expected": 128,
+      "classification": "SOURCE_DEFECT",
+      "status": "DISCREPANCY_REPRODUCED"
+    },
+    {
+      "name": "track formatter decimal carry",
+      "actual": "60.0",
+      "expected": "1:00.0",
+      "classification": "SOURCE_DEFECT",
+      "status": "DISCREPANCY_REPRODUCED"
+    },
+    {
+      "name": "general formatter decimal carry",
+      "actual": "60.0",
+      "expected": "1:00.0",
+      "classification": "SOURCE_DEFECT",
+      "status": "DISCREPANCY_REPRODUCED"
+    },
+    {
+      "name": "km display differs from TrainOracle rounding policy",
+      "actual": "3:59",
+      "expected": "4:00",
+      "classification": "TARGET_POLICY_DIFFERENCE",
+      "status": "DISCREPANCY_REPRODUCED"
+    },
+    {
+      "name": "zero source distance yields non-finite output",
+      "actual": false,
+      "expected": true,
+      "classification": "REUSE_BOUNDARY_RISK",
+      "status": "DISCREPANCY_REPRODUCED"
+    },
+    {
+      "name": "negative source time lacks rejection",
+      "actual": -240,
+      "expected": null,
+      "classification": "REUSE_BOUNDARY_RISK",
+      "status": "DISCREPANCY_REPRODUCED"
+    },
+    {
+      "name": "invalid lane lacks rejection",
+      "actual": 391.7074146987318,
+      "expected": null,
+      "classification": "REUSE_BOUNDARY_RISK",
+      "status": "DISCREPANCY_REPRODUCED"
+    },
+    {
+      "name": "lane 3 constant agrees at 2 decimals",
+      "actual": "414.70",
+      "expected": "414.70",
+      "classification": "SOURCE_DEFECT",
+      "status": "NO_DISCREPANCY"
+    }
+  ],
+  "repairDesign": "Not production code; normalization conservation only, no scientific strategy adoption."
+}

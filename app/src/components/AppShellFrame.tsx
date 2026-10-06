@@ -22,7 +22,9 @@ export function AppShellFrame({
   onOpenTrends,
   onOpenBackup,
   onDecorateSaved,
+  onOpenSaved,
   onTab,
+  onStartRecording,
   hideTabBar = false,
 }: {
   readonly children: React.ReactNode
@@ -33,7 +35,9 @@ export function AppShellFrame({
   readonly onOpenTrends: () => void
   readonly onOpenBackup?: () => void
   readonly onDecorateSaved?: () => void
+  readonly onOpenSaved?: () => void
   readonly onTab: (tab: AppTab) => void
+  readonly onStartRecording?: () => void
   readonly hideTabBar?: boolean
 }) {
   return (
@@ -59,10 +63,11 @@ export function AppShellFrame({
               onOpenTrends={onOpenTrends}
               onOpenBackup={onOpenBackup}
               onDecorateSaved={onDecorateSaved}
+              onOpenSaved={onOpenSaved}
             />
           </ShellToastOutlet>
         )}
-        {!hideTabBar && <TabBar tab={tab} onTab={onTab} />}
+        {!hideTabBar && <TabBar tab={tab} onTab={onTab} onStartRecording={onStartRecording ?? (() => onTab("log"))} />}
       </div>
     </ShellToastHostProvider>
   )

@@ -30,7 +30,7 @@ async function expectCanonicalPlanCandidates(page: Page): Promise<void> {
 test("keeps plan help inside the narrow scroll region", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 650 })
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
   await enterPlanWithoutRecord(page)
   await page.locator(".plan-intake__summary").getByRole("button", { name: "1500m", exact: true }).click()
   await page.getByRole("button", { name: "준비 목표 설명 보기" }).click()
@@ -98,7 +98,7 @@ test("generates selectable 9-day candidates from first-screen intake", async ({ 
   await page.goto("/?app=1")
 
   // When
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
   await answerMinimumPlanQuestions(page)
 
   // Then
@@ -110,7 +110,7 @@ test("generates selectable 9-day candidates from first-screen intake", async ({ 
 
 test("generates a bounded two-a-day 9-day candidate", async ({ page }) => {
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
   await completeDetailedPlan(page, { event: /^5000m\b/u, division: /고등부/u, days: /^매일/u, focus: /숨차게 반복.*VO₂/u, twice: true })
 
   await expectCanonicalPlanCandidates(page)
@@ -133,7 +133,7 @@ test("generates a bounded two-a-day 9-day candidate", async ({ page }) => {
 test("keeps an evening two-a-day plan after selection and reload", async ({ page }) => {
   // Given
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
   await completeDetailedPlan(page, { event: /^5000m\b/u, division: /고등부/u, days: /^매일/u, focus: /숨차게 반복.*VO₂/u, time: /저녁에 운동해요/u, twice: true })
   await expectCanonicalPlanCandidates(page)
   const candidateQuality = page.locator(".plan-candidate").first()
@@ -191,9 +191,9 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
 
   await page.reload()
   await expect(page.getByRole("navigation", { name: "주 탭" }).getByRole("button", {
-    name: "계획", exact: true,
+    name: "훈련", exact: true,
   })).toBeVisible()
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
   await expectActivePlanHeading(page)
   const reloadedDay = await openActiveSessionDetails(page, /강한 유산소 반복/u)
   const reloadedQualitySession = reloadedDay.locator('.plan-day-card__session[data-session-slot="PM"][data-flow-kind="main"]')
@@ -211,7 +211,7 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
 
 test("reads a detailed training notation without creating a plan", async ({ page }) => {
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
   await page.locator("summary", { hasText: "기록 관리·훈련표 읽기" }).click()
   await page.getByRole("button", { name: "훈련표 표기 읽기" }).click()
   await page.getByRole("textbox", { name: "훈련표 표기" }).fill(
@@ -254,7 +254,7 @@ test("does not let a favorable current answer override recent high pain", async 
     }]))
   })
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
 
   await completeQuickPlan(page)
 

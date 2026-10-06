@@ -8,25 +8,31 @@ afterEach(() => vi.useRealTimers())
 beforeEach(() => vi.useFakeTimers())
 
 describe("AppChrome tab labels", () => {
-  it("brands the existing analysis route as Oracle without renaming the plan action", () => {
+  it("offers four destinations with a separate recording action", () => {
     const onTab = vi.fn()
-    render(<TabBar tab="trends" onTab={onTab} />)
+    render(<TabBar tab="trends" onTab={onTab} onStartRecording={vi.fn()} />)
     const tabBar = screen.getByRole("navigation", { name: "주 탭" })
     const oracle = within(tabBar).getByRole("button", { name: "오라클" })
     expect(oracle).toHaveAttribute("aria-current", "page")
     expect(within(tabBar).queryByRole("button", { name: "분석" })).not.toBeInTheDocument()
-    expect(within(tabBar).getByRole("button", { name: "계획" })).toBeVisible()
+    expect(within(tabBar).getByRole("button", { name: "훈련" })).toBeVisible()
     fireEvent.click(oracle)
     expect(onTab).toHaveBeenCalledWith("trends")
   })
 
-  it("distinguishes the race-record tab from the journal tab", () => {
-    render(<TabBar tab="home" onTab={() => undefined} />)
+  it("starts recording without changing the selected destination", () => {
+    const onTab = vi.fn(), onStartRecording = vi.fn()
+    render(<TabBar tab="home" onTab={onTab} onStartRecording={onStartRecording} />)
 
     const tabBar = screen.getByRole("navigation", { name: "주 탭" })
     expect(within(tabBar).getByRole("button", { name: "기록하기" })).toBeVisible()
-    expect(within(tabBar).queryByRole("button", { name: "기록" })).not.toBeInTheDocument()
-    expect(within(tabBar).getByRole("button", { name: "홈" }).querySelector("svg")).toHaveAttribute("width", "13")
+    const record = within(tabBar).getByRole("button", { name: "기록하기" })
+    fireEvent.click(record)
+    expect(onStartRecording).toHaveBeenCalledOnce()
+    expect(onTab).not.toHaveBeenCalled()
+    expect(record).not.toHaveAttribute("aria-current")
+    expect(within(tabBar).getByRole("button", { name: "홈" })).toHaveAttribute("aria-current", "page")
+    expect(within(tabBar).getByRole("button", { name: "홈" }).querySelector("svg")).toHaveAttribute("width", "20")
   })
 })
 

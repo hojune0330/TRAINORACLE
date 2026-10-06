@@ -408,7 +408,7 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
     await next.clock.setFixedTime(new Date(now))
     await next.goto("/?app=1")
     await expect.poll(() => confirmedCount(next)).toBe(1)
-    await next.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
+    await next.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
     await expect(next.getByRole("heading", { name: "오늘 훈련", exact: true })).toBeVisible()
     await expect.poll(() => confirmedPlan(next)).toEqual(selected)
     expect(account.plan.calls.filter(call => call.request.action === "readPart").length).toBeGreaterThanOrEqual(2)

@@ -94,7 +94,7 @@ test("decimal current record binds, survives reload and reaches the linked journ
   expect(prescription.selectedAnchor.performanceSeconds).toBe(121.5)
   await page.screenshot({ path: info.outputPath("today-375.png"), fullPage: true })
   await page.reload()
-  await page.getByRole("button", { name: "계획", exact: true }).click()
+  await page.getByRole("button", { name: "훈련", exact: true }).click()
   await expect(page.getByRole("heading", { name: "오늘 훈련", exact: true })).toBeVisible()
   expect(await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(before)
   await page.getByRole("button", { name: /오전 훈련 기록 남기기/u }).click()

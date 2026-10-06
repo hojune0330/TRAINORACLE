@@ -270,7 +270,7 @@ describe("app screen direction structure", () => {
 
     const tabBar = screen.getByRole("navigation", { name: "주 탭" })
     committedScreens.length = 0
-    fireEvent.click(within(tabBar).getByRole("button", { name: "계획" }))
+    fireEvent.click(within(tabBar).getByRole("button", { name: "훈련" }))
     await waitFor(() => {
       expect(committedScreens.find(({ element }) => element !== initialScreen.element)?.motion).toBe("tab-forward")
     })

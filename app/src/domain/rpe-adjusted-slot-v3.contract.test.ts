@@ -363,7 +363,7 @@ it("opens a saved multi-plan through real application navigation with independen
       readMultiAdjustedEvidenceV3: () => reviewed.retained,
     } }))
   })
-  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "계획" })) })
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "훈련" })) })
   expect(await screen.findByRole("heading", { name: "내 훈련 일정" }, { timeout: 5000 })).toBeTruthy()
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
   expect(readPlanBetaStateFromStorage([], [], reviewed.retained).kind).toBe("multi_adjusted_v3_loaded")

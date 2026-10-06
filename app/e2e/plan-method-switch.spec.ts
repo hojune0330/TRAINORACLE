@@ -19,7 +19,7 @@ test("switches method in place and saves only the reconfirmed prescription", asy
     }]))
   })
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
   await completeDetailedPlan(page, { event: /^5000m/u, division: /고등부/u,
     experience: /구조화된 훈련과 경기 경험이 많아요/u, focus: /숨차게 반복.*VO₂/u,
     time: /저녁에 운동해요/u, twice: true })
@@ -196,7 +196,7 @@ test("switches method in place and saves only the reconfirmed prescription", asy
   expect(detailed[0].prescription.targetRepSeconds).toBe(222.25)
   expect(detailed[0].prescription.templateId).toBe("V2-SEED-05")
   await page.reload()
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
   await expect(page.getByRole("heading", { name: /9일 훈련 계획/u })).toBeVisible()
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.plan-beta.v1")!).activePlan.candidateId)).toBe(stored.activePlan.candidateId)
   expect(errors).toEqual([])

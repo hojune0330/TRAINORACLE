@@ -92,6 +92,7 @@ describe("Trends exploration hub", () => {
 
     expect(screen.getByRole("heading", { name: "오라클", level: 1 })).toBeVisible()
     expect(screen.getByRole("group", { name: "오라클 항목" })).toBeVisible()
+    expect(screen.getAllByRole("button", { name: /^(내 훈련|러닝 취향|읽을거리)$/u })).toHaveLength(3)
     expect(screen.getByText("확인된 기록만 분석해요. 개인 메모는 읽지 않아요.")).toBeInTheDocument()
 
     const topicButtons = screen.getAllByRole("button", { name: /결과 보기/u })
@@ -112,7 +113,7 @@ describe("Trends exploration hub", () => {
     render(<Trends />)
 
     expect(screen.getByRole("heading", { name: "분석할 기록이 아직 없어요" })).toBeVisible()
-    expect(screen.getByRole("button", { name: "요약" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("button", { name: "훈련 요약" })).toHaveAttribute("aria-pressed", "true")
 
     await user.click(screen.getByRole("button", { name: "훈련량" }))
     expect(screen.getByRole("region", { name: "누적 거리와 변화" })).toBeVisible()
@@ -134,6 +135,60 @@ describe("Trends exploration hub", () => {
     expect(screen.queryByRole("region", { name: "누적 거리와 변화" })).not.toBeInTheDocument()
     expect(screen.queryByRole("region", { name: "에너지 시스템 누적" })).not.toBeInTheDocument()
     expect(screen.queryByRole("region", { name: "최근 4개월 추이" })).not.toBeInTheDocument()
+  })
+
+  it("keeps profile and reading library as separate Oracle destinations", async () => {
+    const user = userEvent.setup()
+    const onOpenRunningProfile = vi.fn()
+    const onOpenOracleLibrary = vi.fn()
+    const onOracleSectionChange = vi.fn()
+    render(<Trends oracleV2Enabled onOpenRunningProfile={onOpenRunningProfile} onOpenOracleLibrary={onOpenOracleLibrary} onOracleSectionChange={onOracleSectionChange} />)
+
+    await user.click(screen.getByRole("button", { name: "러닝 취향" }))
+    expect(screen.getByRole("heading", { name: "내가 좋아하는 달리기" })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "러닝 취향 보기" }))
+    expect(onOpenRunningProfile).toHaveBeenCalledOnce()
+
+    await user.click(screen.getByRole("button", { name: "읽을거리" }))
+    expect(screen.getByText("읽을거리 56편 · 8개 주제 묶음")).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "읽을거리 살펴보기" }))
+    expect(onOpenOracleLibrary).toHaveBeenCalledOnce()
+    expect(onOracleSectionChange.mock.calls.map(([section]) => section)).toEqual(["profile", "library"])
+  })
+
+  it("keeps the V1 reading section useful without claiming the V2 library is available", async () => {
+    const user = userEvent.setup()
+    const onOpenTrainingContent = vi.fn()
+    render(<Trends onOpenTrainingContent={onOpenTrainingContent} />)
+
+    await user.click(screen.getByRole("button", { name: "읽을거리" }))
+    expect(screen.getByRole("heading", { name: "달리기 원리와 용어를 살펴봐요" })).toBeVisible()
+    expect(screen.queryByText("읽을거리 56편 · 8개 주제 묶음")).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "훈련 배우기" }))
+    expect(onOpenTrainingContent).toHaveBeenCalledOnce()
+  })
+
+  it("shows plan-preference questions only when the V2 gate is enabled", async () => {
+    const user = userEvent.setup()
+    const { rerender } = render(<Trends />)
+
+    await user.click(screen.getByRole("button", { name: "러닝 취향" }))
+    expect(screen.getByText("기존 러닝 프로필을 확인할 수 있어요. 훈련 분석과 읽을거리도 함께 둘러볼 수 있어요.")).toBeVisible()
+    expect(screen.queryByText(/계획 선호 3문항/u)).not.toBeInTheDocument()
+
+    rerender(<Trends oracleV2Enabled />)
+    expect(screen.getByText(/계획 선호 3문항/u)).toBeVisible()
+  })
+
+  it("restores a selected Oracle section and preserves receipt context when choosing a chart", async () => {
+    const user = userEvent.setup()
+    const onContextChange = vi.fn()
+    render(<Trends initialOracleSection="training" initialContext={{ section: "monthly", metric: "MOOD", savedDate: "2026-10-05" }} onContextChange={onContextChange} />)
+
+    expect(screen.getByRole("button", { name: "내 훈련" })).toHaveAttribute("aria-pressed", "true")
+    await user.click(screen.getByRole("button", { name: "월별 변화" }))
+    expect(onContextChange).toHaveBeenLastCalledWith({ section: "monthly", metric: "MOOD", savedDate: "2026-10-05" })
+    expect(screen.getByText("2026-10-05에 저장한 기분을 월별 기록과 함께 볼 수 있어요.")).toBeVisible()
   })
 
   it("keeps the file-analysis tab useful when the file feature is disabled", async () => {
@@ -165,13 +220,13 @@ describe("Trends exploration hub", () => {
 
     render(<Trends />)
 
-    expect(screen.getByRole("status")).toHaveTextContent("파일 기록 1건 · 확인 전 분석에서 제외")
+    expect(screen.getByText(/파일 기록 1건 · 확인 전 분석에서 제외/u)).toBeVisible()
     expect(screen.getByTestId("trends-analysis-exclusion")).toBeVisible()
     expect(screen.getByText("가져온 기록 1개 · 출처 확인이 필요한 기록 1개 · 분석에서 제외된 항목 안내")).toBeVisible()
 
     await user.click(screen.getByRole("button", { name: "파일 분석" }))
     expect(screen.getByTestId("file-analysis-panel")).toBeVisible()
-    expect(screen.getByRole("status")).toHaveTextContent("최신 상태")
+    expect(screen.getByText(/최신 상태를 계정에서 확인하지 못했어요/u)).toBeVisible()
     expect(screen.getByTestId("trends-analysis-exclusion")).toBeVisible()
   })
 })

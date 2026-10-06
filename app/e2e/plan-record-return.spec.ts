@@ -9,7 +9,7 @@ test("missing-record journey resumes the same choices and explicitly binds a non
   page.on("pageerror", error => errors.push(error.message))
   await page.clock.setFixedTime(new Date("2026-09-04T03:00:00Z"))
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
   await completeDetailedPlan(page, { event: /^5000m\b/u, division: /고등부/u,
     experience: /구조화된 훈련과 경기 경험이 많아요/u, focus: /숨차게 반복.*VO₂/u,
     template: /5000m 경기 페이스 상세 훈련 포함/u, time: /아침에 운동해요/u })

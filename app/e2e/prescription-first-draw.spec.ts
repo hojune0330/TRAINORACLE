@@ -19,7 +19,7 @@ test("current plans use catalog while the historical LT pilot keeps bounded alte
   const errors: string[] = []
   page.on("pageerror", error => errors.push(error.message))
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
   await expect(page.getByRole("button", { name: "처방 훈련 확인", exact: true })).toHaveCount(0)
   await page.getByRole("button", { name: "처방 확인·조절", exact: true }).click()

@@ -80,7 +80,7 @@ async function reachExactEventCandidates(
 ): Promise<void> {
   await page.goto(`${appPath}?app=1`)
   await page.getByRole("navigation", { name: "주 탭" })
-    .getByRole("button", { name: "계획" })
+    .getByRole("button", { name: "훈련" })
     .click()
   await completeDetailedPlan(page, { event: new RegExp(`^${eventDistanceM}m`, "u"),
     division: /일반부/u, experience: /구조화된 훈련과 경기 경험이 많아요/u,
@@ -179,7 +179,7 @@ for (const fixture of cases) {
 
     await page.reload()
     await page.getByRole("navigation", { name: "주 탭" })
-      .getByRole("button", { name: "계획" })
+      .getByRole("button", { name: "훈련" })
       .click()
     const activeSession = await openActiveSessionDetails(page, fixture.notation)
     expect(await page.evaluate(() => {

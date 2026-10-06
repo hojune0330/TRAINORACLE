@@ -12,7 +12,7 @@ test.beforeEach(async ({ page, baseURL }) => {
 test("returns every audited child screen to the screen that opened it", async ({ page }) => {
   await page.goto("/?app=1")
 
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
   await enterPlanWithoutRecord(page)
   await expect(page.getByRole("heading", { name: "지금까지 어떻게 달려왔나요?" })).toBeVisible()
 

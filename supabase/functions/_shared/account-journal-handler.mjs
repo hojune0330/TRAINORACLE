@@ -48,7 +48,10 @@ const sameObservation = (left, right) => canonical(observationOf(left) ?? {}) ==
 const relationsOf = document => document?.entry?.comparisonRelations ?? null;
 const sameRelations = (left, right) => JSON.stringify(stable(relationsOf(left))) === JSON.stringify(stable(relationsOf(right)));
 const comparisonAction = action => ['confirmComparisonRelation', 'releaseComparisonRelation'].includes(action);
-const commitAction = action => ['save', 'correctImportedObservation'].includes(action) || comparisonAction(action);
+const commitAction = action => ['save', 'correctImportedObservation', 'restartOracleV2'].includes(action) || comparisonAction(action);
+const emptyOracleV2 = () => ({ version: 3, state: 'ACCOUNT_STATE', kind: 'RUNNING_PROFILE', data: {
+  version: 'RUNNING_PROFILE_V2', status: 'ACTIVE', legacyAnswers: {}, legacyAnsweredAt: null, current: null, readings: [],
+} });
 const awardAllowed = input => input.action === 'save'
   && input.writePurpose !== 'MIGRATION' && input.writePurpose !== 'FILE_OBSERVATION';
 export const validateAccountJournalDocument = value => validateDraftDocument(value) || validateAccountJournalRecord(value)
@@ -233,6 +236,7 @@ async function stateIdentityValid(ownerId, documentId, document) {
   if (document.kind === 'DECORATIONS') return documentId === await namespacedId(['trainoracle.account.decorations.v1',ownerId]);
   if (document.kind === 'CALENDAR_DECORATIONS') return documentId === await namespacedId(['trainoracle.account.calendar-decorations.v1',ownerId]);
   if (document.kind === 'ATHLETE_RECORDS') return documentId === await namespacedId(['trainoracle.account.athlete-records.v1',ownerId]);
+  if (document.kind === 'RUNNING_PROFILE') return documentId === await namespacedId(['trainoracle.account.running-profile.v1',ownerId]);
   if (document.kind === 'PLAN') return documentId === await namespacedId(['trainoracle.account.plan.v1',ownerId]);
   // Plan worker supplies a bound identity helper with its schema; no guessed IDs.
   return typeof accountState.accountStateDocumentId === 'function'
@@ -294,13 +298,25 @@ function parseAction(input, validateDocument) {
     || Object.hasOwn(input, 'supportedJournalVersions') && input.supportedJournalVersions === null) fail(400, 'INVALID_REQUEST');
   if (Object.hasOwn(input, 'supportsExerciseLogV1') && typeof input.supportsExerciseLogV1 !== 'boolean') fail(400, 'INVALID_REQUEST');
   const supportsExerciseLogV1 = input.supportsExerciseLogV1 === true;
-  const { supportedJournalVersions: _capabilities, supportsExerciseLogV1: _exerciseCapability, ...actionInput } = input;
+  const supportedRunningProfileVersions = input.supportedRunningProfileVersions ?? [1];
+  if (!Array.isArray(supportedRunningProfileVersions) || !supportedRunningProfileVersions.length
+    || supportedRunningProfileVersions.length > 2 || new Set(supportedRunningProfileVersions).size !== supportedRunningProfileVersions.length
+    || supportedRunningProfileVersions.some(version => ![1, 2].includes(version))
+    || Object.hasOwn(input, 'supportedRunningProfileVersions') && input.supportedRunningProfileVersions === null) fail(400, 'INVALID_REQUEST');
+  const { supportedJournalVersions: _capabilities, supportsExerciseLogV1: _exerciseCapability,
+    supportedRunningProfileVersions: _profileCapabilities, ...actionInput } = input;
   input = actionInput;
   const { action } = input;
   let valid = false;
   if (action === 'status') valid = keys(input, ['action']);
   if (action === 'calendarDecorationSupport') valid = keys(input, ['action']);
   if (action === 'athleteRecordSupport') valid = keys(input, ['action']);
+  if (action === 'runningProfileSupport') valid = keys(input, ['action']);
+  if (action === 'oracleV2Support') valid = keys(input, ['action']);
+  if (action === 'oracleV2RestartSupport') valid = keys(input, ['action']);
+  if (action === 'restartOracleV2') valid = keys(input, ['action','documentId','operationId','expectedRevision','confirmation'])
+    && isUuid(input.documentId) && isUuid(input.operationId) && revision(input.expectedRevision) && input.expectedRevision > 0
+    && input.confirmation === 'START_NEW_ORACLE_V2';
   if (action === 'rewardSummary' || action === 'visit') valid = keys(input, ['action']);
   if (action === 'list') valid = keys(input, ['action'], ['limit', 'cursor', 'collection'])
     && (!Object.hasOwn(input, 'collection') || input.collection === 'JOURNAL')
@@ -316,7 +332,7 @@ function parseAction(input, validateDocument) {
   if (action === 'save') valid = keys(input, ['action', 'documentId', 'operationId', 'expectedRevision', 'document'], ['writePurpose'])
     && isUuid(input.documentId) && isUuid(input.operationId) && revision(input.expectedRevision)
     && (!Object.hasOwn(input,'writePurpose') || input.writePurpose === 'MIGRATION'
-      && (input.document?.state === 'FINALIZED' || input.document?.state === 'ACCOUNT_STATE' && input.document?.kind === 'DECORATIONS')
+      && (input.document?.state === 'FINALIZED' || input.document?.state === 'ACCOUNT_STATE' && ['DECORATIONS', 'RUNNING_PROFILE'].includes(input.document?.kind))
       || input.writePurpose === 'FILE_OBSERVATION' && input.document?.state === 'FINALIZED');
   if (action === 'correctImportedObservation') valid = keys(input, ['action', 'documentId', 'operationId', 'expectedRevision',
     'previousContentRevisionFingerprint', 'replacementObservation', 'confirmedChangedFields'])
@@ -338,7 +354,7 @@ function parseAction(input, validateDocument) {
     if (!accepted) fail(422, observationOf(input.document) || input.writePurpose === 'FILE_OBSERVATION' ? 'INVALID_FILE_OBSERVATION' : 'INVALID_DOCUMENT');
   }
   if (action === 'correctImportedObservation' && !parseFileObservation(input.replacementObservation)) fail(422, 'INVALID_FILE_OBSERVATION');
-  return { ...input, supportedJournalVersions, supportsExerciseLogV1, ...(input.documentId ? { documentId: input.documentId.toLowerCase() } : {}),
+  return { ...input, supportedJournalVersions, supportsExerciseLogV1, supportedRunningProfileVersions, ...(input.documentId ? { documentId: input.documentId.toLowerCase() } : {}),
     ...(input.operationId ? { operationId: input.operationId.toLowerCase() } : {}),
     ...(input.cursor ? { cursor: input.cursor.toLowerCase() } : {}) };
 }
@@ -407,10 +423,15 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
       const repo = session.repo;
       const input = parseAction(await bodyJson(request), validateDocument);
       const requireSupported = document => {
+        if (document?.kind === 'RUNNING_PROFILE' && document.data.version === 'RUNNING_PROFILE_V2' && !input.supportedRunningProfileVersions.includes(2)) fail(426, 'UPGRADE_REQUIRED');
         if (document?.state === 'FINALIZED' && !input.supportedJournalVersions.includes(document.version)) fail(426, 'UPGRADE_REQUIRED');
         if (document?.state === 'FINALIZED' && document.entry?.exerciseLog !== undefined && !input.supportsExerciseLogV1) fail(426, 'UPGRADE_REQUIRED');
       };
       if (input.action === 'save') requireSupported(input.document);
+      if (input.action === 'restartOracleV2') {
+        requireSupported(emptyOracleV2());
+        if (!await stateIdentityValid(ownerId, input.documentId, emptyOracleV2())) fail(422, 'INVALID_DOCUMENT');
+      }
       if ((input.action === 'correctImportedObservation' || comparisonAction(input.action)) && !input.supportedJournalVersions.includes(3)) fail(426, 'UPGRADE_REQUIRED');
       if (input.action === 'save' && input.document.state === 'FINALIZED'
         && await recordId(ownerId, input.document.entry.id) !== input.documentId) fail(422, 'INVALID_DOCUMENT');
@@ -421,6 +442,27 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         if (enabled !== true) fail(503, 'UNAVAILABLE');
       };
       await checkGate();
+      const checkOracleV2Support = async () => {
+        if (typeof repo.oracleV2Support !== 'function'
+          || typeof accountState.validateInitialOracleV2Document !== 'function'
+          || !accountState.validateAccountStateDocument({ version: 3, state: 'ACCOUNT_STATE', kind: 'RUNNING_PROFILE',
+            data: { version: 'RUNNING_PROFILE_V2', status: 'ACTIVE', legacyAnswers: {}, legacyAnsweredAt: null, current: null, readings: [] } })) fail(503, 'UNAVAILABLE');
+        const support = await repo.oracleV2Support();
+        await checkGate();
+        if (!keys(support, ['kind', 'version']) || support.kind !== 'oracle-v2-support' || support.version !== 2) fail(503, 'UNAVAILABLE');
+        return support;
+      };
+      if (input.action === 'save' && input.document?.kind === 'RUNNING_PROFILE'
+        && input.document.data.version === 'RUNNING_PROFILE_V2') await checkOracleV2Support();
+      const checkRestartSupport = async () => {
+        await checkOracleV2Support();
+        if (typeof repo.oracleV2RestartSupport !== 'function') fail(503, 'UNAVAILABLE');
+        const support = await repo.oracleV2RestartSupport();
+        await checkGate();
+        if (!keys(support, ['kind', 'version']) || support.kind !== 'oracle-v2-restart-support' || support.version !== 1) fail(503, 'UNAVAILABLE');
+        return support;
+      };
+      if (input.action === 'restartOracleV2') await checkRestartSupport();
       const checkFileGate = async () => {
         const enabled = typeof repo.fileEvidenceEnabled === 'function' ? await repo.fileEvidenceEnabled(ownerId) : undefined;
         if (enabled === false) fail(409, 'FILE_EVIDENCE_DISABLED');
@@ -474,6 +516,18 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         if (!keys(support, ['kind', 'version']) || support.kind !== 'calendar-decoration-support' || support.version !== 1) fail(503, 'UNAVAILABLE');
         return respond(200, support);
       }
+      if (input.action === 'runningProfileSupport') {
+        if (typeof repo.runningProfileSupport !== 'function' || !accountState.validateAccountStateDocument({
+          version: 3, state: 'ACCOUNT_STATE', kind: 'RUNNING_PROFILE',
+          data: { version: 'RUNNING_PROFILE_V1', answeredAt: '2026-10-04T00:00:00.000Z', answers: {} },
+        })) fail(503, 'UNAVAILABLE');
+        const support = await repo.runningProfileSupport();
+        await checkGate();
+        if (!keys(support, ['kind', 'version']) || support.kind !== 'running-profile-support' || support.version !== 1) fail(503, 'UNAVAILABLE');
+        return respond(200, support);
+      }
+      if (input.action === 'oracleV2Support') return respond(200, await checkOracleV2Support());
+      if (input.action === 'oracleV2RestartSupport') return respond(200, await checkRestartSupport());
       if (input.action === 'athleteRecordSupport') {
         if (typeof repo.athleteRecordSupport !== 'function' || !accountState.validateAccountStateDocument({
           version: 3, state: 'ACCOUNT_STATE', kind: 'ATHLETE_RECORDS', data: { records: [] },
@@ -605,11 +659,17 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         if (!object(prior) || prior.user_id !== ownerId || prior.operation_id !== input.operationId
           || !isUuid(prior.document_id) || !revision(prior.expected_revision)) fail(503, 'INVALID_STORED_DATA');
         if (prior.document_id !== input.documentId || prior.expected_revision !== input.expectedRevision) fail(409, 'OPERATION_REUSED');
-        const operationKind = commitAction(input.action) ? 'commit' : input.action;
-        if (!['commit', 'delete', 'restore'].includes(prior.operation_kind)) fail(503, 'INVALID_STORED_DATA');
+        const operationKind = input.action === 'restartOracleV2' ? input.action : commitAction(input.action) ? 'commit' : input.action;
+        if (!['commit', 'delete', 'restore', 'restartOracleV2'].includes(prior.operation_kind)) fail(503, 'INVALID_STORED_DATA');
         if (prior.operation_kind !== operationKind
           || (input.action === 'restore' && prior.source_revision !== input.sourceRevision)) fail(409, 'OPERATION_REUSED');
         if (!commitAction(input.action)) return receiptFor(prior.result, input);
+        if (input.action === 'restartOracleV2') {
+          if (prior.proposed_encrypted_payload === null) fail(409, 'OPERATION_REPLAY_UNAVAILABLE');
+          const proposed = await decode(prior.proposed_encrypted_payload, prior.document_id);
+          if (canonical(proposed) !== canonical(emptyOracleV2())) fail(409, 'OPERATION_REUSED');
+          return receiptFor(prior.result, input);
+        }
         if ((input.action !== 'save' || input.document.state === 'FINALIZED') && (prior.trusted_metadata
           ? prior.trusted_metadata.awardAllowed !== awardAllowed(input)
           : input.writePurpose === 'MIGRATION')) fail(409,'OPERATION_REUSED');
@@ -619,7 +679,7 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         const document = await decode(prior.proposed_encrypted_payload, prior.document_id);
         requireSupported(document);
         if (comparisonAction(input.action)) {
-          const { supportedJournalVersions: ignored, supportsExerciseLogV1: ignoredExercise, ...request } = input;
+          const { supportedJournalVersions: ignored, supportsExerciseLogV1: ignoredExercise, supportedRunningProfileVersions: ignoredProfile, ...request } = input;
           const proposal = applyAccountJournalComparisonMutation(await originalRevision(input.expectedRevision), request);
           if (!proposal || canonical(proposal) !== canonical(document)) fail(409, 'OPERATION_REUSED');
           return receiptFor(prior.result, input);
@@ -654,6 +714,34 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
       const prior = await repo.operation(ownerId, input.operationId);
       let receipt;
       if (prior !== null) receipt = await comparePrior(prior);
+      else if (input.action === 'restartOracleV2') {
+        const row = await repo.read(ownerId, input.documentId);
+        await checkGate();
+        if (!row) fail(404, 'NOT_FOUND');
+        if (row.document_id !== input.documentId) fail(503, 'INVALID_STORED_DATA');
+        const previous = await entry(row);
+        if (previous.revision !== input.expectedRevision) {
+          const winner = await repo.operation(ownerId, input.operationId);
+          if (winner) receipt = await comparePrior(winner);
+          else receipt = { kind: 'conflict', documentId: input.documentId, operationId: input.operationId, currentRevision: previous.revision };
+        } else {
+          if (previous.document && (previous.document.kind !== 'RUNNING_PROFILE'
+            || previous.document.data.version !== 'RUNNING_PROFILE_V2' || previous.document.data.status !== 'DELETED')) fail(422, 'INVALID_DOCUMENT_UPDATE');
+          if (typeof repo.restartOracleV2 !== 'function') fail(503, 'UNAVAILABLE');
+          const document = emptyOracleV2();
+          if (!validateAccountJournalDocument(document) || validateDocument(document) !== true) fail(503, 'UNAVAILABLE');
+          const encryptedPayload = await encryptAccountJournalDocument(canonical(document), { ownerId, documentId: input.documentId }, material.active);
+          await checkGate();
+          try { receipt = receiptFor(await repo.restartOracleV2({ documentId: input.documentId, operationId: input.operationId,
+            expectedRevision: input.expectedRevision, encryptedPayload, metadata: accountJournalMetadata(document) }), input); }
+          catch (error) {
+            if (error?.code !== '22023') throw error;
+            const winner = await repo.operation(ownerId, input.operationId);
+            if (!winner) fail(503, 'UNAVAILABLE');
+            receipt = await comparePrior(winner);
+          }
+        }
+      }
       else if (input.action === 'delete' || input.action === 'restore') {
         let restoredDocument;
         if (input.action === 'restore') {
@@ -661,6 +749,10 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
           restoredDocument = values.find(value => value.revision === input.sourceRevision)?.document;
           requireSupported(restoredDocument);
           const restoreBaseline = lifecycleCurrent?.document ?? values[0]?.document;
+          // Historical profile responses must not reactivate deleted answers or downgrade V2.
+          if (restoredDocument?.kind === 'RUNNING_PROFILE'
+            && (!lifecycleCurrent?.document || restoredDocument.data.version === 'RUNNING_PROFILE_V2'
+              || restoreBaseline?.data?.version === 'RUNNING_PROFILE_V2')) fail(422, 'INVALID_DOCUMENT_UPDATE');
           if (restoredDocument && restoreBaseline?.state === 'FINALIZED' && restoredDocument.state !== 'FINALIZED') fail(422, 'INVALID_DOCUMENT_UPDATE');
           if (restoredDocument?.state === 'FINALIZED') {
             // A tombstone's newest retained version remains its evidence baseline.
@@ -724,7 +816,7 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         }
         let document;
         if (comparisonAction(input.action)) {
-          const { supportedJournalVersions: ignored, supportsExerciseLogV1: ignoredExercise, ...request } = input;
+          const { supportedJournalVersions: ignored, supportsExerciseLogV1: ignoredExercise, supportedRunningProfileVersions: ignoredProfile, ...request } = input;
           if (input.action === 'confirmComparisonRelation') {
             if ((relationsOf(current.document)?.length ?? 0) >= 32) fail(409, 'COMPARISON_CAPACITY_EXCEEDED');
             const original = await readComparisonOriginal(input.relation.original);
@@ -762,6 +854,13 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
           if (currentRow.document_id !== input.documentId) fail(503, 'INVALID_STORED_DATA');
           currentDocument = (await entry(currentRow)).document;
           requireSupported(currentDocument);
+        }
+        if (input.document.kind === 'RUNNING_PROFILE') {
+          if (currentRow && !currentDocument) fail(422, 'INVALID_DOCUMENT_UPDATE');
+          if (input.document.data.version === 'RUNNING_PROFILE_V2') {
+            if (currentRow === null && !accountState.validateInitialOracleV2Document(input.document)) fail(422, 'INVALID_DOCUMENT_UPDATE');
+            if (currentDocument?.data?.version === 'RUNNING_PROFILE_V1' && input.writePurpose !== 'MIGRATION') fail(422, 'INVALID_DOCUMENT_UPDATE');
+          }
         }
         if (input.document.state === 'FINALIZED') {
           if (relationsOf(input.document)) {
@@ -868,6 +967,10 @@ export function createAccountJournalRepository(client, { ownerId, attest } = {})
     attestationStatus: () => mutate('status', {}),
     calendarDecorationSupport: () => mutate('calendarDecorationSupport', {}),
     athleteRecordSupport: () => mutate('athleteRecordSupport', {}),
+    runningProfileSupport: () => mutate('runningProfileSupport', {}),
+    oracleV2Support: () => mutate('oracleV2Support', {}),
+    oracleV2RestartSupport: () => mutate('oracleV2RestartSupport', {}),
+    restartOracleV2: input => mutate('restartOracleV2', input),
     rewardSummary: () => result(client.rpc('account_reward_summary')),
     visit: () => result(client.rpc('record_account_reward_visit')),
     fileEvidenceEnabled: () => result(client.rpc('service_feature_enabled', { feature_key_input: 'FILE_ANALYSIS_WRITE' })),

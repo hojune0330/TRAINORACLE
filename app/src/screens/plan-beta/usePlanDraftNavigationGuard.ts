@@ -12,6 +12,7 @@ export function usePlanDraftNavigationGuard(hasDraft: boolean,
     const unsafe = () => dirty.current && owner.current === localAccountScopeSnapshot()
     const unregister = registerUnsavedDraftGuard({
       isUnsafe: unsafe,
+      canPreserveMountedDraft: () => !options.current.saving,
       onBlocked: () => {},
       confirmDiscard: () => !options.current.saving && window.confirm(options.current.discardMessage),
       discard: () => { dirty.current = false },

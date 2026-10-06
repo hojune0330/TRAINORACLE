@@ -11,7 +11,7 @@ const normalizeLineEndings = value => value.replace(/\r\n/gu, '\n')
 export async function buildAccountStateValidator() {
   return build({
     absWorkingDir: root,
-    stdin: { contents: 'export { validateAccountStateDocument, validateAccountStateDocumentUpdate, accountDecorationPurchaseMetadata, accountCalendarDecorationOwnershipMetadata } from "./src/domain/account/account-state-schema.ts"',
+    stdin: { contents: 'export { validateAccountStateDocument, validateAccountStateDocumentUpdate, validateInitialOracleV2Document, accountDecorationPurchaseMetadata, accountCalendarDecorationOwnershipMetadata } from "./src/domain/account/account-state-schema.ts"',
       resolveDir: app, sourcefile: 'account-state-server-entry.ts', loader: 'ts' },
     tsconfig: 'app/tsconfig.json', bundle: true, write: false, platform: 'neutral', format: 'esm',
     target: 'es2022', define: { navigator: 'undefined' }, minify: true, legalComments: 'none', metafile: true,

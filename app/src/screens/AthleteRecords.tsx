@@ -54,6 +54,7 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로" }: 
   const [seasonId, setSeasonId] = React.useState("")
   const [error, setError] = React.useState<string | null>(null)
   const [updateRecord, setUpdateRecord] = React.useState<AthleteRecord | null>(null)
+  const [explicitPaceBasis, setExplicitPaceBasis] = React.useState(false)
   const [saving, setSaving] = React.useState(false)
   const [pendingRecord, setPendingRecord] = React.useState<AthleteRecord | null>(null)
   const [storageMessage, setStorageMessage] = React.useState("")
@@ -234,7 +235,7 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로" }: 
         <p>실제 경기 기록과 앞으로의 목표를 서로 다른 역할로 보관해요.</p>
       </header>
 
-      {updateRecord && <PacePlanUpdateNotice record={updateRecord} onDone={() => { setUpdateRecord(null); onBack() }} />}
+      {updateRecord && <PacePlanUpdateNotice record={updateRecord} explicitPaceBasis={explicitPaceBasis} onDone={() => { setUpdateRecord(null); setExplicitPaceBasis(false); onBack() }} />}
       {storageMessage && <p role="status">{storageMessage}</p>}
       {pendingRecord && <button type="button" disabled={saving} onClick={() => void retryPending()}>계정 저장 다시 확인</button>}
 
@@ -355,7 +356,7 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로" }: 
             {records.map((record) => (
               <AthleteRecordRow key={record.id} record={record}
                 onUsePace={!saving && !pendingRecord && loadVersionedPlanBetaState()?.version === 3 && isEligiblePaceRecordCurrent(record)
-                  ? () => { if (isEligiblePaceRecordCurrent(record)) setUpdateRecord(record) } : undefined} />
+                  ? () => { if (isEligiblePaceRecordCurrent(record)) { setExplicitPaceBasis(true); setUpdateRecord(record) } } : undefined} />
             ))}
           </ol>
         )}

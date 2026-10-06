@@ -11,7 +11,7 @@ test("keeps term help inside 320px and closes it by outside tap and Escape", asy
   })
   await page.addInitScript(() => window.localStorage.clear())
   await page.goto("/?app=1&popover-test=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
   await enterPlanWithoutRecord(page)
 
   const note = page.getByRole("note").first()

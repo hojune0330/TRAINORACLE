@@ -41,15 +41,14 @@ it("does not interrupt general reading on unrelated journal revisions", () => {
   expect(screen.getByRole("dialog")).toBeVisible()
 })
 
-it("keeps recording and coaching before the six analysis topics", () => {
+it("shows one prepared result before recording without duplicating coaching or topic tiles", () => {
   const model: TrainingHomeViewModel = { homeMode: "WELCOME", todayMessage: "", todayRecordCount: 0, journalSummary: "", flowSummary: "", planSummary: "저장된 계획 없음", analysisSummary: "", showMinjiPrompt: true, nextTraining: null, briefing: "" }
-  render(<TrainingHome model={model} onOpenOracle={vi.fn()} coaching={<h2>훈련 코칭</h2>} />)
+  render(<TrainingHome model={model} onOpenOracle={vi.fn()} oraclePreview={<h2>오라클 예시 결과</h2>} />)
   const write = screen.getByRole("button", { name: "오늘 기록 남기기" })
-  const coaching = screen.getByRole("heading", { name: "훈련 코칭" })
-  const explore = screen.getByRole("heading", { name: "더 살펴보기" })
-  expect(write.compareDocumentPosition(coaching) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-  expect(coaching.compareDocumentPosition(explore) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-  expect(screen.getAllByRole("button", { name: /결과 보기$/ })).toHaveLength(6)
+  const preview = screen.getByRole("heading", { name: "오라클 예시 결과" })
+  expect(preview.compareDocumentPosition(write) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(screen.queryByRole("heading", { name: "훈련 코칭" })).toBeNull()
+  expect(screen.queryByRole("heading", { name: "더 살펴보기" })).toBeNull()
   expect(screen.queryByText("내 훈련, 무엇부터 개선할까요?")).toBeNull()
 })
 

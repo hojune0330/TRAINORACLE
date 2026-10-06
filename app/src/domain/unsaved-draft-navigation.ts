@@ -4,6 +4,8 @@ type DraftGuard = {
   confirmDiscard?: () => boolean
   discard?: () => void
   requestNavigation?: (resume: () => void) => void
+  /** A mounted plan may be temporarily hidden, never discarded, while recording. */
+  canPreserveMountedDraft?: () => boolean
 }
 
 const guards = new Set<DraftGuard>()
@@ -20,8 +22,9 @@ export function registerUnsavedDraftGuard(guard: DraftGuard) {
   return () => { guards.delete(guard) }
 }
 
-export function runDraftSafeNavigation(navigate: () => void): boolean {
-  const unsafe = [...guards].filter(guard => guard.isUnsafe())
+export function runDraftSafeNavigation(navigate: () => void, preserveMountedDrafts = false): boolean {
+  const unsafe = [...guards].filter(guard => guard.isUnsafe()
+    && !(preserveMountedDrafts && guard.canPreserveMountedDraft?.()))
   let blocked = false
   for (const guard of unsafe) {
     if (!guard.confirmDiscard && !guard.requestNavigation) {

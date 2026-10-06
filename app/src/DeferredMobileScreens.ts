@@ -1,12 +1,15 @@
 import React from "react"
 
 export const DeferredMobileScreens = {
+  PaceCalculator: React.lazy(() => import("./screens/PaceCalculator").then(module => ({ default: module.PaceCalculator }))),
   LogDetail: React.lazy(() => import("./screens/LogDetail").then(module => ({ default: module.LogDetail }))),
   JournalArchive: React.lazy(() => import("./screens/JournalArchive").then(module => ({ default: module.JournalArchive }))),
   JournalDayReader: React.lazy(() => import("./screens/JournalDayReader").then(module => ({ default: module.JournalDayReader }))),
   Trends: React.lazy(() => import("./screens/Trends").then(module => ({ default: module.Trends }))),
   OracleExplore: React.lazy(() => import("./screens/OracleExplore").then(module => ({ default: module.OracleExplore }))),
   RecordReadingOracle: React.lazy(() => import("./screens/RecordReadingOracle").then(module => ({ default: module.RecordReadingOracle }))),
+  RunningProfile: React.lazy(() => import("./screens/RunningProfile").then(module => ({ default: module.RunningProfile }))),
+  OracleProfileV2: React.lazy(() => import("./screens/OracleProfileV2").then(module => ({ default: module.OracleProfileV2 }))),
   Guide: React.lazy(() => import("./screens/Guide").then(module => ({ default: module.Guide }))),
   PlanBeta: React.lazy(() => import("./screens/PlanBeta").then(module => ({ default: module.PlanBeta }))),
   PlanProposalInbox: React.lazy(() => import("./screens/plan-beta/PlanProposalInbox").then(module => ({ default: module.PlanProposalInbox }))),

@@ -5,6 +5,7 @@ import { accountJournalRecordSchema, type AccountJournalRecord } from "./account
 import { waitingJournal } from "../../test/progressive-journal-fixture"
 import { buildFileObservation } from "../import/file-observation"
 import { rememberStorageConsentRevision, pinStorageOperationRevision } from "./storage-consent-revision"
+import { accountOracleCompatibleDocumentSchema, emptyOracleV2Document } from "./account-oracle-v2-schema"
 
 const ownerId = "a1111111-1111-4111-8111-111111111111"
 const documentId = "b2222222-2222-4222-8222-222222222222"
@@ -35,6 +36,42 @@ it("unpinned retries cannot borrow a regrant while explicitly pinned new operati
     expect(fresh.invoke.mock.calls[0]?.[1].headers["x-trainoracle-storage-revision"]).toBe("3")
   } finally { localStorage.clear() }
 })
+it("keeps V1 and V2 support distinct, advertises V2 reads and fails closed on mismatched responses", async () => {
+  const request = { action: "oracleV2Support", supportedRunningProfileVersions: [1, 2] } as const
+  const call = { ...request, supportedRunningProfileVersions: [1, 2] as (1 | 2)[] }
+  for (const response of [{ kind: "running-profile-support", version: 1 }, { kind: "oracle-v2-support", version: 1 }, { kind: "ready" }]) {
+    expect(await requestAccountDocument(ownerId, call, () => true, accountOracleCompatibleDocumentSchema, dependencies(response)))
+      .toEqual({ ok: false, code: "INVALID_RESPONSE" })
+  }
+  expect(await requestAccountDocument(ownerId, call, () => true, accountOracleCompatibleDocumentSchema,
+    dependencies({ kind: "oracle-v2-support", version: 2 }))).toEqual({ ok: true, data: { kind: "oracle-v2-support", version: 2 } })
+  const document = emptyOracleV2Document()
+  const deps = dependencies({ kind: "document", documentId, revision: 1, document })
+  expect(await requestAccountDocument(ownerId, { action: "read", documentId, supportedRunningProfileVersions: [1, 2] },
+    () => true, accountOracleCompatibleDocumentSchema, deps)).toMatchObject({ ok: true, data: { document } })
+  expect(deps.invoke.mock.calls[0]![1].body.supportedRunningProfileVersions).toEqual([1, 2])
+})
+it("validates the separate restart capability and exact restart receipt without weakening CAS", async () => {
+  const probe = { action: "oracleV2RestartSupport" } as const
+  const capability = { kind: "oracle-v2-restart-support", version: 1 }
+  const schema = accountOracleCompatibleDocumentSchema
+  expect(await requestAccountDocument(ownerId, probe, () => true, schema, dependencies(capability)))
+    .toEqual({ ok: true, data: capability })
+  expect(await requestAccountDocument(ownerId, probe, () => true, schema, dependencies({ kind: "oracle-v2-support", version: 2 })))
+    .toEqual({ ok: false, code: "INVALID_RESPONSE" })
+  const restart = { action: "restartOracleV2", documentId, operationId, expectedRevision: 3, confirmation: "START_NEW_ORACLE_V2" } as const
+  const receipt = { kind: "saved", documentId, operationId, revision: 4 }
+  expect(await requestAccountDocument(ownerId, restart, () => true, schema, dependencies(receipt)))
+    .toEqual({ ok: true, data: receipt })
+  for (const change of [{ revision: 3 }, { revision: 5 }, { documentId: otherOwnerId }, { operationId: otherOwnerId }]) {
+    expect(await requestAccountDocument(ownerId, restart, () => true, schema, dependencies({ ...receipt, ...change })))
+      .toEqual({ ok: false, code: "INVALID_RESPONSE" })
+  }
+  const conflict = { kind: "conflict", documentId, operationId, currentRevision: 4 }
+  expect(await requestAccountDocument(ownerId, restart, () => true, schema,
+    dependencies(null, { context: new Response(JSON.stringify(conflict), { status: 409 }) }))).toEqual({ ok: true, data: conflict })
+})
+
 describe("account record compatibility API", () => {
   const document: AccountJournalRecord = { version: 2, state: "FINALIZED", kind: "JOURNAL", entry: waitingJournal() }
   const calls = [
@@ -272,6 +309,8 @@ describe("account journal actual SDK authorization race", () => {
       response: { kind: "deleted", documentId, operationId, revision: 1 } },
     { request: { action: "restore" as const, documentId, operationId, expectedRevision: 1, sourceRevision: 1 },
       response: { kind: "restored", documentId, operationId, revision: 2, sourceRevision: 1 } },
+    { request: { action: "restartOracleV2" as const, documentId, operationId, expectedRevision: 1, confirmation: "START_NEW_ORACLE_V2" as const },
+      response: { kind: "saved", documentId, operationId, revision: 2 } },
   ]
   describe.each([false, true])("local owner change observed: %s", localOwnerChanged => {
     it.each(cases)("pins account A for $request.action when the SDK rereads account B", async ({ request, response }) => {

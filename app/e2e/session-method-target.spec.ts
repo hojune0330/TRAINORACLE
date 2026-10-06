@@ -17,7 +17,7 @@ for (const mode of ["shared", "candidate-only", "candidate-B"] as const) test(`$
     }]))
   })
   await page.goto(`${process.env.PLAYWRIGHT_APP_PATH ?? "/"}?app=1`)
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
 await completeDetailedPlan(page, { event: /^5000m\b/u, division: /일반부/u, experience: /구조화된 훈련과 경기 경험이 많아요/u, days: /^매일/u, focus: /숨차게 반복.*VO₂/u, template: /5000m 경기 페이스 상세 훈련 포함/u, time: /아침에 운동해요/u, twice: true })
   await page.locator("summary").filter({ hasText: "처방 확인·조절" }).click()
   await page.getByText("추천에 참고한 이력", { exact: true }).click()

@@ -5,8 +5,9 @@ import { formatPaceSeconds } from "@impl/prescription/record-pace"
 import type { AthleteRecord } from "../../domain/athlete-records"
 import type { ActivePlanEditPreparation } from "../../domain/active-plan-edit"
 import { applyActivePlanEdit, prepareCurrentPaceUpdate, prepareCurrentPaceUndo } from "../../domain/active-plan-edit-store"
+import { localAccountScopeSnapshot, localAccountScopeIsCurrent } from "../../domain/account/local-account-scope"
 
-export function PacePlanUpdateNotice({ record, onDone }: { record: AthleteRecord; onDone: () => void }) {
+export function PacePlanUpdateNotice({ record, onDone, explicitPaceBasis = false }: { record: AthleteRecord; onDone: () => void; explicitPaceBasis?: boolean }) {
   const [preparation, setPreparation] = React.useState<ActivePlanEditPreparation | null>(null)
   const [busy, setBusy] = React.useState(true)
   const [confirmed, setConfirmed] = React.useState(false)
@@ -15,16 +16,20 @@ export function PacePlanUpdateNotice({ record, onDone }: { record: AthleteRecord
   const [undone, setUndone] = React.useState(false)
   const [retry, setRetry] = React.useState(0)
   const applying = React.useRef(false)
+  const live = React.useRef(true)
+  const [uncertain, setUncertain] = React.useState(false)
+  React.useEffect(() => { live.current = true; return () => { live.current = false } }, [])
   React.useEffect(() => {
     let current = true
     setBusy(true); setPreparation(null); setConfirmed(false); setApplied(false); setUndone(false); setMessage("")
-    prepareCurrentPaceUpdate(record).then(result => {
-      if (current) setPreparation(result)
+    const scope = localAccountScopeSnapshot()
+    prepareCurrentPaceUpdate(record, explicitPaceBasis).then(result => {
+      if (current && localAccountScopeIsCurrent(scope)) setPreparation(result)
     }).catch(() => {
       if (current) setMessage("변경안을 불러오지 못했어요. 원래 계획은 그대로예요.")
     }).finally(() => { if (current) setBusy(false) })
     return () => { current = false }
-  }, [record, retry])
+  }, [record, retry, explicitPaceBasis])
   const changes = preparation?.kind === "ready" ? preparation.proposal.afterSessions.flatMap(after => {
     const before = preparation.proposal.beforeSessions.find(row => row.day === after.day && row.slot === after.slot)
     if (!before || JSON.stringify(before) === JSON.stringify(after)) return []
@@ -35,9 +40,9 @@ export function PacePlanUpdateNotice({ record, onDone }: { record: AthleteRecord
     const next = after.prescription.kind === "RPE_TIME_RANGE" && after.prescription.catalogWorkout
       ? resolveCatalogBinding(after.prescription.catalogWorkout) : null
     const referenceKinds = (session: typeof after) => session.prescription.kind === "RPE_TIME_RANGE"
-      ? session.prescription.catalogWorkout?.inputs.paceReferences?.map(ref => [ref.segmentId, ref.kind]) ?? null : null
+      ? session.prescription.catalogWorkout?.inputs.paceReferences?.map(ref => [ref.segmentId, ref.kind, ref.recordId, ref.recordVersion]) ?? null : null
     const basisRows = JSON.stringify(referenceKinds(before)) !== JSON.stringify(referenceKinds(after))
-      ? [record.purpose === "RACE_GOAL" ? "기준: 실제 경기 → 목표기록" : "기준: 목표기록 → 실제 경기"] : []
+      ? [`기준: ${record.eventDistanceM}m ${formatPaceSeconds(record.performanceSeconds)} · ${record.purpose === "RACE_GOAL" ? "목표" : record.achievedOn ?? "날짜 미입력"}`] : []
     return [{ day: after.day, slot: after.slot, rows: [...basisRows, ...(next?.steps.filter(step => step.kind === "WORK").flatMap(step => {
       const previous = old?.steps.find(row => row.segmentId === step.segmentId)
       if (!previous || JSON.stringify([previous.seconds, previous.paceSecondsPerKm]) === JSON.stringify([step.seconds, step.paceSecondsPerKm])) return []
@@ -48,31 +53,39 @@ export function PacePlanUpdateNotice({ record, onDone }: { record: AthleteRecord
     }) ?? [])] }]
   }) : []
   const apply = async () => {
-    if (preparation?.kind !== "ready" || !confirmed || applying.current || applied) return
+    if (preparation?.kind !== "ready" || !confirmed || applying.current || applied || uncertain) return
+    const scope = localAccountScopeSnapshot()
     applying.current = true; setBusy(true)
     try {
       const result = await applyActivePlanEdit(preparation.proposal, true)
+      if (!live.current || !localAccountScopeIsCurrent(scope)) return
       if (result.kind === "applied") {
         setApplied(true); setMessage("남은 훈련에 적용했어요. 이전 훈련과 일지는 그대로예요.")
       } else {
+        setUncertain(result.kind === "uncertain")
         setPreparation(null); setConfirmed(false); setMessage(result.message)
       }
     } catch {
+      if (!live.current || !localAccountScopeIsCurrent(scope)) return
+      setUncertain(true)
       setPreparation(null); setConfirmed(false)
       setMessage("저장 결과를 확인하지 못했어요. 계획을 다시 불러온 뒤 확인해 주세요.")
     } finally { applying.current = false; setBusy(false) }
   }
   const undo = async () => {
-    if (!applied || undone || applying.current) return
+    if (!applied || undone || applying.current || uncertain) return
+    const scope = localAccountScopeSnapshot()
     applying.current = true; setBusy(true)
     try {
       const restoration = await prepareCurrentPaceUndo()
+      if (!live.current || !localAccountScopeIsCurrent(scope)) return
       if (restoration.kind !== "ready") { setMessage(restoration.message); return }
       const result = await applyActivePlanEdit(restoration.proposal, true)
+      if (!live.current || !localAccountScopeIsCurrent(scope)) return
       if (result.kind === "applied") {
         setUndone(true); setMessage("변경 전 페이스로 되돌렸어요. 경기 기록은 그대로 보관해요.")
-      } else setMessage(result.message)
-    } catch { setMessage("되돌리기 결과를 확인하지 못했어요. 계획을 다시 불러와 확인해 주세요.") }
+      } else { setUncertain(result.kind === "uncertain"); setMessage(result.message) }
+    } catch { if (live.current && localAccountScopeIsCurrent(scope)) { setUncertain(true); setMessage("되돌리기 결과를 확인하지 못했어요. 계획을 다시 불러와 확인해 주세요.") } }
     finally { applying.current = false; setBusy(false) }
   }
   return <section className="pace-plan-update" aria-label="기록에 따른 계획 변경" aria-busy={busy}>
@@ -94,8 +107,8 @@ export function PacePlanUpdateNotice({ record, onDone }: { record: AthleteRecord
       </details>}
     </>}
     {message && <p role="status">{message}</p>}
-    {applied && !undone && <button type="button" disabled={busy} onClick={() => void undo()}>이번 페이스 변경 되돌리기</button>}
-    {!busy && !applied && (message || preparation?.kind === "blocked") && <button type="button" onClick={() => setRetry(value => value + 1)}>변경안 다시 확인</button>}
-    <button type="button" disabled={busy} onClick={onDone}>{applied ? "계획으로 돌아가기" : "계획은 그대로 두기"}</button>
+    {applied && !undone && !uncertain && <button type="button" disabled={busy} onClick={() => void undo()}>이번 페이스 변경 되돌리기</button>}
+    {!busy && !applied && !uncertain && (message || preparation?.kind === "blocked") && <button type="button" onClick={() => setRetry(value => value + 1)}>변경안 다시 확인</button>}
+    <button type="button" disabled={busy} onClick={onDone}>{uncertain ? "계획으로 돌아가 저장 확인" : applied ? "계획으로 돌아가기" : "계획은 그대로 두기"}</button>
   </section>
 }

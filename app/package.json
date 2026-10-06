@@ -22,6 +22,7 @@
     "test:e2e:account-draft-buffer": "playwright test --config playwright.account-draft-buffer.config.ts",
     "test:e2e:account-draft-panel": "playwright test --config playwright.account-draft-panel.config.ts",
     "test:e2e:account-record-service": "playwright test --config playwright.account-record-service.config.ts",
+    "test:e2e:running-profile-storage": "playwright test --config playwright.running-profile-storage.config.ts",
     "test:e2e:account-conflict": "playwright test --config playwright.account-conflict.config.ts",
     "test:e2e:account-decoration": "playwright test --config playwright.account-decoration.config.ts",
     "test:e2e:account-calendar-decoration": "playwright test --config playwright.account-calendar-decoration.config.ts",

@@ -15,7 +15,7 @@ test("links one explicitly selected plan session to its journal without copying 
   }, state)
 
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
   await openActivePlanCards(page)
   await page.getByText("오전 훈련 방법과 기록", { exact: true }).click()
   await page.getByRole("button", { name: "이 훈련 일지 쓰기" }).click()

@@ -19,7 +19,7 @@ const EXPERIENCE = ["NEW_TO_RUNNING", "DEVELOPING", "EXPERIENCED"]
 const EXPERIENCE_LABEL = [/달리기를 막 시작했어요/u, /훈련 계획에 맞춰 달려 본 경험/u, /구조화된 훈련과 경기 경험/u]
 const FOCUS = [/골고루.*MIX/u, /편하게 오래.*BASE/u, /조금 힘들게 꾸준히.*LT/u,
   /숨차게 반복.*VO₂/u, /짧고 세게.*GLY/u, /스피드.*ATP-PC/u, /회복만.*REC/u]
-const ENTRY = ["홈", "계획", "일지", "분석"]
+const ENTRY = ["홈", "훈련", "일지", "분석"]
 type Finding = { code: string; severity: "P1" | "P2"; phase: string; evidence: unknown }
 type Evidence = {
   persona: ReturnType<typeof persona>; run: string; source: string; phase: string; attempted: boolean;
@@ -282,7 +282,7 @@ for (let n = 1; n <= 100; n++) {
         await page.keyboard.press("Tab"); await page.keyboard.press("Tab"); await page.keyboard.press("Escape")
         e.steps.push({ phase: "keyboard-entry", detail: await page.evaluate(() => document.activeElement?.getAttribute("aria-label") ?? document.activeElement?.textContent?.slice(0, 70)) })
       }
-      await click(page, e, nav().getByRole("button", { name: "계획", exact: true }), "plan-entry")
+      await click(page, e, nav().getByRole("button", { name: "훈련", exact: true }), "plan-entry")
       const reuse = page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u })
       if (await reuse.isVisible()) throw new Error("Unexpected previous intake in a fresh isolated context")
       e.attempted = true
@@ -325,7 +325,7 @@ for (let n = 1; n <= 100; n++) {
           e.phase = "tab-return"
           const before = await page.locator("main").innerText()
           await nav().getByRole("button", { name: "홈", exact: true }).click()
-          await nav().getByRole("button", { name: "계획", exact: true }).click()
+          await nav().getByRole("button", { name: "훈련", exact: true }).click()
           if (!await page.getByRole("heading", { name: "계획이 준비됐어요", exact: true }).isVisible()) {
             add(e, "GENERATED_DRAFT_LOST_ON_TAB_RETURN", { before, after: await page.locator("main").innerText() })
             await capture(page, e, "draft-lost-tab-return")
@@ -358,7 +358,7 @@ for (let n = 1; n <= 100; n++) {
           const saved = state ? JSON.parse(state) : null
           e.numeric.push({ kind: "saved-session-prescriptions", sessions: saved?.activePlan?.sessions ?? [] })
           await page.reload()
-          await nav().getByRole("button", { name: "계획", exact: true }).click()
+          await nav().getByRole("button", { name: "훈련", exact: true }).click()
           await expect(page.getByRole("heading", { name: "오늘 훈련", exact: true })).toBeVisible()
           expect(await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(state)
           if (p.n % 4 === 2) {

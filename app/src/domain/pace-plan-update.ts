@@ -10,10 +10,11 @@ import { listPermittedActivePlanEditTargets, prepareActivePlanEdit, latestPaceUp
 import type { VersionedStoredPlanSession as Session } from "./plan-session-schema"
 
 export type PreparePacePlanUpdateInput = Pick<PrepareActivePlanEditInput,
-  "state" | "entries" | "today" | "now" | "timeZone" | "journalGuard" | "paceRecordGuard"> & { record: AthleteRecord }
+  "state" | "entries" | "today" | "now" | "timeZone" | "journalGuard" | "paceRecordGuard"> & { record: AthleteRecord; explicitPaceBasis?: boolean }
 
 /** Keep actual/goal meaning distinct, even when displayed numeric targets agree. */
-function paceTargetsChanged(before: Session, after: Session): boolean {
+function paceTargetsChanged(before: Session, after: Session, explicitBasis = false): boolean {
+  if (explicitBasis && activePlanEditFingerprint(before.prescription) !== activePlanEditFingerprint(after.prescription)) return true
   if (before.prescription.kind === "PACE_TARGET" && after.prescription.kind === "PACE_TARGET") {
     return (before.prescription.selectedAnchor.kind === "GOAL") !== (after.prescription.selectedAnchor.kind === "GOAL")
       || roundedPaceSeconds(before.prescription.targetRepSeconds) !== roundedPaceSeconds(after.prescription.targetRepSeconds)
@@ -87,7 +88,7 @@ export function preparePacePlanUpdate(input: PreparePacePlanUpdateInput, records
         exclude("PROPOSAL_INVALID", "원래 템플릿의 반복·거리·회복을 유지하는 공식 계산을 확인할 수 없어요.")
         continue
       }
-      if (!paceTargetsChanged(session, replacement)) {
+      if (!paceTargetsChanged(session, replacement, input.explicitPaceBasis)) {
         exclude("NO_PACE_CHANGE", "계산된 페이스가 같아 기존 기준 기록과 훈련을 그대로 둬요.")
         continue
       }
@@ -106,7 +107,7 @@ export function preparePacePlanUpdate(input: PreparePacePlanUpdateInput, records
       exclude("PROPOSAL_INVALID", "기존 구성과 확인한 시간 범위 안에서 이 기록을 적용할 수 없어요.")
       continue
     }
-    if (!paceTargetsChanged(session, replacement)) {
+    if (!paceTargetsChanged(session, replacement, input.explicitPaceBasis)) {
       exclude("NO_PACE_CHANGE", "계산된 페이스가 같아 기존 기준 기록과 훈련을 그대로 둬요.")
       continue
     }
@@ -120,7 +121,8 @@ export function preparePacePlanUpdate(input: PreparePacePlanUpdateInput, records
       : blocked("이 기록으로 갱신할 수 있는 미기록 훈련의 기존 페이스 연결이 없어요.")
   const result = prepareActivePlanEdit({ ...input, action: "PACE_REFERENCE", source: { day: source.day, slot: source.slot },
     replacements, unstartedConfirmed: true, noFixedFutureCommitments: false })
-  return result.kind === "ready" ? { ...result, excluded, proposal: { ...result.proposal, paceSourceRecord: structuredClone(input.record) } }
+  return result.kind === "ready" ? { ...result, excluded, proposal: { ...result.proposal, paceSourceRecord: structuredClone(input.record),
+    ...(input.explicitPaceBasis ? { explicitPaceBasis: true } : {}) } }
     : { ...result, excluded }
 }
 

@@ -17,7 +17,7 @@ test("compares actual MAIN values and refreshes the chosen record without claimi
     }))))
   })
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
   await completeDetailedPlan(page, { event: /^800m/u, division: /고등부/u,
     experience: /구조화된 훈련과 경기 경험이 많아요/u, focus: /짧고 세게.*GLY/u,
     template: /800m 경기 페이스 상세 훈련 포함/u, time: /아침에 운동해요/u })

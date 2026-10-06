@@ -12,7 +12,7 @@ test.beforeEach(async ({ page, baseURL }) => {
 test("explains the easy-session time difference while keeping the selected purpose identical", async ({ page }, testInfo) => {
   // Given: a mobile athlete starts a new LT-focused plan.
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "계획", exact: true }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
   await completeDetailedPlan(page, { division: /고등부/u, time: /아침에 운동해요/u })
 
   // Then: both choices preserve the selected purpose and their support choices.
