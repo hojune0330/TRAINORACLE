@@ -69,7 +69,7 @@ test("moves a first visitor from WELCOME to JOURNAL after a real first save", as
   await expect(page.getByRole("heading", { name: "오늘 운동은 어떻게 됐나요?" })).toBeVisible()
   await page.getByRole("button", { name: "운동을 마쳤어요" }).click()
   await page.getByRole("button", { name: "시간 미지정" }).click()
-  await page.getByRole("button", { name: /RPE 6,/u }).click()
+  await page.getByRole("button", { name: /힘든 정도 6\/10,/u }).click()
   await page.getByRole("button", { name: "없어요" }).click()
   await expect(page.getByRole("heading", { name: "이 내용으로 남길까요?" })).toBeVisible()
   await page.getByRole("button", { name: "이대로 저장", exact: true }).click()

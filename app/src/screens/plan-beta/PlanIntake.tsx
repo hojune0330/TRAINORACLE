@@ -144,24 +144,8 @@ export function PlanIntake({
       </button>
       {showProgress && (
         <div className="plan-progress" aria-label={`훈련 조건 질문 ${stepNumber}/${visibleSteps.length}`}>
-          <span>훈련 조건 · {stepNumber}/{visibleSteps.length}</span>
+          <span>계획 준비 · {meta.eyebrow}</span>
           <i style={{ width: `${stepNumber * (100 / visibleSteps.length)}%` }} />
-        </div>
-      )}
-      {showProgress && <IntakeCalendarPeek draft={draft} />}
-      {showProgress && answeredSteps.length > 0 && (
-        <div className="plan-intake__summary" aria-label="지금까지">
-          {answeredSteps.map(({ step: answeredStep, label }) => (
-            <button
-              key={answeredStep}
-              type="button"
-              className="plan-intake__summary-line"
-              onClick={() => onJump?.(answeredStep)}
-            >
-              <span>{label}</span>
-              <ChevronRight aria-hidden="true" size={14} />
-            </button>
-          ))}
         </div>
       )}
       <div ref={questionRef} className="plan-eyebrow active-content-scroll-target">{meta.eyebrow}</div>
@@ -254,7 +238,7 @@ export function PlanIntake({
         {step === "template" && (
           <>
             <Choice
-              title="RPE 기준으로 받기"
+              title="시간·힘든 정도로 받기"
               detail="기록 없이 바로 · 힘든 정도(1~10)와 시간"
               selected={draft.selectedDetailedTemplateRef === null}
               recommended
@@ -282,8 +266,8 @@ export function PlanIntake({
             {detailedTemplates.length === 0 && (
               <p className="plan-choice-note" role="status">
                 {draft.experienceBand !== "EXPERIENCED"
-                  ? "이 경험 범위엔 상세 훈련표가 아직 없어요. RPE 기준으로 받아요."
-                  : "이 종목·훈련 종류엔 상세 훈련표가 없어요. RPE 기준으로 받아요."}
+                  ? "이 경험 범위엔 상세 훈련표가 아직 없어요. 시간과 힘든 정도로 안내해요."
+                  : "이 종목·훈련 종류엔 상세 훈련표가 없어요. 시간과 힘든 정도로 안내해요."}
               </p>
             )}
             <PlanSupportCoverage experienceBand={draft.experienceBand} />
@@ -378,6 +362,20 @@ export function PlanIntake({
           <TermHelp term="review" />
         </p>
       )}
+      {showProgress && answeredSteps.length > 0 && (
+        <InfoDisclosure title="선택한 내용 바꾸기" purpose="actions" className="plan-intake__answers"
+          preview={answeredSteps.map(({ label }) => label).join(" · ")}>
+          <div className="plan-intake__summary" aria-label="지금까지">
+            {answeredSteps.map(({ step: answeredStep, label }) => onJump ? (
+              <button key={answeredStep} type="button" className="plan-intake__summary-line" onClick={() => onJump(answeredStep)}>
+                <span>{label}</span><ChevronRight aria-hidden="true" size={14} />
+              </button>
+            ) : <span key={answeredStep} className="plan-intake__summary-line">{label}</span>)}
+          </div>
+        </InfoDisclosure>
+      )}
+      {showProgress && <IntakeCalendarPeek draft={draft}
+        frameLengthDays={draft.requestedFrameLength === 9.5 ? 10 : draft.requestedFrameLength ?? 9} />}
       {step === "goal" && !refining && (
         <details className="plan-support-more">
           <summary>경기 기록이 있나요?</summary>

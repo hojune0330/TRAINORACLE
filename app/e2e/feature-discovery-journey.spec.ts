@@ -84,7 +84,7 @@ test("plan session exposes writing directly and does not confuse journal save wi
   await write.click()
   await page.getByRole("button", { name: "계획대로 마쳤어요", exact: true }).click()
   await page.getByRole("button", { name: session.slot === "PM" ? "오후" : "오전", exact: true }).click()
-  await page.getByRole("button", { name: /^RPE 6,/ }).click()
+  await page.getByRole("button", { name: /^힘든 정도 6\/10,/ }).click()
   await page.getByRole("button", { name: "없어요", exact: true }).click()
   await page.getByRole("button", { name: "이대로 저장", exact: true }).click()
   await expect(page.getByRole("heading", { name: "오늘 기록을 남겼어요.", exact: true })).toBeVisible()

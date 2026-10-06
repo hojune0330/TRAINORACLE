@@ -93,7 +93,7 @@ test(`returning from a ${detailed ? "detailed" : "quick"} DAY 5 PM journal keeps
   await expect(page.getByText("계획 5일차 · 오후")).toBeVisible()
   await page.getByRole("button", { name: "계획대로 마쳤어요" }).click()
   await page.getByRole("button", { name: "오후" }).click()
-  await page.getByRole("button", { name: /RPE 6,/u }).click()
+  await page.getByRole("button", { name: /힘든 정도 6\/10,/u }).click()
   await page.getByRole("button", { name: "없어요" }).click()
   await expect(page.getByRole("heading", { name: "이 내용으로 남길까요?" })).toBeVisible()
   await page.getByRole("button", { name: "이대로 저장", exact: true }).click()

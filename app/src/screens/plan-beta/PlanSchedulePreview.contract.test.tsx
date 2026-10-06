@@ -70,7 +70,7 @@ describe("plan schedule preview", () => {
     expect(screen.getByLabelText("9일 훈련 일정")).toBeVisible()
     expect(screen.getByRole("button", { name: "2026년 8월 17일 월요일 · 오전 주요 훈련 LT · 오후 회복 운동" })).toBeVisible()
     expect(document.getElementById("schedule-details")).not.toBeVisible()
-    expect(screen.queryByLabelText("RPE 쉽게 보기")).not.toBeInTheDocument()
+    expect(screen.queryByLabelText("힘든 정도 쉽게 보기")).not.toBeInTheDocument()
     rerender(<PlanSchedulePreview startDate="2026-08-17" frameLengthDays={9}
       sessions={sessions} detailsExpanded detailsId="schedule-details" />)
     expect(document.getElementById("schedule-details")).toBeVisible()

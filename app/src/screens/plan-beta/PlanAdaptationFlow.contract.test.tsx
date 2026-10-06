@@ -169,7 +169,7 @@ describe("next-frame adaptation flow", () => {
     await chooseReduction(user)
     expect(await screen.findByRole("status")).toHaveTextContent("다음 계획안을 불러오지 못했어요")
     expect(screen.queryByText("다음 계획안을 확인하고 있어요.")).not.toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "다음 계획 조정하기" })).toBeEnabled()
+    expect(screen.getByRole("button", { name: "기록 확인·다음 계획 조정" })).toBeEnabled()
   })
 
   it("ignores a late preparation response after going back and prevents double submissions", async () => {
@@ -200,7 +200,7 @@ describe("next-frame adaptation flow", () => {
     view.rerender(<PlanAdaptationFlow state={{ ...state, generatedAt: "2026-08-19T00:00:00.000Z" }} onPrepare={onPrepare} />)
     await act(async () => resolve({ kind: "unavailable", code: "TEST_LATE_RESPONSE" }))
     expect(screen.queryByRole("heading", { name: "다음 계획 조정" })).not.toBeInTheDocument()
-    await waitFor(() => expect(screen.getByRole("button", { name: "다음 계획 조정하기" })).toBeEnabled())
+    await waitFor(() => expect(screen.getByRole("button", { name: "기록 확인·다음 계획 조정" })).toBeEnabled())
   })
 
   it("does not claim successful or failed storage when acceptance throws", async () => {
@@ -211,7 +211,7 @@ describe("next-frame adaptation flow", () => {
     await chooseReduction(user)
     await user.click(await screen.findByRole("button", { name: "이 다음 계획 선택하기" }))
     expect(await screen.findByRole("status")).toHaveTextContent("저장됐는지 확인하지 못했어요")
-    expect(screen.getByRole("button", { name: "다음 계획 조정하기" })).toBeEnabled()
+    expect(screen.getByRole("button", { name: "기록 확인·다음 계획 조정" })).toBeEnabled()
   })
 
   it("reloads the saved pending plan on reopening after a lost acceptance response", async () => {
@@ -550,7 +550,7 @@ function cycleEntry(state: PlanBetaState, session: PlanSession, rpe: number): Po
 }
 
 async function openAdaptation(user: ReturnType<typeof userEvent.setup>): Promise<void> {
-  const action = screen.getByRole("button", { name: /^(다음 계획 조정하기|이번 주기 기록 확인)$/u })
+  const action = screen.getByRole("button", { name: /^(기록 확인·다음 계획 조정|선택한 다음 계획 보기|이번 주기 기록 확인)$/u })
   await waitFor(() => expect(action).toBeEnabled())
   await user.click(action)
   await waitFor(() => expect(action).toHaveAttribute("aria-expanded", "true"))

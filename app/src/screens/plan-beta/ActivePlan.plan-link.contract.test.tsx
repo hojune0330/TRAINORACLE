@@ -33,7 +33,7 @@ function saveQuickPlanJournal(input: {
     name: input.outcome === "COMPLETED" ? "계획대로 마쳤어요" : "일부만 했거나 내용을 바꿨어요",
   }))
   fireEvent.click(screen.getByRole("button", { name: matchingSlotLabel(draft.link.sessionSlot) }))
-  fireEvent.click(screen.getByRole("button", { name: /RPE 6,/ }))
+  fireEvent.click(screen.getByRole("button", { name: /힘든 정도 6\/10,/ }))
   if (input.pain === "NONE") {
     fireEvent.click(screen.getByRole("button", { name: "없어요" }))
   } else {

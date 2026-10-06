@@ -21,7 +21,7 @@ for (const width of [320, 375]) {
       await expect(page.getByRole("heading", { name: "오늘 운동은 어떻게 됐나요?", exact: true })).toBeVisible()
       await expect(page.getByRole("button", { name: "이대로 저장", exact: true })).toHaveCount(0)
       await click("운동을 마쳤어요"); await click("오전")
-      await click("모르겠어요 · RPE는 비워 둘게요")
+      await click("모르겠어요 · 비워 둘게요")
       await expect(page.getByRole("heading", { name: "운동 후 불편하거나 아픈 곳이 있나요?", exact: true })).toBeVisible()
       await click("없어요")
       await click("글 수정")

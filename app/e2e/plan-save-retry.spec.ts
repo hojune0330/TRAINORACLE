@@ -42,7 +42,7 @@ test("retries a selected plan save and keeps the plan after reload", async ({ pa
   )).not.toBeNull()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
   await expect(page.getByRole("heading", { name: /9일 훈련 계획/u })).toBeVisible()
-  await expect(page.getByRole("button", { name: "현재 기준으로 다음 계획안 만들기" })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "다음 계획안 만들기" })).toHaveCount(0)
   await expect(page.getByText("각 훈련을 마친 뒤 완료·휴식·건너뜀·통증 확인 중 하나를 기록해 주세요."))
     .toBeVisible()
 })

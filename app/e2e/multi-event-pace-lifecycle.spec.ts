@@ -432,7 +432,7 @@ for (const persona of personas) test(`${persona.id} ${persona.name}`, async ({ p
       await page.getByRole("button", { name: "이 훈련 일지 쓰기", exact: true }).click()
       await page.getByRole("button", { name: persona.partial ? "일부만 했거나 내용을 바꿨어요" : "계획대로 마쳤어요", exact: true }).click()
       await page.getByRole("button", { name: persona.slot === "PM" || main.slot === "PM" ? "오후" : "오전", exact: true }).click()
-      await page.getByRole("button", { name: /^RPE 7,/ }).click()
+      await page.getByRole("button", { name: /^힘든 정도 7\/10,/ }).click()
       await page.getByRole("button", { name: "없어요", exact: true }).click()
       if (persona.partial) await page.getByRole("button", { name: "횟수를 줄였어요", exact: true }).click()
       await page.getByRole("button", { name: "이대로 저장", exact: true }).click()
@@ -457,7 +457,7 @@ for (const persona of personas) test(`${persona.id} ${persona.name}`, async ({ p
       nextDate.setUTCDate(nextDate.getUTCDate() + 10)
       await page.clock.setFixedTime(nextDate)
       await page.reload(); await tab(page)
-      await page.getByRole("button", { name: "현재 기준으로 다음 계획안 만들기", exact: true }).click()
+      await page.getByRole("button", { name: "다음 계획안 만들기", exact: true }).click()
       await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/ }).click()
       const previewKeys = [PLAN, HISTORY, JOURNAL, RECORDS]
       const previewStorage = await page.evaluate(keys => keys.map(key => localStorage.getItem(key)), previewKeys)

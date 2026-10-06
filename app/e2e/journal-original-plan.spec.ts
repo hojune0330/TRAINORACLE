@@ -24,7 +24,7 @@ test("archives the original in the real plan flow and compares it from its journ
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
   const activeBefore = JSON.stringify(state)
-  await page.getByRole("button", { name: "현재 기준으로 다음 계획안 만들기" }).click()
+  await page.getByRole("button", { name: "다음 계획안 만들기" }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
   const acceptPlan = page.getByRole("button", { name: "이 일정으로 시작", exact: true })
   await expect(acceptPlan).toBeVisible()

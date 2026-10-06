@@ -57,7 +57,7 @@ export function CycleArchive({ entries, anchor, index, onAnchorChange, onIndexCh
   }
 
   return (
-    <section className="cycle-calendar" aria-label="9.5일 주기 일지" onWheel={nav.markManual} onTouchMove={nav.markManual}
+    <section className="cycle-calendar" aria-label="기간별 일지 묶음" onWheel={nav.markManual} onTouchMove={nav.markManual}
       onKeyDown={event => { if (["PageUp", "PageDown", "Home", "End", " "].includes(event.key)) nav.markManual() }}>
       <div className="cycle-calendar__controls">
         <button type="button" aria-label="이전 주기" disabled={window === null} onClick={() => changeIndex(effectiveIndex - 1)}><ChevronLeft size={18} aria-hidden="true" /></button>
@@ -78,7 +78,7 @@ export function CycleArchive({ entries, anchor, index, onAnchorChange, onIndexCh
         actionLabel="오늘 기록하기" onAction={onWriteLog} />}
       <InfoDisclosure title="주기 시작일과 표시 기준">
       <p style={{ margin: 0, fontFamily: "var(--sans)", fontSize: 12.5, lineHeight: 1.6, color: "var(--ink-2)" }}>
-        9일과 10일을 번갈아 묶어 보는 TrainOracle 일지 방식이에요. 시작일은 직접 정하고,
+        9일과 10일을 번갈아 묶어 보는 TrainOracle 일지 방식이에요. 훈련 계획 기간과는 별개예요. 시작일은 직접 정하고,
         처방이나 정답 주기가 아니에요. 이 화면은 기록을 묶어 볼 뿐 계획을 자동으로 바꾸지 않아요.
       </p>
       <label htmlFor="cycle-anchor" style={{ display: "block", marginTop: 14, fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-3)" }}>

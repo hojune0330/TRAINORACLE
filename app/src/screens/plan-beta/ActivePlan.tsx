@@ -4,6 +4,7 @@ import {
   CalendarDays,
   Check,
   ChevronDown,
+  ChevronRight,
   CircleCheck,
   CircleMinus,
   HeartPulse,
@@ -510,20 +511,9 @@ export function ActivePlan({
       </div>
       <div className="active-plan__continuity">
         <h2>{frameComplete ? "다음 주기" : "이번 주기 이어가기"}</h2>
-        {frameComplete && <PlanAdaptationFlow state={state} onPendingChange={setHasPendingSuccessor} onPrepareNextFrame={onNextFrame} />}
-        <details className="plan-session-guidance">
-        <summary>다음 계획에 반영되는 내용</summary>
-        <p>
-          {state.version === 3
-            ? "다음 주기는 현재 일정과 연결된 수행 기록을 확인해 만들어요. 같은 목적의 상세 훈련은 유지하고, 직접 기록한 RPE가 반복해서 높으면 검토된 짧은 구성으로 조정할 수 있어요."
-            : "현재 일정과 수행 여부를 기준으로 다음 주기를 이어가요. 변경 이력이 있는 이 계획의 상세 구성을 그대로 복사하거나 자동으로 줄이는 경로는 아직 지원하지 않아요."}
-          기록이 부족하거나 비교가 어려우면 임의로 줄이지 않아요. 강도·훈련량을 자동으로 늘리거나 메모 원문을 분석하지 않아요.
-          새 계획을 시작하기 전에 몸 상태와 바뀐 내용을 다시 확인해 주세요.
-        </p>
-        </details>
         {frameComplete && hasPendingSuccessor ? (
           <>
-            <button type="button" onClick={() => setShowActivationCheck(true)}>
+            <button className="active-plan__next-primary" type="button" onClick={() => setShowActivationCheck(true)}>
               선택한 다음 계획 시작하기
             </button>
             {showActivationCheck && (
@@ -544,15 +534,33 @@ export function ActivePlan({
           </>
         ) : state.activePlan.selectionActor !== "SELF" ? (
           <p>이 계획은 지도자가 선택한 계획이에요. 연결된 지도자와 다음 계획을 확인해 주세요.</p>
+        ) : frameComplete ? (
+          <button className="active-plan__next-primary" type="button" onClick={onNextFrame}>
+            다음 계획안 만들기<ChevronRight aria-hidden="true" size={18} />
+          </button>
         ) : (
           <details className="plan-session-guidance">
-          <summary>{frameComplete ? "현재 기준으로 새 계획안 받기" : "다음 계획은 언제 받나요?"}</summary>
+          <summary>다음 계획은 언제 받나요?</summary>
           <p>현재 일정과 기록을 기준으로 새 계획안을 보여줘요. 확인하고 선택하기 전에는 시작하지 않아요.</p>
           <button type="button" disabled={!frameComplete} onClick={onNextFrame}>
-            {frameComplete ? "현재 기준으로 다음 계획안 만들기" : "현재 계획을 먼저 기록해 주세요"}
+            현재 계획을 먼저 기록해 주세요
           </button>
           </details>
         )}
+        {frameComplete && state.activePlan.selectionActor === "SELF" && !hasPendingSuccessor && (
+          <p className="active-plan__next-note">계획안을 보고 고른 뒤에 시작해요.</p>
+        )}
+        {frameComplete && <PlanAdaptationFlow state={state} onPendingChange={setHasPendingSuccessor} onPrepareNextFrame={onNextFrame} />}
+        <details className="plan-session-guidance">
+          <summary>다음 계획에 반영되는 내용</summary>
+          <p>
+            {state.version === 3
+              ? "다음 주기는 현재 일정과 연결된 수행 기록을 확인해 만들어요. 같은 목적의 상세 훈련은 유지하고, 힘든 정도가 반복해서 높게 기록되면 검토된 짧은 구성으로 조정할 수 있어요."
+              : "현재 일정과 수행 여부를 기준으로 다음 주기를 이어가요. 변경 이력이 있는 이 계획의 상세 구성을 그대로 복사하거나 자동으로 줄이는 경로는 아직 지원하지 않아요."}
+            기록이 부족하거나 비교가 어려우면 임의로 줄이지 않아요. 강도·훈련량을 자동으로 늘리거나 메모 원문을 분석하지 않아요.
+            새 계획을 시작하기 전에 몸 상태와 바뀐 내용을 다시 확인해 주세요.
+          </p>
+        </details>
       </div>
     </section>
   )

@@ -56,14 +56,14 @@ for (const viewport of [
     await assertCurrentBuild(page)
 
     await expect(page.getByRole("button", { name: "현재 계획을 먼저 기록해 주세요" })).toBeDisabled()
-    await expect(page.getByRole("button", { name: "다음 계획 조정하기" })).toHaveCount(0)
+    await expect(page.getByRole("button", { name: "기록 확인·다음 계획 조정" })).toHaveCount(0)
     await expect(page.getByRole("list", { name: "날짜별 계획 미리보기" })).toHaveCount(1)
     await assertNoHorizontalOverflow(page)
     await completeVisibleTrainingSessions(page)
     const activeBefore = await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))
 
     await assertTouchTargets(page)
-    const adaptationAction = page.getByRole("button", { name: "다음 계획 조정하기" })
+    const adaptationAction = page.getByRole("button", { name: "기록 확인·다음 계획 조정" })
     await expect(adaptationAction).toBeVisible()
     await adaptationAction.focus()
     await expect(adaptationAction).toBeFocused()
@@ -97,7 +97,7 @@ for (const viewport of [
     await page.getByRole("navigation", { name: "주 탭" })
       .getByRole("button", { name: "훈련" })
       .click()
-    await page.getByRole("button", { name: "다음 계획 조정하기" }).click()
+    await page.getByRole("button", { name: "기록 확인·다음 계획 조정" }).click()
     await expect(page.getByText("다음 주기에 사용할 계획안을 저장했어요", { exact: false }))
       .toBeVisible()
     expect(await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(activeBefore)
@@ -115,7 +115,7 @@ for (const viewport of [
     const laterActiveBytes = await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))
     expect(await activeCandidateId(page)).toBe(candidateBefore)
 
-    await page.getByRole("button", { name: "다음 계획 조정하기" }).click()
+    await page.getByRole("button", { name: "기록 확인·다음 계획 조정" }).click()
     await expect(page.getByRole("heading", { name: "조정 이유를 선택해 주세요" })).toBeVisible()
     await expect(page.getByText("다음 주기에 사용할 계획안을 저장했어요", { exact: false })).toHaveCount(0)
     await page.getByRole("button", { name: /다음 계획을 조정하고 싶어요/u }).click()
@@ -130,7 +130,7 @@ for (const viewport of [
     await page.getByRole("navigation", { name: "주 탭" })
       .getByRole("button", { name: "훈련" })
       .click()
-    await page.getByRole("button", { name: "다음 계획 조정하기" }).click()
+    await page.getByRole("button", { name: "기록 확인·다음 계획 조정" }).click()
     await expect(page.getByText("다음 주기에 사용할 계획안을 저장했어요", { exact: false }))
       .toBeVisible()
     expect(await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(laterActiveBytes)
@@ -246,7 +246,7 @@ async function completeVisibleTrainingSessions(page: Page): Promise<void> {
       await page.getByRole("button", { name: "다음 날짜" }).click()
     }
   }
-  await expect(page.getByRole("button", { name: "다음 계획 조정하기" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "기록 확인·다음 계획 조정" })).toBeVisible()
 }
 
 async function assertNoHorizontalOverflow(page: Page): Promise<void> {

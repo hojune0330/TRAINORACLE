@@ -70,7 +70,7 @@ export const STEP_META: Record<IntakeStep, {
     number: 0,
     eyebrow: "안내 방식",
     title: "강도를 어떻게 알려줄까요?",
-    copy: "기록이 없으면 RPE로.",
+    copy: "기록이 없으면 시간과 힘든 정도로 안내해요.",
     helpTerm: "rpe",
   },
   days: {
@@ -116,7 +116,7 @@ export function answeredSummary(
   if (draft.selectedDetailedTemplateRef !== undefined) {
     lines.push({
       step: "template",
-      label: draft.selectedDetailedTemplateRef === null ? "RPE 기준" : "상세 훈련 선택",
+      label: draft.selectedDetailedTemplateRef === null ? "시간·힘든 정도" : "상세 훈련 선택",
     })
   }
   if (draft.availableDayCount !== undefined) {

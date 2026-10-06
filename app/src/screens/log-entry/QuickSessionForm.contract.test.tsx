@@ -10,7 +10,7 @@ import { runDraftSafeNavigation } from "../../domain/unsaved-draft-navigation"
 function finishPerformedSession(rpe = 6): void {
   fireEvent.click(screen.getByRole("button", { name: "운동을 마쳤어요" }))
   fireEvent.click(screen.getByRole("button", { name: "오후" }))
-  fireEvent.click(screen.getByRole("button", { name: new RegExp(`RPE ${rpe},`) }))
+  fireEvent.click(screen.getByRole("button", { name: new RegExp(`힘든 정도 ${rpe}/10,`) }))
   fireEvent.click(screen.getByRole("button", { name: "없어요" }))
   fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
 }
@@ -31,7 +31,7 @@ describe("quick session journal contract", () => {
     expect(screen.queryByRole("button", { name: "이대로 저장" })).toBeNull()
     expect(loadEntries()).toEqual([])
     click("운동을 마쳤어요"); click("오전")
-    click("모르겠어요 · RPE는 비워 둘게요")
+    click("모르겠어요 · 비워 둘게요")
     expect(screen.getByRole("heading", { name: "운동 후 불편하거나 아픈 곳이 있나요?" })).toBeVisible()
     expect(screen.queryByRole("button", { name: "이대로 저장" })).toBeNull()
     click("없어요"); click("글 수정")
@@ -50,7 +50,7 @@ describe("quick session journal contract", () => {
     render(<QuickSessionForm plannedSessionLink={draft.link} targetDate={draft.date} />)
     fireEvent.click(screen.getByRole("button", { name: "일부만 했거나 내용을 바꿨어요" }))
     fireEvent.click(screen.getByRole("button", { name: "오전" }))
-    fireEvent.click(screen.getByRole("button", { name: /^RPE 8,/ }))
+    fireEvent.click(screen.getByRole("button", { name: /^힘든 정도 8\/10,/ }))
     fireEvent.click(screen.getByRole("button", { name: "없어요" }))
     fireEvent.click(screen.getByRole("button", { name: "횟수를 줄였어요" }))
     fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
@@ -124,7 +124,7 @@ describe("quick session journal contract", () => {
     render(<QuickSessionForm />)
     const click = (name: string) => fireEvent.click(screen.getByRole("button", { name }))
     click("운동을 마쳤어요"); click("오전")
-    fireEvent.click(screen.getByRole("button", { name: /RPE 5,/ }))
+    fireEvent.click(screen.getByRole("button", { name: /힘든 정도 5\/10,/ }))
     click("없어요")
     expect(loadEntries()).toHaveLength(0)
     click("운동 추가·수정"); click("운동 추가"); click("반복 달리기"); click("거리·시간·횟수 적기")
@@ -200,7 +200,7 @@ describe("quick session journal contract", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "가볍게 움직였어요" }))
     fireEvent.click(screen.getByRole("button", { name: "시간 미지정" }))
-    fireEvent.click(screen.getByRole("button", { name: "모르겠어요 · RPE는 비워 둘게요" }))
+    fireEvent.click(screen.getByRole("button", { name: "모르겠어요 · 비워 둘게요" }))
     fireEvent.click(screen.getByRole("button", { name: "없어요" }))
   fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
 
@@ -231,7 +231,7 @@ describe("quick session journal contract", () => {
     fireEvent.click(screen.getByRole("button", { name: "방금 기록 수정" }))
     fireEvent.click(screen.getByRole("button", { name: "하던 운동을 일부만 했어요" }))
     fireEvent.click(screen.getByRole("button", { name: "오전" }))
-    fireEvent.click(screen.getByRole("button", { name: /RPE 7,/ }))
+    fireEvent.click(screen.getByRole("button", { name: /힘든 정도 7\/10,/ }))
     fireEvent.click(screen.getByRole("button", { name: "없어요" }))
   fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
 
@@ -267,7 +267,7 @@ describe("quick session journal contract", () => {
     render(<QuickSessionForm />)
     fireEvent.click(screen.getByRole("button", { name: "운동을 마쳤어요" }))
     fireEvent.click(screen.getByRole("button", { name: "오전" }))
-    fireEvent.click(screen.getByRole("button", { name: /RPE 5,/ }))
+    fireEvent.click(screen.getByRole("button", { name: /힘든 정도 5\/10,/ }))
     fireEvent.click(screen.getByRole("button", { name: "있어요" }))
     fireEvent.click(screen.getByRole("button", { name: "이 상태로 기록" }))
 
@@ -319,7 +319,7 @@ describe("quick session journal contract", () => {
     render(<QuickSessionForm targetDate={draft.date} plannedSessionLink={draft.link} />)
     fireEvent.click(screen.getByRole("button", { name: "계획대로 마쳤어요" }))
     fireEvent.click(screen.getByRole("button", { name: otherSlot }))
-    fireEvent.click(screen.getByRole("button", { name: /RPE 6,/ }))
+    fireEvent.click(screen.getByRole("button", { name: /힘든 정도 6\/10,/ }))
     fireEvent.click(screen.getByRole("button", { name: "없어요" }))
   fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
 
@@ -336,7 +336,7 @@ describe("quick session journal contract", () => {
     render(<QuickSessionForm targetDate={draft.date} plannedSessionLink={draft.link} />)
     fireEvent.click(screen.getByRole("button", { name: "계획대로 마쳤어요" }))
     fireEvent.click(screen.getByRole("button", { name: "시간 미지정" }))
-    fireEvent.click(screen.getByRole("button", { name: /RPE 6,/ }))
+    fireEvent.click(screen.getByRole("button", { name: /힘든 정도 6\/10,/ }))
     fireEvent.click(screen.getByRole("button", { name: "없어요" }))
   fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
 

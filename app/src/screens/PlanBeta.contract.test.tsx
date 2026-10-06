@@ -119,7 +119,7 @@ describe("plan beta user flow", () => {
     expect(screen.getByRole("heading", { name: "이번 9일 중 며칠 훈련할까요?" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: /^3일/u }))
     expect(screen.getByRole("heading", { name: "지금 몸은 어때요?" })).toBeVisible()
-    expect(screen.queryByRole("button", { name: /RPE 기준으로 받기/u })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /시간·힘든 정도로 받기/u })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /9일 계획 받기/u })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /하루 한 번 운동/u })).not.toBeInTheDocument()
   })

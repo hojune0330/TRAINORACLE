@@ -376,7 +376,7 @@ function QuickSessionFormEditor({
           {outcomeLabel === undefined && <span className="quick-log__empty">누르면 여기에 기록돼요.</span>}
           {outcomeLabel !== undefined && <button type="button" onClick={() => setStep("activity")}><span>{savedDateLabel(date)}</span><strong>{outcomeLabel}</strong></button>}
           {slot !== null && performed(outcome) && <button type="button" onClick={() => setStep("activity")}><span>시간</span><strong>{slotLabel}</strong></button>}
-          {effortAnswered && performed(outcome) && <button type="button" onClick={() => setStep("effort")}><span>몸의 느낌</span><strong>{rpe > 0 ? `RPE ${rpe}` : "미기록"}</strong></button>}
+          {effortAnswered && performed(outcome) && <button type="button" onClick={() => setStep("effort")}><span>힘든 정도</span><strong>{rpe > 0 ? `${rpe}/10` : "입력 안 함"}</strong></button>}
           {painStatus !== "UNANSWERED" && performed(outcome) && <button type="button" onClick={() => setStep("effort")}><span>몸 상태</span><strong>{painStatus === "SIGNAL_REPORTED" ? "불편한 곳 있음" : "불편한 곳 없음"}</strong></button>}
         </div>
         {step === "saved" && <div className="quick-log__stamp" aria-label={savedStorage === "PENDING" ? "계정 전송 대기" : savedStorage === "CONFLICT" ? "수정 충돌" : "저장 완료"}>
@@ -441,11 +441,11 @@ function QuickSessionFormEditor({
             <small>2 / 3</small>
             <h1 id="quick-effort-title" ref={stageHeadingRef} tabIndex={-1}>몸에는 어느 정도로 느껴졌나요?</h1>
             <p>가장 가까운 숫자를 한 번 눌러 주세요. 답하기 어렵다면 비워 둘 수 있어요.</p>
-            <div className="quick-log__rpe-scale" role="group" aria-label="RPE 1부터 10까지">
-              {RPE_OPTIONS.map((item) => <button key={item.value} type="button" aria-label={`RPE ${item.value}, ${item.detail}`} aria-pressed={effortAnswered && rpe === item.value} onClick={() => selectRpe(item.value)}>{item.value}</button>)}
+            <div className="quick-log__rpe-scale" role="group" aria-label="힘든 정도 1부터 10까지">
+              {RPE_OPTIONS.map((item) => <button key={item.value} type="button" aria-label={`힘든 정도 ${item.value}/10, ${item.detail}`} aria-pressed={effortAnswered && rpe === item.value} onClick={() => selectRpe(item.value)}>{item.value}</button>)}
             </div>
-            <button className="quick-log__unknown" type="button" aria-pressed={effortAnswered && rpe === 0} onClick={() => selectRpe(0)}>모르겠어요 · RPE는 비워 둘게요</button>
-            {effortAnswered && <p className="quick-log__rpe-detail" role="status">{rpeDetail ?? "RPE를 추정하지 않고 미기록으로 남겨요."}</p>}
+            <button className="quick-log__unknown" type="button" aria-pressed={effortAnswered && rpe === 0} onClick={() => selectRpe(0)}>모르겠어요 · 비워 둘게요</button>
+            {effortAnswered && <p className="quick-log__rpe-detail" role="status">{rpeDetail ?? "힘든 정도를 추측해서 채우지 않아요."}</p>}
 
             {effortAnswered && (
               <div ref={safetyRef} className="quick-log__safety active-content-scroll-target" aria-labelledby="quick-safety-title">
@@ -470,7 +470,7 @@ function QuickSessionFormEditor({
         {step === "review" && outcome !== null && <section aria-labelledby="quick-review-title">
           <small>마지막 확인</small>
           <h1 id="quick-review-title" ref={stageHeadingRef} tabIndex={-1}>이 내용으로 남길까요?</h1>
-          {!performed(outcome) && performed(savedEntry?.activityOutcome ?? null) && <p>쉬거나 건너뛴 기록으로 바꾸면 이 일지의 운동 시간·거리·RPE·몸 상태 응답은 제외돼요.</p>}
+          {!performed(outcome) && performed(savedEntry?.activityOutcome ?? null) && <p>쉬거나 건너뛴 기록으로 바꾸면 운동 시간·거리·힘든 정도·몸 상태 응답은 제외돼요.</p>}
             <ExerciseLogSummary log={exerciseLog} />
             {(performed(outcome) || exerciseLog.plannedRepetitions || exerciseLog.plannedSegments || Object.keys(plannedInputs.values).length > 0) && <PlannedRepetitionEditor entryId={entryId} date={date} link={planLink} value={exerciseLog} onChange={setExerciseLog} inputs={plannedInputs} />}
           {plannedInputs.invalidKeys.length > 0 && <p className="quick-log__error">구간 기록 {plannedInputs.invalidKeys.length}곳의 숫자를 확인해 주세요. 확인 전에는 저장되지 않아요.</p>}

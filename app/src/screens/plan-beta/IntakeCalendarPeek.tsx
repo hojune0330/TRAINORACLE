@@ -48,7 +48,7 @@ export function IntakeCalendarPeek({
       <figcaption>
         <CalendarDays aria-hidden="true" size={15} />
         <span>{caption}</span>
-        <small>{filled}/3</small>
+        <small>준비 중</small>
       </figcaption>
       <details>
         <summary>{calendarDayLabel(start)}부터 · {frameLengthDays}일 달력 보기</summary>

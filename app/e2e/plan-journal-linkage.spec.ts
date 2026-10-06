@@ -23,7 +23,7 @@ test("links one explicitly selected plan session to its journal without copying 
   await expect(page.getByText("계획 1일차 · 오전")).toBeVisible()
   await page.getByRole("button", { name: "계획대로 마쳤어요" }).click()
   await page.getByRole("button", { name: "오전" }).click()
-  await page.getByRole("button", { name: /RPE 6,/u }).click()
+  await page.getByRole("button", { name: /힘든 정도 6\/10,/u }).click()
   await page.getByRole("button", { name: "없어요" }).click()
   await expect(page.getByRole("heading", { name: "이 내용으로 남길까요?" })).toBeVisible()
   await page.getByRole("button", { name: "이대로 저장", exact: true }).click()
@@ -51,7 +51,7 @@ test("links one explicitly selected plan session to its journal without copying 
   )?.progress)).toEqual([{ sessionDay: 1, sessionSlot: "AM", state: "COMPLETED" }])
   const beforeReview = await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))
   // One completed session permits reviewing this cycle, not adjusting an unfinished frame.
-  await expect(page.getByRole("button", { name: "다음 계획 조정하기", exact: true })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "기록 확인·다음 계획 조정", exact: true })).toHaveCount(0)
   await page.getByRole("button", { name: "이번 주기 기록 확인", exact: true }).click()
   await expect(page.getByRole("heading", { name: "이번 주기 기록 요약", exact: true })).toBeVisible()
   await expect(page.getByText("계획 RPE와 비교할 수 있는 기록은 1건이에요")).toBeVisible()

@@ -264,8 +264,8 @@ export function PlanAdaptationFlow({
     setStep("closed")
   }
 
-  const entryLabel = matchingPending === null && !canRequest && !canUseRecord
-    ? "이번 주기 기록 확인" : "다음 계획 조정하기"
+  const entryLabel = matchingPending !== null ? "선택한 다음 계획 보기"
+    : !canRequest && !canUseRecord ? "이번 주기 기록 확인" : "기록 확인·다음 계획 조정"
 
   return (
     <section className="plan-adaptation" aria-label="다음 계획 조정">
@@ -316,7 +316,7 @@ export function PlanAdaptationFlow({
               />}
               <PlanChoice
                 title="이번 주기 수행 기록을 볼래요"
-                detail="계획과 실제 RPE를 비교해요."
+                detail="계획과 기록한 힘든 정도를 비교해요."
                 selected={false}
                 onClick={() => setStep("cycle")}
               />

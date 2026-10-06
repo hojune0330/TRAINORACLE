@@ -84,7 +84,7 @@ test("keeps saved results visible and does not turn missing RPE into a value", a
   await page.getByRole("button", { name: "운동을 마쳤어요", exact: true }).click()
   await expect(page.locator(".quick-log__summary-help")).not.toHaveAttribute("open")
   await page.getByRole("button", { name: "오전", exact: true }).click()
-  await page.getByRole("button", { name: "모르겠어요 · RPE는 비워 둘게요", exact: true }).click()
+  await page.getByRole("button", { name: "모르겠어요 · 비워 둘게요", exact: true }).click()
   await page.getByRole("button", { name: "없어요", exact: true }).click()
   await expect(page.getByRole("heading", { name: "이 내용으로 남길까요?" })).toBeVisible()
   await page.getByRole("button", { name: "이대로 저장", exact: true }).click()

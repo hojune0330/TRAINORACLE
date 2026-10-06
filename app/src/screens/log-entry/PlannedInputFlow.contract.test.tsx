@@ -35,7 +35,7 @@ describe("linked journal context and invalid actual-input guard", () => {
     render(<QuickSessionForm targetDate={fixture.entry.date} plannedSessionLink={fixture.link} />)
     fireEvent.click(screen.getByRole("button", { name: "계획대로 마쳤어요" }))
     fireEvent.click(screen.getByRole("button", { name: "오전" }))
-    fireEvent.click(screen.getByRole("button", { name: /RPE 6,/ }))
+    fireEvent.click(screen.getByRole("button", { name: /힘든 정도 6\/10,/ }))
     fireEvent.click(screen.getByRole("button", { name: "없어요" }))
     fireEvent.click(screen.getByText("반복별 기록 남기기"))
     fireEvent.change(screen.getByLabelText("1세트 1회 실제 시간"), { target: { value: "-12" } })

@@ -170,7 +170,7 @@ describe("active plan persistence retry", () => {
     render(<PlanBeta />)
 
     const active = localStorage.getItem("trainoracle.plan-beta.v1")
-    await user.click(screen.getByRole("button", { name: "현재 기준으로 다음 계획안 만들기" }))
+    await user.click(screen.getByRole("button", { name: "다음 계획안 만들기" }))
     expect(screen.queryByRole("alert")).toBeNull()
     expect(localStorage.getItem("trainoracle.plan-beta.v1")).toBe(active)
     await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
@@ -196,7 +196,7 @@ describe("active plan persistence retry", () => {
       />,
     )
 
-    await user.click(screen.getByRole("button", { name: "현재 기준으로 다음 계획안 만들기" }))
+    await user.click(screen.getByRole("button", { name: "다음 계획안 만들기" }))
     expect(screen.getByRole("alert")).toHaveTextContent("현재 계획이 바뀌었거나 읽을 수 없어요")
     expect(screen.queryByRole("button", { name: "다음 주기 다시 만들기" })).not.toBeInTheDocument()
     expect(onPrepareNextFrame).not.toHaveBeenCalled()
@@ -214,7 +214,7 @@ describe("active plan persistence retry", () => {
       />,
     )
 
-    await user.click(screen.getByRole("button", { name: "현재 기준으로 다음 계획안 만들기" }))
+    await user.click(screen.getByRole("button", { name: "다음 계획안 만들기" }))
 
     expect(screen.getByRole("alert")).toHaveTextContent("현재 계획이 바뀌었거나 읽을 수 없어요")
     expect(screen.queryByRole("button", { name: "다음 주기 다시 만들기" })).not.toBeInTheDocument()

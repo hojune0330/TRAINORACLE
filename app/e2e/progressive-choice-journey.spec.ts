@@ -82,7 +82,7 @@ for (const persona of personas) {
       await page.getByRole("button", { name: "오늘 기록 남기기", exact: true }).click()
       await page.getByRole("button", { name: "운동을 마쳤어요", exact: true }).click()
       await page.getByRole("button", { name: "오후", exact: true }).click()
-      await page.getByRole("button", { name: /RPE 6,/u }).click()
+      await page.getByRole("button", { name: /힘든 정도 6\/10,/u }).click()
       await page.getByRole("button", { name: "없어요", exact: true }).click()
       await expect(page.getByRole("heading", { name: "이 내용으로 남길까요?" })).toBeVisible()
       await noHorizontalOverflow(page)

@@ -2811,6 +2811,38 @@
   border-block: var(--bw-line) solid var(--line);
 }
 
+.active-plan__continuity .plan-adaptation__entry {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line);
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.active-plan__next-primary {
+  flex-wrap: wrap;
+  overflow-wrap: anywhere;
+}
+
+.active-plan__next-primary svg {
+  flex-shrink: 0;
+}
+
+.active-plan__next-note {
+  color: var(--ink-3);
+  font-size: var(--fs-body-sm);
+}
+
+.plan-intake__answers {
+  margin-top: var(--space-4);
+}
+
+.plan-intake__answers .plan-intake__summary {
+  display: block;
+  margin: 0;
+  border: 0;
+}
+
 .periodization-direction {
   display: grid;
   gap: var(--space-3);

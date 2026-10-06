@@ -486,8 +486,8 @@ function PlanSessionPreview({
 export function PlanRpeGuide() {
   return (
     <div className="plan-rpe-guide">
-      <strong>RPE = 얼마나 힘든지 1~10<TermHelp term="rpe" /></strong>
-      <ul className="plan-rpe-guide__scale" aria-label="RPE 쉽게 보기">
+      <strong>힘든 정도 · 1~10<TermHelp term="rpe" /></strong>
+      <ul className="plan-rpe-guide__scale" aria-label="힘든 정도 쉽게 보기">
         <li><b>1~2</b><span>산책처럼 편해요</span></li>
         <li><b>3~4</b><span>대화하며 달릴 수 있어요</span></li>
         <li><b>5~6</b><span>짧게만 말할 수 있어요</span></li>

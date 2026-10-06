@@ -9,6 +9,43 @@ import { firstUnansweredRefinement } from "./plan-intake-navigation"
 
 afterEach(cleanup)
 
+describe("question-first plan preparation", () => {
+  const callbacks = {
+    onBack: vi.fn(), onGoal: vi.fn(), onDivision: vi.fn(), onExperience: vi.fn(),
+    onFocus: vi.fn(), onTemplate: vi.fn(), onDays: vi.fn(), onFrameLength: vi.fn(),
+    onTrainingTime: vi.fn(), onSecondSession: vi.fn(), onManageRecords: vi.fn(),
+    onOpenNotationReader: vi.fn(), onSafety: vi.fn(), onContinue: vi.fn(),
+  }
+
+  it("shows the question before optional answers and the correctly sized calendar", async () => {
+    const onJump = vi.fn()
+    render(<PlanIntake step="days" draft={{ ...stateFixture().intake, requestedFrameLength: 7 }}
+      {...callbacks} onJump={onJump} />)
+    const heading = screen.getByRole("heading", { name: "이번 7일 중 며칠 훈련할까요?" })
+    const answers = screen.getByRole("button", { name: /선택한 내용 바꾸기/ })
+    expect(screen.getByText("계획 준비 · 운동할 날")).toBeVisible()
+    expect(heading.compareDocumentPosition(answers) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    expect(answers.closest("details")).not.toHaveAttribute("open")
+    expect(screen.getByText(/7일 달력 보기/)).toBeVisible()
+    await userEvent.setup().click(answers)
+    await userEvent.setup().click(screen.getByRole("button", { name: "5000m" }))
+    expect(onJump).toHaveBeenCalledWith("goal")
+  })
+
+  it("does not expose inert edit buttons when no jump action is provided", () => {
+    render(<PlanIntake step="safety" draft={stateFixture().intake} {...callbacks} />)
+    expect(screen.queryByRole("button", { name: "5000m" })).toBeNull()
+    expect(screen.getByRole("button", { name: /통증·부상·몸 이상/ })).toBeVisible()
+  })
+
+  it("keeps the legacy half-day value and previews whole calendar dates", () => {
+    const draft = { ...stateFixture().intake, requestedFrameLength: 9.5 as const }
+    render(<PlanIntake step="safety" draft={draft} {...callbacks} />)
+    expect(screen.getByText(/10일 달력 보기/)).toBeVisible()
+    expect(draft.requestedFrameLength).toBe(9.5)
+  })
+})
+
 describe("returning intake navigation", () => {
   it("maps each missing refinement to its first canonical question", () => {
     const intake = stateFixture().intake
@@ -259,7 +296,7 @@ describe("exact event and explicit detail selection", () => {
       />,
     )
 
-    const rpe = screen.getByRole("button", { name: /RPE 기준으로 받기/u, pressed: false })
+    const rpe = screen.getByRole("button", { name: /시간·힘든 정도로 받기/u, pressed: false })
     expect(rpe).toBeVisible()
     expect(rpe).toHaveAccessibleName(/기록 없이 바로.*힘든 정도\(1~10\)와 시간/u)
     const detailed = screen.getByRole("button", { name: /1500m 경기 페이스 상세 훈련 포함/u, pressed: false })

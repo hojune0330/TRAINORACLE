@@ -87,7 +87,7 @@ test("switches method in place and saves only the reconfirmed prescription", asy
   await page.evaluate(() => document.documentElement.style.removeProperty("--fs-body"))
   await supportToggle.press("Space")
   await expect(support).not.toHaveAttribute("open")
-  await page.getByRole("button", { name: /RPE 기준으로 받기/u }).click()
+  await page.getByRole("button", { name: /시간·힘든 정도로 받기/u }).click()
   await openPlanOptions(page, true)
   const method = page.locator(".plan-method-picker")
   const summary = method.locator(":scope > summary")
