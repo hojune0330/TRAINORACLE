@@ -1,0 +1,13 @@
+{
+  "kind": "TRAINORACLE_PAGES_ORACLE_PREVIEW_DEPLOYMENT",
+  "sourceSha": "b2873671380da7469fd49d8bda8404195a37702c",
+  "previousPagesSha": "62d3549aa17ef999e2db55bbdfd8ff502a3b8eb8",
+  "deploymentMethod": "MANUAL_OWNER_APPROVED",
+  "publicationRequestedAt": "2026-10-06T01:44:00Z",
+  "previewOnly": true,
+  "oracleV2Enabled": true,
+  "accountAndShareEnabled": false,
+  "backendVerification": "NOT_CONFIRMED",
+  "productionDatabaseMigrations": "NOT_APPLIED",
+  "realAccountRoundtrip": "NOT_RUN"
+}
