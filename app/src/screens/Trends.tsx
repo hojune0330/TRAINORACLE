@@ -136,7 +136,7 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
           ))}
         </div>
         {section === "training" && detail === "summary" && <ImportedRecordPreview entries={entries} today={today} onOpenDay={onOpenCoachingDay} />}
-        {section === "training" && detail === "summary" && !hasSummary && <div className="trends-hub__explore">
+        {section === "training" && detail === "summary" && (isEmpty || !hasSummary) && <div className="trends-hub__explore">
           {raceRecords.message && <p role="status">{raceRecords.message}</p>}
           {savedRace && <section className="trends-record-reading" aria-label="최근 저장한 경기 기록">
             <div><p>최근 저장한 경기 기록</p><h2>{paceEventLabel(savedRace.eventDistanceM)} · {paceClock(savedRace.performanceSeconds)}</h2><p>{savedRace.achievedOn ?? "달성일 미입력"} · {athleteRecordAuthorityCopy(savedRace)}</p></div>
