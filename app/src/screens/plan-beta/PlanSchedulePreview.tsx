@@ -25,6 +25,7 @@ import {
 import { DetailedPrescriptionView } from "./DetailedPrescriptionView"
 import { PlanFlowCodeHelp } from "./PlanFlowCodeHelp"
 import { SessionExplanationEntry } from "./SessionExplanation"
+import { WorkoutMemoTool } from "../../components/WorkoutMemoTool"
 import type { SessionExplanationContext } from "../../domain/session-explanation"
 import type { SessionExplanationEvidence } from "../../domain/session-explanation-evidence"
 import { PlanDayReader } from "./PlanDayReader"
@@ -446,7 +447,8 @@ function PlanSessionPreview({
         {expanded && footer && <details className="plan-session-records" data-session-records>
           <summary>일지·진행 기록</summary>{footer}
         </details>}
-        <SessionExplanationEntry session={session} context={explanationContext} loadEvidence={loadEvidence} showPurpose={false} />
+        {expanded && <WorkoutMemoTool session={session} date={date} state={explanationContext?.kind === "CANDIDATE" ? "PREVIEW" : "PLAN"} />}
+        <SessionExplanationEntry session={session} date={date} context={explanationContext} loadEvidence={loadEvidence} showPurpose={false} />
         {compact ? (
           <details className="plan-day-card__details" open={returnedFromJournal}>
             <summary>{sessionSlotLabel(session.slot)} 훈련 방법과 기록</summary>

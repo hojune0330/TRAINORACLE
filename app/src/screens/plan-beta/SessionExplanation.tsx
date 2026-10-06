@@ -20,6 +20,8 @@ import { CatalogWorkoutDetail } from "./CatalogWorkoutDetail"
 import { usePlanEvidenceHistory } from "../../hooks/usePlanEvidenceHistory"
 import { PlanEvidenceHistoryNotice } from "../../components/PlanEvidenceHistoryNotice"
 import { onLocalJournalScopeChange } from "../../domain/account/local-journal-ownership"
+import { WorkoutMemoTool } from "../../components/WorkoutMemoTool"
+import type { WorkoutMemoContext } from "../../domain/workout-memo"
 
 type Props = {
   readonly session: PlanSession
@@ -29,6 +31,8 @@ type Props = {
   readonly initialTab?: Tab
   readonly entryLabel?: string
   readonly showPurpose?: boolean
+  readonly date?: string
+  readonly memoState?: WorkoutMemoContext["state"]
 }
 const TABS = ["방법", "이유·근거", "주기·기록"] as const
 type Tab = typeof TABS[number]
@@ -65,7 +69,7 @@ export function SessionExplanationEntry(props: Props) {
   )
 }
 
-function SessionExplanationReader({ session, context, loadEvidence, initialTab = "방법", returnLabel = "훈련 일정으로 돌아가기", onClose }: Props & { readonly onClose: () => void }) {
+function SessionExplanationReader({ session, context, loadEvidence, initialTab = "방법", returnLabel = "훈련 일정으로 돌아가기", date, memoState, onClose }: Props & { readonly onClose: () => void }) {
   const [tab, setTab] = React.useState<Tab>(initialTab)
   const [expert, setExpert] = React.useState(false)
   const history = usePlanEvidenceHistory(context?.kind === "SAVED" && tab === "주기·기록")
@@ -143,6 +147,7 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
       </div>
       <div ref={content} className="session-explanation__content" role="tabpanel" id={`${id}-panel`} aria-labelledby={`${id}-tab-${TABS.indexOf(tab)}`} tabIndex={0}>
         <div className="session-explanation__tab-content" hidden={tab !== "방법"}>
+            <WorkoutMemoTool session={session} date={date} state={memoState ?? (context?.kind === "SAVED" ? "PLAN" : "PREVIEW")} />
             <section className="session-explanation__method-flow"><h3>수행 순서</h3>
               <p className="session-explanation__metric">{sessionExecution(session)}</p>
               {session.prescription.kind === "PACE_TARGET" && <DetailedPrescriptionView prescription={session.prescription} variant="sequence-lead" />}

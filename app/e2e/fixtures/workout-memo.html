@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Workout memo synthetic visual QA</title>
+<style>@font-face { font-family: "Pretendard Variable"; src: url("/fonts/PretendardVariable.woff2") format("woff2-variations"); font-style: normal; font-weight: 45 920; font-display: swap; }</style></head>
+<body><main id="memo-qa" style="max-width:600px;margin:0 auto;padding:16px;box-sizing:border-box"></main>
+<script type="module">
+  import React from "react"
+  import { createRoot } from "react-dom/client"
+  import "../../../colors_and_type.css"
+  import "../../../colors_and_type_journal.css"
+  import { WorkoutMemoTool } from "../../src/components/WorkoutMemoTool.tsx"
+  import { SessionExplanationEntry } from "../../src/screens/plan-beta/SessionExplanation.tsx"
+  // Synthetic presentation data only, never a saved or approved training prescription.
+  const session = { day: 3, slot: "AM", role: "QUALITY", plannedEnergyIntent: "VO2_INTENT", prescription: {
+    kind: "PACE_TARGET", templateId: "SYNTHETIC_VISUAL_QA", templateVersion: "1", targetEventDistanceM: 5000,
+    setCount: 1, repetitionsPerSet: 5, repetitionDistanceM: 1000, targetRepSeconds: 250,
+    selectedAnchor: { kind: "RECENT_RESULT", eventDistanceM: 5000, performanceSeconds: 1250, achievedAt: "2026-09-01", sourceRef: "SYNTHETIC_NOT_AN_ACCOUNT" },
+    repetitionRecoverySeconds: 120, repetitionRecoveryMode: "JOG", setRecoverySeconds: null, setRecoveryMode: "NOT_APPLICABLE",
+    stopCodes: ["STOP_NEW_OR_WORSENING_PAIN", "STOP_DIZZINESS_OR_FAINTNESS", "STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING", "STOP_LOSS_OF_CONTROLLED_FORM"],
+    operationalComponents: { warmup: { easyDurationMinutes: 15, rpeMin: 2, rpeMax: 3, strides: { repetitions: 4, durationSeconds: 20, recoverySeconds: 40 } }, cooldown: { easyDurationMinutes: 10, rpeMin: 1, rpeMax: 2 } },
+  } }
+  const rpe = { day: 1, slot: "PM", role: "EASY", plannedEnergyIntent: "BASE_INTENT", prescription: { kind: "RPE_TIME_RANGE", durationMinutes: { minimum: 35, maximum: 35 }, rpe: { minimum: 3, maximum: 4 } } }
+  createRoot(document.getElementById("memo-qa")).render(React.createElement(React.Fragment, null,
+    React.createElement("p", null, "합성 예시 · 저장하지 않는 디자인 검수 화면"),
+    React.createElement(WorkoutMemoTool, { session, date: "2026-09-20", state: "PLAN" }),
+    React.createElement(SessionExplanationEntry, { session: rpe, date: "2026-09-20" }),
+  ))
+</script></body></html>

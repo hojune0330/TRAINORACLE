@@ -6,15 +6,20 @@ import { formatTrainingSeconds } from "./labels"
 import type { SelectedMultiAdjustedPlanV3 } from "../../domain/selected-multi-adjusted-plan-v3"
 import { WorkoutNotation } from "./WorkoutNotation"
 import { sessionWorkoutNotation } from "../../domain/workout-notation"
+import { WorkoutMemoTool } from "../../components/WorkoutMemoTool"
+import type { WorkoutMemoContext } from "../../domain/workout-memo"
 
-export function AdjustedPrescriptionV3({ session, explanation, showName = true }: {
+export function AdjustedPrescriptionV3({ session, explanation, showName = true, date, memoState = "PREVIEW" }: {
   readonly session: AdjustedPlanCandidateV3["sessions"][number] | SelectedMultiAdjustedPlanV3["activePlan"]["sessions"][number]; readonly explanation?: ReviewedAdjustedExplanationV3;
   readonly showName?: boolean;
+  readonly date?: string;
+  readonly memoState?: WorkoutMemoContext["state"];
 }) {
   const p = session.prescription
-  if (p.kind === "PACE_TARGET") return <DetailedPrescriptionView prescription={p} />
-  if (p.kind === "REST") return <p>운동을 쉬는 날이에요.</p>
-  if (p.kind !== "ADJUSTED_METHOD_V3") return <p>{sessionWorkoutNotation(session)}</p>
+  const memo = <WorkoutMemoTool session={session} date={date} state={memoState} />
+  if (p.kind === "PACE_TARGET") return <><DetailedPrescriptionView prescription={p} />{memo}</>
+  if (p.kind === "REST") return <><p>운동을 쉬는 날이에요.</p>{memo}</>
+  if (p.kind !== "ADJUSTED_METHOD_V3") return <><p>{sessionWorkoutNotation(session)}</p>{memo}</>
   return <>
     <WorkoutNotation sequence={p.projection.sequence} intent={session.plannedEnergyIntent} targets={p.projection.segmentTargets} showName={showName} />
     {p.projection.segmentTargets.length > 0 && <p className="plan-pace-recommendation__notice">저장 당시 개인 기록을 나눈 참고값이에요. 오늘 몸 상태를 새로 판단한 값은 아니에요.</p>}
@@ -39,5 +44,6 @@ export function AdjustedPrescriptionV3({ session, explanation, showName = true }
     </section>
       : <p>저장된 훈련 방법은 확인할 수 있지만, 연결된 설명을 읽지 못했어요.</p>}
     </details>
+    {memo}
   </>
 }

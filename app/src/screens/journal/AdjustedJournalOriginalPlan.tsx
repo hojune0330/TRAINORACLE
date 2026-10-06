@@ -5,12 +5,14 @@ import { DetailedPrescriptionView } from "../plan-beta/DetailedPrescriptionView"
 import { formatTrainingSeconds } from "../plan-beta/labels"
 import { WorkoutNotation } from "../plan-beta/WorkoutNotation"
 import { sessionWorkoutNotation } from "../../domain/workout-notation"
+import { WorkoutMemoTool } from "../../components/WorkoutMemoTool"
 
 /** Historical comparison only: no apply/start controls or inferred actual values. */
-export function AdjustedJournalOriginalPlan({ session, explanation, context = "journal" }: {
+export function AdjustedJournalOriginalPlan({ session, explanation, context = "journal", date }: {
   readonly session: AdjustedCandidateSession
   readonly explanation: ResolvedAdjustedExplanation
   readonly context?: "journal" | "plan" | "preview"
+  readonly date?: string
 }) {
   const prescription = session.prescription
   return <section aria-label="당시 계획한 훈련">
@@ -46,5 +48,6 @@ export function AdjustedJournalOriginalPlan({ session, explanation, context = "j
     </> : prescription.kind === "PACE_TARGET" ? <DetailedPrescriptionView prescription={prescription} />
       : prescription.kind === "REST" ? <p>운동을 쉬는 날로 계획했어요.</p>
         : <p>{sessionWorkoutNotation(session)}</p>}
+    <WorkoutMemoTool session={session} date={date} state={context === "journal" ? "HISTORICAL" : context === "preview" ? "PREVIEW" : "PLAN"} />
   </section>
 }

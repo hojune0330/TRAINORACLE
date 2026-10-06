@@ -49,7 +49,7 @@ export function MultiAdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChan
       const recorded = loaded.state.progress.find(r => r.sessionDay === day && r.sessionSlot === session.slot)
       const explanation = loaded.explanations.find(e => e.address.day === day && e.address.slot === session.slot)?.explanation
       return <section key={session.slot} tabIndex={-1} data-session-slot={session.slot} aria-label={`${time} 훈련`}><h3>{time} · {sessionLabel(session)}</h3>
-        <AdjustedPrescriptionV3 session={session} explanation={explanation} showName={false} />
+        <AdjustedPrescriptionV3 session={session} date={date} memoState="PLAN" explanation={explanation} showName={false} />
         <p role="status">{recorded ? PROGRESS_LABELS[recorded.state] : "아직 진행 기록이 없어요."}</p>
         <div role="group" aria-label={`${time} 진행 기록`}>{([
           ["COMPLETED", Check], ["RESTED", CircleMinus], ["SKIPPED", RefreshCw], ["PAIN_CHECKIN", HeartPulse],

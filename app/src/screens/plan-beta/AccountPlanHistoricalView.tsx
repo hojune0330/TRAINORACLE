@@ -20,9 +20,11 @@ export function AccountPlanHistoricalView({ packet, verificationPending = true }
       <h2>{isoShift(start, session.day - 1)} · {session.slot === "AM" ? "오전" : "오후"}</h2>
       {read.kind === "v4" ? <AdjustedJournalOriginalPlan
         session={read.state.selection.activePlan.sessions.find(s => s.day === session.day && s.slot === session.slot)!}
+        date={isoShift(start, session.day - 1)}
         explanation={read.explanation} />
         : session.prescription.kind === "ADJUSTED_METHOD" ? null
           : <AdjustedPrescriptionV3 session={session as Parameters<typeof AdjustedPrescriptionV3>[0]["session"]}
+            date={isoShift(start, session.day - 1)} memoState="HISTORICAL"
             explanation={read.kind === "v5" ? read.explanation : read.kind === "v6"
               ? read.explanations.find(e => e.address.day === session.day && e.address.slot === session.slot)?.explanation : undefined} />}
       <p>{((progress) => progress ? PROGRESS_LABELS[progress.state] : "진행 기록 없음")(

@@ -6,6 +6,7 @@ import { ALL_WORKOUT_CATALOG, calculatedWorkoutSequence, calculateCatalogWorkout
 import { roundedPaceSeconds } from "@impl/prescription/record-pace"
 
 type Sequence = PrescriptionSequence | PrescriptionSequenceV3
+export type WorkoutNotationStyle = "COACH" | "PLAIN"
 type PacePrescription = Extract<PlanSession["prescription"], { kind: "PACE_TARGET" }>
 type RpePrescription = Extract<PlanSession["prescription"], { kind: "RPE_TIME_RANGE" }>
 type DisplayPrescription = PlanSession["prescription"]
@@ -21,8 +22,9 @@ export function notationNumber(value: number): string {
   const rounded = Number(value.toFixed(3))
   return `${rounded === value ? "" : "≈"}${rounded}`
 }
-export function notationTime(seconds: number): string {
-  return seconds >= 60 && seconds % 60 === 0 ? `${seconds / 60}min` : `${notationNumber(seconds)}s`
+export function notationTime(seconds: number, style: WorkoutNotationStyle = "COACH"): string {
+  return seconds >= 60 && seconds % 60 === 0 ? `${seconds / 60}${style === "PLAIN" ? "분" : "min"}`
+    : `${notationNumber(seconds)}${style === "PLAIN" ? "초" : "s"}`
 }
 export function notationDistance(metres: number): string {
   return metres >= 1000 && metres % 1000 === 0 ? `${metres / 1000}km` : `${notationNumber(metres)}m`
@@ -38,53 +40,61 @@ const recoveryModes: Record<RecoveryStepV3["mode"], string> = {
   WALK: "Walk", JOG: "Jog", STAND: "Stand", WALK_OR_JOG: "Walk/Jog", WALK_OR_STAND: "Walk/Stand",
   FULL_RECOVERY: "상태에 맞춰 회복", COACH_DEFINED: "지도자 지정", ACTIVE_ROLL_ON: "Roll-on",
 }
-export function notationRecovery(step: RecoveryStepV3): string {
+const plainRecoveryModes: Record<RecoveryStepV3["mode"], string> = {
+  WALK: "걷기", JOG: "조깅", STAND: "서서 쉬기", WALK_OR_JOG: "걷기/조깅", WALK_OR_STAND: "걷기/서서 쉬기",
+  FULL_RECOVERY: "상태에 맞춰 회복", COACH_DEFINED: "지도자가 정한 회복", ACTIVE_ROLL_ON: "달리며 회복",
+}
+export function notationRecovery(step: RecoveryStepV3, style: WorkoutNotationStyle = "COACH"): string {
   const amount = "distanceM" in step ? notationDistance(step.distanceM)
-    : step.seconds === null ? "시간 미지정" : step.seconds <= 90 ? `${notationNumber(step.seconds)}s` : notationTime(step.seconds)
-  return `${amount} ${recoveryModes[step.mode]}`
+    : step.seconds === null ? "시간 미지정" : step.seconds <= 90 ? `${notationNumber(step.seconds)}${style === "PLAIN" ? "초" : "s"}` : notationTime(step.seconds, style)
+  return `${amount} ${style === "PLAIN" ? plainRecoveryModes[step.mode] : recoveryModes[step.mode]}`
 }
 
-export function notationEffort(cue: string | null): string {
+export function notationEffort(cue: string | null, style: WorkoutNotationStyle = "COACH"): string {
   if (cue === null) return "강도 미지정"
   if (/s\/\d+m/.test(cue)) return cue
   const matches = [...cue.matchAll(/\bRPE\s*(\d+(?:\.\d+)?)(?:\s*[~–-]\s*(\d+(?:\.\d+)?))?/gu)]
   if (matches.length === 1) {
     const min = Number(matches[0]![1]), max = Number(matches[0]![2] ?? min)
-    if (Number.isInteger(min) && Number.isInteger(max) && min >= 1 && max <= 10 && min <= max) return `RPE ${min}${min === max ? "" : `–${max}`}`
+    if (Number.isInteger(min) && Number.isInteger(max) && min >= 1 && max <= 10 && min <= max) {
+      const value = `${min}${min === max ? "" : `–${max}`}`
+      return style === "PLAIN" ? cue.replace(matches[0]![0], `힘든 정도 ${value}/10`) : `RPE ${value}`
+    }
   }
-  if (cue === "PROGRESSIVE_NOT_ALL_OUT" || cue === "점진적으로 속도를 올리되 전력질주하지 않기") return "Build-up (전력질주 아님)"
+  if (cue === "PROGRESSIVE_NOT_ALL_OUT" || cue === "점진적으로 속도를 올리되 전력질주하지 않기") return style === "PLAIN" ? "가속 달리기 (전력질주 아님)" : "Build-up (전력질주 아님)"
   return cue
 }
-function targetText(target: SequenceTarget, id: string, distance: number | null, targets: readonly AdjustedSegmentTarget[]): string {
-  if (target.kind === "EFFORT_GUIDANCE") return notationEffort(target.cue)
+function targetText(target: SequenceTarget, id: string, distance: number | null, targets: readonly AdjustedSegmentTarget[], style: WorkoutNotationStyle): string {
+  if (target.kind === "EFFORT_GUIDANCE") return notationEffort(target.cue, style)
   if (target.kind === "SPRINT_REFERENCE") return "단거리 기준 · 목표 속도 별도 확인"
-  const rp = target.eventDistanceM === null ? "기준 페이스 미지정" : `${notationEvent(target.eventDistanceM)} RP`
+  const rp = target.eventDistanceM === null ? "기준 페이스 미지정" : `${notationEvent(target.eventDistanceM)} ${style === "PLAIN" ? "경기 평균 페이스" : "RP"}`
   const calculated = targets.find(item => item.segmentId === id && item.distanceM === distance)
-  if (calculated?.targetRepSeconds != null && distance !== null) return `${notationNumber(roundedPaceSeconds(calculated.targetRepSeconds))}s/${notationDistance(distance)} · ${rp}`
+  if (calculated?.targetRepSeconds != null && distance !== null) return `${notationNumber(roundedPaceSeconds(calculated.targetRepSeconds))}${style === "PLAIN" ? "초" : "s"}/${notationDistance(distance)} · ${rp}`
   if (calculated?.fixedWorkSeconds != null) return `${notationPace(calculated.secondsPerKm)} · ${rp}`
   return rp
 }
 
-function v3NodesText(nodes: readonly SequenceNodeV3[], targets: readonly AdjustedSegmentTarget[]): string {
+function v3NodesText(nodes: readonly SequenceNodeV3[], targets: readonly AdjustedSegmentTarget[], style: WorkoutNotationStyle = "COACH"): string {
   return nodes.map(node => {
     let body: string
     if (node.kind === "segment") {
       const work = node.work.kind === "distance" ? node.work.distanceM === null ? "거리 미지정" : notationDistance(node.work.distanceM)
-        : node.work.durationSeconds === null ? "시간 미지정" : notationTime(node.work.durationSeconds)
-      body = `${node.repeatCount > 1 ? `${node.repeatCount} × ` : ""}${work} @ ${targetText(node.target, node.id, node.work.distanceM, targets)}`
+        : node.work.durationSeconds === null ? "시간 미지정" : notationTime(node.work.durationSeconds, style)
+      body = `${node.repeatCount > 1 ? `${node.repeatCount} × ` : ""}${work} @ ${targetText(node.target, node.id, node.work.distanceM, targets, style)}`
     } else {
-      const inner = v3NodesText(node.children, targets)
+      const inner = v3NodesText(node.children, targets, style)
       const simple = node.children.length === 1 && node.children[0]!.kind === "segment"
         && node.children[0]!.repeatCount === 1 && !node.children[0]!.recoveryAfter.length
       body = node.repeatCount === 1 ? inner : node.repeatUnit === "SET"
-        ? `${node.repeatCount} sets × (${inner})`
+        ? `${node.repeatCount} ${style === "PLAIN" ? "세트" : "sets"} × (${inner})`
         : `${node.repeatCount} × ${simple ? inner : `(${inner})`}`
     }
     if (node.repeatCount > 1 && node.recoveryBetweenRepeats.length) {
-      const mark = node.kind === "group" && node.repeatUnit === "SET" ? "R" : "r"
-      body += ` · ${mark}${node.recoveryBetweenRepeats.map(notationRecovery).join(" + ")}`
+      const isSet = node.kind === "group" && node.repeatUnit === "SET"
+      const mark = style === "PLAIN" ? isSet ? "세트 사이 " : "반복 사이 " : isSet ? "R" : "r"
+      body += ` · ${mark}${node.recoveryBetweenRepeats.map(step => notationRecovery(step, style)).join(" + ")}`
     }
-    if (node.recoveryAfter.length) body += ` → 종료 뒤 ${node.recoveryAfter.map(notationRecovery).join(" + ")}`
+    if (node.recoveryAfter.length) body += ` → 종료 뒤 ${node.recoveryAfter.map(step => notationRecovery(step, style)).join(" + ")}`
     return body
   }).join(" → ")
 }
@@ -101,11 +111,17 @@ function legacyDisplayNodes(nodes: readonly PrescriptionSequenceNode[]): readonl
       : { ...node, ...rests, role: "WORK" }
   })
 }
-export function sequenceNotation(sequence: Sequence, targets: readonly AdjustedSegmentTarget[] = []): string {
-  if (sequence.version === 3) return v3NodesText(sequence.main, targets)
-  const text = v3NodesText(legacyDisplayNodes(sequence.main), targets)
+export function sequenceNotation(sequence: Sequence, targets: readonly AdjustedSegmentTarget[] = [], style: WorkoutNotationStyle = "COACH"): string {
+  if (sequence.version === 3) return v3NodesText(sequence.main, targets, style)
+  const text = v3NodesText(legacyDisplayNodes(sequence.main), targets, style)
   return sequence.version === 2 && sequence.terminalRecovery && sequence.terminalRecovery.mode !== "NOT_APPLICABLE"
-    ? `${text} → 마지막 본운동 뒤 ${notationRecovery(sequence.terminalRecovery)}` : text
+    ? `${text} → 마지막 본운동 뒤 ${notationRecovery(sequence.terminalRecovery, style)}` : text
+}
+
+/** Read-only phase display; terminal recovery belongs to MAIN, not warmup/cooldown. */
+export function sequencePhaseNotation(sequence: Sequence, phase: "warmup" | "main" | "cooldown", targets: readonly AdjustedSegmentTarget[] = [], style: WorkoutNotationStyle = "COACH"): string {
+  if (phase === "main") return sequenceNotation(sequence, targets, style)
+  return sequence.version === 3 ? v3NodesText(sequence[phase], targets, style) : v3NodesText(legacyDisplayNodes(sequence[phase]), targets, style)
 }
 
 function repeated(nodes: Sequence["main"]): boolean {

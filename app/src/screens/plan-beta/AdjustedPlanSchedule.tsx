@@ -59,7 +59,7 @@ export function AdjustedPlanSchedule({ loaded, onWritePlannedSessionLog, returnT
       return <section key={session.slot} tabIndex={-1} data-session-slot={session.slot} aria-label={`${session.slot === "AM" ? "오전" : "오후"} 훈련`}>
         <h3>{session.slot === "AM" ? "오전" : "오후"} · {session.role === "REST" ? "휴식" : label.title}</h3>
         <TermHelp term={label.term} />
-        <AdjustedJournalOriginalPlan session={session} explanation={loaded.explanation} context="plan" />
+        <AdjustedJournalOriginalPlan session={session} date={date} explanation={loaded.explanation} context="plan" />
         <p role="status">{recorded === undefined ? "아직 진행 기록이 없어요." : PROGRESS_LABELS[recorded.state]}</p>
         <div role="group" aria-label={`${session.slot === "AM" ? "오전" : "오후"} 진행 기록`}>
           {([{ state: "COMPLETED", Icon: Check }, { state: "RESTED", Icon: CircleMinus },

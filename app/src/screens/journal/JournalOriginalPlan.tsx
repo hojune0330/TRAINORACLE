@@ -44,7 +44,7 @@ export function JournalOriginalPlan({ entry }: { readonly entry: PostSessionEntr
     ? lookup : readJournalOriginalPlan(candidate, undefined, undefined, readMultiEvidence?.()), todayISO(), { journalId: entry.id }).find(item => item.id === entry.id) : undefined
   const originalMethod = lookup && "session" in lookup && !loading ? <section className="journal-original-plan__method"><h3>당시 계획한 훈련 방법</h3>{matched !== null ? <>
     <p>{matched.source === "ARCHIVED" ? "그때 보관한 계획의 훈련이에요." : "이 일지와 연결된 현재 계획의 훈련이에요."}</p>
-    <SessionExplanationEntry session={matched.session} returnLabel="일지로 돌아가기" context={{
+    <SessionExplanationEntry session={matched.session} date={entry.plannedSessionLink.plannedDate} memoState="HISTORICAL" returnLabel="일지로 돌아가기" context={{
       kind: "SAVED", plan: matched.state.activePlan, generatedAt: matched.state.generatedAt,
       receipt: matched.state.version === 3 ? matched.state.explanationReceipt : undefined,
       frameOrdinal: matched.state.version === 3 ? matched.state.periodization?.frameOrdinal : undefined,
@@ -53,9 +53,9 @@ export function JournalOriginalPlan({ entry }: { readonly entry: PostSessionEntr
       return journal.status === "complete"
         ? collectSessionExplanationEvidence(journal.entries, matched.state, session) : null
     }} />
-  </> : lookup.kind === "matched_adjusted" ? <AdjustedJournalOriginalPlan session={lookup.session} explanation={lookup.explanation} />
+  </> : lookup.kind === "matched_adjusted" ? <AdjustedJournalOriginalPlan session={lookup.session} date={entry.plannedSessionLink.plannedDate} explanation={lookup.explanation} />
     : lookup.kind === "matched_adjusted_v3" || lookup.kind === "matched_multi_adjusted_v3"
-      ? <AdjustedPrescriptionV3 session={lookup.session} explanation={lookup.explanation} /> : null}</section> : null
+      ? <AdjustedPrescriptionV3 session={lookup.session} date={entry.plannedSessionLink.plannedDate} memoState="HISTORICAL" explanation={lookup.explanation} /> : null}</section> : null
   return <details className="journal-original-plan" ref={details} onToggle={event => {
     if (event.target !== event.currentTarget) return
     if (!event.currentTarget.open) { pending.current++; setLoading(false); setLookup(null); return }

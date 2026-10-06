@@ -17,6 +17,9 @@
   --tape:         #E8DCB0;  /* masking tape yellow */
   --tape-2:       #DDE3D2;  /* sage masking tape */
   --highlighter:  rgba(255, 215, 64, 0.32);  /* 형광펜 */
+  /* Workout memo paper, based on the owner's flat printed memo references. */
+  --memo-yellow: #FFF2B2;
+  --memo-pink: #FADDE5;
 
   /* ---- Mood scale (5-step, cool→warm) ---- */
   --mood-1: #5B7B8E;  /* 흐림 — cool slate */

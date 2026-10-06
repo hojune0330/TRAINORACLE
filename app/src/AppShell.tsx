@@ -709,6 +709,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         onOpenGuide={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("guide") })}
         onOpenContent={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("content") })}
         onOpenRewards={() => openDecorationStudio()}
+        onOpenPaceCalculator={() => openPaceCalculator()}
         onOpenFeedback={() => openOverlay({ kind: "feedback" })}
         onOpenAccount={accountEnabled ? () => runViewTransition("push", () => setV(s => ({ ...s, accountOpen: true }))) : undefined}
         onOpenRestore={openRestore}
@@ -873,15 +874,17 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     )
   }
 
+  function openPaceCalculator(request: PaceToolRequest = {}) {
+    const token = `pace-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    paceRequestRef.current = { token, owner: activeLocalAccount(), request, consumed: false,
+      opener: document.activeElement instanceof HTMLElement ? document.activeElement : null }
+    openOverlay({ kind: "pace", stage: request.record ? "result" : "event", token, depth: 1 })
+  }
+
   return (
     <MultiPlanEvidenceContext.Provider value={multiPlanRuntime?.readMultiAdjustedEvidenceV3}>
     <AppOverlayNavigationProvider
-      openPaceCalculator={(request = {}) => {
-        const token = `pace-${Date.now()}-${Math.random().toString(36).slice(2)}`
-        paceRequestRef.current = { token, owner: activeLocalAccount(), request, consumed: false,
-          opener: document.activeElement instanceof HTMLElement ? document.activeElement : null }
-        openOverlay({ kind: "pace", stage: request.record ? "result" : "event", token, depth: 1 })
-      }}
+      openPaceCalculator={openPaceCalculator}
       openTrainingTerm={(term) => openOverlay({ kind: "term", term })}
       openFeedback={() => openOverlay({ kind: "feedback" })}
     >

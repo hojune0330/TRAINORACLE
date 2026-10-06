@@ -1,5 +1,5 @@
 import React from "react"
-import { ArrowLeft, BookOpen, CircleHelp, MessageSquareText, Newspaper, ScrollText, ShieldCheck, Sticker, Trash2, Watch } from "lucide-react"
+import { ArrowLeft, BookOpen, Calculator, CircleHelp, MessageSquareText, Newspaper, ScrollText, ShieldCheck, Sticker, Trash2, Watch } from "lucide-react"
 import { DataSafetyNotice } from "../components/DataSafetyNotice"
 import { feedbackConfig } from "../domain/feedback/feedback-config"
 import { SafeJournalExport } from "./home/DeviceJournal"
@@ -18,6 +18,7 @@ export type MoreProps = {
   readonly onOpenFeedback?: () => void
   readonly onOpenContent?: () => void
   readonly onOpenRewards?: () => void
+  readonly onOpenPaceCalculator?: () => void
 }
 
 export function More({
@@ -30,6 +31,7 @@ export function More({
   onOpenFeedback,
   onOpenContent,
   onOpenRewards,
+  onOpenPaceCalculator,
 }: MoreProps) {
   const [trashCount, setTrashCount] = React.useState(() => loadTrash().length)
   return (
@@ -45,6 +47,8 @@ export function More({
       </header>
 
       <div className="more-screen__list">
+        {onOpenPaceCalculator && <><h2 className="more-screen__group-label">훈련 도구</h2>
+          <UtilityRow icon={Calculator} label="페이스 계산" detail="기록·구간 시간·트랙 통과 시간" onClick={onOpenPaceCalculator} /></>}
         <h2 className="more-screen__group-label">배우기·꾸미기</h2>
         <UtilityRow icon={BookOpen} label="민지의 예시 일지" detail="기록이 쌓이는 모습을 한 장씩 구경해요" onClick={onOpenMinji} />
         <UtilityRow icon={CircleHelp} label="훈련 용어집·도움말" detail="전문 용어의 쉬운 뜻과 이름의 이유, 앱 사용법을 확인해요" onClick={onOpenGuide} />

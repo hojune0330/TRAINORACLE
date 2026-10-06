@@ -48,7 +48,7 @@ export function AdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChange, o
       const time = session.slot === "AM" ? "오전" : "오후"
       const recorded = loaded.state.progress.find(r => r.sessionDay === day && r.sessionSlot === session.slot)
       return <section key={session.slot} tabIndex={-1} data-session-slot={session.slot} aria-label={`${time} 훈련`}><h3>{time} · {sessionLabel(session)}</h3>
-        <AdjustedPrescriptionV3 session={session} explanation={explanation} showName={false} />
+        <AdjustedPrescriptionV3 session={session} date={date} memoState="PLAN" explanation={explanation} showName={false} />
         <p role="status">{recorded ? PROGRESS_LABELS[recorded.state] : "아직 진행 기록이 없어요."}</p>
         <div role="group" aria-label={`${time} 진행 기록`}>{([
           ["COMPLETED", Check], ["RESTED", CircleMinus], ["SKIPPED", RefreshCw], ["PAIN_CHECKIN", HeartPulse],

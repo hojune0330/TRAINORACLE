@@ -450,7 +450,7 @@ export function ActivePlan({
                 {current === undefined ? journalLabel ?? "예정" : PROGRESS_LABELS[current]}
               </em>
               {current !== undefined && journalLabel && <small>{journalLabel}</small>}
-              <SessionExplanationEntry session={session} context={explanationContext} loadEvidence={loadSessionEvidence}
+              <SessionExplanationEntry session={session} date={isoShift(startDate, session.day - 1)} context={explanationContext} loadEvidence={loadSessionEvidence}
                 initialTab="주기·기록" entryLabel="연결된 일지 기록 보기" showPurpose={false} returnLabel="훈련과 일지로 돌아가기" />
               {session.role !== "REST" && onWriteSessionLog !== undefined && (
                 <button
