@@ -32,6 +32,8 @@
 .info-disclosure__content { padding-block: var(--space-2); }
 .info-disclosure__content > :first-child { margin-top: 0; }
 .info-disclosure__content > :last-child { margin-bottom: 0; }
+.info-disclosure--actions > summary { color: var(--ink); font-size: var(--fs-body); font-weight: 600; }
+.info-disclosure__preview { display: block; color: var(--ink-2); font-size: var(--fs-caption); font-weight: 400; line-height: 1.5; }
 
 @media (prefers-reduced-motion: reduce) {
   .info-disclosure__chevron { transition: none; }

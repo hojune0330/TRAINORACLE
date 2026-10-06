@@ -35,7 +35,7 @@ test("starts a journal directly from the empty analysis screen", async ({ page }
 test("keeps the empty cycle action inside a mobile viewport", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 })
   await page.getByRole("button", { name: "일지", exact: true }).click()
-  await page.getByRole("button", { name: "9.5일 주기" }).click()
+  await page.getByRole("button", { name: "기록 묶음" }).click()
 
   await expect(page.getByRole("heading", { name: "이 주기에 기록이 없어요" })).toBeVisible()
   await expect(page.getByRole("button", { name: "오늘 기록하기" })).toBeVisible()

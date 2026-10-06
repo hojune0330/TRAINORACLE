@@ -143,8 +143,8 @@ export function PlanIntake({
         {refining ? "계획으로" : "이전"}
       </button>
       {showProgress && (
-        <div className="plan-progress" aria-label={`계획 질문 ${stepNumber}/${visibleSteps.length}`}>
-          <span>{stepNumber}/{visibleSteps.length}</span>
+        <div className="plan-progress" aria-label={`훈련 조건 질문 ${stepNumber}/${visibleSteps.length}`}>
+          <span>훈련 조건 · {stepNumber}/{visibleSteps.length}</span>
           <i style={{ width: `${stepNumber * (100 / visibleSteps.length)}%` }} />
         </div>
       )}

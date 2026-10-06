@@ -64,14 +64,14 @@ export function TrainingHome({
         <TodaySection model={model} onWriteLog={onWriteLog} onOpenToday={onOpenToday} todayContext={todayContext} />
       </>}
 
-      {oraclePreview ? <InfoDisclosure title={model.homeMode === "WELCOME" ? "오라클 결과 예시 보기" : "내 오라클 살펴보기"}>{oraclePreview}</InfoDisclosure>
+      {oraclePreview ? <InfoDisclosure purpose="actions" preview="기록 비교 · 훈련 구성 · 다음 훈련" title={model.homeMode === "WELCOME" ? "오라클 결과 예시 보기" : "내 오라클 살펴보기"}>{oraclePreview}</InfoDisclosure>
         : onOpenOracle && <button className="home-hub__text-action" type="button" onClick={() => onOpenOracle("level")}>오라클 결과 보기<ChevronRight aria-hidden="true" size={17} /></button>}
 
       {model.homeMode !== "WELCOME" && <section className="home-hub__summary">
-        <div className="home-hub__section-heading">
+        {!recentJournal && <div className="home-hub__section-heading">
           <h2 id="home-hub-summary-title">최근 하루 기록</h2>
           {onOpenArchive && <button type="button" onClick={onOpenArchive}>전체 기록 보기<ChevronRight aria-hidden="true" size={16} /></button>}
-        </div>
+        </div>}
         {recentJournal}
         {!recentJournal && <SummaryRow label="최근 기록" detail={model.journalSummary} onClick={onOpenArchive} />}
       </section>}
@@ -83,7 +83,7 @@ export function TrainingHome({
       {installSuggestion}
 
       <nav className="home-hub__explore" aria-label="훈련 도움말과 일지 꾸미기">
-        {onOpenContent && <button type="button" onClick={onOpenContent}><BookOpen aria-hidden="true" size={18} /><span>훈련 배우기</span></button>}
+        {onOpenContent && <button type="button" onClick={onOpenContent}><BookOpen aria-hidden="true" size={18} /><span>훈련법 읽기</span></button>}
         {onOpenRewards && <button type="button" onClick={onOpenRewards}><NotebookPen aria-hidden="true" size={18} /><span>일지 꾸미기</span></button>}
       </nav>
     </div>
@@ -121,7 +121,7 @@ function TodaySection({ model, onWriteLog, onOpenToday, todayContext }: { model:
       <div className="home-hub__status"><CheckCircle2 aria-hidden="true" size={21} /><span><strong>오늘 기록을 남겼어요.</strong><small>오늘 남긴 기록 {model.todayRecordCount}개</small></span></div>
       {model.briefing !== "" && <p className="home-hub__briefing" aria-label="오늘 기록 요약">{model.briefing}</p>}
       <div className="home-hub__today-actions"><button className="home-hub__text-action" type="button" onClick={onOpenToday}>오늘 기록 보기<ChevronRight aria-hidden="true" size={17} /></button><button className="home-hub__text-action" type="button" onClick={() => onWriteLog?.()}>기록 더 남기기<ChevronRight aria-hidden="true" size={17} /></button></div>
-    </div> : <><p>{model.todayMessage}</p><button className="home-hub__primary" type="button" onClick={() => onWriteLog?.("quick-session")}><PencilLine aria-hidden="true" size={19} /><span>오늘 기록하기</span><ChevronRight aria-hidden="true" size={18} /></button><button className="home-hub__text-action" type="button" onClick={() => onWriteLog?.("evening")}>하루 마무리 기록하기<ChevronRight aria-hidden="true" size={17} /></button>{todayContext && <InfoDisclosure title="기분·몸 상태·날씨 남기기">{todayContext}</InfoDisclosure>}{model.briefing !== "" && <p className="home-hub__briefing" aria-label="아침 브리핑">{model.briefing}</p>}</>}
+    </div> : <><p>{model.todayMessage}</p><button className="home-hub__primary" type="button" onClick={() => onWriteLog?.("quick-session")}><PencilLine aria-hidden="true" size={19} /><span>오늘 기록하기</span><ChevronRight aria-hidden="true" size={18} /></button><button className="home-hub__text-action" type="button" onClick={() => onWriteLog?.("evening")}>하루 마무리 기록하기<ChevronRight aria-hidden="true" size={17} /></button>{todayContext && <InfoDisclosure purpose="actions" title="기분·몸 상태·날씨 남기기">{todayContext}</InfoDisclosure>}{model.briefing !== "" && <p className="home-hub__briefing" aria-label="아침 브리핑">{model.briefing}</p>}</>}
   </section>
 }
 

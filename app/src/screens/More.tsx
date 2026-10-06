@@ -1,5 +1,5 @@
 import React from "react"
-import { ArrowLeft, BookOpen, Calculator, CircleHelp, MessageSquareText, Newspaper, ScrollText, ShieldCheck, Sticker, Trash2, Watch } from "lucide-react"
+import { ArrowLeft, BookOpen, Calculator, CircleHelp, Flag, MessageSquareText, Newspaper, ScrollText, ShieldCheck, Sticker, Trash2, UserRound, Watch } from "lucide-react"
 import { DataSafetyNotice } from "../components/DataSafetyNotice"
 import { feedbackConfig } from "../domain/feedback/feedback-config"
 import { SafeJournalExport } from "./home/DeviceJournal"
@@ -19,6 +19,11 @@ export type MoreProps = {
   readonly onOpenContent?: () => void
   readonly onOpenRewards?: () => void
   readonly onOpenPaceCalculator?: () => void
+  readonly onOpenRunningProfile?: () => void
+  readonly onOpenRecordReading?: () => void
+  readonly onOpenOracleLibrary?: () => void
+  readonly onOpenRecords?: () => void
+  readonly onOpenImport?: () => void
 }
 
 export function More({
@@ -32,6 +37,11 @@ export function More({
   onOpenContent,
   onOpenRewards,
   onOpenPaceCalculator,
+  onOpenRunningProfile,
+  onOpenRecordReading,
+  onOpenOracleLibrary,
+  onOpenRecords,
+  onOpenImport,
 }: MoreProps) {
   const [trashCount, setTrashCount] = React.useState(() => loadTrash().length)
   return (
@@ -47,13 +57,19 @@ export function More({
       </header>
 
       <div className="more-screen__list">
-        {onOpenPaceCalculator && <><h2 className="more-screen__group-label">훈련 도구</h2>
-          <UtilityRow icon={Calculator} label="페이스 계산" detail="기록·구간 시간·트랙 통과 시간" onClick={onOpenPaceCalculator} /></>}
+        {(onOpenPaceCalculator || onOpenImport || onOpenRecords) && <h2 className="more-screen__group-label">훈련 도구</h2>}
+        {onOpenPaceCalculator && <UtilityRow icon={Calculator} label="페이스 계산" onClick={onOpenPaceCalculator} />}
+        {onOpenRecords && <UtilityRow icon={Flag} label="경기 기록 추가·수정" onClick={onOpenRecords} />}
+        {onOpenImport && <UtilityRow icon={Watch} label="워치 파일 가져오기" onClick={onOpenImport} />}
+        {(onOpenRunningProfile || onOpenRecordReading || onOpenOracleLibrary) && <h2 className="more-screen__group-label">오라클</h2>}
+        {onOpenRunningProfile && <UtilityRow icon={UserRound} label="나의 러닝 프로필" detail="취향 점수 · 친구와 비교" onClick={onOpenRunningProfile} />}
+        {onOpenRecordReading && <UtilityRow icon={Calculator} label="최고기록으로 풀이하기" detail="저장 없이 내 기록·친구 기록 비교" onClick={onOpenRecordReading} />}
+        {onOpenOracleLibrary && <UtilityRow icon={BookOpen} label="오라클 읽을거리" onClick={onOpenOracleLibrary} />}
         <h2 className="more-screen__group-label">배우기·꾸미기</h2>
-        <UtilityRow icon={BookOpen} label="민지의 예시 일지" detail="기록이 쌓이는 모습을 한 장씩 구경해요" onClick={onOpenMinji} />
-        <UtilityRow icon={CircleHelp} label="훈련 용어집·도움말" detail="전문 용어의 쉬운 뜻과 이름의 이유, 앱 사용법을 확인해요" onClick={onOpenGuide} />
-        {onOpenContent !== undefined && <UtilityRow icon={Newspaper} label="요즘 주목받는 훈련법" detail="유행 이름보다 근거와 사용 범위를 먼저 봐요" onClick={onOpenContent} />}
-        {onOpenRewards !== undefined && <UtilityRow icon={Sticker} label="일지 꾸미기·포인트" detail="모은 포인트와 꾸미기 보관함을 확인해요" onClick={onOpenRewards} />}
+        <UtilityRow icon={BookOpen} label="민지의 예시 일지" onClick={onOpenMinji} />
+        <UtilityRow icon={CircleHelp} label="훈련 용어집·도움말" onClick={onOpenGuide} />
+        {onOpenContent !== undefined && <UtilityRow icon={Newspaper} label="훈련법 읽기" onClick={onOpenContent} />}
+        {onOpenRewards !== undefined && <UtilityRow icon={Sticker} label="일지 꾸미기·포인트" onClick={onOpenRewards} />}
         <h2 className="more-screen__group-label">계정·기록 관리</h2>
         <InstallShortcutMenuEntry />
         <DataSafetyNotice onOpenAccount={onOpenAccount} />
@@ -96,13 +112,13 @@ export function More({
 function UtilityRow({ icon: Icon, label, detail, onClick }: {
   readonly icon: typeof BookOpen
   readonly label: string
-  readonly detail: string
+  readonly detail?: string
   readonly onClick: () => void
 }) {
   return (
     <button className="more-screen__row" type="button" onClick={onClick} aria-label={label}>
       <Icon aria-hidden="true" size={19} />
-      <span><strong>{label}</strong><small>{detail}</small></span>
+      <span><strong>{label}</strong>{detail && <small>{detail}</small>}</span>
     </button>
   )
 }

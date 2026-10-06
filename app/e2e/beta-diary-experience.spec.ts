@@ -70,8 +70,8 @@ test(`uses the diary flow with ${hasEarnedHistory ? "previously earned" : "no ba
   await expect(page.getByRole("heading", { name: "내 기록", exact: true })).toBeVisible()
 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "일지", exact: true }).click()
-  await page.getByRole("button", { name: "9.5일 주기" }).click()
-  await expect(page.getByRole("heading", { name: "9.5일 주기 일지" })).toBeVisible()
+  await page.getByRole("button", { name: "기록 묶음" }).click()
+  await expect(page.getByRole("heading", { name: "기록 묶음" })).toBeVisible()
   await page.getByText("주기 시작일과 표시 기준", { exact: true }).click()
   await expect(page.getByText(/계획을 자동으로 바꾸지 않아요/u)).toBeVisible()
   const cycleRange = page.getByText(/· (?:9|10)일 구간$/u)

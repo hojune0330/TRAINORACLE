@@ -202,7 +202,7 @@ describe("journal archive surface", () => {
       />,
     )
 
-    await user.click(screen.getByRole("button", { name: "9.5일 주기" }))
+    await user.click(screen.getByRole("button", { name: "기록 묶음" }))
     await user.click(screen.getByText("주기 시작일과 표시 기준"))
     fireEvent.change(screen.getByLabelText("주기 시작일"), { target: { value: "2026-07-10" } })
 

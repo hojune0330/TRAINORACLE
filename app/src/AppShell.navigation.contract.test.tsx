@@ -1,9 +1,12 @@
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 import { AppShell } from "./AppShell"
 import { registerUnsavedDraftGuard } from "./domain/unsaved-draft-navigation"
 import { enterPlanWithoutRecord } from "./screens/plan-beta/instant-plan.test-helper"
+
+// Transform the large lazy module outside the interaction timeout; browser tests cover its load.
+beforeAll(async () => { await import("./screens/PlanBeta") }, 60000)
 
 beforeEach(() => {
   window.localStorage.clear()
@@ -14,13 +17,35 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllEnvs() })
 
 describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {
+  it("opens record management and watch import directly from More and returns there", async () => {
+    const user = userEvent.setup()
+    render(<AppShell />)
+    await user.click(screen.getByRole("button", { name: "더보기" }))
+    await user.click(await screen.findByRole("button", { name: "경기 기록 추가·수정" }))
+    await user.click(await screen.findByRole("button", { name: "더보기로" }))
+    expect(await screen.findByRole("heading", { name: "더보기" })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "워치 파일 가져오기" }))
+    expect(await screen.findByRole("heading", { name: "워치 기록 불러오기" })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "뒤로" }))
+    expect(await screen.findByRole("heading", { name: "더보기" })).toBeVisible()
+  })
+  it("opens Oracle reading directly from More and keeps the correct return destination", async () => {
+    vi.stubEnv("VITE_FEATURE_ORACLE_V2", "true")
+    const user = userEvent.setup()
+    render(<AppShell />)
+    await user.click(screen.getByRole("button", { name: "더보기" }))
+    await user.click(await screen.findByRole("button", { name: "오라클 읽을거리" }))
+    expect(await screen.findByRole("group", { name: "읽을거리 주제" }, { timeout: 10000 })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "더보기로 돌아가기" }))
+    expect(await screen.findByRole("heading", { name: "더보기" })).toBeVisible()
+  })
   it("opens existing training reading from the V1 Oracle library and returns to that section", async () => {
     vi.stubEnv("VITE_FEATURE_ORACLE_V2", "false")
     const user = userEvent.setup()
     render(<AppShell />)
     await user.click(screen.getByRole("button", { name: "오라클" }))
     await user.click(await screen.findByRole("button", { name: "읽을거리" }, { timeout: 10000 }))
-    await user.click(screen.getByRole("button", { name: "훈련 배우기" }))
+    await user.click(screen.getByRole("button", { name: "훈련법 읽기" }))
     expect(await screen.findByRole("heading", { name: "어떤 훈련이 궁금한가요?" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "이전 화면" }))
     expect(await screen.findByRole("button", { name: "읽을거리" })).toHaveAttribute("aria-pressed", "true")
@@ -30,7 +55,7 @@ describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {
     const user = userEvent.setup()
     render(<AppShell />)
     await user.click(screen.getByRole("button", { name: "훈련" }))
-    await screen.findByRole("heading", { name: "어떤 종목을 준비하세요?" }, { timeout: 5000 })
+    await screen.findByRole("heading", { name: "어떤 종목을 준비하세요?" }, { timeout: 10000 })
     await enterPlanWithoutRecord()
     expect(await screen.findByRole("heading", { name: "지금까지 어떻게 달려왔나요?" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "기록하기" }))
@@ -59,7 +84,7 @@ describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "훈련" }))
-    await screen.findByRole("heading", { name: "어떤 종목을 준비하세요?" }, { timeout: 5000 })
+    await screen.findByRole("heading", { name: "어떤 종목을 준비하세요?" }, { timeout: 10000 })
     await enterPlanWithoutRecord()
     expect(await screen.findByRole("heading", { name: "지금까지 어떻게 달려왔나요?" })).toBeVisible()
 
@@ -79,7 +104,7 @@ describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "훈련" }))
-    await screen.findByRole("heading", { name: "어떤 종목을 준비하세요?" }, { timeout: 5000 })
+    await screen.findByRole("heading", { name: "어떤 종목을 준비하세요?" }, { timeout: 10000 })
     await enterPlanWithoutRecord()
     await user.click(screen.getByRole("button", { name: /훈련 경험 설명 보기/u }))
     await user.click(screen.getByRole("link", { name: "왜 이런 이름인가요?" }))
@@ -96,7 +121,7 @@ describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {
     const user = userEvent.setup()
     render(<AppShell />)
     await user.click(screen.getByRole("button", { name: "훈련" }))
-    await screen.findByRole("heading", { name: "어떤 종목을 준비하세요?" }, { timeout: 5000 })
+    await screen.findByRole("heading", { name: "어떤 종목을 준비하세요?" }, { timeout: 10000 })
     await enterPlanWithoutRecord()
 
     const blocked = vi.fn()
@@ -116,7 +141,7 @@ describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "더보기" }))
-    await user.click(await screen.findByRole("button", { name: "요즘 주목받는 훈련법" }))
+    await user.click(await screen.findByRole("button", { name: "훈련법 읽기" }))
     expect(await screen.findByRole("heading", { name: "어떤 훈련이 궁금한가요?" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "이전 화면" }))
     expect(await screen.findByRole("heading", { name: "더보기" })).toBeVisible()

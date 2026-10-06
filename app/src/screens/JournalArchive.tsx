@@ -106,7 +106,7 @@ export function JournalArchive({
   }
 
   const heading = activeMode === "CYCLE"
-    ? "9.5일 주기 일지"
+    ? "기록 묶음"
     : selectedWeek !== null
     ? weekHeading(selectedWeek)
     : selectedMonth !== null
@@ -143,10 +143,11 @@ export function JournalArchive({
           <span>월간 달력</span>
         </button>
         <button className="app-compact-tab" type="button" aria-pressed={activeMode === "CYCLE"} onClick={() => changeMode("CYCLE")}>
-          <span>9.5일 주기</span>
+          <span>기록 묶음</span>
         </button>
       </div>
       {readiness !== "READY" && <p className="calendar-guidance" role="status">{readiness === "LOADING" ? "일지를 불러오고 있어요." : readiness === "STALE" ? "저장된 일지를 보고 있어요. 최신 기록은 아직 확인하지 못했어요." : "일지를 불러오지 못했어요. 기록이 없는 것은 아니에요."}</p>}
+      {activeMode === "CYCLE" && <p className="calendar-guidance">9.5일씩 묶어 보기 · 훈련 계획 기간과 별개예요.</p>}
 
       {entries.some(entry => entry.kind === "post-session" && entry.date === today)
         && entries.filter(entry => entry.kind === "post-session" && entry.date <= today).length > 1 && (

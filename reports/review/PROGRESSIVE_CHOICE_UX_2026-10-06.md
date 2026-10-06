@@ -2,6 +2,8 @@
 
 Date: 2026-10-06
 
+Follow-up: the owner correctly challenged discoverability and youth fatigue after this first pass. See `FEATURE_DISCOVERY_UX_FOLLOWUP_2026-10-06.md` for reopened findings and additional fixes. Publication and synthetic checks do not establish completed usability validation.
+
 ## Scope and decision
 
 One clear next action, with secondary information available on demand. This is guided choice, not removal of user agency. Exact workout instructions, safety notices, pending/failed saves, source exclusions, explicit plan activation, and account boundaries remain visible and unchanged.

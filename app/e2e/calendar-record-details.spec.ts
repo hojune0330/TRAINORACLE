@@ -32,7 +32,7 @@ test("same real calendar in journal and cycle, health details on demand, no reco
   await page.goBack()
   await expect(reader).not.toBeVisible()
   await expect(date).toBeFocused()
-  await page.getByRole("button", { name: "9.5일 주기" }).click()
+  await page.getByRole("button", { name: "기록 묶음" }).click()
   await page.getByText("주기 시작일과 표시 기준", { exact: true }).click()
   await page.getByLabel("주기 시작일", { exact: true }).fill("2026-09-27")
   await page.getByText("주기 시작일과 표시 기준", { exact: true }).click()

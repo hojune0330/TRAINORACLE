@@ -247,7 +247,8 @@ describe("plan schedule preview", () => {
     const original = JSON.stringify(sessions)
     render(<PlanSchedulePreview startDate="2026-08-17" sessions={sessions} frameLengthDays={7}
       readerNotice={<p role="status">몸 상태를 먼저 확인해 주세요</p>}
-      renderSessionFooter={session => <button onClick={() => write(session)}>일지 쓰기 {session.slot}</button>} />)
+      renderSessionAction={session => <button onClick={() => write(session)}>일지 쓰기 {session.slot}</button>}
+      renderSessionFooter={() => <span>명시적으로 진행 선택</span>} />)
     const opener = screen.getByRole("button", { name: "8월 17일 월요일 오후 훈련과 일지 크게 보기" })
     await user.click(opener)
     const reader = screen.getByRole("dialog")
@@ -255,7 +256,7 @@ describe("plan schedule preview", () => {
     expect(within(reader).getByRole("button", { name: "크게 보기 이전 날짜" })).toBeEnabled()
     const afternoon = within(reader).getByRole("group", { name: "8월 17일 월요일 오후 세션" })
     expect(within(afternoon).getByText("일지·진행 기록").closest("details")).not.toHaveAttribute("open")
-    await user.click(within(afternoon).getByText("일지·진행 기록"))
+    expect(within(afternoon).getByRole("button", { name: "일지 쓰기 PM" }).closest("details")).toBeNull()
     await user.click(within(reader).getByRole("button", { name: "일지 쓰기 PM" }))
     expect(write).toHaveBeenCalledExactlyOnceWith(sessions[1])
     expect(JSON.stringify(sessions)).toBe(original)

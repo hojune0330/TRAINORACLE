@@ -106,10 +106,7 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
 
   return (
     <div style={{ paddingBottom: 30 }}>
-      <TrendsHeader onBack={onBack} />
-      {navigation?.openPaceCalculator && <button type="button" className="plan-text-action" onClick={() => navigation.openPaceCalculator?.()}>
-        <Calculator size={18} aria-hidden="true" /> 페이스 계산
-      </button>}
+      <TrendsHeader onBack={onBack} onPace={navigation?.openPaceCalculator ? () => navigation.openPaceCalculator?.() : undefined} />
       <div className="trends-motion-stage">
         <div className="trends-hub__sections" role="group" aria-label="오라클 항목">
           {ORACLE_SECTIONS.map(item => (
@@ -119,7 +116,7 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
         </div>
         {section === "training" && <details ref={detailMenu} className="trends-hub__detail-menu" open={detailMenuOpen}
           onToggle={event => setDetailMenuOpen(event.currentTarget.open)}>
-          <summary>{detail === "summary" ? "훈련량·구성·변화 보기" : `${ANALYSIS_SECTIONS.find(item => item.id === detail)?.label} · 다른 항목 보기`}</summary>
+          <summary><span>{detail === "summary" ? "훈련량·구성·변화 보기" : `${ANALYSIS_SECTIONS.find(item => item.id === detail)?.label} · 다른 항목 보기`}</span><small>거리 · 훈련 강도 · 월별 변화 · 파일 기록</small></summary>
           <div className="trends-hub__drilldowns" role="group" aria-label="훈련 분석 자세히 보기">
           {ANALYSIS_SECTIONS.map(item => <button key={item.id} type="button" aria-pressed={detail === item.id}
             onClick={() => {
@@ -174,11 +171,11 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
           {oracleV2Enabled && onOpenOracleLibrary ? <>
             <div><p>훈련 · 기록 · 대회 · 돌아보기 · 배우기</p><h2 id="trends-library-title">궁금한 주제를 골라 읽어요</h2>
               <p className="trends-record-reading__meta">읽을거리 56편 · 8개 주제 묶음</p></div>
-            <button type="button" onClick={onOpenOracleLibrary}>읽을거리 살펴보기<ArrowRight size={18} aria-hidden="true" /></button>
+            <button type="button" onClick={onOpenOracleLibrary}>오라클 읽을거리<ArrowRight size={18} aria-hidden="true" /></button>
           </> : <>
-            <div><p>훈련 배우기</p><h2 id="trends-library-title">달리기 원리와 용어를 살펴봐요</h2>
+            <div><p>훈련법 읽기</p><h2 id="trends-library-title">달리기 원리와 용어를 살펴봐요</h2>
               <p>훈련과 기록을 이해하는 데 도움이 되는 기본 내용을 확인할 수 있어요.</p></div>
-            {onOpenTrainingContent && <button type="button" onClick={onOpenTrainingContent}>훈련 배우기<ArrowRight size={18} aria-hidden="true" /></button>}
+            {onOpenTrainingContent && <button type="button" onClick={onOpenTrainingContent}>훈련법 읽기<ArrowRight size={18} aria-hidden="true" /></button>}
           </>}
         </section>}
         {section === "training" && detail === "summary" && isEmpty && (
@@ -196,8 +193,10 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
               />}
               <InfoDisclosure title="어떤 기록을 분석하나요?">
                 <PersonalOraclePanel observations={observations} today={today} planState={planState} />
+                <p>확인된 기록만 분석해요. 개인 메모는 읽지 않아요.</p>
+                <p>이 결과만으로 훈련 계획을 바꾸지는 않아요.</p>
               </InfoDisclosure>
-              {onOpenOracle && <InfoDisclosure title="기록이 쌓이면 어떤 결과를 볼까요?"><OracleTopicGrid onSelectTopic={onOpenOracle} title="기록으로 알아보기" compact /></InfoDisclosure>}
+              {onOpenOracle && <InfoDisclosure purpose="actions" title="오라클 예시 보기" preview="경기 기록 · 강점 · 훈련 비교 · 다음 훈련"><OracleTopicGrid onSelectTopic={onOpenOracle} title="기록으로 알아보기" compact /></InfoDisclosure>}
             </div>
           </>
         )}
@@ -205,7 +204,7 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
           <>
             <PersonalOraclePanel observations={observations} today={today} planState={planState} />
             {onOpenOracle && <div className="trends-hub__explore">
-              <InfoDisclosure title="경기·계획·훈련 비교하기"><OracleTopicGrid onSelectTopic={onOpenOracle} title="다른 주제 살펴보기" compact /></InfoDisclosure>
+              <InfoDisclosure purpose="actions" title="경기·계획·훈련 비교하기" preview="경기 기록 · 강점 · 훈련 비교 · 다음 훈련"><OracleTopicGrid onSelectTopic={onOpenOracle} title="다른 주제 살펴보기" compact /></InfoDisclosure>
             </div>}
           </>
         )}
@@ -215,11 +214,11 @@ export function Trends({ onBack, onWriteLog, onOpenPlan, onOpenOracle, onOpenRec
         {section === "training" && detail === "distance" && <CumulativeDistancePanel observations={observations} today={today} planWindow={planWindow} mode="full" />}
         {section === "training" && detail === "mix" && <EnergySystemLedgerPanel observations={observations} today={today} planState={planState} mode="full" />}
         {section === "training" && detail === "monthly" && <MonthlyTrendSection observations={observations} today={today} initialMetric={initialContext?.metric} />}
-        {section === "training" && detail === "summary" && onOpenOracle && <div className="trends-hub__explore"><InfoDisclosure title="관심 주제·기록할 요일"><OracleResume onOpenTopic={onOpenOracle} /></InfoDisclosure></div>}
+        {section === "training" && detail === "summary" && onOpenOracle && <div className="trends-hub__explore"><InfoDisclosure purpose="actions" title="관심 주제·기록할 요일"><OracleResume onOpenTopic={onOpenOracle} /></InfoDisclosure></div>}
         {section === "training" && detail !== "files" && <div style={{ padding: "0 20px" }}>
           <AnalysisExclusionNotice summary={exclusion} />
         </div>}
-        {section === "training" && detail === "summary" && <div style={{ padding: "0 20px" }}>
+        {section === "training" && detail === "summary" && !isEmpty && <div style={{ padding: "0 20px" }}>
           <InfoDisclosure title="분석 기준">
             <p>확인된 기록만 분석해요. 개인 메모는 읽지 않아요.</p>
             <p>기록을 정리한 결과이며, 계획·안전 판단은 자동으로 바꾸지 않아요.</p>
@@ -289,13 +288,13 @@ function AnalysisExclusionNotice({ summary }: {
   )
 }
 
-function TrendsHeader({ onBack }: { readonly onBack?: (() => void) | undefined }) {
+function TrendsHeader({ onBack, onPace }: { readonly onBack?: (() => void) | undefined; readonly onPace?: (() => void) | undefined }) {
   return (
     <div style={{
       padding: "12px 16px",
       borderBottom: "1px solid var(--line)",
       display: "grid",
-      gridTemplateColumns: "64px minmax(0, 1fr) 64px",
+      gridTemplateColumns: "64px minmax(0, 1fr) auto",
       alignItems: "center",
       background: "var(--bg)",
     }}>
@@ -325,7 +324,7 @@ function TrendsHeader({ onBack }: { readonly onBack?: (() => void) | undefined }
         textAlign: "center",
         margin: 0,
       }}>오라클</h1>
-      <div aria-hidden="true" />
+      {onPace ? <button type="button" className="trends-hub__pace" onClick={onPace}><Calculator size={16} aria-hidden="true" />페이스 계산</button> : <div style={{ width: 64 }} aria-hidden="true" />}
     </div>
   )
 }

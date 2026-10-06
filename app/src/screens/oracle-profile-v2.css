@@ -2,6 +2,7 @@
 .oracle-v2 *, .oracle-v2 *::before, .oracle-v2 *::after { box-sizing: border-box; }
 .oracle-v2 button { min-height: 44px; min-width: 44px; font: inherit; color: inherit; border: 1px solid var(--line); background: var(--surface, var(--paper)); border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 12px; cursor: pointer; }
 .oracle-v2 button:disabled { opacity: .5; cursor: default; }
+.oracle-v2 .oracle-v2__primary { width: 100%; background: var(--brand); border-color: var(--brand); color: var(--paper); }
 .oracle-v2 button { word-break: keep-all; }
 .oracle-v2 button > svg { flex-shrink: 0; }
 .oracle-v2 button > span { min-width: 0; }
@@ -29,6 +30,8 @@
 .oracle-v2__manager-actions button { width: 100%; justify-content: space-between; text-align: left; font-size: var(--fs-caption); }
 .oracle-v2__context-disclosure { margin-block: var(--space-4); }
 .oracle-v2__context-disclosure > p { margin-top: 0; }
+.oracle-v2 .oracle-v2__context-action { width: 100%; justify-content: space-between; text-align: left; margin-block: var(--space-4); }
+.oracle-v2__context-action small { display: block; font-size: var(--fs-caption); color: var(--ink-2); margin-top: var(--space-1); }
 .oracle-v2__guide { display: block; width: 64px; height: 72px; object-fit: cover; object-position: top; margin-bottom: 12px; }
 .oracle-v2__identity > div { min-width: 0; }
 .oracle-v2__scores, .oracle-v2__facts { margin: 16px 0; }

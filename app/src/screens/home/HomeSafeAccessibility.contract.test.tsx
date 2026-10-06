@@ -86,7 +86,7 @@ describe("home hub destinations and information", () => {
     expect(recent.compareDocumentPosition(analysis) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     fireEvent.click(analysis)
     expect(openTrends).toHaveBeenCalledOnce()
-    fireEvent.click(screen.getByRole("button", { name: "훈련 배우기" }))
+    fireEvent.click(screen.getByRole("button", { name: "훈련법 읽기" }))
     fireEvent.click(screen.getByRole("button", { name: "일지 꾸미기" }))
     expect(learn).toHaveBeenCalledOnce()
     expect(decorate).toHaveBeenCalledOnce()

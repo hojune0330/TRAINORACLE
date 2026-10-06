@@ -100,7 +100,7 @@ describe("Trends exploration hub", () => {
     expect(screen.getByText("확인된 기록만 분석해요. 개인 메모는 읽지 않아요.")).toBeInTheDocument()
 
     for (const button of screen.getAllByRole("button", { name: /결과 보기/u })) expect(button).not.toBeVisible()
-    await user.click(screen.getByText("기록이 쌓이면 어떤 결과를 볼까요?"))
+    await user.click(screen.getByText("오라클 예시 보기"))
     const topicButtons = screen.getAllByRole("button", { name: /결과 보기/u })
     expect(topicButtons).toHaveLength(ORACLE_TOPICS.length)
 
@@ -157,7 +157,7 @@ describe("Trends exploration hub", () => {
 
     await user.click(screen.getByRole("button", { name: "읽을거리" }))
     expect(screen.getByText("읽을거리 56편 · 8개 주제 묶음")).toBeVisible()
-    await user.click(screen.getByRole("button", { name: "읽을거리 살펴보기" }))
+    await user.click(screen.getByRole("button", { name: "오라클 읽을거리" }))
     expect(onOpenOracleLibrary).toHaveBeenCalledOnce()
     expect(onOracleSectionChange.mock.calls.map(([section]) => section)).toEqual(["profile", "library"])
   })
@@ -170,7 +170,7 @@ describe("Trends exploration hub", () => {
     await user.click(screen.getByRole("button", { name: "읽을거리" }))
     expect(screen.getByRole("heading", { name: "달리기 원리와 용어를 살펴봐요" })).toBeVisible()
     expect(screen.queryByText("읽을거리 56편 · 8개 주제 묶음")).not.toBeInTheDocument()
-    await user.click(screen.getByRole("button", { name: "훈련 배우기" }))
+    await user.click(screen.getByRole("button", { name: "훈련법 읽기" }))
     expect(onOpenTrainingContent).toHaveBeenCalledOnce()
   })
 

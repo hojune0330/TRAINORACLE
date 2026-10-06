@@ -66,7 +66,7 @@ test("compact overview keeps exact methods and opens the selected slot's progres
 test("cycle browsing clearly separates month totals and can return to the selected range", async ({ page }, info) => {
   await page.goto("/?app=1&uitest=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "일지", exact: true }).click()
-  await page.getByRole("button", { name: "9.5일 주기", exact: true }).click()
+  await page.getByRole("button", { name: "기록 묶음", exact: true }).click()
   await expect(page.getByRole("button", { name: "월간 달력으로", exact: true })).toBeVisible()
   await page.getByRole("button", { name: "다음 달", exact: true }).click()
   await page.getByRole("button", { name: "다음 달", exact: true }).click()

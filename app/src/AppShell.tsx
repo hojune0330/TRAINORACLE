@@ -105,6 +105,7 @@ type AppOverlay =
   | { readonly kind: "record-reading"; readonly stage: ReadingStage }
   | { readonly kind: "term"; readonly term: TermId }
   | { readonly kind: "feedback" }
+  | { readonly kind: "athlete-records" }
   | { readonly kind: "oracle"; readonly topic: OracleTopicId; readonly mode?: "example" | "personal"; readonly scrollTop?: number }
 
 type OverlayHistoryMarker = AppOverlay & {
@@ -144,6 +145,7 @@ function overlayHistoryMarker(state: unknown, owner: string): AppOverlay | null 
     ...(typeof value.scrollTop === "number" && Number.isFinite(value.scrollTop) && value.scrollTop >= 0 ? { scrollTop: value.scrollTop } : {}),
   }
   if (value.kind === "feedback") return { kind: "feedback" }
+  if (value.kind === "athlete-records") return { kind: "athlete-records" }
   if (value.kind === "record-reading" && isReadingStage(value.stage)) return { kind: "record-reading", stage: value.stage }
   if (value.kind === "running-profile" && isRunningProfileStage(value.stage)) return { kind: "running-profile", stage: value.stage,
     ...(value.initialView === "library" ? { initialView: "library" as const } : {}) }
@@ -845,6 +847,11 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         onOpenContent={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("content") })}
         onOpenRewards={() => openDecorationStudio()}
         onOpenPaceCalculator={() => openPaceCalculator()}
+        onOpenRunningProfile={() => openOverlay({ kind: "running-profile", stage: "overview" })}
+        onOpenRecordReading={() => openOverlay({ kind: "record-reading", stage: "own-event" })}
+        onOpenOracleLibrary={oracleV2Enabled() ? () => openOverlay({ kind: "running-profile", stage: "overview", initialView: "library" }) : undefined}
+        onOpenRecords={() => openOverlay({ kind: "athlete-records" })}
+        onOpenImport={openImport}
         onOpenFeedback={() => openOverlay({ kind: "feedback" })}
         onOpenAccount={accountEnabled ? () => runViewTransition("push", () => setV(s => ({ ...s, accountOpen: true }))) : undefined}
         onOpenRestore={openRestore}
@@ -1091,6 +1098,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           </div>
         )}
         <ErrorBoundary key={`overlay-${overlay?.kind ?? "none"}-${accountScopeRevision}`} region onExit={closeOverlay} recoveryTab={tabForChrome(v)}>
+        {overlay?.kind === "athlete-records" && <DeferredMobileScreens.AthleteRecords backLabel="더보기로" onBack={closeOverlay} />}
         {overlay?.kind === "pace" && paceRequestRef.current?.token === overlay.token && (
           <DeferredMobileScreens.PaceCalculator key={overlay.token} stage={overlay.stage}
             request={{ ...paceRequestRef.current.request, ...(paceRequestRef.current.request.onSelectRecord ? {
@@ -1127,7 +1135,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
             {oracleV2Enabled() ?
               <DeferredMobileScreens.OracleProfileV2 key={`oracle-v2-${accountScopeRevision}-${oracleEntryRevision}`} today={todayISO()} onBack={closeOverlay}
                 initialView={overlay.initialView}
-                backLabel={v.tab === "trends" ? "오라클로 돌아가기" : v.tab === "plan" ? "훈련으로 돌아가기" : v.tab === "journal" ? "일지로 돌아가기" : "홈으로 돌아가기"}
+                backLabel={utilityView === "more" ? "더보기로 돌아가기" : v.tab === "trends" ? "오라클로 돌아가기" : v.tab === "plan" ? "훈련으로 돌아가기" : v.tab === "journal" ? "일지로 돌아가기" : "홈으로 돌아가기"}
                 guestSession={activeLocalAccount() === null ? guestOracleSession : undefined}
                 onGuestSessionChange={session => {
                   if (guestScopeGeneration === localJournalScopeGeneration() && activeLocalAccount() === null

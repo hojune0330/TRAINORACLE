@@ -7,7 +7,7 @@ import { sessionSlotLabel } from "./labels"
 import "../../styles/plan-day-reader.css"
 import { useCalendarMotion } from "../../hooks/useCalendarMotion"
 
-export function PlanDayReader({ date, sessions, initialSlot, initialSection, canPrevious, canNext, onPrevious, onNext, onClose, notice, children }: {
+export function PlanDayReader({ date, sessions, initialSlot, initialSection, canPrevious, canNext, onPrevious, onNext, onClose, returnFocusTo, notice, children }: {
   readonly date: string
   readonly sessions: readonly { readonly slot: "AM" | "PM" }[]
   readonly initialSlot?: "AM" | "PM"
@@ -17,7 +17,8 @@ export function PlanDayReader({ date, sessions, initialSlot, initialSection, can
   readonly onPrevious: () => void
   readonly onNext: () => void
   readonly onClose: () => void
-  readonly children: ReactNode
+  readonly returnFocusTo?: (date: string) => HTMLElement | null
+  readonly children: ReactNode | ((leave: (action: () => void) => void) => ReactNode)
   readonly notice?: ReactNode
 }) {
   const dialog = React.useRef<HTMLDialogElement>(null)
@@ -25,9 +26,18 @@ export function PlanDayReader({ date, sessions, initialSlot, initialSection, can
   const titleId = React.useId()
   const motion = useCalendarMotion()
   const calendar = React.useRef(document.activeElement?.closest<HTMLElement>(".month-calendar"))
+  const requestedReturnFocus = React.useRef(returnFocusTo)
   const [activeSlot, setActiveSlot] = React.useState(initialSlot ?? sessions[0]?.slot)
-  const close = useReaderDialog(dialog, onClose, () => calendar.current?.querySelector<HTMLElement>(`button[data-date="${date}"]`)
+  const pendingAction = React.useRef<(() => void) | null>(null)
+  const close = useReaderDialog(dialog, () => {
+    onClose()
+    const action = pendingAction.current
+    pendingAction.current = null
+    action?.()
+  }, () => requestedReturnFocus.current?.(date)
+    ?? calendar.current?.querySelector<HTMLElement>(`button[data-date="${date}"]`)
     ?? calendar.current?.querySelector<HTMLElement>(".month-calendar__month") ?? null)
+  const leave = (action: () => void) => { pendingAction.current = action; close() }
   const jumpToSlot = (slot: "AM" | "PM") => {
     const section = content.current?.querySelector<HTMLElement>(`[data-session-slot="${slot}"]`)
     section?.scrollIntoView?.({ block: "start", behavior: motion.reduced ? "auto" : "smooth" })
@@ -76,7 +86,7 @@ export function PlanDayReader({ date, sessions, initialSlot, initialSection, can
         onClick={() => jumpToSlot(session.slot)}>{sessionSlotLabel(session.slot)}</button>)}
     </nav>}
     <div className="plan-day-reader__body" ref={content} onScroll={syncSlot}>
-      <div key={date} className="plan-day-reader__content plan-schedule-preview__sessions calendar-reader-transition">{children}</div>
+      <div key={date} className="plan-day-reader__content plan-schedule-preview__sessions calendar-reader-transition">{typeof children === "function" ? children(leave) : children}</div>
     </div>
   </dialog>, document.body)
 }

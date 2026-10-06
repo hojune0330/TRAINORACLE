@@ -59,6 +59,7 @@ export function PlanSchedulePreview({
   frameLengthDays = 9.5,
   sessions,
   renderSessionFooter,
+  renderSessionAction,
   renderAfterSchedule,
   showRpeGuide = true,
   timelineHeading,
@@ -78,6 +79,7 @@ export function PlanSchedulePreview({
   readonly frameLengthDays?: FrameLengthDays
   readonly sessions: readonly PlanSession[]
   readonly renderSessionFooter?: (session: PlanSession) => ReactNode
+  readonly renderSessionAction?: (session: PlanSession, leave?: (action: () => void) => void) => ReactNode
   readonly renderAfterSchedule?: ReactNode
   readonly showRpeGuide?: boolean
   readonly timelineHeading?: string
@@ -116,6 +118,7 @@ export function PlanSchedulePreview({
   const showDetails = (detailsExpanded || calendarDetailsOpen) && selectedInPlan
   const scheduleId = React.useId()
   const scheduleRef = React.useRef<HTMLOListElement>(null)
+  const calendarRef = React.useRef<HTMLElement>(null)
   const handledReaderRequest = React.useRef<number>()
   const previousCalendarIdentity = React.useRef(calendarIdentity)
 
@@ -224,6 +227,7 @@ export function PlanSchedulePreview({
     <>
       {showRpeGuide && showDetails && <PlanRpeGuide />}
       <PlanTrainingFlow
+        calendarRef={calendarRef}
         month={nav.month} onMonthChange={nav.selectMonth}
         days={days}
         journalEntries={journalEntries}
@@ -332,6 +336,7 @@ export function PlanSchedulePreview({
                       loadEvidence={loadEvidence}
                       compact={displayMode === "swipe"}
                       footer={renderSessionFooter?.(session)}
+                      action={renderSessionAction?.(session)}
                       returnedFromJournal={focusSession?.day === session.day && focusSession.slot === session.slot}
                       onExpand={() => openDayReader(index, session.slot)}
                       allowMemoExport={allowMemoExport}
@@ -354,17 +359,23 @@ export function PlanSchedulePreview({
       </section>
       {reader !== null && <PlanDayReader date={reader.date} sessions={readerDay?.sessions ?? []}
         initialSlot={reader.slot} initialSection={reader.section} canPrevious canNext
+        returnFocusTo={reader.section === "records" ? date =>
+          calendarRef.current?.querySelector<HTMLElement>(`button[data-date="${date}"]`)
+          ?? calendarRef.current?.querySelector<HTMLElement>(".month-calendar__month") ?? null : undefined}
         onPrevious={() => moveReader(isoShift(reader.date, -1))}
         onNext={() => moveReader(isoShift(reader.date, 1))}
         onClose={closeDayReader} notice={readerNotice}>
+        {leave => <>
         {readerDay?.sessions.map(session => <PlanSessionPreview key={`${reader.date}-${session.slot}`}
           date={reader.date} session={session} compact={false} expanded
           explanationContext={explanationContext} loadEvidence={loadEvidence}
           footer={renderSessionFooter?.(session)}
+          action={renderSessionAction?.(session, leave)}
           returnedFromJournal={focusSession?.day === session.day && focusSession.slot === session.slot}
           allowMemoExport={allowMemoExport} />)}
         {!readerDay?.sessions.length && <p>이 계획에는 이날 예정된 훈련이 없어요.</p>}
         <CalendarJournalDetails date={reader.date} entries={journalEntries} />
+        </>}
       </PlanDayReader>}
       {renderAfterSchedule}
     </>
@@ -376,6 +387,7 @@ function PlanSessionPreview({
   session,
   compact,
   footer,
+  action,
   explanationContext,
   loadEvidence,
   returnedFromJournal = false,
@@ -387,6 +399,7 @@ function PlanSessionPreview({
   readonly session: PlanSession
   readonly compact: boolean
   readonly footer?: ReactNode
+  readonly action?: ReactNode
   readonly explanationContext?: SessionExplanationContext
   readonly loadEvidence?: (session: PlanSession) => SessionExplanationEvidence | null
   readonly returnedFromJournal?: boolean
@@ -450,6 +463,7 @@ function PlanSessionPreview({
         <small className={session.role === "REST" ? "plan-session-help" : "plan-session-metric"}>
           {prescriptionLabel(session)}
         </small>
+        {action}
         {expanded && footer && <details className="plan-session-records" data-session-records>
           <summary>일지·진행 기록</summary>{footer}
         </details>}
@@ -489,6 +503,7 @@ export function PlanRpeGuide() {
 }
 
 function PlanTrainingFlow({
+  calendarRef,
   month, onMonthChange,
   days,
   today,
@@ -499,6 +514,7 @@ function PlanTrainingFlow({
   journalEntries,
   sessionProgress,
 }: {
+  readonly calendarRef: React.RefObject<HTMLElement>
   readonly month: string
   readonly onMonthChange: (month: string) => void
   readonly days: readonly ScheduleDay[]
@@ -515,7 +531,7 @@ function PlanTrainingFlow({
   const journalByDate = React.useMemo(() => calendarEntriesByDate(journalEntries), [journalEntries])
   const outsidePlanMonth = days.length > 0 && (month < days[0]!.date.slice(0, 7) || month > days.at(-1)!.date.slice(0, 7))
   return (
-    <section className="plan-training-flow" aria-label={`${frameLengthDays}일 훈련 일정`}>
+    <section ref={calendarRef} className="plan-training-flow" aria-label={`${frameLengthDays}일 훈련 일정`}>
       <header>
         <strong>{frameLengthDays}일 훈련 일정</strong>
         <span>{days[0]?.date.slice(5).replace("-", "/")} ~ {days.at(-1)?.date.slice(5).replace("-", "/")}</span>

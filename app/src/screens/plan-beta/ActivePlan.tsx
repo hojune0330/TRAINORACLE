@@ -174,6 +174,12 @@ export function ActivePlan({
       && samePlannedSessionLink(entry.plannedSessionLink, returnToSession))
 
   React.useEffect(() => {
+    if (!returnedSession) return
+    setReaderRequest(previous => ({ day: returnedSession.day, slot: returnedSession.slot,
+      section: "records", sequence: (previous?.sequence ?? 0) + 1 }))
+  }, [returnToSession])
+
+  React.useEffect(() => {
     if (!showCreatedCelebration) return
     setShowCreated(true)
     const dismiss = () => setShowCreated(false)
@@ -385,6 +391,11 @@ export function ActivePlan({
             </details>
           </>
         )}
+        renderSessionAction={onWriteSessionLog === undefined ? undefined : (session, leave) => session.role !== "REST" && (
+          <button className="active-plan__journal-action" type="button" onClick={() => leave ? leave(() => onWriteSessionLog(session)) : onWriteSessionLog(session)}>
+            이 훈련 일지 쓰기
+          </button>
+        )}
         renderSessionFooter={(session) => {
           const current = recorded.get(`${session.day}:${session.slot}`)
           const results = linkedResults.get(`${session.day}:${session.slot}`) ?? []
@@ -450,15 +461,6 @@ export function ActivePlan({
               {current !== undefined && journalLabel && <small>{journalLabel}</small>}
               <SessionExplanationEntry session={session} date={isoShift(startDate, session.day - 1)} context={explanationContext} loadEvidence={loadSessionEvidence}
                 initialTab="주기·기록" entryLabel="연결된 일지 기록 보기" showPurpose={false} returnLabel="훈련과 일지로 돌아가기" />
-              {session.role !== "REST" && onWriteSessionLog !== undefined && (
-                <button
-                  className="active-plan__journal-action"
-                  type="button"
-                  onClick={() => onWriteSessionLog(session)}
-                >
-                  이 훈련 일지 쓰기
-                </button>
-              )}
               {onEditSession && session.role !== "REST" && current === undefined
                 && isoShift(startDate, session.day - 1) >= today && session.day <= frameDayCount && (
                 <button type="button" className="plan-text-action" onClick={() => onEditSession(session)}>
