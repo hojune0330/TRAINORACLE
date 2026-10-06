@@ -1,25 +1,30 @@
 {
   "kind": "TRAINORACLE_PAGES_DEPLOYMENT",
-  "sourceSha": "fb6991c2eb0b6f33c14a6a7c542655cd5f8c06d8",
-  "previousPagesSha": "3df60ce854833223f2528c468e3c6c92a1797f04",
+  "sourceSha": "81dba67de81629c9a7598327282e3b8006b938a4",
+  "previousPagesSha": "ccaccc6d6a3a4eb6186076ccf1b9b8e352407bdf",
   "deploymentMethod": "MANUAL_OWNER_APPROVED",
-  "deployedAt": "2026-10-04T06:23:54.298Z",
-  "publicConfigSource": "assets/index-D-F2x_9B.js",
-  "scope": "Account authentication boundary hardening with shared-origin account access kept closed",
+  "publicationRequestedAt": "2026-10-06T01:22:54Z",
+  "scope": "Result-first Home, four destination tabs, origin-preserving recording, and Oracle navigation",
+  "oracleV2Enabled": false,
+  "accountAccess": "EXISTING_SHARED_ORIGIN_HOLD_RETAINED",
+  "oraclePreviewPath": "previews/oracle-81dba67d/",
   "verification": {
-    "releaseMode": "OWNER_APPROVED_MANUAL_AFTER_CI_BLOCK",
     "appTypecheck": "PASS",
-    "productionBuild": "PASS",
-    "focusedAccountSync": "54/54 PASS",
-    "secretLiteralRegression": "21/21 PASS",
-    "localPostgresFocused": "26/26 PASS",
-    "fullAppSuite": "NOT_COMPLETED",
-    "githubActions": {
-      "runId": 37182279711,
-      "contractTests": "FAILURE",
-      "automaticPagesJob": "BLOCKED"
+    "basicProductionBuild": "PASS",
+    "oraclePreviewBuild": "PASS",
+    "finalRecordingNavigation": "8/8 PASS",
+    "independentMaximumReasoningReview": "ACTIONABLE_FINDINGS_REPAIRED",
+    "releasePackagingReadOnlyReview": "PASS",
+    "githubActionsAtPublicationRequest": {
+      "runId": 37398189408,
+      "contractTests": "SUCCESS",
+      "appQuality": "IN_PROGRESS",
+      "appBrowser": "NOT_STARTED",
+      "fullReleaseGate": "NOT_COMPLETED"
     },
-    "productionDatabaseMigrations0051To0056": "NOT_APPLIED_UNVERIFIED_TARGET",
+    "productionDatabaseMigrations": "NOT_APPLIED",
+    "productionFunctionDeployment": "NOT_PERFORMED",
+    "accountAndShareActivation": "NOT_PERFORMED",
     "realAccountRoundtrip": "NOT_RUN"
   }
 }

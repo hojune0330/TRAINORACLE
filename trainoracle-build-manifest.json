@@ -1,0 +1,12 @@
+{
+  "kind": "TRAINORACLE_RELEASE_BUILD_PACKAGE",
+  "sourceSha": "81dba67de81629c9a7598327282e3b8006b938a4",
+  "previousPagesSha": "ccaccc6d6a3a4eb6186076ccf1b9b8e352407bdf",
+  "deploymentStatus": "NOT_PUBLISHED",
+  "previewOnly": false,
+  "accountHeld": true,
+  "publicConfigurationSourceSha": "ccaccc6d6a3a4eb6186076ccf1b9b8e352407bdf",
+  "oracleV2Enabled": false,
+  "backendVerification": "NOT_CONFIRMED",
+  "builtAt": "2026-10-06T01:16:31.197Z"
+}

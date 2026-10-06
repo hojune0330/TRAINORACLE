@@ -1,0 +1,12 @@
+{
+  "kind": "TRAINORACLE_ORACLE_PUBLIC_PREVIEW_DEPLOYMENT",
+  "sourceSha": "81dba67de81629c9a7598327282e3b8006b938a4",
+  "publicationRequestedAt": "2026-10-06T01:22:54Z",
+  "deploymentMethod": "MANUAL_OWNER_APPROVED",
+  "previewOnly": true,
+  "oracleV2Enabled": true,
+  "accountAndShareEnabled": false,
+  "backendVerification": "NOT_CONFIRMED",
+  "previewPath": "previews/oracle-81dba67d/",
+  "realAccountRoundtrip": "NOT_RUN"
+}
