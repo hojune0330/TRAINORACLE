@@ -31,7 +31,7 @@
 
 - 관련 테스트의 겹치는 실행 수는 합산하지 않는다. 현재 검토한 고유 테스트 범위는 11파일 45개다. 마지막 추가 항목은 계획 요약만 있고 운동 기록이 없는 상태의 가져오기·PB 진입점이다.
 - 결함 네 가지를 일시 주입했다. 미입력 5 기본값은 `explains each subjective dimension in words a young athlete can understand`, PB 분류 오류는 `highest-record entry defaults to PB and stores exact decimal seconds with no invented date`, 누락 거리 0 변환은 `does not turn missing distance and unknown time meaning into zero or moving time`, 계획만 있을 때 진입점 숨김은 `keeps import and PB actions visible when a plan summary exists but workout records do not`에서 각각 실패했다. 결함은 모두 원복했고 정상 재실행이 통과했다.
-- 마지막 수정 후 타입 검사 통과. 공개 빌드는 계정 보류 설정을 유지하며 별도로 수행한다.
+- 마지막 수정 후 타입 검사와 공개 빌드 통과. 기존 폰트 경로·혼합 import·큰 청크 경고는 남아 있다. 계정 보류 설정을 유지했다.
 - 유효 TCX 랩이 없는 초기 테스트 자료 오류를 고쳤다. 런타임의 파일 검증을 완화하지 않았다.
 - 저장 공간 실패, 날짜 미입력, 취소한 돌아가기, 미지원 건강앱 XML, 성공 후 복귀, 파일 미리보기의 누락값·시간 종류를 집중 확인했다.
 - 브라우저: 새 로컬 게스트 탭에서 800m 2:01.5 저장 → 페이스 도구의 200m 30.4초·400m 1:00.8 → 원래 입력 화면 복귀. 회복 입력 → 출발 오라클 복귀. 가상 TCX 5km·30분 선택 → 한 건 저장 → 오라클 사실 미리보기.
@@ -51,4 +51,9 @@
 ## 배포
 
 - 1차 수동 공개: 소스 `b899e367c3ca8eadccb0411c1f873d0c7bd42714`, Pages `c801061d90c465435d41aedf15c602d433dc6010`. 빌드 통과, Pages `built`, 공개 manifest·receipt의 소스 SHA 일치를 확인했다.
-- 계획만 있는 사용자 진입점 보완을 후속 공개한다. 최종 수동 배포 결과는 아래에 추가하며 코드 검사·로컬 저장·공개 웹·실계정 저장의 증거를 구분한다.
+- 최종 수동 공개: 소스 `894cd9abacc346db31f0b96fa0ae055441f451ce`, Pages `732b3245c80e1e718901f486939904d0b9738f53`.
+- GitHub Pages `built`, 오류 없음. 공개 manifest·receipt 모두 최종 소스 SHA 일치. `accountHeld: true`, `oracleV2Enabled: true` 확인.
+- 최종 공개 앱에서 홈 → 더보기 → 워치 파일 가져오기 진입과 새 거리·시간 우선 안내·지원 형식·자동 연동 준비 중 표시를 확인했다. 실제 공개 계정에는 테스트 기록을 추가하지 않았다. [공개 가져오기 화면](evidence/recovery-record-start-20261007/live-import-entry.png).
+- 기존 미리보기와 예전 해시 파일을 삭제하지 않고 보존했다. 원격 소스·공개 브랜치를 확인한 뒤 비강제 푸시했다.
+- 자동 CI 전체 통과를 주장하지 않는다. 최소 검증·수동 공개 요청에 따라 소스 CI를 건너뛰었고, 공개 브랜치 게시 상태는 별도로 확인했다.
+- 코드 검사·로컬 저장·공개 웹·실계정 저장의 증거를 구분하며, 실계정 왕복 저장과 외부 제공자 활성화는 이번 배포에서 검증하지 않았다.
