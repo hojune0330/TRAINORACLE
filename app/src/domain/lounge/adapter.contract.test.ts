@@ -47,6 +47,24 @@ describe("memory-only lounge link intent", () => {
 })
 
 describe("TrainOracle lounge auth adapter", () => {
+  it("retains the versioned server ticket expiry without adding it to the destination", async () => {
+    const expiresAt = new Date(Date.now() + 60_000).toISOString()
+    const fetchImpl = vi.fn().mockResolvedValue(reply({ ticket: "t".repeat(43), expiresAt }, 201))
+    const client = createTrainOracleLoungeClient({ config, expectedUserId: "synthetic-A", getSession: session, fetchImpl })
+    const ticket = await client.enterTicket({ accepted: true, noticeVersion: status.noticeVersion, signal: new AbortController().signal, requireExpiry: true })
+    expect(ticket.expiresAt).toBe(expiresAt)
+    expect(new URL(ticket.url).search).toBe("")
+    expect(ticket.url).not.toContain(expiresAt)
+    expect(parseLoungeStatus({ ...status, trainoracleTicketExpiryVersion: 1 }).ticketExpiryVersion).toBe(1)
+    expect(() => parseLoungeStatus({ ...status, trainoracleTicketExpiryVersion: 2 })).toThrow("LOUNGE_STATUS_INVALID")
+  })
+  it.each([undefined, null, "2100-02-30T00:00:00Z", "2100-01-01T00:00:00+09:00", "2100-01-01T00:00:00Z\n", "1970-01-01T00:00:00Z"])("rejects advertised missing, malformed or expired ticket expiry %s without retry", async expiresAt => {
+    const fetchImpl = vi.fn().mockResolvedValue(reply({ ticket: "t".repeat(43), expiresAt }))
+    const client = createTrainOracleLoungeClient({ config, expectedUserId: "synthetic-A", getSession: session, fetchImpl })
+    await expect(client.enterTicket({ accepted: true, noticeVersion: status.noticeVersion, signal: new AbortController().signal, requireExpiry: true }))
+      .rejects.toThrow(expiresAt === "1970-01-01T00:00:00Z" ? "TICKET_EXPIRED" : "TICKET_INVALID")
+    expect(fetchImpl).toHaveBeenCalledOnce()
+  })
   it("issues the scoped grant through the existing TrainOracle SDK RPC with no arguments", async () => {
     const proof = await grant()
     mocks.rpc.mockResolvedValue({ data: proof, error: null })

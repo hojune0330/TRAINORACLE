@@ -3,7 +3,8 @@ import { publicLoungeUrl, type LoungeConfig } from "./config"
 
 export type LoungeSession = { readonly userId: string }
 export type LoungeGrant = { readonly version: 1; readonly grant: string; readonly expiresAt: string }
-export type LoungeStatus = { readonly noticeVersion: string; readonly prepared: boolean; readonly accepted: boolean }
+export type LoungeStatus = { readonly noticeVersion: string; readonly prepared: boolean; readonly accepted: boolean; readonly ticketExpiryVersion?: 1 }
+export type LoungeEntryTicket = { readonly url: string; readonly expiresAt: string | null }
 type SessionReader = () => Promise<LoungeSession | null>
 const ticketPattern = /^[A-Za-z0-9_-]{43}$/u
 export const LOUNGE_REQUEST_TIMEOUT_MS = 8000
@@ -72,9 +73,11 @@ export function parseLoungeStatus(value: unknown): LoungeStatus & { readonly par
     || typeof readiness.writesReady !== "boolean"
     || !(status.trainoracleEntryEnabled === undefined || typeof status.trainoracleEntryEnabled === "boolean")
     || !(status.trainoracleParticipationVersion === undefined || status.trainoracleParticipationVersion === 1)
+    || !(status.trainoracleTicketExpiryVersion === undefined || status.trainoracleTicketExpiryVersion === 1)
     || !(readiness.reason === null || typeof readiness.reason === "string")) throw new Error("LOUNGE_STATUS_INVALID")
   return { noticeVersion: status.noticeVersion, prepared: readiness.writesReady && typeof status.roomId === "string" && status.trainoracleEntryEnabled === true,
-    accepted: false, ...(status.trainoracleParticipationVersion === 1 ? { participationVersion: 1 as const } : {}) }
+    accepted: false, ...(status.trainoracleParticipationVersion === 1 ? { participationVersion: 1 as const } : {}),
+    ...(status.trainoracleTicketExpiryVersion === 1 ? { ticketExpiryVersion: 1 as const } : {}) }
 }
 
 export function parseLoungeParticipation(value: unknown, noticeVersion: string): boolean {
@@ -142,8 +145,27 @@ export function createTrainOracleLoungeClient({
     } catch (error) { invalidate(); throw error }
     finally { signal.removeEventListener("abort", invalidate) }
   }
+  const enterTicket = async ({ noticeVersion, accepted, signal, requireExpiry = false }: {
+    noticeVersion: string; accepted: boolean; signal: AbortSignal; requireExpiry?: boolean
+  }): Promise<LoungeEntryTicket> => guarded(signal, async () => {
+    if (proof && Date.parse(proof.expiresAt) <= Date.now()) invalidate()
+    if (!validNoticeVersion(noticeVersion) || accepted !== true && acceptedVersion !== noticeVersion) throw new Error("NOTICE_REQUIRED")
+    const result = await post("/api/lounge/entry/trainoracle", accepted ? { noticeVersion } : { noticeVersion, resume: true }, signal)
+    const record = typeof result === "object" && result !== null ? result as Record<string, unknown> : null
+    const ticket = record?.ticket
+    if (!validOneUseToken(ticket)) throw new Error("TICKET_INVALID")
+    const expiry = record?.expiresAt
+    if (expiry !== undefined && (typeof expiry !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|\+00:00)$/u.test(expiry)
+      || !Number.isFinite(Date.parse(expiry)) || new Date(expiry).toISOString().slice(0, 19) !== expiry.slice(0, 19))) throw new Error("TICKET_INVALID")
+    if (requireExpiry && expiry === undefined) throw new Error("TICKET_INVALID")
+    if (typeof expiry === "string" && Date.parse(expiry) <= Date.now()) throw new Error("TICKET_EXPIRED")
+    const destination = new URL(config.pageUrl)
+    destination.hash = new URLSearchParams({ lounge_ticket: ticket }).toString()
+    return { url: destination.href, expiresAt: typeof expiry === "string" ? expiry : null }
+  })
   return {
     invalidate,
+    enterTicket,
     async status(signal: AbortSignal): Promise<LoungeStatus> {
       acceptedVersion = null
       return guarded(signal, () => boundedRequest(signal, async activeSignal => {
@@ -159,16 +181,7 @@ export function createTrainOracleLoungeClient({
       }))
     },
     async enter({ noticeVersion, accepted, signal }: { noticeVersion: string; accepted: boolean; signal: AbortSignal }): Promise<string> {
-      return guarded(signal, async () => {
-        if (proof && Date.parse(proof.expiresAt) <= Date.now()) invalidate()
-        if (!validNoticeVersion(noticeVersion) || accepted !== true && acceptedVersion !== noticeVersion) throw new Error("NOTICE_REQUIRED")
-        const result = await post("/api/lounge/entry/trainoracle", accepted ? { noticeVersion } : { noticeVersion, resume: true }, signal)
-        const ticket = typeof result === "object" && result !== null ? (result as Record<string, unknown>).ticket : undefined
-        if (!validOneUseToken(ticket)) throw new Error("TICKET_INVALID")
-        const destination = new URL(config.pageUrl)
-        destination.hash = new URLSearchParams({ lounge_ticket: ticket }).toString()
-        return destination.href
-      })
+      return (await enterTicket({ noticeVersion, accepted, signal })).url
     },
     async link({ token, confirmed, signal }: { token: string; confirmed: boolean; signal: AbortSignal }): Promise<void> {
       return guarded(signal, async () => {

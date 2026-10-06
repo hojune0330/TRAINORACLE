@@ -60,3 +60,7 @@ verify_jwt = false
 # Manual data-subject export: auth.getUser plus exact active session RPC checks.
 [functions.account-data-rights]
 verify_jwt = false
+
+# Private operator verification; never ordinary end-user JWT authorization.
+[functions.lounge-identity-deletion]
+verify_jwt = false

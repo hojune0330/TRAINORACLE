@@ -12,8 +12,9 @@ vi.mock("../../domain/lounge/entry-intent", () => ({ loungeEntryIntent: mocks.in
 vi.mock("../../domain/account/supabase-client", () => ({ supabase: async () => ({ auth: { getSession: mocks.session }, rpc: (name: string) => ({ abortSignal: (signal: AbortSignal) => { mocks.abort(signal); return mocks.rpc(name) } }) }) }))
 vi.mock("../../domain/account/auth", () => ({ onAuthChange: mocks.auth }))
 
-const ready = { version: 1, noticeVersion: "lounge-v1-2026-09-30", roomId: "synthetic-room", trainoracleEntryEnabled: true, readiness: { writesReady: true, reason: null } }
-const reply = (value: unknown) => new Response(JSON.stringify(value), { status: 200 })
+const ready = { version: 1, noticeVersion: "lounge-v1-2026-09-30", roomId: "synthetic-room", trainoracleEntryEnabled: true, trainoracleTicketExpiryVersion: 1, readiness: { writesReady: true, reason: null } }
+const reply = (value: unknown) => new Response(JSON.stringify(typeof value === "object" && value !== null && "ticket" in value && !("expiresAt" in value)
+  ? { ...value, expiresAt: new Date(Date.now() + 60_000).toISOString() } : value), { status: 200 })
 const user = (id: string): AccountUser => ({ id, email: null, phone: null, provider: null })
 let listener: (next: AccountUser | null) => void
 let fetchMock: ReturnType<typeof vi.fn>
@@ -300,5 +301,99 @@ describe("existing-account lounge entry", () => {
     } finally {
       unregister()
     }
+  })
+
+  // Actual component/adapter/helper with a synthetic deferred guard. These are
+  // lifetime regressions, not a claim that Account and the editor co-mount.
+  it.each(["current", "unmount", "remount", "unregister-unmount", "new-owner", "same-account-refresh", "new-attempt", "status-retry"] as const)("owns a deferred navigation through %s", async mode => {
+    let unsafe = true, resume!: () => void
+    const remove = registerUnsavedDraftGuard({ isUnsafe: () => unsafe, onBlocked: vi.fn(), requestNavigation: next => { resume = next } })
+    const onNavigate = vi.fn(), confirm = vi.fn(() => true), discard = vi.fn()
+    let removeOther: (() => void) | undefined
+    try {
+      const view = render(<LoungeEntry key={owner} userId={owner} requested onNavigate={onNavigate} />)
+      await acceptEntry()
+      await waitFor(() => expect(resume).toBeTypeOf("function"))
+      const oldResume = resume
+      if (mode === "unmount" || mode === "unregister-unmount" || mode === "new-owner") {
+        if (mode !== "unmount") remove()
+        view.unmount()
+        if (mode === "new-owner") removeOther = registerUnsavedDraftGuard({ isUnsafe: () => true, onBlocked: vi.fn(), confirmDiscard: confirm, discard })
+      } else if (mode === "remount") {
+        owner = "synthetic-B"
+        view.rerender(<LoungeEntry key={owner} userId={owner} requested onNavigate={onNavigate} />)
+        await screen.findByRole("button", { name: "확인하고 라운지 열기" })
+      } else if (mode === "same-account-refresh") act(() => listener(user(owner)))
+      else if (mode === "status-retry") await userEvent.click(screen.getByRole("button", { name: "상태 다시 확인" }))
+      else if (mode === "new-attempt") {
+        await userEvent.click(screen.getByRole("button", { name: "확인하고 라운지 열기" }))
+        await waitFor(() => expect(resume).not.toBe(oldResume))
+      } else {
+        removeOther = registerUnsavedDraftGuard({ isUnsafe: () => true, onBlocked: vi.fn(), confirmDiscard: confirm, discard })
+      }
+      act(() => { unsafe = false; oldResume(); oldResume() })
+      expect(onNavigate).toHaveBeenCalledTimes(mode === "current" ? 1 : 0)
+      expect(confirm).toHaveBeenCalledTimes(mode === "current" ? 1 : 0)
+      expect(discard).toHaveBeenCalledTimes(mode === "current" ? 1 : 0)
+      if (mode === "new-attempt") {
+        act(() => { resume(); resume() })
+        expect(onNavigate).toHaveBeenCalledOnce()
+      }
+    } finally { remove(); removeOther?.() }
+  })
+
+  it("does not discard, inspect another draft, or auto-POST after a waiting ticket expires", async () => {
+    let unsafe = true, resume!: () => void
+    const remove = registerUnsavedDraftGuard({ isUnsafe: () => unsafe, onBlocked: vi.fn(), requestNavigation: next => { resume = next } })
+    const confirm = vi.fn(() => true), discard = vi.fn(), onNavigate = vi.fn()
+    let removeOther: (() => void) | undefined
+    try {
+      render(<LoungeEntry userId={owner} requested onNavigate={onNavigate} />)
+      await acceptEntry()
+      await waitFor(() => expect(resume).toBeTypeOf("function"))
+      removeOther = registerUnsavedDraftGuard({ isUnsafe: () => true, onBlocked: vi.fn(), confirmDiscard: confirm, discard })
+      vi.spyOn(Date, "now").mockReturnValue(Date.now() + 61_000)
+      act(() => { unsafe = false; resume() })
+      expect(screen.getByText(/입장 확인 시간이 지났어요/u)).toBeVisible()
+      expect(confirm).not.toHaveBeenCalled(); expect(discard).not.toHaveBeenCalled(); expect(onNavigate).not.toHaveBeenCalled()
+      expect(fetchMock.mock.calls.filter(call => call[1].method === "POST")).toHaveLength(1)
+      expect(screen.getByRole("button", { name: "확인하고 라운지 열기" })).toBeEnabled()
+      await userEvent.click(screen.getByRole("button", { name: "확인하고 라운지 열기" }))
+      await waitFor(() => expect(onNavigate).toHaveBeenCalledOnce())
+      expect(confirm).toHaveBeenCalledOnce(); expect(discard).toHaveBeenCalledOnce()
+      expect(fetchMock.mock.calls.filter(call => call[1].method === "POST")).toHaveLength(2)
+    } finally { remove(); removeOther?.() }
+  })
+
+  it.each([false, true])("keeps legacy expiry-less entry immediate only; unsafe draft=%s", async unsafe => {
+    const confirm = vi.fn(() => true), discard = vi.fn(), onNavigate = vi.fn()
+    const remove = registerUnsavedDraftGuard({ isUnsafe: () => unsafe, onBlocked: vi.fn(), confirmDiscard: confirm, discard })
+    fetchMock.mockImplementation(async (url: URL) => url.pathname === "/api/lounge/status"
+      ? reply({ ...ready, trainoracleTicketExpiryVersion: undefined })
+      : new Response(JSON.stringify({ ticket: "t".repeat(43) }), { status: 200 }))
+    try {
+      render(<LoungeEntry userId={owner} requested onNavigate={onNavigate} />)
+      await acceptEntry()
+      await waitFor(() => expect(screen.getByRole("button", { name: "확인하고 라운지 열기" })).toBeEnabled())
+      expect(onNavigate).toHaveBeenCalledTimes(unsafe ? 0 : 1)
+      expect(confirm).not.toHaveBeenCalled(); expect(discard).not.toHaveBeenCalled()
+      if (unsafe) expect(screen.getByText(/만료 시간을 확인할 수 없어요/u)).toBeVisible()
+    } finally { remove() }
+  })
+
+  it("does not discard a draft when its explicit confirmation outlasts the issued ticket", async () => {
+    const discard=vi.fn(), onNavigate=vi.fn()
+    const remove=registerUnsavedDraftGuard({isUnsafe:()=>true,onBlocked:vi.fn(),discard,confirmDiscard:()=>{
+      vi.spyOn(Date,"now").mockReturnValue(Date.now()+61_000)
+      return true
+    }})
+    try {
+      render(<LoungeEntry userId={owner} requested onNavigate={onNavigate} />)
+      await acceptEntry()
+      expect(await screen.findByText(/입장 확인 시간이 지났어요/u)).toBeVisible()
+      expect(discard).not.toHaveBeenCalled();expect(onNavigate).not.toHaveBeenCalled()
+      expect(screen.getByRole("button", {name:"확인하고 라운지 열기"})).toBeEnabled()
+      expect(fetchMock.mock.calls.filter(call=>call[1].method==="POST")).toHaveLength(1)
+    } finally {remove()}
   })
 })
