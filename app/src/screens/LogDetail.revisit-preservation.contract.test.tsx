@@ -19,6 +19,48 @@ describe("past journal preservation before revisit work", () => {
 
   afterEach(() => vi.restoreAllMocks())
 
+  it("does not fill a note-only journal with empty running metrics", () => {
+    expect(saveEntry({ id: ENTRY_ID, kind: "post-session", date: DATE,
+      savedAt: "2026-07-20T09:00:00.000Z", syncState: "local", system: "", title: "Just a note",
+      distanceKm: "", durationMin: "", avgPace: "", rpe: 0, memo: "A synthetic note", memoPurpose: "ANALYZABLE_TRAINING_NOTE",
+      fieldProvenance: { distanceKm: { provenance: "MISSING" }, durationMin: { provenance: "MISSING" },
+        avgPace: { provenance: "MISSING" }, rpe: { provenance: "MISSING" } } }).ok).toBe(true)
+    render(<LogDetail date={DATE} onEditEntry={vi.fn()} />)
+    expect(document.querySelector(".journal-entry-metrics")).toBeNull()
+    expect(screen.getByText("A synthetic note")).toBeVisible()
+    expect(entriesForDate(DATE)[0]).toMatchObject({ distanceKm: "", durationMin: "", rpe: 0 })
+  })
+
+  it("shows supplied values without placeholder cells and never turns unknown effort into zero", () => {
+    expect(saveEntry({ id: ENTRY_ID, kind: "post-session", date: DATE,
+      savedAt: "2026-07-20T09:00:00.000Z", syncState: "local", system: "", title: "Partial fields",
+      distanceKm: "5", durationMin: "", avgPace: "", rpe: 0, memo: "",
+      fieldProvenance: { distanceKm: { provenance: "EXPLICIT" }, durationMin: { provenance: "MISSING" },
+        avgPace: { provenance: "MISSING" }, rpe: { provenance: "MISSING" } } }).ok).toBe(true)
+    render(<LogDetail date={DATE} />)
+    const metrics = document.querySelectorAll(".journal-entry-metric")
+    expect(metrics).toHaveLength(1)
+    expect(metrics[0]).toHaveTextContent("거리5km")
+    expect(screen.queryByText("힘든 정도", { exact: true })).not.toBeInTheDocument()
+    expect(screen.queryByText("평균 페이스", { exact: true })).not.toBeInTheDocument()
+    expect(entriesForDate(DATE)[0]).toMatchObject({ distanceKm: "5", durationMin: "", rpe: 0 })
+  })
+
+  it("keeps different exercise records visible without inventing an aggregate pace", () => {
+    expect(saveEntry({ id: ENTRY_ID, kind: "post-session", date: DATE,
+      savedAt: "2026-07-20T09:00:00.000Z", syncState: "local", system: "", title: "Two exercises",
+      distanceKm: "", durationMin: "", avgPace: "", rpe: 0, memo: "",
+      exerciseLog: { version: 1, source: "SELF_REPORTED", components: [
+        { id: "run", kind: "RUNNING", name: "달리기", rows: [{ id: "run-row", distanceM: 1000, durationSeconds: 360 }] },
+        { id: "squat", kind: "STRENGTH", name: "스쿼트", rows: [{ id: "squat-row", repetitions: 8, sets: 2 }] },
+      ] } }).ok).toBe(true)
+    render(<LogDetail date={DATE} />)
+    expect(document.querySelector(".journal-entry-metrics")).toBeNull()
+    expect(screen.getByText("1000m · 360초")).toBeVisible()
+    expect(screen.getByText("8회 × 2세트")).toBeVisible()
+    expect(entriesForDate(DATE)[0]).toMatchObject({ distanceKm: "", durationMin: "", avgPace: "" })
+  })
+
   it("keeps the current app confirmation, trash, and tombstone behavior", async () => {
     // Given
     const user = userEvent.setup()

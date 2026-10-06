@@ -84,7 +84,7 @@ function sessionSummary(entry: PostSessionEntry): string {
     entry.distanceKm ? `${entry.distanceKm} km` : null,
     entry.durationMin ? `${entry.durationMin}분` : null,
     entry.avgPace ? `${entry.avgPace}/km` : null,
-    shownRpe === null ? null : `RPE ${shownRpe}`,
+    shownRpe === null ? null : `힘든 정도 ${shownRpe}/10`,
   ])
 }
 
@@ -403,6 +403,12 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
             ? { c: "LOG", n: "빠른 기록", cls: "rest", term: null }
             : SYSTEM_META[entry.system] ?? { c: "??", n: entry.system, cls: "rest", term: null }
           const shownRpe = journalRpeLabel(entry)
+          const metrics = ([
+            ["거리", entry.distanceKm, "km"],
+            ["시간", entry.durationMin, "분"],
+            ["평균 페이스", entry.avgPace, "/km"],
+            ["힘든 정도", shownRpe, "/10"],
+          ] as const).filter(([, value]) => value !== "" && value !== null)
           const imported = hasImportedField(entry.fieldProvenance)
           return (
             <JournalEntryDisclosure
@@ -426,22 +432,17 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
                   {imported && <ImportedChip />}
                 </div>
                 <div className="journal-entry-card__title">{entry.title || "훈련 기록"}</div>
-                <div className="journal-entry-metrics">
-                  {([
-                    ["거리", entry.distanceKm || "—", "km"],
-                    ["시간", entry.durationMin || "—", "min"],
-                    ["평균 페이스", entry.avgPace || "—", "/km"],
-                    ["RPE", shownRpe ?? "—", shownRpe === null ? "" : "/10"],
-                  ] as const).map(([label, value, unit], metricIndex, metrics) => (
+                {metrics.length > 0 && <div className="journal-entry-metrics">
+                  {metrics.map(([label, value, unit], metricIndex) => (
                     <div key={label} className="journal-entry-metric" data-last={metricIndex === metrics.length - 1 ? "true" : undefined}>
-                      <div className="journal-entry-metric__label">{label}{label === "RPE" && <TermHelp term="rpe" />}</div>
+                      <div className="journal-entry-metric__label">{label}{label === "힘든 정도" && <TermHelp term="rpe" />}</div>
                       <div className="journal-entry-metric__value">
                         <span className="journal-entry-metric__number">{value}</span>
                         <span className="journal-entry-metric__unit">{unit}</span>
                       </div>
                     </div>
                   ))}
-                </div>
+                </div>}
                 <SavedMemo entry={entry} text={entry.memo} fontSize={19} />
                 <JournalOriginalPlan entry={entry} />
                 {!readOnly && <EntryDeleteRow entryId={entry.id} onDelete={() => setPendingDelete({ id: entry.id, label: "훈련" })} />}
