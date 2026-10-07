@@ -130,7 +130,7 @@ export function PlanIntake({
     const label = summaryLabels.get(answeredStep)
     return label === undefined ? [] : [{ step: answeredStep, label }]
   })
-  const detailedTemplates = resolveDetailedPlanTemplateOptions(draft)
+  const detailedTemplates = step === "template" ? resolveDetailedPlanTemplateOptions(draft) : []
   return (
     <section
       className="plan-intake active-stage-content"

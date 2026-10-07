@@ -139,6 +139,7 @@ export function PlanCandidates({
   readonly initialMain?: InitialMainCandidateReview
 }) {
   const [purpose, setPurpose] = React.useState<CandidatePurpose | null>(null)
+  const [workoutOpened, setWorkoutOpened] = React.useState(false)
   const purposeId = React.useId()
   const resultRef = React.useRef<HTMLElement>(null)
   const headingRef = React.useRef<HTMLHeadingElement>(null)
@@ -153,7 +154,10 @@ export function PlanCandidates({
   const [navigation, setNavigation] = React.useState<{ kind: "result" | "options" | "date" | "method" | "catalog" | "recovery" | "record"; revision: number } | null>(null)
   const reveal = React.useCallback((kind: "result" | "options" | "date" | "method" | "catalog" | "recovery" | "record") => {
     if (kind === "date" || kind === "options") setPurpose("schedule")
-    else if (kind === "method" || kind === "catalog" || kind === "record") setPurpose("workout")
+    else if (kind === "method" || kind === "catalog" || kind === "record") {
+      setWorkoutOpened(true)
+      setPurpose("workout")
+    }
     else if (kind === "result") setPurpose(null)
     setNavigation(previous => ({ kind, revision: (previous?.revision ?? 0) + 1 }))
   }, [])
@@ -226,7 +230,9 @@ export function PlanCandidates({
   const conditionContext = JSON.stringify([intake, startDate, accountScope])
   const conditionReview = React.useMemo(() => !initialMainActive && onCatalogChange && instantAdjustment === undefined && reviewedConditionContext !== conditionContext && unreviewedConditions.length === 0
     ? findCatalogConditionReview(generated, intake) : null, [initialMainActive, generated, intake, onCatalogChange, instantAdjustment, reviewedConditionContext, conditionContext, unreviewedConditions.length])
-  const detailedOptions = resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference, { anchor: selectedRecord })
+  const detailedOptions = workoutOpened || intake.selectedDetailedTemplateRef !== null
+    ? resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference, { anchor: selectedRecord })
+    : []
   const selectedDetailedOption = detailedOptions.find(option => sameDetailedTemplateReference(option.ref, intake.selectedDetailedTemplateRef))
   const pacePrescription = defaultInstantCandidate(generated).sessions.find(session => session.prescription.kind === "PACE_TARGET")?.prescription
   const workoutSummary = selectedDetailedOption?.mainSummary && pacePrescription?.kind === "PACE_TARGET"
@@ -317,11 +323,15 @@ export function PlanCandidates({
       <div className="plan-purpose-entries" role="group" aria-label="계획 확인·변경">
         {PURPOSE_ENTRIES.map(({ id, label, icon: Icon }) => <button key={id} type="button"
           id={`${purposeId}-${id}-entry`} aria-expanded={visiblePurpose === id} aria-controls={`${purposeId}-${id}`}
-          onClick={() => setPurpose(visiblePurpose === id ? null : id)}>
+          onClick={() => {
+            if (id === "workout") setWorkoutOpened(true)
+            setPurpose(visiblePurpose === id ? null : id)
+          }}>
           <Icon size={18} aria-hidden="true" />{label}
         </button>)}
       </div>
       <section id={`${purposeId}-workout`} hidden={visiblePurpose !== "workout"} aria-labelledby={`${purposeId}-workout-entry`}>
+      {workoutOpened && <>
       {instantAdjustment && <button type="button" className="plan-text-action" disabled={!canSelect} onClick={instantAdjustment}>처방 확인·조절</button>}
       {onCatalogChange && intake.selectedDetailedTemplateRef === null && <InitialRecordPaceOffer
         generated={generated} records={athleteRecords} disabled={!canRevise || !canSelect}
@@ -401,6 +411,7 @@ export function PlanCandidates({
         <PlanRefinePanel purpose="workout" intake={intake} targetRaceDate={targetRaceDate} onRefine={onRefine}
           detailedTemplateAvailable={resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference).length > 0} />
       </fieldset>}
+      </>}
       </section>
       <section id={`${purposeId}-schedule`} hidden={visiblePurpose !== "schedule"} aria-labelledby={`${purposeId}-schedule-entry`}>
       <fieldset disabled={selectionUnavailable || initialMainPending || initialApplying} className="plan-purpose-fields">

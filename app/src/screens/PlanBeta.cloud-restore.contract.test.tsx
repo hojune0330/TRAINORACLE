@@ -51,7 +51,7 @@ it("preserves and displays a new local plan saved in another tab while the older
   storageChanged()
   await act(async () => { response.resolve({ kind: "loaded", state: stateFixture() }); await response.promise })
   expect(readPlanBetaStateFromStorage()).toEqual({ kind: "loaded", state: newer })
-  expect(screen.getByRole("heading", { name: "9일 훈련 계획" })).toBeVisible()
+  expect(await screen.findByRole("heading", { name: "9일 훈련 계획" })).toBeVisible()
   const user = userEvent.setup()
   await user.click(screen.getByRole("button", { name: "날짜별 카드 보기" }))
   await user.click(screen.getAllByText(/훈련 방법과 기록/u)[0]!)

@@ -1,4 +1,5 @@
 import React from "react"
+import { ErrorBoundary } from "../components/ErrorBoundary"
 import { ACCOUNT_PLAN_EVENT, accountPlanService, accountPlansEnabled } from "../domain/account/account-plan-service"
 import { ensureAccountPlanHistory } from "../domain/account/account-plan-domain"
 import { useAccountPlanRuntime } from "./plan-beta/useAccountPlanRuntime"
@@ -34,7 +35,6 @@ import type {
   PlanBetaState,
 } from "../domain/plan-beta-store"
 import type { JournalEntryType } from "./log-entry/shared"
-import { PlanActiveState } from "./plan-beta/PlanActiveState"
 import { PlanCandidates } from "./plan-beta/PlanCandidates"
 import type { InitialMainCandidateReview } from "./plan-beta/PlanCandidates"
 import { applyInitialMainConditions, applyInitialMainManual, reviewInitialMainConditions } from "../domain/initial-main-conditions"
@@ -113,6 +113,7 @@ export type PlanAdjustmentResolver = (context: {
 }) => AdjustmentEntry | null
 
 const AthleteRecords = React.lazy(() => import("./AthleteRecords").then(module => ({ default: module.AthleteRecords })))
+const PlanActiveState = React.lazy(() => import("./plan-beta/PlanActiveState").then(module => ({ default: module.PlanActiveState })))
 
 const INTAKE_MOTION_ORDER: readonly IntakeStep[] = [
   "goal",
@@ -896,6 +897,8 @@ function LegacyPlanBeta({
   if (stored !== null && nextPredecessor === null) {
     return (
       <>
+      <ErrorBoundary key={stored.activePlan.candidateId} region recoveryTab="plan">
+      <React.Suspense fallback={<p role="status" style={{ padding: 24 }}>저장된 훈련 계획을 열고 있어요.</p>}>
       <PlanActiveState
         state={stored}
         onManagePaceRecords={() => setRecordsOpen(true)}
@@ -929,6 +932,8 @@ function LegacyPlanBeta({
         onWritePlannedSessionLog={onWritePlannedSessionLog}
         returnToSession={returnToSession}
       />
+      </React.Suspense>
+      </ErrorBoundary>
       {stored.version === 2 && <section aria-label="이전 계획 보관">
         <p>이전 형식의 계획은 내용만 볼 수 있어요. 원문을 이 기기에 보관한 뒤 새 계획을 만들 수 있어요.</p>
         <button className="plan-text-action" type="button" disabled={legacyArchiving} onClick={async () => {

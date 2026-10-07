@@ -15,7 +15,7 @@ const storageChanged = (key: string | null = activePlanBetaStorageKey()) => act(
 })
 const showProgress = async () => {
   const user = userEvent.setup()
-  await user.click(screen.getByRole("button", { name: "날짜별 카드 보기" }))
+  await user.click(await screen.findByRole("button", { name: "날짜별 카드 보기" }))
   await user.click(screen.getAllByText(/훈련 방법과 기록/u)[0]!)
 }
 function storeLegacyOriginal() {
@@ -41,10 +41,10 @@ it("refreshes active progress changed in another tab without requiring remount",
   expect(screen.queryByText("예정", { selector: "em" })).not.toBeInTheDocument()
 })
 
-it("stops displaying an active plan removed in another tab", () => {
+it("stops displaying an active plan removed in another tab", async () => {
   expect(savePlanBetaState(stateFixture())).toEqual({ ok: true })
   render(<PlanBeta />)
-  expect(screen.getByRole("heading", { name: "9일 훈련 계획" })).toBeVisible()
+  expect(await screen.findByRole("heading", { name: "9일 훈련 계획" })).toBeVisible()
   localStorage.removeItem(activePlanBetaStorageKey())
   storageChanged()
   expect(readPlanBetaStateFromStorage()).toEqual({ kind: "missing" })
@@ -108,7 +108,7 @@ it("preserves an unfinished next-frame draft when its predecessor is removed in 
   const original = { ...stateFixture(), progress: [{ sessionDay: 1, sessionSlot: "AM" as const, state: "COMPLETED" as const }] }
   expect(savePlanBetaState(original)).toEqual({ ok: true })
   render(<PlanBeta />)
-  await userEvent.setup().click(screen.getByRole("button", { name: "다음 계획안 만들기" }))
+  await userEvent.setup().click(await screen.findByRole("button", { name: "다음 계획안 만들기" }))
   const check = screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u })
   expect(check).toBeVisible()
   localStorage.removeItem(activePlanBetaStorageKey())
@@ -130,6 +130,7 @@ it("discards the previous scope's draft when the account changes", async () => {
 it("refreshes a previously active view from the recovered storage value", async () => {
   expect(savePlanBetaState(stateFixture())).toEqual({ ok: true })
   render(<PlanBeta />)
+  expect(await screen.findByRole("heading", { name: "9일 훈련 계획" })).toBeVisible()
   const originalGet = Storage.prototype.getItem
   const read = vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (this: Storage, key: string) {
     if (key === activePlanBetaStorageKey()) throw new Error("Synthetic read failure")
@@ -187,7 +188,7 @@ it("keeps a failed legacy archive visible and lets the athlete retry without los
   await user.click(screen.getByRole("button", { name: "이전 계획을 보관하고 새 계획 만들기" }))
   expect(screen.getByRole("alert")).toHaveTextContent("이전 계획을 보관하지 못했어요")
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(raw)
-  expect(screen.getByRole("heading", { name: "9일 훈련 계획" })).toBeVisible()
+  expect(await screen.findByRole("heading", { name: "9일 훈련 계획" })).toBeVisible()
   await user.click(screen.getByRole("button", { name: "이전 계획을 보관하고 새 계획 만들기" }))
   expect(archive).toHaveBeenCalledTimes(2)
   expect(readPlanBetaStateFromStorage()).toEqual({ kind: "missing" })

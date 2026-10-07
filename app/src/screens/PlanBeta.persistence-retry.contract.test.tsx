@@ -54,7 +54,7 @@ describe("active plan persistence retry", () => {
     render(<PlanBeta />)
 
     // When: the athlete marks a session complete and the first write fails.
-    await user.click(screen.getByRole("button", { name: "날짜별 카드 보기" }))
+    await user.click(await screen.findByRole("button", { name: "날짜별 카드 보기" }))
     await user.click(screen.getAllByText(/훈련 방법과 기록/u)[0]!)
     const firstProgress = screen.getByLabelText(/DAY 1.*진행 기록/u)
     await user.click(within(firstProgress).getByRole("button", { name: "완료" }))
@@ -170,7 +170,7 @@ describe("active plan persistence retry", () => {
     render(<PlanBeta />)
 
     const active = localStorage.getItem("trainoracle.plan-beta.v1")
-    await user.click(screen.getByRole("button", { name: "다음 계획안 만들기" }))
+    await user.click(await screen.findByRole("button", { name: "다음 계획안 만들기" }))
     expect(screen.queryByRole("alert")).toBeNull()
     expect(localStorage.getItem("trainoracle.plan-beta.v1")).toBe(active)
     await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))

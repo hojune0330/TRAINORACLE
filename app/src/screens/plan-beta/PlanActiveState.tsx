@@ -78,6 +78,15 @@ export function PlanActiveState({
   const [editing, setEditing] = React.useState<ActivePlanEditIntent | "hub" | null>(null)
   const [editTarget, setEditTarget] = React.useState<{ day: number; slot: "AM" | "PM" } | undefined>()
   const editHeading = React.useRef<HTMLDivElement>(null)
+  React.useLayoutEffect(() => {
+    // A deferred screen may mount after its parent's view-change focus effect.
+    const root = editHeading.current
+    const active = document.activeElement
+    const focusIsUnclaimed = active === null || active === document.body || active === document.documentElement
+    if (root && focusIsUnclaimed && !root.closest("[hidden], [inert]")) {
+      root.querySelector<HTMLElement>("#active-plan-title")?.focus({ preventScroll: true })
+    }
+  }, [])
   const [editContextRevision, refreshEditContext] = React.useReducer(value => value + 1, 0)
   const today = useLocalToday()
   const wasEditing = React.useRef(false)
