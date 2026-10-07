@@ -7,6 +7,7 @@ import test from 'node:test';
 import { BUILD_MANIFEST, DEPLOY_RECEIPT, assertBuildSourceCommitted, assertFreshOutputDirectory,
   assertReleaseSnapshot, gitAt, packageInventory, remoteReleaseSnapshot, verifyReleasePackage } from './pages-release-safety.mjs';
 import { publishRelease } from './publish-oracle-pages-release.mjs';
+import { acquireManualReleaseLock } from './manual-release-lock.mjs';
 
 function temp(t) {
   const root = mkdtempSync(join(tmpdir(), 'trainoracle-release-test-'));
@@ -71,12 +72,14 @@ test('stale main and stale Pages configuration are distinct rebuild failures', (
   assert.throws(() => assertReleaseSnapshot(expected, { ...expected, previousPagesSha: 'c'.repeat(40) }), /PAGES_CHANGED_REBUILD_REQUIRED/);
 });
 
-test('output refuses the source directory and a reused nonempty build folder without deleting either', t => {
+test('output refuses source ancestors, descendants and reused folders without deleting them', t => {
   const root = temp(t);
   const source = join(root, 'source');
   write(source, 'app.js', 'keep');
   assert.throws(() => assertFreshOutputDirectory(root, source), /CONTAINS_SOURCE/);
   assert.throws(() => assertFreshOutputDirectory(source, source), /CONTAINS_SOURCE/);
+  assert.throws(() => assertFreshOutputDirectory(join(source, 'app', 'dist'), source), /INSIDE_SOURCE/);
+  assert.throws(() => assertFreshOutputDirectory(join(source, '..local-dist'), source), /INSIDE_SOURCE/);
   const output = join(root, 'output');
   write(output, 'old.js', 'keep');
   assert.throws(() => assertFreshOutputDirectory(output, source), /NOT_EMPTY/);
@@ -118,6 +121,24 @@ test('dry run does not copy, commit or publish; actual publish preserves preview
   assert.equal(readFileSync(join(f.pagesRepo, 'CNAME'), 'utf8'), 'synthetic.example.invalid');
   assert.match(readFileSync(join(f.pagesRepo, 'index.html'), 'utf8'), /new.js/u);
   assert.equal(JSON.parse(readFileSync(join(f.pagesRepo, DEPLOY_RECEIPT))).sourceSha, f.manifest.sourceSha);
+});
+
+test('busy release refuses publication before any copy, while inspection stays read-only', t => {
+  const f = fixture(t);
+  const before = remoteReleaseSnapshot(f.repo);
+  const release = acquireManualReleaseLock(f.repo, 'build');
+  try {
+    assert.equal(publishRelease(f).status, 'READY_NOT_PUBLISHED');
+    assert.throws(() => publishRelease({ ...f, publish: true }), /MANUAL_RELEASE_BUSY/);
+    assert.equal(gitAt(f.pagesRepo, 'status', '--porcelain'), '');
+    assert.deepEqual(remoteReleaseSnapshot(f.repo), before);
+  } finally {
+    release();
+  }
+  // A rejected package must release its lease, too, rather than block the next attempt.
+  write(f.bundle, 'extra.js', 'unexpected');
+  assert.throws(() => publishRelease({ ...f, publish: true }), /PACKAGE/);
+  acquireManualReleaseLock(f.repo, 'publish')();
 });
 
 test('a second publisher cannot reuse a package prepared before another deployment', t => {

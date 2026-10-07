@@ -1,11 +1,24 @@
 import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { BUILD_MANIFEST, DEPLOY_RECEIPT, assertReleaseSnapshot, gitAt, hasTrackedChanges, remoteReleaseSnapshot,
   verifyReleasePackage } from './pages-release-safety.mjs';
+import { acquireManualReleaseLock } from './manual-release-lock.mjs';
 
-export function publishRelease({ repo, bundle, pagesRepo, publish = false }) {
+export function publishRelease(options) {
+  // Inspection remains read-only. Only mutating release work takes the shared local lease.
+  if (!options.publish) return publishUnlocked(options);
+  const release = acquireManualReleaseLock(options.repo, 'publish');
+  try {
+    return publishUnlocked(options);
+  } finally {
+    release();
+  }
+}
+
+function publishUnlocked({ repo, bundle, pagesRepo, publish = false }) {
   const { manifest, files } = verifyReleasePackage(bundle);
   assertReleaseSnapshot(manifest, remoteReleaseSnapshot(repo));
   const target = realpathSync(pagesRepo);
@@ -59,7 +72,12 @@ export function publishRelease({ repo, bundle, pagesRepo, publish = false }) {
     previousPagesSha: manifest.previousPagesSha, method: 'PRESERVING_GUARDED_MANUAL',
     deployedAt: new Date().toISOString(), backendVerification: 'NOT_CONFIRMED',
   }, null, 2) + '\n');
-  gitAt(target, 'add', '--all');
+  // Stage only this verified package; an unrelated late file must remain untouched.
+  // A NUL-delimited input also avoids Windows' command-line length limit.
+  execFileSync('git', ['-c', `safe.directory=${target}`, '--literal-pathspecs', 'add',
+    '--pathspec-from-file=-', '--pathspec-file-nul'], {
+    cwd: target, input: paths.join('\0') + '\0', stdio: 'pipe',
+  });
   const changed = gitAt(target, '-c', 'core.quotePath=false', 'diff', '--cached', '--name-only').split(/\r?\n/u);
   if (changed.some(path => !paths.includes(path)) || gitAt(target, 'diff', '--cached', '--name-only', '--diff-filter=D')) {
     throw Error('UNEXPECTED_STAGED_PAGES_CHANGE');
