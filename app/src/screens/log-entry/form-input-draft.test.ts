@@ -30,6 +30,15 @@ describe("validated form input DRAFT adapter", () => {
     expect(decodeFormDraft(encodeFormDraft("2026-09-08", missing))).not.toEqual(body)
     expect(envelope).not.toHaveProperty("entry")
   })
+  it("accepts legacy quick drafts and roundtrips the optional active-question presentation state", () => {
+    const legacy = decodeFormDraft(encodeFormDraft("2026-09-08", body))
+    expect(legacy.input).not.toHaveProperty("activeQuestion")
+    if (legacy.input.kind !== "quick") throw new Error("Expected quick draft fixture")
+    for (const activeQuestion of ["outcome", "slot", "rpe", "pain"] as const) {
+      const input = { ...legacy.input, activeQuestion }
+      expect(decodeFormDraft(encodeFormDraft("2026-09-08", { ...body, input })).input).toEqual(input)
+    }
+  })
   it("preserves incomplete numeric strings, whitespace, null purpose and null self checks", () => {
     const input = { kind: "race", stage: "pre", record: " 16:", rank: "", result: "", tension: null,
       condition: null, mood: null, paceMinutes: "03.", paceSeconds: "", memo: " synthetic\n", purpose: null } as const
@@ -40,6 +49,7 @@ describe("validated form input DRAFT adapter", () => {
     { ...body, extra: "unexpected" },
     { ...body, input: { ...body.input, rpe: "0" } },
     { ...body, input: { ...body.input, effortAnswered: undefined } },
+    { ...body, input: { ...body.input, activeQuestion: "save" } },
     { ...body, input: { ...body.input, kind: "finalized" } },
     { ...body, input: { ...body.input, reward: 100 } },
     { ...body, input: { ...body.input, painParts: { fixture: "secret" } } },

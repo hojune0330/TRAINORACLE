@@ -27,6 +27,7 @@ type PickerProps = {
   readonly conditionRequest?: CatalogConditionRequest | null
   readonly startDate?: string
   readonly reviewedConditionKeys?: readonly string[]
+  readonly inline?: boolean
 }
 export type CatalogWorkoutEditorProps = Omit<PickerProps, "generated" | "onChange"> & {
   readonly generated?: PlanGenerationSuccess
@@ -78,8 +79,7 @@ export function CatalogWorkoutPicker(props: PickerProps) {
   const session = sessions.find(s => `${s.day}:${s.slot}` === address) ?? first
   if (!session || session.prescription.kind !== "RPE_TIME_RANGE") return null
   const actualAddress = `${session.day}:${session.slot}`
-  return <details ref={panelRef} className="plan-session-guidance catalog-workout-picker">
-    <summary>다른 훈련으로 바꾸기</summary>
+  const content = <>
     <label>바꿀 일정<select value={actualAddress} disabled={disabled || pending} onChange={e => { setAddress(e.target.value); setPreferredReview(null); setMessage("") }}>
       {sessions.map(s => <option key={`${s.day}:${s.slot}`} value={`${s.day}:${s.slot}`}>{props.startDate && isValidIsoDate(props.startDate)
         ? `${isoShift(props.startDate, s.day - 1)} · ` : ""}{s.day}일차 {s.slot === "AM" ? "오전" : "오후"}</option>)}
@@ -96,7 +96,11 @@ export function CatalogWorkoutPicker(props: PickerProps) {
       onCancel={() => { setResetRevision(n => n + 1); setMessage("") }}
       onChange={next => { props.onChange(next, { day: session.day, slot: session.slot }); setResetRevision(value => value + 1); setMessage("계획안에 반영했어요. 날짜와 훈련 횟수는 그대로예요.") }} />
     {message && <p role="status">{message}</p>}
-  </details>
+  </>
+  return props.inline ? <section className="catalog-workout-picker" aria-label="다른 훈련으로 바꾸기">{content}</section>
+    : <details ref={panelRef} className="plan-session-guidance catalog-workout-picker">
+      <summary>다른 훈련으로 바꾸기</summary>{content}
+    </details>
 }
 
 export function CatalogWorkoutEditor({ generated, intake, records, onChange, onSelect, canSelect, onDraftChange, applyDisabled,

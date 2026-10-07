@@ -30,11 +30,11 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
   const topic = getOracleTopic(topicId)
   const selectId = useId()
   const headlineId = useId()
-  const [selection, setSelection] = useState<{ topic: OracleTopicId; mode: "example" | "personal" } | null>(null)
-  const mode = selection?.topic === topicId ? selection.mode
+  const [selection, setSelection] = useState<{ topic: OracleTopicId; entryMode: typeof initialMode; mode: "example" | "personal" } | null>(null)
+  const mode = selection?.topic === topicId && selection.entryMode === initialMode ? selection.mode
     : initialMode ?? (personalResultUnavailable || personalResult && personalResult.status !== "missing" ? "personal" : "example")
   const selectMode = (next: "example" | "personal") => {
-    setSelection({ topic: topicId, mode: next })
+    setSelection({ topic: topicId, entryMode: initialMode, mode: next })
     onModeChange?.(next)
   }
   useEffect(() => {
@@ -68,15 +68,15 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
         </div>
       </div>
 
-      {personalResult && <div className="oracle-explore__modes" role="group" aria-label="결과 종류">
+      {(personalResult || personalResultUnavailable) && <div className="oracle-explore__modes" role="group" aria-label="결과 종류">
         <button type="button" aria-pressed={mode === "personal"} onClick={() => selectMode("personal")}>내 기록</button>
         <button type="button" aria-pressed={mode === "example"} onClick={() => selectMode("example")}>예시</button>
       </div>}
       </div>
 
-      {personalResult && mode === "personal" && historyNotice}
-      {personalResult && mode === "personal" ? personalResultUnavailable
-        ? <p role="status">일지를 아직 모두 불러오지 못했어요. 조회가 끝나면 비교가 나타나요.</p> : <OraclePersonalResult
+      {mode === "personal" && historyNotice}
+      {mode === "personal" && personalResultUnavailable
+        ? <p role="status">일지를 아직 모두 불러오지 못했어요. 조회가 끝나면 비교가 나타나요.</p> : personalResult && mode === "personal" ? <OraclePersonalResult
         key={`personal-${topicId}`}
         result={personalResult}
         onAction={() => onPersonalAction(personalResult.action, personalResult.section, personalResult.metric)}

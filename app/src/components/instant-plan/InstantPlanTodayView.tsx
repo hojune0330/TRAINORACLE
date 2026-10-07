@@ -1,5 +1,6 @@
 import { useEffect, useId, useState } from "react"
 import type { InstantPlanToday } from "../../domain/instant-plan-contract"
+import { IncompleteWorkoutNotice } from "./IncompleteWorkoutNotice"
 import { AppHeading } from "../AppHeading"
 import "./instant-plan.css"
 
@@ -69,23 +70,23 @@ function SessionDetail({
       {(!compact || session.recorded) && <p className="instant-plan__hint">
         {session.recorded ? "남긴 기록 있음" : "아직 기록 없음"}
       </p>}
-      {session.guidanceNotice && <p className="instant-plan__hint" role="note">{session.guidanceNotice}</p>}
+      {session.guidanceNotice && <IncompleteWorkoutNotice detail={session.guidanceNotice} />}
       {compact ? <>
         {steps(visibleSteps)}
-        {otherSteps.length > 0 && <details className="instant-plan__disclosure">
+        {!onViewSession && otherSteps.length > 0 && <details className="instant-plan__disclosure">
           <summary>훈련 방법</summary>{steps(otherSteps)}
         </details>}
       </> : steps(session.steps)}
-      {onViewSession && <button className="instant-plan__secondary" type="button"
-        aria-label={`${session.slotLabel} 훈련 방법·근거`} onClick={() => onViewSession(session.id)}>훈련 방법·근거</button>}
       {canRecord && <div className="instant-plan__actions">
-        {!session.recorded && onRecordSession && <button className="instant-plan__secondary" type="button"
+        {!session.recorded && onRecordSession && <button className="instant-plan__button" type="button"
           aria-label={`${session.slotLabel} 훈련 기록 남기기`} onClick={() => onRecordSession(session.id)}>
           {compact ? "일지 쓰기" : `${session.slotLabel} 훈련 기록 남기기`}
         </button>}
         {compact && onChangeSchedule && <button className="instant-plan__secondary" type="button"
           onClick={() => onChangeSchedule(session.id)}>{changeScheduleLabel}</button>}
       </div>}
+      {onViewSession && <button className="instant-plan__secondary" type="button"
+        aria-label={`${session.slotLabel} 훈련 방법·근거`} onClick={() => onViewSession(session.id)}>훈련 방법·근거</button>}
     </section>
   )
 }

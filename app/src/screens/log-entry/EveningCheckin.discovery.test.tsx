@@ -10,7 +10,7 @@ afterEach(cleanup)
 it("names both multi-exercise and memo choices without adding another required choice", () => {
   const pick = vi.fn()
   render(<EntryChooser onPick={pick} />)
-  expect(screen.getByRole("button", { name: /훈련 후.*달리기·근력 등 여러 운동을 함께/ })).toBeVisible()
+  expect(screen.getByRole("button", { name: /훈련 후.*운동별로 자세히/ })).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: /회복 · 하루 마무리.*메모·수면·기분·몸 상태/ }))
   expect(pick).toHaveBeenCalledWith("evening")
 })

@@ -31,3 +31,26 @@
 .file-plan-comparison { width: 100%; min-width: 0; }
 .file-comparison-segment { border: 0; border-top: 1px solid var(--line); padding: 12px 0; margin: 12px 0; min-width: 0; }
 .file-comparison-segment legend { font-weight: 600; padding: 0 6px 0 0; max-width: 100%; }
+.import-preparation {
+  display: grid;
+  gap: 12px;
+  color: var(--ink-2);
+  font: 400 var(--fs-body) / 1.6 var(--sans);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.import-preparation h2 { margin: 0; color: var(--ink); font-size: var(--fs-body); }
+.import-preparation p { margin: 0; }
+.import-preparation ol { margin: 0; padding-left: 24px; }
+.import-preparation li + li { margin-top: 8px; }
+.import-preparation select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font: inherit;
+}
+.import-preparation__formats { margin: 0; color: var(--ink-3); font: 400 var(--fs-caption) / 1.6 var(--sans); }

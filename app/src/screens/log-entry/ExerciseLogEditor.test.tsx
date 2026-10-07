@@ -16,6 +16,25 @@ const fill = (name: string, value: string) => fireEvent.change(screen.getByLabel
 afterEach(cleanup)
 
 describe("optional exercise editor", () => {
+  it("reveals relevant recovery fields without inventing values or losing them when counts change", () => {
+    render(<Harness />)
+    click("운동 추가"); click("반복 달리기"); click("거리·시간·횟수 적기")
+    expect(screen.queryByLabelText("1번 반복 회복")).toBeNull()
+    expect(screen.queryByLabelText("1번 세트 회복")).toBeNull()
+    fill("1번 반복 횟수", "6")
+    expect(screen.getByLabelText("1번 반복 회복")).toHaveValue("")
+    expect(screen.queryByLabelText("1번 세트 회복")).toBeNull()
+    click("세트 사이 회복 추가")
+    fill("1번 세트 회복", "TIMED"); fill("1번 세트 회복 초", "180")
+    fill("1번 반복 회복", "TIMED"); fill("1번 반복 회복 초", "90")
+    fill("1번 반복 횟수", "1")
+    expect(screen.getByLabelText("1번 반복 회복 초")).toHaveValue("90")
+    click("근력 운동"); click("반복 달리기")
+    expect(screen.getByLabelText("1번 세트 회복 초")).toHaveValue("180")
+    click("내용 반영")
+    expect(read().components[0]?.rows[0]).toMatchObject({ repetitions: 1, recovery: { kind: "TIMED", seconds: 90 }, setRecovery: { kind: "TIMED", seconds: 180 } })
+    expect(read().components[0]?.rows[0]?.sets).toBeUndefined()
+  })
   it("keeps partial fields across category changes and an input-draft roundtrip", () => {
     render(<Harness />)
     click("운동 추가"); click("반복 달리기"); click("거리·시간·횟수 적기")

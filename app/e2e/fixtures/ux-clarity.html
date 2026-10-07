@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>UX clarity synthetic review</title></head>
+<body><main id="ux-qa" style="max-width:600px;margin:0 auto;background:var(--bg);min-height:100dvh"></main>
+<script type="module">
+  import React from "react"
+  import { createRoot } from "react-dom/client"
+  import "../../../colors_and_type.css"
+  import "../../../colors_and_type_journal.css"
+  import "../../src/styles/app.css"
+  import "./app-font.css"
+  import { QuickSessionForm } from "../../src/screens/log-entry/QuickSessionForm.tsx"
+  import { Trends } from "../../src/screens/Trends.tsx"
+  import { OracleProfileExperience } from "../../src/screens/OracleProfileExperience.tsx"
+  import "../../src/screens/oracle-profile-v2.css"
+  import { InstantPlanRecommendationView } from "../../src/components/instant-plan/InstantPlanRecommendationView.tsx"
+  import { PaceCalculator } from "../../src/screens/PaceCalculator.tsx"
+  import { AthleteRecords } from "../../src/screens/AthleteRecords.tsx"
+  import { CalendarJournalDetails } from "../../src/components/CalendarJournalDetails.tsx"
+  const noop = () => {}
+  function PaceFixture() {
+    const [stage, setStage] = React.useState("event")
+    return React.createElement(PaceCalculator, {stage, onStageChange: setStage, onBack: () => setStage("event")})
+  }
+  const surface = new URLSearchParams(location.search).get("screen") || "quick"
+  // Synthetic display values; these fixtures never start a plan or submit to an account.
+  const recommendation = {
+    id: "synthetic-review", title: "9일 훈련 계획", reason: "선택한 기록과 일정으로 준비한 후보예요.",
+    periodLabel: "2026-10-07 ~ 2026-10-15 · 9일", sessionCount: 6,
+    durationLabel: "보통 35분 · 가장 긴 훈련 50분", firstSessionLabel: "10월 7일 오전 · 저강도 달리기", source: {kind: "GENERAL"},
+    days: Array.from({length: 9}, (_, i) => ({date: `2026-10-${String(i + 7).padStart(2, "0")}`, dayLabel: `${i + 1}일차`, sessions: [{id: `s${i}`, slotLabel: "오전", role: i % 3 === 2 ? "OFF" : i % 3 === 1 ? "MAIN" : "BASE", title: i % 3 === 2 ? "휴식" : i % 3 === 1 ? "1000m 반복 달리기" : "저강도 달리기", notation: i % 3 === 1 ? "5 × 1000m · 4:10/km · r2min jog" : undefined}]})),
+  }
+  const views = {
+    quick: React.createElement(QuickSessionForm, {targetDate: "2026-10-07", onBack: noop, onDone: noop}),
+    oracle: React.createElement(Trends, {onWriteLog: noop, onOpenImport: noop, onOpenRecords: noop, onOpenOracle: noop, onOpenRecordReading: noop, onOpenOracleLibrary: noop, oracleV2Enabled: true}),
+    profile: React.createElement(OracleProfileExperience, {answers: {}, selectedCharacter: null, revision: 0, readings: [], account: false, status: "READY", readTopic: () => ({state: "MISSING", facts: [], paragraphs: [], limitations: []}), onDraft: noop, onCommit: async () => true, onRemember: async () => true, onDelete: async () => true, onRetry: noop, onBack: noop, onNavigate: noop}),
+    plan: React.createElement("div", {style: {padding: "16px"}}, React.createElement(InstantPlanRecommendationView, {recommendation, actionState: {kind: "READY"}, onStart: noop, anchorLabel: "5000m 20:50 · 2026-10-01"})),
+    pace: React.createElement(PaceFixture),
+    records: React.createElement(AthleteRecords, {onBack: noop}),
+    calendar: React.createElement("div", {style: {padding: "16px"}}, React.createElement(CalendarJournalDetails, {date: "2026-10-07", onOpenDay: noop, entries: ["AM", "PM"].map((slot, i) => ({id: `synthetic-${slot}`, kind: "post-session", date: "2026-10-07", savedAt: "2026-10-07T00:00:00Z", syncState: "local", activitySlot: slot, title: "PRIVATE", memo: "PRIVATE", system: "base", distanceKm: i ? "" : "8", durationMin: "40", avgPace: "", rpe: 0, fieldProvenance: {activitySlot: {provenance: "EXPLICIT"}, distanceKm: {provenance: i ? "MISSING" : "EXPLICIT"}, durationMin: {provenance: "EXPLICIT"}, rpe: {provenance: "MISSING"}}}))})),
+  }
+  createRoot(document.getElementById("ux-qa")).render(views[surface] || views.quick)
+</script></body></html>

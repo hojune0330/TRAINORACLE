@@ -3,6 +3,7 @@ import { ArrowDown, ArrowUp, Copy, Pencil, Plus, Trash2, Undo2, X } from "lucide
 import { EXERCISE_KINDS, cloneExercise, describeExerciseRow, exerciseComponentSchema, type ExerciseComponent, type ExerciseLog } from "../../domain/exercise-log"
 import type { ExerciseEditorDraft } from "./form-input-draft"
 import { parseDecimalString } from "../../domain/numeric-input"
+import { InfoDisclosure } from "../../components/InfoDisclosure"
 import "./exercise-log-editor.css"
 
 type RowDraft = ExerciseEditorDraft["rows"][number]
@@ -56,6 +57,7 @@ export function ExerciseLogEditor({ value, onChange, draft, onDraftChange, recen
 }) {
   const [open, setOpen] = React.useState(draft !== undefined)
   const [error, setError] = React.useState(false)
+  const [recoveryFields, setRecoveryFields] = React.useState<Record<string, boolean>>({})
   const [deleted, setDeleted] = React.useState<{ item: ExerciseComponent; index: number } | null>(null)
   const [deletedRow, setDeletedRow] = React.useState<{ ownerId: string; kind: ExerciseComponent["kind"]; row: RowDraft; index: number } | null>(null)
   const editing = draft
@@ -83,7 +85,7 @@ export function ExerciseLogEditor({ value, onChange, draft, onDraftChange, recen
     onChange({ ...value, components })
   }
   return <div className="exercise-editor">
-    <p>같은 시간에 한 운동을 함께 남겨요. 오전·오후를 따로 남기려면 새 일지를 쓰세요.</p>
+    <InfoDisclosure title="여러 운동·오전·오후는 어떻게 남기나요?"><p>같은 시간에 한 운동은 함께 추가해요. 오전·오후는 새 일지로 나눠요.</p></InfoDisclosure>
     {value.components.map((item, index) => <section key={item.id} className="exercise-editor__item" aria-label={`운동 ${index + 1}`}>
       <ExerciseLogSummary log={{ ...value, components: [item] }} />
       <div className="exercise-editor__tools">
@@ -109,19 +111,25 @@ export function ExerciseLogEditor({ value, onChange, draft, onDraftChange, recen
         }}>{label}</button>)}
       </div>
       <label>운동 이름 · 선택<input aria-label="운동 이름" maxLength={80} value={editing.name} onChange={event => write({ ...editing, name: event.target.value })} /></label>
-      {editing.rows.length > 0 && <p>거리·시간은 한 번의 운동 기준이에요. 반복 횟수는 한 세트 안에서 한 횟수예요.</p>}
+      {editing.rows.length > 0 && <InfoDisclosure title="숫자는 어떻게 적나요?"><p>거리·시간은 한 번, 반복 횟수는 한 세트 기준이에요. 모르는 값은 비워 두세요.</p></InfoDisclosure>}
       {editing.rows.map((row, index) => <fieldset key={row.id}>
         <legend>{index + 1}번 구간</legend>
         <div className="exercise-editor__fields">
           {KEYS[editing.kind].map(key => <label key={key}>{NUMBERS[key]}<input aria-label={`${index + 1}번 ${NUMBERS[key]}`} type="text" inputMode="decimal" value={row[key]} onChange={event => changeRow(index, key, event.target.value)} /></label>)}
           {(editing.kind === "STRENGTH" || editing.kind === "PLYOMETRIC") && <label>좌우<select aria-label={`${index + 1}번 좌우`} value={row.side} onChange={event => changeRow(index, "side", event.target.value)}><option value="">미기록</option><option value="LEFT">왼쪽</option><option value="RIGHT">오른쪽</option><option value="BOTH">양쪽</option></select></label>}
         </div>
-        <div className="exercise-editor__fields">
-          {(["recovery", "setRecovery"] as const).map(key => <React.Fragment key={key}>
+          {(["recovery", "setRecovery"] as const).map(key => {
+            const relevant = Number(key === "recovery" ? row.repetitions : row.sets) > 1 || row[`${key}Kind`] !== "" || row[`${key}Seconds`] !== ""
+            const fields = <div className="exercise-editor__fields">
             <label>{key === "recovery" ? "반복 사이 회복" : "세트 사이 회복"}<select aria-label={`${index + 1}번 ${key === "recovery" ? "반복" : "세트"} 회복`} value={row[`${key}Kind`]} onChange={event => changeRow(index, `${key}Kind`, event.target.value)}><option value="">미기록</option><option value="NONE">회복 없음</option><option value="TIMED">시간 입력</option></select></label>
             {row[`${key}Kind`] === "TIMED" && <label>회복 (초)<input aria-label={`${index + 1}번 ${key === "recovery" ? "반복" : "세트"} 회복 초`} inputMode="decimal" value={row[`${key}Seconds`]} onChange={event => changeRow(index, `${key}Seconds`, event.target.value)} /></label>}
-          </React.Fragment>)}
-        </div>
+            </div>
+            const expanded = relevant || recoveryFields[`${row.id}-${key}`]
+            return <div key={key}>
+              {!expanded && <button type="button" className="exercise-editor__action" onClick={() => setRecoveryFields(current => ({ ...current, [`${row.id}-${key}`]: true }))}><Plus size={16} />{key === "recovery" ? "반복 사이 회복 추가" : "세트 사이 회복 추가"}</button>}
+              {expanded && fields}
+            </div>
+          })}
         <button type="button" title="구간 삭제" aria-label={`${index + 1}번 구간 삭제`} onClick={() => {
           setDeletedRow({ ownerId: editing.id, kind: editing.kind, row, index })
           write({ ...editing, rows: editing.rows.filter(x => x.id !== row.id) })

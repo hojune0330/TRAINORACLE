@@ -1,5 +1,5 @@
 import React from "react"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, RefreshCw } from "lucide-react"
 import {
   projectJournalArchive,
 } from "../domain/journal-archive"
@@ -39,6 +39,7 @@ export type JournalArchiveProps = {
   readonly onWriteLog?: (() => void) | undefined
   readonly onWriteDate?: (date: string) => void
   readonly readiness?: CalendarReadiness
+  readonly onRetry?: () => void
   readonly mode?: "CALENDAR" | "CYCLE"
   readonly cycleAnchor?: string | null
   readonly cycleIndex?: number
@@ -62,6 +63,7 @@ export function JournalArchive({
   onCycleAnchorChange,
   onCycleIndexChange,
   readiness = "READY",
+  onRetry,
 }: JournalArchiveProps) {
   const [internalMode, setInternalMode] = React.useState<"CALENDAR" | "CYCLE">("CALENDAR")
   const calendarDecorationState = useCalendarDecorationState()
@@ -80,7 +82,14 @@ export function JournalArchive({
   const nav = useCalendarPosition("journal", selection.selectedMonth ? `${selection.selectedMonth}-01` : latest ?? today, readiness === "READY")
   const displayedMonth = nav.month
   const [emptyView, setEmptyView] = React.useState<"teaser" | "example" | "calendar">("teaser")
+  const unconfirmedEmpty = readiness !== "READY" && entries.length === 0
+    && !(activeMode === "CALENDAR" && emptyView === "example")
   const exampleVisible = emptyView === "example" || (emptyView === "teaser" && readiness === "READY" && entries.length === 0)
+  const readMessage = readiness === "LOADING"
+    ? entries.length > 0 ? "저장된 일지를 보고 있어요. 최신 기록을 불러오는 중이에요." : "일지를 불러오고 있어요."
+    : entries.length > 0 ? "저장된 일지를 보고 있어요. 최신 기록은 아직 확인하지 못했어요."
+      : readiness === "STALE" ? "최신 일지를 아직 확인하지 못했어요. 기록이 없는 상태로 표시하지 않아요."
+        : "일지를 불러오지 못했어요. 기록이 없는 것은 아니에요."
   const selectedMonth = archive.months.find((month) => month.month === selection.selectedMonth) ?? null
   const calendarMonth = archive.months.find(month => month.month === displayedMonth) ?? {
     month: displayedMonth, entryCount: 0, kindCounts: { postSession: 0, evening: 0, race: 0 },
@@ -139,6 +148,14 @@ export function JournalArchive({
         </div>
       </header>
 
+      {readiness !== "READY" && <div className="calendar-guidance">
+        <p role={readiness === "ERROR" ? "alert" : "status"}>{readMessage}</p>
+        {onRetry && readiness !== "LOADING" && <button type="button" className="calendar-range-return" onClick={onRetry}>
+          <RefreshCw size={18} aria-hidden="true" /> 일지 다시 불러오기
+        </button>}
+      </div>}
+
+      {!unconfirmedEmpty && <>
       <div className="journal-archive__mode-tabs app-compact-tabs">
         <button className="app-compact-tab" type="button" aria-pressed={activeMode === "CALENDAR"} onClick={() => changeMode("CALENDAR")}>
           <span>월간 달력</span>
@@ -147,7 +164,6 @@ export function JournalArchive({
           <span>기록 묶음</span>
         </button>
       </div>
-      {readiness !== "READY" && <p className="calendar-guidance" role="status">{readiness === "LOADING" ? "일지를 불러오고 있어요." : readiness === "STALE" ? "저장된 일지를 보고 있어요. 최신 기록은 아직 확인하지 못했어요." : "일지를 불러오지 못했어요. 기록이 없는 것은 아니에요."}</p>}
 
       {entries.some(entry => entry.kind === "post-session" && entry.date === today)
         && entries.filter(entry => entry.kind === "post-session" && entry.date <= today).length > 1 && (
@@ -225,6 +241,7 @@ export function JournalArchive({
           )}
         </>
       )}
+      </>}
     </div>
   )
 }

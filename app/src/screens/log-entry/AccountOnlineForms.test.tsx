@@ -178,6 +178,7 @@ describe.each(forms)("%s account-online form", form => {
     fireEvent.click(saveButton(form)); await complete(form, done)
     const first = mocks.persist.mock.calls[0]![0] as JournalEntry
     if (form === "quick") {
+      fireEvent.click(screen.getByText("내용 추가·수정"))
       fireEvent.click(screen.getByRole("button", { name: "방금 기록 수정" }))
       fireEvent.click(screen.getByRole("button", { name: "하려던 운동을 건너뛰었어요" }))
       fireEvent.click(saveButton(form))

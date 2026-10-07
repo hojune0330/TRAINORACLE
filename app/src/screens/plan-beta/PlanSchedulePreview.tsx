@@ -12,12 +12,9 @@ import { MonthCalendar } from "../../components/MonthCalendar"
 import { CalendarTrainingMark } from "../../components/CalendarTrainingMark"
 import { CALENDAR_TRAINING_LABELS, plannedCalendarTone } from "../../domain/calendar-training-presentation"
 import {
-  ENERGY_INTENT_LABELS,
   prescriptionLabel,
   sessionExecution,
   sessionExecutionSteps,
-  sessionGuidance,
-  sessionIntentLabel,
   sessionLabel,
   sessionSlotLabel,
   PROGRESS_LABELS,
@@ -71,6 +68,7 @@ export function PlanSchedulePreview({
   detailsId,
   readerNotice,
   journalEntries = [],
+  journalEntriesComplete = true,
   readerRequest,
   sessionProgress,
   allowMemoExport = true,
@@ -91,6 +89,7 @@ export function PlanSchedulePreview({
   readonly detailsId?: string
   readonly readerNotice?: ReactNode
   readonly journalEntries?: readonly JournalEntry[]
+  readonly journalEntriesComplete?: boolean
   readonly readerRequest?: PlanReaderRequest
   readonly sessionProgress?: (session: PlanSession) => PlanProgressState | undefined
   readonly allowMemoExport?: boolean
@@ -374,7 +373,9 @@ export function PlanSchedulePreview({
           returnedFromJournal={focusSession?.day === session.day && focusSession.slot === session.slot}
           allowMemoExport={allowMemoExport} />)}
         {!readerDay?.sessions.length && <p>이 계획에는 이날 예정된 훈련이 없어요.</p>}
-        <CalendarJournalDetails date={reader.date} entries={journalEntries} />
+        {journalEntries.some(entry => entry.date === reader.date)
+          ? <CalendarJournalDetails date={reader.date} entries={journalEntries} />
+          : <p className="plan-caption" role={journalEntriesComplete ? undefined : "status"}>{journalEntriesComplete ? "이 날짜에 남긴 일지가 없어요." : "일지를 모두 읽지 못해 기록 여부를 확인할 수 없어요."}</p>}
         </>}
       </PlanDayReader>}
       {renderAfterSchedule}
@@ -427,15 +428,6 @@ function PlanSessionPreview({
           ))}
         </ol>
       )}
-      <details className="plan-session-guidance">
-        <summary>목적·수치 설명 보기</summary>
-        <p>
-          훈련 의도 · {sessionIntentLabel(session)}
-          <TermHelp term={ENERGY_INTENT_LABELS[session.plannedEnergyIntent].term} />
-          <br />
-          {sessionGuidance(session)}
-        </p>
-      </details>
       {!expanded && footer}
     </>
   )
@@ -471,13 +463,13 @@ function PlanSessionPreview({
           <summary>일지·진행 기록</summary>{footer}
         </details>}
         {expanded && allowMemoExport && <WorkoutMemoTool session={session} date={date} state={explanationContext?.kind === "CANDIDATE" ? "PREVIEW" : "PLAN"} />}
-        <SessionExplanationEntry session={session} date={date} context={explanationContext} loadEvidence={loadEvidence} showPurpose={false} />
         {compact ? (
           <details className="plan-day-card__details" open={returnedFromJournal}>
             <summary>{sessionSlotLabel(session.slot)} 훈련 방법과 기록</summary>
             <div>{details}</div>
           </details>
         ) : details}
+        <SessionExplanationEntry session={session} date={date} context={explanationContext} loadEvidence={loadEvidence} showPurpose={false} />
       </div>
     </section>
   )

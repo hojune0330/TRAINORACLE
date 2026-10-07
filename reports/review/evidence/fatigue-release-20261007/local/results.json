@@ -1,0 +1,131 @@
+{
+  "scope": "isolated synthetic guest journeys, no account data",
+  "results": [
+    {
+      "name": "home",
+      "width": 375,
+      "contentWidth": 375,
+      "height": 755,
+      "viewport": 755
+    },
+    {
+      "name": "plan-question",
+      "width": 375,
+      "contentWidth": 375,
+      "height": 755,
+      "viewport": 755
+    },
+    {
+      "name": "candidate",
+      "width": 375,
+      "contentWidth": 375,
+      "height": 1017,
+      "viewport": 755
+    },
+    {
+      "name": "active",
+      "width": 375,
+      "contentWidth": 375,
+      "height": 1651,
+      "viewport": 755
+    },
+    {
+      "name": "day",
+      "width": 375,
+      "contentWidth": 375,
+      "height": 1651,
+      "viewport": 755
+    },
+    {
+      "name": "journal-confirm",
+      "width": 375,
+      "contentWidth": 375,
+      "height": 755,
+      "viewport": 755
+    },
+    {
+      "name": "saved",
+      "width": 375,
+      "contentWidth": 375,
+      "height": 755,
+      "viewport": 755
+    },
+    {
+      "name": "oracle-after-log",
+      "width": 375,
+      "contentWidth": 375,
+      "height": 1423,
+      "viewport": 755
+    },
+    {
+      "name": "more",
+      "width": 375,
+      "contentWidth": 375,
+      "height": 755,
+      "viewport": 755
+    },
+    {
+      "name": "home",
+      "width": 320,
+      "contentWidth": 320,
+      "height": 755,
+      "viewport": 755
+    },
+    {
+      "name": "plan-question",
+      "width": 320,
+      "contentWidth": 320,
+      "height": 755,
+      "viewport": 755
+    },
+    {
+      "name": "candidate",
+      "width": 320,
+      "contentWidth": 320,
+      "height": 1039,
+      "viewport": 755
+    },
+    {
+      "name": "active",
+      "width": 320,
+      "contentWidth": 320,
+      "height": 1710,
+      "viewport": 755
+    },
+    {
+      "name": "day",
+      "width": 320,
+      "contentWidth": 320,
+      "height": 1710,
+      "viewport": 755
+    },
+    {
+      "name": "journal-confirm",
+      "width": 320,
+      "contentWidth": 320,
+      "height": 755,
+      "viewport": 755
+    },
+    {
+      "name": "saved",
+      "width": 320,
+      "contentWidth": 320,
+      "height": 755,
+      "viewport": 755
+    },
+    {
+      "name": "oracle-after-log",
+      "width": 320,
+      "contentWidth": 320,
+      "height": 1423,
+      "viewport": 755
+    },
+    {
+      "name": "more",
+      "width": 320,
+      "contentWidth": 320,
+      "height": 755,
+      "viewport": 755
+    }
+  ]
+}

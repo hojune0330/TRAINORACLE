@@ -1,4 +1,62 @@
 /* noqa: SIZE_OK - one beta surface owns shared responsive selectors; split after the public layout stabilizes. */
+.plan-choice-list--days,
+.plan-purpose-entries {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.plan-intake .plan-choice-list--days {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.plan-day-choice,
+.plan-purpose-entries > button {
+  min-width: 0;
+  min-height: var(--app-touch-min);
+  padding: var(--space-2);
+  border: var(--bw-line) solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.plan-purpose-entries {
+  margin-block: var(--space-4);
+}
+
+.plan-purpose-entries > button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.plan-day-choice[aria-pressed="true"],
+.plan-purpose-entries > button[aria-expanded="true"] {
+  border-color: var(--brand);
+  color: var(--brand);
+  font-weight: 700;
+}
+
+.plan-day-choice:focus-visible,
+.plan-purpose-entries > button:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.plan-purpose-fields {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
 .plan-instant-entry {
   padding: var(--space-4) var(--space-5);
 }
@@ -413,7 +471,6 @@
 .plan-training-flow {
   margin-top: var(--space-4);
   padding-block: var(--space-3);
-  border-block: var(--bw-line) solid var(--ink);
 }
 
 .plan-training-flow > header {
@@ -2033,7 +2090,6 @@
 
 .active-plan__information {
   margin-top: var(--space-3);
-  border-block: var(--bw-line) solid var(--hair);
 }
 
 .active-plan__information > summary {
@@ -3603,7 +3659,6 @@
 
 .plan-detailed-options {
   margin-block: var(--space-3);
-  border-top: var(--bw-line) solid var(--line);
 }
 
 .plan-detailed-options > summary {

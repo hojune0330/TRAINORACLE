@@ -18,6 +18,39 @@ function Harness({ request = {}, initial = "event" }: { request?: PaceToolReques
 beforeEach(() => { localStorage.clear(); setActiveLocalAccount(null); localStorage.setItem(activeAthleteRecordsStorageKey(), JSON.stringify([record])) })
 afterEach(() => { cleanup(); localStorage.clear(); setActiveLocalAccount(null) })
 
+it("reuses a saved record from the first screen without entering the same event and time or saving again", () => {
+  const before = localStorage.getItem(activeAthleteRecordsStorageKey())
+  render(<Harness />)
+  fireEvent.click(screen.getByRole("button", { name: "저장한 경기 기록 사용" }))
+  fireEvent.click(screen.getByRole("button", { name: /2:01.5/ }))
+  expect(screen.getByRole("heading", { name: "내 기록으로 페이스 계산" })).toBeVisible()
+  expect(screen.getByText("저장한 경기 기록 · 2026-10-01")).toBeVisible()
+  expect(screen.getByText("0:30.4")).toBeVisible()
+  expect(localStorage.getItem(activeAthleteRecordsStorageKey())).toBe(before)
+  fireEvent.click(screen.getByRole("button", { name: "직접 수정" }))
+  fireEvent.change(screen.getByRole("textbox", { name: "초" }), { target: { value: "2" } })
+  fireEvent.click(screen.getByRole("button", { name: "페이스 보기" }))
+  expect(screen.getByText("이번 계산에만 입력 · 저장되지 않음")).toBeVisible()
+  expect(screen.queryByText("저장한 경기 기록 · 2026-10-01")).toBeNull()
+  expect(localStorage.getItem(activeAthleteRecordsStorageKey())).toBe(before)
+})
+
+it("retains the direct input alternative when no saved records are eligible", () => {
+  localStorage.clear()
+  render(<Harness />)
+  fireEvent.click(screen.getByRole("button", { name: "저장한 경기 기록 사용" }))
+  expect(screen.getByText(/저장한 경기 기록이 없어요/)).toBeVisible()
+  fireEvent.click(screen.getByRole("button", { name: "다른 기록 직접 입력" }))
+  fireEvent.click(screen.getByRole("button", { name: "800m" }))
+  expect(screen.getByRole("textbox", { name: "분" })).toHaveValue("")
+})
+
+it("labels saved goals separately from achieved performances", () => {
+  render(<Harness initial="result" request={{ record: { ...record, purpose: "RACE_GOAL", achievedOn: null } }} />)
+  expect(screen.getByText("저장한 목표 · 아직 달성하지 않음 · 미래 목표")).toBeVisible()
+  expect(screen.queryByText(/저장한 경기 기록 ·/)).toBeNull()
+})
+
 it("uses one event/input action and preserves decimal input across tools", () => {
   render(<Harness />)
   fireEvent.click(screen.getByRole("button", { name: "800m" }))
@@ -27,7 +60,7 @@ it("uses one event/input action and preserves decimal input across tools", () =>
   expect(screen.getByText("0:30.4")).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: "구간 시간" }))
   expect(screen.getByRole("table")).toBeVisible()
-  fireEvent.click(screen.getByRole("button", { name: "이전 화면" }))
+  fireEvent.click(screen.getByRole("button", { name: "이전 단계" }))
   expect(screen.getByText("0:30.4")).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: "직접 수정" }))
   fireEvent.change(screen.getByRole("textbox", { name: "초" }), { target: { value: "-1" } })
@@ -76,4 +109,14 @@ it("updates source-derived tables when a different record is selected", () => {
   fireEvent.click(screen.getByRole("button", { name: /40:00/ }))
   expect(screen.getByText("1:36")).toBeVisible()
   expect(screen.queryByText("0:30.4")).not.toBeInTheDocument()
+})
+
+it("describes track guidance and its unavailable calculation before entry", () => {
+  render(<Harness initial="result" request={{ record }} />)
+  expect(screen.getByText("계산 미리보기 · 기록·계획 변경 없음")).toBeVisible()
+  const trackAction = screen.getByRole("button", { name: /트랙 안내/u })
+  expect(trackAction).toHaveTextContent("레인 계산은 아직 준비 중이에요")
+  fireEvent.click(trackAction)
+  expect(screen.getByRole("heading", { name: "트랙 안내" })).toBeVisible()
+  expect(screen.getByText(/공식 시설 기준 확인 후 제공할 예정/u)).toBeVisible()
 })

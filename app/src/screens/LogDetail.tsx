@@ -25,6 +25,7 @@ import { JournalOriginalPlan } from "./journal/JournalOriginalPlan"
 import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
 import { DecoratedJournalPageFrame } from "../components/DecoratedJournalPageFrame"
 import { useJournalDecorationSnapshot } from "./journal/JournalDecorationPreview"
+import "../styles/journal-detail-reader.css"
 
 export type LogDetailVariant = "A" | "B"
 
@@ -322,7 +323,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
   ])
 
   return (
-    <div className="paper-grid journal-detail-page">
+    <div className={`journal-detail-page${decorationStudio ? " paper-grid" : " journal-detail-page--reader"}`}>
       {!decorationStudio && (readerControls === undefined ? <TopBar2 onBack={onBack}>일지</TopBar2> : readerControls)}
       <PageFrame key={date} date={date} hasEntries={entries.length > 0} pageTopRef={pageTopRef} initiallyOpen={decorationStudio !== undefined} onDone={decorationStudio?.onDone} previewMonth={decorationStudio?.previewMonth} materialsFooter={decorationStudio?.materialsFooter}>
 

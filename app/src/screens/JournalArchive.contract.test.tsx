@@ -105,6 +105,69 @@ function ArchiveHarness() {
 }
 
 describe("journal archive surface", () => {
+  it.each(["LOADING", "ERROR", "STALE"] as const)("does not render an empty calendar or example before %s resolves", (readiness) => {
+    const retry = vi.fn()
+    const back = vi.fn()
+    render(<JournalArchive entries={[]} readiness={readiness} onRetry={retry}
+      selection={{ selectedMonth: null, selectedWeekStart: null }} onSelectionChange={vi.fn()}
+      onOpenDay={vi.fn()} onBack={back} />)
+    expect(screen.getByRole(readiness === "ERROR" ? "alert" : "status")).toHaveTextContent(/확인하지 못|불러오지 못|불러오고 있어요/)
+    expect(screen.queryByRole("grid")).toBeNull()
+    expect(screen.queryByRole("button", { name: "기록 묶음" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "내 달력" })).toBeNull()
+    expect(screen.queryByText(/0개 기록|이날 작성한 일지가 없어요/)).toBeNull()
+    if (readiness === "LOADING") expect(screen.queryByRole("button", { name: "일지 다시 불러오기" })).toBeNull()
+    else {
+      fireEvent.click(screen.getByRole("button", { name: "일지 다시 불러오기" }))
+      expect(retry).toHaveBeenCalledOnce()
+    }
+    fireEvent.click(screen.getByRole("button", { name: "홈으로" }))
+    expect(back).toHaveBeenCalledOnce()
+  })
+
+  it.each(["LOADING", "ERROR", "STALE"] as const)("retains known records with an explicit refresh state during %s", (readiness) => {
+    render(<JournalArchive entries={ENTRIES} readiness={readiness}
+      selection={{ selectedMonth: "2026-07", selectedWeekStart: null }} onSelectionChange={vi.fn()}
+      onOpenDay={vi.fn()} onBack={vi.fn()} />)
+    expect(screen.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
+    expect(screen.getByRole("button", { name: /2026년 7월 10일.*훈련 후 2건/ })).toBeVisible()
+    expect(screen.getByText(/저장된 일지를 보고 있어요/)).toBeVisible()
+    expect(screen.queryByRole("button", { name: "내 달력" })).toBeNull()
+  })
+
+  it("only shows the empty example after a successful read and removes it during a failed refresh", () => {
+    const props = { entries: [], selection: { selectedMonth: null, selectedWeekStart: null },
+      onSelectionChange: vi.fn(), onOpenDay: vi.fn(), onBack: vi.fn() }
+    const view = render(<JournalArchive {...props} readiness="LOADING" />)
+    view.rerender(<JournalArchive {...props} readiness="READY" />)
+    expect(screen.getByRole("button", { name: "내 달력" })).toBeVisible()
+    fireEvent.click(screen.getByRole("button", { name: "내 달력" }))
+    expect(screen.getByRole("grid")).toBeVisible()
+    view.rerender(<JournalArchive {...props} readiness="ERROR" />)
+    expect(screen.queryByRole("grid")).toBeNull()
+    view.rerender(<JournalArchive {...props} readiness="ERROR" mode="CYCLE" />)
+    expect(screen.queryByRole("grid")).toBeNull()
+    expect(screen.queryByText(/0개 기록/)).toBeNull()
+  })
+
+  it("preserves an explicitly opened and labelled example without claiming it is the user's missing data", () => {
+    const props = { entries: [], selection: { selectedMonth: null, selectedWeekStart: null },
+      onSelectionChange: vi.fn(), onOpenDay: vi.fn(), onBack: vi.fn() }
+    const view = render(<JournalArchive {...props} />)
+    fireEvent.click(screen.getByRole("button", { name: "예시 둘러보기" }))
+    view.rerender(<JournalArchive {...props} readiness="ERROR" />)
+    expect(screen.getByRole("alert")).toHaveTextContent("일지를 불러오지 못했어요")
+    expect(screen.getByText("예시 · 내 기록에 저장되지 않아요")).toBeVisible()
+    expect(screen.getByRole("heading", { name: "일지가 쌓인 달력" })).toBeVisible()
+    fireEvent.click(screen.getByRole("button", { name: "기록 묶음" }))
+    expect(screen.queryByRole("grid")).toBeNull()
+    expect(screen.queryByText(/0개 기록/)).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "월간 달력으로" }))
+    expect(screen.getByRole("heading", { name: "일지가 쌓인 달력" })).toBeVisible()
+    fireEvent.click(screen.getByRole("button", { name: "내 달력" }))
+    expect(screen.queryByRole("grid")).toBeNull()
+  })
+
   it("uses one screen title accent while keeping the explicit calendar example at section level", async () => {
     const user = userEvent.setup()
     const { container } = render(<JournalArchive entries={[]} selection={{ selectedMonth: null, selectedWeekStart: null }}
@@ -144,7 +207,7 @@ describe("journal archive surface", () => {
 
     for (const { readiness, message } of [
       { readiness: "LOADING", message: "일지를 불러오고 있어요." },
-      { readiness: "STALE", message: "저장된 일지를 보고 있어요. 최신 기록은 아직 확인하지 못했어요." },
+      { readiness: "STALE", message: "최신 일지를 아직 확인하지 못했어요. 기록이 없는 상태로 표시하지 않아요." },
       { readiness: "ERROR", message: "일지를 불러오지 못했어요. 기록이 없는 것은 아니에요." },
     ] as const) {
       rerender(<JournalArchive {...props} entries={[]} readiness={readiness} />)

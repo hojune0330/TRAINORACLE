@@ -50,6 +50,16 @@ describe("selectJournalDecorationPreview", () => {
 })
 
 describe("JournalDecorationPreview", () => {
+  it("keeps writing controls free of full-page artwork without changing the equipped theme", () => {
+    const key = activeDecorationStorageKeyV3()
+    const original = JSON.stringify(createEmptyDecorationState())
+    localStorage.setItem(key, original)
+    const { container } = render(<JournalWritingDecorationPreview date={DATE}><button>저장</button></JournalWritingDecorationPreview>)
+    expect(container.querySelector(".journal-writing-decoration-preview__theme")).toBeNull()
+    expect(container.querySelector("button")).toHaveTextContent("저장")
+    expect(localStorage.getItem(key)).toBe(original)
+  })
+
   it("ignores only the internal storage probe while retaining data, consent, clear and account refresh events", () => {
     const { unmount } = render(<JournalWritingDecorationPreview date={DATE}><p>작성 중</p></JournalWritingDecorationPreview>)
     const read = vi.spyOn(Storage.prototype, "getItem")

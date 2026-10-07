@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Plan readability synthetic visual QA</title>
+  <style>@font-face { font-family: "Pretendard Variable"; src: url("/fonts/PretendardVariable.woff2") format("woff2-variations"); font-style: normal; font-weight: 45 920; font-display: swap; }</style>
+</head>
+<body>
+  <main id="plan-qa" style="max-width:600px;margin:0 auto;padding:20px;box-sizing:border-box"></main>
+  <script type="module">
+    import React from "react"
+    import { createRoot } from "react-dom/client"
+    import "../../../colors_and_type.css"
+    import "../../../colors_and_type_journal.css"
+    import { InstantPlanTodayView } from "../../src/components/instant-plan/InstantPlanTodayView.tsx"
+    // Presentation-only legacy example; no prescription calculation or persistence.
+    const today = {
+      dateLabel: "2026-10-07 수요일",
+      state: "SCHEDULED",
+      title: "10일 훈련 계획",
+      sessions: [{
+        id: "synthetic-am", slotLabel: "오전", title: "기존 계획의 주요 훈련", recorded: false,
+        guidanceNotice: "시간·체감 강도 안내예요. 반복 횟수와 회복 시간은 정해지지 않았어요. 총 시간을 계속 강하게 달리는 시간으로 쓰지 마세요.",
+        steps: [{ label: "총 시간·강도", instruction: "전체 35min @ RPE 6-7" }],
+      }],
+    }
+    createRoot(document.getElementById("plan-qa")).render(React.createElement(React.Fragment, null,
+      React.createElement("p", null, "합성 예시 · 저장하지 않는 디자인 검수 화면"),
+      React.createElement(InstantPlanTodayView, { today, compact: true }),
+    ))
+  </script>
+</body>
+</html>

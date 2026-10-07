@@ -159,6 +159,11 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   padding-top: 2px;
 }
 
+.personal-oracle__insight > div:only-child {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
 .personal-oracle__insight > div > span,
 .personal-oracle__insight small {
   display: block;
@@ -759,7 +764,6 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   overflow: hidden;
   border: 1px solid var(--line-2);
   background-color: var(--paper);
-  background-image: repeating-linear-gradient(to bottom, transparent 0 31px, var(--line) 32px);
 }
 
 .quick-log__date,
@@ -879,8 +883,8 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
 
 .quick-log__choices {
   margin-top: 12px;
-  border-top: 1px solid var(--ink);
 }
+.quick-log__choices button { word-break: keep-all; overflow-wrap: anywhere; }
 
 .quick-log__slot {
   display: grid;
@@ -921,7 +925,6 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   min-height: 50px;
   padding: 9px 4px;
   border: 0;
-  border-bottom: 1px solid var(--line);
   background: transparent;
   color: var(--ink);
   display: flex;
@@ -937,6 +940,10 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
 .quick-log__rpe-grid button:active,
 .quick-log__primary:active,
 .quick-log__secondary:active { transform: scale(0.97); }
+
+.quick-log__rpe-guide { display: grid; gap: var(--space-2); }
+.quick-log__rpe-guide > div { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--space-2); }
+.quick-log__rpe-guide dd { margin: 0; }
 
 .quick-log__rpe-grid {
   display: grid;

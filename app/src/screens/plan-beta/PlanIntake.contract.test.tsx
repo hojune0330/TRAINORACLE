@@ -1,5 +1,5 @@
 /* LEGACY_11STEP_FLOW: 2026-09 4질문 빠른 흐름 도입으로 옛 인테이크 클릭 순서를 전제한 테스트. 다듬기 경로로 재작성 예정(PR #341 본문). */
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { DETAILED_PRESCRIPTION_APPROVALS } from "../../domain/detailed-prescription-approvals"
@@ -17,7 +17,7 @@ describe("question-first plan preparation", () => {
     onOpenNotationReader: vi.fn(), onSafety: vi.fn(), onContinue: vi.fn(),
   }
 
-  it("shows the question before optional answers and the correctly sized calendar", async () => {
+  it("shows compact days before a single answer edit entry without calendar chrome", async () => {
     const onJump = vi.fn()
     render(<PlanIntake step="days" draft={{ ...stateFixture().intake, requestedFrameLength: 7 }}
       {...callbacks} onJump={onJump} />)
@@ -26,7 +26,12 @@ describe("question-first plan preparation", () => {
     expect(screen.getByText("계획 준비 · 운동할 날")).toBeVisible()
     expect(heading.compareDocumentPosition(answers) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     expect(answers.closest("details")).not.toHaveAttribute("open")
-    expect(screen.getByText(/7일 달력 보기/)).toBeVisible()
+    expect(screen.queryByText(/일 달력 보기/)).not.toBeInTheDocument()
+    expect(answers).toHaveAccessibleName("선택한 내용 바꾸기")
+    const days = within(screen.getByRole("group", { name: "운동할 날 선택" }))
+    expect(days.getAllByRole("button").map(button => button.textContent)).toEqual(["3일", "4일", "5일", "6일", "매일"])
+    await userEvent.setup().click(days.getByRole("button", { name: "매일" }))
+    expect(callbacks.onDays).toHaveBeenCalledWith("EVERY_DAY")
     await userEvent.setup().click(answers)
     await userEvent.setup().click(screen.getByRole("button", { name: "5000m" }))
     expect(onJump).toHaveBeenCalledWith("goal")
@@ -40,9 +45,17 @@ describe("question-first plan preparation", () => {
 
   it("keeps the legacy half-day value and previews whole calendar dates", () => {
     const draft = { ...stateFixture().intake, requestedFrameLength: 9.5 as const }
-    render(<PlanIntake step="safety" draft={draft} {...callbacks} />)
+    render(<PlanIntake step="goal" draft={draft} {...callbacks} />)
     expect(screen.getByText(/10일 달력 보기/)).toBeVisible()
     expect(draft.requestedFrameLength).toBe(9.5)
+  })
+
+  it("asks about actual experience without recommending an answer", async () => {
+    render(<PlanIntake step="experience" draft={{}} {...callbacks} />)
+    expect(screen.queryByText("추천")).not.toBeInTheDocument()
+    expect(screen.queryByText(/구조화된/)).not.toBeInTheDocument()
+    await userEvent.setup().click(screen.getByRole("button", { name: /빠른 훈련과 쉬운 훈련/ }))
+    expect(callbacks.onExperience).toHaveBeenCalledWith("EXPERIENCED")
   })
 })
 

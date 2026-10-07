@@ -10,6 +10,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary"
 import { clearRecoveryTab, readRecoveryTab } from "./domain/screen-recovery"
 import type { ShellToastState } from "./components/AppShellFrame"
 import { Home } from "./screens/Home"
+import type { MoreView } from "./screens/More"
 import { HomeOraclePreview } from "./screens/home/HomeOraclePreview"
 import type { GuestOracleSession } from "./screens/OracleProfileV2"
 import { LogEntry } from "./screens/LogEntry"
@@ -73,6 +74,7 @@ const JOURNAL_REWARD_MESSAGE = {
 const TOAST_READABLE_MS = 4000
 const TOAST_EXIT_MS = 150
 const OVERLAY_HISTORY_KEY = "trainoracleOverlay"
+const MORE_HISTORY_KEY = "trainoracleMore"
 const ORACLE_INVITATION_RETURN_KEY = "trainoracle.oracle-v2.invitation-return"
 
 function oracleV2Enabled(): boolean {
@@ -117,6 +119,7 @@ type ShellReturnPoint = {
   readonly view: ReturnType<typeof viewForTab>
   readonly utilityView: "more" | "guide" | "minji" | "content" | "rewards" | null
   readonly utilityOrigin: "home" | "more"
+  readonly moreView: MoreView
   readonly athleteRecordsOpen: boolean
 }
 
@@ -206,6 +209,9 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const scrollRegionRef = React.useRef<HTMLElement>(null)
   const [utilityView, setUtilityView] = React.useState<"more" | "guide" | "minji" | "content" | "rewards" | null>(null)
   const [utilityOrigin, setUtilityOrigin] = React.useState<"home" | "more">("more")
+  const [moreView, setMoreView] = React.useState<MoreView>("tools")
+  const moreVisibleRef = React.useRef(false)
+  moreVisibleRef.current = v.tab === "home" && utilityView === "more" && !v.accountOpen && !v.restoreOpen
   const [decorationInitialDate, setDecorationInitialDate] = React.useState<string | undefined>()
   const decorationReturn = React.useRef<{ owner: string | null; view: typeof v; utility: typeof utilityView; scroll: number; focusLabel: string | null; focusText: string | null } | null>(null)
   const [overlay, setOverlay] = React.useState<AppOverlay | null>(null)
@@ -377,6 +383,10 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           if (!runDraftSafeNavigation(() => applyOverlay(null))) window.history.pushState({ ...window.history.state,
             [OVERLAY_HISTORY_KEY]: { ...previous, owner: overlayHistoryOwnerRef.current, version: 1 } }, "", window.location.href)
         } else applyOverlay(null)
+      } else if (moreVisibleRef.current) {
+        const marker = event.state?.[MORE_HISTORY_KEY]
+        const section = marker?.owner === overlayHistoryOwnerRef.current ? marker.view : "tools"
+        if (["tools", "learning", "account", "backup", "about"].includes(section)) setMoreView(section)
       }
     }
     window.addEventListener("popstate", onPopState)
@@ -644,7 +654,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     return result.status !== "missing" && result.rows.length > 0 ? [{ topic, result }] : []
   }) : []
   const homeCandidate = homeCandidates[0]
-  const homeSourceUnavailable = calendarSnapshot.status !== "READY" || athleteRecords.status !== "READY"
+  const homeSourceUnavailable = calendarSnapshot.status !== "READY" || athleteRecords.status !== "READY" || !oracleHistory.journalReadComplete
   const homeExample = getOracleTopic("focus")
   const homeOraclePreview = <HomeOraclePreview
     question={homeCandidate ? getOracleTopic(homeCandidate.topic).question : homeSourceUnavailable ? "내 기록을 확인할까요?" : homeExample.question}
@@ -663,6 +673,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     v.restoreOpen ? "restore" : "",
     v.accountOpen ? "account" : "",
     utilityView ?? "",
+    utilityView === "more" ? moreView : "",
     athleteRecordsOpen ? "records" : "",
   ].join(":")
 
@@ -696,6 +707,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     view: v,
     utilityView,
     utilityOrigin,
+    moreView,
     athleteRecordsOpen,
   })
   const captureRecordingOrigin = (direct: boolean): RecordingOrigin => {
@@ -761,6 +773,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     setV(point.view)
     setUtilityView(point.utilityView)
     setUtilityOrigin(point.utilityOrigin)
+    setMoreView(point.moreView)
     setAthleteRecordsOpen(point.athleteRecordsOpen)
   }
   const openTrainingReading = () => runViewTransition("push", () => {
@@ -842,6 +855,20 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   } else if (v.tab === "home" && utilityView === "more") {
     screen = (
       <DeferredMobileScreens.More
+        view={moreView}
+        onViewChange={next => runViewTransition(next === "tools" ? "pop" : "push", () => {
+          const state = window.history.state ?? {}
+          const marker = state[MORE_HISTORY_KEY]
+          if (next === "tools" && marker?.owner === overlayHistoryOwnerRef.current && marker.view !== "tools") {
+            window.history.back()
+            return
+          }
+          if (next !== "tools") {
+            window.history.replaceState({ ...state, [MORE_HISTORY_KEY]: { owner: overlayHistoryOwnerRef.current, view: moreView } }, "", window.location.href)
+            window.history.pushState({ ...state, [MORE_HISTORY_KEY]: { owner: overlayHistoryOwnerRef.current, view: next } }, "", window.location.href)
+          }
+          setMoreView(next)
+        })}
         onBack={() => runViewTransition("pop", () => setUtilityView(null))}
         onOpenMinji={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("minji") })}
         onOpenGuide={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("guide") })}
@@ -889,6 +916,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       : (
         <Home
           oraclePreview={homeOraclePreview}
+          oraclePreviewLabel={homeCandidate ? "내 기록으로 본 오라클" : homeSourceUnavailable ? "오라클 기록 상태" : "오라클 결과 예시 보기"}
           onOpenImport={openImport}
           onOpenRecords={() => openOverlay({ kind: "athlete-records", initialPurpose: "PERSONAL_BEST" })}
           onWriteLog={(entryType) => startRecording(entryType)}
@@ -1028,6 +1056,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         initialContext={analysisContext}
         initialOracleSection={oracleHubSection}
         oracleV2Enabled={oracleV2Enabled()}
+        journalReadComplete={calendarSnapshot.status === "READY" && oracleHistory.journalReadComplete}
         onOracleSectionChange={setOracleHubSection}
         onContextChange={context => { analysisReturnContext.current = context }}
         onOpenCoachingDay={(date, entryId) => runViewTransition("push", () => {

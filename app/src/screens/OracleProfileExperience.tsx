@@ -53,18 +53,30 @@ const responseLabels: readonly [OracleResponse, string][] = [[1, "전혀 그렇�
   [3, "보통이에요"], [4, "그런 편이에요"], [5, "매우 그래요"]]
 const nonNumeric: readonly [OracleResponse, string][] = [["UNKNOWN", "아직 모르겠어요"], ["VARIES", "상황마다 달라요"], ["INEXPERIENCED", "경험이 없어요"]]
 
-export function OracleProfileReader({ title, onClose, children, action, closeLabel = "돌아가기" }: { title: string; onClose: () => void; children: React.ReactNode | ((close: () => void) => React.ReactNode); action?: { label: string; run: () => void; closeFirst?: boolean }; closeLabel?: string | null }) {
+export function OracleProfileReader({ title, onClose, children, action, closeLabel = "돌아가기" }: { title: string; onClose: () => void; children: React.ReactNode | ((close: () => void, leave: (run: () => void) => void) => React.ReactNode); action?: { label: string; run: () => void; closeFirst?: boolean }; closeLabel?: string | null }) {
   const ref = React.useRef<HTMLDialogElement>(null)
   const body = React.useRef<HTMLDivElement>(null)
   const pending = React.useRef<(() => void) | null>(null)
   const close = useReaderDialog(ref, () => { onClose(); const run = pending.current; pending.current = null; run?.() })
+  const leave = (run: () => void) => { pending.current = run; close() }
   React.useEffect(() => { if (body.current) body.current.scrollTop = 0 }, [title])
   return <dialog ref={ref} className="oracle-v2 oracle-v2__dialog" aria-label={title} onCancel={event => { event.preventDefault(); close() }}>
     <header className="oracle-v2__chrome"><span className="app-chrome-title">{title}</span><button type="button" aria-label="닫기" title="닫기" onClick={close}><X size={18} /></button></header>
-    <div ref={body} className="oracle-v2__reader-body">{typeof children === "function" ? children(close) : children}{action && <button type="button" onClick={() => { if (action.closeFirst === false) { action.run(); return }; pending.current = action.run; close() }}>{action.label}<ArrowRight size={16} /></button>}{closeLabel && <button type="button" className="oracle-v2__reader-close" onClick={close}>{closeLabel}<ArrowLeft size={16} /></button>}</div>
+    <div ref={body} className="oracle-v2__reader-body">{typeof children === "function" ? children(close, leave) : children}{action && <button type="button" onClick={() => { if (action.closeFirst === false) { action.run(); return }; leave(action.run) }}>{action.label}<ArrowRight size={16} /></button>}{closeLabel && <button type="button" className="oracle-v2__reader-close" onClick={close}>{closeLabel}<ArrowLeft size={16} /></button>}</div>
   </dialog>
 }
 const Reader = OracleProfileReader
+
+function OracleArticleContent({ title, reading }: { title: string; reading: OracleReadingDisplay }) {
+  return <>
+    <p className="oracle-v2__eyebrow">{reading.state === "EDUCATION" ? "훈련 읽을거리" : reading.state === "READY" ? "확인한 자료 기준" : reading.state === "PARTIAL" ? "확인한 부분부터" : reading.state === "UNAVAILABLE" ? "자료를 확인하지 못했어요" : reading.state === "REVOKED" ? "공유가 종료됐어요" : "일반 해설"}</p>
+    <AppHeading variant="screen" accent>{title}</AppHeading>
+    <dl className="oracle-v2__facts">{reading.facts.map((fact, index) => <div key={`${fact.label}-${index}`}><dt>{fact.label}</dt><dd>{fact.value}<small>{fact.source}</small></dd></div>)}</dl>
+    {reading.paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)}
+    <InfoDisclosure title="이 풀이의 기준과 한계">{reading.limitations.map((line, index) => <p key={index}>{line}</p>)}</InfoDisclosure>
+    {reading.evidence && <OracleReadingEvidence reading={reading.evidence} />}
+  </>
+}
 
 function restoredFlow(answers: OracleResponses, draft?: OracleResponses): OracleQuestionFlow {
   const axis = draft ? ORACLE_AXES.find(item => item.questions.some((_text, index) => draft[`${item.id}_${index + 1}` as keyof OracleResponses] !== answers[`${item.id}_${index + 1}` as keyof OracleResponses])) : undefined
@@ -82,6 +94,8 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
   const [savedReading, setSavedReading] = React.useState<OracleProfileReading | null>(null)
   const [storyAxis, setStoryAxis] = React.useState<OracleAxisId | null>(null)
   const [learning, setLearning] = React.useState<OracleLearningDestination | null>(null)
+  const [settingsOpen, setSettingsOpen] = React.useState(false)
+  const [featuredTopicId, setFeaturedTopicId] = React.useState("D02")
   const [group, setGroup] = React.useState("A")
   const [view, setView] = React.useState<"result" | "library" | "saved">(() => props.initialView ?? "result")
   const [confirmDelete, setConfirmDelete] = React.useState(false)
@@ -92,7 +106,7 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
   React.useEffect(() => {
     if (props.status === "DELETED") {
       dirty.current = false; const empty = startOracleQuestionFlow(); flowRef.current = empty; setFlow(empty)
-      setCharacter(null); setQuestionOpen(false); setSavedReading(null); setStoryAxis(null); setTopicId(null); setLearning(null); return
+      setCharacter(null); setQuestionOpen(false); setSavedReading(null); setStoryAxis(null); setTopicId(null); setLearning(null); setSettingsOpen(false); setFeaturedTopicId("D02"); return
     }
     if (dirty.current) return
     const next = restoredFlow(props.answers, props.draftAnswers)
@@ -138,6 +152,8 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
     }
   }
   const topic = topicId ? oracleContentTopic(topicId) : null
+  const featuredTopic = oracleContentTopic(featuredTopicId)!
+  const featuredReading = view === "library" ? props.readTopic(featuredTopic.id, flow.completed) : null
   const learningDestination = topic && ["GLOSSARY", "EVIDENCE", "QUIZ", "EXAMPLE"].includes(topic.destination) ? topic.destination as OracleLearningDestination : null
   const reading = topic ? props.readTopic(topic.id, flow.completed) : null
   const navigateTopic = (direction: number) => {
@@ -150,7 +166,7 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
   return <section className="oracle-v2">
     <header className="oracle-v2__chrome"><button type="button" aria-label={props.backLabel ?? "오라클로 돌아가기"} title={props.backLabel ?? "오라클로 돌아가기"} onClick={props.onBack}><ArrowLeft size={18} /></button><strong className="app-chrome-title">{view === "library" ? "오라클 읽을거리" : view === "saved" ? "풀이 보관함" : "내 러닝 프로필"}</strong><span>오라클</span></header>
     <div className="oracle-v2__body">
-      <nav className="oracle-v2__tabs" aria-label="러닝 프로필 보기">{([["result", "내 결과"], ["library", "읽을거리"], ["saved", "보관함"]] as const).map(([id, label]) => <button type="button" key={id} aria-current={view === id ? "page" : undefined} onClick={() => setView(id)}>{label}</button>)}</nav>
+      {(visibleScores.length > 0 || view !== "result") && <nav className="oracle-v2__tabs" aria-label="러닝 프로필 보기">{([["result", "내 결과"], ["library", "읽을거리"], ["saved", "보관함"]] as const).map(([id, label]) => <button type="button" key={id} aria-current={view === id ? "page" : undefined} onClick={() => setView(id)}>{label}</button>)}</nav>}
       <p className="oracle-v2__status" role="status">{sourceMessage}</p>
       {props.onContext && props.responsesDisabled && <button type="button" disabled={busy || accountBlocked} onClick={props.onContext}>작성하던 추가 맥락 이어가기<ChevronRight size={16} /></button>}
       {(dirty.current || props.hasPendingScore || props.draftAnswers && JSON.stringify(props.draftAnswers) !== JSON.stringify(props.answers)) && <button type="button" disabled={blocked} onClick={() => {
@@ -166,7 +182,7 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
         <section className="oracle-v2__self" aria-label="나의 러닝 프로필">
         <div className="oracle-v2__identity"><UserRound size={24} aria-hidden="true" /><div><p className="oracle-v2__eyebrow">{profile.completedAxes.length ? `${profile.completedAxes.length}개 항목 · 내 응답 기준` : "내가 좋아하는 달리기"}</p><AppHeading variant="screen" accent>{profile.representative.label}</AppHeading></div></div>
         {visibleScores.length === 0 ? <>
-          <button type="button" className="oracle-v2__primary" disabled={blocked} onClick={() => openQuestions("STRUCTURE")}>계획 선호 3문항 시작<ArrowRight size={18} /></button>
+          <button type="button" className="oracle-v2__primary" disabled={blocked} onClick={() => openQuestions("STRUCTURE")}>내 훈련 방식 알아보기 · 질문 3개<ArrowRight size={18} /></button>
           <p className="oracle-v2__status">선택 사항이에요. 해설만 봐도 괜찮아요.</p>
         </> : <>
           <dl className="oracle-v2__scores">{visibleScores.map(score => <div key={score.axisId}><dt><button type="button" onClick={() => setStoryAxis(score.axisId)}>{score.label}<ChevronRight size={16} /></button></dt><dd><strong>{score.display ?? "—"}</strong>{score.mixed && <span>답이 엇갈림</span>}<button type="button" title={`${score.label} 수정`} aria-label={`${score.label} 수정`} disabled={blocked} onClick={() => openQuestions(score.axisId)}><Pencil size={16} /></button></dd>{score.display !== null && <div className="oracle-v2__meter" role="meter" aria-label={score.label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={score.display} aria-valuetext={`${score.display}점 · 내 응답 기준`}><span style={{ width: `${score.display}%` }} /></div>}</div>)}</dl>
@@ -175,6 +191,29 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
           <button type="button" disabled={blocked || !props.account || props.status !== "READY" || dirty.current} onClick={async () => { setBusy(true); setLocalMessage(""); try { if (!await props.onRemember()) setLocalMessage("save") } catch { setLocalMessage("save") } finally { setBusy(false) } }}><Bookmark size={16} />이 결과 보관</button>
         </>}
         </section>
+        {visibleScores.length > 0 && <aside className="oracle-v2__manager" aria-label="마리의 내 응답 해설">
+          <div className="oracle-v2__manager-portrait"><img src={`${import.meta.env.BASE_URL}${managerPortrait.src.slice(1)}`} alt={managerPortrait.alt} width={managerPortrait.width} height={managerPortrait.height} /></div>
+          <div className="oracle-v2__manager-copy"><AppHeading as="h2" variant="section">마리 매니저</AppHeading><p>{managerDescription}</p></div>
+        </aside>}
+        {visibleScores.length === 0 && <nav className="oracle-v2__entry-links" aria-label="프로필 읽을거리">
+          <button type="button" onClick={() => setView("library")}>읽을거리<ChevronRight size={16} /></button>
+          {props.readings.length > 0 && <button type="button" onClick={() => setView("saved")}>보관함<ChevronRight size={16} /></button>}
+        </nav>}
+        <button type="button" className="oracle-v2__settings-entry" onClick={() => setSettingsOpen(true)}>마리·친구·프로필 설정<ChevronRight size={16} /></button>
+      </>}
+      {view === "library" && featuredReading && <>
+        <article className="oracle-v2__article" aria-label="먼저 읽을 글">
+          <OracleArticleContent title={featuredTopic.title} reading={featuredReading} />
+          <button type="button" onClick={() => setTopicId(featuredTopic.id)}>이 글 이어서 보기<ChevronRight size={16} /></button>
+        </article>
+        <InfoDisclosure purpose="actions" title="전체 주제·다른 글" preview={`${ORACLE_CONTENT_CATALOG.length}편`}>
+          <div className="oracle-v2__groups" role="group" aria-label="읽을거리 주제">{groups.map(item => <button type="button" key={item.id} aria-pressed={group === item.id} onClick={() => setGroup(item.id)}>{item.label}</button>)}</div>
+          <div className="oracle-v2__topics">{ORACLE_CONTENT_CATALOG.filter(item => item.group === group).map(item => <button type="button" key={item.id} onClick={() => setTopicId(item.id)}><span>{item.title}</span><ChevronRight size={16} /></button>)}</div>
+        </InfoDisclosure>
+      </>}
+      {view === "saved" && <><AppHeading variant="screen" accent>보관한 풀이</AppHeading>{props.readings.length === 0 ? <p>마음에 드는 결과를 보관하면 여기서 다시 읽을 수 있어요.</p> : props.readings.map(item => <button className="oracle-v2__saved" type="button" key={item.source.revision} onClick={() => setSavedReading(item)}><span>{item.source.answeredAt.slice(0, 10)} · 당시 응답</span><ChevronRight size={16} /></button>)}</>}
+    </div>
+    {settingsOpen && <Reader title="프로필 설정" onClose={() => setSettingsOpen(false)}>{(_close, leave) => <>
         <aside className="oracle-v2__manager" aria-label="마리 매니저">
           <div className="oracle-v2__manager-portrait"><img src={`${import.meta.env.BASE_URL}${managerPortrait.src.slice(1)}`} alt={managerPortrait.alt} width={managerPortrait.width} height={managerPortrait.height} /></div>
           <div className="oracle-v2__manager-copy"><AppHeading as="h2" variant="section">마리 매니저</AppHeading><p className="oracle-v2__eyebrow">{visibleScores.length ? "내 응답 해설" : "오라클 안내"}</p>
@@ -183,27 +222,29 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
             <p>{managerDescription}</p>
           </InfoDisclosure>
             <div className="oracle-v2__manager-actions oracle-v2__manager-details">
-              <button type="button" onClick={() => setTopicId("C02")}>내 훈련 해설<ChevronRight size={16} /></button>
-              <button type="button" onClick={() => setTopicId("B02")}>내 기록 해설<ChevronRight size={16} /></button>
-              <button type="button" onClick={() => setTopicId("C07")}>계획·수행 비교<ChevronRight size={16} /></button>
+              <button type="button" onClick={() => leave(() => setTopicId("C02"))}>내 훈련 해설<ChevronRight size={16} /></button>
             </div>
+          <InfoDisclosure className="oracle-v2__manager-details" purpose="actions" title="기록·계획 해설">
+            <div className="oracle-v2__manager-actions">
+              <button type="button" onClick={() => leave(() => setTopicId("B02"))}>내 기록 해설<ChevronRight size={16} /></button>
+              <button type="button" onClick={() => leave(() => setTopicId("C07"))}>계획·수행 비교<ChevronRight size={16} /></button>
+            </div>
+          </InfoDisclosure>
         </aside>
-        <button type="button" onClick={() => props.onNavigate("FRIENDS")}>친구와 취향 비교<ChevronRight size={16} /></button>
-        {props.onContext && !props.responsesDisabled && <button className="oracle-v2__context-action" type="button" disabled={busy || accountBlocked} onClick={props.onContext}>
+        <button type="button" onClick={() => leave(() => props.onNavigate("FRIENDS"))}>친구와 취향 비교<ChevronRight size={16} /></button>
+        {props.onContext && !props.responsesDisabled && <button className="oracle-v2__context-action" type="button" disabled={busy || accountBlocked} onClick={() => leave(() => props.onContext?.())}>
           <span>훈련·대회 정보 추가<small>달릴 시간 · 장소 · 보조 운동 · 대회</small></span><ChevronRight size={16} />
         </button>}
-        <InfoDisclosure purpose="actions" title="다른 러닝 취향 알아보기" preview="기록 도전 · 함께 달리기 · 웨이트 등 8가지"><div className="oracle-v2__axis-list">{ORACLE_AXES.map(axis => <button type="button" key={axis.id} disabled={blocked} onClick={() => openQuestions(axis.id)}><span>{axis.label}</span><ChevronRight size={16} /></button>)}</div></InfoDisclosure>
+        <InfoDisclosure purpose="actions" title="다른 러닝 취향 알아보기" preview="기록 도전 · 함께 달리기 · 웨이트 등 8가지"><div className="oracle-v2__axis-list">{ORACLE_AXES.map(axis => <button type="button" key={axis.id} disabled={blocked} onClick={() => leave(() => openQuestions(axis.id))}><span>{axis.label}</span><ChevronRight size={16} /></button>)}</div></InfoDisclosure>
         <InfoDisclosure title="내 응답 관리"><p>응답을 바꿔도 훈련 강도나 양이 자동으로 늘어나지 않아요.</p>{confirmDelete ? <><p>응답과 보관한 프로필 풀이를 삭제할까요?</p><button type="button" disabled={busy} onClick={async () => { setBusy(true); try { if (await props.onDelete()) { dirty.current = false; const empty = startOracleQuestionFlow(); flowRef.current = empty; setFlow(empty); setCharacter(null); setConfirmDelete(false) } else setLocalMessage("delete") } catch { setLocalMessage("delete") } finally { setBusy(false) } }}>삭제하기</button><button type="button" onClick={() => setConfirmDelete(false)}>취소</button></> : <button type="button" disabled={blocked} onClick={() => setConfirmDelete(true)}><Trash2 size={16} />응답 삭제</button>}</InfoDisclosure>
-      </>}
-      {view === "library" && <><AppHeading variant="screen" accent>궁금한 것부터</AppHeading><div className="oracle-v2__groups" role="group" aria-label="읽을거리 주제">{groups.map(item => <button type="button" key={item.id} aria-pressed={group === item.id} onClick={() => setGroup(item.id)}>{item.label}</button>)}</div><div className="oracle-v2__topics">{ORACLE_CONTENT_CATALOG.filter(item => item.group === group).map(item => <button type="button" key={item.id} onClick={() => setTopicId(item.id)}><span>{item.title}</span><ChevronRight size={16} /></button>)}</div></>}
-      {view === "saved" && <><AppHeading variant="screen" accent>보관한 풀이</AppHeading>{props.readings.length === 0 ? <p>마음에 드는 결과를 보관하면 여기서 다시 읽을 수 있어요.</p> : props.readings.map(item => <button className="oracle-v2__saved" type="button" key={item.source.revision} onClick={() => setSavedReading(item)}><span>{item.source.answeredAt.slice(0, 10)} · 당시 응답</span><ChevronRight size={16} /></button>)}</>}
-    </div>
+        {localMessage && <p role="alert">변경을 저장하지 못했어요. 입력한 답은 그대로 남아 있어요.</p>}
+    </>}</Reader>}
     {story && <Reader title="마리의 응답 해설" onClose={() => setStoryAxis(null)}><p className="oracle-v2__eyebrow">마리 매니저 · 내 응답 기준</p><AppHeading variant="screen" accent>{story.title}</AppHeading><p>{story.reading}</p><p>{story.example}</p><InfoDisclosure title="함께 생각할 점"><p>{story.watchFor}</p></InfoDisclosure><AppHeading as="h2" variant="section">이렇게 활용해 볼 수 있어요</AppHeading><p>{story.use}</p><InfoDisclosure title="내가 답한 내용">{story.facts.map((fact, i) => <p key={i}>{fact.question}<br />{typeof fact.response === "number" ? `${fact.response}/5` : fact.response === "SKIPPED" ? "건너뜀" : nonNumeric.find(([value]) => value === fact.response)?.[1]}</p>)}</InfoDisclosure><InfoDisclosure title="아직 알 수 없는 것"><p>{story.boundary}</p><p>{story.scope}</p></InfoDisclosure></Reader>}
     {questionOpen && <Reader title={ORACLE_AXES.find(axis => axis.id === flow.axisId)!.label} onClose={() => setQuestionOpen(false)} closeLabel={question ? null : "결과로"}>
       {!question && <><img className="oracle-v2__guide" src={`${import.meta.env.BASE_URL}${ORACLE_MARI_ASSETS.complete.src.slice(1)}`} alt={ORACLE_MARI_ASSETS.complete.alt} width={ORACLE_MARI_ASSETS.complete.width} height={ORACLE_MARI_ASSETS.complete.height} /><p className="oracle-v2__eyebrow">마리 매니저 · 내 응답 정리</p></>}
       {question ? <div className="oracle-v2__question" key={question.id}><p className="oracle-v2__eyebrow">{flow.position + 1} / 3</p><AppHeading variant="screen" accent ref={questionHeading} tabIndex={-1}>{question.text}</AppHeading><div className="oracle-v2__choices">{responseLabels.map(([value, label]) => <button type="button" key={value} disabled={blocked} aria-pressed={flow.draft[question.id] === value} onClick={() => answer(value)}>{label}<ChevronRight size={16} /></button>)}</div><InfoDisclosure title="답하기 어려워요"><div className="oracle-v2__choices">{nonNumeric.map(([value, label]) => <button type="button" key={value} disabled={blocked} aria-pressed={flow.draft[question.id] === value} onClick={() => answer(value)}>{label}</button>)}</div></InfoDisclosure><footer className="oracle-v2__pager"><button type="button" disabled={flow.position === 0 || blocked} aria-label="이전 질문" title="이전 질문" onClick={() => { const next = previousOracleQuestion(flowRef.current); flowRef.current = next; setFlow(next) }}><ArrowLeft size={18} /></button><button type="button" disabled={blocked} aria-pressed={flow.draft[question.id] === "SKIPPED"} onClick={() => answer("SKIPPED")}>건너뛰기</button></footer></div> : <><AppHeading variant="screen" accent ref={questionHeading} tabIndex={-1}>내 답을 정리했어요</AppHeading><p>{profile.scores.find(score => score.axisId === flow.axisId)?.display ?? "아직 점수로 정리하지 않은 응답"}</p><p>{describeOracleAxis(profile.scores.find(score => score.axisId === flow.axisId)!)}</p><p role="status">{sourceMessage}</p>{localMessage === "save" && <button type="button" disabled={busy} onClick={() => { void commit(flow.completed, character) }}>다시 저장<RotateCcw size={16} /></button>}</>}
     </Reader>}
-{topic && reading && <Reader title={topic.title} onClose={() => setTopicId(null)} action={learningDestination ? { label: ({ GLOSSARY: "용어 읽기", EVIDENCE: "근거 살펴보기", QUIZ: "문제 풀기", EXAMPLE: "예시 읽기" })[learningDestination], closeFirst: false, run: () => setLearning(learningDestination) } : ["RECORDS", "JOURNAL", "CALENDAR", "PLAN_REVIEW", "METHODS", "FRIENDS", "SHARE_PREVIEW"].includes(topic.destination) ? { label: topic.destination === "SHARE_PREVIEW" ? "친구 비교·공유 설정 열기" : topic.destination === "FRIENDS" ? "친구와 비교하기" : topic.destination === "RECORDS" ? "경기 기록 보기" : topic.destination === "JOURNAL" ? "일지 보기" : topic.destination === "METHODS" ? "훈련법 보기" : topic.destination === "CALENDAR" ? "달력 보기" : "계획 보기", closeFirst: false, run: () => props.onNavigate(topic.destination) } : topic.destination === "PROFILE" ? { label: "내 응답 보기", run: () => setView("result") } : undefined}>{props.renderTopicControls?.(topic.id)}<article key={topic.id} className="oracle-v2__article" onTouchStart={event => { const point = event.touches[0]; if (point) touch.current = { x: point.clientX, y: point.clientY } }} onTouchEnd={event => { const point = event.changedTouches[0], start = touch.current; touch.current = null; if (point && start && Math.abs(point.clientX - start.x) > 60 && Math.abs(point.clientY - start.y) < 35) navigateTopic(point.clientX < start.x ? 1 : -1) }}><p className="oracle-v2__eyebrow">{reading.state === "EDUCATION" ? "훈련 읽을거리" : reading.state === "READY" ? "확인한 자료 기준" : reading.state === "PARTIAL" ? "확인한 부분부터" : reading.state === "UNAVAILABLE" ? "자료를 확인하지 못했어요" : reading.state === "REVOKED" ? "공유가 종료됐어요" : "일반 해설"}</p><AppHeading variant="screen" accent>{topic.title}</AppHeading><dl className="oracle-v2__facts">{reading.facts.map((fact, index) => <div key={`${fact.label}-${index}`}><dt>{fact.label}</dt><dd>{fact.value}<small>{fact.source}</small></dd></div>)}</dl>{reading.paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)}<InfoDisclosure title="이 풀이의 기준과 한계">{reading.limitations.map((line, index) => <p key={index}>{line}</p>)}</InfoDisclosure>{reading.evidence && <OracleReadingEvidence reading={reading.evidence} />}<footer className="oracle-v2__pager"><button type="button" aria-label="이전 읽을거리" title="이전 읽을거리" disabled={ORACLE_CONTENT_CATALOG.filter(item => item.group === topic.group)[0]?.id === topic.id} onClick={() => navigateTopic(-1)}><ArrowLeft size={18} /></button><button type="button" aria-label="다음 읽을거리" title="다음 읽을거리" disabled={ORACLE_CONTENT_CATALOG.filter(item => item.group === topic.group).at(-1)?.id === topic.id} onClick={() => navigateTopic(1)}><ArrowRight size={18} /></button></footer></article></Reader>}
+{topic && reading && <Reader title={topic.title} onClose={() => { if (view === "library") setFeaturedTopicId(topic.id); setTopicId(null) }} action={learningDestination ? { label: ({ GLOSSARY: "용어 읽기", EVIDENCE: "근거 살펴보기", QUIZ: "문제 풀기", EXAMPLE: "예시 읽기" })[learningDestination], closeFirst: false, run: () => setLearning(learningDestination) } : ["RECORDS", "JOURNAL", "CALENDAR", "PLAN_REVIEW", "METHODS", "FRIENDS", "SHARE_PREVIEW"].includes(topic.destination) ? { label: topic.destination === "SHARE_PREVIEW" ? "친구 비교·공유 설정 열기" : topic.destination === "FRIENDS" ? "친구와 비교하기" : topic.destination === "RECORDS" ? "경기 기록 보기" : topic.destination === "JOURNAL" ? "일지 보기" : topic.destination === "METHODS" ? "훈련법 보기" : topic.destination === "CALENDAR" ? "달력 보기" : "계획 보기", closeFirst: false, run: () => props.onNavigate(topic.destination) } : topic.destination === "PROFILE" ? { label: "내 응답 보기", run: () => setView("result") } : undefined}>{props.renderTopicControls?.(topic.id)}<article key={topic.id} className="oracle-v2__article" onTouchStart={event => { const point = event.touches[0]; if (point) touch.current = { x: point.clientX, y: point.clientY } }} onTouchEnd={event => { const point = event.changedTouches[0], start = touch.current; touch.current = null; if (point && start && Math.abs(point.clientX - start.x) > 60 && Math.abs(point.clientY - start.y) < 35) navigateTopic(point.clientX < start.x ? 1 : -1) }}><OracleArticleContent title={topic.title} reading={reading} /><footer className="oracle-v2__pager"><button type="button" aria-label="이전 읽을거리" title="이전 읽을거리" disabled={ORACLE_CONTENT_CATALOG.filter(item => item.group === topic.group)[0]?.id === topic.id} onClick={() => navigateTopic(-1)}><ArrowLeft size={18} /></button><button type="button" aria-label="다음 읽을거리" title="다음 읽을거리" disabled={ORACLE_CONTENT_CATALOG.filter(item => item.group === topic.group).at(-1)?.id === topic.id} onClick={() => navigateTopic(1)}><ArrowRight size={18} /></button></footer></article></Reader>}
     {learning && <Reader title="오라클 배움" onClose={() => setLearning(null)} closeLabel={null}>{close => <OracleLearningReader destination={learning} onBack={close} />}</Reader>}
     {savedReading && <Reader title="당시의 내 응답" onClose={() => setSavedReading(null)}>{(() => { const result = readOracleProfileReading(savedReading, props.status === "DELETED" ? { state: "DELETED" } : props.status === "READY" ? { state: "READY", currentRevision: props.revision } : { state: "LOADING" }); return result.result ? <><AppHeading variant="screen" accent>{result.result.representative.label}</AppHeading><p>{savedReading.source.answeredAt.slice(0, 10)} · 당시 응답 기준</p><dl className="oracle-v2__facts">{result.result.scores.filter(score => score.display !== null).map(score => <div key={score.axisId}><dt>{score.label}</dt><dd>{score.display}</dd></div>)}</dl></> : <p>보관한 풀이를 지금 확인할 수 없어요.</p> })()}</Reader>}
   </section>

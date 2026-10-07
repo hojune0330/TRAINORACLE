@@ -23,11 +23,13 @@ export function PlanRefinePanel({
   onRefine,
   /** 상세 훈련표를 고를 수 있는 조합인지(고를 수 없는 조합에서는 줄을 숨겨 글자 피로를 줄인다). */
   detailedTemplateAvailable,
+  purpose,
 }: {
   readonly intake: PlanBetaIntake
   readonly targetRaceDate?: string
   readonly onRefine: (step: IntakeStep) => void
   readonly detailedTemplateAvailable: boolean
+  readonly purpose?: "schedule" | "workout"
 }) {
   const changed = new Set(customizedFromDefaults(intake))
   const primary: readonly RefineRow[] = [
@@ -86,6 +88,17 @@ export function PlanRefinePanel({
       changed: changed.has("competitionDivision"),
     },
   ]
+
+  if (purpose) {
+    const scheduleSteps: readonly IntakeStep[] = ["days", "frame-length", "training-time", "two-a-day", "race-date"]
+    const rows = [...primary, ...secondary].filter(row => scheduleSteps.includes(row.step) === (purpose === "schedule"))
+    return <section className="plan-refine" aria-label={purpose === "schedule" ? "일정 조건" : "훈련 조건"}>
+      <p className="plan-refine__hint">바꾸면 다시 만들어요. 새 훈련 구성과 강도를 확인해 주세요.</p>
+      <ul className="plan-refine__list">
+        {rows.map(row => <RefineLine key={row.step} row={row} onRefine={onRefine} />)}
+      </ul>
+    </section>
+  }
 
   return (
     <details className="plan-refine" data-testid="plan-refine">

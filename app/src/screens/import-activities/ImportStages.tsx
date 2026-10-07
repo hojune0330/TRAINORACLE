@@ -1,4 +1,5 @@
 import React from "react"
+import { ArrowLeft, Upload } from "lucide-react"
 import { SectionLb } from "../../components/JournalPrimitives"
 import { ContextualIllustration } from "../../components/ContextualIllustration"
 import { compactDate } from "../../domain/dates"
@@ -22,6 +23,7 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
   readonly onFile: (file: File) => void | Promise<void>
   readonly onCancel: () => void
 }) {
+  const [source, setSource] = React.useState<"" | "garmin" | "coros" | "health">("")
   return (
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
       <div className="contextual-entry-intro">
@@ -31,6 +33,38 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
         </p>
         {!busy && failure === null && <ContextualIllustration image="watch-file" size="medium" />}
       </div>
+
+      <button type="button" style={primaryBtn} disabled={busy} onClick={() => fileInputRef.current?.click()}>
+        <Upload size={18} aria-hidden="true" /> 파일이 있어요 · 바로 선택
+      </button>
+
+      <section aria-label="운동 파일 준비" className="import-preparation">
+        {source === "" ? <>
+          <label htmlFor="import-source">어디에 기록이 있나요?</label>
+          <select id="import-source" value={source} disabled={busy}
+            onChange={event => setSource(event.target.value as typeof source)}>
+            <option value="">기록이 있는 곳 선택</option>
+            <option value="garmin">Garmin · 가민</option>
+            <option value="coros">COROS · 코로스</option>
+            <option value="health">건강앱 · 애플 건강·삼성 헬스</option>
+          </select>
+        </> : <>
+          <button type="button" style={secondaryBtn} disabled={busy} onClick={() => setSource("")}>
+            <ArrowLeft size={18} aria-hidden="true" /> 다른 기록 위치
+          </button>
+          <h2>{source === "garmin" ? "Garmin 파일 준비" : source === "coros" ? "COROS 파일 준비" : "건강앱 파일 준비"}</h2>
+          {source === "health" ? <>
+            <p>애플 건강·삼성 헬스의 전체 ZIP·XML 백업은 아직 읽지 못해요.</p>
+            <p>운동을 기록한 원래 서비스에서 개별 운동의 TCX·GPX를 내보낼 수 있는지 확인해 주세요. CSV·JSON도 지원하는 날짜·거리·시간 형식만 읽어요.</p>
+            <p>지원 파일이 없으면 지금 가져오지 않아도 돼요. 수면·HRV 자동 연결은 제공하지 않아요.</p>
+          </> : <ol>
+            <li>{source === "garmin" ? "Garmin Connect" : "COROS"}에서 가져올 운동 기록을 열어요.</li>
+            <li>활동 내보내기에서 {source === "coros" ? "TCX" : "TCX 또는 GPX"} 파일을 이 기기에 저장해요. FIT·ZIP 파일은 아직 읽지 못해요.</li>
+            <li>위의 파일 선택으로 거리·시간을 확인한 뒤, 원하는 기록만 저장해요.</li>
+          </ol>}
+        </>}
+        <p>계정 자동 연결이 아니라 파일 가져오기예요. 원본 기록은 바뀌지 않아요.</p>
+      </section>
 
       <div
         data-testid="import-privacy-notice"
@@ -47,13 +81,14 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
         </div>
       </div>
 
-      <label htmlFor="import-file" style={{ ...mono, fontSize: 11, color: "var(--ink-3)" }}>
+      <label htmlFor="import-file" hidden>
         내보낸 활동 파일 (.csv / .json / .tcx / .gpx)
       </label>
       <input
         ref={fileInputRef}
         id="import-file"
         type="file"
+        hidden
         accept=".csv,.json,.tcx,.gpx,text/csv,application/json,application/xml,text/xml"
         disabled={busy}
         onChange={(event) => {
@@ -61,12 +96,8 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
           event.currentTarget.value = ""
           if (file !== undefined) void onFile(file)
         }}
-        style={{
-          ...mono, fontSize: 12, width: "100%", boxSizing: "border-box",
-          padding: "12px", minHeight: 48,
-          border: "1px dashed var(--line)", background: "var(--surface)", color: "var(--ink)",
-        }}
       />
+      <p className="import-preparation__formats">TCX · GPX · 지원 CSV·JSON / 한 번에 파일 1개, 최대 10MB</p>
       {busy && (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
           <p role="status" style={{ ...mono, fontSize: 12, color: "var(--ink-3)", margin: 0 }}>읽는 중…</p>
@@ -93,14 +124,8 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
         </div>
       )}
 
-      <InfoDisclosure title="가민·코로스·건강앱 파일 준비하기">
-        <p>가민·코로스 등의 서비스에서 운동을 TCX·GPX 파일로 내보낸 뒤 골라 주세요. 파일에서 읽은 값은 저장 전에 확인할 수 있어요.</p>
-        <p>CSV·JSON은 날짜·거리·시간이 있는 지원 형식만 읽어요. 모든 건강앱의 파일 형식이 서로 같지는 않아요.</p>
-        <p>애플 건강·삼성 헬스의 전체 ZIP·XML 백업은 아직 읽지 못해요. 수면·HRV를 자동으로 받는 기능도 이번 파일 가져오기와 별개예요.</p>
-      </InfoDisclosure>
-
       <div data-testid="oauth-status" style={{ border: "1px dashed var(--line)", padding: "12px 14px" }}>
-        <InfoDisclosure title="가민·WHOOP·스트라바 자동 연동은 준비 중이에요">
+        <InfoDisclosure title="가민·코로스·WHOOP·스트라바 자동 연동은 준비 중이에요">
           <p>지금은 파일을 골라 기록을 가져올 수 있어요. 계정을 연결해 자동으로 받는 기능의 시작 날짜는 아직 정해지지 않았어요.</p>
           <p>파일을 가져와도 워치 앱의 원본 기록은 바뀌지 않아요.</p>
         </InfoDisclosure>

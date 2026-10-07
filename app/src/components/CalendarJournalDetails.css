@@ -1,8 +1,19 @@
 .calendar-journal-detail { padding-block: var(--space-4); border-top: 1px solid var(--line); font-family: var(--sans); color: var(--ink); }
 .calendar-journal-detail h3 { margin: 0 0 var(--space-3); font-size: var(--fs-app-section-title); }
-.calendar-journal-detail article { padding-block: var(--space-4); border-bottom: 1px solid var(--line); }
+.calendar-journal-detail__heading { display: flex; align-items: center; gap: var(--space-2); }
+.calendar-journal-detail__count { margin-inline-start: auto; color: var(--ink-3); font-size: var(--fs-caption); font-weight: 500; white-space: nowrap; }
+.calendar-journal-detail article { padding-block: var(--space-4); }
 .calendar-journal-detail h4 { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2); margin: 0 0 var(--space-3); font-size: var(--fs-body); }
 .calendar-journal-detail small, .calendar-journal-detail__caption { font-size: var(--fs-caption); color: var(--ink-3); line-height: 1.6; }
+.calendar-journal-detail__entries { display: grid; margin-block: var(--space-2); }
+.calendar-journal-detail__entry-choice { display: grid; gap: var(--space-1); width: 100%; min-width: 0; min-height: 56px; padding: var(--space-2) var(--space-3); border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--ink); text-align: left; font: inherit; cursor: pointer; }
+.calendar-journal-detail__entry-choice:last-child { border-bottom: 0; }
+.calendar-journal-detail__entry-choice[aria-pressed="true"] { background: var(--surface-2); }
+.calendar-journal-detail__entry-choice:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
+.calendar-journal-detail__entry-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); min-width: 0; }
+.calendar-journal-detail__entry-head strong { min-width: 0; font-size: var(--fs-body); overflow-wrap: anywhere; }
+.calendar-journal-detail__entry-head small { flex: 0 0 auto; }
+.calendar-journal-detail__entry-summary { min-width: 0; color: var(--ink-2); font-size: var(--fs-body-sm); line-height: 1.5; overflow-wrap: anywhere; }
 .calendar-journal-detail dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin: 0; }
 .calendar-journal-detail dt { color: var(--ink-3); font-size: var(--fs-caption); }
 .calendar-journal-detail dd { margin: var(--space-1) 0 0; font-size: var(--fs-body); overflow-wrap: anywhere; }

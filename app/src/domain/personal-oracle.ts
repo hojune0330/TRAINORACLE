@@ -19,6 +19,7 @@ export type PersonalOracleInsight = {
   readonly headline: string
   readonly detail: string
   readonly evidence: string
+  readonly available: boolean
 }
 
 export type PersonalOracleExplanation = {
@@ -76,6 +77,7 @@ function distanceInsight(
   if (current.totalKm === null) {
     return {
       id: "DISTANCE_FLOW",
+      available: false,
       title: "최근 달린 거리",
       headline: current.excludedSourceCount > 0 ? "거리 기록이 있지만 아직 분석에 사용할 수 없어요" : "직접 적은 거리 기록이 아직 없어요",
       detail: "거리를 적으면 최근 4주와 그 전 4주를 같은 기준으로 나란히 보여드려요.",
@@ -88,6 +90,7 @@ function distanceInsight(
     : `그 전 4주 ${previous.totalKm} km와 함께 확인할 수 있어요.`
   return {
     id: "DISTANCE_FLOW",
+    available: true,
     title: "최근 달린 거리",
     headline: `최근 4주 ${current.totalKm} km`,
     detail: `${comparison} 분석에 포함된 거리의 비교예요. 일부 기록이 빠졌을 수 있으며 다음 훈련량을 자동으로 바꾸지는 않아요.`,
@@ -104,6 +107,7 @@ function energyInsight(
   if (used.length === 0) {
     return {
       id: "ENERGY_COVERAGE",
+      available: false,
       title: "훈련 목적의 구성",
       headline: ledger.excludedSourceCount > 0 ? "기록은 있지만 분석에 사용할 훈련 목적을 확인하지 못했어요" : "직접 고른 에너지 시스템 기록이 아직 없어요",
       detail: "훈련 후 주된 목적을 고르면 8주 동안 어떤 유형을 얼마나 경험했는지 모아 보여드려요.",
@@ -120,6 +124,7 @@ function energyInsight(
     : `가장 자주 고른 유형은 ${mostFrequent.join(" · ")}이며, 모두 ${maxCount}회로 동률이에요.`
   return {
     id: "ENERGY_COVERAGE",
+    available: true,
     title: "훈련 목적의 구성",
     headline: `최근 8주 ${used.length}가지 유형을 기록했어요`,
     detail: `${frequencyDetail} 자주 또는 적게 기록됐다는 사실이며, 강점·약점이나 부족 판정은 아니에요.`,
@@ -132,6 +137,7 @@ function planInsight(planState: PlanBetaState | null): PersonalOracleInsight {
   if (plan === null) {
     return {
       id: "PLAN_FOLLOW_THROUGH",
+      available: false,
       title: "계획과 실행 표시",
       headline: "진행 중인 계획이 아직 없어요",
       detail: "계획을 시작하면 예정한 훈련과 완료로 표시한 훈련을 분리해 보여드려요.",
@@ -140,6 +146,7 @@ function planInsight(planState: PlanBetaState | null): PersonalOracleInsight {
   }
   return {
     id: "PLAN_FOLLOW_THROUGH",
+    available: true,
     title: "계획과 실행 표시",
     headline: `예정 ${plan.plannedSessionCount}회 중 완료 표시 ${plan.completedMarkCount}회`,
     detail: "완료 표시는 실제 일지와 다른 기록이에요. 완료율이나 훈련 효과로 해석하지 않고, 계획을 어디까지 확인했는지만 보여드려요.",

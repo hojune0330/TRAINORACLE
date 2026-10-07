@@ -49,12 +49,7 @@ afterEach(cleanup)
 describe("추이 화면 · 반영되지 않은 일지 안내", () => {
   beforeEach(() => { window.localStorage.clear() })
 
-  /**
-   * 가장 중요한 케이스. 가져오기만 쓴 사용자는 반영되는 일지가 0개여서
-   * **빈 화면**을 본다. 예전에는 여기서 "기록이 생기면 볼 수 있어요"라고만
-   * 말했다 — 이미 기록을 넣은 사람에게 안 넣었다고 안내하던 자리다.
-   */
-  it("가져온 일지만 있으면 빈 화면에서도 이유를 말한다", () => {
+  it("가져온 일지는 저장 사실과 분석 제외 이유를 함께 말한다", () => {
     seed([session("imported", {
       distanceKm: IMPORTED, durationMin: IMPORTED, avgPace: IMPORTED, rpe: BLANK,
     })])
@@ -67,7 +62,8 @@ describe("추이 화면 · 반영되지 않은 일지 안내", () => {
     expect(notice.textContent).toContain("일지에는 그대로 남아 있어요")
     expect(screen.getByRole("region", { name: "가져온 운동 기록 미리보기" })).toBeVisible()
     expect(screen.getByText("8km")).toBeVisible()
-    expect(screen.getByRole("region", { name: "내 훈련 요약", hidden: true })).not.toBeVisible()
+    expect(screen.getByRole("region", { name: "내 훈련 요약" })).toBeVisible()
+    expect(screen.queryByText("첫 운동부터 남겨볼까요?")).toBeNull()
   })
 
   it("출처 정보가 없어 빠진 일지는 **다른 문구로** 알린다", () => {

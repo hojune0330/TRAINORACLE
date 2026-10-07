@@ -40,10 +40,14 @@ describe("InstantPlanRecommendationView", () => {
   it("shows incomplete prescription coverage before the start action", () => {
     const guidanceNotice = "주요 훈련 2회는 시간·체감 강도 안내예요. 반복·회복 구성은 아직 정하지 않았어요."
     render(<InstantPlanRecommendationView recommendation={{ ...recommendation, guidanceNotice }} actionState={{ kind: "READY" }} onStart={vi.fn()} />)
-    const notice = screen.getByText(guidanceNotice)
+    const notice = screen.getByRole("note")
     expect(notice).toBeVisible()
+    expect(screen.getByText("이 시간 내내 강하게 뛰지 마세요.")).toBeVisible()
+    expect(screen.getByText(guidanceNotice)).not.toBeVisible()
     expect(notice.compareDocumentPosition(screen.getByRole("button", { name: "이 일정으로 시작" })))
       .toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    fireEvent.click(screen.getByRole("button", { name: "반복·휴식이 아직 없어요" }))
+    expect(screen.getByText(guidanceNotice)).toBeVisible()
   })
   it("shows the commitment and compact dated AM/PM roles before one explicit start", () => {
     const onStart = vi.fn()
@@ -51,7 +55,9 @@ describe("InstantPlanRecommendationView", () => {
     expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent(recommendation.title)
     expect(screen.getByRole("heading", { level: 2 })).toHaveClass("app-heading--screen", "app-heading--accent")
     expect(screen.getByText(recommendation.periodLabel)).toBeVisible()
-    expect(screen.getByText("2회")).toBeVisible()
+    expect(screen.getAllByText("2회").some(node => !node.closest("details"))).toBe(true)
+    expect(screen.getByText(recommendation.durationLabel)).not.toBeVisible()
+    fireEvent.click(screen.getByText("전체 훈련 시간·목표"))
     expect(screen.getByText(recommendation.durationLabel)).toBeVisible()
     expect(screen.getByText(recommendation.firstSessionLabel)).toBeVisible()
     const schedule = screen.getByRole("region", { name: "이번 일정" })
@@ -103,8 +109,9 @@ describe("InstantPlanRecommendationView", () => {
       anchorLabel="5km 25:00 · 2026-09-10" goalLabel="5km 22:00" programPurposeLabel="검토된 시작 단계"
     />)
     expect(screen.getByText("기준 기록").nextElementSibling).toHaveTextContent("5km 25:00 · 2026-09-10")
+    fireEvent.click(screen.getByText("전체 훈련 시간·목표"))
     expect(screen.getByText("내 목표").nextElementSibling).toHaveTextContent("5km 22:00")
-    expect(screen.getByText("이번 프로그램의 목적").nextElementSibling).toHaveTextContent("검토된 시작 단계")
+    expect(screen.getByText("이 계획의 목적").nextElementSibling).toHaveTextContent("검토된 시작 단계")
     expect(screen.getByText(/목표 기록은 현재 능력/)).toBeVisible()
   })
 
