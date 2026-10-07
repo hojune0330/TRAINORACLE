@@ -1,5 +1,5 @@
 /* LEGACY_11STEP_FLOW: 2026-09 4질문 빠른 흐름 도입으로 옛 인테이크 클릭 순서를 전제한 테스트. 다듬기 경로로 재작성 예정(PR #341 본문). */
-import { cleanup, render, screen, within } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { FIELD_PROVENANCE } from "../domain/field-provenance"
@@ -193,8 +193,13 @@ describe("plan beta user flow", () => {
     await openRefinement("대회 날짜")
     expect(screen.getByRole("heading", { name: "대회 날짜가 있나요?" })).toBeVisible()
     const raceDate = screen.getByLabelText("목표 경기 날짜")
-    await user.type(raceDate, "2099-08-23")
-    await user.click(screen.getByRole("button", { name: "이 날짜로 배치 미리보기" }))
+    // A native date picker commits one complete ISO value. Using a text-key
+    // sequence here can leave JSDOM's date control empty under a loaded runner.
+    fireEvent.change(raceDate, { target: { value: "2099-08-23" } })
+    expect(raceDate).toHaveValue("2099-08-23")
+    const preview = screen.getByRole("button", { name: "이 날짜로 배치 미리보기" })
+    expect(preview).toBeEnabled()
+    await user.click(preview)
 
     expect(screen.getByRole("heading", { name: "아직 경기 날짜를 계획에 적용할 수 없어요" })).toBeVisible()
     expect(screen.queryByRole("button", { name: /선택하기|계획 시작|저장/u })).not.toBeInTheDocument()
