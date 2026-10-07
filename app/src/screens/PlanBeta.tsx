@@ -479,8 +479,12 @@ function LegacyPlanBeta({
   const [racePreview, setRacePreview] = React.useState<
     Extract<PlanDraftGeneration, { readonly kind: "preview_only" }> | null
   >(null)
+  const refinementReturn = React.useRef<{
+    generated: PlanGenerationSuccess; gate: SafetyGateDecision; targetRaceDate: string; errorCode: string | null
+    retrySelection: CandidateSelection | null
+  } | null>(null)
   usePlanDraftNavigationGuard((stored === null || nextPredecessor !== null) && (
-    generated !== null || racePreview !== null || instantEntry !== undefined || instantEntryDirty
+    generated !== null || refinementReturn.current !== null || racePreview !== null || instantEntry !== undefined || instantEntryDirty
     || JSON.stringify(draft) !== JSON.stringify(previousIntake ?? {})
   ))
   const [blocked, setBlocked] = React.useState(false)
@@ -696,6 +700,7 @@ function LegacyPlanBeta({
    * 안전 확인은 `generateCandidates` 안에서 다시 적용된다(현재 확인 값이 없으면 안전 질문으로).
    */
   const continueAfterRefinement = (nextDraft: Partial<PlanBetaIntake>) => {
+    refinementReturn.current = null
     const completed = withQuickDefaults(nextDraft)
     const retainedRecordId = athleteRecords.some((record) => (
       record.id === selectedRecordId && record.eventDistanceM === completed.eventDistanceM
@@ -710,8 +715,10 @@ function LegacyPlanBeta({
 
   /** 결과 화면에서 "다듬기" 항목을 탭하면 해당 질문 하나만 연다. */
   const openRefinement = (target: IntakeStep) => {
-    if (!REFINE_STEPS.includes(target)) return
-    draftRevision.current += 1
+    if (!REFINE_STEPS.includes(target) || selectionWrite.current || generated === null || gate === null) return
+    // Opening a question is not an accepted change to the reviewed candidate.
+    // Keep its exact workouts and review revision until an answer is applied.
+    refinementReturn.current = { generated, gate, targetRaceDate, errorCode, retrySelection }
     setRetrySelection(null)
     setGenerated(null)
     setGate(null)
@@ -1143,7 +1150,7 @@ function LegacyPlanBeta({
   if (instantEntryOpen) return <>
     {/* Keep unsent values and the current question while a supporting tool is open. */}
     <div className="plan-instant-entry" hidden={recordsOpen || notationReaderOpen}>
-    <InstantPlanEntryForm today={todayISO()} initialEntry={instantEntry} active={!recordsOpen && !notationReaderOpen}
+    <InstantPlanEntryForm today={todayISO()} readToday={todayISO} initialEntry={instantEntry} active={!recordsOpen && !notationReaderOpen}
       disabled={instantRecordSaving} isSubmitting={instantRecordSaving} onDraftChange={setInstantEntryDirty} onSubmit={async value => {
       if (instantRecordSaveLock.current) return
       instantRecordSaveLock.current = true; setInstantRecordSaving(true)
@@ -1197,8 +1204,16 @@ function LegacyPlanBeta({
         refining={refining}
         onBack={() => {
           if (refining) {
+            const previous = refinementReturn.current
+            refinementReturn.current = null
             setRefining(false)
-            generateCandidates(draft, null, targetRaceDate || undefined)
+            if (previous !== null) {
+              setGenerated(previous.generated)
+              setGate(previous.gate)
+              setTargetRaceDate(previous.targetRaceDate)
+              setErrorCode(previous.errorCode)
+              setRetrySelection(previous.retrySelection)
+            }
             return
           }
           if (instantEntry !== undefined && (step === "experience" || step === "goal")) {
@@ -1268,6 +1283,7 @@ function LegacyPlanBeta({
         targetRaceDate={targetRaceDate}
         onTargetRaceDateChange={setTargetRaceDate}
         onRaceDate={(raceDate) => {
+          refinementReturn.current = null
           setRefining(false)
           if (raceDate === undefined) setTargetRaceDate("")
           generateCandidates(draft, null, raceDate)

@@ -9,6 +9,8 @@ export type InstantPlanEntryFormProps = {
   readonly onSubmit: (entry: InstantPlanEntry) => void
   /** The integrating screen supplies its local calendar date, YYYY-MM-DD. */
   readonly today: string
+  /** Live screens can re-read their local day after an entry stays open overnight. */
+  readonly readToday?: () => string
   /** Initial values only. Remount for a different person's or program's entry. */
   readonly initialEntry?: InstantPlanEntry
   /** Supporting tools may hide this mounted form; returning restores the current question. */
@@ -78,9 +80,11 @@ function entryFromCurrentOrGoal(
 
 /** Collects facts only. Eligibility, safety, generation and storage belong to the caller. */
 export function InstantPlanEntryForm({
-  onSubmit, today, initialEntry, active = true, isSubmitting = false, disabled = false, sourceLabel, onDraftChange,
+  onSubmit, today, readToday, initialEntry, active = true, isSubmitting = false, disabled = false, sourceLabel, onDraftChange,
 }: InstantPlanEntryFormProps) {
   const id = useId()
+  const [, refreshDateLimit] = useState(today)
+  const dateLimit = readToday?.() ?? today
   const [kind, setKind] = useState<InstantPlanEntry["kind"]>(initialEntry?.kind ?? "CURRENT_RECORD")
   const [event, setEvent] = useState(initialEntry ? String(initialEntry.eventDistanceM) : "")
   const [minutes, setMinutes] = useState(() => initialTime(initialEntry).minutes)
@@ -187,11 +191,12 @@ export function InstantPlanEntryForm({
       }
     }
     if (kind === "CURRENT_RECORD" && achievedOn !== "") {
+      const submittedToday = readToday?.() ?? today
       if (!isCalendarDate(achievedOn)) {
         nextErrors.achievedOn = "기록을 달성한 날짜를 올바르게 입력해 주세요."
-      } else if (!isCalendarDate(today)) {
+      } else if (!isCalendarDate(submittedToday)) {
         nextErrors.achievedOn = "오늘 날짜를 확인하지 못했어요. 잠시 후 다시 시도해 주세요."
-      } else if (achievedOn > today) {
+      } else if (achievedOn > submittedToday) {
         nextErrors.achievedOn = "달성일은 오늘 또는 이전 날짜로 입력해 주세요."
       }
     }
@@ -333,7 +338,8 @@ export function InstantPlanEntryForm({
                   <div className="instant-plan__field">
                     <label htmlFor={`${id}-achievedOn`}>기록 달성일</label>
                     <input id={`${id}-achievedOn`} ref={dateRef} type="date" min="0001-01-01" disabled={disabled}
-                      max={isCalendarDate(today) ? today : undefined} value={achievedOn}
+                      max={isCalendarDate(dateLimit) ? dateLimit : undefined} value={achievedOn}
+                      onFocus={() => { if (readToday) refreshDateLimit(readToday()) }}
                       onChange={e => setAchievedOn(e.target.value)} aria-invalid={Boolean(errors.achievedOn)}
                       aria-describedby={errors.achievedOn ? `${id}-achievedOn-error` : undefined} />
                     {fieldError("achievedOn")}

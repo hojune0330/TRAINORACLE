@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { PlanBeta } from "./PlanBeta"
@@ -9,7 +9,7 @@ import type { InstantPlanEntry } from "../domain/instant-plan-contract"
 const currentEntry: InstantPlanEntry = { kind: "CURRENT_RECORD", eventDistanceM: 1500, performanceSeconds: 263.4, achievedOn: null }
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
-afterEach(() => { cleanup(); vi.restoreAllMocks() })
+afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks() })
 
 async function enterRecord() {
   const user = userEvent.setup()
@@ -21,6 +21,21 @@ async function enterRecord() {
 }
 
 describe("instant plan record submission recovery", () => {
+  it("accepts today's current record after a dirty entry form remains open across local midnight", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date(2026, 9, 7, 23, 59))
+    render(<PlanBeta />)
+    const user = await enterRecord()
+    await user.click(screen.getByText("기록 날짜 추가"))
+    expect(screen.getByLabelText("기록 달성일")).toHaveAttribute("max", "2026-10-07")
+    vi.setSystemTime(new Date(2026, 9, 8, 0, 1))
+    fireEvent.change(screen.getByLabelText("기록 달성일"), { target: { value: "2026-10-08" } })
+    await user.click(screen.getByRole("button", { name: "기록 입력 완료" }))
+    expect(screen.queryByText("달성일은 오늘 또는 이전 날짜로 입력해 주세요.")).not.toBeInTheDocument()
+    expect(await screen.findByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u })).toBeVisible()
+    expect(loadPlanBetaState()).toBeNull()
+  })
+
   it("shows the pending preparation and prevents duplicate submission without activating a plan", async () => {
     let complete!: (result: recordSave.AccountInstantPlanEntryResult) => void
     const prepare = vi.spyOn(recordSave, "prepareAccountInstantPlanEntry")

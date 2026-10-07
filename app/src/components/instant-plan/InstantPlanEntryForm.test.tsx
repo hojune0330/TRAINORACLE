@@ -350,6 +350,33 @@ describe("InstantPlanEntryForm", () => {
     expect(onSubmit).toHaveBeenCalledExactlyOnceWith(entry)
   })
 
+  it("re-reads the supplied live day at submit without a rerender and keeps genuinely future dates blocked", () => {
+    const onSubmit = vi.fn(), entry = { ...record, achievedOn: "2026-09-21" }
+    let day = TODAY
+    render(<InstantPlanEntryForm today={TODAY} readToday={() => day} initialEntry={entry} onSubmit={onSubmit} />)
+    day = "2026-09-21"
+    submit()
+    expect(onSubmit).toHaveBeenCalledExactlyOnceWith(entry)
+    onSubmit.mockClear()
+    fireEvent.change(screen.getByLabelText("기록 달성일"), { target: { value: "2026-09-22" } })
+    submit()
+    expect(onSubmit).not.toHaveBeenCalled()
+    expect(screen.getByRole("alert")).toHaveTextContent("달성일은 오늘 또는 이전 날짜")
+  })
+
+  it("refreshes the date picker limit on focus after midnight while preserving entered values", () => {
+    let day = TODAY
+    render(<InstantPlanEntryForm today={TODAY} readToday={() => day} initialEntry={record} onSubmit={vi.fn()} />)
+    const date = screen.getByLabelText("기록 달성일")
+    expect(date).toHaveAttribute("max", TODAY)
+    day = "2026-09-21"
+    fireEvent.focus(date)
+    expect(date).toHaveAttribute("max", day)
+    expect(date).toHaveValue(record.achievedOn)
+    expect(screen.getByLabelText("분")).toHaveValue("25")
+    expect(screen.getByLabelText("초")).toHaveValue("0.125")
+  })
+
   it("fails closed for current records when the supplied local today is invalid", () => {
     const onSubmit = vi.fn()
     render(<InstantPlanEntryForm today="2026-02-30" initialEntry={record} onSubmit={onSubmit} />)

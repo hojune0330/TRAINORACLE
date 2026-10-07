@@ -5,6 +5,7 @@ import { activeLocalAccount } from "./local-journal-ownership"
 import { supabase } from "./supabase-client"
 import { accountScopedStorageKey } from "./local-account-scope"
 import { accountJournalPreviewEnabled } from "./account-journal-api"
+import { ACCOUNT_NETWORK_DEADLINE_MS } from "./account-network-deadline"
 
 export const PLAN_CLOUD_ARCHIVE_STORAGE_KEY = "trainoracle.plan-cloud-archive.v1"
 
@@ -55,6 +56,20 @@ export async function loadLatestPlanFromServer(): Promise<PlanCloudBackupResult>
   if (!planCloudBackupEnabled()) return { kind: "unavailable" }
   const ownerId = activeLocalAccount()
   if (ownerId === null) return { kind: "unavailable" }
+  let deadline: ReturnType<typeof setTimeout> | undefined
+  try {
+    return await Promise.race([
+      loadLatestPlanFromServerBeforeDeadline(ownerId),
+      new Promise<PlanCloudBackupResult>(resolve => {
+        deadline = setTimeout(() => resolve({ kind: "unavailable" }), ACCOUNT_NETWORK_DEADLINE_MS)
+      }),
+    ])
+  } finally {
+    if (deadline !== undefined) clearTimeout(deadline)
+  }
+}
+
+async function loadLatestPlanFromServerBeforeDeadline(ownerId: string): Promise<PlanCloudBackupResult> {
   const client = await supabase()
   if (client === null) return { kind: "unavailable" }
   try {

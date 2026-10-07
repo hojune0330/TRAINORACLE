@@ -1,5 +1,6 @@
 import React from "react"
 import { oracleV2FeatureEnabled } from "./domain/oracle-rollout"
+import { productFeatures } from "./domain/product-features"
 import { READER_HISTORY_KEY } from "./hooks/useReaderDialog"
 import { useCalendarSnapshot } from "./hooks/useCalendarEntries"
 import { rememberCalendarDate } from "./hooks/useCalendarPosition"
@@ -1068,7 +1069,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       />
     ) : (
       <>
-        <DeferredMobileScreens.PlanProposalInbox />
+        {productFeatures().planProposals && <DeferredMobileScreens.PlanProposalInbox />}
         <DeferredMobileScreens.PlanBeta
           multiAdjustmentResolverV3={multiPlanRuntime?.multiAdjustmentResolverV3}
           readMultiAdjustedEvidenceV3={multiPlanRuntime?.readMultiAdjustedEvidenceV3}
