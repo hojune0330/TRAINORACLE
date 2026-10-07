@@ -60,6 +60,44 @@
   --calendar-off: var(--surface-2);
   --calendar-unclassified: var(--bg);
 
+  /* Minigame world — 2026-10-07 owner request: "모바일 게임처럼, 요즘 게임 톤".
+     Used ONLY inside .treadmill-game (canvas + its game panels). Not for app chrome,
+     analysis, safety or training surfaces. See docs/UX_UI_VISUAL_STANDARD.md §6A. */
+  --game-sky-top: #7FC8F8;     /* track sky */
+  --game-sky-low: #D6F0FF;
+  --game-hill-far: #A8DDB5;
+  --game-hill-near: #6CC48A;
+  --game-mud-sky-top: #F6C28B; /* mud: warm sunset */
+  --game-mud-sky-low: #FFE8C7;
+  --game-mud-hill-far: #D9A273;
+  --game-mud-hill-near: #B97A4E;
+  --game-mud: #8A5A36;
+  --game-mud-light: #A9744A;
+  --game-spike-sky-top: #4B3A78; /* spikes: dusk */
+  --game-spike-sky-low: #B08AD6;
+  --game-spike-hill-far: #6E5A9E;
+  --game-spike-hill-near: #3E2F63;
+  --game-belt: #2E3440;        /* treadmill machine */
+  --game-belt-dark: #1C2028;
+  --game-belt-lane: #FF7A45;
+  --game-rail: #C7CED8;
+  --game-outline: #1D1B2C;     /* thick cartoon outline */
+  --game-skin: #FFD3A6;
+  --game-shirt: #25C2A0;       /* runner, matches brand hue family */
+  --game-shirt-dark: #17927A;
+  --game-shorts: #3D5AFE;
+  --game-shoe: #FFFFFF;
+  --game-cloud: #FFFFFF;
+  --game-danger: #FF4D5E;
+  --game-danger-dark: #C21E35;
+  --game-gold: #FFC83D;
+  --game-gold-dark: #E49B0F;
+  --game-good: #4CD964;
+  --game-panel: #FFFFFF;
+  --game-panel-edge: #DDE3EE;
+  --game-ink: #1D1B2C;
+  --game-ink-soft: #5A6178;
+
   /* ============== TYPOGRAPHY ============== */
   --sans: "Pretendard Variable", "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   /* Korean labels historically used --mono too. Keep one glyph source across the app;
