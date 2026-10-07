@@ -1,46 +1,8 @@
 {
   "kind": "TRAINORACLE_PAGES_DEPLOYMENT",
-  "sourceSha": "0268ec74a51d2453f61ffdcdb0f71be9609de22c",
-  "runtimeSourceCommit": "6fd75bde54ae16f1c7a35c45935736c0ae578cef",
-  "includedSourceCommits": [
-    "583e66ad",
-    "b264d71c",
-    "6fd75bde"
-  ],
-  "previousPagesSha": "4d952ed847d1ca62e2a0c7cf8bb98040539a5b6f",
-  "deploymentMethod": "MANUAL_OWNER_APPROVED",
-  "canonicalUrl": "https://hojune0330.github.io/TRAINORACLE/",
-  "scope": "Completed plan recovery, account restore/deletion lifecycle guards, and local browser back layers. Uncommitted parallel edits excluded.",
-  "oracleV2Enabled": true,
-  "accountAccess": "EXISTING_SHARED_ORIGIN_HOLD_RETAINED",
-  "existingPreviewPaths": "PRESERVED_WITHOUT_MODIFICATION",
-  "existingHashedAssets": "PRESERVED_WITHOUT_REMOVAL",
-  "publicConfigurationSourceSha": "4d952ed847d1ca62e2a0c7cf8bb98040539a5b6f",
-  "publishedAt": "2026-10-07T12:44:40Z",
-  "verification": {
-    "appTypecheck": "PASS_ON_EXACT_RELEASE_SOURCE",
-    "hostedReleaseEnvironment": "PASS_ACCOUNT_HELD",
-    "canonicalReleaseBuild": "PASS_WITH_EXISTING_WARNINGS",
-    "fullCI": "SKIPPED_BY_APPROVED_MANUAL_RELEASE_NOT_CLAIMED_PASSED",
-    "priorFocusedEvidence": "reports/implementation/ACCOUNT_RESTORE_DELETE_LOCAL_NAVIGATION_2026-10-07.md",
-    "liveAfterPublication": "PENDING_AT_PUBLICATION",
-    "realAccountRoundtrip": "NOT_PERFORMED",
-    "backendDeployment": "NOT_PERFORMED",
-    "providerActivation": "NOT_PERFORMED"
-  },
-  "mergeAssessment": {
-    "pullRequest": 349,
-    "headSha": "571ab4a461c18b877e5c2362061f90316676bd79",
-    "status": "DRAFT_NOT_MERGED",
-    "conflicts": [
-      "app/src/screens/More.tsx",
-      "app/src/styles/visual-system.contract.test.ts"
-    ],
-    "latestPRCI": "CONTRACT_PASS_APP_QUALITY_FAIL_APP_BROWSER_SKIPPED",
-    "recentMergedPRs": [
-      350,
-      351
-    ],
-    "recentMergedBranchTips": "NO_ADDITIONAL_UNMERGED_COMMITS"
-  }
+  "sourceSha": "f86266b15759ce4453d88622903a852a99ff77c9",
+  "previousPagesSha": "e664844bd77894545ab8d96a987db7120ccb5c8c",
+  "method": "PRESERVING_GUARDED_MANUAL",
+  "deployedAt": "2026-10-07T13:50:21.871Z",
+  "backendVerification": "NOT_CONFIRMED"
 }
