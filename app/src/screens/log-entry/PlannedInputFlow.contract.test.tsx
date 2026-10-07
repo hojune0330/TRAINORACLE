@@ -22,7 +22,8 @@ describe("linked journal context and invalid actual-input guard", () => {
   it("shows the exact original title and notation before asking how the workout went", () => {
     render(<QuickSessionForm targetDate={fixture.entry.date} plannedSessionLink={fixture.link} />)
     expect(screen.getByRole("region", { name: "기록할 훈련의 원래 계획" })).toHaveTextContent(sessionWorkoutName(fixture.session))
-    expect(screen.getByRole("region", { name: "기록할 훈련의 원래 계획" })).toHaveTextContent(sessionWorkoutNotation(fixture.session))
+    expect(screen.getByRole("region", { name: "기록할 훈련의 원래 계획" })).toHaveTextContent(sessionWorkoutNotation(fixture.session, "PLAIN"))
+    expect(screen.getByRole("region", { name: "기록할 훈련의 원래 계획" })).toHaveTextContent("5 × 1km · 222.3초/1km · 5K 경기 평균 페이스 · 반복 사이 150초 조깅")
     expect(saveEntry).not.toHaveBeenCalled()
   })
   it("does not substitute a different current plan when the linked original is missing", () => {

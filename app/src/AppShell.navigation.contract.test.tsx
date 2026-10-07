@@ -35,20 +35,25 @@ describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {
     render(<AppShell />)
     await user.click(screen.getByRole("button", { name: "더보기" }))
     await user.click(await screen.findByRole("button", { name: "오라클 읽을거리" }))
+    expect(await screen.findByRole("article", { name: "먼저 읽을 글" }, { timeout: 10000 })).toBeVisible()
+    const topics = screen.getByRole("button", { name: /^전체 주제·다른 글/u })
+    expect(topics).toHaveAttribute("aria-expanded", "false")
+    expect(screen.getByRole("group", { name: "읽을거리 주제" })).not.toBeVisible()
+    await user.click(topics)
     expect(await screen.findByRole("group", { name: "읽을거리 주제" }, { timeout: 10000 })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "더보기로 돌아가기" }))
     expect(await screen.findByRole("heading", { name: "더보기" })).toBeVisible()
   })
-  it("opens existing training reading from the V1 Oracle library and returns to that section", async () => {
+  it("opens existing training reading directly from V1 Oracle and returns to the same hub", async () => {
     vi.stubEnv("VITE_FEATURE_ORACLE_V2", "false")
     const user = userEvent.setup()
     render(<AppShell />)
     await user.click(screen.getByRole("button", { name: "오라클" }))
-    await user.click(await screen.findByRole("button", { name: "읽을거리" }, { timeout: 10000 }))
-    await user.click(screen.getByRole("button", { name: "훈련법 읽기" }))
+    await user.click(await screen.findByRole("button", { name: "읽을거리·관심" }, { timeout: 10000 }))
     expect(await screen.findByRole("heading", { name: "어떤 훈련이 궁금한가요?" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "이전 화면" }))
-    expect(await screen.findByRole("button", { name: "읽을거리" })).toHaveAttribute("aria-pressed", "true")
+    expect(await screen.findByRole("button", { name: "내 훈련" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("button", { name: "읽을거리·관심" })).toBeVisible()
     expect(screen.getByRole("button", { name: "오라클" })).toHaveAttribute("aria-current", "page")
   })
   it("keeps the selected training step mounted while recording and returns without a reset", async () => {
@@ -66,17 +71,23 @@ describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByRole("button", { name: "기록하기" })).toHaveFocus())
   })
 
-  it("returns browser Back from recording to the same Oracle section", async () => {
+  it("returns browser Back from recording to the same Oracle analysis selection", async () => {
     const user = userEvent.setup()
     render(<AppShell />)
     await user.click(screen.getByRole("button", { name: "오라클" }))
-    await user.click(await screen.findByRole("button", { name: "러닝 취향" }))
+    await user.click(await screen.findByText("훈련량·구성·변화 보기"))
+    await user.click(screen.getByRole("button", { name: "훈련량" }))
+    expect(screen.getByText("훈련량 · 다른 항목 보기")).toBeVisible()
     await user.click(screen.getByRole("button", { name: "기록하기" }))
     expect(await screen.findByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
     act(() => window.history.back())
-    await waitFor(() => expect(screen.getByRole("button", { name: "러닝 취향" })).toHaveAttribute("aria-pressed", "true"))
+    await waitFor(() => expect(screen.getByText("훈련량 · 다른 항목 보기")).toBeVisible())
+    expect(screen.getByRole("button", { name: "내 훈련" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("button", { name: "오라클" })).toHaveAttribute("aria-current", "page")
     expect(screen.queryByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeNull()
     await waitFor(() => expect(screen.getByRole("button", { name: "기록하기" })).toHaveFocus())
+    await user.click(screen.getByText("훈련량 · 다른 항목 보기"))
+    expect(screen.getByRole("button", { name: "훈련량" })).toHaveAttribute("aria-pressed", "true")
   })
 
   it("returns from a directly opened glossary term to the exact plan step", async () => {
@@ -136,19 +147,24 @@ describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {
     }
   })
 
-  it("returns training content and feedback to More instead of Home", async () => {
+  it("returns training content and feedback to their More submenus instead of Home", async () => {
     const user = userEvent.setup()
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "더보기" }))
+    await user.click(await screen.findByRole("button", { name: "배우기·꾸미기" }))
     await user.click(await screen.findByRole("button", { name: "훈련법 읽기" }))
     expect(await screen.findByRole("heading", { name: "어떤 훈련이 궁금한가요?" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "이전 화면" }))
-    expect(await screen.findByRole("heading", { name: "더보기" })).toBeVisible()
+    expect(await screen.findByRole("heading", { name: "배우기·꾸미기" })).toBeVisible()
 
+    await user.click(screen.getByRole("button", { name: "더보기로 돌아가기" }))
+    await user.click(await screen.findByRole("button", { name: "앱 정보·개인정보·문의" }))
     await user.click(screen.getByRole("button", { name: "문의 게시판" }))
     expect(await screen.findByRole("heading", { name: "문의 게시판" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "이전 화면으로 돌아가기" }))
+    expect(await screen.findByRole("heading", { name: "앱 정보·개인정보·문의" })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "더보기로 돌아가기" }))
     expect(await screen.findByRole("heading", { name: "더보기" })).toBeVisible()
   })
 
@@ -157,11 +173,14 @@ describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "더보기" }))
+    await user.click(await screen.findByRole("button", { name: "백업·복원·휴지통" }))
     await user.click(await screen.findByRole("button", { name: "내려받은 백업 되돌리기" }))
     expect(await screen.findByRole("heading", { name: "내려받은 백업 되돌리기" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "뒤로" }))
-    expect(await screen.findByRole("heading", { name: "더보기" })).toBeVisible()
+    expect(await screen.findByRole("heading", { name: "백업·복원·휴지통" })).toBeVisible()
 
+    await user.click(screen.getByRole("button", { name: "더보기로 돌아가기" }))
+    expect(await screen.findByRole("heading", { name: "더보기" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "홈으로 돌아가기" }))
     await user.click(screen.getByRole("button", { name: "기록하기" }))
     expect(await screen.findByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()

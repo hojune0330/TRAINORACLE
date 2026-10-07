@@ -66,7 +66,17 @@ describe("athlete record entry surface", () => {
       name: "내 경기 기록",
     }))
 
-    expect(onManageRecords).toHaveBeenCalledTimes(1)
+    expect(await screen.findByRole("heading", { name: "내 경기 기록" })).toBeVisible()
+    expect(screen.getByRole("combobox", { name: "종목 거리" })).toBeVisible()
+    expect(screen.queryByRole("textbox", { name: "기록 분" })).toBeNull()
+    expect(screen.queryByRole("textbox", { name: "달성일" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "기록 저장" })).toBeNull()
+    expect(onManageRecords).not.toHaveBeenCalled()
+    expect(window.localStorage.getItem(ATHLETE_RECORDS_STORAGE_KEY)).toBeNull()
+
+    await user.click(screen.getByRole("button", { name: "계획으로" }))
+    expect(screen.getByRole("heading", { name: "어떤 종목을 준비하세요?" })).toBeVisible()
+    expect(tools.open).toBe(true)
     expect(window.localStorage.getItem(ATHLETE_RECORDS_STORAGE_KEY)).toBeNull()
   })
 

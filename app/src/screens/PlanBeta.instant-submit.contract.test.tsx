@@ -54,7 +54,7 @@ describe("instant plan record submission recovery", () => {
     expect(screen.getByRole("button", { name: "내 경기 기록" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "기록 입력 완료" }))
     expect(prepare).toHaveBeenCalledTimes(2)
-    expect(screen.queryByRole("button", { name: /구조화된 훈련과 경기 경험/u })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u })).not.toBeInTheDocument()
     expect(loadPlanBetaState()).toBeNull()
   })
 
@@ -73,7 +73,7 @@ describe("instant plan record submission recovery", () => {
     await user.click(screen.getByRole("button", { name: "기록 입력 완료" }))
     expect(prepare).toHaveBeenCalledTimes(2)
     expect(prepare.mock.calls[1]).toEqual(prepare.mock.calls[0])
-    expect(screen.getByRole("button", { name: /구조화된 훈련과 경기 경험/u })).toBeVisible()
+    expect(screen.getByRole("button", { name: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u })).toBeVisible()
     expect(loadPlanBetaState()).toBeNull()
   })
 })

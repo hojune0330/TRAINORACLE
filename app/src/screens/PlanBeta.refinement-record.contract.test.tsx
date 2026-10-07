@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { PlanBeta } from "./PlanBeta"
@@ -19,7 +19,7 @@ async function confirmedPersonalPlan() {
   await user.click(screen.getByText("기록 날짜 추가", { selector: "summary span" }))
   fireEvent.change(screen.getByLabelText("기록 달성일"), { target: { value: todayISO() } })
   await user.click(screen.getByRole("button", { name: "기록 입력 완료" }))
-  await user.click(screen.getByRole("button", { name: /구조화된 훈련과 경기 경험/u }))
+  await user.click(screen.getByRole("button", { name: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u }))
   await user.click(screen.getByRole("button", { name: /^매일/u }))
   await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
   await user.click(screen.getByRole("button", { name: "기준 기록 확인하기" }))
@@ -31,8 +31,9 @@ async function confirmedPersonalPlan() {
 describe("personal plan refinement without a dead end", () => {
   it("keeps the chosen same-event record after changing the calendar but requires a fresh confirmation", async () => {
     const user = await confirmedPersonalPlan()
-    await user.click(screen.getByText(/^계획 다듬기/u, { selector: "summary span" }))
-    await user.click(screen.getByRole("button", { name: /^달력 길이 바꾸기/u }))
+    await user.click(screen.getByRole("button", { name: "일정 바꾸기" }))
+    const schedule = within(screen.getByRole("region", { name: "일정 조건" }))
+    await user.click(schedule.getByRole("button", { name: /^달력 길이 바꾸기/u }))
     await user.click(screen.getByRole("button", { name: /^7일만 먼저 받기/u }))
     expect(loadPlanBetaState()).toBeNull()
     await user.click(screen.getByRole("button", { name: "기준 기록 확인하기" }))
@@ -47,8 +48,9 @@ describe("personal plan refinement without a dead end", () => {
     "returns to an eligible time/effort plan when the experience is changed to %s", async answer => {
       const user = await confirmedPersonalPlan()
       const records = loadAthleteRecords()
-      await user.click(screen.getByText(/^계획 다듬기/u, { selector: "summary span" }))
-      await user.click(screen.getByRole("button", { name: /^경험 바꾸기/u }))
+      await user.click(screen.getByRole("button", { name: "훈련 조절" }))
+      const workout = within(screen.getByRole("region", { name: "훈련 조건" }))
+      await user.click(workout.getByRole("button", { name: /^경험 바꾸기/u }))
       await user.click(screen.getByRole("button", { name: answer }))
       expect(screen.getByRole("button", { name: "이 일정으로 시작" })).toBeEnabled()
       expect(screen.queryByRole("button", { name: "기준 기록 확인하기" })).toBeNull()

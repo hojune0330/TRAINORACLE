@@ -1,7 +1,7 @@
 import React from "react"
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 import { AppShell } from "./AppShell"
 import { ENGAGEMENT_STORAGE_KEY } from "./domain/engagement"
 import type { JournalEntry } from "./domain/journal-schema"
@@ -9,6 +9,9 @@ import { setActiveLocalAccount } from "./domain/account/local-journal-ownership"
 import { registerUnsavedDraftGuard } from "./domain/unsaved-draft-navigation"
 
 const STORAGE_KEY = "trainoracle.journal.v1"
+
+// Transform the lazy archive outside the interaction timeout, as in navigation contracts.
+beforeAll(async () => { await import("./screens/JournalArchive") }, 60000)
 
 const ENTRY = {
   id: "archive-shell-session",
@@ -119,6 +122,7 @@ describe("AppShell journal archive routing", () => {
     const user = userEvent.setup()
     render(<AppShell />)
 
+    await user.click(screen.getByRole("button", { name: "일지 예시·훈련법·꾸미기" }))
     await user.click(screen.getByRole("button", { name: "일지 예시 보기" }))
     await user.click(await screen.findByRole("button", { name: /돌아가기/u }))
 
@@ -159,11 +163,12 @@ describe("AppShell journal archive routing", () => {
     expect(await screen.findByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
   })
 
-  it("keeps the easy FAQ one tap away through more", async () => {
+  it("keeps the easy FAQ reachable through More's learning menu", async () => {
     const user = userEvent.setup()
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "더보기" }))
+    await user.click(await screen.findByRole("button", { name: "배우기·꾸미기" }))
     await user.click(await screen.findByRole("button", { name: "훈련 용어집·도움말" }))
 
     expect(await screen.findByRole("heading", { name: "궁금한 점을 쉽게 풀어드려요" })).toBeVisible()
@@ -174,6 +179,7 @@ describe("AppShell journal archive routing", () => {
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "더보기" }))
+    await user.click(await screen.findByRole("button", { name: "백업·복원·휴지통" }))
     const exportButton = await screen.findByRole("button", {
       name: /내 일지 데이터 내려받기/u,
       description: /메모 원문.*제외/u,
@@ -184,8 +190,9 @@ describe("AppShell journal archive routing", () => {
     expect(await screen.findByRole("dialog", { name: "메모까지 포함할까요?" })).toBeVisible()
   })
 
-  it("does not grant points merely for opening the app", () => {
+  it("does not grant points merely for opening the app or its decoration menu", async () => {
     window.localStorage.clear()
+    const user = userEvent.setup()
     render(<AppShell />)
 
     expect(screen.getByRole("heading", {
@@ -194,8 +201,14 @@ describe("AppShell journal archive routing", () => {
     expect(screen.getByRole("button", { name: "오늘 기록 남기기" })).toBeVisible()
     expect(screen.getByRole("button", { name: "일지" })).toBeVisible()
     expect(screen.queryByRole("button", { name: "오늘 방문 확인 +1P" })).not.toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "일지 꾸미기" })).toBeVisible()
+    const learningMenu = screen.getByRole("button", { name: "일지 예시·훈련법·꾸미기" })
+    expect(learningMenu).toHaveAttribute("aria-expanded", "false")
+    expect(screen.getByRole("button", { name: "일지 꾸미기" })).not.toBeVisible()
     expect(screen.queryByLabelText(/오라클 포인트/u)).not.toBeInTheDocument()
+    expect(window.localStorage.getItem("trainoracle.engagement.v1")).toBeNull()
+    expect(window.localStorage.getItem(ENGAGEMENT_STORAGE_KEY)).toBeNull()
+    await user.click(learningMenu)
+    expect(screen.getByRole("button", { name: "일지 꾸미기" })).toBeVisible()
     expect(window.localStorage.getItem("trainoracle.engagement.v1")).toBeNull()
     expect(window.localStorage.getItem(ENGAGEMENT_STORAGE_KEY)).toBeNull()
   })
