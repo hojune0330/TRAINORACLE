@@ -1,0 +1,28 @@
+.treadmill-game { padding: var(--space-4); color: var(--ink); word-break: keep-all; }
+.treadmill-game__intro { margin: var(--space-4) 0; font-size: var(--fs-body); }
+.treadmill-game__status { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2); font-size: var(--fs-body-sm); font-variant-numeric: tabular-nums; }
+.treadmill-game__energy { display: block; width: 100%; height: var(--space-2); border: 0; margin: var(--space-2) 0 var(--space-3); accent-color: var(--brand); }
+.treadmill-game__energy::-webkit-progress-bar { background: var(--surface-2); }
+.treadmill-game__energy::-webkit-progress-value { background: var(--brand); }
+.treadmill-game__energy::-moz-progress-bar { background: var(--brand); }
+.treadmill-game__field { position: relative; border: var(--bw-line) solid var(--line); background: var(--bg); }
+.treadmill-game__field canvas { display: block; width: 100%; height: 240px; font-family: var(--sans); }
+.treadmill-game__warning { position: absolute; top: var(--space-2); left: var(--space-3); right: var(--space-3); margin: 0; text-align: center; pointer-events: none; font-size: var(--fs-body-sm); }
+.treadmill-game__route { text-align: right; margin: var(--space-2) 0 var(--space-3); font-size: var(--fs-caption); color: var(--ink-3); }
+.treadmill-game__controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); }
+.treadmill-game button { min-height: var(--app-touch-min); border: var(--bw-line) solid var(--line); border-radius: var(--r-md); padding: var(--space-2); font: inherit; color: var(--ink); background: var(--surface); }
+.treadmill-game button:disabled { opacity: 0.45; }
+.treadmill-game button:focus-visible, .treadmill-game canvas:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.treadmill-game__controls button { display: flex; flex-direction: column; justify-content: center; align-items: center; min-width: 0; touch-action: none; user-select: none; }
+.treadmill-game__controls small { font-size: var(--fs-caption); color: var(--ink-3); }
+.treadmill-game__controls button[aria-pressed="true"], .treadmill-game button.treadmill-game__primary { background: var(--brand); color: var(--surface); border-color: var(--brand); }
+.treadmill-game__controls button[aria-pressed="true"] small { color: inherit; }
+.treadmill-game__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+.treadmill-game__actions button { display: inline-flex; gap: var(--space-2); align-items: center; }
+.treadmill-game__upgrades { margin-top: var(--space-4); display: grid; gap: var(--space-2); }
+.treadmill-game__upgrades h2 { font-size: var(--fs-body); margin: 0; }
+.treadmill-game__upgrades button { display: grid; gap: var(--space-1); text-align: left; }
+.treadmill-game__upgrades span, .treadmill-game__picks, .treadmill-game__note { font-size: var(--fs-caption); color: var(--ink-3); }
+.treadmill-game__picks, .treadmill-game__note { margin: var(--space-3) 0 0; }
+@media (max-width: 375px) { .treadmill-game { padding: var(--space-3); } .treadmill-game__controls { gap: var(--space-1); } }
+@media (prefers-reduced-motion: reduce) { .treadmill-game * { scroll-behavior: auto; } }

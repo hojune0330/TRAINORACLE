@@ -1,6 +1,7 @@
 import React from "react"
 
 export const DeferredMobileScreens = {
+  TreadmillGame: React.lazy(() => import("./screens/TreadmillGame").then(module => ({ default: module.TreadmillGame }))),
   PaceCalculator: React.lazy(() => import("./screens/PaceCalculator").then(module => ({ default: module.PaceCalculator }))),
   LogDetail: React.lazy(() => import("./screens/LogDetail").then(module => ({ default: module.LogDetail }))),
   JournalArchive: React.lazy(() => import("./screens/JournalArchive").then(module => ({ default: module.JournalArchive }))),
