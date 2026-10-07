@@ -1089,7 +1089,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       }}
       onTab={goTab}
       onStartRecording={() => startRecording()}
-      hideTabBar={overlay !== null && overlay.kind !== "oracle"}
+      hideTabBar={(overlay !== null && overlay.kind !== "oracle") || (v.tab === "home" && utilityView === "minigame")}
     >
       <React.Suspense fallback={<AppLoadingState />}>
         <div
