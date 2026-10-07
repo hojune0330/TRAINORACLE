@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, readdirSync, readFileSync } from 'node:fs';
-import { isAbsolute, join, relative, resolve } from 'node:path';
+import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 
 export const BUILD_MANIFEST = 'trainoracle-build-manifest.json';
 export const DEPLOY_RECEIPT = 'trainoracle-deploy-receipt.json';
@@ -46,10 +46,12 @@ export function hasTrackedChanges(repo) {
 
 export function assertFreshOutputDirectory(directory, repo) {
   const path = resolve(directory);
+  const inside = value => !isAbsolute(value) && value !== '..' && !value.startsWith(`..${sep}`);
   const fromOutput = relative(path, resolve(repo));
-  if (!fromOutput || (!fromOutput.startsWith('..') && !isAbsolute(fromOutput))) {
+  if (inside(fromOutput)) {
     throw Error('BUILD_OUTPUT_CONTAINS_SOURCE');
   }
+  if (inside(relative(resolve(repo), path))) throw Error('BUILD_OUTPUT_INSIDE_SOURCE');
   if (existsSync(path) && (lstatSync(path).isSymbolicLink() || readdirSync(path).length)) {
     throw Error('BUILD_OUTPUT_NOT_EMPTY');
   }
