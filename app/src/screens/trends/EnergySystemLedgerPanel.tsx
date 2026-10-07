@@ -39,12 +39,14 @@ export function EnergySystemLedgerPanel({
   planState,
   mode,
   onOpenTrends,
+  onWriteLog,
 }: {
   readonly observations: readonly StructuredJournalObservation[]
   readonly today: string
   readonly planState: PlanBetaState | null
   readonly mode: "compact" | "full"
   readonly onOpenTrends?: (() => void) | undefined
+  readonly onWriteLog?: (() => void) | undefined
 }) {
   const [period, setPeriod] = React.useState<EnergyLedgerPeriod>("RECENT_4_WEEKS")
   const activePeriod = mode === "compact" ? "RECENT_4_WEEKS" : period
@@ -53,6 +55,16 @@ export function EnergySystemLedgerPanel({
     energyLedgerWindow(activePeriod, today),
   ), [activePeriod, observations, today])
   const plan = React.useMemo(() => summarizeCurrentPlanEnergy(planState), [planState])
+  const hasData = ledger.coverage !== "MISSING"
+  const hasSources = hasData || ledger.excludedSourceCount > 0
+  const recordStart = <>
+    <p className="energy-ledger__empty">{ledger.excludedSourceCount > 0
+      ? "이 기간의 기록은 있지만, 분석에 사용할 훈련 목적을 확인하지 못했어요."
+      : "일지에 운동과 훈련 목적을 남기면, 선택한 기간의 훈련 구성을 볼 수 있어요."}</p>
+    {onWriteLog && <button type="button" className="energy-ledger__open" onClick={onWriteLog}>
+      운동 기록하기<ChevronRight aria-hidden="true" size={16} />
+    </button>}
+  </>
 
   if (mode === "compact") {
     const actualRows = ledger.rows.filter((row) => row.journalSessionCount > 0 && row.key !== "MIXED_UNALLOCATED")
@@ -71,22 +83,20 @@ export function EnergySystemLedgerPanel({
             </button>
           )}
         </div>
-        {ledger.coverage === "MISSING" ? (
-          <p className="energy-ledger__empty">{ledger.excludedSourceCount > 0 ? "기록은 있지만 분석에 사용할 훈련 목적을 확인하지 못했어요." : "직접 고른 에너지 시스템 기록이 아직 없어요."}</p>
-        ) : (
+        {!hasData ? recordStart : (
           <div className="energy-ledger__compact-list">
             {actualRows.map((row) => (
               <EnergyCompactRow key={row.key} energyKey={row.key} count={row.journalSessionCount} />
             ))}
           </div>
         )}
-        <p className="energy-ledger__mixed-note">
-          {mixedMeta.code} {mixedMeta.shortLabel} {ledger.coverage === "MISSING" ? "—" : `${mixed?.journalSessionCount ?? 0}회`}
-        </p>
-        <details className="energy-ledger__coverage">
+        {hasData && <p className="energy-ledger__mixed-note">
+          {mixedMeta.code} {mixedMeta.shortLabel} {mixed?.journalSessionCount ?? 0}회
+        </p>}
+        {hasSources && <details className="energy-ledger__coverage">
           <summary>집계 근거 · 반영 {ledger.includedSourceCount}건 · 제외 {ledger.excludedSourceCount}건</summary>
           <p>중복 사본 {ledger.duplicateSourceCount}개 · 충돌 {ledger.conflictingSourceCount}건. 일지에서 직접 고른 주된 목적의 횟수예요. 실제 대사 기여율은 아니에요.</p>
-        </details>
+        </details>}
         {plan !== null && (
           <p className="energy-ledger__plan-brief">
             현재 계획 예정 {plan.plannedSessionCount}회 · 완료 표시 {plan.completedMarkCount}회
@@ -110,9 +120,9 @@ export function EnergySystemLedgerPanel({
           <AppHeading as="h2" variant="screen" accent>에너지 시스템 누적<TermHelp term="energy-system" /></AppHeading>
         </div>
       </div>
-      <p className="energy-ledger__intro">
+      {hasData && <p className="energy-ledger__intro">
         일지에서 고른 훈련 목적별 횟수예요.
-      </p>
+      </p>}
 
       <div className="energy-ledger__periods app-compact-tabs" aria-label="에너지 시스템 분석 기간">
         {PERIODS.map((option) => (
@@ -128,6 +138,7 @@ export function EnergySystemLedgerPanel({
         ))}
       </div>
 
+      {!hasData ? recordStart : <>
       <div className="energy-ledger__chart" role="img" aria-label={`${PERIODS.find((item) => item.value === period)?.label ?? "선택 기간"} 에너지 시스템: ${ariaSummary}`}>
         {ledger.rows.map((row) => (
           <div className={`energy-ledger__row energy-ledger__row--${keyClass(row.key)}`} key={row.key}>
@@ -137,14 +148,12 @@ export function EnergySystemLedgerPanel({
               <span>{ENERGY_SYSTEM_META[row.key].shortLabel}</span>
             </div>
             <div className="energy-ledger__bar-track" aria-hidden="true">
-              {ledger.coverage === "MISSING" ? (
-                <span className="energy-ledger__bar-missing" />
-              ) : row.journalSessionCount > 0 ? (
+              {row.journalSessionCount > 0 ? (
                 <span className="energy-ledger__bar-fill" style={{ width: `${(row.journalSessionCount / maxCount) * 100}%` }} />
               ) : null}
             </div>
             <strong className="energy-ledger__count">
-              {ledger.coverage === "MISSING" ? "—" : `${row.journalSessionCount}회`}
+              {row.journalSessionCount}회
             </strong>
             <span className="energy-ledger__metrics">
               {row.journalSessionCount === 0 ? "분석에 포함된 해당 목적의 기록 없음" : <>{metricText(row.durationMinutes, "분")} ({row.durationSampleCount}회 기록) · {metricText(row.distanceKm, "km")} ({row.distanceSampleCount}회 기록) · RPE {row.meanRpe ?? "미기록"} ({row.rpeSampleCount}회 기록)</>}
@@ -158,20 +167,19 @@ export function EnergySystemLedgerPanel({
         rows={ledger.rows.map((row) => ({
           key: row.key,
           label: `${ENERGY_SYSTEM_META[row.key].code} ${ENERGY_SYSTEM_META[row.key].shortLabel}`,
-          value: ledger.coverage === "MISSING"
-            ? "직접 선택한 기록 없음"
-            : `${row.journalSessionCount}회 · ${metricText(row.durationMinutes, "분")} (${row.durationSampleCount}회 기록) · ${metricText(row.distanceKm, "km")} (${row.distanceSampleCount}회 기록) · RPE ${row.meanRpe ?? "미기록"} (${row.rpeSampleCount}회 기록)`,
+          value: `${row.journalSessionCount}회 · ${metricText(row.durationMinutes, "분")} (${row.durationSampleCount}회 기록) · ${metricText(row.distanceKm, "km")} (${row.distanceSampleCount}회 기록) · RPE ${row.meanRpe ?? "미기록"} (${row.rpeSampleCount}회 기록)`,
         }))}
       />
+      </>}
 
-      <InfoDisclosure title={`계산 기준 · 기록 ${ledger.includedSourceCount}건 사용 · ${ledger.excludedSourceCount}건 제외`}>
+      {hasSources && <InfoDisclosure title={`계산 기준 · 기록 ${ledger.includedSourceCount}건 사용 · ${ledger.excludedSourceCount}건 제외`}>
         <p>중복된 기록 {ledger.duplicateSourceCount}개 · 내용이 서로 다른 기록 {ledger.conflictingSourceCount}건</p>
         <p>몸을 측정한 결과가 아니라 일지에서 직접 고른 훈련 목적을 모은 값이에요. 실제 에너지 공급 비율은 아니에요.</p>
         <p>시간과 거리는 해당 목적으로 기록한 세션의 합계예요. 준비·회복·정리가 포함될 수 있고, 한 대사 경로만 사용한 시간은 아니에요. RPE는 입력된 기록의 단순 평균이에요.</p>
         <p>계획, 완료 표시, 실제 일지 수치는 서로 다른 기록이에요. 이 표만으로 효과·부족·위험을 판단하거나 다음 계획을 자동 변경하지 않아요.</p>
-      </InfoDisclosure>
+      </InfoDisclosure>}
 
-      <CurrentPlanEnergy plan={plan} />
+      {plan !== null && <CurrentPlanEnergy plan={plan} />}
     </section>
   )
 }

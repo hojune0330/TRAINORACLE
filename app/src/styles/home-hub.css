@@ -22,6 +22,8 @@
 .home-hub__intro > .app-heading { margin-top:var(--space-1); }
 .home-hub__today, .home-hub__next, .home-hub__summary { margin-top:24px; }
 .home-hub__today, .home-hub__next { padding:16px 0; border-block:1px solid var(--line); }
+.home-hub__today--record-action { padding-block:0; border-block:0; }
+.home-hub__today--record-action > .home-hub__section-label { margin-bottom:var(--space-3); }
 .home-hub__today p { margin:8px 0 16px; line-height:1.6; }
 .home-hub__primary { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; min-height:50px; padding:12px 16px; border:1px solid var(--brand); border-radius:var(--r-md); background:var(--brand); color:var(--bg); font-weight:750; }
 .home-hub__text-action { display:inline-flex; align-items:center; gap:4px; min-height:44px; max-width:100%; padding:8px 0; border:0; background:none; color:var(--brand); font-weight:700; overflow-wrap:break-word; }
@@ -36,6 +38,10 @@
 .home-hub__status span { display:flex; flex-direction:column; gap:4px; }
 .home-hub__briefing { color:var(--ink-2); font-size:.88rem; }
 .home-hub__summary h2 { margin-bottom:4px; }
+.home-coaching__reading { margin-top:var(--space-3); }
+.home-coaching__reading h3 { margin:var(--space-2) 0; font-size:var(--fs-body); line-height:1.5; }
+.home-coaching__reading p { margin:var(--space-2) 0; line-height:1.6; }
+.home-coaching__reading .home-coaching__reading-kind { color:var(--ink-3); font-size:var(--fs-caption); }
 .home-hub__section-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:0 0 4px; }
 .home-hub__section-heading h2 { margin:0; }
 .home-hub__section-heading button { min-height:44px; padding:8px 0; border:0; background:none; color:var(--brand); font-weight:700; }

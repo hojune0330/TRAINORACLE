@@ -10,6 +10,28 @@
   line-height: 1.5;
 }
 
+.monthly-trend-section__start {
+  margin-top: var(--space-3);
+  color: var(--ink-2);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+}
+
+.monthly-trend-section__start p {
+  margin: 0;
+}
+
+.monthly-trend-section__start button {
+  min-height: var(--app-touch-min);
+  padding: var(--space-2) 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
 .monthly-trend-section__status {
   margin-top: var(--space-3);
   color: var(--ink-2);

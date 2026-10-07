@@ -118,7 +118,9 @@ describe("Trends exploration hub", () => {
 
   it("mounts only the selected analysis panel", async () => {
     const user = userEvent.setup()
-    render(<Trends />)
+    const onOpenImport = vi.fn()
+    const onWriteLog = vi.fn()
+    render(<Trends onOpenImport={onOpenImport} onWriteLog={onWriteLog} />)
 
     expect(screen.getByRole("heading", { name: "첫 운동부터 남겨볼까요?" })).toBeVisible()
     expect(screen.getByText("훈련량·구성·변화 보기")).toBeVisible()
@@ -139,7 +141,10 @@ describe("Trends exploration hub", () => {
     expect(screen.queryByRole("region", { name: "에너지 시스템 누적" })).not.toBeInTheDocument()
 
     await chooseDetail(user, "파일 분석")
-    expect(screen.getByRole("heading", { name: "분석할 파일 기록이 없어요" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "운동 파일로 구간 살펴보기" })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "운동 파일 가져오기" }))
+    expect(onOpenImport).toHaveBeenCalledOnce()
+    expect(onWriteLog).not.toHaveBeenCalled()
     expect(screen.queryByRole("region", { name: "누적 거리와 변화" })).not.toBeInTheDocument()
     expect(screen.queryByRole("region", { name: "에너지 시스템 누적" })).not.toBeInTheDocument()
     expect(screen.queryByRole("region", { name: "최근 4개월 추이" })).not.toBeInTheDocument()

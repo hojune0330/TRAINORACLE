@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
 import { PersonalOraclePanel } from "./PersonalOraclePanel"
 import { projectStructuredJournalObservations } from "../../domain/journal-observation"
@@ -7,37 +7,33 @@ import { projectStructuredJournalObservations } from "../../domain/journal-obser
 afterEach(cleanup)
 
 describe("personal oracle panel", () => {
-  it("shows a useful empty explanation and keeps the evidence boundary expandable", () => {
-    render(<PersonalOraclePanel observations={[]} today="2026-08-28" planState={null} />)
-
-    const region = screen.getByRole("region", { name: "내 훈련 요약" })
-    expect(within(region).getByRole("heading", { level: 2, name: "내 훈련 요약" })).toHaveClass("app-heading--screen", "app-heading--accent")
-    expect(region.querySelectorAll(".app-heading--accent")).toHaveLength(1)
-    expect(region.querySelector(".personal-oracle__mark")).toBeNull()
-    expect(region.querySelector(".personal-oracle__eyebrow")).toBeNull()
-    expect(within(region).getByText("분석할 기록 확인 필요")).toBeVisible()
-    expect(within(region).getByText("최근 달린 거리")).not.toBeVisible()
-    fireEvent.click(screen.getByText("더 알아보려면 어떤 기록이 필요한가요?"))
-    expect(within(region).getByText("최근 달린 거리")).toBeVisible()
-    expect(within(region).getByText("훈련 목적의 구성")).toBeVisible()
-    expect(within(region).getByText("계획과 실행 표시")).toBeVisible()
-
-    const details = within(region).getByText("근거와 해석 범위 보기").closest("details")
-    expect(details).not.toHaveAttribute("open")
-    fireEvent.click(within(region).getByText("근거와 해석 범위 보기"))
-    expect(details).toHaveAttribute("open")
-    expect(within(region).getByText(/비밀 메모 원문/u)).toBeVisible()
+  it("leaves first-record actions to the parent instead of creating an empty result", () => {
+    const { container } = render(<PersonalOraclePanel observations={[]} today="2026-08-28" planState={null} />)
+    expect(container).toBeEmptyDOMElement()
   })
 
   it("separates a plan completion mark from an actual journal result", () => {
-    render(<PersonalOraclePanel observations={[]} today="2026-08-28" planState={stateFixture()} />)
+    const onOpenPlan = vi.fn()
+    const onWriteLog = vi.fn()
+    render(<PersonalOraclePanel observations={[]} today="2026-08-28" planState={stateFixture()} onOpenPlan={onOpenPlan} onWriteLog={onWriteLog} />)
 
-    expect(screen.getByText(/예정 1회 중 완료 표시 0회/u)).not.toBeVisible()
-    fireEvent.click(screen.getByRole("button", { name: "계획과 실행 표시" }))
     expect(screen.getByText(/예정 1회 중 완료 표시 0회/u)).toBeVisible()
+    expect(screen.getByText("일정에 직접 체크한 횟수예요. 실제 운동 기록과는 달라요.")).toBeVisible()
+    expect(screen.queryByText(/기록을 기다리고|기록을 모으는|어떤 기록이 필요한가요/)).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "훈련 일정 보기" }))
+    expect(onOpenPlan).toHaveBeenCalledOnce()
+    fireEvent.click(screen.getByRole("button", { name: "운동 기록 남기기" }))
+    expect(onWriteLog).toHaveBeenCalledOnce()
+
+    const region = screen.getByRole("region", { name: "내 훈련 요약" })
+    expect(within(region).getByRole("heading", { level: 2, name: "내 훈련 요약" })).toHaveClass("app-heading--screen", "app-heading--accent")
+    expect(region.querySelectorAll("details")).toHaveLength(1)
+    expect(region.querySelector(".lucide-circle-help")).toBeNull()
     expect(screen.getByText(/완료 표시는 실제 일지와 다른 기록/u)).not.toBeVisible()
-    fireEvent.click(screen.getByText("계획과 실행 표시 · 근거 보기"))
+    fireEvent.click(screen.getByText("집계 기준"))
     expect(screen.getByText(/완료 표시는 실제 일지와 다른 기록/u)).toBeVisible()
+    expect(screen.getByText(/비밀 메모 원문/u)).toBeVisible()
+    expect(screen.getByText(/계획·안전 판단은 자동으로 바꾸지/)).toBeVisible()
     expect(screen.queryByText(/훈련 효과가/u)).not.toBeInTheDocument()
   })
 
@@ -50,17 +46,33 @@ describe("personal oracle panel", () => {
     expect(screen.getByText("최근 8주 훈련 일지 1건을 남겼어요.")).toBeVisible()
     expect(screen.getByRole("heading", { name: "힘든 정도 6/10" })).toBeVisible()
     expect(screen.queryByText(/훈련 일지 0건/)).not.toBeInTheDocument()
-    expect(screen.getByText(/예정 1회 중 완료 표시 0회/)).not.toBeVisible()
+    expect(screen.getByText(/예정 1회 중 완료 표시 0회/)).toBeVisible()
     expect(screen.queryByText(/private/)).not.toBeInTheDocument()
   })
 
   it("counts saved identity once and excludes old and future dates", () => {
-    render(<PersonalOraclePanel observations={[]} today="2026-08-28" planState={null} savedSessions={[
+    const onOpenDay = vi.fn()
+    render(<PersonalOraclePanel observations={[]} today="2026-08-28" planState={null} onOpenDay={onOpenDay} savedSessions={[
       { id: "rest", date: "2026-08-28" }, { id: "rest", date: "2026-08-28" },
       { id: "old", date: "2025-08-28" }, { id: "future", date: "2027-08-28" },
     ]} />)
     expect(screen.getByText("최근 8주 훈련 일지 1건을 남겼어요.")).toBeVisible()
-    expect(screen.getByText(/저장한 일지는 그대로 있어요/)).toBeVisible()
+    expect(screen.getByRole("heading", { name: "2026-08-28" })).toBeVisible()
+    fireEvent.click(screen.getByRole("button", { name: "최근 일지 읽기" }))
+    expect(onOpenDay).toHaveBeenCalledExactlyOnceWith("2026-08-28")
+    expect(screen.queryByText("집계 기준")).not.toBeInTheDocument()
     expect(screen.queryByText("분석할 기록 확인 필요")).not.toBeInTheDocument()
+  })
+
+  it("can open an older journal without counting it as recent or selecting a future one", () => {
+    const onOpenDay = vi.fn()
+    render(<PersonalOraclePanel observations={[]} today="2026-08-28" planState={null} onOpenDay={onOpenDay} savedSessions={[
+      { id: "old", date: "2025-08-28" }, { id: "future", date: "2027-08-28" },
+    ]} />)
+    expect(screen.queryByText(/최근 8주 훈련 일지/)).not.toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "2025-08-28" })).toBeVisible()
+    fireEvent.click(screen.getByRole("button", { name: "최근 일지 읽기" }))
+    expect(onOpenDay).toHaveBeenCalledExactlyOnceWith("2025-08-28")
+    expect(screen.queryByText("집계 기준")).not.toBeInTheDocument()
   })
 })

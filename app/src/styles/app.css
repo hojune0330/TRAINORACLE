@@ -182,13 +182,31 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
 .personal-oracle__insight p {
   margin-top: 7px;
   color: var(--ink-2);
-  font-size: 12px;
+  font-size: var(--fs-body-sm);
   line-height: 1.65;
 }
 
 .personal-oracle__insight small { margin-top: 8px; }
 
-.personal-oracle__details { padding: 14px 0; }
+.personal-oracle__action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: var(--app-touch-min);
+  padding: var(--space-2) 0;
+  border: 0;
+  background: transparent;
+  color: var(--brand);
+  font: 600 var(--fs-body) / 1.5 var(--sans);
+  text-align: left;
+  cursor: pointer;
+}
+.personal-oracle__action svg { flex-shrink: 0; }
+.personal-oracle__action:focus-visible,
+.personal-oracle__details summary:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.personal-oracle__details { padding: var(--space-1) 0; }
 
 .personal-oracle__details summary {
   min-height: 44px;
@@ -197,9 +215,10 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   gap: 8px;
   cursor: pointer;
   list-style: none;
-  font-family: var(--mono);
-  font-size: var(--fs-caption);
-  font-weight: 700;
+  font-family: var(--sans);
+  font-size: var(--fs-body-sm);
+  font-weight: 500;
+  color: var(--ink-2);
 }
 
 .personal-oracle__details summary::-webkit-details-marker { display: none; }
@@ -227,6 +246,7 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
 }
 
 .personal-oracle__source {
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   gap: 6px;

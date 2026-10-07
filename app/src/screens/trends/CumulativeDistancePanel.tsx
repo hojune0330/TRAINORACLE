@@ -16,6 +16,7 @@ type CumulativeDistancePanelProps = {
   readonly planWindow?: DistanceWindow | null
   readonly mode: "compact" | "full"
   readonly onOpenTrends?: () => void
+  readonly onWriteLog?: (() => void) | undefined
 }
 
 function distanceText(summary: CumulativeDistanceSummary): string {
@@ -42,6 +43,7 @@ export function CumulativeDistancePanel({
   planWindow = null,
   mode,
   onOpenTrends,
+  onWriteLog,
 }: CumulativeDistancePanelProps) {
   const [weekCount, setWeekCount] = React.useState<4 | 12>(4)
   const [monthCount, setMonthCount] = React.useState<6 | 12>(6)
@@ -52,14 +54,21 @@ export function CumulativeDistancePanel({
     weeksBack: mode === "compact" ? 4 : weekCount,
     monthsBack: mode === "compact" ? 6 : monthCount,
   }), [mode, monthCount, observations, planWindow, today, weekCount])
+  const totals = [
+    { label: "이번 주", summary: dashboard.toDate.week },
+    { label: "이번 달", summary: dashboard.toDate.month },
+    { label: "올해", summary: dashboard.toDate.year },
+    ...(dashboard.plan === null ? [] : [{ label: mode === "compact" ? "현재 계획" : "현재 계획 기간", summary: dashboard.plan }]),
+  ]
+  const hasTotals = totals.some(item => item.summary.totalKm !== null)
+  const hasSources = [...totals.map(item => item.summary), ...dashboard.weeks, ...dashboard.months]
+    .some(summary => summary.includedSourceCount > 0 || summary.excludedSourceCount > 0)
+  const recordStart = <div className="distance-overview__heading">
+    <p className="distance-overview__empty">운동 거리를 남기면 주·월별 합계와 변화를 볼 수 있어요.</p>
+    {onWriteLog && <button type="button" onClick={onWriteLog}>운동 기록하기<ArrowRight aria-hidden="true" size={16} /></button>}
+  </div>
 
   if (mode === "compact") {
-    const items = [
-      { label: "이번 주", summary: dashboard.toDate.week },
-      { label: "이번 달", summary: dashboard.toDate.month },
-      { label: "올해", summary: dashboard.toDate.year },
-      ...(dashboard.plan === null ? [] : [{ label: "현재 계획", summary: dashboard.plan }]),
-    ]
     return (
       <section className="distance-overview distance-overview--compact" aria-labelledby="home-distance-title">
         <div className="distance-overview__heading">
@@ -70,23 +79,20 @@ export function CumulativeDistancePanel({
             거리 분석 <ArrowRight aria-hidden="true" size={16} />
           </button>
         </div>
-        <div className={`distance-overview__totals distance-overview__totals--${items.length}`}>
-          {items.map((item) => (
+        {hasTotals ? <div className={`distance-overview__totals distance-overview__totals--${totals.length}`}>
+          {totals.map((item) => (
             <div key={item.label}>
               <span>{item.label}</span>
               <strong className="app-metric__value">{distanceText(item.summary)}<small className="app-metric__unit">{item.summary.totalKm === null ? "" : " km"}</small></strong>
               <small>반영 {item.summary.includedSourceCount}건 · 제외 {item.summary.excludedSourceCount}건</small>
             </div>
           ))}
-        </div>
-        <details className="distance-overview__details">
+        </div> : recordStart}
+        {hasSources && <details className="distance-overview__details">
           <summary>집계 근거 보기</summary>
-          {items.map(item => <p key={item.label}>{item.label}: {item.summary.window.startDate}~{item.summary.window.endDate} · 중복 사본 {item.summary.duplicateSourceCount}개 · 충돌 {item.summary.conflictingSourceCount}건</p>)}
+          {totals.map(item => <p key={item.label}>{item.label}: {item.summary.window.startDate}~{item.summary.window.endDate} · 반영 {item.summary.includedSourceCount}건 · 제외 {item.summary.excludedSourceCount}건 · 중복 사본 {item.summary.duplicateSourceCount}개 · 충돌 {item.summary.conflictingSourceCount}건</p>)}
           <p>가져온 값과 출처가 확인되지 않은 값은 아직 제외해요. 기간별 건수는 서로 겹칠 수 있어 더하지 않아요.</p>
-        </details>
-        {items.every((item) => item.summary.totalKm === null) && (
-          <p className="distance-overview__empty">훈련 후 거리를 직접 적으면 주·월·연간 합계가 여기서 시작돼요.</p>
-        )}
+        </details>}
       </section>
     )
   }
@@ -99,12 +105,9 @@ export function CumulativeDistancePanel({
         </div>
       </div>
 
-      <div className="distance-overview__totals distance-overview__totals--full">
-        <DistanceTotal label="이번 주" summary={dashboard.toDate.week} />
-        <DistanceTotal label="이번 달" summary={dashboard.toDate.month} />
-        <DistanceTotal label="올해" summary={dashboard.toDate.year} />
-        {dashboard.plan !== null && <DistanceTotal label="현재 계획 기간" summary={dashboard.plan} />}
-      </div>
+      {hasTotals ? <div className="distance-overview__totals distance-overview__totals--full">
+        {totals.map(item => <DistanceTotal key={item.label} label={item.label} summary={item.summary} />)}
+      </div> : recordStart}
 
       <DistanceSeries
         title="주간 거리"
@@ -136,15 +139,16 @@ export function CumulativeDistancePanel({
         )}
       />
 
-      <DailyDistanceHeatmap buckets={dashboard.days} month={today.slice(0, 7)} />
+      {dashboard.days.some(bucket => bucket.totalKm !== null) && <DailyDistanceHeatmap buckets={dashboard.days} month={today.slice(0, 7)} />}
 
-      <details className="distance-overview__details">
+      {hasSources && <details className="distance-overview__details">
         <summary>집계 기준과 제외된 기록 보기</summary>
         <p>직접 적어 출처가 확인된 거리만 더해요. 미기록은 0 km로 바꾸지 않아요.</p>
+        {!hasTotals && totals.map(item => <p key={item.label}>{item.label}: {item.summary.window.startDate}~{item.summary.window.endDate} · 반영 {item.summary.includedSourceCount}건 · 제외 {item.summary.excludedSourceCount}건 · 중복 사본 {item.summary.duplicateSourceCount}개 · 충돌 {item.summary.conflictingSourceCount}건</p>)}
         {dashboard.plan !== null && <p className="distance-overview__plan-note"><CalendarDays aria-hidden="true" size={15} />계획 시작일부터 화면의 마지막 계획 날짜까지 합친 거리예요. 정확히 9.5일을 시간 단위로 계산한 값은 아니에요.</p>}
         <p>가져온 값, 출처가 없는 예전 값, 잘못된 숫자, 같은 ID인데 내용이 충돌한 기록은 합계에서 제외해요.</p>
         <p>비밀 메모 원문과 메모가 있다는 사실은 읽거나 점수로 쓰지 않아요.</p>
-      </details>
+      </details>}
     </section>
   )
 }
@@ -200,7 +204,7 @@ function DistanceSeries({ title, buckets, labelForBucket, control }: {
         <AppHeading as="h3" variant="section">{title}</AppHeading>
         {control}
       </div>
-      <div
+      {values.length > 0 && <><div
         className="distance-overview__bars"
         role="img"
         aria-label={`${title}: ${buckets.map((bucket) => `${labelForBucket(bucket.label)} ${distanceAccessibleText(bucket)}`).join(", ")}`}
@@ -225,6 +229,7 @@ function DistanceSeries({ title, buckets, labelForBucket, control }: {
           value: distanceAccessibleText(bucket),
         }))}
       />
+      </>}
       {excluded > 0 && <p className="distance-overview__excluded">집계 기준에 맞지 않아 제외한 기록 {excluded}건</p>}
     </div>
   )

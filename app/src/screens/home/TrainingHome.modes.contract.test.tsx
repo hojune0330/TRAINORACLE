@@ -15,8 +15,8 @@ beforeEach(() => {
 describe("training home presentation", () => {
   it.each([
     { model: BASE, title: "오늘 운동을 기록해요" },
-    { model: TRAINING, title: "오늘의 훈련" },
-    { model: { ...BASE, homeMode: "JOURNAL" } satisfies TrainingHomeViewModel, title: "내 기록" },
+    { model: TRAINING, title: "훈련과 기록" },
+    { model: { ...BASE, homeMode: "JOURNAL", showMinjiPrompt: false, journalSummary: "1일 · 1개의 기록" } satisfies TrainingHomeViewModel, title: "내 기록" },
   ])("uses one accented hero and section headings for $title", ({ model, title }) => {
     const { container } = render(<TrainingHome model={model} />)
     const hero = screen.getByRole("heading", { level: 1, name: title })
@@ -29,7 +29,7 @@ describe("training home presentation", () => {
     if (model.homeMode === "TRAINING") {
       expect(screen.getByRole("heading", { level: 2, name: "다음 훈련" })).toHaveClass("app-heading--section")
     }
-    if (model.homeMode !== "WELCOME") {
+    if (model.homeMode !== "WELCOME" && !model.showMinjiPrompt) {
       expect(screen.getByRole("heading", { level: 2, name: "최근 하루 기록" })).toHaveClass("app-heading--section")
     }
   })
@@ -96,7 +96,7 @@ describe("training home presentation", () => {
   })
   it("keeps today's action before optional Oracle detail and recent journal", () => {
     render(<TrainingHome
-      model={TRAINING}
+      model={{ ...TRAINING, showMinjiPrompt: false }}
       safetyNotice={<div data-testid="safety">안전 안내</div>}
       oraclePreview={<HomeOraclePreview kind="partial" question="최근 결과" answer="확인한 기록만 보여요." sourceLabel="출처 · 2026.09.28" onOpen={vi.fn()} />}
       recentJournal={<div data-testid="recent-journal">하루 기록 1개</div>}
@@ -123,6 +123,46 @@ describe("training home presentation", () => {
     const card = screen.getByRole("button", { name: /^다음 훈련 ·/u })
     expect(card).toHaveTextContent(/전체 25–40min @ RPE 5–6/u); fireEvent.click(card)
     expect(next).toHaveBeenCalledOnce(); expect(plan).not.toHaveBeenCalled()
+  })
+  it("shows the saved future training and useful record actions without a no-record panel", () => {
+    const write = vi.fn()
+    render(<TrainingHome model={{ ...TRAINING, showMinjiPrompt: false, nextTraining: { ...TRAINING.nextTraining, date: "2099-10-09" } }}
+      onWriteLog={write} oraclePreview={<div>오라클 결과</div>} recentJournal={<div data-testid="actual-recent">10월 6일 기록 2개</div>} />)
+    expect(screen.getByRole("heading", { name: "훈련과 기록" })).toBeVisible()
+    const next = screen.getByRole("button", { name: /^다음 훈련 ·/u })
+    expect(next).toHaveAccessibleName(/10월 9일.*오후.*전체 25–40min @ RPE 5–6/u)
+    expect(screen.queryByText(TRAINING.todayMessage)).toBeNull()
+    expect(screen.queryByText(/오늘의 훈련|휴식일|미완료/u)).toBeNull()
+    const recent = screen.getByTestId("actual-recent")
+    expect(recent).toBeVisible()
+    expect(recent.compareDocumentPosition(screen.getByText("내 오라클 살펴보기")) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    fireEvent.click(screen.getByRole("button", { name: "오늘 기록하기" }))
+    expect(write).toHaveBeenCalledWith("quick-session")
+    fireEvent.click(screen.getByRole("button", { name: "하루 마무리 기록하기" }))
+    expect(write).toHaveBeenCalledWith("evening")
+  })
+  it("omits empty journal and analysis rows for plan-only users but keeps real history when today is unrecorded", () => {
+    const write = vi.fn(), plan = vi.fn(), archive = vi.fn(), trends = vi.fn()
+    const actions = { onWriteLog: write, onOpenPlan: plan, onOpenArchive: archive, onOpenTrends: trends }
+    const { rerender } = render(<TrainingHome model={TRAINING} {...actions} />)
+    expect(screen.queryByRole("heading", { name: "최근 하루 기록" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "최근 기록" })).toBeNull()
+    expect(screen.queryByRole("region", { name: "훈련 기록 분석" })).toBeNull()
+    expect(screen.queryByText(TRAINING.journalSummary)).toBeNull()
+    expect(screen.queryByText(TRAINING.analysisSummary)).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "오늘 기록하기" }))
+    fireEvent.click(screen.getByRole("button", { name: /^다음 훈련 ·/u }))
+    expect(write).toHaveBeenCalledWith("quick-session")
+    expect(plan).toHaveBeenCalledOnce()
+
+    rerender(<TrainingHome model={{ ...TRAINING, showMinjiPrompt: false, journalSummary: "2일 · 3개의 기록", analysisSummary: "이번 주 직접 입력 기록이 없어요" }} {...actions} />)
+    expect(screen.getByText("2일 · 3개의 기록")).toBeVisible()
+    expect(screen.getByRole("region", { name: "훈련 기록 분석" })).toBeVisible()
+    expect(screen.getByText("이번 주 직접 입력 기록이 없어요")).toBeVisible()
+    fireEvent.click(screen.getByRole("button", { name: "최근 기록" }))
+    fireEvent.click(screen.getByRole("button", { name: "훈련량·변화 보기" }))
+    expect(archive).toHaveBeenCalledOnce()
+    expect(trends).toHaveBeenCalledOnce()
   })
   it("does not claim all training is complete when today has a record", () => {
     render(<TrainingHome model={{ ...TRAINING, todayRecordCount: 1, briefing: "오늘 기록 · 수면 7h" }} />)

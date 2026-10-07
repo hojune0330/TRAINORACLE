@@ -117,7 +117,7 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
   const isEmpty = observations.length === 0
   const readComplete = journalReadComplete !== false && loadEntriesForPlanSafety().status === "complete"
   const savedSessions = entries.filter(entry => entry.kind === "post-session").map(({ id, date }) => ({ id, date }))
-  const hasSummary = readComplete && (savedSessions.length > 0 || derivePersonalOracle({ observations, today, planState }).maturity !== "EMPTY")
+  const hasSummary = readComplete && (savedSessions.some(entry => entry.date <= today) || derivePersonalOracle({ observations, today, planState }).maturity !== "EMPTY")
   const example = getOracleTopic("focus").example
   const startAction = onWriteLog ? { label: entries.length > 0 ? "기록 더 남기기" : "첫 기록 남기기", run: onWriteLog }
     : onOpenImport ? { label: "운동 파일 가져오기", run: onOpenImport }
@@ -152,7 +152,7 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
         </div>
         {section === "training" && !readComplete && <p className="trends-hub__saved-context" role="status">기록을 아직 모두 확인하지 못했어요. 저장한 일지 수와 분석 결과는 확인이 끝난 뒤 표시해요.</p>}
         {section === "training" && detail === "summary" && readComplete && <ImportedRecordPreview entries={entries} today={today} onOpenDay={onOpenCoachingDay} />}
-        {section === "training" && detail === "summary" && (isEmpty || !hasSummary) && <div className="trends-hub__explore">
+        {section === "training" && detail === "summary" && (isEmpty || !hasSummary) && (savedRace || raceRecords.message) && <div className="trends-hub__explore">
           {raceRecords.message && <p role="status">{raceRecords.message}</p>}
           {savedRace && <section className="trends-record-reading" aria-label="최근 저장한 경기 기록">
             <div><p>최근 저장한 경기 기록</p><h2>{paceEventLabel(savedRace.eventDistanceM)} · {paceClock(savedRace.performanceSeconds)}</h2><p>{savedRace.achievedOn ?? "달성일 미입력"} · {athleteRecordAuthorityCopy(savedRace)}</p></div>
@@ -180,11 +180,12 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
               <button type="button" onClick={() => setDetail("distance")}>훈련량 보기</button>
               </div>
             )}
-            {fileAnalysisEnabled && !accountEntries.some(entry => entry.kind === "post-session" && entry.fileObservation) && pendingFileCount === 0 && (
+            {fileAnalysisEnabled && readComplete && !accountEntries.some(entry => entry.kind === "post-session" && entry.fileObservation) && pendingFileCount === 0 && (
               <div className="trends-hub__empty">
-                <h2>분석할 파일 기록이 없어요</h2>
-                <p>확인된 운동 파일이 있으면 구간과 훈련 내용을 볼 수 있어요.</p>
-                {onWriteLog && <button type="button" onClick={onWriteLog}>기록 추가하기</button>}
+                <h2>운동 파일로 구간 살펴보기</h2>
+                <p>워치에서 내보낸 운동 파일을 가져오면 구간별 기록을 볼 수 있어요.</p>
+                {onOpenImport ? <button type="button" onClick={onOpenImport}>운동 파일 가져오기</button>
+                  : onWriteLog && <button type="button" onClick={onWriteLog}>운동 기록 남기기</button>}
               </div>
             )}
             <div style={{ padding: "0 20px" }}><AnalysisExclusionNotice summary={exclusion} /></div>
@@ -211,7 +212,6 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
                 <button type="button" onClick={() => onOpenOracle("focus", "example")}>이 예시 자세히 보기<ArrowRight size={16} aria-hidden="true" /></button>
               </section>}
               {entries.length > 0 && <InfoDisclosure title="어떤 기록을 분석하나요?">
-                <PersonalOraclePanel observations={observations} today={today} planState={planState} savedSessions={savedSessions} />
                 <p>확인된 기록만 분석해요. 개인 메모는 읽지 않아요.</p>
                 <p>이 결과만으로 훈련 계획을 바꾸지는 않아요.</p>
               </InfoDisclosure>}
@@ -220,7 +220,8 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
         )}
         {section === "training" && detail === "summary" && hasSummary && (
           <>
-            <PersonalOraclePanel observations={observations} today={today} planState={planState} savedSessions={savedSessions} />
+            <PersonalOraclePanel observations={observations} today={today} planState={planState} savedSessions={savedSessions}
+              onOpenPlan={onOpenPlan} onOpenDay={onOpenCoachingDay} onWriteLog={onWriteLog} />
             {onOpenOracle && <div className="trends-hub__explore">
               <InfoDisclosure purpose="actions" title="경기·계획·훈련 비교하기" preview="경기 기록 · 강점 · 훈련 비교 · 다음 훈련"><OracleTopicGrid onSelectTopic={onOpenOracle} title="다른 주제 살펴보기" compact /></InfoDisclosure>
             </div>}
@@ -245,20 +246,11 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
         {section === "training" && detail === "summary" && (onOpenImport || onOpenRecords) && <div className="trends-hub__explore">
           <InfoDisclosure purpose="actions" title="운동 파일·최고기록 추가"><RecordStartActions onImport={onOpenImport} onRecords={onOpenRecords} /></InfoDisclosure>
         </div>}
-        {section === "training" && detail === "summary" && onOpenOracle && <div className="trends-hub__explore">
-          <InfoDisclosure purpose="actions" title="내 관심 주제·기록할 요일"><OracleResume onOpenTopic={onOpenOracle} /></InfoDisclosure>
-        </div>}
-        {section === "training" && detail === "distance" && <CumulativeDistancePanel observations={observations} today={today} planWindow={planWindow} mode="full" />}
-        {section === "training" && detail === "mix" && <EnergySystemLedgerPanel observations={observations} today={today} planState={planState} mode="full" />}
-        {section === "training" && detail === "monthly" && <MonthlyTrendSection observations={observations} today={today} initialMetric={initialContext?.metric} />}
+        {section === "training" && readComplete && detail === "distance" && <CumulativeDistancePanel observations={observations} today={today} planWindow={planWindow} mode="full" onWriteLog={onWriteLog} />}
+        {section === "training" && readComplete && detail === "mix" && <EnergySystemLedgerPanel observations={observations} today={today} planState={planState} mode="full" onWriteLog={onWriteLog} />}
+        {section === "training" && readComplete && detail === "monthly" && <MonthlyTrendSection observations={observations} today={today} initialMetric={initialContext?.metric} onWriteLog={onWriteLog} onWriteRecovery={onWriteRecovery} />}
         {section === "training" && detail !== "files" && <div style={{ padding: "0 20px" }}>
           <AnalysisExclusionNotice summary={exclusion} />
-        </div>}
-        {section === "training" && detail === "summary" && hasSummary && <div style={{ padding: "0 20px" }}>
-          <InfoDisclosure title="분석 기준">
-            <p>확인된 기록만 분석해요. 개인 메모는 읽지 않아요.</p>
-            <p>기록을 정리한 결과이며, 계획·안전 판단은 자동으로 바꾸지 않아요.</p>
-          </InfoDisclosure>
         </div>}
         {section === "training" && detail === "summary" && <div className="trends-hub__recovery">
           <button type="button" aria-expanded={recoveryOpen} aria-controls="trends-recovery" onClick={() => setRecoveryOpen(open => !open)}>몸 상태·회복 기록</button>

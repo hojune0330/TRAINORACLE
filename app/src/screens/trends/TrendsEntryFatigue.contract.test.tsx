@@ -45,4 +45,11 @@ it.each(["pending", "malformed"])("does not invent an empty or saved count for %
   expect(screen.queryByRole("region", { name: "내 기록으로 시작하기" })).toBeNull()
   expect(screen.queryByRole("region", { name: "오라클 예시" })).toBeNull()
   expect(panel).not.toHaveBeenCalled()
+  for (const label of ["훈련량", "훈련 구성", "월별 변화"]) {
+    fireEvent.click(screen.getByRole("button", { name: label }))
+    expect(screen.queryByRole("region", { name: "누적 거리와 변화" })).toBeNull()
+    expect(screen.queryByRole("region", { name: "에너지 시스템 누적" })).toBeNull()
+    expect(screen.queryByRole("region", { name: "최근 4개월 추이" })).toBeNull()
+    expect(screen.getByText(/기록을 아직 모두 확인하지 못했어요/)).toBeVisible()
+  }
 })
