@@ -1,6 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { createElement } from "react"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { PlanSession } from "@impl/plan-generator/types"
 import { bindDefaultCatalogSessions } from "@impl/prescription/catalog-session-binding"
 import { PlanSchedulePreview } from "./PlanSchedulePreview"
@@ -56,7 +56,17 @@ function qualitySession(
 }
 
 describe("two-a-day plan summary", () => {
-  afterEach(cleanup)
+  const originalScrollTo = Object.getOwnPropertyDescriptor(Element.prototype, "scrollTo")
+  beforeEach(() => {
+    Object.defineProperty(Element.prototype, "scrollTo", { configurable: true, value: vi.fn(function (this: Element, options: ScrollToOptions) {
+      this.scrollTop = options.top ?? this.scrollTop
+    }) })
+  })
+  afterEach(() => {
+    cleanup()
+    if (originalScrollTo) Object.defineProperty(Element.prototype, "scrollTo", originalScrollTo)
+    else Reflect.deleteProperty(Element.prototype, "scrollTo")
+  })
 
   it("reads catalog execution in plain units without duplicating the step count or changing the prescription", () => {
     const bound = bindDefaultCatalogSessions([session(1, "AM", { minimum: 35, maximum: 35 })], 5000, "EXPERIENCED", 0)[0]!
@@ -143,8 +153,12 @@ describe("two-a-day plan summary", () => {
     expect(firstDay).toHaveTextContent("본운동")
     expect(firstDay).toHaveTextContent("강한 구간과 천천히 움직이는 회복 구간을 번갈아")
     expect(firstDay).toHaveTextContent("정리")
-    expect(firstDay).toHaveTextContent("목표 페이스·고정 횟수는 추정하지 않습니다.")
     expect(firstDay).toHaveTextContent("같은 강도로 한 번 더 달릴 여유가 없으면 본운동을 끝내세요")
+    fireEvent.click(within(firstDay).getByRole("button", { name: "훈련 방법과 이유" }))
+    const reader = within(screen.getByRole("dialog"))
+    expect(reader.getByText("상세 반복·구간별 시간은 아직 정해지지 않은 RPE 안내예요. 총 시간을 고강도 본운동 시간으로 사용하지 마세요.")).toBeVisible()
+    fireEvent.click(reader.getByRole("tab", { name: "이유·근거" }))
+    expect(reader.getByText(/목표 페이스·고정 횟수는 추정하지 않습니다\./u)).toBeVisible()
   })
 
   it.each([

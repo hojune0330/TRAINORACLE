@@ -1075,7 +1075,9 @@ function LegacyPlanBeta({
       <button type="button" className="plan-text-action" onClick={() => setNotationReaderOpen(true)}>훈련표 표기 읽기</button>
     </details>
     </div>
-    {planTools}
+    {recordsView}
+    {notationReaderOpen && <NotationReader onBack={() => setNotationReaderOpen(false)} />}
+    {!recordsOpen && !notationReaderOpen && planTools}
   </>
 
   return (

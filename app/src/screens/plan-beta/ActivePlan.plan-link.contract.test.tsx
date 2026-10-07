@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
@@ -109,10 +109,14 @@ describe("active plan journal action", () => {
       />,
     )
 
-    expect(screen.getByText("일지를 연결했어요. 수행 결과와 계획을 함께 확인할 수 있어요.")).toBeVisible()
-    expect(screen.getByText("수행 기록 있음")).toBeVisible()
-    expect(screen.getAllByRole("button", { name: "계획에도 완료 표시" })).toHaveLength(1)
-    await user.click(screen.getByRole("button", { name: "계획에도 완료 표시" }))
+    const reader = within(screen.getByRole("dialog"))
+    expect(reader.getByText("일지·진행 기록").closest("details")).toHaveAttribute("open")
+    expect(reader.getByText("일지를 연결했어요. 수행 결과와 계획을 함께 확인할 수 있어요.")).toBeVisible()
+    expect(reader.getByText("수행 기록 있음")).toBeVisible()
+    expect(reader.getAllByRole("button", { name: "계획에도 완료 표시" })).toHaveLength(1)
+    expect(onProgress).not.toHaveBeenCalled()
+    await user.click(reader.getByRole("button", { name: "계획에도 완료 표시" }))
+    expect(onProgress).toHaveBeenCalledOnce()
     expect(onProgress).toHaveBeenCalledWith({
       sessionDay: draft.link.sessionDay,
       sessionSlot: draft.link.sessionSlot,
@@ -125,19 +129,23 @@ describe("active plan journal action", () => {
     ["pain", { outcome: "COMPLETED", pain: "SIGNAL" }],
   ] as const)("does not offer completion for a saved linked %s journal", (_case, input) => {
     const { state, draft } = saveQuickPlanJournal(input)
+    const onProgress = vi.fn()
     render(
       <ActivePlan
         state={state}
         returnToSession={draft.link}
-        onProgress={vi.fn()}
+        onProgress={onProgress}
         onNextFrame={vi.fn()}
         onActivateNextFrame={vi.fn()}
         onCheckDetailedExecution={vi.fn()}
       />,
     )
 
-    expect(screen.getByText("일지를 연결했어요. 수행 결과와 계획을 함께 확인할 수 있어요.")).toBeVisible()
-    expect(screen.getByText(input.pain === "SIGNAL" ? "몸 상태 확인 기록 있음" : "일부 수행·변경 기록 있음")).toBeVisible()
+    const reader = within(screen.getByRole("dialog"))
+    expect(reader.getByText("일지·진행 기록").closest("details")).toHaveAttribute("open")
+    expect(reader.getByText("일지를 연결했어요. 수행 결과와 계획을 함께 확인할 수 있어요.")).toBeVisible()
+    expect(reader.getByText(input.pain === "SIGNAL" ? "몸 상태 확인 기록 있음" : "일부 수행·변경 기록 있음")).toBeVisible()
     expect(screen.queryByRole("button", { name: "계획에도 완료 표시" })).toBeNull()
+    expect(onProgress).not.toHaveBeenCalled()
   })
 })

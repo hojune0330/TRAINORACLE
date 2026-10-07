@@ -58,7 +58,8 @@ it("separates a bound catalog's main workout and full time, and never calls its 
   const state = { ...original, intake: { ...original.intake, startDate: "2026-09-30" }, activePlan: { ...original.activePlan, sessions: [session] } }
   const projected = projectInstantToday(state, "2026-09-30").sessions[0]!
   expect(projected.guidanceNotice).toBeUndefined()
-  expect(projected.steps[0]).toEqual({ label: "본운동", instruction: prescriptionLabel(session) })
+  expect(projected.steps[0]).toEqual({ label: "본운동", instruction: prescriptionLabel(session, true) })
+  expect(projected.steps[0]!.instruction).toBe("3 세트 × (6 × 15초 · 힘든 정도 7–8/10 · 반복 사이 15초 조깅) · 세트 사이 3분 걷기/서서 쉬기")
   expect(projected.steps.find(step => step.label === "전체 예정시간")?.instruction).toContain(formatTrainingSeconds(calculation.totals.seconds!.maximum))
   expect(projectInstantRecommendation({ ...source, sessions: [session] }, "2026-09-30")!.days[0]!.sessions[0]!.notation).toBe(prescriptionLabel(session))
   const generic = { ...session, prescription: { kind: "RPE_TIME_RANGE" as const, rpe: { minimum: 6, maximum: 7 }, durationMinutes: { minimum: 20, maximum: 30 } } }

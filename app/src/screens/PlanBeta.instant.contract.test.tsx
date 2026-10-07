@@ -16,7 +16,7 @@ afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 async function safetyAndExperience() {
   const user = userEvent.setup()
-  await user.click(screen.getByRole("button", { name: /구조화된 훈련과 경기 경험/u }))
+  await user.click(screen.getByRole("button", { name: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u }))
   await user.click(screen.getByRole("button", { name: /^매일/u }))
   await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
 }
@@ -100,8 +100,10 @@ describe("integrated minimal entry to selected plan", () => {
     await safetyAndExperience()
     expect(loadAthleteRecords()).toMatchObject([{ purpose: "RACE_GOAL", eventDistanceM: 42195,
       performanceSeconds: 10800, achievedOn: null }])
-    expect(screen.getByText("내 목표")).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "추천 근거" }))
+    expect(within(screen.getByRole("region", { name: "추천 근거" })).getByText("내 목표")).toBeVisible()
     expect(loadPlanBetaState()).toBeNull()
+    await user.click(screen.getByRole("button", { name: "훈련 조절" }))
     // Scope pace controls to their named region, not every calendar button.
     // Check attachment/visibility after each rerender instead of retaining a
     // detached control or rescanning all calendar buttons for every action.
@@ -152,11 +154,14 @@ describe("integrated minimal entry to selected plan", () => {
     const user = userEvent.setup()
     render(<PlanBeta />)
     await enterPlanWithoutRecord(); await safetyAndExperience()
-    await user.click(screen.getByRole("button", { name: "다른 계획 보기" }))
-    expect(screen.getByRole("button", { name: "계획안 A 일정 펼치기" })).toHaveAttribute("aria-expanded", "false")
-    expect(screen.getByRole("button", { name: "계획안 B 일정 펼치기" })).toHaveAttribute("aria-expanded", "false")
-    expect(screen.getAllByLabelText("9일 훈련 일정")).toHaveLength(2)
-    expect(screen.getAllByText(/주요 훈련/u).length).toBeGreaterThan(0)
+    await user.click(screen.getByRole("button", { name: "일정 바꾸기" }))
+    const alternatives = within(screen.getByRole("region", { name: "다른 계획 비교" }))
+    expect(alternatives.getByRole("button", { name: "계획안 A 일정 펼치기" })).toHaveAttribute("aria-expanded", "false")
+    expect(alternatives.getByRole("button", { name: "계획안 B 일정 펼치기" })).toHaveAttribute("aria-expanded", "false")
+    const calendars = alternatives.getAllByLabelText("9일 훈련 일정")
+    expect(calendars).toHaveLength(2)
+    calendars.forEach(calendar => expect(calendar).toBeVisible())
+    expect(alternatives.getAllByText(/주요 훈련/u).length).toBeGreaterThan(0)
   }, 20_000)
 
   it.each(["ACCOUNT_PLAN_STALE", "ACCOUNT_PLAN_EVIDENCE_REQUIRED", "ACCOUNT_PLAN_REVIEW_REQUIRED"])(
