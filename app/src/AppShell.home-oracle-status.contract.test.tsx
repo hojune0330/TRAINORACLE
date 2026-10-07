@@ -47,8 +47,10 @@ it("uses the existing plan-progress summary when no personal Oracle candidate ha
   source.complete = true
   source.planState = stateFixture()
   source.planReadKind = "loaded"
-  render(<AppShell />)
+  const readEvidence = vi.fn(() => { throw new Error("Home must not load multi-plan evidence") })
+  render(<AppShell multiPlanRuntime={{ readMultiAdjustedEvidenceV3: readEvidence }} />)
 
+  expect(readEvidence).not.toHaveBeenCalled()
   expect(screen.getByRole("heading", { name: "내 계획 진행" })).toBeVisible()
   expect(document.querySelector('[data-oracle-kind="plan"]')).toBeInTheDocument()
   expect(screen.getByRole("heading", { name: "저장한 훈련 계획" })).toBeVisible()

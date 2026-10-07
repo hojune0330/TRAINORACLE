@@ -708,7 +708,9 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     athleteRecords: athleteRecords.records, today: todayISO(), planHistory: oracleHistory.history,
   }) : undefined
   const homePlanRead = v.tab === "home" ? (() => {
-    try { return readPlanBetaStateFromStorage(undefined, undefined, multiPlanRuntime?.readMultiAdjustedEvidenceV3?.()) }
+    // The compact home summary supports ordinary saved plans only. Keep the
+    // supplied multi-plan evidence reader lazy until the actual plan view opens.
+    try { return readPlanBetaStateFromStorage() }
     catch { return { kind: "storage_error" as const } }
   })() : null
   const homePlanState = homePlanRead?.kind === "loaded" ? homePlanRead.state : null
