@@ -52,9 +52,9 @@ describe("training home presentation", () => {
       sourceLabel="출처 · 경기 기록 · 2026.09.12 / 2026.09.28"
       onOpen={open}
     />} />)
-    expect(screen.getByRole("region", { name: "오라클 · 내 기록 결과" })).not.toBeVisible()
-    fireEvent.click(screen.getByText("내 오라클 살펴보기"))
     const preview = screen.getByRole("region", { name: "오라클 · 내 기록 결과" })
+    expect(preview).toBeVisible()
+    expect(preview.closest("details")).toBeNull()
     expect(preview).toHaveAttribute("data-oracle-kind", "personal")
     expect(within(preview).getByText(/2026\.09\.12 \/ 2026\.09\.28/u)).toBeVisible()
     expect(screen.getAllByRole("region", { name: /오라클/u })).toHaveLength(1)
@@ -77,18 +77,22 @@ describe("training home presentation", () => {
     expect(learn).toHaveBeenCalledOnce(); expect(decorate).toHaveBeenCalledOnce()
     expect(guide).toHaveBeenCalledOnce()
   })
-  it("marks an example as an example in the Oracle preview", () => {
+  it("offers one example action without automatically showing fictional results", () => {
+    const open = vi.fn()
     render(<TrainingHome model={BASE} oraclePreview={<HomeOraclePreview
       kind="example"
       question="예시 결과는 이렇게 읽어요"
       answer="가상 기록으로 결과 화면을 먼저 둘러볼 수 있어요."
       sourceLabel="출처 · 예시 데이터"
-      onOpen={vi.fn()}
+      onOpen={open}
     />} />)
-    expect(screen.getByText("출처 · 예시 데이터")).not.toBeVisible()
-    fireEvent.click(screen.getByText("오라클 결과 예시 보기"))
-    expect(screen.getByRole("region", { name: "오라클 · 예시 결과" })).toBeVisible()
-    expect(screen.getByText("출처 · 예시 데이터")).toBeVisible()
+    const preview = screen.getByRole("region", { name: "오라클 · 예시 결과" })
+    expect(preview).toBeVisible()
+    expect(preview.closest("details")).toBeNull()
+    expect(screen.queryByText("예시 결과는 이렇게 읽어요")).toBeNull()
+    expect(screen.queryByText("가상 기록으로 결과 화면을 먼저 둘러볼 수 있어요.")).toBeNull()
+    fireEvent.click(within(preview).getByRole("button", { name: "예시 결과 보기" }))
+    expect(open).toHaveBeenCalledOnce()
   })
   it("places safety notice immediately after the header", () => {
     render(<TrainingHome model={BASE} safetyNotice={<div data-testid="safety">안전 안내</div>} />)
@@ -102,7 +106,7 @@ describe("training home presentation", () => {
       recentJournal={<div data-testid="recent-journal">하루 기록 1개</div>}
     />)
     const safety = screen.getByTestId("safety")
-    const preview = screen.getByText("내 오라클 살펴보기")
+    const preview = screen.getByRole("region", { name: "오라클 · 기록 일부로 확인" })
     const next = screen.getByRole("region", { name: "다음 훈련" })
     const today = screen.getByLabelText("오늘")
     const journal = screen.getByTestId("recent-journal")
@@ -135,10 +139,10 @@ describe("training home presentation", () => {
     expect(screen.queryByText(/오늘의 훈련|휴식일|미완료/u)).toBeNull()
     const recent = screen.getByTestId("actual-recent")
     expect(recent).toBeVisible()
-    expect(recent.compareDocumentPosition(screen.getByText("내 오라클 살펴보기")) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    expect(recent.compareDocumentPosition(screen.getByText("오라클 결과")) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     fireEvent.click(screen.getByRole("button", { name: "오늘 기록하기" }))
     expect(write).toHaveBeenCalledWith("quick-session")
-    fireEvent.click(screen.getByRole("button", { name: "하루 마무리 기록하기" }))
+    fireEvent.click(screen.getByRole("button", { name: "하루 마무리" }))
     expect(write).toHaveBeenCalledWith("evening")
   })
   it("omits empty journal and analysis rows for plan-only users but keeps real history when today is unrecorded", () => {
@@ -167,5 +171,30 @@ describe("training home presentation", () => {
   it("does not claim all training is complete when today has a record", () => {
     render(<TrainingHome model={{ ...TRAINING, todayRecordCount: 1, briefing: "오늘 기록 · 수면 7h" }} />)
     expect(screen.getByText("오늘 기록을 남겼어요.")).toBeVisible(); expect(screen.getByText("다음 훈련")).toBeVisible(); expect(screen.queryByText(/모든 훈련을 마쳤어요/u)).toBeNull()
+  })
+  it.each([BASE, TRAINING, { ...TRAINING, todayRecordCount: 1 }])("keeps optional daily entries available without competing with the primary action: $homeMode/$todayRecordCount", (model) => {
+    const write = vi.fn()
+    render(<TrainingHome model={model} onWriteLog={write} todayContext={<p>선택 입력 내용</p>} />)
+    const optional = screen.getByRole("group", { name: "선택해서 남기는 기록" })
+    fireEvent.click(within(optional).getByRole("button", { name: "하루 마무리" }))
+    expect(write).toHaveBeenCalledWith("evening")
+    expect(screen.getByText("선택 입력 내용")).not.toBeVisible()
+    fireEvent.click(within(optional).getByRole("button", { name: "기분·몸 상태" }))
+    expect(screen.getByText("선택 입력 내용")).toBeVisible()
+    expect(optional.querySelector(".home-hub__primary")).toBeNull()
+    expect(screen.queryByText("기분·몸 상태·날씨 남기기")).toBeNull()
+  })
+  it("shows an unavailable result as a short status, never an example or collapsed explanation", () => {
+    const open = vi.fn()
+    render(<TrainingHome model={TRAINING} oraclePreview={<HomeOraclePreview kind="unavailable" question="기록을 아직 확인하지 못했어요" answer="기록 상태를 확인한 뒤 결과를 볼 수 있어요." sourceLabel="확인되지 않은 기록으로는 결과를 만들지 않아요." onOpen={open} />} />)
+    const status = screen.getByRole("region", { name: "오라클 · 결과를 표시할 수 없어요" })
+    expect(status).toBeVisible()
+    expect(status.closest("details")).toBeNull()
+    expect(within(status).queryByRole("heading")).toBeNull()
+    expect(within(status).getByText("기록 상태를 확인한 뒤 결과를 볼 수 있어요.")).toBeVisible()
+    expect(within(status).queryByText("확인되지 않은 기록으로는 결과를 만들지 않아요.")).toBeNull()
+    expect(within(status).queryByRole("button", { name: "예시 결과 보기" })).toBeNull()
+    fireEvent.click(within(status).getByRole("button", { name: "기록 상태 확인" }))
+    expect(open).toHaveBeenCalledOnce()
   })
 })

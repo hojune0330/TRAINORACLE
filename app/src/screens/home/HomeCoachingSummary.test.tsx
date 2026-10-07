@@ -1,5 +1,4 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
 import { afterEach, expect, it, vi } from "vitest"
 import { HomeCoachingSummary } from "./HomeCoachingSummary"
 import { TrainingHome } from "./TrainingHome"
@@ -49,18 +48,13 @@ it("does not interrupt general reading on unrelated journal revisions", () => {
   expect(screen.getByRole("dialog")).toBeVisible()
 })
 
-it("prioritizes recording and reveals one prepared result on request without duplicating coaching or topic tiles", async () => {
-  const user = userEvent.setup()
+it("prioritizes recording and shows one prepared preview without a second entry wrapper", () => {
   const model: TrainingHomeViewModel = { homeMode: "WELCOME", todayMessage: "", todayRecordCount: 0, journalSummary: "", flowSummary: "", planSummary: "저장된 계획 없음", analysisSummary: "", showMinjiPrompt: true, nextTraining: null, briefing: "" }
-  render(<TrainingHome model={model} onOpenOracle={vi.fn()} oraclePreview={<h2>오라클 예시 결과</h2>} />)
+  render(<TrainingHome model={model} onOpenOracle={vi.fn()} oraclePreview={<h2>오라클 미리보기</h2>} />)
   const write = screen.getByRole("button", { name: "오늘 기록 남기기" })
-  const preview = screen.getByRole("heading", { name: "오라클 예시 결과" })
-  const disclosure = screen.getByRole("button", { name: "오라클 결과 예시 보기" })
+  const preview = screen.getByRole("heading", { name: "오라클 미리보기" })
   expect(write).toBeVisible()
-  expect(disclosure).toHaveAttribute("aria-expanded", "false")
-  expect(preview).not.toBeVisible()
-  expect(write.compareDocumentPosition(disclosure) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-  await user.click(disclosure)
+  expect(preview.closest("details")).toBeNull()
   expect(preview).toBeVisible()
   expect(write.compareDocumentPosition(preview) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   expect(screen.queryByRole("heading", { name: "훈련 코칭" })).toBeNull()

@@ -21,4 +21,22 @@ describe("daily context tags", () => {
 
     expect(loadDailyContext("2026-08-01")).toBeNull()
   })
+
+  it("does not replace an unreadable context map when saving another date", () => {
+    const original = "{invalid-json"
+    window.localStorage.setItem("trainoracle.daily-context.v1", original)
+
+    expect(saveDailyContext({ date: "2026-08-02", mood: "GOOD", body: "NORMAL", weather: "SUNNY" })).toBe(false)
+    expect(window.localStorage.getItem("trainoracle.daily-context.v1")).toBe(original)
+  })
+
+  it("does not treat a context stored under the wrong date as a valid map", () => {
+    const original = JSON.stringify({
+      "2026-08-01": { date: "2026-08-02", mood: "GOOD", body: "NORMAL", weather: "SUNNY" },
+    })
+    window.localStorage.setItem("trainoracle.daily-context.v1", original)
+
+    expect(saveDailyContext({ date: "2026-08-03", mood: "LOW", body: "TIRED", weather: "RAINY" })).toBe(false)
+    expect(window.localStorage.getItem("trainoracle.daily-context.v1")).toBe(original)
+  })
 })

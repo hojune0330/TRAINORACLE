@@ -1,6 +1,27 @@
 import React from "react"
-import { loadDailyContext, saveDailyContext } from "../../domain/daily-context"
+import { readDailyContext, updateDailyContext } from "../../domain/daily-context"
 import type { DailyContext } from "../../domain/daily-context"
+import { localAccountScopeSnapshot } from "../../domain/account/local-account-scope"
+import { onLocalJournalScopeChange } from "../../domain/account/local-journal-ownership"
+
+type DailyContextView = {
+  readonly date: string
+  readonly accountScope: string | null
+  readonly status: "ready" | "unavailable"
+  readonly context: DailyContext
+}
+
+function emptyContext(date: string): DailyContext {
+  return { date, mood: null, body: null, weather: null }
+}
+
+function readView(date: string): DailyContextView {
+  const accountScope = localAccountScopeSnapshot()
+  const result = readDailyContext(date)
+  return result.kind === "loaded"
+    ? { date, accountScope, status: "ready", context: result.context ?? emptyContext(date) }
+    : { date, accountScope, status: "unavailable", context: emptyContext(date) }
+}
 
 const MOODS = [
   { value: "LOW", label: "낮음" },
@@ -21,30 +42,65 @@ const WEATHER = [
 ] as const
 
 export function DailyContextTags({ date, bodyOnly = false }: { readonly date: string; readonly bodyOnly?: boolean }) {
-  const empty = (): DailyContext => ({ date, mood: null, body: null, weather: null })
-  const read = () => { try { return loadDailyContext(date) ?? empty() } catch { return empty() } }
-  const [context, setContext] = React.useState<DailyContext>(read)
+  const [view, setView] = React.useState<DailyContextView>(() => readView(date))
   const [saveMessage, setSaveMessage] = React.useState("")
   const [saveFailed, setSaveFailed] = React.useState(false)
+  const currentScope = localAccountScopeSnapshot()
+  const viewMatches = view.date === date && view.accountScope === currentScope
+  const loadStatus = viewMatches ? view.status : "loading"
+  const context = viewMatches && view.status === "ready" ? view.context : emptyContext(date)
+  const visibleSaveMessage = viewMatches ? saveMessage : ""
+  const visibleSaveFailed = viewMatches && saveFailed
+  const retryRead = () => {
+    setView(readView(date))
+    setSaveMessage("")
+    setSaveFailed(false)
+  }
+
   React.useEffect(() => {
-    setContext(read()); setSaveMessage(""); setSaveFailed(false)
-    const refresh = () => setContext(read())
+    const refresh = () => {
+      const next = readView(date)
+      setView(next)
+      if (next.status === "unavailable") {
+        setSaveMessage("")
+        setSaveFailed(false)
+      }
+    }
+    const refreshScope = () => {
+      setView(readView(date))
+      setSaveMessage("")
+      setSaveFailed(false)
+    }
+    setSaveMessage("")
+    setSaveFailed(false)
+    refresh()
     window.addEventListener("storage", refresh)
     window.addEventListener("trainoracle:daily-context-changed", refresh)
+    const unsubscribeScope = onLocalJournalScopeChange(refreshScope)
     return () => {
       window.removeEventListener("storage", refresh)
       window.removeEventListener("trainoracle:daily-context-changed", refresh)
+      unsubscribeScope()
     }
   }, [date])
 
   const update = (patch: Partial<Pick<DailyContext, "mood" | "body" | "weather">>) => {
-    // Another view may have saved mood or weather since this view was opened.
-    let current: DailyContext
-    try { current = loadDailyContext(date) ?? empty() }
-    catch { setSaveFailed(true); setSaveMessage("저장 공간을 열지 못했어요. 선택은 바꾸지 않았어요."); return }
-    const next = { ...current, ...patch }
-    if (saveDailyContext(next)) {
-      setContext(next); setSaveFailed(false); setSaveMessage("이 기기에 오늘의 상태를 저장했어요.")
+    if (view.date !== date || view.accountScope !== localAccountScopeSnapshot()) {
+      retryRead()
+      return
+    }
+    if (view.status !== "ready") return
+    const result = updateDailyContext(date, patch)
+    if (result.kind === "read_unavailable") {
+      setView(readView(date))
+      setSaveMessage("")
+      setSaveFailed(false)
+      return
+    }
+    if (result.kind === "saved") {
+      setView({ date, accountScope: localAccountScopeSnapshot(), status: "ready", context: result.context })
+      setSaveFailed(false)
+      setSaveMessage("이 기기에 오늘의 상태를 저장했어요.")
       window.dispatchEvent(new Event("trainoracle:daily-context-changed"))
     } else {
       setSaveFailed(true); setSaveMessage("저장하지 못했어요. 선택을 다시 눌러 주세요.")
@@ -53,11 +109,16 @@ export function DailyContextTags({ date, bodyOnly = false }: { readonly date: st
 
   return (
     <section className="daily-context" aria-label={bodyOnly ? "오늘의 몸 상태" : "오늘의 기분 몸 상태 날씨"}>
-      {!bodyOnly && <TagGroup title="기분" values={MOODS} selected={context.mood} onSelect={(mood) => update({ mood })} />}
-      <TagGroup title="몸 상태" values={BODIES} selected={context.body} onSelect={(body) => update({ body })} />
-      {bodyOnly && <button type="button" onClick={() => update({ body: null })} aria-pressed={context.body === null}>모르겠어요 · 비워 두기</button>}
-      {!bodyOnly && <TagGroup title="날씨" values={WEATHER} selected={context.weather} onSelect={(weather) => update({ weather })} />}
-      {saveMessage && <p role={saveFailed ? "alert" : "status"}>{saveMessage}</p>}
+      {!bodyOnly && <TagGroup title="기분" values={MOODS} selected={context.mood} disabled={loadStatus !== "ready"} onSelect={(mood) => update({ mood })} />}
+      <TagGroup title="몸 상태" values={BODIES} selected={context.body} disabled={loadStatus !== "ready"} onSelect={(body) => update({ body })} />
+      {bodyOnly && <button type="button" disabled={loadStatus !== "ready"} onClick={() => update({ body: null })} aria-pressed={loadStatus === "ready" && context.body === null}>모르겠어요 · 비워 두기</button>}
+      {!bodyOnly && <TagGroup title="날씨" values={WEATHER} selected={context.weather} disabled={loadStatus !== "ready"} onSelect={(weather) => update({ weather })} />}
+      {loadStatus === "loading" && <p role="status">오늘의 상태를 확인하고 있어요.</p>}
+      {loadStatus === "unavailable" && <>
+        <p role="alert">오늘의 상태를 불러오지 못했어요. 저장된 자료는 그대로 두었어요.</p>
+        <button type="button" onClick={retryRead}>다시 불러오기</button>
+      </>}
+      {visibleSaveMessage && <p role={visibleSaveFailed ? "alert" : "status"}>{visibleSaveMessage}</p>}
       {!bodyOnly && <p>날씨는 직접 골라요. 위치정보를 사용하지 않아요.</p>}
     </section>
   )
@@ -67,11 +128,13 @@ function TagGroup<T extends string>({
   title,
   values,
   selected,
+  disabled,
   onSelect,
 }: {
   readonly title: string
   readonly values: readonly { readonly value: T; readonly label: string }[]
   readonly selected: T | null
+  readonly disabled: boolean
   readonly onSelect: (value: T) => void
 }) {
   return (
@@ -81,6 +144,7 @@ function TagGroup<T extends string>({
         {values.map((item) => (
           <button
             type="button"
+            disabled={disabled}
             aria-label={`${title} ${item.label}`}
             aria-pressed={selected === item.value}
             onClick={() => onSelect(item.value)}
