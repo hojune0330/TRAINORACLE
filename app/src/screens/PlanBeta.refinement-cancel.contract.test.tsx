@@ -29,7 +29,7 @@ async function reachCandidates() {
 }
 
 function openScheduleQuestion(name: RegExp) {
-  fireEvent.click(screen.getByRole("button", { name: "일정 바꾸기" }))
+  fireEvent.click(screen.getByRole("button", { name: "일정·운동 시간" }))
   fireEvent.click(screen.getByRole("button", { name }))
 }
 

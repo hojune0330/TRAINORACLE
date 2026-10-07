@@ -46,7 +46,7 @@ describe("deferred workout editors on a candidate result", () => {
     expect(methodRender).not.toHaveBeenCalled()
     expect(resolve).not.toHaveBeenCalled()
     expect(history).not.toHaveBeenCalled()
-    fireEvent.click(screen.getByRole("button", { name: "일정 바꾸기" }))
+    fireEvent.click(screen.getByRole("button", { name: "일정·운동 시간" }))
     expect(screen.getByLabelText("계획 시작 날짜")).toBeEnabled()
     expect(catalogRender).not.toHaveBeenCalled()
     expect(methodRender).not.toHaveBeenCalled()

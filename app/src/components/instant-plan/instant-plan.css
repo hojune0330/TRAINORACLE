@@ -398,6 +398,9 @@
   background: var(--surface);
 }
 
+/* Keep the pace source and time summary visible before accepting a plan. */
+.instant-plan--recommendation .instant-plan__start-action { position: static; }
+
 @media (max-width: 359px) {
   .instant-plan__actions > * {
     flex: 1 1 100%;

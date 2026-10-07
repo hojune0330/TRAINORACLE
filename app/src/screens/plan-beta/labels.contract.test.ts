@@ -6,6 +6,8 @@ import { bindDefaultCatalogSessions } from "@impl/prescription/catalog-session-b
 import { PlanSchedulePreview } from "./PlanSchedulePreview"
 import {
   candidateSessionSummary,
+  candidateSharedSessionSummary,
+  candidateDurationSummary,
   sessionExecutionSteps,
   twoADayTrainingDayCount,
 } from "./labels"
@@ -108,6 +110,21 @@ describe("two-a-day plan summary", () => {
 
   it("does not count a single evening session as two-a-day training", () => {
     expect(twoADayTrainingDayCount([session(4, "PM")])).toBe(0)
+  })
+
+  it("counts workouts as occurrences and counts only whole rest days once", () => {
+    expect(candidateSharedSessionSummary({ sessions: [session(1, "AM"), session(1, "PM"),
+      restSession(2, "AM"), session(2, "PM"), restSession(3, "AM"), restSession(3, "PM")] }))
+      .toBe("운동 3회 · 기초·회복 3회 · 쉬는 날 1일 · 하루 2회 훈련 1일")
+  })
+
+  it("does not publish a plausible total from an unreadable catalog binding", () => {
+    const bound = bindDefaultCatalogSessions([session(1, "AM", { minimum: 35, maximum: 35 })], 5000, "EXPERIENCED", 0)[0]!
+    if (bound.prescription.kind !== "RPE_TIME_RANGE" || !bound.prescription.catalogWorkout) throw Error("Expected bound fixture")
+    const invalid = { ...bound, prescription: { ...bound.prescription, catalogWorkout: {
+      ...bound.prescription.catalogWorkout, calculationFingerprint: "invalid-synthetic-fingerprint",
+    } } } as PlanSession
+    expect(candidateDurationSummary({ sessions: [invalid] })).toBe("전체 시간 확인 필요 · 일부 운동의 시간을 읽지 못했어요")
   })
 
   it.each([

@@ -22,7 +22,7 @@ async function generatePlanCandidates(): Promise<void> {
   await user.click(screen.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
   await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
   await user.click(screen.getByRole("button", { name: "내 계획 완성하기" }))
-  await user.click(screen.getByRole("button", { name: /조금 힘들게 꾸준히.*LT/u }))
+  await user.click(screen.getByRole("button", { name: /지속 페이스 훈련/u }))
   await user.click(screen.getByRole("button", { name: /시간·힘든 정도로 받기/u }))
   await user.click(screen.getByRole("button", { name: /^3일/u }))
   await user.click(screen.getByRole("button", { name: /9일 계획 받기/u }))
@@ -42,7 +42,7 @@ describe("plan candidate save retry", () => {
       if (key === "trainoracle.plan-beta.v1" && ++writes === 1) throw new Error("QuotaExceededError")
       return realSetItem.call(this, key, value)
     })
-    await user.click(screen.getAllByRole("button", { name: /선택하기|이 계획으로 시작하기/u })[0]!)
+    await user.click(screen.getAllByRole("button", { name: /선택하기|계획 A로 시작/u })[0]!)
     expect(screen.getByRole("button", { name: "저장 다시 시도" })).toBeVisible()
     let release: (() => void) | undefined
     const lock: mutationLock.PlanMutationLockManager = {
@@ -79,7 +79,7 @@ describe("plan candidate save retry", () => {
     })
 
     // When: the athlete selects the first candidate.
-    const [choice] = screen.getAllByRole("button", { name: /선택하기|이 계획으로 시작하기/u })
+    const [choice] = screen.getAllByRole("button", { name: /선택하기|계획 A로 시작/u })
     if (choice === undefined) throw new Error("Expected a generated plan choice")
     await userEvent.setup().click(choice)
 
@@ -105,7 +105,7 @@ describe("plan candidate save retry", () => {
       }
       return realSetItem.call(this, key, value)
     })
-    const [choice] = screen.getAllByRole("button", { name: /선택하기|이 계획으로 시작하기/u })
+    const [choice] = screen.getAllByRole("button", { name: /선택하기|계획 A로 시작/u })
     if (choice === undefined) throw new Error("Expected a generated plan choice")
     await userEvent.setup().click(choice)
 
@@ -131,7 +131,7 @@ describe("plan candidate save retry", () => {
       if (key === "trainoracle.plan-beta.v1") activePlanWrites += 1
       return realSetItem.call(this, key, value)
     })
-    const [choice] = screen.getAllByRole("button", { name: /선택하기|이 계획으로 시작하기/u })
+    const [choice] = screen.getAllByRole("button", { name: /선택하기|계획 A로 시작/u })
     if (choice === undefined) throw new Error("Expected a generated plan choice")
 
     // When: the athlete double-taps the same choice.
@@ -154,7 +154,7 @@ describe("plan candidate save retry", () => {
 
     // Then: selection is disabled and no active plan is written.
     expect(screen.getByRole("alert")).toHaveTextContent("실제 날짜를 고른 뒤 계획을 선택해 주세요.")
-    for (const choice of screen.getAllByRole("button", { name: /선택하기|이 계획으로 시작하기/u })) {
+    for (const choice of screen.getAllByRole("button", { name: /선택하기|계획 A로 시작/u })) {
       expect(choice).toBeDisabled()
     }
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
@@ -173,7 +173,7 @@ describe("plan candidate save retry", () => {
       if (key === "trainoracle.plan-beta.v1") return
       return realSetItem.call(this, key, value)
     })
-    const [choice] = screen.getAllByRole("button", { name: /선택하기|이 계획으로 시작하기/u })
+    const [choice] = screen.getAllByRole("button", { name: /선택하기|계획 A로 시작/u })
     if (choice === undefined) throw new Error("Expected a generated plan choice")
 
     // When: the athlete chooses the candidate.
@@ -207,7 +207,7 @@ describe("plan candidate save retry", () => {
       if (key === "trainoracle.plan-beta.v1") throw new Error("SecurityError")
       return realRemoveItem.call(this, key)
     })
-    const [choice] = screen.getAllByRole("button", { name: /선택하기|이 계획으로 시작하기/u })
+    const [choice] = screen.getAllByRole("button", { name: /선택하기|계획 A로 시작/u })
     if (choice === undefined) throw new Error("Expected a generated plan choice")
 
     await userEvent.setup().click(choice)
@@ -228,7 +228,7 @@ describe("plan candidate save retry", () => {
       if (key === "trainoracle.plan-beta.v1") throw new Error("SecurityError")
       return realGetItem.call(this, key)
     })
-    const [choice] = screen.getAllByRole("button", { name: /선택하기|이 계획으로 시작하기/u })
+    const [choice] = screen.getAllByRole("button", { name: /선택하기|계획 A로 시작/u })
     if (choice === undefined) throw new Error("Expected a generated plan choice")
 
     await userEvent.setup().click(choice)

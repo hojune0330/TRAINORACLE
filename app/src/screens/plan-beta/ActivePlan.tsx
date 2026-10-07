@@ -22,7 +22,7 @@ import type {
 import { readArchivedOriginalPlans } from "../../domain/plan-beta-store"
 import { TermHelp } from "../../components/TermHelp"
 import {
-  candidateLabel,
+  twoADayTrainingDayCount,
   ENERGY_INTENT_LABELS,
   PROGRESS_LABELS,
   sessionSlotLabel,
@@ -49,6 +49,7 @@ import { projectCurrentInstantToday } from "./instant-plan-today-context"
 import { useLocalToday } from "../../hooks/useLocalToday"
 import { SessionExplanationEntry } from "./SessionExplanation"
 import { useCalendarEntries } from "../../hooks/useCalendarEntries"
+import { EasyTrainingTimes } from "./EasyTrainingTimes"
 
 const PROGRESS_ACTIONS: readonly {
   readonly state: PlanProgressState
@@ -147,10 +148,6 @@ export function ActivePlan({
     const key = `${session.day}:${session.slot}`
     linkedResults.set(key, [...(linkedResults.get(key) ?? []), entry])
   }
-  const label = candidateLabel(
-    activePlan.candidateKind,
-    activePlan.selectedEnergyIntent,
-  )
   const frameLengthDays = "projectionLengthDays" in activePlan.frame
     ? activePlan.frame.projectionLengthDays ?? activePlan.frame.lengthDays
     : activePlan.frame.lengthDays
@@ -164,9 +161,9 @@ export function ActivePlan({
   const startDate = state.intake.startDate ?? state.generatedAt.slice(0, 10)
   const frameDayCount = Math.ceil(frameLengthDays)
   const focusLabel = ENERGY_INTENT_LABELS[activePlan.selectedEnergyIntent].title
-  const planAdjustment = activePlan.candidateKind === "CONSERVATIVE"
-    ? "쉬운 훈련은 가장 짧은 시간으로 구성"
-    : "쉬운 훈련은 표시 범위 안에서 조절"
+  const visibleSessions = activePlan.sessions.filter(session => session.day >= 1 && session.day <= frameDayCount)
+  const doubleDays = twoADayTrainingDayCount(visibleSessions)
+  const trainingCount = visibleSessions.filter(session => session.role !== "REST").length
   const returnedSession = returnToSession === undefined
     ? null
     : resolveCurrentPlannedSession(state, returnToSession)
@@ -273,12 +270,9 @@ export function ActivePlan({
         {onManagePaceRecords && <button type="button" className="plan-text-action" onClick={onManagePaceRecords}>기준 기록·페이스 바꾸기</button>}
       </div>
       {futureTrainingEditor}
+      <PlanPrescriptionBasis sessions={visibleSessions} />
       <details className="plan-detailed-options">
-      <summary>전체 계획 구성</summary>
-      <p className="active-plan__variant">
-        <strong>{label.title}</strong>
-        <span>{planAdjustment}</span>
-      </p>
+      <summary>기간·운동 시간</summary>
       <p className="active-plan__date-range">
         <CalendarDays aria-hidden="true" size={18} />
         {planDateRangeLabel(startDate, frameDayCount)}
@@ -289,8 +283,9 @@ export function ActivePlan({
           {focusLabel}
           <TermHelp term={ENERGY_INTENT_LABELS[activePlan.selectedEnergyIntent].term} />
         </li>
-        <li>{state.intake.secondSessionMode === "RECOVERY_PM_ALLOWED" ? "하루 2회 포함" : "하루 1회"}</li>
+        <li>{doubleDays > 0 ? `하루 2회 운동하는 날 ${doubleDays}일` : `예정된 운동 ${trainingCount}회`}</li>
       </ul>
+      <EasyTrainingTimes sessions={visibleSessions} />
       {state.version === 3 && state.periodization !== undefined && (
         <section className="periodization-direction" aria-labelledby="periodization-direction-title">
           <div>
@@ -361,7 +356,6 @@ export function ActivePlan({
                 <ChevronDown aria-hidden="true" size={18} />
               </summary>
               <div className="active-plan__information-body">
-                <PlanPrescriptionBasis inline sessions={activePlan.sessions} />
                 <p className="active-plan__carryover-warning">
                   완료하지 못한 훈련을 다음 날에 몰아서 하지 마세요. 계획에 표시된 날짜를 기준으로 진행해 주세요.
                 </p>

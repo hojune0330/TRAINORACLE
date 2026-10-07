@@ -8,6 +8,21 @@ export function PlanPrescriptionBasis({ sessions, confirmationPending = false, i
   readonly inline?: boolean
 }) {
   const basis = planPrescriptionBasis(sessions, confirmationPending)
-  const content = <><p>{basis.label}</p><p>{basis.detail}</p></>
-  return inline ? content : <InfoDisclosure title="무엇을 기준으로 만든 훈련인가요?">{content}</InfoDisclosure>
+  const importantNotice = basis.importantNotice
+    && <p className="plan-prescription-basis__notice" role="note">{basis.importantNotice}</p>
+  const pending = basis.pendingNotice && <p className="plan-prescription-basis__pending" role="status">{basis.pendingNotice}</p>
+  return inline
+    ? <div className="plan-prescription-basis">
+        <p className="plan-prescription-basis__summary">{basis.label}</p>
+        <p className="plan-prescription-basis__detail">{basis.detail}</p>
+        {importantNotice}
+        {pending}
+      </div>
+    : <div className="plan-prescription-basis">
+        <InfoDisclosure title="페이스 안내" preview={basis.label} purpose="actions" className="plan-prescription-basis__disclosure">
+          <p className="plan-prescription-basis__detail">{basis.detail}</p>
+        </InfoDisclosure>
+        {importantNotice}
+        {pending}
+      </div>
 }

@@ -154,7 +154,7 @@ describe("integrated minimal entry to selected plan", () => {
     const user = userEvent.setup()
     render(<PlanBeta />)
     await enterPlanWithoutRecord(); await safetyAndExperience()
-    await user.click(screen.getByRole("button", { name: "일정 바꾸기" }))
+    await user.click(screen.getByRole("button", { name: "일정·운동 시간" }))
     const alternatives = within(screen.getByRole("region", { name: "다른 계획 비교" }))
     expect(alternatives.getByRole("button", { name: "계획안 A 일정 펼치기" })).toHaveAttribute("aria-expanded", "false")
     expect(alternatives.getByRole("button", { name: "계획안 B 일정 펼치기" })).toHaveAttribute("aria-expanded", "false")
