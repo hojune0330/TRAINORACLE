@@ -10,8 +10,8 @@ test("keeps compact navigation visible without shrinking its touch target", asyn
 
   await expect(navigation).toBeVisible()
   await expect(home).toHaveCSS("min-height", "44px")
-  await expect(icon).toHaveCSS("width", "13px")
-  await expect(icon).toHaveCSS("height", "13px")
+  await expect(icon).toHaveCSS("width", "20px")
+  await expect(icon).toHaveCSS("height", "20px")
   await expectNoHorizontalOverflow(page)
 })
 

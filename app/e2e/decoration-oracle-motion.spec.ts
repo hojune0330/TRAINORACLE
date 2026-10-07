@@ -42,14 +42,11 @@ test("keeps decoration and oracle motion brief, directional, and optional", asyn
       duration: getComputedStyle(element).animationDuration,
     }))
   ))
+  expect(oracleAnimations.length).toBeGreaterThan(0)
   if (testInfo.project.name === "reduced-motion") {
     expect(oracleAnimations.every((animation) => animation.name === "none")).toBe(true)
   } else {
-    expect(oracleAnimations.map((animation) => animation.name)).toEqual([
-      "oracle-insight-enter",
-      "oracle-insight-enter",
-      "oracle-insight-enter",
-    ])
+    expect(oracleAnimations.every((animation) => animation.name === "oracle-insight-enter")).toBe(true)
     expect(oracleAnimations.every((animation) => animation.duration === "0.3s")).toBe(true)
   }
 

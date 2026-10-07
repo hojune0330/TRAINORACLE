@@ -34,7 +34,11 @@ test("groups a busy day into one compact destination alongside oracle exploratio
   await expect(page.getByRole("button", { name: "오늘 기록하기", exact: true })).toBeInViewport({ ratio: 1 })
   const geometry = await page.locator(".app-scroll-region").evaluate(el => ({ height: el.scrollHeight, viewport: el.clientHeight, overflow: el.scrollWidth > el.clientWidth }))
   console.log("HOME_HUB_POPULATED", JSON.stringify(geometry))
-  expect(await page.getByRole("region", { name: "기록과 계획" }).evaluate(el => el.getBoundingClientRect().height)).toBeLessThanOrEqual(500)
+  const todayBox = await page.getByRole("region", { name: "오늘", exact: true }).boundingBox()
+  const recentBox = await page.getByRole("region", { name: "최근 하루 기록" }).boundingBox()
+  expect(todayBox).not.toBeNull()
+  expect(recentBox).not.toBeNull()
+  expect(recentBox!.y + recentBox!.height - todayBox!.y).toBeLessThanOrEqual(500)
   expect(geometry.overflow).toBe(false)
   for (const button of await page.locator(".home-hub button").all()) {
     expect((await button.boundingBox())!.height).toBeGreaterThanOrEqual(44)

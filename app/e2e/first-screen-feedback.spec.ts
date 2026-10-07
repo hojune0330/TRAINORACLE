@@ -130,7 +130,7 @@ test("opens the closed feedback state from the More entry", async ({ page }) => 
 
   await page.getByRole("button", { name: "더보기" }).click()
   await page.getByRole("button", { name: "앱 정보·개인정보·문의" }).click()
-  await expect(page.getByText("지금은 준비 중이에요. 열리면 앱 안에서 알려드려요")).toBeVisible()
+  await expect(page.getByRole("button", { name: "문의 게시판", exact: true })).toContainText("준비 중")
 
   await page.getByRole("button", { name: "문의 게시판", exact: true }).click()
   await expect(page.getByText("문의 게시판을 지금 사용할 수 없어요.")).toBeVisible()

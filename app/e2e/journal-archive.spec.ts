@@ -119,6 +119,7 @@ test("opens a day from the monthly calendar with provenance-safe summaries and r
   const archive = page.getByTestId("journal-archive")
   await expect(archive.getByRole("heading", { name: "지난 일지" })).toBeVisible()
   await expect(archive.getByText(secret, { exact: false })).toHaveCount(0)
+  await archive.getByText("월별 기록 모아보기").click()
   await expect(archive.getByText("출처를 확인할 수 없어 제외된 기록 1건")).toBeVisible()
   const month = archive.getByRole("button", { name: /2026년 7월.*훈련 후 3건.*6 km.*30분.*제외된 기록 1건/u })
   await expect(month).toBeVisible()

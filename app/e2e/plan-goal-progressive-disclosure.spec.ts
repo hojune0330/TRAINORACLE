@@ -8,11 +8,8 @@ test("shows the seven initial plan events from 800m through marathon", async ({ 
   // Given: a new athlete has opened the plan flow.
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
-  const choices = page.getByRole("combobox", { name: "종목" })
-  await expect(choices).toBeVisible()
-  await expect(choices.locator("option")).toHaveCount(8)
-  expect(await choices.locator("option").evaluateAll(options => options.map(option => (option as HTMLOptionElement).value)))
-    .toEqual(["", "800", "1500", "3000", "5000", "10000", "21097", "42195"])
+  const choices = page.getByRole("group", { name: "어떤 종목을 준비하세요?" }).getByRole("button")
+  await expect(choices).toHaveText(["800m", "1500m", "3000m", "5km", "10km", "하프 마라톤", "마라톤"])
   await page.screenshot({
     path: testInfo.outputPath("supported-plan-events.png"),
     fullPage: true,

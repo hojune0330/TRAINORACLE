@@ -117,7 +117,7 @@ for (const legacy of [false, true]) {
     await reader.getByRole("button", { name: "훈련 일정으로 돌아가기" }).click()
     await expect(reader).toHaveCount(0)
     await expect(trigger).toBeFocused()
-    expect(await page.locator(".app-scroll-region").evaluate(node => node.scrollTop)).toBeCloseTo(before, 0)
+    await expect.poll(() => page.locator(".app-scroll-region").evaluate(node => node.scrollTop)).toBeCloseTo(before, 0)
     await trigger.click()
     await page.keyboard.press("Escape")
     await expect(page.getByRole("dialog")).toHaveCount(0)

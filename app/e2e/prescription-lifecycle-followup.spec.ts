@@ -3,6 +3,8 @@ import { loadCatalogReductionFixture } from "./fixtures/catalog-cycle-reduction-
 import { JOURNAL_STORAGE_KEY } from "../src/domain/journal-storage-keys"
 
 async function openPlan(page: Page) {
+  const dayReader = page.locator("dialog.plan-day-reader")
+  if (await dayReader.isVisible()) await dayReader.getByRole("button", { name: "달력으로 돌아가기" }).click()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
 }
 async function storedPlan(page: Page) {
@@ -12,11 +14,13 @@ async function generate(page: Page, event = "5000", experienced = false) {
   await page.clock.setFixedTime(new Date("2026-10-02T03:00:00Z"))
   await page.goto("/?app=1")
   await openPlan(page)
-  await page.getByRole("combobox", { name: "종목", exact: true }).selectOption(event)
+  await page.getByRole("button", { name: event === "800" ? "800m" : "5km", exact: true }).click()
+  await page.getByRole("button", { name: "내 기록", exact: true }).click()
   await page.getByLabel("분", { exact: true }).fill(event === "800" ? "2" : "18")
   await page.getByLabel("초", { exact: true }).fill(event === "800" ? "1.5" : "31.5")
+  await page.getByText("기록 날짜 추가", { exact: true }).click()
   await page.getByLabel("기록 달성일", { exact: true }).fill("2026-09-25")
-  await page.getByRole("button", { name: "내 계획 받기", exact: true }).click()
+  await page.getByRole("button", { name: "기록 입력 완료", exact: true }).click()
   if (experienced) await page.getByRole("button", { name: /빠른 훈련과 쉬운 훈련/ }).click()
   else await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/ }).click()
   await page.getByRole("button", { name: /^3일/ }).click()

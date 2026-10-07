@@ -21,6 +21,7 @@ for (const width of [375, 320, 1024]) test(`coaching reader preserves original p
   const errors: string[] = []
   page.on("pageerror", error => errors.push(error.message))
   await page.goto("/?app=1&uitest=1")
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클" }).click()
   const before = await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))
   const open = page.getByRole("button", { name: /일부만 한 훈련/ })
   await open.scrollIntoViewIfNeeded()
@@ -75,6 +76,7 @@ test("coaching pages accept swipes but do not hijack vertical scrolling or butto
     }]))
   }, { state, draft })
   await page.goto("/?app=1&uitest=1")
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클" }).click()
   await page.getByRole("button", { name: /계획과 실제 기록/ }).click()
   const dialog = page.getByRole("dialog")
   const body = dialog.locator(".plan-day-reader__body")

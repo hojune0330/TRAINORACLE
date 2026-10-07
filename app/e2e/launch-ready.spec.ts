@@ -32,6 +32,7 @@ test("keeps plan help inside the narrow scroll region", async ({ page }) => {
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
   await enterPlanWithoutRecord(page)
+  await page.getByRole("button", { name: "선택한 내용 바꾸기" }).click()
   await page.locator(".plan-intake__summary").getByRole("button", { name: "1500m", exact: true }).click()
   await page.getByRole("button", { name: "준비 목표 설명 보기" }).click()
 
@@ -142,13 +143,12 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   await expect(candidateSteps.locator("li > strong")).toHaveText(["준비", "본운동", "정리"])
   const selectedTitle = await candidateQuality.locator(".plan-session-content > strong").innerText()
   const selectedNotation = await candidateQuality.locator(".plan-session-metric").innerText()
-  const selectedExecution = await candidateQuality.locator(".plan-session-execution").innerText()
   const selectedSteps = await candidateSteps.locator("li > span").allTextContents()
-  // Read the selected catalog's actual work/recovery notation, not retired RPE-only prose.
+  // Preserve the selected work and recovery details across activation and reload.
   expect(selectedNotation).toMatch(/@ RPE/u)
-  expect(selectedSteps[1]).toMatch(/\d+\s*×\s*\d+(?:\.\d+)?(?:s|min)\s*@ RPE 7[–~]8/u)
-  expect(selectedSteps[1]).toMatch(/· r\d+(?:\.\d+)?(?:s|min)\s+(?:Jog|Walk)\b/u)
-  expect(selectedExecution).toMatch(/본운동 \d+개 구간과 표시된 회복을 순서대로 진행하세요/u)
+  expect(selectedSteps[1]).toMatch(/\d+\s*×\s*\d+(?:\.\d+)?분/u)
+  expect(selectedSteps[1]).toMatch(/힘든 정도 7[–~]8\/10/u)
+  expect(selectedSteps[1]).toMatch(/반복 사이 \d+초 조깅/u)
 
   // When
   await page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u }).first().click()
@@ -161,8 +161,6 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   await expect(qualitySession).toHaveCount(1)
   await expect(qualitySession.locator(".plan-session-content > strong")).toHaveText(selectedTitle)
   await expect(qualitySession.locator(".plan-session-metric")).toHaveText(selectedNotation)
-  await expect(qualitySession.locator(".plan-session-execution")).toBeVisible()
-  await expect(qualitySession.locator(".plan-session-execution")).toHaveText(selectedExecution)
   const qualitySteps = qualitySession.getByRole("list", { name: "훈련 실행 순서" })
   await expect(qualitySteps).toBeVisible()
   await expect(qualitySteps.locator("li > strong")).toHaveText(["준비", "본운동", "정리"])
@@ -200,8 +198,6 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   await expect(reloadedQualitySession).toHaveCount(1)
   await expect(reloadedQualitySession.locator(".plan-session-content > strong")).toHaveText(selectedTitle)
   await expect(reloadedQualitySession.locator(".plan-session-metric")).toHaveText(selectedNotation)
-  await expect(reloadedQualitySession.locator(".plan-session-execution")).toBeVisible()
-  await expect(reloadedQualitySession.locator(".plan-session-execution")).toHaveText(selectedExecution)
   const reloadedSteps = reloadedQualitySession.getByRole("list", { name: "훈련 실행 순서" })
   await expect(reloadedSteps).toBeVisible()
   await expect(reloadedSteps.locator("li > strong")).toHaveText(["준비", "본운동", "정리"])

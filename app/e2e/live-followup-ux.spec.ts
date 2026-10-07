@@ -28,11 +28,11 @@ for (const width of [320, 375]) {
     await expect(today.locator(".instant-plan__steps").first()).toContainText("힘든 정도")
     await expect(today.locator(".instant-plan__steps").first()).not.toContainText("min")
     await expect(today.locator(".instant-plan__steps").first()).not.toContainText("RPE")
-    const method = today.locator("summary", { hasText: "훈련 방법" })
+    const method = today.getByRole("button", { name: "오전 훈련 방법·근거" })
     await expect(method).toBeVisible()
     await method.focus()
     await page.keyboard.press("Enter")
-    await expect(method.locator("..")).toHaveAttribute("open")
+    await expect(page.getByRole("dialog")).toBeVisible()
   })
 }
 

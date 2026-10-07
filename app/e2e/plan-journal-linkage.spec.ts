@@ -42,13 +42,14 @@ test("links one explicitly selected plan session to its journal without copying 
   expect(JSON.stringify(stored.journal[0].plannedSessionLink)).not.toContain(state.activePlan.candidateId)
   expect(stored.plan.progress).toEqual([])
 
-  const returnedSession = page.getByRole("group", { name: /오전 세션 · 일지에서 돌아온 세션/u })
+  const returnedSession = page.getByRole("dialog").getByRole("group", { name: /오전 세션 · 일지에서 돌아온 세션/u })
   await expect(returnedSession).toBeVisible()
   await expect(returnedSession).toBeInViewport()
-  await page.getByRole("button", { name: "계획에도 완료 표시", exact: true }).click()
+  await returnedSession.getByRole("button", { name: "계획에도 완료 표시", exact: true }).click()
   await expect.poll(() => page.evaluate(() => JSON.parse(
     window.localStorage.getItem("trainoracle.plan-beta.v1") ?? "null",
   )?.progress)).toEqual([{ sessionDay: 1, sessionSlot: "AM", state: "COMPLETED" }])
+  await page.getByRole("dialog").getByRole("button", { name: "달력으로 돌아가기" }).click()
   const beforeReview = await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))
   // One completed session permits reviewing this cycle, not adjusting an unfinished frame.
   await expect(page.getByRole("button", { name: "기록 확인·다음 계획 조정", exact: true })).toHaveCount(0)

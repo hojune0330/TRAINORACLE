@@ -175,7 +175,7 @@ test("WELCOME keeps its height and readable actions with a reserved scrollbar gu
   expect(secondBox!.height).toBeGreaterThanOrEqual(44)
   expect(firstBox!.width).toBeGreaterThanOrEqual(44)
   expect(secondBox!.width).toBeGreaterThanOrEqual(44)
-  expect(firstBox!.y).toBe(secondBox!.y)
+  expect(secondBox!.y).toBeGreaterThanOrEqual(firstBox!.y + firstBox!.height)
   await first.focus()
   await page.keyboard.press("Tab")
   await expect(second).toBeFocused()

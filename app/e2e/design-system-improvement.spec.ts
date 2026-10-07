@@ -76,7 +76,8 @@ test("home navigation remains usable when the bundled font cannot load", async (
   expect(blockedFonts).toBeGreaterThan(0)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await navigation.getByRole("button", { name: "훈련", exact: true }).click()
-  await expect(page.getByRole("combobox", { name: "종목" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "어떤 종목을 준비하세요?" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "5km", exact: true })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })
 
