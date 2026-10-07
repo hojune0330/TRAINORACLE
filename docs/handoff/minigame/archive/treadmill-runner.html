@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>보존된 treadmill-runner 시안</title><style>:root{color-scheme:light dark;--background:light-dark(#fafaf7,#17231f);--foreground:light-dark(#20352b,#e4f1e9);--muted:light-dark(#eff3f1,#21372b);--muted-foreground:light-dark(#52675b,#b3c7ba);--border:light-dark(#cad7cf,#3e5749);--viz-series-1:light-dark(#175c3c,#a6ebbb);--viz-series-2:light-dark(#b33935,#ff8f84);--card:var(--background);--card-foreground:var(--foreground)}body{margin:24px auto;padding:0 16px;max-width:736px;font:14px/1.5 system-ui;color:var(--foreground);background:var(--background)}button{font:inherit;padding:10px 12px;border:1px solid var(--border);border-radius:4px;color:var(--foreground);background:var(--muted);min-height:44px}button:disabled{opacity:.45}.card{padding:16px;border:1px solid var(--border)}.text-small{font-size:12px}.text-muted{color:var(--muted-foreground)}.viz-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}.viz-stat-value{font-size:24px}.tabular-nums{font-variant-numeric:tabular-nums}[hidden]{display:none!important}</style></head><body>
+<div id="treadmill-lab">
+  <div class="tl-top"><strong>멈추면 밀려나는 트랙</strong><span>30초 플레이 스케치</span></div>
+  <div class="tl-status" aria-live="polite"><span id="tl-stage">트랙 · 준비</span><span id="tl-time">0 / 30초</span><span id="tl-energy">에너지 80</span></div>
+  <div class="tl-energy-track" aria-label="에너지"><div id="tl-energy-fill"></div></div>
+  <div class="tl-field"><canvas aria-label="왼쪽 끝으로 밀리면 떨어지는 트레드밀 러너" id="tl-canvas"></canvas><div id="tl-banner" class="tl-banner">달려서 공간을 벌고, 잠깐 놓아서 회복하기</div></div>
+  <div class="tl-next" id="tl-next">트랙 → 진흙 → 가시밭</div>
+  <div class="tl-actions"><button type="button" id="tl-run" class="cursor-interaction">달리기 꾹 <span>→</span></button><button type="button" id="tl-jump" class="cursor-interaction">점프 <span>Space · 10</span></button><button type="button" id="tl-dash" class="cursor-interaction">대시 <span>D · 18</span></button></div>
+  <div class="tl-bottom"><button type="button" id="tl-start" class="cursor-interaction">시작</button><button type="button" id="tl-pause" class="cursor-interaction" disabled>일시정지</button><span id="tl-hint" aria-live="polite">게임용 규칙 · 실제 운동 수치와 무관</span></div>
+  <div id="tl-upgrades" hidden><div class="tl-up-title">안전 발판 · 바닥 정지</div><div class="tl-up-grid"><button type="button" data-up="grip" class="cursor-interaction">접지 밑창<span>진흙 감속 완화 / 점프 +2 소모</span></button><button type="button" data-up="spring" class="cursor-interaction">스프링 밑창<span>점프 −3 소모 / 대시 거리 −15%</span></button><button type="button" data-up="economy" class="cursor-interaction">일정한 박자<span>달리기 소모 −20% / 대시 충전 +0.5초</span></button></div></div>
+  <div class="tl-picks" id="tl-picks"></div>
+</div>
+<style>
+#treadmill-lab{--tl-bg:light-dark(#eff3f1,#17231f);--tl-ink:light-dark(#20352b,#e4f1e9);--tl-sub:light-dark(#52675b,#b3c7ba);--tl-surface:light-dark(#ffffff,#21372b);--tl-edge:light-dark(#cad7cf,#3e5749);--tl-main:light-dark(#175c3c,#a6ebbb);--tl-on:light-dark(#ffffff,#193a27);--tl-red:light-dark(#b33935,#ff8f84);--tl-ground:light-dark(#c57857,#985137);--tl-mark:light-dark(#f9e4ce,#edcbb0);--tl-mud:light-dark(#95724a,#806442);--tl-shadow:light-dark(#bdcec2,#0f1914);--tl-runner:light-dark(#287cbb,#79bee9);--tl-skin:light-dark(#edbd82,#edbd82);--tl-dark:light-dark(#24382d,#a7c6b3);color:var(--tl-ink);font-family:system-ui,sans-serif;font-size:14px;line-height:1.5;width:100%;box-sizing:border-box}
+#treadmill-lab *{box-sizing:border-box}#treadmill-lab [hidden]{display:none!important}
+#treadmill-lab .tl-top{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:baseline;padding-right:90px;margin-bottom:14px}#treadmill-lab strong{font-weight:600;font-size:18px}#treadmill-lab .tl-top span{color:var(--tl-sub);font-size:12px}
+#treadmill-lab .tl-status{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-variant-numeric:tabular-nums;margin-bottom:7px}
+#treadmill-lab .tl-energy-track{height:6px;background:var(--tl-edge);border-radius:4px;margin-bottom:10px;overflow:hidden}#tl-energy-fill{height:100%;background:var(--tl-main);width:100%}
+#treadmill-lab .tl-field{position:relative;background:var(--tl-bg);border-radius:16px;overflow:hidden}#tl-canvas{width:100%;height:258px;display:block}#treadmill-lab .tl-banner{position:absolute;left:15px;right:15px;top:18px;text-align:center;color:var(--tl-ink);font-weight:500;pointer-events:none;white-space:normal}
+#treadmill-lab .tl-next{color:var(--tl-sub);font-size:12px;margin:8px 0 12px;text-align:right}
+#treadmill-lab button{font:inherit;color:var(--tl-ink);background:var(--tl-surface);border:1px solid var(--tl-edge);border-radius:10px;padding:10px 12px;min-height:44px;touch-action:manipulation;user-select:none}#treadmill-lab button:hover:enabled{border-color:var(--tl-main)}#treadmill-lab button:disabled{opacity:.45}#treadmill-lab button:focus-visible{outline:2px solid var(--tl-main);outline-offset:3px}
+#treadmill-lab .tl-actions{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:8px}#treadmill-lab .tl-actions button{display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:none}#treadmill-lab button span{font-size:12px;color:var(--tl-sub);font-weight:400;display:block}#tl-run.is-held{background:var(--tl-main);color:var(--tl-on)}#tl-run.is-held span{color:var(--tl-on)}
+#treadmill-lab .tl-bottom{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}#tl-start{background:var(--tl-main)!important;color:var(--tl-on)!important;border-color:transparent!important}#treadmill-lab .tl-bottom>span{font-size:12px;color:var(--tl-sub);flex:1;min-width:140px}
+#treadmill-lab .tl-up-title{font-weight:600;margin:14px 0 8px}#treadmill-lab .tl-up-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}#treadmill-lab .tl-up-grid button{text-align:left}#treadmill-lab .tl-picks{font-size:12px;color:var(--tl-sub);margin-top:8px;min-height:18px}
+@media(max-width:480px){#treadmill-lab .tl-top{padding-right:75px}#treadmill-lab .tl-up-grid{grid-template-columns:1fr}#treadmill-lab .tl-actions{gap:6px}#treadmill-lab .tl-actions button{padding:9px 5px}#tl-canvas{height:230px}}
+</style>
+<script>
+(()=>{
+const root=document.getElementById('treadmill-lab'), cv=root.querySelector('#tl-canvas'), ctx=cv.getContext('2d');
+const el=id=>root.querySelector('#tl-'+id);
+const stages=[{name:'트랙',belt:.074,move:.114,color:'ground',hazard:'barrier'},{name:'진흙',belt:.081,move:.088,color:'mud',hazard:'barrier'},{name:'가시밭',belt:.080,move:.116,color:'ground',hazard:'spike'}];
+let s, w=600,h=258,last=0,raf=0,colors={};
+const base=()=>({mode:'ready',stage:0,t:0,x:.53,y:0,vy:0,e:80,run:false,dash:0,cool:0,phase:0,hazards:[],spawn:2.4,hurt:0,picks:[],grip:0,jumpCost:10,dashFactor:1,drain:1,coolMax:2.5,flash:'',flashTime:0});
+s=base();
+function palette(){const p=document.createElement('span');p.style.position='absolute';p.style.visibility='hidden';root.appendChild(p);for(const k of ['bg','ink','sub','edge','main','red','ground','mark','mud','shadow','runner','skin','dark']){p.style.color='var(--tl-'+k+')';colors[k]=getComputedStyle(p).color;}p.remove();}
+function resize(){w=Math.max(280,cv.clientWidth);h=cv.clientHeight;const d=window.devicePixelRatio||1;cv.width=w*d;cv.height=h*d;ctx.setTransform(d,0,0,d,0,0);palette();draw();}
+function save(){if(window.openai?.setWidgetState)window.openai.setWidgetState({modelContent:{concept:'트레드밀 생존 러너',stage:stages[s.stage].name,completed:s.mode==='clear',upgrades:s.picks},privateContent:{picks:s.picks}}).catch(()=>{});}
+function release(){s.run=false;el('run').classList.remove('is-held');}
+function setMode(mode,message){s.mode=mode;release();if(message)el('banner').textContent=message;el('upgrades').hidden=mode!=='upgrade';el('pause').disabled=!['running','paused'].includes(mode);el('pause').textContent=mode==='paused'?'계속':'일시정지';el('start').textContent=['over','clear'].includes(mode)?'다시 시작':'새로 시작';sync();draw();if(['over','clear','upgrade'].includes(mode))save();}
+function start(){s=base();setMode('running','달리기를 놓으면 회복 · 뒤로 밀립니다');el('hint').textContent='앞쪽 공간을 벌어 두면 잠깐 쉴 수 있어요';el('picks').textContent='';s.flashTime=2;save();}
+function sync(){el('stage').textContent=(s.stage+1)+'/3 · '+stages[s.stage].name;el('time').textContent=Math.min(30,Math.floor(s.stage*10+s.t))+' / 30초';el('energy').textContent='에너지 '+Math.ceil(s.e);el('energy-fill').style.width=(s.e/80*100)+'%';const enabled=s.mode==='running';el('run').disabled=!enabled;el('jump').disabled=!enabled||s.y>0||s.e<s.jumpCost;el('dash').disabled=!enabled||s.cool>0||s.e<18;el('jump').querySelector('span').textContent='Space · '+s.jumpCost;el('dash').querySelector('span').textContent=s.cool>0?s.cool.toFixed(1)+'초':'D · 18';}
+function jump(){if(s.mode!=='running'||s.y>0||s.e<s.jumpCost)return;s.e-=s.jumpCost;s.vy=390;s.y=.1;sync();}
+function dash(){if(s.mode!=='running'||s.cool>0||s.e<18)return;s.e-=18;s.dash=.5;s.cool=s.coolMax;sync();}
+function frame(ts){const dt=Math.min((ts-last)/1000||0, .035);last=ts;if(s.mode==='running')step(dt);draw();raf=requestAnimationFrame(frame);}
+function step(dt){
+const st=stages[s.stage];s.t+=dt;s.phase+=dt*130;s.cool=Math.max(0,s.cool-dt);s.dash=Math.max(0,s.dash-dt);s.hurt=Math.max(0,s.hurt-dt);s.flashTime=Math.max(0,s.flashTime-dt);
+let speed=-st.belt;
+if(s.run&&s.e>0){speed+=st.move+(s.stage===1?s.grip:0);s.e=Math.max(0,s.e-dt*4.1*s.drain);}else s.e=Math.min(80,s.e+dt*10);
+if(s.dash>0)speed+=.38*s.dashFactor;
+s.x=Math.min(.90,s.x+speed*dt);
+if(s.y>0||s.vy>0){s.vy-=940*dt;s.y+=s.vy*dt;if(s.y<0){s.y=0;s.vy=0;}}
+if(s.t>=s.spawn&&s.t<7.1){s.hazards.push({x:1.03,hit:false});s.spawn+=3.7;}
+for(const ob of s.hazards){ob.x-=.22*dt;if(!ob.hit&&Math.abs(s.x-ob.x)<.028&&s.y<25&&s.hurt<=0){ob.hit=true;if(st.hazard==='spike'){setMode('over','가시에 닿았어요 · 다시 도전');return;}s.x-=.13;s.e=Math.max(0,s.e-10);s.hurt=1;s.flashTime=1.4;el('banner').textContent='장애물 충돌 · 뒤로 밀림';}}
+s.hazards=s.hazards.filter(o=>o.x>-.06);
+if(s.x<.047){setMode('over','뒤쪽 끝에서 떨어졌어요');return;}
+if(s.t>=10){s.t=10;if(s.stage===2){setMode('clear','세 구간 완주!');el('hint').textContent='다른 조합으로 다시 달릴 수 있어요';}else setMode('upgrade','안전 발판 도착 · 바닥이 멈췄어요');return;}
+if(s.flashTime===0){el('banner').textContent=s.x<.23?'뒤쪽 위험!':s.e<18?'에너지 부족 · 앞에서 잠깐 회복':s.hazards.some(o=>o.x>s.x&&o.x-s.x<.23)?'앞에 '+(st.hazard==='spike'?'가시':'장애물')+' · 점프':' ';}
+sync();}
+function draw(){
+if(!ctx||!s)return;const floor=h-63,st=stages[s.stage];ctx.clearRect(0,0,w,h);
+ctx.fillStyle=colors.shadow;ctx.fillRect(w*.04,floor+21,w*.92,20);
+ctx.fillStyle=colors[st.color];ctx.fillRect(w*.04,floor,w*.92,25);
+ctx.save();ctx.beginPath();ctx.rect(w*.04,floor,w*.92,25);ctx.clip();
+ctx.fillStyle=colors.mark;ctx.globalAlpha=.6;for(let x=-(s.phase%44);x<w;x+=44){if(s.stage===1){ctx.beginPath();ctx.ellipse(x,floor+13,11,4,0,0,Math.PI*2);ctx.fill();}else ctx.fillRect(x,floor+11,21,3);}ctx.restore();
+ctx.fillStyle=colors.red;ctx.globalAlpha=.12;ctx.fillRect(w*.04,63,w*.13,floor-63);ctx.globalAlpha=1;
+ctx.font='12px system-ui';ctx.fillStyle=colors.red;ctx.fillText('추락',w*.055,floor+58);ctx.fillStyle=colors.sub;ctx.textAlign='right';ctx.fillText('바닥 ←',w*.94,floor+58);ctx.textAlign='left';
+for(const ob of s.hazards){const x=ob.x*w;ctx.fillStyle=colors.red;if(st.hazard==='spike'){for(let j=-1;j<=1;j++){ctx.beginPath();ctx.moveTo(x+j*12-6,floor);ctx.lineTo(x+j*12,floor-25);ctx.lineTo(x+j*12+6,floor);ctx.fill();}}else{ctx.fillRect(x-11,floor-26,22,8);ctx.fillStyle=colors.dark;ctx.fillRect(x-8,floor-18,4,18);ctx.fillRect(x+4,floor-18,4,18);}}
+let px=s.x*w,py=floor-s.y;if(s.mode==='over'){py+=28;px=Math.max(10,px);}
+ctx.save();ctx.translate(px,py);if(s.hurt>0&&Math.floor(s.hurt*12)%2===0)ctx.globalAlpha=.45;
+ctx.fillStyle=colors.runner;ctx.fillRect(-10,-35,20,20);ctx.fillStyle=colors.skin;ctx.fillRect(-8,-52,16,16);ctx.fillStyle=colors.ink;ctx.fillRect(3,-46,3,3);
+const walk=s.mode==='running'&&s.run&&s.y===0?Math.sin(s.phase*.11)*6:0;
+ctx.strokeStyle=colors.dark;ctx.lineWidth=6;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-4,-16);ctx.lineTo(-6-walk,-3);ctx.moveTo(5,-16);ctx.lineTo(7+walk,-3);ctx.stroke();
+ctx.strokeStyle=colors.skin;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-10,-31);ctx.lineTo(-17+walk,-22);ctx.moveTo(10,-31);ctx.lineTo(16-walk,-23);ctx.stroke();
+if(s.dash>0){ctx.strokeStyle=colors.runner;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-20,-28);ctx.lineTo(-41,-28);ctx.moveTo(-22,-17);ctx.lineTo(-34,-17);ctx.stroke();}ctx.restore();
+}
+el('start').addEventListener('click',start);
+el('run').addEventListener('pointerdown',e=>{if(s.mode!=='running')return;e.preventDefault();el('run').setPointerCapture(e.pointerId);s.run=true;el('run').classList.add('is-held');});
+for(const name of ['pointerup','pointercancel','lostpointercapture'])el('run').addEventListener(name,release);
+el('run').addEventListener('keydown',e=>{if([' ','Enter'].includes(e.key)&&s.mode==='running'){e.preventDefault();s.run=true;el('run').classList.add('is-held');}});
+el('run').addEventListener('keyup',release);
+el('jump').addEventListener('click',jump);el('dash').addEventListener('click',dash);
+el('pause').addEventListener('click',()=>{if(s.mode==='running')setMode('paused','일시정지');else if(s.mode==='paused')setMode('running',' ');});
+root.querySelectorAll('[data-up]').forEach(b=>b.addEventListener('click',()=>{if(s.mode!=='upgrade')return;const k=b.dataset.up;if(k==='grip'){s.grip+=.026;s.jumpCost+=2;s.picks.push('접지 밑창');}if(k==='spring'){s.jumpCost=Math.max(2,s.jumpCost-3);s.dashFactor*=.85;s.picks.push('스프링 밑창');}if(k==='economy'){s.drain*=.8;s.coolMax+=.5;s.picks.push('일정한 박자');}s.stage++;s.t=0;s.x=.53;s.e=Math.min(80,s.e+25);s.y=0;s.vy=0;s.hazards=[];s.spawn=2.4;s.dash=0;s.cool=0;setMode('paused','다음 구간 · 계속을 누르면 출발');el('picks').textContent='이번 판: '+s.picks.join(' · ');save();}));
+document.addEventListener('keydown',e=>{if(e.repeat||s.mode!=='running')return;if(e.key==='ArrowRight'){e.preventDefault();s.run=true;el('run').classList.add('is-held');}else if(e.code==='Space'&&e.target!==el('run')){e.preventDefault();jump();}else if(e.key.toLowerCase()==='d'){e.preventDefault();dash();}});
+document.addEventListener('keyup',e=>{if(e.key==='ArrowRight')release();});
+window.addEventListener('blur',()=>{if(s.mode==='running')setMode('paused','일시정지 · 계속을 누르면 출발');});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&s.mode==='running')setMode('paused','일시정지 · 계속을 누르면 출발');});
+const restored=window.openai?.widgetState?.privateContent?.picks;if(Array.isArray(restored))el('picks').textContent=restored.length?'이전 선택: '+restored.filter(v=>typeof v==='string').slice(0,2).join(' · '):'';
+window.addEventListener('openai:set_globals',event=>{const p=event.detail?.globals?.widgetState?.privateContent?.picks;if(s.mode==='ready'&&Array.isArray(p))el('picks').textContent=p.length?'이전 선택: '+p.filter(v=>typeof v==='string').slice(0,2).join(' · '):'';});
+new ResizeObserver(resize).observe(cv);new MutationObserver(palette).observe(document.documentElement,{attributes:true,attributeFilter:['class','style']});
+sync();resize();raf=requestAnimationFrame(frame);
+})();
+</script>
+
+</body></html>

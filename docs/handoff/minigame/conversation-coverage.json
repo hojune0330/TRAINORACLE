@@ -1,0 +1,15 @@
+{
+  "cutoff": "2026-10-07T02:09:01.100Z",
+  "messages": 49,
+  "userMessages": 16,
+  "assistantMessages": 33,
+  "referenceSubmissions": 24,
+  "uniqueReferenceImages": 17,
+  "transformations": [
+    "omit environment/system/developer/tool/analysis records",
+    "replace local attachment paths with repository references",
+    "omit local absolute paths and memory citation metadata",
+    "replace inline visualization references with archive links",
+    "preserve Markdown hard breaks using backslashes instead of trailing spaces"
+  ]
+}

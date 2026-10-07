@@ -1,5 +1,5 @@
 import React from "react"
-import { ArrowLeft, BookOpen, Calculator, CircleHelp, Flag, MessageSquareText, Newspaper, ScrollText, ShieldCheck, Sticker, Trash2, UserRound, Watch } from "lucide-react"
+import { ArrowLeft, BookOpen, Calculator, CircleHelp, Flag, Gamepad2, MessageSquareText, Newspaper, ScrollText, ShieldCheck, Sticker, Trash2, UserRound, Watch } from "lucide-react"
 import { DataSafetyNotice } from "../components/DataSafetyNotice"
 import { feedbackConfig } from "../domain/feedback/feedback-config"
 import { SafeJournalExport } from "./home/DeviceJournal"
@@ -17,6 +17,7 @@ export type MoreProps = {
   readonly feedbackAvailable?: boolean
   readonly onOpenFeedback?: () => void
   readonly onOpenContent?: () => void
+  readonly onOpenMinigame?: () => void
   readonly onOpenRewards?: () => void
   readonly onOpenPaceCalculator?: () => void
   readonly onOpenRunningProfile?: () => void
@@ -35,6 +36,7 @@ export function More({
   feedbackAvailable = feedbackConfig() !== null,
   onOpenFeedback,
   onOpenContent,
+  onOpenMinigame,
   onOpenRewards,
   onOpenPaceCalculator,
   onOpenRunningProfile,
@@ -70,6 +72,7 @@ export function More({
         <UtilityRow icon={CircleHelp} label="훈련 용어집·도움말" onClick={onOpenGuide} />
         {onOpenContent !== undefined && <UtilityRow icon={Newspaper} label="훈련법 읽기" onClick={onOpenContent} />}
         {onOpenRewards !== undefined && <UtilityRow icon={Sticker} label="일지 꾸미기·포인트" onClick={onOpenRewards} />}
+        {onOpenMinigame && <UtilityRow icon={Gamepad2} label="미니게임" detail="멈추면 밀려나는 트랙 · 30초 도전" onClick={onOpenMinigame} />}
         <h2 className="more-screen__group-label">계정·기록 관리</h2>
         <InstallShortcutMenuEntry />
         <DataSafetyNotice onOpenAccount={onOpenAccount} />
