@@ -312,7 +312,7 @@ describe("InstantPlanEntryForm", () => {
     expect(screen.getByLabelText("기록 달성일")).not.toBeVisible()
     expect(screen.getByText("기록 날짜 추가")).toBeVisible()
     expect(screen.getByText("선택")).toBeVisible()
-    expect(screen.getByText("날짜가 없으면 최근 12개월 기록에서는 제외돼요.")).toBeVisible()
+    expect(screen.getByText("개인 페이스를 계산하려면 기록 날짜가 필요해요. 모르면 비워 두세요. 시간·힘든 정도 기준 계획으로 시작할 수 있어요.")).toBeVisible()
     submit()
     expect(onSubmit).toHaveBeenCalledExactlyOnceWith({ ...record, achievedOn: null })
   })

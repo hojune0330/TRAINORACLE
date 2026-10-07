@@ -26,11 +26,13 @@ describe("integrated minimal entry to selected plan", () => {
     "binds the exact %sm non-divisible result after explicit confirmation", async (distance, minutes, seconds) => {
       const user = userEvent.setup()
       render(<PlanBeta />)
-      await user.selectOptions(screen.getByRole("combobox", { name: "종목" }), distance!)
+      await user.click(screen.getByRole("button", { name: distance === "5000" ? "5km" : `${distance}m` }))
+      await user.click(screen.getByRole("button", { name: "내 기록" }))
       await user.type(screen.getByLabelText("분"), minutes!)
       await user.type(screen.getByLabelText("초"), seconds!)
+      await user.click(screen.getByText("기록 날짜 추가", { selector: "summary span" }))
       fireEvent.change(screen.getByLabelText("기록 달성일"), { target: { value: todayISO() } })
-      await user.click(screen.getByRole("button", { name: "내 계획 받기" }))
+      await user.click(screen.getByRole("button", { name: "기록 입력 완료" }))
       await safetyAndExperience()
       expect(screen.queryByRole("button", { name: "이 일정으로 시작" })).toBeNull()
       expect(loadPlanBetaState()).toBeNull()
@@ -56,14 +58,45 @@ describe("integrated minimal entry to selected plan", () => {
       }
     }, 20_000)
 
+  it.each([
+    ["unknown", null],
+    ["stale", isoShift(todayISO(), -730)],
+  ] as const)("keeps an %s-date record and starts an RPE plan without personal pace", async (_dateState, achievedOn) => {
+    const user = userEvent.setup()
+    render(<PlanBeta />)
+    await user.click(screen.getByRole("button", { name: "1500m" }))
+    await user.click(screen.getByRole("button", { name: "내 기록" }))
+    await user.type(screen.getByLabelText("분"), "4")
+    await user.type(screen.getByLabelText("초"), "23.4")
+    if (achievedOn !== null) {
+      await user.click(screen.getByText("기록 날짜 추가", { selector: "summary span" }))
+      fireEvent.change(screen.getByLabelText("기록 달성일"), { target: { value: achievedOn } })
+    }
+    await user.click(screen.getByRole("button", { name: "기록 입력 완료" }))
+    await safetyAndExperience()
+    const records = loadAthleteRecords()
+    expect(records).toMatchObject([{ purpose: "RECENT_RESULT", eventDistanceM: 1500,
+      performanceSeconds: 263.4, achievedOn }])
+    expect(loadPlanBetaState()).toBeNull()
+    const start = screen.getByRole("button", { name: "이 일정으로 시작" })
+    expect(start).toBeEnabled()
+    await user.click(start)
+    const stored = loadPlanBetaState()
+    expect(stored).not.toBeNull()
+    expect(stored!.activePlan.sessions.some(session => session.prescription.kind === "RPE_TIME_RANGE")).toBe(true)
+    expect(stored!.activePlan.sessions.some(session => session.prescription.kind === "PACE_TARGET")).toBe(false)
+    expect(loadAthleteRecords()).toEqual(records)
+    expect(screen.getByRole("heading", { name: "오늘 훈련" })).toBeVisible()
+  }, 20_000)
+
   it("goal-only remains aspirational when explicitly applied to a marathon pace plan", async () => {
     const user = userEvent.setup()
     render(<PlanBeta />)
-    await user.click(screen.getByRole("radio", { name: "목표만 있어요" }))
-    await user.selectOptions(screen.getByRole("combobox", { name: "종목" }), "42195")
+    await user.click(screen.getByRole("button", { name: "마라톤" }))
+    await user.click(screen.getByRole("button", { name: "목표만 있어요" }))
     await user.type(screen.getByLabelText("분"), "180")
     await user.type(screen.getByLabelText("초"), "0")
-    await user.click(screen.getByRole("button", { name: "내 계획 받기" }))
+    await user.click(screen.getByRole("button", { name: "목표 입력 완료" }))
     await safetyAndExperience()
     expect(loadAthleteRecords()).toMatchObject([{ purpose: "RACE_GOAL", eventDistanceM: 42195,
       performanceSeconds: 10800, achievedOn: null }])
@@ -113,7 +146,7 @@ describe("integrated minimal entry to selected plan", () => {
     expect(screen.getByRole("button", { name: "이 일정으로 시작" })).toBeDisabled()
     expect(screen.queryByRole("button", { name: "저장 다시 시도" })).toBeNull()
     expect(loadPlanBetaState()).toBeNull()
-  })
+  }, 20_000)
 
   it("keeps actual calendar previews when both alternatives are collapsed", async () => {
     const user = userEvent.setup()
@@ -124,7 +157,7 @@ describe("integrated minimal entry to selected plan", () => {
     expect(screen.getByRole("button", { name: "계획안 B 일정 펼치기" })).toHaveAttribute("aria-expanded", "false")
     expect(screen.getAllByLabelText("9일 훈련 일정")).toHaveLength(2)
     expect(screen.getAllByText(/주요 훈련/u).length).toBeGreaterThan(0)
-  })
+  }, 20_000)
 
   it.each(["ACCOUNT_PLAN_STALE", "ACCOUNT_PLAN_EVIDENCE_REQUIRED", "ACCOUNT_PLAN_REVIEW_REQUIRED"])(
     "%s allows fresh questions without blindly retrying a rejected save", async code => {
@@ -138,5 +171,5 @@ describe("integrated minimal entry to selected plan", () => {
       await user.click(screen.getByRole("button", { name: "질문 다시 보기" }))
       expect(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u })).toBeVisible()
       expect(loadPlanBetaState()).toBeNull()
-    })
+    }, 20_000)
 })

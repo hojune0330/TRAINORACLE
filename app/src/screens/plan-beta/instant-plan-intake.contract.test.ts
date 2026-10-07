@@ -26,6 +26,25 @@ describe("instant intake proposals", () => {
       { kind: "NO_RECORD", eventDistanceM: 5000 }, evaluatedAt)
       .selectedDetailedTemplateRef).toBeNull()
   })
+  it.each([800, 1500, 3000, 5000] as const)("keeps the %sm time/effort plan when the record date is unknown or stale", distance => {
+    const draft = { eventDistanceM: distance, experienceBand: "EXPERIENCED" as const }
+    for (const achievedOn of [null, "2024-09-01"]) {
+      const entry = { kind: "CURRENT_RECORD" as const, eventDistanceM: distance, achievedOn, performanceSeconds: 263.4 }
+      const result = prepareInstantIntake(draft, entry, evaluatedAt)
+      expect(result.selectedDetailedTemplateRef).toBeNull()
+      expect(result.trainingFocus).toBe("MIXED_INTENT")
+      expect(entry.achievedOn).toBe(achievedOn)
+    }
+  })
+  it("preserves an explicitly chosen detailed method for the normal evidence review", () => {
+    const selectedDetailedTemplateRef = prepareInstantIntake({ eventDistanceM: 1500, experienceBand: "EXPERIENCED" },
+      { kind: "CURRENT_RECORD", eventDistanceM: 1500, achievedOn: "2026-09-01", performanceSeconds: 263.4 }, evaluatedAt)
+      .selectedDetailedTemplateRef
+    expect(selectedDetailedTemplateRef).toBeTruthy()
+    expect(prepareInstantIntake({ eventDistanceM: 1500, experienceBand: "EXPERIENCED", selectedDetailedTemplateRef },
+      { kind: "CURRENT_RECORD", eventDistanceM: 1500, achievedOn: null, performanceSeconds: 263.4 }, evaluatedAt)
+      .selectedDetailedTemplateRef).toEqual(selectedDetailedTemplateRef)
+  })
   it.each([800, 1500, 3000, 5000] as const)("offers an approved method for a %sm goal without confirming its pace", distance => {
     const draft = { eventDistanceM: distance, experienceBand: "EXPERIENCED" as const }
     const goal = { kind: "GOAL_ONLY" as const, eventDistanceM: distance, performanceSeconds: 121.5 }

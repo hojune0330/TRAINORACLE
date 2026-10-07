@@ -13,6 +13,7 @@ import type { PlanBetaIntake } from "../../domain/plan-beta-store"
 import type { PlanAthleteEvidence } from "../../domain/plan-beta-flow"
 import type { AthleteRecord } from "../../domain/athlete-records"
 import type { CandidatePrescriptionBinding } from "../../domain/plan-candidate-prescription"
+import { deriveRecordCurrentness } from "../../domain/pace-target-evidence"
 import {
   candidateDurationSummary,
   candidateLabel,
@@ -244,6 +245,13 @@ export function PlanCandidates({
       {cycleSummary && <CatalogCycleSummary summary={cycleSummary} startDate={startDate} />}
       <PlanPrescriptionBasis sessions={defaultInstantCandidate(generated).sessions}
         confirmationPending={recordConfirmationPending || detailedEvidencePending} />
+      {instantEntry?.kind === "CURRENT_RECORD" && intake.selectedDetailedTemplateRef === null
+        && selectedRecord && deriveRecordCurrentness(selectedRecord, new Date()) !== "CURRENT" && (
+        <p className="plan-copy" role="status">
+          {selectedRecord.achievedOn === null ? "기록 날짜가 없어" : "현재 페이스 기준으로 쓰기에는 오래된 기록이라"}
+          {" 이 기록으로는 개인 페이스를 적용하지 않았어요. 입력한 기록은 보관하고, 시간·힘든 정도 기준 계획으로 시작할 수 있어요."}
+        </p>
+      )}
       {onCatalogChange && intake.selectedDetailedTemplateRef === null && <InitialRecordPaceOffer
         generated={generated} records={athleteRecords} disabled={!canRevise || !canSelect}
         onChange={onCatalogChange} />}
