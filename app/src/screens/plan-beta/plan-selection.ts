@@ -40,6 +40,7 @@ import {
   localAccountScopeIsCurrent,
   localAccountScopeSnapshot,
 } from "../../domain/account/local-account-scope"
+import { localJournalScopeGeneration } from "../../domain/account/local-journal-ownership"
 
 export type CandidateSelection = {
   readonly candidateId: string
@@ -87,12 +88,15 @@ export async function saveSelectedPlanCandidate(
   }
   const adaptationScope = adaptationScopeForCandidate(canonicalCandidate)
   const accountScope = localAccountScopeSnapshot()
+  const scopeGeneration = localJournalScopeGeneration()
+  const scopeIsCurrent = () => localAccountScopeIsCurrent(accountScope)
+    && localJournalScopeGeneration() === scopeGeneration
   const accountWrite = captureAccountPlanWrite(activePlanBetaStorageKey())
   const locks = getPlanMutationLockManager()
   if (locks === null) return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" }
 
   try {
-    return await locks.request(
+    const result = await locks.request(
       PLAN_BETA_MUTATION_LOCK_NAME,
       { mode: "exclusive", ifAvailable: true },
       async (lock) => {
@@ -103,7 +107,7 @@ export async function saveSelectedPlanCandidate(
             || !mainDraftStillMatches(draftSnapshot, generated, intake, selection.startDate)) {
           return { kind: "rejected", code: "STALE_CANDIDATE_SELECTION" } as const
         }
-        if (!localAccountScopeIsCurrent(accountScope)) {
+        if (!scopeIsCurrent()) {
           return { kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" } as const
         }
         if (typeof window === "undefined") {
@@ -183,7 +187,7 @@ export async function saveSelectedPlanCandidate(
           if (accountWrite) {
             const freshReview = () => {
               const current = readPlanBetaStateFromStorage()
-              return isCurrentDraft() && localAccountScopeIsCurrent(accountScope)
+              return isCurrentDraft() && scopeIsCurrent()
                 && current.kind === "loaded" && sameStoredContent(current.state, predecessor)
                 && requestFingerprint() === originalRequest
                 && mainDraftStillMatches(draftSnapshot, generated, intake, selection.startDate)
@@ -232,7 +236,7 @@ export async function saveSelectedPlanCandidate(
 
         if (accountWrite) {
           const freshReview = () => {
-            if (!isCurrentDraft() || !localAccountScopeIsCurrent(accountScope) || requestFingerprint() !== originalRequest
+            if (!isCurrentDraft() || !scopeIsCurrent() || requestFingerprint() !== originalRequest
               || !mainDraftStillMatches(draftSnapshot, generated, intake, selection.startDate)
               || !planAnchorsStillCurrent(canonicalCandidate, new Date())
               || evaluatePlanSafety(gate.kind === "passed" ? "NO_KNOWN_RISK" : "REVIEW_REQUIRED").kind !== "passed") return false
@@ -270,6 +274,9 @@ export async function saveSelectedPlanCandidate(
         return { kind: "saved", state } as const
       },
     )
+    // The account may change again between the locked write and its caller's continuation.
+    if (!scopeIsCurrent()) return { kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" }
+    return result
   } catch {
     return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" }
   }

@@ -25,6 +25,7 @@ import {
   localAccountScopeIsCurrent,
 } from "./local-account-scope"
 import { accountPlanService, type AccountPlanResult, type AccountPlanService } from "./account-plan-service"
+import { localJournalScopeGeneration } from "./local-journal-ownership"
 import {
   accountPlanEntry,
   accountPlanFingerprint,
@@ -183,6 +184,11 @@ function sourceHasData(snapshots: readonly StorageSnapshot[]): boolean {
   return snapshots.some((snapshot) => snapshot.sourceValue !== null)
 }
 
+function snapshotsStillMatch(snapshots: readonly StorageSnapshot[]): boolean {
+  return snapshots.every(snapshot => snapshot.storage.getItem(snapshot.sourceKey) === snapshot.sourceValue
+    && snapshot.storage.getItem(snapshot.targetKey) === snapshot.targetValue)
+}
+
 function restoreValue(storage: Storage, key: string, value: string | null): boolean {
   try {
     if (value === null) storage.removeItem(key)
@@ -316,7 +322,16 @@ export function connectDeviceTrainingData(
       rollbackComplete: true,
     }
   }
-  const movePlan = options.movePlan !== false
+  return connectCapturedTrainingData(summary, plans, records, decorations, options.movePlan !== false)
+}
+
+function connectCapturedTrainingData(
+  summary: DeviceTrainingDataConnectionSummary,
+  plans: readonly StorageSnapshot[],
+  records: readonly StorageSnapshot[],
+  decorations: readonly StorageSnapshot[],
+  movePlan: boolean,
+): DeviceTrainingDataConnectionResult {
   const planMove = summary.plan.kind === "available" && movePlan ? moveBundle(plans) : null
   const recordMove = summary.records.kind === "available" ? moveBundle(records) : null
   const deviceDecoration = decorationStateFromSnapshots(decorations, "source")
@@ -402,33 +417,62 @@ export async function connectDeviceTrainingDataToAccount(
   today: Date = new Date(),
   serviceFactory: () => AccountPlanService | null = accountPlanService,
 ): Promise<DeviceTrainingDataAccountConnectionResult> {
+  const generation = localJournalScopeGeneration()
+  const current = () => localAccountScopeIsCurrent(userId) && localJournalScopeGeneration() === generation
+  const stale = (): DeviceTrainingDataAccountConnectionResult => ({ ok: false, plan: "scope_mismatch",
+    records: "scope_mismatch", decorations: "scope_mismatch", connectedRecords: 0, rollbackComplete: true, planStorage: "unavailable" })
+  if (!current()) return stale()
   const summary = inspectDeviceTrainingDataConnection(userId, today)
   if (summary.plan.kind !== "available" && summary.plan.kind !== "account_local") {
-    return { ...connectDeviceTrainingData(userId, today), planStorage: "none" }
+    return current() ? { ...connectDeviceTrainingData(userId, today), planStorage: "none" } : stale()
   }
   const storage = storages()
-  if (storage === null || !localAccountScopeIsCurrent(userId)) {
-    return { ...connectDeviceTrainingData(userId, today, { movePlan: false }), planStorage: "unavailable" }
+  if (storage === null || !current()) return stale()
+  const preserved = (planStorage: DevicePlanOnlineStorageStatus): DeviceTrainingDataAccountConnectionResult => ({
+    ok: false, plan: "preserved", records: "none", decorations: "none", connectedRecords: 0, rollbackComplete: true, planStorage,
+  })
+  let plans: StorageSnapshot[], records: StorageSnapshot[], decorations: StorageSnapshot[]
+  try {
+    plans = planSnapshots(userId, storage)
+    records = recordSnapshots(userId, storage)
+    decorations = decorationSnapshots(userId, storage)
+  } catch { return preserved("failed") }
+  // Only keys this operation may move are captured. Server hydration/outbox writes
+  // have their own storage and do not invalidate this review.
+  const unchanged = () => snapshotsStillMatch([...plans, ...records, ...decorations])
+  const blocked = (): DeviceTrainingDataAccountConnectionResult | null => {
+    if (!current()) return stale()
+    try { return unchanged() ? null : preserved("conflict") }
+    catch { return preserved("failed") }
+  }
+  const finish = (planStorage: DevicePlanOnlineStorageStatus, movePlan = false): DeviceTrainingDataAccountConnectionResult => {
+    const invalid = blocked()
+    if (invalid) return invalid
+    return { ...connectCapturedTrainingData(summary, plans, records, decorations, movePlan), planStorage }
   }
   const packet = planPacketFromDevice(userId, summary, storage)
-  if (packet === null) {
-    return { ...connectDeviceTrainingData(userId, today, { movePlan: false }), planStorage: "invalid" }
-  }
+  if (packet === null) return finish("invalid")
   const service = serviceFactory()
-  if (service === null) {
-    return { ...connectDeviceTrainingData(userId, today, { movePlan: false }), planStorage: "unavailable" }
-  }
+  if (service === null) return finish("unavailable")
+  const invalidInitial = blocked()
+  if (invalidInitial) return invalidInitial
 
   const hydrated = await service.hydrate()
+  const invalidHydration = blocked()
+  if (invalidHydration) return invalidHydration
   if (hydrated && "migrateLegacy" in service && service.snapshot().migrationRequired) {
     const migration = onlineStatus(await service.migrateLegacy())
+    const invalidMigration = blocked()
+    if (invalidMigration) return invalidMigration
     if (migration !== "stored_online") {
-      return { ...connectDeviceTrainingData(userId, today, { movePlan: false }), planStorage: migration }
+      return finish(migration)
     }
   }
   if (hydrated && "loadHistory" in service && !await service.loadHistory()) {
-    return { ...connectDeviceTrainingData(userId, today, { movePlan: false }), planStorage: "failed" }
+    return finish("failed")
   }
+  const invalidHistory = blocked()
+  if (invalidHistory) return invalidHistory
   const view = service.snapshot()
   if (!hydrated || view.fingerprint === null || !["EMPTY", "READY"].includes(view.status)) {
     const status: DevicePlanOnlineStorageStatus = view.status === "PENDING" ? "pending"
@@ -436,7 +480,7 @@ export async function connectDeviceTrainingDataToAccount(
       : view.status === "REJECTED" ? "rejected"
       : view.status === "INVALID" ? "invalid"
       : "failed"
-    return { ...connectDeviceTrainingData(userId, today, { movePlan: false }), planStorage: status }
+    return finish(status)
   }
 
   const desired = accountPlanEntry(packet)
@@ -448,8 +492,5 @@ export async function connectDeviceTrainingDataToAccount(
     : accountPlanFingerprint(existing.progress) === accountPlanFingerprint(desired.progress)
       ? "stored_online"
       : "conflict"
-  return {
-    ...connectDeviceTrainingData(userId, today, { movePlan: stored === "stored_online" }),
-    planStorage: stored,
-  }
+  return finish(stored, stored === "stored_online")
 }

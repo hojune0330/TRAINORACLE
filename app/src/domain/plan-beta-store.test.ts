@@ -14,6 +14,7 @@ import { stateFixture } from "./plan-beta-store.test-fixture"
 import { PLAN_BETA_MUTATION_LOCK_NAME } from "./plan-mutation-lock"
 import { deriveCandidateId } from "@impl/plan-generator/candidate-identity"
 import { generatePlanFromDraft, selectPlanForActivation } from "./plan-beta-flow"
+import { setActiveLocalAccount } from "./account/local-journal-ownership"
 
 let locksDescriptor: PropertyDescriptor | undefined
 
@@ -35,6 +36,7 @@ function legacyStateFixture() {
 
 describe("plan beta local store", () => {
   beforeEach(() => {
+    setActiveLocalAccount(null)
     window.localStorage.clear()
     window.sessionStorage.clear()
     locksDescriptor = Object.getOwnPropertyDescriptor(navigator, "locks")
@@ -50,6 +52,7 @@ describe("plan beta local store", () => {
   })
 
   afterEach(() => {
+    setActiveLocalAccount(null)
     vi.restoreAllMocks()
     if (locksDescriptor === undefined) Reflect.deleteProperty(navigator, "locks")
     else Object.defineProperty(navigator, "locks", locksDescriptor)
@@ -62,6 +65,30 @@ describe("plan beta local store", () => {
 
     expect(loadPlanBetaState()).toEqual(state)
     expect(JSON.stringify(loadPlanBetaState())).not.toMatch(/memo|symptom/u)
+  })
+
+  it.each(["progress", "archive"] as const)("rejects an old %s click after an account ABA while waiting for the mutation lock", async operation => {
+    setActiveLocalAccount("synthetic-a")
+    const state = stateFixture()
+    expect(savePlanBetaState(state)).toEqual({ ok: true })
+    const before = { local: JSON.stringify(localStorage), session: JSON.stringify(sessionStorage) }
+    let release!: () => Promise<void>
+    Object.defineProperty(navigator, "locks", { configurable: true, value: {
+      request: (_name: string, _options: unknown, callback: (lock: object) => unknown) => new Promise(resolve => {
+        release = async () => { resolve(await callback({})) }
+      }),
+    } })
+    const result = operation === "progress"
+      ? savePlanProgressWithLock(state.activePlan.candidateId, { sessionDay: 1, sessionSlot: "AM", state: "COMPLETED" })
+      : archiveAndClearActivePlanWithLock(state.activePlan.candidateId)
+    setActiveLocalAccount("synthetic-b")
+    setActiveLocalAccount("synthetic-a")
+    const write = vi.spyOn(Storage.prototype, "setItem"), remove = vi.spyOn(Storage.prototype, "removeItem")
+    await release()
+    await expect(result).resolves.toEqual({ kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" })
+    expect({ local: JSON.stringify(localStorage), session: JSON.stringify(sessionStorage) }).toEqual(before)
+    expect(write).not.toHaveBeenCalled()
+    expect(remove).not.toHaveBeenCalled()
   })
 
   it.each([

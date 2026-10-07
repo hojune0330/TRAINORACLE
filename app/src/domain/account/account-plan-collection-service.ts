@@ -67,6 +67,7 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
     const code = typeof error === "object" && error !== null && "code" in error ? error.code
       : error instanceof Error ? error.message : "FAILED"
     if (code === "STALE") return "STALE"
+    if (code === "REVIEW_REQUIRED") return "REVIEW_REQUIRED"
     if (code === "CONFLICT") { change("CONFLICT"); return "CONFLICT" }
     if (code === "INVALID" || code === "INVALID_RESPONSE") { change("INVALID"); return "INVALID" }
     if (code === "AUTH_REQUIRED") { change("AUTH_REQUIRED"); return "FAILED" }
@@ -346,13 +347,16 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
     if (next.data.plans.length > 100) return "CAPACITY"
     await yieldTask(); check()
     if (!guard()) return "STALE"
+    const requiresSelectionReview = next.data.currentPlanId !== null && next.data.currentPlanId !== base.data.currentPlanId
+    const acceptsIntent = () => guard() && (!requiresSelectionReview || review())
+    if (!acceptsIntent()) return "REVIEW_REQUIRED"
     const transfer = prepareAccountPlanCollectionTransfer({ ownerId: input.ownerId,
       operationId: input.operationId?.() ?? crypto.randomUUID(), expectedRevision: revision,
       previous: index ? base : null, next, ...(migration ? { legacy: migration } : {}),
       ...(journalGuard === undefined || next.data.currentPlanId === base.data.currentPlanId ? {} : { journalGuard }),
       ...(paceRecordGuard === undefined || next.data.currentPlanId === base.data.currentPlanId ? {} : { paceRecordGuard }) })
     if (!transfer) return "INVALID"
-    await local().save(transfer, sequence); check(); change("PENDING")
+    await local().save(transfer, sequence, acceptsIntent); check(); change("PENDING")
     if (!guard()) return "STALE"
     return flush(review, guard, allowedLegacySource)
   }

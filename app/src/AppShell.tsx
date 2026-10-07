@@ -24,7 +24,7 @@ import { ACCOUNT_REWARD_EVENT, accountRewardsEnabled, accountRewardStatus, readA
 import { createSavedFactReceipt } from "./domain/save-receipt"
 import { analysisNavigationForReceipt, type AnalysisNavigation, type AnalysisSection } from "./domain/analysis-navigation"
 import { buildOraclePersonalResult } from "./domain/oracle-personal-result"
-import { loadPlanBetaState } from "./domain/plan-beta-store"
+import { loadPlanBetaState, readPlanBetaStateFromStorage } from "./domain/plan-beta-store"
 import { usePlanEvidenceHistory } from "./hooks/usePlanEvidenceHistory"
 import { PlanEvidenceHistoryNotice } from "./components/PlanEvidenceHistoryNotice"
 import { useAthleteRecordsSnapshot } from "./hooks/useAthleteRecordsSnapshot"
@@ -194,6 +194,12 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const coachingDayOrigin = React.useRef<RecordingOrigin | null>(null)
   const trainingContentOrigin = React.useRef<RecordingOrigin | null>(null)
   const oracleInputRef = React.useRef<{ topic: OracleTopicId; owner: string | null; inputKind: "log" | "records" | "plan"; historyToken?: string; mode: "example" | "personal"; scrollTop: number; view: ReturnType<typeof viewForTab> } | null>(null)
+  // Keep only this mounted shell's return route. Forward always rereads the saved plan.
+  const oraclePlanForwardRef = React.useRef<{ intent: NonNullable<typeof oracleInputRef.current>; scope: number } | null>(null)
+  const hasStoredOraclePlan = React.useCallback(() => {
+    try { return "state" in readPlanBetaStateFromStorage(undefined, undefined, multiPlanRuntime?.readMultiAdjustedEvidenceV3?.()) }
+    catch { return false }
+  }, [multiPlanRuntime?.readMultiAdjustedEvidenceV3])
   const pendingReward = React.useRef<{ ownerId: string | null; date: string } | null>(null)
   const calendarDraftReturn = React.useRef<{ token: string; owner: string | null; view: typeof v } | null>(null)
   const calendarOriginalReturn = React.useRef<{ token: string; owner: string | null; view: typeof v } | null>(null)
@@ -361,12 +367,34 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         if (!allowed) window.history.pushState({ ...window.history.state, calendarOriginalPage: originalOrigin.token }, "", window.location.href)
         return
       }
+      const forward = oraclePlanForwardRef.current
+      if (forward && event.state?.[ORACLE_PLAN_HISTORY_KEY] === forward.intent.historyToken) {
+        const isCurrent = () => oraclePlanForwardRef.current === forward
+          && forward.scope === localJournalScopeGeneration() && forward.intent.owner === activeLocalAccount()
+          && window.history.state?.[ORACLE_PLAN_HISTORY_KEY] === forward.intent.historyToken
+        if (isCurrent() && hasStoredOraclePlan()) {
+          const allowed = runDraftSafeNavigation(() => {
+            if (!hasStoredOraclePlan()) { oraclePlanForwardRef.current = null; return }
+            oraclePlanForwardRef.current = null
+            oracleInputRef.current = forward.intent
+            applyOverlay(null)
+            setUtilityView(null)
+            setAthleteRecordsOpen(false)
+            setV(viewForTab("plan"))
+          }, false, isCurrent)
+          if (!allowed && isCurrent()) window.history.back()
+          return
+        }
+        oraclePlanForwardRef.current = null
+      }
       const intent = oracleInputRef.current
       const leavingOraclePlan = intent?.inputKind === "plan" && intent.historyToken !== undefined
         && event.state?.[ORACLE_PLAN_HISTORY_KEY] !== intent.historyToken
       if ((intent?.inputKind === "log" || leavingOraclePlan) && overlayRef.current === null && intent.owner === activeLocalAccount()) {
         const restored: AppOverlay = { kind: "oracle", topic: intent.topic, mode: intent.mode, scrollTop: intent.scrollTop }
         const allowed = runDraftSafeNavigation(() => {
+          oraclePlanForwardRef.current = leavingOraclePlan && hasStoredOraclePlan()
+            ? { intent, scope: localJournalScopeGeneration() } : null
           oracleInputRef.current = null
           setV(intent.view)
           window.history.replaceState({ ...window.history.state, [OVERLAY_HISTORY_KEY]: {
@@ -397,7 +425,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     }
     window.addEventListener("popstate", onPopState)
     return () => window.removeEventListener("popstate", onPopState)
-  }, [applyOverlay])
+  }, [applyOverlay, hasStoredOraclePlan])
 
   React.useEffect(() => {
     if (v.tab === "log" || calendarDraftReturn.current === null) return
@@ -430,6 +458,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       analysisReturnContext.current = undefined
       setOracleHubSection("training")
       pendingReward.current = null; oracleInputRef.current = null; decorationReturn.current = null; setDecorationInitialDate(undefined); setSavedToast(null); setAnalysisContext(undefined)
+      oraclePlanForwardRef.current = null
       paceRequestRef.current = null
       if (overlayRef.current?.kind === "pace") {
         overlayHistoryOwnerRef.current = `shell-${Date.now()}-${Math.random().toString(36).slice(2)}`
@@ -474,6 +503,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const goHome = () => {
     runViewTransition("pop", () => {
       oracleInputRef.current = null
+      oraclePlanForwardRef.current = null
       recordingOrigin.current = null
       coachingDayOrigin.current = null
       setAthleteRecordsOpen(false)
@@ -593,6 +623,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     // Leaving the exploration invalidates its older history entries too.
     // Otherwise Back could reopen a sample over a different destination tab.
     overlayHistoryOwnerRef.current = `shell-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    oraclePlanForwardRef.current = null
     paceRequestRef.current = null
     if (overlayRef.current?.kind !== "oracle" && overlayRef.current?.kind !== "record-reading" && overlayRef.current?.kind !== "running-profile" && overlayRef.current?.kind !== "pace") return
     const currentState = window.history.state
@@ -624,6 +655,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   })
   const openOraclePersonal = (action: "records" | "journal" | "trends" | "plan" | "log", section?: AnalysisSection, metric?: "DISTANCE_KM" | "RPE") => {
     runViewTransition("push", () => {
+      oraclePlanForwardRef.current = null
       const topic = overlayRef.current?.kind === "oracle" ? overlayRef.current.topic : null
       oracleInputRef.current = topic && (action === "records" || action === "log" || action === "plan")
         ? { topic, owner: activeLocalAccount(), inputKind: action,

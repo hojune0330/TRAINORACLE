@@ -30,6 +30,65 @@ function setup(server = collectionServer(), extra: Partial<AccountPlanCollection
 const select = (packet = accountPlanPacketFixture(3)) => ({ kind: "SELECT" as const, packet,
   confirmsSelection: true as const, freshReview: () => true })
 
+it.each(["service-yield", "buffer-read", "preparation-before-write"] as const)(
+  "declines a selection invalidated at %s before creating a durable pending operation", async phase => {
+    const packet = accountPlanPacketFixture(3)
+    let reviewed = false, reviewCurrent = true, invalidate = true
+    const { service, server, stores } = setup(undefined, { yieldTask: async () => {
+      if (phase === "service-yield" && reviewed && invalidate) { reviewCurrent = false; invalidate = false }
+    } })
+    const read = vi.mocked(stores.manifests.buffer.read).getMockImplementation()!
+    vi.mocked(stores.manifests.buffer.read).mockImplementation(async (...args) => {
+      if (phase === "buffer-read" && reviewed && invalidate) { reviewCurrent = false; invalidate = false }
+      return read(...args)
+    })
+    const prepare = vi.mocked(stores.preparations.buffer.save).getMockImplementation()!
+    vi.mocked(stores.preparations.buffer.save).mockImplementation(async (input, current, acceptsIntent) => {
+      if (phase === "preparation-before-write" && invalidate) { reviewCurrent = false; invalidate = false }
+      return prepare(input, current, acceptsIntent)
+    })
+    expect(await service.hydrate()).toBe(true)
+    const result = await service.mutate({ ...select(packet), freshReview: () => { reviewed = true; return reviewCurrent } },
+      service.snapshot().fingerprint!)
+    expect(result).toBe("REVIEW_REQUIRED")
+    expect(service.snapshot()).toMatchObject({ status: "EMPTY", currentPlan: null })
+    expect(stores.preparations.rows.size).toBe(0)
+    expect(stores.manifests.writes).toHaveLength(0)
+    expect(stores.parts.writes).toHaveLength(0)
+    expect(server.commits).toHaveLength(0)
+    // A fresh explicit selection can proceed immediately; the stale review did not occupy the queue.
+    reviewCurrent = true
+    expect(await service.mutate(select(packet), service.snapshot().fingerprint!)).toBe("ACCOUNT")
+    expect(server.commits).toHaveLength(1)
+    service.close()
+  },
+)
+
+it("preserves the exact durable operation when review changes after preparation commit before acknowledgement", async () => {
+  const packet = accountPlanPacketFixture(3), { service, server, stores } = setup(undefined, { yieldTask: async () => {} })
+  let reviewCurrent = true, operationId = ""
+  const prepare = vi.mocked(stores.preparations.buffer.save).getMockImplementation()!
+  vi.mocked(stores.preparations.buffer.save).mockImplementationOnce(async (input, current, acceptsIntent) => {
+    await prepare(input, current, acceptsIntent)
+    operationId = input.transfer.operationId
+    reviewCurrent = false
+    // The native preparation store rechecks its guard when the write transaction completes.
+    if (!current()) throw Error("STALE")
+  })
+  expect(await service.hydrate()).toBe(true)
+  expect(await service.mutate({ ...select(packet), freshReview: () => reviewCurrent }, service.snapshot().fingerprint!)).toBe("PENDING")
+  const pending = structuredClone([...stores.manifests.rows.values()][0]!.pending)
+  expect(pending?.operationId).toBe(operationId)
+  expect(service.snapshot()).toMatchObject({ status: "PENDING", currentPlan: null })
+  expect(server.commits).toHaveLength(0)
+  expect(await service.retry()).toBe("PENDING")
+  expect([...stores.manifests.rows.values()][0]!.pending).toEqual(pending)
+  expect(await service.retry(() => true)).toBe("ACCOUNT")
+  expect(server.commits).toHaveLength(1)
+  expect(server.commits[0]!.operationId).toBe(operationId)
+  service.close()
+})
+
 it.each(["missing", "rejected"])("production lock %s never falls back to uncoordinated client or storage work", async mode => {
   vi.stubGlobal("navigator", mode === "missing" ? {} : { locks: { request: vi.fn(async () => { throw Error("Denied") }) } })
   const { service, server, stores } = setup(undefined, { runExclusive: undefined })

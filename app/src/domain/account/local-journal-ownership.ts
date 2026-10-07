@@ -114,16 +114,24 @@ export function isJournalVisible(entryId: string): boolean {
   return owner === null || owner === activeAccountId
 }
 
-/** One synchronous list read shares a fresh ledger; never retain it across reads. */
-export function filterVisibleJournalEntries<T extends { readonly id: string }>(entries: readonly T[]): T[] {
-  if (entries.length === 0) return []
+/** One synchronous list read shares a fresh ledger and reports an unreadable owner map. */
+export function readVisibleJournalEntries<T extends { readonly id: string }>(entries: readonly T[]):
+  | { readonly kind: "loaded"; readonly entries: T[] }
+  | { readonly kind: "unavailable" } {
   const snapshot = loadSnapshot()
-  if (snapshot.status === "uncertain") return []
+  if (snapshot.status === "uncertain") return { kind: "unavailable" }
   const accountId = activeAccountId
-  return entries.filter(entry => {
+  return { kind: "loaded", entries: entries.filter(entry => {
     const owner = snapshot.ownerByEntryId[entry.id] ?? null
     return owner === null || owner === accountId
-  })
+  }) }
+}
+
+/** Never retain the ownership snapshot across reads. */
+export function filterVisibleJournalEntries<T extends { readonly id: string }>(entries: readonly T[]): T[] {
+  if (entries.length === 0) return []
+  const read = readVisibleJournalEntries(entries)
+  return read.kind === "loaded" ? read.entries : []
 }
 
 export function isJournalOwnedBy(entryId: string, userId: string): boolean {

@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test"
 
 for (const width of [320, 375]) {
   test.describe(`write first ${width}px`, () => {
-    test.use({ viewport: { width, height: 740 }, reducedMotion: "reduce" })
+    test.use({ viewport: { width, height: 740 }, contextOptions: { reducedMotion: "reduce" } })
     test("keeps an early note and two exercise types through safety checks and explicit save", async ({ page }, info) => {
       const errors: string[] = []
       page.on("pageerror", error => errors.push(error.message))

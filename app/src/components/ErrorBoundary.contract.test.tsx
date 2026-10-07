@@ -79,6 +79,17 @@ describe("ErrorBoundary", () => {
     expect(emergencyJournalBackupRaw()).toBe("[]")
   })
 
+  it("reads one fresh ownership snapshot for a large emergency backup", () => {
+    const entries = Array.from({ length: 500 }, (_, index) => ({ id: `synthetic-${index}` }))
+    localStorage.setItem(JOURNAL_KEY, JSON.stringify(entries))
+    localStorage.setItem("trainoracle.journal.ownership.v1", JSON.stringify({
+      schemaVersion: 1, ownerByEntryId: { "synthetic-499": "another-account" },
+    }))
+    const read = vi.spyOn(Storage.prototype, "getItem")
+    expect(readEmergencyJournalBackup()).toEqual({ kind: "ready", count: 499, raw: JSON.stringify(entries.slice(0, 499)) })
+    expect(read.mock.calls.filter(([key]) => key === "trainoracle.journal.ownership.v1")).toHaveLength(1)
+  })
+
   it("다시 열어 보기 경로를 제공한다", () => {
     render(<ErrorBoundary><Boom /></ErrorBoundary>)
     expect(screen.getByTestId("error-retry")).toBeTruthy()

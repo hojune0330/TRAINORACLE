@@ -172,7 +172,7 @@ export function createAccountPlanCollectionBuffer(ownerId: string, isCurrent: ()
   async function read() { await recover(); return readManifest() }
   return {
     read, stage, readPart,
-    async save(transfer: AccountPlanCollectionTransfer, expectedSequence: number) {
+    async save(transfer: AccountPlanCollectionTransfer, expectedSequence: number, acceptsIntent?: () => boolean) {
       check()
       const captured = structuredClone(transfer)
       if (!readAccountPlanCollectionTransfer(captured) || captured.ownerId !== ownerId) throw Error("INVALID")
@@ -181,7 +181,9 @@ export function createAccountPlanCollectionBuffer(ownerId: string, isCurrent: ()
       // The complete accepted intent becomes durable atomically before any part is
       // staged. A stale scope may stop publication, never orphan the remaining input.
       try {
-        await preparations.save({ transfer: captured, expectedSequence }, current); check()
+        if (acceptsIntent) await preparations.save({ transfer: captured, expectedSequence }, current, acceptsIntent)
+        else await preparations.save({ transfer: captured, expectedSequence }, current)
+        check()
         await recover()
       } catch (error) { check(); throw error }
     },

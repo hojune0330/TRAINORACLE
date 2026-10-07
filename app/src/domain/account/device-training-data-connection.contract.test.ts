@@ -29,6 +29,12 @@ const PLAN_KEYS = [
 ] as const
 const PREVIOUS_INTAKE_KEY = "trainoracle.plan-beta.previous-intake.v1"
 
+function deferred<T>() {
+  let resolve!: (value: T) => void
+  const promise = new Promise<T>(done => { resolve = done })
+  return { promise, resolve }
+}
+
 function validRecord(id = "pb-5000") {
   const record = createSelfReportedAthleteRecord({
     id,
@@ -77,6 +83,105 @@ afterEach(() => {
 })
 
 describe("explicit device training data connection", () => {
+  it("keeps a changed device plan in place when the server acknowledged only the earlier captured plan", async () => {
+    const original = stateFixture(), raw = JSON.stringify(original)
+    const changed = JSON.stringify({ ...original, progress: [{ sessionDay: 1, sessionSlot: "AM", state: "COMPLETED" }] })
+    localStorage.setItem(PLAN_BETA_STORAGE_KEY, raw)
+    const response = deferred<"ACCOUNT">(), entered = deferred<void>()
+    const mutate = vi.fn(async () => { entered.resolve(); return response.promise })
+    const service = { hydrate: vi.fn(async () => true), mutate,
+      snapshot: () => ({ status: "EMPTY", document: null, fingerprint: "empty", currentPlan: null }) } as unknown as AccountPlanService
+    const pending = connectDeviceTrainingDataToAccount(USER_ID, TODAY, () => service)
+    await entered.promise
+    localStorage.setItem(PLAN_BETA_STORAGE_KEY, changed)
+    response.resolve("ACCOUNT")
+    expect(await pending).toMatchObject({ ok: false, plan: "preserved", planStorage: "conflict" })
+    expect(mutate).toHaveBeenCalledWith(expect.objectContaining({ packet: expect.objectContaining({ state: original }) }), "empty")
+    expect(localStorage.getItem(PLAN_BETA_STORAGE_KEY)).toBe(changed)
+    expect(localStorage.getItem(accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID))).toBeNull()
+  })
+
+  it.each(["hydrate", "migration", "history", "save"] as const)("does not move device data after an account ABA during %s", async phase => {
+    const plan = JSON.stringify(stateFixture()), records = JSON.stringify([validRecord()])
+    localStorage.setItem(PLAN_BETA_STORAGE_KEY, plan)
+    localStorage.setItem(ATHLETE_RECORDS_STORAGE_KEY, records)
+    const response = deferred<void>(), entered = deferred<void>()
+    const wait = async () => { entered.resolve(); await response.promise }
+    const mutate = vi.fn(async () => { if (phase === "save") await wait(); return "ACCOUNT" as const })
+    const service = {
+      hydrate: async () => { if (phase === "hydrate") { await wait(); return false }; return true },
+      migrateLegacy: async () => { if (phase === "migration") await wait(); return "ACCOUNT" as const },
+      loadHistory: async () => { if (phase === "history") await wait(); return true },
+      mutate, snapshot: () => ({ status: "EMPTY", document: null, fingerprint: "empty", currentPlan: null,
+        migrationRequired: phase === "migration" }),
+    } as unknown as AccountPlanService
+    const pending = connectDeviceTrainingDataToAccount(USER_ID, TODAY, () => service)
+    await entered.promise
+    setActiveLocalAccount("athlete-b"); setActiveLocalAccount(USER_ID)
+    const write = vi.spyOn(Storage.prototype, "setItem"), remove = vi.spyOn(Storage.prototype, "removeItem")
+    response.resolve()
+    expect(await pending).toMatchObject({ ok: false, plan: "scope_mismatch", records: "scope_mismatch" })
+    expect(write).not.toHaveBeenCalled(); expect(remove).not.toHaveBeenCalled()
+    expect(localStorage.getItem(PLAN_BETA_STORAGE_KEY)).toBe(plan)
+    expect(localStorage.getItem(ATHLETE_RECORDS_STORAGE_KEY)).toBe(records)
+    expect(mutate).toHaveBeenCalledTimes(phase === "save" ? 1 : 0)
+  })
+
+  it.each(["plan-source", "plan-target", "records-source", "records-target", "previous-intake"])("preserves all current bytes when %s changes during hydration", async changedKey => {
+    const source = JSON.stringify(stateFixture()), records = JSON.stringify([validRecord()])
+    localStorage.setItem(PLAN_BETA_STORAGE_KEY, source)
+    localStorage.setItem(ATHLETE_RECORDS_STORAGE_KEY, records)
+    const response = deferred<boolean>(), entered = deferred<void>()
+    const mutate = vi.fn(async () => "ACCOUNT" as const)
+    const service = { hydrate: async () => { entered.resolve(); return response.promise }, mutate,
+      snapshot: () => ({ status: "EMPTY", document: null, fingerprint: "empty", currentPlan: null }) } as unknown as AccountPlanService
+    const pending = connectDeviceTrainingDataToAccount(USER_ID, TODAY, () => service)
+    await entered.promise
+    const keys: Record<string, [Storage, string]> = {
+      "plan-source": [localStorage, PLAN_BETA_STORAGE_KEY],
+      "plan-target": [localStorage, accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID)],
+      "records-source": [localStorage, ATHLETE_RECORDS_STORAGE_KEY],
+      "records-target": [localStorage, accountScopedStorageKeyFor(ATHLETE_RECORDS_STORAGE_KEY, USER_ID)],
+      "previous-intake": [sessionStorage, PREVIOUS_INTAKE_KEY],
+    }
+    const [storage, key] = keys[changedKey]!
+    storage.setItem(key, "newer synthetic bytes")
+    const localBefore = { ...localStorage }, sessionBefore = { ...sessionStorage }
+    response.resolve(true)
+    expect(await pending).toMatchObject({ ok: false, plan: "preserved", planStorage: "conflict" })
+    expect(mutate).not.toHaveBeenCalled()
+    expect({ ...localStorage }).toEqual(localBefore); expect({ ...sessionStorage }).toEqual(sessionBefore)
+  })
+
+  it("keeps an acknowledged plan's device original when the account-local cache write fails", async () => {
+    const source = JSON.stringify(stateFixture())
+    localStorage.setItem(PLAN_BETA_STORAGE_KEY, source)
+    const set = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, key, value) {
+      if (key === accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID)) throw new DOMException("Synthetic quota", "QuotaExceededError")
+      set.call(this, key, value)
+    })
+    const mutate = vi.fn(async () => "ACCOUNT" as const)
+    const service = { hydrate: async () => true, mutate,
+      snapshot: () => ({ status: "EMPTY", document: null, fingerprint: "empty", currentPlan: null }) } as unknown as AccountPlanService
+    expect(await connectDeviceTrainingDataToAccount(USER_ID, TODAY, () => service)).toMatchObject({
+      ok: false, plan: "failed", planStorage: "stored_online", rollbackComplete: true,
+    })
+    expect(mutate).toHaveBeenCalledOnce()
+    expect(localStorage.getItem(PLAN_BETA_STORAGE_KEY)).toBe(source)
+    expect(localStorage.getItem(accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID))).toBeNull()
+  })
+
+  it("does not mistake unrelated account hydration cache writes for a changed transfer source", async () => {
+    const source = JSON.stringify(stateFixture())
+    localStorage.setItem(PLAN_BETA_STORAGE_KEY, source)
+    const service = { hydrate: async () => { localStorage.setItem("synthetic.account.hydration", "new server projection"); return true },
+      mutate: async () => "ACCOUNT" as const,
+      snapshot: () => ({ status: "EMPTY", document: null, fingerprint: "empty", currentPlan: null }) } as unknown as AccountPlanService
+    expect(await connectDeviceTrainingDataToAccount(USER_ID, TODAY, () => service)).toMatchObject({ plan: "connected", planStorage: "stored_online" })
+    expect(localStorage.getItem(accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, USER_ID))).toBe(source)
+  })
+
   it("moves the complete plan bundle and records only after an explicit call", () => {
     const planValues = seedDevicePlanBundle()
     const recordsValue = JSON.stringify([validRecord()])

@@ -25,6 +25,7 @@ import {
   loadPlanBetaState,
   loadPreviousIntake,
   savePlanBetaState,
+  restorePlanBetaStateIfMissing,
   readPlanBetaStateFromStorage,
   activePlanBetaStorageKey,
 } from "../domain/plan-beta-store"
@@ -578,16 +579,37 @@ function LegacyPlanBeta({
       return
     }
     let cancelled = false
-    void loadLatestPlanFromServer().then((result) => {
-      if (cancelled) return
-      if (result.kind === "loaded" && savePlanBetaState(result.state).ok) {
-        setStored(result.state)
-        setCloudPersistence("SAVED")
+    const scope = localAccountScopeSnapshot(), generation = localJournalScopeGeneration()
+    const storageKey = activePlanBetaStorageKey()
+    const current = () => !cancelled && localAccountScopeIsCurrent(scope)
+      && localJournalScopeGeneration() === generation && activePlanBetaStorageKey() === storageKey
+      && planCloudBackupEnabled()
+    const refreshStored = () => {
+      const read = readPlanBetaStateFromStorage()
+      if (read.kind === "loaded") setStored(read.state)
+      onAdjustedStored()
+    }
+    if (readPlanBetaStateFromStorage().kind !== "missing") {
+      refreshStored()
+      setCloudRestorePending(false)
+      return
+    }
+    void loadLatestPlanFromServer().then(async (result) => {
+      if (!current()) return
+      if (result.kind === "loaded") {
+        const restored = await restorePlanBetaStateIfMissing(result.state, current)
+        if (!current()) return
+        refreshStored()
+        setCloudPersistence(restored.kind === "restored" ? "SAVED" : restored.kind === "failed" ? "FAILED" : "DEVICE_ONLY")
       } else if (result.kind === "failed") {
         setCloudPersistence("FAILED")
       } else {
         setCloudPersistence("DEVICE_ONLY")
       }
+      setCloudRestorePending(false)
+    }).catch(() => {
+      if (!current()) return
+      setCloudPersistence("FAILED")
       setCloudRestorePending(false)
     })
     return () => { cancelled = true }

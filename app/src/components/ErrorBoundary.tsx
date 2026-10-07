@@ -14,7 +14,7 @@
 //  - 오류 내용을 서버로 보내지 않는다. 일지 본문이 섞여 나갈 수 있다.
 //  - 사용자를 탓하거나 불안을 주는 문구를 쓰지 않는다.
 import React from "react"
-import { isJournalVisible, journalOwner } from "../domain/account/local-journal-ownership"
+import { readVisibleJournalEntries } from "../domain/account/local-journal-ownership"
 import { captureInterruptedDraft, isScreenAssetFailure, reloadScreenAssets, rememberRecoveryTab } from "../domain/screen-recovery"
 import type { AppTab } from "./AppChrome"
 
@@ -33,14 +33,16 @@ type BackupRead = { kind: "ready"; raw: string; count: number } | { kind: "unava
 export function readEmergencyJournalBackup(): BackupRead {
   try {
     const parsed: unknown = JSON.parse(window.localStorage.getItem(JOURNAL_KEY) ?? "[]")
-    if (!Array.isArray(parsed) || journalOwner("") === undefined) return { kind: "unavailable" }
-    const visible = []
+    if (!Array.isArray(parsed)) return { kind: "unavailable" }
+    const entries: { readonly id: string }[] = []
     for (const candidate of parsed) {
       if (typeof candidate !== "object" || candidate === null || typeof candidate.id !== "string") return { kind: "unavailable" }
-      if (journalOwner(candidate.id) === undefined) return { kind: "unavailable" }
-      if (isJournalVisible(candidate.id)) visible.push(candidate)
+      entries.push(candidate)
     }
-    return { kind: "ready", raw: JSON.stringify(visible), count: visible.length }
+    const read = readVisibleJournalEntries(entries)
+    return read.kind === "loaded"
+      ? { kind: "ready", raw: JSON.stringify(read.entries), count: read.entries.length }
+      : { kind: "unavailable" }
   } catch { return { kind: "unavailable" } }
 }
 

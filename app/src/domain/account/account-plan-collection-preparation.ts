@@ -12,7 +12,7 @@ export const COLLECTION_PREPARATION_DB = "trainoracle-account-plan-collection-pr
 export type AccountPlanCollectionPreparation = { transfer: AccountPlanCollectionTransfer; expectedSequence: number }
 export interface AccountPlanCollectionPreparationStore {
   read(ownerId: string, isCurrent: () => boolean): Promise<AccountPlanCollectionPreparation | null>
-  save(input: AccountPlanCollectionPreparation, isCurrent: () => boolean): Promise<void>
+  save(input: AccountPlanCollectionPreparation, isCurrent: () => boolean, acceptsIntent?: () => boolean): Promise<void>
   clear(ownerId: string, operationId: string, isCurrent: () => boolean): Promise<void>
   close(): void
 }
@@ -105,12 +105,18 @@ export function createAccountPlanCollectionPreparationStore(factory: IDBFactory 
     })
   }
   return {
-    async save(input, current) {
+    async save(input, current, acceptsIntent = () => true) {
       check(current)
+      const reviewIntent = () => {
+        check(current)
+        if (!acceptsIntent()) throw Error("REVIEW_REQUIRED")
+        check(current)
+      }
       // Capture all caller-owned values synchronously, before the first await.
       const captured = structuredClone({ transfer: input.transfer, expectedSequence: input.expectedSequence })
       const transfer = readAccountPlanCollectionTransfer(captured.transfer)
       if (!transfer) throw Error("INVALID")
+      reviewIntent()
       const { ownerId, operationId } = transfer
       const references = (c: AccountPlanCollectionParts) => ({ index: c.index,
         snapshots: c.snapshots.map(p => p.id), progress: c.progress.map(p => p.id) })
@@ -143,6 +149,9 @@ export function createAccountPlanCollectionPreparationStore(factory: IDBFactory 
           check(current); encrypted.push({ ...row, ciphertext })
         } finally { bytes.fill(0) }
       }
+      // Full selection review can be expensive. Check at acceptance/write boundaries,
+      // not once per encrypted history part; account scope still guards every await.
+      reviewIntent()
       await transaction<void>(current, "readwrite", (tx, finish, guard) => {
         const store = tx.objectStore("payloads"), keys = tx.objectStore("ownerKeys")
         const existing = store.index("ownerId").getAll(ownerId)
@@ -156,11 +165,12 @@ export function createAccountPlanCollectionPreparationStore(factory: IDBFactory 
               if (!root || root.operationId !== operationId || root.fingerprint !== fingerprint) throw Error("CONFLICT")
               finish(); return
             }
+            reviewIntent()
             if (storedKey.result === undefined) keys.add(key, ownerId)
             for (const row of encrypted) { check(current); store.add(row) }
             // A request callback scope loss still aborts every queued write, including the key.
             const verify = store.get([ownerId, "intent"])
-            verify.onsuccess = () => guard(() => finish())
+            verify.onsuccess = () => guard(() => { reviewIntent(); finish() })
           })
         })
       })

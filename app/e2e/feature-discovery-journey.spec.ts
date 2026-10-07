@@ -3,7 +3,7 @@ import { completeQuickPlan } from "./plan-flow"
 
 for (const width of [320, 375]) {
   test.describe(`feature discovery ${width}px`, () => {
-    test.use({ viewport: { width, height: 740 }, reducedMotion: "reduce" })
+    test.use({ viewport: { width, height: 740 }, contextOptions: { reducedMotion: "reduce" } })
     test("keeps named tools reachable and returns to the actual origin", async ({ page }, info) => {
       const errors: string[] = []
       page.on("pageerror", error => errors.push(error.message))

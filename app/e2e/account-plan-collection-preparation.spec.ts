@@ -16,6 +16,65 @@ test.beforeEach(async ({ context, page }) => {
   await load(page)
 })
 
+for (const phase of ["encryption", "transaction"] as const) {
+  test(`native selection review withdrawn during ${phase} leaves no durable intent or key`, async ({ page }) => {
+    const result = await page.evaluate(async phase => {
+      const h = window.accountPreparationHarness, prep = h.createPreparation(), input = h.fixture(18)
+      const encrypt = crypto.subtle.encrypt, add = IDBObjectStore.prototype.add
+      let reviewCurrent = true, checks = 0, intercepted = false
+      if (phase === "encryption") crypto.subtle.encrypt = async function (...args: Parameters<typeof encrypt>) {
+        const result = await encrypt.apply(this, args)
+        reviewCurrent = false; intercepted = true
+        return result
+      }
+      if (phase === "transaction") IDBObjectStore.prototype.add = function (...args: Parameters<typeof add>) {
+        const result = add.apply(this, args)
+        if (this.transaction.db.name === h.databaseName && this.name === "payloads") {
+          reviewCurrent = false; intercepted = true
+        }
+        return result
+      }
+      let error: string | null
+      try { error = await h.rejected(() => prep.save(input, () => true, () => { checks++; return reviewCurrent })) }
+      finally { crypto.subtle.encrypt = encrypt; IDBObjectStore.prototype.add = add }
+      const raw = await h.raw(), recovered = await prep.read(h.owner, () => true)
+      prep.close()
+      return { error, intercepted, checks, rows: raw.rows.length, keys: raw.keys.length, hasRecovered: recovered !== null }
+    }, phase)
+    expect(result).toMatchObject({ error: "REVIEW_REQUIRED", intercepted: true, rows: 0, keys: 0, hasRecovered: false })
+    // Full review is bounded even with 18 plans; scope checks still cover every part and await.
+    expect(result.checks).toBeGreaterThan(0)
+    expect(result.checks).toBeLessThanOrEqual(4)
+  })
+}
+
+test("native committed intent survives review withdrawal before the save promise resumes", async ({ page }) => {
+  const result = await page.evaluate(async () => {
+    const h = window.accountPreparationHarness, prep = h.createPreparation(), input = h.fixture()
+    const add = IDBObjectStore.prototype.add
+    let reviewCurrent = true, intercepted = false, checks = 0
+    IDBObjectStore.prototype.add = function (...args: Parameters<typeof add>) {
+      const result = add.apply(this, args)
+      if (!intercepted && this.transaction.db.name === h.databaseName && this.name === "payloads") {
+        intercepted = true
+        this.transaction.addEventListener("complete", () => { reviewCurrent = false })
+      }
+      return result
+    }
+    let error: string | null
+    try { error = await h.rejected(() => prep.save(input, () => true, () => { checks++; return reviewCurrent })) }
+    finally { IDBObjectStore.prototype.add = add }
+    const retained = await prep.read(h.owner, () => true), raw = await h.raw()
+    prep.close()
+    return { error, reviewCurrent, intercepted, checks, operationId: retained?.transfer.operationId,
+      expectedOperationId: input.transfer.operationId, expected: h.fingerprint({ transfer: input.transfer, expectedSequence: input.expectedSequence }), retained: h.fingerprint(retained),
+      rows: raw.rows.length, keys: raw.keys.length }
+  })
+  expect(result).toMatchObject({ error: null, reviewCurrent: false, intercepted: true, checks: 4, rows: 6, keys: 1 })
+  expect(result.operationId).toBe(result.expectedOperationId)
+  expect(result.retained).toBe(result.expected)
+})
+
 test("native SELECT preparation survives first-snapshot scope close and page reload, visible only to A", async ({ page }) => {
   const before = await page.evaluate(async () => {
     const h = window.accountPreparationHarness, input = h.fixture(), buffer = h.open()

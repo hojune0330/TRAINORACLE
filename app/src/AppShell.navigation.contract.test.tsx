@@ -3,7 +3,9 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 import { AppShell } from "./AppShell"
 import { registerUnsavedDraftGuard } from "./domain/unsaved-draft-navigation"
+import { setActiveLocalAccount } from "./domain/account/local-journal-ownership"
 import { enterPlanWithoutRecord } from "./screens/plan-beta/instant-plan.test-helper"
+import { PLAN_BETA_STORAGE_KEY } from "./domain/plan-beta-store"
 
 // Transform the large lazy module outside the interaction timeout; browser tests cover its load.
 beforeAll(async () => { await import("./screens/PlanBeta") }, 60000)
@@ -188,5 +190,92 @@ describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {
     expect(await screen.findByRole("heading", { name: "워치 기록 불러오기" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "뒤로" }))
     expect(await screen.findByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
+  })
+})
+
+async function navigateHistory(direction: "back" | "forward") {
+  const popped = new Promise<void>(resolve => window.addEventListener("popstate", () => resolve(), { once: true }))
+  await act(async () => { window.history[direction](); await popped })
+}
+
+async function enterOraclePlan(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole("button", { name: "오라클" }))
+  await user.click(await screen.findByRole("button", { name: "이 예시 자세히 보기" }, { timeout: 10000 }))
+  await user.click(await screen.findByRole("button", { name: "내 기록으로 확인하기" }, { timeout: 10000 }))
+  await user.click(screen.getByRole("button", { name: "계획 만들기" }))
+  await screen.findByRole("heading", { name: "어떤 종목을 준비하세요?" })
+}
+
+async function saveOraclePlan(user: ReturnType<typeof userEvent.setup>) {
+  await enterOraclePlan(user)
+  await enterPlanWithoutRecord()
+  await user.click(screen.getByRole("button", { name: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u }))
+  await user.click(screen.getByRole("button", { name: /^매일/u }))
+  await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
+  await user.click(screen.getByRole("button", { name: "이 일정으로 시작" }))
+  await screen.findByRole("heading", { name: "9일 훈련 계획" })
+}
+
+describe("saved Oracle plan Forward navigation", { timeout: 20000 }, () => {
+  it("reopens the saved plan with Forward after returning to its Oracle result", async () => {
+    const user = userEvent.setup(); render(<AppShell />)
+    await saveOraclePlan(user)
+    const stored = localStorage.getItem(PLAN_BETA_STORAGE_KEY)
+    expect(stored).not.toBeNull()
+    for (let count = 0; count < 2; count += 1) {
+      await navigateHistory("back")
+      expect(screen.getByRole("combobox", { name: "살펴볼 주제" })).toHaveValue("focus")
+      await navigateHistory("forward")
+      expect(screen.getByRole("heading", { name: "9일 훈련 계획" })).toBeVisible()
+      expect(screen.getByRole("button", { name: "훈련" })).toHaveAttribute("aria-current", "page")
+      expect(localStorage.getItem(PLAN_BETA_STORAGE_KEY)).toBe(stored)
+    }
+  })
+
+  it("does not bring back a discarded unsaved plan through Forward", async () => {
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true)
+    const user = userEvent.setup(); render(<AppShell />)
+    await enterOraclePlan(user)
+    await user.click(screen.getByRole("button", { name: "1500m" }))
+    await user.click(screen.getByRole("button", { name: "내 기록" }))
+    await user.type(screen.getByLabelText("분", { exact: true }), "4")
+    await user.type(screen.getByLabelText("초", { exact: true }), "23.4")
+    await navigateHistory("back")
+    expect(confirm).toHaveBeenCalledTimes(1)
+    await navigateHistory("forward")
+    expect(screen.queryByRole("form", { name: "계획 시작 정보" })).toBeNull()
+    expect(localStorage.getItem(PLAN_BETA_STORAGE_KEY)).toBeNull()
+  })
+
+  it("keeps the Oracle result when an unsaved draft refuses Forward", async () => {
+    const user = userEvent.setup(); render(<AppShell />)
+    await saveOraclePlan(user)
+    await navigateHistory("back")
+    const confirmDiscard = vi.fn(() => false)
+    const discard = vi.fn()
+    const unregister = registerUnsavedDraftGuard({ isUnsafe: () => true, onBlocked: () => undefined, confirmDiscard, discard })
+    try {
+      await navigateHistory("forward")
+      await waitFor(() => expect(window.history.state?.trainoracleOverlay?.topic).toBe("focus"))
+      expect(confirmDiscard).toHaveBeenCalledTimes(1)
+      expect(discard).not.toHaveBeenCalled()
+      expect(screen.getByRole("combobox", { name: "살펴볼 주제" })).toHaveValue("focus")
+      expect(screen.queryByRole("heading", { name: "9일 훈련 계획" })).toBeNull()
+    } finally { unregister() }
+    await navigateHistory("forward")
+    expect(screen.getByRole("heading", { name: "9일 훈련 계획" })).toBeVisible()
+  })
+
+  it.each(["tab", "owner", "remount", "removed"] as const)("does not restore a saved plan token after %s invalidation", async reason => {
+    const user = userEvent.setup(); const app = render(<AppShell />)
+    await saveOraclePlan(user)
+    await navigateHistory("back")
+    if (reason === "tab") await user.click(screen.getByRole("button", { name: "홈" }))
+    if (reason === "owner") act(() => { setActiveLocalAccount("synthetic-forward-owner"); setActiveLocalAccount(null) })
+    if (reason === "remount") { app.unmount(); render(<AppShell />) }
+    if (reason === "removed") localStorage.removeItem(PLAN_BETA_STORAGE_KEY)
+    await navigateHistory("forward")
+    expect(screen.queryByRole("heading", { name: "9일 훈련 계획" })).toBeNull()
+    expect(screen.getByRole("button", { name: "훈련" })).not.toHaveAttribute("aria-current", "page")
   })
 })

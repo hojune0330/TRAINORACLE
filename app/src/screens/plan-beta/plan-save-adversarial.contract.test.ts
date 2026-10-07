@@ -146,6 +146,33 @@ describe("adversarial plan save transaction", () => {
     expect(Object.entries(localStorage)).toEqual(before)
   })
 
+  it("rejects a guest-account-guest lifecycle during the lock wait without reviving the old selection", async () => {
+    const plan = generated()
+    const release = delayedLock()
+    const pending = save(plan)
+    setActiveLocalAccount("synthetic-account-b")
+    setActiveLocalAccount(null)
+    const before = Object.entries(localStorage)
+    release()
+    await expect(pending).resolves.toEqual({ kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" })
+    expect(Object.entries(localStorage)).toEqual(before)
+  })
+
+  it("does not acknowledge an old scope after the locked write has completed", async () => {
+    const plan = generated()
+    vi.spyOn(mutationLock, "getPlanMutationLockManager").mockReturnValue({
+      request: async <T,>(_name: string, _options: unknown, callback: (lock: object | null) => T | Promise<T>) => {
+        const result = await callback({})
+        setActiveLocalAccount("synthetic-account-b")
+        setActiveLocalAccount(null)
+        return result
+      },
+    })
+    await expect(save(plan)).resolves.toEqual({ kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" })
+    // A completed write remains available to a fresh read; only stale UI acknowledgement is suppressed.
+    expect(readPlanBetaStateFromStorage().kind).toBe("loaded")
+  })
+
   it("fails closed when the journal becomes unreadable during the lock wait", async () => {
     const plan = generated()
     const release = delayedLock()
