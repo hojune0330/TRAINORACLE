@@ -10,6 +10,7 @@ import { accountPlanPacketFixture } from "../../domain/account/account-plan.test
 import { createPlannedSessionLogDraft } from "../../domain/planned-session-link"
 import type { PostSessionEntry } from "../../domain/journal-schema"
 import { MultiPlanEvidenceContext } from "../../components/MultiPlanEvidenceContext"
+import type { RetainedMultiAdjustedEvidenceV3 } from "../../domain/selected-multi-adjusted-plan-v3"
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); localStorage.clear() })
 
@@ -104,5 +105,30 @@ it("memoizes a failed V6 evidence read across visible coaching records", () => {
 
   render(<MultiPlanEvidenceContext.Provider value={readMultiEvidence}><HomeCoachingSummary revision={0} /></MultiPlanEvidenceContext.Provider>)
   expect(screen.getByRole("heading", { name: "훈련 코칭" })).toBeVisible()
+  expect(readMultiEvidence).toHaveBeenCalledOnce()
+})
+
+it("reuses a successful V6 evidence read when a coaching record opens", () => {
+  const packet = accountPlanPacketFixture(6)
+  if (packet.state.version !== 6 || packet.evidence === null || !("slots" in packet.evidence) || !("rpeBindings" in packet.evidence)) throw Error("Expected V6 plan evidence")
+  const evidence = packet.evidence as RetainedMultiAdjustedEvidenceV3
+  const session = packet.state.selection.activePlan.sessions[0]
+  if (session === undefined) throw Error("Expected a linkable V6 session")
+  const draft = createPlannedSessionLogDraft(packet.state.selection, session, packet.state.selection.generatedAt)
+  if (draft === null) throw Error("Expected linked V6 journal")
+  const entry: PostSessionEntry = { id: "v6-evidence-success", kind: "post-session", date: draft.date,
+    savedAt: packet.state.selection.generatedAt, syncState: "local", system: "", title: "", memo: "", rpe: 0,
+    distanceKm: "", durationMin: "", avgPace: "", plannedSessionLink: draft.link }
+  window.localStorage.setItem(activePlanBetaStorageKey(), JSON.stringify(packet.state))
+  vi.spyOn(store, "todayISO").mockReturnValue("2099-12-31")
+  vi.spyOn(store, "loadEntriesForPlanSafety").mockReturnValue({ status: "complete", entries: [entry] })
+  const readMultiEvidence = vi.fn(() => [evidence])
+
+  render(<MultiPlanEvidenceContext.Provider value={readMultiEvidence}><HomeCoachingSummary revision={0} /></MultiPlanEvidenceContext.Provider>)
+  expect(readMultiEvidence).toHaveBeenCalledOnce()
+  const reviewButton = screen.getAllByRole("button").find(button => button.closest(".home-coaching__item") !== null)
+  expect(reviewButton).toBeDefined()
+  fireEvent.click(reviewButton!)
+  expect(screen.getByRole("dialog")).toBeVisible()
   expect(readMultiEvidence).toHaveBeenCalledOnce()
 })

@@ -47,7 +47,7 @@ it.each([false, true].flatMap(supplied => [App, AppShell].map(Component => ({ su
   expect(typeof forwarded.onWritePlannedSessionLog).toBe("function")
 })
 
-it("queries the supplied evidence reader when the actual next-training plan screen opens", () => {
+it("keeps the supplied V6 evidence reader deferred when a stored V3 next-training plan opens", () => {
   const state = stateFixture(), today = new Date()
   const startDate = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, "0"), String(today.getDate()).padStart(2, "0")].join("-")
   expect(savePlanBetaState({ ...state, intake: { ...state.intake, startDate } }).ok).toBe(true)
@@ -58,7 +58,18 @@ it("queries the supplied evidence reader when the actual next-training plan scre
   expect(readEvidence).not.toHaveBeenCalled()
   fireEvent.click(nextTraining)
   expect(planProps.mock.calls.at(-1)![0].returnToSession).toMatchObject({ plannedDate: startDate, sessionDay: 1, sessionSlot: "AM" })
-  expect(readEvidence).toHaveBeenCalled()
+  expect(readEvidence).not.toHaveBeenCalled()
+  expect(resolver).not.toHaveBeenCalled()
+})
+
+it("keeps the supplied V6 evidence reader deferred when an empty plan screen opens", () => {
+  const resolver = vi.fn(() => null), readEvidence = vi.fn((): never => { throw new Error("V6 evidence must stay deferred") })
+  planMode.actual = true
+  render(<AppShell multiPlanRuntime={{ multiAdjustmentResolverV3: resolver, readMultiAdjustedEvidenceV3: readEvidence }} />)
+  expect(readEvidence).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole("button", { name: "훈련" }))
+  expect(screen.getByRole("heading", { name: "어떤 종목을 준비하세요?" })).toBeVisible()
+  expect(readEvidence).not.toHaveBeenCalled()
   expect(resolver).not.toHaveBeenCalled()
 })
 
@@ -71,6 +82,6 @@ it("defers supplied evidence for a stored multi-plan until the plan screen opens
   expect(readEvidence).not.toHaveBeenCalled()
   fireEvent.click(screen.getByRole("button", { name: "훈련" }))
   expect(screen.getByRole("heading", { name: "내 훈련 일정" })).toBeVisible()
-  expect(readEvidence).toHaveBeenCalled()
+  expect(readEvidence).toHaveBeenCalledOnce()
   expect(resolver).not.toHaveBeenCalled()
 })

@@ -22,7 +22,7 @@ export function HomeCoachingSummary({ revision, onOpenDay, onOpenPlan }: {
   const heading = useRef<HTMLHeadingElement>(null)
   const today = useLocalToday()
   useEffect(() => onLocalJournalScopeChange(() => { setSelected(null); setReplanEntry(null); setVisibleCount(2) }), [])
-  const { source, reviews, total } = useMemo(() => {
+  const { source, reviews, total, readRetained } = useMemo(() => {
     const source = loadEntriesForPlanSafety()
     const total = source.status === "complete" ? source.entries.filter(entry => entry.kind === "post-session" && entry.plannedSessionLink && entry.date <= today).length : 0
     let retainedRead:
@@ -41,7 +41,7 @@ export function HomeCoachingSummary({ revision, onOpenDay, onOpenPlan }: {
         throw error
       }
     } : undefined
-    return { source, total, reviews: collectExecutionReviews(source, entry => readJournalOriginalPlan(entry, undefined, undefined, readRetained), today, { limit: visibleCount }) }
+    return { source, total, readRetained, reviews: collectExecutionReviews(source, entry => readJournalOriginalPlan(entry, undefined, undefined, readRetained), today, { limit: visibleCount }) }
   }, [revision, readMulti, visibleCount, today])
   const review = reviews.find(item => `record:${item.id}` === selected)
   const article = COACHING_READING.find(item => `article:${item.id}` === selected)
@@ -54,7 +54,7 @@ export function HomeCoachingSummary({ revision, onOpenDay, onOpenPlan }: {
   const selectedEntry = source.status === "complete" ? source.entries.find(entry => entry.kind === "post-session" && entry.id === review?.id) : undefined
   let originalMethod
   if (selectedEntry?.kind === "post-session" && review?.status !== "CONFLICT") {
-    try { originalMethod = <OriginalTrainingMethod original={readJournalOriginalPlan(selectedEntry, undefined, undefined, readMulti)} /> } catch { /* The report already explains unavailable source evidence. */ }
+    try { originalMethod = <OriginalTrainingMethod original={readJournalOriginalPlan(selectedEntry, undefined, undefined, readRetained)} /> } catch { /* The report already explains unavailable source evidence. */ }
   }
   return <section className="home-hub__summary home-coaching" aria-labelledby="home-coaching-title">
     <AppHeading as="h2" variant="section" id="home-coaching-title" ref={heading} tabIndex={-1}>{readingFirst ? "훈련법 읽기" : "훈련 코칭"}</AppHeading>
