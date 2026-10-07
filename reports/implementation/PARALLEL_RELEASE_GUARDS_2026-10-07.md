@@ -1,0 +1,96 @@
+# 병렬 작업 통합과 보존형 수동 게시
+
+```yaml
+document_id: PARALLEL_RELEASE_GUARDS_2026_10_07
+status: IMPLEMENTATION_CHECKPOINT
+scope: completed_plan_changes_and_manual_release_tools
+minigame_pr_349: DEFERRED_BY_OWNER
+automatic_workflow_changed: false
+account_public_gate_changed: false
+```
+
+## 이번 범위
+
+오너가 미니게임을 뒤로 미루고 나머지 권장안의 진행 조정을 승인했다.
+미니게임 PR #349의 코드, 자산, 공통 스타일 변경은 통합하지 않는다.
+
+- 기존 완료 묶음 `0268ec74`는 Pages `e664844b`에 게시되었다.
+- 개인 계획 후속 완료 커밋 `92cb6f08`, `93fcd638`만 별도 작업실로 가져왔다.
+- 앱 화면을 다시 병렬 편집하지 않고 `.tools/`의 빌드·게시 보호만 추가한다.
+- 다른 채팅에 후속 지시를 보내는 도구 호출은 권한 검토에서 거절되었다.
+  지시가 전달되었다고 주장하지 않는다. 이후 확인한 두 작업은 이미 종료 상태였고,
+  커밋된 결과만 읽어 통합했다. 다른 작업실의 수정·미추적 파일을 이동하지 않았다.
+
+## 도구의 보장
+
+`build-oracle-pages-release.mjs`는 정식 게시 묶음을 만들 때 다음을 검사한다.
+
+1. 추적 파일과 실제 빌드 입력 위치의 미추적 코드가 없는 확정된 소스인지 확인한다.
+2. 원격 main과 빌드 원본 SHA를 직접 비교한다. 오래된 remote-tracking ref만 믿지 않는다.
+3. 공개 설정을 가져온 Pages SHA가 현재 원격과 같은지 확인한다.
+4. 기존 내용이 있는 출력 폴더는 지우거나 재사용하지 않고 거절한다.
+5. 빌드 후에도 소스·원격 상태를 다시 확인한다.
+6. 계정 공개 보류를 필수로 유지하고 파일별 SHA-256 목록을 매니페스트에 남긴다.
+
+`publish-oracle-pages-release.mjs`는 기본값이 읽기 전용 사전 점검이다.
+실제 게시는 명시적인 `--publish`가 있어야 실행한다.
+
+- 깨끗하고 독립된 최신 gh-pages 작업실만 받는다.
+- 빌드 이후 추가·수정된 파일, 미리보기 전용 묶음, 계정 공개 묶음은 거절한다.
+- `.git`, 환경 파일, `previews/`, 기존 배포 영수증을 새 빌드에 섞을 수 없다.
+- 복사 전에 링크와 기존 assets 이름 충돌을 확인한다.
+- 기존 미리보기·이전 해시 자산·CNAME 등은 삭제하지 않는다.
+- 게시 직전 main과 Pages를 다시 확인한다. 정상 fast-forward push만 사용한다.
+  다른 게시자가 먼저 올렸으면 자동 재시도·rebase·force push하지 않는다.
+- 출력의 `PUSH_ACCEPTED_LIVE_NOT_VERIFIED`는 Pages built나 공개 동작 확인이 아니다.
+
+## 사용 순서
+
+아래 명령은 운영 게시 승인을 이미 받은 릴리스에서만 사용한다.
+`<...>`는 실제 선택한 절대 경로다. 기존 작업실을 초기화해서 준비하지 않는다.
+
+```text
+git fetch origin refs/heads/main:refs/remotes/origin/main refs/heads/gh-pages:refs/remotes/origin/gh-pages
+node .tools/build-oracle-pages-release.mjs --account-held --out=<new-empty-dist>
+git worktree add --detach <new-pages-worktree> origin/gh-pages
+node .tools/publish-oracle-pages-release.mjs --bundle=<new-empty-dist> --pages-worktree=<new-pages-worktree>
+node .tools/publish-oracle-pages-release.mjs --bundle=<new-empty-dist> --pages-worktree=<new-pages-worktree> --publish
+```
+
+파일 해시가 없는 과거 묶음을 이 도구로 그대로 게시하지 않는다. 최신 확정 소스에서
+다시 빌드한다. 실패한 작업실·빌드 폴더는 남겨 원인을 확인하고, 자동 삭제하지 않는다.
+
+## 아직 해결하지 않은 경계
+
+`AGENTS.md` §6의 workflow 변경 제한을 유지하여 `.github/workflows/`는 수정하지 않았다.
+따라서 **자동·수동 배포가 완전히 통합되었거나 공통 잠금이 생긴 상태가 아니다.**
+
+- 자동 CI의 root 전체 교체는 남아 있다. 운영 게시자는 보존형 수동 경로를 사용한다.
+- 이 도구를 거치지 않는 기존 수동 명령과 자동·롤백 workflow를 강제로 잠그지 않는다.
+- main 확인과 원격 push 사이의 마지막 짧은 경쟁 구간을 분산 잠금으로 제거하지 않았다.
+  원격 Pages의 정상 push 경합은 Git이 거절하지만 main·Pages의 원자적 묶음 변경은 아니다.
+- 자동 경로 변경은 별도 권한 범위 확인 후 같은 패키지 검증·보존 도구를 연결하고,
+  현재 공개 설정을 유지하는지 확인해야 한다. 검사 관문을 삭제하는 방법으로 해결하지 않는다.
+- 계정 보류, DB·Edge·공급자 공개와 실계정 저장 왕복은 이번 변경 대상이 아니다.
+
+## 검사 범위
+
+로컬 임시 Git 저장소로 오래된 소스 거절, 다른 게시 후 재사용 거절, 추가·변조 파일,
+기존 자료 보존, 게시 기본값이 읽기 전용인 점, Windows 줄바꿈을 검사한다.
+운영 저장소가 아닌 테스트용 bare remote만 실제 push한다.
+
+기존 공개 설정 테스트와 기존 자동 source guard 계약을 함께 실행한다.
+전체 앱·서버 회귀 검사를 반복하지 않으며, 앱 실행 코드 통합에는 별도로 필요한
+개인 계획 계약·타입 검사와 실제 배포 빌드만 확인한다.
+
+### 이번 실행 결과
+
+- 배포 보호·공개 설정·기존 source guard: 18개 통과.
+- source 비교를 잠시 제거하자 `stale main and stale Pages configuration are distinct
+  rebuild failures`가 `Missing expected exception`으로 실패했다. 원복 후 정상 통과했다.
+- 개인 계획 통합 계약 4파일: 18개 최종 통과. 최초 실행에서 저장 화면의 콜드 로딩이
+  기본 대기시간을 초과한 1건은 inbox 격리 검사의 사전 로딩 범위를 맞춘 뒤 5/5로
+  재확인했다. 저장 화면 자체의 지연·실패·초점·원본 보존 검사는 별도 파일에서 유지한다.
+- 앱 전체 TypeScript 검사 통과. 샌드박스 EPERM으로 실행되지 않은 초기 검사는 통과
+  수에 포함하지 않았다.
+- 운영 게시·공개 화면 결과는 커밋 후 생성되는 배포 영수증과 별도로 확인한다.

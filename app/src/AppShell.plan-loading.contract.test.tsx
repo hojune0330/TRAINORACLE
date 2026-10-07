@@ -11,8 +11,11 @@ import { stateFixture } from "./domain/plan-beta-store.test-fixture"
 const originalInbox = DeferredMobileScreens.PlanProposalInbox
 const loadInbox = vi.fn<() => Promise<{ default: () => React.ReactElement | null }>>()
 
-// Warm the real plan module; only the optional inbox's import is fault-injected.
-beforeAll(async () => { await import("./screens/PlanBeta") }, 60000)
+// Isolate the optional inbox; PlanBeta.active-lazy covers the saved screen's cold load.
+beforeAll(async () => {
+  await import("./screens/PlanBeta")
+  await import("./screens/plan-beta/PlanActiveState")
+}, 60000)
 beforeEach(() => {
   localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null)
   window.history.replaceState(null, "", "/?app=1")

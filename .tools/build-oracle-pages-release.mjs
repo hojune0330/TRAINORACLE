@@ -4,11 +4,13 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { canonicalOracleEnabled, holdSharedOriginAccount, publishedModuleNames } from './oracle-public-release-config.mjs';
+import { assertBuildSourceCommitted, assertFreshOutputDirectory, assertReleaseSnapshot,
+  gitAt, packageInventory, remoteReleaseSnapshot } from './pages-release-safety.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const app = resolve(repo, 'app');
 const require = createRequire(resolve(app, 'package.json'));
-const git = (...args) => execFileSync('git', args, { cwd: repo, encoding: 'utf8', maxBuffer: 48 * 1024 * 1024 }).trim();
+const git = (...args) => gitAt(repo, ...args);
 const sourceSha = git('rev-parse', 'HEAD');
 const previousPagesSha = git('rev-parse', 'origin/gh-pages');
 const { parseAst } = await import(pathToFileURL(require.resolve('rollup/parseAst')).href);
@@ -78,20 +80,27 @@ if (process.argv.includes('--inspect-only')) {
     kakaoEnabled: configuration.VITE_KAKAO_AUTH_ENABLED === 'true',
     googleEnabled: configuration.VITE_GOOGLE_AUTH_ENABLED === 'true' }));
 } else {
-  if (git('diff', '--name-only', 'HEAD', '--', 'app', '.tools/build-oracle-pages-release.mjs', '.tools/oracle-public-release-config.mjs')) {
-    throw Error('BUILD_SOURCE_NOT_COMMITTED');
+  assertBuildSourceCommitted(repo);
+  if (!previewOnly) {
+    if (!accountHeld) throw Error('CANONICAL_ACCOUNT_HOLD_REQUIRED');
+    assertReleaseSnapshot({ sourceSha, previousPagesSha }, remoteReleaseSnapshot(repo));
   }
   const outDir = resolve(process.argv.find(arg => arg.startsWith('--out='))?.slice(6)
     ?? resolve(repo, `../.scratch/oracle-mari-${sourceSha.slice(0, 8)}${previewOnly ? '-preview' : ''}/dist`));
+  assertFreshOutputDirectory(outDir, repo);
   mkdirSync(outDir, { recursive: true });
   execFileSync(process.execPath, ['scripts/check-build-runtime.mjs'], { cwd: app, stdio: 'inherit', env: process.env });
   const { build } = await import(pathToFileURL(require.resolve('vite')).href);
   await build({ root: app, envFile: false, build: { outDir, emptyOutDir: false } });
+  assertBuildSourceCommitted(repo);
+  if (git('rev-parse', 'HEAD') !== sourceSha) throw Error('BUILD_SOURCE_CHANGED');
+  if (!previewOnly) assertReleaseSnapshot({ sourceSha, previousPagesSha }, remoteReleaseSnapshot(repo));
   writeFileSync(resolve(outDir, '.nojekyll'), '');
   writeFileSync(resolve(outDir, 'trainoracle-build-manifest.json'), JSON.stringify({
     kind: previewOnly ? 'TRAINORACLE_LOCAL_PREVIEW_BUILD' : 'TRAINORACLE_RELEASE_BUILD_PACKAGE', sourceSha, previousPagesSha,
     deploymentStatus: 'NOT_PUBLISHED', previewOnly, accountHeld,
     publicConfigurationSourceSha: previousPagesSha, oracleV2Enabled: enabled,
+    files: packageInventory(outDir),
     backendVerification: 'NOT_CONFIRMED', builtAt: new Date().toISOString(),
   }, null, 2) + '\n');
   console.log(`Package ready: ${sourceSha}; Oracle V2 ${enabled ? 'enabled' : 'held'}.`);
