@@ -41,13 +41,16 @@ describe("training home presentation", () => {
     fireEvent.click(within(preview).getByRole("button", { name: "이 결과 자세히 보기" }))
     expect(open).toHaveBeenCalledOnce()
   })
-  it("keeps welcome concise and exposes learning and decoration entry points", () => {
+  it("keeps welcome focused on recording and planning with a named learning and decoration entry", () => {
     const learn = vi.fn(); const decorate = vi.fn(); const guide = vi.fn()
     render(<TrainingHome model={BASE} onOpenContent={learn} onOpenRewards={decorate} onOpenGuide={guide} />)
     expect(screen.getByRole("heading", { name: "오늘 운동을 기록해요" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "훈련법 읽기" })).not.toBeVisible()
+    expect(screen.getByRole("button", { name: "일지 꾸미기" })).not.toBeVisible()
+    expect(screen.getByRole("navigation", { name: "오늘 기록 또는 계획 만들기" }).querySelectorAll("button")).toHaveLength(2)
+    fireEvent.click(screen.getByText("일지 예시·훈련법·꾸미기"))
     expect(screen.getByRole("button", { name: "훈련법 읽기" })).toBeVisible()
     expect(screen.getByRole("button", { name: "일지 꾸미기" })).toBeVisible()
-    expect(screen.getByRole("navigation", { name: "오늘 기록 또는 계획 만들기" }).querySelectorAll("button")).toHaveLength(3)
     fireEvent.click(screen.getByRole("button", { name: "훈련법 읽기" })); fireEvent.click(screen.getByRole("button", { name: "일지 꾸미기" }))
     fireEvent.click(screen.getByRole("button", { name: "일지 예시 보기" }))
     expect(learn).toHaveBeenCalledOnce(); expect(decorate).toHaveBeenCalledOnce()

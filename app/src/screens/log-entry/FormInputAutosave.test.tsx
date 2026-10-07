@@ -20,8 +20,9 @@ vi.mock("../../domain/account/account-journal-record-service", () => ({
   accountJournalRecordsEnabled: () => true, persistAccountJournalRecord: (...args: unknown[]) => mocks.persist(...args),
 }))
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
+import { loadEntries } from "../../domain/journal-store"
 import { runDraftSafeNavigation } from "../../domain/unsaved-draft-navigation"
-import { decodeFormDraft, formDraftEnvelopeSchema } from "./form-input-draft"
+import { decodeFormDraft, encodeFormDraft, formDraftEnvelopeSchema } from "./form-input-draft"
 import { EveningCheckin } from "./EveningCheckin"
 import { RaceForm } from "./RaceForm"
 import { PostSessionForm } from "./PostSessionForm"
@@ -131,10 +132,93 @@ describe("existing form input autosave", () => {
     fireEvent.click(await screen.findByRole("button", { name: "운동을 마쳤어요" }))
     fireEvent.click(screen.getByRole("button", { name: "오전" }))
     fireEvent.click(screen.getByRole("button", { name: "모르겠어요 · 비워 둘게요" }))
-    await waitFor(() => expect(savedInput()).toMatchObject({ rpe: 0, effortAnswered: true, step: "effort", painStatus: "UNANSWERED" }))
+    await waitFor(() => expect(savedInput()).toMatchObject({ rpe: 0, effortAnswered: true, step: "effort",
+      activeQuestion: "pain", painStatus: "UNANSWERED" }))
     cleanup(); render(<QuickSessionForm targetDate="2026-09-08" />)
-    expect(await screen.findByRole("button", { name: "모르겠어요 · 비워 둘게요" })).toHaveAttribute("aria-pressed", "true")
+    expect(await screen.findByRole("heading", { name: "운동 후 불편하거나 아픈 곳이 있나요?" })).toBeVisible()
+    expect(savedInput()).toMatchObject({ rpe: 0, effortAnswered: true, step: "effort", activeQuestion: "pain" })
     expect(screen.queryByRole("button", { name: "완료" })).toBeNull()
+    expect(mocks.persist).not.toHaveBeenCalled()
+  })
+
+  it("restores an RPE edit after remount with the corrected answer and earlier answers intact", async () => {
+    render(<QuickSessionForm targetDate="2026-09-08" />)
+    fireEvent.click(await screen.findByRole("button", { name: "운동을 마쳤어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "오전" }))
+    fireEvent.click(screen.getByRole("button", { name: /^힘든 정도 6\/10,/ }))
+    fireEvent.click(screen.getByRole("button", { name: "← 뒤로" }))
+    fireEvent.click(screen.getByRole("button", { name: /^힘든 정도 7\/10,/ }))
+    fireEvent.click(screen.getByRole("button", { name: "← 뒤로" }))
+
+    await waitFor(() => expect(savedInput()).toMatchObject({ kind: "quick", step: "effort", activeQuestion: "rpe",
+      outcome: "COMPLETED", slot: "AM", rpe: 7, effortAnswered: true, painStatus: "UNANSWERED" }))
+    cleanup(); render(<QuickSessionForm targetDate="2026-09-08" />)
+
+    expect(await screen.findByRole("heading", { name: "몸에는 어느 정도로 느껴졌나요?" })).toBeVisible()
+    expect(screen.getByRole("button", { name: /^힘든 정도 7\/10,/ })).toHaveAttribute("aria-pressed", "true")
+    expect(savedInput()).toMatchObject({ step: "effort", activeQuestion: "rpe", outcome: "COMPLETED",
+      slot: "AM", rpe: 7, effortAnswered: true, painStatus: "UNANSWERED" })
+    expect(loadEntries()).toHaveLength(0)
+    expect(mocks.persist).not.toHaveBeenCalled()
+  })
+
+  it("restores the outcome edit after backing through every question without losing later answers", async () => {
+    render(<QuickSessionForm targetDate="2026-09-08" />)
+    fireEvent.click(await screen.findByRole("button", { name: "운동을 마쳤어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "오전" }))
+    fireEvent.click(screen.getByRole("button", { name: /^힘든 정도 6\/10,/ }))
+    fireEvent.click(screen.getByRole("button", { name: "없어요" }))
+    for (let i = 0; i < 4; i++) fireEvent.click(screen.getByRole("button", { name: "← 뒤로" }))
+
+    await waitFor(() => expect(savedInput()).toMatchObject({ kind: "quick", step: "activity", activeQuestion: "outcome",
+      outcome: "COMPLETED", slot: "AM", rpe: 6, effortAnswered: true, painStatus: "NO_SIGNAL_REPORTED" }))
+    cleanup(); render(<QuickSessionForm targetDate="2026-09-08" />)
+
+    expect(await screen.findByRole("heading", { name: /운동은 어떻게 됐나요\?/ })).toBeVisible()
+    expect(screen.getByRole("button", { name: "운동을 마쳤어요" })).toHaveAttribute("aria-pressed", "true")
+    expect(savedInput()).toMatchObject({ activeQuestion: "outcome", outcome: "COMPLETED", slot: "AM",
+      rpe: 6, effortAnswered: true, painStatus: "NO_SIGNAL_REPORTED" })
+    expect(loadEntries()).toHaveLength(0)
+    expect(mocks.persist).not.toHaveBeenCalled()
+  })
+
+  it("opens a legacy effort draft at its earliest unanswered question while retaining its existing answer", async () => {
+    render(<QuickSessionForm targetDate="2026-09-08" />)
+    fireEvent.click(await screen.findByRole("button", { name: "운동을 마쳤어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "오전" }))
+    fireEvent.click(screen.getByRole("button", { name: /^힘든 정도 6\/10,/ }))
+    await waitFor(() => expect(savedInput()).toMatchObject({ activeQuestion: "pain", rpe: 6 }))
+
+    const [key, view] = [...records.entries()][0]!
+    const body = decodeFormDraft(view.draft)
+    if (body.input.kind !== "quick") throw new Error("Expected quick draft")
+    const { activeQuestion: _activeQuestion, ...legacyInput } = body.input
+    records.set(key, { ...view, draft: encodeFormDraft("2026-09-08", { ...body, input: legacyInput }) })
+    cleanup(); render(<QuickSessionForm targetDate="2026-09-08" />)
+
+    expect(await screen.findByRole("heading", { name: "운동 후 불편하거나 아픈 곳이 있나요?" })).toBeVisible()
+    expect(savedInput()).toMatchObject({ rpe: 6 })
+    expect(savedInput()).not.toHaveProperty("activeQuestion")
+    expect(loadEntries()).toHaveLength(0)
+    expect(mocks.persist).not.toHaveBeenCalled()
+  })
+
+  it("opens a legacy activity draft at the unanswered slot question without losing its outcome", async () => {
+    render(<QuickSessionForm targetDate="2026-09-08" />)
+    fireEvent.click(await screen.findByRole("button", { name: "운동을 마쳤어요" }))
+    await waitFor(() => expect(savedInput()).toMatchObject({ activeQuestion: "slot", outcome: "COMPLETED", slot: null }))
+
+    const [key, view] = [...records.entries()][0]!
+    const body = decodeFormDraft(view.draft)
+    if (body.input.kind !== "quick") throw new Error("Expected quick draft")
+    const { activeQuestion: _activeQuestion, ...legacyInput } = body.input
+    records.set(key, { ...view, draft: encodeFormDraft("2026-09-08", { ...body, input: legacyInput }) })
+    cleanup(); render(<QuickSessionForm targetDate="2026-09-08" />)
+
+    expect(await screen.findByRole("heading", { name: "언제 했나요?" })).toBeVisible()
+    expect(savedInput()).toMatchObject({ outcome: "COMPLETED", slot: null })
+    expect(savedInput()).not.toHaveProperty("activeQuestion")
+    expect(loadEntries()).toHaveLength(0)
     expect(mocks.persist).not.toHaveBeenCalled()
   })
 

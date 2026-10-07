@@ -88,24 +88,27 @@ export function WorkoutMemoTool({ session, date, state = "PREVIEW" }: { readonly
     </div>
     <div id={panelId} hidden={!open}>
     {open && <div className="workout-memo-tool__body">
-      <div className="workout-memo-tool__options">
-        <div className="workout-memo-tool__layouts workout-memo-tool__subchoices" role="group" aria-label="메모 세부 보기">
-          {WORKOUT_MEMO_VIEWS.filter(item => item.group === group).map(item => <button key={item.id} type="button"
-            aria-pressed={view === item.id} disabled={busy} onClick={() => setViews(previous => ({ ...previous, [group]: item.id }))}>{item.label}</button>)}
-        </div>
-        <div className="workout-memo-tool__layouts workout-memo-tool__subchoices" role="group" aria-label="메모 표현 방식">
-          {WORKOUT_MEMO_WORDINGS.map(item => <button key={item.id} type="button" aria-pressed={wording === item.id}
-            disabled={busy} onClick={() => setWording(item.id)}>{item.label}</button>)}
-        </div>
-      </div>
-      <div className="workout-memo-tool__papers" role="group" aria-label="메모 종이 색">
-        {MEMO_PAPERS.map(item => <button key={item.id} type="button" className="workout-memo-tool__swatch" data-paper={item.id}
-          aria-label={item.label} title={item.label} aria-pressed={paper === item.id} disabled={busy} onClick={() => setPaper(item.id)}>
-          {paper === item.id && <Check size={18} aria-hidden="true" />}
-        </button>)}
-      </div>
       <WorkoutMemoSheet memo={presentation} paper={paper} />
-      <div className="workout-memo-tool__actions" aria-label="메모 가져가기" aria-busy={busy}>
+      <details className="workout-memo-tool__customization">
+        <summary>표현·꾸미기</summary>
+        <div className="workout-memo-tool__options">
+          <div className="workout-memo-tool__layouts workout-memo-tool__subchoices" role="group" aria-label="메모 세부 보기">
+            {WORKOUT_MEMO_VIEWS.filter(item => item.group === group).map(item => <button key={item.id} type="button"
+              aria-pressed={view === item.id} disabled={busy} onClick={() => setViews(previous => ({ ...previous, [group]: item.id }))}>{item.label}</button>)}
+          </div>
+          <div className="workout-memo-tool__layouts workout-memo-tool__subchoices" role="group" aria-label="메모 표현 방식">
+            {WORKOUT_MEMO_WORDINGS.map(item => <button key={item.id} type="button" aria-pressed={wording === item.id}
+              disabled={busy} onClick={() => setWording(item.id)}>{item.label}</button>)}
+          </div>
+          <div className="workout-memo-tool__papers" role="group" aria-label="메모 종이 색">
+            {MEMO_PAPERS.map(item => <button key={item.id} type="button" className="workout-memo-tool__swatch" data-paper={item.id}
+              aria-label={item.label} title={item.label} aria-pressed={paper === item.id} disabled={busy} onClick={() => setPaper(item.id)}>
+              {paper === item.id && <Check size={18} aria-hidden="true" />}
+            </button>)}
+          </div>
+        </div>
+      </details>
+      <div className="workout-memo-tool__actions" role="group" aria-label="메모 가져가기" aria-busy={busy}>
         <button type="button" disabled={busy} onClick={() => void act("copy")}><Copy size={18} aria-hidden="true" />복사</button>
         <button type="button" disabled={busy} onClick={() => void act("save")}><Download size={18} aria-hidden="true" />저장</button>
         <button type="button" disabled={busy} onClick={() => void act("share")}><Share2 size={18} aria-hidden="true" />공유</button>

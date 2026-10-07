@@ -52,8 +52,8 @@ export const EXPERIENCE_LABELS: Record<ExperienceBand, {
     short: "꾸준히",
   },
   EXPERIENCED: {
-    title: "구조화된 훈련과 경기 경험이 많아요",
-    detail: "힘든 날과 쉬는 날을 나눠 훈련해 봤어요",
+    title: "빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요",
+    detail: "반복 달리기와 대회 경험이 많아요",
     short: "경험자",
   },
 }

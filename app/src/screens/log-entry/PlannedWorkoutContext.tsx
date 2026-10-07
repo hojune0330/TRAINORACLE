@@ -12,6 +12,6 @@ export function PlannedWorkoutContext({ entryId, date, link }: {
   }
   return <section className="planned-workout-context" aria-label="기록할 훈련의 원래 계획">
     <strong>{sessionWorkoutName(original.session)}</strong>
-    <p>{sessionWorkoutNotation(original.session)}</p>
+    <p>{sessionWorkoutNotation(original.session, "PLAIN")}</p>
   </section>
 }

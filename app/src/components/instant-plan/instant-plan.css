@@ -166,7 +166,18 @@
 
 .instant-plan__status {
   padding-block: var(--space-3);
-  border-block: var(--bw-line) solid var(--line);
+}
+
+.instant-plan__guidance {
+  color: var(--ink-2);
+}
+
+.instant-plan__guidance .info-disclosure {
+  margin: 0;
+}
+
+.instant-plan__guidance .info-disclosure > summary {
+  font-size: var(--fs-body);
 }
 
 .instant-plan__save-recovery {
@@ -261,6 +272,10 @@
 .instant-plan__program {
   min-width: 0;
   padding-block: var(--space-4);
+}
+
+.instant-plan__session + .instant-plan__session,
+.instant-plan__program {
   border-block-start: var(--bw-line) solid var(--line);
 }
 

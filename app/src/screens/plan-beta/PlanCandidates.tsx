@@ -1,12 +1,11 @@
 import React from "react"
 import { formatPaceSeconds } from "@impl/prescription/record-pace"
 import { InitialRecordPaceOffer } from "./InitialRecordPaceOffer"
-import { ArrowLeft, ShieldCheck } from "lucide-react"
+import { ArrowLeft, CalendarDays, BookOpen, SlidersHorizontal, ShieldCheck } from "lucide-react"
 import type {
   PlanGenerationSuccess,
 } from "@impl/plan-generator/types"
 import { TermHelp } from "../../components/TermHelp"
-import { InfoDisclosure } from "../../components/InfoDisclosure"
 import { isValidIsoDate, isoShift } from "../../domain/dates"
 import { todayISO } from "../../domain/journal-store"
 import type { PlanBetaIntake } from "../../domain/plan-beta-store"
@@ -34,7 +33,7 @@ import { resolveDetailedPlanTemplateOptions } from "./plan-template-options"
 import { listDetailedSessionTargets, type PlanSessionTarget, type CandidateSessionTargets } from "../../domain/plan-session-target"
 import { PlanSessionTargetPicker } from "./PlanSessionTargetPicker"
 import type { RepeatPreference } from "@impl/prescription/method-recommendation"
-import { InstantPlanRecommendationView } from "../../components/instant-plan/InstantPlanRecommendationView"
+import { InstantPlanRecommendationFacts, InstantPlanRecommendationView } from "../../components/instant-plan/InstantPlanRecommendationView"
 import type { InstantPlanEntry } from "../../domain/instant-plan-contract"
 import { formatRecordTime } from "../../domain/athlete-record-display"
 import { defaultInstantCandidate, projectInstantRecommendation } from "./instant-plan-projection"
@@ -56,6 +55,13 @@ export type InitialMainCandidateReview = Omit<InitialMainConditionsProps, "disab
   readonly confirmed?: { readonly pairId: string; readonly startDate: string; readonly accountScope: string | null;
     readonly revision: number; readonly keys: readonly string[] } | null
 }
+
+const PURPOSE_ENTRIES = [
+  { id: "schedule", label: "일정 바꾸기", icon: CalendarDays },
+  { id: "workout", label: "훈련 조절", icon: SlidersHorizontal },
+  { id: "basis", label: "추천 근거", icon: BookOpen },
+] as const
+type CandidatePurpose = typeof PURPOSE_ENTRIES[number]["id"]
 
 export function PlanCandidates({
   generated,
@@ -131,7 +137,8 @@ export function PlanCandidates({
   readonly onRebuildCycle?: () => void
   readonly initialMain?: InitialMainCandidateReview
 }) {
-  const [showOptions, setShowOptions] = React.useState(false)
+  const [purpose, setPurpose] = React.useState<CandidatePurpose | null>(null)
+  const purposeId = React.useId()
   const resultRef = React.useRef<HTMLElement>(null)
   const headingRef = React.useRef<HTMLHeadingElement>(null)
   const optionsRef = React.useRef<HTMLDivElement>(null)
@@ -144,6 +151,9 @@ export function PlanCandidates({
   const confirmationRequested = React.useRef(false)
   const [navigation, setNavigation] = React.useState<{ kind: "result" | "options" | "date" | "method" | "catalog" | "recovery" | "record"; revision: number } | null>(null)
   const reveal = React.useCallback((kind: "result" | "options" | "date" | "method" | "catalog" | "recovery" | "record") => {
+    if (kind === "date" || kind === "options") setPurpose("schedule")
+    else if (kind === "method" || kind === "catalog" || kind === "record") setPurpose("workout")
+    else if (kind === "result") setPurpose(null)
     setNavigation(previous => ({ kind, revision: (previous?.revision ?? 0) + 1 }))
   }, [])
   useActiveContentScroll(navigation?.revision ?? null,
@@ -222,10 +232,10 @@ export function PlanCandidates({
     ? `${selectedDetailedOption.mainSummary} · ${pacePrescription.repetitionDistanceM}m당 ${formatPaceSeconds(pacePrescription.targetRepSeconds)}`
     : selectedDetailedOption?.mainSummary
   const needsReview = recordConfirmationPending || detailedEvidencePending || targetDraftPending || methodDraftPending || !hasValidStartDate
+  const visiblePurpose = purpose
   React.useEffect(() => {
     if (!confirmationRequested.current || needsReview || selectionUnavailable) return
     confirmationRequested.current = false
-    setShowOptions(false)
     reveal("result")
   }, [needsReview, selectionUnavailable, reveal])
 
@@ -242,25 +252,23 @@ export function PlanCandidates({
       </div>
       </div>
       {cycleSummary && <CatalogCycleSummary summary={cycleSummary} startDate={startDate} />}
-      <PlanPrescriptionBasis sessions={defaultInstantCandidate(generated).sessions}
-        confirmationPending={recordConfirmationPending || detailedEvidencePending} />
-      {onCatalogChange && intake.selectedDetailedTemplateRef === null && <InitialRecordPaceOffer
-        generated={generated} records={athleteRecords} disabled={!canRevise || !canSelect}
-        onChange={onCatalogChange} />}
       {recommendation && <InstantPlanRecommendationView recommendation={recommendation}
+        showSupportingDetails={false}
         recoveryRef={recoveryRef}
         blockedAction={!selectionUnavailable && !saveError && !initialApplying && !catalogDraftPending && !initialMainPending
           && !methodDraftPending && !targetDraftPending && hasValidStartDate && unreviewedConditions.length === 0
           && intake.selectedDetailedTemplateRef !== null && intake.experienceBand === "EXPERIENCED"
           && (recordConfirmationPending || detailedEvidencePending)
-          ? { label: "기준 기록 확인하기", onClick: () => { setShowOptions(true); reveal("record") } } : undefined}
+          ? { label: "기준 기록 확인하기", onClick: () => reveal("record") } : undefined}
         actionState={saving ? { kind: "SAVING" } : saveCode === "ACCOUNT_PLAN_PENDING" ? { kind: "PENDING", message: saveError ?? "계정 저장을 확인하고 있어요." }
           : selectionUnavailable ? { kind: "BLOCKED", message: saveError ?? "계정 저장 상태를 먼저 확인해 주세요." }
           : saveError ? { kind: "FAILED", message: saveError }
           : initialApplying ? { kind: "BLOCKED", message: "확인한 구성을 계획안에 반영하고 있어요." }
           : catalogDraftPending || initialMainPending ? { kind: "BLOCKED", message: "바꾼 훈련을 적용하거나 취소해 주세요." }
           : unreviewedConditions.length ? { kind: "BLOCKED", message: "새 날짜에 사용할 운동 환경을 확인해 주세요." }
-          : needsReview ? { kind: "BLOCKED", message: "아래에서 기준 기록이나 변경한 내용을 확인해 주세요." } : { kind: "READY" }}
+          : needsReview ? { kind: "BLOCKED", message: !hasValidStartDate
+            ? "일정 바꾸기에서 실제 시작 날짜를 골라 주세요."
+            : "훈련 조절에서 기준 기록이나 변경한 내용을 확인해 주세요." } : { kind: "READY" }}
         onStart={candidateId => {
           if (!canSelect || !localAccountScopeIsCurrent(accountScope)) return
           const adjust = adjustmentActions[candidateId]
@@ -279,10 +287,6 @@ export function PlanCandidates({
             onSelectionDetailsChange?.()
             reveal("result")
           }} />}
-        onShowAlternatives={() => { setShowOptions(true); reveal("options") }}
-        onEditSchedule={() => { setShowOptions(true); reveal("date") }}
-        onEditWorkout={instantAdjustment ?? (onCatalogChange && intake.selectedDetailedTemplateRef === null
-          ? () => reveal("catalog") : detailedOptions.length > 0 ? () => reveal("method") : undefined)}
         workoutLabel={instantAdjustment ? "거리·시간·반복·회복을 확인하고 조절해요" : workoutSummary}
         workoutLabelTitle={instantAdjustment ? "상세 훈련" : undefined}
         startLabel={instantAdjustment ? "처방 훈련 확인" : undefined}
@@ -302,8 +306,20 @@ export function PlanCandidates({
         onPendingChange={setInitialMainPending} />}
       {saveCode === "CYCLE_EVIDENCE_CHANGED" && onRebuildCycle && <button type="button" className="plan-text-action"
         disabled={saving} onClick={onRebuildCycle}>일지를 반영해 다시 만들기</button>}
+      <div className="plan-purpose-entries" role="group" aria-label="계획 확인·변경">
+        {PURPOSE_ENTRIES.map(({ id, label, icon: Icon }) => <button key={id} type="button"
+          id={`${purposeId}-${id}-entry`} aria-expanded={visiblePurpose === id} aria-controls={`${purposeId}-${id}`}
+          onClick={() => setPurpose(visiblePurpose === id ? null : id)}>
+          <Icon size={18} aria-hidden="true" />{label}
+        </button>)}
+      </div>
+      <section id={`${purposeId}-workout`} hidden={visiblePurpose !== "workout"} aria-labelledby={`${purposeId}-workout-entry`}>
+      {instantAdjustment && <button type="button" className="plan-text-action" disabled={!canSelect} onClick={instantAdjustment}>처방 확인·조절</button>}
+      {onCatalogChange && intake.selectedDetailedTemplateRef === null && <InitialRecordPaceOffer
+        generated={generated} records={athleteRecords} disabled={!canRevise || !canSelect}
+        onChange={onCatalogChange} />}
       {onCatalogChange && intake.selectedDetailedTemplateRef === null && <div ref={catalogRef} tabIndex={-1}>
-        <CatalogWorkoutPicker generated={generated} intake={intake} openRequest={navigation?.kind === "catalog" ? navigation.revision : null}
+        <CatalogWorkoutPicker inline generated={generated} intake={intake} openRequest={navigation?.kind === "catalog" ? navigation.revision : null}
           conditionRequest={conditionRequest} startDate={startDate} reviewedConditionKeys={reviewedConditionKeys}
           records={athleteRecords} onChange={(next, reviewedAddress) => {
             if (!localAccountScopeIsCurrent(accountScope)) return
@@ -324,6 +340,7 @@ export function PlanCandidates({
       {!recommendation && saveError && <p role="alert">{saveError}</p>}
       {instantAdjustment === undefined && onChangeMethod !== undefined && detailedOptions.length > 0 && <div ref={methodRef} tabIndex={-1}>
         <PlanMethodPicker
+          inline
           options={detailedOptions}
           openRequest={navigation?.kind === "method" ? navigation.revision : null}
           selected={intake.selectedDetailedTemplateRef}
@@ -334,9 +351,6 @@ export function PlanCandidates({
           onRepeatPreferenceChange={setRepeatPreference}
         />
       </div>}
-      <details className="plan-detailed-options" open={showOptions || needsReview}
-        onToggle={event => { if (!needsReview) setShowOptions(event.currentTarget.open) }}>
-      <summary>기록·시작일·다른 일정 확인</summary>
       <fieldset disabled={selectionUnavailable || initialMainPending || initialApplying} style={{ border: 0, padding: 0, minWidth: 0 }}>
       {intake.selectedDetailedTemplateRef !== null
         && (intake.eventGroup === "FIVE_K" || intake.eventGroup === "MIDDLE_DISTANCE")
@@ -364,16 +378,6 @@ export function PlanCandidates({
         </div>
         </>
       )}
-      {!hasValidStartDate && (
-        <>
-          <p className="plan-start-date-error" role="alert">
-            실제 날짜를 고른 뒤 계획을 선택해 주세요.
-          </p>
-          <p className="plan-schedule-unavailable" role="status">
-            시작 날짜를 고르면 실제 날짜에 맞춘 계획을 보여드려요.
-          </p>
-        </>
-      )}
       {recordConfirmationPending && (
         <p className="plan-start-date-error" role="alert">
           새로 고른 기준 기록을 확인한 뒤 계획을 선택해 주세요.
@@ -384,6 +388,15 @@ export function PlanCandidates({
           같은 종목의 경기 기록 또는 목표기록을 고르고 확인해 주세요. 기록 없이 받으려면 상세 훈련에서 ‘기록 없이 시간·RPE로 받기’를 고르세요.
         </p>
       )}
+      </fieldset>
+      {onRefine !== undefined && canRevise && <fieldset disabled={initialMainPending} className="plan-purpose-fields">
+        <PlanRefinePanel purpose="workout" intake={intake} targetRaceDate={targetRaceDate} onRefine={onRefine}
+          detailedTemplateAvailable={resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference).length > 0} />
+      </fieldset>}
+      </section>
+      <section id={`${purposeId}-schedule`} hidden={visiblePurpose !== "schedule"} aria-labelledby={`${purposeId}-schedule-entry`}>
+      <fieldset disabled={selectionUnavailable || initialMainPending || initialApplying} className="plan-purpose-fields">
+      {!hasValidStartDate && <p className="plan-start-date-error" role="alert">실제 날짜를 고른 뒤 계획을 선택해 주세요.</p>}
       <label ref={dateRef} className="plan-start-date" htmlFor="plan-start-date">
         <span>계획 시작 날짜</span>
         <input
@@ -403,6 +416,8 @@ export function PlanCandidates({
           오늘부터 시작해요. 바꿀 수 있어요.
         </small>
       </label>
+      {onRefine !== undefined && canRevise && <PlanRefinePanel purpose="schedule" intake={intake}
+        targetRaceDate={targetRaceDate} onRefine={onRefine} detailedTemplateAvailable={false} />}
       {unreviewedConditions.length > 0 && <button type="button" className="plan-text-action"
         onClick={() => reveal("result")}>바뀐 날짜의 운동 환경 확인</button>}
       <div ref={optionsRef} tabIndex={-1} role="region" aria-label="다른 계획 비교" className="plan-candidate-list">
@@ -428,19 +443,16 @@ export function PlanCandidates({
         ))}
       </div>
       </fieldset>
-      </details>
-      {onRefine !== undefined && canRevise && (
-        <fieldset disabled={initialMainPending} style={{ border: 0, padding: 0, minWidth: 0 }}>
-        <PlanRefinePanel
-          intake={intake}
-          targetRaceDate={targetRaceDate}
-          onRefine={onRefine}
-          detailedTemplateAvailable={resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference).length > 0}
-        />
-        </fieldset>
-      )}
+      </section>
       {generated.racePlacement.kind !== "NO_TARGET_RACE" && <RacePlacementNotice state={generated.racePlacement} />}
-      <InfoDisclosure title="추천 이유·계획 기준">
+      <section id={`${purposeId}-basis`} hidden={visiblePurpose !== "basis"} aria-labelledby={`${purposeId}-basis-entry`}>
+      <h2>전체 훈련 시간·목표</h2>
+      {recommendation && <InstantPlanRecommendationFacts recommendation={recommendation}
+        goalLabel={instantEntry?.kind === "GOAL_ONLY" ? `${instantEntry.eventDistanceM}m ${formatRecordTime(instantEntry.performanceSeconds)}` : undefined} />}
+      {recommendation?.reason && <p>{recommendation.reason}</p>}
+      <h2>무엇을 기준으로 만든 훈련인가요?</h2>
+      <PlanPrescriptionBasis inline sessions={defaultInstantCandidate(generated).sessions}
+        confirmationPending={recordConfirmationPending || detailedEvidencePending} />
       {generated.racePlacement.kind === "NO_TARGET_RACE" && <RacePlacementNotice state={generated.racePlacement} />}
       <h2>A와 B는 뭐가 달라요?</h2>
         <CandidateComparison candidates={generated.candidates} />
@@ -491,7 +503,7 @@ export function PlanCandidates({
           )}
         </span>
       </div>
-      </InfoDisclosure>
+      </section>
     </section>
   )
 }

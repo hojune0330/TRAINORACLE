@@ -341,10 +341,10 @@ function PlanBetaContent(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
     <p role="alert">계획을 지우거나 새 계획으로 바꾸지 않았어요. 다시 확인해 주세요.</p>
     <button type="button" onClick={() => setRead(readCurrent())}>다시 확인</button>
   </section>
-  return <><LegacyPlanBeta key={revision} {...props} onAdjustedStored={() => setRead(readCurrent())} />
+  return <LegacyPlanBeta key={revision} {...props} onAdjustedStored={() => setRead(readCurrent())} planTools={<>
     {read.kind === "missing" && <MultiPlanCloudControlsV3 fingerprint={null} readEvidence={readMultiV3Evidence}
       readRestoreReview={props.readMultiRestoreReviewV3 ?? readCurrentMultiRestoreReviewV3} onCurrentRestored={() => setRead(readCurrent())} />}
-    <button className="plan-file-import" type="button" onClick={() => setImportOpen(true)}>개인 계획 파일 불러오기</button></>
+    <button className="plan-file-import" type="button" onClick={() => setImportOpen(true)}>개인 계획 파일 불러오기</button></>} />
 }
 
 function LegacyPlanBeta({
@@ -356,6 +356,7 @@ function LegacyPlanBeta({
   adjustmentResolverV3,
   multiAdjustmentResolverV3,
   onAdjustedStored,
+  planTools,
 }: {
   readonly onWriteLog?: (entryType?: JournalEntryType) => void
   readonly onManageRecords?: () => void
@@ -365,6 +366,7 @@ function LegacyPlanBeta({
   readonly adjustmentResolverV3?: PlanAdjustmentResolverV3
   readonly multiAdjustmentResolverV3?: PlanMultiAdjustmentResolverV3
   readonly onAdjustedStored: () => void
+  readonly planTools?: React.ReactNode
 }) {
   const [adjusting, setAdjusting] = React.useState<{ entry: AdjustmentEntry; revision: number } | null>(null)
   const [adjustingV3, setAdjustingV3] = React.useState<{ entry: AdjustmentEntryV3; revision: number } | null>(null)
@@ -798,6 +800,7 @@ function LegacyPlanBeta({
 
   if (stored !== null && nextPredecessor === null) {
     return (
+      <>
       <PlanActiveState
         state={stored}
         onManagePaceRecords={() => setRecordsOpen(true)}
@@ -831,6 +834,8 @@ function LegacyPlanBeta({
         onWritePlannedSessionLog={onWritePlannedSessionLog}
         returnToSession={returnToSession}
       />
+      {planTools}
+      </>
     )
   }
 
@@ -1019,6 +1024,7 @@ function LegacyPlanBeta({
             void saveCandidate(selection, generated)
           }}
         />
+        {planTools}
       </>
     )
   }
@@ -1052,6 +1058,7 @@ function LegacyPlanBeta({
       <button type="button" className="plan-text-action" onClick={() => onManageRecords ? onManageRecords() : setRecordsOpen(true)}>내 경기 기록</button>
       <button type="button" className="plan-text-action" onClick={() => setNotationReaderOpen(true)}>훈련표 표기 읽기</button>
     </details>
+    {planTools}
   </>
 
   return (

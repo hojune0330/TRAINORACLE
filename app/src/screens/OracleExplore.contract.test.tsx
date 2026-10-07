@@ -33,6 +33,26 @@ function readWidths(chart: HTMLElement) {
 }
 
 describe("Oracle exploration examples", () => {
+  it("honors an explicit example destination even when a personal result exists", () => {
+    const result = buildOraclePersonalResult({ topicId: "level", entries: [], planState: null, today: "2026-09-27" })
+    const seen = vi.fn()
+    const props = { topicId: "level" as const, personalResult: { ...result, status: "ready" as const, headline: "개인 결과" }, onBack: vi.fn(), onSelectTopic: vi.fn(), onPersonalAction: vi.fn(), onPersonalResultSeen: seen }
+    const view = render(<OracleExplore {...props} initialMode="personal" />)
+    expect(screen.getByRole("button", { name: "내 기록" })).toHaveAttribute("aria-pressed", "true")
+    fireEvent.click(screen.getByRole("button", { name: "내 기록" }))
+    view.rerender(<OracleExplore {...props} initialMode="example" />)
+    expect(screen.getByRole("button", { name: "예시" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByText("내 기록을 분석한 결과가 아니에요")).toBeVisible()
+    expect(screen.queryByText("개인 결과")).toBeNull()
+  })
+
+  it("does not replace an unavailable result with an example when no result object exists", () => {
+    render(<OracleExplore topicId="focus" personalResultUnavailable onBack={vi.fn()} onSelectTopic={vi.fn()} onPersonalAction={vi.fn()} />)
+    expect(screen.getByText(/일지를 아직 모두 불러오지 못했어요/)).toBeVisible()
+    expect(screen.queryByText("내 기록을 분석한 결과가 아니에요")).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "예시" }))
+    expect(screen.getByText("내 기록을 분석한 결과가 아니에요")).toBeVisible()
+  })
   it("does not show or mark an unfinished personal comparison as read, then reveals the confirmed result", () => {
     const store = createOracleReturnStore()
     expect(store.enableOptIn().ok).toBe(true)

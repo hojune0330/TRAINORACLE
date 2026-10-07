@@ -1,7 +1,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { ATHLETE_RECORDS_STORAGE_KEY, loadAthleteRecords } from "../domain/athlete-records"
+import { ATHLETE_RECORDS_STORAGE_KEY, loadAthleteRecords, saveAthleteRecord } from "../domain/athlete-records"
 import { PlanBeta } from "./PlanBeta"
 import { AthleteRecords } from "./AthleteRecords"
 
@@ -24,24 +24,28 @@ describe("athlete record entry surface", () => {
   it("focuses the first invalid field and connects its inline error", async () => {
     const user = userEvent.setup()
     render(<AthleteRecords onBack={() => undefined} />)
-    await user.click(screen.getByRole("button", { name: "기록 저장" }))
+    await user.click(screen.getByRole("button", { name: "시간 입력" }))
     const minutes = screen.getByRole("textbox", { name: "기록 분" })
+    await user.click(screen.getByRole("button", { name: "날짜 확인" }))
     expect(minutes).toHaveFocus()
     expect(minutes).toHaveAttribute("aria-invalid", "true")
     expect(minutes).toHaveAccessibleDescription("기록의 분과 초를 다시 확인해 주세요.")
     await fillTime("18", "31")
+    await user.click(screen.getByRole("button", { name: "날짜 확인" }))
     await user.type(screen.getByRole("textbox", { name: "달성일" }), "2024-02-30")
     await user.click(screen.getByRole("button", { name: "기록 저장" }))
     expect(screen.getByRole("textbox", { name: "달성일" })).toHaveFocus()
     expect(screen.getByRole("textbox", { name: "달성일" })).toHaveAccessibleDescription("달성일을 YYYY-MM-DD로 입력해 주세요.")
-    expect(minutes).not.toHaveAttribute("aria-invalid")
+    expect(screen.queryByRole("textbox", { name: "기록 분" })).toBeNull()
     expect(loadAthleteRecords(new Date())).toHaveLength(0)
   })
   it("stores an unknown date without inventing today and preserves the exact half distance", async () => {
     const user = userEvent.setup()
     render(<AthleteRecords onBack={() => undefined} />)
     await user.selectOptions(screen.getByRole("combobox", { name: "종목 거리" }), "21097.5")
+    await user.click(screen.getByRole("button", { name: "시간 입력" }))
     await fillTime("90", "1.5")
+    await user.click(screen.getByRole("button", { name: "날짜 확인" }))
     await user.click(screen.getByRole("button", { name: "기록 저장" }))
     expect(loadAthleteRecords()).toEqual([expect.objectContaining({
       eventDistanceM: 21097.5, achievedOn: null, performanceSeconds: 5401.5,
@@ -68,17 +72,29 @@ describe("athlete record entry surface", () => {
 
   it("keeps a 5000m PB distinct from a 5000m race goal", async () => {
     const user = userEvent.setup()
+    const legacySeasonBest = {
+      schemaVersion: 1 as const, id: "legacy-season-best", purpose: "SEASON_BEST" as const,
+      eventDistanceM: 3000, performanceSeconds: 615, achievedOn: "2025-10-01", seasonId: "2025",
+      enteredBy: "ATHLETE" as const, verificationState: "SELF_REPORTED" as const,
+      sourceRef: "athlete-record:legacy-season-best", savedAt: "2025-10-02T00:00:00.000Z",
+    }
+    expect(saveAthleteRecord(legacySeasonBest, new Date("2026-10-02T00:00:00.000Z")).ok).toBe(true)
     render(<AthleteRecords onBack={() => undefined} />)
 
     expect(screen.getByText("내 경기 기록", { selector: ".plan-eyebrow" })).toBeVisible()
     await user.selectOptions(screen.getByRole("combobox", { name: "기록 역할" }), "PERSONAL_BEST")
     await user.selectOptions(screen.getByRole("combobox", { name: "종목 거리" }), "5000")
+    await user.click(screen.getByRole("button", { name: "시간 입력" }))
     await fillTime("18", "30")
+    await user.click(screen.getByRole("button", { name: "날짜 확인" }))
     await user.type(screen.getByRole("textbox", { name: "달성일" }), "2024-03-10")
     await user.click(screen.getByRole("button", { name: "기록 저장" }))
 
     await user.selectOptions(screen.getByRole("combobox", { name: "기록 역할" }), "RACE_GOAL")
+    await user.click(screen.getByRole("button", { name: "시간 입력" }))
     await fillTime("17", "30")
+    await user.click(screen.getByRole("button", { name: "목표 확인" }))
+    expect(screen.queryByRole("textbox", { name: "달성일" })).toBeNull()
     await user.click(screen.getByRole("button", { name: "기록 저장" }))
 
     const list = screen.getByRole("region", { name: "저장한 경기 기록" })
@@ -88,12 +104,13 @@ describe("athlete record entry surface", () => {
     expect(within(list).getByText(
       "직접 입력한 목표 · 현재 경기력 기록이 아님",
     )).toBeVisible()
+    expect(within(list).getByText("3000m · 10분 15초 · 시즌 최고")).toBeVisible()
+    expect(within(list).getByText(/2025 ·/u)).toBeVisible()
 
     const stored = loadAthleteRecords(new Date())
-    expect(stored.map((record) => record.purpose)).toEqual([
-      "PERSONAL_BEST",
-      "RACE_GOAL",
-    ])
+    expect(stored.map((record) => record.purpose)).toEqual(expect.arrayContaining([
+      "PERSONAL_BEST", "RACE_GOAL", "SEASON_BEST",
+    ]))
     expect(JSON.stringify(stored)).not.toMatch(/COACH|VERIFIED_IMPORT|"VERIFIED"/u)
     expect(screen.queryByRole("combobox", { name: "입력 경로" })).toBeNull()
     expect(screen.queryByRole("combobox", { name: "검증 상태" })).toBeNull()
@@ -108,18 +125,28 @@ describe("athlete record entry surface", () => {
 
     await user.selectOptions(screen.getByRole("combobox", { name: "종목 거리" }), "CUSTOM")
     await user.type(screen.getByRole("textbox", { name: "직접 입력 거리 (m)" }), "59")
-    await fillTime("1", "0")
-    await user.type(screen.getByRole("textbox", { name: "달성일" }), "2024-03-10")
-    await user.click(screen.getByRole("button", { name: "기록 저장" }))
+    await user.click(screen.getByRole("button", { name: "시간 입력" }))
     expect(screen.getByRole("alert")).toHaveTextContent("종목 거리는 60m 이상")
 
     await user.clear(screen.getByRole("textbox", { name: "직접 입력 거리 (m)" }))
     await user.type(screen.getByRole("textbox", { name: "직접 입력 거리 (m)" }), "400")
-    await user.clear(screen.getByRole("textbox", { name: "달성일" }))
+    await user.click(screen.getByRole("button", { name: "시간 입력" }))
+    await fillTime("1", "0")
+    await user.click(screen.getByRole("button", { name: "날짜 확인" }))
     await user.type(screen.getByRole("textbox", { name: "달성일" }), "2099-01-01")
     await user.click(screen.getByRole("button", { name: "기록 저장" }))
     expect(screen.getByRole("alert")).toHaveTextContent("미래 달성일")
     expect(loadAthleteRecords(new Date())).toEqual([])
+  })
+
+  it("requires a seasonal-best name before leaving the event step", async () => {
+    const user = userEvent.setup()
+    render(<AthleteRecords onBack={() => undefined} initialPurpose={"SEASON_BEST" as never} />)
+
+    await user.click(screen.getByRole("button", { name: "시간 입력" }))
+    expect(screen.getByRole("textbox", { name: "시즌 이름" })).toHaveFocus()
+    expect(screen.getByRole("alert")).toHaveTextContent("시즌 최고 기록에는 시즌 이름이 필요해요.")
+    expect(screen.queryByRole("textbox", { name: "기록 분" })).toBeNull()
   })
 
   it("does not migrate a legacy race journal or goal pace into athlete records", () => {

@@ -3,12 +3,15 @@ import type { PostSessionEntry } from "../../domain/journal-schema"
 import { loadVersionedPlanBetaState } from "../../domain/plan-beta-store"
 import { journalProgressAction, journalResultLabel, reflectSavedJournalProgress } from "../../domain/journal-plan-progress"
 
-export function JournalPlanProgressAction({ entry }: { readonly entry: PostSessionEntry }) {
+export function JournalPlanProgressAction({ entry, initialResult = null }: {
+  readonly entry: PostSessionEntry
+  readonly initialResult?: { readonly ok: boolean; readonly message: string } | null
+}) {
   const [busy, setBusy] = React.useState(false)
-  const [result, setResult] = React.useState<{ ok: boolean; message: string } | null>(null)
+  const [result, setResult] = React.useState<{ ok: boolean; message: string } | null>(initialResult)
   const identity = `${entry.id}:${entry.savedAt}`
   const revision = React.useRef(0)
-  React.useEffect(() => { revision.current++; setResult(null); setBusy(false); return () => { revision.current++ } }, [identity])
+  React.useEffect(() => { revision.current++; setResult(initialResult); setBusy(false); return () => { revision.current++ } }, [identity, initialResult])
   if (!entry.plannedSessionLink) return null
   const state = loadVersionedPlanBetaState()
   const action = state && journalProgressAction(state, entry)

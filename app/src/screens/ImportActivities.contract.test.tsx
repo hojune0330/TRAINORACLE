@@ -7,7 +7,7 @@
 //  4. 중복으로 보이는 항목은 기본 해제 — 사용자가 켜야 저장된다.
 //  5. 고른 것만 저장된다. 저장 전에는 localStorage가 비어 있다.
 //  6. RPE·메모는 파일에 없다는 사실과, 가져온 값이 통계에서 빠진다는 사실을 알린다.
-import { cleanup, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ImportActivities } from "./ImportActivities"
@@ -60,6 +60,34 @@ describe("ImportActivities — 고르기 단계", () => {
     window.localStorage.clear()
   })
 
+  it("opens the native picker directly without requiring a provider choice", () => {
+    render(<ImportActivities />)
+    const input = screen.getByLabelText(/내보낸 활동 파일/u)
+    const click = vi.spyOn(input, "click").mockImplementation(() => undefined)
+    fireEvent.click(screen.getByRole("button", { name: "파일이 있어요 · 바로 선택" }))
+    expect(click).toHaveBeenCalledOnce()
+    expect(screen.getByRole("combobox", { name: "어디에 기록이 있나요?" })).toHaveValue("")
+    expect(loadEntries()).toEqual([])
+  })
+
+  it.each([
+    ["garmin", "Garmin 파일 준비", "Garmin Connect"],
+    ["coros", "COROS 파일 준비", "TCX"],
+    ["health", "건강앱 파일 준비", "전체 ZIP·XML 백업은 아직 읽지 못해요"],
+  ])("shows only the chosen %s preparation, keeps direct upload and returns to source choice", (value, title, text) => {
+    render(<ImportActivities />)
+    fireEvent.change(screen.getByRole("combobox", { name: "어디에 기록이 있나요?" }), { target: { value } })
+    expect(screen.getByRole("heading", { name: title })).toBeVisible()
+    expect(screen.getByRole("region", { name: "운동 파일 준비" })).toHaveTextContent(text)
+    expect(screen.getByText(/계정 자동 연결이 아니라 파일 가져오기/)).toBeVisible()
+    expect(screen.getByRole("button", { name: "파일이 있어요 · 바로 선택" })).toBeEnabled()
+    expect(screen.queryByRole("textbox", { name: /비밀번호|로그인/ })).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "다른 기록 위치" }))
+    expect(screen.queryByRole("heading", { name: title })).toBeNull()
+    expect(screen.getByRole("combobox", { name: "어디에 기록이 있나요?" })).toHaveValue("")
+    expect(loadEntries()).toEqual([])
+  })
+
   it("explains unsupported native health XML instead of pretending it was imported", async () => {
     const user = userEvent.setup()
     render(<ImportActivities />)
@@ -84,7 +112,7 @@ describe("ImportActivities — 고르기 단계", () => {
 
     // Then
     const status = screen.getByTestId("oauth-status")
-    const help = screen.getByText("가민·WHOOP·스트라바 자동 연동은 준비 중이에요")
+    const help = screen.getByText("가민·코로스·WHOOP·스트라바 자동 연동은 준비 중이에요")
     expect(help).toBeVisible()
     expect(help.closest("details")).not.toHaveAttribute("open")
     await userEvent.click(help)

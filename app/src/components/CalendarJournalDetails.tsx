@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react"
+import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState } from "react"
 import { BookOpen, ChevronLeft, PenLine } from "lucide-react"
 import { useLocalToday } from "../hooks/useLocalToday"
 import type { JournalEntry } from "../domain/journal-schema"
@@ -38,8 +38,10 @@ export function CalendarJournalDetails({ entries, date, onOpenDay, onWriteDate }
   readonly onWriteDate?: (date: string) => void
 }) {
   const [original, setOriginal] = useState(false)
+  const [selection, setSelection] = useState<{ readonly date: string; readonly id: string } | null>(null)
   const originalEntryCreated = useRef(false)
   const originalToken = useRef<string | null>(null)
+  const selectionPanelId = useId()
   const closeOriginal = () => { if (originalToken.current && window.history.state?.calendarOriginal === originalToken.current) window.history.back(); else setOriginal(false) }
   useEffect(() => {
     if (!original) { originalEntryCreated.current = false; originalToken.current = null; return }
@@ -63,14 +65,22 @@ export function CalendarJournalDetails({ entries, date, onOpenDay, onWriteDate }
   const activeDates = useMemo(() => new Set(entries.map((entry) => entry.date).filter(isValidIsoDate)), [entries])
   const decorationPreviews = useJournalDecorationPreviews(activeDates)
   useEffect(() => setOriginal(false), [date])
-  const day = entries.filter(entry => entry.date === date)
+  const day = useMemo(() => entries.filter(entry => entry.date === date), [entries, date])
+  const defaultEntry = day.find(entry => entry.kind === "post-session") ?? day[0] ?? null
+  const selectedEntry = day.find(entry => selection?.date === date && entry.id === selection.id) ?? defaultEntry
+  const selectedIndex = day.findIndex(entry => entry.id === selectedEntry?.id)
+  useEffect(() => {
+    if (selection?.date === date && day.some(entry => entry.id === selection.id)) return
+    setSelection(defaultEntry ? { date, id: defaultEntry.id } : null)
+  }, [date, day, defaultEntry, selection])
   if (original) return <section className="calendar-journal-detail">
     <button type="button" onClick={closeOriginal}><ChevronLeft size={18} aria-hidden="true" />날짜 요약으로</button>
-    <Suspense fallback={<p role="status">일지를 여는 중이에요.</p>}><OriginalJournal date={date} onBack={closeOriginal} /></Suspense>
+    <Suspense fallback={<p role="status">일지를 여는 중이에요.</p>}><OriginalJournal date={date} initialEntryId={selectedEntry?.id} onBack={closeOriginal} /></Suspense>
   </section>
   return <section className="calendar-journal-detail" aria-label="이날 남긴 기록">
-    <h3 style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-      이날 남긴 기록
+    <h3 className="calendar-journal-detail__heading">
+      <span>이날 남긴 기록</span>
+      {day.length > 0 && <small className="calendar-journal-detail__count">{day.length}개</small>}
       <JournalDecorationPreview item={decorationPreviews.get(date)} />
     </h3>
     {day.length === 0 ? <>
@@ -80,14 +90,25 @@ export function CalendarJournalDetails({ entries, date, onOpenDay, onWriteDate }
       </button>}
     </> : <>
       <p className="calendar-journal-detail__caption">계획과 별도로 남긴 실제 기록이에요.</p>
-      {day.map((entry, index) => <article key={entry.id}>
-        <h4>{entry.kind === "post-session" ? `${slotLabel(entry)} · 훈련 기록` : entry.kind === "race" ? entry.stage === "pre" ? "경기 전 기록" : "경기 결과" : "하루 마무리"}<small>기록 {index + 1}</small></h4>
-        <dl>{facts(entry).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
-        {entry.kind === "post-session" && entry.exerciseLog?.components.map(component => <div className="calendar-journal-detail__exercise" key={component.id}>
+      {day.length > 1 && <div className="calendar-journal-detail__entries" role="group" aria-label="이날 기록 선택">
+        {day.map((entry, index) => <button key={entry.id} type="button"
+          className="calendar-journal-detail__entry-choice" aria-pressed={selectedEntry?.id === entry.id}
+          aria-controls={selectionPanelId} onClick={() => setSelection({ date, id: entry.id })}>
+          <span className="calendar-journal-detail__entry-head">
+            <strong>{entryHeading(entry)}</strong>
+            <small>{selectedEntry?.id === entry.id ? "선택됨" : `기록 ${index + 1}`}</small>
+          </span>
+          <span className="calendar-journal-detail__entry-summary">{entrySummary(entry)}</span>
+        </button>)}
+      </div>}
+      {selectedEntry && <article id={selectionPanelId} aria-label="선택한 기록 상세">
+        <h4>{entryHeading(selectedEntry)}<small>기록 {selectedIndex + 1}</small></h4>
+        <dl>{facts(selectedEntry).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+        {selectedEntry.kind === "post-session" && selectedEntry.exerciseLog?.components.map(component => <div className="calendar-journal-detail__exercise" key={component.id}>
           <strong>{EXERCISE_KINDS[component.kind]}</strong>
           {component.rows.map(row => <p key={row.id}>{describeExerciseRow(row)}</p>)}
         </div>)}
-      </article>)}
+      </article>}
       <button type="button" className="calendar-journal-detail__open" onClick={() => onOpenDay ? onOpenDay(date) : setOriginal(true)}>
         <BookOpen size={18} aria-hidden="true" />일지·메모 원문 열기
       </button>
@@ -103,6 +124,35 @@ function slotLabel(entry: Extract<JournalEntry, { kind: "post-session" }>) {
   if (explicit === "PM") return "오후"
   if (explicit === "SINGLE") return "하루 한 번"
   return "시간대 미기록"
+}
+
+function entryHeading(entry: JournalEntry): string {
+  if (entry.kind === "post-session") return `${slotLabel(entry)} · 훈련 기록`
+  if (entry.kind === "race") return entry.stage === "pre" ? "경기 전 기록" : "경기 결과"
+  return "하루 마무리"
+}
+
+function entrySummary(entry: JournalEntry): string {
+  if (entry.kind === "evening") return "하루 마무리 기록"
+  const values = entry.kind === "post-session" ? [
+    summaryFact(entry, "수행", "activityOutcome", quickOutcomeLabel(entry)),
+    summaryFact(entry, "거리", "distanceKm", entry.distanceKm, " km"),
+    summaryFact(entry, "시간", "durationMin", entry.durationMin, "분"),
+    summaryFact(entry, "평균 페이스", "avgPace", entry.avgPace, "/km"),
+  ] : [
+    summaryFact(entry, "경기 기록", "record", entry.record),
+    summaryFact(entry, "순위", "rank", entry.rank),
+  ]
+  const exercises = entry.kind === "post-session"
+    ? [...new Set((entry.exerciseLog?.components ?? []).map(component => EXERCISE_KINDS[component.kind]))]
+    : []
+  return [...values.filter((value): value is string => value !== null), ...exercises].slice(0, 2).join(" · ") || "기록 내용을 확인할 수 있어요"
+}
+
+function summaryFact(entry: JournalEntry, label: string, field: string, value: string | number | null | undefined, suffix = ""): string | null {
+  if (value === undefined || value === null || value === "" || entry.fieldProvenance?.[field]?.provenance === "MISSING") return null
+  const source = isImportedField(field, entry.fieldProvenance) ? " · 가져온 값" : entry.fieldProvenance?.[field] === undefined ? " · 입력 출처 미확인" : ""
+  return `${label} ${value}${suffix}${source}`
 }
 
 function facts(entry: JournalEntry): [string, string][] {

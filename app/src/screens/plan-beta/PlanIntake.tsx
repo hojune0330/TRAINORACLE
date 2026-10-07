@@ -183,9 +183,9 @@ export function PlanIntake({
       )}
       {step !== "preview" && (
         <div
-          className={`plan-choice-list${isQuickStep || step === "division" || step === "focus" ? " plan-choice-list--cards" : ""}${step === "goal" ? " plan-choice-list--goals" : ""}`}
-          role={step === "goal" ? "group" : undefined}
-          aria-label={step === "goal" ? "계획 종목 선택" : undefined}
+          className={`plan-choice-list${(isQuickStep && step !== "days") || step === "division" || step === "focus" ? " plan-choice-list--cards" : ""}${step === "goal" ? " plan-choice-list--goals" : ""}${step === "days" ? " plan-choice-list--days" : ""}`}
+          role={step === "goal" || step === "days" ? "group" : undefined}
+          aria-label={step === "goal" ? "계획 종목 선택" : step === "days" ? "운동할 날 선택" : undefined}
         >
         {step === "goal" && (
           SUPPORTED_GOAL_ORDER.map((event) => (
@@ -218,7 +218,6 @@ export function PlanIntake({
               title={EXPERIENCE_LABELS[value].title}
               detail={EXPERIENCE_LABELS[value].detail}
               selected={draft.experienceBand === value}
-              recommended={value === RECOMMENDED_ANSWERS.experienceBand}
               onClick={() => onExperience(value)}
             />
           ))
@@ -275,16 +274,13 @@ export function PlanIntake({
         )}
         {step === "days" && (
           ([3, 4, 5, 6, "EVERY_DAY"] as const).map((days) => (
-            <Choice
+            <button
               key={days}
-              title={days === "EVERY_DAY" ? "매일" : `${days}일`}
-              detail={days === "EVERY_DAY"
-                ? "매일 훈련을 배치해요. 모두 강한 훈련은 아니에요"
-                : `이번 ${projectionDays}일 중 ${days}일 훈련 · ${projectionDays - days}일 휴식`}
-              selected={draft.availableDayCount === days}
-              recommended={days === RECOMMENDED_ANSWERS.availableDayCount}
+              type="button"
+              className="plan-day-choice"
+              aria-pressed={draft.availableDayCount === days}
               onClick={() => onDays(days)}
-            />
+            >{days === "EVERY_DAY" ? "매일" : `${days}일`}</button>
           ))
         )}
         {step === "frame-length" && (
@@ -356,6 +352,7 @@ export function PlanIntake({
         )}
         </div>
       )}
+      {step === "days" && <p className="plan-choice-note">매일을 골라도 모두 강한 훈련은 아니에요.</p>}
       {step === "safety" && !refining && (
         <p className="plan-choice-note plan-choice-note--muted">
           이 질문은 진단이나 의료 허가가 아니에요.
@@ -363,8 +360,7 @@ export function PlanIntake({
         </p>
       )}
       {showProgress && answeredSteps.length > 0 && (
-        <InfoDisclosure title="선택한 내용 바꾸기" purpose="actions" className="plan-intake__answers"
-          preview={answeredSteps.map(({ label }) => label).join(" · ")}>
+        <InfoDisclosure title="선택한 내용 바꾸기" purpose="actions" className="plan-intake__answers">
           <div className="plan-intake__summary" aria-label="지금까지">
             {answeredSteps.map(({ step: answeredStep, label }) => onJump ? (
               <button key={answeredStep} type="button" className="plan-intake__summary-line" onClick={() => onJump(answeredStep)}>
@@ -374,7 +370,7 @@ export function PlanIntake({
           </div>
         </InfoDisclosure>
       )}
-      {showProgress && <IntakeCalendarPeek draft={draft}
+      {!refining && (step === "goal" || step === "preview") && <IntakeCalendarPeek draft={draft}
         frameLengthDays={draft.requestedFrameLength === 9.5 ? 10 : draft.requestedFrameLength ?? 9} />}
       {step === "goal" && !refining && (
         <details className="plan-support-more">

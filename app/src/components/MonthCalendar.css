@@ -19,9 +19,8 @@
 .month-calendar__grid td[data-outside] .month-calendar__number { color: var(--ink-3); font-weight: 400; }
 .month-calendar__grid td[data-in-range] { background: var(--surface-2); border-bottom: 2px solid var(--brand); }
 .month-calendar__grid td button { display: flex; flex-direction: column; align-items: stretch; width: 100%; min-height: 64px; padding: var(--space-1) 0; border: 0; border-radius: 0; background: transparent; color: var(--ink); cursor: pointer; font: inherit; text-align: center; }
-.month-calendar__date-heading { display: grid; grid-template-columns: 28px; justify-content: center; align-items: center; width: 100%; min-height: 28px; }
-.month-calendar__date-heading--with-adornment { grid-template-columns: 28px 16px; }
-.month-calendar__number { display: grid; place-items: center; min-width: 28px; min-height: 28px; font-size: var(--fs-body); font-weight: 600; font-variant-numeric: tabular-nums; }
+.month-calendar__date-heading { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%; min-height: 28px; }
+.month-calendar__number { display: grid; place-items: center; min-width: 28px; min-height: 28px; white-space: nowrap; font-size: var(--fs-body); font-weight: 600; font-variant-numeric: tabular-nums; }
 .month-calendar__day-adornment { display: grid; place-items: center; width: 16px; height: 16px; overflow: hidden; }
 .month-calendar__grid button[aria-current="date"] .month-calendar__number { background: var(--brand); color: var(--surface); border-radius: 50%; }
 .month-calendar__grid button[data-selected] { outline: 2px solid var(--ink); outline-offset: -2px; }

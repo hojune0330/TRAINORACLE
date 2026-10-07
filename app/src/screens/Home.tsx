@@ -38,6 +38,7 @@ export type HomeProps = {
   readonly onOpenRecords?: () => void
   readonly onOpenOracle?: (topic: OracleTopicId) => void
   readonly oraclePreview?: ReactNode
+  readonly oraclePreviewLabel?: string
   readonly onOpenMore?: () => void
   readonly onOpenAccount?: () => void
   readonly onOpenContent?: () => void
@@ -47,7 +48,7 @@ export type HomeProps = {
 
 export function Home({
   onWriteLog, onOpenDay, onOpenArchive, onOpenGuide, onOpenPlan,
-  onOpenNextTraining, onOpenTrends, onOpenImport, onOpenRecords, onOpenOracle, oraclePreview, onOpenMore, onOpenAccount, onOpenContent, onOpenRewards,
+  onOpenNextTraining, onOpenTrends, onOpenImport, onOpenRecords, onOpenOracle, oraclePreview, oraclePreviewLabel, onOpenMore, onOpenAccount, onOpenContent, onOpenRewards,
 }: HomeProps) {
   const [revision, setRevision] = React.useState(0)
   const athleteRecords = useAthleteRecordsSnapshot()
@@ -141,6 +142,7 @@ export function Home({
         model={model}
         safetyNotice={safetyNotice}
         oraclePreview={oraclePreview}
+        oraclePreviewLabel={oraclePreviewLabel}
         recordStart={entries.length === 0 ? <RecordStartActions onImport={onOpenImport} onRecords={onOpenRecords} /> : undefined}
         onWriteLog={onWriteLog}
         onOpenArchive={onOpenArchive}

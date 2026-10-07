@@ -26,7 +26,7 @@ export function HomeOraclePreview({ question, answer, sourceLabel, kind, onOpen 
     <p className="home-hub__oracle-answer">{answer}</p>
     <p className="home-hub__oracle-source">{sourceLabel}</p>
     <button className="home-hub__oracle-action" type="button" onClick={onOpen}>
-      이 결과 자세히 보기<ArrowRight aria-hidden="true" size={17} />
+      {kind === "unavailable" ? "기록 상태 확인" : "이 결과 자세히 보기"}<ArrowRight aria-hidden="true" size={17} />
     </button>
   </section>
 }

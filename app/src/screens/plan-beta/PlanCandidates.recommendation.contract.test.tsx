@@ -54,7 +54,7 @@ describe("candidate-owned optional recommendation preference", () => {
   it("starts neutral and changes ranking without changing the selected method or confirmation", () => {
     const { props, resolver } = setup()
     render(<PlanCandidates {...props} />)
-    fireEvent.click(screen.getByRole("button", { name: "처방 확인·조절" }))
+    fireEvent.click(screen.getByRole("button", { name: "훈련 조절" }))
     fireEvent.click(screen.getByText("훈련 목록·다른 설정"))
     expect(screen.getByRole("radio", { name: "선호 없음" })).toBeChecked()
     expect(resolver.mock.lastCall?.[3]).toBe("NEUTRAL")
@@ -71,7 +71,7 @@ describe("candidate-owned optional recommendation preference", () => {
   ] as const)("resets preference to neutral when intake context changes %j", (change) => {
     const { props, resolver } = setup()
     const view = render(<PlanCandidates {...props} />)
-    fireEvent.click(screen.getByRole("button", { name: "처방 확인·조절" }))
+    fireEvent.click(screen.getByRole("button", { name: "훈련 조절" }))
     fireEvent.click(screen.getByText("훈련 목록·다른 설정"))
     fireEvent.click(screen.getByRole("radio", { name: "해본 방법 선호" }))
     expect(resolver.mock.lastCall?.[3]).toBe("PREFER_REPEAT")
@@ -84,7 +84,7 @@ describe("candidate-owned optional recommendation preference", () => {
   it("keeps preference on an unrelated start-date rerender", () => {
     const { props } = setup()
     const view = render(<PlanCandidates {...props} />)
-    fireEvent.click(screen.getByRole("button", { name: "처방 확인·조절" }))
+    fireEvent.click(screen.getByRole("button", { name: "훈련 조절" }))
     fireEvent.click(screen.getByText("훈련 목록·다른 설정"))
     fireEvent.click(screen.getByRole("radio", { name: "해본 방법 선호" }))
     view.rerender(<PlanCandidates {...props} startDateValue="2026-09-12" />)

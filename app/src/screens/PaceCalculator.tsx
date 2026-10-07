@@ -1,5 +1,5 @@
 import React from "react"
-import { ArrowLeft, ArrowRight, Calculator, Clock3, Flag, HelpCircle, ListOrdered, Table2, LockKeyhole, UnlockKeyhole } from "lucide-react"
+import { ArrowLeft, ArrowRight, Calculator, Flag, HelpCircle, ListOrdered, Table2, LockKeyhole, UnlockKeyhole, X } from "lucide-react"
 import { PACE_EVENT_METERS, canonicalPaceDistance, paceReferenceRange } from "@impl/prescription/record-pace"
 import type { AthleteRecord } from "../domain/athlete-records"
 import { todayISO } from "../domain/journal-store"
@@ -15,6 +15,18 @@ function clockFields(seconds: number) {
   const hours = Math.floor(seconds / 3600), minutes = Math.floor(seconds / 60) % 60
   return { hours: hours ? String(hours) : "", minutes: String(minutes), seconds: String(Number((seconds % 60).toFixed(6))) }
 }
+
+function paceOverlayDepth(stage: PaceToolStage): number | null {
+  const state = window.history.state
+  if (typeof state !== "object" || state === null) return null
+  const marker = (state as Record<string, unknown>).trainoracleOverlay
+  if (typeof marker !== "object" || marker === null) return null
+  const overlay = marker as Record<string, unknown>
+  return overlay.kind === "pace" && overlay.stage === stage
+    && Number.isInteger(overlay.depth) && (overlay.depth as number) > 0 && (overlay.depth as number) <= 100
+    ? overlay.depth as number : null
+}
+
 const BADGES = { RECENT_ACTUAL: "최근 경기", ROLLING_12_BEST: "최근 12개월 최고", LIFETIME_BEST: "입력된 개인 최고", GOAL: "목표" } as const
 
 export function PaceCalculator({ request = {}, stage, onStageChange, onBack }: {
@@ -33,11 +45,17 @@ export function PaceCalculator({ request = {}, stage, onStageChange, onBack }: {
   const [message, setMessage] = React.useState("")
   const [fixed, setFixed] = React.useState<{ source: string; values: Record<number, string> }>({ source: "", values: {} })
   const heading = React.useRef<HTMLHeadingElement>(null)
+  const referenceFromEvent = React.useRef(false)
   const parsed = parsePaceClock(fields.hours, fields.minutes, fields.seconds)
   const total = parsed.kind === "valid" ? parsed.seconds : null
   const stale = selected !== undefined && !isEligiblePaceRecordCurrent(selected)
   const canSelect = request.onSelectRecord && selected && !stale
     && (request.allowedEvents?.some(value => canonicalPaceDistance(value) === event) ?? true)
+  const closeTool = () => {
+    const depth = paceOverlayDepth(stage)
+    if (depth === null || depth === 1) onBack()
+    else window.history.go(-depth)
+  }
   React.useEffect(() => { heading.current?.focus({ preventScroll: true }) }, [stage])
   React.useEffect(() => { setPage(0) }, [event, total, unit, trend])
   const setField = (key: keyof typeof fields, value: string) => {
@@ -51,7 +69,13 @@ export function PaceCalculator({ request = {}, stage, onStageChange, onBack }: {
     const current = readRecords().find(row => row.id === record.id && row.savedAt === record.savedAt)
     if (!current || !isEligiblePaceRecordCurrent(current)) { setMessage("기록이 바뀌었어요. 다시 선택해 주세요."); return }
     setEvent(canonicalPaceDistance(current.eventDistanceM)); setFields(clockFields(current.performanceSeconds))
-    setSelected({ ...current }); setMessage(""); onBack()
+    setSelected({ ...current }); setMessage("")
+    if (referenceFromEvent.current) onStageChange("result")
+    else onBack()
+  }
+  const openRecords = () => {
+    referenceFromEvent.current = stage === "event"
+    onStageChange("reference")
   }
   const splitSource = JSON.stringify([event, total, unit, trend])
   const fixedValues = fixed.source === splitSource ? fixed.values : {}
@@ -63,24 +87,28 @@ export function PaceCalculator({ request = {}, stage, onStageChange, onBack }: {
   const visiblePage = Math.min(page, Math.max(0, Math.ceil(rows.length / SPLIT_PAGE_SIZE) - 1))
   const selectionRange = selected && request.calculationModel
     ? paceReferenceRange(createSegmentRecordReference("pace-tool-preview", selected, todayISO(), request.calculationModel)) : null
-  const sourceLabel = selected ? `${selected.purpose === "RACE_GOAL" ? "목표" : "경기 기록"} · ${selected.achievedOn ?? (selected.purpose === "RACE_GOAL" ? "미래 목표" : "날짜 미입력")}` : "입력한 기록 · 비교용"
+  const sourceLabel = selected ? `${selected.purpose === "RACE_GOAL" ? "저장한 목표 · 아직 달성하지 않음" : "저장한 경기 기록"} · ${selected.achievedOn ?? (selected.purpose === "RACE_GOAL" ? "미래 목표" : "날짜 미입력")}` : "이번 계산에만 입력 · 저장되지 않음"
   const titles: Record<PaceToolStage, string> = { event: "어떤 종목의 기록인가요?", input: `${paceEventLabel(event)} 기록을 입력해 주세요`, result: "내 기록으로 페이스 계산",
-    reference: "어떤 기록을 기준으로 볼까요?", splits: "구간별 통과 시간", table: "비슷한 페이스 비교", track: "트랙·레인", evidence: "이 숫자는 어떻게 나왔나요?" }
+    reference: "어떤 기록을 기준으로 볼까요?", splits: "구간별 통과 시간", table: "비슷한 페이스 비교", track: "트랙 안내", evidence: "이 숫자는 어떻게 나왔나요?" }
 
   return <section className="pace-tool" aria-label="페이스 계산">
-    <header className="pace-tool__header"><button type="button" onClick={onBack} aria-label="이전 화면"><ArrowLeft size={20} /></button>
-      <span>오라클 · 페이스 계산</span></header>
+    <header className="pace-tool__header"><button type="button" onClick={onBack} aria-label="이전 단계" title="이전 단계"><ArrowLeft size={20} /></button>
+      <span>오라클 · 페이스 계산</span>
+      <button type="button" onClick={closeTool} aria-label="페이스 도구 닫기" title="페이스 도구 닫기"><X size={18} /></button></header>
     <h1 ref={heading} tabIndex={-1}>{titles[stage]}</h1>
     {message && <p role="status">{message}</p>}
-    {stage === "event" && <div className="pace-tool__choices">{PACE_EVENT_METERS.map(distance => <button key={distance} type="button"
-      onClick={() => chooseEvent(distance)}>{paceEventLabel(distance)}<ArrowRight size={18} /></button>)}</div>}
+    {stage === "event" && <>
+      <button type="button" onClick={openRecords}>저장한 경기 기록 사용 <ArrowRight size={18} aria-hidden="true" /></button>
+      <div className="pace-tool__choices">{PACE_EVENT_METERS.map(distance => <button key={distance} type="button"
+        onClick={() => chooseEvent(distance)}>{paceEventLabel(distance)}<ArrowRight size={18} /></button>)}</div>
+    </>}
     {stage === "input" && <form onSubmit={e => { e.preventDefault(); if (total !== null) onStageChange("result") }}>
       <div className="pace-tool__clock">{([ ["hours", "시간"], ["minutes", "분"], ["seconds", "초"] ] as const).map(([key, label]) => <label key={key}>
         <input aria-label={label} type="text" inputMode={key === "seconds" ? "decimal" : "numeric"} value={fields[key]}
           onChange={e => setField(key, e.target.value)} placeholder="0" />{label}</label>)}</div>
       {parsed.kind === "invalid" && <p role="alert">{parsed.message}</p>}
       <button type="submit" className="pace-tool__primary" disabled={total === null}>페이스 보기 <ArrowRight size={18} /></button>
-      <button type="button" onClick={() => onStageChange("reference")}>저장한 경기 기록 사용</button>
+      <button type="button" onClick={openRecords}>저장한 경기 기록 사용</button>
     </form>}
     {stage === "reference" && <>
       {!records.length && <p>저장한 경기 기록이 없어요. 기록을 직접 입력해 계산할 수 있어요.</p>}
@@ -99,7 +127,7 @@ export function PaceCalculator({ request = {}, stage, onStageChange, onBack }: {
     {stage !== "event" && stage !== "reference" && stage !== "input" && <>
       {total === null ? <><p role="status">기록을 입력하면 결과를 볼 수 있어요.</p><button type="button" onClick={() => onStageChange("input")}>기록 입력</button></> : <>
         <div className="pace-tool__source"><strong>{paceEventLabel(event)} · {paceClock(total)}</strong><span>{sourceLabel}</span>
-          <button type="button" onClick={() => onStageChange("reference")}>기준 바꾸기</button>
+          <button type="button" onClick={openRecords}>기준 바꾸기</button>
           <button type="button" onClick={() => onStageChange("input")}>직접 수정</button></div>
         {stale && <p role="status">저장된 기록이 바뀌었어요. 계산은 비교용으로 볼 수 있지만 훈련에 연결하려면 다시 선택해 주세요.</p>}
         {stage === "result" && <>
@@ -115,8 +143,10 @@ export function PaceCalculator({ request = {}, stage, onStageChange, onBack }: {
             }}>이 기준으로 훈련 확인 <ArrowRight size={18} /></button>
             {!selected && <p>훈련에 연결하려면 저장한 경기 기록을 골라 주세요.</p>}
           </section>}
-          <div className="pace-tool__tools">{([ ["splits", ListOrdered, "구간 시간"], ["table", Table2, "페이스 표"], ["track", Flag, "트랙·레인"], ["evidence", HelpCircle, "계산 근거"] ] as const).map(([destination, Icon, label]) =>
-            <button key={destination} type="button" onClick={() => onStageChange(destination)}><Icon size={20} />{label}<ArrowRight size={16} /></button>)}</div>
+          <div className="pace-tool__tools">{([ ["splits", ListOrdered, "구간 시간"], ["table", Table2, "페이스 표"], ["track", Flag, "트랙 안내"], ["evidence", HelpCircle, "계산 근거"] ] as const).map(([destination, Icon, label]) =>
+            <button key={destination} type="button" onClick={() => onStageChange(destination)}><Icon size={20} />
+              <span className="pace-tool__tool-copy"><span>{label}</span>{destination === "track" && <small>레인 계산은 아직 준비 중이에요</small>}</span>
+              <ArrowRight size={16} /></button>)}</div>
         </>}
         {stage === "splits" && <>
           <div className="pace-tool__split-controls"><label>구간 거리(m)<input type="text" inputMode="decimal" value={unit} onChange={e => setUnit(e.target.value)} /></label>
@@ -158,6 +188,6 @@ export function PaceCalculator({ request = {}, stage, onStageChange, onBack }: {
           <p>목표는 현재 실력과 구분해요. 하프 계산 거리는 21,097.5m예요. 표시는 마지막에 반올림하며 구간 합계는 전체 기록에 맞춰요.</p></>}
       </>}
     </>}
-    <footer className="pace-tool__footer"><Calculator size={16} /><span>계산만으로 기록이나 계획은 바뀌지 않아요.</span><Clock3 size={16} /></footer>
+    <footer className="pace-tool__footer"><Calculator size={16} /><span>계산 미리보기 · 기록·계획 변경 없음</span></footer>
   </section>
 }

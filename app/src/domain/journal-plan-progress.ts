@@ -17,7 +17,9 @@ export function journalResultLabel(entry: PostSessionEntry): string {
 }
 
 /** A journal result is never silently converted into a plan progress mark. */
-export function journalProgressAction(state: PlanBetaState, entry: PostSessionEntry): StoredPlanProgress | null {
+export function journalProgressAction(state: PlanBetaState, entry: Pick<PostSessionEntry,
+  "plannedSessionLink" | "date" | "fieldProvenance" | "painCheckStatus" | "painParts" | "activityOutcome" | "activitySlot"
+>): StoredPlanProgress | null {
   if (state.version !== 3 || !entry.plannedSessionLink || entry.date !== entry.plannedSessionLink.plannedDate
     || entry.fieldProvenance?.activityOutcome?.provenance !== "EXPLICIT") return null
   const session = resolveCurrentPlannedSession(state, entry.plannedSessionLink)

@@ -17,6 +17,23 @@ function sourceFiles(root: string): readonly string[] {
 }
 
 describe("shared visual system", () => {
+  it("keeps plan summaries and writing backgrounds free of redundant decorative lines", () => {
+    const instant = readFileSync("src/components/instant-plan/instant-plan.css", "utf8")
+    const plan = readFileSync("src/styles/plan-beta.css", "utf8")
+    const writer = readFileSync("src/screens/journal/journal-decoration-preview.css", "utf8")
+    const app = readFileSync("src/styles/app.css", "utf8")
+    const rule = (css: string, selector: string) => css.slice(css.indexOf(`${selector} {`)).split("}")[0]!
+    for (const [css, selector] of [[instant, ".instant-plan__status"], [plan, ".plan-training-flow"],
+      [plan, ".plan-detailed-options"], [plan, ".active-plan__information"]] as const) {
+      expect(css, selector).toContain(`${selector} {`)
+      expect(rule(css, selector), selector).not.toMatch(/border(?:-block|-top|-bottom)?\s*:/u)
+    }
+    expect(writer).not.toContain(".journal-writing-decoration-preview__theme")
+    expect(rule(app, ".quick-log__paper")).not.toContain("background-image")
+    expect(plan).toContain(".plan-training-flow__days {")
+    expect(instant).toContain(".instant-plan :is(button, input, select, a, summary):focus-visible")
+  })
+
   it("self-hosts one variable Korean interface font", () => {
     const indexHtml = readFileSync("index.html", "utf8")
     const tokens = readFileSync("../colors_and_type.css", "utf8")

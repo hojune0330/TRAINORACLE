@@ -34,9 +34,33 @@ describe("InstantPlanTodayView", () => {
         { label: "방법", instruction: "저장된 안내" }],
     }] }} compact onViewSession={onViewSession} />)
     expect(screen.getByRole("note")).toBeVisible()
-    expect(screen.getByText("저장된 안내")).not.toBeVisible()
+    expect(screen.getByText("반복 횟수와 회복 시간은 정해지지 않았어요.")).not.toBeVisible()
+    expect(screen.getByText("이 시간 내내 강하게 뛰지 마세요.")).toBeVisible()
+    fireEvent.click(screen.getByRole("button", { name: "반복·휴식이 아직 없어요" }))
+    expect(screen.getByText("반복 횟수와 회복 시간은 정해지지 않았어요.")).toBeVisible()
+    expect(screen.queryByText("저장된 안내")).not.toBeInTheDocument()
+    expect(screen.queryByText("훈련 방법", { selector: "summary" })).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole("button", { name: "오전 훈련 방법·근거" }))
     expect(onViewSession).toHaveBeenCalledExactlyOnceWith("am")
+  })
+  it("prioritizes recording while retaining every main step and recovery in compact mode", () => {
+    const record = vi.fn(), view = vi.fn()
+    const session = { ...today.sessions[1]!, steps: [
+      ...today.sessions[1]!.steps,
+      { label: "본운동", instruction: "마지막 200m · 45초" },
+      { label: "회복", instruction: "세트 사이 3분 서서 쉬기" },
+    ] }
+    render(<InstantPlanTodayView compact today={{ ...today, sessions: [session] }} onRecordSession={record} onViewSession={view} />)
+    const button = screen.getByRole("button", { name: "오후 훈련 기록 남기기" })
+    const explanation = screen.getByRole("button", { name: "오후 훈련 방법·근거" })
+    expect(button).toHaveClass("instant-plan__button")
+    expect(button.compareDocumentPosition(explanation) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    for (const step of session.steps.filter(step => ["본운동", "회복", "사이 회복"].includes(step.label))) {
+      expect(screen.getByText(step.instruction)).toBeVisible()
+    }
+    fireEvent.click(button)
+    expect(record).toHaveBeenCalledExactlyOnceWith("pm")
+    expect(view).not.toHaveBeenCalled()
   })
   it("shows both session summaries first and expands only the selected session", () => {
     const { container } = render(<InstantPlanTodayView today={today} />)
@@ -70,6 +94,8 @@ describe("InstantPlanTodayView", () => {
     const region = screen.getByRole("region", { name: "오전 · 준비 훈련" })
     expect(within(region).getByText("준비 동작 8분")).toBeVisible()
     expect(within(region).getByText("안내된 동작 12분")).toBeVisible()
+    expect(screen.queryByRole("note")).not.toBeInTheDocument()
+    expect(screen.queryByText("이 시간 내내 강하게 뛰지 마세요.")).not.toBeInTheDocument()
   })
 
   it("records the specific slot only after an explicit user action", () => {

@@ -8,9 +8,14 @@
 .pace-tool :focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
 .pace-tool__header { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--ink-3); }
 .pace-tool__header button { width: 44px; padding: 0; flex-shrink: 0; }
+.pace-tool__header > span { flex: 1; min-width: 0; }
 .pace-tool__choices, .pace-tool__tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .pace-tool__choices button, .pace-tool__tools button { justify-content: space-between; text-align: left; }
 .pace-tool__tools { margin-top: 24px; }
+.pace-tool__tools button { min-height: 60px; }
+.pace-tool__tool-copy { display: grid; flex: 1; min-width: 0; gap: 2px; }
+.pace-tool__tool-copy > span { overflow-wrap: anywhere; }
+.pace-tool__tool-copy small { color: var(--ink-3); font-size: 12px; line-height: 1.35; }
 .pace-tool__clock { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 24px; }
 .pace-tool__clock label { display: flex; flex-direction: column; gap: 8px; color: var(--ink-3); }
 .pace-tool__clock input { min-width: 0; width: 100%; box-sizing: border-box; padding: 12px 8px; font-size: 24px; font-variant-numeric: tabular-nums; }

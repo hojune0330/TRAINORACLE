@@ -19,6 +19,7 @@ type Props = {
   readonly contextKey?: string
   readonly onPendingChange?: (pending: boolean) => void
   readonly openRequest?: number | null
+  readonly inline?: boolean
 }
 export function PlanMethodPicker(props: Props) {
   const [expanded, setExpanded] = React.useState(false)
@@ -29,7 +30,7 @@ export function PlanMethodPicker(props: Props) {
     .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)))])
   return <MethodPreview key={key} {...props} expanded={expanded} onExpandedChange={setExpanded} />
 }
-function MethodPreview({ options, selected, onChange, repeatPreference = "NEUTRAL", onRepeatPreferenceChange, onPendingChange, expanded, onExpandedChange }: Props & {
+function MethodPreview({ options, selected, onChange, repeatPreference = "NEUTRAL", onRepeatPreferenceChange, onPendingChange, expanded, onExpandedChange, inline }: Props & {
   readonly expanded: boolean; readonly onExpandedChange: (expanded: boolean) => void;
 }) {
   const id = React.useId()
@@ -75,13 +76,7 @@ function MethodPreview({ options, selected, onChange, repeatPreference = "NEUTRA
   const eligibleFamilyCount = new Set(options.flatMap(option => option.method === undefined ? [] : [option.method.familyId])).size
   const hasMultipleMethods = distinct.length > 1
   const summaryTitle = "처방 확인·조절"
-  return (
-    <details className="plan-method-picker" open={expanded} onToggle={event => onExpandedChange(event.currentTarget.open)}>
-      <summary>
-        <SlidersHorizontal size={16} aria-hidden="true" />
-        <span>{summaryTitle}<small>{previewRef === null ? "기록 없이 시간·RPE로 안내" : current?.mainSummary ?? "선택한 상세 훈련 확인 필요"}</small></span>
-        <ChevronDown className="plan-method-picker__chevron" size={16} aria-hidden="true" />
-      </summary>
+  const content = <>
       {current && <section className="plan-method-picker__preview" aria-label="훈련 미리보기" key={JSON.stringify(current.ref)}>
         {current.sequence ? <WorkoutNotation sequence={current.sequence} intent={current.trainingFocus} /> : <><strong>{current.mainSummary}</strong><p>{current.recoverySummary}</p></>}
         <p>현재 {current.targetEventDistanceM}m 기록을 확인하면 목표 시간을 계산해요.</p>
@@ -156,6 +151,13 @@ function MethodPreview({ options, selected, onChange, repeatPreference = "NEUTRA
       {distinct.length < 2 && <p className="plan-method-picker__limit">{options.length === 0
         ? "이 조건에서 선택할 수 있는 상세 방법은 아직 없어요. 시간과 체감 강도로 안내받을 수 있어요."
         : "현재 조건에서 검토가 끝난 상세 훈련이에요. 기록 없이 받는 방식과 비교해 고를 수 있어요."}</p>}
+  </>
+  return inline ? <section className="plan-method-picker" aria-label={summaryTitle}>{content}</section>
+    : <details className="plan-method-picker" open={expanded} onToggle={event => onExpandedChange(event.currentTarget.open)}>
+      <summary>
+        <SlidersHorizontal size={16} aria-hidden="true" />
+        <span>{summaryTitle}<small>{previewRef === null ? "기록 없이 시간·RPE로 안내" : current?.mainSummary ?? "선택한 상세 훈련 확인 필요"}</small></span>
+        <ChevronDown className="plan-method-picker__chevron" size={16} aria-hidden="true" />
+      </summary>{content}
     </details>
-  )
 }

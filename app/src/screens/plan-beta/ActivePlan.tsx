@@ -217,10 +217,7 @@ export function ActivePlan({
       <p className="plan-eyebrow">오라클 · 훈련 계획</p>
       <div className="active-plan__edit-heading">
         <h1 id="active-plan-title">{frameLengthDays}일 훈련 계획</h1>
-        {onEditPlan && <button type="button" className="plan-text-action" data-plan-edit-button onClick={onEditPlan}><Pencil aria-hidden="true" size={16} />계획 수정</button>}
       </div>
-      {futureTrainingEditor}
-      {onManagePaceRecords && <button type="button" className="plan-text-action" onClick={onManagePaceRecords}>기준 기록·페이스 바꾸기</button>}
       {state.version === 3 && state.activePlanEdit && <p className="active-plan__journal-return" role="status">수정한 계획이에요. 이전 계획과 일지는 보관되어 있어요.</p>}
       {state.version === 3 && state.executionReplan && <details className="plan-detailed-options">
         <summary>수행 기록을 확인하고 바꾼 일정</summary>
@@ -271,7 +268,11 @@ export function ActivePlan({
           type="button" className="plan-text-action" key={`edit-today:${session.day}:${session.slot}`} onClick={() => onEditSession(session)}>
           <Pencil aria-hidden="true" size={16} />{sessionSlotLabel(session.slot)} 훈련 수정
         </button>)}
-      <PlanPrescriptionBasis sessions={activePlan.sessions} />
+      <div className="active-plan__edit-heading">
+        {onEditPlan && <button type="button" className="plan-text-action" data-plan-edit-button onClick={onEditPlan}><Pencil aria-hidden="true" size={16} />계획 수정</button>}
+        {onManagePaceRecords && <button type="button" className="plan-text-action" onClick={onManagePaceRecords}>기준 기록·페이스 바꾸기</button>}
+      </div>
+      {futureTrainingEditor}
       <details className="plan-detailed-options">
       <summary>전체 계획 구성</summary>
       <p className="active-plan__variant">
@@ -327,6 +328,7 @@ export function ActivePlan({
       <div ref={scheduleAnchor} tabIndex={-1} aria-label="전체 일정과 기록">
       <PlanSchedulePreview
         journalEntries={calendarEntries}
+        journalEntriesComplete={journalRead.status === "complete"}
         readerRequest={readerRequest}
         sessionProgress={session => recorded.get(`${session.day}:${session.slot}`)}
         startDate={startDate}
@@ -359,6 +361,7 @@ export function ActivePlan({
                 <ChevronDown aria-hidden="true" size={18} />
               </summary>
               <div className="active-plan__information-body">
+                <PlanPrescriptionBasis inline sessions={activePlan.sessions} />
                 <p className="active-plan__carryover-warning">
                   완료하지 못한 훈련을 다음 날에 몰아서 하지 마세요. 계획에 표시된 날짜를 기준으로 진행해 주세요.
                 </p>
@@ -465,8 +468,10 @@ export function ActivePlan({
                 {current === undefined ? journalLabel ?? "예정" : PROGRESS_LABELS[current]}
               </em>
               {current !== undefined && journalLabel && <small>{journalLabel}</small>}
-              <SessionExplanationEntry session={session} date={isoShift(startDate, session.day - 1)} context={explanationContext} loadEvidence={loadSessionEvidence}
-                initialTab="주기·기록" entryLabel="연결된 일지 기록 보기" showPurpose={false} returnLabel="훈련과 일지로 돌아가기" />
+              {journalRead.status !== "complete" ? <p role="status">일지를 모두 읽지 못해 연결된 기록을 확인할 수 없어요.</p>
+                : results.length > 0 ? <SessionExplanationEntry session={session} date={isoShift(startDate, session.day - 1)} context={explanationContext} loadEvidence={loadSessionEvidence}
+                  initialTab="주기·기록" entryLabel="연결된 일지 기록 보기" showPurpose={false} returnLabel="훈련과 일지로 돌아가기" />
+                : <p className="plan-caption">연결된 일지 없음</p>}
               {onEditSession && session.role !== "REST" && current === undefined
                 && isoShift(startDate, session.day - 1) >= today && session.day <= frameDayCount && (
                 <button type="button" className="plan-text-action" onClick={() => onEditSession(session)}>

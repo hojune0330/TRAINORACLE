@@ -70,6 +70,7 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로", in
   const [storageMessage, setStorageMessage] = React.useState("")
   const [lastSavedRecord, setLastSavedRecord] = React.useState<AthleteRecord | null>(null)
   const [calendarOpen, setCalendarOpen] = React.useState(false)
+  const [entryStep, setEntryStep] = React.useState<"event" | "time" | "date">("event")
   const saveLock = React.useRef(false)
   const unsafeDraft = React.useRef(false)
   unsafeDraft.current = pendingRecord === null && [minutes, seconds, achievedOn, customDistance, seasonId].some(value => value.trim() !== "")
@@ -91,6 +92,7 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로", in
   }, [])
   const [errorField, setErrorField] = React.useState<string | null>(null)
   const formRef = React.useRef<HTMLFormElement>(null)
+  const headingRef = React.useRef<HTMLHeadingElement>(null)
   const errorId = React.useId()
   const showError = (message: string, field: string | null = null) => {
     setError(message)
@@ -105,18 +107,18 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로", in
     "aria-invalid": errorField === name || undefined,
     "aria-describedby": errorField === name ? errorId : undefined })
   const fieldError = (name: string) => errorField === name && <span id={errorId} className="athlete-record-error" role="alert">{error}</span>
+  React.useEffect(() => { headingRef.current?.focus({ preventScroll: true }) }, [entryStep])
 
-  const handleSave = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (saveLock.current || pendingRecord) return
-    const now = new Date()
-    const distance = Number(
-      distanceOption === "CUSTOM" ? customDistance : distanceOption,
-    )
+  const readDistance = (): number | null => {
+    const distance = Number(distanceOption === "CUSTOM" ? customDistance : distanceOption)
     if (!Number.isFinite(distance) || distance < 60) {
       showError("종목 거리는 60m 이상으로 입력해 주세요.", "distance")
-      return
+      return null
     }
+    return distance
+  }
+
+  const readPerformanceSeconds = (): number | null => {
     const minutesText = minutes.trim(), secondsText = seconds.trim()
     const parsedMinutes = Number(minutesText || "0")
     const parsedSeconds = Number(secondsText || "0")
@@ -132,8 +134,19 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로", in
     ) {
       showError("기록의 분과 초를 다시 확인해 주세요.",
         secondsText !== "" && !/^\d+(?:\.\d+)?$/.test(secondsText) || !Number.isFinite(parsedSeconds) || parsedSeconds < 0 || parsedSeconds >= 60 ? "seconds" : "minutes")
-      return
+      return null
     }
+    return parsedMinutes * 60 + parsedSeconds
+  }
+
+  const handleSave = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (saveLock.current || pendingRecord) return
+    const now = new Date()
+    const distance = readDistance()
+    if (distance === null) return
+    const performanceSeconds = readPerformanceSeconds()
+    if (performanceSeconds === null) return
     if (purpose !== "RACE_GOAL" && achievedOn !== "") {
       const dateError = achievedDateError(achievedOn, now)
       if (dateError === "FUTURE_DATE") {
@@ -154,7 +167,7 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로", in
       id,
       purpose,
       eventDistanceM: distance,
-      performanceSeconds: parsedMinutes * 60 + parsedSeconds,
+      performanceSeconds,
       achievedOn: purpose === "RACE_GOAL" || achievedOn === "" ? null : achievedOn,
       seasonId: purpose === "SEASON_BEST" ? seasonId.trim() : null,
     }, now)
@@ -193,6 +206,25 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로", in
     finally { saveLock.current = false; setSaving(false) }
   }
 
+  const handleStepSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (entryStep === "event") {
+      if (readDistance() === null) return
+      if (purpose === "SEASON_BEST" && seasonId.trim() === "") {
+        showError("시즌 최고 기록에는 시즌 이름이 필요해요.", "season")
+        return
+      }
+      setError(null); setErrorField(null); setEntryStep("time")
+      return
+    }
+    if (entryStep === "time") {
+      if (readPerformanceSeconds() === null) return
+      setError(null); setErrorField(null); setEntryStep("date")
+      return
+    }
+    void handleSave(event)
+  }
+
   const finishSaved = async (record: AthleteRecord) => {
     const now = new Date(), distance = record.eventDistanceM
     setLastSavedRecord(record)
@@ -203,6 +235,7 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로", in
     setSeasonId("")
     setCustomDistance("")
     setCalendarOpen(false)
+    setEntryStep("event")
     setError(null)
     setErrorField(null)
     unsafeDraft.current = false
@@ -250,6 +283,16 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로", in
     finally { saveLock.current = false; setSaving(false) }
   }
 
+  const currentDistanceLabel = distanceOption === "CUSTOM"
+    ? `${customDistance || "입력한 거리"}m`
+    : DISTANCE_OPTIONS.find(([value]) => value === distanceOption)?.[1] ?? "선택한 종목"
+  const currentPurposeLabel = PURPOSE_OPTIONS.find(([value]) => value === purpose)?.[1] ?? "저장한 기록"
+  const currentTimeSeconds = Number(minutes || "0") * 60 + Number(seconds || "0")
+  const stepHeading = entryStep === "event"
+    ? initialPurpose === "PERSONAL_BEST" ? "최고기록을 남겨요" : "내 경기 기록"
+    : entryStep === "time" ? "기록 시간을 입력해 주세요"
+    : purpose === "RACE_GOAL" ? "목표 기록을 확인해 주세요" : "달성일을 입력할까요?"
+
   return (
     <section className="athlete-records" aria-labelledby="athlete-records-title">
       <header className="athlete-records-header">
@@ -258,7 +301,7 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로", in
           {backLabel}
         </button>
         <div className="plan-eyebrow">내 경기 기록</div>
-        <h1 id="athlete-records-title">{initialPurpose === "PERSONAL_BEST" ? "최고기록을 남겨요" : "내 경기 기록"}</h1>
+        <h1 id="athlete-records-title" ref={headingRef} tabIndex={-1}>{stepHeading}</h1>
       </header>
 
       {updateRecord && <PacePlanUpdateNotice record={updateRecord} explicitPaceBasis={explicitPaceBasis} onDone={() => { setUpdateRecord(null); setExplicitPaceBasis(false); onBack() }} />}
@@ -268,117 +311,94 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로", in
       {pendingRecord && <button type="button" disabled={saving} onClick={() => void retryPending()}>계정 저장 다시 확인</button>}
 
       {updateRecord === null && <>
-      <form ref={formRef} className="athlete-record-form" onSubmit={handleSave}>
+      <form ref={formRef} className="athlete-record-form" onSubmit={handleStepSubmit}>
         <fieldset disabled={saving || pendingRecord !== null} style={{ display: "contents" }}>
-        <label>
-          <span>어떤 기록인가요?</span>
-          <select
-            aria-label="기록 역할"
-            value={purpose}
-            onChange={(event) => setPurpose(event.target.value as RecordPurpose)}
-          >
-            {PURPOSE_OPTIONS.map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <span>종목</span>
-          <select
-            aria-label="종목 거리"
-            value={distanceOption}
-            onChange={(event) => setDistanceOption(event.target.value)}
-          >
-            {DISTANCE_OPTIONS.map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
-        </label>
-        {distanceOption === "CUSTOM" && (
+        {entryStep === "event" && <div className="athlete-record-step">
           <label>
+            <span>종목</span>
+            <select aria-label="종목 거리" value={distanceOption} onChange={(event) => setDistanceOption(event.target.value)}>
+              {DISTANCE_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            </select>
+          </label>
+          {distanceOption === "CUSTOM" && <label>
             <span>직접 입력 거리 (m)</span>
-            <input
-              aria-label="직접 입력 거리 (m)"
-              {...fieldProps("distance")}
-              inputMode="decimal"
-              value={customDistance}
-              onChange={(event) => setCustomDistance(event.target.value)}
-            />
+            <input aria-label="직접 입력 거리 (m)" {...fieldProps("distance")} inputMode="decimal" value={customDistance}
+              onChange={(event) => setCustomDistance(event.target.value)} />
             {fieldError("distance")}
-          </label>
-        )}
-        <div className="athlete-record-time">
+          </label>}
           <label>
-            <span>분</span>
-            <input
-              aria-label="기록 분"
-              {...fieldProps("minutes")}
-              inputMode="numeric"
-              placeholder={`예: ${RECORD_MINUTE_EXAMPLES[distanceOption] ?? "2"}`}
-              value={minutes}
-              onChange={(event) => setMinutes(event.target.value)}
-            />
-            {fieldError("minutes")}
+            <span>기록 구분</span>
+            <select aria-label="기록 역할" value={purpose} onChange={(event) => setPurpose(event.target.value as RecordPurpose)}>
+              {PURPOSE_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            </select>
           </label>
-          <label>
-            <span>초</span>
-            <input
-              aria-label="기록 초"
-              {...fieldProps("seconds")}
-              inputMode="decimal"
-              placeholder="예: 08.5"
-              value={seconds}
-              onChange={(event) => setSeconds(event.target.value)}
-            />
-            {fieldError("seconds")}
-          </label>
-        </div>
-        {/^(?:\d+)?$/.test(minutes.trim()) && /^(?:\d+(?:\.\d+)?)?$/.test(seconds.trim())
-          && Number(seconds || "0") < 60 && Number(minutes || "0") * 60 + Number(seconds || "0") > 0 && <output className="athlete-record-preview" aria-label="저장할 기록 미리보기">
-            {distanceOption === "CUSTOM" ? `${customDistance || "입력한 거리"}m` : DISTANCE_OPTIONS.find(([value]) => value === distanceOption)?.[1] ?? "선택한 종목"} · {paceClock(Number(minutes || "0") * 60 + Number(seconds || "0"))}
-            <small>{PURPOSE_OPTIONS.find(([value]) => value === purpose)?.[1]}{purpose === "RACE_GOAL" ? " · 아직 달성하지 않은 목표" : " · 입력한 기록"}</small>
-          </output>}
-        {purpose !== "RACE_GOAL" && (
-          <label>
-            <span>언제 달성했나요? · 모르면 비워 두세요</span>
+          {purpose === "SEASON_BEST" && <label>
+            <span>시즌 이름</span>
+            <input aria-label="시즌 이름" {...fieldProps("season")} value={seasonId}
+              onChange={(event) => setSeasonId(event.target.value)} />
+            {fieldError("season")}
+          </label>}
+          <div className="athlete-record-step-actions athlete-record-step-actions--single">
+            <button className="athlete-record-save" type="submit" disabled={saving || pendingRecord !== null}>시간 입력<ArrowRight aria-hidden="true" size={17} /></button>
+          </div>
+        </div>}
+        {entryStep === "time" && <div className="athlete-record-step">
+          <div className="athlete-record-time">
+            <label>
+              <span>분</span>
+              <input aria-label="기록 분" {...fieldProps("minutes")} inputMode="numeric"
+                placeholder={`예: ${RECORD_MINUTE_EXAMPLES[distanceOption] ?? "2"}`} value={minutes}
+                onChange={(event) => setMinutes(event.target.value)} />
+              {fieldError("minutes")}
+            </label>
+            <label>
+              <span>초</span>
+              <input aria-label="기록 초" {...fieldProps("seconds")} inputMode="decimal" placeholder="예: 08.5" value={seconds}
+                onChange={(event) => setSeconds(event.target.value)} />
+              {fieldError("seconds")}
+            </label>
+          </div>
+          {/^(?:\d+)?$/.test(minutes.trim()) && /^(?:\d+(?:\.\d+)?)?$/.test(seconds.trim())
+            && Number(seconds || "0") < 60 && currentTimeSeconds > 0 && <output className="athlete-record-preview" aria-label="저장할 기록 미리보기">
+              {currentDistanceLabel} · {paceClock(currentTimeSeconds)}
+              <small>{currentPurposeLabel}{purpose === "RACE_GOAL" ? " · 아직 달성하지 않은 목표" : " · 입력한 기록"}</small>
+            </output>}
+          {error !== null && errorField === null && <p className="athlete-record-error" role="alert">{error}</p>}
+          <div className="athlete-record-step-actions">
+            <button className="athlete-record-step-back" type="button" onClick={() => { setError(null); setErrorField(null); setEntryStep("event") }}><ArrowLeft aria-hidden="true" size={17} />이전</button>
+            <button className="athlete-record-save" type="submit" disabled={saving || pendingRecord !== null}>
+              {purpose === "RACE_GOAL" ? "목표 확인" : "날짜 확인"}<ArrowRight aria-hidden="true" size={17} />
+            </button>
+          </div>
+        </div>}
+        {entryStep === "date" && <div className="athlete-record-step">
+          {purpose !== "RACE_GOAL" ? <label>
+            <span>달성일 (선택) · 모르면 비워 두세요</span>
             <span className="athlete-record-date">
-            <input
-              aria-label="달성일"
-              {...fieldProps("date")}
-              inputMode="numeric"
-              placeholder="YYYY-MM-DD"
-              value={achievedOn}
-              onChange={(event) => setAchievedOn(event.target.value)}
-            />
-            <button type="button" aria-label="달력으로 날짜 선택" aria-expanded={calendarOpen} onClick={() => setCalendarOpen(value => !value)}><CalendarDays size={18} aria-hidden="true" /></button>
+              <input aria-label="달성일" {...fieldProps("date")} inputMode="numeric" placeholder="YYYY-MM-DD" value={achievedOn}
+                onChange={(event) => setAchievedOn(event.target.value)} />
+              <button type="button" aria-label="달력으로 날짜 선택" aria-expanded={calendarOpen}
+                onClick={() => setCalendarOpen(value => !value)}><CalendarDays size={18} aria-hidden="true" /></button>
             </span>
             {calendarOpen && <input type="date" aria-label="달성일 달력" value={/^\d{4}-\d{2}-\d{2}$/.test(achievedOn) ? achievedOn : ""}
               onChange={event => { setAchievedOn(event.target.value); setCalendarOpen(false) }} />}
             {fieldError("date")}
-          </label>
-        )}
-        {purpose === "SEASON_BEST" && (
-          <label>
-            <span>시즌 이름</span>
-            <input
-              aria-label="시즌 이름"
-              {...fieldProps("season")}
-              value={seasonId}
-              onChange={(event) => setSeasonId(event.target.value)}
-            />
-            {fieldError("season")}
-          </label>
-        )}
-        <InfoDisclosure className="athlete-record-help" title="기록은 어떻게 사용하나요?">
-          <p>선수 직접 입력 · 아직 별도 검증되지 않음</p>
-          <p>개인 최고는 입력한 기록 기준이에요. 목표 기록과 실제 경기 기록은 따로 보관해요.</p>
-          <p>날짜가 없으면 최근 12개월 최고 계산에는 넣지 않아요. 과거 계획의 목표 초는 바뀌지 않아요.</p>
-        </InfoDisclosure>
-        {error !== null && errorField === null && <p className="athlete-record-error" role="alert">{error}</p>}
-        <button className="athlete-record-save" type="submit" disabled={saving || pendingRecord !== null}>
-          <Save aria-hidden="true" size={17} />
-          기록 저장
-        </button>
+          </label> : <p className="athlete-record-goal-note">목표 기록에는 달성일을 저장하지 않아요. 현재 경기력 기록과 구분해 보관해요.</p>}
+          <output className="athlete-record-preview" aria-label="저장할 기록 미리보기">
+            {currentDistanceLabel} · {paceClock(currentTimeSeconds)}
+            <small>{currentPurposeLabel}{purpose === "RACE_GOAL" ? " · 아직 달성하지 않은 목표" : ` · ${achievedOn || "달성일 미입력"}`}</small>
+          </output>
+          <InfoDisclosure className="athlete-record-help" title="기록은 어떻게 사용하나요?">
+            <p>선수 직접 입력 · 아직 별도 검증되지 않음</p>
+            <p>개인 최고는 입력한 기록 기준이에요. 목표 기록과 실제 경기 기록은 따로 보관해요.</p>
+            <p>날짜가 없으면 최근 12개월 최고 계산에는 넣지 않아요. 과거 계획의 목표 초는 바뀌지 않아요.</p>
+          </InfoDisclosure>
+          {error !== null && errorField === null && <p className="athlete-record-error" role="alert">{error}</p>}
+          <div className="athlete-record-step-actions">
+            <button className="athlete-record-step-back" type="button" onClick={() => { setError(null); setErrorField(null); setEntryStep("time") }}><ArrowLeft aria-hidden="true" size={17} />이전</button>
+            <button className="athlete-record-save" type="submit" disabled={saving || pendingRecord !== null}><Save aria-hidden="true" size={17} />기록 저장</button>
+          </div>
+        </div>}
         </fieldset>
       </form>
 

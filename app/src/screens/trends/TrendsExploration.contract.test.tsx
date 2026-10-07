@@ -89,18 +89,19 @@ afterEach(() => {
 })
 
 describe("Trends exploration hub", () => {
-  it("offers all six Oracle topics from the empty summary", async () => {
+  it("offers all six Oracle examples in the reading tab", async () => {
     const user = userEvent.setup()
-    const onOpenOracle = vi.fn<(topic: OracleTopicId) => void>()
+    const onOpenOracle = vi.fn<(topic: OracleTopicId, mode?: "example" | "personal") => void>()
     render(<Trends onOpenOracle={onOpenOracle} />)
 
     expect(screen.getByRole("heading", { name: "오라클", level: 1 })).toBeVisible()
     expect(screen.getByRole("group", { name: "오라클 항목" })).toBeVisible()
-    expect(screen.getAllByRole("button", { name: /^(내 훈련|러닝 취향|읽을거리)$/u })).toHaveLength(3)
-    expect(screen.getByText("확인된 기록만 분석해요. 개인 메모는 읽지 않아요.")).toBeInTheDocument()
+    expect(screen.getAllByRole("button", { name: /^(내 훈련|러닝 취향|읽을거리·관심)$/u })).toHaveLength(3)
+    expect(screen.getByText("예시 · 내 기록 분석이 아니에요")).toBeVisible()
 
-    for (const button of screen.getAllByRole("button", { name: /결과 보기/u })) expect(button).not.toBeVisible()
-    await user.click(screen.getByText("오라클 예시 보기"))
+    expect(screen.queryAllByRole("button", { name: /결과 보기/u })).toHaveLength(0)
+    await user.click(screen.getByRole("button", { name: "읽을거리·관심" }))
+    expect(screen.getByText("내 관심 주제·기록할 요일")).toBeVisible()
     const topicButtons = screen.getAllByRole("button", { name: /결과 보기/u })
     expect(topicButtons).toHaveLength(ORACLE_TOPICS.length)
 
@@ -112,13 +113,14 @@ describe("Trends exploration hub", () => {
 
     expect(onOpenOracle).toHaveBeenCalledTimes(ORACLE_TOPICS.length)
     expect(onOpenOracle.mock.calls.map(([topic]) => topic)).toEqual(ORACLE_TOPICS.map(topic => topic.id))
+    expect(onOpenOracle.mock.calls.every(call => call[1] === "example")).toBe(true)
   })
 
   it("mounts only the selected analysis panel", async () => {
     const user = userEvent.setup()
     render(<Trends />)
 
-    expect(screen.getByRole("heading", { name: "분석할 기록이 아직 없어요" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "첫 운동부터 남겨볼까요?" })).toBeVisible()
     expect(screen.getByText("훈련량·구성·변화 보기")).toBeVisible()
 
     await chooseDetail(user, "훈련량")
@@ -151,15 +153,13 @@ describe("Trends exploration hub", () => {
     render(<Trends oracleV2Enabled onOpenRunningProfile={onOpenRunningProfile} onOpenOracleLibrary={onOpenOracleLibrary} onOracleSectionChange={onOracleSectionChange} />)
 
     await user.click(screen.getByRole("button", { name: "러닝 취향" }))
-    expect(screen.getByRole("heading", { name: "내가 좋아하는 달리기" })).toBeVisible()
-    await user.click(screen.getByRole("button", { name: "러닝 취향 보기" }))
     expect(onOpenRunningProfile).toHaveBeenCalledOnce()
+    expect(screen.queryByRole("button", { name: "러닝 취향 보기" })).toBeNull()
 
-    await user.click(screen.getByRole("button", { name: "읽을거리" }))
-    expect(screen.getByText("읽을거리 56편 · 8개 주제 묶음")).toBeVisible()
-    await user.click(screen.getByRole("button", { name: "오라클 읽을거리" }))
+    await user.click(screen.getByRole("button", { name: "읽을거리·관심" }))
     expect(onOpenOracleLibrary).toHaveBeenCalledOnce()
-    expect(onOracleSectionChange.mock.calls.map(([section]) => section)).toEqual(["profile", "library"])
+    expect(onOracleSectionChange).not.toHaveBeenCalled()
+    expect(screen.getByRole("button", { name: "내 훈련" })).toHaveAttribute("aria-pressed", "true")
   })
 
   it("keeps the V1 reading section useful without claiming the V2 library is available", async () => {
@@ -167,23 +167,21 @@ describe("Trends exploration hub", () => {
     const onOpenTrainingContent = vi.fn()
     render(<Trends onOpenTrainingContent={onOpenTrainingContent} />)
 
-    await user.click(screen.getByRole("button", { name: "읽을거리" }))
-    expect(screen.getByRole("heading", { name: "달리기 원리와 용어를 살펴봐요" })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "읽을거리·관심" }))
     expect(screen.queryByText("읽을거리 56편 · 8개 주제 묶음")).not.toBeInTheDocument()
-    await user.click(screen.getByRole("button", { name: "훈련법 읽기" }))
     expect(onOpenTrainingContent).toHaveBeenCalledOnce()
   })
 
-  it("shows plan-preference questions only when the V2 gate is enabled", async () => {
+  it("uses only the enabled library destination without a second introduction", async () => {
     const user = userEvent.setup()
-    const { rerender } = render(<Trends />)
-
-    await user.click(screen.getByRole("button", { name: "러닝 취향" }))
-    expect(screen.getByText("내 러닝 프로필을 살펴봐요.")).toBeVisible()
-    expect(screen.queryByText("질문 3개로 시작해요.")).not.toBeInTheDocument()
-
-    rerender(<Trends oracleV2Enabled />)
-    expect(screen.getByText("질문 3개로 시작해요.")).toBeVisible()
+    const legacy = vi.fn(), v2 = vi.fn()
+    const { rerender } = render(<Trends onOpenTrainingContent={legacy} onOpenOracleLibrary={v2} />)
+    await user.click(screen.getByRole("button", { name: "읽을거리·관심" }))
+    expect(legacy).toHaveBeenCalledOnce()
+    expect(v2).not.toHaveBeenCalled()
+    rerender(<Trends oracleV2Enabled onOpenTrainingContent={legacy} onOpenOracleLibrary={v2} />)
+    await user.click(screen.getByRole("button", { name: "읽을거리·관심" }))
+    expect(v2).toHaveBeenCalledOnce()
   })
 
   it("restores a selected Oracle section and preserves receipt context when choosing a chart", async () => {
@@ -228,7 +226,7 @@ describe("Trends exploration hub", () => {
 
     expect(screen.getByText(/파일 기록 1건 · 확인 전 분석에서 제외/u)).toBeVisible()
     expect(screen.getByTestId("trends-analysis-exclusion")).toBeVisible()
-    expect(screen.getByText("가져온 기록 1개 · 출처 확인이 필요한 기록 1개 · 분석에서 제외된 항목 안내")).toBeVisible()
+    expect(screen.getByText("가져온 기록 1개 · 출처 미확인 1개 · 분석 제외 안내")).toBeVisible()
 
     await chooseDetail(user, "파일 분석")
     expect(screen.getByTestId("file-analysis-panel")).toBeVisible()

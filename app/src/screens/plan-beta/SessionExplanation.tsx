@@ -9,7 +9,7 @@ import { explainSession, explanationProfile, type SessionExplanationContext } fr
 import type { SessionExplanationEvidence } from "../../domain/session-explanation-evidence"
 import { COMPARISON_LABELS } from "./PlanCycleEvidence"
 import { DetailedPrescriptionView } from "./DetailedPrescriptionView"
-import { prescriptionLabel, sessionLabel, sessionExecution, sessionExecutionSteps } from "./labels"
+import { prescriptionLabel, sessionLabel, sessionExecution, sessionExecutionSteps, sessionGuidance } from "./labels"
 import { sessionPrescriptionSequence } from "../../domain/session-prescription-sequence"
 import { PrescriptionStructure } from "./PrescriptionStructure"
 import { PlanMethodObservationDetails } from "./PlanMethodObservationDetails"
@@ -169,6 +169,7 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
         </div>
         <div className="session-explanation__tab-content" hidden={tab !== "이유·근거"}>
             <p className="session-explanation__note">오라클 · 훈련의 이유와 근거</p>
+            <p>{sessionGuidance(session)}</p>
             {catalogWorkout ? <><CatalogWorkoutDetail workout={catalogWorkout} evidence /><section><h3>이번 주기에서 맡는 역할</h3>{explanation.cycle.map(line => <p key={line}>{line}</p>)}</section></> : <>
             <p className="session-explanation__notice">{explanation.availability}</p>
             <section><h3>훈련 목적</h3><p>{explanation.profile.purpose}</p></section>

@@ -132,17 +132,18 @@ export function OracleReturnPanel({ currentFingerprints = {}, onOpenTopic, compa
     {!compact && <>
       <details className="oracle-return-panel__participation">
         <summary>
-          <span><strong>기록할 요일</strong><small>일지를 남긴 날과 쉬는 날을 구분해 보관</small></span>
-          <span className="oracle-return-panel__counts"><strong>{summary.streak}</strong> 연속 · <strong>{summary.cumulative}</strong> 누적</span>
+          <span><strong>기록할 요일 · 선택 사항</strong></span>
         </summary>
         <div className="oracle-return-panel__participation-body" aria-labelledby="oracle-participation-heading">
           <h3 id="oracle-participation-heading" className="oracle-return-panel__sr-only">기록할 요일</h3>
+          <p className="oracle-return-panel__muted">관심 주제 저장과 별개예요. 요일을 고르지 않아도 저장한 글을 다시 볼 수 있어요.</p>
           {!state.optedIn
             ? <>
               <p className="oracle-return-panel__muted">선택한 참여 설정을 이 기기에만 보관합니다. 운동량·보상·알림은 바꾸지 않습니다.</p>
               <button type="button" className="oracle-return-panel__save-days" onClick={enableParticipation}>참여 기록 켜기</button>
             </>
             : <>
+              <p className="oracle-return-panel__counts"><strong>{summary.streak}</strong> 연속 · <strong>{summary.cumulative}</strong> 누적</p>
               <p className="oracle-return-panel__muted">일지를 남긴 날을 세고, 쉬는 날도 별도로 기록할 수 있어요. 추가 운동은 요구하지 않습니다.</p>
               <div className="oracle-return-panel__weekdays" aria-label="참여 요일 선택">
                 {WEEKDAY_LABELS.map((label, day) => <button
@@ -158,9 +159,9 @@ export function OracleReturnPanel({ currentFingerprints = {}, onOpenTopic, compa
                 <Check size={15} aria-hidden="true" />{PARTICIPATION_LABELS["rest-recorded"]}
               </button>
             </>}
+          <p className="oracle-return-panel__note"><RotateCcw size={14} aria-hidden="true" /> 쉬는 날도 누적 기록을 지우지 않고 보존합니다.</p>
         </div>
       </details>
-      <p className="oracle-return-panel__note"><RotateCcw size={14} aria-hidden="true" /> 쉬는 날도 누적 기록을 지우지 않고 보존합니다.</p>
     </>}
     {message && <p className="oracle-return-panel__message" role="status">{message}</p>}
   </section>

@@ -27,6 +27,7 @@ type TrainingHomeProps = {
   readonly onOpenNextTraining?: () => void
   readonly safetyNotice?: ReactNode
   readonly oraclePreview?: ReactNode
+  readonly oraclePreviewLabel?: string
   readonly recordStart?: ReactNode
   readonly accountEntry?: ReactNode
   readonly todayContext?: ReactNode
@@ -37,7 +38,7 @@ type TrainingHomeProps = {
 export function TrainingHome({
   model, onWriteLog, onOpenArchive, onOpenToday, onOpenGuide, onOpenPlan, onOpenTrends,
   onOpenOracle, onOpenMore, onOpenContent, onOpenRewards, onOpenNextTraining,
-  safetyNotice, oraclePreview, recordStart, accountEntry, todayContext, recentJournal, installSuggestion,
+  safetyNotice, oraclePreview, oraclePreviewLabel, recordStart, accountEntry, todayContext, recentJournal, installSuggestion,
 }: TrainingHomeProps) {
   const next = model.nextTraining
   const nextAction = onOpenNextTraining ?? onOpenPlan
@@ -60,13 +61,13 @@ export function TrainingHome({
         <h1 id="home-hub-title">{model.homeMode === "WELCOME" ? "오늘 운동을 기록해요" : model.homeMode === "TRAINING" ? "오늘의 훈련" : "내 기록"}</h1>
       </section>
 
-      {model.homeMode === "WELCOME" ? <WelcomeToday model={model} onWriteLog={onWriteLog} onOpenPlan={onOpenPlan} onOpenGuide={onOpenGuide} /> : <>
+      {model.homeMode === "WELCOME" ? <WelcomeToday model={model} onWriteLog={onWriteLog} onOpenPlan={onOpenPlan} /> : <>
         {next !== null && <NextTrainingCard next={next} onOpen={nextAction} />}
         <TodaySection model={model} onWriteLog={onWriteLog} onOpenToday={onOpenToday} todayContext={todayContext} />
       </>}
 
-      {recordStart}
-      {oraclePreview ? <InfoDisclosure purpose="actions" preview="기록 비교 · 훈련 구성 · 다음 훈련" title={model.homeMode === "WELCOME" ? "오라클 결과 예시 보기" : "내 오라클 살펴보기"}>{oraclePreview}</InfoDisclosure>
+      {recordStart && <InfoDisclosure purpose="actions" title="운동 파일·최고기록 가져오기">{recordStart}</InfoDisclosure>}
+      {oraclePreview ? <InfoDisclosure purpose="actions" title={oraclePreviewLabel ?? (model.homeMode === "WELCOME" ? "오라클 결과 예시 보기" : "내 오라클 살펴보기")}>{oraclePreview}</InfoDisclosure>
         : onOpenOracle && <button className="home-hub__text-action" type="button" onClick={() => onOpenOracle("level")}>오라클 결과 보기<ChevronRight aria-hidden="true" size={17} /></button>}
 
       {model.homeMode !== "WELCOME" && <section className="home-hub__summary">
@@ -79,27 +80,29 @@ export function TrainingHome({
       </section>}
 
       {model.homeMode !== "WELCOME" && onOpenTrends && <section className="home-hub__summary" aria-label="훈련 기록 분석">
-        <SummaryRow label="훈련 기록 살펴보기" detail={model.analysisSummary} onClick={onOpenTrends} />
+        <SummaryRow label="훈련량·변화 보기" detail={model.analysisSummary} onClick={onOpenTrends} />
       </section>}
 
       {installSuggestion}
 
+      {(onOpenGuide || onOpenContent || onOpenRewards) && <InfoDisclosure purpose="actions" title="일지 예시·훈련법·꾸미기">
       <nav className="home-hub__explore" aria-label="훈련 도움말과 일지 꾸미기">
+        {onOpenGuide && <button type="button" onClick={onOpenGuide}><BookOpen aria-hidden="true" size={18} /><span>일지 예시 보기</span></button>}
         {onOpenContent && <button type="button" onClick={onOpenContent}><BookOpen aria-hidden="true" size={18} /><span>훈련법 읽기</span></button>}
         {onOpenRewards && <button type="button" onClick={onOpenRewards}><NotebookPen aria-hidden="true" size={18} /><span>일지 꾸미기</span></button>}
       </nav>
+      </InfoDisclosure>}
     </div>
   )
 }
 
-function WelcomeToday({ model, onWriteLog, onOpenPlan, onOpenGuide }: { model: TrainingHomeViewModel; onWriteLog?: (entryType?: LogEntryType) => void; onOpenPlan?: () => void; onOpenGuide?: () => void }) {
+function WelcomeToday({ model, onWriteLog, onOpenPlan }: { model: TrainingHomeViewModel; onWriteLog?: (entryType?: LogEntryType) => void; onOpenPlan?: () => void }) {
   return <section className="home-hub__today home-hub__today--welcome" aria-labelledby="home-hub-today">
     <div id="home-hub-today" className="home-hub__section-label">오늘</div>
     <p>{model.todayMessage}</p>
     <nav aria-label="오늘 기록 또는 계획 만들기">
     <button className="home-hub__primary" type="button" onClick={() => onWriteLog?.("quick-session")}><PencilLine aria-hidden="true" size={19} /><span>오늘 기록 남기기</span><ChevronRight aria-hidden="true" size={18} /></button>
     <button className="home-hub__text-action" type="button" onClick={onOpenPlan}>훈련 계획 만들기<ChevronRight aria-hidden="true" size={17} /></button>
-    {onOpenGuide && <button className="home-hub__text-action" type="button" onClick={onOpenGuide}>일지 예시 보기<ChevronRight aria-hidden="true" size={17} /></button>}
     </nav>
   </section>
 }

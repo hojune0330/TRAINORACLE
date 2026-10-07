@@ -93,7 +93,7 @@ describe("provenance-safe Trends surface", () => {
     expect(within(distance).getByLabelText(/이번 주, 8킬로미터, 기록 1건/u)).toBeVisible()
     expect(within(distance).getByLabelText(/이번 달, 8킬로미터, 기록 1건/u)).toBeVisible()
     expect(within(distance).getAllByText(/집계 기준에 맞지 않아 제외한 기록 2건/u)).toHaveLength(2)
-    fireEvent.click(screen.getByText(/분석에서 제외된 항목 안내/u))
+    fireEvent.click(screen.getByText(/분석 제외 안내/u))
     expect(screen.getByTestId("trends-excluded-imported")).toBeVisible()
     expect(screen.getByTestId("trends-excluded-imported")).toHaveTextContent("가져온 일지 1개")
     expect(screen.getByTestId("trends-excluded-no-provenance")).toBeVisible()

@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { loadAnalysisEntries, loadEntries } from "../../domain/journal-store"
 import { QuickSessionForm } from "./QuickSessionForm"
 import { createPlannedSessionLogDraft } from "../../domain/planned-session-link"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
 import { collectPlanJournalEvidence } from "../../domain/plan-journal-evidence"
 import { runDraftSafeNavigation } from "../../domain/unsaved-draft-navigation"
+import { savePlanBetaState, loadVersionedPlanBetaState } from "../../domain/plan-beta-store"
 
 function finishPerformedSession(rpe = 6): void {
   fireEvent.click(screen.getByRole("button", { name: "운동을 마쳤어요" }))
@@ -16,6 +17,101 @@ function finishPerformedSession(rpe = 6): void {
 }
 
 describe("quick session journal contract", () => {
+  it.each([false, true])("marks the plan only with pre-save opt-in (%s), preserving missing actual quantities", async optedIn => {
+    const state = stateFixture()
+    expect(savePlanBetaState(state).ok).toBe(true)
+    const link = createPlannedSessionLogDraft(state, state.activePlan.sessions[0]!, new Date().toISOString())!
+    const locks = Object.getOwnPropertyDescriptor(navigator, "locks")
+    Object.defineProperty(navigator, "locks", { configurable: true, value: {
+      request: async (_name: string, _options: unknown, callback: (lock: object) => unknown) => callback({}),
+    } })
+    try {
+      render(<QuickSessionForm plannedSessionLink={link.link} targetDate={link.date} />)
+      fireEvent.click(screen.getByRole("button", { name: "계획대로 마쳤어요" }))
+      fireEvent.click(screen.getByRole("button", { name: "오전" }))
+      fireEvent.click(screen.getByRole("button", { name: /^힘든 정도 6\/10,/ }))
+      fireEvent.click(screen.getByRole("button", { name: "없어요" }))
+      const confirm = screen.getByRole("checkbox", { name: "계획에도 완료 표시 남기기" })
+      expect(confirm).not.toBeChecked()
+      if (optedIn) fireEvent.click(confirm)
+      fireEvent.click(screen.getByRole("button", { name: optedIn ? "저장하고 계획에 완료 표시" : "이대로 저장" }))
+      await waitFor(() => expect(screen.getByRole("button", { name: "완료" })).toBeVisible())
+      expect(loadEntries()).toHaveLength(1)
+      expect(loadEntries()[0]).toMatchObject({ distanceKm: "", durationMin: "", avgPace: "", rpe: 6 })
+      expect(loadVersionedPlanBetaState()?.progress).toEqual(optedIn ? [{ sessionDay: 1, sessionSlot: "AM", state: "COMPLETED" }] : [])
+      expect(screen.getByText("내용 추가·수정").closest("details")).not.toHaveAttribute("open")
+    } finally {
+      if (locks) Object.defineProperty(navigator, "locks", locks)
+      else Reflect.deleteProperty(navigator, "locks")
+    }
+  })
+
+  it("withdraws pre-save plan consent when the reported result changes", () => {
+    const state = stateFixture()
+    savePlanBetaState(state)
+    const link = createPlannedSessionLogDraft(state, state.activePlan.sessions[0]!, new Date().toISOString())!
+    render(<QuickSessionForm plannedSessionLink={link.link} targetDate={link.date} />)
+    fireEvent.click(screen.getByRole("button", { name: "계획 대신 쉬었어요" }))
+    fireEvent.click(screen.getByRole("checkbox", { name: "계획에도 휴식 표시 남기기" }))
+    fireEvent.click(screen.getByRole("button", { name: /휴식으로 변경/ }))
+    fireEvent.click(screen.getByRole("button", { name: "계획한 훈련을 건너뛰었어요" }))
+    expect(screen.getByRole("checkbox", { name: "계획에도 건너뜀 표시 남기기" })).not.toBeChecked()
+    expect(loadEntries()).toEqual([])
+    expect(loadVersionedPlanBetaState()?.progress).toEqual([])
+  })
+
+  it("keeps the successful journal when the opted-in plan write fails", async () => {
+    const state = stateFixture()
+    savePlanBetaState(state)
+    const link = createPlannedSessionLogDraft(state, state.activePlan.sessions[0]!, new Date().toISOString())!
+    const locks = Object.getOwnPropertyDescriptor(navigator, "locks")
+    Object.defineProperty(navigator, "locks", { configurable: true, value: {
+      request: async (_name: string, _options: unknown, callback: (lock: object) => unknown) => callback({}),
+    } })
+    const original = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, key, value) {
+      if (key === "trainoracle.plan-beta.v1") throw new DOMException("quota", "QuotaExceededError")
+      original.call(this, key, value)
+    })
+    try {
+      render(<QuickSessionForm plannedSessionLink={link.link} targetDate={link.date} />)
+      fireEvent.click(screen.getByRole("button", { name: "계획 대신 쉬었어요" }))
+      fireEvent.click(screen.getByRole("checkbox", { name: "계획에도 휴식 표시 남기기" }))
+      fireEvent.click(screen.getByRole("button", { name: "저장하고 계획에 휴식 표시" }))
+      await waitFor(() => expect(screen.getByText(/일지는 저장돼 있어요/)).toBeVisible())
+      expect(screen.getByRole("button", { name: "이 결과를 계획에도 반영" })).toBeVisible()
+      expect(loadEntries()).toHaveLength(1)
+      expect(loadEntries()[0]).toMatchObject({ activityOutcome: "RESTED", rpe: 0 })
+      expect(loadVersionedPlanBetaState()?.progress).toEqual([])
+    } finally {
+      if (locks) Object.defineProperty(navigator, "locks", locks)
+      else Reflect.deleteProperty(navigator, "locks")
+    }
+  })
+
+  it("shows one active question and keeps answers editable when moving back", () => {
+    const onBack = vi.fn()
+    render(<QuickSessionForm onBack={onBack} />)
+    fireEvent.click(screen.getByRole("button", { name: "운동을 마쳤어요" }))
+    expect(screen.getByRole("heading", { name: "언제 했나요?" })).toBeVisible()
+    expect(screen.queryByRole("button", { name: "운동을 마쳤어요" })).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "오후" }))
+    fireEvent.click(screen.getByRole("button", { name: /^힘든 정도 7\/10,/ }))
+    expect(screen.getByRole("heading", { name: "운동 후 불편하거나 아픈 곳이 있나요?" })).toBeVisible()
+    expect(screen.queryByRole("group", { name: "힘든 정도 1부터 10까지" })).toBeNull()
+    expect(screen.getByText("운동 완료 · 오후 · 힘든 정도 7/10")).toBeVisible()
+    fireEvent.click(screen.getByRole("button", { name: "← 뒤로" }))
+    expect(screen.getByRole("button", { name: /^힘든 정도 7\/10,/ })).toHaveAttribute("aria-pressed", "true")
+    fireEvent.click(screen.getByRole("button", { name: "← 뒤로" }))
+    expect(screen.getByRole("button", { name: "오후" })).toHaveAttribute("aria-pressed", "true")
+    expect(onBack).not.toHaveBeenCalled()
+    expect(loadEntries()).toEqual([])
+    fireEvent.click(screen.getByRole("button", { name: "오전" }))
+    fireEvent.click(screen.getByRole("button", { name: "모르겠어요 · 비워 둘게요" }))
+    fireEvent.click(screen.getByRole("button", { name: "없어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
+    expect(loadEntries()[0]).toMatchObject({ activitySlot: "AM", rpe: 0, painCheckStatus: "NO_SIGNAL_REPORTED", fieldProvenance: { rpe: { provenance: "MISSING" } } })
+  })
   it("accepts a note and two exercises first without saving or bypassing the activity and body check", () => {
     render(<QuickSessionForm />)
     const click = (name: string) => fireEvent.click(screen.getByRole("button", { name }))
@@ -58,6 +154,7 @@ describe("quick session journal contract", () => {
     expect(entry).toMatchObject({ activityOutcome: "PARTIAL", planExecutionChange: "FEWER_REPETITIONS",
       distanceKm: "", durationMin: "", fieldProvenance: { planExecutionChange: { provenance: "EXPLICIT" } } })
     expect(screen.queryByRole("button", { name: "이 결과를 계획에도 반영" })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByText("내용 추가·수정"))
     fireEvent.click(screen.getByRole("button", { name: "방금 기록 수정" }))
     fireEvent.click(screen.getByRole("button", { name: "계획 대신 쉬었어요" }))
     fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
@@ -216,6 +313,7 @@ describe("quick session journal contract", () => {
     render(<QuickSessionForm onContinueDetailed={onContinueDetailed} />)
 
     finishPerformedSession(4)
+    fireEvent.click(screen.getByText("내용 추가·수정"))
     fireEvent.click(screen.getByRole("button", { name: "일지 더 쓰기" }))
 
     const [entry] = loadEntries()
@@ -228,6 +326,7 @@ describe("quick session journal contract", () => {
     finishPerformedSession(6)
     const original = loadEntries()[0]
 
+    fireEvent.click(screen.getByText("내용 추가·수정"))
     fireEvent.click(screen.getByRole("button", { name: "방금 기록 수정" }))
     fireEvent.click(screen.getByRole("button", { name: "하던 운동을 일부만 했어요" }))
     fireEvent.click(screen.getByRole("button", { name: "오전" }))
@@ -248,6 +347,7 @@ describe("quick session journal contract", () => {
     render(<QuickSessionForm />)
     finishPerformedSession(6)
 
+    fireEvent.click(screen.getByText("내용 추가·수정"))
     fireEvent.click(screen.getByRole("button", { name: "방금 기록 수정" }))
     fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
   fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
