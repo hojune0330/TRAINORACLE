@@ -2,10 +2,12 @@ import { useEffect, useId, useState } from "react"
 import { Check, ChevronDown, SlidersHorizontal } from "lucide-react"
 import type { PlanGenerationSuccess } from "@impl/plan-generator/types"
 import { TermHelp } from "../../components/TermHelp"
-import { candidatePurposeStatus } from "./candidate-purpose-status"
+import { EasyTrainingTimes } from "./EasyTrainingTimes"
+import { PlanPrescriptionBasis } from "./PlanPrescriptionBasis"
 import {
   candidateLabel,
-  candidateSessionSummary,
+  candidateDurationSummary,
+  candidateSharedSessionSummary,
   ENERGY_INTENT_LABELS,
   EVENT_LABELS,
 } from "./labels"
@@ -46,20 +48,19 @@ export function CandidateSection({
   useEffect(() => { setPendingTarget(null) }, [candidate, startDate, detailedTarget])
   const hasCatalog = candidate.sessions.some(s => s.prescription.kind === "RPE_TIME_RANGE" && s.prescription.catalogWorkout)
   const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent, hasCatalog)
-  const purposeStatus = candidatePurposeStatus(candidate.kind, hasCatalog)
   const optionLetter = candidate.kind === "BALANCED" ? "A" : "B"
   const frameLengthDays = candidate.frame.projectionLengthDays ?? candidate.frame.lengthDays
-  const hasDetailedPrescription = candidate.sessions.some(
-    (session) => session.prescription.kind === "PACE_TARGET",
-  )
+  const visibleSessions = candidate.sessions.filter(session => session.day >= 1 && session.day <= Math.ceil(frameLengthDays))
   const headingId = `candidate-heading-${localId}`
   const scheduleId = `candidate-schedule-${localId}`
   return (
-    <article className="plan-candidate" aria-labelledby={headingId} data-recommended={recommended ? "true" : undefined}>
+    <article className="plan-candidate" aria-labelledby={headingId}>
       <header>
-        <span>계획안 {optionLetter}{recommended && <em className="plan-choice__badge">추천</em>}</span>
+        <span>일정·운동 시간{recommended && <em className="plan-choice__badge">먼저 보기</em>}</span>
         <h2 id={headingId}>{label.title}</h2>
       </header>
+      <EasyTrainingTimes sessions={visibleSessions} />
+      <p className="plan-duration-total">{candidateDurationSummary(candidate)}</p>
       {isValidIsoDate(startDate) && (
         <>
           <button
@@ -73,8 +74,9 @@ export function CandidateSection({
             일정 {expanded ? "접기" : "펼치기"}
             <ChevronDown aria-hidden="true" size={18} />
           </button>
+          <div id={scheduleId} hidden={!expanded}>
             <PlanSchedulePreview
-              detailsId={scheduleId}
+              detailsId={`${scheduleId}-cards`}
               detailsExpanded={expanded}
               showRpeGuide={false}
               startDate={startDate}
@@ -93,26 +95,25 @@ export function CandidateSection({
                 return <button type="button" className="plan-text-action" onClick={() => setPendingTarget(target)}>이 훈련을 개인 페이스로 받기</button>
               }}
             />
+          </div>
         </>
       )}
       <details className="plan-candidate-explanation">
-        <summary>계획안 {optionLetter} 설명·시간 합계<ChevronDown size={16} aria-hidden="true" /></summary>
+        <summary>계획안 {optionLetter} 세부 정보<ChevronDown size={16} aria-hidden="true" /></summary>
         <p>{label.detail}</p>
-        <p>{purposeStatus.detail}</p>
-        <strong className="plan-candidate-summary">{candidateSessionSummary(candidate)}</strong>
+        <strong className="plan-candidate-summary">{candidateSharedSessionSummary(candidate)}</strong>
         <p>{eventDistanceLabel(candidate.eventDistanceM)} · {EVENT_LABELS[candidate.eventGroup].title} · {frameLengthDays}일</p>
         <div className="plan-session-legend" aria-label="훈련 수치와 의도 설명">
-          <span>RPE<TermHelp term="rpe" /></span>
+          <span>힘든 정도<TermHelp term="rpe" /></span>
           <span>{ENERGY_INTENT_LABELS[candidate.selectedEnergyIntent].title}
             <TermHelp term={ENERGY_INTENT_LABELS[candidate.selectedEnergyIntent].term} /></span>
-          <span>{hasDetailedPrescription ? "개인 페이스 상세 훈련 포함" : "RPE 기준 실행 안내"}
-            <TermHelp term="quality-session" /></span>
         </div>
       </details>
       {onAdjust !== undefined && <button type="button" className="plan-text-action"
         disabled={!canSelect || pendingTarget !== null} onClick={onAdjust}>
         <SlidersHorizontal size={18} aria-hidden="true" />훈련 구성 조정하기
       </button>}
+      <PlanPrescriptionBasis sessions={visibleSessions} />
       <button
         className="plan-select-action"
         type="button"
@@ -120,7 +121,7 @@ export function CandidateSection({
         onClick={onSelect}
       >
         <Check aria-hidden="true" size={18} />
-        {recommended ? "이 계획으로 시작하기" : `${label.title} 선택하기`}
+        {`${label.title}로 시작`}
       </button>
     </article>
   )

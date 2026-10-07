@@ -105,7 +105,7 @@ describe("plan entry supporting navigation", () => {
     await user.click(screen.getByRole("button", { name: /^매일/u }))
     await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
     expect(screen.getByRole("heading", { name: "계획이 준비됐어요" })).toHaveFocus()
-    await user.click(screen.getByRole("button", { name: "일정 바꾸기" }))
+    await user.click(screen.getByRole("button", { name: "일정·운동 시간" }))
     const refine = within(screen.getByRole("region", { name: "일정 조건" }))
     await user.click(refine.getByRole("button", { name: /^달력 길이 바꾸기/u }))
     await user.click(screen.getByRole("button", { name: /7일만 먼저 받기/u }))

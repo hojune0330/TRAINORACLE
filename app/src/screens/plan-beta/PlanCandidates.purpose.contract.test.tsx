@@ -31,7 +31,7 @@ describe("plan candidate purpose contrast", () => {
   it.skip("keeps one candidate schedule expanded and allows both to collapse", async () => {
     render(<PlanBeta />)
 
-    await generateCandidates(/조금 힘들게 꾸준히.*LT/u)
+    await generateCandidates(/지속 페이스 훈련/u)
 
     const user = userEvent.setup()
     const candidateA = screen.getByRole("button", { name: "계획안 A 일정 접기" })
@@ -57,7 +57,7 @@ describe("plan candidate purpose contrast", () => {
     render(<PlanBeta />)
 
     // When: the plan candidates are generated.
-    await generateCandidates(/조금 힘들게 꾸준히.*LT/u)
+    await generateCandidates(/지속 페이스 훈련/u)
 
     // Then: the athlete sees the shared high-intensity work before the only authorized difference.
     const comparison = screen.getByRole("region", { name: "두 계획 핵심 비교" })
@@ -81,7 +81,7 @@ describe("plan candidate purpose contrast", () => {
   it.skip("shows each VO2 candidate's readable total time without repeating shared facts", async () => {
     render(<PlanBeta />)
 
-    await generateCandidates(/숨차게 반복.*VO₂/u)
+    await generateCandidates(/유산소 반복 훈련/u)
 
     const comparison = screen.getByRole("region", { name: "두 계획 핵심 비교" })
     const comparisonSummaries = within(comparison).getAllByText(/표시된 시간 합계/u)

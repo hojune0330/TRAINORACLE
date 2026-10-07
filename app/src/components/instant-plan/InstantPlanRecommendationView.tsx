@@ -30,6 +30,7 @@ export type InstantPlanRecommendationViewProps = {
   readonly onReviewCondition?: () => void
   readonly scheduleReview?: ReactNode
   readonly showSupportingDetails?: boolean
+  readonly beforeStart?: ReactNode
 }
 
 const roleLabels: Record<InstantPlanDaySummary["sessions"][number]["role"], string> = {
@@ -61,6 +62,7 @@ export function InstantPlanRecommendationView({
   onReviewCondition,
   scheduleReview,
   showSupportingDetails = true,
+  beforeStart,
 }: InstantPlanRecommendationViewProps) {
   const headingId = useId()
   const actionStatusId = useId()
@@ -124,6 +126,7 @@ export function InstantPlanRecommendationView({
         <summary>전체 훈련 시간·목표</summary>
         <InstantPlanRecommendationFacts recommendation={recommendation} goalLabel={goalLabel} programPurposeLabel={programPurposeLabel} />
       </details>}
+      {beforeStart}
       <div className="instant-plan__actions instant-plan__start-action">
         <button
           className="instant-plan__button"

@@ -59,15 +59,15 @@ describe("active plan first-view overview", () => {
     render(<ActivePlan state={overviewState()} {...callbacks} />)
 
     expect(screen.getByRole("heading", { level: 1, name: "9일 훈련 계획" })).toBeVisible()
-    expect(screen.getByText("전체 계획 구성").closest("details")).not.toHaveAttribute("open")
-    await userEvent.setup().click(screen.getByText("전체 계획 구성"))
+    expect(screen.getByText("기간·운동 시간").closest("details")).not.toHaveAttribute("open")
+    await userEvent.setup().click(screen.getByText("기간·운동 시간"))
     expect(screen.getByText("8월 27일(목) - 9월 4일(금)")).toBeVisible()
     const buildSummary = screen.getByRole("list", { name: "계획 구성 요약" })
     const summaryItems = within(buildSummary).getAllByRole("listitem")
     expect(summaryItems[0]).toHaveTextContent("5000m")
     expect(summaryItems).toHaveLength(3)
-    expect(summaryItems[1]).toHaveTextContent("조금 힘들게 꾸준히 · LT")
-    expect(summaryItems[2]).toHaveTextContent("하루 2회 포함")
+    expect(summaryItems[1]).toHaveTextContent("지속 페이스 훈련")
+    expect(summaryItems[2]).toHaveTextContent("하루 2회 운동하는 날 1일")
     expect(within(buildSummary).getByRole("button", { name: "지속 페이스 LT 설명 보기" })).toBeVisible()
 
     const flow = screen.getByLabelText("9일 훈련 일정")
@@ -103,6 +103,14 @@ describe("active plan first-view overview", () => {
     expect(screen.getByText("훈련 계획이 완성됐어요")).toBeVisible()
     act(() => vi.advanceTimersByTime(3_000))
     expect(screen.queryByText("훈련 계획이 완성됐어요")).not.toBeInTheDocument()
+  })
+
+  it("does not claim two workouts per day just because the setting allows them", async () => {
+    const state = overviewState()
+    render(<ActivePlan state={{ ...state, activePlan: { ...state.activePlan, sessions: [state.activePlan.sessions[0]!] } }} {...callbacks} />)
+    await userEvent.setup().click(screen.getByText("기간·운동 시간"))
+    expect(screen.getByRole("list", { name: "계획 구성 요약" })).toHaveTextContent("예정된 운동 1회")
+    expect(screen.getByRole("list", { name: "계획 구성 요약" })).not.toHaveTextContent("하루 2회")
   })
 
   it("does not celebrate an already stored plan opened later", () => {

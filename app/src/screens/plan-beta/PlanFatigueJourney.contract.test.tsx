@@ -50,12 +50,15 @@ describe("batch2 purpose-first plan journey", () => {
     const props = candidateProps(), original = JSON.stringify(props.generated)
     render(<PlanCandidates {...props} />)
     const entries = within(screen.getByRole("group", { name: "계획 확인·변경" }))
-    expect(entries.getAllByRole("button").map(button => button.textContent)).toEqual(["일정 바꾸기", "훈련 조절", "추천 근거"])
+    const basis = screen.getByRole("button", { name: /페이스 안내/ })
+    expect(basis).toBeVisible()
+    expect(basis.compareDocumentPosition(screen.getByRole("button", { name: "이 일정으로 시작" })) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    expect(entries.getAllByRole("button").map(button => button.textContent)).toEqual(["일정·운동 시간", "훈련 조절", "추천 근거"])
     for (const label of ["일정·훈련 바꾸기", "기록·시작일·다른 일정 확인", "계획 다듬기", "추천 이유·계획 기준", "추천 이유"]) {
       expect(screen.queryByText(label, { selector: "summary" })).toBeNull()
     }
-    fireEvent.click(entries.getByRole("button", { name: "일정 바꾸기" }))
-    const schedule = within(screen.getByRole("region", { name: "일정 바꾸기" }))
+    fireEvent.click(entries.getByRole("button", { name: "일정·운동 시간" }))
+    const schedule = within(screen.getByRole("region", { name: "일정·운동 시간" }))
     expect(schedule.getByLabelText("계획 시작 날짜")).toBeVisible()
     for (const label of ["운동할 날", "달력 길이", "시간대", "하루 두 번", "대회 날짜"]) {
       expect(schedule.getByRole("button", { name: new RegExp(`^${label} 바꾸기`) })).toBeVisible()
@@ -64,7 +67,7 @@ describe("batch2 purpose-first plan journey", () => {
     expect(props.onStartDateChange).toHaveBeenCalledWith("2026-10-08")
     expect(schedule.getByRole("button", { name: "계획안 A 일정 펼치기" })).toBeVisible()
     fireEvent.click(entries.getByRole("button", { name: "훈련 조절" }))
-    expect(screen.queryByRole("region", { name: "일정 바꾸기" })).toBeNull()
+    expect(screen.queryByRole("region", { name: "일정·운동 시간" })).toBeNull()
     const workout = within(screen.getByRole("region", { name: "훈련 조절" }))
     expect(workout.getByRole("combobox", { name: "바꿀 일정" })).toBeVisible()
     for (const label of ["목표", "경험", "훈련 종류", "참가 부문"]) {
@@ -74,7 +77,7 @@ describe("batch2 purpose-first plan journey", () => {
     expect(props.onRefine).toHaveBeenCalledWith("experience")
     fireEvent.click(entries.getByRole("button", { name: "추천 근거" }))
     expect(screen.getByRole("heading", { name: "전체 훈련 시간·목표" })).toBeVisible()
-    expect(screen.getByRole("heading", { name: "무엇을 기준으로 만든 훈련인가요?" })).toBeVisible()
+    expect(screen.getByRole("button", { name: /페이스 안내/ })).toBeVisible()
     expect(screen.queryByText("무엇을 기준으로 만든 훈련인가요?", { selector: "summary" })).toBeNull()
     expect(JSON.stringify(props.generated)).toBe(original)
     expect(props.onSelect).not.toHaveBeenCalled()

@@ -31,7 +31,7 @@ async function confirmedPersonalPlan() {
 describe("personal plan refinement without a dead end", () => {
   it("keeps the chosen same-event record after changing the calendar but requires a fresh confirmation", async () => {
     const user = await confirmedPersonalPlan()
-    await user.click(screen.getByRole("button", { name: "일정 바꾸기" }))
+    await user.click(screen.getByRole("button", { name: "일정·운동 시간" }))
     const schedule = within(screen.getByRole("region", { name: "일정 조건" }))
     await user.click(schedule.getByRole("button", { name: /^달력 길이 바꾸기/u }))
     await user.click(screen.getByRole("button", { name: /^7일만 먼저 받기/u }))

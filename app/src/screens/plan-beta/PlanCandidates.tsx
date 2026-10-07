@@ -19,7 +19,7 @@ import {
   candidateSharedSessionSummary,
   ENERGY_INTENT_LABELS,
 } from "./labels"
-import { candidatePurposeStatus } from "./candidate-purpose-status"
+import { EasyTrainingTimes } from "./EasyTrainingTimes"
 import { DIVISION_LABELS } from "./plan-intake-meta"
 import { CandidateSection } from "./CandidateSection"
 import type { CandidateSelection } from "./plan-selection"
@@ -58,7 +58,7 @@ export type InitialMainCandidateReview = Omit<InitialMainConditionsProps, "disab
 }
 
 const PURPOSE_ENTRIES = [
-  { id: "schedule", label: "일정 바꾸기", icon: CalendarDays },
+  { id: "schedule", label: "일정·운동 시간", icon: CalendarDays },
   { id: "workout", label: "훈련 조절", icon: SlidersHorizontal },
   { id: "basis", label: "추천 근거", icon: BookOpen },
 ] as const
@@ -225,7 +225,10 @@ export function PlanCandidates({
   const selectedEventLabel = selectedRecord === undefined
     ? "선택한 종목"
     : `${selectedRecord.eventDistanceM}m`
-  const recommendation = projectInstantRecommendation(defaultInstantCandidate(generated), startDate)
+  const defaultCandidate = defaultInstantCandidate(generated)
+  const visibleDefaultSessions = defaultCandidate.sessions.filter(session => session.day >= 1
+    && session.day <= Math.ceil(defaultCandidate.frame.projectionLengthDays ?? defaultCandidate.frame.lengthDays))
+  const recommendation = projectInstantRecommendation(defaultCandidate, startDate)
   const instantAdjustment = recommendation === null ? undefined : adjustmentActions[recommendation.id]
   const conditionContext = JSON.stringify([intake, startDate, accountScope])
   const conditionReview = React.useMemo(() => !initialMainActive && onCatalogChange && instantAdjustment === undefined && reviewedConditionContext !== conditionContext && unreviewedConditions.length === 0
@@ -268,6 +271,11 @@ export function PlanCandidates({
       )}
       {recommendation && <InstantPlanRecommendationView recommendation={recommendation}
         showSupportingDetails={false}
+        beforeStart={<>
+          <p className="plan-duration-total">{recommendation.durationLabel}</p>
+          <PlanPrescriptionBasis sessions={visibleDefaultSessions}
+            confirmationPending={recordConfirmationPending || detailedEvidencePending} />
+        </>}
         recoveryRef={recoveryRef}
         blockedAction={!selectionUnavailable && !saveError && !initialApplying && !catalogDraftPending && !initialMainPending
           && !methodDraftPending && !targetDraftPending && hasValidStartDate && unreviewedConditions.length === 0
@@ -281,7 +289,7 @@ export function PlanCandidates({
           : catalogDraftPending || initialMainPending ? { kind: "BLOCKED", message: "바꾼 훈련을 적용하거나 취소해 주세요." }
           : unreviewedConditions.length ? { kind: "BLOCKED", message: "새 날짜에 사용할 운동 환경을 확인해 주세요." }
           : needsReview ? { kind: "BLOCKED", message: !hasValidStartDate
-            ? "일정 바꾸기에서 실제 시작 날짜를 골라 주세요."
+            ? "일정·운동 시간에서 시작 날짜를 골라 주세요."
             : "훈련 조절에서 기준 기록이나 변경한 내용을 확인해 주세요." } : { kind: "READY" }}
         onStart={candidateId => {
           if (!canSelect || !localAccountScopeIsCurrent(accountScope)) return
@@ -318,6 +326,8 @@ export function PlanCandidates({
       {initialMainActive && instantAdjustment === undefined && <InitialMainConditions {...initialMain}
         disabled={!canRevise || selectionUnavailable || catalogDraftPending || methodDraftPending || targetDraftPending || recordConfirmationPending}
         onPendingChange={setInitialMainPending} />}
+      {!recommendation && <PlanPrescriptionBasis sessions={visibleDefaultSessions}
+        confirmationPending={recordConfirmationPending || detailedEvidencePending} />}
       {saveCode === "CYCLE_EVIDENCE_CHANGED" && onRebuildCycle && <button type="button" className="plan-text-action"
         disabled={saving} onClick={onRebuildCycle}>일지를 반영해 다시 만들기</button>}
       <div className="plan-purpose-entries" role="group" aria-label="계획 확인·변경">
@@ -440,7 +450,8 @@ export function PlanCandidates({
       {unreviewedConditions.length > 0 && <button type="button" className="plan-text-action"
         onClick={() => reveal("result")}>바뀐 날짜의 운동 환경 확인</button>}
       <div ref={optionsRef} tabIndex={-1} role="region" aria-label="다른 계획 비교" className="plan-candidate-list">
-        <h2>일정을 보고 골라요</h2>
+        <h2>운동 시간을 비교하고 골라요</h2>
+        <p className="plan-copy">각 운동의 1회 시간을 확인해 주세요. 계획 이름만으로 강도나 운동량을 나누지 않아요.</p>
         {generated.candidates.map((candidate) => (
           <CandidateSection
             key={candidate.kind}
@@ -469,11 +480,7 @@ export function PlanCandidates({
       {recommendation && <InstantPlanRecommendationFacts recommendation={recommendation}
         goalLabel={instantEntry?.kind === "GOAL_ONLY" ? `${instantEntry.eventDistanceM}m ${formatRecordTime(instantEntry.performanceSeconds)}` : undefined} />}
       {recommendation?.reason && <p>{recommendation.reason}</p>}
-      <h2>무엇을 기준으로 만든 훈련인가요?</h2>
-      <PlanPrescriptionBasis inline sessions={defaultInstantCandidate(generated).sessions}
-        confirmationPending={recordConfirmationPending || detailedEvidencePending} />
       {generated.racePlacement.kind === "NO_TARGET_RACE" && <RacePlacementNotice state={generated.racePlacement} />}
-      <h2>A와 B는 뭐가 달라요?</h2>
         <CandidateComparison candidates={generated.candidates} />
       <h2>이 계획은 어떤 정보로 만들었나요?</h2>
       <p className="plan-copy">
@@ -538,21 +545,15 @@ function CandidateComparison({
 
   return (
     <section className="plan-candidate-comparison" aria-label="두 계획 핵심 비교">
-      <h2>{comparison.easyDurationOnly ? "고른 목표는 같고, 쉬운 훈련 시간만 달라요" : "두 계획의 본운동 구성을 확인하세요"}</h2>
+      <h2>계획 A·B 비교</h2>
       <p className="plan-candidate-comparison__intro">
-        {comparison.hasUnsupportedCatalog ? <>
-          {comparison.contextMatches && <>두 계획 모두 주요 훈련 목적은 &lsquo;{selectedIntentLabel}&rsquo;
-            <TermHelp term={ENERGY_INTENT_LABELS[sharedCandidate.selectedEnergyIntent].term} />이에요. </>}
-          카탈로그 상세 구성은 이 비교에서 공통 여부를 확인할 수 없어요. 각 일정의 훈련 방법을 확인해 주세요.
-        </> : comparison.sameMainValues ? <>
-          두 계획 모두 주요 훈련 목적은 &lsquo;{selectedIntentLabel}&rsquo;
-          <TermHelp term={ENERGY_INTENT_LABELS[sharedCandidate.selectedEnergyIntent].term} />이에요.
-          {comparison.hasDetailed
-            ? " 상세 처방이 있는 본운동의 반복·회복·목표 페이스가 같아요."
-            : " 같은 날·시간대에 같은 시간·RPE 범위를 넣었어요. 구체적인 반복과 회복 방법이 정해진 것은 아니에요."}
-          {comparison.hasDetailed && comparison.hasUnspecified && " 구간이 미지정인 다른 본운동은 시간·RPE 범위만 같아요."}
-          {" "}여기서 쉬운 훈련은 기초 달리기와 회복 운동을 말해요.
-        </> : "일정이나 본운동의 수치가 달라 공통 구성이라고 단정할 수 없어요."}
+        {comparison.easyDurationOnly
+          ? "일부 기초·회복 운동의 시간만 달라요. 주요 훈련과 그에 붙는 회복 운동은 그대로예요."
+          : comparison.hasUnsupportedCatalog
+          ? "운동 시간부터 비교해 보세요. 세부 훈련 방법이 같은지는 각 일정에서 확인해야 해요."
+          : comparison.sameMainValues
+          ? `두 계획의 주요 훈련 수치는 같아요. 훈련 목표는 ${selectedIntentLabel}이에요.`
+          : "일정이나 주요 훈련이 달라요. 시간뿐 아니라 날짜별 훈련 방법도 확인해 주세요."}
       </p>
       {comparison.easyDurationOnly && <div className="plan-candidate-comparison__shared">
         <strong>두 계획의 공통 일정</strong>
@@ -562,12 +563,10 @@ function CandidateComparison({
         {candidates.map((candidate) => {
           const hasCatalog = candidate.sessions.some(s => s.prescription.kind === "RPE_TIME_RANGE" && s.prescription.catalogWorkout)
           const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent, hasCatalog)
-          const purposeStatus = candidatePurposeStatus(candidate.kind, hasCatalog)
           return (
             <article key={candidate.candidateId}>
-              <span>계획안 {candidate.kind === "BALANCED" ? "A" : "B"}</span>
               <strong>{label.title}</strong>
-              <p>{purposeStatus.label}</p>
+              <EasyTrainingTimes sessions={candidate.sessions.filter(session => session.day >= 1 && session.day <= Math.ceil(candidate.frame.projectionLengthDays ?? candidate.frame.lengthDays))} />
               <small>{candidateDurationSummary(candidate)}</small>
             </article>
           )
@@ -576,8 +575,8 @@ function CandidateComparison({
       <MainWorkComparison comparison={comparison} />
       <p className="plan-candidate-comparison__note">
         {comparison.easyDurationOnly
-          ? "두 합계의 차이는 조절할 수 있는 쉬운 훈련을 A에서는 시간 범위로, B에서는 가장 짧은 시간으로 계산해서 생겨요. 주요 훈련이 더 많거나 세지는 차이는 아니에요."
-          : "시간 합계만으로 훈련 방법이나 부담이 같다고 판단하지 않아요."}
+          ? "범위의 앞 숫자는 최소 시간, 뒤 숫자는 최대 시간이에요. 두 안 모두 그 범위 안에서 정한 시간이므로, B가 항상 실제 운동 시간이 더 짧다는 뜻은 아니에요."
+          : "시간이 같아도 운동 방법과 강도는 다를 수 있어요."}
       </p>
     </section>
   )

@@ -1,35 +1,70 @@
 import type { PlanSession } from "@impl/plan-generator/types"
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 
-/** Describes only inputs actually used by the displayed prescriptions. */
+type BasisCounts = { actual: number; goal: number; direct: number; unconfirmed: number }
+
+function calculatedBasis(session: Exclude<PlanSession, { role: "REST" }>): Omit<BasisCounts, "unconfirmed"> & { unconfirmed: boolean } {
+  if (session.prescription.kind === "PACE_TARGET") {
+    return session.prescription.selectedAnchor.kind === "GOAL"
+      ? { actual: 0, goal: 1, direct: 0, unconfirmed: false }
+      : { actual: 1, goal: 0, direct: 0, unconfirmed: false }
+  }
+
+  const binding = session.prescription.catalogWorkout
+  if (!binding) return { actual: 0, goal: 0, direct: 0, unconfirmed: false }
+
+  const calculation = resolveCatalogBinding(binding)
+  if (!calculation) return { actual: 0, goal: 0, direct: 0, unconfirmed: true }
+
+  const steps = calculation.steps.filter(step => step.phase === "main" && step.kind === "WORK")
+  return {
+    actual: Number(steps.some(step => step.targetModel === "FIVE_K_REFERENCE"
+      || step.targetModel === "THRESHOLD_REFERENCE" || step.targetModel === "ACTUAL_RACE_REFERENCE")),
+    goal: Number(steps.some(step => step.targetModel === "GOAL_RACE_REFERENCE")),
+    direct: Number(steps.some(step => step.targetModel === "EXPLICIT_SEGMENT_PACE"
+      || step.targetModel === "EXPLICIT_SEGMENT_SECONDS")),
+    unconfirmed: false,
+  }
+}
+
+/** Describes validated work-segment values across the displayed plan, including EASY. */
 export function planPrescriptionBasis(sessions: readonly PlanSession[], confirmationPending = false) {
-  const main = sessions.filter(session => session.role === "QUALITY")
-  const personalCount = main.filter(session => {
-    if (session.prescription.kind === "PACE_TARGET") return true
-    const binding = session.prescription.kind === "RPE_TIME_RANGE" ? session.prescription.catalogWorkout : undefined
-    const calculation = binding && resolveCatalogBinding(binding)
-    return calculation && calculation.steps.some(step => typeof step.referenceRecordId === "string" && step.targetModel !== "GOAL_RACE_REFERENCE")
-  }).length
-  const goalCount = main.filter(session => session.prescription.kind === "RPE_TIME_RANGE"
-    && session.prescription.catalogWorkout?.inputs.paceReferences?.some(reference => reference.kind === "GOAL")).length
-  if (goalCount > 0) return {
-    label: `목표기록 기준 포함 · 주요 훈련 ${goalCount}회`,
-    detail: "목표기록에서 계산한 구간이 있어요. 현재 실력이나 실제 달성 기록을 뜻하지 않아요. 각 구간의 기준을 확인해 주세요.",
-  }
-  if (personalCount > 0) return {
-    label: confirmationPending ? "기록 확인 전 · 페이스 초안" : `기록 기준 페이스 · 주요 훈련 ${personalCount}회`,
-    detail: confirmationPending
-      ? "입력한 기록으로 계산한 초안이에요. 기준 기록을 확인해야 이 계획으로 시작할 수 있어요."
-      : "개인 기록으로 계산한 구간에만 페이스를 적용했어요. 나머지 구간은 표시된 시간·체감 강도를 따르세요. 모든 훈련 수치가 기록에서 계산된 것은 아니에요.",
-  }
-  const specified = main.some(session => session.prescription.kind === "RPE_TIME_RANGE"
-    && session.prescription.catalogWorkout && (session.prescription.catalogWorkout.inputs.segmentPaces.length > 0
-      || (session.prescription.catalogWorkout.inputs.segmentSeconds?.length ?? 0) > 0))
-  return specified ? {
-    label: "선택한 구성 · 직접 정한 구간 수치",
-    detail: "검토된 훈련 구성에 직접 확인한 구간 수치를 사용했어요. 개인 경기 기록에서 자동으로 계산한 페이스는 아니에요.",
-  } : {
-    label: "시간·체감 강도 기준",
-    detail: "고른 종목·경험·목적에 맞는 구성입니다. 개인 경기 기록을 페이스 계산에 사용하지 않았어요. 거리형 훈련은 표시된 거리와 체감 강도를 따르세요.",
+  const workouts = sessions.filter((session): session is Exclude<PlanSession, { role: "REST" }> => session.role !== "REST")
+  const counts = workouts.reduce<BasisCounts>((total, session) => {
+    const item = calculatedBasis(session)
+    return {
+      actual: total.actual + item.actual,
+      goal: total.goal + item.goal,
+      direct: total.direct + item.direct,
+      unconfirmed: total.unconfirmed + Number(item.unconfirmed),
+    }
+  }, { actual: 0, goal: 0, direct: 0, unconfirmed: 0 })
+
+  const labels = [
+    counts.actual > 0 && `내 기록으로 페이스 계산 · 훈련 ${counts.actual}회`,
+    counts.goal > 0 && `목표기록으로 페이스 계산 · 훈련 ${counts.goal}회`,
+    counts.direct > 0 && `직접 정한 페이스·구간 시간 · 훈련 ${counts.direct}회`,
+    counts.unconfirmed > 0 && `계산 확인 필요 · 훈련 ${counts.unconfirmed}회`,
+  ].filter((label): label is string => Boolean(label))
+
+  const hasVerifiedBasis = counts.actual + counts.goal + counts.direct > 0
+  const detail = hasVerifiedBasis
+    ? "페이스·구간 시간은 표시된 구간에만 적용돼요. 다른 구간은 날짜별 시간·힘든 정도를 따르세요. 반복 횟수와 회복 시간은 페이스와 별도로 구성돼요."
+    : counts.unconfirmed > 0
+      ? "페이스 계산을 확인할 수 없어요. 날짜별 훈련 안내를 확인해 주세요."
+      : "시간과 힘든 정도에 맞춰 훈련하세요. 날짜별 안내에서 반복 횟수와 회복 구성을 확인해 주세요."
+
+  const importantNotices = [
+    counts.goal > 0 && "목표기록은 페이스 계산에 사용됐어요. 현재 실력이나 실제 달성 기록을 뜻하지 않아요.",
+    counts.unconfirmed > 0 && "일부 훈련의 계산 상태를 확인하지 못했어요. 페이스 기준을 다시 확인해 주세요.",
+  ].filter((notice): notice is string => Boolean(notice))
+
+  return {
+    label: labels.length > 0 ? labels.join(" · ") : "시간·힘든 정도로 훈련",
+    detail,
+    importantNotice: importantNotices.length > 0 ? importantNotices.join(" ") : undefined,
+    pendingNotice: confirmationPending
+      ? "기준 확인이 아직 끝나지 않았어요. 확인을 마치기 전에는 계획을 시작할 수 없어요."
+      : undefined,
   }
 }

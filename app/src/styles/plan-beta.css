@@ -2218,6 +2218,46 @@
   color: var(--ink-3);
 }
 
+/* Concrete schedule values before optional explanations; no extra card shell. */
+.plan-easy-times {
+  min-width: 0;
+  margin-block: var(--space-3);
+  font-family: var(--sans);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.plan-easy-times h3 {
+  margin: 0 0 var(--space-2);
+  font: 600 var(--fs-body-sm)/1.5 var(--sans);
+  color: var(--ink-2);
+}
+.plan-easy-times dl { margin: 0; display: grid; gap: var(--space-2); }
+.plan-easy-times dl > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  padding-block: var(--space-2);
+  border-bottom: var(--bw-line) solid var(--hair);
+}
+.plan-easy-times dt { flex: 1 1 10rem; min-width: 0; font-size: var(--fs-body); line-height: 1.5; }
+.plan-easy-times dt span { display: block; color: var(--ink-3); font-size: var(--fs-caption); }
+.plan-easy-times dd { margin: 0; color: var(--ink); font-size: var(--fs-body); font-weight: 700; font-variant-numeric: tabular-nums; }
+.plan-easy-times dd small { margin-inline-end: var(--space-2); color: var(--ink-3); font-size: var(--fs-caption); font-weight: 400; }
+.plan-easy-times > p, .plan-duration-total {
+  margin: var(--space-2) 0;
+  color: var(--ink-2);
+  font: 400 var(--fs-body-sm)/1.6 var(--sans);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.plan-easy-times > details > summary { min-height: var(--app-touch-min, 44px); display: flex; align-items: center; cursor: pointer; }
+.plan-easy-times > details > summary:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.plan-prescription-basis { min-width: 0; font: 400 var(--fs-body-sm)/1.6 var(--sans); overflow-wrap: anywhere; word-break: keep-all; }
+.plan-prescription-basis__notice, .plan-prescription-basis__pending { margin-block: var(--space-2); color: var(--ink); }
+.plan-prescription-basis__pending { font-weight: 600; }
+.plan-prescription-basis .info-disclosure__preview { font-size: var(--fs-body-sm); }
+
 .active-plan__date-range {
   margin: var(--space-3) 0 0;
   display: flex;
@@ -3619,17 +3659,6 @@
 
 .plan-choice-list--cards .plan-choice[data-recommended="true"] {
   border: var(--bw-line) solid var(--brand);
-}
-
-.plan-candidate[data-recommended="true"] {
-  border: var(--bw-line) solid var(--brand);
-  border-radius: var(--r-md);
-  padding: var(--space-3);
-}
-
-.plan-candidate[data-recommended="true"] .plan-select-action {
-  background: var(--brand);
-  color: #fff;
 }
 
 .plan-result-header {

@@ -136,7 +136,7 @@ describe("plan beta user flow", () => {
     await user.click(screen.getByRole("button", { name: /^4일/u }))
     expect(screen.getByRole("figure", { name: /10km · 처음 · 9일 중 4일/u })).toBeVisible()
     expect(screen.queryByText(/RPE \d/u)).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: /선택하기|이 계획으로 시작하기|이 일정으로 시작/u })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /선택하기|계획 A로 시작|이 일정으로 시작/u })).not.toBeInTheDocument()
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
   })
 
@@ -148,7 +148,7 @@ describe("plan beta user flow", () => {
 
     expect(screen.getByRole("heading", { name: "계획안은 먼저 만들 수 있어요" })).toBeVisible()
     expect(screen.getByText("10km · 처음 · 9일 중 3일")).toBeVisible()
-    expect(screen.queryByRole("button", { name: /선택하기|이 계획으로 시작하기|이 일정으로 시작/u })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /선택하기|계획 A로 시작|이 일정으로 시작/u })).not.toBeInTheDocument()
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
 
     await user.click(screen.getByRole("button", { name: "몸 상태 다시 확인하기" }))
@@ -227,7 +227,7 @@ describe("plan beta user flow", () => {
     }).ok).toBe(true)
 
     await openRefinement("훈련 종류")
-    await user.click(screen.getByRole("button", { name: /조금 힘들게 꾸준히.*LT/u }))
+    await user.click(screen.getByRole("button", { name: /지속 페이스 훈련/u }))
 
     expect(screen.getByRole("heading", { name: "계획안은 먼저 만들 수 있어요" })).toBeVisible()
     expect(screen.queryByRole("heading", { name: "계획이 준비됐어요" }))
@@ -326,7 +326,7 @@ describe("plan beta user flow", () => {
 
     expect(screen.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
     expect(screen.getAllByText(/5km.*10일/u)).not.toHaveLength(0)
-    expect(screen.getAllByText(/숨차게 반복.*VO₂/u)).not.toHaveLength(0)
+    expect(screen.getAllByText(/유산소 반복 훈련/u)).not.toHaveLength(0)
     expect(screen.getByText("5개 바꿨어요")).toBeVisible()
     expect(screen.getByRole("button", { name: /^참가 부문 바꾸기 · 지금 고등부/u, hidden: true })).toBeInTheDocument()
   })
@@ -353,7 +353,7 @@ describe("plan beta user flow", () => {
 
     await answerQuickPlanQuestions("clear", { days: /^6일/u })
     await openRefinement("훈련 종류")
-    await user.click(screen.getByRole("button", { name: /숨차게 반복.*VO₂/u }))
+    await user.click(screen.getByRole("button", { name: /유산소 반복 훈련/u }))
     await openRefinement("달력 길이")
     await user.click(screen.getByRole("button", { name: /10일 계획 받기/u }))
     await openRefinement("시간대")
@@ -469,8 +469,8 @@ describe("plan beta user flow", () => {
     await answerQuickPlanQuestions("clear")
     await openRefinement("훈련 종류")
 
-    expect(screen.getByRole("button", { name: /조금 힘들게 꾸준히.*LT/u })).toBeVisible()
-    expect(screen.getByRole("button", { name: /숨차게 반복.*VO₂/u })).toBeVisible()
+    expect(screen.getByRole("button", { name: /지속 페이스 훈련/u })).toBeVisible()
+    expect(screen.getByRole("button", { name: /유산소 반복 훈련/u })).toBeVisible()
     expect(screen.getByRole("button", { name: /짧고 세게.*GLY/u })).toBeVisible()
     expect(screen.getByRole("button", { name: /스피드.*ATP-PC/u })).toBeVisible()
 
@@ -511,7 +511,7 @@ describe("plan beta user flow", () => {
         painParts: { provenance: FIELD_PROVENANCE.explicit },
       },
     }).ok).toBe(true)
-    const [choice] = screen.getAllByRole("button", { name: /선택하기|이 계획으로 시작하기|이 일정으로 시작/u })
+    const [choice] = screen.getAllByRole("button", { name: /선택하기|계획 A로 시작|이 일정으로 시작/u })
     if (choice === undefined) throw new Error("Expected a generated plan choice")
 
     // When: the athlete selects a now-stale candidate.
@@ -657,7 +657,7 @@ describe("plan beta user flow", () => {
     render(<PlanBeta />)
     await answerMinimumPlanQuestions()
 
-    const [firstChoice] = screen.getAllByRole("button", { name: /선택하기|이 계획으로 시작하기|이 일정으로 시작/u })
+    const [firstChoice] = screen.getAllByRole("button", { name: /선택하기|계획 A로 시작|이 일정으로 시작/u })
     if (!firstChoice) throw new Error("Expected at least one candidate choice")
     await userEvent.setup().click(firstChoice)
 
@@ -673,7 +673,7 @@ describe("plan beta user flow", () => {
     render(<PlanBeta />)
     await answerMinimumPlanQuestions()
     window.localStorage.setItem(JOURNAL_STORAGE_KEY, "{")
-    const [choice] = screen.getAllByRole("button", { name: /선택하기|이 계획으로 시작하기|이 일정으로 시작/u })
+    const [choice] = screen.getAllByRole("button", { name: /선택하기|계획 A로 시작|이 일정으로 시작/u })
     if (choice === undefined) throw new Error("Expected a generated plan choice")
 
     // When
@@ -697,7 +697,7 @@ describe("plan beta user flow", () => {
       if (key === "trainoracle.plan-beta.v1") throw new Error("QuotaExceededError")
       return realSetItem.call(this, key, value)
     })
-    const [firstChoice] = screen.getAllByRole("button", { name: /선택하기|이 계획으로 시작하기|이 일정으로 시작/u })
+    const [firstChoice] = screen.getAllByRole("button", { name: /선택하기|계획 A로 시작|이 일정으로 시작/u })
     if (!firstChoice) throw new Error("Expected at least one candidate choice")
     await userEvent.setup().click(firstChoice)
 
@@ -725,7 +725,7 @@ describe("plan beta user flow", () => {
       }
       return realSetItem.call(this, key, value)
     })
-    const [choice] = screen.getAllByRole("button", { name: /선택하기|이 계획으로 시작하기|이 일정으로 시작/u })
+    const [choice] = screen.getAllByRole("button", { name: /선택하기|계획 A로 시작|이 일정으로 시작/u })
     if (choice === undefined) throw new Error("Expected a generated plan choice")
     await user.click(choice)
     expect(screen.getByRole("button", { name: "저장 다시 시도" })).toBeVisible()
@@ -766,7 +766,7 @@ describe("plan beta user flow", () => {
       }
       return realSetItem.call(this, key, value)
     })
-    const [choice] = screen.getAllByRole("button", { name: /선택하기|이 계획으로 시작하기|이 일정으로 시작/u })
+    const [choice] = screen.getAllByRole("button", { name: /선택하기|계획 A로 시작|이 일정으로 시작/u })
     if (choice === undefined) throw new Error("Expected a generated plan choice")
     await user.click(choice)
     expect(screen.getByRole("button", { name: "저장 다시 시도" })).toBeVisible()
