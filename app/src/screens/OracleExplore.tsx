@@ -1,4 +1,5 @@
 import { useEffect, useId, useState, type ReactNode } from "react"
+import { AppHeading } from "../components/AppHeading"
 import { ArrowLeft, ArrowRight, ChevronDown, NotebookPen, Target, ListChecks } from "lucide-react"
 import { InfoDisclosure } from "../components/InfoDisclosure"
 import { ORACLE_TOPICS, getOracleTopic, type OracleTopicId } from "../domain/oracle-exploration"
@@ -48,7 +49,7 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
       <button type="button" className="oracle-explore__back" onClick={onBack} aria-label="이전 화면으로 돌아가기">
         <ArrowLeft size={20} aria-hidden="true" />
       </button>
-      <span>오라클</span>
+      <span className="app-chrome-title">오라클</span>
       <span className="oracle-explore__header-note">탐색</span>
     </header>
 
@@ -86,7 +87,7 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
           <span>{rows.length > 0 ? "예시 기록" : "예시 상황"}</span>
           <p>내 기록을 분석한 결과가 아니에요</p>
         </div>
-        <h1 id={headlineId} aria-live="polite" aria-atomic="true">{topic.example.headline}</h1>
+        <AppHeading variant="screen" accent id={headlineId} aria-live="polite" aria-atomic="true">{topic.example.headline}</AppHeading>
 
         {rows.length > 0 ? <div className="oracle-explore__data">
           <div className="oracle-explore__chart" role="img" aria-label={chartLabel}>

@@ -16,6 +16,7 @@ import type { StructuredJournalObservation } from "../../domain/journal-observat
 import type { PlanBetaState } from "../../domain/plan-beta-schema"
 import { AccessibleTrendTable } from "./AccessibleTrendTable"
 import { InfoDisclosure } from "../../components/InfoDisclosure"
+import { AppHeading } from "../../components/AppHeading"
 
 const PERIODS: readonly { readonly value: EnergyLedgerPeriod; readonly label: string }[] = [
   { value: "RECENT_4_WEEKS", label: "4주" },
@@ -62,7 +63,7 @@ export function EnergySystemLedgerPanel({
         <div className="energy-ledger__heading-row">
           <div>
             <span className="energy-ledger__eyebrow">최근 4주</span>
-            <h2>에너지 시스템 기록<TermHelp term="energy-system" /></h2>
+            <AppHeading as="h2" variant="section">에너지 시스템 기록<TermHelp term="energy-system" /></AppHeading>
           </div>
           {onOpenTrends !== undefined && (
             <button type="button" className="energy-ledger__open" onClick={onOpenTrends} aria-label="훈련 목적 분석 보기">
@@ -106,7 +107,7 @@ export function EnergySystemLedgerPanel({
       <div className="energy-ledger__heading-row">
         <div>
           <span className="energy-ledger__eyebrow">훈련 일지 분석</span>
-          <h2>에너지 시스템 누적<TermHelp term="energy-system" /></h2>
+          <AppHeading as="h2" variant="screen" accent>에너지 시스템 누적<TermHelp term="energy-system" /></AppHeading>
         </div>
       </div>
       <p className="energy-ledger__intro">

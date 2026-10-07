@@ -12,6 +12,8 @@ import { loadPlanBetaState } from "../domain/plan-beta-store"
 import { deriveTrainingMethodCompatibility } from "../domain/training-method-compatibility"
 import type { TrainingMethodCompatibilityStatus } from "../domain/training-method-compatibility"
 import { InfoDisclosure } from "../components/InfoDisclosure"
+import { ContextualIllustration } from "../components/ContextualIllustration"
+import { AppHeading } from "../components/AppHeading"
 
 const SOURCE_STATE_LABEL: Record<TrainingContentSourceState, string> = {
   DIRECT_SOURCE_REOPENED: "원문 확인 자료",
@@ -49,7 +51,7 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
         <ContentHeader title="훈련법 읽기" onBack={() => setSelected(null)} />
         <article className="training-content-article">
           <span className="training-content-article__category">{article.category}</span>
-          <h1>{article.title}</h1>
+          <AppHeading variant="screen" accent>{article.title}</AppHeading>
           <p className="training-content-article__lead">{article.summary}</p>
           <button
             className="training-content-article__save"
@@ -62,11 +64,11 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
           </button>
 
           <section>
-            <h2>왜 주목받나요?</h2>
+            <AppHeading as="h2" variant="section">왜 주목받나요?</AppHeading>
             <p>{article.whyNoticed}</p>
           </section>
           <section>
-            <h2>무엇을 훈련하나요?</h2>
+            <AppHeading as="h2" variant="section">무엇을 훈련하나요?</AppHeading>
             <p>{article.whatItTrains}</p>
           </section>
           <section className="training-content-article__compatibility" aria-labelledby="training-method-compatibility-title">
@@ -74,7 +76,7 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
               <Scale aria-hidden="true" size={18} />
               <div>
                 <span>내 기록과 비교</span>
-                <h2 id="training-method-compatibility-title">{compatibility.headline}</h2>
+                <AppHeading as="h2" variant="section" id="training-method-compatibility-title">{compatibility.headline}</AppHeading>
               </div>
               <strong data-status={compatibility.status}>{COMPATIBILITY_LABEL[compatibility.status]}</strong>
             </div>
@@ -100,7 +102,7 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
             </InfoDisclosure>
           </section>
           <section className="training-content-article__boundary">
-            <h2>따라 하기 전에</h2>
+            <AppHeading as="h2" variant="section">따라 하기 전에</AppHeading>
             <p>{article.useBoundary}</p>
           </section>
 
@@ -126,7 +128,10 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
       <ContentHeader title="훈련 방법 배우기" onBack={onBack} />
       <div className="training-content-intro">
         <span>훈련 방법 · 선수 사례</span>
-        <h1>어떤 훈련이 궁금한가요?</h1>
+        <div className="training-content-intro__heading">
+          <AppHeading variant="screen" accent>어떤 훈련이 궁금한가요?</AppHeading>
+          <ContextualIllustration image="training-track" size="small" />
+        </div>
       </div>
       <div className="training-content-list" aria-label="훈련법 콘텐츠 목록">
         {TRAINING_CONTENT_CATALOG.map((article, index) => (
@@ -167,7 +172,7 @@ function ContentHeader({ title, onBack }: { readonly title: string; readonly onB
   return (
     <header className="training-content-header">
       <button type="button" onClick={onBack} aria-label="이전 화면" title="뒤로"><ArrowLeft aria-hidden="true" size={19} /></button>
-      <span>{title}</span>
+      <span className="app-chrome-title">{title}</span>
     </header>
   )
 }

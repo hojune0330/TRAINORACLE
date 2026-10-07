@@ -9,9 +9,10 @@
 //  6. RPE·메모는 파일에 없다는 사실과, 가져온 값이 통계에서 빠진다는 사실을 알린다.
 import { cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { createRef } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ImportActivities } from "./ImportActivities"
-import { SavedStage } from "./import-activities/ImportStages"
+import { PickStage, SavedStage } from "./import-activities/ImportStages"
 import { loadAnalysisEntries, loadEntries } from "../domain/journal-store"
 
 afterEach(() => {
@@ -60,12 +61,65 @@ describe("ImportActivities — 고르기 단계", () => {
     window.localStorage.clear()
   })
 
+  it("keeps a single screen heading without adding a second heading to the file pick guidance", () => {
+    const { container } = render(<ImportActivities />)
+    const heading = screen.getByRole("heading", { name: "워치 기록 불러오기", level: 1 })
+
+    expect(heading).toHaveClass("app-heading", "app-heading--screen", "app-heading--accent")
+    expect(heading.style.fontSize).toBe("")
+    expect(heading.style.fontWeight).toBe("")
+    expect(container.querySelectorAll(".app-heading--accent")).toHaveLength(1)
+    expect(container.querySelector(".contextual-entry-intro h1, .contextual-entry-intro h2")).toBeNull()
+    expect(screen.getByTestId("import-privacy-notice")).toBeVisible()
+  })
+
   it("explains unsupported native health XML instead of pretending it was imported", async () => {
     const user = userEvent.setup()
-    render(<ImportActivities />)
+    const { container } = render(<ImportActivities />)
     await pickFile(user, upload('<HealthData locale="ko_KR"><Record type="steps" value="100" /></HealthData>', "export.xml"))
     expect(await screen.findByTestId("import-failure")).toHaveTextContent("건강앱의 전체 ZIP·XML 백업")
     expect(loadEntries()).toEqual([])
+    expect(container.querySelector("img")).toBeNull()
+  })
+
+  it("keeps decorative file guidance at the first pick only, with file privacy and format actions unchanged", async () => {
+    const user = userEvent.setup()
+    const { container } = render(<ImportActivities />)
+    const guide = container.querySelector(".contextual-entry-intro img")
+
+    expect(guide).toHaveAttribute("width", "80")
+    expect(guide).toHaveAttribute("alt", "")
+    expect(guide).toHaveAttribute("aria-hidden", "true")
+    expect(container.querySelectorAll("img")).toHaveLength(1)
+    expect(screen.getByTestId("import-privacy-notice")).toBeVisible()
+    expect(screen.getByLabelText(/내보낸 활동 파일/u)).toHaveAttribute("accept", ".csv,.json,.tcx,.gpx,text/csv,application/json,application/xml,text/xml")
+    expect(loadEntries()).toEqual([])
+
+    await pickFile(user, upload(tcxFile([tcxLap("2026-07-20T06:00:00Z", 10000, 3000)])))
+    await waitFor(() => expect(screen.getAllByTestId("import-draft-row")).toHaveLength(1))
+    expect(container.querySelector("img")).toBeNull()
+    expect(loadEntries()).toEqual([])
+
+    await user.click(screen.getByRole("button", { name: /고른 1건 일지에 저장/u }))
+    await waitFor(() => expect(screen.getByTestId("import-saved")).toBeVisible())
+    expect(container.querySelector("img")).toBeNull()
+    expect(loadEntries()).toHaveLength(1)
+  })
+
+  it("leaves reading and failed pick states free of decorative guidance while keeping retry and cancellation available", () => {
+    const onCancel = vi.fn()
+    const props = { fileInputRef: createRef<HTMLInputElement>(), onFile: vi.fn(), onCancel }
+    const view = render(<PickStage {...props} busy failure={null} />)
+
+    expect(view.container.querySelector("img")).toBeNull()
+    expect(screen.getByRole("status")).toHaveTextContent("읽는 중…")
+    expect(screen.getByRole("button", { name: "가져오기 취소" })).toBeEnabled()
+    expect(screen.getByLabelText(/내보낸 활동 파일/u)).toBeDisabled()
+
+    view.rerender(<PickStage {...props} busy={false} failure="unreadable" />)
+    expect(view.container.querySelector("img")).toBeNull()
+    expect(screen.getByRole("alert")).toHaveTextContent("기존 일지는 그대로 있어요.")
+    expect(screen.getByLabelText(/내보낸 활동 파일/u)).toBeEnabled()
   })
 
   it("파일을 고르기 전에 기기 내 처리 안내를 보여준다", () => {

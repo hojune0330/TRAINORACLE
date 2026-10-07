@@ -10,7 +10,35 @@
 .trends-hub__detail-menu > summary:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 .trends-hub__detail-menu .trends-hub__drilldowns { padding: 0 0 12px; border: 0; }
 .trends-hub__detail-menu > summary small { display: block; margin-top: var(--space-1); color: var(--ink-2); font: 400 var(--fs-caption) / 1.5 var(--sans); }
-.trends-hub__pace { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1); min-height: var(--app-touch-min); border: 0; background: transparent; color: var(--ink); font: 500 var(--fs-caption) / 1.5 var(--sans); cursor: pointer; }
+.trends-hub__header {
+  display: grid;
+  grid-template-columns: minmax(64px, 1fr) auto minmax(64px, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--bw-line) solid var(--line);
+  background: var(--bg);
+}
+.trends-hub__back,
+.trends-hub__pace {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 64px;
+  min-height: var(--app-touch-min);
+  max-width: 100%;
+  padding: var(--space-1);
+  border: 0;
+  background: transparent;
+  color: var(--ink-2);
+  font: 500 var(--fs-caption) / 1.5 var(--sans);
+  cursor: pointer;
+}
+.trends-hub__back { justify-self: start; }
+.trends-hub__back span { white-space: nowrap; }
+.trends-hub__pace { justify-self: end; }
+.trends-hub__header svg { flex-shrink: 0; }
+.trends-hub__back:focus-visible,
 .trends-hub__pace:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 .trends-record-reading__journal h2 { margin: 16px 0; font-size: 20px; line-height: 1.5; }
 

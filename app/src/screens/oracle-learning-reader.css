@@ -8,7 +8,7 @@
   overflow-wrap: anywhere;
   word-break: keep-all;
 }
-.oracle-learning h2 { margin: var(--space-2) 0 var(--space-3); font-size: var(--fs-h3); line-height: 1.5; }
+.oracle-learning .app-heading.app-heading--screen { margin: var(--space-2) 0 var(--space-3); }
 .oracle-learning p { margin: var(--space-3) 0; }
 .oracle-learning__meta { font-size: var(--fs-caption); color: var(--ink-3); }
 .oracle-learning__notice, .oracle-learning__boundary { padding-block: var(--space-3); border-block: var(--bw-line) solid var(--line); }

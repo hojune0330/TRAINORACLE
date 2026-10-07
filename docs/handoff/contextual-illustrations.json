@@ -1,0 +1,107 @@
+{
+  "version": 1,
+  "date": "2026-10-07",
+  "purpose": "Small optional contextual illustrations, not UI icons, user decorations, products, or training/health/save-status evidence.",
+  "sourceDraft": ".scratch/asset-expansion-20261007",
+  "originalsPreserved": true,
+  "conversion": {
+    "format": "webp",
+    "quality": 88,
+    "alphaQuality": 100,
+    "maximumSide": 256,
+    "contentAltered": false
+  },
+  "rightsNote": "Generated candidates and user-workspace Mari assets reused at the user's request. No exclusive-rights or separate third-party license claim is made.",
+  "totalBytes": 98726,
+  "sourceBytes": 6830247,
+  "assets": [
+    {
+      "sourceName": "mari-journal-guide.png",
+      "outputName": "mari-journal-guide.webp",
+      "sourceBytes": 966598,
+      "bytes": 16992,
+      "sourceSha256": "93bbf2cb8b609edfa8bfa87faf40b7e17a9b53937163954deb57ea880caad670",
+      "sha256": "93b2466d558abcfd59a0270ae08fd1b66423e6cbb127adff04e6d978661d47b0",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true
+    },
+    {
+      "sourceName": "journal-empty-illustration.png",
+      "outputName": "journal-empty-illustration.webp",
+      "sourceBytes": 530565,
+      "bytes": 7956,
+      "sourceSha256": "74fd315d285bbc14d6d5cf76c01737a2c53cd55faa4c831a87b3f1d8344646d5",
+      "sha256": "59950059b4ca1d0f75f0a056fce441a7b5fd97f2bf7537871f1265dc3e222314",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true
+    },
+    {
+      "sourceName": "watch-file-guide-v1.png",
+      "outputName": "watch-file-guide-v1.webp",
+      "sourceBytes": 541249,
+      "bytes": 8362,
+      "sourceSha256": "ab9f98cefb27802b182dcb317f90b17f452c6b8f816b94d5c1cd4e59adc1265e",
+      "sha256": "eef6af2ba908bb17e22c6933063d452707d07d37f829fe1da1f3c2c64dd40127",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true
+    },
+    {
+      "sourceName": "training-track-break-v1.png",
+      "outputName": "training-track-break-v1.webp",
+      "sourceBytes": 640240,
+      "bytes": 10994,
+      "sourceSha256": "1ce10f0fee432d4c7602c933945b2457e86c995655a8bc30f00838ecf74babed",
+      "sha256": "7b660c07ae491608ca0de7e5df4342a03d1c34bb62eaa5e2f9ea0ebdfec621b7",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true
+    },
+    {
+      "sourceName": "plan-guide-v1.png",
+      "outputName": "plan-guide-v1.webp",
+      "sourceBytes": 594942,
+      "bytes": 10242,
+      "sourceSha256": "35e8bed49a2acee9a93a3fb3befba479ec74ec9517b0afae5a8a975bc32c7cbe",
+      "sha256": "e704a10dadfcd9ec80484361c8ff603bfa7e6abeee0ed410c81217f51cdaf12d",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true
+    },
+    {
+      "sourceName": "decorating-kit-v1.png",
+      "outputName": "decorating-kit-v1.webp",
+      "sourceBytes": 727471,
+      "bytes": 14460,
+      "sourceSha256": "7caa988a49088672ef7933346fa4cb259569e5493fe3058fdc7fe7f3416e91fb",
+      "sha256": "4b74ea345d10beb353d7990d97168d905a29703506872e57668bfdfafdf3e916",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true
+    },
+    {
+      "sourceName": "mari-explain-original.png",
+      "outputName": "mari-explain.webp",
+      "sourceBytes": 1424012,
+      "bytes": 15392,
+      "sourceSha256": "fd410a56e32ccb29f0adadec2124efb58e23d3145804c9317963277f15f44743",
+      "sha256": "ef520a4deac797bce2ed73460e37e9cf0fe7216bf5b2f171602d36892b2514b0",
+      "width": 171,
+      "height": 256,
+      "hasAlpha": true
+    },
+    {
+      "sourceName": "mari-thanks-original.png",
+      "outputName": "mari-thanks.webp",
+      "sourceBytes": 1405170,
+      "bytes": 14328,
+      "sourceSha256": "c8a3523c51906ea68d6ebe3146afb58dda70fbf15e83022b795cd9634b9a25c3",
+      "sha256": "76d38e10c7ee1d4f3a05c7385912fbc38256b3fe13b7107762c96327eb618183",
+      "width": 171,
+      "height": 256,
+      "hasAlpha": true
+    }
+  ]
+}

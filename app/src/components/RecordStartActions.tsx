@@ -1,5 +1,6 @@
 import { ChevronRight, Flag, Watch } from "lucide-react"
 import { InfoDisclosure } from "./InfoDisclosure"
+import { AppHeading } from "./AppHeading"
 import "./record-start.css"
 
 export function RecordStartActions({ onImport, onRecords }: {
@@ -8,7 +9,7 @@ export function RecordStartActions({ onImport, onRecords }: {
 }) {
   if (!onImport && !onRecords) return null
   return <section className="record-start" aria-label="이미 있는 기록으로 시작하기">
-    <h2>이미 있는 기록으로 시작해요</h2>
+    <AppHeading as="h2" variant="section">이미 있는 기록으로 시작해요</AppHeading>
     <nav aria-label="기록 가져오기 또는 최고기록 입력">
       {onImport && <button type="button" onClick={onImport}><Watch size={18} aria-hidden="true" /><span><strong>운동 파일 가져오기</strong><small>가민·코로스 등의 운동 기록</small></span><ChevronRight size={18} aria-hidden="true" /></button>}
       {onRecords && <button type="button" onClick={onRecords}><Flag size={18} aria-hidden="true" /><span><strong>최고기록 남기기</strong><small>종목과 시간으로 페이스 확인</small></span><ChevronRight size={18} aria-hidden="true" /></button>}

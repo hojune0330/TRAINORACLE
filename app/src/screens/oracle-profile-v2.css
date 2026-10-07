@@ -8,11 +8,11 @@
 .oracle-v2 button > span { min-width: 0; }
 .oracle-v2 button:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
 .oracle-v2 button[aria-pressed="true"], .oracle-v2 button[aria-current="page"] { border-color: var(--ink); background: var(--ink); color: var(--paper); }
-.oracle-v2 h1 { font-size: 22px; line-height: 1.4; margin: 8px 0 16px; overflow-wrap: anywhere; }
-.oracle-v2 h2 { font-size: 18px; line-height: 1.4; }
+.oracle-v2 .app-heading.app-heading--screen { margin: var(--space-2) 0 var(--space-4); }
+.oracle-v2 .app-heading.app-heading--section { margin-block: var(--space-3); }
 .oracle-v2 p { line-height: 1.65; overflow-wrap: anywhere; }
 .oracle-v2__chrome { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
-.oracle-v2__chrome > span { font-size: 12px; overflow-wrap: anywhere; }
+.oracle-v2__chrome > span:not(.app-chrome-title) { font-size: var(--fs-caption); overflow-wrap: anywhere; }
 .oracle-v2__body { max-width: 640px; margin-inline: auto; padding: 16px; }
 .oracle-v2__tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
 .oracle-v2__status, .oracle-v2__eyebrow { font-size: 12px; color: var(--ink-muted, var(--ink)); }
@@ -22,7 +22,7 @@
 .oracle-v2__manager-portrait { width: 64px; height: 80px; overflow: hidden; }
 .oracle-v2__manager-portrait img { display: block; width: 100%; height: auto; max-width: none; }
 .oracle-v2__manager-copy { min-width: 0; }
-.oracle-v2__manager h2 { font-size: var(--fs-body); margin: 0; }
+.oracle-v2__manager .app-heading.app-heading--section { margin: 0; }
 .oracle-v2__manager p { margin-block: var(--space-2); }
 .oracle-v2__manager > .oracle-v2__manager-details { grid-column: 1 / -1; }
 .oracle-v2__manager-details > p { margin-top: 0; }

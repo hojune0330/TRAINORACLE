@@ -13,6 +13,27 @@ beforeEach(() => {
 })
 
 describe("training home presentation", () => {
+  it.each([
+    { model: BASE, title: "오늘 운동을 기록해요" },
+    { model: TRAINING, title: "오늘의 훈련" },
+    { model: { ...BASE, homeMode: "JOURNAL" } satisfies TrainingHomeViewModel, title: "내 기록" },
+  ])("uses one accented hero and section headings for $title", ({ model, title }) => {
+    const { container } = render(<TrainingHome model={model} />)
+    const hero = screen.getByRole("heading", { level: 1, name: title })
+    expect(hero).toHaveClass("app-heading--hero", "app-heading--accent")
+    expect(hero).toHaveAttribute("id", "home-hub-title")
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
+    expect(container.querySelectorAll(".app-heading--accent")).toHaveLength(1)
+    expect(screen.getByRole("heading", { level: 2, name: "오늘" })).toHaveClass("app-heading--section")
+    expect(container.querySelectorAll(".home-hub__primary")).toHaveLength(1)
+    if (model.homeMode === "TRAINING") {
+      expect(screen.getByRole("heading", { level: 2, name: "다음 훈련" })).toHaveClass("app-heading--section")
+    }
+    if (model.homeMode !== "WELCOME") {
+      expect(screen.getByRole("heading", { level: 2, name: "최근 하루 기록" })).toHaveClass("app-heading--section")
+    }
+  })
+
   it("keeps the today action visible and uses a neutral Oracle fallback without a prepared result", () => {
     const explore = vi.fn()
     render(<TrainingHome model={BASE} onOpenOracle={explore} />)

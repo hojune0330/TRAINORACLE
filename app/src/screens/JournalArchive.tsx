@@ -24,6 +24,7 @@ import { useLocalToday } from "../hooks/useLocalToday"
 import { useCalendarPosition, useCalendarScroll } from "../hooks/useCalendarPosition"
 import { calendarRecordDates, nearestCalendarDate, recentCalendarDate, type CalendarReadiness } from "../domain/calendar-context"
 import { CalendarEmptyExample } from "../components/CalendarEmptyExample"
+import { AppHeading } from "../components/AppHeading"
 import { CalendarDecorationFrame } from "../components/CalendarDecorationFrame"
 import { useCalendarDecorationState } from "../components/calendar/useCalendarDecorationState"
 import type { DecorationId } from "../domain/decoration-catalog"
@@ -132,9 +133,9 @@ export function JournalArchive({
           <div className="journal-archive__eyebrow">
             JOURNAL ARCHIVE
           </div>
-          <h1>
+          <AppHeading as="h1" variant="screen" accent className="journal-archive__title">
             {heading}
-          </h1>
+          </AppHeading>
         </div>
       </header>
 
@@ -188,7 +189,7 @@ export function JournalArchive({
       ) : (
         <>
           {exampleVisible ? <CalendarEmptyExample today={today} expanded={emptyView === "example"} onExpand={() => setEmptyView("example")}
-            onCalendar={() => setEmptyView("calendar")} onWrite={onWriteLog} hasRealRecords={entries.length > 0} /> : <>
+            onCalendar={() => setEmptyView("calendar")} onWrite={onWriteLog} hasRealRecords={entries.length > 0} illustrationAllowed={readiness === "READY"} /> : <>
           <div className="calendar-guidance-actions">
             {latest && <button type="button" onClick={() => nav.selectDate(latest)}>최근 일지 · {latest.slice(5).replace("-", "/")}</button>}
             {!dates.includes(nav.date) && dates.length > 0 && nearestCalendarDate(dates, nav.date) !== latest && <button type="button" onClick={() => { const date = nearestCalendarDate(dates, nav.date); if (date) nav.selectDate(date) }}>가까운 기록</button>}

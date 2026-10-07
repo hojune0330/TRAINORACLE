@@ -10,6 +10,10 @@ describe("personal oracle panel", () => {
     render(<PersonalOraclePanel observations={[]} today="2026-08-28" planState={null} />)
 
     const region = screen.getByRole("region", { name: "내 훈련 요약" })
+    expect(within(region).getByRole("heading", { level: 2, name: "내 훈련 요약" })).toHaveClass("app-heading--screen", "app-heading--accent")
+    expect(region.querySelectorAll(".app-heading--accent")).toHaveLength(1)
+    expect(region.querySelector(".personal-oracle__mark")).toBeNull()
+    expect(region.querySelector(".personal-oracle__eyebrow")).toBeNull()
     expect(within(region).getByText("분석할 기록 확인 필요")).toBeVisible()
     expect(within(region).getByText("최근 달린 거리")).toBeVisible()
     expect(within(region).getByText("훈련 목적의 구성")).toBeVisible()

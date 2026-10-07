@@ -133,7 +133,7 @@ const mount = (initial = ready()) => {
   const fixture = account(initial); accounts.set(OWNER_A, fixture)
   return { ...fixture, ...render(<OracleProfileV2 {...props} />) }
 }
-const contextButton = () => screen.getByRole("button", { name: /취향과 여건 더 알려주기|작성하던 추가 응답 이어가기/ })
+const contextButton = () => screen.getByRole("button", { name: /^(?:훈련·대회 정보 추가|작성하던 추가 맥락 이어가기)/ })
 const closeDialog = () => fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "닫기" }))
 const resultScore = (container: HTMLElement) => container.querySelector(".oracle-v2__scores dd strong")
 function contextAnswer() {
@@ -156,6 +156,7 @@ it.each(profileTopics.flatMap(topic => (["LOADING", "FAILED"] as const).map(stat
     fireEvent.click(screen.getByRole("button", { name: group }))
     fireEvent.click(screen.getByRole("button", { name: title }))
     const reader = screen.getByRole("dialog", { name: title })
+    expect(within(reader).getByRole("heading", { level: 1, name: title })).toHaveClass("app-heading--screen", "app-heading--accent")
     expect(within(reader).getByText("자료를 확인하지 못했어요")).toBeVisible()
     expect(within(reader).queryByText("일반 해설")).toBeNull()
     expect(vi.mocked(buildOracleContentReading).mock.lastCall).toEqual([id, expect.objectContaining({
@@ -229,6 +230,7 @@ it.each([OWNER_B, null])("hides prior account readings and open editors immediat
   const fixture = mount(ready(scored()))
   fireEvent.click(screen.getByRole("button", { name: "보관함" }))
   expect(screen.getByRole("button", { name: "2026-10-01 · 당시 응답" })).toBeVisible()
+  fireEvent.click(screen.getByRole("button", { name: "내 결과" }))
   fireEvent.click(contextButton()); contextAnswer()
   await waitFor(() => expect(fixture.service.saveDraft).toHaveBeenCalledTimes(1))
   const waiting = account({ ...ready(), status: "LOADING" })

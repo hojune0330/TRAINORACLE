@@ -6,6 +6,7 @@ import {
   type CreatorProgramEvaluation,
 } from "../../domain/creator-program"
 import "./instant-plan.css"
+import { AppHeading } from "../AppHeading"
 
 export type CreatorProgramPickerProps = {
   /** Curated public metadata from the integrator, never private plan projections. */
@@ -50,7 +51,7 @@ export function CreatorProgramPicker({
 
   return (
     <section className="instant-plan" aria-labelledby={headingId}>
-      <h2 id={headingId} className="instant-plan__heading">제작자의 프로그램</h2>
+      <AppHeading as="h2" variant="section" id={headingId} className="instant-plan__heading">제작자의 프로그램</AppHeading>
       <p className="instant-plan__hint">프로그램을 고르면 내 조건에 맞는지 확인한 뒤 시작해요.</p>
       {selectionNotice && <p role="alert" className="instant-plan__status">{selectionNotice}</p>}
       {visible.length === 0 ? (

@@ -2,6 +2,7 @@ import { BookOpen, CheckCircle2, ChevronRight, Ellipsis, NotebookPen, PencilLine
 import { useId, type ReactNode } from "react"
 import type { HomeSession, TrainingHomeViewModel } from "../../domain/home-view-model"
 import { InfoDisclosure } from "../../components/InfoDisclosure"
+import { AppHeading } from "../../components/AppHeading"
 import type { OracleTopicId } from "../../domain/oracle-exploration"
 import { sessionWorkoutNotation } from "../../domain/workout-notation"
 import { sessionLabel, sessionSlotLabel } from "../plan-beta/labels"
@@ -57,7 +58,7 @@ export function TrainingHome({
 
       <section className="home-hub__intro" aria-labelledby="home-hub-title">
         <p className="home-hub__eyebrow">{model.homeMode === "WELCOME" ? "처음 기록하기" : model.homeMode === "TRAINING" ? "오늘 할 일" : "최근 기록"}</p>
-        <h1 id="home-hub-title">{model.homeMode === "WELCOME" ? "오늘 운동을 기록해요" : model.homeMode === "TRAINING" ? "오늘의 훈련" : "내 기록"}</h1>
+        <AppHeading id="home-hub-title" variant="hero" accent>{model.homeMode === "WELCOME" ? "오늘 운동을 기록해요" : model.homeMode === "TRAINING" ? "오늘의 훈련" : "내 기록"}</AppHeading>
       </section>
 
       {model.homeMode === "WELCOME" ? <WelcomeToday model={model} onWriteLog={onWriteLog} onOpenPlan={onOpenPlan} onOpenGuide={onOpenGuide} /> : <>
@@ -71,7 +72,7 @@ export function TrainingHome({
 
       {model.homeMode !== "WELCOME" && <section className="home-hub__summary">
         {!recentJournal && <div className="home-hub__section-heading">
-          <h2 id="home-hub-summary-title">최근 하루 기록</h2>
+          <AppHeading as="h2" variant="section" id="home-hub-summary-title">최근 하루 기록</AppHeading>
           {onOpenArchive && <button type="button" onClick={onOpenArchive}>전체 기록 보기<ChevronRight aria-hidden="true" size={16} /></button>}
         </div>}
         {recentJournal}
@@ -94,7 +95,7 @@ export function TrainingHome({
 
 function WelcomeToday({ model, onWriteLog, onOpenPlan, onOpenGuide }: { model: TrainingHomeViewModel; onWriteLog?: (entryType?: LogEntryType) => void; onOpenPlan?: () => void; onOpenGuide?: () => void }) {
   return <section className="home-hub__today home-hub__today--welcome" aria-labelledby="home-hub-today">
-    <div id="home-hub-today" className="home-hub__section-label">오늘</div>
+    <AppHeading as="h2" variant="section" id="home-hub-today" className="home-hub__section-label">오늘</AppHeading>
     <p>{model.todayMessage}</p>
     <nav aria-label="오늘 기록 또는 계획 만들기">
     <button className="home-hub__primary" type="button" onClick={() => onWriteLog?.("quick-session")}><PencilLine aria-hidden="true" size={19} /><span>오늘 기록 남기기</span><ChevronRight aria-hidden="true" size={18} /></button>
@@ -108,7 +109,7 @@ function NextTrainingCard({ next, onOpen }: { next: NonNullable<TrainingHomeView
   const later = next.laterSameDaySession
   const accessibleName = `다음 훈련 · ${sessionLabel(next.session)} · ${nextTrainingDateLabel(next.date)} · ${sessionSlotLabel(next.session.slot)} · ${nextTrainingPrescriptionLabel(next.session)}${later === null ? "" : ` · 같은 날 ${sessionSlotLabel(later.slot)} ${sessionLabel(later)}도 예정`}`
   return <section className="home-hub__next" aria-labelledby="home-hub-next">
-    <div id="home-hub-next" className="home-hub__section-label">다음 훈련</div>
+    <AppHeading as="h2" variant="section" id="home-hub-next" className="home-hub__section-label">다음 훈련</AppHeading>
     <button className="home-hub__next-card" type="button" onClick={onOpen} aria-label={accessibleName}>
       <span><strong>{sessionLabel(next.session)}</strong><small><span>{nextTrainingDateLabel(next.date)}</span><span>{sessionSlotLabel(next.session.slot)}</span><span>{nextTrainingPrescriptionLabel(next.session)}</span></small>{later !== null && <small>같은 날 {sessionSlotLabel(later.slot)} · {sessionLabel(later)}도 예정</small>}</span>
       <ChevronRight aria-hidden="true" size={19} />
@@ -118,7 +119,7 @@ function NextTrainingCard({ next, onOpen }: { next: NonNullable<TrainingHomeView
 
 function TodaySection({ model, onWriteLog, onOpenToday, todayContext }: { model: TrainingHomeViewModel; onWriteLog?: (entryType?: LogEntryType) => void; onOpenToday?: () => void; todayContext?: ReactNode }) {
   return <section className="home-hub__today" aria-labelledby="home-hub-today">
-    <div id="home-hub-today" className="home-hub__section-label">오늘</div>
+    <AppHeading as="h2" variant="section" id="home-hub-today" className="home-hub__section-label">오늘</AppHeading>
     {model.todayRecordCount > 0 ? <div className="home-hub__today-complete">
       <div className="home-hub__status"><CheckCircle2 aria-hidden="true" size={21} /><span><strong>오늘 기록을 남겼어요.</strong><small>오늘 남긴 기록 {model.todayRecordCount}개</small></span></div>
       {model.briefing !== "" && <p className="home-hub__briefing" aria-label="오늘 기록 요약">{model.briefing}</p>}

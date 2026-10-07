@@ -1,8 +1,9 @@
-import { BookOpenCheck, ChevronDown, Route, Sparkles } from "lucide-react"
+import { BookOpenCheck, ChevronDown, Route } from "lucide-react"
 import type { StructuredJournalObservation } from "../../domain/journal-observation"
 import type { PlanBetaState } from "../../domain/plan-beta-schema"
 import { derivePersonalOracle } from "../../domain/personal-oracle"
 import { InfoDisclosure } from "../../components/InfoDisclosure"
+import { AppHeading } from "../../components/AppHeading"
 
 const MATURITY_LABEL = {
   EMPTY: "분석할 기록 확인 필요",
@@ -23,11 +24,7 @@ export function PersonalOraclePanel({
   return (
     <section className="personal-oracle" aria-labelledby="personal-oracle-title">
       <header className="personal-oracle__header">
-        <div className="personal-oracle__mark" aria-hidden="true"><Sparkles size={18} /></div>
-        <div>
-          <span className="personal-oracle__eyebrow">오라클</span>
-          <h2 id="personal-oracle-title">내 훈련 요약</h2>
-        </div>
+        <AppHeading as="h2" accent id="personal-oracle-title">내 훈련 요약</AppHeading>
         <span className="personal-oracle__status">{MATURITY_LABEL[oracle.maturity]}</span>
       </header>
 

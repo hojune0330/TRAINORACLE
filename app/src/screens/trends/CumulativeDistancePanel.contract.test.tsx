@@ -47,6 +47,9 @@ describe("cumulative distance panel", () => {
     )
     const homeMonth = within(home.container).getByText("이번 달").parentElement
     expect(homeMonth).toHaveTextContent("15.5 km")
+    expect(homeMonth?.querySelector("strong")).toHaveClass("app-metric__value")
+    expect(homeMonth?.querySelector("strong small")).toHaveClass("app-metric__unit")
+    expect(screen.getByRole("heading", { name: "달린 거리" })).toHaveClass("app-heading--section")
     home.unmount()
 
     const analysis = render(
@@ -55,6 +58,8 @@ describe("cumulative distance panel", () => {
     const analysisMonth = within(analysis.container).getByText("이번 달").parentElement
     expect(analysisMonth).toHaveTextContent("15.5 km")
     expect(analysisMonth).toHaveAccessibleName(/이번 달.*15.5킬로미터.*2건/u)
+    expect(screen.getByRole("heading", { name: "누적 거리와 변화" })).toHaveClass("app-heading--screen", "app-heading--accent")
+    expect(analysis.container.querySelectorAll(".app-heading--accent")).toHaveLength(1)
   })
 
   it("switches to 12-week and 12-month comparisons without changing the source rules", () => {
@@ -74,5 +79,16 @@ describe("cumulative distance panel", () => {
     expect(screen.getByRole("listitem", { name: "1일, 집계 가능한 거리 기록 없음" })).toBeVisible()
     expect(screen.getByRole("listitem", { name: "27일, 5.5킬로미터, 기록 1건" })).toBeVisible()
     expect(screen.getAllByText("표로 보기")).toHaveLength(2)
+  })
+
+  it("does not turn missing values into measured zeroes in emphasized totals", () => {
+    const { container } = render(<CumulativeDistancePanel observations={[]} today="2026-08-28" mode="full" />)
+    const totals = [...container.querySelectorAll(".app-metric__value")]
+    expect(totals).toHaveLength(3)
+    for (const total of totals) {
+      expect(total).toHaveTextContent(/^—$/u)
+      expect(total.querySelector(".app-metric__unit")).toBeEmptyDOMElement()
+    }
+    expect(screen.queryByText("0 km")).toBeNull()
   })
 })

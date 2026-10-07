@@ -16,15 +16,6 @@
   font-weight: 650;
 }
 
-.oracle-personal-result h1 {
-  margin: 0;
-  color: var(--ink);
-  font-size: var(--fs-app-title);
-  font-weight: 700;
-  line-height: 1.45;
-  text-wrap: balance;
-}
-
 .oracle-personal-result__summary,
 .oracle-personal-result__missing {
   margin: var(--space-2) 0 0;

@@ -19,10 +19,13 @@ it("makes the user's profile the subject and keeps Mari in a separate manager ar
   render(<OracleProfileExperience {...props({ answers: { STRUCTURE_1: 5, STRUCTURE_2: 5, STRUCTURE_3: 5 }, selectedCharacter: "STRUCTURE" })} />)
   const self = screen.getByRole("region", { name: "나의 러닝 프로필" })
   expect(within(self).getByRole("heading", { name: "계획을 즐기는 러너" })).toBeVisible()
+  expect(within(self).getByRole("heading", { level: 1, name: "계획을 즐기는 러너" })).toHaveClass("app-heading--screen", "app-heading--accent")
   expect(within(self).getByRole("meter", { name: "계획 선호" })).toHaveAttribute("aria-valuenow", "100")
   expect(within(self).queryByRole("img")).toBeNull()
   expect(within(self).queryByText("마리 매니저")).toBeNull()
   const manager = screen.getByRole("complementary", { name: "마리 매니저" })
+  expect(within(manager).getByRole("heading", { level: 2, name: "마리 매니저" })).toHaveClass("app-heading--section")
+  expect(within(manager).getByRole("heading", { level: 2 })).not.toHaveClass("app-heading--accent")
   expect(within(manager).getByRole("img")).toHaveAttribute("src", expect.stringContaining("mari-analysis.png"))
   const details = within(manager).getByText("마리의 안내")
   expect(details.closest("details")).not.toHaveAttribute("open")
@@ -40,6 +43,7 @@ it("chooses Mari's work portrait by context, not by the user's preference type",
 it("opens the requested library view with a contextual return label", () => {
   render(<OracleProfileExperience {...props({ initialView: "library", backLabel: "읽을거리로 돌아가기" })} />)
   expect(screen.getByRole("group", { name: "읽을거리 주제" })).toBeVisible()
+  expect(screen.getByRole("heading", { level: 1, name: "궁금한 것부터" })).toHaveClass("app-heading--screen", "app-heading--accent")
   expect(screen.getByRole("button", { name: "읽을거리로 돌아가기" })).toBeVisible()
   expect(screen.getByText("오라클 읽을거리")).toBeVisible()
 })
@@ -139,6 +143,7 @@ it("asks one question at a time and only commits after the third response", asyn
   expect(screen.getByText(/선택 사항이에요/u)).toBeVisible()
   for (let n = 0; n < 3; n++) {
     expect(within(dialog()).getAllByRole("heading", { hidden: true })).toHaveLength(1)
+    expect(within(dialog()).getByRole("heading", { level: 1, hidden: true })).toHaveClass("app-heading--screen", "app-heading--accent")
     fireEvent.click(within(dialog()).getByRole("button", { name: "매우 그래요", hidden: true }))
     if (n < 2) expect(p.onCommit).not.toHaveBeenCalled()
   }

@@ -1031,7 +1031,7 @@ function LegacyPlanBeta({
 
   if (instantEntryOpen) return <>
     {/* Keep unsent values and the current question while a supporting tool is open. */}
-    <div hidden={recordsOpen || notationReaderOpen}>
+    <div className="plan-instant-entry" hidden={recordsOpen || notationReaderOpen}>
     <InstantPlanEntryForm today={todayISO()} initialEntry={instantEntry} active={!recordsOpen && !notationReaderOpen}
       disabled={instantRecordSaving} isSubmitting={instantRecordSaving} onDraftChange={setInstantEntryDirty} onSubmit={async value => {
       if (instantRecordSaveLock.current) return

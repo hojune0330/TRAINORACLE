@@ -40,6 +40,7 @@ describe("InstantPlanTodayView", () => {
   })
   it("shows both session summaries first and expands only the selected session", () => {
     const { container } = render(<InstantPlanTodayView today={today} />)
+    expect(screen.getByRole("heading", { level: 2, name: today.title })).toHaveClass("app-heading--screen", "app-heading--accent")
     expect(screen.getByText(today.dateLabel)).toBeVisible()
     expect(screen.getByText(today.sourceLabel!)).toBeVisible()
     const picker = screen.getByRole("group", { name: "오늘 세션 선택" })

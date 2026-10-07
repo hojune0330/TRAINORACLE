@@ -323,41 +323,13 @@ function AnalysisExclusionNotice({ summary }: {
 
 function TrendsHeader({ onBack, onPace }: { readonly onBack?: (() => void) | undefined; readonly onPace?: (() => void) | undefined }) {
   return (
-    <div style={{
-      padding: "12px 16px",
-      borderBottom: "1px solid var(--line)",
-      display: "grid",
-      gridTemplateColumns: "64px minmax(0, 1fr) auto",
-      alignItems: "center",
-      background: "var(--bg)",
-    }}>
-      <button type="button" onClick={onBack} style={{
-        background: "transparent",
-        border: 0,
-        cursor: "pointer",
-        padding: 4,
-        minWidth: 64,
-        minHeight: 44,
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 3,
-        fontFamily: "var(--mono)",
-        fontSize: 11,
-        color: "var(--ink-2)",
-      }}>
+    <div className="trends-hub__header">
+      <button type="button" className="trends-hub__back" onClick={onBack}>
         <ArrowLeft aria-hidden="true" size={16} />
-        <span style={{ whiteSpace: "nowrap" }}>뒤로</span>
+        <span>뒤로</span>
       </button>
-      <h1 style={{
-        minWidth: 0,
-        fontFamily: "var(--mono)",
-        fontSize: 11,
-        fontWeight: 600,
-        color: "var(--ink)",
-        textAlign: "center",
-        margin: 0,
-      }}>오라클</h1>
-      {onPace ? <button type="button" className="trends-hub__pace" onClick={onPace}><Calculator size={16} aria-hidden="true" />페이스 계산</button> : <div style={{ width: 64 }} aria-hidden="true" />}
+      <h1 className="app-chrome-title">오라클</h1>
+      {onPace ? <button type="button" className="trends-hub__pace" onClick={onPace}><Calculator size={16} aria-hidden="true" />페이스 계산</button> : <div aria-hidden="true" />}
     </div>
   )
 }

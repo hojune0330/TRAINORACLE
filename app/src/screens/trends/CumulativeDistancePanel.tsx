@@ -8,6 +8,7 @@ import {
 } from "../../domain/cumulative-distance"
 import type { StructuredJournalObservation } from "../../domain/journal-observation"
 import { AccessibleTrendTable } from "./AccessibleTrendTable"
+import { AppHeading } from "../../components/AppHeading"
 
 type CumulativeDistancePanelProps = {
   readonly observations: readonly StructuredJournalObservation[]
@@ -63,8 +64,7 @@ export function CumulativeDistancePanel({
       <section className="distance-overview distance-overview--compact" aria-labelledby="home-distance-title">
         <div className="distance-overview__heading">
           <div>
-            <span className="distance-overview__eyebrow">쌓인 거리</span>
-            <h2 id="home-distance-title">달린 거리</h2>
+            <AppHeading as="h2" variant="section" id="home-distance-title">달린 거리</AppHeading>
           </div>
           <button type="button" onClick={onOpenTrends} aria-label="누적 거리 분석 보기">
             거리 분석 <ArrowRight aria-hidden="true" size={16} />
@@ -74,7 +74,7 @@ export function CumulativeDistancePanel({
           {items.map((item) => (
             <div key={item.label}>
               <span>{item.label}</span>
-              <strong>{distanceText(item.summary)}<small>{item.summary.totalKm === null ? "" : " km"}</small></strong>
+              <strong className="app-metric__value">{distanceText(item.summary)}<small className="app-metric__unit">{item.summary.totalKm === null ? "" : " km"}</small></strong>
               <small>반영 {item.summary.includedSourceCount}건 · 제외 {item.summary.excludedSourceCount}건</small>
             </div>
           ))}
@@ -95,8 +95,7 @@ export function CumulativeDistancePanel({
     <section className="distance-overview distance-overview--full" aria-labelledby="distance-analysis-title">
       <div className="distance-overview__heading">
         <div>
-          <span className="distance-overview__eyebrow">누적 거리</span>
-          <h2 id="distance-analysis-title">누적 거리와 변화</h2>
+          <AppHeading as="h2" accent id="distance-analysis-title">누적 거리와 변화</AppHeading>
         </div>
       </div>
 
@@ -157,7 +156,7 @@ function DistanceTotal({ label, summary }: {
   return (
     <div aria-label={`${label}, ${distanceAccessibleText(summary)}`}>
       <span>{label}</span>
-      <strong>{distanceText(summary)}<small>{summary.totalKm === null ? "" : " km"}</small></strong>
+      <strong className="app-metric__value">{distanceText(summary)}<small className="app-metric__unit">{summary.totalKm === null ? "" : " km"}</small></strong>
       <em>{summary.includedSourceCount}건 반영 · {summary.excludedSourceCount}건 제외</em>
     </div>
   )
@@ -198,7 +197,7 @@ function DistanceSeries({ title, buckets, labelForBucket, control }: {
   return (
     <div className="distance-overview__series">
       <div className="distance-overview__series-heading">
-        <h3>{title}</h3>
+        <AppHeading as="h3" variant="section">{title}</AppHeading>
         {control}
       </div>
       <div
@@ -245,7 +244,7 @@ function DailyDistanceHeatmap({ buckets, month }: {
   return (
     <div className="distance-overview__heatmap">
       <div className="distance-overview__series-heading">
-        <h3>이번 달 날짜별 거리</h3>
+        <AppHeading as="h3" variant="section">이번 달 날짜별 거리</AppHeading>
         <span>{Number(month.slice(5, 7))}월</span>
       </div>
       <div className="distance-overview__weekdays" aria-hidden="true">

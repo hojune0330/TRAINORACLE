@@ -1,4 +1,8 @@
 /* noqa: SIZE_OK - one beta surface owns shared responsive selectors; split after the public layout stabilizes. */
+.plan-instant-entry {
+  padding: var(--space-4) var(--space-5);
+}
+
 .home-plan-action {
   width: 100%;
   min-height: var(--app-action-height);
@@ -1094,9 +1098,9 @@
 
 .plan-eyebrow {
   margin-top: var(--space-6);
-  color: var(--brand);
+  color: var(--ink-2);
   font-family: var(--mono);
-  font-size: var(--fs-mono-xs);
+  font-size: var(--fs-caption);
   font-weight: 700;
 }
 
@@ -1109,9 +1113,24 @@
   margin: var(--space-2) 0 0;
   font-family: var(--sans);
   font-size: var(--fs-app-title);
-  line-height: 1.25;
+  font-weight: var(--fw-app-heading);
+  line-height: var(--lh-app-heading);
   letter-spacing: 0;
   word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.plan-intake h1::before,
+.plan-candidates h1::before,
+.active-plan h1::before,
+.plan-race-preview h1::before,
+.plan-notation-reader h1::before {
+  content: "";
+  display: block;
+  width: 28px;
+  height: 2px;
+  margin-bottom: var(--space-3);
+  background: var(--brand);
 }
 
 .plan-heading-row {

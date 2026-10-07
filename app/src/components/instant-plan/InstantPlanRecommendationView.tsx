@@ -7,6 +7,7 @@ import type {
 } from "../../domain/instant-plan-contract"
 import "./instant-plan.css"
 import { RecommendationCalendar } from "./RecommendationCalendar"
+import { AppHeading } from "../AppHeading"
 
 export type InstantPlanRecommendationViewProps = {
   readonly recommendation: InstantPlanRecommendation
@@ -70,7 +71,7 @@ export function InstantPlanRecommendationView({
 
   return (
     <section className="instant-plan instant-plan--recommendation" aria-labelledby={headingId}>
-      <h2 id={headingId} className="instant-plan__heading">{recommendation.title}</h2>
+      <AppHeading as="h2" accent id={headingId} className="instant-plan__heading">{recommendation.title}</AppHeading>
       {recommendation.source.kind === "CREATOR" && (
         <p className="instant-plan__source">
           {recommendation.creatorLabel || "선택한 제작자 프로그램"}

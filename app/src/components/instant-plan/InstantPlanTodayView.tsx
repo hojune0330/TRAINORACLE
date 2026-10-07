@@ -1,5 +1,6 @@
 import { useEffect, useId, useState } from "react"
 import type { InstantPlanToday } from "../../domain/instant-plan-contract"
+import { AppHeading } from "../AppHeading"
 import "./instant-plan.css"
 
 export type InstantPlanTodayViewProps = {
@@ -117,7 +118,7 @@ export function InstantPlanTodayView({
     <section className={`instant-plan${compact ? " instant-plan--today-compact" : ""}`} aria-labelledby={headingId}>
       <p className="instant-plan__eyebrow">{today.dateLabel}</p>
       {today.sourceLabel && <p className="instant-plan__source">{today.sourceLabel}</p>}
-      <h2 id={headingId} className="instant-plan__heading">{today.title}</h2>
+      <AppHeading as="h2" variant={compact ? "section" : "screen"} accent={!compact} id={headingId} className="instant-plan__heading">{today.title}</AppHeading>
       {(!compact || !["SCHEDULED", "PARTLY_RECORDED", "RECORDED"].includes(today.state)) && <p className="instant-plan__status" role={today.state === "UNAVAILABLE" ? "alert" : "status"}>
         {stateMessages[today.state]}
       </p>}

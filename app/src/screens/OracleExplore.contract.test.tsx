@@ -81,9 +81,11 @@ describe("Oracle exploration examples", () => {
 
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
     expect(screen.getByRole("heading", { name: topic.example.headline })).toBeVisible()
+    expect(screen.getByRole("heading", { level: 1, name: topic.example.headline })).toHaveClass("app-heading--screen", "app-heading--accent")
     expect(screen.getByText(id === "priority" ? "예시 상황" : "예시 기록")).toBeVisible()
     expect(screen.getByText("내 기록을 분석한 결과가 아니에요")).toBeVisible()
     expect(screen.getByText(topic.example.source)).toBeVisible()
+    expect(screen.getByText("오라클", { selector: ".oracle-explore__header > span" })).toHaveClass("app-chrome-title")
 
     const explanation = screen.getByText("예시의 기준과 읽는 방법")
     const personalAction = screen.getByRole("button", { name: topic.personalLabel })

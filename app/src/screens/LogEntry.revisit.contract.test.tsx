@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { JournalEntry } from "../domain/journal-store"
 import { loadEntries, replaceAllEntries } from "../domain/journal-store"
 import { LogEntry } from "./LogEntry"
@@ -134,11 +134,68 @@ describe("past journal revisit forms", () => {
 
   it("describes a historical chooser as the selected date rather than today", () => {
     // When
-    render(<LogEntry entryType="choose" targetDate={DATE} />)
+    const { container } = render(<LogEntry entryType="choose" targetDate={DATE} />)
 
     // Then
     expect(screen.getByText("이 날짜의 첫 일지예요. 원하는 항목만 남겨도 괜찮아요.")).toBeVisible()
     expect(screen.queryByText(/오늘 첫 일지/u)).not.toBeInTheDocument()
+    expect(screen.getAllByText("이 날짜의 첫 일지예요. 원하는 항목만 남겨도 괜찮아요.")).toHaveLength(1)
+    const intro = container.querySelector(".contextual-entry-intro")
+    expect(intro).toContainElement(screen.getByRole("heading", { name: "어떤 일지를 쓰세요?" }))
+    expect(intro).toHaveTextContent("이 날짜의 첫 일지예요.")
+    expect(intro?.querySelector("img")).toHaveAttribute("width", "64")
+    expect(intro?.querySelector("img")).toHaveAttribute("alt", "")
+    expect(intro?.querySelector("img")).toHaveAttribute("aria-hidden", "true")
+  })
+
+  it("keeps a focused native screen heading while its four entry actions stay separate", () => {
+    const { container } = render(<LogEntry entryType="choose" targetDate={DATE} />)
+    const heading = screen.getByRole("heading", { name: "어떤 일지를 쓰세요?", level: 1 })
+
+    expect(heading).toHaveClass("app-heading", "app-heading--screen", "app-heading--accent")
+    expect(heading).toHaveAttribute("tabindex", "-1")
+    expect(heading).toHaveFocus()
+    expect(heading.style.fontSize).toBe("")
+    expect(heading.style.fontWeight).toBe("")
+    expect(container.querySelectorAll(".app-heading--accent")).toHaveLength(1)
+    expect(container.querySelectorAll("[data-testid^='entry-choice-']")).toHaveLength(4)
+    expect(screen.getByText("이 날짜의 첫 일지예요. 원하는 항목만 남겨도 괜찮아요.")).not.toHaveClass("app-heading")
+  })
+
+  it("limits the small guide to the selected empty date without changing the four choices or import action", async () => {
+    const user = userEvent.setup()
+    const onDone = vi.fn()
+    const onOpenImport = vi.fn()
+    const recordedDate = "2026-07-21"
+    expect(replaceAllEntries([{
+      id: "recorded-evening",
+      kind: "evening",
+      date: recordedDate,
+      savedAt: "2026-07-21T20:00:00.000Z",
+      syncState: "local",
+      sleepH: 8,
+      sleepQuality: 4,
+      weightKg: "",
+      restingHr: "",
+      painParts: {},
+      mood: 4,
+      note: "",
+    } satisfies JournalEntry]).ok).toBe(true)
+    const view = render(<LogEntry entryType="choose" targetDate={DATE} onDone={onDone} onOpenImport={onOpenImport} />)
+
+    expect(view.container.querySelectorAll("img")).toHaveLength(1)
+    for (const [index, type] of ["quick-session", "post-session", "evening", "race"].entries()) {
+      await user.click(screen.getByTestId(`entry-choice-${type}`))
+      expect(onDone).toHaveBeenNthCalledWith(index + 1, type)
+    }
+    expect(view.container.querySelectorAll("[data-testid^='entry-choice-']")).toHaveLength(4)
+    await user.click(screen.getByTestId("open-import"))
+    expect(onOpenImport).toHaveBeenCalledOnce()
+
+    view.rerender(<LogEntry entryType="choose" targetDate={recordedDate} onDone={onDone} onOpenImport={onOpenImport} />)
+    expect(view.container.querySelector("img")).toBeNull()
+    expect(screen.getByText("이 날짜에 남긴 일지가 있어요. 기록을 더 쓰면 같은 날짜에 모아 보여드려요.")).toBeVisible()
+    expect(screen.queryByText(/첫 일지예요/u)).not.toBeInTheDocument()
   })
 
   it("describes a historical race as belonging to the selected date", () => {

@@ -137,7 +137,12 @@
   --app-plan-mark-size: 72px;
   --app-dialog-max-width: 360px;
   --fs-app-title: 24px;
+  /* Compatibility role for existing calendar/group headings, not AppHeading section. */
   --fs-app-section-title: 22px;
+  --fs-app-hero: clamp(26px, 6vw, 32px);
+  --fs-app-metric: 28px;
+  --fw-app-heading: 700;
+  --lh-app-heading: 1.4;
 }
 
 /* ============== BASE ============== */
