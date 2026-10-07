@@ -1,0 +1,151 @@
+{
+  "purpose": "User-supplied advertisement screenshots for design discussion; not licensed game assets.",
+  "submissions": 24,
+  "uniqueImages": 17,
+  "items": [
+    {
+      "batch": "gun-hero",
+      "originalFilename": "1-사진-1.jpg",
+      "sha256": "17696ebb7a1c07678e7915f5938ec033bc92e0f87504102c5591da2b7c2935ce",
+      "file": "references/gun-hero-01.jpg"
+    },
+    {
+      "batch": "cat-growth",
+      "originalFilename": "1-사진-1.jpg",
+      "sha256": "3a36b3fa5a7ad2009f61532108dee7c33f6bcee9f185623e6362f6f8f18b493f",
+      "file": "references/cat-growth-01.jpg"
+    },
+    {
+      "batch": "cat-growth",
+      "originalFilename": "2-사진-2.jpg",
+      "sha256": "239e162dd3f9864f8ec4cbbe70a9a0ff5c29c4ed79f87181b20dd19f04987d36",
+      "file": "references/cat-growth-02.jpg"
+    },
+    {
+      "batch": "cat-growth",
+      "originalFilename": "3-사진-3.jpg",
+      "sha256": "83ad05e1dfea84cd0ef0604e21f089714d4db66cb2a86e5a27a820bef214878d",
+      "file": "references/cat-growth-03.jpg"
+    },
+    {
+      "batch": "cat-growth",
+      "originalFilename": "4-사진-4.jpg",
+      "sha256": "5c091ded36e3050c020331e0aa2947675ca436a641b42f2d59a7855f11a80196",
+      "file": "references/cat-growth-04.jpg"
+    },
+    {
+      "batch": "cat-growth",
+      "originalFilename": "5-사진-5.jpg",
+      "sha256": "85adb281d02e6d1ef668ed41fb3dde0247d1692c8d6aeacc72a58e693d6e552a",
+      "file": "references/cat-growth-05.jpg"
+    },
+    {
+      "batch": "cat-growth",
+      "originalFilename": "6-사진-6.jpg",
+      "sha256": "d76724c1c4710e3f9a701434bf7fd4a4094e58d79e5382480c713009c42222fe",
+      "file": "references/cat-growth-06.jpg"
+    },
+    {
+      "batch": "cat-growth",
+      "originalFilename": "7-사진-7.jpg",
+      "sha256": "f48b44bcea997fde3b0f925ba25b8e84eb3e5ba64b50d5ed77100dfd2da5d8aa",
+      "file": "references/cat-growth-07.jpg"
+    },
+    {
+      "batch": "cat-growth",
+      "originalFilename": "8-사진-8.jpg",
+      "sha256": "f42640ac511c43b49aa7999134bab52f1d247cdf6d2d59210da8386e1ca2b235",
+      "file": "references/cat-growth-08.jpg"
+    },
+    {
+      "batch": "cat-growth",
+      "originalFilename": "9-사진-9.jpg",
+      "sha256": "462ed33c2fa33cbf5675fcaf11fc926b7a928f02b31c269dcc0dab9221d0c2c0",
+      "file": "references/cat-growth-09.jpg"
+    },
+    {
+      "batch": "cat-growth",
+      "originalFilename": "10-사진-10.jpg",
+      "sha256": "6882c475706f9a3731754e6177afed053db04b8aca6920ed3d25048ecccf07e9",
+      "file": "references/cat-growth-10.jpg"
+    },
+    {
+      "batch": "cat-laser",
+      "originalFilename": "1-사진-1.jpg",
+      "sha256": "3b1c31c56191eac1b721801ee18e7d945ab848d1df2f9657db6a8449c3fd89a9",
+      "file": "references/cat-laser-01.jpg"
+    },
+    {
+      "batch": "cat-laser",
+      "originalFilename": "2-사진-2.jpg",
+      "sha256": "ecc4d1e02cf31d416d8fbe07f16d3ff5f393e35b206be558ad858354f62aeb73",
+      "file": "references/cat-laser-02.jpg"
+    },
+    {
+      "batch": "cat-laser",
+      "originalFilename": "3-사진-3.jpg",
+      "sha256": "e6b8a28965468c62ed9bd319d80a0b3d068258577ebe7f6cc3bb11f9cb4c9e12",
+      "file": "references/cat-laser-03.jpg"
+    },
+    {
+      "batch": "cat-laser",
+      "originalFilename": "4-사진-4.jpg",
+      "sha256": "5499237f89a566b101625f860b655d18ce2db56a1766720bc142185607a095df",
+      "file": "references/cat-laser-04.jpg"
+    },
+    {
+      "batch": "cat-laser",
+      "originalFilename": "5-사진-5.jpg",
+      "sha256": "7ff44d108fd99c16844e0da11e30ff8cc2044c9200b870dd94b406e0d6463548",
+      "file": "references/cat-laser-05.jpg"
+    },
+    {
+      "batch": "cat-laser",
+      "originalFilename": "6-사진-6.jpg",
+      "sha256": "2a3d30d4a8a5c4f70ac6ab82574ebb564369c8d2dd537746f3483ef66f6cc060",
+      "file": "references/cat-laser-06.jpg"
+    },
+    {
+      "batch": "cat-repeat",
+      "originalFilename": "1-사진-1.jpg",
+      "sha256": "2a3d30d4a8a5c4f70ac6ab82574ebb564369c8d2dd537746f3483ef66f6cc060",
+      "file": "references/cat-laser-06.jpg"
+    },
+    {
+      "batch": "cat-repeat",
+      "originalFilename": "2-사진-2.jpg",
+      "sha256": "7ff44d108fd99c16844e0da11e30ff8cc2044c9200b870dd94b406e0d6463548",
+      "file": "references/cat-laser-05.jpg"
+    },
+    {
+      "batch": "cat-repeat",
+      "originalFilename": "3-사진-3.jpg",
+      "sha256": "5499237f89a566b101625f860b655d18ce2db56a1766720bc142185607a095df",
+      "file": "references/cat-laser-04.jpg"
+    },
+    {
+      "batch": "cat-repeat",
+      "originalFilename": "4-사진-4.jpg",
+      "sha256": "e6b8a28965468c62ed9bd319d80a0b3d068258577ebe7f6cc3bb11f9cb4c9e12",
+      "file": "references/cat-laser-03.jpg"
+    },
+    {
+      "batch": "cat-repeat",
+      "originalFilename": "5-사진-5.jpg",
+      "sha256": "ecc4d1e02cf31d416d8fbe07f16d3ff5f393e35b206be558ad858354f62aeb73",
+      "file": "references/cat-laser-02.jpg"
+    },
+    {
+      "batch": "cat-repeat",
+      "originalFilename": "6-사진-6.jpg",
+      "sha256": "6882c475706f9a3731754e6177afed053db04b8aca6920ed3d25048ecccf07e9",
+      "file": "references/cat-growth-10.jpg"
+    },
+    {
+      "batch": "cat-repeat",
+      "originalFilename": "7-사진-7.jpg",
+      "sha256": "f42640ac511c43b49aa7999134bab52f1d247cdf6d2d59210da8386e1ca2b235",
+      "file": "references/cat-growth-08.jpg"
+    }
+  ]
+}
