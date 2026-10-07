@@ -24,6 +24,7 @@ function trendEntries(): readonly JournalEntry[] {
       rpe: 4,
       memo: "",
       fieldProvenance: {
+        system: { provenance: "EXPLICIT" },
         distanceKm: { provenance: "EXPLICIT" },
         durationMin: { provenance: "EXPLICIT" },
         avgPace: { provenance: "EXPLICIT" },

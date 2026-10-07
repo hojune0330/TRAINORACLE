@@ -27,6 +27,7 @@ import { ACCOUNT_REWARD_EVENT, accountRewardsEnabled, accountRewardStatus, readA
 import { createSavedFactReceipt } from "./domain/save-receipt"
 import { analysisNavigationForReceipt, type AnalysisNavigation, type AnalysisSection } from "./domain/analysis-navigation"
 import { buildOraclePersonalResult } from "./domain/oracle-personal-result"
+import { derivePersonalOracle } from "./domain/personal-oracle"
 import { loadPlanBetaState, readPlanBetaStateFromStorage } from "./domain/plan-beta-store"
 import { usePlanEvidenceHistory } from "./hooks/usePlanEvidenceHistory"
 import { PlanEvidenceHistoryNotice } from "./components/PlanEvidenceHistoryNotice"
@@ -706,23 +707,34 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     topicId: overlay.topic, entries: loadEntries(), planState: loadPlanBetaState(),
     athleteRecords: athleteRecords.records, today: todayISO(), planHistory: oracleHistory.history,
   }) : undefined
+  const homePlanRead = v.tab === "home" ? (() => {
+    try { return readPlanBetaStateFromStorage(undefined, undefined, multiPlanRuntime?.readMultiAdjustedEvidenceV3?.()) }
+    catch { return { kind: "storage_error" as const } }
+  })() : null
+  const homePlanState = homePlanRead?.kind === "loaded" ? homePlanRead.state : null
+  const homePlanReadUnavailable = homePlanRead !== null && homePlanRead.kind !== "loaded" && homePlanRead.kind !== "missing"
   const homeCandidates = v.tab === "home" ? (["focus", "level", "mix"] as const).flatMap(topic => {
     if (topic === "level" && athleteRecords.status !== "READY") return []
     if (topic !== "level" && (calendarSnapshot.status !== "READY" || !oracleHistory.journalReadComplete)) return []
     const result = buildOraclePersonalResult({ topicId: topic, entries: calendarSnapshot.entries,
-      planState: loadPlanBetaState(), athleteRecords: athleteRecords.records,
+      planState: homePlanState, athleteRecords: athleteRecords.records,
       today: todayISO(), planHistory: oracleHistory.history })
     return result.status !== "missing" && result.rows.length > 0 ? [{ topic, result }] : []
   }) : []
   const homeCandidate = homeCandidates[0]
-  const homeSourceUnavailable = calendarSnapshot.status !== "READY" || athleteRecords.status !== "READY" || !oracleHistory.journalReadComplete
+  const homeSourceUnavailable = calendarSnapshot.status !== "READY" || athleteRecords.status !== "READY"
+    || !oracleHistory.journalReadComplete || homePlanReadUnavailable
+  const homePlanProgress = !homeCandidate && !homeSourceUnavailable && homePlanState !== null
+    ? derivePersonalOracle({ observations: [], today: todayISO(), planState: homePlanState })
+      .insights.find(insight => insight.id === "PLAN_FOLLOW_THROUGH" && insight.available)
+    : undefined
   const homeExample = getOracleTopic("focus")
   const homeOraclePreview = <HomeOraclePreview
-    question={homeCandidate ? getOracleTopic(homeCandidate.topic).question : homeSourceUnavailable ? "내 기록을 확인할까요?" : homeExample.question}
-    answer={homeCandidate?.result.headline ?? (homeSourceUnavailable ? "기록을 아직 확인하지 못했어요. 저장 상태를 먼저 살펴봐요." : homeExample.example.headline)}
-    sourceLabel={homeCandidate ? `${homeCandidate.result.source}${homeCandidate.topic === "focus" ? ` · ${homeCandidate.result.rows[0]?.label.split(" · ")[0]}~${homeCandidate.result.rows.at(-1)?.label.split(" · ")[0]}` : ""} · 확인일 ${todayISO()}` : homeSourceUnavailable ? "확인되지 않은 자료는 결과에 넣지 않아요." : homeExample.example.source}
-    kind={homeCandidate ? homeCandidate.result.status === "partial" ? "partial" : "personal" : homeSourceUnavailable ? "unavailable" : "example"}
-    onOpen={() => homeCandidate ? openOracle(homeCandidate.topic, "personal") : homeSourceUnavailable ? goTab("trends") : openOracle("focus", "example")}
+    question={homePlanProgress ? "저장한 훈련 계획" : homeCandidate ? getOracleTopic(homeCandidate.topic).question : homeSourceUnavailable ? "내 기록을 확인할까요?" : homeExample.question}
+    answer={homePlanProgress?.headline ?? homeCandidate?.result.headline ?? (homeSourceUnavailable ? homePlanReadUnavailable ? "저장한 훈련 계획을 확인하지 못했어요." : "기록 확인 후 오라클 결과를 볼 수 있어요." : homeExample.example.headline)}
+    sourceLabel={homePlanProgress ? `${homePlanProgress.evidence} · 완료 표시는 실제 일지와 다른 기록이에요.` : homeCandidate ? `${homeCandidate.result.source}${homeCandidate.topic === "focus" ? ` · ${homeCandidate.result.rows[0]?.label.split(" · ")[0]}~${homeCandidate.result.rows.at(-1)?.label.split(" · ")[0]}` : ""} · 확인일 ${todayISO()}` : homeSourceUnavailable ? "확인되지 않은 자료는 결과에 넣지 않아요." : homeExample.example.source}
+    kind={homePlanProgress ? "plan" : homeCandidate ? homeCandidate.result.status === "partial" ? "partial" : "personal" : homeSourceUnavailable ? "unavailable" : "example"}
+    onOpen={() => homePlanProgress ? goTab("trends") : homeCandidate ? openOracle(homeCandidate.topic, "personal") : homeSourceUnavailable ? goTab("trends") : openOracle("focus", "example")}
   />
 
   const accountEnabled = accountFeatureEnabled()
@@ -982,7 +994,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       : (
         <Home
           oraclePreview={homeOraclePreview}
-          oraclePreviewLabel={homeCandidate ? "내 기록으로 본 오라클" : homeSourceUnavailable ? "오라클 기록 상태" : "오라클 결과 예시 보기"}
+          oraclePreviewLabel={homePlanProgress ? "내 계획 진행" : homeCandidate ? "내 기록으로 본 오라클" : homeSourceUnavailable ? "오라클 기록 상태" : "오라클 결과 예시 보기"}
           onOpenImport={openImport}
           onOpenRecords={() => openOverlay({ kind: "athlete-records", initialPurpose: "PERSONAL_BEST" })}
           onWriteLog={(entryType) => startRecording(entryType)}

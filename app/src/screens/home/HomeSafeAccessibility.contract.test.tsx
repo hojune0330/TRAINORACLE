@@ -77,9 +77,9 @@ describe("home hub destinations and information", () => {
 
   it("keeps learning and decorating visible while detailed rewards and graphs leave home", () => {
     const learn = vi.fn(), decorate = vi.fn(), openTrends = vi.fn()
-    render(<Home onOpenContent={learn} onOpenRewards={decorate} onOpenTrends={openTrends} />)
+    render(<Home onWriteLog={vi.fn()} onOpenContent={learn} onOpenRewards={decorate} onOpenTrends={openTrends} />)
     expect(screen.getByRole("button", { name: "오늘 기록하기" })).toBeVisible()
-    expect(screen.getByRole("button", { name: "하루 마무리 기록하기" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "하루 마무리" })).toBeVisible()
     expect(screen.queryByRole("button", { name: /훈련 계획 만들기/ })).toBeNull()
     const analysis = screen.getByRole("button", { name: /훈련량·변화 보기/ })
     const recent = screen.getByRole("region", { name: "최근 하루 기록" })
@@ -102,7 +102,8 @@ describe("home hub destinations and information", () => {
     render(<Home onOpenDay={onOpenDay} onWriteLog={onWriteLog} />)
     expect(screen.getByText("오늘 남긴 기록 1개")).toBeVisible()
     expect(screen.queryByRole("button", { name: "오늘 기록하기" })).toBeNull()
-    expect(screen.queryByRole("region", { name: "오늘의 기분 몸 상태 날씨" })).toBeNull()
+    expect(screen.getByRole("button", { name: "기분·몸 상태" })).toBeVisible()
+    expect(screen.getByRole("region", { name: "오늘의 기분 몸 상태 날씨" })).not.toBeVisible()
     expect(screen.queryByText("오늘 훈련을 모두 마쳤어요")).toBeNull()
     fireEvent.click(screen.getByRole("button", { name: "오늘 기록 보기" }))
     fireEvent.click(screen.getByRole("button", { name: "기록 더 남기기" }))
@@ -167,7 +168,7 @@ describe("home hub destinations and information", () => {
   it("keeps the optional daily context inside today and usable", async () => {
     const user = userEvent.setup()
     render(<Home />)
-    await user.click(screen.getByText("기분·몸 상태·날씨 남기기"))
+    await user.click(screen.getByText("기분·몸 상태"))
     await user.click(screen.getByRole("button", { name: "날씨 맑음" }))
     const context = screen.getByRole("region", { name: "오늘의 기분 몸 상태 날씨" })
     expect(screen.getByLabelText("오늘")).toContainElement(context)
