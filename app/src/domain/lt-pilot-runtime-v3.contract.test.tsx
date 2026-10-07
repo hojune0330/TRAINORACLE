@@ -178,7 +178,7 @@ it("opens the current catalog workout flow from the first plan result action wit
     kind: candidate.kind, sessions: candidate.sessions.map(({ day, slot, role }) => ({ day, slot, role })),
   }))
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
-  fireEvent.click(screen.getByRole("button", { name: "처방 확인·조절" }))
+  fireEvent.click(screen.getByRole("button", { name: "훈련 조절" }))
   const address = screen.getByRole("combobox", { name: "바꿀 일정" })
   expect(address).toBeVisible()
   expect(address).toHaveValue("5:AM")
