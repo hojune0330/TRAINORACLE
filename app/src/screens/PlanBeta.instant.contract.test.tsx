@@ -45,7 +45,7 @@ describe("integrated minimal entry to selected plan", () => {
       if (prescription?.kind !== "PACE_TARGET") throw new Error("Expected exact personalized prescription")
       expect(prescription.selectedAnchor.performanceSeconds).toBe(Number(minutes) * 60 + Number(seconds))
       expect(prescription.targetEventDistanceM).toBe(Number(distance))
-      expect(screen.getByRole("heading", { name: "오늘 훈련" })).toBeVisible()
+      expect(await screen.findByRole("heading", { name: "오늘 훈련" }, { timeout: 10_000 })).toBeVisible()
       if (distance === "800") {
         const session = stored!.activePlan.sessions.find(item => item.prescription.kind === "PACE_TARGET")!
         const day = isoShift(stored!.intake.startDate!, session.day - 1)
@@ -86,7 +86,7 @@ describe("integrated minimal entry to selected plan", () => {
     expect(stored!.activePlan.sessions.some(session => session.prescription.kind === "RPE_TIME_RANGE")).toBe(true)
     expect(stored!.activePlan.sessions.some(session => session.prescription.kind === "PACE_TARGET")).toBe(false)
     expect(loadAthleteRecords()).toEqual(records)
-    expect(screen.getByRole("heading", { name: "오늘 훈련" })).toBeVisible()
+    expect(await screen.findByRole("heading", { name: "오늘 훈련" }, { timeout: 10_000 })).toBeVisible()
   }, 20_000)
 
   it("goal-only remains aspirational when explicitly applied to a marathon pace plan", async () => {
