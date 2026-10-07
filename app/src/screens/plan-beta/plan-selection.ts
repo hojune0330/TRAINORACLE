@@ -275,7 +275,8 @@ export async function saveSelectedPlanCandidate(
       },
     )
     // The account may change again between the locked write and its caller's continuation.
-    if (result.kind === "saved" && !scopeIsCurrent()) {
+    if (!scopeIsCurrent()
+        && !(result.kind === "rejected" && result.code === "ACCOUNT_PLAN_STALE")) {
       return { kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" }
     }
     return result
