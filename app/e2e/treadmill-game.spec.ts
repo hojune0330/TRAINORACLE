@@ -50,11 +50,14 @@ test("explains the rules before play, falls on inaction and restarts with pointe
   await expect(page.getByRole("heading", { name: "30초 동안 바닥 위에서 버티세요" })).toBeVisible()
   await expect(page.getByRole("navigation")).toHaveCount(0)
   await page.getByRole("button", { name: "시작", exact: true }).click()
-  await page.clock.runFor(8000)
+  await page.clock.runFor(1000)
+  await expect(page.getByRole("button", { name: /점프/ })).toBeDisabled()
+  await page.clock.runFor(10000)
   await expect(page.getByRole("heading", { name: "트랙에서 뒤로 떨어졌어요" })).toBeVisible()
   await expect(page.getByText(/^버틴 시간/)).toBeVisible()
   await expect(page.getByText(/손을 놓으세요|다시 달리세요|미리 쉬어 두세요/)).toBeVisible()
   await page.getByRole("button", { name: "다시 시작", exact: true }).click()
+  await page.clock.runFor(3100)
   const run = page.getByRole("button", { name: /달리기 꾹/ })
   await run.hover(); await page.mouse.down(); await page.clock.runFor(1500)
   await expect(run).toHaveAttribute("aria-pressed", "true")
@@ -97,7 +100,7 @@ test("clears three stages with real keys, shows trade-offs and resets the build"
         await page.screenshot({ path: info.outputPath("checkpoint.png"), fullPage: true })
       }
       await page.getByRole("button", { name: /일정한 박자/ }).click()
-      await expect(page.getByText(checkpoints === 0 ? "2구간 · 진흙" : "3구간 · 가시밭")).toBeVisible()
+      await expect(page.getByRole("heading", { name: checkpoints === 0 ? "진흙" : "가시밭", exact: true })).toBeVisible()
       await page.getByRole("button", { name: "계속", exact: true }).click()
       checkpoints += 1
     }
@@ -118,6 +121,7 @@ test("focus loss pauses, Esc pauses, and reduced motion preserves movement and c
   await page.emulateMedia({ reducedMotion: "reduce" })
   await openGame(page)
   await page.getByRole("button", { name: "시작", exact: true }).click()
+  await page.clock.runFor(3100)
   await page.keyboard.down("ArrowRight"); await page.clock.runFor(500); await page.keyboard.up("ArrowRight")
   await page.getByRole("button", { name: /대시/ }).click()
   await expect(page.getByLabel("게임 에너지", { exact: true })).not.toHaveText("에너지 100")

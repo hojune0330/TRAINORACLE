@@ -30,6 +30,9 @@ export const TREADMILL_RULES = {
   /** Gap (hazard centre minus runner) where a jump clears. Drawn as a guide only. */
   jumpWindow: [0.07, 0.12],
   warnRear: 0.2,
+  /** "3, 2, 1" before a run and a short "ready" beat after every resume. Belt is still. */
+  countdownStart: 3,
+  countdownResume: 1,
 } as const
 
 export type TreadmillHazardKind = "barrier" | "spike"
@@ -71,10 +74,16 @@ export type TreadmillCommand =
   | { type: "upgrade"; upgrade: TreadmillUpgrade }
 
 export type TreadmillHazard = { id: number; kind: TreadmillHazardKind; x: number; hit: boolean; passed: boolean }
-export type TreadmillStats = { hits: number; cleared: number; jumps: number; dashes: number; restSeconds: number; lowestEnergy: number }
+export type TreadmillStats = {
+  hits: number; cleared: number; jumps: number; dashes: number; restSeconds: number; lowestEnergy: number
+  /** Hazards cleared in a row without a hit; multiplies the next clear. */
+  combo: number; bestCombo: number; score: number
+}
 
 export type TreadmillState = {
   mode: TreadmillMode
+  /** Seconds left before the belt moves. Inputs except holding run are ignored meanwhile. */
+  countdown: number
   stage: number
   seconds: number
   x: number
@@ -108,12 +117,15 @@ export type TreadmillState = {
   message: string
 }
 
-const freshStats = (): TreadmillStats => ({ hits: 0, cleared: 0, jumps: 0, dashes: 0, restSeconds: 0, lowestEnergy: TREADMILL_RULES.maxEnergy })
+const freshStats = (): TreadmillStats => ({ hits: 0, cleared: 0, jumps: 0, dashes: 0, restSeconds: 0, lowestEnergy: TREADMILL_RULES.maxEnergy, combo: 0, bestCombo: 0, score: 0 })
+
+/** Game score only: clears grow with the combo, stage finishes add a flat bonus. */
+export const TREADMILL_SCORE = { clear: 100, comboStep: 50, comboCap: 5, stage: 300 } as const
 
 export function newTreadmillRun(): TreadmillState {
   const rules = TREADMILL_RULES
   return {
-    mode: "ready", stage: 0, seconds: 0, x: rules.startPosition, y: 0, velocityY: 0,
+    mode: "ready", countdown: 0, stage: 0, seconds: 0, x: rules.startPosition, y: 0, velocityY: 0,
     energy: rules.maxEnergy, running: false, exhausted: false, dashLeft: 0, cooldown: 0, invulnerable: 0,
     hitFlash: 9, landed: 9, hazards: [], spawned: 0, upgrades: [], mudBonus: 0, jumpCost: rules.jumpCost,
     jumpVelocity: rules.jumpVelocity, dashFactor: 1, knockbackFactor: 1, strideFactor: 1, runDrainFactor: 1, recoveryFactor: 1,
@@ -141,13 +153,13 @@ export function applyUpgrade(state: TreadmillState, upgrade: TreadmillUpgrade): 
 
 export function treadmillCommand(state: TreadmillState, command: TreadmillCommand): TreadmillState {
   if (command.type === "start") {
-    return { ...newTreadmillRun(), mode: "running", message: "달리면 앞으로, 놓으면 회복하며 뒤로 밀려요." }
+    return { ...newTreadmillRun(), mode: "running", countdown: TREADMILL_RULES.countdownStart, message: "달리면 앞으로, 놓으면 회복하며 뒤로 밀려요." }
   }
   if (command.type === "pause" && state.mode === "running") {
     return { ...state, mode: "paused", running: false, exhausted: false, message: "일시정지" }
   }
   if (command.type === "resume" && state.mode === "paused") {
-    return { ...state, mode: "running", running: false, exhausted: false, message: "출발!" }
+    return { ...state, mode: "running", countdown: TREADMILL_RULES.countdownResume, running: false, exhausted: false, message: "출발!" }
   }
   if (command.type === "upgrade" && state.mode === "upgrade") {
     const next = applyUpgrade(state, command.upgrade)
@@ -159,6 +171,7 @@ export function treadmillCommand(state: TreadmillState, command: TreadmillComman
     }
   }
   if (state.mode !== "running") return state
+  if (state.countdown > 0 && command.type !== "run") return state
   switch (command.type) {
     case "run": return state.running === command.held ? state : { ...state, running: command.held, exhausted: command.held && state.energy <= 0 }
     case "jump": return state.y === 0 && state.velocityY === 0 && state.energy >= state.jumpCost
@@ -180,6 +193,7 @@ function overlaps(runnerX: number, hazard: TreadmillHazard): boolean {
 function step(state: TreadmillState, dt: number): TreadmillState {
   const rules = TREADMILL_RULES
   const stage = TREADMILL_STAGES[state.stage]!
+  if (state.countdown > 0) return { ...state, countdown: Math.max(0, state.countdown - dt) }
   const next: TreadmillState = { ...state, stats: { ...state.stats }, hazards: state.hazards.map(hazard => ({ ...hazard })) }
   next.seconds += dt
   next.cooldown = Math.max(0, state.cooldown - dt)
@@ -220,6 +234,7 @@ function step(state: TreadmillState, dt: number): TreadmillState {
     if (!hazard.hit && !hazard.passed && (overlaps(next.x, hazard) || crossed) && low && next.invulnerable === 0) {
       hazard.hit = true
       next.stats.hits += 1
+      next.stats.combo = 0
       if (hazard.kind === "spike") {
         return { ...next, mode: "over", running: false, exhausted: false, failure: "spike", message: "가시에 닿았어요." }
       }
@@ -231,6 +246,9 @@ function step(state: TreadmillState, dt: number): TreadmillState {
     } else if (!hazard.hit && !hazard.passed && hazard.x + shape.halfWidth < next.x - rules.runnerHalfWidth) {
       hazard.passed = true
       next.stats.cleared += 1
+      next.stats.score += TREADMILL_SCORE.clear + TREADMILL_SCORE.comboStep * Math.min(next.stats.combo, TREADMILL_SCORE.comboCap)
+      next.stats.combo += 1
+      next.stats.bestCombo = Math.max(next.stats.bestCombo, next.stats.combo)
     }
   }
   next.hazards = next.hazards.filter(hazard => hazard.x > -0.08)
@@ -239,6 +257,7 @@ function step(state: TreadmillState, dt: number): TreadmillState {
   }
   if (next.seconds >= rules.stageSeconds) {
     const clear = next.stage === TREADMILL_STAGES.length - 1
+    next.stats.score += TREADMILL_SCORE.stage
     return { ...next, seconds: rules.stageSeconds, mode: clear ? "clear" : "upgrade", running: false, exhausted: false,
       message: clear ? "세 구간 완주!" : "안전 발판 도착! 바닥이 멈췄어요." }
   }
@@ -274,6 +293,7 @@ export type TreadmillWarningTone = "neutral" | "caution" | "danger"
 
 export function treadmillWarning(state: TreadmillState): { text: string; tone: TreadmillWarningTone } {
   if (state.mode !== "running") return { text: state.message, tone: state.mode === "over" ? "danger" : "neutral" }
+  if (state.countdown > 0) return { text: "준비", tone: "neutral" }
   if (state.x < TREADMILL_RULES.warnRear) return { text: "뒤쪽 끝! 달리거나 대시", tone: "danger" }
   if (state.exhausted) return { text: "에너지 0 · 손을 놓아야 회복돼요", tone: "danger" }
   const ahead = nearestHazard(state)
@@ -300,4 +320,10 @@ export function treadmillTip(state: TreadmillState): string {
   if (state.stats.restSeconds < 1) return "계속 달리기만 하면 에너지가 바닥나요. 앞쪽에 여유가 있을 때 손을 놓으세요."
   if (state.stats.lowestEnergy <= 1) return "에너지가 바닥났어요. 뒤쪽 끝에 닿기 전에, 앞쪽에서 미리 쉬어 두세요."
   return "뒤로 밀리는 동안 너무 오래 쉬었어요. 빨간 구역에 닿기 전에 다시 달리세요."
+}
+
+/** 0 for a failed run; a finish earns 1, at most one hit 2, no hits 3. */
+export function treadmillStars(state: TreadmillState): 0 | 1 | 2 | 3 {
+  if (state.mode !== "clear") return 0
+  return state.stats.hits === 0 ? 3 : state.stats.hits <= 1 ? 2 : 1
 }

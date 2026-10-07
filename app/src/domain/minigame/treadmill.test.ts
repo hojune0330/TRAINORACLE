@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
-  advanceTreadmill, nearestHazard, newTreadmillRun, treadmillCommand, treadmillTip, treadmillWarning, upcomingHazards,
+  advanceTreadmill, nearestHazard, newTreadmillRun, treadmillCommand, treadmillStars, treadmillTip, treadmillWarning, upcomingHazards,
+  TREADMILL_SCORE,
   TREADMILL_RULES, TREADMILL_STAGES,
 } from "./treadmill"
 import type { TreadmillHazard, TreadmillHazardKind, TreadmillState, TreadmillUpgrade } from "./treadmill"
@@ -10,7 +11,8 @@ function advance(state: TreadmillState, seconds: number): TreadmillState {
   for (let left = seconds; left > 0.000001; left -= 0.05) next = advanceTreadmill(next, Math.min(left, 0.05))
   return next
 }
-const start = () => treadmillCommand(newTreadmillRun(), { type: "start" })
+/** A started run with the opening countdown already finished. */
+const start = () => ({ ...treadmillCommand(newTreadmillRun(), { type: "start" }), countdown: 0 })
 const hazard = (x: number, kind: TreadmillHazardKind = "barrier"): TreadmillHazard => ({ id: 1, kind, x, hit: false, passed: false })
 /** Empty course so a test isolates one rule; `spawned` past the end stops the fixed course from adding hazards. */
 const clean = (patch: Partial<TreadmillState> = {}): TreadmillState => ({ ...start(), spawned: 99, ...patch })
@@ -27,7 +29,7 @@ const player = (target: number, reserve: number, gap: number): Strategy => state
   return next
 }
 function play(picks: readonly TreadmillUpgrade[], strategy: Strategy): TreadmillState {
-  let state = start()
+  let state = treadmillCommand(newTreadmillRun(), { type: "start" })
   for (let frame = 0; frame < 4000 && (state.mode === "running" || state.mode === "upgrade"); frame++) {
     if (state.mode === "upgrade") state = treadmillCommand(treadmillCommand(state, { type: "upgrade", upgrade: picks[state.stage]! }), { type: "resume" })
     state = advanceTreadmill(strategy(state), 1 / 60)
@@ -111,6 +113,32 @@ describe("treadmill survival rules", () => {
     expect(upcomingHazards(early)).toHaveLength(1)
     expect(early.hazards).toHaveLength(0)
     expect(advance(start(), first + 0.05).hazards).toHaveLength(1)
+  })
+  it("counts down before the belt moves and ignores jump/dash meanwhile, again briefly after resume", () => {
+    const fresh = treadmillCommand(newTreadmillRun(), { type: "start" })
+    expect(fresh.countdown).toBe(TREADMILL_RULES.countdownStart)
+    expect(treadmillCommand(fresh, { type: "jump" })).toBe(fresh)
+    expect(treadmillCommand(fresh, { type: "dash" })).toBe(fresh)
+    const waiting = advance(fresh, TREADMILL_RULES.countdownStart - 0.1)
+    expect(waiting.x).toBe(fresh.x)
+    expect(waiting.seconds).toBe(0)
+    expect(advance(fresh, TREADMILL_RULES.countdownStart + 0.5).x).toBeLessThan(fresh.x)
+    const resumed = treadmillCommand(treadmillCommand(start(), { type: "pause" }), { type: "resume" })
+    expect(resumed.countdown).toBe(TREADMILL_RULES.countdownResume)
+  })
+  it("scores clears with a growing combo that a hit resets, and rates a finish with stars", () => {
+    const one = advance(clean({ y: 60, velocityY: 300, hazards: [hazard(0.53)] }), 0.4)
+    expect(one.stats.score).toBe(TREADMILL_SCORE.clear)
+    expect(one.stats.combo).toBe(1)
+    const two = advance({ ...one, y: 60, velocityY: 300, hazards: [{ ...hazard(one.x + 0.03), id: 2 }] }, 0.4)
+    expect(two.stats.score).toBe(TREADMILL_SCORE.clear * 2 + TREADMILL_SCORE.comboStep)
+    const hit = advanceTreadmill({ ...two, y: 0, velocityY: 0, invulnerable: 0, hazards: [{ ...hazard(two.x + 0.01), id: 3 }] }, 0.02)
+    expect(hit.stats.combo).toBe(0)
+    expect(hit.stats.bestCombo).toBe(2)
+    const finish = (hits: number) => advanceTreadmill({ ...clean({ stage: 2, seconds: 9.99 }), stats: { ...clean().stats, hits } }, 0.05)
+    expect(finish(0).stats.score).toBe(TREADMILL_SCORE.stage)
+    expect([0, 1, 4].map(hits => treadmillStars(finish(hits)))).toEqual([3, 2, 1])
+    expect(treadmillStars(advance(start(), 8))).toBe(0)
   })
   it("freezes all simulation during manual pause and upgrade choice", () => {
     const state = advance(treadmillCommand(start(), { type: "run", held: true }), 0.5)

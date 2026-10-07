@@ -24,6 +24,7 @@ npm run dev -- --host 127.0.0.1
 6. [참고 사진](references/README.md): 사용자 첨부 24개, 중복 제거 후 17개와 원래 묶음의 매핑.
 7. [이번 구현 검증](VALIDATION.md): 실제로 수행한 로컬 확인과 원격 CI·배포 상태.
 8. [UX·UI 2차 개선](UX_PASS_2.md): 규칙 v2(판정·고정 코스·예고·강화 재설계), 화면 재구성, 밸런스 가드.
+9. [3차 아트·UI 개편](ART_PASS_3.md): 모바일 게임 톤의 캐릭터·맵·이펙트·HUD, `--game-*` 토큰과 기준 §6A, 점수·콤보·별·카운트다운.
 
 ## 이번 PR에 구현된 것
 
@@ -44,7 +45,8 @@ npm run dev -- --host 127.0.0.1
 | `app/src/domain/minigame/treadmill.ts` | 경기 상태·게임용 수치·명령·물리·충돌·강화. 순수 함수, 훈련 도메인 의존 없음 |
 | `app/src/domain/minigame/treadmill.test.ts` | 추락·회복·점프·대시·충돌·정지·강화·재시작·프레임 차이 |
 | `app/src/screens/TreadmillGame.tsx` | 실제 입력·경기 화면·시계·초점·정지·수명 관리 |
-| `app/src/screens/treadmill/draw.ts` | 재사용하는 작은 캐릭터·바닥·장애물 Canvas 표현 |
+| `app/src/screens/treadmill/draw.ts` | 맵·트레드밀·이펙트·카운트다운을 그리는 렌더러(이펙트 상태는 여기, 게임 상태는 순수 엔진) |
+| `app/src/screens/treadmill/sprites.ts` | 러너·장애물 원본 스프라이트와 `--game-*` 팔레트 |
 | `app/src/styles/treadmill-game.css` | 기존 앱 토큰·서체·터치 규격을 쓰는 게임 화면 |
 | `app/src/screens/More.tsx`, `AppShell.tsx`, `DeferredMobileScreens.ts` | 진입·복귀·지연 로딩 |
 | `app/e2e/treadmill-game.spec.ts` | 실제 브라우저의 무행동·입력·완주·복귀·정지·모바일 |
