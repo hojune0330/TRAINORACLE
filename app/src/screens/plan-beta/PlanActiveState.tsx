@@ -255,7 +255,7 @@ export function PlanActiveState({
 
   return (
     <div ref={editHeading}>
-      {editing === "new-plan" && state.version === 3 ? <ActivePlanRebuildEditor state={state} onCancel={closeEditor} onApplied={editApplied} />
+      {editing === "new-plan" && state.version === 3 ? <ActivePlanRebuildEditor state={state} onCancel={closeEditor} onApplied={editApplied} onManageRecords={onManagePaceRecords} />
         : (editing === "workout" || editing === "schedule") && state.version === 3 ? <ActivePlanSessionEditor
           state={state} intent={editing} selection={editSelection} onClose={closeEditor} onApplied={editApplied}
           sourceOptions={editOptions} entriesReady={editRead.status === "complete"}

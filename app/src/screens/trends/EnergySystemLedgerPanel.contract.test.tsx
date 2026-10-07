@@ -64,6 +64,8 @@ describe("energy system ledger UI", () => {
     />)
 
     const region = screen.getByRole("region", { name: "에너지 시스템 누적" })
+    expect(within(region).getByRole("heading", { level: 2, name: /에너지 시스템 누적/u })).toHaveClass("app-heading--screen", "app-heading--accent")
+    expect(region.querySelectorAll(".app-heading--accent")).toHaveLength(1)
     expect(within(region).getByRole("img", { name: /LT 지속 페이스 1회/u })).toBeVisible()
     expect(within(region).getByText("40분 (1회 기록) · 8km (1회 기록) · RPE 6 (1회 기록)")).toBeVisible()
     expect(within(region).getByRole("img", { name: /MIX 여러 강도 조합 0회/u })).toBeVisible()
@@ -95,7 +97,10 @@ describe("energy system ledger UI", () => {
       mode="compact"
     />)
 
-    expect(screen.getByRole("region", { name: "에너지 시스템 요약" })).toBeVisible()
+    const region = screen.getByRole("region", { name: "에너지 시스템 요약" })
+    expect(region).toBeVisible()
+    expect(within(region).getByRole("heading", { level: 2, name: /에너지 시스템 기록/u })).toHaveClass("app-heading--section")
+    expect(region.querySelector(".app-heading--accent")).toBeNull()
     expect(screen.getByText("MIX 여러 강도 조합 0회")).toBeVisible()
     expect(screen.getByText(/현재 계획 예정 1회 · 완료 표시 0회/u)).toBeVisible()
   })

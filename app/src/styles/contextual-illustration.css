@@ -1,0 +1,46 @@
+.contextual-illustration {
+  display: block;
+  flex: 0 0 auto;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.contextual-illustration--small { width: 64px; height: 64px; }
+.contextual-illustration--medium { width: 80px; height: 80px; }
+
+.contextual-guide,
+.contextual-entry-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.contextual-guide__copy,
+.contextual-entry-intro__copy { min-width: 0; flex: 1 1 auto; }
+.contextual-guide__copy > :last-child { margin-bottom: 0; }
+.contextual-guide__copy p {
+  color: var(--ink-2);
+  font-size: var(--fs-body-sm);
+  line-height: 1.6;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.training-content-intro__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+.training-content-intro .training-content-intro__heading h1 { min-width: 0; margin: 0; }
+.calendar-empty-example__copy { min-width: 0; }
+.calendar-empty-example__copy .calendar-example-label { margin: var(--space-1) 0 0; }
+
+@media (max-width: 360px) {
+  .contextual-guide,
+  .contextual-entry-intro,
+  .training-content-intro__heading { gap: var(--space-2); }
+}

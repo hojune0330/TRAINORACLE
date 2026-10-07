@@ -13,6 +13,7 @@ import { accountJournalRecordsEnabled } from "../domain/account/account-journal-
 import { buildAccountImportDrafts, createAccountImportConfirmation } from "../domain/import/account-import"
 import { useImportOwnerScope } from "./import-activities/useImportOwnerScope"
 import { fileAnalysisFormats } from "../domain/import/file-analysis-policy"
+import { AppHeading } from "../components/AppHeading"
 
 type Stage =
   | { readonly step: "pick" }
@@ -192,9 +193,9 @@ export function ImportActivities({ onBack, onOpenLog, onOpenAnalysis, onOpenSumm
           <div style={{ ...mono, fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>
             워치·건강앱 운동 기록
           </div>
-          <h1 style={{ fontFamily: "var(--sans)", fontSize: 20, fontWeight: 500, margin: "4px 0 0" }}>
+          <AppHeading as="h1" variant="screen" accent className="import-activities__title">
             워치 기록 불러오기
-          </h1>
+          </AppHeading>
         </div>
       </div>
 

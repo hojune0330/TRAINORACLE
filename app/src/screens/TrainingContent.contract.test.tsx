@@ -7,9 +7,13 @@ afterEach(cleanup)
 
 describe("training content reader", () => {
   it("shows topics and source status first and keeps the reading boundary available on demand", () => {
-    render(<TrainingContent onBack={vi.fn()} />)
+    const { container } = render(<TrainingContent onBack={vi.fn()} />)
 
-    expect(screen.getByRole("heading", { name: "어떤 훈련이 궁금한가요?" })).toBeVisible()
+    const title = screen.getByRole("heading", { level: 1, name: "어떤 훈련이 궁금한가요?" })
+    expect(title).toBeVisible()
+    expect(title).toHaveClass("app-heading--screen", "app-heading--accent")
+    expect(container.querySelectorAll(".app-heading--accent")).toHaveLength(1)
+    expect(container.querySelector('img[src$="training-track-break-v1.webp"]')).toHaveAttribute("width", "64")
     expect(screen.getByRole("button", { name: /노르웨이식 더블 스레숄드/u })).toHaveTextContent("추가 검토 중인 기사")
     expect(screen.getByRole("button", { name: /크루즈 인터벌/u })).toHaveTextContent("원문 확인 자료")
     const help = screen.getByText("훈련 자료와 읽기 포인트 안내")
@@ -19,10 +23,19 @@ describe("training content reader", () => {
   })
 
   it("opens an article, saves it locally, and keeps the prescription boundary visible", () => {
-    render(<TrainingContent onBack={vi.fn()} />)
+    const { container } = render(<TrainingContent onBack={vi.fn()} />)
     fireEvent.click(screen.getByRole("button", { name: /크루즈 인터벌은 지속주와/u }))
 
-    expect(screen.getByRole("heading", { name: "따라 하기 전에" })).toBeVisible()
+    expect(container.querySelector('img[src$="training-track-break-v1.webp"]')).toBeNull()
+    expect(screen.getByRole("heading", { level: 1 })).toHaveClass("app-heading--screen", "app-heading--accent")
+    expect(container.querySelectorAll(".app-heading--accent")).toHaveLength(1)
+    const boundary = screen.getByRole("heading", { level: 2, name: "따라 하기 전에" })
+    expect(boundary).toBeVisible()
+    expect(boundary).toHaveClass("app-heading--section")
+    for (const heading of screen.getAllByRole("heading", { level: 2 })) {
+      expect(heading).toHaveClass("app-heading--section")
+      expect(heading).not.toHaveClass("app-heading--accent")
+    }
     expect(screen.getByText(/계획의 페이스나 반복 수를 정하지 않아요/u)).toBeVisible()
     expect(screen.getByRole("link", { name: /VDOT Threshold/u })).toHaveAttribute("rel", "noreferrer")
 

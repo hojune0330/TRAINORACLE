@@ -1,6 +1,6 @@
 # Luna Max Independent Persona Review
 
-Date: 2026-10-07  
+Date: 2026-10-07
 Scope: current dirty source for the home, plan, quick-record, calendar, Oracle, pace, memo, and exercise-log journeys. This is an independent source review; only this report is edited.
 
 ## Evidence Boundary

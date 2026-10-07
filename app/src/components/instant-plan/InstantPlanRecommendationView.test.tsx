@@ -53,6 +53,7 @@ describe("InstantPlanRecommendationView", () => {
     const onStart = vi.fn()
     render(<InstantPlanRecommendationView recommendation={recommendation} actionState={{ kind: "READY" }} onStart={onStart} />)
     expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent(recommendation.title)
+    expect(screen.getByRole("heading", { level: 2 })).toHaveClass("app-heading--screen", "app-heading--accent")
     expect(screen.getByText(recommendation.periodLabel)).toBeVisible()
     expect(screen.getAllByText("2회").some(node => !node.closest("details"))).toBe(true)
     expect(screen.getByText(recommendation.durationLabel)).not.toBeVisible()

@@ -26,6 +26,7 @@ describe("OraclePersonalResult", () => {
     ["partial", [{ label: "7월", value: 0, valueLabel: "0 km" }]],
   ] as const)("renders %s data with one-axis chart and accessible table", (status, rows) => {
     render(<OraclePersonalResult result={fixture(status, rows)} onAction={vi.fn()} onShowExample={vi.fn()} />)
+    expect(screen.getByRole("heading", { level: 1 })).toHaveClass("app-heading--screen", "app-heading--accent")
     expect(screen.getByRole("img")).toBeVisible()
     expect(screen.getByRole("table")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "기록 남기기" })).toBeVisible()
@@ -34,6 +35,7 @@ describe("OraclePersonalResult", () => {
 
   it("keeps the missing input requirement visible and closes explanation by default", () => {
     render(<OraclePersonalResult result={fixture("missing")} onAction={vi.fn()} onShowExample={vi.fn()} />)
+    expect(screen.getByRole("heading", { level: 1 })).toHaveClass("app-heading--screen", "app-heading--accent")
     expect(screen.getByText("필요한 입력: 거리와 시간이 있는 기록")).toBeVisible()
     expect(screen.queryByRole("img")).not.toBeInTheDocument()
     expect(screen.queryByRole("table")).not.toBeInTheDocument()

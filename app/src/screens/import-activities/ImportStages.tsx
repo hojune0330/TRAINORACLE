@@ -1,6 +1,7 @@
 import React from "react"
 import { ArrowLeft, Upload } from "lucide-react"
 import { SectionLb } from "../../components/JournalPrimitives"
+import { ContextualIllustration } from "../../components/ContextualIllustration"
 import { compactDate } from "../../domain/dates"
 import type { ActivityParseResult } from "../../domain/import/activity-file"
 import type { ImportDraft, ImportSaveIntent, ImportSaveResult } from "../../domain/import/import-draft"
@@ -25,10 +26,13 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
   const [source, setSource] = React.useState<"" | "garmin" | "coros" | "health">("")
   return (
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
-      <p style={{ fontFamily: "var(--sans)", fontSize: 13, lineHeight: 1.65, color: "var(--ink-2)", margin: 0 }}>
-        운동 파일을 고르면 <b>거리·시간을 먼저 확인</b>할 수 있어요.
-        원하는 운동만 일지로 옮겨요.
-      </p>
+      <div className="contextual-entry-intro">
+        <p className="contextual-entry-intro__copy" style={{ fontFamily: "var(--sans)", fontSize: 13, lineHeight: 1.65, color: "var(--ink-2)", margin: 0 }}>
+          운동 파일을 고르면 <b>거리·시간을 먼저 확인</b>할 수 있어요.
+          원하는 운동만 일지로 옮겨요.
+        </p>
+        {!busy && failure === null && <ContextualIllustration image="watch-file" size="medium" />}
+      </div>
 
       <button type="button" style={primaryBtn} disabled={busy} onClick={() => fileInputRef.current?.click()}>
         <Upload size={18} aria-hidden="true" /> 파일이 있어요 · 바로 선택

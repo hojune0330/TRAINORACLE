@@ -162,6 +162,7 @@ it.each(profileTopics.flatMap(topic => (["LOADING", "FAILED"] as const).map(stat
     fireEvent.click(screen.getByRole("button", { name: group }))
     fireEvent.click(screen.getByRole("button", { name: title }))
     const reader = screen.getByRole("dialog", { name: title })
+    expect(within(reader).getByRole("heading", { level: 1, name: title })).toHaveClass("app-heading--screen", "app-heading--accent")
     expect(within(reader).getByText("자료를 확인하지 못했어요")).toBeVisible()
     expect(within(reader).queryByText("일반 해설")).toBeNull()
     expect(vi.mocked(buildOracleContentReading).mock.lastCall).toEqual([id, expect.objectContaining({

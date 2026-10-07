@@ -168,11 +168,15 @@ describe("shared visual system", () => {
     expect(lexiconCss).toMatch(/\.term-help__more\s*\{[^}]*min-height:\s*var\(--app-touch-min\)/u)
   })
 
-  it("keeps the analysis back label on one line without widening its symmetric header tracks", () => {
+  it("centers the analysis chrome between equal flexible tracks while keeping both tools touch-safe", () => {
     const trends = readFileSync("src/screens/Trends.tsx", "utf8")
+    const css = readFileSync("src/screens/trends/trends-hub.css", "utf8")
 
-    expect(trends).toContain('gridTemplateColumns: "64px minmax(0, 1fr) 64px"')
-    expect(trends).toContain('gap: 3')
-    expect(trends).toContain('<span style={{ whiteSpace: "nowrap" }}>뒤로</span>')
+    expect(trends).toContain('className="trends-hub__header"')
+    expect(trends).toContain('className="app-chrome-title">오라클</h1>')
+    expect(css).toContain("grid-template-columns: minmax(64px, 1fr) auto minmax(64px, 1fr)")
+    expect(css).toContain("min-height: var(--app-touch-min)")
+    expect(css).toContain(".trends-hub__back span { white-space: nowrap; }")
+    expect(css).toContain(".trends-hub__pace { justify-self: end; }")
   })
 })

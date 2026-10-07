@@ -216,7 +216,7 @@ export function ActivePlan({
       )}
       <p className="plan-eyebrow">오라클 · 훈련 계획</p>
       <div className="active-plan__edit-heading">
-        <h1 id="active-plan-title">{frameLengthDays}일 훈련 계획</h1>
+        <h1 id="active-plan-title" tabIndex={-1}>{frameLengthDays}일 훈련 계획</h1>
       </div>
       {state.version === 3 && state.activePlanEdit && <p className="active-plan__journal-return" role="status">수정한 계획이에요. 이전 계획과 일지는 보관되어 있어요.</p>}
       {state.version === 3 && state.executionReplan && <details className="plan-detailed-options">

@@ -26,6 +26,7 @@ function Harness() {
 }
 async function initial() {
   const user = userEvent.setup(); render(<Harness />)
+  expect(screen.getByRole("heading", { level: 1 })).toHaveClass("app-heading--screen", "app-heading--accent")
   await user.click(screen.getByRole("button", { name: "3문항으로 시작" }))
   await user.click(screen.getByRole("button", { name: "건강과 체력" }))
   await user.click(screen.getByRole("button", { name: "기분 전환" }))
@@ -37,6 +38,7 @@ async function initial() {
 it("finishes three questions without a forced survey or guest writes", async () => {
   const storage = vi.spyOn(Storage.prototype, "setItem"); const user = await initial()
   expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("건강과 체력 · 기분 전환")
+  expect(screen.getByRole("heading", { level: 1 })).toHaveClass("app-heading--screen", "app-heading--accent")
   expect(screen.getByText(/저장 없는 체험/)).toBeVisible()
   expect(storage).not.toHaveBeenCalled()
   await user.click(screen.getByRole("button", { name: "이전 단계로" }))

@@ -11,6 +11,9 @@ export type InstantPlanEntryFormProps = {
   readonly today: string
   /** Initial values only. Remount for a different person's or program's entry. */
   readonly initialEntry?: InstantPlanEntry
+  /** Supporting tools may hide this mounted form; returning restores the current question. */
+  readonly active?: boolean
+  readonly isSubmitting?: boolean
   readonly disabled?: boolean
   readonly sourceLabel?: string
   readonly onDraftChange?: (dirty: boolean) => void
@@ -75,7 +78,7 @@ function entryFromCurrentOrGoal(
 
 /** Collects facts only. Eligibility, safety, generation and storage belong to the caller. */
 export function InstantPlanEntryForm({
-  onSubmit, today, initialEntry, disabled = false, sourceLabel, onDraftChange,
+  onSubmit, today, initialEntry, active = true, isSubmitting = false, disabled = false, sourceLabel, onDraftChange,
 }: InstantPlanEntryFormProps) {
   const id = useId()
   const [kind, setKind] = useState<InstantPlanEntry["kind"]>(initialEntry?.kind ?? "CURRENT_RECORD")
@@ -103,12 +106,15 @@ export function InstantPlanEntryForm({
   const dateRef = useRef<HTMLInputElement>(null)
   const stepHeadingRef = useRef<HTMLHeadingElement>(null)
   const lastStep = useRef(step)
+  const wasActive = useRef(false)
 
   useLayoutEffect(() => {
-    if (lastStep.current === step) return
+    const returned = active && !wasActive.current
+    wasActive.current = active
+    const stepChanged = lastStep.current !== step
     lastStep.current = step
-    stepHeadingRef.current?.focus()
-  }, [step])
+    if (active && (returned || stepChanged)) stepHeadingRef.current?.focus()
+  }, [active, step])
 
   useEffect(() => {
     const firstError = (["event", "minutes", "seconds", "achievedOn"] as const)
@@ -335,7 +341,7 @@ export function InstantPlanEntryForm({
                 </div>
               </details>
               {achievedOn === "" && <p id={`${id}-date-hint`} className="instant-plan__hint">
-                날짜가 없으면 최근 12개월 기록에서는 제외돼요.
+                개인 페이스를 계산하려면 기록 날짜가 필요해요. 모르면 비워 두세요. 시간·힘든 정도 기준 계획으로 시작할 수 있어요.
               </p>}
             </div>
           )}
@@ -343,7 +349,7 @@ export function InstantPlanEntryForm({
           {kind === "GOAL_ONLY" && <p className="instant-plan__hint">목표는 현재 실력과 구분해서 사용해요.</p>}
           <div className="instant-plan__step-actions">
             <button className="instant-plan__button" type="submit" disabled={disabled}>
-              {kind === "CURRENT_RECORD" ? "기록 입력 완료" : "목표 입력 완료"}
+              {isSubmitting ? "계획 준비 중…" : kind === "CURRENT_RECORD" ? "기록 입력 완료" : "목표 입력 완료"}
               <ArrowRight size={18} aria-hidden="true" />
             </button>
           </div>

@@ -131,8 +131,11 @@
 }
 
 .instant-plan__button {
-  background: var(--ink);
+  min-height: var(--app-action-height);
+  border-color: var(--brand);
+  background: var(--brand);
   color: var(--surface);
+  font-weight: var(--fw-app-heading);
 }
 
 .instant-plan__secondary {

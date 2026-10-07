@@ -168,6 +168,64 @@ describe("journal archive surface", () => {
     expect(screen.queryByRole("grid")).toBeNull()
   })
 
+  it("uses one screen title accent while keeping the explicit calendar example at section level", async () => {
+    const user = userEvent.setup()
+    const { container } = render(<JournalArchive entries={[]} selection={{ selectedMonth: null, selectedWeekStart: null }}
+      onSelectionChange={vi.fn()} onOpenDay={vi.fn()} onBack={vi.fn()} />)
+    const title = screen.getByRole("heading", { name: "지난 일지", level: 1 })
+    const exampleTitle = screen.getByRole("heading", { name: "첫 일지를 남겨보세요", level: 2 })
+
+    expect(title).toHaveClass("app-heading", "app-heading--screen", "app-heading--accent")
+    expect(exampleTitle).toHaveClass("app-heading", "app-heading--section")
+    expect(exampleTitle).not.toHaveClass("app-heading--accent")
+    expect(container.querySelectorAll(".app-heading--accent")).toHaveLength(1)
+    expect(screen.getByText("예시 · 내 기록에 저장되지 않아요")).not.toHaveClass("app-heading")
+
+    await user.click(screen.getByRole("button", { name: "예시 둘러보기" }))
+    const expandedTitle = screen.getByRole("heading", { name: "일지가 쌓인 달력", level: 2 })
+    expect(expandedTitle).toHaveClass("app-heading--section")
+    expect(expandedTitle).not.toHaveClass("app-heading--accent")
+    expect(container.querySelectorAll(".app-heading--accent")).toHaveLength(1)
+  })
+
+  it("keeps an opened example explicit but removes its empty illustration until emptiness is confirmed", async () => {
+    const user = userEvent.setup()
+    const props = {
+      selection: { selectedMonth: null, selectedWeekStart: null },
+      onSelectionChange: vi.fn(),
+      onOpenDay: vi.fn(),
+      onBack: vi.fn(),
+    }
+    const { container, rerender } = render(<JournalArchive {...props} entries={[]} readiness="READY" />)
+    const illustration = () => container.querySelector('img[src$="journal-empty-illustration.webp"]')
+
+    expect(illustration()).toHaveAttribute("width", "64")
+    expect(illustration()).toHaveAttribute("height", "64")
+    expect(screen.getByText("예시 · 내 기록에 저장되지 않아요")).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "예시 둘러보기" }))
+    expect(screen.getByRole("heading", { name: "일지가 쌓인 달력" })).toBeVisible()
+
+    for (const { readiness, message } of [
+      { readiness: "LOADING", message: "일지를 불러오고 있어요." },
+      { readiness: "STALE", message: "최신 일지를 아직 확인하지 못했어요. 기록이 없는 상태로 표시하지 않아요." },
+      { readiness: "ERROR", message: "일지를 불러오지 못했어요. 기록이 없는 것은 아니에요." },
+    ] as const) {
+      rerender(<JournalArchive {...props} entries={[]} readiness={readiness} />)
+      expect(illustration()).toBeNull()
+      expect(screen.getByText(message)).toBeVisible()
+      expect(screen.getByText("예시 · 내 기록에 저장되지 않아요")).toBeVisible()
+      expect(screen.getByRole("heading", { name: "일지가 쌓인 달력" })).toBeVisible()
+      expect(screen.getByRole("grid")).toBeVisible()
+    }
+
+    rerender(<JournalArchive {...props} entries={ENTRIES} readiness="READY" />)
+    expect(illustration()).toBeNull()
+    expect(screen.getByText("내 기록도 도착했어요.")).toBeVisible()
+    expect(screen.getByText("예시 · 내 기록에 저장되지 않아요")).toBeVisible()
+    expect(screen.getByRole("grid")).toBeVisible()
+    expect(props.onOpenDay).not.toHaveBeenCalled()
+  })
+
   it("offers a separate example before the empty real calendar", async () => {
     const user = userEvent.setup()
     const onSelectionChange = vi.fn()

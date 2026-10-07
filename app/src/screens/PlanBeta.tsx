@@ -480,7 +480,7 @@ function LegacyPlanBeta({
   const [prescriptionBinding, setPrescriptionBinding] = React.useState<
     Omit<CandidatePrescriptionBinding, "generated">
   >({ kind: "fallback", code: "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR" })
-  const intakeQuestionRef = React.useRef<HTMLDivElement>(null)
+  const intakeQuestionRef = React.useRef<HTMLHeadingElement>(null)
   const intakeMotion = useOrderedStepMotion(step, INTAKE_MOTION_ORDER)
   const viewKey = recordsOpen
     ? "records"
@@ -500,11 +500,14 @@ function LegacyPlanBeta({
     if (viewKey.startsWith("intake-")) return
     const scrollRegion = document.querySelector<HTMLElement>(".app-scroll-region")
     if (scrollRegion !== null) scrollRegion.scrollTop = 0
+    const headingId = viewKey === "candidates" ? "plan-candidates-title"
+      : viewKey === "active" ? "active-plan-title" : null
+    if (headingId) document.getElementById(headingId)?.focus({ preventScroll: true })
   }, [viewKey])
   useActiveContentScroll(
     viewKey.startsWith("intake-") ? viewKey : null,
     intakeQuestionRef,
-    undefined,
+    intakeQuestionRef,
     true,
   )
 
@@ -612,11 +615,14 @@ function LegacyPlanBeta({
    */
   const continueAfterRefinement = (nextDraft: Partial<PlanBetaIntake>) => {
     const completed = withQuickDefaults(nextDraft)
+    const retainedRecordId = athleteRecords.some((record) => (
+      record.id === selectedRecordId && record.eventDistanceM === completed.eventDistanceM
+    )) ? selectedRecordId : null
     setDraft(completed)
     setRefining(false)
-    setSelectedRecordId(null)
+    setSelectedRecordId(retainedRecordId)
     setComparisonRecordId(null)
-    setRecordConfirmationPending(false)
+    setRecordConfirmationPending(retainedRecordId !== null && completed.selectedDetailedTemplateRef !== null)
     generateCandidates(completed, null, targetRaceDate || undefined)
   }
 
@@ -774,9 +780,8 @@ function LegacyPlanBeta({
     finally { selectionWrite.current = false; setInitialApplying(false) }
   }
 
-  if (recordsOpen) {
-    return <React.Suspense fallback={<p role="status">경기 기록을 열고 있어요.</p>}>
-      <AthleteRecords onBack={() => {
+  const recordsView = recordsOpen ? <React.Suspense fallback={<p role="status">경기 기록을 열고 있어요.</p>}>
+      <AthleteRecords preserveMountedDraftsOnBack onBack={() => {
         setAthleteRecords([...readEligibleAccountPaceRecords()])
         setSelectedRecordId(null)
         setComparisonRecordId(null)
@@ -787,10 +792,11 @@ function LegacyPlanBeta({
         // Re-evaluate current safety and authority; never reuse the old bound numbers.
         if (generatedIntake !== null) generateCandidates(generatedIntake, null, targetRaceDate || undefined)
       }} />
-    </React.Suspense>
-  }
+    </React.Suspense> : null
 
-  if (notationReaderOpen) {
+  if (recordsOpen && !instantEntryOpen) return recordsView
+
+  if (notationReaderOpen && !instantEntryOpen) {
     return <NotationReader onBack={() => setNotationReaderOpen(false)} />
   }
 
@@ -1030,34 +1036,45 @@ function LegacyPlanBeta({
   }
 
   if (instantEntryOpen) return <>
-    <InstantPlanEntryForm today={todayISO()} initialEntry={instantEntry} disabled={instantRecordSaving} onDraftChange={setInstantEntryDirty} onSubmit={async value => {
+    {/* Keep unsent values and the current question while a supporting tool is open. */}
+    <div className="plan-instant-entry" hidden={recordsOpen || notationReaderOpen}>
+    <InstantPlanEntryForm today={todayISO()} initialEntry={instantEntry} active={!recordsOpen && !notationReaderOpen}
+      disabled={instantRecordSaving} isSubmitting={instantRecordSaving} onDraftChange={setInstantEntryDirty} onSubmit={async value => {
       if (instantRecordSaveLock.current) return
       instantRecordSaveLock.current = true; setInstantRecordSaving(true)
-      const prepared = await prepareAccountInstantPlanEntry(value)
-      instantRecordSaveLock.current = false; setInstantRecordSaving(false)
-      if (prepared.kind !== "ready") {
-        setInstantEntryError(prepared.kind === "invalid" ? "입력한 종목·기록·날짜를 다시 확인해 주세요."
-          : prepared.kind === "pending" ? "기록 전송을 기다리고 있어요. 연결 후 다시 누르면 저장 여부를 확인해요."
-          : "기록을 저장하지 못했어요. 입력은 그대로 남아 있어요. 다시 시도해 주세요.")
-        return
+      setInstantEntryError(null)
+      try {
+        const prepared = await prepareAccountInstantPlanEntry(value)
+        if (prepared.kind !== "ready") {
+          setInstantEntryError(prepared.kind === "invalid" ? "입력한 종목·기록·날짜를 다시 확인해 주세요."
+            : prepared.kind === "pending" ? "기록 전송을 기다리고 있어요. 연결 후 다시 누르면 저장 여부를 확인해요."
+            : prepared.kind === "cache_failed" ? "계정에 기록은 저장됐지만 이 기기의 기록 사본을 준비하지 못했어요. 내 경기 기록에서 확인한 뒤 다시 시도해 주세요."
+            : "기록을 저장하지 못했어요. 입력은 그대로 남아 있어요. 다시 시도해 주세요.")
+          return
+        }
+        draftRevision.current += 1
+        setInstantEntry(prepared.entry); setInstantEntryError(null); setInstantEntryOpen(false)
+        setBodyRecheckRequested(false)
+        setAthleteRecords([...readEligibleAccountPaceRecords()]); setSelectedRecordId(prepared.recordId)
+        setComparisonRecordId(null); setRecordConfirmationPending(false)
+        const nextDraft: Partial<PlanBetaIntake> = { ...draft, eventDistanceM: prepared.entry.eventDistanceM,
+          eventGroup: eventGroupForDistance(prepared.entry.eventDistanceM) }
+        delete nextDraft.selectedDetailedTemplateRef
+        if (draft.eventDistanceM !== prepared.entry.eventDistanceM) delete nextDraft.trainingFocus
+        setDraft(nextDraft); setStep(firstUnansweredQuickStep(nextDraft)); setCurrentCheck(null)
+      } catch {
+        setInstantEntryError("기록 준비를 마치지 못했어요. 입력은 그대로 남아 있어요. 다시 시도해 주세요.")
+      } finally {
+        instantRecordSaveLock.current = false; setInstantRecordSaving(false)
       }
-      draftRevision.current += 1
-      setInstantEntry(prepared.entry); setInstantEntryError(null); setInstantEntryOpen(false)
-      setBodyRecheckRequested(false)
-      setAthleteRecords([...readEligibleAccountPaceRecords()]); setSelectedRecordId(prepared.recordId)
-      setComparisonRecordId(null); setRecordConfirmationPending(false)
-      const nextDraft: Partial<PlanBetaIntake> = { ...draft, eventDistanceM: prepared.entry.eventDistanceM,
-        eventGroup: eventGroupForDistance(prepared.entry.eventDistanceM) }
-      delete nextDraft.selectedDetailedTemplateRef
-      if (draft.eventDistanceM !== prepared.entry.eventDistanceM) delete nextDraft.trainingFocus
-      setDraft(nextDraft); setStep(firstUnansweredQuickStep(nextDraft)); setCurrentCheck(null)
     }} />
     {instantEntryError && <p role="alert">{instantEntryError}</p>}
     <details className="plan-detailed-options">
       <summary>기록 관리·훈련표 읽기</summary>
-      <button type="button" className="plan-text-action" onClick={() => onManageRecords ? onManageRecords() : setRecordsOpen(true)}>내 경기 기록</button>
+      <button type="button" className="plan-text-action" onClick={() => setRecordsOpen(true)}>내 경기 기록</button>
       <button type="button" className="plan-text-action" onClick={() => setNotationReaderOpen(true)}>훈련표 표기 읽기</button>
     </details>
+    </div>
     {planTools}
   </>
 
@@ -1108,7 +1125,11 @@ function LegacyPlanBeta({
         }}
         onDivision={(competitionDivision) => continueAfterRefinement({ ...draft, competitionDivision })}
         onExperience={(experienceBand) => {
-          const nextDraft = { ...draft, experienceBand }
+          const nextDraft = {
+            ...draft,
+            experienceBand,
+            selectedDetailedTemplateRef: experienceBand === "EXPERIENCED" ? draft.selectedDetailedTemplateRef : null,
+          }
           if (refining) {
             continueAfterRefinement(nextDraft)
             return

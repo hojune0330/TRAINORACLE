@@ -9,7 +9,7 @@
 .home-hub__oracle-heading { display:flex; flex-wrap:wrap; align-items:center; gap:4px 12px; }
 .home-hub__oracle-brand { color:var(--brand); font-size:.78rem; font-weight:800; letter-spacing:.08em; }
 .home-hub__oracle-kind, .home-hub__oracle-source { color:var(--ink-3); font-size:var(--fs-caption, 12px); line-height:1.5; }
-.home-hub__oracle h2 { margin:8px 0 0; font-size:1.08rem; line-height:1.45; }
+.home-hub__oracle h2:not(.app-heading) { margin:var(--space-2) 0 0; font-size:var(--fs-h3); line-height:var(--lh-app-heading); }
 .home-hub__oracle-answer, .home-hub__oracle-fallback p { margin:8px 0 0; line-height:1.55; overflow-wrap:break-word; }
 .home-hub__oracle-source { margin:8px 0 0; }
 .home-hub__oracle-action { display:inline-flex; align-items:center; gap:4px; min-height:44px; margin-top:4px; padding:8px 0; border:0; background:none; color:var(--brand); font:inherit; font-weight:700; }
@@ -17,9 +17,9 @@
 .home-hub__oracle-fallback { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:4px 16px; }
 .home-hub__oracle-fallback p { flex:1 1 220px; margin:0; color:var(--ink-2); }
 .home-hub__today--welcome nav { display:flex; flex-wrap:wrap; gap:8px 20px; }
-.home-hub__eyebrow, .home-hub__section-label { margin:0; color:var(--ink-3); font-size:.84rem; font-weight:700; }
-.home-hub h1 { margin:4px 0 0; font-size:clamp(1.6rem, 6vw, 2.15rem); line-height:1.25; letter-spacing:-.04em; }
-.home-hub h2 { margin:0; font-size:1rem; }
+.home-hub__eyebrow { margin:0; color:var(--ink-3); font-size:var(--fs-body-sm); font-weight:700; }
+.home-hub__section-label { margin:0; }
+.home-hub__intro > .app-heading { margin-top:var(--space-1); }
 .home-hub__today, .home-hub__next, .home-hub__summary { margin-top:24px; }
 .home-hub__today, .home-hub__next { padding:16px 0; border-block:1px solid var(--line); }
 .home-hub__today p { margin:8px 0 16px; line-height:1.6; }

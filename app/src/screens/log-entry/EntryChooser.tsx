@@ -2,6 +2,8 @@ import React from "react"
 import { CheckCircle2, ChevronRight, Flag, Moon, PencilLine } from "lucide-react"
 import { compactDate, dowOf, nowClock } from "../../domain/dates"
 import { entriesForDate, todayISO } from "../../domain/journal-store"
+import { ContextualIllustration } from "../../components/ContextualIllustration"
+import { AppHeading } from "../../components/AppHeading"
 import { TopBar } from "./shared"
 import type { LogEntryType } from "./shared"
 
@@ -25,6 +27,7 @@ export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: Entry
   const today = todayISO()
   const entryDate = targetDate ?? today
   const isToday = entryDate === today
+  const hasEntries = entriesForDate(entryDate).length > 0
   React.useEffect(() => {
     headingRef.current?.focus()
   }, [])
@@ -36,7 +39,17 @@ export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: Entry
         <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: 0 }}>
           {compactDate(entryDate)} {dowOf(entryDate)} · {nowClock()}
         </div>
-        <h1 ref={headingRef} tabIndex={-1} style={{ fontFamily: "var(--sans)", fontSize: 22, fontWeight: 500, letterSpacing: 0, margin: "6px 0 0" }}>어떤 일지를 쓰세요?</h1>
+        <div className="contextual-entry-intro">
+          <div className="contextual-entry-intro__copy">
+            <AppHeading ref={headingRef} tabIndex={-1} as="h1" variant="screen" accent className="entry-chooser__title">어떤 일지를 쓰세요?</AppHeading>
+            {!hasEntries && (
+              <p style={{ fontFamily: "var(--sans)", fontSize: 12, color: "var(--ink-3)", letterSpacing: 0, lineHeight: 1.55, margin: "8px 0 0" }}>
+                {`${isToday ? "오늘" : "이 날짜의"} 첫 일지예요. 원하는 항목만 남겨도 괜찮아요.`}
+              </p>
+            )}
+          </div>
+          {!hasEntries && <ContextualIllustration image="journal-guide" size="small" />}
+        </div>
       </div>
 
       <div style={{ marginTop: 18 }}>
@@ -83,13 +96,11 @@ export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: Entry
         </div>
       )}
 
-      <div style={{ padding: "24px 20px" }}>
+      {hasEntries && <div style={{ padding: "24px 20px" }}>
         <div style={{ fontFamily: "var(--sans)", fontSize: 12, color: "var(--ink-3)", letterSpacing: 0, lineHeight: 1.55 }}>
-          {entriesForDate(entryDate).length > 0
-            ? `${isToday ? "오늘" : "이 날짜에"} 남긴 일지가 있어요. 기록을 더 쓰면 같은 날짜에 모아 보여드려요.`
-            : `${isToday ? "오늘" : "이 날짜의"} 첫 일지예요. 원하는 항목만 남겨도 괜찮아요.`}
+          {`${isToday ? "오늘" : "이 날짜에"} 남긴 일지가 있어요. 기록을 더 쓰면 같은 날짜에 모아 보여드려요.`}
         </div>
-      </div>
+      </div>}
     </div>
   )
 }

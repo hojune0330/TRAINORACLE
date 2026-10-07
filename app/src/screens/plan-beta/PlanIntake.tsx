@@ -41,7 +41,7 @@ type PlanIntakeProps = {
   readonly step: IntakeStep
   readonly motion?: "initial" | "forward" | "backward" | "replace"
   readonly draft: IntakeDraft
-  readonly questionRef?: React.RefObject<HTMLDivElement>
+  readonly questionRef?: React.RefObject<HTMLHeadingElement>
   /** true면 "다듬기"에서 열린 단일 질문 — 진행 표시·달력 미리보기를 숨기고 뒤로 가기 문구를 바꾼다. */
   readonly refining?: boolean
   readonly onBack: () => void
@@ -148,9 +148,9 @@ export function PlanIntake({
           <i style={{ width: `${stepNumber * (100 / visibleSteps.length)}%` }} />
         </div>
       )}
-      <div ref={questionRef} className="plan-eyebrow active-content-scroll-target">{meta.eyebrow}</div>
+      <div className="plan-eyebrow">{meta.eyebrow}</div>
       <div className="plan-heading-row">
-        <h1 id="plan-intake-title">{meta.title}</h1>
+        <h1 ref={questionRef} tabIndex={-1} className="active-content-scroll-target" id="plan-intake-title">{meta.title}</h1>
         {meta.helpTerm !== null && <TermHelp term={meta.helpTerm} />}
       </div>
       <p className="plan-copy">{meta.copy}</p>

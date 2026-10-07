@@ -1,4 +1,5 @@
 import React from "react"
+import { AppHeading } from "../components/AppHeading"
 import { ArrowLeft, ArrowRight, Check, ChevronRight, Pencil, RotateCcw, Trash2, X, Compass, Flag, Activity, Users } from "lucide-react"
 import { InfoDisclosure } from "../components/InfoDisclosure"
 import { PROFILE_QUESTIONS, describeRunningPreferences, toggleProfileAnswer, type RunningProfileAnswers, type RunningProfileStage } from "../domain/running-profile"
@@ -157,7 +158,7 @@ export function RunningProfile({ stage, today, onStageChange, onBack, onClose }:
   return <div className="running-profile" data-reduced-motion={motion.reduced || undefined}>
     <header className="running-profile__header">
       <button type="button" onClick={onBack} aria-label="이전 단계로"><ArrowLeft size={18} aria-hidden="true" /></button>
-      <span>오라클 · 러닝 프로필</span>
+      <span className="app-chrome-title">오라클 · 러닝 프로필</span>
       <button type="button" onClick={onClose} aria-label="프로필 닫기"><X size={18} aria-hidden="true" /></button>
     </header>
     <main className="running-profile__body">
@@ -167,13 +168,13 @@ export function RunningProfile({ stage, today, onStageChange, onBack, onClose }:
       </div>}
       {message && <p role="status" className="running-profile__notice">{message}</p>}
       {review && <section className="running-profile__conflict" aria-label="변경된 계정 응답 확인">
-        <h2>편집 중 계정 응답이 바뀌었어요</h2>
+        <AppHeading as="h2" variant="section">편집 중 계정 응답이 바뀌었어요</AppHeading>
         <p>계정: {describeRunningPreferences(review.document?.data.answers).title}</p>
         <button type="button" disabled={busy} onClick={reviewLocal}>이 화면 응답으로 저장</button>
         <button type="button" disabled={busy} onClick={() => { const latest = service.current?.snapshot(); if (!latest) return; setAnswers(latest.document?.data.answers ?? {}); token.current = runningProfileEditToken(latest); dirty.current = false; setReview(null); setMessage(null) }}>계정 응답 사용</button>
       </section>}
       {owner && store.status === "CONFLICT" && store.remoteRevision !== null && <section className="running-profile__conflict" aria-label="응답 충돌 확인">
-        <h2>어느 응답을 남길까요?</h2>
+        <AppHeading as="h2" variant="section">어느 응답을 남길까요?</AppHeading>
         <p>이 기기: {describeRunningPreferences(store.document?.data.answers).title}</p>
         <p>계정: {store.remote ? describeRunningPreferences(store.remote.data.answers).title : "응답 삭제됨"}</p>
         {store.remote && <button type="button" disabled={busy} onClick={() => void resolve("LOCAL")}>이 기기 응답 반영</button>}
@@ -182,7 +183,7 @@ export function RunningProfile({ stage, today, onStageChange, onBack, onClose }:
 
       {stage === "overview" && <section className="running-profile__stage">
         <p className="running-profile__source">좋아하는 방식과 실제 기록, 따로 살펴봐요</p>
-        <h1 ref={heading} tabIndex={-1}>나는 어떻게 달리는 사람일까?</h1>
+        <AppHeading variant="screen" accent ref={heading} tabIndex={-1}>나는 어떻게 달리는 사람일까?</AppHeading>
         <div className="running-profile__map" aria-label="프로필의 네 가지 내용">
           {SECTIONS.map(({ id, label, icon: Icon }) => <button key={id} type="button" onClick={() => onStageChange(id)}><Icon size={22} aria-hidden="true" /><span>{label}</span><ChevronRight size={16} aria-hidden="true" /></button>)}
         </div>
@@ -193,7 +194,7 @@ export function RunningProfile({ stage, today, onStageChange, onBack, onClose }:
 
       {question && <section className="running-profile__stage" key={question.id} aria-busy={busy}>
         <p className="running-profile__source">{questionIndex < 3 ? `${questionIndex + 1} / 3` : `더 알아보기 ${questionIndex - 2} / 6`} · {question.label}</p>
-        <h1 ref={heading} tabIndex={-1}>{question.title}</h1>
+        <AppHeading variant="screen" accent ref={heading} tabIndex={-1}>{question.title}</AppHeading>
         {question.multiple && <p className="running-profile__source">여러 개 골라도 좋아요</p>}
         <div className="running-profile__options" role="group" aria-label={question.label}>
           {question.options.map(option => <button key={option.id} type="button" disabled={busy} aria-pressed={answers[question.id]?.includes(option.id) ?? false} onClick={() => select(option.id)}>
@@ -211,7 +212,7 @@ export function RunningProfile({ stage, today, onStageChange, onBack, onClose }:
         <section className="running-profile__stage" key={stage}>
           {stage === "preferences" ? <>
             <p className="running-profile__source">{description.source}</p>
-            <h1 ref={heading} tabIndex={-1}>{description.title}</h1>
+            <AppHeading variant="screen" accent ref={heading} tabIndex={-1}>{description.title}</AppHeading>
             <dl className="running-profile__facts">{description.rows.filter(row => row.status !== "UNANSWERED").map(row => <div key={row.id}><dt>{row.label}</dt><dd>{row.text}</dd></div>)}</dl>
             <div className="running-profile__actions"><button type="button" disabled={!canEdit} onClick={() => edit("motives")}><Pencil size={16} aria-hidden="true" />응답 수정</button><button type="button" disabled={!canEdit} onClick={() => edit("routine")}>대회·종목·운동 취향 더하기<ChevronRight size={16} aria-hidden="true" /></button></div>
             {owner && dirty.current && <button className="running-profile__primary" type="button" disabled={busy || !["READY", "EMPTY"].includes(store.status)} onClick={() => void finish(answers)}>계정에 저장</button>}
@@ -222,7 +223,7 @@ export function RunningProfile({ stage, today, onStageChange, onBack, onClose }:
             </InfoDisclosure>
           </> : <>
             <p className="running-profile__source">{stage === "records" ? "입력된 경기 기록" : stage === "training" ? "출처를 확인한 훈련 일지" : "일지에 적은 체감 강도 · RPE"}</p>
-            <h1 ref={heading} tabIndex={-1}>{stage === "records" ? "기록으로 확인하는 나" : stage === "training" ? "최근 어떤 훈련을 했을까?" : "훈련이 어떻게 느껴졌을까?"}</h1>
+            <AppHeading variant="screen" accent ref={heading} tabIndex={-1}>{stage === "records" ? "기록으로 확인하는 나" : stage === "training" ? "최근 어떤 훈련을 했을까?" : "훈련이 어떻게 느껴졌을까?"}</AppHeading>
             {unavailable ? <p role="status">{stage === "records" ? recordSnapshot.message : "일지를 모두 확인하지 못했어요. 없는 기록으로 판단하지 않아요."}</p>
               : stage === "records" && recordSnapshot.records.length > 0 && result?.status === "missing"
                 ? <p>저장한 기록은 있어요. 실제 경기의 달성일이 있어야 비교할 수 있어요. 목표 기록은 비교에서 제외해요.</p>
@@ -245,7 +246,7 @@ function ProfileEvidence({ result, noResponse, showBars }: { readonly result: Or
   if (noResponse) return <p>RPE를 남긴 일지가 있으면 월별로 비교할 수 있어요. 거리만으로 몸의 반응을 판단하지 않아요.</p>
   const max = Math.max(...result.rows.map(row => row.value), 0)
   return <>
-    <h2>{result.headline}</h2><p>{result.summary}</p>
+    <AppHeading as="h2" variant="section">{result.headline}</AppHeading><p>{result.summary}</p>
     <dl className="running-profile__data">{result.rows.map((row, index) => <div key={`${index}-${row.label}`}><dt>{row.label}</dt><dd><strong>{row.valueLabel}</strong>{showBars && <span aria-hidden="true" className="running-profile__bar"><i style={{ width: `${max > 0 ? row.value / max * 100 : 0}%` }} /></span>}</dd></div>)}</dl>
     <p className="running-profile__source">{result.source}</p>
     {result.notice && <p role="note">{result.notice}</p>}

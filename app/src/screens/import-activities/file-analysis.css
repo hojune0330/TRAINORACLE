@@ -3,8 +3,10 @@
 .file-observation-review label { display: grid; gap: 6px; margin-block: 12px; }
 .file-observation-review select, .file-observation-review input[type="date"] { width: 100%; max-width: 100%; min-width: 0; min-height: 44px; font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--line); padding: 8px; }
 .file-analysis-panel { padding: 20px; border-top: 1px solid var(--line); font-family: var(--sans); line-height: 1.6; }
-.file-analysis-panel h2 { font-size: 20px; margin: 0 0 8px; }
-.file-analysis-panel h3 { font-size: 16px; margin: 16px 0 6px; }
+.file-analysis-panel h2:not(.app-heading) { font-size: 20px; margin: 0 0 8px; }
+.file-analysis-panel h3:not(.app-heading) { font-size: 16px; margin: 16px 0 6px; }
+.file-analysis-panel .app-heading.app-heading--screen { margin-bottom: var(--space-2); }
+.file-analysis-panel .app-heading.app-heading--section { margin: var(--space-4) 0 var(--space-2); }
 .file-analysis-panel p { margin: 6px 0; }
 .file-analysis-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 12px; margin-block: 16px; }
 .file-analysis-metrics div { border-bottom: 1px solid var(--line); padding-bottom: 10px; }

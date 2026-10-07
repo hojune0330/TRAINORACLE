@@ -1,0 +1,29 @@
+import type React from "react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
+import { PlanActiveState } from "./PlanActiveState"
+import type { ActivePlan } from "./ActivePlan"
+import type { ActivePlanRebuildEditor } from "./ActivePlanRebuildEditor"
+
+vi.mock("./ActivePlan", () => ({ ActivePlan: ({ onEditPlan, futureTrainingEditor }: React.ComponentProps<typeof ActivePlan>) => <>
+  <button type="button" onClick={onEditPlan}>계획 수정</button>{futureTrainingEditor}
+</> }))
+vi.mock("./ActivePlanRebuildEditor", () => ({ ActivePlanRebuildEditor: ({ onManageRecords }: React.ComponentProps<typeof ActivePlanRebuildEditor>) =>
+  <button type="button" onClick={onManageRecords}>기준 기록 확인하기</button> }))
+
+beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
+afterEach(cleanup)
+
+it("opens record management from a new-plan record recovery action without changing the current plan", () => {
+  const state = stateFixture(), original = JSON.stringify(state)
+  const onManagePaceRecords = vi.fn(), onStateChange = vi.fn()
+  render(<PlanActiveState state={state} onStateChange={onStateChange} onPrepareNextFrame={vi.fn()}
+    onManagePaceRecords={onManagePaceRecords} />)
+  fireEvent.click(screen.getByRole("button", { name: "계획 수정" }))
+  fireEvent.click(screen.getByRole("button", { name: "새 계획 만들기" }))
+  fireEvent.click(screen.getByRole("button", { name: "기준 기록 확인하기" }))
+  expect(onManagePaceRecords).toHaveBeenCalledOnce()
+  expect(onStateChange).not.toHaveBeenCalled()
+  expect(JSON.stringify(state)).toBe(original)
+})

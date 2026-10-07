@@ -250,11 +250,7 @@ export function TopBar({ onBack, children }: {
         fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-2)",
         letterSpacing: "0.06em",
       }}>← 뒤로</button>
-      <h1 className="entry-topbar__title" style={{
-        flex: 1, fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600,
-        color: "var(--ink)", letterSpacing: "0.14em", textTransform: "uppercase",
-        textAlign: "center", margin: 0,
-      }}>{children}</h1>
+      <h1 className="entry-topbar__title app-chrome-title">{children}</h1>
       <div aria-hidden="true" style={{ width: 64 }}></div>
     </div>
   )

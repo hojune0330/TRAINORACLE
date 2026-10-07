@@ -31,10 +31,16 @@ vi.mock("../../domain/account/local-journal-ownership", () => ({ onLocalJournalS
 vi.mock("../../domain/plan-beta-schema", () => ({ planBetaStateV3Schema: { safeParse: (data: unknown) => ({ success: true, data }) } }))
 vi.mock("./usePlanDraftNavigationGuard", () => ({ usePlanDraftNavigationGuard: () => undefined }))
 vi.mock("./PlanRefinePanel", () => ({
-  PlanRefinePanel: ({ onRefine }: { onRefine: (step: "race-date") => void }) => <button type="button" onClick={() => onRefine("race-date")}>대회 날짜 바꾸기</button>,
+  PlanRefinePanel: ({ onRefine }: { onRefine: (step: "race-date" | "template") => void }) => <>
+    <button type="button" onClick={() => onRefine("race-date")}>대회 날짜 바꾸기</button>
+    <button type="button" onClick={() => onRefine("template")}>안내 방식 바꾸기</button>
+  </>,
 }))
 vi.mock("./PlanIntake", () => ({
-  PlanIntake: ({ onRaceDate }: { onRaceDate: (date: string) => void }) => <button type="button" onClick={() => onRaceDate("2026-11-15")}>대회 날짜 선택</button>,
+  PlanIntake: ({ onRaceDate, onTemplate }: { onRaceDate: (date: string) => void; onTemplate: (template: null) => void }) => <>
+    <button type="button" onClick={() => onRaceDate("2026-11-15")}>대회 날짜 선택</button>
+    <button type="button" onClick={() => onTemplate(null)}>시간·힘든 정도로 받기</button>
+  </>,
 }))
 vi.mock("./PlanSchedulePreview", () => ({ PlanSchedulePreview: () => <div>일정 미리보기</div> }))
 vi.mock("./plan-template-options", () => ({ resolveDetailedPlanTemplateOptions: () => [] }))
@@ -52,6 +58,18 @@ afterEach(() => {
 
 function fixture(): PlanBetaStateV3 {
   return stateFixture() as PlanBetaStateV3
+}
+
+function anchoredFixture(): PlanBetaStateV3 {
+  const state = fixture()
+  return {
+    ...state,
+    intake: { ...state.intake, selectedDetailedTemplateRef: { templateId: "V2-SEED-05", version: "1.0.0" } },
+    activePlan: { ...state.activePlan, sessions: [{
+      ...state.activePlan.sessions[0]!,
+      prescription: { kind: "PACE_TARGET", selectedAnchor: { anchorId: "record-fixture" } },
+    }, ...state.activePlan.sessions.slice(1)] },
+  } as unknown as PlanBetaStateV3
 }
 
 describe("active plan rebuild editor", () => {
@@ -72,24 +90,40 @@ describe("active plan rebuild editor", () => {
 
   it("blocks a stale source record anchor before generating a draft", async () => {
     const user = userEvent.setup()
-    const state = fixture()
-    const first = state.activePlan.sessions[0]!
-    const anchoredState = {
-      ...state,
-      activePlan: { ...state.activePlan, sessions: [{
-        ...first,
-        prescription: { kind: "PACE_TARGET", selectedAnchor: { anchorId: "record-fixture" } },
-      }, ...state.activePlan.sessions.slice(1)] },
-    } as unknown as PlanBetaStateV3
+    const anchoredState = anchoredFixture()
     mocks.detailedAuthority.mockReturnValue({ kind: "blocked" })
+    const onManageRecords = vi.fn()
 
-    render(<ActivePlanRebuildEditor state={anchoredState} onCancel={vi.fn()} onApplied={vi.fn()} />)
+    render(<ActivePlanRebuildEditor state={anchoredState} onCancel={vi.fn()} onApplied={vi.fn()} onManageRecords={onManageRecords} />)
     await user.click(screen.getByRole("checkbox", { name: "지금 통증이나 몸 상태 이상이 없어요" }))
     await user.click(screen.getByRole("button", { name: "새 계획안 보기" }))
 
     expect(mocks.detailedAuthority).toHaveBeenCalledOnce()
     expect(mocks.generate).not.toHaveBeenCalled()
     expect(screen.getByRole("alert")).toHaveTextContent("기준 기록")
+    await user.click(screen.getByRole("button", { name: "기준 기록 확인하기" }))
+    expect(onManageRecords).toHaveBeenCalledOnce()
+    expect(mocks.replace).not.toHaveBeenCalled()
+  })
+
+  it("allows an explicit effort-based rebuild without reusing the stale source pace anchor", async () => {
+    const user = userEvent.setup()
+    const state = anchoredFixture(), original = JSON.stringify(state)
+    mocks.detailedAuthority.mockReturnValue({ kind: "blocked" })
+    mocks.generate.mockReturnValue({ kind: "generated", generated: { candidates: [{ candidateId: "rpe-draft",
+      kind: "BALANCED", selectedEnergyIntent: "LT_INTENT", sessions: [] }] },
+      intake: { ...state.intake, selectedDetailedTemplateRef: null }, prescriptionBinding: { kind: "fallback" } })
+    render(<ActivePlanRebuildEditor state={state} onCancel={vi.fn()} onApplied={vi.fn()} />)
+    await user.click(screen.getByRole("button", { name: "안내 방식 바꾸기" }))
+    await user.click(screen.getByRole("button", { name: "시간·힘든 정도로 받기" }))
+    await user.click(screen.getByRole("checkbox", { name: "지금 통증이나 몸 상태 이상이 없어요" }))
+    await user.click(screen.getByRole("button", { name: "새 계획안 보기" }))
+
+    expect(mocks.generate).toHaveBeenCalledWith(expect.objectContaining({ selectedDetailedTemplateRef: null }), "NO_KNOWN_RISK", undefined)
+    expect(mocks.detailedAuthority).not.toHaveBeenCalled()
+    expect(screen.getByText("일정 미리보기")).toBeVisible()
+    expect(mocks.replace).not.toHaveBeenCalled()
+    expect(JSON.stringify(state)).toBe(original)
   })
 
   it("requires a valid today-or-future start date before generation", async () => {

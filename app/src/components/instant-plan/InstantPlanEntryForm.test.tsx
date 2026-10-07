@@ -38,6 +38,18 @@ function openDate() {
 }
 
 describe("InstantPlanEntryForm", () => {
+  it("shows ongoing preparation while the parent prevents repeated submission", () => {
+    const onSubmit = vi.fn()
+    const { rerender } = render(<InstantPlanEntryForm today={TODAY} initialEntry={record} onSubmit={onSubmit} />)
+    rerender(<InstantPlanEntryForm today={TODAY} initialEntry={record} onSubmit={onSubmit} disabled isSubmitting />)
+    expect(screen.getByRole("button", { name: "계획 준비 중…" })).toBeDisabled()
+    fireEvent.submit(screen.getByRole("form", { name: "계획 시작 정보" }))
+    expect(onSubmit).not.toHaveBeenCalled()
+    expect(screen.getByLabelText("초")).toHaveValue("0.125")
+    rerender(<InstantPlanEntryForm today={TODAY} initialEntry={record} onSubmit={onSubmit} />)
+    expect(screen.getByRole("button", { name: "기록 입력 완료" })).toBeEnabled()
+  })
+
   it("requires a real basis choice and distinguishes actual, goal and skipped time", () => {
     const onSubmit = vi.fn()
     render(<InstantPlanEntryForm today={TODAY} onSubmit={onSubmit} />)
@@ -312,7 +324,7 @@ describe("InstantPlanEntryForm", () => {
     expect(screen.getByLabelText("기록 달성일")).not.toBeVisible()
     expect(screen.getByText("기록 날짜 추가")).toBeVisible()
     expect(screen.getByText("선택")).toBeVisible()
-    expect(screen.getByText("날짜가 없으면 최근 12개월 기록에서는 제외돼요.")).toBeVisible()
+    expect(screen.getByText("개인 페이스를 계산하려면 기록 날짜가 필요해요. 모르면 비워 두세요. 시간·힘든 정도 기준 계획으로 시작할 수 있어요.")).toBeVisible()
     submit()
     expect(onSubmit).toHaveBeenCalledExactlyOnceWith({ ...record, achievedOn: null })
   })

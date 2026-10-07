@@ -13,6 +13,7 @@ describe("OracleLearningReader content-only destinations", () => {
     const onBack = vi.fn()
     render(<OracleLearningReader destination={destination} onBack={onBack} />)
     expect(screen.getByRole("article", { name: ORACLE_LEARNING_TITLES[destination] })).toBeVisible()
+    expect(screen.getByRole("heading", { level: 2 })).toHaveClass("app-heading--screen", "app-heading--accent")
     expect(screen.queryByRole("dialog")).toBeNull()
     expect(screen.getByRole("button", { name: "이전 학습 페이지" })).toBeDisabled()
     fireEvent.click(screen.getByRole("button", { name: "돌아가기" }))
