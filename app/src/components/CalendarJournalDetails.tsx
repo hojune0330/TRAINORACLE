@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState } from "react"
+import { isBrowserPopNavigationConsumed } from "../navigation/browserNavigation"
 import { BookOpen, ChevronLeft, PenLine } from "lucide-react"
 import { useLocalToday } from "../hooks/useLocalToday"
 import type { JournalEntry } from "../domain/journal-schema"
@@ -52,7 +53,10 @@ export function CalendarJournalDetails({ entries, date, onOpenDay, onWriteDate }
       window.history[originalEntryCreated.current ? "replaceState" : "pushState"]({ ...previous, calendarOriginal: token }, "", window.location.href)
       originalEntryCreated.current = true
     } catch { /* The in-reader Back action remains available. */ }
-    const pop = () => { if (window.history.state?.calendarOriginal !== token) setOriginal(false) }
+    const pop = (event: PopStateEvent) => {
+      if (isBrowserPopNavigationConsumed(event)) return
+      if (window.history.state?.calendarOriginal !== token) setOriginal(false)
+    }
     window.addEventListener("popstate", pop)
     return () => {
       window.removeEventListener("popstate", pop)

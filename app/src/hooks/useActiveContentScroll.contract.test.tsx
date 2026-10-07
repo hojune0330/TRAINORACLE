@@ -1,12 +1,17 @@
 import React from "react"
-import { cleanup, render, waitFor } from "@testing-library/react"
+import { act, cleanup, render, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { useActiveContentScroll } from "./useActiveContentScroll"
+import { beginBrowserPopNavigation } from "../navigation/browserNavigation"
+import { setActiveLocalAccount } from "../domain/account/local-journal-ownership"
 
 const originalMatchMedia = window.matchMedia
 
 afterEach(() => {
   cleanup()
+  vi.useRealTimers()
+  vi.restoreAllMocks()
+  setActiveLocalAccount(null)
   Object.defineProperty(window, "matchMedia", {
     configurable: true,
     value: originalMatchMedia,
@@ -29,6 +34,46 @@ function NestedScrollHarness({ activeKey }: { readonly activeKey: string }) {
 }
 
 describe("active content scroll", () => {
+  it("never applies an old queued alignment after an A to B to A account lifetime change", () => {
+    vi.useFakeTimers()
+    setActiveLocalAccount("synthetic-scroll-a")
+    const scrollIntoView = vi.fn()
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", { configurable: true, value: scrollIntoView })
+    render(<ScrollHarness activeKey="one" />)
+    setActiveLocalAccount("synthetic-scroll-b")
+    setActiveLocalAccount("synthetic-scroll-a")
+    act(() => { vi.advanceTimersByTime(300) })
+    expect(scrollIntoView).not.toHaveBeenCalled()
+  })
+
+  it("cancels the delayed alignment on POP and lets the next ordinary decision align again", () => {
+    vi.useFakeTimers()
+    const scrollIntoView = vi.fn()
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", { configurable: true, value: scrollIntoView })
+    const { rerender } = render(<ScrollHarness activeKey="one" skipInitial />)
+    rerender(<ScrollHarness activeKey="two" skipInitial />)
+    act(() => { vi.advanceTimersByTime(20) })
+    expect(scrollIntoView).toHaveBeenCalledOnce()
+    act(() => {
+      beginBrowserPopNavigation()
+      rerender(<ScrollHarness activeKey="one" skipInitial />)
+    })
+    act(() => { vi.advanceTimersByTime(300) })
+    expect(scrollIntoView).toHaveBeenCalledOnce()
+    rerender(<ScrollHarness activeKey="three" skipInitial />)
+    act(() => { vi.advanceTimersByTime(20) })
+    expect(scrollIntoView).toHaveBeenCalledTimes(2)
+  })
+
+  it("cancels a queued alignment even when POP leaves the active key unchanged", () => {
+    vi.useFakeTimers()
+    const scrollIntoView = vi.fn()
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", { configurable: true, value: scrollIntoView })
+    render(<ScrollHarness activeKey="one" />)
+    act(() => { beginBrowserPopNavigation(); vi.advanceTimersByTime(300) })
+    expect(scrollIntoView).not.toHaveBeenCalled()
+  })
+
   it("keeps the first view still and then follows the next decision step", async () => {
     const scrollIntoView = vi.fn()
     Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {

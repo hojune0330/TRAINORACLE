@@ -6,6 +6,7 @@ import { waitingJournal } from "../../test/progressive-journal-fixture"
 import { buildFileObservation } from "../import/file-observation"
 import { rememberStorageConsentRevision, pinStorageOperationRevision } from "./storage-consent-revision"
 import { accountOracleCompatibleDocumentSchema, emptyOracleV2Document } from "./account-oracle-v2-schema"
+import { ACCOUNT_DELETION_BOUNDARY_PREFIX, closeAccountDeletionBoundary } from "./account-deletion-boundary"
 
 const ownerId = "a1111111-1111-4111-8111-111111111111"
 const documentId = "b2222222-2222-4222-8222-222222222222"
@@ -165,6 +166,126 @@ describe("account record compatibility API", () => {
       expect(await requestAccountDocument(ownerId, release, () => true, accountJournalRecordSchema,
         dependencies(null, { context: new Response(JSON.stringify({ error: code }), { status }) }))).toEqual({ ok: false, code })
     }
+  })
+})
+describe("account journal restore source availability", () => {
+  const restore = { action: "restore", documentId, operationId, expectedRevision: 2, sourceRevision: 1 } as const
+  const receipt = { kind: "source_unavailable", documentId, operationId, currentRevision: 2, sourceRevision: 1 }
+  const unavailable = (data: unknown) => dependencies(null, { context: new Response(JSON.stringify(data), { status: 409 }) })
+  it("keeps an exact unavailable-source receipt distinct from a version conflict", async () => {
+    expect(await requestAccountJournal(ownerId, restore, () => true, unavailable(receipt))).toEqual({ ok: true, data: receipt })
+    expect(await requestAccountJournal(ownerId, restore, () => true, unavailable({ error: "SOURCE_UNAVAILABLE" })))
+      .toEqual({ ok: false, code: "SOURCE_UNAVAILABLE" })
+    const conflict = { kind: "conflict", documentId, operationId, currentRevision: 3 }
+    expect(await requestAccountJournal(ownerId, restore, () => true, unavailable(conflict))).toEqual({ ok: true, data: conflict })
+  })
+  it.each([{ documentId: otherOwnerId }, { operationId: otherOwnerId }, { sourceRevision: 2 },
+    { currentRevision: 3 }, { sourceRevision: 0 }, { unexpected: true }])("rejects a mismatched unavailable-source receipt %j", async change => {
+    expect(await requestAccountJournal(ownerId, restore, () => true, unavailable({ ...receipt, ...change })))
+      .toEqual({ ok: false, code: "INVALID_RESPONSE" })
+  })
+  it("does not accept restore-source failures for save or delete", async () => {
+    for (const call of [request, { action: "delete", documentId, operationId, expectedRevision: 2 } as const]) {
+      expect(await requestAccountJournal(ownerId, call, () => true, unavailable(receipt)))
+        .toEqual({ ok: false, code: "INVALID_RESPONSE" })
+      expect(await requestAccountJournal(ownerId, call, () => true, unavailable({ error: "SOURCE_UNAVAILABLE" })))
+        .toEqual({ ok: false, code: "INVALID_RESPONSE" })
+    }
+    expect(await requestAccountJournal(ownerId, restore, () => true, unavailable({ error: "SOURCE_UNAVAILABLE", documentId: otherOwnerId })))
+      .toEqual({ ok: false, code: "INVALID_RESPONSE" })
+  })
+  it("does not turn a late previous-account source failure into a current terminal result", async () => {
+    let active = true
+    const context = new Response(null, { status: 409 })
+    vi.spyOn(context, "clone").mockReturnValue({ json: async () => { active = false; return receipt } } as Response)
+    expect(await requestAccountJournal(ownerId, restore, () => active, dependencies(null, { context })))
+      .toEqual({ ok: false, code: "STALE_RESPONSE" })
+  })
+})
+describe("account journal deleted owner boundary", () => {
+  it("holds an unreadable deletion notice without claiming deletion or initializing the client", async () => {
+    const unreadableOwner = "e5555555-5555-4555-8555-555555555553"
+    const read = Storage.prototype.getItem
+    const unavailable = vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (this: Storage, key: string) {
+      if (key === ACCOUNT_DELETION_BOUNDARY_PREFIX + unreadableOwner) throw new Error("synthetic storage unavailable")
+      return read.call(this, key)
+    })
+    const deps = dependencies(null)
+    try {
+      expect(await requestAccountJournal(unreadableOwner, request, () => true, { ...deps, owner: () => unreadableOwner }))
+        .toEqual({ ok: false, code: "UNAVAILABLE" })
+      expect(deps.client).not.toHaveBeenCalled()
+      expect(deps.auth.getSession).not.toHaveBeenCalled()
+      expect(deps.invoke).not.toHaveBeenCalled()
+    } finally { unavailable.mockRestore() }
+  })
+  it.each(["client", "auth", "response"] as const)(
+    "holds a notice that becomes unreadable during %s and permits an explicit later normal retry", async phase => {
+      const unreadableOwner = "e5555555-5555-4555-8555-55555555555" + ({ client: "4", auth: "5", response: "6" }[phase])
+      const read = Storage.prototype.getItem
+      let unreadable = false
+      const unavailable = vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (this: Storage, key: string) {
+        if (unreadable && key === ACCOUNT_DELETION_BOUNDARY_PREFIX + unreadableOwner) {
+          // A one-check outage also must not be reclassified as a stale owner.
+          unreadable = false
+          throw new Error("synthetic storage unavailable")
+        }
+        return read.call(this, key)
+      })
+      const saved = { kind: "saved", documentId, operationId, revision: 1 }
+      const deps = dependencies(saved)
+      const session = { data: { session: { user: { id: unreadableOwner }, access_token: accessToken } }, error: null }
+      deps.client.mockImplementation(async () => {
+        if (phase === "client") unreadable = true
+        return { auth: deps.auth, functions: { invoke: deps.invoke } } as unknown as SupabaseClient
+      })
+      deps.auth.getSession.mockImplementation(async () => {
+        if (phase === "auth") unreadable = true
+        return session
+      })
+      deps.invoke.mockImplementation(async () => {
+        if (phase === "response") unreadable = true
+        return { data: saved, error: null }
+      })
+      try {
+        const bound = { ...deps, owner: () => unreadableOwner }
+        expect(await requestAccountJournal(unreadableOwner, request, () => true, bound))
+          .toEqual({ ok: false, code: "UNAVAILABLE" })
+        expect(deps.invoke).toHaveBeenCalledTimes(phase === "response" ? 1 : 0)
+        unavailable.mockRestore()
+        deps.client.mockResolvedValue({ auth: deps.auth, functions: { invoke: deps.invoke } } as unknown as SupabaseClient)
+        deps.auth.getSession.mockResolvedValue(session)
+        deps.invoke.mockResolvedValue({ data: saved, error: null })
+        expect(await requestAccountJournal(unreadableOwner, request, () => true, bound))
+          .toEqual({ ok: true, data: saved })
+      } finally { unavailable.mockRestore() }
+    },
+  )
+  it("rejects a deleted owner before client or auth initialization", async () => {
+    const deletedOwner = "e5555555-5555-4555-8555-555555555551"
+    closeAccountDeletionBoundary(deletedOwner, "2026-10-07T00:00:00.000Z")
+    const deps = dependencies(null)
+    expect(await requestAccountJournal(deletedOwner, request, () => true, { ...deps, owner: () => deletedOwner }))
+      .toEqual({ ok: false, code: "ACCOUNT_DELETION_REQUESTED" })
+    expect(deps.client).not.toHaveBeenCalled()
+  })
+  it("stops an in-flight request immediately on deletion and ignores a late successful receipt", async () => {
+    const deletedOwner = "e5555555-5555-4555-8555-555555555552"
+    const deps = dependencies(null)
+    deps.auth.getSession.mockResolvedValue({ data: { session: { user: { id: deletedOwner }, access_token: accessToken } }, error: null })
+    let complete!: (value: unknown) => void
+    deps.invoke.mockImplementation(() => new Promise(resolve => { complete = resolve }))
+    const result = requestAccountJournal(deletedOwner, request, () => true, { ...deps, owner: () => deletedOwner })
+    await vi.waitFor(() => expect(deps.invoke).toHaveBeenCalledTimes(1))
+    const signal = deps.invoke.mock.calls[0]![1].signal as AbortSignal
+    closeAccountDeletionBoundary(deletedOwner, "2026-10-07T00:00:00.000Z")
+    expect(await result).toEqual({ ok: false, code: "ACCOUNT_DELETION_REQUESTED" })
+    expect(signal.aborted).toBe(true)
+    complete({ data: { kind: "saved", documentId, operationId, revision: 1 }, error: null })
+    await Promise.resolve()
+    expect(await requestAccountJournal(ownerId, request, () => true,
+      dependencies({ kind: "saved", documentId, operationId, revision: 1 })))
+      .toEqual({ ok: true, data: { kind: "saved", documentId, operationId, revision: 1 } })
   })
 })
 describe("additive calendar capability API", () => {

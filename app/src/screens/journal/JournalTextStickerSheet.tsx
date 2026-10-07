@@ -1,5 +1,6 @@
 import { X } from "lucide-react"
 import React from "react"
+import { hasActiveBrowserBackLayer } from "../../navigation/browserNavigation"
 import { TEXT_INK_DEFINITIONS, TEXT_STICKER_MAX_LENGTH } from "../../domain/decorations"
 import type { TextInkId } from "../../domain/decorations"
 
@@ -31,6 +32,7 @@ export function JournalTextStickerSheet({
 
   React.useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (hasActiveBrowserBackLayer()) return
       if (event.key !== "Escape") return
       /* 시트가 열려 있는 동안 Escape는 시트만 닫는다 — 편집기 전체 닫기로 새지 않게. */
       event.stopImmediatePropagation()

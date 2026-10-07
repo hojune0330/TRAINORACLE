@@ -5,6 +5,7 @@ import { fileObservationSchema } from "../import/file-observation"
 import { accountJournalRecordSchema, correctAccountJournalImportedObservation, FILE_OBSERVATION_CORRECTION_FIELDS, applyAccountJournalComparisonMutation } from "./account-journal-record-schema"
 import { comparisonRelationSchema, releaseComparisonRelationRequestSchema } from "../import/comparison-relation"
 import { accountCalendarDecorationDocumentSchema } from "./account-calendar-decoration-schema"
+import { accountDeletionBoundaryState, onAccountDeletionBoundaryChange } from "./account-deletion-boundary"
 
 /** Local draft protection only, not authentication or server/account storage.
  * Callers must verify the current authenticated scope before every call and discard
@@ -242,13 +243,20 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
   if (!globalThis.crypto?.subtle) throw new Error("Web Crypto unavailable")
   const disposedOwners = new Set<string>()
   const transactions = new Map<IDBTransaction, string>()
+  const stopDeletion = onAccountDeletionBoundaryChange(owner => {
+    const parsed = uuid.safeParse(owner)
+    if (!parsed.success) return
+    const ownerId = parsed.data.toLowerCase()
+    disposedOwners.add(ownerId)
+    for (const [tx, txOwner] of transactions) if (txOwner === ownerId) tx.abort()
+  })
   let closed = false
   let database: Promise<IDBDatabase> | undefined
 
   function scope(owner: string, document?: string) {
     const ownerId = uuid.parse(owner).toLowerCase()
     const documentId = document === undefined ? undefined : uuid.parse(document).toLowerCase()
-    if (closed || disposedOwners.has(ownerId)) throw new Error("Draft buffer scope disposed")
+    if (closed || disposedOwners.has(ownerId) || accountDeletionBoundaryState(ownerId) !== "OPEN") throw new Error("Draft buffer scope disposed")
     return { ownerId, documentId }
   }
 
@@ -757,6 +765,7 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
     },
     close() {
       closed = true
+      stopDeletion()
       for (const tx of transactions.keys()) tx.abort()
       void database?.then(db => db.close(), () => undefined)
       database = undefined

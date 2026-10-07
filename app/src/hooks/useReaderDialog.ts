@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useId, useRef, type RefObject } from "react"
+import { isBrowserPopNavigationConsumed } from "../navigation/browserNavigation"
 
 export const READER_HISTORY_KEY = "trainoracleReader"
 const HISTORY_KEY = READER_HISTORY_KEY
@@ -30,7 +31,8 @@ export function useReaderDialog(dialog: RefObject<HTMLDialogElement | null>, onC
     } catch { /* The reader still works when the browser disallows history writes. */ }
     document.body.style.overflow = "hidden"
     element?.showModal()
-    const onPop = () => {
+    const onPop = (event: PopStateEvent) => {
+      if (isBrowserPopNavigationConsumed(event)) return
       if (window.history.state?.[HISTORY_KEY] !== id) closeRef.current()
     }
     window.addEventListener("popstate", onPop)

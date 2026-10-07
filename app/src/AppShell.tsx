@@ -4,6 +4,8 @@ import { READER_HISTORY_KEY } from "./hooks/useReaderDialog"
 import { useCalendarSnapshot } from "./hooks/useCalendarEntries"
 import { rememberCalendarDate } from "./hooks/useCalendarPosition"
 import { runDraftSafeNavigation } from "./domain/unsaved-draft-navigation"
+import { useNavigationReturnFrame } from "./hooks/useNavigationReturnFrame"
+import { beginBrowserPopNavigation, consumeBrowserBackLayer, getBrowserNavigationEpoch, isBrowserPopScrollRestoration } from "./navigation/browserNavigation"
 import type { AppTab } from "./components/AppChrome"
 import { AppShellFrame } from "./components/AppShellFrame"
 import { ErrorBoundary } from "./components/ErrorBoundary"
@@ -229,6 +231,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const restoreReturnRef = React.useRef<ShellReturnPoint | null>(null)
   const importReturnRef = React.useRef<ShellReturnPoint | null>(null)
   const pendingScreenMotionRef = React.useRef<Exclude<AppScreenMotion, "initial" | "none"> | null>(null)
+  const { schedule: scheduleReturnFrame, invalidate: invalidateReturnFrame } = useNavigationReturnFrame()
   const runViewTransition = React.useCallback((
     motion: Exclude<AppScreenMotion, "initial" | "none">,
     update: () => void,
@@ -236,12 +239,16 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   ) => {
     // The remounted app-flow-stage supplies the non-blocking CSS transition.
     // Native document snapshots block rapid follow-up taps on mobile.
+    const expectedScope = localJournalScopeGeneration()
+    const expectedNavigation = getBrowserNavigationEpoch()
     runDraftSafeNavigation(() => {
+      invalidateReturnFrame()
       pendingScreenMotionRef.current = motion
       setSavedToast(current => current?.reviewMessage === undefined ? null : current)
       update()
-    }, preserveMountedDrafts)
-  }, [])
+    }, preserveMountedDrafts, () => localJournalScopeGeneration() === expectedScope
+      && getBrowserNavigationEpoch() === expectedNavigation)
+  }, [invalidateReturnFrame])
 
   const applyOverlay = React.useCallback((next: AppOverlay | null) => {
     const pace = paceRequestRef.current
@@ -249,14 +256,14 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     const leavingPace = overlayRef.current?.kind === "pace" && next?.kind !== "pace"
     overlayRef.current = next
     setOverlay(next)
-    window.requestAnimationFrame(() => {
+    scheduleReturnFrame(() => {
       const scrollRegion = scrollRegionRef.current
       if (scrollRegion === null) return
       scrollRegion.scrollTop = next === null ? overlayScrollTopRef.current : next.kind === "oracle" || next.kind === "pace" ? next.scrollTop ?? 0 : 0
       scrollRegion.scrollLeft = 0
       if (leavingPace && pace?.opener?.isConnected) pace.opener.focus({ preventScroll: true })
     })
-  }, [])
+  }, [scheduleReturnFrame])
 
   const openOverlay = React.useCallback((next: AppOverlay) => {
     if (overlayRef.current === null) overlayScrollTopRef.current = scrollRegionRef.current?.scrollTop ?? 0
@@ -339,6 +346,9 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
 
   React.useEffect(() => {
     const onPopState = (event: PopStateEvent) => {
+      beginBrowserPopNavigation()
+      invalidateReturnFrame()
+      if (consumeBrowserBackLayer(event)) return
       const recording = recordingOrigin.current
       if (recording && event.state?.recordingDraft !== recording.token) {
         const allowed = runDraftSafeNavigation(() => {
@@ -425,7 +435,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     }
     window.addEventListener("popstate", onPopState)
     return () => window.removeEventListener("popstate", onPopState)
-  }, [applyOverlay, hasStoredOraclePlan])
+  }, [applyOverlay, invalidateReturnFrame, hasStoredOraclePlan])
 
   React.useEffect(() => {
     if (v.tab === "log" || calendarDraftReturn.current === null) return
@@ -555,6 +565,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   React.useLayoutEffect(() => {
     const scrollRegion = scrollRegionRef.current
     if (scrollRegion === null) return
+    if (isBrowserPopScrollRestoration()) return
     scrollRegion.scrollTop = 0
     scrollRegion.scrollLeft = 0
   }, [
@@ -612,7 +623,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     decorationReturn.current = null; setDecorationInitialDate(undefined)
     if (!origin || origin.owner !== activeLocalAccount()) { setUtilityView(utilityOrigin === "home" ? null : "more"); return }
     setV(origin.view); setUtilityView(origin.utility)
-    window.requestAnimationFrame(() => {
+    scheduleReturnFrame(() => {
       if (origin.owner !== activeLocalAccount()) return
       if (scrollRegionRef.current) scrollRegionRef.current.scrollTop = origin.scroll
       if (origin.focusLabel) scrollRegionRef.current?.querySelector<HTMLElement>(`[aria-label=${JSON.stringify(origin.focusLabel)}]`)?.focus({ preventScroll: true })
@@ -775,7 +786,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     setAnalysisContext(origin.analysis)
     analysisReturnContext.current = origin.analysis
     if (origin.overlay) openOverlay(origin.overlay)
-    window.requestAnimationFrame(() => {
+    scheduleReturnFrame(() => {
       if (origin.owner !== activeLocalAccount()) return
       if (scrollRegionRef.current) scrollRegionRef.current.scrollTop = origin.scroll
       const buttons = [

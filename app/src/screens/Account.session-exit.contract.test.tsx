@@ -1,5 +1,5 @@
 import React from "react"
-import { cleanup, render, screen, waitFor } from "@testing-library/react"
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   clearReceipt: vi.fn(),
   consumeEmailCallback: vi.fn(),
   loadSetup: vi.fn(),
+  authListener: null as null | ((user: { id: string; email: string | null; phone: null; provider: "email" } | null) => void),
   gatewayEmailResult: null as null | {
     handled: true
     ok: boolean
@@ -25,7 +26,10 @@ vi.mock("../domain/account/auth", () => ({
   clearAuthReturnAttemptIdFromUrl: vi.fn(),
   currentUser: mocks.currentUser,
   maskPhoneNumber: (value: string) => value,
-  onAuthChange: () => () => undefined,
+  onAuthChange: (listener: NonNullable<typeof mocks.authListener>) => {
+    mocks.authListener = listener
+    return () => { mocks.authListener = null }
+  },
   signOut: mocks.signOut,
 }))
 
@@ -102,9 +106,12 @@ vi.mock("./account/index", () => ({
 }))
 
 import { Account } from "./Account"
+import { closeAccountDeletionBoundary } from "../domain/account/account-deletion-boundary"
+import { activeLocalAccount, localJournalScopeGeneration, setActiveLocalAccount } from "../domain/account/local-journal-ownership"
 
 beforeEach(() => {
   localStorage.clear()
+  setActiveLocalAccount(null)
   mocks.currentUser.mockReset()
   mocks.currentUser.mockResolvedValue({
     id: "athlete-a",
@@ -121,6 +128,7 @@ beforeEach(() => {
   mocks.loadSetup.mockReset()
   mocks.loadSetup.mockResolvedValue({ ok: true, ready: true, message: "준비됨" })
   mocks.gatewayEmailResult = null
+  mocks.authListener = null
 })
 
 afterEach(() => cleanup())
@@ -150,7 +158,7 @@ describe("Account session exit", () => {
 
     expect(screen.getByRole("heading", { name: "내 계정" })).toBeVisible()
     expect(screen.getByTestId("account-action-result")).toHaveAttribute("data-state", "error")
-    expect(mocks.signOut).toHaveBeenCalledWith({ scope: "local" })
+    expect(mocks.signOut).toHaveBeenCalledWith({ scope: "local", expectedUserId: "athlete-a", isCurrent: expect.any(Function) })
     expect(mocks.clearPending).not.toHaveBeenCalled()
     expect(mocks.clearReceipt).not.toHaveBeenCalled()
   })
@@ -181,10 +189,113 @@ describe("Account session exit", () => {
     expect(await screen.findByRole("heading", { name: "계정 삭제 요청을 저장했어요" })).toBeVisible()
     expect(screen.getByRole("button", { name: "이 기기에서 다시 로그아웃" })).toBeVisible()
     expect(screen.queryByRole("button", { name: "합성 삭제 완료" })).not.toBeInTheDocument()
-    expect(mocks.signOut.mock.calls).toEqual([[{ scope: "global" }], [{ scope: "local" }]])
+    expect(mocks.signOut.mock.calls).toEqual([
+      [{ scope: "global", expectedUserId: "athlete-a", isCurrent: expect.any(Function) }],
+      [{ scope: "local", expectedUserId: "athlete-a", isCurrent: expect.any(Function) }],
+    ])
     expect(mocks.clearReceipt).not.toHaveBeenCalled()
     await waitFor(() => expect(screen.getByTestId("account-action-result"))
       .toHaveTextContent("로그아웃을 확인하지 못했어요"))
+  })
+
+  it("closes private controls and the local scope before a pending deletion logout finishes", async () => {
+    let finish!: (result: { ok: boolean; message: string }) => void
+    mocks.signOut.mockImplementationOnce(() => new Promise(done => { finish = done }))
+      .mockResolvedValueOnce({ ok: false, message: "local failed" })
+    render(<Account />)
+    const deleted = await screen.findByRole("button", { name: "합성 삭제 완료" })
+    setActiveLocalAccount("athlete-a")
+    const generation = localJournalScopeGeneration()
+    await userEvent.click(deleted)
+    expect(screen.getByRole("heading", { name: "계정 삭제 요청을 저장했어요" })).toBeVisible()
+    expect(screen.queryByRole("button", { name: "합성 삭제 완료" })).not.toBeInTheDocument()
+    expect(activeLocalAccount()).toBeNull()
+    expect(localJournalScopeGeneration()).toBeGreaterThan(generation)
+    finish({ ok: false, message: "global failed" })
+    await waitFor(() => expect(mocks.signOut).toHaveBeenCalledTimes(2))
+    expect(await screen.findByRole("button", { name: "이 기기에서 다시 로그아웃" })).toBeVisible()
+  })
+
+  it("does not clear B or sign B out when A's deletion logout fails after account switching", async () => {
+    let finish!: (result: { ok: boolean; message: string }) => void
+    mocks.signOut.mockImplementationOnce(() => new Promise(done => { finish = done }))
+    render(<Account />)
+    await userEvent.click(await screen.findByRole("button", { name: "합성 삭제 완료" }))
+    const b = { id: "ui-delete-other-b", email: "synthetic-b@example.test", phone: null, provider: "email" as const }
+    mocks.currentUser.mockResolvedValue(b)
+    await act(async () => { mocks.authListener?.(b) })
+    expect(await screen.findByRole("button", { name: "합성 삭제 완료" })).toBeVisible()
+    setActiveLocalAccount(b.id)
+    finish({ ok: false, message: "global failed" })
+    await waitFor(() => expect(screen.getByRole("button", { name: "로그아웃" })).not.toBeDisabled())
+    expect(mocks.signOut).toHaveBeenCalledTimes(1)
+    expect(activeLocalAccount()).toBe(b.id)
+    expect(mocks.clearReceipt).not.toHaveBeenCalledWith(b.id)
+    expect(screen.queryByRole("heading", { name: "계정 삭제 요청을 저장했어요" })).not.toBeInTheDocument()
+  })
+
+  it("cannot mount deleted A again from a late verified auth event after B", async () => {
+    const a = { id: "ui-confirmed-deleted-a", email: "synthetic-a@example.test", phone: null, provider: "email" as const }
+    const b = { ...a, id: "ui-confirmed-normal-b" }
+    mocks.currentUser.mockResolvedValue(a)
+    render(<Account />)
+    await screen.findByRole("button", { name: "합성 삭제 완료" })
+    await act(async () => { closeAccountDeletionBoundary(a.id, "2026-10-07T00:00:00Z") })
+    expect(screen.queryByRole("button", { name: "합성 삭제 완료" })).not.toBeInTheDocument()
+    mocks.currentUser.mockResolvedValue(b)
+    await act(async () => { mocks.authListener?.(b) })
+    expect(await screen.findByRole("button", { name: "합성 삭제 완료" })).toBeVisible()
+    mocks.currentUser.mockResolvedValue(a)
+    await act(async () => { mocks.authListener?.(a) })
+    expect(await screen.findByRole("heading", { name: "계정 삭제 요청을 저장했어요" })).toBeVisible()
+    expect(screen.queryByRole("button", { name: "합성 삭제 완료" })).not.toBeInTheDocument()
+  })
+
+  it("does not reuse A's deletion logout guard after an A to B to A session exchange", async () => {
+    let finish!: (result: { ok: boolean; message: string }) => void
+    mocks.signOut.mockImplementationOnce(() => new Promise(done => { finish = done }))
+    render(<Account />)
+    await userEvent.click(await screen.findByRole("button", { name: "합성 삭제 완료" }))
+    const deletionOptions = mocks.signOut.mock.calls[0]?.[0] as { expectedUserId: string; isCurrent: () => boolean }
+    expect(deletionOptions.expectedUserId).toBe("athlete-a")
+    expect(deletionOptions.isCurrent()).toBe(true)
+    const b = { id: "ui-logout-generation-b", email: "synthetic-b@example.test", phone: null, provider: "email" as const }
+    mocks.currentUser.mockResolvedValue(b)
+    await act(async () => { mocks.authListener?.(b) })
+    await screen.findByRole("button", { name: "합성 삭제 완료" })
+    const a = { ...b, id: "athlete-a" }
+    mocks.currentUser.mockResolvedValue(a)
+    await act(async () => { mocks.authListener?.(a) })
+    await screen.findByRole("button", { name: "합성 삭제 완료" })
+    expect(deletionOptions.isCurrent()).toBe(false)
+    finish({ ok: false, message: "global failed" })
+    await waitFor(() => expect(screen.getByRole("button", { name: "로그아웃" })).not.toBeDisabled())
+    expect(mocks.signOut).toHaveBeenCalledTimes(1)
+    expect(mocks.clearReceipt).not.toHaveBeenCalled()
+    expect(screen.queryByRole("heading", { name: "계정 삭제 요청을 저장했어요" })).not.toBeInTheDocument()
+  })
+
+  it("does not clear B when a deleted-account local logout retry completes late", async () => {
+    let finishRetry!: (result: { ok: boolean; message: string }) => void
+    mocks.signOut
+      .mockResolvedValueOnce({ ok: false, message: "global failed" })
+      .mockResolvedValueOnce({ ok: false, message: "local failed" })
+      .mockImplementationOnce(() => new Promise(done => { finishRetry = done }))
+    render(<Account />)
+    await userEvent.click(await screen.findByRole("button", { name: "합성 삭제 완료" }))
+    await userEvent.click(await screen.findByRole("button", { name: "이 기기에서 다시 로그아웃" }))
+    const retryOptions = mocks.signOut.mock.calls[2]?.[0] as { expectedUserId: string; isCurrent: () => boolean }
+    expect(retryOptions.expectedUserId).toBe("athlete-a")
+    expect(retryOptions.isCurrent()).toBe(true)
+    const b = { id: "ui-local-retry-other-b", email: "synthetic-b@example.test", phone: null, provider: "email" as const }
+    mocks.currentUser.mockResolvedValue(b)
+    await act(async () => { mocks.authListener?.(b) })
+    expect(await screen.findByRole("button", { name: "합성 삭제 완료" })).toBeVisible()
+    expect(retryOptions.isCurrent()).toBe(false)
+    finishRetry({ ok: true, message: "로그아웃되었어요." })
+    await waitFor(() => expect(screen.getByRole("button", { name: "로그아웃" })).not.toBeDisabled())
+    expect(mocks.clearReceipt).not.toHaveBeenCalledWith(b.id)
+    expect(screen.queryByTestId("guest-auth-gateway")).not.toBeInTheDocument()
   })
 
   it("blocks account controls when email verification installs a session that cannot be rechecked or signed out", async () => {

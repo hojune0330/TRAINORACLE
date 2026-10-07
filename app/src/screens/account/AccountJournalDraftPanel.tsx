@@ -27,6 +27,7 @@ const messages = {
 type DraftNoticeTone = "info" | "pending" | "success" | "warning" | "error" | "conflict"
 
 const messageTones: Record<keyof typeof messages, DraftNoticeTone> = {
+  ACCOUNT_DELETION_REQUESTED: "error",
   UPGRADE_REQUIRED: "error",
   FILE_EVIDENCE_DISABLED: "warning",
   INVALID_FILE_OBSERVATION: "error",

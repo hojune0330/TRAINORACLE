@@ -9,7 +9,15 @@ export default async function setup() {
     configLoader: "runner",
     cacheDir: fileURLToPath(new URL("../test-results/account-draft-buffer-vite-cache", import.meta.url)),
     // A named, memory-only fault probe. Never modify the shared working source.
-    plugins: ["omit-generation","existing-retry"].includes(process.env.DRAFT_CONSENT_MUTATION ?? "") ? [{
+    plugins: process.env.DRAFT_DELETION_MUTATION === "ignore-durable-marker" ? [{
+      name: "synthetic-deletion-marker-defect", enforce: "pre",
+      transform(source, id) {
+        if (!id.replaceAll("\\", "/").endsWith("/src/domain/account/account-deletion-boundary.ts")) return null
+        const target = "if (localStorage.getItem(ACCOUNT_DELETION_BOUNDARY_PREFIX + encodeURIComponent(userId)) !== null)"
+        if (!source.includes(target)) throw new Error("Synthetic deletion marker target missing")
+        return source.replace(target, "if (false)")
+      },
+    }] : ["omit-generation","existing-retry"].includes(process.env.DRAFT_CONSENT_MUTATION ?? "") ? [{
       name: "synthetic-draft-consent-defect", enforce: "pre",
       transform(source, id) {
         if (!id.replaceAll("\\", "/").endsWith("/src/domain/account/account-journal-draft-buffer.ts")) return null

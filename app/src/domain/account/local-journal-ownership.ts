@@ -1,3 +1,5 @@
+import { accountDeletionBoundaryState } from "./account-deletion-boundary"
+
 const OWNERSHIP_KEY = "trainoracle.journal.ownership.v1"
 const SCOPE_CHANGED_EVENT = "trainoracle:journal-scope-changed"
 
@@ -79,7 +81,7 @@ function announceScopeChange(): void {
 }
 
 export function setActiveLocalAccount(userId: string | null): void {
-  const next = userId === "" ? null : userId
+  const next = userId === "" || (userId !== null && accountDeletionBoundaryState(userId) !== "OPEN") ? null : userId
   if (activeAccountId === next) return
   activeAccountId = next
   scopeGeneration += 1

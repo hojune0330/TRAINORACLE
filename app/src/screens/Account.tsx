@@ -45,6 +45,9 @@ import { mono, primaryBtn, secondaryBtn } from "./account/styles"
 import { InstallShortcutSuggestion } from "../components/InstallShortcut"
 import { LoungeEntry } from "./account/LoungeEntry"
 import { requestVerifiedAccountScopeRefresh } from "../domain/account/verified-account-scope"
+import { isAccountDeletionClosed, onAccountDeletionBoundaryChange } from "../domain/account/account-deletion-boundary"
+import { activeLocalAccount, setActiveLocalAccount } from "../domain/account/local-journal-ownership"
+import { setAccountAuthState } from "../domain/account/account-auth-state"
 
 type SetupState = "checking" | "not-required" | "saving" | "needs-profile" | "ready" | "failed"
 
@@ -79,6 +82,7 @@ export function Account({ onBack, onOpenImport, onOpenRestore, loungeRequested =
   const [returnAttemptId] = React.useState(() => authReturnAttemptId())
   const setupAttemptRef = React.useRef<string | null>(null)
   const activeUserIdRef = React.useRef<string | null>(null)
+  const accountSessionGenerationRef = React.useRef(0)
   const sessionBlockedRef = React.useRef(false)
 
   React.useEffect(() => {
@@ -91,6 +95,14 @@ export function Account({ onBack, onOpenImport, onOpenRestore, loungeRequested =
     let verificationSequence = 0
 
     const applyVerifiedUser = (nextUser: AccountUser | null) => {
+      if (nextUser !== null && isAccountDeletionClosed(nextUser.id)) {
+        activeUserIdRef.current = nextUser.id
+        setupAttemptRef.current = null
+        setUser(null)
+        setDeletedAccountSessionOpen(true)
+        setLoading(false)
+        return
+      }
       if (nextUser !== null && (sessionBlockedRef.current || isAuthSessionQuarantined())) {
         activeUserIdRef.current = null
         setupAttemptRef.current = null
@@ -140,6 +152,9 @@ export function Account({ onBack, onOpenImport, onOpenRestore, loungeRequested =
       }
       unsubscribe = onAuthChange((sessionHint) => {
         const sequence = ++verificationSequence
+        // Any new non-null session hint supersedes an older deletion cleanup,
+        // including A->B->A before the server identity checks settle.
+        if (sessionHint !== null) accountSessionGenerationRef.current += 1
         if (sessionHint === null) {
           applyVerifiedUser(null)
           return
@@ -172,6 +187,17 @@ export function Account({ onBack, onOpenImport, onOpenRestore, loungeRequested =
     })
     return () => { mounted = false; unsubscribe() }
   }, [])
+
+  React.useEffect(() => onAccountDeletionBoundaryChange(owner => {
+    if (activeUserIdRef.current !== owner) return
+    // Unmount every private control immediately, not after logout settles.
+    setupAttemptRef.current = null
+    setUser(null)
+    setSetupState("not-required")
+    setSetupNotice(null)
+    setDeletedAccountSessionOpen(true)
+    setLoading(false)
+  }), [])
 
   React.useEffect(() => subscribeAuthSessionQuarantine((quarantined) => {
     if (!quarantined || activeUserIdRef.current === null) return
@@ -288,20 +314,55 @@ export function Account({ onBack, onOpenImport, onOpenRestore, loungeRequested =
 
   const handleSignOut = async (): Promise<AuthResult> => {
     const signingOutUserId = activeUserIdRef.current ?? user?.id ?? null
+    const signOutGeneration = accountSessionGenerationRef.current
+    const isCurrentSignOutSession = () => accountSessionGenerationRef.current === signOutGeneration
+      && (activeUserIdRef.current === signingOutUserId || activeUserIdRef.current === null)
     setBusy(true)
     setAccountActionNotice(null)
-    const result = await signOut({ scope: "local" })
-    if (result.ok) clearConfirmedLocalSession(signingOutUserId)
+    const result = await signOut(signingOutUserId === null
+      ? { scope: "local" }
+      : { scope: "local", expectedUserId: signingOutUserId, isCurrent: isCurrentSignOutSession })
+    if (!isCurrentSignOutSession()) {
+      setBusy(false)
+      return { ok: false, message: "현재 계정이 바뀌어 로그아웃을 중단했어요." }
+    }
+    if (result.ok) {
+      clearConfirmedLocalSession(signingOutUserId)
+    }
     setAccountActionNotice(result)
     setBusy(false)
     return result
   }
 
-  const handleDeletionCompleted = async (): Promise<AuthResult> => {
-    const deletingUserId = activeUserIdRef.current ?? user?.id ?? null
+  const handleDeletionCompleted = async (deletingUserId: string): Promise<AuthResult> => {
+    if (activeUserIdRef.current !== deletingUserId) {
+      return { ok: false, message: "삭제 요청한 계정의 접근은 막았어요. 현재 계정은 바꾸지 않았어요." }
+    }
+    if (activeLocalAccount() === deletingUserId) {
+      setActiveLocalAccount(null)
+      setAccountAuthState("FAILED")
+    }
+    setupAttemptRef.current = null
+    setUser(null)
+    setSetupState("not-required")
+    setSetupNotice(null)
+    setDeletedAccountSessionOpen(true)
     setBusy(true)
     setAccountActionNotice(null)
-    const result = await closeDeletedAccountSessions()
+    const deletionGeneration = accountSessionGenerationRef.current
+    const isCurrentDeletionSession = () => accountSessionGenerationRef.current === deletionGeneration
+      && (activeUserIdRef.current === deletingUserId || activeUserIdRef.current === null)
+    const result = await closeDeletedAccountSessions(options => {
+      // An A->B switch while global logout waits must not sign B out in fallback.
+      if (!isCurrentDeletionSession() || activeUserIdRef.current !== deletingUserId) {
+        return Promise.resolve({ ok: false, message: "현재 계정이 바뀌어 로그아웃을 중단했어요." })
+      }
+      return signOut({ ...options, expectedUserId: deletingUserId, isCurrent: isCurrentDeletionSession })
+    })
+    if (!isCurrentDeletionSession()) {
+      setBusy(false)
+      return { ok: false, message: "삭제 요청한 계정의 접근은 막았어요. 현재 계정은 바꾸지 않았어요." }
+    }
     if (result.localSessionClosed) {
       clearConfirmedLocalSession(deletingUserId)
     } else {
@@ -402,7 +463,7 @@ export function Account({ onBack, onOpenImport, onOpenRestore, loungeRequested =
               void currentUser({ throwOnFailure: true })
                 .then((verified) => {
                   if (verified?.id !== expectedUserId) throw new Error("AUTH_IDENTITY_MISMATCH")
-                  if (isAuthSessionQuarantined()) throw new Error("AUTH_SESSION_QUARANTINED")
+                  if (isAuthSessionQuarantined() || isAccountDeletionClosed(expectedUserId)) throw new Error("AUTH_SESSION_QUARANTINED")
                   sessionBlockedRef.current = false
                   activeUserIdRef.current = verified.id
                   setupAttemptRef.current = null
@@ -441,8 +502,6 @@ export function Account({ onBack, onOpenImport, onOpenRestore, loungeRequested =
             }
           }}
         />
-      ) : user === null ? (
-        <AccountAuthGateway config={config} today={today} onUnsafeSessionDetected={blockUnverifiedAccountSession} />
       ) : deletedAccountSessionOpen ? (
         <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 12 }}>
           <h2 style={{ fontFamily: "var(--sans)", fontSize: 18, margin: 0, letterSpacing: 0 }}>계정 삭제 요청을 저장했어요</h2>
@@ -453,6 +512,8 @@ export function Account({ onBack, onOpenImport, onOpenRestore, loungeRequested =
             이 기기에서 다시 로그아웃
           </button>
         </div>
+      ) : user === null ? (
+        <AccountAuthGateway config={config} today={today} onUnsafeSessionDetected={blockUnverifiedAccountSession} />
       ) : setupState === "saving" || setupState === "checking" ? (
         <div style={{ marginTop: 24 }}>
           <p role="status" style={{ fontFamily: "var(--sans)", fontSize: 14, lineHeight: 1.65, margin: 0 }}>
@@ -517,7 +578,7 @@ export function Account({ onBack, onOpenImport, onOpenRestore, loungeRequested =
             today={today}
             legalDocuments={config}
             profileSetupComplete={profileSetupComplete}
-            onDeletionCompleted={handleDeletionCompleted}
+            onDeletionCompleted={() => handleDeletionCompleted(user.id)}
           />
           <DeviceJournalOwnershipPanel userId={user.id} />
           <DeviceTrainingDataPanel userId={user.id} />
@@ -556,7 +617,7 @@ export function Account({ onBack, onOpenImport, onOpenRestore, loungeRequested =
         <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 16 }}>
           <AccountDataRightsPanel key={`rights-${user.id}`} userId={user.id} />
           <BetaAccountSettings key={`delete-${user.id}`} userId={user.id} today={today}
-            legalDocuments={config} dataRightsOnly onDeletionCompleted={handleDeletionCompleted} />
+            legalDocuments={config} dataRightsOnly onDeletionCompleted={() => handleDeletionCompleted(user.id)} />
         </div>
       )}
 

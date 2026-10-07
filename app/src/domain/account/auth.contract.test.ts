@@ -173,6 +173,106 @@ describe("passwordless email confirmation", () => {
 })
 
 describe("session sign-out scope", () => {
+  const owner = "synthetic-deletion-owner-a"
+  const superseded = { ok: false, message: "현재 계정이 바뀌어 로그아웃을 중단했어요." }
+  const ownerSession = () => ({ data: { session: { user: { id: owner } } }, error: null })
+
+  it("refuses superseded deletion cleanup before waiting for the origin lock", async () => {
+    await expect(signOut({ expectedUserId: owner, isCurrent: () => false })).resolves.toEqual(superseded)
+    expect(navigator.locks.request).not.toHaveBeenCalled()
+    expect(supabaseMock).not.toHaveBeenCalled()
+  })
+
+  it("rechecks deletion generation after waiting for the origin lock", async () => {
+    let release!: () => Promise<unknown>
+    let current = true
+    Object.defineProperty(navigator, "locks", { configurable: true, value: {
+      request: vi.fn((_name: string, _options: unknown, operation: () => Promise<unknown>) =>
+        new Promise(resolve => { release = async () => { resolve(await operation()) } })),
+    } })
+    const result = signOut({ expectedUserId: owner, isCurrent: () => current })
+    current = false
+    await release()
+    await expect(result).resolves.toEqual(superseded)
+    expect(supabaseMock).not.toHaveBeenCalled()
+  })
+
+  it("does not log B out when account changes during client initialization", async () => {
+    let initialize!: (client: unknown) => void
+    let current = true
+    const getSession = vi.fn().mockResolvedValue(ownerSession())
+    const signOutClient = vi.fn().mockResolvedValue({ error: null })
+    supabaseMock.mockImplementationOnce(() => new Promise(resolve => { initialize = resolve }))
+    const result = signOut({ scope: "global", expectedUserId: owner, isCurrent: () => current })
+    await vi.waitFor(() => expect(supabaseMock).toHaveBeenCalledOnce())
+    current = false
+    initialize({ auth: { getSession, signOut: signOutClient } })
+    await expect(result).resolves.toEqual(superseded)
+    expect(getSession).not.toHaveBeenCalled()
+    expect(signOutClient).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    { data: { session: { user: { id: "synthetic-owner-b" } } }, error: null },
+    { data: { session: null }, error: null },
+    { data: { session: null }, error: new Error("unreadable local session") },
+  ])("does not sign another or unconfirmed SDK session out", async session => {
+    const signOutClient = vi.fn().mockResolvedValue({ error: null })
+    supabaseMock.mockResolvedValue({ auth: { getSession: vi.fn().mockResolvedValue(session), signOut: signOutClient } })
+    await expect(signOut({ expectedUserId: owner, isCurrent: () => true })).resolves.toEqual(superseded)
+    expect(signOutClient).not.toHaveBeenCalled()
+  })
+
+  it("rejects A to B to A even if the delayed session read again reports owner A", async () => {
+    let readSession!: (session: ReturnType<typeof ownerSession>) => void
+    let generation = 0
+    const expectedGeneration = generation
+    const getSession = vi.fn(() => new Promise(resolve => { readSession = resolve }))
+    const signOutClient = vi.fn().mockResolvedValue({ error: null })
+    supabaseMock.mockResolvedValue({ auth: { getSession, signOut: signOutClient } })
+    const result = signOut({ expectedUserId: owner, isCurrent: () => generation === expectedGeneration })
+    await vi.waitFor(() => expect(getSession).toHaveBeenCalledOnce())
+    generation += 2
+    readSession(ownerSession())
+    await expect(result).resolves.toEqual(superseded)
+    expect(signOutClient).not.toHaveBeenCalled()
+  })
+
+  it("rechecks deletion generation immediately before the actual SDK sign-out call", async () => {
+    const signOutClient = vi.fn().mockResolvedValue({ error: null })
+    const isCurrent = vi.fn()
+      .mockReturnValueOnce(true) // Before lock.
+      .mockReturnValueOnce(true) // Inside lock.
+      .mockReturnValueOnce(true) // After client initialization.
+      .mockReturnValueOnce(true) // After owner read.
+      .mockReturnValue(false) // Immediately before the SDK invocation.
+    supabaseMock.mockResolvedValue({ auth: { getSession: vi.fn().mockResolvedValue(ownerSession()), signOut: signOutClient } })
+    await expect(signOut({ expectedUserId: owner, isCurrent })).resolves.toEqual(superseded)
+    expect(signOutClient).not.toHaveBeenCalled()
+  })
+
+  it("keeps a newer quarantine when deletion logout completes after generation changes", async () => {
+    expect(beginAuthSessionQuarantine({ attemptId, method: "email" })).toBe(true)
+    let complete!: (result: { error: null }) => void
+    let current = true
+    const signOutClient = vi.fn(() => new Promise(resolve => { complete = resolve }))
+    supabaseMock.mockResolvedValue({ auth: { getSession: vi.fn().mockResolvedValue(ownerSession()), signOut: signOutClient } })
+    const result = signOut({ expectedUserId: owner, isCurrent: () => current })
+    await vi.waitFor(() => expect(signOutClient).toHaveBeenCalledOnce())
+    current = false
+    complete({ error: null })
+    await expect(result).resolves.toEqual(superseded)
+    expect(isAuthSessionQuarantined()).toBe(true)
+  })
+
+  it("passes only the scope to SDK logout for the still-current deletion owner", async () => {
+    const signOutClient = vi.fn().mockResolvedValue({ error: null })
+    supabaseMock.mockResolvedValue({ auth: { getSession: vi.fn().mockResolvedValue(ownerSession()), signOut: signOutClient } })
+    await expect(signOut({ scope: "global", expectedUserId: owner, isCurrent: () => true }))
+      .resolves.toEqual({ ok: true, message: "로그아웃되었어요." })
+    expect(signOutClient).toHaveBeenCalledWith({ scope: "global" })
+  })
+
   it("recovers an abandoned pre-exchange callback when no local session exists", async () => {
     expect(beginAuthSessionQuarantine({ attemptId, method: "email" })).toBe(true)
     const getSession = vi.fn().mockResolvedValue({ data: { session: null }, error: null })

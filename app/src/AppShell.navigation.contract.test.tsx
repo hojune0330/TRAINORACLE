@@ -19,6 +19,30 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllEnvs() })
 
 describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {
+  it("does not resume a delayed draft decision after the owner lifetime has changed", async () => {
+    const user = userEvent.setup()
+    render(<AppShell />)
+    let unsafe = true
+    let resume: (() => void) | undefined
+    const unregister = registerUnsavedDraftGuard({
+      isUnsafe: () => unsafe,
+      onBlocked: () => undefined,
+      requestNavigation: callback => { resume = callback },
+    })
+    try {
+      await user.click(screen.getByRole("button", { name: "기록하기" }))
+      expect(resume).toBeTypeOf("function")
+      act(() => {
+        setActiveLocalAccount("navigation-decision-account")
+        setActiveLocalAccount(null)
+        unsafe = false
+        resume?.()
+      })
+      expect(screen.queryByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeNull()
+      expect(screen.getByRole("button", { name: "홈" })).toHaveAttribute("aria-current", "page")
+    } finally { unregister(); setActiveLocalAccount(null) }
+  })
+
   it("opens record management and watch import directly from More and returns there", async () => {
     const user = userEvent.setup()
     render(<AppShell />)

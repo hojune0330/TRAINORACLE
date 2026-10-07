@@ -2,6 +2,10 @@ import { profileFromBirthDate } from "./profile"
 import { koreaServiceDate } from "./service-date"
 import { supabase } from "./supabase-client"
 import { verifyReturnedAuthSession } from "./verified-auth-session"
+import { z } from "zod"
+import { accountDeletionBoundaryState, closeAccountDeletionBoundary } from "./account-deletion-boundary"
+import { activeLocalAccount, setActiveLocalAccount } from "./local-journal-ownership"
+import { setAccountAuthState } from "./account-auth-state"
 
 export type AccountActionResult = {
   readonly ok: boolean
@@ -68,6 +72,13 @@ function setupStatusFromServer(value: unknown): PrivateProfileSetupStatus {
   return { ok: false, ready: false, canComplete: false, message: "가입 확인 정보를 확인하지 못했어요." }
 }
 
+function localProfileBoundaryStatus(userId: string): PrivateProfileSetupStatus | null {
+  const state = accountDeletionBoundaryState(userId)
+  if (state === "OPEN") return null
+  if (state === "CLOSED") return setupStatusFromServer("DELETION_REQUESTED")
+  return { ok: false, ready: false, canComplete: false, message: "이 기기의 계정 보호 상태를 확인하지 못했어요. 기록은 유지하고 계정 기능을 잠시 멈췄어요." }
+}
+
 export async function loadPrivateProfileSetupStatus(input: {
   readonly userId: string
   // Transitional optional fields keep an older caller source-compatible. They
@@ -75,12 +86,16 @@ export async function loadPrivateProfileSetupStatus(input: {
   readonly privacyPolicyVersion?: string
   readonly termsOfServiceVersion?: string
 }): Promise<PrivateProfileSetupStatus> {
+  const initialBoundary = localProfileBoundaryStatus(input.userId)
+  if (initialBoundary) return initialBoundary
   const client = await supabase()
   if (client === null) {
     return { ok: false, ready: false, canComplete: false, message: "계정 확인 기능이 꺼져 있어요." }
   }
   try {
     const { data: userData, error: userError } = await client.auth.getUser()
+    const checkedBoundary = localProfileBoundaryStatus(input.userId)
+    if (checkedBoundary) return checkedBoundary
     if (userError != null || userData.user?.id !== input.userId) {
       return { ok: false, ready: false, canComplete: false, message: "로그인 정보를 다시 확인해 주세요." }
     }
@@ -90,13 +105,15 @@ export async function loadPrivateProfileSetupStatus(input: {
     if (error != null) {
       return { ok: false, ready: false, canComplete: false, message: "가입 확인 정보를 불러오지 못했어요." }
     }
-    return setupStatusFromServer(data)
+    return localProfileBoundaryStatus(input.userId) ?? setupStatusFromServer(data)
   } catch {
     return { ok: false, ready: false, canComplete: false, message: "가입 확인 정보를 불러오지 못했어요." }
   }
 }
 
 export async function savePrivateProfile(input: SaveProfileInput): Promise<AccountActionResult> {
+  const initialBoundary = localProfileBoundaryStatus(input.userId)
+  if (initialBoundary) return initialBoundary
   const client = await supabase()
   if (client === null) return { ok: false, message: "계정 기능이 꺼져 있어요." }
   try {
@@ -112,7 +129,7 @@ export async function savePrivateProfile(input: SaveProfileInput): Promise<Accou
     throw error
   }
   const { data: userData, error: userError } = await client.auth.getUser()
-  if (userError != null || userData.user?.id !== input.userId) {
+  if (accountDeletionBoundaryState(input.userId) !== "OPEN" || userError != null || userData.user?.id !== input.userId) {
     return { ok: false, message: "로그인 정보를 다시 확인해 주세요." }
   }
   let expectedSessionId = input.expectedSessionId ?? null
@@ -132,6 +149,8 @@ export async function savePrivateProfile(input: SaveProfileInput): Promise<Accou
     }
     if (expectedSessionId === null) return { ok: false, message: "로그인 세션을 다시 확인해 주세요." }
   }
+  const preClaimBoundary = localProfileBoundaryStatus(input.userId)
+  if (preClaimBoundary) return preClaimBoundary
   const { data, error } = await client.rpc("claim_beta_seat", {
     expected_user_id_input: input.userId,
     expected_session_id_input: expectedSessionId,
@@ -139,6 +158,8 @@ export async function savePrivateProfile(input: SaveProfileInput): Promise<Accou
     privacy_policy_version_input: input.privacyPolicyVersion,
     terms_of_service_version_input: input.termsOfServiceVersion,
   })
+  const returnedBoundary = localProfileBoundaryStatus(input.userId)
+  if (returnedBoundary) return returnedBoundary
   if (error !== null) return { ok: false, message: "계정 정보를 저장하지 못했어요." }
   if (data === "BETA_FULL") {
     return {
@@ -179,16 +200,27 @@ export async function savePrivateProfile(input: SaveProfileInput): Promise<Accou
 }
 
 export async function requestServerAccountDeletion(userId: string): Promise<AccountActionResult> {
+  try {
   const client = await supabase()
   if (client === null) return { ok: false, message: "계정 기능이 꺼져 있어요." }
   const { data: userData, error: userError } = await client.auth.getUser()
   if (userError != null || userData.user?.id !== userId) {
     return { ok: false, message: "로그인 정보를 다시 확인해 주세요." }
   }
-  const { error } = await client.rpc("request_account_deletion", {
+  const { data, error } = await client.rpc("request_account_deletion", {
     expected_user_id_input: userId,
   })
-  return error === null
+  const confirmed = error === null && z.iso.datetime({ offset: true }).safeParse(data).success
+  if (confirmed) {
+    // Terminal before UI/logout; never remove this owner's device recovery data.
+    closeAccountDeletionBoundary(userId, data as string)
+    if (activeLocalAccount() === userId) {
+      setActiveLocalAccount(null)
+      setAccountAuthState("FAILED")
+    }
+  }
+  return confirmed
     ? { ok: true, message: "계정 삭제 요청을 접수하고 접근을 막았어요. 온라인 건강·일지 자료 삭제와 나머지 계정 정보 정리는 별도 완료 상태를 확인해 주세요. 기기 기록은 그대로이며 백업 정리 완료를 뜻하지 않아요." }
     : { ok: false, message: "계정 삭제를 요청하지 못했어요. 잠시 후 다시 시도해 주세요." }
+  } catch { return { ok: false, message: "계정 삭제를 요청하지 못했어요. 잠시 후 다시 시도해 주세요." } }
 }

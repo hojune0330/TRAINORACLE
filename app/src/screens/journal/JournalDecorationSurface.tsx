@@ -1,4 +1,5 @@
 import React from "react"
+import { hasActiveBrowserBackLayer, isBrowserPopNavigationConsumed } from "../../navigation/browserNavigation"
 import { DecoratedJournalPageFrame } from "../../components/DecoratedJournalPageFrame"
 import {
   DECORATION_CATALOG,
@@ -165,6 +166,7 @@ function JournalDecorationSurfaceSession({
     const push = () => window.history.pushState({ ...window.history.state, journalDecorationEditor: token }, "", window.location.href)
     if (window.history.state?.journalDecorationEditor !== token) push()
     const pop = (event: PopStateEvent) => {
+      if (isBrowserPopNavigationConsumed(event)) return
       if (event.state?.journalDecorationEditor === token) return
       if (closeLayerRef.current()) { push(); return }
       if (calendarRef.current?.hasDirty()) push()
@@ -340,7 +342,7 @@ function JournalDecorationSurfaceSession({
 
   /* 모달 편집기 밖의 앱 탐색으로 Tab 초점이 새지 않게 한다. 캡처 단계에서 막아 첫 키 입력도 놓치지 않는다. */
   const trapFocus = (event: { readonly key: string; readonly shiftKey: boolean; preventDefault: () => void }): void => {
-    if (event.key !== "Tab" || leave) return
+    if (event.key !== "Tab" || leave || hasActiveBrowserBackLayer()) return
     const root = workspaceRef.current
     if (root === null) return
     const focusable = Array.from(root.querySelectorAll<HTMLElement>(
@@ -362,6 +364,7 @@ function JournalDecorationSurfaceSession({
   React.useLayoutEffect(() => {
     if (!open) return
     const onKeyDown = (event: KeyboardEvent) => {
+      if (hasActiveBrowserBackLayer()) return
       if (event.key === "Escape" && !leave) {
         event.preventDefault(); event.stopImmediatePropagation()
         if (textSheet) { setTextSheet(null); return }
@@ -458,6 +461,7 @@ function JournalDecorationSurfaceSession({
   React.useEffect(() => {
     if (!open || target === "CALENDAR") return
     const onKeyDown = (event: KeyboardEvent) => {
+      if (hasActiveBrowserBackLayer()) return
       if (!(event.ctrlKey || event.metaKey)) return
       const target = event.target
       if (target instanceof HTMLElement && (

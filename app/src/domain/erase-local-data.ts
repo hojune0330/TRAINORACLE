@@ -39,6 +39,7 @@ import { findAccountScopedStorageKeys } from "./account/local-account-scope"
 import { DAILY_CONTEXT_STORAGE_KEY } from "./daily-context"
 import { FATIGUE_EXPERIMENT_STORAGE_KEY } from "./fatigue-experiment-store"
 import { SYNC_CONSENT_STORAGE_KEY } from "./account/sync-local"
+import { ACCOUNT_DELETION_BOUNDARY_PREFIX } from "./account/account-deletion-boundary"
 
 const ACCOUNT_SCOPED_PLAN_LOCAL_KEYS = [
   "trainoracle.plan-beta.v1",
@@ -132,6 +133,15 @@ const ACCOUNT_KEYS = [
 /** 삭제 기록 — 기본은 **남긴다**(서버 부활 방지) */
 const DELETION_RECORD_KEY = "trainoracle.sync.tombstones.v1"
 
+function accountDeletionRecordKeys(target: Storage): string[] {
+  const keys: string[] = []
+  for (let index = 0; index < target.length; index += 1) {
+    const key = target.key(index)
+    if (key?.startsWith(ACCOUNT_DELETION_BOUNDARY_PREFIX)) keys.push(key)
+  }
+  return keys
+}
+
 export type EraseOptions = {
   /**
    * 삭제 기록(tombstone)까지 지울지. 기본 false.
@@ -200,6 +210,9 @@ export function eraseAllLocalData(options: EraseOptions = {}): EraseResult {
   ]
   if (options.includeDeletionRecord === true) {
     keys.push(DELETION_RECORD_KEY)
+    // Default wipe preserves resurrection prevention. An explicit full-trace
+    // wipe removes durable metadata, but cannot reopen this tab's deleted session.
+    keys.push(...accountDeletionRecordKeys(localStorage))
   }
 
   const failed: string[] = []
@@ -235,6 +248,7 @@ export function erasableKeys(options: EraseOptions = {}): readonly string[] {
   if (options.includeDeletionRecord === true) {
     keys.push(DELETION_RECORD_KEY)
     keys.push(LOCAL_JOURNAL_OWNERSHIP_KEY)
+    if (localStorage !== null) keys.push(...accountDeletionRecordKeys(localStorage))
   }
   return keys
 }

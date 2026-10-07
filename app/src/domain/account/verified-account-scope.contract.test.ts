@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { AccountUser } from "./auth"
+import { closeAccountDeletionBoundary } from "./account-deletion-boundary"
 import {
   requestVerifiedAccountScopeRefresh,
   startVerifiedAccountScope,
@@ -166,6 +167,43 @@ describe("verified local account scope", () => {
     await vi.waitFor(() => expect(activeScope).toBe("account-a"))
     expect(loadSetup).toHaveBeenCalledWith({ userId: "account-a" })
     expect(currentUser).toHaveBeenCalledWith({ throwOnFailure: true })
+    dispose()
+  })
+
+  it("revokes immediately during a delayed consent check and cannot revive deleted A after B", async () => {
+    const a = "verified-delete-a", b = "verified-delete-b"
+    currentUser.mockResolvedValue(account(a))
+    const consent = deferred<unknown>()
+    const load = vi.fn().mockReturnValueOnce(consent.promise).mockResolvedValue({ ok: true })
+    const dispose = start(load)
+    await vi.waitFor(() => expect(load).toHaveBeenCalledWith(a))
+    closeAccountDeletionBoundary(a, "2026-10-07T00:00:00Z")
+    expect(activeScope).toBeNull()
+    expect(statuses.at(-1)).toBe("FAILED")
+    consent.resolve({ ok: true })
+    await Promise.resolve()
+    expect(setScope).not.toHaveBeenCalledWith(a)
+    currentUser.mockResolvedValue(account(b))
+    authListener?.(account(b))
+    await vi.waitFor(() => expect(activeScope).toBe(b))
+    authListener?.(account(a))
+    await vi.waitFor(() => expect(statuses.at(-1)).toBe("FAILED"))
+    expect(activeScope).toBeNull()
+    expect(setScope).not.toHaveBeenCalledWith(a)
+    dispose()
+  })
+
+  it("does not revoke a normal B scope or a guest for A's deletion", async () => {
+    currentUser.mockResolvedValue(account("verified-delete-normal-b"))
+    const dispose = start()
+    await vi.waitFor(() => expect(activeScope).toBe("verified-delete-normal-b"))
+    closeAccountDeletionBoundary("verified-delete-other-a", "2026-10-07T00:00:00Z")
+    expect(activeScope).toBe("verified-delete-normal-b")
+    expect(statuses.at(-1)).toBe("READY")
+    authListener?.(null)
+    closeAccountDeletionBoundary("verified-delete-other-c", "2026-10-07T00:00:00Z")
+    expect(activeScope).toBeNull()
+    expect(statuses.at(-1)).toBe("READY")
     dispose()
   })
 })

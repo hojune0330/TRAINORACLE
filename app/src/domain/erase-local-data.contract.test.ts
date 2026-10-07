@@ -12,6 +12,7 @@ import { recoverPendingSync } from "./account/sync-recovery"
 import { eraseAllLocalData, erasableKeys } from "./erase-local-data"
 import { ENGAGEMENT_STORAGE_KEY } from "./engagement"
 import { LOCAL_JOURNAL_OWNERSHIP_KEY } from "./account/local-journal-ownership"
+import { ACCOUNT_DELETION_BOUNDARY_PREFIX, closeAccountDeletionBoundary, isAccountDeletionClosed } from "./account/account-deletion-boundary"
 
 const JOURNAL = "trainoracle.journal.v1"
 const TOMBSTONES = "trainoracle.sync.tombstones.v1"
@@ -35,6 +36,19 @@ const JOURNAL_OWNERSHIP = LOCAL_JOURNAL_OWNERSHIP_KEY
 beforeEach(() => {
   window.localStorage.clear()
   window.sessionStorage.clear()
+})
+
+it("preserves the account terminal record by default and erases durable traces only with the existing explicit option", () => {
+  const owner = "erase-confirmed-deleted-owner"
+  const key = ACCOUNT_DELETION_BOUNDARY_PREFIX + owner
+  closeAccountDeletionBoundary(owner, "2026-10-07T00:00:00Z")
+  expect(erasableKeys()).not.toContain(key)
+  eraseAllLocalData()
+  expect(localStorage.getItem(key)).toBe("2026-10-07T00:00:00Z")
+  expect(erasableKeys({ includeDeletionRecord: true })).toContain(key)
+  eraseAllLocalData({ includeDeletionRecord: true })
+  expect(localStorage.getItem(key)).toBeNull()
+  expect(isAccountDeletionClosed(owner)).toBe(true) // this tab's deleted session stays terminal
 })
 
 it.each([1, 3])("erases adjusted originals v%s for guest and every account without parsing private content", version => {

@@ -9,7 +9,7 @@ export const browserFixtureTests = ["**/multi-event-pace-lifecycle.spec.ts", "**
 export default defineConfig({
   testDir: "./e2e",
   // Native-IDB and draft-panel tests require their dedicated Vite configs, not built preview.
-  testIgnore: ["**/account-journal-draft-buffer.spec.ts", "**/account-journal-draft-panel.spec.ts", "**/account-journal-record-service.spec.ts", "**/account-journal-conflict.spec.ts", "**/account-decoration-service.spec.ts", "**/account-calendar-decoration-service.spec.ts", "**/calendar-decoration-flow.spec.ts", "**/form-input-autosave.spec.ts", "**/account-plan-service.spec.ts", "**/account-plan-collection-preparation.spec.ts", "**/account-plan-lock.spec.ts", "**/account-plan-service-mobile.spec.ts", "**/file-analysis-flow.spec.ts", "**/planned-repetition.spec.ts", "**/run-full-suite.test.mjs", ...browserFixtureTests],
+  testIgnore: ["**/account-journal-draft-buffer.spec.ts", "**/account-deletion-boundary.spec.ts", "**/account-journal-draft-panel.spec.ts", "**/account-journal-record-service.spec.ts", "**/account-journal-conflict.spec.ts", "**/account-decoration-service.spec.ts", "**/account-calendar-decoration-service.spec.ts", "**/calendar-decoration-flow.spec.ts", "**/form-input-autosave.spec.ts", "**/account-plan-service.spec.ts", "**/account-plan-collection-preparation.spec.ts", "**/account-plan-lock.spec.ts", "**/account-plan-service-mobile.spec.ts", "**/file-analysis-flow.spec.ts", "**/planned-repetition.spec.ts", "**/run-full-suite.test.mjs", ...browserFixtureTests],
   outputDir: "./test-results",
   fullyParallel: true,
   timeout: 60_000,
