@@ -97,9 +97,11 @@ async function openRecords(page: Page, active: boolean) {
 async function enterRecord(page: Page, event: number, extra: Extra) {
   await page.getByRole("combobox", { name: "기록 역할" }).selectOption(extra.purpose)
   await page.getByRole("combobox", { name: "종목 거리" }).selectOption(String(event))
+  await page.getByRole("button", { name: "시간 입력", exact: true }).click()
   const fields = timeFields(extra.seconds)
   await page.getByRole("textbox", { name: "기록 분", exact: true }).fill(fields.minutes)
   await page.getByRole("textbox", { name: "기록 초", exact: true }).fill(fields.seconds)
+  await page.getByRole("button", { name: extra.purpose === "RACE_GOAL" ? "목표 확인" : "날짜 확인", exact: true }).click()
   if (extra.purpose !== "RACE_GOAL") await page.getByRole("textbox", { name: "달성일", exact: true }).fill(extra.date ?? "")
   await page.getByRole("button", { name: "기록 저장", exact: true }).click()
   await expect.poll(async () => (await stored<AthleteRecord[]>(page, RECORDS))?.some(row =>
@@ -231,14 +233,21 @@ for (const persona of personas) test(`${persona.id} ${persona.name}`, async ({ p
       await openRecords(page, false)
       for (const extra of persona.extras ?? []) await enterRecord(page, persona.event, extra)
       await page.getByRole("button", { name: "계획으로", exact: true }).click()
-      if (persona.goal) await page.getByRole("radio", { name: "목표만 있어요", exact: true }).check()
-      await page.getByRole("combobox", { name: "종목", exact: true }).selectOption(String(persona.event === 21097.5 ? 21097 : persona.event))
+      const eventLabel = persona.event === 21097.5 ? "하프 마라톤"
+        : persona.event === 42195 ? "마라톤"
+        : persona.event === 10000 ? "10km"
+        : persona.event === 5000 ? "5km" : `${persona.event}m`
+      await page.getByRole("button", { name: eventLabel, exact: true }).click()
+      await page.getByRole("button", { name: persona.goal ? "목표만 있어요" : "내 기록", exact: true }).click()
       const fields = timeFields(persona.seconds)
       await page.getByLabel("분", { exact: true }).fill(fields.minutes)
       await page.getByLabel("초", { exact: true }).fill(fields.seconds)
-      if (!persona.goal) await page.getByLabel("기록 달성일", { exact: true }).fill(DATE)
-      await page.getByRole("button", { name: "내 계획 받기", exact: true }).click()
-      await page.getByRole("button", { name: /구조화된 훈련/ }).click()
+      if (!persona.goal) {
+        await page.getByText("기록 날짜 추가", { exact: true }).click()
+        await page.getByLabel("기록 달성일", { exact: true }).fill(DATE)
+      }
+      await page.getByRole("button", { name: persona.goal ? "목표 입력 완료" : "기록 입력 완료", exact: true }).click()
+      await page.getByRole("button", { name: /빠른 훈련과 쉬운 훈련/ }).click()
       await page.getByRole("button", { name: /^3일/ }).click()
       await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/ }).click()
       const all = await stored<AthleteRecord[]>(page, RECORDS)
@@ -445,6 +454,8 @@ for (const persona of personas) test(`${persona.id} ${persona.name}`, async ({ p
         plannedSessionLink: { sessionDay: main.day, sessionSlot: main.slot } })
       expect((await plan(page)).progress).toEqual([])
       await page.getByRole("button", { name: "완료", exact: true }).click()
+      const returnToCalendar = page.getByRole("button", { name: "달력으로 돌아가기", exact: true })
+      if (await returnToCalendar.isVisible()) await returnToCalendar.click()
       await tab(page)
       await page.getByRole("button", { name: "연결된 일지 기록 보기", exact: true }).click()
       await expect(page.getByRole("tabpanel")).toContainText("직접 기록한 RPE 7")
@@ -502,7 +513,7 @@ for (const persona of personas) test(`${persona.id} ${persona.name}`, async ({ p
           archivedOriginalExact: true, planHistoryAndJournalExactAfterReload: true }, null, 2) })
     })
   } finally {
-    await context.setOffline(false)
+    if (!page.isClosed()) await context.setOffline(false)
     await info.attach("lifecycle-stage-receipt", { contentType: "application/json",
       body: JSON.stringify({ persona, proof: "synthetic guest browser; scope-switch probe is not authenticated account proof",
         completed, overBudgetRequired: persona.overBudget !== undefined, overBudgetVerified,

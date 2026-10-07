@@ -292,7 +292,7 @@ test("shows a truthful distance receipt and opens the real trend", async ({ page
   })
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
-  await page.getByRole("button", { name: /훈련 후.*거리·시간·훈련 내용을 모두 기록/u }).click()
+  await page.getByRole("button", { name: /훈련 후.*운동별로 자세히/u }).click()
   await page.getByRole("textbox", { name: "거리 (km)" }).fill("8")
 
   // When
@@ -303,10 +303,12 @@ test("shows a truthful distance receipt and opens the real trend", async ({ page
   await expect(receipt).toContainText("8 km")
   await receipt.getByRole("button", { name: "거리 추이 보기" }).click()
   await expect(page.getByRole("heading", { name: "오라클", exact: true })).toBeVisible()
-  await expect(page.getByRole("group", { name: "훈련 분석 자세히 보기" }).getByRole("button", { name: "월별 변화", exact: true })).toHaveAttribute("aria-pressed", "true")
+  const detailMenu = page.locator(".trends-hub__detail-menu")
+  await detailMenu.locator(":scope > summary").click()
+  await expect(detailMenu.getByRole("button", { name: "월별 변화", exact: true })).toHaveAttribute("aria-pressed", "true")
   await page.getByRole("region", { name: "최근 4개월 추이" }).locator("summary", { hasText: "월별 수치와 집계 범위 보기" }).click()
   await expect(page.getByRole("region", { name: "최근 4개월 추이" }).getByText(/중앙 거리 8 km/u)).toBeVisible()
-  await page.getByRole("group", { name: "훈련 분석 자세히 보기" }).getByRole("button", { name: "훈련량", exact: true }).click()
+  await detailMenu.getByRole("button", { name: "훈련량", exact: true }).click()
   const distance = page.getByRole("region", { name: "누적 거리와 변화" })
   await expect(distance.getByLabel(/이번 주, 8킬로미터, 기록 1건/u)).toBeVisible()
   await expect(distance.getByText(/1건 반영/u).first()).toBeVisible()

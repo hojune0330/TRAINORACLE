@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { completeDetailedPlan } from "./plan-flow"
+import { completeDetailedPlan, openPlanOptions } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
@@ -18,7 +18,8 @@ test("explains the easy-session time difference while keeping the selected purpo
   // Then: both choices preserve the selected purpose and their support choices.
   // The current catalog has explicit structure; this older comparison must not
   // claim it is unspecified or reduce all differences to an envelope's time.
-  await page.locator("summary", { hasText: "A와 B는 뭐가 달라요?" }).click()
+  await page.getByRole("group", { name: "계획 확인·변경" })
+    .getByRole("button", { name: "추천 근거", exact: true }).click()
   const comparison = page.getByRole("region", { name: "두 계획 핵심 비교" })
   await expect(comparison.getByText("기본 훈련 구성", { exact: true })).toBeVisible()
   await expect(comparison.getByText("기초·회복 운동을 짧게")).toBeVisible()
@@ -38,6 +39,7 @@ test("explains the easy-session time difference while keeping the selected purpo
   await comparison.screenshot({ path: testInfo.outputPath("candidate-comparison.png") })
   // The shared summary is withheld when comparison is unsupported, so verify the
   // original one-LT-day assertion independently on both actual candidate cards.
+  await openPlanOptions(page)
   for (const letter of ["A", "B"]) {
     const details = page.locator(".plan-candidate-explanation").filter({ has: page.locator("summary", { hasText: `계획안 ${letter} 설명·시간 합계` }) })
     await details.locator("summary").click()

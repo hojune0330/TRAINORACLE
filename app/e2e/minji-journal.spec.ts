@@ -65,6 +65,7 @@ test("opens Minji's diary as a readable page stack", async ({ page }, testInfo) 
 
   await page.goto("/")
   await page.getByRole("button", { name: "더보기" }).click()
+  await page.getByRole("button", { name: "배우기·꾸미기" }).click()
   await page.getByRole("button", { name: "민지의 예시 일지" }).click()
   const storageBefore = await page.evaluate(() => JSON.stringify({ ...window.localStorage }))
 

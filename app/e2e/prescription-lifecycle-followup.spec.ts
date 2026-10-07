@@ -17,7 +17,7 @@ async function generate(page: Page, event = "5000", experienced = false) {
   await page.getByLabel("초", { exact: true }).fill(event === "800" ? "1.5" : "31.5")
   await page.getByLabel("기록 달성일", { exact: true }).fill("2026-09-25")
   await page.getByRole("button", { name: "내 계획 받기", exact: true }).click()
-  if (experienced) await page.getByRole("button", { name: /구조화된 훈련/ }).click()
+  if (experienced) await page.getByRole("button", { name: /빠른 훈련과 쉬운 훈련/ }).click()
   else await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/ }).click()
   await page.getByRole("button", { name: /^3일/ }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/ }).click()

@@ -12,11 +12,18 @@ for (const width of [320, 375]) {
       await page.getByRole("button", { name: "더보기", exact: true }).click()
       await expect(page.getByRole("button", { name: "페이스 계산", exact: true })).toBeVisible()
       await page.screenshot({ path: info.outputPath("more-tools.png"), fullPage: true })
-      for (const name of ["페이스 계산", "경기 기록 추가·수정", "워치 파일 가져오기", "나의 러닝 프로필", "최고기록으로 풀이하기", "오라클 읽을거리", "훈련법 읽기", "일지 꾸미기·포인트"]) {
+      for (const name of ["페이스 계산", "경기 기록 추가·수정", "워치 파일 가져오기", "나의 러닝 프로필", "최고기록으로 풀이하기", "오라클 읽을거리"]) {
         const entry = page.getByRole("button", { name, exact: true })
         await expect(entry).toBeVisible()
         expect(await entry.evaluate(node => node.closest("details") === null)).toBe(true)
       }
+      await page.getByRole("button", { name: "배우기·꾸미기", exact: true }).click()
+      for (const name of ["민지의 예시 일지", "훈련 용어집·도움말", "훈련법 읽기", "일지 꾸미기·포인트"]) {
+        const entry = page.getByRole("button", { name, exact: true })
+        await expect(entry).toBeVisible()
+        expect(await entry.evaluate(node => node.closest("details") === null)).toBe(true)
+      }
+      await page.getByRole("button", { name: "더보기로 돌아가기", exact: true }).click()
       await page.getByRole("button", { name: "경기 기록 추가·수정", exact: true }).click()
       await expect(page.getByRole("button", { name: "더보기로", exact: true })).toBeVisible()
       await page.goBack()
@@ -26,25 +33,31 @@ for (const width of [320, 375]) {
       await page.getByRole("button", { name: "뒤로", exact: true }).click()
       await page.getByRole("button", { name: "오라클 읽을거리", exact: true }).click()
       await expect(page.locator(".oracle-v2__chrome").getByText("오라클 읽을거리", { exact: true })).toBeVisible()
+      await page.getByRole("button", { name: /^전체 주제·다른 글/u }).click()
       await expect(page.getByRole("group", { name: "읽을거리 주제" })).toBeVisible()
       await page.getByRole("button", { name: "더보기로 돌아가기", exact: true }).click()
       await page.getByRole("button", { name: "나의 러닝 프로필", exact: true }).click()
+      await page.getByRole("button", { name: "마리·친구·프로필 설정", exact: true }).click()
       await expect(page.getByRole("button", { name: "친구와 취향 비교", exact: true })).toBeVisible()
       await page.getByRole("button", { name: "친구와 취향 비교", exact: true }).click()
       await expect(page.getByRole("heading", { name: "어떻게 비교할까요?", exact: true })).toBeVisible()
       await expect(page.getByRole("button", { name: "직접 입력해서 비교", exact: true })).toBeEnabled()
       await page.getByRole("button", { name: "닫기", exact: true }).click()
-      for (const name of ["내 훈련 해설", "내 기록 해설", "계획·수행 비교"]) {
+      await page.getByRole("button", { name: "마리·친구·프로필 설정", exact: true }).click()
+      await expect(page.getByRole("button", { name: "내 훈련 해설", exact: true })).toBeVisible()
+      await page.getByText("기록·계획 해설", { exact: true }).click()
+      for (const name of ["내 기록 해설", "계획·수행 비교"]) {
         const entry = page.getByRole("button", { name, exact: true })
         await expect(entry).toBeVisible()
-        expect(await entry.evaluate(node => node.closest("details") === null)).toBe(true)
+        expect(await entry.evaluate(node => node.closest("details")?.hasAttribute("open"))).toBe(true)
       }
       await page.screenshot({ path: info.outputPath("profile-actions.png"), fullPage: true })
+      await page.getByRole("dialog", { name: "프로필 설정" }).getByRole("button", { name: "닫기" }).click()
       await page.getByRole("button", { name: "더보기로 돌아가기", exact: true }).click()
       await page.getByRole("button", { name: "홈으로 돌아가기", exact: true }).click()
       await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클", exact: true }).click()
       await expect(page.getByRole("button", { name: "첫 기록 남기기", exact: true })).toBeInViewport()
-      await expect(page.getByText("오라클 예시 보기", { exact: true })).toBeVisible()
+      await expect(page.getByRole("region", { name: "오라클 예시" })).toBeVisible()
       await page.screenshot({ path: info.outputPath("oracle-first.png") })
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
       await page.evaluate(() => {

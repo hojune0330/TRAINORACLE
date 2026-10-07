@@ -16,7 +16,7 @@ const SOURCE = { head: git("rev-parse", "HEAD"), trackedChanges: git("diff", "--
 const WIDTHS = [320, 360, 375, 390, 768, 1280]
 const EVENTS = [800, 1500, 3000, 5000, 10000, 21097, 42195]
 const EXPERIENCE = ["NEW_TO_RUNNING", "DEVELOPING", "EXPERIENCED"]
-const EXPERIENCE_LABEL = [/달리기를 막 시작했어요/u, /훈련 계획에 맞춰 달려 본 경험/u, /구조화된 훈련과 경기 경험/u]
+const EXPERIENCE_LABEL = [/달리기를 막 시작했어요/u, /훈련 계획에 맞춰 달려 본 경험/u, /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u]
 const FOCUS = [/골고루.*MIX/u, /편하게 오래.*BASE/u, /조금 힘들게 꾸준히.*LT/u,
   /숨차게 반복.*VO₂/u, /짧고 세게.*GLY/u, /스피드.*ATP-PC/u, /회복만.*REC/u]
 const ENTRY = ["홈", "훈련", "일지", "분석"]

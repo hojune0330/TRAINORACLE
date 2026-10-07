@@ -68,8 +68,8 @@ test("does not ask to discard a blank or successfully saved guest journal", asyn
 
 test("keeps personal mode when another analysis topic has no personal evidence", async ({ page }) => {
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클", exact: true }).click()
-  await page.locator("summary", { hasText: "예시로 먼저 둘러보기" }).click()
-  await page.getByRole("region", { name: "어떤 훈련 정보가 궁금하세요?" }).getByRole("button").first().click()
+  await page.getByRole("region", { name: "오라클 예시" })
+    .getByRole("button", { name: "이 예시 자세히 보기", exact: true }).click()
   await page.getByRole("button", { name: "내 기록", exact: true }).click()
   await page.getByRole("button", { name: /이어서 살펴보기/ }).click()
   await expect(page.getByRole("button", { name: "내 기록", exact: true })).toHaveAttribute("aria-pressed", "true")
@@ -88,7 +88,7 @@ test("shows an executable record-based workout and opens its same stored method"
     verificationState: "SELF_REPORTED", sourceRef: "athlete-record:synthetic-followup-5k", savedAt: "2026-09-20T12:00:00Z",
   }])))
   await page.getByRole("button", { name: "훈련 계획 만들기", exact: true }).click()
-  await completeDetailedPlan(page, { event: /^5000m/, experience: /구조화된 훈련과 경기 경험이 많아요/,
+  await completeDetailedPlan(page, { event: /^5000m/, experience: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/,
     focus: /숨차게 반복.*VO₂/, template: /5000m 경기 페이스 상세 훈련 포함/ })
   const picker = page.getByRole("region", { name: "개인 페이스 기준 기록" })
   await picker.getByRole("button", { name: /18분 31초/ }).click()

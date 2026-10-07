@@ -93,6 +93,7 @@ test("휴지통 화면에서 나중에도 되돌릴 수 있다", async ({ page }
   await page.reload()
 
   await page.getByRole("button", { name: "더보기" }).click()
+  await page.getByRole("button", { name: "백업·복원·휴지통" }).click()
   await page.locator("summary").filter({ hasText: /^휴지통/u }).click()
 
   // Then — 휴지통이 보이고 남은 일수가 표시된다
@@ -134,6 +135,7 @@ test("완전히 지우기는 확인을 한 번 더 받는다", async ({ page }) 
   await page.reload()
 
   await page.getByRole("button", { name: "더보기" }).click()
+  await page.getByRole("button", { name: "백업·복원·휴지통" }).click()
   await page.locator("summary").filter({ hasText: /^휴지통/u }).click()
   await expect(page.getByTestId("trash-bin")).toBeVisible()
   await page.getByTestId("trash-purge").first().click()
@@ -180,6 +182,7 @@ test("30일이 지난 항목은 앱을 켤 때 사라진다", async ({ page }) =
   await page.reload()
 
   await page.getByRole("button", { name: "더보기" }).click()
+  await page.getByRole("button", { name: "백업·복원·휴지통" }).click()
   await page.locator("summary").filter({ hasText: /^휴지통/u }).click()
 
   // 화면에 보이지 않고, 저장소에서도 실제로 비워진다
@@ -212,6 +215,7 @@ test("메모만 쓴 일지가 안전 백업에서 빠진다는 안내가 뜬다"
 
   // Then — 빠지는 개수와 포함/전체 개수를 사실대로 알린다
   await page.getByRole("button", { name: "더보기" }).click()
+  await page.getByRole("button", { name: "백업·복원·휴지통" }).click()
   const notice = page.getByTestId("safe-export-skipped")
   await expect(notice).toBeVisible()
   await expect(notice).toContainText("2개")

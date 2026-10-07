@@ -8,6 +8,19 @@ export async function selectNineDayProjection(page: Page): Promise<void> {
 }
 
 export async function openPlanRefinement(page: Page, label: string): Promise<void> {
+  const purposeLabel = ["운동할 날", "달력 길이", "시간대", "하루 두 번", "대회 날짜"].includes(label)
+    ? "일정 바꾸기"
+    : "훈련 조절"
+  const purposeEntry = page.getByRole("group", { name: "계획 확인·변경" })
+    .getByRole("button", { name: purposeLabel, exact: true })
+  if (await purposeEntry.count()) {
+    if (await purposeEntry.getAttribute("aria-expanded") !== "true") await purposeEntry.click()
+    const purpose = page.getByRole("region", { name: purposeLabel, exact: true })
+    await expect(purpose).toBeVisible()
+    await purpose.getByRole("button", { name: new RegExp(`^${label} 바꾸기`) }).click()
+    return
+  }
+
   const panel = page.getByTestId("plan-refine")
   if (await panel.getAttribute("open") === null) await panel.locator("summary").click()
   await panel.getByRole("button", { name: new RegExp(`^${label} 바꾸기`) }).click()
@@ -16,7 +29,7 @@ export async function openPlanRefinement(page: Page, label: string): Promise<voi
 export async function refinePlan(page: Page, label: string, answer: string | RegExp): Promise<void> {
   await openPlanRefinement(page, label)
   await page.getByRole("button", { name: answer, exact: typeof answer === "string" }).click()
-  await expect(page.getByTestId("plan-refine")).toBeAttached()
+  await expect(page.locator('[data-testid="plan-refine"], [role="group"][aria-label="계획 확인·변경"]')).toBeAttached()
 }
 
 export async function completeQuickPlan(page: Page, options: {
@@ -64,6 +77,17 @@ export async function completeDetailedPlan(page: Page, options: {
 }
 
 export async function openPlanOptions(page: Page, expandA = false): Promise<void> {
+  const purposeEntry = page.getByRole("group", { name: "계획 확인·변경" })
+    .getByRole("button", { name: "일정 바꾸기", exact: true })
+  if (await purposeEntry.count()) {
+    if (await purposeEntry.getAttribute("aria-expanded") !== "true") await purposeEntry.click()
+    const schedule = page.getByRole("region", { name: "일정 바꾸기", exact: true })
+    await expect(schedule).toBeVisible()
+    const toggle = schedule.getByRole("button", { name: "계획안 A 일정 펼치기" })
+    if (expandA && await toggle.count()) await toggle.click()
+    return
+  }
+
   const options = page.locator(".plan-detailed-options").filter({ has: page.locator("summary", { hasText: "기록·시작일·다른 일정 확인" }) })
   if (await options.getAttribute("open") === null) await options.locator(":scope > summary").click()
   const toggle = page.getByRole("button", { name: "계획안 A 일정 펼치기" })

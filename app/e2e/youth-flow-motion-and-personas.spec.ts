@@ -32,7 +32,7 @@ test("moves from a choice to the next question and gives a clear journal save co
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
 
-  await expect(page.getByRole("combobox", { name: "종목" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "어떤 종목을 준비하세요?" })).toBeVisible()
   await enterPlanWithoutRecord(page)
   await expect(page.getByRole("heading", { name: "지금까지 어떻게 달려왔나요?" })).toBeVisible()
   await expectActiveQuestionAtReadingPosition(page)
@@ -41,18 +41,9 @@ test("moves from a choice to the next question and gives a clear journal save co
   const activePlanBefore = await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))
   expect(activePlanBefore).toBeNull()
 
-  let discardDialog: { type: string; message: string } | undefined
-  page.once("dialog", (dialog) => {
-    discardDialog = { type: dialog.type(), message: dialog.message() }
-    void dialog.accept()
-  })
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
-  expect(discardDialog).toEqual({
-    type: "confirm",
-    message: "아직 저장하지 않은 계획이 있어요. 계획 만들기를 그만두고 이동할까요?\n계속 만들려면 취소를 눌러 주세요.",
-  })
   await expect(page.getByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
-  await page.getByRole("button", { name: /훈련 후.*거리·시간·훈련 내용을 모두 기록/u }).click()
+  await page.getByRole("button", { name: /훈련 후.*운동별로 자세히/u }).click()
   await expect(page.getByRole("heading", { name: "훈련 후 · 기록" })).toBeVisible()
   await page.getByRole("textbox", { name: "거리 (km)" }).fill("8")
   await page.getByRole("button", { name: /^저장/u }).click()
@@ -75,13 +66,14 @@ test("a high-school athlete can make a ten-day two-a-day plan without prior reco
   await resetLocalState(page)
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
-await completeDetailedPlan(page, { frame: /^10일 계획 받기/u, event: /^1500m/u, division: /고등부/u, experience: /구조화된 훈련과 경기 경험이 많아요/u, days: /^매일/u, focus: /조금 힘들게 꾸준히.*LT/u, time: /날마다 달라요/u, twice: true })
+  await completeDetailedPlan(page, { frame: /^10일 계획 받기/u, event: /^1500m/u, division: /고등부/u, experience: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u, days: /^매일/u, focus: /조금 힘들게 꾸준히.*LT/u, time: /날마다 달라요/u, twice: true })
 
   await expect(page.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
-  await page.getByText("A와 B는 뭐가 달라요?", { exact: true }).click()
-  await expect(page.getByRole("region", { name: "두 계획 핵심 비교" })).toContainText("조금 힘들게 꾸준히 · LT")
   await expect(page.getByRole("group", { name: /훈련 2개/u }).first()).toBeVisible()
   await expect(page.getByLabel("10일 훈련 일정").first()).toContainText(/MAIN|REC|BASE/u)
+  await page.getByRole("group", { name: "계획 확인·변경" })
+    .getByRole("button", { name: "추천 근거", exact: true }).click()
+  await expect(page.getByRole("region", { name: "두 계획 핵심 비교" })).toContainText("조금 힘들게 꾸준히 · LT")
   expect(await page.locator("body").evaluate((body) => body.scrollWidth <= window.innerWidth)).toBe(true)
 })
 
@@ -95,7 +87,8 @@ test("a self-directed runner with no journal can still reach an RPE plan", async
   await expect(page.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
   await page.getByText("계획안 A 설명·시간 합계", { exact: true }).click()
   await expect(page.getByText("RPE 기준 실행 안내").first()).toBeVisible()
-  await page.locator("summary", { hasText: "기준 기록·참가 부문·이전 계획 확인" }).click()
+  await page.getByRole("group", { name: "계획 확인·변경" })
+    .getByRole("button", { name: "추천 근거", exact: true }).click()
   await expect(page.getByText("기준 기록 없이 만든 계획")).toBeVisible()
   await expect(page.getByText(/확인한 기준 기록이 없어 개인 기록과 일지 수치는 이번 계획 계산에 사용하지 않았어요/u)).toBeVisible()
 })

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { completeQuickPlan, refinePlan } from "./plan-flow"
+import { completeQuickPlan, openPlanOptions, refinePlan } from "./plan-flow"
 
 for (const [width, zoom] of [[320, 1], [375, 2], [1280, 1]] as const) {
   test(`schedule condition review ${width}px zoom ${zoom}`, async ({ page, context }, info) => {
@@ -18,7 +18,7 @@ for (const [width, zoom] of [[320, 1], [375, 2], [1280, 1]] as const) {
     await page.clock.setFixedTime(new Date("2026-10-02T03:00:00Z"))
     await page.goto("/?app=1&uitest=1")
     await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
-    await completeQuickPlan(page, { event: "5000", experience: /구조화된 훈련과 경기 경험/u, days: /^5일/u })
+    await completeQuickPlan(page, { event: "5000", experience: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u, days: /^5일/u })
     await refinePlan(page, "훈련 종류", /스피드.*ATP-PC/u)
     await page.getByRole("button", { name: /공간 확인하고 상세 훈련 보기/u }).click()
     const picker = page.locator(".catalog-workout-picker")
@@ -28,7 +28,7 @@ for (const [width, zoom] of [[320, 1], [375, 2], [1280, 1]] as const) {
     await picker.getByRole("button", { name: "이 구성으로 바꾸기" }).click()
     const start = page.getByRole("button", { name: "이 일정으로 시작", exact: true })
     await expect(start).toBeEnabled()
-    await page.getByRole("button", { name: "시작일·훈련일 바꾸기" }).click()
+    await openPlanOptions(page)
     await page.getByLabel("계획 시작 날짜", { exact: true }).fill("2026-11-02")
     await page.getByRole("button", { name: "바뀐 날짜의 운동 환경 확인" }).click()
     const review = page.getByRole("group", { name: "이 날짜에도 운동할 환경이 갖춰져 있나요?" })

@@ -125,6 +125,7 @@ test("WELCOME은 빈 꾸미기·성취 점수판을 숨기고 유용한 기록 �
   expect(height).toBeLessThanOrEqual(HOME_LIMIT[project])
   expect(height).toBeLessThan(HOME_BEFORE[project])
 
+  await page.getByRole("button", { name: "일지 예시·훈련법·꾸미기" }).click()
   await page.getByRole("button", { name: "일지 꾸미기" }).click()
   const editor = page.getByRole("dialog", { name: "일지 꾸미기", exact: true })
   await expect(editor).toBeVisible()
@@ -260,6 +261,7 @@ test("기록이 하나 생기면 꾸미기 진입 뒤 포인트 보관함을 확
   })
   await page.goto("/?app=1")
 
+  await page.getByRole("button", { name: "일지 예시·훈련법·꾸미기" }).click()
   await page.getByRole("button", { name: "일지 꾸미기" }).click()
   const editor = page.getByRole("dialog", { name: "일지 꾸미기", exact: true })
   await expect(editor).toBeVisible()

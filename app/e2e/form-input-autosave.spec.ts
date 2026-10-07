@@ -52,7 +52,9 @@ test("quick skipped answer survives a closed tab without a completion screen", a
   await page.close()
   const next = await context.newPage()
   await next.goto("/__form_input__?kind=quick")
-  await expect(next.getByRole("button", { name: "모르겠어요 · 비워 둘게요" })).toHaveAttribute("aria-pressed", "true")
+  await expect(next.getByRole("heading", { name: "운동 후 불편하거나 아픈 곳이 있나요?" })).toBeVisible()
+  await expect.poll(async () => (await next.evaluate(() => window.formInputHarness.input()))[0]?.input)
+    .toMatchObject({ kind: "quick", effortAnswered: true, rpe: 0, painStatus: "UNANSWERED" })
   await expect(next.getByRole("button", { name: "완료", exact: true })).toHaveCount(0)
 })
 

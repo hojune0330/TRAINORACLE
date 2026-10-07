@@ -60,12 +60,14 @@ test("returning from a cancelled DAY 5 PM journal restores its slot without a sa
   for (let index = 0; index < 4; index += 1) {
     await page.getByRole("button", { name: "다음 날짜" }).click()
   }
-  await page.getByText("오후 훈련 방법과 기록", { exact: true }).click()
-  await page.getByRole("button", { name: "이 훈련 일지 쓰기" }).click()
+  const afternoonSession = page.getByRole("group", { name: /오후 세션$/u })
+  await afternoonSession.getByText("오후 훈련 방법과 기록", { exact: true }).click()
+  await afternoonSession.getByRole("button", { name: "이 훈련 일지 쓰기" }).click()
   await expect(page.getByText("계획 5일차 · 오후")).toBeVisible()
   await page.getByRole("button", { name: /뒤로/u }).click()
 
-  const returnedSession = page.getByRole("group", { name: /오후 세션 · 일지에서 돌아온 세션/u })
+  const returnedSession = page.locator('[data-returned-session="true"][tabindex="-1"]')
+  await expect(returnedSession).toHaveAttribute("aria-label", /오후 세션 · 일지에서 돌아온 세션/u)
   await expect(returnedSession).toBeVisible()
   await expect(returnedSession).toBeInViewport()
   await expect(page.getByText("일지를 연결했어요. 수행 결과와 계획을 함께 확인할 수 있어요.")).not.toBeVisible()
@@ -88,8 +90,9 @@ test(`returning from a ${detailed ? "detailed" : "quick"} DAY 5 PM journal keeps
   for (let index = 0; index < 4; index += 1) {
     await page.getByRole("button", { name: "다음 날짜" }).click()
   }
-  await page.getByText("오후 훈련 방법과 기록", { exact: true }).click()
-  await page.getByRole("button", { name: "이 훈련 일지 쓰기" }).click()
+  const afternoonSession = page.getByRole("group", { name: /오후 세션$/u })
+  await afternoonSession.getByText("오후 훈련 방법과 기록", { exact: true }).click()
+  await afternoonSession.getByRole("button", { name: "이 훈련 일지 쓰기" }).click()
   await expect(page.getByText("계획 5일차 · 오후")).toBeVisible()
   await page.getByRole("button", { name: "계획대로 마쳤어요" }).click()
   await page.getByRole("button", { name: "오후" }).click()
@@ -98,6 +101,7 @@ test(`returning from a ${detailed ? "detailed" : "quick"} DAY 5 PM journal keeps
   await expect(page.getByRole("heading", { name: "이 내용으로 남길까요?" })).toBeVisible()
   await page.getByRole("button", { name: "이대로 저장", exact: true }).click()
   if (detailed) {
+    await page.getByRole("button", { name: "내용 추가·수정", exact: true }).click()
     await page.getByRole("button", { name: "일지 더 쓰기", exact: true }).click()
     await page.getByLabel("세션 제목").fill("합성 훈련 기록")
     await page.getByRole("button", { name: /수정 저장/u }).click()
@@ -105,11 +109,13 @@ test(`returning from a ${detailed ? "detailed" : "quick"} DAY 5 PM journal keeps
     await page.getByRole("button", { name: "완료", exact: true }).click()
   }
 
-  const returnedSession = page.getByRole("group", { name: /오후 세션 · 일지에서 돌아온 세션/u })
+  const returnedSession = page.locator('[data-returned-session="true"][tabindex="-1"]')
+  await expect(returnedSession).toHaveAttribute("aria-label", /오후 세션 · 일지에서 돌아온 세션/u)
   await expect(returnedSession).toBeVisible()
   await expect(returnedSession).toBeInViewport()
-  await expect(page.getByText("일지를 연결했어요. 수행 결과와 계획을 함께 확인할 수 있어요.")).toBeVisible()
-  await expect(page.getByRole("button", { name: "계획에도 완료 표시" })).toBeVisible()
+  await expect(returnedSession.getByText("일지를 연결했어요. 수행 결과와 계획을 함께 확인할 수 있어요.")).toBeVisible()
+  const completePlan = returnedSession.getByRole("button", { name: "계획에도 완료 표시" })
+  await expect(completePlan).toBeVisible()
   await expect.poll(() => page.evaluate(() => ({
     journal: JSON.parse(window.localStorage.getItem("trainoracle.journal.v1") ?? "[]"),
     progress: JSON.parse(window.localStorage.getItem("trainoracle.plan-beta.v1") ?? "null")?.progress,
@@ -122,7 +128,7 @@ test(`returning from a ${detailed ? "detailed" : "quick"} DAY 5 PM journal keeps
     progress: [],
   })
   await page.screenshot({ path: testInfo.outputPath(`day5-pm-${detailed ? "detailed" : "quick"}-return.png`) })
-  await page.getByRole("button", { name: "계획에도 완료 표시" }).click()
+  await completePlan.click()
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.plan-beta.v1")!).progress))
     .toEqual([{ sessionDay: 5, sessionSlot: "PM", state: "COMPLETED" }])
 })

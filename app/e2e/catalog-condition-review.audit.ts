@@ -18,7 +18,7 @@ for (const [width, zoom, reduced] of [[320, 1, false], [375, 2, true], [1280, 1,
     await page.clock.setFixedTime(new Date("2026-10-02T03:00:00Z"))
     await page.goto("/?app=1&uitest=1")
     await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
-    await completeQuickPlan(page, { event: "5000", experience: /구조화된 훈련과 경기 경험/u, days: /^5일/u })
+    await completeQuickPlan(page, { event: "5000", experience: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u, days: /^5일/u })
     await refinePlan(page, "훈련 종류", /스피드.*ATP-PC/u)
     if (zoom !== 1) await page.addStyleTag({ content: `html { zoom: ${zoom}; }` })
     const shortcut = page.getByRole("button", { name: /공간 확인하고 상세 훈련 보기/u })

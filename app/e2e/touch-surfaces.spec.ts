@@ -15,11 +15,12 @@ function requireTouchProject(projectName: string) {
 test("audits empty home and chooser touch actions", async ({ page }, testInfo) => {
   requireTouchProject(testInfo.project.name)
   await page.goto("/")
+  await page.getByRole("button", { name: "일지 예시·훈련법·꾸미기" }).click()
   const services = page.getByRole("navigation", { name: "훈련 도움말과 일지 꾸미기" })
   await auditTouchTargets(page, [
     { name: "empty-home.first-entry", locator: page.getByRole("button", { name: "오늘 기록 남기기" }), heightOnly: true },
     { name: "empty-home.create-plan", locator: page.getByRole("button", { name: "훈련 계획 만들기" }), heightOnly: true },
-    { name: "empty-home.learn", locator: services.getByRole("button", { name: "훈련 배우기" }), heightOnly: true },
+    { name: "empty-home.learn", locator: services.getByRole("button", { name: "훈련법 읽기" }), heightOnly: true },
     { name: "empty-home.decorate", locator: services.getByRole("button", { name: "일지 꾸미기" }), heightOnly: true },
     { name: "empty-home.more", locator: page.getByRole("button", { name: "더보기" }) },
   ])
@@ -55,6 +56,7 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
     { name: "populated-home.tabs", locator: page.getByRole("navigation", { name: "주 탭" }).getByRole("button"), count: 5 },
   ])
   await page.getByRole("button", { name: "더보기" }).click()
+  await page.getByRole("button", { name: "백업·복원·휴지통" }).click()
   await auditTouchTargets(page, [
     { name: "more.export", locator: page.getByRole("button", { name: /내 일지 데이터 내려받기/u }), heightOnly: true },
     { name: "more.full-export", locator: page.getByRole("button", { name: /메모 포함 파일 내보내기/u }), heightOnly: true },
@@ -101,7 +103,9 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
   await expectNoHorizontalOverflow(page)
   await page.getByRole("button", { name: "홈으로 돌아가기" }).click()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클" }).click()
-  await page.getByRole("group", { name: "훈련 분석 자세히 보기" }).getByRole("button", { name: "월별 변화", exact: true }).click()
+  const detailMenu = page.locator(".trends-hub__detail-menu")
+  await detailMenu.locator(":scope > summary").click()
+  await detailMenu.getByRole("button", { name: "월별 변화", exact: true }).click()
   const metricButtons = page
     .getByRole("region", { name: "최근 4개월 추이" })
     .getByRole("button")

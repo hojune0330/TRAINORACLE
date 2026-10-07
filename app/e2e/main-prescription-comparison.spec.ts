@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { completeDetailedPlan, openPlanOptions } from "./plan-flow"
+import { completeDetailedPlan } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
@@ -19,9 +19,15 @@ test("compares actual MAIN values and refreshes the chosen record without claimi
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
   await completeDetailedPlan(page, { event: /^800m/u, division: /고등부/u,
-    experience: /구조화된 훈련과 경기 경험이 많아요/u, focus: /짧고 세게.*GLY/u,
+    experience: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u, focus: /짧고 세게.*GLY/u,
     template: /800m 경기 페이스 상세 훈련 포함/u, time: /아침에 운동해요/u })
-  await page.locator("summary", { hasText: "A와 B는 뭐가 달라요?" }).click()
+  const purposeEntries = page.getByRole("group", { name: "계획 확인·변경" })
+  const showPurpose = async (name: "훈련 조절" | "추천 근거") => {
+    const entry = purposeEntries.getByRole("button", { name, exact: true })
+    if (await entry.getAttribute("aria-expanded") !== "true") await entry.click()
+    await expect(page.getByRole("region", { name, exact: true })).toBeVisible()
+  }
+  await showPurpose("추천 근거")
   const comparison = page.getByRole("region", { name: "두 계획 핵심 비교" })
   const summary = comparison.locator("summary").filter({ hasText: "본운동 방법 비교" })
   await expect(comparison.locator(".plan-main-comparison")).not.toHaveAttribute("open")
@@ -29,19 +35,22 @@ test("compares actual MAIN values and refreshes the chosen record without claimi
   await summary.press("Enter")
   await expect(comparison.locator(".plan-main-comparison")).toHaveAttribute("open")
   await expect(comparison.getByText("반복 거리·운동 구간·횟수 미지정").first()).toBeVisible()
+  await showPurpose("훈련 조절")
+  await expect(page.getByRole("region", { name: "추천 근거", exact: true })).toBeHidden()
   const picker = page.getByRole("region", { name: "개인 페이스 기준 기록" })
   await picker.getByRole("button", { name: /2분 2초/u }).click()
   await picker.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
   await expect(page.getByRole("heading", { name: "계획이 준비됐어요", exact: true })).toBeFocused()
-  await openPlanOptions(page)
+  await showPurpose("추천 근거")
   await expect(comparison.getByText("800m 기록 기준 · 200m마다 목표 30.5초")).toBeVisible()
   await expect(comparison.getByText("1세트 × (10회 × 200m) · 총 10회")).toHaveCount(1)
   await expect(comparison.getByText(/반복 사이 60초 서서 쉬기 · 총 9번/u)).toHaveCount(1)
   await expect(comparison.getByText("같은 핵심 훈련을 날짜와 전체 일정만 다르게 배치한 계획이에요. 서로 다른 훈련 두 개가 아니에요.")).toBeVisible()
   await expect(comparison.locator(".plan-candidate-comparison__intro")).not.toContainText("같은 횟수와 RPE로")
+  await showPurpose("훈련 조절")
   await picker.getByRole("group", { name: "기준 기록 선택" }).getByRole("button", { name: /2분 3.5초/u }).click()
   await picker.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
-  await openPlanOptions(page)
+  await showPurpose("추천 근거")
   await expect(comparison.getByText("800m 기록 기준 · 200m마다 목표 30.875초")).toBeVisible()
   await expect(comparison.getByText("800m 기록 기준 · 200m마다 목표 30.5초")).toHaveCount(0)
   const normalFont = await summary.evaluate((node) => parseFloat(getComputedStyle(node).fontSize))

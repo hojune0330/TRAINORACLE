@@ -324,8 +324,16 @@ export function PlanCandidates({
         {PURPOSE_ENTRIES.map(({ id, label, icon: Icon }) => <button key={id} type="button"
           id={`${purposeId}-${id}-entry`} aria-expanded={visiblePurpose === id} aria-controls={`${purposeId}-${id}`}
           onClick={() => {
+            if (visiblePurpose === id) {
+              setPurpose(null)
+              return
+            }
+            if (id === "schedule") {
+              reveal("date")
+              return
+            }
             if (id === "workout") setWorkoutOpened(true)
-            setPurpose(visiblePurpose === id ? null : id)
+            setPurpose(id)
           }}>
           <Icon size={18} aria-hidden="true" />{label}
         </button>)}

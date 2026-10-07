@@ -33,6 +33,7 @@ test("finishes a quick journal and deepens the same record without duplication",
   expect(quick[0].rpeBand).toBeUndefined()
   const id = quick[0].id as string
 
+  await page.getByRole("button", { name: "내용 추가·수정", exact: true }).click()
   await page.getByRole("button", { name: "일지 더 쓰기" }).click()
   await expect(page.getByText("훈련 후 · 기록", { exact: true })).toBeVisible()
   await expect(page.getByLabel("세션 제목")).toHaveValue("운동 완료")
@@ -117,6 +118,7 @@ test("confirms mixed exercises before saving and preserves them when deepening t
   expect(before[0].exerciseLog.components[0].rows[0]).toMatchObject({ distanceM: 400, durationSeconds: 80,
     repetitions: 10, sets: 2, recovery: { kind: "TIMED", seconds: 60 }, setRecovery: { kind: "TIMED", seconds: 180 } })
   expect(before[0].exerciseLog.components[1].rows).toEqual([])
+  await page.getByRole("button", { name: "내용 추가·수정", exact: true }).click()
   await page.getByRole("button", { name: "일지 더 쓰기" }).click()
   await page.getByRole("button", { name: /^수정 저장/u }).click()
   const after = await page.evaluate(key => JSON.parse(localStorage.getItem(key) ?? "[]"), JOURNAL_KEY)

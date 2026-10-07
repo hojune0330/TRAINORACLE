@@ -6,7 +6,7 @@ import type { AccountJournalRecord } from "../src/domain/account/account-journal
 import type { AccountAthleteRecordDocument } from "../src/domain/account/account-athlete-record-schema"
 import { mockPlanCollectionServer } from "./fixtures/account-plan-collection-server"
 import { openActivePlanCards, openActiveSessionDetails } from "./active-plan-flow"
-import { completeQuickPlan, openPlanOptions } from "./plan-flow"
+import { completeQuickPlan, openPlanOptions, refinePlan } from "./plan-flow"
 
 const origin = "http://127.0.0.1:4497"
 const owner = "11111111-1111-4111-8111-111111111111"
@@ -262,11 +262,21 @@ async function saveImport(page: Page) {
   await expect.poll(() => confirmedCount(page)).toBe(1)
   expect(await sharedDistance(page)).toEqual({ totalKm: 10, includedSourceCount: 1 })
   await page.getByRole("button", { name: "가져온 기록 분석하기" }).click()
-  await expect(page.getByRole("group", { name: "훈련 분석 자세히 보기" }).getByRole("button", { name: "파일 분석", exact: true })).toHaveAttribute("aria-pressed", "true")
   const panel = page.getByTestId("file-analysis-panel")
+  await expect(panel).toBeVisible()
   await expect(panel.getByText("10km", { exact: true })).toBeVisible()
   await expect(panel.getByText("80분", { exact: true })).toBeVisible()
   await expect(panel.getByText("8분/km", { exact: true })).toBeVisible()
+  return panel
+}
+
+async function openFileAnalysis(page: Page) {
+  const panel = page.getByTestId("file-analysis-panel")
+  if (await panel.isVisible()) return panel
+  const menu = page.locator(".trends-hub__detail-menu")
+  if (await menu.getAttribute("open") === null) await menu.locator(":scope > summary").click()
+  await menu.getByRole("button", { name: "파일 분석", exact: true }).click()
+  await expect(panel).toBeVisible()
   return panel
 }
 
@@ -328,14 +338,11 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
     }, now)).toEqual(recordsBeforeSelection)
   }
   await panel.getByRole("button", { name: "훈련 계획 보기" }).click()
-  await completeQuickPlan(page, { event: /^5000m/u, experience: /구조화된 훈련과 경기 경험이 많아요/u })
-  const refine = page.getByTestId("plan-refine")
-  await refine.locator(":scope > summary").click()
-  await refine.getByRole("button", { name: /^훈련 종류 바꾸기/u }).click()
-  await page.getByRole("button", { name: /숨차게 반복.*VO₂/u }).click()
-  await openPlanOptions(page, true)
-  const method = page.locator(".plan-method-picker")
-  await method.locator(":scope > summary").click()
+  await completeQuickPlan(page, { event: /^5000m/u, experience: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u })
+  await refinePlan(page, "훈련 종류", /숨차게 반복.*VO₂/u)
+  await page.getByRole("group", { name: "계획 확인·변경" })
+    .getByRole("button", { name: "훈련 조절", exact: true }).click()
+  const method = page.getByRole("region", { name: "처방 확인·조절", exact: true })
   const eligibility = await page.evaluate(async now => {
     const path = "/src/screens/plan-beta/plan-template-options.ts"
     const { resolveDetailedPlanTemplateOptions } = await import(/* @vite-ignore */ path)
@@ -370,11 +377,14 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
   await method.evaluate(node => node.scrollIntoView({ block: "start" }))
   await page.screenshot({ path: testInfo.outputPath("method-preference-eligibility.png"), animations: "disabled" })
   await method.getByRole("button", { name: "기록으로 페이스 받기", exact: true }).click()
+  await openPlanOptions(page)
   const choose = page.locator("article.plan-candidate")
     .filter({ has: page.getByRole("button", { name: /^계획안 A 일정/u }) })
     .getByRole("button", { name: "이 계획으로 시작하기" })
   await expect(choose).toBeDisabled()
   await assertNoAutomaticPlanWrite()
+  await page.getByRole("group", { name: "계획 확인·변경" })
+    .getByRole("button", { name: "훈련 조절", exact: true }).click()
   await method.getByRole("button", { name: "이 훈련으로 변경", exact: true }).click()
   const record = page.getByRole("region", { name: "개인 페이스 기준 기록" })
   await record.getByRole("group", { name: "기준 기록 선택" }).getByRole("button").first().click()
@@ -429,8 +439,7 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
     await next.screenshot({ path: testInfo.outputPath("account-plan-reopened-prescription.png") })
 
     await next.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클" }).click()
-    await next.getByRole("group", { name: "훈련 분석 자세히 보기" }).getByRole("button", { name: "파일 분석", exact: true }).click()
-    const reopenedPanel = next.getByTestId("file-analysis-panel")
+    const reopenedPanel = await openFileAnalysis(next)
     await reopenedPanel.locator("summary").filter({ hasText: "2026-09-19 · 달리기 · 2개 구간" }).click()
     await reopenedPanel.getByRole("button", { name: "계획과 비교", exact: true }).click()
     const compare = reopenedPanel.getByRole("group", { name: "계획과 실제 기록 비교", exact: true })
@@ -470,7 +479,7 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
     await next.reload()
     await expect.poll(() => confirmedCount(next)).toBe(1)
     await next.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클" }).click()
-    await next.getByRole("group", { name: "훈련 분석 자세히 보기" }).getByRole("button", { name: "파일 분석", exact: true }).click()
+    await openFileAnalysis(next)
     await reopenedPanel.locator("summary").filter({ hasText: "2026-09-19 · 달리기 · 2개 구간" }).click()
     await reopenedPanel.getByRole("button", { name: "계획과 비교", exact: true }).click()
     await expect(choice).toBeEnabled()
@@ -521,8 +530,7 @@ test("persisted ACK cache stays displayable but cannot authorize file analysis a
   expect(await confirmedCount(page)).toBe(1)
   expect(await sharedDistance(page)).toEqual({ totalKm: null, includedSourceCount: 0 })
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클" }).click()
-  await page.getByRole("group", { name: "훈련 분석 자세히 보기" }).getByRole("button", { name: "파일 분석", exact: true }).click()
-  const panel = page.getByTestId("file-analysis-panel")
+  const panel = await openFileAnalysis(page)
   await expect(page.getByRole("heading", { name: "오라클", exact: true, level: 1 })).toBeVisible()
   await expect(panel.getByRole("status")).toContainText("이전에 저장한 파일 기록 1개의 최신 상태를 계정에서 확인하지 못했어요.")
   await expect(panel.getByText("10km", { exact: true })).toHaveCount(0)
@@ -573,7 +581,7 @@ test("a real replacement TCX candidate saves a validated correction and reopens 
   await page.reload()
   await expect.poll(() => sharedDistance(page)).toEqual({ totalKm: 11, includedSourceCount: 1 })
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클" }).click()
-  await page.getByRole("group", { name: "훈련 분석 자세히 보기" }).getByRole("button", { name: "파일 분석", exact: true }).click()
+  await openFileAnalysis(page)
   await expect(panel.getByText("11km", { exact: true })).toBeVisible()
   await expect(panel.getByText("90분", { exact: true })).toBeVisible()
   await panel.locator("h2").evaluate(node => node.scrollIntoView({ block: "start" }))
@@ -616,8 +624,7 @@ for (const file of additionalFiles) {
     expect(account.documents.get(stored.documentId)).toEqual(stored)
     expect((await sharedDistance(page)).includedSourceCount).toBe(1)
     await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클" }).click()
-    await page.getByRole("group", { name: "훈련 분석 자세히 보기" }).getByRole("button", { name: "파일 분석", exact: true }).click()
-    const panel = page.getByTestId("file-analysis-panel")
+    const panel = await openFileAnalysis(page)
     await expect(panel.getByText(file.distance, { exact: true })).toBeVisible()
     await expect(panel.getByText(file.duration, { exact: true })).toBeVisible()
     await expect(panel.getByRole("heading", { name: file.label, exact: true })).toBeVisible()
