@@ -89,6 +89,7 @@ describe("account record compatibility API", () => {
       .toEqual({ ok: true, data: response })
     expect(deps.invoke).toHaveBeenCalledWith("account-journal", {
       body: { ...request, supportedJournalVersions: [2, 3], supportsExerciseLogV1: true }, headers: { Authorization: `Bearer ${accessToken}`, "x-trainoracle-storage-revision": "0" },
+      signal: expect.any(AbortSignal),
     })
     expect(document.version).toBe(2)
   })
@@ -141,7 +142,7 @@ describe("account record compatibility API", () => {
     const deps = dependencies(receipt)
     expect(await requestAccountDocument(ownerId, correction, () => true, accountJournalRecordSchema, deps)).toEqual({ ok: true, data: receipt })
     expect(deps.invoke).toHaveBeenCalledWith("account-journal", { body: { ...correction, supportedJournalVersions: [2, 3], supportsExerciseLogV1: true },
-      headers: { Authorization: `Bearer ${accessToken}`, "x-trainoracle-storage-revision": "0" } })
+      headers: { Authorization: `Bearer ${accessToken}`, "x-trainoracle-storage-revision": "0" }, signal: expect.any(AbortSignal) })
     expect(await requestAccountDocument(ownerId, correction, () => true, accountJournalRecordSchema,
       dependencies({ ...receipt, revision: 3 }))).toEqual({ ok: false, code: "INVALID_RESPONSE" })
     const conflict = { kind: "conflict", documentId, operationId, currentRevision: 2 }
@@ -155,7 +156,7 @@ describe("account record compatibility API", () => {
     const deps = dependencies(receipt)
     expect(await requestAccountDocument(ownerId, release, () => true, accountJournalRecordSchema, deps)).toEqual({ ok: true, data: receipt })
     expect(deps.invoke).toHaveBeenCalledWith("account-journal", { body: { ...release, supportedJournalVersions: [2, 3], supportsExerciseLogV1: true },
-      headers: { Authorization: `Bearer ${accessToken}`, "x-trainoracle-storage-revision": "0" } })
+      headers: { Authorization: `Bearer ${accessToken}`, "x-trainoracle-storage-revision": "0" }, signal: expect.any(AbortSignal) })
     for (const changed of [{ revision: 4 }, { operationId: otherOwnerId }, { documentId: otherOwnerId }]) {
       expect(await requestAccountDocument(ownerId, release, () => true, accountJournalRecordSchema,
         dependencies({ ...receipt, ...changed }))).toEqual({ ok: false, code: "INVALID_RESPONSE" })
@@ -215,6 +216,7 @@ describe("account draft API", () => {
     expect((await requestAccountJournal(ownerId, request, () => true, deps)).ok).toBe(true)
     expect(deps.invoke).toHaveBeenCalledWith("account-journal", {
       body: request, headers: { Authorization: `Bearer ${accessToken}`, "x-trainoracle-storage-revision": "0" },
+      signal: expect.any(AbortSignal),
     })
   })
   it.each([

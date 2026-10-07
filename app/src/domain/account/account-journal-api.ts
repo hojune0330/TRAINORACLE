@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { supabase } from "./supabase-client"
+import { ACCOUNT_NETWORK_DEADLINE_MS } from "./account-network-deadline"
 import { activeLocalAccount } from "./local-journal-ownership"
 import { isAccountStoragePaused } from "./storage-consent"
 import { currentStorageConsentRevision, pinStorageOperationRevision } from "./storage-consent-revision"
@@ -91,8 +92,41 @@ export async function requestAccountJournal(
 export async function requestAccountDocument<T>(
   ownerId: string, request: AccountJournalRequest<T>, isCurrent: () => boolean, schema: z.ZodType<T>,
   dependencies: { client: typeof supabase; owner: typeof activeLocalAccount } = { client: supabase, owner: activeLocalAccount },
+  options: { signal?: AbortSignal } = {},
 ): Promise<AccountJournalResult<T>> {
-  const current = () => isCurrent() && dependencies.owner() === ownerId
+  if (options.signal?.aborted) return { ok: false, code: "STALE_RESPONSE" }
+  const controller = new AbortController()
+  let stopped = false
+  let resolveStopped!: (result: AccountJournalResult<T>) => void
+  const interruption = new Promise<AccountJournalResult<T>>(resolve => { resolveStopped = resolve })
+  const stop = (code: "STALE_RESPONSE" | "UNAVAILABLE") => {
+    if (stopped) return
+    stopped = true
+    resolveStopped({ ok: false, code })
+    controller.abort()
+  }
+  const abort = () => stop("STALE_RESPONSE")
+  options.signal?.addEventListener("abort", abort, { once: true })
+  const deadline = setTimeout(() => stop(isCurrent() && dependencies.owner() === ownerId ? "UNAVAILABLE" : "STALE_RESPONSE"),
+    ACCOUNT_NETWORK_DEADLINE_MS)
+  try {
+    // SDK timeout alone cannot bound client initialization, auth, or response-body reads.
+    // Ignore all late results as well as aborting the underlying request when supported.
+    return await Promise.race([
+      executeAccountDocument(ownerId, request, isCurrent, schema, dependencies, controller.signal), interruption,
+    ])
+  } finally {
+    stopped = true
+    clearTimeout(deadline)
+    options.signal?.removeEventListener("abort", abort)
+  }
+}
+
+async function executeAccountDocument<T>(
+  ownerId: string, request: AccountJournalRequest<T>, isCurrent: () => boolean, schema: z.ZodType<T>,
+  dependencies: { client: typeof supabase; owner: typeof activeLocalAccount }, signal: AbortSignal,
+): Promise<AccountJournalResult<T>> {
+  const current = () => !signal.aborted && isCurrent() && dependencies.owner() === ownerId
   if (!current()) return { ok: false, code: "STALE_RESPONSE" }
   const storageRevision = "operationId" in request
     ? pinStorageOperationRevision(ownerId, request.operationId, 0) : currentStorageConsentRevision(ownerId)
@@ -112,6 +146,7 @@ export async function requestAccountDocument<T>(
     const { data, error } = await client.functions.invoke("account-journal", {
       body: journalCall ? { ...request, supportedJournalVersions: [2, 3], supportsExerciseLogV1: true } : request,
       headers: { Authorization: `Bearer ${token}`, "x-trainoracle-storage-revision": String(storageRevision) },
+      signal,
     })
     let responseData: unknown = data
     if (!current()) return { ok: false, code: "STALE_RESPONSE" }

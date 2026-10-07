@@ -3,6 +3,7 @@ import { prepareInstantPlanEntry, readInstantPlanEntry } from "../instant-plan-e
 import { canonicalPaceDistance } from "@impl/prescription/record-pace"
 import type { InstantPlanEntry } from "../instant-plan-contract"
 import { localAccountScopeIsCurrent, localAccountScopeSnapshot } from "./local-account-scope"
+import { localJournalScopeGeneration } from "./local-journal-ownership"
 import { accountAthleteRecordsEnabled, addAccountAthleteRecord, loadAccountAthleteRecords } from "./account-athlete-record-service"
 import { eligibleAccountPaceRecords } from "./eligible-account-pace-records"
 
@@ -12,6 +13,8 @@ export type AccountInstantPlanEntryResult =
 
 export async function prepareAccountInstantPlanEntry(value: unknown, now = new Date()): Promise<AccountInstantPlanEntryResult> {
   const scope = localAccountScopeSnapshot()
+  const generation = localJournalScopeGeneration()
+  const isCurrentScope = () => localAccountScopeIsCurrent(scope) && localJournalScopeGeneration() === generation
   if (!scope) return prepareInstantPlanEntry(value, now)
   const entry = readInstantPlanEntry(value, now)
   if (!entry) return { kind: "invalid" }
@@ -19,7 +22,7 @@ export async function prepareAccountInstantPlanEntry(value: unknown, now = new D
   if (!accountAthleteRecordsEnabled()) return { kind: "storage_failed" }
   try {
     const current = await loadAccountAthleteRecords()
-    if (!localAccountScopeIsCurrent(scope)) return { kind: "storage_failed" }
+    if (!isCurrentScope()) return { kind: "storage_failed" }
     if (current.status === "PENDING") return { kind: "pending" }
     if (current.ownerId !== scope || !["READY", "EMPTY"].includes(current.status) || current.serverRevision === null
       || current.status === "READY" && !current.confirmed) return { kind: "storage_failed" }
@@ -36,7 +39,7 @@ export async function prepareAccountInstantPlanEntry(value: unknown, now = new D
       achievedOn: entry.kind === "CURRENT_RECORD" ? entry.achievedOn : null, seasonId: null }, now)
     if (!record) return { kind: "invalid" }
     const result = await addAccountAthleteRecord(record, current.serverRevision)
-    if (!localAccountScopeIsCurrent(scope) || !result.ok) return { kind: "storage_failed" }
+    if (!isCurrentScope() || !result.ok) return { kind: "storage_failed" }
     if (result.storage !== "ACCOUNT") return { kind: "pending" }
     if (!eligibleAccountPaceRecords([], scope, result.state).some(saved => JSON.stringify(saved) === JSON.stringify(record))) {
       return { kind: "storage_failed" }

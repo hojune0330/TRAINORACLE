@@ -99,6 +99,15 @@ function seed(): void {
 }
 
 describe("eraseAllLocalData", () => {
+  it("removes preserved legacy-plan originals for guests and every local account", () => {
+    const keys = ["trainoracle.plan-beta.legacy-originals.v1",
+      "trainoracle.plan-beta.legacy-originals.v1.account.athlete-a",
+      "trainoracle.plan-beta.legacy-originals.v1.account.athlete-b"]
+    for (const key of keys) localStorage.setItem(key, "synthetic archived original")
+    expect(eraseAllLocalData().ok).toBe(true)
+    for (const key of keys) expect(localStorage.getItem(key)).toBeNull()
+  })
+
   it("로그인 토큰과 진행 중이던 인증 보호 상태를 모두 지운다", () => {
     seed()
     const result = eraseAllLocalData()

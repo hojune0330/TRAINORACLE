@@ -5,6 +5,7 @@ import { useAccountPlanRuntime } from "./plan-beta/useAccountPlanRuntime"
 import { AccountPlanHistoryControls, AccountPlanStorageControls } from "./plan-beta/AccountPlanStorageControls"
 import { AccountPlanHistoricalView } from "./plan-beta/AccountPlanHistoricalView"
 import { AccountPlanLegacyRecovery } from "./plan-beta/AccountPlanLegacyRecovery"
+import { archiveLegacyPlanForNewEntry, readLegacyPlanArchives } from "../domain/legacy-plan-archive"
 import { materializeAccountPlan, accountPlanCapacity, type AccountPlanEntry } from "../domain/account/account-plan-document-schema"
 import type {
   PlanGenerationSuccess,
@@ -78,7 +79,7 @@ import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
 import { useOrderedStepMotion } from "../hooks/useOrderedStepMotion"
 import { resolvePlanMethodChange } from "../domain/plan-method-selection"
 import { todayISO } from "../domain/journal-store"
-import { onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
+import { localJournalScopeGeneration, onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
 import { localAccountScopeIsCurrent, localAccountScopeSnapshot } from "../domain/account/local-account-scope"
 import { AdjustedPlanSchedule } from "./plan-beta/AdjustedPlanSchedule"
 import { AdjustedPlanEditFlow } from "./plan-beta/AdjustedPlanEditFlow"
@@ -239,7 +240,33 @@ export function PlanBeta(props: React.ComponentProps<typeof PlanBetaContent>) {
   </div>
 }
 
-function PlanBetaContent(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>, "onAdjustedStored"> & {
+function LegacyPlanArchiveDownloads({ revision }: { readonly revision: unknown }) {
+  const scope = localAccountScopeSnapshot()
+  const read = React.useMemo(() => readLegacyPlanArchives(), [revision, scope])
+  const [error, setError] = React.useState(false)
+  if (read.kind === "unavailable") return <p role="status">보관한 이전 계획을 확인하지 못했어요.</p>
+  if (read.archives.length === 0) return null
+  return <details className="plan-detailed-options">
+    <summary>보관한 이전 계획</summary>
+    <p>이전 계획은 원문 그대로 이 기기에 보관돼 있어요. 현재 훈련 계획으로 사용하지 않아요.</p>
+    {read.archives.map((entry, index) => <button key={`${entry.archivedAt}:${index}`} className="plan-text-action" type="button" onClick={() => {
+      let url: string | undefined
+      try {
+        const current = readLegacyPlanArchives()
+        if (!localAccountScopeIsCurrent(scope) || current.kind !== "loaded"
+            || current.archives[index]?.raw !== entry.raw || current.archives[index]?.archivedAt !== entry.archivedAt) throw Error("Archive changed")
+        url = URL.createObjectURL(new Blob([entry.raw], { type: "application/json" }))
+        const link = document.createElement("a")
+        link.href = url; link.download = `trainoracle-previous-plan-${entry.archivedAt.slice(0, 10)}-${index + 1}.json`
+        link.click(); setError(false)
+      } catch { setError(true) }
+      finally { if (url !== undefined) { const downloadUrl = url; window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000) } }
+    }}>이전 계획 {index + 1} 내려받기</button>)}
+    {error && <p role="alert">보관한 계획을 내려받지 못했어요. 원문은 그대로 있으니 다시 시도해 주세요.</p>}
+  </details>
+}
+
+function PlanBetaContent(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>, "onAdjustedStored" | "storageRead"> & {
   readonly readAdjustedEvidence?: React.ComponentProps<typeof AdjustedPlanNextFlow>["readEvidence"]
   readonly readAdjustedEvidenceV3?: () => readonly RetainedAdjustedPlanEvidenceV3[]
   readonly readMultiAdjustedEvidenceV3?: () => readonly RetainedMultiAdjustedEvidenceV3[]
@@ -254,6 +281,10 @@ function PlanBetaContent(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
   const [nextOpen, setNextOpen] = React.useState(false)
   const [importOpen, setImportOpen] = React.useState(false)
   const [revision, setRevision] = React.useState(0)
+  const legacyMounted = React.useRef(false)
+  const storageUnavailable = read.kind === "invalid" || read.kind === "storage_error"
+  const keepLegacy = read.kind === "loaded" || read.kind === "missing" || storageUnavailable && legacyMounted.current
+  legacyMounted.current = keepLegacy
   const prepareNext = async (kind: typeof read.kind) => {
     const scope = localAccountScopeSnapshot()
     const expected = read.kind === "adjusted_loaded" || read.kind === "adjusted_v3_loaded" || read.kind === "multi_adjusted_v3_loaded"
@@ -266,10 +297,9 @@ function PlanBetaContent(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
       && current.kind === kind && current.state.contentFingerprint === expected) setNextOpen(true)
   }
   React.useEffect(() => {
-    const refresh = () => { setImportOpen(false); setNextOpen(false); setRead(readCurrent()); setRevision(value => value + 1) }
+    const refresh = () => { legacyMounted.current = false; setImportOpen(false); setNextOpen(false); setRead(readCurrent()); setRevision(value => value + 1) }
     const onStorage = (event: StorageEvent) => {
-      if (event.key === null) { refresh(); return }
-      if (event.key !== activePlanBetaStorageKey()) return
+      if (event.key !== null && event.key !== activePlanBetaStorageKey()) return
       // Keep an in-progress legacy candidate mounted; its save gate checks the current stored plan.
       setRead(readCurrent())
     }
@@ -333,18 +363,22 @@ function PlanBetaContent(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
       }
       props.onWritePlannedSessionLog?.(draft)
     }} returnToSession={props.returnToSession} />
-  if (read.kind === "invalid" || read.kind === "storage_error") return <section>
+  const storageError = storageUnavailable ? <section>
     <h1>저장된 계획을 확인하지 못했어요</h1>
     <p>{read.kind === "storage_error"
       ? "저장 공간에 접근하지 못했어요. 브라우저의 저장 허용 상태를 확인해 주세요."
       : "저장된 계획의 형식을 읽지 못했어요. 이전 버전의 계획이거나 일부 내용이 누락됐을 수 있어요."}</p>
     <p role="alert">계획을 지우거나 새 계획으로 바꾸지 않았어요. 다시 확인해 주세요.</p>
     <button type="button" onClick={() => setRead(readCurrent())}>다시 확인</button>
-  </section>
-  return <LegacyPlanBeta key={revision} {...props} onAdjustedStored={() => setRead(readCurrent())} planTools={<>
+  </section> : null
+  if (!keepLegacy) return storageError
+  return <>{storageError}<div hidden={storageUnavailable}>
+    <LegacyPlanBeta key={revision} {...props} storageRead={read} onAdjustedStored={() => setRead(readCurrent())} planTools={<>
+    <LegacyPlanArchiveDownloads revision={read} />
     {read.kind === "missing" && <MultiPlanCloudControlsV3 fingerprint={null} readEvidence={readMultiV3Evidence}
       readRestoreReview={props.readMultiRestoreReviewV3 ?? readCurrentMultiRestoreReviewV3} onCurrentRestored={() => setRead(readCurrent())} />}
     <button className="plan-file-import" type="button" onClick={() => setImportOpen(true)}>개인 계획 파일 불러오기</button></>} />
+  </div></>
 }
 
 function LegacyPlanBeta({
@@ -356,6 +390,7 @@ function LegacyPlanBeta({
   adjustmentResolverV3,
   multiAdjustmentResolverV3,
   onAdjustedStored,
+  storageRead,
   planTools,
 }: {
   readonly onWriteLog?: (entryType?: JournalEntryType) => void
@@ -366,6 +401,7 @@ function LegacyPlanBeta({
   readonly adjustmentResolverV3?: PlanAdjustmentResolverV3
   readonly multiAdjustmentResolverV3?: PlanMultiAdjustmentResolverV3
   readonly onAdjustedStored: () => void
+  readonly storageRead: ReturnType<typeof readPlanBetaStateFromStorage>
   readonly planTools?: React.ReactNode
 }) {
   const [adjusting, setAdjusting] = React.useState<{ entry: AdjustmentEntry; revision: number } | null>(null)
@@ -374,6 +410,9 @@ function LegacyPlanBeta({
   const [stored, setStored] = React.useState<PlanBetaState | null>(
     () => loadPlanBetaState(),
   )
+  const legacyArchivePending = React.useRef(false)
+  const [legacyArchiving, setLegacyArchiving] = React.useState(false)
+  const [legacyArchiveError, setLegacyArchiveError] = React.useState<string | null>(null)
   const [nextPredecessor, setNextPredecessor] = React.useState<Extract<PlanBetaState, { version: 3 }> | null>(null)
   const [cycleDraft, setCycleDraft] = React.useState<CatalogCycleDraftContext | null>(null)
   const [cycleSummary, setCycleSummary] = React.useState<CatalogCycleSuccessorSummary | null>(null)
@@ -399,6 +438,27 @@ function LegacyPlanBeta({
   const [instantEntry, setInstantEntry] = React.useState<InstantPlanEntry | undefined>()
   const [instantEntryDirty, setInstantEntryDirty] = React.useState(false)
   const [instantEntryError, setInstantEntryError] = React.useState<string | null>(null)
+  const lastStorageRead = React.useRef(storageRead)
+  React.useEffect(() => {
+    if (lastStorageRead.current === storageRead) return
+    lastStorageRead.current = storageRead
+    // A storage event may refresh an active view, but cannot replace an athlete's
+    // unfinished candidate or next-frame draft. Its save gate checks the live base.
+    if (stored === null || nextPredecessor !== null) return
+    if (storageRead.kind === "loaded") {
+      setStored(previous => JSON.stringify(previous) === JSON.stringify(storageRead.state) ? previous : storageRead.state)
+    } else if (storageRead.kind === "missing") {
+      setStored(null)
+      setGenerated(null)
+      setGate(null)
+      setRacePreview(null)
+      setRetrySelection(null)
+      setErrorCode(null)
+      setCurrentCheck(null)
+      setCelebrateActivePlan(false)
+      setInstantEntryOpen(true)
+    }
+  }, [storageRead, stored, nextPredecessor])
   const [draft, setDraft] = React.useState<Partial<PlanBetaIntake>>(
     previousIntake ?? {},
   )
@@ -840,6 +900,29 @@ function LegacyPlanBeta({
         onWritePlannedSessionLog={onWritePlannedSessionLog}
         returnToSession={returnToSession}
       />
+      {stored.version === 2 && <section aria-label="이전 계획 보관">
+        <p>이전 형식의 계획은 내용만 볼 수 있어요. 원문을 이 기기에 보관한 뒤 새 계획을 만들 수 있어요.</p>
+        <button className="plan-text-action" type="button" disabled={legacyArchiving} onClick={async () => {
+          if (legacyArchivePending.current) return
+          legacyArchivePending.current = true; setLegacyArchiving(true); setLegacyArchiveError(null)
+          const scope = localAccountScopeSnapshot()
+          const generation = localJournalScopeGeneration()
+          try {
+            const result = await archiveLegacyPlanForNewEntry(stored)
+            if (!localAccountScopeIsCurrent(scope) || localJournalScopeGeneration() !== generation) return
+            if (result.kind === "archived") {
+              setStored(null); setDraft({}); setInstantEntry(undefined); setInstantEntryDirty(false); setInstantEntryOpen(true)
+              setGenerated(null); setGate(null); setRacePreview(null); setCurrentCheck(null)
+              onAdjustedStored()
+            } else setLegacyArchiveError(result.kind === "failed" && !result.rollbackComplete
+              ? "보관 상태를 확인하지 못했어요. 새 계획을 시작하지 않았어요. 현재 계획을 다시 확인해 주세요."
+              : "이전 계획을 보관하지 못했어요. 계획은 그대로 두었으니 다시 확인해 주세요.")
+          } finally { legacyArchivePending.current = false; setLegacyArchiving(false) }
+        }}>{legacyArchiving ? "이전 계획 보관 중…" : "이전 계획을 보관하고 새 계획 만들기"}</button>
+        {legacyArchiveError && <div role="alert"><p>{legacyArchiveError}</p>
+          <button type="button" onClick={onAdjustedStored}>현재 계획 다시 확인</button>
+        </div>}
+      </section>}
       {planTools}
       </>
     )

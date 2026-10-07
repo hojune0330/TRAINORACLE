@@ -75,6 +75,7 @@ const TOAST_READABLE_MS = 4000
 const TOAST_EXIT_MS = 150
 const OVERLAY_HISTORY_KEY = "trainoracleOverlay"
 const MORE_HISTORY_KEY = "trainoracleMore"
+const ORACLE_PLAN_HISTORY_KEY = "trainoracleOraclePlan"
 const ORACLE_INVITATION_RETURN_KEY = "trainoracle.oracle-v2.invitation-return"
 
 function oracleV2Enabled(): boolean {
@@ -192,7 +193,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const recordingOrigin = React.useRef<RecordingOrigin | null>(null)
   const coachingDayOrigin = React.useRef<RecordingOrigin | null>(null)
   const trainingContentOrigin = React.useRef<RecordingOrigin | null>(null)
-  const oracleInputRef = React.useRef<{ topic: OracleTopicId; owner: string | null; inputKind: "log" | "records" | "plan"; mode: "example" | "personal"; scrollTop: number; view: ReturnType<typeof viewForTab> } | null>(null)
+  const oracleInputRef = React.useRef<{ topic: OracleTopicId; owner: string | null; inputKind: "log" | "records" | "plan"; historyToken?: string; mode: "example" | "personal"; scrollTop: number; view: ReturnType<typeof viewForTab> } | null>(null)
   const pendingReward = React.useRef<{ ownerId: string | null; date: string } | null>(null)
   const calendarDraftReturn = React.useRef<{ token: string; owner: string | null; view: typeof v } | null>(null)
   const calendarOriginalReturn = React.useRef<{ token: string; owner: string | null; view: typeof v } | null>(null)
@@ -361,7 +362,9 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         return
       }
       const intent = oracleInputRef.current
-      if (intent?.inputKind === "log" && overlayRef.current === null && intent.owner === activeLocalAccount()) {
+      const leavingOraclePlan = intent?.inputKind === "plan" && intent.historyToken !== undefined
+        && event.state?.[ORACLE_PLAN_HISTORY_KEY] !== intent.historyToken
+      if ((intent?.inputKind === "log" || leavingOraclePlan) && overlayRef.current === null && intent.owner === activeLocalAccount()) {
         const restored: AppOverlay = { kind: "oracle", topic: intent.topic, mode: intent.mode, scrollTop: intent.scrollTop }
         const allowed = runDraftSafeNavigation(() => {
           oracleInputRef.current = null
@@ -371,7 +374,10 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           } }, "", window.location.href)
           applyOverlay(restored)
         })
-        if (!allowed) window.history.pushState({}, "", window.location.href)
+        if (!allowed) {
+          const { [OVERLAY_HISTORY_KEY]: _overlay, ...rest } = window.history.state ?? {}
+          window.history.pushState(leavingOraclePlan ? { ...rest, [ORACLE_PLAN_HISTORY_KEY]: intent.historyToken } : {}, "", window.location.href)
+        }
         return
       }
       const next = overlayHistoryMarker(event.state, overlayHistoryOwnerRef.current)
@@ -484,16 +490,19 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     const rewardMessage = JOURNAL_REWARD_MESSAGE[reward.kind]
     runViewTransition("replace", () => {
       const origin = recordingOrigin.current
-      recordingOrigin.current = null
-      if (origin && origin.owner === activeLocalAccount()) restoreRecordingOrigin(origin)
+      if (isOraclePlanRecording(origin)) window.history.back()
       else {
-        setUtilityView(null)
-        setV(detailDate === undefined ? INITIAL_VIEW_STATE : viewForJournalReturn(v))
+        recordingOrigin.current = null
+        if (origin && origin.owner === activeLocalAccount()) restoreRecordingOrigin(origin)
+        else {
+          setUtilityView(null)
+          setV(detailDate === undefined ? INITIAL_VIEW_STATE : viewForJournalReturn(v))
+        }
       }
       setSavedToast({ count: localOnlyCount(), phase: "enter", receipt, reviewMessage, storageMessage, rewardMessage })
       const intent = oracleInputRef.current
-      oracleInputRef.current = null
-      if (reviewMessage === undefined && intent && intent.owner === activeLocalAccount()) {
+      if (intent?.inputKind === "log") oracleInputRef.current = null
+      if (reviewMessage === undefined && intent?.inputKind === "log" && intent.owner === activeLocalAccount()) {
         setV(intent.view)
         openOverlay({ kind: "oracle", topic: intent.topic, mode: "personal" })
       }
@@ -617,14 +626,22 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     runViewTransition("push", () => {
       const topic = overlayRef.current?.kind === "oracle" ? overlayRef.current.topic : null
       oracleInputRef.current = topic && (action === "records" || action === "log" || action === "plan")
-        ? { topic, owner: activeLocalAccount(), inputKind: action, mode: overlayRef.current?.kind === "oracle" ? overlayRef.current.mode ?? "personal" : "personal", scrollTop: scrollRegionRef.current?.scrollTop ?? 0, view: v } : null
+        ? { topic, owner: activeLocalAccount(), inputKind: action,
+          ...(action === "plan" ? { historyToken: `oracle-plan-${Date.now()}-${Math.random().toString(36).slice(2)}` } : {}),
+          mode: overlayRef.current?.kind === "oracle" ? overlayRef.current.mode ?? "personal" : "personal", scrollTop: scrollRegionRef.current?.scrollTop ?? 0, view: v } : null
       if (action === "records") {
         dismissOracle()
         setUtilityView(null)
         setV(viewForTab("plan"))
         setAthleteRecordsOpen(true)
       } else {
-        dismissOracle()
+        if (action === "plan" && oracleInputRef.current?.historyToken) {
+          // A plan opened from this result can return to it. Reader entries inherit
+          // the token, so closing a plan date does not discard the enclosing input.
+          const { [OVERLAY_HISTORY_KEY]: _overlay, ...rest } = window.history.state ?? {}
+          window.history.pushState({ ...rest, [ORACLE_PLAN_HISTORY_KEY]: oracleInputRef.current.historyToken }, "", window.location.href)
+          applyOverlay(null)
+        } else dismissOracle()
         setAthleteRecordsOpen(false)
         setUtilityView(null)
         setAnalysisContext(action === "trends" ? { section: section ?? "summary", ...(metric === "DISTANCE_KM" ? { metric } : {}) } : undefined)
@@ -757,8 +774,13 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       setV(plannedView ?? viewForTab("log", entryType))
     }, true)
   }
+  const isOraclePlanRecording = (origin: RecordingOrigin | null) => origin !== null
+    && origin.owner === activeLocalAccount() && origin.view.tab === "plan"
+    && oracleInputRef.current?.inputKind === "plan" && window.history.state?.recordingDraft === origin.token
   const returnFromRecording = () => runViewTransition("pop", () => {
     const origin = recordingOrigin.current
+    // Consume this child entry so the next Back leaves the enclosing plan once.
+    if (isOraclePlanRecording(origin)) { window.history.back(); return }
     recordingOrigin.current = null
     if (!origin || origin.owner !== activeLocalAccount()) { setV(INITIAL_VIEW_STATE); setUtilityView(null); return }
     restoreRecordingOrigin(origin)
@@ -1030,7 +1052,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         targetDate={v.journalDraft?.date}
         initialEntry={v.journalDraft?.initialEntry}
         plannedSessionLink={v.journalDraft?.plannedSessionLink}
-        onBack={oracleInputRef.current !== null ? returnFromOracleInput : recordingOrigin.current && (v.entryType === "choose" || recordingOrigin.current.direct)
+        onBack={oracleInputRef.current?.inputKind === "log" ? returnFromOracleInput : recordingOrigin.current && (v.entryType === "choose" || recordingOrigin.current.direct)
           ? returnFromRecording : v.entryType === "choose"
           ? v.journalDraft === undefined
             ? goHome

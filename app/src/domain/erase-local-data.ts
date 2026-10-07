@@ -43,6 +43,7 @@ import { SYNC_CONSENT_STORAGE_KEY } from "./account/sync-local"
 const ACCOUNT_SCOPED_PLAN_LOCAL_KEYS = [
   "trainoracle.plan-beta.v1",
   "trainoracle.plan-beta.history.v1",
+  "trainoracle.plan-beta.legacy-originals.v1",
   "trainoracle.plan-beta.adaptation.v1",
   "trainoracle.plan-beta.adaptation-activation.v1",
   "trainoracle.plan-adaptation-context.v1",

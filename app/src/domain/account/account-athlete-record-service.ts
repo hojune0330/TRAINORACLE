@@ -1,4 +1,5 @@
 import { accountJournalPreviewEnabled, requestAccountDocument } from "./account-journal-api"
+import { ACCOUNT_NETWORK_DEADLINE_MS } from "./account-network-deadline"
 import { activeLocalAccount, onLocalJournalScopeChange } from "./local-journal-ownership"
 import { createAccountDocumentBuffer, type AccountJournalConflictBuffer } from "./account-journal-draft-buffer"
 import { flushAccountJournalDraft } from "./account-journal-sync"
@@ -27,6 +28,7 @@ let epoch = 0
 let buffer: AccountJournalConflictBuffer<AccountAthleteRecordDocument> | null = null
 let unsubscribe: (() => void) | null = null
 let work: Promise<unknown> = Promise.resolve()
+let scopeController: AbortController | null = null
 const empty = (status: AccountAthleteRecordsStatus = "IDLE"): AccountAthleteRecordsState => ({
   status, ownerId: null, documentId: null, serverRevision: null, records: [], confirmed: false,
 })
@@ -61,7 +63,8 @@ export function getConfirmedAccountAthleteRecordSnapshot(recordId: string): Acco
 }
 
 export function disposeAccountAthleteRecords(): void {
-  epoch += 1; buffer?.close(); buffer = null; owner = null
+  epoch += 1; scopeController?.abort(); scopeController = null
+  buffer?.close(); buffer = null; owner = null
   unsubscribe?.(); unsubscribe = null; work = Promise.resolve(); publish(empty())
 }
 function context() {
@@ -69,27 +72,43 @@ function context() {
   if (!user || !accountAthleteRecordsEnabled()) return null
   if (owner !== user || !buffer) {
     disposeAccountAthleteRecords(); owner = user
+    scopeController = new AbortController()
     try { buffer = createAccountDocumentBuffer(accountAthleteRecordDocumentSchema, "trainoracle-account-athlete-records-v1") }
     catch { status("FAILED"); return null }
     unsubscribe = onLocalJournalScopeChange(disposeAccountAthleteRecords)
   }
   const generation = epoch
-  return { owner: user, buffer, current: () => epoch === generation && activeLocalAccount() === user && accountAthleteRecordsEnabled() }
+  return { owner: user, buffer, signal: scopeController!.signal,
+    current: () => epoch === generation && activeLocalAccount() === user && accountAthleteRecordsEnabled() }
 }
 type Context = NonNullable<ReturnType<typeof context>>
 function serialize<T>(ctx: Context, run: () => Promise<T>, fallback: () => T): Promise<T> {
   const next = work.catch(() => undefined).then(async () => {
     const guarded = () => ctx.current() ? run() : Promise.resolve(fallback())
-    return globalThis.navigator?.locks
-      ? navigator.locks.request(`trainoracle-account-athlete-records:${ctx.owner}`, { mode: "exclusive" }, guarded) : guarded()
+    if (!ctx.current()) return fallback()
+    if (!globalThis.navigator?.locks) return guarded()
+    const acquisition = new AbortController()
+    const cancel = () => acquisition.abort()
+    ctx.signal.addEventListener("abort", cancel, { once: true })
+    // A different tab may hold this lock indefinitely. Bound acquisition separately
+    // from the request; aborting a signal does not release an already granted lock.
+    const deadline = setTimeout(cancel, ACCOUNT_NETWORK_DEADLINE_MS)
+    try {
+      return await navigator.locks.request(`trainoracle-account-athlete-records:${ctx.owner}`,
+        { mode: "exclusive", signal: acquisition.signal }, () => { clearTimeout(deadline); return guarded() })
+    } finally {
+      clearTimeout(deadline)
+      ctx.signal.removeEventListener("abort", cancel)
+    }
   }).catch(() => { if (ctx.current()) status("FAILED"); return fallback() })
   work = next; return next
 }
 const send = (ctx: Context, id: string) => requestAccountDocument(ctx.owner,
-  { action: "read", documentId: id }, ctx.current, accountAthleteRecordDocumentSchema)
+  { action: "read", documentId: id }, ctx.current, accountAthleteRecordDocumentSchema, undefined, { signal: ctx.signal })
 
 async function hasSupport(ctx: Context): Promise<boolean> {
-  const result = await requestAccountDocument(ctx.owner, { action: "athleteRecordSupport" }, ctx.current, accountAthleteRecordDocumentSchema)
+  const result = await requestAccountDocument(ctx.owner, { action: "athleteRecordSupport" }, ctx.current, accountAthleteRecordDocumentSchema,
+    undefined, { signal: ctx.signal })
   if (!ctx.current()) return false
   if (result.ok && result.data.kind === "athlete-record-support" && result.data.version === 1) return true
   status(!result.ok && result.code === "AUTH_REQUIRED" ? "AUTH_REQUIRED" : "FAILED")
@@ -107,7 +126,7 @@ async function publishLocal(ctx: Context, id: string, acknowledged = false) {
 }
 async function flush(ctx: Context, id: string) {
   const result = await flushAccountJournalDraft(ctx.buffer, ctx.owner, id,
-    request => requestAccountDocument(ctx.owner, request, ctx.current, accountAthleteRecordDocumentSchema), ctx.current)
+    request => requestAccountDocument(ctx.owner, request, ctx.current, accountAthleteRecordDocumentSchema, undefined, { signal: ctx.signal }), ctx.current)
   if (ctx.current()) await publishLocal(ctx, id, result === "SAVED")
   return result
 }
