@@ -65,6 +65,9 @@ export type {
 } from "./plan-beta-schema"
 export type { StoredActivePlan } from "./plan-session-schema"
 
+type RetainedMultiAdjustedEvidenceSourceV3 = readonly RetainedMultiAdjustedEvidenceV3[]
+  | (() => readonly RetainedMultiAdjustedEvidenceV3[])
+
 export const PLAN_BETA_STORAGE_KEY = "trainoracle.plan-beta.v1"
 const HISTORY_KEY = "trainoracle.plan-beta.history.v1"
 const PREVIOUS_INTAKE_KEY = "trainoracle.plan-beta.previous-intake.v1"
@@ -151,8 +154,20 @@ export function loadVersionedPlanBetaState(): PlanBetaState | null {
 export function readPlanBetaStateFromStorage(
   retained: readonly RetainedAdjustedPlanEvidence[] = RETAINED_ADJUSTED_PLAN_EVIDENCE,
   retainedV3: readonly RetainedAdjustedPlanEvidenceV3[] = RETAINED_ADJUSTED_PLAN_EVIDENCE_V3,
-  retainedMultiV3: readonly RetainedMultiAdjustedEvidenceV3[] = RETAINED_MULTI_ADJUSTED_EVIDENCE_V3,
+  retainedMultiV3: RetainedMultiAdjustedEvidenceSourceV3 = RETAINED_MULTI_ADJUSTED_EVIDENCE_V3,
 ): PlanBetaStateReadResult {
+  return readPlanBetaStateFromStorageInternal(retained, retainedV3, retainedMultiV3, true)
+}
+
+function readPlanBetaStateFromStorageInternal(
+  retained: readonly RetainedAdjustedPlanEvidence[],
+  retainedV3: readonly RetainedAdjustedPlanEvidenceV3[],
+  retainedMultiV3: RetainedMultiAdjustedEvidenceSourceV3,
+  allowScopeRetry: boolean,
+): PlanBetaStateReadResult {
+  const accountScope = localAccountScopeSnapshot(), accountGeneration = localJournalScopeGeneration()
+  const scopeIsCurrent = () => localAccountScopeIsCurrent(accountScope)
+    && localJournalScopeGeneration() === accountGeneration
   if (accountPlansEnabled()) {
     const view = accountPlanService()?.snapshot(), selected = view?.currentPlan
     if (!view || !view.document) return { kind: "storage_error" }
@@ -168,17 +183,38 @@ export function readPlanBetaStateFromStorage(
       const read = readStoredAdjustedPlanStateV5(state, retainedV3)
       return read.kind === "loaded" ? { ...read, kind: "adjusted_v3_loaded" } : { kind: "invalid" }
     }
+    if (typeof retainedMultiV3 === "function") {
+      let currentEvidence: readonly RetainedMultiAdjustedEvidenceV3[]
+      try { currentEvidence = retainedMultiV3() }
+      catch { return { kind: "invalid" } }
+      if (!scopeIsCurrent()) return allowScopeRetry
+        ? readPlanBetaStateFromStorageInternal(retained, retainedV3, retainedMultiV3, false)
+        : { kind: "storage_error" }
+      return readPlanBetaStateFromStorageInternal(retained, retainedV3, currentEvidence, false)
+    }
     const read = readStoredMultiAdjustedPlanV6(state, retainedMultiV3)
     return read.kind === "loaded" ? { ...read, kind: "multi_adjusted_v3_loaded" } : { kind: "invalid" }
   }
-  return readPlanBetaStateForAccount(localAccountScopeSnapshot(), retained, retainedV3, retainedMultiV3)
+  if (typeof retainedMultiV3 !== "function") {
+    return readPlanBetaStateForAccount(accountScope, retained, retainedV3, retainedMultiV3)
+  }
+  let currentEvidence: readonly RetainedMultiAdjustedEvidenceV3[] | undefined
+  const read = readPlanBetaStateForAccount(accountScope, retained, retainedV3, () => {
+    currentEvidence = retainedMultiV3()
+    return currentEvidence
+  })
+  return currentEvidence !== undefined && !scopeIsCurrent()
+    ? allowScopeRetry
+      ? readPlanBetaStateFromStorageInternal(retained, retainedV3, retainedMultiV3, false)
+      : { kind: "storage_error" }
+    : read
 }
 
 export function readPlanBetaStateForAccount(
   accountScope: string | null,
   retained: readonly RetainedAdjustedPlanEvidence[] = RETAINED_ADJUSTED_PLAN_EVIDENCE,
   retainedV3: readonly RetainedAdjustedPlanEvidenceV3[] = RETAINED_ADJUSTED_PLAN_EVIDENCE_V3,
-  retainedMultiV3: readonly RetainedMultiAdjustedEvidenceV3[] = RETAINED_MULTI_ADJUSTED_EVIDENCE_V3,
+  retainedMultiV3: RetainedMultiAdjustedEvidenceSourceV3 = RETAINED_MULTI_ADJUSTED_EVIDENCE_V3,
 ): PlanBetaStateReadResult {
   if (typeof window === "undefined") return { kind: "storage_error" }
   const storageKey = accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, accountScope)
@@ -193,6 +229,10 @@ export function readPlanBetaStateForAccount(
   try {
     const json: unknown = JSON.parse(raw)
     if (json !== null && typeof json === "object" && "version" in json && json.version === 6) {
+      if (typeof retainedMultiV3 === "function") {
+        const currentEvidence = retainedMultiV3()
+        return readPlanBetaStateForAccount(accountScope, retained, retainedV3, currentEvidence)
+      }
       const adjusted = readStoredMultiAdjustedPlanV6(json, retainedMultiV3)
       return adjusted.kind === "loaded" ? { ...adjusted, kind: "multi_adjusted_v3_loaded" } : { kind: "invalid" }
     }
