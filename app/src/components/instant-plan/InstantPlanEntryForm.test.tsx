@@ -38,6 +38,18 @@ function openDate() {
 }
 
 describe("InstantPlanEntryForm", () => {
+  it("shows ongoing preparation while the parent prevents repeated submission", () => {
+    const onSubmit = vi.fn()
+    const { rerender } = render(<InstantPlanEntryForm today={TODAY} initialEntry={record} onSubmit={onSubmit} />)
+    rerender(<InstantPlanEntryForm today={TODAY} initialEntry={record} onSubmit={onSubmit} disabled isSubmitting />)
+    expect(screen.getByRole("button", { name: "계획 준비 중…" })).toBeDisabled()
+    fireEvent.submit(screen.getByRole("form", { name: "계획 시작 정보" }))
+    expect(onSubmit).not.toHaveBeenCalled()
+    expect(screen.getByLabelText("초")).toHaveValue("0.125")
+    rerender(<InstantPlanEntryForm today={TODAY} initialEntry={record} onSubmit={onSubmit} />)
+    expect(screen.getByRole("button", { name: "기록 입력 완료" })).toBeEnabled()
+  })
+
   it("requires a real basis choice and distinguishes actual, goal and skipped time", () => {
     const onSubmit = vi.fn()
     render(<InstantPlanEntryForm today={TODAY} onSubmit={onSubmit} />)

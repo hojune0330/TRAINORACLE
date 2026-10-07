@@ -27,6 +27,7 @@ import { accountCalendarDecorationStatus } from "./account/account-calendar-deco
 import {
   activeLocalAccount,
   assignJournalsToAccount,
+  filterVisibleJournalEntries,
   isJournalOwnedBy,
   isJournalVisible,
   journalOwner,
@@ -75,10 +76,14 @@ export class PrivateMemoUnlockRequiredError extends Error {
 }
 
 export function loadEntries(): JournalEntry[] {
+  return projectVisibleEntries(loadJournalEntriesSnapshot().entries)
+}
+
+function projectVisibleEntries(entries: readonly JournalEntry[]): JournalEntry[] {
   const online = readAccountJournalProjection()
   const ids = new Set(online.map(entry => entry.id))
-  return [...loadJournalEntriesSnapshot().entries.filter((entry) => isJournalVisible(entry.id)
-    && !ids.has(entry.id) && !isAccountJournalLocalCopyShadowed(entry.id)), ...online]
+  return [...filterVisibleJournalEntries(entries).filter((entry) => !ids.has(entry.id)
+    && !isAccountJournalLocalCopyShadowed(entry.id)), ...online]
 }
 
 /** 동기화 전용. 기기 미연결 데이터와 다른 계정 데이터는 포함하지 않는다. */
@@ -111,7 +116,7 @@ export function loadEntriesForPlanSafety(): PlanSafetyJournalRead {
   const snapshot = loadJournalEntriesSnapshot()
   const onlineStatus = accountJournalProjectionStatus()
   return snapshot.readStatus === "complete" && (onlineStatus === "IDLE" || onlineStatus === "READY")
-    ? { status: "complete", entries: loadEntries() }
+    ? { status: "complete", entries: projectVisibleEntries(snapshot.entries) }
     : { status: "uncertain" }
 }
 

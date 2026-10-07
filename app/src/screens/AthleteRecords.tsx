@@ -42,11 +42,13 @@ const RECORD_MINUTE_EXAMPLES: Readonly<Record<string, string>> = {
   "800": "2", "1500": "4", "3000": "12", "5000": "20", "10000": "40", "21097.5": "100", "42195": "240",
 }
 
-export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로", initialPurpose = "RECENT_RESULT" }: {
+export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로", initialPurpose = "RECENT_RESULT", preserveMountedDraftsOnBack = false }: {
   readonly onBack: () => void
   readonly onSaved?: (() => void) | undefined
   readonly backLabel?: string | undefined
   readonly initialPurpose?: "PERSONAL_BEST" | "RECENT_RESULT" | undefined
+  /** Only a caller that keeps its draft mounted may preserve that draft on return. */
+  readonly preserveMountedDraftsOnBack?: boolean
 }) {
   const navigation = useAppOverlayNavigation()
   const [records, setRecords] = React.useState(() => loadAthleteRecords(new Date()))
@@ -253,7 +255,7 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로", in
   return (
     <section className="athlete-records" aria-labelledby="athlete-records-title">
       <header className="athlete-records-header">
-        <button className="plan-back" type="button" onClick={() => runDraftSafeNavigation(onBack)}>
+        <button className="plan-back" type="button" onClick={() => runDraftSafeNavigation(onBack, preserveMountedDraftsOnBack)}>
           <ArrowLeft aria-hidden="true" size={17} />
           {backLabel}
         </button>

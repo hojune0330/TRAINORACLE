@@ -114,6 +114,18 @@ export function isJournalVisible(entryId: string): boolean {
   return owner === null || owner === activeAccountId
 }
 
+/** One synchronous list read shares a fresh ledger; never retain it across reads. */
+export function filterVisibleJournalEntries<T extends { readonly id: string }>(entries: readonly T[]): T[] {
+  if (entries.length === 0) return []
+  const snapshot = loadSnapshot()
+  if (snapshot.status === "uncertain") return []
+  const accountId = activeAccountId
+  return entries.filter(entry => {
+    const owner = snapshot.ownerByEntryId[entry.id] ?? null
+    return owner === null || owner === accountId
+  })
+}
+
 export function isJournalOwnedBy(entryId: string, userId: string): boolean {
   return userId !== "" && journalOwner(entryId) === userId
 }

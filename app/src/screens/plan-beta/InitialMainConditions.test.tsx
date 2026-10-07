@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { InitialMainConditions } from "./InitialMainConditions"
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import { applyInitialMainConditions, applyInitialMainManual, reviewInitialMainConditions } from "../../domain/initial-main-conditions"
+import * as initialMainConditions from "../../domain/initial-main-conditions"
 import type { InitialMainInput } from "../../domain/initial-main-conditions"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 
@@ -20,6 +21,25 @@ function fixture(trainingFocus = "ATP_PC_INTENT" as "ATP_PC_INTENT" | "GLY_INTEN
 const applyName = "이 훈련으로 적용"
 
 describe("grouped initial MAIN environment confirmation", () => {
+  it("reuses candidate review for checkbox edits but refreshes it for new inputs and account scope", () => {
+    const input = fixture(), review = vi.spyOn(initialMainConditions, "reviewInitialMainConditions")
+    const onApply = vi.fn()
+    const view = render(<InitialMainConditions input={input} onApply={onApply} />)
+    expect(review).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole("checkbox"))
+    fireEvent.click(screen.getByRole("button", { name: "변경 취소" }))
+    expect(review).toHaveBeenCalledTimes(1)
+    expect(onApply).not.toHaveBeenCalled()
+    const next = { ...input, context: { ...input.context, startDate: "2026-11-02", revision: 2 } }
+    view.rerender(<InitialMainConditions input={next} onApply={onApply} />)
+    expect(review).toHaveBeenCalledTimes(2)
+    expect(screen.getByRole("checkbox")).not.toBeChecked()
+    setActiveLocalAccount("another")
+    view.rerender(<InitialMainConditions input={next} onApply={onApply} />)
+    expect(review).toHaveBeenCalledTimes(3)
+    expect(screen.queryByRole("checkbox")).toBeNull()
+  })
+
   it("shows all actual dates and complete reviewed work before one unchecked space question", () => {
     const input = fixture(), onApply = vi.fn(), onPendingChange = vi.fn(), snapshot = JSON.stringify(input)
     render(<InitialMainConditions input={input} onApply={onApply} onPendingChange={onPendingChange} />)
