@@ -1,20 +1,28 @@
 import React from "react"
-import { ArrowLeft, ChevronsRight, Footprints, Pause, Play, RotateCcw, MoveUp, Star, Zap, Flame, Trophy } from "lucide-react"
+import { ArrowLeft, ChevronsRight, Footprints, Pause, Play, RotateCcw, MoveUp, Star, Zap, Flame, Trophy, Menu, Map as MapIcon, ArrowRight, Sparkles } from "lucide-react"
 import {
   advanceTreadmill, newTreadmillRun, treadmillCommand, treadmillCourseSeconds, treadmillElapsed, treadmillStars, treadmillTip, treadmillWarning,
   TREADMILL_RULES, TREADMILL_STAGES, TREADMILL_UPGRADES,
 } from "../domain/minigame/treadmill"
-import type { TreadmillCommand, TreadmillState, TreadmillUpgrade } from "../domain/minigame/treadmill"
+import type { TreadmillCommand, TreadmillStage, TreadmillState, TreadmillUpgrade } from "../domain/minigame/treadmill"
+import { TOUR_CITIES, tourStages } from "../domain/minigame/tour"
+import type { TourCity, TourSeasonId } from "../domain/minigame/tour"
+import {
+  MINIGAME_CHARACTERS, activeCharacter, characterUnlocked, nextCity, recordCityResult, seasonUnlocked, updateMinigameSettings,
+} from "../domain/minigame/progress"
+import type { MinigameProgress } from "../domain/minigame/progress"
+import { useMinigameProgress } from "../domain/minigame/progress-store"
 import { createTreadmillRenderer, gamePalette } from "./treadmill/draw"
+import type { RenderView } from "./treadmill/draw"
 import { drawRunner } from "./treadmill/sprites"
-import type { GamePalette } from "./treadmill/sprites"
+import type { GamePalette, RunnerCharacter } from "./treadmill/sprites"
 import { fxPalette, mountShaderSky } from "./treadmill/shader-sky"
 import type { ShaderSky } from "./treadmill/shader-sky"
 import type { SkyScene } from "./treadmill/sky-presets"
+import { CharacterPortrait, GameMenu, TourMap } from "./treadmill/GamePanels"
+import { playGameSound } from "./treadmill/sound"
 import "../styles/treadmill-game.css"
-
-/** Best of this app session only. Not saved, not sent, reset when the app reloads. */
-let sessionBest = { score: 0, seconds: 0 }
+import "../styles/treadmill-tour.css"
 
 /** Taps act on press for game timing; keyboard activation (click with detail 0) still works. */
 function tapAction(action: () => void) {
@@ -28,7 +36,7 @@ const upgradeName = (id: string) => TREADMILL_UPGRADES.find(upgrade => upgrade.i
 const UPGRADE_ICON: Record<TreadmillUpgrade, typeof Zap> = { grip: Footprints, spring: MoveUp, economy: Flame }
 
 /** Small canvas portrait of the runner wearing the given gear (Gun Hero-style loadout preview). */
-function RunnerPortrait({ upgrades, pose = "idle", label }: { readonly upgrades: readonly TreadmillUpgrade[]; readonly pose?: "idle" | "cheer" | "hit" | "fall"; readonly label: string }) {
+function RunnerPortrait({ upgrades, pose = "idle", label, character }: { readonly upgrades: readonly TreadmillUpgrade[]; readonly pose?: "idle" | "cheer" | "hit"; readonly label: string; readonly character: RunnerCharacter }) {
   const ref = React.useRef<HTMLCanvasElement>(null)
   React.useEffect(() => {
     const canvas = ref.current
@@ -39,12 +47,10 @@ function RunnerPortrait({ upgrades, pose = "idle", label }: { readonly upgrades:
     canvas.width = size * ratio; canvas.height = size * ratio
     context.setTransform(ratio, 0, 0, ratio, 0, 0)
     context.clearRect(0, 0, size, size)
-    const palette = gamePalette(canvas)
     context.translate(size / 2, size * 0.86)
-    const scale = size / 82
-    context.scale(scale, scale)
-    drawRunner(context, palette, { pose: pose === "fall" ? "hit" : pose, phase: 0, upgrades })
-  }, [upgrades, pose])
+    context.scale(size / 82, size / 82)
+    drawRunner(context, gamePalette(canvas), { pose, phase: 0, upgrades, character })
+  }, [upgrades, pose, character])
   return <canvas ref={ref} className="treadmill-game__portrait" role="img" aria-label={label} />
 }
 
@@ -54,11 +60,38 @@ function Stars({ count }: { readonly count: number }) {
   </div>
 }
 
+type Course = { readonly kind: "practice" } | { readonly kind: "city"; readonly city: TourCity }
+const courseStages = (course: Course): readonly TreadmillStage[] => course.kind === "city" ? tourStages(course.city) : TREADMILL_STAGES
+type Screen = "map" | "play"
+
+/** Unlocks gained between two progress snapshots, for the result card. */
+function unlocksBetween(before: MinigameProgress, after: MinigameProgress): string[] {
+  const out: string[] = []
+  for (const city of TOUR_CITIES) {
+    const was = before.cities[city.id]?.stars ?? 0, now = after.cities[city.id]?.stars ?? 0
+    if (was === 0 && now > 0) {
+      const next = nextCity(after, city.id)
+      if (next) out.push(next.season !== city.season ? `시즌 2 월드 투어 · ${next.name} 열림` : `${next.name} 열림`)
+    }
+  }
+  for (const character of MINIGAME_CHARACTERS) {
+    if (!characterUnlocked(before, character.id) && characterUnlocked(after, character.id)) out.push(`새 캐릭터 ${character.name}`)
+  }
+  return out
+}
+
 export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
-  const state = React.useRef(newTreadmillRun())
+  const store = useMinigameProgress()
+  const { progress } = store
+  const settings = progress.settings
+  const character = activeCharacter(progress)
+  const [screen, setScreen] = React.useState<Screen>("map")
+  const [course, setCourse] = React.useState<Course>({ kind: "city", city: TOUR_CITIES[0]! })
+  const [season, setSeason] = React.useState<TourSeasonId>(() => seasonUnlocked(progress, "world") ? "world" : "korea")
+  const [menuOpen, setMenuOpen] = React.useState(false)
+  const [result, setResult] = React.useState<{ best: boolean; unlocks: string[]; bestScore: number } | null>(null)
+  const state = React.useRef(newTreadmillRun(courseStages(course)))
   const [view, setView] = React.useState<TreadmillState>(state.current)
-  const [best, setBest] = React.useState(sessionBest)
-  const [newBest, setNewBest] = React.useState(false)
   const canvas = React.useRef<HTMLCanvasElement>(null)
   const skyCanvas = React.useRef<HTMLCanvasElement>(null)
   const sky = React.useRef<ShaderSky | null>(null)
@@ -67,39 +100,67 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
   const surface = React.useRef<HTMLDivElement>(null)
   const heldPointers = React.useRef(new Set<number>())
   const keyboardHeld = React.useRef(false)
+  const [systemReduced, setSystemReduced] = React.useState(() => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+  const reduced = systemReduced || settings.motion === "reduce"
+  const city = course.kind === "city" ? course.city : null
+  const renderView = React.useRef<RenderView & { reduced: boolean; sound: boolean; vibration: boolean }>({ reduced, sound: settings.sound, vibration: settings.vibration })
+  renderView.current = { city: settings.view === "flat" ? null : city, character, effects: settings.effects, jumpGuide: settings.jumpGuide,
+    reduced, sound: settings.sound, vibration: settings.vibration }
+  const progressRef = React.useRef(progress)
+  progressRef.current = progress
+  const courseRef = React.useRef(course)
+  courseRef.current = course
+  const updateRef = React.useRef(store.update)
+  updateRef.current = store.update
+
   const releaseInputs = () => { heldPointers.current.clear(); keyboardHeld.current = false }
+  // Stable on purpose: the game loop depends on it and must not restart on every render.
   const settle = React.useCallback((next: TreadmillState) => {
     if (next.mode !== "over" && next.mode !== "clear") return
-    const seconds = treadmillElapsed(next)
-    const better = next.stats.score > sessionBest.score
-    setNewBest(better && next.stats.score > 0)
-    sessionBest = { score: Math.max(sessionBest.score, next.stats.score), seconds: Math.max(sessionBest.seconds, seconds) }
-    setBest(sessionBest)
+    const sound = renderView.current.sound
+    playGameSound(next.mode === "clear" ? "win" : "lose", sound)
+    const course = courseRef.current
+    if (course.kind !== "city") { setResult({ best: false, unlocks: [], bestScore: 0 }); return }
+    const before = progressRef.current
+    const stars = treadmillStars(next)
+    const previousBest = before.cities[course.city.id]?.bestScore ?? 0
+    const after = recordCityResult(before, course.city.id, stars, next.stats.score)
+    setResult({ best: stars > 0 && next.stats.score > previousBest, unlocks: unlocksBetween(before, after), bestScore: Math.max(previousBest, stars > 0 ? next.stats.score : 0) })
+    if (after !== before) updateRef.current(() => after)
   }, [])
   const command = React.useCallback((input: TreadmillCommand) => {
+    const before = state.current
     state.current = treadmillCommand(state.current, input)
     if (state.current.mode !== "running" || input.type === "start") releaseInputs()
+    if (input.type === "jump" && state.current.stats.jumps > before.stats.jumps) playGameSound("jump", renderView.current.sound)
     setView(state.current)
   }, [])
   const updateHeld = () => command({ type: "run", held: keyboardHeld.current || heldPointers.current.size > 0 })
 
   React.useEffect(() => {
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)")
+    const changed = () => setSystemReduced(motion.matches)
+    motion.addEventListener("change", changed)
+    return () => motion.removeEventListener("change", changed)
+  }, [])
+
+  // Game loop: runs only on the play screen.
+  React.useEffect(() => {
+    if (screen !== "play") return
     const element = canvas.current, container = surface.current
     if (!element || !container) return
     const context = element.getContext("2d")
     if (!context) return
     const render = createTreadmillRenderer()
     let width = 320, height = 300, previous = 0, published = 0, frame = 0
-    const motion = window.matchMedia("(prefers-reduced-motion: reduce)")
     let palette: GamePalette = gamePalette(container)
-    const draw = (now: number) => render(context, state.current, width, height, palette, motion.matches, now, shaderLiveRef.current)
+    const draw = (now: number) => render(context, state.current, width, height, palette, renderView.current.reduced, now, shaderLiveRef.current, renderView.current)
     const resize = () => {
       width = element.clientWidth; height = element.clientHeight
       const ratio = Math.min(window.devicePixelRatio || 1, 2)
       element.width = Math.round(width * ratio); element.height = Math.round(height * ratio)
       context.setTransform(ratio, 0, 0, ratio, 0, 0); palette = gamePalette(container); draw(performance.now())
     }
-    const refreshTheme = () => { palette = gamePalette(container) }
     const observer = new ResizeObserver(resize)
     observer.observe(element)
     const tick = (now: number) => {
@@ -109,8 +170,17 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
       if (delta > 0.25) command({ type: "pause" })
       else state.current = advanceTreadmill(state.current, delta)
       const after = state.current
+      const sound = renderView.current.sound
       if (after.mode !== "running") releaseInputs()
-      if (after.stats.hits > before.stats.hits) navigator.vibrate?.(after.mode === "over" ? [60, 40, 90] : 40)
+      if (after.stats.hits > before.stats.hits) {
+        if (renderView.current.vibration) navigator.vibrate?.(after.mode === "over" ? [60, 40, 90] : 40)
+        playGameSound("hit", sound)
+      }
+      if (after.stats.cleared > before.stats.cleared) playGameSound("clearHazard", sound)
+      if (before.y > 0 && after.y === 0 && after.mode === "running") playGameSound("land", sound)
+      if (after.countdown > 0 && Math.ceil(after.countdown) !== Math.ceil(before.countdown)) playGameSound("tick", sound)
+      if (before.countdown > 0 && after.countdown === 0 && after.mode === "running") playGameSound("go", sound)
+      if (after.mode === "upgrade" && before.mode !== "upgrade") playGameSound("stage", sound)
       if (before.mode !== after.mode) settle(after)
       if (now - published > 80 || before.mode !== after.mode || (before.countdown > 0) !== (after.countdown > 0)) { setView(after); published = now }
       context.setTransform(Math.min(window.devicePixelRatio || 1, 2), 0, 0, Math.min(window.devicePixelRatio || 1, 2), 0, 0)
@@ -120,54 +190,66 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
     const hidden = () => { if (document.hidden) pause() }
     window.addEventListener("blur", pause)
     document.addEventListener("visibilitychange", hidden)
-    motion.addEventListener("change", refreshTheme)
     resize(); frame = window.requestAnimationFrame(tick)
-    // Optional WebGPU sky. Absent or failed => the 2D canvas keeps painting its own sky.
+    return () => {
+      window.cancelAnimationFrame(frame); observer.disconnect()
+      window.removeEventListener("blur", pause); document.removeEventListener("visibilitychange", hidden)
+      releaseInputs()
+    }
+  }, [command, settle, screen])
+
+  // Optional WebGPU sky, only with high effects. Absent or failed => the 2D canvas paints its own sky.
+  const wantShader = screen === "play" && settings.effects === "high"
+  React.useEffect(() => {
+    const skyElement = skyCanvas.current, container = surface.current
+    if (!wantShader || !skyElement || !container) return
     let cancelled = false
-    const skyElement = skyCanvas.current
     const lose = () => { shaderLiveRef.current = false; setShaderLive(false); sky.current?.destroy(); sky.current = null }
-    if (skyElement) void mountShaderSky(skyElement, fxPalette(container), motion.matches, lose).then(instance => {
+    void mountShaderSky(skyElement, fxPalette(container), renderView.current.reduced, lose).then(instance => {
       if (cancelled) { instance?.destroy(); return }
       if (!instance) return
       sky.current = instance; shaderLiveRef.current = true; setShaderLive(true)
     })
-    const skyMotion = () => sky.current?.setMotion(motion.matches)
-    motion.addEventListener("change", skyMotion)
-    return () => {
-      cancelled = true; motion.removeEventListener("change", skyMotion)
-      sky.current?.destroy(); sky.current = null; shaderLiveRef.current = false
-      window.cancelAnimationFrame(frame); observer.disconnect()
-      window.removeEventListener("blur", pause); document.removeEventListener("visibilitychange", hidden)
-      motion.removeEventListener("change", refreshTheme)
-      releaseInputs()
-    }
-  }, [command, settle])
+    return () => { cancelled = true; sky.current?.destroy(); sky.current = null; shaderLiveRef.current = false; setShaderLive(false) }
+  }, [wantShader])
+  React.useEffect(() => { sky.current?.setMotion(reduced) }, [reduced, shaderLive])
 
   const running = view.mode === "running"
   const live = running && view.countdown === 0
-  const stage = TREADMILL_STAGES[view.stage]!
-  const nextStage = TREADMILL_STAGES[view.stage + 1]
+  const stages = view.stages
+  const stage = stages[view.stage]!
+  const nextStage = stages[view.stage + 1]
   const warning = treadmillWarning(view)
-  const total = treadmillCourseSeconds()
+  const total = treadmillCourseSeconds(view)
   const elapsed = Math.min(total, Math.floor(treadmillElapsed(view)))
   const focusField = () => canvas.current?.focus({ preventScroll: true })
-  const start = () => { setNewBest(false); command({ type: "start" }); focusField() }
+  const start = () => { setResult(null); command({ type: "start", stages: courseStages(course) }); playGameSound("tap", settings.sound); focusField() }
   const resume = () => { command({ type: "resume" }); focusField() }
   const energyLow = view.energy < view.jumpCost + 4
   const canJump = live && view.y === 0 && view.energy >= view.jumpCost
   const canDash = live && view.cooldown === 0 && view.energy >= TREADMILL_RULES.dashCost
   const ended = view.mode === "over" || view.mode === "clear"
   const stars = treadmillStars(view)
-  const scene: SkyScene = view.mode === "clear" ? "clear" : view.mode === "over" ? "over" : stage.id
+  const scene: SkyScene = view.mode === "clear" ? "clear" : view.mode === "over" ? "over" : stage.surface
   React.useEffect(() => { sky.current?.show(scene) }, [scene, shaderLive])
   React.useEffect(() => {
     if (!sky.current) return
-    if (view.mode === "running" || view.mode === "clear" || view.mode === "over" || view.mode === "ready") sky.current.resume()
+    if (!menuOpen && (view.mode === "running" || view.mode === "clear" || view.mode === "over" || view.mode === "ready")) sky.current.resume()
     else sky.current.pause()
-  }, [view.mode, shaderLive])
+  }, [view.mode, shaderLive, menuOpen])
+
+  const openCourse = (next: Course) => {
+    setCourse(next); setResult(null)
+    state.current = newTreadmillRun(courseStages(next)); setView(state.current)
+    setScreen("play"); playGameSound("tap", settings.sound)
+  }
+  const backToMap = () => { command({ type: "pause" }); releaseInputs(); setScreen("map"); setResult(null) }
+  const openMenu = () => { command({ type: "pause" }); setMenuOpen(true) }
+  const following = city ? nextCity(progress, city.id) : undefined
+  const isCity = course.kind === "city"
 
   const handleKey = (event: React.KeyboardEvent) => {
-    if (!running || event.repeat) return
+    if (!running || event.repeat || menuOpen) return
     const onField = event.target === canvas.current
     if (event.key === "ArrowRight") {
       event.preventDefault(); keyboardHeld.current = true; updateHeld()
@@ -180,24 +262,36 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
     }
   }
 
-  return <div className="treadmill-game" ref={surface} onKeyDown={handleKey} data-mode={view.mode} data-stage={stage.id} data-sky={shaderLive ? "shader" : "canvas"}
+  const title = screen === "map" ? "러닝 투어" : city ? `${city.name} 투어` : "러닝머신 연습"
+  return <div className="treadmill-game" ref={surface} onKeyDown={handleKey} data-screen={screen} data-mode={view.mode} data-stage={stage.surface}
+    data-sky={shaderLive ? "shader" : "canvas"} data-view={renderView.current.city ? "city" : "flat"} data-controls={settings.controls} data-run-side={settings.runSide}
+    data-reduced={reduced || undefined}
     onKeyUp={event => { if (event.key === "ArrowRight") { keyboardHeld.current = false; updateHeld() } }}
-    onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) command({ type: "pause" }) }}>
+    onBlur={event => { if (screen === "play" && !menuOpen && !event.currentTarget.contains(event.relatedTarget as Node | null)) command({ type: "pause" }) }}>
     <header className="treadmill-game__header">
-      <button type="button" className="treadmill-game__icon" onClick={onBack} aria-label="더보기로 돌아가기"><ArrowLeft size={20} aria-hidden="true" /></button>
-      <div className="treadmill-game__title"><span>TRAINORACLE 미니게임</span><h1>멈추면 밀려나는 트랙</h1></div>
-      <button type="button" className="treadmill-game__icon" disabled={!running} aria-label="일시정지" title="일시정지 (Esc)"
-        onClick={() => command({ type: "pause" })}><Pause size={20} aria-hidden="true" /></button>
+      {screen === "map"
+        ? <button type="button" className="treadmill-game__icon" onClick={onBack} aria-label="더보기로 돌아가기"><ArrowLeft size={20} aria-hidden="true" /></button>
+        : <button type="button" className="treadmill-game__icon" onClick={backToMap} aria-label="투어 지도로"><MapIcon size={20} aria-hidden="true" /></button>}
+      <div className="treadmill-game__title"><span>TRAINORACLE 미니게임</span><h1>{title}</h1></div>
+      <div className="treadmill-game__header-actions">
+        {screen === "play" && <button type="button" className="treadmill-game__icon" disabled={!running} aria-label="일시정지" title="일시정지 (Esc)"
+          onClick={() => command({ type: "pause" })}><Pause size={20} aria-hidden="true" /></button>}
+        <button type="button" className="treadmill-game__icon" aria-label="게임 메뉴 (설정·도움말·오픈소스)" aria-haspopup="dialog" onClick={openMenu}><Menu size={20} aria-hidden="true" /></button>
+      </div>
     </header>
 
+    {screen === "map" && <TourMap progress={progress} season={season} onSeason={setSeason} status={store.status}
+      onPlay={item => openCourse({ kind: "city", city: item })} onPractice={() => openCourse({ kind: "practice" })} />}
+
+    {screen === "play" && <>
     <div className="treadmill-game__stage">
       <div className="treadmill-game__hud">
         <div className="treadmill-game__hud-row">
-          <ol className="treadmill-game__stages" aria-label={`코스 ${view.stage + 1}/3 · ${stage.name}`}>
-            {TREADMILL_STAGES.map((item, index) => {
+          <ol className="treadmill-game__stages" aria-label={`코스 ${view.stage + 1}/${stages.length} · ${stage.name}`}>
+            {stages.map((item, index) => {
               const done = index < view.stage || (index === view.stage && view.mode === "clear")
               const fill = done ? 1 : index === view.stage ? view.seconds / TREADMILL_RULES.stageSeconds : 0
-              return <li key={item.id} data-state={done ? "done" : index === view.stage ? "current" : "next"} data-stage={item.id}>
+              return <li key={item.id} data-state={done ? "done" : index === view.stage ? "current" : "next"} data-stage={item.surface}>
                 <span>{item.name}</span>
                 <i aria-hidden="true"><b style={fillStyle(fill)} /></i>
               </li>
@@ -218,13 +312,13 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
 
       <canvas ref={skyCanvas} className="treadmill-game__sky" aria-hidden="true" data-live={shaderLive || undefined} />
       <canvas ref={canvas} tabIndex={0} className="treadmill-game__canvas"
-        aria-label="게임 조작 영역. 오른쪽 방향키를 누르고 있으면 달리기, 스페이스나 위 방향키는 점프, D는 대시, Esc는 일시정지. 왼쪽 끝 구덩이로 밀리면 추락합니다." />
+        aria-label="게임 조작 영역. 오른쪽 방향키를 누르고 있으면 달리기, 스페이스나 위 방향키는 점프, D는 대시, Esc는 일시정지. 왼쪽 끝으로 밀리면 떨어집니다." />
       <p className="treadmill-game__warning" role="status" data-tone={warning.tone}>{warning.text}</p>
 
-      {view.mode === "paused" && <div className="treadmill-game__overlay">
+      {view.mode === "paused" && !menuOpen && <div className="treadmill-game__overlay">
         <div className="treadmill-game__card treadmill-game__card--small">
           {view.seconds === 0 && view.stage > 0
-            ? <><span className="treadmill-game__ribbon" data-stage={stage.id}>{view.stage + 1}구간</span><h2>{stage.name}</h2><p>{stage.hint}</p></>
+            ? <><span className="treadmill-game__ribbon" data-stage={stage.surface}>{view.stage + 1}구간</span><h2>{stage.name}</h2><p>{stage.hint}</p></>
             : <><span className="treadmill-game__ribbon">일시정지</span><h2>잠깐 쉬는 중</h2><p>바닥과 장애물이 멈춰 있어요.</p></>}
           <div className="treadmill-game__card-actions">
             <button type="button" className="treadmill-game__cta" onClick={resume}><Play size={18} aria-hidden="true" />계속</button>
@@ -235,13 +329,18 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
 
       {view.mode === "ready" && <div className="treadmill-game__overlay">
         <section className="treadmill-game__card" aria-labelledby="treadmill-ready-title">
-          <span className="treadmill-game__ribbon">30초 서바이벌</span>
-          <h2 id="treadmill-ready-title">30초 동안 바닥 위에서 버티세요</h2>
+          <span className="treadmill-game__ribbon">{city ? `${city.country} · 30초 서바이벌` : "30초 서바이벌"}</span>
+          {city
+            ? <><h2 id="treadmill-ready-title">{city.name} · {city.tagline}</h2>
+              <ol className="treadmill-game__intro-stages">{stages.map((item, index) => <li key={item.id} data-stage={item.surface}><b>{index + 1}</b>{item.name}</li>)}</ol></>
+            : <h2 id="treadmill-ready-title">30초 동안 바닥 위에서 버티세요</h2>}
           <ul className="treadmill-game__rules">
             <li><b><Footprints size={18} aria-hidden="true" /></b><span><strong>꾹 누르면 앞으로</strong>에너지를 써요</span></li>
             <li><b><Pause size={18} aria-hidden="true" /></b><span><strong>손을 떼면 회복</strong>대신 뒤로 밀려요</span></li>
-            <li><b><MoveUp size={18} aria-hidden="true" /></b><span><strong>장애물은 점프</strong>구덩이·가시에 닿으면 끝</span></li>
+            <li><b><MoveUp size={18} aria-hidden="true" /></b><span><strong>장애물은 점프</strong>{city ? "허들·못판" : "구덩이·가시"}에 닿으면 끝</span></li>
           </ul>
+          <div className="treadmill-game__ready-runner"><CharacterPortrait character={character} size={52} label={`캐릭터 ${MINIGAME_CHARACTERS.find(item => item.id === character)?.name}`} />
+            <button type="button" className="treadmill-game__link" onClick={openMenu}>캐릭터·설정 바꾸기</button></div>
           <button type="button" className="treadmill-game__cta" onClick={start}><Play size={18} aria-hidden="true" />시작</button>
           <p className="treadmill-game__keys">키보드: → 달리기 · Space/↑ 점프 · D 대시 · Esc 정지</p>
         </section>
@@ -250,9 +349,12 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
       {ended && <div className="treadmill-game__overlay">
         <section className="treadmill-game__card treadmill-game__result" aria-labelledby="treadmill-result-title" data-result={view.mode}>
           <span className="treadmill-game__ribbon" data-tone={view.mode === "clear" ? "gold" : "danger"}>{view.mode === "clear" ? "완주" : "실패"}</span>
-          <h2 id="treadmill-result-title">{view.mode === "clear" ? "세 구간 완주!" : view.failure === "spike" ? `${stage.name}에서 가시에 닿았어요` : `${stage.name}에서 뒤로 떨어졌어요`}</h2>
-          {view.mode === "clear" ? <Stars count={stars} /> : <RunnerPortrait upgrades={view.upgrades} pose="hit" label="넘어진 러너" />}
-          <div className="treadmill-game__big-score"><small>점수</small><strong>{view.stats.score.toLocaleString("ko-KR")}</strong>{newBest && <em>이번 접속 최고!</em>}</div>
+          <h2 id="treadmill-result-title">{view.mode === "clear" ? (city ? `${city.name} 완주!` : "세 구간 완주!") : view.failure === "spike" ? `${stage.name}에서 가시에 닿았어요` : `${stage.name}에서 뒤로 떨어졌어요`}</h2>
+          {view.mode === "clear" ? <Stars count={stars} /> : <RunnerPortrait upgrades={view.upgrades} pose="hit" label="넘어진 러너" character={character} />}
+          <div className="treadmill-game__big-score"><small>점수</small><strong>{view.stats.score.toLocaleString("ko-KR")}</strong>{result?.best && <em>{city?.name} 최고 기록!</em>}</div>
+          {result && result.unlocks.length > 0 && <ul className="treadmill-game__unlocks" aria-label="새로 열림">
+            {result.unlocks.map(item => <li key={item}><Sparkles size={14} aria-hidden="true" />{item}</li>)}
+          </ul>}
           <dl className="treadmill-game__stats">
             <div><dt>버틴 시간</dt><dd>{elapsed}<small>/{total}초</small></dd></div>
             <div><dt>넘은 장애물</dt><dd>{view.stats.cleared}</dd></div>
@@ -261,8 +363,14 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
           </dl>
           <p className="treadmill-game__tip">{treadmillTip(view)}</p>
           {view.upgrades.length > 0 && <p className="treadmill-game__picks">이번 판: {view.upgrades.map(upgradeName).join(" · ")}</p>}
-          <p className="treadmill-game__best">이번 접속 최고 {best.score.toLocaleString("ko-KR")}점 · {Math.floor(best.seconds)}초</p>
-          <button type="button" className="treadmill-game__cta" onClick={start}><RotateCcw size={18} aria-hidden="true" />다시 시작</button>
+          {isCity && result && result.bestScore > 0 && <p className="treadmill-game__best">{city?.name} 최고 {result.bestScore.toLocaleString("ko-KR")}점</p>}
+          <div className="treadmill-game__card-actions">
+            {view.mode === "clear" && following
+              ? <button type="button" className="treadmill-game__cta" onClick={() => openCourse({ kind: "city", city: following })}><ArrowRight size={18} aria-hidden="true" />다음 도시 {following.name}</button>
+              : <button type="button" className="treadmill-game__cta" onClick={start}><RotateCcw size={18} aria-hidden="true" />다시 시작</button>}
+            {view.mode === "clear" && following && <button type="button" className="treadmill-game__ghost" onClick={start}><RotateCcw size={16} aria-hidden="true" />다시</button>}
+            <button type="button" className="treadmill-game__ghost" onClick={backToMap}><MapIcon size={16} aria-hidden="true" />지도</button>
+          </div>
           <p className="treadmill-game__keys">다시 시작하면 강화가 초기화돼요.</p>
         </section>
       </div>}
@@ -292,7 +400,7 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
 
     {view.mode === "upgrade" && nextStage && <section className="treadmill-game__loadout" aria-labelledby="treadmill-upgrade-title">
       <div className="treadmill-game__loadout-head">
-        <RunnerPortrait upgrades={view.upgrades} label={`현재 장비: ${view.upgrades.length ? view.upgrades.map(upgradeName).join(", ") : "기본"}`} />
+        <RunnerPortrait upgrades={view.upgrades} character={character} label={`현재 장비: ${view.upgrades.length ? view.upgrades.map(upgradeName).join(", ") : "기본"}`} />
         <div>
           <span className="treadmill-game__ribbon" data-tone="gold">구간 통과!</span>
           <h2 id="treadmill-upgrade-title">안전 발판 · 강화 하나 선택</h2>
@@ -311,7 +419,7 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
           return <button type="button" key={upgrade.id} data-upgrade={upgrade.id} onClick={() => command({ type: "upgrade", upgrade: upgrade.id })}>
             <b className="treadmill-game__gear-icon" aria-hidden="true"><Icon size={26} /></b>
             <span className="treadmill-game__gear-text">
-              <strong>{upgrade.name}{owned > 0 && <em> Lv.{owned + 1}</em>}{upgrade.fits === nextStage.id && <mark>다음 구간에 맞음</mark>}</strong>
+              <strong>{upgrade.name}{owned > 0 && <em> Lv.{owned + 1}</em>}{upgrade.fits === nextStage.surface && <mark>다음 구간에 맞음</mark>}</strong>
               <span className="treadmill-game__plus">+ {upgrade.benefit}</span>
               <span className="treadmill-game__minus">− {upgrade.cost}</span>
             </span>
@@ -319,7 +427,13 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
         })}
       </div>
     </section>}
+    </>}
 
-    <p className="treadmill-game__note">게임 에너지와 점수는 이번 판에만 쓰여요. 실제 훈련 수치·포인트와 연결되지 않고 저장하지 않아요.</p>
+    {menuOpen && <GameMenu progress={progress} status={store.status} onClose={() => { setMenuOpen(false); if (screen === "play") focusField() }}
+      onSettings={patch => store.update(current => updateMinigameSettings(current, patch))}
+      onCharacter={id => store.update(current => updateMinigameSettings(current, { character: id }))}
+      onReset={store.reset} />}
+
+    <p className="treadmill-game__note">게임 에너지·점수·별은 게임 안에서만 쓰여요. 실제 훈련 기록이나 포인트(P)와 연결되지 않아요. 투어 기록은 이 기기와, 로그인하면 계정에 저장돼요.</p>
   </div>
 }

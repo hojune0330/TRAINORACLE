@@ -59,7 +59,7 @@ describe("treadmill shader sky boundary", () => {
       const path = join(dir, name)
       return statSync(path).isDirectory() ? walk(path) : /\.(tsx?|css)$/u.test(name) ? [path] : []
     })
-    const users = walk("src").filter(path => !path.endsWith(".test.ts") && /["']shaders(\/[a-z]+)?["']/u.test(readFileSync(path, "utf8")))
+    const users = walk("src").filter(path => !path.endsWith(".test.ts") && /(?:from\s+|import\s*\(\s*|require\s*\(\s*)["']shaders(\/[a-z]+)?["']/u.test(readFileSync(path, "utf8")))
     expect(users).toEqual([join("src", "screens", "treadmill", "shader-sky.ts")])
   })
 })

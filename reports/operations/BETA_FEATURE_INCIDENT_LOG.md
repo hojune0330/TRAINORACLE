@@ -34,6 +34,8 @@
 | `PRODUCT_ANALYTICS` | 선택형 제품 분석 저장 | `TRAINORACLE_KILL_PRODUCT_ANALYTICS=true` | `VITE_KILL_PRODUCT_ANALYTICS=true` |
 | `FEEDBACK_BOARD` | 의견 게시글·답변 읽기/쓰기 | `TRAINORACLE_KILL_FEEDBACK_BOARD=true` | `VITE_KILL_FEEDBACK_BOARD=true` |
 
+미니게임 투어 계정 저장(`MINIGAME_PROGRESS` 문서, 2026-10-08 추가)은 별도 서버 키가 없다. 계정 문서 저장(`ACCOUNT_JOURNAL_V2`)을 그대로 쓰므로 그 스위치를 끄면 함께 닫힌다. 게임 저장만 닫을 때는 앱 빌드 변수 `VITE_KILL_MINIGAME_PROGRESS=true`를 쓴다. 닫혀도 투어는 이 기기에 계속 저장되고, 서버 사본은 지워지지 않는다. ⚠️ 이 앱 변수는 아직 `.github/workflows/ci.yml` 빌드 환경에 연결되지 않았다(에이전트 토큰에 workflows 권한이 없음). 저장소 관리자가 `VITE_KILL_MINIGAME_PROGRESS: ${{ vars.TRAINORACLE_KILL_MINIGAME_PROGRESS }}` 한 줄을 추가해야 실제로 쓸 수 있다.
+
 사고 대응 순서는 다음과 같다.
 
 1. 서버 스위치를 먼저 끄고 이유를 남긴다.

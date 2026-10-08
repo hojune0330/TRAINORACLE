@@ -36,24 +36,27 @@ export const TREADMILL_RULES = {
 } as const
 
 export type TreadmillHazardKind = "barrier" | "spike"
+/** The rule a stage plays by. Names and art may change per city; the surface decides the physics. */
+export type TreadmillSurface = "track" | "mud" | "spikes"
+export type TreadmillStage = {
+  readonly id: string; readonly surface: TreadmillSurface; readonly name: string; readonly belt: number; readonly movement: number; readonly hint: string
+  readonly course: readonly { readonly at: number; readonly kind: TreadmillHazardKind }[]
+}
 
 export const TREADMILL_HAZARDS: Record<TreadmillHazardKind, { halfWidth: number; height: number }> = {
   barrier: { halfWidth: 0.022, height: 26 },
   spike: { halfWidth: 0.03, height: 16 },
 }
 
-/** Fixed course. `at` is the stage second at which a hazard enters from the front edge. */
+/** Practice course. `at` is the stage second at which a hazard enters from the front edge. */
 export const TREADMILL_STAGES = [
-  { id: "track", name: "트랙", belt: 0.07, movement: 0.115, hint: "기본 속도. 달리고 쉬는 박자를 익히는 구간",
+  { id: "track", surface: "track", name: "트랙", belt: 0.07, movement: 0.115, hint: "기본 속도. 달리고 쉬는 박자를 익히는 구간",
     course: [{ at: 1.6, kind: "barrier" }, { at: 4.6, kind: "barrier" }, { at: 7.2, kind: "barrier" }] },
-  { id: "mud", name: "진흙", belt: 0.084, movement: 0.092, hint: "달려도 덜 나아가요. 앞쪽 공간을 미리 벌어 두세요",
+  { id: "mud", surface: "mud", name: "진흙", belt: 0.084, movement: 0.092, hint: "달려도 덜 나아가요. 앞쪽 공간을 미리 벌어 두세요",
     course: [{ at: 1.2, kind: "barrier" }, { at: 3.6, kind: "barrier" }, { at: 5.6, kind: "barrier" }, { at: 7.6, kind: "barrier" }] },
-  { id: "spikes", name: "가시밭", belt: 0.074, movement: 0.115, hint: "가시는 한 번만 닿아도 끝. 점프할 에너지를 남기세요",
+  { id: "spikes", surface: "spikes", name: "가시밭", belt: 0.074, movement: 0.115, hint: "가시는 한 번만 닿아도 끝. 점프할 에너지를 남기세요",
     course: [{ at: 1.0, kind: "spike" }, { at: 2.9, kind: "spike" }, { at: 4.6, kind: "barrier" }, { at: 5.9, kind: "spike" }, { at: 7.6, kind: "spike" }] },
-] as const satisfies readonly {
-  id: string; name: string; belt: number; movement: number; hint: string
-  course: readonly { at: number; kind: TreadmillHazardKind }[]
-}[]
+] as const satisfies readonly TreadmillStage[]
 
 export const TREADMILL_UPGRADES = [
   { id: "grip", name: "접지 밑창", benefit: "진흙 전진 +50% · 부딪혀도 덜 밀림", cost: "점프 에너지 +3", fits: "mud" },
@@ -65,7 +68,7 @@ export type TreadmillUpgrade = typeof TREADMILL_UPGRADES[number]["id"]
 export type TreadmillMode = "ready" | "running" | "paused" | "upgrade" | "over" | "clear"
 export type TreadmillFailure = "fall" | "spike"
 export type TreadmillCommand =
-  | { type: "start" }
+  | { type: "start"; stages?: readonly TreadmillStage[] }
   | { type: "run"; held: boolean }
   | { type: "jump" }
   | { type: "dash" }
@@ -82,6 +85,8 @@ export type TreadmillStats = {
 
 export type TreadmillState = {
   mode: TreadmillMode
+  /** The course being played: the practice course or one city of the tour. Never changes mid-run. */
+  stages: readonly TreadmillStage[]
   /** Seconds left before the belt moves. Inputs except holding run are ignored meanwhile. */
   countdown: number
   stage: number
@@ -122,10 +127,10 @@ const freshStats = (): TreadmillStats => ({ hits: 0, cleared: 0, jumps: 0, dashe
 /** Game score only: clears grow with the combo, stage finishes add a flat bonus. */
 export const TREADMILL_SCORE = { clear: 100, comboStep: 50, comboCap: 5, stage: 300 } as const
 
-export function newTreadmillRun(): TreadmillState {
+export function newTreadmillRun(stages: readonly TreadmillStage[] = TREADMILL_STAGES): TreadmillState {
   const rules = TREADMILL_RULES
   return {
-    mode: "ready", countdown: 0, stage: 0, seconds: 0, x: rules.startPosition, y: 0, velocityY: 0,
+    mode: "ready", stages, countdown: 0, stage: 0, seconds: 0, x: rules.startPosition, y: 0, velocityY: 0,
     energy: rules.maxEnergy, running: false, exhausted: false, dashLeft: 0, cooldown: 0, invulnerable: 0,
     hitFlash: 9, landed: 9, hazards: [], spawned: 0, upgrades: [], mudBonus: 0, jumpCost: rules.jumpCost,
     jumpVelocity: rules.jumpVelocity, dashFactor: 1, knockbackFactor: 1, strideFactor: 1, runDrainFactor: 1, recoveryFactor: 1,
@@ -139,8 +144,8 @@ export function treadmillElapsed(state: TreadmillState): number {
   return state.stage * TREADMILL_RULES.stageSeconds + state.seconds
 }
 
-export function treadmillCourseSeconds(): number {
-  return TREADMILL_STAGES.length * TREADMILL_RULES.stageSeconds
+export function treadmillCourseSeconds(state?: Pick<TreadmillState, "stages">): number {
+  return (state?.stages ?? TREADMILL_STAGES).length * TREADMILL_RULES.stageSeconds
 }
 
 export function applyUpgrade(state: TreadmillState, upgrade: TreadmillUpgrade): TreadmillState {
@@ -153,7 +158,7 @@ export function applyUpgrade(state: TreadmillState, upgrade: TreadmillUpgrade): 
 
 export function treadmillCommand(state: TreadmillState, command: TreadmillCommand): TreadmillState {
   if (command.type === "start") {
-    return { ...newTreadmillRun(), mode: "running", countdown: TREADMILL_RULES.countdownStart, message: "달리면 앞으로, 놓으면 회복하며 뒤로 밀려요." }
+    return { ...newTreadmillRun(command.stages ?? state.stages), mode: "running", countdown: TREADMILL_RULES.countdownStart, message: "달리면 앞으로, 놓으면 회복하며 뒤로 밀려요." }
   }
   if (command.type === "pause" && state.mode === "running") {
     return { ...state, mode: "paused", running: false, exhausted: false, message: "일시정지" }
@@ -192,7 +197,7 @@ function overlaps(runnerX: number, hazard: TreadmillHazard): boolean {
 
 function step(state: TreadmillState, dt: number): TreadmillState {
   const rules = TREADMILL_RULES
-  const stage = TREADMILL_STAGES[state.stage]!
+  const stage = state.stages[state.stage]!
   if (state.countdown > 0) return { ...state, countdown: Math.max(0, state.countdown - dt) }
   const next: TreadmillState = { ...state, stats: { ...state.stats }, hazards: state.hazards.map(hazard => ({ ...hazard })) }
   next.seconds += dt
@@ -211,7 +216,7 @@ function step(state: TreadmillState, dt: number): TreadmillState {
   next.exhausted = state.running && next.energy <= 0
   if (!state.running) next.stats.restSeconds += dt
   next.stats.lowestEnergy = Math.min(next.stats.lowestEnergy, next.energy)
-  const movement = stage.movement * state.strideFactor * (stage.id === "mud" ? 1 + state.mudBonus : 1)
+  const movement = stage.movement * state.strideFactor * (stage.surface === "mud" ? 1 + state.mudBonus : 1)
   next.x = Math.min(rules.frontEdge, state.x - stage.belt * dt + runningSeconds * movement
     + dashSeconds * rules.dashSpeed * state.dashFactor)
   if (state.y > 0 || state.velocityY > 0) {
@@ -256,10 +261,10 @@ function step(state: TreadmillState, dt: number): TreadmillState {
     return { ...next, mode: "over", running: false, exhausted: false, failure: "fall", message: "뒤쪽 끝에서 떨어졌어요." }
   }
   if (next.seconds >= rules.stageSeconds) {
-    const clear = next.stage === TREADMILL_STAGES.length - 1
+    const clear = next.stage === state.stages.length - 1
     next.stats.score += TREADMILL_SCORE.stage
     return { ...next, seconds: rules.stageSeconds, mode: clear ? "clear" : "upgrade", running: false, exhausted: false,
-      message: clear ? "세 구간 완주!" : "안전 발판 도착! 바닥이 멈췄어요." }
+      message: clear ? "완주!" : "안전 발판 도착! 바닥이 멈췄어요." }
   }
   return next
 }
@@ -279,7 +284,7 @@ export function advanceTreadmill(state: TreadmillState, seconds: number): Treadm
 
 /** Hazards that will enter within the telegraph window, so the screen can announce them early. */
 export function upcomingHazards(state: TreadmillState): { kind: TreadmillHazardKind; inSeconds: number }[] {
-  const course = TREADMILL_STAGES[state.stage]!.course
+  const course = state.stages[state.stage]!.course
   return course.slice(state.spawned)
     .map(item => ({ kind: item.kind, inSeconds: item.at - state.seconds }))
     .filter(item => item.inSeconds <= TREADMILL_RULES.telegraphSeconds)

@@ -26,6 +26,10 @@ npm run dev -- --host 127.0.0.1
 8. [UX·UI 2차 개선](UX_PASS_2.md): 규칙 v2(판정·고정 코스·예고·강화 재설계), 화면 재구성, 밸런스 가드.
 9. [3차 아트·UI 개편](ART_PASS_3.md): 모바일 게임 톤의 캐릭터·맵·이펙트·HUD, `--game-*` 토큰과 기준 §6A, 점수·콤보·별·카운트다운.
 10. [4차 셰이더 배경](FX_PASS_4.md): MIT `shaders` 패키지로 WebGPU 하늘·완주 연출, 텔레메트리 차단·지연 로드·2D 대체 경로.
+11. [5차 러닝 투어](TOUR_PASS_5.md): 서울~런던 8개 도시 시즌제, 2.5D 도시·날씨·랜드마크, 캐릭터 6종, 게임 메뉴(설정·도움말·오픈소스), 기기+계정 저장(`MINIGAME_PROGRESS`, 0064 미배포).
+
+> 2026-10-08 갱신: 아래 "저장·로그인·네트워크 요청 없이"와 "세 지형과 코스는 고정" 설명은 **연습 모드**에만 해당한다. 투어 진행(별·점수·캐릭터·설정)은 오너 결정으로 이 기기와 계정에 저장한다. 게임 점수·별은 여전히 TrainOracle P·훈련 기록과 연결되지 않는다.
+
 
 ## 이번 PR에 구현된 것
 
@@ -48,7 +52,10 @@ npm run dev -- --host 127.0.0.1
 | `app/src/screens/TreadmillGame.tsx` | 실제 입력·경기 화면·시계·초점·정지·수명 관리 |
 | `app/src/screens/treadmill/draw.ts` | 맵·트레드밀·이펙트·카운트다운을 그리는 렌더러(이펙트 상태는 여기, 게임 상태는 순수 엔진) |
 | `app/src/screens/treadmill/shader-sky.ts`, `sky-presets.ts` | 선택적 WebGPU 배경(지연 로드, 텔레메트리 off)과 장면별 레이어 설정 |
-| `app/src/screens/treadmill/sprites.ts` | 러너·장애물 원본 스프라이트와 `--game-*` 팔레트 |
+| `app/src/screens/treadmill/sprites.ts` | 러너 6종·장애물 원본 스프라이트와 `--game-*` 팔레트 |
+| `app/src/domain/minigame/tour.ts`, `progress.ts`, `progress-store.ts` | 투어 도시·시즌·난이도, 진행 스키마·해금·병합, 기기 저장과 계정 동기화 연결 |
+| `app/src/domain/account/account-minigame-progress-*.ts`, `supabase/migrations/0064_*` | 계정 문서 `MINIGAME_PROGRESS`(늘기만 하는 갱신, 보상 자격 없음) |
+| `app/src/screens/treadmill/city-art.ts`, `GamePanels.tsx`, `sound.ts` | 2.5D 도시·날씨, 투어 지도·게임 메뉴, 합성 효과음 |
 | `app/src/styles/treadmill-game.css` | 기존 앱 토큰·서체·터치 규격을 쓰는 게임 화면 |
 | `app/src/screens/More.tsx`, `AppShell.tsx`, `DeferredMobileScreens.ts` | 진입·복귀·지연 로딩 |
 | `app/e2e/treadmill-game.spec.ts` | 실제 브라우저의 무행동·입력·완주·복귀·정지·모바일 |

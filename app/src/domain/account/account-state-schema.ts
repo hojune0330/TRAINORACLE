@@ -4,12 +4,14 @@ import { validateAccountPlanDocument, validateAccountPlanDocumentUpdate } from "
 import { validateAccountCalendarDecorationDocument } from "./account-calendar-decoration-schema"
 import { validateAccountAthleteRecordDocument, validateAccountAthleteRecordDocumentUpdate } from "./account-athlete-record-schema"
 import { validateAccountRunningProfileDocument } from "./account-running-profile-schema"
+import { validateAccountMinigameProgressDocument, validateAccountMinigameProgressUpdate } from "./account-minigame-progress-schema"
 import { accountOracleV2DocumentSchema, validateOracleV2Migration, validateOracleV2Transition, validateInitialOracleV2Document } from "./account-oracle-v2-schema"
 export { validateInitialOracleV2Document }
 export { accountCalendarDecorationOwnershipMetadata } from "./account-calendar-decoration-schema"
 
 export function validateAccountStateDocument(value: unknown): boolean {
   return accountOracleV2DocumentSchema.safeParse(value).success || validateAccountRunningProfileDocument(value) || validateAccountDecorationDocument(value) || validateAccountCalendarDecorationDocument(value) || validateAccountAthleteRecordDocument(value) || validateAccountPlanDocument(value)
+    || validateAccountMinigameProgressDocument(value)
 }
 
 export function validateAccountStateDocumentUpdate(previous: unknown, next: unknown): boolean {
@@ -18,6 +20,7 @@ export function validateAccountStateDocumentUpdate(previous: unknown, next: unkn
   if (validateAccountDecorationDocument(previous)) return validateAccountDecorationDocument(next)
   if (validateAccountCalendarDecorationDocument(previous)) return validateAccountCalendarDecorationDocument(next)
   if (validateAccountAthleteRecordDocument(previous)) return validateAccountAthleteRecordDocumentUpdate(previous, next)
+  if (validateAccountMinigameProgressDocument(previous)) return validateAccountMinigameProgressUpdate(previous, next)
   return validateAccountPlanDocumentUpdate(previous, next)
 }
 

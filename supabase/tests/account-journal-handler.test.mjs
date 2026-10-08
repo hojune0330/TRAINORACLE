@@ -27,6 +27,7 @@ if (process.env.JOURNAL_HANDLER_MUTATION) {
   const mutations = {
     'oracle-v2-capability': ["if (document?.kind === 'RUNNING_PROFILE' && document.data.version === 'RUNNING_PROFILE_V2' && !input.supportedRunningProfileVersions.includes(2)) fail(426, 'UPGRADE_REQUIRED');", ''],
     'running-profile-identity': ["if (document.kind === 'RUNNING_PROFILE') return documentId === await namespacedId(['trainoracle.account.running-profile.v1',ownerId]);", "if (document.kind === 'RUNNING_PROFILE') return true;"],
+    'minigame-progress-identity': ["if (document.kind === 'MINIGAME_PROGRESS') return documentId === await namespacedId(['trainoracle.account.minigame-progress.v1',ownerId]);", "if (document.kind === 'MINIGAME_PROGRESS') return true;"],
     'history-record-identity': ["if (doc.state === 'FINALIZED' && await recordId(ownerId, doc.entry.id) !== documentId) throw 0;", ''],
     'history-collection-filter': ["input.collection !== 'JOURNAL' || value.document.state === 'FINALIZED'", 'true'],
     'purged-operation-guard': ["if (prior.proposed_encrypted_payload === null) fail(409, 'OPERATION_REPLAY_UNAVAILABLE');", ''],
@@ -948,7 +949,7 @@ test('P4 concurrent identical relation nonces replay while distinct stale writer
 });
 
 async function fixedStateId(kind,owner=OWNER) {
-  const namespace = kind === 'RUNNING_PROFILE' ? 'trainoracle.account.running-profile.v1' : kind === 'PLAN' ? 'trainoracle.account.plan.v1' : 'trainoracle.account.decorations.v1';
+  const namespace = kind === 'RUNNING_PROFILE' ? 'trainoracle.account.running-profile.v1' : kind === 'MINIGAME_PROGRESS' ? 'trainoracle.account.minigame-progress.v1' : kind === 'PLAN' ? 'trainoracle.account.plan.v1' : 'trainoracle.account.decorations.v1';
   const bytes=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify([namespace,owner]))));
   bytes[6]=(bytes[6]&15)|80;bytes[8]=(bytes[8]&63)|128;
   const h=Buffer.from(bytes.slice(0,16)).toString('hex');
@@ -977,6 +978,41 @@ test('running profile capability fails closed on old SQL or gated account',async
   }
   const f=await fixture({repo:{enabled:async()=>false,runningProfileSupport:async()=>({kind:'running-profile-support',version:1})}});
   await response(await f.request({action:'runningProfileSupport'}),403);
+});
+
+const minigameSettings = { sound:true,vibration:true,effects:'high',view:'auto',motion:'system',controls:'normal',runSide:'left',jumpGuide:true };
+const minigameDoc = cities => ({ version:3,state:'ACCOUNT_STATE',kind:'MINIGAME_PROGRESS',data:{ version:'MINIGAME_PROGRESS_V1',cities,character:'tori',
+  settings:minigameSettings,settingsUpdatedAt:'2026-10-08T00:00:00.000Z' } });
+const minigameRepo = { minigameProgressSupport:async()=>({kind:'minigame-progress-support',version:1}) };
+test('minigame progress: capability, owner identity, encrypted game-only metadata and grow-only updates',async()=>{
+  const f=await fixture({dependencies:{validateDocument:validateAccountJournalDocument},repo:minigameRepo});
+  await response(await f.request({action:'minigameProgressSupport'}),200,{kind:'minigame-progress-support',version:1});
+  const documentId=await fixedStateId('MINIGAME_PROGRESS');
+  const first=minigameDoc({seoul:{stars:2,bestScore:900,clears:1}});
+  await response(await f.request(save({documentId,document:first})),200);
+  assert.deepEqual((await response(await f.request({action:'read',documentId}),200)).document,first);
+  const stored=f.operations.get(f.key(OWNER,OP));
+  // Never reward-eligible, and the stars never leave the ciphertext.
+  assert.deepEqual(stored.trusted_metadata,{kind:'MINIGAME_PROGRESS',occurrenceId:null,journalDate:null,eligible:false});
+  assert.equal(JSON.stringify(stored.proposed_encrypted_payload).includes('seoul'),false);
+  // Another owner's id, a training field, or a lowered star count are refused.
+  await response(await f.request(save({documentId:await fixedStateId('MINIGAME_PROGRESS',OTHER),operationId:OP2,document:first})),422);
+  await response(await f.request(save({documentId,operationId:OP2,expectedRevision:1,document:{...first,data:{...first.data,points:5}}})),422);
+  await response(await f.request(save({documentId,operationId:OP2,expectedRevision:1,document:minigameDoc({seoul:{stars:1,bestScore:900,clears:1}})})),422);
+  await response(await f.request(save({documentId,operationId:OP2,expectedRevision:1,document:minigameDoc({seoul:{stars:3,bestScore:900,clears:2},daejeon:{stars:1,bestScore:10,clears:1}})})),200);
+  assert.equal(f.calls.commit,2);
+});
+test('minigame progress capability fails closed on old SQL, wrong version or gated account',async()=>{
+  for(const repo of [{},{minigameProgressSupport:async()=>({kind:'minigame-progress-support',version:2})},
+    {minigameProgressSupport:async()=>({kind:'running-profile-support',version:1})}]) {
+    const f=await fixture({repo}); await response(await f.request({action:'minigameProgressSupport'}),503);
+  }
+  const old=await fixture({repo:{minigameProgressSupport:async()=>{throw Object.assign(new Error('old sql'),{code:'22023'})}}});
+  await response(await old.request({action:'minigameProgressSupport'}),400);
+  const gated=await fixture({repo:{enabled:async()=>false,...minigameRepo}});
+  await response(await gated.request({action:'minigameProgressSupport'}),403);
+  const extra=await fixture({repo:minigameRepo});
+  await response(await extra.request({action:'minigameProgressSupport',extra:true}),400);
 });
 
 const oracleV2 = () => ({ version:3,state:'ACCOUNT_STATE',kind:'RUNNING_PROFILE',data:{

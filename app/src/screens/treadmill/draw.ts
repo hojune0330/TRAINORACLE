@@ -1,10 +1,22 @@
-import { nearestHazard, treadmillElapsed, upcomingHazards, TREADMILL_HAZARDS, TREADMILL_RULES, TREADMILL_STAGES } from "../../domain/minigame/treadmill"
+import { nearestHazard, treadmillElapsed, upcomingHazards, TREADMILL_HAZARDS, TREADMILL_RULES } from "../../domain/minigame/treadmill"
 import type { TreadmillState } from "../../domain/minigame/treadmill"
 import { drawHazard, drawRunner, gamePalette, outlinedText, roundRect } from "./sprites"
-import type { GamePalette, RunnerPose } from "./sprites"
+import type { GamePalette, RunnerCharacter, RunnerPose } from "./sprites"
+import { citySceneFor, drawCityBackdrop, drawCityGround, drawWeather } from "./city-art"
+import type { CityFrame } from "./city-art"
+import type { TourCity } from "../../domain/minigame/tour"
 
 export { gamePalette }
 export type { GamePalette }
+
+/** Presentation choices; none of them changes the rules or hit boxes. */
+export type RenderView = {
+  /** A tour city switches the classic treadmill side view to the 2.5D city run. */
+  city?: TourCity | null
+  character?: RunnerCharacter
+  effects?: "high" | "low"
+  jumpGuide?: boolean
+}
 
 /** Shared geometry so the drawing, the hit boxes and the tests talk about the same belt. */
 export function treadmillGeometry(width: number, height: number) {
@@ -35,8 +47,9 @@ export function createTreadmillRenderer() {
   let seed = 1
   const random = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646 }
 
+  let fewer = false
   function emit(count: number, base: Omit<Particle, "vx" | "vy" | "life" | "max">, spread: { vx: [number, number]; vy: [number, number]; life: [number, number] }) {
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < (fewer ? Math.ceil(count / 3) : count); i++) {
       const life = spread.life[0] + random() * (spread.life[1] - spread.life[0])
       particles.push({ ...base, vx: spread.vx[0] + random() * (spread.vx[1] - spread.vx[0]), vy: spread.vy[0] + random() * (spread.vy[1] - spread.vy[0]), life, max: life })
     }
@@ -48,6 +61,8 @@ export function createTreadmillRenderer() {
     if (!before) return
     if (state.mode === "running" && before.mode !== "running" && state.countdown > 0 && treadmillElapsed(state) === 0) { particles = []; popups = [] }
     if ((state.mode === "over" || state.mode === "clear") && before.mode !== state.mode) endedAt = clock
+    // A new stage starts clean, so the "구간 통과!" popup never sits under the countdown.
+    if (state.stage !== before.stage) popups = []
     if (state.stats.hits > before.stats.hits) {
       if (!reduced) shake = 0.35
       popups.push({ x: runnerX + 6, y: footY - 76, text: state.failure === "spike" ? "앗!" : "쿵!", life: 0.8, color: "gold", size: 26 })
@@ -92,12 +107,16 @@ export function createTreadmillRenderer() {
   }
 
   return function draw(context: CanvasRenderingContext2D, state: TreadmillState, width: number, height: number,
-    palette: GamePalette, reduced: boolean, now: number, skyFromShader = false) {
+    palette: GamePalette, reduced: boolean, now: number, skyFromShader = false, view: RenderView = {}) {
+    const character = view.character ?? "tori"
+    const low = view.effects === "low"
+    const guide = view.jumpGuide ?? true
+    fewer = low
     const dt = lastNow === 0 ? 0 : Math.min(0.05, Math.max(0, (now - lastNow) / 1000))
     lastNow = now
     clock += dt
     const rules = TREADMILL_RULES
-    const stage = TREADMILL_STAGES[state.stage]!
+    const stage = state.stages[state.stage]!
     const { left, beltWidth, floor, toPx } = treadmillGeometry(width, height)
     const font = getComputedStyle(context.canvas).fontFamily
     const runnerX = Math.max(left - 18, toPx(state.x))
@@ -109,12 +128,20 @@ export function createTreadmillRenderer() {
     context.save()
     if (shake > 0) context.translate((random() - 0.5) * 10 * (shake / 0.35), (random() - 0.5) * 8 * (shake / 0.35))
     const travel = reduced ? 0 : treadmillElapsed(state) * 60
-    drawWorld(context, palette, stage.id, width, height, floor, travel, clock, reduced, skyFromShader)
-    drawMachine(context, palette, stage.id, width, height, left, beltWidth, floor, travel * 1.6, state)
+    const scene = view.city ? citySceneFor(view.city, stage.surface) : null
+    const frame: CityFrame = { width, height, floor, left, beltWidth, travel, clock, reduced, low, skyFromShader }
+    if (scene) {
+      drawCityBackdrop(context, palette, scene, frame)
+      const near = state.mode === "running" ? Math.max(0, Math.min(1, (rules.warnRear + 0.14 - state.x) / 0.14)) : 0
+      drawCityGround(context, palette, scene, frame, rules.warnRear, near)
+    } else {
+      drawWorld(context, palette, stage.surface, width, height, floor, travel, clock, reduced, skyFromShader)
+      drawMachine(context, palette, stage.surface, width, height, left, beltWidth, floor, travel * 1.6, state)
+    }
 
     // Jump guide: a gold strip on the belt; it lights up while a jump now would clear.
     const ahead = state.mode === "running" ? nearestHazard(state) : undefined
-    if (ahead && ahead.x - state.x < 0.34 && state.y === 0) {
+    if (guide && ahead && ahead.x - state.x < 0.34 && state.y === 0) {
       const [from, to] = rules.jumpWindow
       const gap = ahead.x - state.x
       const inWindow = gap >= from && gap <= to
@@ -166,7 +193,7 @@ export function createTreadmillRenderer() {
       for (const k of [1, 2]) {
         context.save(); context.globalAlpha = 0.22 / k
         context.translate(runnerX - k * 16, floor - state.y)
-        drawRunner(context, palette, { pose: "dash", phase, upgrades: state.upgrades })
+        drawRunner(context, palette, { pose: "dash", phase, upgrades: state.upgrades, character })
         context.restore()
       }
     }
@@ -176,7 +203,7 @@ export function createTreadmillRenderer() {
     const blink = state.invulnerable > 0 && !reduced && Math.floor(state.invulnerable * 12) % 2 === 0
     if (blink) context.globalAlpha = 0.45
     const squash = !reduced && state.landed < 0.14 ? 1 - state.landed / 0.14 : 0
-    drawRunner(context, palette, { pose: pose(state), phase: reduced ? 0 : phase, upgrades: state.upgrades, squash })
+    drawRunner(context, palette, { pose: pose(state), phase: reduced ? 0 : phase, upgrades: state.upgrades, squash, character })
     context.restore()
     if (state.invulnerable > 0 && reduced) {
       context.strokeStyle = palette.gold; context.lineWidth = 3
@@ -188,7 +215,7 @@ export function createTreadmillRenderer() {
       dustTimer -= dt
       if (dustTimer <= 0) {
         dustTimer = 0.09
-        emit(1, { x: runnerX - 6, y: floor - 2, size: 3 + random() * 2, color: stage.id === "mud" ? "mudLight" : "cloud", kind: "dot" }, { vx: [-120, -60], vy: [-50, -15], life: [0.3, 0.5] })
+        emit(1, { x: runnerX - 6, y: floor - 2, size: 3 + random() * 2, color: stage.surface === "mud" ? "mudLight" : "cloud", kind: "dot" }, { vx: [-120, -60], vy: [-50, -15], life: [0.3, 0.5] })
       }
     }
 
@@ -207,6 +234,7 @@ export function createTreadmillRenderer() {
       outlinedText(context, pop.text, pop.x, pop.y, pop.size, palette[pop.color], palette.outline, font)
     }
     context.globalAlpha = 1
+    if (scene) drawWeather(context, palette, scene, frame)
 
     // Countdown banner.
     if (state.mode === "running" && state.countdown > 0) {

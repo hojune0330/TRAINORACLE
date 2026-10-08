@@ -121,6 +121,36 @@
   --game-fx-burst-bg: #FFB43D;
   --game-fx-fail-a: #FF8FA0;
   --game-fx-fail-b: #5A2A6E;
+  /* Tour characters (cosmetic) and city world, 2026-10-08. */
+  --game-hair: #3A2A3F;
+  --game-hana-shirt: #FF6FA8;
+  --game-hana-shirt-dark: #D84E86;
+  --game-bear: #B07A4F;
+  --game-bear-light: #E8C49A;
+  --game-cat: #F2A14A;
+  --game-cat-light: #FFE2B8;
+  --game-robot: #9AA8BC;
+  --game-robot-light: #E3EAF4;
+  --game-robot-eye: #41F2C6;
+  --game-penguin: #2B3350;
+  --game-penguin-belly: #F4F7FF;
+  --game-beak: #FFA62B;
+  --game-city-far: #8FA8C8;
+  --game-city-near: #5C6F92;
+  --game-city-night: #2A2F52;
+  --game-window: #FFE58A;
+  --game-neon-pink: #FF5FA2;
+  --game-neon-blue: #4FD8FF;
+  --game-sea: #3FA7E0;
+  --game-sea-light: #9FDDF7;
+  --game-sand: #F2D59B;
+  --game-petal: #FFC2D6;
+  --game-rain: #CFE6FF;
+  --game-snow: #FFFFFF;
+  --game-heat: #FFB36B;
+  --game-lane-red: #D9604A;
+  --game-lane-red-dark: #A8432F;
+  --game-grass-stripe: #7FD39A;
 
   /* ============== TYPOGRAPHY ============== */
   --sans: "Pretendard Variable", "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
