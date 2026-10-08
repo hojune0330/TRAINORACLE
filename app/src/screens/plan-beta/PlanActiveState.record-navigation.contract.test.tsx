@@ -15,6 +15,23 @@ vi.mock("./ActivePlanRebuildEditor", () => ({ ActivePlanRebuildEditor: ({ onMana
 beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
 afterEach(cleanup)
 
+it("reports the existing editor visibility without changing the plan, then clears it on close and unmount", () => {
+  const state = stateFixture(), original = JSON.stringify(state)
+  const onEditingChange = vi.fn(), onStateChange = vi.fn()
+  const view = render(<PlanActiveState state={state} onStateChange={onStateChange} onPrepareNextFrame={vi.fn()}
+    onEditingChange={onEditingChange} />)
+  expect(onEditingChange).toHaveBeenLastCalledWith(false)
+  fireEvent.click(screen.getByRole("button", { name: "계획 수정" }))
+  expect(onEditingChange).toHaveBeenLastCalledWith(true)
+  fireEvent.click(screen.getByRole("button", { name: "계획 수정 닫기" }))
+  expect(onEditingChange).toHaveBeenLastCalledWith(false)
+  fireEvent.click(screen.getByRole("button", { name: "계획 수정" }))
+  view.unmount()
+  expect(onEditingChange).toHaveBeenLastCalledWith(false)
+  expect(onStateChange).not.toHaveBeenCalled()
+  expect(JSON.stringify(state)).toBe(original)
+})
+
 it("opens record management from a new-plan record recovery action without changing the current plan", () => {
   const state = stateFixture(), original = JSON.stringify(state)
   const onManagePaceRecords = vi.fn(), onStateChange = vi.fn()

@@ -587,6 +587,10 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   React.useEffect(() => {
     if (savedToast === null) return
     if (savedToast.receipt.savedDate !== undefined && !savedToast.completionAlreadyShown) return
+    // Quick completion owns a persistent result surface too. Keep its actual
+    // storage/reward receipt alive while reading or editing that saved entry.
+    if (savedToast.receipt.savedDate !== undefined && savedToast.completionAlreadyShown
+      && v.tab === "log" && v.entryType === "quick-session") return
     if (savedToast.reviewMessage !== undefined) return
     if (savedToast.rewardRetry || savedToast.rewardLoading || savedToast.rewardMessage === JOURNAL_REWARD_MESSAGE.PENDING) return
     const delay = savedToast.phase === "enter" ? TOAST_READABLE_MS : TOAST_EXIT_MS
@@ -597,7 +601,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       })
     }, delay)
     return () => window.clearTimeout(t)
-  }, [savedToast])
+  }, [savedToast, v.tab, v.entryType])
   React.useLayoutEffect(() => {
     const scrollRegion = scrollRegionRef.current
     if (scrollRegion === null) return
@@ -1240,6 +1244,9 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       onStartRecording={() => startRecording()}
       hideTabBar={overlay !== null ? overlay.kind !== "oracle" : v.tab === "log" && v.entryType !== "choose"}
       wideTask={overlay === null && (v.tab === "log" || v.tab === "plan")}
+      wideResults={overlay === null ? v.tab === "trends"
+        : overlay.kind === "running-profile" || overlay.kind === "oracle"
+          || (overlay.kind === "record-reading" && (overlay.stage === "self-result" || overlay.stage === "pair-result"))}
     >
       <React.Suspense fallback={<AppLoadingState />}>
         <div

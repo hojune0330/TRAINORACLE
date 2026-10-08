@@ -1,5 +1,5 @@
 import React from "react"
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { PlanCandidates } from "./PlanCandidates"
 import * as catalog from "./CatalogWorkoutPicker"
@@ -10,6 +10,8 @@ import * as store from "../../domain/plan-beta-store"
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import { resolveDetailedPlanTemplateOptions } from "./plan-template-options"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
+import { defaultInstantCandidate } from "./instant-plan-projection"
+import { projectInstantExecutionSteps } from "./instant-plan-today"
 
 beforeEach(() => {
   localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null)
@@ -35,6 +37,52 @@ function fixture(detailed = false): React.ComponentProps<typeof PlanCandidates> 
 const toggleWorkout = () => fireEvent.click(screen.getByRole("button", { name: "훈련 조절" }))
 
 describe("deferred workout editors on a candidate result", () => {
+  it("puts the first non-rest workout and its existing total-time notation ahead of the full calendar", () => {
+    const props = fixture()
+    const sessions = defaultInstantCandidate(props.generated).sessions
+    const rest = sessions.find(session => session.role === "REST")
+    const workout = sessions.find(session => session.role !== "REST")
+    if (!rest || !workout) throw Error("Expected a rest and a workout in the generated fixture")
+    // Display-only rearrangement of existing prescriptions; no new training dose.
+    const firstWorkout = { ...workout, day: 3, slot: "PM" as const }
+    const candidates = props.generated.candidates
+    const withDisplayedSessions = (candidate: typeof candidates[number]) => ({
+      ...candidate, sessions: [{ ...rest, day: 1 }, firstWorkout],
+    })
+    const generated = { ...props.generated, candidates: [
+      withDisplayedSessions(candidates[0]), withDisplayedSessions(candidates[1]),
+    ] as const }
+    render(<PlanCandidates {...props} generated={generated} startDateValue="2026-09-20" />)
+    const first = screen.getByRole("region", { name: "첫 훈련 구성" })
+    expect(first).toHaveTextContent("2026-09-22 오후")
+    expect(first).not.toHaveTextContent("오늘")
+    const total = projectInstantExecutionSteps(firstWorkout).find(step => step.role === "TOTAL_DURATION")
+    if (!total) throw Error("Expected the existing total-time projection")
+    expect(within(first).getByText(total.instruction)).toBeVisible()
+    const calendar = screen.getByRole("region", { name: "이번 일정" })
+    expect(first.compareDocumentPosition(calendar)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(calendar.querySelectorAll('[data-in-range="true"] button[data-date]')).toHaveLength(9)
+    expect(props.onSelect).not.toHaveBeenCalled()
+  })
+
+  it.each([false, true])("does not invent a first workout for rest-only or empty sessions (%s)", empty => {
+    const props = fixture()
+    const candidates = props.generated.candidates
+    const withDisplayedSessions = (candidate: typeof candidates[number]) => ({
+      ...candidate, sessions: empty ? [] : candidate.sessions.filter(session => session.role === "REST"),
+    })
+    const generated = { ...props.generated, candidates: [
+      withDisplayedSessions(candidates[0]), withDisplayedSessions(candidates[1]),
+    ] as const }
+    render(<PlanCandidates {...props} generated={generated} />)
+    const first = screen.getByRole("region", { name: "첫 훈련 구성" })
+    expect(first).toHaveTextContent("예정된 훈련 없음")
+    expect(within(first).queryByText("총 시간")).not.toBeInTheDocument()
+    expect(first.querySelector("dl")).toBeNull()
+    expect(screen.getByRole("region", { name: "이번 일정" })).toBeVisible()
+    expect(props.onSelect).not.toHaveBeenCalled()
+  })
+
   it("does not mount unused catalog and method editors before opening workout controls", () => {
     const catalogRender = vi.spyOn(catalog, "CatalogWorkoutPicker")
     const methodRender = vi.spyOn(methods, "PlanMethodPicker")

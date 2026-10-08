@@ -11,15 +11,18 @@
 }
 
 .active-plan-edit-hub__header {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-3);
 }
 
+.active-plan-edit-hub__header > div { min-width: 0; }
+
 .active-plan-edit-hub__header h2 {
   margin: 0;
-  font-size: var(--fs-h3);
+  font-size: var(--fs-app-title);
   line-height: 1.45;
   word-break: keep-all;
 }
@@ -40,7 +43,7 @@
   width: var(--app-touch-min);
   min-height: var(--app-touch-min);
   border: var(--bw-line) solid var(--line);
-  border-radius: var(--r-md);
+  border-radius: var(--r-action);
   background: transparent;
   color: var(--ink-2);
   cursor: pointer;
@@ -63,12 +66,14 @@
   box-sizing: border-box;
   padding: var(--space-2) var(--space-3);
   border: var(--bw-line) solid var(--line);
-  border-radius: var(--r-md);
+  border-radius: var(--r-action);
   background: transparent;
   color: var(--ink);
   font: inherit;
   text-align: left;
   cursor: pointer;
+  white-space: normal;
+  word-break: keep-all;
 }
 
 .active-plan-edit-hub__choice > button:hover,

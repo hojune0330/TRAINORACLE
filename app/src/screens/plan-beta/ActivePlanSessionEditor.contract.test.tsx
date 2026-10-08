@@ -78,7 +78,7 @@ describe("active plan session editor", () => {
     render(<ActivePlanSessionEditor state={state} sourceOptions={[option]} entriesReady intent="workout" contextKey="guest:plan-1"
       onRetryEntries={vi.fn()} onPrepare={onPrepare} onApply={onApply} onClose={onClose} onApplied={onApplied} records={[]} />)
 
-    const editor = screen.getByRole("region", { name: "이 훈련 수정" })
+    const editor = screen.getByRole("region", { name: "훈련 내용 바꾸기" })
     const previewButton = within(editor).getByRole("button", { name: "변경안 미리보기" })
     expect(previewButton).toBeDisabled()
     await user.click(within(editor).getByRole("checkbox", { name: "이 훈련은 아직 시작하지 않았어요." }))
@@ -125,7 +125,7 @@ describe("active plan session editor", () => {
     render(<ActivePlanSessionEditor state={stateWithTarget} sourceOptions={[option]} entriesReady intent="schedule" contextKey="guest:plan-2"
       onRetryEntries={vi.fn()} onPrepare={onPrepare} onApply={vi.fn()} onClose={vi.fn()} onApplied={vi.fn()} records={[]} />)
 
-    const editor = screen.getByRole("region", { name: "이 훈련 수정" })
+    const editor = screen.getByRole("region", { name: "훈련 날짜 바꾸기" })
     const preview = within(editor).getByRole("button", { name: "바꿀 날짜 보기" })
     expect(preview).toBeDisabled()
     await user.click(within(editor).getByRole("checkbox", { name: "옮길 훈련은 아직 시작하지 않았어요." }))

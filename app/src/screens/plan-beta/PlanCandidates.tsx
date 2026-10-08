@@ -50,6 +50,8 @@ import { PlanPrescriptionBasis } from "./PlanPrescriptionBasis"
 import type { CatalogCycleSuccessorSummary } from "../../domain/catalog-cycle-successor"
 import { InitialMainConditions } from "./InitialMainConditions"
 import type { InitialMainConditionsProps } from "./InitialMainConditions"
+import { AppHeading } from "../../components/AppHeading"
+import { projectInstantExecutionSteps } from "./instant-plan-today"
 
 export type InitialMainCandidateReview = Omit<InitialMainConditionsProps, "disabled" | "onPendingChange"> & {
   readonly applying: boolean
@@ -229,6 +231,9 @@ export function PlanCandidates({
   const visibleDefaultSessions = defaultCandidate.sessions.filter(session => session.day >= 1
     && session.day <= Math.ceil(defaultCandidate.frame.projectionLengthDays ?? defaultCandidate.frame.lengthDays))
   const recommendation = projectInstantRecommendation(defaultCandidate, startDate)
+  const firstWorkout = [...visibleDefaultSessions].sort((a, b) => a.day - b.day || a.slot.localeCompare(b.slot))
+    .find(session => session.role !== "REST")
+  const firstWorkoutSteps = firstWorkout ? projectInstantExecutionSteps(firstWorkout) : []
   const instantAdjustment = recommendation === null ? undefined : adjustmentActions[recommendation.id]
   const conditionContext = JSON.stringify([intake, startDate, accountScope])
   const conditionReview = React.useMemo(() => !initialMainActive && onCatalogChange && instantAdjustment === undefined && reviewedConditionContext !== conditionContext && unreviewedConditions.length === 0
@@ -271,6 +276,16 @@ export function PlanCandidates({
       )}
       {recommendation && <InstantPlanRecommendationView recommendation={recommendation}
         showSupportingDetails={false}
+        executionSummary={<section className="plan-first-workout" aria-label="첫 훈련 구성">
+          <AppHeading as="h3" variant="section">첫 훈련</AppHeading>
+          <p>{recommendation.firstSessionLabel}</p>
+          {firstWorkout && <dl className="plan-first-workout__facts">
+            {firstWorkoutSteps.filter(step => step.role === "TOTAL_DURATION" || step.role === "MAIN" || step.role === "RECOVERY" || step.role === "METHOD")
+              .map((step, index) => <div key={`${step.role}-${index}`}><dt>{step.label}</dt><dd>{step.instruction}</dd></div>)}
+          </dl>}
+          {instantAdjustment ? <p className="plan-caption">상세 훈련 · 거리·시간·반복·회복을 확인하고 조절해요.</p>
+            : workoutSummary && <p className="plan-caption">처방 훈련 · {workoutSummary}</p>}
+        </section>}
         beforeStart={<>
           <p className="plan-duration-total">{recommendation.durationLabel}</p>
           <PlanPrescriptionBasis sessions={visibleDefaultSessions}

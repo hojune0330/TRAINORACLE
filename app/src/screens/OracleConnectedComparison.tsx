@@ -129,7 +129,7 @@ function ConnectedComparisonSession({ ownerId, documentId, documentRevision, own
   return <section className="oracle-friend oracle-connected" aria-label="계정 친구 비교">
     <header className="oracle-friend__header"><button type="button" aria-label="친구 비교 닫기" title="닫기" onClick={() => { clear(); onBack() }}><ArrowLeft size={20} aria-hidden="true" /></button><span>오라클 · 친구 비교</span></header>
     <div className="oracle-friend__body">
-      {!ownProfile && <p role="status">먼저 내 러닝 프로필을 계정에 저장해 주세요.</p>}
+      {!ownProfile && <p role="status">먼저 러닝 취향 응답을 계정에 저장해 주세요.</p>}
       {stage === "start" && <><h2>함께 답을 비교해 볼까요?</h2><div className="oracle-connected__actions">
         <button type="button" disabled={!ownProfile} onClick={() => setStage("fields")}>비교 초대 만들기</button>
         <button type="button" disabled={!ownProfile} onClick={() => setStage("receive")}>초대 받았어요</button>

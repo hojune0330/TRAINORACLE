@@ -158,7 +158,7 @@ export function RunningProfile({ stage, today, onStageChange, onBack, onClose }:
   return <div className="running-profile" data-reduced-motion={motion.reduced || undefined}>
     <header className="running-profile__header">
       <button type="button" onClick={onBack} aria-label="이전 단계로"><ArrowLeft size={18} aria-hidden="true" /></button>
-      <span className="app-chrome-title">오라클 · 러닝 프로필</span>
+      <span className="app-chrome-title">오라클 · 러닝 취향</span>
       <button type="button" onClick={onClose} aria-label="프로필 닫기"><X size={18} aria-hidden="true" /></button>
     </header>
     <main className="running-profile__body">
@@ -206,7 +206,7 @@ export function RunningProfile({ stage, today, onStageChange, onBack, onClose }:
       </section>}
 
       {resultStage && <>
-        <nav className="running-profile__tabs" aria-label="러닝 프로필 항목">
+        <nav className="running-profile__tabs" aria-label="러닝 취향 항목">
           {SECTIONS.map(section => <button key={section.id} type="button" aria-current={section.id === stage ? "page" : undefined} onClick={() => onStageChange(section.id)}>{section.label}</button>)}
         </nav>
         <section className="running-profile__stage" key={stage}>

@@ -6,6 +6,7 @@ import { useReaderDialog } from "../../hooks/useReaderDialog"
 import { sessionSlotLabel } from "./labels"
 import "../../styles/plan-day-reader.css"
 import { useCalendarMotion } from "../../hooks/useCalendarMotion"
+import { useShellReaderVisibility } from "../../components/AppShellFrame"
 
 export function PlanDayReader({ date, sessions, initialSlot, initialSection, canPrevious, canNext, onPrevious, onNext, onClose, returnFocusTo, notice, children }: {
   readonly date: string
@@ -25,6 +26,7 @@ export function PlanDayReader({ date, sessions, initialSlot, initialSection, can
   const content = React.useRef<HTMLDivElement>(null)
   const titleId = React.useId()
   const motion = useCalendarMotion()
+  const enabled = useShellReaderVisibility()
   const calendar = React.useRef(document.activeElement?.closest<HTMLElement>(".month-calendar"))
   const requestedReturnFocus = React.useRef(returnFocusTo)
   const [activeSlot, setActiveSlot] = React.useState(initialSlot ?? sessions[0]?.slot)
@@ -36,7 +38,7 @@ export function PlanDayReader({ date, sessions, initialSlot, initialSection, can
     action?.()
   }, () => requestedReturnFocus.current?.(date)
     ?? calendar.current?.querySelector<HTMLElement>(`button[data-date="${date}"]`)
-    ?? calendar.current?.querySelector<HTMLElement>(".month-calendar__month") ?? null)
+    ?? calendar.current?.querySelector<HTMLElement>(".month-calendar__month") ?? null, enabled)
   const leave = (action: () => void) => { pendingAction.current = action; close() }
   const jumpToSlot = (slot: "AM" | "PM") => {
     const section = content.current?.querySelector<HTMLElement>(`[data-session-slot="${slot}"]`)
@@ -54,6 +56,7 @@ export function PlanDayReader({ date, sessions, initialSlot, initialSection, can
     if (slot === "AM" || slot === "PM") setActiveSlot(slot)
   }
   React.useEffect(() => {
+    if (!enabled || !dialog.current?.open) return
     if (content.current) content.current.scrollTop = 0
     const slot = initialSlot ?? sessions[0]?.slot
     setActiveSlot(slot)
@@ -68,7 +71,7 @@ export function PlanDayReader({ date, sessions, initialSlot, initialSection, can
     } else if (slot === "PM") {
       section?.scrollIntoView?.({ block: "start", behavior: "instant" })
     }
-  }, [date, initialSlot, initialSection])
+  }, [date, initialSlot, initialSection, enabled, close])
 
   return createPortal(<dialog ref={dialog} className="plan-day-reader" data-reduced-motion={motion.reduced || undefined} aria-labelledby={titleId}
     onCancel={event => { event.preventDefault(); close() }}>

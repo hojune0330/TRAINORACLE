@@ -2,7 +2,7 @@ import {
   ArrowLeft,
   BookOpen,
   Check,
-  ChevronDown,
+  ChevronUp,
   ClipboardPaste,
   Copy,
   Gift,
@@ -316,6 +316,7 @@ export function JournalDecorationLauncher({ onOpen }: { readonly onOpen: () => v
 export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
   const closeButtonRef = React.useRef<HTMLButtonElement>(null)
   const drawerRef = React.useRef<HTMLElement>(null)
+  const drawerId = React.useId()
   const [toolFilter, setToolFilter] = React.useState<DrawerFilter>("ALL")
   /* 현재 펼쳤진 컬렉션 id. 레지스트리에 컬렉션이 늘어도 이 상태 하나로 동작한다. */
   const [openCollectionId, setOpenCollectionId] = React.useState<string | null>(null)
@@ -619,7 +620,7 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
     <>
       {!props.calendarMode && <header className="journal-decoration-editor__topbar" data-decoration-interaction="true">
         <button ref={closeButtonRef} type="button" onClick={props.onClose} aria-label="꾸미기 편집기 닫기" title="닫기"><X aria-hidden="true" size={18} /></button>
-        <span><strong>이 일지 꾸미기</strong><small>장식을 눌러 옮기고 모서리로 크기를 바꿔요.</small></span>
+        <span><small>끌어 옮기고 모서리로 크기를 조절해요.</small></span>
         <div className="journal-decoration-editor__topbar-actions">
           {props.canUndo && (
             <button type="button" onClick={props.onUndo} aria-label="꾸미기 되돌리기" title="되돌리기"><Undo2 aria-hidden="true" size={18} /></button>
@@ -640,8 +641,8 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
         {props.onOpenTextSticker !== undefined && (
           <button type="button" aria-label="글 스티커 도구" onClick={props.onOpenTextSticker}><Type aria-hidden="true" size={19} /><span>글</span></button>
         )}
-        <button type="button" aria-label="페이지 테마 도구" aria-pressed={props.drawerOpen && toolFilter === "THEME"} onClick={() => chooseTool("THEME")}><BookOpen aria-hidden="true" size={19} /><span>테마</span></button>
-        <button type="button" aria-label="글자색 도구" aria-pressed={props.drawerOpen && toolFilter === "INK"} onClick={() => chooseTool("INK")}><PenLine aria-hidden="true" size={19} /><span>글자색</span></button>
+        {!props.drawerOpen && <button type="button" aria-label="페이지 테마 도구" onClick={() => chooseTool("THEME")}><BookOpen aria-hidden="true" size={19} /><span>테마</span></button>}
+        {!props.drawerOpen && <button type="button" aria-label="글자색 도구" onClick={() => chooseTool("INK")}><PenLine aria-hidden="true" size={19} /><span>글자색</span></button>}
       </nav>}
 
       {!props.calendarMode && !props.drawerOpen && (props.selectedIndex !== null || props.clipboardAvailable) && (
@@ -661,6 +662,7 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
 
       <section
         ref={drawerRef}
+        id={drawerId}
         className="journal-decoration-toolbar"
         data-open={props.drawerOpen ? "true" : "false"}
         aria-label="꾸미기 재료 서랍"
@@ -677,13 +679,15 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
               <small className="journal-decoration-toolbar__points">베타 포인트 · 사용 가능 <b>{props.availablePoints}P</b></small>
               <span>{props.calendarMode ? "달력 여백을 미리 보고 적용할 수 있어요." : props.hasEntries ? "재료를 눌러 바로 붙여 보세요." : "기록을 남기기 전에는 테마만 미리 볼 수 있어요."}</span>
             </div>
-            <button type="button" className="journal-decoration-toolbar__icon" onClick={props.onDrawerClose} aria-label="재료 서랍 숨기기"><ChevronDown aria-hidden="true" size={19} /></button>
+            <button type="button" className="journal-decoration-toolbar__icon" onClick={props.onDrawerClose} aria-label={props.calendarMode ? "달력 재료 서랍 접기" : "재료 서랍 접기"} title={props.calendarMode ? "달력 재료 서랍 접기" : "재료 서랍 접기"} aria-expanded={props.drawerOpen} aria-controls={drawerId}><span>접기</span><ChevronUp aria-hidden="true" size={16} /></button>
           </header>
         </div>
 
         {openCollection === undefined && (
           <div className="journal-decoration-toolbar__filters" role="group" aria-label="꾸미기 재료 종류">
-            {DRAWER_FILTERS.filter((filter) => !props.calendarMode || filter.id === "ALL" || calendarMaterialCategories.has(filter.id)).map((filter) => (
+            {DRAWER_FILTERS.filter((filter) => props.calendarMode
+              ? filter.id === "ALL" || calendarMaterialCategories.has(filter.id)
+              : filter.id !== "ALL" && filter.id !== "EMOJI_STICKER").map((filter) => (
               <button
                 key={filter.id}
                 type="button"

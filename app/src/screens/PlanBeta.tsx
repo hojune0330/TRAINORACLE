@@ -441,6 +441,7 @@ function LegacyPlanBeta({
   const [instantEntry, setInstantEntry] = React.useState<InstantPlanEntry | undefined>()
   const [instantEntryDirty, setInstantEntryDirty] = React.useState(false)
   const [instantEntryError, setInstantEntryError] = React.useState<string | null>(null)
+  const [activePlanEditing, setActivePlanEditing] = React.useState(false)
   const lastStorageRead = React.useRef(storageRead)
   React.useEffect(() => {
     if (lastStorageRead.current === storageRead) return
@@ -926,6 +927,7 @@ function LegacyPlanBeta({
       <React.Suspense fallback={<p role="status" style={{ padding: 24 }}>저장된 훈련 계획을 열고 있어요.</p>}>
       <PlanActiveState
         state={stored}
+        onEditingChange={setActivePlanEditing}
         onManagePaceRecords={() => setRecordsOpen(true)}
         cloudPersistence={cloudPersistence}
         onRetryCloudBackup={retryCloudBackup}
@@ -982,7 +984,7 @@ function LegacyPlanBeta({
           <button type="button" onClick={onAdjustedStored}>현재 계획 다시 확인</button>
         </div>}
       </section>}
-      {planTools}
+      {!activePlanEditing && planTools}
       </>
     )
   }

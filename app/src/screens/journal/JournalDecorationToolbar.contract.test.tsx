@@ -74,6 +74,26 @@ describe("JournalDecorationToolbar account purchase boundary", () => {
 })
 
 describe("JournalDecorationToolbar material presentation", () => {
+  it("keeps broad tools in the dock and shows a named, explicit drawer collapse control", () => {
+    const { container } = renderToolbar(false)
+    const dock = screen.getByRole("navigation", { name: "일지 꾸미기 도구" })
+    const filters = screen.getByRole("group", { name: "꾸미기 재료 종류" })
+
+    expect(within(filters).queryByRole("button", { name: "전체" })).not.toBeInTheDocument()
+    expect(within(filters).queryByRole("button", { name: "이모지" })).not.toBeInTheDocument()
+    expect(within(filters).getByRole("button", { name: "테마" })).toBeInTheDocument()
+    expect(within(filters).getByRole("button", { name: "글자색" })).toBeInTheDocument()
+    expect(within(dock).queryByRole("button", { name: "페이지 테마 도구" })).not.toBeInTheDocument()
+    expect(within(dock).queryByRole("button", { name: "글자색 도구" })).not.toBeInTheDocument()
+
+    const collapse = screen.getByRole("button", { name: "재료 서랍 접기" })
+    const drawerId = collapse.getAttribute("aria-controls")
+    expect(collapse).toHaveAttribute("aria-expanded", "true")
+    expect(collapse).toContainElement(within(collapse).getByText("접기"))
+    expect(drawerId).not.toBeNull()
+    expect(document.getElementById(drawerId ?? "")).toBe(container.querySelector(".journal-decoration-toolbar"))
+  })
+
   it("marks existing collection artwork for optical sizing without changing item identity", () => {
     const { container } = renderToolbar(false)
     fireEvent.click(screen.getByRole("button", { name: /귀여운 스티커 28종 보기/u }))

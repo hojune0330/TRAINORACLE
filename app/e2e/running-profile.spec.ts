@@ -7,7 +7,7 @@ for (const width of [320, 375, 1440]) {
     await page.setViewportSize({ width, height: width === 1440 ? 900 : 812 })
     await page.goto("/?app=1")
     await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클", exact: true }).click()
-    await page.getByRole("button", { name: "내 러닝 프로필" }).click()
+    await page.getByRole("button", { name: "러닝 취향" }).click()
     await page.getByRole("button", { name: "3문항으로 시작" }).click()
     await page.getByRole("button", { name: "건강과 체력", exact: true }).click()
     await page.getByRole("button", { name: "기분 전환", exact: true }).click()
@@ -35,7 +35,7 @@ for (const width of [320, 375, 1440]) {
     await page.getByRole("button", { name: "프로필 보기", exact: true }).click()
     await expect(page.locator(".running-profile__facts")).toContainText("800m · 마라톤")
     for (const tab of ["경기 기록", "최근 훈련", "변화", "취향"]) {
-      await page.getByRole("navigation", { name: "러닝 프로필 항목" }).getByRole("button", { name: tab, exact: true }).click()
+      await page.getByRole("navigation", { name: "러닝 취향 항목" }).getByRole("button", { name: tab, exact: true }).click()
     }
     await expect(page.locator(".running-profile__facts")).toContainText("800m · 마라톤")
     expect(await page.evaluate(() => JSON.stringify(history.state))).not.toMatch(/health|motives|answers|marathon/)
@@ -52,7 +52,7 @@ test("profile enlarged text, reduced motion and draft cancellation", async ({ pa
   await page.emulateMedia({ reducedMotion: "reduce" })
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클", exact: true }).click()
-  await page.getByRole("button", { name: "내 러닝 프로필" }).click()
+  await page.getByRole("button", { name: "러닝 취향" }).click()
   await page.getByRole("button", { name: "3문항으로 시작" }).click()
   await expect(page.locator(".running-profile__stage")).toHaveCSS("animation-name", "none")
   await page.getByRole("button", { name: "건강과 체력", exact: true }).click()

@@ -204,9 +204,9 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
   }
   const sourceMessage = props.message || (props.account ? props.draftState === "EDITING" && props.status === "PENDING" ? "작성 중 · 이 기기에 임시 보관했어요. 응답을 마치면 계정에 저장해요." : ({ LOADING: "계정에서 불러오는 중", READY: "계정에 저장됨", PENDING: "계정으로 보내는 중", CONFLICT: "다른 곳에서 바뀐 응답을 확인해 주세요", FAILED: "계정 저장을 확인하지 못했어요", DELETED: "삭제된 프로필이에요" }[props.status]) : "게스트 · 임시 응답은 새로고침하면 사라져요.")
   return <section className="oracle-v2" data-reduced-motion={reduced ? "true" : undefined}>
-    <header className="oracle-v2__chrome"><button type="button" aria-label={props.backLabel ?? "오라클로 돌아가기"} title={props.backLabel ?? "오라클로 돌아가기"} onClick={props.onBack}><ArrowLeft size={18} /></button><strong className="app-chrome-title">{view === "library" ? "오라클 읽을거리" : view === "saved" ? "풀이 보관함" : "내 러닝 프로필"}</strong><span>오라클</span></header>
-    <div className="oracle-v2__body">
-      {(visibleScores.length > 0 || view !== "result") && <nav className="oracle-v2__tabs" aria-label="러닝 프로필 보기">{([["result", "내 결과"], ["library", "읽을거리"], ["saved", "보관함"]] as const).map(([id, label]) => <button type="button" key={id} aria-current={view === id ? "page" : undefined} onClick={() => setView(id)}>{label}</button>)}</nav>}
+    <header className="oracle-v2__chrome"><button type="button" aria-label={props.backLabel ?? "오라클로 돌아가기"} title={props.backLabel ?? "오라클로 돌아가기"} onClick={props.onBack}><ArrowLeft size={18} /></button><strong className="app-chrome-title">{view === "library" ? "오라클 읽을거리" : view === "saved" ? "풀이 보관함" : "러닝 취향"}</strong><span>오라클</span></header>
+    <div className={`oracle-v2__body${view === "result" && visibleScores.length > 0 ? " oracle-v2__body--results" : ""}`}>
+      {(visibleScores.length > 0 || view !== "result") && <nav className="oracle-v2__tabs" aria-label="러닝 취향 보기">{([["result", "내 결과"], ["library", "읽을거리"], ["saved", "보관함"]] as const).map(([id, label]) => <button type="button" key={id} aria-current={view === id ? "page" : undefined} onClick={() => setView(id)}>{label}</button>)}</nav>}
       <p className="oracle-v2__status" role="status">{sourceMessage}</p>
       {props.onContext && props.responsesDisabled && <button type="button" disabled={busy || accountBlocked} onClick={props.onContext}>작성하던 추가 맥락 이어가기<ChevronRight size={16} /></button>}
       {(dirty.current || props.hasPendingScore || props.draftAnswers && JSON.stringify(props.draftAnswers) !== JSON.stringify(props.answers)) && <button type="button" disabled={blocked} onClick={() => {
@@ -219,7 +219,7 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
       {localMessage && !questionOpen && <p role="alert">계정 저장을 확인하지 못했어요. 입력한 답은 이 화면에 남아 있어요.</p>}
       {props.account && props.draftState !== "EDITING" && ["FAILED", "PENDING"].includes(props.status) && <button type="button" onClick={props.onRetry}><RotateCcw size={16} />다시 확인</button>}
       {view === "result" && <>
-        <section className="oracle-v2__self" aria-label="나의 러닝 프로필">
+        <section className={`oracle-v2__self${visibleScores.length > 0 ? " oracle-v2__self--results" : ""}`} aria-label="러닝 취향 결과">
         <div className="oracle-v2__identity"><div><p className="oracle-v2__eyebrow">{visibleScores.length ? `${visibleScores.length}개 항목 · 내 응답 기준` : "내 러닝 취향"}</p><AppHeading variant="screen" accent>{visibleScores.length ? profile.representative.id === "NEUTRAL" ? "내가 고른 달리기 취향" : profile.representative.label : "나는 어떤 달리기를 좋아할까요?"}</AppHeading></div></div>
         {visibleScores.length === 0 ? <>
           <p>질문 3개로 먼저 훈련 방식을 살펴봐요.</p>

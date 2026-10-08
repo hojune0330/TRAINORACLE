@@ -258,11 +258,11 @@ export const CalendarDecorationEditor = React.forwardRef<CalendarDecorationEdito
     <div className="calendar-decoration-editor__controls">
       <div className="calendar-decoration-editor__heading">
         <div>
-          <h2>달력 꾸미기</h2>
+          <h2>여백 배치</h2>
         </div>
       </div>
 
-      <div className="calendar-decoration-editor__regions" aria-label="장식할 여백">
+      <div className="calendar-decoration-editor__regions" role="group" aria-label="장식할 여백">
         <button type="button" disabled={saving || Boolean(disabledReason)} aria-pressed={region === "HEADER_MARGIN"} onClick={() => setRegion("HEADER_MARGIN")}>위쪽 여백 {countRegion(draft, "HEADER_MARGIN")}/{MAX_ITEMS_PER_REGION}</button>
         <button type="button" disabled={saving || Boolean(disabledReason)} aria-pressed={region === "FOOTER_MARGIN"} onClick={() => setRegion("FOOTER_MARGIN")}>아래쪽 여백 {countRegion(draft, "FOOTER_MARGIN")}/{MAX_ITEMS_PER_REGION}</button>
       </div>
@@ -277,7 +277,7 @@ export const CalendarDecorationEditor = React.forwardRef<CalendarDecorationEdito
         <button type="button" onClick={redo} disabled={saving || Boolean(disabledReason) || future.length === 0} aria-label="달력 꾸미기 다시 실행">다시 하기</button>
         <span aria-live="polite">{draft.items.length}/{MAX_ITEMS} 장식</span>
       </div>
-      <details className="calendar-decoration-editor__more"><summary>더보기</summary>
+      <details className="calendar-decoration-editor__more"><summary>달력 초기화</summary>
       <button type="button" disabled={draft.paperThemeId === null || saving || Boolean(disabledReason)} onClick={() => updateTheme(null)}>종이를 기본으로</button>
       <button type="button" className="calendar-decoration-editor__reset" disabled={(draft.paperThemeId === null && draft.items.length === 0) || saving || Boolean(disabledReason)} onClick={() => {
         commitDraft({ version: 1, paperThemeId: null, items: [] })
@@ -318,7 +318,7 @@ export const CalendarDecorationEditor = React.forwardRef<CalendarDecorationEdito
       </div>}
       {disabledReason && <p className="calendar-decoration-editor__notice" role="status">{disabledReason}</p>}
       {notice && <p className="calendar-decoration-editor__notice" role="status">{notice}</p>}
-      <div className="calendar-decoration-editor__actions">
+      <div className="calendar-decoration-editor__actions" role="group" aria-label="달력 변경 적용">
         <button type="button" className="calendar-decoration-editor__cancel" onClick={() => onCancel ? onCancel() : (discard(), onExit())}>취소</button>
         <button type="button" className="calendar-decoration-editor__apply" onClick={() => void requestApply()} disabled={(!dirty && !requiresApply) || saving || Boolean(disabledReason)}>{saving ? "저장 중…" : "모든 달에 적용"}</button>
       </div>

@@ -2,6 +2,7 @@ import React from "react"
 import { hasActiveBrowserBackLayer, isBrowserPopNavigationConsumed } from "../../navigation/browserNavigation"
 import { DecoratedJournalPageFrame } from "../../components/DecoratedJournalPageFrame"
 import { ContextualIllustration } from "../../components/ContextualIllustration"
+import { AppHeading } from "../../components/AppHeading"
 import {
   DECORATION_CATALOG,
   MAX_DECORATION_ITEMS_PER_PAGE,
@@ -91,7 +92,19 @@ type SurfaceProps = {
 }
 export function JournalDecorationSurface(props: SurfaceProps) {
   const owner = React.useSyncExternalStore(onLocalJournalScopeChange, activeLocalAccount, () => null)
-  return <JournalDecorationSurfaceSession key={`${owner ?? "device"}:${props.date}`} {...props} />
+  return <JournalDecorationSurfaceBootstrap key={`${owner ?? "device"}:${props.date}`} {...props} />
+}
+
+function JournalDecorationSurfaceBootstrap(props: SurfaceProps) {
+  const [initial, setInitial] = React.useState<{ canonical: DecorationState; storageVersion: string | null } | null>(null)
+  React.useEffect(() => {
+    // The existing loader may initialize or migrate local decoration storage and
+    // synchronously notify mounted previews. Do that after commit, before edits.
+    const canonical = loadDecorationState()
+    setInitial({ canonical, storageVersion: readDecorationStateSerialized() })
+  }, [])
+  if (initial === null) return <p role="status">꾸미기 상태를 준비하고 있어요.</p>
+  return <JournalDecorationSurfaceSession {...props} initial={initial} />
 }
 
 function JournalDecorationSurfaceSession({
@@ -103,13 +116,15 @@ function JournalDecorationSurfaceSession({
   onDone,
   previewMonth,
   materialsFooter,
-}: SurfaceProps) {
-  const [canonical, setCanonical] = React.useState(loadDecorationState)
-  const [storageVersion, setStorageVersion] = React.useState(() => readDecorationStateSerialized())
+  initial,
+}: SurfaceProps & { readonly initial: { readonly canonical: DecorationState; readonly storageVersion: string | null } }) {
+  const [canonical, setCanonical] = React.useState(initial.canonical)
+  const [storageVersion, setStorageVersion] = React.useState(initial.storageVersion)
   const [preview, setPreview] = React.useState<DecorationState | null>(null)
   /* 홈 "꾸미기 열기" → 오늘 일지로 이동해 바로 편집 시작 (레거시 별도 화면 통합). */
   const [open, setOpen] = React.useState(() => initiallyOpen || pendingJournalDecorationAutoOpenDate() === date)
   const [target, setTarget] = React.useState<"JOURNAL" | "CALENDAR">("JOURNAL")
+  const editorHeadingId = React.useId()
   const [calendar, setCalendar] = React.useState(loadCalendarDecorationState)
   const calendarBase = React.useRef(readCalendarDecorationStateSerialized())
   const [calendarStatus, setCalendarStatus] = React.useState<string>(() => accountDecorationsEnabled() ? accountCalendarDecorationStatus() : calendarDecorationReadStatus())
@@ -812,9 +827,9 @@ function JournalDecorationSurfaceSession({
       : "저장된 달력 꾸밈을 확인한 뒤 편집할 수 있어요." : undefined
 
   return (
-    <div ref={workspaceRef} className={`journal-decoration-workspace${open ? " journal-decoration-workspace--open" : ""}`} role={open ? "dialog" : undefined} aria-label={open ? "일지 꾸미기" : undefined} aria-modal={open ? "true" : undefined}>
+    <div ref={workspaceRef} className={`journal-decoration-workspace${open ? " journal-decoration-workspace--open" : ""}`} role={open ? "dialog" : undefined} aria-labelledby={open ? editorHeadingId : undefined} aria-modal={open ? "true" : undefined}>
       {!open && <div className="journal-decoration-unified__entry"><JournalDecorationLauncher onOpen={openEditor} /><details><summary>더보기</summary><button type="button" onClick={() => setHiddenForReading(value => !value)}>{hiddenForReading ? "장식 다시 보기" : "장식 잠시 숨기기"}</button></details></div>}
-      {open && <header className="journal-decoration-unified__header"><div className="contextual-entry-intro"><h1>일지 꾸미기</h1>
+      {open && <header className="journal-decoration-unified__header"><div className="contextual-entry-intro"><AppHeading id={editorHeadingId} as="h1" variant="screen">{target === "CALENDAR" ? "달력 꾸미기" : "일지 꾸미기"}</AppHeading>
         {target === "JOURNAL" && selectedIndex === null && !drawerOpen && !preview && !textSheet && !notice && !saving && !leave
           && (!accountDecorationsEnabled() || accountAuthState() === "ACCOUNT" && ["READY", "EMPTY"].includes(accountStatus))
           && <ContextualIllustration image="decorating-kit-v2" />}

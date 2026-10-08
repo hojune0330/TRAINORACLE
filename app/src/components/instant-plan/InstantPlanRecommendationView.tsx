@@ -31,6 +31,8 @@ export type InstantPlanRecommendationViewProps = {
   readonly scheduleReview?: ReactNode
   readonly showSupportingDetails?: boolean
   readonly beforeStart?: ReactNode
+  /** The selected candidate's execution facts, before the full calendar. */
+  readonly executionSummary?: ReactNode
 }
 
 const roleLabels: Record<InstantPlanDaySummary["sessions"][number]["role"], string> = {
@@ -63,6 +65,7 @@ export function InstantPlanRecommendationView({
   scheduleReview,
   showSupportingDetails = true,
   beforeStart,
+  executionSummary,
 }: InstantPlanRecommendationViewProps) {
   const headingId = useId()
   const actionStatusId = useId()
@@ -110,6 +113,11 @@ export function InstantPlanRecommendationView({
         </section>
       )}
       {scheduleReview}
+      {executionSummary ?? <dl className="instant-plan__summary">
+        <div><dt>첫 훈련</dt><dd>{recommendation.firstSessionLabel}</dd></div>
+        {workoutLabel && <div><dt>{workoutLabelTitle ?? "처방 훈련"}</dt><dd>{workoutLabel}</dd></div>}
+      </dl>}
+      {beforeStart}
       <section aria-label="이번 일정">
         <h3>이번 일정</h3>
         {recommendation.days.length === 0 ? (
@@ -118,15 +126,10 @@ export function InstantPlanRecommendationView({
           <RecommendationCalendar identity={recommendation.id} days={recommendation.days} />
         )}
       </section>
-      <dl className="instant-plan__summary">
-        <div><dt>첫 훈련</dt><dd>{recommendation.firstSessionLabel}</dd></div>
-        {workoutLabel && <div><dt>{workoutLabelTitle ?? "처방 훈련"}</dt><dd>{workoutLabel}</dd></div>}
-      </dl>
       {showSupportingDetails && <details className="instant-plan__disclosure">
         <summary>전체 훈련 시간·목표</summary>
         <InstantPlanRecommendationFacts recommendation={recommendation} goalLabel={goalLabel} programPurposeLabel={programPurposeLabel} />
       </details>}
-      {beforeStart}
       <div className="instant-plan__actions instant-plan__start-action">
         <button
           className="instant-plan__button"

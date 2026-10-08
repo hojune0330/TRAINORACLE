@@ -17,6 +17,14 @@ function placementItem(): DecorationCatalogItem {
 }
 
 describe("CalendarDecorationEditor", () => {
+  it("gives margin selection, reset options, and apply/cancel controls explicit names", () => {
+    render(<CalendarDecorationEditor state={createEmptyCalendarDecorationState()} ownedIds={new Set()} onApply={vi.fn(async () => true)} onExit={vi.fn()}><div>달력</div></CalendarDecorationEditor>)
+
+    expect(screen.getByRole("group", { name: "장식할 여백" })).toBeVisible()
+    expect(screen.getByText("달력 초기화")).toBeVisible()
+    expect(screen.getByRole("group", { name: "달력 변경 적용" })).toBeVisible()
+  })
+
   it("allows explicit retry of an unchanged rejected outbox without treating it as a new dirty edit", async () => {
     const state = createEmptyCalendarDecorationState()
     const onApply = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true)

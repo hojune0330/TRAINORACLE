@@ -146,7 +146,7 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
   }, [isEmpty, observations.length])
 
   return (
-    <div style={{ paddingBottom: 30 }}>
+    <div className="trends-hub">
       <TrendsHeader onBack={onBack} onPace={navigation?.openPaceCalculator ? () => navigation.openPaceCalculator?.() : undefined} />
       <div className="trends-motion-stage">
         <TaskGuide className="trends-hub__guide" title={guideTitle}
@@ -230,17 +230,17 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
             </div>
           </>
         )}
-        {section === "training" && detail === "summary" && hasSummary && (
-          <>
+        {section === "training" && detail === "summary" && hasSummary && <div className="trends-hub__result-layout">
+          <div className="trends-hub__result">
             <PersonalOraclePanel observations={observations} today={today} planState={planState} savedSessions={savedSessions}
               onOpenPlan={onOpenPlan} onOpenDay={onOpenCoachingDay} onWriteLog={onWriteLog} />
-            {onOpenOracle && <div className="trends-hub__explore">
-              <InfoDisclosure purpose="actions" title="경기·계획·훈련 비교하기" preview="경기 기록 · 강점 · 훈련 비교 · 다음 훈련"><OracleTopicGrid onSelectTopic={onOpenOracle} title="다른 주제 살펴보기" compact /></InfoDisclosure>
-            </div>}
-          </>
-        )}
-        {section === "training" && detail === "summary" && hasSummary && <div className="trends-hub__coaching">
-          <HomeCoachingSummary revision={entryRevision} onOpenDay={onOpenCoachingDay} onOpenPlan={onOpenPlan} />
+          </div>
+          <div className="trends-hub__coaching">
+            <HomeCoachingSummary revision={entryRevision} onOpenDay={onOpenCoachingDay} onOpenPlan={onOpenPlan} />
+          </div>
+        </div>}
+        {section === "training" && detail === "summary" && hasSummary && onOpenOracle && <div className="trends-hub__explore">
+          <InfoDisclosure purpose="actions" title="경기·계획·훈련 비교하기" preview="경기 기록 · 강점 · 훈련 비교 · 다음 훈련"><OracleTopicGrid onSelectTopic={onOpenOracle} title="다른 주제 살펴보기" compact /></InfoDisclosure>
         </div>}
         {section === "training" && <details ref={detailMenu} className="trends-hub__detail-menu" open={detailMenuOpen}
           onToggle={event => setDetailMenuOpen(event.currentTarget.open)}>

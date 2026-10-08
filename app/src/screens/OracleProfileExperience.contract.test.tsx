@@ -64,7 +64,7 @@ it("does not draw an empty radar or assign a character when every answer is unce
 
 it("makes the user's preference result the subject before optional guidance and settings", () => {
   render(<OracleProfileExperience {...props({ answers: { STRUCTURE_1: 5, STRUCTURE_2: 5, STRUCTURE_3: 5 }, selectedCharacter: "STRUCTURE" })} />)
-  const self = screen.getByRole("region", { name: "나의 러닝 프로필" })
+  const self = screen.getByRole("region", { name: "러닝 취향 결과" })
   expect(within(self).getByRole("heading", { name: "계획을 즐기는 러너" })).toBeVisible()
   expect(within(self).getByRole("heading", { level: 1, name: "계획을 즐기는 러너" })).toHaveClass("app-heading--screen", "app-heading--accent")
   const chart = within(self).getByRole("img", { name: /러닝 취향.*계획: 100점/ })
@@ -136,7 +136,7 @@ it("prioritizes the first survey and preserves manager and friend actions in a n
   const p = props()
   render(<OracleProfileExperience {...p} />)
   expect(screen.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" })).toBeVisible()
-  expect(screen.queryByRole("navigation", { name: "러닝 프로필 보기" })).toBeNull()
+  expect(screen.queryByRole("navigation", { name: "러닝 취향 보기" })).toBeNull()
   expect(screen.queryByRole("button", { name: "친구와 취향 비교" })).toBeNull()
   openSettings()
   for (const name of ["내 훈련 해설", "친구와 취향 비교"]) {
@@ -198,7 +198,7 @@ it("does not invent a personal training analysis for an empty or loading profile
 it("moves optional context into profile settings and keeps its unfinished action direct", () => {
   const onContext = vi.fn()
   const { rerender } = render(<OracleProfileExperience {...props({ onContext })} />)
-  const self = screen.getByRole("region", { name: "나의 러닝 프로필" })
+  const self = screen.getByRole("region", { name: "러닝 취향 결과" })
   expect(screen.queryByRole("button", { name: /^훈련·대회 정보 추가/ })).toBeNull()
   openSettings()
   const contextAction = screen.getByRole("button", { name: /^훈련·대회 정보 추가/ })
@@ -238,7 +238,7 @@ it("describes a loading account without hiding its status", () => {
 })
 it("keeps the manager's preference explanation tied to the selected result", () => {
   render(<OracleProfileExperience {...props({ answers: { STRUCTURE_1: 5, STRUCTURE_2: 5, STRUCTURE_3: 5 }, selectedCharacter: "STRUCTURE" })} />)
-  fireEvent.click(within(screen.getByRole("region", { name: "나의 러닝 프로필" })).getByRole("button", { name: /^계획, 100점/ }))
+  fireEvent.click(within(screen.getByRole("region", { name: "러닝 취향 결과" })).getByRole("button", { name: /^계획, 100점/ }))
   expect(dialog()).toHaveAttribute("aria-label", "마리의 응답 해설")
   expect(within(dialog()).getByText("마리 매니저 · 내 응답 기준")).toBeInTheDocument()
   expect(within(dialog()).getByText(/세 문항의 응답을 정리한 100점/)).toBeInTheDocument()

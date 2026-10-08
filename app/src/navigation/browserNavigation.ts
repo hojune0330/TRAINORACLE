@@ -65,6 +65,11 @@ export function hasActiveBrowserBackLayer(): boolean {
   return [...layers.values()].some(layer => layer.active)
 }
 
+/** Read-only: a new native reader must not replace a layer's queued Back target. */
+export function hasPendingBrowserBackLayer(): boolean {
+  return pendingBackLayerId !== null
+}
+
 function mayClose(layer: BackLayer): boolean {
   try { return layer.options?.canClose() === true }
   catch { return false }

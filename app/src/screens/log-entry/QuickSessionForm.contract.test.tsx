@@ -1,3 +1,4 @@
+import React from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { loadAnalysisEntries, loadEntries } from "../../domain/journal-store"
@@ -7,6 +8,8 @@ import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
 import { collectPlanJournalEvidence } from "../../domain/plan-journal-evidence"
 import { runDraftSafeNavigation } from "../../domain/unsaved-draft-navigation"
 import { savePlanBetaState, loadVersionedPlanBetaState } from "../../domain/plan-beta-store"
+import { AppShellFrame, type ShellToastState } from "../../components/AppShellFrame"
+import { createSavedFactReceipt } from "../../domain/save-receipt"
 
 function finishPerformedSession(rpe = 6): void {
   fireEvent.click(screen.getByRole("button", { name: "운동을 마쳤어요" }))
@@ -17,6 +20,87 @@ function finishPerformedSession(rpe = 6): void {
 }
 
 describe("quick session journal contract", () => {
+  it("uses one saved result with the shell reward retry and keeps the same record editable", async () => {
+    const retry = vi.fn(), open = vi.fn(), done = vi.fn()
+    function Fixture() {
+      const [result, setResult] = React.useState<ShellToastState | null>(null)
+      return <AppShellFrame scrollRegionRef={React.createRef()} tab="log" savedToast={result}
+        onDismissToast={() => setResult(null)} onOpenTrends={vi.fn()} onTab={vi.fn()}
+        onOpenSaved={open} onRetryReward={retry} hideTabBar>
+        <QuickSessionForm onDone={done} onSaved={entry => setResult({ count: 1, phase: "enter",
+          receipt: createSavedFactReceipt(entry), completionAlreadyShown: true, storageStatus: "CONFIRMED",
+          rewardMessage: "포인트 확인이 필요해요.", rewardRetry: true })} />
+      </AppShellFrame>
+    }
+    render(<Fixture />)
+    fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
+    expect(screen.queryByRole("button", { name: "포인트 다시 확인" })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
+    await screen.findByRole("button", { name: "완료" })
+    expect(document.querySelectorAll(".journal-save-result")).toHaveLength(1)
+    expect(document.querySelector("[data-toast-priority]")).toBeNull()
+    expect(screen.getAllByText("포인트 확인이 필요해요.")).toHaveLength(1)
+    fireEvent.click(screen.getByRole("button", { name: "포인트 다시 확인" }))
+    expect(retry).toHaveBeenCalledTimes(1)
+    expect(loadEntries()).toHaveLength(1)
+    expect(done).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole("button", { name: "기록 보기" }))
+    expect(open).toHaveBeenCalledTimes(1)
+    const originalId = loadEntries()[0]?.id
+    fireEvent.click(screen.getByText("내용 추가·수정"))
+    fireEvent.click(screen.getByRole("button", { name: "방금 기록 수정" }))
+    expect(screen.getByRole("button", { name: "오늘은 쉬었어요" })).toHaveAttribute("aria-pressed", "true")
+    expect(loadEntries()[0]?.id).toBe(originalId)
+    expect(document.querySelector("[data-toast-priority]")).toBeNull()
+  })
+
+  it.each(["오늘 운동 완료", "시간 오후", "힘든 정도 6/10", "몸 상태 불편한 곳 없음"])(
+    "dismisses the prior receipt when editing the saved summary: %s", async label => {
+      const dismiss = vi.fn()
+      function Fixture() {
+        const [result, setResult] = React.useState<ShellToastState | null>(null)
+        return <AppShellFrame scrollRegionRef={React.createRef()} tab="log" savedToast={result}
+          onDismissToast={() => { dismiss(); setResult(null) }} onOpenTrends={vi.fn()} onTab={vi.fn()} hideTabBar>
+          <QuickSessionForm onSaved={entry => setResult({ count: 1, phase: "enter",
+            receipt: createSavedFactReceipt(entry), completionAlreadyShown: true, storageStatus: "CONFIRMED",
+            rewardMessage: "포인트 확인이 필요해요." })} />
+        </AppShellFrame>
+      }
+      render(<Fixture />)
+      finishPerformedSession()
+      await screen.findByRole("button", { name: "완료" })
+      const original = loadEntries()[0]
+      fireEvent.click(screen.getByRole("button", { name: label }))
+      expect(dismiss).toHaveBeenCalledTimes(1)
+      expect(document.querySelector("[data-toast-priority]")).toBeNull()
+      expect(screen.queryByText("포인트 확인이 필요해요.")).not.toBeInTheDocument()
+      expect(loadEntries()[0]).toEqual(original)
+    })
+
+  it("keeps the independent high-pain notice when the authoritative result also needs another review", async () => {
+    function Fixture() {
+      const [result, setResult] = React.useState<ShellToastState | null>(null)
+      return <AppShellFrame scrollRegionRef={React.createRef()} tab="log" savedToast={result}
+        onDismissToast={() => setResult(null)} onOpenTrends={vi.fn()} onTab={vi.fn()} hideTabBar>
+        <QuickSessionForm onSaved={entry => setResult({ count: 1, phase: "enter", receipt: createSavedFactReceipt(entry),
+          completionAlreadyShown: true, storageStatus: "CONFIRMED", reviewMessage: "합성 메모 검토가 필요해요." })} />
+      </AppShellFrame>
+    }
+    render(<Fixture />)
+    fireEvent.click(screen.getByRole("button", { name: "운동을 마쳤어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "오전" }))
+    fireEvent.click(screen.getByRole("button", { name: /^힘든 정도 6\/10,/ }))
+    fireEvent.click(screen.getByRole("button", { name: "있어요" }))
+    for (let level = 0; level < 4; level++) fireEvent.click(screen.getByRole("button", { name: /오른 무릎, 통증/ }))
+    fireEvent.click(screen.getByRole("button", { name: "이 상태로 기록" }))
+    fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
+    await screen.findByRole("button", { name: "완료" })
+    expect(screen.getByRole("alert")).toHaveTextContent("합성 메모 검토가 필요해요.")
+    expect(screen.getByText(/높은 통증은 사람이 꼭 확인해야 하는 기록이에요/)).toBeVisible()
+    expect(loadEntries()[0]).toMatchObject({ painParts: { rKnee: 4 } })
+    expect(document.querySelector("[data-toast-priority]")).toBeNull()
+  })
+
   it("announces confirmed persistence before Done and never on an unsaved answer", async () => {
     const saved = vi.fn(), done = vi.fn()
     render(<QuickSessionForm onSaved={saved} onDone={done} />)

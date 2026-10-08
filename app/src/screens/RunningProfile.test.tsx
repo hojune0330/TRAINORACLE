@@ -47,7 +47,7 @@ it("finishes three questions without a forced survey or guest writes", async () 
 })
 it("keeps responses across result tabs and does not interpret distance as response", async () => {
   const user = await initial(); mocks.metric = "DISTANCE_KM"
-  await user.click(within(screen.getByRole("navigation", { name: "러닝 프로필 항목" })).getByRole("button", { name: "변화" }))
+  await user.click(within(screen.getByRole("navigation", { name: "러닝 취향 항목" })).getByRole("button", { name: "변화" }))
   expect(screen.getByText(/거리만으로 몸의 반응을 판단하지 않아요/)).toBeVisible()
   expect(screen.queryByText("월별 기록")).toBeNull()
   await user.click(screen.getByRole("button", { name: "취향" }))

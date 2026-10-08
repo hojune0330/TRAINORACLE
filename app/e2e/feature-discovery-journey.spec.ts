@@ -12,7 +12,7 @@ for (const width of [320, 375]) {
       await page.getByRole("button", { name: "더보기", exact: true }).click()
       await expect(page.getByRole("button", { name: "페이스 계산", exact: true })).toBeVisible()
       await page.screenshot({ path: info.outputPath("more-tools.png"), fullPage: true })
-      for (const name of ["페이스 계산", "경기 기록 추가·수정", "워치 파일 가져오기", "나의 러닝 프로필", "최고기록으로 풀이하기", "오라클 읽을거리", "훈련법 읽기", "일지 꾸미기·포인트"]) {
+      for (const name of ["페이스 계산", "경기 기록 추가·수정", "워치 파일 가져오기", "러닝 취향", "최고기록으로 풀이하기", "오라클 읽을거리", "훈련법 읽기", "일지 꾸미기·포인트"]) {
         const entry = page.getByRole("button", { name, exact: true })
         await expect(entry).toBeVisible()
         expect(await entry.evaluate(node => node.closest("details") === null)).toBe(true)
@@ -28,7 +28,7 @@ for (const width of [320, 375]) {
       await expect(page.locator(".oracle-v2__chrome").getByText("오라클 읽을거리", { exact: true })).toBeVisible()
       await expect(page.getByRole("group", { name: "읽을거리 주제" })).toBeVisible()
       await page.getByRole("button", { name: "더보기로 돌아가기", exact: true }).click()
-      await page.getByRole("button", { name: "나의 러닝 프로필", exact: true }).click()
+      await page.getByRole("button", { name: "러닝 취향", exact: true }).click()
       await expect(page.getByRole("button", { name: "친구와 취향 비교", exact: true })).toBeVisible()
       await page.getByRole("button", { name: "친구와 취향 비교", exact: true }).click()
       await expect(page.getByRole("heading", { name: "어떻게 비교할까요?", exact: true })).toBeVisible()

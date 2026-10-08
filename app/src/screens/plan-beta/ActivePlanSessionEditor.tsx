@@ -8,6 +8,7 @@ import type { ActivePlanEditApplyResult, ActivePlanEditSelection } from "../../d
 import type { AthleteRecord } from "../../domain/athlete-records"
 import { isoShift } from "../../domain/dates"
 import { CatalogWorkoutEditor } from "./CatalogWorkoutPicker"
+import { AppHeading } from "../../components/AppHeading"
 import "./ActivePlanSessionEditor.css"
 
 export type ActivePlanSessionEditorIntent = "schedule" | "workout"
@@ -219,8 +220,10 @@ export function ActivePlanSessionEditor({ state, sourceOptions, entriesReady, in
     <section className="active-plan-session-editor" role="region" aria-labelledby="active-plan-session-editor-heading">
       <header className="active-plan-session-editor__header">
         <div>
-          <h2 id="active-plan-session-editor-heading" ref={headingRef} tabIndex={-1}>이 훈련 수정</h2>
-          <p>현재 계획은 미리보기에서 확인한 뒤 한 번에 적용해요.</p>
+          <AppHeading as="h2" variant="screen" id="active-plan-session-editor-heading" ref={headingRef} tabIndex={-1}>
+            {intent === "schedule" ? "훈련 날짜 바꾸기" : "훈련 내용 바꾸기"}
+          </AppHeading>
+          <p>바뀐 내용을 확인한 뒤 현재 계획에 적용해요.</p>
         </div>
         <button type="button" className="active-plan-session-editor__back" onClick={cancel} disabled={busy}>닫기</button>
       </header>

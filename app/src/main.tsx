@@ -28,6 +28,7 @@ import "./styles/training-content.css"
 import "./styles/training-lexicon.css"
 import "./styles/compact-tabs.css"
 import "./styles/emphasis-system.css"
+import "./styles/app-presentation.css"
 
 const showP3PaceHarness = import.meta.env.DEV
   && new URLSearchParams(window.location.search).get("p3-pace-fixture") === "1"

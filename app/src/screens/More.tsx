@@ -11,7 +11,7 @@ import "../styles/home-menu.css"
 export type MoreView = "tools" | "learning" | "account" | "backup" | "about"
 
 const VIEW_TITLES: Record<MoreView, string> = {
-  tools: "더보기", learning: "배우기·꾸미기", account: "계정·기록 보관",
+  tools: "더보기", learning: "훈련 배우기·일지 꾸미기", account: "계정·기록 보관",
   backup: "백업·복원·휴지통", about: "앱 정보·개인정보·문의",
 }
 
@@ -87,13 +87,18 @@ export function More({
         {onOpenRecords && <UtilityRow icon={Flag} label="경기 기록 추가·수정" onClick={onOpenRecords} />}
         {onOpenImport && <UtilityRow icon={Watch} label="워치 파일 가져오기" onClick={onOpenImport} />}
         {(onOpenRunningProfile || onOpenRecordReading || onOpenOracleLibrary) && <h2 className="more-screen__group-label">오라클</h2>}
-        {onOpenRunningProfile && <UtilityRow icon={UserRound} label="나의 러닝 프로필" detail="취향 점수 · 친구와 비교" onClick={onOpenRunningProfile} />}
+        {onOpenRunningProfile && <UtilityRow icon={UserRound} label="러닝 취향" detail="취향 점수 · 친구와 비교" onClick={onOpenRunningProfile} />}
         {onOpenRecordReading && <UtilityRow icon={Calculator} label="최고기록으로 풀이하기" detail="저장 없이 내 기록·친구 기록 비교" onClick={onOpenRecordReading} />}
         {onOpenOracleLibrary && <UtilityRow icon={BookOpen} label="오라클 읽을거리" onClick={onOpenOracleLibrary} />}
+        <h2 className="more-screen__group-label">훈련 배우기</h2>
+        <UtilityRow icon={BookOpen} label="민지의 예시 일지" onClick={onOpenMinji} />
+        <UtilityRow icon={CircleHelp} label="훈련 용어집·도움말" onClick={onOpenGuide} />
+        {onOpenContent && <UtilityRow icon={Newspaper} label="훈련법 읽기" onClick={onOpenContent} />}
+        {onOpenRewards && <>
+          <h2 className="more-screen__group-label">일지 꾸미기</h2>
+          <UtilityRow icon={Sticker} label="일지 꾸미기·포인트" onClick={onOpenRewards} />
+        </>}
         <h2 className="more-screen__group-label">관리·도움말</h2>
-        <UtilityRow icon={BookOpen} label={VIEW_TITLES.learning}
-          detail={["예시 일지", "용어집", onOpenContent && "훈련법", onOpenRewards && "꾸미기"].filter(Boolean).join(" · ")}
-          onClick={() => changeView("learning")} />
         <UtilityRow icon={UserRound} label={VIEW_TITLES.account} onClick={() => changeView("account")} />
         <UtilityRow icon={DatabaseBackup} label={VIEW_TITLES.backup} onClick={() => changeView("backup")} />
         <UtilityRow icon={ShieldCheck} label={VIEW_TITLES.about} detail="기기 연동 상태 · 약관 · 출처" onClick={() => changeView("about")} />
