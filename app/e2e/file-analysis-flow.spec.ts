@@ -339,7 +339,7 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
   }
   await panel.getByRole("button", { name: "훈련 계획 보기" }).click()
   await completeQuickPlan(page, { event: /^5000m/u, experience: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u })
-  await refinePlan(page, "훈련 종류", /숨차게 반복.*VO₂/u)
+  await refinePlan(page, "훈련 종류", /유산소 반복 훈련/u)
   await page.getByRole("group", { name: "계획 확인·변경" })
     .getByRole("button", { name: "훈련 조절", exact: true }).click()
   const method = page.getByRole("region", { name: "처방 확인·조절", exact: true })
@@ -380,7 +380,7 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
   await openPlanOptions(page)
   const choose = page.locator("article.plan-candidate")
     .filter({ has: page.getByRole("button", { name: /^계획안 A 일정/u }) })
-    .getByRole("button", { name: "이 계획으로 시작하기" })
+    .getByRole("button", { name: "계획 A로 시작", exact: true })
   await expect(choose).toBeDisabled()
   await assertNoAutomaticPlanWrite()
   await page.getByRole("group", { name: "계획 확인·변경" })

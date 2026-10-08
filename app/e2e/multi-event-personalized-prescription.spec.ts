@@ -28,7 +28,7 @@ const records = [
 const cases = [
   {
     eventDistanceM: 800,
-    focus: /짧고 세게.*GLY/u,
+    focus: /고강도 반복 훈련/u,
     notation: /10 × 200m @ (?:30\.5s\/200m · )?800m RP · r60s Stand/u,
     paceBasis: "기준: 800m 최근 경기 2분 2초",
     expectedPrescription: { targetEventDistanceM: 800, targetRepSeconds: 30.5,
@@ -40,7 +40,7 @@ const cases = [
   },
   {
     eventDistanceM: 1500,
-    focus: /골고루.*MIX/u,
+    focus: /혼합 훈련/u,
     notation: /3 × 500m @ (?:81\.7s\/500m · )?1500m RP · r3min Stand/u,
     paceBasis: "기준: 1500m 최근 경기 4분 5초",
     expectedPrescription: { targetEventDistanceM: 1500, targetRepSeconds: 245 * 500 / 1500,
@@ -52,7 +52,7 @@ const cases = [
   },
   {
     eventDistanceM: 3000,
-    focus: /숨차게 반복.*VO₂/u,
+    focus: /유산소 반복 훈련/u,
     notation: /4 × 800m @ (?:162\.9s\/800m · )?3K RP · r3min Walk/u,
     paceBasis: "기준: 3000m 최근 경기 10분 11초",
     expectedPrescription: { targetEventDistanceM: 3000, targetRepSeconds: 611 * 800 / 3000,
@@ -72,7 +72,7 @@ async function seedRecords(page: Page): Promise<void> {
 
 async function showCandidatePurpose(
   page: Page,
-  name: "훈련 조절" | "일정 바꾸기",
+  name: "훈련 조절" | "일정·운동 시간",
 ): Promise<void> {
   const entry = page.getByRole("group", { name: "계획 확인·변경" })
     .getByRole("button", { name, exact: true })
@@ -151,9 +151,9 @@ for (const fixture of cases) {
       })
     }
     await openPlanOptions(page, true)
-    const schedule = page.getByRole("region", { name: "일정 바꾸기", exact: true })
+    const schedule = page.getByRole("region", { name: "일정·운동 시간", exact: true })
     await expect(schedule.getByText(fixture.notation).first()).toBeVisible()
-    await page.getByRole("button", { name: /이 계획으로 시작하기/u }).click()
+    await page.getByRole("button", { name: /이 일정으로 시작/u }).click()
     await expectActivePlanHeading(page)
     const storedPrescription = await page.evaluate(() => {
       const state = JSON.parse(localStorage.getItem("trainoracle.plan-beta.v1")!)

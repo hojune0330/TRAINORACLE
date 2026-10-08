@@ -38,11 +38,16 @@ for (const width of [320, 375]) {
     await page.screenshot({ path: info.outputPath(`recommendation-${width}.png`), fullPage: true })
     await openPlanOptions(page)
     await expect(page.getByRole("region", { name: "다른 계획 비교" })).toBeVisible()
-    await expect(page.getByRole("heading", { name: "일정을 보고 골라요" })).toBeInViewport()
+    await expect(page.getByRole("heading", { name: "운동 시간을 비교하고 골라요" })).toBeInViewport()
     await expect(page.getByRole("button", { name: "계획안 A 일정 펼치기" })).toHaveAttribute("aria-expanded", "false")
     await expect(page.getByRole("button", { name: "계획안 B 일정 펼치기" })).toHaveAttribute("aria-expanded", "false")
-    await expect(page.getByLabel("9일 훈련 일정", { exact: true }).first()).toBeVisible()
-    await expect(page.getByLabel("9일 훈련 일정", { exact: true }).last()).toBeVisible()
+    const candidateA = page.locator(".plan-candidate").first()
+    const candidateB = page.locator(".plan-candidate").last()
+    await expect(candidateA.getByLabel("9일 훈련 일정", { exact: true })).toBeHidden()
+    await expect(candidateB.getByLabel("9일 훈련 일정", { exact: true })).toBeHidden()
+    await page.getByRole("button", { name: "계획안 A 일정 펼치기" }).click()
+    await expect(candidateA.getByLabel("9일 훈련 일정", { exact: true })).toBeVisible()
+    await expect(candidateB.getByLabel("9일 훈련 일정", { exact: true })).toBeHidden()
   })
 }
 
@@ -78,7 +83,7 @@ test("decimal current record binds, survives reload and reaches the linked journ
   await page.getByRole("button", { name: /^매일/u }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
   // This case exercises the adopted 800m detailed pace template, not the default catalog.
-  await refinePlan(page, "훈련 종류", /짧고 세게.*GLY/u)
+  await refinePlan(page, "훈련 종류", /고강도 반복 훈련/u)
   await refinePlan(page, "안내 방식", /800m 경기 페이스 상세 훈련 포함/u)
   await expect(page.getByRole("button", { name: "이 일정으로 시작", exact: true })).toHaveCount(0)
   await expect(page.getByRole("region", { name: "계획 저장 상태" }).getByRole("alert")).toHaveText("훈련 조절에서 기준 기록이나 변경한 내용을 확인해 주세요.")

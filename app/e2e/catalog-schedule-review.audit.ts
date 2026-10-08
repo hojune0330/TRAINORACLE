@@ -19,7 +19,7 @@ for (const [width, zoom] of [[320, 1], [375, 2], [1280, 1]] as const) {
     await page.goto("/?app=1&uitest=1")
     await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
     await completeQuickPlan(page, { event: "5000", experience: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u, days: /^5일/u })
-    await refinePlan(page, "훈련 종류", /스피드.*ATP-PC/u)
+    await refinePlan(page, "훈련 종류", /스피드 훈련/u)
     await page.getByRole("button", { name: /공간 확인하고 상세 훈련 보기/u }).click()
     const picker = page.locator(".catalog-workout-picker")
     const address = await picker.getByRole("combobox", { name: "바꿀 일정" }).inputValue()

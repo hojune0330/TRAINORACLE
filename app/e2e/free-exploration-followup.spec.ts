@@ -89,7 +89,7 @@ test("shows an executable record-based workout and opens its same stored method"
   }])))
   await page.getByRole("button", { name: "훈련 계획 만들기", exact: true }).click()
   await completeDetailedPlan(page, { event: /^5000m/, experience: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/,
-    focus: /숨차게 반복.*VO₂/, template: /5000m 경기 페이스 상세 훈련 포함/ })
+    focus: /유산소 반복 훈련/, template: /5000m 경기 페이스 상세 훈련 포함/ })
   await page.getByRole("button", { name: "기준 기록 확인하기", exact: true }).click()
   const picker = page.getByRole("region", { name: "개인 페이스 기준 기록" })
   await picker.getByRole("button", { name: /18분 31초/ }).click()

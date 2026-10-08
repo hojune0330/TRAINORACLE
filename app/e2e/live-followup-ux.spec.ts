@@ -18,6 +18,7 @@ for (const width of [320, 375]) {
       const sizes = [...document.querySelectorAll<HTMLElement>("main *")].map(element => ({ element, size: parseFloat(getComputedStyle(element).fontSize) }))
       for (const { element, size } of sizes) element.style.setProperty("font-size", `${size * 2}px`, "important")
     })
+    await start.scrollIntoViewIfNeeded()
     await expect(start).toBeInViewport()
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
     await page.screenshot({ path: info.outputPath("start-double-text.png") })

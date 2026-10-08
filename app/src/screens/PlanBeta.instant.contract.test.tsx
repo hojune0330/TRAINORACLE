@@ -150,17 +150,23 @@ describe("integrated minimal entry to selected plan", () => {
     expect(loadPlanBetaState()).toBeNull()
   }, 20_000)
 
-  it("keeps actual calendar previews when both alternatives are collapsed", async () => {
+  it("keeps the actual recommended calendar visible while alternative calendars are collapsed", async () => {
     const user = userEvent.setup()
     render(<PlanBeta />)
     await enterPlanWithoutRecord(); await safetyAndExperience()
+    const recommended = within(screen.getByRole("region", { name: "이번 일정" }))
+    expect(recommended.getByRole("grid")).toBeVisible()
     await user.click(screen.getByRole("button", { name: "일정·운동 시간" }))
     const alternatives = within(screen.getByRole("region", { name: "다른 계획 비교" }))
-    expect(alternatives.getByRole("button", { name: "계획안 A 일정 펼치기" })).toHaveAttribute("aria-expanded", "false")
+    const expandA = alternatives.getByRole("button", { name: "계획안 A 일정 펼치기" })
+    expect(expandA).toHaveAttribute("aria-expanded", "false")
     expect(alternatives.getByRole("button", { name: "계획안 B 일정 펼치기" })).toHaveAttribute("aria-expanded", "false")
     const calendars = alternatives.getAllByLabelText("9일 훈련 일정")
     expect(calendars).toHaveLength(2)
-    calendars.forEach(calendar => expect(calendar).toBeVisible())
+    calendars.forEach(calendar => expect(calendar).not.toBeVisible())
+    await user.click(expandA)
+    expect(calendars[0]).toBeVisible()
+    expect(calendars[1]).not.toBeVisible()
     expect(alternatives.getAllByText(/주요 훈련/u).length).toBeGreaterThan(0)
   }, 20_000)
 

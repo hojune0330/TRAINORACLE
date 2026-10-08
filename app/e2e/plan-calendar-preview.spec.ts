@@ -41,7 +41,7 @@ test("shows a dated AM and PM plan before selection and after reload", async ({ 
   await expect(candidateDay).toContainText("오전")
   await expect(candidateDay).toContainText("오후")
   await expect(candidateDay.getByRole("button", { name: "회복 운동 REC 훈련 설명 보기", exact: true })).toBeVisible()
-  await page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u }).first().click()
+  await page.getByRole("button", { name: /선택하기|이 일정으로 시작/u }).first().click()
   await expect(page.getByRole("heading", { name: "9일 훈련 계획" })).toBeVisible()
   await page.reload()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()

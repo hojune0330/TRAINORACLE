@@ -25,18 +25,19 @@ test("creates a mobile marathon beta plan without inventing pace numbers", async
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
   await page.getByRole("button", { name: /^5일/u }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
-  await refinePlan(page, "훈련 종류", /편하게 오래.*BASE/u)
+  await refinePlan(page, "훈련 종류", /기초 지구력/u)
   await openPlanOptions(page, true)
 
   await expect(page.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
   await expect(page.getByText("마라톤").first()).toBeVisible()
-  await page.getByText("계획안 A 설명·시간 합계", { exact: true }).click()
-  await expect(page.getByText("RPE 기준 실행 안내").first()).toBeVisible()
+  const candidateA = page.getByRole("article", { name: "계획 A" })
+  await candidateA.getByText("계획안 A 세부 정보", { exact: true }).click()
+  await expect(candidateA.getByRole("button", { name: /페이스 안내 시간·힘든 정도로 훈련/u })).toBeVisible()
   await expect(page.getByText(/@(?:10km|하프|마라톤).*RP/u)).toHaveCount(0)
   await expect.poll(() => page.locator(".app-scroll-region").evaluate(
     (element) => element.scrollWidth <= element.clientWidth,
   )).toBe(true)
-  await page.getByRole("button", { name: "이 계획으로 시작하기", exact: true }).click()
+  await page.getByRole("button", { name: "이 일정으로 시작", exact: true }).click()
   await openActiveSessionDetails(page)
   await page.getByRole("button", { name: "훈련 방법과 이유", exact: true }).first().click()
   const reader = page.getByRole("dialog")

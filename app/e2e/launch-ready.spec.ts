@@ -20,7 +20,7 @@ async function expectCanonicalPlanCandidates(page: Page): Promise<void> {
     name: "계획이 준비됐어요",
   })).toBeVisible()
   await expect(page.locator(".plan-candidate")).toHaveCount(2)
-  await expect(page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u })).toHaveCount(2)
+  await expect(page.getByRole("button", { name: /계획 [AB]로 시작/u })).toHaveCount(2)
   await expect(page.getByText(/9일/u).first()).toBeVisible()
   await expect.poll(async () => page.evaluate(
     () => window.localStorage.getItem("trainoracle.plan-beta.v1"),
@@ -112,7 +112,7 @@ test("generates selectable 9-day candidates from first-screen intake", async ({ 
 test("generates a bounded two-a-day 9-day candidate", async ({ page }) => {
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
-  await completeDetailedPlan(page, { event: /^5000m\b/u, division: /고등부/u, days: /^매일/u, focus: /숨차게 반복.*VO₂/u, twice: true })
+  await completeDetailedPlan(page, { event: /^5000m\b/u, division: /고등부/u, days: /^매일/u, focus: /유산소 반복 훈련/u, twice: true })
 
   await expectCanonicalPlanCandidates(page)
   const days = page.locator(".plan-candidate").first().locator(".plan-day-deck:visible .plan-schedule-preview > li")
@@ -135,7 +135,7 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   // Given
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
-  await completeDetailedPlan(page, { event: /^5000m\b/u, division: /고등부/u, days: /^매일/u, focus: /숨차게 반복.*VO₂/u, time: /저녁에 운동해요/u, twice: true })
+  await completeDetailedPlan(page, { event: /^5000m\b/u, division: /고등부/u, days: /^매일/u, focus: /유산소 반복 훈련/u, time: /저녁에 운동해요/u, twice: true })
   await expectCanonicalPlanCandidates(page)
   const candidateQuality = page.locator(".plan-candidate").first()
     .locator('.plan-day-card__session[data-session-slot="PM"][data-flow-kind="main"]').first()
@@ -151,7 +151,7 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   expect(selectedSteps[1]).toMatch(/반복 사이 \d+초 조깅/u)
 
   // When
-  await page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u }).first().click()
+  await page.getByRole("button", { name: "계획 A로 시작", exact: true }).click()
 
   // Then
   await expectActivePlanHeading(page)

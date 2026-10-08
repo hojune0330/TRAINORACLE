@@ -79,7 +79,7 @@ for (const persona of personas) {
       await expect(page.getByRole("region", { name: "이번 일정", exact: true })).toBeVisible()
       await expect(page.getByRole("region", { name: "다른 계획 비교", exact: true })).not.toBeVisible()
       const schedule = page.getByRole("group", { name: "계획 확인·변경" })
-        .getByRole("button", { name: "일정 바꾸기", exact: true })
+        .getByRole("button", { name: "일정·운동 시간", exact: true })
       await schedule.click()
       await expect(page.getByRole("region", { name: "다른 계획 비교", exact: true })).toBeVisible()
       await schedule.click()

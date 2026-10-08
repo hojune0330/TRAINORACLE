@@ -62,7 +62,7 @@ describe("InstantPlanRecommendationView", () => {
     expect(screen.getByText(recommendation.firstSessionLabel)).toBeVisible()
     const schedule = screen.getByRole("region", { name: "이번 일정" })
     expect(screen.getByRole("button", { name: "이 일정으로 시작" }).compareDocumentPosition(schedule))
-      .toBe(Node.DOCUMENT_POSITION_PRECEDING)
+      .toBe(Node.DOCUMENT_POSITION_FOLLOWING)
     expect(within(schedule).getByRole("button", { name: /2026년 9월 21일 월요일/ })).toBeVisible()
     expect(within(schedule).getByRole("button", { name: /2026년 9월 22일 화요일/ })).toBeVisible()
     expect(within(schedule).getByText("오전")).toBeVisible()

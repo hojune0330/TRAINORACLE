@@ -6,7 +6,7 @@ import { openActivePlanCards } from "./active-plan-flow"
 test.use({ serviceWorkers: "block" })
 
 async function answerMinimumPlanQuestions(page: Page): Promise<void> {
-await completeDetailedPlan(page, { event: /^1500m\b/u, division: /고등부/u, experience: /훈련 계획에 맞춰 달려 본 경험/u, days: /^3일/u, focus: /조금 힘들게 꾸준히.*LT/u, time: /날마다 달라요/u })
+await completeDetailedPlan(page, { event: /^1500m\b/u, division: /고등부/u, experience: /훈련 계획에 맞춰 달려 본 경험/u, days: /^3일/u, focus: /지속 페이스 훈련/u, time: /날마다 달라요/u })
 }
 
 test("retries a selected plan save and keeps the plan after reload", async ({ page }) => {
@@ -27,7 +27,7 @@ test("retries a selected plan save and keeps the plan after reload", async ({ pa
   await answerMinimumPlanQuestions(page)
 
   // When: the athlete selects a candidate, retries, and returns after a reload.
-  await page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u }).first().click()
+  await page.getByRole("button", { name: /선택하기|이 일정으로 시작/u }).first().click()
   await expect(page.getByRole("alert")).toContainText("계획을 이 기기에 저장하지 못했어요")
   await page.getByRole("button", { name: "저장 다시 시도" }).click()
   await expect(page.getByRole("heading", { name: /9일 훈련 계획/u })).toBeVisible()
@@ -65,7 +65,7 @@ test("retries a completed-session save without losing the active plan", async ({
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
   await answerMinimumPlanQuestions(page)
-  await page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u }).first().click()
+  await page.getByRole("button", { name: /선택하기|이 일정으로 시작/u }).first().click()
 
   // When: the athlete records completion, sees the save failure, and retries the same change.
   await openActivePlanCards(page)

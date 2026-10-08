@@ -9,7 +9,7 @@ export async function selectNineDayProjection(page: Page): Promise<void> {
 
 export async function openPlanRefinement(page: Page, label: string): Promise<void> {
   const purposeLabel = ["운동할 날", "달력 길이", "시간대", "하루 두 번", "대회 날짜"].includes(label)
-    ? "일정 바꾸기"
+    ? "일정·운동 시간"
     : "훈련 조절"
   const purposeEntry = page.getByRole("group", { name: "계획 확인·변경" })
     .getByRole("button", { name: purposeLabel, exact: true })
@@ -68,7 +68,7 @@ export async function completeDetailedPlan(page: Page, options: {
 } = {}): Promise<void> {
   await completeQuickPlan(page, options)
   if (options.division) await refinePlan(page, "참가 부문", options.division)
-  await refinePlan(page, "훈련 종류", options.focus ?? /조금 힘들게 꾸준히.*LT/u)
+  await refinePlan(page, "훈련 종류", options.focus ?? /지속 페이스 훈련/u)
   if (options.template) await refinePlan(page, "안내 방식", options.template)
   if (options.frame) await refinePlan(page, "달력 길이", options.frame)
   if (options.time) await refinePlan(page, "시간대", options.time)
@@ -78,10 +78,10 @@ export async function completeDetailedPlan(page: Page, options: {
 
 export async function openPlanOptions(page: Page, expandA = false): Promise<void> {
   const purposeEntry = page.getByRole("group", { name: "계획 확인·변경" })
-    .getByRole("button", { name: "일정 바꾸기", exact: true })
+    .getByRole("button", { name: "일정·운동 시간", exact: true })
   if (await purposeEntry.count()) {
     if (await purposeEntry.getAttribute("aria-expanded") !== "true") await purposeEntry.click()
-    const schedule = page.getByRole("region", { name: "일정 바꾸기", exact: true })
+    const schedule = page.getByRole("region", { name: "일정·운동 시간", exact: true })
     await expect(schedule).toBeVisible()
     const toggle = schedule.getByRole("button", { name: "계획안 A 일정 펼치기" })
     if (expandA && await toggle.count()) await toggle.click()

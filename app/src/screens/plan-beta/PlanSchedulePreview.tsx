@@ -34,7 +34,11 @@ type FrameLengthDays = 7 | 9 | 9.5 | 10
 type ScheduleDisplayMode = "stack" | "swipe"
 type SessionFlowKind = "main" | "base" | "recovery" | "off"
 
-export type PlanReaderRequest = Pick<PlanSession, "day" | "slot"> & { readonly sequence: number; readonly section?: "records" }
+export type PlanReaderRequest = Pick<PlanSession, "day" | "slot"> & {
+  readonly sequence: number
+  readonly section?: "records"
+  readonly returnFocusToCalendar?: boolean
+}
 const PROGRESS_ICONS = { COMPLETED: Check, RESTED: CircleMinus, SKIPPED: SkipForward, PAIN_CHECKIN: HeartPulse } as const
 
 type ScheduleDay = {
@@ -144,8 +148,9 @@ export function PlanSchedulePreview({
     const day = days[index]
     if (!day) return
     handledReaderRequest.current = readerRequest.sequence
-    readerRequestOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
-    readerOpenedFromCalendar.current = false
+    readerRequestOrigin.current = readerRequest.returnFocusToCalendar
+      ? null : document.activeElement instanceof HTMLElement ? document.activeElement : null
+    readerOpenedFromCalendar.current = readerRequest.returnFocusToCalendar === true
     setSelectedDate(day.date)
     setActiveDayIndex(index)
     setReader({ date: day.date, slot: readerRequest.slot, section: readerRequest.section })

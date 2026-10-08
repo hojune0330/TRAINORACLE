@@ -176,7 +176,7 @@ export function ActivePlan({
   React.useEffect(() => {
     if (!returnedSession) return
     setReaderRequest(previous => ({ day: returnedSession.day, slot: returnedSession.slot,
-      section: "records", sequence: (previous?.sequence ?? 0) + 1 }))
+      section: "records", returnFocusToCalendar: true, sequence: (previous?.sequence ?? 0) + 1 }))
   }, [returnToSession])
 
   React.useEffect(() => {

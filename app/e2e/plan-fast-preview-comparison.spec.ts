@@ -19,7 +19,7 @@ test("creates unsaved candidates after four explicit answers and exposes optiona
 
   await expect(page.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
   await expect(page.getByRole("button", { name: "이 일정으로 시작" })).toHaveCount(1)
-  await expect(page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: /계획 [AB]로 시작/u })).toHaveCount(0)
   await expect(page.locator(".plan-candidate")).toHaveCount(2)
   await expect(page.getByRole("group", { name: "계획 확인·변경" })
     .getByRole("button", { name: "훈련 조절", exact: true })).toHaveAttribute("aria-expanded", "false")
@@ -79,7 +79,7 @@ test("reuses a fully explicit returning intake to create two candidates", async 
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
   await expect.poll(() => page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBeNull()
   await openPlanOptions(page)
-  const schedule = page.getByRole("region", { name: "일정 바꾸기", exact: true })
+  const schedule = page.getByRole("region", { name: "일정·운동 시간", exact: true })
   await expect(schedule.getByRole("button", { name: /달력 길이 바꾸기.*10일/u })).toBeVisible()
   await expect(schedule.getByRole("button", { name: /하루 두 번 바꾸기.*함/u })).toBeVisible()
 
@@ -94,13 +94,13 @@ test("blocks review-risk before any preview or candidates", async ({ page }) => 
   await expect(page.getByRole("heading", { name: "계획안은 먼저 만들 수 있어요" })).toBeVisible()
   await expect(page.getByRole("heading", { name: "계획 형태 미리보기" })).toHaveCount(0)
   await expect(page.locator(".plan-candidate")).toHaveCount(0)
-  await expect(page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: /선택하기|이 일정으로 시작/u })).toHaveCount(0)
 })
 
 test("moves the single expanded schedule between candidates and allows collapse", async ({ page }) => {
   await openPlan(page)
   await answerFirstThree(page)
-  await refinePlan(page, "훈련 종류", /조금 힘들게 꾸준히.*LT/u)
+  await refinePlan(page, "훈련 종류", /지속 페이스 훈련/u)
   await refinePlan(page, "시간대", /아침에 운동해요/u)
   await openPlanOptions(page, true)
 

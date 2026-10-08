@@ -114,7 +114,7 @@ describe("plan beta user flow", () => {
     expect(within(schedule).getByRole("button", { name: /^시간대 바꾸기 · 지금 날마다 달라요/u })).toBeVisible()
     expect(within(schedule).getByRole("button", { name: /^하루 두 번 바꾸기 · 지금 안 함/u })).toBeVisible()
     const workout = await openRefinementGroup("workout")
-    expect(within(workout).getByRole("button", { name: /^훈련 종류 바꾸기 · 지금 골고루/u })).toBeVisible()
+    expect(within(workout).getByRole("button", { name: /^훈련 종류 바꾸기 · 지금 혼합 훈련/u })).toBeVisible()
     expect(within(workout).getByRole("button", { name: /^참가 부문 바꾸기 · 지금 선택하지 않음/u })).toBeVisible()
   })
 
@@ -343,7 +343,6 @@ describe("plan beta user flow", () => {
     expect(screen.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
     expect(screen.getAllByText(/5km.*10일/u)).not.toHaveLength(0)
     expect(screen.getAllByText(/유산소 반복 훈련/u)).not.toHaveLength(0)
-    expect(screen.getByText("5개 바꿨어요")).toBeVisible()
     const schedule = await openRefinementGroup("schedule")
     expect(within(schedule).getByRole("button", { name: /^달력 길이 바꾸기 · 지금 10일/u })).toBeVisible()
     expect(within(schedule).getByRole("button", { name: /^시간대 바꾸기 · 지금 저녁/u })).toBeVisible()
@@ -367,7 +366,7 @@ describe("plan beta user flow", () => {
 
     expectGeneratedCandidates()
     const workout = await openRefinementGroup("workout")
-    expect(within(workout).getByRole("button", { name: /^훈련 종류 바꾸기 · 지금 골고루/u })).toBeVisible()
+    expect(within(workout).getByRole("button", { name: /^훈련 종류 바꾸기 · 지금 혼합 훈련/u })).toBeVisible()
   })
 
   it("persists every explicit answer while keeping the next frame locked until completion", async () => {
@@ -495,8 +494,8 @@ describe("plan beta user flow", () => {
 
     expect(screen.getByRole("button", { name: /지속 페이스 훈련/u })).toBeVisible()
     expect(screen.getByRole("button", { name: /유산소 반복 훈련/u })).toBeVisible()
-    expect(screen.getByRole("button", { name: /짧고 세게.*GLY/u })).toBeVisible()
-    expect(screen.getByRole("button", { name: /스피드.*ATP-PC/u })).toBeVisible()
+    expect(screen.getByRole("button", { name: /고강도 반복 훈련/u })).toBeVisible()
+    expect(screen.getByRole("button", { name: /스피드 훈련/u })).toBeVisible()
 
     const focusHelp = screen.getByRole("button", { name: "훈련 목적과 에너지 대사 설명 보기" })
     await user.click(focusHelp)

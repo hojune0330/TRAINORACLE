@@ -17,8 +17,8 @@ const WIDTHS = [320, 360, 375, 390, 768, 1280]
 const EVENTS = [800, 1500, 3000, 5000, 10000, 21097, 42195]
 const EXPERIENCE = ["NEW_TO_RUNNING", "DEVELOPING", "EXPERIENCED"]
 const EXPERIENCE_LABEL = [/달리기를 막 시작했어요/u, /훈련 계획에 맞춰 달려 본 경험/u, /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u]
-const FOCUS = [/골고루.*MIX/u, /편하게 오래.*BASE/u, /조금 힘들게 꾸준히.*LT/u,
-  /숨차게 반복.*VO₂/u, /짧고 세게.*GLY/u, /스피드.*ATP-PC/u, /회복만.*REC/u]
+const FOCUS = [/혼합 훈련/u, /기초 지구력/u, /지속 페이스 훈련/u,
+  /유산소 반복 훈련/u, /고강도 반복 훈련/u, /스피드 훈련/u, /회복 운동/u]
 const ENTRY = ["홈", "훈련", "일지", "분석"]
 type Finding = { code: string; severity: "P1" | "P2"; phase: string; evidence: unknown }
 type Evidence = {

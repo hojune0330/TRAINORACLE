@@ -61,7 +61,7 @@ for (const [width, reduced] of [[320, true], [375, false], [1280, true]] as cons
     const planTab = () => page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true })
     await planTab().click()
     await completeQuickPlan(page, { event: "5000", experience: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u, days: /^5일/u })
-    await refinePlan(page, "훈련 종류", /조금 힘들게 꾸준히.*LT/u)
+    await refinePlan(page, "훈련 종류", /지속 페이스 훈련/u)
     await page.screenshot({ path: info.outputPath("initial-main.png") })
     await page.getByRole("group", { name: "계획 확인·변경" })
       .getByRole("button", { name: "훈련 조절", exact: true }).click()

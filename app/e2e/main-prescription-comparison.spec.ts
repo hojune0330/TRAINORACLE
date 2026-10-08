@@ -19,7 +19,7 @@ test("compares actual MAIN values and refreshes the chosen record without claimi
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
   await completeDetailedPlan(page, { event: /^800m/u, division: /고등부/u,
-    experience: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u, focus: /짧고 세게.*GLY/u,
+    experience: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u, focus: /고강도 반복 훈련/u,
     template: /800m 경기 페이스 상세 훈련 포함/u, time: /아침에 운동해요/u })
   const purposeEntries = page.getByRole("group", { name: "계획 확인·변경" })
   const showPurpose = async (name: "훈련 조절" | "추천 근거") => {

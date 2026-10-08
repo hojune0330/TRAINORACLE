@@ -25,7 +25,7 @@ for (const mode of ["shared", "candidate-only", "candidate-B"] as const) test(`$
   })
   await page.goto(`${process.env.PLAYWRIGHT_APP_PATH ?? "/"}?app=1`)
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
-  await completeDetailedPlan(page, { event: /^5000m\b/u, division: /일반부/u, experience: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u, days: /^매일/u, focus: /숨차게 반복.*VO₂/u, template: /5000m 경기 페이스 상세 훈련 포함/u, time: /아침에 운동해요/u, twice: true })
+  await completeDetailedPlan(page, { event: /^5000m\b/u, division: /일반부/u, experience: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u, days: /^매일/u, focus: /유산소 반복 훈련/u, template: /5000m 경기 페이스 상세 훈련 포함/u, time: /아침에 운동해요/u, twice: true })
   await openWorkoutOptions(page)
   const method = page.getByRole("region", { name: "처방 확인·조절", exact: true })
   await method.getByText("추천에 참고한 이력", { exact: true }).click()
@@ -73,7 +73,7 @@ for (const mode of ["shared", "candidate-only", "candidate-B"] as const) test(`$
   await expect(evidence.getByRole("status")).toBeVisible()
   await expect(evidence.getByRole("status")).toHaveText("선택한 기록으로 상세 훈련 수치를 계산했어요.")
   await openPlanOptions(page)
-  await page.getByRole("button", { name: mode === "candidate-B" ? /기초·회복 운동을 짧게 선택하기/u : /이 계획으로 시작하기/u }).click()
+  await page.getByRole("button", { name: mode === "candidate-B" ? "계획 B로 시작" : "이 일정으로 시작", exact: true }).click()
   await expectActivePlanHeading(page)
   const read = () => page.evaluate(() => {
     const value = localStorage.getItem("trainoracle.plan-beta.v1")
