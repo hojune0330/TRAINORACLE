@@ -168,6 +168,149 @@ describe("request-local goal index send review", () => {
   })
 })
 
+describe("identity-only lounge RPC transport boundary", () => {
+  const paths = ["/rest/v1/rpc/get_lounge_admission", "/rest/v1/rpc/issue_lounge_grant"]
+  const identityInit = (): RequestInit => ({ ...init, headers: { ...init.headers, "Content-Type": "application/json" }, body: "{}" })
+
+  it.each(paths)("sends only the empty identity command without health storage consent: %s", async path => {
+    const transport = vi.fn<typeof fetch>().mockResolvedValue(new Response("{}"))
+    holdStorageTransmission(A)
+    try {
+      expect((await createConsentCheckedFetch(origin, transport)(origin + path, identityInit())).status).toBe(200)
+      expect(transport).toHaveBeenCalledTimes(1)
+      expect(transport.mock.calls[0]?.[0]).toBe(origin + path)
+      expect(transport.mock.calls[0]?.[1]?.method).toBe("POST")
+      expect(transport.mock.calls[0]?.[1]?.body).toBe("{}")
+      expect(new Headers(transport.mock.calls[0]?.[1]?.headers).get("Authorization")).toBe(authorization)
+      expect(new Headers(transport.mock.calls[0]?.[1]?.headers).has("x-trainoracle-storage-revision")).toBe(false)
+      expect((await createConsentCheckedFetch(origin, transport)(origin + "/functions/v1/account-journal", init)).status).toBe(403)
+      expect(transport).toHaveBeenCalledTimes(1)
+    } finally { releaseStorageTransmissionHold(A) }
+  })
+
+  it.each([init.body, "{", "null", "[]", '"{}"', '{"__proto__":{}}', '{"health":1}', "{}" + " ".repeat(256)])(
+    "does not exempt extra, malformed, non-object or oversized lounge body: %s", async body => {
+      const transport = vi.fn<typeof fetch>().mockResolvedValue(new Response("{}"))
+      holdStorageTransmission(A)
+      try {
+        expect((await createConsentCheckedFetch(origin, transport)(origin + paths[1], { ...identityInit(), body })).status).toBe(403)
+        expect(transport).not.toHaveBeenCalled()
+      } finally { releaseStorageTransmissionHold(A) }
+    },
+  )
+
+  it.each([
+    { path: paths[1] + "?health=synthetic", method: "POST" },
+    { path: paths[1] + "#synthetic", method: "POST" },
+    { path: paths[1] + "/", method: "POST" },
+    { path: "/rest/v1/rpc/issue_lounge_grant_extra", method: "POST" },
+    { path: "/rest/v1/rpc/save_journal", method: "POST" },
+    { path: paths[1], method: "GET" },
+    { path: paths[1], method: "PUT" },
+  ])("does not widen the exact lounge path or POST method: $path $method", async ({ path, method }) => {
+    const transport = vi.fn<typeof fetch>()
+    holdStorageTransmission(A)
+    try {
+      expect((await createConsentCheckedFetch(origin, transport)(origin + path, { ...identityInit(), method })).status).toBe(403)
+      expect(transport).not.toHaveBeenCalled()
+    } finally { releaseStorageTransmissionHold(A) }
+  })
+
+  it("requires a JSON content type and a live-shaped user/session token, never a decoded authorization grant", async () => {
+    const transport = vi.fn<typeof fetch>()
+    const subjectOnly = `Bearer x.${btoa(JSON.stringify({ sub: A }))}.x`
+    const invalidHeaders: HeadersInit[] = [init.headers, { "Content-Type": "application/json" }, { "Content-Type": "application/json", Authorization: subjectOnly }]
+    holdStorageTransmission(A)
+    try {
+      for (const headers of invalidHeaders) {
+        expect((await createConsentCheckedFetch(origin, transport)(origin + paths[1], { ...identityInit(), headers })).status).toBe(403)
+      }
+      expect(transport).not.toHaveBeenCalled()
+    } finally { releaseStorageTransmissionHold(A) }
+  })
+
+  it("does not read or exempt a Request or cloned Request's unknown body", async () => {
+    const transport = vi.fn<typeof fetch>()
+    const request = new Request(origin + paths[1], identityInit())
+    const clone = request.clone()
+    const privateRequest = new Request(origin + paths[1], init)
+    holdStorageTransmission(A)
+    try {
+      for (const input of [request, clone, privateRequest]) {
+        expect((await createConsentCheckedFetch(origin, transport)(input)).status).toBe(403)
+        expect(input.bodyUsed).toBe(false)
+      }
+      expect(transport).not.toHaveBeenCalled()
+    } finally { releaseStorageTransmissionHold(A) }
+  })
+
+  it("captures a changing body getter only once and pins the empty body and destination", async () => {
+    let reads = 0
+    const url = new URL(origin + paths[1])
+    const request: RequestInit = { ...identityInit(), get body() { reads++; return reads === 1 ? "{}" : init.body } }
+    const transport = vi.fn<typeof fetch>().mockImplementation(async () => {
+      url.pathname = "/functions/v1/account-journal"
+      return new Response("{}")
+    })
+    holdStorageTransmission(A)
+    try {
+      expect((await createConsentCheckedFetch(origin, transport)(url, request)).status).toBe(200)
+      expect(reads).toBe(1)
+      expect(transport).toHaveBeenCalledTimes(1)
+      expect(transport.mock.calls[0]?.[0]).toBe(origin + paths[1])
+      expect(transport.mock.calls[0]?.[1]?.body).toBe("{}")
+    } finally { releaseStorageTransmissionHold(A) }
+  })
+
+  it("does not upgrade a getter's first private body to a later empty identity body", async () => {
+    let reads = 0
+    const request: RequestInit = { ...identityInit(), get body() { reads++; return reads === 1 ? init.body : "{}" } }
+    const transport = vi.fn<typeof fetch>().mockResolvedValue(new Response("{}"))
+    holdStorageTransmission(A)
+    try {
+      expect((await createConsentCheckedFetch(origin, transport)(origin + paths[1], request)).status).toBe(403)
+      expect(reads).toBe(1)
+      expect(transport).not.toHaveBeenCalled()
+    } finally { releaseStorageTransmissionHold(A) }
+  })
+
+  it("denies an aborted identity-only command before transmitting", async () => {
+    const controller = new AbortController()
+    controller.abort()
+    const transport = vi.fn<typeof fetch>()
+    expect((await createConsentCheckedFetch(origin, transport)(origin + paths[1], { ...identityInit(), signal: controller.signal })).status).toBe(403)
+    expect(transport).not.toHaveBeenCalled()
+  })
+
+  it("leaves other origins unchanged and never normalizes their body as a lounge exemption", async () => {
+    const transport = vi.fn<typeof fetch>().mockResolvedValue(new Response("{}", { status: 418 }))
+    const destination = "https://different.synthetic.supabase.co" + paths[1]
+    const request = { ...identityInit(), body: " { } " }
+    expect((await createConsentCheckedFetch(origin, transport)(destination, request)).status).toBe(418)
+    expect(transport).toHaveBeenCalledExactlyOnceWith(destination, request)
+  })
+
+  it.each(["get_lounge_admission", "issue_lounge_grant"])("keeps real SDK %s subject to the server's admission rejection", async rpc => {
+    const transport = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ message: "synthetic admission denied", code: "42501" }), {
+      status: 403, headers: { "Content-Type": "application/json" },
+    }))
+    const client = createClient(origin, "synthetic-public", {
+      global: { fetch: createConsentCheckedFetch(origin, transport) },
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: `lounge-transport-${rpc}` },
+    })
+    vi.spyOn(client.auth, "getSession").mockResolvedValue({ data: { session: { user: { id: A }, access_token: authorization.slice(7) } }, error: null } as never)
+    holdStorageTransmission(A)
+    try {
+      const result = await client.rpc(rpc)
+      expect(result.error?.code).toBe("42501")
+      expect(result.data).toBeNull()
+      expect(transport).toHaveBeenCalledTimes(1)
+      expect(transport.mock.calls[0]?.[0]).toBe(origin + "/rest/v1/rpc/" + rpc)
+      expect(transport.mock.calls[0]?.[1]?.body).toBe("{}")
+      expect(new Headers(transport.mock.calls[0]?.[1]?.headers).get("Authorization")).toBe(authorization)
+    } finally { releaseStorageTransmissionHold(A) }
+  })
+})
 describe("consent body transport boundary",()=>{
   it("does not upgrade a pre-withdrawal new operation on a later regrant or page reload",async()=>{
     const operation="synthetic-new-operation"
