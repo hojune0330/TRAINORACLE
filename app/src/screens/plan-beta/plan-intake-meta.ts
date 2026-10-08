@@ -16,6 +16,8 @@ import { eventDistanceLabel } from "./plan-intake-navigation"
 
 export type IntakeStep = "goal" | "division" | "experience" | "focus" | "template" | "days" | "training-time" | "two-a-day" | "safety"
 
+export const SINGLE_CHOICE_ADVANCE_HINT = "하나를 고르면 다음 단계로 이동해요."
+
 export const DIVISION_LABELS: Record<CompetitionDivision, {
   readonly title: string
   readonly detail: string
@@ -31,7 +33,6 @@ export const DIVISION_LABELS: Record<CompetitionDivision, {
 }
 
 export const STEP_META: Record<IntakeStep, {
-  readonly number: number
   readonly eyebrow: string
   readonly title: string
   /** 한 줄 이하. 긴 설명은 `helpTerm` 물음표 뒤로 숨긴다. */
@@ -39,63 +40,54 @@ export const STEP_META: Record<IntakeStep, {
   readonly helpTerm: TermId
 }> = {
   goal: {
-    number: 1,
     eyebrow: "목표",
     title: "어떤 달리기를 준비할까요?",
     copy: "나중에 바꿀 수 있어요.",
     helpTerm: "plan-goal",
   },
   division: {
-    number: 0,
     eyebrow: "참가 부문",
     title: "대회 부문이 있나요?",
     copy: "계획에 이름만 표시해요. 강도나 안전 판단에는 쓰지 않아요.",
     helpTerm: "competition-division",
   },
   experience: {
-    number: 2,
     eyebrow: "경험",
     title: "지금까지 어떻게 달려왔나요?",
     copy: "경험에 맞는 훈련 구성과 운동 시간을 정하는 데 써요.",
     helpTerm: "plan-experience",
   },
   focus: {
-    number: 0,
     eyebrow: "훈련 종류",
     title: "더 하고 싶은 훈련이 있나요?",
-    copy: "모르면 골고루가 좋아요.",
+    copy: "모르면 ‘골고루’를 고를 수 있어요.",
     helpTerm: "energy-system",
   },
   template: {
-    number: 0,
     eyebrow: "안내 방식",
     title: "강도를 어떻게 알려줄까요?",
     copy: "기록이 없으면 시간과 힘든 정도로 안내해요.",
     helpTerm: "rpe",
   },
   days: {
-    number: 3,
     eyebrow: "운동할 날",
     title: "이번 계획에서 며칠 훈련할까요?",
     copy: "걷기나 가벼운 조깅을 할 날도 포함해요.",
     helpTerm: "training-days",
   },
   "training-time": {
-    number: 0,
     eyebrow: "시간대",
     title: "주로 언제 운동하나요?",
     copy: "주요 훈련을 놓을 칸만 정해요.",
     helpTerm: "training-days",
   },
   "two-a-day": {
-    number: 0,
     eyebrow: "하루 두 번",
     title: "하루에 두 번 운동하는 날도 넣을까요?",
     copy: "고르면 훈련일을 오전·오후 두 칸으로 나눠요.",
     helpTerm: "two-a-day",
   },
   safety: {
-    number: 4,
     eyebrow: "몸 상태",
     title: "지금 몸은 어때요?",
     copy: "통증이 있어도 체크 후 계획안을 볼 수 있어요. 시작 전 몸 상태는 따로 확인해요.",

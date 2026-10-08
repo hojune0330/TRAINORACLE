@@ -23,6 +23,17 @@ function renderOpenStudio() {
 }
 
 describe("JournalDecorationSurface calendar decoration flow", () => {
+  it("keeps the small decorating guide outside the paper and removes it during material editing or calendar editing", async () => {
+    const view = renderOpenStudio()
+    const illustration = () => view.container.querySelector('img[src$="decorating-kit-v2.webp"]')
+    expect(illustration()).toHaveAttribute("width", "64")
+    expect(illustration()?.closest(".journal-decoration-unified__header")).not.toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "꾸미기 재료 도구" }))
+    expect(illustration()).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: /^달력$/u }))
+    expect(illustration()).toBeNull()
+    expect(await screen.findByRole("button", { name: "재료 서랍 열기" })).toBeEnabled()
+  })
   it("offers apply, keep editing, and discard when leaving a dirty calendar draft", async () => {
     renderOpenStudio()
     fireEvent.click(screen.getByRole("button", { name: /^달력$/u }))

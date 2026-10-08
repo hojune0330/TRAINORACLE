@@ -2,6 +2,8 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from "react"
 import type { FormEvent, SyntheticEvent } from "react"
 import { ArrowLeft, ArrowRight, Pencil } from "lucide-react"
 import type { InstantPlanEntry } from "../../domain/instant-plan-contract"
+import { useTaskFlowBack } from "../../hooks/useTaskFlowBack"
+import { ContextualIllustration } from "../ContextualIllustration"
 import "./instant-plan.css"
 import "./instant-plan-entry-steps.css"
 
@@ -34,6 +36,8 @@ const EVENTS: readonly { value: InstantPlanEntry["eventDistanceM"]; label: strin
 type Step = "event" | "basis" | "details"
 type Field = "event" | "minutes" | "seconds" | "achievedOn"
 type Errors = Partial<Record<Field, string>>
+
+const SINGLE_CHOICE_ADVANCE_HINT = "하나를 고르면 다음 단계로 이동해요."
 
 function isCalendarDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
@@ -227,6 +231,16 @@ export function InstantPlanEntryForm({
     setStep("event")
   }
 
+  useTaskFlowBack({ enabled: active && (step !== "event" || eventReturnStep === "details"),
+    busy: disabled || isSubmitting,
+    onBack: () => {
+      setErrors({})
+      if (step === "details") setStep("basis")
+      else if (step === "basis") revisitEvent("basis")
+      else setStep("details")
+    },
+  })
+
   return (
     <form className="instant-plan" aria-label="계획 시작 정보" noValidate onSubmit={submit}>
       <p className="instant-plan__entry-context">계획 준비 · {step === "event" ? "종목 선택" : step === "basis" ? "기록 선택" : "기록 입력"}</p>
@@ -239,11 +253,15 @@ export function InstantPlanEntryForm({
               <ArrowLeft size={18} aria-hidden="true" />기록 입력으로
             </button>
           )}
-          <h2 id={`${id}-event-heading`} ref={stepHeadingRef} tabIndex={-1} className="instant-plan__step-heading">
-            어떤 종목을 준비하세요?
-          </h2>
+          <div className="contextual-entry-intro">
+            <h2 id={`${id}-event-heading`} ref={stepHeadingRef} tabIndex={-1} className="instant-plan__step-heading contextual-entry-intro__copy">
+              어떤 종목을 준비하세요?
+            </h2>
+            {!event && active && !disabled && !isSubmitting && !errors.event && <ContextualIllustration image="plan-notebook" />}
+          </div>
+          <p id={`${id}-advance-hint`} className="instant-plan__hint">{SINGLE_CHOICE_ADVANCE_HINT}</p>
           <div className="instant-plan__step-choices" role="group" aria-labelledby={`${id}-event-heading`}
-            aria-describedby={errors.event ? `${id}-event-error` : undefined}>
+            aria-describedby={errors.event ? `${id}-advance-hint ${id}-event-error` : `${id}-advance-hint`}>
             {EVENTS.map((option, index) => (
               <button key={option.value} ref={index === 0 ? eventButtonRef : undefined}
                 className="instant-plan__step-choice" type="button" disabled={disabled}
@@ -266,7 +284,9 @@ export function InstantPlanEntryForm({
           <h2 id={`${id}-basis-heading`} ref={stepHeadingRef} tabIndex={-1} className="instant-plan__step-heading">
             {selectedEventLabel} 기록이 있나요?
           </h2>
-          <div className="instant-plan__step-choices instant-plan__basis-choices" role="group" aria-labelledby={`${id}-basis-heading`}>
+          <p id={`${id}-advance-hint`} className="instant-plan__hint">{SINGLE_CHOICE_ADVANCE_HINT}</p>
+          <div className="instant-plan__step-choices instant-plan__basis-choices" role="group" aria-labelledby={`${id}-basis-heading`}
+            aria-describedby={`${id}-advance-hint`}>
             {([
               ["CURRENT_RECORD", "내 기록", "실제로 달린 시간"],
               ["GOAL_ONLY", "목표만 있어요", "앞으로 달리고 싶은 시간"],

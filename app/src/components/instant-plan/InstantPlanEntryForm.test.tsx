@@ -7,6 +7,20 @@ import { InstantPlanEntryForm } from "./InstantPlanEntryForm"
 afterEach(cleanup)
 
 const TODAY = "2026-09-20"
+it("uses the plan illustration only at a fresh, available entry and not after choosing an event", () => {
+  const view = render(<InstantPlanEntryForm today={TODAY} onSubmit={vi.fn()} />)
+  expect(view.container.querySelector('img[src$="plan-notebook-v2.webp"]')).toHaveAttribute("width", "64")
+  chooseEvent()
+  expect(view.container.querySelector("img")).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "종목 다시 선택" }))
+  expect(view.container.querySelector("img")).toBeNull()
+})
+it("omits the plan entry illustration while submission or disabled state needs attention", () => {
+  const view = render(<InstantPlanEntryForm today={TODAY} onSubmit={vi.fn()} isSubmitting />)
+  expect(view.container.querySelector("img")).toBeNull()
+  view.rerender(<InstantPlanEntryForm today={TODAY} onSubmit={vi.fn()} disabled />)
+  expect(view.container.querySelector("img")).toBeNull()
+})
 const record: InstantPlanEntry = {
   kind: "CURRENT_RECORD", eventDistanceM: 5000, performanceSeconds: 1500.125, achievedOn: "2026-09-01",
 }
@@ -54,8 +68,13 @@ describe("InstantPlanEntryForm", () => {
     const onSubmit = vi.fn()
     render(<InstantPlanEntryForm today={TODAY} onSubmit={onSubmit} />)
     expect(screen.getByText("계획 준비 · 종목 선택")).toBeVisible()
+    expect(screen.getByText("하나를 고르면 다음 단계로 이동해요.")).toBeVisible()
+    expect(screen.getByRole("group", { name: "어떤 종목을 준비하세요?" }))
+      .toHaveAccessibleDescription("하나를 고르면 다음 단계로 이동해요.")
     chooseEvent("1500m")
     expect(screen.getByText("계획 준비 · 기록 선택")).toBeVisible()
+    expect(screen.getByRole("group", { name: "1500m 기록이 있나요?" }))
+      .toHaveAccessibleDescription("하나를 고르면 다음 단계로 이동해요.")
     expect(screen.getByRole("button", { name: "내 기록" })).toHaveAttribute("aria-pressed", "false")
     expect(screen.getByRole("button", { name: "내 기록" })).toHaveAccessibleDescription("실제로 달린 시간")
     expect(screen.getByRole("button", { name: "목표만 있어요" })).toHaveAccessibleDescription("앞으로 달리고 싶은 시간")

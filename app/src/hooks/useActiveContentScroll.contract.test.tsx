@@ -9,6 +9,7 @@ const originalMatchMedia = window.matchMedia
 
 afterEach(() => {
   cleanup()
+  window.localStorage.removeItem("trainoracle.calendar-reduced-motion.v1")
   vi.useRealTimers()
   vi.restoreAllMocks()
   setActiveLocalAccount(null)
@@ -34,6 +35,14 @@ function NestedScrollHarness({ activeKey }: { readonly activeKey: string }) {
 }
 
 describe("active content scroll", () => {
+  it("uses an immediate move for the existing in-app motion preference too", async () => {
+    window.localStorage.setItem("trainoracle.calendar-reduced-motion.v1", "true")
+    const scrollIntoView = vi.fn()
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", { configurable: true, value: scrollIntoView })
+    render(<ScrollHarness activeKey="one" />)
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "auto", block: "start", inline: "nearest" }))
+  })
+
   it("never applies an old queued alignment after an A to B to A account lifetime change", () => {
     vi.useFakeTimers()
     setActiveLocalAccount("synthetic-scroll-a")

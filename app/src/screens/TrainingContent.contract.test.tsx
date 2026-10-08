@@ -13,7 +13,7 @@ describe("training content reader", () => {
     expect(title).toBeVisible()
     expect(title).toHaveClass("app-heading--screen", "app-heading--accent")
     expect(container.querySelectorAll(".app-heading--accent")).toHaveLength(1)
-    expect(container.querySelector('img[src$="training-track-break-v1.webp"]')).toHaveAttribute("width", "64")
+    expect(container.querySelector('img[src$="running-shoe-v2.webp"]')).toHaveAttribute("width", "64")
     expect(screen.getByRole("button", { name: /노르웨이식 더블 스레숄드/u })).toHaveTextContent("추가 검토 중인 기사")
     expect(screen.getByRole("button", { name: /크루즈 인터벌/u })).toHaveTextContent("원문 확인 자료")
     const help = screen.getByText("훈련 자료와 읽기 포인트 안내")
@@ -26,7 +26,7 @@ describe("training content reader", () => {
     const { container } = render(<TrainingContent onBack={vi.fn()} />)
     fireEvent.click(screen.getByRole("button", { name: /크루즈 인터벌은 지속주와/u }))
 
-    expect(container.querySelector('img[src$="training-track-break-v1.webp"]')).toBeNull()
+    expect(container.querySelector('img[src$="running-shoe-v2.webp"]')).toBeNull()
     expect(screen.getByRole("heading", { level: 1 })).toHaveClass("app-heading--screen", "app-heading--accent")
     expect(container.querySelectorAll(".app-heading--accent")).toHaveLength(1)
     const boundary = screen.getByRole("heading", { level: 2, name: "따라 하기 전에" })

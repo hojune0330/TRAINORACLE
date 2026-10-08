@@ -24,6 +24,7 @@ function renderShell(open: boolean, onDismissToast = vi.fn()) {
         count: 1,
         phase: "enter",
         receipt: { kind: "generic", savedDate: "2026-09-12" },
+        completionAlreadyShown: true,
         reviewMessage: "합성 검토 항목",
       }}
       tab="home"

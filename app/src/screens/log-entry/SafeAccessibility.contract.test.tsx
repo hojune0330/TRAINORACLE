@@ -8,19 +8,30 @@ import { PostSessionForm } from "./PostSessionForm"
 afterEach(cleanup)
 
 describe("form input names", () => {
-  it("names each adjacent post-session input", () => {
+  it("names each adjacent post-session input when its question is active", async () => {
+    const user = userEvent.setup()
     render(<PostSessionForm />)
 
+    await user.click(screen.getByRole("button", { name: "결과는 생략하고 계속" }))
     expect(screen.getByRole("textbox", { name: "세션 제목" })).toBeVisible()
+    expect(screen.queryByRole("textbox", { name: "거리 (km)" })).toBeNull()
+    await user.click(screen.getByRole("button", { name: "다음 질문" }))
     expect(screen.getByRole("textbox", { name: "거리 (km)" })).toBeVisible()
     expect(screen.getByRole("textbox", { name: "시간 (분)" })).toBeVisible()
     expect(screen.getByRole("textbox", { name: "평균 페이스 (/km)" })).toBeVisible()
   })
 
-  it("names the evening slider and adjacent body inputs", () => {
+  it("names controls in the active evening step and keeps optional measures grouped", async () => {
+    const user = userEvent.setup()
     render(<EveningCheckin />)
 
     expect(screen.getByRole("slider", { name: "수면 시간" })).toBeVisible()
+    expect(screen.queryByRole("textbox", { name: "체중 (kg)" })).toBeNull()
+    await user.click(screen.getByRole("button", { name: "다음 질문" }))
+    expect(screen.getByRole("button", { name: "감정 4 좋음" })).toBeVisible()
+    expect(screen.queryByRole("textbox", { name: "체중 (kg)" })).toBeNull()
+    await user.click(screen.getByRole("button", { name: "지금 입력 확인" }))
+    await user.click(screen.getByRole("button", { name: "체중 · 안정시 심박 입력" }))
     expect(screen.getByRole("textbox", { name: "체중 (kg)" })).toBeVisible()
     expect(screen.getByRole("textbox", { name: "안정시 심박 (bpm)" })).toBeVisible()
   })
@@ -30,14 +41,18 @@ describe("selector state", () => {
   it("exposes the selected energy system and RPE as pressed", async () => {
     const user = userEvent.setup()
     render(<PostSessionForm />)
+    await user.click(screen.getByRole("button", { name: "결과는 생략하고 계속" }))
     const vo2 = screen.getByRole("button", { name: /VO₂ 강한 유산소 반복/u })
-    const rpeSix = screen.getByRole("button", { name: "6" })
 
     expect(screen.getAllByRole("button", { name: /^(?:REC|BASE|LT|VO₂|GLY|ATP-PC|MIX) /u })
       .every((button) => button.getAttribute("aria-pressed") === "false")).toBe(true)
     expect(vo2).toHaveAttribute("aria-pressed", "false")
-    expect(rpeSix).toHaveAttribute("aria-pressed", "false")
+    expect(screen.queryByRole("button", { name: "6" })).toBeNull()
     await user.click(vo2)
+    await user.click(screen.getByRole("button", { name: "다음 질문" }))
+    await user.click(screen.getByRole("button", { name: "다음 질문" }))
+    const rpeSix = screen.getByRole("button", { name: "6" })
+    expect(rpeSix).toHaveAttribute("aria-pressed", "false")
     await user.click(rpeSix)
     expect(vo2).toHaveAttribute("aria-pressed", "true")
     expect(rpeSix).toHaveAttribute("aria-pressed", "true")

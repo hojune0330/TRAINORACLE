@@ -6,6 +6,7 @@ import { DETAILED_PRESCRIPTION_APPROVALS } from "../../domain/detailed-prescript
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
 import { PlanIntake } from "./PlanIntake"
 import { firstUnansweredRefinement } from "./plan-intake-navigation"
+import { SINGLE_CHOICE_ADVANCE_HINT } from "./plan-intake-meta"
 
 afterEach(cleanup)
 
@@ -17,24 +18,44 @@ describe("question-first plan preparation", () => {
     onOpenNotationReader: vi.fn(), onSafety: vi.fn(), onContinue: vi.fn(),
   }
 
-  it("shows compact days before a single answer edit entry without calendar chrome", async () => {
+  it("shows concise editable answers without implying overall plan progress", async () => {
     const onJump = vi.fn()
-    render(<PlanIntake step="days" draft={{ ...stateFixture().intake, requestedFrameLength: 7 }}
+    const { container } = render(<PlanIntake step="days" draft={{ ...stateFixture().intake, requestedFrameLength: 7 }}
       {...callbacks} onJump={onJump} />)
     const heading = screen.getByRole("heading", { name: "이번 7일 중 며칠 훈련할까요?" })
-    const answers = screen.getByRole("button", { name: /선택한 내용 바꾸기/ })
-    expect(screen.getByText("계획 준비 · 운동할 날")).toBeVisible()
+    const answers = screen.getByRole("group", { name: "앞서 선택한 답 수정" })
+    expect(container.querySelector(".plan-progress")).not.toBeInTheDocument()
+    expect(screen.queryByText(/훈련 조건 질문 \d+\/\d+/u)).not.toBeInTheDocument()
     expect(heading.compareDocumentPosition(answers) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
-    expect(answers.closest("details")).not.toHaveAttribute("open")
     expect(screen.queryByText(/일 달력 보기/)).not.toBeInTheDocument()
-    expect(answers).toHaveAccessibleName("선택한 내용 바꾸기")
-    const days = within(screen.getByRole("group", { name: "운동할 날 선택" }))
+    const goalEdit = within(answers).getByRole("button", { name: "목표 5000m 답 바꾸기" })
+    expect(within(answers).getAllByRole("button")).toHaveLength(2)
+    expect(goalEdit).toBeVisible()
+    const dayGroup = screen.getByRole("group", { name: "운동할 날 선택" })
+    const days = within(dayGroup)
+    expect(dayGroup).toHaveAccessibleDescription(SINGLE_CHOICE_ADVANCE_HINT)
     expect(days.getAllByRole("button").map(button => button.textContent)).toEqual(["3일", "4일", "5일", "6일", "매일"])
     await userEvent.setup().click(days.getByRole("button", { name: "매일" }))
     expect(callbacks.onDays).toHaveBeenCalledWith("EVERY_DAY")
-    await userEvent.setup().click(answers)
-    await userEvent.setup().click(screen.getByRole("button", { name: "5000m" }))
+    await userEvent.setup().click(goalEdit)
     expect(onJump).toHaveBeenCalledWith("goal")
+  })
+
+  it("can omit a no-op Back action at the first quick question", () => {
+    render(<PlanIntake step="goal" draft={{}} canGoBack={false} {...callbacks} />)
+    expect(screen.queryByRole("button", { name: "이전" })).not.toBeInTheDocument()
+    expect(screen.getByRole("group", { name: "계획 종목 선택" }))
+      .toHaveAccessibleDescription(SINGLE_CHOICE_ADVANCE_HINT)
+  })
+
+  it("keeps the quick-flow answer shortcuts to the three prior answers", () => {
+    const onJump = vi.fn()
+    render(<PlanIntake step="safety" draft={stateFixture().intake} {...callbacks} onJump={onJump} />)
+    const answers = within(screen.getByRole("group", { name: "앞서 선택한 답 수정" }))
+    expect(answers.getAllByRole("button")).toHaveLength(3)
+    expect(answers.getByRole("button", { name: "목표 5000m 답 바꾸기" })).toBeVisible()
+    expect(answers.getByRole("button", { name: /경험 .* 답 바꾸기/u })).toBeVisible()
+    expect(answers.getByRole("button", { name: "운동할 날 4일 답 바꾸기" })).toBeVisible()
   })
 
   it("does not expose inert edit buttons when no jump action is provided", () => {

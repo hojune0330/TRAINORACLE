@@ -18,6 +18,19 @@ function Harness({ request = {}, initial = "event" }: { request?: PaceToolReques
 beforeEach(() => { localStorage.clear(); setActiveLocalAccount(null); localStorage.setItem(activeAthleteRecordsStorageKey(), JSON.stringify([record])) })
 afterEach(() => { cleanup(); localStorage.clear(); setActiveLocalAccount(null) })
 
+it("orients the first choice without repeating art or losing focus in the input step", () => {
+  const { container } = render(<Harness />)
+  expect(screen.getByRole("heading", { name: "어떤 종목의 기록인가요?" })).toHaveFocus()
+  expect(screen.getByText("기록으로 거리별 평균 시간을 계산해요.")).toBeVisible()
+  expect(screen.getByRole("group", { name: "직접 입력할 종목" })).toBeVisible()
+  expect(container.querySelector("img")?.getAttribute("src")).toMatch(/pace-stopwatch-v3.webp$/u)
+  fireEvent.click(screen.getByRole("button", { name: "800m" }))
+  expect(screen.getByRole("heading", { name: "800m 기록을 입력해 주세요" })).toHaveFocus()
+  expect(container.querySelector("img")).toBeNull()
+  expect(screen.queryByText("기록으로 거리별 평균 시간을 계산해요.")).toBeNull()
+  expect(screen.getByRole("textbox", { name: "초" })).toHaveValue("")
+})
+
 it("reuses a saved record from the first screen without entering the same event and time or saving again", () => {
   const before = localStorage.getItem(activeAthleteRecordsStorageKey())
   render(<Harness />)

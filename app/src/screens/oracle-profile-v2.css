@@ -1,8 +1,8 @@
 .oracle-v2 { color: var(--ink); background: var(--paper); font-family: inherit; letter-spacing: 0; }
 .oracle-v2 *, .oracle-v2 *::before, .oracle-v2 *::after { box-sizing: border-box; }
-.oracle-v2 button { min-height: 44px; min-width: 44px; font: inherit; color: inherit; border: 1px solid var(--line); background: var(--surface, var(--paper)); border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 12px; cursor: pointer; }
+.oracle-v2 button { min-height: 44px; min-width: 44px; font: inherit; color: inherit; border: 1px solid var(--line); background: var(--surface, var(--paper)); border-radius: var(--r-action, 12px); display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 12px; cursor: pointer; transition: background-color 160ms ease-out, border-color 160ms ease-out; }
 .oracle-v2 button:disabled { opacity: .5; cursor: default; }
-.oracle-v2 .oracle-v2__primary { width: 100%; background: var(--brand); border-color: var(--brand); color: var(--paper); }
+.oracle-v2 .oracle-v2__primary { width: 100%; min-height: 52px; background: var(--brand); border-color: var(--brand); color: var(--paper); font-weight: 700; }
 .oracle-v2 button { word-break: keep-all; }
 .oracle-v2 button > svg { flex-shrink: 0; }
 .oracle-v2 button > span { min-width: 0; }
@@ -18,11 +18,11 @@
 .oracle-v2__entry-links { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-block: var(--space-4); }
 .oracle-v2 .oracle-v2__settings-entry { width: 100%; justify-content: space-between; text-align: left; margin-block: var(--space-4); }
 .oracle-v2__status, .oracle-v2__eyebrow { font-size: 12px; color: var(--ink-muted, var(--ink)); }
-.oracle-v2__identity { display: flex; align-items: center; gap: 12px; margin-block: 24px; }
+.oracle-v2__identity { display: flex; align-items: center; gap: 12px; margin-block: 24px 16px; }
 .oracle-v2__identity > svg { flex-shrink: 0; color: var(--ink-muted, var(--ink)); }
 .oracle-v2__manager { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: var(--space-3); margin-block: var(--space-6); padding-block: var(--space-4); border-block: var(--bw-line) solid var(--line); }
-.oracle-v2__manager-portrait { width: 64px; height: 80px; overflow: hidden; }
-.oracle-v2__manager-portrait img { display: block; width: 100%; height: auto; max-width: none; }
+.oracle-v2__manager-portrait { width: 64px; height: 64px; }
+.oracle-v2__manager-portrait img { display: block; width: 64px; height: 64px; object-fit: contain; }
 .oracle-v2__manager-copy { min-width: 0; }
 .oracle-v2__manager .app-heading.app-heading--section { margin: 0; }
 .oracle-v2__manager p { margin-block: var(--space-2); }
@@ -39,6 +39,10 @@
 .oracle-v2__scores, .oracle-v2__facts { margin: 16px 0; }
 .oracle-v2__scores > div, .oracle-v2__facts > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .oracle-v2__scores > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+.oracle-v2__scores dt button { padding-inline: 0; border-color: transparent; background: transparent; justify-content: flex-start; text-align: left; }
+.oracle-v2__scores dd { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-2); }
+.oracle-v2__scores dd strong { font-size: var(--fs-app-section-title); font-variant-numeric: tabular-nums; }
+.oracle-v2__scores dd > span { font-size: var(--fs-caption); }
 .oracle-v2__meter { grid-column: 1 / -1; height: 6px; background: var(--line); overflow: hidden; }
 .oracle-v2__meter > span { display: block; height: 100%; background: var(--brand); }
 .oracle-v2 dt { overflow-wrap: anywhere; }
@@ -62,6 +66,29 @@
 .oracle-v2__condition-row small { display: block; }
 .oracle-v2__condition-row > button { flex-shrink: 0; }
 .oracle-v2__question, .oracle-v2__article { animation: oracle-v2-enter 160ms ease-out; }
+.oracle-v2__question-progress { display: flex; align-items: center; gap: var(--space-3); margin-block: var(--space-2) var(--space-5); }
+.oracle-v2__question-progress p { margin: 0; flex-shrink: 0; }
+.oracle-v2__question-progress progress { appearance: none; display: block; width: 100%; height: 4px; border: 0; background: var(--line); accent-color: var(--brand); }
+.oracle-v2__question-progress progress::-webkit-progress-bar { background: var(--line); }
+.oracle-v2__question-progress progress::-webkit-progress-value { background: var(--brand); }
+.oracle-v2__question-progress progress::-moz-progress-bar { background: var(--brand); }
+.oracle-v2__question-hint { color: var(--ink-2); margin-block: 0 var(--space-5); }
+.oracle-v2__question .oracle-v2__choices { gap: var(--space-3); }
+.oracle-v2__question .oracle-v2__choices button { min-height: 56px; padding: var(--space-4); border-radius: var(--r-task-surface, 16px); }
+.oracle-v2__question .oracle-v2__choices button[aria-pressed="true"] { background: var(--surface-2); color: var(--ink); border-color: var(--brand); }
+.oracle-v2 .oracle-v2__previous-answer { width: 100%; text-align: left; justify-content: space-between; margin-top: var(--space-3); background: transparent; }
+.oracle-v2__previous-answer small, .oracle-v2__answer-review small { display: block; color: var(--ink-2); font-size: var(--fs-caption); margin-bottom: var(--space-1); }
+.oracle-v2__answer-review { display: grid; gap: var(--space-3); }
+.oracle-v2__answer-review button { justify-content: space-between; text-align: left; padding: var(--space-3); }
+.oracle-v2__result-reading { margin-block: 0 var(--space-4); }
+.oracle-v2__result-number { font-size: var(--fs-app-hero-title, 28px); font-weight: 700; font-variant-numeric: tabular-nums; margin-block: var(--space-4) var(--space-2); }
+.oracle-v2__result-number small { font-size: var(--fs-caption); font-weight: 400; color: var(--ink-2); }
+.oracle-v2__next-interest { margin-block: var(--space-5); }
+.oracle-v2__question-result + .oracle-v2__reader-close { width: 100%; margin-top: 0; min-height: 52px; }
+.oracle-v2[data-reduced-motion="true"] .oracle-v2__question,
+.oracle-v2[data-reduced-motion="true"] .oracle-v2__article { animation: none; }
+.oracle-v2[data-reduced-motion="true"] button { transition: none; }
+.oracle-v2[data-reduced-motion="true"] button:not(:disabled):not([aria-disabled="true"]):active { transform: none; }
 @keyframes oracle-v2-enter { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-@media (prefers-reduced-motion: reduce) { .oracle-v2__question, .oracle-v2__article { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .oracle-v2__question, .oracle-v2__article { animation: none; } .oracle-v2 button { transition: none; } .oracle-v2 button:not(:disabled):not([aria-disabled="true"]):active { transform: none; } }
 @media (max-width: 340px) { .oracle-v2__body, .oracle-v2__reader-body { padding-inline: 12px; } }

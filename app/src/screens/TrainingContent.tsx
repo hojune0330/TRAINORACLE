@@ -130,7 +130,7 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
         <span>훈련 방법 · 선수 사례</span>
         <div className="training-content-intro__heading">
           <AppHeading variant="screen" accent>어떤 훈련이 궁금한가요?</AppHeading>
-          <ContextualIllustration image="training-track" size="small" />
+          <ContextualIllustration image="running-shoe" size="small" />
         </div>
       </div>
       <div className="training-content-list" aria-label="훈련법 콘텐츠 목록">

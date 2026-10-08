@@ -11,6 +11,7 @@ import type {
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 import { calculatedWorkoutSequence } from "@impl/prescription/all-workout-calculator"
 import { sequencePhaseNotation, sessionWorkoutName, sessionWorkoutNotation, type WorkoutDisplaySession } from "../../domain/workout-notation"
+import type { InstantPlanStepRole } from "../../domain/instant-plan-contract"
 
 export const EVENT_LABELS: Record<PlanEventGroup, {
   readonly title: string
@@ -191,33 +192,52 @@ export function formatTrainingSeconds(value: number): string {
 }
 
 export type SessionExecutionStep = {
+  readonly role: InstantPlanStepRole
   readonly title: string
   readonly detail: string
 }
+
+const EXECUTION_STOP_CUE = "통증\u2060·\u2060어지럼\u2060·\u2060자세\u00a0무너짐이 생기면 시간을 채우지 말고 중단하세요."
 
 export function sessionExecutionSteps(session: PlanSession): readonly SessionExecutionStep[] {
   if (session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout) {
     const calculation = resolveCatalogBinding(session.prescription.catalogWorkout)
     const sequence = calculation && calculatedWorkoutSequence(calculation)
-    if (sequence) return ([['warmup', '준비'], ['main', '본운동'], ['cooldown', '정리']] as const)
-      .filter(([phase]) => sequence[phase].length > 0)
-      .map(([phase, title]) => ({ title, detail: sequencePhaseNotation(sequence, phase, [], "PLAIN") }))
+    if (sequence) {
+      const total = calculation.totals.seconds
+      const phases = ([['warmup', '준비', 'PREPARATION'], ['main', '본운동', 'MAIN'], ['cooldown', '정리', 'COOLDOWN']] as const)
+        .filter(([phase]) => sequence[phase].length > 0)
+      const hasCooldown = phases.some(([phase]) => phase === "cooldown")
+      const totalStep: SessionExecutionStep[] = total === null ? [] : [{
+        role: "TOTAL_DURATION",
+        title: "총 시간",
+        detail: `준비·회복·정리 포함 ${formatTrainingSeconds(total.minimum)}${total.minimum === total.maximum ? "" : `~${formatTrainingSeconds(total.maximum)}`}`,
+      }]
+      return [...totalStep, ...phases.map(([phase, title, role], index) => ({
+        role,
+        title,
+        detail: `${sequencePhaseNotation(sequence, phase, [], "PLAIN")}${phase === "cooldown" || (!hasCooldown && index === phases.length - 1) ? ` ${EXECUTION_STOP_CUE}` : ""}`,
+      }))]
+    }
     return []
   }
   if (session.role !== "QUALITY" || session.prescription.kind !== "RPE_TIME_RANGE") return []
 
   return [
     {
+      role: "PREPARATION",
       title: "준비",
       detail: "표시된 총 시간 안에서 걷거나 천천히 달리며 몸이 부드럽게 움직이는지 확인하세요.",
     },
     {
+      role: "MAIN",
       title: "본운동",
       detail: qualityExecution(session.plannedEnergyIntent, session.prescription.rpe),
     },
     {
+      role: "COOLDOWN",
       title: "정리",
-      detail: "남은 총 시간은 천천히 달리거나 걸으세요. 통증\u2060·\u2060어지럼\u2060·\u2060자세\u00a0무너짐이 생기면 시간을 채우지 말고 중단하세요.",
+      detail: `남은 총 시간은 천천히 달리거나 걸으세요. ${EXECUTION_STOP_CUE}`,
     },
   ]
 }

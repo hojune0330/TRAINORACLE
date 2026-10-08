@@ -36,15 +36,37 @@ describe("past journal revisit forms", () => {
     render(<LogEntry entryType="evening" initialEntry={entry} />)
 
     // Then
+    expect(screen.getByRole("heading", { name: "입력 확인" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "체중 · 안정시 심박 수정" })).toBeVisible()
+    expect(screen.queryByLabelText("수면 시간")).toBeNull()
+
+    // Open only the requested group; other stored values remain summarized.
+    await user.click(screen.getByRole("button", { name: "수면 수정" }))
     expect(screen.getByLabelText("수면 시간")).toHaveValue("8")
+    expect(screen.getByRole("button", { name: "수면 질 4 좋음" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.queryByLabelText("체중 (kg)")).toBeNull()
+    await user.click(screen.getByRole("button", { name: "입력 확인으로" }))
+
+    await user.click(screen.getByRole("button", { name: "몸 상태 · 기분 수정" }))
+    expect(screen.getByRole("button", { name: "감정 4 좋음" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.queryByLabelText("수면 시간")).toBeNull()
+    expect(screen.queryByLabelText("체중 (kg)")).toBeNull()
+    await user.click(screen.getByRole("button", { name: "입력 확인으로" }))
+
+    // Open only the selected metric group, leaving the other answers summarized.
+    await user.click(screen.getByRole("button", { name: "체중 · 안정시 심박 수정" }))
+    expect(screen.queryByLabelText("수면 시간")).toBeNull()
     expect(screen.getByLabelText("체중 (kg)")).toHaveValue("61.2")
     expect(screen.getByLabelText("안정시 심박 (bpm)")).toHaveValue("48")
-    expect(screen.getByRole("button", { name: "감정 4 좋음" })).toHaveAttribute("aria-pressed", "true")
-    expect(screen.getByRole("textbox", { name: "오늘의 메모" })).toHaveValue("몸이 가벼웠다")
+    expect(screen.queryByRole("textbox", { name: "오늘의 메모" })).toBeNull()
 
     // When
     await user.clear(screen.getByLabelText("체중 (kg)"))
     await user.type(screen.getByLabelText("체중 (kg)"), "61.0")
+    await user.click(screen.getByRole("button", { name: "입력 확인으로" }))
+    expect(screen.getByRole("button", { name: "수면 수정" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "몸 상태 · 기분 수정" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "체중 · 안정시 심박 수정" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: /수정 저장/u }))
 
     // Then
@@ -79,15 +101,22 @@ describe("past journal revisit forms", () => {
     render(<LogEntry entryType="race" initialEntry={entry} />)
 
     // Then
+    expect(screen.getByRole("heading", { name: "입력 확인" })).toBeVisible()
+    expect(screen.getByRole("region", { name: "저장 전 입력 확인" })).toHaveTextContent("경기 직후")
+    expect(screen.getByRole("region", { name: "저장 전 입력 확인" })).toHaveTextContent("기록 16:42.18")
+    expect(screen.queryByRole("textbox", { name: "경기 기록" })).toBeNull()
+    expect(screen.queryByRole("textbox", { name: "경기 메모" })).toBeNull()
+
+    // When
+    await user.click(screen.getByRole("button", { name: "경기 정보 수정" }))
     expect(screen.getByRole("button", { name: "경기 직후" })).toHaveAttribute("aria-pressed", "true")
     expect(screen.getByRole("textbox", { name: "경기 기록" })).toHaveValue("16:42.18")
     expect(screen.getByRole("textbox", { name: "경기 순위" })).toHaveValue("2위")
     expect(screen.getByRole("textbox", { name: "경기 결과" })).toHaveValue("결승 진출")
-    expect(screen.getByRole("textbox", { name: "경기 메모" })).toHaveValue("마지막 300m를 밀었다")
-
-    // When
     await user.clear(screen.getByRole("textbox", { name: "경기 결과" }))
     await user.type(screen.getByRole("textbox", { name: "경기 결과" }), "결승 2위")
+    await user.click(screen.getByRole("button", { name: "입력 확인으로" }))
+    expect(screen.getByRole("region", { name: "저장 전 입력 확인" })).toHaveTextContent("결과 결승 2위")
     await user.click(screen.getByRole("button", { name: /수정 저장/u }))
 
     // Then
@@ -98,8 +127,9 @@ describe("past journal revisit forms", () => {
     expect(Date.parse(updated?.savedAt ?? "")).toBeGreaterThan(Date.parse(entry.savedAt))
   })
 
-  it("resets the form when another entry of the same kind is selected", () => {
+  it("resets the form when another entry of the same kind is selected", async () => {
     // Given
+    const user = userEvent.setup()
     const first = {
       id: "morning-session",
       kind: "post-session",
@@ -112,6 +142,11 @@ describe("past journal revisit forms", () => {
       durationMin: "25",
       avgPace: "5:00",
       rpe: 6,
+      intensityAssessment: {
+        schemaVersion: 1,
+        plannedRpe: 7,
+        objectiveComponents: [{ componentId: "interval-fixture", kind: "INTERVALS", repetitions: 4, workSeconds: 60, recoverySeconds: 90 }],
+      },
       memo: "",
     } satisfies JournalEntry
     const second = {
@@ -122,13 +157,35 @@ describe("past journal revisit forms", () => {
       distanceKm: "8",
     } satisfies JournalEntry
     const { rerender } = render(<LogEntry entryType="post-session" initialEntry={first} />)
+    expect(screen.getByRole("heading", { name: "입력 확인" })).toBeVisible()
+    expect(screen.getByText(/Morning run/u)).toBeVisible()
+    expect(screen.queryByLabelText("세션 제목")).toBeNull()
+
+    // 강도 그룹에서는 계획 RPE와 기존 객관 구성을 함께 확인·수정할 수 있다.
+    await user.click(screen.getByRole("button", { name: "운동 강도 수정" }))
+    expect(screen.getByRole("button", { name: "예상 강도 7" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("region", { name: "강도 종합" })).toHaveTextContent("4회 · 운동 60초 / 회복 90초")
+    await user.click(screen.getByRole("button", { name: "입력 확인으로" }))
+
+    // 세션 제목은 해당 요약 항목에서만 연다.
+    await user.click(screen.getByRole("button", { name: "실제로 한 운동 수정" }))
     expect(screen.getByLabelText("세션 제목")).toHaveValue("Morning run")
 
     // When
     rerender(<LogEntry entryType="post-session" initialEntry={second} />)
 
     // Then
+    expect(screen.getByRole("heading", { name: "입력 확인" })).toBeVisible()
+    expect(screen.getByText(/Evening run/u)).toBeVisible()
+    expect(screen.getByText(/8 km/u)).toBeVisible()
+    expect(screen.queryByLabelText("세션 제목")).toBeNull()
+    expect(screen.queryByLabelText("거리 (km)")).toBeNull()
+
+    // 세션 제목과 거리·시간은 각 요약 항목에서 별도로 연다.
+    await user.click(screen.getByRole("button", { name: "실제로 한 운동 수정" }))
     expect(screen.getByLabelText("세션 제목")).toHaveValue("Evening run")
+    await user.click(screen.getByRole("button", { name: "입력 확인으로" }))
+    await user.click(screen.getByRole("button", { name: "거리와 시간 수정" }))
     expect(screen.getByLabelText("거리 (km)")).toHaveValue("8")
   })
 

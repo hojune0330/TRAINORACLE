@@ -21,11 +21,12 @@ import {
 import type { PlannedSessionLink } from "../../domain/planned-session-link"
 import { PLAN_EXECUTION_CHANGE_LABELS, type PlanExecutionChange } from "../../domain/journal-schema"
 import { derivePlanExecutionRelation } from "../../domain/plan-execution-relation"
-import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
 import { useOrderedStepMotion } from "../../hooks/useOrderedStepMotion"
+import { useTaskFlowBack } from "../../hooks/useTaskFlowBack"
 import { painLevelsRequireReview } from "../../safety/memo-safety"
 import { BodyDiagram, PainReviewBanner } from "./BodyDiagram"
 import { TopBar } from "./shared"
+import { TaskFlowStep } from "../../components/TaskFlowStep"
 import { PurposeScopedMemoField, usePurposeScopedMemo } from "./PurposeScopedMemoField"
 import { ExerciseLogEditor, ExerciseLogSummary } from "./ExerciseLogEditor"
 import { hasExerciseLog, type ExerciseLog } from "../../domain/exercise-log"
@@ -137,6 +138,7 @@ export function QuickSessionForm(props: React.ComponentProps<typeof QuickSession
 function QuickSessionFormEditor({
   onBack,
   onDone,
+  onSaved,
   onContinueDetailed,
   targetDate,
   initialEntry,
@@ -144,6 +146,8 @@ function QuickSessionFormEditor({
 }: {
   readonly onBack?: () => void
   readonly onDone?: (entry: PostSessionEntry, reviewMessage?: string, storageMessage?: string) => void
+  /** Confirmed persistence, independent of leaving the local completion screen. */
+  readonly onSaved?: (entry: PostSessionEntry, reviewMessage?: string, storageMessage?: string) => void
   readonly onContinueDetailed?: (entry: PostSessionEntry) => void
   readonly targetDate?: string
   readonly initialEntry?: PostSessionEntry
@@ -208,11 +212,9 @@ function QuickSessionFormEditor({
     outcome, slot, rpe, effortAnswered, painStatus, painParts, exerciseLog, exerciseEditor, plannedInputs: plannedInputs.values, planExecutionChange,
     ...(draftQuestion === undefined ? {} : { activeQuestion: draftQuestion }),
     memo: inheritedMemo.text, purpose: inheritedMemo.purpose ?? null }, entryId, step !== "saved", lastSavedAt.current)
-  const stageRef = React.useRef<HTMLDivElement>(null)
-  const stageHeadingRef = React.useRef<HTMLHeadingElement>(null)
-  const motion = useOrderedStepMotion(step, ["activity", "effort", "review", "exercise", "memo", "saved"])
   const activeQuestion = step === "activity" ? activityQuestion : step === "effort" ? effortQuestion : step
-  useActiveContentScroll(activeQuestion, stageRef, stageHeadingRef)
+  // Optional editors are branches, not forward progress through required questions.
+  const motion = useOrderedStepMotion(activeQuestion, ["outcome", "slot", "rpe", "pain", "review", "saved"])
 
   const persist = async (next: {
     readonly outcome: Outcome
@@ -362,7 +364,8 @@ function QuickSessionFormEditor({
             : "일지를 이 기기에 보관했어요. 계정 전송 대기 중이에요."
       setSavedMessage([memoPreparation?.reviewMessage, storageMessage].filter(Boolean).join(" ") || null)
       setSavedStorageMessage(storageMessage ?? undefined)
-      setSavedReviewMessage(memoPreparation.reviewMessage ?? (painLevelsRequireReview(entry.painParts ?? {}) ? "불편한 곳을 기록했어요. 몸 상태를 확인해 주세요." : undefined))
+      const reviewMessage = memoPreparation.reviewMessage ?? (painLevelsRequireReview(entry.painParts ?? {}) ? "불편한 곳을 기록했어요. 몸 상태를 확인해 주세요." : undefined)
+      setSavedReviewMessage(reviewMessage)
       setProgressResult(null)
       if (applyProgressAfterSave) {
         // A confirmed journal stays saved even if the separate plan write fails.
@@ -373,6 +376,7 @@ function QuickSessionFormEditor({
         setProgressResult(reflected)
       }
       setSaveError(null)
+      onSaved?.(entry, reviewMessage, storageMessage ?? undefined)
       setStep("saved")
     } catch {
       setSaveError("저장을 완료하지 못했어요. 입력은 그대로 남아 있어요. 다시 시도해 주세요.")
@@ -450,17 +454,32 @@ function QuickSessionFormEditor({
     if (performed(outcome)) editPain()
     else editOutcome()
   }
+  const firstQuestion = step === "activity" && activityQuestion === "outcome"
+  useTaskFlowBack({ enabled: !firstQuestion && step !== "saved", busy: saving, onBack: goBack })
+
+  const saveReview = () => {
+    if (outcome === null) return
+    if (performed(outcome) && (!effortAnswered || slot === null || painStatus === "UNANSWERED")) {
+      if (slot === null) editSlot()
+      else if (!effortAnswered) editEffort()
+      else editPain()
+      return
+    }
+    void persist({ outcome, slot: performed(outcome) ? slot : null, rpe: performed(outcome) ? rpe : 0,
+      effortAnswered: performed(outcome) && effortAnswered, painStatus: performed(outcome) ? painStatus : "UNANSWERED",
+      painParts: performed(outcome) ? painParts : {}, answerTapCount: taps + 1 })
+  }
 
   const recordSummary = (
-      <section className={`quick-log__paper${step === "review" ? " quick-log__paper--review" : ""}`} aria-label="지금까지 기록한 내용">
+      <section className={`quick-log__paper${step !== "saved" ? " quick-log__paper--review" : ""}`} aria-label="현재까지 답한 내용">
         <div className="quick-log__date">{compactDate(date)} · {dowOf(date)}</div>
         {step === "saved" && planLink !== undefined && <div className="quick-log__plan-source">계획 {planLink.sessionDay}일차 · {planLink.sessionSlot === "AM" ? "오전" : "오후"}</div>}
         <div className="quick-log__ink-stack" aria-live="polite">
           {outcomeLabel === undefined && <span className="quick-log__empty">누르면 여기에 기록돼요.</span>}
-          {outcomeLabel !== undefined && <button type="button" onClick={editOutcome}><span>{savedDateLabel(date)}</span><strong>{outcomeLabel}</strong></button>}
-          {slot !== null && performed(outcome) && <button type="button" onClick={editSlot}><span>시간</span><strong>{slotLabel}</strong></button>}
-          {effortAnswered && performed(outcome) && <button type="button" onClick={editEffort}><span>힘든 정도</span><strong>{rpe > 0 ? `${rpe}/10` : "입력 안 함"}</strong></button>}
-          {painStatus !== "UNANSWERED" && performed(outcome) && <button type="button" onClick={editPain}><span>몸 상태</span><strong>{painStatus === "SIGNAL_REPORTED" ? "불편한 곳 있음" : "불편한 곳 없음"}</strong></button>}
+          {outcomeLabel !== undefined && <button type="button" aria-label={`${savedDateLabel(date)} ${outcomeLabel}`} onClick={editOutcome}><span>{savedDateLabel(date)}</span><strong>{outcomeLabel}</strong></button>}
+          {slot !== null && performed(outcome) && <button type="button" aria-label={`시간 ${slotLabel}`} onClick={editSlot}><span>시간</span><strong>{slotLabel}</strong></button>}
+          {effortAnswered && performed(outcome) && <button type="button" aria-label={`힘든 정도 ${rpe > 0 ? `${rpe}/10` : "입력 안 함"}`} onClick={editEffort}><span>힘든 정도</span><strong>{rpe > 0 ? `${rpe}/10` : "입력 안 함"}</strong></button>}
+          {painStatus !== "UNANSWERED" && performed(outcome) && <button type="button" aria-label={`몸 상태 ${painStatus === "SIGNAL_REPORTED" ? "불편한 곳 있음" : "불편한 곳 없음"}`} onClick={editPain}><span>몸 상태</span><strong>{painStatus === "SIGNAL_REPORTED" ? "불편한 곳 있음" : "불편한 곳 없음"}</strong></button>}
         </div>
         {step === "saved" && <div className="quick-log__stamp" aria-label={savedStorage === "PENDING" ? "계정 전송 대기" : savedStorage === "CONFLICT" ? "수정 충돌" : "저장 완료"}>
           {savedStorage === "PENDING" ? <Clock3 aria-hidden="true" /> : savedStorage === "CONFLICT" ? <TriangleAlert aria-hidden="true" /> : <Check aria-hidden="true" />}
@@ -469,31 +488,51 @@ function QuickSessionFormEditor({
       </section>
   )
 
+  const taskTitle = step === "activity"
+    ? activityQuestion === "outcome" ? `${savedDateLabel(date)} 운동은 어떻게 됐나요?` : "언제 했나요?"
+    : step === "effort"
+      ? effortQuestion === "rpe" ? "몸에는 어느 정도로 느껴졌나요?" : "운동 후 불편하거나 아픈 곳이 있나요?"
+      : step === "review" ? "이 내용으로 남길까요?"
+        : step === "exercise" ? "실제로 한 운동"
+          : step === "memo" ? "오늘 남길 말"
+            : savedEntry ? savedReceiptLabel(savedEntry.date) : "기록을 남겼어요."
+
+  const taskFlowActions = step === "review" && outcome !== null ? (
+    <button type="button" className="quick-log__primary" onClick={saveReview}>
+      {inheritedMemo.text.trim() !== "" && inheritedMemo.needsPrivateSetup ? "비밀 메모 보관 준비" : includeProgress ? `저장하고 계획에 ${progressLabel} 표시` : "이대로 저장"}
+    </button>
+  ) : step === "effort" && effortQuestion === "pain" && painStatus === "SIGNAL_REPORTED" ? (
+    <button className="quick-log__primary" type="button" onClick={savePain}>이 상태로 기록</button>
+  ) : step === "exercise" ? (
+    <button type="button" className="quick-log__primary" onClick={() => { setSaveError(null); returnToRecord() }}>
+      {outcome === null ? "운동 결과 선택으로" : "기록 요약으로"}
+    </button>
+  ) : step === "memo" ? (
+    <button type="button" className="quick-log__primary" onClick={() => { setSaveError(null); returnToRecord() }}>내용 반영</button>
+  ) : step === "saved" && savedEntry !== null ? (
+    <button className="quick-log__primary" type="button" onClick={() => savedStorageMessage !== undefined
+      ? onDone?.(savedEntry, savedReviewMessage, savedStorageMessage)
+      : savedReviewMessage !== undefined ? onDone?.(savedEntry, savedReviewMessage) : onDone?.(savedEntry)}>완료</button>
+  ) : undefined
+
   return (
     <div className="quick-log" aria-busy={saving}>
       <fieldset disabled={saving} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
       <TopBar onBack={goBack}>빠르게 기록</TopBar>
       <FormFinalizationRecovery recovery={finalization} onBack={draft.back(onBack)} />
-      {step === "saved" || step === "review" ? recordSummary : outcome !== null && (
-        <InfoDisclosure title={[outcomeLabel, performed(outcome) && slotLabel, performed(outcome) && effortAnswered && `힘든 정도 ${rpe > 0 ? `${rpe}/10` : "모름"}`].filter(Boolean).join(" · ")} className="quick-log__summary-help">{recordSummary}</InfoDisclosure>
-      )}
-
       {saving && <p role="status">저장 중이에요.</p>}
-      <div
-        key={activeQuestion}
-        ref={stageRef}
-        className="quick-log__stage active-stage-content active-content-scroll-target"
-        data-flow-direction={motion}
-      >
+      <TaskFlowStep stepKey={activeQuestion} title={taskTitle} summary={outcomeLabel === undefined ? undefined : recordSummary}
+        summaryFirst={step === "review" || step === "saved"} actions={taskFlowActions} busy={saving} motion={motion}>
+      <div className="quick-log__stage">
+        <div data-task-motion-surface>
         {(step === "exercise" || step === "memo") && <div className="quick-log__safety-actions" role="group" aria-label="추가 기록 종류">
           <button type="button" aria-pressed={step === "exercise"} onClick={() => setStep("exercise")}>운동 내용</button>
           <button type="button" aria-pressed={step === "memo"} onClick={() => setStep("memo")}>글 쓰기</button>
         </div>}
         {step === "activity" && activityQuestion === "outcome" && (
-          <section aria-labelledby="quick-activity-title">
+          <section>
             <small>운동 결과</small>
             {planLink !== undefined && <div className="quick-log__plan-source">계획 {planLink.sessionDay}일차 · {planLink.sessionSlot === "AM" ? "오전" : "오후"}</div>}
-            <h1 id="quick-activity-title" ref={stageHeadingRef} tabIndex={-1}>{savedDateLabel(date)} 운동은 어떻게 됐나요?</h1>
             {planLink && <PlannedWorkoutContext entryId={entryId} date={date} link={planLink} />}
             <div className="quick-log__choices">
               {outcomes.map((item) => <button key={item.value} type="button" aria-pressed={outcome === item.value} onClick={() => selectOutcome(item.value)}><span>{item.label}</span><ChevronRight aria-hidden="true" /></button>)}
@@ -507,18 +546,16 @@ function QuickSessionFormEditor({
             {saveError !== null && <p className="quick-log__error" role="alert">{saveError}</p>}
           </section>
         )}
-        {step === "activity" && activityQuestion === "slot" && <section aria-labelledby="quick-slot-title">
+        {step === "activity" && activityQuestion === "slot" && <section>
           <small>운동 시간대</small>
-          <h1 id="quick-slot-title" ref={stageHeadingRef} tabIndex={-1}>언제 했나요?</h1>
           {planLink && <p>계획은 {planLink.sessionSlot === "AM" ? "오전" : "오후"}이에요. 실제로 한 시간대를 골라 주세요.</p>}
           <div className="quick-log__choices">
             {[...ACTIVITY_SLOTS].sort((a, b) => Number(b.value === planLink?.sessionSlot) - Number(a.value === planLink?.sessionSlot)).map(item => <button key={item.value} type="button" aria-pressed={slot === item.value} onClick={() => selectSlot(item.value)}>{item.label}<ChevronRight aria-hidden="true" /></button>)}
           </div>
         </section>}
         {step === "effort" && effortQuestion === "rpe" && (
-          <section aria-labelledby="quick-effort-title">
+          <section>
             <small>힘든 정도</small>
-            <h1 id="quick-effort-title" ref={stageHeadingRef} tabIndex={-1}>몸에는 어느 정도로 느껴졌나요?</h1>
             <p>1 아주 가벼움 · 10 최대 노력</p>
             <div className="quick-log__rpe-scale" role="group" aria-label="힘든 정도 1부터 10까지">
               {RPE_OPTIONS.map((item) => <button key={item.value} type="button" aria-label={`힘든 정도 ${item.value}/10, ${item.detail}`} aria-pressed={effortAnswered && rpe === item.value} onClick={() => selectRpe(item.value)}>{item.value}</button>)}
@@ -528,9 +565,8 @@ function QuickSessionFormEditor({
           </section>
         )}
         {step === "effort" && effortQuestion === "pain" && (
-              <section aria-labelledby="quick-safety-title">
+              <section>
                 <small>몸 상태</small>
-                <h1 id="quick-safety-title" ref={stageHeadingRef} tabIndex={-1}>운동 후 불편하거나 아픈 곳이 있나요?</h1>
                 <p>이 확인은 몸 상태를 남기기 위한 것이며 의료 판단이 아니에요.</p>
                 <div className="quick-log__safety-actions">
                   <button type="button" aria-pressed={painStatus === "NO_SIGNAL_REPORTED"} onClick={selectNoPain}>없어요</button>
@@ -540,15 +576,13 @@ function QuickSessionFormEditor({
                   <div className="quick-log__pain-details">
                     <BodyDiagram selected={painParts} onChange={setPainParts} />
                     {painLevelsRequireReview(painParts) && <PainReviewBanner />}
-                    <button className="quick-log__primary" type="button" onClick={savePain}>이 상태로 기록</button>
                   </div>
                 )}
             {saveError !== null && <p className="quick-log__error" role="alert">{saveError}</p>}
               </section>
         )}
-        {step === "review" && outcome !== null && <section aria-labelledby="quick-review-title">
+        {step === "review" && outcome !== null && <section>
           <small>마지막 확인</small>
-          <h1 id="quick-review-title" ref={stageHeadingRef} tabIndex={-1}>이 내용으로 남길까요?</h1>
           {!performed(outcome) && performed(savedEntry?.activityOutcome ?? null) && <p>쉬거나 건너뛴 기록으로 바꾸면 운동 시간·거리·힘든 정도·몸 상태 응답은 제외돼요.</p>}
             <ExerciseLogSummary log={exerciseLog} />
             {(performed(outcome) || exerciseLog.plannedRepetitions || exerciseLog.plannedSegments || Object.keys(plannedInputs.values).length > 0) && <PlannedRepetitionEditor entryId={entryId} date={date} link={planLink} value={exerciseLog} onChange={setExerciseLog} inputs={plannedInputs} />}
@@ -576,42 +610,23 @@ function QuickSessionFormEditor({
             계획에도 {progressLabel} 표시 남기기
           </label>}
           {saveError && <p role="alert">{saveError}</p>}
-          <button type="button" className="quick-log__primary" onClick={() => {
-            if (performed(outcome) && (!effortAnswered || slot === null || painStatus === "UNANSWERED")) {
-              if (slot === null) editSlot()
-              else if (!effortAnswered) editEffort()
-              else editPain()
-              return
-            }
-            void persist({ outcome, slot: performed(outcome) ? slot : null, rpe: performed(outcome) ? rpe : 0,
-              effortAnswered: performed(outcome) && effortAnswered, painStatus: performed(outcome) ? painStatus : "UNANSWERED",
-              painParts: performed(outcome) ? painParts : {}, answerTapCount: taps + 1 })
-          }}>{inheritedMemo.text.trim() !== "" && inheritedMemo.needsPrivateSetup ? "비밀 메모 보관 준비" : includeProgress ? `저장하고 계획에 ${progressLabel} 표시` : "이대로 저장"}</button>
         </section>}
-        {step === "exercise" && <section aria-labelledby="quick-exercise-title">
-          <h1 id="quick-exercise-title" ref={stageHeadingRef} tabIndex={-1}>실제로 한 운동</h1>
+        {step === "exercise" && <section>
           <ExerciseLogEditor value={exerciseLog} onChange={setExerciseLog} draft={exerciseEditor} onDraftChange={setExerciseEditor}
             recent={loadEntries().filter(entry => entry.id !== entryId).flatMap(entry => entry.kind === "post-session" ? entry.exerciseLog?.components ?? [] : []).slice(0, 6)} />
           {saveError && <p role="alert">{saveError}</p>}
-          <button type="button" className="quick-log__primary" onClick={() => { setSaveError(null); returnToRecord() }}>{outcome === null ? "운동 결과 선택으로" : "기록 요약으로"}</button>
         </section>}
-        {step === "memo" && <section aria-labelledby="quick-memo-title">
-          <h1 id="quick-memo-title" ref={stageHeadingRef} tabIndex={-1}>오늘 남길 말</h1>
+        {step === "memo" && <section>
           <PurposeScopedMemoField controller={inheritedMemo} fieldId="quick-memo" label="일지 내용" rows={4} />
-          <button type="button" className="quick-log__primary" onClick={() => { setSaveError(null); returnToRecord() }}>내용 반영</button>
         </section>}
         {step === "saved" && savedEntry !== null && (
-          <section className="quick-log__complete" aria-labelledby="quick-saved-title">
+          <section className="quick-log__complete">
             <small>{savedDateLabel(savedEntry.date)} 기록</small>
-            <h1 id="quick-saved-title" ref={stageHeadingRef} tabIndex={-1}>{savedReceiptLabel(savedEntry.date)}</h1>
             {savedMessage !== null && <p role="status">{savedMessage}</p>}
             {painLevelsRequireReview(savedEntry.painParts ?? {}) && <PainReviewBanner />}
             <ExerciseLogSummary log={savedEntry.exerciseLog} />
             {savedEntry.planExecutionChange && <p>{PLAN_EXECUTION_CHANGE_LABELS[savedEntry.planExecutionChange]}</p>}
             {progressResult !== null && <JournalPlanProgressAction entry={savedEntry} initialResult={progressResult} />}
-            <button className="quick-log__primary" type="button" onClick={() => savedStorageMessage !== undefined
-              ? onDone?.(savedEntry, savedReviewMessage, savedStorageMessage)
-              : savedReviewMessage !== undefined ? onDone?.(savedEntry, savedReviewMessage) : onDone?.(savedEntry)}>완료</button>
             <InfoDisclosure title="내용 추가·수정" purpose="actions">
               {progressResult === null && <JournalPlanProgressAction entry={savedEntry} />}
               <button className="quick-log__secondary" type="button" onClick={() => onContinueDetailed?.(savedEntry)}><FilePenLine aria-hidden="true" /><span>일지 더 쓰기</span></button>
@@ -619,7 +634,9 @@ function QuickSessionFormEditor({
             </InfoDisclosure>
           </section>
         )}
+        </div>
       </div>
+      </TaskFlowStep>
       </fieldset>
     </div>
   )

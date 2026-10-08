@@ -90,6 +90,34 @@ const settle = async () => { await act(async () => { for (let i = 0; i < 15; i++
 const idle = async () => { await act(async () => { await new Promise(resolve => setTimeout(resolve, 850)) }) }
 const components = { evening: EveningCheckin, race: RaceForm, "post-session": PostSessionForm }
 
+async function openInput(kind: keyof typeof components, label: string | RegExp) {
+  const current = screen.queryByLabelText(label, { selector: "input,textarea,select" })
+  if (current) return current
+  const editLabel = kind === "evening"
+    ? label === "오늘의 메모" ? /^메모 (수정|입력)$/ : /^체중 · 안정시 심박 (수정|입력)$/
+    : kind === "race" ? "경기 정보 수정" : "실제로 한 운동 수정"
+  // Remote-draft hydration may replace the first question with review. Wait
+  // for either legitimate destination instead of assuming the fresh route.
+  const action = await waitFor(() => {
+    const node = screen.queryByRole("button", { name: editLabel })
+      ?? screen.queryByRole("button", { name: /^(지금 입력 확인|입력 확인으로)$/ })
+    expect(node).not.toBeNull()
+    return node!
+  })
+  const editing = screen.queryByRole("button", { name: editLabel }) === action
+  fireEvent.click(action)
+  if (!editing) fireEvent.click(await screen.findByRole("button", { name: editLabel }))
+  return screen.findByLabelText(label, { selector: "input,textarea,select" })
+}
+
+function reviewedSave() {
+  if (!screen.queryByRole("button", { name: /^저장/ })) {
+    fireEvent.click(screen.queryByRole("button", { name: "입력 확인으로" })
+      ?? screen.getByRole("button", { name: "지금 입력 확인" }))
+  }
+  return screen.getByRole("button", { name: /^저장/ })
+}
+
 beforeEach(() => {
   records.clear(); holdWrite = null; failWrite = false
   vi.stubGlobal("crypto", webcrypto)
@@ -114,13 +142,13 @@ describe("existing form input autosave", () => {
     const Component = components[kind]
     render(<Component targetDate="2026-09-08" />)
     // Race inputs use their field labels from RacePreChecks.
-    const field = kind === "race" ? await screen.findByLabelText(/목표.*분|페이스.*분/) : await screen.findByRole("textbox", { name: label })
+    const field = await openInput(kind, kind === "race" ? /목표.*분|페이스.*분/ : label)
     fireEvent.change(field, { target: { value } })
     await waitFor(() => expect(records.size).toBe(1))
     const before = savedInput()
     cleanup()
     render(<Component targetDate="2026-09-08" />)
-    const restored = kind === "race" ? await screen.findByLabelText(/목표.*분|페이스.*분/) : await screen.findByRole("textbox", { name: label })
+    const restored = await openInput(kind, kind === "race" ? /목표.*분|페이스.*분/ : label)
     expect(restored).toHaveValue(kind === "race" ? Number(value) : value)
     if (kind === "race") expect(before).toMatchObject({ paceMinutes: "03", paceSeconds: "" })
     expect(savedInput()).toEqual(before)
@@ -158,6 +186,31 @@ describe("existing form input autosave", () => {
     expect(screen.getByRole("button", { name: /^힘든 정도 7\/10,/ })).toHaveAttribute("aria-pressed", "true")
     expect(savedInput()).toMatchObject({ step: "effort", activeQuestion: "rpe", outcome: "COMPLETED",
       slot: "AM", rpe: 7, effortAnswered: true, painStatus: "UNANSWERED" })
+    expect(loadEntries()).toHaveLength(0)
+    expect(mocks.persist).not.toHaveBeenCalled()
+  })
+
+  it("returns a recovered unscoped memo to its editor before hidden validation can block save", async () => {
+    render(<PostSessionForm targetDate="2026-09-08" />)
+    fireEvent.click(await screen.findByRole("button", { name: "결과는 생략하고 계속" }))
+    fireEvent.click(screen.getByRole("button", { name: "지금 입력 확인" }))
+    fireEvent.click(screen.getByRole("button", { name: "메모 수정" }))
+    fireEvent.change(screen.getByRole("textbox", { name: "훈련 메모 내용" }), {
+      target: { value: "synthetic recovered memo without a purpose" },
+    })
+    await waitFor(() => expect(savedInput()).toMatchObject({
+      memo: "synthetic recovered memo without a purpose", purpose: null,
+    }))
+
+    cleanup()
+    render(<PostSessionForm targetDate="2026-09-08" />)
+    expect(await screen.findByRole("heading", { level: 2, name: "입력 확인" })).toBeVisible()
+    fireEvent.click(screen.getByRole("button", { name: /^저장/ }))
+
+    expect(await screen.findByRole("heading", { level: 2, name: "오늘 남길 메모" })).toBeVisible()
+    expect(screen.getByRole("alert")).toHaveTextContent("메모를 저장할 방법을 선택해 주세요.")
+    expect(screen.getByRole("textbox", { name: "훈련 메모 내용" })).toHaveValue("synthetic recovered memo without a purpose")
+    expect(savedInput()).toMatchObject({ memo: "synthetic recovered memo without a purpose", purpose: null })
     expect(loadEntries()).toHaveLength(0)
     expect(mocks.persist).not.toHaveBeenCalled()
   })
@@ -224,10 +277,10 @@ describe("existing form input autosave", () => {
 
   it("preserves memo with no selected purpose without invoking the finalize validator", async () => {
     render(<EveningCheckin targetDate="2026-09-08" />)
-    fireEvent.change(await screen.findByRole("textbox", { name: "오늘의 메모" }), { target: { value: "synthetic unselected memo" } })
+    fireEvent.change(await openInput("evening", "오늘의 메모"), { target: { value: "synthetic unselected memo" } })
     await waitFor(() => expect(savedInput()).toMatchObject({ memo: "synthetic unselected memo", purpose: null }))
     cleanup(); render(<EveningCheckin targetDate="2026-09-08" />)
-    expect(await screen.findByRole("textbox", { name: "오늘의 메모" })).toHaveValue("synthetic unselected memo")
+    expect(await openInput("evening", "오늘의 메모")).toHaveValue("synthetic unselected memo")
     expect(screen.getByRole("radio", { name: "나만의 메모" })).not.toBeChecked()
     expect(screen.getByRole("radio", { name: "훈련 메모" })).not.toBeChecked()
     expect(mocks.persist).not.toHaveBeenCalled()
@@ -235,13 +288,15 @@ describe("existing form input autosave", () => {
 
   it("restores unadded objective component fields and planned RPE", async () => {
     render(<PostSessionForm targetDate="2026-09-08" />)
-    await screen.findByRole("textbox", { name: "세션 제목" })
+    fireEvent.click(await screen.findByRole("button", { name: "지금 입력 확인" }))
+    fireEvent.click(screen.getByRole("button", { name: "운동 강도 수정" }))
     fireEvent.click(screen.getByRole("button", { name: "예상 강도 7" }))
     fireEvent.change(screen.getByLabelText("운동 시간 (초)"), { target: { value: "42" } })
     await waitFor(() => expect(savedInput()).toMatchObject({ plannedRpe: 7, objectiveComponents: [],
       objectiveEditor: { kind: "INTERVALS", fields: { workSeconds: "42" } } }))
     cleanup(); render(<PostSessionForm targetDate="2026-09-08" />)
-    await screen.findByRole("textbox", { name: "세션 제목" })
+    await screen.findByRole("heading", { level: 2, name: "입력 확인" })
+    fireEvent.click(screen.getByRole("button", { name: "운동 강도 수정" }))
     expect(screen.getByRole("button", { name: "예상 강도 7" })).toHaveAttribute("aria-pressed", "true")
     expect(screen.getByLabelText("운동 시간 (초)")).toHaveValue(42)
     expect(mocks.persist).not.toHaveBeenCalled()
@@ -249,20 +304,20 @@ describe("existing form input autosave", () => {
 
   it("isolates accounts in mounted forms and restores only the original owner", async () => {
     render(<EveningCheckin targetDate="2026-09-08" />)
-    fireEvent.change(await screen.findByRole("textbox", { name: "체중 (kg)" }), { target: { value: "62." } })
+    fireEvent.change(await openInput("evening", "체중 (kg)"), { target: { value: "62." } })
     await waitFor(() => expect(records.size).toBe(1))
     act(() => setActiveLocalAccount(B))
-    expect(await screen.findByRole("textbox", { name: "체중 (kg)" })).toHaveValue("")
+    expect(await openInput("evening", "체중 (kg)")).toHaveValue("")
     expect([...records.values()].every(v => v.ownerId === A)).toBe(true)
     act(() => setActiveLocalAccount(A))
-    expect(await screen.findByRole("textbox", { name: "체중 (kg)" })).toHaveValue("62.")
+    expect(await openInput("evening", "체중 (kg)")).toHaveValue("62.")
   })
 
   it("never reuses inherited entry props from account A after switching to account B", async () => {
     render(<EveningCheckin initialEntry={{ id: "synthetic-existing", kind: "evening", date: "2026-09-08",
       savedAt: "2026-09-08T00:00:00.000Z", syncState: "local", sleepH: 0, sleepQuality: 0,
       weightKg: "", restingHr: "", mood: 0, painParts: {}, note: "synthetic inherited memo" }} />)
-    expect(await screen.findByRole("textbox", { name: "오늘의 메모" })).toHaveValue("synthetic inherited memo")
+    expect(await openInput("evening", "오늘의 메모")).toHaveValue("synthetic inherited memo")
     act(() => setActiveLocalAccount(B))
     expect(screen.getByText("계정이 변경됐어요. 기록 목록에서 다시 열어 주세요.")).toBeVisible()
     expect(screen.queryByRole("textbox", { name: "오늘의 메모" })).toBeNull()
@@ -271,7 +326,7 @@ describe("existing form input autosave", () => {
 
   it("blocks navigation and unload until encrypted local write completion; quota failure stays blocked", async () => {
     render(<EveningCheckin targetDate="2026-09-08" />)
-    const field = await screen.findByRole("textbox", { name: "체중 (kg)" })
+    const field = await openInput("evening", "체중 (kg)")
     let release!: () => void
     holdWrite = new Promise(resolve => { release = resolve })
     fireEvent.change(field, { target: { value: "62." } })
@@ -289,7 +344,7 @@ describe("existing form input autosave", () => {
 
   it("writes locally immediately, sends only after 800ms, and ignores a late ACK for newer input", async () => {
     render(<EveningCheckin targetDate="2026-09-08" />)
-    const field = await screen.findByRole("textbox", { name: "체중 (kg)" })
+    const field = await openInput("evening", "체중 (kg)")
     let acknowledge!: () => void
     mocks.request.mockImplementation((_owner, request) => new Promise(resolve => {
       acknowledge = () => resolve({ ok: true, data: { kind: "saved", documentId: request.documentId,
@@ -311,11 +366,11 @@ describe("existing form input autosave", () => {
     mocks.persist.mockResolvedValueOnce({ ok: true, storage: "PENDING" })
     const done = vi.fn()
     render(<EveningCheckin targetDate="2026-09-08" onDone={done} />)
-    fireEvent.change(await screen.findByRole("textbox", { name: "체중 (kg)" }), { target: { value: "62." } }); await settle()
-    fireEvent.click(screen.getByRole("button", { name: /^저장/ })); await settle()
+    fireEvent.change(await openInput("evening", "체중 (kg)"), { target: { value: "62." } }); await settle()
+    fireEvent.click(reviewedSave()); await settle()
     expect(done).not.toHaveBeenCalled()
     expect(decodeFormDraft([...records.values()][0]!.draft).completed).toBe(false)
-    fireEvent.click(screen.getByRole("button", { name: /^저장/ })); await settle()
+    fireEvent.click(reviewedSave()); await settle()
     expect(done).toHaveBeenCalledOnce()
     expect(decodeFormDraft([...records.values()][0]!.draft).completed).toBe(true)
   })
@@ -329,7 +384,8 @@ describe("existing form input autosave", () => {
     mocks.request.mockResolvedValueOnce({ ok: true, data: { kind: "document", documentId: remote.documentId,
       revision: 4, document: remote.draft } })
     render(<RaceForm targetDate="2026-09-08" />)
-    expect(await screen.findByRole("button", { name: "긴장도 10" })).toHaveAttribute("aria-pressed", "true")
+    await openInput("race", /목표.*분|페이스.*분/)
+    expect(screen.getByRole("button", { name: "긴장도 10" })).toHaveAttribute("aria-pressed", "true")
     expect([...records.values()][0]!.serverRevision).toBe(4)
     expect(mocks.persist).not.toHaveBeenCalled()
   })
@@ -340,7 +396,7 @@ describe("existing form input autosave", () => {
     render(<EveningCheckin targetDate="2026-09-08" />)
     await waitFor(() => expect(mocks.request).toHaveBeenCalled())
     act(() => setActiveLocalAccount(B))
-    expect(await screen.findByRole("textbox", { name: "체중 (kg)" })).toHaveValue("")
+    expect(await openInput("evening", "체중 (kg)")).toHaveValue("")
     release({ ok: false, code: "INVALID_RESPONSE" }); await settle()
     expect(screen.queryByText("초안 조회 실패 또는 형식 확인 필요 · 기존 초안은 유지됨")).toBeNull()
     expect(records.size).toBe(0)
@@ -356,14 +412,14 @@ describe("existing form input autosave", () => {
     expect(records.size).toBe(0)
     expect(mocks.persist).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole("button", { name: "초안 조회 재시도" }))
-    expect(await screen.findByRole("textbox", { name: "체중 (kg)" })).toHaveValue("")
+    expect(await openInput("evening", "체중 (kg)")).toHaveValue("")
     expect(records.size).toBe(0)
   })
 
   it("labels offline drafts locally and resumes transport on online without finalization", async () => {
     vi.spyOn(navigator, "onLine", "get").mockReturnValue(false)
     render(<EveningCheckin targetDate="2026-09-08" />)
-    fireEvent.change(await screen.findByRole("textbox", { name: "체중 (kg)" }), { target: { value: "62." } })
+    fireEvent.change(await openInput("evening", "체중 (kg)"), { target: { value: "62." } })
     await idle()
     expect(screen.getByText("연결 대기 · 초안은 이 기기에 보관됨")).toBeVisible()
     expect(mocks.request).not.toHaveBeenCalled()
@@ -375,15 +431,15 @@ describe("existing form input autosave", () => {
 
   it("recovers the accepted edit baseline and stable entry ID after a post-ACK correction", async () => {
     render(<EveningCheckin targetDate="2026-09-08" />)
-    fireEvent.change(await screen.findByRole("textbox", { name: "체중 (kg)" }), { target: { value: "62." } }); await settle()
-    fireEvent.click(screen.getByRole("button", { name: /^저장/ })); await settle()
+    fireEvent.change(await openInput("evening", "체중 (kg)"), { target: { value: "62." } }); await settle()
+    fireEvent.click(reviewedSave()); await settle()
     const accepted = mocks.persist.mock.calls[0]![0]
-    fireEvent.change(screen.getByRole("textbox", { name: "체중 (kg)" }), { target: { value: "63." } }); await settle()
+    fireEvent.change(await openInput("evening", "체중 (kg)"), { target: { value: "63." } }); await settle()
     expect(decodeFormDraft([...records.values()][0]!.draft)).toMatchObject({ completed: false,
       entryId: accepted.id, baseSavedAt: accepted.savedAt })
     cleanup(); render(<EveningCheckin targetDate="2026-09-08" />)
-    expect(await screen.findByRole("textbox", { name: "체중 (kg)" })).toHaveValue("63.")
-    fireEvent.click(screen.getByRole("button", { name: /^저장/ })); await settle()
+    expect(await openInput("evening", "체중 (kg)")).toHaveValue("63.")
+    fireEvent.click(reviewedSave()); await settle()
     expect(mocks.persist.mock.calls[1]![0].id).toBe(accepted.id)
     expect(mocks.persist.mock.calls[1]![1]).toBe(accepted.savedAt)
   })

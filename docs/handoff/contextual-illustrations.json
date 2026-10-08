@@ -1,8 +1,14 @@
 {
   "version": 1,
-  "date": "2026-10-07",
+  "date": "2026-10-08",
   "purpose": "Small optional contextual illustrations, not UI icons, user decorations, products, or training/health/save-status evidence.",
   "sourceDraft": ".scratch/asset-expansion-20261007",
+  "additionalSources": [
+    "assets/illustrations/reference-motion-20261008/prompts.json",
+    "assets/illustrations/task-orientation-20261008/prompts.json",
+    "assets/illustrations/profile-companion-20261008/prompts.json",
+    "assets/illustrations/preference-characters-20261008/prompts.json"
+  ],
   "originalsPreserved": true,
   "conversion": {
     "format": "webp",
@@ -12,8 +18,8 @@
     "contentAltered": false
   },
   "rightsNote": "Generated candidates and user-workspace Mari assets reused at the user's request. No exclusive-rights or separate third-party license claim is made.",
-  "totalBytes": 98726,
-  "sourceBytes": 6830247,
+  "totalBytes": 295676,
+  "sourceBytes": 27935963,
   "assets": [
     {
       "sourceName": "mari-journal-guide.png",
@@ -102,6 +108,273 @@
       "width": 171,
       "height": 256,
       "hasAlpha": true
+    },
+    {
+      "sourceName": "analysis-lens-v2.png",
+      "sourcePath": "assets/illustrations/reference-motion-20261008/analysis-lens-v2.png",
+      "outputName": "analysis-lens-v2.webp",
+      "sourceBytes": 1098748,
+      "bytes": 8696,
+      "sourceSha256": "50275a4d3edba84b2920c80e5327562426100500fea3aaebbcd22f97f6e8b685",
+      "sha256": "49e6cc956d23f8ae3f56ab1d106507a4ef7ae4c474b4635777d56617a412be73",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true
+    },
+    {
+      "sourceName": "decorating-kit-v2.png",
+      "sourcePath": "assets/illustrations/reference-motion-20261008/decorating-kit-v2.png",
+      "outputName": "decorating-kit-v2.webp",
+      "sourceBytes": 1206975,
+      "bytes": 9518,
+      "sourceSha256": "17006aec4daff3ab209ca28d33184e7f5b15df1afa5a95b8b5d05eaf73206bbe",
+      "sha256": "e045180cd7949f0e65772ea4014b3b05b9c5f778bebf501afeba5efaf54fc0fc",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true
+    },
+    {
+      "sourceName": "journal-saved-v2.png",
+      "sourcePath": "assets/illustrations/reference-motion-20261008/journal-saved-v2.png",
+      "outputName": "journal-saved-v2.webp",
+      "sourceBytes": 1488244,
+      "bytes": 8300,
+      "sourceSha256": "aee6f0ba44af16b222036ab528b5b0f7cd71116c997ceb64acba9e9dcec35286",
+      "sha256": "50c15f006b98d3171cdb941f4ce4e5bbb6a536684d85729242c406c5c86c3634",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true
+    },
+    {
+      "sourceName": "plan-notebook-v2.png",
+      "sourcePath": "assets/illustrations/reference-motion-20261008/plan-notebook-v2.png",
+      "outputName": "plan-notebook-v2.webp",
+      "sourceBytes": 1365701,
+      "bytes": 10590,
+      "sourceSha256": "62849bd4293e202053ea6d96d3cb8de2917af08c9038ab97244bcb792a75aa60",
+      "sha256": "c2087fa093b2a6d47087097dafa0c8536cd021411392067764e689e55fc84245",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true
+    },
+    {
+      "sourceName": "running-shoe-v2.png",
+      "sourcePath": "assets/illustrations/reference-motion-20261008/running-shoe-v2.png",
+      "outputName": "running-shoe-v2.webp",
+      "sourceBytes": 1429140,
+      "bytes": 11682,
+      "sourceSha256": "01b76733ef83b00bb0aa9b07267a97b56f49b94907821abc4dee7be45b3d675b",
+      "sha256": "f569e32ba935c54a480036003f00e8c7c7723bebd6596463eb6f33c913a089e3",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true
+    },
+    {
+      "sourceName": "watch-file-v2.png",
+      "sourcePath": "assets/illustrations/reference-motion-20261008/watch-file-v2.png",
+      "outputName": "watch-file-v2.webp",
+      "sourceBytes": 1117704,
+      "bytes": 9496,
+      "sourceSha256": "286daf0b1edb99bd246075f2698c9e0e8a1fcc8a637227448d4d2d5012489e26",
+      "sha256": "3290b85c84b608c8bd63a965f60427fb26b7290084bc7549fb9ce9d6f6003cdd",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true
+    },
+    {
+      "sourceName": "training-map-v3.png",
+      "sourcePath": "assets/illustrations/task-orientation-20261008/training-map-v3.png",
+      "outputName": "training-map-v3.webp",
+      "sourceBytes": 1285796,
+      "bytes": 12800,
+      "sourceSha256": "5af61f48086caafba449510f3fc129a1c153cb63e209154a694c4b0856ba34c5",
+      "sha256": "32d9212aeddaf4f1d33f878e83c38fa223fa5480a344b221691aa10baaba6176",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true
+    },
+    {
+      "sourceName": "pace-stopwatch-v3.png",
+      "sourcePath": "assets/illustrations/task-orientation-20261008/pace-stopwatch-v3.png",
+      "outputName": "pace-stopwatch-v3.webp",
+      "sourceBytes": 1181184,
+      "bytes": 10878,
+      "sourceSha256": "40e5e2a9c8856ad0677766a43ef45716e9df4e5cc5ca613394c8299343b165d0",
+      "sha256": "2ba1eceee5e754c375b515934c9f8c2d1e7f9f2c52692bdd9c80353545641897",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true
+    },
+    {
+      "sourceName": "record-stopwatch-v3.png",
+      "sourcePath": "assets/illustrations/task-orientation-20261008/record-stopwatch-v3.png",
+      "outputName": "record-stopwatch-v3.webp",
+      "sourceBytes": 1143987,
+      "bytes": 8556,
+      "sourceSha256": "dac269d3778af2c59be21aaa149505f4c438df1c3e3418451b3e5e8f46bed9a8",
+      "sha256": "b0c129acf57b1d01569895154ac2153d924fdae6afd983048d0aedfd187d8368",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true
+    },
+    {
+      "sourceName": "plan-adjust-v3.png",
+      "sourcePath": "assets/illustrations/task-orientation-20261008/plan-adjust-v3.png",
+      "outputName": "plan-adjust-v3.webp",
+      "sourceBytes": 1400235,
+      "bytes": 10496,
+      "sourceSha256": "6d392015444adad7badc2f742ccc981aa488a8e65114f05b3aec2a844d7df55b",
+      "sha256": "0a5061d6852c0ee57cc0a1bda9b2bc2dc2692c93dac7c02a6c504fe41c97ebfc",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true
+    },
+    {
+      "sourceName": "mari-profile-hello-v4.png",
+      "sourcePath": "assets/illustrations/profile-companion-20261008/mari-profile-hello-v4.png",
+      "outputName": "mari-profile-hello-v4.webp",
+      "sourceBytes": 1108219,
+      "bytes": 10946,
+      "sourceSha256": "affddbfb8aea3ed123c798896282f46e013c596c5a50900f3c340ba1a6200c27",
+      "sha256": "80c553311cab5723794b59e97e07ba40c3f0537fbd09b7e574690409bb5b38ae",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true,
+      "conversionQuality": 82
+    },
+    {
+      "sourceName": "mari-profile-explain-v4.png",
+      "sourcePath": "assets/illustrations/profile-companion-20261008/mari-profile-explain-v4.png",
+      "outputName": "mari-profile-explain-v4.webp",
+      "sourceBytes": 1139952,
+      "bytes": 11898,
+      "sourceSha256": "b4654720d23dad2d976ebfcf24386c56545583f4d3e0b6c774792651b6136fa2",
+      "sha256": "60b7d6cb6025708923703a13237f017cbe293c61a1878f70d58f5daa489fa843",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true,
+      "conversionQuality": 82
+    },
+    {
+      "sourceName": "mari-profile-wave-v4.png",
+      "sourcePath": "assets/illustrations/profile-companion-20261008/mari-profile-wave-v4.png",
+      "outputName": "mari-profile-wave-v4.webp",
+      "sourceBytes": 1222568,
+      "bytes": 12748,
+      "sourceSha256": "078c30599ea5731be2ad4b0e95a41fb1c146bd473cd4bf5f196f2cf2764e4f19",
+      "sha256": "b355140771ba709c3700ede32bafe0cdabb46733592dbaba1ddc790bc85bdc3f",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true,
+      "conversionQuality": 82
+    },
+    {
+      "sourceName": "preference-structure-original.png",
+      "sourcePath": "assets/illustrations/preference-characters-20261008/preference-structure-original.png",
+      "outputName": "preference-structure-v1.webp",
+      "sourceBytes": 950574,
+      "bytes": 11072,
+      "sourceSha256": "79c35a3fb2c770cda3dd8c3ee33c333255771fee3b2b77bd585cbec2799d8df2",
+      "sha256": "62b59b9e53c5bdc7105ead9d526c8156ffc2eeaf42bb94c47bf2813e166926d7",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true,
+      "conversion": {
+        "tool": "FFmpeg libwebp",
+        "quality": 84,
+        "maximumSide": 256,
+        "contentAltered": false
+      }
+    },
+    {
+      "sourceName": "preference-challenge-original.png",
+      "sourcePath": "assets/illustrations/preference-characters-20261008/preference-challenge-original.png",
+      "outputName": "preference-challenge-v1.webp",
+      "sourceBytes": 840420,
+      "bytes": 9730,
+      "sourceSha256": "a0fc04b7d9ab73624739d36f9da391b49b8de668ad711b5a024a411a95800253",
+      "sha256": "6a92ef37e6324359e280bcc8ba870a8f4be1e80defcbd9aa32ad9a46099e2dca",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true,
+      "conversion": {
+        "tool": "FFmpeg libwebp",
+        "quality": 84,
+        "maximumSide": 256,
+        "contentAltered": false
+      }
+    },
+    {
+      "sourceName": "preference-intensity-original.png",
+      "sourcePath": "assets/illustrations/preference-characters-20261008/preference-intensity-original.png",
+      "outputName": "preference-intensity-v1.webp",
+      "sourceBytes": 679372,
+      "bytes": 9444,
+      "sourceSha256": "18061034be90b53bc3baa2e144807a5cb8cb3d359fe120e1acf3f0b3430209ba",
+      "sha256": "13c3bb89249bc0e8037946a204a31a0a36e033f7a21c503136786f1870dd45bb",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true,
+      "conversion": {
+        "tool": "FFmpeg libwebp",
+        "quality": 84,
+        "maximumSide": 256,
+        "contentAltered": false
+      }
+    },
+    {
+      "sourceName": "preference-social-original.png",
+      "sourcePath": "assets/illustrations/preference-characters-20261008/preference-social-original.png",
+      "outputName": "preference-social-v1.webp",
+      "sourceBytes": 838110,
+      "bytes": 10404,
+      "sourceSha256": "6865e743ba988688c54589319b45a3e74ebec302d0650f9113551d03920f9b6f",
+      "sha256": "a1823cecddc91babcbb941866b3b832858829d1618f57c27f8674de7d4977ed9",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true,
+      "conversion": {
+        "tool": "FFmpeg libwebp",
+        "quality": 84,
+        "maximumSide": 256,
+        "contentAltered": false
+      }
+    },
+    {
+      "sourceName": "preference-explore-original.png",
+      "sourcePath": "assets/illustrations/preference-characters-20261008/preference-explore-original.png",
+      "outputName": "preference-explore-v1.webp",
+      "sourceBytes": 839651,
+      "bytes": 10414,
+      "sourceSha256": "62a38485163fef4d37dc2bbdcbdb221f9d63aff5ea946927463d65cc6e37e3b5",
+      "sha256": "bba8ce5aa7d12c6882a07eb3692140ba9c0917b3a8bdbfe6b229920c07374943",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true,
+      "conversion": {
+        "tool": "FFmpeg libwebp",
+        "quality": 84,
+        "maximumSide": 256,
+        "contentAltered": false
+      }
+    },
+    {
+      "sourceName": "preference-refresh-original.png",
+      "sourcePath": "assets/illustrations/preference-characters-20261008/preference-refresh-original.png",
+      "outputName": "preference-refresh-v1.webp",
+      "sourceBytes": 769136,
+      "bytes": 9282,
+      "sourceSha256": "ad13a38d54e495fe22e033603169d5700946ff431d1ba853f5161a841a9cf5ff",
+      "sha256": "93accbc67d4146b2cb1cd4f9caa5b9cd2739fe5bfbc1275b06b7941a71e9c860",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true,
+      "conversion": {
+        "tool": "FFmpeg libwebp",
+        "quality": 84,
+        "maximumSide": 256,
+        "contentAltered": false
+      }
     }
   ]
 }

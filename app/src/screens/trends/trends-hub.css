@@ -1,8 +1,10 @@
+.trends-hub__guide { margin: var(--space-5) var(--space-5) var(--space-2); }
+
 .trends-hub__sections {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 16px 20px 8px;
+  padding: var(--space-2) var(--space-5) var(--space-3);
 }
 
 .trends-hub__detail-menu { margin: 0 20px 12px; }
@@ -43,9 +45,9 @@
 .trends-record-reading__journal h2 { margin: 16px 0; font-size: 20px; line-height: 1.5; }
 
 .trends-hub__drilldowns {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
   padding: 8px 20px 12px;
   border-bottom: 1px solid var(--line);
 }
@@ -66,18 +68,29 @@
 }
 
 .trends-hub__drilldowns button {
-  min-height: 44px;
-  padding-inline: 8px;
-  border: 0;
-  border-bottom: 1px solid transparent;
-  border-radius: 0;
-  background: transparent;
-  color: var(--ink-2);
-  font-size: var(--fs-caption, 12px);
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  min-width: 0;
+  min-height: var(--app-touch-min);
+  padding: var(--space-3);
+  border: var(--bw-line) solid var(--line);
+  border-radius: var(--r-action);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
+.trends-hub__drilldowns button > span { font-weight: 600; }
+.trends-hub__drilldowns button > small { color: var(--ink-2); font: 400 var(--fs-caption) / 1.5 var(--sans); }
+
 .trends-hub__drilldowns button[aria-pressed="true"] {
-  border-bottom-color: var(--ink);
+  border-color: var(--brand);
+  background: var(--surface-2);
   color: var(--ink);
 }
 
@@ -133,3 +146,7 @@
 .trends-hub__recovery { margin: var(--space-3) 20px; }
 .trends-hub__recovery > button { padding-inline: 0; }
 .trends-hub__start button:focus-visible, .trends-hub__example button:focus-visible, .trends-hub__recovery > button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+@media (max-width: 359px) {
+  .trends-hub__drilldowns { grid-template-columns: minmax(0, 1fr); }
+}

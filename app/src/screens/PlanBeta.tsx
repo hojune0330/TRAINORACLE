@@ -77,6 +77,7 @@ import {
 import type { PlanCloudPersistenceState } from "../domain/account/plan-cloud-backup"
 import type { PlannedSessionLogDraft } from "../domain/planned-session-link"
 import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
+import { useTaskFlowBack } from "../hooks/useTaskFlowBack"
 import { useOrderedStepMotion } from "../hooks/useOrderedStepMotion"
 import { resolvePlanMethodChange } from "../domain/plan-method-selection"
 import { todayISO } from "../domain/journal-store"
@@ -561,6 +562,30 @@ function LegacyPlanBeta({
       : generated !== null && gate !== null
         ? "candidates"
         : instantEntryOpen ? "instant-entry" : `intake-${step}`
+
+  const canGoBackInIntake = refining || step !== "goal" || instantEntry !== undefined
+  const goBackInIntake = () => {
+    if (refining) {
+      const previous = refinementReturn.current
+      refinementReturn.current = null
+      setRefining(false)
+      if (previous !== null) {
+        setGenerated(previous.generated)
+        setGate(previous.gate)
+        setTargetRaceDate(previous.targetRaceDate)
+        setErrorCode(previous.errorCode)
+        setRetrySelection(previous.retrySelection)
+      }
+      return
+    }
+    if (instantEntry !== undefined && (step === "experience" || step === "goal")) {
+      setInstantEntryOpen(true)
+      return
+    }
+    if (step !== "goal") setStep(previousIntakeStep(step, draft.eventGroup))
+  }
+  useTaskFlowBack({ enabled: viewKey.startsWith("intake-") && canGoBackInIntake,
+    busy: selectionSaving || instantRecordSaving || initialApplying, onBack: goBackInIntake })
 
   React.useLayoutEffect(() => {
     if (viewKey.startsWith("intake-")) return
@@ -1207,26 +1232,8 @@ function LegacyPlanBeta({
         questionRef={intakeQuestionRef}
         draft={draft}
         refining={refining}
-        onBack={() => {
-          if (refining) {
-            const previous = refinementReturn.current
-            refinementReturn.current = null
-            setRefining(false)
-            if (previous !== null) {
-              setGenerated(previous.generated)
-              setGate(previous.gate)
-              setTargetRaceDate(previous.targetRaceDate)
-              setErrorCode(previous.errorCode)
-              setRetrySelection(previous.retrySelection)
-            }
-            return
-          }
-          if (instantEntry !== undefined && (step === "experience" || step === "goal")) {
-            setInstantEntryOpen(true)
-            return
-          }
-          setStep(previousIntakeStep(step, draft.eventGroup))
-        }}
+        canGoBack={canGoBackInIntake}
+        onBack={goBackInIntake}
         onJump={(target) => setStep(target)}
         onGoal={(eventDistanceM) => {
           const eventGroup = eventGroupForDistance(eventDistanceM)

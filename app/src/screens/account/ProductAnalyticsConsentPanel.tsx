@@ -56,7 +56,7 @@ export function ProductAnalyticsConsentPanel({
   }
 
   return (
-    <section aria-labelledby="product-analytics-title" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <section aria-labelledby="product-analytics-title" aria-busy={loading || busy} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <SectionLb><span id="product-analytics-title">앱 사용 정보 보내기</span></SectionLb>
       <p style={{ fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.65, color: "var(--ink-2)", margin: 0 }}>
         앱을 개선할 수 있도록 어떤 화면을 열고 저장이 성공했는지 같은 정해진 이름만 기록해요.

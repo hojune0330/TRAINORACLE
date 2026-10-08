@@ -108,6 +108,9 @@ export function SavedToast({
   reviewMessage,
   storageMessage,
   rewardMessage,
+  rewardRetry = false,
+  rewardLoading = false,
+  onRetryReward,
   onDismiss,
   onOpenTrends,
   onOpenBackup,
@@ -120,6 +123,9 @@ export function SavedToast({
   readonly reviewMessage?: string
   readonly storageMessage?: string
   readonly rewardMessage?: string
+  readonly rewardRetry?: boolean
+  readonly rewardLoading?: boolean
+  readonly onRetryReward?: () => void
   readonly onDismiss?: () => void
   readonly onOpenTrends?: () => void
   readonly onOpenBackup?: () => void
@@ -156,6 +162,9 @@ export function SavedToast({
           {needsReview ? `분석 결과를 확인해야 해요. ${reviewMessage}` : presentation.detail}
         </div>
         {rewardMessage !== undefined && <div className="saved-toast__reward">{rewardMessage}</div>}
+        {rewardRetry && onRetryReward && <button className="saved-toast__action" type="button" disabled={rewardLoading} onClick={onRetryReward}>
+          {rewardLoading ? "포인트 확인 중" : "포인트 다시 확인"}
+        </button>}
         {actionable && (
           <button className="saved-toast__action" type="button" onClick={onAction}>
             {presentation.actionLabel}
@@ -169,7 +178,7 @@ export function SavedToast({
   )
 }
 
-function receiptPresentation(receipt: SavedFactReceipt): {
+export function receiptPresentation(receipt: SavedFactReceipt): {
   readonly title: string
   readonly detail: string
   readonly actionLabel?: string

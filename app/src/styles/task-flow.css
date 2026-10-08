@@ -1,0 +1,173 @@
+/* One current task; no viewport-height filler or second fixed navigation bar. */
+@media (min-width: 900px) {
+  /* Only task surfaces grow; journal paper coordinates and browse layouts stay unchanged. */
+  .app-shell--task { --app-shell-max-width: 48rem; }
+}
+
+.task-flow {
+  display: grid;
+  gap: var(--space-6);
+  min-width: 0;
+  padding-block: var(--space-4);
+  overflow-wrap: anywhere;
+}
+
+.task-flow__header,
+.task-flow__body {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.task-flow > .task-flow__header,
+.task-flow > .task-flow__actions,
+.task-flow__summary > p,
+.task-flow__body > .post-session-review,
+.task-flow__body > .race-review {
+  padding-inline: var(--space-5);
+}
+
+.task-flow__body > :is(.post-session-review, .race-review) > p:first-child {
+  margin-top: 0;
+}
+
+.task-flow__back {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: var(--space-2);
+  min-height: var(--app-touch-min, 44px);
+  padding: var(--space-2);
+  color: var(--ink-2);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.task-flow__summary {
+  min-width: 0;
+  color: var(--ink-2);
+}
+
+.task-flow__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--space-3);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.task-flow__actions > button {
+  min-height: var(--app-touch-min, 44px);
+  max-width: 100%;
+  white-space: normal;
+}
+
+.task-flow__back:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.task-flow__back:disabled { cursor: default; }
+
+.task-flow__title-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.task-flow__title-row > .app-heading { min-width: 0; }
+
+.task-review-additions,
+.post-session-review__additions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+.task-review-additions > button,
+.post-session-review__additions-grid > button {
+  min-height: var(--app-touch-min, 44px);
+  margin: 0;
+  min-width: 0;
+  white-space: normal;
+  text-align: left;
+}
+.post-session-review__additions > h3 { font-size: var(--fs-body); margin: var(--space-4) 0 0; }
+
+.journal-save-result {
+  padding: var(--space-6) var(--space-4);
+  max-width: 48rem;
+  margin-inline: auto;
+}
+
+.journal-save-result__mark { color: var(--ink-2); }
+.journal-save-result .task-flow > :is(.task-flow__header, .task-flow__actions) { padding-inline: 0; }
+.journal-save-result p { margin: 0; line-height: 1.6; }
+.journal-save-result__reward { display: grid; gap: var(--space-2); }
+.journal-save-result__optional { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.journal-save-result button {
+  min-height: var(--app-touch-min, 44px);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.journal-save-result .journal-save-result__primary {
+  background: var(--brand);
+  color: var(--on-brand, var(--bg));
+  border-color: var(--brand);
+}
+.journal-save-result__optional button { border-color: transparent; }
+.journal-save-result button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+/* Reference-inspired tactile controls: scoped to tasks, not the diary or charts. */
+.task-flow :is(.quick-log__primary, .quick-log__secondary),
+.task-flow__actions > button,
+.task-review-additions > button,
+.post-session-review__additions-grid > button,
+.task-flow .quick-log__rpe-grid button,
+.task-flow .quick-log__slot button,
+.task-flow .journal-progressive-edit button,
+.journal-save-result button {
+  border-radius: var(--r-action);
+}
+
+.task-flow .quick-log__choices {
+  display: grid;
+  gap: var(--space-2);
+}
+.task-flow .quick-log__choices button {
+  padding: var(--space-4);
+  min-height: var(--app-action-height);
+  border-radius: var(--r-task-surface);
+  background: var(--surface-2);
+  transition: background-color var(--dur-instant), transform var(--dur-instant) var(--ease-out-strong);
+}
+.task-flow .quick-log__choices button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--surface);
+}
+
+.task-flow button:not(:disabled):not([aria-disabled="true"]):active {
+  transform: scale(0.98);
+}
+.task-flow .task-flow__back:not(:disabled):active {
+  transform: none;
+  background: var(--surface-2);
+}
+.journal-save-result__intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.journal-save-result__intro-copy { display: grid; gap: var(--space-3); min-width: 0; }
+.journal-save-result__primary { flex: 1 1 160px; }
+.journal-save-result__secondary { flex: 0 1 auto; }
+
+.task-flow[data-task-reduced-motion="true"] button:not(:disabled):not([aria-disabled="true"]):active { transform: none; }
+.task-flow[data-task-reduced-motion="true"] .quick-log__choices button { transition: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .task-flow button:not(:disabled):not([aria-disabled="true"]):active { transform: none; }
+  .task-flow .quick-log__choices button { transition: none; }
+}

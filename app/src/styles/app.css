@@ -787,7 +787,8 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
 }
 
 .quick-log__date,
-.quick-log__stage > section > small {
+.quick-log__stage > section > small,
+.quick-log__stage > [data-task-motion-surface] > section > small {
   font-family: var(--mono);
   font-size: var(--fs-mono-xs);
   color: var(--ink-3);
@@ -956,10 +957,10 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   cursor: pointer;
 }
 
-.quick-log__choices button:active,
-.quick-log__rpe-grid button:active,
-.quick-log__primary:active,
-.quick-log__secondary:active { transform: scale(0.97); }
+.quick-log__choices button:not(:disabled):not([aria-disabled="true"]):active,
+.quick-log__rpe-grid button:not(:disabled):not([aria-disabled="true"]):active,
+.quick-log__primary:not(:disabled):not([aria-disabled="true"]):active,
+.quick-log__secondary:not(:disabled):not([aria-disabled="true"]):active { transform: scale(0.98); }
 
 .quick-log__rpe-guide { display: grid; gap: var(--space-2); }
 .quick-log__rpe-guide > div { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--space-2); }

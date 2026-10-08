@@ -45,6 +45,7 @@
 .prescription-adjustment .prescription-adjustment__icon { display: grid; place-items: center; width: var(--app-touch-min); height: var(--app-touch-min); padding: 0; }
 .prescription-adjustment__content { flex: 1; overflow: auto; overscroll-behavior: contain; padding: var(--space-4); }
 .prescription-adjustment__content > * { max-width: 800px; margin-inline: auto; }
+.prescription-adjustment__content > .task-guide { margin-block: 0 var(--space-4); }
 .prescription-adjustment__choices { padding: 0; margin-block: 0 var(--space-4); border: 0; }
 .prescription-adjustment__choices legend { padding: 0; font-weight: 700; }
 .prescription-adjustment__choices label { display: flex; align-items: center; gap: var(--space-3); min-height: var(--app-touch-min); padding-block: var(--space-2); border-bottom: var(--bw-line) solid var(--line); cursor: pointer; }

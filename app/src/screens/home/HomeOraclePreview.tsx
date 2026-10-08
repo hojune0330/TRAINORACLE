@@ -1,4 +1,5 @@
 import { ArrowRight } from "lucide-react"
+import { ContextualIllustration } from "../../components/ContextualIllustration"
 import "../../styles/home-hub.css"
 
 export type HomeOraclePreviewProps = {
@@ -21,7 +22,10 @@ export function HomeOraclePreview({ question, answer, sourceLabel, kind, onOpen 
   // Examples remain opt-in. The home invitation contains no fictional result.
   if (kind === "example") return <section className="home-hub__oracle home-hub__oracle--example" aria-label="오라클 · 예시 결과" data-oracle-kind={kind}>
     <span className="home-hub__oracle-brand">오라클</span>
-    <h2>훈련량부터 경기 기록 비교까지</h2>
+    <div className="contextual-entry-intro">
+      <h2 className="contextual-entry-intro__copy">훈련량부터 경기 기록 비교까지</h2>
+      <ContextualIllustration image="analysis-lens" />
+    </div>
     <p className="home-hub__oracle-answer">기록 없이도 예시 결과를 먼저 볼 수 있어요.</p>
     <button className="home-hub__oracle-action" type="button" onClick={onOpen}>예시 결과 보기<ArrowRight aria-hidden="true" size={17} /></button>
   </section>

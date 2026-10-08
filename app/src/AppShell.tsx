@@ -23,7 +23,7 @@ import { loungeEntryIntent } from "./domain/lounge/entry-intent"
 import { loadEntries, localOnlyCount, todayISO } from "./domain/journal-store"
 import type { JournalEntry } from "./domain/journal-store"
 import { awardJournalEntry, type EngagementAwardResult } from "./domain/engagement"
-import { ACCOUNT_REWARD_EVENT, accountRewardsEnabled, accountRewardStatus, readAccountRewardSummary } from "./domain/account/account-reward-service"
+import { ACCOUNT_REWARD_EVENT, accountRewardsEnabled, accountRewardStatus, readAccountRewardSummary, hydrateAccountRewards } from "./domain/account/account-reward-service"
 import { createSavedFactReceipt } from "./domain/save-receipt"
 import { analysisNavigationForReceipt, type AnalysisNavigation, type AnalysisSection } from "./domain/analysis-navigation"
 import { buildOraclePersonalResult } from "./domain/oracle-personal-result"
@@ -190,6 +190,9 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   })
   React.useEffect(() => { clearRecoveryTab() }, [])
   const [savedToast, setSavedToast] = React.useState<ShellToastState | null>(null)
+  const confirmedSaveEffects = React.useRef<{
+    entryId: string; savedAt: string; scope: number; rewardMessage: string; rewardRetry?: boolean
+  } | null>(null)
   const [analysisContext, setAnalysisContext] = React.useState<AnalysisNavigation | undefined>()
   const analysisReturnContext = React.useRef<AnalysisNavigation | undefined>()
   const [oracleHubSection, setOracleHubSection] = React.useState<"training" | "profile" | "library">("training")
@@ -454,12 +457,17 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       if (!pending || !accountRewardsEnabled() || pending.ownerId !== activeLocalAccount()) return
       const summary = readAccountRewardSummary()
       if (!summary && accountRewardStatus() !== "FAILED") return
-      const rewardMessage = !summary ? "계정 포인트를 확인하지 못했어요. 나중에 다시 확인해 주세요."
+      const rewardMessage = !summary ? "기록은 보관됐어요. 포인트 확인만 다시 해 주세요."
         : summary.today === pending.date && summary.journalRecordedToday
           ? "오늘 기록 포인트가 계정에 반영돼 있어요."
           : "계정 기록을 확인했어요. 현재 추가 적립된 기록 포인트는 없어요."
-      setSavedToast(current => current?.rewardMessage === JOURNAL_REWARD_MESSAGE.PENDING ? { ...current, rewardMessage } : current)
-      pendingReward.current = null
+      if (confirmedSaveEffects.current?.scope === localJournalScopeGeneration()) {
+        confirmedSaveEffects.current = { ...confirmedSaveEffects.current, rewardMessage, rewardRetry: !summary }
+      }
+      setSavedToast(current => current?.rewardMessage === JOURNAL_REWARD_MESSAGE.PENDING || current?.rewardRetry
+        ? { ...current, rewardMessage, rewardRetry: !summary, rewardLoading: false } : current)
+      // A failed summary read is retryable; never resubmit the journal or award.
+      if (summary) pendingReward.current = null
     }
     const scope = () => {
       if (recordingOrigin.current) { setV(INITIAL_VIEW_STATE); setUtilityView(null) }
@@ -469,7 +477,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       setGuestOracleSession(null)
       analysisReturnContext.current = undefined
       setOracleHubSection("training")
-      pendingReward.current = null; oracleInputRef.current = null; decorationReturn.current = null; setDecorationInitialDate(undefined); setSavedToast(null); setAnalysisContext(undefined)
+      pendingReward.current = null; confirmedSaveEffects.current = null; oracleInputRef.current = null; decorationReturn.current = null; setDecorationInitialDate(undefined); setSavedToast(null); setAnalysisContext(undefined)
       oraclePlanForwardRef.current = null
       paceRequestRef.current = null
       if (overlayRef.current?.kind === "pace") {
@@ -524,12 +532,22 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       setV(INITIAL_VIEW_STATE)
     }, false)
   }
-  const goHomeAfterSave = (savedEntry: JournalEntry, reviewMessage?: string, detailDate?: string, storageMessage?: string) => {
+  const confirmSavedJournalEffects = (savedEntry: JournalEntry) => {
+    const prior = confirmedSaveEffects.current
+    const scope = localJournalScopeGeneration()
+    if (prior?.scope === scope && prior.entryId === savedEntry.id && prior.savedAt === savedEntry.savedAt) return prior
     recordOracleJournalParticipation(savedEntry)
-    const receipt = createSavedFactReceipt(savedEntry)
     const reward = awardJournalEntry(savedEntry, todayISO())
     pendingReward.current = reward.kind === "PENDING" ? { ownerId: activeLocalAccount(), date: savedEntry.date } : null
-    const rewardMessage = JOURNAL_REWARD_MESSAGE[reward.kind]
+    const confirmed = { entryId: savedEntry.id, savedAt: savedEntry.savedAt, scope,
+      rewardMessage: JOURNAL_REWARD_MESSAGE[reward.kind], rewardRetry: false }
+    confirmedSaveEffects.current = confirmed
+    void trackProductEvent("JOURNAL_SAVED")
+    return confirmed
+  }
+  const goHomeAfterSave = (savedEntry: JournalEntry, reviewMessage?: string, detailDate?: string, storageMessage?: string, completionAlreadyShown = false) => {
+    const { rewardMessage, rewardRetry } = confirmSavedJournalEffects(savedEntry)
+    const receipt = createSavedFactReceipt(savedEntry)
     runViewTransition("replace", () => {
       const origin = recordingOrigin.current
       if (isOraclePlanRecording(origin)) window.history.back()
@@ -541,7 +559,10 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           setV(detailDate === undefined ? INITIAL_VIEW_STATE : viewForJournalReturn(v))
         }
       }
-      setSavedToast({ count: localOnlyCount(), phase: "enter", receipt, reviewMessage, storageMessage, rewardMessage })
+      // All form onDone contracts return only after a confirmed device/account
+      // save; pending and conflict results stay in the form recovery flow.
+      setSavedToast({ count: localOnlyCount(), phase: "enter", receipt, reviewMessage, storageMessage,
+        storageStatus: "CONFIRMED", rewardMessage, rewardRetry, completionAlreadyShown })
       const intent = oracleInputRef.current
       if (intent?.inputKind === "log") oracleInputRef.current = null
       if (reviewMessage === undefined && intent?.inputKind === "log" && intent.owner === activeLocalAccount()) {
@@ -549,12 +570,25 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         openOverlay({ kind: "oracle", topic: intent.topic, mode: "personal" })
       }
     })
-    void trackProductEvent("JOURNAL_SAVED")
+  }
+
+  const retrySavedReward = () => {
+    const pending = pendingReward.current
+    if (!pending || pending.ownerId !== activeLocalAccount() || !accountRewardsEnabled()
+      || accountRewardStatus() === "LOADING") return
+    const scope = localJournalScopeGeneration()
+    setSavedToast(current => current?.rewardRetry ? { ...current, rewardLoading: true } : current)
+    void hydrateAccountRewards().catch(() => {
+      if (scope !== localJournalScopeGeneration() || pendingReward.current !== pending) return
+      setSavedToast(current => current?.rewardRetry ? { ...current, rewardLoading: false } : current)
+    })
   }
 
   React.useEffect(() => {
     if (savedToast === null) return
+    if (savedToast.receipt.savedDate !== undefined && !savedToast.completionAlreadyShown) return
     if (savedToast.reviewMessage !== undefined) return
+    if (savedToast.rewardRetry || savedToast.rewardLoading || savedToast.rewardMessage === JOURNAL_REWARD_MESSAGE.PENDING) return
     const delay = savedToast.phase === "enter" ? TOAST_READABLE_MS : TOAST_EXIT_MS
     const t = window.setTimeout(() => {
       setSavedToast(current => {
@@ -1120,11 +1154,19 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
             : () => runViewTransition("pop", () => setV(s => ({ ...s, entryType: "choose" })))}
         onOpenImport={openImport}
         onContinueDetailed={(entry) => runViewTransition("replace", () => setV((state) => viewForJournalDraft(state, entry.date, entry)))}
+        onSaved={(entry, reviewMessage, storageMessage) => {
+          const reward = confirmSavedJournalEffects(entry)
+          // Quick owns its completion screen. Show only the existing receipt
+          // notice now, so Back/closing never withholds confirmed reward status.
+          setSavedToast({ count: localOnlyCount(), phase: "enter", receipt: createSavedFactReceipt(entry),
+            storageStatus: "CONFIRMED", reviewMessage, storageMessage,
+            rewardMessage: reward.rewardMessage, rewardRetry: reward.rewardRetry, completionAlreadyShown: true })
+        }}
         onDone={(picked, savedEntry, reviewMessage, storageMessage) => {
           if (v.entryType === "choose") {
             runViewTransition("push", () => setV(s => ({ ...s, entryType: picked })))
           } else if (savedEntry !== undefined) {
-            goHomeAfterSave(savedEntry, reviewMessage, v.journalDraft?.date, storageMessage)
+            goHomeAfterSave(savedEntry, reviewMessage, v.journalDraft?.date, storageMessage, v.entryType === "quick-session")
           }
         }}
       />
@@ -1179,6 +1221,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       savedToast={savedToast}
       tab={v.tab === "log" && recordingOrigin.current ? tabForChrome(recordingOrigin.current.view) : tabForChrome(v)}
       onDismissToast={() => setSavedToast(null)}
+      onRetryReward={retrySavedReward}
       onOpenTrends={goTrendsFromReceipt}
       onDecorateSaved={() => { const date = savedToast?.receipt.savedDate; if (date && loadEntries().some(entry => entry.date === date)) openDecorationStudio(date) }}
       onOpenSaved={() => {
@@ -1195,7 +1238,8 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       }}
       onTab={goTab}
       onStartRecording={() => startRecording()}
-      hideTabBar={overlay !== null && overlay.kind !== "oracle"}
+      hideTabBar={overlay !== null ? overlay.kind !== "oracle" : v.tab === "log" && v.entryType !== "choose"}
+      wideTask={overlay === null && (v.tab === "log" || v.tab === "plan")}
     >
       <React.Suspense fallback={<AppLoadingState />}>
         <div
