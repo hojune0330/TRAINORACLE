@@ -67,6 +67,7 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
     { name: "full-export.confirm", locator: page.getByRole("button", { name: "파일 만들기" }) },
   ])
   await page.getByRole("button", { name: "취소" }).click()
+  await page.getByRole("button", { name: "더보기로 돌아가기" }).click()
   await page.getByRole("button", { name: "홈으로 돌아가기" }).click()
   await expectNoHorizontalOverflow(page)
   await entries.nth(0).click()
@@ -108,6 +109,7 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
   await detailMenu.getByRole("button", { name: "월별 변화", exact: true }).click()
   const metricButtons = page
     .getByRole("region", { name: "최근 4개월 추이" })
+    .getByRole("group", { name: "추이 항목" })
     .getByRole("button")
   await auditTouchTargets(page, [
     { name: "trends.back", locator: page.getByRole("button", { name: "뒤로", exact: true }) },

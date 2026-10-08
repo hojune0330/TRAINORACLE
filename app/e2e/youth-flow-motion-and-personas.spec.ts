@@ -12,18 +12,23 @@ async function expectActiveQuestionAtReadingPosition(page: import("@playwright/t
     const scrollRegion = element.closest<HTMLElement>(".app-scroll-region")
     if (scrollRegion === null) return false
 
-    const targetRect = element.getBoundingClientRect()
+    const eyebrowRect = element.getBoundingClientRect()
     const regionRect = scrollRegion.getBoundingClientRect()
-    const scrollMargin = Number.parseFloat(window.getComputedStyle(element).scrollMarginTop) || 0
-    const aligned = Math.abs(targetRect.top - regionRect.top - scrollMargin) <= 4
-    const cannotScrollFurther = scrollRegion.scrollTop >= scrollRegion.scrollHeight - scrollRegion.clientHeight - 2
-    const readableTopLimit = window.innerWidth <= 600 ? 64 : window.innerHeight * 0.25
-    const choices = element.closest(".plan-intake")?.querySelector(".plan-choice-list")
-    const choicesBottom = choices?.getBoundingClientRect().bottom ?? Infinity
+    const intake = element.closest(".plan-intake")
+    const title = intake?.querySelector("h1")
+    const firstChoice = intake?.querySelector(".plan-choice-list button")
+    if (title === null || title === undefined || firstChoice === null || firstChoice === undefined) return false
+    const choiceRect = firstChoice.getBoundingClientRect()
 
-    return targetRect.top >= regionRect.top
-      && ((targetRect.top <= readableTopLimit && aligned)
-        || (cannotScrollFurther && choicesBottom <= regionRect.bottom))
+    return eyebrowRect.top >= regionRect.top
+      && eyebrowRect.bottom <= regionRect.bottom
+      && (scrollRegion.scrollHeight <= scrollRegion.clientHeight + 1
+        || eyebrowRect.top - regionRect.top <= 64)
+      && document.activeElement === title
+      && choiceRect.top >= regionRect.top
+      && choiceRect.bottom <= regionRect.bottom
+      && scrollRegion.scrollWidth <= scrollRegion.clientWidth + 1
+      && document.documentElement.scrollWidth <= window.innerWidth + 1
   })).toBe(true)
 }
 
