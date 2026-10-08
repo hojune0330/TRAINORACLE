@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "date": "2026-10-08",
+  "generator": "built-in image_gen",
+  "useCase": "stylized-concept",
+  "purpose": "Original decorative orientation assets for difficult tasks. They do not encode records, results, health state, rewards or success.",
+  "rightsNote": "Generated at the user's request. No exclusive-rights or third-party license claim is made.",
+  "assets": [
+    {
+      "key": "training-map-v3",
+      "sourceName": "training-map-v3.png",
+      "outputName": "training-map-v3.webp",
+      "transparent_background": true,
+      "prompt": "Use case: stylized-concept\nAsset type: small optional orientation illustration for a youth running training app, displayed beside an analysis heading at 64 to 80 px.\nPrimary request: one original friendly tactile 3D object composition: a small folded ivory map card carrying a single simple teal running-track oval, with a chunky teal magnifying glass resting across one corner. The oval is only a pictorial track, not data or a chart.\nScene/backdrop: genuine transparent alpha background, no scene, no floor or background shadow.\nStyle/medium: softly rounded matte clay and thick paper miniature, calm contemporary Korean mobile-product illustration, independent original design.\nComposition/framing: square canvas, centered composition filling about 76 percent of the image; slight three-quarter view; all pieces entirely visible; clear silhouette readable at 64 px; the track and magnifier should remain easily recognizable.\nLighting/mood: soft diffuse light, gentle form shading only on the objects, approachable without a face.\nColor palette: restrained deep teal #0D5F5A, warm ivory #FAFAF7, charcoal #2B3330, tiny muted mint accents. No bright new colors.\nMaterials/textures: smooth matte clay with restrained paper grain; no glossy glass glare; simple solid magnifier lens with subtle clear center.\nConstraints: no text, letters, numbers, labels, logos, watermark, badges, stars, medals, checkmarks, graphs, medical symbols or faces. No detached floating decorations. No border, plate, cast floor shadow or opaque backdrop. Do not mimic any company's artwork. Preserve true transparency."
+    },
+    {
+      "key": "pace-stopwatch-v3",
+      "sourceName": "pace-stopwatch-v3.png",
+      "outputName": "pace-stopwatch-v3.webp",
+      "transparent_background": true,
+      "prompt": "Use case: stylized-concept\nAsset type: small optional orientation illustration for a youth running training app, displayed beside a task heading at 64 to 80 px.\nScene/backdrop: genuine transparent alpha background, no scene, no floor or background shadow.\nStyle/medium: softly rounded matte clay and thick paper miniature, calm contemporary Korean mobile-product illustration, independent original design.\nComposition/framing: square canvas, centered composition filling about 76 percent of the image; slight three-quarter view; all pieces entirely visible; clear silhouette readable at 64 px.\nLighting/mood: soft diffuse light, gentle form shading only on the objects, approachable without a face.\nColor palette: restrained deep teal #0D5F5A, warm ivory #FAFAF7, charcoal #2B3330, tiny muted mint accents. No bright new colors.\nMaterials/textures: smooth matte clay with restrained paper grain, not glossy.\nConstraints: no text, letters, numbers, labels, logos, watermark, badges, stars, medals, checkmarks, graphs, medical symbols or faces. No detached floating decorations. No border, plate, cast floor shadow or opaque backdrop. Do not mimic any company's artwork. Preserve true transparency.\nPrimary request: one friendly chunky deep-teal stopwatch with a blank ivory dial, one thick charcoal dial hand and just four simple tick marks. Beside its lower corner place one tiny curved teal running-track strip with a single ivory lane line. The watch is the dominant object and the track strip is much smaller. This signifies a pace calculator tool, not a recorded result. No other objects or data."
+    },
+    {
+      "key": "record-stopwatch-v3",
+      "sourceName": "record-stopwatch-v3.png",
+      "outputName": "record-stopwatch-v3.webp",
+      "transparent_background": true,
+      "prompt": "Use case: stylized-concept\nAsset type: small optional orientation illustration for a youth running training app, displayed beside a task heading at 64 to 80 px.\nScene/backdrop: genuine transparent alpha background, no scene, no floor or background shadow.\nStyle/medium: softly rounded matte clay and thick paper miniature, calm contemporary Korean mobile-product illustration, independent original design.\nComposition/framing: square canvas, centered composition filling about 76 percent of the image; slight three-quarter view; all pieces entirely visible; clear silhouette readable at 64 px.\nLighting/mood: soft diffuse light, gentle form shading only on the objects, approachable without a face.\nColor palette: restrained deep teal #0D5F5A, warm ivory #FAFAF7, charcoal #2B3330, tiny muted mint accents. No bright new colors.\nMaterials/textures: smooth matte clay with restrained paper grain, not glossy.\nConstraints: no text, letters, numbers, labels, logos, watermark, badges, stars, medals, checkmarks, graphs, medical symbols or faces. No detached floating decorations. No border, plate, cast floor shadow or opaque backdrop. Do not mimic any company's artwork. Preserve true transparency.\nPrimary request: a small ivory fabric race bib with a completely blank unprinted face, a tiny charcoal fastener in each top corner, and one small chunky deep-teal stopwatch leaning in front of its lower corner. The stopwatch has a blank ivory dial with one thick hand and only four simple tick marks. The bib remains clearly visible. This signifies existing running records, not an award, success or ranking. No number on the bib and no other objects."
+    },
+    {
+      "key": "plan-adjust-v3",
+      "sourceName": "plan-adjust-v3.png",
+      "outputName": "plan-adjust-v3.webp",
+      "transparent_background": true,
+      "prompt": "Use case: stylized-concept\nAsset type: small optional orientation illustration for a youth running training app, displayed beside a task heading at 64 to 80 px.\nScene/backdrop: genuine transparent alpha background, no scene, no floor or background shadow.\nStyle/medium: softly rounded matte clay and thick paper miniature, calm contemporary Korean mobile-product illustration, independent original design.\nComposition/framing: square canvas, centered composition filling about 76 percent of the image; slight three-quarter view; all pieces entirely visible; clear silhouette readable at 64 px.\nLighting/mood: soft diffuse light, gentle form shading only on the objects, approachable without a face.\nColor palette: restrained deep teal #0D5F5A, warm ivory #FAFAF7, charcoal #2B3330, tiny muted mint accents. No bright new colors.\nMaterials/textures: smooth matte clay with restrained paper grain, not glossy.\nConstraints: no text, letters, numbers, labels, logos, watermark, badges, stars, medals, checkmarks, graphs, medical symbols or faces. No detached floating decorations. No border, plate, cast floor shadow or opaque backdrop. Do not mimic any company's artwork. Preserve true transparency.\nPrimary request: a small ivory notebook, slightly open and shown in three-quarter view, with a deep-teal spine. Its blank front page has two wide shallow horizontal clay slider tracks and one large tactile teal knob on each track at different positions. A short charcoal pencil with an ivory wooden tip leans beside it. This signifies editing a training plan, not a data chart. Exactly two simple sliders, no checkmarks and no writing."
+    }
+  ]
+}

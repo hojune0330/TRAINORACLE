@@ -17,11 +17,12 @@ export interface LogEntryProps {
   readonly initialEntry?: JournalEntry
   readonly plannedSessionLink?: PlannedSessionLink
   readonly onContinueDetailed?: (entry: JournalEntry) => void
+  readonly onSaved?: (entry: JournalEntry, reviewMessage?: string, storageMessage?: string) => void
   /** 기기 데이터 가져오기 화면 진입 — 선택 화면에서만 노출 */
   readonly onOpenImport?: () => void
 }
 
-export function LogEntry({ entryType = "choose", onBack, onDone, onOpenImport, onContinueDetailed, targetDate, initialEntry, plannedSessionLink }: LogEntryProps) {
+export function LogEntry({ entryType = "choose", onBack, onDone, onSaved, onOpenImport, onContinueDetailed, targetDate, initialEntry, plannedSessionLink }: LogEntryProps) {
   if (entryType === "choose") {
     return <EntryChooser onBack={onBack} onPick={(picked) => onDone?.(picked)} onOpenImport={onOpenImport} targetDate={targetDate} />
   }
@@ -52,6 +53,7 @@ export function LogEntry({ entryType = "choose", onBack, onDone, onOpenImport, o
       plannedSessionLink={plannedSessionLink}
       onDone={(entry, reviewMessage, storageMessage) => handleSaved("post-session", entry, reviewMessage, storageMessage)}
       onContinueDetailed={onContinueDetailed}
+      onSaved={onSaved}
     />
   )
   if (entryType === "post-session") return <PostSessionForm key={draftKey} onBack={onBack} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} plannedSessionLink={plannedSessionLink} />

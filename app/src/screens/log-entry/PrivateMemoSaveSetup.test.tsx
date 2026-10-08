@@ -13,15 +13,22 @@ import * as privateCrypto from "../../domain/account/private-note-crypto"
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); clearSessionRecoveryCode() })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); clearSessionRecoveryCode() })
 
+function openRaceMemo() {
+  fireEvent.click(screen.getByRole("button", { name: "지금 입력 확인" }))
+  fireEvent.click(screen.getByRole("button", { name: "메모 수정" }))
+}
+
 it("keeps the race input and explains missing encryption setup instead of blaming storage capacity", async () => {
   const done = vi.fn()
   render(<RaceForm targetDate="2026-09-13" onDone={done} />)
+  openRaceMemo()
   fireEvent.click(screen.getByRole("radio", { name: "나만의 메모" }))
-  fireEvent.change(screen.getByLabelText("경기 메모"), { target: { value: "synthetic-private-race" } })
+  fireEvent.change(screen.getByRole("textbox", { name: "경기 메모" }), { target: { value: "synthetic-private-race" } })
+  fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
   fireEvent.click(screen.getByRole("button", { name: /^저장/ }))
   expect(await screen.findByRole("alert")).toHaveTextContent("복구 코드를 준비")
   expect(screen.queryByTestId("save-error")).not.toBeInTheDocument()
-  expect(screen.getByLabelText("경기 메모")).toHaveValue("synthetic-private-race")
+  expect(screen.getByRole("textbox", { name: "경기 메모" })).toHaveValue("synthetic-private-race")
   expect(loadEntries()).toEqual([])
   expect(done).not.toHaveBeenCalled()
 })
@@ -29,8 +36,9 @@ it("keeps the race input and explains missing encryption setup instead of blamin
 it("prepares a new code in place only after acknowledgement, then encrypts the unchanged race memo", async () => {
   const done = vi.fn()
   render(<RaceForm targetDate="2026-09-13" onDone={done} />)
+  openRaceMemo()
   fireEvent.click(screen.getByRole("radio", { name: "나만의 메모" }))
-  fireEvent.change(screen.getByLabelText("경기 메모"), { target: { value: "synthetic-private-race" } })
+  fireEvent.change(screen.getByRole("textbox", { name: "경기 메모" }), { target: { value: "synthetic-private-race" } })
   fireEvent.click(screen.getByRole("button", { name: "나만의 메모 저장 준비" }))
   fireEvent.click(screen.getByRole("button", { name: /처음 사용해요/ }))
   expect(loadSessionRecoveryCode()).toBeNull()
@@ -40,6 +48,7 @@ it("prepares a new code in place only after acknowledgement, then encrypts the u
   await screen.findByText(/암호화 준비가 됐어요/)
   expect(done).not.toHaveBeenCalled()
   expect(loadEntries()).toEqual([])
+  fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
   fireEvent.click(screen.getByRole("button", { name: /^저장/ }))
   await waitFor(() => expect(done).toHaveBeenCalledTimes(1))
   expect(loadEntries()).toHaveLength(1)

@@ -8,6 +8,39 @@ import { LogEntry } from "./LogEntry"
 
 afterEach(cleanup)
 
+async function openRaceMemo(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole("button", { name: /^(메모 추가|메모 수정)$/u }))
+}
+
+async function saveRaceFromReview(user: ReturnType<typeof userEvent.setup>) {
+  if (!screen.queryByRole("button", { name: /^(저장|수정 저장)/u })) {
+    const continueButton = screen.queryByRole("button", { name: "입력 확인으로" })
+      ?? screen.getByRole("button", { name: "지금 입력 확인" })
+    await user.click(continueButton)
+  }
+  await user.click(screen.getByRole("button", { name: /^(저장|수정 저장)/u }))
+}
+
+async function openPostContent(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole("button", { name: "완료" }))
+  await user.click(screen.getByRole("button", { name: "시간대는 기록하지 않고 계속" }))
+}
+
+async function openPostEffort(user: ReturnType<typeof userEvent.setup>) {
+  await openPostContent(user)
+  await user.click(screen.getByRole("button", { name: "다음 질문" }))
+  await user.click(screen.getByRole("button", { name: "다음 질문" }))
+}
+
+async function savePostFromCurrentStep(user: ReturnType<typeof userEvent.setup>) {
+  if (!screen.queryByRole("button", { name: /^(저장|수정 저장)/u })) {
+    const continueButton = screen.queryByRole("button", { name: "입력 확인으로" })
+      ?? screen.getByRole("button", { name: "지금 입력 확인" })
+    await user.click(continueButton)
+  }
+  await user.click(screen.getByRole("button", { name: /^(저장|수정 저장)/u }))
+}
+
 describe("race entry purpose-scoped notes", () => {
   beforeEach(() => {
     window.localStorage.clear()
@@ -18,10 +51,11 @@ describe("race entry purpose-scoped notes", () => {
     const user = userEvent.setup()
     const onDone = vi.fn()
     render(<LogEntry entryType="race" onDone={onDone} />)
+    await openRaceMemo(user)
     await user.type(screen.getByRole("textbox", { name: "경기 메모" }), "첫 바퀴는 침착하게")
 
     // When
-    await user.click(screen.getByRole("button", { name: /^저장/u }))
+    await saveRaceFromReview(user)
 
     // Then
     expect(onDone).not.toHaveBeenCalled()
@@ -72,6 +106,7 @@ describe("race entry purpose-scoped notes", () => {
     render(<LogEntry entryType="race" />)
 
     // When
+    await openRaceMemo(user)
     await user.click(screen.getByRole("radio", { name: "나만의 메모" }))
 
     // Then
@@ -84,11 +119,12 @@ describe("race entry purpose-scoped notes", () => {
     const onDone = vi.fn()
     expect(saveSessionRecoveryCode(createRecoveryCode())).toBe(true)
     render(<LogEntry entryType="race" onDone={onDone} />)
+    await openRaceMemo(user)
     await user.type(screen.getByRole("textbox", { name: "경기 메모" }), "PRIVATE-LUNA-731")
     await user.click(screen.getByRole("radio", { name: "나만의 메모" }))
 
     // When
-    await user.click(screen.getByRole("button", { name: /^저장/u }))
+    await saveRaceFromReview(user)
 
     // Then
     await vi.waitFor(() => expect(onDone).toHaveBeenCalledWith("race", expect.objectContaining({ kind: "race" })))
@@ -110,13 +146,17 @@ describe("race entry purpose-scoped notes", () => {
     await user.click(screen.getByRole("button", { name: "컨디션 4" }))
     await user.type(screen.getByRole("spinbutton", { name: "목표 페이스 분" }), "3")
     await user.type(screen.getByRole("spinbutton", { name: "목표 페이스 초" }), "45")
+    await openRaceMemo(user)
     await user.type(screen.getByRole("textbox", { name: "경기 메모" }), "후반 300m에서 리듬 올리기")
     await user.click(screen.getByRole("radio", { name: "훈련 메모" }))
+    await user.click(screen.getByRole("button", { name: "입력 확인으로" }))
+    await user.click(screen.getByRole("button", { name: "경기 정보 수정" }))
     await user.click(screen.getByRole("button", { name: "경기 직후" }))
     await user.click(screen.getByRole("button", { name: "감정 5" }))
+    await user.click(screen.getByRole("button", { name: "지금 입력 확인" }))
 
     // When
-    await user.click(screen.getByRole("button", { name: /^저장/u }))
+    await saveRaceFromReview(user)
 
     // Then
     expect(onDone).toHaveBeenCalledWith("race", expect.objectContaining({ kind: "race" }))
@@ -135,11 +175,12 @@ describe("race entry purpose-scoped notes", () => {
     const user = userEvent.setup()
     const onDone = vi.fn()
     render(<LogEntry entryType="race" onDone={onDone} />)
+    await openRaceMemo(user)
     await user.type(screen.getByRole("textbox", { name: "경기 메모" }), text)
     await user.click(screen.getByRole("radio", { name: "훈련 메모" }))
 
     // When
-    await user.click(screen.getByRole("button", { name: /^저장/u }))
+    await saveRaceFromReview(user)
 
     // Then
     expect(onDone).toHaveBeenCalledWith(
@@ -163,7 +204,7 @@ describe("existing journal entry regression", () => {
     render(<LogEntry entryType="post-session" onDone={onDone} />)
 
     // When
-    await user.click(screen.getByRole("button", { name: /^저장/u }))
+    await savePostFromCurrentStep(user)
 
     // Then
     expect(onDone).toHaveBeenCalledWith(
@@ -180,8 +221,9 @@ describe("existing journal entry regression", () => {
     render(<LogEntry entryType="post-session" onDone={onDone} />)
 
     // When
+    await openPostEffort(user)
     await user.click(screen.getByRole("button", { name: "예상 강도 7" }))
-    await user.click(screen.getByRole("button", { name: /^저장/u }))
+    await savePostFromCurrentStep(user)
 
     // Then
     expect(onDone).toHaveBeenCalledWith(
@@ -195,7 +237,7 @@ describe("existing journal entry regression", () => {
     const user = userEvent.setup()
     render(<LogEntry entryType="post-session" />)
 
-    await user.click(screen.getByRole("button", { name: "예상 강도 7" }))
+    await openPostEffort(user)
     // 객관 기록 구획은 닫힌 상태로 시작한다 (작업지시서 UX1 §2-2).
     // 필수 입력이 아니고 아무것도 안 넣어도 393px 를 먹기 때문이다.
     // 실제 사용자도 이 한 번을 누르고 들어간다.
@@ -205,7 +247,9 @@ describe("existing journal entry regression", () => {
     await user.type(screen.getByRole("spinbutton", { name: "운동 시간 (초)" }), "60")
     await user.type(screen.getByRole("spinbutton", { name: "회복 시간 (초)" }), "90")
     await user.click(screen.getByRole("button", { name: "객관 구성 추가" }))
-    await user.click(screen.getByRole("button", { name: /^저장/u }))
+    await user.click(screen.getByRole("button", { name: "예상 강도 7" }))
+    await user.click(screen.getByRole("button", { name: "지금 입력 확인" }))
+    await savePostFromCurrentStep(user)
 
     const saved = window.localStorage.getItem("trainoracle.journal.v1")
     expect(saved).toContain('"plannedRpe":7')
@@ -219,6 +263,7 @@ describe("existing journal entry regression", () => {
     render(<LogEntry entryType="post-session" />)
 
     // 객관 기록 구획을 먼저 펼친다 (작업지시서 UX1 §2-2).
+    await openPostEffort(user)
     await user.click(screen.getByRole("button", { name: /객관 기록 · \d+개/u }))
     await user.type(screen.getByRole("spinbutton", { name: "반복 횟수" }), "6")
     await user.type(screen.getByRole("spinbutton", { name: "운동 시간 (초)" }), "60")

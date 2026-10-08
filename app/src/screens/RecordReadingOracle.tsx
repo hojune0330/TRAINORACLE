@@ -1,6 +1,9 @@
 import React from "react"
 import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Users, X } from "lucide-react"
 import { InfoDisclosure } from "../components/InfoDisclosure"
+import { ContextualIllustration } from "../components/ContextualIllustration"
+import { TaskGuide } from "../components/TaskGuide"
+import { useCalendarMotion } from "../hooks/useCalendarMotion"
 import { READING_EVENTS, parseReadingTime, readPersonalRecord, readTogetherRecords, readingTime, validReadingDate, type ReadingEventId, type ReadingRecord, type ReadingStage } from "../domain/record-reading-oracle"
 import "./record-reading-oracle.css"
 
@@ -24,6 +27,7 @@ export function RecordReadingOracle({ stage, today, onStageChange, onBack, onClo
   const [firstFriendConsent, setFirstFriendConsent] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [chapter, setChapter] = React.useState(0)
+  const { reduced } = useCalendarMotion()
   const heading = React.useRef<HTMLHeadingElement>(null)
   const ownResult = own ? readPersonalRecord(own) : null
   const pair = own && friend ? subject === "self" ? readTogetherRecords(own, friend, consent)
@@ -77,13 +81,13 @@ export function RecordReadingOracle({ stage, today, onStageChange, onBack, onClo
     if (own) setFriendDraft(current => ({ ...current, eventId: current.eventId ?? own.eventId }))
     onStageChange("friend-event")
   }
-  const chapters = isPair ? ["두 사람의 기록", "러닝 궁합", "풀이 근거"] : [subject === "self" ? "나의 한 장" : "친구의 한 장", "기록의 리듬", "더 깊게 읽기"]
+  const chapters = isPair ? ["두 기록 비교", "함께 달리기", "비교 기준"] : ["기록 요약", "400m 평균", "더 알아보기"]
   const pickChapter = (next: number) => {
     setChapter(next)
     heading.current?.scrollIntoView({ block: "start", behavior: "auto" })
   }
 
-  return <div className="record-reading">
+  return <div className="record-reading" data-reduced-motion={reduced}>
     <header className="record-reading__header">
       <button type="button" onClick={onBack} aria-label="이전 단계로"><ArrowLeft size={19} aria-hidden="true" /></button>
       <span>오라클 · {isPair ? "러닝 궁합" : "기록 풀이"}</span>
@@ -92,7 +96,10 @@ export function RecordReadingOracle({ stage, today, onStageChange, onBack, onClo
     <div className="record-reading__body">
       {!isResult && <>
         <p className="record-reading__eyebrow">{entryIsFriend ? "친구의 최고기록" : "나의 최고기록"} · {visibleStage.endsWith("event") ? "1 / 2" : "2 / 2"}</p>
-        <h1 ref={heading} tabIndex={-1}>{visibleStage.endsWith("event") ? isFriend ? entryIsFriend ? "친구는 어떤 종목인가요?" : "나는 어떤 종목인가요?" : "어떤 기록을 풀어볼까요?" : `${event?.label ?? "선택한 종목"} 최고기록은?`}</h1>
+        <TaskGuide as="h1" ref={heading} tabIndex={-1}
+          title={visibleStage.endsWith("event") ? isFriend ? entryIsFriend ? "친구는 어떤 종목인가요?" : "나는 어떤 종목인가요?" : "어떤 기록을 살펴볼까요?" : `${event?.label ?? "선택한 종목"} 최고기록은?`}
+          description={visibleStage === "own-event" ? "최고기록을 1km·400m 평균 시간으로 살펴봐요." : undefined}
+          illustration={visibleStage === "own-event" ? "record-stopwatch" : undefined} />
         {visibleStage === "own-event" && <div className="record-reading__subjects" role="group" aria-label="누구의 기록인가요?">
           {(["self", "friend"] as const).map(value => <button key={value} type="button" aria-pressed={subject === value} onClick={() => {
             if (subject === value) return
@@ -106,7 +113,6 @@ export function RecordReadingOracle({ stage, today, onStageChange, onBack, onClo
               onStageChange(isFriend ? "friend-time" : "own-time")
             }}>{item.label}<ChevronRight size={17} aria-hidden="true" /></button>)}
           </div>
-          <p className="record-reading__muted">일지가 없어도 최고기록 하나로 시작해요.</p>
         </> : <form onSubmit={read} noValidate>
           <label className="record-reading__field">최고기록
             <input key={isFriend ? "friend" : "own"} name="recordTime" value={draft.time} onChange={e => edit({ time: e.target.value })} placeholder={event?.example ?? "20:30"} inputMode="text" autoComplete="off" maxLength={12} aria-invalid={error !== null} aria-describedby="reading-time-hint" />
@@ -131,16 +137,17 @@ export function RecordReadingOracle({ stage, today, onStageChange, onBack, onClo
         </div>
         <section key={`${visibleStage}-${chapter}`} className="record-reading__page">
           <p className="record-reading__eyebrow">{chapter + 1} / 3 · {isPair ? "친구와 나" : "직접 입력한 최고기록"}</p>
-          <h1 ref={heading} tabIndex={-1}>{isPair ? chapter === 0 ? pair.headline : chapter === 1 ? "우리에게 맞는 달리기 방식" : "두 기록을 이렇게 읽었어요" : chapter === 0 ? `${ownResult.event.label}에 담긴 ${subject === "self" ? "나의" : "친구의"} 리듬` : chapter === 1 ? "한 바퀴 길이로 읽으면" : "이 기록, 더 깊이 알고 싶다면"}</h1>
+          <TaskGuide as="h1" ref={heading} tabIndex={-1}
+            title={isPair ? chapter === 0 ? "나와 친구의 기록 비교" : chapter === 1 ? "함께 달리는 방법" : "비교에 사용한 기록" : chapter === 0 ? `${subject === "self" ? "내" : "친구의"} ${ownResult.event.label} 기록 요약` : chapter === 1 ? "400m 평균 시간" : "더 알 수 있는 기록"} />
 
           {!isPair && chapter === 0 && <>
             <div className="record-reading__signature">
-              <img src={`${import.meta.env.BASE_URL}decorations/stamp-personal-best.webp`} alt="" width="80" height="80" />
+              <ContextualIllustration image="record-stopwatch" />
               <div><span>{ownResult.event.label} · 최고기록</span><strong>{ownResult.recordTime}</strong><small>{ownResult.dateLabel}</small></div>
             </div>
-            <p className="record-reading__story">{ownResult.story}</p>
             <dl className="record-reading__numbers"><div><dt>평균 1km</dt><dd>{ownResult.pace}</dd></div><div><dt>같은 속도의 400m</dt><dd>{ownResult.lap}</dd></div></dl>
             <p className="record-reading__muted">최고기록을 나눈 값이며, 오늘의 훈련 목표는 아니에요.</p>
+            <p className="record-reading__story">{ownResult.story}</p>
           </>}
           {!isPair && chapter === 1 && <>
             <div className="record-reading__lap"><span>400m</span><strong>{ownResult.lap}</strong><small>최고기록의 평균 속도</small></div>

@@ -1,11 +1,7 @@
 import React from "react"
 import { getBrowserNavigationEpoch, isBrowserPopScrollRestoration, subscribeBrowserPopNavigation } from "../navigation/browserNavigation"
 import { localJournalScopeGeneration } from "../domain/account/local-journal-ownership"
-
-function reducedMotionPreferred(): boolean {
-  return typeof window.matchMedia === "function"
-    && window.matchMedia("(prefers-reduced-motion: reduce)").matches
-}
+import { calendarReducedMotion } from "./useCalendarMotion"
 
 /**
  * Move a newly opened page or decision step into the readable part of the app
@@ -37,7 +33,7 @@ export function useActiveContentScroll(
     const scope = localJournalScopeGeneration()
     const alignTarget = () => {
       if (epoch !== getBrowserNavigationEpoch() || scope !== localJournalScopeGeneration()) return
-      const behavior = reducedMotionPreferred() ? "auto" : "smooth"
+      const behavior = calendarReducedMotion() ? "auto" : "smooth"
       const scrollRegion = target.closest<HTMLElement>(".app-scroll-region")
       if (scrollRegion !== null && typeof scrollRegion.scrollTo === "function") {
         const targetRect = target.getBoundingClientRect()

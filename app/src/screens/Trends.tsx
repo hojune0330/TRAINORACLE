@@ -29,14 +29,15 @@ import { getOracleTopic, type OracleTopicId } from "../domain/oracle-exploration
 import type { AnalysisNavigation, AnalysisSection } from "../domain/analysis-navigation"
 import { fileAnalysisFormats } from "../domain/import/file-analysis-policy"
 import { HomeCoachingSummary } from "./home/HomeCoachingSummary"
+import { TaskGuide } from "../components/TaskGuide"
 import "./trends/trends-hub.css"
 
 const ANALYSIS_SECTIONS = [
-  { id: "summary", label: "훈련 요약" },
-  { id: "distance", label: "훈련량" },
-  { id: "mix", label: "훈련 구성" },
-  { id: "monthly", label: "월별 변화" },
-  { id: "files", label: "파일 분석" },
+  { id: "summary", label: "훈련 요약", description: "남긴 운동과 계획" },
+  { id: "distance", label: "훈련량", description: "달린 거리 합계" },
+  { id: "mix", label: "훈련 구성", description: "직접 고른 훈련 종류" },
+  { id: "monthly", label: "월별 변화", description: "거리·페이스·기분·통증" },
+  { id: "files", label: "파일 분석", description: "운동 파일의 구간 기록" },
 ] as const
 const ORACLE_SECTIONS = [
   { id: "training", label: "내 훈련" },
@@ -118,6 +119,14 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
   const readComplete = journalReadComplete !== false && loadEntriesForPlanSafety().status === "complete"
   const savedSessions = entries.filter(entry => entry.kind === "post-session").map(({ id, date }) => ({ id, date }))
   const hasSummary = readComplete && (savedSessions.some(entry => entry.date <= today) || derivePersonalOracle({ observations, today, planState }).maturity !== "EMPTY")
+  const currentAnalysis = ANALYSIS_SECTIONS.find(item => item.id === detail) ?? ANALYSIS_SECTIONS[0]
+  const guideTitle = section === "profile" ? "최고기록 살펴보기"
+    : section === "library" ? "훈련 이야기 읽기"
+      : detail === "summary" ? "내 훈련 살펴보기" : `${currentAnalysis.label} 보기`
+  const guideDescription = section === "profile" ? "내 경기 기록으로 풀이를 볼 수 있어요."
+    : section === "library" ? "궁금한 주제를 골라 읽어보세요."
+      : detail === "summary" ? "거리와 훈련 종류, 월별 변화를 확인해요."
+        : currentAnalysis.description
   const example = getOracleTopic("focus").example
   const startAction = onWriteLog ? { label: entries.length > 0 ? "기록 더 남기기" : "첫 기록 남기기", run: onWriteLog }
     : onOpenImport ? { label: "운동 파일 가져오기", run: onOpenImport }
@@ -140,6 +149,9 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
     <div style={{ paddingBottom: 30 }}>
       <TrendsHeader onBack={onBack} onPace={navigation?.openPaceCalculator ? () => navigation.openPaceCalculator?.() : undefined} />
       <div className="trends-motion-stage">
+        <TaskGuide className="trends-hub__guide" title={guideTitle}
+          description={section !== "training" || readComplete ? guideDescription : undefined}
+          illustration={section === "training" && readComplete ? "training-map" : undefined} />
         <div className="trends-hub__sections" role="group" aria-label="오라클 항목">
           {ORACLE_SECTIONS.map(item => (
             <button key={item.id} type="button" aria-pressed={section === item.id}
@@ -235,12 +247,13 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
           <summary><span>{detail === "summary" ? "훈련량·구성·변화 보기" : `${ANALYSIS_SECTIONS.find(item => item.id === detail)?.label} · 다른 항목 보기`}</span></summary>
           <div className="trends-hub__drilldowns" role="group" aria-label="훈련 분석 자세히 보기">
           {ANALYSIS_SECTIONS.map(item => <button key={item.id} type="button" aria-pressed={detail === item.id}
+            aria-label={item.label} aria-describedby={`trends-choice-${item.id}`}
             onClick={() => {
               setDetail(item.id)
               setDetailMenuOpen(false)
               onContextChange?.({ ...initialContext, section: item.id })
               detailMenu.current?.querySelector("summary")?.focus()
-            }}>{item.label}</button>)}
+            }}><span>{item.label}</span><small id={`trends-choice-${item.id}`}>{item.description}</small></button>)}
           </div>
         </details>}
         {section === "training" && detail === "summary" && (onOpenImport || onOpenRecords) && <div className="trends-hub__explore">

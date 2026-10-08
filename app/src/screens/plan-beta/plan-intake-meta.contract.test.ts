@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { STEP_META } from "./plan-intake-meta"
+import { SINGLE_CHOICE_ADVANCE_HINT, STEP_META } from "./plan-intake-meta"
 import {
   divisionForGoal,
   visibleIntakeSteps,
@@ -20,6 +20,10 @@ describe("plan intake wording", () => {
     ])
     // 글자 피로를 줄이기 위해 각 질문의 보조 문구는 한두 문장, 60자 이내로 유지한다.
     for (const step of Object.values(STEP_META)) expect(step.copy.length).toBeLessThanOrEqual(60)
+  })
+
+  it("keeps the single-choice auto-advance explanation short and explicit", () => {
+    expect(SINGLE_CHOICE_ADVANCE_HINT).toBe("하나를 고르면 다음 단계로 이동해요.")
   })
 })
 

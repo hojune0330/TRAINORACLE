@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { OracleProfileExperience, type OracleProfileExperienceProps } from "./OracleProfileExperience"
 import { ORACLE_CONTENT_CATALOG } from "../domain/oracle-content-catalog"
+import { ORACLE_QUESTIONS } from "../domain/oracle-profile-v2"
 
 vi.mock("../hooks/useReaderDialog", () => ({ useReaderDialog: (ref: React.RefObject<HTMLDialogElement>, close: () => void) => {
   React.useEffect(() => { ref.current?.showModal() }, [ref])
@@ -20,30 +21,95 @@ const dialog = () => screen.getByRole("dialog", { hidden: true })
 const openSettings = () => fireEvent.click(screen.getByRole("button", { name: "마리·친구·프로필 설정" }))
 const openTopics = () => fireEvent.click(screen.getByText("전체 주제·다른 글"))
 
-it("makes the user's profile the subject and keeps Mari in a separate manager area", () => {
+it("shows a complete six-axis chart without treating optional strength preferences as radar axes", () => {
+  const answers = Object.fromEntries(ORACLE_QUESTIONS.map(q => [q.id, q.axisId === "INTENSITY" ? 1 : 4]))
+  render(<OracleProfileExperience {...props({ answers, selectedCharacter: "STRUCTURE" })} />)
+  const chart = screen.getByRole("img", { name: /러닝 취향/ })
+  expect(chart.querySelectorAll(".preference-radar__point")).toHaveLength(6)
+  expect(chart.querySelector(".preference-radar__shape")).not.toBeNull()
+  expect(chart.getAttribute("aria-label")).toContain("강한 달리기: 0점")
+  expect(chart.getAttribute("aria-label")).not.toMatch(/웨이트|보조 운동/)
+  expect(screen.getByText("보조 운동·웨이트 취향")).toBeVisible()
+})
+
+it("opens an unanswered radar axis directly without committing a fabricated result", () => {
+  const p = props({ answers: { STRUCTURE_1: 5, STRUCTURE_2: 5, STRUCTURE_3: 5 } })
+  render(<OracleProfileExperience {...p} />)
+  fireEvent.click(screen.getByRole("button", { name: /^함께 달리기, 답 더하기/ }))
+  expect(within(dialog()).getByRole("heading", { name: ORACLE_QUESTIONS.find(q => q.id === "SOCIAL_1")!.text })).toBeVisible()
+  expect(p.onCommit).not.toHaveBeenCalled()
+})
+
+it("reviews existing radar answers and edits just one without asking the whole axis again", async () => {
+  const answers = { STRUCTURE_1: 5, STRUCTURE_2: 5, STRUCTURE_3: 5, SOCIAL_1: 2, SOCIAL_2: 2, SOCIAL_3: 2 } as const
+  const p = props({ answers, selectedCharacter: "STRUCTURE" })
+  render(<OracleProfileExperience {...p} />)
+  fireEvent.click(screen.getByRole("button", { name: /^계획, 100점/ }))
+  fireEvent.click(within(dialog()).getByRole("button", { name: "내 답 수정" }))
+  expect(within(dialog()).getByRole("heading", { name: "내 답을 정리했어요" })).toBeVisible()
+  fireEvent.click(within(dialog()).getByText("내 답 확인·수정"))
+  fireEvent.click(within(dialog()).getByRole("button", { name: `${ORACLE_QUESTIONS.find(q => q.id === "STRUCTURE_2")!.text} 매우 그래요` }))
+  fireEvent.click(within(dialog()).getByRole("button", { name: "그런 편이에요" }))
+  await waitFor(() => expect(p.onCommit).toHaveBeenCalledOnce())
+  expect(p.onCommit).toHaveBeenCalledWith({ ...answers, STRUCTURE_2: 4 }, "STRUCTURE")
+})
+
+it("does not draw an empty radar or assign a character when every answer is uncertain", () => {
+  render(<OracleProfileExperience {...props({ answers: { STRUCTURE_1: "UNKNOWN", STRUCTURE_2: "UNKNOWN", STRUCTURE_3: "SKIPPED" } })} />)
+  expect(screen.queryByRole("img")).toBeNull()
+  expect(screen.queryByRole("button", { name: /캐릭터 이야기$/ })).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "훈련 계획 응답 보기" }))
+  expect(within(dialog()).getByText(/숫자 0과 달라요/)).toBeVisible()
+})
+
+it("makes the user's preference result the subject before optional guidance and settings", () => {
   render(<OracleProfileExperience {...props({ answers: { STRUCTURE_1: 5, STRUCTURE_2: 5, STRUCTURE_3: 5 }, selectedCharacter: "STRUCTURE" })} />)
   const self = screen.getByRole("region", { name: "나의 러닝 프로필" })
   expect(within(self).getByRole("heading", { name: "계획을 즐기는 러너" })).toBeVisible()
   expect(within(self).getByRole("heading", { level: 1, name: "계획을 즐기는 러너" })).toHaveClass("app-heading--screen", "app-heading--accent")
-  expect(within(self).getByRole("meter", { name: "계획 선호" })).toHaveAttribute("aria-valuenow", "100")
-  expect(within(self).queryByRole("img")).toBeNull()
+  const chart = within(self).getByRole("img", { name: /러닝 취향.*계획: 100점/ })
+  expect(chart).toBeVisible()
+  expect(chart.querySelectorAll(".preference-radar__point")).toHaveLength(1)
+  expect(chart.querySelector(".preference-radar__shape")).toBeNull()
   expect(within(self).queryByText("마리 매니저")).toBeNull()
-  const manager = screen.getByRole("complementary", { name: "마리의 내 응답 해설" })
-  expect(within(manager).getByRole("heading", { level: 2, name: "마리 매니저" })).toHaveClass("app-heading--section")
-  expect(within(manager).getByRole("heading", { level: 2 })).not.toHaveClass("app-heading--accent")
-  expect(within(manager).getByRole("img")).toHaveAttribute("src", expect.stringContaining("mari-analysis.png"))
-  expect(within(manager).getByText(/실제 훈련 횟수나 능력을 뜻하지는/)).toBeVisible()
+  const character = within(self).getByRole("button", { name: "계획을 챙기는 여우 캐릭터 이야기" })
+  expect(character).toBeVisible()
+  expect(character.compareDocumentPosition(chart) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+  expect(within(self).getByText("점수가 높을수록 그 항목에 동의했어요. 실력 점수는 아니에요.")).toBeVisible()
+  expect(screen.queryByRole("complementary", { name: "마리의 내 응답 해설" })).toBeNull()
 })
-it("chooses Mari's work portrait by context, not by the user's preference type", () => {
+it("introduces a tappable guide without making Mari the user's preference type", () => {
   const { rerender } = render(<OracleProfileExperience {...props()} />)
   expect(screen.queryByRole("complementary")).toBeNull()
+  expect(screen.getByRole("heading", { name: "나는 어떤 달리기를 좋아할까요?" })).toBeVisible()
+  expect(screen.getByRole("button", { name: "마리의 답변 팁" })).toBeVisible()
   openSettings()
-  expect(within(screen.getByRole("complementary")).getByRole("img")).toHaveAttribute("src", expect.stringContaining("mari-wave.png"))
+  expect(screen.getByRole("complementary").querySelector("img")).toHaveAttribute("src", expect.stringContaining("mari-explain.webp"))
   fireEvent.click(within(dialog()).getByRole("button", { name: "닫기" }))
   for (const axis of ["STRUCTURE", "SOCIAL", "REFRESH"] as const) {
     rerender(<OracleProfileExperience {...props({ answers: { [`${axis}_1`]: 5, [`${axis}_2`]: 5, [`${axis}_3`]: 5 }, selectedCharacter: axis })} />)
-    expect(within(screen.getByRole("complementary")).getByRole("img")).toHaveAttribute("src", expect.stringContaining("mari-analysis.png"))
+    expect(screen.getByRole("button", { name: /캐릭터 이야기$/ })).toBeVisible()
+    expect(screen.queryByRole("complementary")).toBeNull()
   }
+})
+it("hides decorative manager guidance during pending, failed and conflicting account reads", () => {
+  const answers = { STRUCTURE_1: 5, STRUCTURE_2: 5, STRUCTURE_3: 5 } as const
+  const view = render(<OracleProfileExperience {...props({ account: true, answers })} />)
+  expect(screen.getByRole("button", { name: "마리의 결과 안내" })).toBeVisible()
+  for (const status of ["LOADING", "PENDING", "FAILED", "CONFLICT"] as const) {
+    view.rerender(<OracleProfileExperience {...props({ account: true, answers, status })} />)
+    expect(view.container.querySelector("img")).toBeNull()
+    expect(screen.getByRole("status")).toBeVisible()
+  }
+})
+it("keeps preference explanations and settings usable when the companion image fails", () => {
+  const view = render(<OracleProfileExperience {...props({ answers: { STRUCTURE_1: 5, STRUCTURE_2: 5, STRUCTURE_3: 5 } })} />)
+  fireEvent.error(view.container.querySelector("img")!)
+  expect(view.container.querySelector("img")).toBeNull()
+  expect(screen.getByRole("heading", { name: "내가 고른 달리기 취향" })).toBeVisible()
+  expect(screen.getByRole("button", { name: "마리의 결과 안내" })).toBeVisible()
+  openSettings()
+  expect(dialog()).toBeVisible()
 })
 it("opens the requested library view with a contextual return label", () => {
   render(<OracleProfileExperience {...props({ initialView: "library", backLabel: "읽을거리로 돌아가기" })} />)
@@ -172,7 +238,7 @@ it("describes a loading account without hiding its status", () => {
 })
 it("keeps the manager's preference explanation tied to the selected result", () => {
   render(<OracleProfileExperience {...props({ answers: { STRUCTURE_1: 5, STRUCTURE_2: 5, STRUCTURE_3: 5 }, selectedCharacter: "STRUCTURE" })} />)
-  fireEvent.click(within(screen.getByRole("region", { name: "나의 러닝 프로필" })).getByRole("button", { name: "계획 선호" }))
+  fireEvent.click(within(screen.getByRole("region", { name: "나의 러닝 프로필" })).getByRole("button", { name: /^계획, 100점/ }))
   expect(dialog()).toHaveAttribute("aria-label", "마리의 응답 해설")
   expect(within(dialog()).getByText("마리 매니저 · 내 응답 기준")).toBeInTheDocument()
   expect(within(dialog()).getByText(/세 문항의 응답을 정리한 100점/)).toBeInTheDocument()
@@ -237,7 +303,8 @@ it("does not offer a fake zero score for skipped responses", async () => {
   render(<OracleProfileExperience {...props()} />)
   fireEvent.click(screen.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" }))
   for (let n = 0; n < 3; n++) fireEvent.click(within(dialog()).getByRole("button", { name: "건너뛰기", hidden: true }))
-  await waitFor(() => expect(within(dialog()).getByText("아직 점수로 정리하지 않은 응답")).toBeInTheDocument())
+  await waitFor(() => expect(within(dialog()).getByText("점수 없이 답만 정리했어요.")).toBeInTheDocument())
+  expect(dialog().querySelector(".oracle-v2__result-number")).toBeNull()
   expect(within(dialog()).queryByText("0")).toBeNull()
 })
 it("exposes every topic in its group without inventing personal facts", () => {
@@ -296,4 +363,120 @@ it("clears a failed bookmark message when retry succeeds", async () => {
   fireEvent.click(screen.getByRole("button", { name: "이 결과 보관" }))
   await waitFor(() => expect(onRemember).toHaveBeenCalledTimes(2))
   expect(screen.queryByRole("alert")).toBeNull()
+})
+
+it("confirms the previous choice and lets it be changed without losing later answers", async () => {
+  const p = props()
+  render(<OracleProfileExperience {...p} />)
+  fireEvent.click(screen.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" }))
+  expect(within(dialog()).getByRole("heading")).toHaveFocus()
+  expect(within(dialog()).getByRole("progressbar", { name: "현재 질문 순서" })).toHaveAttribute("value", "1")
+  fireEvent.click(within(dialog()).getByRole("button", { name: "그런 편이에요" }))
+  expect(within(dialog()).getByRole("button", { name: "이전 답 그런 편이에요" })).toBeVisible()
+  expect(within(dialog()).getByRole("progressbar")).toHaveAttribute("value", "2")
+  fireEvent.click(within(dialog()).getByRole("button", { name: "이전 답 그런 편이에요" }))
+  expect(within(dialog()).getByRole("heading")).toHaveFocus()
+  expect(within(dialog()).getByRole("button", { name: "그런 편이에요" })).toHaveAttribute("aria-pressed", "true")
+  fireEvent.click(within(dialog()).getByRole("button", { name: "보통이에요" }))
+  fireEvent.click(within(dialog()).getByRole("button", { name: "매우 그래요" }))
+  fireEvent.click(within(dialog()).getByRole("button", { name: "매우 그래요" }))
+  await waitFor(() => expect(p.onCommit).toHaveBeenCalledOnce())
+  expect(p.onCommit).toHaveBeenCalledWith({ STRUCTURE_1: 3, STRUCTURE_2: 5, STRUCTURE_3: 5 }, "STRUCTURE")
+})
+
+it("finishes one preference before offering an optional next topic and never calls it a full diagnosis", async () => {
+  const p = props()
+  render(<OracleProfileExperience {...p} />)
+  fireEvent.click(screen.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" }))
+  expect(screen.queryByRole("button", { name: "마리의 답변 팁" })).toBeNull()
+  for (let n = 0; n < 3; n++) fireEvent.click(within(dialog()).getByRole("button", { name: "매우 그래요" }))
+  await waitFor(() => expect(within(dialog()).getByRole("button", { name: "기록 도전도 알아보기" })).toBeEnabled())
+  expect(screen.getAllByRole("button", { name: "계획을 챙기는 여우 캐릭터 이야기" })).toHaveLength(1)
+  expect(within(dialog()).getByText("계획 선호 · 내 응답 기준")).toBeVisible()
+  expect(within(dialog()).getByText("취향을 정리한 값이에요. 체력이나 실력 점수가 아니에요.")).toBeVisible()
+  expect(within(dialog()).getByRole("button", { name: "내 결과 보기" })).toBeVisible()
+  expect(within(dialog()).queryByText(/진단 완료|분석 완료|보상|포인트/)).toBeNull()
+  fireEvent.click(within(dialog()).getByRole("button", { name: "기록 도전도 알아보기" }))
+  expect(dialog()).toHaveAttribute("aria-label", "기록 도전 선호")
+  expect(within(dialog()).getByRole("heading", { name: ORACLE_QUESTIONS.find(q => q.id === "CHALLENGE_1")!.text })).toHaveFocus()
+  expect(p.onCommit).toHaveBeenCalledOnce()
+  for (let n = 0; n < 3; n++) fireEvent.click(within(dialog()).getByRole("button", { name: "그런 편이에요" }))
+  await waitFor(() => expect(p.onCommit).toHaveBeenCalledTimes(2))
+  expect(p.onCommit).toHaveBeenLastCalledWith({ STRUCTURE_1: 5, STRUCTURE_2: 5, STRUCTURE_3: 5, CHALLENGE_1: 4, CHALLENGE_2: 4, CHALLENGE_3: 4 }, "STRUCTURE")
+})
+
+it("updates a reviewed answer once without making the user repeat the other questions", async () => {
+  const p = props()
+  render(<OracleProfileExperience {...p} />)
+  fireEvent.click(screen.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" }))
+  for (let n = 0; n < 3; n++) fireEvent.click(within(dialog()).getByRole("button", { name: "매우 그래요" }))
+  await waitFor(() => expect(p.onCommit).toHaveBeenCalledOnce())
+  fireEvent.click(within(dialog()).getByText("내 답 확인·수정"))
+  const second = ORACLE_QUESTIONS.find(q => q.id === "STRUCTURE_2")!
+  fireEvent.click(within(dialog()).getByRole("button", { name: `${second.text} 매우 그래요` }))
+  expect(within(dialog()).getByRole("heading", { name: second.text })).toHaveFocus()
+  expect(within(dialog()).getByRole("button", { name: "매우 그래요" })).toHaveAttribute("aria-pressed", "true")
+  expect(within(dialog()).getByText("내 답 수정")).toBeVisible()
+  expect(within(dialog()).queryByRole("progressbar")).toBeNull()
+  fireEvent.click(within(dialog()).getByRole("button", { name: "전혀 그렇지 않아요" }))
+  await waitFor(() => expect(p.onCommit).toHaveBeenCalledTimes(2))
+  expect(within(dialog()).getByRole("heading", { name: "내 답을 정리했어요" })).toHaveFocus()
+  expect(p.onCommit).toHaveBeenLastCalledWith({ STRUCTURE_1: 5, STRUCTURE_2: 1, STRUCTURE_3: 5 }, null)
+})
+
+it("keeps uncertain answers unscored while making the next preference optional", async () => {
+  const p = props()
+  render(<OracleProfileExperience {...p} />)
+  fireEvent.click(screen.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" }))
+  for (let n = 0; n < 3; n++) {
+    fireEvent.click(within(dialog()).getByText("답하기 어려워요"))
+    fireEvent.click(within(dialog()).getByRole("button", { name: "아직 모르겠어요" }))
+  }
+  await waitFor(() => expect(within(dialog()).getByRole("button", { name: "기록 도전도 알아보기" })).toBeEnabled())
+  expect(within(dialog()).getByText("점수 없이 답만 정리했어요.")).toBeVisible()
+  expect(dialog().querySelector(".oracle-v2__result-number")).toBeNull()
+  expect(within(dialog()).queryByText("0")).toBeNull()
+  expect(screen.queryByRole("meter")).toBeNull()
+  expect(p.onCommit).toHaveBeenCalledWith({ STRUCTURE_1: "UNKNOWN", STRUCTURE_2: "UNKNOWN", STRUCTURE_3: "UNKNOWN" }, null)
+})
+
+it("cancels a single-answer review without changing answers or committing again", async () => {
+  const p = props()
+  render(<OracleProfileExperience {...p} />)
+  fireEvent.click(screen.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" }))
+  for (let n = 0; n < 3; n++) fireEvent.click(within(dialog()).getByRole("button", { name: "매우 그래요" }))
+  await waitFor(() => expect(p.onCommit).toHaveBeenCalledOnce())
+  fireEvent.click(within(dialog()).getByText("내 답 확인·수정"))
+  const first = ORACLE_QUESTIONS.find(q => q.id === "STRUCTURE_1")!
+  fireEvent.click(within(dialog()).getByRole("button", { name: `${first.text} 매우 그래요` }))
+  fireEvent.click(within(dialog()).getByRole("button", { name: "수정 취소" }))
+  expect(within(dialog()).getByRole("heading", { name: "내 답을 정리했어요" })).toHaveFocus()
+  expect(within(dialog()).getByText("100")).toBeVisible()
+  expect(p.onDraft).toHaveBeenCalledTimes(3)
+  expect(p.onCommit).toHaveBeenCalledOnce()
+})
+
+it("keeps failed saves inside the result dialog and prevents starting another preference", async () => {
+  const p = props({ account: true, onCommit: vi.fn(async () => false) })
+  render(<OracleProfileExperience {...p} />)
+  fireEvent.click(screen.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" }))
+  for (let n = 0; n < 3; n++) fireEvent.click(within(dialog()).getByRole("button", { name: "매우 그래요" }))
+  await waitFor(() => expect(within(dialog()).getByRole("alert")).toHaveTextContent("입력한 답은 이 화면에 남아 있어요."))
+  expect(within(dialog()).queryByText("계정에 저장됨")).toBeNull()
+  expect(within(dialog()).getByRole("button", { name: "기록 도전도 알아보기" })).toBeDisabled()
+  expect(within(dialog()).queryByRole("button", { name: "마리의 결과 안내" })).toBeNull()
+  expect(within(dialog()).getByRole("button", { name: "다시 저장" })).toBeEnabled()
+})
+
+it("passes the live app reduced-motion setting into the profile and the dialog", () => {
+  render(<OracleProfileExperience {...props()} />)
+  const motionKey = "trainoracle.calendar-reduced-motion.v1"
+  window.localStorage.setItem(motionKey, "true")
+  fireEvent(window, new StorageEvent("storage", { key: motionKey }))
+  fireEvent.click(screen.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" }))
+  expect(document.querySelector("section.oracle-v2")).toHaveAttribute("data-reduced-motion", "true")
+  expect(dialog()).toHaveAttribute("data-reduced-motion", "true")
+  window.localStorage.removeItem(motionKey)
+  fireEvent(window, new StorageEvent("storage", { key: motionKey }))
+  expect(dialog()).not.toHaveAttribute("data-reduced-motion")
 })

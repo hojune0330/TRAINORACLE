@@ -7,6 +7,7 @@ import { derivePaceRecordOptions } from "../domain/pace-record-options"
 import { createSegmentRecordReference } from "../domain/catalog-pace-reference"
 import { isEligiblePaceRecordCurrent } from "../domain/account/eligible-account-pace-records"
 import { useEligibleAccountPaceRecords } from "../hooks/useEligibleAccountPaceRecords"
+import { TaskGuide } from "../components/TaskGuide"
 import { directPaceSeconds, equalDistanceSplits, nearbyPaceTable, paceClock, paceEventLabel, parsePaceClock,
   primaryPaceDistances, SPLIT_PAGE_SIZE, type PaceToolRequest, type PaceToolStage } from "../domain/pace-tools"
 import "./pace-calculator.css"
@@ -95,11 +96,14 @@ export function PaceCalculator({ request = {}, stage, onStageChange, onBack }: {
     <header className="pace-tool__header"><button type="button" onClick={onBack} aria-label="이전 단계" title="이전 단계"><ArrowLeft size={20} /></button>
       <span>오라클 · 페이스 계산</span>
       <button type="button" onClick={closeTool} aria-label="페이스 도구 닫기" title="페이스 도구 닫기"><X size={18} /></button></header>
-    <h1 ref={heading} tabIndex={-1}>{titles[stage]}</h1>
+    <TaskGuide as="h1" ref={heading} tabIndex={-1} title={titles[stage]}
+      description={stage === "event" ? "기록으로 거리별 평균 시간을 계산해요." : undefined}
+      illustration={stage === "event" ? "pace-stopwatch" : undefined} />
     {message && <p role="status">{message}</p>}
     {stage === "event" && <>
       <button type="button" onClick={openRecords}>저장한 경기 기록 사용 <ArrowRight size={18} aria-hidden="true" /></button>
-      <div className="pace-tool__choices">{PACE_EVENT_METERS.map(distance => <button key={distance} type="button"
+      <h2 id="pace-direct-event">직접 입력할 종목</h2>
+      <div className="pace-tool__choices" role="group" aria-labelledby="pace-direct-event">{PACE_EVENT_METERS.map(distance => <button key={distance} type="button"
         onClick={() => chooseEvent(distance)}>{paceEventLabel(distance)}<ArrowRight size={18} /></button>)}</div>
     </>}
     {stage === "input" && <form onSubmit={e => { e.preventDefault(); if (total !== null) onStageChange("result") }}>

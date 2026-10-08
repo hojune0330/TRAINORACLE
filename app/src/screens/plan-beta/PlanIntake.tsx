@@ -1,5 +1,5 @@
 import React from "react"
-import { ArrowLeft, CalendarDays, ChevronRight, Medal } from "lucide-react"
+import { ArrowLeft, CalendarDays, ChevronRight, Medal, Pencil } from "lucide-react"
 import {
   EXPERIENCE_BANDS,
   TRAINING_TIME_PREFERENCES,
@@ -11,7 +11,6 @@ import type {
   TrainingTimePreference,
 } from "@impl/plan-generator/types"
 import { TermHelp } from "../../components/TermHelp"
-import { InfoDisclosure } from "../../components/InfoDisclosure"
 import { isValidIsoDate, isoShift } from "../../domain/dates"
 import { todayISO } from "../../domain/journal-store"
 import { COMPETITION_DIVISIONS } from "../../domain/plan-beta-schema"
@@ -23,12 +22,17 @@ import {
 } from "./labels"
 import { PlanChoice as Choice } from "./PlanChoice"
 import { IntakeCalendarPeek } from "./IntakeCalendarPeek"
-import { answeredSummary, DIVISION_LABELS, STEP_META, trainingTimeLabel } from "./plan-intake-meta"
+import {
+  answeredSummary,
+  DIVISION_LABELS,
+  SINGLE_CHOICE_ADVANCE_HINT,
+  STEP_META,
+  trainingTimeLabel,
+} from "./plan-intake-meta"
 import type { IntakeStep as MetaIntakeStep } from "./plan-intake-meta"
 import {
   QUICK_STEP_ORDER,
   RECOMMENDED_ANSWERS,
-  visibleIntakeSteps,
 } from "./plan-intake-navigation"
 import { resolveDetailedPlanTemplateOptions } from "./plan-template-options"
 import { PlanSupportCoverage } from "./PlanSupportCoverage"
@@ -42,7 +46,8 @@ type PlanIntakeProps = {
   readonly motion?: "initial" | "forward" | "backward" | "replace"
   readonly draft: IntakeDraft
   readonly questionRef?: React.RefObject<HTMLHeadingElement>
-  /** true면 "다듬기"에서 열린 단일 질문 — 진행 표시·달력 미리보기를 숨기고 뒤로 가기 문구를 바꾼다. */
+  readonly canGoBack?: boolean
+  /** true면 "다듬기"에서 열린 단일 질문 — 달력 미리보기를 숨기고 뒤로 가기 문구를 바꾼다. */
   readonly refining?: boolean
   readonly onBack: () => void
   readonly onGoal: (distanceM: PlanBetaIntake["eventDistanceM"]) => void
@@ -71,6 +76,7 @@ export function PlanIntake({
   motion = "initial",
   draft,
   questionRef,
+  canGoBack = true,
   refining = false,
   onBack,
   onGoal,
@@ -91,6 +97,7 @@ export function PlanIntake({
   onContinue,
   onJump,
 }: PlanIntakeProps) {
+  const choiceAdvanceHintId = React.useId()
   const projectionDays = Math.ceil(draft.requestedFrameLength ?? 9)
   const meta = step === "preview"
     ? {
@@ -116,17 +123,16 @@ export function PlanIntake({
     : step === "days"
     ? { ...STEP_META.days, title: `이번 ${projectionDays}일 중 며칠 훈련할까요?` }
     : STEP_META[step]
-  const visibleSteps = visibleIntakeSteps(draft.eventGroup)
   const isQuickStep = (QUICK_STEP_ORDER as readonly IntakeStep[]).includes(step)
-  const currentStepIndex = visibleSteps.indexOf(step)
-  const stepNumber = currentStepIndex < 0 ? visibleSteps.length : currentStepIndex + 1
-  const showProgress = !refining && isQuickStep
+  const showQuickAnswers = !refining && isQuickStep
+  const hasSingleChoiceQuestion = step !== "preview" && step !== "race-date"
   const summaryLabels = new Map<IntakeStep, string>(
     answeredSummary(draft)
-      .filter(({ step: answeredStep }) => (QUICK_STEP_ORDER as readonly IntakeStep[]).includes(answeredStep))
+      .filter(({ step: answeredStep }) => (QUICK_STEP_ORDER as readonly IntakeStep[]).includes(answeredStep)
+        && answeredStep !== step)
       .map(({ step: answeredStep, label }) => [answeredStep, label]),
   )
-  const answeredSteps = visibleSteps.flatMap((answeredStep) => {
+  const answeredSteps = QUICK_STEP_ORDER.flatMap((answeredStep) => {
     const label = summaryLabels.get(answeredStep)
     return label === undefined ? [] : [{ step: answeredStep, label }]
   })
@@ -138,22 +144,21 @@ export function PlanIntake({
       data-refining={refining ? "true" : undefined}
       aria-labelledby="plan-intake-title"
     >
-      <button className="plan-back" type="button" onClick={onBack}>
+      {canGoBack && <button className="plan-back" type="button" onClick={onBack}>
         <ArrowLeft aria-hidden="true" size={17} />
         {refining ? "계획으로" : "이전"}
-      </button>
-      {showProgress && (
-        <div className="plan-progress" aria-label={`훈련 조건 질문 ${stepNumber}/${visibleSteps.length}`}>
-          <span>계획 준비 · {meta.eyebrow}</span>
-          <i style={{ width: `${stepNumber * (100 / visibleSteps.length)}%` }} />
-        </div>
-      )}
+      </button>}
       <div className="plan-eyebrow">{meta.eyebrow}</div>
       <div className="plan-heading-row">
         <h1 ref={questionRef} tabIndex={-1} className="active-content-scroll-target" id="plan-intake-title">{meta.title}</h1>
         {meta.helpTerm !== null && <TermHelp term={meta.helpTerm} />}
       </div>
       <p className="plan-copy">{meta.copy}</p>
+      {hasSingleChoiceQuestion && (
+        <p id={choiceAdvanceHintId} className="plan-choice-note plan-choice-note--muted">
+          {SINGLE_CHOICE_ADVANCE_HINT}
+        </p>
+      )}
       {step === "preview" && (
         <>
           <dl className="plan-shape-preview" aria-label="미리보기 기준">
@@ -184,8 +189,9 @@ export function PlanIntake({
       {step !== "preview" && (
         <div
           className={`plan-choice-list${(isQuickStep && step !== "days") || step === "division" || step === "focus" ? " plan-choice-list--cards" : ""}${step === "goal" ? " plan-choice-list--goals" : ""}${step === "days" ? " plan-choice-list--days" : ""}`}
-          role={step === "goal" || step === "days" ? "group" : undefined}
-          aria-label={step === "goal" ? "계획 종목 선택" : step === "days" ? "운동할 날 선택" : undefined}
+          role={hasSingleChoiceQuestion ? "group" : undefined}
+          aria-label={step === "goal" ? "계획 종목 선택" : step === "days" ? "운동할 날 선택" : hasSingleChoiceQuestion ? meta.title : undefined}
+          aria-describedby={hasSingleChoiceQuestion ? choiceAdvanceHintId : undefined}
         >
         {step === "goal" && (
           SUPPORTED_GOAL_ORDER.map((event) => (
@@ -359,16 +365,23 @@ export function PlanIntake({
           <TermHelp term="review" />
         </p>
       )}
-      {showProgress && answeredSteps.length > 0 && (
-        <InfoDisclosure title="선택한 내용 바꾸기" purpose="actions" className="plan-intake__answers">
-          <div className="plan-intake__summary" aria-label="지금까지">
-            {answeredSteps.map(({ step: answeredStep, label }) => onJump ? (
-              <button key={answeredStep} type="button" className="plan-intake__summary-line" onClick={() => onJump(answeredStep)}>
-                <span>{label}</span><ChevronRight aria-hidden="true" size={14} />
+      {showQuickAnswers && answeredSteps.length > 0 && (
+        <div className="plan-intake__summary" role="group" aria-label="앞서 선택한 답 수정">
+          {answeredSteps.map(({ step: answeredStep, label }) => {
+            const question = STEP_META[answeredStep].eyebrow
+            return onJump ? (
+              <button
+                key={answeredStep}
+                type="button"
+                className="plan-text-action"
+                aria-label={`${question} ${label} 답 바꾸기`}
+                onClick={() => onJump(answeredStep)}
+              >
+                {question} · {label}<Pencil aria-hidden="true" size={14} />
               </button>
-            ) : <span key={answeredStep} className="plan-intake__summary-line">{label}</span>)}
-          </div>
-        </InfoDisclosure>
+            ) : <span key={answeredStep} className="plan-intake__summary-answer">{question} · {label}</span>
+          })}
+        </div>
       )}
       {!refining && (step === "goal" || step === "preview") && <IntakeCalendarPeek draft={draft}
         frameLengthDays={draft.requestedFrameLength === 9.5 ? 10 : draft.requestedFrameLength ?? 9} />}

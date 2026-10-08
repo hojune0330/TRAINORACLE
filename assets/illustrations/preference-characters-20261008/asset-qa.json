@@ -1,0 +1,265 @@
+{
+  "generatedOn": "2026-10-08",
+  "description": "Original and production derivative dimensions, bytes, SHA-256 and decoded alpha checks. Alpha visible bounds use alpha > 16 to ignore near-invisible generation specks.",
+  "scope": "Asset inspection only; no application, CI, deployment or real-account proof.",
+  "assets": [
+    {
+      "axis": "structure",
+      "original": "assets/illustrations/preference-characters-20261008/preference-structure-original.png",
+      "source": {
+        "width": 1254,
+        "height": 1254,
+        "pixelFormat": "rgba",
+        "bytes": 950574,
+        "sha256": "79c35a3fb2c770cda3dd8c3ee33c333255771fee3b2b77bd585cbec2799d8df2",
+        "alpha": {
+          "transparent": 1082393,
+          "partial": 489170,
+          "opaque": 953,
+          "edgeAlphaPixels": 10,
+          "visibleBounds": [
+            313,
+            66,
+            966,
+            1175
+          ]
+        }
+      },
+      "public": "app/public/illustrations/preference-structure-v1.webp",
+      "derivative": {
+        "width": 256,
+        "height": 256,
+        "pixelFormat": "yuva420p",
+        "bytes": 11072,
+        "sha256": "62b59b9e53c5bdc7105ead9d526c8156ffc2eeaf42bb94c47bf2813e166926d7",
+        "alpha": {
+          "transparent": 44499,
+          "partial": 18619,
+          "opaque": 2418,
+          "edgeAlphaPixels": 0,
+          "visibleBounds": [
+            64,
+            13,
+            197,
+            239
+          ]
+        }
+      }
+    },
+    {
+      "axis": "challenge",
+      "original": "assets/illustrations/preference-characters-20261008/preference-challenge-original.png",
+      "source": {
+        "width": 1254,
+        "height": 1254,
+        "pixelFormat": "rgba",
+        "bytes": 840420,
+        "sha256": "a0fc04b7d9ab73624739d36f9da391b49b8de668ad711b5a024a411a95800253",
+        "alpha": {
+          "transparent": 1149886,
+          "partial": 421532,
+          "opaque": 1098,
+          "edgeAlphaPixels": 0,
+          "visibleBounds": [
+            308,
+            141,
+            963,
+            1126
+          ]
+        }
+      },
+      "public": "app/public/illustrations/preference-challenge-v1.webp",
+      "derivative": {
+        "width": 256,
+        "height": 256,
+        "pixelFormat": "yuva420p",
+        "bytes": 9730,
+        "sha256": "6a92ef37e6324359e280bcc8ba870a8f4be1e80defcbd9aa32ad9a46099e2dca",
+        "alpha": {
+          "transparent": 47259,
+          "partial": 16264,
+          "opaque": 2013,
+          "edgeAlphaPixels": 0,
+          "visibleBounds": [
+            63,
+            28,
+            196,
+            229
+          ]
+        }
+      }
+    },
+    {
+      "axis": "intensity",
+      "original": "assets/illustrations/preference-characters-20261008/preference-intensity-original.png",
+      "source": {
+        "width": 1254,
+        "height": 1254,
+        "pixelFormat": "rgba",
+        "bytes": 679372,
+        "sha256": "18061034be90b53bc3baa2e144807a5cb8cb3d359fe120e1acf3f0b3430209ba",
+        "alpha": {
+          "transparent": 1212140,
+          "partial": 359885,
+          "opaque": 491,
+          "edgeAlphaPixels": 6,
+          "visibleBounds": [
+            400,
+            48,
+            872,
+            1200
+          ]
+        }
+      },
+      "public": "app/public/illustrations/preference-intensity-v1.webp",
+      "derivative": {
+        "width": 256,
+        "height": 256,
+        "pixelFormat": "yuva420p",
+        "bytes": 9444,
+        "sha256": "13c3bb89249bc0e8037946a204a31a0a36e033f7a21c503136786f1870dd45bb",
+        "alpha": {
+          "transparent": 49972,
+          "partial": 14286,
+          "opaque": 1278,
+          "edgeAlphaPixels": 0,
+          "visibleBounds": [
+            81,
+            9,
+            178,
+            245
+          ]
+        }
+      }
+    },
+    {
+      "axis": "social",
+      "original": "assets/illustrations/preference-characters-20261008/preference-social-original.png",
+      "source": {
+        "width": 1254,
+        "height": 1254,
+        "pixelFormat": "rgba",
+        "bytes": 838110,
+        "sha256": "6865e743ba988688c54589319b45a3e74ebec302d0650f9113551d03920f9b6f",
+        "alpha": {
+          "transparent": 1097260,
+          "partial": 474209,
+          "opaque": 1047,
+          "edgeAlphaPixels": 0,
+          "visibleBounds": [
+            279,
+            113,
+            1014,
+            1147
+          ]
+        }
+      },
+      "public": "app/public/illustrations/preference-social-v1.webp",
+      "derivative": {
+        "width": 256,
+        "height": 256,
+        "pixelFormat": "yuva420p",
+        "bytes": 10404,
+        "sha256": "a1823cecddc91babcbb941866b3b832858829d1618f57c27f8674de7d4977ed9",
+        "alpha": {
+          "transparent": 45048,
+          "partial": 19244,
+          "opaque": 1244,
+          "edgeAlphaPixels": 0,
+          "visibleBounds": [
+            57,
+            23,
+            207,
+            234
+          ]
+        }
+      }
+    },
+    {
+      "axis": "explore",
+      "original": "assets/illustrations/preference-characters-20261008/preference-explore-original.png",
+      "source": {
+        "width": 1254,
+        "height": 1254,
+        "pixelFormat": "rgba",
+        "bytes": 839651,
+        "sha256": "62a38485163fef4d37dc2bbdcbdb221f9d63aff5ea946927463d65cc6e37e3b5",
+        "alpha": {
+          "transparent": 1124058,
+          "partial": 447902,
+          "opaque": 556,
+          "edgeAlphaPixels": 2,
+          "visibleBounds": [
+            293,
+            86,
+            974,
+            1165
+          ]
+        }
+      },
+      "public": "app/public/illustrations/preference-explore-v1.webp",
+      "derivative": {
+        "width": 256,
+        "height": 256,
+        "pixelFormat": "yuva420p",
+        "bytes": 10414,
+        "sha256": "bba8ce5aa7d12c6882a07eb3692140ba9c0917b3a8bdbfe6b229920c07374943",
+        "alpha": {
+          "transparent": 46194,
+          "partial": 18030,
+          "opaque": 1312,
+          "edgeAlphaPixels": 0,
+          "visibleBounds": [
+            59,
+            17,
+            198,
+            237
+          ]
+        }
+      }
+    },
+    {
+      "axis": "refresh",
+      "original": "assets/illustrations/preference-characters-20261008/preference-refresh-original.png",
+      "source": {
+        "width": 1254,
+        "height": 1254,
+        "pixelFormat": "rgba",
+        "bytes": 769136,
+        "sha256": "ad13a38d54e495fe22e033603169d5700946ff431d1ba853f5161a841a9cf5ff",
+        "alpha": {
+          "transparent": 1155472,
+          "partial": 416027,
+          "opaque": 1017,
+          "edgeAlphaPixels": 6,
+          "visibleBounds": [
+            338,
+            134,
+            925,
+            1133
+          ]
+        }
+      },
+      "public": "app/public/illustrations/preference-refresh-v1.webp",
+      "derivative": {
+        "width": 256,
+        "height": 256,
+        "pixelFormat": "yuva420p",
+        "bytes": 9282,
+        "sha256": "93accbc67d4146b2cb1cd4f9caa5b9cd2739fe5bfbc1275b06b7941a71e9c860",
+        "alpha": {
+          "transparent": 47561,
+          "partial": 15701,
+          "opaque": 2274,
+          "edgeAlphaPixels": 0,
+          "visibleBounds": [
+            69,
+            27,
+            188,
+            231
+          ]
+        }
+      }
+    }
+  ]
+}

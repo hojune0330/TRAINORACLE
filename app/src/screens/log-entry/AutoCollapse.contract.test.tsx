@@ -37,11 +37,24 @@ const rpeButton = (value: number) => screen.getByRole("button", { name: exactNam
  */
 const hiddenRpeButton = (value: number) => screen.getByRole("button", { name: exactName(value), hidden: true })
 
+async function enterEffort(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole("button", { name: "결과는 생략하고 계속" }))
+  await user.click(screen.getByRole("button", { name: "다음 질문" }))
+  await user.click(screen.getByRole("button", { name: "다음 질문" }))
+}
+
+async function enterReview(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole("button", { name: "다음 질문" }))
+  await user.click(screen.getByRole("button", { name: "다음 질문" }))
+  await user.click(screen.getByRole("button", { name: "다음 질문" }))
+}
+
 describe("훈련 후 일지 자동 접기", () => {
   it("RPE 를 고른 직후에는 접히지 않는다 — 누른 값을 확인할 시간을 준다", async () => {
     const user = userEvent.setup()
     render(<PostSessionForm />)
 
+    await enterEffort(user)
     await user.click(rpeButton(7))
 
     expect(rpeToggle()).toHaveAttribute("aria-expanded", "true")
@@ -52,6 +65,7 @@ describe("훈련 후 일지 자동 접기", () => {
     const user = userEvent.setup()
     render(<PostSessionForm />)
 
+    await enterEffort(user)
     await user.click(rpeButton(7))
     await user.click(screen.getByRole("button", { name: "예상 강도 8" }))
 
@@ -67,6 +81,7 @@ describe("훈련 후 일지 자동 접기", () => {
     const user = userEvent.setup()
     render(<PostSessionForm />)
 
+    await enterEffort(user)
     // 이 순서가 함정이다. 값으로 판정하면 여기서 접힌다.
     await user.click(screen.getByRole("button", { name: "예상 강도 7" }))
     await user.click(rpeButton(8))
@@ -79,6 +94,7 @@ describe("훈련 후 일지 자동 접기", () => {
     const user = userEvent.setup()
     render(<PostSessionForm />)
 
+    await enterEffort(user)
     await user.click(screen.getByRole("button", { name: "예상 강도 7" }))
 
     // 보여줄 값이 없으면 접힌 줄이 비어서 어차피 다시 펼쳐야 한다.
@@ -89,6 +105,7 @@ describe("훈련 후 일지 자동 접기", () => {
     const user = userEvent.setup()
     render(<PostSessionForm />)
 
+    await enterEffort(user)
     await user.click(rpeButton(7))
     await user.click(screen.getByRole("button", { name: "예상 강도 8" }))
     expect(rpeToggle()).toHaveAttribute("aria-expanded", "false")
@@ -106,9 +123,11 @@ describe("훈련 후 일지 자동 접기", () => {
     window.localStorage.clear()
     render(<PostSessionForm />)
 
+    await enterEffort(user)
     await user.click(rpeButton(7))
     await user.click(screen.getByRole("button", { name: "예상 강도 8" }))
     expect(rpeToggle()).toHaveAttribute("aria-expanded", "false")
+    await enterReview(user)
     await user.click(screen.getByRole("button", { name: /^저장/u }))
 
     const saved = window.localStorage.getItem("trainoracle.journal.v1")
@@ -123,6 +142,7 @@ describe("훈련 후 일지 자동 접기", () => {
     const user = userEvent.setup()
     render(<PostSessionForm />)
 
+    await enterEffort(user)
     await user.click(rpeButton(9))
     await user.click(screen.getByRole("button", { name: "예상 강도 8" }))
 

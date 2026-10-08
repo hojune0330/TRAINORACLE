@@ -74,17 +74,17 @@
 
 .instant-plan__step-choices {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
   gap: var(--space-2);
 }
 
 .instant-plan__step-choice {
   min-width: 0;
-  min-height: var(--app-touch-min);
+  min-height: var(--app-action-height);
   padding: var(--space-3);
   border: var(--bw-line) solid var(--line-2);
-  border-radius: var(--r-md);
-  background: var(--surface);
+  border-radius: var(--r-task-surface);
+  background: var(--surface-2);
   color: var(--ink);
   font: inherit;
   font-weight: 600;

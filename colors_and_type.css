@@ -85,6 +85,9 @@
   --r-sm: 2px;
   --r-md: 4px;    /* max for inputs/buttons */
   /* avatar circles use 50% — only exception */
+  /* 2026-10-08 owner reference: soft task controls only, not journal paper or data cells. */
+  --r-action: 12px;
+  --r-task-surface: 16px;
 
   /* ============== BORDERS ============== */
   --bw-hair:  1px;   /* hairline (--hair) */

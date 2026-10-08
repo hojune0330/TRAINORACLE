@@ -194,8 +194,9 @@ export function consumeBrowserBackLayer(event: PopStateEvent): boolean {
     return consume()
   }
   // Forward into a completed layer is not an instruction to reopen, delete,
-  // save input, or repeat a purchase.
-  if (nextMarker !== null) {
+  // save input, or repeat a purchase. An unchanged marker may belong to a
+  // different entry (such as a reader) above that inactive layer.
+  if (nextMarker !== null && nextMarker !== previousMarker) {
     const next = layers.get(nextMarker)
     if (next?.ownsEntry && !next.active) return consume()
   }

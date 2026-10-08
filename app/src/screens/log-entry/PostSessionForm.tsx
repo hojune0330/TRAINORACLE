@@ -34,6 +34,8 @@ import { JOURNAL_ENERGY_SYSTEM_OPTIONS } from "../../domain/energy-system-taxono
 import { painLevelsRequireReview } from "../../safety/memo-safety"
 import { BodyDiagram, PainReviewBanner } from "./BodyDiagram"
 import { derivePlanExecutionRelation } from "../../domain/plan-execution-relation"
+import { TaskFlowStep } from "../../components/TaskFlowStep"
+import { useTaskFlowBack } from "../../hooks/useTaskFlowBack"
 
 const DETAILED_OUTCOMES = [
   ["COMPLETED", "완료"],
@@ -59,6 +61,7 @@ const OUTCOME_TITLES = {
 const GENERATED_OUTCOME_TITLES = new Set<string>(Object.values(OUTCOME_TITLES))
 
 type DetailedOutcome = (typeof DETAILED_OUTCOMES)[number][0]
+type PostSessionTask = "outcome" | "slot" | "content" | "measurements" | "effort" | "body" | "memo" | "review"
 
 function isPerformedOutcome(outcome: DetailedOutcome | undefined): boolean {
   return outcome === "COMPLETED" || outcome === "PARTIAL" || outcome === "LIGHT_ACTIVITY"
@@ -82,6 +85,11 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
   const input = recovered?.input
   const initial = initialEntry?.kind === "post-session" ? initialEntry : undefined
   const isEditing = initial !== undefined
+  const isInputReview = isEditing || input !== undefined
+  const [task, setTask] = React.useState<PostSessionTask>(isInputReview ? "review" : "outcome")
+  const [editingFromReview, setEditingFromReview] = React.useState(false)
+  const returnsToReview = isInputReview || editingFromReview
+  React.useEffect(() => { if (isInputReview) setTask("review") }, [isInputReview])
   const [entryId] = React.useState(() => recovered?.entryId ?? initial?.id ?? newEntryId())
   const lastSavedAt = React.useRef(recovered?.baseSavedAt ?? initial?.savedAt)
   const persistInFlight = React.useRef(false)
@@ -125,6 +133,119 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
   const didNotPerform = isNonPerformedOutcome(activityOutcome)
   const recordsPerformance = !didNotPerform
   const importedObjective = IMPORTED_OBJECTIVE_FIELDS.some((field) => isImportedField(field, initial?.fieldProvenance))
+  const returnToReview = () => {
+    setEditingFromReview(false)
+    setTask("review")
+  }
+  const chooseOutcome = (value: DetailedOutcome) => {
+    setActivityOutcome(value)
+    setTitle((current) => GENERATED_OUTCOME_TITLES.has(current) ? OUTCOME_TITLES[value] : current)
+    setSaveError(false)
+    if (returnsToReview) returnToReview()
+    else setTask(isPerformedOutcome(value) ? "slot" : "memo")
+  }
+  const chooseSlot = (value: "UNSPECIFIED" | "AM" | "PM") => {
+    setActivitySlot(value)
+    if (returnsToReview) returnToReview()
+    else setTask("content")
+  }
+  const skipOutcome = () => { if (returnsToReview) returnToReview(); else setTask("content") }
+  const reviewNow = () => setTask("review")
+  const nextTask = () => {
+    if (returnsToReview) { returnToReview(); return }
+    if (task === "content") setTask("measurements")
+    else if (task === "measurements") setTask("effort")
+    else if (task === "effort") setTask("body")
+    else if (task === "body") setTask("memo")
+    else if (task === "memo") setTask("review")
+  }
+  const previousTask = () => {
+    setSaveError(false)
+    if (returnsToReview) { returnToReview(); return }
+    if (task === "slot") setTask("outcome")
+    else if (task === "content") setTask(isPerformedOutcome(activityOutcome) ? "slot" : "outcome")
+    else if (task === "measurements") setTask("content")
+    else if (task === "effort") setTask("measurements")
+    else if (task === "body") setTask("effort")
+    else if (task === "memo") setTask(isNonPerformedOutcome(activityOutcome) ? "outcome" : "body")
+    else if (task === "review") setTask("memo")
+  }
+  const firstTask = isInputReview ? task === "review" : task === "outcome"
+  const goBackFlow = () => {
+    if (firstTask) { draft.back(onBack)?.(); return }
+    previousTask()
+  }
+  useTaskFlowBack({ enabled: !firstTask, busy: saving, onBack: goBackFlow })
+
+  const selectedOutcome = activityOutcome
+    ? DETAILED_OUTCOMES.find(([value]) => value === activityOutcome)?.[1] ?? "선택한 결과"
+    : "아직 기록하지 않았어요"
+  const selectedSlot = activitySlot
+    ? DETAILED_SLOTS.find(([value]) => value === activitySlot)?.[1] ?? "선택한 시간대"
+    : "아직 기록하지 않았어요"
+  const selectedSystem = system
+    ? JOURNAL_ENERGY_SYSTEM_OPTIONS.find((option) => option.journalValue === system)?.pickerLabel ?? "선택한 강도 시스템"
+    : "아직 선택하지 않았어요"
+  const measurementSummary = [
+    distanceKm.trim() ? `${distanceKm.trim()} km` : null,
+    durationMin.trim() ? `${durationMin.trim()}분` : null,
+    avgPace.trim() ? `${avgPace.trim()} /km` : null,
+  ].filter((value): value is string => value !== null)
+  const hasExplicitSessionTitle = title.trim() !== "" && !GENERATED_OUTCOME_TITLES.has(title.trim())
+  const hasExerciseContent = hasExplicitSessionTitle || system !== "" || hasExerciseLog(exerciseLog)
+    || Object.values(plannedInputs.values).some(value => value.trim() !== "")
+  const hasMeasurements = distanceKm.trim() !== "" || durationMin.trim() !== "" || avgPace.trim() !== ""
+  const hasEffort = rpe > 0 || intensity.plannedRpe > 0 || intensity.objectiveComponents.length > 0
+  const bodySummary = painCheckStatus === "NO_SIGNAL_REPORTED"
+    ? "불편한 곳 없음"
+    : painCheckStatus === "SIGNAL_REPORTED"
+      ? `불편한 곳 표시 ${Object.values(painParts).filter((level) => level > 0).length}곳`
+      : "아직 응답하지 않았어요"
+  const memoPreview = memo.text.trim().replace(/\s+/gu, " ")
+  const reviewItems: Array<{ key: PostSessionTask; label: string; value: string; answered: boolean }> = [
+    { key: "outcome", label: "운동 결과", value: selectedOutcome, answered: activityOutcome !== undefined },
+    ...(recordsPerformance ? [
+      { key: "slot" as const, label: "운동 시간대", value: selectedSlot, answered: activitySlot !== undefined },
+      {
+        key: "content" as const,
+        label: "실제로 한 운동",
+        value: [
+          hasExplicitSessionTitle ? title.trim() : null,
+          system ? selectedSystem : null,
+          exerciseLog.components.length > 0 ? `운동 내용 ${exerciseLog.components.length}개` : null,
+          plannedInputs.invalidKeys.length > 0 ? "구간 기록 확인 필요" : null,
+        ].filter(Boolean).join(" · "),
+        answered: hasExerciseContent,
+      },
+      { key: "measurements" as const, label: "거리와 시간", value: measurementSummary.join(" · ") || "아직 기록하지 않았어요", answered: hasMeasurements },
+      {
+        key: "effort" as const,
+        label: "운동 강도",
+        value: [rpe > 0 ? `느낌 ${rpe}/10` : null, intensity.plannedRpe > 0 ? `예상 ${intensity.plannedRpe}/10` : null,
+          intensity.objectiveComponents.length > 0 ? `구간 기록 ${intensity.objectiveComponents.length}개` : null]
+          .filter(Boolean).join(" · "),
+        answered: hasEffort,
+      },
+      { key: "body" as const, label: "운동 후 몸 상태", value: bodySummary, answered: painCheckStatus !== "UNANSWERED" },
+    ] : []),
+    { key: "memo", label: "메모", value: memoPreview ? `${memoPreview.slice(0, 80)}${memoPreview.length > 80 ? "…" : ""}${memo.purpose === "PRIVATE_SELF_ONLY" ? " · 나만 보는 메모" : ""}` : "메모 없음", answered: memo.text.trim() !== "" },
+  ]
+  const answeredReviewItems = reviewItems.filter(item => item.answered)
+  const addableReviewItems = reviewItems.filter(item => !item.answered)
+  const taskTitle: Record<PostSessionTask, string> = {
+    outcome: "오늘 운동은 어떻게 됐나요?",
+    slot: "언제 운동했나요?",
+    content: "실제로 한 운동",
+    measurements: "거리와 시간을 남겨요",
+    effort: "몸에 느껴진 강도",
+    body: "운동 후 몸 상태",
+    memo: "오늘 남길 메모",
+    review: "입력 확인",
+  }
+  const editReviewItem = (key: PostSessionTask) => {
+    setEditingFromReview(true)
+    setTask(key)
+  }
 
   // "다음 구획을 건드렸다" 판정은 화면이 한다 (오너 결정 2026-07-28 "건드릴 때").
   // FormSec 안에 넣지 않는 이유: 무엇이 "다음" 인지는 화면 순서가 정하는
@@ -141,18 +262,21 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
       plannedInputs.revealFirstInvalid()
       setSaveError(true)
       setAccountNotice("구간 기록에 고칠 숫자가 있어요. 수정하거나 입력한 구간 기록을 지운 뒤 저장해 주세요.")
+      setTask("content")
       return
     }
     if (exerciseEditor || (didNotPerform && hasExerciseLog(exerciseLog))) {
       setSaveError(true)
       setAccountNotice(exerciseEditor ? "작성 중인 운동 내용을 반영하거나 지운 뒤 저장해 주세요." : "운동 내용이 남아 있어요. 운동 결과를 바꾸거나 운동 내용을 직접 정리해 주세요.")
+      setTask("content")
       return
     }
     const memoPreparation = memo.prepareForSave()
-    if (!memoPreparation.ready) return
+    if (!memoPreparation.ready) { setTask("memo"); return }
     if (recordsPerformance && painCheckStatus === "SIGNAL_REPORTED"
       && !Object.values(painParts).some((level) => level > 0)) {
       setSaveError(true)
+      setTask("body")
       return
     }
     const didPerform = isPerformedOutcome(activityOutcome)
@@ -268,9 +392,9 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
   }
 
   return (
-    <div style={{ paddingBottom: 100 }} aria-busy={saving}>
+    <div style={{ paddingBottom: task === "review" ? 100 : 24 }} aria-busy={saving}>
       <fieldset disabled={saving} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
-      <TopBar onBack={draft.back(onBack)}>훈련 후 · 기록</TopBar>
+      <TopBar onBack={goBackFlow}>훈련 후 · 기록</TopBar>
       <FormFinalizationRecovery recovery={finalization} onBack={draft.back(onBack)} />
       <div style={{ padding: "8px 20px 0" }}>
         <IndexCard date={compactDate(entryDate)} dow={`${dowOf(entryDate)} · ${nowClock()}`} />
@@ -283,35 +407,79 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
         </div>
       )}
 
-      {activityOutcome !== undefined && (
-        <FormSec compact lb="빠르게 남긴 운동 결과">
-          <div className="journal-progressive-edit" role="group" aria-label="운동 결과 수정">
-            {DETAILED_OUTCOMES.map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={activityOutcome === value}
-                disabled={importedObjective && isNonPerformedOutcome(value)}
-                onClick={() => {
-                  setActivityOutcome(value)
-                  setTitle((current) => GENERATED_OUTCOME_TITLES.has(current) ? OUTCOME_TITLES[value] : current)
-                  setSaveError(false)
-                }}
-              >{label}</button>
+      <TaskFlowStep stepKey={task} title={taskTitle[task]} busy={saving}
+        actions={task === "review" ? <StickyBar onSave={persist} error={saveError && !accountEnabled && !accountNotice}
+          label={saving ? "저장 중" : isEditing ? "수정 저장" : undefined} /> : (
+          <div className="task-flow__actions">
+            {task === "outcome" && (returnsToReview
+              ? <button type="button" className="quick-log__primary" onClick={reviewNow}>입력 확인으로</button>
+              : <>
+                <button type="button" className="quick-log__secondary" onClick={skipOutcome}>결과는 생략하고 계속</button>
+                <button type="button" className="quick-log__primary" onClick={reviewNow}>지금 입력 확인</button>
+              </>)}
+            {task === "slot" && (returnsToReview
+              ? <button type="button" className="quick-log__primary" onClick={reviewNow}>입력 확인으로</button>
+              : <>
+                <button type="button" className="quick-log__secondary" onClick={() => setTask("content")}>시간대는 기록하지 않고 계속</button>
+                <button type="button" className="quick-log__primary" onClick={reviewNow}>지금 입력 확인</button>
+              </>)}
+            {task !== "outcome" && task !== "slot" && (returnsToReview
+              ? <button type="button" className="quick-log__primary" onClick={nextTask}>입력 확인으로</button>
+              : <>
+                <button type="button" className="quick-log__primary" onClick={nextTask}>다음 질문</button>
+                <button type="button" className="quick-log__secondary" onClick={reviewNow}>지금 입력 확인</button>
+              </>)}
+          </div>
+        )}>
+
+      {task === "review" && <div className="post-session-review" aria-label="저장 전 입력 확인">
+        <p>입력한 내용만 저장해요.</p>
+        {memo.reviewMessage !== null && <p role="status" className="post-session-review__notice">
+          {memo.reviewMessage} {accountEnabled ? "계정 저장 여부는 저장 결과에서 확인해 주세요." : "저장은 이 기기에만 됩니다."}
+        </p>}
+        {painLevelsRequireReview(painParts) && <PainReviewBanner />}
+        {answeredReviewItems.length > 0 && <dl className="post-session-review__answers" style={{ display: "grid", gap: 8, margin: 0 }}>
+          {answeredReviewItems.map((item) => (
+            <div key={item.key} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", alignItems: "center", gap: 8, borderBottom: "1px solid var(--line)", paddingBlock: 8 }}>
+              <div style={{ minWidth: 0 }}>
+                <dt style={{ fontSize: 11, color: "var(--ink-3)" }}>{item.label}</dt>
+                <dd style={{ margin: "2px 0 0", fontSize: 14, color: "var(--ink)", overflowWrap: "anywhere" }}>{item.value}</dd>
+              </div>
+              <button type="button" className="quick-log__secondary" aria-label={`${item.label} 수정`}
+                onClick={() => editReviewItem(item.key)}>수정</button>
+            </div>
+          ))}
+        </dl>}
+        {addableReviewItems.length > 0 && <section className="post-session-review__additions" aria-labelledby="post-session-review-additions-title">
+          <h3 id="post-session-review-additions-title">추가할 항목</h3>
+          <div className="post-session-review__additions-grid" role="group" aria-label="추가할 항목">
+            {addableReviewItems.map((item) => (
+              <button key={item.key} type="button" className="quick-log__secondary post-session-review__add-item"
+                aria-label={`${item.label} 수정`} onClick={() => editReviewItem(item.key)}>{item.label}</button>
             ))}
           </div>
-          {importedObjective && <p role="note">가져온 활동 값이 있어 휴식·건너뜀으로 변경할 수 없는 기록이에요.</p>}
-          {(activityOutcome === "COMPLETED" || activityOutcome === "PARTIAL" || activityOutcome === "LIGHT_ACTIVITY") && (
-            <div className="journal-progressive-edit" role="group" aria-label="운동 시간대 수정">
-              {DETAILED_SLOTS.map(([value, label]) => (
-                <button key={value} type="button" aria-pressed={activitySlot === value} onClick={() => setActivitySlot(value)}>{label}</button>
-              ))}
-            </div>
-          )}
-        </FormSec>
-      )}
+        </section>}
+      </div>}
 
-      {recordsPerformance && <FormSec compact lb="강도 시스템" help="energy-system">
+      {task === "outcome" && <FormSec compact lb="운동 결과 · 선택">
+        <div className="journal-progressive-edit" role="group" aria-label="운동 결과 수정">
+          {DETAILED_OUTCOMES.map(([value, label]) => (
+            <button key={value} type="button" aria-pressed={activityOutcome === value}
+              disabled={importedObjective && isNonPerformedOutcome(value)} onClick={() => chooseOutcome(value)}>{label}</button>
+          ))}
+        </div>
+        {importedObjective && <p role="note">가져온 활동 값이 있어 휴식·건너뜀으로 변경할 수 없는 기록이에요.</p>}
+      </FormSec>}
+      {task === "slot" && recordsPerformance && <FormSec compact lb="운동 시간대 · 선택">
+        <div className="journal-progressive-edit" role="group" aria-label="운동 시간대 수정">
+          {DETAILED_SLOTS.map(([value, label]) => (
+            <button key={value} type="button" aria-pressed={activitySlot === value}
+              onClick={() => chooseSlot(value)}>{label}</button>
+          ))}
+        </div>
+      </FormSec>}
+
+      {task === "content" && recordsPerformance && <FormSec compact lb="강도 시스템" help="energy-system">
         <div className="journal-energy-picker">
           {JOURNAL_ENERGY_SYSTEM_OPTIONS.map((energySystem) => (
             <button
@@ -333,7 +501,7 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
         </div>
       </FormSec>}
 
-      <FormSec compact lb="세션 제목">
+      {task === "content" && recordsPerformance && <FormSec compact lb="세션 제목">
         <div className="exercise-editor__entry">
           <input aria-label="세션 제목" type="text" value={title} onChange={(event) => setTitle(event.target.value)} style={inputStyle()} />
           <button type="button" aria-label="운동 내용 추가·수정" title="실제로 한 운동 추가·수정"
@@ -345,10 +513,10 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
         <div id={exercisePanelId} hidden={!exerciseOpen}>
           <ExerciseLogEditor value={exerciseLog} onChange={setExerciseLog} draft={exerciseEditor} onDraftChange={setExerciseEditor} />
         </div>
-      </FormSec>
-      {(recordsPerformance || exerciseLog.plannedRepetitions || exerciseLog.plannedSegments || Object.keys(plannedInputs.values).length > 0) && <PlannedRepetitionEditor entryId={entryId} date={entryDate} link={planLink} value={exerciseLog} onChange={setExerciseLog} inputs={plannedInputs} />}
-      {plannedInputs.invalidKeys.length > 0 && <p>구간 기록 {plannedInputs.invalidKeys.length}곳의 숫자를 확인해 주세요. 확인 전에는 저장되지 않아요.</p>}
-      {recordsPerformance && <FormSec compact lb="거리 · 시간 · 평균 페이스" help="pace">
+      </FormSec>}
+      {task === "content" && (recordsPerformance || exerciseLog.plannedRepetitions || exerciseLog.plannedSegments || Object.keys(plannedInputs.values).length > 0) && <PlannedRepetitionEditor entryId={entryId} date={entryDate} link={planLink} value={exerciseLog} onChange={setExerciseLog} inputs={plannedInputs} />}
+      {task === "content" && plannedInputs.invalidKeys.length > 0 && <p>구간 기록 {plannedInputs.invalidKeys.length}곳의 숫자를 확인해 주세요. 확인 전에는 저장되지 않아요.</p>}
+      {task === "measurements" && recordsPerformance && <FormSec compact lb="거리 · 시간 · 평균 페이스" help="pace">
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
           <input aria-label="거리 (km)" readOnly={isImportedField("distanceKm", initial?.fieldProvenance)} type="text" value={distanceKm} onChange={(event) => setDistanceKm(event.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
           <input aria-label="시간 (분)" readOnly={isImportedField("durationMin", initial?.fieldProvenance)} type="text" value={durationMin} onChange={(event) => setDurationMin(event.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
@@ -372,7 +540,7 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
         `미선택` 을 넣지 않고 undefined 를 준다. 판정 문구가 아니라 "값이 없다"
         는 뜻이고, 값이 없으면 접혀서는 안 된다.
       */}
-      {recordsPerformance && <FormSec
+      {task === "effort" && recordsPerformance && <FormSec
         compact
         lb="RPE · 주관 강도"
         help="rpe"
@@ -397,7 +565,7 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
         </div>
       </FormSec>}
 
-      {recordsPerformance && <FormSec compact lb="운동 후 몸 상태">
+      {task === "body" && recordsPerformance && <FormSec compact lb="운동 후 몸 상태">
         <div className="journal-progressive-edit" role="group" aria-label="운동 후 불편함 확인">
           <button type="button" aria-pressed={painCheckStatus === "NO_SIGNAL_REPORTED"} onClick={() => { setPainCheckStatus("NO_SIGNAL_REPORTED"); setPainParts({}) }}>불편한 곳 없음</button>
           <button type="button" aria-pressed={painCheckStatus === "SIGNAL_REPORTED"} onClick={() => setPainCheckStatus("SIGNAL_REPORTED")}>불편한 곳 있음</button>
@@ -410,7 +578,7 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
         )}
       </FormSec>}
 
-      {recordsPerformance && <IntensityAssessmentField
+      {task === "effort" && recordsPerformance && <IntensityAssessmentField
         controller={intensity}
         editorDraft={objectiveEditor}
         onEditorDraftChange={setObjectiveEditor}
@@ -418,7 +586,7 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
         onSectionTouch={touchOrder.touch}
       />}
 
-      <FormSec compact lb="메모 · 손글씨처럼" onTouch={() => touchOrder.touch("memo")}>
+      {task === "memo" && <FormSec compact lb="메모 · 손글씨처럼" onTouch={() => touchOrder.touch("memo")}>
         <PurposeScopedMemoField
           controller={memo}
           fieldId="post-session-memo"
@@ -426,10 +594,10 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
           placeholder="오늘 어땠는지 한 줄이라도..."
           rows={4}
         />
-      </FormSec>
+      </FormSec>}
 
       {saveError && (accountEnabled || accountNotice) && <p role="alert">{accountNotice ?? "계정 저장을 완료하지 못했어요. 입력은 그대로 남아 있어요. 연결과 로그인 상태를 확인한 뒤 다시 저장해 주세요."}</p>}
-      <StickyBar onSave={persist} error={saveError && !accountEnabled && !accountNotice} label={saving ? "저장 중" : isEditing ? "수정 저장" : undefined} />
+      </TaskFlowStep>
       </fieldset>
     </div>
   )

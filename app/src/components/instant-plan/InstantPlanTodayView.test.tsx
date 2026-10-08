@@ -13,14 +13,14 @@ const today: InstantPlanToday = {
   sourceLabel: "시험 제작자의 프로그램 · 2회차 · 같은 구성, 개인 페이스",
   sessions: [
     { id: "am", slotLabel: "오전", title: "준비 훈련", recorded: false, steps: [
-      { label: "준비", instruction: "준비 동작 8분" },
-      { label: "본운동", instruction: "안내된 동작 12분" },
+      { role: "PREPARATION", label: "준비", instruction: "준비 동작 8분" },
+      { role: "MAIN", label: "본운동", instruction: "안내된 동작 12분" },
     ] },
     { id: "pm", slotLabel: "오후", title: "반복 훈련", recorded: false, steps: [
-      { label: "준비", instruction: "준비 달리기 10분" },
-      { label: "본운동", instruction: "400m × 3회 · 400m 한 번에 100초 · 1km당 페이스 4분 10초" },
-      { label: "사이 회복", instruction: "각 반복 사이 90초 걷기" },
-      { label: "정리", instruction: "정리 달리기 5분" },
+      { role: "PREPARATION", label: "준비", instruction: "준비 달리기 10분" },
+      { role: "MAIN", label: "본운동", instruction: "400m × 3회 · 400m 한 번에 100초 · 1km당 페이스 4분 10초" },
+      { role: "RECOVERY", label: "사이 회복", instruction: "각 반복 사이 90초 걷기" },
+      { role: "COOLDOWN", label: "정리", instruction: "정리 달리기 5분" },
     ] },
   ],
 }
@@ -30,8 +30,8 @@ describe("InstantPlanTodayView", () => {
     const onViewSession = vi.fn()
     render(<InstantPlanTodayView today={{ ...today, sessions: [{ ...today.sessions[0]!,
       guidanceNotice: "반복 횟수와 회복 시간은 정해지지 않았어요.",
-      steps: [{ label: "총 시간·강도", instruction: "총 35분 · RPE 6~7" },
-        { label: "방법", instruction: "저장된 안내" }],
+      steps: [{ role: "TOTAL_DURATION", label: "총 시간", instruction: "총 35분 · RPE 6~7" },
+        { role: "METHOD", label: "방법", instruction: "저장된 안내" }],
     }] }} compact onViewSession={onViewSession} />)
     expect(screen.getByRole("note")).toBeVisible()
     expect(screen.getByText("반복 횟수와 회복 시간은 정해지지 않았어요.")).not.toBeVisible()
@@ -47,8 +47,8 @@ describe("InstantPlanTodayView", () => {
     const record = vi.fn(), view = vi.fn()
     const session = { ...today.sessions[1]!, steps: [
       ...today.sessions[1]!.steps,
-      { label: "본운동", instruction: "마지막 200m · 45초" },
-      { label: "회복", instruction: "세트 사이 3분 서서 쉬기" },
+      { role: "MAIN" as const, label: "본운동", instruction: "마지막 200m · 45초" },
+      { role: "RECOVERY" as const, label: "회복", instruction: "세트 사이 3분 서서 쉬기" },
     ] }
     render(<InstantPlanTodayView compact today={{ ...today, sessions: [session] }} onRecordSession={record} onViewSession={view} />)
     const button = screen.getByRole("button", { name: "오후 훈련 기록 남기기" })
@@ -172,19 +172,22 @@ describe("InstantPlanTodayView", () => {
     expect(screen.getByRole("status")).toBeVisible()
   })
 
-  it("keeps the compact overview numeric and preserves every method behind one disclosure", async () => {
+  it("keeps total time and every execution phase visible; only method details are collapsed", async () => {
     const compactToday: InstantPlanToday = { ...today, sourceLabel: undefined, sessions: [{ ...today.sessions[1]!, steps: [
-      { label: "총 시간·강도", instruction: "총 35분 · RPE 3~4" }, ...today.sessions[1]!.steps,
+      { role: "TOTAL_DURATION", label: "총 시간", instruction: "총 35분 · RPE 3~4" }, ...today.sessions[1]!.steps,
+      { role: "METHOD", label: "방법", instruction: "별도 훈련 방법" },
     ] }] }
     const { rerender } = render(<InstantPlanTodayView today={compactToday} compact />)
     expect(screen.getByText("총 35분 · RPE 3~4")).toBeVisible()
     expect(screen.queryByText("아직 기록 없음")).toBeNull()
     expect(screen.queryByRole("status")).toBeNull()
+    expect(screen.getByText("준비 달리기 10분")).toBeVisible()
     expect(screen.getByText("각 반복 사이 90초 걷기")).toBeVisible()
     expect(screen.getByText(/400m × 3회/)).toBeVisible()
-    expect(screen.getByText("준비 달리기 10분")).not.toBeVisible()
+    expect(screen.getByText("정리 달리기 5분")).toBeVisible()
+    expect(screen.queryByText("별도 훈련 방법")).not.toBeVisible()
     fireEvent.click(screen.getByText("훈련 방법"))
-    expect(screen.getByText("준비 달리기 10분")).toBeVisible()
+    expect(screen.getByText("별도 훈련 방법")).toBeVisible()
     expect(screen.getByText("각 반복 사이 90초 걷기")).toBeVisible()
     expect(screen.getByText(/400m × 3회/)).toBeVisible()
     rerender(<InstantPlanTodayView today={{ ...compactToday, state: "UNAVAILABLE" }} compact />)

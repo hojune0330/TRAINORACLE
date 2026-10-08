@@ -107,7 +107,7 @@ export function BetaAccountSettings({
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <div aria-busy={busy} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <SectionLb>{dataRightsOnly ? "기존 계정 삭제 요청" : completionOnly ? "가입 마무리" : "계정 정보와 개인정보"}</SectionLb>
       {dataRightsOnly ? null : profileSetupComplete ? (
         <p style={{ fontFamily: "var(--sans)", fontSize: 12.5, lineHeight: 1.6, color: "var(--ink-2)", margin: 0 }}>

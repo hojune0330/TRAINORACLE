@@ -77,6 +77,16 @@ function row(label: string, table = "변경 전후 합계") {
 }
 
 describe("prepared reviewed prescription adjustment editor", () => {
+  it("does not invite adjustment when there are no alternative configurations", () => {
+    const { props } = fixture()
+    render(<PrescriptionAdjustmentEditor {...props} choices={[]} />)
+    expect(screen.getByRole("heading", { name: "현재 훈련 확인" })).toBeVisible()
+    expect(document.querySelector('.task-guide img')).toBeNull()
+    expect(screen.queryByText("변경안은 적용을 눌러야 반영돼요.")).toBeNull()
+    expect(applyButton()).toBeDisabled()
+    expect(props.onApply).not.toHaveBeenCalled()
+  })
+
   it("opens a native modal, makes no draft/save by default and restores focus/scroll on clean Escape", () => {
     const { props } = fixture()
     render(<button>편집 열기</button>)

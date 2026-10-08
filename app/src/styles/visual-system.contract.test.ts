@@ -17,6 +17,17 @@ function sourceFiles(root: string): readonly string[] {
 }
 
 describe("shared visual system", () => {
+  it("scopes softer reference controls to tasks and respects both motion preferences", () => {
+    const tokens = readFileSync("../colors_and_type.css", "utf8")
+    const task = readFileSync("src/styles/task-flow.css", "utf8")
+    const app = readFileSync("src/styles/app.css", "utf8")
+    expect(tokens).toContain("--r-action: 12px")
+    expect(tokens).toContain("--r-task-surface: 16px")
+    expect(task).toContain('.task-flow[data-task-reduced-motion="true"] button:not(:disabled):not([aria-disabled="true"]):active { transform: none; }')
+    expect(task).toContain("@media (prefers-reduced-motion: reduce)")
+    expect(app).not.toMatch(/\.quick-log__(?:choices|rpe-grid|slot) button:active/u)
+  })
+
   it("keeps plan summaries and writing backgrounds free of redundant decorative lines", () => {
     const instant = readFileSync("src/components/instant-plan/instant-plan.css", "utf8")
     const plan = readFileSync("src/styles/plan-beta.css", "utf8")

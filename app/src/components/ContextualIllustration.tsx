@@ -10,10 +10,31 @@ const imageFiles = {
   "decorating-kit": "decorating-kit-v1.webp",
   "mari-explain": "mari-explain.webp",
   "mari-thanks": "mari-thanks.webp",
+  "plan-notebook": "plan-notebook-v2.webp",
+  "journal-saved": "journal-saved-v2.webp",
+  "running-shoe": "running-shoe-v2.webp",
+  "analysis-lens": "analysis-lens-v2.webp",
+  "watch-file-v2": "watch-file-v2.webp",
+  "decorating-kit-v2": "decorating-kit-v2.webp",
+  "training-map": "training-map-v3.webp",
+  "pace-stopwatch": "pace-stopwatch-v3.webp",
+  "record-stopwatch": "record-stopwatch-v3.webp",
+  "plan-adjust": "plan-adjust-v3.webp",
+  "mari-profile-hello": "mari-profile-hello-v4.webp",
+  "mari-profile-explain": "mari-profile-explain-v4.webp",
+  "mari-profile-wave": "mari-profile-wave-v4.webp",
+  "preference-structure": "preference-structure-v1.webp",
+  "preference-challenge": "preference-challenge-v1.webp",
+  "preference-intensity": "preference-intensity-v1.webp",
+  "preference-social": "preference-social-v1.webp",
+  "preference-explore": "preference-explore-v1.webp",
+  "preference-refresh": "preference-refresh-v1.webp",
 } as const
 
+export type ContextualIllustrationName = keyof typeof imageFiles
+
 interface ContextualIllustrationProps {
-  readonly image: keyof typeof imageFiles
+  readonly image: ContextualIllustrationName
   readonly size?: "small" | "medium"
   readonly className?: string
 }

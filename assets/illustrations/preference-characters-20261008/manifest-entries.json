@@ -1,0 +1,115 @@
+{
+  "additionalSource": "assets/illustrations/preference-characters-20261008/prompts.json",
+  "totalBytes": 60346,
+  "sourceBytes": 4917263,
+  "assets": [
+    {
+      "sourceName": "preference-structure-original.png",
+      "sourcePath": "assets/illustrations/preference-characters-20261008/preference-structure-original.png",
+      "outputName": "preference-structure-v1.webp",
+      "sourceBytes": 950574,
+      "bytes": 11072,
+      "sourceSha256": "79c35a3fb2c770cda3dd8c3ee33c333255771fee3b2b77bd585cbec2799d8df2",
+      "sha256": "62b59b9e53c5bdc7105ead9d526c8156ffc2eeaf42bb94c47bf2813e166926d7",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true,
+      "conversion": {
+        "tool": "FFmpeg libwebp",
+        "quality": 84,
+        "maximumSide": 256,
+        "contentAltered": false
+      }
+    },
+    {
+      "sourceName": "preference-challenge-original.png",
+      "sourcePath": "assets/illustrations/preference-characters-20261008/preference-challenge-original.png",
+      "outputName": "preference-challenge-v1.webp",
+      "sourceBytes": 840420,
+      "bytes": 9730,
+      "sourceSha256": "a0fc04b7d9ab73624739d36f9da391b49b8de668ad711b5a024a411a95800253",
+      "sha256": "6a92ef37e6324359e280bcc8ba870a8f4be1e80defcbd9aa32ad9a46099e2dca",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true,
+      "conversion": {
+        "tool": "FFmpeg libwebp",
+        "quality": 84,
+        "maximumSide": 256,
+        "contentAltered": false
+      }
+    },
+    {
+      "sourceName": "preference-intensity-original.png",
+      "sourcePath": "assets/illustrations/preference-characters-20261008/preference-intensity-original.png",
+      "outputName": "preference-intensity-v1.webp",
+      "sourceBytes": 679372,
+      "bytes": 9444,
+      "sourceSha256": "18061034be90b53bc3baa2e144807a5cb8cb3d359fe120e1acf3f0b3430209ba",
+      "sha256": "13c3bb89249bc0e8037946a204a31a0a36e033f7a21c503136786f1870dd45bb",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true,
+      "conversion": {
+        "tool": "FFmpeg libwebp",
+        "quality": 84,
+        "maximumSide": 256,
+        "contentAltered": false
+      }
+    },
+    {
+      "sourceName": "preference-social-original.png",
+      "sourcePath": "assets/illustrations/preference-characters-20261008/preference-social-original.png",
+      "outputName": "preference-social-v1.webp",
+      "sourceBytes": 838110,
+      "bytes": 10404,
+      "sourceSha256": "6865e743ba988688c54589319b45a3e74ebec302d0650f9113551d03920f9b6f",
+      "sha256": "a1823cecddc91babcbb941866b3b832858829d1618f57c27f8674de7d4977ed9",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true,
+      "conversion": {
+        "tool": "FFmpeg libwebp",
+        "quality": 84,
+        "maximumSide": 256,
+        "contentAltered": false
+      }
+    },
+    {
+      "sourceName": "preference-explore-original.png",
+      "sourcePath": "assets/illustrations/preference-characters-20261008/preference-explore-original.png",
+      "outputName": "preference-explore-v1.webp",
+      "sourceBytes": 839651,
+      "bytes": 10414,
+      "sourceSha256": "62a38485163fef4d37dc2bbdcbdb221f9d63aff5ea946927463d65cc6e37e3b5",
+      "sha256": "bba8ce5aa7d12c6882a07eb3692140ba9c0917b3a8bdbfe6b229920c07374943",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true,
+      "conversion": {
+        "tool": "FFmpeg libwebp",
+        "quality": 84,
+        "maximumSide": 256,
+        "contentAltered": false
+      }
+    },
+    {
+      "sourceName": "preference-refresh-original.png",
+      "sourcePath": "assets/illustrations/preference-characters-20261008/preference-refresh-original.png",
+      "outputName": "preference-refresh-v1.webp",
+      "sourceBytes": 769136,
+      "bytes": 9282,
+      "sourceSha256": "ad13a38d54e495fe22e033603169d5700946ff431d1ba853f5161a841a9cf5ff",
+      "sha256": "93accbc67d4146b2cb1cd4f9caa5b9cd2739fe5bfbc1275b06b7941a71e9c860",
+      "width": 256,
+      "height": 256,
+      "hasAlpha": true,
+      "conversion": {
+        "tool": "FFmpeg libwebp",
+        "quality": 84,
+        "maximumSide": 256,
+        "contentAltered": false
+      }
+    }
+  ]
+}

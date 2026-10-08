@@ -103,7 +103,9 @@ test(`returning from a ${detailed ? "detailed" : "quick"} DAY 5 PM journal keeps
   if (detailed) {
     await page.getByRole("button", { name: "내용 추가·수정", exact: true }).click()
     await page.getByRole("button", { name: "일지 더 쓰기", exact: true }).click()
+    await page.getByRole("button", { name: "실제로 한 운동 수정" }).click()
     await page.getByLabel("세션 제목").fill("합성 훈련 기록")
+    await page.getByRole("button", { name: "입력 확인으로" }).click()
     await page.getByRole("button", { name: /수정 저장/u }).click()
   } else {
     await page.getByRole("button", { name: "완료", exact: true }).click()
@@ -121,6 +123,7 @@ test(`returning from a ${detailed ? "detailed" : "quick"} DAY 5 PM journal keeps
     progress: JSON.parse(window.localStorage.getItem("trainoracle.plan-beta.v1") ?? "null")?.progress,
   }))).toMatchObject({
     journal: [{
+      ...(detailed ? { title: "합성 훈련 기록" } : {}),
       activityOutcome: "COMPLETED",
       activitySlot: "PM",
       plannedSessionLink: { sessionDay: 5, sessionSlot: "PM" },

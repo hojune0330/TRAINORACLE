@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "date": "2026-10-08",
+  "tool": "built-in image_gen.imagegen",
+  "purpose": "Original optional Mari companion poses for running-preference UI; greeting is not answer approval, a health assessment or save/reward evidence.",
+  "identityReference": "app/public/oracle-v2/mari-friendly.png",
+  "conversion": {
+    "tool": "FFmpeg",
+    "format": "webp",
+    "quality": 82,
+    "compressionLevel": 6,
+    "pixelFormat": "yuva420p",
+    "width": 256,
+    "height": 256,
+    "filter": "scale=256:256:flags=lanczos",
+    "contentAltered": false
+  },
+  "assets": [
+    {
+      "name": "mari-profile-hello-v4",
+      "prompt": "Use case: stylized-concept\nAsset type: original small TrainOracle running-preference UI companion, one square transparent character asset for display at 80px.\nInput images: Image 1 is the user's existing Mari character identity reference, not a person photo. Keep Mari recognizable: short charcoal-black bob with side-parted bangs, black rounded-rectangular glasses, warm gentle face.\nPrimary request: reimagine this existing illustrated Mari as one polished matte-clay 3D upper-body character, curious and welcoming with a small relaxed closed smile and very slight head tilt. Hands rest naturally near the lower torso; no waving yet. Youthful approachable guide, not a baby or toddler.\nStyle/medium: soft tactile sculpted clay with simplified clean geometry, matte finish, expressive but restrained proportions and clear silhouette. Eye-level frontal composition, character centered, head and both shoulders fully visible, upper body only, 10% clear transparent padding on all sides.\nColor palette: charcoal hair and glasses, natural warm skin, deep muted teal jacket (#0D5F5A), ivory T-shirt (#FAFAF7). Soft diffuse light, subtle shading within the character only.\nConstraints: genuine transparent background; no floor, external cast shadow, glow, halo, frame or background scene. No text, letters, numbers, logos, badges, reward imagery, health claims, confetti, accessories or additional objects. No thumbs-up, checkmarks or approval gesture. Produce exactly one character image, not a sheet or montage.",
+      "referenceImages": [
+        "app/public/oracle-v2/mari-friendly.png"
+      ],
+      "generatedSource": "exec-a2ad42e5-3af8-4af7-ad09-1bac46f47e00.png"
+    },
+    {
+      "name": "mari-profile-explain-v4",
+      "prompt": "Use case: identity-preserve\nAsset type: second matching original Mari companion illustration for an 80px running-preference UI.\nInput images: Image 1 is the approved matte-clay Mari identity and style reference. Keep this exact character: same short charcoal bob, side-parted bangs, black rounded-rectangular glasses, warm skin, face proportions, muted teal jacket and ivory T-shirt, same matte-clay material and soft lighting.\nPrimary request: Mari gently explains something while holding a small open blank ivory notebook near the chest with both hands. Friendly attentive neutral smile, head mostly upright. This is a companion guide, not an evaluation or celebration. Make the two broad blank notebook pages readable as an object at 80px; absolutely no writing, symbols or marks on them.\nComposition: one centered eye-level upper-body character, square transparent image, same character scale as the reference, head and hands fully inside a 10% transparent safe margin. Clean smooth curved lower bust boundary, no cut-off fingers. Keep the body compact so the face remains clear when reduced.\nConstraints: preserve recognizable identity, outfit, palette, materials and frontal view. Genuine transparent background and clean alpha edges. No ground, cast shadow outside character, halo, glow, added scene, letters, numbers, logo, watermark, health or score badges, rewards, confetti, checkmarks or thumbs-up. Exactly one character asset.",
+      "referenceImages": [
+        "assets/illustrations/profile-companion-20261008/mari-profile-hello-v4.png"
+      ],
+      "generatedSource": "exec-9afd1f47-1839-463a-8126-8ad746023053.png"
+    },
+    {
+      "name": "mari-profile-wave-v4",
+      "prompt": "Use case: identity-preserve\nAsset type: third matching original Mari companion illustration for a tap-triggered friendly greeting in an 80px running-preference UI.\nInput images: Image 1 is the approved matte-clay Mari identity and style reference. Keep this exact character: same short charcoal bob, side-parted bangs, black rounded-rectangular glasses, warm skin, face proportions, muted teal jacket and ivory T-shirt, same matte-clay material and soft lighting.\nPrimary request: Mari gives a small friendly hello with one relaxed open hand raised beside the shoulder. A warm little closed smile, head upright, looking toward viewer. This is a welcoming hand wave only, not congratulations, cheering or approval of a survey answer. Other hand rests naturally near torso. Five clear fingers, no extra limbs.\nComposition: one centered eye-level upper-body character, square transparent image, same scale as reference, all of the head and waving hand inside 10% transparent margin. Compact torso and clean curved lower bust edge. No notebook for this pose.\nConstraints: preserve recognizable identity, outfit, palette, materials and frontal view. Genuine transparent background, clean alpha edges without colored fringe. No ground, external cast shadow, halo, glow, background scene, motion lines, text, letters, numbers, logos, watermark, health or score badges, reward objects, confetti, checkmarks or thumbs-up. Exactly one character asset.",
+      "referenceImages": [
+        "assets/illustrations/profile-companion-20261008/mari-profile-hello-v4.png"
+      ],
+      "generatedSource": "exec-f7b455ff-785c-4a02-b4fb-332ad81086e3.png"
+    }
+  ]
+}

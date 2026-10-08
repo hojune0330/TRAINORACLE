@@ -1,5 +1,6 @@
 import React from "react"
 import { readFileSync } from "node:fs"
+import { createHash } from "node:crypto"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { ContextualIllustration } from "./ContextualIllustration"
@@ -46,20 +47,47 @@ describe("optional contextual illustrations", () => {
     expect(container.querySelector("img")?.getAttribute("src")).toMatch(/illustrations\/training-track-break-v1\.webp$/u)
   })
 
+  it.each(["plan-notebook", "journal-saved", "running-shoe", "analysis-lens", "watch-file-v2", "decorating-kit-v2"] as const)("registers the optional %s artwork without changing fixed decorative behavior", image => {
+    const { container } = render(<ContextualIllustration image={image} />)
+    const artwork = container.querySelector("img")!
+    expect(artwork).toHaveAttribute("alt", "")
+    expect(artwork).toHaveAttribute("width", "64")
+    expect(artwork).toHaveAttribute("height", "64")
+    expect(artwork).toHaveAttribute("loading", "lazy")
+    expect(artwork.getAttribute("src")).toMatch(/-v2\.webp$/u)
+    fireEvent.error(artwork)
+    expect(container.querySelector("img")).toBeNull()
+  })
+
   it("ships the registered small alpha derivatives without adding them to the service worker precache", () => {
     const manifest = JSON.parse(readFileSync("../docs/handoff/contextual-illustrations.json", "utf8")) as {
-      assets: {outputName: string; bytes: number; hasAlpha: boolean}[]
+      totalBytes: number
+      assets: {outputName: string; bytes: number; hasAlpha: boolean; sha256: string}[]
     }
     const component = readFileSync("src/components/ContextualIllustration.tsx", "utf8")
     const worker = readFileSync("public/sw.js", "utf8")
+    expect(manifest.assets.reduce((total, asset) => total + asset.bytes, 0)).toBe(manifest.totalBytes)
     for (const asset of manifest.assets) {
       const file = readFileSync(`public/illustrations/${asset.outputName}`)
       expect(file.byteLength).toBe(asset.bytes)
+      expect(createHash("sha256").update(file).digest("hex")).toBe(asset.sha256)
       expect(file.subarray(0, 4).toString()).toBe("RIFF")
       expect(file.subarray(8, 12).toString()).toBe("WEBP")
       expect(asset.hasAlpha).toBe(true)
       expect(component).toContain(asset.outputName)
       expect(worker).not.toContain(asset.outputName)
     }
+  })
+
+  it.each(["training-map", "pace-stopwatch", "record-stopwatch", "plan-adjust"] as const)("keeps %s task artwork optional and non-interactive", image => {
+    const { container } = render(<ContextualIllustration image={image} />)
+    const artwork = container.querySelector("img")!
+    expect(artwork).toHaveAttribute("alt", "")
+    expect(artwork).toHaveAttribute("aria-hidden", "true")
+    expect(artwork).toHaveAttribute("width", "64")
+    expect(artwork.getAttribute("src")).toMatch(/-v3\.webp$/u)
+    expect(screen.queryByRole("img")).toBeNull()
+    fireEvent.error(artwork)
+    expect(container.querySelector("img")).toBeNull()
   })
 })

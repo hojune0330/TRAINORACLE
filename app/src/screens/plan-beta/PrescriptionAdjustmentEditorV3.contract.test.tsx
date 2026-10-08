@@ -48,6 +48,19 @@ const row = (name: string) => within(within(screen.getByRole("table", { name: "�
   .getByRole("rowheader", { name }).closest("tr")!).getAllByRole("cell").map(c => c.textContent)
 
 describe("V3 adjustment editor", () => {
+  it("only illustrates an available reviewed change, not an unverified raw choice", () => {
+    const { props } = fixture()
+    const { rerender } = render(<PrescriptionAdjustmentEditorV3 {...props} />)
+    expect(screen.getByRole("heading", { name: "훈련 조절하기" })).toBeVisible()
+    expect(document.querySelector('.task-guide img')).not.toBeNull()
+    rerender(<PrescriptionAdjustmentEditorV3 {...props} authority={{ ...props.authority, policies: [] }} />)
+    expect(screen.getByRole("heading", { name: "현재 훈련 확인" })).toBeVisible()
+    expect(document.querySelector('.task-guide img')).toBeNull()
+    expect(screen.queryByText("변경안은 적용을 눌러야 반영돼요.")).toBeNull()
+    expect(screen.getByRole("button", { name: "변경안 적용" })).toBeDisabled()
+    expect(props.onApply).not.toHaveBeenCalled()
+  })
+
   it("restores the previously selected configuration and closes an unchanged reopened editor without a discard prompt", () => {
     const { props, refs } = fixture()
     render(<PrescriptionAdjustmentEditorV3 {...props} initialConfiguration={refs[1]} />)
@@ -73,13 +86,27 @@ describe("V3 adjustment editor", () => {
     expect(screen.getByRole("button", { name: "변경안 적용" })).toBeDisabled()
     fireEvent.click(screen.getByRole("button", { name: "반복 줄이기" }))
     expect(row("본운동 시간")).toEqual(["78초", "52초", "-26초"])
-    expect(row("회복 시간")).toEqual(["산출 불가", "산출 불가", "산출 불가"])
+    expect(within(screen.getByRole("table", { name: "본운동 변경 전후 합계" }))
+      .queryByRole("rowheader", { name: "회복 시간" })).toBeNull()
     expect(row("회복 거리")).toEqual(["500m", "300m", "-200m"])
     expect(props.onApply).not.toHaveBeenCalled()
     await act(async () => apply())
     expect(props.onApply).toHaveBeenCalledOnce()
     expect(props.onApply.mock.calls[0]![1].configuration).toEqual(refs[1])
     expect(JSON.stringify(props.current)).toBe(original)
+  })
+
+  it("shows the decision-critical before/after sums before the full detail is opened", () => {
+    const { props } = fixture()
+    render(<PrescriptionAdjustmentEditorV3 {...props} />)
+    fireEvent.click(screen.getByRole("button", { name: "반복 줄이기" }))
+    const summary = screen.getByRole("table", { name: "핵심 수치 변경 전후" })
+    const cells = (label: string) => within(within(summary).getByRole("rowheader", { name: label }).closest("tr")!)
+      .getAllByRole("cell").map(cell => cell.textContent)
+    expect(cells("반복 횟수")).toEqual(["6회", "4회"])
+    expect(cells("본운동 시간")).toEqual(["1분 18초", "52초"])
+    expect(screen.getByText("전체 합계 세부 비교")).toBeTruthy()
+    expect(props.onApply).not.toHaveBeenCalled()
   })
 
   it("discards only the draft and restores focus without applying", () => {

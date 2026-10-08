@@ -55,8 +55,8 @@ function SessionDetail({
   readonly onChangeSchedule?: (id: string) => void
   readonly changeScheduleLabel?: string
 }) {
-  const primarySteps = session.steps.filter(step => ["총 시간·강도", "본운동", "회복", "사이 회복"].includes(step.label))
-  const visibleSteps = primarySteps.length > 0 ? primarySteps : session.steps.slice(0, 1)
+  const primarySteps = session.steps.filter(step => step.role !== "METHOD" && step.role !== "OTHER")
+  const visibleSteps = primarySteps
   const otherSteps = session.steps.filter(step => !visibleSteps.includes(step))
   const steps = (items: TodaySession["steps"]) => <dl className="instant-plan__steps">
     {items.map((step, index) => <div key={`${index}-${step.label}`}>

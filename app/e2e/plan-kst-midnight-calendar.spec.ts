@@ -22,6 +22,9 @@ test("a plan waiting across KST midnight requires today's date and keeps its cal
   await expect(startDate).toHaveValue("2026-10-07")
   await expect(start).toBeDisabled()
   expect(await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBeNull()
+  // The boundary has been observed; allow browser history and navigation
+  // timers to run during the journal flow.
+  await page.clock.resume()
 
   await startDate.fill("2026-10-08")
   await expect(start).toBeEnabled()

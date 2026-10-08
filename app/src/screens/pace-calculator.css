@@ -1,7 +1,7 @@
 .pace-tool { max-width: 680px; margin: 0 auto; padding: 16px 20px 32px; color: var(--ink); font-family: var(--sans); }
 .pace-tool h1 { font-size: 24px; line-height: 1.4; margin: 24px 0; overflow-wrap: anywhere; }
 .pace-tool h2 { font-size: 18px; margin: 16px 0 12px; }
-.pace-tool button, .pace-tool input, .pace-tool select { font: inherit; min-height: 44px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 4px; }
+.pace-tool button, .pace-tool input, .pace-tool select { font: inherit; min-height: 44px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: var(--r-action); }
 .pace-tool button { padding: 10px 12px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 .pace-tool button:hover:not(:disabled) { background: var(--surface-2); }
 .pace-tool button:disabled { opacity: .5; cursor: default; }
@@ -11,6 +11,7 @@
 .pace-tool__header > span { flex: 1; min-width: 0; }
 .pace-tool__choices, .pace-tool__tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .pace-tool__choices button, .pace-tool__tools button { justify-content: space-between; text-align: left; }
+.pace-tool__choices button { min-height: 52px; border-radius: var(--r-task-surface); }
 .pace-tool__tools { margin-top: 24px; }
 .pace-tool__tools button { min-height: 60px; }
 .pace-tool__tool-copy { display: grid; flex: 1; min-width: 0; gap: 2px; }

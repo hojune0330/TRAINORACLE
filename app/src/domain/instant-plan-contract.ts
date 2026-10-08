@@ -44,6 +44,16 @@ export type InstantPlanActionState =
   | { readonly kind: "PENDING"; readonly message: string }
   | { readonly kind: "BLOCKED" | "FAILED"; readonly message: string }
 
+/** Stable presentation role. Labels remain user-facing copy, never selection keys. */
+export type InstantPlanStepRole =
+  | "TOTAL_DURATION"
+  | "PREPARATION"
+  | "MAIN"
+  | "RECOVERY"
+  | "COOLDOWN"
+  | "METHOD"
+  | "OTHER"
+
 export type InstantPlanToday = {
   readonly dateLabel: string
   readonly state: "BEFORE_START" | "SCHEDULED" | "PARTLY_RECORDED" | "RECORDED" | "REST"
@@ -56,6 +66,6 @@ export type InstantPlanToday = {
     readonly title: string
     readonly recorded: boolean
     readonly guidanceNotice?: string
-    readonly steps: readonly { readonly label: string; readonly instruction: string }[]
+    readonly steps: readonly { readonly role: InstantPlanStepRole; readonly label: string; readonly instruction: string }[]
   }[]
 }

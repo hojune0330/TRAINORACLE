@@ -17,6 +17,20 @@ function finishPerformedSession(rpe = 6): void {
 }
 
 describe("quick session journal contract", () => {
+  it("announces confirmed persistence before Done and never on an unsaved answer", async () => {
+    const saved = vi.fn(), done = vi.fn()
+    render(<QuickSessionForm onSaved={saved} onDone={done} />)
+    fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
+    expect(saved).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
+    await screen.findByRole("button", { name: "완료" })
+    expect(saved).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ activityOutcome: "RESTED" }), undefined, undefined)
+    expect(done).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole("button", { name: "완료" }))
+    expect(saved).toHaveBeenCalledTimes(1)
+    expect(done).toHaveBeenCalledTimes(1)
+  })
+
   it.each([false, true])("marks the plan only with pre-save opt-in (%s), preserving missing actual quantities", async optedIn => {
     const state = stateFixture()
     expect(savePlanBetaState(state).ok).toBe(true)
@@ -99,7 +113,9 @@ describe("quick session journal contract", () => {
     fireEvent.click(screen.getByRole("button", { name: /^힘든 정도 7\/10,/ }))
     expect(screen.getByRole("heading", { name: "운동 후 불편하거나 아픈 곳이 있나요?" })).toBeVisible()
     expect(screen.queryByRole("group", { name: "힘든 정도 1부터 10까지" })).toBeNull()
-    expect(screen.getByText("운동 완료 · 오후 · 힘든 정도 7/10")).toBeVisible()
+    expect(screen.getByRole("button", { name: /운동 완료/ })).toBeVisible()
+    expect(screen.getByRole("button", { name: /오후/ })).toBeVisible()
+    expect(screen.getByRole("button", { name: /힘든 정도 7\/10/ })).toBeVisible()
     fireEvent.click(screen.getByRole("button", { name: "← 뒤로" }))
     expect(screen.getByRole("button", { name: /^힘든 정도 7\/10,/ })).toHaveAttribute("aria-pressed", "true")
     fireEvent.click(screen.getByRole("button", { name: "← 뒤로" }))
@@ -111,6 +127,22 @@ describe("quick session journal contract", () => {
     fireEvent.click(screen.getByRole("button", { name: "없어요" }))
     fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
     expect(loadEntries()[0]).toMatchObject({ activitySlot: "AM", rpe: 0, painCheckStatus: "NO_SIGNAL_REPORTED", fieldProvenance: { rpe: { provenance: "MISSING" } } })
+  })
+
+  it("uses one focused task heading and shows the saved answers below the current question", () => {
+    render(<QuickSessionForm />)
+
+    const firstQuestion = screen.getByRole("heading", { name: "오늘 운동은 어떻게 됐나요?" })
+    expect(firstQuestion.tagName).toBe("H2")
+    expect(screen.getAllByRole("heading", { name: "오늘 운동은 어떻게 됐나요?" })).toHaveLength(1)
+
+    fireEvent.click(screen.getByRole("button", { name: "운동을 마쳤어요" }))
+
+    const nextQuestion = screen.getByRole("heading", { name: "언제 했나요?" })
+    expect(nextQuestion.tagName).toBe("H2")
+    expect(screen.getAllByRole("heading", { name: "언제 했나요?" })).toHaveLength(1)
+    expect(screen.getByRole("button", { name: /운동 완료/ })).toBeVisible()
+    expect(screen.queryByRole("group", { name: "힘든 정도 1부터 10까지" })).toBeNull()
   })
   it("accepts a note and two exercises first without saving or bypassing the activity and body check", () => {
     render(<QuickSessionForm />)
