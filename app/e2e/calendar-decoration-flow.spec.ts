@@ -25,6 +25,16 @@ async function seed(page: import("@playwright/test").Page) {
   return date
 }
 
+async function openDecorationStudio(page: Page) {
+  const entry = page.getByRole("button", { name: "일지 꾸미기", exact: true })
+  if (!await entry.isVisible()) {
+    await page.getByRole("button", { name: "일지 예시·훈련법·꾸미기", exact: true }).click()
+    await expect(entry).toBeVisible()
+  }
+  await entry.click()
+  await expect(page.getByRole("dialog", { name: "일지 꾸미기", exact: true })).toBeVisible()
+}
+
 async function waitForDrawerMotion(drawer: Locator) {
   await drawer.evaluate(async (element) => {
     const finiteAnimations = element.getAnimations({ subtree: true }).filter((animation) => {
@@ -59,8 +69,7 @@ for (const width of [320, 375, 1440]) test(`unified studio and protected calenda
   page.on("pageerror", error => errors.push(error.message))
   await page.setViewportSize({ width, height: 900 })
   const date = await seed(page)
-  await page.getByRole("button", { name: "일지 꾸미기", exact: true }).click()
-  await expect(page.getByRole("dialog", { name: "일지 꾸미기", exact: true })).toBeVisible()
+  await openDecorationStudio(page)
   await expect(page.getByRole("button", { name: "일지", exact: true })).toHaveAttribute("aria-pressed", "true")
   const before = await page.evaluate(() => localStorage.getItem("trainoracle.decorations.v3"))
   await page.getByRole("button", { name: "달력", exact: true }).click()
@@ -103,7 +112,7 @@ for (const width of [320, 375, 1440]) test(`unified studio and protected calenda
   await page.keyboard.press("Escape") // clear selected decoration before closing
   await page.keyboard.press("Escape")
   await expect(page.getByRole("dialog", { name: "일지 꾸미기", exact: true })).toHaveCount(0)
-  await page.getByRole("button", { name: "일지 꾸미기", exact: true }).click()
+  await openDecorationStudio(page)
   await expect(page.getByRole("button", { name: "일지", exact: true })).toHaveAttribute("aria-pressed", "true")
   await page.getByRole("button", { name: "꾸미기 완료", exact: true }).click()
   await page.getByRole("button", { name: "일지", exact: true }).click()
@@ -116,7 +125,7 @@ test("large text, keyboard and browser back preserve draft and preview", async (
   await page.setViewportSize({ width: 375, height: 812 })
   await seed(page)
   await page.emulateMedia({ reducedMotion: "reduce" })
-  await page.getByRole("button", { name: "일지 꾸미기", exact: true }).click()
+  await openDecorationStudio(page)
   await page.getByRole("button", { name: "달력", exact: true }).click()
   await page.addStyleTag({ content: ":root { --fs-body:20px; --fs-body-sm:18px; --fs-caption:16px; --fs-h3:24px; } .journal-decoration-workspace { font-size:20px; }" })
   const drawer = await openMaterialsDrawer(page)
@@ -144,7 +153,7 @@ test("large text, keyboard and browser back preserve draft and preview", async (
 
 test("empty calendar creates no fake journals and cancel discards only the draft", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 }); await page.goto("/?app=1")
-  await page.getByRole("button", { name: "일지 꾸미기", exact: true }).click()
+  await openDecorationStudio(page)
   await page.getByRole("button", { name: "달력", exact: true }).click()
   const drawer = await openMaterialsDrawer(page)
   const filters = drawer.getByRole("group", { name: "꾸미기 재료 종류" })

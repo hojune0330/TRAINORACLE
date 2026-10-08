@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { completeDetailedPlan, enterPlanWithoutRecord } from "./plan-flow"
+import { completeDetailedPlan, enterPlanWithoutRecord, openPlanOptions } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
@@ -12,18 +12,23 @@ async function expectActiveQuestionAtReadingPosition(page: import("@playwright/t
     const scrollRegion = element.closest<HTMLElement>(".app-scroll-region")
     if (scrollRegion === null) return false
 
-    const targetRect = element.getBoundingClientRect()
+    const eyebrowRect = element.getBoundingClientRect()
     const regionRect = scrollRegion.getBoundingClientRect()
-    const scrollMargin = Number.parseFloat(window.getComputedStyle(element).scrollMarginTop) || 0
-    const aligned = Math.abs(targetRect.top - regionRect.top - scrollMargin) <= 4
-    const cannotScrollFurther = scrollRegion.scrollTop >= scrollRegion.scrollHeight - scrollRegion.clientHeight - 2
-    const readableTopLimit = window.innerWidth <= 600 ? 64 : window.innerHeight * 0.25
-    const choices = element.closest(".plan-intake")?.querySelector(".plan-choice-list")
-    const choicesBottom = choices?.getBoundingClientRect().bottom ?? Infinity
+    const intake = element.closest(".plan-intake")
+    const title = intake?.querySelector("h1")
+    const firstChoice = intake?.querySelector(".plan-choice-list button")
+    if (title === null || title === undefined || firstChoice === null || firstChoice === undefined) return false
+    const choiceRect = firstChoice.getBoundingClientRect()
 
-    return targetRect.top >= regionRect.top
-      && ((targetRect.top <= readableTopLimit && aligned)
-        || (cannotScrollFurther && choicesBottom <= regionRect.bottom))
+    return eyebrowRect.top >= regionRect.top
+      && eyebrowRect.bottom <= regionRect.bottom
+      && (scrollRegion.scrollHeight <= scrollRegion.clientHeight + 1
+        || eyebrowRect.top - regionRect.top <= 64)
+      && document.activeElement === title
+      && choiceRect.top >= regionRect.top
+      && choiceRect.bottom <= regionRect.bottom
+      && scrollRegion.scrollWidth <= scrollRegion.clientWidth + 1
+      && document.documentElement.scrollWidth <= window.innerWidth + 1
   })).toBe(true)
 }
 
@@ -32,7 +37,7 @@ test("moves from a choice to the next question and gives a clear journal save co
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
 
-  await expect(page.getByRole("combobox", { name: "종목" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "어떤 종목을 준비하세요?" })).toBeVisible()
   await enterPlanWithoutRecord(page)
   await expect(page.getByRole("heading", { name: "지금까지 어떻게 달려왔나요?" })).toBeVisible()
   await expectActiveQuestionAtReadingPosition(page)
@@ -41,18 +46,9 @@ test("moves from a choice to the next question and gives a clear journal save co
   const activePlanBefore = await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))
   expect(activePlanBefore).toBeNull()
 
-  let discardDialog: { type: string; message: string } | undefined
-  page.once("dialog", (dialog) => {
-    discardDialog = { type: dialog.type(), message: dialog.message() }
-    void dialog.accept()
-  })
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
-  expect(discardDialog).toEqual({
-    type: "confirm",
-    message: "아직 저장하지 않은 계획이 있어요. 계획 만들기를 그만두고 이동할까요?\n계속 만들려면 취소를 눌러 주세요.",
-  })
   await expect(page.getByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
-  await page.getByRole("button", { name: /훈련 후.*거리·시간·훈련 내용을 모두 기록/u }).click()
+  await page.getByRole("button", { name: /훈련 후.*운동별로 자세히/u }).click()
   await expect(page.getByRole("heading", { name: "훈련 후 · 기록" })).toBeVisible()
   await page.getByRole("textbox", { name: "거리 (km)" }).fill("8")
   await page.getByRole("button", { name: /^저장/u }).click()
@@ -75,13 +71,16 @@ test("a high-school athlete can make a ten-day two-a-day plan without prior reco
   await resetLocalState(page)
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
-await completeDetailedPlan(page, { frame: /^10일 계획 받기/u, event: /^1500m/u, division: /고등부/u, experience: /구조화된 훈련과 경기 경험이 많아요/u, days: /^매일/u, focus: /조금 힘들게 꾸준히.*LT/u, time: /날마다 달라요/u, twice: true })
+  await completeDetailedPlan(page, { frame: /^10일 계획 받기/u, event: /^1500m/u, division: /고등부/u, experience: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u, days: /^매일/u, focus: /지속 페이스 훈련/u, time: /날마다 달라요/u, twice: true })
 
   await expect(page.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
-  await page.getByText("A와 B는 뭐가 달라요?", { exact: true }).click()
-  await expect(page.getByRole("region", { name: "두 계획 핵심 비교" })).toContainText("조금 힘들게 꾸준히 · LT")
   await expect(page.getByRole("group", { name: /훈련 2개/u }).first()).toBeVisible()
   await expect(page.getByLabel("10일 훈련 일정").first()).toContainText(/MAIN|REC|BASE/u)
+  await page.getByRole("group", { name: "계획 확인·변경" })
+    .getByRole("button", { name: "추천 근거", exact: true }).click()
+  await openPlanOptions(page)
+  await page.getByText("계획안 A 세부 정보", { exact: true }).click()
+  await expect(page.locator(".plan-candidate-explanation").first()).toContainText("훈련 목표 · 지속 페이스 훈련")
   expect(await page.locator("body").evaluate((body) => body.scrollWidth <= window.innerWidth)).toBe(true)
 })
 
@@ -90,12 +89,14 @@ test("a self-directed runner with no journal can still reach an RPE plan", async
   await resetLocalState(page)
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
-  await completeDetailedPlan(page, { frame: /^7일만 먼저 받기/u, event: /^5000m/u, division: /일반부/u, experience: /훈련 계획에 맞춰 달려 본 경험이 있어요/u, days: /^3일/u, focus: /편하게 오래.*BASE/u, time: /저녁에 운동해요/u })
+  await completeDetailedPlan(page, { frame: /^7일만 먼저 받기/u, event: /^5000m/u, division: /일반부/u, experience: /훈련 계획에 맞춰 달려 본 경험이 있어요/u, days: /^3일/u, focus: /기초 지구력/u, time: /저녁에 운동해요/u })
 
   await expect(page.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
-  await page.getByText("계획안 A 설명·시간 합계", { exact: true }).click()
-  await expect(page.getByText("RPE 기준 실행 안내").first()).toBeVisible()
-  await page.locator("summary", { hasText: "기준 기록·참가 부문·이전 계획 확인" }).click()
+  await openPlanOptions(page)
+  await page.getByText("계획안 A 세부 정보", { exact: true }).click()
+  await expect(page.locator(".plan-candidate").first()).toContainText("시간·힘든 정도로 훈련")
+  await page.getByRole("group", { name: "계획 확인·변경" })
+    .getByRole("button", { name: "추천 근거", exact: true }).click()
   await expect(page.getByText("기준 기록 없이 만든 계획")).toBeVisible()
   await expect(page.getByText(/확인한 기준 기록이 없어 개인 기록과 일지 수치는 이번 계획 계산에 사용하지 않았어요/u)).toBeVisible()
 })

@@ -215,7 +215,7 @@ async function openPlan(page: Page): Promise<void> {
 
 async function createBoundActivePlan(page: Page, projectionLength: 7 | 9 | 10): Promise<void> {
   await completeDetailedPlan(page, { event: /^5000m\b/u, division: /일반부/u,
-    experience: /구조화된 훈련과 경기 경험이 많아요/u, focus: /숨차게 반복.*VO₂/u,
+    experience: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u, focus: /유산소 반복 훈련/u,
     template: /5000m 경기 페이스 상세 훈련 포함/u, time: /아침에 운동해요/u,
     frame: projectionLength === 7 ? /^7일만 먼저 받기/u : new RegExp(`^${projectionLength}일 계획 받기`, "u") })
 
@@ -223,7 +223,7 @@ async function createBoundActivePlan(page: Page, projectionLength: 7 | 9 | 10): 
   await expect(picker).toBeVisible()
   await picker.getByRole("button", { name: /개인 최고.*18분 30초/u }).click()
   await picker.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
-  await page.getByRole("button", { name: /이 계획으로 시작하기/u }).click()
+  await page.getByRole("button", { name: /이 일정으로 시작/u }).click()
   await expect(page.getByRole("heading", {
     name: new RegExp(`${projectionLength}일 훈련 계획`, "u"),
   })).toBeVisible()

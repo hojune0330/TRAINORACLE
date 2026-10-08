@@ -62,7 +62,7 @@ for (const viewport of [
     await editor.getByRole("checkbox", { name: "지금 통증이나 몸 상태 이상이 없어요." }).check()
     await editor.getByRole("button", { name: "변경안 적용하기" }).click()
     await expect(editor).toHaveCount(0)
-    await expect(page.getByText("계획을 수정했어요. 이전 계획과 일지는 남겨두었어요.")).toBeVisible()
+    await expect(page.getByText("수정한 계획이에요. 이전 계획과 일지는 보관되어 있어요.")).toBeVisible()
 
     const appliedBytes = await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))
     expect(appliedBytes).not.toBeNull()
@@ -71,6 +71,7 @@ for (const viewport of [
     expect(applied.activePlan.sessions.find(session => session.day === 1 && session.slot === "AM")?.prescription)
       .toMatchObject({ kind: "RPE_TIME_RANGE", durationMinutes: { minimum: 20, maximum: 25 } })
     expect(applied.progress).toEqual(fixture.state.progress)
+    expect(await page.evaluate(() => window.localStorage.getItem("trainoracle.journal.v1"))).toBe("[]")
 
     await page.reload()
     await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()

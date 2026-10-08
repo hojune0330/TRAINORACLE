@@ -1,13 +1,16 @@
 import type React from "react"
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { PlanBeta } from "../PlanBeta"
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import { loadPlanBetaState } from "../../domain/plan-beta-store"
 import { PlanCandidates } from "./PlanCandidates"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
-afterEach(cleanup)
+beforeEach(() => {
+  localStorage.clear(); sessionStorage.clear()
+  vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-10-06T12:00:00Z"))
+})
+afterEach(() => { cleanup(); vi.useRealTimers() })
 
 function candidateProps(): React.ComponentProps<typeof PlanCandidates> {
   const result = generatePlanFromDraft({
@@ -46,7 +49,7 @@ describe("batch2 purpose-first plan journey", () => {
     expect(loadPlanBetaState()).toBeNull()
   })
 
-  it("exposes three purpose entries and keeps each refinement reachable without stacked wrappers", () => {
+  it("exposes three purpose entries and keeps each refinement reachable without stacked wrappers", async () => {
     const props = candidateProps(), original = JSON.stringify(props.generated)
     render(<PlanCandidates {...props} />)
     const entries = within(screen.getByRole("group", { name: "계획 확인·변경" }))
@@ -59,7 +62,9 @@ describe("batch2 purpose-first plan journey", () => {
     }
     fireEvent.click(entries.getByRole("button", { name: "일정·운동 시간" }))
     const schedule = within(screen.getByRole("region", { name: "일정·운동 시간" }))
-    expect(schedule.getByLabelText("계획 시작 날짜")).toBeVisible()
+    const startDate = schedule.getByLabelText("계획 시작 날짜")
+    expect(startDate).toBeVisible()
+    await waitFor(() => expect(startDate).toHaveFocus())
     for (const label of ["운동할 날", "달력 길이", "시간대", "하루 두 번", "대회 날짜"]) {
       expect(schedule.getByRole("button", { name: new RegExp(`^${label} 바꾸기`) })).toBeVisible()
     }

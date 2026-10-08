@@ -93,6 +93,7 @@ test("휴지통 화면에서 나중에도 되돌릴 수 있다", async ({ page }
   await page.reload()
 
   await page.getByRole("button", { name: "더보기" }).click()
+  await page.getByRole("button", { name: "백업·복원·휴지통" }).click()
   await page.locator("summary").filter({ hasText: /^휴지통/u }).click()
 
   // Then — 휴지통이 보이고 남은 일수가 표시된다
@@ -106,8 +107,9 @@ test("휴지통 화면에서 나중에도 되돌릴 수 있다", async ({ page }
 
   // Then — 휴지통이 비고 일지가 돌아온다
   await expect(page.getByTestId("trash-bin")).toHaveCount(0)
-  await page.getByRole("button", { name: "홈으로 돌아가기" }).click()
-  await expect(page.getByRole("button", { name: /2026년 7월 20일 기록 1개 보기/u })).toBeVisible()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "일지" }).click()
+  await expect(page.getByRole("grid", { name: "2026년 7월 달력" })
+    .getByRole("button", { name: /2026년 7월 20일.*훈련 후 1건/u })).toBeVisible()
 })
 
 test("완전히 지우기는 확인을 한 번 더 받는다", async ({ page }) => {
@@ -134,6 +136,7 @@ test("완전히 지우기는 확인을 한 번 더 받는다", async ({ page }) 
   await page.reload()
 
   await page.getByRole("button", { name: "더보기" }).click()
+  await page.getByRole("button", { name: "백업·복원·휴지통" }).click()
   await page.locator("summary").filter({ hasText: /^휴지통/u }).click()
   await expect(page.getByTestId("trash-bin")).toBeVisible()
   await page.getByTestId("trash-purge").first().click()
@@ -180,6 +183,7 @@ test("30일이 지난 항목은 앱을 켤 때 사라진다", async ({ page }) =
   await page.reload()
 
   await page.getByRole("button", { name: "더보기" }).click()
+  await page.getByRole("button", { name: "백업·복원·휴지통" }).click()
   await page.locator("summary").filter({ hasText: /^휴지통/u }).click()
 
   // 화면에 보이지 않고, 저장소에서도 실제로 비워진다
@@ -212,6 +216,7 @@ test("메모만 쓴 일지가 안전 백업에서 빠진다는 안내가 뜬다"
 
   // Then — 빠지는 개수와 포함/전체 개수를 사실대로 알린다
   await page.getByRole("button", { name: "더보기" }).click()
+  await page.getByRole("button", { name: "백업·복원·휴지통" }).click()
   const notice = page.getByTestId("safe-export-skipped")
   await expect(notice).toBeVisible()
   await expect(notice).toContainText("2개")

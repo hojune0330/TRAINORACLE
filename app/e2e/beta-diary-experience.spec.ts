@@ -51,7 +51,7 @@ test(`uses the diary flow with ${hasEarnedHistory ? "previously earned" : "no ba
 
   await page.goto("/?app=1&uitest=1")
 
-  await page.locator("summary", { hasText: "기분·몸 상태·날씨 남기기" }).click()
+  await page.getByRole("button", { name: "기분·몸 상태", exact: true }).click()
   await page.getByRole("button", { name: "기분 좋음" }).click()
   await page.getByRole("button", { name: "몸 상태 가벼움" }).click()
   await page.getByRole("button", { name: "날씨 흐림" }).click()
@@ -60,6 +60,7 @@ test(`uses the diary flow with ${hasEarnedHistory ? "previously earned" : "no ba
 
   // Historical entries stay visible; only a stored award history supplies past points.
   const balance = `베타 포인트 · 사용 가능 ${hasEarnedHistory ? 32 : 0}P`
+  await page.getByRole("button", { name: "일지 예시·훈련법·꾸미기" }).click()
   await page.getByRole("button", { name: "일지 꾸미기" }).click()
   const editor = page.getByRole("dialog", { name: "일지 꾸미기", exact: true })
   await expect(editor).toBeVisible()
@@ -81,6 +82,7 @@ test(`uses the diary flow with ${hasEarnedHistory ? "previously earned" : "no ba
 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "홈" }).click()
   await page.getByRole("button", { name: "더보기" }).click()
+  await page.getByRole("button", { name: "배우기·꾸미기" }).click()
   await page.getByRole("button", { name: "훈련 용어집·도움말" }).click()
   await expect(page.getByRole("heading", { name: "궁금한 점을 쉽게 풀어드려요" })).toBeVisible()
   await page.getByText("나중에 월 구독이나 광고가 생길 수 있나요?").click()

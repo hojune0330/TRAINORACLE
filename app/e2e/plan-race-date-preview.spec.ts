@@ -42,7 +42,7 @@ for (const viewport of [
 
     await page.getByRole("button", { name: "날짜 없이 일반 계획 보기" }).click()
     await expect(page.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
-    await page.getByText("경기 날짜는 어떻게 되나요?", { exact: true }).click()
+    await page.getByRole("group", { name: "계획 확인·변경" }).getByRole("button", { name: "추천 근거", exact: true }).click()
     await expect(page.getByText("경기 날짜 없이 만든 일반 계획")).toBeVisible()
   })
 }

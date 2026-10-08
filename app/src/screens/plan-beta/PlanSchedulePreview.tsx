@@ -34,7 +34,11 @@ type FrameLengthDays = 7 | 9 | 9.5 | 10
 type ScheduleDisplayMode = "stack" | "swipe"
 type SessionFlowKind = "main" | "base" | "recovery" | "off"
 
-export type PlanReaderRequest = Pick<PlanSession, "day" | "slot"> & { readonly sequence: number; readonly section?: "records" }
+export type PlanReaderRequest = Pick<PlanSession, "day" | "slot"> & {
+  readonly sequence: number
+  readonly section?: "records"
+  readonly returnFocusToCalendar?: boolean
+}
 const PROGRESS_ICONS = { COMPLETED: Check, RESTED: CircleMinus, SKIPPED: SkipForward, PAIN_CHECKIN: HeartPulse } as const
 
 type ScheduleDay = {
@@ -111,6 +115,9 @@ export function PlanSchedulePreview({
   const setSelectedDate = nav.selectDate
   const [calendarDetailsOpen, setCalendarDetailsOpen] = React.useState(false)
   const [reader, setReader] = React.useState<{ date: string; slot?: PlanSession["slot"]; section?: "records" } | null>(null)
+  // Keep the original reader mounted after its last journal is deleted so its undo
+  // action and nested Back entry survive until the athlete leaves this date.
+  const [readerJournalDate, setReaderJournalDate] = React.useState<string | null>(null)
   const readerIndex = days.findIndex(day => day.date === reader?.date)
   const readerDay = days[readerIndex]
   const selectedInPlan = days.some(day => day.date === selectedDate)
@@ -119,6 +126,8 @@ export function PlanSchedulePreview({
   const scheduleRef = React.useRef<HTMLOListElement>(null)
   const calendarRef = React.useRef<HTMLElement>(null)
   const handledReaderRequest = React.useRef<number>()
+  const readerRequestOrigin = React.useRef<HTMLElement | null>(null)
+  const readerOpenedFromCalendar = React.useRef(false)
   const previousCalendarIdentity = React.useRef(calendarIdentity)
 
   React.useEffect(() => {
@@ -128,6 +137,9 @@ export function PlanSchedulePreview({
     setActiveDayIndex(nextIndex)
     setCalendarDetailsOpen(false)
     setReader(null)
+    setReaderJournalDate(null)
+    readerRequestOrigin.current = null
+    readerOpenedFromCalendar.current = false
   }, [calendarIdentity])
 
   React.useEffect(() => {
@@ -136,10 +148,18 @@ export function PlanSchedulePreview({
     const day = days[index]
     if (!day) return
     handledReaderRequest.current = readerRequest.sequence
+    readerRequestOrigin.current = readerRequest.returnFocusToCalendar
+      ? null : document.activeElement instanceof HTMLElement ? document.activeElement : null
+    readerOpenedFromCalendar.current = readerRequest.returnFocusToCalendar === true
     setSelectedDate(day.date)
     setActiveDayIndex(index)
     setReader({ date: day.date, slot: readerRequest.slot, section: readerRequest.section })
-  }, [readerRequest, days])
+    setReaderJournalDate(journalEntries.some(entry => entry.date === day.date) ? day.date : null)
+  }, [readerRequest, days, journalEntries])
+
+  React.useEffect(() => {
+    if (reader !== null && journalEntries.some(entry => entry.date === reader.date)) setReaderJournalDate(reader.date)
+  }, [reader?.date, journalEntries])
 
   const moveToDay = React.useCallback((nextIndex: number) => {
     const boundedIndex = Math.min(Math.max(nextIndex, 0), days.length - 1)
@@ -198,16 +218,22 @@ export function PlanSchedulePreview({
     if (date !== undefined) setSelectedDate(date)
   }, [days, displayMode])
 
-  const openDayReader = (index: number, slot?: PlanSession["slot"]) => {
+  const openDayReader = (index: number, slot?: PlanSession["slot"], origin: "calendar" | "other" | "preserve" = "other") => {
     const day = days[index]
     if (!day) return
+    if (origin !== "preserve") {
+      readerRequestOrigin.current = null
+      readerOpenedFromCalendar.current = origin === "calendar"
+    }
     setSelectedDate(day.date)
     setActiveDayIndex(index)
     setReader({ date: day.date, slot })
+    setReaderJournalDate(journalEntries.some(entry => entry.date === day.date) ? day.date : null)
   }
 
   const closeDayReader = () => {
     setReader(null)
+    setReaderJournalDate(null)
     const list = scheduleRef.current
     const first = list?.children.item(0) as HTMLElement | null
     const target = list?.children.item(activeDayIndex) as HTMLElement | null
@@ -216,8 +242,8 @@ export function PlanSchedulePreview({
 
   const moveReader = (date: string) => {
     const index = days.findIndex(day => day.date === date)
-    if (index >= 0) openDayReader(index)
-    else { setReader({ date }); setSelectedDate(date) }
+    if (index >= 0) openDayReader(index, undefined, "preserve")
+    else { setReader({ date }); setReaderJournalDate(journalEntries.some(entry => entry.date === date) ? date : null); setSelectedDate(date) }
   }
 
   if (!validStartDate) return null
@@ -242,8 +268,12 @@ export function PlanSchedulePreview({
         onSelectDate={date => {
           setSelectedDate(date)
           const index = days.findIndex(day => day.date === date)
-          if (index < 0) { setReader({ date }); return }
-          openDayReader(index)
+          if (index < 0) {
+            readerRequestOrigin.current = null
+            readerOpenedFromCalendar.current = true
+            setReader({ date }); setReaderJournalDate(journalEntries.some(entry => entry.date === date) ? date : null); return
+          }
+          openDayReader(index, undefined, "calendar")
         }}
       />
       {!selectedInPlan && <p className="month-calendar__empty" role="status">{calendarDateLabel(selectedDate)}에는 이 계획의 일정이 없어요.</p>}
@@ -358,9 +388,11 @@ export function PlanSchedulePreview({
       </section>
       {reader !== null && <PlanDayReader date={reader.date} sessions={readerDay?.sessions ?? []}
         initialSlot={reader.slot} initialSection={reader.section} canPrevious canNext
-        returnFocusTo={reader.section === "records" ? date =>
-          calendarRef.current?.querySelector<HTMLElement>(`button[data-date="${date}"]`)
-          ?? calendarRef.current?.querySelector<HTMLElement>(".month-calendar__month") ?? null : undefined}
+        returnFocusTo={readerRequestOrigin.current !== null || readerOpenedFromCalendar.current || reader.section === "records"
+          ? date => (readerRequestOrigin.current?.isConnected ? readerRequestOrigin.current : null)
+            ?? calendarRef.current?.querySelector<HTMLElement>(`button[data-date="${date}"]`)
+            ?? calendarRef.current?.querySelector<HTMLElement>(".month-calendar__month") ?? null
+          : undefined}
         onPrevious={() => moveReader(isoShift(reader.date, -1))}
         onNext={() => moveReader(isoShift(reader.date, 1))}
         onClose={closeDayReader} notice={readerNotice}>
@@ -373,7 +405,7 @@ export function PlanSchedulePreview({
           returnedFromJournal={focusSession?.day === session.day && focusSession.slot === session.slot}
           allowMemoExport={allowMemoExport} />)}
         {!readerDay?.sessions.length && <p>이 계획에는 이날 예정된 훈련이 없어요.</p>}
-        {journalEntries.some(entry => entry.date === reader.date)
+        {journalEntries.some(entry => entry.date === reader.date) || (journalEntriesComplete && readerJournalDate === reader.date)
           ? <CalendarJournalDetails date={reader.date} entries={journalEntries} />
           : <p className="plan-caption" role={journalEntriesComplete ? undefined : "status"}>{journalEntriesComplete ? "이 날짜에 남긴 일지가 없어요." : "일지를 모두 읽지 못해 기록 여부를 확인할 수 없어요."}</p>}
         </>}

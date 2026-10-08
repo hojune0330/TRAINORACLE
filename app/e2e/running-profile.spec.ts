@@ -1,78 +1,85 @@
-import { expect, test } from "@playwright/test"
+import { expect, test, type Page } from "@playwright/test"
 
 test.use({ serviceWorkers: "block" })
+
+async function openGuestProfile(page: Page) {
+  await page.getByRole("button", { name: "더보기", exact: true }).click()
+  await page.getByRole("button", { name: "나의 러닝 프로필", exact: true }).click()
+  await expect(page.locator(".oracle-v2__status").first()).toContainText("게스트")
+}
+
+async function answerAxis(page: Page, axis: string, answer: string) {
+  const dialog = page.getByRole("dialog", { name: axis })
+  for (let question = 1; question <= 3; question++) {
+    await expect(dialog.getByText(`${question} / 3`, { exact: true })).toBeVisible()
+    await dialog.getByRole("button", { name: answer, exact: true }).click()
+  }
+  await expect(dialog.getByRole("heading", { name: "내 답을 정리했어요" })).toBeVisible()
+  await dialog.getByRole("button", { name: "결과로" }).click()
+}
+
 for (const width of [320, 375, 1440]) {
-  test(`profile minimal and extended journeys preserve answers at ${width}px`, async ({ page }, info) => {
-    const errors: string[] = []; page.on("pageerror", error => errors.push(error.message))
+  test(`guest profile keeps answers within the open app and clears them on reload at ${width}px`, async ({ page }, info) => {
+    const errors: string[] = []
+    page.on("pageerror", error => errors.push(error.message))
     await page.setViewportSize({ width, height: width === 1440 ? 900 : 812 })
     await page.goto("/?app=1")
-    await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클", exact: true }).click()
-    await page.getByRole("button", { name: "내 러닝 프로필" }).click()
-    await page.getByRole("button", { name: "3문항으로 시작" }).click()
-    await page.getByRole("button", { name: "건강과 체력", exact: true }).click()
-    await page.getByRole("button", { name: "기분 전환", exact: true }).click()
-    await page.getByRole("button", { name: "다음", exact: true }).click()
-    await page.getByRole("button", { name: "대화할 수 있는 강도", exact: true }).click()
-    await page.getByRole("button", { name: "혼자", exact: true }).click()
-    await expect(page.locator(".running-profile h1")).toContainText("건강과 체력 · 기분 전환")
+    await openGuestProfile(page)
+    await page.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" }).click()
+    await answerAxis(page, "계획 선호", "매우 그래요")
+    const scores = page.locator(".oracle-v2__scores [role='meter']")
+    await expect(scores).toHaveCount(1)
+    await expect(scores.first()).toHaveAttribute("aria-valuenow", "100")
+    await expect(page.getByRole("button", { name: "이 결과 보관" })).toBeDisabled()
     await expect(page.locator("html")).toHaveJSProperty("scrollWidth", width)
-    await page.screenshot({ path: info.outputPath(`profile-${width}.png`) })
+    await page.screenshot({ path: info.outputPath(`guest-profile-${width}.png`) })
+
     await page.goBack()
-    await expect(page.getByRole("button", { name: "혼자", exact: true })).toHaveAttribute("aria-pressed", "true")
-    await page.goForward()
-    await page.getByRole("button", { name: /대회·종목·운동 취향 더하기/ }).click()
-    await page.getByRole("button", { name: "그날 상황에 맞춰", exact: true }).click()
-    await page.getByRole("button", { name: "내 기록 경신", exact: true }).click()
-    await page.getByRole("button", { name: "대회 분위기와 경험", exact: true }).click()
-    await page.getByRole("button", { name: "다음", exact: true }).click()
-    await page.getByRole("button", { name: "800m", exact: true }).click()
-    await page.getByRole("button", { name: "마라톤", exact: true }).click()
-    await page.getByRole("button", { name: "다음", exact: true }).click()
-    await page.getByRole("button", { name: "지금은 건너뛰기" }).click()
-    await page.getByRole("button", { name: "경험이 없어 아직 몰라요" }).click()
-    await page.getByRole("button", { name: "다음", exact: true }).click()
-    await page.getByRole("button", { name: "시간이 부족해요" }).click()
-    await page.getByRole("button", { name: "프로필 보기", exact: true }).click()
-    await expect(page.locator(".running-profile__facts")).toContainText("800m · 마라톤")
-    for (const tab of ["경기 기록", "최근 훈련", "변화", "취향"]) {
-      await page.getByRole("navigation", { name: "러닝 프로필 항목" }).getByRole("button", { name: tab, exact: true }).click()
-    }
-    await expect(page.locator(".running-profile__facts")).toContainText("800m · 마라톤")
-    expect(await page.evaluate(() => JSON.stringify(history.state))).not.toMatch(/health|motives|answers|marathon/)
-    await page.getByRole("button", { name: "프로필 닫기" }).click()
-    await expect(page.locator(".running-profile")).toHaveCount(0)
-    await page.goBack(); await page.goForward()
-    await expect(page.locator(".running-profile__facts")).toHaveCount(0)
+    await expect(page.getByRole("heading", { name: "더보기", exact: true })).toBeVisible()
+    await page.getByRole("button", { name: "나의 러닝 프로필", exact: true }).click()
+    await expect(scores.first()).toHaveAttribute("aria-valuenow", "100")
+
+    await page.getByRole("button", { name: "마리·친구·프로필 설정" }).click()
+    const settings = page.getByRole("dialog", { name: "프로필 설정" })
+    await settings.getByText("다른 러닝 취향 알아보기", { exact: true }).click()
+    await settings.getByRole("button", { name: "기록 도전 선호" }).click()
+    await answerAxis(page, "기록 도전 선호", "그런 편이에요")
+    await expect(scores).toHaveCount(2)
+    await expect(page.locator(".oracle-v2__scores [role='meter'][aria-valuenow='75']")).toHaveCount(1)
+    expect(await page.evaluate(() => JSON.stringify(history.state))).not.toMatch(/STRUCTURE_1|CHALLENGE_1|selectedCharacter|answers/u)
+
+    await page.reload()
+    await openGuestProfile(page)
+    await expect(page.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" })).toBeVisible()
+    await expect(page.locator(".oracle-v2__scores [role='meter']")).toHaveCount(0)
+    await expect(page.locator(".oracle-v2__status").first()).toContainText("새로고침하면 사라져요")
     expect(errors).toEqual([])
   })
 }
 
-test("profile enlarged text, reduced motion and draft cancellation", async ({ page }, info) => {
+test("guest profile retains an in-screen draft, keeps question focus, and fits doubled text", async ({ page }, info) => {
   await page.setViewportSize({ width: 320, height: 812 })
   await page.emulateMedia({ reducedMotion: "reduce" })
   await page.goto("/?app=1")
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클", exact: true }).click()
-  await page.getByRole("button", { name: "내 러닝 프로필" }).click()
-  await page.getByRole("button", { name: "3문항으로 시작" }).click()
-  await expect(page.locator(".running-profile__stage")).toHaveCSS("animation-name", "none")
-  await page.getByRole("button", { name: "건강과 체력", exact: true }).click()
-  page.once("dialog", dialog => dialog.dismiss())
-  await page.getByRole("button", { name: "프로필 닫기" }).click()
-  await expect(page.getByRole("button", { name: "건강과 체력", exact: true })).toHaveAttribute("aria-pressed", "true")
-  await page.goBack()
-  page.once("dialog", dialog => dialog.dismiss())
-  await page.goBack()
-  await expect(page.locator(".running-profile")).toBeVisible()
-  await page.getByRole("button", { name: "내 응답 바꾸기" }).click()
-  await expect(page.getByRole("button", { name: "건강과 체력", exact: true })).toHaveAttribute("aria-pressed", "true")
+  await openGuestProfile(page)
+  await page.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" }).click()
+  const dialog = page.getByRole("dialog", { name: "계획 선호" })
+  await expect(dialog.getByRole("heading", { name: "달리기 전에 할 내용을 정해두는 것이 좋아요." })).toBeFocused()
+  await dialog.getByRole("button", { name: "매우 그래요" }).click()
+  await dialog.getByRole("button", { name: "닫기" }).click()
+  await page.getByRole("button", { name: "작성하던 답 이어가기" }).click()
+  await expect(dialog.getByText("2 / 3", { exact: true })).toBeVisible()
+  await dialog.getByRole("button", { name: "이전 질문" }).click()
+  await expect(dialog.getByRole("button", { name: "매우 그래요" })).toHaveAttribute("aria-pressed", "true")
   await page.evaluate(() => {
-    document.querySelectorAll<HTMLElement>(".running-profile h1,.running-profile p,.running-profile button,.running-profile__header,.running-profile .info-disclosure summary").forEach(element => {
+    document.querySelectorAll<HTMLElement>(".oracle-v2 h1, .oracle-v2 h2, .oracle-v2 p, .oracle-v2 button, .oracle-v2 strong, .oracle-v2 span").forEach(element => {
       element.style.fontSize = `${parseFloat(getComputedStyle(element).fontSize) * 2}px`
     })
   })
   await expect(page.locator("html")).toHaveJSProperty("scrollWidth", 320)
-  await page.screenshot({ path: info.outputPath("profile-text-200.png") })
-  await page.getByRole("button", { name: "다음", exact: true }).focus()
-  await page.keyboard.press("Enter")
-  await expect(page.getByRole("heading", { name: "어떤 강도로 달리는 게 좋나요?" })).toBeFocused()
+  await page.screenshot({ path: info.outputPath("guest-profile-draft-text-200.png") })
+  await page.reload()
+  await openGuestProfile(page)
+  await expect(page.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "작성하던 답 이어가기" })).toHaveCount(0)
 })

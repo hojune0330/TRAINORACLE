@@ -110,6 +110,19 @@ export function InstantPlanRecommendationView({
         </section>
       )}
       {scheduleReview}
+      {beforeStart}
+      <div className="instant-plan__actions instant-plan__start-action">
+        <button
+          className="instant-plan__button"
+          type="button"
+          disabled={!ready && !(actionState.kind === "BLOCKED" && blockedAction)}
+          aria-describedby={status !== null ? actionStatusId : undefined}
+          onClick={() => {
+            if (ready) onStart(recommendation.id)
+            else if (actionState.kind === "BLOCKED") blockedAction?.onClick()
+          }}
+        >{saving ? "저장 중" : actionState.kind === "BLOCKED" && blockedAction ? blockedAction.label : startLabel ?? "이 일정으로 시작"}</button>
+      </div>
       <section aria-label="이번 일정">
         <h3>이번 일정</h3>
         {recommendation.days.length === 0 ? (
@@ -126,19 +139,6 @@ export function InstantPlanRecommendationView({
         <summary>전체 훈련 시간·목표</summary>
         <InstantPlanRecommendationFacts recommendation={recommendation} goalLabel={goalLabel} programPurposeLabel={programPurposeLabel} />
       </details>}
-      {beforeStart}
-      <div className="instant-plan__actions instant-plan__start-action">
-        <button
-          className="instant-plan__button"
-          type="button"
-          disabled={!ready && !(actionState.kind === "BLOCKED" && blockedAction)}
-          aria-describedby={status !== null ? actionStatusId : undefined}
-          onClick={() => {
-            if (ready) onStart(recommendation.id)
-            else if (actionState.kind === "BLOCKED") blockedAction?.onClick()
-          }}
-        >{saving ? "저장 중" : actionState.kind === "BLOCKED" && blockedAction ? blockedAction.label : startLabel ?? "이 일정으로 시작"}</button>
-      </div>
       {showSupportingDetails && (onEditSchedule || onShowAlternatives || onEditWorkout) && <details className="instant-plan__disclosure">
         <summary>일정·훈련 바꾸기</summary>
         <div className="instant-plan__actions">

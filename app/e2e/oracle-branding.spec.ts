@@ -16,9 +16,8 @@ for (const width of [320, 375, 1440]) {
     await expect(page.locator("html")).toHaveJSProperty("scrollWidth", width)
     await page.screenshot({ path: testInfo.outputPath(`oracle-${width}.png`) })
 
-    const topic = page.getByRole("button", { name: /강점·보완점.*결과 보기/u })
-    if (!await topic.isVisible()) await page.getByText("예시로 먼저 둘러보기", { exact: true }).click()
-    await topic.click()
+    await page.getByRole("region", { name: "오라클 예시" })
+      .getByRole("button", { name: "이 예시 자세히 보기", exact: true }).click()
     await expect(page.getByRole("combobox", { name: "살펴볼 주제" })).toHaveValue("focus")
     const example = page.getByRole("button", { name: "예시", exact: true })
     if (await example.isVisible()) await example.click()

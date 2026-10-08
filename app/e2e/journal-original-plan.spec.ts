@@ -43,9 +43,10 @@ test("archives the original in the real plan flow and compares it from its journ
   await page.reload()
   await page.getByRole("region", { name: "최근 하루 기록" }).getByRole("button", { name: /기록 1개 보기/u }).click()
   const journalEntry = page.getByRole("region", { name: /Original plan comparison/u })
-  await expect(journalEntry.getByText("—", { exact: true })).toHaveCount(2)
-  await expect(journalEntry.getByText("시간", { exact: true }).locator("xpath=../..")).toContainText("—")
-  await expect(journalEntry.getByText("평균 페이스", { exact: true }).locator("xpath=../..")).toContainText("—")
+  await expect(journalEntry).toContainText("3.2")
+  await expect(journalEntry).toContainText("힘든 정도")
+  await expect(journalEntry.getByText("시간", { exact: true })).toHaveCount(0)
+  await expect(journalEntry.getByText("평균 페이스", { exact: true })).toHaveCount(0)
   const summary = page.getByText("계획한 훈련과 비교하기", { exact: true })
   await summary.scrollIntoViewIfNeeded()
   if (testInfo.project.name === "desktop-chromium") {

@@ -68,8 +68,8 @@ test("does not ask to discard a blank or successfully saved guest journal", asyn
 
 test("keeps personal mode when another analysis topic has no personal evidence", async ({ page }) => {
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클", exact: true }).click()
-  await page.locator("summary", { hasText: "예시로 먼저 둘러보기" }).click()
-  await page.getByRole("region", { name: "어떤 훈련 정보가 궁금하세요?" }).getByRole("button").first().click()
+  await page.getByRole("region", { name: "오라클 예시" })
+    .getByRole("button", { name: "이 예시 자세히 보기", exact: true }).click()
   await page.getByRole("button", { name: "내 기록", exact: true }).click()
   await page.getByRole("button", { name: /이어서 살펴보기/ }).click()
   await expect(page.getByRole("button", { name: "내 기록", exact: true })).toHaveAttribute("aria-pressed", "true")
@@ -88,8 +88,9 @@ test("shows an executable record-based workout and opens its same stored method"
     verificationState: "SELF_REPORTED", sourceRef: "athlete-record:synthetic-followup-5k", savedAt: "2026-09-20T12:00:00Z",
   }])))
   await page.getByRole("button", { name: "훈련 계획 만들기", exact: true }).click()
-  await completeDetailedPlan(page, { event: /^5000m/, experience: /구조화된 훈련과 경기 경험이 많아요/,
-    focus: /숨차게 반복.*VO₂/, template: /5000m 경기 페이스 상세 훈련 포함/ })
+  await completeDetailedPlan(page, { event: /^5000m/, experience: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/,
+    focus: /유산소 반복 훈련/, template: /5000m 경기 페이스 상세 훈련 포함/ })
+  await page.getByRole("button", { name: "기준 기록 확인하기", exact: true }).click()
   const picker = page.getByRole("region", { name: "개인 페이스 기준 기록" })
   await picker.getByRole("button", { name: /18분 31초/ }).click()
   await picker.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
@@ -108,13 +109,14 @@ test("shows an executable record-based workout and opens its same stored method"
   const overview = page.locator(".instant-plan--today-compact")
   await expect(overview).toContainText("1000m를 약 3분 42.2초에 5회")
   await expect(overview).toContainText("반복 사이 2분 30초 조깅")
-  await expect(overview).toContainText("15분 가볍게 움직이기")
-  await expect(overview).toContainText("10분 가볍게 움직이기")
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await overview.screenshot({ path: info.outputPath("executable-workout-375.png") })
   const before = await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))
   await overview.getByRole("button", { name: /훈련 방법·근거/ }).click()
   const reader = page.getByRole("dialog")
+  await reader.locator("summary", { hasText: "자세히 보기 · 수행 순서" }).click()
+  await expect(reader.locator('[data-phase="prepare"]')).toContainText("15분")
+  await expect(reader.locator('[data-phase="cooldown"]')).toContainText("10분")
   await expect(reader.getByText("5 × 1km @ 222.2s/1km · 5K RP · r150s Jog", { exact: true }).first()).toBeVisible()
   await reader.screenshot({ path: info.outputPath("same-workout-reader-375.png") })
   await reader.getByRole("button", { name: "달력으로 돌아가기" }).click()

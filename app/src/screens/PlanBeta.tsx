@@ -279,7 +279,7 @@ function PlanBetaContent(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
   const readEvidence = props.readAdjustedEvidence ?? readOperatingAdjustedEvidence
   const readV3Evidence = props.readAdjustedEvidenceV3 ?? readOperatingV3Evidence
   const readMultiV3Evidence = props.readMultiAdjustedEvidenceV3 ?? readOperatingMultiV3Evidence
-  const readCurrent = React.useCallback(() => readPlanBetaStateFromStorage(readEvidence(), readV3Evidence(), readMultiV3Evidence()), [readEvidence, readV3Evidence, readMultiV3Evidence])
+  const readCurrent = React.useCallback(() => readPlanBetaStateFromStorage(readEvidence(), readV3Evidence(), readMultiV3Evidence), [readEvidence, readV3Evidence, readMultiV3Evidence])
   const [read, setRead] = React.useState(readCurrent)
   const [nextOpen, setNextOpen] = React.useState(false)
   const [importOpen, setImportOpen] = React.useState(false)
@@ -1146,6 +1146,7 @@ function LegacyPlanBeta({
             setInitialConfirmed(null)
             refreshInitialRevision(draftRevision.current)
             setRetrySelection(null)
+            setErrorCode(code => code === "PLAN_START_DATE_PAST" || code === "ACCOUNT_PLAN_REVIEW_REQUIRED" ? null : code)
           }}
           onConfirmRecord={() => {
             if (selectedRecordId !== null) {

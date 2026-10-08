@@ -20,7 +20,7 @@ async function expectCanonicalPlanCandidates(page: Page): Promise<void> {
     name: "계획이 준비됐어요",
   })).toBeVisible()
   await expect(page.locator(".plan-candidate")).toHaveCount(2)
-  await expect(page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u })).toHaveCount(2)
+  await expect(page.getByRole("button", { name: /계획 [AB]로 시작/u })).toHaveCount(2)
   await expect(page.getByText(/9일/u).first()).toBeVisible()
   await expect.poll(async () => page.evaluate(
     () => window.localStorage.getItem("trainoracle.plan-beta.v1"),
@@ -32,6 +32,7 @@ test("keeps plan help inside the narrow scroll region", async ({ page }) => {
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
   await enterPlanWithoutRecord(page)
+  await page.getByRole("button", { name: "선택한 내용 바꾸기" }).click()
   await page.locator(".plan-intake__summary").getByRole("button", { name: "1500m", exact: true }).click()
   await page.getByRole("button", { name: "준비 목표 설명 보기" }).click()
 
@@ -111,7 +112,7 @@ test("generates selectable 9-day candidates from first-screen intake", async ({ 
 test("generates a bounded two-a-day 9-day candidate", async ({ page }) => {
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
-  await completeDetailedPlan(page, { event: /^5000m\b/u, division: /고등부/u, days: /^매일/u, focus: /숨차게 반복.*VO₂/u, twice: true })
+  await completeDetailedPlan(page, { event: /^5000m\b/u, division: /고등부/u, days: /^매일/u, focus: /유산소 반복 훈련/u, twice: true })
 
   await expectCanonicalPlanCandidates(page)
   const days = page.locator(".plan-candidate").first().locator(".plan-day-deck:visible .plan-schedule-preview > li")
@@ -134,7 +135,7 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   // Given
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
-  await completeDetailedPlan(page, { event: /^5000m\b/u, division: /고등부/u, days: /^매일/u, focus: /숨차게 반복.*VO₂/u, time: /저녁에 운동해요/u, twice: true })
+  await completeDetailedPlan(page, { event: /^5000m\b/u, division: /고등부/u, days: /^매일/u, focus: /유산소 반복 훈련/u, time: /저녁에 운동해요/u, twice: true })
   await expectCanonicalPlanCandidates(page)
   const candidateQuality = page.locator(".plan-candidate").first()
     .locator('.plan-day-card__session[data-session-slot="PM"][data-flow-kind="main"]').first()
@@ -142,16 +143,15 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   await expect(candidateSteps.locator("li > strong")).toHaveText(["준비", "본운동", "정리"])
   const selectedTitle = await candidateQuality.locator(".plan-session-content > strong").innerText()
   const selectedNotation = await candidateQuality.locator(".plan-session-metric").innerText()
-  const selectedExecution = await candidateQuality.locator(".plan-session-execution").innerText()
   const selectedSteps = await candidateSteps.locator("li > span").allTextContents()
-  // Read the selected catalog's actual work/recovery notation, not retired RPE-only prose.
+  // Preserve the selected work and recovery details across activation and reload.
   expect(selectedNotation).toMatch(/@ RPE/u)
-  expect(selectedSteps[1]).toMatch(/\d+\s*×\s*\d+(?:\.\d+)?(?:s|min)\s*@ RPE 7[–~]8/u)
-  expect(selectedSteps[1]).toMatch(/· r\d+(?:\.\d+)?(?:s|min)\s+(?:Jog|Walk)\b/u)
-  expect(selectedExecution).toMatch(/본운동 \d+개 구간과 표시된 회복을 순서대로 진행하세요/u)
+  expect(selectedSteps[1]).toMatch(/\d+\s*×\s*\d+(?:\.\d+)?분/u)
+  expect(selectedSteps[1]).toMatch(/힘든 정도 7[–~]8\/10/u)
+  expect(selectedSteps[1]).toMatch(/반복 사이 \d+초 조깅/u)
 
   // When
-  await page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u }).first().click()
+  await page.getByRole("button", { name: "계획 A로 시작", exact: true }).click()
 
   // Then
   await expectActivePlanHeading(page)
@@ -161,8 +161,6 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   await expect(qualitySession).toHaveCount(1)
   await expect(qualitySession.locator(".plan-session-content > strong")).toHaveText(selectedTitle)
   await expect(qualitySession.locator(".plan-session-metric")).toHaveText(selectedNotation)
-  await expect(qualitySession.locator(".plan-session-execution")).toBeVisible()
-  await expect(qualitySession.locator(".plan-session-execution")).toHaveText(selectedExecution)
   const qualitySteps = qualitySession.getByRole("list", { name: "훈련 실행 순서" })
   await expect(qualitySteps).toBeVisible()
   await expect(qualitySteps.locator("li > strong")).toHaveText(["준비", "본운동", "정리"])
@@ -200,8 +198,6 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   await expect(reloadedQualitySession).toHaveCount(1)
   await expect(reloadedQualitySession.locator(".plan-session-content > strong")).toHaveText(selectedTitle)
   await expect(reloadedQualitySession.locator(".plan-session-metric")).toHaveText(selectedNotation)
-  await expect(reloadedQualitySession.locator(".plan-session-execution")).toBeVisible()
-  await expect(reloadedQualitySession.locator(".plan-session-execution")).toHaveText(selectedExecution)
   const reloadedSteps = reloadedQualitySession.getByRole("list", { name: "훈련 실행 순서" })
   await expect(reloadedSteps).toBeVisible()
   await expect(reloadedSteps.locator("li > strong")).toHaveText(["준비", "본운동", "정리"])
@@ -292,7 +288,7 @@ test("shows a truthful distance receipt and opens the real trend", async ({ page
   })
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
-  await page.getByRole("button", { name: /훈련 후.*거리·시간·훈련 내용을 모두 기록/u }).click()
+  await page.getByRole("button", { name: /훈련 후.*운동별로 자세히/u }).click()
   await page.getByRole("textbox", { name: "거리 (km)" }).fill("8")
 
   // When
@@ -303,10 +299,12 @@ test("shows a truthful distance receipt and opens the real trend", async ({ page
   await expect(receipt).toContainText("8 km")
   await receipt.getByRole("button", { name: "거리 추이 보기" }).click()
   await expect(page.getByRole("heading", { name: "오라클", exact: true })).toBeVisible()
-  await expect(page.getByRole("group", { name: "훈련 분석 자세히 보기" }).getByRole("button", { name: "월별 변화", exact: true })).toHaveAttribute("aria-pressed", "true")
+  const detailMenu = page.locator(".trends-hub__detail-menu")
+  await detailMenu.locator(":scope > summary").click()
+  await expect(detailMenu.getByRole("button", { name: "월별 변화", exact: true })).toHaveAttribute("aria-pressed", "true")
   await page.getByRole("region", { name: "최근 4개월 추이" }).locator("summary", { hasText: "월별 수치와 집계 범위 보기" }).click()
   await expect(page.getByRole("region", { name: "최근 4개월 추이" }).getByText(/중앙 거리 8 km/u)).toBeVisible()
-  await page.getByRole("group", { name: "훈련 분석 자세히 보기" }).getByRole("button", { name: "훈련량", exact: true }).click()
+  await detailMenu.getByRole("button", { name: "훈련량", exact: true }).click()
   const distance = page.getByRole("region", { name: "누적 거리와 변화" })
   await expect(distance.getByLabel(/이번 주, 8킬로미터, 기록 1건/u)).toBeVisible()
   await expect(distance.getByText(/1건 반영/u).first()).toBeVisible()

@@ -1,11 +1,17 @@
 import { expect, test } from "@playwright/test"
 
+async function openHomeLearning(page: import("@playwright/test").Page) {
+  const disclosure = page.getByRole("button", { name: "일지 예시·훈련법·꾸미기", exact: true })
+  if (await disclosure.getAttribute("aria-expanded") !== "true") await disclosure.click()
+}
+
 test.describe("screen asset recovery", () => {
   test.use({ serviceWorkers: "block" })
 
   test("a failed guide leaves navigation usable and recovers after a real reload", async ({ page }, testInfo) => {
     await page.route("**/assets/Guide-*.js", route => route.abort())
     await page.goto("/?app=1")
+    await openHomeLearning(page)
     await page.getByRole("button", { name: "일지 예시 보기", exact: true }).click()
     await expect(page.getByRole("heading", { name: "화면 파일을 불러오지 못했어요" })).toBeVisible()
     const nav = page.getByRole("navigation", { name: "주 탭" })
@@ -14,11 +20,13 @@ test.describe("screen asset recovery", () => {
     await nav.getByRole("button", { name: "훈련", exact: true }).click()
     await expect(page.getByTestId("error-boundary")).toHaveCount(0)
     await nav.getByRole("button", { name: "홈", exact: true }).click()
+    await openHomeLearning(page)
     await page.getByRole("button", { name: "일지 예시 보기", exact: true }).click()
     await expect(page.getByTestId("error-boundary")).toBeVisible()
     await page.unroute("**/assets/Guide-*.js")
     await page.getByTestId("error-retry").click()
     await expect(page.getByTestId("error-boundary")).toHaveCount(0)
+    await openHomeLearning(page)
     await page.getByRole("button", { name: "일지 예시 보기", exact: true }).click()
     await expect(page.getByTestId("error-boundary")).toHaveCount(0)
     await expect(page.getByText(/민지/u).first()).toBeVisible()
@@ -33,7 +41,7 @@ test.describe("screen asset recovery", () => {
     await expect(page.getByTestId("error-boundary")).toBeVisible()
     await page.unroute("**/assets/PlanBeta-*.js")
     await page.getByTestId("error-retry").click()
-    await expect(page.getByRole("heading", { name: "내 계획 받기" })).toBeVisible()
+    await expect(page.getByRole("form", { name: "계획 시작 정보" }).getByRole("heading", { name: "어떤 종목을 준비하세요?" })).toBeVisible()
     expect(await page.evaluate(() => localStorage.getItem("screen-recovery-test-sentinel"))).toBe("unchanged")
   })
 

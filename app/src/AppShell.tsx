@@ -204,7 +204,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   // Keep only this mounted shell's return route. Forward always rereads the saved plan.
   const oraclePlanForwardRef = React.useRef<{ intent: NonNullable<typeof oracleInputRef.current>; scope: number } | null>(null)
   const hasStoredOraclePlan = React.useCallback(() => {
-    try { return "state" in readPlanBetaStateFromStorage(undefined, undefined, multiPlanRuntime?.readMultiAdjustedEvidenceV3?.()) }
+    try { return "state" in readPlanBetaStateFromStorage(undefined, undefined, multiPlanRuntime?.readMultiAdjustedEvidenceV3) }
     catch { return false }
   }, [multiPlanRuntime?.readMultiAdjustedEvidenceV3])
   const pendingReward = React.useRef<{ ownerId: string | null; date: string } | null>(null)

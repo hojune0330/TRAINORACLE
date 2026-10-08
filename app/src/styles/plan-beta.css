@@ -1200,6 +1200,10 @@
   min-width: 0;
 }
 
+.plan-intake .plan-heading-row h1.active-content-scroll-target {
+  scroll-margin-block-start: var(--space-8);
+}
+
 .active-plan__edit-heading {
   display: flex;
   align-items: center;
@@ -2769,26 +2773,6 @@
 
 @media (max-width: 420px) {
   .plan-candidate-comparison__options {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .plan-candidate-comparison article {
-    padding: 0 var(--space-2);
-  }
-
-  .plan-candidate-comparison article:first-child {
-    padding-top: 0;
-    border-right: var(--bw-line) solid var(--hair);
-    border-bottom: 0;
-  }
-
-  .plan-candidate-comparison article:last-child {
-    padding-right: 0;
-  }
-}
-
-@media (max-width: 280px) {
-  .plan-candidate-comparison__options {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -2797,12 +2781,17 @@
   }
 
   .plan-candidate-comparison article:first-child {
+    padding-top: 0;
     border-right: 0;
     border-bottom: var(--bw-line) solid var(--hair);
   }
+
+  .plan-candidate-comparison article:last-child {
+    padding-bottom: 0;
+  }
 }
 
-/* A rem-based container threshold also responds to text-only enlargement. */
+/* Narrow comparison containers also stack independently of viewport width. */
 @container plan-comparison (max-width: 16rem) {
   .plan-candidate-comparison__options,
   .plan-main-comparison__pair {

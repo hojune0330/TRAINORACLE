@@ -3,6 +3,7 @@ import { undersizedInteractiveTargets } from "./touch-audit"
 
 async function openMore(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: "더보기", exact: true }).click()
+  await page.getByRole("button", { name: "계정·기록 보관", exact: true }).click()
   await page.getByTestId("install-shortcut-menu").click()
   await expect(page.getByTestId("install-shortcut-dialog")).toBeVisible()
 }
@@ -31,6 +32,7 @@ test("shortcut is optional after a real quick save and dismissal survives reload
 test("native install capability is called only by the user's install click", async ({ page }, info) => {
   await page.goto("/?app=1&uitest=1")
   await page.getByRole("button", { name: "더보기", exact: true }).click()
+  await page.getByRole("button", { name: "계정·기록 보관", exact: true }).click()
   await page.evaluate(() => {
     const state = { calls: 0 }
     Object.assign(window, { shortcutProbe: state })

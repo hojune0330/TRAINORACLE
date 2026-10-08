@@ -48,12 +48,13 @@ test("keeps explicit energy records separate from legacy defaults across home an
   })
 
   await page.goto("/?app=1")
-  const home = page.getByRole("region", { name: "기록과 계획" })
-  const analysisEntry = home.getByRole("button", { name: "훈련 기록 살펴보기", exact: true })
-  await expect(home.getByRole("region", { name: "최근 하루 기록" })).toContainText("오늘 기록 2개")
+  const analysisEntry = page.getByRole("button", { name: "훈련량·변화 보기", exact: true })
+  await expect(page.getByRole("region", { name: "최근 하루 기록" })).toContainText("오늘 기록 2개")
   await expect(analysisEntry).toContainText("이번 주 8km · 직접 입력 1건")
   await analysisEntry.click()
-  await page.getByRole("group", { name: "훈련 분석 자세히 보기" }).getByRole("button", { name: "훈련 구성", exact: true }).click()
+  const detailMenu = page.locator(".trends-hub__detail-menu")
+  await detailMenu.locator(":scope > summary").click()
+  await detailMenu.getByRole("button", { name: "훈련 구성", exact: true }).click()
 
   const analysis = page.getByRole("region", { name: "에너지 시스템 누적" })
   await expect(analysis.getByRole("img", { name: /LT 지속 페이스 1회/u })).toBeVisible()

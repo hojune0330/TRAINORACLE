@@ -56,6 +56,7 @@ test("routes the home decoration card into the real journal editor with points",
 
   await page.goto("/?app=1")
   /* 홈의 통합 꾸미기 진입은 실제 오늘 일지 편집기를 바로 연다. */
+  await page.getByRole("button", { name: "일지 예시·훈련법·꾸미기" }).click()
   await page.getByRole("button", { name: "일지 꾸미기" }).click()
   const editor = page.getByRole("dialog", { name: "일지 꾸미기", exact: true })
   await expect(editor).toBeVisible()

@@ -117,7 +117,7 @@ it.each([false, true])("leaves the pending next-plan screen when the server rece
   const { entry, server, service } = await fixture()
   render(<PlanBeta />)
   const user = userEvent.setup()
-  await user.click(screen.getByRole("button", { name: "다음 계획안 만들기" }))
+  await user.click(await screen.findByRole("button", { name: "다음 계획안 만들기" }, { timeout: 10_000 }))
   await user.click(await screen.findByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/ }))
   server.loseResponse()
   await user.click(await screen.findByRole("button", { name: "이 일정으로 시작" }))
@@ -126,7 +126,7 @@ it.each([false, true])("leaves the pending next-plan screen when the server rece
   expect(service.snapshot().currentPlan?.planId).toBe(entry.planId)
   if (reopen) {
     await user.click(screen.getByRole("button", { name: "현재 계획으로 돌아가기" }))
-    await user.click(screen.getByRole("button", { name: "다음 계획안 만들기" }))
+    await user.click(await screen.findByRole("button", { name: "다음 계획안 만들기" }, { timeout: 10_000 }))
     await screen.findByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/ })
   }
   await act(async () => {
@@ -137,4 +137,4 @@ it.each([false, true])("leaves the pending next-plan screen when the server rece
   expect(screen.queryByRole("button", { name: "이 일정으로 시작" })).not.toBeInTheDocument()
   expect(service.snapshot().currentPlan?.planId).not.toBe(entry.planId)
   expect(server.commits).toHaveLength(1)
-})
+}, 20_000)

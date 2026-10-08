@@ -1,13 +1,20 @@
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
 
+async function enterAthleteRecordsFromPlan(page: Page): Promise<void> {
+  const recordsButton = page.getByRole("button", { name: "내 경기 기록", exact: true })
+  if (!await recordsButton.isVisible()) {
+    await page.locator("summary", { hasText: "기록 관리·훈련표 읽기" }).click()
+  }
+  await recordsButton.click()
+}
+
 async function openAthleteRecords(page: Page): Promise<void> {
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" })
     .getByRole("button", { name: "훈련" })
     .click()
-  await page.locator("summary", { hasText: "기록 관리·훈련표 읽기" }).click()
-  await page.getByRole("button", { name: "내 경기 기록", exact: true }).click()
+  await enterAthleteRecordsFromPlan(page)
   await expect(page.getByRole("heading", { name: "내 경기 기록" })).toBeVisible()
   expect(await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBeNull()
 }
@@ -20,15 +27,19 @@ test("stores an achieved PB and an aspirational goal without choosing a pace anc
   await page.getByRole("combobox", { name: "기록 역할" })
     .selectOption("PERSONAL_BEST")
   await page.getByRole("combobox", { name: "종목 거리" }).selectOption("5000")
+  await page.getByRole("button", { name: "시간 입력", exact: true }).click()
   await page.getByRole("textbox", { name: "기록 분" }).fill("18")
   await page.getByRole("textbox", { name: "기록 초" }).fill("30")
+  await page.getByRole("button", { name: "날짜 확인", exact: true }).click()
   await page.getByRole("textbox", { name: "달성일" }).fill("2024-03-10")
   await page.getByRole("button", { name: "기록 저장" }).click()
 
   await page.getByRole("combobox", { name: "기록 역할" })
     .selectOption("RACE_GOAL")
+  await page.getByRole("button", { name: "시간 입력", exact: true }).click()
   await page.getByRole("textbox", { name: "기록 분" }).fill("17")
   await page.getByRole("textbox", { name: "기록 초" }).fill("30")
+  await page.getByRole("button", { name: "목표 확인", exact: true }).click()
   await page.getByRole("button", { name: "기록 저장" }).click()
 
   const list = page.getByRole("region", { name: "저장한 경기 기록" })
@@ -65,8 +76,7 @@ test("stores an achieved PB and an aspirational goal without choosing a pace anc
   )).toBe(true)
 
   await page.getByRole("button", { name: "계획으로" }).click()
-  await page.locator("summary", { hasText: "기록 관리·훈련표 읽기" }).click()
-  await page.getByRole("button", { name: "내 경기 기록", exact: true }).click()
+  await enterAthleteRecordsFromPlan(page)
   await expect(page.getByRole("region", { name: "저장한 경기 기록" })
     .getByText("5000m · 17분 30초 · 경기 목표")).toBeVisible()
 
@@ -97,13 +107,14 @@ test("rejects invalid records and never migrates a legacy race note", async ({
 
   await page.getByRole("combobox", { name: "종목 거리" }).selectOption("CUSTOM")
   await page.getByRole("textbox", { name: "직접 입력 거리 (m)" }).fill("59")
-  await page.getByRole("textbox", { name: "기록 분" }).fill("1")
-  await page.getByRole("textbox", { name: "기록 초" }).fill("0")
-  await page.getByRole("textbox", { name: "달성일" }).fill("2024-03-10")
-  await page.getByRole("button", { name: "기록 저장" }).click()
+  await page.getByRole("button", { name: "시간 입력", exact: true }).click()
   await expect(page.getByRole("alert")).toContainText("종목 거리는 60m 이상")
 
   await page.getByRole("textbox", { name: "직접 입력 거리 (m)" }).fill("400")
+  await page.getByRole("button", { name: "시간 입력", exact: true }).click()
+  await page.getByRole("textbox", { name: "기록 분" }).fill("1")
+  await page.getByRole("textbox", { name: "기록 초" }).fill("0")
+  await page.getByRole("button", { name: "날짜 확인", exact: true }).click()
   await page.getByRole("textbox", { name: "달성일" }).fill("2099-01-01")
   await page.getByRole("button", { name: "기록 저장" }).click()
   await expect(page.getByRole("alert")).toContainText("미래 달성일")
@@ -150,8 +161,10 @@ test("reports a record save failure when the browser silently drops the write", 
   })
   await openAthleteRecords(page)
 
+  await page.getByRole("button", { name: "시간 입력", exact: true }).click()
   await page.getByRole("textbox", { name: "기록 분" }).fill("18")
   await page.getByRole("textbox", { name: "기록 초" }).fill("30")
+  await page.getByRole("button", { name: "날짜 확인", exact: true }).click()
   await page.getByRole("textbox", { name: "달성일" }).fill("2024-03-10")
   await page.getByRole("button", { name: "기록 저장" }).click()
 
@@ -195,10 +208,12 @@ test("keeps an existing record after a partial save and allows a later retry", a
 
   await page.getByRole("combobox", { name: "기록 역할" }).selectOption("PERSONAL_BEST")
   await expect(page.getByRole("combobox", { name: "기록 역할" })).toHaveValue("PERSONAL_BEST")
-  await page.locator(".athlete-record-form input").nth(0).fill("17")
-  await page.locator(".athlete-record-form input").nth(1).fill("30")
-  await page.locator(".athlete-record-form input").nth(2).fill("2024-03-10")
-  await page.locator(".athlete-record-save").click()
+  await page.getByRole("button", { name: "시간 입력", exact: true }).click()
+  await page.getByRole("textbox", { name: "기록 분", exact: true }).fill("17")
+  await page.getByRole("textbox", { name: "기록 초", exact: true }).fill("30")
+  await page.getByRole("button", { name: "날짜 확인", exact: true }).click()
+  await page.getByRole("textbox", { name: "달성일", exact: true }).fill("2024-03-10")
+  await page.getByRole("button", { name: "기록 저장", exact: true }).click()
 
   await expect(page.locator(".athlete-record-error")).toBeVisible()
   await expect.poll(() => page.evaluate(() => JSON.parse(
@@ -213,10 +228,12 @@ test("keeps an existing record after a partial save and allows a later retry", a
 
   await page.getByRole("combobox", { name: "기록 역할" }).selectOption("PERSONAL_BEST")
   await expect(page.getByRole("combobox", { name: "기록 역할" })).toHaveValue("PERSONAL_BEST")
-  await page.locator(".athlete-record-form input").nth(0).fill("17")
-  await page.locator(".athlete-record-form input").nth(1).fill("30")
-  await page.locator(".athlete-record-form input").nth(2).fill("2024-03-10")
-  await page.locator(".athlete-record-save").click()
+  await page.getByRole("button", { name: "시간 입력", exact: true }).click()
+  await page.getByRole("textbox", { name: "기록 분", exact: true }).fill("17")
+  await page.getByRole("textbox", { name: "기록 초", exact: true }).fill("30")
+  await page.getByRole("button", { name: "날짜 확인", exact: true }).click()
+  await page.getByRole("textbox", { name: "달성일", exact: true }).fill("2024-03-10")
+  await page.getByRole("button", { name: "기록 저장", exact: true }).click()
   await expect.poll(() => page.evaluate(() => JSON.parse(
     window.localStorage.getItem("trainoracle.athlete-records.v1") ?? "[]",
   ).map((record: { purpose: string }) => record.purpose))).toEqual([

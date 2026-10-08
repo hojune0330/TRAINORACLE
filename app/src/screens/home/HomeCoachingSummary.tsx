@@ -10,6 +10,7 @@ import { onLocalJournalScopeChange } from "../../domain/account/local-journal-ow
 import { COACHING_READING, ExecutionReviewReader } from "../plan-review/ExecutionReview"
 import { OriginalTrainingMethod } from "../plan-review/OriginalTrainingMethod"
 import { ExecutionReplan } from "../plan-review/ExecutionReplan"
+import type { RetainedMultiAdjustedEvidenceV3 } from "../../domain/selected-multi-adjusted-plan-v3"
 
 export function HomeCoachingSummary({ revision, onOpenDay, onOpenPlan }: {
   readonly revision: number; readonly onOpenDay?: (date: string, entryId?: string) => void; readonly onOpenPlan?: () => void
@@ -21,11 +22,26 @@ export function HomeCoachingSummary({ revision, onOpenDay, onOpenPlan }: {
   const heading = useRef<HTMLHeadingElement>(null)
   const today = useLocalToday()
   useEffect(() => onLocalJournalScopeChange(() => { setSelected(null); setReplanEntry(null); setVisibleCount(2) }), [])
-  const { source, reviews, total } = useMemo(() => {
+  const { source, reviews, total, readRetained } = useMemo(() => {
     const source = loadEntriesForPlanSafety()
-    const retained = readMulti?.()
     const total = source.status === "complete" ? source.entries.filter(entry => entry.kind === "post-session" && entry.plannedSessionLink && entry.date <= today).length : 0
-    return { source, total, reviews: collectExecutionReviews(source, entry => readJournalOriginalPlan(entry, undefined, undefined, retained), today, { limit: visibleCount }) }
+    let retainedRead:
+      | { readonly kind: "pending" }
+      | { readonly kind: "loaded"; readonly value: readonly RetainedMultiAdjustedEvidenceV3[] }
+      | { readonly kind: "failed"; readonly error: unknown } = { kind: "pending" }
+    const readRetained = readMulti ? () => {
+      if (retainedRead.kind === "loaded") return retainedRead.value
+      if (retainedRead.kind === "failed") throw retainedRead.error
+      try {
+        const value = readMulti()
+        retainedRead = { kind: "loaded", value }
+        return value
+      } catch (error) {
+        retainedRead = { kind: "failed", error }
+        throw error
+      }
+    } : undefined
+    return { source, total, readRetained, reviews: collectExecutionReviews(source, entry => readJournalOriginalPlan(entry, undefined, undefined, readRetained), today, { limit: visibleCount }) }
   }, [revision, readMulti, visibleCount, today])
   const review = reviews.find(item => `record:${item.id}` === selected)
   const article = COACHING_READING.find(item => `article:${item.id}` === selected)
@@ -38,7 +54,7 @@ export function HomeCoachingSummary({ revision, onOpenDay, onOpenPlan }: {
   const selectedEntry = source.status === "complete" ? source.entries.find(entry => entry.kind === "post-session" && entry.id === review?.id) : undefined
   let originalMethod
   if (selectedEntry?.kind === "post-session" && review?.status !== "CONFLICT") {
-    try { originalMethod = <OriginalTrainingMethod original={readJournalOriginalPlan(selectedEntry, undefined, undefined, readMulti?.())} /> } catch { /* The report already explains unavailable source evidence. */ }
+    try { originalMethod = <OriginalTrainingMethod original={readJournalOriginalPlan(selectedEntry, undefined, undefined, readRetained)} /> } catch { /* The report already explains unavailable source evidence. */ }
   }
   return <section className="home-hub__summary home-coaching" aria-labelledby="home-coaching-title">
     <AppHeading as="h2" variant="section" id="home-coaching-title" ref={heading} tabIndex={-1}>{readingFirst ? "훈련법 읽기" : "훈련 코칭"}</AppHeading>

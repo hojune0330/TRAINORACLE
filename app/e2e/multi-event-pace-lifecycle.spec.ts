@@ -97,9 +97,11 @@ async function openRecords(page: Page, active: boolean) {
 async function enterRecord(page: Page, event: number, extra: Extra) {
   await page.getByRole("combobox", { name: "기록 역할" }).selectOption(extra.purpose)
   await page.getByRole("combobox", { name: "종목 거리" }).selectOption(String(event))
+  await page.getByRole("button", { name: "시간 입력", exact: true }).click()
   const fields = timeFields(extra.seconds)
   await page.getByRole("textbox", { name: "기록 분", exact: true }).fill(fields.minutes)
   await page.getByRole("textbox", { name: "기록 초", exact: true }).fill(fields.seconds)
+  await page.getByRole("button", { name: extra.purpose === "RACE_GOAL" ? "목표 확인" : "날짜 확인", exact: true }).click()
   if (extra.purpose !== "RACE_GOAL") await page.getByRole("textbox", { name: "달성일", exact: true }).fill(extra.date ?? "")
   await page.getByRole("button", { name: "기록 저장", exact: true }).click()
   await expect.poll(async () => (await stored<AthleteRecord[]>(page, RECORDS))?.some(row =>
@@ -107,6 +109,20 @@ async function enterRecord(page: Page, event: number, extra: Extra) {
     && row.purpose === extra.purpose && row.achievedOn === extra.date)).toBe(true)
   return (await stored<AthleteRecord[]>(page, RECORDS)).find(row => row.eventDistanceM === event
     && row.performanceSeconds === extra.seconds && row.purpose === extra.purpose && row.achievedOn === extra.date)!
+}
+async function chooseLongEventRacePace(page: Page, event: number, recordId: string) {
+  const catalogId = event === 10000 ? "RP-10000-DISTANCE"
+    : event === 21097.5 ? "RP-HALF-DISTANCE" : "RP-42195-DISTANCE"
+  await page.getByRole("group", { name: "계획 확인·변경" })
+    .getByRole("button", { name: "훈련 조절", exact: true }).click()
+  const picker = page.getByRole("region", { name: "다른 훈련으로 바꾸기" })
+  await picker.getByRole("combobox", { name: "훈련 구성" }).selectOption(catalogId)
+  await picker.locator("summary", { hasText: "기록으로 구간 페이스 정하기" }).click()
+  await picker.getByRole("combobox", { name: "1000m 구간의 기준" }).selectOption(recordId)
+  const longer = picker.getByRole("checkbox", { name: /준비·회복·정리까지/u })
+  if (await longer.count()) await longer.check()
+  await picker.getByRole("button", { name: "이 구성으로 바꾸기" }).click()
+  await expect(picker).toContainText("계획안에 반영했어요")
 }
 async function confirmNumeric(page: Page, sourceId: string) {
   const confirmation = page.getByRole("button", { name: "기준 기록 확인하기", exact: true })
@@ -137,10 +153,11 @@ async function confirmNumeric(page: Page, sourceId: string) {
 
 async function assertBoundSuccessor(page: Page, persona: Persona, source: AthleteRecord,
   predecessor: PlanBetaStateV3, rows: Awaited<ReturnType<typeof numeric>>, startDate: Date) {
-  // A disabled initial offer is not proof: inspect the untouched candidate's binding and raw UI numbers.
-  await expect(page.getByRole("button", { name: "이 기록으로 목표 페이스 보기", exact: true })).toBeDisabled()
-  const picker = page.locator("details.catalog-workout-picker")
-  await picker.locator(":scope > summary").click()
+  // Inspect the untouched candidate's binding and raw UI numbers without applying a new draft.
+  await page.getByRole("group", { name: "계획 확인·변경" })
+    .getByRole("button", { name: "훈련 조절", exact: true }).click()
+  const picker = page.getByRole("region", { name: "다른 훈련으로 바꾸기" })
+  await expect(picker).toBeVisible()
   const addresses = [...new Set(rows.map(row => `${row.day}:${row.slot}`))]
   expect(addresses.length).toBeGreaterThan(0)
   const evidence = []
@@ -187,7 +204,6 @@ async function assertBoundSuccessor(page: Page, persona: Persona, source: Athlet
     await formula.locator(":scope > summary").click()
     await references.locator(":scope > summary").click()
   }
-  await picker.locator(":scope > summary").click()
   for (const address of addresses) {
     const main = rows.find(row => `${row.day}:${row.slot}` === address)!
     const date = new Date(startDate)
@@ -231,14 +247,21 @@ for (const persona of personas) test(`${persona.id} ${persona.name}`, async ({ p
       await openRecords(page, false)
       for (const extra of persona.extras ?? []) await enterRecord(page, persona.event, extra)
       await page.getByRole("button", { name: "계획으로", exact: true }).click()
-      if (persona.goal) await page.getByRole("radio", { name: "목표만 있어요", exact: true }).check()
-      await page.getByRole("combobox", { name: "종목", exact: true }).selectOption(String(persona.event === 21097.5 ? 21097 : persona.event))
+      const eventLabel = persona.event === 21097.5 ? "하프 마라톤"
+        : persona.event === 42195 ? "마라톤"
+        : persona.event === 10000 ? "10km"
+        : persona.event === 5000 ? "5km" : `${persona.event}m`
+      await page.getByRole("button", { name: eventLabel, exact: true }).click()
+      await page.getByRole("button", { name: persona.goal ? "목표만 있어요" : "내 기록", exact: true }).click()
       const fields = timeFields(persona.seconds)
       await page.getByLabel("분", { exact: true }).fill(fields.minutes)
       await page.getByLabel("초", { exact: true }).fill(fields.seconds)
-      if (!persona.goal) await page.getByLabel("기록 달성일", { exact: true }).fill(DATE)
-      await page.getByRole("button", { name: "내 계획 받기", exact: true }).click()
-      await page.getByRole("button", { name: /구조화된 훈련/ }).click()
+      if (!persona.goal) {
+        await page.getByText("기록 날짜 추가", { exact: true }).click()
+        await page.getByLabel("기록 달성일", { exact: true }).fill(DATE)
+      }
+      await page.getByRole("button", { name: persona.goal ? "목표 입력 완료" : "기록 입력 완료", exact: true }).click()
+      await page.getByRole("button", { name: /빠른 훈련과 쉬운 훈련/ }).click()
       await page.getByRole("button", { name: /^3일/ }).click()
       await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/ }).click()
       const all = await stored<AthleteRecord[]>(page, RECORDS)
@@ -248,11 +271,12 @@ for (const persona of personas) test(`${persona.id} ${persona.name}`, async ({ p
       expect(record!.eventDistanceM).toBe(persona.event)
       expect(record!.achievedOn).toBe(persona.goal ? null : DATE)
       expect(record!.verificationState).toBe("SELF_REPORTED")
+      if (persona.event >= 10000) await chooseLongEventRacePace(page, persona.event, record!.id)
       expect(await stored(page, PLAN)).toBeNull()
       return record!
     })
     const first = await step("02 first plan with actual target seconds", async () => {
-      await confirmNumeric(page, source.id)
+      if (persona.event < 10000) await confirmNumeric(page, source.id)
       await page.getByRole("button", { name: "이 일정으로 시작", exact: true }).click()
       await expect(page.getByRole("heading", { name: /훈련 계획$/ }).first()).toBeVisible()
       await expect.poll(() => stored(page, PLAN)).not.toBeNull()
@@ -445,6 +469,8 @@ for (const persona of personas) test(`${persona.id} ${persona.name}`, async ({ p
         plannedSessionLink: { sessionDay: main.day, sessionSlot: main.slot } })
       expect((await plan(page)).progress).toEqual([])
       await page.getByRole("button", { name: "완료", exact: true }).click()
+      const returnToCalendar = page.getByRole("button", { name: "달력으로 돌아가기", exact: true })
+      if (await returnToCalendar.isVisible()) await returnToCalendar.click()
       await tab(page)
       await page.getByRole("button", { name: "연결된 일지 기록 보기", exact: true }).click()
       await expect(page.getByRole("tabpanel")).toContainText("직접 기록한 RPE 7")
@@ -502,7 +528,7 @@ for (const persona of personas) test(`${persona.id} ${persona.name}`, async ({ p
           archivedOriginalExact: true, planHistoryAndJournalExactAfterReload: true }, null, 2) })
     })
   } finally {
-    await context.setOffline(false)
+    if (!page.isClosed()) await context.setOffline(false)
     await info.attach("lifecycle-stage-receipt", { contentType: "application/json",
       body: JSON.stringify({ persona, proof: "synthetic guest browser; scope-switch probe is not authenticated account proof",
         completed, overBudgetRequired: persona.overBudget !== undefined, overBudgetVerified,

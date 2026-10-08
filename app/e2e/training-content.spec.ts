@@ -34,5 +34,6 @@ test("opens, saves, and reloads a training article without changing other produc
 
 async function openTrainingContent(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: "더보기" }).click()
-  await page.getByRole("button", { name: /요즘 주목받는 훈련법/u }).click()
+  await page.getByRole("button", { name: "배우기·꾸미기" }).click()
+  await page.getByRole("button", { name: "훈련법 읽기" }).click()
 }

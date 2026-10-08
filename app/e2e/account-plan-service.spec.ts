@@ -154,7 +154,7 @@ test("actual PlanBeta selection, progress, archive and Home/journal projections 
   await page.evaluate(() => localStorage.setItem("trainoracle.plan-beta.v1", "SYNTHETIC_DEVICE_ORIGINAL"))
   await mountUi(page)
   await completeDetailedPlan(page, { division: /고등부/u })
-  await page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u }).first().click()
+  await page.getByRole("button", { name: "이 일정으로 시작", exact: true }).click()
   await expect(page.getByText("계정에 저장됨", { exact: true })).toBeVisible()
   await expect.poll(() => page.evaluate(() => window.accountPlanUi.service.snapshot().currentPlan?.kind)).toBe("read_only")
   await openActivePlanCards(page)

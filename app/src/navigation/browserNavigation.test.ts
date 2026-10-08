@@ -108,6 +108,24 @@ describe("native browser layer history", () => {
     expect(popTo(null)).toBe(false)
   })
 
+  it("does not claim another owner's POP when an inactive ancestor marker is unchanged", async () => {
+    const outerClose = vi.fn(), innerClose = vi.fn()
+    const outer = navigation.registerBrowserBackLayer({ id: "outer-inactive", canClose: () => true, onClose: outerClose })
+    const outerState = window.history.state
+    const inner = navigation.registerBrowserBackLayer({ id: "inner-inactive", canClose: () => true, onClose: innerClose })
+    outer.dispose()
+    await Promise.resolve()
+    inner.dispose()
+    await Promise.resolve()
+    expect(window.history.back).toHaveBeenCalledOnce()
+    expect(popTo(outerState)).toBe(true)
+    // A reader can own a separate entry above this same stale flow marker.
+    expect(popTo(outerState)).toBe(false)
+    expect(outerClose).not.toHaveBeenCalled()
+    expect(innerClose).not.toHaveBeenCalled()
+    expect(popTo({ parent: "origin" })).toBe(true)
+  })
+
   it("does not create or consume a ghost entry during StrictMode effect replay", async () => {
     const close = vi.fn(), push = vi.spyOn(window.history, "pushState")
     const first = navigation.registerBrowserBackLayer({ id: "strict", canClose: () => true, onClose: close })

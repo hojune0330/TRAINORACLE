@@ -13,6 +13,11 @@ const page = await context.newPage()
 const failures = []
 page.on("pageerror", error => failures.push(error.message))
 const cases = []
+async function openCustomization(scope) {
+  const summary = scope.locator("summary", { hasText: "표현·꾸미기" }).first()
+  const disclosure = summary.locator("..")
+  if (await disclosure.getAttribute("open") === null) await summary.click()
+}
 try {
   await page.goto(`${base}/e2e/fixtures/workout-memo.html`)
   await page.setViewportSize({ width: 320, height: 900 })
@@ -27,6 +32,7 @@ try {
   if (!fonts.some(font => font.family.includes("Pretendard") && font.status === "loaded")) throw Error("Expected self-hosted Pretendard")
   for (const layout of ["full", "compact"]) {
     await page.getByRole("button", { name: layout === "full" ? "자세히" : "간단히", exact: true }).click()
+    await openCustomization(page)
     for (const width of [320, 375, 1024]) {
     await page.setViewportSize({ width, height: 900 })
     for (const paper of ["노랑 종이", "분홍 종이", "흰 종이"]) {
@@ -55,6 +61,7 @@ try {
   await page.emulateMedia({ reducedMotion: "reduce" })
   const reducedAnimation = await page.locator(".workout-memo-tool__body").first().evaluate(element => getComputedStyle(element).animationName)
   if (reducedAnimation !== "none") throw Error("Reduced motion not respected")
+  await openCustomization(page)
   await page.getByRole("button", { name: "노랑 종이" }).click()
   await page.getByRole("button", { name: "자세히", exact: true }).click()
   const downloading = page.waitForEvent("download")

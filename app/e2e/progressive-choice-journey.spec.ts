@@ -2,10 +2,10 @@ import { expect, test, type Page, type Locator } from "@playwright/test"
 import { completeQuickPlan } from "./plan-flow"
 
 const personas = [
-  { id: "small-phone-new-runner", width: 320, height: 740, seed: 17, event: "800m", reduced: false },
-  { id: "commuter-short-visit", width: 375, height: 667, seed: 43, event: "5km", reduced: false },
-  { id: "reduced-motion-returner", width: 390, height: 844, seed: 71, event: "10km", reduced: true },
-  { id: "desktop-marathon-reader", width: 1280, height: 900, seed: 97, event: "마라톤", reduced: false },
+  { id: "small-phone-new-runner", width: 320, height: 740, event: "800m", reduced: false },
+  { id: "commuter-short-visit", width: 375, height: 667, event: "5km", reduced: false },
+  { id: "reduced-motion-returner", width: 390, height: 844, event: "10km", reduced: true },
+  { id: "desktop-marathon-reader", width: 1280, height: 900, event: "마라톤", reduced: false },
 ] as const
 
 async function noHorizontalOverflow(page: Page) {
@@ -25,7 +25,7 @@ for (const persona of personas) {
       await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "홈", exact: true }).click()
     })
 
-    test("opens Oracle details on demand and returns through random sections", async ({ page }, info) => {
+    test("opens Oracle details on demand and returns through each section destination", async ({ page }, info) => {
       let actions = 0
       const click = async (locator: Locator) => { await locator.click(); actions++ }
       const nav = page.getByRole("navigation", { name: "주 탭" })
@@ -34,21 +34,35 @@ for (const persona of personas) {
       await expect(page.getByRole("heading", { name: "첫 운동부터 남겨볼까요?" })).toBeVisible()
       await expect(page.getByRole("button", { name: "훈련량", exact: true })).not.toBeVisible()
       await page.screenshot({ path: info.outputPath("oracle-first.png") })
-      let seed: number = persona.seed
-      const choices = ["러닝 취향", "읽을거리", "내 훈련"]
-      for (let n = 0; n < 6; n++) {
-        seed = (seed * 16807) % 2147483647
-        await click(page.getByRole("button", { name: choices[seed % choices.length], exact: true }))
-        await noHorizontalOverflow(page)
-      }
-      await click(page.getByRole("button", { name: "내 훈련", exact: true }))
+      const sections = () => page.getByRole("group", { name: "오라클 항목" })
+      await click(sections().getByRole("button", { name: "내 훈련", exact: true }))
+      await noHorizontalOverflow(page)
+
+      await click(sections().getByRole("button", { name: "러닝 취향", exact: true }))
+      await expect(page.getByText("내 러닝 프로필", { exact: true })).toBeVisible()
+      await expect(page.getByRole("button", { name: "오라클로 돌아가기", exact: true })).toBeVisible()
+      await noHorizontalOverflow(page)
+      await click(page.getByRole("button", { name: "오라클로 돌아가기", exact: true }))
+      await expect(sections()).toBeVisible()
+
+      await click(sections().getByRole("button", { name: "읽을거리·관심", exact: true }))
+      await expect(page.getByRole("article", { name: "먼저 읽을 글" })).toBeVisible()
+      await noHorizontalOverflow(page)
+      await click(page.getByRole("button", { name: "오라클로 돌아가기", exact: true }))
+      await expect(sections()).toBeVisible()
+
+      await click(sections().getByRole("button", { name: "내 훈련", exact: true }))
       await click(page.getByText("훈련량·구성·변화 보기", { exact: true }))
       await click(page.getByRole("button", { name: "훈련량", exact: true }))
       await expect(page.getByText("훈련량 · 다른 항목 보기", { exact: true })).toBeVisible()
       await click(page.getByText("훈련량 · 다른 항목 보기", { exact: true }))
       await click(page.getByRole("button", { name: "훈련 요약", exact: true }))
-      await click(page.getByText("오라클 예시 보기", { exact: true }))
-      await expect(page.getByRole("button", { name: /^내 경기 기록 비교.*결과 보기/u })).toBeVisible()
+      await click(page.getByRole("group", { name: "오라클 항목" })
+        .getByRole("button", { name: "읽을거리·관심", exact: true }))
+      await click(page.getByRole("button", { name: /전체 주제·다른 글/u }))
+      await click(page.getByRole("button", { name: "경기 기록", exact: true }))
+      await expect(page.getByRole("button", { name: "최근 경기와 최고기록", exact: true })).toBeVisible()
+      await click(page.getByRole("button", { name: "오라클로 돌아가기", exact: true }))
       await click(nav.getByRole("button", { name: "일지", exact: true }))
       await expect(page.getByRole("heading", { name: "지난 일지", exact: true })).toBeVisible()
       await click(nav.getByRole("button", { name: "홈", exact: true }))
@@ -63,10 +77,12 @@ for (const persona of personas) {
       await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
       await completeQuickPlan(page, { event: persona.event })
       await expect(page.getByRole("region", { name: "이번 일정", exact: true })).toBeVisible()
-      await expect(page.getByRole("button", { name: "다른 계획 보기", exact: true })).not.toBeVisible()
-      await page.getByText("일정·훈련 바꾸기", { exact: true }).click()
-      await expect(page.getByRole("button", { name: "다른 계획 보기", exact: true })).toBeVisible()
-      await page.getByText("일정·훈련 바꾸기", { exact: true }).click()
+      await expect(page.getByRole("region", { name: "다른 계획 비교", exact: true })).not.toBeVisible()
+      const schedule = page.getByRole("group", { name: "계획 확인·변경" })
+        .getByRole("button", { name: "일정·운동 시간", exact: true })
+      await schedule.click()
+      await expect(page.getByRole("region", { name: "다른 계획 비교", exact: true })).toBeVisible()
+      await schedule.click()
       await noHorizontalOverflow(page)
       await page.screenshot({ path: info.outputPath("plan-ready.png"), fullPage: true })
       await page.getByRole("button", { name: "이 일정으로 시작", exact: true }).click()

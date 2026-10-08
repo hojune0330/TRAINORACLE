@@ -33,7 +33,7 @@ test("imports a watch TCX file into the local journal and marks its source", asy
 
   // 자동 연동 준비 상태는 보이고, 자세한 일정 안내는 눌러 확인한다.
   const integrationStatus = page.getByTestId("oauth-status")
-  await expect(integrationStatus.locator("summary")).toHaveText("가민·WHOOP·스트라바 자동 연동은 준비 중이에요")
+  await expect(integrationStatus.locator("summary")).toHaveText("가민·코로스·WHOOP·스트라바 자동 연동은 준비 중이에요")
   await expect(integrationStatus.locator("details")).not.toHaveAttribute("open")
   await integrationStatus.locator("summary").click()
   await expect(integrationStatus).toContainText("시작 날짜는 아직 정해지지 않았어요")
@@ -87,6 +87,7 @@ test("counts an imported journal without treating its numbers as analysis eviden
   // 월 목록과 달력을 거쳐 실제 날짜의 일지를 연다.
   const [year, month, day] = today.split("-").map(Number)
   const monthLabel = `${year}년 ${month}월`
+  await page.getByText("월별 기록 모아보기", { exact: true }).click()
   await page.getByRole("region", { name: "월별 기록" }).getByRole("button", { name: new RegExp(`^${monthLabel} `, "u") }).click()
   await expect(page.getByText("이 달 1일 · 1개 기록", { exact: true })).toBeVisible()
   await page.getByRole("grid", { name: `${monthLabel} 달력` }).getByRole("button", {
@@ -96,7 +97,7 @@ test("counts an imported journal without treating its numbers as analysis eviden
   await expect(page.getByTestId("imported-chip").first()).toBeVisible()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "홈", exact: true }).click()
   await expect(page.getByRole("button", { name: /기록 1개 보기/u })).toContainText("가져온 기록 포함")
-  await page.getByRole("button", { name: "훈련 기록 살펴보기", exact: true }).click()
+  await page.getByRole("button", { name: "훈련량·변화 보기", exact: true }).click()
   await expect(page.getByTestId("trends-analysis-exclusion").locator("summary")).toContainText("가져온 기록 1개")
   await page.getByTestId("trends-analysis-exclusion").locator("summary").click()
   await expect(page.getByTestId("trends-excluded-imported")).toContainText("외부 수치는 아직 분석에 넣지 않았어요")
@@ -150,6 +151,7 @@ test("reconciles a detailed continuation and keeps subjective editing available"
   await page.getByRole("button", { name: "없어요", exact: true }).click()
   await expect(page.getByRole("heading", { name: "이 내용으로 남길까요?" })).toBeVisible()
   await page.getByRole("button", { name: "이대로 저장", exact: true }).click()
+  await page.getByRole("button", { name: "내용 추가·수정", exact: true }).click()
   await page.getByRole("button", { name: "일지 더 쓰기" }).click()
   await page.getByLabel("세션 제목").fill("Synthetic afternoon journal")
   await page.getByRole("button", { name: /수정 저장/u }).click()

@@ -8,6 +8,7 @@ import type {
 import { TermHelp } from "../../components/TermHelp"
 import { isValidIsoDate, isoShift } from "../../domain/dates"
 import { todayISO } from "../../domain/journal-store"
+import { useLocalToday } from "../../hooks/useLocalToday"
 import type { PlanBetaIntake } from "../../domain/plan-beta-store"
 import type { PlanAthleteEvidence } from "../../domain/plan-beta-flow"
 import type { AthleteRecord } from "../../domain/athlete-records"
@@ -179,10 +180,12 @@ export function PlanCandidates({
   }, [intake.eventGroup, intake.eventDistanceM, intake.trainingFocus, intake.experienceBand])
   const [localStartDate, setLocalStartDate] = React.useState(todayISO)
   const startDate = startDateValue ?? localStartDate
+  const localToday = useLocalToday()
   const [expandedCandidateKind, setExpandedCandidateKind] = React.useState<PlanGenerationSuccess["candidates"][number]["kind"] | null>(
     null,
   )
-  const hasValidStartDate = isValidIsoDate(startDate)
+  const isRealStartDate = isValidIsoDate(startDate)
+  const hasValidStartDate = isRealStartDate && startDate >= localToday
   const detailedEvidencePending = intake.selectedDetailedTemplateRef !== null
     && prescriptionBinding.kind !== "bound"
   const selectionUnavailable = saving || saveCode?.startsWith("ACCOUNT_PLAN_") === true
@@ -289,7 +292,8 @@ export function PlanCandidates({
           : catalogDraftPending || initialMainPending ? { kind: "BLOCKED", message: "바꾼 훈련을 적용하거나 취소해 주세요." }
           : unreviewedConditions.length ? { kind: "BLOCKED", message: "새 날짜에 사용할 운동 환경을 확인해 주세요." }
           : needsReview ? { kind: "BLOCKED", message: !hasValidStartDate
-            ? "일정·운동 시간에서 시작 날짜를 골라 주세요."
+            ? isRealStartDate ? "시작 날짜가 지났어요. 일정·운동 시간에서 오늘 또는 이후 날짜를 다시 골라 주세요."
+              : "일정·운동 시간에서 시작 날짜를 골라 주세요."
             : "훈련 조절에서 기준 기록이나 변경한 내용을 확인해 주세요." } : { kind: "READY" }}
         onStart={candidateId => {
           if (!canSelect || !localAccountScopeIsCurrent(accountScope)) return
@@ -334,8 +338,16 @@ export function PlanCandidates({
         {PURPOSE_ENTRIES.map(({ id, label, icon: Icon }) => <button key={id} type="button"
           id={`${purposeId}-${id}-entry`} aria-expanded={visiblePurpose === id} aria-controls={`${purposeId}-${id}`}
           onClick={() => {
+            if (visiblePurpose === id) {
+              setPurpose(null)
+              return
+            }
+            if (id === "schedule") {
+              reveal("date")
+              return
+            }
             if (id === "workout") setWorkoutOpened(true)
-            setPurpose(visiblePurpose === id ? null : id)
+            setPurpose(id)
           }}>
           <Icon size={18} aria-hidden="true" />{label}
         </button>)}
@@ -425,13 +437,17 @@ export function PlanCandidates({
       </section>
       <section id={`${purposeId}-schedule`} hidden={visiblePurpose !== "schedule"} aria-labelledby={`${purposeId}-schedule-entry`}>
       <fieldset disabled={selectionUnavailable || initialMainPending || initialApplying} className="plan-purpose-fields">
-      {!hasValidStartDate && <p className="plan-start-date-error" role="alert">실제 날짜를 고른 뒤 계획을 선택해 주세요.</p>}
+      {!hasValidStartDate && <p className="plan-start-date-error" role="alert">
+        {isRealStartDate ? "시작 날짜가 지났어요. 오늘 또는 이후 날짜를 다시 골라 주세요."
+          : "실제 날짜를 고른 뒤 계획을 선택해 주세요."}
+      </p>}
       <label ref={dateRef} className="plan-start-date" htmlFor="plan-start-date">
         <span>계획 시작 날짜</span>
         <input
           id="plan-start-date"
           ref={dateInputRef}
           type="date"
+          min={localToday}
           value={startDate}
           aria-label="계획 시작 날짜"
           aria-describedby="plan-start-date-help"
@@ -442,7 +458,7 @@ export function PlanCandidates({
           }}
         />
         <small id="plan-start-date-help">
-          오늘부터 시작해요. 바꿀 수 있어요.
+          오늘 또는 이후 날짜로 시작해요. 바꿀 수 있어요.
         </small>
       </label>
       {onRefine !== undefined && canRevise && <PlanRefinePanel purpose="schedule" intake={intake}

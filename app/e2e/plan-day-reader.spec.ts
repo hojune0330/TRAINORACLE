@@ -1,4 +1,6 @@
 import { expect, test } from "@playwright/test"
+import { createPlannedSessionLogDraft } from "../src/domain/planned-session-link"
+import type { PostSessionEntry } from "../src/domain/journal-schema"
 import { completeQuickPlan, refinePlan } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
@@ -14,6 +16,18 @@ test("enlarged AM/PM reader, nested records, back restoration and linked writing
   await completeQuickPlan(page, { days: /^매일/u })
   await refinePlan(page, "하루 두 번", /하루 두 번 운동할게요/u)
   await page.getByRole("button", { name: "이 일정으로 시작" }).click()
+  const state = await page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.plan-beta.v1")!))
+  const afternoonSession = state.activePlan.sessions.find((session: { day: number; slot: string }) => session.day === 1 && session.slot === "PM")
+  expect(afternoonSession).toBeDefined()
+  const draft = createPlannedSessionLogDraft(state, afternoonSession, state.generatedAt)
+  expect(draft).not.toBeNull()
+  const linkedJournal: PostSessionEntry = { id: "day-reader-linked-record", kind: "post-session", date: draft!.date,
+    savedAt: state.generatedAt, syncState: "local", system: "base", title: "", memo: "", distanceKm: "",
+    durationMin: "", avgPace: "", rpe: 3, activityOutcome: "PARTIAL", planExecutionRelation: "MODIFIED",
+    plannedSessionLink: draft!.link }
+  await page.evaluate((entry) => localStorage.setItem("trainoracle.journal.v1", JSON.stringify([entry])), linkedJournal)
+  await page.reload()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
   const planBefore = await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))
   const calendar = page.getByRole("grid", { name: "2026년 9월 달력" })
   const date = calendar.getByRole("button", { name: /2026년 9월 27일 일요일/u })
@@ -59,6 +73,6 @@ test("enlarged AM/PM reader, nested records, back restoration and linked writing
   await afternoon.getByText("일지·진행 기록", { exact: true }).click()
   await afternoon.getByRole("button", { name: "이 훈련 일지 쓰기" }).click()
   await expect(reader).not.toBeVisible()
-  await expect(page.getByText(/계획.*오후|오후.*계획/u).first()).toBeVisible()
+  await expect(page.getByRole("region", { name: "오늘 운동은 어떻게 됐나요?" })).toContainText(/운동 결과\s*계획 1일차 · 오후/u)
   expect(await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(planBefore)
 })

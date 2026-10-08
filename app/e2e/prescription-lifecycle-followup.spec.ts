@@ -3,6 +3,8 @@ import { loadCatalogReductionFixture } from "./fixtures/catalog-cycle-reduction-
 import { JOURNAL_STORAGE_KEY } from "../src/domain/journal-storage-keys"
 
 async function openPlan(page: Page) {
+  const dayReader = page.locator("dialog.plan-day-reader")
+  if (await dayReader.isVisible()) await dayReader.getByRole("button", { name: "달력으로 돌아가기" }).click()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
 }
 async function storedPlan(page: Page) {
@@ -12,12 +14,14 @@ async function generate(page: Page, event = "5000", experienced = false) {
   await page.clock.setFixedTime(new Date("2026-10-02T03:00:00Z"))
   await page.goto("/?app=1")
   await openPlan(page)
-  await page.getByRole("combobox", { name: "종목", exact: true }).selectOption(event)
+  await page.getByRole("button", { name: event === "800" ? "800m" : "5km", exact: true }).click()
+  await page.getByRole("button", { name: "내 기록", exact: true }).click()
   await page.getByLabel("분", { exact: true }).fill(event === "800" ? "2" : "18")
   await page.getByLabel("초", { exact: true }).fill(event === "800" ? "1.5" : "31.5")
+  await page.getByText("기록 날짜 추가", { exact: true }).click()
   await page.getByLabel("기록 달성일", { exact: true }).fill("2026-09-25")
-  await page.getByRole("button", { name: "내 계획 받기", exact: true }).click()
-  if (experienced) await page.getByRole("button", { name: /구조화된 훈련/ }).click()
+  await page.getByRole("button", { name: "기록 입력 완료", exact: true }).click()
+  if (experienced) await page.getByRole("button", { name: /빠른 훈련과 쉬운 훈련/ }).click()
   else await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/ }).click()
   await page.getByRole("button", { name: /^3일/ }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/ }).click()
@@ -65,6 +69,7 @@ for (const outcome of ["PARTIAL", "COMPLETED"] as const) test(`edited MAIN -> ${
   if (outcome === "PARTIAL") await page.getByRole("button", { name: "횟수를 줄였어요" }).click()
   await page.getByRole("button", { name: "이대로 저장", exact: true }).click()
   await expect(page.getByRole("heading", { name: "오늘 기록을 남겼어요.", exact: true })).toBeVisible()
+  await page.getByRole("button", { name: "내용 추가·수정", exact: true }).click()
   if (outcome === "COMPLETED") {
     await page.getByRole("button", { name: "이 결과를 계획에도 반영" }).click()
     await expect(page.getByText("일지의 결과를 계획에도 반영했어요.", { exact: true })).toBeVisible()
@@ -114,13 +119,14 @@ for (const outcome of ["PARTIAL", "COMPLETED"] as const) test(`edited MAIN -> ${
 
 test("first numeric pace plan routes its primary action to explicit record confirmation", async ({ page }) => {
   await generate(page, "800", true)
-  await expect(page.getByText("처방 기준 · 기록 확인 전 · 페이스 초안", { exact: true })).toBeVisible()
+  await expect(page.getByRole("button", { name: /페이스 안내 내 기록으로 페이스 계산 · 훈련 1회/u })).toBeVisible()
+  await expect(page.locator(".plan-prescription-basis__pending")).toContainText("기준 확인이 아직 끝나지 않았어요")
   await page.getByRole("button", { name: "기준 기록 확인하기", exact: true }).click()
   await expect(page.getByRole("region", { name: "개인 페이스 기준 기록" })).toBeVisible()
   await page.getByRole("button", { name: "이 기록으로 개인 페이스 적용", exact: true }).click()
   await page.getByRole("button", { name: "이 일정으로 시작", exact: true }).click()
   await expect(page.getByRole("heading", { name: "9일 훈련 계획", exact: true })).toBeVisible()
-  await expect(page.getByText("처방 기준 · 기록 기준 페이스 · 주요 훈련 1회", { exact: true })).toBeVisible()
+  await expect(page.getByRole("button", { name: /페이스 안내 내 기록으로 페이스 계산 · 훈련 1회/u })).toBeVisible()
   const main = (await storedPlan(page)).activePlan.sessions.find((s: { prescription: { kind: string } }) => s.prescription.kind === "PACE_TARGET")
   expect(main.prescription.targetRepSeconds).toBe(30.375)
 })

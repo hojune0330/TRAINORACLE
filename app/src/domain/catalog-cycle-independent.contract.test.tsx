@@ -161,6 +161,17 @@ describe('independent real reduction and transactional boundaries', () => {
     expect(invoked).toBe(true)
   })
 
+  it('does not expose an old account pending receipt after the scope changes', async () => {
+    const f = fixture(), result = f.next()
+    let invoked = false
+    vi.spyOn(accountDomain, 'captureAccountPlanWrite').mockReturnValue({ save: async (_s: unknown, _r: unknown, fresh: () => boolean) => {
+      invoked = true; expect(fresh()).toBe(true); setActiveLocalAccount('synthetic-account-b')
+      expect(fresh()).toBe(false); return 'ACCOUNT_PLAN_PENDING'
+    } } as never)
+    expect(await f.save(result)).toEqual({ kind: 'rejected', code: 'PLAN_STORAGE_STATE_UNCERTAIN' })
+    expect(invoked).toBe(true)
+  })
+
   it('maintains exact retry without double archival or lineage advance', async () => {
     const f = fixture(), result = f.next()
     expect((await f.save(result)).kind).toBe('saved')

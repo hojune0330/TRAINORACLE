@@ -12,6 +12,7 @@ test("explains the first free beta places without implying that account sync is 
   // Given: a new athlete is using the public local-journal app.
   await page.goto("/")
   await page.getByRole("button", { name: "더보기" }).click()
+  await page.getByRole("button", { name: "배우기·꾸미기" }).click()
 
   // When: the athlete opens the plain-language FAQ and expands the free-beta answer.
   await page.getByRole("button", { name: "훈련 용어집·도움말" }).click()
@@ -48,8 +49,9 @@ test("keeps the welcome home clear and usable on narrow phones", async ({ page }
     await expect(result).toBeVisible()
     await expect(result).toContainText("예시")
     await expect(page.getByRole("region", { name: "더 살펴보기", exact: true })).toHaveCount(0)
+    await page.getByRole("button", { name: "일지 예시·훈련법·꾸미기" }).click()
     const services = page.getByRole("navigation", { name: "훈련 도움말과 일지 꾸미기" })
-    for (const name of ["훈련 배우기", "일지 꾸미기"]) {
+    for (const name of ["훈련법 읽기", "일지 꾸미기"]) {
       await expect(services.getByRole("button", { name })).toBeVisible()
     }
     await expect(page.getByRole("button", { name: "일지 예시 보기" })).toBeVisible()
@@ -96,6 +98,7 @@ test("shows a returning athlete's latest entry before the decoration studio", as
   await page.setViewportSize({ width: 320, height: 568 })
   await page.goto("/")
   const recentEntry = page.getByRole("button", { name: /2026년 8월 10일 기록 1개 보기.*훈련 1/u })
+  await page.getByRole("button", { name: "일지 예시·훈련법·꾸미기" }).click()
   const services = page.getByRole("navigation", { name: "훈련 도움말과 일지 꾸미기" })
   // 과거 날짜를 뒤늦게 넣은 기록에는 포인트를 소급 지급하지 않는다.
   const decorationEntry = services.getByRole("button", { name: "일지 꾸미기" })
@@ -126,7 +129,8 @@ test("opens the closed feedback state from the More entry", async ({ page }) => 
   await page.goto("/")
 
   await page.getByRole("button", { name: "더보기" }).click()
-  await expect(page.getByText("지금은 준비 중이에요. 열리면 앱 안에서 알려드려요")).toBeVisible()
+  await page.getByRole("button", { name: "앱 정보·개인정보·문의" }).click()
+  await expect(page.getByRole("button", { name: "문의 게시판", exact: true })).toContainText("준비 중")
 
   await page.getByRole("button", { name: "문의 게시판", exact: true }).click()
   await expect(page.getByText("문의 게시판을 지금 사용할 수 없어요.")).toBeVisible()

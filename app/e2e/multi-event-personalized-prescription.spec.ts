@@ -28,40 +28,37 @@ const records = [
 const cases = [
   {
     eventDistanceM: 800,
-    focus: /짧고 세게.*GLY/u,
+    focus: /고강도 반복 훈련/u,
     notation: /10 × 200m @ (?:30\.5s\/200m · )?800m RP · r60s Stand/u,
     paceBasis: "기준: 800m 최근 경기 2분 2초",
     expectedPrescription: { targetEventDistanceM: 800, targetRepSeconds: 30.5,
       repetitionsPerSet: 10, repetitionDistanceM: 200, repetitionRecoverySeconds: 60,
       repetitionRecoveryMode: "STAND", totals: { qualityDistanceM: 2000,
         repetitionRecoveryOccurrences: 9, repetitionRecoveryTotalSeconds: 540 } },
-    execution: "준비, 10회 본운동과 9번의 사이 회복, 정리 순서로 진행하세요.",
     work: "200m를 약 31초 기준으로 10회 · 주요 구간 거리 2000m",
     recovery: "9번 · 매번 60초 서서 쉬기 · 총 540초",
   },
   {
     eventDistanceM: 1500,
-    focus: /골고루.*MIX/u,
+    focus: /혼합 훈련/u,
     notation: /3 × 500m @ (?:81\.7s\/500m · )?1500m RP · r3min Stand/u,
     paceBasis: "기준: 1500m 최근 경기 4분 5초",
     expectedPrescription: { targetEventDistanceM: 1500, targetRepSeconds: 245 * 500 / 1500,
       repetitionsPerSet: 3, repetitionDistanceM: 500, repetitionRecoverySeconds: 180,
       repetitionRecoveryMode: "STAND", totals: { qualityDistanceM: 1500,
         repetitionRecoveryOccurrences: 2, repetitionRecoveryTotalSeconds: 360 } },
-    execution: "준비, 3회 본운동과 2번의 사이 회복, 정리 순서로 진행하세요.",
     work: "500m를 약 1분 22초 기준으로 3회 · 주요 구간 거리 1500m",
     recovery: "2번 · 매번 180초 서서 쉬기 · 총 360초",
   },
   {
     eventDistanceM: 3000,
-    focus: /숨차게 반복.*VO₂/u,
+    focus: /유산소 반복 훈련/u,
     notation: /4 × 800m @ (?:162\.9s\/800m · )?3K RP · r3min Walk/u,
     paceBasis: "기준: 3000m 최근 경기 10분 11초",
     expectedPrescription: { targetEventDistanceM: 3000, targetRepSeconds: 611 * 800 / 3000,
       repetitionsPerSet: 4, repetitionDistanceM: 800, repetitionRecoverySeconds: 180,
       repetitionRecoveryMode: "WALK", totals: { qualityDistanceM: 3200,
         repetitionRecoveryOccurrences: 3, repetitionRecoveryTotalSeconds: 540 } },
-    execution: "준비, 4회 본운동과 3번의 사이 회복, 정리 순서로 진행하세요.",
     work: "800m를 약 2분 43초 기준으로 4회 · 주요 구간 거리 3200m",
     recovery: "3번 · 매번 180초 걷기 · 총 540초",
   },
@@ -71,6 +68,16 @@ async function seedRecords(page: Page): Promise<void> {
   await page.addInitScript((seed) => {
     window.localStorage.setItem("trainoracle.athlete-records.v1", JSON.stringify(seed))
   }, records)
+}
+
+async function showCandidatePurpose(
+  page: Page,
+  name: "훈련 조절" | "일정·운동 시간",
+): Promise<void> {
+  const entry = page.getByRole("group", { name: "계획 확인·변경" })
+    .getByRole("button", { name, exact: true })
+  if (await entry.getAttribute("aria-expanded") !== "true") await entry.click()
+  await expect(page.getByRole("region", { name, exact: true })).toBeVisible()
 }
 
 async function reachExactEventCandidates(
@@ -83,7 +90,7 @@ async function reachExactEventCandidates(
     .getByRole("button", { name: "훈련" })
     .click()
   await completeDetailedPlan(page, { event: new RegExp(`^${eventDistanceM}m`, "u"),
-    division: /일반부/u, experience: /구조화된 훈련과 경기 경험이 많아요/u,
+    division: /일반부/u, experience: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u,
     focus, time: /아침에 운동해요/u })
   await openPlanRefinement(page, "안내 방식")
   const detailChoice = page.getByRole("button", {
@@ -115,12 +122,8 @@ for (const fixture of cases) {
     await seedRecords(page)
     await reachExactEventCandidates(page, fixture.eventDistanceM, fixture.focus)
 
+    await showCandidatePurpose(page, "훈련 조절")
     const picker = page.getByRole("region", { name: "개인 페이스 기준 기록" })
-    await page.locator("summary", { hasText: "A와 B는 뭐가 달라요?" }).click()
-    const comparison = page.getByRole("region", { name: "두 계획 핵심 비교" })
-    const pickerBox = await picker.boundingBox()
-    const comparisonBox = await comparison.boundingBox()
-    expect(pickerBox?.y).toBeLessThan(comparisonBox?.y ?? 0)
     await expect(picker.getByRole("button", {
       name: new RegExp(`${fixture.eventDistanceM}m`, "u"),
     })).toBeVisible()
@@ -138,18 +141,19 @@ for (const fixture of cases) {
       name: "이 기록으로 개인 페이스 적용",
     }).click()
     await expect(page.getByRole("heading", { name: "계획이 준비됐어요", exact: true })).toBeFocused()
-    await openPlanOptions(page, true)
+    await showCandidatePurpose(page, "훈련 조절")
     await expect(picker.getByRole("status")).toBeVisible()
     await expect(picker.getByRole("status")).toHaveText("선택한 기록으로 상세 훈련 수치를 계산했어요.")
-
-    await expect(page.getByText(fixture.notation).first()).toBeVisible()
     if (process.env.CAPTURE_PLAN_QA === "1") {
       await picker.scrollIntoViewIfNeeded()
       await page.screenshot({
         path: testInfo.outputPath(`candidate-${fixture.eventDistanceM}m.png`),
       })
     }
-    await page.getByRole("button", { name: /이 계획으로 시작하기/u }).click()
+    await openPlanOptions(page, true)
+    const schedule = page.getByRole("region", { name: "일정·운동 시간", exact: true })
+    await expect(schedule.getByText(fixture.notation).first()).toBeVisible()
+    await page.getByRole("button", { name: /이 일정으로 시작/u }).click()
     await expectActivePlanHeading(page)
     const storedPrescription = await page.evaluate(() => {
       const state = JSON.parse(localStorage.getItem("trainoracle.plan-beta.v1")!)
@@ -161,9 +165,10 @@ for (const fixture of cases) {
     const selectedSession = await openActiveSessionDetails(page, fixture.notation)
     await expect(selectedSession.getByText(fixture.paceBasis, { exact: true }).first()).toBeVisible()
     await selectedSession.getByText("자세히 보기 · 수행 순서", { exact: true }).click()
-    await expect(selectedSession.getByText(fixture.execution).first()).toBeVisible()
     await expect(selectedSession.getByText(fixture.work).first()).toBeVisible()
     await expect(selectedSession.getByText(fixture.recovery).first()).toBeVisible()
+    await expect(selectedSession.getByText("준비", { exact: true })).toBeVisible()
+    await expect(selectedSession.getByText("정리", { exact: true })).toBeVisible()
     await expect(selectedSession.getByText(fixture.notation).first()).toBeVisible()
     await selectedSession.getByRole("button", { name: "훈련 방법과 이유", exact: true }).first().click()
     const explanation = page.getByRole("dialog")
