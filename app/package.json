@@ -19,6 +19,7 @@
     "collection-docs:check": "node scripts/generate-collection-docs.mjs --check",
     "test:watch": "vitest",
     "test:e2e:treadmill": "playwright test --config playwright.treadmill.config.ts",
+    "test:e2e:treadmill:webgpu": "playwright test --config playwright.treadmill-webgpu.config.ts",
     "test:e2e:adaptive-next-frame": "node e2e/run-adaptive-next-frame.mjs",
     "test:e2e:account-draft-buffer": "playwright test --config playwright.account-draft-buffer.config.ts",
     "test:e2e:account-draft-panel": "playwright test --config playwright.account-draft-panel.config.ts",
@@ -42,6 +43,7 @@
     "lucide-react": "^0.468.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "shaders": "4.0.2",
     "zod": "^4.4.3"
   },
   "devDependencies": {

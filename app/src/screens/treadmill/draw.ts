@@ -92,7 +92,7 @@ export function createTreadmillRenderer() {
   }
 
   return function draw(context: CanvasRenderingContext2D, state: TreadmillState, width: number, height: number,
-    palette: GamePalette, reduced: boolean, now: number) {
+    palette: GamePalette, reduced: boolean, now: number, skyFromShader = false) {
     const dt = lastNow === 0 ? 0 : Math.min(0.05, Math.max(0, (now - lastNow) / 1000))
     lastNow = now
     clock += dt
@@ -109,7 +109,7 @@ export function createTreadmillRenderer() {
     context.save()
     if (shake > 0) context.translate((random() - 0.5) * 10 * (shake / 0.35), (random() - 0.5) * 8 * (shake / 0.35))
     const travel = reduced ? 0 : treadmillElapsed(state) * 60
-    drawWorld(context, palette, stage.id, width, height, floor, travel, clock, reduced)
+    drawWorld(context, palette, stage.id, width, height, floor, travel, clock, reduced, skyFromShader)
     drawMachine(context, palette, stage.id, width, height, left, beltWidth, floor, travel * 1.6, state)
 
     // Jump guide: a gold strip on the belt; it lights up while a jump now would clear.
@@ -233,74 +233,107 @@ function star(context: CanvasRenderingContext2D, x: number, y: number, r: number
 }
 
 function drawWorld(context: CanvasRenderingContext2D, palette: GamePalette, stageId: string, width: number, height: number,
-  floor: number, travel: number, clock: number, reduced: boolean) {
+  floor: number, travel: number, clock: number, reduced: boolean, skyFromShader: boolean) {
   const theme = stageId === "mud"
     ? { top: palette.mudSkyTop, low: palette.mudSkyLow, far: palette.mudHillFar, near: palette.mudHillNear }
     : stageId === "spikes"
       ? { top: palette.spikeSkyTop, low: palette.spikeSkyLow, far: palette.spikeHillFar, near: palette.spikeHillNear }
       : { top: palette.skyTop, low: palette.skyLow, far: palette.hillFar, near: palette.hillNear }
-  const sky = context.createLinearGradient(0, 0, 0, floor)
-  sky.addColorStop(0, theme.top); sky.addColorStop(1, theme.low)
-  context.fillStyle = sky; context.fillRect(0, 0, width, height)
+  context.clearRect(0, 0, width, height)
+  if (!skyFromShader) {
+    const sky = context.createLinearGradient(0, 0, 0, floor)
+    sky.addColorStop(0, theme.top); sky.addColorStop(1, theme.low)
+    context.fillStyle = sky; context.fillRect(0, 0, width, height)
+    if (stageId === "spikes") {
+      context.fillStyle = palette.cloud
+      for (let i = 0; i < 26; i++) {
+        const sx = (i * 97) % width, sy = (i * 53) % Math.max(1, floor * 0.6)
+        context.globalAlpha = reduced ? 0.7 : 0.35 + 0.45 * Math.abs(Math.sin(clock * 1.5 + i)); context.fillRect(sx, sy, 2, 2)
+      }
+      context.globalAlpha = 1
+    }
+  }
 
-  // Sun / moon and stars.
+  // Sun or moon with a soft halo (drawn on top of either sky).
+  const bodyX = width * 0.8, bodyY = stageId === "mud" ? floor * 0.46 : floor * 0.2
+  const radius = stageId === "mud" ? 28 : stageId === "spikes" ? 17 : 22
+  const halo = context.createRadialGradient(bodyX, bodyY, radius * 0.6, bodyX, bodyY, radius * 3)
+  const glowColor = stageId === "spikes" ? palette.skyLow : palette.gold
+  halo.addColorStop(0, glowColor); halo.addColorStop(1, "transparent")
+  context.globalAlpha = 0.35; context.fillStyle = halo
+  context.fillRect(bodyX - radius * 3, bodyY - radius * 3, radius * 6, radius * 6); context.globalAlpha = 1
   if (stageId === "spikes") {
-    context.fillStyle = palette.cloud
-    for (let i = 0; i < 18; i++) {
-      const sx = (i * 97) % width, sy = (i * 53) % Math.max(1, floor * 0.55)
-      context.globalAlpha = reduced ? 0.7 : 0.4 + 0.4 * Math.abs(Math.sin(clock * 1.5 + i)); context.fillRect(sx, sy, 2, 2)
-    }
-    context.globalAlpha = 1
-    context.beginPath(); context.arc(width * 0.78, floor * 0.22, 18, 0, Math.PI * 2); context.fillStyle = palette.skyLow; context.fill()
-    context.beginPath(); context.arc(width * 0.78 + 7, floor * 0.22 - 4, 15, 0, Math.PI * 2); context.fillStyle = theme.top; context.fill()
+    context.beginPath(); context.arc(bodyX, bodyY, radius, 0, Math.PI * 2); context.fillStyle = palette.skyLow; context.fill()
+    context.beginPath(); context.arc(bodyX + 7, bodyY - 4, radius - 2, 0, Math.PI * 2); context.fillStyle = theme.top; context.fill()
   } else {
-    const sunY = stageId === "mud" ? floor * 0.42 : floor * 0.2
-    context.beginPath(); context.arc(width * 0.8, sunY, stageId === "mud" ? 26 : 20, 0, Math.PI * 2)
-    context.fillStyle = palette.gold; context.globalAlpha = stageId === "mud" ? 0.9 : 1; context.fill(); context.globalAlpha = 1
+    const disc = context.createRadialGradient(bodyX - radius * 0.3, bodyY - radius * 0.3, 2, bodyX, bodyY, radius)
+    disc.addColorStop(0, palette.cloud); disc.addColorStop(0.45, palette.gold); disc.addColorStop(1, palette.gold)
+    context.beginPath(); context.arc(bodyX, bodyY, radius, 0, Math.PI * 2); context.fillStyle = disc; context.fill()
   }
 
-  // Clouds drift slowly.
+  // Puffy shaded clouds.
   if (stageId !== "spikes") {
-    context.fillStyle = palette.cloud; context.globalAlpha = 0.9
     for (let i = 0; i < 4; i++) {
-      const span = width + 120
-      const cx = ((i * 140 - travel * 0.15 - (reduced ? 0 : clock * 6)) % span + span) % span - 60
-      const cy = 24 + (i % 2) * 26
-      cloud(context, cx, cy, 1 + (i % 3) * 0.2)
+      const span = width + 140
+      const cx = ((i * 150 - travel * 0.12 - (reduced ? 0 : clock * 5)) % span + span) % span - 70
+      cloud(context, palette, cx, 22 + (i % 2) * 30, 0.9 + (i % 3) * 0.25, stageId === "mud")
     }
-    context.globalAlpha = 1
   }
 
-  hills(context, theme.far, width, floor - 6, 46, 180, travel * 0.25, 0.8)
-  hills(context, theme.near, width, floor + 2, 30, 120, travel * 0.5, 1.7)
+  // Three hill layers, each with a lit rim so they read as rounded forms.
+  hills(context, theme.far, palette.cloud, width, floor - 14, 54, 210, travel * 0.18, 0.8, 0.12)
+  hills(context, theme.far, palette.outline, width, floor - 4, 40, 150, travel * 0.32, 2.4, 0)
+  context.globalAlpha = 0.35; context.fillStyle = theme.top; context.fillRect(0, 0, width, floor + 10); context.globalAlpha = 1
+  hills(context, theme.near, palette.cloud, width, floor + 4, 30, 118, travel * 0.55, 1.7, 0.18)
 
   // Near decorations that sell each place.
   const span = width + 80
   for (let i = 0; i < 5; i++) {
-    const x = ((i * 115 - travel * 0.5) % span + span) % span - 40
+    const x = ((i * 115 - travel * 0.55) % span + span) % span - 40
     context.save(); context.translate(x, floor - 4)
-    if (stageId === "track") flag(context, palette, i)
+    if (stageId === "track") (i % 2 ? tree(context, palette, i) : flag(context, palette, i))
     else if (stageId === "mud") reed(context, palette)
     else crystal(context, palette, i)
     context.restore()
   }
 }
 
-function hills(context: CanvasRenderingContext2D, color: string, width: number, base: number, amp: number, wave: number, offset: number, seed: number) {
-  context.fillStyle = color
-  context.beginPath(); context.moveTo(0, base + 40)
-  for (let x = 0; x <= width + 8; x += 8) {
+function hills(context: CanvasRenderingContext2D, color: string, rim: string, width: number, base: number, amp: number, wave: number,
+  offset: number, seed: number, rimAlpha: number) {
+  const y = (x: number) => {
     const t = (x + offset) / wave
-    context.lineTo(x, base - amp * (0.55 + 0.3 * Math.sin(t * Math.PI * 2 + seed) + 0.15 * Math.sin(t * Math.PI * 5 + seed * 3)))
+    return base - amp * (0.55 + 0.3 * Math.sin(t * Math.PI * 2 + seed) + 0.15 * Math.sin(t * Math.PI * 5 + seed * 3))
   }
-  context.lineTo(width, base + 40); context.closePath(); context.fill()
+  context.fillStyle = color
+  context.beginPath(); context.moveTo(0, base + 60)
+  for (let x = 0; x <= width + 8; x += 6) context.lineTo(x, y(x))
+  context.lineTo(width, base + 60); context.closePath(); context.fill()
+  if (rimAlpha > 0) {
+    context.save(); context.globalAlpha = rimAlpha; context.strokeStyle = rim; context.lineWidth = 3; context.lineCap = "round"
+    context.beginPath()
+    for (let x = 0; x <= width + 8; x += 6) x === 0 ? context.moveTo(x, y(x) + 2) : context.lineTo(x, y(x) + 2)
+    context.stroke(); context.restore()
+  }
 }
 
-function cloud(context: CanvasRenderingContext2D, x: number, y: number, s: number) {
-  context.beginPath()
-  context.arc(x, y, 12 * s, 0, Math.PI * 2); context.arc(x + 14 * s, y - 6 * s, 15 * s, 0, Math.PI * 2)
-  context.arc(x + 30 * s, y, 11 * s, 0, Math.PI * 2); context.rect(x, y, 30 * s, 10 * s)
-  context.fill()
+function cloud(context: CanvasRenderingContext2D, palette: GamePalette, x: number, y: number, s: number, warm: boolean) {
+  const puff = () => {
+    context.beginPath()
+    context.arc(x, y, 12 * s, 0, Math.PI * 2); context.arc(x + 14 * s, y - 7 * s, 16 * s, 0, Math.PI * 2)
+    context.arc(x + 31 * s, y - 1 * s, 12 * s, 0, Math.PI * 2); context.arc(x + 18 * s, y + 4 * s, 12 * s, 0, Math.PI * 2)
+  }
+  context.save()
+  context.globalAlpha = 0.25; context.translate(0, 4 * s); puff(); context.fillStyle = warm ? palette.mudHillFar : palette.skyTop; context.fill()
+  context.restore()
+  context.save(); context.globalAlpha = warm ? 0.85 : 0.95; puff(); context.fillStyle = palette.cloud; context.fill(); context.restore()
+}
+
+function tree(context: CanvasRenderingContext2D, palette: GamePalette, i: number) {
+  const h = 26 + (i % 3) * 6
+  context.lineWidth = 2; context.strokeStyle = palette.outline
+  roundRect(context, -2.5, -h * 0.4, 5, h * 0.4, 1); context.fillStyle = palette.mud; context.fill(); context.stroke()
+  context.beginPath(); context.arc(0, -h * 0.62, h * 0.32, 0, Math.PI * 2); context.fillStyle = palette.hillNear; context.fill(); context.stroke()
+  context.beginPath(); context.arc(-h * 0.1, -h * 0.72, h * 0.12, 0, Math.PI * 2); context.fillStyle = palette.hillFar; context.fill()
 }
 
 function flag(context: CanvasRenderingContext2D, palette: GamePalette, i: number) {
@@ -341,7 +374,10 @@ function drawMachine(context: CanvasRenderingContext2D, palette: GamePalette, st
 
   // Machine body and legs.
   context.lineWidth = 2.5; context.strokeStyle = palette.outline
-  roundRect(context, left - 4, floor + 8, beltWidth + 8, 22, 10); context.fillStyle = palette.belt; context.fill(); context.stroke()
+  const body = context.createLinearGradient(0, floor + 8, 0, floor + 30)
+  body.addColorStop(0, palette.rail); body.addColorStop(0.25, palette.belt); body.addColorStop(1, palette.beltDark)
+  roundRect(context, left - 4, floor + 8, beltWidth + 8, 22, 10); context.fillStyle = body; context.fill(); context.stroke()
+  context.globalAlpha = 0.5; context.fillStyle = palette.cloud; roundRect(context, left + 8, floor + 11, beltWidth - 16, 2, 1); context.fill(); context.globalAlpha = 1
   for (const lx of [left + 22, right - 30]) { roundRect(context, lx, floor + 26, 10, height - floor - 34, 3); context.fillStyle = palette.beltDark; context.fill(); context.stroke() }
   roundRect(context, left + 10, height - 14, beltWidth - 20, 8, 4); context.fillStyle = palette.beltDark; context.fill(); context.stroke()
 

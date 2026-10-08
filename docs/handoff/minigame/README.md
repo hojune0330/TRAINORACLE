@@ -25,6 +25,7 @@ npm run dev -- --host 127.0.0.1
 7. [이번 구현 검증](VALIDATION.md): 실제로 수행한 로컬 확인과 원격 CI·배포 상태.
 8. [UX·UI 2차 개선](UX_PASS_2.md): 규칙 v2(판정·고정 코스·예고·강화 재설계), 화면 재구성, 밸런스 가드.
 9. [3차 아트·UI 개편](ART_PASS_3.md): 모바일 게임 톤의 캐릭터·맵·이펙트·HUD, `--game-*` 토큰과 기준 §6A, 점수·콤보·별·카운트다운.
+10. [4차 셰이더 배경](FX_PASS_4.md): MIT `shaders` 패키지로 WebGPU 하늘·완주 연출, 텔레메트리 차단·지연 로드·2D 대체 경로.
 
 ## 이번 PR에 구현된 것
 
@@ -46,6 +47,7 @@ npm run dev -- --host 127.0.0.1
 | `app/src/domain/minigame/treadmill.test.ts` | 추락·회복·점프·대시·충돌·정지·강화·재시작·프레임 차이 |
 | `app/src/screens/TreadmillGame.tsx` | 실제 입력·경기 화면·시계·초점·정지·수명 관리 |
 | `app/src/screens/treadmill/draw.ts` | 맵·트레드밀·이펙트·카운트다운을 그리는 렌더러(이펙트 상태는 여기, 게임 상태는 순수 엔진) |
+| `app/src/screens/treadmill/shader-sky.ts`, `sky-presets.ts` | 선택적 WebGPU 배경(지연 로드, 텔레메트리 off)과 장면별 레이어 설정 |
 | `app/src/screens/treadmill/sprites.ts` | 러너·장애물 원본 스프라이트와 `--game-*` 팔레트 |
 | `app/src/styles/treadmill-game.css` | 기존 앱 토큰·서체·터치 규격을 쓰는 게임 화면 |
 | `app/src/screens/More.tsx`, `AppShell.tsx`, `DeferredMobileScreens.ts` | 진입·복귀·지연 로딩 |

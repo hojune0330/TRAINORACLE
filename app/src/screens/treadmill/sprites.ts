@@ -34,9 +34,18 @@ export function roundRect(context: CanvasRenderingContext2D, x: number, y: numbe
   context.closePath()
 }
 
+/** Toon-shaded rounded part: base fill, a lit top band, a shadow bottom band, then the outline. */
 function part(context: CanvasRenderingContext2D, palette: GamePalette, fill: string, x: number, y: number, w: number, h: number, r: number) {
   roundRect(context, x, y, w, h, r)
   context.fillStyle = fill; context.fill()
+  context.save()
+  context.clip()
+  context.globalAlpha = 0.32; context.fillStyle = palette.cloud
+  roundRect(context, x + w * 0.12, y + h * 0.1, w * 0.5, Math.max(1.2, h * 0.22), Math.min(r, 2)); context.fill()
+  context.globalAlpha = 0.18; context.fillStyle = palette.outline
+  context.fillRect(x, y + h * 0.72, w, h * 0.28)
+  context.restore()
+  roundRect(context, x, y, w, h, r)
   context.strokeStyle = palette.outline; context.stroke()
 }
 

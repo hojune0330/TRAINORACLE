@@ -97,6 +97,30 @@
   --game-panel-edge: #DDE3EE;
   --game-ink: #1D1B2C;
   --game-ink-soft: #5A6178;
+  /* Animated sky layers (shaders package, WebGPU). Must stay #rrggbb: the shader props read them. */
+  --game-fx-track-a: #46A8F5;
+  --game-fx-track-b: #C9F0FF;
+  --game-fx-track-mesh-1: #5BB8FF;
+  --game-fx-track-mesh-2: #8ED8FF;
+  --game-fx-track-mesh-3: #D8F6FF;
+  --game-fx-track-ray: #FFF6C8;
+  --game-fx-mud-a: #FF8A5C;
+  --game-fx-mud-b: #FFE3B3;
+  --game-fx-mud-flow-1: #FF9C6B;
+  --game-fx-mud-flow-2: #FFB97A;
+  --game-fx-mud-flow-3: #FF8F9E;
+  --game-fx-mud-flow-4: #FFE0AE;
+  --game-fx-mud-ray: #FFF0C0;
+  --game-fx-spike-a: #1B1440;
+  --game-fx-spike-b: #6A4BA8;
+  --game-fx-aurora-1: #8A4DFF;
+  --game-fx-aurora-2: #41F2C6;
+  --game-fx-aurora-3: #5AB8FF;
+  --game-fx-star: #FFFFFF;
+  --game-fx-burst: #FFE58A;
+  --game-fx-burst-bg: #FFB43D;
+  --game-fx-fail-a: #FF8FA0;
+  --game-fx-fail-b: #5A2A6E;
 
   /* ============== TYPOGRAPHY ============== */
   --sans: "Pretendard Variable", "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;

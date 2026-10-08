@@ -46,7 +46,17 @@ function planRun(): Step[] {
 }
 
 test("explains the rules before play, falls on inaction and restarts with pointer recovery", async ({ page }) => {
+  const scripts: string[] = []
+  page.on("request", request => { if (request.resourceType() === "script") scripts.push(request.url()) })
   await openGame(page)
+  // This Chromium build has no WebGPU adapter, so the game paints its own sky and never downloads the shader library.
+  await expect(page.locator(".treadmill-game")).toHaveAttribute("data-sky", "canvas")
+  expect(scripts.filter(url => /typegpu|shaders_js|[/]shaders[/]/u.test(url))).toEqual([])
+  // ...and that sky is really painted: the top-left pixel of the game canvas is opaque.
+  expect(await page.locator("canvas.treadmill-game__canvas").evaluate(canvas => {
+    const element = canvas as HTMLCanvasElement
+    return element.getContext("2d")!.getImageData(4, 4, 1, 1).data[3]
+  })).toBe(255)
   await expect(page.getByRole("heading", { name: "30초 동안 바닥 위에서 버티세요" })).toBeVisible()
   await expect(page.getByRole("navigation")).toHaveCount(0)
   await page.getByRole("button", { name: "시작", exact: true }).click()

@@ -168,3 +168,15 @@
 .treadmill-game__result .treadmill-game__portrait { width: 80px; height: 80px; }
 .treadmill-game *, .treadmill-game *::before, .treadmill-game *::after { box-sizing: border-box; }
 .treadmill-game__overlay { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+
+/* Optional WebGPU sky (shaders package) sits behind the transparent 2D game canvas. */
+.treadmill-game__sky { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity var(--dur-slow) var(--ease-out); pointer-events: none; }
+.treadmill-game__sky[data-live] { opacity: 1; }
+.treadmill-game__canvas { position: relative; }
+@media (prefers-reduced-motion: reduce) { .treadmill-game__sky { transition: none; } }
+.treadmill-game__hud, .treadmill-game__warning { z-index: 2; }
+.treadmill-game__overlay { z-index: 3; }
+/* With a live shader sky the result scrim stays light so the burst shows through. */
+.treadmill-game[data-sky="shader"][data-mode="clear"] .treadmill-game__overlay { background: color-mix(in srgb, var(--game-outline) 10%, transparent); }
+.treadmill-game[data-sky="shader"][data-mode="clear"] .treadmill-game__canvas,
+.treadmill-game[data-sky="shader"][data-mode="over"] .treadmill-game__canvas { opacity: 0.25; transition: opacity var(--dur-slow) var(--ease-out); }

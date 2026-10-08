@@ -8,6 +8,9 @@ import type { TreadmillCommand, TreadmillState, TreadmillUpgrade } from "../doma
 import { createTreadmillRenderer, gamePalette } from "./treadmill/draw"
 import { drawRunner } from "./treadmill/sprites"
 import type { GamePalette } from "./treadmill/sprites"
+import { fxPalette, mountShaderSky } from "./treadmill/shader-sky"
+import type { ShaderSky } from "./treadmill/shader-sky"
+import type { SkyScene } from "./treadmill/sky-presets"
 import "../styles/treadmill-game.css"
 
 /** Best of this app session only. Not saved, not sent, reset when the app reloads. */
@@ -57,6 +60,10 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
   const [best, setBest] = React.useState(sessionBest)
   const [newBest, setNewBest] = React.useState(false)
   const canvas = React.useRef<HTMLCanvasElement>(null)
+  const skyCanvas = React.useRef<HTMLCanvasElement>(null)
+  const sky = React.useRef<ShaderSky | null>(null)
+  const [shaderLive, setShaderLive] = React.useState(false)
+  const shaderLiveRef = React.useRef(false)
   const surface = React.useRef<HTMLDivElement>(null)
   const heldPointers = React.useRef(new Set<number>())
   const keyboardHeld = React.useRef(false)
@@ -85,7 +92,7 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
     let width = 320, height = 300, previous = 0, published = 0, frame = 0
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)")
     let palette: GamePalette = gamePalette(container)
-    const draw = (now: number) => render(context, state.current, width, height, palette, motion.matches, now)
+    const draw = (now: number) => render(context, state.current, width, height, palette, motion.matches, now, shaderLiveRef.current)
     const resize = () => {
       width = element.clientWidth; height = element.clientHeight
       const ratio = Math.min(window.devicePixelRatio || 1, 2)
@@ -115,7 +122,20 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
     document.addEventListener("visibilitychange", hidden)
     motion.addEventListener("change", refreshTheme)
     resize(); frame = window.requestAnimationFrame(tick)
+    // Optional WebGPU sky. Absent or failed => the 2D canvas keeps painting its own sky.
+    let cancelled = false
+    const skyElement = skyCanvas.current
+    const lose = () => { shaderLiveRef.current = false; setShaderLive(false); sky.current?.destroy(); sky.current = null }
+    if (skyElement) void mountShaderSky(skyElement, fxPalette(container), motion.matches, lose).then(instance => {
+      if (cancelled) { instance?.destroy(); return }
+      if (!instance) return
+      sky.current = instance; shaderLiveRef.current = true; setShaderLive(true)
+    })
+    const skyMotion = () => sky.current?.setMotion(motion.matches)
+    motion.addEventListener("change", skyMotion)
     return () => {
+      cancelled = true; motion.removeEventListener("change", skyMotion)
+      sky.current?.destroy(); sky.current = null; shaderLiveRef.current = false
       window.cancelAnimationFrame(frame); observer.disconnect()
       window.removeEventListener("blur", pause); document.removeEventListener("visibilitychange", hidden)
       motion.removeEventListener("change", refreshTheme)
@@ -138,6 +158,13 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
   const canDash = live && view.cooldown === 0 && view.energy >= TREADMILL_RULES.dashCost
   const ended = view.mode === "over" || view.mode === "clear"
   const stars = treadmillStars(view)
+  const scene: SkyScene = view.mode === "clear" ? "clear" : view.mode === "over" ? "over" : stage.id
+  React.useEffect(() => { sky.current?.show(scene) }, [scene, shaderLive])
+  React.useEffect(() => {
+    if (!sky.current) return
+    if (view.mode === "running" || view.mode === "clear" || view.mode === "over" || view.mode === "ready") sky.current.resume()
+    else sky.current.pause()
+  }, [view.mode, shaderLive])
 
   const handleKey = (event: React.KeyboardEvent) => {
     if (!running || event.repeat) return
@@ -153,7 +180,7 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
     }
   }
 
-  return <div className="treadmill-game" ref={surface} onKeyDown={handleKey} data-mode={view.mode} data-stage={stage.id}
+  return <div className="treadmill-game" ref={surface} onKeyDown={handleKey} data-mode={view.mode} data-stage={stage.id} data-sky={shaderLive ? "shader" : "canvas"}
     onKeyUp={event => { if (event.key === "ArrowRight") { keyboardHeld.current = false; updateHeld() } }}
     onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) command({ type: "pause" }) }}>
     <header className="treadmill-game__header">
@@ -189,6 +216,7 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
         {view.stats.combo > 1 && live && <div className="treadmill-game__combo" aria-label={`연속 ${view.stats.combo}`}>콤보 ×{view.stats.combo}</div>}
       </div>
 
+      <canvas ref={skyCanvas} className="treadmill-game__sky" aria-hidden="true" data-live={shaderLive || undefined} />
       <canvas ref={canvas} tabIndex={0} className="treadmill-game__canvas"
         aria-label="게임 조작 영역. 오른쪽 방향키를 누르고 있으면 달리기, 스페이스나 위 방향키는 점프, D는 대시, Esc는 일시정지. 왼쪽 끝 구덩이로 밀리면 추락합니다." />
       <p className="treadmill-game__warning" role="status" data-tone={warning.tone}>{warning.text}</p>
