@@ -1121,6 +1121,7 @@ function LegacyPlanBeta({
             setInitialConfirmed(null)
             refreshInitialRevision(draftRevision.current)
             setRetrySelection(null)
+            setErrorCode(code => code === "PLAN_START_DATE_PAST" || code === "ACCOUNT_PLAN_REVIEW_REQUIRED" ? null : code)
           }}
           onConfirmRecord={() => {
             if (selectedRecordId !== null) {

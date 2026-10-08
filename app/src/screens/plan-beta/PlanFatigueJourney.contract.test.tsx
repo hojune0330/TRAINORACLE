@@ -6,8 +6,11 @@ import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import { loadPlanBetaState } from "../../domain/plan-beta-store"
 import { PlanCandidates } from "./PlanCandidates"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
-afterEach(cleanup)
+beforeEach(() => {
+  localStorage.clear(); sessionStorage.clear()
+  vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-10-06T12:00:00Z"))
+})
+afterEach(() => { cleanup(); vi.useRealTimers() })
 
 function candidateProps(): React.ComponentProps<typeof PlanCandidates> {
   const result = generatePlanFromDraft({

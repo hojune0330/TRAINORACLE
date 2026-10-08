@@ -3,6 +3,7 @@ import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import * as mutationLock from "../../domain/plan-mutation-lock"
 import { saveSelectedPlanCandidate } from "./plan-selection"
 import { JOURNAL_STORAGE_KEY } from "../../domain/journal-local-storage"
+import { todayISO } from "../../domain/journal-store"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
 afterEach(() => vi.restoreAllMocks())
@@ -62,7 +63,7 @@ describe("candidate save revision inside the mutation lock", () => {
   it("saves the current revision as a positive control", async () => {
     const plan = generated()
     const result = await saveSelectedPlanCandidate(
-      { candidateId: plan.generated.candidates[0].candidateId, startDate: "2026-09-10" },
+      { candidateId: plan.generated.candidates[0].candidateId, startDate: todayISO() },
       plan.generated, plan.gate, plan.intake, plan.athleteEvidence, () => true,
     )
     expect(result.kind).toBe("saved")

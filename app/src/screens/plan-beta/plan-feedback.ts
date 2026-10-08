@@ -20,6 +20,8 @@ export function planErrorMessage(errorCode: string): string {
       return "현재 계획의 시작일이 아직 오지 않았어요. 기존 일정은 그대로 유지해요."
     case "INVALID_NEXT_START_DATE":
       return "다음 시작일은 오늘 또는 그 이후의 날짜로 골라 주세요."
+    case "PLAN_START_DATE_PAST":
+      return "시작 날짜가 지났어요. 오늘 또는 이후 날짜를 다시 고르면 현재 계획안을 확인할 수 있어요."
     case "ACTIVE_HOLD":
     case "SAFETY_GATE_ACTIVE":
     case "SAFETY_GATE_UNKNOWN":
