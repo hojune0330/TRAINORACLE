@@ -4,6 +4,8 @@ import { setActiveLocalAccount } from "./account/local-journal-ownership"
 import { readJournalOriginalPlan } from "./journal-original-plan"
 import { activePlanBetaStorageKey, archiveAndClearActivePlan, savePlanBetaState } from "./plan-beta-store"
 import { createPlannedSessionLogDraft } from "./planned-session-link"
+import { ADJUSTED_PLAN_ARCHIVE_KEY } from "./adjusted-plan-archive"
+import { ADJUSTED_PLAN_ARCHIVE_V3_KEY } from "./adjusted-plan-archive-v3"
 import { hasMultiAdjustedOriginalPlansV3, MULTI_ADJUSTED_PLAN_ARCHIVE_V3_KEY, prepareMultiAdjustedOriginalArchiveV3 } from "./multi-adjusted-plan-archive-v3"
 import type { RetainedMultiAdjustedEvidenceV3 } from "./selected-multi-adjusted-plan-v3"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
@@ -37,6 +39,43 @@ it("recognizes a valid empty multi-plan archive without evidence", () => {
   }))
 
   expect(hasMultiAdjustedOriginalPlansV3()).toBe(false)
+})
+
+it.each([
+  { reason: "malformed JSON", raw: "{" },
+  { reason: "invalid fingerprint", raw: JSON.stringify({ version: 3, entries: [], contentFingerprint: "invalid" }) },
+])("reports a linked plan as unavailable when the V6 archive has $reason", ({ raw }) => {
+  const packet = accountPlanPacketFixture(6)
+  if (packet.state.version !== 6 || packet.evidence === null || !("slots" in packet.evidence)
+      || !("rpeBindings" in packet.evidence)) throw Error("Expected V6 plan")
+  const evidence = packet.evidence as RetainedMultiAdjustedEvidenceV3
+  const session = packet.state.selection.activePlan.sessions.find(candidate => candidate.prescription.kind === "ADJUSTED_METHOD_V3")
+  if (session === undefined) throw Error("Expected V6 session")
+  const draft = createPlannedSessionLogDraft(packet.state.selection, session, packet.state.selection.generatedAt)
+  if (draft === null) throw Error("Expected linked V6 journal")
+  window.localStorage.setItem(MULTI_ADJUSTED_PLAN_ARCHIVE_V3_KEY, raw)
+  const readMultiEvidence = vi.fn(() => [evidence])
+
+  expect(readJournalOriginalPlan({ id: "linked-v6-archived", date: draft.date, plannedSessionLink: draft.link }, [], [], readMultiEvidence))
+    .toEqual({ kind: "unavailable" })
+  expect(readMultiEvidence).toHaveBeenCalledOnce()
+})
+
+it.each([
+  { version: "V4", key: ADJUSTED_PLAN_ARCHIVE_KEY },
+  { version: "V5", key: ADJUSTED_PLAN_ARCHIVE_V3_KEY },
+])("reports a linked plan as unavailable when the $version archive cannot be validated", ({ key }) => {
+  const packet = accountPlanPacketFixture(3)
+  if (packet.state.version !== 3) throw Error("Expected V3 plan")
+  const session = packet.state.activePlan.sessions[0]!
+  const draft = createPlannedSessionLogDraft(packet.state, session, packet.state.generatedAt)
+  if (draft === null) throw Error("Expected linked journal")
+  window.localStorage.setItem(key, "{")
+  const readMultiEvidence = vi.fn(() => [])
+
+  expect(readJournalOriginalPlan({ id: "linked-archived-plan", date: draft.date, plannedSessionLink: draft.link }, [], [], readMultiEvidence))
+    .toEqual({ kind: "unavailable" })
+  expect(readMultiEvidence).not.toHaveBeenCalled()
 })
 
 it("reads multi-plan evidence once for a linked V6 journal", () => {

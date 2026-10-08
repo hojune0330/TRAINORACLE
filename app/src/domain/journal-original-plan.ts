@@ -140,6 +140,8 @@ export function readJournalOriginalPlan(entry: Pick<PostSessionEntry, "id" | "da
     if (checked.kind === "loaded") return { kind: "matched_multi_adjusted_v3" as const, source: "ARCHIVED" as const,
       state: checked.state, session, explanation: checked.explanations.find(e => e.address.day === session.day && e.address.slot === session.slot)?.explanation }
   }
-  return archived.kind !== "loaded" || active.kind === "invalid" || active.kind === "storage_error"
+  return archived.kind !== "loaded" || adjustedArchive.kind !== "loaded"
+    || v3Archive.kind !== "loaded" || multiArchive.kind !== "loaded"
+    || active.kind === "invalid" || active.kind === "storage_error"
     ? { kind: "unavailable" as const } : { kind: "missing" as const }
 }
