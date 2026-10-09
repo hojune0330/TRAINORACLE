@@ -149,14 +149,18 @@ describe("treadmill survival rules", () => {
     expect(upgrade.mode).toBe("upgrade")
     expect(advance(upgrade, 4)).toEqual(upgrade)
   })
-  it("applies both the benefit and cost and waits for explicit resume", () => {
+  it("applies both the benefit and cost and starts the next stage after a short countdown", () => {
     const checkpoint = { ...start(), mode: "upgrade" as const, energy: 40 }
     const grip = treadmillCommand(checkpoint, { type: "upgrade", upgrade: "grip" })
     expect(grip.stage).toBe(1)
     expect(grip.mudBonus).toBe(0.5)
     expect(grip.knockbackFactor).toBe(0.5)
     expect(grip.jumpCost).toBe(TREADMILL_RULES.jumpCost + 3)
-    expect(grip.mode).toBe("paused")
+    expect(grip.mode).toBe("running")
+    expect(grip.countdown).toBe(TREADMILL_RULES.countdownStage)
+    expect(grip.checkpoint?.stage).toBe(1)
+    // The belt stays still during that countdown.
+    expect(advance(grip, TREADMILL_RULES.countdownStage - 0.1).x).toBe(grip.x)
     expect(grip.energy).toBe(40 + TREADMILL_RULES.checkpointRefill)
     const spring = treadmillCommand(checkpoint, { type: "upgrade", upgrade: "spring" })
     expect(spring.jumpCost).toBe(TREADMILL_RULES.jumpCost - 4)
@@ -170,10 +174,33 @@ describe("treadmill survival rules", () => {
   it("makes the grip trade-off real on mud: more ground per second, not just a label", () => {
     const mud = (upgrades: TreadmillUpgrade[]) => {
       let state = clean({ stage: 1, running: true })
-      if (upgrades.length) state = { ...treadmillCommand({ ...state, mode: "upgrade", stage: 0 }, { type: "upgrade", upgrade: "grip" }), mode: "running", running: true, spawned: 99 }
+      if (upgrades.length) state = { ...treadmillCommand({ ...state, mode: "upgrade", stage: 0 }, { type: "upgrade", upgrade: "grip" }), mode: "running", countdown: 0, running: true, spawned: 99 }
       return advance(state, 1).x
     }
     expect(mud(["grip"])).toBeGreaterThan(mud([]) + 0.03)
+  })
+  it("retries a failed later stage from its start with the same build, and caps that finish at one star", () => {
+    const checkpoint = { ...start(), mode: "upgrade" as const, energy: 40, stats: { ...start().stats, score: 400, cleared: 3 } }
+    const stage2 = treadmillCommand(checkpoint, { type: "upgrade", upgrade: "spring" })
+    const fell = advance({ ...stage2, countdown: 0 }, 9)
+    expect(fell.mode).toBe("over")
+    const retry = treadmillCommand(fell, { type: "retryStage" })
+    expect(retry.mode).toBe("running")
+    expect(retry.stage).toBe(1)
+    expect(retry.seconds).toBe(0)
+    expect(retry.upgrades).toEqual(["spring"])
+    expect(retry.jumpCost).toBe(stage2.jumpCost)
+    expect(retry.energy).toBe(stage2.energy)
+    expect(retry.stats.score).toBe(400)
+    expect(retry.stats.retries).toBe(1)
+    expect("checkpoint" in retry.checkpoint!).toBe(false)
+    const finish = advanceTreadmill({ ...retry, countdown: 0, stage: 2, seconds: 9.99, spawned: 99, stats: { ...retry.stats, hits: 0 } }, 0.05)
+    expect(finish.mode).toBe("clear")
+    expect(treadmillStars(finish)).toBe(1)
+    // Stage 1 failures and finished runs offer no retry; a full restart clears the retry count.
+    expect(treadmillCommand(advance(start(), 8), { type: "retryStage" }).mode).toBe("over")
+    expect(treadmillCommand(finish, { type: "retryStage" })).toBe(finish)
+    expect(treadmillCommand(fell, { type: "start" }).stats.retries).toBe(0)
   })
   it("finishes the final stage and resets all upgrades and stats on restart", () => {
     const clear = advanceTreadmill({ ...clean(), stage: 2, seconds: 9.99, upgrades: ["grip"], jumpCost: 11 }, 0.05)

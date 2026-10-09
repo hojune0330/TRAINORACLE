@@ -241,10 +241,13 @@ export function createTreadmillRenderer() {
       const n = Math.ceil(state.countdown)
       const t = state.countdown - Math.floor(state.countdown)
       const pulse = reduced ? 1 : 1 + t * 0.35
-      const resumeOnly = state.countdown <= rules.countdownResume && treadmillElapsed(state) > 0
+      // A fresh stage (seconds 0) gets its name and hint; a mid-stage resume only gets "준비!".
+      const freshStage = state.seconds === 0
+      const resumeOnly = !freshStage && state.countdown <= rules.countdownResume
       context.fillStyle = palette.outline; context.globalAlpha = 0.18; context.fillRect(0, 0, width, height); context.globalAlpha = 1
-      outlinedText(context, `${state.stage + 1}구간 · ${stage.name}`, width / 2, height * 0.26, 20, palette.cloud, palette.outline, font, 800)
-      outlinedText(context, resumeOnly ? "준비!" : String(n), width / 2, height * 0.46, 56 * pulse, palette.gold, palette.outline, font)
+      outlinedText(context, `${state.stage + 1}구간 · ${stage.name}`, width / 2, height * 0.26, 20, palette.cloud, palette.outline, font, 800, width - 24)
+      if (freshStage && state.stage > 0) outlinedText(context, stage.hint, width / 2, height * 0.33, 13, palette.cloud, palette.outline, font, 700, width - 32)
+      outlinedText(context, resumeOnly ? "준비!" : String(n), width / 2, height * 0.48, 56 * pulse, palette.gold, palette.outline, font)
     }
     context.restore()
   }

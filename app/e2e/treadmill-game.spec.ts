@@ -34,7 +34,7 @@ function planRun(stages: readonly TreadmillStage[] = TREADMILL_STAGES): Step[] {
   for (let frame = 0; frame < 4000 && (state.mode === "running" || state.mode === "upgrade"); frame++) {
     if (state.mode === "upgrade") {
       steps.push({ at: ms, key: "upgrade" })
-      state = treadmillCommand(treadmillCommand(state, { type: "upgrade", upgrade: "economy" }), { type: "resume" })
+      state = treadmillCommand(state, { type: "upgrade", upgrade: "economy" })
     }
     const want = (state.x < 0.45 && state.energy > 25) || (state.x < 0.22 && state.energy > 0)
     if (want !== state.running) { steps.push({ at: ms, key: want ? "run-down" : "run-up" }); state = treadmillCommand(state, { type: "run", held: want }) }
@@ -67,9 +67,11 @@ test("explains the rules before play, falls on inaction and restarts with pointe
   await expect(page.getByRole("button", { name: /점프/ })).toBeDisabled()
   await page.clock.runFor(10000)
   await expect(page.getByRole("heading", { name: "트랙에서 뒤로 떨어졌어요" })).toBeVisible()
+  await page.getByText("이번 판 기록").click()
   await expect(page.getByText(/^버틴 시간/)).toBeVisible()
   await expect(page.getByText(/손을 놓으세요|다시 달리세요|미리 쉬어 두세요/)).toBeVisible()
-  await page.getByRole("button", { name: "다시 시작", exact: true }).click()
+  // Stage 1 failure: the one primary action is a full retry.
+  await page.getByRole("button", { name: "다시 도전", exact: true }).click()
   await page.clock.runFor(3100)
   const run = page.getByRole("button", { name: /달리기 꾹/ })
   await run.hover(); await page.mouse.down(); await page.clock.runFor(1500)
@@ -104,19 +106,21 @@ test("clears three stages with real keys, shows trade-offs and resets the build"
     else if (step.key === "run-up") await page.keyboard.up("ArrowRight")
     else if (step.key === "jump") await page.keyboard.press("Space")
     else {
-      await expect(page.getByRole("heading", { name: "안전 발판 · 강화 하나 선택" })).toBeVisible()
+      await expect(page.getByRole("heading", { name: "강화 하나 고르면 바로 출발" })).toBeVisible()
       await expect(page.getByText("− 대시 충전 +1초 · 회복 −10%")).toBeVisible()
       const time = await page.getByLabel("경기 진행 시간").textContent()
       await page.clock.runFor(2000)
       await expect(page.getByLabel("경기 진행 시간")).toHaveText(time!)
       if (checkpoints === 0) {
-        await expect(page.getByText("다음 구간에 맞음")).toBeVisible()
+        await expect(page.getByText("추천", { exact: true })).toBeVisible()
         expect(await noSideScroll(page)).toBe(true)
         await page.screenshot({ path: info.outputPath("checkpoint.png"), fullPage: true })
       }
+      // One tap: the pick starts the next stage; its name is announced during a short still countdown.
       await page.getByRole("button", { name: /일정한 박자/ }).click()
-      await expect(page.getByRole("heading", { name: checkpoints === 0 ? "진흙" : "가시밭", exact: true })).toBeVisible()
-      await page.getByRole("button", { name: "계속", exact: true }).click()
+      await expect(page.getByRole("heading", { name: "강화 하나 고르면 바로 출발" })).toHaveCount(0)
+      await expect(page.getByRole("list", { name: `코스 ${checkpoints + 2}/3 · ${checkpoints === 0 ? "진흙" : "가시밭"}` })).toBeVisible()
+      await expect(page.getByRole("button", { name: "계속", exact: true })).toHaveCount(0)
       checkpoints += 1
     }
   }
@@ -124,11 +128,12 @@ test("clears three stages with real keys, shows trade-offs and resets the build"
   await page.clock.runFor(1200)
   await page.keyboard.up("ArrowRight")
   await expect(page.getByRole("heading", { name: "세 구간 완주!" })).toBeVisible()
-  await expect(page.getByText("이번 판: 일정한 박자 · 일정한 박자")).toBeVisible()
+  await page.getByText("이번 판 기록").click()
+  await expect(page.getByText("강화: 일정한 박자 · 일정한 박자")).toBeVisible()
   await page.screenshot({ path: info.outputPath("clear.png"), fullPage: true })
-  await page.getByRole("button", { name: "다시 시작", exact: true }).click()
+  await page.getByRole("button", { name: "처음부터" }).click()
   await expect(page.getByRole("list", { name: "코스 1/3 · 트랙" })).toBeVisible()
-  await expect(page.getByText(/^이번 판:/)).toHaveCount(0)
+  await expect(page.getByText(/^강화:/)).toHaveCount(0)
   await expect(page.getByLabel("게임 에너지", { exact: true })).toHaveText("에너지 100")
 })
 
@@ -152,8 +157,8 @@ test("focus loss pauses, Esc pauses, and reduced motion preserves movement and c
   expect(await noSideScroll(page)).toBe(true)
 })
 
-/** Replays a planned run with real keys, picking "일정한 박자" at each checkpoint. */
-/** `afterResume` may run the clock; it returns the milliseconds it used so the replay stays on plan. */
+/** Replays a planned run with real keys, picking "일정한 박자" at each checkpoint (the pick starts the next stage).
+ * `afterResume` may run the clock; it returns the milliseconds it used so the replay stays on plan. */
 async function replay(page: Page, plan: Step[], afterResume?: (index: number) => Promise<number>) {
   let now = 0, checkpoints = 0
   for (const step of plan) {
@@ -162,9 +167,8 @@ async function replay(page: Page, plan: Step[], afterResume?: (index: number) =>
     else if (step.key === "run-up") await page.keyboard.up("ArrowRight")
     else if (step.key === "jump") await page.keyboard.press("Space")
     else {
-      await expect(page.getByRole("heading", { name: "안전 발판 · 강화 하나 선택" })).toBeVisible()
+      await expect(page.getByRole("heading", { name: "강화 하나 고르면 바로 출발" })).toBeVisible()
       await page.getByRole("button", { name: /일정한 박자/ }).click()
-      await page.getByRole("button", { name: "계속", exact: true }).click()
       now += (await afterResume?.(checkpoints)) ?? 0
       checkpoints += 1
     }
@@ -172,6 +176,34 @@ async function replay(page: Page, plan: Step[], afterResume?: (index: number) =>
   await page.clock.runFor(1200)
   await page.keyboard.up("ArrowRight")
 }
+test("a later-stage failure offers 'retry this stage' with the same build, capped at one star", async ({ page }, info) => {
+  await openGame(page)
+  const plan = planRun()
+  await page.getByRole("button", { name: "시작", exact: true }).click()
+  // Play through the first checkpoint, then stop running so the runner falls in stage 2.
+  let now = 0
+  for (const step of plan) {
+    if (step.at > now) { await page.clock.runFor(Math.round(step.at - now)); now = step.at }
+    if (step.key === "upgrade") { await page.getByRole("button", { name: /스프링 밑창/ }).click(); break }
+    if (step.key === "run-down") await page.keyboard.down("ArrowRight")
+    else if (step.key === "run-up") await page.keyboard.up("ArrowRight")
+    else if (step.key === "jump") await page.keyboard.press("Space")
+  }
+  await page.keyboard.up("ArrowRight")
+  await page.clock.runFor(12000)
+  await expect(page.getByRole("heading", { name: "진흙에서 뒤로 떨어졌어요" })).toBeVisible()
+  const retry = page.getByRole("button", { name: /2구간부터 다시/ })
+  await expect(retry).toBeVisible()
+  await expect(page.getByRole("button", { name: "다시 도전", exact: true })).toHaveCount(0)
+  expect(await noSideScroll(page)).toBe(true)
+  await page.screenshot({ path: info.outputPath("retry-offer.png"), fullPage: true })
+  await retry.click()
+  await expect(page.getByRole("list", { name: "코스 2/3 · 진흙" })).toBeVisible()
+  await expect(page.getByLabel("경기 진행 시간")).toHaveText("10 / 30초")
+  // Same build: the spring upgrade keeps the jump cheap.
+  await expect(page.getByRole("button", { name: /점프/ })).toContainText("4")
+})
+
 const savedProgress = (page: Page) => page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.minigame.progress.v1") ?? "null"))
 
 test("tours Seoul in 2.5D, saves stars on this device, unlocks the next city and keeps it after reload", async ({ page }, info) => {
@@ -201,7 +233,7 @@ test("tours Seoul in 2.5D, saves stars on this device, unlocks the next city and
   const saved = await savedProgress(page)
   expect(saved.cities.seoul.stars).toBeGreaterThan(0)
   expect(Object.keys(saved).sort()).toEqual(["character", "cities", "settings", "settingsUpdatedAt", "version"])
-  await expect(page.getByRole("button", { name: "다음 도시 대전" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "다음 도시 · 대전" })).toBeVisible()
   await page.getByRole("button", { name: "지도", exact: true }).click()
   await expect(page.getByRole("button", { name: /^대전 · / })).toBeEnabled()
   await expect(page.getByRole("button", { name: /^대구 \(잠김\)/ })).toBeDisabled()

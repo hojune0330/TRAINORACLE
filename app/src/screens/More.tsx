@@ -106,6 +106,10 @@ export function More({
           <Sticker aria-hidden="true" size={19} />
           <span><strong>스티커·오픈소스 출처</strong><small>귀여운 스티커의 원본과 이용 조건을 확인해요</small></span>
         </a>
+        <a className="more-screen__row" href="./legal/third-party-notices.html" target="_blank" rel="noreferrer">
+          <ScrollText aria-hidden="true" size={19} />
+          <span><strong>오픈소스 소프트웨어 고지</strong><small>앱에 포함된 소프트웨어의 라이선스 전문을 확인해요</small></span>
+        </a>
       </div>
 
     </div>

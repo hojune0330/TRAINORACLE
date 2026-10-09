@@ -33,6 +33,8 @@ export const TREADMILL_RULES = {
   /** "3, 2, 1" before a run and a short "ready" beat after every resume. Belt is still. */
   countdownStart: 3,
   countdownResume: 1,
+  /** After an upgrade pick the next stage starts by itself: a short beat to read its name. */
+  countdownStage: 2,
 } as const
 
 export type TreadmillHazardKind = "barrier" | "spike"
@@ -75,12 +77,16 @@ export type TreadmillCommand =
   | { type: "pause" }
   | { type: "resume" }
   | { type: "upgrade"; upgrade: TreadmillUpgrade }
+  /** After a failure in stage 2+, replay that stage from its start with the same build. Caps the finish at 1 star. */
+  | { type: "retryStage" }
 
 export type TreadmillHazard = { id: number; kind: TreadmillHazardKind; x: number; hit: boolean; passed: boolean }
 export type TreadmillStats = {
   hits: number; cleared: number; jumps: number; dashes: number; restSeconds: number; lowestEnergy: number
   /** Hazards cleared in a row without a hit; multiplies the next clear. */
   combo: number; bestCombo: number; score: number
+  /** Stage retries used this run; any retry caps the finish at 1 star. */
+  retries: number
 }
 
 export type TreadmillState = {
@@ -120,9 +126,12 @@ export type TreadmillState = {
   failure: TreadmillFailure | null
   stats: TreadmillStats
   message: string
+  /** The state at the start of the current stage, for retryStage. Never nested. */
+  checkpoint: TreadmillCheckpoint | null
 }
+export type TreadmillCheckpoint = Omit<TreadmillState, "checkpoint">
 
-const freshStats = (): TreadmillStats => ({ hits: 0, cleared: 0, jumps: 0, dashes: 0, restSeconds: 0, lowestEnergy: TREADMILL_RULES.maxEnergy, combo: 0, bestCombo: 0, score: 0 })
+const freshStats = (): TreadmillStats => ({ hits: 0, cleared: 0, jumps: 0, dashes: 0, restSeconds: 0, lowestEnergy: TREADMILL_RULES.maxEnergy, combo: 0, bestCombo: 0, score: 0, retries: 0 })
 
 /** Game score only: clears grow with the combo, stage finishes add a flat bonus. */
 export const TREADMILL_SCORE = { clear: 100, comboStep: 50, comboCap: 5, stage: 300 } as const
@@ -135,7 +144,7 @@ export function newTreadmillRun(stages: readonly TreadmillStage[] = TREADMILL_ST
     hitFlash: 9, landed: 9, hazards: [], spawned: 0, upgrades: [], mudBonus: 0, jumpCost: rules.jumpCost,
     jumpVelocity: rules.jumpVelocity, dashFactor: 1, knockbackFactor: 1, strideFactor: 1, runDrainFactor: 1, recoveryFactor: 1,
     cooldownSeconds: rules.dashCooldown, failure: null, stats: freshStats(),
-    message: "달리면 앞으로, 놓으면 회복하며 뒤로 밀려요.",
+    message: "달리면 앞으로, 놓으면 회복하며 뒤로 밀려요.", checkpoint: null,
   }
 }
 
@@ -158,7 +167,13 @@ export function applyUpgrade(state: TreadmillState, upgrade: TreadmillUpgrade): 
 
 export function treadmillCommand(state: TreadmillState, command: TreadmillCommand): TreadmillState {
   if (command.type === "start") {
-    return { ...newTreadmillRun(command.stages ?? state.stages), mode: "running", countdown: TREADMILL_RULES.countdownStart, message: "달리면 앞으로, 놓으면 회복하며 뒤로 밀려요." }
+    return withCheckpoint({ ...newTreadmillRun(command.stages ?? state.stages), mode: "running", countdown: TREADMILL_RULES.countdownStart, message: "달리면 앞으로, 놓으면 회복하며 뒤로 밀려요." })
+  }
+  if (command.type === "retryStage") {
+    if (state.mode !== "over" || !state.checkpoint || state.stage === 0) return state
+    const from = state.checkpoint
+    return { ...from, checkpoint: from, mode: "running", countdown: TREADMILL_RULES.countdownStage, message: "이 구간부터 다시!",
+      stats: { ...from.stats, retries: state.stats.retries + 1 } }
   }
   if (command.type === "pause" && state.mode === "running") {
     return { ...state, mode: "paused", running: false, exhausted: false, message: "일시정지" }
@@ -168,12 +183,13 @@ export function treadmillCommand(state: TreadmillState, command: TreadmillComman
   }
   if (command.type === "upgrade" && state.mode === "upgrade") {
     const next = applyUpgrade(state, command.upgrade)
-    return {
+    const started: TreadmillState = {
       ...next, stage: state.stage + 1, seconds: 0, x: TREADMILL_RULES.startPosition, y: 0, velocityY: 0,
       energy: Math.min(TREADMILL_RULES.maxEnergy, state.energy + TREADMILL_RULES.checkpointRefill),
       hazards: [], spawned: 0, dashLeft: 0, cooldown: 0, invulnerable: 0, hitFlash: 9, landed: 9,
-      running: false, exhausted: false, mode: "paused", message: "준비되면 출발하세요.",
+      running: false, exhausted: false, mode: "running", countdown: TREADMILL_RULES.countdownStage, message: "출발!",
     }
+    return withCheckpoint(started)
   }
   if (state.mode !== "running") return state
   if (state.countdown > 0 && command.type !== "run") return state
@@ -189,6 +205,11 @@ export function treadmillCommand(state: TreadmillState, command: TreadmillComman
       : state
     default: return state
   }
+}
+
+function withCheckpoint(state: TreadmillState): TreadmillState {
+  const { checkpoint: _previous, ...snapshot } = state
+  return { ...state, checkpoint: snapshot }
 }
 
 function overlaps(runnerX: number, hazard: TreadmillHazard): boolean {
@@ -327,8 +348,9 @@ export function treadmillTip(state: TreadmillState): string {
   return "뒤로 밀리는 동안 너무 오래 쉬었어요. 빨간 구역에 닿기 전에 다시 달리세요."
 }
 
-/** 0 for a failed run; a finish earns 1, at most one hit 2, no hits 3. */
+/** 0 for a failed run; a finish earns 1, at most one hit 2, no hits 3. A stage retry caps it at 1. */
 export function treadmillStars(state: TreadmillState): 0 | 1 | 2 | 3 {
   if (state.mode !== "clear") return 0
+  if (state.stats.retries > 0) return 1
   return state.stats.hits === 0 ? 3 : state.stats.hits <= 1 ? 2 : 1
 }

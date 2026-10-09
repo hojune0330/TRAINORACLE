@@ -25,7 +25,7 @@ export function CharacterPortrait({ character, size = 64, pose = "idle", label }
     const ratio = Math.min(window.devicePixelRatio || 1, 2)
     canvas.width = size * ratio; canvas.height = size * ratio
     context.setTransform(ratio, 0, 0, ratio, 0, 0); context.clearRect(0, 0, size, size)
-    context.translate(size / 2, size * 0.88); context.scale(size / 80, size / 80)
+    context.translate(size / 2, size * 0.9); context.scale(size / 90, size / 90)
     drawRunner(context, gamePalette(canvas), { pose, phase: 0, upgrades: [], character })
   }, [character, size, pose])
   return <canvas ref={ref} className="treadmill-game__mini-portrait" style={{ width: size, height: size }}
@@ -237,7 +237,8 @@ export function GameMenu({ progress, status, onClose, onSettings, onCharacter, o
             <a href={item.file} target="_blank" rel="noreferrer">라이선스 전문 보기</a>
           </li>)}
         </ul>
-        <p className="treadmill-game__fine">앱 전체 오픈소스 고지는 더보기 › 오픈소스 고지에서 볼 수 있어요.</p>
+        <p className="treadmill-game__fine">앱 전체에 포함된 소프트웨어 전체 목록: 
+          <a href="legal/third-party-notices.html" target="_blank" rel="noreferrer">오픈소스 소프트웨어 고지</a>(더보기에서도 볼 수 있어요)</p>
       </div>}
     </section>
   </div>

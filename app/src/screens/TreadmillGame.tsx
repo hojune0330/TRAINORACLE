@@ -48,7 +48,7 @@ function RunnerPortrait({ upgrades, pose = "idle", label, character }: { readonl
     context.setTransform(ratio, 0, 0, ratio, 0, 0)
     context.clearRect(0, 0, size, size)
     context.translate(size / 2, size * 0.86)
-    context.scale(size / 82, size / 82)
+    context.scale(size / 94, size / 94)
     drawRunner(context, gamePalette(canvas), { pose, phase: 0, upgrades, character })
   }, [upgrades, pose, character])
   return <canvas ref={ref} className="treadmill-game__portrait" role="img" aria-label={label} />
@@ -247,6 +247,12 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
   const openMenu = () => { command({ type: "pause" }); setMenuOpen(true) }
   const following = city ? nextCity(progress, city.id) : undefined
   const isCity = course.kind === "city"
+  // The full rules card is for someone who has never finished a city; afterwards the intro is one line.
+  const firstTime = Object.values(progress.cities).every(item => item.clears === 0)
+  const cityBest = city ? progress.cities[city.id]?.bestScore ?? 0 : 0
+  const canRetryStage = view.mode === "over" && view.stage > 0 && view.checkpoint !== null
+  const pickUpgrade = (upgrade: TreadmillUpgrade) => { command({ type: "upgrade", upgrade }); playGameSound("tap", settings.sound); focusField() }
+  const retryStage = () => { setResult(null); command({ type: "retryStage" }); playGameSound("tap", settings.sound); focusField() }
 
   const handleKey = (event: React.KeyboardEvent) => {
     if (!running || event.repeat || menuOpen) return
@@ -317,66 +323,100 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
 
       {view.mode === "paused" && !menuOpen && <div className="treadmill-game__overlay">
         <div className="treadmill-game__card treadmill-game__card--small">
-          {view.seconds === 0 && view.stage > 0
-            ? <><span className="treadmill-game__ribbon" data-stage={stage.surface}>{view.stage + 1}구간</span><h2>{stage.name}</h2><p>{stage.hint}</p></>
-            : <><span className="treadmill-game__ribbon">일시정지</span><h2>잠깐 쉬는 중</h2><p>바닥과 장애물이 멈춰 있어요.</p></>}
-          <div className="treadmill-game__card-actions">
-            <button type="button" className="treadmill-game__cta" onClick={resume}><Play size={18} aria-hidden="true" />계속</button>
-            <button type="button" className="treadmill-game__ghost" onClick={start}><RotateCcw size={16} aria-hidden="true" />처음부터</button>
+          <span className="treadmill-game__ribbon">일시정지</span><h2>잠깐 쉬는 중</h2><p>{stage.name} · 바닥과 장애물이 멈춰 있어요.</p>
+          <button type="button" className="treadmill-game__cta" onClick={resume}><Play size={18} aria-hidden="true" />계속</button>
+          <div className="treadmill-game__card-actions treadmill-game__card-actions--quiet">
+            <button type="button" className="treadmill-game__text-button" onClick={start}><RotateCcw size={14} aria-hidden="true" />처음부터</button>
+            <button type="button" className="treadmill-game__text-button" onClick={backToMap}><MapIcon size={14} aria-hidden="true" />지도로</button>
           </div>
         </div>
       </div>}
 
       {view.mode === "ready" && <div className="treadmill-game__overlay">
-        <section className="treadmill-game__card" aria-labelledby="treadmill-ready-title">
-          <span className="treadmill-game__ribbon">{city ? `${city.country} · 30초 서바이벌` : "30초 서바이벌"}</span>
+        <section className="treadmill-game__card" aria-labelledby="treadmill-ready-title" data-first={firstTime || undefined}>
+          <span className="treadmill-game__ribbon">{city ? `${city.country} · ${TOUR_CITIES.indexOf(city) + 1}번째 도시` : "연습 · 30초"}</span>
           {city
             ? <><h2 id="treadmill-ready-title">{city.name} · {city.tagline}</h2>
               <ol className="treadmill-game__intro-stages">{stages.map((item, index) => <li key={item.id} data-stage={item.surface}><b>{index + 1}</b>{item.name}</li>)}</ol></>
             : <h2 id="treadmill-ready-title">30초 동안 바닥 위에서 버티세요</h2>}
-          <ul className="treadmill-game__rules">
-            <li><b><Footprints size={18} aria-hidden="true" /></b><span><strong>꾹 누르면 앞으로</strong>에너지를 써요</span></li>
-            <li><b><Pause size={18} aria-hidden="true" /></b><span><strong>손을 떼면 회복</strong>대신 뒤로 밀려요</span></li>
-            <li><b><MoveUp size={18} aria-hidden="true" /></b><span><strong>장애물은 점프</strong>{city ? "허들·못판" : "구덩이·가시"}에 닿으면 끝</span></li>
-          </ul>
+          {firstTime
+            ? <ul className="treadmill-game__rules">
+              <li><b><Footprints size={18} aria-hidden="true" /></b><span><strong>꾹 누르면 앞으로</strong>에너지를 써요</span></li>
+              <li><b><Pause size={18} aria-hidden="true" /></b><span><strong>손을 떼면 회복</strong>대신 뒤로 밀려요</span></li>
+              <li><b><MoveUp size={18} aria-hidden="true" /></b><span><strong>장애물은 점프</strong>{city ? "허들·못판" : "구덩이·가시"}에 닿으면 끝</span></li>
+            </ul>
+            : <p className="treadmill-game__ready-hint">{stages[0]!.hint}{cityBest > 0 && <> · 최고 <strong>{cityBest.toLocaleString("ko-KR")}점</strong></>}</p>}
           <div className="treadmill-game__ready-runner"><CharacterPortrait character={character} size={52} label={`캐릭터 ${MINIGAME_CHARACTERS.find(item => item.id === character)?.name}`} />
             <button type="button" className="treadmill-game__link" onClick={openMenu}>캐릭터·설정 바꾸기</button></div>
           <button type="button" className="treadmill-game__cta" onClick={start}><Play size={18} aria-hidden="true" />시작</button>
-          <p className="treadmill-game__keys">키보드: → 달리기 · Space/↑ 점프 · D 대시 · Esc 정지</p>
+          {firstTime && <p className="treadmill-game__keys">키보드: → 달리기 · Space/↑ 점프 · D 대시 · Esc 정지</p>}
+        </section>
+      </div>}
+
+      {view.mode === "upgrade" && nextStage && <div className="treadmill-game__overlay treadmill-game__overlay--light">
+        <section className="treadmill-game__card treadmill-game__pick" aria-labelledby="treadmill-upgrade-title">
+          <span className="treadmill-game__ribbon" data-tone="gold">{view.stage + 1}구간 통과!</span>
+          <h2 id="treadmill-upgrade-title">강화 하나 고르면 바로 출발</h2>
+          <p className="treadmill-game__pick-next" data-stage={nextStage.surface}><b>다음</b>{nextStage.name} · {nextStage.hint}</p>
+          <div className="treadmill-game__upgrades">
+            {TREADMILL_UPGRADES.map(upgrade => {
+              const owned = view.upgrades.filter(id => id === upgrade.id).length
+              const Icon = UPGRADE_ICON[upgrade.id]
+              return <button type="button" key={upgrade.id} data-upgrade={upgrade.id} onClick={() => pickUpgrade(upgrade.id)}>
+                <b className="treadmill-game__gear-icon" aria-hidden="true"><Icon size={22} /></b>
+                <span className="treadmill-game__gear-text">
+                  <strong>{upgrade.name}{owned > 0 && <em> Lv.{owned + 1}</em>}{upgrade.fits === nextStage.surface && <mark>추천</mark>}</strong>
+                  <span className="treadmill-game__plus">+ {upgrade.benefit}</span>
+                  <span className="treadmill-game__minus">− {upgrade.cost}</span>
+                </span>
+              </button>
+            })}
+          </div>
+          <p className="treadmill-game__keys"><Zap size={11} aria-hidden="true" />에너지 +{TREADMILL_RULES.checkpointRefill} · 점프 {view.jumpCost} · 대시 {view.cooldownSeconds.toFixed(1)}초</p>
         </section>
       </div>}
 
       {ended && <div className="treadmill-game__overlay">
         <section className="treadmill-game__card treadmill-game__result" aria-labelledby="treadmill-result-title" data-result={view.mode}>
-          <span className="treadmill-game__ribbon" data-tone={view.mode === "clear" ? "gold" : "danger"}>{view.mode === "clear" ? "완주" : "실패"}</span>
+          <span className="treadmill-game__ribbon" data-tone={view.mode === "clear" ? "gold" : "danger"}>{view.mode === "clear" ? "완주" : `${view.stage + 1}구간에서 멈춤`}</span>
           <h2 id="treadmill-result-title">{view.mode === "clear" ? (city ? `${city.name} 완주!` : "세 구간 완주!") : view.failure === "spike" ? `${stage.name}에서 가시에 닿았어요` : `${stage.name}에서 뒤로 떨어졌어요`}</h2>
           {view.mode === "clear" ? <Stars count={stars} /> : <RunnerPortrait upgrades={view.upgrades} pose="hit" label="넘어진 러너" character={character} />}
           <div className="treadmill-game__big-score"><small>점수</small><strong>{view.stats.score.toLocaleString("ko-KR")}</strong>{result?.best && <em>{city?.name} 최고 기록!</em>}</div>
           {result && result.unlocks.length > 0 && <ul className="treadmill-game__unlocks" aria-label="새로 열림">
             {result.unlocks.map(item => <li key={item}><Sparkles size={14} aria-hidden="true" />{item}</li>)}
           </ul>}
-          <dl className="treadmill-game__stats">
-            <div><dt>버틴 시간</dt><dd>{elapsed}<small>/{total}초</small></dd></div>
-            <div><dt>넘은 장애물</dt><dd>{view.stats.cleared}</dd></div>
-            <div><dt>최고 콤보</dt><dd>{view.stats.bestCombo}</dd></div>
-            <div><dt>부딪힘</dt><dd>{view.stats.hits - (view.failure === "spike" ? 1 : 0)}</dd></div>
-          </dl>
-          <p className="treadmill-game__tip">{treadmillTip(view)}</p>
-          {view.upgrades.length > 0 && <p className="treadmill-game__picks">이번 판: {view.upgrades.map(upgradeName).join(" · ")}</p>}
-          {isCity && result && result.bestScore > 0 && <p className="treadmill-game__best">{city?.name} 최고 {result.bestScore.toLocaleString("ko-KR")}점</p>}
-          <div className="treadmill-game__card-actions">
+          {view.mode === "clear" && view.stats.retries > 0 && <p className="treadmill-game__picks">구간 다시하기를 써서 별은 1개예요. 처음부터 완주하면 별 3개까지 받을 수 있어요.</p>}
+          {view.mode === "over" && <p className="treadmill-game__tip">{treadmillTip(view)}</p>}
+          <div className="treadmill-game__result-actions">
             {view.mode === "clear" && following
-              ? <button type="button" className="treadmill-game__cta" onClick={() => openCourse({ kind: "city", city: following })}><ArrowRight size={18} aria-hidden="true" />다음 도시 {following.name}</button>
-              : <button type="button" className="treadmill-game__cta" onClick={start}><RotateCcw size={18} aria-hidden="true" />다시 시작</button>}
-            {view.mode === "clear" && following && <button type="button" className="treadmill-game__ghost" onClick={start}><RotateCcw size={16} aria-hidden="true" />다시</button>}
-            <button type="button" className="treadmill-game__ghost" onClick={backToMap}><MapIcon size={16} aria-hidden="true" />지도</button>
+              && <button type="button" className="treadmill-game__cta" onClick={() => openCourse({ kind: "city", city: following })}><ArrowRight size={18} aria-hidden="true" />다음 도시 · {following.name}</button>}
+            {view.mode === "clear" && !following
+              && <button type="button" className="treadmill-game__cta" onClick={backToMap}><MapIcon size={18} aria-hidden="true" />지도에서 보기</button>}
+            {canRetryStage
+              && <button type="button" className="treadmill-game__cta" onClick={retryStage}><RotateCcw size={18} aria-hidden="true" />{view.stage + 1}구간부터 다시<small>강화 유지 · 별 최대 1개</small></button>}
+            {view.mode === "over" && !canRetryStage
+              && <button type="button" className="treadmill-game__cta" onClick={start}><RotateCcw size={18} aria-hidden="true" />다시 도전</button>}
+            <div className="treadmill-game__card-actions treadmill-game__card-actions--quiet">
+              {(view.mode === "clear" || canRetryStage) && <button type="button" className="treadmill-game__text-button" onClick={start}><RotateCcw size={14} aria-hidden="true" />처음부터</button>}
+              <button type="button" className="treadmill-game__text-button" onClick={backToMap}><MapIcon size={14} aria-hidden="true" />지도</button>
+            </div>
           </div>
-          <p className="treadmill-game__keys">다시 시작하면 강화가 초기화돼요.</p>
+          <details className="treadmill-game__more">
+            <summary>이번 판 기록</summary>
+            <dl className="treadmill-game__stats">
+              <div><dt>버틴 시간</dt><dd>{elapsed}<small>/{total}초</small></dd></div>
+              <div><dt>넘은 장애물</dt><dd>{view.stats.cleared}</dd></div>
+              <div><dt>최고 콤보</dt><dd>{view.stats.bestCombo}</dd></div>
+              <div><dt>부딪힘</dt><dd>{view.stats.hits - (view.failure === "spike" ? 1 : 0)}</dd></div>
+            </dl>
+            {view.upgrades.length > 0 && <p className="treadmill-game__picks">강화: {view.upgrades.map(upgradeName).join(" · ")}</p>}
+            {isCity && result && result.bestScore > 0 && <p className="treadmill-game__best">{city?.name} 최고 {result.bestScore.toLocaleString("ko-KR")}점</p>}
+          </details>
         </section>
       </div>}
     </div>
 
-    {view.mode !== "upgrade" && <div className="treadmill-game__controls" onContextMenu={event => event.preventDefault()} data-hidden={!running && view.mode !== "paused" ? true : undefined}>
+    <div className="treadmill-game__controls" onContextMenu={event => event.preventDefault()} data-hidden={!running && view.mode !== "paused" && view.mode !== "upgrade" ? true : undefined}>
       <button type="button" className="treadmill-game__pad treadmill-game__run" disabled={!running} aria-pressed={view.running}
         onPointerDown={event => { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); heldPointers.current.add(event.pointerId); updateHeld() }}
         onPointerUp={event => { heldPointers.current.delete(event.pointerId); updateHeld() }}
@@ -396,37 +436,7 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
         <small>{view.cooldown > 0 ? `${view.cooldown.toFixed(1)}초 뒤` : <><Zap size={11} aria-hidden="true" />{TREADMILL_RULES.dashCost}</>}</small>
         {view.cooldown > 0 && <i aria-hidden="true" style={fillStyle(1 - view.cooldown / view.cooldownSeconds)} />}
       </button>
-    </div>}
-
-    {view.mode === "upgrade" && nextStage && <section className="treadmill-game__loadout" aria-labelledby="treadmill-upgrade-title">
-      <div className="treadmill-game__loadout-head">
-        <RunnerPortrait upgrades={view.upgrades} character={character} label={`현재 장비: ${view.upgrades.length ? view.upgrades.map(upgradeName).join(", ") : "기본"}`} />
-        <div>
-          <span className="treadmill-game__ribbon" data-tone="gold">구간 통과!</span>
-          <h2 id="treadmill-upgrade-title">안전 발판 · 강화 하나 선택</h2>
-          <p>다음 구간 <strong>{nextStage.name}</strong> · {nextStage.hint}. 고르면 <Zap size={12} aria-hidden="true" />+{TREADMILL_RULES.checkpointRefill}</p>
-        </div>
-      </div>
-      <div className="treadmill-game__gear-stats" aria-label="현재 능력치">
-        <span><Zap size={13} aria-hidden="true" />점프 {view.jumpCost}</span>
-        <span><Footprints size={13} aria-hidden="true" />소모 ×{view.runDrainFactor.toFixed(2)}</span>
-        <span><ChevronsRight size={13} aria-hidden="true" />대시 {view.cooldownSeconds.toFixed(1)}초</span>
-      </div>
-      <div className="treadmill-game__upgrades">
-        {TREADMILL_UPGRADES.map(upgrade => {
-          const owned = view.upgrades.filter(id => id === upgrade.id).length
-          const Icon = UPGRADE_ICON[upgrade.id]
-          return <button type="button" key={upgrade.id} data-upgrade={upgrade.id} onClick={() => command({ type: "upgrade", upgrade: upgrade.id })}>
-            <b className="treadmill-game__gear-icon" aria-hidden="true"><Icon size={26} /></b>
-            <span className="treadmill-game__gear-text">
-              <strong>{upgrade.name}{owned > 0 && <em> Lv.{owned + 1}</em>}{upgrade.fits === nextStage.surface && <mark>다음 구간에 맞음</mark>}</strong>
-              <span className="treadmill-game__plus">+ {upgrade.benefit}</span>
-              <span className="treadmill-game__minus">− {upgrade.cost}</span>
-            </span>
-          </button>
-        })}
-      </div>
-    </section>}
+    </div>
     </>}
 
     {menuOpen && <GameMenu progress={progress} status={store.status} onClose={() => { setMenuOpen(false); if (screen === "play") focusField() }}

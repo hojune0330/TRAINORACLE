@@ -151,6 +151,11 @@
   --game-lane-red: #D9604A;
   --game-lane-red-dark: #A8432F;
   --game-grass-stripe: #7FD39A;
+  /* Anime runner cel shading and hair, 2026-10-09. */
+  --game-skin-shade: #F0B48A;
+  --game-hair-hana: #7A3E2E;
+  --game-hair-silver: #C9D3E6;
+  --game-hair-shine: #8FA0C8;
 
   /* ============== TYPOGRAPHY ============== */
   --sans: "Pretendard Variable", "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
