@@ -8,6 +8,8 @@
  * settings win.
  */
 import { z } from "zod"
+import { emptyMedals, medalStateSchema, mergeMedals } from "./rewards"
+import type { MedalState } from "./rewards"
 import { TOUR_CITIES, TOUR_SEASONS } from "./tour"
 import type { TourCity, TourSeasonId } from "./tour"
 
@@ -40,6 +42,8 @@ export const minigameProgressSchema = z.object({
   character: idSchema,
   settings: minigameSettingsSchema,
   settingsUpdatedAt: z.iso.datetime(),
+  /** Game-only medals and owned cosmetic items. Optional so V1 saves without it stay valid. */
+  medals: medalStateSchema.optional(),
 }).strict()
 export type MinigameProgress = z.infer<typeof minigameProgressSchema>
 
@@ -63,8 +67,12 @@ export function mergeMinigameProgress(a: MinigameProgress, b: MinigameProgress):
       clears: Math.max(x?.clears ?? 0, y?.clears ?? 0),
     }
   }
-  const newer = a.settingsUpdatedAt > b.settingsUpdatedAt || (a.settingsUpdatedAt === b.settingsUpdatedAt && JSON.stringify([a.settings, a.character]) >= JSON.stringify([b.settings, b.character])) ? a : b
-  return { version: MINIGAME_PROGRESS_VERSION, cities, character: newer.character, settings: { ...newer.settings }, settingsUpdatedAt: newer.settingsUpdatedAt }
+  const aNewer = a.settingsUpdatedAt > b.settingsUpdatedAt || (a.settingsUpdatedAt === b.settingsUpdatedAt && JSON.stringify([a.settings, a.character, a.medals?.trail ?? null]) >= JSON.stringify([b.settings, b.character, b.medals?.trail ?? null]))
+  const newer = aNewer ? a : b
+  const merged: MinigameProgress = { version: MINIGAME_PROGRESS_VERSION, cities, character: newer.character, settings: { ...newer.settings }, settingsUpdatedAt: newer.settingsUpdatedAt }
+  if (!a.medals && !b.medals) return merged
+  const trail = newer.medals?.trail ?? null
+  return { ...merged, medals: mergeMedals(a.medals ?? emptyMedals(), b.medals ?? emptyMedals(), trail) }
 }
 
 export function sameMinigameProgress(a: MinigameProgress, b: MinigameProgress): boolean {
@@ -144,4 +152,14 @@ export function unlockLabel(unlock: CharacterUnlock): string {
 /** The character to draw: the saved one if it is still unlocked here, else the default. */
 export function activeCharacter(progress: MinigameProgress): MinigameCharacterId {
   return (characterUnlocked(progress, progress.character) ? progress.character : "tori") as MinigameCharacterId
+}
+
+export function medalsOf(progress: MinigameProgress): MedalState {
+  return progress.medals ?? emptyMedals()
+}
+
+export function withMedals(progress: MinigameProgress, medals: MedalState, now?: Date): MinigameProgress {
+  // Equipping a trail is a settings change: bump the timestamp so it wins the merge on other devices.
+  const trailChanged = medals.trail !== (progress.medals?.trail ?? null)
+  return { ...progress, medals, ...(trailChanged ? { settingsUpdatedAt: (now ?? new Date()).toISOString() } : {}) }
 }

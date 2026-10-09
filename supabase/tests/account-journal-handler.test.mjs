@@ -1002,6 +1002,18 @@ test('minigame progress: capability, owner identity, encrypted game-only metadat
   await response(await f.request(save({documentId,operationId:OP2,expectedRevision:1,document:minigameDoc({seoul:{stars:3,bestScore:900,clears:2},daejeon:{stars:1,bestScore:10,clears:1}})})),200);
   assert.equal(f.calls.commit,2);
 });
+test('minigame medals: over-cap days and dropped medals or items are refused by the server validator',async()=>{
+  const f=await fixture({dependencies:{validateDocument:validateAccountJournalDocument},repo:minigameRepo});
+  const documentId=await fixedStateId('MINIGAME_PROGRESS');
+  const cities={seoul:{stars:1,bestScore:10,clears:1}};
+  const withMedals=medals=>({...minigameDoc(cities),data:{...minigameDoc(cities).data,medals}});
+  const owned={days:{'2026-10-08':[5,0],'2026-10-09':[5,0]},months:{},owned:['stardust'],trail:'stardust'};
+  await response(await f.request(save({documentId,document:withMedals(owned)})),200);
+  await response(await f.request(save({documentId,operationId:OP2,expectedRevision:1,document:withMedals({...owned,owned:[],trail:null})})),422);
+  await response(await f.request(save({documentId,operationId:OP2,expectedRevision:1,document:withMedals({...owned,days:{'2026-10-09':[5,0]}})})),422);
+  await response(await f.request(save({documentId,operationId:OP2,expectedRevision:1,document:withMedals({...owned,days:{...owned.days,'2026-10-10':[99,0]}})})),422);
+  await response(await f.request(save({documentId,operationId:OP2,expectedRevision:1,document:withMedals({...owned,days:{...owned.days,'2026-10-10':[1,1]}})})),200);
+});
 test('minigame progress capability fails closed on old SQL, wrong version or gated account',async()=>{
   for(const repo of [{},{minigameProgressSupport:async()=>({kind:'minigame-progress-support',version:2})},
     {minigameProgressSupport:async()=>({kind:'running-profile-support',version:1})}]) {

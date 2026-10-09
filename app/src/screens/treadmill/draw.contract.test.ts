@@ -35,7 +35,7 @@ describe("treadmill renderer with tour cities", () => {
       const stages = tourStages(city)
       const state = { ...treadmillCommand(newTreadmillRun(stages), { type: "start", stages }), countdown: 0, stage, running: true }
       const render = createTreadmillRenderer()
-      for (const now of [1000, 1016, 1032]) render(recordingContext(), state, 360, 400, palette, false, now, false, { city, character, effects: stage === 1 ? "low" : "high" })
+      for (const now of [1000, 1016, 1032]) render(recordingContext(), state, 360, 400, palette, false, now, false, { city, character, effects: stage === 1 ? "low" : "high", trail: ["stardust", "petals", "spark", "flame", "rainbow", null][TOUR_CITIES.indexOf(city) % 6]! })
     }
   })
 })

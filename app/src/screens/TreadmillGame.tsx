@@ -8,8 +8,9 @@ import type { TreadmillCommand, TreadmillStage, TreadmillState, TreadmillUpgrade
 import { TOUR_CITIES, tourStages } from "../domain/minigame/tour"
 import type { TourCity, TourSeasonId } from "../domain/minigame/tour"
 import {
-  MINIGAME_CHARACTERS, activeCharacter, characterUnlocked, nextCity, recordCityResult, seasonUnlocked, updateMinigameSettings,
+  MINIGAME_CHARACTERS, activeCharacter, characterUnlocked, medalsOf, nextCity, recordCityResult, seasonUnlocked, updateMinigameSettings, withMedals,
 } from "../domain/minigame/progress"
+import { buyTrail, equipTrail, medalForRun, runMedalsLeftToday, MINIGAME_REWARD_RULES } from "../domain/minigame/rewards"
 import type { MinigameProgress } from "../domain/minigame/progress"
 import { useMinigameProgress } from "../domain/minigame/progress-store"
 import { createTreadmillRenderer, gamePalette } from "./treadmill/draw"
@@ -89,7 +90,8 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
   const [course, setCourse] = React.useState<Course>({ kind: "city", city: TOUR_CITIES[0]! })
   const [season, setSeason] = React.useState<TourSeasonId>(() => seasonUnlocked(progress, "world") ? "world" : "korea")
   const [menuOpen, setMenuOpen] = React.useState(false)
-  const [result, setResult] = React.useState<{ best: boolean; unlocks: string[]; bestScore: number } | null>(null)
+  const [menuTab, setMenuTab] = React.useState<"settings" | "shop">("settings")
+  const [result, setResult] = React.useState<{ best: boolean; unlocks: string[]; bestScore: number; medal: number; medalsLeft: number } | null>(null)
   const state = React.useRef(newTreadmillRun(courseStages(course)))
   const [view, setView] = React.useState<TreadmillState>(state.current)
   const canvas = React.useRef<HTMLCanvasElement>(null)
@@ -104,7 +106,7 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
   const reduced = systemReduced || settings.motion === "reduce"
   const city = course.kind === "city" ? course.city : null
   const renderView = React.useRef<RenderView & { reduced: boolean; sound: boolean; vibration: boolean }>({ reduced, sound: settings.sound, vibration: settings.vibration })
-  renderView.current = { city: settings.view === "flat" ? null : city, character, effects: settings.effects, jumpGuide: settings.jumpGuide,
+  renderView.current = { city: settings.view === "flat" ? null : city, character, effects: settings.effects, jumpGuide: settings.jumpGuide, trail: medalsOf(progress).trail,
     reduced, sound: settings.sound, vibration: settings.vibration }
   const progressRef = React.useRef(progress)
   progressRef.current = progress
@@ -120,12 +122,20 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
     const sound = renderView.current.sound
     playGameSound(next.mode === "clear" ? "win" : "lose", sound)
     const course = courseRef.current
-    if (course.kind !== "city") { setResult({ best: false, unlocks: [], bestScore: 0 }); return }
     const before = progressRef.current
-    const stars = treadmillStars(next)
-    const previousBest = before.cities[course.city.id]?.bestScore ?? 0
-    const after = recordCityResult(before, course.city.id, stars, next.stats.score)
-    setResult({ best: stars > 0 && next.stats.score > previousBest, unlocks: unlocksBetween(before, after), bestScore: Math.max(previousBest, stars > 0 ? next.stats.score : 0) })
+    // The medal depends only on time played this run, never on the result (rewards.ts).
+    const now = new Date()
+    const paid = medalForRun(medalsOf(before), treadmillElapsed(next), now)
+    let after = paid.earned > 0 ? withMedals(before, paid.state) : before
+    const medalsLeft = runMedalsLeftToday(paid.state, now)
+    if (course.kind !== "city") {
+      setResult({ best: false, unlocks: [], bestScore: 0, medal: paid.earned, medalsLeft })
+    } else {
+      const stars = treadmillStars(next)
+      const previousBest = before.cities[course.city.id]?.bestScore ?? 0
+      after = recordCityResult(after, course.city.id, stars, next.stats.score)
+      setResult({ best: stars > 0 && next.stats.score > previousBest, unlocks: unlocksBetween(before, after), bestScore: Math.max(previousBest, stars > 0 ? next.stats.score : 0), medal: paid.earned, medalsLeft })
+    }
     if (after !== before) updateRef.current(() => after)
   }, [])
   const command = React.useCallback((input: TreadmillCommand) => {
@@ -244,7 +254,7 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
     setScreen("play"); playGameSound("tap", settings.sound)
   }
   const backToMap = () => { command({ type: "pause" }); releaseInputs(); setScreen("map"); setResult(null) }
-  const openMenu = () => { command({ type: "pause" }); setMenuOpen(true) }
+  const openMenu = () => { command({ type: "pause" }); setMenuTab("settings"); setMenuOpen(true) }
   const following = city ? nextCity(progress, city.id) : undefined
   const isCity = course.kind === "city"
   // The full rules card is for someone who has never finished a city; afterwards the intro is one line.
@@ -286,7 +296,7 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
       </div>
     </header>
 
-    {screen === "map" && <TourMap progress={progress} season={season} onSeason={setSeason} status={store.status}
+    {screen === "map" && <TourMap progress={progress} season={season} onSeason={setSeason} status={store.status} onShop={() => { setMenuTab("shop"); setMenuOpen(true) }}
       onPlay={item => openCourse({ kind: "city", city: item })} onPractice={() => openCourse({ kind: "practice" })} />}
 
     {screen === "play" && <>
@@ -385,6 +395,10 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
           {result && result.unlocks.length > 0 && <ul className="treadmill-game__unlocks" aria-label="새로 열림">
             {result.unlocks.map(item => <li key={item}><Sparkles size={14} aria-hidden="true" />{item}</li>)}
           </ul>}
+          {result && <p className="treadmill-game__medal-line" data-earned={result.medal > 0 || undefined}>
+            <b aria-hidden="true">🏅</b>{result.medal > 0 ? `메달 +${result.medal}` : "오늘 받을 메달을 다 받았어요"}
+            <small>{result.medal > 0 ? `오늘 ${result.medalsLeft}번 더 받을 수 있어요 · 결과와 상관없이 한 판에 ${MINIGAME_REWARD_RULES.medalsPerRun}개` : "내일 다시 받을 수 있어요"}</small>
+          </p>}
           {view.mode === "clear" && view.stats.retries > 0 && <p className="treadmill-game__picks">구간 다시하기를 써서 별은 1개예요. 처음부터 완주하면 별 3개까지 받을 수 있어요.</p>}
           {view.mode === "over" && <p className="treadmill-game__tip">{treadmillTip(view)}</p>}
           <div className="treadmill-game__result-actions">
@@ -439,7 +453,10 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
     </div>
     </>}
 
-    {menuOpen && <GameMenu progress={progress} status={store.status} onClose={() => { setMenuOpen(false); if (screen === "play") focusField() }}
+    {menuOpen && <GameMenu progress={progress} status={store.status} initialTab={menuTab}
+      onBuy={id => { let ok = false; store.update(current => { const bought = buyTrail(medalsOf(current), id); ok = bought.ok; return bought.ok ? withMedals(current, bought.state) : current }); return ok }}
+      onEquip={id => store.update(current => withMedals(current, equipTrail(medalsOf(current), id)))}
+      onClose={() => { setMenuOpen(false); if (screen === "play") focusField() }}
       onSettings={patch => store.update(current => updateMinigameSettings(current, patch))}
       onCharacter={id => store.update(current => updateMinigameSettings(current, { character: id }))}
       onReset={store.reset} />}

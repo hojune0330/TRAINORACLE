@@ -86,7 +86,9 @@ describe("minigame account sync", () => {
     for (const path of ["src/domain/account/account-minigame-progress-service.ts", "src/domain/account/account-minigame-progress-schema.ts",
       "src/domain/minigame/progress.ts", "src/domain/minigame/progress-store.ts", "src/domain/minigame/tour.ts"]) {
       const source = readFileSync(path, "utf8")
-      expect(source, path).not.toMatch(/from "[^"]*(reward|engagement|decoration|journal-storage|plan-|athlete|running-profile|intensity)[^"]*"/u)
+      // Game-local modules (./rewards, ../minigame/*) are fine; app reward/point/training modules are not.
+      const imports = [...source.matchAll(/from "([^"]+)"/gu)].map(match => match[1]!).filter(spec => !/^(\.\/(?!.*account)|\.\.\/minigame\/)/u.test(spec))
+      for (const spec of imports) expect(spec, path).not.toMatch(/reward|engagement|decoration|journal-storage|plan-|athlete|running-profile|intensity/u)
     }
   })
 })

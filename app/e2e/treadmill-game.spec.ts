@@ -204,6 +204,38 @@ test("a later-stage failure offers 'retry this stage' with the same build, cappe
   await expect(page.getByRole("button", { name: /점프/ })).toContainText("4")
 })
 
+test("medals: a fixed medal per run whatever the result, spent only on a cosmetic trail in the shop", async ({ page }, info) => {
+  await page.goto("/?app=1")
+  // Seed 9 medals earned on earlier days, plus progress, then fail one run.
+  await page.evaluate(() => localStorage.setItem("trainoracle.minigame.progress.v1", JSON.stringify({
+    version: "MINIGAME_PROGRESS_V1", character: "tori", settingsUpdatedAt: "2026-10-08T00:00:00.000Z", cities: {},
+    settings: { sound: false, vibration: false, effects: "low", view: "auto", motion: "system", controls: "normal", runSide: "left", jumpGuide: true },
+    medals: { days: { "2000-01-01": [5, 0], "2000-01-02": [4, 0] }, months: {}, owned: [], trail: null },
+  })))
+  await openGame(page)
+  await page.getByRole("button", { name: "시작", exact: true }).click()
+  // Hold run briefly so the run lasts past the 8-second minimum, then let go and fall.
+  await page.clock.runFor(3100)
+  await page.keyboard.down("ArrowRight"); await page.clock.runFor(3500); await page.keyboard.up("ArrowRight")
+  await page.clock.runFor(12000)
+  await expect(page.getByRole("heading", { name: "트랙에서 뒤로 떨어졌어요" })).toBeVisible()
+  // A failed run still pays exactly one medal.
+  await expect(page.getByText("메달 +1")).toBeVisible()
+  await page.screenshot({ path: info.outputPath("medal-result.png"), fullPage: true })
+  await page.getByRole("button", { name: "지도", exact: true }).click()
+  await page.getByRole("button", { name: /메달 10개/ }).click()
+  const dialog = page.getByRole("dialog", { name: "게임 메뉴" })
+  await expect(dialog.getByRole("tab", { name: "상점" })).toHaveAttribute("aria-selected", "true")
+  await expect(dialog.getByRole("button", { name: /무지개 꼬리 메달 35개로 열기/ })).toBeDisabled()
+  await dialog.getByRole("button", { name: /별가루 메달 10개로 열기/ }).click()
+  await expect(dialog.getByRole("button", { name: "장착 중" })).toBeVisible()
+  await expect(dialog.getByText("포인트(P)·현금으로 바꿀 수 없어요", { exact: false })).toBeVisible()
+  await page.screenshot({ path: info.outputPath("medal-shop.png") })
+  const saved = await savedProgress(page)
+  expect(saved.medals.owned).toEqual(["stardust"])
+  expect(saved.medals.trail).toBe("stardust")
+})
+
 const savedProgress = (page: Page) => page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.minigame.progress.v1") ?? "null"))
 
 test("tours Seoul in 2.5D, saves stars on this device, unlocks the next city and keeps it after reload", async ({ page }, info) => {
@@ -232,7 +264,9 @@ test("tours Seoul in 2.5D, saves stars on this device, unlocks the next city and
   await page.screenshot({ path: info.outputPath("seoul-clear.png"), fullPage: true })
   const saved = await savedProgress(page)
   expect(saved.cities.seoul.stars).toBeGreaterThan(0)
-  expect(Object.keys(saved).sort()).toEqual(["character", "cities", "settings", "settingsUpdatedAt", "version"])
+  expect(Object.keys(saved).sort()).toEqual(["character", "cities", "medals", "settings", "settingsUpdatedAt", "version"])
+  // One medal for the run, whatever the score.
+  expect(Object.values(saved.medals.days)).toEqual([[1, 0]])
   await expect(page.getByRole("button", { name: "다음 도시 · 대전" })).toBeVisible()
   await page.getByRole("button", { name: "지도", exact: true }).click()
   await expect(page.getByRole("button", { name: /^대전 · / })).toBeEnabled()

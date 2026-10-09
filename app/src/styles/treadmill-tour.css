@@ -160,3 +160,24 @@
 .treadmill-game__pick .treadmill-game__gear-icon { width: 34px; height: 34px; border-radius: 10px; }
 .treadmill-game__pick .treadmill-game__upgrades button { grid-template-columns: 34px minmax(0, 1fr); }
 .treadmill-game__pick .treadmill-game__plus, .treadmill-game__pick .treadmill-game__minus { font-size: 11px; }
+
+/* Medals and shop (2026-10-09). Game-only currency; see rewards.ts. */
+.treadmill-game button.treadmill-game__medals { min-height: 44px; display: inline-flex; align-items: center; gap: var(--space-1); padding: 0 var(--space-3); border-radius: 999px; border: 2px solid var(--game-outline); background: var(--game-gold); color: var(--game-ink); font-weight: 900; }
+.treadmill-game__medals small { font-size: 11px; font-weight: 800; color: var(--game-ink-soft); }
+.treadmill-game__medal-line { width: 100%; display: grid; grid-template-columns: auto 1fr; column-gap: var(--space-2); align-items: center; padding: var(--space-1) var(--space-3); border-radius: 12px; background: var(--game-sky-low); text-align: left; }
+.treadmill-game__card p.treadmill-game__medal-line { font-size: var(--fs-body-sm); font-weight: 900; color: var(--game-ink); }
+.treadmill-game__medal-line b { grid-row: span 2; font-size: 22px; }
+.treadmill-game__medal-line small { font-size: 11px; font-weight: 700; color: var(--game-ink-soft); }
+.treadmill-game__medal-line[data-earned] b { animation: treadmill-pop var(--dur-slow) var(--ease-out); }
+.treadmill-game[data-reduced] .treadmill-game__medal-line b { animation: none; }
+.treadmill-game__shop-balance { display: flex; align-items: baseline; gap: var(--space-2); }
+.treadmill-game__panel p.treadmill-game__shop-balance { color: var(--game-ink); }
+.treadmill-game__shop-balance strong { font-size: var(--fs-h2, 28px); font-weight: 900; }
+.treadmill-game__shop { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+.treadmill-game__shop li { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); min-height: 56px; padding: var(--space-2) var(--space-3); border-radius: 12px; background: var(--game-sky-low); }
+.treadmill-game__shop li > span { display: grid; gap: 1px; }
+.treadmill-game__shop strong { font-size: var(--fs-body-sm); font-weight: 900; }
+.treadmill-game__shop small { font-size: 11px; color: var(--game-ink-soft); }
+.treadmill-game__shop button.treadmill-game__ghost { flex: none; min-height: 44px; padding: 0 var(--space-3); }
+.treadmill-game__shop button[aria-pressed="true"] { background: var(--game-good); }
+.treadmill-game__tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }

@@ -16,6 +16,8 @@ export type RenderView = {
   character?: RunnerCharacter
   effects?: "high" | "low"
   jumpGuide?: boolean
+  /** Cosmetic trail bought with medals. Particles only; never touches the rules. */
+  trail?: string | null
 }
 
 /** Shared geometry so the drawing, the hit boxes and the tests talk about the same belt. */
@@ -48,6 +50,7 @@ export function createTreadmillRenderer() {
   const random = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646 }
 
   let fewer = false
+  let trailTimer = 0
   function emit(count: number, base: Omit<Particle, "vx" | "vy" | "life" | "max">, spread: { vx: [number, number]; vy: [number, number]; life: [number, number] }) {
     for (let i = 0; i < (fewer ? Math.ceil(count / 3) : count); i++) {
       const life = spread.life[0] + random() * (spread.life[1] - spread.life[0])
@@ -216,6 +219,22 @@ export function createTreadmillRenderer() {
       if (dustTimer <= 0) {
         dustTimer = 0.09
         emit(1, { x: runnerX - 6, y: floor - 2, size: 3 + random() * 2, color: stage.surface === "mud" ? "mudLight" : "cloud", kind: "dot" }, { vx: [-120, -60], vy: [-50, -15], life: [0.3, 0.5] })
+      }
+    }
+    if (view.trail && moving && state.running && !reduced && !low) {
+      trailTimer -= dt
+      if (trailTimer <= 0) {
+        trailTimer = view.trail === "rainbow" ? 0.03 : 0.07
+        const body = floor - state.y
+        const t = view.trail
+        if (t === "stardust") emit(1, { x: runnerX - 8, y: body - 4 - random() * 8, size: 3, color: "gold", kind: "star" }, { vx: [-140, -80], vy: [-30, 10], life: [0.4, 0.6] })
+        else if (t === "petals") emit(1, { x: runnerX - 8, y: body - 10 - random() * 20, size: 3.5, color: "petal", kind: "confetti" }, { vx: [-150, -90], vy: [-20, 30], life: [0.5, 0.8] })
+        else if (t === "spark" && (state.dashLeft > 0 || random() < 0.3)) emit(1, { x: runnerX - 10, y: body - 10 - random() * 26, size: 2, color: "neonBlue", kind: "line" }, { vx: [-260, -180], vy: [-5, 5], life: [0.15, 0.25] })
+        else if (t === "flame") emit(1, { x: runnerX - 7, y: body - 3, size: 3 + random() * 2, color: random() < 0.5 ? "heat" : "danger", kind: "dot" }, { vx: [-110, -60], vy: [-70, -30], life: [0.2, 0.35] })
+        else if (t === "rainbow") {
+          const band = ["danger", "heat", "gold", "good", "neonBlue", "hanaShirt"] as const
+          emit(1, { x: runnerX - 10, y: body - 18 - (Math.floor(clock * 30) % band.length) * 2.2, size: 3, color: band[Math.floor(clock * 30) % band.length]!, kind: "dot" }, { vx: [-200, -200], vy: [0, 0], life: [0.35, 0.35] })
+        }
       }
     }
 

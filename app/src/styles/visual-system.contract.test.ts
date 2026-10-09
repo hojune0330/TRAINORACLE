@@ -162,6 +162,7 @@ describe("shared visual system", () => {
       join("src", "styles", "treadmill-tour.css"),
       join("src", "screens", "treadmill", "city-art.ts"),
       join("src", "screens", "treadmill", "GamePanels.tsx"),
+      join("src", "screens", "treadmill", "anime-runner.ts"),
     ])
     const leaking = sourceFiles("src").filter((path) => !gameFiles.has(path) && /var\(--game-/u.test(readFileSync(path, "utf8")))
     expect(leaking).toEqual([])

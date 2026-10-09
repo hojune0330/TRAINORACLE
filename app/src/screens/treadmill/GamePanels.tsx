@@ -11,6 +11,8 @@ import {
 } from "../../domain/minigame/progress"
 import type { MinigameProgress, MinigameSettings } from "../../domain/minigame/progress"
 import type { MinigameStorageStatus } from "../../domain/minigame/progress-store"
+import { medalBalance, medalsEarned, runMedalsLeftToday, MINIGAME_REWARD_RULES, TRAIL_ITEMS } from "../../domain/minigame/rewards"
+import { medalsOf } from "../../domain/minigame/progress"
 import { TREADMILL_RULES, TREADMILL_UPGRADES } from "../../domain/minigame/treadmill"
 import { drawRunner, gamePalette } from "./sprites"
 import type { RunnerCharacter } from "./sprites"
@@ -38,8 +40,9 @@ function CityStars({ count }: { readonly count: number }) {
   </span>
 }
 
-export function TourMap({ progress, season, onSeason, onPlay, onPractice, status }: {
+export function TourMap({ progress, season, onSeason, onPlay, onPractice, status, onShop }: {
   readonly progress: MinigameProgress; readonly season: TourSeasonId
+  readonly onShop: () => void
   readonly onSeason: (season: TourSeasonId) => void
   readonly onPlay: (city: TourCity) => void; readonly onPractice: () => void
   readonly status: MinigameStorageStatus
@@ -78,6 +81,9 @@ export function TourMap({ progress, season, onSeason, onPlay, onPractice, status
     </ol>
     <div className="treadmill-game__map-foot">
       <button type="button" className="treadmill-game__ghost" onClick={onPractice}>러닝머신 연습</button>
+      <button type="button" className="treadmill-game__medals" onClick={onShop} aria-label={`메달 ${medalBalance(medalsOf(progress))}개 · 꾸미기 상점 열기`}>
+        <b aria-hidden="true">🏅</b>{medalBalance(medalsOf(progress))}<small>상점</small>
+      </button>
       <span className="treadmill-game__sync" data-status={status}>{storageLabel(status)}</span>
     </div>
   </section>
@@ -110,7 +116,7 @@ export function CharacterPicker({ progress, selected, onSelect }: {
   </div>
 }
 
-type Tab = "settings" | "help" | "licenses"
+type Tab = "settings" | "shop" | "help" | "licenses"
 
 function Toggle({ label, hint, checked, onChange }: { readonly label: string; readonly hint?: string; readonly checked: boolean; readonly onChange: (value: boolean) => void }) {
   return <label className="treadmill-game__setting">
@@ -132,20 +138,25 @@ function Choice<T extends string>({ label, hint, value, options, onChange }: {
   </div>
 }
 
-export function GameMenu({ progress, status, onClose, onSettings, onCharacter, onReset }: {
+export function GameMenu({ progress, status, onClose, onSettings, onCharacter, onReset, onBuy, onEquip, initialTab = "settings" }: {
   readonly progress: MinigameProgress; readonly status: MinigameStorageStatus
+  readonly onBuy: (id: string) => boolean
+  readonly onEquip: (id: string | null) => void
+  readonly initialTab?: "settings" | "shop"
   readonly onClose: () => void
   readonly onSettings: (patch: Partial<MinigameSettings>) => void
   readonly onCharacter: (id: RunnerCharacter) => void
   readonly onReset: () => Promise<boolean>
 }) {
-  const [tab, setTab] = React.useState<Tab>("settings")
+  const [tab, setTab] = React.useState<Tab>(initialTab)
   const [confirm, setConfirm] = React.useState(false)
   const [resetMessage, setResetMessage] = React.useState<string | null>(null)
   const close = React.useRef<HTMLButtonElement>(null)
   React.useEffect(() => { close.current?.focus() }, [])
   const s = progress.settings
-  const tabs: readonly { id: Tab; label: string }[] = [{ id: "settings", label: "설정" }, { id: "help", label: "도움말" }, { id: "licenses", label: "오픈소스" }]
+  const tabs: readonly { id: Tab; label: string }[] = [{ id: "settings", label: "설정" }, { id: "shop", label: "상점" }, { id: "help", label: "도움말" }, { id: "licenses", label: "오픈소스" }]
+  const medals = medalsOf(progress)
+  const balance = medalBalance(medals)
   return <div className="treadmill-game__sheet-backdrop" onClick={event => { if (event.target === event.currentTarget) onClose() }}
     onKeyDown={event => { if (event.key === "Escape") { event.stopPropagation(); onClose() } }}>
     <section className="treadmill-game__sheet" role="dialog" aria-modal="true" aria-labelledby="treadmill-menu-title">
@@ -195,6 +206,24 @@ export function GameMenu({ progress, status, onClose, onSettings, onCharacter, o
         {resetMessage && <p className="treadmill-game__fine" role="status">{resetMessage}</p>}
       </div>}
 
+      {tab === "shop" && <div role="tabpanel" id="treadmill-panel-shop" aria-labelledby="treadmill-tab-shop" className="treadmill-game__panel">
+        <p className="treadmill-game__shop-balance"><b aria-hidden="true">🏅</b><strong>{balance}</strong><span>메달 · 모은 메달 {medalsEarned(medals)}개</span></p>
+        <p className="treadmill-game__fine">한 판(8초 이상)을 하면 결과와 상관없이 메달 {MINIGAME_REWARD_RULES.medalsPerRun}개, 하루 {MINIGAME_REWARD_RULES.runMedalsPerDay}개까지. 오늘 {Math.max(0, runMedalsLeftToday(medals, new Date()))}개 더 받을 수 있어요. 메달은 게임 꾸미기에만 쓰고 포인트(P)·현금으로 바꿀 수 없어요.</p>
+        <h3>달리기 효과</h3>
+        <ul className="treadmill-game__shop">
+          {TRAIL_ITEMS.map(item => {
+            const owned = medals.owned.includes(item.id), equipped = medals.trail === item.id
+            return <li key={item.id} data-trail={item.id} data-owned={owned || undefined}>
+              <span><strong>{item.name}</strong><small>{item.line}</small></span>
+              {owned
+                ? <button type="button" className="treadmill-game__ghost" aria-pressed={equipped} onClick={() => onEquip(equipped ? null : item.id)}>{equipped ? "장착 중" : "장착"}</button>
+                : <button type="button" className="treadmill-game__ghost" disabled={balance < item.price} onClick={() => onBuy(item.id)} aria-label={`${item.name} 메달 ${item.price}개로 열기`}><b aria-hidden="true">🏅</b>{item.price}</button>}
+            </li>
+          })}
+        </ul>
+        <p className="treadmill-game__fine">효과는 모습만 바꿔요. 속도·점프·판정은 그대로예요.</p>
+      </div>}
+
       {tab === "help" && <div role="tabpanel" id="treadmill-panel-help" aria-labelledby="treadmill-tab-help" className="treadmill-game__panel treadmill-game__help">
         <h3>목표</h3>
         <p>각 도시는 10초짜리 구간 세 개예요. 바닥은 계속 뒤로 흐르니, 뒤쪽 끝으로 밀려 떨어지지 않게 버티면 완주예요.</p>
@@ -222,6 +251,8 @@ export function GameMenu({ progress, status, onClose, onSettings, onCharacter, o
           <li>도시를 완주하면 다음 도시가 열려요. 부산을 완주하면 시즌 2 월드 투어가 열려요.</li>
           <li>도시 완주와 별 개수로 캐릭터가 열려요. 캐릭터는 모습만 달라요.</li>
           <li>도시가 뒤로 갈수록 바닥이 조금 빨라지고 장애물이 늘어요.</li>
+          <li>2·3구간에서 떨어지면 그 구간부터 다시 할 수 있어요. 강화는 그대로, 그 판의 별은 1개까지예요.</li>
+          <li>메달 🏅은 결과와 상관없이 한 판에 1개(하루 5개). 상점의 달리기 효과에 써요.</li>
         </ul>
         <h3>훈련과의 관계</h3>
         <p><Zap size={12} aria-hidden="true" /> 게임 에너지·점수·별은 게임 안에서만 쓰여요. 실제 훈련 기록·몸 상태·포인트(P)를 읽거나 바꾸지 않아요.</p>
@@ -229,6 +260,7 @@ export function GameMenu({ progress, status, onClose, onSettings, onCharacter, o
 
       {tab === "licenses" && <div role="tabpanel" id="treadmill-panel-licenses" aria-labelledby="treadmill-tab-licenses" className="treadmill-game__panel">
         <p>이 게임의 캐릭터·도시·랜드마크 그림과 효과음은 TrainOracle이 코드로 직접 그리거나 합성했어요. 실제 건축물은 단순한 실루엣으로만 표현했어요. 아래 오픈소스를 사용해요.</p>
+        <p className="treadmill-game__fine">달리기 동작 참고: Eadweard Muybridge, 《Animal Locomotion》 Plate 65 “Running full speed”(1887), 퍼블릭 도메인 · Boston Public Library / <a href="https://commons.wikimedia.org/wiki/File:Animal_locomotion._Plate_65_(Boston_Public_Library).jpg" target="_blank" rel="noreferrer">Wikimedia Commons</a>. 사진을 옮기지 않고 관절 각도만 참고했어요.</p>
         <ul className="treadmill-game__licenses">
           {LICENSES.map(item => <li key={item.name}>
             <strong>{item.name} <small>{item.version}</small></strong>

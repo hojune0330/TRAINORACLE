@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { minigameProgressSchema } from "../minigame/progress"
+import { emptyMedals, medalsGrewFrom } from "../minigame/rewards"
 
 /**
  * Account copy of the minigame tour. Game-only: no training, health or reward fields,
@@ -24,8 +25,10 @@ export function validateAccountMinigameProgressUpdate(previous: unknown, next: u
   const before = accountMinigameProgressDocumentSchema.safeParse(previous)
   const after = accountMinigameProgressDocumentSchema.safeParse(next)
   if (!before.success || !after.success) return false
-  return Object.entries(before.data.data.cities).every(([id, city]) => {
+  const citiesKept = Object.entries(before.data.data.cities).every(([id, city]) => {
     const now = after.data.data.cities[id]
     return now !== undefined && now.stars >= city.stars && now.bestScore >= city.bestScore && now.clears >= city.clears
   })
+  // Medals earned and items owned only grow too; dropping them is a reset (delete), not an update.
+  return citiesKept && medalsGrewFrom(before.data.data.medals ?? emptyMedals(), after.data.data.medals ?? emptyMedals())
 }
