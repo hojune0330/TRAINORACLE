@@ -44,6 +44,7 @@ type IntakeDraft = Partial<PlanBetaIntake>
 type PlanIntakeProps = {
   readonly step: IntakeStep
   readonly motion?: "initial" | "forward" | "backward" | "replace"
+  readonly answerActivation?: Pick<React.HTMLAttributes<HTMLElement>, "onClickCapture" | "onKeyDownCapture">
   readonly draft: IntakeDraft
   readonly questionRef?: React.RefObject<HTMLHeadingElement>
   readonly canGoBack?: boolean
@@ -74,6 +75,7 @@ type PlanIntakeProps = {
 export function PlanIntake({
   step,
   motion = "initial",
+  answerActivation,
   draft,
   questionRef,
   canGoBack = true,
@@ -188,7 +190,8 @@ export function PlanIntake({
       )}
       {step !== "preview" && (
         <div
-          className={`plan-choice-list${(isQuickStep && step !== "days") || step === "division" || step === "focus" ? " plan-choice-list--cards" : ""}${step === "goal" ? " plan-choice-list--goals" : ""}${step === "days" ? " plan-choice-list--days" : ""}`}
+          {...answerActivation}
+          className={`plan-choice-list app-choice-group${(isQuickStep && step !== "days") || step === "division" || step === "focus" ? " plan-choice-list--cards" : ""}${step === "goal" ? " plan-choice-list--goals" : ""}${step === "days" ? " plan-choice-list--days" : ""}`}
           role={hasSingleChoiceQuestion ? "group" : undefined}
           aria-label={step === "goal" ? "계획 종목 선택" : step === "days" ? "운동할 날 선택" : hasSingleChoiceQuestion ? meta.title : undefined}
           aria-describedby={hasSingleChoiceQuestion ? choiceAdvanceHintId : undefined}
@@ -281,9 +284,10 @@ export function PlanIntake({
         {step === "days" && (
           ([3, 4, 5, 6, "EVERY_DAY"] as const).map((days) => (
             <button
+              data-auto-advance
               key={days}
               type="button"
-              className="plan-day-choice"
+              className="plan-day-choice app-choice-control app-choice-control--answer"
               aria-pressed={draft.availableDayCount === days}
               onClick={() => onDays(days)}
             >{days === "EVERY_DAY" ? "매일" : `${days}일`}</button>

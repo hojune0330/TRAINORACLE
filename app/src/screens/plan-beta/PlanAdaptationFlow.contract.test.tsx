@@ -147,7 +147,7 @@ describe("next-frame adaptation flow", () => {
     expect(screen.getByText("현재 계획에 연결된 훈련 1건")).toBeVisible()
     await user.click(screen.getByText("훈련별 비교 근거 1건"))
     expect(screen.getByText("변경 전 계획의 같은 훈련 기준")).toBeVisible()
-    expect(screen.getByText(/직접 기록 RPE 3/u)).toBeVisible()
+    expect(screen.getByText(/실제 힘든 정도 3\/10 · 직접 입력/u)).toBeVisible()
     expect(screen.queryByRole("button", { name: "이 다음 계획 선택하기" })).toBeNull()
   })
 

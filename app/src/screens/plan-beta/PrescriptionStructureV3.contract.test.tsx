@@ -34,7 +34,7 @@ it("shows main work first while preserving support, recoveries and the complete 
   const sequence: PrescriptionSequenceV3 = { kind: "PRESCRIPTION_SEQUENCE", version: 3, id: "SYNTHETIC", label: null,
     warmup: [part("warm", 60)], main: [part("main", 120)], cooldown: [part("cool", 90)] }
   render(<PrescriptionStructureV3 sequence={sequence} compact collapseSupport />)
-  expect(screen.getByText("2 × 2min @ 합성 시험 · r30s Walk")).toBeVisible()
+  expect(screen.getByText("2 × 2분 · 합성 시험 · 반복 사이 30초 걷기")).toBeVisible()
   expect(screen.getAllByLabelText("계획된 전체 시간")[0]).toHaveTextContent("총 10분 30초")
   const support = screen.getByText("자세히 보기 · 준비부터 정리까지").closest("details")!
   expect(support).not.toHaveAttribute("open")

@@ -39,7 +39,7 @@ export function PlanSessionTargetPicker({ targets, selected, startDate, onChange
       <button type="button" className="plan-text-action" onClick={() => { onChange(draft); setDraft(null) }}>이 날짜에 적용</button>
       <button type="button" className="plan-text-action" onClick={() => setDraft(null)}>변경 취소</button>
     </div>}
-    <p id={`${id}-help`}>고른 날의 주요 훈련에 상세 방법을 적용해요. 현재는 계획당 한 번 적용하며, 다른 날의 시간·RPE 안내는 유지해요.</p>
+    <p id={`${id}-help`}>고른 날의 주요 훈련 한 번에 적용해요. 다른 날의 시간·힘든 정도는 그대로예요.</p>
   </details>
 }
 

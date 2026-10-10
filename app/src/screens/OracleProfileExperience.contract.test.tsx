@@ -18,8 +18,24 @@ function props(extra: Partial<OracleProfileExperienceProps> = {}): OracleProfile
 beforeEach(() => { HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", "") } })
 afterEach(cleanup)
 const dialog = () => screen.getByRole("dialog", { hidden: true })
-const openSettings = () => fireEvent.click(screen.getByRole("button", { name: "마리·친구·프로필 설정" }))
+const openSettings = () => fireEvent.click(screen.getByRole("button", { name: "프로필 설정·추가 정보" }))
 const openTopics = () => fireEvent.click(screen.getByText("전체 주제·다른 글"))
+it("offers friend comparison directly without opening profile settings", () => {
+  const p = props()
+  render(<OracleProfileExperience {...p} />)
+  fireEvent.click(screen.getByRole("button", { name: "친구와 취향 비교" }))
+  expect(p.onNavigate).toHaveBeenCalledWith("FRIENDS")
+  expect(screen.queryByRole("dialog")).toBeNull()
+})
+it("resets the question reader scroll when moving to another question of the same axis", () => {
+  render(<OracleProfileExperience {...props()} />)
+  fireEvent.click(screen.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" }))
+  const body = dialog().querySelector<HTMLElement>(".oracle-v2__reader-body")!
+  body.scrollTop = 300
+  fireEvent.click(within(dialog()).getByRole("button", { name: "매우 그래요" }))
+  expect(body.scrollTop).toBe(0)
+  expect(within(dialog()).getByRole("heading", { level: 1 })).toHaveFocus()
+})
 
 it("shows a complete six-axis chart without treating optional strength preferences as radar axes", () => {
   const answers = Object.fromEntries(ORACLE_QUESTIONS.map(q => [q.id, q.axisId === "INTENSITY" ? 1 : 4]))
@@ -132,14 +148,14 @@ it("reads an existing article first and resumes the last opened article without 
   fireEvent.click(within(featured).getByText("이 풀이의 기준과 한계"))
   expect(within(featured).getByText("이 글의 한계")).toBeVisible()
 })
-it("prioritizes the first survey and preserves manager and friend actions in a named profile menu", () => {
+it("prioritizes the first survey, exposes comparison and preserves manager actions in settings", () => {
   const p = props()
   render(<OracleProfileExperience {...p} />)
   expect(screen.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" })).toBeVisible()
   expect(screen.queryByRole("navigation", { name: "러닝 취향 보기" })).toBeNull()
-  expect(screen.queryByRole("button", { name: "친구와 취향 비교" })).toBeNull()
+  expect(screen.getByRole("button", { name: "친구와 취향 비교" })).toBeVisible()
   openSettings()
-  for (const name of ["내 훈련 해설", "친구와 취향 비교"]) {
+  for (const name of ["내 훈련 해설"]) {
     const button = screen.getByRole("button", { name })
     expect(button).toBeVisible()
     expect(button.closest("details")).toBeNull()
@@ -148,6 +164,7 @@ it("prioritizes the first survey and preserves manager and friend actions in a n
   fireEvent.click(screen.getByText("기록·계획 해설"))
   expect(screen.getByRole("button", { name: "내 기록 해설" })).toBeVisible()
   expect(screen.getByRole("button", { name: "계획·수행 비교" })).toBeVisible()
+  fireEvent.click(within(dialog()).getByRole("button", { name: "닫기" }))
   fireEvent.click(screen.getByRole("button", { name: "친구와 취향 비교" }))
   expect(p.onNavigate).toHaveBeenCalledWith("FRIENDS")
 })

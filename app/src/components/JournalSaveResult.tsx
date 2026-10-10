@@ -54,7 +54,7 @@ export function JournalSaveResult({ result, onClose, onOpenSaved, onDecorateSave
         <div className="journal-save-result__intro-copy">
           <div className="journal-save-result__mark" aria-hidden="true" data-storage-state={confirmed ? "confirmed" : "pending"}>{confirmed ? <Check size={20} /> : <Clock3 size={20} />}</div>
           {needsReview
-            ? <p role="alert">분석 결과를 확인해야 해요. {result.reviewMessage}</p>
+            ? <p role="alert">{result.reviewMessage}</p>
             : result.receipt.kind !== "generic" && <p>{presentation.detail}</p>}
         </div>
       </div>}

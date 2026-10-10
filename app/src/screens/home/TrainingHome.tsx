@@ -10,7 +10,7 @@ import type { LogEntryType } from "../log-entry/shared"
 import "../../styles/home-hub.css"
 
 export function nextTrainingPrescriptionLabel(session: HomeSession): string {
-  return sessionWorkoutNotation(session)
+  return sessionWorkoutNotation(session, "PLAIN")
 }
 
 type TrainingHomeProps = {

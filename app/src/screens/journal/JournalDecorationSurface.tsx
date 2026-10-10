@@ -833,7 +833,7 @@ function JournalDecorationSurfaceSession({
         {target === "JOURNAL" && selectedIndex === null && !drawerOpen && !preview && !textSheet && !notice && !saving && !leave
           && (!accountDecorationsEnabled() || accountAuthState() === "ACCOUNT" && ["READY", "EMPTY"].includes(accountStatus))
           && <ContextualIllustration image="decorating-kit-v2" />}
-      </div><div role="group" aria-label="꾸밀 대상"><button type="button" aria-pressed={target === "JOURNAL"} onClick={() => switchTarget("JOURNAL")}>일지</button><button type="button" aria-pressed={target === "CALENDAR"} onClick={() => switchTarget("CALENDAR")}>달력</button></div>{target === "CALENDAR" && <button type="button" aria-label="꾸미기 완료" onClick={() => requestLeave(close)}>완료</button>}</header>}
+      </div><div className="app-choice-group" role="group" aria-label="꾸밀 대상"><button className="app-choice-control" type="button" aria-pressed={target === "JOURNAL"} onClick={() => switchTarget("JOURNAL")}>일지</button><button className="app-choice-control" type="button" aria-pressed={target === "CALENDAR"} onClick={() => switchTarget("CALENDAR")}>달력</button></div>{target === "CALENDAR" && <button type="button" aria-label="꾸미기 완료" onClick={() => requestLeave(close)}>완료</button>}</header>}
       {accountDecorationsEnabled() && <div role="status" className="account-storage-status">
         {accountAuthState() === "RESOLVING" ? "로그인 상태를 확인하고 있어요." : accountAuthState() === "FAILED" ? "로그인 상태를 확인하지 못했어요. 게스트 장부로 전환하지 않았어요." : saving ? "꾸미기 저장 중" : accountStatus === "READY" ? "계정 꾸미기" : accountStatus === "EMPTY" ? "계정에 저장된 꾸미기가 없어요." : accountStatus === "PENDING"
           ? "연결되면 계정에 저장해요" : accountStatus === "CONFLICT" ? "다른 기기의 꾸미기와 달라요. 두 내용을 확인해 주세요."

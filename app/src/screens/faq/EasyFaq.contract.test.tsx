@@ -87,15 +87,25 @@ describe("easy FAQ", () => {
 
   it("separates what a free beta reader can use today from features still being prepared", async () => {
     const user = userEvent.setup()
-    render(<EasyFaq />)
+    render(<EasyFaq feedbackAvailable={false} />)
 
     await user.click(screen.getByText("지금 무엇을 할 수 있나요?"))
     expect(screen.getByText(/오늘의 일지, 달력과 9.5일 보기, 지난 일지, 백업·복원, 꾸미기를 사용할 수 있어요/u)).toBeVisible()
 
     await user.click(screen.getByText("아직 준비 중인 기능은 무엇인가요?"))
     expect(screen.getByText(/계정 동기화, 코치 연결, 사용자가 확인하지 않은 자동 계획 변경은 아직 열지 않았어요/u)).toBeVisible()
-    expect(screen.getByText(/문의 게시판은 지금 사용할 수 있어요/u)).toBeVisible()
+    expect(screen.getByText(/문의 게시판은 지금 준비 중이에요. 열리면 앱 안에서 알려드릴게요./u)).toBeVisible()
     expect(screen.getByText(/새 기능을 열기 전에는 앱에서 먼저 알려드려요/u)).toBeVisible()
+  })
+
+  it("does not promise that a configured feedback board is currently reachable", async () => {
+    const user = userEvent.setup()
+    render(<EasyFaq feedbackAvailable />)
+
+    await user.click(screen.getByText("아직 준비 중인 기능은 무엇인가요?"))
+
+    expect(screen.getByText(/문의 게시판에 의견을 남겨 주세요./u)).toBeVisible()
+    expect(screen.queryByText(/문의 게시판은 지금 사용할 수 있어요/u)).toBeNull()
   })
 
   it("describes account, coach sharing, and plan features as closed when they are closed", async () => {

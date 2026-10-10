@@ -68,9 +68,9 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
         </div>
       </div>
 
-      {(personalResult || personalResultUnavailable) && <div className="oracle-explore__modes" role="group" aria-label="결과 종류">
-        <button type="button" aria-pressed={mode === "personal"} onClick={() => selectMode("personal")}>내 기록</button>
-        <button type="button" aria-pressed={mode === "example"} onClick={() => selectMode("example")}>예시</button>
+      {(personalResult || personalResultUnavailable) && <div className="oracle-explore__modes app-choice-group" role="group" aria-label="결과 종류">
+        <button className="app-choice-control" type="button" aria-pressed={mode === "personal"} onClick={() => selectMode("personal")}>내 기록</button>
+        <button className="app-choice-control" type="button" aria-pressed={mode === "example"} onClick={() => selectMode("example")}>예시</button>
       </div>}
       </div>
 

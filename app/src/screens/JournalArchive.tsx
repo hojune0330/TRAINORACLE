@@ -29,12 +29,13 @@ import { CalendarDecorationFrame } from "../components/CalendarDecorationFrame"
 import { useCalendarDecorationState } from "../components/calendar/useCalendarDecorationState"
 import type { DecorationId } from "../domain/decoration-catalog"
 import { useJournalDecorationSnapshot } from "./journal/JournalDecorationPreview"
+import { validJournalCalendarReturn, type JournalCalendarReturn, type OpenJournalDay } from "../navigation/readerPosition"
 
 export type JournalArchiveProps = {
   readonly entries: readonly JournalEntry[]
   readonly selection: ArchiveSelection
   readonly onSelectionChange: (selection: ArchiveSelection) => void
-  readonly onOpenDay: (date: string) => void
+  readonly onOpenDay: OpenJournalDay
   readonly onBack: () => void
   readonly onWriteLog?: (() => void) | undefined
   readonly onWriteDate?: (date: string) => void
@@ -46,6 +47,8 @@ export type JournalArchiveProps = {
   readonly onModeChange?: (mode: "CALENDAR" | "CYCLE") => void
   readonly onCycleAnchorChange?: (anchor: string) => void
   readonly onCycleIndexChange?: (index: number) => void
+  readonly calendarReturn?: JournalCalendarReturn | null
+  readonly onCalendarReturnConsumed?: () => void
 }
 
 export function JournalArchive({
@@ -62,6 +65,8 @@ export function JournalArchive({
   onModeChange,
   onCycleAnchorChange,
   onCycleIndexChange,
+  calendarReturn,
+  onCalendarReturnConsumed,
   readiness = "READY",
   onRetry,
 }: JournalArchiveProps) {
@@ -81,6 +86,10 @@ export function JournalArchive({
   const latest = recentCalendarDate(dates, today)
   const nav = useCalendarPosition("journal", selection.selectedMonth ? `${selection.selectedMonth}-01` : latest ?? today, readiness === "READY")
   const displayedMonth = nav.month
+  React.useLayoutEffect(() => {
+    const returned = validJournalCalendarReturn(calendarReturn, entries)
+    if (returned && activeMode === "CALENDAR" && (nav.date !== returned.date || nav.month !== returned.date.slice(0, 7))) nav.selectDate(returned.date)
+  }, [calendarReturn, entries, activeMode, nav.date, nav.month, nav.selectDate])
   const [emptyView, setEmptyView] = React.useState<"teaser" | "example" | "calendar">("teaser")
   const unconfirmedEmpty = readiness !== "READY" && entries.length === 0
     && !(activeMode === "CALENDAR" && emptyView === "example")
@@ -181,7 +190,7 @@ export function JournalArchive({
           index={cycleIndex}
           onAnchorChange={onCycleAnchorChange}
           onIndexChange={onCycleIndexChange}
-          onOpenDay={onOpenDay}
+          onOpenDay={(date, entryId?: string) => onOpenDay(date, entryId)}
           onWriteLog={onWriteLog}
           onWriteDate={onWriteDate}
           readiness={readiness}
@@ -212,9 +221,11 @@ export function JournalArchive({
             {dates.length > 0 && !latest && <span>미래 날짜의 기록이 있어요.</span>}
           </div>
           {calendarDecorationState === null ? <JournalMonthCalendar month={calendarMonth} entries={entries} onOpenDay={onOpenDay} onWriteDate={onWriteDate}
+            calendarReturn={calendarReturn} onCalendarReturnConsumed={onCalendarReturnConsumed}
             selectedDate={nav.date} onSelectedDateChange={nav.selectDate} onMonthChange={nav.selectMonth} /> :
             <CalendarDecorationFrame state={calendarDecorationState} allowedItemIds={allowedCalendarDecorationIds}>
               <JournalMonthCalendar month={calendarMonth} entries={entries} onOpenDay={onOpenDay} onWriteDate={onWriteDate}
+                calendarReturn={calendarReturn} onCalendarReturnConsumed={onCalendarReturnConsumed}
                 selectedDate={nav.date} onSelectedDateChange={nav.selectDate} onMonthChange={nav.selectMonth} />
             </CalendarDecorationFrame>}
           {entries.length === 0 && readiness === "READY" && <button type="button" className="calendar-range-return" onClick={() => setEmptyView("example")}>일지가 쌓인 예시 보기</button>}

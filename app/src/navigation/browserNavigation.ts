@@ -165,8 +165,21 @@ export function consumeBrowserBackLayer(event: PopStateEvent): boolean {
   const departed = previousMarker === null ? undefined : layers.get(previousMarker)
   observedLayer = nextMarker
 
-  if (pendingBackLayerId !== null && previousMarker === pendingBackLayerId && nextMarker !== pendingBackLayerId) {
+  if (pendingBackLayerId !== null && previousMarker === pendingBackLayerId) {
     consume()
+    // A child may inherit a marker, or replace a flow before its old sentinel
+    // departs. Drain only owned, completed sentinels; stop at a live parent or
+    // ordinary shell history. Never replay callbacks or release a new reader
+    // until the whole obsolete chain has departed.
+    const nextLayer = nextMarker === null ? undefined : layers.get(nextMarker)
+    if (nextMarker === pendingBackLayerId || (nextLayer?.ownsEntry && !nextLayer.active)) {
+      const prior = layers.get(pendingBackLayerId)
+      if (prior !== undefined) prior.pendingBack = false
+      pendingBackLayerId = nextMarker
+      if (nextLayer !== undefined) nextLayer.pendingBack = true
+      window.history.back()
+      return true
+    }
     const pending = layers.get(pendingBackLayerId)
     if (pending !== undefined) pending.pendingBack = false
     pendingBackLayerId = null

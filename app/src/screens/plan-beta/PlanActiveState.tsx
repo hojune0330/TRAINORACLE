@@ -79,6 +79,11 @@ export function PlanActiveState({
   const [executionMessage, setExecutionMessage] = React.useState<string | null>(null)
   const [executionBlocked, setExecutionBlocked] = React.useState(false)
   const [editing, setEditing] = React.useState<ActivePlanEditIntent | "hub" | null>(null)
+  const [creationCelebrationConsumed, setCreationCelebrationConsumed] = React.useState(false)
+  const consumeCreationCelebration = React.useCallback(() => setCreationCelebrationConsumed(true), [])
+  React.useEffect(() => {
+    if (!celebrateOnMount) setCreationCelebrationConsumed(false)
+  }, [celebrateOnMount])
   const editingChangeRef = React.useRef(onEditingChange)
   editingChangeRef.current = onEditingChange
   React.useLayoutEffect(() => { editingChangeRef.current?.(editing !== null) }, [editing])
@@ -295,7 +300,8 @@ export function PlanActiveState({
         state={state}
         cloudPersistence={cloudPersistence}
         onRetryCloudBackup={onRetryCloudBackup}
-        showCreatedCelebration={celebrateOnMount}
+        showCreatedCelebration={celebrateOnMount && !creationCelebrationConsumed}
+        onCreatedCelebrationConsumed={consumeCreationCelebration}
         onProgress={saveProgress}
         onNextFrame={() => void startNextFrame()}
         onActivateNextFrame={(nextCurrentCheck) => void activateNextFrame(nextCurrentCheck)}

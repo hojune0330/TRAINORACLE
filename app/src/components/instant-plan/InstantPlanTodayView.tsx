@@ -128,10 +128,10 @@ export function InstantPlanTodayView({
         <div className="instant-plan__sessions">
           {hasMultipleSessions ? (
             <>
-              <div className="instant-plan__session-picker" role="group" aria-label="오늘 세션 선택">
+              <div className="instant-plan__session-picker app-choice-group" role="group" aria-label="오늘 세션 선택">
                 {today.sessions.map(session => (
                   <button
-                    className="instant-plan__session-summary"
+                    className="instant-plan__session-summary app-choice-control"
                     type="button"
                     key={session.id}
                     aria-pressed={session.id === selectedSessionId}

@@ -1,5 +1,5 @@
 import React from "react"
-import { ArrowLeft, BookOpen, Calculator, CircleHelp, DatabaseBackup, Flag, MessageSquareText, Newspaper, ScrollText, ShieldCheck, Sticker, Trash2, UserRound, Watch } from "lucide-react"
+import { ArrowLeft, BookOpen, Calculator, ChevronRight, CircleHelp, DatabaseBackup, Flag, MessageSquareText, Newspaper, ScrollText, ShieldCheck, Sticker, Trash2, UserRound, Watch } from "lucide-react"
 import { DataSafetyNotice } from "../components/DataSafetyNotice"
 import { feedbackConfig } from "../domain/feedback/feedback-config"
 import { SafeJournalExport } from "./home/DeviceJournal"
@@ -7,6 +7,8 @@ import { InstallShortcutMenuEntry } from "../components/InstallShortcut"
 import { TrashBin } from "./home/TrashBin"
 import { loadTrash } from "../domain/journal-trash"
 import "../styles/home-menu.css"
+import { captureReaderPosition, restoreReaderPosition, type ReaderPosition } from "../navigation/readerPosition"
+import { useNavigationReturnFrame } from "../hooks/useNavigationReturnFrame"
 
 export type MoreView = "tools" | "learning" | "account" | "backup" | "about"
 
@@ -57,16 +59,24 @@ export function More({
   const [internalView, setInternalView] = React.useState<MoreView>("tools")
   const activeView = view ?? internalView
   const heading = React.useRef<HTMLHeadingElement>(null)
-  const previousView = React.useRef(activeView)
+  const previousView = React.useRef<MoreView | null>(null)
+  const menuReturn = React.useRef<ReaderPosition | null>(null)
+  const { schedule } = useNavigationReturnFrame()
+  const readerRegion = () => heading.current?.closest<HTMLElement>(".app-scroll-region") ?? heading.current?.closest<HTMLElement>(".more-screen") ?? null
   const changeView = (next: MoreView) => {
+    if (activeView === "tools" && next !== "tools") menuReturn.current = captureReaderPosition(readerRegion())
     setInternalView(next)
     onViewChange?.(next)
   }
   React.useEffect(() => {
     if (previousView.current === activeView) return
     previousView.current = activeView
-    heading.current?.focus()
-  }, [activeView])
+    if (activeView === "tools" && menuReturn.current) {
+      const position = menuReturn.current
+      menuReturn.current = null
+      schedule(() => restoreReaderPosition(readerRegion(), position))
+    } else heading.current?.focus({ preventScroll: true })
+  }, [activeView, schedule])
   const [trashCount, setTrashCount] = React.useState(() => loadTrash().length)
   return (
     <div className="more-screen">
@@ -96,7 +106,7 @@ export function More({
         {onOpenContent && <UtilityRow icon={Newspaper} label="훈련법 읽기" onClick={onOpenContent} />}
         {onOpenRewards && <>
           <h2 className="more-screen__group-label">일지 꾸미기</h2>
-          <UtilityRow icon={Sticker} label="일지 꾸미기·포인트" onClick={onOpenRewards} />
+          <UtilityRow icon={Sticker} label="일지 꾸미기" detail="달력 꾸미기 · 포인트는 재료에서 확인" onClick={onOpenRewards} />
         </>}
         <h2 className="more-screen__group-label">관리·도움말</h2>
         <UtilityRow icon={UserRound} label={VIEW_TITLES.account} onClick={() => changeView("account")} />
@@ -107,7 +117,7 @@ export function More({
         <UtilityRow icon={BookOpen} label="민지의 예시 일지" onClick={onOpenMinji} />
         <UtilityRow icon={CircleHelp} label="훈련 용어집·도움말" onClick={onOpenGuide} />
         {onOpenContent !== undefined && <UtilityRow icon={Newspaper} label="훈련법 읽기" onClick={onOpenContent} />}
-        {onOpenRewards !== undefined && <UtilityRow icon={Sticker} label="일지 꾸미기·포인트" onClick={onOpenRewards} />}
+        {onOpenRewards !== undefined && <UtilityRow icon={Sticker} label="일지 꾸미기" detail="달력 꾸미기 · 포인트는 재료에서 확인" onClick={onOpenRewards} />}
         </>}
         {activeView === "account" && <>
         {onOpenAccount && <UtilityRow icon={UserRound} label="계정 저장 상태 확인" onClick={onOpenAccount} />}
@@ -159,10 +169,12 @@ function UtilityRow({ icon: Icon, label, detail, onClick }: {
   readonly detail?: string
   readonly onClick: () => void
 }) {
+  const descriptionId = React.useId()
   return (
-    <button className="more-screen__row" type="button" onClick={onClick} aria-label={label}>
+    <button className="more-screen__row app-choice-control" type="button" onClick={event => { event.currentTarget.focus({ preventScroll: true }); onClick() }} aria-label={label} aria-describedby={detail ? descriptionId : undefined}>
       <Icon aria-hidden="true" size={19} />
-      <span><strong>{label}</strong>{detail && <small>{detail}</small>}</span>
+      <span><strong>{label}</strong>{detail && <small id={descriptionId}>{detail}</small>}</span>
+      <ChevronRight aria-hidden="true" size={18} />
     </button>
   )
 }

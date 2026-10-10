@@ -140,9 +140,10 @@ function TagGroup<T extends string>({
   return (
     <div className="daily-context__group" role="group" aria-label={title}>
       <span className="daily-context__label">{title}</span>
-      <div>
+      <div className="app-choice-group">
         {values.map((item) => (
           <button
+            className="app-choice-control"
             type="button"
             disabled={disabled}
             aria-label={`${title} ${item.label}`}

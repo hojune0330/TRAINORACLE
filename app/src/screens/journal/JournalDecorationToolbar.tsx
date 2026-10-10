@@ -620,7 +620,7 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
     <>
       {!props.calendarMode && <header className="journal-decoration-editor__topbar" data-decoration-interaction="true">
         <button ref={closeButtonRef} type="button" onClick={props.onClose} aria-label="꾸미기 편집기 닫기" title="닫기"><X aria-hidden="true" size={18} /></button>
-        <span><small>끌어 옮기고 모서리로 크기를 조절해요.</small></span>
+        <span><small>{!props.hasEntries ? "일지를 저장하면 그림을 붙일 수 있어요." : props.placementCount > 0 ? "끌어 옮기고 모서리로 크기를 조절해요." : "재료에서 종이와 그림을 골라요."}</small></span>
         <div className="journal-decoration-editor__topbar-actions">
           {props.canUndo && (
             <button type="button" onClick={props.onUndo} aria-label="꾸미기 되돌리기" title="되돌리기"><Undo2 aria-hidden="true" size={18} /></button>
@@ -634,15 +634,15 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
 
       {props.notice !== "" && <p className="journal-decoration-editor__notice" role="status" aria-live="polite">{props.notice}</p>}
 
-      {!props.calendarMode && <nav className="journal-decoration-editor__dock" aria-label="일지 꾸미기 도구" data-decoration-interaction="true">
-        <button type="button" aria-label="모든 꾸미기 도구" aria-pressed={props.drawerOpen && toolFilter === "ALL"} onClick={() => chooseTool("ALL")}><LayoutGrid aria-hidden="true" size={19} /><span>전체</span></button>
-        <button type="button" aria-label="꾸미기 재료 도구" aria-pressed={props.drawerOpen && toolFilter === "MATERIALS"} onClick={() => chooseTool("MATERIALS")}><Sticker aria-hidden="true" size={19} /><span>재료</span></button>
-        <button type="button" aria-label="이모지 스티커 도구" aria-pressed={props.drawerOpen && toolFilter === "EMOJI_STICKER"} onClick={() => chooseTool("EMOJI_STICKER")}><Smile aria-hidden="true" size={19} /><span>이모지</span></button>
+      {!props.calendarMode && <nav className="journal-decoration-editor__dock app-choice-group" aria-label="일지 꾸미기 도구" data-decoration-interaction="true">
+        <button className="app-choice-control" type="button" aria-label="모든 꾸미기 도구" aria-pressed={props.drawerOpen && toolFilter === "ALL"} onClick={() => chooseTool("ALL")}><LayoutGrid aria-hidden="true" size={19} /><span>전체</span></button>
+        <button className="app-choice-control" type="button" aria-label="꾸미기 재료 도구" aria-pressed={props.drawerOpen && toolFilter === "MATERIALS"} onClick={() => chooseTool("MATERIALS")}><Sticker aria-hidden="true" size={19} /><span>재료</span></button>
+        <button className="app-choice-control" type="button" aria-label="이모지 스티커 도구" aria-pressed={props.drawerOpen && toolFilter === "EMOJI_STICKER"} onClick={() => chooseTool("EMOJI_STICKER")}><Smile aria-hidden="true" size={19} /><span>이모지</span></button>
         {props.onOpenTextSticker !== undefined && (
-          <button type="button" aria-label="글 스티커 도구" onClick={props.onOpenTextSticker}><Type aria-hidden="true" size={19} /><span>글</span></button>
+          <button className="app-choice-control" type="button" aria-label="글 스티커 도구" onClick={props.onOpenTextSticker}><Type aria-hidden="true" size={19} /><span>글</span></button>
         )}
-        {!props.drawerOpen && <button type="button" aria-label="페이지 테마 도구" onClick={() => chooseTool("THEME")}><BookOpen aria-hidden="true" size={19} /><span>테마</span></button>}
-        {!props.drawerOpen && <button type="button" aria-label="글자색 도구" onClick={() => chooseTool("INK")}><PenLine aria-hidden="true" size={19} /><span>글자색</span></button>}
+        {!props.drawerOpen && <button className="app-choice-control" type="button" aria-label="페이지 테마 도구" onClick={() => chooseTool("THEME")}><BookOpen aria-hidden="true" size={19} /><span>테마</span></button>}
+        {!props.drawerOpen && <button className="app-choice-control" type="button" aria-label="글자색 도구" onClick={() => chooseTool("INK")}><PenLine aria-hidden="true" size={19} /><span>글자색</span></button>}
       </nav>}
 
       {!props.calendarMode && !props.drawerOpen && (props.selectedIndex !== null || props.clipboardAvailable) && (
@@ -684,11 +684,12 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
         </div>
 
         {openCollection === undefined && (
-          <div className="journal-decoration-toolbar__filters" role="group" aria-label="꾸미기 재료 종류">
+          <div className="journal-decoration-toolbar__filters app-choice-group" role="group" aria-label="꾸미기 재료 종류">
             {DRAWER_FILTERS.filter((filter) => props.calendarMode
               ? filter.id === "ALL" || calendarMaterialCategories.has(filter.id)
               : filter.id !== "ALL" && filter.id !== "EMOJI_STICKER").map((filter) => (
               <button
+                className="app-choice-control"
                 key={filter.id}
                 type="button"
                 aria-pressed={toolFilter === filter.id}

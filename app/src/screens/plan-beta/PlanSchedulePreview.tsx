@@ -487,7 +487,7 @@ export function PlanRpeGuide() {
         <li><b>9~10</b><span>거의 전력이에요</span></li>
       </ul>
       <details className="plan-rpe-guide__more">
-        <summary>RPE 단계 설명</summary>
+        <summary>힘든 정도 자세히 보기</summary>
         <span>
           1~2 회복 움직임 · 3~4 대화 가능한 쉬운 유산소 · 5 꾸준한 노력 · 6 짧은 문장만 가능 · 7 몇 마디만 가능 · 8 매우 힘든 짧은 반복 · 9 거의 최대인 짧은 노력 · 10 최대 노력에 가까운 느낌
         </span>

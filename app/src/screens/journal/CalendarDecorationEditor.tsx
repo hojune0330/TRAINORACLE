@@ -262,9 +262,9 @@ export const CalendarDecorationEditor = React.forwardRef<CalendarDecorationEdito
         </div>
       </div>
 
-      <div className="calendar-decoration-editor__regions" role="group" aria-label="장식할 여백">
-        <button type="button" disabled={saving || Boolean(disabledReason)} aria-pressed={region === "HEADER_MARGIN"} onClick={() => setRegion("HEADER_MARGIN")}>위쪽 여백 {countRegion(draft, "HEADER_MARGIN")}/{MAX_ITEMS_PER_REGION}</button>
-        <button type="button" disabled={saving || Boolean(disabledReason)} aria-pressed={region === "FOOTER_MARGIN"} onClick={() => setRegion("FOOTER_MARGIN")}>아래쪽 여백 {countRegion(draft, "FOOTER_MARGIN")}/{MAX_ITEMS_PER_REGION}</button>
+      <div className="calendar-decoration-editor__regions app-choice-group" role="group" aria-label="장식할 여백">
+        <button className="app-choice-control" type="button" disabled={saving || Boolean(disabledReason)} aria-pressed={region === "HEADER_MARGIN"} onClick={() => setRegion("HEADER_MARGIN")}>위쪽 여백 {countRegion(draft, "HEADER_MARGIN")}/{MAX_ITEMS_PER_REGION}</button>
+        <button className="app-choice-control" type="button" disabled={saving || Boolean(disabledReason)} aria-pressed={region === "FOOTER_MARGIN"} onClick={() => setRegion("FOOTER_MARGIN")}>아래쪽 여백 {countRegion(draft, "FOOTER_MARGIN")}/{MAX_ITEMS_PER_REGION}</button>
       </div>
 
       <div className="calendar-decoration-editor__materials">

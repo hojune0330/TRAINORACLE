@@ -98,7 +98,7 @@ export function AdjustedPlanNextFlowV3({ loaded, resolver, readEvidence, onBack,
       <p>{draft.continuity.nextStartDate} 시작 · 이전 주기 미기록 {draft.continuity.missingRequiredOutcomes}회</p>
       <p>연결된 일지 {draft.cycleResponse.linkedResultCount}건 · 겹친 기록 {draft.cycleResponse.conflictCount}건 · 연결 미확인 {draft.cycleResponse.rejectedLinkCount}건</p>
       <PlanCycleEvidence response={draft.cycleResponse} />
-      <p>현재 수정된 MAIN을 유지해요. 일지의 RPE를 처방 목표로 바꾸지 않아요.</p>
+      <p>수정한 주요 훈련은 유지해요. 일지에 남긴 힘든 정도를 다음 훈련의 목표로 쓰지 않아요.</p>
       <p>미기록은 완료로 계산하지 않아요. 이전 기록만으로 강도·양·횟수를 자동으로 늘리지 않아요.</p>
       <button type="button" onClick={() => { setDraft(null); setError(null) }}><ArrowLeft size={18} aria-hidden="true" />시작일·기록 다시 선택</button>
       {draft.draft.generated.candidates.map((candidate, index) => {

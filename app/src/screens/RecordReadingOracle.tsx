@@ -100,15 +100,15 @@ export function RecordReadingOracle({ stage, today, onStageChange, onBack, onClo
           title={visibleStage.endsWith("event") ? isFriend ? entryIsFriend ? "친구는 어떤 종목인가요?" : "나는 어떤 종목인가요?" : "어떤 기록을 살펴볼까요?" : `${event?.label ?? "선택한 종목"} 최고기록은?`}
           description={visibleStage === "own-event" ? "최고기록을 1km·400m 평균 시간으로 살펴봐요." : undefined}
           illustration={visibleStage === "own-event" ? "record-stopwatch" : undefined} />
-        {visibleStage === "own-event" && <div className="record-reading__subjects" role="group" aria-label="누구의 기록인가요?">
-          {(["self", "friend"] as const).map(value => <button key={value} type="button" aria-pressed={subject === value} onClick={() => {
+        {visibleStage === "own-event" && <div className="record-reading__subjects app-choice-group" role="group" aria-label="누구의 기록인가요?">
+          {(["self", "friend"] as const).map(value => <button className="app-choice-control" key={value} type="button" aria-pressed={subject === value} onClick={() => {
             if (subject === value) return
             setSubject(value); setOwnDraft(emptyDraft()); setFriendDraft(emptyDraft()); setOwn(null); setFriend(null); setConsent(false); setFirstFriendConsent(false)
           }}>{value === "self" ? "내 기록" : "친구 기록"}</button>)}
         </div>}
         {visibleStage.endsWith("event") ? <>
-          <div className="record-reading__events" role="group" aria-label={entryIsFriend ? "친구 종목" : "내 종목"}>
-            {READING_EVENTS.map(item => <button type="button" key={item.id} onClick={() => {
+          <div className="record-reading__events app-choice-group" role="group" aria-label={entryIsFriend ? "친구 종목" : "내 종목"}>
+            {READING_EVENTS.map(item => <button className="app-choice-control app-choice-control--answer" type="button" key={item.id} onClick={() => {
               edit({ eventId: item.id })
               onStageChange(isFriend ? "friend-time" : "own-time")
             }}>{item.label}<ChevronRight size={17} aria-hidden="true" /></button>)}
@@ -132,8 +132,8 @@ export function RecordReadingOracle({ stage, today, onStageChange, onBack, onClo
       </>}
 
       {isResult && ownResult && <>
-        <div className="record-reading__chapter-tabs" role="group" aria-label="풀이 내용">
-          {chapters.map((label, index) => <button type="button" key={label} aria-pressed={chapter === index} onClick={() => pickChapter(index)}>{label}</button>)}
+        <div className="record-reading__chapter-tabs app-choice-group" role="group" aria-label="풀이 내용">
+          {chapters.map((label, index) => <button className="app-choice-control" type="button" key={label} aria-pressed={chapter === index} onClick={() => pickChapter(index)}>{label}</button>)}
         </div>
         <section key={`${visibleStage}-${chapter}`} className="record-reading__page">
           <p className="record-reading__eyebrow">{chapter + 1} / 3 · {isPair ? "친구와 나" : "직접 입력한 최고기록"}</p>

@@ -113,7 +113,7 @@ export function OracleFriendComparisonV2({ today, ownProfile, records, onBack }:
           </details>}
         </div>
         {error && <p role="alert">{error}</p>}
-        <nav className="oracle-friend__topics" aria-label="비교 주제">{ORACLE_FRIEND_TOPICS.map(id => <button type="button" key={id} aria-pressed={id === topic} onClick={() => setTopic(id)}>{topicNames[id]}</button>)}</nav>
+        <nav className="oracle-friend__topics app-choice-group" aria-label="비교 주제">{ORACLE_FRIEND_TOPICS.map(id => <button className="app-choice-control" type="button" key={id} aria-pressed={id === topic} onClick={() => setTopic(id)}>{topicNames[id]}</button>)}</nav>
         {reading && <article className="oracle-friend__reading" aria-label="현재 비교 결과"><h2>{reading.title}</h2><p className="oracle-friend__notice">{statusNames[reading.status]}</p>
           <dl>{reading.facts.map(fact => <div key={fact.id}><dt>{fact.owner === "FRIEND" ? "친구 · " : fact.owner === "SELF" ? "나 · " : "비교 · "}{oracleFriendFactLabel(fact)}</dt><dd>{formatOracleFriendFact(fact)}</dd></div>)}</dl>
           {[...new Set(reading.paragraphs)].filter(p => !reading.facts.some(f => p.startsWith(`${f.label}:`))).map((text, index) => <p key={index}>{text}</p>)}

@@ -184,8 +184,8 @@ export function RunningProfile({ stage, today, onStageChange, onBack, onClose }:
       {stage === "overview" && <section className="running-profile__stage">
         <p className="running-profile__source">좋아하는 방식과 실제 기록, 따로 살펴봐요</p>
         <AppHeading variant="screen" accent ref={heading} tabIndex={-1}>나는 어떻게 달리는 사람일까?</AppHeading>
-        <div className="running-profile__map" aria-label="프로필의 네 가지 내용">
-          {SECTIONS.map(({ id, label, icon: Icon }) => <button key={id} type="button" onClick={() => onStageChange(id)}><Icon size={22} aria-hidden="true" /><span>{label}</span><ChevronRight size={16} aria-hidden="true" /></button>)}
+        <div className="running-profile__map app-choice-group" aria-label="프로필의 네 가지 내용">
+          {SECTIONS.map(({ id, label, icon: Icon }) => <button className="app-choice-control" key={id} type="button" onClick={() => onStageChange(id)}><Icon size={22} aria-hidden="true" /><span>{label}</span><ChevronRight size={16} aria-hidden="true" /></button>)}
         </div>
         <button className="running-profile__primary" type="button" disabled={!canEdit} onClick={() => edit("motives")}>{description.answeredCount ? "내 응답 바꾸기" : "3문항으로 시작"}<ArrowRight size={18} aria-hidden="true" /></button>
         {description.answeredCount > 0 && <p>{description.title}</p>}
@@ -196,8 +196,8 @@ export function RunningProfile({ stage, today, onStageChange, onBack, onClose }:
         <p className="running-profile__source">{questionIndex < 3 ? `${questionIndex + 1} / 3` : `더 알아보기 ${questionIndex - 2} / 6`} · {question.label}</p>
         <AppHeading variant="screen" accent ref={heading} tabIndex={-1}>{question.title}</AppHeading>
         {question.multiple && <p className="running-profile__source">여러 개 골라도 좋아요</p>}
-        <div className="running-profile__options" role="group" aria-label={question.label}>
-          {question.options.map(option => <button key={option.id} type="button" disabled={busy} aria-pressed={answers[question.id]?.includes(option.id) ?? false} onClick={() => select(option.id)}>
+        <div className="running-profile__options app-choice-group" role="group" aria-label={question.label}>
+          {question.options.map(option => <button className="app-choice-control app-choice-control--answer" key={option.id} type="button" disabled={busy} aria-pressed={answers[question.id]?.includes(option.id) ?? false} onClick={() => select(option.id)}>
             <span>{option.label}</span>{answers[question.id]?.includes(option.id) ? <Check size={17} aria-hidden="true" /> : <ChevronRight size={17} aria-hidden="true" />}
           </button>)}
         </div>
@@ -206,8 +206,8 @@ export function RunningProfile({ stage, today, onStageChange, onBack, onClose }:
       </section>}
 
       {resultStage && <>
-        <nav className="running-profile__tabs" aria-label="러닝 취향 항목">
-          {SECTIONS.map(section => <button key={section.id} type="button" aria-current={section.id === stage ? "page" : undefined} onClick={() => onStageChange(section.id)}>{section.label}</button>)}
+        <nav className="running-profile__tabs app-choice-group" aria-label="러닝 취향 항목">
+          {SECTIONS.map(section => <button className="app-choice-control" key={section.id} type="button" aria-current={section.id === stage ? "page" : undefined} onClick={() => onStageChange(section.id)}>{section.label}</button>)}
         </nav>
         <section className="running-profile__stage" key={stage}>
           {stage === "preferences" ? <>

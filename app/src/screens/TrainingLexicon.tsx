@@ -1,5 +1,9 @@
 import React from "react"
-import { ArrowLeft, BookOpenCheck, ExternalLink, Search } from "lucide-react"
+import { useTaskFlowBack } from "../hooks/useTaskFlowBack"
+import { ArrowLeft, ChevronRight, ExternalLink, Search } from "lucide-react"
+import { useNavigationReturnFrame } from "../hooks/useNavigationReturnFrame"
+import { captureReaderPosition, restoreReaderPosition, type ReaderPosition } from "../navigation/readerPosition"
+import { AppHeading } from "../components/AppHeading"
 import {
   GLOSSARY,
   GLOSSARY_ENTRIES,
@@ -26,12 +30,14 @@ const FREQUENT_TERMS: readonly TermId[] = ["rpe", "base", "lt", "vo2", "gly", "a
 
 export function TrainingLexicon({
   initialTerm,
+  active = true,
   standalone = false,
   directEntry = false,
   onBack,
   onNavigateTerm,
 }: {
   readonly initialTerm?: TermId
+  readonly active?: boolean
   readonly standalone?: boolean
   readonly directEntry?: boolean
   readonly onBack?: () => void
@@ -39,24 +45,34 @@ export function TrainingLexicon({
 }) {
   const [query, setQuery] = React.useState("")
   const [category, setCategory] = React.useState<TermCategory | "ALL">("ALL")
+  const [showAll, setShowAll] = React.useState(false)
   const [selectedTerm, setSelectedTerm] = React.useState<TermId | null>(initialTerm ?? null)
   const [termTrail, setTermTrail] = React.useState<readonly TermId[]>([])
   const [detailMode, setDetailMode] = React.useState<"EASY" | "PRO">("EASY")
   const topRef = React.useRef<HTMLElement>(null)
+  const indexReturn = React.useRef<ReaderPosition | null>(null)
+  const categoryReturn = React.useRef<ReaderPosition | null>(null)
+  const pendingReturn = React.useRef<ReaderPosition | null>(null)
+  const termPositions = React.useRef<ReaderPosition[]>([])
+  const { schedule, invalidate } = useNavigationReturnFrame()
+  const region = () => topRef.current?.closest<HTMLElement>(".app-scroll-region") ?? (document.scrollingElement as HTMLElement | null) ?? topRef.current
 
   const normalizedQuery = query.trim().toLocaleLowerCase("ko-KR")
   const visibleEntries = GLOSSARY_ENTRIES.filter((entry) => (
-    (category === "ALL" || entry.category === category)
+    (normalizedQuery !== "" || category === "ALL" || entry.category === category)
     && (normalizedQuery === "" || glossarySearchText(entry.id, entry).includes(normalizedQuery))
   ))
 
-  const openTerm = (term: TermId) => {
+  const openTerm = (term: TermId, opener?: HTMLElement) => {
     if (directEntry && onNavigateTerm !== undefined) {
       onNavigateTerm(term)
       return
     }
     if (selectedTerm !== null && selectedTerm !== term) {
       setTermTrail((trail) => [...trail, selectedTerm])
+      termPositions.current.push(captureReaderPosition(region(), opener))
+    } else if (selectedTerm === null) {
+      indexReturn.current = captureReaderPosition(region(), opener)
     }
     setSelectedTerm(term)
     setDetailMode("EASY")
@@ -66,18 +82,12 @@ export function TrainingLexicon({
       url.searchParams.set("term", term)
       window.history.pushState({}, "", url)
     }
-    requestAnimationFrame(() => {
-      const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false
-      const target = topRef.current
-      if (target && typeof target.scrollIntoView === "function") {
-        target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" })
-      }
-    })
   }
 
   const closeTerm = () => {
     const previous = termTrail.at(-1)
     if (previous !== undefined) {
+      pendingReturn.current = termPositions.current.pop() ?? null
       setTermTrail((trail) => trail.slice(0, -1))
       setSelectedTerm(previous)
       if (standalone) {
@@ -92,6 +102,8 @@ export function TrainingLexicon({
       onBack()
       return
     }
+    pendingReturn.current = indexReturn.current
+    indexReturn.current = null
     setSelectedTerm(null)
     if (standalone) {
       const url = new URL(window.location.href)
@@ -100,12 +112,46 @@ export function TrainingLexicon({
       window.history.pushState({}, "", url)
     }
   }
+  const resetIndex = () => {
+    const position = categoryReturn.current
+    categoryReturn.current = null
+    pendingReturn.current = position
+    setQuery(""); setCategory("ALL"); setShowAll(false)
+    // Clearing only a search does not change the category effect dependencies.
+    if (active && category === "ALL" && !showAll) schedule(() => topRef.current?.querySelector<HTMLElement>("h1")?.focus({ preventScroll: true }))
+  }
+  useTaskFlowBack({
+    enabled: active && !standalone && !directEntry && (selectedTerm !== null || category !== "ALL" || showAll || normalizedQuery !== ""),
+    onBack: () => selectedTerm !== null ? closeTerm() : resetIndex(),
+  })
+
+  React.useEffect(() => {
+    if (!active) {
+      invalidate()
+      return
+    }
+    const position = pendingReturn.current
+    pendingReturn.current = null
+    schedule(() => {
+      if (position) { restoreReaderPosition(region(), position); return }
+      const target = topRef.current?.querySelector<HTMLElement>(selectedTerm === null && category === "ALL" && !showAll ? "h1" : selectedTerm === null ? ".training-lexicon__group h2" : ".training-term h2")
+      if ((selectedTerm !== null || category !== "ALL" || showAll) && region()) region()!.scrollTop = 0
+      if (target) target.tabIndex = -1
+      target?.focus({ preventScroll: true })
+    })
+    return invalidate
+  }, [active, selectedTerm, category, showAll, schedule, invalidate])
 
   React.useEffect(() => {
     if (!standalone) return
     const syncFromUrl = () => {
       const term = new URLSearchParams(window.location.search).get("term")
       setTermTrail([])
+      termPositions.current = []
+      if (!isTermId(term)) {
+        pendingReturn.current = indexReturn.current
+        indexReturn.current = null
+      }
       setSelectedTerm(isTermId(term) ? term : null)
     }
     window.addEventListener("popstate", syncFromUrl)
@@ -126,9 +172,8 @@ export function TrainingLexicon({
             <ArrowLeft aria-hidden="true" size={18} />앱으로 돌아가기
           </button>
         )}
-        <span className="training-lexicon__eyebrow"><BookOpenCheck aria-hidden="true" size={17} />TRAINORACLE</span>
-        <h1 id="training-lexicon-title">훈련 용어집</h1>
-        <p>쉬운 뜻부터 보고, 필요하면 이름의 이유와 자세한 생리학 설명을 확인하세요.</p>
+        <AppHeading accent tabIndex={-1} id="training-lexicon-title">훈련 용어집</AppHeading>
+        {selectedEntry === null && <p>궁금한 용어를 골라 보세요.</p>}
       </header>
 
       {selectedEntry === null ? (
@@ -136,7 +181,10 @@ export function TrainingLexicon({
           query={query}
           onQueryChange={setQuery}
           category={category}
-          onCategoryChange={setCategory}
+          onCategoryChange={(value, opener) => { categoryReturn.current = captureReaderPosition(region(), opener); setCategory(value); setShowAll(false) }}
+          showAll={showAll}
+          onShowAll={(opener) => { categoryReturn.current = captureReaderPosition(region(), opener); setCategory("ALL"); setShowAll(true) }}
+          onReset={resetIndex}
           visibleEntries={visibleEntries}
           onOpenTerm={openTerm}
         />
@@ -160,16 +208,23 @@ function LexiconIndex({
   onQueryChange,
   category,
   onCategoryChange,
+  showAll,
+  onShowAll,
+  onReset,
   visibleEntries,
   onOpenTerm,
 }: {
   readonly query: string
   readonly onQueryChange: (value: string) => void
   readonly category: TermCategory | "ALL"
-  readonly onCategoryChange: (value: TermCategory | "ALL") => void
+  readonly onCategoryChange: (value: TermCategory, opener: HTMLElement) => void
+  readonly showAll: boolean
+  readonly onShowAll: (opener: HTMLElement) => void
+  readonly onReset: () => void
   readonly visibleEntries: typeof GLOSSARY_ENTRIES
-  readonly onOpenTerm: (term: TermId) => void
+  readonly onOpenTerm: (term: TermId, opener?: HTMLElement) => void
 }) {
+  const browsing = query.trim() === "" && category === "ALL" && !showAll
   return (
     <div className="training-lexicon__index">
       <div className="training-lexicon__tools" role="search">
@@ -185,30 +240,32 @@ function LexiconIndex({
             />
           </span>
         </label>
-        <label>
-          <span>분류</span>
-          <select value={category} onChange={(event) => onCategoryChange(event.target.value as TermCategory | "ALL")}>
-            <option value="ALL">전체 용어</option>
-            {CATEGORY_ORDER.map((item) => <option key={item} value={item}>{TERM_CATEGORY_LABELS[item]}</option>)}
-          </select>
-        </label>
       </div>
 
-      {query === "" && category === "ALL" && (
+      {browsing && <>
         <section className="training-lexicon__frequent" aria-labelledby="frequent-terms-title">
           <h2 id="frequent-terms-title">자주 보는 용어</h2>
-          <div>
+          <div className="app-choice-group">
             {FREQUENT_TERMS.map((term) => (
-              <button key={term} type="button" onClick={() => onOpenTerm(term)}>
+              <button className="app-choice-control" key={term} type="button" onClick={event => onOpenTerm(term, event.currentTarget)}>
                 <strong>{GLOSSARY[term].label}</strong>
                 {GLOSSARY[term].code !== undefined && <small>{GLOSSARY[term].code}</small>}
               </button>
             ))}
           </div>
         </section>
-      )}
+        <section className="training-lexicon__categories" aria-labelledby="term-categories-title">
+          <h2 id="term-categories-title">분류로 찾기</h2>
+          <div className="app-choice-group">
+            {CATEGORY_ORDER.map((item) => <button className="app-choice-control" type="button" key={item} onClick={event => onCategoryChange(item, event.currentTarget)}>{TERM_CATEGORY_LABELS[item]}<ChevronRight aria-hidden="true" size={18} /></button>)}
+          </div>
+          <button className="training-lexicon__all app-choice-control" type="button" onClick={event => onShowAll(event.currentTarget)}>전체 용어 보기<ChevronRight aria-hidden="true" size={18} /></button>
+        </section>
+      </>}
 
-      {visibleEntries.length === 0 ? (
+      {!browsing && <button type="button" className="training-term__index-back" onClick={onReset}><ArrowLeft aria-hidden="true" size={18} />분류로 돌아가기</button>}
+
+      {!browsing && (visibleEntries.length === 0 ? (
         <p className="training-lexicon__empty" role="status">일치하는 용어가 없어요. 다른 이름이나 영어 약자로 검색해 보세요.</p>
       ) : CATEGORY_ORDER.map((group) => {
         const entries = visibleEntries.filter((entry) => entry.category === group)
@@ -216,22 +273,22 @@ function LexiconIndex({
         return (
           <section key={group} className="training-lexicon__group" aria-labelledby={`term-category-${group}`}>
             <h2 id={`term-category-${group}`}>{TERM_CATEGORY_LABELS[group]}</h2>
-            <ul>
+            <ul className="app-choice-group">
               {entries.map((entry) => (
                 <li key={entry.id}>
-                  <button type="button" onClick={() => onOpenTerm(entry.id)}>
+                  <button className="app-choice-control" type="button" onClick={event => onOpenTerm(entry.id, event.currentTarget)}>
                     <span>
                       <strong>{entry.label}</strong>
                       {entry.code !== undefined && <small>{entry.code}</small>}
                     </span>
-                    <p>{entry.short}</p>
+                    <ChevronRight aria-hidden="true" size={18} />
                   </button>
                 </li>
               ))}
             </ul>
           </section>
         )
-      })}
+      }))}
     </div>
   )
 }
@@ -251,7 +308,7 @@ function TermDetail({
   readonly onModeChange: (mode: "EASY" | "PRO") => void
   readonly onBack: () => void
   readonly backLabel: string
-  readonly onOpenTerm: (term: TermId) => void
+  readonly onOpenTerm: (term: TermId, opener?: HTMLElement) => void
 }) {
   return (
     <article className="training-term" aria-labelledby={`training-term-${term}`}>
@@ -260,7 +317,7 @@ function TermDetail({
       </button>
       <header>
         <span>{TERM_CATEGORY_LABELS[entry.category]}</span>
-        <h2 id={`training-term-${term}`}>{entry.label}{entry.code !== undefined && <small>{entry.code}</small>}</h2>
+        <h2 tabIndex={-1} id={`training-term-${term}`}>{entry.label}{entry.code !== undefined && <small>{entry.code}</small>}</h2>
         <p>{entry.short}</p>
       </header>
 
@@ -299,8 +356,8 @@ function TermDetail({
       {entry.relatedTerms !== undefined && (
         <section className="training-term__related" aria-labelledby={`related-${term}`}>
           <h3 id={`related-${term}`}>함께 보면 좋은 용어</h3>
-          <div>{entry.relatedTerms.map((related) => (
-            <button key={related} type="button" onClick={() => onOpenTerm(related)}>
+          <div className="app-choice-group">{entry.relatedTerms.map((related) => (
+            <button className="app-choice-control" key={related} type="button" onClick={event => onOpenTerm(related, event.currentTarget)}>
               {GLOSSARY[related].label}{GLOSSARY[related].code !== undefined && <small>{GLOSSARY[related].code}</small>}
             </button>
           ))}</div>

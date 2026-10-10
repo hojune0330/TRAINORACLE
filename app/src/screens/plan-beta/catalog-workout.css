@@ -10,6 +10,7 @@
 .catalog-workout-picker label:has(input[type="checkbox"]) { grid-template-columns: 24px minmax(0, 1fr); align-items: start; padding-block: 8px; min-height: 44px; }
 .catalog-workout-picker input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--brand); }
 .catalog-workout-picker button { min-height: 44px; max-width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: normal; }
+.catalog-workout-picker summary { min-height: 44px; padding-block: var(--space-2); box-sizing: border-box; }
 .catalog-workout-picker :is(button, input, select, summary):focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 .catalog-workout-picker code { white-space: normal; overflow-wrap: anywhere; }
 .catalog-workout-picker dl { margin-block: 12px; }

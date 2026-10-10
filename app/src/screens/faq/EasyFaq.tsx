@@ -1,5 +1,6 @@
 import React from "react"
 import { accountFeatureEnabled } from "../../domain/account/config"
+import { feedbackConfig } from "../../domain/feedback/feedback-config"
 import { productFeatures } from "../../domain/product-features"
 
 type FaqItem = {
@@ -7,7 +8,13 @@ type FaqItem = {
   readonly answer: React.ReactNode
 }
 
-function faqItems(): readonly FaqItem[] {
+export function feedbackAvailabilityMessage(available: boolean): string {
+  return available
+    ? "문의 게시판에 의견을 남겨 주세요."
+    : "문의 게시판은 지금 준비 중이에요. 열리면 앱 안에서 알려드릴게요."
+}
+
+function faqItems(feedbackAvailable: boolean): readonly FaqItem[] {
   const accountEnabled = accountFeatureEnabled()
   const features = productFeatures()
   return [
@@ -25,7 +32,7 @@ function faqItems(): readonly FaqItem[] {
   },
   {
     question: "아직 준비 중인 기능은 무엇인가요?",
-    answer: "계정 동기화, 코치 연결, 사용자가 확인하지 않은 자동 계획 변경은 아직 열지 않았어요. 문의 게시판은 지금 사용할 수 있어요. 새 기능을 열기 전에는 앱에서 먼저 알려드려요.",
+    answer: `계정 동기화, 코치 연결, 사용자가 확인하지 않은 자동 계획 변경은 아직 열지 않았어요. ${feedbackAvailabilityMessage(feedbackAvailable)} 새 기능을 열기 전에는 앱에서 먼저 알려드려요.`,
   },
   {
     question: "나중에도 계속 무료인가요?",
@@ -92,15 +99,19 @@ function faqItems(): readonly FaqItem[] {
   ]
 }
 
-export function EasyFaq() {
+export function EasyFaq({ feedbackAvailable = feedbackConfig() !== null, headingLevel = 2 }: {
+  readonly feedbackAvailable?: boolean
+  readonly headingLevel?: 1 | 2
+}) {
+  const Title = headingLevel === 1 ? "h1" : "h2"
   return (
     <section aria-labelledby="easy-faq-title" style={{ padding: "30px 20px 0" }}>
       <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.12em" }}>
         FAQ · 쉬운 안내
       </div>
-      <h2 id="easy-faq-title" style={{ fontFamily: "var(--sans)", fontSize: 20, fontWeight: 600, margin: "6px 0 0" }}>
+      <Title id="easy-faq-title" style={{ fontFamily: "var(--sans)", fontSize: 20, fontWeight: 600, margin: "6px 0 0" }}>
         궁금한 점을 쉽게 풀어드려요
-      </h2>
+      </Title>
       <p
         data-testid="beta-price-notice"
         style={{
@@ -121,7 +132,7 @@ export function EasyFaq() {
           : "이 페이지는 쉬운 설명이에요. 개인정보 처리방침이나 이용 약관을 대신하지 않아요. 정식 문서는 계정·공유 기능을 열기 전에 함께 제공해요."}
       </p>
       <div style={{ borderTop: "1px solid var(--line)" }}>
-        {faqItems().map((item) => (
+        {faqItems(feedbackAvailable).map((item) => (
           <details key={item.question} style={{ borderBottom: "1px solid var(--line)", padding: "2px 0" }}>
             <summary style={{ minHeight: 48, display: "flex", alignItems: "center", cursor: "pointer", fontFamily: "var(--sans)", fontSize: 14, fontWeight: 600 }}>
               {item.question}

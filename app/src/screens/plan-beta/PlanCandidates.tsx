@@ -345,8 +345,8 @@ export function PlanCandidates({
         confirmationPending={recordConfirmationPending || detailedEvidencePending} />}
       {saveCode === "CYCLE_EVIDENCE_CHANGED" && onRebuildCycle && <button type="button" className="plan-text-action"
         disabled={saving} onClick={onRebuildCycle}>일지를 반영해 다시 만들기</button>}
-      <div className="plan-purpose-entries" role="group" aria-label="계획 확인·변경">
-        {PURPOSE_ENTRIES.map(({ id, label, icon: Icon }) => <button key={id} type="button"
+      <div className="plan-purpose-entries app-choice-group" role="group" aria-label="계획 확인·변경">
+        {PURPOSE_ENTRIES.map(({ id, label, icon: Icon }) => <button className="app-choice-control" key={id} type="button"
           id={`${purposeId}-${id}-entry`} aria-expanded={visiblePurpose === id} aria-controls={`${purposeId}-${id}`}
           onClick={() => {
             if (id === "workout") setWorkoutOpened(true)
@@ -428,7 +428,7 @@ export function PlanCandidates({
       )}
       {detailedEvidencePending && !recordConfirmationPending && (
         <p className="plan-start-date-error" role="alert">
-          같은 종목의 경기 기록 또는 목표기록을 고르고 확인해 주세요. 기록 없이 받으려면 상세 훈련에서 ‘기록 없이 시간·RPE로 받기’를 고르세요.
+          같은 종목의 기록을 고르고 확인해 주세요. 기록이 없으면 ‘기록 없이 계획 받기’를 고르세요.
         </p>
       )}
       </fieldset>
@@ -500,10 +500,10 @@ export function PlanCandidates({
       <h2>이 계획은 어떤 정보로 만들었나요?</h2>
       <p className="plan-copy">
         {prescriptionBinding.kind === "bound"
-          ? `직접 고르고 확인한 현재 ${selectedEventLabel} 기록으로 한 강도 세션의 상세 페이스를 계산했어요. 다른 훈련과 일지 값은 시간이나 RPE를 바꾸지 않습니다.`
+          ? `직접 고르고 확인한 ${selectedEventLabel} 기록으로 주요 훈련 한 번의 페이스를 계산했어요. 다른 훈련의 시간·힘든 정도는 바꾸지 않아요.`
           : generated.sourceMode === "PROFILE_ONLY"
           ? "고른 목표·경험·운동할 날로 만들었어요. 아래에서 조금씩 다듬을 수 있어요."
-          : "최근 일지가 있는지만 확인했어요. 일지의 거리, RPE, 메모는 계획의 시간이나 강도를 바꾸지 않아요."}
+          : "최근 일지가 있는지만 확인했어요. 일지에 남긴 거리·힘든 정도·메모로 계획을 바꾸지 않아요."}
       </p>
       <h2>기준 기록·참가 부문·이전 계획</h2>
       <div className="plan-source-strip">

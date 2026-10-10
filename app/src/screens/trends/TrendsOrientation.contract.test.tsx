@@ -31,7 +31,7 @@ it("explains each analysis choice and updates only the selected task while prese
   expect(screen.getByRole("heading", { name: "훈련량 보기", level: 2 })).toBeVisible()
   expect(screen.queryByRole("heading", { name: "내 훈련 살펴보기" })).toBeNull()
   expect(screen.getByRole("region", { name: "누적 거리와 변화" })).toBeVisible()
-  expect(screen.queryByRole("region", { name: "에너지 시스템 누적" })).toBeNull()
+  expect(screen.queryByRole("region", { name: "훈련 종류별 합계" })).toBeNull()
   expect(change).toHaveBeenLastCalledWith({ section: "distance", savedDate: "2026-10-05", metric: "DISTANCE_KM" })
   expect(container.querySelectorAll(".trends-hub__guide img")).toHaveLength(1)
 })

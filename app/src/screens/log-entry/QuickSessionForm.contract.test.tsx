@@ -20,6 +20,22 @@ function finishPerformedSession(rpe = 6): void {
 }
 
 describe("quick session journal contract", () => {
+  it("returns a single time or effort edit straight to review without repeating later answers", () => {
+    render(<QuickSessionForm />)
+    fireEvent.click(screen.getByRole("button", { name: "운동을 마쳤어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "오후" }))
+    fireEvent.click(screen.getByRole("button", { name: /힘든 정도 6\/10,/ }))
+    fireEvent.click(screen.getByRole("button", { name: "없어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "시간 오후" }))
+    fireEvent.click(screen.getByRole("button", { name: "오전" }))
+    expect(screen.getByRole("heading", { name: "이 내용으로 남길까요?" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "힘든 정도 6/10" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "몸 상태 불편한 곳 없음" })).toBeVisible()
+    fireEvent.click(screen.getByRole("button", { name: "힘든 정도 6/10" }))
+    fireEvent.click(screen.getByRole("button", { name: /힘든 정도 4\/10,/ }))
+    expect(screen.getByRole("heading", { name: "이 내용으로 남길까요?" })).toBeVisible()
+    expect(loadEntries()).toHaveLength(0)
+  })
   it("uses one saved result with the shell reward retry and keeps the same record editable", async () => {
     const retry = vi.fn(), open = vi.fn(), done = vi.fn()
     function Fixture() {
@@ -445,9 +461,10 @@ describe("quick session journal contract", () => {
     fireEvent.click(screen.getByText("내용 추가·수정"))
     fireEvent.click(screen.getByRole("button", { name: "방금 기록 수정" }))
     fireEvent.click(screen.getByRole("button", { name: "하던 운동을 일부만 했어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "시간 오후" }))
     fireEvent.click(screen.getByRole("button", { name: "오전" }))
+    fireEvent.click(screen.getByRole("button", { name: "힘든 정도 6/10" }))
     fireEvent.click(screen.getByRole("button", { name: /힘든 정도 7\/10,/ }))
-    fireEvent.click(screen.getByRole("button", { name: "없어요" }))
   fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
 
     expect(loadEntries()).toHaveLength(1)

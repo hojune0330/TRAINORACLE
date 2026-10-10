@@ -7,6 +7,8 @@ import { rememberCalendarDate } from "./hooks/useCalendarPosition"
 import { runDraftSafeNavigation } from "./domain/unsaved-draft-navigation"
 import { useNavigationReturnFrame } from "./hooks/useNavigationReturnFrame"
 import { beginBrowserPopNavigation, consumeBrowserBackLayer, getBrowserNavigationEpoch, isBrowserPopScrollRestoration } from "./navigation/browserNavigation"
+import { captureReaderPosition, captureCalendarReaderPosition, restoreReaderPosition, validJournalCalendarReturn,
+  type JournalCalendarReturn, type ReaderPosition } from "./navigation/readerPosition"
 import type { AppTab } from "./components/AppChrome"
 import { AppShellFrame } from "./components/AppShellFrame"
 import { ErrorBoundary } from "./components/ErrorBoundary"
@@ -200,6 +202,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const recordingOrigin = React.useRef<RecordingOrigin | null>(null)
   const coachingDayOrigin = React.useRef<RecordingOrigin | null>(null)
   const trainingContentOrigin = React.useRef<RecordingOrigin | null>(null)
+  const guideOrigin = React.useRef<RecordingOrigin | null>(null)
   const oracleInputRef = React.useRef<{ topic: OracleTopicId; owner: string | null; inputKind: "log" | "records" | "plan"; historyToken?: string; mode: "example" | "personal"; scrollTop: number; view: ReturnType<typeof viewForTab> } | null>(null)
   // Keep only this mounted shell's return route. Forward always rereads the saved plan.
   const oraclePlanForwardRef = React.useRef<{ intent: NonNullable<typeof oracleInputRef.current>; scope: number } | null>(null)
@@ -209,13 +212,17 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   }, [multiPlanRuntime?.readMultiAdjustedEvidenceV3])
   const pendingReward = React.useRef<{ ownerId: string | null; date: string } | null>(null)
   const calendarDraftReturn = React.useRef<{ token: string; owner: string | null; view: typeof v } | null>(null)
-  const calendarOriginalReturn = React.useRef<{ token: string; owner: string | null; view: typeof v } | null>(null)
+  const calendarOriginalReturn = React.useRef<{ token: string; owner: string | null; view: typeof v;
+    calendarReturn: JournalCalendarReturn | null; position: ReaderPosition } | null>(null)
+  const [calendarReaderReturn, setCalendarReaderReturn] = React.useState<JournalCalendarReturn | null>(null)
+  const calendarSnapshotRef = React.useRef(calendarSnapshot)
+  calendarSnapshotRef.current = calendarSnapshot
   const lastJournalView = React.useRef<{ owner: string | null; view: typeof v } | null>(null)
   React.useEffect(() => {
     if (v.tab === "journal") lastJournalView.current = { owner: activeLocalAccount(), view: { ...v, detailDate: null, detailEntryId: undefined } }
   }, [v])
   React.useEffect(() => onLocalJournalScopeChange(() => {
-    lastJournalView.current = null; calendarOriginalReturn.current = null
+    lastJournalView.current = null; calendarOriginalReturn.current = null; setCalendarReaderReturn(null)
     setV(state => state.tab === "journal" ? { ...viewForTab("journal") } : state)
   }), [])
   const [athleteRecordsOpen, setAthleteRecordsOpen] = React.useState(false)
@@ -232,11 +239,33 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const overlayRef = React.useRef<AppOverlay | null>(null)
   const paceRequestRef = React.useRef<{ token: string; owner: string | null; request: PaceToolRequest; opener: HTMLElement | null; consumed: boolean } | null>(null)
   const overlayScrollTopRef = React.useRef(0)
+  const overlayReturnPosition = React.useRef<ReaderPosition | null>(null)
+  const moreReturnPosition = React.useRef<ReaderPosition | null>(null)
   const overlayHistoryOwnerRef = React.useRef(`shell-${Date.now()}-${Math.random().toString(36).slice(2)}`)
   const restoreReturnRef = React.useRef<ShellReturnPoint | null>(null)
-  const importReturnRef = React.useRef<ShellReturnPoint | null>(null)
+  const importReturnRef = React.useRef<RecordingOrigin | null>(null)
   const pendingScreenMotionRef = React.useRef<Exclude<AppScreenMotion, "initial" | "none"> | null>(null)
   const { schedule: scheduleReturnFrame, invalidate: invalidateReturnFrame } = useNavigationReturnFrame()
+  const restoreCalendarOriginal = React.useCallback((origin: NonNullable<typeof calendarOriginalReturn.current>) => {
+    calendarOriginalReturn.current = null
+    if (origin.owner !== activeLocalAccount() || origin.position.scope !== localJournalScopeGeneration()) {
+      setCalendarReaderReturn(null); setV(INITIAL_VIEW_STATE); return
+    }
+    const restored = validJournalCalendarReturn(origin.calendarReturn, calendarSnapshotRef.current.entries)
+    setCalendarReaderReturn(restored)
+    setV(origin.view)
+    scheduleReturnFrame(() => {
+      const region = scrollRegionRef.current
+      if (restored && region) region.scrollTop = origin.position.scroll
+      else restoreReaderPosition(region, origin.position)
+    })
+  }, [scheduleReturnFrame])
+  React.useEffect(() => {
+    if (utilityView !== "more" || moreView !== "tools" || !moreReturnPosition.current) return
+    const position = moreReturnPosition.current
+    moreReturnPosition.current = null
+    scheduleReturnFrame(() => restoreReaderPosition(scrollRegionRef.current, position))
+  }, [utilityView, moreView, scheduleReturnFrame])
   const runViewTransition = React.useCallback((
     motion: Exclude<AppScreenMotion, "initial" | "none">,
     update: () => void,
@@ -266,12 +295,16 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       if (scrollRegion === null) return
       scrollRegion.scrollTop = next === null ? overlayScrollTopRef.current : next.kind === "oracle" || next.kind === "pace" ? next.scrollTop ?? 0 : 0
       scrollRegion.scrollLeft = 0
+      if (next === null) restoreReaderPosition(scrollRegion, overlayReturnPosition.current)
       if (leavingPace && pace?.opener?.isConnected) pace.opener.focus({ preventScroll: true })
     })
   }, [scheduleReturnFrame])
 
   const openOverlay = React.useCallback((next: AppOverlay) => {
-    if (overlayRef.current === null) overlayScrollTopRef.current = scrollRegionRef.current?.scrollTop ?? 0
+    if (overlayRef.current === null) {
+      overlayScrollTopRef.current = scrollRegionRef.current?.scrollTop ?? 0
+      overlayReturnPosition.current = captureReaderPosition(scrollRegionRef.current)
+    }
     const marker: OverlayHistoryMarker = { ...next, owner: overlayHistoryOwnerRef.current, version: 1 }
     const currentState = typeof window.history.state === "object" && window.history.state !== null
       ? window.history.state as Record<string, unknown>
@@ -376,8 +409,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       const originalOrigin = calendarOriginalReturn.current
       if (originalOrigin && event.state?.calendarOriginalPage !== originalOrigin.token) {
         const allowed = runDraftSafeNavigation(() => {
-          calendarOriginalReturn.current = null
-          setV(originalOrigin.owner === activeLocalAccount() ? originalOrigin.view : INITIAL_VIEW_STATE)
+          restoreCalendarOriginal(originalOrigin)
         })
         if (!allowed) window.history.pushState({ ...window.history.state, calendarOriginalPage: originalOrigin.token }, "", window.location.href)
         return
@@ -440,7 +472,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     }
     window.addEventListener("popstate", onPopState)
     return () => window.removeEventListener("popstate", onPopState)
-  }, [applyOverlay, invalidateReturnFrame, hasStoredOraclePlan])
+  }, [applyOverlay, invalidateReturnFrame, hasStoredOraclePlan, restoreCalendarOriginal])
 
   React.useEffect(() => {
     if (v.tab === "log" || calendarDraftReturn.current === null) return
@@ -474,6 +506,10 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       recordingOrigin.current = null
       coachingDayOrigin.current = null
       trainingContentOrigin.current = null
+      guideOrigin.current = null
+      overlayReturnPosition.current = null
+      moreReturnPosition.current = null
+      importReturnRef.current = null
       setGuestOracleSession(null)
       analysisReturnContext.current = undefined
       setOracleHubSection("training")
@@ -631,9 +667,12 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       setAnalysisContext(tab === "trends" ? analysis : undefined)
       analysisReturnContext.current = tab === "trends" ? analysis : undefined
       calendarOriginalReturn.current = null
+      setCalendarReaderReturn(null)
       coachingDayOrigin.current = null
       setV(tab === "journal" && lastJournalView.current?.owner === activeLocalAccount() ? lastJournalView.current.view : viewForTab(tab))
       trainingContentOrigin.current = null
+      guideOrigin.current = null
+      moreReturnPosition.current = null
     }, false)
   }
   const goTrendsFromReceipt = () => {
@@ -671,6 +710,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     })
   })
   const dismissOracle = () => {
+    overlayReturnPosition.current = null
     // Leaving the exploration invalidates its older history entries too.
     // Otherwise Back could reopen a sample over a different destination tab.
     overlayHistoryOwnerRef.current = `shell-${Date.now()}-${Math.random().toString(36).slice(2)}`
@@ -875,8 +915,12 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     && oracleInputRef.current?.inputKind === "plan" && window.history.state?.recordingDraft === origin.token
   const returnFromRecording = () => runViewTransition("pop", () => {
     const origin = recordingOrigin.current
-    // Consume this child entry so the next Back leaves the enclosing plan once.
-    if (isOraclePlanRecording(origin)) { window.history.back(); return }
+    // A recording entry can carry its enclosing flow's Back marker. Consume
+    // the child entry instead of relabelling it as its parent: duplicate parent
+    // markers otherwise leave a later flow waiting for a POP that never arrives.
+    if (origin && origin.owner === activeLocalAccount() && window.history.state?.recordingDraft === origin.token) {
+      window.history.back(); return
+    }
     recordingOrigin.current = null
     if (!origin || origin.owner !== activeLocalAccount()) { setV(INITIAL_VIEW_STATE); setUtilityView(null); return }
     restoreRecordingOrigin(origin)
@@ -897,9 +941,21 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const openTrainingReading = () => runViewTransition("push", () => {
     trainingContentOrigin.current = captureRecordingOrigin(false)
     dismissOracle()
+    setUtilityOrigin(utilityView === "more" ? "more" : "home")
     setUtilityView("content")
     setV(viewForTab("home"))
   }, false)
+  const openGuide = (section: "guide" | "minji") => runViewTransition("push", () => {
+    guideOrigin.current = captureRecordingOrigin(false)
+    setUtilityOrigin(utilityView === "more" ? "more" : "home")
+    setUtilityView(section)
+  })
+  const closeGuide = () => runViewTransition("pop", () => {
+    const origin = guideOrigin.current
+    guideOrigin.current = null
+    if (origin && origin.owner === activeLocalAccount()) restoreRecordingOrigin(origin)
+    else setUtilityView(utilityOrigin === "home" ? null : "more")
+  })
   const openRestore = () => runViewTransition("push", () => {
     restoreReturnRef.current = captureReturnPoint()
     setUtilityView(null)
@@ -918,7 +974,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     restoreReturnPoint(point)
   })
   const openImport = () => runViewTransition("push", () => {
-    importReturnRef.current = captureReturnPoint()
+    importReturnRef.current = captureRecordingOrigin(false)
     setUtilityView(null)
     setAthleteRecordsOpen(false)
     setV(s => ({ ...s, tab: "log", accountOpen: false, restoreOpen: false, importOpen: true }))
@@ -926,7 +982,8 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const closeImport = () => runViewTransition("pop", () => {
     const point = importReturnRef.current
     importReturnRef.current = null
-    restoreReturnPoint(point)
+    if (point && point.owner === activeLocalAccount()) restoreRecordingOrigin(point)
+    else restoreReturnPoint(null)
   })
 
   const detailScreen = (onBack: () => void, withReader = false) => {
@@ -975,6 +1032,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       <DeferredMobileScreens.More
         view={moreView}
         onViewChange={next => runViewTransition(next === "tools" ? "pop" : "push", () => {
+          if (moreView === "tools" && next !== "tools") moreReturnPosition.current = captureReaderPosition(scrollRegionRef.current)
           const state = window.history.state ?? {}
           const marker = state[MORE_HISTORY_KEY]
           if (next === "tools" && marker?.owner === overlayHistoryOwnerRef.current && marker.view !== "tools") {
@@ -987,10 +1045,10 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           }
           setMoreView(next)
         })}
-        onBack={() => runViewTransition("pop", () => setUtilityView(null))}
-        onOpenMinji={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("minji") })}
-        onOpenGuide={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("guide") })}
-        onOpenContent={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("content") })}
+        onBack={() => runViewTransition("pop", () => { moreReturnPosition.current = null; setUtilityView(null) })}
+        onOpenMinji={() => openGuide("minji")}
+        onOpenGuide={() => openGuide("guide")}
+        onOpenContent={openTrainingReading}
         onOpenRewards={() => openDecorationStudio()}
         onOpenPaceCalculator={() => openPaceCalculator()}
         onOpenRunningProfile={() => openOverlay({ kind: "running-profile", stage: "overview" })}
@@ -1020,7 +1078,8 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   } else if (v.tab === "home" && (utilityView === "guide" || utilityView === "minji")) {
     screen = <DeferredMobileScreens.Guide
       initialSection={utilityView}
-      onBack={() => runViewTransition("pop", () => setUtilityView(utilityOrigin === "home" ? null : "more"))}
+      backLabel={utilityOrigin === "home" ? "홈으로 돌아가기" : "더보기로 돌아가기"}
+      onBack={closeGuide}
       onWriteLog={() => runViewTransition("tab-forward", () => { setUtilityView(null); setV(viewForTab("log")) })}
       onOpenFeedback={() => openOverlay({ kind: "feedback" })}
     />
@@ -1046,13 +1105,13 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           onOpenArchive={() => {
             runViewTransition("tab-forward", () => setV({ ...viewForTab("journal"), journalMode: "CALENDAR" }))
           }}
-          onOpenGuide={() => runViewTransition("push", () => { setUtilityOrigin("home"); setUtilityView("minji") })}
+          onOpenGuide={() => openGuide("minji")}
           onOpenPlan={() => goTab("plan")}
           onOpenTrends={() => goTab("trends")}
           onOpenOracle={openOracle}
           onOpenMore={() => runViewTransition("push", () => setUtilityView("more"))}
           onOpenAccount={accountEnabled ? () => runViewTransition("push", () => setV(s => ({ ...s, accountOpen: true }))) : undefined}
-          onOpenContent={() => runViewTransition("push", () => { setUtilityOrigin("home"); setUtilityView("content") })}
+          onOpenContent={openTrainingReading}
           onOpenRewards={() => openDecorationStudio()}
           onOpenNextTraining={(link: PlannedSessionLink) => runViewTransition("tab-forward", () => {
             setAthleteRecordsOpen(false)
@@ -1075,13 +1134,19 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           return
         }
         if (calendarOriginalReturn.current && window.history.state?.calendarOriginalPage === calendarOriginalReturn.current.token) window.history.back()
-        else runViewTransition("pop", () => setV(s => ({ ...s, detailDate: null })))
+        else runViewTransition("pop", () => {
+          const origin = calendarOriginalReturn.current
+          if (origin) restoreCalendarOriginal(origin)
+          else setV(s => ({ ...s, detailDate: null, detailEntryId: undefined }))
+        })
       }, true)
       : (
         <DeferredMobileScreens.JournalArchive
           entries={calendarSnapshot.entries}
           readiness={calendarSnapshot.status}
           selection={selection}
+          calendarReturn={calendarReaderReturn}
+          onCalendarReturnConsumed={() => setCalendarReaderReturn(null)}
           mode={v.journalMode}
           cycleAnchor={v.cycleAnchor}
           cycleIndex={v.cyclePositionSet ? v.cycleIndex : undefined}
@@ -1099,14 +1164,19 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
             setV(s => viewForJournalDraft(s, date))
           })}
           onSelectionChange={(archiveSelection) => setV(s => ({ ...s, archiveSelection }))}
-          onOpenDay={(detailDate) => runViewTransition("push", () => {
+          onOpenDay={(detailDate, entryId, calendarReturn) => runViewTransition("push", () => {
             const token = `calendar-original-${Date.now()}`
             const { [READER_HISTORY_KEY]: reader, ...rest } = window.history.state ?? {}
+            setCalendarReaderReturn(null)
+            // Keep return context in this owner only, not in browser history or storage.
+            calendarOriginalReturn.current = { token, owner: activeLocalAccount(),
+              view: { ...v, detailDate: null, detailEntryId: undefined },
+              calendarReturn: validJournalCalendarReturn(calendarReturn, calendarSnapshot.entries),
+              position: captureCalendarReaderPosition(scrollRegionRef.current, detailDate) }
             try {
               window.history[reader ? "replaceState" : "pushState"]({ ...rest, calendarOriginalPage: token }, "", window.location.href)
-              calendarOriginalReturn.current = { token, owner: activeLocalAccount(), view: { ...v, detailDate: null } }
             } catch { /* In-app Back still returns to the archive. */ }
-            setV(s => ({ ...s, detailDate, detailEntryId: undefined }))
+            setV(s => ({ ...s, detailDate, detailEntryId: entryId }))
           })}
           onBack={goHome}
           onWriteLog={() => goTab("log")}

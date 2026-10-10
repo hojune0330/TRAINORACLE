@@ -104,7 +104,7 @@ describe.skip("production detailed prescription experience", () => {
     expect(screen.getByText(/상세 처방을 연결하는 중 문제가 생겨/u)).toBeVisible()
     expect(screen.getByRole("button", { name: /계획 A로 시작/u })).toBeDisabled()
     expect(localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
-    await user.click(screen.getByRole("button", { name: "기록 없이 시간·RPE 계획 받기" }))
+    await user.click(screen.getByRole("button", { name: "기록 없이 계획 받기" }))
     expect(screen.getByRole("button", { name: /계획 A로 시작/u })).toBeEnabled()
   }, 15_000)
 
@@ -206,7 +206,7 @@ describe.skip("production detailed prescription experience", () => {
     expect(within(schedule).getByText("1,111초 × 1000m ÷ 5000m")).toBeVisible()
     expect(within(schedule).getByText(/계산값 약 222.2초/u)).toBeVisible()
     await user.click(within(schedule).getByText("추천 기준"))
-    await user.click(within(schedule).getByText("기준 기록·중단·낮춤 규칙 보기"))
+    await user.click(within(schedule).getByText("기준 기록·훈련을 바꾸는 방법"))
     expect(within(schedule).getByText(/^기준 기록 · 5000m.*18분 31초.*2026-05-10/u)).toBeVisible()
 
     await user.click(screen.getByRole("button", { name: /계획 A로 시작/u }))
@@ -244,7 +244,7 @@ describe.skip("production detailed prescription experience", () => {
     render(<PlanBeta />)
     const reloadedSession = await openDetailedActiveSession(user)
     expect(within(reloadedSession).getByText(/5×1000m @5000m RP.*r150.*JOG/u)).toBeVisible()
-    await user.click(within(reloadedSession).getByText("기준 기록·중단·낮춤 규칙 보기"))
+    await user.click(within(reloadedSession).getByText("기준 기록·훈련을 바꾸는 방법"))
     expect(within(reloadedSession).getByText(/^기준 기록 · 5000m.*18분 31초.*2026-05-10/u)).toBeVisible()
   }, 15_000)
 

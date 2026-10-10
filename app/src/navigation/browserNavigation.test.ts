@@ -18,6 +18,48 @@ function popTo(state: unknown): boolean {
 }
 
 describe("native browser layer history", () => {
+  it("drains inherited duplicate markers before releasing a queued new flow without replaying callbacks", async () => {
+    const close = vi.fn(), nextClose = vi.fn()
+    const layer = navigation.registerBrowserBackLayer({ id: "inherited-parent", canClose: () => true, onClose: close })
+    const parentEntry = window.history.state
+    window.history.pushState({ ...parentEntry, syntheticChild: "recording" }, "", window.location.href)
+    layer.dispose()
+    await Promise.resolve()
+    navigation.registerBrowserBackLayer({ id: "waiting-next", canClose: () => true, onClose: nextClose })
+    expect(navigation.hasPendingBrowserBackLayer()).toBe(true)
+    expect(popTo(parentEntry)).toBe(true)
+    expect(window.history.back).toHaveBeenCalledTimes(2)
+    expect(navigation.hasPendingBrowserBackLayer()).toBe(true)
+    expect(popTo({ parent: "origin" })).toBe(true)
+    expect(navigation.hasPendingBrowserBackLayer()).toBe(false)
+    expect(window.history.state.trainoracleBackLayer).toBe("waiting-next")
+    expect(window.history.state.parent).toBe("origin")
+    expect(close).not.toHaveBeenCalled()
+    expect(nextClose).not.toHaveBeenCalled()
+  })
+  it("drains an obsolete different ancestor but preserves live parent and logical plan history", async () => {
+    window.history.replaceState({ parent: "origin", logicalPlan: "synthetic-plan" }, "", window.location.href)
+    const outerClose = vi.fn(), oldClose = vi.fn(), nextClose = vi.fn()
+    const outer = navigation.registerBrowserBackLayer({ id: "live-parent", canClose: () => true, onClose: outerClose })
+    const parentState = window.history.state
+    const old = navigation.registerBrowserBackLayer({ id: "obsolete-ancestor", canClose: () => true, onClose: oldClose })
+    const oldState = window.history.state
+    old.dispose()
+    const next = navigation.registerBrowserBackLayer({ id: "obsolete-child", canClose: () => true, onClose: nextClose })
+    await Promise.resolve()
+    next.dispose()
+    await Promise.resolve()
+    expect(popTo(oldState)).toBe(true)
+    expect(navigation.hasPendingBrowserBackLayer()).toBe(true)
+    expect(popTo(parentState)).toBe(true)
+    expect(navigation.hasPendingBrowserBackLayer()).toBe(false)
+    expect(window.history.state).toEqual(parentState)
+    expect(window.history.state.logicalPlan).toBe("synthetic-plan")
+    expect(outerClose).not.toHaveBeenCalled()
+    expect(oldClose).not.toHaveBeenCalled()
+    expect(nextClose).not.toHaveBeenCalled()
+    outer.dispose()
+  })
   it.each(["new-layer", "queued"])("does not let a queued old Back close a newly registered %s", id => {
     const oldClose = vi.fn(), newClose = vi.fn(), push = vi.spyOn(window.history, "pushState")
     const old = navigation.registerBrowserBackLayer({ id: "queued", canClose: () => true, onClose: oldClose })

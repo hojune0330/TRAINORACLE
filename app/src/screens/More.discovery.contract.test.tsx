@@ -1,8 +1,25 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, expect, it, vi } from "vitest"
 import { More } from "./More"
 
 afterEach(cleanup)
+
+it("restores the management opener and scroll when returning to More", async () => {
+  render(<div className="app-scroll-region"><More onBack={vi.fn()} onOpenMinji={vi.fn()} onOpenGuide={vi.fn()} /></div>)
+  const region = document.querySelector<HTMLElement>(".app-scroll-region")!
+  region.scrollTop = 350
+  const opener = screen.getByRole("button", { name: "백업·복원·휴지통" })
+  fireEvent.click(opener)
+  region.scrollTop = 0
+  fireEvent.click(screen.getByRole("button", { name: "더보기로 돌아가기" }))
+  await waitFor(() => expect(screen.getByRole("button", { name: "백업·복원·휴지통" })).toHaveFocus())
+  expect(region.scrollTop).toBe(350)
+})
+
+it("exposes a destination's supporting description without making its name verbose", () => {
+  render(<More onBack={vi.fn()} onOpenMinji={vi.fn()} onOpenGuide={vi.fn()} onOpenRewards={vi.fn()} />)
+  expect(screen.getByRole("button", { name: "일지 꾸미기" })).toHaveAccessibleDescription("달력 꾸미기 · 포인트는 재료에서 확인")
+})
 
 it("shows learning and decoration destinations directly in More", () => {
   const entries = [
@@ -13,7 +30,7 @@ it("shows learning and decoration destinations directly in More", () => {
     ["최고기록으로 풀이하기", "onOpenRecordReading"],
     ["오라클 읽을거리", "onOpenOracleLibrary"],
     ["훈련법 읽기", "onOpenContent"],
-    ["일지 꾸미기·포인트", "onOpenRewards"],
+    ["일지 꾸미기", "onOpenRewards"],
     ["민지의 예시 일지", "onOpenMinji"],
     ["훈련 용어집·도움말", "onOpenGuide"],
   ] as const
@@ -77,7 +94,7 @@ it("keeps direct learning destinations in More while returning from external des
   expect(change).toHaveBeenCalledWith("tools")
   view.rerender(<More {...props} view="tools" />)
   expect(screen.queryByText(/휴지통 ·/)).toBeNull()
-  fireEvent.click(screen.getByRole("button", { name: "일지 꾸미기·포인트" }))
+  fireEvent.click(screen.getByRole("button", { name: "일지 꾸미기" }))
   expect(openDecorations).toHaveBeenCalledOnce()
   expect(change).toHaveBeenLastCalledWith("tools")
   expect(screen.getByRole("heading", { name: "더보기" })).toBeVisible()

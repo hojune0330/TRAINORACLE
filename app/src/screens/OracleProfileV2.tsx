@@ -233,12 +233,12 @@ function OracleProfileV2ForOwner({ owner, today, onBack, onNavigate, initialView
       {close => friendMode === "manual" ? <OracleFriendComparisonV2 today={today} ownProfile={comparisonProfile} records={records.status === "READY" ? records.records : null} onBack={() => setFriendMode("choose")} />
         : friendMode === "connected" && owner && documentId && current && store.status === "READY" && !hasScoreDraft
           ? <OracleConnectedComparison ownerId={owner} documentId={documentId} documentRevision={store.revision} ownProfile={current} onBack={() => setFriendMode("choose")} />
-          : <section className="oracle-v2__choices" aria-label="비교 방법">
+          : <section className="oracle-v2__choices app-choice-group" aria-label="비교 방법">
             <AppHeading as="h2" variant="screen" accent>어떻게 비교할까요?</AppHeading>
-            <button type="button" disabled={!owner || !documentId || !current || store.status !== "READY" || hasScoreDraft} onClick={() => setFriendMode("connected")}>친구 초대로 응답 비교</button>
+            <button className="app-choice-control app-choice-control--answer" type="button" disabled={!owner || !documentId || !current || store.status !== "READY" || hasScoreDraft} onClick={() => setFriendMode("connected")}>친구 초대로 응답 비교</button>
             {(!owner || !current) && <p>초대 비교는 내 응답을 계정에 저장한 뒤 할 수 있어요.</p>}
             {owner && current && (store.status !== "READY" || hasScoreDraft) && <p role="status">내 응답 저장을 먼저 마쳐 주세요.</p>}
-            <button type="button" onClick={() => setFriendMode("manual")}>직접 입력해서 비교</button>
+            <button className="app-choice-control app-choice-control--answer" type="button" onClick={() => setFriendMode("manual")}>직접 입력해서 비교</button>
             <p>직접 입력은 이 화면에서만 보는 비교예요. 친구 계정과 연결되지 않아요.</p>
             <button type="button" onClick={close}>풀이로 돌아가기</button>
           </section>}

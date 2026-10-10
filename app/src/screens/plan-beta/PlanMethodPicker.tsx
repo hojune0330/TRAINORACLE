@@ -120,7 +120,7 @@ function MethodPreview({ options, selected, onChange, repeatPreference = "NEUTRA
         <legend>{hasMultipleMethods ? "받고 싶은 훈련" : "안내 방식"}</legend>
         <label className="plan-method-picker__option">
           <input type="radio" name={`${id}-method`} checked={previewRef === null} onChange={() => choose(null)} />
-          <span><strong>기록 없이 시간·RPE로 받기</strong><small>현재 경기 기록을 계산에 쓰지 않고 운동 시간과 힘든 정도로 안내해요.</small></span>
+          <span><strong>기록 없이 계획 받기</strong><small>운동 시간과 힘든 정도로 안내해요.</small></span>
         </label>
         {shownOptions.map(option => (
           <label className="plan-method-picker__option" key={`${option.ref.templateId}@${option.ref.version}`}>
@@ -156,7 +156,7 @@ function MethodPreview({ options, selected, onChange, repeatPreference = "NEUTRA
     : <details className="plan-method-picker" open={expanded} onToggle={event => onExpandedChange(event.currentTarget.open)}>
       <summary>
         <SlidersHorizontal size={16} aria-hidden="true" />
-        <span>{summaryTitle}<small>{previewRef === null ? "기록 없이 시간·RPE로 안내" : current?.mainSummary ?? "선택한 상세 훈련 확인 필요"}</small></span>
+        <span>{summaryTitle}<small>{previewRef === null ? "시간·힘든 정도로 안내" : current?.mainSummary ?? "선택한 상세 훈련 확인 필요"}</small></span>
         <ChevronDown className="plan-method-picker__chevron" size={16} aria-hidden="true" />
       </summary>{content}
     </details>

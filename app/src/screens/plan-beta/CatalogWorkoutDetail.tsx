@@ -1,9 +1,10 @@
 import { ALL_WORKOUT_CATALOG, calculatedWorkoutSequence, type CalculatedWorkout } from "@impl/prescription/all-workout-calculator"
 import { PrescriptionStructureV3 } from "./PrescriptionStructureV3"
-import { notationNumber, notationTime, notationDistance } from "../../domain/workout-notation"
+import { notationNumber, notationTime, notationDistance, notationEffort } from "../../domain/workout-notation"
 import { formatTrainingSeconds } from "./labels"
 import type { PlannedEnergyIntent } from "@impl/plan-generator/types"
 import { formatPaceSeconds } from "@impl/prescription/record-pace"
+import { conciseReviewedEffortCue } from "./workout-notation-presentation"
 
 const intents: Record<string, PlannedEnergyIntent> = { BASE: "BASE_INTENT", LT: "LT_INTENT", VO2: "VO2_INTENT", GLY: "GLY_INTENT",
   "ATP-PC": "ATP_PC_INTENT", MIX: "MIXED_INTENT", REC: "RECOVERY_INTENT" }
@@ -30,15 +31,19 @@ export function CatalogWorkoutDetail({ workout, evidence = false }: { readonly w
     .filter((s, i, all) => all.findIndex(other => other.segmentId === s.segmentId) === i)
   const timedDistanceRecoveries = workout.steps.filter(s => s.kind === "RECOVERY" && s.distanceM !== null && s.seconds !== null)
     .filter((s, i, all) => all.findIndex(other => other.segmentId === s.segmentId) === i)
+  // The exact reviewed time-only cue is already in the concise notation and
+  // both named disclosures. Keep other instructions, targets and warnings visible.
+  const detailTargets = sequence ? targets.filter(s => s.distanceM !== null || s.referenceRecordId != null
+    || conciseReviewedEffortCue(s.instruction) === null) : targets
   return <div>
     <p>{workout.totals.workOccurrences}개 운동 구간{workout.totals.mainDistanceM !== null ? ` · 본운동 ${notationDistance(workout.totals.mainDistanceM)}` : ""}</p>
     {sequence && <PrescriptionStructureV3 sequence={sequence} intent={intents[entry.family]} compact collapseSupport hideTotals />}
-    <dl>{targets.map(s => <div key={s.segmentId}>
-      <dt>{s.distanceM !== null ? notationDistance(s.distanceM) : s.seconds ? notationTime(s.seconds.minimum) : "운동 구간"}</dt>
+    {detailTargets.length > 0 && <dl>{detailTargets.map(s => <div key={s.segmentId}>
+      <dt>{s.distanceM !== null ? notationDistance(s.distanceM) : s.seconds ? notationTime(s.seconds.minimum, "PLAIN") : "운동 구간"}</dt>
       <dd>{s.distanceM !== null && s.seconds ? s.referenceRecordId
         ? `${formatPaceSeconds(s.seconds.minimum)}${s.seconds.minimum === s.seconds.maximum ? "" : `~${formatPaceSeconds(s.seconds.maximum)}`} · `
-        : `${notationNumber(s.seconds.minimum)}${s.seconds.minimum === s.seconds.maximum ? "" : `~${notationNumber(s.seconds.maximum)}`}초 · ` : ""}{s.instruction}</dd>
-    </div>)}</dl>
+        : `${notationNumber(s.seconds.minimum)}${s.seconds.minimum === s.seconds.maximum ? "" : `~${notationNumber(s.seconds.maximum)}`}초 · ` : ""}{notationEffort(s.instruction, "PLAIN")}</dd>
+    </div>)}</dl>}
     {workout.inputs.paceReferences?.map(reference => <p key={reference.segmentId}>
       기준: {reference.eventDistanceM === 21097.5 ? "하프" : `${reference.eventDistanceM}m`} {formatPaceSeconds(reference.performanceSeconds)} · {reference.kind === "GOAL" ? "목표" : reference.achievedOn ?? "날짜 미입력 실제 기록"}
     </p>)}

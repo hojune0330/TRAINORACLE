@@ -87,7 +87,7 @@ describe("trend chart alternatives", () => {
     ))).toBe(true)
 
     await user.click(screen.getByRole("button", { name: "훈련 구성" }))
-    const mix = screen.getByRole("region", { name: "에너지 시스템 누적" })
+    const mix = screen.getByRole("region", { name: "훈련 종류별 합계" })
     const mixTableToggles = within(mix).getAllByText("표로 보기")
     for (const toggle of mixTableToggles) await user.click(toggle)
     const mixTables = within(mix).getAllByRole("table")

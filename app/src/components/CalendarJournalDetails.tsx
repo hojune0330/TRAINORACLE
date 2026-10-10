@@ -1,5 +1,8 @@
 import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState } from "react"
 import { isBrowserPopNavigationConsumed } from "../navigation/browserNavigation"
+import { validJournalCalendarReturn, type JournalCalendarReturn, type OpenJournalDay } from "../navigation/readerPosition"
+import { localJournalScopeGeneration, onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
+import { useNavigationReturnFrame } from "../hooks/useNavigationReturnFrame"
 import { BookOpen, ChevronLeft, PenLine } from "lucide-react"
 import { useLocalToday } from "../hooks/useLocalToday"
 import type { JournalEntry } from "../domain/journal-schema"
@@ -32,14 +35,23 @@ export function calendarJournalDescription(entries: readonly JournalEntry[], dat
   return day.length === 0 ? "" : `일지 ${day.length}개 · ${calendarMarksDescription(day.flatMap(journalCalendarMarks))}`
 }
 
-export function CalendarJournalDetails({ entries, date, onOpenDay, onWriteDate }: {
+export function CalendarJournalDetails({ entries, date, onOpenDay, onWriteDate, initialEntryId, returnPosition, onReturnRestored }: {
   readonly entries: readonly JournalEntry[]
   readonly date: string
-  readonly onOpenDay?: (date: string) => void
+  readonly onOpenDay?: OpenJournalDay
   readonly onWriteDate?: (date: string) => void
+  readonly initialEntryId?: string
+  readonly returnPosition?: JournalCalendarReturn | null
+  readonly onReturnRestored?: () => void
 }) {
   const [original, setOriginal] = useState(false)
-  const [selection, setSelection] = useState<{ readonly date: string; readonly id: string } | null>(null)
+  const renderedScope = localJournalScopeGeneration()
+  const [selection, setSelection] = useState<{ readonly date: string; readonly id: string; readonly scope: number } | null>(
+    () => initialEntryId ? { date, id: initialEntryId, scope: renderedScope } : null)
+  const section = useRef<HTMLElement>(null)
+  const localReturnPosition = useRef<JournalCalendarReturn | null>(null)
+  const restoredPosition = useRef<JournalCalendarReturn | null>(null)
+  const { schedule: scheduleReturnFrame, invalidate: invalidateReturnFrame } = useNavigationReturnFrame()
   const originalEntryCreated = useRef(false)
   const originalToken = useRef<string | null>(null)
   const selectionPanelId = useId()
@@ -71,17 +83,42 @@ export function CalendarJournalDetails({ entries, date, onOpenDay, onWriteDate }
   useEffect(() => setOriginal(false), [date])
   const day = useMemo(() => entries.filter(entry => entry.date === date), [entries, date])
   const defaultEntry = day.find(entry => entry.kind === "post-session") ?? day[0] ?? null
-  const selectedEntry = day.find(entry => selection?.date === date && entry.id === selection.id) ?? defaultEntry
+  const selectedEntry = day.find(entry => selection?.scope === renderedScope && selection.date === date && entry.id === selection.id)
+    ?? day.find(entry => entry.id === initialEntryId) ?? defaultEntry
   const selectedIndex = day.findIndex(entry => entry.id === selectedEntry?.id)
+  useEffect(() => onLocalJournalScopeChange(() => {
+    localReturnPosition.current = null; restoredPosition.current = null
+    setOriginal(false); setSelection(null)
+  }), [])
   useEffect(() => {
-    if (selection?.date === date && day.some(entry => entry.id === selection.id)) return
-    setSelection(defaultEntry ? { date, id: defaultEntry.id } : null)
-  }, [date, day, defaultEntry, selection])
-  if (original) return <section className="calendar-journal-detail">
+    if (selection?.scope === renderedScope && selection.date === date && day.some(entry => entry.id === selection.id)) return
+    const initial = day.find(entry => entry.id === initialEntryId) ?? defaultEntry
+    setSelection(initial ? { date, id: initial.id, scope: renderedScope } : null)
+  }, [date, day, defaultEntry, selection, initialEntryId, renderedScope])
+  const position = returnPosition ?? localReturnPosition.current
+  useEffect(() => {
+    if (original || position === restoredPosition.current || position?.date !== date
+      || !validJournalCalendarReturn(position, day)) return
+    scheduleReturnFrame(() => {
+      const root = section.current
+      if (!root || !validJournalCalendarReturn(position, day)) return
+      const body = root.closest<HTMLElement>(".plan-day-reader__body")
+      if (body) body.scrollTop = position.scroll
+      const choice = [...root.querySelectorAll<HTMLButtonElement>("button[data-journal-entry-id]")]
+        .find(button => button.dataset.journalEntryId === position.entryId)
+      const target = choice ?? root.closest("dialog")?.querySelector<HTMLElement>("h2") ?? root.querySelector<HTMLElement>("h3")
+      if (target) { if (!choice) target.tabIndex = -1; target.focus({ preventScroll: true }) }
+      restoredPosition.current = position
+      localReturnPosition.current = null
+      onReturnRestored?.()
+    })
+    return invalidateReturnFrame
+  }, [date, day, original, position, onReturnRestored, scheduleReturnFrame, invalidateReturnFrame])
+  if (original) return <section ref={section} className="calendar-journal-detail">
     <button type="button" onClick={closeOriginal}><ChevronLeft size={18} aria-hidden="true" />날짜 요약으로</button>
     <Suspense fallback={<p role="status">일지를 여는 중이에요.</p>}><OriginalJournal date={date} initialEntryId={selectedEntry?.id} onBack={closeOriginal} /></Suspense>
   </section>
-  return <section className="calendar-journal-detail" aria-label="이날 남긴 기록">
+  return <section ref={section} className="calendar-journal-detail" aria-label="이날 남긴 기록">
     <h3 className="calendar-journal-detail__heading">
       <span>이날 남긴 기록</span>
       {day.length > 0 && <small className="calendar-journal-detail__count">{day.length}개</small>}
@@ -94,10 +131,11 @@ export function CalendarJournalDetails({ entries, date, onOpenDay, onWriteDate }
       </button>}
     </> : <>
       <p className="calendar-journal-detail__caption">계획과 별도로 남긴 실제 기록이에요.</p>
-      {day.length > 1 && <div className="calendar-journal-detail__entries" role="group" aria-label="이날 기록 선택">
+      {day.length > 1 && <div className="calendar-journal-detail__entries app-choice-group" role="group" aria-label="이날 기록 선택">
         {day.map((entry, index) => <button key={entry.id} type="button"
-          className="calendar-journal-detail__entry-choice" aria-pressed={selectedEntry?.id === entry.id}
-          aria-controls={selectionPanelId} onClick={() => setSelection({ date, id: entry.id })}>
+          className="calendar-journal-detail__entry-choice app-choice-control" aria-pressed={selectedEntry?.id === entry.id}
+          data-journal-entry-id={entry.id} aria-controls={selectionPanelId}
+          onClick={() => setSelection({ date, id: entry.id, scope: localJournalScopeGeneration() })}>
           <span className="calendar-journal-detail__entry-head">
             <strong>{entryHeading(entry)}</strong>
             <small>{selectedEntry?.id === entry.id ? "선택됨" : `기록 ${index + 1}`}</small>
@@ -113,7 +151,16 @@ export function CalendarJournalDetails({ entries, date, onOpenDay, onWriteDate }
           {component.rows.map(row => <p key={row.id}>{describeExerciseRow(row)}</p>)}
         </div>)}
       </article>}
-      <button type="button" className="calendar-journal-detail__open" onClick={() => onOpenDay ? onOpenDay(date) : setOriginal(true)}>
+      <button type="button" className="calendar-journal-detail__open" onClick={() => {
+        if (renderedScope !== localJournalScopeGeneration()) return
+        const calendarReturn = { scope: renderedScope, date, entryId: selectedEntry?.id ?? null,
+          scroll: section.current?.closest<HTMLElement>(".plan-day-reader__body")?.scrollTop ?? 0 }
+        if (onOpenDay) onOpenDay(date, selectedEntry?.id, calendarReturn)
+        else {
+          localReturnPosition.current = calendarReturn
+          setOriginal(true)
+        }
+      }}>
         <BookOpen size={18} aria-hidden="true" />일지·메모 원문 열기
       </button>
       <small>메모는 원래 일지에서 확인해요. 공유 설정은 바뀌지 않아요.</small>

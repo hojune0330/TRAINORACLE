@@ -22,7 +22,7 @@ import { PostSessionForm } from "./PostSessionForm"
 
 afterEach(cleanup)
 
-const rpeToggle = () => screen.getByRole("button", { name: /RPE · 주관 강도/u })
+const rpeToggle = () => screen.getByRole("button", { name: /힘든 정도 · 1~10/u })
 // getByRole 에는 exact 옵션이 없다 (있는 줄 알고 썼다가 tsc 가 잡았다).
 // 이름이 정확히 그 숫자인 것만 잡으려면 앵커 붙은 정규식을 써야 한다.
 // 안 그러면 "7" 이 "예상 강도 7" 과 "17" 에도 걸린다.

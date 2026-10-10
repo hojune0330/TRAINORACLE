@@ -113,11 +113,11 @@ export function EnergySystemLedgerPanel({
   }).join(", ")
 
   return (
-    <section className="energy-ledger energy-ledger--full" aria-label="에너지 시스템 누적">
+    <section className="energy-ledger energy-ledger--full" aria-label="훈련 종류별 합계">
       <div className="energy-ledger__heading-row">
         <div>
           <span className="energy-ledger__eyebrow">훈련 일지 분석</span>
-          <AppHeading as="h2" variant="screen" accent>에너지 시스템 누적<TermHelp term="energy-system" /></AppHeading>
+          <AppHeading as="h2" variant="screen" accent>훈련 종류별 합계<TermHelp term="energy-system" /></AppHeading>
         </div>
       </div>
       {hasData && <p className="energy-ledger__intro">

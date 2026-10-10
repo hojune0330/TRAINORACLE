@@ -127,18 +127,18 @@ describe("Trends exploration hub", () => {
 
     await chooseDetail(user, "훈련량")
     expect(screen.getByRole("region", { name: "누적 거리와 변화" })).toBeVisible()
-    expect(screen.queryByRole("region", { name: "에너지 시스템 누적" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("region", { name: "훈련 종류별 합계" })).not.toBeInTheDocument()
     expect(screen.queryByRole("region", { name: "최근 4개월 추이" })).not.toBeInTheDocument()
 
     await chooseDetail(user, "훈련 구성")
-    expect(screen.getByRole("region", { name: "에너지 시스템 누적" })).toBeVisible()
+    expect(screen.getByRole("region", { name: "훈련 종류별 합계" })).toBeVisible()
     expect(screen.queryByRole("region", { name: "누적 거리와 변화" })).not.toBeInTheDocument()
     expect(screen.queryByRole("region", { name: "최근 4개월 추이" })).not.toBeInTheDocument()
 
     await chooseDetail(user, "월별 변화")
     expect(screen.getByRole("region", { name: "최근 4개월 추이" })).toBeVisible()
     expect(screen.queryByRole("region", { name: "누적 거리와 변화" })).not.toBeInTheDocument()
-    expect(screen.queryByRole("region", { name: "에너지 시스템 누적" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("region", { name: "훈련 종류별 합계" })).not.toBeInTheDocument()
 
     await chooseDetail(user, "파일 분석")
     expect(screen.getByRole("heading", { name: "운동 파일로 구간 살펴보기" })).toBeVisible()
@@ -146,7 +146,7 @@ describe("Trends exploration hub", () => {
     expect(onOpenImport).toHaveBeenCalledOnce()
     expect(onWriteLog).not.toHaveBeenCalled()
     expect(screen.queryByRole("region", { name: "누적 거리와 변화" })).not.toBeInTheDocument()
-    expect(screen.queryByRole("region", { name: "에너지 시스템 누적" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("region", { name: "훈련 종류별 합계" })).not.toBeInTheDocument()
     expect(screen.queryByRole("region", { name: "최근 4개월 추이" })).not.toBeInTheDocument()
   })
 

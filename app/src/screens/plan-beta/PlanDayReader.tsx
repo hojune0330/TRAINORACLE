@@ -84,8 +84,8 @@ export function PlanDayReader({ date, sessions, initialSlot, initialSection, can
       </div>
     </header>
     {notice && <div className="plan-day-reader__notice">{notice}</div>}
-    {sessions.length > 1 && <nav className="plan-day-reader__slots" aria-label="오전·오후 바로가기">
-      {sessions.map(session => <button type="button" key={session.slot} aria-current={activeSlot === session.slot ? "location" : undefined}
+    {sessions.length > 1 && <nav className="plan-day-reader__slots app-choice-group" aria-label="오전·오후 바로가기">
+      {sessions.map(session => <button className="app-choice-control" type="button" key={session.slot} aria-current={activeSlot === session.slot ? "location" : undefined}
         onClick={() => jumpToSlot(session.slot)}>{sessionSlotLabel(session.slot)}</button>)}
     </nav>}
     <div className="plan-day-reader__body" ref={content} onScroll={syncSlot}>
