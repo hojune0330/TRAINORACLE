@@ -74,7 +74,7 @@ describe("two-a-day plan summary", () => {
     const bound = bindDefaultCatalogSessions([session(1, "AM", { minimum: 35, maximum: 35 })], 5000, "EXPERIENCED", 0)[0]!
     const before = JSON.stringify(bound)
     const steps = sessionExecutionSteps(bound)
-    expect(steps.find(step => step.title === "본운동")?.detail).toBe("20분 · 힘든 정도 3/10 → 15분 · 힘든 정도 4/10")
+    expect(steps.find(step => step.title === "본운동")?.detail).toBe("20분 · 힘든 정도 3/10 → 15분 · 힘든 정도 4/10 통증\u2060·\u2060어지럼\u2060·\u2060자세\u00a0무너짐이 생기면 시간을 채우지 말고 중단하세요.")
     render(createElement(PlanSchedulePreview, { startDate: "2026-08-17", frameLengthDays: 7, sessions: [bound] }))
     expect(screen.getByRole("list", { name: "훈련 실행 순서" })).toHaveTextContent("20분 · 힘든 정도 3/10 → 15분 · 힘든 정도 4/10")
     expect(screen.queryByText(/본운동 \d+개 구간과/)).not.toBeInTheDocument()
@@ -173,9 +173,10 @@ describe("two-a-day plan summary", () => {
     expect(firstDay).toHaveTextContent("같은 강도로 한 번 더 달릴 여유가 없으면 본운동을 끝내세요")
     fireEvent.click(within(firstDay).getByRole("button", { name: "훈련 방법과 이유" }))
     const reader = within(screen.getByRole("dialog"))
-    expect(reader.getByText("상세 반복·구간별 시간은 아직 정해지지 않은 RPE 안내예요. 총 시간을 고강도 본운동 시간으로 사용하지 마세요.")).toBeVisible()
+    expect(reader.getByText("표시한 시간은 준비·회복·정리를 포함한 전체 시간이에요. 전부 빠르게 달리는 시간이 아니에요.")).toBeVisible()
     fireEvent.click(reader.getByRole("tab", { name: "이유·근거" }))
     expect(reader.getByText(/목표 페이스·고정 횟수는 추정하지 않습니다\./u)).toBeVisible()
+    expect(reader.getByText(/구간별 숫자가 없는 RPE 안내예요\. 반복과 회복의 구체적인 구성을 확인할 수 없어요\./u)).toBeVisible()
   })
 
   it.each([
