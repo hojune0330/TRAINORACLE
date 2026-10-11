@@ -22,13 +22,18 @@ test("keeps the local diary usable after the network goes offline", async ({ con
   await page.reload({ waitUntil: "domcontentloaded" })
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
   await page.getByRole("button", { name: /훈련 후/u }).click()
+  await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
+  await page.getByRole("button", { name: "거리와 시간 수정", exact: true }).click()
   await page.getByRole("textbox", { name: "거리 (km)" }).fill("3.2")
   await page.getByRole("textbox", { name: "시간 (분)" }).fill("18")
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
+  await page.getByRole("button", { name: "운동 강도 수정", exact: true }).click()
   await page.getByRole("button", { name: "5", exact: true }).click()
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
   await page.getByRole("button", { name: /^저장/u }).click()
 
   // Then: the honest receipt and the local record survive without a server.
-  await expect(page.getByRole("status")).toContainText("3.2 km")
+  await expect(page.locator(".journal-save-result")).toContainText("3.2 km")
   await expect.poll(async () => page.evaluate(() => {
     const journal = window.localStorage.getItem("trainoracle.journal.v1")
     return journal?.includes('"distanceKm":"3.2"') ?? false

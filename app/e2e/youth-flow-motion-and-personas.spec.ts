@@ -50,12 +50,16 @@ test("moves from a choice to the next question and gives a clear journal save co
   await expect(page.getByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
   await page.getByRole("button", { name: /훈련 후.*운동별로 자세히/u }).click()
   await expect(page.getByRole("heading", { name: "훈련 후 · 기록" })).toBeVisible()
+  await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
+  await page.getByRole("button", { name: "거리와 시간 수정", exact: true }).click()
   await page.getByRole("textbox", { name: "거리 (km)" }).fill("8")
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
   await page.getByRole("button", { name: /^저장/u }).click()
 
-  const receipt = page.locator(".saved-toast")
+  const receipt = page.locator(".journal-save-result")
   await expect(receipt).toBeVisible()
-  await expect(receipt.locator(".saved-toast__check")).toHaveCount(1)
+  await expect(receipt).toHaveAttribute("data-storage-state", "confirmed")
+  await expect(receipt.locator(".journal-save-result__mark .lucide-check")).toHaveCount(1)
   await expect(receipt).toContainText("저장")
   const savedEntries = await page.evaluate(() => {
     const raw = window.localStorage.getItem("trainoracle.journal.v1")

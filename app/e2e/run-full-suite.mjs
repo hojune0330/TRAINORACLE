@@ -29,13 +29,25 @@ export function fixtureEnvironment(environment, port) {
   }
 }
 
-export async function runFullSuite({
+export function runFullSuite(options = {}) {
+  return runBrowserSuite(options, projects, "full-e2e")
+}
+
+// CI distributes the fixed project inventory across independent runners. Each
+// shard still owns and completes both lanes; only the workflow aggregate is a
+// full gate. This entry point cannot select a test file, grep or one lane.
+export function runProjectSuite(project, options = {}) {
+  if (!projects.includes(project)) throw Error("Unknown browser project")
+  return runBrowserSuite(options, [project], "project-e2e")
+}
+
+async function runBrowserSuite({
   argv = [],
   appDirectory = process.cwd(), environment = process.env,
   spawnChild = spawn, selectPort = reservePort, waitForServer = waitForPreview,
   stopServer = stopPreview, signals = process,
   stdout = process.stdout, stderr = process.stderr,
-} = {}) {
+} = {}, requiredProjects, runLabel) {
   if (argv.length !== 0) throw Error("The full browser gate does not accept narrowing arguments; run installed Playwright directly for focused checks")
   const vitePath = path.join(appDirectory, "node_modules", "vite", "bin", "vite.js")
   const playwrightPath = path.join(appDirectory, "node_modules", "@playwright", "test", "cli.js")
@@ -75,10 +87,10 @@ export async function runFullSuite({
       try {
         await waitForServer(port, activeServer)
         if (serverError !== null) throw serverError
-        stdout.write(`[full-e2e] lane=${lane.name} server=READY port=${port} projects=${projects.length}\n`)
-        for (const project of projects) {
+        stdout.write(`[${runLabel}] lane=${lane.name} server=READY port=${port} projects=${requiredProjects.length}\n`)
+        for (const project of requiredProjects) {
           if (interruptedSignal !== null) throw Error("Interrupted before project start")
-          stdout.write(`[full-e2e] lane=${lane.name} project=${project} result=STARTED\n`)
+          stdout.write(`[${runLabel}] lane=${lane.name} project=${project} result=STARTED\n`)
           activeProject = spawnChild(process.execPath, [
             playwrightPath, "test", `--config=${lane.config}`, `--project=${project}`,
             "--no-deps", "--workers=1",
@@ -95,7 +107,7 @@ export async function runFullSuite({
           if (activeServer.exitCode !== null || activeServer.signalCode !== null) throw Error(`${lane.name} server exited during ${project}`)
           if (interruptedSignal !== null) throw Error("Interrupted during project")
           completedProjects += 1
-          stdout.write(`[full-e2e] lane=${lane.name} project=${project} result=PASS exit=0\n`)
+          stdout.write(`[${runLabel}] lane=${lane.name} project=${project} result=PASS exit=0\n`)
         }
         completedLanes += 1
       } finally {
@@ -106,8 +118,8 @@ export async function runFullSuite({
       }
     }
     // A removed, skipped or partially completed lane is never a full-suite pass.
-    if (completedLanes !== 2 || cleanedServers !== 2 || completedProjects !== projects.length * 2) {
-      throw Error("Both browser lanes and all four projects must complete and clean up")
+    if (completedLanes !== 2 || cleanedServers !== 2 || completedProjects !== requiredProjects.length * 2) {
+      throw Error("Both browser lanes and every required project must complete and clean up")
     }
   } catch (error) {
     failure = error
@@ -120,10 +132,10 @@ export async function runFullSuite({
   const code = failure === null && interruptedSignal === null ? 0
     : interruptedSignal === "SIGINT" ? 130 : interruptedSignal === "SIGTERM" ? 143 : 1
   if (code === 0) {
-    stdout.write(`[full-e2e] SUCCESS lanes=${completedLanes}/2 projects=${completedProjects}/8 serverCleanup=PASS\n`)
+    stdout.write(`[${runLabel}] SUCCESS lanes=${completedLanes}/2 projects=${completedProjects}/${requiredProjects.length * 2} serverCleanup=PASS\n`)
   } else {
     const reason = interruptedSignal === null ? failure instanceof Error ? failure.message : String(failure) : `Interrupted by ${interruptedSignal}`
-    stderr.write(`[full-e2e] FAILURE lanes=${completedLanes}/2 projects=${completedProjects}/8 serverCleanup=${cleanedServers}/2 reason=${reason}\n`)
+    stderr.write(`[${runLabel}] FAILURE lanes=${completedLanes}/2 projects=${completedProjects}/${requiredProjects.length * 2} serverCleanup=${cleanedServers}/2 reason=${reason}\n`)
   }
   return { code, completedProjects, completedLanes, cleanedServers }
 }
@@ -132,7 +144,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   try {
     if (process.argv.length !== 2) throw Error("The full browser gate does not accept narrowing arguments")
     // This Node test is not a Playwright case; make it a mandatory gate here.
-    const selfTests = spawn(process.execPath, ["--test", path.join(process.cwd(), "e2e", "run-full-suite.test.mjs")], {
+    const selfTests = spawn(process.execPath, ["--test", path.join(process.cwd(), "e2e", "run-full-suite.test.mjs"),
+      path.join(process.cwd(), "scripts", "ci-gates.test.mjs")], {
       stdio: "inherit", shell: false, windowsHide: true,
     })
     const selfTestCode = await processExit(selfTests)

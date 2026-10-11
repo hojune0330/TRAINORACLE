@@ -1,0 +1,85 @@
+import assert from "node:assert/strict"
+import { spawnSync } from "node:child_process"
+import { readFileSync } from "node:fs"
+import path from "node:path"
+import { test } from "node:test"
+import YAML from "yaml"
+import { projects } from "../e2e/run-full-suite.mjs"
+
+const workflow = YAML.parse(readFileSync(new URL("../../.github/workflows/ci.yml", import.meta.url), "utf8"))
+const jobs = workflow.jobs
+const needs = job => Array.isArray(job.needs) ? job.needs : [job.needs]
+const commands = job => job.steps.filter(step => step.run).flatMap(step => step.run.trim().split("\n").map(line => line.trim()))
+
+test("CI distributes the complete fixed timezone and browser project inventories", () => {
+  assert.deepEqual(jobs["app-unit"].strategy.matrix.include, [
+    { timezone: "UTC", tz: "UTC", script: "test:unit" },
+    { timezone: "KST", tz: "Asia/Seoul", script: "test:unit:kst" },
+  ])
+  assert.equal(jobs["app-unit"].strategy["fail-fast"], false)
+  const unitStep = jobs["app-unit"].steps.find(step => step.env?.UNIT_TEST_SCRIPT)
+  assert.equal(unitStep.env.TZ, "${{ matrix.tz }}")
+  assert.equal(unitStep.run, 'npm run "$UNIT_TEST_SCRIPT"')
+  assert.deepEqual(jobs["app-browser-generic"].strategy.matrix.project, [...projects])
+  assert.equal(jobs["app-browser-generic"].strategy["fail-fast"], false)
+  assert.deepEqual(needs(jobs["app-browser-generic"]), ["app-quality"])
+  assert(commands(jobs["app-browser-generic"]).includes("node e2e/run-project-suite.mjs '${{ matrix.project }}'"))
+})
+
+test("quality and dedicated checks keep the original complete command coverage", () => {
+  const quality = commands(jobs["app-quality"])
+  for (const command of ["npm run test:release-env", "npm run test:device-integration",
+    "npm run test:account-record-validator", "npm run test:account-state-validator",
+    "npm run typecheck", "npm run typecheck:e2e", "npm run build"]) assert(quality.includes(command), command)
+  assert.deepEqual(commands(jobs["app-browser-dedicated"]).filter(command => command.startsWith("npm run test:")), [
+    "npm run test:e2e:calendar-decoration", "npm run test:e2e:account-draft-buffer",
+    "npm run test:e2e:account-draft-panel", "npm run test:e2e:account-record-service",
+    "npm run test:e2e:account-conflict", "npm run test:e2e:account-decoration",
+    "npm run test:e2e:account-calendar-decoration", "npm run test:e2e:account-plan-service",
+    "npm run test:e2e:form-input-autosave", "npm run test:e2e:file-analysis",
+  ])
+  assert.deepEqual(needs(jobs["app-browser-dedicated"]), ["app-quality"])
+  assert.deepEqual(needs(jobs["deploy-pages"]), ["contract-tests", "app-quality", "app-browser"])
+  assert.equal(workflow.permissions.contents, "read")
+  for (const name of ["app-unit", "app-quality", "app-browser-generic", "app-browser-dedicated", "app-browser"]) {
+    assert.equal(jobs[name].permissions, undefined)
+  }
+})
+
+function bashCommand() {
+  if (process.platform !== "win32") return "bash"
+  const git = spawnSync("git", ["--exec-path"], { encoding: "utf8", windowsHide: true, shell: false })
+  assert.equal(git.status, 0, "Git is required to locate its Windows Bash runtime")
+  return path.resolve(git.stdout.trim(), "../../..", "bin/bash.exe")
+}
+
+test("actual aggregate shell guards reject every incomplete or unsuccessful result", () => {
+  for (const [name, expectedNeeds] of [
+    ["app-quality", ["app-unit"]], ["app-browser", ["app-browser-generic", "app-browser-dedicated"]],
+  ]) {
+    const job = jobs[name]
+    assert.deepEqual(needs(job), expectedNeeds)
+    assert.equal(job.if, "${{ always() }}")
+    const guard = job.steps.find(step => step.shell === "bash" && step.env)
+    const keys = Object.keys(guard.env)
+    assert.equal(keys.length, expectedNeeds.length)
+    assert.deepEqual(Object.values(guard.env), expectedNeeds.map(dependency => `\${{ needs.${dependency}.result }}`))
+    const execute = values => {
+      const environment = { ...process.env }
+      for (const key of keys) delete environment[key]
+      Object.assign(environment, values)
+      return spawnSync(bashCommand(), ["--noprofile", "--norc", "-e", "-o", "pipefail", "-c", guard.run], {
+        env: environment, windowsHide: true, shell: false, encoding: "utf8",
+      })
+    }
+    const successful = Object.fromEntries(keys.map(key => [key, "success"]))
+    assert.equal(execute(successful).status, 0)
+    for (const key of keys) {
+      for (const status of ["", "failure", "cancelled", "skipped", "missing", "in_progress"]) {
+        assert.equal(execute({ ...successful, [key]: status }).status, 1, `${name}:${key}:${status || "empty"}`)
+      }
+      const missing = { ...successful }; delete missing[key]
+      assert.equal(execute(missing).status, 1, `${name}:${key}:absent`)
+    }
+  }
+})

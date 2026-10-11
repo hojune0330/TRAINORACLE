@@ -289,13 +289,16 @@ test("shows a truthful distance receipt and opens the real trend", async ({ page
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
   await page.getByRole("button", { name: /훈련 후.*운동별로 자세히/u }).click()
+  await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
+  await page.getByRole("button", { name: "거리와 시간 수정", exact: true }).click()
   await page.getByRole("textbox", { name: "거리 (km)" }).fill("8")
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
 
   // When
   await page.getByRole("button", { name: /^저장/u }).click()
 
   // Then
-  const receipt = page.getByRole("status")
+  const receipt = page.locator(".journal-save-result")
   await expect(receipt).toContainText("8 km")
   await receipt.getByRole("button", { name: "거리 추이 보기" }).click()
   await expect(page.getByRole("heading", { name: "오라클", exact: true })).toBeVisible()

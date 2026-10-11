@@ -36,8 +36,12 @@ test("finishes a quick journal and deepens the same record without duplication",
   await page.getByRole("button", { name: "내용 추가·수정", exact: true }).click()
   await page.getByRole("button", { name: "일지 더 쓰기" }).click()
   await expect(page.getByText("훈련 후 · 기록", { exact: true })).toBeVisible()
+  await page.getByRole("button", { name: "실제로 한 운동 수정", exact: true }).click()
   await expect(page.getByLabel("세션 제목")).toHaveValue("운동 완료")
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
+  await page.getByRole("button", { name: "거리와 시간 수정", exact: true }).click()
   await page.getByLabel("거리 (km)").fill("6.2")
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
   await page.getByRole("button", { name: "수정 저장" }).click()
 
   const detailed = await page.evaluate((key) => JSON.parse(window.localStorage.getItem(key) ?? "[]"), JOURNAL_KEY)

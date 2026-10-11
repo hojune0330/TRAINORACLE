@@ -12,14 +12,17 @@ test("지운 일지를 그 자리에서 되돌릴 수 있다", async ({ page }) 
   // 기록 탭은 곧바로 입력폼이 아니라 "어떤 일지를 쓰세요?" 선택 화면이다.
   // 종류를 먼저 골라야 입력폼이 나온다(스냅샷으로 확인).
   await page.getByRole("button", { name: /훈련 후/u }).first().click()
+  await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
+  await page.getByRole("button", { name: "실제로 한 운동 수정", exact: true }).click()
   // 실제 접근성 이름은 "세션 제목"이다(PostSessionForm.tsx). 추측한 이름(/훈련 이름|제목/)은
   // 아무 요소에도 걸리지 않아 e2e가 60초 타임아웃으로 죽었다.
   await page.getByRole("textbox", { name: "세션 제목" }).first().fill("휴지통 시험 훈련")
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
   await page.keyboard.press("Escape")
   await page.getByRole("button", { name: /^저장/u }).click()
 
   // 저장된 일지를 열어 삭제한다
-  const saved = page.getByRole("button", { name: "오늘 기록 보기" })
+  const saved = page.getByRole("button", { name: "기록 보기", exact: true })
   await expect(saved).toBeVisible()
   await saved.click()
   await page.keyboard.press("Escape")

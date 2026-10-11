@@ -100,8 +100,18 @@ jobs:
         working-directory: impl
         run: npm test
 
-  app-quality:
+  app-unit:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - timezone: UTC
+            tz: UTC
+            script: test:unit
+          - timezone: KST
+            tz: Asia/Seoul
+            script: test:unit:kst
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -119,7 +129,45 @@ jobs:
 
       - name: Run app unit tests
         working-directory: app
-        run: npm test
+        env:
+          TZ: ${{ matrix.tz }}
+          UNIT_TEST_SCRIPT: ${{ matrix.script }}
+        run: npm run "$UNIT_TEST_SCRIPT"
+
+  app-quality:
+    needs: app-unit
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require both unit timezones to pass
+        shell: bash
+        env:
+          APP_UNIT_RESULT: ${{ needs.app-unit.result }}
+        run: |
+          if [[ "$APP_UNIT_RESULT" != "success" ]]; then
+            echo "::error::Both unit timezones must pass; app-unit result is '$APP_UNIT_RESULT'."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install app dependencies
+        working-directory: app
+        run: npm ci
+
+      - name: Verify hosted release environment and device integration
+        working-directory: app
+        run: |
+          npm run test:release-env
+          npm run test:device-integration
 
       - name: Verify shared account journal record validator
         working-directory: app
@@ -139,7 +187,43 @@ jobs:
         working-directory: app
         run: npm run build
 
-  app-browser:
+  app-browser-generic:
+    needs: app-quality
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - desktop-chromium
+          - mobile-chromium
+          - touch-narrow
+          - reduced-motion
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install app dependencies
+        working-directory: app
+        run: npm ci
+
+      - name: Install Chromium
+        working-directory: app
+        run: npx playwright install --with-deps chromium
+
+      - name: Build and run both browser lanes for the project
+        working-directory: app
+        run: |
+          npm run build
+          node e2e/run-project-suite.mjs '${{ matrix.project }}'
+
+  app-browser-dedicated:
     needs: app-quality
     runs-on: ubuntu-latest
     steps:
@@ -178,9 +262,23 @@ jobs:
           npm run test:e2e:form-input-autosave
           npm run test:e2e:file-analysis
 
-      - name: Run app browser scenarios
-        working-directory: app
-        run: npm run test:e2e:generic
+  app-browser:
+    needs:
+      - app-browser-generic
+      - app-browser-dedicated
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all browser projects and dedicated scenarios to pass
+        shell: bash
+        env:
+          GENERIC_RESULT: ${{ needs.app-browser-generic.result }}
+          DEDICATED_RESULT: ${{ needs.app-browser-dedicated.result }}
+        run: |
+          if [[ "$GENERIC_RESULT" != "success" || "$DEDICATED_RESULT" != "success" ]]; then
+            echo "::error::All browser coverage must pass; generic result is '$GENERIC_RESULT', dedicated result is '$DEDICATED_RESULT'."
+            exit 1
+          fi
 
   deploy-pages:
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
