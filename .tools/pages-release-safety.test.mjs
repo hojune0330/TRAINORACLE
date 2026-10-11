@@ -120,7 +120,37 @@ test('dry run does not copy, commit or publish; actual publish preserves preview
   assert.equal(readFileSync(join(f.pagesRepo, 'assets/old.js'), 'utf8'), 'retained old entry');
   assert.equal(readFileSync(join(f.pagesRepo, 'CNAME'), 'utf8'), 'synthetic.example.invalid');
   assert.match(readFileSync(join(f.pagesRepo, 'index.html'), 'utf8'), /new.js/u);
+  assert.match(gitAt(f.pagesRepo, 'show', 'HEAD:index.html'), /new.js/u);
+  assert.equal(gitAt(f.pagesRepo, 'rev-parse', 'HEAD:index.html'),
+    gitAt(f.pagesRepo, 'hash-object', '--no-filters', join(f.bundle, 'index.html')));
   assert.equal(JSON.parse(readFileSync(join(f.pagesRepo, DEPLOY_RECEIPT))).sourceSha, f.manifest.sourceSha);
+});
+
+test('publication rehashes same-size tracked HTML instead of trusting its cached stat', t => {
+  const f = fixture(t);
+  assert.equal(readFileSync(join(f.bundle, 'index.html')).length,
+    readFileSync(join(f.pagesRepo, 'index.html')).length);
+  // Deterministically emulate Git trusting a stale working-file stat entry.
+  gitAt(f.pagesRepo, 'update-index', '--assume-unchanged', 'index.html');
+  const result = publishRelease({ ...f, publish: true });
+  assert.equal(result.status, 'PUSH_ACCEPTED_LIVE_NOT_VERIFIED');
+  assert.match(gitAt(f.pagesRepo, 'show', 'HEAD:index.html'), /new.js/u);
+  assert.equal(gitAt(f.pagesRepo, 'rev-parse', 'HEAD:index.html'),
+    gitAt(f.pagesRepo, 'hash-object', '--no-filters', join(f.bundle, 'index.html')));
+});
+
+test('a staged byte-changing filter stops before commit or push', t => {
+  const f = fixture(t);
+  write(f.pagesRepo, '.gitattributes', 'index.html text eol=lf\n');
+  commit(f.pagesRepo, 'explicit text filter');
+  gitAt(f.pagesRepo, 'push', 'origin', 'gh-pages');
+  const snapshot = remoteReleaseSnapshot(f.repo);
+  write(f.bundle, 'index.html', '<script src="./assets/new.js"></script>\r\n');
+  write(f.bundle, BUILD_MANIFEST, JSON.stringify({ ...f.manifest, ...snapshot,
+    publicConfigurationSourceSha: snapshot.previousPagesSha, files: packageInventory(f.bundle) }));
+  assert.throws(() => publishRelease({ ...f, publish: true }), /PUBLISHED_BLOB_MISMATCH:INDEX:index.html/);
+  assert.equal(gitAt(f.pagesRepo, 'rev-parse', 'HEAD'), snapshot.previousPagesSha);
+  assert.deepEqual(remoteReleaseSnapshot(f.repo), snapshot);
 });
 
 test('busy release refuses publication before any copy, while inspection stays read-only', t => {
