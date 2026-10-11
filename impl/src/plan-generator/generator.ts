@@ -112,7 +112,9 @@ function mainExposureDaysAreAvailable(request: CanonicalPlanGenerationRequest, c
   return countedExposureIds.every((exposureId) => {
     const localDayKey = byExposureId.get(exposureId)?.localDayKey
     const slotIndex = localDayKey === undefined ? undefined : firstSlotForDay.get(localDayKey)
-    return slotIndex !== undefined && availableDays.has(Math.floor(slotIndex / 2) + 1)
+    return slotIndex !== undefined && availableDays.has(
+      Math.floor((slotIndex + (request.formation.startSlot === "PM" ? 1 : 0)) / 2) + 1,
+    )
   })
 }
 

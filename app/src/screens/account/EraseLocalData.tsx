@@ -1,6 +1,7 @@
 import React from "react"
 import { SectionLb } from "../../components/JournalPrimitives"
-import { eraseAllLocalData } from "../../domain/erase-local-data"
+import { eraseAllLocalData, type EraseResult } from "../../domain/erase-local-data"
+import { disposeGoalProgramDatabase } from "../../domain/account/goal-program-database-disposal"
 import { SafeJournalExport } from "../home/DeviceJournal"
 import { secondaryBtn } from "./styles"
 
@@ -9,15 +10,27 @@ export function EraseLocalData({ onOpenRestore }: {
 } = {}) {
   const [confirming, setConfirming] = React.useState(false)
   const [done, setDone] = React.useState<string | null>(null)
+  const [erasing, setErasing] = React.useState(false)
 
-  const handleErase = () => {
-    const result = eraseAllLocalData()
+  const handleErase = async () => {
+    if (erasing) return
+    setErasing(true)
+    let result: EraseResult
+    try {
+      result = eraseAllLocalData()
+    } catch {
+      result = { ok: false, cleared: 0, failed: ["local-data"] }
+    }
+    const databaseResult = await disposeGoalProgramDatabase()
     setConfirming(false)
     setDone(
-      result.ok
-        ? `이 기기에서 ${result.cleared}개 항목을 지웠어요.`
-        : "일부 항목을 지우지 못했어요. 브라우저 설정에서 사이트 데이터를 삭제해 주세요.",
+      result.ok && databaseResult.ok
+        ? "이 기기의 저장 데이터를 삭제했어요."
+        : databaseResult.failed.length > 0
+          ? "계정 훈련 계획 저장소를 삭제하지 못했어요. 이 기기 데이터가 모두 지워지지 않았으니 브라우저 설정에서 사이트 데이터를 삭제해 주세요."
+          : "일부 항목을 지우지 못했어요. 브라우저 설정에서 사이트 데이터를 삭제해 주세요.",
     )
+    setErasing(false)
   }
 
   return (
@@ -73,7 +86,9 @@ export function EraseLocalData({ onOpenRestore }: {
           <button
             type="button"
             data-testid="erase-confirm"
-            onClick={handleErase}
+            onClick={() => { void handleErase() }}
+            disabled={erasing}
+            aria-busy={erasing}
             style={{
               minHeight: 44,
               borderRadius: "var(--r-md)",
@@ -86,9 +101,12 @@ export function EraseLocalData({ onOpenRestore }: {
               fontWeight: 600,
             }}
           >
-            네, 전부 지울게요
+            {erasing ? "기기 데이터를 지우는 중…" : "네, 전부 지울게요"}
           </button>
-          <button type="button" data-testid="erase-cancel" onClick={() => setConfirming(false)} style={{ ...secondaryBtn, minHeight: 44 }}>
+          {erasing && <p role="status" data-testid="erase-progress" style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--ink-2)", margin: 0 }}>
+            기기에 저장된 데이터를 정리하고 있어요.
+          </p>}
+          <button type="button" data-testid="erase-cancel" disabled={erasing} onClick={() => setConfirming(false)} style={{ ...secondaryBtn, minHeight: 44 }}>
             그만두기
           </button>
         </div>

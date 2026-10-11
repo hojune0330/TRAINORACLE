@@ -51,7 +51,7 @@ function parseComponent(value: unknown): MainExposureComponent | undefined {
   }
 }
 
-function parseSlots(value: unknown): readonly LocalCivilHalfDaySlot[] | undefined {
+function parseSlots(value: unknown, startSlot: "AM" | "PM"): readonly LocalCivilHalfDaySlot[] | undefined {
   if (!Array.isArray(value) || value.length !== 19) {
     return undefined
   }
@@ -63,7 +63,7 @@ function parseSlots(value: unknown): readonly LocalCivilHalfDaySlot[] | undefine
       return undefined
     }
 
-    const expectedSlot = slotIndex === 18 || slotIndex % 2 === 0 ? "AM" : "PM"
+    const expectedSlot = (slotIndex + (startSlot === "PM" ? 1 : 0)) % 2 === 0 ? "AM" : "PM"
     const localDayKey = rawSlot["localDayKey"]
     if (
       rawSlot["slotIndex"] !== slotIndex ||
@@ -73,10 +73,10 @@ function parseSlots(value: unknown): readonly LocalCivilHalfDaySlot[] | undefine
       return undefined
     }
 
-    if (slotIndex > 0 && slotIndex % 2 === 1 && localDayKey !== slots[slotIndex - 1]?.localDayKey) {
+    if (slotIndex > 0 && expectedSlot === "PM" && localDayKey !== slots[slotIndex - 1]?.localDayKey) {
       return undefined
     }
-    if (slotIndex > 0 && slotIndex % 2 === 0 && localDayKey === slots[slotIndex - 1]?.localDayKey) {
+    if (slotIndex > 0 && expectedSlot === "AM" && localDayKey === slots[slotIndex - 1]?.localDayKey) {
       return undefined
     }
 
@@ -140,7 +140,8 @@ export function parseFormation(value: unknown): LocalCivilNinePointFiveFormation
     return undefined
   }
 
-  const slots = parseSlots(value["slots"])
+  if (value["startSlot"] !== undefined && value["startSlot"] !== "PM") return undefined
+  const slots = parseSlots(value["slots"], value["startSlot"] === "PM" ? "PM" : "AM")
   if (slots === undefined) {
     return undefined
   }
@@ -151,5 +152,5 @@ export function parseFormation(value: unknown): LocalCivilNinePointFiveFormation
     return undefined
   }
 
-  return Object.freeze({ kind: "LOCAL_CIVIL_9_5", slots, exposures })
+  return Object.freeze({ kind: "LOCAL_CIVIL_9_5", ...(value["startSlot"] === "PM" ? { startSlot: "PM" as const } : {}), slots, exposures })
 }

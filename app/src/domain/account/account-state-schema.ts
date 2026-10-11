@@ -5,16 +5,20 @@ import { validateAccountCalendarDecorationDocument } from "./account-calendar-de
 import { validateAccountAthleteRecordDocument, validateAccountAthleteRecordDocumentUpdate } from "./account-athlete-record-schema"
 import { validateAccountRunningProfileDocument } from "./account-running-profile-schema"
 import { validateAccountMinigameProgressDocument, validateAccountMinigameProgressUpdate } from "./account-minigame-progress-schema"
+import { validateAccountGoalProgramDocument, validateAccountGoalProgramDocumentUpdate } from "./account-goal-program-schema"
+export { validateAccountGoalProgramDocument, validateAccountGoalProgramCollectionUpdate, joinAccountGoalProgramCollection, accountGoalProgramDocumentId,
+  accountGoalProgramReferences, emptyAccountGoalProgramIndex } from "./account-goal-program-schema"
 import { accountOracleV2DocumentSchema, validateOracleV2Migration, validateOracleV2Transition, validateInitialOracleV2Document } from "./account-oracle-v2-schema"
 export { validateInitialOracleV2Document }
 export { accountCalendarDecorationOwnershipMetadata } from "./account-calendar-decoration-schema"
 
 export function validateAccountStateDocument(value: unknown): boolean {
-  return accountOracleV2DocumentSchema.safeParse(value).success || validateAccountRunningProfileDocument(value) || validateAccountDecorationDocument(value) || validateAccountCalendarDecorationDocument(value) || validateAccountAthleteRecordDocument(value) || validateAccountPlanDocument(value)
+  return validateAccountGoalProgramDocument(value) || accountOracleV2DocumentSchema.safeParse(value).success || validateAccountRunningProfileDocument(value) || validateAccountDecorationDocument(value) || validateAccountCalendarDecorationDocument(value) || validateAccountAthleteRecordDocument(value) || validateAccountPlanDocument(value)
     || validateAccountMinigameProgressDocument(value)
 }
 
 export function validateAccountStateDocumentUpdate(previous: unknown, next: unknown): boolean {
+  if (validateAccountGoalProgramDocument(previous)) return validateAccountGoalProgramDocumentUpdate(previous, next)
   if (accountOracleV2DocumentSchema.safeParse(previous).success) return validateOracleV2Transition(previous, next)
   if (validateAccountRunningProfileDocument(previous)) return validateAccountRunningProfileDocument(next) || validateOracleV2Migration(previous, next)
   if (validateAccountDecorationDocument(previous)) return validateAccountDecorationDocument(next)

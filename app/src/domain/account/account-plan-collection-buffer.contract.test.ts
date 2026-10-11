@@ -22,6 +22,30 @@ function setup() {
   return { stores, open }
 }
 
+it("stores an archive review marker only on a bounded current-to-archived manifest", async () => {
+  const { stores, open } = setup(), previous = emptyAccountPlanDocument()
+  previous.data.plans.push(accountPlanEntry(accountPlanPacketFixture(3)))
+  previous.data.currentPlanId = previous.data.plans[0]!.planId
+  const next = structuredClone(previous)
+  next.data.plans[0]!.archivedAt = new Date().toISOString(); next.data.currentPlanId = null
+  const guarded = prepareAccountPlanCollectionTransfer({ ownerId: COLLECTION_OWNER, operationId: crypto.randomUUID(),
+    expectedRevision: 1, previous, next, archiveReviewRequired: true })!
+  const buffer = open()
+  await buffer.observe(guarded.previous!.index, 1)
+  await buffer.save(guarded, 1, () => true)
+  const manifest = stores.manifests.writes[0]!
+  expect(accountPlanCollectionManifestSchema.safeParse(manifest).success).toBe(true)
+  expect(manifest.operation?.archiveReviewRequired).toBe(true)
+  for (const marker of [false, null, "true", 1]) {
+    expect(accountPlanCollectionManifestSchema.safeParse({ ...manifest,
+      operation: { ...manifest.operation, archiveReviewRequired: marker } }).success).toBe(false)
+  }
+  expect(accountPlanCollectionManifestSchema.safeParse({ ...manifest, next: manifest.previous }).success).toBe(false)
+  expect(accountPlanCollectionManifestSchema.safeParse({ ...manifest, previous: null,
+    operation: { ...manifest.operation, expectedRevision: 0 } }).success).toBe(false)
+  buffer.close()
+})
+
 it.each([{ journalGuard: [] }, { journalGuard: [{ documentId: "55555555-5555-4555-8555-555555555555", revision: 2 }] }])("reopens exact source and journal guards in the durable outbox", async ({ journalGuard }) => {
   const { open } = setup(), buffer = open(), op = transfer()
   op.next.index.currentPlanId = op.next.snapshots[0]!.planId

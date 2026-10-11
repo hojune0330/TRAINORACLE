@@ -153,6 +153,8 @@ export type AccountJournalConflictArchive<T = AccountJournalDraft> = {
 }
 export interface AccountJournalDraftBuffer<T = AccountJournalDraft> {
   saveDraft(owner: string, doc: string, draft: T, expectedLocalSequence?: number, writePurpose?: "MIGRATION" | "FILE_OBSERVATION"): Promise<void>
+  /** Complete collection intent and encrypted parts in one native transaction. */
+  saveDraftBatch?(owner: string, entries: readonly { documentId: string; draft: T; expectedLocalSequence: number }[], isCurrent?: () => boolean): Promise<void>
   read(owner: string, doc: string): Promise<AccountJournalDraftView<T> | null>
   list(owner: string): Promise<AccountJournalDraftView<T>[]>
   queue(owner: string, doc: string, operationId: string): Promise<void>
@@ -397,6 +399,45 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
   }
 
   return {
+    async saveDraftBatch(owner, entries, isCurrent = () => true) {
+      const { ownerId } = scope(owner)
+      if (!isCurrent() || !Array.isArray(entries) || entries.length === 0 || entries.length > 39) throw Error("Invalid draft batch")
+      const storageRevision = currentStorageConsentRevision(ownerId)
+      const fresh = () => {
+        scope(ownerId)
+        if (!isCurrent() || currentStorageConsentRevision(ownerId) !== storageRevision) throw Error("Draft batch scope changed")
+      }
+      const captured = entries.map(entry => ({ documentId: scope(ownerId, entry.documentId).documentId!,
+        draft: parseDocument(structuredClone(entry.draft), schema), expectedLocalSequence: sequence.parse(entry.expectedLocalSequence) }))
+      if (new Set(captured.map(entry => entry.documentId)).size !== captured.length) throw Error("Duplicate batch document")
+      const key = await keyFor(ownerId, true)
+      fresh()
+      const encrypted = await Promise.all(captured.map(async entry => {
+        const cipher = await encrypt(key, ownerId, entry.documentId, entry.draft, databaseName)
+        fresh(); return { ...entry, cipher }
+      }))
+      fresh()
+      await transaction<void>(ownerId, [RECORDS], "readwrite", (tx, finish, guard) => {
+        fresh()
+        const store = tx.objectStore(RECORDS)
+        let remaining = encrypted.length
+        for (const entry of encrypted) {
+          const request = store.get([ownerId, entry.documentId])
+          request.onsuccess = () => guard(() => {
+            fresh()
+            const old = request.result === undefined ? null : parseRecord(request.result, ownerId, entry.documentId)
+            if ((old?.localSequence ?? 0) !== entry.expectedLocalSequence || old?.blocked || old?.operation
+              || old?.resolvedDeletion || old?.encryptedMutation) throw Error("Draft batch base changed")
+            const next = old ? { ...old, localSequence: old.localSequence + 1, encryptedCurrent: entry.cipher }
+              : initial(ownerId, entry.documentId, entry.cipher)
+            next.storageConsentRevision = storageRevision
+            store.put(parseRecord(next, ownerId, entry.documentId))
+            remaining -= 1
+            if (remaining === 0) { fresh(); finish(undefined) }
+          })
+        }
+      })
+    },
     async saveDraft(owner: string, doc: string, input: T, expectedLocalSequence?: number, writePurpose?: "MIGRATION" | "FILE_OBSERVATION") {
       const { ownerId, documentId } = scope(owner, doc)
       const storageConsentRevision = currentStorageConsentRevision(ownerId)

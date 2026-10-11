@@ -44,6 +44,8 @@ import { ACCOUNT_DELETION_BOUNDARY_PREFIX } from "./account/account-deletion-bou
 const ACCOUNT_SCOPED_PLAN_LOCAL_KEYS = [
   "trainoracle.plan-beta.v1",
   "trainoracle.plan-beta.history.v1",
+  "trainoracle.goal-training-program.v1",
+  "trainoracle.goal-training-program.history.v1",
   "trainoracle.plan-beta.legacy-originals.v1",
   "trainoracle.plan-beta.adaptation.v1",
   "trainoracle.plan-beta.adaptation-activation.v1",

@@ -165,6 +165,8 @@ export type CanonicalPlanFrame = {
   readonly formationKind: "LOCAL_CIVIL_9_5"
   readonly lengthDays: 9.5
   readonly slotCount: 19
+  /** Only PM needs a marker; legacy AM content and fingerprints stay unchanged. */
+  readonly startSlot?: "PM"
   readonly projectionLengthDays?: 7 | 9 | 9.5 | 10
   readonly continuity:
     | {

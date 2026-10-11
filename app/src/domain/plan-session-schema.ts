@@ -533,6 +533,7 @@ const canonicalPlanFrameSchema = z.object({
   formationKind: z.literal("LOCAL_CIVIL_9_5"),
   lengthDays: z.literal(9.5),
   slotCount: z.literal(19),
+  startSlot: z.literal("PM").optional(),
   projectionLengthDays: z.union([frameLengthSchema, z.literal(9.5)]).optional(),
   continuity: z.union([
     z.object({

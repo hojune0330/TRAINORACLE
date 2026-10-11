@@ -66,6 +66,7 @@ function frameFor(request: CanonicalPlanGenerationRequest): PlanCandidate["frame
     formationKind: "LOCAL_CIVIL_9_5",
     lengthDays: 9.5,
     slotCount: 19,
+    ...(request.formation.startSlot === "PM" ? { startSlot: "PM" as const } : {}),
     projectionLengthDays: request.requestedFrameLength,
     continuity: request.requestedFrameLength === 7
       ? Object.freeze({

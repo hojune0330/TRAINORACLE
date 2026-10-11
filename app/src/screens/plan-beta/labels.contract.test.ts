@@ -74,7 +74,9 @@ describe("two-a-day plan summary", () => {
     const bound = bindDefaultCatalogSessions([session(1, "AM", { minimum: 35, maximum: 35 })], 5000, "EXPERIENCED", 0)[0]!
     const before = JSON.stringify(bound)
     const steps = sessionExecutionSteps(bound)
-    expect(steps.find(step => step.title === "본운동")?.detail).toBe("20분 · 힘든 정도 3/10 → 15분 · 힘든 정도 4/10 통증\u2060·\u2060어지럼\u2060·\u2060자세\u00a0무너짐이 생기면 시간을 채우지 말고 중단하세요.")
+    const mainInstruction = steps.find(step => step.title === "본운동")?.detail
+    expect(mainInstruction).toBe("20분 · 힘든 정도 3/10 → 15분 · 힘든 정도 4/10 통증\u2060·\u2060어지럼\u2060·\u2060자세\u00a0무너짐이 생기면 시간을 채우지 말고 중단하세요.")
+    expect(mainInstruction?.replace(/\u2060/g, "").replace(/\u00a0/g, " ")).toContain("통증·어지럼·자세 무너짐이 생기면 시간을 채우지 말고 중단하세요.")
     render(createElement(PlanSchedulePreview, { startDate: "2026-08-17", frameLengthDays: 7, sessions: [bound] }))
     expect(screen.getByRole("list", { name: "훈련 실행 순서" })).toHaveTextContent("20분 · 힘든 정도 3/10 → 15분 · 힘든 정도 4/10")
     expect(screen.queryByText(/본운동 \d+개 구간과/)).not.toBeInTheDocument()

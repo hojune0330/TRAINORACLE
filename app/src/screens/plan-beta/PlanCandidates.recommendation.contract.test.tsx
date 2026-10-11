@@ -1,9 +1,14 @@
 import React from "react"
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import { PlanCandidates } from "./PlanCandidates"
 import * as templateOptions from "./plan-template-options"
+import { defaultInstantCandidate } from "./instant-plan-projection"
+import { projectInstantExecutionSteps } from "./instant-plan-today"
+import { isoShift } from "../../domain/dates"
+import { formatTrainingSeconds, prescriptionLabel, sessionLabel } from "./labels"
+import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
 afterEach(cleanup)
@@ -33,6 +38,64 @@ function setup() {
 }
 
 describe("candidate-owned optional recommendation preference", () => {
+  it("shows the actual candidate preparation and cooldown with dated prescription amounts without selecting silently", () => {
+    const { props } = setup()
+    const candidate = defaultInstantCandidate(props.generated)
+    const supportedWorkout = candidate.sessions.find(session => {
+      const roles = projectInstantExecutionSteps(session).map(step => step.role)
+      return roles.includes("PREPARATION") && roles.includes("COOLDOWN")
+    })
+    if (!supportedWorkout) throw Error("Expected an existing candidate prescription with preparation and cooldown")
+    // Reorder existing sessions only so this real prescription is the first workout; no new dose.
+    const projectedDays = Math.ceil(candidate.frame.projectionLengthDays ?? candidate.frame.lengthDays)
+    const sessions = [{ ...supportedWorkout, day: 1 }, ...candidate.sessions.filter(session =>
+      session !== supportedWorkout && session.day > 1 && session.day <= projectedDays)]
+    const withDisplayedSessions = (item: typeof props.generated.candidates[number]) =>
+      item.candidateId === candidate.candidateId ? { ...item, sessions } : item
+    const generated = { ...props.generated, candidates: [
+      withDisplayedSessions(props.generated.candidates[0]), withDisplayedSessions(props.generated.candidates[1]),
+    ] as const }
+    const original = JSON.stringify(generated)
+    const startDate = "2026-09-05"
+    const displayProps = { ...props, generated, intake: { ...props.intake, selectedDetailedTemplateRef: null }, startDateValue: startDate }
+    const view = render(<PlanCandidates {...displayProps} />)
+    const first = screen.getByRole("region", { name: "첫 훈련 구성" })
+    const steps = projectInstantExecutionSteps(sessions[0]!)
+    for (const step of steps) {
+      const label = within(first).getByText(step.label)
+      expect(label).toBeVisible()
+      expect(label.nextElementSibling).toBeVisible()
+      expect(label.nextElementSibling?.textContent).toBe(step.instruction)
+    }
+    const calendar = screen.getByRole("region", { name: "이번 일정" })
+    expect(within(calendar).getAllByRole("grid")).toHaveLength(1)
+    for (const session of sessions) {
+      const day = calendar.querySelector<HTMLButtonElement>(`button[data-date="${isoShift(startDate, session.day - 1)}"]`)
+      expect(day).not.toBeNull()
+      for (const label of within(day!).getAllByText(sessionLabel(session))) expect(label).toBeVisible()
+      if (session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout) {
+        const calculation = resolveCatalogBinding(session.prescription.catalogWorkout)
+        const total = calculation?.totals.seconds
+        if (!total) throw Error("Expected a verified catalog duration in this fixture")
+        const expected = `전체 ${formatTrainingSeconds(total.minimum)}${total.minimum === total.maximum ? "" : ` ~ ${formatTrainingSeconds(total.maximum)}`}`
+        expect(within(day!).getByText(expected)).toBeVisible()
+      } else if (session.role !== "REST") expect(within(day!).getByText(prescriptionLabel(session, true))).toBeVisible()
+    }
+    const onRetrySave = vi.fn()
+    view.rerender(<PlanCandidates {...displayProps} saveCode="PLAN_STORAGE_WRITE_FAILED"
+      saveError="기기에 저장하지 못했어요. 결과와 입력은 그대로 두었어요." onRetrySave={onRetrySave} />)
+    expect(screen.getByRole("alert")).toHaveTextContent("결과와 입력은 그대로")
+    expect(screen.getByRole("button", { name: "이 일정으로 시작" })).toBeDisabled()
+    expect(within(screen.getByRole("region", { name: "첫 훈련 구성" })).getByText("준비")).toBeVisible()
+    expect(within(screen.getByRole("region", { name: "첫 훈련 구성" })).getByText("정리")).toBeVisible()
+    expect(screen.getByRole("region", { name: "이번 일정" })).toBeVisible()
+    expect(onRetrySave).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole("button", { name: "저장 다시 시도" }))
+    expect(onRetrySave).toHaveBeenCalledOnce()
+    expect(JSON.stringify(generated)).toBe(original)
+    expect(props.onSelect).not.toHaveBeenCalled()
+  })
+
   it("takes the blocked primary action to record confirmation without selecting or confirming silently", () => {
     const { props } = setup()
     render(<PlanCandidates {...props} recordConfirmationPending />)

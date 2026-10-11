@@ -2,6 +2,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from "react"
 import type { FormEvent, SyntheticEvent } from "react"
 import { ArrowLeft, ArrowRight, Pencil } from "lucide-react"
 import type { InstantPlanEntry } from "../../domain/instant-plan-contract"
+import { TEN_K_GOAL_MINUTES, tenKGoalPaceLabel } from "../../domain/goal-program-calendar"
 import { useTaskFlowBack } from "../../hooks/useTaskFlowBack"
 import { ContextualIllustration } from "../ContextualIllustration"
 import "./instant-plan.css"
@@ -101,6 +102,7 @@ export function InstantPlanEntryForm({
   const [eventReturnStep, setEventReturnStep] = useState<"basis" | "details">("basis")
   const [basisChosen, setBasisChosen] = useState(initialEntry !== undefined)
   const [dateOpen, setDateOpen] = useState(false)
+  const [customGoalOpen, setCustomGoalOpen] = useState(false)
   const [errors, setErrors] = useState<Errors>({})
   const formValue = JSON.stringify([kind, event, minutes, seconds, achievedOn])
   const initialValue = useRef(formValue)
@@ -124,6 +126,12 @@ export function InstantPlanEntryForm({
     if (active && (returned || stepChanged)) stepHeadingRef.current?.focus()
   }, [active, step])
 
+  useLayoutEffect(() => {
+    if (active && customGoalOpen && step === "details" && kind === "GOAL_ONLY" && event === "10000") {
+      minutesRef.current?.focus()
+    }
+  }, [customGoalOpen])
+
   useEffect(() => {
     const firstError = (["event", "minutes", "seconds", "achievedOn"] as const)
       .find(field => errors[field])
@@ -136,6 +144,7 @@ export function InstantPlanEntryForm({
 
   const selectedEvent = EVENTS.find(option => String(option.value) === event)
   const selectedEventLabel = selectedEvent?.label ?? ""
+  const showGoalChoices = kind === "GOAL_ONLY" && selectedEvent?.value === 10000 && !customGoalOpen
 
   function chooseBasis(next: InstantPlanEntry["kind"]) {
     if (disabled) return
@@ -319,9 +328,26 @@ export function InstantPlanEntryForm({
             </button>
           </div>
           <h2 id={`${id}-details-heading`} ref={stepHeadingRef} tabIndex={-1} className="instant-plan__step-heading">
-            {kind === "CURRENT_RECORD" ? `${selectedEventLabel}를 달린 전체 시간` : `${selectedEventLabel} 목표 전체 시간`}
+            {showGoalChoices ? "10km, 몇 분을 목표로 할까요?"
+              : kind === "CURRENT_RECORD" ? `${selectedEventLabel}를 달린 전체 시간` : `${selectedEventLabel} 목표 전체 시간`}
           </h2>
-          {kind !== "NO_RECORD" && (
+          {showGoalChoices && <>
+            <div className="instant-plan__step-choices instant-plan__basis-choices app-choice-group" role="group" aria-label="10km 목표 선택">
+              {TEN_K_GOAL_MINUTES.map(goal => <button key={goal} type="button"
+                className="instant-plan__step-choice app-choice-control app-choice-control--answer"
+                disabled={disabled || isSubmitting} aria-label={`${goal}분 목표`}
+                onClick={() => {
+                  if (disabled || isSubmitting) return
+                  setMinutes(String(goal)); setSeconds("0"); setErrors({})
+                  onSubmit({ kind: "GOAL_ONLY", eventDistanceM: 10000, performanceSeconds: goal * 60 })
+                }}>
+                <span>{goal}분</span><span className="instant-plan__hint">목표 {tenKGoalPaceLabel(goal)}</span>
+              </button>)}
+            </div>
+            <button type="button" className="instant-plan__step-back" disabled={disabled || isSubmitting}
+              onClick={() => setCustomGoalOpen(true)}>다른 목표 직접 입력</button>
+          </>}
+          {kind !== "NO_RECORD" && !showGoalChoices && (
             <fieldset className="instant-plan__fields" disabled={disabled} aria-labelledby={`${id}-details-heading`}>
               <div className="instant-plan__time-fields">
                 <div className="instant-plan__field">
@@ -373,12 +399,12 @@ export function InstantPlanEntryForm({
           )}
           {kind === "CURRENT_RECORD" && <p className="instant-plan__hint">입력한 현재 기록은 내 기록에도 남아요.</p>}
           {kind === "GOAL_ONLY" && <p className="instant-plan__hint">목표는 현재 실력과 구분해서 사용해요.</p>}
-          <div className="instant-plan__step-actions">
+          {!showGoalChoices && <div className="instant-plan__step-actions">
             <button className="instant-plan__button" type="submit" disabled={disabled}>
               {isSubmitting ? "계획 준비 중…" : kind === "CURRENT_RECORD" ? "기록 입력 완료" : "목표 입력 완료"}
               <ArrowRight size={18} aria-hidden="true" />
             </button>
-          </div>
+          </div>}
         </section>
       )}
     </form>

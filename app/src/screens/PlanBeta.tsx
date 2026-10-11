@@ -84,6 +84,7 @@ import { resolvePlanMethodChange } from "../domain/plan-method-selection"
 import { todayISO } from "../domain/journal-store"
 import { localJournalScopeGeneration, onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
 import { localAccountScopeIsCurrent, localAccountScopeSnapshot } from "../domain/account/local-account-scope"
+import { runDraftSafeNavigation } from "../domain/unsaved-draft-navigation"
 import { AdjustedPlanSchedule } from "./plan-beta/AdjustedPlanSchedule"
 import { AdjustedPlanEditFlow } from "./plan-beta/AdjustedPlanEditFlow"
 import { matchingAdjustmentEntry } from "./plan-beta/adjustment-entry"
@@ -116,6 +117,7 @@ export type PlanAdjustmentResolver = (context: {
 
 const AthleteRecords = React.lazy(() => import("./AthleteRecords").then(module => ({ default: module.AthleteRecords })))
 const PlanActiveState = React.lazy(() => import("./plan-beta/PlanActiveState").then(module => ({ default: module.PlanActiveState })))
+const GoalTrainingProgramFlow = React.lazy(() => import("./plan-beta/GoalTrainingProgramFlow").then(module => ({ default: module.GoalTrainingProgramFlow })))
 
 const INTAKE_MOTION_ORDER: readonly IntakeStep[] = [
   "goal",
@@ -166,6 +168,13 @@ function AccountPlanHistoryList({ plans }: { plans: AccountPlanEntry[] }) {
 
 export function PlanBeta(props: React.ComponentProps<typeof PlanBetaContent>) {
   const service = accountPlanService(), { view, retry } = useAccountPlanRuntime(service)
+  const [goalSession, setGoalSession] = React.useState<{ owner: string | null; generation: number } | null>(null)
+  const goalEntryButton = React.useRef<HTMLButtonElement>(null)
+  React.useEffect(() => onLocalJournalScopeChange(() => setGoalSession(null)), [])
+  const closeGoalProgram = () => {
+    setGoalSession(null)
+    requestAnimationFrame(() => goalEntryButton.current?.focus())
+  }
   const [error, setError] = React.useState<string | null>(null)
   const [archiveReview, setArchiveReview] = React.useState<{ fingerprint: string; planId: string } | null>(null)
   const [historyPanel, setHistoryPanel] = React.useState({ service, open: false, paused: false })
@@ -193,7 +202,17 @@ export function PlanBeta(props: React.ComponentProps<typeof PlanBetaContent>) {
   const historyControls = collection && <AccountPlanHistoryControls status={collection.historyStatus}
     progress={collection.historyProgress}
     onRetry={loadHistory} onCancel={cancelHistory} />
+  if (goalSession && localAccountScopeIsCurrent(goalSession.owner) && goalSession.generation === localJournalScopeGeneration()) {
+    return <ErrorBoundary><React.Suspense fallback={<p role="status">훈련표를 열고 있어요.</p>}>
+      <GoalTrainingProgramFlow key={`${goalSession.owner}:${goalSession.generation}`} onClose={closeGoalProgram} onOpenActive={closeGoalProgram} />
+    </React.Suspense></ErrorBoundary>
+  }
   return <div className="account-plan-runtime">
+    <button type="button" ref={goalEntryButton} className="plan-text-action" onClick={() => {
+      const context = { owner: localAccountScopeSnapshot(), generation: localJournalScopeGeneration() }
+      runDraftSafeNavigation(() => setGoalSession(context), false,
+        () => localAccountScopeIsCurrent(context.owner) && context.generation === localJournalScopeGeneration())
+    }}>10km 한 달 훈련표</button>
     {view && <AccountPlanStorageControls status={view.status} evidenceRequired={historical !== null}
       capacity={!collection && view.document ? accountPlanCapacity(view.document) : undefined}
       collectionCount={collection?.totalPlans}

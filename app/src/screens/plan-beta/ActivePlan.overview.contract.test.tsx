@@ -55,8 +55,12 @@ function overviewState() {
 }
 
 describe("active plan first-view overview", () => {
-  it("shows the training flow and same-day sessions before collapsed notes", async () => {
-    render(<ActivePlan state={overviewState()} {...callbacks} />)
+  it("shows exact same-day prescription amounts in the calendar and keeps notes secondary in list view", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date("2026-08-27T00:00:00.000Z"))
+    const state = overviewState()
+    const original = JSON.stringify(state)
+    render(<ActivePlan state={state} {...callbacks} />)
 
     expect(screen.getByRole("heading", { level: 1, name: "9일 훈련 계획" })).toBeVisible()
     expect(screen.getByText("기간·운동 시간").closest("details")).not.toHaveAttribute("open")
@@ -72,22 +76,34 @@ describe("active plan first-view overview", () => {
 
     const flow = screen.getByLabelText("9일 훈련 일정")
     const information = screen.getByText("계획 정보와 유의사항").closest("details")
+    const trainingDate = flow.querySelector<HTMLButtonElement>('button[data-date="2026-08-29"]')
+    expect(trainingDate).not.toBeNull()
+    expect(within(trainingDate!).getByText("템포 훈련 · LT")).toBeVisible()
+    expect(within(trainingDate!).getByText("전체 30–40분 · 힘든 정도 6–7/10")).toBeVisible()
+    expect(within(trainingDate!).getByText("회복 운동 · Recovery")).toBeVisible()
+    expect(within(trainingDate!).getByText("전체 15–20분 · 힘든 정도 1–2/10")).toBeVisible()
     expect(screen.queryByRole("list", { name: "날짜별 계획 미리보기" })).toBeNull()
-    await userEvent.setup().click(screen.getByRole("button", { name: "날짜별 카드 보기" }))
+    await userEvent.setup().click(screen.getByRole("button", { name: "목록" }))
     const timeline = screen.getByRole("list", { name: "날짜별 계획 미리보기" })
     const trainingDay = screen.getByRole("group", {
       name: "8월 29일 토요일 · 훈련 2개",
     })
 
-    expect(flow).toHaveTextContent(/주요 훈련MAIN.*회복 운동REC/u)
-    expect(trainingDay).toHaveTextContent(/오전.*주요 훈련MAIN.*템포 훈련.*LT.*오후.*회복 운동REC.*회복 운동.*Recovery/u)
-    expect(trainingDay).toHaveTextContent(/전체 30–40min @ RPE 6–7/u)
-    expect(trainingDay).toHaveTextContent(/전체 15–20min @ RPE 1–2/u)
+    expect(trainingDay).toHaveTextContent(/오전.*템포 훈련.*LT.*오후.*회복 운동.*Recovery/u)
+    expect(within(trainingDay).queryByRole("button", { name: /훈련 설명 보기/u })).not.toBeInTheDocument()
+    expect(trainingDay).toHaveTextContent("전체 30–40분 · 힘든 정도 6–7/10")
+    expect(trainingDay).toHaveTextContent("전체 15–20분 · 힘든 정도 1–2/10")
     expect(flow.compareDocumentPosition(timeline) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     expect(timeline.compareDocumentPosition(information as Node) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     expect(information).not.toHaveAttribute("open")
     expect(screen.getByText(/1~2 회복 움직임/u)).not.toBeVisible()
-    expect(screen.getByText("오전 훈련 방법과 기록").closest("details")).not.toHaveAttribute("open")
+    expect(within(trainingDay).queryByText("본운동")).not.toBeInTheDocument()
+    await userEvent.setup().click(within(trainingDay).getByRole("button", { name: "8월 29일 토요일 전체 처방 보기" }))
+    const reader = screen.getByRole("dialog")
+    const readerInstruction = within(reader).getByText("본운동")
+    expect(readerInstruction).toBeVisible()
+    expect(readerInstruction.closest("details")).toBeNull()
+    expect(JSON.stringify(state)).toBe(original)
   })
 
   it("shows a one-shot creation confirmation and removes it automatically", () => {

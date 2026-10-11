@@ -239,6 +239,10 @@ async function stateIdentityValid(ownerId, documentId, document) {
   if (document.kind === 'RUNNING_PROFILE') return documentId === await namespacedId(['trainoracle.account.running-profile.v1',ownerId]);
   if (document.kind === 'MINIGAME_PROGRESS') return documentId === await namespacedId(['trainoracle.account.minigame-progress.v1',ownerId]);
   if (document.kind === 'PLAN') return documentId === await namespacedId(['trainoracle.account.plan.v1',ownerId]);
+  if (['GOAL_PROGRAM_BODY', 'GOAL_PROGRAM_PROGRESS', 'GOAL_PROGRAM_INDEX'].includes(document.kind)) {
+    return typeof accountState.accountGoalProgramDocumentId === 'function'
+      && documentId === await accountState.accountGoalProgramDocumentId(ownerId, document.kind, document.data.id);
+  }
   // Plan worker supplies a bound identity helper with its schema; no guessed IDs.
   return typeof accountState.accountStateDocumentId === 'function'
     && documentId === await accountState.accountStateDocumentId(ownerId,document);
@@ -314,6 +318,7 @@ function parseAction(input, validateDocument) {
   if (action === 'athleteRecordSupport') valid = keys(input, ['action']);
   if (action === 'runningProfileSupport') valid = keys(input, ['action']);
   if (action === 'minigameProgressSupport') valid = keys(input, ['action']);
+  if (action === 'goalProgramSupport') valid = keys(input, ['action']);
   if (action === 'oracleV2Support') valid = keys(input, ['action']);
   if (action === 'oracleV2RestartSupport') valid = keys(input, ['action']);
   if (action === 'restartOracleV2') valid = keys(input, ['action','documentId','operationId','expectedRevision','confirmation'])
@@ -543,6 +548,18 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         return respond(200, support);
       }
       if (input.action === 'oracleV2Support') return respond(200, await checkOracleV2Support());
+      const checkGoalProgramSupport = async () => {
+        if (typeof repo.goalProgramSupport !== 'function' || typeof accountState.emptyAccountGoalProgramIndex !== 'function'
+          || !accountState.validateAccountStateDocument(accountState.emptyAccountGoalProgramIndex())) fail(503, 'UNAVAILABLE');
+        let support;
+        try { support = await repo.goalProgramSupport(); }
+        catch (error) { if (error?.code === '22023') fail(400, 'GOAL_PROGRAM_UNSUPPORTED'); throw error; }
+        await checkGate();
+        if (!keys(support, ['kind', 'version']) || support.kind !== 'goal-program-support' || support.version !== 1) fail(503, 'UNAVAILABLE');
+        return support;
+      };
+      if (input.action === 'goalProgramSupport') return respond(200, await checkGoalProgramSupport());
+      if (input.action === 'save' && input.document?.kind?.startsWith('GOAL_PROGRAM_')) await checkGoalProgramSupport();
       if (input.action === 'oracleV2RestartSupport') return respond(200, await checkRestartSupport());
       if (input.action === 'athleteRecordSupport') {
         if (typeof repo.athleteRecordSupport !== 'function' || !accountState.validateAccountStateDocument({
@@ -651,6 +668,10 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
             ...accountState.accountCalendarDecorationOwnershipMetadata(document, ownership.document) };
         } catch { fail(409, 'OWNERSHIP_STATE_CHANGED'); }
       };
+      if (input.action === 'delete' || input.action === 'restore') {
+        const protectedRow = await repo.read(ownerId, input.documentId);
+        if (protectedRow && (await entry(protectedRow)).document?.kind?.startsWith('GOAL_PROGRAM_')) fail(422, 'INVALID_DOCUMENT_UPDATE');
+      }
       if (input.action === 'history') {
         const values = await versions();
         await checkGate();
@@ -670,6 +691,34 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         const original = (await versions()).find(value => value.revision === expected)?.document;
         if (!original) fail(409, 'OPERATION_REPLAY_UNAVAILABLE');
         return original;
+      };
+      const readGoalProgramParts = async document => {
+        const parts = [], references = [], seen = new Set();
+        for (const ref of accountState.accountGoalProgramReferences(document)) {
+          for (const [kind, id] of [['GOAL_PROGRAM_BODY', ref.bodyId], ['GOAL_PROGRAM_PROGRESS', ref.progressId]]) {
+            if (seen.has(id)) continue;
+            seen.add(id);
+            const documentId = await accountState.accountGoalProgramDocumentId(ownerId, kind, id);
+            const row = await repo.read(ownerId, documentId);
+            if (!row || row.document_id !== documentId || row.revision !== 1) fail(409, 'GOAL_PROGRAM_REFERENCE_UNAVAILABLE');
+            const saved = await entry(row);
+            if (!saved.document || saved.document.kind !== kind || saved.document.data.id !== id) fail(409, 'GOAL_PROGRAM_REFERENCE_UNAVAILABLE');
+            parts.push(saved.document); references.push({ documentId, kind, partId: id });
+          }
+        }
+        return { parts, references };
+      };
+      const goalProgramMetadata = async (document, previous) => {
+        if (!document.kind?.startsWith('GOAL_PROGRAM_')) return {};
+        if (document.kind !== 'GOAL_PROGRAM_INDEX') return { goalProgramPartId: document.data.id };
+        const { parts, references } = await readGoalProgramParts(document);
+        if (!accountState.joinAccountGoalProgramCollection(document, parts)) fail(422, 'INVALID_DOCUMENT');
+        if (previous?.kind === 'GOAL_PROGRAM_INDEX') {
+          const old = await readGoalProgramParts(previous);
+          if (!accountState.validateAccountGoalProgramCollectionUpdate(previous, old.parts, document, parts)) fail(422, 'INVALID_DOCUMENT_UPDATE');
+        }
+        await checkGate();
+        return { goalProgramParts: references.sort((a, b) => a.documentId.localeCompare(b.documentId)) };
       };
       const comparePrior = async prior => {
         if (!object(prior) || prior.user_id !== ownerId || prior.operation_id !== input.operationId
@@ -871,6 +920,8 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
           currentDocument = (await entry(currentRow)).document;
           requireSupported(currentDocument);
         }
+        if (input.document.kind?.startsWith('GOAL_PROGRAM_') && input.document.kind !== 'GOAL_PROGRAM_INDEX'
+          && input.expectedRevision !== 0) fail(422, 'INVALID_DOCUMENT_UPDATE');
         if (input.document.kind === 'RUNNING_PROFILE') {
           if (currentRow && !currentDocument) fail(422, 'INVALID_DOCUMENT_UPDATE');
           if (input.document.data.version === 'RUNNING_PROFILE_V2') {
@@ -929,7 +980,7 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
           { ownerId, documentId: input.documentId }, material.active);
         try { receipt = receiptFor(await repo.commit({ documentId: input.documentId,
           operationId: input.operationId, expectedRevision: input.expectedRevision, encryptedPayload,
-          metadata: { ...accountJournalMetadata(input.document), ...await calendarOwnershipMetadata(input.document), ...(input.document.state === 'FINALIZED'
+          metadata: { ...accountJournalMetadata(input.document), ...await calendarOwnershipMetadata(input.document), ...await goalProgramMetadata(input.document, currentRow?.revision === input.expectedRevision ? currentDocument : undefined), ...(input.document.state === 'FINALIZED'
             ? { awardAllowed: awardAllowed(input) } : {}),
             ...(input.document.kind === 'DECORATIONS' && input.writePurpose === 'MIGRATION' && input.expectedRevision === 0
               ? { legacyInitialGrant: true } : {}) } }), input); }
@@ -985,6 +1036,7 @@ export function createAccountJournalRepository(client, { ownerId, attest } = {})
     athleteRecordSupport: () => mutate('athleteRecordSupport', {}),
     runningProfileSupport: () => mutate('runningProfileSupport', {}),
     minigameProgressSupport: () => mutate('minigameProgressSupport', {}),
+    goalProgramSupport: () => mutate('goalProgramSupport', {}),
     oracleV2Support: () => mutate('oracleV2Support', {}),
     oracleV2RestartSupport: () => mutate('oracleV2RestartSupport', {}),
     restartOracleV2: input => mutate('restartOracleV2', input),

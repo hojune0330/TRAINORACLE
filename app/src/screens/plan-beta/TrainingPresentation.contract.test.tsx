@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react"
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, expect, it } from "vitest"
 import { DetailedPrescriptionView } from "./DetailedPrescriptionView"
 
@@ -30,15 +30,25 @@ it("keeps the exact main and recovery quantities in plain presentation without m
   expect(notation).toHaveTextContent(/5.*1km/u)
   expect(notation).toHaveTextContent(/222.2초\/1km/u)
   expect(notation).toHaveTextContent(/반복 사이.*150초 조깅/u)
-  fireEvent.click(screen.getByText("자세히 보기 · 수행 순서"))
-  expect(container.querySelector('[data-phase="prepare"]')).toHaveTextContent("15분 · 힘든 정도 2–3/10")
-  expect(container.querySelector('[data-phase="cooldown"]')).toHaveTextContent("10분 · 힘든 정도 1–2/10")
-  expect(container.querySelector('[data-recovery-kind="repetition"]')).toHaveTextContent("4번 · 매번 150초 조깅 · 총 600초")
+  const preparation = container.querySelector('[data-phase="prepare"]')!
+  const main = container.querySelector('.plan-detailed-prescription__primary')!
+  const recovery = container.querySelector('[data-recovery-kind="repetition"]')!
+  const cooldown = container.querySelector('[data-phase="cooldown"]')!
+  expect(preparation).toHaveTextContent("15분 · 힘든 정도 2–3/10")
+  expect(cooldown).toHaveTextContent("10분 · 힘든 정도 1–2/10")
+  expect(recovery).toHaveTextContent("4번 · 매번 150초 조깅 · 총 600초")
+  for (const row of [preparation, main, recovery, cooldown]) {
+    expect(row).toBeVisible()
+    expect(row.closest("details")).toBeNull()
+  }
+  expect(preparation.compareDocumentPosition(main) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(main.compareDocumentPosition(recovery) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(recovery.compareDocumentPosition(cooldown) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   expect(container).not.toHaveTextContent("처방 무결성")
   expect(JSON.stringify(prescription)).toBe(original)
 })
 
-it("keeps every stop condition visible even while preparation and technical details are collapsed", () => {
+it("keeps every stop condition visible while explanation details are collapsed", () => {
   const { container } = render(<DetailedPrescriptionView prescription={fixture()} />)
   expect([...container.querySelectorAll("details")].every(detail => !detail.open)).toBe(true)
   const stops = screen.getByRole("list", { name: "운동을 중단해야 하는 경우" })

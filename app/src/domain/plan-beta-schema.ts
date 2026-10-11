@@ -388,6 +388,13 @@ function validatePlanBetaState(
   const sessionKeys = new Set<string>()
 
   for (const session of state.activePlan.sessions) {
+    const frame = state.activePlan.frame
+    if ("formationKind" in frame && frame.startSlot === "PM") {
+      const position = (session.day - 1) * 2 + (session.slot === "PM" ? 1 : 0) - 1
+      if (position < 0 || position >= frame.slotCount) {
+        addIssue(context, ["activePlan", "sessions"], "Session must stay within the PM-start frame.")
+      }
+    }
     const sessionKey = `${session.day}:${session.slot}`
     if (sessionKeys.has(sessionKey)) {
       addIssue(context, ["activePlan", "sessions"], "Duplicate plan session slot.")
@@ -481,6 +488,7 @@ const candidateFrameSchema = z.object({
   formationKind: z.literal("LOCAL_CIVIL_9_5"),
   lengthDays: z.literal(9.5),
   slotCount: z.literal(19),
+  startSlot: z.literal("PM").optional(),
   projectionLengthDays: z.union([z.literal(7), z.literal(9), z.literal(9.5), z.literal(10)]).optional(),
   continuity: z.union([
     z.object({ kind: z.literal("STANDARD_FRAME") }).strict(),
