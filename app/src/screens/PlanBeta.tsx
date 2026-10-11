@@ -84,6 +84,7 @@ import { resolvePlanMethodChange } from "../domain/plan-method-selection"
 import { todayISO } from "../domain/journal-store"
 import { localJournalScopeGeneration, onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
 import { localAccountScopeIsCurrent, localAccountScopeSnapshot } from "../domain/account/local-account-scope"
+import type { PlanExecutionFeedback } from "./plan-beta/PlanActiveState"
 import { runDraftSafeNavigation } from "../domain/unsaved-draft-navigation"
 import { AdjustedPlanSchedule } from "./plan-beta/AdjustedPlanSchedule"
 import { AdjustedPlanEditFlow } from "./plan-beta/AdjustedPlanEditFlow"
@@ -433,6 +434,8 @@ function LegacyPlanBeta({
   const [stored, setStored] = React.useState<PlanBetaState | null>(
     () => loadPlanBetaState(),
   )
+  const [executionFeedback, setExecutionFeedback] = React.useState<PlanExecutionFeedback | null>(null)
+  React.useEffect(() => onLocalJournalScopeChange(() => setExecutionFeedback(null)), [])
   const legacyArchivePending = React.useRef(false)
   const [legacyArchiving, setLegacyArchiving] = React.useState(false)
   const [legacyArchiveError, setLegacyArchiveError] = React.useState<string | null>(null)
@@ -953,13 +956,27 @@ function LegacyPlanBeta({
       <React.Suspense fallback={<p role="status" style={{ padding: 24 }}>저장된 훈련 계획을 열고 있어요.</p>}>
       <PlanActiveState
         state={stored}
+        executionFeedback={executionFeedback !== null
+          && executionFeedback.candidateId === stored.activePlan.candidateId
+          && executionFeedback.generatedAt === stored.generatedAt
+          && localAccountScopeIsCurrent(executionFeedback.owner)
+          && executionFeedback.scopeGeneration === localJournalScopeGeneration()
+          ? executionFeedback : undefined}
         onEditingChange={setActivePlanEditing}
-        onManagePaceRecords={() => setRecordsOpen(true)}
+        onManagePaceRecords={() => { setExecutionFeedback(null); setRecordsOpen(true) }}
         cloudPersistence={cloudPersistence}
         onRetryCloudBackup={retryCloudBackup}
         celebrateOnMount={celebrateActivePlan}
-        onStateChange={setStored}
+        onStateChange={(next, feedback) => {
+          if (feedback && (feedback.candidateId !== next.activePlan.candidateId
+            || feedback.generatedAt !== next.generatedAt
+            || !localAccountScopeIsCurrent(feedback.owner)
+            || feedback.scopeGeneration !== localJournalScopeGeneration())) return
+          setExecutionFeedback(feedback ?? null)
+          setStored(next)
+        }}
         onPrepareNextFrame={(predecessor) => {
+          setExecutionFeedback(null)
           draftRevision.current += 1
           setDetailedSessionTarget(null)
           setCandidateSessionTargets({})

@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test"
 import { loadCatalogReductionFixture } from "./fixtures/catalog-cycle-reduction-loader"
 import { JOURNAL_STORAGE_KEY } from "../src/domain/journal-storage-keys"
+import { closeActiveDayReader, openActiveDayReader, openSessionRecords } from "./active-plan-flow"
 
 async function openPlan(page: Page) {
   const dayReader = page.locator("dialog.plan-day-reader")
@@ -59,9 +60,11 @@ for (const outcome of ["PARTIAL", "COMPLETED"] as const) test(`edited MAIN -> ${
   await page.clock.setFixedTime(new Date("2026-10-06T03:00:00Z"))
   await page.reload()
   await openPlan(page)
-  await page.getByRole("button", { name: /2026년 10월 6일 화요일/ }).click()
-  await page.getByText("일지·진행 기록", { exact: true }).click()
-  await page.getByRole("button", { name: "이 훈련 일지 쓰기", exact: true }).click()
+  const journalDay = await openActiveDayReader(page, main.day - 1)
+  const journalSession = journalDay.locator(`[data-session-slot="${main.slot}"]`)
+  await expect(journalDay.getByRole("heading", { level: 2 })).toHaveText("2026년 10월 6일 화요일")
+  await openSessionRecords(journalSession)
+  await journalSession.getByRole("button", { name: "이 훈련 일지 쓰기", exact: true }).click()
   await page.getByRole("button", { name: outcome === "PARTIAL" ? "일부만 했거나 내용을 바꿨어요" : "계획대로 마쳤어요", exact: true }).click()
   await page.getByRole("button", { name: "오전", exact: true }).click()
   await page.getByRole("button", { name: /^힘든 정도 7\/10,/ }).click()
@@ -80,12 +83,15 @@ for (const outcome of ["PARTIAL", "COMPLETED"] as const) test(`edited MAIN -> ${
   }
   await page.getByRole("button", { name: "완료", exact: true }).click()
   await openPlan(page)
-  await expect(page.getByText(outcome === "PARTIAL" ? "일부 수행·변경 기록 있음" : "수행 기록 있음", { exact: true }).first()).toBeVisible()
-  const activeCard = page.locator('.plan-schedule-preview > li[data-active-card="true"]')
-  await activeCard.getByRole("button", { name: "연결된 일지 기록 보기", exact: true }).click()
+  const activeDay = await openActiveDayReader(page, main.day - 1)
+  const activeSession = activeDay.locator(`[data-session-slot="${main.slot}"]`)
+  await openSessionRecords(activeSession)
+  await expect(activeSession.getByText(outcome === "PARTIAL" ? "일부 수행·변경 기록 있음" : "수행 기록 있음", { exact: true })).toBeVisible()
+  await activeSession.getByRole("button", { name: "연결된 일지 기록 보기", exact: true }).click()
   await expect(page.getByRole("tabpanel")).toContainText("7/10 · 직접 입력")
   await page.screenshot({ path: info.outputPath("edited-main-journal.png"), fullPage: true, animations: "disabled" })
   await page.getByRole("button", { name: "훈련과 일지로 돌아가기", exact: true }).click()
+  await closeActiveDayReader(page)
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "홈", exact: true }).click()
   await page.getByRole("button", { name: /2026년 10월 6일 기록 1개 보기/ }).click()
   await page.getByText("계획한 훈련과 비교하기", { exact: true }).click()

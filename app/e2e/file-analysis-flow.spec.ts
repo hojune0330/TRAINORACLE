@@ -5,7 +5,7 @@ import { createServer, type ViteDevServer } from "vite"
 import type { AccountJournalRecord } from "../src/domain/account/account-journal-record-schema"
 import type { AccountAthleteRecordDocument } from "../src/domain/account/account-athlete-record-schema"
 import { mockPlanCollectionServer } from "./fixtures/account-plan-collection-server"
-import { openActivePlanCards, openActiveSessionDetails } from "./active-plan-flow"
+import { closeActiveDayReader, openActivePlanCards, openActiveSessionDetails } from "./active-plan-flow"
 import { completeQuickPlan, openPlanOptions, refinePlan } from "./plan-flow"
 
 const origin = "http://127.0.0.1:4497"
@@ -53,7 +53,20 @@ test.beforeAll(async () => {
   }
   vite = await createServer({
     root: fileURLToPath(new URL("..", import.meta.url)), envFile: false, clearScreen: false,
-    configLoader: "runner", cacheDir: "test-results/file-analysis-vite-cache",
+    configLoader: "runner", cacheDir: process.env.FILE_ANALYSIS_BROWSER_TEST_VITE_CACHE_DIR ?? "test-results/file-analysis-vite-cache",
+    // Scan the actual app and dynamic browser modules, excluding retained build copies.
+    optimizeDeps: { entries: [
+      "index.html",
+      "src/domain/account/local-journal-ownership.ts",
+      "src/domain/account/account-journal-projection.ts",
+      "src/domain/journal-store.ts",
+      "src/domain/journal-observation.ts",
+      "src/domain/cumulative-distance.ts",
+      "src/domain/account/account-plan-service.ts",
+      "src/domain/athlete-records.ts",
+      "src/domain/account/account-athlete-record-service.ts",
+      "src/screens/plan-beta/plan-template-options.ts",
+    ] },
     define: { "import.meta.env.DEV": "false", ...Object.fromEntries(Object.entries(env).map(([key, value]) => [`import.meta.env.${key}`, JSON.stringify(value)])) },
     server: { host: "127.0.0.1", port: 4497, strictPort: true, watch: null, hmr: false },
   })
@@ -429,15 +442,16 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
     await openActivePlanCards(next)
     // Compact workout notation rounds to one decimal; the canonical stored
     // prescription and comparison arithmetic above/below retain 222.25 seconds.
-    const displayedPrescription = /5 × 1km @ 222\.3s\/1km · 5K RP/u
+    const displayedPrescription = /5 × 1km · 222\.3초\/1km · 5K 경기 평균 페이스/u
+    const compactPrescription = /5 × 1km · 1km당 3분 42\.3초/u
     expect(await next.locator(".plan-session-metric").allTextContents()).toEqual(expect.arrayContaining([
-      expect.stringMatching(displayedPrescription),
+      expect.stringMatching(compactPrescription),
     ]))
     const active = await openActiveSessionDetails(next, displayedPrescription)
     await expect(active.getByText(displayedPrescription).first()).toBeVisible()
     await active.getByText(displayedPrescription).first().scrollIntoViewIfNeeded()
     await next.screenshot({ path: testInfo.outputPath("account-plan-reopened-prescription.png") })
-
+    await closeActiveDayReader(next)
     await next.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클" }).click()
     const reopenedPanel = await openFileAnalysis(next)
     await reopenedPanel.locator("summary").filter({ hasText: "2026-09-19 · 달리기 · 2개 구간" }).click()

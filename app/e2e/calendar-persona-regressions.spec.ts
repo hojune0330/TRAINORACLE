@@ -39,6 +39,7 @@ test("deleting a diary in the training-day reader refreshes its summary and cale
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
   await completeQuickPlan(page, { days: /^매일/u })
   await page.getByRole("button", { name: "이 일정으로 시작" }).click()
+  await page.getByRole("group", { name: "계획 일정 보기", exact: true }).getByRole("button", { name: "달력", exact: true }).click()
   const before = await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))
   const calendar = page.getByRole("grid", { name: "2026년 9월 달력" })
   const today = calendar.getByRole("button", { name: /2026년 9월 27일 일요일/ })

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 import { stateFixture } from "../src/domain/plan-beta-store.test-fixture"
-import { openActivePlanCards } from "./active-plan-flow"
+import { openActiveDayReader, openSessionRecords } from "./active-plan-flow"
 
 test("links one explicitly selected plan session to its journal without copying planned intensity", async ({ page }, testInfo) => {
   const browserErrors: string[] = []
@@ -16,9 +16,10 @@ test("links one explicitly selected plan session to its journal without copying 
 
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
-  await openActivePlanCards(page)
-  await page.getByText("오전 훈련 방법과 기록", { exact: true }).click()
-  await page.getByRole("button", { name: "이 훈련 일지 쓰기" }).click()
+  const day = await openActiveDayReader(page)
+  const morning = day.locator('[data-session-slot="AM"]')
+  await openSessionRecords(morning)
+  await morning.getByRole("button", { name: "이 훈련 일지 쓰기" }).click()
 
   await expect(page.getByText("계획 1일차 · 오전")).toBeVisible()
   await page.getByRole("button", { name: "계획대로 마쳤어요" }).click()
@@ -45,6 +46,7 @@ test("links one explicitly selected plan session to its journal without copying 
   const returnedSession = page.getByRole("dialog").getByRole("group", { name: /오전 세션 · 일지에서 돌아온 세션/u })
   await expect(returnedSession).toBeVisible()
   await expect(returnedSession).toBeInViewport()
+  await openSessionRecords(returnedSession)
   await returnedSession.getByRole("button", { name: "계획에도 완료 표시", exact: true }).click()
   await expect.poll(() => page.evaluate(() => JSON.parse(
     window.localStorage.getItem("trainoracle.plan-beta.v1") ?? "null",

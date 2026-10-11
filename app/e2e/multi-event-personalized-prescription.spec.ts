@@ -164,14 +164,15 @@ for (const fixture of cases) {
     expect(storedPrescription).toMatchObject(fixture.expectedPrescription)
     const selectedSession = await openActiveSessionDetails(page, fixture.notation)
     await expect(selectedSession.getByText(fixture.paceBasis, { exact: true }).first()).toBeVisible()
-    await selectedSession.getByText("자세히 보기 · 수행 순서", { exact: true }).click()
+    // The date reader renders the complete prescription without a collapsed preview.
+    await expect(selectedSession.locator(".plan-detailed-prescription__primary")).toBeVisible()
     await expect(selectedSession.getByText(fixture.work).first()).toBeVisible()
     await expect(selectedSession.getByText(fixture.recovery).first()).toBeVisible()
     await expect(selectedSession.getByText("준비", { exact: true })).toBeVisible()
     await expect(selectedSession.getByText("정리", { exact: true })).toBeVisible()
     await expect(selectedSession.getByText(fixture.notation).first()).toBeVisible()
     await selectedSession.getByRole("button", { name: "훈련 방법과 이유", exact: true }).first().click()
-    const explanation = page.getByRole("dialog")
+    const explanation = page.locator(".session-explanation[open]")
     await expect(explanation.getByText(fixture.notation).first()).toBeVisible()
     await explanation.getByRole("tab", { name: "이유·근거" }).click()
     await expect(explanation.getByText("저장된 처방과 설명 버전이 일치해요.")).toBeVisible()
@@ -196,20 +197,20 @@ for (const fixture of cases) {
       name: "통증 없고 평소와 같음 · 다시 시작 확인",
     })).toHaveCount(0)
     if (process.env.CAPTURE_PLAN_QA === "1") {
-      await page.locator(".active-plan__execution-check").first().screenshot({
+      await activeSession.locator(".active-plan__execution-check").first().screenshot({
         path: testInfo.outputPath(`execution-check-${fixture.eventDistanceM}m.png`),
       })
     }
-    await page.getByRole("button", {
+    await activeSession.getByRole("button", {
       name: "통증 없고 평소와 같음 · 시작 확인",
     }).click()
-    await expect(page.getByRole("status").filter({ hasText: "시작할 수 있어요" })).toBeVisible()
+    await expect(activeSession.getByRole("status").filter({ hasText: "시작할 수 있어요" })).toBeVisible()
     await activeSession.getByRole("button", { name: "완료" }).click()
     await expect(page.getByRole("button", {
       name: /통증 없고 평소와 같음 · (시작|다시 시작) 확인/u,
     })).toHaveCount(0)
     await expect(page.getByRole("status").filter({ hasText: "시작할 수 있어요" })).toHaveCount(0)
-    await expect(page.getByText(/이미 결과를 기록한 세션은 다시 시작하지 않아요/u).first())
+    await expect(activeSession.getByText(/이미 결과를 기록한 세션은 다시 시작하지 않아요/u).first())
       .toBeVisible()
     await activeSession.getByRole("button", { name: "휴식" }).click()
     await expect(page.getByRole("button", {
@@ -226,13 +227,13 @@ for (const fixture of cases) {
       name: /통증 없고 평소와 같음 · (시작|다시 시작) 확인/u,
     })).toHaveCount(0)
     await expect(page.getByRole("status").filter({ hasText: "시작할 수 있어요" })).toHaveCount(0)
-    await expect(page.getByText("통증 기록 후 확인")).toBeVisible()
-    await expect(page.getByRole("button", {
+    await expect(activeSession.getByText("통증 기록 후 확인")).toBeVisible()
+    await expect(activeSession.getByRole("button", {
       name: "통증·이상 또는 잘 모르겠음",
     })).toBeVisible()
     expect(browserErrors).toEqual([])
     if (process.env.CAPTURE_PLAN_QA === "1") {
-      await page.getByText(fixture.notation).first().scrollIntoViewIfNeeded()
+      await activeSession.getByText(fixture.notation).first().scrollIntoViewIfNeeded()
       await page.screenshot({
         path: testInfo.outputPath(`active-${fixture.eventDistanceM}m.png`),
       })

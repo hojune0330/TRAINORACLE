@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test"
 import type { PlanSession } from "@impl/plan-generator/types"
 import { deriveCandidateId, derivePairId } from "@impl/plan-generator/candidate-identity"
 import { stateFixture } from "../src/domain/plan-beta-store.test-fixture"
-import { openActivePlanCards } from "./active-plan-flow"
+import { openActiveDayReader, openSessionRecords } from "./active-plan-flow"
 import { completeQuickPlan } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
@@ -62,12 +62,9 @@ test("returning from a cancelled DAY 5 PM journal restores its slot without a sa
 
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
-  await openActivePlanCards(page)
-  for (let index = 0; index < 4; index += 1) {
-    await page.getByRole("button", { name: "다음 날짜" }).click()
-  }
-  const afternoonSession = page.getByRole("group", { name: /오후 세션$/u })
-  await afternoonSession.getByText("오후 훈련 방법과 기록", { exact: true }).click()
+  const day = await openActiveDayReader(page, 4)
+  const afternoonSession = day.getByRole("group", { name: /오후 세션$/u })
+  await openSessionRecords(afternoonSession)
   await afternoonSession.getByRole("button", { name: "이 훈련 일지 쓰기" }).click()
   await expect(page.getByText("계획 5일차 · 오후")).toBeVisible()
   await page.getByRole("button", { name: /뒤로/u }).click()
@@ -94,12 +91,9 @@ test(`returning from a ${detailed ? "detailed" : completion === "native-back" ? 
 
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
-  await openActivePlanCards(page)
-  for (let index = 0; index < 4; index += 1) {
-    await page.getByRole("button", { name: "다음 날짜" }).click()
-  }
-  const afternoonSession = page.getByRole("group", { name: /오후 세션$/u })
-  await afternoonSession.getByText("오후 훈련 방법과 기록", { exact: true }).click()
+  const day = await openActiveDayReader(page, 4)
+  const afternoonSession = day.getByRole("group", { name: /오후 세션$/u })
+  await openSessionRecords(afternoonSession)
   await afternoonSession.getByRole("button", { name: "이 훈련 일지 쓰기" }).click()
   await expect(page.getByText("계획 5일차 · 오후")).toBeVisible()
   await page.getByRole("button", { name: "계획대로 마쳤어요" }).click()

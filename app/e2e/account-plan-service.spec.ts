@@ -157,18 +157,17 @@ test("actual PlanBeta selection, progress, archive and Home/journal projections 
   await page.getByRole("button", { name: "이 일정으로 시작", exact: true }).click()
   await expect(page.getByText("계정에 저장됨", { exact: true })).toBeVisible()
   await expect.poll(() => page.evaluate(() => window.accountPlanUi.service.snapshot().currentPlan?.kind)).toBe("read_only")
-  await openActivePlanCards(page)
-  await page.getByText("오전 훈련 방법과 기록", { exact: true }).first().click()
+  await openActiveSessionDetails(page)
   await page.getByRole("button", { name: "완료", exact: true }).first().click()
   await expect.poll(() => page.evaluate(() => {
     const current = window.accountPlanUi.service.snapshot().currentPlan
     return current?.kind === "read_only" ? current.packet.state.progress.length : 0
   })).toBe(1)
+  await closeActiveDayReader(page)
   await page.evaluate(() => window.accountPlanUi.home())
   await expect(page.getByRole("button", { name: /다음 훈련/u }).first()).toBeVisible()
   await page.getByRole("button", { name: /다음 훈련/u }).first().click()
-  await openActivePlanCards(page)
-  await page.getByText("오전 훈련 방법과 기록", { exact: true }).first().click()
+  await openActiveSessionDetails(page)
   await page.getByRole("button", { name: /이 훈련.*일지/u }).first().click()
   await expect.poll(() => page.evaluate(() => !!window.accountPlanUi.draft())).toBe(true)
   await page.evaluate(() => window.accountPlanUi.journal())
@@ -219,4 +218,4 @@ test("actual recovery UI preserves an old unsent plan as account history without
       archive: s.snapshot().confirmedDocument!.data.plans[0]!.archivedAt }
   })).toMatchObject({ pending: false, current: null, archive: expect.any(String) })
 })
-import { openActivePlanCards } from "./active-plan-flow"
+import { closeActiveDayReader, openActiveSessionDetails } from "./active-plan-flow"

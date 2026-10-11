@@ -28,6 +28,7 @@ test("enlarged AM/PM reader, nested records, back restoration and linked writing
   await page.evaluate((entry) => localStorage.setItem("trainoracle.journal.v1", JSON.stringify([entry])), linkedJournal)
   await page.reload()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
+  await page.getByRole("group", { name: "계획 일정 보기", exact: true }).getByRole("button", { name: "달력", exact: true }).click()
   const planBefore = await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))
   const calendar = page.getByRole("grid", { name: "2026년 9월 달력" })
   const date = calendar.getByRole("button", { name: /2026년 9월 27일 일요일/u })

@@ -159,7 +159,7 @@ for (const viewport of [
 
     const schedule = page.getByRole("region", { name: "일정·운동 시간", exact: true })
     await expect(schedule.getByText(fiveKNotation).first()).toBeVisible()
-    await schedule.getByText("자세히 보기 · 수행 순서", { exact: true }).first().click()
+    await expect(schedule.locator(".plan-detailed-prescription__primary").first()).toBeVisible()
     await expect(schedule.getByText(/4번.*150초.*조깅.*600초/u).first()).toBeVisible()
     await schedule.getByText("기준 기록·훈련을 바꾸는 방법", { exact: true }).first().click()
     await expect(schedule.getByText(/기준 기록.*18분 30초.*2026-05-10/u).first()).toBeVisible()
@@ -191,7 +191,7 @@ for (const viewport of [
       .click()
     const activeSession = await openActiveSessionDetails(page, fiveKNotation)
     await activeSession.getByRole("button", { name: "훈련 방법과 이유", exact: true }).click()
-    const reader = page.getByRole("dialog")
+    const reader = page.locator(".session-explanation[open]")
     await expect(reader.getByText("계획을 만들 때 저장한 운동·회복 순서예요.", { exact: true })).toBeVisible()
     await expect(reader.getByText("수행 순서", { exact: true })).toBeVisible()
     await reader.getByText("수행 순서", { exact: true }).scrollIntoViewIfNeeded()
@@ -205,10 +205,10 @@ for (const viewport of [
     await expect(page.getByRole("button", {
       name: "통증 없고 평소와 같음 · 다시 시작 확인",
     })).toHaveCount(0)
-    await page.getByRole("button", { name: "통증 없고 평소와 같음 · 시작 확인" }).click()
-    await expect(page.locator(".plan-execution-status")).toContainText("시작할 수 있어요")
-    await page.getByRole("button", { name: "통증·이상 또는 잘 모르겠음" }).click()
-    await expect(page.locator(".plan-execution-status")).toContainText("상세 세션을 시작하지 않아요")
+    await activeSession.getByRole("button", { name: "통증 없고 평소와 같음 · 시작 확인" }).click()
+    await expect(activeSession.getByRole("status")).toContainText("시작할 수 있어요")
+    await activeSession.getByRole("button", { name: "통증·이상 또는 잘 모르겠음" }).click()
+    await expect(activeSession.getByRole("status")).toContainText("상세 세션을 시작하지 않아요")
     await assertViewportIntegrity(page)
     await assertTouchTargets(page)
     await page.screenshot({

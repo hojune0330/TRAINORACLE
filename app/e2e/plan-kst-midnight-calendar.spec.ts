@@ -39,6 +39,7 @@ test("a plan waiting across KST midnight requires today's date and keeps its cal
   expect(firstSession).toBeDefined()
   if (!firstSession) return
 
+  await page.getByRole("group", { name: "계획 일정 보기", exact: true }).getByRole("button", { name: "달력", exact: true }).click()
   const calendar = page.getByRole("grid", { name: "2026년 10월 달력" })
   const day = calendar.locator('button[data-date="2026-10-08"]')
   await expect(day).toHaveAttribute("aria-label", /2026년 10월 8일/u)

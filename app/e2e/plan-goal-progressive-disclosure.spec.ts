@@ -23,7 +23,9 @@ test("creates a mobile marathon beta plan without inventing pace numbers", async
   await enterPlanWithoutRecord(page, /^마라톤/u)
   await expect(page.getByRole("button", { name: /일반부/u })).toHaveCount(0)
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
-  await page.getByRole("button", { name: /^5일/u }).click()
+  // A deliberate keyboard choice is separate from the preceding same-position
+  // pointer activation, which the intake protects against as a double tap.
+  await page.getByRole("button", { name: /^5일/u }).press("Enter")
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
   await refinePlan(page, "훈련 종류", /기초 지구력/u)
   await openPlanOptions(page, true)
@@ -40,7 +42,7 @@ test("creates a mobile marathon beta plan without inventing pace numbers", async
   await page.getByRole("button", { name: "이 일정으로 시작", exact: true }).click()
   await openActiveSessionDetails(page)
   await page.getByRole("button", { name: "훈련 방법과 이유", exact: true }).first().click()
-  const reader = page.getByRole("dialog")
+  const reader = page.locator(".session-explanation[open]")
   await reader.getByRole("tab", { name: "이유·근거" }).click()
   await expect(reader.getByRole("paragraph").filter({ hasText: /대상 종목은 42195m/u })).toBeAttached()
   await reader.getByText("사용한 기록과 출처", { exact: true }).click()
