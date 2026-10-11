@@ -104,6 +104,8 @@ Windows 집중 검사의 일부 실행은 worker 시작 오류 또는 도구 시
 
 새 main의 13개 unit 파일을 포함해 실제 inventory 검사는 UTC/KST 모두 `710 normal + 3 heavy = 713` 파일을 확인했다. inventory 확인은 검사 실행·통과 증거가 아니다. 최종 통합 커밋에서 모든 기존 gate를 다시 실행하며 `[skip ci]`를 사용하지 않는다.
 
+최종 전송 보호 제품 수정 뒤 앱 TypeScript·production build와 E2E TypeScript 검사가 통과했다. 그 뒤 추가한 게임 packet은 runtime 수정 없는 정적 에셋·설계 도구이며 최종 CI의 빌드는 이 파일까지 포함한다. 최신 Pages 패키지 보호 13개는 실제 원격과 분리한 임시 로컬 bare 저장소에서 통과했다. staged 필터 변경·같은 크기의 HTML 변경·retained asset 충돌·dirty destination·이전 main/Pages·동시 릴리스 거절과 기존 미리보기/에셋 보존을 확인했으며 실제 게시 저장소에는 송신하지 않았다. 최초 sandbox의 임시 Git config 권한 오류는 제품 실패나 통과로 세지 않았다.
+
 원본 goal browser 스크립트는 직전 통과 빌드의 실제 Chromium에서 미리보기 미저장·명시 확인 후 저장/적용·동일 프로그램 재진입·다음 주기 잠금, 320/375/1280 화면·320의 200% 글자·44px 동작·pageerror 0을 통과했다. 별도 현재 소스의 native script도 실제 WebCrypto/IndexedDB 8개 경계를 통과했다. CAS 전체 취소, 늦은 owner·transaction·동의 변경, 암호화 저장·추출 불가능한 키, 원래 pending operation 재생, 열린 연결 종료 후 월간 DB 삭제와 재열기 후 데이터 없음이다. 외부 origin 요청은 차단한 합성 브라우저 자료이며 실제 계정 서버 왕복이 아니다. 재시도 전후 집중 소스 17개·빌드 파일 925개와 원본/실행 script의 SHA 일치를 확인했다. 최초 sandbox 차단과 dev 무응답 실행은 통과로 세지 않는다. owned 서버는 종료했고 남은 listener도 없었다. 이 빌드 결과를 이후 archive API 변경의 빌드·hosted 증거로 확대하지 않는다.
 
 최신화 전 `6f2d7141` push 실행 `38134364979`는 실제 두 시간대의 전체 unit에 성공했다. 각 700파일에서 일반 8,070개 통과·기존 33개 skip, heavy 113개 통과·기존 2개 skip으로 합계 8,183개 통과·35개 skip이다. 계약과 app-quality 검사도 성공했지만 목표 프로그램·새 보관 보호 통합으로 후보가 바뀌었으므로 원본 로그 보존 뒤 obsolete 실행을 중단했다. 미실행 브라우저 또는 전체 gate 성공으로 취급하지 않는다.
