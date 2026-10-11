@@ -43,6 +43,7 @@ export type GoalTrainingProgramSaveOptions = {
   /** An explicit owner-reviewed whole-program replacement; never an implicit overwrite. */
   replaceExisting?: boolean
   replaceExpiredPending?: true
+  expectedPendingReview?: AccountGoalProgramSnapshot
 }
 export type GoalTrainingProgramApplyInput = {
   programId: string
@@ -135,16 +136,26 @@ async function persistAccountProgram(service: NonNullable<ReturnType<typeof mont
   if (!parseDocument(document) || !fresh()) return false
   return await service.save(document, history, token, fresh, { goalStartDateReviewRequired, replaceExpiredPending }) && monthlyAccountService() === service && fresh()
 }
+function expiredPendingReviewIdentity(view?: AccountGoalProgramSnapshot) {
+  return view?.status === "PENDING" && view.goalStartDateReviewRequired === true
+    && view.pendingDocument !== null && view.pendingDocument.program.window.startDate < todayISO()
+    ? fingerprint([view.ownerId, view.sessionGeneration, view.revision, view.sequence, view.document, view.pendingDocument,
+      view.goalStartDateReviewRequired]) : null
+}
 async function saveAccountGoalProgram(program: GoalTrainingProgram, options: GoalTrainingProgramSaveOptions) {
   if (validateGoalTrainingProgram(program).kind !== "valid") return rejected("INVALID_PROGRAM")
-  const request = fingerprint([program, options.expectedRevision, options.currentCheck, options.replaceExisting === true, options.replaceExpiredPending === true])
+  const pendingReview = options.replaceExpiredPending ? expiredPendingReviewIdentity(options.expectedPendingReview) : null
+  if (options.replaceExpiredPending && pendingReview === null) return rejected("ACCOUNT_PROGRAM_STATE_CHANGED")
+  const request = fingerprint([program, options.expectedRevision, options.currentCheck, options.replaceExisting === true, options.replaceExpiredPending === true, pendingReview])
   const service = await readyAccountProgram(options.replaceExpiredPending === true)
   if (!service) return accountProgramFailure()
   return lockedAccountProgram(service, async current => {
     const fresh = () => current() && options.freshPreview?.() !== false && evaluatePlanSafety(options.currentCheck).kind === "passed"
-      && fingerprint([program, options.expectedRevision, options.currentCheck, options.replaceExisting === true, options.replaceExpiredPending === true]) === request
+      && fingerprint([program, options.expectedRevision, options.currentCheck, options.replaceExisting === true, options.replaceExpiredPending === true,
+        options.replaceExpiredPending ? expiredPendingReviewIdentity(options.expectedPendingReview) : null]) === request
     if (!fresh()) return rejected("SAFETY_OR_PREVIEW_CHANGED")
     const opening = service.snapshot(), token = accountGoalProgramEditToken(opening)
+    if (options.replaceExpiredPending && expiredPendingReviewIdentity(opening) !== pendingReview) return rejected("ACCOUNT_PROGRAM_STATE_CHANGED")
     const read = options.replaceExpiredPending === true && opening.status === "PENDING"
       && opening.goalStartDateReviewRequired === true && opening.document === null
       ? { kind: "missing" as const } : storedDocument()

@@ -585,7 +585,8 @@ describe("GoalTrainingProgramFlow", () => {
     expect(mocks.save).not.toHaveBeenCalled(); expect(mocks.apply).not.toHaveBeenCalled()
     await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 시작" }))
     expect(mocks.save).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ window: expect.objectContaining({ startDate: "2026-10-18" }) }),
-      expect.objectContaining({ expectedRevision: original?.revision ?? null, currentCheck: "NO_KNOWN_RISK", replaceExisting: hasConfirmed, replaceExpiredPending: true }))
+      expect.objectContaining({ expectedRevision: original?.revision ?? null, currentCheck: "NO_KNOWN_RISK", replaceExisting: hasConfirmed,
+        replaceExpiredPending: true, expectedPendingReview: review }))
     expect(mocks.apply).toHaveBeenCalledOnce()
     expect(mocks.conflictBackup).not.toHaveBeenCalled()
     expect(review.pendingDocument.program.window.startDate).toBe(START)

@@ -160,7 +160,7 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
       if (result.kind !== "ready") { setError(failureMessage("code" in result ? result.code : "INVALID_DATE")); return }
       const saved = await saveGoalTrainingProgram(result.program, { expectedRevision: document?.revision ?? null,
         currentCheck: "NO_KNOWN_RISK", replaceExisting: replaceConfirmed,
-        ...(expiredPendingReview ? { replaceExpiredPending: true as const } : {}),
+        ...(expiredPendingReview ? { replaceExpiredPending: true as const, expectedPendingReview: structuredClone(expiredPendingReview) } : {}),
         freshPreview: () => current() && previewRef.current === selected })
       if (!current()) return
       if (saved.kind !== "saved") { setError(failureMessage(saved.code)); return }

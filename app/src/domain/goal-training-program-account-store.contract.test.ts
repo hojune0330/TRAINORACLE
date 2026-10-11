@@ -13,7 +13,8 @@ vi.setConfig({ testTimeout: 30_000 })
 const owner = "a1111111-1111-4111-8111-111111111111"
 const f = vi.hoisted(() => ({ snapshot: null as AccountGoalProgramSnapshot | null,
   active: null as PlanBetaStateV3 | null, failSave: false, monthlySave: vi.fn(), planSave: vi.fn(), planArchive: vi.fn(),
-  beforeLock: null as (() => void) | null, beforeArchive: null as (() => void) | null }))
+  beforeLock: null as (() => void) | null, beforeArchive: null as (() => void) | null,
+  beforeLoadHistory: null as (() => Promise<void>) | null }))
 vi.mock("./account/account-plan-service", async original => ({
   ...await original<typeof import("./account/account-plan-service")>(), accountPlansEnabled: () => true,
   accountPlanService: () => ({ snapshot: () => ({ historyLoaded: true, confirmedDocument: { data: { plans: [] } } }) }),
@@ -23,7 +24,7 @@ vi.mock("./account/account-goal-program-service", async original => ({
   createAccountGoalProgramService: () => ({
     snapshot: () => structuredClone(f.snapshot!),
     hydrate: async () => true,
-    loadHistory: async () => { if (f.snapshot!.status === "PENDING") return false; f.snapshot!.status = "READY"; return true },
+    loadHistory: async () => { await f.beforeLoadHistory?.(); if (f.snapshot!.status === "PENDING") return false; f.snapshot!.status = "READY"; return true },
     save: async (document: StoredGoalTrainingProgram, history: GoalTrainingProgramHistory, _token: string, fresh: () => boolean,
       options?: { goalStartDateReviewRequired?: true; replaceExpiredPending?: true }) => {
       f.monthlySave(document, history, options)
@@ -67,6 +68,7 @@ beforeEach(() => {
   f.snapshot = { ownerId: owner, sessionGeneration: localJournalScopeGeneration(), status: "READY", revision: 3, sequence: 3,
     historyLoaded: true, document, history: { version: 1, entries: [] }, pendingDocument: null, remoteRevision: null }
   f.active = null; f.failSave = false; f.monthlySave.mockClear(); f.planSave.mockClear(); f.planArchive.mockClear(); f.beforeLock = null; f.beforeArchive = null
+  f.beforeLoadHistory = null
 })
 afterEach(() => { setActiveLocalAccount(null); vi.useRealTimers(); vi.unstubAllGlobals() })
 
@@ -154,7 +156,8 @@ it.each([false, true])("requires explicit fresh-date approval to replace an expi
     currentCheck: "NO_KNOWN_RISK" as const, replaceExisting: hasConfirmed }
   expect(await saveGoalTrainingProgram(generated.program, options)).toEqual({ kind: "rejected", code: "ACCOUNT_PROGRAM_PENDING" })
   expect(f.monthlySave).not.toHaveBeenCalled()
-  expect(await saveGoalTrainingProgram(generated.program, { ...options, replaceExpiredPending: true })).toMatchObject({ kind: "saved", document: { application: null } })
+  expect(await saveGoalTrainingProgram(generated.program, { ...options, replaceExpiredPending: true,
+    expectedPendingReview: structuredClone(f.snapshot) })).toMatchObject({ kind: "saved", document: { application: null } })
   expect(f.monthlySave.mock.calls[0]?.[2]).toEqual({ goalStartDateReviewRequired: true, replaceExpiredPending: true })
   expect(f.planSave).not.toHaveBeenCalled()
   expect(f.planArchive).not.toHaveBeenCalled()
@@ -166,10 +169,84 @@ it("does not report an unchanged confirmed program as a successful pending repla
   f.snapshot = { ...f.snapshot!, status: "PENDING", pendingDocument: pending, goalStartDateReviewRequired: true }
   const before = structuredClone(f.snapshot)
   expect(await saveGoalTrainingProgram(confirmed.program, { expectedRevision: confirmed.revision,
-    currentCheck: "NO_KNOWN_RISK", replaceExisting: true, replaceExpiredPending: true }))
+    currentCheck: "NO_KNOWN_RISK", replaceExisting: true, replaceExpiredPending: true, expectedPendingReview: structuredClone(f.snapshot) }))
     .toEqual({ kind: "rejected", code: "ACCOUNT_PROGRAM_PENDING" })
   expect(f.snapshot).toEqual(before)
   expect(f.monthlySave).not.toHaveBeenCalled()
+  expect(f.planSave).not.toHaveBeenCalled()
+  expect(f.planArchive).not.toHaveBeenCalled()
+})
+
+it("rejects a different expired pending original adopted during history loading", async () => {
+  vi.setSystemTime(new Date(2026, 9, 12, 0, 1))
+  const original = syntheticGoalProgram(), safety = evaluatePlanSafety("NO_KNOWN_RISK")
+  if (safety.kind !== "passed") throw Error("Synthetic safety unavailable")
+  const generated = generateGoalTrainingProgram({ goalMinutes: 45, dateChoice: { kind: "START", startDate: "2026-10-12" },
+    today: "2026-10-12", generatedAt: new Date().toISOString(), ...original.program.inputs, safetyGate: safety.gate })
+  if (generated.kind !== "ready") throw Error("Synthetic next date unavailable")
+  f.snapshot = { ...f.snapshot!, status: "PENDING", pendingDocument: syntheticGoalProgram(1), goalStartDateReviewRequired: true }
+  const review = structuredClone(f.snapshot)
+  f.beforeLoadHistory = async () => {
+    await Promise.resolve()
+    f.snapshot = { ...f.snapshot!, sequence: f.snapshot!.sequence + 1, pendingDocument: syntheticGoalProgram(2) }
+  }
+  expect(await saveGoalTrainingProgram(generated.program, { expectedRevision: review.document!.revision,
+    currentCheck: "NO_KNOWN_RISK", replaceExisting: true, replaceExpiredPending: true, expectedPendingReview: review }))
+    .toEqual({ kind: "rejected", code: "ACCOUNT_PROGRAM_STATE_CHANGED" })
+  expect(f.snapshot!.sequence).toBe(review.sequence + 1)
+  expect(f.snapshot!.pendingDocument).not.toEqual(review.pendingDocument)
+  expect(f.monthlySave).not.toHaveBeenCalled()
+  expect(f.planSave).not.toHaveBeenCalled()
+  expect(f.planArchive).not.toHaveBeenCalled()
+})
+
+it.each(["missing", "owner", "session", "revision", "sequence", "pending", "marker", "date"])("rejects a %s pending replacement review", async mismatch => {
+  vi.setSystemTime(new Date(2026, 9, 12, 0, 1))
+  const original = syntheticGoalProgram(), safety = evaluatePlanSafety("NO_KNOWN_RISK")
+  if (safety.kind !== "passed") throw Error("Synthetic safety unavailable")
+  const generated = generateGoalTrainingProgram({ goalMinutes: 45, dateChoice: { kind: "START", startDate: "2026-10-12" },
+    today: "2026-10-12", generatedAt: new Date().toISOString(), ...original.program.inputs, safetyGate: safety.gate })
+  if (generated.kind !== "ready") throw Error("Synthetic next date unavailable")
+  f.snapshot = { ...f.snapshot!, status: "PENDING", pendingDocument: syntheticGoalProgram(1), goalStartDateReviewRequired: true }
+  const before = structuredClone(f.snapshot), review = structuredClone(f.snapshot)
+  if (mismatch === "owner") review.ownerId = "b1111111-1111-4111-8111-111111111111"
+  if (mismatch === "session") review.sessionGeneration += 1
+  if (mismatch === "revision") review.revision += 1
+  if (mismatch === "sequence") review.sequence += 1
+  if (mismatch === "pending") review.pendingDocument = syntheticGoalProgram(2)
+  if (mismatch === "marker") delete review.goalStartDateReviewRequired
+  if (mismatch === "date") review.pendingDocument = { ...review.pendingDocument!, program: { ...review.pendingDocument!.program,
+    window: { ...review.pendingDocument!.program.window, startDate: "2026-10-12" } } }
+  expect(await saveGoalTrainingProgram(generated.program, { expectedRevision: before.document!.revision,
+    currentCheck: "NO_KNOWN_RISK", replaceExisting: true, replaceExpiredPending: true,
+    expectedPendingReview: mismatch === "missing" ? undefined : review }))
+    .toEqual({ kind: "rejected", code: "ACCOUNT_PROGRAM_STATE_CHANGED" })
+  expect(f.snapshot).toEqual(before)
+  expect(f.monthlySave).not.toHaveBeenCalled()
+  expect(f.planSave).not.toHaveBeenCalled()
+  expect(f.planArchive).not.toHaveBeenCalled()
+})
+
+it("accepts the reviewed pending original after history hydration fills only history metadata", async () => {
+  vi.setSystemTime(new Date(2026, 9, 12, 0, 1))
+  const original = syntheticGoalProgram(), safety = evaluatePlanSafety("NO_KNOWN_RISK")
+  if (safety.kind !== "passed") throw Error("Synthetic safety unavailable")
+  const generated = generateGoalTrainingProgram({ goalMinutes: 45, dateChoice: { kind: "START", startDate: "2026-10-12" },
+    today: "2026-10-12", generatedAt: new Date().toISOString(), ...original.program.inputs, safetyGate: safety.gate })
+  if (generated.kind !== "ready") throw Error("Synthetic next date unavailable")
+  f.snapshot = { ...f.snapshot!, status: "PENDING", pendingDocument: syntheticGoalProgram(1), goalStartDateReviewRequired: true,
+    historyLoaded: false }
+  const review = structuredClone(f.snapshot)
+  f.beforeLoadHistory = async () => {
+    await Promise.resolve()
+    f.snapshot!.historyLoaded = true
+    f.snapshot!.history.entries.push({ archivedAt: "2026-10-10T01:00:00.000Z", document: syntheticGoalProgram(2) })
+  }
+  expect(await saveGoalTrainingProgram(generated.program, { expectedRevision: review.document!.revision,
+    currentCheck: "NO_KNOWN_RISK", replaceExisting: true, replaceExpiredPending: true, expectedPendingReview: review }))
+    .toMatchObject({ kind: "saved", document: { application: null } })
+  expect(f.monthlySave).toHaveBeenCalledOnce()
+  expect(f.monthlySave.mock.calls[0]?.[1].entries).toHaveLength(2)
   expect(f.planSave).not.toHaveBeenCalled()
   expect(f.planArchive).not.toHaveBeenCalled()
 })

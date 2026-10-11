@@ -4,7 +4,7 @@
 
 ## 통합한 기준
 
-- 통합 중 확인한 최신 `main`: `09c917f588aed7c743eba19fdc5a745e56ef5c67`. 목표 프로그램 기준은 그 부모 `62f4e40210a682776753fe89d84365dfeea3e5bf`, 이전 기준은 `bf29931c24ab64b2477f6269bd26ed655b4699e2`였다. 최신 후속 변경은 Pages 패키지의 staged/committed bytes 검증 3파일이며 앱 처방·계정 공개 상태를 바꾸지 않는다.
+- 통합 중 확인한 최신 `main`: `793d9c5f63164813e34e5fb299be1037728e246b`. 그 부모 `09c917f588aed7c743eba19fdc5a745e56ef5c67`의 Pages 패키지 보호와 `62f4e40210a682776753fe89d84365dfeea3e5bf`의 목표 프로그램을 함께 보존했다. `793d9c5f`의 단계·목표 속도·대회 날짜 안내와 검수된 원본의 읽기 쉬운 처방 표기, 기존 COACH 원본 표기 및 새 계약/브라우저 검수를 결합했다. 기존 처방 수량과 계정 공개 상태는 이 설명 변경의 대상이 아니다.
 - 최신 게임 PR #349: `2b86f638123f62c628bd28d8e4b02f41efc6172d`. 기존 게임 런타임 기준은 그 부모 `7fb1e9a7c710c8d6095960b5838cb8b703e6c27f`다. 후속 99파일은 2단계 문서·copy deck·에셋·생성 도구이며 앱에 현금성 포인트나 광고를 연결하지 않는다.
 - 개인 계획 PR #353의 기존 수정: `b2a4e9abca548b316500980b42afa9c821fa6b5c`.
 - 통합 브랜치: `codex/personal-plan-ci-gates-20261007`. `34edaf5e`에서 본체, `3e9e14fe`에서 게임을 병합했다. `6f2d7141` 검사 중 main에 목표 프로그램 변경이 추가되어 병합 기준을 다시 갱신했다. 최종 커밋과 원격 상태는 PR 기록에서 확인한다.
@@ -103,10 +103,19 @@ Windows 집중 검사의 일부 실행은 worker 시작 오류 또는 도구 시
 - 신규 월간 원본 저장의 날짜 확인을 암호화된 로컬 INDEX와 고정 operation의 선택적 `goalStartDateReviewRequired: true` 표식으로 유지한다. 표식 자체에는 날짜·몸 상태·본문이 없고, 다른 문서 종류나 mutation/writePurpose와 함께 사용하면 거부한다. 송신 직전마다 원래 시작일과 현재 날짜를 비교하며, BODY 준비·SDK 인증·동의 응답/JSON 대기 중 승인이 만료되면 INDEX를 최초 확정하지 않는다. 과거 원본 파일 복원·일반 진행 기록은 이 신규 저장 표식의 대상이 아니다.
 - 이미 확정된 요청의 복구는 원격 revision이 원래 expected revision보다 증가했고 참조 원본이 일치할 때 원래 INDEX operation을 그대로 재생한다. 오래된 CAS를 새 첫 저장에 재사용하거나 새 ACK를 추측하지 않는다. 원격 문서가 그 이후 더 진행된 경우에도 해당 원래 영수증의 복구와 실제 현재 문서 확인을 구분한다.
 - 시작일이 지난 미확정 초안은 보관 상태와 파일 내보내기를 유지하고, 사용자가 명시적으로 새 날짜를 선택·미리보기·몸 상태·기존 훈련표 교체를 확인한 뒤에만 다시 저장한다. 자동으로 오늘 날짜로 이동하지 않는다. 기존 INDEX ciphertext와 pending operation은 기존 REVIEW archive에 보존하고 old operation을 retired 처리하며, 새 INDEX/부분 기록과 같은 native 트랜잭션에서 반영한다. 원격 원본이 없는 첫 저장의 revision 0/acknowledged sequence 0도 유지한다. 원래 BODY/진행 기록을 삭제하거나 실제 원격 충돌이 없는 상태를 CONFLICT로 꾸미지 않는다.
+- 회복 화면에서 승인한 초안의 계정·세대·revision·sequence·확정 원본·대기 원본을 저장 요청에 함께 묶는다. history 로딩 중 같은 confirmed revision에서 다른 만료 초안/sequence로 바뀌면 원본 구현이 새 초안을 채택해 저장하는 회귀 1개가 실제 실패했다. 로딩과 lock 뒤, 기존 PLAN 보관 전에 선택한 원본의 동일성을 검사한다. 정상 history 확장과 자기 batch 이후의 상태 변경을 승인 만료로 오인하지 않고, 이후 service 토큰과 native row 비교로 확인을 이어간다.
+
+월간 INDEX의 API/fetch 4파일 199개는 UTC/KST 모두 통과했다. 실제 SDK의 추가 인증·동의 응답·JSON 대기 뒤 첫 송신 차단, abort/deadline 뒤 nonce 정리, unrelated read와 내부 표식의 서버 비노출을 확인했고 제품 4파일의 전후 SHA는 동일했다. 최종 회복 UI·Entry·catalog reader·처방 연결 4파일 72개도 UTC/KST 모두 통과했으며 검수 9파일의 전후 SHA는 동일하다. 원본 UI의 회복 선택 회귀는 4개 실패·1개 통과였고 수정 후 정상 첫 저장·기존 교체·지난 날짜/잘못된 승인 차단·원본 파일 보관을 확인했다. `app/.scratch/account-goal-index-send-guard-20261011`과 `app/.scratch/goal-expired-pending-ui-20261011`에 원본/중간/최종 결과를 구분해 보존했다.
+
+최종 native 브라우저의 원래 WebCrypto/IndexedDB 8개 경계와 추가 표식/교체 9개 경계도 모두 통과했다. 개인 원본의 암호문 저장과 새 표식의 재열기 유지·동일 operation ACK·표식 불일치/비 literal/다른 문서 종류 거절·일반 갱신 표식 해제, 첫 revision 0과 기존 확정 원본 교체의 archive/retired operation/late ACK/rollback을 확인했다. 기존 timeout과 원본 script를 유지했다. dev 환경의 기본 탐색 정체는 보존물 삭제 없이 별도 cache·index 진입점·산출물 watcher 제외 설정으로 해결했으며 startup 실패·무응답은 통과로 세지 않았다. 이는 실제 브라우저의 합성 로컬 저장소 경계이며 운영 계정의 서버 왕복 증거가 아니다.
+
+월간 서비스 17개·generic buffer 75개·root store 19개의 최종 KST 전체 111개는 실패·skip 없이 통과했다. UTC는 회복 단계의 전체 101개에서 100개 통과·기존 INDEX CAS 사례 1개의 30초 초과가 있었다. 동일 제품·동일 30초 제한의 단일 재실행은 23.59초로 통과했다. 이후 승인 대상 선택 보강의 root store 19개를 별도로 검증하고, 불변 service/buffer의 이전 결과와 구분한다. UTC의 분리된 성공 증거를 단일 전체 111개 실행의 성공으로 표현하지 않는다. 두 시간대의 원본 approval-await 회귀는 각각 실제 saved를 반환해 실패했으며 보강 뒤 잘못된 owner/session/revision/sequence/pending/표식/날짜·승인 누락 거절과 정상 history metadata 확장 허용을 확인했다. 최종 전체 hosted gate에서는 양 시간대의 모든 파일을 다시 실행한다.
+
+승인 대상 확인까지 포함한 마지막 앱 build·앱/E2E TypeScript와 검증기 freshness 확인을 통과했다. 빌드 전후 제품 10파일 SHA는 동일하다. 그 빌드의 실제 Chromium에서 최신 원본 `goal-program.browser.mjs`를 그대로 실행해 29일 달력·3주기·4단계·처방 수치와 기존 표기·reader/몸 상태 확인 포커스·저장 전 미기록·명시 저장/적용·재진입·다음 주기 제한·320/375/1280 폭·320의 200% 글씨·pageerror 0을 통과했다. 소스 1,045파일·빌드 1,405파일·원본 script의 검사 전후 SHA는 동일하고 스크린샷 14개를 보존했다. 57반일 수는 기존 domain/calendar 검수이며 이 browser 원본의 직접 단언은 아니다. 미리보기와 native 서버는 정확한 소유 PID를 확인해 종료하고 listener 0을 확인했다. `app/.scratch/goal-program-final-preview-20261011-42359`와 `app/.scratch/goal-index-start-review-final-20261011`에 증거를 보존했다.
 
 보관 서비스·전송·로컬 준비/버퍼·domain·구형 서비스의 최종 6파일 113개가 UTC/KST 모두 통과했고 skip은 0개다. API/fetch를 포함한 집중 소스·fixture·설정 18파일의 전후 SHA256은 모두 동일했다. 격리 원본에서는 서비스 yield·버퍼 읽기·준비 쓰기 직전·외부 commit readback의 4경계가 UTC/KST에서 각각 실패했으며, 재접속 후 승인 없는 pending 보관 자동 실행도 양쪽에서 재현했다. 수정 후 실제 archive 전송 직전과 명시 재시도의 만료, 정상 영수증 복구·18프레임/500KB 초과 원본 보존도 확인했다. 처음 110개 실행의 fixture 실패와 startup 실패는 원본 증거와 구분해 보존했다.
 
-새 main의 13개 unit 파일을 포함해 실제 inventory 검사는 UTC/KST 모두 `710 normal + 3 heavy = 713` 파일을 확인했다. inventory 확인은 검사 실행·통과 증거가 아니다. 최종 통합 커밋에서 모든 기존 gate를 다시 실행하며 `[skip ci]`를 사용하지 않는다.
+목표 프로그램 main의 13개 unit 파일을 합친 inventory는 UTC/KST 모두 `710 normal + 3 heavy = 713` 파일이었다. 이후 최신 `793d9c5f`의 catalog reader 계약 1파일을 추가한 실제 inventory는 양쪽 모두 `711 normal + 3 heavy = 714` 파일이다. inventory 확인은 검사 실행·통과 증거가 아니다. 최종 통합 커밋에서 모든 기존 gate를 다시 실행하며 `[skip ci]`를 사용하지 않는다.
 
 최종 전송 보호 제품 수정 뒤 앱 TypeScript·production build와 E2E TypeScript 검사가 통과했다. 그 뒤 추가한 게임 packet은 runtime 수정 없는 정적 에셋·설계 도구이며 최종 CI의 빌드는 이 파일까지 포함한다. 최신 Pages 패키지 보호 13개는 실제 원격과 분리한 임시 로컬 bare 저장소에서 통과했다. staged 필터 변경·같은 크기의 HTML 변경·retained asset 충돌·dirty destination·이전 main/Pages·동시 릴리스 거절과 기존 미리보기/에셋 보존을 확인했으며 실제 게시 저장소에는 송신하지 않았다. 최초 sandbox의 임시 Git config 권한 오류는 제품 실패나 통과로 세지 않았다.
 
