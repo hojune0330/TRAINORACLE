@@ -86,10 +86,11 @@ it("explicitly limits embedding to supported screens instead of treating other d
 it("reuses the existing method reader and its local bookmark without closing or navigating the parent", () => {
   const onBack = vi.fn(), history = vi.spyOn(window.history, "pushState")
   const parentHistory = window.history.state
+  const parentHref = window.location.href
   render(<OracleLinkedDestination destination="METHODS" onBack={onBack} today={today} />)
   expect(history).toHaveBeenCalledExactlyOnceWith({ ...parentHistory,
     [BROWSER_BACK_LAYER_HISTORY_KEY]: expect.stringMatching(/^task-flow-/u),
-  }, "", window.location.href)
+  }, "", parentHref)
   expect(screen.getByRole("heading", { name: "어떤 훈련이 궁금한가요?" })).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: /크루즈 인터벌은 지속주와/ }))
   expect(screen.getByRole("heading", { name: "따라 하기 전에" })).toBeVisible()
@@ -103,6 +104,7 @@ it("reuses the existing method reader and its local bookmark without closing or 
   fireEvent.click(screen.getByRole("button", { name: "이전 화면" }))
   expect(onBack).toHaveBeenCalledTimes(1)
   expect(history).toHaveBeenCalledTimes(1)
+  expect(window.location.href).toBe(parentHref)
 })
 
 it("keeps a guest record save inside the existing screen until explicit return", async () => {
