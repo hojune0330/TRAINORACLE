@@ -65,6 +65,28 @@ function paceSession(): PlanSession {
 }
 
 describe("session explanation review regressions", () => {
+  it("cancels only the portal explanation and returns focus inside its parent day reader", async () => {
+    const parentCancel = vi.fn()
+    const session = paceSession()
+    const before = JSON.stringify(session)
+    render(<dialog open aria-label="부모 날짜 읽기" onCancel={parentCancel}>
+      <SessionExplanationEntry session={session} />
+    </dialog>)
+    const parent = screen.getByRole("dialog", { name: "부모 날짜 읽기" })
+    const opener = screen.getByRole("button", { name: "훈련 방법과 이유" })
+    await userEvent.click(opener)
+    const explanation = document.querySelector<HTMLDialogElement>(".session-explanation")!
+    expect(explanation).toBeVisible()
+    const cancellation = new Event("cancel", { cancelable: true })
+    fireEvent(explanation, cancellation)
+    expect(cancellation.defaultPrevented).toBe(true)
+    expect(parentCancel).not.toHaveBeenCalled()
+    await waitFor(() => expect(document.querySelector(".session-explanation")).toBeNull())
+    expect(parent).toHaveAttribute("open")
+    expect(opener).toHaveFocus()
+    expect(JSON.stringify(session)).toBe(before)
+  })
+
   it.each(["ACTIVE", "ARCHIVED"] as const)("shows planned and actual slots for %s changed execution without claiming no journal", async source => {
     const f = replacedReplanFixture(), session = f.state.activePlan.sessions.find(s => s.day === 1)!
     const entry = { ...f.entries[0]!, activitySlot: "PM" as const, planExecutionRelation: "MODIFIED" as const,

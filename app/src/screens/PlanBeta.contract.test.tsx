@@ -1,5 +1,5 @@
 /* LEGACY_11STEP_FLOW: 2026-09 4질문 빠른 흐름 도입으로 옛 인테이크 클릭 순서를 전제한 테스트. 다듬기 경로로 재작성 예정(PR #341 본문). */
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { FIELD_PROVENANCE } from "../domain/field-provenance"
@@ -12,15 +12,17 @@ import { createRecoveryCode } from "../domain/account/private-note-crypto"
 import { saveSessionRecoveryCode } from "../domain/account/private-note-sync"
 import { PlanBeta } from "./PlanBeta"
 import { enterPlanWithoutRecord } from "./plan-beta/instant-plan.test-helper"
+import { hasPendingBrowserBackLayer } from "../navigation/browserNavigation"
 
 beforeEach(() => {
   window.localStorage.clear()
   window.sessionStorage.clear()
 })
 
-afterEach(() => {
+afterEach(async () => {
   cleanup()
   vi.restoreAllMocks()
+  await waitFor(() => expect(hasPendingBrowserBackLayer()).toBe(false))
 })
 
 /**
@@ -841,15 +843,18 @@ describe("plan beta user flow", () => {
     })
 
     const user = userEvent.setup()
-    await user.click(await screen.findByRole("button", { name: "날짜별 카드 보기" }))
-    await user.click(screen.getAllByText(/훈련 방법과 기록/u)[0]!)
-    const progress = screen.getByLabelText(/DAY 1.*진행 기록/u)
+    await user.click(await screen.findByRole("button", { name: "목록" }))
+    const list = screen.getByRole("region", { name: "날짜별 훈련 목록" })
+    await user.click(within(list).getByRole("button", { name: "7월 24일 금요일 전체 처방 보기" }))
+    const reader = within(await screen.findByRole("dialog", { name: "2026년 7월 24일 금요일" }))
+    await user.click(reader.getByText("일지·진행 기록", { exact: true }))
+    const progress = reader.getByLabelText(/DAY 1.*진행 기록/u)
     await user.click(within(progress).getByRole("button", { name: "완료" }))
 
-    expect(screen.getByRole("alert")).toHaveTextContent("진행 기록 저장을 되돌렸는지 확인할 수 없어요")
+    expect(reader.getByRole("alert")).toHaveTextContent("진행 기록 저장을 되돌렸는지 확인할 수 없어요")
     expect(screen.queryByRole("button", { name: "진행 상태 다시 저장하기" })).not.toBeInTheDocument()
-    expect(screen.getByText("예정")).toBeVisible()
-    expect(screen.queryByText("완료", { selector: "em" })).toBeNull()
+    expect(reader.getByText("예정", { selector: "em" })).toBeVisible()
+    expect(reader.queryByText("완료", { selector: "em" })).toBeNull()
   })
 })
 

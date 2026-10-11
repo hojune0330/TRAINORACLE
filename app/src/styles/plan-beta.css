@@ -891,6 +891,12 @@
   margin-inline: 0;
 }
 
+@media (max-width: 400px) {
+  .plan-training-flow[data-presentation="prescription-calendar"] > .month-calendar {
+    margin-inline: min(0px, calc((100% - 7 * var(--app-touch-min) - 8px) / 2));
+  }
+}
+
 .plan-training-flow[data-presentation="prescription-calendar"] .month-calendar__grid td[data-in-range] button {
   min-height: 120px;
   padding: var(--space-2) var(--space-1);

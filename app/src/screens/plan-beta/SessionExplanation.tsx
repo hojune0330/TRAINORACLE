@@ -124,7 +124,7 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
   }
 
   return (
-    <dialog ref={dialog} className="session-explanation" aria-labelledby={`${id}-title`} onCancel={event => { event.preventDefault(); close() }}>
+    <dialog ref={dialog} className="session-explanation" aria-labelledby={`${id}-title`} onCancel={event => { event.preventDefault(); event.stopPropagation(); close() }}>
       <header className="session-explanation__header">
         <button type="button" className="session-explanation__back" onClick={close} aria-label={returnLabel}>
           <ArrowLeft size={21} aria-hidden="true" />

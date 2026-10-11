@@ -61,7 +61,7 @@ export function useActiveContentScroll(
       // Delayed alignment must not interrupt typing or a later focus choice.
       // An unchanged opener can still hand focus to the newly opened question.
       if (focusTarget && (activeFocus === focusTarget || activeFocus === document.body
-        || activeFocus === focusAtSchedule && !target.contains(activeFocus) && !editing)) {
+        || activeFocus === focusAtSchedule && !focusTarget.contains(activeFocus) && !editing)) {
         focusTarget.focus({ preventScroll: true })
       }
       // Parent shell resets and short entry animations can land after a child

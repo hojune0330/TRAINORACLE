@@ -40,6 +40,7 @@ function FocusHarness({ activeKey, skipInitial = false }: { readonly activeKey: 
   useActiveContentScroll(activeKey, targetRef, headingRef, skipInitial)
   return <><button type="button">다른 화면</button><label>별도 입력<input /></label><section ref={targetRef}>
     <h2 ref={headingRef} tabIndex={-1}>현재 질문</h2><label>작성 중인 메모<textarea /></label>
+    <button type="button">같은 구간의 적용</button>
   </section></>
 }
 
@@ -96,6 +97,25 @@ describe("active content scroll", () => {
     view.rerender(<FocusHarness activeKey="two" skipInitial />)
     flushFrames()
     expect(view.getByRole("heading", { name: "현재 질문" })).toHaveFocus()
+  })
+
+  it("moves an unchanged internal apply button to the explicitly requested heading", () => {
+    const flushFrames = queuedFrames()
+    const view = render(<FocusHarness activeKey="one" skipInitial />)
+    view.getByRole("button", { name: "같은 구간의 적용" }).focus()
+    view.rerender(<FocusHarness activeKey="two" skipInitial />)
+    flushFrames()
+    expect(view.getByRole("heading", { name: "현재 질문" })).toHaveFocus()
+  })
+
+  it("preserves an internal control chosen after the new heading alignment was queued", () => {
+    const flushFrames = queuedFrames()
+    const view = render(<FocusHarness activeKey="one" skipInitial />)
+    view.rerender(<FocusHarness activeKey="two" skipInitial />)
+    const control = view.getByRole("button", { name: "같은 구간의 적용" })
+    control.focus()
+    flushFrames()
+    expect(control).toHaveFocus()
   })
 
   it("uses an immediate move for the existing in-app motion preference too", async () => {

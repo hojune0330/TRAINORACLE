@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
@@ -6,8 +6,12 @@ import { ActivePlan } from "./ActivePlan"
 import { createInitialPeriodizationContext } from "../../domain/periodization-lineage"
 import { createPlannedSessionLogDraft } from "../../domain/planned-session-link"
 import { QuickSessionForm } from "../log-entry/QuickSessionForm"
+import { hasPendingBrowserBackLayer } from "../../navigation/browserNavigation"
 
-afterEach(cleanup)
+afterEach(async () => {
+  cleanup()
+  await waitFor(() => expect(hasPendingBrowserBackLayer()).toBe(false))
+})
 beforeEach(() => window.localStorage.clear())
 
 function plannedDraft() {
@@ -62,10 +66,12 @@ describe("active plan journal action", () => {
       />,
     )
 
-    await user.click(screen.getByRole("button", { name: "날짜별 카드 보기" }))
-    await user.click(screen.getAllByText(/훈련 방법과 기록/u)[0]!)
-    await user.click(screen.getByRole("button", { name: "이 훈련 일지 쓰기" }))
-    expect(onWriteSessionLog).toHaveBeenCalledWith(state.activePlan.sessions[0])
+    await user.click(screen.getByRole("button", { name: "목록" }))
+    const list = screen.getByRole("region", { name: "날짜별 훈련 목록" })
+    await user.click(within(list).getByRole("button", { name: "7월 24일 금요일 전체 처방 보기" }))
+    const reader = within(await screen.findByRole("dialog", { name: "2026년 7월 24일 금요일" }))
+    await user.click(reader.getByRole("button", { name: "이 훈련 일지 쓰기" }))
+    await waitFor(() => expect(onWriteSessionLog).toHaveBeenCalledWith(state.activePlan.sessions[0]))
   })
 
   it("shows the long direction without presenting it as automatic load progression", async () => {
