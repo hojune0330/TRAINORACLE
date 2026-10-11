@@ -12,7 +12,10 @@ async function answerAxis(page: Page, axis: string, answer: string) {
   const dialog = page.getByRole("dialog", { name: axis })
   for (let question = 1; question <= 3; question++) {
     await expect(dialog.getByText(`${question} / 3`, { exact: true })).toBeVisible()
-    await dialog.getByRole("button", { name: answer, exact: true }).click()
+    // Rapid clicks at the same point are guarded across questions; choose each answer deliberately.
+    const answerButton = dialog.getByRole("button", { name: answer, exact: true })
+    await answerButton.focus()
+    await answerButton.press("Enter")
   }
   await expect(dialog.getByRole("heading", { name: "내 답을 정리했어요" })).toBeVisible()
   await dialog.getByRole("button", { name: "내 결과 보기", exact: true }).click()
