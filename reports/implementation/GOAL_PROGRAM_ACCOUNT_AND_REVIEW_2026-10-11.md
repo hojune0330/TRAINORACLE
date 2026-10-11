@@ -57,6 +57,13 @@ Luna max의 12개 **합성** 페르소나 검토다. 실제 중학생·코치 �
 - 빌드는 커밋된 깨끗한 checkout에서 수행하고 정식 주소에 `--account-held`를 유지한다. preview·기존 해시 자산은 삭제하지 않는다.
 - 이 문서는 빌드 전 source 기록이다. 커밋·푸시·Pages 게시 및 실제 공개 여부는 최종 사용자 보고와 공개 `trainoracle-build-manifest.json` / `trainoracle-deploy-receipt.json`의 동일 source SHA로 별도 확인한다. 로컬 통과를 공개 확인으로 대체하지 않는다.
 
+## 게시 정확성 후속 — 첫 게시를 완료로 인정하지 않음
+
+- `62f4e402`를 위한 첫 Pages `8b11cd74`는 새 자산·영수증은 게시했으나 실제 Git 커밋의 `index.html`이 이전 entry를 유지했다. 작업실 파일은 새 내용이었고 size/timestamp cache와 Git 상태 검사는 변경을 검출하지 못했다. 공개 HTML 대조에서 발견했으므로 첫 게시를 사용자 배포 완료로 보고하지 않는다.
+- 게시 도구에 package-only 강제 재해시를 추가하고, SHA-256으로 검증한 **동일 바이트에서 고정한 Git blob**을 stage와 최종 commit에서 각각 대조한다. 저장소 필터가 bytes를 바꾸면 commit 전 거절하며, 최종 검증한 Pages SHA만 push한다. 전역 Git 설정은 바꾸지 않았다.
+- 게시 도구 focused 검사는 13/13 통과했다. stage guard를 임시 생략한 결함에서 `a staged byte-changing filter stops before commit or push`가 예상한 INDEX 차단 대신 commit 차단을 관측하여 이름으로 실패했고 즉시 원복한 뒤 동일 검사 1/1 재통과했다.
+- 앱/훈련 코드 변경 없이 해당 게시 도구 보강과 인계만 추가 main 커밋한 후, 새 main·현재 Pages 기준으로 다시 빌드/게시한다. 최종 공개 확인은 영수증뿐 아니라 HTML entry와 주요 앱 파일의 실제 SHA-256까지 포함한다.
+
 ## 남은 공개 경계
 
 - 운영 SQL은 검토용 source다. PGlite 적용 검사는 완료했으나 Supabase CLI migration 생성·실제 PostgreSQL 로컬 스택/운영 DB/Edge 게시를 증명하지 않는다.

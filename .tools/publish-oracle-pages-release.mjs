@@ -54,40 +54,65 @@ function publishUnlocked({ repo, bundle, pagesRepo, publish = false }) {
     previousPagesSha: manifest.previousPagesSha, files: paths.length };
 
   assertReleaseSnapshot(manifest, remoteReleaseSnapshot(repo));
+  const expectedBlobs = new Map();
+  const blobForBytes = bytes => execFileSync('git', ['-c', `safe.directory=${target}`,
+    'hash-object', '--no-filters', '--stdin'], { cwd: target, input: bytes, encoding: 'utf8' }).trim();
   for (const path of paths.filter(path => path !== DEPLOY_RECEIPT)) {
     const destination = join(target, path);
     mkdirSync(dirname(destination), { recursive: true });
     copyFileSync(join(bundle, path), destination);
   }
   for (const [path, digest] of Object.entries(files)) {
-    if (createHash('sha256').update(readFileSync(join(target, path))).digest('hex') !== digest) {
+    const verifiedBytes = readFileSync(join(target, path));
+    if (createHash('sha256').update(verifiedBytes).digest('hex') !== digest) {
       throw Error('COPIED_PACKAGE_CONTENT_CHANGED');
     }
+    expectedBlobs.set(path, blobForBytes(verifiedBytes));
   }
-  if (JSON.stringify(JSON.parse(readFileSync(join(target, BUILD_MANIFEST), 'utf8'))) !== JSON.stringify(manifest)) {
+  const manifestBytes = readFileSync(join(target, BUILD_MANIFEST));
+  if (JSON.stringify(JSON.parse(manifestBytes.toString('utf8'))) !== JSON.stringify(manifest)) {
     throw Error('COPIED_PACKAGE_MANIFEST_CHANGED');
   }
-  writeFileSync(join(target, DEPLOY_RECEIPT), JSON.stringify({
+  expectedBlobs.set(BUILD_MANIFEST, blobForBytes(manifestBytes));
+  const receiptBytes = Buffer.from(JSON.stringify({
     kind: 'TRAINORACLE_PAGES_DEPLOYMENT', sourceSha: manifest.sourceSha,
     previousPagesSha: manifest.previousPagesSha, method: 'PRESERVING_GUARDED_MANUAL',
     deployedAt: new Date().toISOString(), backendVerification: 'NOT_CONFIRMED',
   }, null, 2) + '\n');
+  writeFileSync(join(target, DEPLOY_RECEIPT), receiptBytes);
+  expectedBlobs.set(DEPLOY_RECEIPT, blobForBytes(receiptBytes));
+  // A same-size copy can retain a Windows stat-cache signature. Disk verification
+  // alone does not prove git add actually staged those bytes. Freeze raw blob IDs.
+  const assertBlobs = tree => {
+    for (const [path, expected] of expectedBlobs) {
+      if (gitAt(target, 'rev-parse', `${tree}:${path}`) !== expected) {
+        throw Error(`PUBLISHED_BLOB_MISMATCH:${tree || 'INDEX'}:${path}`);
+      }
+    }
+  };
   // Stage only this verified package; an unrelated late file must remain untouched.
   // A NUL-delimited input also avoids Windows' command-line length limit.
-  execFileSync('git', ['-c', `safe.directory=${target}`, '--literal-pathspecs', 'add',
-    '--pathspec-from-file=-', '--pathspec-file-nul'], {
-    cwd: target, input: paths.join('\0') + '\0', stdio: 'pipe',
-  });
+  // Rehash tracked files even if their cached size/timestamps appear unchanged.
+  // Keep release bytes exact; an explicit filter that changes them fails below.
+  for (const options of [[], ['--renormalize']]) {
+    execFileSync('git', ['-c', `safe.directory=${target}`, '-c', 'core.autocrlf=false',
+      '--literal-pathspecs', 'add', ...options, '--pathspec-from-file=-', '--pathspec-file-nul'], {
+      cwd: target, input: paths.join('\0') + '\0', stdio: 'pipe',
+    });
+  }
   const changed = gitAt(target, '-c', 'core.quotePath=false', 'diff', '--cached', '--name-only').split(/\r?\n/u);
   if (changed.some(path => !paths.includes(path)) || gitAt(target, 'diff', '--cached', '--name-only', '--diff-filter=D')) {
     throw Error('UNEXPECTED_STAGED_PAGES_CHANGE');
   }
+  assertBlobs('');
   gitAt(target, 'commit', '-m', `deploy: preserving app from main ${manifest.sourceSha.slice(0, 8)}`);
+  const pagesSha = gitAt(target, 'rev-parse', 'HEAD');
+  assertBlobs(pagesSha);
   assertReleaseSnapshot(manifest, remoteReleaseSnapshot(repo));
   // A concurrent publisher wins cleanly: never rebase, force, or retry this prepared commit.
-  gitAt(target, 'push', 'origin', 'HEAD:refs/heads/gh-pages');
+  gitAt(target, 'push', 'origin', `${pagesSha}:refs/heads/gh-pages`);
   return { status: 'PUSH_ACCEPTED_LIVE_NOT_VERIFIED', sourceSha: manifest.sourceSha,
-    pagesSha: gitAt(target, 'rev-parse', 'HEAD') };
+    pagesSha };
 }
 
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
