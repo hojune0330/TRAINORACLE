@@ -59,6 +59,7 @@ export function GoalProgramEntry({ today, readToday, onPreview, onBack, disabled
     <button type="button" className="instant-plan__step-back" disabled={disabled} onClick={back}>
       <ArrowLeft size={18} aria-hidden="true" />{goal === null ? "뒤로" : "목표 다시 선택"}
     </button>
+    <p className="instant-plan__hint">{goal === null ? "1 / 4 · 목표" : "2 / 4 · 날짜"}</p>
     <h2 id={`${id}-heading`} ref={heading} tabIndex={-1} className="instant-plan__step-heading">
       {goal === null ? "10km, 몇 분을 목표로 할까요?" : "언제 시작할까요?"}
     </h2>
@@ -68,7 +69,7 @@ export function GoalProgramEntry({ today, readToday, onPreview, onBack, disabled
         {TEN_K_GOAL_MINUTES.map(value => <button type="button" key={value} disabled={disabled}
           className="instant-plan__step-choice app-choice-control app-choice-control--answer"
           aria-label={`${value}분 목표`} onClick={() => setGoal(value)}>
-          <span>{value}분</span><span className="instant-plan__hint">목표 {tenKGoalPaceLabel(value)}</span>
+          <span>{value}분</span><span className="instant-plan__hint">1km에 {tenKGoalPaceLabel(value).replace("/km", "")}</span>
         </button>)}
       </div>
     </> : <form noValidate onSubmit={event => { event.preventDefault(); preview() }} className="instant-plan__step">
@@ -90,12 +91,13 @@ export function GoalProgramEntry({ today, readToday, onPreview, onBack, disabled
               setError(null); setTooClose(false)
             }} />
         </div>}
+        {mode === "DEADLINE" && <p className="instant-plan__hint">날짜만 맞춰요. 대회 전 훈련량을 자동으로 줄이지는 않아요.</p>}
       </fieldset>
       {error && <p id={`${id}-error`} role="alert">{error}</p>}
       {tooClose && <button type="button" className="instant-plan__button" disabled={disabled} onClick={() => preview(true)}>
-        오늘부터 약 한 달 계획 보기
+        오늘을 시작일로 선택
       </button>}
-      {!tooClose && <button type="submit" className="instant-plan__button" disabled={disabled}>훈련표 보기</button>}
+      {!tooClose && <button type="submit" className="instant-plan__button" disabled={disabled}>다음</button>}
     </form>}
   </section>
 }
