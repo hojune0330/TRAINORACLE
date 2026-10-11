@@ -3,7 +3,7 @@ import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 import {
   buyTrail, emptyMedals, equipTrail, interstitialDue, medalBalance, medalForRewardedView, medalForRun, medalsEarned, medalsGrewFrom,
-  medalStateSchema, mergeMedals, rewardedOffered, runMedalsLeftToday, MINIGAME_REWARD_RULES, NO_AD_AUDIENCE, NO_ADS, TRAIL_ITEMS,
+  medalStateSchema, mergeMedals, rewardDay, rewardedOffered, runMedalsLeftToday, MINIGAME_REWARD_RULES, NO_AD_AUDIENCE, NO_ADS, TRAIL_ITEMS,
 } from "./rewards"
 import type { AdBreakProvider, MedalState } from "./rewards"
 import { emptyMinigameProgress, mergeMinigameProgress, withMedals } from "./progress"
@@ -79,7 +79,7 @@ describe("minigame medals (game-only, never money)", () => {
     const october = play(emptyMedals(), 5, new Date(2026, 9, 9))
     const november = play(october, 2, new Date(2026, 10, 2))
     expect(Object.keys(november.days)).toEqual(["2026-11-02"])
-    expect(november.months).toEqual({ "2026-10": 5 })
+    expect(november.months).toEqual({ "2026-10": [0, "000000005"] })
     // A device that still has October as days merges into the archived total without double counting.
     expect(medalsEarned(mergeMedals(october, november, null))).toBe(7)
     expect(medalStateSchema.safeParse(november).success).toBe(true)
@@ -100,6 +100,73 @@ describe("minigame medals (game-only, never money)", () => {
     expect(medalsGrewFrom(owning, owning)).toBe(true)
     // Over-cap day counts are rejected by the schema.
     expect(validateAccountMinigameProgressDocument(doc({ ...before, days: { "2026-10-09": [99, 0] } }))).toBe(false)
+  })
+  it("preserves different offline days when either device has already archived the month", () => {
+    const a = play(emptyMedals(), 5, new Date(2026, 9, 1, 12))
+    const b = play(emptyMedals(), 5, new Date(2026, 9, 2, 12))
+    const november = play(b, 1, new Date(2026, 10, 1, 0, 1))
+    const merged = mergeMedals(a, november, null)
+    expect(medalsEarned(merged)).toBe(11)
+    expect(mergeMedals(november, a, null)).toEqual(merged)
+    expect(mergeMedals(merged, merged, null)).toEqual(merged)
+    const c = play(emptyMedals(), 3, new Date(2026, 9, 1, 12))
+    expect(mergeMedals(mergeMedals(a, november, null), c, null))
+      .toEqual(mergeMedals(a, mergeMedals(november, c, null), null))
+    expect(medalsGrewFrom(a, merged)).toBe(true)
+    expect(medalsGrewFrom(november, merged)).toBe(true)
+  })
+  it("retains archived daily caps if a second device is still in the previous local month", () => {
+    const october = play(emptyMedals(), 5, new Date(2026, 9, 31, 23, 59))
+    const november = medalForRun(october, 12, new Date(2026, 10, 1, 0, 1)).state
+    const backwardLocalDay = new Date(2026, 9, 31, 23, 59)
+    expect(runMedalsLeftToday(november, backwardLocalDay)).toBe(0)
+    const result = medalForRun(november, 12, backwardLocalDay)
+    expect(result.earned).toBe(0)
+    expect(medalsEarned(result.state)).toBe(6)
+    expect(rewardDay(new Date(2026, 10, 1, 0, 1))).toBe("2026-11-01")
+  })
+  it("rejects moving daily run or ad counts to another day or an aggregate month to reset the cap", () => {
+    const before: MedalState = { ...emptyMedals(), days: { "2026-10-09": [5, 3] } }
+    const anotherDay: MedalState = { ...emptyMedals(), days: { "2026-10-10": [5, 3] } }
+    const anotherMonth: MedalState = { ...emptyMedals(), months: { "2026-09": 11 } }
+    const sameMonthScalar: MedalState = { ...emptyMedals(), months: { "2026-10": 11 } }
+    for (const moved of [anotherDay, anotherMonth, sameMonthScalar]) {
+      expect(validateAccountMinigameProgressDocument(doc(moved))).toBe(true)
+      expect(validateAccountMinigameProgressUpdate(doc(before), doc(moved))).toBe(false)
+    }
+    const growing = { ...before, days: { ...before.days, "2026-10-10": [1, 0] as [number, number] } }
+    expect(validateAccountMinigameProgressUpdate(doc(before), doc(growing))).toBe(true)
+  })
+  it("keeps each archived day and each legacy month floor instead of allowing compensated decreases", () => {
+    const oldDay = new Date(2026, 9, 9, 12)
+    const archived = medalForRun(play(emptyMedals(), 5, oldDay), 12, new Date(2026, 10, 1, 0, 1)).state
+    const compensated: MedalState = { ...emptyMedals(), days: { "2026-11-01": [1, 0] }, months: { "2026-10": 5 } }
+    expect(validateAccountMinigameProgressUpdate(doc(archived), doc(compensated))).toBe(false)
+    const legacy: MedalState = { ...emptyMedals(), months: { "2026-09": 5 } }
+    const shifted: MedalState = { ...emptyMedals(), months: { "2026-08": 5 } }
+    expect(validateAccountMinigameProgressUpdate(doc(legacy), doc(shifted))).toBe(false)
+    const legacyMerged = mergeMedals(legacy, play(emptyMedals(), 3, new Date(2026, 8, 1, 12)), null)
+    expect(medalsEarned(legacyMerged)).toBe(5)
+    expect(validateAccountMinigameProgressDocument(doc(legacyMerged))).toBe(true)
+    expect(validateAccountMinigameProgressUpdate(doc(legacy), doc(legacyMerged))).toBe(true)
+    expect(mergeMedals(legacyMerged, legacy, null)).toEqual(legacyMerged)
+  })
+  it("stores 240 complete monthly daily ledgers within the existing account document limit", () => {
+    const months = Object.fromEntries(Array.from({ length: 240 }, (_, index) => {
+      const year = 2007 + Math.floor(index / 12), month = index % 12 + 1
+      const daysInMonth = new Date(year, month, 0).getDate()
+      return [`${year}-${String(month).padStart(2, "0")}`, [0, "n".repeat(daysInMonth)]]
+    }))
+    const parsed = medalStateSchema.safeParse({ ...emptyMedals(), months })
+    expect(parsed.success).toBe(true)
+    if (!parsed.success) throw new Error("Expected compact monthly ledgers")
+    const document = doc(parsed.data)
+    expect(new TextEncoder().encode(JSON.stringify(document)).byteLength).toBeLessThan(16_000)
+    expect(validateAccountMinigameProgressDocument(document)).toBe(true)
+    const malformed = { ...emptyMedals(), months: { "2026-02": [0, "n".repeat(31)] } }
+    expect(medalStateSchema.safeParse(malformed).success).toBe(false)
+    expect(medalStateSchema.safeParse({ ...emptyMedals(), months: { "2026-10": [0, "o"] } }).success).toBe(false)
+    expect(medalStateSchema.safeParse({ ...emptyMedals(), days: { "2026-02-31": [1, 0] } }).success).toBe(false)
   })
   it("shows interstitials only to consenting 14+ players, between runs, after a grace period, with a cap", () => {
     const at = (finishedRuns: number, lastShownAt: number | null, now: number, audience = adult) => interstitialDue({ finishedRuns, lastShownAt }, audience, now)
