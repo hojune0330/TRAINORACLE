@@ -109,7 +109,7 @@ function monthMedals(ledger: MonthLedger): number {
 
 export function medalsEarned(state: MedalState): number {
   const normalized = canonical(state)
-  return Object.values(normalized.months).reduce((sum, ledger) => sum + monthMedals(ledger), 0) + Object.values(normalized.days).reduce((sum, day) => sum + dayMedals(day), 0)
+  return Object.values(normalized.months).reduce<number>((sum, ledger) => sum + monthMedals(ledger), 0) + Object.values(normalized.days).reduce<number>((sum, day) => sum + dayMedals(day), 0)
 }
 export function medalsSpent(state: MedalState): number {
   return state.owned.reduce((sum, id) => sum + (TRAIL_ITEMS.find(item => item.id === id)?.price ?? 0), 0)

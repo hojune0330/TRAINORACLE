@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /*
  * Builds public/legal/third-party-notices.html: every production package shipped in the app bundle
  * (walked from package-lock.json, dev dependencies excluded), with its version, license and the full
@@ -16,7 +15,7 @@ import { fileURLToPath } from "node:url"
 
 const appRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 const output = join(appRoot, "public/legal/third-party-notices.html")
-const normalize = text => text.replace(/\r\n/gu, "\n")
+const normalize = text => text.replace(/\r\n/gu, "\n").replace(/[ \t]+$/gmu, "")
 const escape = text => text.replace(/[&<>"]/gu, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" })[ch])
 
 export function productionPackages(lock = JSON.parse(readFileSync(join(appRoot, "package-lock.json"), "utf8"))) {
