@@ -61,6 +61,19 @@
   padding: var(--space-4) var(--space-5);
 }
 
+.plan-program-entry {
+  padding: var(--space-3) var(--space-5) 0;
+}
+
+.plan-program-entry > button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  text-align: left;
+}
+
 .home-plan-action {
   width: 100%;
   min-height: var(--app-action-height);

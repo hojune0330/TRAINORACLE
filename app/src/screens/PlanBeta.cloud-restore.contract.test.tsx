@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen } from "@testing-library/react"
+import { act, cleanup, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { PlanBeta } from "./PlanBeta"
@@ -17,6 +17,12 @@ function deferred<T>() {
   let resolve!: (value: T) => void
   const promise = new Promise<T>(done => { resolve = done })
   return { promise, resolve }
+}
+function expectGoalEntryAfter(content: HTMLElement) {
+  const entry = screen.getByRole("button", { name: "10km 한 달 훈련표" })
+  expect(screen.getAllByRole("button", { name: "10km 한 달 훈련표" })).toHaveLength(1)
+  expect(content.compareDocumentPosition(entry) & Node.DOCUMENT_POSITION_FOLLOWING)
+    .toBe(Node.DOCUMENT_POSITION_FOLLOWING)
 }
 const newerPlan = () => ({ ...stateFixture(), progress: [{ sessionDay: 1, sessionSlot: "AM" as const, state: "COMPLETED" as const }] })
 const storageChanged = () => act(() => {
@@ -37,6 +43,7 @@ it("restores a valid cloud plan into a still-empty local slot and shows the reco
   cloud.load.mockResolvedValue({ kind: "loaded", state: stateFixture() })
   render(<PlanBeta />)
   expect(await screen.findByRole("heading", { name: "9일 훈련 계획" })).toBeVisible()
+  expectGoalEntryAfter(screen.getByRole("heading", { name: "9일 훈련 계획" }))
   expect(readPlanBetaStateFromStorage()).toEqual({ kind: "loaded", state: stateFixture() })
   expect(screen.queryByText("계정에 저장된 훈련 계획을 확인하고 있어요")).not.toBeInTheDocument()
 })
@@ -46,6 +53,7 @@ it("preserves and displays a new local plan saved in another tab while the older
   cloud.load.mockReturnValue(response.promise)
   render(<PlanBeta />)
   expect(screen.getByRole("status")).toHaveTextContent("계정에 저장된 훈련 계획을 확인하고 있어요")
+  expectGoalEntryAfter(screen.getByRole("status"))
   const newer = newerPlan()
   expect(savePlanBetaState(newer)).toEqual({ ok: true })
   storageChanged()
@@ -53,9 +61,11 @@ it("preserves and displays a new local plan saved in another tab while the older
   expect(readPlanBetaStateFromStorage()).toEqual({ kind: "loaded", state: newer })
   expect(await screen.findByRole("heading", { name: "9일 훈련 계획" })).toBeVisible()
   const user = userEvent.setup()
-  await user.click(screen.getByRole("button", { name: "날짜별 카드 보기" }))
-  await user.click(screen.getAllByText(/훈련 방법과 기록/u)[0]!)
-  expect(screen.getByText("완료", { selector: "em" })).toBeVisible()
+  await user.click(within(screen.getByRole("group", { name: "계획 일정 보기" })).getByRole("button", { name: "목록" }))
+  const schedule = within(screen.getByRole("region", { name: "날짜별 훈련 목록" }))
+  const progress = schedule.getAllByLabelText("현재 진행 상태")[0]!
+  expect(progress).toBeVisible()
+  expect(progress).toHaveTextContent("완료")
 })
 
 it.each(["invalid", "unreadable"] as const)("preserves %s local state that appears during a cloud request", async mode => {
@@ -92,6 +102,7 @@ it("ends the loading view when a cloud request rejects", async () => {
   render(<PlanBeta />)
   expect(await screen.findByRole("button", { name: "5km" })).toBeVisible()
   expect(readPlanBetaStateFromStorage()).toEqual({ kind: "missing" })
+  expectGoalEntryAfter(screen.getByRole("form", { name: "계획 시작 정보" }))
 })
 
 it.each(["plan", "account-aba"] as const)("rechecks the %s after waiting for the restore mutation lock", async change => {

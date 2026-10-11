@@ -13,7 +13,7 @@ test.beforeEach(async ({ page, baseURL }) => {
 })
 
 test("keeps unsaved guest writing on cancelled tab navigation and browser back", async ({ page }, testInfo) => {
-  await page.getByRole("button", { name: "오늘 기록 남기기" }).click()
+  await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).click()
   await page.getByRole("button", { name: "오늘은 쉬었어요" }).click()
   await page.getByRole("button", { name: "글 추가", exact: true }).click()
   await page.getByRole("radio", { name: "나만의 메모", exact: true }).check()
@@ -47,7 +47,7 @@ test("keeps unsaved guest writing on cancelled tab navigation and browser back",
   page.removeAllListeners("dialog")
   page.once("dialog", dialog => dialog.accept())
   await home.click()
-  await page.getByRole("button", { name: "오늘 기록 남기기" }).click()
+  await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).click()
   await expect(page.getByRole("heading", { name: "오늘 운동은 어떻게 됐나요?" })).toBeVisible()
 })
 
@@ -55,9 +55,9 @@ test("does not ask to discard a blank or successfully saved guest journal", asyn
   const dialogs: string[] = []
   page.on("dialog", async dialog => { dialogs.push(dialog.message()); await dialog.dismiss() })
   const home = page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "홈", exact: true })
-  await page.getByRole("button", { name: "오늘 기록 남기기" }).click()
+  await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).click()
   await home.click()
-  await page.getByRole("button", { name: "오늘 기록 남기기" }).click()
+  await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).click()
   await page.getByRole("button", { name: "오늘은 쉬었어요" }).click()
   await page.getByRole("button", { name: "이대로 저장", exact: true }).click()
   await expect(page.getByRole("heading", { name: "오늘 기록을 남겼어요." })).toBeVisible()

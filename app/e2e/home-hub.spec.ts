@@ -31,7 +31,7 @@ test("groups a busy day into one compact destination alongside oracle exploratio
   await expect(day).toBeVisible()
   await expect(page.getByRole("region", { name: "최근 하루 기록" })).toHaveCount(1)
   await expect(page.getByRole("region", { name: "기록 습관" })).toHaveCount(0)
-  await expect(page.getByRole("button", { name: "오늘 기록하기", exact: true })).toBeInViewport({ ratio: 1 })
+  await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true })).toBeInViewport({ ratio: 1 })
   const geometry = await page.locator(".app-scroll-region").evaluate(el => ({ height: el.scrollHeight, viewport: el.clientHeight, overflow: el.scrollWidth > el.clientWidth }))
   console.log("HOME_HUB_POPULATED", JSON.stringify(geometry))
   expect(await page.getByRole("region", { name: "기록과 계획" }).evaluate(el => el.getBoundingClientRect().height)).toBeLessThanOrEqual(500)
@@ -51,8 +51,8 @@ test("keeps optional destinations discoverable and returns to home without clipp
   await page.setViewportSize({ width: 375, height: 667 })
   await page.goto("/?app=1&uitest=1")
   await page.evaluate(() => document.fonts.ready)
-  await expect(page.getByRole("button", { name: "오늘 기록 남기기", exact: true })).toBeInViewport({ ratio: 1 })
-  for (const name of ["오늘 기록 남기기", "훈련 계획 만들기"]) {
+  await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true })).toBeInViewport({ ratio: 1 })
+  for (const name of ["오늘 운동 기록 쓰기", "훈련 계획 만들기"]) {
     const button = page.getByRole("button", { name, exact: true })
     await button.scrollIntoViewIfNeeded()
     await expect(button).toBeInViewport({ ratio: 1 })

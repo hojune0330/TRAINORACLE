@@ -11,7 +11,7 @@ test.beforeEach(async ({ page, baseURL }) => {
 
 test("question motion is local, does not overflow, and respects the app preference", async ({ page }, info) => {
   await page.setViewportSize({ width: 375, height: 812 })
-  await page.getByRole("button", { name: "오늘 기록 남기기", exact: true }).click()
+  await page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true }).click()
   const choice = page.getByRole("button", { name: "운동을 마쳤어요", exact: true })
   await expect(choice).toHaveCSS("border-radius", "16px")
   await page.screenshot({ path: info.outputPath("record-choice-375.png"), fullPage: true })

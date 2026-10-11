@@ -38,6 +38,6 @@ test("keeps the empty cycle action inside a mobile viewport", async ({ page }) =
   await page.getByRole("button", { name: "기록 묶음" }).click()
 
   await expect(page.getByRole("heading", { name: "이 주기에 기록이 없어요" })).toBeVisible()
-  await expect(page.getByRole("button", { name: "오늘 기록하기" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기" })).toBeVisible()
   await expect(page.locator("html")).toHaveJSProperty("scrollWidth", 375)
 })

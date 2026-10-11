@@ -225,12 +225,14 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
       {props.account && props.draftState !== "EDITING" && ["FAILED", "PENDING"].includes(props.status) && <button type="button" onClick={props.onRetry}><RotateCcw size={16} />다시 확인</button>}
       {view === "result" && <>
         <section className={`oracle-v2__self${visibleScores.length > 0 ? " oracle-v2__self--results" : ""}`} aria-label="러닝 취향 결과">
-        <div className="oracle-v2__identity"><div><p className="oracle-v2__eyebrow">{visibleScores.length ? `${visibleScores.length}개 항목 · 내 응답 기준` : "내 러닝 취향"}</p><AppHeading variant="screen" accent>{visibleScores.length ? profile.representative.id === "NEUTRAL" ? "내가 고른 달리기 취향" : profile.representative.label : "나는 어떤 달리기를 좋아할까요?"}</AppHeading></div></div>
+        <div className="oracle-v2__identity"><div>{visibleScores.length > 0 && <p className="oracle-v2__eyebrow">{visibleScores.length}개 항목 · 내 응답 기준</p>}<AppHeading variant="screen" accent>{visibleScores.length ? profile.representative.id === "NEUTRAL" ? "내가 고른 달리기 취향" : profile.representative.label : "나는 어떤 달리기를 좋아할까요?"}</AppHeading></div></div>
         {visibleScores.length === 0 ? <>
-          <p>질문 3개로 먼저 훈련 방식을 살펴봐요.</p>
-          <p className="oracle-v2__status">6가지 취향을 점수와 육각 그래프로 볼 수 있어요.</p>
+          <p className="oracle-v2__intro-scope">질문 3개로 훈련 계획 취향 한 가지만 알아봐요.</p>
+          <div className="oracle-v2__entry-choices app-choice-group" role="group" aria-label="러닝 취향 시작 방법">
+            <button type="button" className="oracle-v2__primary app-choice-control" aria-label="내 훈련 방식 알아보기 · 질문 3개" aria-describedby="oracle-entry-questions" disabled={blocked} onClick={() => openQuestions("STRUCTURE")}><span>내 훈련 방식 알아보기<small id="oracle-entry-questions">계획 취향 · 질문 3개</small></span><ArrowRight size={18} aria-hidden="true" /></button>
+            <button type="button" className="app-choice-control" aria-label="읽을거리" aria-describedby="oracle-entry-library" onClick={() => setView("library")}><span>읽을거리<small id="oracle-entry-library">질문 없이 바로 읽기</small></span><ChevronRight size={18} aria-hidden="true" /></button>
+          </div>
           {illustrationAllowed && !questionOpen && <ProfileCompanion mode="intro" />}
-          <button type="button" className="oracle-v2__primary" aria-label="내 훈련 방식 알아보기 · 질문 3개" disabled={blocked} onClick={() => openQuestions("STRUCTURE")}>내 훈련 방식 알아보기<ArrowRight size={18} /></button>
           <p className="oracle-v2__status">선택 사항이에요. 체력이나 실력 평가는 아니에요.</p>
         </> : <>
           {illustrationAllowed && !questionOpen && (profile.representative.id === "NEUTRAL" ? <ProfileCompanion mode="result" /> : <PreferenceCharacter key={profile.representative.id} axis={profile.representative.id} label={profile.representative.label} />)}
@@ -247,9 +249,8 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
           <button type="button" disabled={blocked || !props.account || props.status !== "READY" || dirty.current} onClick={async () => { setBusy(true); setLocalMessage(""); try { if (!await props.onRemember()) setLocalMessage("save") } catch { setLocalMessage("save") } finally { setBusy(false) } }}><Bookmark size={16} />이 결과 보관</button>
         </>}
         </section>
-        {visibleScores.length === 0 && <nav className="oracle-v2__entry-links" aria-label="프로필 읽을거리">
-          <button type="button" onClick={() => setView("library")}>읽을거리<ChevronRight size={16} /></button>
-          {props.readings.length > 0 && <button type="button" onClick={() => setView("saved")}>보관함<ChevronRight size={16} /></button>}
+        {visibleScores.length === 0 && props.readings.length > 0 && <nav className="oracle-v2__entry-links" aria-label="프로필 보관함">
+          <button type="button" onClick={() => setView("saved")}>보관함<ChevronRight size={16} /></button>
         </nav>}
         <button type="button" className="oracle-v2__settings-entry" onClick={() => props.onNavigate("FRIENDS")}>친구와 취향 비교<ChevronRight size={16} /></button>
         <button type="button" className="oracle-v2__settings-entry" onClick={() => setSettingsOpen(true)}>프로필 설정·추가 정보<ChevronRight size={16} /></button>

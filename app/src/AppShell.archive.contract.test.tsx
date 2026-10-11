@@ -122,7 +122,6 @@ describe("AppShell journal archive routing", () => {
     const user = userEvent.setup()
     render(<AppShell />)
 
-    await user.click(screen.getByRole("button", { name: "일지 예시·훈련법·꾸미기" }))
     await user.click(screen.getByRole("button", { name: "일지 예시 보기" }))
     await user.click(await screen.findByRole("button", { name: /돌아가기/u }))
 
@@ -146,7 +145,11 @@ describe("AppShell journal archive routing", () => {
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "일지" }))
-    await user.click(await screen.findByRole("button", { name: "내 첫 기록 남기기" }))
+    const calendar = await screen.findByRole("grid")
+    const selectedDate = calendar.querySelector<HTMLButtonElement>('button[data-selected="true"]')
+    expect(selectedDate).not.toBeNull()
+    await user.click(selectedDate!)
+    await user.click(await screen.findByRole("button", { name: "이날 일지 쓰기" }))
 
     expect(await screen.findByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
   })
@@ -168,8 +171,8 @@ describe("AppShell journal archive routing", () => {
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "더보기" }))
-    await user.click(await screen.findByRole("button", { name: "배우기·꾸미기" }))
     await user.click(await screen.findByRole("button", { name: "훈련 용어집·도움말" }))
+    await user.click(await screen.findByRole("button", { name: "앱 이용 안내" }))
 
     expect(await screen.findByRole("heading", { name: "궁금한 점을 쉽게 풀어드려요" })).toBeVisible()
   })
@@ -198,17 +201,17 @@ describe("AppShell journal archive routing", () => {
     expect(screen.getByRole("heading", {
       name: "오늘 운동을 기록해요",
     })).toBeVisible()
-    expect(screen.getByRole("button", { name: "오늘 기록 남기기" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "오늘 운동 기록 쓰기" })).toBeVisible()
     expect(screen.getByRole("button", { name: "일지" })).toBeVisible()
     expect(screen.queryByRole("button", { name: "오늘 방문 확인 +1P" })).not.toBeInTheDocument()
-    const learningMenu = screen.getByRole("button", { name: "일지 예시·훈련법·꾸미기" })
-    expect(learningMenu).toHaveAttribute("aria-expanded", "false")
-    expect(screen.getByRole("button", { name: "일지 꾸미기" })).not.toBeVisible()
+    const decorate = screen.getByRole("button", { name: "일지 꾸미기" })
+    expect(decorate).toBeVisible()
+    expect(decorate.closest("details")).toBeNull()
     expect(screen.queryByLabelText(/오라클 포인트/u)).not.toBeInTheDocument()
     expect(window.localStorage.getItem("trainoracle.engagement.v1")).toBeNull()
     expect(window.localStorage.getItem(ENGAGEMENT_STORAGE_KEY)).toBeNull()
-    await user.click(learningMenu)
-    expect(screen.getByRole("button", { name: "일지 꾸미기" })).toBeVisible()
+    await user.click(decorate)
+    expect(await screen.findByRole("dialog", { name: "일지 꾸미기" })).toBeVisible()
     expect(window.localStorage.getItem("trainoracle.engagement.v1")).toBeNull()
     expect(window.localStorage.getItem(ENGAGEMENT_STORAGE_KEY)).toBeNull()
   })

@@ -4,7 +4,7 @@ import type { Page } from "@playwright/test"
 async function openPostSession(page: Page) {
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
-  await page.getByRole("button", { name: /훈련 후/u }).click()
+  await page.getByRole("button", { name: /자세히 기록.*운동별로 자세히/u }).click()
   // 객관 기록 구획은 닫힌 상태로 시작한다 (작업지시서 UX1 §2-2).
   // 필수 입력이 아니라서 화면 길이 393px 를 아끼려고 접어 뒀다.
   // 객관 기록을 쓰는 시험은 실제 사용자처럼 먼저 펼친다.

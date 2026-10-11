@@ -82,7 +82,7 @@ test("home navigation remains usable when the bundled font cannot load", async (
 
 test("review receipt has one modal-owned copy and a keyboard reachable dismissal", async ({ page }) => {
   await page.clock.install()
-  await openEntry(page, /경기 직전\/직후/u)
+  await openEntry(page, /경기 기록.*경기 전후 기록·컨디션/u)
   await page.getByRole("textbox", { name: "경기 메모" }).fill("무릎이 아파")
   await page.getByRole("radio", { name: "훈련 메모" }).click()
   await page.getByRole("button", { name: /^저장/u }).click()

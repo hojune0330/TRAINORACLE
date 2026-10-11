@@ -17,7 +17,7 @@ test("audits empty home and chooser touch actions", async ({ page }, testInfo) =
   await page.goto("/")
   const services = page.getByRole("navigation", { name: "훈련 도움말과 일지 꾸미기" })
   await auditTouchTargets(page, [
-    { name: "empty-home.first-entry", locator: page.getByRole("button", { name: "오늘 기록 남기기" }), heightOnly: true },
+    { name: "empty-home.first-entry", locator: page.getByRole("button", { name: "오늘 운동 기록 쓰기" }), heightOnly: true },
     { name: "empty-home.create-plan", locator: page.getByRole("button", { name: "훈련 계획 만들기" }), heightOnly: true },
     { name: "empty-home.learn", locator: services.getByRole("button", { name: "훈련 배우기" }), heightOnly: true },
     { name: "empty-home.decorate", locator: services.getByRole("button", { name: "일지 꾸미기" }), heightOnly: true },
@@ -26,7 +26,7 @@ test("audits empty home and chooser touch actions", async ({ page }, testInfo) =
   await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
   await expectNoHorizontalOverflow(page)
   // 홈의 주 행동은 세부 입력 전에 빠른 기록으로 시작한다.
-  await page.getByRole("button", { name: "오늘 기록 남기기" }).click()
+  await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).click()
   await auditTouchTargets(page, [
     { name: "quick.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
     { name: "quick.outcome", locator: page.getByRole("button", { name: /^(운동을 마쳤어요|하던 운동을 일부만 했어요|가볍게 움직였어요|오늘은 쉬었어요|하려던 운동을 건너뛰었어요)$/u }), count: 5, heightOnly: true },
@@ -36,9 +36,9 @@ test("audits empty home and chooser touch actions", async ({ page }, testInfo) =
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
   await auditTouchTargets(page, [
     { name: "chooser.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
-    { name: "chooser.post", locator: page.getByRole("button", { name: /훈련 후/u }), heightOnly: true },
-    { name: "chooser.evening", locator: page.getByRole("button", { name: /회복 · 하루 마무리/u }), heightOnly: true },
-    { name: "chooser.race", locator: page.getByRole("button", { name: /경기 직전\/직후/u }), heightOnly: true },
+    { name: "chooser.post", locator: page.getByRole("button", { name: /자세히 기록.*운동별로 자세히/u }), heightOnly: true },
+    { name: "chooser.evening", locator: page.getByRole("button", { name: /하루 마무리.*메모·수면·기분·몸 상태/u }), heightOnly: true },
+    { name: "chooser.race", locator: page.getByRole("button", { name: /경기 기록.*경기 전후 기록·컨디션/u }), heightOnly: true },
   ])
   await expectNoHorizontalOverflow(page)
 })
@@ -117,7 +117,7 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
 
 test("saves post-session and evening entries through the mobile shell", async ({ page }, testInfo) => {
   requireTouchProject(testInfo.project.name)
-  await openEntry(page, /훈련 후/u)
+  await openEntry(page, /자세히 기록.*운동별로 자세히/u)
   await page.getByRole("button", { name: /^저장/u }).click()
   await expect(page.getByRole("button", { name: /기록 1개 보기 · 훈련 1/u })).toHaveCount(1)
   await openEntry(page, /하루 마무리/u)
@@ -127,7 +127,7 @@ test("saves post-session and evening entries through the mobile shell", async ({
 
 test("keeps the review toast dismissal touchable", async ({ page }, testInfo) => {
   requireTouchProject(testInfo.project.name)
-  await openEntry(page, /경기 직전\/직후/u)
+  await openEntry(page, /경기 기록.*경기 전후 기록·컨디션/u)
   await page.getByRole("textbox", { name: "경기 메모" }).fill("무릎이 아파")
   await page.getByRole("radio", { name: "훈련 메모" }).click()
   await page.getByRole("button", { name: /^저장/u }).click()

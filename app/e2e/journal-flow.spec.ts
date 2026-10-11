@@ -7,7 +7,7 @@ test("saves a structured race note, carries review attention, and reopens the re
     await expect.poll(() => page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches)).toBe(true)
   }
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
-  await page.getByRole("button", { name: new RegExp("경기 직전/직후", "u") }).click()
+  await page.getByRole("button", { name: /경기 기록.*경기 전후 기록·컨디션/u }).click()
   await page.getByRole("button", { name: "긴장도 7" }).click()
   await page.getByRole("button", { name: "컨디션 4" }).click()
   await page.getByRole("spinbutton", { name: "목표 페이스 분" }).fill("3")

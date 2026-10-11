@@ -4,7 +4,7 @@ test("keeps the race save action above the bottom navigation on mobile", async (
   // Given
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
-  await page.getByRole("button", { name: new RegExp("경기 직전/직후", "u") }).click()
+  await page.getByRole("button", { name: /경기 기록.*경기 전후 기록·컨디션/u }).click()
   const paceMinutes = page.getByRole("spinbutton", { name: "목표 페이스 분" })
   await paceMinutes.fill("3")
   await page.getByRole("spinbutton", { name: "목표 페이스 초" }).fill("60")

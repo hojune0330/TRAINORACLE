@@ -24,12 +24,17 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
   readonly onCancel: () => void
 }) {
   const [source, setSource] = React.useState<"" | "garmin" | "coros" | "health">("")
+  const [preparationOpen, setPreparationOpen] = React.useState(false)
+  const preparationHeading = React.useRef<HTMLHeadingElement>(null)
+  const preparationButton = React.useRef<HTMLButtonElement>(null)
+  React.useEffect(() => {
+    if (preparationOpen) preparationHeading.current?.focus()
+  }, [preparationOpen, source])
   return (
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
       <div className="contextual-entry-intro">
         <p className="contextual-entry-intro__copy" style={{ fontFamily: "var(--sans)", fontSize: 13, lineHeight: 1.65, color: "var(--ink-2)", margin: 0 }}>
-          운동 파일을 고르면 <b>거리·시간을 먼저 확인</b>할 수 있어요.
-          원하는 운동만 일지로 옮겨요.
+          <b>파일 선택 → 기록 확인 → 저장</b>
         </p>
         {!busy && failure === null && <ContextualIllustration image="watch-file-v2" size="medium" />}
       </div>
@@ -39,20 +44,26 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
       </button>
 
       <section aria-label="운동 파일 준비" className="import-preparation">
+        <button type="button" ref={preparationButton} className="app-choice-control import-preparation__toggle"
+          disabled={busy} aria-expanded={preparationOpen} aria-controls="import-preparation-steps"
+          onClick={() => setPreparationOpen(open => !open)}>파일 준비하기</button>
+        {preparationOpen && <div id="import-preparation-steps">
         {source === "" ? <>
-          <label htmlFor="import-source">어디에 기록이 있나요?</label>
-          <select id="import-source" value={source} disabled={busy}
-            onChange={event => setSource(event.target.value as typeof source)}>
-            <option value="">기록이 있는 곳 선택</option>
-            <option value="garmin">Garmin · 가민</option>
-            <option value="coros">COROS · 코로스</option>
-            <option value="health">건강앱 · 애플 건강·삼성 헬스</option>
-          </select>
+          <h2 ref={preparationHeading} tabIndex={-1}>어디에 기록이 있나요?</h2>
+          <div className="import-preparation__choices app-choice-group" role="group" aria-label="기록이 있는 곳 선택">
+            {([
+              ["garmin", "Garmin · 가민"],
+              ["coros", "COROS · 코로스"],
+              ["health", "애플 건강·삼성 헬스"],
+            ] as const).map(([value, label]) => <button key={value} type="button"
+              className="app-choice-control app-choice-control--answer" disabled={busy}
+              onClick={() => setSource(value)}>{label}</button>)}
+          </div>
         </> : <>
           <button type="button" style={secondaryBtn} disabled={busy} onClick={() => setSource("")}>
             <ArrowLeft size={18} aria-hidden="true" /> 다른 기록 위치
           </button>
-          <h2>{source === "garmin" ? "Garmin 파일 준비" : source === "coros" ? "COROS 파일 준비" : "건강앱 파일 준비"}</h2>
+          <h2 ref={preparationHeading} tabIndex={-1}>{source === "garmin" ? "Garmin 파일 준비" : source === "coros" ? "COROS 파일 준비" : "건강앱 파일 준비"}</h2>
           {source === "health" ? <>
             <p>애플 건강·삼성 헬스의 전체 ZIP·XML 백업은 아직 읽지 못해요.</p>
             <p>운동을 기록한 원래 서비스에서 개별 운동의 TCX·GPX를 내보낼 수 있는지 확인해 주세요. CSV·JSON도 지원하는 날짜·거리·시간 형식만 읽어요.</p>
@@ -63,6 +74,11 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
             <li>위의 파일 선택으로 거리·시간을 확인한 뒤, 원하는 기록만 저장해요.</li>
           </ol>}
         </>}
+        <button type="button" style={secondaryBtn} disabled={busy} onClick={() => {
+          setPreparationOpen(false)
+          preparationButton.current?.focus()
+        }}>준비 안내 닫기</button>
+        </div>}
         <p>계정 자동 연결이 아니라 파일 가져오기예요. 원본 기록은 바뀌지 않아요.</p>
       </section>
 
