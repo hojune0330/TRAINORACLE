@@ -31,6 +31,7 @@ export function useActiveContentScroll(
     let settleTimer: number | undefined
     const epoch = getBrowserNavigationEpoch()
     const scope = localJournalScopeGeneration()
+    const focusAtSchedule = document.activeElement
     const alignTarget = () => {
       if (epoch !== getBrowserNavigationEpoch() || scope !== localJournalScopeGeneration()) return
       const behavior = calendarReducedMotion() ? "auto" : "smooth"
@@ -54,7 +55,15 @@ export function useActiveContentScroll(
     const frame = window.requestAnimationFrame(() => {
       if (epoch !== getBrowserNavigationEpoch() || scope !== localJournalScopeGeneration()) return
       alignTarget()
-      focusRef?.current?.focus({ preventScroll: true })
+      const focusTarget = focusRef?.current
+      const activeFocus = document.activeElement
+      const editing = activeFocus instanceof HTMLElement && (activeFocus.matches("input, textarea, select") || activeFocus.isContentEditable)
+      // Delayed alignment must not interrupt typing or a later focus choice.
+      // An unchanged opener can still hand focus to the newly opened question.
+      if (focusTarget && (activeFocus === focusTarget || activeFocus === document.body
+        || activeFocus === focusAtSchedule && !target.contains(activeFocus) && !editing)) {
+        focusTarget.focus({ preventScroll: true })
+      }
       // Parent shell resets and short entry animations can land after a child
       // effect. Re-align once after those transitions settle; normally this is
       // a no-op, but it prevents a half-finished scroll on real diary turns.
