@@ -764,6 +764,9 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           const { [OVERLAY_HISTORY_KEY]: _overlay, ...rest } = window.history.state ?? {}
           window.history.pushState({ ...rest, [ORACLE_PLAN_HISTORY_KEY]: oracleInputRef.current.historyToken }, "", window.location.href)
           applyOverlay(null)
+          // This opens a new input screen, rather than returning to the view
+          // beneath the explanation. Do not restore its old scroll or focus.
+          invalidateReturnFrame()
         } else dismissOracle()
         setAthleteRecordsOpen(false)
         setUtilityView(null)

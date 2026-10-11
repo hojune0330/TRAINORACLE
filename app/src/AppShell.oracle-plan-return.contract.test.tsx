@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { setActiveLocalAccount } from "./domain/account/local-journal-ownership"
 import type { OracleTopicId } from "./domain/oracle-exploration"
 import type { LogEntryProps } from "./screens/LogEntry"
+import { hasPendingBrowserBackLayer } from "./navigation/browserNavigation"
 
 vi.mock("./screens/LogEntry", () => ({ LogEntry: ({ onBack, onDone }: LogEntryProps) => <>
   <h1>계획에서 연 일지</h1><button onClick={onBack}>일지 취소</button>
@@ -56,7 +57,12 @@ beforeEach(() => {
   setActiveLocalAccount(null); localStorage.clear(); sessionStorage.clear()
   window.history.replaceState({ unrelated: "keep" }, "", "/?app=1")
 })
-afterEach(() => { cleanup(); vi.restoreAllMocks() })
+afterEach(async () => {
+  cleanup()
+  await act(async () => { await Promise.resolve() })
+  await waitFor(() => expect(hasPendingBrowserBackLayer()).toBe(false))
+  vi.restoreAllMocks()
+})
 
 async function back() {
   const popped = new Promise<void>(resolve => window.addEventListener("popstate", () => resolve(), { once: true }))
@@ -86,6 +92,8 @@ it("keeps the plan input after cancelling Back and returns to Oracle after confi
   const user = userEvent.setup(); render(<AppShell />)
   await fromOracle(user)
   await user.type(screen.getByLabelText("입력한 계획"), "작성 유지")
+  expect(screen.getByLabelText("입력한 계획")).toHaveFocus()
+  expect(screen.getByLabelText("입력한 계획")).toHaveValue("작성 유지")
   await back()
   expect(confirm).toHaveBeenCalledTimes(1)
   expect(screen.getByLabelText("입력한 계획")).toHaveValue("작성 유지")
@@ -99,6 +107,8 @@ it("closes a nested plan reader without discarding or leaving the Oracle-started
   const user = userEvent.setup(); render(<AppShell />)
   await fromOracle(user)
   await user.type(screen.getByLabelText("입력한 계획"), "작성 유지")
+  expect(screen.getByLabelText("입력한 계획")).toHaveFocus()
+  expect(screen.getByLabelText("입력한 계획")).toHaveValue("작성 유지")
   await user.click(screen.getByRole("button", { name: "계획 날짜 열기" }))
   expect(screen.getByRole("dialog")).toBeVisible()
   await back()
@@ -107,6 +117,52 @@ it("closes a nested plan reader without discarding or leaving the Oracle-started
   expect(confirm).not.toHaveBeenCalled()
   await back()
   expect(confirm).toHaveBeenCalledTimes(1)
+})
+
+it("keeps typed plan input and its draft guard through the deferred Oracle dismissal frame", async () => {
+  const frames = new Map<number, FrameRequestCallback>()
+  let nextFrame = 0
+  const requestFrame = vi.spyOn(window, "requestAnimationFrame").mockImplementation(callback => {
+    frames.set(++nextFrame, callback)
+    return nextFrame
+  })
+  vi.spyOn(window, "cancelAnimationFrame").mockImplementation(frame => { frames.delete(frame) })
+  const confirm = vi.spyOn(window, "confirm").mockReturnValueOnce(false).mockReturnValueOnce(true)
+  const user = userEvent.setup()
+  render(<AppShell />)
+  await fromOracle(user)
+  expect(requestFrame).toHaveBeenCalled()
+  const input = screen.getByLabelText("입력한 계획")
+  await user.click(input)
+  await user.type(input, "작", { skipClick: true })
+  expect(input).toHaveFocus()
+  expect(input).toHaveValue("작")
+  const parentState = structuredClone(window.history.state)
+
+  await act(async () => {
+    const scheduled = [...frames.values()]
+    frames.clear()
+    for (const callback of scheduled) callback(performance.now())
+  })
+  expect(input).toHaveFocus()
+  expect(input).toHaveValue("작")
+  expect(window.history.state).toEqual(parentState)
+  await user.type(input, "성 유지", { skipClick: true })
+  expect(input).toHaveValue("작성 유지")
+  expect(JSON.stringify(window.history.state)).not.toContain("작성 유지")
+  await back()
+  expect(confirm).toHaveBeenCalledTimes(1)
+  expect(screen.getByLabelText("입력한 계획")).toHaveValue("작성 유지")
+  await back()
+  expect(confirm).toHaveBeenCalledTimes(2)
+  expect(screen.getByRole("heading", { name: "원래 오라클 해설" })).toBeVisible()
+  expect(screen.getByLabelText("해설 위치")).toHaveTextContent("focus:personal")
+  expect(window.history.state.unrelated).toBe("keep")
+  await act(async () => {
+    const scheduled = [...frames.values()]
+    frames.clear()
+    for (const callback of scheduled) callback(performance.now())
+  })
 })
 
 it("does not revive an Oracle origin abandoned through the main tabs", async () => {
