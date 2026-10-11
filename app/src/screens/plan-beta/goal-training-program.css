@@ -1,0 +1,146 @@
+.goal-program {
+  display: grid;
+  gap: var(--space-4, 16px);
+  min-width: 0;
+  padding: var(--space-5, 20px);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.goal-program h2 {
+  font-size: var(--fs-app-screen-title, 24px);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.goal-program h3 {
+  font-size: var(--fs-app-section-title, 18px);
+  margin: 0;
+}
+
+.goal-program p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.goal-program__muted {
+  color: var(--ink-3);
+}
+
+.goal-program__choices,
+.goal-program__first,
+.goal-program__safety,
+.goal-program__storage,
+.goal-program__storage section {
+  display: grid;
+  gap: var(--space-3, 12px);
+}
+
+.goal-program__storage button {
+  padding: var(--space-3, 12px);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--paper);
+  color: var(--ink);
+  text-align: left;
+}
+
+.goal-program__choices button {
+  display: grid;
+  gap: var(--space-2, 8px);
+  min-height: var(--app-touch-min, 44px);
+  text-align: left;
+  padding: var(--space-4, 16px);
+  white-space: normal;
+}
+
+.goal-program__choices button span {
+  font-weight: 400;
+}
+
+.goal-program__first ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--space-3, 12px);
+}
+
+.goal-program__first li {
+  display: grid;
+  grid-template-columns: 4em minmax(0, 1fr);
+  gap: var(--space-3, 12px);
+  line-height: 1.6;
+}
+
+.goal-program__cycles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3, 12px);
+}
+
+.goal-program__cycles > div {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2, 8px);
+}
+
+.goal-program__cycle-summary {
+  list-style: none;
+  display: grid;
+  gap: var(--space-4, 16px);
+  padding: 0;
+}
+
+.goal-program__cycle-summary ul {
+  padding-inline-start: var(--space-5, 20px);
+  line-height: 1.6;
+}
+
+.goal-program button,
+.goal-program select,
+.goal-program__file {
+  min-height: var(--app-touch-min, 44px);
+  max-width: 100%;
+}
+
+.goal-program__details summary {
+  cursor: pointer;
+  box-sizing: border-box;
+  min-height: var(--app-touch-min, 44px);
+  padding-block: var(--space-3, 12px);
+}
+
+.goal-program__details label,
+.goal-program__details p,
+.goal-program__details button {
+  margin-bottom: var(--space-3, 12px);
+}
+
+.goal-program__details label {
+  display: grid;
+  gap: var(--space-2, 8px);
+}
+
+.goal-program .goal-program__check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  min-height: var(--app-touch-min, 44px);
+}
+
+.goal-program__file input {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 374px) {
+  .goal-program__cycles { grid-template-columns: minmax(0, 1fr); }
+}
+.goal-program .prescription-calendar__annotation {
+  display: block;
+  font-size: var(--fs-app-caption, 12px);
+  line-height: 1.35;
+  color: var(--brand);
+  overflow-wrap: anywhere;
+}

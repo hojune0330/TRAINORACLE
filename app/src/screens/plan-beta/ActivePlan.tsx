@@ -336,6 +336,7 @@ export function ActivePlan({
       </details>
       <div ref={scheduleAnchor} tabIndex={-1} aria-label="전체 일정과 기록">
       <PlanSchedulePreview
+        presentation="prescription-calendar"
         journalEntries={calendarEntries}
         journalEntriesComplete={journalRead.status === "complete"}
         readerRequest={readerRequest}

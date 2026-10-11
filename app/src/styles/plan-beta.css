@@ -872,6 +872,233 @@
   line-height: 1.45;
 }
 
+.plan-training-flow[data-presentation="prescription-calendar"] .prescription-calendar__view-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: var(--space-3);
+}
+
+.prescription-calendar__rest {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--ink-3);
+  font-size: var(--fs-body-sm);
+  line-height: 1.5;
+}
+
+.plan-training-flow[data-presentation="prescription-calendar"] > .month-calendar {
+  margin-inline: 0;
+}
+
+.plan-training-flow[data-presentation="prescription-calendar"] .month-calendar__grid td[data-in-range] button {
+  min-height: 120px;
+  padding: var(--space-2) var(--space-1);
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.plan-training-flow[data-presentation="prescription-calendar"] .month-calendar__date-heading {
+  justify-content: flex-start;
+  min-height: var(--app-touch-min);
+}
+
+.plan-training-flow[data-presentation="prescription-calendar"] .month-calendar__events {
+  align-content: start;
+  padding: 0;
+  text-align: left;
+}
+
+.plan-training-flow[data-presentation="prescription-calendar"] .calendar-training-mark {
+  justify-items: start;
+  min-height: 0;
+  padding: var(--space-1);
+  border: var(--bw-line) solid var(--line);
+  box-sizing: border-box;
+}
+
+.plan-training-flow[data-presentation="prescription-calendar"] .calendar-training-mark__slot {
+  text-align: left;
+}
+
+.plan-training-flow[data-presentation="prescription-calendar"] .calendar-training-mark__label {
+  display: block;
+  text-align: left;
+  line-height: 1.2;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.prescription-calendar__amount {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  white-space: pre-line;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.prescription-calendar__calendar-name--short,
+.prescription-calendar__amount--short {
+  display: none;
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .prescription-calendar__amount {
+  display: block;
+  max-width: 100%;
+  font-size: var(--fs-body-sm);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .prescription-calendar__day-trigger {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+  min-height: var(--app-touch-min);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  white-space: normal;
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .prescription-calendar__day-trigger small {
+  overflow-wrap: anywhere;
+}
+
+.prescription-calendar__empty {
+  display: block;
+  padding: var(--space-1);
+  color: var(--ink-3);
+  font-size: var(--fs-caption);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .plan-schedule-preview > li {
+  padding-block: var(--space-2);
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .plan-schedule-preview > li > header {
+  margin-bottom: var(--space-1);
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .plan-schedule-preview__sessions {
+  gap: 0;
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .plan-schedule-preview__sessions > section {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-block: 0;
+  border-top: var(--bw-line) solid var(--hair);
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .plan-schedule-preview__sessions > section > header {
+  justify-content: flex-start;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .plan-schedule-preview__sessions .plan-schedule-preview__slot {
+  min-height: 0;
+  padding-inline: 0;
+  border: 0;
+  background: transparent;
+  font-size: var(--fs-mono-xs);
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .plan-session-content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-2);
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .plan-session-content > strong {
+  flex: 1 1 100%;
+  overflow-wrap: anywhere;
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .plan-session-content .prescription-calendar__amount {
+  flex: 1 1 auto;
+  width: auto;
+  margin: 0;
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .prescription-calendar__progress {
+  color: var(--ink-3);
+  font-size: var(--fs-caption);
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .prescription-calendar__empty-day {
+  margin: 0;
+  padding: var(--space-2) 0;
+  border-top: var(--bw-line) solid var(--hair);
+  color: var(--ink-3);
+  font-size: var(--fs-body-sm);
+}
+
+@media (min-width: 768px) {
+  .plan-training-flow[data-presentation="prescription-calendar"] .month-calendar__grid td[data-in-range] button {
+    min-height: 148px;
+    padding: var(--space-3);
+  }
+}
+
+@media (max-width: 375px) {
+  .plan-training-flow[data-presentation="prescription-calendar"] .month-calendar__grid td[data-in-range] button {
+    min-height: 104px;
+    padding-inline: 2px;
+  }
+
+  .plan-training-flow[data-presentation="prescription-calendar"] .calendar-training-mark {
+    min-height: 0;
+    padding: 2px;
+  }
+
+  .plan-training-flow[data-presentation="prescription-calendar"] .calendar-training-mark__label,
+  .plan-training-flow[data-presentation="prescription-calendar"] .prescription-calendar__amount {
+    font-size: 0.6875rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .plan-training-flow[data-presentation="prescription-calendar"] .prescription-calendar__calendar-name--full,
+  .plan-training-flow[data-presentation="prescription-calendar"] .prescription-calendar__amount--full {
+    display: none;
+  }
+
+  .plan-training-flow[data-presentation="prescription-calendar"] .prescription-calendar__calendar-name--short,
+  .plan-training-flow[data-presentation="prescription-calendar"] .prescription-calendar__amount--short {
+    display: block;
+  }
+
+  .plan-training-flow[data-presentation="prescription-calendar"] .calendar-training-mark__label,
+  .plan-training-flow[data-presentation="prescription-calendar"] .prescription-calendar__amount {
+    font-size: var(--fs-caption);
+    word-break: keep-all;
+    overflow-wrap: normal;
+  }
+}
+
 .plan-day-card__session > header {
   display: flex;
   align-items: center;

@@ -41,8 +41,13 @@ export function DetailedPrescriptionView({ prescription, variant = "default" }: 
         <code>{pacePrescriptionNotation(prescription, "PLAIN")}</code>
         <TermHelp term="training-notation" />
       </p>
-      <PaceRecommendation prescription={prescription} />
-      <details><summary>자세히 보기 · 수행 순서</summary>
+      <p className="plan-detailed-prescription__support" data-phase="prepare">
+        <strong>준비</strong>
+        <span>
+          {warmup.easyDurationMinutes}분 · 힘든 정도 {warmup.rpeMin}–{warmup.rpeMax}/10 · 가볍게 움직이기 ·
+          {" "}{warmup.strides.durationSeconds}초 점진 가속 {warmup.strides.repetitions}회, 사이 <span className="plan-session-term">{warmup.strides.recoverySeconds}초</span> 걷기/조깅
+        </span>
+      </p>
       <p className="plan-detailed-prescription__primary">
         <strong>본운동</strong>
         <span>
@@ -75,21 +80,14 @@ export function DetailedPrescriptionView({ prescription, variant = "default" }: 
           </span>
         </p>
       )}
-      <p className="plan-detailed-prescription__support" data-phase="prepare">
-        <strong>준비</strong>
-        <span>
-          {warmup.easyDurationMinutes}분 · 힘든 정도 {warmup.rpeMin}–{warmup.rpeMax}/10 · 가볍게 움직이기 ·
-          {" "}{warmup.strides.durationSeconds}초 점진 가속 {warmup.strides.repetitions}회, 사이 <span className="plan-session-term">{warmup.strides.recoverySeconds}초</span> 걷기/조깅
-        </span>
-      </p>
       <p className="plan-detailed-prescription__support" data-phase="cooldown">
         <strong>정리</strong>
         <span>{cooldown.easyDurationMinutes}분 · 힘든 정도 {cooldown.rpeMin}–{cooldown.rpeMax}/10 · 가볍게 움직이기</span>
       </p>
-      </details>
       <ul aria-label="운동을 중단해야 하는 경우">
         {prescription.stopCodes.map((code) => <li key={code}>{stopLabel(code)}</li>)}
       </ul>
+      <PaceRecommendation prescription={prescription} />
       <details>
         <summary>기준 기록·훈련을 바꾸는 방법</summary>
         <div>

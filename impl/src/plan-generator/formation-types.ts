@@ -31,6 +31,8 @@ export type ExplicitMainExposure = {
 
 export type LocalCivilNinePointFiveFormation = {
   readonly kind: "LOCAL_CIVIL_9_5"
+  /** Absent retains the original AM-to-AM frame. */
+  readonly startSlot?: "PM"
   readonly slots: readonly LocalCivilHalfDaySlot[]
   readonly exposures: readonly ExplicitMainExposure[]
 }

@@ -1,0 +1,71 @@
+.prescription-structure--compact {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.prescription-structure--compact > section,
+.prescription-structure--compact .prescription-structure__compact {
+  min-width: 0;
+}
+
+.prescription-structure--compact > section > h4 {
+  margin: 0 0 var(--space-1);
+  color: var(--ink-2);
+  font-size: var(--fs-body);
+}
+
+.prescription-structure--compact > p {
+  margin: 0;
+}
+
+.prescription-structure--compact .prescription-structure__compact {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.prescription-structure--compact .prescription-structure__compact > li {
+  padding-block: var(--space-1);
+  line-height: 1.5;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.prescription-structure--compact .prescription-structure__compact > li > strong,
+.prescription-structure--compact .prescription-structure__compact > li > span {
+  display: block;
+}
+
+.prescription-structure--compact .prescription-structure__compact-label {
+  color: var(--ink-2);
+}
+
+.prescription-structure--compact .prescription-structure__compact .prescription-structure__compact {
+  padding-left: var(--space-3);
+}
+
+.prescription-structure--compact .prescription-structure__compact-recovery {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  color: var(--ink-2);
+}
+
+.prescription-structure--compact .prescription-structure__compact-recovery ol {
+  margin: 0;
+  padding-left: var(--space-4);
+}
+
+.prescription-structure--compact .prescription-structure__compact-recovery ol:has(> li:only-child) {
+  list-style: none;
+  padding: 0;
+}
+
+.prescription-structure--compact > details > summary {
+  min-height: var(--app-touch-min);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}

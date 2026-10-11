@@ -31,6 +31,7 @@ function copyFrame(frame: CanonicalPlanFrame): CanonicalPlanFrame {
     formationKind: "LOCAL_CIVIL_9_5",
     lengthDays: frame.lengthDays,
     slotCount: frame.slotCount,
+    ...(frame.startSlot === "PM" ? { startSlot: "PM" as const } : {}),
     continuity: frame.continuity.kind === "SEVEN_DAY_CONTINUITY"
       ? Object.freeze({
           kind: "SEVEN_DAY_CONTINUITY" as const,
@@ -59,7 +60,7 @@ function copySession(session: PlanSession): PlanSession {
     case "REST":
       return Object.freeze({
         day: session.day,
-        slot: "AM",
+        slot: session.slot,
         role: "REST",
         plannedEnergyIntent: "RECOVERY_INTENT",
         prescription: Object.freeze({ kind: "REST" }),

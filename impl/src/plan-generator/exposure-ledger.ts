@@ -52,7 +52,8 @@ function hasCanonicalSlotTopology(formation: LocalCivilNinePointFiveFormation): 
       return false
     }
 
-    const expectedSlot = slotIndex === 18 || slotIndex % 2 === 0 ? "AM" : "PM"
+    if (formation.startSlot !== undefined && formation.startSlot !== "PM") return false
+    const expectedSlot = (slotIndex + (formation.startSlot === "PM" ? 1 : 0)) % 2 === 0 ? "AM" : "PM"
     if (slot.slot !== expectedSlot) {
       return false
     }

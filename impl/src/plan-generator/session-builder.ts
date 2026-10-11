@@ -151,6 +151,7 @@ function formationHasSlot(
   slot: PlanSessionSlot,
 ): boolean {
   const slotIndex = (day - 1) * 2 + (slot === "PM" ? 1 : 0)
+    - (input.request.formation.startSlot === "PM" ? 1 : 0)
   return input.request.formation.slots[slotIndex]?.slot === slot
 }
 
@@ -166,7 +167,7 @@ function qualitySlotFor(input: CandidateSessionBuildInput, day: number): "AM" | 
         return assertNever(input.request.profile.trainingTimePreference)
     }
   })()
-  return formationHasSlot(input, day, preferredSlot) ? preferredSlot : "AM"
+  return formationHasSlot(input, day, preferredSlot) ? preferredSlot : preferredSlot === "AM" ? "PM" : "AM"
 }
 
 function recoverySecondSessionDays(
@@ -209,14 +210,14 @@ export function makeCandidateSessions(input: CandidateSessionBuildInput): readon
 
   for (let day = 1; day <= 10; day += 1) {
     if (!availableDays.has(day)) {
-      sessions.push(restSession(day))
+      sessions.push(restSession(day, formationHasSlot(input, day, "AM") ? "AM" : "PM"))
       continue
     }
 
     if (qualityDays.has(day)) {
       const qualitySlot = qualitySlotFor(input, day)
       const recoveryCounterpartSlot = qualitySlot === "AM" ? "PM" : "AM"
-      if (recoverySecondDays.has(day)) {
+      if (recoverySecondDays.has(day) && formationHasSlot(input, day, recoveryCounterpartSlot)) {
         sessions.push(easyTrainingSession(
           day,
           recoveryCounterpartSlot,
@@ -235,11 +236,11 @@ export function makeCandidateSessions(input: CandidateSessionBuildInput): readon
 
     sessions.push(easyTrainingSession(
       day,
-      "AM",
+      formationHasSlot(input, day, "AM") ? "AM" : "PM",
       durationForCandidate(ranges.easy, input.kind),
       easyIntent(input),
     ))
-    if (recoverySecondDays.has(day)) {
+    if (recoverySecondDays.has(day) && formationHasSlot(input, day, "AM")) {
       sessions.push(easyTrainingSession(
         day,
         "PM",

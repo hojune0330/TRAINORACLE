@@ -26,6 +26,7 @@ return z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("calendar-decoration-support"), version: z.literal(1) }).strict(),
   z.object({ kind: z.literal("athlete-record-support"), version: z.literal(1) }).strict(),
   z.object({ kind: z.literal("running-profile-support"), version: z.literal(1) }).strict(),
+  z.object({ kind: z.literal("goal-program-support"), version: z.literal(1) }).strict(),
   z.object({ kind: z.literal("oracle-v2-support"), version: z.literal(2) }).strict(),
   z.object({ kind: z.literal("oracle-v2-restart-support"), version: z.literal(1) }).strict(),
   document.extend({ kind: z.literal("document") }),
@@ -49,6 +50,7 @@ export type AccountJournalResponse<T = AccountJournalDraft> =
   | { kind: "calendar-decoration-support"; version: 1 }
   | { kind: "athlete-record-support"; version: 1 }
   | { kind: "running-profile-support"; version: 1 }
+  | { kind: "goal-program-support"; version: 1 }
   | { kind: "oracle-v2-support"; version: 2 }
   | { kind: "oracle-v2-restart-support"; version: 1 }
   | { kind: "document"; documentId: string; revision: number; document: T }
@@ -65,6 +67,7 @@ export type AccountJournalRequest<T = AccountJournalDraft> = { supportedRunningP
   | { action: "calendarDecorationSupport" }
   | { action: "athleteRecordSupport" }
   | { action: "runningProfileSupport" }
+  | { action: "goalProgramSupport" }
   | { action: "oracleV2Support" }
   | { action: "oracleV2RestartSupport" }
   | { action: "restartOracleV2"; documentId: string; operationId: string; expectedRevision: number; confirmation: "START_NEW_ORACLE_V2" }
@@ -81,7 +84,7 @@ export type AccountJournalRequest<T = AccountJournalDraft> = { supportedRunningP
 
 export type AccountJournalResult<T = AccountJournalDraft> =
   | { ok: true; data: AccountJournalResponse<T> }
-  | { ok: false; code: "AUTH_REQUIRED" | "ACCESS_DENIED" | "NOT_FOUND" | "UNAVAILABLE" | "INVALID_RESPONSE" | "CALENDAR_DECORATION_UNSUPPORTED" | "ATHLETE_RECORD_UNSUPPORTED" | "STALE_RESPONSE" | "CONFLICT" | "SOURCE_UNAVAILABLE" | "UPGRADE_REQUIRED" | "FILE_EVIDENCE_DISABLED" | "INVALID_FILE_OBSERVATION" | "FILE_OBSERVATION_CONFLICT" | "COMPARISON_ORIGINAL_UNAVAILABLE" | "INVALID_COMPARISON_RELATION" | "COMPARISON_CAPACITY_EXCEEDED" | AccountJournalWriteRejection }
+  | { ok: false; code: "AUTH_REQUIRED" | "ACCESS_DENIED" | "NOT_FOUND" | "UNAVAILABLE" | "INVALID_RESPONSE" | "CALENDAR_DECORATION_UNSUPPORTED" | "ATHLETE_RECORD_UNSUPPORTED" | "GOAL_PROGRAM_UNSUPPORTED" | "STALE_RESPONSE" | "CONFLICT" | "SOURCE_UNAVAILABLE" | "UPGRADE_REQUIRED" | "FILE_EVIDENCE_DISABLED" | "INVALID_FILE_OBSERVATION" | "FILE_OBSERVATION_CONFLICT" | "COMPARISON_ORIGINAL_UNAVAILABLE" | "INVALID_COMPARISON_RELATION" | "COMPARISON_CAPACITY_EXCEEDED" | AccountJournalWriteRejection }
 
 export type CorrectImportedObservationRequest = Extract<AccountJournalRequest, { action: "correctImportedObservation" }>
 
@@ -192,6 +195,9 @@ async function executeAccountDocument<T>(
       if (request.action === "athleteRecordSupport" && [400, 404, 501].includes(status)) {
         return { ok: false, code: "ATHLETE_RECORD_UNSUPPORTED" }
       }
+      if (request.action === "goalProgramSupport" && [400, 404, 501].includes(status)) {
+        return { ok: false, code: "GOAL_PROGRAM_UNSUPPORTED" }
+      }
       if ([409, 422].includes(status) && ["save", "delete", "restore", "restartOracleV2", "correctImportedObservation", "confirmComparisonRelation", "releaseComparisonRelation"].includes(request.action)) {
         responseData = await error.context.clone().json()
         if (!current()) return obsolete()
@@ -217,6 +223,7 @@ async function executeAccountDocument<T>(
       : request.action === "calendarDecorationSupport" ? result.kind === "calendar-decoration-support"
       : request.action === "athleteRecordSupport" ? result.kind === "athlete-record-support"
       : request.action === "runningProfileSupport" ? result.kind === "running-profile-support"
+      : request.action === "goalProgramSupport" ? result.kind === "goal-program-support"
       : request.action === "oracleV2Support" ? result.kind === "oracle-v2-support"
       : request.action === "oracleV2RestartSupport" ? result.kind === "oracle-v2-restart-support"
       : request.action === "list" ? result.kind === "list"

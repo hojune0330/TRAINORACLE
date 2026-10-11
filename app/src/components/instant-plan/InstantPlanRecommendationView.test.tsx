@@ -38,6 +38,36 @@ describe("InstantPlanRecommendationView", () => {
     expect(within(schedule).getByRole("button", { name: /2026년 9월 21일 월요일/ })).toBeVisible()
   })
 
+  it("uses the selected prescription calendar once and keeps the generic fallback for other callers", () => {
+    const { rerender } = render(<InstantPlanRecommendationView recommendation={recommendation}
+      actionState={{ kind: "READY" }} onStart={vi.fn()}
+      calendar={<p>선택한 처방의 실제 달력</p>} />)
+    const schedule = screen.getByRole("region", { name: "이번 일정" })
+    expect(within(schedule).getAllByText("선택한 처방의 실제 달력")).toHaveLength(1)
+    expect(within(schedule).queryByRole("button", { name: /2026년 9월 21일 월요일/ })).not.toBeInTheDocument()
+    rerender(<InstantPlanRecommendationView recommendation={recommendation}
+      actionState={{ kind: "READY" }} onStart={vi.fn()} />)
+    expect(within(schedule).queryByText("선택한 처방의 실제 달력")).not.toBeInTheDocument()
+    expect(within(schedule).getByRole("button", { name: /2026년 9월 21일 월요일/ })).toBeVisible()
+  })
+
+  it("offers one explicit start after required facts but before a long prescription calendar", () => {
+    const onStart = vi.fn()
+    render(<InstantPlanRecommendationView recommendation={recommendation}
+      actionState={{ kind: "READY" }} onStart={onStart}
+      beforeStart={<p>합성 시간·적용 기준</p>}
+      calendar={<p>전체 날짜별 처방 목록</p>} />)
+    const action = screen.getByRole("button", { name: "이 일정으로 시작" })
+    expect(screen.getAllByRole("button", { name: "이 일정으로 시작" })).toHaveLength(1)
+    expect(screen.getByText("합성 시간·적용 기준").compareDocumentPosition(action))
+      .toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(action.compareDocumentPosition(screen.getByRole("region", { name: "이번 일정" })))
+      .toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(onStart).not.toHaveBeenCalled()
+    fireEvent.click(action)
+    expect(onStart).toHaveBeenCalledExactlyOnceWith(recommendation.id)
+  })
+
   it("shows the exact prescription in a day reader and the optional full contents", () => {
     const notation = "2 sets x (10 x 400m) · r60s · R3min"
     const days = recommendation.days.map(day => ({ ...day,
@@ -191,6 +221,27 @@ describe("InstantPlanRecommendationView", () => {
       onEditSchedule={onEditSchedule} onShowAlternatives={onShowAlternatives} />)
     expect(screen.getByRole("button", { name: "시작일·훈련일 바꾸기" })).toBeDisabled()
     expect(screen.getByRole("button", { name: "다른 계획 보기" })).toBeDisabled()
+  })
+
+  it("keeps editing separate from supporting explanations and preserves the pending-save guard", () => {
+    const onEditWorkout = vi.fn()
+    const onStart = vi.fn()
+    const { rerender } = render(<InstantPlanRecommendationView recommendation={recommendation}
+      actionState={{ kind: "READY" }} onStart={onStart} onEditWorkout={onEditWorkout} showSupportingDetails={false} />)
+    const edit = screen.getByRole("button", { name: "훈련 조절" })
+    expect(edit).toBeVisible()
+    expect(edit.closest("details")).toBeNull()
+    expect(screen.queryByText("추천 이유")).not.toBeInTheDocument()
+    expect(onEditWorkout).not.toHaveBeenCalled()
+    fireEvent.click(edit)
+    expect(onEditWorkout).toHaveBeenCalledTimes(1)
+    expect(onStart).not.toHaveBeenCalled()
+    rerender(<InstantPlanRecommendationView recommendation={recommendation}
+      actionState={{ kind: "PENDING", message: "저장 확인 중" }} onStart={onStart} onEditWorkout={onEditWorkout} showSupportingDetails={false} />)
+    expect(screen.getByRole("button", { name: "훈련 조절" })).toBeDisabled()
+    fireEvent.click(screen.getByRole("button", { name: "훈련 조절" }))
+    expect(onEditWorkout).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole("status")).toHaveTextContent("저장 확인 중")
   })
 
   it("does not label a missing session projection as a prescribed rest day", () => {

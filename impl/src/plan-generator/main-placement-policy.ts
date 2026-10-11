@@ -137,8 +137,8 @@ export function mainPlacementFrameScopeFingerprint(context: MainPlacementContext
   const addresses = new Set<number>()
   const sessions = []
   for (const session of context.sessions) {
-    const position = (session.day - 1) * 2 + (session.slot === "AM" ? 0 : 1)
-    if (!Number.isInteger(session.day) || session.day < 1 || position >= frame.slotCount
+    const position = (session.day - 1) * 2 + (session.slot === "AM" ? 0 : 1) - (frame.startSlot === "PM" ? 1 : 0)
+    if (!Number.isInteger(session.day) || session.day < 1 || position < 0 || position >= frame.slotCount
         || (session.slot !== "AM" && session.slot !== "PM") || addresses.has(position)) return null
     addresses.add(position)
     const prescription = session.prescription
@@ -153,6 +153,7 @@ export function mainPlacementFrameScopeFingerprint(context: MainPlacementContext
   try {
     return canonicalJsonFingerprint("trainoracle.main-placement-frame-scope.v1", {
       frame: { formationKind: frame.formationKind, lengthDays: frame.lengthDays, slotCount: frame.slotCount,
+        ...(frame.startSlot === "PM" ? { startSlot: "PM" } : {}),
         projectionLengthDays: frame.projectionLengthDays ?? null,
         continuity: frame.continuity.kind === "STANDARD_FRAME" ? { kind: "STANDARD_FRAME" }
           : { kind: "SEVEN_DAY_CONTINUITY", nextFrameInput: frame.continuity.nextFrameInput } },

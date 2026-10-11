@@ -62,6 +62,16 @@ it.each([1, 3])("erases adjusted originals v%s for guest and every account witho
   expect(localStorage.getItem("another-app-data")).toBe("keep")
 })
 
+it("erases goal-program wrappers and preserved whole-program history for guest and every owner without parsing private content", () => {
+  const bases = ["trainoracle.goal-training-program.v1", "trainoracle.goal-training-program.history.v1"]
+  const keys = bases.flatMap(base => [base, `${base}.account.athlete-a`, `${base}.account.athlete-b`])
+  for (const key of keys) localStorage.setItem(key, "{unreadable-private-program")
+  localStorage.setItem("another-app-data", "keep")
+  expect(eraseAllLocalData().ok).toBe(true)
+  for (const key of keys) expect(localStorage.getItem(key)).toBeNull()
+  expect(localStorage.getItem("another-app-data")).toBe("keep")
+})
+
 function seed(): void {
   window.localStorage.setItem(JOURNAL, JSON.stringify([{ id: "a" }, { id: "b" }]))
   window.localStorage.setItem(

@@ -33,6 +33,8 @@ export type InstantPlanRecommendationViewProps = {
   readonly beforeStart?: ReactNode
   /** The selected candidate's execution facts, before the full calendar. */
   readonly executionSummary?: ReactNode
+  /** The selected candidate's prescription calendar, replacing the generic projection. */
+  readonly calendar?: ReactNode
 }
 
 const roleLabels: Record<InstantPlanDaySummary["sessions"][number]["role"], string> = {
@@ -66,6 +68,7 @@ export function InstantPlanRecommendationView({
   showSupportingDetails = true,
   beforeStart,
   executionSummary,
+  calendar,
 }: InstantPlanRecommendationViewProps) {
   const headingId = useId()
   const actionStatusId = useId()
@@ -73,9 +76,22 @@ export function InstantPlanRecommendationView({
   const saving = actionState.kind === "SAVING"
   const waiting = saving || actionState.kind === "PENDING"
   const ready = actionState.kind === "READY"
+  const hasPrescriptionCalendar = calendar != null
   const status = saving
     ? "계획을 저장하고 있어요. 저장이 확인될 때까지 기다려 주세요."
     : actionState.kind === "READY" ? null : actionState.message
+  const startAction = <div className="instant-plan__actions instant-plan__start-action">
+    <button
+      className="instant-plan__button"
+      type="button"
+      disabled={!ready && !(actionState.kind === "BLOCKED" && blockedAction)}
+      aria-describedby={status !== null ? actionStatusId : undefined}
+      onClick={() => {
+        if (ready) onStart(recommendation.id)
+        else if (actionState.kind === "BLOCKED") blockedAction?.onClick()
+      }}
+    >{saving ? "저장 중" : actionState.kind === "BLOCKED" && blockedAction ? blockedAction.label : startLabel ?? "이 일정으로 시작"}</button>
+  </div>
 
   return (
     <section className="instant-plan instant-plan--recommendation" aria-labelledby={headingId}>
@@ -118,31 +134,28 @@ export function InstantPlanRecommendationView({
         {workoutLabel && <div><dt>{workoutLabelTitle ?? "처방 훈련"}</dt><dd>{workoutLabel}</dd></div>}
       </dl>}
       {beforeStart}
+      {/* Full prescription calendars can be long lists. Required facts stay above
+          the action; browsing every date is not another acceptance requirement. */}
+      {hasPrescriptionCalendar && startAction}
+      {onEditWorkout && <div className="instant-plan__actions">
+        <button className="instant-plan__secondary" type="button" disabled={waiting} onClick={onEditWorkout}>
+          훈련 조절
+        </button>
+      </div>}
       <section aria-label="이번 일정">
         <h3>이번 일정</h3>
-        {recommendation.days.length === 0 ? (
+        {calendar ?? (recommendation.days.length === 0 ? (
           <p className="instant-plan__status">표시할 일정이 없어요.</p>
         ) : (
           <RecommendationCalendar identity={recommendation.id} days={recommendation.days} />
-        )}
+        ))}
       </section>
       {showSupportingDetails && <details className="instant-plan__disclosure">
         <summary>전체 훈련 시간·목표</summary>
         <InstantPlanRecommendationFacts recommendation={recommendation} goalLabel={goalLabel} programPurposeLabel={programPurposeLabel} />
       </details>}
-      <div className="instant-plan__actions instant-plan__start-action">
-        <button
-          className="instant-plan__button"
-          type="button"
-          disabled={!ready && !(actionState.kind === "BLOCKED" && blockedAction)}
-          aria-describedby={status !== null ? actionStatusId : undefined}
-          onClick={() => {
-            if (ready) onStart(recommendation.id)
-            else if (actionState.kind === "BLOCKED") blockedAction?.onClick()
-          }}
-        >{saving ? "저장 중" : actionState.kind === "BLOCKED" && blockedAction ? blockedAction.label : startLabel ?? "이 일정으로 시작"}</button>
-      </div>
-      {showSupportingDetails && (onEditSchedule || onShowAlternatives || onEditWorkout) && <details className="instant-plan__disclosure">
+      {!hasPrescriptionCalendar && startAction}
+      {showSupportingDetails && (onEditSchedule || onShowAlternatives) && <details className="instant-plan__disclosure">
         <summary>일정·훈련 바꾸기</summary>
         <div className="instant-plan__actions">
         {onEditSchedule && (
@@ -153,11 +166,6 @@ export function InstantPlanRecommendationView({
         {onShowAlternatives && (
           <button className="instant-plan__secondary" type="button" disabled={waiting} onClick={onShowAlternatives}>
             다른 계획 보기
-          </button>
-        )}
-        {onEditWorkout && (
-          <button className="instant-plan__secondary" type="button" disabled={waiting} onClick={onEditWorkout}>
-            처방 확인·조절
           </button>
         )}
         </div>
