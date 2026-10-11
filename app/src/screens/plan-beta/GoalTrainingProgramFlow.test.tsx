@@ -155,7 +155,7 @@ async function chooseGoalDate(user: ReturnType<typeof userEvent.setup>, goal = 4
   await user.click(screen.getByRole("button", { name: `${goal}분 목표` }))
   await user.click(screen.getByRole("button", { name: "시작일 선택" }))
   fireEvent.change(screen.getByLabelText("시작일"), { target: { value: date } })
-  await user.click(screen.getByRole("button", { name: "훈련표 보기" }))
+  await user.click(screen.getByRole("button", { name: "다음" }))
 }
 
 beforeEach(() => {
@@ -233,9 +233,24 @@ describe("GoalTrainingProgramFlow", () => {
       goalPaceConfirmed: false,
     }))
     expect(screen.getByText("미리보기 · 아직 시작하지 않았어요")).toBeVisible()
+    expect(screen.getByText("날짜를 누르면 운동 순서를 볼 수 있어요.")).toBeVisible()
     expect(mocks.generate).not.toHaveBeenCalled()
     expect(mocks.save).not.toHaveBeenCalled()
     expect(mocks.apply).not.toHaveBeenCalled()
+  })
+
+  it("shows the deadline placement limit before opening any result details", async () => {
+    const user = userEvent.setup()
+    renderFlow()
+    await user.click(screen.getByRole("button", { name: "50분 목표" }))
+    await user.click(screen.getByRole("button", { name: "대회 날짜에 맞추기" }))
+    fireEvent.change(screen.getByLabelText("대회 날짜"), { target: { value: "2026-11-15" } })
+    await user.click(screen.getByRole("button", { name: "다음" }))
+    await user.click(screen.getByRole("button", { name: "달리기를 막 시작했어요" }))
+    await user.click(screen.getByRole("button", { name: /시간 기준으로 훈련/u }))
+    expect(screen.getByText(/대회 날짜 · 2026-11-15/u)).toHaveTextContent("날짜만 맞춰요. 대회 전 훈련량을 자동으로 줄이지는 않아요.")
+    expect(screen.getByText(/대회 날짜 · 2026-11-15/u)).toBeVisible()
+    expect(mocks.save).not.toHaveBeenCalled()
   })
 
   it("saves only after the no-known-risk confirmation, then applies the first cycle", async () => {
@@ -328,6 +343,22 @@ describe("GoalTrainingProgramFlow", () => {
     expect(mocks.generate).not.toHaveBeenCalled()
     expect(mocks.save).not.toHaveBeenCalled()
     expect(mocks.apply).not.toHaveBeenCalled()
+    expect(screen.queryByRole("button", { name: "이 계획 시작" })).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "몸 상태 다시 확인" }))
+    expect(screen.getByRole("heading", { name: "지금 몸 상태는 어떤가요?" })).toHaveFocus()
+    expect(mocks.evaluateSafety).not.toHaveBeenCalled()
+    mocks.evaluateSafety.mockReturnValueOnce({ kind: "blocked" })
+    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 시작" }))
+    await waitFor(() => expect(screen.getByRole("button", { name: "몸 상태 다시 확인" })).toBeEnabled())
+    expect(mocks.evaluateSafety).toHaveBeenCalledExactlyOnceWith("NO_KNOWN_RISK")
+    expect(mocks.generate).not.toHaveBeenCalled()
+    expect(mocks.save).not.toHaveBeenCalled()
+    expect(mocks.apply).not.toHaveBeenCalled()
+    await user.click(screen.getByRole("button", { name: "몸 상태 다시 확인" }))
+    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 시작" }))
+    await waitFor(() => expect(mocks.apply).toHaveBeenCalledOnce())
+    expect(mocks.evaluateSafety).toHaveBeenCalledTimes(2)
+    expect(screen.queryByText("몸 상태 확인 필요 · 이 훈련표로 훈련을 시작하지 마세요.")).not.toBeInTheDocument()
   })
 
   it("allows a preview in account scope but blocks activation and local-store writes", async () => {
@@ -363,12 +394,17 @@ describe("GoalTrainingProgramFlow", () => {
     const user = userEvent.setup()
     renderFlow()
     await chooseGoalDate(user)
+    expect(screen.getByText("3 / 4 · 달리기 경험")).toBeVisible()
     await user.click(screen.getByRole("button", { name: /빠른 훈련과 쉬운 훈련/u }))
+    expect(screen.getByText("4 / 4 · 훈련 방식")).toBeVisible()
+    expect(screen.getByRole("heading", { name: "어떤 방식으로 훈련할까요?" })).toHaveFocus()
+    expect(screen.getByText("선택에 따라 훈련 구성과 시간도 달라져요.")).toBeVisible()
+    expect(screen.getByRole("button", { name: /목표 속도로 연습/u })).toHaveTextContent("1km에 4분 30초 · 속도가 적힌 구간에서만 따라요")
     expect(mocks.createPreview).not.toHaveBeenCalled()
     await user.click(screen.getByRole("button", { name: /목표 속도로 연습/u }))
 
     expect(mocks.createPreview).toHaveBeenCalledWith(expect.objectContaining({ goalPaceConfirmed: true }))
-    expect(screen.getByText(/^목표 속도 구간/u)).toBeVisible()
+    expect(screen.getByText("목표 속도 · 1km에 4분 30초 · 속도가 적힌 구간에서만 따라요")).toBeVisible()
     await user.click(screen.getByRole("button", { name: "이 계획 시작" }))
     await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 시작" }))
 

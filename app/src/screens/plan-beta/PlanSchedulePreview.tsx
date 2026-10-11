@@ -10,10 +10,11 @@ import { useLocalToday } from "../../hooks/useLocalToday"
 import { calendarReducedMotion } from "../../hooks/useCalendarMotion"
 import { formatPaceSeconds } from "@impl/prescription/record-pace"
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
+import { calculatedWorkoutSequence } from "@impl/prescription/all-workout-calculator"
 import { MonthCalendar } from "../../components/MonthCalendar"
 import { CalendarTrainingMark } from "../../components/CalendarTrainingMark"
 import { CALENDAR_TRAINING_LABELS, plannedCalendarTone } from "../../domain/calendar-training-presentation"
-import { notationDistance, notationNumber } from "../../domain/workout-notation"
+import { notationDistance, notationNumber, sequencePhaseNotation } from "../../domain/workout-notation"
 import {
   prescriptionLabel,
   sessionExecution,
@@ -516,7 +517,14 @@ function PlanSessionPreview({
   readonly allowMemoExport?: boolean
 }) {
   const flow = sessionFlowLabel(session)
-  const executionSteps = sessionExecutionSteps(session)
+  const executionSteps = sessionExecutionSteps(session, expanded)
+  const hasCompleteDurationStep = executionSteps.some(step => step.role === "TOTAL_DURATION")
+  const showOriginalNotation = expanded && session.prescription.kind === "RPE_TIME_RANGE"
+    && session.prescription.catalogWorkout !== undefined
+    && (sessionLabel(session, true) !== sessionLabel(session) || prescriptionLabel(session, true) !== prescriptionLabel(session))
+  const originalCalculation = showOriginalNotation && session.prescription.kind === "RPE_TIME_RANGE"
+    && session.prescription.catalogWorkout ? resolveCatalogBinding(session.prescription.catalogWorkout) : null
+  const originalSequence = originalCalculation ? calculatedWorkoutSequence(originalCalculation) : null
   const details = (
     <>
       {executionSteps.length === 0 && session.prescription.kind !== "PACE_TARGET" && (
@@ -561,8 +569,8 @@ function PlanSessionPreview({
           aria-haspopup="dialog"><Maximize2 size={17} aria-hidden="true" /></button>}
       </header>
       <div className="plan-session-content">
-        <strong>{sessionLabel(session)}</strong>
-        {!(lightweightSummary && session.role === "REST") && <small className={session.role === "REST" ? "plan-session-help" : "plan-session-metric"}>
+        <strong>{sessionLabel(session, expanded)}</strong>
+        {!(lightweightSummary && session.role === "REST") && !(expanded && hasCompleteDurationStep) && <small className={session.role === "REST" ? "plan-session-help" : "plan-session-metric"}>
           {compactNotation ?? prescriptionLabel(session, expanded)}
         </small>}
         {lightweightSummary && showProgress && <small className="prescription-calendar__progress" aria-label="현재 진행 상태">
@@ -583,6 +591,17 @@ function PlanSessionPreview({
             <div>{details}</div>
           </details>
         ) : !lightweightSummary && details}
+        {showOriginalNotation && <details className="plan-session-records">
+          <summary>기존 훈련 표기</summary>
+          <p><strong>{sessionLabel(session)}</strong></p>
+          {originalSequence ? <ol className="plan-session-steps" aria-label="기존 훈련 표기 순서">
+            {([['warmup', '준비'], ['main', '본운동'], ['cooldown', '정리']] as const)
+              .filter(([phase]) => originalSequence[phase].length > 0)
+              .map(([phase, title]) => <li key={phase}><strong>{title}</strong>
+                <span>{sequencePhaseNotation(originalSequence, phase, [], "COACH")}</span>
+              </li>)}
+          </ol> : <p>{prescriptionLabel(session)}</p>}
+        </details>}
         {!lightweightSummary && <SessionExplanationEntry session={session} date={date} context={explanationContext} loadEvidence={loadEvidence} showPurpose={false} />}
       </div>
     </section>

@@ -8,7 +8,7 @@ import { bindCatalogSession, resolveCatalogBinding } from "@impl/prescription/ca
 import type { AthleteRecord } from "../../domain/athlete-records"
 import { createSegmentRecordReference } from "../../domain/catalog-pace-reference"
 import { projectInstantExecutionSteps } from "./instant-plan-today"
-import { sessionExecutionSteps } from "./labels"
+import { prescriptionLabel, sessionExecutionSteps, sessionLabel } from "./labels"
 import { presentSessionWorkoutNotation } from "./workout-notation-presentation"
 import { PlanSchedulePreview } from "./PlanSchedulePreview"
 
@@ -158,13 +158,31 @@ describe("verified catalog targets in execution steps", () => {
     fireEvent.click(required(calendar.querySelector('button[data-date="2026-10-02"]')))
     const firstReader = screen.getByRole("dialog", { name: "2026년 10월 2일 금요일" })
     const firstExecution = within(firstReader).getByRole("list", { name: "훈련 실행 순서" })
-    expect(within(firstExecution).getByText(mainInstruction(distance))).toBeVisible()
-    expect(firstExecution).toHaveTextContent("≈300.7s/1000m · 실제 기록 기준 · RP")
+    expect(within(firstExecution).getByText(required(sessionExecutionSteps(distance, true).find(step => step.role === "MAIN")).detail)).toBeVisible()
+    expect(firstExecution).toHaveTextContent("1km씩 5번")
+    expect(firstExecution).toHaveTextContent("한 번에 약 5분 0.7초 · 10km 실제 기록 기준")
+    expect(firstExecution).toHaveTextContent("사이 1분 조깅")
     fireEvent.click(within(firstReader).getByRole("button", { name: "크게 보기 다음 날짜" }))
     const nextReader = screen.getByRole("dialog", { name: "2026년 10월 3일 토요일" })
     const nextExecution = within(nextReader).getByRole("list", { name: "훈련 실행 순서" })
-    expect(within(nextExecution).getByText(mainInstruction(timed))).toBeVisible()
-    expect(nextExecution).toHaveTextContent("≈301초/km · 목표기록 기준 · RP")
+    expect(within(nextExecution).getByText(required(sessionExecutionSteps(timed, true).find(step => step.role === "MAIN")).detail)).toBeVisible()
+    expect(nextExecution).toHaveTextContent("7분씩 3번")
+    expect(nextExecution).toHaveTextContent("1km에 약 5분 1초 · 10km 목표 기록 기준")
+    expect(nextExecution).toHaveTextContent("사이 1분 조깅")
+    expect(nextExecution).not.toHaveTextContent("301초/km")
+    expect(nextReader.querySelector(".plan-session-metric")).toBeNull()
+    expect(within(nextReader).getByText(/10km 목표 속도 연습 \(RP\)/u)).toBeVisible()
+    const originalNotation = within(nextReader).getByText("기존 훈련 표기").closest("details")!
+    expect(originalNotation).not.toHaveAttribute("open")
+    fireEvent.click(within(originalNotation).getByText("기존 훈련 표기"))
+    expect(within(originalNotation).getByText(sessionLabel(timed))).toBeVisible()
+    expect(within(originalNotation).getByText(prescriptionLabel(timed))).toBeVisible()
+    const originalSteps = within(originalNotation).getByRole("list", { name: "기존 훈련 표기 순서" })
+    expect(within(originalSteps).getAllByRole("listitem")).toHaveLength(3)
+    expect(originalSteps).toHaveTextContent("RPE")
+    expect(originalSteps).toHaveTextContent("RP")
+    expect(originalSteps).toHaveTextContent("40s Walk")
+    expect(originalSteps).toHaveTextContent("10min")
     expect(JSON.stringify(sessions)).toBe(before)
   })
 })

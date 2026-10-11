@@ -11,6 +11,7 @@ import type {
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 import { calculatedWorkoutSequence } from "@impl/prescription/all-workout-calculator"
 import { sequencePhaseNotation, sessionWorkoutName, sessionWorkoutNotation, type WorkoutDisplaySession } from "../../domain/workout-notation"
+import { catalogWorkoutReader } from "../../domain/catalog-workout-reader"
 import type { InstantPlanStepRole } from "../../domain/instant-plan-contract"
 
 export const EVENT_LABELS: Record<PlanEventGroup, {
@@ -124,11 +125,19 @@ export const PROGRESS_LABELS: Record<PlanProgressState, string> = {
   PAIN_CHECKIN: "통증 체크",
 }
 
-export function sessionLabel(session: WorkoutDisplaySession): string {
+export function sessionLabel(session: WorkoutDisplaySession, plain = false): string {
+  if (plain) {
+    const reading = catalogWorkoutReader(session)
+    if (reading) return reading.name
+  }
   return sessionWorkoutName(session)
 }
 
 export function prescriptionLabel(session: PlanSession, plain = false): string {
+  if (plain) {
+    const reading = catalogWorkoutReader(session)
+    if (reading) return reading.summary
+  }
   return sessionWorkoutNotation(session, plain ? "PLAIN" : "COACH")
 }
 
@@ -199,11 +208,12 @@ export type SessionExecutionStep = {
 
 const EXECUTION_STOP_CUE = "통증\u2060·\u2060어지럼\u2060·\u2060자세\u00a0무너짐이 생기면 시간을 채우지 말고 중단하세요."
 
-export function sessionExecutionSteps(session: PlanSession): readonly SessionExecutionStep[] {
+export function sessionExecutionSteps(session: PlanSession, plain = false): readonly SessionExecutionStep[] {
   if (session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout) {
     const calculation = resolveCatalogBinding(session.prescription.catalogWorkout)
     const sequence = calculation && calculatedWorkoutSequence(calculation)
     if (sequence) {
+      const reading = plain ? catalogWorkoutReader(session) : null
       const total = calculation.totals.seconds
       const phases = ([['warmup', '준비', 'PREPARATION'], ['main', '본운동', 'MAIN'], ['cooldown', '정리', 'COOLDOWN']] as const)
         .filter(([phase]) => sequence[phase].length > 0)
@@ -216,7 +226,7 @@ export function sessionExecutionSteps(session: PlanSession): readonly SessionExe
       return [...totalStep, ...phases.map(([phase, title, role], index) => ({
         role,
         title,
-        detail: `${sequencePhaseNotation(sequence, phase, [], "PLAIN")}${phase === "cooldown" || (!hasCooldown && index === phases.length - 1) ? ` ${EXECUTION_STOP_CUE}` : ""}`,
+        detail: `${reading?.phases[phase] ?? sequencePhaseNotation(sequence, phase, [], "PLAIN")}${phase === "cooldown" || (!hasCooldown && index === phases.length - 1) ? ` ${EXECUTION_STOP_CUE}` : ""}`,
       }))]
     }
     return []

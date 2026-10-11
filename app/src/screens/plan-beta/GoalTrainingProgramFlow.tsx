@@ -77,6 +77,7 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
   const entryInProgress = React.useRef(false)
   entryInProgress.current = entryDirty || request !== undefined || preview !== null
   const heading = React.useRef<HTMLHeadingElement>(null)
+  const safetyHeading = React.useRef<HTMLHeadingElement>(null)
   const programSource = preview ?? (read.kind === "loaded" ? read.document.program : undefined)
   const durationReview = React.useMemo(() => programSource ? goalTrainingProgramDurationReview(programSource) : null, [programSource])
   const current = () => mounted.current && localAccountScopeIsCurrent(scope.current.owner)
@@ -101,7 +102,10 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
     setArchiveReview(false)
     setConflictReview(null)
   }), [])
-  React.useLayoutEffect(() => { if (stage !== "entry") heading.current?.focus() }, [stage, safetyFor])
+  React.useLayoutEffect(() => {
+    if (safetyFor !== null) safetyHeading.current?.focus()
+    else if (stage !== "entry") heading.current?.focus()
+  }, [stage, safetyFor])
   const dirty = preview !== null || stage !== "result" && (entryDirty || request !== undefined)
   usePlanDraftNavigationGuard(dirty, "아직 저장하지 않은 훈련표가 있어요. 만들기를 그만두고 이동할까요?", busy)
 
@@ -166,6 +170,7 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
     if (applied.kind !== "applied") { setError(failureMessage(applied.code)); setNotice(storageStatus === "DEVICE"
       ? "한 달 훈련표는 보관했지만 이번 9.5일 훈련은 시작하지 않았어요."
       : "한 달 훈련표는 보관했어요. 이번 훈련의 연결 상태는 다시 확인해 주세요."); return }
+    setReviewOnly(false)
     setNotice(`${cycle}차 9.5일 훈련을 시작했어요.`)
   }) }
 
@@ -259,6 +264,7 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
 
   if (stage === "experience") return <section className="goal-program">
     <button type="button" className="plan-text-action" onClick={back}><ArrowLeft size={18} aria-hidden="true" />목표·날짜 바꾸기</button>
+    <p className="goal-program__muted">3 / 4 · 달리기 경험</p>
     <h2 tabIndex={-1} ref={heading}>달리기 경험은 어느 정도인가요?</h2>
     <p className="goal-program__muted">기록은 입력하지 않아도 돼요. 경험에 맞는 훈련부터 볼게요.</p>
     <div className="app-choice-group goal-program__choices" role="group" aria-label="달리기 경험">
@@ -278,12 +284,14 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
 
   if (stage === "basis") return <section className="goal-program">
     <button type="button" className="plan-text-action" disabled={busy} onClick={back}><ArrowLeft size={18} aria-hidden="true" />경험·훈련 횟수 바꾸기</button>
-    <h2 tabIndex={-1} ref={heading}>훈련 속도를 어떻게 정할까요?</h2>
-    <div className="app-choice-group goal-program__choices" role="group" aria-label="훈련 속도 기준">
+    <p className="goal-program__muted">4 / 4 · 훈련 방식</p>
+    <h2 tabIndex={-1} ref={heading}>어떤 방식으로 훈련할까요?</h2>
+    <p className="goal-program__muted">선택에 따라 훈련 구성과 시간도 달라져요.</p>
+    <div className="app-choice-group goal-program__choices" role="group" aria-label="훈련 방식">
       <button type="button" className="app-choice-control app-choice-control--answer" disabled={busy}
         onClick={() => { setGoalPaceConfirmed(true); makePreview(experience, true) }}>
         <strong>목표 속도로 연습</strong>
-        <span>{request && tenKGoalPaceLabel(request.goalMinutes)} · 정해진 본운동 구간에 적용</span>
+        <span>{request && `1km에 ${tenKGoalPaceLabel(request.goalMinutes).replace("/km", "")}`} · 속도가 적힌 구간에서만 따라요</span>
       </button>
       <button type="button" className="app-choice-control app-choice-control--answer" disabled={busy}
         onClick={() => { setGoalPaceConfirmed(false); makePreview(experience, false) }}>
@@ -341,18 +349,18 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
     </> : <>
       <p className="goal-program__summary">{source.window.startDate} ~ {source.window.endDate}<br />{!projectionInvalid && <>훈련 {workouts}회 · 휴식 {29 - workouts}일 · 하루 최대 1회</>}</p>
       <p>한 달 기본 훈련 · 9.5일 × 3</p>
-      {source.window.deadline && <p>대회 날짜 · {source.window.deadline}</p>}
+      {source.window.deadline && <p>대회 날짜 · {source.window.deadline}<br />날짜만 맞춰요. 대회 전 훈련량을 자동으로 줄이지는 않아요.</p>}
       <p className="goal-program__muted">{preview ? "미리보기 · 아직 시작하지 않았어요" : storageStatus === "DEVICE" ? "이 기기에 보관된 훈련표" : "계정에서 확인한 훈련표"}</p>
-      <p>{source.inputs.goalPaceConfirmed ? `목표 속도 구간 · ${tenKGoalPaceLabel(source.goalMinutes)}` : "시간 기준 훈련표 · 각 날짜의 시간·힘든 정도를 따라요."}</p>
+      <p>{source.inputs.goalPaceConfirmed ? `목표 속도 · 1km에 ${tenKGoalPaceLabel(source.goalMinutes).replace("/km", "")} · 속도가 적힌 구간에서만 따라요` : "시간 기준 훈련표 · 각 날짜의 시간·힘든 정도를 따라요."}</p>
       {projectionInvalid && <p role="alert">수정된 훈련표의 날짜를 확인하지 못했어요. 원본으로 바꿔 표시하지 않았어요. 현재 계획을 확인해 주세요.</p>}
       {reviewOnly && <p role="alert">몸 상태 확인 필요 · 이 훈련표로 훈련을 시작하지 마세요.</p>}
       {first && preview && <section className="goal-program__first" aria-label="첫 훈련">
         <h3>첫 훈련 · {first.date.slice(5).replace("-", "/")}</h3>
-        <strong>{sessionLabel(first.session)}</strong>
-        <ol>{sessionExecutionSteps(first.session).map((step, index) => <li key={`${step.role}-${index}`}><b>{step.title}</b><span>{step.detail}</span></li>)}</ol>
+        <strong>{sessionLabel(first.session, true)}</strong>
+        <ol>{sessionExecutionSteps(first.session, true).map((step, index) => <li key={`${step.role}-${index}`}><b>{step.title}</b><span>{step.detail}</span></li>)}</ol>
       </section>}
       {safetyFor !== null ? <section className="goal-program__safety" aria-label="시작 전 몸 상태 확인">
-        <h3>지금 몸 상태는 어떤가요?</h3>
+        <h3 ref={safetyHeading} tabIndex={-1}>지금 몸 상태는 어떤가요?</h3>
         <div className="app-choice-group goal-program__choices">
           <button type="button" className="app-choice-control" disabled={busy || !writable} onClick={start}>{busy ? "시작하는 중…" : "통증 없고 평소와 같아요 · 시작"}</button>
           <button type="button" className="app-choice-control" disabled={busy} onClick={() => { setReviewOnly(true); setSafetyFor(null) }}>통증·몸 이상이 있거나 잘 모르겠어요</button>
@@ -367,7 +375,7 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
           onChange={event => setReplaceConfirmed(event.target.checked)} />이전 훈련표를 보관하고 새 훈련표로 바꿀게요</label>}
         <button type="button" className="instant-plan__button" disabled={busy || !writable || !!stored && !replaceConfirmed
           || durationReview?.required && !longerDurationConfirmed}
-          onClick={() => setSafetyFor("new")}>이 계획 시작</button>
+          onClick={() => setSafetyFor("new")}>{reviewOnly ? "몸 상태 다시 확인" : "이 계획 시작"}</button>
       </> : <>
         {canUseActive && <button type="button" className="instant-plan__button" disabled={busy} onClick={onOpenActive}>이번 9.5일 보기·수정</button>}
         {read.kind === "loaded" && read.currentCycleStatus === "PAUSED" && <p role="status">복원한 훈련표예요. 몸 상태를 확인한 뒤 진행하던 9.5일 훈련을 다시 연결할 수 있어요.</p>}
@@ -408,14 +416,15 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
         <ol className="goal-program__cycle-summary">{cycleSummary.frames.map(frame => {
           const original = summarySource?.frames.find(item => item.cycle === frame.cycle)
           const frameSessions = original ? "plan" in original ? original.plan.activePlan.sessions : original.sessions : []
-          const labels = [...new Set(frameSessions.filter(session => session.role === "QUALITY").map(session => sessionLabel(session)))]
+          const labels = [...new Set(frameSessions.filter(session => session.role === "QUALITY").map(session => sessionLabel(session, true)))]
           return <li key={frame.cycle}><strong>{frame.cycle}차 · 9.5일</strong>
             <p>주요 훈련 {frame.qualityCount}회 · 쉬운 훈련 {frame.easyCount}회</p>
             {labels.length > 0 && <ul>{labels.map(label => <li key={label}>{label}</li>)}</ul>}
           </li>
         })}</ol>
       </details>}
-      {!projectionInvalid && <PlanSchedulePreview key={stored?.program.programId ?? preview?.generatedAt} startDate={source.window.startDate}
+      {!projectionInvalid && <><p className="goal-program__muted">날짜를 누르면 운동 순서를 볼 수 있어요.</p>
+      <PlanSchedulePreview key={stored?.program.programId ?? preview?.generatedAt} startDate={source.window.startDate}
         sessions={sessions} presentation="prescription-calendar" programProjection={{ kind: "THREE_CYCLE_PROGRAM", calendarDayCount: 29 }}
         dayAnnotations={annotations}
         sessionProgress={!preview && stored ? session => {
@@ -423,7 +432,7 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
           const state = day && stored.cycles[day.cycle - 1]?.latestPlan
           return state?.progress.find(item => item.sessionDay === day?.session.day && item.sessionSlot === day?.session.slot)?.state
         } : undefined}
-        showRpeGuide={false} detailsExpanded={false} allowMemoExport={false} />}
+        showRpeGuide={false} detailsExpanded={false} allowMemoExport={false} /></>}
       <details className="goal-program__details"><summary>목표·주기·훈련 기준</summary>
         <p>최소 훈련 단위는 9.5일 마이크로사이클이에요. 세 번을 묶은 28.5일이 한 달 기본 프로그램이며, 달력에서는 29개 날짜에 걸쳐 보여요.</p>
         <p>목표 기록은 현재 실력이 아니며 한 달 안의 목표 달성을 보장하지 않아요.</p>
