@@ -1,0 +1,30 @@
+{
+  "method": "Mutate scratch copies only; real engine never changed.",
+  "results": [
+    {
+      "mutation": "disable-fall",
+      "expectedFailure": "falls without action and stops simulating after failure",
+      "actualFailures": [
+        "falls without action and stops simulating after failure"
+      ],
+      "caught": true
+    },
+    {
+      "mutation": "remove-upgrade-cost",
+      "expectedFailure": "applies both the benefit and cost and waits for explicit resume",
+      "actualFailures": [
+        "applies both the benefit and cost and waits for explicit resume"
+      ],
+      "caught": true
+    },
+    {
+      "mutation": "recover-while-running",
+      "expectedFailure": "requires release to recover an exhausted held run",
+      "actualFailures": [
+        "buys front space while running and spends it to recover",
+        "requires release to recover an exhausted held run"
+      ],
+      "caught": true
+    }
+  ]
+}

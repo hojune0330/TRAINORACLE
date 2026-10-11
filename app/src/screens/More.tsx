@@ -1,5 +1,5 @@
 import React from "react"
-import { ArrowLeft, BookOpen, Calculator, ChevronRight, CircleHelp, DatabaseBackup, Flag, MessageSquareText, Newspaper, ScrollText, ShieldCheck, Sticker, Trash2, UserRound, Watch } from "lucide-react"
+import { ArrowLeft, BookOpen, Calculator, ChevronRight, CircleHelp, DatabaseBackup, Flag, Gamepad2, MessageSquareText, Newspaper, ScrollText, ShieldCheck, Sticker, Trash2, UserRound, Watch } from "lucide-react"
 import { DataSafetyNotice } from "../components/DataSafetyNotice"
 import { feedbackConfig } from "../domain/feedback/feedback-config"
 import { SafeJournalExport } from "./home/DeviceJournal"
@@ -28,6 +28,7 @@ export type MoreProps = {
   readonly feedbackAvailable?: boolean
   readonly onOpenFeedback?: () => void
   readonly onOpenContent?: () => void
+  readonly onOpenMinigame?: () => void
   readonly onOpenRewards?: () => void
   readonly onOpenPaceCalculator?: () => void
   readonly onOpenRunningProfile?: () => void
@@ -48,6 +49,7 @@ export function More({
   feedbackAvailable = feedbackConfig() !== null,
   onOpenFeedback,
   onOpenContent,
+  onOpenMinigame,
   onOpenRewards,
   onOpenPaceCalculator,
   onOpenRunningProfile,
@@ -108,6 +110,7 @@ export function More({
           <h2 className="more-screen__group-label">일지 꾸미기</h2>
           <UtilityRow icon={Sticker} label="일지 꾸미기" detail="달력 꾸미기 · 포인트는 재료에서 확인" onClick={onOpenRewards} />
         </>}
+        {onOpenMinigame && <UtilityRow icon={Gamepad2} label="미니게임" detail="러닝 투어 · 서울에서 런던까지" onClick={onOpenMinigame} />}
         <h2 className="more-screen__group-label">관리·도움말</h2>
         <UtilityRow icon={UserRound} label={VIEW_TITLES.account} onClick={() => changeView("account")} />
         <UtilityRow icon={DatabaseBackup} label={VIEW_TITLES.backup} onClick={() => changeView("backup")} />
@@ -118,6 +121,7 @@ export function More({
         <UtilityRow icon={CircleHelp} label="훈련 용어집·도움말" onClick={onOpenGuide} />
         {onOpenContent !== undefined && <UtilityRow icon={Newspaper} label="훈련법 읽기" onClick={onOpenContent} />}
         {onOpenRewards !== undefined && <UtilityRow icon={Sticker} label="일지 꾸미기" detail="달력 꾸미기 · 포인트는 재료에서 확인" onClick={onOpenRewards} />}
+        {onOpenMinigame && <UtilityRow icon={Gamepad2} label="미니게임" detail="러닝 투어 · 서울에서 런던까지" onClick={onOpenMinigame} />}
         </>}
         {activeView === "account" && <>
         {onOpenAccount && <UtilityRow icon={UserRound} label="계정 저장 상태 확인" onClick={onOpenAccount} />}
@@ -155,6 +159,10 @@ export function More({
         <a className="more-screen__row" href="./legal/open-source.html" target="_blank" rel="noreferrer">
           <Sticker aria-hidden="true" size={19} />
           <span><strong>스티커·오픈소스 출처</strong></span>
+        </a>
+        <a className="more-screen__row" href="./legal/third-party-notices.html" target="_blank" rel="noreferrer">
+          <ScrollText aria-hidden="true" size={19} />
+          <span><strong>오픈소스 소프트웨어 고지</strong><small>앱에 포함된 소프트웨어의 라이선스 전문을 확인해요</small></span>
         </a>
         </>}
       </div>

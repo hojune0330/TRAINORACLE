@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>보존된 pace-runner 시안</title><style>:root{color-scheme:light dark;--background:light-dark(#fafaf7,#17231f);--foreground:light-dark(#20352b,#e4f1e9);--muted:light-dark(#eff3f1,#21372b);--muted-foreground:light-dark(#52675b,#b3c7ba);--border:light-dark(#cad7cf,#3e5749);--viz-series-1:light-dark(#175c3c,#a6ebbb);--viz-series-2:light-dark(#b33935,#ff8f84);--card:var(--background);--card-foreground:var(--foreground)}body{margin:24px auto;padding:0 16px;max-width:736px;font:14px/1.5 system-ui;color:var(--foreground);background:var(--background)}button{font:inherit;padding:10px 12px;border:1px solid var(--border);border-radius:4px;color:var(--foreground);background:var(--muted);min-height:44px}button:disabled{opacity:.45}.card{padding:16px;border:1px solid var(--border)}.text-small{font-size:12px}.text-muted{color:var(--muted-foreground)}.viz-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}.viz-stat-value{font-size:24px}.tabular-nums{font-variant-numeric:tabular-nums}[hidden]{display:none!important}</style></head><body>
+<div id="pace-runner-concept">
+  <style>
+    #pace-runner-concept .pr-top { padding-right: 92px; margin-bottom: 18px; }
+    #pace-runner-concept .pr-stats { display:flex; flex-wrap:wrap; gap:12px 24px; margin:16px 0 10px; }
+    #pace-runner-concept .pr-course { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:4px; margin:12px 0; }
+    #pace-runner-concept .pr-sector { text-align:center; padding:8px 0; border-bottom:3px solid var(--border); }
+    #pace-runner-concept .pr-sector[data-active="true"] { border-color:var(--viz-series-1); font-weight:500; }
+    #pace-runner-concept .pr-track { height:105px; position:relative; margin:0 12px 18px; }
+    #pace-runner-concept .pr-road { position:absolute; top:75px; left:0; right:0; height:8px; background:var(--muted); }
+    #pace-runner-concept .pr-distance { height:100%; background:var(--viz-series-1); transition:width 450ms ease; }
+    #pace-runner-concept .pr-person { position:absolute; top:33px; left:0; transform:translateX(-50%); transition:left 450ms ease; }
+    #pace-runner-concept .pr-person span { display:block; text-align:center; }
+    #pace-runner-concept .pr-finish { position:absolute; right:0; top:18px; }
+    #pace-runner-concept .pr-actions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:18px 0; }
+    #pace-runner-concept .pr-choice { display:flex; flex-direction:column; gap:8px; }
+    #pace-runner-concept .pr-choice small { text-align:center; color:var(--muted-foreground); }
+    #pace-runner-concept .pr-detail { min-height:2.5em; margin:12px 0; }
+    #pace-runner-concept .pr-economy { display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; margin:14px 0; }
+    #pace-runner-concept [hidden] { display:none !important; }
+    @media (prefers-reduced-motion:reduce) { #pace-runner-concept .pr-distance, #pace-runner-concept .pr-person { transition:none; } }
+  </style>
+  <div class="pr-top">
+    <h3>페이스 러너 · 규칙 체험</h3>
+    <div class="text-small text-muted">6구간 · 게임용 수치 · 기록은 짧을수록 좋음</div>
+  </div>
+  <div class="pr-stats tabular-nums">
+    <span id="pr-energy-label">체력 100 / 100</span>
+    <span id="pr-time-label">게임 시간 0</span>
+    <span id="pr-stage-label">1 / 6 구간</span>
+  </div>
+  <div id="pr-energy" class="progress" role="progressbar" aria-label="남은 체력" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"><div id="pr-energy-fill" class="progress-bar" style="width:100%"></div></div>
+  <div class="pr-course" aria-label="코스 순서">
+    <div class="pr-sector" data-active="true">평지</div><div class="pr-sector">내리막</div><div class="pr-sector">오르막</div><div class="pr-sector">평지</div><div class="pr-sector">맞바람</div><div class="pr-sector">결승</div>
+  </div>
+  <div class="pr-track" role="img" aria-label="6구간 코스의 주자 위치">
+    <span class="pr-finish">결승 ⚑</span>
+    <div class="pr-road"><div id="pr-distance" class="pr-distance" style="width:0%"></div></div>
+    <div id="pr-person" class="pr-person"><span id="pr-shirt">🏃</span><span id="pr-distance-label" class="text-small">출발</span></div>
+  </div>
+  <div class="pr-actions" id="pr-actions">
+    <div class="pr-choice"><button class="btn" type="button" data-pace="0">천천히</button><small id="pr-cost-0" class="text-small">체력 −9 · 시간 +40</small></div>
+    <div class="pr-choice"><button class="btn btn-primary" type="button" data-pace="1">일정하게</button><small id="pr-cost-1" class="text-small">체력 −15 · 시간 +36</small></div>
+    <div class="pr-choice"><button class="btn" type="button" data-pace="2">빠르게</button><small id="pr-cost-2" class="text-small">체력 −23 · 시간 +33</small></div>
+  </div>
+  <div id="pr-detail" class="pr-detail" aria-live="polite">완주 5코인 · 은메달 225 이하 +3 · 금메달 220 이하 +6</div>
+  <div id="pr-result" hidden>
+    <div id="pr-reward" class="tabular-nums"></div>
+    <div class="pr-economy tabular-nums"><span id="pr-level">러너 Lv.1</span><span id="pr-coins">보유 0코인</span></div>
+    <div class="viz-controls">
+      <button id="pr-upgrade" class="btn" type="button">레벨업 · 8코인</button>
+      <button id="pr-outfit" class="btn" type="button">반짝 효과 · 6코인</button>
+      <button id="pr-next" class="btn btn-primary" type="button">다음 레이스</button>
+    </div>
+  </div>
+  <div class="text-small text-muted">체험 내 성장만 반영 · 실제 훈련 및 계정 포인트와 별개</div>
+  <script>
+  (() => {
+    const root = document.getElementById('pace-runner-concept');
+    const el = id => root.querySelector('#' + id);
+    const course = [
+      {name:'평지',cost:[9,15,23],time:[40,36,33]},
+      {name:'내리막',cost:[6,11,16],time:[36,33,31]},
+      {name:'오르막',cost:[10,18,31],time:[44,41,39]},
+      {name:'평지',cost:[9,15,23],time:[40,36,33]},
+      {name:'맞바람',cost:[11,19,32],time:[43,40,38]},
+      {name:'결승',cost:[9,15,23],time:[40,36,32]}
+    ];
+    const paceNames = ['천천히','일정하게','빠르게'];
+    const defaults = () => ({version:1,level:1,coins:0,outfit:false,turn:0,energy:100,time:0,choices:[],status:'running',reward:0,note:''});
+    function restore(snapshot) {
+      const v=snapshot?.privateContent;
+      if (!v || v.version!==1 || !Number.isInteger(v.level) || v.level<1 || v.level>3 || !Number.isInteger(v.turn) || v.turn<0 || v.turn>6 || !Number.isFinite(v.coins) || v.coins<0 || !Number.isFinite(v.energy) || v.energy<0 || !Number.isFinite(v.time) || !Array.isArray(v.choices) || v.choices.length>6 || !['running','finished','exhausted'].includes(v.status)) return defaults();
+      if (v.status==='running' && v.turn>=6) return defaults();
+      return {...defaults(),...v};
+    }
+    let state=restore(window.openai?.widgetState);
+    const maximum=()=>100+(state.level-1)*5;
+    function save() {
+      if (window.openai?.setWidgetState) window.openai.setWidgetState({modelContent:{concept:'pace-runner-v1',choices:state.choices.map(x=>paceNames[x]),status:state.status,energy:state.energy,gameTime:state.time,level:state.level,coins:state.coins},privateContent:{...state}}).catch(()=>{});
+    }
+    function render() {
+      const done=state.status!=='running';
+      el('pr-energy-label').textContent=`체력 ${state.energy} / ${maximum()}`;
+      el('pr-time-label').textContent=`게임 시간 ${state.time}`;
+      el('pr-stage-label').textContent=done ? (state.status==='finished'?'완주':`${state.turn}구간 통과 · 종료`) : `${state.turn+1} / 6 구간`;
+      el('pr-energy').setAttribute('aria-valuenow',state.energy);
+      el('pr-energy').setAttribute('aria-valuemax',maximum());
+      el('pr-energy-fill').style.width=`${state.energy/maximum()*100}%`;
+      el('pr-distance').style.width=`${state.turn/6*100}%`;
+      el('pr-person').style.left=`${state.turn/6*100}%`;
+      el('pr-shirt').textContent=state.outfit?'🏃✨':'🏃';
+      el('pr-distance-label').textContent=state.turn?`${state.turn}/6`:'출발';
+      root.querySelectorAll('.pr-sector').forEach((s,i)=>s.dataset.active=String(i===state.turn&&!done));
+      el('pr-actions').hidden=done;
+      if(!done) for(let i=0;i<3;i++) el(`pr-cost-${i}`).textContent=`체력 −${course[state.turn].cost[i]} · 시간 +${course[state.turn].time[i]}`;
+      el('pr-result').hidden=!done;
+      if(done) {
+        const medal=state.time<=220?'금메달':state.time<=225?'은메달':'완주';
+        el('pr-reward').textContent=state.status==='finished'?`${medal} · 이번 보상 ${state.reward}코인`:'체력 소진 · 이번 보상 0코인';
+        el('pr-level').textContent=`러너 Lv.${state.level} · 다음 출발 체력 ${maximum()}`;
+        el('pr-coins').textContent=`보유 ${state.coins}코인`;
+        el('pr-upgrade').disabled=state.coins<8||state.level>=3;
+        el('pr-upgrade').textContent=state.level>=3?'체험 최대 Lv.3':'레벨업 · 8코인';
+        el('pr-outfit').disabled=state.coins<6||state.outfit;
+        el('pr-outfit').textContent=state.outfit?'반짝 효과 적용됨':'반짝 효과 · 6코인';
+      }
+      el('pr-detail').textContent=state.note || '완주 5코인 · 은메달 225 이하 +3 · 금메달 220 이하 +6';
+    }
+    function choose(pace) {
+      if(state.status!=='running') return;
+      const sector=course[state.turn],cost=sector.cost[pace];
+      state.choices.push(pace);
+      if(state.energy<cost) {
+        state.energy=0; state.status='exhausted'; state.note=`${sector.name}에서 체력이 부족해 멈췄어요. 다음 레이스에서 페이스를 바꿔보세요.`;
+      } else {
+        state.energy-=cost; state.time+=sector.time[pace]; state.turn++;
+        if(state.turn===6) {
+          state.status='finished'; state.reward=5+(state.time<=220?6:state.time<=225?3:0); state.coins+=state.reward;
+          state.note='완주! 코인을 성장이나 꾸미기에 쓰거나 다음 레이스까지 모을 수 있어요.';
+        } else if(state.energy===0) {
+          state.status='exhausted'; state.note='결승 전에 체력을 모두 썼어요. 다음 레이스에 다시 도전하세요.';
+        } else {
+          const minimum=course.slice(state.turn).reduce((s,c)=>s+c.cost[0],0);
+          state.note=`${sector.name} · ${paceNames[pace]} 통과. `+(state.energy<minimum?`남은 구간의 최소 체력 ${minimum}보다 부족해요.`:`다음은 ${course[state.turn].name}.`);
+        }
+      }
+      render(); save();
+    }
+    root.querySelectorAll('[data-pace]').forEach(button=>button.addEventListener('click',()=>choose(Number(button.dataset.pace))));
+    el('pr-upgrade').addEventListener('click',()=>{if(state.status==='running'||state.coins<8||state.level>=3)return;state.coins-=8;state.level++;state.note='레벨업! 다음 레이스의 최대 체력이 5 늘었어요.';render();save();});
+    el('pr-outfit').addEventListener('click',()=>{if(state.status==='running'||state.coins<6||state.outfit)return;state.coins-=6;state.outfit=true;state.note='반짝 효과 장착! 달리기 능력치는 그대로예요.';render();save();});
+    el('pr-next').addEventListener('click',()=>{if(state.status==='running')return;state={...defaults(),level:state.level,coins:state.coins,outfit:state.outfit,energy:maximum()};render();save();});
+    window.addEventListener('openai:set_globals',event=>{if(event.detail?.globals?.widgetState){state=restore(event.detail.globals.widgetState);render();}});
+    render();
+  })();
+  </script>
+</div>
+
+</body></html>

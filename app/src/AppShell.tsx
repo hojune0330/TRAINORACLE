@@ -124,7 +124,7 @@ type OverlayHistoryMarker = AppOverlay & {
 
 type ShellReturnPoint = {
   readonly view: ReturnType<typeof viewForTab>
-  readonly utilityView: "more" | "guide" | "minji" | "content" | "rewards" | null
+  readonly utilityView: "more" | "guide" | "minji" | "content" | "rewards" | "minigame" | null
   readonly utilityOrigin: "home" | "more"
   readonly moreView: MoreView
   readonly athleteRecordsOpen: boolean
@@ -228,7 +228,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const [athleteRecordsOpen, setAthleteRecordsOpen] = React.useState(false)
   const [homeDetailOrigin, setHomeDetailOrigin] = React.useState<"home" | "rewards">("home")
   const scrollRegionRef = React.useRef<HTMLElement>(null)
-  const [utilityView, setUtilityView] = React.useState<"more" | "guide" | "minji" | "content" | "rewards" | null>(null)
+  const [utilityView, setUtilityView] = React.useState<"more" | "guide" | "minji" | "content" | "rewards" | "minigame" | null>(null)
   const [utilityOrigin, setUtilityOrigin] = React.useState<"home" | "more">("more")
   const [moreView, setMoreView] = React.useState<MoreView>("tools")
   const moreVisibleRef = React.useRef(false)
@@ -1049,6 +1049,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         onOpenMinji={() => openGuide("minji")}
         onOpenGuide={() => openGuide("guide")}
         onOpenContent={openTrainingReading}
+        onOpenMinigame={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("minigame") })}
         onOpenRewards={() => openDecorationStudio()}
         onOpenPaceCalculator={() => openPaceCalculator()}
         onOpenRunningProfile={() => openOverlay({ kind: "running-profile", stage: "overview" })}
@@ -1061,6 +1062,8 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         onOpenRestore={openRestore}
       />
     )
+  } else if (v.tab === "home" && utilityView === "minigame") {
+    screen = <DeferredMobileScreens.TreadmillGame onBack={() => runViewTransition("pop", () => setUtilityView("more"))} />
   } else if (v.tab === "home" && utilityView === "content") {
     screen = <DeferredMobileScreens.TrainingContent onBack={() => runViewTransition("pop", () => {
       const origin = trainingContentOrigin.current
@@ -1312,7 +1315,8 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       }}
       onTab={goTab}
       onStartRecording={() => startRecording()}
-      hideTabBar={overlay !== null ? overlay.kind !== "oracle" : v.tab === "log" && v.entryType !== "choose"}
+      hideTabBar={(overlay !== null ? overlay.kind !== "oracle" : v.tab === "log" && v.entryType !== "choose")
+        || (v.tab === "home" && utilityView === "minigame")}
       wideTask={overlay === null && (v.tab === "log" || v.tab === "plan")}
       wideResults={overlay === null ? v.tab === "trends"
         : overlay.kind === "running-profile" || overlay.kind === "oracle"
