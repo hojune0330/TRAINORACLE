@@ -62,7 +62,7 @@ test("archives the original in the real plan flow and compares it from its journ
   await reader.getByRole("tab", { name: "주기·기록" }).click()
   await expect(reader.getByText("계획의 일부를 수행한 기록", { exact: true })).toBeVisible()
   await expect(reader.getByText("3.2km", { exact: true })).toBeVisible()
-  await expect(reader.getByText("직접 기록한 RPE 6", { exact: true })).toBeVisible()
+  await expect(reader.getByText(/^(?:실제 힘든 정도 )?6\/10 · 직접 입력$/u)).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: testInfo.outputPath("archived-original-comparison.png") })
   await reader.getByRole("heading", { name: "실제 기록", exact: true }).scrollIntoViewIfNeeded()

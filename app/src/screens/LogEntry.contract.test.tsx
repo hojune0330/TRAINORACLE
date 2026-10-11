@@ -205,11 +205,17 @@ describe("existing journal entry regression", () => {
 
     // When
     await savePostFromCurrentStep(user)
+    expect(onDone).not.toHaveBeenCalled()
+    expect(screen.getByRole("alert")).toHaveTextContent("아직 입력한 내용이 없어요")
+    expect(window.localStorage.getItem("trainoracle.journal.v1")).toBeNull()
+    await user.click(screen.getByRole("button", { name: "운동 결과 수정" }))
+    await user.click(screen.getByRole("button", { name: "완료" }))
+    await savePostFromCurrentStep(user)
 
     // Then
     expect(onDone).toHaveBeenCalledWith(
       "post-session",
-      expect.objectContaining({ kind: "post-session" }),
+      expect.objectContaining({ kind: "post-session", activityOutcome: "COMPLETED" }),
     )
     expect(window.localStorage.getItem("trainoracle.journal.v1")).toContain('"kind":"post-session"')
   })

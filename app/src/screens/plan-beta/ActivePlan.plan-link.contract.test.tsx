@@ -127,7 +127,7 @@ describe("active plan journal action", () => {
   it.each([
     ["partial", { outcome: "PARTIAL", pain: "NONE" }],
     ["pain", { outcome: "COMPLETED", pain: "SIGNAL" }],
-  ] as const)("does not offer completion for a saved linked %s journal", (_case, input) => {
+  ] as const)("does not offer completion for a saved linked %s journal", async (_case, input) => {
     const { state, draft } = saveQuickPlanJournal(input)
     const onProgress = vi.fn()
     render(
@@ -141,7 +141,7 @@ describe("active plan journal action", () => {
       />,
     )
 
-    const reader = within(screen.getByRole("dialog"))
+    const reader = within(await screen.findByRole("dialog"))
     expect(reader.getByText("일지·진행 기록").closest("details")).toHaveAttribute("open")
     expect(reader.getByText("일지를 연결했어요. 수행 결과와 계획을 함께 확인할 수 있어요.")).toBeVisible()
     expect(reader.getByText(input.pain === "SIGNAL" ? "몸 상태 확인 기록 있음" : "일부 수행·변경 기록 있음")).toBeVisible()

@@ -1,5 +1,5 @@
 import React from "react"
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import type { PostSessionEntry } from "../domain/journal-store"
 
@@ -35,7 +35,10 @@ it.each(["ACCOUNT", "PENDING", "CONFLICT"] as const)("completes Quick only after
     fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
   }
   const complete = await screen.findByRole("button", { name: "완료" })
-  const message = screen.getByRole("status").textContent
+  const result = screen.getByRole("region", { name: "일지를 계정에 저장했어요." })
+  expect(result).toContainElement(complete)
+  expect(within(result).getByRole("alert")).toHaveTextContent("자동 확인을 완료하지 못했어요")
+  const message = result.textContent
   fireEvent.click(complete)
   expect(onDone).toHaveBeenCalledExactlyOnceWith("post-session", expect.objectContaining({
     id: initial.id, syncState: "synced", memo: initial.memo, activityOutcome: "RESTED",

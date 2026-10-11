@@ -18,7 +18,7 @@
 .session-explanation__back { width: 44px; height: 44px; border: 0; background: transparent; color: var(--ink); display: grid; place-items: center; cursor: pointer; }
 .session-explanation__expert { display: flex; align-items: center; min-height: 44px; gap: 5px; font-size: 0.75rem; cursor: pointer; }
 .session-explanation__expert input { accent-color: var(--brand); width: 18px; height: 18px; }
-.session-explanation__tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: 1px solid var(--line); }
+.session-explanation__tabs { --fs-body: 0.90625rem; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: 1px solid var(--line); }
 .session-explanation__tabs button { min-height: 48px; padding: 8px 4px; border: 0; border-bottom: 2px solid transparent; background: transparent; font: inherit; color: var(--ink-2); cursor: pointer; overflow-wrap: anywhere; }
 .session-explanation__tabs [aria-selected="true"] { border-bottom-color: var(--brand); color: var(--brand); font-weight: 700; }
 .session-explanation__tabs button span { display: inline-block; white-space: nowrap; }

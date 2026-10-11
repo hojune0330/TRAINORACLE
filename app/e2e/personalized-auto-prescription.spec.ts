@@ -6,7 +6,7 @@ import { undersizedInteractiveTargets } from "./touch-audit"
 
 test.use({ serviceWorkers: "block" })
 const appPath = process.env.PLAYWRIGHT_APP_PATH ?? "/"
-const fiveKNotation = /5 × 1km @ (?:\d+(?:\.\d+)?s\/1km · )?5K RP · r150s Jog/u
+const fiveKNotation = /5 × 1km · \d+(?:\.\d+)?초\/1km · 5K 경기 평균 페이스 · 반복 사이 150초 조깅/u
 const currentRecords = [
   {
     schemaVersion: 1,
@@ -161,7 +161,7 @@ for (const viewport of [
     await expect(schedule.getByText(fiveKNotation).first()).toBeVisible()
     await schedule.getByText("자세히 보기 · 수행 순서", { exact: true }).first().click()
     await expect(schedule.getByText(/4번.*150초.*조깅.*600초/u).first()).toBeVisible()
-    await schedule.getByText("기준 기록·중단·낮춤 규칙 보기").first().click()
+    await schedule.getByText("기준 기록·훈련을 바꾸는 방법", { exact: true }).first().click()
     await expect(schedule.getByText(/기준 기록.*18분 30초.*2026-05-10/u).first()).toBeVisible()
     await assertViewportIntegrity(page)
     await assertTouchTargets(page)
@@ -283,7 +283,7 @@ test("requires reconfirmation after replacing the selected record", async ({ pag
   // A catalog's uncalculated pattern may remain, but no confirmed numeric
   // prescription or previous record's target may survive this change.
   await expect(page.locator(".plan-detailed-prescription")).toHaveCount(0)
-  await expect(page.getByText(/5 × 1km @ \d+(?:\.\d+)?s\/1km/u)).toHaveCount(0)
+  await expect(page.getByText(/5 × 1km · \d+(?:\.\d+)?초\/1km/u)).toHaveCount(0)
   await expect(page.getByText("새로 고른 기준 기록을 확인한 뒤 계획을 선택해 주세요.")).toBeVisible()
   await openPlanOptions(page)
   await expect(page.getByRole("button", { name: "계획 A로 시작", exact: true })).toBeDisabled()
@@ -294,7 +294,7 @@ test("requires reconfirmation after replacing the selected record", async ({ pag
   await openPlanOptions(page, true)
   await expect(page.getByRole("button", { name: "계획 A로 시작", exact: true })).toBeEnabled()
   const schedule = page.getByRole("region", { name: "일정·운동 시간", exact: true })
-  await schedule.getByText("기준 기록·중단·낮춤 규칙 보기").first().click()
+  await schedule.getByText("기준 기록·훈련을 바꾸는 방법", { exact: true }).first().click()
   await expect(schedule.getByText(/기준 기록.*5000m.*19분.*2026-04-20/u).first()).toBeVisible()
 })
 test("keeps stale evidence RPE-only", async ({ page }) => {
@@ -314,7 +314,7 @@ test("keeps stale evidence RPE-only", async ({ page }) => {
   await openWorkoutOptions(page)
   await expect(picker).toContainText("선택한 기록일이 현재 기준 범위를 벗어났어요")
   await expect(page.locator(".plan-detailed-prescription")).toHaveCount(0)
-  await expect(page.getByText(/5 × 1km @ \d+(?:\.\d+)?s\/1km/u)).toHaveCount(0)
+  await expect(page.getByText(/5 × 1km · \d+(?:\.\d+)?초\/1km/u)).toHaveCount(0)
   await page.screenshot({ path: test.info().outputPath("mobile-375x667-stale.png"), fullPage: true })
 })
 
@@ -325,7 +325,7 @@ test("keeps missing evidence RPE-only", async ({ page }) => {
   await openWorkoutOptions(page)
   await expect(page.getByText(/이 종목의 경기 기록이 아직 없어요/u)).toBeVisible()
   await expect(page.locator(".plan-detailed-prescription")).toHaveCount(0)
-  await expect(page.getByText(/5 × 1km @ \d+(?:\.\d+)?s\/1km/u)).toHaveCount(0)
+  await expect(page.getByText(/5 × 1km · \d+(?:\.\d+)?초\/1km/u)).toHaveCount(0)
 })
 
 test("D9 blocks before candidates", async ({ page }) => {

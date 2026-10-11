@@ -128,7 +128,7 @@ describe("training home presentation", () => {
     const next = vi.fn(); const plan = vi.fn()
     render(<TrainingHome model={TRAINING} onOpenNextTraining={next} onOpenPlan={plan} />)
     const card = screen.getByRole("button", { name: /^다음 훈련 ·/u })
-    expect(card).toHaveTextContent(/전체 25–40min @ RPE 5–6/u); fireEvent.click(card)
+    expect(card).toHaveTextContent(/전체 25–40분 · 힘든 정도 5–6\/10/u); fireEvent.click(card)
     expect(next).toHaveBeenCalledOnce(); expect(plan).not.toHaveBeenCalled()
   })
   it("shows the saved future training and useful record actions without a no-record panel", () => {
@@ -137,7 +137,7 @@ describe("training home presentation", () => {
       onWriteLog={write} oraclePreview={<div>오라클 결과</div>} recentJournal={<div data-testid="actual-recent">10월 6일 기록 2개</div>} />)
     expect(screen.getByRole("heading", { name: "훈련과 기록" })).toBeVisible()
     const next = screen.getByRole("button", { name: /^다음 훈련 ·/u })
-    expect(next).toHaveAccessibleName(/10월 9일.*오후.*전체 25–40min @ RPE 5–6/u)
+    expect(next).toHaveAccessibleName(/10월 9일.*오후.*전체 25–40분 · 힘든 정도 5–6\/10/u)
     expect(screen.queryByText(TRAINING.todayMessage)).toBeNull()
     expect(screen.queryByText(/오늘의 훈련|휴식일|미완료/u)).toBeNull()
     const recent = screen.getByTestId("actual-recent")

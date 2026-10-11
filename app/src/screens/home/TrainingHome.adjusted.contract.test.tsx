@@ -20,7 +20,7 @@ it("shows actual adjusted repetition/distance on the home card and opens the pla
   expect(model.homeMode).toBe("TRAINING")
   expect(model.planSummary).not.toContain("저장된 계획 없음")
   expect(nextTrainingPrescriptionLabel(session)).toContain("2 × 400m")
-  expect(nextTrainingPrescriptionLabel(session)).toContain("r17s")
+  expect(nextTrainingPrescriptionLabel(session)).toContain("반복 사이 17초 서서 쉬기")
   expect(nextTrainingPrescriptionLabel(session)).not.toContain("1000m")
   const open = vi.fn()
   render(<TrainingHome model={model} onOpenPlan={open} />)

@@ -153,7 +153,7 @@ describe("Oracle exploration examples", () => {
 
   it.each([
     { id: "level", labels: ["앞선 기록", "최근 기록"], values: ["24분 40초", "24분 10초"], widths: [100, 97.97297297297297] },
-    { id: "focus", labels: ["계획", "실제"], values: ["RPE 5", "RPE 7"], widths: [71.42857142857143, 100] },
+    { id: "focus", labels: ["계획", "실제"], values: ["힘든 정도 5/10", "힘든 정도 7/10"], widths: [71.42857142857143, 100] },
     { id: "compare", labels: ["지난달", "이번 달"], values: ["5 km", "6 km"], widths: [83.33333333333334, 100] },
     { id: "mix", labels: ["기초 지구력 · BASE", "지속 페이스 · LT", "강한 유산소 반복 · VO2"], values: ["4건", "1건", "1건"], widths: [100, 25, 25] },
     { id: "change", labels: ["지난달", "이번 달"], values: ["7 / 10", "5 / 10"], widths: [100, 71.42857142857143] },

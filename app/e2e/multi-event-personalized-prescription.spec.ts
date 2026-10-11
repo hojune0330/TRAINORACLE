@@ -29,7 +29,7 @@ const cases = [
   {
     eventDistanceM: 800,
     focus: /고강도 반복 훈련/u,
-    notation: /10 × 200m @ (?:30\.5s\/200m · )?800m RP · r60s Stand/u,
+    notation: /10 × 200m · 30\.5초\/200m · 800m 경기 평균 페이스 · 반복 사이 60초 서서 쉬기/u,
     paceBasis: "기준: 800m 최근 경기 2분 2초",
     expectedPrescription: { targetEventDistanceM: 800, targetRepSeconds: 30.5,
       repetitionsPerSet: 10, repetitionDistanceM: 200, repetitionRecoverySeconds: 60,
@@ -41,7 +41,7 @@ const cases = [
   {
     eventDistanceM: 1500,
     focus: /혼합 훈련/u,
-    notation: /3 × 500m @ (?:81\.7s\/500m · )?1500m RP · r3min Stand/u,
+    notation: /3 × 500m · 81\.7초\/500m · 1500m 경기 평균 페이스 · 반복 사이 3분 서서 쉬기/u,
     paceBasis: "기준: 1500m 최근 경기 4분 5초",
     expectedPrescription: { targetEventDistanceM: 1500, targetRepSeconds: 245 * 500 / 1500,
       repetitionsPerSet: 3, repetitionDistanceM: 500, repetitionRecoverySeconds: 180,
@@ -53,7 +53,7 @@ const cases = [
   {
     eventDistanceM: 3000,
     focus: /유산소 반복 훈련/u,
-    notation: /4 × 800m @ (?:162\.9s\/800m · )?3K RP · r3min Walk/u,
+    notation: /4 × 800m · 162\.9초\/800m · 3K 경기 평균 페이스 · 반복 사이 3분 걷기/u,
     paceBasis: "기준: 3000m 최근 경기 10분 11초",
     expectedPrescription: { targetEventDistanceM: 3000, targetRepSeconds: 611 * 800 / 3000,
       repetitionsPerSet: 4, repetitionDistanceM: 800, repetitionRecoverySeconds: 180,

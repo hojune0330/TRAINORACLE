@@ -82,8 +82,9 @@ test(`uses the diary flow with ${hasEarnedHistory ? "previously earned" : "no ba
 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "홈" }).click()
   await page.getByRole("button", { name: "더보기" }).click()
-  await page.getByRole("button", { name: "배우기·꾸미기" }).click()
+  await expect(page.getByRole("heading", { name: "훈련 배우기", exact: true })).toBeVisible()
   await page.getByRole("button", { name: "훈련 용어집·도움말" }).click()
+  await page.getByRole("button", { name: "앱 이용 안내", exact: true }).click()
   await expect(page.getByRole("heading", { name: "궁금한 점을 쉽게 풀어드려요" })).toBeVisible()
   await page.getByText("나중에 월 구독이나 광고가 생길 수 있나요?").click()
   await expect(page.getByText(/TrainOracle 베타는 현재 무료입니다/u)).toBeVisible()

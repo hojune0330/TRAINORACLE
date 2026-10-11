@@ -423,7 +423,7 @@ for (const persona of personas) test(`${persona.id} ${persona.name}`, async ({ p
       const choice = await page.evaluate(async path => (await import(/* @vite-ignore */ path) as typeof Harness).editChoice(), helperPath)
       await page.locator("[data-plan-edit-button]").click()
       await page.getByRole("button", { name: "훈련 내용 바꾸기", exact: true }).click()
-      const editor = page.getByRole("region", { name: "이 훈련 수정" })
+      const editor = page.getByRole("region", { name: "훈련 내용 바꾸기", exact: true })
       await editor.getByLabel("수정할 훈련").selectOption(`${choice.source.day}:${choice.source.slot}`)
       await editor.getByRole("checkbox", { name: "이 훈련은 아직 시작하지 않았어요." }).check()
       if (choice.action === "DURATION") await editor.getByLabel("새 최대 시간 · 분").fill(String(choice.maximumMinutes))
@@ -473,7 +473,7 @@ for (const persona of personas) test(`${persona.id} ${persona.name}`, async ({ p
       if (await returnToCalendar.isVisible()) await returnToCalendar.click()
       await tab(page)
       await page.getByRole("button", { name: "연결된 일지 기록 보기", exact: true }).click()
-      await expect(page.getByRole("tabpanel")).toContainText("직접 기록한 RPE 7")
+      await expect(page.getByRole("tabpanel")).toContainText("7/10 · 직접 입력")
       await page.screenshot({ path: info.outputPath("saved-journal.png"), fullPage: true, animations: "disabled" })
       return entries
     })

@@ -61,7 +61,8 @@ describe("linked journal context and invalid actual-input guard", () => {
   })
   it("blocks detailed-form save with invalid actual input and allows explicit clearing", () => {
     render(<PostSessionForm targetDate={fixture.entry.date} plannedSessionLink={fixture.link} />)
-    fireEvent.click(screen.getByRole("button", { name: "결과는 생략하고 계속" }))
+    fireEvent.click(screen.getByRole("button", { name: "완료" }))
+    fireEvent.click(screen.getByRole("button", { name: "시간대는 기록하지 않고 계속" }))
     fireEvent.click(screen.getByText("반복별 기록 남기기"))
     fireEvent.change(screen.getByLabelText("1세트 1회 실제 시간"), { target: { value: "90000" } })
     advancePostSessionToReview()

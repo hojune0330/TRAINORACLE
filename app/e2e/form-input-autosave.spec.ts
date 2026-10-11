@@ -1,5 +1,53 @@
-import { expect, test } from "@playwright/test"
+import { expect, test, type Page } from "@playwright/test"
 import type {} from "./fixtures/form-input-autosave"
+
+async function showEveningReview(page: Page) {
+  await page.locator(".task-flow").waitFor({ state: "visible" })
+  const review = page.locator('.task-flow[data-task-step^="review:"]')
+  if (await review.isVisible()) return
+  const previous = page.getByRole("button", { name: "이전 질문", exact: true })
+  if (await previous.count()) await previous.click()
+  else await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
+  await expect(review).toBeVisible()
+}
+
+async function showEveningInput(page: Page, group: "memo" | "metrics") {
+  await page.locator(".task-flow").waitFor({ state: "visible" })
+  const editor = page.locator(`.task-flow[data-task-step^="${group}:"]`)
+  if (await editor.isVisible()) return
+  await showEveningReview(page)
+  await page.getByRole("button", {
+    name: group === "memo" ? /^메모 (입력|수정)$/u : /^체중 · 안정시 심박 (입력|수정)$/u,
+  }).click()
+  await expect(editor).toBeVisible()
+}
+
+async function showPostInput(page: Page, group: "content" | "effort" | "body" | "memo") {
+  await page.locator(".task-flow").waitFor({ state: "visible" })
+  const editor = page.locator(`.task-flow[data-task-step="${group}"]`)
+  if (await editor.isVisible()) return
+  const review = page.locator('.task-flow[data-task-step="review"]')
+  if (!await review.isVisible()) {
+    await page.getByRole("button", { name: /^(지금 입력 확인|입력 확인으로)$/u }).click()
+  }
+  const label = { content: "실제로 한 운동", effort: "운동 강도", body: "운동 후 몸 상태", memo: "메모" }[group]
+  await page.getByRole("button", { name: `${label} 수정`, exact: true }).click()
+  await expect(editor).toBeVisible()
+}
+
+async function showRaceInfo(page: Page) {
+  await page.locator(".task-flow").waitFor({ state: "visible" })
+  const info = page.locator('.task-flow[data-task-step="info"]')
+  if (!await info.isVisible()) await page.getByRole("button", { name: "경기 정보 수정", exact: true }).click()
+  await expect(info).toBeVisible()
+}
+
+async function showRaceReview(page: Page) {
+  await page.locator(".task-flow").waitFor({ state: "visible" })
+  const review = page.locator('.task-flow[data-task-step="review"]')
+  if (!await review.isVisible()) await page.getByRole("button", { name: /^(지금 입력 확인|입력 확인으로)$/u }).click()
+  await expect(review).toBeVisible()
+}
 
 test.beforeEach(async ({ context }) => {
   await context.route("**/*", route => {
@@ -22,18 +70,27 @@ test.beforeEach(async ({ context }) => {
 test("native encrypted form input survives reload, protects account switch, and fits mobile and desktop", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 375, height: 667 })
   await page.goto("/__form_input__")
-  await page.getByRole("textbox", { name: "오늘의 메모" }).fill("SYNTHETIC_FORM_MEMO")
+  // Keep the note's purpose unanswered while retaining both independent inputs.
+  await showEveningInput(page, "metrics")
   await page.getByRole("textbox", { name: "체중 (kg)" }).fill("62.")
+  await showEveningInput(page, "memo")
+  await page.getByRole("textbox", { name: "오늘의 메모" }).fill("SYNTHETIC_FORM_MEMO")
   await expect.poll(async () => (await page.evaluate(() => window.formInputHarness.input()))[0]?.input)
     .toMatchObject({ kind: "evening", memo: "SYNTHETIC_FORM_MEMO", purpose: null, weight: "62." })
   expect(await page.evaluate(() => window.formInputHarness.encryptedAtRest()))
     .toEqual({ noPlaintext: true, nativeKey: true, nonextractable: true })
   await page.reload()
+  await showEveningInput(page, "memo")
   await expect(page.getByRole("textbox", { name: "오늘의 메모" })).toHaveValue("SYNTHETIC_FORM_MEMO")
+  await showEveningInput(page, "metrics")
   await expect(page.getByRole("textbox", { name: "체중 (kg)" })).toHaveValue("62.")
   await page.evaluate(() => window.formInputHarness.switchOwner("22222222-2222-4222-8222-222222222222"))
+  await expect(page.locator('.task-flow[data-task-step^="sleep:"]')).toBeVisible()
+  await showEveningInput(page, "memo")
   await expect(page.getByRole("textbox", { name: "오늘의 메모" })).toHaveValue("")
   await page.evaluate(() => window.formInputHarness.switchOwner("11111111-1111-4111-8111-111111111111"))
+  await expect(page.locator('.task-flow[data-task-step^="review:"]')).toBeVisible()
+  await showEveningInput(page, "memo")
   await expect(page.getByRole("textbox", { name: "오늘의 메모" })).toHaveValue("SYNTHETIC_FORM_MEMO")
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: testInfo.outputPath("mobile.png"), fullPage: true })
@@ -44,9 +101,12 @@ test("native encrypted form input survives reload, protects account switch, and 
 
 test("quick skipped answer survives a closed tab without a completion screen", async ({ page, context }) => {
   await page.goto("/__form_input__?kind=quick")
-  await page.getByRole("button", { name: "운동을 마쳤어요" }).click()
-  await page.getByRole("button", { name: "오전", exact: true }).click()
-  await page.getByRole("button", { name: "모르겠어요 · 비워 둘게요" }).click()
+  await page.getByRole("button", { name: "운동을 마쳤어요" }).focus()
+  await page.getByRole("button", { name: "운동을 마쳤어요" }).press("Enter")
+  await page.getByRole("button", { name: "오전", exact: true }).focus()
+  await page.getByRole("button", { name: "오전", exact: true }).press("Enter")
+  await page.getByRole("button", { name: "모르겠어요 · 비워 둘게요" }).focus()
+  await page.getByRole("button", { name: "모르겠어요 · 비워 둘게요" }).press("Enter")
   await expect.poll(async () => (await page.evaluate(() => window.formInputHarness.input()))[0]?.input)
     .toMatchObject({ kind: "quick", effortAnswered: true, rpe: 0, painStatus: "UNANSWERED" })
   await page.close()
@@ -62,6 +122,8 @@ test("two tabs durably preserve losing CAS input and require explicit recovery a
   await page.goto("/__form_input__")
   const other = await context.newPage()
   await other.goto("/__form_input__")
+  await showEveningInput(page, "memo")
+  await showEveningInput(other, "memo")
   await expect(other.getByRole("textbox", { name: "오늘의 메모" })).toHaveValue("")
   await page.getByRole("textbox", { name: "오늘의 메모" }).fill("SYNTHETIC_WINNER")
   await expect.poll(async () => (await page.evaluate(() => window.formInputHarness.input()))[0]?.input)
@@ -81,16 +143,21 @@ test("two tabs durably preserve losing CAS input and require explicit recovery a
     .toMatchObject({ memo: "SYNTHETIC_WINNER_NEWER" })
   await other.close()
   await page.reload()
+  await showEveningInput(page, "memo")
   await expect(page.getByRole("textbox", { name: "오늘의 메모" })).toHaveValue("SYNTHETIC_WINNER_NEWER")
   await expect(page.getByRole("button", { name: "이 복구본으로 계속", exact: true })).toBeVisible()
   await page.setViewportSize({ width: 375, height: 667 })
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: testInfo.outputPath("recovery-mobile.png"), fullPage: true })
   await page.evaluate(() => window.formInputHarness.switchOwner("22222222-2222-4222-8222-222222222222"))
+  await expect(page.locator('.task-flow[data-task-step^="sleep:"]')).toBeVisible()
+  await showEveningInput(page, "memo")
   await expect(page.getByRole("textbox", { name: "오늘의 메모" })).toHaveValue("")
   await expect(page.getByRole("button", { name: "이 복구본으로 계속", exact: true })).toHaveCount(0)
   await page.evaluate(() => window.formInputHarness.switchOwner("11111111-1111-4111-8111-111111111111"))
   await page.getByRole("button", { name: "이 복구본으로 계속", exact: true }).click()
+  await expect(page.locator('.task-flow[data-task-step^="review:"]')).toBeVisible()
+  await showEveningInput(page, "memo")
   await expect(page.getByRole("textbox", { name: "오늘의 메모" })).toHaveValue("SYNTHETIC_LOSER")
   await page.getByText(/보관한 수정본 \d+건/).click()
   await expect(page.getByText("SYNTHETIC_WINNER_NEWER", { exact: true })).toHaveCount(1)
@@ -98,6 +165,7 @@ test("two tabs durably preserve losing CAS input and require explicit recovery a
   await expect.poll(async () => (await page.evaluate(() => window.formInputHarness.input()))[0]?.input)
     .toMatchObject({ memo: "SYNTHETIC_AFTER_CHOICE" })
   await page.reload()
+  await showEveningInput(page, "memo")
   await expect(page.getByRole("textbox", { name: "오늘의 메모" })).toHaveValue("SYNTHETIC_AFTER_CHOICE")
 })
 
@@ -127,10 +195,12 @@ for (const choice of ["LOCAL", "REMOTE", "DELETE"] as const) test(`server confli
       }`,
   }))
   await page.goto("/__form_input__")
+  await showEveningInput(page, "memo")
   await page.getByRole("textbox", { name: "오늘의 메모" }).fill("SYNTHETIC_LOCAL")
   if (choice === "REMOTE") {
     await expect(page.getByRole("button", { name: "계정 입력 사용", exact: true })).toBeVisible()
     await expect(page.getByRole("heading", { name: "계정 입력 · 수정 버전 1", exact: true })).toBeVisible()
+    await showEveningReview(page)
     await expect(page.getByRole("button", { name: "저장", exact: true })).toBeDisabled()
     await expect(page.locator(".entry-sticky-bar")).toHaveCount(0)
     await page.setViewportSize({ width: 375, height: 667 })
@@ -152,9 +222,12 @@ for (const choice of ["LOCAL", "REMOTE", "DELETE"] as const) test(`server confli
     await expect(page.getByRole("button", { name: "당시 기기 입력으로 계속", exact: true }).first()).toBeDisabled()
     return
   }
+  await expect(page.locator('.task-flow[data-task-step^="review:"]')).toBeVisible()
+  await showEveningInput(page, "memo")
   await expect(page.getByRole("textbox", { name: "오늘의 메모" })).toHaveValue(`SYNTHETIC_${choice}`)
   await expect(page.getByRole("button", { name: "이 기기 입력 사용", exact: true })).toHaveCount(0)
   await page.reload()
+  await showEveningInput(page, "memo")
   await expect(page.getByRole("textbox", { name: "오늘의 메모" })).toHaveValue(`SYNTHETIC_${choice}`)
   await page.getByText(/보관한 수정본 \d+건/).click()
   await page.getByText(/충돌 보관본 1/).click()
@@ -163,10 +236,13 @@ for (const choice of ["LOCAL", "REMOTE", "DELETE"] as const) test(`server confli
   await expect(page.getByRole("button", { name: "완료", exact: true })).toHaveCount(0)
   if (choice === "REMOTE") {
     await page.getByRole("button", { name: "당시 기기 입력으로 계속", exact: true }).first().click()
+    await expect(page.locator('.task-flow[data-task-step^="review:"]')).toBeVisible()
+    await showEveningInput(page, "memo")
     await expect(page.getByRole("textbox", { name: "오늘의 메모" })).toHaveValue("SYNTHETIC_LOCAL")
     await expect.poll(async () => (await page.evaluate(() => window.formInputHarness.input()))[0]?.input)
       .toMatchObject({ memo: "SYNTHETIC_LOCAL" })
     await page.reload()
+    await showEveningInput(page, "memo")
     await expect(page.getByRole("textbox", { name: "오늘의 메모" })).toHaveValue("SYNTHETIC_LOCAL")
   }
 })
@@ -180,6 +256,7 @@ test("race restores partial pace, maximum tension and post-race stage from nativ
   await expect.poll(async () => (await page.evaluate(() => window.formInputHarness.input()))[0]?.input)
     .toMatchObject({ kind: "race", tension: 10, paceMinutes: "3", paceSeconds: "", record: "16:", stage: "post" })
   await page.reload()
+  await showRaceInfo(page)
   await expect(page.getByRole("textbox", { name: "경기 기록" })).toHaveValue("16:")
   await page.getByRole("button", { name: "경기 직전", exact: true }).click()
   await expect(page.getByRole("spinbutton", { name: "목표 페이스 분" })).toHaveValue("3")
@@ -188,7 +265,9 @@ test("race restores partial pace, maximum tension and post-race stage from nativ
 
 test("detailed form restores the unadded objective editor without converting it into performance", async ({ page }) => {
   await page.goto("/__form_input__?kind=post-session")
+  await showPostInput(page, "content")
   await page.getByRole("textbox", { name: "세션 제목" }).fill("SYNTHETIC_SESSION")
+  await showPostInput(page, "effort")
   await page.getByRole("button", { name: "예상 강도 7", exact: true }).click()
   await page.getByRole("button", { name: /객관 기록 · 0개/ }).click()
   await page.getByRole("spinbutton", { name: "운동 시간 (초)" }).fill("42")
@@ -196,7 +275,9 @@ test("detailed form restores the unadded objective editor without converting it 
     .toMatchObject({ kind: "post-session", plannedRpe: 7, objectiveComponents: [],
       objectiveEditor: { kind: "INTERVALS", fields: { workSeconds: "42" } } })
   await page.reload()
+  await showPostInput(page, "content")
   await expect(page.getByRole("textbox", { name: "세션 제목" })).toHaveValue("SYNTHETIC_SESSION")
+  await showPostInput(page, "effort")
   await page.getByRole("button", { name: /객관 기록 · 0개/ }).click()
   await expect(page.getByRole("spinbutton", { name: "운동 시간 (초)" })).toHaveValue("42")
   await expect(page.getByRole("button", { name: "예상 강도 7", exact: true })).toHaveAttribute("aria-pressed", "true")
@@ -206,16 +287,21 @@ test("detailed recovery preview uses readable energy, body and objective labels 
   await page.goto("/__form_input__?kind=post-session")
   const other = await context.newPage()
   await other.goto("/__form_input__?kind=post-session")
+  await showPostInput(page, "content")
+  await showPostInput(other, "content")
   await expect(other.getByRole("textbox", { name: "세션 제목" })).toBeVisible()
   await page.getByRole("textbox", { name: "세션 제목" }).fill("SYNTHETIC_CURRENT")
   await expect.poll(async () => (await page.evaluate(() => window.formInputHarness.input()))[0]?.input)
     .toMatchObject({ title: "SYNTHETIC_CURRENT" })
   await other.getByRole("button", { name: "ATP-PC 스피드·가속", exact: true }).click()
-  await other.getByRole("textbox", { name: "훈련 메모 내용" }).fill("SYNTHETIC_RECOVERY")
+  await showPostInput(other, "effort")
   await other.getByRole("button", { name: /객관 기록 · 0개/ }).click()
   await other.getByRole("spinbutton", { name: "운동 시간 (초)" }).fill("42")
+  await showPostInput(other, "body")
   await other.getByRole("button", { name: "불편한 곳 있음", exact: true }).click()
   await other.getByRole("button", { name: /오른 무릎/ }).click()
+  await showPostInput(other, "memo")
+  await other.getByRole("textbox", { name: "훈련 메모 내용" }).fill("SYNTHETIC_RECOVERY")
   const preview = other.getByRole("region", { name: "입력 초안 충돌 및 복구" })
   await expect(preview).toContainText("스피드·가속")
   await expect(preview).toContainText("인터벌")
@@ -266,17 +352,21 @@ for (const response of ["ACK_LOST", "EDITED_PENDING", "PLANNED_SESSION_ALREADY_R
     await page.getByRole("textbox", { name: "경기 기록" }).fill("16:")
     await expect.poll(async () => (await page.evaluate(() => window.formInputHarness.input()))[0]?.input)
       .toMatchObject({ record: "16:", stage: "post" })
+    await showRaceReview(page)
     await page.getByRole("button", { name: /^저장/ }).click()
     await expect.poll(() => requests.length).toBe(1)
     await expect(page.getByRole("button", { name: /^저장/ })).toBeEnabled()
     if (response !== "ACK_LOST") {
       if (response !== "EDITED_PENDING") await expect(page.getByRole("region", { name: "최종 저장 요청 확인" })).toContainText("새 요청을 자동으로 만들거나 다시 전송하지 않습니다")
+      await showRaceInfo(page)
       await page.getByRole("textbox", { name: "경기 기록" }).fill("17:")
       await expect.poll(async () => (await page.evaluate(() => window.formInputHarness.input()))[0]?.input)
         .toMatchObject({ record: "17:" })
     }
     await page.reload()
+    await showRaceInfo(page)
     await expect(page.getByRole("textbox", { name: "경기 기록" })).toHaveValue(response === "ACK_LOST" ? "16:" : "17:")
+    await showRaceReview(page)
     await page.getByRole("button", { name: /^저장/ }).click()
     if (response === "EDITED_PENDING") {
       await expect(page.getByRole("region", { name: "최종 저장 요청 확인" })).toContainText("변경한 내용을 전송하지 않았어요")
@@ -284,10 +374,12 @@ for (const response of ["ACK_LOST", "EDITED_PENDING", "PLANNED_SESSION_ALREADY_R
       await page.getByRole("button", { name: "이전 요청 그대로 확인" }).click()
       await expect.poll(() => requests.length).toBe(2)
       await expect(page.getByRole("region", { name: "최종 저장 요청 확인" })).toContainText("이전 요청의 계정 저장을 확인했어요")
+      await showRaceInfo(page)
       await expect(page.getByRole("textbox", { name: "경기 기록" })).toHaveValue("17:")
       expect((await page.evaluate(() => window.formInputHarness.input()))[0]?.completed).toBe(false)
       await page.setViewportSize({ width: 375, height: 667 })
       await page.screenshot({ path: testInfo.outputPath("edited-pending-mobile.png"), fullPage: true })
+      await showRaceReview(page)
       await page.getByRole("button", { name: /^저장/ }).click()
       await expect.poll(() => requests.length).toBe(3)
       await expect.poll(async () => (await page.evaluate(() => window.formInputHarness.input()))[0]?.completed).toBe(true)

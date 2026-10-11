@@ -58,7 +58,7 @@ test("links one explicitly selected plan session to its journal without copying 
   await expect(page.getByText("계획 RPE와 비교할 수 있는 기록은 1건이에요")).toBeVisible()
   const disclosure = page.getByText("훈련별 비교 근거 1건")
   await disclosure.click()
-  await expect(page.getByText("계획 RPE 2-4 · 직접 기록 RPE 6")).toBeVisible()
+  await expect(page.getByText("계획의 힘든 정도 2–4/10 · 실제 힘든 정도 6/10 · 직접 입력", { exact: true })).toBeVisible()
   await expect(page.getByText("계획보다 높음", { exact: true })).toBeVisible()
   expect((await disclosure.boundingBox())?.height).toBeGreaterThanOrEqual(44)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)

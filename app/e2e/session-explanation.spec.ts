@@ -51,14 +51,14 @@ test("exact linked observations survive reload without implying prescription adh
     await reader.getByRole("tab", { name: "주기·기록" }).click()
     await expect(reader.getByText("3.2km", { exact: true })).toBeVisible()
     await expect(reader.getByText("18분", { exact: true })).toBeVisible()
-    await expect(reader.getByText("직접 기록한 RPE 4", { exact: true })).toBeVisible()
+    await expect(reader.getByText(/^(?:실제 힘든 정도 )?4\/10 · 직접 입력$/u)).toBeVisible()
     await expect(reader.getByText("계획의 일부를 수행한 기록", { exact: true })).toBeVisible()
     await reader.getByText("어떤 기록을 비교하나요?", { exact: true }).click()
     await expect(reader.getByText(/반복별 기록과 회복 구간은 확인하지 않았어요/u)).toBeVisible()
     await expect(reader.getByText("PRIVATE_SENTINEL")).toHaveCount(0)
     await expect.poll(() => reader.evaluate(node => node.scrollWidth <= node.clientWidth + 1)).toBe(true)
     if (reload) {
-      await reader.getByText("직접 기록한 RPE 4", { exact: true }).scrollIntoViewIfNeeded()
+      await reader.getByText(/^(?:실제 힘든 정도 )?4\/10 · 직접 입력$/u).scrollIntoViewIfNeeded()
       await page.screenshot({ path: testInfo.outputPath("linked-actual-observations.png") })
     }
   }

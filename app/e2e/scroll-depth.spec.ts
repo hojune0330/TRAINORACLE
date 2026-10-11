@@ -284,6 +284,8 @@ test("훈련 후 일지가 빈 상태에서 길지 않다", async ({ page }, tes
   expect(height).toBeLessThanOrEqual(limit.post)
   // 줄었다는 것 자체도 잠근다. 상한만 두면 원래도 통과하는 값이 섞인다.
   expect(height).toBeLessThan(before.post)
+  await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
+  await page.getByRole("button", { name: "실제로 한 운동 수정", exact: true }).click()
   const exerciseToggle = page.getByRole("button", { name: "운동 내용 추가·수정", exact: true })
   await expect(exerciseToggle).toHaveAttribute("aria-expanded", "false")
   await exerciseToggle.click()
@@ -307,22 +309,31 @@ test("하루 마무리가 빈 상태에서 길지 않다", async ({ page }, test
 test("RPE 를 채우고 다음으로 넘어가면 화면이 더 짧아진다", async ({ page }, testInfo) => {
   limitsFor(testInfo.project.name)
   await openEntry(page, /훈련 후/u)
+  await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
+  await page.getByRole("button", { name: "운동 강도 수정", exact: true }).click()
   const emptyHeight = await scrollHeightPx(page)
+  const body = page.locator(".task-flow__body")
+  const emptyContentHeight = (await body.boundingBox())!.height
 
   // 사람이 하는 순서대로 한다. RPE 를 고르고 다음 구획을 건드린다.
   await page.getByRole("button", { name: /^8$/u }).click()
   const afterAnswer = await scrollHeightPx(page)
   // 답을 넣은 것만으로 접히지 않는다. 방금 누른 값을 확인할 시간을 준다.
-  await expect(page.getByRole("button", { name: /RPE · 주관 강도/u })).toHaveAttribute("aria-expanded", "true")
+  const effort = page.getByRole("button", { name: /힘든 정도 · 1~10/u })
+  await expect(effort).toHaveAttribute("aria-expanded", "true")
 
   await page.getByRole("button", { name: "예상 강도 7" }).click()
-  await expect(page.getByRole("button", { name: /RPE · 주관 강도/u })).toHaveAttribute("aria-expanded", "false")
+  await expect(effort).toHaveAttribute("aria-expanded", "false")
+  await expect(effort).toContainText("8/10")
   const filledHeight = await scrollHeightPx(page)
+  const filledContentHeight = (await body.boundingBox())!.height
 
   const limit = FILLED_LIMIT[testInfo.project.name as TouchProject]
   console.log(`[SCROLL] ${testInfo.project.name} post-filled empty=${emptyHeight} answered=${afterAnswer} filled=${filledHeight} limit=${limit}`)
-  // 접힌 뒤가 답을 넣기 전보다 짧아야 한다. 안 그러면 접기가 손해다.
-  expect(filledHeight).toBeLessThan(emptyHeight)
+  // 단계별 화면은 scrollHeight가 뷰포트보다 작아질 수 없다. 실제 내용의
+  // 길이 감소와 스크롤 길이의 비증가를 함께 재고 기존 상한은 그대로 둔다.
+  expect(filledContentHeight).toBeLessThan(emptyContentHeight)
+  expect(filledHeight).toBeLessThanOrEqual(emptyHeight)
   expect(filledHeight).toBeLessThanOrEqual(limit)
 })
 
@@ -338,6 +349,8 @@ test("경기 일지는 나빠지지 않는다", async ({ page }, testInfo) => {
 test("접어도 값은 사라지지 않는다 — 객관 기록을 펼쳤다 접었다 해도 입력이 남는다", async ({ page }, testInfo) => {
   limitsFor(testInfo.project.name)
   await openEntry(page, /훈련 후/u)
+  await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
+  await page.getByRole("button", { name: "운동 강도 수정", exact: true }).click()
   const section = page.getByRole("button", { name: /객관 기록 · \d+개/u })
 
   await section.click()
@@ -352,6 +365,7 @@ test("접어도 값은 사라지지 않는다 — 객관 기록을 펼쳤다 접
 test("몸 그림을 접어도 부위 버튼 10개는 늘 눌린다", async ({ page }, testInfo) => {
   limitsFor(testInfo.project.name)
   await openEntry(page, /하루 마무리/u)
+  await page.getByRole("button", { name: "다음 질문", exact: true }).click()
   const selector = page.locator(".body-pain-selector")
   const bodyButtons = page.getByRole("button", { name: /통증/u })
 
@@ -367,6 +381,7 @@ test("몸 그림을 접어도 부위 버튼 10개는 늘 눌린다", async ({ pa
 test("사람이 접은 구획을 코드가 다시 펼치지 않는다", async ({ page }, testInfo) => {
   limitsFor(testInfo.project.name)
   await openEntry(page, /하루 마무리/u)
+  await page.getByRole("button", { name: "다음 질문", exact: true }).click()
   const selector = page.locator(".body-pain-selector")
 
   // 통증을 고르면 자동으로 펼쳐진다. 거기서 사람이 접는다.

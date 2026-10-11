@@ -56,7 +56,7 @@ test("keeps explicit energy records separate from legacy defaults across home an
   await detailMenu.locator(":scope > summary").click()
   await detailMenu.getByRole("button", { name: "훈련 구성", exact: true }).click()
 
-  const analysis = page.getByRole("region", { name: "에너지 시스템 누적" })
+  const analysis = page.getByRole("region", { name: "훈련 종류별 합계", exact: true })
   await expect(analysis.getByRole("img", { name: /LT 지속 페이스 1회/u })).toBeVisible()
   await expect(analysis.getByRole("img", { name: /MIX 여러 강도 조합 0회/u })).toBeVisible()
   await expect(analysis.locator(".energy-ledger__row--lt").getByText("지속 페이스", { exact: true })).toBeVisible()

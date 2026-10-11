@@ -1339,6 +1339,9 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           </div>
         )}
         <ErrorBoundary key={`overlay-${overlay?.kind ?? "none"}-${accountScopeRevision}`} region onExit={closeOverlay} recoveryTab={tabForChrome(v)}>
+        {/* Loading a reader must not suspend the retained draft's layout effects
+            and dispose its native Back layer underneath the new overlay entry. */}
+        <React.Suspense fallback={<AppLoadingState />}>
         {overlay?.kind === "athlete-records" && <DeferredMobileScreens.AthleteRecords initialPurpose={overlay.initialPurpose}
           backLabel={utilityView === "more" ? "더보기로" : v.tab === "trends" ? "오라클로" : "홈으로"} onBack={closeOverlay} />}
         {overlay?.kind === "pace" && paceRequestRef.current?.token === overlay.token && (
@@ -1429,6 +1432,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
             }
           </div>
         )}
+        </React.Suspense>
         </ErrorBoundary>
       </React.Suspense>
     </AppShellFrame>

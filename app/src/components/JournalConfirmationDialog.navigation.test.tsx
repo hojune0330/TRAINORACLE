@@ -1,5 +1,5 @@
 import React from "react"
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { JournalConfirmationDialog } from "./JournalConfirmationDialog"
 import { beginBrowserPopNavigation, consumeBrowserBackLayer, registerBrowserBackLayer } from "../navigation/browserNavigation"
@@ -41,6 +41,14 @@ function Harness({ cancel, confirm, editor = false }: {
 function popTo(state: unknown): void {
   window.history.replaceState(state, "", window.location.href)
   fireEvent(window, new PopStateEvent("popstate", { state }))
+}
+
+function expectDecorationDrawerOpen(): void {
+  const drawer = screen.getByRole("region", { name: "꾸미기 재료 서랍" })
+  expect(drawer).toBeVisible()
+  expect(drawer).toHaveAttribute("data-open", "true")
+  expect(within(drawer).getByRole("button", { name: "재료 서랍 접기" })).toHaveAttribute("aria-expanded", "true")
+  expect(screen.getByRole("button", { name: "꾸미기 재료 도구" })).toHaveAttribute("aria-pressed", "true")
 }
 
 describe("confirmation native navigation", () => {
@@ -110,7 +118,7 @@ describe("confirmation native navigation", () => {
     expect(confirm).not.toHaveBeenCalled()
     expect(parentLeave).not.toHaveBeenCalled()
     expect(screen.queryByRole("alertdialog")).toBeNull()
-    expect(screen.getByRole("button", { name: "재료 서랍 숨기기" })).toBeVisible()
+    expectDecorationDrawerOpen()
     expect(window.history.state.journalDecorationEditor).toBe(parentState.journalDecorationEditor)
   })
 
@@ -125,7 +133,7 @@ describe("confirmation native navigation", () => {
     fireEvent.keyDown(confirmButton, { key: "Escape" })
     expect(cancel).toHaveBeenCalledOnce()
     expect(screen.queryByRole("alertdialog")).toBeNull()
-    expect(screen.getByRole("button", { name: "재료 서랍 숨기기" })).toBeVisible()
+    expectDecorationDrawerOpen()
     expect(window.history.back).toHaveBeenCalledOnce()
   })
 

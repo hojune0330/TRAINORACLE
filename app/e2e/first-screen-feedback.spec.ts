@@ -12,10 +12,11 @@ test("explains the first free beta places without implying that account sync is 
   // Given: a new athlete is using the public local-journal app.
   await page.goto("/")
   await page.getByRole("button", { name: "더보기" }).click()
-  await page.getByRole("button", { name: "배우기·꾸미기" }).click()
+  await expect(page.getByRole("heading", { name: "훈련 배우기", exact: true })).toBeVisible()
 
   // When: the athlete opens the plain-language FAQ and expands the free-beta answer.
   await page.getByRole("button", { name: "훈련 용어집·도움말" }).click()
+  await page.getByRole("button", { name: "앱 이용 안내", exact: true }).click()
   await expect(page.getByTestId("beta-price-notice")).toHaveText(
     "TrainOracle 베타는 현재 무료입니다. 서비스 운영을 위해 나중에 월 구독이나 광고가 포함된 선택 상품이 생길 수 있습니다. 가격이나 무료 기능이 바뀌기 전에는 앱에서 먼저 알려드립니다.",
   )
@@ -29,7 +30,9 @@ test("explains the first free beta places without implying that account sync is 
   await expect(page.getByText(/오늘의 일지, 달력과 9.5일 보기, 지난 일지, 백업·복원, 꾸미기를 사용할 수 있어요/u)).toBeVisible()
   await page.getByText("아직 준비 중인 기능은 무엇인가요?").click()
   await expect(page.getByText(/계정 동기화, 코치 연결, 사용자가 확인하지 않은 자동 계획 변경은 아직 열지 않았어요/u)).toBeVisible()
-  await expect(page.getByText(/문의 게시판은 지금 사용할 수 있어요/u)).toBeVisible()
+  await expect(page.getByRole("region", { name: "궁금한 점을 쉽게 풀어드려요", exact: true })
+    .getByText(/문의 게시판은 지금 준비 중이에요. 열리면 앱 안에서 알려드릴게요./u)).toBeVisible()
+  await expect(page.getByText(/문의 게시판은 지금 사용할 수 있어요/u)).toHaveCount(0)
 })
 
 test("keeps the welcome home clear and usable on narrow phones", async ({ page }, testInfo) => {
@@ -66,7 +69,10 @@ test("keeps the welcome home clear and usable on narrow phones", async ({ page }
   await expect(page.getByRole("heading", { name: "오늘 운동은 어떻게 됐나요?" })).toBeVisible()
   await expect(page.getByRole("button", { name: "← 뒤로" })).toBeInViewport()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
-  // the chooser is reached via the "기록하기" tab bar button (§3-3)
+  // Active recording hides the main tabs; leave the blank task before reopening the chooser.
+  await expect(page.getByRole("navigation", { name: "주 탭" })).toHaveCount(0)
+  await page.getByRole("button", { name: "← 뒤로", exact: true }).click()
+  await expect(page.getByRole("button", { name: "오늘 기록 남기기", exact: true })).toBeVisible()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
   const heading = page.getByRole("heading", { name: "어떤 일지를 쓰세요?" })
   await expect(heading).toBeFocused()

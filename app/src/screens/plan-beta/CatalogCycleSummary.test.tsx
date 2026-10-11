@@ -25,7 +25,8 @@ describe("next-cycle explanation", () => {
     expect(detail.open).toBe(true)
     expect(screen.getByText("2 × 10min @ RPE 6–7 · r60s Jog", { exact: false })).toBeVisible()
     expect(screen.getByText("2 × 8min @ RPE 6–7 · r60s Jog", { exact: false })).toBeVisible()
-    expect(screen.getByText(/같은 목적에서 계획보다 높게 기록한 RPE 2회/)).toBeVisible()
+    expect(screen.getByText("지난 훈련의 힘든 정도 9/10 · 직접 입력")).toBeVisible()
+    expect(screen.getByText(/같은 훈련 목적에서 계획보다 힘들었다고 남긴 기록 2회/)).toBeVisible()
     expect(screen.getByText(/2026-10-02/)).toHaveTextContent("오후")
   })
 

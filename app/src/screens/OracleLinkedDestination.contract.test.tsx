@@ -13,6 +13,7 @@ import { splitAccountPlanCollection } from "../domain/account/account-plan-colle
 import { createAccountPlanCollectionClient, type AccountPlanCollectionClient } from "../domain/account/account-plan-collection-api"
 import { accountPlansEnabled } from "../domain/account/account-plan-service"
 import { PLAN_BETA_STORAGE_KEY } from "../domain/plan-beta-store"
+import { BROWSER_BACK_LAYER_HISTORY_KEY, hasPendingBrowserBackLayer } from "../navigation/browserNavigation"
 import {
   accountAthleteRecordsEnabled, loadAccountAthleteRecords, readAccountAthleteRecordsState, addAccountAthleteRecord,
   type AccountAthleteRecordsState, type AddAccountAthleteRecordResult,
@@ -44,6 +45,7 @@ beforeEach(() => {
   calendar.override = null
   vi.mocked(accountPlansEnabled).mockReturnValue(false)
   window.localStorage.clear(); window.sessionStorage.clear(); setActiveLocalAccount(null)
+  window.history.replaceState({ syntheticOracleOrigin: true }, "", window.location.href)
   vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-10-04T03:00:00.000Z"))
   vi.mocked(accountAthleteRecordsEnabled).mockReturnValue(false)
   vi.mocked(loadAccountAthleteRecords).mockImplementation(async () => accountState())
@@ -53,7 +55,14 @@ beforeEach(() => {
   vi.spyOn(HTMLDialogElement.prototype, "close").mockImplementation(function (this: HTMLDialogElement) { this.removeAttribute("open") })
   vi.stubGlobal("fetch", vi.fn(async () => { throw Error("Linked destination tests must not access the network") }))
 })
-afterEach(() => { cleanup(); setActiveLocalAccount(null); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
+afterEach(async () => {
+  cleanup()
+  // Disposing a task flow queues native Back. Finish its owned sentinel before
+  // the next fixture opens a reader above an ordinary parent history entry.
+  await act(async () => { await Promise.resolve() })
+  await waitFor(() => expect(hasPendingBrowserBackLayer()).toBe(false))
+  setActiveLocalAccount(null); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals()
+})
 function enterRecord() {
   expect(screen.getByRole("combobox", { name: "종목 거리" })).toHaveValue("5000")
   expect(screen.queryByRole("textbox", { name: "기록 분" })).toBeNull()
@@ -76,7 +85,11 @@ it("explicitly limits embedding to supported screens instead of treating other d
 
 it("reuses the existing method reader and its local bookmark without closing or navigating the parent", () => {
   const onBack = vi.fn(), history = vi.spyOn(window.history, "pushState")
+  const parentHistory = window.history.state
   render(<OracleLinkedDestination destination="METHODS" onBack={onBack} today={today} />)
+  expect(history).toHaveBeenCalledExactlyOnceWith({ ...parentHistory,
+    [BROWSER_BACK_LAYER_HISTORY_KEY]: expect.stringMatching(/^task-flow-/u),
+  }, "", window.location.href)
   expect(screen.getByRole("heading", { name: "어떤 훈련이 궁금한가요?" })).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: /크루즈 인터벌은 지속주와/ }))
   expect(screen.getByRole("heading", { name: "따라 하기 전에" })).toBeVisible()
@@ -89,7 +102,7 @@ it("reuses the existing method reader and its local bookmark without closing or 
   expect(onBack).not.toHaveBeenCalled()
   fireEvent.click(screen.getByRole("button", { name: "이전 화면" }))
   expect(onBack).toHaveBeenCalledTimes(1)
-  expect(history).not.toHaveBeenCalled()
+  expect(history).toHaveBeenCalledTimes(1)
 })
 
 it("keeps a guest record save inside the existing screen until explicit return", async () => {
@@ -233,8 +246,13 @@ it.each(["METHODS", "RECORDS", "JOURNAL", "CALENDAR", "PLAN_REVIEW"] as const)("
   expect(screen.getByRole("dialog", { name: "내가 읽던 풀이" })).toBe(origin)
   expect(within(origin).getByRole("heading", { name: "기록에서 확인한 내용" })).toBeVisible()
   expect(body.scrollTop).toBe(173)
-  expect(window.history.state).toEqual(originHistory)
+  await waitFor(() => {
+    expect(hasPendingBrowserBackLayer()).toBe(false)
+    expect(window.history.state).toEqual(originHistory)
+  })
   expect(onOriginClose).not.toHaveBeenCalled()
+  window.history.back()
+  await waitFor(() => expect(onOriginClose).toHaveBeenCalledTimes(1))
 })
 
 function seedJournal(date = today) {

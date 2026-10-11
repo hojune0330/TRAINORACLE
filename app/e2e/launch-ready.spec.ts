@@ -140,15 +140,16 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   const candidateQuality = page.locator(".plan-candidate").first()
     .locator('.plan-day-card__session[data-session-slot="PM"][data-flow-kind="main"]').first()
   const candidateSteps = candidateQuality.getByRole("list", { name: "훈련 실행 순서" })
-  await expect(candidateSteps.locator("li > strong")).toHaveText(["준비", "본운동", "정리"])
+  await expect(candidateSteps.locator("li > strong")).toHaveText(["총 시간", "준비", "본운동", "정리"])
   const selectedTitle = await candidateQuality.locator(".plan-session-content > strong").innerText()
   const selectedNotation = await candidateQuality.locator(".plan-session-metric").innerText()
   const selectedSteps = await candidateSteps.locator("li > span").allTextContents()
   // Preserve the selected work and recovery details across activation and reload.
   expect(selectedNotation).toMatch(/@ RPE/u)
-  expect(selectedSteps[1]).toMatch(/\d+\s*×\s*\d+(?:\.\d+)?분/u)
-  expect(selectedSteps[1]).toMatch(/힘든 정도 7[–~]8\/10/u)
-  expect(selectedSteps[1]).toMatch(/반복 사이 \d+초 조깅/u)
+  expect(selectedSteps[0]).toBe("준비·회복·정리 포함 40분 20초")
+  expect(selectedSteps[2]).toMatch(/\d+\s*×\s*\d+(?:\.\d+)?분/u)
+  expect(selectedSteps[2]).toMatch(/힘든 정도 7[–~]8\/10/u)
+  expect(selectedSteps[2]).toMatch(/반복 사이 \d+초 조깅/u)
 
   // When
   await page.getByRole("button", { name: "계획 A로 시작", exact: true }).click()
@@ -163,7 +164,7 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   await expect(qualitySession.locator(".plan-session-metric")).toHaveText(selectedNotation)
   const qualitySteps = qualitySession.getByRole("list", { name: "훈련 실행 순서" })
   await expect(qualitySteps).toBeVisible()
-  await expect(qualitySteps.locator("li > strong")).toHaveText(["준비", "본운동", "정리"])
+  await expect(qualitySteps.locator("li > strong")).toHaveText(["총 시간", "준비", "본운동", "정리"])
   await expect(qualitySteps.locator("li > span")).toHaveText(selectedSteps)
   await expect(qualitySession).toContainText("오후")
   await expect.poll(async () => page.evaluate(() => {
@@ -200,7 +201,7 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   await expect(reloadedQualitySession.locator(".plan-session-metric")).toHaveText(selectedNotation)
   const reloadedSteps = reloadedQualitySession.getByRole("list", { name: "훈련 실행 순서" })
   await expect(reloadedSteps).toBeVisible()
-  await expect(reloadedSteps.locator("li > strong")).toHaveText(["준비", "본운동", "정리"])
+  await expect(reloadedSteps.locator("li > strong")).toHaveText(["총 시간", "준비", "본운동", "정리"])
   await expect(reloadedSteps.locator("li > span")).toHaveText(selectedSteps)
   await expect.poll(() => page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(savedPlan)
 })
