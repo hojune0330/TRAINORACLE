@@ -21,6 +21,9 @@ const sample = i => 'lg1_' + i.toString(16).padStart(64,'0');
 const owner = async (sql,params=[]) => { await db.exec('reset role'); return db.query(sql,params); };
 const ownerExec = async sql => { await db.exec('reset role'); return db.exec(sql); };
 function definition(text,name) {
+  // Checkout line endings must not hide the exact SQL mutation target.
+  // The migrations themselves are still replayed unchanged below.
+  text=text.replace(/\r\n?/gu,'\n');
   const start=text.indexOf(`create or replace function public.${name}(`), end=text.indexOf('$$;',start);
   assert.ok(start>=0 && end>start,`Maintained function ${name} must exist`);
   return text.slice(start,end+3);
