@@ -161,7 +161,15 @@ describe("native browser layer history", () => {
     await Promise.resolve()
     expect(window.history.back).toHaveBeenCalledOnce()
     expect(popTo(outerState)).toBe(true)
-    // A reader can own a separate entry above this same stale flow marker.
+    // The completed outer sentinel must drain before a new reader can open.
+    expect(navigation.hasPendingBrowserBackLayer()).toBe(true)
+    expect(window.history.back).toHaveBeenCalledTimes(2)
+    expect(popTo({ parent: "origin" })).toBe(true)
+    expect(navigation.hasPendingBrowserBackLayer()).toBe(false)
+    // Forward can revisit that stale marker without reopening the completed
+    // layer. A reader may now own a separate entry above the same marker.
+    expect(popTo(outerState)).toBe(true)
+    window.history.pushState({ ...outerState, trainoracleReader: "separate-reader" }, "", window.location.href)
     expect(popTo(outerState)).toBe(false)
     expect(outerClose).not.toHaveBeenCalled()
     expect(innerClose).not.toHaveBeenCalled()
