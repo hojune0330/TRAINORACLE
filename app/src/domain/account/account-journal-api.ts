@@ -5,6 +5,7 @@ import { accountDeletionBoundaryState, onAccountDeletionBoundaryChange } from ".
 import { activeLocalAccount } from "./local-journal-ownership"
 import { isAccountStoragePaused } from "./storage-consent"
 import { currentStorageConsentRevision, pinStorageOperationRevision } from "./storage-consent-revision"
+import { LOCAL_COLLECTION_SEND_GUARD_HEADER, registerCollectionSendGuard } from "./consent-checked-fetch"
 import { accountJournalDraftSchema } from "./account-journal-draft-buffer"
 import { isAccountJournalWriteRejection, type AccountJournalWriteRejection } from "./account-write-rejection"
 import type { AccountJournalDraft } from "./account-journal-draft-buffer"
@@ -160,6 +161,8 @@ async function executeAccountDocument<T>(
   if (!current()) return obsolete()
   const storageRevision = "operationId" in request
     ? pinStorageOperationRevision(ownerId, request.operationId, 0) : currentStorageConsentRevision(ownerId)
+  let sendGuard: ReturnType<typeof registerCollectionSendGuard> | undefined
+  const releaseSendGuard = () => sendGuard?.release()
   try {
     const client = await dependencies.client()
     if (!current()) return obsolete()
@@ -173,9 +176,17 @@ async function executeAccountDocument<T>(
     const journalCall = Object.is(schema, accountJournalRecordSchema) || ["correctImportedObservation", "confirmComparisonRelation", "releaseComparisonRelation"].includes(request.action)
       || ((request.action === "list" || request.action === "history") && request.collection === "JOURNAL")
       || (request.action === "save" && (request.document as { kind?: unknown })?.kind === "JOURNAL")
+    // Keep this INDEX's fresh/date decision through the SDK auth reread and
+    // asynchronous consent fetch. Do not change unrelated journal requests.
+    if (request.action === "save" && (request.document as { kind?: unknown })?.kind === "GOAL_PROGRAM_INDEX") {
+      sendGuard = registerCollectionSendGuard(current)
+      signal.addEventListener("abort", releaseSendGuard, { once: true })
+      if (!current()) return obsolete()
+    }
     const { data, error } = await client.functions.invoke("account-journal", {
       body: journalCall ? { ...request, supportedJournalVersions: [2, 3], supportsExerciseLogV1: true } : request,
-      headers: { Authorization: `Bearer ${token}`, "x-trainoracle-storage-revision": String(storageRevision) },
+      headers: { Authorization: `Bearer ${token}`, "x-trainoracle-storage-revision": String(storageRevision),
+        ...(sendGuard ? { [LOCAL_COLLECTION_SEND_GUARD_HEADER]: sendGuard.nonce } : {}) },
       signal,
     })
     let responseData: unknown = data
@@ -250,4 +261,5 @@ async function executeAccountDocument<T>(
         && (result.kind !== "saved" || result.revision === request.expectedRevision + 1)
     return correctKind ? { ok: true, data: result } : { ok: false, code: "INVALID_RESPONSE" }
   } catch { return current() ? { ok: false, code: "UNAVAILABLE" } : obsolete() }
+  finally { signal.removeEventListener("abort", releaseSendGuard); releaseSendGuard() }
 }

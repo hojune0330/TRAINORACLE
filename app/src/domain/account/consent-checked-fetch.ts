@@ -4,7 +4,7 @@ import { isStorageTransmissionHeld } from "./storage-transmission-hold"
 import { currentStorageConsentRevision } from "./storage-consent-revision"
 
 // SDK timeout signals may be replaced. This browser-only marker keeps the
-// review attached to one commit without changing the shared SDK client.
+// review attached to one commit/index save without changing the shared SDK client.
 export const LOCAL_COLLECTION_SEND_GUARD_HEADER = "x-trainoracle-local-send-guard"
 const collectionSendGuards = new Map<string, () => boolean>()
 export function registerCollectionSendGuard(beforeSend: () => boolean): { nonce: string; release: () => void } {
@@ -81,13 +81,17 @@ export function createConsentCheckedFetch(serviceUrl: string, transport: typeof 
     if (guarded) {
       headers.delete(LOCAL_COLLECTION_SEND_GUARD_HEADER)
       init = { ...init, headers }
-      // Internal markers are accepted only for this service's JSON commit.
+      // Internal markers are accepted only for this service's JSON commit or
+      // goal INDEX save. BODY/progress/JOURNAL writes keep their existing path.
       // Never forward one to auth, rights, a different function or origin.
-      let commit = false
-      try { commit = typeof init.body === "string" && JSON.parse(init.body)?.action === "commit" } catch { /* fail closed */ }
+      let permitted = false
+      try {
+        const body = typeof init.body === "string" ? JSON.parse(init.body) : null
+        permitted = url.pathname === "/functions/v1/account-plan-collection" && body?.action === "commit"
+          || url.pathname === "/functions/v1/account-journal" && body?.action === "save" && body.document?.kind === "GOAL_PROGRAM_INDEX"
+      } catch { /* fail closed */ }
       const method = (init.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase()
-      if (url.origin !== service.origin || url.pathname !== "/functions/v1/account-plan-collection"
-        || method !== "POST" || !commit || !reviewCurrent()) return denied()
+      if (url.origin !== service.origin || method !== "POST" || !permitted || !reviewCurrent()) return denied()
     }
     const path = url.pathname.replace(/^\/rest\/v1\//u, "")
     const comparison = url.pathname === "/functions/v1/oracle-profile-comparison"

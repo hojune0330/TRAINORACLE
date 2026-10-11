@@ -117,6 +117,57 @@ describe("request-local collection send review", () => {
   })
 })
 
+describe("request-local goal index send review", () => {
+  const journalPath = origin + "/functions/v1/account-journal"
+  const indexBody = JSON.stringify({ action: "save", document: { kind: "GOAL_PROGRAM_INDEX", data: { synthetic: true } } })
+  const guardedInit = (nonce: string): RequestInit => ({ ...init,
+    headers: { ...init.headers, [LOCAL_COLLECTION_SEND_GUARD_HEADER]: nonce }, body: indexBody,
+  })
+  it.each([
+    { path: "https://elsewhere.invalid/functions/v1/account-journal", method: "POST", body: indexBody },
+    { path: journalPath, method: "GET", body: indexBody },
+    { path: journalPath, method: "POST", body: '{"action":"read","document":{"kind":"GOAL_PROGRAM_INDEX"}}' },
+    { path: journalPath, method: "POST", body: '{"action":"save","document":{"kind":"GOAL_PROGRAM_BODY"}}' },
+    { path: journalPath, method: "POST", body: '{"action":"save","document":{"kind":"GOAL_PROGRAM_PROGRESS"}}' },
+    { path: journalPath, method: "POST", body: '{"action":"save","document":{"kind":"JOURNAL"}}' },
+  ])("rejects a goal marker outside the exact same-origin index save: %j", async value => {
+    const registration = registerCollectionSendGuard(() => true), transport = vi.fn<typeof fetch>()
+    try {
+      expect((await createConsentCheckedFetch(origin, transport)(value.path, { ...guardedInit(registration.nonce), method: value.method, body: value.body })).status).toBe(403)
+      expect(transport).not.toHaveBeenCalled()
+    } finally { registration.release() }
+  })
+  it.each(["consent", "json"])("holds a goal index when its request review expires during %s", async boundary => {
+    let fresh = true, release!: () => void, reached!: () => void
+    const registration = registerCollectionSendGuard(() => fresh)
+    const held = new Promise<void>(resolve => { release = resolve }), started = new Promise<void>(resolve => { reached = resolve })
+    const transport = vi.fn<typeof fetch>(async (_url, options) => {
+      expect(new Headers(options?.headers).has(LOCAL_COLLECTION_SEND_GUARD_HEADER)).toBe(false)
+      if (boundary === "consent") { reached(); await held; return new Response(JSON.stringify(receipt)) }
+      const checked = new Response(JSON.stringify(receipt))
+      vi.spyOn(checked, "json").mockImplementation(async () => { reached(); await held; return receipt })
+      return checked
+    })
+    try {
+      const sending = createConsentCheckedFetch(origin, transport)(journalPath, guardedInit(registration.nonce))
+      await started; fresh = false; release()
+      expect((await sending).status).toBe(403)
+      expect(transport).toHaveBeenCalledTimes(1)
+    } finally { release?.(); registration.release() }
+  })
+  it("strips a valid goal marker and preserves the exact index save body", async () => {
+    const registration = registerCollectionSendGuard(() => true)
+    const transport = vi.fn<typeof fetch>().mockResolvedValueOnce(new Response(JSON.stringify(receipt)))
+      .mockResolvedValueOnce(new Response("{}"))
+    try {
+      expect((await createConsentCheckedFetch(origin, transport)(journalPath, guardedInit(registration.nonce))).status).toBe(200)
+      expect(transport).toHaveBeenCalledTimes(2)
+      expect(transport.mock.calls[1]?.[1]?.body).toBe(indexBody)
+      for (const [, options] of transport.mock.calls) expect(new Headers(options?.headers).has(LOCAL_COLLECTION_SEND_GUARD_HEADER)).toBe(false)
+    } finally { registration.release() }
+  })
+})
+
 describe("consent body transport boundary",()=>{
   it("does not upgrade a pre-withdrawal new operation on a later regrant or page reload",async()=>{
     const operation="synthetic-new-operation"
