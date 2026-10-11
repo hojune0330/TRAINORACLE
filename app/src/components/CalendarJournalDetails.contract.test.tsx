@@ -91,7 +91,8 @@ describe("calendar structured actual records", () => {
     render(<CalendarJournalDetails date={date} entries={[session]} onOpenDay={open} />)
     expect(open).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole("button", { name: "일지·메모 원문 열기" }))
-    expect(open).toHaveBeenCalledExactlyOnceWith(date)
+    expect(open).toHaveBeenCalledExactlyOnceWith(date, session.id,
+      expect.objectContaining({ date, entryId: session.id, scroll: 0 }))
   })
 
   it("keeps intervals and weights as components, without inventing distance or total load", () => {

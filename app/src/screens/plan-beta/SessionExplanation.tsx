@@ -132,9 +132,9 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
         <div><small>{session.day}일차 · {session.slot === "AM" ? "오전" : "오후"}</small><h2 id={`${id}-title`}>{sessionLabel(session)}</h2></div>
         <label className="session-explanation__expert"><input type="checkbox" checked={expert} onChange={(event) => setExpert(event.target.checked)} />전문 보기</label>
       </header>
-      <div className="session-explanation__tabs" role="tablist" aria-label="훈련 상세 구분">
+      <div className="session-explanation__tabs app-choice-group" role="tablist" aria-label="훈련 상세 구분">
         {TABS.map((item, index) => (
-          <button key={item} ref={(node) => { tabs.current[index] = node }} type="button" role="tab"
+          <button className="app-choice-control" key={item} ref={(node) => { tabs.current[index] = node }} type="button" role="tab"
             id={`${id}-tab-${index}`} aria-label={item} aria-controls={`${id}-panel`} aria-selected={tab === item} tabIndex={tab === item ? 0 : -1}
             onClick={() => selectTab(item)} onKeyDown={(event) => {
               const next = event.key === "ArrowRight" ? (index + 1) % 3 : event.key === "ArrowLeft" ? (index + 2) % 3
@@ -164,7 +164,7 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
                   : "저장된 처방을 순서도로 보여드려요. 이전 계획에 새 훈련을 추가하지 않아요."}</p>
               )}
             </section>
-            {session.prescription.kind === "RPE_TIME_RANGE" && !catalogWorkout && session.role === "QUALITY" && <p className="session-explanation__notice">상세 반복·구간별 시간은 아직 정해지지 않은 RPE 안내예요. 총 시간을 고강도 본운동 시간으로 사용하지 마세요.</p>}
+            {session.prescription.kind === "RPE_TIME_RANGE" && !catalogWorkout && session.role === "QUALITY" && <p className="session-explanation__notice">표시한 시간은 준비·회복·정리를 포함한 전체 시간이에요. 전부 빠르게 달리는 시간이 아니에요.</p>}
             <button className="session-explanation__next" type="button" onClick={() => selectTab("이유·근거")}>이렇게 구성한 이유<ChevronRight size={18} aria-hidden="true" /></button>
         </div>
         <div className="session-explanation__tab-content" hidden={tab !== "이유·근거"}>
@@ -223,7 +223,7 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
                 : evidence.historyReadIncomplete && rows.length === 0 ? <p>이전 기록의 연결을 다시 확인해 주세요.</p>
                 : methodObservation !== null ? <PlanMethodObservationDetails observation={methodObservation} comparison={rows[0] === undefined ? undefined : COMPARISON_LABELS[rows[0].comparison]} />
                 : rows.length === 0 ? <p>이 훈련과 연결된 일지가 아직 없어요. 미기록을 0이나 훈련 실패로 계산하지 않아요.</p> : rows.map((row) => (
-              <div key={row.plannedSessionId}><p>{row.date} · {row.slot === "AM" ? "오전" : "오후"}</p><p>{row.actualRpe === null ? "비교할 수 있는 RPE 미기록" : `직접 기록한 RPE ${row.actualRpe}`}</p><p>계획 RPE와 비교: {COMPARISON_LABELS[row.comparison]}</p></div>
+              <div key={row.plannedSessionId}><p>{row.date} · {row.slot === "AM" ? "오전" : "오후"}</p><p>{row.actualRpe === null ? "힘든 정도 미기록" : `실제 힘든 정도 ${row.actualRpe}/10 · 직접 입력`}</p><p>계획한 힘든 정도와 비교: {COMPARISON_LABELS[row.comparison]}</p></div>
             ))}</section>
             <section><h3>관찰할 변화</h3><p>{explanation.profile.observationGuide}</p><p>계획의 자극과 실제 수행은 다를 수 있어요. 한 번의 기록이나 특정 훈련 횟수만으로 능력 부족·향상 원인·다음 경기 성적을 판단하지 않아요.</p><p>다음 주기에도 같은 방법을 선택할 수 있어요. 기록이 쌓였다는 이유만으로 강도·양·횟수를 자동으로 올리지 않아요.</p></section>
         </div>

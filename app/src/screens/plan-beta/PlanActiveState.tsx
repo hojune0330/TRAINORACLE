@@ -58,6 +58,7 @@ export function PlanActiveState({
   onPrepareNextFrame,
   onWritePlannedSessionLog,
   onManagePaceRecords,
+  onEditingChange,
   returnToSession,
 }: {
   readonly state: PlanBetaState
@@ -68,6 +69,8 @@ export function PlanActiveState({
   readonly onPrepareNextFrame: (predecessor: PlanBetaStateV3) => void
   readonly onWritePlannedSessionLog?: (draft: PlannedSessionLogDraft) => void
   readonly onManagePaceRecords?: () => void
+  /** Presentation only: hide unrelated tools while the existing editor is open. */
+  readonly onEditingChange?: (editing: boolean) => void
   readonly returnToSession?: PlannedSessionLogDraft["link"]
 }) {
   const [error, setError] = React.useState<string | null>(null)
@@ -76,6 +79,15 @@ export function PlanActiveState({
   const [executionMessage, setExecutionMessage] = React.useState<string | null>(null)
   const [executionBlocked, setExecutionBlocked] = React.useState(false)
   const [editing, setEditing] = React.useState<ActivePlanEditIntent | "hub" | null>(null)
+  const [creationCelebrationConsumed, setCreationCelebrationConsumed] = React.useState(false)
+  const consumeCreationCelebration = React.useCallback(() => setCreationCelebrationConsumed(true), [])
+  React.useEffect(() => {
+    if (!celebrateOnMount) setCreationCelebrationConsumed(false)
+  }, [celebrateOnMount])
+  const editingChangeRef = React.useRef(onEditingChange)
+  editingChangeRef.current = onEditingChange
+  React.useLayoutEffect(() => { editingChangeRef.current?.(editing !== null) }, [editing])
+  React.useLayoutEffect(() => () => editingChangeRef.current?.(false), [])
   const [editTarget, setEditTarget] = React.useState<{ day: number; slot: "AM" | "PM" } | undefined>()
   const editHeading = React.useRef<HTMLDivElement>(null)
   React.useLayoutEffect(() => {
@@ -288,7 +300,8 @@ export function PlanActiveState({
         state={state}
         cloudPersistence={cloudPersistence}
         onRetryCloudBackup={onRetryCloudBackup}
-        showCreatedCelebration={celebrateOnMount}
+        showCreatedCelebration={celebrateOnMount && !creationCelebrationConsumed}
+        onCreatedCelebrationConsumed={consumeCreationCelebration}
         onProgress={saveProgress}
         onNextFrame={() => void startNextFrame()}
         onActivateNextFrame={(nextCurrentCheck) => void activateNextFrame(nextCurrentCheck)}

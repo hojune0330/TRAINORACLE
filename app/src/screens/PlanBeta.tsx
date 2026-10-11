@@ -79,6 +79,7 @@ import type { PlannedSessionLogDraft } from "../domain/planned-session-link"
 import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
 import { useTaskFlowBack } from "../hooks/useTaskFlowBack"
 import { useOrderedStepMotion } from "../hooks/useOrderedStepMotion"
+import { useAutoAdvanceActivation } from "../hooks/useAutoAdvanceActivation"
 import { resolvePlanMethodChange } from "../domain/plan-method-selection"
 import { todayISO } from "../domain/journal-store"
 import { localJournalScopeGeneration, onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
@@ -441,6 +442,7 @@ function LegacyPlanBeta({
   const [instantEntry, setInstantEntry] = React.useState<InstantPlanEntry | undefined>()
   const [instantEntryDirty, setInstantEntryDirty] = React.useState(false)
   const [instantEntryError, setInstantEntryError] = React.useState<string | null>(null)
+  const [activePlanEditing, setActivePlanEditing] = React.useState(false)
   const lastStorageRead = React.useRef(storageRead)
   React.useEffect(() => {
     if (lastStorageRead.current === storageRead) return
@@ -549,6 +551,8 @@ function LegacyPlanBeta({
   >({ kind: "fallback", code: "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR" })
   const intakeQuestionRef = React.useRef<HTMLHeadingElement>(null)
   const intakeMotion = useOrderedStepMotion(step, INTAKE_MOTION_ORDER)
+  // PlanIntake remounts per step; retain the click-series boundary in this owner.
+  const answerActivation = useAutoAdvanceActivation(step)
   const viewKey = recordsOpen
     ? "records"
     : notationReaderOpen
@@ -594,6 +598,10 @@ function LegacyPlanBeta({
     const headingId = viewKey === "candidates" ? "plan-candidates-title"
       : viewKey === "active" ? "active-plan-title" : null
     if (headingId) document.getElementById(headingId)?.focus({ preventScroll: true })
+    else if (viewKey === "blocked" || viewKey === "race-preview") {
+      const heading = document.querySelector<HTMLElement>(".plan-blocked h1, .plan-race-preview h1")
+      if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }) }
+    }
   }, [viewKey])
   useActiveContentScroll(
     viewKey.startsWith("intake-") ? viewKey : null,
@@ -926,6 +934,7 @@ function LegacyPlanBeta({
       <React.Suspense fallback={<p role="status" style={{ padding: 24 }}>저장된 훈련 계획을 열고 있어요.</p>}>
       <PlanActiveState
         state={stored}
+        onEditingChange={setActivePlanEditing}
         onManagePaceRecords={() => setRecordsOpen(true)}
         cloudPersistence={cloudPersistence}
         onRetryCloudBackup={retryCloudBackup}
@@ -982,7 +991,7 @@ function LegacyPlanBeta({
           <button type="button" onClick={onAdjustedStored}>현재 계획 다시 확인</button>
         </div>}
       </section>}
-      {planTools}
+      {!activePlanEditing && planTools}
       </>
     )
   }
@@ -1230,6 +1239,7 @@ function LegacyPlanBeta({
         key={step}
         step={step}
         motion={intakeMotion}
+        answerActivation={answerActivation}
         questionRef={intakeQuestionRef}
         draft={draft}
         refining={refining}

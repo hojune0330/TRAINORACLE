@@ -105,6 +105,25 @@ describe("active plan first-view overview", () => {
     expect(screen.queryByText("훈련 계획이 완성됐어요")).not.toBeInTheDocument()
   })
 
+  it("consumes the creation signal while keeping its visible toast on the original timer", () => {
+    vi.useFakeTimers()
+    const onCreatedCelebrationConsumed = vi.fn()
+    const state = overviewState()
+    const view = render(<ActivePlan state={state} showCreatedCelebration
+      onCreatedCelebrationConsumed={onCreatedCelebrationConsumed} {...callbacks} />)
+
+    expect(screen.getByText("훈련 계획이 완성됐어요")).toBeVisible()
+    expect(onCreatedCelebrationConsumed).toHaveBeenCalledOnce()
+    view.rerender(<ActivePlan state={state} showCreatedCelebration={false}
+      onCreatedCelebrationConsumed={onCreatedCelebrationConsumed} {...callbacks} />)
+
+    expect(screen.getByText("훈련 계획이 완성됐어요")).toBeVisible()
+    act(() => vi.advanceTimersByTime(2_999))
+    expect(screen.getByText("훈련 계획이 완성됐어요")).toBeVisible()
+    act(() => vi.advanceTimersByTime(1))
+    expect(screen.queryByText("훈련 계획이 완성됐어요")).not.toBeInTheDocument()
+  })
+
   it("does not claim two workouts per day just because the setting allows them", async () => {
     const state = overviewState()
     render(<ActivePlan state={{ ...state, activePlan: { ...state.activePlan, sessions: [state.activePlan.sessions[0]!] } }} {...callbacks} />)

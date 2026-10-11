@@ -51,6 +51,8 @@ import { PlanPrescriptionBasis } from "./PlanPrescriptionBasis"
 import type { CatalogCycleSuccessorSummary } from "../../domain/catalog-cycle-successor"
 import { InitialMainConditions } from "./InitialMainConditions"
 import type { InitialMainConditionsProps } from "./InitialMainConditions"
+import { AppHeading } from "../../components/AppHeading"
+import { projectInstantExecutionSteps } from "./instant-plan-today"
 
 export type InitialMainCandidateReview = Omit<InitialMainConditionsProps, "disabled" | "onPendingChange"> & {
   readonly applying: boolean
@@ -232,6 +234,9 @@ export function PlanCandidates({
   const visibleDefaultSessions = defaultCandidate.sessions.filter(session => session.day >= 1
     && session.day <= Math.ceil(defaultCandidate.frame.projectionLengthDays ?? defaultCandidate.frame.lengthDays))
   const recommendation = projectInstantRecommendation(defaultCandidate, startDate)
+  const firstWorkout = [...visibleDefaultSessions].sort((a, b) => a.day - b.day || a.slot.localeCompare(b.slot))
+    .find(session => session.role !== "REST")
+  const firstWorkoutSteps = firstWorkout ? projectInstantExecutionSteps(firstWorkout) : []
   const instantAdjustment = recommendation === null ? undefined : adjustmentActions[recommendation.id]
   const conditionContext = JSON.stringify([intake, startDate, accountScope])
   const conditionReview = React.useMemo(() => !initialMainActive && onCatalogChange && instantAdjustment === undefined && reviewedConditionContext !== conditionContext && unreviewedConditions.length === 0
@@ -274,6 +279,16 @@ export function PlanCandidates({
       )}
       {recommendation && <InstantPlanRecommendationView recommendation={recommendation}
         showSupportingDetails={false}
+        executionSummary={<section className="plan-first-workout" aria-label="첫 훈련 구성">
+          <AppHeading as="h3" variant="section">첫 훈련</AppHeading>
+          <p>{recommendation.firstSessionLabel}</p>
+          {firstWorkout && <dl className="plan-first-workout__facts">
+            {firstWorkoutSteps.filter(step => step.role === "TOTAL_DURATION" || step.role === "MAIN" || step.role === "RECOVERY" || step.role === "METHOD")
+              .map((step, index) => <div key={`${step.role}-${index}`}><dt>{step.label}</dt><dd>{step.instruction}</dd></div>)}
+          </dl>}
+          {instantAdjustment ? <p className="plan-caption">상세 훈련 · 거리·시간·반복·회복을 확인하고 조절해요.</p>
+            : workoutSummary && <p className="plan-caption">처방 훈련 · {workoutSummary}</p>}
+        </section>}
         beforeStart={<>
           <p className="plan-duration-total">{recommendation.durationLabel}</p>
           <PlanPrescriptionBasis sessions={visibleDefaultSessions}
@@ -334,8 +349,8 @@ export function PlanCandidates({
         confirmationPending={recordConfirmationPending || detailedEvidencePending} />}
       {saveCode === "CYCLE_EVIDENCE_CHANGED" && onRebuildCycle && <button type="button" className="plan-text-action"
         disabled={saving} onClick={onRebuildCycle}>일지를 반영해 다시 만들기</button>}
-      <div className="plan-purpose-entries" role="group" aria-label="계획 확인·변경">
-        {PURPOSE_ENTRIES.map(({ id, label, icon: Icon }) => <button key={id} type="button"
+      <div className="plan-purpose-entries app-choice-group" role="group" aria-label="계획 확인·변경">
+        {PURPOSE_ENTRIES.map(({ id, label, icon: Icon }) => <button className="app-choice-control" key={id} type="button"
           id={`${purposeId}-${id}-entry`} aria-expanded={visiblePurpose === id} aria-controls={`${purposeId}-${id}`}
           onClick={() => {
             if (visiblePurpose === id) {
@@ -425,7 +440,7 @@ export function PlanCandidates({
       )}
       {detailedEvidencePending && !recordConfirmationPending && (
         <p className="plan-start-date-error" role="alert">
-          같은 종목의 경기 기록 또는 목표기록을 고르고 확인해 주세요. 기록 없이 받으려면 상세 훈련에서 ‘기록 없이 시간·RPE로 받기’를 고르세요.
+          같은 종목의 기록을 고르고 확인해 주세요. 기록이 없으면 ‘기록 없이 계획 받기’를 고르세요.
         </p>
       )}
       </fieldset>
@@ -501,10 +516,10 @@ export function PlanCandidates({
       <h2>이 계획은 어떤 정보로 만들었나요?</h2>
       <p className="plan-copy">
         {prescriptionBinding.kind === "bound"
-          ? `직접 고르고 확인한 현재 ${selectedEventLabel} 기록으로 한 강도 세션의 상세 페이스를 계산했어요. 다른 훈련과 일지 값은 시간이나 RPE를 바꾸지 않습니다.`
+          ? `직접 고르고 확인한 ${selectedEventLabel} 기록으로 주요 훈련 한 번의 페이스를 계산했어요. 다른 훈련의 시간·힘든 정도는 바꾸지 않아요.`
           : generated.sourceMode === "PROFILE_ONLY"
           ? "고른 목표·경험·운동할 날로 만들었어요. 아래에서 조금씩 다듬을 수 있어요."
-          : "최근 일지가 있는지만 확인했어요. 일지의 거리, RPE, 메모는 계획의 시간이나 강도를 바꾸지 않아요."}
+          : "최근 일지가 있는지만 확인했어요. 일지에 남긴 거리·힘든 정도·메모로 계획을 바꾸지 않아요."}
       </p>
       <h2>기준 기록·참가 부문·이전 계획</h2>
       <div className="plan-source-strip">

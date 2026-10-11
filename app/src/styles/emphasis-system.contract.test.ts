@@ -18,12 +18,14 @@ describe("role based visual emphasis", () => {
     expect(css).not.toMatch(/\.journal-paper|\.journal-page|!important|animation:|#[\da-f]{3,8}\b/iu)
   })
 
-  it("keeps navigation distinct from the record action without large active fills or smaller labels", () => {
+  it("uses a rounded destination face without selecting the record action or shrinking labels", () => {
     const css = readFileSync("src/styles/app.css", "utf8")
-    const active = css.match(/\.app-tab-bar__button\[data-active="true"\]\s*\{([^}]+)\}/u)?.[1]
-    expect(active).toContain("color: var(--brand)")
-    expect(active).not.toContain("background:")
-    expect(css).toContain('.app-tab-bar__button[data-active="true"]::before')
+    const selection = readFileSync("src/styles/selection-system.css", "utf8")
+    const main = readFileSync("src/main.tsx", "utf8")
+    expect(selection).toContain('.app-tab-bar .app-tab-bar__button:not(.app-tab-bar__record)::before')
+    expect(selection).toContain('.app-tab-bar .app-tab-bar__button[data-active="true"]::before { background: var(--surface-2); }')
+    expect(selection).toContain("border-radius: var(--r-action)")
+    expect(main.indexOf('import "./styles/selection-system.css"')).toBeGreaterThan(main.indexOf('import "./styles/app.css"'))
     expect(css).toMatch(/\.app-tab-bar__button span\s*\{[^}]*font-size:\s*var\(--fs-caption\)/u)
     expect(css).toContain(".app-tab-bar__button:focus-visible")
   })

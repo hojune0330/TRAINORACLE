@@ -103,7 +103,7 @@ export function PaceCalculator({ request = {}, stage, onStageChange, onBack }: {
     {stage === "event" && <>
       <button type="button" onClick={openRecords}>저장한 경기 기록 사용 <ArrowRight size={18} aria-hidden="true" /></button>
       <h2 id="pace-direct-event">직접 입력할 종목</h2>
-      <div className="pace-tool__choices" role="group" aria-labelledby="pace-direct-event">{PACE_EVENT_METERS.map(distance => <button key={distance} type="button"
+      <div className="pace-tool__choices app-choice-group" role="group" aria-labelledby="pace-direct-event">{PACE_EVENT_METERS.map(distance => <button className="app-choice-control app-choice-control--answer" key={distance} type="button"
         onClick={() => chooseEvent(distance)}>{paceEventLabel(distance)}<ArrowRight size={18} /></button>)}</div>
     </>}
     {stage === "input" && <form onSubmit={e => { e.preventDefault(); if (total !== null) onStageChange("result") }}>

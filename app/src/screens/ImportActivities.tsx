@@ -14,6 +14,7 @@ import { buildAccountImportDrafts, createAccountImportConfirmation } from "../do
 import { useImportOwnerScope } from "./import-activities/useImportOwnerScope"
 import { fileAnalysisFormats } from "../domain/import/file-analysis-policy"
 import { AppHeading } from "../components/AppHeading"
+import { useTaskFlowBack } from "../hooks/useTaskFlowBack"
 
 type Stage =
   | { readonly step: "pick" }
@@ -38,6 +39,11 @@ export function ImportActivities({ onBack, onOpenLog, onOpenAnalysis, onOpenSumm
   const readControllerRef = React.useRef<AbortController | null>(null)
   const stageRef = React.useRef<HTMLDivElement>(null)
   const stageMotion = useOrderedStepMotion(stage.step, ["pick", "review", "saved"])
+  useTaskFlowBack({ enabled: onBack !== undefined, busy, onBack: () => {
+    const current = captureScope()
+    // The shell's POP listener invalidates old return frames. Restore only after it ran.
+    queueMicrotask(() => { if (current()) onBack?.() })
+  } })
   useActiveContentScroll(stage.step, stageRef, undefined, true)
   const captureScope = useImportOwnerScope(() => {
     readControllerRef.current?.abort(); readControllerRef.current = null

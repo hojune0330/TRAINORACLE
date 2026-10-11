@@ -231,6 +231,7 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
     { key: "memo", label: "메모", value: memoPreview ? `${memoPreview.slice(0, 80)}${memoPreview.length > 80 ? "…" : ""}${memo.purpose === "PRIVATE_SELF_ONLY" ? " · 나만 보는 메모" : ""}` : "메모 없음", answered: memo.text.trim() !== "" },
   ]
   const answeredReviewItems = reviewItems.filter(item => item.answered)
+  const [emptyNotice, setEmptyNotice] = React.useState(false)
   const addableReviewItems = reviewItems.filter(item => !item.answered)
   const taskTitle: Record<PostSessionTask, string> = {
     outcome: "오늘 운동은 어떻게 됐나요?",
@@ -258,6 +259,8 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
 
   const persist = async () => {
     if (persistInFlight.current || !draft.current()) return
+    if (answeredReviewItems.length === 0) { setEmptyNotice(true); return }
+    setEmptyNotice(false)
     if (plannedInputs.invalidKeys.length > 0) {
       plannedInputs.revealFirstInvalid()
       setSaveError(true)
@@ -433,6 +436,7 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
         )}>
 
       {task === "review" && <div className="post-session-review" aria-label="저장 전 입력 확인">
+        {emptyNotice && answeredReviewItems.length === 0 && <p role="alert">아직 입력한 내용이 없어요. 남길 항목 하나를 골라 주세요.</p>}
         <p>입력한 내용만 저장해요.</p>
         {memo.reviewMessage !== null && <p role="status" className="post-session-review__notice">
           {memo.reviewMessage} {accountEnabled ? "계정 저장 여부는 저장 결과에서 확인해 주세요." : "저장은 이 기기에만 됩니다."}
@@ -462,30 +466,30 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
       </div>}
 
       {task === "outcome" && <FormSec compact lb="운동 결과 · 선택">
-        <div className="journal-progressive-edit" role="group" aria-label="운동 결과 수정">
+        <div className="journal-progressive-edit app-choice-group" role="group" aria-label="운동 결과 수정">
           {DETAILED_OUTCOMES.map(([value, label]) => (
-            <button key={value} type="button" aria-pressed={activityOutcome === value}
+            <button className="app-choice-control app-choice-control--answer" key={value} type="button" aria-pressed={activityOutcome === value}
               disabled={importedObjective && isNonPerformedOutcome(value)} onClick={() => chooseOutcome(value)}>{label}</button>
           ))}
         </div>
         {importedObjective && <p role="note">가져온 활동 값이 있어 휴식·건너뜀으로 변경할 수 없는 기록이에요.</p>}
       </FormSec>}
       {task === "slot" && recordsPerformance && <FormSec compact lb="운동 시간대 · 선택">
-        <div className="journal-progressive-edit" role="group" aria-label="운동 시간대 수정">
+        <div className="journal-progressive-edit app-choice-group" role="group" aria-label="운동 시간대 수정">
           {DETAILED_SLOTS.map(([value, label]) => (
-            <button key={value} type="button" aria-pressed={activitySlot === value}
+            <button className="app-choice-control app-choice-control--answer" key={value} type="button" aria-pressed={activitySlot === value}
               onClick={() => chooseSlot(value)}>{label}</button>
           ))}
         </div>
       </FormSec>}
 
       {task === "content" && recordsPerformance && <FormSec compact lb="강도 시스템" help="energy-system">
-        <div className="journal-energy-picker">
+        <div className="journal-energy-picker app-choice-group">
           {JOURNAL_ENERGY_SYSTEM_OPTIONS.map((energySystem) => (
             <button
               key={energySystem.key}
               type="button"
-              className="journal-energy-picker__option"
+              className="journal-energy-picker__option app-choice-control"
               aria-label={`${energySystem.code} ${energySystem.shortLabel}`}
               aria-pressed={system === energySystem.journalValue}
               title={energySystem.shortLabel}
@@ -542,7 +546,7 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
       */}
       {task === "effort" && recordsPerformance && <FormSec
         compact
-        lb="RPE · 주관 강도"
+        lb="힘든 정도 · 1~10"
         help="rpe"
         collapsible
         summary={rpe > 0 ? `${rpe}/10` : undefined}

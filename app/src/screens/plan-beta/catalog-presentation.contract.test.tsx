@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, expect, it } from "vitest"
 import { ALL_WORKOUT_CATALOG, calculateCatalogWorkout, calculatedWorkoutSequence, type WorkoutCalculationInputs } from "@impl/prescription/all-workout-calculator"
 import { parsePrescriptionSequenceV3 } from "@impl/prescription/sequence-v3"
@@ -16,6 +16,25 @@ afterEach(cleanup)
 
 const inputs: WorkoutCalculationInputs = { eventDistanceM: 800, experience: "DEVELOPING", availableSeconds: null,
   confirmedRequirements: [], fiveK: null, segmentPaces: [] }
+
+it("does not duplicate reviewed time-only effort cues but keeps full text and unknown warnings reachable", () => {
+  const workout = calculateCatalogWorkout("P-BASE-C", { ...inputs, eventDistanceM: 5000 })!
+  const before = JSON.stringify(workout)
+  const { container, rerender } = render(<CatalogWorkoutDetail workout={workout} />)
+  expect(container.querySelector("code")).toHaveTextContent(/분 · 힘든 정도 3–4\/10 \(제안\)/u)
+  expect(container.querySelector("dl")).toBeNull()
+  const original = screen.getByText(/문장으로 대화할 수 있는 노력.*RPE 3~4/u)
+  expect(original).not.toBeVisible()
+  fireEvent.click(screen.getByText("자세히 보기 · 준비부터 정리까지"))
+  expect(original).toBeVisible()
+  expect(JSON.stringify(workout)).toBe(before)
+
+  const withWarning = { ...workout, steps: workout.steps.map(step => step.phase === "main" && step.kind !== "RECOVERY"
+    ? { ...step, instruction: `통증이 생기면 중단 · ${step.instruction}` } : step) }
+  rerender(<CatalogWorkoutDetail workout={withWarning} />)
+  expect(screen.getAllByText(/통증이 생기면 중단/u).some(element => !element.closest("details"))).toBe(true)
+  expect(container.querySelector("dl")).toHaveTextContent(/통증이 생기면 중단/u)
+})
 
 it("preserves distance recovery when the athlete supplies its time, without crashing the detail", () => {
   const initial = calculateCatalogWorkout("P-RHYTHM-300", inputs)!

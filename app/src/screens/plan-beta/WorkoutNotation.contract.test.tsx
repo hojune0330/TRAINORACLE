@@ -3,8 +3,8 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import type { PrescriptionSequence, PrescriptionSequenceSegment } from "@impl/prescription/sequence"
 import type { PrescriptionSequenceV3, SequenceNodeV3 } from "@impl/prescription/sequence-v3"
-import { WorkoutNotation } from "./WorkoutNotation"
-import { presentWorkoutNotation } from "./workout-notation-presentation"
+import { WorkoutNotation, SessionWorkoutNotation } from "./WorkoutNotation"
+import { presentSessionWorkoutNotation, presentWorkoutNotation } from "./workout-notation-presentation"
 
 afterEach(cleanup)
 
@@ -44,15 +44,47 @@ describe("concise workout instruction and optional effort detail", () => {
     expect(source.main[0]).toMatchObject({ target: { cue: catalogCue } })
   })
 
+  it("keeps the reviewed easy-run cue concise without hiding its exact intensity or source", () => {
+    const baseCue = "문장으로 대화할 수 있는 노력 본운동 체감 노력 제안 RPE 3~4"
+    const source = sequence([segment({ repeatCount: 1, work: { kind: "duration", durationSeconds: 1200, distanceM: null },
+      target: { kind: "EFFORT_GUIDANCE", cue: baseCue }, recoveryBetweenRepeats: [] })])
+    const before = JSON.stringify(source)
+    const { container } = render(<WorkoutNotation sequence={source} />)
+    expect(container.querySelector("code")).toHaveTextContent("20분 · 힘든 정도 3–4/10 (제안)")
+    expect(container.querySelector("code")).not.toHaveTextContent("문장으로 대화")
+    const explanation = screen.getByText("문장으로 대화할 수 있는 노력 본운동 체감 노력 제안 힘든 정도 3–4/10")
+    expect(explanation).not.toBeVisible()
+    fireEvent.click(screen.getByText("강도 안내"))
+    expect(explanation).toBeVisible()
+    expect(JSON.stringify(source)).toBe(before)
+  })
+
+  it("uses the same concise projection in session comparisons without modifying an adjusted prescription", () => {
+    const source = { role: "QUALITY", plannedEnergyIntent: "LT_INTENT" as const,
+      prescription: { kind: "ADJUSTED_METHOD_V3" as const, projection: { sequence: sequence(), segmentTargets: [] } } }
+    const before = JSON.stringify(source)
+    const { container } = render(<SessionWorkoutNotation session={source} />)
+    expect(container.querySelector("span")).toHaveTextContent("2 × 10분 · 힘든 정도 6–7/10 (제안) · 반복 사이 60초 조깅")
+    expect(container.querySelector("span")).not.toHaveTextContent("고르게 유지")
+    expect(screen.getByText(fullPlainCue)).not.toBeVisible()
+    fireEvent.click(screen.getByText("강도 안내"))
+    expect(screen.getByText(fullPlainCue)).toBeVisible()
+    expect(JSON.stringify(source)).toBe(before)
+    expect(presentSessionWorkoutNotation({ role: "EASY", plannedEnergyIntent: "BASE_INTENT",
+      prescription: { kind: "RPE_TIME_RANGE", durationMinutes: { minimum: 20, maximum: 25 }, rpe: { minimum: 3, maximum: 4 } } }))
+      .toEqual({ notation: "전체 20–25분 · 힘든 정도 3–4/10", explanations: [] })
+  })
+
   it.each([
     `통증이 생기면 중단 · ${cue}`,
     "RPE 6~7 · 전력질주하지 않기",
     "RPE 6 / RPE 8 · 구간마다 다르게 달리기",
     "RPE 12 · 강도 확인 필요",
+    "통증이 생기면 중단 · 문장으로 대화할 수 있는 노력 본운동 체감 노력 제안 RPE 3~4",
   ])("does not hide unknown instructions or safety limits: %s", unknownCue => {
     const { container } = render(<WorkoutNotation sequence={sequence([segment({ target: { kind: "EFFORT_GUIDANCE", cue: unknownCue } })])} />)
     expect(screen.queryByText("강도 안내")).toBeNull()
-    expect(container.querySelector("code")).toHaveTextContent(unknownCue.replace("RPE 6~7", "힘든 정도 6–7/10"))
+    expect(container.querySelector("code")).toHaveTextContent(unknownCue.replace("RPE 6~7", "힘든 정도 6–7/10").replace("RPE 3~4", "힘든 정도 3–4/10"))
   })
 
   it("preserves nested sets, each target and both types of recovery in the concise line", () => {

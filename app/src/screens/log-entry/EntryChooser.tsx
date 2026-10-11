@@ -52,15 +52,11 @@ export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: Entry
         </div>
       </div>
 
-      <div style={{ marginTop: 18 }}>
-        {ENTRY_OPTIONS.map((option, index) => (
-          <button type="button" key={option.id} data-testid={`entry-choice-${option.id}`} onClick={() => onPick?.(option.id)} style={{
+      <div className="app-choice-group" style={{ marginTop: 18, padding: "0 20px", display: "grid" }}>
+        {ENTRY_OPTIONS.map((option) => (
+          <button className="app-choice-control app-choice-control--answer" type="button" key={option.id} data-testid={`entry-choice-${option.id}`} onClick={() => onPick?.(option.id)} style={{
             width: "100%", textAlign: "left",
-            padding: "12px 20px", minHeight: 64,
-            background: "var(--surface)",
-            border: 0, borderTop: "1px solid var(--ink)",
-            borderBottom: index === ENTRY_OPTIONS.length - 1 ? "1px solid var(--ink)" : 0,
-            cursor: "pointer",
+            minHeight: 64,
             display: "grid", gridTemplateColumns: "20px minmax(0, 1fr) 18px", gap: 12, alignItems: "center",
           }}>
             <option.Icon size={19} aria-hidden="true" style={{ color: "var(--brand)" }} />
@@ -74,16 +70,14 @@ export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: Entry
       </div>
 
       {onOpenImport && (
-        <div style={{ padding: "20px 20px 0" }}>
+        <div className="app-choice-group" style={{ padding: "20px 20px 0" }}>
           <button
+            className="app-choice-control"
             type="button"
             onClick={onOpenImport}
             data-testid="open-import"
             style={{
-              width: "100%", minHeight: 48, padding: "13px 16px", textAlign: "left",
-              background: "transparent", color: "var(--ink-2)",
-              border: "1px dashed var(--line-2, var(--line))", borderRadius: 0,
-              cursor: "pointer", lineHeight: 1.5,
+              width: "100%", minHeight: 48, textAlign: "left", lineHeight: 1.5,
             }}
           >
             <span style={{ fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 500, color: "var(--ink)" }}>

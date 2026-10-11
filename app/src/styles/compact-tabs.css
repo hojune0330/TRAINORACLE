@@ -1,13 +1,13 @@
 /*
  * Compact navigation density
  *
- * The visible tab face is 32px high, while every button keeps a 44px touch
- * target. This reclaims vertical space without making mobile taps unreliable.
+ * Shared rounded section choices use the full 44px touch target as their face.
+ * Labels wrap at large text sizes instead of being squeezed into an 11px rail.
  * Answer controls such as RPE and training-purpose choices do not use these
  * classes and intentionally keep their existing size.
  */
 .app-compact-tabs {
-  gap: 4px !important;
+  gap: var(--space-2) !important;
   min-height: var(--app-touch-min);
   border: 0 !important;
 }
@@ -17,14 +17,17 @@
   isolation: isolate;
   min-width: 0;
   min-height: var(--app-touch-min) !important;
-  padding: 0 8px !important;
+  padding: var(--space-2) var(--space-3) !important;
   border: 0 !important;
   background: transparent !important;
   color: var(--ink-2) !important;
   font-family: var(--sans) !important;
-  font-size: 11px !important;
+  font-size: var(--fs-body) !important;
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.45;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
   cursor: pointer;
   touch-action: manipulation;
 }
@@ -32,10 +35,10 @@
 .app-compact-tab::before {
   content: "";
   position: absolute;
-  inset: 6px 0;
+  inset: 0;
   z-index: -1;
   border: 1px solid var(--line);
-  border-radius: var(--r-md);
+  border-radius: var(--r-action);
   background: var(--surface);
 }
 
@@ -46,22 +49,25 @@
   align-items: center;
   justify-content: center;
   min-width: 0;
-  white-space: nowrap;
+  white-space: normal;
 }
 
-.app-compact-tab[aria-pressed="true"] {
+.app-compact-tab:is([aria-pressed="true"], [aria-selected="true"], [aria-current="page"]) {
   color: var(--bg) !important;
 }
 
-.app-compact-tab[aria-pressed="true"]::before {
+.app-compact-tab:is([aria-pressed="true"], [aria-selected="true"], [aria-current="page"])::before {
   border-color: var(--ink);
   background: var(--ink);
 }
 
 .app-compact-tab:focus-visible {
   outline: 2px solid var(--ink-blue);
-  outline-offset: -4px;
+  outline-offset: 2px;
 }
+
+.app-compact-tab:not(:disabled):hover::before { border-color: var(--ink-2); }
+.app-compact-tab:disabled { cursor: default; opacity: .55; }
 
 .journal-archive__mode-tabs,
 .monthly-trend__tabs {
@@ -73,6 +79,10 @@
 .monthly-trend__tabs {
   margin: 0;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 380px) {
+  .monthly-trend__tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* The persistent five-tab bar is shared by every app screen. */

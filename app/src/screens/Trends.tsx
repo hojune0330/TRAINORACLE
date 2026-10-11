@@ -146,15 +146,15 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
   }, [isEmpty, observations.length])
 
   return (
-    <div style={{ paddingBottom: 30 }}>
+    <div className="trends-hub">
       <TrendsHeader onBack={onBack} onPace={navigation?.openPaceCalculator ? () => navigation.openPaceCalculator?.() : undefined} />
       <div className="trends-motion-stage">
         <TaskGuide className="trends-hub__guide" title={guideTitle}
           description={section !== "training" || readComplete ? guideDescription : undefined}
           illustration={section === "training" && readComplete ? "training-map" : undefined} />
-        <div className="trends-hub__sections" role="group" aria-label="오라클 항목">
+        <div className="trends-hub__sections app-choice-group" role="group" aria-label="오라클 항목">
           {ORACLE_SECTIONS.map(item => (
-            <button key={item.id} type="button" aria-pressed={section === item.id}
+            <button className="app-choice-control" key={item.id} type="button" aria-pressed={section === item.id}
               onClick={() => {
                 const destination = destinationFor(item.id)
                 if (destination) { destination(); return }
@@ -230,30 +230,30 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
             </div>
           </>
         )}
-        {section === "training" && detail === "summary" && hasSummary && (
-          <>
+        {section === "training" && detail === "summary" && hasSummary && <div className="trends-hub__result-layout">
+          <div className="trends-hub__result">
             <PersonalOraclePanel observations={observations} today={today} planState={planState} savedSessions={savedSessions}
               onOpenPlan={onOpenPlan} onOpenDay={onOpenCoachingDay} onWriteLog={onWriteLog} />
-            {onOpenOracle && <div className="trends-hub__explore">
-              <InfoDisclosure purpose="actions" title="경기·계획·훈련 비교하기" preview="경기 기록 · 강점 · 훈련 비교 · 다음 훈련"><OracleTopicGrid onSelectTopic={onOpenOracle} title="다른 주제 살펴보기" compact /></InfoDisclosure>
-            </div>}
-          </>
-        )}
-        {section === "training" && detail === "summary" && hasSummary && <div className="trends-hub__coaching">
-          <HomeCoachingSummary revision={entryRevision} onOpenDay={onOpenCoachingDay} onOpenPlan={onOpenPlan} />
+          </div>
+          <div className="trends-hub__coaching">
+            <HomeCoachingSummary revision={entryRevision} onOpenDay={onOpenCoachingDay} onOpenPlan={onOpenPlan} />
+          </div>
+        </div>}
+        {section === "training" && detail === "summary" && hasSummary && onOpenOracle && <div className="trends-hub__explore">
+          <InfoDisclosure purpose="actions" title="경기·계획·훈련 비교하기" preview="경기 기록 · 강점 · 훈련 비교 · 다음 훈련"><OracleTopicGrid onSelectTopic={onOpenOracle} title="다른 주제 살펴보기" compact /></InfoDisclosure>
         </div>}
         {section === "training" && <details ref={detailMenu} className="trends-hub__detail-menu" open={detailMenuOpen}
           onToggle={event => setDetailMenuOpen(event.currentTarget.open)}>
           <summary><span>{detail === "summary" ? "훈련량·구성·변화 보기" : `${ANALYSIS_SECTIONS.find(item => item.id === detail)?.label} · 다른 항목 보기`}</span></summary>
-          <div className="trends-hub__drilldowns" role="group" aria-label="훈련 분석 자세히 보기">
-          {ANALYSIS_SECTIONS.map(item => <button key={item.id} type="button" aria-pressed={detail === item.id}
+          <div className="trends-hub__drilldowns app-choice-group" role="group" aria-label="훈련 분석 자세히 보기">
+          {ANALYSIS_SECTIONS.map(item => <button className="app-choice-control" key={item.id} type="button" aria-pressed={detail === item.id}
             aria-label={item.label} aria-describedby={`trends-choice-${item.id}`}
             onClick={() => {
               setDetail(item.id)
               setDetailMenuOpen(false)
               onContextChange?.({ ...initialContext, section: item.id })
               detailMenu.current?.querySelector("summary")?.focus()
-            }}><span>{item.label}</span><small id={`trends-choice-${item.id}`}>{item.description}</small></button>)}
+            }}><span>{item.label}{item.id === "files" && !fileAnalysisEnabled ? " · 준비 중" : ""}</span><small id={`trends-choice-${item.id}`}>{item.id === "files" && !fileAnalysisEnabled ? "지금은 일지에 남긴 값으로 훈련량을 볼 수 있어요." : item.description}</small></button>)}
           </div>
         </details>}
         {section === "training" && detail === "summary" && (onOpenImport || onOpenRecords) && <div className="trends-hub__explore">

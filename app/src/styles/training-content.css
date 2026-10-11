@@ -76,6 +76,9 @@
   font-family: var(--sans);
 }
 
+.training-content-basics-link { margin: var(--space-5) var(--space-5) var(--space-6); }
+.training-content-screen > .app-heading--section { margin: 0 var(--space-5) var(--space-3); }
+
 .training-content-header {
   min-height: 56px;
   padding: 0 var(--space-4);

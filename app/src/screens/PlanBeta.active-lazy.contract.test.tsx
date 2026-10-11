@@ -1,5 +1,5 @@
 import React from "react"
-import { act, cleanup, render, screen } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 
 beforeEach(() => {
@@ -29,6 +29,21 @@ it("does not fetch the saved-plan screen when opening a new personal plan", asyn
   expect(screen.getByRole("button", { name: "5km" })).toBeVisible()
   expect(load).not.toHaveBeenCalled()
 }, 20_000)
+
+it("isolates unrelated plan tools during editing and restores them without a saved-plan write", async () => {
+  const original = await storedOriginal()
+  const { PlanBeta } = await import("./PlanBeta")
+  render(<PlanBeta />)
+  await screen.findByRole("heading", { name: "9일 훈련 계획" })
+  expect(screen.getByRole("button", { name: "개인 계획 파일 불러오기" })).toBeVisible()
+  fireEvent.click(screen.getByRole("button", { name: "계획 수정" }))
+  expect(screen.getByRole("region", { name: "계획 수정" })).toBeVisible()
+  expect(screen.queryByRole("button", { name: "개인 계획 파일 불러오기" })).not.toBeInTheDocument()
+  expect(localStorage.getItem(original.key)).toBe(original.raw)
+  fireEvent.click(screen.getByRole("button", { name: "계획 수정 닫기" }))
+  expect(screen.getByRole("button", { name: "개인 계획 파일 불러오기" })).toBeVisible()
+  expect(localStorage.getItem(original.key)).toBe(original.raw)
+})
 
 it("preserves saved raw bytes while the active screen suspends and resumes without an outer Suspense", async () => {
   let release!: () => void

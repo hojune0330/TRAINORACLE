@@ -43,6 +43,12 @@ describe("DS-05 journal decoration visual contract", () => {
     expect(preview).toContain("height: 48px")
   })
 
+  it("keeps the drawer collapse control labeled and comfortably tappable", () => {
+    const collapse = rule(".journal-decoration-toolbar__icon")
+    expect(collapse).toContain("min-width: 68px")
+    expect(collapse).toContain("min-height: 44px")
+  })
+
   it("shrinks only the visible handle while retaining its 44px touch target", () => {
     const handle = rule(".decorated-journal-page__transform-handle")
     const visibleHandle = rule(".decorated-journal-page__transform-handle::before")

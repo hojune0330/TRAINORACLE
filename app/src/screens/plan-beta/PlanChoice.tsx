@@ -22,7 +22,8 @@ export function PlanChoice({
 }) {
   const button = (
     <button
-      className="plan-choice"
+      data-auto-advance
+      className="plan-choice app-choice-control app-choice-control--answer"
       type="button"
       disabled={disabled}
       aria-pressed={selected}

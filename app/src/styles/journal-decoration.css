@@ -447,7 +447,8 @@
 .journal-decoration-toolbar__drawer-header > header strong { font-size: var(--fs-body); }
 .journal-decoration-toolbar__drawer-header > header span,
 .journal-decoration-toolbar > footer span { color: var(--ink-3); font-family: var(--sans); font-size: var(--fs-caption); line-height: 1.3; }
-.journal-decoration-toolbar__icon { width: 44px; padding: 0; display: grid; place-items: center; flex: 0 0 auto; }
+.journal-decoration-toolbar__icon { min-width: 68px; min-height: 44px; padding: 0 8px; display: flex; align-items: center; justify-content: center; gap: 4px; border-radius: var(--r-md); flex: 0 0 auto; }
+.journal-decoration-toolbar__drawer-header > header .journal-decoration-toolbar__icon span { color: var(--ink-2); font-size: var(--fs-caption); font-weight: 600; }
 
 .journal-decoration-toolbar__filters {
   position: sticky;

@@ -78,7 +78,7 @@ describe("active plan session editor", () => {
     render(<ActivePlanSessionEditor state={state} sourceOptions={[option]} entriesReady intent="workout" contextKey="guest:plan-1"
       onRetryEntries={vi.fn()} onPrepare={onPrepare} onApply={onApply} onClose={onClose} onApplied={onApplied} records={[]} />)
 
-    const editor = screen.getByRole("region", { name: "이 훈련 수정" })
+    const editor = screen.getByRole("region", { name: "훈련 내용 바꾸기" })
     const previewButton = within(editor).getByRole("button", { name: "변경안 미리보기" })
     expect(previewButton).toBeDisabled()
     await user.click(within(editor).getByRole("checkbox", { name: "이 훈련은 아직 시작하지 않았어요." }))
@@ -88,6 +88,14 @@ describe("active plan session editor", () => {
     await waitFor(() => expect(onPrepare).toHaveBeenCalledOnce())
     expect(onPrepare).toHaveBeenCalledWith(expect.objectContaining({ action: "DURATION", unstartedConfirmed: true, maximumMinutes: 25 }))
     expect(screen.getByRole("heading", { name: "변경안 미리보기" })).toBeVisible()
+    const summaries = document.querySelectorAll(".active-plan-session-editor__session-summary")
+    expect(summaries.length).toBeGreaterThanOrEqual(2)
+    for (const summary of summaries) {
+      expect(summary).toHaveTextContent("전체")
+      expect(summary).toHaveTextContent(/힘든 정도 .*\/10/u)
+      expect(summary).not.toHaveTextContent(/RPE| min| @ /u)
+    }
+    expect(summaries[summaries.length - 1]).toHaveTextContent("전체 20–25분")
     const applyButton = screen.getByRole("button", { name: "변경안 적용하기" })
     expect(applyButton).toBeDisabled()
     expect(onApply).not.toHaveBeenCalled()
@@ -125,7 +133,7 @@ describe("active plan session editor", () => {
     render(<ActivePlanSessionEditor state={stateWithTarget} sourceOptions={[option]} entriesReady intent="schedule" contextKey="guest:plan-2"
       onRetryEntries={vi.fn()} onPrepare={onPrepare} onApply={vi.fn()} onClose={vi.fn()} onApplied={vi.fn()} records={[]} />)
 
-    const editor = screen.getByRole("region", { name: "이 훈련 수정" })
+    const editor = screen.getByRole("region", { name: "훈련 날짜 바꾸기" })
     const preview = within(editor).getByRole("button", { name: "바꿀 날짜 보기" })
     expect(preview).toBeDisabled()
     await user.click(within(editor).getByRole("checkbox", { name: "옮길 훈련은 아직 시작하지 않았어요." }))

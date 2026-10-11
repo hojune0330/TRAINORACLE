@@ -65,10 +65,13 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
   const [weight, setWeight] = React.useState(() => input?.weight ?? initial?.weightKg ?? "")
   const [hr, setHr] = React.useState(() => input?.hr ?? initial?.restingHr ?? "")
   const [saveError, setSaveError] = React.useState(false)
+  const [emptyNotice, setEmptyNotice] = React.useState(false)
   const [accountNotice, setAccountNotice] = React.useState<string | null>(null)
   const note = usePurposeScopedMemo(input?.memo ?? initial?.note ?? "", input ? input.purpose ?? undefined : initial?.memoPurpose)
   const draft = useFormInputDraft({ kind: "evening", sleep, quality, mood, painParts, weight, hr,
     memo: note.text, purpose: note.purpose ?? null }, entryId, true, lastSavedAt.current)
+  const hasInput = sleep > 0 || quality > 0 || mood > 0 || Object.values(painParts).some(level => level > 0)
+    || weight.trim() !== "" || hr.trim() !== "" || note.text.trim() !== ""
 
   const navigateTo = (location: EveningLocation) => setFlow((current) => ({
     location, history: [...current.history, current.location],
@@ -101,6 +104,8 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
 
   const persist = async () => {
     if (persistInFlight.current || !draft.current()) return
+    if (!hasInput) { setEmptyNotice(true); return }
+    setEmptyNotice(false)
     const notePreparation = note.prepareForSave()
     if (!notePreparation.ready) {
       if (step !== "memo") navigateTo({ step: "memo", editGroup: "memo", returnToReview: true })
@@ -214,6 +219,7 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
       <div style={{ padding: "14px 20px 0" }}>
         <IndexCard date={compactDate(entryDate)} dow={`${dowOf(entryDate)} · ${nowClock()}`} />
       </div>
+      {step === "review" && emptyNotice && !hasInput && <p role="alert">아직 입력한 내용이 없어요. 남길 항목 하나를 골라 주세요.</p>}
       <TaskFlowStep stepKey={`${step}:${editGroup ?? "flow"}`} title={stepTitle[step]}
         busy={saving} onBack={flow.history.length > 0 ? goBackFlow : undefined}
         summary={step === "review" ? undefined : <p style={{ margin: 0 }}>{guidance[step]}</p>}

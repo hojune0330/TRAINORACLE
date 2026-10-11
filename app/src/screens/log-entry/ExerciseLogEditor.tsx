@@ -103,8 +103,8 @@ export function ExerciseLogEditor({ value, onChange, draft, onDraftChange, recen
     {!open && <button type="button" className="exercise-editor__action" disabled={value.components.length >= 24 && !editing} onClick={() => begin()}><Plus size={18} />{editing ? "작성하던 운동 계속" : "운동 추가"}</button>}
     {open && editing && <section className="exercise-editor__form" aria-label="운동 내용 작성">
       <h2>어떤 운동을 했나요?</h2>
-      <div className="exercise-editor__kinds" role="group" aria-label="운동 종류">
-        {Object.entries(EXERCISE_KINDS).map(([kind, label]) => <button key={kind} type="button" aria-pressed={editing.kind === kind} onClick={() => {
+      <div className="exercise-editor__kinds app-choice-group" role="group" aria-label="운동 종류">
+        {Object.entries(EXERCISE_KINDS).map(([kind, label]) => <button className="app-choice-control app-choice-control--answer" key={kind} type="button" aria-pressed={editing.kind === kind} onClick={() => {
           if (kind === editing.kind) return
           write({ ...editing, kind: kind as ExerciseComponent["kind"], name: editing.previousKinds?.[kind]?.name ?? "", rows: editing.previousKinds?.[kind]?.rows ?? [],
             previousKinds: { ...editing.previousKinds, [editing.kind]: { name: editing.name, rows: editing.rows } } })

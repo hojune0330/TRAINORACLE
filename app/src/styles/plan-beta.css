@@ -1059,6 +1059,7 @@
 .plan-back,
 .plan-text-action {
   align-self: flex-start;
+  min-width: var(--app-touch-min);
   min-height: var(--app-touch-min);
   padding: 0;
   border: 0;

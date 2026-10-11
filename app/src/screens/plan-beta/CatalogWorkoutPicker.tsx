@@ -217,8 +217,8 @@ export function CatalogWorkoutEditor({ generated, intake, records, onChange, onS
     : code === "TIME_BUDGET_EXCEEDED" ? "처음 계획보다 긴 구성이에요. 아래에서 시간을 확인하거나 다른 구성을 골라 주세요."
       : code === "TIME_BUDGET_UNCONFIRMED" ? "미정 구간을 정하면 전체 시간을 계산해요."
         : code === "EXPERIENCE_SCOPE" ? "현재 선택한 훈련 경험에 맞는 다른 구성을 골라 주세요." : "현재 계획의 조건에 맞지 않는 구성이에요."
-  return <div className="catalog-workout-picker__editor">
-    <button type="button" disabled={disabled || alternatives.length === 0} onClick={() => {
+  return <div className="catalog-workout-picker catalog-workout-picker__editor">
+    <button className="app-choice-control" type="button" disabled={disabled || alternatives.length === 0} onClick={() => {
       if (!alternatives.length) return
       const result = drawUnseenCatalogMethod(eligibleDraws, entry, drawHistory.get(drawScope) ?? new Set())
       if (!result) return
@@ -253,8 +253,8 @@ export function CatalogWorkoutEditor({ generated, intake, records, onChange, onS
     {preview && <CatalogWorkoutDetail workout={preview} />}
     {recordId && !record && configurationChanged && <p role="status">기준 기록을 찾을 수 없어 새 구성의 페이스 계산에 사용하지 않았어요.</p>}
     {stronger && nextRpe && (editingSavedPlan ? <label><input type="checkbox" checked={acceptStronger} disabled={disabled}
-      onChange={e => setAcceptStronger(e.target.checked)} />지금 훈련 RPE {session.prescription.rpe.minimum}~{session.prescription.rpe.maximum}에서 새 훈련 RPE {nextRpe.minimum}~{nextRpe.maximum}으로 더 강해지는 변경을 확인하고 동의해요.</label>
-      : <p role="status">지금 훈련 RPE {session.prescription.rpe.minimum}~{session.prescription.rpe.maximum} → 새 훈련 RPE {nextRpe.minimum}~{nextRpe.maximum}. 더 강한 구성이에요. 아래 버튼을 누르면 이 강도로 바뀌어요.</p>)}
+      onChange={e => setAcceptStronger(e.target.checked)} />힘든 정도 {session.prescription.rpe.minimum}~{session.prescription.rpe.maximum}/10 → {nextRpe.minimum}~{nextRpe.maximum}/10. 더 힘든 훈련으로 바꾸는 데 동의해요.</label>
+      : <p role="status">힘든 정도 {session.prescription.rpe.minimum}~{session.prescription.rpe.maximum}/10 → {nextRpe.minimum}~{nextRpe.maximum}/10. 아래 버튼을 누르면 더 힘든 훈련으로 바뀌어요.</p>)}
     {longer && preview?.totals.seconds && <label><input type="checkbox" checked={!!acceptLonger} disabled={disabled}
       onChange={e => durationKey !== null && setDurationDecision({ key: durationKey, accepted: e.target.checked })} />준비·회복·정리까지 최대 {formatTotalMinutes(preview.totals.seconds.maximum / 60)} 걸려요. {generated ? "더 짧았던 계획안도 이 시간으로 바꿀게요." : currentSessionMaximum <= originalMaximum ? "현재 계획보다 긴 구성임을 확인하고 동의해요." : "처음 안내한 시간보다 긴 구성임을 확인하고 동의해요."}</label>}
     {!preview && <p role="status">입력한 시간을 확인해 주세요. 0보다 큰 초 단위 숫자로 입력해요.</p>}
@@ -262,13 +262,13 @@ export function CatalogWorkoutEditor({ generated, intake, records, onChange, onS
     {preview && !canApply && !unavailable.length && (pending || !binding) && <p role="status">이 일정에는 적용할 수 없는 구성이에요. 같은 목적의 다른 훈련을 골라 주세요.</p>}
     {preview?.unresolved.includes("RECORD_NOT_CURRENT") && <p role="status">오래된 기록이라 참고 페이스에 사용하지 않았어요.</p>}
     <div className="catalog-workout-picker__actions">
-      <button type="button" disabled={disabled || applyDisabled || !canApply || !pending && !!binding} onClick={() => {
+      <button className="app-choice-control" type="button" disabled={disabled || applyDisabled || !canApply || !pending && !!binding} onClick={() => {
         if (disabled || applyDisabled || !canApply || !localAccountScopeIsCurrent(accountScope)
           || startDate !== undefined && !isValidIsoDate(startDate)) return
         if (next) onChange?.(next)
         else if (canApply) onSelect?.(entry.id, inputs, !!acceptLonger, !!stronger)
       }}>이 구성으로 바꾸기</button>
-      {pending && <button type="button" disabled={disabled} onClick={onCancel}>변경 취소</button>}
+      {pending && <button className="app-choice-control" type="button" disabled={disabled} onClick={onCancel}>변경 취소</button>}
     </div>
     {pending && <p role="status">아직 계획에 적용하지 않았어요.</p>}
   </div>

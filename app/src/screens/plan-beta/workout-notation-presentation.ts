@@ -1,14 +1,20 @@
 import type { PrescriptionSequence, PrescriptionSequenceNode, SequenceTarget } from "@impl/prescription/sequence"
 import type { PrescriptionSequenceV3, SequenceNodeV3 } from "@impl/prescription/sequence-v3"
 import type { AdjustedSegmentTarget } from "../../domain/adjusted-method-resolution"
-import { notationEffort, sequenceNotation } from "../../domain/workout-notation"
+import { calculatedWorkoutSequence, calculateCatalogWorkout } from "@impl/prescription/all-workout-calculator"
+import { notationEffort, sequenceNotation, sessionWorkoutNotation, type WorkoutDisplaySession } from "../../domain/workout-notation"
 
-// These two reviewed LT cues say the same thing. Match the whole cue, not just
-// an RPE number: unknown instructions and stop conditions must stay in sight.
-const detailedLtCues = new Set([
-  "힘들지만 정해진 구간 동안 고르게 유지하는 노력 · 본운동 체감 제안 RPE 6~7",
-  "힘들지만 정해진 구간 동안 고르게 유지하는 노력 본운동 체감 노력 제안 RPE 6~7",
+// Match only reviewed whole cues, never just an RPE number. Unknown instructions
+// and stop conditions must stay in sight; their intensity is not inferred here.
+const reviewedEffortCues = new Map([
+  ["힘들지만 정해진 구간 동안 고르게 유지하는 노력 · 본운동 체감 제안 RPE 6~7", "RPE 6~7 (제안)"],
+  ["힘들지만 정해진 구간 동안 고르게 유지하는 노력 본운동 체감 노력 제안 RPE 6~7", "RPE 6~7 (제안)"],
+  ["문장으로 대화할 수 있는 노력 본운동 체감 노력 제안 RPE 3~4", "RPE 3~4 (제안)"],
 ])
+
+export function conciseReviewedEffortCue(cue: string | null): string | null {
+  return cue === null ? null : reviewedEffortCues.get(cue) ?? null
+}
 
 /** Read-only UI projection. Never pass this shortened sequence to saving or calculation. */
 export function presentWorkoutNotation(
@@ -17,9 +23,11 @@ export function presentWorkoutNotation(
 ) {
   const explanations = new Set<string>()
   const compactTarget = (target: SequenceTarget): SequenceTarget => {
-    if (target.kind !== "EFFORT_GUIDANCE" || target.cue === null || !detailedLtCues.has(target.cue)) return target
+    if (target.kind !== "EFFORT_GUIDANCE" || target.cue === null) return target
+    const conciseCue = conciseReviewedEffortCue(target.cue)
+    if (!conciseCue) return target
     explanations.add(notationEffort(target.cue, "PLAIN"))
-    return { ...target, cue: "RPE 6~7 (제안)" }
+    return { ...target, cue: conciseCue }
   }
   const legacyNodes = (nodes: readonly PrescriptionSequenceNode[]): readonly PrescriptionSequenceNode[] => nodes.map(node =>
     node.kind === "group" ? { ...node, children: legacyNodes(node.children) } : { ...node, target: compactTarget(node.target) })
@@ -32,4 +40,23 @@ export function presentWorkoutNotation(
     notation: sequenceNotation(displaySequence, targets, "PLAIN"),
     explanations: [...explanations],
   }
+}
+
+/** Same verified calculation boundary as sessionWorkoutNotation, with optional UI-only detail. */
+export function presentSessionWorkoutNotation(session: WorkoutDisplaySession) {
+  const prescription = session.prescription
+  if (prescription?.kind === "ADJUSTED_METHOD_V3") {
+    return presentWorkoutNotation(prescription.projection.sequence, prescription.projection.segmentTargets)
+  }
+  if (prescription?.kind === "ADJUSTED_METHOD") {
+    return presentWorkoutNotation(prescription.snapshot.projection.sequence, prescription.snapshot.projection.segmentTargets)
+  }
+  if (prescription?.kind === "RPE_TIME_RANGE" && prescription.catalogWorkout) {
+    const binding = prescription.catalogWorkout
+    const calculated = calculateCatalogWorkout(binding.catalogId, binding.inputs)
+    const sequence = calculated && calculated.fingerprint === binding.calculationFingerprint
+      ? calculatedWorkoutSequence(calculated) : null
+    if (sequence) return presentWorkoutNotation(sequence)
+  }
+  return { notation: sessionWorkoutNotation(session, "PLAIN"), explanations: [] as string[] }
 }

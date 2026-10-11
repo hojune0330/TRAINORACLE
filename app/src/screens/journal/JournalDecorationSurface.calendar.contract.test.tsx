@@ -25,12 +25,16 @@ function renderOpenStudio() {
 describe("JournalDecorationSurface calendar decoration flow", () => {
   it("keeps the small decorating guide outside the paper and removes it during material editing or calendar editing", async () => {
     const view = renderOpenStudio()
+    expect(await screen.findByRole("heading", { level: 1, name: "일지 꾸미기" })).toHaveClass("app-heading--screen")
+    expect(screen.queryByText("이 일지 꾸미기")).toBeNull()
     const illustration = () => view.container.querySelector('img[src$="decorating-kit-v2.webp"]')
     expect(illustration()).toHaveAttribute("width", "64")
     expect(illustration()?.closest(".journal-decoration-unified__header")).not.toBeNull()
     fireEvent.click(screen.getByRole("button", { name: "꾸미기 재료 도구" }))
     expect(illustration()).toBeNull()
     fireEvent.click(screen.getByRole("button", { name: /^달력$/u }))
+    expect(screen.getByRole("dialog", { name: "달력 꾸미기" })).toBeVisible()
+    expect(await screen.findByRole("heading", { level: 2, name: "여백 배치" })).toBeVisible()
     expect(illustration()).toBeNull()
     expect(await screen.findByRole("button", { name: "재료 서랍 열기" })).toBeEnabled()
   })

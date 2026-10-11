@@ -1,0 +1,120 @@
+/* Explicit navigation/choice opt-in. Never targets calendar cells, paper,
+   destructive actions or all buttons in a screen. */
+.app-choice-group.app-choice-group {
+  gap: var(--space-2);
+  min-width: 0;
+  border: 0;
+}
+
+button.app-choice-control.app-choice-control {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: var(--app-touch-min, 44px);
+  max-width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: var(--bw-line, 1px) solid var(--line);
+  border-radius: var(--r-action, 12px);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-family: var(--sans);
+  font-size: var(--fs-body);
+  line-height: 1.45;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color 160ms ease-out, border-color 160ms ease-out;
+}
+
+button.app-choice-control.app-choice-control.app-choice-control:is([aria-pressed="true"], [aria-selected="true"], [aria-current="page"], [aria-current="location"]) {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--surface);
+  font-weight: 700;
+}
+/* Only the mutually exclusive plan panes use expanded as their selection state. */
+.plan-purpose-entries button.app-choice-control.app-choice-control[aria-expanded="true"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--surface);
+  font-weight: 700;
+}
+button.app-choice-control.app-choice-control:is([aria-pressed="true"], [aria-selected="true"], [aria-current="page"], [aria-current="location"]) :is(small, span) { color: inherit; }
+button.app-choice-control.app-choice-control:not(:disabled):not([aria-disabled="true"]):hover { border-color: var(--ink-2); }
+button.app-choice-control.app-choice-control:not(:disabled):not([aria-disabled="true"]):active { border-color: var(--brand); }
+button.app-choice-control.app-choice-control:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+button.app-choice-control.app-choice-control:is(:disabled, [aria-disabled="true"]) { cursor: default; opacity: .55; }
+button.app-choice-control.app-choice-control > svg { flex-shrink: 0; }
+button.app-choice-control.app-choice-control--answer {
+  border-radius: var(--r-task-surface, 16px);
+  min-height: 56px;
+}
+
+/* Named destination rows use the same touch surface, without inventing a
+   selected state for actions that leave the current view. */
+.more-screen .more-screen__row {
+  margin-block: var(--space-2);
+  border-radius: var(--r-action);
+  border: var(--bw-line) solid var(--line);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+}
+.more-screen button.more-screen__row { grid-template-columns: 24px minmax(0, 1fr) 18px; }
+.more-screen button.more-screen__row.app-choice-control { color: var(--ink); }
+.home-hub .home-hub__explore { gap: var(--space-2); }
+.home-hub .home-hub__explore > button {
+  padding: var(--space-3);
+  border: var(--bw-line) solid var(--line);
+  border-radius: var(--r-action);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.home-hub .home-hub__explore > button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+/* Tool rails have an intentional horizontal material list. Do not squeeze
+   Korean names into single-character columns or grow the fixed bottom dock. */
+.journal-decoration-toolbar__filters button.app-choice-control {
+  flex: 0 0 auto;
+  min-width: max-content;
+  padding: var(--space-2) var(--space-3);
+  white-space: nowrap;
+}
+.journal-decoration-editor__dock button.app-choice-control {
+  min-width: 44px;
+  padding: var(--space-1);
+  min-height: 52px;
+}
+.journal-decoration-unified__header button.app-choice-control {
+  padding-block: var(--space-2);
+}
+
+/* Persistent destinations retain their labels and action/navigation distinction. */
+.app-tab-bar .app-tab-bar__button {
+  isolation: isolate;
+  border-radius: var(--r-action);
+}
+.app-tab-bar .app-tab-bar__button:not(.app-tab-bar__record)::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: var(--space-1);
+  width: auto;
+  height: auto;
+  border-radius: var(--r-action);
+  background: transparent;
+  transition: background-color 160ms ease-out;
+}
+.app-tab-bar .app-tab-bar__button[data-active="true"] { color: var(--ink); }
+.app-tab-bar .app-tab-bar__button[data-active="true"]::before { background: var(--surface-2); }
+.app-tab-bar .app-tab-bar__button:not(.app-tab-bar__record):not(:disabled):hover::before { background: var(--surface-2); }
+.app-tab-bar .app-tab-bar__button[data-active="true"] svg { animation: none; }
+
+.app-shell[data-reduced-motion="true"] .app-choice-control,
+.app-shell[data-reduced-motion="true"] .app-tab-bar__button::before { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  button.app-choice-control.app-choice-control,
+  .app-tab-bar .app-tab-bar__button::before { transition: none; }
+}

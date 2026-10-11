@@ -260,11 +260,11 @@ export function InstantPlanEntryForm({
             {!event && active && !disabled && !isSubmitting && !errors.event && <ContextualIllustration image="plan-notebook" />}
           </div>
           <p id={`${id}-advance-hint`} className="instant-plan__hint">{SINGLE_CHOICE_ADVANCE_HINT}</p>
-          <div className="instant-plan__step-choices" role="group" aria-labelledby={`${id}-event-heading`}
+          <div className="instant-plan__step-choices app-choice-group" role="group" aria-labelledby={`${id}-event-heading`}
             aria-describedby={errors.event ? `${id}-advance-hint ${id}-event-error` : `${id}-advance-hint`}>
             {EVENTS.map((option, index) => (
               <button key={option.value} ref={index === 0 ? eventButtonRef : undefined}
-                className="instant-plan__step-choice" type="button" disabled={disabled}
+                className="instant-plan__step-choice app-choice-control app-choice-control--answer" type="button" disabled={disabled}
                 aria-pressed={event === String(option.value)}
                 aria-describedby={errors.event ? `${id}-event-error` : undefined}
                 onClick={() => { setEvent(String(option.value)); setErrors({}); setStep(eventReturnStep) }}>
@@ -285,14 +285,14 @@ export function InstantPlanEntryForm({
             {selectedEventLabel} 기록이 있나요?
           </h2>
           <p id={`${id}-advance-hint`} className="instant-plan__hint">{SINGLE_CHOICE_ADVANCE_HINT}</p>
-          <div className="instant-plan__step-choices instant-plan__basis-choices" role="group" aria-labelledby={`${id}-basis-heading`}
+          <div className="instant-plan__step-choices instant-plan__basis-choices app-choice-group" role="group" aria-labelledby={`${id}-basis-heading`}
             aria-describedby={`${id}-advance-hint`}>
             {([
               ["CURRENT_RECORD", "내 기록", "실제로 달린 시간"],
               ["GOAL_ONLY", "목표만 있어요", "앞으로 달리고 싶은 시간"],
               ["NO_RECORD", "기록 없이", "시간 입력 건너뛰기"],
             ] as const).map(([value, label, description]) => (
-              <button key={value} className="instant-plan__step-choice" type="button" disabled={disabled}
+              <button key={value} className="instant-plan__step-choice app-choice-control app-choice-control--answer" type="button" disabled={disabled}
                 aria-labelledby={`${id}-basis-${value}`} aria-describedby={`${id}-basis-${value}-hint`}
                 aria-pressed={basisChosen && kind === value} onClick={() => chooseBasis(value)}>
                 <span className="instant-plan__basis-text">

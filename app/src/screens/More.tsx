@@ -1,5 +1,5 @@
 import React from "react"
-import { ArrowLeft, BookOpen, Calculator, CircleHelp, DatabaseBackup, Flag, MessageSquareText, Newspaper, ScrollText, ShieldCheck, Sticker, Trash2, UserRound, Watch } from "lucide-react"
+import { ArrowLeft, BookOpen, Calculator, ChevronRight, CircleHelp, DatabaseBackup, Flag, MessageSquareText, Newspaper, ScrollText, ShieldCheck, Sticker, Trash2, UserRound, Watch } from "lucide-react"
 import { DataSafetyNotice } from "../components/DataSafetyNotice"
 import { feedbackConfig } from "../domain/feedback/feedback-config"
 import { SafeJournalExport } from "./home/DeviceJournal"
@@ -7,11 +7,13 @@ import { InstallShortcutMenuEntry } from "../components/InstallShortcut"
 import { TrashBin } from "./home/TrashBin"
 import { loadTrash } from "../domain/journal-trash"
 import "../styles/home-menu.css"
+import { captureReaderPosition, restoreReaderPosition, type ReaderPosition } from "../navigation/readerPosition"
+import { useNavigationReturnFrame } from "../hooks/useNavigationReturnFrame"
 
 export type MoreView = "tools" | "learning" | "account" | "backup" | "about"
 
 const VIEW_TITLES: Record<MoreView, string> = {
-  tools: "더보기", learning: "배우기·꾸미기", account: "계정·기록 보관",
+  tools: "더보기", learning: "훈련 배우기·일지 꾸미기", account: "계정·기록 보관",
   backup: "백업·복원·휴지통", about: "앱 정보·개인정보·문의",
 }
 
@@ -57,16 +59,24 @@ export function More({
   const [internalView, setInternalView] = React.useState<MoreView>("tools")
   const activeView = view ?? internalView
   const heading = React.useRef<HTMLHeadingElement>(null)
-  const previousView = React.useRef(activeView)
+  const previousView = React.useRef<MoreView | null>(null)
+  const menuReturn = React.useRef<ReaderPosition | null>(null)
+  const { schedule } = useNavigationReturnFrame()
+  const readerRegion = () => heading.current?.closest<HTMLElement>(".app-scroll-region") ?? heading.current?.closest<HTMLElement>(".more-screen") ?? null
   const changeView = (next: MoreView) => {
+    if (activeView === "tools" && next !== "tools") menuReturn.current = captureReaderPosition(readerRegion())
     setInternalView(next)
     onViewChange?.(next)
   }
   React.useEffect(() => {
     if (previousView.current === activeView) return
     previousView.current = activeView
-    heading.current?.focus()
-  }, [activeView])
+    if (activeView === "tools" && menuReturn.current) {
+      const position = menuReturn.current
+      menuReturn.current = null
+      schedule(() => restoreReaderPosition(readerRegion(), position))
+    } else heading.current?.focus({ preventScroll: true })
+  }, [activeView, schedule])
   const [trashCount, setTrashCount] = React.useState(() => loadTrash().length)
   return (
     <div className="more-screen">
@@ -87,13 +97,18 @@ export function More({
         {onOpenRecords && <UtilityRow icon={Flag} label="경기 기록 추가·수정" onClick={onOpenRecords} />}
         {onOpenImport && <UtilityRow icon={Watch} label="워치 파일 가져오기" onClick={onOpenImport} />}
         {(onOpenRunningProfile || onOpenRecordReading || onOpenOracleLibrary) && <h2 className="more-screen__group-label">오라클</h2>}
-        {onOpenRunningProfile && <UtilityRow icon={UserRound} label="나의 러닝 프로필" detail="취향 점수 · 친구와 비교" onClick={onOpenRunningProfile} />}
+        {onOpenRunningProfile && <UtilityRow icon={UserRound} label="러닝 취향" detail="취향 점수 · 친구와 비교" onClick={onOpenRunningProfile} />}
         {onOpenRecordReading && <UtilityRow icon={Calculator} label="최고기록으로 풀이하기" detail="저장 없이 내 기록·친구 기록 비교" onClick={onOpenRecordReading} />}
         {onOpenOracleLibrary && <UtilityRow icon={BookOpen} label="오라클 읽을거리" onClick={onOpenOracleLibrary} />}
+        <h2 className="more-screen__group-label">훈련 배우기</h2>
+        <UtilityRow icon={BookOpen} label="민지의 예시 일지" onClick={onOpenMinji} />
+        <UtilityRow icon={CircleHelp} label="훈련 용어집·도움말" onClick={onOpenGuide} />
+        {onOpenContent && <UtilityRow icon={Newspaper} label="훈련법 읽기" onClick={onOpenContent} />}
+        {onOpenRewards && <>
+          <h2 className="more-screen__group-label">일지 꾸미기</h2>
+          <UtilityRow icon={Sticker} label="일지 꾸미기" detail="달력 꾸미기 · 포인트는 재료에서 확인" onClick={onOpenRewards} />
+        </>}
         <h2 className="more-screen__group-label">관리·도움말</h2>
-        <UtilityRow icon={BookOpen} label={VIEW_TITLES.learning}
-          detail={["예시 일지", "용어집", onOpenContent && "훈련법", onOpenRewards && "꾸미기"].filter(Boolean).join(" · ")}
-          onClick={() => changeView("learning")} />
         <UtilityRow icon={UserRound} label={VIEW_TITLES.account} onClick={() => changeView("account")} />
         <UtilityRow icon={DatabaseBackup} label={VIEW_TITLES.backup} onClick={() => changeView("backup")} />
         <UtilityRow icon={ShieldCheck} label={VIEW_TITLES.about} detail="기기 연동 상태 · 약관 · 출처" onClick={() => changeView("about")} />
@@ -102,7 +117,7 @@ export function More({
         <UtilityRow icon={BookOpen} label="민지의 예시 일지" onClick={onOpenMinji} />
         <UtilityRow icon={CircleHelp} label="훈련 용어집·도움말" onClick={onOpenGuide} />
         {onOpenContent !== undefined && <UtilityRow icon={Newspaper} label="훈련법 읽기" onClick={onOpenContent} />}
-        {onOpenRewards !== undefined && <UtilityRow icon={Sticker} label="일지 꾸미기·포인트" onClick={onOpenRewards} />}
+        {onOpenRewards !== undefined && <UtilityRow icon={Sticker} label="일지 꾸미기" detail="달력 꾸미기 · 포인트는 재료에서 확인" onClick={onOpenRewards} />}
         </>}
         {activeView === "account" && <>
         {onOpenAccount && <UtilityRow icon={UserRound} label="계정 저장 상태 확인" onClick={onOpenAccount} />}
@@ -154,10 +169,12 @@ function UtilityRow({ icon: Icon, label, detail, onClick }: {
   readonly detail?: string
   readonly onClick: () => void
 }) {
+  const descriptionId = React.useId()
   return (
-    <button className="more-screen__row" type="button" onClick={onClick} aria-label={label}>
+    <button className="more-screen__row app-choice-control" type="button" onClick={event => { event.currentTarget.focus({ preventScroll: true }); onClick() }} aria-label={label} aria-describedby={detail ? descriptionId : undefined}>
       <Icon aria-hidden="true" size={19} />
-      <span><strong>{label}</strong>{detail && <small>{detail}</small>}</span>
+      <span><strong>{label}</strong>{detail && <small id={descriptionId}>{detail}</small>}</span>
+      <ChevronRight aria-hidden="true" size={18} />
     </button>
   )
 }

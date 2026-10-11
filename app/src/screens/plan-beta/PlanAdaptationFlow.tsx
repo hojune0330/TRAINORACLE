@@ -340,7 +340,7 @@ export function PlanAdaptationFlow({
               />}
               {availability.kind === "unavailable" && currentContext.kind === "current" && <InfoDisclosure title="어떤 계획을 기준으로 하나요?">
                 <p>{state.version === 3
-                  ? "같은 종목·목적·주기 조건에서는 확인 가능한 상세 훈련을 이어가요. 같은 목적의 직접 기록 RPE가 반복해서 높으면, 검토된 짧은 구성으로 다음 계획안을 조정해요. 줄일 수 있는 구성이 없으면 그 이유를 알려드려요."
+                  ? "같은 조건의 상세 훈련을 이어가요. 같은 목적의 훈련이 반복해서 계획보다 힘들었다면, 줄일 수 있는 구성을 확인해 다음 계획안을 만들어요. 줄일 수 없으면 이유를 알려드려요."
                   : "현재 화면의 계획과 수행 여부를 기준으로 다음 주기를 이어가요. 변경 이력이 있는 이 계획의 상세 훈련을 그대로 복사하거나 자동으로 줄이지는 않아요."}</p>
                 <p>{currentContext.origin.kind === "unavailable"
                   ? "변경 전 계획을 모두 확인하지 못했어요. 지금 계획은 보존하며, 확인하지 못한 이전 구성은 새 계획의 근거로 사용하지 않아요."
@@ -492,7 +492,7 @@ function DecisionStep({
         </button>
         <h2>{title}</h2>
       </div>
-      <div className="plan-choice-list">{children}</div>
+      <div className="plan-choice-list app-choice-group">{children}</div>
     </div>
   )
 }

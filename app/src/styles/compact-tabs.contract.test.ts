@@ -19,9 +19,12 @@ describe("compact tab density", () => {
     expect(main).toContain('import "./styles/compact-tabs.css"')
   })
 
-  it("keeps a 44px target around a 32px visible tab face", () => {
+  it("uses the full touch target for a rounded readable selection face", () => {
     expect(compactTabsCss).toMatch(/\.app-compact-tab\s*\{[\s\S]*min-height:\s*var\(--app-touch-min\)\s*!important/u)
-    expect(compactTabsCss).toMatch(/\.app-compact-tab::before\s*\{[\s\S]*inset:\s*6px 0/u)
+    expect(compactTabsCss).toMatch(/\.app-compact-tab::before\s*\{[\s\S]*inset:\s*0;/u)
+    expect(compactTabsCss).toContain("border-radius: var(--r-action)")
+    expect(compactTabsCss).toContain("font-size: var(--fs-body) !important")
+    expect(compactTabsCss).not.toContain("white-space: nowrap")
     /* P4 v3 자유 배치로 슬롯 레일이 사라져 예시 일지가 짧아졌다 — 최대 스크롤
      * 위치에서 종이를 읽기 상단에 맞추려면 128px 여유가 필요하다. */
     expect(compactTabsCss).toContain("padding-bottom: calc(128px + env(safe-area-inset-bottom))")

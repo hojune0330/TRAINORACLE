@@ -63,8 +63,8 @@ describe("energy system ledger UI", () => {
       mode="full"
     />)
 
-    const region = screen.getByRole("region", { name: "에너지 시스템 누적" })
-    expect(within(region).getByRole("heading", { level: 2, name: /에너지 시스템 누적/u })).toHaveClass("app-heading--screen", "app-heading--accent")
+    const region = screen.getByRole("region", { name: "훈련 종류별 합계" })
+    expect(within(region).getByRole("heading", { level: 2, name: /훈련 종류별 합계/u })).toHaveClass("app-heading--screen", "app-heading--accent")
     expect(region.querySelectorAll(".app-heading--accent")).toHaveLength(1)
     expect(within(region).getByRole("img", { name: /LT 지속 페이스 1회/u })).toBeVisible()
     expect(within(region).getByText("40분 (1회 기록) · 8km (1회 기록) · RPE 6 (1회 기록)")).toBeVisible()

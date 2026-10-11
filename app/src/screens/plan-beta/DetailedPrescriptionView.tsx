@@ -23,7 +23,7 @@ export function DetailedPrescriptionView({ prescription, variant = "default" }: 
     return (
       <div className="plan-detailed-prescription plan-detailed-prescription--sequence-lead">
         <p className="plan-detailed-prescription__notation">
-          <code>{pacePrescriptionNotation(prescription)}</code>
+          <code>{pacePrescriptionNotation(prescription, "PLAIN")}</code>
           <TermHelp term="training-notation" />
         </p>
         <p className="plan-detailed-prescription__lead">
@@ -38,7 +38,7 @@ export function DetailedPrescriptionView({ prescription, variant = "default" }: 
   return (
     <div className="plan-detailed-prescription">
       <p className="plan-detailed-prescription__notation">
-        <code>{pacePrescriptionNotation(prescription)}</code>
+        <code>{pacePrescriptionNotation(prescription, "PLAIN")}</code>
         <TermHelp term="training-notation" />
       </p>
       <PaceRecommendation prescription={prescription} />
@@ -78,26 +78,25 @@ export function DetailedPrescriptionView({ prescription, variant = "default" }: 
       <p className="plan-detailed-prescription__support" data-phase="prepare">
         <strong>준비</strong>
         <span>
-          {warmup.easyDurationMinutes}분 RPE {warmup.rpeMin}-{warmup.rpeMax} 쉬운 움직임 ·
+          {warmup.easyDurationMinutes}분 · 힘든 정도 {warmup.rpeMin}–{warmup.rpeMax}/10 · 가볍게 움직이기 ·
           {" "}{warmup.strides.durationSeconds}초 점진 가속 {warmup.strides.repetitions}회, 사이 <span className="plan-session-term">{warmup.strides.recoverySeconds}초</span> 걷기/조깅
         </span>
       </p>
       <p className="plan-detailed-prescription__support" data-phase="cooldown">
         <strong>정리</strong>
-        <span>{cooldown.easyDurationMinutes}분 RPE {cooldown.rpeMin}-{cooldown.rpeMax} 쉬운 움직임</span>
+        <span>{cooldown.easyDurationMinutes}분 · 힘든 정도 {cooldown.rpeMin}–{cooldown.rpeMax}/10 · 가볍게 움직이기</span>
       </p>
       </details>
+      <ul aria-label="운동을 중단해야 하는 경우">
+        {prescription.stopCodes.map((code) => <li key={code}>{stopLabel(code)}</li>)}
+      </ul>
       <details>
-        <summary>기준 기록·중단·낮춤 규칙 보기</summary>
+        <summary>기준 기록·훈련을 바꾸는 방법</summary>
         <div>
           <p>
             {anchor.kind === "GOAL" ? "목표 기준 · 현재 실력 아님" : "기준 기록"} · {anchor.eventDistanceM}m {formatRecordTime(anchor.performanceSeconds)} · {anchor.achievedAt ?? "미달성 목표"}
           </p>
-          <p>낮춤 · 숫자 반복을 임의로 줄이지 않고 기존 RPE 계획안으로 돌아갑니다.</p>
-          <ul>
-            {prescription.stopCodes.map((code) => <li key={code}>{stopLabel(code)}</li>)}
-          </ul>
-          <small>처방 무결성 · 확인됨</small>
+          <p>강도를 낮추려면 기존 시간·힘든 정도 계획안으로 돌아가세요. 반복 횟수를 자동으로 줄이지 않아요.</p>
         </div>
       </details>
     </div>

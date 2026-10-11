@@ -73,6 +73,7 @@ function RaceFormEditor({ onBack, onDone, targetDate, initialEntry }: EntryFormP
   const [paceMinutes, setPaceMinutes] = React.useState(() => input?.paceMinutes ?? (initialPaceSeconds === undefined ? "" : String(Math.floor(initialPaceSeconds / 60))))
   const [paceSeconds, setPaceSeconds] = React.useState(() => input?.paceSeconds ?? (initialPaceSeconds === undefined ? "" : String(initialPaceSeconds % 60).padStart(2, "0")))
   const [paceError, setPaceError] = React.useState<string | null>(null)
+  const [emptyNotice, setEmptyNotice] = React.useState(false)
   const prepareMemoOnOpen = React.useRef(false)
   const [saveError, setSaveError] = React.useState(false)
   const [accountNotice, setAccountNotice] = React.useState<string | null>(null)
@@ -110,6 +111,8 @@ function RaceFormEditor({ onBack, onDone, targetDate, initialEntry }: EntryFormP
 
   const persist = async () => {
     if (persistInFlight.current || !draft.current()) return
+    if (!reviewItems.some(item => item.label !== "경기 시점" && item.answered)) { setEmptyNotice(true); return }
+    setEmptyNotice(false)
     const hasPaceInput = paceMinutes.trim() !== "" || paceSeconds.trim() !== ""
     const goalPace = parseTargetPaceInput(paceMinutes, paceSeconds)
     if (hasPaceInput && goalPace === null) {
@@ -238,6 +241,7 @@ function RaceFormEditor({ onBack, onDone, targetDate, initialEntry }: EntryFormP
           </div>
         )}>
         {flowStep === "review" && <div className="race-review" role="region" aria-label="저장 전 입력 확인">
+          {emptyNotice && !reviewItems.some(item => item.label !== "경기 시점" && item.answered) && <p role="alert">아직 입력한 내용이 없어요. 남길 항목 하나를 골라 주세요.</p>}
           <p>{reviewContext}</p>
           <dl style={{ display: "grid", gap: 8, margin: 0 }}>
             {reviewItems.filter(item => item.answered).map((item) => (
@@ -328,14 +332,9 @@ function RaceHeader({
 function StageTabs({ stage, onChange }: { readonly stage: RaceStage; readonly onChange: (stage: RaceStage) => void }) {
   return (
     <div style={{ padding: "18px 20px 0" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", border: "1px solid var(--ink)" }}>
-        {(["pre", "post"] as const).map((stageOption, index) => (
-          <button key={stageOption} type="button" aria-pressed={stage === stageOption} onClick={() => onChange(stageOption)} style={{
-            minHeight: 44, padding: "12px 0", background: stage === stageOption ? "var(--ink)" : "transparent",
-            color: stage === stageOption ? "var(--bg)" : "var(--ink-2)", border: 0,
-            borderRight: index === 0 ? "1px solid var(--ink)" : 0,
-            fontFamily: "var(--mono)", fontSize: 11, fontWeight: 500, cursor: "pointer",
-          }}>{stageOption === "pre" ? "경기 직전" : "경기 직후"}</button>
+      <div className="app-choice-group" style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+        {(["pre", "post"] as const).map((stageOption) => (
+          <button className="app-choice-control" key={stageOption} type="button" aria-pressed={stage === stageOption} onClick={() => onChange(stageOption)}>{stageOption === "pre" ? "경기 직전" : "경기 직후"}</button>
         ))}
       </div>
     </div>

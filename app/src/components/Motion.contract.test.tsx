@@ -204,6 +204,10 @@ describe("saved toast motion structure", () => {
       fireEvent.click(within(tabBar).getByRole("button", { name: "기록하기" }))
       fireEvent.click(screen.getByRole("button", { name: /훈련 후/u }))
       fireEvent.click(screen.getByRole("button", { name: "지금 입력 확인" }))
+      fireEvent.click(screen.getByRole("button", { name: "메모 수정" }))
+      fireEvent.change(screen.getByRole("textbox", { name: "훈련 메모 내용" }), { target: { value: "합성 테스트 기록" } })
+      fireEvent.click(screen.getByRole("radio", { name: "훈련 메모" }))
+      fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
       await act(async () => fireEvent.click(screen.getByRole("button", { name: /^저장/u })))
 
       expect(screen.getByRole("button", { name: "기록 보기" })).toBeVisible()
@@ -233,7 +237,8 @@ describe("saved toast motion structure", () => {
       fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
       await act(async () => fireEvent.click(screen.getByRole("button", { name: /^저장/u })))
 
-      expect(screen.getByRole("alert")).toHaveTextContent("분석 결과를 확인해야 해요")
+      expect(screen.getByRole("alert")).toHaveTextContent(/확인|검토/u)
+      expect(screen.getByRole("alert")).not.toHaveTextContent("분석 결과")
       act(() => vi.advanceTimersByTime(10_000))
       expect(screen.getByRole("alert")).toBeInTheDocument()
 

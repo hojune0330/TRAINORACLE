@@ -145,11 +145,11 @@ export function OracleReturnPanel({ currentFingerprints = {}, onOpenTopic, compa
             : <>
               <p className="oracle-return-panel__counts"><strong>{summary.streak}</strong> 연속 · <strong>{summary.cumulative}</strong> 누적</p>
               <p className="oracle-return-panel__muted">일지를 남긴 날을 세고, 쉬는 날도 별도로 기록할 수 있어요. 추가 운동은 요구하지 않습니다.</p>
-              <div className="oracle-return-panel__weekdays" aria-label="참여 요일 선택">
+              <div className="oracle-return-panel__weekdays app-choice-group" aria-label="참여 요일 선택">
                 {WEEKDAY_LABELS.map((label, day) => <button
                   key={label}
                   type="button"
-                  className="oracle-return-panel__weekday"
+                  className="oracle-return-panel__weekday app-choice-control"
                   aria-pressed={weekdays.includes(day as OracleWeekday)}
                   onClick={() => toggleWeekday(day as OracleWeekday)}
                 >{label}</button>)}

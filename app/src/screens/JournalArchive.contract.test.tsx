@@ -290,7 +290,8 @@ describe("journal archive surface", () => {
     expect(document.body.textContent).not.toContain(SECRET)
     expect(onOpenDay).not.toHaveBeenCalled()
     await user.click(screen.getByRole("button", { name: "일지·메모 원문 열기" }))
-    expect(onOpenDay).toHaveBeenCalledWith("2026-07-10")
+    expect(onOpenDay).toHaveBeenCalledWith("2026-07-10", "session-visible",
+      expect.objectContaining({ date: "2026-07-10", entryId: "session-visible", scroll: expect.any(Number) }))
   })
 
   it("keeps controlled month and week selection when the archive remounts", () => {
@@ -337,6 +338,22 @@ describe("journal archive surface", () => {
     expect(screen.getByText(/이 달 0일 · 0개 기록/)).toBeVisible()
     await user.click(screen.getByRole("button", { name: "선택한 주기로 이동" }))
     expect(screen.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
+  })
+
+  it("keeps cycle-origin record identity without passing a monthly reopen context", async () => {
+    const user = userEvent.setup()
+    const onOpenDay = vi.fn()
+    render(<JournalArchive entries={ENTRIES} mode="CYCLE" cycleAnchor="2026-07-10" cycleIndex={0}
+      selection={{ selectedMonth: null, selectedWeekStart: null }}
+      onSelectionChange={vi.fn()} onOpenDay={onOpenDay} onBack={vi.fn()} />)
+
+    await user.click(screen.getByRole("button", { name: /2026년 7월 10일/u }))
+    const choices = screen.getAllByRole("button", { name: /^시간대 미기록 · 훈련 기록/u })
+    expect(choices).toHaveLength(2)
+    await user.click(choices[1]!)
+    await user.click(screen.getByRole("button", { name: "일지·메모 원문 열기" }))
+
+    expect(onOpenDay).toHaveBeenCalledExactlyOnceWith("2026-07-10", "session-private-only")
   })
 
   it("offers date-specific writing on an empty past day without silently selecting today", async () => {

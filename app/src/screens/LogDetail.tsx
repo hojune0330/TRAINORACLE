@@ -6,6 +6,7 @@ import { activeLocalAccount } from "../domain/account/local-journal-ownership"
 import { canEditJournalEntry } from "../domain/journal-edit-policy"
 import { AccountJournalHistory } from "./account/AccountJournalHistory"
 import { IndexCard, MoodStrip, PainDot } from "../components/JournalPrimitives"
+import { calendarDayLabel } from "../components/MonthCalendar"
 import { JournalConfirmationDialog } from "../components/JournalConfirmationDialog"
 import { TermHelp } from "../components/TermHelp"
 import type { TermId } from "../domain/glossary"
@@ -327,7 +328,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
       {!decorationStudio && (readerControls === undefined ? <TopBar2 onBack={onBack}>일지</TopBar2> : readerControls)}
       <PageFrame key={date} date={date} hasEntries={entries.length > 0} pageTopRef={pageTopRef} initiallyOpen={decorationStudio !== undefined} onDone={decorationStudio?.onDone} previewMonth={decorationStudio?.previewMonth} materialsFooter={decorationStudio?.materialsFooter}>
 
-      <div className="journal-detail-page__date">
+      <div className="journal-detail-page__date" role="heading" aria-level={1} aria-label={`${calendarDayLabel(date)} 일지`}>
         <IndexCard date={cardDate(date)} dow={dowOf(date)} season={seasonOf(date)} />
       </div>
 

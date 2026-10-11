@@ -11,7 +11,7 @@ test.beforeEach(async ({ page, baseURL }) => {
 
 async function openProfile(page: Page) {
   await page.getByRole("button", { name: "더보기", exact: true }).click()
-  await page.getByRole("button", { name: "나의 러닝 프로필", exact: false }).click()
+  await page.getByRole("button", { name: "러닝 취향", exact: false }).click()
   await expect(page.getByRole("heading", { name: "나는 어떤 달리기를 좋아할까요?" })).toBeVisible()
 }
 

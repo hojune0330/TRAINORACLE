@@ -159,7 +159,7 @@ export function SavedToast({
           )}
         </div>
         <div className="saved-toast__detail">
-          {needsReview ? `분석 결과를 확인해야 해요. ${reviewMessage}` : presentation.detail}
+          {needsReview ? reviewMessage : presentation.detail}
         </div>
         {rewardMessage !== undefined && <div className="saved-toast__reward">{rewardMessage}</div>}
         {rewardRetry && onRetryReward && <button className="saved-toast__action" type="button" disabled={rewardLoading} onClick={onRetryReward}>

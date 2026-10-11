@@ -27,6 +27,17 @@ const recommendation: InstantPlanRecommendation = {
 }
 
 describe("InstantPlanRecommendationView", () => {
+  it("puts the first workout and required execution summary before the full calendar", () => {
+    render(<InstantPlanRecommendationView recommendation={recommendation} actionState={{ kind: "READY" }}
+      onStart={vi.fn()} beforeStart={<p>합성 훈련의 총 시간 35분</p>} />)
+    const schedule = screen.getByRole("region", { name: "이번 일정" })
+    expect(screen.getByText(recommendation.firstSessionLabel).compareDocumentPosition(schedule))
+      .toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(screen.getByText("합성 훈련의 총 시간 35분").compareDocumentPosition(schedule))
+      .toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(within(schedule).getByRole("button", { name: /2026년 9월 21일 월요일/ })).toBeVisible()
+  })
+
   it("shows the exact prescription in a day reader and the optional full contents", () => {
     const notation = "2 sets x (10 x 400m) · r60s · R3min"
     const days = recommendation.days.map(day => ({ ...day,

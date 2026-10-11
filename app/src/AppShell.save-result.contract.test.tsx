@@ -35,7 +35,7 @@ beforeEach(() => {
   fixture.status = "FAILED"; fixture.summary = null
   fixture.read.mockReset(); fixture.award.mockReset().mockReturnValue({ kind: "PENDING" }); fixture.saved.mockReset()
 })
-afterEach(() => { cleanup(); setActiveLocalAccount(null); vi.restoreAllMocks() })
+afterEach(() => { cleanup(); setActiveLocalAccount(null); vi.useRealTimers(); vi.restoreAllMocks() })
 
 function savedWithFailedReward() {
   render(<AppShell />)
@@ -94,4 +94,19 @@ it("processes a Quick save before leaving completion and does not award twice on
   expect(fixture.award).toHaveBeenCalledTimes(1)
   expect(fixture.saved).toHaveBeenCalledTimes(1)
   expect(document.querySelector(".journal-save-result")).toBeNull()
+})
+
+it("retains the Quick receipt while reading completion instead of expiring authoritative feedback", () => {
+  vi.useFakeTimers()
+  fixture.award.mockReturnValue({ kind: "AWARDED" })
+  render(<AppShell />)
+  fireEvent.click(screen.getByRole("button", { name: "합성 빠른 기록 시작" }))
+  fireEvent.click(screen.getByRole("button", { name: "확인된 빠른 저장" }))
+  // The fixture has no inline result consumer, so its receipt uses the fallback
+  // host. This asserts lifecycle, not the production result's visual layout.
+  expect(document.querySelector(".saved-toast--enter")).not.toBeNull()
+  act(() => { vi.advanceTimersByTime(10_000) })
+  expect(document.querySelector(".saved-toast--enter")).not.toBeNull()
+  expect(fixture.saved).toHaveBeenCalledTimes(1)
+  expect(fixture.award).toHaveBeenCalledTimes(1)
 })

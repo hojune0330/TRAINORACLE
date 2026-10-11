@@ -1,3 +1,4 @@
+.trends-hub { padding-bottom: 32px; }
 .trends-hub__guide { margin: var(--space-5) var(--space-5) var(--space-2); }
 
 .trends-hub__sections {
@@ -121,6 +122,8 @@
 .trends-hub__notice button { flex-shrink: 0; }
 .trends-hub__explore { padding: 16px 20px 0; }
 .trends-hub__coaching { padding: 16px 20px 0; }
+.trends-hub__result-layout { min-width: 0; }
+.trends-hub__result, .trends-hub__coaching { min-width: 0; }
 .trends-hub__empty h2 { margin: 0; font-size: 22px; line-height: 1.4; }
 .trends-hub__empty p { margin: 8px 0 20px; color: var(--ink-2); font-size: 14.5px; line-height: 1.6; }
 .trends-hub__empty { padding: 24px 20px; }
@@ -149,4 +152,14 @@
 
 @media (max-width: 359px) {
   .trends-hub__drilldowns { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (min-width: 56rem) {
+  .app-shell--results .trends-hub__result-layout:has(.personal-oracle) {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(18rem, .75fr);
+    align-items: start;
+    gap: var(--space-6);
+  }
+  .app-shell--results .trends-hub__coaching { padding: var(--space-5) var(--space-5) 0; }
 }

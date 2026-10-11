@@ -2,12 +2,14 @@ import React from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { AppShellFrame, type ShellToastState } from "./AppShellFrame"
+import { JournalSaveResult } from "./JournalSaveResult"
+import { registerBrowserBackLayer } from "../navigation/browserNavigation"
 
 vi.mock("../navigation/browserNavigation", async importOriginal => ({
   ...await importOriginal<typeof import("../navigation/browserNavigation")>(),
-  registerBrowserBackLayer: (options: { onClose: () => void }) => ({ close: options.onClose, dispose: vi.fn() }),
+  registerBrowserBackLayer: vi.fn((options: { onClose: () => void }) => ({ close: options.onClose, dispose: vi.fn() })),
 }))
-afterEach(cleanup)
+afterEach(() => { cleanup(); vi.clearAllMocks() })
 
 const saved: ShellToastState = { count: 1, phase: "enter", receipt: { kind: "generic", savedDate: "2026-10-08" },
   rewardMessage: "오늘 기록 포인트가 반영됐어요." }
@@ -20,6 +22,14 @@ function frame(result: ShellToastState | null, onClose = vi.fn(), extras: Partia
 }
 
 describe("journal save completion", () => {
+  it("lets an embedded completion keep its existing browser-back owner", () => {
+    const close = vi.fn()
+    render(<JournalSaveResult result={saved} onClose={close} closeLabel="완료" manageBrowserBack={false} />)
+    expect(registerBrowserBackLayer).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole("button", { name: "완료" }))
+    expect(close).toHaveBeenCalledTimes(1)
+  })
+
   it("shows a dated result alone, preserving the underlying screen until explicitly closed", () => {
     const close = vi.fn(), open = vi.fn(), decorate = vi.fn()
     const view = render(frame(saved, close, { onOpenSaved: open, onDecorateSaved: decorate }))

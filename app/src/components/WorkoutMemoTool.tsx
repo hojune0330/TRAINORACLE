@@ -81,8 +81,8 @@ export function WorkoutMemoTool({ session, date, state = "PREVIEW" }: { readonly
     <div className="workout-memo-tool__heading"><StickyNote size={18} aria-hidden="true" /><h3>훈련 메모</h3>
       {open && <button type="button" aria-label="메모 접기" title="메모 접기" onClick={closeMemo}><ChevronUp size={18} aria-hidden="true" /></button>}
     </div>
-    <div className="workout-memo-tool__layouts" role="group" aria-label="메모 정보량">
-      {WORKOUT_MEMO_GROUPS.map(item => <button key={item.id} type="button" aria-pressed={open && group === item.id}
+    <div className="workout-memo-tool__layouts app-choice-group" role="group" aria-label="메모 정보량">
+      {WORKOUT_MEMO_GROUPS.map(item => <button className="app-choice-control" key={item.id} type="button" aria-pressed={open && group === item.id}
         aria-expanded={open && group === item.id} aria-controls={panelId}
         disabled={busy} onClick={() => { setGroup(item.id); setOpen(true) }}>{item.label}</button>)}
     </div>
@@ -92,12 +92,12 @@ export function WorkoutMemoTool({ session, date, state = "PREVIEW" }: { readonly
       <details className="workout-memo-tool__customization">
         <summary>표현·꾸미기</summary>
         <div className="workout-memo-tool__options">
-          <div className="workout-memo-tool__layouts workout-memo-tool__subchoices" role="group" aria-label="메모 세부 보기">
-            {WORKOUT_MEMO_VIEWS.filter(item => item.group === group).map(item => <button key={item.id} type="button"
+          <div className="workout-memo-tool__layouts workout-memo-tool__subchoices app-choice-group" role="group" aria-label="메모 세부 보기">
+            {WORKOUT_MEMO_VIEWS.filter(item => item.group === group).map(item => <button className="app-choice-control" key={item.id} type="button"
               aria-pressed={view === item.id} disabled={busy} onClick={() => setViews(previous => ({ ...previous, [group]: item.id }))}>{item.label}</button>)}
           </div>
-          <div className="workout-memo-tool__layouts workout-memo-tool__subchoices" role="group" aria-label="메모 표현 방식">
-            {WORKOUT_MEMO_WORDINGS.map(item => <button key={item.id} type="button" aria-pressed={wording === item.id}
+          <div className="workout-memo-tool__layouts workout-memo-tool__subchoices app-choice-group" role="group" aria-label="메모 표현 방식">
+            {WORKOUT_MEMO_WORDINGS.map(item => <button className="app-choice-control" key={item.id} type="button" aria-pressed={wording === item.id}
               disabled={busy} onClick={() => setWording(item.id)}>{item.label}</button>)}
           </div>
           <div className="workout-memo-tool__papers" role="group" aria-label="메모 종이 색">

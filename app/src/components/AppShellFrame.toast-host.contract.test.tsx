@@ -1,8 +1,9 @@
 import React from "react"
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { AppShellFrame } from "./AppShellFrame"
+import { AppShellFrame, useInlineJournalSaveResult, type ShellToastState } from "./AppShellFrame"
 import { ShellToastHost } from "./ShellToastHost"
+import { JournalSaveResult } from "./JournalSaveResult"
 
 afterEach(cleanup)
 
@@ -39,6 +40,40 @@ function renderShell(open: boolean, onDismissToast = vi.fn()) {
 }
 
 describe("AppShellFrame decoration editor toast host", () => {
+  it("suppresses the duplicate toast only for a matching, confirmed inline save", () => {
+    const result: ShellToastState = { count: 1, phase: "enter", completionAlreadyShown: true,
+      receipt: { kind: "generic", savedDate: "2026-10-08" }, storageStatus: "CONFIRMED",
+      reviewMessage: "합성 안전 검토 안내", rewardMessage: "포인트 확인 대기", rewardRetry: true }
+    function InlineResult() {
+      const host = useInlineJournalSaveResult("2026-10-08")
+      return host?.result ? <JournalSaveResult result={host.result} onClose={vi.fn()} onRetryReward={host.onRetryReward} /> : null
+    }
+    const retry = vi.fn()
+    const view = render(<AppShellFrame scrollRegionRef={React.createRef()} savedToast={result} tab="log"
+      onDismissToast={vi.fn()} onOpenTrends={vi.fn()} onTab={vi.fn()} onRetryReward={retry}>
+      <InlineResult />
+    </AppShellFrame>)
+    expect(screen.getAllByRole("alert")).toHaveLength(1)
+    expect(document.querySelector("[data-toast-priority]")).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "포인트 다시 확인" }))
+    expect(retry).toHaveBeenCalledTimes(1)
+    view.rerender(<AppShellFrame scrollRegionRef={React.createRef()} savedToast={{ ...result, storageStatus: "PENDING" }} tab="log"
+      onDismissToast={vi.fn()} onOpenTrends={vi.fn()} onTab={vi.fn()}>
+      <InlineResult />
+    </AppShellFrame>)
+    expect(document.querySelector('[data-toast-priority="review"]')).not.toBeNull()
+  })
+
+  it("uses the wider result role only when a task does not already own the surface", () => {
+    const props = { scrollRegionRef: React.createRef<HTMLElement>(), savedToast: null, tab: "home" as const,
+      onDismissToast: vi.fn(), onOpenTrends: vi.fn(), onTab: vi.fn() }
+    const view = render(<AppShellFrame {...props} wideResults><h1>합성 결과</h1></AppShellFrame>)
+    expect(document.querySelector(".app-shell")).toHaveClass("app-shell--results")
+    view.rerender(<AppShellFrame {...props} wideResults wideTask><h1>합성 결과</h1></AppShellFrame>)
+    expect(document.querySelector(".app-shell")).toHaveClass("app-shell--task")
+    expect(document.querySelector(".app-shell")).not.toHaveClass("app-shell--results")
+  })
+
   it("moves one persistent review alert inside the active modal", () => {
     renderShell(true)
 

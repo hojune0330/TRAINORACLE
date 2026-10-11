@@ -70,6 +70,7 @@ export function ActivePlan({
   onActivateNextFrame,
   onCheckDetailedExecution,
   showCreatedCelebration = false,
+  onCreatedCelebrationConsumed,
   onWriteSessionLog,
   returnToSession,
   executionMessage,
@@ -92,6 +93,7 @@ export function ActivePlan({
     currentCheck: PlanCurrentCheck,
   ) => void
   readonly showCreatedCelebration?: boolean
+  readonly onCreatedCelebrationConsumed?: () => void
   readonly onWriteSessionLog?: (session: PlanSession) => void
   readonly returnToSession?: PlannedSessionLogDraft["link"]
   readonly executionMessage?: string | null
@@ -108,6 +110,7 @@ export function ActivePlan({
   const today = useLocalToday()
   const [showActivationCheck, setShowActivationCheck] = React.useState(false)
   const [showCreated, setShowCreated] = React.useState(false)
+  const createdCelebrationConsumed = React.useRef(false)
   const scheduleAnchor = React.useRef<HTMLDivElement>(null)
   const checkedToday = projectCurrentInstantToday(state)
   const todayView = executionBlocked
@@ -180,8 +183,19 @@ export function ActivePlan({
   }, [returnToSession])
 
   React.useEffect(() => {
-    if (!showCreatedCelebration) return
+    if (!showCreatedCelebration) {
+      createdCelebrationConsumed.current = false
+      return
+    }
     setShowCreated(true)
+    if (!createdCelebrationConsumed.current) {
+      createdCelebrationConsumed.current = true
+      onCreatedCelebrationConsumed?.()
+    }
+  }, [showCreatedCelebration, onCreatedCelebrationConsumed])
+
+  React.useEffect(() => {
+    if (!showCreated) return
     const dismiss = () => setShowCreated(false)
     const timeout = window.setTimeout(dismiss, 3_000)
     window.addEventListener("pointerdown", dismiss, { once: true, capture: true })
@@ -193,7 +207,7 @@ export function ActivePlan({
       window.removeEventListener("keydown", dismiss, true)
       window.removeEventListener("scroll", dismiss, true)
     }
-  }, [showCreatedCelebration])
+  }, [showCreated])
 
   return (
     <section className="active-plan" aria-labelledby="active-plan-title">

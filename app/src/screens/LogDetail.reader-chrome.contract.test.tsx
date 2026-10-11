@@ -28,6 +28,15 @@ const entry: JournalEntry = {
 }
 
 describe("journal reader chrome", () => {
+  it("exposes the original date as a level-one heading without adding a paper layout box", () => {
+    const { container } = render(<LogDetail date={date} entries={[entry]} readOnly readerControls={<nav aria-label="synthetic reader navigation" />} />)
+    const heading = screen.getByRole("heading", { level: 1, name: "2026년 9월 27일 일요일 일지" })
+    expect(heading).toBe(container.querySelector(".journal-detail-page__date"))
+    expect(heading.children).toHaveLength(1)
+    expect(heading).not.toHaveClass("app-heading")
+    expect(heading).toHaveTextContent("2026 · 09 · 27")
+  })
+
   it("keeps the reader background plain while retaining the saved theme and placement", () => {
     const base = createEmptyDecorationState()
     const state = decorationStateSchema.parse({

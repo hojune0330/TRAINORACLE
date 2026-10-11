@@ -1,11 +1,37 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { TrainingContent, TrainingContentCorrectionNotice } from "./TrainingContent"
+import { hasPendingBrowserBackLayer } from "../navigation/browserNavigation"
 
 beforeEach(() => window.localStorage.clear())
-afterEach(cleanup)
+afterEach(async () => {
+  cleanup()
+  await Promise.resolve()
+  // A consumed native Back entry queues a POP. Let it finish before the next
+  // reader creates its account- and navigation-scoped focus frame.
+  await waitFor(() => expect(hasPendingBrowserBackLayer()).toBe(false), { timeout: 5000 })
+})
 
 describe("training content reader", () => {
+  it("does not erase a reader's early list scroll when the initial title focus runs", async () => {
+    render(<div className="app-scroll-region"><TrainingContent onBack={vi.fn()} /></div>)
+    const region = document.querySelector<HTMLElement>(".app-scroll-region")!
+    region.scrollTop = 320
+    await waitFor(() => expect(screen.getByRole("heading", { level: 1 })).toHaveFocus())
+    expect(region.scrollTop).toBe(320)
+  })
+  it("focuses the article title and returns to the originating topic and scroll", async () => {
+    render(<div className="app-scroll-region"><TrainingContent onBack={vi.fn()} /></div>)
+    await waitFor(() => expect(screen.getByRole("heading", { level: 1 })).toHaveFocus())
+    const region = document.querySelector<HTMLElement>(".app-scroll-region")!
+    const opener = screen.getByRole("button", { name: /크루즈 인터벌은 지속주와/u })
+    region.scrollTop = 320; fireEvent.click(opener)
+    await waitFor(() => expect(screen.getByRole("heading", { level: 1 })).toHaveFocus())
+    expect(region.scrollTop).toBe(0)
+    fireEvent.click(screen.getByRole("button", { name: "이전 화면" }))
+    await waitFor(() => expect(screen.getByRole("button", { name: /크루즈 인터벌은 지속주와/u })).toHaveFocus())
+    expect(region.scrollTop).toBe(320)
+  })
   it("shows topics and source status first and keeps the reading boundary available on demand", () => {
     const { container } = render(<TrainingContent onBack={vi.fn()} />)
 
