@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="게임 메달"><title>게임 메달</title>
+  <path d="M20 4h10l6 18h-10z" fill="#FF4D5E" stroke="#1D1B2C" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M44 4H34l-6 18h10z" fill="#3D5AFE" stroke="#1D1B2C" stroke-width="2.5" stroke-linejoin="round"/>
+  <circle cx="32" cy="40" r="19" fill="#E49B0F" stroke="#1D1B2C" stroke-width="2.8"/>
+  <circle cx="32" cy="38.5" r="15" fill="#FFC83D"/>
+  <polygon points="32.00,29.50 34.51,35.54 41.04,36.06 36.07,40.32 37.58,46.69 32.00,43.27 26.42,46.69 27.93,40.32 22.96,36.06 29.49,35.54" fill="#FFFFFF" stroke="#1D1B2C" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M19 33a14 14 0 0 1 6-8" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"/></svg>
