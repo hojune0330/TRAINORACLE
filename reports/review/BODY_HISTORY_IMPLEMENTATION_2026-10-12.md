@@ -182,6 +182,26 @@ active account/scope generation/recovery-code 검사를 유지하며 async 동�
 유지된 hosted 필수 CI를 통합 담당자가 별도 증거로 확정한다. 이 기록만으로 P1 보류를
 해제하거나 커밋·main 통합·게시·실계정 왕복이 끝났다고 표시하지 않는다.
 
+### 저장 구조 중복 통합 보류 — 2026-10-12 07:23 UTC
+
+최종 게시 전 원격 재확인에서 main이 `6194f3f5`에서 `4266f022`로 전진했다.
+별도 작업의 canonical 저장소 구현과 162파일 변경이 포함되어 있다. 그 구현은
+`to-local-journal.*`, 중앙 저장 주소 계약 및 명시적 초기화/충돌 확인 UI를 사용한다.
+본 작업실의 `trainoracle.device-journal.v2:` adapter를 기계적으로 함께 병합하면
+서로 다른 활성 주소·초기화·삭제 경계가 겹친다. 둘을 동시에 제품 원본으로 채택하지 않는다.
+
+본 작업 결과는 `d5245064ebf606d468b67fd3ffef048ea8cc9c0f`까지 별도로 보존했다.
+핵심 23계약, 기존 vault lifecycle 7계약과 publication failure 5계약, 앞선 main 통합
+6파일 66계약은 각각 UTC/KST에서 통과했다. source 보존/owner CAS/guest 자동귀속 금지
+등 RAM 결함 검출 6개 및 persistence 결함 검출 2개도 이름으로 확인했다.
+실제 격리 두 탭의 전체 기록 바이트 보존은 기존 fixture 7단언/30조건으로 확인했다.
+이 결과는 `4266f022`의 구현·전체 회귀·CI·배포를 검증한 수치가 아니다.
+
+PR #355는 재통합 검토 중이며 지금 병합하거나 게시하지 않는다. 최신 main의 저장
+구조를 기준으로 닫힌 라운지 연결 변경과 필요한 보호를 좁게 대조한 뒤, 단일 구조의
+최종 SHA에서 유지된 필수 CI를 실행해야 한다. 보존용 WIP의 `[skip ci]`는 검사
+성공·P1 해제·공개 관문 승인으로 취급하지 않는다. 기존 main과 에셋, 원본 자료는 보존한다.
+
 ### 기존 private 편집의 owner CAS 보완 및 최종 소스 검증
 
 독립 검토는 신규 private 저장과 달리 기존 private 편집이 journal/vault 및 active account/
