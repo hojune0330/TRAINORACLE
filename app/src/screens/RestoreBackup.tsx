@@ -600,16 +600,21 @@ function RestoreFailedStage({ outcome, onRestart, onOpenHome }: {
 
   return (
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
-      <div role="alert" data-testid="restore-commit-failure" style={{ border: "1px solid var(--pain-5)", background: "var(--surface)", padding: "14px 16px" }}>
+      <div role="alert" data-testid="restore-commit-failure" className="restore-failure-notice" style={{ border: "1px solid var(--pain-5)", background: "var(--surface)", padding: "14px 16px" }}>
         <div style={{ ...mono, fontSize: 10, color: "var(--pain-5)", letterSpacing: "0.1em" }}>되돌리기 실패</div>
         <div style={{ fontFamily: "var(--sans)", fontSize: 15, fontWeight: 500, marginTop: 5 }}>{message}</div>
         {outcome.calendarDecorationRestore === "ROLLED_BACK" && <p>달력 꾸미기는 이전 상태로 되돌렸어요.</p>}
         {outcome.calendarDecorationRestore === "SAVE_FAILED" && <p>달력 꾸미기 저장을 확인하지 못했어요.</p>}
       </div>
-      {onOpenHome && <button {...nextActionFeedback} type="button" className={inspectFirst ? "next-action" : undefined}
-        style={inspectFirst ? undefined : secondaryBtn} onClick={onOpenHome}>현재 일지 확인</button>}
-      <button {...nextActionFeedback} type="button" className={inspectFirst ? undefined : "next-action"}
-        style={inspectFirst ? secondaryBtn : undefined} onClick={onRestart}>{restartLabel}</button>
+      <div className="next-action-group restore-failure-actions">
+        {inspectFirst ? <>
+          <button {...nextActionFeedback} type="button" className="next-action" onClick={onOpenHome}>현재 일지 확인</button>
+          <button type="button" style={secondaryBtn} onClick={onRestart}>{restartLabel}</button>
+        </> : <>
+          <button {...nextActionFeedback} type="button" className="next-action" onClick={onRestart}>{restartLabel}</button>
+          {onOpenHome && <button type="button" style={secondaryBtn} onClick={onOpenHome}>현재 일지 확인</button>}
+        </>}
+      </div>
     </div>
   )
 }

@@ -137,12 +137,14 @@ export function InstantPlanRecommendationView({
       {beforeStart}
       {/* Full prescription calendars can be long lists. Required facts stay above
           the action; browsing every date is not another acceptance requirement. */}
+      <div className="instant-plan__decision">
       {startAction}
       {onEditWorkout && <div className="instant-plan__actions">
         <button className="instant-plan__secondary" type="button" disabled={waiting} onClick={onEditWorkout}>
           훈련 조절
         </button>
       </div>}
+      </div>
       <section aria-label="이번 일정">
         <h3>이번 일정</h3>
         {calendar ?? (recommendation.days.length === 0 ? (
