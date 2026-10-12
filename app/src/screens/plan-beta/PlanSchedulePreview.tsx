@@ -192,7 +192,8 @@ export function PlanSchedulePreview({
   const visibleDays = prescriptionCalendar && scheduleView === "calendar"
     ? days.filter(day => day.date === selectedDate)
     : days
-  const previewDisplayMode = prescriptionCalendar ? "stack" : displayMode
+  const previewDisplayMode = prescriptionCalendar ? scheduleView === "list" ? "swipe" : "stack" : displayMode
+  const dateRailRef = React.useRef<HTMLDivElement>(null)
   const scheduleId = React.useId()
   const scheduleRef = React.useRef<HTMLOListElement>(null)
   const calendarRef = React.useRef<HTMLElement>(null)
@@ -200,6 +201,11 @@ export function PlanSchedulePreview({
   const readerRequestOrigin = React.useRef<HTMLElement | null>(null)
   const readerOpenedFromCalendar = React.useRef(false)
   const previousCalendarIdentity = React.useRef(calendarIdentity)
+
+  React.useEffect(() => {
+    dateRailRef.current?.querySelector<HTMLElement>('[aria-pressed="true"]')
+      ?.scrollIntoView?.({ block: "nearest", inline: "nearest", behavior: "auto" })
+  }, [activeDayIndex, scheduleView])
 
   React.useEffect(() => {
     if (previousCalendarIdentity.current === calendarIdentity) return
@@ -402,12 +408,32 @@ export function PlanSchedulePreview({
             )}
           </header>
         )}
+        {prescriptionCalendar && previewDisplayMode === "swipe" && <div
+          ref={dateRailRef} className="plan-date-rail" role="group" aria-label="훈련 날짜 선택">
+          {days.map(({ date, day }, index) => <button key={date} type="button"
+            aria-label={`${calendarDateLabel(date)} 선택`}
+            aria-pressed={index === activeDayIndex}
+            aria-current={date === today ? "date" : undefined}
+            onClick={() => moveToDay(index)}>
+            <span>{WEEKDAYS[isoToDate(date).getDay()]?.slice(0, 1)}</span>
+            <strong>{isoToDate(date).getDate()}</strong>
+            <small>{date === today ? "오늘" : day === 1 || date.endsWith("-01") ? `${isoToDate(date).getMonth() + 1}월` : ""}</small>
+          </button>)}
+        </div>}
         <ol
           ref={scheduleRef}
           className="plan-schedule-preview"
           data-display-mode={previewDisplayMode}
           aria-label="날짜별 계획 미리보기"
           onScroll={syncActiveDay}
+          tabIndex={previewDisplayMode === "swipe" ? 0 : undefined}
+          onKeyDown={event => {
+            if (previewDisplayMode !== "swipe" || event.target !== event.currentTarget) return
+            if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+              event.preventDefault()
+              moveToDay(activeDayIndex + (event.key === "ArrowRight" ? 1 : -1))
+            }
+          }}
         >
           {visibleDays.map(({ date, day, sessions: daySessions }) => {
             const index = days.findIndex(item => item.date === date)
@@ -416,6 +442,9 @@ export function PlanSchedulePreview({
               <li
                 id={`${scheduleId}-day-${day}`}
                 key={date}
+                ref={element => {
+                  if (element) element.inert = prescriptionCalendar && previewDisplayMode === "swipe" && index !== activeDayIndex
+                }}
                 role="group"
                 aria-roledescription={previewDisplayMode === "swipe" ? "날짜 카드" : undefined}
                 aria-label={label}
@@ -710,7 +739,7 @@ function PlanTrainingFlow({
         <button className="app-choice-control" type="button" aria-pressed={scheduleView === "calendar"}
           onClick={() => onScheduleViewChange("calendar")}>달력</button>
         <button className="app-choice-control" type="button" aria-pressed={scheduleView === "list"}
-          onClick={() => onScheduleViewChange("list")}>목록</button>
+          onClick={() => onScheduleViewChange("list")}>하루씩</button>
       </div>}
       {outsidePlanMonth && showCalendar && <button className="calendar-range-return" type="button" onClick={() => {
         setMonth(days[0]!.date.slice(0, 7))
