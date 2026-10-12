@@ -246,7 +246,7 @@ export function GameMenu({ progress, status, onClose, onSettings, onCharacter, o
 
       {tab === "help" && <div role="tabpanel" id="treadmill-panel-help" aria-labelledby="treadmill-tab-help" className="treadmill-game__panel treadmill-game__help">
         <h3>목표</h3>
-        <p>각 도시는 10초짜리 구간 세 개예요. 바닥은 계속 뒤로 흐르니, 뒤쪽 끝으로 밀려 떨어지지 않게 버티면 완주예요.</p>
+        <p>각 도시는 30초짜리 구간 세 개, 총 90초예요. 10초마다 새 웨이브와 에너지 보급이 와요. 바닥은 계속 뒤로 흐르니, 뒤쪽 끝으로 밀려 떨어지지 않게 버티면 완주예요.</p>
         <h3>조작</h3>
         <ul className="treadmill-game__rules">
           <li><b><Footprints size={18} aria-hidden="true" /></b><span><strong>달리기 꾹</strong>누르는 동안 앞으로 가고 에너지를 써요. 떼면 회복하지만 뒤로 밀려요.</span></li>

@@ -1,6 +1,6 @@
 import React from "react"
 import { RewardActionButton } from "../components/rewards/RewardActionButton"
-import { ArrowLeft, ChevronsRight, Footprints, Pause, Play, RotateCcw, MoveUp, Star, Zap, Flame, Trophy, Menu, Map as MapIcon, ArrowRight, Sparkles } from "lucide-react"
+import { ArrowLeft, ChevronsRight, Footprints, Pause, Play, RotateCcw, MoveUp, Star, Zap, Trophy, Menu, Map as MapIcon, ArrowRight, Sparkles } from "lucide-react"
 import {
   advanceTreadmill, newTreadmillRun, treadmillCommand, treadmillCourseSeconds, treadmillElapsed, treadmillStars, treadmillTip, treadmillWarning,
   TREADMILL_RULES, TREADMILL_STAGES, TREADMILL_UPGRADES,
@@ -23,10 +23,12 @@ import { fxPalette, mountShaderSky } from "./treadmill/shader-sky"
 import type { ShaderSky } from "./treadmill/shader-sky"
 import type { SkyScene } from "./treadmill/sky-presets"
 import { CharacterPortrait, GameMenu, TourMap } from "./treadmill/GamePanels"
+import { UpgradeChoice, UPGRADE_STORIES } from "./treadmill/UpgradeChoice"
 import { playGameSound } from "./treadmill/sound"
 import "../styles/treadmill-game.css"
 import "../styles/treadmill-tour.css"
 import "./treadmill/game-reward-actions.css"
+import "./treadmill/upgrade-choice.css"
 
 /** Taps act on press for game timing; keyboard activation (click with detail 0) still works. */
 function tapAction(action: () => void) {
@@ -37,7 +39,7 @@ function tapAction(action: () => void) {
 }
 const fillStyle = (fill: number) => ({ "--fill": Math.max(0, Math.min(1, fill)).toFixed(3) }) as React.CSSProperties
 const upgradeName = (id: string) => TREADMILL_UPGRADES.find(upgrade => upgrade.id === id)?.name ?? id
-const UPGRADE_ICON: Record<TreadmillUpgrade, typeof Zap> = { grip: Footprints, spring: MoveUp, economy: Flame }
+
 
 /** Small canvas portrait of the runner wearing the given gear (Gun Hero-style loadout preview). */
 function RunnerPortrait({ upgrades, pose = "idle", label, character }: { readonly upgrades: readonly TreadmillUpgrade[]; readonly pose?: "idle" | "cheer" | "hit"; readonly label: string; readonly character: RunnerCharacter }) {
@@ -106,6 +108,7 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
   const [pauseReason, setPauseReason] = React.useState("직접 일시정지했어요.")
   const [menuTab, setMenuTab] = React.useState<"settings" | "shop">("settings")
   const [result, setResult] = React.useState<{ best: boolean; unlocks: string[]; bestScore: number; medal: number; medalsLeft: number } | null>(null)
+  const [equipped, setEquipped] = React.useState<TreadmillUpgrade | null>(null)
   const state = React.useRef(newTreadmillRun(courseStages(course)))
   const [view, setView] = React.useState<TreadmillState>(state.current)
   const canvas = React.useRef<HTMLCanvasElement>(null)
@@ -154,6 +157,7 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
   }, [])
   const command = React.useCallback((input: TreadmillCommand, reason = "직접 일시정지했어요.") => {
     const before = state.current
+    if (["start", "resume", "retryStage", "pause"].includes(input.type)) setEquipped(null)
     state.current = treadmillCommand(state.current, input)
     if (before.mode === "running" && state.current.mode === "paused") setPauseReason(reason)
     if (state.current.mode !== "running" || input.type === "start") releaseInputs()
@@ -280,7 +284,7 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
   const firstTime = Object.values(progress.cities).every(item => item.clears === 0)
   const cityBest = city ? progress.cities[city.id]?.bestScore ?? 0 : 0
   const canRetryStage = view.mode === "over" && view.stage > 0 && view.checkpoint !== null
-  const pickUpgrade = (upgrade: TreadmillUpgrade) => { command({ type: "upgrade", upgrade }); playGameSound("tap", settings.sound); focusField() }
+  const pickUpgrade = (upgrade: TreadmillUpgrade) => { setEquipped(upgrade); command({ type: "upgrade", upgrade }); playGameSound("tap", settings.sound); focusField() }
   const retryStage = () => { setResult(null); command({ type: "retryStage" }); playGameSound("tap", settings.sound); focusField() }
 
   const handleKey = (event: React.KeyboardEvent) => {
@@ -354,6 +358,8 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
       <canvas ref={skyCanvas} className="treadmill-game__sky" aria-hidden="true" data-live={shaderLive || undefined} />
       <canvas ref={canvas} tabIndex={0} className="treadmill-game__canvas"
         aria-label="게임 조작 영역. 오른쪽 방향키를 누르고 있으면 달리기, 스페이스나 위 방향키는 점프, D는 대시, Esc는 일시정지. 왼쪽 끝으로 밀리면 떨어집니다." />
+      {live && <span className="treadmill-game__wave">웨이브 {Math.min(3, Math.floor(view.seconds / TREADMILL_RULES.waveSeconds) + 1)}/3 · 10초마다 보급</span>}
+      {running && view.countdown > 0 && equipped && <div className="treadmill-game__equipped" role="status"><strong>{upgradeName(equipped)} 장착!</strong><span>{UPGRADE_STORIES[equipped].effect}</span></div>}
       <p className="treadmill-game__warning" role="status" data-tone={warning.tone}>{warning.text}</p>
 
       {view.mode === "paused" && !menuOpen && <div className="treadmill-game__overlay">
@@ -369,11 +375,11 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
 
       {view.mode === "ready" && <div className="treadmill-game__overlay">
         <section className="treadmill-game__card" aria-labelledby="treadmill-ready-title" data-first={firstTime || undefined}>
-          <span className="treadmill-game__ribbon">{city ? `${city.country} · ${TOUR_CITIES.indexOf(city) + 1}번째 도시` : "연습 · 30초"}</span>
+          <span className="treadmill-game__ribbon">{city ? `${city.country} · ${TOUR_CITIES.indexOf(city) + 1}번째 도시` : `연습 · ${total}초`}</span>
           {city
             ? <><h2 id="treadmill-ready-title">{city.name} · {city.tagline}</h2>
               <ol className="treadmill-game__intro-stages">{stages.map((item, index) => <li key={item.id} data-stage={item.surface}><b>{index + 1}</b>{item.name}</li>)}</ol></>
-            : <h2 id="treadmill-ready-title">30초 동안 바닥 위에서 버티세요</h2>}
+            : <h2 id="treadmill-ready-title">{total}초 러닝 챌린지</h2>}
           {firstTime
             ? <ul className="treadmill-game__rules">
               <li><b><Footprints size={18} aria-hidden="true" /></b><span><strong>꾹 누르면 앞으로</strong>에너지를 써요</span></li>
@@ -388,28 +394,7 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
         </section>
       </div>}
 
-      {view.mode === "upgrade" && nextStage && <div className="treadmill-game__overlay treadmill-game__overlay--light">
-        <section className="treadmill-game__card treadmill-game__pick" aria-labelledby="treadmill-upgrade-title">
-          <span className="treadmill-game__ribbon" data-tone="gold">{view.stage + 1}구간 통과!</span>
-          <h2 id="treadmill-upgrade-title">강화 하나 고르면 바로 출발</h2>
-          <p className="treadmill-game__pick-next" data-stage={nextStage.surface}><b>다음</b>{nextStage.name} · {nextStage.hint}</p>
-          <div className="treadmill-game__upgrades">
-            {TREADMILL_UPGRADES.map(upgrade => {
-              const owned = view.upgrades.filter(id => id === upgrade.id).length
-              const Icon = UPGRADE_ICON[upgrade.id]
-              return <button type="button" key={upgrade.id} data-upgrade={upgrade.id} onClick={() => pickUpgrade(upgrade.id)}>
-                <b className="treadmill-game__gear-icon" aria-hidden="true"><Icon size={22} /></b>
-                <span className="treadmill-game__gear-text">
-                  <strong>{upgrade.name}{owned > 0 && <em> Lv.{owned + 1}</em>}{upgrade.fits === nextStage.surface && <mark>추천</mark>}</strong>
-                  <span className="treadmill-game__plus">+ {upgrade.benefit}</span>
-                  <span className="treadmill-game__minus">− {upgrade.cost}</span>
-                </span>
-              </button>
-            })}
-          </div>
-          <p className="treadmill-game__keys"><Zap size={11} aria-hidden="true" />에너지 +{TREADMILL_RULES.checkpointRefill} · 점프 {view.jumpCost} · 대시 {view.cooldownSeconds.toFixed(1)}초</p>
-        </section>
-      </div>}
+      {view.mode === "upgrade" && nextStage && <UpgradeChoice state={view} nextStage={nextStage} onPick={pickUpgrade} />}
 
       {ended && <div className="treadmill-game__overlay">
         <section className="treadmill-game__card treadmill-game__result" aria-labelledby="treadmill-result-title" data-result={view.mode}>

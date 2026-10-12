@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
-  advanceTreadmill, nearestHazard, newTreadmillRun, treadmillCommand, treadmillStars, treadmillTip, treadmillWarning, upcomingHazards,
-  TREADMILL_SCORE,
+  applyUpgrade, advanceTreadmill, nearestHazard, newTreadmillRun, treadmillCommand, treadmillStars, treadmillTip, treadmillWarning, upcomingHazards,
+  TREADMILL_SCORE, treadmillCourseSeconds,
   TREADMILL_RULES, TREADMILL_STAGES,
 } from "./treadmill"
 import type { TreadmillHazard, TreadmillHazardKind, TreadmillState, TreadmillUpgrade } from "./treadmill"
@@ -30,7 +30,7 @@ const player = (target: number, reserve: number, gap: number): Strategy => state
 }
 function play(picks: readonly TreadmillUpgrade[], strategy: Strategy): TreadmillState {
   let state = treadmillCommand(newTreadmillRun(), { type: "start" })
-  for (let frame = 0; frame < 4000 && (state.mode === "running" || state.mode === "upgrade"); frame++) {
+  for (let frame = 0; frame < 7000 && (state.mode === "running" || state.mode === "upgrade"); frame++) {
     if (state.mode === "upgrade") state = treadmillCommand(treadmillCommand(state, { type: "upgrade", upgrade: picks[state.stage]! }), { type: "resume" })
     state = advanceTreadmill(strategy(state), 1 / 60)
   }
@@ -38,6 +38,21 @@ function play(picks: readonly TreadmillUpgrade[], strategy: Strategy): Treadmill
 }
 
 describe("treadmill survival rules", () => {
+  it("offers 90 seconds with hazards in all three waves of each surface", () => {
+    expect(treadmillCourseSeconds()).toBe(90)
+    for (const stage of TREADMILL_STAGES) for (const start of [0, 10, 20]) {
+      expect(stage.course.filter(item => item.at >= start && item.at < start + 10).length, `${stage.id} wave ${start}`).toBeGreaterThanOrEqual(3)
+    }
+  })
+  it("supplies energy once at an internal wave boundary, never while paused", () => {
+    const before = clean({ seconds: 9.99, energy: 20, running: true })
+    const supplied = advanceTreadmill(before, 0.02)
+    expect(supplied.mode).toBe("running")
+    expect(supplied.energy).toBeGreaterThan(50)
+    expect(advanceTreadmill(supplied, 0.02).energy).toBeLessThan(supplied.energy)
+    const paused = treadmillCommand(before, { type: "pause" })
+    expect(advanceTreadmill(paused, 2)).toEqual(paused)
+  })
   it("falls without action and stops simulating after failure", () => {
     const state = advance(start(), 8)
     expect(state.mode).toBe("over")
@@ -108,7 +123,7 @@ describe("treadmill survival rules", () => {
     expect(treadmillTip(state)).toMatch(/점프/)
   })
   it("telegraphs the fixed course before each hazard enters", () => {
-    const first = TREADMILL_STAGES[0].course[0].at
+    const first = TREADMILL_STAGES[0]!.course[0]!.at
     const early = advance(start(), first - 1)
     expect(upcomingHazards(early)).toHaveLength(1)
     expect(early.hazards).toHaveLength(0)
@@ -135,7 +150,7 @@ describe("treadmill survival rules", () => {
     const hit = advanceTreadmill({ ...two, y: 0, velocityY: 0, invulnerable: 0, hazards: [{ ...hazard(two.x + 0.01), id: 3 }] }, 0.02)
     expect(hit.stats.combo).toBe(0)
     expect(hit.stats.bestCombo).toBe(2)
-    const finish = (hits: number) => advanceTreadmill({ ...clean({ stage: 2, seconds: 9.99 }), stats: { ...clean().stats, hits } }, 0.05)
+    const finish = (hits: number) => advanceTreadmill({ ...clean({ stage: 2, seconds: TREADMILL_RULES.stageSeconds - 0.01 }), stats: { ...clean().stats, hits } }, 0.05)
     expect(finish(0).stats.score).toBe(TREADMILL_SCORE.stage)
     expect([0, 1, 4].map(hits => treadmillStars(finish(hits)))).toEqual([3, 2, 1])
     expect(treadmillStars(advance(start(), 8))).toBe(0)
@@ -145,7 +160,7 @@ describe("treadmill survival rules", () => {
     const paused = treadmillCommand(state, { type: "pause" })
     expect(paused.running).toBe(false)
     expect(advance(paused, 4)).toEqual(paused)
-    const upgrade = advanceTreadmill({ ...clean(), seconds: 9.99 }, 0.05)
+    const upgrade = advanceTreadmill({ ...clean(), seconds: TREADMILL_RULES.stageSeconds - 0.01 }, 0.05)
     expect(upgrade.mode).toBe("upgrade")
     expect(advance(upgrade, 4)).toEqual(upgrade)
   })
@@ -194,7 +209,7 @@ describe("treadmill survival rules", () => {
     expect(retry.stats.score).toBe(400)
     expect(retry.stats.retries).toBe(1)
     expect("checkpoint" in retry.checkpoint!).toBe(false)
-    const finish = advanceTreadmill({ ...retry, countdown: 0, stage: 2, seconds: 9.99, spawned: 99, stats: { ...retry.stats, hits: 0 } }, 0.05)
+    const finish = advanceTreadmill({ ...retry, countdown: 0, stage: 2, seconds: TREADMILL_RULES.stageSeconds - 0.01, spawned: 99, stats: { ...retry.stats, hits: 0 } }, 0.05)
     expect(finish.mode).toBe("clear")
     expect(treadmillStars(finish)).toBe(1)
     // Stage 1 failures and finished runs offer no retry; a full restart clears the retry count.
@@ -203,7 +218,7 @@ describe("treadmill survival rules", () => {
     expect(treadmillCommand(fell, { type: "start" }).stats.retries).toBe(0)
   })
   it("finishes the final stage and resets all upgrades and stats on restart", () => {
-    const clear = advanceTreadmill({ ...clean(), stage: 2, seconds: 9.99, upgrades: ["grip"], jumpCost: 11 }, 0.05)
+    const clear = advanceTreadmill({ ...clean(), stage: 2, seconds: TREADMILL_RULES.stageSeconds - 0.01, upgrades: ["grip"], jumpCost: 11 }, 0.05)
     expect(clear.mode).toBe("clear")
     const again = treadmillCommand(clear, { type: "start" })
     expect(again.stage).toBe(0)
@@ -243,8 +258,13 @@ describe("treadmill balance guard (game feel, not training)", () => {
       expect(play([pick, pick], player(0.55, 25, 0.08)).mode, pick).toBe("clear")
     }
   })
-  it("makes double grip pay for heavier jumps: a thin energy reserve fails on spikes", () => {
-    expect(play(["grip", "grip"], player(0.55, 10, 0.08)).failure).toBe("spike")
-    expect(play(["spring", "spring"], player(0.55, 10, 0.08)).mode).toBe("clear")
+  it("makes heavier grip jumps require a larger reserve before a spike", () => {
+    const approach = (pick: TreadmillUpgrade) => {
+      const built = applyUpgrade(applyUpgrade(clean({ stage: 2, energy: 12, running: true, hazards: [hazard(0.59, "spike")] }), pick), pick)
+      return advance(treadmillCommand(built, { type: "jump" }), 0.3)
+    }
+    expect(approach("grip").failure).toBe("spike")
+    expect(approach("spring").mode).toBe("running")
+    expect(approach("spring").y).toBeGreaterThan(16)
   })
 })
