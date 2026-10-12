@@ -4,15 +4,20 @@ import type { ExperienceBand } from "@impl/plan-generator/types"
 import { ENERGY_INTENT_LABELS, EXPERIENCE_LABELS } from "./labels"
 import { planSupportCoverage } from "./plan-support-coverage"
 
-export function PlanSupportCoverage({ experienceBand, evaluatedAt = new Date().toISOString() }: {
+export function PlanSupportCoverage({ experienceBand, evaluatedAt }: {
   readonly experienceBand: ExperienceBand | undefined
   readonly evaluatedAt?: string
 }) {
-  const rows = React.useMemo(() => experienceBand === undefined ? [] : planSupportCoverage(experienceBand, evaluatedAt), [experienceBand, evaluatedAt])
+  const [openedAt, setOpenedAt] = React.useState<string | null>(null)
+  const rows = React.useMemo(() => experienceBand === undefined || openedAt === null
+    ? [] : planSupportCoverage(experienceBand, evaluatedAt ?? openedAt), [experienceBand, evaluatedAt, openedAt])
   if (experienceBand === undefined) return null
   return (
-    <details className="plan-support-coverage">
+    <details className="plan-support-coverage" onToggle={event => {
+      if (event.currentTarget.open) setOpenedAt(previous => previous ?? new Date().toISOString())
+    }}>
       <summary><CircleHelp size={16} aria-hidden="true" />종목별 상세 훈련 지원</summary>
+      {openedAt !== null && <>
       <p>선택한 경험: {EXPERIENCE_LABELS[experienceBand].title}</p>
       <table>
         <caption>현재 경험의 훈련 구성과 개인 페이스 지원</caption>
@@ -38,6 +43,7 @@ export function PlanSupportCoverage({ experienceBand, evaluatedAt = new Date().t
       <p>일부 LT·유산소 반복은 5km 기록을, 10km·하프·마라톤 경기 페이스 구성은 같은 종목의 실제 기록 또는 직접 선택한 목표 기록을 기준으로 계산해요. 목표는 현재 능력이 아니에요. 기존 상세 훈련은 해당 종목의 현재 기록 조건을 따라요. 스프린트·언덕은 경기 페이스로 환산하지 않아요.</p>
       <p>기록 저장만으로 계획이 바뀌지는 않아요. 변경 내용을 확인하고 적용하면 조건에 맞는 남은 훈련들의 페이스를 갱신해요. 지난 훈련과 일지가 연결된 훈련은 유지해요.</p>
       <p>A/B는 다른 훈련법 두 개가 아니라, 주요 훈련을 유지한 채 기초·회복 운동의 구성을 고르는 선택이에요. 개별 훈련은 같은 목적의 다른 구성으로 바꿀 수 있어요.</p>
+      </>}
     </details>
   )
 }

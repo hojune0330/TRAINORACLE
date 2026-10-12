@@ -433,6 +433,11 @@ function isPlanCandidate(value: unknown): value is PlanCandidate {
       || !Array.isArray(value["rationaleCodes"]) || !isDenseArray(value["rationaleCodes"])
       || !value["rationaleCodes"].every((code) => typeof code === "string" && PLAN_BETA_CODES.has(code))
       || !hasValidSessionLayout(value["sessions"])) return false
+  if (isRecord(value["frame"]) && value["frame"]["startSlot"] === "PM"
+    && value["sessions"].some(session => {
+      const position = (session.day - 1) * 2 + (session.slot === "PM" ? 1 : 0) - 1
+      return position < 0 || position >= 19
+    })) return false
   const detailedSessionCount = value["sessions"].filter(session => session.prescription.kind === "PACE_TARGET").length
   if (value["sessions"].some(session => session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout
     && (session.prescription.catalogWorkout.inputs.eventDistanceM !== value["eventDistanceM"]
@@ -496,7 +501,7 @@ function isDetailedTemplateRef(value: unknown): value is DetailedTemplateRef | n
 function isPlanSession(value: unknown): value is PlanSession {
   if (!isRecord(value) || typeof value["day"] !== "number" || !Number.isInteger(value["day"]) || value["day"] <= 0 || (value["slot"] !== "AM" && value["slot"] !== "PM") || !isRecord(value["prescription"])) return false
   switch (value["role"]) {
-    case "REST": return hasExactKeys(value, ["day", "slot", "role", "plannedEnergyIntent", "prescription"]) && value["slot"] === "AM" && value["plannedEnergyIntent"] === "RECOVERY_INTENT" && hasExactKeys(value["prescription"], ["kind"]) && value["prescription"]["kind"] === "REST"
+    case "REST": return hasExactKeys(value, ["day", "slot", "role", "plannedEnergyIntent", "prescription"]) && value["plannedEnergyIntent"] === "RECOVERY_INTENT" && hasExactKeys(value["prescription"], ["kind"]) && value["prescription"]["kind"] === "REST"
     case "EASY": return (value["plannedEnergyIntent"] === "RECOVERY_INTENT" || value["plannedEnergyIntent"] === "BASE_INTENT") && hasRpePrescription(value)
     case "QUALITY": return isQualityEnergyIntent(value["plannedEnergyIntent"])
       && (value["prescription"]["kind"] === "PACE_TARGET" ? isPaceTargetPrescription(value["prescription"]) : hasRpePrescription(value))
@@ -542,11 +547,12 @@ function isContinuityContext(value: unknown): value is PlanCandidate["continuity
 }
 
 function isCandidateFrame(value: unknown): boolean {
-  if (!isRecord(value) || !hasExactKeys(value, value["projectionLengthDays"] === undefined
-    ? ["formationKind", "lengthDays", "slotCount", "continuity"]
-    : ["formationKind", "lengthDays", "slotCount", "projectionLengthDays", "continuity"])) return false
+  if (!isRecord(value) || !hasExactKeys(value, ["formationKind", "lengthDays", "slotCount", "continuity",
+    ...(value["projectionLengthDays"] === undefined ? [] : ["projectionLengthDays"]),
+    ...(value["startSlot"] === undefined ? [] : ["startSlot"])])) return false
   const continuity = value["continuity"]
   return value["formationKind"] === "LOCAL_CIVIL_9_5" && value["lengthDays"] === 9.5 && value["slotCount"] === 19
+    && (value["startSlot"] === undefined || value["startSlot"] === "PM")
     && (value["projectionLengthDays"] === undefined || value["projectionLengthDays"] === 7 || value["projectionLengthDays"] === 9 || value["projectionLengthDays"] === 9.5 || value["projectionLengthDays"] === 10)
     && isRecord(continuity)
     && ((continuity["kind"] === "STANDARD_FRAME" && hasExactKeys(continuity, ["kind"]))

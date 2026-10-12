@@ -12,6 +12,7 @@ import { recoverPendingSync } from "./account/sync-recovery"
 import { eraseAllLocalData, erasableKeys } from "./erase-local-data"
 import { ENGAGEMENT_STORAGE_KEY } from "./engagement"
 import { LOCAL_JOURNAL_OWNERSHIP_KEY } from "./account/local-journal-ownership"
+import { ACCOUNT_DELETION_BOUNDARY_PREFIX, closeAccountDeletionBoundary, isAccountDeletionClosed } from "./account/account-deletion-boundary"
 
 const JOURNAL = "trainoracle.journal.v1"
 const TOMBSTONES = "trainoracle.sync.tombstones.v1"
@@ -37,6 +38,19 @@ beforeEach(() => {
   window.sessionStorage.clear()
 })
 
+it("preserves the account terminal record by default and erases durable traces only with the existing explicit option", () => {
+  const owner = "erase-confirmed-deleted-owner"
+  const key = ACCOUNT_DELETION_BOUNDARY_PREFIX + owner
+  closeAccountDeletionBoundary(owner, "2026-10-07T00:00:00Z")
+  expect(erasableKeys()).not.toContain(key)
+  eraseAllLocalData()
+  expect(localStorage.getItem(key)).toBe("2026-10-07T00:00:00Z")
+  expect(erasableKeys({ includeDeletionRecord: true })).toContain(key)
+  eraseAllLocalData({ includeDeletionRecord: true })
+  expect(localStorage.getItem(key)).toBeNull()
+  expect(isAccountDeletionClosed(owner)).toBe(true) // this tab's deleted session stays terminal
+})
+
 it.each([1, 3])("erases adjusted originals v%s for guest and every account without parsing private content", version => {
   const keys = [`trainoracle.adjusted-plan-originals.v${version}`,
     `trainoracle.adjusted-plan-originals.v${version}.account.athlete-a`,
@@ -44,6 +58,16 @@ it.each([1, 3])("erases adjusted originals v%s for guest and every account witho
   for (const key of keys) localStorage.setItem(key, "{unreadable-private-original")
   localStorage.setItem("another-app-data", "keep")
   eraseAllLocalData()
+  for (const key of keys) expect(localStorage.getItem(key)).toBeNull()
+  expect(localStorage.getItem("another-app-data")).toBe("keep")
+})
+
+it("erases goal-program wrappers and preserved whole-program history for guest and every owner without parsing private content", () => {
+  const bases = ["trainoracle.goal-training-program.v1", "trainoracle.goal-training-program.history.v1"]
+  const keys = bases.flatMap(base => [base, `${base}.account.athlete-a`, `${base}.account.athlete-b`])
+  for (const key of keys) localStorage.setItem(key, "{unreadable-private-program")
+  localStorage.setItem("another-app-data", "keep")
+  expect(eraseAllLocalData().ok).toBe(true)
   for (const key of keys) expect(localStorage.getItem(key)).toBeNull()
   expect(localStorage.getItem("another-app-data")).toBe("keep")
 })
@@ -99,6 +123,15 @@ function seed(): void {
 }
 
 describe("eraseAllLocalData", () => {
+  it("removes preserved legacy-plan originals for guests and every local account", () => {
+    const keys = ["trainoracle.plan-beta.legacy-originals.v1",
+      "trainoracle.plan-beta.legacy-originals.v1.account.athlete-a",
+      "trainoracle.plan-beta.legacy-originals.v1.account.athlete-b"]
+    for (const key of keys) localStorage.setItem(key, "synthetic archived original")
+    expect(eraseAllLocalData().ok).toBe(true)
+    for (const key of keys) expect(localStorage.getItem(key)).toBeNull()
+  })
+
   it("로그인 토큰과 진행 중이던 인증 보호 상태를 모두 지운다", () => {
     seed()
     const result = eraseAllLocalData()

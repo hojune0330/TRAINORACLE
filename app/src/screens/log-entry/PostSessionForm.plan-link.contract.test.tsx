@@ -8,6 +8,12 @@ import { PostSessionForm } from "./PostSessionForm"
 beforeEach(() => window.localStorage.clear())
 afterEach(cleanup)
 
+async function advanceToReview(user: ReturnType<typeof userEvent.setup>) {
+  while (screen.queryByRole("button", { name: "다음 질문" })) {
+    await user.click(screen.getByRole("button", { name: "다음 질문" }))
+  }
+}
+
 describe("planned session journal entry", () => {
   it("shows the selected plan occurrence and preserves its link without pre-filling actual effort", async () => {
     const state = stateFixture()
@@ -21,12 +27,17 @@ describe("planned session journal entry", () => {
     render(<PostSessionForm targetDate={draft.date} plannedSessionLink={draft.link} onDone={onDone} />)
 
     expect(screen.getByText(/계획의 DAY 1 오전 훈련/u)).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "완료" }))
+    await user.click(screen.getByRole("button", { name: "시간대는 기록하지 않고 계속" }))
     expect(screen.getByRole("button", { name: "BASE 기초 지구력" })).toHaveAttribute("aria-pressed", "false")
+    await advanceToReview(user)
     await user.click(screen.getByRole("button", { name: /저장/u }))
     await waitFor(() => expect(onDone).toHaveBeenCalledOnce())
     const saved = onDone.mock.calls[0]?.[1]
     expect(saved?.plannedSessionLink).toEqual(draft.link)
     expect(saved?.system).toBe("")
+    expect(saved?.rpe).toBe(0)
+    expect(saved?.fieldProvenance?.rpe).toEqual({ provenance: "MISSING" })
     expect(saved?.date).toBe(draft.date)
   })
 })

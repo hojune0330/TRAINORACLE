@@ -6,7 +6,7 @@ import { TermHelp } from "../components/TermHelp"
 import { InstallShortcutSuggestion } from "../components/InstallShortcut"
 import { accountAuthState } from "../domain/account/account-auth-state"
 import { buildTrainingHomeViewModel, type HomeSession } from "../domain/home-view-model"
-import { loadEntries } from "../domain/journal-store"
+import { useCalendarSnapshot } from "../hooks/useCalendarEntries"
 import { useLocalToday } from "../hooks/useLocalToday"
 import { readPlanBetaStateFromStorage } from "../domain/plan-beta-store"
 import { toAnalysisJournalEntry, type AnalysisJournalEntry } from "../domain/safe-export"
@@ -15,14 +15,13 @@ import { summarizeToDateDistances } from "../domain/cumulative-distance"
 import { projectStructuredJournalObservations } from "../domain/journal-observation"
 import { painLevelsRequireReview } from "../safety/memo-safety"
 import { AccountEntryButton } from "../components/AccountEntryButton"
-import { DailyContextTags } from "./home/DailyContextTags"
 import { TrainingHome } from "./home/TrainingHome"
 import { LatestJournalDay } from "./home/LatestJournalDay"
 import { LOCAL_JOURNALS_CHANGED } from "../domain/journal-change-events"
 import type { LogEntryType } from "./log-entry/shared"
 import type { OracleTopicId } from "../domain/oracle-exploration"
 import { onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
-import { accountJournalProjectionStatus } from "../domain/account/account-journal-projection"
+import { accountJournalProjectionStatus, readAccountJournalProjection, readCurrentConfirmedAccountJournalProjection } from "../domain/account/account-journal-projection"
 import { RecordStartActions } from "../components/RecordStartActions"
 import { createPlannedSessionLogDraft, type PlannedSessionLink } from "../domain/planned-session-link"
 
@@ -38,6 +37,7 @@ export type HomeProps = {
   readonly onOpenRecords?: () => void
   readonly onOpenOracle?: (topic: OracleTopicId) => void
   readonly oraclePreview?: ReactNode
+  readonly oraclePreviewLabel?: string
   readonly onOpenMore?: () => void
   readonly onOpenAccount?: () => void
   readonly onOpenContent?: () => void
@@ -47,9 +47,10 @@ export type HomeProps = {
 
 export function Home({
   onWriteLog, onOpenDay, onOpenArchive, onOpenGuide, onOpenPlan,
-  onOpenNextTraining, onOpenTrends, onOpenImport, onOpenRecords, onOpenOracle, oraclePreview, onOpenMore, onOpenAccount, onOpenContent, onOpenRewards,
+  onOpenNextTraining, onOpenTrends, onOpenImport, onOpenRecords, onOpenOracle, oraclePreview, oraclePreviewLabel, onOpenMore, onOpenAccount, onOpenContent, onOpenRewards,
 }: HomeProps) {
-  const [revision, setRevision] = React.useState(0)
+  const [, setRevision] = React.useState(0)
+  const journalSnapshot = useCalendarSnapshot()
   const athleteRecords = useAthleteRecordsSnapshot()
   React.useEffect(() => {
     const refresh = () => setRevision(value => value + 1)
@@ -66,7 +67,7 @@ export function Home({
       window.removeEventListener("storage", refresh)
     }
   }, [])
-  const entries = React.useMemo(() => loadEntries(), [revision])
+  const entries = journalSnapshot.entries
   const analysisEntries = React.useMemo(
     () => entries.flatMap(entry => {
       const projected = toAnalysisJournalEntry(entry)
@@ -101,20 +102,30 @@ export function Home({
   const storageStatus = accountJournalProjectionStatus()
   const storageMessage = storageStatus === "CONFLICT" ? "다른 기기의 수정과 겹친 기록이 있어요. 사용할 내용을 확인해 주세요."
     : storageStatus === "REJECTED" ? "계정에 저장하지 못한 기록이 있어요. 기기에 보관된 내용을 확인해 주세요."
-    : storageStatus === "FAILED" ? "계정의 기록을 확인하지 못했어요. 저장 상태를 확인해 주세요."
+    : storageStatus === "FAILED" ? "계정 기록의 최신 상태를 확인하지 못했어요. 보관된 기록의 저장 상태를 확인해 주세요."
     : storageStatus === "PENDING" ? "계정 저장을 기다리는 기록이 있어요. 아직 계정 저장이 완료되지 않았어요."
+    : storageStatus === "LOADING" && journalSnapshot.owner !== null ? "계정 기록을 확인하고 있어요. 아직 최신 확인이 끝나지 않았어요."
+    : null
+  const journalReadMessage = journalSnapshot.status === "ERROR" ? "기록을 읽지 못했어요. 기록이 없는 상태와는 달라요."
+    : storageMessage !== null ? null
+    : journalSnapshot.status === "LOADING" ? "기록을 확인하고 있어요. 아직 기록 유무를 확인하지 못했어요."
+    : journalSnapshot.status === "STALE" ? "기록의 최신 상태를 확인하지 못했어요. 지금 보이는 기록은 보관된 내용이에요."
     : null
   const needsPlanReview = accountCurrent?.kind === "evidence_required"
-  const safetyNotice = needsPainCheck || painReviewDates.length > 0 || storageMessage !== null || needsPlanReview || athleteRecords.message !== null ? (
+  const safetyNotice = needsPainCheck || painReviewDates.length > 0 || storageMessage !== null || journalReadMessage !== null || needsPlanReview || athleteRecords.message !== null ? (
     <div className="home-hub__notices">
       {athleteRecords.message && <p role="status">{athleteRecords.message}</p>}
       {needsPainCheck && <p role="alert" className="home-hub__notice">
         계획에 통증 확인 기록이 있어요. 다음 훈련 전에 몸 상태를 확인하고 지도자·보호자와 상의해 주세요.
       </p>}
       {painReviewDates.length > 0 && <PainReview dates={painReviewDates} />}
-      {storageMessage !== null && <div className="home-hub__notice" role={storageStatus === "PENDING" ? "status" : "alert"}>
+      {storageMessage !== null && <div className="home-hub__notice" role={storageStatus === "PENDING" || storageStatus === "LOADING" ? "status" : "alert"}>
         <p>{storageMessage}</p>
         {onOpenAccount && <button type="button" onClick={onOpenAccount}>계정 저장 상태 확인</button>}
+      </div>}
+      {journalReadMessage !== null && <div className="home-hub__notice" role={journalSnapshot.status === "ERROR" ? "alert" : "status"}>
+        <p>{journalReadMessage}</p>
+        {onOpenArchive && <button type="button" onClick={onOpenArchive}>일지에서 확인</button>}
       </div>}
       {needsPlanReview && <div className="home-hub__notice" role="status">
         <p>보관한 계획의 출처 확인이 필요해요. 원본과 진행 기록을 먼저 확인해 주세요.</p>
@@ -139,9 +150,12 @@ export function Home({
     <div className="training-home-screen">
       <TrainingHome
         model={model}
+        journalReadiness={journalSnapshot.status}
+        analysisAvailable={toDateDistance.week.totalKm !== null}
         safetyNotice={safetyNotice}
         oraclePreview={oraclePreview}
-        recordStart={entries.length === 0 ? <RecordStartActions onImport={onOpenImport} onRecords={onOpenRecords} /> : undefined}
+        oraclePreviewLabel={oraclePreviewLabel}
+        recordStart={journalSnapshot.status === "READY" && entries.length === 0 ? <RecordStartActions onImport={onOpenImport} onRecords={onOpenRecords} /> : undefined}
         onWriteLog={onWriteLog}
         onOpenArchive={onOpenArchive}
         onOpenToday={onOpenDay === undefined ? onOpenArchive : () => onOpenDay(today)}
@@ -154,9 +168,12 @@ export function Home({
         onOpenContent={onOpenContent}
         onOpenRewards={onOpenRewards}
         accountEntry={<AccountEntryButton onOpenAccount={onOpenAccount} />}
-        todayContext={<DailyContextTags date={today} />}
         installSuggestion={<InstallShortcutSuggestion compact eligible={entries.length > 0 || homePlan !== null || accountCurrent !== null || accountAuthState() === "ACCOUNT"} returnFocusTo={() => document.querySelector<HTMLElement>('[data-install-shortcut-return="home"]')} />}
-        recentJournal={<LatestJournalDay entries={entries} today={today} onOpenDay={onOpenDay} onOpenArchive={onOpenArchive} />}
+        recentJournal={<LatestJournalDay entries={entries} today={today} storage={{
+          readiness: journalSnapshot.status, owner: journalSnapshot.owner, accountStatus: storageStatus,
+          accountStoredVersions: new Map(readAccountJournalProjection().map(entry => [entry.id, { savedAt: entry.savedAt, date: entry.date, kind: entry.kind }])),
+          currentConfirmedVersions: new Map(readCurrentConfirmedAccountJournalProjection().map(entry => [entry.id, { savedAt: entry.savedAt, date: entry.date, kind: entry.kind }])),
+        }} onOpenDay={onOpenDay} onOpenArchive={onOpenArchive} />}
       />
     </div>
   )

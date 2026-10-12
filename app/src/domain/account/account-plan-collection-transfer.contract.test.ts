@@ -75,6 +75,82 @@ function run(transfer: AccountPlanCollectionTransfer, port: AccountPlanCollectio
   return transferAccountPlanCollection({ transfer, port, scope: () => ({ ownerId: OWNER, epoch: 1 }), freshSelectionReview: () => true, ...overrides })
 }
 
+function archiveTransfer() {
+  const previous = document(), next = structuredClone(previous)
+  next.data.plans[0]!.archivedAt = new Date().toISOString()
+  next.data.currentPlanId = null
+  return { previous, next, transfer: { ...prepared(next, previous), archiveReviewRequired: true as const } }
+}
+
+it("keeps an archive review requirement local and resumes only after fresh review", async () => {
+  const { previous, next, transfer } = archiveTransfer(), server = repository(splitAccountPlanCollection(previous))
+  expect((await run(transfer, server.port, { freshSelectionReview: () => false })).kind).toBe("review_required")
+  expect(server.port.commit).not.toHaveBeenCalled()
+  expect(server.indices.get(OWNER)?.parts.index.currentPlanId).toBe(previous.data.currentPlanId)
+  expect((await run(transfer, server.port)).kind).toBe("committed")
+  expect(accountPlanCollectionCommit(transfer)).not.toHaveProperty("archiveReviewRequired")
+  expect(joinAccountPlanCollection(server.indices.get(OWNER)!.parts)).toEqual(next)
+})
+
+it("rechecks an archive review after readback before committing or retrying", async () => {
+  const { previous, transfer } = archiveTransfer(), server = repository(splitAccountPlanCollection(previous))
+  let fresh = true
+  const read = server.port.readPart
+  server.port.readPart = vi.fn(async (...args: Parameters<AccountPlanCollectionPort["readPart"]>) => {
+    const part = await read(...args); fresh = false; return part
+  })
+  expect((await run(transfer, server.port, { freshSelectionReview: () => fresh })).kind).toBe("review_required")
+  expect(server.port.commit).not.toHaveBeenCalled()
+  expect((await run(transfer, server.port, { freshSelectionReview: () => false })).kind).toBe("review_required")
+  expect(server.port.commit).not.toHaveBeenCalled()
+})
+
+it.each(["archive", "selection"] as const)("keeps the final transport guard fresh for a reviewed %s", async kind => {
+  const archive = archiveTransfer(), transfer = kind === "archive" ? archive.transfer : prepared()
+  const server = repository(kind === "archive" ? splitAccountPlanCollection(archive.previous) : null)
+  const commit = server.port.commit
+  let fresh = true, invalidate = true
+  server.port.commit = vi.fn(async (request, beforeSend) => {
+    await Promise.resolve()
+    if (invalidate) { fresh = false; invalidate = false }
+    if (beforeSend?.() === false) throw Error("STALE")
+    return commit(request)
+  })
+  expect((await run(transfer, server.port, { freshSelectionReview: () => fresh })).kind).toBe("outcome_unknown")
+  expect(commit).not.toHaveBeenCalled()
+  expect(server.receipts.size).toBe(0)
+  expect(server.indices.get(OWNER)?.parts.index.currentPlanId ?? null)
+    .toBe(kind === "archive" ? archive.previous.data.currentPlanId : null)
+  const preserved = structuredClone(transfer)
+  expect((await run(transfer, server.port, { freshSelectionReview: () => false })).kind).toBe("review_required")
+  expect(commit).not.toHaveBeenCalled()
+  expect(transfer).toEqual(preserved)
+  fresh = true
+  expect((await run(transfer, server.port, { freshSelectionReview: () => fresh })).kind).toBe("committed")
+  expect(commit).toHaveBeenCalledTimes(1)
+  expect(vi.mocked(commit).mock.calls[0]![0]).not.toHaveProperty("archiveReviewRequired")
+})
+
+it("recovers an already committed reviewed archive from its exact receipt without a second commit", async () => {
+  const { previous, transfer } = archiveTransfer(), server = repository(splitAccountPlanCollection(previous)), commit = server.port.commit
+  server.port.commit = vi.fn(async request => { await commit(request); throw Error("lost ACK") })
+  expect((await run(transfer, server.port)).kind).toBe("outcome_unknown")
+  expect((await run(transfer, server.port, { freshSelectionReview: () => false })).kind).toBe("committed")
+  expect(server.port.commit).toHaveBeenCalledTimes(1)
+})
+
+it("accepts the local archive review marker only on an exact current-plan archive", () => {
+  const { previous, next, transfer } = archiveTransfer()
+  expect(readAccountPlanCollectionTransfer(transfer)).toEqual(transfer)
+  for (const marker of [false, null, "true", 1]) expect(readAccountPlanCollectionTransfer({ ...transfer, archiveReviewRequired: marker })).toBeNull()
+  expect(readAccountPlanCollectionTransfer({ ...prepared(), archiveReviewRequired: true })).toBeNull()
+  expect(readAccountPlanCollectionTransfer({ ...prepared(previous, previous), archiveReviewRequired: true })).toBeNull()
+  const changed = structuredClone(next)
+  changed.data.plans[0]!.progress.push({ sessionDay: 1, sessionSlot: "AM", state: "COMPLETED" })
+  const combined = prepared(changed, previous)
+  expect(readAccountPlanCollectionTransfer({ ...combined, archiveReviewRequired: true })).toBeNull()
+})
+
 it("stages a prepared collection with its original consent revision after a later regrant",async()=>{
   const next=document()
   rememberStorageConsentRevision(OWNER,1)

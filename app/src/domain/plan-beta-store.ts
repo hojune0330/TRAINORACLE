@@ -23,6 +23,7 @@ import {
   localAccountScopeIsCurrent,
   localAccountScopeSnapshot,
 } from "./account/local-account-scope"
+import { localJournalScopeGeneration } from "./account/local-journal-ownership"
 import {
   archivePlanOnServer,
   backupActivePlanToServer,
@@ -63,6 +64,9 @@ export type {
   StoredPlanProgress,
 } from "./plan-beta-schema"
 export type { StoredActivePlan } from "./plan-session-schema"
+
+type RetainedMultiAdjustedEvidenceSourceV3 = readonly RetainedMultiAdjustedEvidenceV3[]
+  | (() => readonly RetainedMultiAdjustedEvidenceV3[])
 
 export const PLAN_BETA_STORAGE_KEY = "trainoracle.plan-beta.v1"
 const HISTORY_KEY = "trainoracle.plan-beta.history.v1"
@@ -150,8 +154,20 @@ export function loadVersionedPlanBetaState(): PlanBetaState | null {
 export function readPlanBetaStateFromStorage(
   retained: readonly RetainedAdjustedPlanEvidence[] = RETAINED_ADJUSTED_PLAN_EVIDENCE,
   retainedV3: readonly RetainedAdjustedPlanEvidenceV3[] = RETAINED_ADJUSTED_PLAN_EVIDENCE_V3,
-  retainedMultiV3: readonly RetainedMultiAdjustedEvidenceV3[] = RETAINED_MULTI_ADJUSTED_EVIDENCE_V3,
+  retainedMultiV3: RetainedMultiAdjustedEvidenceSourceV3 = RETAINED_MULTI_ADJUSTED_EVIDENCE_V3,
 ): PlanBetaStateReadResult {
+  return readPlanBetaStateFromStorageInternal(retained, retainedV3, retainedMultiV3, true)
+}
+
+function readPlanBetaStateFromStorageInternal(
+  retained: readonly RetainedAdjustedPlanEvidence[],
+  retainedV3: readonly RetainedAdjustedPlanEvidenceV3[],
+  retainedMultiV3: RetainedMultiAdjustedEvidenceSourceV3,
+  allowScopeRetry: boolean,
+): PlanBetaStateReadResult {
+  const accountScope = localAccountScopeSnapshot(), accountGeneration = localJournalScopeGeneration()
+  const scopeIsCurrent = () => localAccountScopeIsCurrent(accountScope)
+    && localJournalScopeGeneration() === accountGeneration
   if (accountPlansEnabled()) {
     const view = accountPlanService()?.snapshot(), selected = view?.currentPlan
     if (!view || !view.document) return { kind: "storage_error" }
@@ -167,17 +183,38 @@ export function readPlanBetaStateFromStorage(
       const read = readStoredAdjustedPlanStateV5(state, retainedV3)
       return read.kind === "loaded" ? { ...read, kind: "adjusted_v3_loaded" } : { kind: "invalid" }
     }
+    if (typeof retainedMultiV3 === "function") {
+      let currentEvidence: readonly RetainedMultiAdjustedEvidenceV3[]
+      try { currentEvidence = retainedMultiV3() }
+      catch { return { kind: "invalid" } }
+      if (!scopeIsCurrent()) return allowScopeRetry
+        ? readPlanBetaStateFromStorageInternal(retained, retainedV3, retainedMultiV3, false)
+        : { kind: "storage_error" }
+      return readPlanBetaStateFromStorageInternal(retained, retainedV3, currentEvidence, false)
+    }
     const read = readStoredMultiAdjustedPlanV6(state, retainedMultiV3)
     return read.kind === "loaded" ? { ...read, kind: "multi_adjusted_v3_loaded" } : { kind: "invalid" }
   }
-  return readPlanBetaStateForAccount(localAccountScopeSnapshot(), retained, retainedV3, retainedMultiV3)
+  if (typeof retainedMultiV3 !== "function") {
+    return readPlanBetaStateForAccount(accountScope, retained, retainedV3, retainedMultiV3)
+  }
+  let currentEvidence: readonly RetainedMultiAdjustedEvidenceV3[] | undefined
+  const read = readPlanBetaStateForAccount(accountScope, retained, retainedV3, () => {
+    currentEvidence = retainedMultiV3()
+    return currentEvidence
+  })
+  return currentEvidence !== undefined && !scopeIsCurrent()
+    ? allowScopeRetry
+      ? readPlanBetaStateFromStorageInternal(retained, retainedV3, retainedMultiV3, false)
+      : { kind: "storage_error" }
+    : read
 }
 
 export function readPlanBetaStateForAccount(
   accountScope: string | null,
   retained: readonly RetainedAdjustedPlanEvidence[] = RETAINED_ADJUSTED_PLAN_EVIDENCE,
   retainedV3: readonly RetainedAdjustedPlanEvidenceV3[] = RETAINED_ADJUSTED_PLAN_EVIDENCE_V3,
-  retainedMultiV3: readonly RetainedMultiAdjustedEvidenceV3[] = RETAINED_MULTI_ADJUSTED_EVIDENCE_V3,
+  retainedMultiV3: RetainedMultiAdjustedEvidenceSourceV3 = RETAINED_MULTI_ADJUSTED_EVIDENCE_V3,
 ): PlanBetaStateReadResult {
   if (typeof window === "undefined") return { kind: "storage_error" }
   const storageKey = accountScopedStorageKeyFor(PLAN_BETA_STORAGE_KEY, accountScope)
@@ -192,6 +229,10 @@ export function readPlanBetaStateForAccount(
   try {
     const json: unknown = JSON.parse(raw)
     if (json !== null && typeof json === "object" && "version" in json && json.version === 6) {
+      if (typeof retainedMultiV3 === "function") {
+        const currentEvidence = retainedMultiV3()
+        return readPlanBetaStateForAccount(accountScope, retained, retainedV3, currentEvidence)
+      }
       const adjusted = readStoredMultiAdjustedPlanV6(json, retainedMultiV3)
       return adjusted.kind === "loaded" ? { ...adjusted, kind: "multi_adjusted_v3_loaded" } : { kind: "invalid" }
     }
@@ -251,6 +292,52 @@ export function savePlanBetaState(
   }
 }
 
+/** A delayed cloud response may fill an empty slot, but cannot replace local work. */
+export async function restorePlanBetaStateIfMissing(
+  state: unknown,
+  requestIsCurrent: () => boolean,
+): Promise<
+  | { readonly kind: "restored"; readonly state: PlanBetaStateV3 }
+  | { readonly kind: "preserved" }
+  | { readonly kind: "failed"; readonly rollbackComplete: boolean }
+> {
+  const scope = localAccountScopeSnapshot(), generation = localJournalScopeGeneration()
+  const storageKey = activePlanBetaStorageKey()
+  const current = () => requestIsCurrent() && localAccountScopeIsCurrent(scope)
+    && localJournalScopeGeneration() === generation && !accountPlansEnabled()
+    && activePlanBetaStorageKey() === storageKey
+  const parsed = planBetaStateV3Schema.safeParse(state)
+  if (!parsed.success) return { kind: "failed", rollbackComplete: true }
+  const locks = getPlanMutationLockManager()
+  if (!locks) return { kind: "failed", rollbackComplete: true }
+  const serialized = JSON.stringify(parsed.data)
+  try {
+    return await locks.request(PLAN_BETA_MUTATION_LOCK_NAME, { mode: "exclusive", ifAvailable: true }, lock => {
+      if (!lock) return { kind: "failed", rollbackComplete: true } as const
+      if (!current()) return { kind: "preserved" } as const
+      let writeAttempted = false
+      try {
+        const storage = window.localStorage
+        if (storage.getItem(storageKey) !== null || !current()) return { kind: "preserved" } as const
+        writeAttempted = true
+        storage.setItem(storageKey, serialized)
+        if (storage.getItem(storageKey) !== serialized || !current()) throw Error("Restore readback failed")
+        return { kind: "restored", state: parsed.data } as const
+      } catch {
+        let rollbackComplete = !writeAttempted
+        if (writeAttempted) {
+          try {
+            const storage = window.localStorage, raw = storage.getItem(storageKey)
+            if (raw === serialized) storage.removeItem(storageKey)
+            rollbackComplete = storage.getItem(storageKey) === null
+          } catch { rollbackComplete = false }
+        }
+        return { kind: "failed", rollbackComplete } as const
+      }
+    })
+  } catch { return { kind: "failed", rollbackComplete: true } }
+}
+
 /** Called only inside the plan mutation lock after fresh selection checks. */
 export function commitNextPlanBetaStateInsideLock(
   predecessor: PlanBetaStateV3,
@@ -307,16 +394,18 @@ export async function savePlanProgressWithLock(
 ): Promise<PlanProgressStorageResult> {
   const accountWrite = captureAccountPlanWrite(activePlanBetaStorageKey())
   const accountScope = localAccountScopeSnapshot()
+  const generation = localJournalScopeGeneration()
+  const scopeIsCurrent = () => localAccountScopeIsCurrent(accountScope) && localJournalScopeGeneration() === generation
   const locks = getPlanMutationLockManager()
   if (locks === null) return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" }
 
   try {
-    return await locks.request(
+    const result = await locks.request(
       PLAN_BETA_MUTATION_LOCK_NAME,
       { mode: "exclusive", ifAvailable: true },
       async (lock) => {
         if (lock === null) return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" } as const
-        if (!localAccountScopeIsCurrent(accountScope)) {
+        if (!scopeIsCurrent()) {
           return { kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" } as const
         }
         const currentRead = readPlanBetaStateFromStorage()
@@ -345,9 +434,11 @@ export async function savePlanProgressWithLock(
           return { kind: "rejected", code: "INVALID_PROGRESS" } as const
         }
         const next = updateStoredProgress(current, progress)
+        if (!scopeIsCurrent()) return { kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" } as const
         if (accountWrite) {
           const context = accountWrite.packet?.evidence === null ? accountWrite.packet.context : undefined
           const code = await accountWrite.save(next, [], evidenceStillCurrent, context)
+          if (!scopeIsCurrent()) return { kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" } as const
           return code ? { kind: "rejected", code } as const : { kind: "saved", state: next } as const
         }
         const saved = savePlanBetaState(next)
@@ -361,6 +452,7 @@ export async function savePlanProgressWithLock(
             } as const
       },
     )
+    return scopeIsCurrent() ? result : { kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" }
   } catch {
     return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" }
   }
@@ -460,18 +552,20 @@ export async function archiveAndClearActivePlanWithLock(
 ): Promise<LockedPlanArchiveResult> {
   const accountWrite = captureAccountPlanWrite(activePlanBetaStorageKey())
   const accountScope = localAccountScopeSnapshot()
+  const generation = localJournalScopeGeneration()
+  const scopeIsCurrent = () => localAccountScopeIsCurrent(accountScope) && localJournalScopeGeneration() === generation
   const locks = getPlanMutationLockManager()
   if (locks === null) return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" }
 
   try {
-    return await locks.request(
+    const result = await locks.request(
       PLAN_BETA_MUTATION_LOCK_NAME,
       { mode: "exclusive", ifAvailable: true },
       async (lock) => {
         if (lock === null) {
           return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" } as const
         }
-        if (!localAccountScopeIsCurrent(accountScope)) {
+        if (!scopeIsCurrent()) {
           return { kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" } as const
         }
         const currentRead = readPlanBetaStateFromStorage()
@@ -490,6 +584,7 @@ export async function archiveAndClearActivePlanWithLock(
         }
         if (accountWrite) {
           const code = await accountWrite.archive()
+          if (!scopeIsCurrent()) return { kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" } as const
           return code ? { kind: "rejected", code } as const : { kind: "archived", intake: current.intake } as const
         }
         const archived = archiveAndClearActivePlan(current)
@@ -502,6 +597,7 @@ export async function archiveAndClearActivePlanWithLock(
             } as const
       },
     )
+    return scopeIsCurrent() ? result : { kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" }
   } catch {
     return { kind: "rejected", code: "MUTATION_LOCK_UNAVAILABLE" }
   }

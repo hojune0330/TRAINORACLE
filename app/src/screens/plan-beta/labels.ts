@@ -8,10 +8,11 @@ import type {
   PlannedEnergyIntent,
   RpeTimeRange,
 } from "@impl/plan-generator/types"
-import { PLANNED_ENERGY_INTENTS } from "@impl/plan-generator/types"
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 import { calculatedWorkoutSequence } from "@impl/prescription/all-workout-calculator"
 import { sequencePhaseNotation, sessionWorkoutName, sessionWorkoutNotation, type WorkoutDisplaySession } from "../../domain/workout-notation"
+import { catalogWorkoutReader } from "../../domain/catalog-workout-reader"
+import type { InstantPlanStepRole } from "../../domain/instant-plan-contract"
 
 export const EVENT_LABELS: Record<PlanEventGroup, {
   readonly title: string
@@ -52,8 +53,8 @@ export const EXPERIENCE_LABELS: Record<ExperienceBand, {
     short: "꾸준히",
   },
   EXPERIENCED: {
-    title: "구조화된 훈련과 경기 경험이 많아요",
-    detail: "힘든 날과 쉬는 날을 나눠 훈련해 봤어요",
+    title: "빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요",
+    detail: "반복 달리기와 대회 경험이 많아요",
     short: "경험자",
   },
 }
@@ -65,37 +66,37 @@ export const ENERGY_INTENT_LABELS: Record<PlannedEnergyIntent, {
   readonly term: "base" | "lt" | "vo2" | "gly" | "atp" | "energy-system" | "rpe"
 }> = {
   MIXED_INTENT: {
-    title: "골고루 · MIX",
-    detail: "빠른 날, 오래 뛰는 날을 섞어요. 처음이면 이걸로",
+    title: "혼합 훈련",
+    detail: "빠른 달리기와 가벼운 달리기를 조합",
     term: "energy-system",
   },
   BASE_INTENT: {
-    title: "편하게 오래 · BASE",
+    title: "기초 지구력",
     detail: "대화하며 뛸 수 있는 속도로",
     term: "base",
   },
   LT_INTENT: {
-    title: "조금 힘들게 꾸준히 · LT",
+    title: "지속 페이스 훈련",
     detail: "살짝 힘든 속도를 일정하게",
     term: "lt",
   },
   VO2_INTENT: {
-    title: "숨차게 반복 · VO₂",
-    detail: "숨찬 구간과 쉬는 구간을 반복",
+    title: "유산소 반복 훈련",
+    detail: "빠른 구간과 천천히 움직이는 구간을 번갈아",
     term: "vo2",
   },
   GLY_INTENT: {
-    title: "짧고 세게 · GLY",
+    title: "고강도 반복 훈련",
     detail: "짧고 강한 구간을 여러 번",
     term: "gly",
   },
   ATP_PC_INTENT: {
-    title: "스피드 · ATP-PC",
+    title: "스피드 훈련",
     detail: "아주 짧은 가속과 충분한 휴식",
     term: "atp",
   },
   RECOVERY_INTENT: {
-    title: "회복만 · REC",
+    title: "회복 운동",
     detail: "걷기·아주 가벼운 조깅",
     term: "rpe",
   },
@@ -104,22 +105,16 @@ export const ENERGY_INTENT_LABELS: Record<PlannedEnergyIntent, {
 export function candidateLabel(
   kind: PlanCandidateKind,
   selectedEnergyIntent: PlannedEnergyIntent,
-  hasCatalog = false,
+  _hasCatalog = false,
 ): {
   readonly title: string
   readonly detail: string
 } {
-  if (hasCatalog) return { title: kind === "BALANCED" ? "기본 훈련 구성" : "기초·회복 운동을 짧게",
-    detail: `${ENERGY_INTENT_LABELS[selectedEnergyIntent].title.split(" · ")[0]} 목적 · 날짜별 거리·시간·회복 확인` }
-  if (kind === "CONSERVATIVE") {
-    return {
-      title: "기초·회복 운동을 짧게",
-      detail: `${ENERGY_INTENT_LABELS[selectedEnergyIntent].title.split(" · ")[0]} 목적 · 기초·회복 운동은 제시 범위의 짧은 시간으로`,
-    }
-  }
+  // A saved kind does not prove shorter exercise after catalog binding or edits.
+  // Actual session times are shown alongside these neutral identifiers.
   return {
-    title: "기초·회복 운동 시간을 범위로",
-    detail: `${ENERGY_INTENT_LABELS[selectedEnergyIntent].title.split(" · ")[0]} 목적 · 기초·회복 운동은 표시된 시간 범위에서 선택`,
+    title: kind === "BALANCED" ? "계획 A" : "계획 B",
+    detail: `훈련 목표 · ${ENERGY_INTENT_LABELS[selectedEnergyIntent].title}`,
   }
 }
 
@@ -130,11 +125,19 @@ export const PROGRESS_LABELS: Record<PlanProgressState, string> = {
   PAIN_CHECKIN: "통증 체크",
 }
 
-export function sessionLabel(session: WorkoutDisplaySession): string {
+export function sessionLabel(session: WorkoutDisplaySession, plain = false): string {
+  if (plain) {
+    const reading = catalogWorkoutReader(session)
+    if (reading) return reading.name
+  }
   return sessionWorkoutName(session)
 }
 
 export function prescriptionLabel(session: PlanSession, plain = false): string {
+  if (plain) {
+    const reading = catalogWorkoutReader(session)
+    if (reading) return reading.summary
+  }
   return sessionWorkoutNotation(session, plain ? "PLAIN" : "COACH")
 }
 
@@ -198,33 +201,53 @@ export function formatTrainingSeconds(value: number): string {
 }
 
 export type SessionExecutionStep = {
+  readonly role: InstantPlanStepRole
   readonly title: string
   readonly detail: string
 }
 
-export function sessionExecutionSteps(session: PlanSession): readonly SessionExecutionStep[] {
+const EXECUTION_STOP_CUE = "통증\u2060·\u2060어지럼\u2060·\u2060자세\u00a0무너짐이 생기면 시간을 채우지 말고 중단하세요."
+
+export function sessionExecutionSteps(session: PlanSession, plain = false): readonly SessionExecutionStep[] {
   if (session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout) {
     const calculation = resolveCatalogBinding(session.prescription.catalogWorkout)
     const sequence = calculation && calculatedWorkoutSequence(calculation)
-    if (sequence) return ([['warmup', '준비'], ['main', '본운동'], ['cooldown', '정리']] as const)
-      .filter(([phase]) => sequence[phase].length > 0)
-      .map(([phase, title]) => ({ title, detail: sequencePhaseNotation(sequence, phase, [], "PLAIN") }))
+    if (sequence) {
+      const reading = plain ? catalogWorkoutReader(session) : null
+      const total = calculation.totals.seconds
+      const phases = ([['warmup', '준비', 'PREPARATION'], ['main', '본운동', 'MAIN'], ['cooldown', '정리', 'COOLDOWN']] as const)
+        .filter(([phase]) => sequence[phase].length > 0)
+      const hasCooldown = phases.some(([phase]) => phase === "cooldown")
+      const totalStep: SessionExecutionStep[] = total === null ? [] : [{
+        role: "TOTAL_DURATION",
+        title: "총 시간",
+        detail: `준비·회복·정리 포함 ${formatTrainingSeconds(total.minimum)}${total.minimum === total.maximum ? "" : `~${formatTrainingSeconds(total.maximum)}`}`,
+      }]
+      return [...totalStep, ...phases.map(([phase, title, role], index) => ({
+        role,
+        title,
+        detail: `${reading?.phases[phase] ?? sequencePhaseNotation(sequence, phase, [], "PLAIN")}${phase === "cooldown" || (!hasCooldown && index === phases.length - 1) ? ` ${EXECUTION_STOP_CUE}` : ""}`,
+      }))]
+    }
     return []
   }
   if (session.role !== "QUALITY" || session.prescription.kind !== "RPE_TIME_RANGE") return []
 
   return [
     {
+      role: "PREPARATION",
       title: "준비",
       detail: "표시된 총 시간 안에서 걷거나 천천히 달리며 몸이 부드럽게 움직이는지 확인하세요.",
     },
     {
+      role: "MAIN",
       title: "본운동",
       detail: qualityExecution(session.plannedEnergyIntent, session.prescription.rpe),
     },
     {
+      role: "COOLDOWN",
       title: "정리",
-      detail: "남은 총 시간은 천천히 달리거나 걸으세요. 통증\u2060·\u2060어지럼\u2060·\u2060자세\u00a0무너짐이 생기면 시간을 채우지 말고 중단하세요.",
+      detail: `남은 총 시간은 천천히 달리거나 걸으세요. ${EXECUTION_STOP_CUE}`,
     },
   ]
 }
@@ -271,7 +294,7 @@ function qualityGuidance(intent: PlannedEnergyIntent): string {
 
 type CandidateSummarySource = {
   readonly sessions: readonly PlanSession[]
-  readonly frame?: { readonly projectionLengthDays?: 7 | 9 | 9.5 | 10 }
+  readonly frame?: { readonly lengthDays?: number; readonly projectionLengthDays?: 7 | 9 | 9.5 | 10 }
 }
 
 export function formatTotalMinutes(totalMinutes: number): string {
@@ -288,10 +311,10 @@ export function formatTotalMinutes(totalMinutes: number): string {
 }
 
 function candidateSessionFacts(candidate: CandidateSummarySource) {
-  const projectionLengthDays = candidate.frame?.projectionLengthDays
+  const projectionLengthDays = candidate.frame?.projectionLengthDays ?? candidate.frame?.lengthDays
   const visibleSessions = projectionLengthDays === undefined
     ? candidate.sessions
-    : candidate.sessions.filter((session) => session.day <= Math.ceil(projectionLengthDays))
+    : candidate.sessions.filter((session) => session.day >= 1 && session.day <= Math.ceil(projectionLengthDays))
   const counts = visibleSessions.reduce(
     (current, session) => ({
       training: current.training + (session.role === "REST" ? 0 : 1),
@@ -302,29 +325,8 @@ function candidateSessionFacts(candidate: CandidateSummarySource) {
     { training: 0, easy: 0, quality: 0, rest: 0 },
   )
 
-  const intentionCounts = visibleSessions.reduce<Record<PlannedEnergyIntent, number>>(
-    (current, session) => ({
-      ...current,
-      [session.plannedEnergyIntent]: current[session.plannedEnergyIntent] + 1,
-    }),
-    {
-      RECOVERY_INTENT: 0,
-      BASE_INTENT: 0,
-      LT_INTENT: 0,
-      VO2_INTENT: 0,
-      GLY_INTENT: 0,
-      ATP_PC_INTENT: 0,
-      MIXED_INTENT: 0,
-    },
-  )
-  const qualityIntent = PLANNED_ENERGY_INTENTS.find((intent) => (
-    intent !== "RECOVERY_INTENT"
-    && intent !== "BASE_INTENT"
-    && intentionCounts[intent] > 0
-  ))
-  const qualityLabel = qualityIntent === undefined
-    ? "주요 훈련 0일"
-    : `${ENERGY_INTENT_LABELS[qualityIntent].title} ${intentionCounts[qualityIntent]}일`
+  const trainingDays = new Set(visibleSessions.filter(session => session.role !== "REST").map(session => session.day))
+  const restDays = new Set(visibleSessions.filter(session => session.role === "REST" && !trainingDays.has(session.day)).map(session => session.day)).size
 
   const plannedDuration = visibleSessions.reduce(
     (current, session) => {
@@ -349,13 +351,15 @@ function candidateSessionFacts(candidate: CandidateSummarySource) {
   const hasDetailedPrescription = visibleSessions.some(
     (session) => session.prescription.kind === "PACE_TARGET",
   )
+  const hasUnknownDuration = visibleSessions.some(session => session.prescription.kind === "RPE_TIME_RANGE"
+    && session.prescription.catalogWorkout !== undefined && resolveCatalogBinding(session.prescription.catalogWorkout) === null)
   return {
     counts,
-    intentionCounts,
-    qualityLabel,
+    restDays,
     durationLabel,
     twoADayTrainingDays,
     hasDetailedPrescription,
+    hasUnknownDuration,
     projectionLengthDays,
   }
 }
@@ -365,16 +369,22 @@ export function candidateSharedSessionSummary(candidate: CandidateSummarySource)
   const secondSession = facts.twoADayTrainingDays === 0
     ? ""
     : ` · 하루 2회 훈련 ${facts.twoADayTrainingDays}일`
-  return `운동 ${facts.counts.training}회 · 기초 지구력 ${facts.intentionCounts.BASE_INTENT}일 · ${facts.qualityLabel} · 휴식 ${facts.counts.rest}일${secondSession}`
+  return [
+    `운동 ${facts.counts.training}회`,
+    facts.counts.easy > 0 ? `기초·회복 ${facts.counts.easy}회` : null,
+    facts.counts.quality > 0 ? `주요 훈련 ${facts.counts.quality}회` : null,
+    facts.restDays > 0 ? `쉬는 날 ${facts.restDays}일` : null,
+  ].filter(Boolean).join(" · ") + secondSession
 }
 
 export function candidateDurationSummary(candidate: CandidateSummarySource): string {
   const facts = candidateSessionFacts(candidate)
+  if (facts.hasUnknownDuration) return "전체 시간 확인 필요 · 일부 운동의 시간을 읽지 못했어요"
   const frameLabel = facts.projectionLengthDays === undefined
     ? ""
     : `${facts.projectionLengthDays}일 동안 `
   return facts.hasDetailedPrescription
-    ? `${frameLabel}RPE 훈련 시간 합계 ${facts.durationLabel} · 개인 페이스 훈련 시간은 일정에서 확인`
+    ? `${frameLabel}시간 안내 훈련 합계 ${facts.durationLabel} · 페이스로 안내한 훈련은 제외`
     : `${frameLabel}표시된 시간 합계 ${facts.durationLabel}`
 }
 

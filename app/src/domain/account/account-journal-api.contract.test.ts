@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { webcrypto } from "node:crypto"
 import { createClient, type Session, type SupabaseClient } from "@supabase/supabase-js"
 import { accountJournalPreviewEnabled, requestAccountJournal, requestAccountDocument } from "./account-journal-api"
 import { accountJournalRecordSchema, type AccountJournalRecord } from "./account-journal-record-schema"
@@ -6,6 +7,12 @@ import { waitingJournal } from "../../test/progressive-journal-fixture"
 import { buildFileObservation } from "../import/file-observation"
 import { rememberStorageConsentRevision, pinStorageOperationRevision } from "./storage-consent-revision"
 import { accountOracleCompatibleDocumentSchema, emptyOracleV2Document } from "./account-oracle-v2-schema"
+import { ACCOUNT_DELETION_BOUNDARY_PREFIX, closeAccountDeletionBoundary } from "./account-deletion-boundary"
+import { createConsentCheckedFetch, LOCAL_COLLECTION_SEND_GUARD_HEADER, registerCollectionSendGuard } from "./consent-checked-fetch"
+import { accountGoalProgramDocumentSchema, splitAccountGoalProgramCollection } from "./account-goal-program-schema"
+import { syntheticGoalProgram } from "./account-goal-program.test-fixtures"
+import { todayISO } from "../journal-store"
+import { ACCOUNT_NETWORK_DEADLINE_MS } from "./account-network-deadline"
 
 const ownerId = "a1111111-1111-4111-8111-111111111111"
 const documentId = "b2222222-2222-4222-8222-222222222222"
@@ -89,6 +96,7 @@ describe("account record compatibility API", () => {
       .toEqual({ ok: true, data: response })
     expect(deps.invoke).toHaveBeenCalledWith("account-journal", {
       body: { ...request, supportedJournalVersions: [2, 3], supportsExerciseLogV1: true }, headers: { Authorization: `Bearer ${accessToken}`, "x-trainoracle-storage-revision": "0" },
+      signal: expect.any(AbortSignal),
     })
     expect(document.version).toBe(2)
   })
@@ -141,7 +149,7 @@ describe("account record compatibility API", () => {
     const deps = dependencies(receipt)
     expect(await requestAccountDocument(ownerId, correction, () => true, accountJournalRecordSchema, deps)).toEqual({ ok: true, data: receipt })
     expect(deps.invoke).toHaveBeenCalledWith("account-journal", { body: { ...correction, supportedJournalVersions: [2, 3], supportsExerciseLogV1: true },
-      headers: { Authorization: `Bearer ${accessToken}`, "x-trainoracle-storage-revision": "0" } })
+      headers: { Authorization: `Bearer ${accessToken}`, "x-trainoracle-storage-revision": "0" }, signal: expect.any(AbortSignal) })
     expect(await requestAccountDocument(ownerId, correction, () => true, accountJournalRecordSchema,
       dependencies({ ...receipt, revision: 3 }))).toEqual({ ok: false, code: "INVALID_RESPONSE" })
     const conflict = { kind: "conflict", documentId, operationId, currentRevision: 2 }
@@ -155,7 +163,7 @@ describe("account record compatibility API", () => {
     const deps = dependencies(receipt)
     expect(await requestAccountDocument(ownerId, release, () => true, accountJournalRecordSchema, deps)).toEqual({ ok: true, data: receipt })
     expect(deps.invoke).toHaveBeenCalledWith("account-journal", { body: { ...release, supportedJournalVersions: [2, 3], supportsExerciseLogV1: true },
-      headers: { Authorization: `Bearer ${accessToken}`, "x-trainoracle-storage-revision": "0" } })
+      headers: { Authorization: `Bearer ${accessToken}`, "x-trainoracle-storage-revision": "0" }, signal: expect.any(AbortSignal) })
     for (const changed of [{ revision: 4 }, { operationId: otherOwnerId }, { documentId: otherOwnerId }]) {
       expect(await requestAccountDocument(ownerId, release, () => true, accountJournalRecordSchema,
         dependencies({ ...receipt, ...changed }))).toEqual({ ok: false, code: "INVALID_RESPONSE" })
@@ -164,6 +172,126 @@ describe("account record compatibility API", () => {
       expect(await requestAccountDocument(ownerId, release, () => true, accountJournalRecordSchema,
         dependencies(null, { context: new Response(JSON.stringify({ error: code }), { status }) }))).toEqual({ ok: false, code })
     }
+  })
+})
+describe("account journal restore source availability", () => {
+  const restore = { action: "restore", documentId, operationId, expectedRevision: 2, sourceRevision: 1 } as const
+  const receipt = { kind: "source_unavailable", documentId, operationId, currentRevision: 2, sourceRevision: 1 }
+  const unavailable = (data: unknown) => dependencies(null, { context: new Response(JSON.stringify(data), { status: 409 }) })
+  it("keeps an exact unavailable-source receipt distinct from a version conflict", async () => {
+    expect(await requestAccountJournal(ownerId, restore, () => true, unavailable(receipt))).toEqual({ ok: true, data: receipt })
+    expect(await requestAccountJournal(ownerId, restore, () => true, unavailable({ error: "SOURCE_UNAVAILABLE" })))
+      .toEqual({ ok: false, code: "SOURCE_UNAVAILABLE" })
+    const conflict = { kind: "conflict", documentId, operationId, currentRevision: 3 }
+    expect(await requestAccountJournal(ownerId, restore, () => true, unavailable(conflict))).toEqual({ ok: true, data: conflict })
+  })
+  it.each([{ documentId: otherOwnerId }, { operationId: otherOwnerId }, { sourceRevision: 2 },
+    { currentRevision: 3 }, { sourceRevision: 0 }, { unexpected: true }])("rejects a mismatched unavailable-source receipt %j", async change => {
+    expect(await requestAccountJournal(ownerId, restore, () => true, unavailable({ ...receipt, ...change })))
+      .toEqual({ ok: false, code: "INVALID_RESPONSE" })
+  })
+  it("does not accept restore-source failures for save or delete", async () => {
+    for (const call of [request, { action: "delete", documentId, operationId, expectedRevision: 2 } as const]) {
+      expect(await requestAccountJournal(ownerId, call, () => true, unavailable(receipt)))
+        .toEqual({ ok: false, code: "INVALID_RESPONSE" })
+      expect(await requestAccountJournal(ownerId, call, () => true, unavailable({ error: "SOURCE_UNAVAILABLE" })))
+        .toEqual({ ok: false, code: "INVALID_RESPONSE" })
+    }
+    expect(await requestAccountJournal(ownerId, restore, () => true, unavailable({ error: "SOURCE_UNAVAILABLE", documentId: otherOwnerId })))
+      .toEqual({ ok: false, code: "INVALID_RESPONSE" })
+  })
+  it("does not turn a late previous-account source failure into a current terminal result", async () => {
+    let active = true
+    const context = new Response(null, { status: 409 })
+    vi.spyOn(context, "clone").mockReturnValue({ json: async () => { active = false; return receipt } } as Response)
+    expect(await requestAccountJournal(ownerId, restore, () => active, dependencies(null, { context })))
+      .toEqual({ ok: false, code: "STALE_RESPONSE" })
+  })
+})
+describe("account journal deleted owner boundary", () => {
+  it("holds an unreadable deletion notice without claiming deletion or initializing the client", async () => {
+    const unreadableOwner = "e5555555-5555-4555-8555-555555555553"
+    const read = Storage.prototype.getItem
+    const unavailable = vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (this: Storage, key: string) {
+      if (key === ACCOUNT_DELETION_BOUNDARY_PREFIX + unreadableOwner) throw new Error("synthetic storage unavailable")
+      return read.call(this, key)
+    })
+    const deps = dependencies(null)
+    try {
+      expect(await requestAccountJournal(unreadableOwner, request, () => true, { ...deps, owner: () => unreadableOwner }))
+        .toEqual({ ok: false, code: "UNAVAILABLE" })
+      expect(deps.client).not.toHaveBeenCalled()
+      expect(deps.auth.getSession).not.toHaveBeenCalled()
+      expect(deps.invoke).not.toHaveBeenCalled()
+    } finally { unavailable.mockRestore() }
+  })
+  it.each(["client", "auth", "response"] as const)(
+    "holds a notice that becomes unreadable during %s and permits an explicit later normal retry", async phase => {
+      const unreadableOwner = "e5555555-5555-4555-8555-55555555555" + ({ client: "4", auth: "5", response: "6" }[phase])
+      const read = Storage.prototype.getItem
+      let unreadable = false
+      const unavailable = vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (this: Storage, key: string) {
+        if (unreadable && key === ACCOUNT_DELETION_BOUNDARY_PREFIX + unreadableOwner) {
+          // A one-check outage also must not be reclassified as a stale owner.
+          unreadable = false
+          throw new Error("synthetic storage unavailable")
+        }
+        return read.call(this, key)
+      })
+      const saved = { kind: "saved", documentId, operationId, revision: 1 }
+      const deps = dependencies(saved)
+      const session = { data: { session: { user: { id: unreadableOwner }, access_token: accessToken } }, error: null }
+      deps.client.mockImplementation(async () => {
+        if (phase === "client") unreadable = true
+        return { auth: deps.auth, functions: { invoke: deps.invoke } } as unknown as SupabaseClient
+      })
+      deps.auth.getSession.mockImplementation(async () => {
+        if (phase === "auth") unreadable = true
+        return session
+      })
+      deps.invoke.mockImplementation(async () => {
+        if (phase === "response") unreadable = true
+        return { data: saved, error: null }
+      })
+      try {
+        const bound = { ...deps, owner: () => unreadableOwner }
+        expect(await requestAccountJournal(unreadableOwner, request, () => true, bound))
+          .toEqual({ ok: false, code: "UNAVAILABLE" })
+        expect(deps.invoke).toHaveBeenCalledTimes(phase === "response" ? 1 : 0)
+        unavailable.mockRestore()
+        deps.client.mockResolvedValue({ auth: deps.auth, functions: { invoke: deps.invoke } } as unknown as SupabaseClient)
+        deps.auth.getSession.mockResolvedValue(session)
+        deps.invoke.mockResolvedValue({ data: saved, error: null })
+        expect(await requestAccountJournal(unreadableOwner, request, () => true, bound))
+          .toEqual({ ok: true, data: saved })
+      } finally { unavailable.mockRestore() }
+    },
+  )
+  it("rejects a deleted owner before client or auth initialization", async () => {
+    const deletedOwner = "e5555555-5555-4555-8555-555555555551"
+    closeAccountDeletionBoundary(deletedOwner, "2026-10-07T00:00:00.000Z")
+    const deps = dependencies(null)
+    expect(await requestAccountJournal(deletedOwner, request, () => true, { ...deps, owner: () => deletedOwner }))
+      .toEqual({ ok: false, code: "ACCOUNT_DELETION_REQUESTED" })
+    expect(deps.client).not.toHaveBeenCalled()
+  })
+  it("stops an in-flight request immediately on deletion and ignores a late successful receipt", async () => {
+    const deletedOwner = "e5555555-5555-4555-8555-555555555552"
+    const deps = dependencies(null)
+    deps.auth.getSession.mockResolvedValue({ data: { session: { user: { id: deletedOwner }, access_token: accessToken } }, error: null })
+    let complete!: (value: unknown) => void
+    deps.invoke.mockImplementation(() => new Promise(resolve => { complete = resolve }))
+    const result = requestAccountJournal(deletedOwner, request, () => true, { ...deps, owner: () => deletedOwner })
+    await vi.waitFor(() => expect(deps.invoke).toHaveBeenCalledTimes(1))
+    const signal = deps.invoke.mock.calls[0]![1].signal as AbortSignal
+    closeAccountDeletionBoundary(deletedOwner, "2026-10-07T00:00:00.000Z")
+    expect(await result).toEqual({ ok: false, code: "ACCOUNT_DELETION_REQUESTED" })
+    expect(signal.aborted).toBe(true)
+    complete({ data: { kind: "saved", documentId, operationId, revision: 1 }, error: null })
+    await Promise.resolve()
+    expect(await requestAccountJournal(ownerId, request, () => true,
+      dependencies({ kind: "saved", documentId, operationId, revision: 1 })))
+      .toEqual({ ok: true, data: { kind: "saved", documentId, operationId, revision: 1 } })
   })
 })
 describe("additive calendar capability API", () => {
@@ -215,6 +343,7 @@ describe("account draft API", () => {
     expect((await requestAccountJournal(ownerId, request, () => true, deps)).ok).toBe(true)
     expect(deps.invoke).toHaveBeenCalledWith("account-journal", {
       body: request, headers: { Authorization: `Bearer ${accessToken}`, "x-trainoracle-storage-revision": "0" },
+      signal: expect.any(AbortSignal),
     })
   })
   it.each([
@@ -295,6 +424,135 @@ describe("account draft API", () => {
     expect(await requestAccountJournal(ownerId, request, () => true,
       dependencies(null, { context: new Response(JSON.stringify({ error: "OPERATION_REUSED" }), { status: 409 }) })))
       .toEqual({ ok: false, code: "CONFLICT" })
+  })
+})
+
+describe("goal index request-local final send review", () => {
+  const origin = "https://synthetic.supabase.co"
+  const token = `x.${btoa(JSON.stringify({ sub: ownerId, session_id: documentId })).replace(/\+/gu, "-").replace(/\//gu, "_").replace(/=+$/u, "")}.x`
+  const consent = { userId: ownerId, revision: 1, purposeVersion: "2026-10-05", healthStorage: true, journalTextStorage: true, operationsReady: true }
+  const index = splitAccountGoalProgramCollection(syntheticGoalProgram(), { version: 1, entries: [] }).index
+  const save = { ...request, document: index }
+  const response = { kind: "saved", documentId, operationId, revision: 1 }
+  const fresh = () => "2026-10-11" >= todayISO()
+  const expire = () => vi.setSystemTime(new Date(2026, 9, 12, 0, 1))
+  beforeEach(() => {
+    localStorage.clear(); vi.stubGlobal("crypto", webcrypto)
+    vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date(2026, 9, 11, 23, 59))
+    rememberStorageConsentRevision(ownerId, 1); pinStorageOperationRevision(ownerId, operationId)
+  })
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); localStorage.clear() })
+  async function sdkFor(transport: typeof fetch, name: string) {
+    const sdk = createClient(origin, "synthetic-public", {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: `goal-index-review-${name}` },
+      global: { fetch: createConsentCheckedFetch(origin, transport) },
+    })
+    await sdk.auth.initialize()
+    vi.spyOn(sdk.auth, "getSession").mockResolvedValue({ data: { session: { user: { id: ownerId }, access_token: token } as Session }, error: null })
+    // Supabase's getter creates a FunctionsClient each time; observe one real
+    // instance while keeping its invoke/auth/fetch implementation unchanged.
+    const functions = sdk.functions
+    vi.spyOn(sdk, "functions", "get").mockReturnValue(functions)
+    return sdk
+  }
+  it.each(["client", "auth"])("does not invoke a new goal index after its %s await expires", async boundary => {
+    const deps = dependencies(response)
+    if (boundary === "client") deps.client.mockImplementation(async () => { expire(); return { auth: deps.auth, functions: { invoke: deps.invoke } } as unknown as SupabaseClient })
+    else deps.auth.getSession.mockImplementation(async () => { expire(); return { data: { session: { user: { id: ownerId }, access_token: accessToken } }, error: null } })
+    expect(await requestAccountDocument(ownerId, save, fresh, accountGoalProgramDocumentSchema, deps)).toEqual({ ok: false, code: "STALE_RESPONSE" })
+    expect(deps.invoke).not.toHaveBeenCalled()
+  })
+  it("the real SDK cannot send after its second auth read expires the start date", async () => {
+    const transport = vi.fn<typeof fetch>().mockImplementation(async url => new Response(JSON.stringify(String(url).endsWith("/rpc/get_account_storage_consent") ? consent : response), { headers: { "Content-Type": "application/json" } }))
+    const sdk = await sdkFor(transport, "sdk-auth")
+    vi.mocked(sdk.auth.getSession).mockResolvedValueOnce({ data: { session: { user: { id: ownerId }, access_token: token } as Session }, error: null })
+      .mockImplementation(async () => { expire(); return { data: { session: { user: { id: ownerId }, access_token: token } as Session }, error: null } })
+    expect(await requestAccountDocument(ownerId, save, fresh, accountGoalProgramDocumentSchema, { client: async () => sdk, owner: () => ownerId })).toEqual({ ok: false, code: "STALE_RESPONSE" })
+    expect(transport).not.toHaveBeenCalled()
+  })
+  it.each(["consent", "json"])("the real SDK blocks an expired goal index after its %s await without blocking a read", async boundary => {
+    let release!: () => void, reached!: () => void, waiting = true
+    const held = new Promise<void>(resolve => { release = resolve }), started = new Promise<void>(resolve => { reached = resolve })
+    const transport = vi.fn<typeof fetch>(async (url, options) => {
+      expect(new Headers(options?.headers).has(LOCAL_COLLECTION_SEND_GUARD_HEADER)).toBe(false)
+      if (String(url).endsWith("/rpc/get_account_storage_consent")) {
+        if (waiting) {
+          waiting = false
+          if (boundary === "consent") { reached(); await held; return new Response(JSON.stringify(consent)) }
+          const checked = new Response(JSON.stringify(consent))
+          vi.spyOn(checked, "json").mockImplementation(async () => { reached(); await held; return consent })
+          return checked
+        }
+        return new Response(JSON.stringify(consent))
+      }
+      const body = JSON.parse(String(options?.body))
+      return new Response(JSON.stringify(body.action === "read" ? { kind: "document", documentId, revision: 1, document: index } : response), { headers: { "Content-Type": "application/json" } })
+    })
+    const sdk = await sdkFor(transport, boundary), deps = { client: async () => sdk, owner: () => ownerId }
+    const sending = requestAccountDocument(ownerId, save, fresh, accountGoalProgramDocumentSchema, deps)
+    await started
+    const read = requestAccountDocument(ownerId, { action: "read", documentId }, () => true, accountGoalProgramDocumentSchema, deps)
+    expire(); release()
+    expect(await sending).toEqual({ ok: false, code: "STALE_RESPONSE" })
+    expect(await read).toMatchObject({ ok: true, data: { kind: "document", document: index } })
+    const dataCalls = transport.mock.calls.filter(([url]) => String(url).endsWith("/functions/v1/account-journal"))
+    expect(dataCalls).toHaveLength(1)
+    expect(JSON.parse(String(dataCalls[0]?.[1]?.body))).toEqual({ action: "read", documentId })
+  })
+  it("keeps the exact index and same-operation receipt recovery with no internal marker on the wire", async () => {
+    let revision = 0
+    const receipts = new Map<string, typeof response>(), wire: unknown[] = []
+    const transport = vi.fn<typeof fetch>(async (url, options) => {
+      expect(new Headers(options?.headers).has(LOCAL_COLLECTION_SEND_GUARD_HEADER)).toBe(false)
+      if (String(url).endsWith("/rpc/get_account_storage_consent")) return new Response(JSON.stringify(consent))
+      const body = JSON.parse(String(options?.body)); wire.push(body)
+      const prior = receipts.get(body.operationId)
+      if (prior) return new Response(JSON.stringify(prior), { headers: { "Content-Type": "application/json" } })
+      expect(body.expectedRevision).toBe(revision)
+      revision += 1; receipts.set(body.operationId, response)
+      return new Response(JSON.stringify(response), { headers: { "Content-Type": "application/json" } })
+    })
+    const sdk = await sdkFor(transport, "receipt"), deps = { client: async () => sdk, owner: () => ownerId }
+    const invoked = vi.spyOn(sdk.functions, "invoke")
+    expect(await requestAccountDocument(ownerId, save, fresh, accountGoalProgramDocumentSchema, deps)).toEqual({ ok: true, data: response })
+    const marker = new Headers(invoked.mock.calls[0]?.[1]?.headers).get(LOCAL_COLLECTION_SEND_GUARD_HEADER)
+    expect(marker).toBeTruthy()
+    const count = transport.mock.calls.length
+    expect((await createConsentCheckedFetch(origin, transport)(origin + "/functions/v1/account-journal", {
+      method: "POST", headers: { Authorization: `Bearer ${token}`, [LOCAL_COLLECTION_SEND_GUARD_HEADER]: marker! }, body: JSON.stringify(save),
+    })).status).toBe(403)
+    expect(transport).toHaveBeenCalledTimes(count)
+    expire()
+    // The service permits this owner-only retry only after exact remote bytes/revision prove a prior commit.
+    expect(await requestAccountDocument(ownerId, save, () => true, accountGoalProgramDocumentSchema, deps)).toEqual({ ok: true, data: response })
+    expect(revision).toBe(1); expect(wire).toEqual([save, save])
+  })
+  it.each(["abort", "deadline"])("releases an interrupted goal guard before a late consent response (%s)", async boundary => {
+    let release!: () => void, reached!: () => void
+    const held = new Promise<void>(resolve => { release = resolve }), started = new Promise<void>(resolve => { reached = resolve })
+    const transport = vi.fn<typeof fetch>(async (_url, options) => {
+      expect(new Headers(options?.headers).has(LOCAL_COLLECTION_SEND_GUARD_HEADER)).toBe(false)
+      reached(); await held; return new Response(JSON.stringify(consent))
+    })
+    const sdk = await sdkFor(transport, boundary), controller = new AbortController()
+    const invoked = vi.spyOn(sdk.functions, "invoke")
+    if (boundary === "deadline") vi.useFakeTimers()
+    const sending = requestAccountDocument(ownerId, save, () => true, accountGoalProgramDocumentSchema,
+      { client: async () => sdk, owner: () => ownerId }, { signal: controller.signal })
+    try {
+      await started
+      expect(new Headers(invoked.mock.calls[0]?.[1]?.headers).get(LOCAL_COLLECTION_SEND_GUARD_HEADER)).toBeTruthy()
+      if (boundary === "abort") controller.abort()
+      else await vi.advanceTimersByTimeAsync(ACCOUNT_NETWORK_DEADLINE_MS)
+      expect(await sending).toEqual({ ok: false, code: boundary === "abort" ? "STALE_RESPONSE" : "UNAVAILABLE" })
+      const registrations: ReturnType<typeof registerCollectionSendGuard>[] = []
+      try {
+        // The SDK is still waiting; all request-local capacity must already be reclaimed.
+        for (let i = 0; i < 128; i++) registrations.push(registerCollectionSendGuard(() => true))
+      } finally { registrations.forEach(registration => registration.release()) }
+      release(); await Promise.resolve(); await Promise.resolve()
+      expect(transport).toHaveBeenCalledTimes(1)
+    } finally { controller.abort(); release?.(); await sending }
   })
 })
 

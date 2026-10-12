@@ -46,7 +46,7 @@ it("shows exact linked actual measurements in the live explanation reader withou
   await userEvent.click(screen.getByRole("tab", { name: "주기·기록" }))
   expect(screen.getByText("3.2km")).toBeVisible()
   expect(screen.getByText("18분")).toBeVisible()
-  expect(screen.getByText("직접 기록한 RPE 4")).toBeVisible()
+  expect(screen.getByText("4/10 · 직접 입력")).toBeVisible()
   expect(screen.getByText("계획의 일부를 수행한 기록")).toBeVisible()
   expect(screen.getByText("계획을 바꿔 수행한 기록")).toBeVisible()
   expect(screen.getByText(/반복별 기록과 회복 구간은 확인하지 않았어요/u)).not.toBeVisible()
@@ -80,7 +80,7 @@ it.each(["other-slot", "stale-content"] as const)("does not display a %s method 
   await userEvent.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))
   await userEvent.click(screen.getByRole("tab", { name: "주기·기록" }))
   expect(screen.queryByText("3.2km")).toBeNull()
-  expect(screen.queryByText("직접 기록한 RPE 4")).toBeNull()
+  expect(screen.queryByText("4/10 · 직접 입력")).toBeNull()
   expect(screen.getByText(/조회하지 못한 상태를 일지가 없는 것으로 판단하지 않아요/u)).toBeVisible()
 })
 
@@ -89,7 +89,7 @@ it("labels an in-range comparison as RPE only, not distance, time or method adhe
   const evidence = collectSessionExplanationEvidence([entry], state, session)!
   const comparison = COMPARISON_LABELS[evidence.rows[0]!.comparison]
   render(<PlanMethodObservationDetails observation={evidence.methodObservation!} comparison={comparison} />)
-  expect(screen.getByText("계획 RPE와 비교: 계획 범위 안")).toBeVisible()
+  expect(screen.getByText("계획한 힘든 정도와 비교: 계획 범위 안")).toBeVisible()
   expect(screen.getByText("3.2km")).toBeVisible()
   await userEvent.click(screen.getByText("어떤 기록을 비교하나요?"))
   expect(screen.getByText(/완료 표시만으로 계획의 방법·수치를 그대로 수행했다고 판단하지 않아요/u)).toBeVisible()
@@ -101,7 +101,7 @@ it.each(["RESTED", "SKIPPED"] as const)("keeps %s without fabricated actual meas
   render(<PlanMethodObservationDetails observation={evidence.methodObservation!} comparison={COMPARISON_LABELS[evidence.rows[0]!.comparison]} />)
   expect(screen.getByText(outcome === "RESTED" ? "휴식으로 기록했어요." : "건너뛴 훈련으로 기록했어요.")).toBeVisible()
   expect(screen.queryByText("3.2km")).toBeNull()
-  expect(screen.queryByText("직접 기록한 RPE 4")).toBeNull()
+  expect(screen.queryByText("4/10 · 직접 입력")).toBeNull()
   expect(screen.queryByText("직접 기록한 거리")).toBeNull()
   expect(screen.getByText("거리·시간·페이스 미기록")).not.toBeVisible()
   await userEvent.click(screen.getByText("어떤 기록을 비교하나요?"))
@@ -120,5 +120,5 @@ it("distinguishes a missing journal from a linked journal with missing measureme
   expect(screen.getByText("거리·시간·페이스 미기록")).not.toBeVisible()
   await userEvent.click(screen.getByText("어떤 기록을 비교하나요?"))
   expect(screen.getByText("거리·시간·페이스 미기록")).toBeVisible()
-  expect(screen.getByText("비교할 수 있는 RPE 미기록")).toBeVisible()
+  expect(screen.getByText("미기록")).toBeVisible()
 })

@@ -5,6 +5,7 @@ import { createAccountPlanCollectionClient } from "./account-plan-collection-api
 import { TODAY } from "../prescription-quality-matrix.test-fixtures"
 import { accountPlanPacketFixture } from "./account-plan.test-fixtures"
 import { accountPlanEntry, accountPlanFingerprint, emptyAccountPlanDocument, materializeAccountPlan } from "./account-plan-document-schema"
+import { joinAccountPlanCollection, type AccountPlanSnapshotPart, type AccountPlanProgressPart } from "./account-plan-collection-schema"
 import { createAccountPlanCollectionService, type AccountPlanCollectionServiceInput } from "./account-plan-collection-service"
 import { COLLECTION_OWNER, collectionMemoryBuffers, collectionServer } from "./account-plan-collection.test-support"
 
@@ -29,6 +30,185 @@ function setup(server = collectionServer(), extra: Partial<AccountPlanCollection
 }
 const select = (packet = accountPlanPacketFixture(3)) => ({ kind: "SELECT" as const, packet,
   confirmsSelection: true as const, freshReview: () => true })
+
+it.each(["service-yield", "buffer-read", "preparation-before-write", "before-external-commit"] as const)(
+  "preserves the current plan when an archive review expires at %s", async phase => {
+    const document = fixture(1)
+    let reviewCurrent = true, invalidate = true, archiving = false
+    const { service, server, stores } = setup(collectionServer(document), { yieldTask: async () => {
+      if (phase === "service-yield" && archiving && invalidate) { reviewCurrent = false; invalidate = false }
+    } })
+    const read = vi.mocked(stores.manifests.buffer.read).getMockImplementation()!
+    vi.mocked(stores.manifests.buffer.read).mockImplementation(async (...args) => {
+      if (phase === "buffer-read" && archiving && invalidate) { reviewCurrent = false; invalidate = false }
+      return read(...args)
+    })
+    const prepare = vi.mocked(stores.preparations.buffer.save).getMockImplementation()!
+    vi.mocked(stores.preparations.buffer.save).mockImplementation(async (input, current, acceptsIntent) => {
+      if (phase === "preparation-before-write" && invalidate) { reviewCurrent = false; invalidate = false }
+      return prepare(input, current, acceptsIntent)
+    })
+    const readRemote = vi.mocked(server.client.readPart).getMockImplementation()!
+    vi.mocked(server.client.readPart).mockImplementation(async (...args) => {
+      const part = await readRemote(...args)
+      if (phase === "before-external-commit" && archiving && args[1] === "PLAN_PROGRESS" && invalidate) {
+        reviewCurrent = false; invalidate = false
+      }
+      return part
+    })
+    expect(await service.hydrate()).toBe(true)
+    expect(await service.loadHistory()).toBe(true)
+    const confirmed = service.snapshot().confirmedDocument
+    const writesBefore = { manifests: structuredClone(stores.manifests.writes), parts: structuredClone(stores.parts.writes) }
+    archiving = true
+    const result = await service.mutate({ kind: "ARCHIVE", planId: document.data.currentPlanId!,
+      freshReview: () => reviewCurrent }, service.snapshot().fingerprint!)
+    expect(invalidate).toBe(false)
+    expect(result).toBe(phase === "preparation-before-write" ? "REVIEW_REQUIRED" : "STALE")
+    expect(service.snapshot().confirmedDocument).toEqual(confirmed)
+    expect(service.snapshot().currentPlan?.planId).toBe(document.data.currentPlanId)
+    expect(server.index()?.currentPlanId).toBe(document.data.currentPlanId)
+    expect(server.commits).toHaveLength(0)
+    expect(stores.preparations.rows.size).toBe(0)
+    if (phase === "before-external-commit") {
+      const pending = structuredClone([...stores.manifests.rows.values()][0]!.pending)
+      expect(pending?.draft.next.currentPlanId).toBeNull()
+      const next = pending!.draft.next, parts = [...stores.parts.rows.values()].map(row => row.draft)
+      const archived = joinAccountPlanCollection({ index: next,
+        snapshots: parts.filter((part): part is AccountPlanSnapshotPart => part.kind === "PLAN_SNAPSHOT"
+          && next.plans.some(ref => ref.snapshotId === part.id)),
+        progress: parts.filter((part): part is AccountPlanProgressPart => part.kind === "PLAN_PROGRESS"
+          && next.plans.some(ref => ref.progressId === part.id)) })
+      expect(archived?.data.plans[0]?.archivedAt).toEqual(expect.any(String))
+      expect(archived?.data.plans[0]?.snapshot).toEqual(document.data.plans[0]!.snapshot)
+      expect(service.snapshot().status).toBe("PENDING")
+      expect(stores.manifests.buffer.ack).not.toHaveBeenCalled()
+      expect([...stores.manifests.rows.values()][0]!.pending).toEqual(pending)
+    } else {
+      expect(stores.manifests.writes).toEqual(writesBefore.manifests)
+      expect(stores.parts.writes).toEqual(writesBefore.parts)
+    }
+    service.close()
+  },
+)
+
+it("requires a fresh explicit archive review after reopen without replacing the durable operation", async () => {
+  const document = fixture(1), { service, server, stores } = setup(collectionServer(document))
+  expect(await service.hydrate()).toBe(true)
+  server.failStages(true)
+  expect(await service.mutate({ kind: "ARCHIVE", planId: document.data.currentPlanId!, freshReview: () => true },
+    service.snapshot().fingerprint!)).toBe("PENDING")
+  const pending = structuredClone([...stores.manifests.rows.values()][0]!.pending)
+  service.close(); server.failStages(false)
+  const reopened = setup(server, {}, stores).service
+  expect(await reopened.hydrate()).toBe(false)
+  expect(await reopened.retry()).toBe("PENDING")
+  expect(await reopened.retry(() => false)).toBe("PENDING")
+  expect(server.commits).toHaveLength(0)
+  expect(server.index()?.currentPlanId).toBe(document.data.currentPlanId)
+  expect(reopened.snapshot().currentPlan?.planId).toBe(document.data.currentPlanId)
+  expect([...stores.manifests.rows.values()][0]!.pending).toEqual(pending)
+  expect(pending?.draft.operation?.archiveReviewRequired).toBe(true)
+  expect(await reopened.retry(() => true)).toBe("ACCOUNT")
+  expect(server.commits).toHaveLength(1)
+  expect(server.commits[0]!.operationId).toBe(pending!.operationId)
+  expect(server.commits[0]).not.toHaveProperty("archiveReviewRequired")
+  expect(reopened.snapshot().currentPlan).toBeNull()
+  reopened.close()
+})
+
+it("retains a reviewed archive when its explicit retry expires during the transport wait", async () => {
+  const document = fixture(1), { service, server, stores } = setup(collectionServer(document))
+  expect(await service.hydrate()).toBe(true)
+  server.failStages(true)
+  expect(await service.mutate({ kind: "ARCHIVE", planId: document.data.currentPlanId!, freshReview: () => true },
+    service.snapshot().fingerprint!)).toBe("PENDING")
+  const pending = structuredClone([...stores.manifests.rows.values()][0]!.pending)
+  service.close(); server.failStages(false)
+  const reopened = setup(server, {}, stores).service
+  expect(await reopened.hydrate()).toBe(false)
+  let fresh = true, invalidate = true
+  const commit = vi.mocked(server.client.commit).getMockImplementation()!
+  vi.mocked(server.client.commit).mockImplementation(async (request, beforeSend) => {
+    await tick()
+    if (invalidate) { fresh = false; invalidate = false }
+    if (beforeSend?.() === false) throw Error("STALE")
+    return commit(request)
+  })
+  expect(await reopened.retry(() => fresh)).toBe("PENDING")
+  expect(server.commits).toHaveLength(0)
+  expect(server.index()?.currentPlanId).toBe(document.data.currentPlanId)
+  expect(reopened.snapshot().currentPlan?.planId).toBe(document.data.currentPlanId)
+  expect([...stores.manifests.rows.values()][0]!.pending).toEqual(pending)
+  expect(stores.manifests.buffer.ack).not.toHaveBeenCalled()
+  expect(await reopened.retry(() => false)).toBe("PENDING")
+  expect(server.client.commit).toHaveBeenCalledTimes(1)
+  fresh = true
+  expect(await reopened.retry(() => fresh)).toBe("ACCOUNT")
+  expect(server.commits).toHaveLength(1)
+  expect(server.commits[0]!.operationId).toBe(pending!.operationId)
+  expect(server.commits[0]).not.toHaveProperty("archiveReviewRequired")
+  reopened.close()
+})
+
+it.each(["service-yield", "buffer-read", "preparation-before-write"] as const)(
+  "declines a selection invalidated at %s before creating a durable pending operation", async phase => {
+    const packet = accountPlanPacketFixture(3)
+    let reviewed = false, reviewCurrent = true, invalidate = true
+    const { service, server, stores } = setup(undefined, { yieldTask: async () => {
+      if (phase === "service-yield" && reviewed && invalidate) { reviewCurrent = false; invalidate = false }
+    } })
+    const read = vi.mocked(stores.manifests.buffer.read).getMockImplementation()!
+    vi.mocked(stores.manifests.buffer.read).mockImplementation(async (...args) => {
+      if (phase === "buffer-read" && reviewed && invalidate) { reviewCurrent = false; invalidate = false }
+      return read(...args)
+    })
+    const prepare = vi.mocked(stores.preparations.buffer.save).getMockImplementation()!
+    vi.mocked(stores.preparations.buffer.save).mockImplementation(async (input, current, acceptsIntent) => {
+      if (phase === "preparation-before-write" && invalidate) { reviewCurrent = false; invalidate = false }
+      return prepare(input, current, acceptsIntent)
+    })
+    expect(await service.hydrate()).toBe(true)
+    const result = await service.mutate({ ...select(packet), freshReview: () => { reviewed = true; return reviewCurrent } },
+      service.snapshot().fingerprint!)
+    expect(result).toBe("REVIEW_REQUIRED")
+    expect(service.snapshot()).toMatchObject({ status: "EMPTY", currentPlan: null })
+    expect(stores.preparations.rows.size).toBe(0)
+    expect(stores.manifests.writes).toHaveLength(0)
+    expect(stores.parts.writes).toHaveLength(0)
+    expect(server.commits).toHaveLength(0)
+    // A fresh explicit selection can proceed immediately; the stale review did not occupy the queue.
+    reviewCurrent = true
+    expect(await service.mutate(select(packet), service.snapshot().fingerprint!)).toBe("ACCOUNT")
+    expect(server.commits).toHaveLength(1)
+    service.close()
+  },
+)
+
+it("preserves the exact durable operation when review changes after preparation commit before acknowledgement", async () => {
+  const packet = accountPlanPacketFixture(3), { service, server, stores } = setup(undefined, { yieldTask: async () => {} })
+  let reviewCurrent = true, operationId = ""
+  const prepare = vi.mocked(stores.preparations.buffer.save).getMockImplementation()!
+  vi.mocked(stores.preparations.buffer.save).mockImplementationOnce(async (input, current, acceptsIntent) => {
+    await prepare(input, current, acceptsIntent)
+    operationId = input.transfer.operationId
+    reviewCurrent = false
+    // The native preparation store rechecks its guard when the write transaction completes.
+    if (!current()) throw Error("STALE")
+  })
+  expect(await service.hydrate()).toBe(true)
+  expect(await service.mutate({ ...select(packet), freshReview: () => reviewCurrent }, service.snapshot().fingerprint!)).toBe("PENDING")
+  const pending = structuredClone([...stores.manifests.rows.values()][0]!.pending)
+  expect(pending?.operationId).toBe(operationId)
+  expect(service.snapshot()).toMatchObject({ status: "PENDING", currentPlan: null })
+  expect(server.commits).toHaveLength(0)
+  expect(await service.retry()).toBe("PENDING")
+  expect([...stores.manifests.rows.values()][0]!.pending).toEqual(pending)
+  expect(await service.retry(() => true)).toBe("ACCOUNT")
+  expect(server.commits).toHaveLength(1)
+  expect(server.commits[0]!.operationId).toBe(operationId)
+  service.close()
+})
 
 it.each(["missing", "rejected"])("production lock %s never falls back to uncoordinated client or storage work", async mode => {
   vi.stubGlobal("navigator", mode === "missing" ? {} : { locks: { request: vi.fn(async () => { throw Error("Denied") }) } })

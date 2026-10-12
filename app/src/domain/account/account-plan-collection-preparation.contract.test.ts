@@ -119,3 +119,23 @@ it("a lost preparation-clear result does not create a duplicate operation or loc
   expect(stores.manifests.buffer.queue).toHaveBeenCalledTimes(1)
   expect(stores.manifests.buffer.ack).not.toHaveBeenCalled()
 })
+
+it("preserves a reviewed archive marker and all original bytes through preparation recovery", async () => {
+  const stores = collectionMemoryBuffers(), previous = emptyAccountPlanDocument()
+  previous.data.plans.push(accountPlanEntry(accountPlanPacketFixture(3)))
+  previous.data.currentPlanId = previous.data.plans[0]!.planId
+  const next = structuredClone(previous)
+  next.data.plans[0]!.archivedAt = new Date().toISOString(); next.data.currentPlanId = null
+  const transfer = { ...prepareAccountPlanCollectionTransfer({ ownerId: COLLECTION_OWNER, operationId: crypto.randomUUID(),
+    expectedRevision: 1, previous, next })!, archiveReviewRequired: true as const }
+  const open = () => createAccountPlanCollectionBuffer(COLLECTION_OWNER, () => true, { ...stores.dependencies, yieldTask: async () => {} })
+  const buffer = open()
+  await buffer.observe(splitAccountPlanCollection(previous).index, 1)
+  vi.mocked(stores.manifests.buffer.queue).mockRejectedValueOnce(Error("Interrupted"))
+  await expect(buffer.save(transfer, 1, () => true)).rejects.toThrow("Interrupted")
+  expect(stores.preparations.rows.get(COLLECTION_OWNER)?.transfer).toEqual(transfer)
+  expect(await open().pending()).toEqual(transfer)
+  expect([...stores.manifests.rows.values()][0]!.pending?.draft.operation?.archiveReviewRequired).toBe(true)
+  expect(stores.manifests.buffer.ack).not.toHaveBeenCalled()
+  expect(stores.preparations.rows.size).toBe(0)
+})

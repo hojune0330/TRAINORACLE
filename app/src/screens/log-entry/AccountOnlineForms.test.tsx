@@ -1,5 +1,5 @@
 import React from "react"
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { JournalEntry, PostSessionEntry } from "../../domain/journal-store"
 
@@ -40,16 +40,36 @@ function mount(form: Form, purpose?: Purpose, memo = syntheticMemo) {
   else {
     const Component = form === "post-session" ? PostSessionForm : form === "evening" ? EveningCheckin : RaceForm
     render(<Component onDone={onDone} />)
+    if (form === "evening") fireEvent.click(screen.getByRole("button", { name: purpose ? "메모 쓰기" : "수면" }))
     if (purpose) {
-      fireEvent.change(screen.getByRole("textbox", { name: fields[form] }), { target: { value: memo } })
+      fireEvent.change(memoField(form), { target: { value: memo } })
       fireEvent.click(screen.getByRole("radio", { name: purpose === "PRIVATE_SELF_ONLY" ? "나만의 메모" : "훈련 메모" }))
+    } else {
+      // A new detailed form needs one explicit answer before account persistence.
+      const answer = form === "post-session" ? "완료"
+        : form === "evening" ? "수면 질 3 보통" : "긴장도 3"
+      fireEvent.click(screen.getByRole("button", { name: answer }))
     }
   }
   if (form === "quick") fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
   return onDone
 }
 function saveButton(form: Form) {
+  if (form !== "quick") showReview()
   return screen.getByRole("button", { name: form === "quick" ? "이대로 저장" : /^(저장|수정 저장)/ })
+}
+function showReview() {
+  if (screen.queryByRole("button", { name: /^(저장|수정 저장)/ })) return
+  const review = screen.queryByRole("button", { name: "입력 확인으로" })
+    ?? screen.getByRole("button", { name: "지금 입력 확인" })
+  fireEvent.click(review)
+}
+function memoField(form: Exclude<Form, "quick">) {
+  const current = screen.queryByRole("textbox", { name: fields[form] })
+  if (current) return current
+  showReview()
+  fireEvent.click(screen.getByRole("button", { name: /^메모 (수정|입력)$/ }))
+  return screen.getByRole("textbox", { name: fields[form] })
 }
 async function settle() { await act(async () => { for (let i = 0; i < 12; i++) await Promise.resolve() }) }
 async function complete(form: Form, done: ReturnType<typeof vi.fn>) {
@@ -96,14 +116,14 @@ describe.each(forms)("%s account-online form", form => {
       }
       fireEvent.click(saveButton(form))
     }
-    if (form !== "quick") fireEvent.change(screen.getByRole("textbox", { name: fields[form] }), { target: { value: "synthetic edited pending" } })
+    if (form !== "quick") fireEvent.change(memoField(form), { target: { value: "synthetic edited pending" } })
     saveEdited(); await settle()
     expect(mocks.persist).toHaveBeenCalledTimes(1)
     expect(done).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole("button", { name: "이전 요청 그대로 확인" })); await settle()
     expect(mocks.persist.mock.calls[1]).toEqual(first)
     expect(done).not.toHaveBeenCalled()
-    if (form !== "quick") expect(screen.getByRole("textbox", { name: fields[form] })).toHaveValue("synthetic edited pending")
+    if (form !== "quick") expect(memoField(form)).toHaveValue("synthetic edited pending")
     saveEdited(); await complete(form, done)
     expect(mocks.persist.mock.calls[2]![1]).toBe(first[0].savedAt)
     expect(mocks.persist.mock.calls[2]![0].savedAt > first[0].savedAt).toBe(true)
@@ -117,13 +137,13 @@ describe.each(forms)("%s account-online form", form => {
       const done = mount(form, "PRIVATE_SELF_ONLY")
       fireEvent.click(saveButton(form)); await settle()
       expect(screen.getByRole("region", { name: "최종 저장 요청 확인" })).toHaveTextContent("새 요청을 자동으로 만들거나 다시 전송하지 않습니다")
-      if (form !== "quick") fireEvent.change(screen.getByRole("textbox", { name: fields[form] }), { target: { value: "synthetic rejected edit" } })
+      if (form !== "quick") fireEvent.change(memoField(form), { target: { value: "synthetic rejected edit" } })
       fireEvent.click(saveButton(form)); await settle()
       fireEvent.click(screen.getByRole("button", { name: "보관된 거절 상태 확인" })); await settle()
       expect(mocks.persist).toHaveBeenCalledTimes(1)
       expect(done).not.toHaveBeenCalled()
       expect(screen.queryByRole("button", { name: "완료" })).toBeNull()
-      if (form !== "quick") expect(screen.getByRole("textbox", { name: fields[form] })).toHaveValue("synthetic rejected edit")
+      if (form !== "quick") expect(memoField(form)).toHaveValue("synthetic rejected edit")
     },
   )
   it.each(["ANALYZABLE_TRAINING_NOTE", "PRIVATE_SELF_ONLY"] as const)(
@@ -178,11 +198,12 @@ describe.each(forms)("%s account-online form", form => {
     fireEvent.click(saveButton(form)); await complete(form, done)
     const first = mocks.persist.mock.calls[0]![0] as JournalEntry
     if (form === "quick") {
+      fireEvent.click(screen.getByText("내용 추가·수정"))
       fireEvent.click(screen.getByRole("button", { name: "방금 기록 수정" }))
       fireEvent.click(screen.getByRole("button", { name: "하려던 운동을 건너뛰었어요" }))
       fireEvent.click(saveButton(form))
     } else {
-      fireEvent.change(screen.getByRole("textbox", { name: fields[form] }), { target: { value: "synthetic correction" } })
+      fireEvent.change(memoField(form), { target: { value: "synthetic correction" } })
       fireEvent.click(screen.getByRole("radio", { name: "나만의 메모" }))
       fireEvent.click(saveButton(form))
     }
@@ -202,7 +223,7 @@ describe.each(forms)("%s account-online form", form => {
       fireEvent.click(saveButton(form)); await settle()
       expect(done).not.toHaveBeenCalled()
       expect(screen.getByRole("alert")).toHaveTextContent("완료하지 못했어요")
-      if (form !== "quick") expect(screen.getByRole("textbox", { name: fields[form] })).toHaveValue(syntheticMemo)
+      if (form !== "quick") expect(memoField(form)).toHaveValue(syntheticMemo)
       fireEvent.click(saveButton(form)); await complete(form, done)
       expect(mocks.persist.mock.calls[1]![0]).toMatchObject({
         id: mocks.persist.mock.calls[0]![0].id, [form === "evening" ? "note" : "memo"]: syntheticMemo,
@@ -228,7 +249,11 @@ describe.each(forms)("%s account-online form", form => {
     const result = await complete(form, done)
     expect(result.reviewMessage).toContain(review)
     expect(result.storageMessage).toContain(storage === "ACCOUNT" ? "계정에 저장했어요" : "전송 대기")
-    if (form === "quick") expect(screen.getByRole("status")).toHaveTextContent(review!)
+    if (form === "quick") {
+      const receipt = screen.getByRole("region", { name: "일지를 계정에 저장했어요." })
+      expect(within(receipt).getByRole("alert")).toHaveTextContent(review!)
+      expect(within(receipt).getByRole("alert")).toHaveTextContent("자동 확인은 결론이 아니에요")
+    }
   })
 
   it("does not log raw private memo text", async () => {

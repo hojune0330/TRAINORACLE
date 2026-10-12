@@ -18,6 +18,7 @@ const TURN_THRESHOLD_PX = 56
 const HORIZONTAL_INTENT_RATIO = 1.2
 const MAX_DRAG_OFFSET_PX = 20
 const BOUNDARY_DRAG_OFFSET_PX = 8
+const BROWSER_EDGE_GESTURE_PX = 24
 
 export function useJournalPageTurn({
   onPrevious,
@@ -64,7 +65,9 @@ export function useJournalPageTurn({
     touchOrigin.current = touch === undefined ? null : {
       x: touch.clientX,
       y: touch.clientY,
-      blocked: isJournalNavigationBlockedTarget(event.target),
+      blocked: touch.clientX <= BROWSER_EDGE_GESTURE_PX
+        || touch.clientX >= window.innerWidth - BROWSER_EDGE_GESTURE_PX
+        || isJournalNavigationBlockedTarget(event.target),
     }
   }, [resetTouch])
 
@@ -138,5 +141,8 @@ export function isJournalNavigationBlockedTarget(target: EventTarget | null): bo
     "[role='button']",
     "[contenteditable]:not([contenteditable='false'])",
     "[data-decoration-interaction='true']",
+    ".journal-decoration-workspace--open",
+    "[role='dialog']",
+    "[role='alertdialog']",
   ].join(",")) !== null
 }

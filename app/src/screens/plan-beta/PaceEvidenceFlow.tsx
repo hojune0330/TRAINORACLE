@@ -95,10 +95,10 @@ export function PaceEvidenceFlow({
         })
       }}><Calculator aria-hidden="true" size={18} />페이스 계산 · 기준 바꾸기</button>}
       {usable.length === 0 ? (
-        <p className="pace-evidence-fallback">이 종목의 경기 기록이 아직 없어요. 기록을 추가하면 고른 조건과 시작 날짜를 유지한 채 돌아옵니다. 기록 없이 시간·RPE 계획을 받을 수도 있어요.</p>
+        <p className="pace-evidence-fallback">이 종목의 경기 기록이 없어요. 기록을 추가해도 고른 조건과 시작일은 유지돼요.</p>
       ) : (
         <>
-          <div className="plan-choice-list" role="group" aria-label="기준 기록 선택">
+          <div className="plan-choice-list app-choice-group" role="group" aria-label="기준 기록 선택">
             {shownRecords.map((record) => (
               <PlanChoice
                 key={record.id}
@@ -118,11 +118,11 @@ export function PaceEvidenceFlow({
               <strong>기준 기록 · {recordTitle(selected)}</strong>
               <span>{selected.achievedOn} · {athleteRecordAuthorityCopy(selected)}</span>
               {selected.purpose === "RACE_GOAL" ? <p>목표 기록을 기준으로 계산해요. 달성한 기록이나 현재 실력을 뜻하지 않아요.</p>
-                : deriveRecordCurrentness(selected, new Date()) !== "CURRENT" && <p>이 기록은 현재 페이스 계산에 사용하지 않아요. 최근 기록을 추가하거나 시간·RPE 계획을 선택해 주세요.</p>}
+                : deriveRecordCurrentness(selected, new Date()) !== "CURRENT" && <p>이 기록은 지금 페이스 계산에 쓸 수 없어요. 최근 기록을 추가하거나 기록 없이 계획을 받으세요.</p>}
               {comparisonOptions.length > 0 && (
                 <details>
                   <summary>다른 같은 종목 기록과 비교</summary>
-                  <div className="plan-choice-list" role="group" aria-label="비교 기록 선택">
+                  <div className="plan-choice-list app-choice-group" role="group" aria-label="비교 기록 선택">
                     {comparisonOptions.map((record) => (
                       <PlanChoice
                         key={record.id}
@@ -156,7 +156,7 @@ export function PaceEvidenceFlow({
       {onManageRecords !== undefined && <button type="button" className="plan-text-action" onClick={onManageRecords}>
         <Plus aria-hidden="true" size={18} />경기 기록 추가·관리
       </button>}
-      {onUseRpe !== undefined && <button type="button" className="plan-text-action" onClick={onUseRpe}>기록 없이 시간·RPE 계획 받기</button>}
+      {onUseRpe !== undefined && <button type="button" className="plan-text-action" onClick={onUseRpe}>기록 없이 계획 받기</button>}
       <BindingStatus binding={binding} statusRef={statusRef} />
     </section>
   )
@@ -176,7 +176,7 @@ function BindingStatus({
   return (
     <p ref={statusRef} className="pace-evidence-fallback" role="status" tabIndex={-1}>
       <RefreshCw aria-hidden="true" size={16} />
-      <span className="pace-evidence-copy">{fallbackMessage(binding.code)} 두 계획안 모두 원래 RPE 계획을 유지합니다.</span>
+      <span className="pace-evidence-copy">{fallbackMessage(binding.code)} 원래 시간·힘든 정도 안내를 유지해요.</span>
     </p>
   )
 }

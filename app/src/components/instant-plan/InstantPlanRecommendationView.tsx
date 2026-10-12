@@ -7,6 +7,8 @@ import type {
 } from "../../domain/instant-plan-contract"
 import "./instant-plan.css"
 import { RecommendationCalendar } from "./RecommendationCalendar"
+import { IncompleteWorkoutNotice } from "./IncompleteWorkoutNotice"
+import { AppHeading } from "../AppHeading"
 
 export type InstantPlanRecommendationViewProps = {
   readonly recommendation: InstantPlanRecommendation
@@ -27,6 +29,12 @@ export type InstantPlanRecommendationViewProps = {
   readonly conditionReviewLabel?: string
   readonly onReviewCondition?: () => void
   readonly scheduleReview?: ReactNode
+  readonly showSupportingDetails?: boolean
+  readonly beforeStart?: ReactNode
+  /** The selected candidate's execution facts, before the full calendar. */
+  readonly executionSummary?: ReactNode
+  /** The selected candidate's prescription calendar, replacing the generic projection. */
+  readonly calendar?: ReactNode
 }
 
 const roleLabels: Record<InstantPlanDaySummary["sessions"][number]["role"], string> = {
@@ -57,6 +65,10 @@ export function InstantPlanRecommendationView({
   conditionReviewLabel,
   onReviewCondition,
   scheduleReview,
+  showSupportingDetails = true,
+  beforeStart,
+  executionSummary,
+  calendar,
 }: InstantPlanRecommendationViewProps) {
   const headingId = useId()
   const actionStatusId = useId()
@@ -67,29 +79,30 @@ export function InstantPlanRecommendationView({
   const status = saving
     ? "계획을 저장하고 있어요. 저장이 확인될 때까지 기다려 주세요."
     : actionState.kind === "READY" ? null : actionState.message
+  const startAction = <div className="instant-plan__actions instant-plan__start-action">
+    <button
+      className="instant-plan__button"
+      type="button"
+      disabled={!ready && !(actionState.kind === "BLOCKED" && blockedAction)}
+      aria-describedby={status !== null ? actionStatusId : undefined}
+      onClick={() => {
+        if (ready) onStart(recommendation.id)
+        else if (actionState.kind === "BLOCKED") blockedAction?.onClick()
+      }}
+    >{saving ? "저장 중" : actionState.kind === "BLOCKED" && blockedAction ? blockedAction.label : startLabel ?? "이 일정으로 시작"}</button>
+  </div>
 
   return (
     <section className="instant-plan instant-plan--recommendation" aria-labelledby={headingId}>
-      <h2 id={headingId} className="instant-plan__heading">{recommendation.title}</h2>
+      <AppHeading as="h2" accent id={headingId} className="instant-plan__heading">{recommendation.title}</AppHeading>
       {recommendation.source.kind === "CREATOR" && (
         <p className="instant-plan__source">
           {recommendation.creatorLabel || "선택한 제작자 프로그램"}
         </p>
       )}
-      <dl className="instant-plan__summary">
-        <div><dt>기간</dt><dd>{recommendation.periodLabel}</dd></div>
-        <div className="instant-plan__burden"><dt>이 기간의 훈련</dt><dd>{recommendation.sessionCount}회</dd></div>
-        <div className="instant-plan__burden"><dt>훈련 시간</dt><dd>{recommendation.durationLabel}</dd></div>
-        <div><dt>첫 훈련</dt><dd>{recommendation.firstSessionLabel}</dd></div>
-        {anchorLabel && <div><dt>기준 기록</dt><dd>{anchorLabel}</dd></div>}
-        {goalLabel && <div><dt>내 목표</dt><dd>{goalLabel}</dd></div>}
-        {programPurposeLabel && <div><dt>이번 프로그램의 목적</dt><dd>{programPurposeLabel}</dd></div>}
-        {workoutLabel && <div><dt>{workoutLabelTitle ?? "처방 훈련"}</dt><dd>{workoutLabel}</dd></div>}
-      </dl>
-      {goalLabel && (
-        <p className="instant-plan__hint">목표 기록은 현재 능력이나 이 기간 안의 달성 보장을 뜻하지 않아요.</p>
-      )}
-      {recommendation.guidanceNotice && <p className="instant-plan__hint">{recommendation.guidanceNotice}</p>}
+      <p className="instant-plan__hint"><span>{recommendation.periodLabel}</span> · 훈련 <span>{recommendation.sessionCount}회</span></p>
+      {anchorLabel && <p className="instant-plan__source"><span>기준 기록</span> <span>{anchorLabel}</span></p>}
+      {recommendation.guidanceNotice && <IncompleteWorkoutNotice detail={recommendation.guidanceNotice} />}
       {conditionReviewLabel && onReviewCondition && <button className="instant-plan__secondary"
         type="button" disabled={!ready} onClick={onReviewCondition}>{conditionReviewLabel}</button>}
 
@@ -115,27 +128,32 @@ export function InstantPlanRecommendationView({
         </section>
       )}
       {scheduleReview}
+      {executionSummary ?? <dl className="instant-plan__summary">
+        <div><dt>첫 훈련</dt><dd>{recommendation.firstSessionLabel}</dd></div>
+        {workoutLabel && <div><dt>{workoutLabelTitle ?? "처방 훈련"}</dt><dd>{workoutLabel}</dd></div>}
+      </dl>}
+      {beforeStart}
+      {/* Full prescription calendars can be long lists. Required facts stay above
+          the action; browsing every date is not another acceptance requirement. */}
+      {startAction}
+      {onEditWorkout && <div className="instant-plan__actions">
+        <button className="instant-plan__secondary" type="button" disabled={waiting} onClick={onEditWorkout}>
+          훈련 조절
+        </button>
+      </div>}
       <section aria-label="이번 일정">
         <h3>이번 일정</h3>
-        {recommendation.days.length === 0 ? (
+        {calendar ?? (recommendation.days.length === 0 ? (
           <p className="instant-plan__status">표시할 일정이 없어요.</p>
         ) : (
           <RecommendationCalendar identity={recommendation.id} days={recommendation.days} />
-        )}
+        ))}
       </section>
-      <div className="instant-plan__actions instant-plan__start-action">
-        <button
-          className="instant-plan__button"
-          type="button"
-          disabled={!ready && !(actionState.kind === "BLOCKED" && blockedAction)}
-          aria-describedby={status !== null ? actionStatusId : undefined}
-          onClick={() => {
-            if (ready) onStart(recommendation.id)
-            else if (actionState.kind === "BLOCKED") blockedAction?.onClick()
-          }}
-        >{saving ? "저장 중" : actionState.kind === "BLOCKED" && blockedAction ? blockedAction.label : startLabel ?? "이 일정으로 시작"}</button>
-      </div>
-      {(onEditSchedule || onShowAlternatives || onEditWorkout) && <details className="instant-plan__disclosure">
+      {showSupportingDetails && <details className="instant-plan__disclosure">
+        <summary>전체 훈련 시간·목표</summary>
+        <InstantPlanRecommendationFacts recommendation={recommendation} goalLabel={goalLabel} programPurposeLabel={programPurposeLabel} />
+      </details>}
+      {showSupportingDetails && (onEditSchedule || onShowAlternatives) && <details className="instant-plan__disclosure">
         <summary>일정·훈련 바꾸기</summary>
         <div className="instant-plan__actions">
         {onEditSchedule && (
@@ -148,15 +166,10 @@ export function InstantPlanRecommendationView({
             다른 계획 보기
           </button>
         )}
-        {onEditWorkout && (
-          <button className="instant-plan__secondary" type="button" disabled={waiting} onClick={onEditWorkout}>
-            처방 확인·조절
-          </button>
-        )}
         </div>
       </details>}
 
-      {recommendation.days.length > 0 && (
+      {showSupportingDetails && recommendation.days.length > 0 && (
         <details className="instant-plan__disclosure">
           <summary>전체 훈련 내용</summary>
           <ol className="instant-plan__sessions">
@@ -178,7 +191,7 @@ export function InstantPlanRecommendationView({
           </ol>
         </details>
       )}
-      {recommendation.reason && (
+      {showSupportingDetails && recommendation.reason && (
         <details className="instant-plan__disclosure">
           <summary>추천 이유</summary>
           <p>{recommendation.reason}</p>
@@ -186,4 +199,16 @@ export function InstantPlanRecommendationView({
       )}
     </section>
   )
+}
+
+export function InstantPlanRecommendationFacts({ recommendation, goalLabel, programPurposeLabel }: Pick<InstantPlanRecommendationViewProps, "recommendation" | "goalLabel" | "programPurposeLabel">) {
+  return <>
+    <dl className="instant-plan__summary">
+      <div className="instant-plan__burden"><dt>훈련 횟수</dt><dd>{recommendation.sessionCount}회</dd></div>
+      <div className="instant-plan__burden"><dt>훈련 시간</dt><dd>{recommendation.durationLabel}</dd></div>
+      {goalLabel && <div><dt>내 목표</dt><dd>{goalLabel}</dd></div>}
+      {programPurposeLabel && <div><dt>이 계획의 목적</dt><dd>{programPurposeLabel}</dd></div>}
+    </dl>
+    {goalLabel && <p className="instant-plan__hint">목표 기록은 현재 능력이나 이 기간 안의 달성 보장을 뜻하지 않아요.</p>}
+  </>
 }

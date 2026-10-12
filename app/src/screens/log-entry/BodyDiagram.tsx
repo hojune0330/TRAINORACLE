@@ -2,6 +2,7 @@ import React from "react"
 import { PainDot } from "../../components/JournalPrimitives"
 import { TermHelp } from "../../components/TermHelp"
 import { BODY_PARTS } from "../../components/body-parts"
+import "./BodyDiagram.css"
 
 interface BodyDiagramProps {
   readonly selected?: Readonly<Record<string, number>>
@@ -9,106 +10,90 @@ interface BodyDiagramProps {
 }
 
 export function BodyDiagram({ selected = {}, onChange }: BodyDiagramProps) {
-  const anySelected = Object.values(selected).some((level) => level > 0)
-  // 그림은 기본으로 닫는다. 하루 마무리 화면 길이의 절반을 이 그림이 먹는데
-  // (476px / 754px), 그림은 aria-hidden 이고 onClick 도 없어서 고르는 데는
-  // 쓰이지 않는다. 선택은 아래 버튼 10개에서만 일어난다. — 작업지시서 UX1 §2-3
-  //
-  // 통증을 하나라도 고르면 자동으로 펼친다. 어디를 골랐는지 한눈에
-  // 보여주는 게 그림이 하는 일이다. 반대로 코드가 닫는 일은 없다.
-  //
-  // 닫혀 있어도 <svg> 는 DOM 에 그대로 둔다 (display:none). 지우면
-  // [data-body-part] 를 읽는 검사가 깨지고, 다시 열 때 그림이 새로 그려진다.
-  const [diagramOpen, setDiagramOpen] = React.useState(false)
-  const wasSelected = React.useRef(anySelected)
+  const [openPartId, setOpenPartId] = React.useState<string | null>(null)
+  const [guideUnavailable, setGuideUnavailable] = React.useState(false)
+  const pickerId = React.useId()
+  const firstLevelRef = React.useRef<HTMLButtonElement>(null)
+  const partButtonRefs = React.useRef(new Map<string, HTMLButtonElement>())
+  const openPart = BODY_PARTS.find((part) => part.id === openPartId)
 
   React.useEffect(() => {
-    if (anySelected && !wasSelected.current) setDiagramOpen(true)
-    wasSelected.current = anySelected
-  }, [anySelected])
+    if (openPartId !== null) firstLevelRef.current?.focus()
+  }, [openPartId])
 
-  const cycle = (id: string) => {
-    const current = selected[id] || 0
-    const next = current >= 5 ? 0 : current + 1
+  const chooseLevel = (id: string, level: number) => {
     const output = { ...selected }
-    if (next === 0) delete output[id]
-    else output[id] = next
+    if (level === 0) delete output[id]
+    else output[id] = level
     onChange?.(output)
   }
 
   return (
-    <div className="body-pain-selector" data-diagram-open={diagramOpen ? "true" : "false"}>
-      <div
-        className="body-pain-selector__visual"
-        style={diagramOpen
-          ? { position: "relative", background: "var(--paper)", padding: 8 }
-          : { display: "none" }}
-      >
-        <svg aria-hidden="true" focusable="false" viewBox="0 0 220 460" width="100%" preserveAspectRatio="xMidYMid meet" style={{ display: "block", height: "auto" }}>
-          <g fill="none" stroke="var(--ink-3)" strokeWidth="1.2">
-            <circle cx="110" cy="60" r="22" />
-            <line x1="110" y1="82" x2="110" y2="220" />
-            <line x1="110" y1="100" x2="70" y2="170" />
-            <line x1="110" y1="100" x2="150" y2="170" />
-            <line x1="110" y1="220" x2="96" y2="420" />
-            <line x1="110" y1="220" x2="124" y2="420" />
-          </g>
-          {BODY_PARTS.map((part) => {
-            const level = selected[part.id] || 0
-            return (
-              <g key={part.id}>
-                <circle data-body-part={part.id} cx={part.x} cy={part.y} r={level ? 9 : 6}
-                  fill={level ? `var(--pain-${level})` : "rgba(0,0,0,0)"}
-                  stroke={level ? `var(--pain-${level})` : "var(--ink-4)"}
-                  strokeWidth={level ? 0 : 1.2} />
-                {level > 0 && (
-                  <text x={part.x} y={part.y + 3.5} textAnchor="middle"
-                    fontFamily="JetBrains Mono, monospace" fontSize="9" fontWeight="700"
-                    fill="#fff">{level}</text>
-                )}
-              </g>
-            )
-          })}
-        </svg>
+    <div className="body-pain-selector">
+      <div className="body-pain-selector__heading">
+        {!guideUnavailable && <div className="body-pain-selector__visual" aria-hidden="true">
+          <img
+            src={`${import.meta.env.BASE_URL || "/"}illustrations/body-check-emoji-v1.webp`}
+            alt=""
+            width={80}
+            height={80}
+            decoding="async"
+            draggable={false}
+            onError={() => setGuideUnavailable(true)}
+          />
+        </div>}
+        <p className="body-pain-selector__instruction">불편한 부위를 골라요</p>
       </div>
-      <div style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-3)", letterSpacing: "0.04em" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-          <span style={{ fontSize: 9.5, letterSpacing: "0.14em", textTransform: "uppercase" }}>탭으로 1→5→해제</span>
-          <button
-            type="button"
-            aria-expanded={diagramOpen}
-            onClick={() => setDiagramOpen((current) => !current)}
-            style={{
-              marginLeft: "auto", minHeight: 44, padding: "8px 10px",
-              border: "1px solid var(--line)", background: "transparent", borderRadius: 0,
-              fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-2)",
-              letterSpacing: "0.06em", cursor: "pointer",
-            }}
-          >{diagramOpen ? "몸 그림 접기" : "몸 그림 보기"}</button>
-        </div>
+      <div className="body-pain-selector__content">
         <div className="body-pain-selector__buttons">
           {BODY_PARTS.map((part) => {
             const level = selected[part.id] || 0
+            const isOpen = openPartId === part.id
             return (
-              <button
-                key={part.id}
-                type="button"
-                aria-label={`${part.name}${level > 0 ? `, 통증 ${level}단계` : ", 통증 없음"}. 누르면 ${level >= 5 ? "해제" : `${level + 1}단계`}`}
-                aria-pressed={level > 0}
-                onClick={() => cycle(part.id)}
-                style={{
-                  minHeight: 44, width: "100%", display: "flex", alignItems: "center", gap: 8,
-                  padding: "7px 8px", border: "1px solid var(--line)", background: level > 0 ? "var(--surface)" : "transparent",
-                  color: "var(--ink)", cursor: "pointer", borderRadius: 0, textAlign: "left",
-                }}
-              >
-                <PainDot level={level} />
-                <span style={{ color: "var(--ink)", fontFamily: "var(--sans)", fontSize: 12.5 }}>{part.name}</span>
-                <span style={{ marginLeft: "auto", color: level > 0 ? `var(--pain-${level})` : "var(--ink-4)", fontWeight: 600 }}>{level > 0 ? `${level}/5` : "—"}</span>
-              </button>
+              <div className="body-pain-selector__part" key={part.id}>
+                <button
+                  type="button"
+                  ref={(node) => {
+                    if (node) partButtonRefs.current.set(part.id, node)
+                    else partButtonRefs.current.delete(part.id)
+                  }}
+                  aria-label={`${part.name}${level > 0 ? `, 통증 ${level}/5` : ""}`}
+                  aria-expanded={isOpen}
+                  aria-controls={isOpen ? pickerId : undefined}
+                  onClick={() => setOpenPartId(current => current === part.id ? null : part.id)}
+                  className="body-pain-selector__part-button app-choice-control"
+                >
+                  <PainDot level={level} />
+                  <span className="body-pain-selector__part-name">{part.name}</span>
+                  {level > 0 && <span className="body-pain-selector__part-value">{level}/5</span>}
+                </button>
+              </div>
             )
           })}
         </div>
+        {openPart !== undefined && <div className="body-pain-selector__picker" id={pickerId}>
+          <h3 className="body-pain-selector__picker-title" id={`${pickerId}-title`}>{openPart.name} 통증 정도</h3>
+          <p className="body-pain-selector__scale-range" id={`${pickerId}-range`}>
+            <span>약함</span><span aria-hidden="true">→</span><span>심함</span>
+          </p>
+          <div className="body-pain-selector__level-picker" role="group" aria-labelledby={`${pickerId}-title`} aria-describedby={`${pickerId}-range`}
+            onKeyDown={(event) => {
+              if (event.key !== "Escape") return
+              event.preventDefault()
+              setOpenPartId(null)
+              partButtonRefs.current.get(openPart.id)?.focus()
+            }}>
+            {[1, 2, 3, 4, 5].map(value => (
+              <button key={value} type="button" className="app-choice-control body-pain-selector__level"
+                aria-label={`${openPart.name} 통증 ${value}단계`} aria-pressed={(selected[openPart.id] || 0) === value}
+                ref={value === 1 ? firstLevelRef : undefined}
+                onClick={() => chooseLevel(openPart.id, value)}>{value}</button>
+            ))}
+            <button type="button" className="app-choice-control body-pain-selector__clear"
+              aria-label={`${openPart.name} 통증 해제`} aria-pressed={(selected[openPart.id] || 0) === 0}
+              onClick={() => chooseLevel(openPart.id, 0)}>해제</button>
+          </div>
+        </div>}
       </div>
     </div>
   )
@@ -127,8 +112,8 @@ export function PainReviewBanner() {
       }}></span>
       <div>
         <div style={{
-          fontFamily: "var(--mono)", fontSize: 10, fontWeight: 600,
-          letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--warn)",
+          fontFamily: "var(--mono)", fontSize: "var(--fs-caption)", fontWeight: 600,
+          letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--warn)",
         }}>REVIEW · 통증 4 이상<TermHelp term="review" /></div>
         <div style={{
           marginTop: 4, fontFamily: "var(--sans)", fontSize: 12.5,

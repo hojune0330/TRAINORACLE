@@ -30,6 +30,7 @@ export function ActivePlanRebuildEditor({ state, onCancel, onApplied, onManageRe
   const [generated, setGenerated] = React.useState<Generated | null>(null)
   const [candidateId, setCandidateId] = React.useState<string | null>(null)
   const [message, setMessage] = React.useState("")
+  const [recordReviewNeeded, setRecordReviewNeeded] = React.useState(false)
   const [busy, setBusy] = React.useState(false)
   const [uncertain, setUncertain] = React.useState(false)
   const [raceDate, setRaceDate] = React.useState("")
@@ -43,11 +44,11 @@ export function ActivePlanRebuildEditor({ state, onCancel, onApplied, onManageRe
   const previousStateFingerprint = React.useRef(stateFingerprint)
   React.useEffect(() => {
     alive.current = true
-    const stop = onLocalJournalScopeChange(() => { scopeInvalid.current = true; revision.current += 1; setGenerated(null); setNoRisk(false); setMessage("계정이 바뀌었어요. 현재 계획을 다시 열어 주세요.") })
+    const stop = onLocalJournalScopeChange(() => { scopeInvalid.current = true; revision.current += 1; setGenerated(null); setNoRisk(false); setRecordReviewNeeded(false); setMessage("계정이 바뀌었어요. 현재 계획을 다시 열어 주세요.") })
     return () => { alive.current = false; revision.current += 1; stop() }
   }, [])
   usePlanDraftNavigationGuard(true)
-  const invalidate = () => { revision.current += 1; setGenerated(null); setCandidateId(null); setMessage("") }
+  const invalidate = () => { revision.current += 1; setGenerated(null); setCandidateId(null); setMessage(""); setRecordReviewNeeded(false) }
   const update = (next: PlanBetaIntake) => { invalidate(); setDraft(next); setStep(null) }
   React.useEffect(() => {
     // A refreshed active plan is a new editing context; never apply a draft based on the old one.
@@ -57,11 +58,13 @@ export function ActivePlanRebuildEditor({ state, onCancel, onApplied, onManageRe
     setGenerated(null)
     setCandidateId(null)
     setNoRisk(false)
+    setRecordReviewNeeded(false)
     setEvidenceFingerprint("")
     setMessage("현재 계획이 바뀌었어요. 최신 계획을 다시 확인해 주세요.")
   }, [stateFingerprint])
   const sourceAnchor = state.activePlan.sessions.find(s => s.prescription.kind === "PACE_TARGET")
   const recordId = sourceAnchor?.prescription.kind === "PACE_TARGET" ? sourceAnchor.prescription.selectedAnchor.anchorId : undefined
+  const reuseSourceAnchor = draft.selectedDetailedTemplateRef !== null && draft.eventDistanceM === state.intake.eventDistanceM && sourceAnchor !== undefined
   const generate = () => {
     invalidate()
     if (!noRisk || scopeInvalid.current) { setMessage("지금 몸 상태를 확인해 주세요."); return }
@@ -72,19 +75,22 @@ export function ActivePlanRebuildEditor({ state, onCancel, onApplied, onManageRe
       return
     }
     const safety = evaluatePlanSafety("NO_KNOWN_RISK", new Date())
-    const anchorCurrent = !sourceAnchor || draft.eventDistanceM !== state.intake.eventDistanceM
-      || safety.kind === "passed" && recheckStoredDetailedPrescriptionAuthority({ operation: "START",
+    // A newly selected effort-only plan does not reuse the old plan's pace evidence.
+    const anchorCurrent = !reuseSourceAnchor || sourceAnchor !== undefined
+      && safety.kind === "passed" && recheckStoredDetailedPrescriptionAuthority({ operation: "START",
         prescription: sourceAnchor.prescription, evaluatedAt: new Date().toISOString(), safetyGate: safety.gate }).kind === "permitted"
     if (!anchorCurrent) {
+      setRecordReviewNeeded(true)
       setMessage("현재 계획의 기준 기록을 확인할 수 없어요. 기록을 다시 확인한 뒤 새 계획을 만들어 주세요.")
       return
     }
     const read = loadEntriesForPlanSafety()
     if (read.status !== "complete") { setMessage("기록을 모두 불러온 뒤 새 계획을 만들 수 있어요."); return }
     const result = generateReplacementPlanFromDraft({ ...draft, startDate, ...(raceDate ? { targetRaceDate: raceDate } : {}) }, "NO_KNOWN_RISK",
-      recordId && draft.eventDistanceM === state.intake.eventDistanceM ? { selectedRecordId: recordId } : undefined)
+      reuseSourceAnchor && recordId ? { selectedRecordId: recordId } : undefined)
     if (result.kind === "generated") {
       if (draft.selectedDetailedTemplateRef && result.prescriptionBinding.kind !== "bound") {
+        setRecordReviewNeeded(true)
         setMessage("선택한 상세 훈련에 쓸 현재 경기 기록을 먼저 확인해 주세요."); return
       }
       setGenerated(result); setCandidateId(result.generated.candidates[0]?.candidateId ?? null)
@@ -154,5 +160,6 @@ export function ActivePlanRebuildEditor({ state, onCancel, onApplied, onManageRe
       <button type="button" disabled={busy || uncertain || !noRisk} onClick={() => void apply()}>{busy ? "새 계획 저장 중" : "이 새 계획으로 시작"}</button>
     </>}
     {message && <p role="alert">{message}</p>}
+    {recordReviewNeeded && onManageRecords && <button type="button" disabled={busy || uncertain} onClick={() => { invalidate(); onManageRecords() }}>기준 기록 확인하기</button>}
   </section>
 }

@@ -18,11 +18,18 @@ beforeEach(() => {
 })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers() })
 
+function advancePostSessionToReview() {
+  while (screen.queryByRole("button", { name: "다음 질문" })) {
+    fireEvent.click(screen.getByRole("button", { name: "다음 질문" }))
+  }
+}
+
 describe("linked journal context and invalid actual-input guard", () => {
   it("shows the exact original title and notation before asking how the workout went", () => {
     render(<QuickSessionForm targetDate={fixture.entry.date} plannedSessionLink={fixture.link} />)
     expect(screen.getByRole("region", { name: "기록할 훈련의 원래 계획" })).toHaveTextContent(sessionWorkoutName(fixture.session))
-    expect(screen.getByRole("region", { name: "기록할 훈련의 원래 계획" })).toHaveTextContent(sessionWorkoutNotation(fixture.session))
+    expect(screen.getByRole("region", { name: "기록할 훈련의 원래 계획" })).toHaveTextContent(sessionWorkoutNotation(fixture.session, "PLAIN"))
+    expect(screen.getByRole("region", { name: "기록할 훈련의 원래 계획" })).toHaveTextContent("5 × 1km · 222.3초/1km · 5K 경기 평균 페이스 · 반복 사이 150초 조깅")
     expect(saveEntry).not.toHaveBeenCalled()
   })
   it("does not substitute a different current plan when the linked original is missing", () => {
@@ -54,12 +61,16 @@ describe("linked journal context and invalid actual-input guard", () => {
   })
   it("blocks detailed-form save with invalid actual input and allows explicit clearing", () => {
     render(<PostSessionForm targetDate={fixture.entry.date} plannedSessionLink={fixture.link} />)
+    fireEvent.click(screen.getByRole("button", { name: "완료" }))
+    fireEvent.click(screen.getByRole("button", { name: "시간대는 기록하지 않고 계속" }))
     fireEvent.click(screen.getByText("반복별 기록 남기기"))
     fireEvent.change(screen.getByLabelText("1세트 1회 실제 시간"), { target: { value: "90000" } })
+    advancePostSessionToReview()
     fireEvent.click(screen.getByRole("button", { name: /^저장/ }))
     expect(saveEntry).not.toHaveBeenCalled()
     vi.spyOn(window, "confirm").mockReturnValue(true)
     fireEvent.click(screen.getByRole("button", { name: "입력한 반복 기록 지우기" }))
+    advancePostSessionToReview()
     fireEvent.click(screen.getByRole("button", { name: /^저장/ }))
     expect(saveEntry).toHaveBeenCalledOnce()
     expect(vi.mocked(saveEntry).mock.calls[0]![0]).not.toHaveProperty("exerciseLog")

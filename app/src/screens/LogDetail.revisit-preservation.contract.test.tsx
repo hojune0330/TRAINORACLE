@@ -263,11 +263,11 @@ describe("past journal preservation before revisit work", () => {
 
     render(<LogDetail date={DATE} />)
 
-    expect(screen.getByLabelText("훈련 1 · 하루 마무리 1 기록")).toBeVisible()
+    expect(screen.getByLabelText("훈련 1 · 컨디션·메모 1 기록")).toBeVisible()
     const orderedSummaries = screen.getAllByRole("button", { name: /번째 기록/u })
     expect(orderedSummaries[0]).toHaveAccessibleName(/1번째 기록 · 훈련 · Morning run/u)
-    expect(orderedSummaries[1]).toHaveAccessibleName(/2번째 기록 · 하루 마무리/u)
-    const summary = screen.getByRole("button", { name: /하루 마무리.+기분 무덤덤.+통증 확인.+펼쳐보기/u })
+    expect(orderedSummaries[1]).toHaveAccessibleName(/2번째 기록 · 컨디션·메모/u)
+    const summary = screen.getByRole("button", { name: /컨디션·메모.+기분 무덤덤.+통증 확인.+펼쳐보기/u })
     expect(summary).toBeVisible()
     expect(summary).toHaveAttribute("aria-expanded", "false")
     expect(screen.getByTestId("pain-review-persist")).not.toBeVisible()

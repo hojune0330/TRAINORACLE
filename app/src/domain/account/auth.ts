@@ -54,6 +54,10 @@ export type AccountSignOutScope = "local" | "global"
 
 export type AccountSignOutOptions = {
   readonly scope?: AccountSignOutScope
+  /** 삭제 후 정리만 이 계정에 묶는다. 일반 로그아웃에는 필요하지 않다. */
+  readonly expectedUserId?: string
+  /** 같은 ID로 돌아온 새 세션도 이전 삭제 정리의 대상이 아니다. */
+  readonly isCurrent?: () => boolean
 }
 
 function toAccountUser(raw: {
@@ -359,18 +363,39 @@ export async function signInWithGoogle(attemptId: string): Promise<AuthResult> {
 }
 
 export async function signOut(options: AccountSignOutOptions = {}): Promise<AuthResult> {
+  const superseded = (): AuthResult => ({ ok: false, message: "현재 계정이 바뀌어 로그아웃을 중단했어요." })
+  const isCurrent = (): boolean => {
+    try {
+      return options.isCurrent?.() ?? true
+    } catch {
+      return false
+    }
+  }
+  if (!isCurrent()) return superseded()
   const quarantinePhase = authSessionQuarantinePhase()
   if (quarantinePhase !== null && !authSessionQuarantineLockAvailable()) {
     return { ok: false, message: "다른 로그인 창을 모두 닫고 이 화면을 다시 열어 주세요." }
   }
   return withAuthSessionQuarantineLock(async () => {
     try {
+      // The origin lock serializes this app's exchanges, not arbitrary SDK clients.
+      if (!isCurrent()) return superseded()
       const client = await supabase({ allowQuarantined: true })
+      if (!isCurrent()) return superseded()
       if (client === null) return { ok: false, message: "계정 기능이 꺼져 있어요." }
-      if (authSessionQuarantinePhase() === "PRE_EXCHANGE") {
+      if (options.expectedUserId !== undefined) {
+        const { data, error } = await client.auth.getSession()
+        if (!isCurrent()
+          || error
+          || options.expectedUserId.length === 0
+          || data.session?.user.id !== options.expectedUserId) return superseded()
+      }
+      if (options.expectedUserId === undefined && authSessionQuarantinePhase() === "PRE_EXCHANGE") {
         try {
           const { data, error } = await client.auth.getSession()
+          if (!isCurrent()) return superseded()
           if (!error && data.session === null && authSessionQuarantinePhase() === "PRE_EXCHANGE") {
+            if (!isCurrent()) return superseded()
             if (!clearAuthSessionQuarantineAfterConfirmedSignOut()) {
               return { ok: false, message: "로그인 보호 상태를 정리하지 못했어요." }
             }
@@ -380,8 +405,11 @@ export async function signOut(options: AccountSignOutOptions = {}): Promise<Auth
           // If local-session absence cannot be proved, require a real sign-out.
         }
       }
+      if (!isCurrent()) return superseded()
       const { error } = await client.auth.signOut({ scope: options.scope ?? "local" })
+      if (!isCurrent()) return superseded()
       if (error) return { ok: false, message: "로그아웃에 실패했어요." }
+      if (!isCurrent()) return superseded()
       if (!clearAuthSessionQuarantineAfterConfirmedSignOut()) {
         return { ok: false, message: "로그아웃했지만 이 기기의 로그인 보호 상태를 정리하지 못했어요." }
       }

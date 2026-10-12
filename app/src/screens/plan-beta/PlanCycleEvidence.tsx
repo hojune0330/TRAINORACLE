@@ -5,8 +5,8 @@ export const COMPARISON_LABELS: Record<PlanJournalComparison, string> = {
   WITHIN_RANGE: "계획 범위 안",
   ABOVE_RANGE: "계획보다 높음",
   BELOW_RANGE: "계획보다 낮음",
-  RPE_MISSING: "직접 입력한 정확한 RPE가 없어 비교하지 않음",
-  NO_PLANNED_RPE: "페이스 기준 훈련이라 계획 RPE와 비교하지 않음",
+  RPE_MISSING: "힘든 정도를 입력하지 않아 비교하지 않음",
+  NO_PLANNED_RPE: "페이스로 정한 훈련이라 힘든 정도는 비교하지 않음",
   NOT_PERFORMED: "휴식·건너뜀은 훈련 수행으로 비교하지 않음",
   CHANGED_SESSION: "일부만 하거나 바꾼 훈련이라 원래 계획과 비교하지 않음",
   CONFLICTING_RESULT: "겹친 기록의 내용이 달라 비교하지 않음",
@@ -30,8 +30,8 @@ export function PlanCycleEvidence({ response }: { readonly response: PlanCycleRe
                 <strong>{row.date} · {row.slot === "AM" ? "오전" : "오후"}</strong>
                 {row.source === "ARCHIVED" && <small>변경 전 계획의 같은 훈련 기준</small>}
                 <p>
-                  {row.plannedRpe === null ? "계획 RPE 없음" : `계획 RPE ${row.plannedRpe.minimum}-${row.plannedRpe.maximum}`}
-                  {" · "}{row.actualRpe === null ? "비교용 RPE 없음" : `직접 기록 RPE ${row.actualRpe}`}
+                  {row.plannedRpe === null ? "계획의 힘든 정도 없음" : `계획의 힘든 정도 ${row.plannedRpe.minimum}–${row.plannedRpe.maximum}/10`}
+                  {" · "}{row.actualRpe === null ? "힘든 정도 미기록" : `실제 힘든 정도 ${row.actualRpe}/10 · 직접 입력`}
                 </p>
                 <p>{COMPARISON_LABELS[row.comparison]}</p>
                 {row.executionComparison && <details>

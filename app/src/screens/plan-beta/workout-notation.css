@@ -1,0 +1,20 @@
+.workout-notation__effort {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--fs-body);
+}
+
+.workout-notation__effort > summary {
+  box-sizing: border-box;
+  min-height: var(--app-touch-min);
+  padding: var(--space-3) 0;
+  cursor: pointer;
+  line-height: 1.5;
+}
+
+.workout-notation__effort > p {
+  margin: 0 0 var(--space-2);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}

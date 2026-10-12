@@ -28,9 +28,7 @@ export function projectInstantRecommendation(candidate: PlanCandidate, startDate
       ? "선택한 목적과 가능한 날짜로 일정을 배치했어요. 세부 구성이 없는 주요 훈련은 아직 반복·회복까지 정한 처방이 아니에요."
       : projected.some(s => s.prescription.kind === "RPE_TIME_RANGE" && s.prescription.catalogWorkout)
       ? "날짜별로 훈련 구성과 회복을 정했어요. 저장하기 전에는 같은 목적의 다른 훈련으로 바꿀 수 있어요."
-      : candidate.kind === "BALANCED"
-      ? "기초·회복 운동을 표시된 시간 범위 안에서 선택할 수 있는 안을 먼저 보여드려요."
-      : "기초·회복 운동을 제시 범위의 짧은 시간으로 배치했어요.",
+      : "기초·회복 운동 시간은 일정에 표시했어요. 범위가 있으면 그 안에서 시간을 정할 수 있어요.",
     periodLabel: `${startDate} ~ ${isoShift(startDate, length - 1)} · ${length}일`,
     sessionCount: projected.filter(session => session.role !== "REST").length,
     durationLabel: candidateDurationSummary(candidate),

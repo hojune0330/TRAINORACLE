@@ -148,7 +148,7 @@ function useActiveSavedDates(): ReadonlySet<string> {
   return dates
 }
 
-/** Read-only paper and motif treatment for in-progress writers; it never makes form controls inert. */
+/** Writers keep a small saved motif; full-page themes belong to the finished journal. */
 export function JournalWritingDecorationPreview({ date, children }: {
   readonly date: string
   readonly children: React.ReactNode
@@ -156,14 +156,8 @@ export function JournalWritingDecorationPreview({ date, children }: {
   const activeDates = useActiveSavedDates()
   const state = useJournalDecorationSnapshot()
   const motif = selectJournalDecorationPreview(state, date, activeDates)
-  const owned = state === null ? null : new Set(state.ownedItemIds)
-  const equippedThemeId = state?.equipped.themeId ?? null
-  const theme = equippedThemeId !== null && owned?.has(equippedThemeId)
-    ? decorationCatalogItem(equippedThemeId) ?? null : null
   return (
     <div className="journal-writing-decoration-preview">
-      {theme?.category === "THEME" && <img className="journal-writing-decoration-preview__theme"
-        src={`${import.meta.env.BASE_URL}${theme.assetPath}`} alt="" aria-hidden="true" />}
       {motif !== null && <div className="journal-writing-decoration-preview__motif"><JournalDecorationPreview item={motif} /></div>}
       <div className="journal-writing-decoration-preview__content">{children}</div>
     </div>

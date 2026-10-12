@@ -23,9 +23,21 @@ import { inputStyle } from "./input-style"
 import { FormSec, TopBar } from "./shared"
 import { FormInputSaveBar as StickyBar } from "./useFormInputDraft"
 import type { EntryFormProps } from "./shared"
+import { TaskFlowStep } from "../../components/TaskFlowStep"
+import { useTaskFlowBack } from "../../hooks/useTaskFlowBack"
 
 const MOOD_LABELS = ["흐림", "무덤덤", "보통", "좋음", "최고"] as const
 const SLEEP_QUALITY_LABELS = ["최악", "나쁨", "보통", "좋음", "최고"] as const
+const isValidSleepHours = (value: string) => {
+  if (!/^(?:\d+(?:\.\d+)?|\.\d+)$/u.test(value)) return false
+  const hours = Number(value)
+  return Number.isFinite(hours) && hours > 0 && hours <= 24
+}
+type EveningInputStep = "sleep" | "condition" | "metrics" | "memo"
+type EveningStep = EveningInputStep | "choose" | "review"
+type EveningEditGroup = EveningInputStep | null
+type EveningLocation = { readonly step: EveningStep; readonly editGroup: EveningEditGroup; readonly returnToReview?: boolean }
+type EveningFlow = { readonly location: EveningLocation; readonly history: readonly EveningLocation[] }
 
 export function EveningCheckin(props: EntryFormProps) {
   const date = props.initialEntry?.date ?? props.targetDate ?? todayISO()
@@ -48,22 +60,91 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
   const accountEnabled = accountJournalRecordsEnabled()
   const finalization = useFormFinalization(entryId, accountEnabled, lastSavedAt)
   const entryDate = initial?.date ?? targetDate ?? todayISO()
+  const [flow, setFlow] = React.useState<EveningFlow>(() => ({
+    location: { step: initial !== undefined || recovered !== null ? "review" : "choose", editGroup: null }, history: [],
+  }))
+  const { step, editGroup } = flow.location
   const [sleep, setSleep] = React.useState(() => input?.sleep ?? initial?.sleepH ?? 0)
+  const [sleepText, setSleepText] = React.useState(() => {
+    const hours = input?.sleep ?? initial?.sleepH ?? 0
+    return hours > 0 ? String(hours) : ""
+  })
+  const [sleepInputError, setSleepInputError] = React.useState(false)
+  const sleepInputRef = React.useRef<HTMLInputElement>(null)
   const [quality, setQuality] = React.useState(() => input?.quality ?? initial?.sleepQuality ?? 0)
   const [mood, setMood] = React.useState(() => input?.mood ?? initial?.mood ?? 0)
   const [painParts, setPainParts] = React.useState<Record<string, number>>(() => ({ ...(input?.painParts ?? initial?.painParts) }))
   const [weight, setWeight] = React.useState(() => input?.weight ?? initial?.weightKg ?? "")
   const [hr, setHr] = React.useState(() => input?.hr ?? initial?.restingHr ?? "")
   const [saveError, setSaveError] = React.useState(false)
+  const [emptyNotice, setEmptyNotice] = React.useState(false)
   const [accountNotice, setAccountNotice] = React.useState<string | null>(null)
   const note = usePurposeScopedMemo(input?.memo ?? initial?.note ?? "", input ? input.purpose ?? undefined : initial?.memoPurpose)
   const draft = useFormInputDraft({ kind: "evening", sleep, quality, mood, painParts, weight, hr,
     memo: note.text, purpose: note.purpose ?? null }, entryId, true, lastSavedAt.current)
+  const hasInput = sleep > 0 || quality > 0 || mood > 0 || Object.values(painParts).some(level => level > 0)
+    || weight.trim() !== "" || hr.trim() !== "" || note.text.trim() !== ""
+
+  const navigateTo = (location: EveningLocation) => setFlow((current) => ({
+    location, history: [...current.history, current.location],
+  }))
+  const updateSleepText = (value: string) => {
+    setSleepText(value)
+    if (value === "") {
+      setSleep(0)
+      setSleepInputError(false)
+      return
+    }
+    if (!isValidSleepHours(value)) {
+      setSleepInputError(true)
+      return
+    }
+    setSleep(Number(value))
+    setSleepInputError(false)
+  }
+  const goBackFlow = () => {
+    if (step === "sleep" && sleepInputError) {
+      sleepInputRef.current?.focus()
+      return
+    }
+    setFlow((current) => {
+      const previous = current.history[current.history.length - 1]
+      if (previous === undefined) return current
+      return { location: previous, history: current.history.slice(0, -1) }
+    })
+  }
+  const enterReview = () => {
+    if (sleepInputError) {
+      if (step !== "sleep") navigateTo({ step: "sleep", editGroup: "sleep", returnToReview: true })
+      window.requestAnimationFrame(() => sleepInputRef.current?.focus())
+      return
+    }
+    const preparation = note.prepareForSave()
+    if (!preparation.ready) {
+      if (step !== "memo") navigateTo({ step: "memo", editGroup: "memo", returnToReview: true })
+      return
+    }
+    navigateTo({ step: "review", editGroup: null })
+  }
+  useTaskFlowBack({ enabled: flow.history.length > 0, busy: saving, onBack: goBackFlow })
+  React.useEffect(() => {
+    if (step === "memo" && note.purposeError !== null) note.privateOptionRef.current?.focus()
+  }, [step, note.purposeError, note.privateOptionRef])
 
   const persist = async () => {
     if (persistInFlight.current || !draft.current()) return
+    if (sleepInputError) {
+      if (step !== "sleep") navigateTo({ step: "sleep", editGroup: "sleep", returnToReview: true })
+      window.requestAnimationFrame(() => sleepInputRef.current?.focus())
+      return
+    }
+    if (!hasInput) { setEmptyNotice(true); return }
+    setEmptyNotice(false)
     const notePreparation = note.prepareForSave()
-    if (!notePreparation.ready) return
+    if (!notePreparation.ready) {
+      if (step !== "memo") navigateTo({ step: "memo", editGroup: "memo", returnToReview: true })
+      return
+    }
     let entry: JournalEntry = {
       id: entryId, kind: "evening", date: entryDate,
       savedAt: nextJournalSavedAt(lastSavedAt.current), syncState: "local",
@@ -119,114 +200,167 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
     }
   }
 
+  const stepTitle: Record<EveningStep, string> = {
+    choose: "무엇을 남길까요?",
+    sleep: "어젯밤 수면",
+    condition: "오늘 몸 상태와 기분",
+    metrics: "체중 · 안정시 심박",
+    memo: "오늘 남길 메모",
+    review: "입력 확인",
+  }
+  const painPartCount = Object.values(painParts).filter((level) => level > 0).length
+  const sleepSummary = [
+    sleep > 0 ? `${sleep}h` : null,
+    quality > 0 ? `수면 질 ${SLEEP_QUALITY_LABELS[quality - 1]}` : null,
+  ].filter((value): value is string => value !== null).join(" · ") || "입력 안 함"
+  const conditionSummary = [
+    painPartCount > 0 ? `불편한 곳 ${painPartCount}곳 표시` : null,
+    mood > 0 ? `기분 ${MOOD_LABELS[mood - 1]}` : null,
+  ].filter((value): value is string => value !== null).join(" · ") || "입력 안 함"
+  const hasMetricInput = weight.trim() !== "" || hr.trim() !== ""
+  const metricsSummary = [
+    weight.trim() ? `체중 ${weight.trim()}kg` : null,
+    hr.trim() ? `안정시 심박 ${hr.trim()}bpm` : null,
+  ].filter((value): value is string => value !== null).join(" · ") || "입력 안 함"
+  const memoPreview = note.text.trim().replace(/\s+/gu, " ")
+  const memoSummary = memoPreview
+    ? `${memoPreview.slice(0, 80)}${memoPreview.length > 80 ? "…" : ""}${note.purpose === "PRIVATE_SELF_ONLY" ? " · 나만 보는 메모" : note.purpose === undefined ? " · 용도 미선택" : ""}`
+    : "입력 안 함"
+  const reviewItems: Array<{ key: EveningInputStep; label: string; value: string }> = [
+    { key: "sleep", label: "수면", value: sleepSummary },
+    { key: "condition", label: "몸 상태 · 기분", value: conditionSummary },
+    { key: "metrics", label: "체중 · 안정시 심박", value: metricsSummary },
+    { key: "memo", label: "메모", value: memoSummary },
+  ]
+  const reviewActionLabel = (key: EveningInputStep) => {
+    const hasValue = key === "sleep" ? sleep > 0 || quality > 0
+      : key === "condition" ? painPartCount > 0 || mood > 0
+        : key === "metrics" ? hasMetricInput
+          : memoPreview.length > 0
+    return hasValue ? "수정" : "입력"
+  }
+
   return (
     <div style={{ paddingBottom: 100 }} aria-busy={saving}>
       <fieldset disabled={saving} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
-      <TopBar onBack={draft.back(onBack)}>회복 · 하루 마무리</TopBar>
+      <TopBar onBack={draft.back(onBack)}>컨디션·메모</TopBar>
       <FormFinalizationRecovery recovery={finalization} onBack={draft.back(onBack)} />
       <div style={{ padding: "14px 20px 0" }}>
         <IndexCard date={compactDate(entryDate)} dow={`${dowOf(entryDate)} · ${nowClock()}`} />
       </div>
-
-      <FormSec lb="오늘의 한 줄">
-        <PurposeScopedMemoField
-          controller={note}
-          fieldId="evening-note"
-          label="오늘의 메모"
-          placeholder="메모만 남겨도 괜찮아요"
-        />
-      </FormSec>
-
-      <FormSec lb={`수면 · ${sleep > 0 ? `${sleep}h` : "미기록 (움직여서 기록)"}`}>
-        <div style={{ position: "relative", height: 44, display: "flex", alignItems: "center" }}>
-          <div aria-hidden="true" style={{
-            position: "absolute", left: 0, right: 0, top: "50%", height: 4,
-            transform: "translateY(-50%)", background: "var(--line)",
-          }}>
-            <div style={{
-              width: sleep > 0 ? `${((sleep - 4) / 8) * 100}%` : "0%",
-              height: 4, background: "var(--ink)",
-            }} />
+      {step === "review" && emptyNotice && !hasInput && <p role="alert">아직 입력한 내용이 없어요. 남길 항목 하나를 골라 주세요.</p>}
+      <TaskFlowStep stepKey={`${step}:${editGroup ?? "flow"}`} title={stepTitle[step]}
+        busy={saving} onBack={flow.history.length > 0 ? goBackFlow : undefined}
+        actions={step === "review" ? <StickyBar onSave={persist} error={saveError && !accountEnabled}
+          label={saving ? "저장 중" : isEditing ? "수정 저장" : undefined} /> : step === "choose" ? undefined : (
+          <div className="task-flow__actions">
+            <button type="button" className="quick-log__primary" onClick={enterReview}>입력 확인으로</button>
           </div>
-          {sleep > 0 && (
-            <div aria-hidden="true" style={{
-              position: "absolute", top: "50%", left: `${((sleep - 4) / 8) * 100}%`,
-              width: 18, height: 18, transform: "translate(-50%, -50%)",
-              borderRadius: 999, background: "var(--ink)", border: "3px solid var(--bg)",
-            }} />
-          )}
-          {sleep === 0 && (
-            <div aria-hidden="true" style={{
-              position: "absolute", left: 6, top: "50%", transform: "translateY(-50%)",
-              fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)",
-              letterSpacing: "0.06em", pointerEvents: "none",
-            }}>아래로 움직여 기록</div>
-          )}
-          {/* 실제 인터랙션 표면: 접근성 트리/role(slider)은 그대로 두고,
-              시각은 아래 커스텀 트랙·손잡이가 담당한다. opacity 0이 되면
-              jest-dom toBeVisible이 숨김으로 판정하므로 0.01로 유지한다. */}
-          <input aria-label="수면 시간" type="range" min="4" max="12" step="0.5"
-            value={sleep > 0 ? sleep : 4}
-            onChange={(event) => setSleep(parseFloat(event.target.value))}
-            style={{ position: "absolute", inset: 0, width: "100%", height: 44, margin: 0, opacity: 0.01, cursor: "pointer" }} />
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.06em", marginTop: 4 }}>
-          <span>4h</span><span>8h</span><span>12h</span>
-        </div>
-      </FormSec>
+        )}>
 
-      <FormSec lb="수면 질">
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", border: "1px solid var(--ink)" }}>
-          {SLEEP_QUALITY_LABELS.map((label, index) => (
-            <button key={label} aria-label={`수면 질 ${index + 1} ${label}`} aria-pressed={quality === index + 1} onClick={() => setQuality(index + 1)} style={{
-              minHeight: 44, padding: "10px 0", border: 0,
-              background: quality === index + 1 ? "var(--ink)" : "transparent",
-              color: quality === index + 1 ? "var(--bg)" : "var(--ink)",
-              fontFamily: "var(--mono)", fontSize: 10.5,
-              borderRight: index < 4 ? "1px solid var(--line)" : 0,
-              cursor: "pointer", letterSpacing: "0.04em",
-            }}>{label}</button>
-          ))}
-        </div>
-      </FormSec>
+        {step === "choose" && <nav className="app-choice-group" aria-label="남길 항목" style={{ display: "grid", paddingInline: "var(--space-5)" }}>
+          {([
+            ["condition", "몸 상태·기분"], ["sleep", "수면"], ["memo", "메모 쓰기"], ["metrics", "체중·심박"],
+          ] as const).map(([key, label]) => <button key={key} type="button" className="app-choice-control app-choice-control--answer"
+            onClick={() => navigateTo({ step: key, editGroup: key, returnToReview: true })}>{label}</button>)}
+        </nav>}
 
-      <FormSec lb="체중 · 안정시 심박">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          <div>
-            <input aria-label="체중 (kg)" type="text" value={weight} onChange={(event) => setWeight(event.target.value)} placeholder="62.0" style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
-            <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.06em", marginTop: 4 }}>kg · 안 재면 비워둬요</div>
+        {step === "review" && <div className="post-session-review" aria-label="저장 전 입력 확인">
+          {note.reviewMessage !== null && <p role="status">{note.reviewMessage}</p>}
+          {painLevelsRequireReview(painParts) && <PainReviewBanner />}
+          <dl style={{ display: "grid", gap: 8, margin: 0 }}>
+            {reviewItems.filter(item => reviewActionLabel(item.key) === "수정").map((item) => (
+              <div key={item.key} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", alignItems: "center", gap: 8, borderBottom: "1px solid var(--line)", paddingBlock: 8 }}>
+                <div style={{ minWidth: 0 }}>
+                  <dt style={{ fontSize: 11, color: "var(--ink-3)" }}>{item.label}</dt>
+                  <dd style={{ margin: "2px 0 0", fontSize: 14, color: "var(--ink)", overflowWrap: "anywhere" }}>{item.value}</dd>
+                </div>
+                <button type="button" className="quick-log__secondary" aria-label={`${item.label} ${reviewActionLabel(item.key)}`}
+                  onClick={() => navigateTo({ step: item.key, editGroup: item.key, returnToReview: true })}>{reviewActionLabel(item.key)}</button>
+              </div>
+            ))}
+          </dl>
+          {reviewItems.some(item => reviewActionLabel(item.key) === "입력") && <div className="task-review-additions" role="group" aria-label="추가할 항목">
+            {reviewItems.filter(item => reviewActionLabel(item.key) === "입력").map(item => <button key={item.key}
+              type="button" className="quick-log__secondary" aria-label={`${item.label} 입력`}
+              onClick={() => navigateTo({ step: item.key, editGroup: item.key, returnToReview: true })}>{item.label}</button>)}
+          </div>}
+        </div>}
+
+        {step === "sleep" && <>
+          <FormSec compact lb="수면 시간">
+            <label htmlFor="evening-sleep-hours" style={{ display: "block", fontSize: "var(--fs-body-sm)", marginBottom: "var(--space-2)" }}>
+              시간 (h) · 선택 입력
+            </label>
+            <input id="evening-sleep-hours" ref={sleepInputRef} aria-label="수면 시간" aria-invalid={sleepInputError}
+              aria-describedby={sleepInputError ? "sleep-time-error" : undefined}
+              type="text" inputMode="decimal" autoComplete="off" value={sleepText}
+              onChange={(event) => updateSleepText(event.target.value)}
+              style={{ ...inputStyle(), borderRadius: "var(--r-action)", fontFamily: "var(--mono)", maxWidth: 220, textAlign: "right" }} />
+            {sleepInputError && <p id="sleep-time-error" role="alert" style={{ fontSize: "var(--fs-caption)", color: "var(--err)", lineHeight: 1.5, margin: "var(--space-1) 0 0" }}>
+              0은 비워 두고, 1시간 미만도 입력할 수 있어요. 최대 24시간이에요.
+            </p>}
+            {sleepText !== "" && <button type="button" className="quick-log__secondary" onClick={() => updateSleepText("")}>시간 입력 안 함</button>}
+          </FormSec>
+
+          <FormSec compact lb="수면 질 · 선택">
+            <div className="app-choice-group" role="group" aria-label="수면 질" style={{ display: "flex", flexWrap: "wrap" }}>
+              {SLEEP_QUALITY_LABELS.map((label, index) => (
+                <button key={label} type="button" className="app-choice-control" aria-label={`수면 질 ${index + 1} ${label}`}
+                  aria-pressed={quality === index + 1} onClick={() => setQuality(index + 1)}
+                  style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-body-sm)", paddingInline: "var(--space-1)", flex: "1 0 44px", minWidth: "max-content", whiteSpace: "nowrap" }}>{label}</button>
+              ))}
+            </div>
+            {quality > 0 && <button type="button" className="quick-log__secondary" onClick={() => setQuality(0)}>수면 질 입력 안 함</button>}
+          </FormSec>
+        </>}
+
+        {step === "condition" && <>
+          <FormSec compact lb="몸 상태 · 표시 선택">
+            <BodyDiagram selected={painParts} onChange={setPainParts} />
+            {painLevelsRequireReview(painParts) && <PainReviewBanner />}
+          </FormSec>
+          <FormSec compact lb="오늘 감정 · 선택">
+            <div role="group" aria-label="오늘 감정" style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+              {MOOD_LABELS.map((label, index) => (
+                <button key={label} type="button" className="app-choice-control app-choice-control--answer" aria-label={`감정 ${index + 1} ${label}`} aria-pressed={mood === index + 1} onClick={() => setMood(index + 1)} style={{
+                  padding: "var(--space-2) var(--space-1)",
+                  flex: "1 0 44px", minWidth: "max-content", whiteSpace: "nowrap",
+                  cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+                }}>
+                  <MoodStrip level={index + 1} />
+                  <span style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-caption)", color: mood === index + 1 ? "var(--ink)" : "var(--ink-3)", letterSpacing: "0.02em" }}>{label}</span>
+                </button>
+              ))}
+            </div>
+            {mood > 0 && <button type="button" className="quick-log__secondary" onClick={() => setMood(0)}>기분 입력 안 함</button>}
+          </FormSec>
+        </>}
+
+        {step === "metrics" && <FormSec compact lb="체중 · 안정시 심박 · 선택">
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <div>
+              <input aria-label="체중 (kg)" type="text" value={weight} onChange={(event) => setWeight(event.target.value)} placeholder="62.0" style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
+              <div style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-caption)", color: "var(--ink-2)", letterSpacing: "0.02em", marginTop: 4 }}>kg · 안 재면 비워둬요</div>
+            </div>
+            <div>
+              <input aria-label="안정시 심박 (bpm)" type="text" value={hr} onChange={(event) => setHr(event.target.value)} placeholder="55" style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
+              <div style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-caption)", color: "var(--ink-2)", letterSpacing: "0.02em", marginTop: 4 }}>bpm · 아침 안정시 기준</div>
+            </div>
           </div>
-          <div>
-            <input aria-label="안정시 심박 (bpm)" type="text" value={hr} onChange={(event) => setHr(event.target.value)} placeholder="55" style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
-            <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.06em", marginTop: 4 }}>bpm · 아침 안정시 기준</div>
-          </div>
-        </div>
-      </FormSec>
+        </FormSec>}
 
-      <FormSec lb="통증 부위 · 정도 (탭하여 표시)">
-        <BodyDiagram selected={painParts} onChange={setPainParts} />
-        {painLevelsRequireReview(painParts) && <PainReviewBanner />}
-      </FormSec>
+        {step === "memo" && <FormSec compact lb="오늘의 한 줄 · 선택">
+          <PurposeScopedMemoField
+            controller={note}
+            fieldId="evening-note"
+            label="오늘의 메모"
+            placeholder="메모만 남겨도 괜찮아요"
+          />
+        </FormSec>}
 
-      <FormSec lb="오늘 감정">
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4 }}>
-          {MOOD_LABELS.map((label, index) => (
-            <button key={label} aria-label={`감정 ${index + 1} ${label}`} aria-pressed={mood === index + 1} onClick={() => setMood(index + 1)} style={{
-              minHeight: 44, padding: "14px 4px 10px",
-              background: mood === index + 1 ? "var(--surface)" : "transparent",
-              border: mood === index + 1 ? "1px solid var(--ink)" : "1px solid var(--line)",
-              cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-              borderRadius: 0,
-            }}>
-              <MoodStrip level={index + 1} />
-              <span style={{ fontFamily: "var(--mono)", fontSize: 9, color: mood === index + 1 ? "var(--ink)" : "var(--ink-3)", letterSpacing: "0.06em" }}>{label}</span>
-            </button>
-          ))}
-        </div>
-      </FormSec>
-
-      {accountEnabled && saveError && <p role="alert">{accountNotice ?? "계정 저장을 완료하지 못했어요. 입력은 그대로 남아 있어요. 연결과 로그인 상태를 확인한 뒤 다시 저장해 주세요."}</p>}
-      <StickyBar onSave={persist} error={saveError && !accountEnabled} label={saving ? "저장 중" : isEditing ? "수정 저장" : undefined} />
+        {accountEnabled && saveError && <p role="alert">{accountNotice ?? "계정 저장을 완료하지 못했어요. 입력은 그대로 남아 있어요. 연결과 로그인 상태를 확인한 뒤 다시 저장해 주세요."}</p>}
+      </TaskFlowStep>
       </fieldset>
     </div>
   )

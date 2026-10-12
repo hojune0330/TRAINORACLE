@@ -22,7 +22,7 @@ import type {
 import { readArchivedOriginalPlans } from "../../domain/plan-beta-store"
 import { TermHelp } from "../../components/TermHelp"
 import {
-  candidateLabel,
+  twoADayTrainingDayCount,
   ENERGY_INTENT_LABELS,
   PROGRESS_LABELS,
   sessionSlotLabel,
@@ -49,6 +49,7 @@ import { projectCurrentInstantToday } from "./instant-plan-today-context"
 import { useLocalToday } from "../../hooks/useLocalToday"
 import { SessionExplanationEntry } from "./SessionExplanation"
 import { useCalendarEntries } from "../../hooks/useCalendarEntries"
+import { EasyTrainingTimes } from "./EasyTrainingTimes"
 
 const PROGRESS_ACTIONS: readonly {
   readonly state: PlanProgressState
@@ -69,6 +70,7 @@ export function ActivePlan({
   onActivateNextFrame,
   onCheckDetailedExecution,
   showCreatedCelebration = false,
+  onCreatedCelebrationConsumed,
   onWriteSessionLog,
   returnToSession,
   executionMessage,
@@ -91,6 +93,7 @@ export function ActivePlan({
     currentCheck: PlanCurrentCheck,
   ) => void
   readonly showCreatedCelebration?: boolean
+  readonly onCreatedCelebrationConsumed?: () => void
   readonly onWriteSessionLog?: (session: PlanSession) => void
   readonly returnToSession?: PlannedSessionLogDraft["link"]
   readonly executionMessage?: string | null
@@ -107,6 +110,7 @@ export function ActivePlan({
   const today = useLocalToday()
   const [showActivationCheck, setShowActivationCheck] = React.useState(false)
   const [showCreated, setShowCreated] = React.useState(false)
+  const createdCelebrationConsumed = React.useRef(false)
   const scheduleAnchor = React.useRef<HTMLDivElement>(null)
   const checkedToday = projectCurrentInstantToday(state)
   const todayView = executionBlocked
@@ -147,10 +151,6 @@ export function ActivePlan({
     const key = `${session.day}:${session.slot}`
     linkedResults.set(key, [...(linkedResults.get(key) ?? []), entry])
   }
-  const label = candidateLabel(
-    activePlan.candidateKind,
-    activePlan.selectedEnergyIntent,
-  )
   const frameLengthDays = "projectionLengthDays" in activePlan.frame
     ? activePlan.frame.projectionLengthDays ?? activePlan.frame.lengthDays
     : activePlan.frame.lengthDays
@@ -164,9 +164,9 @@ export function ActivePlan({
   const startDate = state.intake.startDate ?? state.generatedAt.slice(0, 10)
   const frameDayCount = Math.ceil(frameLengthDays)
   const focusLabel = ENERGY_INTENT_LABELS[activePlan.selectedEnergyIntent].title
-  const planAdjustment = activePlan.candidateKind === "CONSERVATIVE"
-    ? "쉬운 훈련은 가장 짧은 시간으로 구성"
-    : "쉬운 훈련은 표시 범위 안에서 조절"
+  const visibleSessions = activePlan.sessions.filter(session => session.day >= 1 && session.day <= frameDayCount)
+  const doubleDays = twoADayTrainingDayCount(visibleSessions)
+  const trainingCount = visibleSessions.filter(session => session.role !== "REST").length
   const returnedSession = returnToSession === undefined
     ? null
     : resolveCurrentPlannedSession(state, returnToSession)
@@ -179,12 +179,23 @@ export function ActivePlan({
   React.useEffect(() => {
     if (!returnedSession) return
     setReaderRequest(previous => ({ day: returnedSession.day, slot: returnedSession.slot,
-      section: "records", sequence: (previous?.sequence ?? 0) + 1 }))
+      section: "records", returnFocusToCalendar: true, sequence: (previous?.sequence ?? 0) + 1 }))
   }, [returnToSession])
 
   React.useEffect(() => {
-    if (!showCreatedCelebration) return
+    if (!showCreatedCelebration) {
+      createdCelebrationConsumed.current = false
+      return
+    }
     setShowCreated(true)
+    if (!createdCelebrationConsumed.current) {
+      createdCelebrationConsumed.current = true
+      onCreatedCelebrationConsumed?.()
+    }
+  }, [showCreatedCelebration, onCreatedCelebrationConsumed])
+
+  React.useEffect(() => {
+    if (!showCreated) return
     const dismiss = () => setShowCreated(false)
     const timeout = window.setTimeout(dismiss, 3_000)
     window.addEventListener("pointerdown", dismiss, { once: true, capture: true })
@@ -196,7 +207,7 @@ export function ActivePlan({
       window.removeEventListener("keydown", dismiss, true)
       window.removeEventListener("scroll", dismiss, true)
     }
-  }, [showCreatedCelebration])
+  }, [showCreated])
 
   return (
     <section className="active-plan" aria-labelledby="active-plan-title">
@@ -210,17 +221,12 @@ export function ActivePlan({
           <CircleCheck aria-hidden="true" size={22} />
           <span>
             <strong>훈련 계획이 완성됐어요</strong>
-            <small>메인 훈련일과 날짜를 먼저 확인해 보세요.</small>
           </span>
         </div>
       )}
-      <p className="plan-eyebrow">오라클 · 훈련 계획</p>
       <div className="active-plan__edit-heading">
-        <h1 id="active-plan-title">{frameLengthDays}일 훈련 계획</h1>
-        {onEditPlan && <button type="button" className="plan-text-action" data-plan-edit-button onClick={onEditPlan}><Pencil aria-hidden="true" size={16} />계획 수정</button>}
+        <h1 id="active-plan-title" tabIndex={-1}>{frameLengthDays}일 훈련 계획</h1>
       </div>
-      {futureTrainingEditor}
-      {onManagePaceRecords && <button type="button" className="plan-text-action" onClick={onManagePaceRecords}>기준 기록·페이스 바꾸기</button>}
       {state.version === 3 && state.activePlanEdit && <p className="active-plan__journal-return" role="status">수정한 계획이에요. 이전 계획과 일지는 보관되어 있어요.</p>}
       {state.version === 3 && state.executionReplan && <details className="plan-detailed-options">
         <summary>수행 기록을 확인하고 바꾼 일정</summary>
@@ -271,25 +277,27 @@ export function ActivePlan({
           type="button" className="plan-text-action" key={`edit-today:${session.day}:${session.slot}`} onClick={() => onEditSession(session)}>
           <Pencil aria-hidden="true" size={16} />{sessionSlotLabel(session.slot)} 훈련 수정
         </button>)}
-      <PlanPrescriptionBasis sessions={activePlan.sessions} />
-      <details className="plan-detailed-options">
-      <summary>전체 계획 구성</summary>
-      <p className="active-plan__variant">
-        <strong>{label.title}</strong>
-        <span>{planAdjustment}</span>
-      </p>
+      <div className="active-plan__edit-heading">
+        {onEditPlan && <button type="button" className="plan-text-action" data-plan-edit-button onClick={onEditPlan}><Pencil aria-hidden="true" size={16} />계획 수정</button>}
+        {onManagePaceRecords && <button type="button" className="plan-text-action" onClick={onManagePaceRecords}>기준 기록·페이스 바꾸기</button>}
+      </div>
+      {futureTrainingEditor}
+      <PlanPrescriptionBasis sessions={visibleSessions} />
       <p className="active-plan__date-range">
         <CalendarDays aria-hidden="true" size={18} />
         {planDateRangeLabel(startDate, frameDayCount)}
       </p>
+      <details className="plan-detailed-options">
+      <summary>훈련 구성·시간</summary>
       <ul className="active-plan__build-summary" aria-label="계획 구성 요약">
         <li>{eventDistanceLabel(activePlan.eventDistanceM ?? state.intake.eventDistanceM)}</li>
         <li>
           {focusLabel}
           <TermHelp term={ENERGY_INTENT_LABELS[activePlan.selectedEnergyIntent].term} />
         </li>
-        <li>{state.intake.secondSessionMode === "RECOVERY_PM_ALLOWED" ? "하루 2회 포함" : "하루 1회"}</li>
+        <li>{doubleDays > 0 ? `하루 2회 운동하는 날 ${doubleDays}일` : `예정된 운동 ${trainingCount}회`}</li>
       </ul>
+      <EasyTrainingTimes sessions={visibleSessions} />
       {state.version === 3 && state.periodization !== undefined && (
         <section className="periodization-direction" aria-labelledby="periodization-direction-title">
           <div>
@@ -326,7 +334,9 @@ export function ActivePlan({
       </details>
       <div ref={scheduleAnchor} tabIndex={-1} aria-label="전체 일정과 기록">
       <PlanSchedulePreview
+        presentation="prescription-calendar"
         journalEntries={calendarEntries}
+        journalEntriesComplete={journalRead.status === "complete"}
         readerRequest={readerRequest}
         sessionProgress={session => recorded.get(`${session.day}:${session.slot}`)}
         startDate={startDate}
@@ -429,7 +439,6 @@ export function ActivePlan({
                         ? "통증 기록 후 확인"
                         : "기록 후 몸 상태 확인"}
                   </summary>
-                  <p>누를 때마다 몸 상태와 저장된 처방의 승인·만료·철회 여부를 다시 확인해요.</p>
                   {current === undefined ? (
                     <button
                       className="active-plan__execution-primary"
@@ -465,8 +474,10 @@ export function ActivePlan({
                 {current === undefined ? journalLabel ?? "예정" : PROGRESS_LABELS[current]}
               </em>
               {current !== undefined && journalLabel && <small>{journalLabel}</small>}
-              <SessionExplanationEntry session={session} date={isoShift(startDate, session.day - 1)} context={explanationContext} loadEvidence={loadSessionEvidence}
-                initialTab="주기·기록" entryLabel="연결된 일지 기록 보기" showPurpose={false} returnLabel="훈련과 일지로 돌아가기" />
+              {journalRead.status !== "complete" ? <p role="status">일지를 모두 읽지 못해 연결된 기록을 확인할 수 없어요.</p>
+                : results.length > 0 ? <SessionExplanationEntry session={session} date={isoShift(startDate, session.day - 1)} context={explanationContext} loadEvidence={loadSessionEvidence}
+                  initialTab="주기·기록" entryLabel="연결된 일지 기록 보기" showPurpose={false} returnLabel="훈련과 일지로 돌아가기" />
+                : null}
               {onEditSession && session.role !== "REST" && current === undefined
                 && isoShift(startDate, session.day - 1) >= today && session.day <= frameDayCount && (
                 <button type="button" className="plan-text-action" onClick={() => onEditSession(session)}>
@@ -539,28 +550,11 @@ export function ActivePlan({
             다음 계획안 만들기<ChevronRight aria-hidden="true" size={18} />
           </button>
         ) : (
-          <details className="plan-session-guidance">
-          <summary>다음 계획은 언제 받나요?</summary>
-          <p>현재 일정과 기록을 기준으로 새 계획안을 보여줘요. 확인하고 선택하기 전에는 시작하지 않아요.</p>
           <button type="button" disabled={!frameComplete} onClick={onNextFrame}>
             현재 계획을 먼저 기록해 주세요
           </button>
-          </details>
-        )}
-        {frameComplete && state.activePlan.selectionActor === "SELF" && !hasPendingSuccessor && (
-          <p className="active-plan__next-note">계획안을 보고 고른 뒤에 시작해요.</p>
         )}
         {frameComplete && <PlanAdaptationFlow state={state} onPendingChange={setHasPendingSuccessor} onPrepareNextFrame={onNextFrame} />}
-        <details className="plan-session-guidance">
-          <summary>다음 계획에 반영되는 내용</summary>
-          <p>
-            {state.version === 3
-              ? "다음 주기는 현재 일정과 연결된 수행 기록을 확인해 만들어요. 같은 목적의 상세 훈련은 유지하고, 힘든 정도가 반복해서 높게 기록되면 검토된 짧은 구성으로 조정할 수 있어요."
-              : "현재 일정과 수행 여부를 기준으로 다음 주기를 이어가요. 변경 이력이 있는 이 계획의 상세 구성을 그대로 복사하거나 자동으로 줄이는 경로는 아직 지원하지 않아요."}
-            기록이 부족하거나 비교가 어려우면 임의로 줄이지 않아요. 강도·훈련량을 자동으로 늘리거나 메모 원문을 분석하지 않아요.
-            새 계획을 시작하기 전에 몸 상태와 바뀐 내용을 다시 확인해 주세요.
-          </p>
-        </details>
       </div>
     </section>
   )

@@ -33,6 +33,26 @@ function readWidths(chart: HTMLElement) {
 }
 
 describe("Oracle exploration examples", () => {
+  it("honors an explicit example destination even when a personal result exists", () => {
+    const result = buildOraclePersonalResult({ topicId: "level", entries: [], planState: null, today: "2026-09-27" })
+    const seen = vi.fn()
+    const props = { topicId: "level" as const, personalResult: { ...result, status: "ready" as const, headline: "개인 결과" }, onBack: vi.fn(), onSelectTopic: vi.fn(), onPersonalAction: vi.fn(), onPersonalResultSeen: seen }
+    const view = render(<OracleExplore {...props} initialMode="personal" />)
+    expect(screen.getByRole("button", { name: "내 기록" })).toHaveAttribute("aria-pressed", "true")
+    fireEvent.click(screen.getByRole("button", { name: "내 기록" }))
+    view.rerender(<OracleExplore {...props} initialMode="example" />)
+    expect(screen.getByRole("button", { name: "예시" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByText("내 기록을 분석한 결과가 아니에요")).toBeVisible()
+    expect(screen.queryByText("개인 결과")).toBeNull()
+  })
+
+  it("does not replace an unavailable result with an example when no result object exists", () => {
+    render(<OracleExplore topicId="focus" personalResultUnavailable onBack={vi.fn()} onSelectTopic={vi.fn()} onPersonalAction={vi.fn()} />)
+    expect(screen.getByText(/일지를 아직 모두 불러오지 못했어요/)).toBeVisible()
+    expect(screen.queryByText("내 기록을 분석한 결과가 아니에요")).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "예시" }))
+    expect(screen.getByText("내 기록을 분석한 결과가 아니에요")).toBeVisible()
+  })
   it("does not show or mark an unfinished personal comparison as read, then reveals the confirmed result", () => {
     const store = createOracleReturnStore()
     expect(store.enableOptIn().ok).toBe(true)
@@ -81,9 +101,11 @@ describe("Oracle exploration examples", () => {
 
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
     expect(screen.getByRole("heading", { name: topic.example.headline })).toBeVisible()
+    expect(screen.getByRole("heading", { level: 1, name: topic.example.headline })).toHaveClass("app-heading--screen", "app-heading--accent")
     expect(screen.getByText(id === "priority" ? "예시 상황" : "예시 기록")).toBeVisible()
     expect(screen.getByText("내 기록을 분석한 결과가 아니에요")).toBeVisible()
     expect(screen.getByText(topic.example.source)).toBeVisible()
+    expect(screen.getByText("오라클", { selector: ".oracle-explore__header > span" })).toHaveClass("app-chrome-title")
 
     const explanation = screen.getByText("예시의 기준과 읽는 방법")
     const personalAction = screen.getByRole("button", { name: topic.personalLabel })
@@ -131,7 +153,7 @@ describe("Oracle exploration examples", () => {
 
   it.each([
     { id: "level", labels: ["앞선 기록", "최근 기록"], values: ["24분 40초", "24분 10초"], widths: [100, 97.97297297297297] },
-    { id: "focus", labels: ["계획", "실제"], values: ["RPE 5", "RPE 7"], widths: [71.42857142857143, 100] },
+    { id: "focus", labels: ["계획", "실제"], values: ["힘든 정도 5/10", "힘든 정도 7/10"], widths: [71.42857142857143, 100] },
     { id: "compare", labels: ["지난달", "이번 달"], values: ["5 km", "6 km"], widths: [83.33333333333334, 100] },
     { id: "mix", labels: ["기초 지구력 · BASE", "지속 페이스 · LT", "강한 유산소 반복 · VO2"], values: ["4건", "1건", "1건"], widths: [100, 25, 25] },
     { id: "change", labels: ["지난달", "이번 달"], values: ["7 / 10", "5 / 10"], widths: [100, 71.42857142857143] },

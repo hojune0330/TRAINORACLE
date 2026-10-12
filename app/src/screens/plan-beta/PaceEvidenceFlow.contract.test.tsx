@@ -99,7 +99,7 @@ describe("explicit pace evidence selection", () => {
       onManageRecords={onManageRecords} onUseRpe={onUseRpe} />)
     expect(screen.getByRole("button", { name: /개인 최고/u })).toHaveTextContent("오래된 기록 · 현재 페이스 계산 제외")
     await user.click(screen.getByRole("button", { name: "경기 기록 추가·관리" }))
-    await user.click(screen.getByRole("button", { name: "기록 없이 시간·RPE 계획 받기" }))
+    await user.click(screen.getByRole("button", { name: "기록 없이 계획 받기" }))
     expect(onManageRecords).toHaveBeenCalledOnce()
     expect(onUseRpe).toHaveBeenCalledOnce()
   })

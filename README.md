@@ -22,6 +22,11 @@ Design package added 2026-09-10: [design_handoff_plan_beta_extension/README.md](
 > 강도·기록·계획·안전 코드를 만지기 전에 **어느 스펙 문서를 먼저 읽어야
 > 하는지**를 모듈별 표로 정리해 둔 파일입니다.
 
+작업자 간 담당 분리와 브랜치·병합·배포 확인은
+[`기존 협업·최신 상태 정책`](./reports/operations/REPOSITORY_FRESHNESS_POLICY.md)을 읽습니다.
+새 브랜치 전략을 도입하는 문서가 아니며, 기본 main 작업과 별도 승인된 PR 흐름을
+구분합니다. 공개 앱의 최신 확인은 아래 운영 인계의 **2026-10-07 갱신 절**부터 읽습니다.
+
 ## TrainOracle Master Plan
 
 - **훈련 선택·간편 조절:** [상세 계획](./reports/plans/WORKOUT_CHOICE_AND_TUNING_PRODUCT_PLAN_2026-09-27.md) / [구현·검수·남은 공급 작업](./reports/implementation/WORKOUT_CHOICE_AND_TUNING_IMPLEMENTATION_2026-09-28.md). 미리보기·조절·되돌리기를 구현했으며, 새 훈련 검토안 37개의 공개 활성화는 별도입니다.

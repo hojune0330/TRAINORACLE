@@ -1,4 +1,6 @@
 import { expect, test } from "@playwright/test"
+import { mkdir } from "node:fs/promises"
+import { resolve } from "node:path"
 
 test.beforeEach(({}, testInfo) => {
   test.skip(
@@ -9,13 +11,27 @@ test.beforeEach(({}, testInfo) => {
 
 test("routes the home decoration card into the real journal editor with points", async ({ page }, testInfo) => {
   const isDesktop = testInfo.project.name === "desktop-chromium"
+  const reviewCaptureDir = process.env.DECORATION_REVIEW_CAPTURE_DIR
+    ? resolve(process.cwd(), process.env.DECORATION_REVIEW_CAPTURE_DIR)
+    : null
+  if (reviewCaptureDir !== null && !isDesktop) {
+    await page.setViewportSize({ width: 375, height: 812 })
+    await mkdir(reviewCaptureDir, { recursive: true })
+  }
   const consoleErrors: string[] = []
   page.on("console", (message) => {
     if (message.type() === "error") consoleErrors.push(message.text())
   })
   page.on("pageerror", (error) => consoleErrors.push(error.message))
+  const allowedOrigin = new URL(process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173").origin
+  await page.route("**/*", (route) => {
+    if (new URL(route.request().url()).origin === allowedOrigin) return route.continue()
+    return route.abort()
+  })
 
   await page.addInitScript(() => {
+    window.localStorage.clear()
+    window.sessionStorage.clear()
     const now = new Date()
     const iso = (d: Date) => [
       d.getFullYear(),
@@ -55,10 +71,13 @@ test("routes the home decoration card into the real journal editor with points",
   })
 
   await page.goto("/?app=1")
+  await page.getByRole("button", { name: "일지 예시·훈련법·꾸미기", exact: true }).click()
   /* 홈의 통합 꾸미기 진입은 실제 오늘 일지 편집기를 바로 연다. */
-  await page.getByRole("button", { name: "일지 꾸미기" }).click()
+  await page.getByRole("button", { name: "일지 꾸미기", exact: true }).click()
   const editor = page.getByRole("dialog", { name: "일지 꾸미기", exact: true })
   await expect(editor).toBeVisible()
+  await expect(editor.getByRole("heading", { name: "일지 꾸미기", level: 1 })).toBeVisible()
+  await expect(editor.getByText("이 일지 꾸미기", { exact: true })).toHaveCount(0)
   await expect(editor.getByRole("button", { name: "일지", exact: true })).toHaveAttribute("aria-pressed", "true")
   await expect(page.getByText("꾸미기 화면 점검")).toBeVisible()
 
@@ -78,10 +97,12 @@ test("routes the home decoration card into the real journal editor with points",
       drawerTop: drawerRect.top,
       drawerBottom: drawerRect.bottom,
       paperStartsAboveDrawer: pageRect.top < drawerRect.top,
+      paperVisibleHeight: Math.max(0, Math.min(pageRect.bottom, drawerRect.top) - pageRect.top),
       paperDrawerOverlap: pageRect.right - drawerRect.left,
       paperVisibleWidth: Math.min(pageRect.right, drawerRect.left) - pageRect.left,
       navigationHidden: getComputedStyle(navigation).visibility === "hidden",
       pageFits: document.documentElement.scrollWidth <= window.innerWidth,
+      viewportHeight: window.innerHeight,
     }
   })
   expect(drawerGeometry).not.toBeNull()
@@ -92,11 +113,20 @@ test("routes the home decoration card into the real journal editor with points",
     expect(drawerGeometry?.paperVisibleWidth ?? 0).toBeGreaterThan(400)
   } else {
     expect(drawerGeometry?.drawerTop ?? 0).toBeGreaterThan(0)
-    expect(drawerGeometry?.drawerBottom ?? 568).toBeLessThanOrEqual(511)
+    expect(drawerGeometry?.drawerBottom ?? 568).toBeLessThanOrEqual((drawerGeometry?.viewportHeight ?? 568) - 58)
     expect(drawerGeometry?.paperStartsAboveDrawer).toBe(true)
+    expect(drawerGeometry?.paperVisibleHeight ?? 0).toBeGreaterThan(160)
   }
   expect(drawerGeometry?.navigationHidden).toBe(true)
   expect(drawerGeometry?.pageFits).toBe(true)
+  const drawerCollapse = editor.getByRole("button", { name: "재료 서랍 접기" })
+  await expect(drawerCollapse).toHaveAttribute("aria-expanded", "true")
+  const drawerCollapseBox = await drawerCollapse.boundingBox()
+  expect(drawerCollapseBox?.width ?? 0).toBeGreaterThanOrEqual(68)
+  expect(drawerCollapseBox?.height ?? 0).toBeGreaterThanOrEqual(44)
+  if (reviewCaptureDir !== null && !isDesktop) {
+    await page.screenshot({ path: resolve(reviewCaptureDir, "journal-decoration-drawer-open-375.png"), animations: "disabled" })
+  }
 
   /* 포인트 구매는 타일 선택 뒤 같은 자리의 확인 행에서 한 번 더 확인한다. */
   await expect(page.getByText("베타 포인트 · 사용 가능 8P")).toBeVisible()
@@ -109,6 +139,11 @@ test("routes the home decoration card into the real journal editor with points",
   await expect(page.getByRole("button", { name: "결승선 스티커 8P로 받기" })).toHaveCount(0)
   await expect(page.getByRole("button", { name: "결승선 스티커 붙이기" })).toBeVisible()
   await expect(page.getByText("베타 포인트 · 사용 가능 0P")).toBeVisible()
+  if (reviewCaptureDir !== null && !isDesktop) {
+    await drawerCollapse.click()
+    await expect(page.locator(".journal-decoration-toolbar")).toHaveAttribute("data-open", "false")
+    await page.screenshot({ path: resolve(reviewCaptureDir, "journal-decoration-canvas-visible-375.png"), animations: "disabled" })
+  }
 
   /* 편집기 열림 상태는 일회성 UI 상태 — 새로고침 뒤에는 저절로 열리지 않는다. */
   await page.reload()

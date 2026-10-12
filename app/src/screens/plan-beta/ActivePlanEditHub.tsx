@@ -1,5 +1,6 @@
 import React from "react"
 import { X } from "lucide-react"
+import { AppHeading } from "../../components/AppHeading"
 import "./ActivePlanEditHub.css"
 
 export type ActivePlanEditIntent = "schedule" | "workout" | "remaining" | "new-plan"
@@ -51,7 +52,7 @@ export function ActivePlanEditHub({ onClose, onChoose, availability }: ActivePla
     <section className="active-plan-edit-hub" role="region" aria-labelledby={headingId}>
       <header className="active-plan-edit-hub__header">
         <div>
-          <h2 id={headingId} ref={headingRef} tabIndex={-1}>계획 수정</h2>
+          <AppHeading as="h2" variant="screen" id={headingId} ref={headingRef} tabIndex={-1}>계획 수정</AppHeading>
           <p>바꾸려는 범위를 선택해 주세요.</p>
         </div>
         <button

@@ -19,7 +19,8 @@ vi.mock("../../domain/account/account-journal-record-service", () => ({ readAcco
   confirmAccountJournalComparison: api.confirm, releaseAccountJournalComparison: api.release, retryAccountJournalComparison: api.retry }))
 vi.mock("../../domain/account/account-journal-projection", async importOriginal => ({
   ...await importOriginal<typeof import("../../domain/account/account-journal-projection")>(), readAccountJournalProjection: () => [] }))
-vi.mock("../../domain/account/local-journal-ownership", () => ({
+vi.mock("../../domain/account/local-journal-ownership", async importOriginal => ({
+  ...await importOriginal<typeof import("../../domain/account/local-journal-ownership")>(),
   activeLocalAccount: () => api.owner,
   onLocalJournalScopeChange: (listener: () => void) => {
     api.listeners.add(listener); api.scope = () => { for (const notify of api.listeners) notify() }

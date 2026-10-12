@@ -32,6 +32,7 @@ vi.mock("./screens/Home", () => ({
     onOpenContent: () => void
     onOpenMore: () => void
     onOpenRewards: () => void
+    onOpenTrends: () => void
     onOpenNextTraining: (link: PlannedSessionLink) => void
   }) => (
     <main>
@@ -39,6 +40,7 @@ vi.mock("./screens/Home", () => ({
       <button type="button" onClick={props.onOpenContent}>홈 콘텐츠 열기</button>
       <button type="button" onClick={props.onOpenMore}>홈 더보기 열기</button>
       <button type="button" onClick={props.onOpenRewards}>홈 보상 열기</button>
+      <button type="button" onClick={props.onOpenTrends}>훈련량·변화 보기</button>
       <button type="button" onClick={() => props.onOpenNextTraining(LINK)}>다음 훈련 열기</button>
     </main>
   ),
@@ -54,6 +56,11 @@ vi.mock("./DeferredMobileScreens", () => ({
     JournalDayReader: ({ onBack }: { onBack: () => void }) => <main><h1>오늘 일지</h1><button onClick={onBack}>일지 뒤로</button></main>,
     PlanBeta: ({ returnToSession }: { returnToSession?: PlannedSessionLink }) => <main><h1>계획</h1><output data-testid="return-session">{returnToSession?.plannedSessionId ?? "none"}</output></main>,
     PlanProposalInbox: () => null,
+    Trends: ({ initialContext, initialOracleSection, onOracleSectionChange, onBack }: {
+      initialContext?: { section: string }; initialOracleSection: string;
+      onOracleSectionChange: (section: "profile") => void; onBack: () => void;
+    }) => <main><h1>오라클</h1><output data-testid="analysis-destination">{initialOracleSection}/{initialContext?.section}</output>
+      <button onClick={() => onOracleSectionChange("profile")}>러닝 취향 보기</button><button onClick={onBack}>홈으로</button></main>,
   },
 }))
 
@@ -62,6 +69,16 @@ import { AppShell } from "./AppShell"
 afterEach(cleanup)
 
 describe("AppShell home hub secondary destinations", () => {
+  it("opens training volume directly even after visiting another Oracle section", async () => {
+    const user = userEvent.setup()
+    render(<AppShell />)
+    await user.click(screen.getByRole("button", { name: "훈련량·변화 보기" }))
+    expect(screen.getByTestId("analysis-destination")).toHaveTextContent("training/distance")
+    await user.click(screen.getByRole("button", { name: "러닝 취향 보기" }))
+    await user.click(screen.getByRole("button", { name: "홈으로" }))
+    await user.click(screen.getByRole("button", { name: "훈련량·변화 보기" }))
+    expect(screen.getByTestId("analysis-destination")).toHaveTextContent("training/distance")
+  })
   it.each([
     ["home", "홈 콘텐츠 열기", "홈"],
     ["more", "더보기 콘텐츠 열기", "더보기 화면"],

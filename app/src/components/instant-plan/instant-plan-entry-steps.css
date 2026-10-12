@@ -45,8 +45,22 @@
 
 .instant-plan__step-heading {
   margin: 0;
-  font-size: var(--fs-app-section-title);
-  line-height: 1.4;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--fs-app-title);
+  font-weight: var(--fw-app-heading);
+  line-height: var(--lh-app-heading);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.instant-plan__step-heading::before {
+  content: "";
+  display: block;
+  width: 28px;
+  height: 2px;
+  margin-bottom: var(--space-3);
+  background: var(--brand);
 }
 
 .instant-plan__step-heading:focus {
@@ -60,17 +74,17 @@
 
 .instant-plan__step-choices {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
   gap: var(--space-2);
 }
 
 .instant-plan__step-choice {
   min-width: 0;
-  min-height: var(--app-touch-min);
+  min-height: var(--app-action-height);
   padding: var(--space-3);
   border: var(--bw-line) solid var(--line-2);
-  border-radius: var(--r-md);
-  background: var(--surface);
+  border-radius: var(--r-task-surface);
+  background: var(--surface-2);
   color: var(--ink);
   font: inherit;
   font-weight: 600;

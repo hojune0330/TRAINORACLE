@@ -13,6 +13,8 @@ import { accountJournalRecordsEnabled } from "../domain/account/account-journal-
 import { buildAccountImportDrafts, createAccountImportConfirmation } from "../domain/import/account-import"
 import { useImportOwnerScope } from "./import-activities/useImportOwnerScope"
 import { fileAnalysisFormats } from "../domain/import/file-analysis-policy"
+import { AppHeading } from "../components/AppHeading"
+import { useTaskFlowBack } from "../hooks/useTaskFlowBack"
 
 type Stage =
   | { readonly step: "pick" }
@@ -37,6 +39,11 @@ export function ImportActivities({ onBack, onOpenLog, onOpenAnalysis, onOpenSumm
   const readControllerRef = React.useRef<AbortController | null>(null)
   const stageRef = React.useRef<HTMLDivElement>(null)
   const stageMotion = useOrderedStepMotion(stage.step, ["pick", "review", "saved"])
+  useTaskFlowBack({ enabled: onBack !== undefined, busy, onBack: () => {
+    const current = captureScope()
+    // The shell's POP listener invalidates old return frames. Restore only after it ran.
+    queueMicrotask(() => { if (current()) onBack?.() })
+  } })
   useActiveContentScroll(stage.step, stageRef, undefined, true)
   const captureScope = useImportOwnerScope(() => {
     readControllerRef.current?.abort(); readControllerRef.current = null
@@ -189,12 +196,9 @@ export function ImportActivities({ onBack, onOpenLog, onOpenAnalysis, onOpenSumm
           >←</button>
         )}
         <div>
-          <div style={{ ...mono, fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>
-            워치·건강앱 운동 기록
-          </div>
-          <h1 style={{ fontFamily: "var(--sans)", fontSize: 20, fontWeight: 500, margin: "4px 0 0" }}>
-            워치 기록 불러오기
-          </h1>
+          <AppHeading as="h1" variant="screen" accent className="import-activities__title">
+            운동 기록 가져오기
+          </AppHeading>
         </div>
       </div>
 

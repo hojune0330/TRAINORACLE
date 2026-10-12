@@ -1,15 +1,45 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { TrainingContent, TrainingContentCorrectionNotice } from "./TrainingContent"
+import { hasPendingBrowserBackLayer } from "../navigation/browserNavigation"
 
 beforeEach(() => window.localStorage.clear())
-afterEach(cleanup)
+afterEach(async () => {
+  cleanup()
+  await Promise.resolve()
+  // A consumed native Back entry queues a POP. Let it finish before the next
+  // reader creates its account- and navigation-scoped focus frame.
+  await waitFor(() => expect(hasPendingBrowserBackLayer()).toBe(false), { timeout: 5000 })
+})
 
 describe("training content reader", () => {
+  it("does not erase a reader's early list scroll when the initial title focus runs", async () => {
+    render(<div className="app-scroll-region"><TrainingContent onBack={vi.fn()} /></div>)
+    const region = document.querySelector<HTMLElement>(".app-scroll-region")!
+    region.scrollTop = 320
+    await waitFor(() => expect(screen.getByRole("heading", { level: 1 })).toHaveFocus())
+    expect(region.scrollTop).toBe(320)
+  })
+  it("focuses the article title and returns to the originating topic and scroll", async () => {
+    render(<div className="app-scroll-region"><TrainingContent onBack={vi.fn()} /></div>)
+    await waitFor(() => expect(screen.getByRole("heading", { level: 1 })).toHaveFocus())
+    const region = document.querySelector<HTMLElement>(".app-scroll-region")!
+    const opener = screen.getByRole("button", { name: /크루즈 인터벌은 지속주와/u })
+    region.scrollTop = 320; fireEvent.click(opener)
+    await waitFor(() => expect(screen.getByRole("heading", { level: 1 })).toHaveFocus())
+    expect(region.scrollTop).toBe(0)
+    fireEvent.click(screen.getByRole("button", { name: "이전 화면" }))
+    await waitFor(() => expect(screen.getByRole("button", { name: /크루즈 인터벌은 지속주와/u })).toHaveFocus())
+    expect(region.scrollTop).toBe(320)
+  })
   it("shows topics and source status first and keeps the reading boundary available on demand", () => {
-    render(<TrainingContent onBack={vi.fn()} />)
+    const { container } = render(<TrainingContent onBack={vi.fn()} />)
 
-    expect(screen.getByRole("heading", { name: "어떤 훈련이 궁금한가요?" })).toBeVisible()
+    const title = screen.getByRole("heading", { level: 1, name: "어떤 훈련이 궁금한가요?" })
+    expect(title).toBeVisible()
+    expect(title).toHaveClass("app-heading--screen", "app-heading--accent")
+    expect(container.querySelectorAll(".app-heading--accent")).toHaveLength(1)
+    expect(container.querySelector('img[src$="running-shoe-v2.webp"]')).toHaveAttribute("width", "64")
     expect(screen.getByRole("button", { name: /노르웨이식 더블 스레숄드/u })).toHaveTextContent("추가 검토 중인 기사")
     expect(screen.getByRole("button", { name: /크루즈 인터벌/u })).toHaveTextContent("원문 확인 자료")
     const help = screen.getByText("훈련 자료와 읽기 포인트 안내")
@@ -19,10 +49,19 @@ describe("training content reader", () => {
   })
 
   it("opens an article, saves it locally, and keeps the prescription boundary visible", () => {
-    render(<TrainingContent onBack={vi.fn()} />)
+    const { container } = render(<TrainingContent onBack={vi.fn()} />)
     fireEvent.click(screen.getByRole("button", { name: /크루즈 인터벌은 지속주와/u }))
 
-    expect(screen.getByRole("heading", { name: "따라 하기 전에" })).toBeVisible()
+    expect(container.querySelector('img[src$="running-shoe-v2.webp"]')).toBeNull()
+    expect(screen.getByRole("heading", { level: 1 })).toHaveClass("app-heading--screen", "app-heading--accent")
+    expect(container.querySelectorAll(".app-heading--accent")).toHaveLength(1)
+    const boundary = screen.getByRole("heading", { level: 2, name: "따라 하기 전에" })
+    expect(boundary).toBeVisible()
+    expect(boundary).toHaveClass("app-heading--section")
+    for (const heading of screen.getAllByRole("heading", { level: 2 })) {
+      expect(heading).toHaveClass("app-heading--section")
+      expect(heading).not.toHaveClass("app-heading--accent")
+    }
     expect(screen.getByText(/계획의 페이스나 반복 수를 정하지 않아요/u)).toBeVisible()
     expect(screen.getByRole("link", { name: /VDOT Threshold/u })).toHaveAttribute("rel", "noreferrer")
 

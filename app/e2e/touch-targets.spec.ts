@@ -1,16 +1,42 @@
-import { expect, test } from "@playwright/test"
+import { expect, test, type Page } from "@playwright/test"
 import {
   TOUCH_PROJECTS,
   auditTouchTargets,
   expectMinimumTouchSize,
   expectNoHorizontalOverflow,
-  expectSaveAboveNavigation,
   meetsTouchContract,
   openEntry,
+  openEveningStage,
 } from "./touch-audit"
 
 function requireTouchProject(projectName: string) {
   test.skip(!TOUCH_PROJECTS.has(projectName), "Rendered size assertions only apply to touch viewports")
+}
+
+async function expectSaveActionUnobstructed(page: Page) {
+  const save = page.getByRole("button", { name: /^저장/u })
+  const navigation = page.getByRole("navigation", { name: "주 탭" })
+  await expect(save).toBeVisible()
+  await save.scrollIntoViewIfNeeded()
+  const saveBox = await save.boundingBox()
+  expect(saveBox).not.toBeNull()
+  expect(saveBox?.height ?? 0).toBeGreaterThanOrEqual(44)
+  const saveBottom = (saveBox?.y ?? 0) + (saveBox?.height ?? 0)
+  if (await navigation.count() > 0) {
+    await expect(navigation).toHaveCount(1)
+    const navigationBox = await navigation.boundingBox()
+    expect(navigationBox).not.toBeNull()
+    expect(saveBottom).toBeLessThanOrEqual((navigationBox?.y ?? 0) + 0.5)
+  } else {
+    // The active recording task intentionally hides the primary tab bar.
+    await expect(navigation).toHaveCount(0)
+    const viewportBottom = await page.evaluate(() => document.documentElement.clientHeight)
+    expect(saveBottom).toBeLessThanOrEqual(viewportBottom)
+  }
+  expect(await save.evaluate(button => {
+    const box = button.getBoundingClientRect()
+    return button.contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2))
+  })).toBe(true)
 }
 
 test("does not round a 43x44 target up to the touch contract", () => {
@@ -20,7 +46,9 @@ test("does not round a 43x44 target up to the touch contract", () => {
 
 test("keeps core journal controls at least 44px tall", async ({ page }, testInfo) => {
   requireTouchProject(testInfo.project.name)
-  await openEntry(page, /훈련 후/u)
+  await openEntry(page, /자세히 기록.*운동별로 자세히/u)
+  await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
+  await page.getByRole("button", { name: "실제로 한 운동 수정", exact: true }).click()
   const privateMemo = page.getByRole("radio", { name: "나만의 메모" })
   const trainingMemo = page.getByRole("radio", { name: "훈련 메모" })
 
@@ -29,16 +57,6 @@ test("keeps core journal controls at least 44px tall", async ({ page }, testInfo
     { name: "post.energy-help", locator: page.getByRole("button", { name: /훈련 목적과 에너지 대사 설명 보기/u }) },
     { name: "post.energy", locator: page.getByRole("button", { name: /^(REC 회복 운동|BASE 기초 지구력|LT 지속 페이스|VO₂ 강한 유산소 반복|GLY 짧은 고강도 반복|ATP-PC 스피드·가속|MIX 여러 강도 조합)$/u }), count: 7 },
     { name: "post.title", locator: page.getByRole("textbox", { name: "세션 제목" }), heightOnly: true },
-    { name: "post.distance", locator: page.getByRole("textbox", { name: "거리 (km)" }), heightOnly: true },
-    { name: "post.duration", locator: page.getByRole("textbox", { name: "시간 (분)" }), heightOnly: true },
-    { name: "post.pace", locator: page.getByRole("textbox", { name: "평균 페이스 (/km)" }), heightOnly: true },
-    { name: "post.pace-help", locator: page.getByRole("button", { name: /페이스 설명 보기/u }) },
-    { name: "post.rpe", locator: page.getByRole("button", { name: /^(?:[1-9]|10)$/u }), count: 10 },
-    { name: "post.rpe-help", locator: page.getByRole("button", { name: /RPE 설명 보기/u }), count: 2 },
-    { name: "post.private-label", locator: privateMemo.locator("xpath=.."), heightOnly: true },
-    { name: "post.training-label", locator: trainingMemo.locator("xpath=.."), heightOnly: true },
-    { name: "post.memo", locator: page.getByRole("textbox", { name: "훈련 메모 내용" }), heightOnly: true },
-    { name: "post.save", locator: page.getByRole("button", { name: /^저장/u }) },
   ])
   const base = page.getByRole("button", { name: "BASE 기초 지구력" })
   const rest = page.getByRole("button", { name: "REC 회복" })
@@ -47,7 +65,36 @@ test("keeps core journal controls at least 44px tall", async ({ page }, testInfo
   await expect(base).toHaveAttribute("aria-pressed", "false")
   await expect(rest).toHaveAttribute("aria-pressed", "true")
   await expectNoHorizontalOverflow(page)
-  await expectSaveAboveNavigation(page)
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
+  await page.getByRole("button", { name: "거리와 시간 수정", exact: true }).click()
+  await auditTouchTargets(page, [
+    { name: "post.distance", locator: page.getByRole("textbox", { name: "거리 (km)" }), heightOnly: true },
+    { name: "post.duration", locator: page.getByRole("textbox", { name: "시간 (분)" }), heightOnly: true },
+    { name: "post.pace", locator: page.getByRole("textbox", { name: "평균 페이스 (/km)" }), heightOnly: true },
+    { name: "post.pace-help", locator: page.getByRole("button", { name: /페이스 설명 보기/u }) },
+  ])
+  await expectNoHorizontalOverflow(page)
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
+  await page.getByRole("button", { name: "운동 강도 수정", exact: true }).click()
+  await auditTouchTargets(page, [
+    { name: "post.rpe", locator: page.getByRole("button", { name: /^(?:[1-9]|10)$/u }), count: 10 },
+    { name: "post.rpe-help", locator: page.getByRole("button", { name: /RPE 설명 보기/u }), count: 2 },
+  ])
+  await expectNoHorizontalOverflow(page)
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
+  await page.getByRole("button", { name: "메모 수정", exact: true }).click()
+  await auditTouchTargets(page, [
+    { name: "post.private-label", locator: privateMemo.locator("xpath=.."), heightOnly: true },
+    { name: "post.training-label", locator: trainingMemo.locator("xpath=.."), heightOnly: true },
+    { name: "post.memo", locator: page.getByRole("textbox", { name: "훈련 메모 내용" }), heightOnly: true },
+  ])
+  await expectNoHorizontalOverflow(page)
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
+  await auditTouchTargets(page, [
+    { name: "post.save", locator: page.getByRole("button", { name: /^저장/u }) },
+  ])
+  await expectNoHorizontalOverflow(page)
+  await expectSaveActionUnobstructed(page)
   if (testInfo.project.name === "touch-narrow") {
     await page.screenshot({ path: "../.omo/evidence/mobile-touch-targets/task-2-shared.png" })
   }
@@ -55,7 +102,7 @@ test("keeps core journal controls at least 44px tall", async ({ page }, testInfo
 
 test("keeps the journal title centered at touch widths", async ({ page }, testInfo) => {
   requireTouchProject(testInfo.project.name)
-  for (const entryName of [/훈련 후/u, /하루 마무리/u, /경기 직전\/직후/u]) {
+  for (const entryName of [/자세히 기록.*운동별로 자세히/u, /컨디션·메모/u, /경기 기록.*경기 전후 기록·컨디션/u]) {
     await openEntry(page, entryName)
     const topbarBox = await page.locator(".entry-topbar").boundingBox()
     const titleBox = await page.locator(".entry-topbar__title").boundingBox()
@@ -68,7 +115,9 @@ test("keeps the journal title centered at touch widths", async ({ page }, testIn
 
 test("lays out ten-point scales as two ordered rows on narrow touch screens", async ({ page }, testInfo) => {
   test.skip(!["mobile-chromium", "touch-narrow"].includes(testInfo.project.name), "Two-row layout is a mobile touch contract")
-  await openEntry(page, /훈련 후/u)
+  await openEntry(page, /자세히 기록.*운동별로 자세히/u)
+  await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
+  await page.getByRole("button", { name: "운동 강도 수정", exact: true }).click()
   const buttons = Array.from({ length: 10 }, (_, index) => page.getByRole("button", { name: String(index + 1), exact: true }))
   const boxes = await Promise.all(buttons.map(async (button) => {
     await expectMinimumTouchSize(button)
@@ -93,7 +142,7 @@ test("lays out ten-point scales as two ordered rows on narrow touch screens", as
 
 test("keeps evening controls and every body-part selector touchable", async ({ page }, testInfo) => {
   requireTouchProject(testInfo.project.name)
-  await openEntry(page, /하루 마무리/u)
+  await openEveningStage(page, "수면")
   const bodyParts = [
     { id: "rKnee", name: "오른 무릎" }, { id: "lKnee", name: "왼 무릎" },
     { id: "rCalf", name: "오른 종아리" }, { id: "lCalf", name: "왼 종아리" },
@@ -109,29 +158,39 @@ test("keeps evening controls and every body-part selector touchable", async ({ p
     { name: "evening.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
     { name: "evening.sleep-range", locator: page.getByRole("slider", { name: "수면 시간" }), heightOnly: true },
     { name: "evening.sleep-quality", locator: page.getByRole("button", { name: /^수면 질 [1-5]/u }), count: 5 },
+  ])
+  const sleepFirst = page.getByRole("button", { name: /^수면 질 1/u })
+  const sleepLast = page.getByRole("button", { name: /^수면 질 5/u })
+  await sleepFirst.click()
+  await sleepLast.click()
+  await expect(sleepFirst).toHaveAttribute("aria-pressed", "false")
+  await expect(sleepLast).toHaveAttribute("aria-pressed", "true")
+  await expectNoHorizontalOverflow(page)
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
+  await page.getByRole("button", { name: /^체중 · 안정시 심박 (입력|수정)$/u }).click()
+  await auditTouchTargets(page, [
     { name: "evening.weight", locator: page.getByRole("textbox", { name: "체중 (kg)" }), heightOnly: true },
     { name: "evening.heart-rate", locator: page.getByRole("textbox", { name: "안정시 심박 (bpm)" }), heightOnly: true },
+  ])
+  await expectNoHorizontalOverflow(page)
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
+  await page.getByRole("button", { name: /^몸 상태 · 기분 (입력|수정)$/u }).click()
+  await auditTouchTargets(page, [
     { name: "evening.mood", locator: page.getByRole("button", { name: /^감정 [1-5]/u }), count: 5 },
     { name: "evening.body-part", locator: page.getByRole("button", { name: /통증/u }), count: 10, heightOnly: true },
-    { name: "evening.private-label", locator: privateMemo.locator("xpath=.."), heightOnly: true },
-    { name: "evening.training-label", locator: trainingMemo.locator("xpath=.."), heightOnly: true },
-    { name: "evening.memo", locator: page.getByRole("textbox", { name: "오늘의 메모" }), heightOnly: true },
-    { name: "evening.save", locator: page.getByRole("button", { name: /^저장/u }) },
   ])
-  for (const prefix of ["수면 질", "감정"]) {
-    const first = page.getByRole("button", { name: new RegExp(`^${prefix} 1`, "u") })
-    const last = page.getByRole("button", { name: new RegExp(`^${prefix} 5`, "u") })
-    await first.click()
-    await last.click()
-    await expect(first).toHaveAttribute("aria-pressed", "false")
-    await expect(last).toHaveAttribute("aria-pressed", "true")
-  }
+  const moodFirst = page.getByRole("button", { name: /^감정 1/u })
+  const moodLast = page.getByRole("button", { name: /^감정 5/u })
+  await moodFirst.click()
+  await moodLast.click()
+  await expect(moodFirst).toHaveAttribute("aria-pressed", "false")
+  await expect(moodLast).toHaveAttribute("aria-pressed", "true")
   const bodyButtons = page.getByRole("button", { name: /통증/u })
   const orderedLabels = await bodyButtons.evaluateAll((buttons) => buttons.map((button) => button.getAttribute("aria-label") ?? ""))
   expect(orderedLabels.map((label) => label.split(",")[0])).toEqual(bodyPartNames)
   // 몸 그림은 닫힌 상태로 시작한다 (작업지시서 UX1 §2-3).
   // 그림은 aria-hidden 이고 onClick 도 없어서 고르는 데 쓰이지 않는데
-  // 하루 마무리 화면 길이의 절반(476px)을 먹었다. 접어도 기능 손실은 없다.
+  // 컨디션·메모 화면 길이의 절반(476px)을 먹었다. 접어도 기능 손실은 없다.
   // 닫혀 있어도 <svg> 는 DOM 에 남으므로 [data-body-part] 는 계속 읽힌다.
   await expect(page.locator(".body-pain-selector")).toHaveAttribute("data-diagram-open", "false")
   expect(await page.locator('[data-body-part="rKnee"]').getAttribute("r")).toBe("6")
@@ -159,7 +218,20 @@ test("keeps evening controls and every body-part selector touchable", async ({ p
   await expect(rightKnee).toBeFocused()
   await expect(page.locator("svg [role='button']")).toHaveCount(0)
   await expectNoHorizontalOverflow(page)
-  await expectSaveAboveNavigation(page)
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
+  await page.getByRole("button", { name: /^메모 (입력|수정)$/u }).click()
+  await auditTouchTargets(page, [
+    { name: "evening.private-label", locator: privateMemo.locator("xpath=.."), heightOnly: true },
+    { name: "evening.training-label", locator: trainingMemo.locator("xpath=.."), heightOnly: true },
+    { name: "evening.memo", locator: page.getByRole("textbox", { name: "오늘의 메모" }), heightOnly: true },
+  ])
+  await expectNoHorizontalOverflow(page)
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
+  await auditTouchTargets(page, [
+    { name: "evening.save", locator: page.getByRole("button", { name: /^저장/u }) },
+  ])
+  await expectNoHorizontalOverflow(page)
+  await expectSaveActionUnobstructed(page)
   if (testInfo.project.name === "touch-narrow") {
     await page.screenshot({ path: "../.omo/evidence/mobile-touch-targets/task-4-body-button.png" })
   }
@@ -167,7 +239,7 @@ test("keeps evening controls and every body-part selector touchable", async ({ p
 
 test("keeps race stages, checks, fields, and help controls touchable", async ({ page }, testInfo) => {
   requireTouchProject(testInfo.project.name)
-  await openEntry(page, /경기 직전\/직후/u)
+  await openEntry(page, /경기 기록.*경기 전후 기록·컨디션/u)
 
   const privateMemo = page.getByRole("radio", { name: "나만의 메모" })
   const trainingMemo = page.getByRole("radio", { name: "훈련 메모" })
@@ -178,9 +250,6 @@ test("keeps race stages, checks, fields, and help controls touchable", async ({ 
     { name: "race.condition", locator: page.getByRole("button", { name: /^컨디션 [1-5]$/u }), count: 5 },
     { name: "race.goal-minute", locator: page.getByRole("spinbutton", { name: "목표 페이스 분" }), heightOnly: true },
     { name: "race.goal-second", locator: page.getByRole("spinbutton", { name: "목표 페이스 초" }), heightOnly: true },
-    { name: "race.private-label", locator: privateMemo.locator("xpath=.."), heightOnly: true },
-    { name: "race.training-label", locator: trainingMemo.locator("xpath=.."), heightOnly: true },
-    { name: "race.memo", locator: page.getByRole("textbox", { name: "경기 메모" }), heightOnly: true },
   ])
   for (const scale of ["긴장도", "컨디션"]) {
     const last = scale === "긴장도" ? 10 : 5
@@ -192,9 +261,7 @@ test("keeps race stages, checks, fields, and help controls touchable", async ({ 
     await expect(lastButton).toHaveAttribute("aria-pressed", "true")
     await expect(firstButton).toHaveAttribute("aria-pressed", "false")
   }
-  await privateMemo.focus()
-  await page.keyboard.press("ArrowRight")
-  await expect(trainingMemo).toBeChecked()
+  await expectNoHorizontalOverflow(page)
   await page.getByRole("button", { name: "경기 직후" }).click()
   await auditTouchTargets(page, [
     { name: "race.record", locator: page.getByRole("textbox", { name: "경기 기록" }), heightOnly: true },
@@ -202,7 +269,6 @@ test("keeps race stages, checks, fields, and help controls touchable", async ({ 
     { name: "race.result", locator: page.getByRole("textbox", { name: "경기 결과" }), heightOnly: true },
     { name: "race.pb-help", locator: page.getByRole("button", { name: /PB 설명 보기/u }) },
     { name: "race.post-mood", locator: page.getByRole("button", { name: /^감정 [1-5]$/u }), count: 5 },
-    { name: "race.save", locator: page.getByRole("button", { name: /^저장/u }) },
   ])
   const moodOne = page.getByRole("button", { name: "감정 1", exact: true })
   const moodFive = page.getByRole("button", { name: "감정 5", exact: true })
@@ -211,11 +277,28 @@ test("keeps race stages, checks, fields, and help controls touchable", async ({ 
   await expect(moodOne).toHaveAttribute("aria-pressed", "false")
   await expect(moodFive).toHaveAttribute("aria-pressed", "true")
   await expectNoHorizontalOverflow(page)
-  await expectSaveAboveNavigation(page)
+  await page.getByRole("button", { name: /^메모 (추가|수정)$/u }).click()
+  await auditTouchTargets(page, [
+    { name: "race.private-label", locator: privateMemo.locator("xpath=.."), heightOnly: true },
+    { name: "race.training-label", locator: trainingMemo.locator("xpath=.."), heightOnly: true },
+    { name: "race.memo", locator: page.getByRole("textbox", { name: "경기 메모" }), heightOnly: true },
+  ])
+  await privateMemo.focus()
+  await page.keyboard.press("ArrowRight")
+  await expect(trainingMemo).toBeChecked()
+  await expectNoHorizontalOverflow(page)
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
+  await auditTouchTargets(page, [
+    { name: "race.save", locator: page.getByRole("button", { name: /^저장/u }) },
+  ])
+  await expectNoHorizontalOverflow(page)
+  await expectSaveActionUnobstructed(page)
 })
 
 test("keeps the help mark small while its hit area and popover remain usable", async ({ page }, testInfo) => {
-  await openEntry(page, /훈련 후/u)
+  await openEntry(page, /자세히 기록.*운동별로 자세히/u)
+  await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
+  await page.getByRole("button", { name: "실제로 한 운동 수정", exact: true }).click()
   const help = page.getByRole("button", { name: /훈련 목적과 에너지 대사 설명 보기/u })
   if (TOUCH_PROJECTS.has(testInfo.project.name)) await expectMinimumTouchSize(help)
   const markBox = await help.locator("span").boundingBox()

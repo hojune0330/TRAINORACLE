@@ -4,9 +4,11 @@ import { planBetaStateV3Schema } from "../plan-beta-schema"
 import { setActiveLocalAccount } from "./local-journal-ownership"
 import { generatePlanFromDraft, selectPlanForActivation } from "../plan-beta-flow"
 import { RUNTIME_CASES, TODAY, draftFor, saveCurrentRecord } from "../prescription-quality-matrix.test-fixtures"
+import { ACCOUNT_NETWORK_DEADLINE_MS } from "./account-network-deadline"
 
 let savedRow: Record<string, unknown> | null = null
 let serverRows: Record<string, unknown>[] | null = null
+let pendingSelectResponse: Promise<{ data: Record<string, unknown> | null; error: null }> | null = null
 
 function selectQuery() {
   const filters: [string, unknown][] = []
@@ -16,6 +18,7 @@ function selectQuery() {
     order: () => query,
     limit: () => query,
     maybeSingle: () => {
+      if (pendingSelectResponse !== null) return pendingSelectResponse
       const rows = serverRows ?? (savedRow === null ? [] : [savedRow])
       const row = rows.filter(item => filters.every(([key, value]) => (
         value === null ? item[key] == null : item[key] === value
@@ -73,6 +76,7 @@ import {
 beforeEach(() => {
   savedRow = null
   serverRows = null
+  pendingSelectResponse = null
   window.localStorage.clear()
   setActiveLocalAccount("user-1")
 })
@@ -144,6 +148,18 @@ describe("active plan cloud backup", () => {
     await backupActivePlanToServer(state)
 
     await expect(loadLatestPlanFromServer()).resolves.toEqual({ kind: "loaded", state })
+  })
+
+  it("bounds a legacy restore when the server response never settles", async () => {
+    vi.useFakeTimers()
+    pendingSelectResponse = new Promise(() => undefined)
+    try {
+      const result = loadLatestPlanFromServer()
+      await vi.advanceTimersByTimeAsync(ACCOUNT_NETWORK_DEADLINE_MS)
+      await expect(result).resolves.toEqual({ kind: "unavailable" })
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it("does not upload when the active local account differs from the session", async () => {

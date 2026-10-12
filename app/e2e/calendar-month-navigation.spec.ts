@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 import { completeQuickPlan, refinePlan } from "./plan-flow"
-import { openActivePlanCards } from "./active-plan-flow"
+import { closeActiveDayReader, openActiveDayReader, openActivePlanCards } from "./active-plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
@@ -15,6 +15,7 @@ test("real month navigation, today, AM/PM and narrow layout", async ({ page }, i
   await completeQuickPlan(page, { days: /^매일/u })
   await refinePlan(page, "하루 두 번", /하루 두 번 운동할게요/u)
   await page.getByRole("button", { name: "이 일정으로 시작" }).click()
+  await page.getByRole("group", { name: "계획 일정 보기", exact: true }).getByRole("button", { name: "달력", exact: true }).click()
   const calendar = page.getByRole("grid", { name: "2026년 9월 달력" })
   const before = await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))
   await expect(calendar.getByRole("columnheader", { name: "일요일" })).toBeVisible()
@@ -46,7 +47,7 @@ test("real month navigation, today, AM/PM and narrow layout", async ({ page }, i
   await enlarged.getByRole("button", { name: "달력으로 돌아가기" }).click()
   await expect(enlarged).not.toBeVisible()
   await openActivePlanCards(page)
-  await expect(page.locator('[data-active-card="true"]')).toContainText("10월 1일 목요일")
+  await expect(page.locator(".active-plan .plan-schedule-preview > li")).toHaveCount(9)
   const day = page.getByRole("group", { name: "10월 1일 목요일 · 훈련 2개", exact: true })
   await expect.poll(async () => {
     return day.evaluate(element => {
@@ -56,13 +57,16 @@ test("real month navigation, today, AM/PM and narrow layout", async ({ page }, i
   }).toBeLessThan(2)
   await expect(day.getByText("오전", { exact: true })).toBeVisible()
   await expect(day.getByText("오후", { exact: true })).toBeVisible()
-  await day.getByText("오후 훈련 방법과 기록", { exact: true }).click()
-  await expect(day.locator('.plan-day-card__details[open]')).toBeVisible()
-  await day.evaluate(element => element.scrollIntoView({ block: "start", inline: "start", behavior: "instant" }))
+  const selectedDay = await openActiveDayReader(page, 4)
+  await expect(selectedDay.getByRole("heading", { level: 2 })).toHaveText("2026년 10월 1일 목요일")
+  await expect(selectedDay.locator('[data-session-slot="AM"]')).toBeVisible()
+  await expect(selectedDay.locator('[data-session-slot="PM"]')).toBeVisible()
   await page.screenshot({ path: info.outputPath("selected-am-pm.png") })
+  await closeActiveDayReader(page)
+  await page.getByRole("group", { name: "계획 일정 보기", exact: true }).getByRole("button", { name: "달력", exact: true }).click()
   await page.getByRole("button", { name: "오늘", exact: true }).click()
   await expect(calendar).toBeVisible()
-  await expect(page.locator('[data-active-card="true"]')).toContainText("9월 27일 일요일")
+  await expect(today).toHaveAttribute("data-selected", "true")
   expect(await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(before)
 
   await page.emulateMedia({ reducedMotion: "reduce" })

@@ -2,6 +2,9 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from "react"
 import type { FormEvent, SyntheticEvent } from "react"
 import { ArrowLeft, ArrowRight, Pencil } from "lucide-react"
 import type { InstantPlanEntry } from "../../domain/instant-plan-contract"
+import { TEN_K_GOAL_MINUTES, tenKGoalPaceLabel } from "../../domain/goal-program-calendar"
+import { useTaskFlowBack } from "../../hooks/useTaskFlowBack"
+import { ContextualIllustration } from "../ContextualIllustration"
 import "./instant-plan.css"
 import "./instant-plan-entry-steps.css"
 
@@ -9,8 +12,13 @@ export type InstantPlanEntryFormProps = {
   readonly onSubmit: (entry: InstantPlanEntry) => void
   /** The integrating screen supplies its local calendar date, YYYY-MM-DD. */
   readonly today: string
+  /** Live screens can re-read their local day after an entry stays open overnight. */
+  readonly readToday?: () => string
   /** Initial values only. Remount for a different person's or program's entry. */
   readonly initialEntry?: InstantPlanEntry
+  /** Supporting tools may hide this mounted form; returning restores the current question. */
+  readonly active?: boolean
+  readonly isSubmitting?: boolean
   readonly disabled?: boolean
   readonly sourceLabel?: string
   readonly onDraftChange?: (dirty: boolean) => void
@@ -75,9 +83,11 @@ function entryFromCurrentOrGoal(
 
 /** Collects facts only. Eligibility, safety, generation and storage belong to the caller. */
 export function InstantPlanEntryForm({
-  onSubmit, today, initialEntry, disabled = false, sourceLabel, onDraftChange,
+  onSubmit, today, readToday, initialEntry, active = true, isSubmitting = false, disabled = false, sourceLabel, onDraftChange,
 }: InstantPlanEntryFormProps) {
   const id = useId()
+  const [, refreshDateLimit] = useState(today)
+  const dateLimit = readToday?.() ?? today
   const [kind, setKind] = useState<InstantPlanEntry["kind"]>(initialEntry?.kind ?? "CURRENT_RECORD")
   const [event, setEvent] = useState(initialEntry ? String(initialEntry.eventDistanceM) : "")
   const [minutes, setMinutes] = useState(() => initialTime(initialEntry).minutes)
@@ -90,6 +100,7 @@ export function InstantPlanEntryForm({
   const [eventReturnStep, setEventReturnStep] = useState<"basis" | "details">("basis")
   const [basisChosen, setBasisChosen] = useState(initialEntry !== undefined)
   const [dateOpen, setDateOpen] = useState(false)
+  const [customGoalOpen, setCustomGoalOpen] = useState(false)
   const [errors, setErrors] = useState<Errors>({})
   const formValue = JSON.stringify([kind, event, minutes, seconds, achievedOn])
   const initialValue = useRef(formValue)
@@ -103,12 +114,21 @@ export function InstantPlanEntryForm({
   const dateRef = useRef<HTMLInputElement>(null)
   const stepHeadingRef = useRef<HTMLHeadingElement>(null)
   const lastStep = useRef(step)
+  const wasActive = useRef(false)
 
   useLayoutEffect(() => {
-    if (lastStep.current === step) return
+    const returned = active && !wasActive.current
+    wasActive.current = active
+    const stepChanged = lastStep.current !== step
     lastStep.current = step
-    stepHeadingRef.current?.focus()
-  }, [step])
+    if (active && (returned || stepChanged)) stepHeadingRef.current?.focus()
+  }, [active, step])
+
+  useLayoutEffect(() => {
+    if (active && customGoalOpen && step === "details" && kind === "GOAL_ONLY" && event === "10000") {
+      minutesRef.current?.focus()
+    }
+  }, [customGoalOpen])
 
   useEffect(() => {
     const firstError = (["event", "minutes", "seconds", "achievedOn"] as const)
@@ -122,6 +142,7 @@ export function InstantPlanEntryForm({
 
   const selectedEvent = EVENTS.find(option => String(option.value) === event)
   const selectedEventLabel = selectedEvent?.label ?? ""
+  const showGoalChoices = kind === "GOAL_ONLY" && selectedEvent?.value === 10000 && !customGoalOpen
 
   function chooseBasis(next: InstantPlanEntry["kind"]) {
     if (disabled) return
@@ -181,11 +202,12 @@ export function InstantPlanEntryForm({
       }
     }
     if (kind === "CURRENT_RECORD" && achievedOn !== "") {
+      const submittedToday = readToday?.() ?? today
       if (!isCalendarDate(achievedOn)) {
         nextErrors.achievedOn = "기록을 달성한 날짜를 올바르게 입력해 주세요."
-      } else if (!isCalendarDate(today)) {
+      } else if (!isCalendarDate(submittedToday)) {
         nextErrors.achievedOn = "오늘 날짜를 확인하지 못했어요. 잠시 후 다시 시도해 주세요."
-      } else if (achievedOn > today) {
+      } else if (achievedOn > submittedToday) {
         nextErrors.achievedOn = "달성일은 오늘 또는 이전 날짜로 입력해 주세요."
       }
     }
@@ -216,9 +238,18 @@ export function InstantPlanEntryForm({
     setStep("event")
   }
 
+  useTaskFlowBack({ enabled: active && (step !== "event" || eventReturnStep === "details"),
+    busy: disabled || isSubmitting,
+    onBack: () => {
+      setErrors({})
+      if (step === "details") setStep("basis")
+      else if (step === "basis") revisitEvent("basis")
+      else setStep("details")
+    },
+  })
+
   return (
     <form className="instant-plan" aria-label="계획 시작 정보" noValidate onSubmit={submit}>
-      <p className="instant-plan__entry-context">계획 준비 · {step === "event" ? "종목 선택" : step === "basis" ? "기록 선택" : "기록 입력"}</p>
       {sourceLabel && <p className="instant-plan__hint">선택한 프로그램: {sourceLabel}</p>}
       {step === "event" && (
         <section className="instant-plan__step" aria-labelledby={`${id}-event-heading`}>
@@ -228,14 +259,17 @@ export function InstantPlanEntryForm({
               <ArrowLeft size={18} aria-hidden="true" />기록 입력으로
             </button>
           )}
-          <h2 id={`${id}-event-heading`} ref={stepHeadingRef} tabIndex={-1} className="instant-plan__step-heading">
-            어떤 종목을 준비하세요?
-          </h2>
-          <div className="instant-plan__step-choices" role="group" aria-labelledby={`${id}-event-heading`}
+          <div className="contextual-entry-intro">
+            <h2 id={`${id}-event-heading`} ref={stepHeadingRef} tabIndex={-1} className="instant-plan__step-heading contextual-entry-intro__copy">
+              어떤 종목을 준비하세요?
+            </h2>
+            {!event && active && !disabled && !isSubmitting && !errors.event && <ContextualIllustration image="plan-notebook" />}
+          </div>
+          <div className="instant-plan__step-choices app-choice-group" role="group" aria-labelledby={`${id}-event-heading`}
             aria-describedby={errors.event ? `${id}-event-error` : undefined}>
             {EVENTS.map((option, index) => (
               <button key={option.value} ref={index === 0 ? eventButtonRef : undefined}
-                className="instant-plan__step-choice" type="button" disabled={disabled}
+                className="instant-plan__step-choice app-choice-control app-choice-control--answer" type="button" disabled={disabled}
                 aria-pressed={event === String(option.value)}
                 aria-describedby={errors.event ? `${id}-event-error` : undefined}
                 onClick={() => { setEvent(String(option.value)); setErrors({}); setStep(eventReturnStep) }}>
@@ -255,13 +289,13 @@ export function InstantPlanEntryForm({
           <h2 id={`${id}-basis-heading`} ref={stepHeadingRef} tabIndex={-1} className="instant-plan__step-heading">
             {selectedEventLabel} 기록이 있나요?
           </h2>
-          <div className="instant-plan__step-choices instant-plan__basis-choices" role="group" aria-labelledby={`${id}-basis-heading`}>
+          <div className="instant-plan__step-choices instant-plan__basis-choices app-choice-group" role="group" aria-labelledby={`${id}-basis-heading`}>
             {([
               ["CURRENT_RECORD", "내 기록", "실제로 달린 시간"],
               ["GOAL_ONLY", "목표만 있어요", "앞으로 달리고 싶은 시간"],
               ["NO_RECORD", "기록 없이", "시간 입력 건너뛰기"],
             ] as const).map(([value, label, description]) => (
-              <button key={value} className="instant-plan__step-choice" type="button" disabled={disabled}
+              <button key={value} className="instant-plan__step-choice app-choice-control app-choice-control--answer" type="button" disabled={disabled}
                 aria-labelledby={`${id}-basis-${value}`} aria-describedby={`${id}-basis-${value}-hint`}
                 aria-pressed={basisChosen && kind === value} onClick={() => chooseBasis(value)}>
                 <span className="instant-plan__basis-text">
@@ -288,9 +322,26 @@ export function InstantPlanEntryForm({
             </button>
           </div>
           <h2 id={`${id}-details-heading`} ref={stepHeadingRef} tabIndex={-1} className="instant-plan__step-heading">
-            {kind === "CURRENT_RECORD" ? `${selectedEventLabel}를 달린 전체 시간` : `${selectedEventLabel} 목표 전체 시간`}
+            {showGoalChoices ? "10km, 몇 분을 목표로 할까요?"
+              : kind === "CURRENT_RECORD" ? `${selectedEventLabel}를 달린 전체 시간` : `${selectedEventLabel} 목표 전체 시간`}
           </h2>
-          {kind !== "NO_RECORD" && (
+          {showGoalChoices && <>
+            <div className="instant-plan__step-choices instant-plan__basis-choices app-choice-group" role="group" aria-label="10km 목표 선택">
+              {TEN_K_GOAL_MINUTES.map(goal => <button key={goal} type="button"
+                className="instant-plan__step-choice app-choice-control app-choice-control--answer"
+                disabled={disabled || isSubmitting} aria-label={`${goal}분 목표`}
+                onClick={() => {
+                  if (disabled || isSubmitting) return
+                  setMinutes(String(goal)); setSeconds("0"); setErrors({})
+                  onSubmit({ kind: "GOAL_ONLY", eventDistanceM: 10000, performanceSeconds: goal * 60 })
+                }}>
+                <span>{goal}분</span><span className="instant-plan__hint">목표 {tenKGoalPaceLabel(goal)}</span>
+              </button>)}
+            </div>
+            <button type="button" className="instant-plan__step-back" disabled={disabled || isSubmitting}
+              onClick={() => setCustomGoalOpen(true)}>다른 목표 직접 입력</button>
+          </>}
+          {kind !== "NO_RECORD" && !showGoalChoices && (
             <fieldset className="instant-plan__fields" disabled={disabled} aria-labelledby={`${id}-details-heading`}>
               <div className="instant-plan__time-fields">
                 <div className="instant-plan__field">
@@ -327,7 +378,8 @@ export function InstantPlanEntryForm({
                   <div className="instant-plan__field">
                     <label htmlFor={`${id}-achievedOn`}>기록 달성일</label>
                     <input id={`${id}-achievedOn`} ref={dateRef} type="date" min="0001-01-01" disabled={disabled}
-                      max={isCalendarDate(today) ? today : undefined} value={achievedOn}
+                      max={isCalendarDate(dateLimit) ? dateLimit : undefined} value={achievedOn}
+                      onFocus={() => { if (readToday) refreshDateLimit(readToday()) }}
                       onChange={e => setAchievedOn(e.target.value)} aria-invalid={Boolean(errors.achievedOn)}
                       aria-describedby={errors.achievedOn ? `${id}-achievedOn-error` : undefined} />
                     {fieldError("achievedOn")}
@@ -335,18 +387,18 @@ export function InstantPlanEntryForm({
                 </div>
               </details>
               {achievedOn === "" && <p id={`${id}-date-hint`} className="instant-plan__hint">
-                날짜가 없으면 최근 12개월 기록에서는 제외돼요.
+                개인 페이스에는 기록 날짜가 필요해요. 모르면 비워 두세요.
               </p>}
             </div>
           )}
           {kind === "CURRENT_RECORD" && <p className="instant-plan__hint">입력한 현재 기록은 내 기록에도 남아요.</p>}
           {kind === "GOAL_ONLY" && <p className="instant-plan__hint">목표는 현재 실력과 구분해서 사용해요.</p>}
-          <div className="instant-plan__step-actions">
+          {!showGoalChoices && <div className="instant-plan__step-actions">
             <button className="instant-plan__button" type="submit" disabled={disabled}>
-              {kind === "CURRENT_RECORD" ? "기록 입력 완료" : "목표 입력 완료"}
+              {isSubmitting ? "계획 준비 중…" : kind === "CURRENT_RECORD" ? "기록 입력 완료" : "목표 입력 완료"}
               <ArrowRight size={18} aria-hidden="true" />
             </button>
-          </div>
+          </div>}
         </section>
       )}
     </form>

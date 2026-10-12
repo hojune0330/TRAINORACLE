@@ -3,7 +3,7 @@ import { defineConfig } from "@playwright/test"
 // Dedicated native-IDB module tests. Never reuse a parent's server or load app UI.
 export default defineConfig({
   testDir: "./e2e",
-  testMatch: "account-journal-draft-buffer.spec.ts",
+  testMatch: ["account-journal-draft-buffer.spec.ts", "account-deletion-boundary.spec.ts"],
   outputDir: "./test-results/account-draft-buffer",
   workers: 1,
   retries: 0,

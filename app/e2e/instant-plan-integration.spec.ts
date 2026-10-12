@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { completeQuickPlan, enterPlanWithoutRecord, refinePlan } from "./plan-flow"
+import { completeQuickPlan, enterPlanWithoutRecord, openPlanOptions, refinePlan } from "./plan-flow"
 
 test.use({ serviceWorkers: "block" })
 test.beforeEach(async ({ page }) => {
@@ -14,9 +14,11 @@ test.beforeEach(async ({ page }) => {
 for (const width of [320, 375]) {
   test(`minimal entry and one recommendation at ${width}px`, async ({ page }, info) => {
     await page.setViewportSize({ width, height: width === 320 ? 568 : 667 })
-    await page.getByRole("radio", { name: "기록 없이" }).check()
-    await expect(page.getByRole("button", { name: "내 계획 받기" })).toBeInViewport({ ratio: 1 })
-    await completeQuickPlan(page, { days: /^매일/u })
+    await expect(page.getByRole("button", { name: "1500m", exact: true })).toBeInViewport({ ratio: 1 })
+    await enterPlanWithoutRecord(page)
+    await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }).click()
+    await page.getByRole("button", { name: /^매일/u }).click()
+    await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
     const recommendation = page.getByRole("region", { name: "1500m · 9일 훈련", exact: true })
     await expect(recommendation.getByRole("grid")).toBeVisible()
     const rangeDates = () => recommendation.locator('[data-in-range="true"] button[data-date]')
@@ -34,13 +36,18 @@ for (const width of [320, 375]) {
     await expect(start).toBeInViewport({ ratio: 1 })
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
     await page.screenshot({ path: info.outputPath(`recommendation-${width}.png`), fullPage: true })
-    await page.getByRole("button", { name: "다른 계획 보기" }).click()
-    await expect(page.getByRole("region", { name: "다른 계획 비교" })).toBeFocused()
-    await expect(page.getByRole("heading", { name: "일정을 보고 골라요" })).toBeInViewport()
+    await openPlanOptions(page)
+    await expect(page.getByRole("region", { name: "다른 계획 비교" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "운동 시간을 비교하고 골라요" })).toBeInViewport()
     await expect(page.getByRole("button", { name: "계획안 A 일정 펼치기" })).toHaveAttribute("aria-expanded", "false")
     await expect(page.getByRole("button", { name: "계획안 B 일정 펼치기" })).toHaveAttribute("aria-expanded", "false")
-    await expect(page.getByLabel("9일 훈련 일정", { exact: true }).first()).toBeVisible()
-    await expect(page.getByLabel("9일 훈련 일정", { exact: true }).last()).toBeVisible()
+    const candidateA = page.locator(".plan-candidate").first()
+    const candidateB = page.locator(".plan-candidate").last()
+    await expect(candidateA.getByLabel("9일 훈련 일정", { exact: true })).toBeHidden()
+    await expect(candidateB.getByLabel("9일 훈련 일정", { exact: true })).toBeHidden()
+    await page.getByRole("button", { name: "계획안 A 일정 펼치기" }).click()
+    await expect(candidateA.getByLabel("9일 훈련 일정", { exact: true })).toBeVisible()
+    await expect(candidateB.getByLabel("9일 훈련 일정", { exact: true })).toBeHidden()
   })
 }
 
@@ -64,20 +71,22 @@ test("the recommendation keeps real two-times text readable without horizontal c
 
 test("decimal current record binds, survives reload and reaches the linked journal", async ({ page }, info) => {
   await page.setViewportSize({ width: 375, height: 667 })
-  await page.getByRole("combobox", { name: "종목" }).selectOption("800")
+  await page.getByRole("button", { name: "800m", exact: true }).click()
+  await page.getByRole("button", { name: "내 기록", exact: true }).click()
   await page.getByLabel("분", { exact: true }).fill("2")
   await page.getByLabel("초", { exact: true }).fill("1.5")
   const date = await page.evaluate(() => new Date().toLocaleDateString("en-CA"))
+  await page.getByText("기록 날짜 추가", { exact: true }).click()
   await page.getByLabel("기록 달성일").fill(date)
-  await page.getByRole("button", { name: "내 계획 받기" }).click()
-  await page.getByRole("button", { name: /구조화된 훈련과 경기 경험/u }).click()
+  await page.getByRole("button", { name: "기록 입력 완료", exact: true }).click()
+  await page.getByRole("button", { name: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u }).click()
   await page.getByRole("button", { name: /^매일/u }).click()
   await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
   // This case exercises the adopted 800m detailed pace template, not the default catalog.
-  await refinePlan(page, "훈련 종류", /짧고 세게.*GLY/u)
+  await refinePlan(page, "훈련 종류", /고강도 반복 훈련/u)
   await refinePlan(page, "안내 방식", /800m 경기 페이스 상세 훈련 포함/u)
   await expect(page.getByRole("button", { name: "이 일정으로 시작", exact: true })).toHaveCount(0)
-  await expect(page.getByRole("region", { name: "계획 저장 상태" }).getByRole("alert")).toHaveText("아래에서 기준 기록이나 변경한 내용을 확인해 주세요.")
+  await expect(page.getByRole("region", { name: "계획 저장 상태" }).getByRole("alert")).toHaveText("훈련 조절에서 기준 기록이나 변경한 내용을 확인해 주세요.")
   await page.getByRole("button", { name: "기준 기록 확인하기", exact: true }).click()
   await page.getByRole("button", { name: /추천 · 최근 경기 · 800m · 2분 1\.5초/u }).click()
   await page.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
@@ -105,7 +114,7 @@ test("decimal current record binds, survives reload and reaches the linked journ
 test("editing the schedule moves directly to the actual start-date input", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 })
   await completeQuickPlan(page, { days: /^매일/u })
-  await page.getByRole("button", { name: "시작일·훈련일 바꾸기" }).click()
+  await openPlanOptions(page)
   const input = page.getByLabel("계획 시작 날짜", { exact: true })
   await expect(input).toBeFocused()
   await expect(input).toBeInViewport({ ratio: 1 })

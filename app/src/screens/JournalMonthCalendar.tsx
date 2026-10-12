@@ -10,25 +10,44 @@ import { CalendarTrainingMark } from "../components/CalendarTrainingMark"
 import { calendarMarksDescription, journalCalendarMarks, type CalendarTrainingMarkData } from "../domain/calendar-training-presentation"
 import { calendarRecordDates } from "../domain/calendar-context"
 import { JournalDecorationPreview, useJournalDecorationPreviews } from "./journal/JournalDecorationPreview"
+import { onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
+import { validJournalCalendarReturn, type JournalCalendarReturn, type OpenJournalDay } from "../navigation/readerPosition"
 
 type JournalMonthCalendarProps = {
   readonly month: ArchiveMonthSummary
-  readonly onOpenDay: (date: string) => void
+  readonly onOpenDay: OpenJournalDay
   readonly onMonthChange: (month: string) => void
   readonly entries?: readonly JournalEntry[]
   readonly highlightedRange?: { readonly start: string; readonly end: string }
   readonly onWriteDate?: (date: string) => void
   readonly selectedDate?: string
   readonly onSelectedDateChange?: (date: string) => void
+  readonly calendarReturn?: JournalCalendarReturn | null
+  readonly onCalendarReturnConsumed?: () => void
 }
 
-export function JournalMonthCalendar({ month, onOpenDay, onMonthChange, entries = [], highlightedRange, onWriteDate, selectedDate: controlledDate, onSelectedDateChange }: JournalMonthCalendarProps) {
+export function JournalMonthCalendar({ month, onOpenDay, onMonthChange, entries = [], highlightedRange, onWriteDate, selectedDate: controlledDate, onSelectedDateChange, calendarReturn, onCalendarReturnConsumed }: JournalMonthCalendarProps) {
   const today = useLocalToday()
-  const [internalDate, setInternalDate] = React.useState<string>()
+  const calendarRoot = React.useRef<HTMLElement>(null)
+  const restoredReturn = React.useRef(validJournalCalendarReturn(calendarReturn, entries))
+  const [internalDate, setInternalDate] = React.useState<string | undefined>(restoredReturn.current?.date)
   const selectedDate = controlledDate ?? internalDate
   const setSelectedDate = (date: string) => { setInternalDate(date); onSelectedDateChange?.(date) }
-  const [readerDate, setReaderDate] = React.useState<string | null>(null)
-  const openDate = (date: string) => { setSelectedDate(date); setReaderDate(date); onMonthChange(date.slice(0, 7)) }
+  const [readerDate, setReaderDate] = React.useState<string | null>(restoredReturn.current?.date ?? null)
+  const consumeReturn = React.useCallback(() => { restoredReturn.current = null; onCalendarReturnConsumed?.() }, [onCalendarReturnConsumed])
+  const openDate = (date: string) => {
+    if (restoredReturn.current) consumeReturn()
+    setSelectedDate(date); setReaderDate(date); onMonthChange(date.slice(0, 7))
+  }
+  React.useEffect(() => {
+    if (calendarReturn && !validJournalCalendarReturn(calendarReturn, entries)) {
+      if (restoredReturn.current) setReaderDate(null)
+      consumeReturn()
+    }
+  }, [calendarReturn, entries, consumeReturn])
+  React.useEffect(() => onLocalJournalScopeChange(() => {
+    restoredReturn.current = null; setReaderDate(null); setInternalDate(undefined)
+  }), [])
   const summaryId = React.useId()
   const recordDates = React.useMemo(() => calendarRecordDates(entries), [entries])
   const activeDates = React.useMemo(
@@ -64,10 +83,10 @@ export function JournalMonthCalendar({ month, onOpenDay, onMonthChange, entries 
   }, [entries])
 
   return (
-    <section className="journal-calendar-browse" aria-labelledby={summaryId}>
+    <section ref={calendarRoot} className="journal-calendar-browse" aria-labelledby={summaryId}>
       <div className="journal-month-calendar__summary" id={summaryId}>
         <strong>날짜별 일지</strong>
-        <span>이 달 {activeDays}일 · {month.entryCount}개 기록</span>
+        {month.entryCount > 0 && activeDays > 0 && <span>이 달 {activeDays}일 · {month.entryCount}개 기록</span>}
       </div>
       <MonthCalendar trainingColors month={month.month} today={today} selectedDate={selectedDate} highlightedRange={highlightedRange}
         onMonthChange={onMonthChange} onToday={setSelectedDate} onSelectDate={date => {
@@ -89,14 +108,14 @@ export function JournalMonthCalendar({ month, onOpenDay, onMonthChange, entries 
           </>
           return <>
             {day.kindCounts.postSession > 0 && <CalendarTrainingMark tone="unknown" label={`훈련 ${day.kindCounts.postSession}`} />}
-            {day.kindCounts.evening > 0 && <span className="month-calendar__event">일상 {day.kindCounts.evening}</span>}
+            {day.kindCounts.evening > 0 && <span className="month-calendar__event">컨디션·메모 {day.kindCounts.evening}</span>}
             {day.kindCounts.race > 0 && <CalendarTrainingMark tone="race" label={`경기 ${day.kindCounts.race}`} />}
           </>
         }} />
-      {selectedDate?.startsWith(month.month) && !byDate.has(selectedDate) && <p className="month-calendar__empty" role="status">이날 작성한 일지가 없어요.</p>}
       {readerDate !== null && <PlanDayReader date={readerDate} sessions={[]} canPrevious canNext
         onPrevious={() => openDate(isoShift(readerDate, -1))} onNext={() => openDate(isoShift(readerDate, 1))}
-        onClose={() => setReaderDate(null)}>
+        onClose={() => { if (restoredReturn.current) consumeReturn(); setReaderDate(null) }}
+        returnFocusTo={date => calendarRoot.current?.querySelector<HTMLElement>(`button[data-date="${date}"]`) ?? null}>
         <nav className="calendar-record-jumps" aria-label="기록 있는 날짜 이동">
           <button type="button" disabled={!recordDates.some(date => date < readerDate)} onClick={() => {
             const date = recordDates.filter(date => date < readerDate).at(-1); if (date) openDate(date)
@@ -105,7 +124,9 @@ export function JournalMonthCalendar({ month, onOpenDay, onMonthChange, entries 
             const date = recordDates.find(date => date > readerDate); if (date) openDate(date)
           }}>다음 기록</button>
         </nav>
-        <CalendarJournalDetails date={readerDate} entries={entries} onOpenDay={onOpenDay} onWriteDate={onWriteDate} />
+        <CalendarJournalDetails date={readerDate} entries={entries} onWriteDate={onWriteDate}
+          initialEntryId={restoredReturn.current?.entryId ?? undefined} returnPosition={restoredReturn.current}
+          onReturnRestored={consumeReturn} onOpenDay={onOpenDay} />
       </PlanDayReader>}
     </section>
   )
@@ -114,7 +135,7 @@ export function JournalMonthCalendar({ month, onOpenDay, onMonthChange, entries 
 function kindText(counts: ArchiveKindCounts): string {
   const parts = [
     counts.postSession > 0 ? `훈련 후 ${counts.postSession}건` : null,
-    counts.evening > 0 ? `하루 마무리 ${counts.evening}건` : null,
+    counts.evening > 0 ? `컨디션·메모 ${counts.evening}건` : null,
     counts.race > 0 ? `경기 ${counts.race}건` : null,
   ].filter((part): part is string => part !== null)
   return parts.join(" · ")

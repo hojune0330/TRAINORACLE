@@ -33,7 +33,7 @@ export function JournalOriginalPlan({ entry }: { readonly entry: PostSessionEntr
     return () => { pending.current++; unsubscribe(); window.removeEventListener("storage", clear) }
   }, [])
   React.useEffect(() => {
-    const refresh = () => { if (details.current?.open) setLookup(readJournalOriginalPlan(entry, undefined, undefined, readMultiEvidence?.())) }
+    const refresh = () => { if (details.current?.open) setLookup(readJournalOriginalPlan(entry, undefined, undefined, readMultiEvidence)) }
     window.addEventListener(ACCOUNT_PLAN_EVENT, refresh)
     return () => window.removeEventListener(ACCOUNT_PLAN_EVENT, refresh)
   }, [entry, readMultiEvidence])
@@ -41,7 +41,7 @@ export function JournalOriginalPlan({ entry }: { readonly entry: PostSessionEntr
   const matched = lookup?.kind === "matched" ? lookup : null
   const source = lookup ? loadEntriesForPlanSafety() : null
   const review = lookup && source ? collectExecutionReviews(source, candidate => candidate.id === entry.id
-    ? lookup : readJournalOriginalPlan(candidate, undefined, undefined, readMultiEvidence?.()), todayISO(), { journalId: entry.id }).find(item => item.id === entry.id) : undefined
+    ? lookup : readJournalOriginalPlan(candidate, undefined, undefined, readMultiEvidence), todayISO(), { journalId: entry.id }).find(item => item.id === entry.id) : undefined
   const originalMethod = lookup && "session" in lookup && !loading ? <section className="journal-original-plan__method"><h3>당시 계획한 훈련 방법</h3>{matched !== null ? <>
     <p>{matched.source === "ARCHIVED" ? "그때 보관한 계획의 훈련이에요." : "이 일지와 연결된 현재 계획의 훈련이에요."}</p>
     <SessionExplanationEntry session={matched.session} date={entry.plannedSessionLink.plannedDate} memoState="HISTORICAL" returnLabel="일지로 돌아가기" context={{
@@ -60,14 +60,14 @@ export function JournalOriginalPlan({ entry }: { readonly entry: PostSessionEntr
     if (event.target !== event.currentTarget) return
     if (!event.currentTarget.open) { pending.current++; setLoading(false); setLookup(null); return }
     try {
-      const result = readJournalOriginalPlan(entry, undefined, undefined, readMultiEvidence?.())
+      const result = readJournalOriginalPlan(entry, undefined, undefined, readMultiEvidence)
       setLookup(result)
       if (accountPlansEnabled() && (result.kind === "unavailable" || result.kind === "missing")) {
         const request = ++pending.current
         setLoading(true)
         void ensureAccountPlanHistory().then(ready => {
           if (request !== pending.current || !details.current?.open) return
-          setLookup(ready ? readJournalOriginalPlan(entry, undefined, undefined, readMultiEvidence?.()) : { kind: "unavailable" })
+          setLookup(ready ? readJournalOriginalPlan(entry, undefined, undefined, readMultiEvidence) : { kind: "unavailable" })
         }).catch(() => {
           if (request === pending.current && details.current?.open) setLookup({ kind: "unavailable" })
         }).finally(() => { if (request === pending.current) setLoading(false) })

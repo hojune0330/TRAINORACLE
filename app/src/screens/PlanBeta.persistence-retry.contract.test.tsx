@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, render, screen, within } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import * as planStore from "../domain/plan-beta-store"
 import { savePlanBetaState } from "../domain/plan-beta-store"
@@ -8,8 +8,18 @@ import type { PlanBetaState } from "../domain/plan-beta-store"
 import { PlanBeta } from "./PlanBeta"
 import { PlanActiveState } from "./plan-beta/PlanActiveState"
 import { PLAN_BETA_MUTATION_LOCK_NAME } from "../domain/plan-mutation-lock"
+import { hasPendingBrowserBackLayer } from "../navigation/browserNavigation"
 
 let locksDescriptor: PropertyDescriptor | undefined
+
+async function openFirstProgress(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(await screen.findByRole("button", { name: "목록" }))
+  const list = screen.getByRole("region", { name: "날짜별 훈련 목록" })
+  await user.click(within(list).getByRole("button", { name: "7월 24일 금요일 전체 처방 보기" }))
+  const reader = within(await screen.findByRole("dialog", { name: "2026년 7월 24일 금요일" }))
+  await user.click(reader.getByText("일지·진행 기록", { exact: true }))
+  return reader
+}
 
 describe("active plan persistence retry", () => {
   beforeEach(() => {
@@ -27,11 +37,12 @@ describe("active plan persistence retry", () => {
     })
   })
 
-  afterEach(() => {
+  afterEach(async () => {
     cleanup()
     vi.restoreAllMocks()
     if (locksDescriptor === undefined) Reflect.deleteProperty(navigator, "locks")
     else Object.defineProperty(navigator, "locks", locksDescriptor)
+    await waitFor(() => expect(hasPendingBrowserBackLayer()).toBe(false))
   })
 
   it("retries a failed completed-session save without losing the selected progress", async () => {
@@ -54,19 +65,18 @@ describe("active plan persistence retry", () => {
     render(<PlanBeta />)
 
     // When: the athlete marks a session complete and the first write fails.
-    await user.click(screen.getByRole("button", { name: "날짜별 카드 보기" }))
-    await user.click(screen.getAllByText(/훈련 방법과 기록/u)[0]!)
-    const firstProgress = screen.getByLabelText(/DAY 1.*진행 기록/u)
+    const reader = await openFirstProgress(user)
+    const firstProgress = reader.getByLabelText(/DAY 1.*진행 기록/u)
     await user.click(within(firstProgress).getByRole("button", { name: "완료" }))
 
     // Then: the choice remains pending and a direct retry preserves it once storage returns.
-    expect(screen.getByRole("alert")).toHaveTextContent("계획을 이 기기에 저장하지 못했어요")
-    expect(screen.getByRole("button", { name: "진행 상태 다시 저장하기" })).toBeVisible()
-    expect(screen.getByText("예정")).toBeVisible()
+    expect(reader.getByRole("alert")).toHaveTextContent("계획을 이 기기에 저장하지 못했어요")
+    expect(reader.getByRole("button", { name: "진행 상태 다시 저장하기" })).toBeVisible()
+    expect(reader.getByText("예정", { selector: "em" })).toBeVisible()
 
-    await user.click(screen.getByRole("button", { name: "진행 상태 다시 저장하기" }))
+    await user.click(reader.getByRole("button", { name: "진행 상태 다시 저장하기" }))
 
-    expect(screen.getByText("완료", { selector: "em" })).toBeVisible()
+    expect(reader.getByText("완료", { selector: "em" })).toBeVisible()
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toContain("COMPLETED")
   })
 
@@ -87,12 +97,11 @@ describe("active plan persistence retry", () => {
       />,
     )
 
-    await user.click(screen.getByRole("button", { name: "날짜별 카드 보기" }))
-    await user.click(screen.getAllByText(/훈련 방법과 기록/u)[0]!)
-    const firstProgress = screen.getByLabelText(/DAY 1.*진행 기록/u)
+    const reader = await openFirstProgress(user)
+    const firstProgress = reader.getByLabelText(/DAY 1.*진행 기록/u)
     await user.click(within(firstProgress).getByRole("button", { name: "완료" }))
 
-    expect(screen.getByRole("alert")).toHaveTextContent("진행 기록 저장을 되돌렸는지 확인할 수 없어요")
+    expect(reader.getByRole("alert")).toHaveTextContent("진행 기록 저장을 되돌렸는지 확인할 수 없어요")
     expect(screen.queryByRole("button", { name: "진행 상태 다시 저장하기" })).not.toBeInTheDocument()
     expect(onStateChange).not.toHaveBeenCalled()
   })
@@ -110,9 +119,11 @@ describe("active plan persistence retry", () => {
       const user = userEvent.setup()
       const onStateChange = vi.fn()
       render(<PlanActiveState state={state} onStateChange={onStateChange} onPrepareNextFrame={vi.fn()} />)
-      await user.click(screen.getByRole("button", { name: "이전 달" }))
-      await user.click(document.querySelector<HTMLButtonElement>('button[data-date="2026-07-24"]')!)
-      const reader = within(await screen.findByRole("dialog"))
+      await user.click(screen.getByRole("button", { name: /년월과 날짜 이동/u }))
+      fireEvent.change(screen.getByLabelText("년월 선택", { exact: true }), { target: { value: "2026-07" } })
+      const calendar = screen.getByRole("grid", { name: "2026년 7월 달력" })
+      await user.click(within(calendar).getByRole("button", { name: /^2026년 7월 24일 금요일/u }))
+      const reader = within(await screen.findByRole("dialog", { name: "2026년 7월 24일 금요일" }))
       await user.click(reader.getByText("일지·진행 기록", { exact: true }))
       await user.click(within(reader.getByLabelText(/DAY 1.*진행 기록/u)).getByRole("button", { name: "완료" }))
       expect(await reader.findByRole("alert")).toHaveTextContent("계획을 이 기기에 저장하지 못했어요")
@@ -141,12 +152,11 @@ describe("active plan persistence retry", () => {
       />,
     )
 
-    await user.click(screen.getByRole("button", { name: "날짜별 카드 보기" }))
-    await user.click(screen.getAllByText(/훈련 방법과 기록/u)[0]!)
-    const firstProgress = screen.getByLabelText(/DAY 1.*진행 기록/u)
+    const reader = await openFirstProgress(user)
+    const firstProgress = reader.getByLabelText(/DAY 1.*진행 기록/u)
     await user.click(within(firstProgress).getByRole("button", { name: "완료" }))
 
-    expect(screen.getByRole("alert")).toHaveTextContent("계획 저장 상태를 확인할 수 없어요")
+    expect(reader.getByRole("alert")).toHaveTextContent("계획 저장 상태를 확인할 수 없어요")
     expect(screen.queryByRole("button", { name: "진행 상태 다시 저장하기" })).not.toBeInTheDocument()
     expect(onStateChange).not.toHaveBeenCalled()
   })
@@ -170,7 +180,7 @@ describe("active plan persistence retry", () => {
     render(<PlanBeta />)
 
     const active = localStorage.getItem("trainoracle.plan-beta.v1")
-    await user.click(screen.getByRole("button", { name: "다음 계획안 만들기" }))
+    await user.click(await screen.findByRole("button", { name: "다음 계획안 만들기" }))
     expect(screen.queryByRole("alert")).toBeNull()
     expect(localStorage.getItem("trainoracle.plan-beta.v1")).toBe(active)
     await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))

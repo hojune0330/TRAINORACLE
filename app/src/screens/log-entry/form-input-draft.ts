@@ -12,6 +12,8 @@ const purpose = z.enum(["PRIVATE_SELF_ONLY", "ANALYZABLE_TRAINING_NOTE"]).nullab
 const outcome = z.enum(["COMPLETED", "PARTIAL", "LIGHT_ACTIVITY", "RESTED", "SKIPPED"])
 const slot = z.enum(["UNSPECIFIED", "AM", "PM"])
 const painStatus = z.enum(["UNANSWERED", "NO_SIGNAL_REPORTED", "SIGNAL_REPORTED"])
+const quickActiveQuestion = z.enum(["outcome", "slot", "rpe", "pain"])
+export type QuickActiveQuestion = z.infer<typeof quickActiveQuestion>
 const memo = { memo: z.string().max(50_000), purpose }
 const objectiveDraftFields = z.object({
     distanceKm: text.optional(), actualPace: text.optional(), typicalDistanceKm: text.optional(),
@@ -57,6 +59,7 @@ export const formInputSchema = z.discriminatedUnion("kind", [
     plannedRpe: rpe, objectiveComponents: z.array(objectiveLoadComponentSchema).max(6),
     objectiveEditor: objectiveEditorDraftSchema, ...exerciseFields, ...memo }).strict(),
   z.object({ kind: z.literal("quick"), step: z.enum(["activity", "effort", "review", "exercise", "memo"]),
+    activeQuestion: quickActiveQuestion.optional(),
     outcome: outcome.nullable(), slot: slot.nullable(), rpe, effortAnswered: z.boolean(),
     planExecutionChange: z.enum(["FEWER_REPETITIONS", "SHORTER_DURATION", "DIFFERENT_WORKOUT"]).nullable().optional(),
     painStatus, painParts: pain, ...exerciseFields,

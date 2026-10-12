@@ -193,7 +193,7 @@ describe("saved toast motion structure", () => {
     expect(screen.getByRole("status")).toHaveClass("saved-toast", "saved-toast--exit")
   })
 
-  it("shows the exit phase before unmounting after a save", () => {
+  it("keeps a confirmed result until explicitly closed instead of timing it out", async () => {
     vi.useFakeTimers()
     window.localStorage.clear()
 
@@ -202,25 +202,26 @@ describe("saved toast motion structure", () => {
       const tabBar = screen.getByRole("navigation", { name: "주 탭" })
 
       fireEvent.click(within(tabBar).getByRole("button", { name: "기록하기" }))
-      fireEvent.click(screen.getByRole("button", { name: /훈련 후/u }))
-      fireEvent.click(screen.getByRole("button", { name: /^저장/u }))
+      fireEvent.click(screen.getByRole("button", { name: /자세히 기록.*운동별로 자세히/u }))
+      fireEvent.click(screen.getByRole("button", { name: "지금 입력 확인" }))
+      fireEvent.click(screen.getByRole("button", { name: "메모 수정" }))
+      fireEvent.change(screen.getByRole("textbox", { name: "훈련 메모 내용" }), { target: { value: "합성 테스트 기록" } })
+      fireEvent.click(screen.getByRole("radio", { name: "훈련 메모" }))
+      fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
+      await act(async () => fireEvent.click(screen.getByRole("button", { name: /^저장/u })))
 
-      expect(screen.getByRole("status")).toHaveClass("saved-toast--enter")
-
-      act(() => vi.advanceTimersByTime(4050))
-      expect(screen.getByRole("status")).toHaveClass("saved-toast--exit")
-
-      act(() => vi.advanceTimersByTime(149))
-      expect(screen.getByRole("status")).toBeInTheDocument()
-
-      act(() => vi.advanceTimersByTime(1))
-      expect(screen.queryByRole("status")).not.toBeInTheDocument()
+      expect(screen.getByRole("button", { name: "기록 보기" })).toBeVisible()
+      act(() => vi.advanceTimersByTime(10_000))
+      expect(screen.getByRole("button", { name: "닫기" })).toBeVisible()
+      fireEvent.click(screen.getByRole("button", { name: "닫기" }))
+      expect(document.querySelector(".journal-save-result")).toBeNull()
+      expect(screen.getByRole("navigation", { name: "주 탭" })).toBeVisible()
     } finally {
       vi.useRealTimers()
     }
   })
 
-  it("keeps review attention until the athlete dismisses it", () => {
+  it("keeps review attention until the athlete dismisses it", async () => {
     vi.useFakeTimers()
     window.localStorage.clear()
 
@@ -228,16 +229,20 @@ describe("saved toast motion structure", () => {
       render(<AppShell />)
       const tabBar = screen.getByRole("navigation", { name: "주 탭" })
       fireEvent.click(within(tabBar).getByRole("button", { name: "기록하기" }))
-      fireEvent.click(screen.getByRole("button", { name: new RegExp("경기 직전/직후", "u") }))
-      fireEvent.change(screen.getByRole("textbox", { name: "경기 메모" }), { target: { value: "무릎이 아파" } })
+      fireEvent.click(screen.getByRole("button", { name: /자세히 기록.*운동별로 자세히/u }))
+      fireEvent.click(screen.getByRole("button", { name: "지금 입력 확인" }))
+      fireEvent.click(screen.getByRole("button", { name: "메모 수정" }))
+      fireEvent.change(screen.getByRole("textbox", { name: "훈련 메모 내용" }), { target: { value: "무릎이 아파" } })
       fireEvent.click(screen.getByRole("radio", { name: "훈련 메모" }))
-      fireEvent.click(screen.getByRole("button", { name: /^저장/u }))
+      fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
+      await act(async () => fireEvent.click(screen.getByRole("button", { name: /^저장/u })))
 
-      expect(screen.getByRole("alert")).toHaveTextContent("분석 결과를 확인해야 해요")
+      expect(screen.getByRole("alert")).toHaveTextContent(/확인|검토/u)
+      expect(screen.getByRole("alert")).not.toHaveTextContent("분석 결과")
       act(() => vi.advanceTimersByTime(10_000))
       expect(screen.getByRole("alert")).toBeInTheDocument()
 
-      fireEvent.click(screen.getByRole("button", { name: "검토 안내 닫기" }))
+      fireEvent.click(screen.getByRole("button", { name: "닫기" }))
       expect(screen.queryByRole("alert")).not.toBeInTheDocument()
     } finally {
       vi.useRealTimers()

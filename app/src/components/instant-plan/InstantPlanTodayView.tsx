@@ -1,5 +1,7 @@
 import { useEffect, useId, useState } from "react"
 import type { InstantPlanToday } from "../../domain/instant-plan-contract"
+import { IncompleteWorkoutNotice } from "./IncompleteWorkoutNotice"
+import { AppHeading } from "../AppHeading"
 import "./instant-plan.css"
 
 export type InstantPlanTodayViewProps = {
@@ -53,8 +55,8 @@ function SessionDetail({
   readonly onChangeSchedule?: (id: string) => void
   readonly changeScheduleLabel?: string
 }) {
-  const primarySteps = session.steps.filter(step => ["총 시간·강도", "본운동", "회복", "사이 회복"].includes(step.label))
-  const visibleSteps = primarySteps.length > 0 ? primarySteps : session.steps.slice(0, 1)
+  const primarySteps = session.steps.filter(step => step.role !== "METHOD" && step.role !== "OTHER")
+  const visibleSteps = primarySteps
   const otherSteps = session.steps.filter(step => !visibleSteps.includes(step))
   const steps = (items: TodaySession["steps"]) => <dl className="instant-plan__steps">
     {items.map((step, index) => <div key={`${index}-${step.label}`}>
@@ -68,23 +70,23 @@ function SessionDetail({
       {(!compact || session.recorded) && <p className="instant-plan__hint">
         {session.recorded ? "남긴 기록 있음" : "아직 기록 없음"}
       </p>}
-      {session.guidanceNotice && <p className="instant-plan__hint" role="note">{session.guidanceNotice}</p>}
+      {session.guidanceNotice && <IncompleteWorkoutNotice detail={session.guidanceNotice} />}
       {compact ? <>
         {steps(visibleSteps)}
-        {otherSteps.length > 0 && <details className="instant-plan__disclosure">
+        {!onViewSession && otherSteps.length > 0 && <details className="instant-plan__disclosure">
           <summary>훈련 방법</summary>{steps(otherSteps)}
         </details>}
       </> : steps(session.steps)}
-      {onViewSession && <button className="instant-plan__secondary" type="button"
-        aria-label={`${session.slotLabel} 훈련 방법·근거`} onClick={() => onViewSession(session.id)}>훈련 방법·근거</button>}
       {canRecord && <div className="instant-plan__actions">
-        {!session.recorded && onRecordSession && <button className="instant-plan__secondary" type="button"
+        {!session.recorded && onRecordSession && <button className="instant-plan__button" type="button"
           aria-label={`${session.slotLabel} 훈련 기록 남기기`} onClick={() => onRecordSession(session.id)}>
           {compact ? "일지 쓰기" : `${session.slotLabel} 훈련 기록 남기기`}
         </button>}
         {compact && onChangeSchedule && <button className="instant-plan__secondary" type="button"
           onClick={() => onChangeSchedule(session.id)}>{changeScheduleLabel}</button>}
       </div>}
+      {onViewSession && <button className="instant-plan__secondary" type="button"
+        aria-label={`${session.slotLabel} 훈련 방법·근거`} onClick={() => onViewSession(session.id)}>훈련 방법·근거</button>}
     </section>
   )
 }
@@ -117,7 +119,7 @@ export function InstantPlanTodayView({
     <section className={`instant-plan${compact ? " instant-plan--today-compact" : ""}`} aria-labelledby={headingId}>
       <p className="instant-plan__eyebrow">{today.dateLabel}</p>
       {today.sourceLabel && <p className="instant-plan__source">{today.sourceLabel}</p>}
-      <h2 id={headingId} className="instant-plan__heading">{today.title}</h2>
+      <AppHeading as="h2" variant={compact ? "section" : "screen"} accent={!compact} id={headingId} className="instant-plan__heading">{today.title}</AppHeading>
       {(!compact || !["SCHEDULED", "PARTLY_RECORDED", "RECORDED"].includes(today.state)) && <p className="instant-plan__status" role={today.state === "UNAVAILABLE" ? "alert" : "status"}>
         {stateMessages[today.state]}
       </p>}
@@ -126,10 +128,10 @@ export function InstantPlanTodayView({
         <div className="instant-plan__sessions">
           {hasMultipleSessions ? (
             <>
-              <div className="instant-plan__session-picker" role="group" aria-label="오늘 세션 선택">
+              <div className="instant-plan__session-picker app-choice-group" role="group" aria-label="오늘 세션 선택">
                 {today.sessions.map(session => (
                   <button
-                    className="instant-plan__session-summary"
+                    className="instant-plan__session-summary app-choice-control"
                     type="button"
                     key={session.id}
                     aria-pressed={session.id === selectedSessionId}

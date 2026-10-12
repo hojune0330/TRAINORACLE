@@ -55,39 +55,56 @@ function overviewState() {
 }
 
 describe("active plan first-view overview", () => {
-  it("shows the training flow and same-day sessions before collapsed notes", async () => {
-    render(<ActivePlan state={overviewState()} {...callbacks} />)
+  it("shows exact same-day prescription amounts in the calendar and keeps notes secondary in list view", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date("2026-08-27T00:00:00.000Z"))
+    const state = overviewState()
+    const original = JSON.stringify(state)
+    render(<ActivePlan state={state} {...callbacks} />)
 
     expect(screen.getByRole("heading", { level: 1, name: "9일 훈련 계획" })).toBeVisible()
-    expect(screen.getByText("전체 계획 구성").closest("details")).not.toHaveAttribute("open")
-    await userEvent.setup().click(screen.getByText("전체 계획 구성"))
     expect(screen.getByText("8월 27일(목) - 9월 4일(금)")).toBeVisible()
+    expect(screen.getByText("8월 27일(목) - 9월 4일(금)").closest("details")).toBeNull()
+    expect(screen.getByText("훈련 구성·시간").closest("details")).not.toHaveAttribute("open")
+    await userEvent.setup().click(screen.getByText("훈련 구성·시간"))
     const buildSummary = screen.getByRole("list", { name: "계획 구성 요약" })
     const summaryItems = within(buildSummary).getAllByRole("listitem")
     expect(summaryItems[0]).toHaveTextContent("5000m")
     expect(summaryItems).toHaveLength(3)
-    expect(summaryItems[1]).toHaveTextContent("조금 힘들게 꾸준히 · LT")
-    expect(summaryItems[2]).toHaveTextContent("하루 2회 포함")
+    expect(summaryItems[1]).toHaveTextContent("지속 페이스 훈련")
+    expect(summaryItems[2]).toHaveTextContent("하루 2회 운동하는 날 1일")
     expect(within(buildSummary).getByRole("button", { name: "지속 페이스 LT 설명 보기" })).toBeVisible()
 
     const flow = screen.getByLabelText("9일 훈련 일정")
     const information = screen.getByText("계획 정보와 유의사항").closest("details")
+    const trainingDate = flow.querySelector<HTMLButtonElement>('button[data-date="2026-08-29"]')
+    expect(trainingDate).not.toBeNull()
+    expect(within(trainingDate!).getByText("템포 훈련 · LT")).toBeVisible()
+    expect(within(trainingDate!).getByText("전체 30–40분 · 힘든 정도 6–7/10")).toBeVisible()
+    expect(within(trainingDate!).getByText("회복 운동 · Recovery")).toBeVisible()
+    expect(within(trainingDate!).getByText("전체 15–20분 · 힘든 정도 1–2/10")).toBeVisible()
     expect(screen.queryByRole("list", { name: "날짜별 계획 미리보기" })).toBeNull()
-    await userEvent.setup().click(screen.getByRole("button", { name: "날짜별 카드 보기" }))
+    await userEvent.setup().click(screen.getByRole("button", { name: "목록" }))
     const timeline = screen.getByRole("list", { name: "날짜별 계획 미리보기" })
     const trainingDay = screen.getByRole("group", {
       name: "8월 29일 토요일 · 훈련 2개",
     })
 
-    expect(flow).toHaveTextContent(/주요 훈련MAIN.*회복 운동REC/u)
-    expect(trainingDay).toHaveTextContent(/오전.*주요 훈련MAIN.*템포 훈련.*LT.*오후.*회복 운동REC.*회복 운동.*Recovery/u)
-    expect(trainingDay).toHaveTextContent(/전체 30–40min @ RPE 6–7/u)
-    expect(trainingDay).toHaveTextContent(/전체 15–20min @ RPE 1–2/u)
+    expect(trainingDay).toHaveTextContent(/오전.*템포 훈련.*LT.*오후.*회복 운동.*Recovery/u)
+    expect(within(trainingDay).queryByRole("button", { name: /훈련 설명 보기/u })).not.toBeInTheDocument()
+    expect(trainingDay).toHaveTextContent("전체 30–40분 · 힘든 정도 6–7/10")
+    expect(trainingDay).toHaveTextContent("전체 15–20분 · 힘든 정도 1–2/10")
     expect(flow.compareDocumentPosition(timeline) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     expect(timeline.compareDocumentPosition(information as Node) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     expect(information).not.toHaveAttribute("open")
     expect(screen.getByText(/1~2 회복 움직임/u)).not.toBeVisible()
-    expect(screen.getByText("오전 훈련 방법과 기록").closest("details")).not.toHaveAttribute("open")
+    expect(within(trainingDay).queryByText("본운동")).not.toBeInTheDocument()
+    await userEvent.setup().click(within(trainingDay).getByRole("button", { name: "8월 29일 토요일 전체 처방 보기" }))
+    const reader = screen.getByRole("dialog")
+    const readerInstruction = within(reader).getByText("본운동")
+    expect(readerInstruction).toBeVisible()
+    expect(readerInstruction.closest("details")).toBeNull()
+    expect(JSON.stringify(state)).toBe(original)
   })
 
   it("shows a one-shot creation confirmation and removes it automatically", () => {
@@ -103,6 +120,33 @@ describe("active plan first-view overview", () => {
     expect(screen.getByText("훈련 계획이 완성됐어요")).toBeVisible()
     act(() => vi.advanceTimersByTime(3_000))
     expect(screen.queryByText("훈련 계획이 완성됐어요")).not.toBeInTheDocument()
+  })
+
+  it("consumes the creation signal while keeping its visible toast on the original timer", () => {
+    vi.useFakeTimers()
+    const onCreatedCelebrationConsumed = vi.fn()
+    const state = overviewState()
+    const view = render(<ActivePlan state={state} showCreatedCelebration
+      onCreatedCelebrationConsumed={onCreatedCelebrationConsumed} {...callbacks} />)
+
+    expect(screen.getByText("훈련 계획이 완성됐어요")).toBeVisible()
+    expect(onCreatedCelebrationConsumed).toHaveBeenCalledOnce()
+    view.rerender(<ActivePlan state={state} showCreatedCelebration={false}
+      onCreatedCelebrationConsumed={onCreatedCelebrationConsumed} {...callbacks} />)
+
+    expect(screen.getByText("훈련 계획이 완성됐어요")).toBeVisible()
+    act(() => vi.advanceTimersByTime(2_999))
+    expect(screen.getByText("훈련 계획이 완성됐어요")).toBeVisible()
+    act(() => vi.advanceTimersByTime(1))
+    expect(screen.queryByText("훈련 계획이 완성됐어요")).not.toBeInTheDocument()
+  })
+
+  it("does not claim two workouts per day just because the setting allows them", async () => {
+    const state = overviewState()
+    render(<ActivePlan state={{ ...state, activePlan: { ...state.activePlan, sessions: [state.activePlan.sessions[0]!] } }} {...callbacks} />)
+    await userEvent.setup().click(screen.getByText("훈련 구성·시간"))
+    expect(screen.getByRole("list", { name: "계획 구성 요약" })).toHaveTextContent("예정된 운동 1회")
+    expect(screen.getByRole("list", { name: "계획 구성 요약" })).not.toHaveTextContent("하루 2회")
   })
 
   it("does not celebrate an already stored plan opened later", () => {

@@ -1,5 +1,6 @@
 import React from "react"
-import { SectionLb } from "../../components/JournalPrimitives"
+import { ArrowLeft, Upload } from "lucide-react"
+import { ContextualIllustration } from "../../components/ContextualIllustration"
 import { compactDate } from "../../domain/dates"
 import type { ActivityParseResult } from "../../domain/import/activity-file"
 import type { ImportDraft, ImportSaveIntent, ImportSaveResult } from "../../domain/import/import-draft"
@@ -21,35 +22,85 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
   readonly onFile: (file: File) => void | Promise<void>
   readonly onCancel: () => void
 }) {
+  const [source, setSource] = React.useState<"" | "garmin" | "coros" | "health">("")
+  const [preparationOpen, setPreparationOpen] = React.useState(false)
+  const preparationHeading = React.useRef<HTMLHeadingElement>(null)
+  const preparationButton = React.useRef<HTMLButtonElement>(null)
+  React.useEffect(() => {
+    if (preparationOpen) preparationHeading.current?.focus()
+  }, [preparationOpen, source])
   return (
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
-      <p style={{ fontFamily: "var(--sans)", fontSize: 13, lineHeight: 1.65, color: "var(--ink-2)", margin: 0 }}>
-        운동 파일을 고르면 <b>거리·시간을 먼저 확인</b>할 수 있어요.
-        원하는 운동만 일지로 옮겨요.
-      </p>
+      <div className="contextual-entry-intro">
+        {!busy && failure === null && <ContextualIllustration image="watch-file-v2" size="medium" />}
+      </div>
+
+      <button type="button" style={primaryBtn} disabled={busy} onClick={() => fileInputRef.current?.click()}>
+        <Upload size={18} aria-hidden="true" /> 파일이 있어요 · 바로 선택
+      </button>
+
+      <section aria-label="운동 파일 준비" className="import-preparation">
+        <button type="button" ref={preparationButton} className="app-choice-control import-preparation__toggle"
+          disabled={busy} aria-expanded={preparationOpen} aria-controls="import-preparation-steps"
+          onClick={() => setPreparationOpen(open => !open)}>파일 준비하기</button>
+        {preparationOpen && <div id="import-preparation-steps">
+        {source === "" ? <>
+          <h2 ref={preparationHeading} tabIndex={-1}>어디에 기록이 있나요?</h2>
+          <div className="import-preparation__choices app-choice-group" role="group" aria-label="기록이 있는 곳 선택">
+            {([
+              ["garmin", "Garmin · 가민"],
+              ["coros", "COROS · 코로스"],
+              ["health", "애플 건강·삼성 헬스"],
+            ] as const).map(([value, label]) => <button key={value} type="button"
+              className="app-choice-control app-choice-control--answer" disabled={busy}
+              onClick={() => setSource(value)}>{label}</button>)}
+          </div>
+        </> : <>
+          <button type="button" style={secondaryBtn} disabled={busy} onClick={() => setSource("")}>
+            <ArrowLeft size={18} aria-hidden="true" /> 다른 기록 위치
+          </button>
+          <h2 ref={preparationHeading} tabIndex={-1}>{source === "garmin" ? "Garmin 파일 준비" : source === "coros" ? "COROS 파일 준비" : "건강앱 파일 준비"}</h2>
+          {source === "health" ? <>
+            <p>애플 건강·삼성 헬스의 전체 ZIP·XML 백업은 아직 읽지 못해요.</p>
+            <p>운동을 기록한 원래 서비스에서 개별 운동의 TCX·GPX를 내보낼 수 있는지 확인해 주세요. CSV·JSON도 지원하는 날짜·거리·시간 형식만 읽어요.</p>
+            <p>지원 파일이 없으면 지금 가져오지 않아도 돼요. 수면·HRV 자동 연결은 제공하지 않아요.</p>
+          </> : <ol>
+            <li>{source === "garmin" ? "Garmin Connect" : "COROS"}에서 가져올 운동 기록을 열어요.</li>
+            <li>활동 내보내기에서 {source === "coros" ? "TCX" : "TCX 또는 GPX"} 파일을 이 기기에 저장해요. FIT·ZIP 파일은 아직 읽지 못해요.</li>
+            <li>위의 파일 선택으로 거리·시간을 확인한 뒤, 원하는 기록만 저장해요.</li>
+          </ol>}
+        </>}
+        <button type="button" style={secondaryBtn} disabled={busy} onClick={() => {
+          setPreparationOpen(false)
+          preparationButton.current?.focus()
+        }}>준비 안내 닫기</button>
+        </div>}
+        <p>계정 자동 연결 대신 파일을 가져와요. 원본 기록은 바뀌지 않아요.</p>
+      </section>
 
       <div
         data-testid="import-privacy-notice"
       style={{ border: "1px solid var(--line)", background: "var(--surface)", padding: "10px 13px" }}
       >
-        <div style={{ ...mono, fontSize: 9.5, fontWeight: 600, color: "var(--ink-3)", letterSpacing: "0.12em" }}>
+        <div style={{ ...mono, fontSize: "var(--fs-caption)", fontWeight: 600, color: "var(--ink-3)", letterSpacing: "0.04em" }}>
           파일은 이 기기에서만 읽어요
         </div>
-        <div style={{ ...mono, fontSize: 10, color: "var(--ink-2)", lineHeight: 1.65, marginTop: 5 }}>
+        <div style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-2)", lineHeight: 1.65, marginTop: 5 }}>
           {accountJournalRecordsEnabled()
-            ? "원본 파일은 이 기기에서만 읽어요. 저장을 눌러 확인한 기록만 현재 로그인한 계정의 암호화 보관 경로로 전송해요. 비밀 글은 공유·분석에서 제외해요."
+            ? "파일은 이 브라우저에서 읽어요. 저장을 눌러 확인한 기록만 현재 로그인한 계정의 암호화 보관 경로로 전송해요. 비밀 글은 공유·분석에서 제외해요."
             : <>고른 파일은 서버로 올라가지 않아요. 이 화면에서 내용을 읽어 일지 초안만
-              만들고, <b>저장을 누른 것만</b> 이 기기의 일지에 들어가요.</>}
+              만들고, <b>저장을 누른 것만</b> 이 브라우저의 일지에 들어가요.</>}
         </div>
       </div>
 
-      <label htmlFor="import-file" style={{ ...mono, fontSize: 11, color: "var(--ink-3)" }}>
-        내보낸 활동 파일 (.csv / .json / .tcx / .gpx)
+      <label htmlFor="import-file" hidden>
+        가져올 운동 파일 선택
       </label>
       <input
         ref={fileInputRef}
         id="import-file"
         type="file"
+        hidden
         accept=".csv,.json,.tcx,.gpx,text/csv,application/json,application/xml,text/xml"
         disabled={busy}
         onChange={(event) => {
@@ -57,12 +108,8 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
           event.currentTarget.value = ""
           if (file !== undefined) void onFile(file)
         }}
-        style={{
-          ...mono, fontSize: 12, width: "100%", boxSizing: "border-box",
-          padding: "12px", minHeight: 48,
-          border: "1px dashed var(--line)", background: "var(--surface)", color: "var(--ink)",
-        }}
       />
+      <p className="import-preparation__formats">TCX · GPX · 지원 CSV·JSON / 한 번에 파일 1개, 최대 10MB</p>
       {busy && (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
           <p role="status" style={{ ...mono, fontSize: 12, color: "var(--ink-3)", margin: 0 }}>읽는 중…</p>
@@ -89,16 +136,9 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
         </div>
       )}
 
-      <InfoDisclosure title="가민·코로스·건강앱 파일 준비하기">
-        <p>가민·코로스 등의 서비스에서 운동을 TCX·GPX 파일로 내보낸 뒤 골라 주세요. 파일에서 읽은 값은 저장 전에 확인할 수 있어요.</p>
-        <p>CSV·JSON은 날짜·거리·시간이 있는 지원 형식만 읽어요. 모든 건강앱의 파일 형식이 서로 같지는 않아요.</p>
-        <p>애플 건강·삼성 헬스의 전체 ZIP·XML 백업은 아직 읽지 못해요. 수면·HRV를 자동으로 받는 기능도 이번 파일 가져오기와 별개예요.</p>
-      </InfoDisclosure>
-
-      <div data-testid="oauth-status" style={{ border: "1px dashed var(--line)", padding: "12px 14px" }}>
-        <InfoDisclosure title="가민·WHOOP·스트라바 자동 연동은 준비 중이에요">
+      <div data-testid="oauth-status">
+        <InfoDisclosure title="가민·코로스·WHOOP·스트라바 자동 연동은 준비 중이에요">
           <p>지금은 파일을 골라 기록을 가져올 수 있어요. 계정을 연결해 자동으로 받는 기능의 시작 날짜는 아직 정해지지 않았어요.</p>
-          <p>파일을 가져와도 워치 앱의 원본 기록은 바뀌지 않아요.</p>
         </InfoDisclosure>
       </div>
     </div>
@@ -148,7 +188,6 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
         </p>)}
         <p>읽지 못한 값은 추측해서 채우지 않아요. 원본 파일은 바뀌지 않아요.</p>
       </InfoDisclosure>}
-      <SectionLb>가져올 활동</SectionLb>
       <div style={{ borderTop: "1px solid var(--ink)", borderBottom: "1px solid var(--ink)" }}>
         {drafts.map((draft, index) => {
           const { activity } = draft
@@ -230,13 +269,13 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
         })}
       </div>
       <p style={{ fontFamily: "var(--sans)", fontSize: 12, color: "var(--ink-2)", lineHeight: 1.6, margin: 0 }}>
-        {analysisEnabled ? "가져오기만으로 최고기록·훈련 목표는 바뀌지 않아요." : "새 일지는 읽기 전용이에요. 가져온 숫자는 주간 통계·추이·훈련계획에는 들어가지 않아요."}
+        {analysisEnabled ? "가져오기만으로 최고기록·훈련 목표·강도는 바뀌지 않아요." : "새 일지는 읽기 전용이에요. 가져온 숫자는 주간 통계·추이·훈련계획에는 들어가지 않아요."}
       </p>
-      <InfoDisclosure title="저장 후 수정·분석은 어떻게 되나요?">
+      <InfoDisclosure title="수정·분석 범위">
         <p>기존 일지를 보완하면 힘든 정도(RPE<TermHelp term="rpe" />)와 메모는 계속 수정할 수 있어요.</p>
-        <p>{analysisEnabled ? "파일 기록은 오라클의 파일 분석에서 수정할 수 있어요. " : "새 일지로 가져온 활동은 현재 읽기 전용이에요. "}</p>
+        {analysisEnabled && <p>파일 기록은 오라클의 파일 분석에서 수정할 수 있어요.</p>}
         <p>{analysisEnabled
-          ? "계정에 저장된 달리기 거리는 누적 거리에 포함해요. 시간과 페이스는 시간의 뜻을 확인한 항목끼리만 비교해요. 이 파일만으로 개인 최고기록이나 훈련 강도를 바꾸지는 않아요."
+          ? "계정에 저장된 달리기 거리는 누적 거리에 포함해요. 시간과 페이스는 시간의 뜻을 확인한 항목끼리만 비교해요."
           : "가져온 숫자를 다시 입력해서 분석에 넣을 필요는 없어요. 저장한 거리·시간은 오라클의 가져온 기록에서 먼저 볼 수 있어요."}</p>
       </InfoDisclosure>
       <button type="button" style={primaryBtn} disabled={busy || chosenCount === 0 || missingIntent} onClick={onSave}>
@@ -286,9 +325,9 @@ export function SavedStage({ outcome, onOpenLog, onOpenAnalysis, onOpenSummary, 
         <div style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500, marginTop: 5 }}>
           {onlyExcluded ? `${outcome.excluded}건 가져오기에서 제외` : <>새 일지 {outcome.saved}건 저장 · 기존 일지 {outcome.merged ?? 0}건 보완</>}
         </div>
-        <div style={{ ...mono, fontSize: 10, color: "var(--ink-3)", marginTop: 4 }}>
-          {onlyExcluded ? "새로 저장한 일지는 없어요. 기존 일지는 그대로예요." : `${completed}건을 일지에 저장했어요`}
-        </div>
+        {onlyExcluded && <div style={{ ...mono, fontSize: 10, color: "var(--ink-3)", marginTop: 4 }}>
+          새로 저장한 일지는 없어요. 기존 일지는 그대로예요.
+        </div>}
         {!onlyExcluded && (outcome.excluded ?? 0) > 0 && <p>이번 가져오기에서 {outcome.excluded}건 제외했어요</p>}
         {(outcome.conflicts ?? 0) > 0 && (
           <div style={{ ...mono, fontSize: 10.5, color: "var(--ink-2)", lineHeight: 1.6, marginTop: 6 }}>
@@ -302,7 +341,6 @@ export function SavedStage({ outcome, onOpenLog, onOpenAnalysis, onOpenSummary, 
         )}
         {!onlyExcluded && <div style={{ ...mono, fontSize: 10, color: "var(--ink-4)", lineHeight: 1.65, marginTop: 8 }}>
           가져온 값에는 <b>가져옴</b> 표시가 붙어요. 기존 일지에 직접 입력한 RPE<TermHelp term="rpe" />는 분석에 쓸 수 있고, 가져온 값과 메모 원문은 분석에 포함되지 않아요.
-          {outcome.saved > 0 && " 새 일지로 가져온 활동은 현재 읽기 전용이에요."}
         </div>}
       </div>
       {onOpenSummary && completed > 0 && <button type="button" style={primaryBtn} onClick={onOpenSummary}>가져온 기록 보기</button>}

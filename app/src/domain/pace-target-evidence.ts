@@ -12,7 +12,7 @@ import type {
 } from "./pace-target-plan"
 
 export function deriveRecordCurrentness(
-  record: AthleteRecord,
+  record: Pick<AthleteRecord, "achievedOn">,
   evaluatedAt: Date,
 ): PaceSelectionFreshness {
   const elapsed = elapsedSinceAchieved(record, evaluatedAt)

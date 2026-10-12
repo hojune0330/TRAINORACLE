@@ -4,7 +4,9 @@ import type { Page } from "@playwright/test"
 async function openPostSession(page: Page) {
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
-  await page.getByRole("button", { name: /훈련 후/u }).click()
+  await page.getByRole("button", { name: /자세히 기록.*운동별로 자세히/u }).click()
+  await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
+  await page.getByRole("button", { name: "운동 강도 수정", exact: true }).click()
   // 객관 기록 구획은 닫힌 상태로 시작한다 (작업지시서 UX1 §2-2).
   // 필수 입력이 아니라서 화면 길이 393px 를 아끼려고 접어 뒀다.
   // 객관 기록을 쓰는 시험은 실제 사용자처럼 먼저 펼친다.
@@ -29,9 +31,10 @@ test("saves and reopens subjective intensity with mixed objective components", a
   await page.getByRole("spinbutton", { name: "강도 (%1RM) · 선택" }).fill("80")
   await page.getByRole("spinbutton", { name: "남은 반복 (RIR) · 선택" }).fill("2")
   await page.getByRole("button", { name: "객관 구성 추가" }).click()
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
   await page.getByRole("button", { name: /^저장/u }).click()
 
-  const savedSession = page.getByRole("button", { name: "오늘 기록 보기" })
+  const savedSession = page.getByRole("button", { name: "기록 보기", exact: true })
   await expect(savedSession).toBeVisible()
   await savedSession.click()
   await expect(page.getByText("주관 + 객관 함께 기록")).toBeVisible()
@@ -48,9 +51,10 @@ test("uses objective records without fabricating missing subjective intensity", 
   await page.getByRole("spinbutton", { name: "접지 수", exact: true }).fill("40")
   await page.getByRole("spinbutton", { name: "평소 접지 수 · 선택" }).fill("32")
   await page.getByRole("button", { name: "객관 구성 추가" }).click()
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
   await page.getByRole("button", { name: /^저장/u }).click()
 
-  const savedSession = page.getByRole("button", { name: "오늘 기록 보기" })
+  const savedSession = page.getByRole("button", { name: "기록 보기", exact: true })
   await expect(savedSession).toBeVisible()
   await savedSession.click()
   await expect(page.getByText("객관 기록으로만 표시")).toBeVisible()

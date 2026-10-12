@@ -68,7 +68,7 @@ describe("catalog prescription -> original journal link -> actual segment evalua
     const displayed = sessionExecutionSteps(f.session).find(step => step.title === "본운동")!.detail
     expect(displayed).toContain("150m")
     expect(displayed).toContain("24.7s")
-    expect(displayed).toContain("3min")
+    expect(displayed).toContain("반복 사이 3분 걷기/서서 쉬기")
     expect(displayed).not.toContain("숨이 가라앉으면")
   })
   it("distinguishes missing distance from a deliberately changed distance", () => {

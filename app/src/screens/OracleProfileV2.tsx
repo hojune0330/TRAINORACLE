@@ -1,4 +1,5 @@
 import React from "react"
+import { AppHeading } from "../components/AppHeading"
 import { OracleProfileExperience, OracleProfileReader } from "./OracleProfileExperience"
 import { createOracleV2Service, oracleV2EditToken, type OracleV2Store } from "../domain/account/account-oracle-v2-service"
 import { activeLocalAccount } from "../domain/account/local-journal-ownership"
@@ -151,10 +152,10 @@ function OracleProfileV2ForOwner({ owner, today, onBack, onNavigate, initialView
     else setNotice("")
     return ok
   }
-  const status = store.status === "EMPTY" ? "READY" : ["MIGRATION_REQUIRED", "LEGACY_DRAFT"].includes(store.status) ? "LOADING" : store.status
+  const status = !owner || store.status === "EMPTY" ? "READY" : ["MIGRATION_REQUIRED", "LEGACY_DRAFT"].includes(store.status) ? "LOADING" : store.status
   return <>
     {store.status === "DELETED" && <section className="oracle-v2 oracle-v2__body"><p>이전 응답은 삭제됐어요. 새 질문에 답해 다시 시작할 수 있어요.</p><button type="button" onClick={() => { void enqueue(next => next.restartProfile(oracleV2EditToken(next.snapshot()), "START_NEW_ORACLE_V2")).then(ok => { if (!ok) setNotice("새 프로필을 시작하지 못했어요. 연결을 확인한 뒤 다시 시도해 주세요.") }) }}>빈 프로필로 새로 시작</button></section>}
-    {store.status === "MIGRATION_REQUIRED" && <section className="oracle-v2 oracle-v2__body"><h2>이전 응답을 보관하고 새 프로필 시작</h2><p>기존 답은 그대로 보관해요. 새 점수는 새 질문에 답한 내용으로만 계산해요.</p><button type="button" onClick={() => { void enqueue(next => next.migrateV1(oracleV2EditToken(next.snapshot()))) }}>이전 응답 보관하고 시작</button></section>}
+    {store.status === "MIGRATION_REQUIRED" && <section className="oracle-v2 oracle-v2__body"><AppHeading as="h2" variant="section">이전 응답을 보관하고 새 프로필 시작</AppHeading><p>기존 답은 그대로 보관해요. 새 점수는 새 질문에 답한 내용으로만 계산해요.</p><button type="button" onClick={() => { void enqueue(next => next.migrateV1(oracleV2EditToken(next.snapshot()))) }}>이전 응답 보관하고 시작</button></section>}
     {store.status === "LEGACY_DRAFT" && <p role="alert">이전 화면에 아직 계정으로 보내지 않은 응답이 있어요. 기존 프로필에서 먼저 저장해 주세요.</p>}
     {store.status === "CONFLICT" && <section className="oracle-v2 oracle-v2__body"><p role="alert">다른 곳에서 응답이 바뀌었어요. 어떤 응답을 사용할까요?</p><button type="button" onClick={() => { void resolveConflict("REMOTE") }}>계정의 응답 사용</button><button type="button" onClick={() => { void resolveConflict("LOCAL") }}>이 화면의 응답 사용</button></section>}
     <OracleProfileExperience key={resetVersion} initialView={initialView} backLabel={backLabel} answers={owner ? current?.answers ?? {} : guest}
@@ -232,12 +233,12 @@ function OracleProfileV2ForOwner({ owner, today, onBack, onNavigate, initialView
       {close => friendMode === "manual" ? <OracleFriendComparisonV2 today={today} ownProfile={comparisonProfile} records={records.status === "READY" ? records.records : null} onBack={() => setFriendMode("choose")} />
         : friendMode === "connected" && owner && documentId && current && store.status === "READY" && !hasScoreDraft
           ? <OracleConnectedComparison ownerId={owner} documentId={documentId} documentRevision={store.revision} ownProfile={current} onBack={() => setFriendMode("choose")} />
-          : <section className="oracle-v2__choices" aria-label="비교 방법">
-            <h2>어떻게 비교할까요?</h2>
-            <button type="button" disabled={!owner || !documentId || !current || store.status !== "READY" || hasScoreDraft} onClick={() => setFriendMode("connected")}>친구 초대로 응답 비교</button>
+          : <section className="oracle-v2__choices app-choice-group" aria-label="비교 방법">
+            <AppHeading as="h2" variant="screen" accent>어떻게 비교할까요?</AppHeading>
+            <button className="app-choice-control app-choice-control--answer" type="button" disabled={!owner || !documentId || !current || store.status !== "READY" || hasScoreDraft} onClick={() => setFriendMode("connected")}>친구 초대로 응답 비교</button>
             {(!owner || !current) && <p>초대 비교는 내 응답을 계정에 저장한 뒤 할 수 있어요.</p>}
             {owner && current && (store.status !== "READY" || hasScoreDraft) && <p role="status">내 응답 저장을 먼저 마쳐 주세요.</p>}
-            <button type="button" onClick={() => setFriendMode("manual")}>직접 입력해서 비교</button>
+            <button className="app-choice-control app-choice-control--answer" type="button" onClick={() => setFriendMode("manual")}>직접 입력해서 비교</button>
             <p>직접 입력은 이 화면에서만 보는 비교예요. 친구 계정과 연결되지 않아요.</p>
             <button type="button" onClick={close}>풀이로 돌아가기</button>
           </section>}

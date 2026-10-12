@@ -3,7 +3,8 @@ import { EventEmitter } from "node:events"
 import { PassThrough, Writable } from "node:stream"
 import { test } from "node:test"
 import path from "node:path"
-import { fixtureEnvironment, projects, runFullSuite } from "./run-full-suite.mjs"
+import { fixtureEnvironment, projects, runFullSuite, runProjectSuite } from "./run-full-suite.mjs"
+import { parseProject } from "./run-project-suite.mjs"
 
 function fixture(options = {}) {
   const calls = [], stopped = [], signals = new EventEmitter(), messages = []
@@ -147,4 +148,45 @@ test("Playwright spawn error fails and cleans up the project and server", async 
   const value = fixture({ spawnErrorAt: 5 }), result = await runFullSuite(value)
   assert.equal(result.code, 1); assert.equal(result.completedProjects, 4); assert.equal(succeeded(value), false)
   assert.equal(value.stopped.length, 3)
+})
+
+test("each configured project shard requires both lanes without reporting a full gate", async () => {
+  const coverage = []
+  for (const project of projects) {
+    const value = fixture(), result = await runProjectSuite(project, value)
+    assert.deepEqual(result, { code: 0, completedProjects: 2, completedLanes: 2, cleanedServers: 2 })
+    const calls = children(value)
+    assert.equal(calls.length, 2)
+    assert(calls.every(call => call.args.includes(`--project=${project}`) && call.args.includes("--workers=1")))
+    assert.deepEqual(calls.map(call => call.args.find(arg => arg.startsWith("--config="))), [
+      "--config=playwright.config.ts", "--config=playwright.browser-fixtures.config.ts",
+    ])
+    assert.equal(new Set(calls.map(call => call.settings.env.PLAYWRIGHT_BASE_URL)).size, 2)
+    assert.equal(value.stopped.length, 2)
+    assert.equal(succeeded(value), false)
+    assert(value.messages.some(message => message.includes("[project-e2e] SUCCESS lanes=2/2 projects=2/2")))
+    coverage.push(...calls.map(call => `${project}:${call.args.find(arg => arg.startsWith("--config="))}`))
+  }
+  assert.equal(new Set(coverage).size, 8)
+})
+
+test("project entry refuses unknown, missing, extra and narrowing arguments", async () => {
+  for (const argv of [[], ["unknown"], [projects[0], "--grep=one"], [projects[0], "--pass-with-no-tests"]]) {
+    assert.throws(() => parseProject(argv), /exactly one configured/u)
+  }
+  for (const project of projects) assert.equal(parseProject([project]), project)
+  const value = fixture()
+  assert.throws(() => runProjectSuite("unknown", value), /Unknown browser project/u)
+  await assert.rejects(runProjectSuite(projects[0], { ...value, argv: ["--grep=one"] }), /does not accept narrowing/u)
+  assert.equal(value.calls.length, 0)
+})
+
+test("project shard refuses either lane failure, missing fixture and interrupted success", async () => {
+  for (const options of [{ failAt: 1 }, { failAt: 2 }, { missingFixture: true }, { interruptAt: 2 },
+    { cleanupFailureAt: 2 }, { serverExitAt: 2 }, { spawnErrorAt: 2 }]) {
+    const value = fixture(options), result = await runProjectSuite(projects[0], value)
+    assert.notEqual(result.code, 0)
+    assert.equal(value.messages.some(message => message.includes("[project-e2e] SUCCESS")), false)
+    assert.equal(value.signals.listenerCount("SIGTERM"), 0)
+  }
 })

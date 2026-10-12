@@ -1,5 +1,5 @@
 /* LEGACY_11STEP_FLOW: 2026-09 4질문 빠른 흐름 도입으로 옛 인테이크 클릭 순서를 전제한 테스트. 다듬기 경로로 재작성 예정(PR #341 본문). */
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { DETAILED_PRESCRIPTION_APPROVALS } from "../../domain/detailed-prescription-approvals"
@@ -17,19 +17,44 @@ describe("question-first plan preparation", () => {
     onOpenNotationReader: vi.fn(), onSafety: vi.fn(), onContinue: vi.fn(),
   }
 
-  it("shows the question before optional answers and the correctly sized calendar", async () => {
+  it("shows concise editable answers without implying overall plan progress", async () => {
     const onJump = vi.fn()
-    render(<PlanIntake step="days" draft={{ ...stateFixture().intake, requestedFrameLength: 7 }}
+    const { container } = render(<PlanIntake step="days" draft={{ ...stateFixture().intake, requestedFrameLength: 7 }}
       {...callbacks} onJump={onJump} />)
     const heading = screen.getByRole("heading", { name: "이번 7일 중 며칠 훈련할까요?" })
-    const answers = screen.getByRole("button", { name: /선택한 내용 바꾸기/ })
-    expect(screen.getByText("계획 준비 · 운동할 날")).toBeVisible()
+    const answers = screen.getByRole("group", { name: "앞서 선택한 답 수정" })
+    expect(container.querySelector(".plan-progress")).not.toBeInTheDocument()
+    expect(screen.queryByText(/훈련 조건 질문 \d+\/\d+/u)).not.toBeInTheDocument()
     expect(heading.compareDocumentPosition(answers) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
-    expect(answers.closest("details")).not.toHaveAttribute("open")
-    expect(screen.getByText(/7일 달력 보기/)).toBeVisible()
-    await userEvent.setup().click(answers)
-    await userEvent.setup().click(screen.getByRole("button", { name: "5000m" }))
+    expect(screen.queryByText(/일 달력 보기/)).not.toBeInTheDocument()
+    const goalEdit = within(answers).getByRole("button", { name: "목표 5000m 답 바꾸기" })
+    expect(within(answers).getAllByRole("button")).toHaveLength(2)
+    expect(goalEdit).toBeVisible()
+    const dayGroup = screen.getByRole("group", { name: "운동할 날 선택" })
+    const days = within(dayGroup)
+    expect(dayGroup).toBeVisible()
+    expect(days.getAllByRole("button").map(button => button.textContent)).toEqual(["3일", "4일", "5일", "6일", "매일"])
+    await userEvent.setup().click(days.getByRole("button", { name: "매일" }))
+    expect(callbacks.onDays).toHaveBeenCalledWith("EVERY_DAY")
+    await userEvent.setup().click(goalEdit)
     expect(onJump).toHaveBeenCalledWith("goal")
+  })
+
+  it("can omit a no-op Back action at the first quick question", () => {
+    render(<PlanIntake step="goal" draft={{}} canGoBack={false} {...callbacks} />)
+    expect(screen.queryByRole("button", { name: "이전" })).not.toBeInTheDocument()
+    expect(screen.getByRole("group", { name: "계획 종목 선택" }))
+      .toBeVisible()
+  })
+
+  it("keeps the quick-flow answer shortcuts to the three prior answers", () => {
+    const onJump = vi.fn()
+    render(<PlanIntake step="safety" draft={stateFixture().intake} {...callbacks} onJump={onJump} />)
+    const answers = within(screen.getByRole("group", { name: "앞서 선택한 답 수정" }))
+    expect(answers.getAllByRole("button")).toHaveLength(3)
+    expect(answers.getByRole("button", { name: "목표 5000m 답 바꾸기" })).toBeVisible()
+    expect(answers.getByRole("button", { name: /경험 .* 답 바꾸기/u })).toBeVisible()
+    expect(answers.getByRole("button", { name: "운동할 날 4일 답 바꾸기" })).toBeVisible()
   })
 
   it("does not expose inert edit buttons when no jump action is provided", () => {
@@ -40,9 +65,17 @@ describe("question-first plan preparation", () => {
 
   it("keeps the legacy half-day value and previews whole calendar dates", () => {
     const draft = { ...stateFixture().intake, requestedFrameLength: 9.5 as const }
-    render(<PlanIntake step="safety" draft={draft} {...callbacks} />)
+    render(<PlanIntake step="goal" draft={draft} {...callbacks} />)
     expect(screen.getByText(/10일 달력 보기/)).toBeVisible()
     expect(draft.requestedFrameLength).toBe(9.5)
+  })
+
+  it("asks about actual experience without recommending an answer", async () => {
+    render(<PlanIntake step="experience" draft={{}} {...callbacks} />)
+    expect(screen.queryByText("추천")).not.toBeInTheDocument()
+    expect(screen.queryByText(/구조화된/)).not.toBeInTheDocument()
+    await userEvent.setup().click(screen.getByRole("button", { name: /빠른 훈련과 쉬운 훈련/ }))
+    expect(callbacks.onExperience).toHaveBeenCalledWith("EXPERIENCED")
   })
 })
 

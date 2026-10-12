@@ -1,9 +1,7 @@
 import React from "react"
-
-function reducedMotionPreferred(): boolean {
-  return typeof window.matchMedia === "function"
-    && window.matchMedia("(prefers-reduced-motion: reduce)").matches
-}
+import { getBrowserNavigationEpoch, isBrowserPopScrollRestoration, subscribeBrowserPopNavigation } from "../navigation/browserNavigation"
+import { localJournalScopeGeneration } from "../domain/account/local-journal-ownership"
+import { calendarReducedMotion } from "./useCalendarMotion"
 
 /**
  * Move a newly opened page or decision step into the readable part of the app
@@ -17,18 +15,26 @@ export function useActiveContentScroll(
   skipInitial = false,
 ): void {
   const initialRun = React.useRef(true)
-  React.useEffect(() => {
+  const cancelAlignment = React.useRef<(() => void) | null>(null)
+  React.useLayoutEffect(() => subscribeBrowserPopNavigation(() => cancelAlignment.current?.()), [])
+  React.useLayoutEffect(() => {
     if (initialRun.current) {
       initialRun.current = false
       if (skipInitial) return
     }
     if (activeKey === null) return
+    // Back/Forward restores reading position, not a new answer/decision.
+    if (isBrowserPopScrollRestoration()) return
     const target = targetRef.current
     if (target === null) return
 
     let settleTimer: number | undefined
+    const epoch = getBrowserNavigationEpoch()
+    const scope = localJournalScopeGeneration()
+    const focusAtSchedule = document.activeElement
     const alignTarget = () => {
-      const behavior = reducedMotionPreferred() ? "auto" : "smooth"
+      if (epoch !== getBrowserNavigationEpoch() || scope !== localJournalScopeGeneration()) return
+      const behavior = calendarReducedMotion() ? "auto" : "smooth"
       const scrollRegion = target.closest<HTMLElement>(".app-scroll-region")
       if (scrollRegion !== null && typeof scrollRegion.scrollTo === "function") {
         const targetRect = target.getBoundingClientRect()
@@ -47,16 +53,30 @@ export function useActiveContentScroll(
       }
     }
     const frame = window.requestAnimationFrame(() => {
+      if (epoch !== getBrowserNavigationEpoch() || scope !== localJournalScopeGeneration()) return
       alignTarget()
-      focusRef?.current?.focus({ preventScroll: true })
+      const focusTarget = focusRef?.current
+      const activeFocus = document.activeElement
+      const editing = activeFocus instanceof HTMLElement && (activeFocus.matches("input, textarea, select") || activeFocus.isContentEditable)
+      // Delayed alignment must not interrupt typing or a later focus choice.
+      // An unchanged opener can still hand focus to the newly opened question.
+      if (focusTarget && (activeFocus === focusTarget || activeFocus === document.body
+        || activeFocus === focusAtSchedule && !focusTarget.contains(activeFocus) && !editing)) {
+        focusTarget.focus({ preventScroll: true })
+      }
       // Parent shell resets and short entry animations can land after a child
       // effect. Re-align once after those transitions settle; normally this is
       // a no-op, but it prevents a half-finished scroll on real diary turns.
       settleTimer = window.setTimeout(alignTarget, 220)
     })
-    return () => {
+    const cancel = () => {
       window.cancelAnimationFrame(frame)
       if (settleTimer !== undefined) window.clearTimeout(settleTimer)
+    }
+    cancelAlignment.current = cancel
+    return () => {
+      cancel()
+      if (cancelAlignment.current === cancel) cancelAlignment.current = null
     }
   }, [activeKey, focusRef, skipInitial, targetRef])
 }

@@ -11,8 +11,11 @@ import { prepareInitialRecordPaces } from "../../domain/initial-record-pace"
 import { CatalogWorkoutEditor, CatalogWorkoutPicker } from "./CatalogWorkoutPicker"
 import { PlanCandidates } from "./PlanCandidates"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
-afterEach(() => { cleanup(); vi.restoreAllMocks() })
+beforeEach(() => {
+  localStorage.clear(); sessionStorage.clear()
+  vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-09-29T12:00:00Z"))
+})
+afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers() })
 
 function fixture(experienceBand: "NEW_TO_RUNNING" | "EXPERIENCED" = "EXPERIENCED") {
   const result = generatePlanFromDraft({ eventGroup: "FIVE_K", eventDistanceM: 5000,
@@ -278,15 +281,15 @@ describe("catalog picker actionable and truthful review", () => {
       athleteRecords={[]} selectedRecordId={null} comparisonRecordId={null} prescriptionBinding={source.prescriptionBinding}
       recordConfirmationPending={false} onSelectRecord={vi.fn()} onCompareRecord={vi.fn()} onConfirmRecord={vi.fn()}
       onBack={vi.fn()} onSelect={onSelect} onCatalogChange={vi.fn()} startDateValue="2026-09-30" />)
-    fireEvent.click(screen.getByRole("button", { name: "처방 확인·조절" }))
-    expect(screen.getByText("다른 훈련으로 바꾸기", { exact: true }).closest("details")).toHaveAttribute("open")
+    fireEvent.click(screen.getByRole("button", { name: "훈련 조절" }))
+    expect(screen.getByRole("region", { name: "다른 훈련으로 바꾸기" })).toBeVisible()
     fireEvent.change(screen.getByRole("combobox", { name: "훈련 구성" }), { target: { value: "X-LT-01" } })
-    expect(screen.getByRole("button", { name: "이 계획으로 시작하기" })).toBeDisabled()
+    expect(screen.getByText("계획 A로 시작", { selector: "button" })).toBeDisabled()
     expect(screen.getByRole("button", { name: "이 일정으로 시작" })).toBeDisabled()
     expect(screen.getByRole("combobox", { name: "바꿀 일정" })).toBeDisabled()
     expect(screen.getByText("바꾼 훈련을 적용하거나 취소해 주세요.")).toBeVisible()
     fireEvent.click(screen.getByRole("button", { name: "변경 취소" }))
-    expect(screen.getByRole("button", { name: "이 계획으로 시작하기" })).toBeEnabled()
+    expect(screen.getByText("계획 A로 시작", { selector: "button" })).toBeEnabled()
     expect(screen.getByRole("button", { name: "이 일정으로 시작" })).toBeEnabled()
     expect(screen.getByRole("combobox", { name: "바꿀 일정" })).toBeEnabled()
     expect(onSelect).not.toHaveBeenCalled()

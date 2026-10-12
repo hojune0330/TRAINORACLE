@@ -1,0 +1,54 @@
+/* Role-based emphasis. Never apply to the saved journal paper coordinate frame. */
+.app-heading.app-heading {
+  display: block;
+  margin: 0;
+  min-width: 0;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-weight: var(--fw-app-heading);
+  line-height: var(--lh-app-heading);
+  letter-spacing: 0;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+.app-heading.app-heading--screen { font-size: var(--fs-app-title); }
+.app-heading.app-heading--hero { font-size: var(--fs-app-hero); }
+.app-heading.app-heading--section { font-size: var(--fs-h3); }
+.entry-chooser__title.app-heading,
+.journal-archive__title.app-heading,
+.import-activities__title.app-heading { margin-top: var(--space-1); }
+.guided-empty-state__title.app-heading { margin-top: var(--space-3); }
+.app-heading--accent::before {
+  content: "";
+  display: block;
+  width: 28px;
+  height: 2px;
+  margin-bottom: var(--space-3);
+  background: var(--brand);
+}
+
+.app-metric__value {
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--fs-app-metric);
+  font-weight: var(--fw-app-heading);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.app-metric__value .app-metric__unit {
+  color: var(--ink-2);
+  font-size: var(--fs-body-sm);
+  font-weight: 500;
+}
+
+/* A compact chrome label is not a second competing screen heading. */
+.app-chrome-title {
+  margin: 0;
+  min-width: 0;
+  color: var(--ink-2);
+  font: 600 var(--fs-body-sm) / 1.5 var(--sans);
+  text-align: center;
+}

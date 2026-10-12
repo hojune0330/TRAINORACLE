@@ -43,6 +43,25 @@ it("keeps semantic stages in Back without adding entries while typing", async ()
   expect(JSON.stringify(window.history.state)).not.toContain("121.5")
 })
 
+it("closes the whole pace tool from track guidance and returns to the opener", async () => {
+  render(<AppShell />)
+  fireEvent.change(screen.getByRole("textbox", { name: "남겨 둔 입력" }), { target: { value: "보존" } })
+  fireEvent.click(screen.getByRole("button", { name: "페이스 도구 열기" }))
+  fireEvent.click(await screen.findByRole("button", { name: "800m" }))
+  fireEvent.change(screen.getByRole("textbox", { name: "분" }), { target: { value: "2" } })
+  fireEvent.change(screen.getByRole("textbox", { name: "초" }), { target: { value: "1.5" } })
+  fireEvent.click(screen.getByRole("button", { name: "페이스 보기" }))
+  const trackAction = screen.getByRole("button", { name: /트랙 안내/u })
+  expect(trackAction).toHaveTextContent("레인 계산은 아직 준비 중이에요")
+  fireEvent.click(trackAction)
+  expect(screen.getByRole("heading", { name: "트랙 안내" })).toBeVisible()
+  expect(window.history.state).toMatchObject({ trainoracleOverlay: { depth: 4, kind: "pace", stage: "track" } })
+
+  fireEvent.click(screen.getByRole("button", { name: "페이스 도구 닫기" }))
+  await waitFor(() => expect(screen.getByRole("heading", { name: "출발 화면" })).toBeVisible())
+  expect(screen.getByRole("textbox", { name: "남겨 둔 입력" })).toHaveValue("보존")
+})
+
 it("invalidates pace callbacks and private tool state on account switch", async () => {
   render(<AppShell />)
   fireEvent.click(screen.getByRole("button", { name: "페이스 도구 열기" }))

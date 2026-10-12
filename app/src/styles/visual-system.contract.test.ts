@@ -17,6 +17,34 @@ function sourceFiles(root: string): readonly string[] {
 }
 
 describe("shared visual system", () => {
+  it("scopes softer reference controls to tasks and respects both motion preferences", () => {
+    const tokens = readFileSync("../colors_and_type.css", "utf8")
+    const task = readFileSync("src/styles/task-flow.css", "utf8")
+    const app = readFileSync("src/styles/app.css", "utf8")
+    expect(tokens).toContain("--r-action: 12px")
+    expect(tokens).toContain("--r-task-surface: 16px")
+    expect(task).toContain('.task-flow[data-task-reduced-motion="true"] button:not(:disabled):not([aria-disabled="true"]):active { transform: none; }')
+    expect(task).toContain("@media (prefers-reduced-motion: reduce)")
+    expect(app).not.toMatch(/\.quick-log__(?:choices|rpe-grid|slot) button:active/u)
+  })
+
+  it("keeps plan summaries and writing backgrounds free of redundant decorative lines", () => {
+    const instant = readFileSync("src/components/instant-plan/instant-plan.css", "utf8")
+    const plan = readFileSync("src/styles/plan-beta.css", "utf8")
+    const writer = readFileSync("src/screens/journal/journal-decoration-preview.css", "utf8")
+    const app = readFileSync("src/styles/app.css", "utf8")
+    const rule = (css: string, selector: string) => css.slice(css.indexOf(`${selector} {`)).split("}")[0]!
+    for (const [css, selector] of [[instant, ".instant-plan__status"], [plan, ".plan-training-flow"],
+      [plan, ".plan-detailed-options"], [plan, ".active-plan__information"]] as const) {
+      expect(css, selector).toContain(`${selector} {`)
+      expect(rule(css, selector), selector).not.toMatch(/border(?:-block|-top|-bottom)?\s*:/u)
+    }
+    expect(writer).not.toContain(".journal-writing-decoration-preview__theme")
+    expect(rule(app, ".quick-log__paper")).not.toContain("background-image")
+    expect(plan).toContain(".plan-training-flow__days {")
+    expect(instant).toContain(".instant-plan :is(button, input, select, a, summary):focus-visible")
+  })
+
   it("self-hosts one variable Korean interface font", () => {
     const indexHtml = readFileSync("index.html", "utf8")
     const tokens = readFileSync("../colors_and_type.css", "utf8")
@@ -174,11 +202,15 @@ describe("shared visual system", () => {
     expect(css).toMatch(/var\(--game-/u)
   })
 
-  it("keeps the analysis back label on one line without widening its symmetric header tracks", () => {
+  it("centers the analysis chrome between equal flexible tracks while keeping both tools touch-safe", () => {
     const trends = readFileSync("src/screens/Trends.tsx", "utf8")
+    const css = readFileSync("src/screens/trends/trends-hub.css", "utf8")
 
-    expect(trends).toContain('gridTemplateColumns: "64px minmax(0, 1fr) 64px"')
-    expect(trends).toContain('gap: 3')
-    expect(trends).toContain('<span style={{ whiteSpace: "nowrap" }}>뒤로</span>')
+    expect(trends).toContain('className="trends-hub__header"')
+    expect(trends).toContain('className="app-chrome-title">오라클</h1>')
+    expect(css).toContain("grid-template-columns: minmax(64px, 1fr) auto minmax(64px, 1fr)")
+    expect(css).toContain("min-height: var(--app-touch-min)")
+    expect(css).toContain(".trends-hub__back span { white-space: nowrap; }")
+    expect(css).toContain(".trends-hub__pace { justify-self: end; }")
   })
 })

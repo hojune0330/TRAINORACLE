@@ -67,6 +67,7 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
     const code = typeof error === "object" && error !== null && "code" in error ? error.code
       : error instanceof Error ? error.message : "FAILED"
     if (code === "STALE") return "STALE"
+    if (code === "REVIEW_REQUIRED") return "REVIEW_REQUIRED"
     if (code === "CONFLICT") { change("CONFLICT"); return "CONFLICT" }
     if (code === "INVALID" || code === "INVALID_RESPONSE") { change("INVALID"); return "INVALID" }
     if (code === "AUTH_REQUIRED") { change("AUTH_REQUIRED"); return "FAILED" }
@@ -227,10 +228,12 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
       receipt: (owner, op) => attempt(() => client.receipt(owner, op)),
       readPart: (owner, kind, id) => attempt(() => client.readPart(owner, kind, id)),
       stage: (owner, part) => attempt(() => client.stage(owner, part)),
-      commit: request => attempt(() => client.commit(request)),
+      commit: (request, beforeSend) => attempt(() => client.commit(request,
+        () => guard() && (beforeSend?.() ?? true) && guard())),
     },
       scope: () => current() && guard() ? { ownerId: input.ownerId, epoch: openingEpoch } : null,
       freshSelectionReview: () => {
+        if (pending.archiveReviewRequired) return online() && review() === true
         const selected = pending.next.index.currentPlanId
         const doc = joinAccountPlanCollection(pending.next), entry = doc?.data.plans.find(p => p.planId === selected)
         return online() && !!entry && readAccountPlanEntry(entry, input.readTrusted).kind === "read_only" && review() === true
@@ -342,17 +345,21 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
   async function save(base: AccountPlanDocument, next: AccountPlanDocument, sequence: number,
     review: () => boolean = () => false, migration?: AccountPlanCollectionLegacy,
     guard: () => boolean = () => true, allowedLegacySource?: string, journalGuard?: AccountPlanJournalGuard,
-    paceRecordGuard?: AccountPlanPaceRecordGuard): Promise<AccountPlanResult> {
+    paceRecordGuard?: AccountPlanPaceRecordGuard, archiveReviewRequired?: true): Promise<AccountPlanResult> {
     if (next.data.plans.length > 100) return "CAPACITY"
     await yieldTask(); check()
     if (!guard()) return "STALE"
+    const requiresSelectionReview = next.data.currentPlanId !== null && next.data.currentPlanId !== base.data.currentPlanId
+    const acceptsIntent = () => guard() && (!requiresSelectionReview || review())
+    if (!acceptsIntent()) return "REVIEW_REQUIRED"
     const transfer = prepareAccountPlanCollectionTransfer({ ownerId: input.ownerId,
       operationId: input.operationId?.() ?? crypto.randomUUID(), expectedRevision: revision,
       previous: index ? base : null, next, ...(migration ? { legacy: migration } : {}),
       ...(journalGuard === undefined || next.data.currentPlanId === base.data.currentPlanId ? {} : { journalGuard }),
-      ...(paceRecordGuard === undefined || next.data.currentPlanId === base.data.currentPlanId ? {} : { paceRecordGuard }) })
+      ...(paceRecordGuard === undefined || next.data.currentPlanId === base.data.currentPlanId ? {} : { paceRecordGuard }),
+      ...(archiveReviewRequired === undefined ? {} : { archiveReviewRequired }) })
     if (!transfer) return "INVALID"
-    await local().save(transfer, sequence); check(); change("PENDING")
+    await local().save(transfer, sequence, acceptsIntent); check(); change("PENDING")
     if (!guard()) return "STALE"
     return flush(review, guard, allowedLegacySource)
   }
@@ -418,9 +425,11 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
     if (captured.kind === "SELECT" && captured.paceRecordGuard !== undefined
       && (paceSource.kind !== "ready" || captured.paceRecordGuard.documentId !== paceSource.guard.documentId
         || captured.paceRecordGuard.revision !== paceSource.guard.revision)) return Promise.resolve("REVIEW_REQUIRED")
-    const sourceCurrent = () => captured.kind !== "SELECT" || accountPlanPaceSourceStillCurrent(captured.packet, input.ownerId, paceSource)
+    const sourceCurrent = () => captured.kind === "ARCHIVE"
+      ? captured.freshReview === undefined || captured.freshReview() === true
+      : captured.kind !== "SELECT" || accountPlanPaceSourceStillCurrent(captured.packet, input.ownerId, paceSource)
     return serialize(async () => {
-      const ready = await writable(expectedFingerprint)
+      const ready = await writable(expectedFingerprint, captured.kind === "ARCHIVE" ? sourceCurrent : undefined)
       if (!ready) return "STALE"
       const { base, sequence } = ready, next = structuredClone(base), at = now()
       if (captured.kind === "ARCHIVE") {
@@ -453,8 +462,10 @@ export function createAccountPlanCollectionService(input: AccountPlanCollectionS
         }
       }
       check()
-      return save(base, next, sequence, () => captured.kind === "SELECT" && sourceCurrent() && captured.freshReview(), undefined, sourceCurrent,
-        undefined, captured.kind === "SELECT" ? captured.journalGuard : undefined, paceSource.kind === "ready" ? paceSource.guard : undefined)
+      return save(base, next, sequence, () => captured.kind === "ARCHIVE" ? sourceCurrent()
+        : captured.kind === "SELECT" && sourceCurrent() && captured.freshReview(), undefined, sourceCurrent,
+        undefined, captured.kind === "SELECT" ? captured.journalGuard : undefined, paceSource.kind === "ready" ? paceSource.guard : undefined,
+        captured.kind === "ARCHIVE" && captured.freshReview !== undefined ? true : undefined)
     }, "FAILED", failure)
   }
   return {

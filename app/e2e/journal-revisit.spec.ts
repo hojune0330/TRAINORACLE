@@ -55,11 +55,15 @@ test("revisits a past journal without duplicating it and adds a same-date check-
   await page.getByTestId(`journal-edit-${ENTRY_ID}`).click()
 
   // Then
+  await page.getByRole("button", { name: "실제로 한 운동 수정", exact: true }).click()
   await expect(page.getByLabel("세션 제목")).toHaveValue("Past revisit session")
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
+  await page.getByRole("button", { name: "거리와 시간 수정", exact: true }).click()
   await expect(page.getByLabel("거리 (km)")).toHaveValue("5")
 
   // When
   await page.getByLabel("거리 (km)").fill("6")
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
   await page.getByRole("button", { name: /수정 저장/u }).click()
 
   // Then
@@ -72,11 +76,15 @@ test("revisits a past journal without duplicating it and adds a same-date check-
   }, { date: DATE, entryId: ENTRY_ID })
   expect(afterEdit).toHaveLength(1)
   expect(afterEdit[0]).toMatchObject({ distanceKm: "6" })
+  await page.locator(".journal-save-result").getByRole("button", { name: "기록 보기", exact: true }).click()
 
   // When
   await page.getByTestId("journal-manage-toggle").click()
   await page.getByTestId("journal-add-entry").click()
   await page.getByTestId("entry-choice-evening").click()
+  await page.getByRole("button", { name: "수면", exact: true }).click()
+  await page.getByRole("button", { name: /^수면 질 3 /u }).click()
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
   await page.getByRole("button", { name: /^저장/u }).click()
 
   // Then
@@ -87,10 +95,11 @@ test("revisits a past journal without duplicating it and adds a same-date check-
     return parsed.filter((entry) => typeof entry === "object" && entry !== null && "date" in entry && entry.date === date)
   }, DATE)
   expect(sameDateEntries).toHaveLength(2)
+  await page.locator(".journal-save-result").getByRole("button", { name: "기록 보기", exact: true }).click()
   await expect(page.getByRole("button", { name: /훈련 · Past revisit session.+펼쳐보기/u })).toBeVisible()
   await page.getByTestId("journal-manage-toggle").click()
   await expect(page.getByRole("button", { name: "훈련 기록 수정" })).toBeVisible()
-  await expect(page.getByRole("button", { name: "하루 마무리 수정" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "컨디션·메모 수정" })).toBeVisible()
 })
 
 test("swipes between real diary dates and returns the selected page to its content top", async ({ page }) => {

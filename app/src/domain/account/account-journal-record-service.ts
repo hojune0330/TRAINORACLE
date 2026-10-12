@@ -23,6 +23,8 @@ let hydration: Promise<boolean> | null = null
 let unsubscribeScope: (() => void) | null = null
 type LifecycleRequest = Extract<AccountJournalRequest<AccountJournalRecord>, { action: "delete" | "restore" }>
 const lifecycleRequests = new Map<string, LifecycleRequest>()
+// Only the unavailable historical source is terminal, never the current document.
+const unavailableRestoreSources = new Set<string>()
 const deleted = new Map<string, number>()
 export function accountJournalDeletedDocuments() { return owner === activeLocalAccount() ? [...deleted].map(([documentId, revision]) => ({ documentId, revision })) : [] }
 export function accountJournalRecordsEnabled() { return accountJournalPreviewEnabled() && activeLocalAccount() !== null }
@@ -38,7 +40,7 @@ function context() {
   const userId = activeLocalAccount()
   if (!accountJournalRecordsEnabled() || !userId) return null
   if (owner !== userId || !buffer) {
-    buffer?.close(); generation += 1; owner = userId; deleted.clear(); lifecycleRequests.clear()
+    buffer?.close(); generation += 1; owner = userId; deleted.clear(); lifecycleRequests.clear(); unavailableRestoreSources.clear()
     work = Promise.resolve(); hydration = null
     buffer = createAccountDocumentBuffer(accountJournalRecordSchema, "trainoracle-account-journal-records-v1")
     resetAccountJournalProjection(userId)
@@ -51,7 +53,7 @@ function context() {
 }
 export function disposeAccountJournalRecords() {
   unsubscribeScope?.(); unsubscribeScope = null
-  generation += 1; buffer?.close(); buffer = null; owner = null; lifecycleRequests.clear(); deleted.clear()
+  generation += 1; buffer?.close(); buffer = null; owner = null; lifecycleRequests.clear(); deleted.clear(); unavailableRestoreSources.clear()
   work = Promise.resolve(); hydration = null; resetAccountJournalProjection(null)
 }
 
@@ -698,38 +700,67 @@ export async function deleteAccountJournalRecord(entryId: string) {
   }, false)
 }
 
-export async function restoreAccountJournalVersion(documentId: string, sourceRevision: number, expectedRevision: number) {
+export type AccountJournalRestoreResult = { readonly ok: true } | {
+  readonly ok: false
+  readonly code: "SOURCE_UNAVAILABLE" | "REMOTE_CHANGED" | "CONFLICT" | "FAILED" | "STALE_RESPONSE"
+}
+
+export async function restoreAccountJournalVersionResult(documentId: string, sourceRevision: number, expectedRevision: number): Promise<AccountJournalRestoreResult> {
   const ctx = context()
-  if (!ctx) return false
+  const failed = { ok: false, code: "FAILED" } as const
+  const stale = { ok: false, code: "STALE_RESPONSE" } as const
+  if (!ctx) return failed
+  const sourceKey = JSON.stringify([documentId, sourceRevision])
   const storageRevision = currentStorageConsentRevision(ctx.ownerId)
-  return serialize(ctx, async () => {
+  return serialize<AccountJournalRestoreResult>(ctx, async () => {
+    if (unavailableRestoreSources.has(sourceKey)) return { ok: false, code: "SOURCE_UNAVAILABLE" }
+    const sourceUnavailable = (): AccountJournalRestoreResult => {
+      unavailableRestoreSources.add(sourceKey)
+      lifecycleRequests.delete(documentId)
+      return { ok: false, code: "SOURCE_UNAVAILABLE" }
+    }
     const cached = await ctx.buffer.read(ctx.ownerId, documentId)
-    if ((cached && cached.state !== "DRAFT_ACKNOWLEDGED") || !ctx.current()) return false
+    if (!ctx.current()) return stale
+    if (cached && cached.state !== "DRAFT_ACKNOWLEDGED") return failed
     let request = lifecycleRequests.get(documentId)
-    if (request && (request.action !== "restore" || request.sourceRevision !== sourceRevision || request.expectedRevision !== expectedRevision)) return false
+    if (request && (request.action !== "restore" || request.sourceRevision !== sourceRevision || request.expectedRevision !== expectedRevision)) return { ok: false, code: "CONFLICT" }
     if (!request) {
       // A reload loses in-memory operation IDs. Always reconcile the server base
       // before creating a fresh lifecycle operation, never guess from the cache.
       const remote = await reconcileDocument(ctx, documentId)
-      if (!remote?.clean || remote.data.revision !== expectedRevision || !ctx.current()) return false
+      if (!ctx.current()) return stale
+      if (!remote?.clean) return failed
+      if (remote.data.revision !== expectedRevision) return { ok: false, code: "REMOTE_CHANGED" }
       const history = await accountJournalRecordHistory(documentId)
-      if (!history?.versions.some(version => version.revision === sourceRevision) || !ctx.current()) return false
+      if (!ctx.current()) return stale
+      if (!history) return failed
+      if (!history.versions.some(version => version.revision === sourceRevision)) return sourceUnavailable()
       request = { action: "restore", documentId, sourceRevision, expectedRevision, operationId: crypto.randomUUID() }
       pinStorageOperationRevision(ctx.ownerId, request.operationId, storageRevision)
       lifecycleRequests.set(documentId, request)
     }
     const result = await requestAccountDocument(ctx.ownerId, request, ctx.current, accountJournalRecordSchema)
-    if (ctx.current() && (result.ok ? result.data.kind === "conflict" : result.code === "CONFLICT")) {
+    if (!ctx.current()) return stale
+    if (result.ok ? result.data.kind === "source_unavailable" : result.code === "SOURCE_UNAVAILABLE") return sourceUnavailable()
+    if (result.ok ? result.data.kind === "conflict" : result.code === "CONFLICT") {
       lifecycleRequests.delete(documentId)
       await reconcileDocument(ctx, documentId)
-      return false
+      if (!ctx.current()) return stale
+      return { ok: false, code: result.ok && result.data.kind === "conflict"
+        && result.data.currentRevision !== expectedRevision ? "REMOTE_CHANGED" : "CONFLICT" }
     }
-    if (!result.ok || result.data.kind !== "restored" || !ctx.current()) return false
+    if (!result.ok || result.data.kind !== "restored") return failed
     const restored = await reconcileDocument(ctx, documentId)
-    if (!restored || !ctx.current()) return false
+    if (!ctx.current()) return stale
+    if (!restored) return failed
     lifecycleRequests.delete(documentId)
-    return restored.clean && restored.data.kind === "document" && restored.data.revision === result.data.revision
-  }, false)
+    return restored.clean && restored.data.kind === "document" && restored.data.revision === result.data.revision ? { ok: true } : failed
+  }, failed)
+}
+
+/** Preserve the existing deletion-undo and browser-harness boolean contract. */
+export async function restoreAccountJournalVersion(documentId: string, sourceRevision: number, expectedRevision: number): Promise<boolean> {
+  return (await restoreAccountJournalVersionResult(documentId, sourceRevision, expectedRevision)).ok
 }
 
 export async function readAccountJournalRecordVersion(entryId: string) {

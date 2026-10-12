@@ -1,6 +1,6 @@
 import { act, cleanup, renderHook } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
-import { useCalendarEntries } from "./useCalendarEntries"
+import { useCalendarEntries, useCalendarSnapshot } from "./useCalendarEntries"
 import { deleteEntry, restoreDeletedEntry, saveEntry } from "../domain/journal-store"
 import { updateEntry } from "../domain/journal-update"
 import { setActiveLocalAccount } from "../domain/account/local-journal-ownership"
@@ -37,4 +37,25 @@ it("never shows failed writes or another account's owned records", () => {
   vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("synthetic storage full") })
   act(() => { expect(updateEntry({ ...entry, distanceKm: "99", savedAt: "2026-09-27T03:00:00Z" }, entry.savedAt).ok).toBe(false) })
   expect(result.current[0]).toMatchObject({ distanceKm: "3" })
+})
+
+it("retries a temporary local read failure without replacing the stored journal", () => {
+  expect(saveEntry(entry).ok).toBe(true)
+  const read = Storage.prototype.getItem
+  let unavailable = true
+  vi.spyOn(Storage.prototype, "getItem").mockImplementation(function(this: Storage, key: string) {
+    if (key === "trainoracle.journal.v1" && unavailable) throw new Error("synthetic read failure")
+    return read.call(this, key)
+  })
+  const write = vi.spyOn(Storage.prototype, "setItem")
+  const { result } = renderHook(useCalendarSnapshot)
+  expect(result.current.status).toBe("ERROR")
+  expect(result.current.retry).toBeTypeOf("function")
+  unavailable = false
+  act(() => { result.current.retry?.() })
+  expect(result.current.status).toBe("READY")
+  expect(result.current.entries).toEqual([entry])
+  expect(result.current.retry).toBeUndefined()
+  expect(write.mock.calls.every(([key]) => key === "__to_probe__")).toBe(true)
+  expect(JSON.parse(localStorage.getItem("trainoracle.journal.v1")!)).toEqual([entry])
 })

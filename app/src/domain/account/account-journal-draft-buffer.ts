@@ -5,6 +5,7 @@ import { fileObservationSchema } from "../import/file-observation"
 import { accountJournalRecordSchema, correctAccountJournalImportedObservation, FILE_OBSERVATION_CORRECTION_FIELDS, applyAccountJournalComparisonMutation } from "./account-journal-record-schema"
 import { comparisonRelationSchema, releaseComparisonRelationRequestSchema } from "../import/comparison-relation"
 import { accountCalendarDecorationDocumentSchema } from "./account-calendar-decoration-schema"
+import { accountDeletionBoundaryState, onAccountDeletionBoundaryChange } from "./account-deletion-boundary"
 
 /** Local draft protection only, not authentication or server/account storage.
  * Callers must verify the current authenticated scope before every call and discard
@@ -58,6 +59,7 @@ function mutationMatches(envelope: MutationEnvelope, draft: unknown, expectedRev
   return proposal !== null && parsed.success && JSON.stringify(proposal) === JSON.stringify(parsed.data)
 }
 const operationSchema = z.object({
+  goalStartDateReviewRequired: z.literal(true).optional(),
   encryptedMutation: cipherSchema.optional(),
   rejection: accountJournalWriteRejectionSchema.optional(),
   writePurpose: z.enum(["MIGRATION", "FILE_OBSERVATION"]).optional(),
@@ -84,6 +86,7 @@ const archiveSchema = z.object({
 }).strict()
 export const MAX_CONFLICT_ARCHIVE_ENTRIES = 128
 const recordSchema = z.object({
+  goalStartDateReviewRequired: z.literal(true).optional(),
   storageConsentRevision: revision.optional(),
   encryptedMutation: cipherSchema.optional(),
   acknowledgedWritePurpose: z.literal("FILE_OBSERVATION").optional(),
@@ -103,6 +106,9 @@ const recordSchema = z.object({
   if (record.acknowledgedSequence > record.localSequence) invalid()
   if (record.serverRevision === 0 && record.acknowledgedSequence !== 0) invalid()
   const op = record.operation
+  if (op?.sequence === record.localSequence && op.goalStartDateReviewRequired !== record.goalStartDateReviewRequired) invalid()
+  if ((record.goalStartDateReviewRequired || op?.goalStartDateReviewRequired)
+    && (record.writePurpose || record.encryptedMutation || op?.writePurpose || op?.encryptedMutation)) invalid()
   if (record.encryptedMutation && (!op || op.sequence !== record.localSequence || record.writePurpose !== undefined)) invalid()
   if (op?.encryptedMutation && (op.writePurpose !== undefined || !record.encryptedMutation)) invalid()
   if (op?.sequence === record.localSequence
@@ -123,6 +129,7 @@ const recordSchema = z.object({
 
 export type AccountJournalDraftRecord = z.infer<typeof recordSchema>
 export type AccountJournalDraftPending<T = AccountJournalDraft> = {
+  goalStartDateReviewRequired?: true
   mutation?: AccountJournalMutation
   originalDraft?: T
   rejection?: AccountJournalWriteRejection
@@ -130,6 +137,7 @@ export type AccountJournalDraftPending<T = AccountJournalDraft> = {
   operationId: string; expectedRevision: number; sequence: number; draft: T
 }
 export type AccountJournalDraftView<T = AccountJournalDraft> = {
+  goalStartDateReviewRequired?: true
   acknowledgedWritePurpose?: "FILE_OBSERVATION"
   writePurpose?: "MIGRATION" | "FILE_OBSERVATION"
   ownerId: string; documentId: string; serverRevision: number
@@ -144,6 +152,12 @@ export type AccountJournalDraftView<T = AccountJournalDraft> = {
   recoverableVersions?: number
 }
 export type ConflictChoice = "LOCAL" | "REMOTE" | "DELETE"
+export type AccountGoalPendingReplacement<T> = {
+  expectedOperationId: string | null
+  expectedServerRevision: number
+  expectedDraft: T
+  remoteDraft: T | null
+}
 export type AccountJournalConflictArchive<T = AccountJournalDraft> = {
   version: 1; createdAt: string | null; localServerRevision: number | null
   localSequence: number; remoteRevision: number; deleted: boolean
@@ -152,6 +166,9 @@ export type AccountJournalConflictArchive<T = AccountJournalDraft> = {
 }
 export interface AccountJournalDraftBuffer<T = AccountJournalDraft> {
   saveDraft(owner: string, doc: string, draft: T, expectedLocalSequence?: number, writePurpose?: "MIGRATION" | "FILE_OBSERVATION"): Promise<void>
+  /** Complete collection intent and encrypted parts in one native transaction. */
+  saveDraftBatch?(owner: string, entries: readonly { documentId: string; draft: T; expectedLocalSequence: number; goalStartDateReviewRequired?: true;
+    replaceExpiredGoalPending?: AccountGoalPendingReplacement<T> }[], isCurrent?: () => boolean): Promise<void>
   read(owner: string, doc: string): Promise<AccountJournalDraftView<T> | null>
   list(owner: string): Promise<AccountJournalDraftView<T>[]>
   queue(owner: string, doc: string, operationId: string): Promise<void>
@@ -195,6 +212,12 @@ function parseDocument<T>(value: unknown, schema: z.ZodType<T>): T {
   // Do not propagate Zod input values into error logs.
   if (!result.success) throw new Error("Invalid journal draft")
   return result.data
+}
+
+function goalReviewMetadata(value: unknown, draft: unknown): true | undefined {
+  const flag = z.literal(true).optional().parse(value)
+  if (flag && (draft as { kind?: unknown } | null)?.kind !== "GOAL_PROGRAM_INDEX") throw Error("Invalid goal review metadata")
+  return flag
 }
 
 function deviceKey(value: unknown): CryptoKey {
@@ -242,13 +265,20 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
   if (!globalThis.crypto?.subtle) throw new Error("Web Crypto unavailable")
   const disposedOwners = new Set<string>()
   const transactions = new Map<IDBTransaction, string>()
+  const stopDeletion = onAccountDeletionBoundaryChange(owner => {
+    const parsed = uuid.safeParse(owner)
+    if (!parsed.success) return
+    const ownerId = parsed.data.toLowerCase()
+    disposedOwners.add(ownerId)
+    for (const [tx, txOwner] of transactions) if (txOwner === ownerId) tx.abort()
+  })
   let closed = false
   let database: Promise<IDBDatabase> | undefined
 
   function scope(owner: string, document?: string) {
     const ownerId = uuid.parse(owner).toLowerCase()
     const documentId = document === undefined ? undefined : uuid.parse(document).toLowerCase()
-    if (closed || disposedOwners.has(ownerId)) throw new Error("Draft buffer scope disposed")
+    if (closed || disposedOwners.has(ownerId) || accountDeletionBoundaryState(ownerId) !== "OPEN") throw new Error("Draft buffer scope disposed")
     return { ownerId, documentId }
   }
 
@@ -360,13 +390,16 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
     const { ownerId, documentId } = record
     const key = await keyFor(ownerId, false)
     const draft = await decrypt(key, ownerId, documentId, record.encryptedCurrent, schema, databaseName)
+    goalReviewMetadata(record.goalStartDateReviewRequired, draft)
     const op = record.operation
     // Older persisted jobs have no consent pin and remain local; loading them
     // after a new grant must not silently authorize an automatic upload.
     if (op) pinStorageOperationRevision(ownerId, op.operationId, 0)
     const pending: AccountJournalDraftPending<T> | null = op ? { operationId: op.operationId, expectedRevision: op.expectedRevision,
+      ...(op.goalStartDateReviewRequired ? { goalStartDateReviewRequired: op.goalStartDateReviewRequired } : {}),
       ...(op.writePurpose ? { writePurpose: op.writePurpose } : {}),
       sequence: op.sequence, ...(op.rejection ? { rejection: op.rejection } : {}), draft: await decrypt(key, ownerId, documentId, op.encryptedSnapshot, schema, databaseName) } : null
+    if (pending) goalReviewMetadata(pending.goalStartDateReviewRequired, pending.draft)
     if (op?.encryptedMutation && pending) {
       const envelope = await decrypt(key, ownerId, documentId, op.encryptedMutation, mutationEnvelopeSchema, `${databaseName}:mutation`)
       if (!mutationMatches(envelope, pending.draft, pending.expectedRevision)) throw new Error("Invalid journal mutation")
@@ -377,6 +410,7 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
       ? await decrypt(key, ownerId, documentId, record.blocked.encryptedRemote, schema, databaseName) : null
     scope(ownerId)
     return { ownerId, documentId, serverRevision: record.serverRevision,
+      ...(record.goalStartDateReviewRequired ? { goalStartDateReviewRequired: record.goalStartDateReviewRequired } : {}),
       ...(record.acknowledgedWritePurpose ? { acknowledgedWritePurpose: record.acknowledgedWritePurpose } : {}),
       ...(record.writePurpose ? { writePurpose: record.writePurpose } : {}),
       localSequence: record.localSequence, acknowledgedSequence: record.acknowledgedSequence,
@@ -389,6 +423,80 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
   }
 
   return {
+    async saveDraftBatch(owner, entries, isCurrent = () => true) {
+      const { ownerId } = scope(owner)
+      if (!isCurrent() || !Array.isArray(entries) || entries.length === 0 || entries.length > 39) throw Error("Invalid draft batch")
+      const storageRevision = currentStorageConsentRevision(ownerId)
+      const fresh = () => {
+        scope(ownerId)
+        if (!isCurrent() || currentStorageConsentRevision(ownerId) !== storageRevision) throw Error("Draft batch scope changed")
+      }
+      const captured = entries.map(entry => {
+        const draft = parseDocument(structuredClone(entry.draft), schema)
+        const replacement = entry.replaceExpiredGoalPending
+        if (replacement && (!entry.goalStartDateReviewRequired || goalReviewMetadata(true, replacement.expectedDraft) !== true
+          || replacement.remoteDraft !== null && goalReviewMetadata(true, replacement.remoteDraft) !== true)) throw Error("Invalid goal pending replacement")
+        return { documentId: scope(ownerId, entry.documentId).documentId!, draft,
+          expectedLocalSequence: sequence.parse(entry.expectedLocalSequence),
+          goalStartDateReviewRequired: goalReviewMetadata(entry.goalStartDateReviewRequired, draft),
+          replacement: replacement ? { expectedOperationId: replacement.expectedOperationId === null ? null : uuid.parse(replacement.expectedOperationId),
+            expectedServerRevision: revision.parse(replacement.expectedServerRevision),
+            expectedDraft: parseDocument(structuredClone(replacement.expectedDraft), schema),
+            remoteDraft: replacement.remoteDraft === null ? null : parseDocument(structuredClone(replacement.remoteDraft), schema) } : undefined }
+      })
+      if (new Set(captured.map(entry => entry.documentId)).size !== captured.length) throw Error("Duplicate batch document")
+      const key = await keyFor(ownerId, true)
+      fresh()
+      const encrypted = await Promise.all(captured.map(async entry => {
+        const cipher = await encrypt(key, ownerId, entry.documentId, entry.draft, databaseName)
+        let replacementBefore: AccountJournalDraftRecord | null = null, replacementRemote: Cipher | null = null
+        if (entry.replacement) {
+          replacementBefore = await get(ownerId, entry.documentId)
+          if (!replacementBefore || !replacementBefore.goalStartDateReviewRequired || replacementBefore.blocked
+            || replacementBefore.resolvedDeletion || replacementBefore.encryptedMutation || replacementBefore.writePurpose
+            || replacementBefore.serverRevision !== entry.replacement.expectedServerRevision
+            || (replacementBefore.operation?.operationId ?? null) !== entry.replacement.expectedOperationId
+            || replacementBefore.localSequence === replacementBefore.acknowledgedSequence
+            || (entry.replacement.expectedServerRevision === 0) !== (entry.replacement.remoteDraft === null)) throw Error("Goal pending base changed")
+          const previous = await decrypt(key, ownerId, entry.documentId, replacementBefore.encryptedCurrent, schema, databaseName)
+          if (JSON.stringify(previous) !== JSON.stringify(entry.replacement.expectedDraft)) throw Error("Goal pending bytes changed")
+          if (entry.replacement.remoteDraft !== null) replacementRemote = await encrypt(key, ownerId, entry.documentId, entry.replacement.remoteDraft, databaseName)
+        }
+        fresh(); return { ...entry, cipher, replacementBefore, replacementRemote }
+      }))
+      fresh()
+      await transaction<void>(ownerId, [RECORDS], "readwrite", (tx, finish, guard) => {
+        fresh()
+        const store = tx.objectStore(RECORDS)
+        let remaining = encrypted.length
+        for (const entry of encrypted) {
+          const request = store.get([ownerId, entry.documentId])
+          request.onsuccess = () => guard(() => {
+            fresh()
+            const old = request.result === undefined ? null : parseRecord(request.result, ownerId, entry.documentId)
+             if ((old?.localSequence ?? 0) !== entry.expectedLocalSequence || old?.blocked || old?.operation && !entry.replacement
+              || old?.resolvedDeletion || old?.encryptedMutation) throw Error("Draft batch base changed")
+             if (entry.replacement && (!old || JSON.stringify(old) !== JSON.stringify(entry.replacementBefore)
+               || old.conflictArchive.length >= MAX_CONFLICT_ARCHIVE_ENTRIES)) throw Error("Goal pending replacement changed")
+             const next: AccountJournalDraftRecord = old ? { ...old, localSequence: old.localSequence + 1, encryptedCurrent: entry.cipher }
+              : initial(ownerId, entry.documentId, entry.cipher)
+             if (entry.replacement && old) {
+               next.conflictArchive = [...old.conflictArchive, { version: 1, createdAt: new Date().toISOString(),
+                 localServerRevision: old.serverRevision, localSequence: old.localSequence,
+                 remoteRevision: entry.replacement.expectedServerRevision, encryptedLocal: old.encryptedCurrent,
+                 encryptedRemote: entry.replacementRemote, operation: old.operation, deleted: false, choice: "REVIEW" }]
+               next.operation = null
+               if (old.operation) next.retiredOperationIds = [...old.retiredOperationIds, old.operation.operationId]
+             }
+            next.storageConsentRevision = storageRevision
+             next.goalStartDateReviewRequired = entry.goalStartDateReviewRequired
+            store.put(parseRecord(next, ownerId, entry.documentId))
+            remaining -= 1
+            if (remaining === 0) { fresh(); finish(undefined) }
+          })
+        }
+      })
+    },
     async saveDraft(owner: string, doc: string, input: T, expectedLocalSequence?: number, writePurpose?: "MIGRATION" | "FILE_OBSERVATION") {
       const { ownerId, documentId } = scope(owner, doc)
       const storageConsentRevision = currentStorageConsentRevision(ownerId)
@@ -407,6 +515,7 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
         }
         const record = old ? { ...old, localSequence: old.localSequence + 1, encryptedCurrent: encrypted }
           : initial(ownerId, documentId!, encrypted)
+        if (record.goalStartDateReviewRequired) throw Error("Goal review requires atomic batch")
         record.storageConsentRevision = storageConsentRevision
         if (writePurpose) record.writePurpose = writePurpose
         else if (record.writePurpose === "FILE_OBSERVATION") delete record.writePurpose
@@ -458,6 +567,7 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
         // consent merely because an automatic flush creates its job later.
         pinStorageOperationRevision(ownerId, operationId, record.storageConsentRevision ?? 0)
         const operation = operationSchema.parse({ operationId, expectedRevision: record.serverRevision,
+          ...(record.goalStartDateReviewRequired ? { goalStartDateReviewRequired: record.goalStartDateReviewRequired } : {}),
           ...(record.writePurpose ? { writePurpose: record.writePurpose } : {}),
           sequence: record.localSequence, encryptedSnapshot: record.encryptedCurrent })
         return { record: { ...record, operation }, result: operation }
@@ -606,6 +716,7 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
         }
         const localSequence = old ? old.localSequence + 1 : 1
         const record = { ...(old ?? initial(ownerId, documentId!, encrypted)), encryptedCurrent: encrypted,
+          goalStartDateReviewRequired: undefined,
           serverRevision, localSequence, acknowledgedSequence: localSequence, resolvedDeletion: null,
           encryptedMutation: undefined, acknowledgedWritePurpose: undefined,
           ...(old?.writePurpose === "FILE_OBSERVATION" ? { writePurpose: undefined } : {}) }
@@ -678,6 +789,7 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
           serverRevision: remoteRevision, localSequence,
           acknowledgedSequence: choice === "LOCAL" ? record.acknowledgedSequence : localSequence,
           operation: null, blocked: null, encryptedMutation: undefined,
+          ...(choice !== "LOCAL" ? { goalStartDateReviewRequired: undefined } : {}),
           ...(record.encryptedMutation || record.writePurpose === "FILE_OBSERVATION" ? { writePurpose: undefined } : {}),
           resolvedDeletion: choice === "DELETE" ? remoteRevision : null,
           retiredOperationIds: record.operation
@@ -702,12 +814,14 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
         const envelope = op?.encryptedMutation ? await decrypt(key, ownerId, documentId!, op.encryptedMutation,
           mutationEnvelopeSchema, `${databaseName}:mutation`) : null
         const pendingDraft = op ? await decrypt(key, ownerId, documentId!, op.encryptedSnapshot, schema, databaseName) : null
+        if (op) goalReviewMetadata(op.goalStartDateReviewRequired, pendingDraft)
         if (envelope && !mutationMatches(envelope, pendingDraft, op!.expectedRevision)) throw new Error("Invalid archived journal mutation")
         versions.push({ version: item.version, createdAt: item.createdAt, localServerRevision: item.localServerRevision,
           localSequence: item.localSequence, remoteRevision: item.remoteRevision, deleted: item.deleted, choice: item.choice,
           local: await decrypt(key, ownerId, documentId!, item.encryptedLocal, schema, databaseName),
           remote: item.encryptedRemote ? await decrypt(key, ownerId, documentId!, item.encryptedRemote, schema, databaseName) : null,
           pending: op ? { operationId: op.operationId, expectedRevision: op.expectedRevision, sequence: op.sequence,
+            ...(op.goalStartDateReviewRequired ? { goalStartDateReviewRequired: op.goalStartDateReviewRequired } : {}),
             ...(envelope ? { mutation: envelope.mutation, originalDraft: parseDocument(envelope.original, schema) } : {}),
             ...(op.writePurpose ? { writePurpose: op.writePurpose } : {}),
             ...(op.rejection ? { rejection: op.rejection } : {}),
@@ -757,6 +871,7 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
     },
     close() {
       closed = true
+      stopDeletion()
       for (const tx of transactions.keys()) tx.abort()
       void database?.then(db => db.close(), () => undefined)
       database = undefined

@@ -10,8 +10,11 @@ import { replaceCandidateCatalogWorkout } from "../../domain/catalog-plan-bindin
 import { catalogScheduleConditions } from "../../domain/catalog-schedule-conditions"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null) })
-afterEach(() => { cleanup(); setActiveLocalAccount(null) })
+beforeEach(() => {
+  localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null)
+  vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-10-01T12:00:00Z"))
+})
+afterEach(() => { cleanup(); vi.useRealTimers(); setActiveLocalAccount(null) })
 function fixture() {
   const result = generatePlanFromDraft({ eventGroup: "FIVE_K", eventDistanceM: 5000, competitionDivision: "HIGH_SCHOOL",
     experienceBand: "EXPERIENCED", availableDayCount: 5, requestedFrameLength: 9, trainingFocus: "ATP_PC_INTENT",
@@ -41,7 +44,7 @@ describe("condition review to explicit detail application", () => {
     const snapshot = JSON.stringify(source.generated)
     const view = render(<PlanCandidates {...initial} />)
     fireEvent.click(screen.getByRole("button", { name: /공간 확인하고 상세 훈련 보기/u }))
-    expect(screen.getByText("다른 훈련으로 바꾸기", { exact: true }).closest("details")).toHaveAttribute("open")
+    expect(screen.getByRole("region", { name: "다른 훈련으로 바꾸기" })).toBeVisible()
     expect(screen.getByRole("combobox", { name: "바꿀 일정" })).toHaveValue(`${offer.day}:${offer.slot}`)
     expect(screen.getByRole("combobox", { name: "훈련 구성" })).toHaveValue(offer.catalogId)
     expect(screen.getByRole("checkbox", { name: spaceLabel })).not.toBeChecked()
@@ -135,9 +138,9 @@ describe("condition review to explicit detail application", () => {
     expect(screen.queryByText(/공간 확인하고 상세 훈련 보기/u, { selector: "button" })).toBeNull()
     expect(review).toHaveTextContent("2026-11-")
     expect(startButton()).toBeDisabled()
-    fireEvent.click(visibleButton("다른 계획 보기"))
-    expect(visibleButton("이 계획으로 시작하기")).toBeDisabled()
-    for (const action of screen.getAllByRole("button", { name: /선택하기$/u })) expect(action).toBeDisabled()
+    fireEvent.click(visibleButton("일정·운동 시간"))
+    expect(visibleButton("계획 A로 시작")).toBeDisabled()
+    for (const action of screen.getAllByRole("button", { name: /계획 [AB]로 시작$/u })) expect(action).toBeDisabled()
     fireEvent.click(within(review).getByRole("checkbox"))
     expect(startButton()).toBeDisabled()
     fireEvent.click(within(review).getByRole("button", { name: "이 날짜의 조건 확인" }))
@@ -205,8 +208,8 @@ describe("condition review to explicit detail application", () => {
       confirmedRequirements: ["ACCELERATION_AND_DECELERATION_SPACE"], segmentPaces: [], fiveK: null,
     })!
     const initial = props(source), view = render(<PlanCandidates {...initial} generated={generated} />)
-    fireEvent.click(screen.getByText("다른 훈련으로 바꾸기", { exact: true }))
-    const picker = screen.getByText("다른 훈련으로 바꾸기", { exact: true }).closest("details")!
+    fireEvent.click(screen.getByRole("button", { name: "훈련 조절" }))
+    const picker = screen.getByRole("region", { name: "다른 훈련으로 바꾸기" })
     expect(within(picker).getByRole("checkbox", { name: spaceLabel })).not.toBeChecked()
     fireEvent.click(within(picker).getByRole("checkbox", { name: spaceLabel }))
     fireEvent.click(within(picker).getByRole("button", { name: "이 구성으로 바꾸기" }))
@@ -247,7 +250,7 @@ describe("condition review to explicit detail application", () => {
     const review = screen.getByRole("group", { name: "이 날짜에도 운동할 환경이 갖춰져 있나요?" })
     fireEvent.click(within(review).getByRole("checkbox"))
     fireEvent.click(within(review).getByRole("button"))
-    fireEvent.click(screen.getByText("다른 훈련으로 바꾸기", { exact: true }))
+    fireEvent.click(screen.getByRole("button", { name: "훈련 조절" }))
     const checkbox = screen.getByRole("checkbox", { name: spaceLabel })
     expect(checkbox).toBeChecked()
     fireEvent.click(checkbox)

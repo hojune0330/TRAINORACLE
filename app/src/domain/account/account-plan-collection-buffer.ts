@@ -16,7 +16,8 @@ export type AccountPlanCollectionManifest = {
   next: AccountPlanCollectionIndex
   operation: { ownerId: string; operationId: string; expectedRevision: number;
     legacy: AccountPlanCollectionTransfer["legacy"]; journalGuard?: AccountPlanCollectionTransfer["journalGuard"];
-    paceRecordGuard?: AccountPlanCollectionTransfer["paceRecordGuard"] } | null
+    paceRecordGuard?: AccountPlanCollectionTransfer["paceRecordGuard"];
+    archiveReviewRequired?: AccountPlanCollectionTransfer["archiveReviewRequired"] } | null
   /** Actual collection revision for an observed baseline; the local journal has its own counter. */
   revision?: number
 }
@@ -29,9 +30,12 @@ export const accountPlanCollectionManifestSchema = z.object({
       fingerprint: z.string().regex(/^sha256:[a-f0-9]{64}$/u) }).strict().nullable(),
     journalGuard: accountPlanJournalGuardSchema.optional(),
     paceRecordGuard: accountPlanPaceRecordGuardSchema.optional(),
+    archiveReviewRequired: z.literal(true).optional(),
   }).strict().nullable(),
   revision: revision.optional(),
 }).strict().refine(m => m.operation ? (m.previous === null) === (m.operation.expectedRevision === 0) : m.revision !== undefined)
+  .refine(m => !m.operation?.archiveReviewRequired || m.operation.legacy === null
+    && m.previous?.currentPlanId != null && m.next.currentPlanId === null)
 
 export type AccountPlanCollectionBufferDependencies = {
   manifests?: AccountJournalConflictBuffer<AccountPlanCollectionManifest>
@@ -128,7 +132,8 @@ export function createAccountPlanCollectionBuffer(ownerId: string, isCurrent: ()
       next: captured.next.index, operation: { ownerId, operationId: captured.operationId,
         expectedRevision: captured.expectedRevision, legacy: captured.legacy,
         ...(captured.journalGuard === undefined ? {} : { journalGuard: captured.journalGuard }),
-        ...(captured.paceRecordGuard === undefined ? {} : { paceRecordGuard: captured.paceRecordGuard }) } }
+        ...(captured.paceRecordGuard === undefined ? {} : { paceRecordGuard: captured.paceRecordGuard }),
+        ...(captured.archiveReviewRequired === undefined ? {} : { archiveReviewRequired: captured.archiveReviewRequired }) } }
     const same = (v: Awaited<ReturnType<typeof readManifest>>) => v
       && accountPlanFingerprint(v.draft) === accountPlanFingerprint(manifest)
     const writable = (v: Awaited<ReturnType<typeof readManifest>>) => {
@@ -172,7 +177,7 @@ export function createAccountPlanCollectionBuffer(ownerId: string, isCurrent: ()
   async function read() { await recover(); return readManifest() }
   return {
     read, stage, readPart,
-    async save(transfer: AccountPlanCollectionTransfer, expectedSequence: number) {
+    async save(transfer: AccountPlanCollectionTransfer, expectedSequence: number, acceptsIntent?: () => boolean) {
       check()
       const captured = structuredClone(transfer)
       if (!readAccountPlanCollectionTransfer(captured) || captured.ownerId !== ownerId) throw Error("INVALID")
@@ -181,7 +186,9 @@ export function createAccountPlanCollectionBuffer(ownerId: string, isCurrent: ()
       // The complete accepted intent becomes durable atomically before any part is
       // staged. A stale scope may stop publication, never orphan the remaining input.
       try {
-        await preparations.save({ transfer: captured, expectedSequence }, current); check()
+        if (acceptsIntent) await preparations.save({ transfer: captured, expectedSequence }, current, acceptsIntent)
+        else await preparations.save({ transfer: captured, expectedSequence }, current)
+        check()
         await recover()
       } catch (error) { check(); throw error }
     },

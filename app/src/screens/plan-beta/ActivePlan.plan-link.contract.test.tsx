@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
@@ -6,8 +6,12 @@ import { ActivePlan } from "./ActivePlan"
 import { createInitialPeriodizationContext } from "../../domain/periodization-lineage"
 import { createPlannedSessionLogDraft } from "../../domain/planned-session-link"
 import { QuickSessionForm } from "../log-entry/QuickSessionForm"
+import { hasPendingBrowserBackLayer } from "../../navigation/browserNavigation"
 
-afterEach(cleanup)
+afterEach(async () => {
+  cleanup()
+  await waitFor(() => expect(hasPendingBrowserBackLayer()).toBe(false))
+})
 beforeEach(() => window.localStorage.clear())
 
 function plannedDraft() {
@@ -62,10 +66,12 @@ describe("active plan journal action", () => {
       />,
     )
 
-    await user.click(screen.getByRole("button", { name: "날짜별 카드 보기" }))
-    await user.click(screen.getAllByText(/훈련 방법과 기록/u)[0]!)
-    await user.click(screen.getByRole("button", { name: "이 훈련 일지 쓰기" }))
-    expect(onWriteSessionLog).toHaveBeenCalledWith(state.activePlan.sessions[0])
+    await user.click(screen.getByRole("button", { name: "목록" }))
+    const list = screen.getByRole("region", { name: "날짜별 훈련 목록" })
+    await user.click(within(list).getByRole("button", { name: "7월 24일 금요일 전체 처방 보기" }))
+    const reader = within(await screen.findByRole("dialog", { name: "2026년 7월 24일 금요일" }))
+    await user.click(reader.getByRole("button", { name: "이 훈련 일지 쓰기" }))
+    await waitFor(() => expect(onWriteSessionLog).toHaveBeenCalledWith(state.activePlan.sessions[0]))
   })
 
   it("shows the long direction without presenting it as automatic load progression", async () => {
@@ -85,8 +91,8 @@ describe("active plan journal action", () => {
       />,
     )
 
-    expect(screen.getByText("전체 계획 구성").closest("details")).not.toHaveAttribute("open")
-    await userEvent.setup().click(screen.getByText("전체 계획 구성"))
+    expect(screen.getByText("훈련 구성·시간").closest("details")).not.toHaveAttribute("open")
+    await userEvent.setup().click(screen.getByText("훈련 구성·시간"))
     expect(screen.getByText("24주 훈련 방향")).toBeVisible()
     expect(screen.getByText(/1\/18번째 계획/u)).toBeVisible()
     expect(screen.getByRole("progressbar", { name: "24주 훈련 방향 진행 위치" }))
@@ -109,10 +115,14 @@ describe("active plan journal action", () => {
       />,
     )
 
-    expect(screen.getByText("일지를 연결했어요. 수행 결과와 계획을 함께 확인할 수 있어요.")).toBeVisible()
-    expect(screen.getByText("수행 기록 있음")).toBeVisible()
-    expect(screen.getAllByRole("button", { name: "계획에도 완료 표시" })).toHaveLength(1)
-    await user.click(screen.getByRole("button", { name: "계획에도 완료 표시" }))
+    const reader = within(screen.getByRole("dialog"))
+    expect(reader.getByText("일지·진행 기록").closest("details")).toHaveAttribute("open")
+    expect(reader.getByText("일지를 연결했어요. 수행 결과와 계획을 함께 확인할 수 있어요.")).toBeVisible()
+    expect(reader.getByText("수행 기록 있음")).toBeVisible()
+    expect(reader.getAllByRole("button", { name: "계획에도 완료 표시" })).toHaveLength(1)
+    expect(onProgress).not.toHaveBeenCalled()
+    await user.click(reader.getByRole("button", { name: "계획에도 완료 표시" }))
+    expect(onProgress).toHaveBeenCalledOnce()
     expect(onProgress).toHaveBeenCalledWith({
       sessionDay: draft.link.sessionDay,
       sessionSlot: draft.link.sessionSlot,
@@ -123,21 +133,25 @@ describe("active plan journal action", () => {
   it.each([
     ["partial", { outcome: "PARTIAL", pain: "NONE" }],
     ["pain", { outcome: "COMPLETED", pain: "SIGNAL" }],
-  ] as const)("does not offer completion for a saved linked %s journal", (_case, input) => {
+  ] as const)("does not offer completion for a saved linked %s journal", async (_case, input) => {
     const { state, draft } = saveQuickPlanJournal(input)
+    const onProgress = vi.fn()
     render(
       <ActivePlan
         state={state}
         returnToSession={draft.link}
-        onProgress={vi.fn()}
+        onProgress={onProgress}
         onNextFrame={vi.fn()}
         onActivateNextFrame={vi.fn()}
         onCheckDetailedExecution={vi.fn()}
       />,
     )
 
-    expect(screen.getByText("일지를 연결했어요. 수행 결과와 계획을 함께 확인할 수 있어요.")).toBeVisible()
-    expect(screen.getByText(input.pain === "SIGNAL" ? "몸 상태 확인 기록 있음" : "일부 수행·변경 기록 있음")).toBeVisible()
+    const reader = within(await screen.findByRole("dialog"))
+    expect(reader.getByText("일지·진행 기록").closest("details")).toHaveAttribute("open")
+    expect(reader.getByText("일지를 연결했어요. 수행 결과와 계획을 함께 확인할 수 있어요.")).toBeVisible()
+    expect(reader.getByText(input.pain === "SIGNAL" ? "몸 상태 확인 기록 있음" : "일부 수행·변경 기록 있음")).toBeVisible()
     expect(screen.queryByRole("button", { name: "계획에도 완료 표시" })).toBeNull()
+    expect(onProgress).not.toHaveBeenCalled()
   })
 })

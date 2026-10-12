@@ -1,5 +1,6 @@
 import React from "react"
 import { PencilLine } from "lucide-react"
+import { AppHeading } from "./AppHeading"
 
 export function GuidedEmptyState({
   title,
@@ -17,7 +18,7 @@ export function GuidedEmptyState({
   return (
     <section className="guided-empty-state" aria-labelledby={titleId}>
       <PencilLine className="guided-empty-state__icon" aria-hidden="true" size={22} />
-      <h2 id={titleId}>{title}</h2>
+      <AppHeading as="h2" id={titleId} className="guided-empty-state__title">{title}</AppHeading>
       <p>{description}</p>
       {onAction !== undefined && (
         <button type="button" onClick={onAction}>

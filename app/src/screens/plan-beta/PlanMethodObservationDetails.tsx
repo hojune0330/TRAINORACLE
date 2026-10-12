@@ -21,9 +21,9 @@ export function PlanMethodObservationDetails({ observation, comparison }: { read
       {actual.distanceKm !== null && <><dt>직접 기록한 거리</dt><dd>{actual.distanceKm}km</dd></>}
       {actual.durationMin !== null && <><dt>직접 기록한 시간</dt><dd>{actual.durationMin}분</dd></>}
       {actual.secondsPerKm !== null && <><dt>직접 기록한 페이스</dt><dd>{formatTrainingSeconds(actual.secondsPerKm)}/km</dd></>}
-      <dt>체감 강도</dt><dd>{actual.rpe === null ? "비교할 수 있는 RPE 미기록" : `직접 기록한 RPE ${actual.rpe}`}</dd>
+      <dt>힘든 정도</dt><dd>{actual.rpe === null ? "미기록" : `${actual.rpe}/10 · 직접 입력`}</dd>
     </dl>
-    {comparison !== undefined && <p>계획 RPE와 비교: {comparison}</p>}
+    {comparison !== undefined && <p>계획한 힘든 정도와 비교: {comparison}</p>}
     <details><summary>어떤 기록을 비교하나요?</summary>
       {(actual.distanceKm === null || actual.durationMin === null || actual.secondsPerKm === null) && <p>
         {[actual.distanceKm === null ? "거리" : null, actual.durationMin === null ? "시간" : null,

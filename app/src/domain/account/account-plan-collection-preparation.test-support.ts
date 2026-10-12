@@ -8,7 +8,9 @@ export function createCollectionPreparationMemory() {
   const check = (current: () => boolean) => { if (!current()) throw Error("STALE") }
   const buffer: AccountPlanCollectionPreparationStore = {
     read: vi.fn(async (owner, current) => { check(current); return structuredClone(rows.get(owner) ?? null) }),
-    save: vi.fn(async (input, current) => {
+    save: vi.fn(async (input, current, acceptsIntent = () => true) => {
+      check(current)
+      if (!acceptsIntent()) throw Error("REVIEW_REQUIRED")
       check(current)
       const captured = structuredClone(input), old = rows.get(captured.transfer.ownerId)
       if (old && accountPlanFingerprint(old) !== accountPlanFingerprint(captured)) throw Error("CONFLICT")

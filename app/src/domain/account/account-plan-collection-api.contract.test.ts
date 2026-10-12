@@ -5,8 +5,10 @@ import { emptyAccountPlanDocument, accountPlanEntry } from "./account-plan-docum
 import { splitAccountPlanCollection } from "./account-plan-collection-schema"
 import { accountPlanPacketFixture } from "./account-plan.test-fixtures"
 import { accountPlanCollectionCommit, prepareAccountPlanCollectionTransfer } from "./account-plan-collection-transfer"
+import { createConsentCheckedFetch, LOCAL_COLLECTION_SEND_GUARD_HEADER } from "./consent-checked-fetch"
+import { pinStorageOperationRevision, rememberStorageConsentRevision } from "./storage-consent-revision"
 const OWNER = "11111111-1111-4111-8111-111111111111", OTHER = "22222222-2222-4222-8222-222222222222"
-afterEach(() => vi.restoreAllMocks())
+afterEach(() => { vi.restoreAllMocks(); localStorage.clear() })
 it("freezes commit source metadata before awaiting authentication", async () => {
   const doc = emptyAccountPlanDocument(), entry = accountPlanEntry(accountPlanPacketFixture(3))
   doc.data.plans.push(entry); doc.data.currentPlanId = entry.planId
@@ -31,6 +33,113 @@ function dependencies(data: unknown, error: unknown = null) {
   return { client: vi.fn().mockResolvedValue({ auth, functions: { invoke } } as unknown as SupabaseClient),
     owner: () => OWNER, invoke, auth }
 }
+function archiveRequest() {
+  const previous = emptyAccountPlanDocument(), entry = accountPlanEntry(accountPlanPacketFixture(3))
+  previous.data.plans.push(entry); previous.data.currentPlanId = entry.planId
+  const next = structuredClone(previous)
+  next.data.currentPlanId = null; next.data.plans[0]!.archivedAt = new Date().toISOString()
+  return accountPlanCollectionCommit(prepareAccountPlanCollectionTransfer({ ownerId: OWNER,
+    operationId: OTHER, expectedRevision: 1, previous, next, archiveReviewRequired: true })!)
+}
+it.each(["client", "session"] as const)("does not send a reviewed archive that expires while awaiting %s", async boundary => {
+  const deps = dependencies({ kind: "conflict" })
+  let fresh = true, release!: () => void, reached!: () => void
+  const held = new Promise<void>(resolve => { release = resolve })
+  const started = new Promise<void>(resolve => { reached = resolve })
+  if (boundary === "client") deps.client.mockImplementation(async () => {
+    reached(); await held; return { auth: deps.auth, functions: { invoke: deps.invoke } } as unknown as SupabaseClient
+  })
+  else deps.auth.getSession.mockImplementation(async () => {
+    reached(); await held
+    return { data: { session: { access_token: "synthetic-token-A", user: { id: OWNER } } }, error: null }
+  })
+  const sending = createAccountPlanCollectionClient(OWNER, () => true, deps).commit(archiveRequest(), () => fresh)
+  await started; fresh = false; release()
+  await expect(sending).rejects.toMatchObject({ code: "STALE" })
+  expect(deps.invoke).not.toHaveBeenCalled()
+})
+it("rechecks account ownership after a send-review callback changes it synchronously", async () => {
+  let owner = OWNER
+  const deps = { ...dependencies({ kind: "conflict" }), owner: () => owner }
+  await expect(createAccountPlanCollectionClient(OWNER, () => true, deps).commit(archiveRequest(), () => {
+    owner = OTHER; return true
+  })).rejects.toMatchObject({ code: "STALE" })
+  expect(deps.invoke).not.toHaveBeenCalled()
+})
+it("a throwing send-review callback fails closed before SDK access", async () => {
+  const deps = dependencies({ kind: "conflict" })
+  await expect(createAccountPlanCollectionClient(OWNER, () => true, deps).commit(archiveRequest(), () => {
+    throw new Error("synthetic expired review")
+  })).rejects.toMatchObject({ code: "STALE" })
+  expect(deps.client).not.toHaveBeenCalled()
+  expect(deps.invoke).not.toHaveBeenCalled()
+})
+it.each([false, true])("releases the local send marker when SDK transport finishes (failed: %s)", async failed => {
+  const request = archiveRequest(), deps = dependencies({ kind: "conflict" })
+  let nonce: string | null = null
+  deps.invoke.mockImplementation(async (_name, options) => {
+    nonce = new Headers(options.headers).get(LOCAL_COLLECTION_SEND_GUARD_HEADER)
+    expect(nonce).toMatch(/^[0-9a-f-]{36}$/u)
+    expect(options.body).toEqual({ action: "commit", request })
+    expect(JSON.stringify(options.body)).not.toContain("archiveReviewRequired")
+    if (failed) throw new Error("synthetic transport failure")
+    return { data: { kind: "conflict" }, error: null }
+  })
+  const sending = createAccountPlanCollectionClient(OWNER, () => true, deps).commit(request, () => true)
+  if (failed) await expect(sending).rejects.toMatchObject({ code: "UNAVAILABLE" })
+  else await expect(sending).resolves.toEqual({ kind: "conflict" })
+  const transport = vi.fn<typeof fetch>()
+  const token = `x.${btoa(JSON.stringify({ sub: OWNER }))}.x`
+  const response = await createConsentCheckedFetch("https://synthetic.supabase.co", transport)(
+    "https://synthetic.supabase.co/functions/v1/account-plan-collection", {
+      method: "POST", headers: { Authorization: `Bearer ${token}`, [LOCAL_COLLECTION_SEND_GUARD_HEADER]: nonce! },
+      body: JSON.stringify({ action: "commit", request }),
+    })
+  expect(response.status).toBe(403)
+  expect(transport).not.toHaveBeenCalled()
+})
+it.each(["consent", "consent body"] as const)("actual SDK cannot send an archive that expires during the %s await", async boundary => {
+  const origin = "https://synthetic.supabase.co"
+  const token = `x.${btoa(JSON.stringify({ sub: OWNER }))}.x`
+  const consent = { userId: OWNER, revision: 1, purposeVersion: "2026-10-05",
+    healthStorage: true, journalTextStorage: true, operationsReady: true }
+  rememberStorageConsentRevision(OWNER, 1)
+  const request = archiveRequest()
+  expect(pinStorageOperationRevision(OWNER, request.operationId)).toBe(1)
+  let fresh = true, release!: () => void, reached!: () => void
+  const held = new Promise<void>(resolve => { release = resolve })
+  const started = new Promise<void>(resolve => { reached = resolve })
+  const transport = vi.fn<typeof fetch>(async (url, options) => {
+    expect(new Headers(options?.headers).has("x-trainoracle-local-send-guard")).toBe(false)
+    if (String(url).endsWith("/rpc/get_account_storage_consent")) {
+      expect(options?.signal).toBeInstanceOf(AbortSignal)
+      if (boundary === "consent") { reached(); await held; return new Response(JSON.stringify(consent)) }
+      const response = new Response(JSON.stringify(consent))
+      vi.spyOn(response, "json").mockImplementation(async () => { reached(); await held; return consent })
+      return response
+    }
+    const body = JSON.parse(String(options?.body))
+    return new Response(JSON.stringify(body.action === "readIndex" ? { kind: "missing" } : { kind: "conflict" }),
+      { headers: { "Content-Type": "application/json" } })
+  })
+  const sdk = createClient(origin, "synthetic-anon", {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: `archive-await-${boundary}` },
+    global: { fetch: createConsentCheckedFetch(origin, transport) },
+  })
+  await sdk.auth.initialize()
+  vi.spyOn(sdk.auth, "getSession").mockResolvedValue({ data: { session: { user: { id: OWNER }, access_token: token } as Session }, error: null })
+  const api = createAccountPlanCollectionClient(OWNER, () => true, { client: async () => sdk, owner: () => OWNER })
+  const sending = api.commit(request, () => fresh)
+  await started
+  // A distinct read must remain reachable while this guarded request is waiting.
+  const unrelated = api.readIndex()
+  fresh = false; release()
+  await expect(sending).rejects.toMatchObject({ code: "STALE" })
+  await expect(unrelated).resolves.toBeNull()
+  const collectionCalls = transport.mock.calls.filter(([url]) => String(url).endsWith("/functions/v1/account-plan-collection"))
+  expect(collectionCalls).toHaveLength(1)
+  expect(JSON.parse(String(collectionCalls[0]?.[1]?.body))).toEqual({ action: "readIndex" })
+})
 it("reads the compact index without downloading all plan bodies", async () => {
   const index = splitAccountPlanCollection(emptyAccountPlanDocument()).index
   const deps = dependencies({ kind: "index", revision: 1, index })

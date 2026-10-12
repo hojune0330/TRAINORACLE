@@ -5,7 +5,7 @@ export const RECORD_REFERENCE_MAX_AGE_MONTHS = 18
 export const SEASON_WINDOW_MONTHS = RECORD_REFERENCE_MAX_AGE_MONTHS
 
 export function elapsedSinceAchieved(
-  record: AthleteRecord,
+  record: Pick<AthleteRecord, "achievedOn">,
   today: Date,
 ): { readonly months: number; readonly label: string } | null {
   if (record.achievedOn === null) return null

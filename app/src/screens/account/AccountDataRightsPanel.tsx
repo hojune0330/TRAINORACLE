@@ -25,7 +25,7 @@ export function AccountDataRightsPanel({ userId, exportData = exportAccountDataR
     anchor.click(); URL.revokeObjectURL(url)
     setNotice("선택한 자료의 열람 사본을 내려받았어요. 건강정보와 글이 포함될 수 있으니 안전한 곳에 보관해 주세요.")
   }
-  return <section className="account-panel" aria-label="내 자료 열람">
+  return <section className="account-panel" aria-label="내 자료 열람" aria-busy={busy}>
     <h2 style={{ margin: 0 }}>내 자료 내려받기</h2>
     <p className="account-panel__body">온라인 보관 동의를 철회해도 본인 자료를 직접 내려받을 수 있어요. 동의를 다시 켜거나 앱으로 자동 복구하지 않아요. 삭제는 계정 삭제에서 요청해 주세요.</p>
     <label>내려받을 자료 <select value={collection} disabled={busy} style={{ minHeight: 44 }}

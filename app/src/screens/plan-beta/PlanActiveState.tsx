@@ -38,8 +38,8 @@ import { prepareCurrentActivePlanEdit, applyActivePlanEdit, type ActivePlanEditS
 import { useEligibleAccountPaceRecords } from "../../hooks/useEligibleAccountPaceRecords"
 import { areCatalogPaceSourcesCurrent } from "../../domain/account/eligible-account-pace-records"
 import { LOCAL_JOURNALS_CHANGED } from "../../domain/journal-change-events"
-import { onLocalJournalScopeChange } from "../../domain/account/local-journal-ownership"
-import { localAccountScopeSnapshot } from "../../domain/account/local-account-scope"
+import { localJournalScopeGeneration, onLocalJournalScopeChange } from "../../domain/account/local-journal-ownership"
+import { localAccountScopeIsCurrent, localAccountScopeSnapshot } from "../../domain/account/local-account-scope"
 import { useLocalToday } from "../../hooks/useLocalToday"
 import { accountPlansEnabled } from "../../domain/account/account-plan-service"
 import { ensureAccountPlanHistory } from "../../domain/account/account-plan-domain"
@@ -49,36 +49,78 @@ type PersistenceRetry =
   | { readonly kind: "progress"; readonly progress: StoredPlanProgress }
   | { readonly kind: "activate"; readonly currentCheck: PlanCurrentCheck }
 
+export type PlanExecutionFeedback = {
+  readonly candidateId: string
+  readonly generatedAt: string
+  readonly owner: string | null
+  readonly scopeGeneration: number
+  readonly message: string
+}
+
 export function PlanActiveState({
   state,
   cloudPersistence = "DEVICE_ONLY",
   onRetryCloudBackup,
   celebrateOnMount = false,
+  executionFeedback,
   onStateChange,
   onPrepareNextFrame,
   onWritePlannedSessionLog,
   onManagePaceRecords,
+  onEditingChange,
   returnToSession,
 }: {
   readonly state: PlanBetaState
   readonly cloudPersistence?: PlanCloudPersistenceState
   readonly onRetryCloudBackup?: () => void
   readonly celebrateOnMount?: boolean
-  readonly onStateChange: (state: PlanBetaState) => void
+  readonly executionFeedback?: PlanExecutionFeedback
+  readonly onStateChange: (state: PlanBetaState, feedback?: PlanExecutionFeedback) => void
   readonly onPrepareNextFrame: (predecessor: PlanBetaStateV3) => void
   readonly onWritePlannedSessionLog?: (draft: PlannedSessionLogDraft) => void
   readonly onManagePaceRecords?: () => void
+  /** Presentation only: hide unrelated tools while the existing editor is open. */
+  readonly onEditingChange?: (editing: boolean) => void
   readonly returnToSession?: PlannedSessionLogDraft["link"]
 }) {
   const [error, setError] = React.useState<string | null>(null)
   const { records } = useEligibleAccountPaceRecords()
   const [retry, setRetry] = React.useState<PersistenceRetry | null>(null)
   const [executionMessage, setExecutionMessage] = React.useState<string | null>(null)
+  React.useEffect(() => {
+    if (executionFeedback
+      && executionFeedback.candidateId === state.activePlan.candidateId
+      && executionFeedback.generatedAt === state.generatedAt
+      && localAccountScopeIsCurrent(executionFeedback.owner)
+      && executionFeedback.scopeGeneration === localJournalScopeGeneration()) {
+      setExecutionMessage(executionFeedback.message)
+    }
+  }, [executionFeedback, state.activePlan.candidateId, state.generatedAt])
   const [executionBlocked, setExecutionBlocked] = React.useState(false)
   const [editing, setEditing] = React.useState<ActivePlanEditIntent | "hub" | null>(null)
+  const [creationCelebrationConsumed, setCreationCelebrationConsumed] = React.useState(false)
+  const consumeCreationCelebration = React.useCallback(() => setCreationCelebrationConsumed(true), [])
+  React.useEffect(() => {
+    if (!celebrateOnMount) setCreationCelebrationConsumed(false)
+  }, [celebrateOnMount])
+  const editingChangeRef = React.useRef(onEditingChange)
+  editingChangeRef.current = onEditingChange
+  React.useLayoutEffect(() => { editingChangeRef.current?.(editing !== null) }, [editing])
+  React.useLayoutEffect(() => () => editingChangeRef.current?.(false), [])
   const [editTarget, setEditTarget] = React.useState<{ day: number; slot: "AM" | "PM" } | undefined>()
   const editHeading = React.useRef<HTMLDivElement>(null)
+  React.useLayoutEffect(() => {
+    // A deferred screen may mount after its parent's view-change focus effect.
+    const root = editHeading.current
+    const active = document.activeElement
+    const focusIsUnclaimed = active === null || active === document.body || active === document.documentElement
+    if (root && focusIsUnclaimed && !root.closest("[hidden], [inert]")) {
+      root.querySelector<HTMLElement>("#active-plan-title")?.focus({ preventScroll: true })
+    }
+  }, [])
   const [editContextRevision, refreshEditContext] = React.useReducer(value => value + 1, 0)
+  const renderOwner = localAccountScopeSnapshot()
+  const renderScopeGeneration = localJournalScopeGeneration()
   const today = useLocalToday()
   const wasEditing = React.useRef(false)
   React.useLayoutEffect(() => {
@@ -92,7 +134,14 @@ export function PlanActiveState({
     return () => { unsubscribe(); events.forEach(event => window.removeEventListener(event, refreshEditContext)) }
   }, [])
   const closeEditor = () => { setEditing(null); setEditTarget(undefined) }
-  const editApplied = (next: typeof state) => { closeEditor(); setExecutionMessage("계획을 수정했어요. 이전 계획과 일지는 남겨두었어요."); onStateChange(next) }
+  const editApplied = (next: typeof state) => {
+    if (!localAccountScopeIsCurrent(renderOwner) || renderScopeGeneration !== localJournalScopeGeneration()) return
+    const message = "계획을 수정했어요. 이전 계획과 일지는 남겨두었어요."
+    closeEditor()
+    setExecutionMessage(message)
+    onStateChange(next, { candidateId: next.activePlan.candidateId, generatedAt: next.generatedAt,
+      owner: renderOwner, scopeGeneration: renderScopeGeneration, message })
+  }
   const retryEditRead = async () => {
     const openingScope = localAccountScopeSnapshot()
     if (accountPlansEnabled() && !await ensureAccountPlanHistory()) return
@@ -173,6 +222,8 @@ export function PlanActiveState({
   }
 
   const activateNextFrame = async (nextCurrentCheck: PlanCurrentCheck) => {
+    const openingOwner = localAccountScopeSnapshot()
+    const openingScopeGeneration = localJournalScopeGeneration()
     setExecutionMessage(null)
     const now = new Date()
     const result = await activateAcceptedNextFrameSuccessor({
@@ -180,13 +231,16 @@ export function PlanActiveState({
       activatedAt: now.toISOString(),
       localDate: todayISO(now),
     })
+    if (!localAccountScopeIsCurrent(openingOwner) || openingScopeGeneration !== localJournalScopeGeneration()) return
     if (result.kind === "activated" || result.kind === "already_consumed") {
       setError(null)
       setRetry(null)
-      setExecutionMessage(result.kind === "activated"
+      const message = result.kind === "activated"
         ? "선택한 다음 계획을 시작했어요. 이전 계획은 이 기기의 계획 이력에 보관했어요."
-        : "이미 시작된 다음 계획을 그대로 보여드려요.")
-      onStateChange(result.state)
+        : "이미 시작된 다음 계획을 그대로 보여드려요."
+      setExecutionMessage(message)
+      onStateChange(result.state, { candidateId: result.state.activePlan.candidateId, generatedAt: result.state.generatedAt,
+        owner: openingOwner, scopeGeneration: openingScopeGeneration, message })
       return
     }
     if (result.kind === "blocked") {
@@ -255,7 +309,7 @@ export function PlanActiveState({
 
   return (
     <div ref={editHeading}>
-      {editing === "new-plan" && state.version === 3 ? <ActivePlanRebuildEditor state={state} onCancel={closeEditor} onApplied={editApplied} />
+      {editing === "new-plan" && state.version === 3 ? <ActivePlanRebuildEditor state={state} onCancel={closeEditor} onApplied={editApplied} onManageRecords={onManagePaceRecords} />
         : (editing === "workout" || editing === "schedule") && state.version === 3 ? <ActivePlanSessionEditor
           state={state} intent={editing} selection={editSelection} onClose={closeEditor} onApplied={editApplied}
           sourceOptions={editOptions} entriesReady={editRead.status === "complete"}
@@ -279,7 +333,8 @@ export function PlanActiveState({
         state={state}
         cloudPersistence={cloudPersistence}
         onRetryCloudBackup={onRetryCloudBackup}
-        showCreatedCelebration={celebrateOnMount}
+        showCreatedCelebration={celebrateOnMount && !creationCelebrationConsumed}
+        onCreatedCelebrationConsumed={consumeCreationCelebration}
         onProgress={saveProgress}
         onNextFrame={() => void startNextFrame()}
         onActivateNextFrame={(nextCurrentCheck) => void activateNextFrame(nextCurrentCheck)}

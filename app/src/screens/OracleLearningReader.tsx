@@ -1,4 +1,5 @@
 import React from "react"
+import { AppHeading } from "../components/AppHeading"
 import { ArrowLeft, ArrowRight, Check, ExternalLink, RotateCcw } from "lucide-react"
 import { ORACLE_EVIDENCE_PAGES, ORACLE_EXAMPLE_PAGES, ORACLE_GLOSSARY_PAGES, ORACLE_LEARNING_QUIZ,
   ORACLE_LEARNING_TITLES, ORACLE_SOURCE_GRADE_LABELS, ORACLE_SOURCE_STATE_LABELS, ORACLE_SYNTHETIC_NOTICE,
@@ -49,7 +50,7 @@ function LearningContent({ destination, onBack }: OracleLearningReaderProps) {
   const go = (next: number) => { pageChanged.current = true; setIndex(next) }
   return <article className="oracle-learning" aria-label={ORACLE_LEARNING_TITLES[destination]}>
     <header><p className="oracle-learning__meta">{complete ? "퀴즈 마침" : `${index + 1} / ${length} · ${isQuiz ? "학습 퀴즈" : page?.category}`}</p>
-      <h2 ref={heading} tabIndex={-1}>{complete ? "문제 풀이를 마쳤어요" : quiz?.question ?? page?.title}</h2></header>
+      <AppHeading as="h2" variant="screen" accent ref={heading} tabIndex={-1}>{complete ? "문제 풀이를 마쳤어요" : quiz?.question ?? page?.title}</AppHeading></header>
     {(isQuiz || destination === "EXAMPLE") && <p className="oracle-learning__notice">{ORACLE_SYNTHETIC_NOTICE}</p>}
     {isQuiz ? complete ? <><p>답과 정답 수는 저장하지 않아요. 퀴즈 결과는 신체 능력이나 훈련 수준 평가가 아니에요.</p>
       <button type="button" onClick={() => { setAnswers({}); go(0) }}><RotateCcw size={16} aria-hidden="true" />다시 풀기</button></> : quiz && <>

@@ -1,0 +1,34 @@
+/* Shared presentation roles. Diary paper, calendar cells and stored artwork
+   deliberately keep their own geometry; this is not a global radius reset. */
+@media (min-width: 900px) {
+  .app-shell--results:not(.app-shell--task) { --app-shell-max-width: 64rem; }
+  .app-shell--results .record-reading { max-width: 52rem; margin-inline: auto; }
+}
+
+/* Task actions share the approved touch shape, without rounding data surfaces. */
+.app-shell :is(.account-auth__method, .account-auth__primary,
+  .account-auth__field-group input, .athlete-record-save,
+  .athlete-record-step-actions > button, .athlete-record-form input,
+  .athlete-record-form select, .guided-empty-state button) {
+  border-radius: var(--r-action);
+}
+
+.app-shell :is(.utility-header, .pace-tool__header, .record-reading__header) > button {
+  flex-shrink: 0;
+  min-width: var(--app-touch-min);
+  min-height: var(--app-touch-min);
+  white-space: nowrap;
+}
+
+/* Respect the existing in-app setting as well as the OS preference. No new
+   preference, tracking or animation is introduced by the cross-screen shell. */
+.app-shell[data-reduced-motion="true"] :is(.app-flow-stage, .journal-flow-stage,
+  .popover-surface, .pace-tool__results, .active-stage-content,
+  .saved-toast__surface, .saved-toast__check, .info-disclosure__chevron) {
+  animation: none;
+  transition: none;
+}
+.app-shell[data-reduced-motion="true"] button:not(:disabled):not([aria-disabled="true"]):active {
+  transform: none;
+  transition: none;
+}

@@ -10,6 +10,7 @@ import { catalogRequirementLabels } from "../../domain/catalog-schedule-conditio
 import { CatalogWorkoutDetail } from "./CatalogWorkoutDetail"
 import { CatalogWorkoutEditor } from "./CatalogWorkoutPicker"
 import "./catalog-workout.css"
+import { localJournalScopeGeneration } from "../../domain/account/local-journal-ownership"
 
 export type InitialMainConditionsProps = {
   readonly input: InitialMainInput
@@ -24,7 +25,10 @@ export type InitialMainConditionsProps = {
 }
 
 export function InitialMainConditions({ input, disabled = false, onApply, onApplyManual, onChooseAlternative, onPendingChange }: InitialMainConditionsProps) {
-  const review = reviewInitialMainConditions(input)
+  const accountGeneration = localJournalScopeGeneration()
+  // Checkbox and preview edits do not change this source-bound review. Applying
+  // still recomputes from fresh input; an account switch revokes the render memo.
+  const review = React.useMemo(() => reviewInitialMainConditions(input), [input, accountGeneration])
   const key = review?.key ?? null
   const [answer, setAnswer] = React.useState<{ key: string | null; checked: readonly string[] }>({ key, checked: [] })
   const [message, setMessage] = React.useState("")

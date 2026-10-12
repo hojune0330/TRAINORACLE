@@ -17,18 +17,7 @@
   position: relative;
   isolation: isolate;
   min-height: 100%;
-  background: var(--paper);
-}
-
-.journal-writing-decoration-preview__theme {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0.12;
-  pointer-events: none;
+  background: var(--surface);
 }
 
 .journal-writing-decoration-preview__motif {
@@ -49,9 +38,7 @@
   min-width: 0;
 }
 
-/* The decoration preview is positioned so its theme stays inside the paper.
- * Keep the form save bar anchored to the app viewport instead of that growing
- * content box; otherwise long writers can push the action under the tab bar. */
+/* Keep the save bar anchored to the viewport, not the growing writer. */
 .journal-writing-decoration-preview .entry-sticky-bar {
   position: fixed !important;
   inset-inline: 50% auto !important;

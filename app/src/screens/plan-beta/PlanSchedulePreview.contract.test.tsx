@@ -3,6 +3,10 @@ import { StrictMode } from "react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { PlanSession } from "@impl/plan-generator/types"
+import { bindCatalogSession, resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
+import type { WorkoutCalculationInputs } from "@impl/prescription/all-workout-calculator"
+import { formatPaceSeconds } from "@impl/prescription/record-pace"
+import { formatTrainingSeconds } from "./labels"
 import { PlanSchedulePreview } from "./PlanSchedulePreview"
 
 const sessions: readonly PlanSession[] = [
@@ -49,6 +53,188 @@ afterEach(() => {
 afterEach(() => vi.useRealTimers())
 
 describe("plan schedule preview", () => {
+  it("keeps explicit rest quiet and shows program boundaries without inventing rest for empty dates", () => {
+    render(<PlanSchedulePreview startDate="2026-08-17" sessions={sessions}
+      presentation="prescription-calendar" dayAnnotations={{ "2026-08-17": "1주기 시작", "2026-08-18": "대회 날짜" }} />)
+    const calendar = screen.getByRole("grid", { name: "2026년 8월 달력" })
+    const rest = calendar.querySelector<HTMLButtonElement>('button[data-date="2026-08-18"]')!
+    expect(rest).toHaveAccessibleName(expect.stringContaining("대회 날짜"))
+    expect(rest.querySelector(".prescription-calendar__rest")).toHaveTextContent("휴식")
+    expect(rest.querySelector(".calendar-training-mark")).toBeNull()
+    const empty = calendar.querySelector<HTMLButtonElement>('button[data-date="2026-08-19"]')!
+    expect(empty.querySelector(".prescription-calendar__rest")).toBeNull()
+    expect(empty).toHaveTextContent("예정 없음")
+  })
+
+  it("projects all 29 program dates without widening a source frame or inventing missing rest", async () => {
+    const user = userEvent.setup()
+    const projected = [sessions[0]!, { ...sessions[0]!, day: 29 }]
+    const original = JSON.stringify(projected)
+    render(<PlanSchedulePreview startDate="2026-10-11" sessions={projected}
+      presentation="prescription-calendar" showRpeGuide={false}
+      programProjection={{ kind: "THREE_CYCLE_PROGRAM", calendarDayCount: 29 }} />)
+    expect(screen.getByRole("region", { name: "한 달 훈련표 · 9.5일 × 3" })).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "목록" }))
+    const list = screen.getByRole("list", { name: "날짜별 계획 미리보기" })
+    expect(list.children).toHaveLength(29)
+    expect(within(list).getByRole("button", { name: "11월 8일 일요일 전체 처방 보기" })).toBeVisible()
+    expect(list.children[1]).toHaveTextContent("예정 없음")
+    expect(list.children[1]).not.toHaveTextContent("휴식일")
+    expect(JSON.stringify(projected)).toBe(original)
+  })
+
+  it("keeps the standard presentation by default for existing callers", () => {
+    render(<PlanSchedulePreview startDate="2026-08-17" sessions={sessions} />)
+
+    expect(screen.queryByRole("group", { name: "계획 일정 보기" })).not.toBeInTheDocument()
+  })
+
+  it("shows each workout name and exact core amount in a seven-column prescription calendar", async () => {
+    const user = userEvent.setup()
+    const original = JSON.stringify(sessions)
+    render(<PlanSchedulePreview startDate="2026-08-17" frameLengthDays={7} sessions={sessions}
+      presentation="prescription-calendar" detailsExpanded={false} />)
+
+    const calendar = screen.getByRole("grid", { name: "2026년 8월 달력" })
+    expect(calendar.querySelectorAll("thead th")).toHaveLength(7)
+    expect(calendar.querySelectorAll("tbody tr:first-child td")).toHaveLength(7)
+
+    const firstPlanDate = calendar.querySelector<HTMLButtonElement>('button[data-date="2026-08-17"]')
+    expect(firstPlanDate).not.toBeNull()
+    expect(screen.getByRole("button", { name: "선택한 날짜 처방 보기" })).toBeVisible()
+    expect(within(firstPlanDate!).getByText("템포 훈련 · LT")).toBeVisible()
+    expect(within(firstPlanDate!).getByText("전체 25–40분 · 힘든 정도 5–6/10")).toBeVisible()
+    expect(firstPlanDate).toBeVisible()
+    expect(firstPlanDate).toHaveAttribute("aria-label", expect.stringContaining("전체 25–40분 · 힘든 정도 5–6/10"))
+    expect(firstPlanDate).toHaveAttribute("aria-label", expect.stringContaining("전체 15–25분 · 힘든 정도 1–2/10"))
+
+    await user.click(firstPlanDate!)
+    const reader = screen.getByRole("dialog", { name: "2026년 8월 17일 월요일" })
+    expect(within(reader).getByRole("group", { name: "8월 17일 월요일 오전 세션" })).toHaveTextContent(
+      "전체 25–40분 · 힘든 정도 5–6/10",
+    )
+    expect(within(reader).getByRole("group", { name: "8월 17일 월요일 오후 세션" })).toHaveTextContent(
+      "전체 15–25분 · 힘든 정도 1–2/10",
+    )
+    expect(JSON.stringify(sessions)).toBe(original)
+  })
+
+  it("offers a vertically readable list view for narrow or enlarged text layouts", async () => {
+    const user = userEvent.setup()
+    const original = JSON.stringify(sessions)
+    render(<PlanSchedulePreview startDate="2026-08-17" frameLengthDays={7} sessions={sessions}
+      presentation="prescription-calendar" detailsExpanded={false}
+      sessionProgress={session => session.day === 1 ? "COMPLETED" : undefined}
+      renderSessionAction={session => session.day === 1 ? <button type="button">이 훈련 일지 쓰기</button> : null}
+      renderSessionFooter={() => <button type="button">진행 기록 자세히</button>} />)
+
+    await user.click(screen.getByRole("button", { name: "목록" }))
+
+    expect(screen.getByRole("button", { name: "목록" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.queryByRole("grid", { name: "2026년 8월 달력" })).not.toBeInTheDocument()
+    expect(screen.getByRole("list", { name: "날짜별 계획 미리보기" })).toBeVisible()
+    const summary = screen.getByRole("group", { name: "8월 17일 월요일 오전 세션" })
+    expect(summary).toHaveTextContent(
+      "전체 25–40분 · 힘든 정도 5–6/10",
+    )
+    expect(summary).toHaveTextContent("완료")
+    expect(within(summary).getByRole("button", { name: "이 훈련 일지 쓰기" })).toBeVisible()
+    expect(within(summary).queryByRole("button", { name: /설명 보기/u })).not.toBeInTheDocument()
+    expect(within(summary).queryByRole("button", { name: /크게 보기/u })).not.toBeInTheDocument()
+    expect(within(summary).queryByText("오전 훈련 방법과 기록")).not.toBeInTheDocument()
+    expect(within(summary).queryByRole("button", { name: "훈련 방법과 이유" })).not.toBeInTheDocument()
+    expect(within(summary).queryByRole("button", { name: "진행 기록 자세히" })).not.toBeInTheDocument()
+    const restSummary = screen.getByRole("group", { name: "8월 18일 화요일 오전 세션" })
+    expect(restSummary).toHaveTextContent("휴식")
+    expect(restSummary).not.toHaveTextContent("훈련 없음")
+    const emptyDay = screen.getByRole("group", { name: "8월 19일 수요일 · 비움" })
+    expect(emptyDay).toHaveTextContent("예정 없음")
+    expect(emptyDay).not.toHaveTextContent("휴식")
+
+    const dateButton = screen.getByRole("button", { name: "8월 17일 월요일 전체 처방 보기" })
+    await user.click(dateButton)
+    const reader = screen.getByRole("dialog", { name: "2026년 8월 17일 월요일" })
+    expect(within(reader).getByRole("group", { name: "8월 17일 월요일 오전 세션" })).toHaveTextContent(
+      "전체 25–40분 · 힘든 정도 5–6/10",
+    )
+    expect(within(reader).getByRole("group", { name: "8월 17일 월요일 오후 세션" })).toHaveTextContent(
+      "전체 15–25분 · 힘든 정도 1–2/10",
+    )
+    expect(within(reader).getAllByRole("button", { name: "훈련 방법과 이유" })).toHaveLength(2)
+    const readerMorning = within(reader).getByRole("group", { name: "8월 17일 월요일 오전 세션" })
+    await user.click(within(readerMorning).getByText("일지·진행 기록"))
+    expect(within(readerMorning).getByRole("button", { name: "진행 기록 자세히" })).toBeVisible()
+    await user.click(within(reader).getByRole("button", { name: "달력으로 돌아가기" }))
+    await waitFor(() => expect(dateButton).toHaveFocus())
+    expect(JSON.stringify(sessions)).toBe(original)
+  })
+
+  it("starts narrow viewports in list mode and leaves later view changes to the user", async () => {
+    const originalMatchMedia = Object.getOwnPropertyDescriptor(window, "matchMedia")
+    const matchMedia = vi.fn((query: string) => ({
+      matches: query === "(max-width: 767px)", media: query,
+      addEventListener: vi.fn(), removeEventListener: vi.fn(),
+    }))
+    Object.defineProperty(window, "matchMedia", { configurable: true, value: matchMedia })
+    try {
+      const user = userEvent.setup()
+      render(<PlanSchedulePreview startDate="2026-08-17" frameLengthDays={7} sessions={sessions}
+        presentation="prescription-calendar" detailsExpanded={false} />)
+
+      expect(screen.getByRole("button", { name: "목록" })).toHaveAttribute("aria-pressed", "true")
+      expect(screen.queryByRole("grid", { name: "2026년 8월 달력" })).not.toBeInTheDocument()
+      matchMedia.mockImplementation((query: string) => ({
+        matches: false, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn(),
+      }))
+      expect(screen.getByRole("button", { name: "목록" })).toHaveAttribute("aria-pressed", "true")
+
+      await user.click(screen.getByRole("button", { name: "달력" }))
+      expect(screen.getByRole("button", { name: "달력" })).toHaveAttribute("aria-pressed", "true")
+      expect(screen.getByRole("grid", { name: "2026년 8월 달력" })).toBeVisible()
+    } finally {
+      if (originalMatchMedia) Object.defineProperty(window, "matchMedia", originalMatchMedia)
+      else Reflect.deleteProperty(window, "matchMedia")
+    }
+  })
+
+  it("shows validated catalog totals and formatted pace without mutating prescriptions", () => {
+    const source = { ...(sessions[0]! as Extract<PlanSession, { readonly role: "QUALITY" }>), plannedEnergyIntent: "VO2_INTENT" as const }
+    const inputs: WorkoutCalculationInputs = {
+      eventDistanceM: 5000, experience: "EXPERIENCED", availableSeconds: null,
+      confirmedRequirements: [], fiveK: null, segmentPaces: [],
+    }
+    const bound = bindCatalogSession(source, "X-VO2-08", inputs, true)
+    expect(bound?.prescription.kind).toBe("RPE_TIME_RANGE")
+    if (!bound || bound.prescription.kind !== "RPE_TIME_RANGE" || !bound.prescription.catalogWorkout) throw Error("binding failed")
+    const calculation = resolveCatalogBinding(bound.prescription.catalogWorkout)
+    expect(calculation?.totals.seconds).not.toBeNull()
+    const total = calculation!.totals.seconds!
+    const catalogLabel = `전체 ${formatTrainingSeconds(total.minimum)}${total.minimum === total.maximum ? "" : ` ~ ${formatTrainingSeconds(total.maximum)}`}`
+    const catalogBefore = JSON.stringify(bound)
+    const { rerender } = render(<PlanSchedulePreview startDate="2026-08-17" frameLengthDays={7} sessions={[bound]}
+      presentation="prescription-calendar" detailsExpanded={false} />)
+    const catalogDate = screen.getByRole("grid", { name: "2026년 8월 달력" })
+      .querySelector<HTMLButtonElement>('button[data-date="2026-08-17"]')!
+    expect(within(catalogDate).getByText(catalogLabel)).toBeVisible()
+    expect(catalogDate).not.toHaveTextContent("힘든 정도")
+    expect(JSON.stringify(bound)).toBe(catalogBefore)
+
+    const pacePrescription = {
+      kind: "PACE_TARGET", setCount: 1, repetitionsPerSet: 5, repetitionDistanceM: 1000,
+      targetRepSeconds: 300, targetEventDistanceM: 5000, repetitionRecoverySeconds: 60,
+      repetitionRecoveryMode: "JOG", setRecoverySeconds: null, setRecoveryMode: "NOT_APPLICABLE",
+    }
+    const paceSession = { day: 1, slot: "AM", role: "QUALITY", plannedEnergyIntent: "LT_INTENT",
+      prescription: pacePrescription } as unknown as PlanSession
+    const paceBefore = JSON.stringify(paceSession)
+    rerender(<PlanSchedulePreview startDate="2026-08-17" frameLengthDays={7} sessions={[paceSession]}
+      presentation="prescription-calendar" detailsExpanded={false} />)
+    const paceDate = screen.getByRole("grid", { name: "2026년 8월 달력" })
+      .querySelector<HTMLButtonElement>('button[data-date="2026-08-17"]')!
+    expect(within(paceDate).getByText(`5 × 1km · 1km당 ${formatPaceSeconds(300)}`)).toBeVisible()
+    expect(JSON.stringify(paceSession)).toBe(paceBefore)
+  })
+
   it("keeps a returned journal slot open when StrictMode replays initialization", async () => {
     render(<StrictMode><PlanSchedulePreview startDate="2026-08-17" frameLengthDays={9}
       sessions={sessions} displayMode="swipe" detailsExpanded={false}

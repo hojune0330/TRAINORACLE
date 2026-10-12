@@ -22,6 +22,8 @@ const transferSchema = z.object({
   previous: z.unknown(), next: z.unknown(), legacy: legacySchema.nullable(),
   journalGuard: accountPlanJournalGuardSchema.optional(),
   paceRecordGuard: accountPlanPaceRecordGuardSchema.optional(),
+  /** Local outbox intent only; never part of the server commit request. */
+  archiveReviewRequired: z.literal(true).optional(),
 }).strict()
 export type AccountPlanCollectionTransfer = Omit<z.infer<typeof transferSchema>, "previous" | "next"> & {
   previous: AccountPlanCollectionParts | null; next: AccountPlanCollectionParts;
@@ -48,7 +50,7 @@ export interface AccountPlanCollectionPort {
   receipt(ownerId: string, operationId: string): Promise<unknown | null>
   stage(ownerId: string, part: Part, storageConsentRevision?: number): Promise<void>
   readPart(ownerId: string, kind: Part["kind"], id: string): Promise<unknown | null>
-  commit(request: AccountPlanCollectionCommit): Promise<
+  commit(request: AccountPlanCollectionCommit, beforeSend?: () => boolean): Promise<
     { kind: "committed"; receipt: unknown } | { kind: "conflict" }>
 }
 export type AccountPlanCollectionScope = { ownerId: string; epoch: number }
@@ -73,6 +75,7 @@ export function readAccountPlanCollectionTransfer(value: unknown): AccountPlanCo
     if (!parsed.success) return null
     const transfer = parsed.data, next = joinAccountPlanCollection(transfer.next)
     if (!next || (transfer.previous === null) !== (transfer.expectedRevision === 0)) return null
+    if (transfer.archiveReviewRequired && (transfer.previous === null || transfer.legacy)) return null
     if (transfer.journalGuard !== undefined && (transfer.legacy || next.data.currentPlanId === null
       || next.data.currentPlanId === (transfer.previous as AccountPlanCollectionParts | null)?.index.currentPlanId)) return null
     if (transfer.paceRecordGuard !== undefined && (transfer.legacy || next.data.currentPlanId === null
@@ -81,6 +84,15 @@ export function readAccountPlanCollectionTransfer(value: unknown): AccountPlanCo
       const previous = joinAccountPlanCollection(transfer.previous)
       if (!previous || transfer.legacy || !preservesHistory(previous, next)) return null
       const oldCurrent = previous.data.currentPlanId
+      if (transfer.archiveReviewRequired) {
+        const currentEntry = previous.data.plans.find(p => p.planId === oldCurrent)
+        const archivedEntry = next.data.plans.find(p => p.planId === oldCurrent)
+        if (!oldCurrent || next.data.currentPlanId !== null || !currentEntry || currentEntry.archivedAt !== null
+          || !archivedEntry?.archivedAt) return null
+        const archiveOnly = { ...previous, data: { ...previous.data, currentPlanId: null,
+          plans: previous.data.plans.map(p => p.planId === oldCurrent ? { ...p, archivedAt: archivedEntry.archivedAt } : p) } }
+        if (accountPlanFingerprint(archiveOnly) !== accountPlanFingerprint(next)) return null
+      }
       if (oldCurrent !== null && oldCurrent !== next.data.currentPlanId
         && next.data.plans.find(p => p.planId === oldCurrent)?.archivedAt === null) return null
       // Archived plans cannot become current again, even after a complete rehash.
@@ -100,6 +112,7 @@ export function prepareAccountPlanCollectionTransfer(input: {
   legacy?: { documentId: string; revision: number; document: AccountPlanDocument };
   journalGuard?: AccountPlanJournalGuard;
   paceRecordGuard?: AccountPlanPaceRecordGuard;
+  archiveReviewRequired?: true;
 }): AccountPlanCollectionTransfer | null {
   try {
     pinStorageOperationRevision(input.ownerId, input.operationId)
@@ -111,7 +124,8 @@ export function prepareAccountPlanCollectionTransfer(input: {
         documentId: input.legacy.documentId, revision: input.legacy.revision,
         fingerprint: accountPlanFingerprint(input.legacy.document),
       } : null, ...(input.journalGuard === undefined ? {} : { journalGuard: input.journalGuard }),
-      ...(input.paceRecordGuard === undefined ? {} : { paceRecordGuard: input.paceRecordGuard }) })
+      ...(input.paceRecordGuard === undefined ? {} : { paceRecordGuard: input.paceRecordGuard }),
+      ...(input.archiveReviewRequired === undefined ? {} : { archiveReviewRequired: input.archiveReviewRequired }) })
   } catch { return null }
 }
 
@@ -158,7 +172,7 @@ export async function transferAccountPlanCollection(input: {
     }
     const changesSelection = transfer.next.index.currentPlanId !== null
       && transfer.next.index.currentPlanId !== transfer.previous?.index.currentPlanId && !transfer.legacy
-    const reviewed = () => !changesSelection || input.freshSelectionReview() === true
+    const reviewed = () => !(changesSelection || transfer.archiveReviewRequired) || input.freshSelectionReview() === true
     if (!reviewed()) return { kind: "review_required" }
     const snapshots: AccountPlanSnapshotPart[] = [], progress: AccountPlanProgressPart[] = []
     for (const part of [...transfer.next.snapshots, ...transfer.next.progress]) {
@@ -181,7 +195,7 @@ export async function transferAccountPlanCollection(input: {
     // Callbacks can change account scope synchronously too.
     if (!current()) return { kind: "stale" }
     committing = true
-    const result = await input.port.commit(structuredClone(request))
+    const result = await input.port.commit(structuredClone(request), () => current() && reviewed() && current())
     if (!current()) return { kind: "stale" }
     if (result.kind === "conflict") return { kind: "conflict" }
     const receipt = matchingReceipt(result.receipt)

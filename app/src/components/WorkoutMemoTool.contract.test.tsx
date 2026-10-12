@@ -21,6 +21,7 @@ beforeEach(() => {
 })
 afterEach(() => { cleanup(); localStorage.clear(); vi.clearAllMocks() })
 const open = () => fireEvent.click(screen.getByRole("button", { name: "자세히" }))
+const openCustomization = () => fireEvent.click(screen.getByText("표현·꾸미기"))
 
 describe("workout memo read-only actions", () => {
   it("does not create another modal or history entry and copies the current snapshot", async () => {
@@ -35,6 +36,7 @@ describe("workout memo read-only actions", () => {
   })
   it("updates colour using swatches and downloads one PNG despite a double click", async () => {
     render(<WorkoutMemoTool session={memoSessionFixture()} />); open()
+    openCustomization()
     fireEvent.click(screen.getByRole("button", { name: "분홍 종이" }))
     const button = screen.getByRole("button", { name: "저장" })
     fireEvent.click(button); fireEvent.click(button)
@@ -128,7 +130,13 @@ describe("workout memo read-only actions", () => {
     expect(screen.getByRole("button", { name: "자세히" })).toBeVisible()
     expect(screen.queryByRole("article", { name: "훈련 메모 미리보기" })).toBeNull()
     fireEvent.click(screen.getByRole("button", { name: "간단히" }))
-    expect(screen.getByRole("article", { name: "훈련 메모 미리보기" })).toHaveAttribute("data-layout", "compact")
+    const preview = screen.getByRole("article", { name: "훈련 메모 미리보기" })
+    const customization = screen.getByText("표현·꾸미기").closest("details")
+    const actions = screen.getByRole("group", { name: "메모 가져가기" })
+    expect(preview).toHaveAttribute("data-layout", "compact")
+    expect(customization).not.toHaveAttribute("open")
+    expect(preview.compareDocumentPosition(customization!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(customization!.compareDocumentPosition(actions) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(screen.getByRole("button", { name: "간단히" })).toHaveAttribute("aria-expanded", "true")
     fireEvent.click(screen.getByRole("button", { name: "메모 접기" }))
     expect(screen.queryByRole("article", { name: "훈련 메모 미리보기" })).toBeNull()
@@ -152,6 +160,7 @@ describe("workout memo read-only actions", () => {
     const session = memoSessionFixture(), before = JSON.stringify(session)
     render(<WorkoutMemoTool session={session} />)
     fireEvent.click(screen.getByRole("button", { name: "간단히" }))
+    openCustomization()
     fireEvent.click(screen.getByRole("button", { name: "핵심만" }))
     fireEvent.click(screen.getByRole("button", { name: "훈련 표기" }))
     const preview = screen.getByRole("article", { name: "훈련 메모 미리보기" })
@@ -172,7 +181,7 @@ describe("workout memo read-only actions", () => {
     expect(JSON.stringify(session)).toBe(before)
   })
   it("exports the selected wording and detail, and does not reuse the previous wording's image", async () => {
-    render(<WorkoutMemoTool session={memoSessionFixture()} state="HISTORICAL" />); open()
+    render(<WorkoutMemoTool session={memoSessionFixture()} state="HISTORICAL" />); open(); openCustomization()
     fireEvent.click(screen.getByRole("button", { name: "저장" }))
     await waitFor(() => expect(downloadMemo).toHaveBeenCalledTimes(1))
     fireEvent.click(screen.getByRole("button", { name: "훈련 표기" }))

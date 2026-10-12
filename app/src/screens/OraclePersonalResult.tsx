@@ -1,4 +1,5 @@
 import { ArrowRight } from "lucide-react"
+import { AppHeading } from "../components/AppHeading"
 import { InfoDisclosure } from "../components/InfoDisclosure"
 import { AccessibleTrendTable } from "./trends/AccessibleTrendTable"
 import type { OraclePersonalResult } from "../domain/oracle-personal-result"
@@ -20,7 +21,7 @@ export function OraclePersonalResult({ result, onAction, onShowExample }: Oracle
 
   return <section className="oracle-personal-result" aria-labelledby={headlineId}>
     <div className="oracle-personal-result__label">내 기록 결과</div>
-    <h1 id={headlineId}>{result.headline}</h1>
+    <AppHeading variant="screen" accent id={headlineId}>{result.headline}</AppHeading>
     <p className="oracle-personal-result__summary">{result.summary}</p>
     {result.notice && <p className="oracle-personal-result__missing" role="status">{result.notice}</p>}
 

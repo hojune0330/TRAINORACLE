@@ -1,5 +1,5 @@
 import React from "react"
-import { act, cleanup, render, renderHook, screen, waitFor } from "@testing-library/react"
+import { act, cleanup, render, renderHook, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { usePlanEvidenceHistory } from "./usePlanEvidenceHistory"
@@ -21,6 +21,12 @@ vi.mock("../domain/account/account-plan-service", async original => ({
   accountPlansEnabled: () => runtime.enabled, accountPlanService: () => runtime.service,
 }))
 const announce = () => window.dispatchEvent(new Event(ACCOUNT_PLAN_EVENT))
+
+function expectExplicitEffort(panel: HTMLElement, value: number): void {
+  const effort = within(panel).getByText(`${value}/10 · 직접 입력`, { selector: "dd" })
+  expect(effort).toBeVisible()
+  expect(effort.previousElementSibling).toHaveTextContent("힘든 정도")
+}
 const savedDialog = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const savedScroll = Object.getOwnPropertyDescriptor(Element.prototype, "scrollTo")
 beforeEach(() => {
@@ -168,7 +174,7 @@ it("the saved-session reader refreshes evidence without changing tab or scroll",
   await act(async () => f.complete())
   expect(screen.getByRole("tab", { name: "주기·기록" })).toHaveAttribute("aria-selected", "true")
   expect(panel.scrollTop).toBe(113)
-  expect(screen.getByText("직접 기록한 RPE 3")).toBeVisible()
+  expectExplicitEffort(panel, 3)
   expect(screen.queryByRole("button", { name: "이전 계획 다시 불러오기" })).toBeNull()
 })
 
@@ -192,11 +198,11 @@ it("an eventless guest retry refreshes the real reader evidence and preserves sc
     context={{ kind: "SAVED", plan: f.state.activePlan, generatedAt: f.state.generatedAt }}
     loadEvidence={() => collectSessionExplanationEvidence(f.entries, f.state, session, readArchivedOriginalPlans())} />)
   await user.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))
-  expect(screen.queryByText("직접 기록한 RPE 3")).toBeNull()
+  expect(screen.queryByText("3/10 · 직접 입력", { selector: "dd" })).toBeNull()
   const panel = screen.getByRole("tabpanel"); panel.scrollTop = 91
   localStorage.setItem(key, JSON.stringify(f.archivedPlans.map(p => planHistorySnapshotContent(p, new Date().toISOString(), "MANUAL"))))
   await user.click(screen.getByRole("button", { name: "이전 계획 다시 불러오기" }))
-  expect(screen.getByText("직접 기록한 RPE 3")).toBeVisible()
+  expectExplicitEffort(panel, 3)
   expect(panel.scrollTop).toBe(91)
 })
 

@@ -56,9 +56,12 @@ export function captureAccountPlanWrite(activeKey: string) {
         : { kind: "PROGRESS", packet }, opening.fingerprint)
       return result === "ACCOUNT" ? null : `ACCOUNT_PLAN_${result}`
     },
-    async archive(): Promise<`ACCOUNT_PLAN_${string}` | null> {
-      if (!service || !ready || !opening?.fingerprint || !opening.currentPlan || read() !== raw) return "ACCOUNT_PLAN_STALE"
-      const result = await service.mutate({ kind: "ARCHIVE", planId: opening.currentPlan.planId }, opening.fingerprint)
+    async archive(freshReview?: () => boolean): Promise<`ACCOUNT_PLAN_${string}` | null> {
+      if (!service || !ready || !opening?.fingerprint || !opening.currentPlan || read() !== raw
+        || accountPlanService() !== service || activeLocalAccount() !== ownerId) return "ACCOUNT_PLAN_STALE"
+      const result = await service.mutate({ kind: "ARCHIVE", planId: opening.currentPlan.planId,
+        ...(freshReview ? { freshReview: () => accountPlanService() === service && activeLocalAccount() === ownerId
+          && freshReview() && accountPlanService() === service && activeLocalAccount() === ownerId } : {}) }, opening.fingerprint)
       return result === "ACCOUNT" ? null : `ACCOUNT_PLAN_${result}`
     },
   }

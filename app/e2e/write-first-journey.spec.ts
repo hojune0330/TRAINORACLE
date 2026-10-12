@@ -2,14 +2,14 @@ import { expect, test } from "@playwright/test"
 
 for (const width of [320, 375]) {
   test.describe(`write first ${width}px`, () => {
-    test.use({ viewport: { width, height: 740 }, reducedMotion: "reduce" })
+    test.use({ viewport: { width, height: 740 }, contextOptions: { reducedMotion: "reduce" } })
     test("keeps an early note and two exercise types through safety checks and explicit save", async ({ page }, info) => {
       const errors: string[] = []
       page.on("pageerror", error => errors.push(error.message))
       await page.route("**/*", route => new URL(route.request().url()).hostname === "127.0.0.1" ? route.continue() : route.abort())
       await page.goto("/?app=1&uitest=1")
       const click = (name: string) => page.getByRole("button", { name, exact: true }).click()
-      await click("오늘 기록 남기기")
+      await click("오늘 운동 기록 쓰기")
       await page.getByText("메모·운동 내용 먼저 쓰기", { exact: true }).click()
       await click("메모 먼저 쓰기")
       await page.getByRole("radio", { name: "훈련 메모", exact: true }).check()
@@ -36,10 +36,13 @@ for (const width of [320, 375]) {
       await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기", exact: true }).click()
       await expect(page.locator('[data-toast-priority="receipt"]')).toHaveCount(0)
       await page.getByTestId("entry-choice-evening").click()
+      await expect(page.getByRole("heading", { name: "무엇을 남길까요?", exact: true })).toBeVisible()
+      await click("메모 쓰기")
       await expect(page.getByRole("textbox", { name: "오늘의 메모", exact: true })).toBeInViewport()
       await page.screenshot({ path: info.outputPath("note-first.png") })
       await page.getByRole("radio", { name: "훈련 메모", exact: true }).check()
       await page.getByRole("textbox", { name: "오늘의 메모", exact: true }).fill("SYNTHETIC_NOTE_ONLY")
+      await click("입력 확인으로")
       await page.getByRole("button", { name: /^저장/ }).click()
       await expect(page.getByRole("textbox", { name: "오늘의 메모", exact: true })).toHaveCount(0)
       expect(errors).toEqual([])

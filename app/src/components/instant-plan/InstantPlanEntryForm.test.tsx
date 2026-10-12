@@ -7,6 +7,20 @@ import { InstantPlanEntryForm } from "./InstantPlanEntryForm"
 afterEach(cleanup)
 
 const TODAY = "2026-09-20"
+it("uses the plan illustration only at a fresh, available entry and not after choosing an event", () => {
+  const view = render(<InstantPlanEntryForm today={TODAY} onSubmit={vi.fn()} />)
+  expect(view.container.querySelector('img[src$="plan-notebook-v2.webp"]')).toHaveAttribute("width", "64")
+  chooseEvent()
+  expect(view.container.querySelector("img")).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "종목 다시 선택" }))
+  expect(view.container.querySelector("img")).toBeNull()
+})
+it("omits the plan entry illustration while submission or disabled state needs attention", () => {
+  const view = render(<InstantPlanEntryForm today={TODAY} onSubmit={vi.fn()} isSubmitting />)
+  expect(view.container.querySelector("img")).toBeNull()
+  view.rerender(<InstantPlanEntryForm today={TODAY} onSubmit={vi.fn()} disabled />)
+  expect(view.container.querySelector("img")).toBeNull()
+})
 const record: InstantPlanEntry = {
   kind: "CURRENT_RECORD", eventDistanceM: 5000, performanceSeconds: 1500.125, achievedOn: "2026-09-01",
 }
@@ -38,19 +52,35 @@ function openDate() {
 }
 
 describe("InstantPlanEntryForm", () => {
+  it("shows ongoing preparation while the parent prevents repeated submission", () => {
+    const onSubmit = vi.fn()
+    const { rerender } = render(<InstantPlanEntryForm today={TODAY} initialEntry={record} onSubmit={onSubmit} />)
+    rerender(<InstantPlanEntryForm today={TODAY} initialEntry={record} onSubmit={onSubmit} disabled isSubmitting />)
+    expect(screen.getByRole("button", { name: "계획 준비 중…" })).toBeDisabled()
+    fireEvent.submit(screen.getByRole("form", { name: "계획 시작 정보" }))
+    expect(onSubmit).not.toHaveBeenCalled()
+    expect(screen.getByLabelText("초")).toHaveValue("0.125")
+    rerender(<InstantPlanEntryForm today={TODAY} initialEntry={record} onSubmit={onSubmit} />)
+    expect(screen.getByRole("button", { name: "기록 입력 완료" })).toBeEnabled()
+  })
+
   it("requires a real basis choice and distinguishes actual, goal and skipped time", () => {
     const onSubmit = vi.fn()
     render(<InstantPlanEntryForm today={TODAY} onSubmit={onSubmit} />)
-    expect(screen.getByText("계획 준비 · 종목 선택")).toBeVisible()
+    expect(screen.getByRole("heading", { name: "어떤 종목을 준비하세요?" })).toHaveFocus()
+    expect(screen.queryByText("계획 준비 · 종목 선택")).toBeNull()
+    expect(screen.getByRole("group", { name: "어떤 종목을 준비하세요?" }))
+      .toBeVisible()
     chooseEvent("1500m")
-    expect(screen.getByText("계획 준비 · 기록 선택")).toBeVisible()
+    expect(screen.getByRole("heading", { name: "1500m 기록이 있나요?" })).toHaveFocus()
+    expect(screen.getByRole("group", { name: "1500m 기록이 있나요?" }))
+      .toBeVisible()
     expect(screen.getByRole("button", { name: "내 기록" })).toHaveAttribute("aria-pressed", "false")
     expect(screen.getByRole("button", { name: "내 기록" })).toHaveAccessibleDescription("실제로 달린 시간")
     expect(screen.getByRole("button", { name: "목표만 있어요" })).toHaveAccessibleDescription("앞으로 달리고 싶은 시간")
     expect(screen.getByRole("button", { name: "기록 없이" })).toHaveAccessibleDescription("시간 입력 건너뛰기")
     expect(screen.queryByLabelText("분")).not.toBeInTheDocument()
     chooseBasis("내 기록")
-    expect(screen.getByText("계획 준비 · 기록 입력")).toBeVisible()
     expect(screen.getByRole("heading", { name: "1500m를 달린 전체 시간" })).toHaveFocus()
     fireEvent.click(screen.getByRole("button", { name: "기준 다시 선택" }))
     expect(screen.getByRole("button", { name: "내 기록" })).toHaveAttribute("aria-pressed", "true")
@@ -312,7 +342,7 @@ describe("InstantPlanEntryForm", () => {
     expect(screen.getByLabelText("기록 달성일")).not.toBeVisible()
     expect(screen.getByText("기록 날짜 추가")).toBeVisible()
     expect(screen.getByText("선택")).toBeVisible()
-    expect(screen.getByText("날짜가 없으면 최근 12개월 기록에서는 제외돼요.")).toBeVisible()
+    expect(screen.getByText("개인 페이스에는 기록 날짜가 필요해요. 모르면 비워 두세요.")).toBeVisible()
     submit()
     expect(onSubmit).toHaveBeenCalledExactlyOnceWith({ ...record, achievedOn: null })
   })
@@ -336,6 +366,33 @@ describe("InstantPlanEntryForm", () => {
     render(<InstantPlanEntryForm today={TODAY} initialEntry={entry} onSubmit={onSubmit} />)
     submit()
     expect(onSubmit).toHaveBeenCalledExactlyOnceWith(entry)
+  })
+
+  it("re-reads the supplied live day at submit without a rerender and keeps genuinely future dates blocked", () => {
+    const onSubmit = vi.fn(), entry = { ...record, achievedOn: "2026-09-21" }
+    let day = TODAY
+    render(<InstantPlanEntryForm today={TODAY} readToday={() => day} initialEntry={entry} onSubmit={onSubmit} />)
+    day = "2026-09-21"
+    submit()
+    expect(onSubmit).toHaveBeenCalledExactlyOnceWith(entry)
+    onSubmit.mockClear()
+    fireEvent.change(screen.getByLabelText("기록 달성일"), { target: { value: "2026-09-22" } })
+    submit()
+    expect(onSubmit).not.toHaveBeenCalled()
+    expect(screen.getByRole("alert")).toHaveTextContent("달성일은 오늘 또는 이전 날짜")
+  })
+
+  it("refreshes the date picker limit on focus after midnight while preserving entered values", () => {
+    let day = TODAY
+    render(<InstantPlanEntryForm today={TODAY} readToday={() => day} initialEntry={record} onSubmit={vi.fn()} />)
+    const date = screen.getByLabelText("기록 달성일")
+    expect(date).toHaveAttribute("max", TODAY)
+    day = "2026-09-21"
+    fireEvent.focus(date)
+    expect(date).toHaveAttribute("max", day)
+    expect(date).toHaveValue(record.achievedOn)
+    expect(screen.getByLabelText("분")).toHaveValue("25")
+    expect(screen.getByLabelText("초")).toHaveValue("0.125")
   })
 
   it("fails closed for current records when the supplied local today is invalid", () => {

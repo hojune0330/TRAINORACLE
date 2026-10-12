@@ -269,7 +269,7 @@ export function GameMenu({ progress, status, onClose, onSettings, onCharacter, o
             <a href={item.file} target="_blank" rel="noreferrer">라이선스 전문 보기</a>
           </li>)}
         </ul>
-        <p className="treadmill-game__fine">앱 전체에 포함된 소프트웨어 전체 목록: 
+        <p className="treadmill-game__fine">앱 전체에 포함된 소프트웨어 전체 목록:
           <a href="legal/third-party-notices.html" target="_blank" rel="noreferrer">오픈소스 소프트웨어 고지</a>(더보기에서도 볼 수 있어요)</p>
       </div>}
     </section>

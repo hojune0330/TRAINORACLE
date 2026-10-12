@@ -1,7 +1,10 @@
 import React from "react"
 import { CheckCircle2, ChevronRight, Flag, Moon, PencilLine } from "lucide-react"
-import { compactDate, dowOf, nowClock } from "../../domain/dates"
-import { entriesForDate, todayISO } from "../../domain/journal-store"
+import { compactDate, dowOf } from "../../domain/dates"
+import { todayISO } from "../../domain/journal-store"
+import { useCalendarSnapshot } from "../../hooks/useCalendarEntries"
+import { ContextualIllustration } from "../../components/ContextualIllustration"
+import { AppHeading } from "../../components/AppHeading"
 import { TopBar } from "./shared"
 import type { LogEntryType } from "./shared"
 
@@ -14,17 +17,24 @@ interface EntryChooserProps {
 }
 
 const ENTRY_OPTIONS = [
-  { id: "quick-session", t: "빠르게 기록", d: "운동 결과와 몸 상태만", Icon: CheckCircle2 },
-  { id: "post-session", t: "훈련 후", d: "달리기·근력 등 여러 운동을 함께", Icon: PencilLine },
-  { id: "evening", t: "회복 · 하루 마무리", d: "메모·수면·기분·몸 상태 · 원하는 것만", Icon: Moon },
-  { id: "race", t: "경기 직전/직후", d: "경기 기록과 컨디션", Icon: Flag },
+  { id: "quick-session", t: "빠르게 기록", d: "거리·시간·힘든 정도", Icon: CheckCircle2 },
+  { id: "post-session", t: "자세히 기록", d: "운동별로 자세히", Icon: PencilLine },
+  { id: "evening", t: "컨디션·메모", d: "수면·몸 상태·기분·메모", Icon: Moon },
+  { id: "race", t: "경기 기록", d: "경기 전후 기록·컨디션", Icon: Flag },
 ] as const
 
 export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: EntryChooserProps) {
   const headingRef = React.useRef<HTMLHeadingElement>(null)
   const today = todayISO()
   const entryDate = targetDate ?? today
-  const isToday = entryDate === today
+  const journalSnapshot = useCalendarSnapshot()
+  const entryCount = journalSnapshot.entries.filter(entry => entry.date === entryDate).length
+  const hasEntries = entryCount > 0
+  const confirmedEmpty = journalSnapshot.status === "READY" && !hasEntries
+  const readMessage = journalSnapshot.status === "LOADING" ? "기록을 불러오는 중이에요."
+    : journalSnapshot.status === "STALE" ? "기록의 최신 상태를 확인하지 못했어요. 보관된 기록은 계속 볼 수 있어요."
+    : journalSnapshot.status === "ERROR" ? "기록을 불러오지 못했어요."
+    : null
   React.useEffect(() => {
     headingRef.current?.focus()
   }, [])
@@ -33,21 +43,26 @@ export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: Entry
     <div style={{ paddingBottom: 30 }}>
       <TopBar onBack={onBack}>새 일지</TopBar>
       <div style={{ padding: "20px 20px 4px" }}>
-        <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: 0 }}>
-          {compactDate(entryDate)} {dowOf(entryDate)} · {nowClock()}
+        <div style={{ fontFamily: "var(--sans)", fontSize: 14, color: "var(--ink-3)", letterSpacing: 0 }}>
+          {entryDate.slice(0, 4) !== today.slice(0, 4) ? `${entryDate.slice(0, 4)}년 ` : ""}{compactDate(entryDate)} {dowOf(entryDate)}
+          {hasEntries && <span> · {journalSnapshot.status === "READY" ? "일지" : "보관된 일지"} {entryCount}개</span>}
         </div>
-        <h1 ref={headingRef} tabIndex={-1} style={{ fontFamily: "var(--sans)", fontSize: 22, fontWeight: 500, letterSpacing: 0, margin: "6px 0 0" }}>어떤 일지를 쓰세요?</h1>
+        <div className="contextual-entry-intro">
+          <div className="contextual-entry-intro__copy">
+            <AppHeading ref={headingRef} tabIndex={-1} as="h1" variant="screen" accent className="entry-chooser__title">무엇을 기록할까요?</AppHeading>
+            {readMessage !== null && <p role={journalSnapshot.status === "ERROR" ? "alert" : "status"}>
+              {readMessage}
+            </p>}
+          </div>
+          {confirmedEmpty && <ContextualIllustration image="journal-guide" size="small" />}
+        </div>
       </div>
 
-      <div style={{ marginTop: 18 }}>
-        {ENTRY_OPTIONS.map((option, index) => (
-          <button type="button" key={option.id} data-testid={`entry-choice-${option.id}`} onClick={() => onPick?.(option.id)} style={{
+      <div className="app-choice-group" style={{ marginTop: 18, padding: "0 20px", display: "grid" }}>
+        {ENTRY_OPTIONS.map((option) => (
+          <button className="app-choice-control app-choice-control--answer" type="button" key={option.id} data-testid={`entry-choice-${option.id}`} onClick={() => onPick?.(option.id)} style={{
             width: "100%", textAlign: "left",
-            padding: "12px 20px", minHeight: 64,
-            background: "var(--surface)",
-            border: 0, borderTop: "1px solid var(--ink)",
-            borderBottom: index === ENTRY_OPTIONS.length - 1 ? "1px solid var(--ink)" : 0,
-            cursor: "pointer",
+            minHeight: 64,
             display: "grid", gridTemplateColumns: "20px minmax(0, 1fr) 18px", gap: 12, alignItems: "center",
           }}>
             <option.Icon size={19} aria-hidden="true" style={{ color: "var(--brand)" }} />
@@ -61,35 +76,23 @@ export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: Entry
       </div>
 
       {onOpenImport && (
-        <div style={{ padding: "20px 20px 0" }}>
+        <div className="app-choice-group" style={{ padding: "20px 20px 0" }}>
           <button
+            className="app-choice-control"
             type="button"
             onClick={onOpenImport}
             data-testid="open-import"
             style={{
-              width: "100%", minHeight: 48, padding: "13px 16px", textAlign: "left",
-              background: "transparent", color: "var(--ink-2)",
-              border: "1px dashed var(--line-2, var(--line))", borderRadius: 0,
-              cursor: "pointer", lineHeight: 1.5,
+              width: "100%", minHeight: 48, textAlign: "left", lineHeight: 1.5,
             }}
           >
             <span style={{ fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 500, color: "var(--ink)" }}>
-              워치 기록 불러오기
-            </span>
-            <span style={{ display: "block", fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", marginTop: 3 }}>
-              워치 앱에서 내보낸 파일을 골라요
+              운동 파일 불러오기
             </span>
           </button>
         </div>
       )}
 
-      <div style={{ padding: "24px 20px" }}>
-        <div style={{ fontFamily: "var(--sans)", fontSize: 12, color: "var(--ink-3)", letterSpacing: 0, lineHeight: 1.55 }}>
-          {entriesForDate(entryDate).length > 0
-            ? `${isToday ? "오늘" : "이 날짜에"} 남긴 일지가 있어요. 기록을 더 쓰면 같은 날짜에 모아 보여드려요.`
-            : `${isToday ? "오늘" : "이 날짜의"} 첫 일지예요. 원하는 항목만 남겨도 괜찮아요.`}
-        </div>
-      </div>
     </div>
   )
 }

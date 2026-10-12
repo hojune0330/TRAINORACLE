@@ -1,13 +1,15 @@
 import { useState } from "react"
-import { ArrowRight, CalendarDays } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import { MonthCalendar, calendarDayLabel } from "./MonthCalendar"
 import { CalendarTrainingMark } from "./CalendarTrainingMark"
 import { isoShift, isoToDate } from "../domain/dates"
 import { PlanDayReader } from "../screens/plan-beta/PlanDayReader"
+import { ContextualIllustration } from "./ContextualIllustration"
+import { AppHeading } from "./AppHeading"
 
 /** Isolated display-only example: never enters any journal or plan data collection. */
-export function CalendarEmptyExample({ today, expanded, onExpand, onCalendar, onWrite, hasRealRecords }: {
-  today: string; expanded: boolean; onExpand: () => void; onCalendar: () => void; onWrite?: () => void; hasRealRecords: boolean;
+export function CalendarEmptyExample({ today, expanded, onExpand, onCalendar, onWrite, hasRealRecords, illustrationAllowed = true }: {
+  today: string; expanded: boolean; onExpand: () => void; onCalendar: () => void; onWrite?: () => void; hasRealRecords: boolean; illustrationAllowed?: boolean;
 }) {
   const start = isoShift(today, -isoToDate(today).getDay())
   const [month, setMonth] = useState(today.slice(0, 7))
@@ -19,8 +21,13 @@ export function CalendarEmptyExample({ today, expanded, onExpand, onCalendar, on
     { date: isoShift(start, 4), tone: "off" as const, label: "휴식", detail: "쉬었다고 직접 기록한 날이에요. 훈련하지 않아도 일지를 남길 수 있어요." },
   ]
   return <section className="calendar-empty-example" aria-label="일지 달력 예시">
-    <header><CalendarDays size={20} aria-hidden="true" /><h2>{expanded ? "일지가 쌓인 달력" : "첫 일지를 남겨보세요"}</h2></header>
-    <p className="calendar-example-label">예시 · 내 기록에 저장되지 않아요</p>
+    <header>
+      {illustrationAllowed && !hasRealRecords && <ContextualIllustration image="empty-journal" size="small" />}
+      <div className="calendar-empty-example__copy">
+        <AppHeading as="h2" variant="section">{expanded ? "일지가 쌓인 달력" : "첫 일지를 남겨보세요"}</AppHeading>
+        <p className="calendar-example-label">예시 · 내 기록에 저장되지 않아요</p>
+      </div>
+    </header>
     {expanded ? <MonthCalendar month={month} today={today} selectedDate={date ?? undefined}
       onMonthChange={setMonth} onToday={value => { setMonth(value.slice(0, 7)); setDate(null) }}
       onSelectDate={openDate} trainingColors

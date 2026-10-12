@@ -3,8 +3,8 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import type { JournalEntry, PostSessionEntry } from "../domain/journal-store"
 import { canEditJournalEntry } from "../domain/journal-edit-policy"
-import { putAccountJournalProjection, readAccountJournalPrivateEntry, resetAccountJournalProjection } from "../domain/account/account-journal-projection"
-import { setActiveLocalAccount } from "../domain/account/local-journal-ownership"
+import { putAccountJournalProjection, readAccountJournalPrivateEntry, resetAccountJournalProjection, setAccountJournalProjectionStatus } from "../domain/account/account-journal-projection"
+import { assignJournalsToAccount, setActiveLocalAccount } from "../domain/account/local-journal-ownership"
 import { toImportedEntry } from "../domain/import/import-draft"
 
 const mocks = vi.hoisted(() => ({ entries: [] as JournalEntry[], enabled: true, persist: vi.fn(), readFinalization: vi.fn() }))
@@ -64,6 +64,21 @@ it("passes the current-account private body to its editor without mutating the a
   expect(readAccountJournalPrivateEntry(session.id)).toEqual(privateEntry)
 })
 
+it.each([
+  ["PENDING", "계정 저장 대기 중"],
+  ["REJECTED", "계정 저장 거절"],
+  ["FAILED", "계정 확인 실패"],
+  ["CONFLICT", "충돌 확인 필요"],
+] as const)("keeps the current account %s state visible for a local draft", (status, label) => {
+  const draft = { ...session, syncState: "local" as const }
+  mocks.entries = [draft]
+  expect(assignJournalsToAccount([draft.id], owner)).toBe(true)
+  expect(putAccountJournalProjection(owner, draft, false)).toBe(true)
+  setAccountJournalProjectionStatus(owner, status)
+  render(<LogDetail date={session.date} />)
+  expect(screen.getByText(label)).toBeVisible()
+})
+
 it("rechecks account ownership at click time rather than trusting a previously rendered action", () => {
   seed(session)
   const edit = vi.fn()
@@ -110,10 +125,22 @@ it.each(["quick-session", "post-session", "evening", "race"] as const)(
     render(<Flow />)
     fireEvent.click(screen.getByTestId("journal-manage-toggle"))
     fireEvent.click(screen.getByTestId(`journal-edit-${session.id}`))
+    if (form === "evening") {
+      fireEvent.click(screen.getByRole("button", { name: "체중 · 안정시 심박 입력" }))
+      fireEvent.change(screen.getByRole("textbox", { name: "체중 (kg)" }), { target: { value: "60.5" } })
+      fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
+    } else if (form === "race") {
+      fireEvent.click(screen.getByRole("button", { name: "경기 정보 수정" }))
+      fireEvent.click(screen.getByRole("button", { name: "긴장도 4" }))
+      fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
+    }
+    expect(readAccountJournalPrivateEntry(session.id)).toEqual(entry)
     fireEvent.click(screen.getByRole("button", { name: form === "quick-session" ? "오늘은 쉬었어요" : /^수정 저장/ }))
     if (form === "quick-session") fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
     await waitFor(() => expect(mocks.persist).toHaveBeenCalledOnce())
     expect(mocks.persist.mock.calls[0]![0]).toMatchObject({ id: session.id, kind: entry.kind, syncState: "local" })
+    if (form === "evening") expect(mocks.persist.mock.calls[0]![0]).toMatchObject({ weightKg: "60.5" })
+    if (form === "race") expect(mocks.persist.mock.calls[0]![0]).toMatchObject({ tension: 4 })
     expect(mocks.persist.mock.calls[0]![1]).toBe(session.savedAt)
     expect(mocks.readFinalization).toHaveBeenCalledWith(owner, session.id)
     await act(async () => {})

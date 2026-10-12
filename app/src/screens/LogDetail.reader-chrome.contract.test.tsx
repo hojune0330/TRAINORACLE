@@ -1,0 +1,80 @@
+import { cleanup, render, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it, vi } from "vitest"
+import {
+  createEmptyDecorationState,
+  decorationStateSchema,
+  loadDecorationState,
+  saveDecorationState,
+} from "../domain/decorations"
+import type { JournalEntry } from "../domain/journal-schema"
+import { LogDetail } from "./LogDetail"
+
+afterEach(() => { cleanup(); localStorage.clear(); vi.restoreAllMocks() })
+
+const date = "2026-09-27"
+const entry: JournalEntry = {
+  id: "reader-session",
+  kind: "post-session",
+  date,
+  savedAt: date + "T02:00:00Z",
+  syncState: "local",
+  system: "base",
+  title: "조깅",
+  memo: "기록 원문",
+  distanceKm: "8",
+  durationMin: "40",
+  avgPace: "",
+  rpe: 0,
+}
+
+describe("journal reader chrome", () => {
+  it("exposes the original date as a level-one heading without adding a paper layout box", () => {
+    const { container } = render(<LogDetail date={date} entries={[entry]} readOnly readerControls={<nav aria-label="synthetic reader navigation" />} />)
+    const heading = screen.getByRole("heading", { level: 1, name: "2026년 9월 27일 일요일 일지" })
+    expect(heading).toBe(container.querySelector(".journal-detail-page__date"))
+    expect(heading.children).toHaveLength(1)
+    expect(heading).not.toHaveClass("app-heading")
+    expect(heading).toHaveTextContent("2026 · 09 · 27")
+  })
+
+  it("labels a local record by its actual browser storage", () => {
+    render(<LogDetail date={date} entries={[entry]} />)
+    expect(screen.getByText("이 브라우저에 저장됨")).toBeVisible()
+    expect(screen.queryByText("이 기기")).toBeNull()
+    expect(screen.queryByText(/이 페이지는 이 기기에만 저장돼/u)).toBeNull()
+  })
+
+  it("does not label a legacy synced flag as browser-only storage", () => {
+    render(<LogDetail date={date} entries={[{ ...entry, syncState: "synced" }]} />)
+    expect(screen.queryByText("이 브라우저에 저장됨")).toBeNull()
+    expect(screen.queryByText("저장 위치·상태 확인")).toBeNull()
+  })
+
+  it("keeps the reader background plain while retaining the saved theme and placement", () => {
+    const base = createEmptyDecorationState()
+    const state = decorationStateSchema.parse({
+      ...base,
+      ownedItemIds: [...base.ownedItemIds, "THEME_SKY_JOURNAL", "STICKER_FINISH_LINE"],
+      spentPoints: 40,
+      equipped: { ...base.equipped, themeId: "THEME_SKY_JOURNAL" },
+      pages: [{
+        date,
+        items: [{
+          itemId: "STICKER_FINISH_LINE",
+          transform: { xPercent: 18, yPercent: 28, scale: 1, rotationDeg: 0 },
+        }],
+      }],
+    })
+    expect(saveDecorationState(state).ok).toBe(true)
+    const savedBeforeRender = loadDecorationState()
+    const { container } = render(<LogDetail date={date} entries={[entry]} readOnly />)
+
+    const chrome = container.querySelector(".journal-detail-page--reader")
+    const page = container.querySelector(".decorated-journal-page")
+    expect(chrome).not.toBeNull()
+    expect(chrome).not.toHaveClass("paper-grid")
+    expect(page).toHaveAttribute("data-theme-id", "THEME_SKY_JOURNAL")
+    expect(screen.getByTestId("journal-decoration-item-0")).toBeInTheDocument()
+    expect(loadDecorationState()).toEqual(savedBeforeRender)
+  })
+})

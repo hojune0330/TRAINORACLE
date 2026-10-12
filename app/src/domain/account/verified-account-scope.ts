@@ -8,6 +8,7 @@ import {
 } from "./auth-session-quarantine"
 import { setActiveLocalAccount } from "./local-journal-ownership"
 import { loadAccountStorageConsent } from "./storage-consent"
+import { accountDeletionBoundaryState, onAccountDeletionBoundaryChange } from "./account-deletion-boundary"
 
 export type VerifiedAccountScopeStatus = "LOADING" | "READY" | "FAILED"
 
@@ -64,6 +65,7 @@ export function startVerifiedAccountScope(
 ): () => void {
   let active = true
   let generation = 0
+  let hintedOwner: string | null = null
 
   const revoke = (status: AuthState, viewStatus: VerifiedAccountScopeStatus) => {
     generation += 1
@@ -73,12 +75,13 @@ export function startVerifiedAccountScope(
   }
 
   const verifyHint = async (hintedUserId: string | null) => {
+    hintedOwner = hintedUserId
     const ticket = ++generation
     dependencies.setActiveLocalAccount(null)
     dependencies.setAccountAuthState("RESOLVING")
     onStatus("LOADING")
 
-    if (dependencies.isQuarantined()) {
+    if (dependencies.isQuarantined() || (hintedUserId !== null && accountDeletionBoundaryState(hintedUserId) !== "OPEN")) {
       revoke("FAILED", "FAILED")
       return
     }
@@ -89,6 +92,7 @@ export function startVerifiedAccountScope(
     }
 
     const stillCurrent = () => active && ticket === generation && !dependencies.isQuarantined()
+      && accountDeletionBoundaryState(hintedUserId) === "OPEN"
     try {
       const firstCheck = await dependencies.currentUser({ throwOnFailure: true })
       if (!stillCurrent()) return
@@ -140,6 +144,10 @@ export function startVerifiedAccountScope(
     stopAuth = dependencies.onAuthChange(handleAuthChange)
   }
   subscribeAuth()
+  const stopDeletion = onAccountDeletionBoundaryChange(owner => {
+    // Deleting A must not close an already-verified B or a genuine guest.
+    if (hintedOwner === owner) revoke("FAILED", "FAILED")
+  })
   const stopQuarantine = dependencies.subscribeQuarantine((quarantined) => {
     if (quarantined) {
       stopAuth()
@@ -187,6 +195,7 @@ export function startVerifiedAccountScope(
     generation += 1
     stopAuth()
     stopQuarantine()
+    stopDeletion()
     if (typeof window !== "undefined") {
       window.removeEventListener(SCOPE_REFRESH_EVENT, onScopeRefresh)
       window.removeEventListener("storage", onCrossTabScopeRefresh)

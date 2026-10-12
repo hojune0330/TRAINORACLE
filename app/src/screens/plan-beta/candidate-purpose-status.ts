@@ -9,20 +9,20 @@ export type CandidatePurposeStatus = {
 
 export function candidatePurposeStatus(kind: PlanCandidateKind, hasCatalog = false): CandidatePurposeStatus {
   if (hasCatalog) return { tone: kind === "BALANCED" ? "included" : "conservative",
-    label: kind === "BALANCED" ? "기초·회복 운동은 기본 구성으로" : "기초·회복 운동은 짧은 구성으로",
-    detail: "주요 훈련의 횟수와 강도는 같은 기준을 사용해요" }
+    label: "운동별 시간 확인",
+    detail: "훈련 방법과 시간은 날짜별 일정에 표시돼요" }
   switch (kind) {
     case "BALANCED":
       return {
         tone: "included",
-        label: "기초·회복 운동은 시간 범위로",
-        detail: "주요 훈련 횟수와 강도를 더 올리는 안은 아니에요",
+        label: "운동별 시간 확인",
+        detail: "범위가 있으면 그 안에서 시간을 정해요",
       }
     case "CONSERVATIVE":
       return {
         tone: "conservative",
-        label: "기초·회복 운동은 범위의 짧은 시간으로",
-        detail: "주요 훈련의 횟수와 강도는 같은 기준을 사용해요",
+        label: "운동별 시간 확인",
+        detail: "범위가 있으면 그 안에서 시간을 정해요",
       }
     default:
       return assertNever(kind)

@@ -75,10 +75,10 @@ export function MonthCalendar({ month, today, selectedDate, onMonthChange, onSel
           if (onToday) onToday(today)
           else onSelectDate(today)
         }}>오늘</button>
-        <button type="button" aria-label="이전 달" title="이전 달" onClick={() => onMonthChange(shiftCalendarMonth(month, -1))}>
+        <button type="button" className="month-calendar__month-nav" aria-label="이전 달" title="이전 달" onClick={() => onMonthChange(shiftCalendarMonth(month, -1))}>
           <ChevronLeft size={18} aria-hidden="true" />
         </button>
-        <button type="button" aria-label="다음 달" title="다음 달" onClick={() => onMonthChange(shiftCalendarMonth(month, 1))}>
+        <button type="button" className="month-calendar__month-nav" aria-label="다음 달" title="다음 달" onClick={() => onMonthChange(shiftCalendarMonth(month, 1))}>
           <ChevronRight size={18} aria-hidden="true" />
         </button>
       </div>

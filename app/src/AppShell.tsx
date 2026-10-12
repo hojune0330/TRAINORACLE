@@ -1,15 +1,21 @@
 import React from "react"
 import { oracleV2FeatureEnabled } from "./domain/oracle-rollout"
+import { productFeatures } from "./domain/product-features"
 import { READER_HISTORY_KEY } from "./hooks/useReaderDialog"
 import { useCalendarSnapshot } from "./hooks/useCalendarEntries"
 import { rememberCalendarDate } from "./hooks/useCalendarPosition"
 import { runDraftSafeNavigation } from "./domain/unsaved-draft-navigation"
+import { useNavigationReturnFrame } from "./hooks/useNavigationReturnFrame"
+import { beginBrowserPopNavigation, consumeBrowserBackLayer, getBrowserNavigationEpoch, isBrowserPopScrollRestoration } from "./navigation/browserNavigation"
+import { captureReaderPosition, captureCalendarReaderPosition, restoreReaderPosition, validJournalCalendarReturn,
+  type JournalCalendarReturn, type ReaderPosition } from "./navigation/readerPosition"
 import type { AppTab } from "./components/AppChrome"
 import { AppShellFrame } from "./components/AppShellFrame"
 import { ErrorBoundary } from "./components/ErrorBoundary"
 import { clearRecoveryTab, readRecoveryTab } from "./domain/screen-recovery"
 import type { ShellToastState } from "./components/AppShellFrame"
 import { Home } from "./screens/Home"
+import type { MoreView } from "./screens/More"
 import { HomeOraclePreview } from "./screens/home/HomeOraclePreview"
 import type { GuestOracleSession } from "./screens/OracleProfileV2"
 import { LogEntry } from "./screens/LogEntry"
@@ -19,11 +25,11 @@ import { loungeEntryIntent } from "./domain/lounge/entry-intent"
 import { loadEntries, localOnlyCount, todayISO } from "./domain/journal-store"
 import type { JournalEntry } from "./domain/journal-store"
 import { awardJournalEntry, type EngagementAwardResult } from "./domain/engagement"
-import { ACCOUNT_REWARD_EVENT, accountRewardsEnabled, accountRewardStatus, readAccountRewardSummary } from "./domain/account/account-reward-service"
+import { ACCOUNT_REWARD_EVENT, accountRewardsEnabled, accountRewardStatus, readAccountRewardSummary, hydrateAccountRewards } from "./domain/account/account-reward-service"
 import { createSavedFactReceipt } from "./domain/save-receipt"
 import { analysisNavigationForReceipt, type AnalysisNavigation, type AnalysisSection } from "./domain/analysis-navigation"
 import { buildOraclePersonalResult } from "./domain/oracle-personal-result"
-import { loadPlanBetaState } from "./domain/plan-beta-store"
+import { loadPlanBetaState, readPlanBetaStateFromStorage } from "./domain/plan-beta-store"
 import { usePlanEvidenceHistory } from "./hooks/usePlanEvidenceHistory"
 import { PlanEvidenceHistoryNotice } from "./components/PlanEvidenceHistoryNotice"
 import { useAthleteRecordsSnapshot } from "./hooks/useAthleteRecordsSnapshot"
@@ -73,6 +79,8 @@ const JOURNAL_REWARD_MESSAGE = {
 const TOAST_READABLE_MS = 4000
 const TOAST_EXIT_MS = 150
 const OVERLAY_HISTORY_KEY = "trainoracleOverlay"
+const MORE_HISTORY_KEY = "trainoracleMore"
+const ORACLE_PLAN_HISTORY_KEY = "trainoracleOraclePlan"
 const ORACLE_INVITATION_RETURN_KEY = "trainoracle.oracle-v2.invitation-return"
 
 function oracleV2Enabled(): boolean {
@@ -117,6 +125,7 @@ type ShellReturnPoint = {
   readonly view: ReturnType<typeof viewForTab>
   readonly utilityView: "more" | "guide" | "minji" | "content" | "rewards" | "minigame" | null
   readonly utilityOrigin: "home" | "more"
+  readonly moreView: MoreView
   readonly athleteRecordsOpen: boolean
 }
 
@@ -182,6 +191,9 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   })
   React.useEffect(() => { clearRecoveryTab() }, [])
   const [savedToast, setSavedToast] = React.useState<ShellToastState | null>(null)
+  const confirmedSaveEffects = React.useRef<{
+    entryId: string; savedAt: string; scope: number; rewardMessage: string; rewardRetry?: boolean
+  } | null>(null)
   const [analysisContext, setAnalysisContext] = React.useState<AnalysisNavigation | undefined>()
   const analysisReturnContext = React.useRef<AnalysisNavigation | undefined>()
   const [oracleHubSection, setOracleHubSection] = React.useState<"training" | "profile" | "library">("training")
@@ -189,16 +201,27 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const recordingOrigin = React.useRef<RecordingOrigin | null>(null)
   const coachingDayOrigin = React.useRef<RecordingOrigin | null>(null)
   const trainingContentOrigin = React.useRef<RecordingOrigin | null>(null)
-  const oracleInputRef = React.useRef<{ topic: OracleTopicId; owner: string | null; inputKind: "log" | "records" | "plan"; mode: "example" | "personal"; scrollTop: number; view: ReturnType<typeof viewForTab> } | null>(null)
+  const guideOrigin = React.useRef<RecordingOrigin | null>(null)
+  const oracleInputRef = React.useRef<{ topic: OracleTopicId; owner: string | null; inputKind: "log" | "records" | "plan"; historyToken?: string; mode: "example" | "personal"; scrollTop: number; view: ReturnType<typeof viewForTab> } | null>(null)
+  // Keep only this mounted shell's return route. Forward always rereads the saved plan.
+  const oraclePlanForwardRef = React.useRef<{ intent: NonNullable<typeof oracleInputRef.current>; scope: number } | null>(null)
+  const hasStoredOraclePlan = React.useCallback(() => {
+    try { return "state" in readPlanBetaStateFromStorage(undefined, undefined, multiPlanRuntime?.readMultiAdjustedEvidenceV3) }
+    catch { return false }
+  }, [multiPlanRuntime?.readMultiAdjustedEvidenceV3])
   const pendingReward = React.useRef<{ ownerId: string | null; date: string } | null>(null)
   const calendarDraftReturn = React.useRef<{ token: string; owner: string | null; view: typeof v } | null>(null)
-  const calendarOriginalReturn = React.useRef<{ token: string; owner: string | null; view: typeof v } | null>(null)
+  const calendarOriginalReturn = React.useRef<{ token: string; owner: string | null; view: typeof v;
+    calendarReturn: JournalCalendarReturn | null; position: ReaderPosition } | null>(null)
+  const [calendarReaderReturn, setCalendarReaderReturn] = React.useState<JournalCalendarReturn | null>(null)
+  const calendarSnapshotRef = React.useRef(calendarSnapshot)
+  calendarSnapshotRef.current = calendarSnapshot
   const lastJournalView = React.useRef<{ owner: string | null; view: typeof v } | null>(null)
   React.useEffect(() => {
     if (v.tab === "journal") lastJournalView.current = { owner: activeLocalAccount(), view: { ...v, detailDate: null, detailEntryId: undefined } }
   }, [v])
   React.useEffect(() => onLocalJournalScopeChange(() => {
-    lastJournalView.current = null; calendarOriginalReturn.current = null
+    lastJournalView.current = null; calendarOriginalReturn.current = null; setCalendarReaderReturn(null)
     setV(state => state.tab === "journal" ? { ...viewForTab("journal") } : state)
   }), [])
   const [athleteRecordsOpen, setAthleteRecordsOpen] = React.useState(false)
@@ -206,16 +229,42 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const scrollRegionRef = React.useRef<HTMLElement>(null)
   const [utilityView, setUtilityView] = React.useState<"more" | "guide" | "minji" | "content" | "rewards" | "minigame" | null>(null)
   const [utilityOrigin, setUtilityOrigin] = React.useState<"home" | "more">("more")
+  const [moreView, setMoreView] = React.useState<MoreView>("tools")
+  const moreVisibleRef = React.useRef(false)
+  moreVisibleRef.current = v.tab === "home" && utilityView === "more" && !v.accountOpen && !v.restoreOpen
   const [decorationInitialDate, setDecorationInitialDate] = React.useState<string | undefined>()
   const decorationReturn = React.useRef<{ owner: string | null; view: typeof v; utility: typeof utilityView; scroll: number; focusLabel: string | null; focusText: string | null } | null>(null)
   const [overlay, setOverlay] = React.useState<AppOverlay | null>(null)
   const overlayRef = React.useRef<AppOverlay | null>(null)
   const paceRequestRef = React.useRef<{ token: string; owner: string | null; request: PaceToolRequest; opener: HTMLElement | null; consumed: boolean } | null>(null)
   const overlayScrollTopRef = React.useRef(0)
+  const overlayReturnPosition = React.useRef<ReaderPosition | null>(null)
+  const moreReturnPosition = React.useRef<ReaderPosition | null>(null)
   const overlayHistoryOwnerRef = React.useRef(`shell-${Date.now()}-${Math.random().toString(36).slice(2)}`)
   const restoreReturnRef = React.useRef<ShellReturnPoint | null>(null)
-  const importReturnRef = React.useRef<ShellReturnPoint | null>(null)
+  const importReturnRef = React.useRef<RecordingOrigin | null>(null)
   const pendingScreenMotionRef = React.useRef<Exclude<AppScreenMotion, "initial" | "none"> | null>(null)
+  const { schedule: scheduleReturnFrame, invalidate: invalidateReturnFrame } = useNavigationReturnFrame()
+  const restoreCalendarOriginal = React.useCallback((origin: NonNullable<typeof calendarOriginalReturn.current>) => {
+    calendarOriginalReturn.current = null
+    if (origin.owner !== activeLocalAccount() || origin.position.scope !== localJournalScopeGeneration()) {
+      setCalendarReaderReturn(null); setV(INITIAL_VIEW_STATE); return
+    }
+    const restored = validJournalCalendarReturn(origin.calendarReturn, calendarSnapshotRef.current.entries)
+    setCalendarReaderReturn(restored)
+    setV(origin.view)
+    scheduleReturnFrame(() => {
+      const region = scrollRegionRef.current
+      if (restored && region) region.scrollTop = origin.position.scroll
+      else restoreReaderPosition(region, origin.position)
+    })
+  }, [scheduleReturnFrame])
+  React.useEffect(() => {
+    if (utilityView !== "more" || moreView !== "tools" || !moreReturnPosition.current) return
+    const position = moreReturnPosition.current
+    moreReturnPosition.current = null
+    scheduleReturnFrame(() => restoreReaderPosition(scrollRegionRef.current, position))
+  }, [utilityView, moreView, scheduleReturnFrame])
   const runViewTransition = React.useCallback((
     motion: Exclude<AppScreenMotion, "initial" | "none">,
     update: () => void,
@@ -223,12 +272,16 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   ) => {
     // The remounted app-flow-stage supplies the non-blocking CSS transition.
     // Native document snapshots block rapid follow-up taps on mobile.
+    const expectedScope = localJournalScopeGeneration()
+    const expectedNavigation = getBrowserNavigationEpoch()
     runDraftSafeNavigation(() => {
+      invalidateReturnFrame()
       pendingScreenMotionRef.current = motion
       setSavedToast(current => current?.reviewMessage === undefined ? null : current)
       update()
-    }, preserveMountedDrafts)
-  }, [])
+    }, preserveMountedDrafts, () => localJournalScopeGeneration() === expectedScope
+      && getBrowserNavigationEpoch() === expectedNavigation)
+  }, [invalidateReturnFrame])
 
   const applyOverlay = React.useCallback((next: AppOverlay | null) => {
     const pace = paceRequestRef.current
@@ -236,17 +289,21 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     const leavingPace = overlayRef.current?.kind === "pace" && next?.kind !== "pace"
     overlayRef.current = next
     setOverlay(next)
-    window.requestAnimationFrame(() => {
+    scheduleReturnFrame(() => {
       const scrollRegion = scrollRegionRef.current
       if (scrollRegion === null) return
       scrollRegion.scrollTop = next === null ? overlayScrollTopRef.current : next.kind === "oracle" || next.kind === "pace" ? next.scrollTop ?? 0 : 0
       scrollRegion.scrollLeft = 0
+      if (next === null) restoreReaderPosition(scrollRegion, overlayReturnPosition.current)
       if (leavingPace && pace?.opener?.isConnected) pace.opener.focus({ preventScroll: true })
     })
-  }, [])
+  }, [scheduleReturnFrame])
 
   const openOverlay = React.useCallback((next: AppOverlay) => {
-    if (overlayRef.current === null) overlayScrollTopRef.current = scrollRegionRef.current?.scrollTop ?? 0
+    if (overlayRef.current === null) {
+      overlayScrollTopRef.current = scrollRegionRef.current?.scrollTop ?? 0
+      overlayReturnPosition.current = captureReaderPosition(scrollRegionRef.current)
+    }
     const marker: OverlayHistoryMarker = { ...next, owner: overlayHistoryOwnerRef.current, version: 1 }
     const currentState = typeof window.history.state === "object" && window.history.state !== null
       ? window.history.state as Record<string, unknown>
@@ -326,6 +383,9 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
 
   React.useEffect(() => {
     const onPopState = (event: PopStateEvent) => {
+      beginBrowserPopNavigation()
+      invalidateReturnFrame()
+      if (consumeBrowserBackLayer(event)) return
       const recording = recordingOrigin.current
       if (recording && event.state?.recordingDraft !== recording.token) {
         const allowed = runDraftSafeNavigation(() => {
@@ -348,16 +408,39 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       const originalOrigin = calendarOriginalReturn.current
       if (originalOrigin && event.state?.calendarOriginalPage !== originalOrigin.token) {
         const allowed = runDraftSafeNavigation(() => {
-          calendarOriginalReturn.current = null
-          setV(originalOrigin.owner === activeLocalAccount() ? originalOrigin.view : INITIAL_VIEW_STATE)
+          restoreCalendarOriginal(originalOrigin)
         })
         if (!allowed) window.history.pushState({ ...window.history.state, calendarOriginalPage: originalOrigin.token }, "", window.location.href)
         return
       }
+      const forward = oraclePlanForwardRef.current
+      if (forward && event.state?.[ORACLE_PLAN_HISTORY_KEY] === forward.intent.historyToken) {
+        const isCurrent = () => oraclePlanForwardRef.current === forward
+          && forward.scope === localJournalScopeGeneration() && forward.intent.owner === activeLocalAccount()
+          && window.history.state?.[ORACLE_PLAN_HISTORY_KEY] === forward.intent.historyToken
+        if (isCurrent() && hasStoredOraclePlan()) {
+          const allowed = runDraftSafeNavigation(() => {
+            if (!hasStoredOraclePlan()) { oraclePlanForwardRef.current = null; return }
+            oraclePlanForwardRef.current = null
+            oracleInputRef.current = forward.intent
+            applyOverlay(null)
+            setUtilityView(null)
+            setAthleteRecordsOpen(false)
+            setV(viewForTab("plan"))
+          }, false, isCurrent)
+          if (!allowed && isCurrent()) window.history.back()
+          return
+        }
+        oraclePlanForwardRef.current = null
+      }
       const intent = oracleInputRef.current
-      if (intent?.inputKind === "log" && overlayRef.current === null && intent.owner === activeLocalAccount()) {
+      const leavingOraclePlan = intent?.inputKind === "plan" && intent.historyToken !== undefined
+        && event.state?.[ORACLE_PLAN_HISTORY_KEY] !== intent.historyToken
+      if ((intent?.inputKind === "log" || leavingOraclePlan) && overlayRef.current === null && intent.owner === activeLocalAccount()) {
         const restored: AppOverlay = { kind: "oracle", topic: intent.topic, mode: intent.mode, scrollTop: intent.scrollTop }
         const allowed = runDraftSafeNavigation(() => {
+          oraclePlanForwardRef.current = leavingOraclePlan && hasStoredOraclePlan()
+            ? { intent, scope: localJournalScopeGeneration() } : null
           oracleInputRef.current = null
           setV(intent.view)
           window.history.replaceState({ ...window.history.state, [OVERLAY_HISTORY_KEY]: {
@@ -365,7 +448,10 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           } }, "", window.location.href)
           applyOverlay(restored)
         })
-        if (!allowed) window.history.pushState({}, "", window.location.href)
+        if (!allowed) {
+          const { [OVERLAY_HISTORY_KEY]: _overlay, ...rest } = window.history.state ?? {}
+          window.history.pushState(leavingOraclePlan ? { ...rest, [ORACLE_PLAN_HISTORY_KEY]: intent.historyToken } : {}, "", window.location.href)
+        }
         return
       }
       const next = overlayHistoryMarker(event.state, overlayHistoryOwnerRef.current)
@@ -377,11 +463,15 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           if (!runDraftSafeNavigation(() => applyOverlay(null))) window.history.pushState({ ...window.history.state,
             [OVERLAY_HISTORY_KEY]: { ...previous, owner: overlayHistoryOwnerRef.current, version: 1 } }, "", window.location.href)
         } else applyOverlay(null)
+      } else if (moreVisibleRef.current) {
+        const marker = event.state?.[MORE_HISTORY_KEY]
+        const section = marker?.owner === overlayHistoryOwnerRef.current ? marker.view : "tools"
+        if (["tools", "learning", "account", "backup", "about"].includes(section)) setMoreView(section)
       }
     }
     window.addEventListener("popstate", onPopState)
     return () => window.removeEventListener("popstate", onPopState)
-  }, [applyOverlay])
+  }, [applyOverlay, invalidateReturnFrame, hasStoredOraclePlan, restoreCalendarOriginal])
 
   React.useEffect(() => {
     if (v.tab === "log" || calendarDraftReturn.current === null) return
@@ -398,22 +488,32 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       if (!pending || !accountRewardsEnabled() || pending.ownerId !== activeLocalAccount()) return
       const summary = readAccountRewardSummary()
       if (!summary && accountRewardStatus() !== "FAILED") return
-      const rewardMessage = !summary ? "계정 포인트를 확인하지 못했어요. 나중에 다시 확인해 주세요."
+      const rewardMessage = !summary ? "기록은 보관됐어요. 포인트 확인만 다시 해 주세요."
         : summary.today === pending.date && summary.journalRecordedToday
           ? "오늘 기록 포인트가 계정에 반영돼 있어요."
           : "계정 기록을 확인했어요. 현재 추가 적립된 기록 포인트는 없어요."
-      setSavedToast(current => current?.rewardMessage === JOURNAL_REWARD_MESSAGE.PENDING ? { ...current, rewardMessage } : current)
-      pendingReward.current = null
+      if (confirmedSaveEffects.current?.scope === localJournalScopeGeneration()) {
+        confirmedSaveEffects.current = { ...confirmedSaveEffects.current, rewardMessage, rewardRetry: !summary }
+      }
+      setSavedToast(current => current?.rewardMessage === JOURNAL_REWARD_MESSAGE.PENDING || current?.rewardRetry
+        ? { ...current, rewardMessage, rewardRetry: !summary, rewardLoading: false } : current)
+      // A failed summary read is retryable; never resubmit the journal or award.
+      if (summary) pendingReward.current = null
     }
     const scope = () => {
       if (recordingOrigin.current) { setV(INITIAL_VIEW_STATE); setUtilityView(null) }
       recordingOrigin.current = null
       coachingDayOrigin.current = null
       trainingContentOrigin.current = null
+      guideOrigin.current = null
+      overlayReturnPosition.current = null
+      moreReturnPosition.current = null
+      importReturnRef.current = null
       setGuestOracleSession(null)
       analysisReturnContext.current = undefined
       setOracleHubSection("training")
-      pendingReward.current = null; oracleInputRef.current = null; decorationReturn.current = null; setDecorationInitialDate(undefined); setSavedToast(null); setAnalysisContext(undefined)
+      pendingReward.current = null; confirmedSaveEffects.current = null; oracleInputRef.current = null; decorationReturn.current = null; setDecorationInitialDate(undefined); setSavedToast(null); setAnalysisContext(undefined)
+      oraclePlanForwardRef.current = null
       paceRequestRef.current = null
       if (overlayRef.current?.kind === "pace") {
         overlayHistoryOwnerRef.current = `shell-${Date.now()}-${Math.random().toString(36).slice(2)}`
@@ -458,6 +558,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const goHome = () => {
     runViewTransition("pop", () => {
       oracleInputRef.current = null
+      oraclePlanForwardRef.current = null
       recordingOrigin.current = null
       coachingDayOrigin.current = null
       setAthleteRecordsOpen(false)
@@ -466,34 +567,67 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       setV(INITIAL_VIEW_STATE)
     }, false)
   }
-  const goHomeAfterSave = (savedEntry: JournalEntry, reviewMessage?: string, detailDate?: string, storageMessage?: string) => {
+  const confirmSavedJournalEffects = (savedEntry: JournalEntry) => {
+    const prior = confirmedSaveEffects.current
+    const scope = localJournalScopeGeneration()
+    if (prior?.scope === scope && prior.entryId === savedEntry.id && prior.savedAt === savedEntry.savedAt) return prior
     recordOracleJournalParticipation(savedEntry)
-    const receipt = createSavedFactReceipt(savedEntry)
     const reward = awardJournalEntry(savedEntry, todayISO())
     pendingReward.current = reward.kind === "PENDING" ? { ownerId: activeLocalAccount(), date: savedEntry.date } : null
-    const rewardMessage = JOURNAL_REWARD_MESSAGE[reward.kind]
+    const confirmed = { entryId: savedEntry.id, savedAt: savedEntry.savedAt, scope,
+      rewardMessage: JOURNAL_REWARD_MESSAGE[reward.kind], rewardRetry: false }
+    confirmedSaveEffects.current = confirmed
+    void trackProductEvent("JOURNAL_SAVED")
+    return confirmed
+  }
+  const goHomeAfterSave = (savedEntry: JournalEntry, reviewMessage?: string, detailDate?: string, storageMessage?: string, completionAlreadyShown = false) => {
+    const { rewardMessage, rewardRetry } = confirmSavedJournalEffects(savedEntry)
+    const receipt = createSavedFactReceipt(savedEntry)
     runViewTransition("replace", () => {
       const origin = recordingOrigin.current
-      recordingOrigin.current = null
-      if (origin && origin.owner === activeLocalAccount()) restoreRecordingOrigin(origin)
+      if (isOraclePlanRecording(origin)) window.history.back()
       else {
-        setUtilityView(null)
-        setV(detailDate === undefined ? INITIAL_VIEW_STATE : viewForJournalReturn(v))
+        recordingOrigin.current = null
+        if (origin && origin.owner === activeLocalAccount()) restoreRecordingOrigin(origin)
+        else {
+          setUtilityView(null)
+          setV(detailDate === undefined ? INITIAL_VIEW_STATE : viewForJournalReturn(v))
+        }
       }
-      setSavedToast({ count: localOnlyCount(), phase: "enter", receipt, reviewMessage, storageMessage, rewardMessage })
+      // All form onDone contracts return only after a confirmed device/account
+      // save; pending and conflict results stay in the form recovery flow.
+      setSavedToast({ count: localOnlyCount(), phase: "enter", receipt, reviewMessage, storageMessage,
+        storageStatus: "CONFIRMED", rewardMessage, rewardRetry, completionAlreadyShown })
       const intent = oracleInputRef.current
-      oracleInputRef.current = null
-      if (reviewMessage === undefined && intent && intent.owner === activeLocalAccount()) {
+      if (intent?.inputKind === "log") oracleInputRef.current = null
+      if (reviewMessage === undefined && intent?.inputKind === "log" && intent.owner === activeLocalAccount()) {
         setV(intent.view)
         openOverlay({ kind: "oracle", topic: intent.topic, mode: "personal" })
       }
     })
-    void trackProductEvent("JOURNAL_SAVED")
+  }
+
+  const retrySavedReward = () => {
+    const pending = pendingReward.current
+    if (!pending || pending.ownerId !== activeLocalAccount() || !accountRewardsEnabled()
+      || accountRewardStatus() === "LOADING") return
+    const scope = localJournalScopeGeneration()
+    setSavedToast(current => current?.rewardRetry ? { ...current, rewardLoading: true } : current)
+    void hydrateAccountRewards().catch(() => {
+      if (scope !== localJournalScopeGeneration() || pendingReward.current !== pending) return
+      setSavedToast(current => current?.rewardRetry ? { ...current, rewardLoading: false } : current)
+    })
   }
 
   React.useEffect(() => {
     if (savedToast === null) return
+    if (savedToast.receipt.savedDate !== undefined && !savedToast.completionAlreadyShown) return
+    // Quick completion owns a persistent result surface too. Keep its actual
+    // storage/reward receipt alive while reading or editing that saved entry.
+    if (savedToast.receipt.savedDate !== undefined && savedToast.completionAlreadyShown
+      && v.tab === "log" && v.entryType === "quick-session") return
     if (savedToast.reviewMessage !== undefined) return
+    if (savedToast.rewardRetry || savedToast.rewardLoading || savedToast.rewardMessage === JOURNAL_REWARD_MESSAGE.PENDING) return
     const delay = savedToast.phase === "enter" ? TOAST_READABLE_MS : TOAST_EXIT_MS
     const t = window.setTimeout(() => {
       setSavedToast(current => {
@@ -502,10 +636,11 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       })
     }, delay)
     return () => window.clearTimeout(t)
-  }, [savedToast])
+  }, [savedToast, v.tab, v.entryType])
   React.useLayoutEffect(() => {
     const scrollRegion = scrollRegionRef.current
     if (scrollRegion === null) return
+    if (isBrowserPopScrollRestoration()) return
     scrollRegion.scrollTop = 0
     scrollRegion.scrollLeft = 0
   }, [
@@ -529,11 +664,15 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       setAthleteRecordsOpen(false)
       setUtilityView(null)
       setAnalysisContext(tab === "trends" ? analysis : undefined)
+      if (tab === "trends" && analysis) setOracleHubSection("training")
       analysisReturnContext.current = tab === "trends" ? analysis : undefined
       calendarOriginalReturn.current = null
+      setCalendarReaderReturn(null)
       coachingDayOrigin.current = null
       setV(tab === "journal" && lastJournalView.current?.owner === activeLocalAccount() ? lastJournalView.current.view : viewForTab(tab))
       trainingContentOrigin.current = null
+      guideOrigin.current = null
+      moreReturnPosition.current = null
     }, false)
   }
   const goTrendsFromReceipt = () => {
@@ -563,7 +702,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     decorationReturn.current = null; setDecorationInitialDate(undefined)
     if (!origin || origin.owner !== activeLocalAccount()) { setUtilityView(utilityOrigin === "home" ? null : "more"); return }
     setV(origin.view); setUtilityView(origin.utility)
-    window.requestAnimationFrame(() => {
+    scheduleReturnFrame(() => {
       if (origin.owner !== activeLocalAccount()) return
       if (scrollRegionRef.current) scrollRegionRef.current.scrollTop = origin.scroll
       if (origin.focusLabel) scrollRegionRef.current?.querySelector<HTMLElement>(`[aria-label=${JSON.stringify(origin.focusLabel)}]`)?.focus({ preventScroll: true })
@@ -571,9 +710,11 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     })
   })
   const dismissOracle = () => {
+    overlayReturnPosition.current = null
     // Leaving the exploration invalidates its older history entries too.
     // Otherwise Back could reopen a sample over a different destination tab.
     overlayHistoryOwnerRef.current = `shell-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    oraclePlanForwardRef.current = null
     paceRequestRef.current = null
     if (overlayRef.current?.kind !== "oracle" && overlayRef.current?.kind !== "record-reading" && overlayRef.current?.kind !== "running-profile" && overlayRef.current?.kind !== "pace") return
     const currentState = window.history.state
@@ -605,16 +746,28 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   })
   const openOraclePersonal = (action: "records" | "journal" | "trends" | "plan" | "log", section?: AnalysisSection, metric?: "DISTANCE_KM" | "RPE") => {
     runViewTransition("push", () => {
+      oraclePlanForwardRef.current = null
       const topic = overlayRef.current?.kind === "oracle" ? overlayRef.current.topic : null
       oracleInputRef.current = topic && (action === "records" || action === "log" || action === "plan")
-        ? { topic, owner: activeLocalAccount(), inputKind: action, mode: overlayRef.current?.kind === "oracle" ? overlayRef.current.mode ?? "personal" : "personal", scrollTop: scrollRegionRef.current?.scrollTop ?? 0, view: v } : null
+        ? { topic, owner: activeLocalAccount(), inputKind: action,
+          ...(action === "plan" ? { historyToken: `oracle-plan-${Date.now()}-${Math.random().toString(36).slice(2)}` } : {}),
+          mode: overlayRef.current?.kind === "oracle" ? overlayRef.current.mode ?? "personal" : "personal", scrollTop: scrollRegionRef.current?.scrollTop ?? 0, view: v } : null
       if (action === "records") {
         dismissOracle()
         setUtilityView(null)
         setV(viewForTab("plan"))
         setAthleteRecordsOpen(true)
       } else {
-        dismissOracle()
+        if (action === "plan" && oracleInputRef.current?.historyToken) {
+          // A plan opened from this result can return to it. Reader entries inherit
+          // the token, so closing a plan date does not discard the enclosing input.
+          const { [OVERLAY_HISTORY_KEY]: _overlay, ...rest } = window.history.state ?? {}
+          window.history.pushState({ ...rest, [ORACLE_PLAN_HISTORY_KEY]: oracleInputRef.current.historyToken }, "", window.location.href)
+          applyOverlay(null)
+          // This opens a new input screen, rather than returning to the view
+          // beneath the explanation. Do not restore its old scroll or focus.
+          invalidateReturnFrame()
+        } else dismissOracle()
         setAthleteRecordsOpen(false)
         setUtilityView(null)
         setAnalysisContext(action === "trends" ? { section: section ?? "summary", ...(metric === "DISTANCE_KM" ? { metric } : {}) } : undefined)
@@ -635,20 +788,30 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     topicId: overlay.topic, entries: loadEntries(), planState: loadPlanBetaState(),
     athleteRecords: athleteRecords.records, today: todayISO(), planHistory: oracleHistory.history,
   }) : undefined
+  const homePlanRead = v.tab === "home" ? (() => {
+    // The compact home summary supports ordinary saved plans only. Keep the
+    // supplied multi-plan evidence reader lazy until the actual plan view opens.
+    try { return readPlanBetaStateFromStorage() }
+    catch { return { kind: "storage_error" as const } }
+  })() : null
+  const homePlanState = homePlanRead?.kind === "loaded" ? homePlanRead.state : null
+  const homePlanReadUnavailable = homePlanRead !== null && homePlanRead.kind !== "loaded" && homePlanRead.kind !== "missing"
   const homeCandidates = v.tab === "home" ? (["focus", "level", "mix"] as const).flatMap(topic => {
     if (topic === "level" && athleteRecords.status !== "READY") return []
     if (topic !== "level" && (calendarSnapshot.status !== "READY" || !oracleHistory.journalReadComplete)) return []
     const result = buildOraclePersonalResult({ topicId: topic, entries: calendarSnapshot.entries,
-      planState: loadPlanBetaState(), athleteRecords: athleteRecords.records,
+      planState: homePlanState, athleteRecords: athleteRecords.records,
       today: todayISO(), planHistory: oracleHistory.history })
     return result.status !== "missing" && result.rows.length > 0 ? [{ topic, result }] : []
   }) : []
   const homeCandidate = homeCandidates[0]
   const homeSourceUnavailable = calendarSnapshot.status !== "READY" || athleteRecords.status !== "READY"
+    || !oracleHistory.journalReadComplete || homePlanReadUnavailable
   const homeExample = getOracleTopic("focus")
-  const homeOraclePreview = <HomeOraclePreview
+  // A completion checklist is not an Oracle insight. Plans remain in Training.
+  const homeOraclePreview = !homeCandidate && !homeSourceUnavailable && homePlanState !== null ? null : <HomeOraclePreview
     question={homeCandidate ? getOracleTopic(homeCandidate.topic).question : homeSourceUnavailable ? "내 기록을 확인할까요?" : homeExample.question}
-    answer={homeCandidate?.result.headline ?? (homeSourceUnavailable ? "기록을 아직 확인하지 못했어요. 저장 상태를 먼저 살펴봐요." : homeExample.example.headline)}
+    answer={homeCandidate?.result.headline ?? (homeSourceUnavailable ? homePlanReadUnavailable ? "저장한 훈련 계획을 확인하지 못했어요." : "기록 확인 후 오라클 결과를 볼 수 있어요." : homeExample.example.headline)}
     sourceLabel={homeCandidate ? `${homeCandidate.result.source}${homeCandidate.topic === "focus" ? ` · ${homeCandidate.result.rows[0]?.label.split(" · ")[0]}~${homeCandidate.result.rows.at(-1)?.label.split(" · ")[0]}` : ""} · 확인일 ${todayISO()}` : homeSourceUnavailable ? "확인되지 않은 자료는 결과에 넣지 않아요." : homeExample.example.source}
     kind={homeCandidate ? homeCandidate.result.status === "partial" ? "partial" : "personal" : homeSourceUnavailable ? "unavailable" : "example"}
     onOpen={() => homeCandidate ? openOracle(homeCandidate.topic, "personal") : homeSourceUnavailable ? goTab("trends") : openOracle("focus", "example")}
@@ -663,6 +826,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     v.restoreOpen ? "restore" : "",
     v.accountOpen ? "account" : "",
     utilityView ?? "",
+    utilityView === "more" ? moreView : "",
     athleteRecordsOpen ? "records" : "",
   ].join(":")
 
@@ -696,6 +860,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     view: v,
     utilityView,
     utilityOrigin,
+    moreView,
     athleteRecordsOpen,
   })
   const captureRecordingOrigin = (direct: boolean): RecordingOrigin => {
@@ -714,7 +879,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     setAnalysisContext(origin.analysis)
     analysisReturnContext.current = origin.analysis
     if (origin.overlay) openOverlay(origin.overlay)
-    window.requestAnimationFrame(() => {
+    scheduleReturnFrame(() => {
       if (origin.owner !== activeLocalAccount()) return
       if (scrollRegionRef.current) scrollRegionRef.current.scrollTop = origin.scroll
       const buttons = [
@@ -745,8 +910,17 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       setV(plannedView ?? viewForTab("log", entryType))
     }, true)
   }
+  const isOraclePlanRecording = (origin: RecordingOrigin | null) => origin !== null
+    && origin.owner === activeLocalAccount() && origin.view.tab === "plan"
+    && oracleInputRef.current?.inputKind === "plan" && window.history.state?.recordingDraft === origin.token
   const returnFromRecording = () => runViewTransition("pop", () => {
     const origin = recordingOrigin.current
+    // A recording entry can carry its enclosing flow's Back marker. Consume
+    // the child entry instead of relabelling it as its parent: duplicate parent
+    // markers otherwise leave a later flow waiting for a POP that never arrives.
+    if (origin && origin.owner === activeLocalAccount() && window.history.state?.recordingDraft === origin.token) {
+      window.history.back(); return
+    }
     recordingOrigin.current = null
     if (!origin || origin.owner !== activeLocalAccount()) { setV(INITIAL_VIEW_STATE); setUtilityView(null); return }
     restoreRecordingOrigin(origin)
@@ -761,14 +935,27 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     setV(point.view)
     setUtilityView(point.utilityView)
     setUtilityOrigin(point.utilityOrigin)
+    setMoreView(point.moreView)
     setAthleteRecordsOpen(point.athleteRecordsOpen)
   }
   const openTrainingReading = () => runViewTransition("push", () => {
     trainingContentOrigin.current = captureRecordingOrigin(false)
     dismissOracle()
+    setUtilityOrigin(utilityView === "more" ? "more" : "home")
     setUtilityView("content")
     setV(viewForTab("home"))
   }, false)
+  const openGuide = (section: "guide" | "minji") => runViewTransition("push", () => {
+    guideOrigin.current = captureRecordingOrigin(false)
+    setUtilityOrigin(utilityView === "more" ? "more" : "home")
+    setUtilityView(section)
+  })
+  const closeGuide = () => runViewTransition("pop", () => {
+    const origin = guideOrigin.current
+    guideOrigin.current = null
+    if (origin && origin.owner === activeLocalAccount()) restoreRecordingOrigin(origin)
+    else setUtilityView(utilityOrigin === "home" ? null : "more")
+  })
   const openRestore = () => runViewTransition("push", () => {
     restoreReturnRef.current = captureReturnPoint()
     setUtilityView(null)
@@ -787,7 +974,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
     restoreReturnPoint(point)
   })
   const openImport = () => runViewTransition("push", () => {
-    importReturnRef.current = captureReturnPoint()
+    importReturnRef.current = captureRecordingOrigin(false)
     setUtilityView(null)
     setAthleteRecordsOpen(false)
     setV(s => ({ ...s, tab: "log", accountOpen: false, restoreOpen: false, importOpen: true }))
@@ -795,7 +982,8 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   const closeImport = () => runViewTransition("pop", () => {
     const point = importReturnRef.current
     importReturnRef.current = null
-    restoreReturnPoint(point)
+    if (point && point.owner === activeLocalAccount()) restoreRecordingOrigin(point)
+    else restoreReturnPoint(null)
   })
 
   const detailScreen = (onBack: () => void, withReader = false) => {
@@ -842,10 +1030,25 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   } else if (v.tab === "home" && utilityView === "more") {
     screen = (
       <DeferredMobileScreens.More
-        onBack={() => runViewTransition("pop", () => setUtilityView(null))}
-        onOpenMinji={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("minji") })}
-        onOpenGuide={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("guide") })}
-        onOpenContent={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("content") })}
+        view={moreView}
+        onViewChange={next => runViewTransition(next === "tools" ? "pop" : "push", () => {
+          if (moreView === "tools" && next !== "tools") moreReturnPosition.current = captureReaderPosition(scrollRegionRef.current)
+          const state = window.history.state ?? {}
+          const marker = state[MORE_HISTORY_KEY]
+          if (next === "tools" && marker?.owner === overlayHistoryOwnerRef.current && marker.view !== "tools") {
+            window.history.back()
+            return
+          }
+          if (next !== "tools") {
+            window.history.replaceState({ ...state, [MORE_HISTORY_KEY]: { owner: overlayHistoryOwnerRef.current, view: moreView } }, "", window.location.href)
+            window.history.pushState({ ...state, [MORE_HISTORY_KEY]: { owner: overlayHistoryOwnerRef.current, view: next } }, "", window.location.href)
+          }
+          setMoreView(next)
+        })}
+        onBack={() => runViewTransition("pop", () => { moreReturnPosition.current = null; setUtilityView(null) })}
+        onOpenMinji={() => openGuide("minji")}
+        onOpenGuide={() => openGuide("guide")}
+        onOpenContent={openTrainingReading}
         onOpenMinigame={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("minigame") })}
         onOpenRewards={() => openDecorationStudio()}
         onOpenPaceCalculator={() => openPaceCalculator()}
@@ -878,7 +1081,8 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
   } else if (v.tab === "home" && (utilityView === "guide" || utilityView === "minji")) {
     screen = <DeferredMobileScreens.Guide
       initialSection={utilityView}
-      onBack={() => runViewTransition("pop", () => setUtilityView(utilityOrigin === "home" ? null : "more"))}
+      backLabel={utilityOrigin === "home" ? "홈으로 돌아가기" : "더보기로 돌아가기"}
+      onBack={closeGuide}
       onWriteLog={() => runViewTransition("tab-forward", () => { setUtilityView(null); setV(viewForTab("log")) })}
       onOpenFeedback={() => openOverlay({ kind: "feedback" })}
     />
@@ -892,6 +1096,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       : (
         <Home
           oraclePreview={homeOraclePreview}
+          oraclePreviewLabel={homeCandidate ? "내 기록으로 본 오라클" : homeSourceUnavailable ? "오라클 기록 상태" : homePlanState ? "오라클" : "오라클 결과 예시 보기"}
           onOpenImport={openImport}
           onOpenRecords={() => openOverlay({ kind: "athlete-records", initialPurpose: "PERSONAL_BEST" })}
           onWriteLog={(entryType) => startRecording(entryType)}
@@ -903,13 +1108,13 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           onOpenArchive={() => {
             runViewTransition("tab-forward", () => setV({ ...viewForTab("journal"), journalMode: "CALENDAR" }))
           }}
-          onOpenGuide={() => runViewTransition("push", () => { setUtilityOrigin("home"); setUtilityView("minji") })}
+          onOpenGuide={() => openGuide("minji")}
           onOpenPlan={() => goTab("plan")}
-          onOpenTrends={() => goTab("trends")}
+          onOpenTrends={() => goTab("trends", { section: "distance" })}
           onOpenOracle={openOracle}
           onOpenMore={() => runViewTransition("push", () => setUtilityView("more"))}
           onOpenAccount={accountEnabled ? () => runViewTransition("push", () => setV(s => ({ ...s, accountOpen: true }))) : undefined}
-          onOpenContent={() => runViewTransition("push", () => { setUtilityOrigin("home"); setUtilityView("content") })}
+          onOpenContent={openTrainingReading}
           onOpenRewards={() => openDecorationStudio()}
           onOpenNextTraining={(link: PlannedSessionLink) => runViewTransition("tab-forward", () => {
             setAthleteRecordsOpen(false)
@@ -932,13 +1137,20 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           return
         }
         if (calendarOriginalReturn.current && window.history.state?.calendarOriginalPage === calendarOriginalReturn.current.token) window.history.back()
-        else runViewTransition("pop", () => setV(s => ({ ...s, detailDate: null })))
+        else runViewTransition("pop", () => {
+          const origin = calendarOriginalReturn.current
+          if (origin) restoreCalendarOriginal(origin)
+          else setV(s => ({ ...s, detailDate: null, detailEntryId: undefined }))
+        })
       }, true)
       : (
         <DeferredMobileScreens.JournalArchive
           entries={calendarSnapshot.entries}
           readiness={calendarSnapshot.status}
+          onRetry={calendarSnapshot.retry}
           selection={selection}
+          calendarReturn={calendarReaderReturn}
+          onCalendarReturnConsumed={() => setCalendarReaderReturn(null)}
           mode={v.journalMode}
           cycleAnchor={v.cycleAnchor}
           cycleIndex={v.cyclePositionSet ? v.cycleIndex : undefined}
@@ -956,14 +1168,19 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
             setV(s => viewForJournalDraft(s, date))
           })}
           onSelectionChange={(archiveSelection) => setV(s => ({ ...s, archiveSelection }))}
-          onOpenDay={(detailDate) => runViewTransition("push", () => {
+          onOpenDay={(detailDate, entryId, calendarReturn) => runViewTransition("push", () => {
             const token = `calendar-original-${Date.now()}`
             const { [READER_HISTORY_KEY]: reader, ...rest } = window.history.state ?? {}
+            setCalendarReaderReturn(null)
+            // Keep return context in this owner only, not in browser history or storage.
+            calendarOriginalReturn.current = { token, owner: activeLocalAccount(),
+              view: { ...v, detailDate: null, detailEntryId: undefined },
+              calendarReturn: validJournalCalendarReturn(calendarReturn, calendarSnapshot.entries),
+              position: captureCalendarReaderPosition(scrollRegionRef.current, detailDate) }
             try {
               window.history[reader ? "replaceState" : "pushState"]({ ...rest, calendarOriginalPage: token }, "", window.location.href)
-              calendarOriginalReturn.current = { token, owner: activeLocalAccount(), view: { ...v, detailDate: null } }
             } catch { /* In-app Back still returns to the archive. */ }
-            setV(s => ({ ...s, detailDate, detailEntryId: undefined }))
+            setV(s => ({ ...s, detailDate, detailEntryId: entryId }))
           })}
           onBack={goHome}
           onWriteLog={() => goTab("log")}
@@ -978,7 +1195,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       />
     ) : (
       <>
-        <DeferredMobileScreens.PlanProposalInbox />
+        {productFeatures().planProposals && <DeferredMobileScreens.PlanProposalInbox />}
         <DeferredMobileScreens.PlanBeta
           multiAdjustmentResolverV3={multiPlanRuntime?.multiAdjustmentResolverV3}
           readMultiAdjustedEvidenceV3={multiPlanRuntime?.readMultiAdjustedEvidenceV3}
@@ -1005,7 +1222,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         targetDate={v.journalDraft?.date}
         initialEntry={v.journalDraft?.initialEntry}
         plannedSessionLink={v.journalDraft?.plannedSessionLink}
-        onBack={oracleInputRef.current !== null ? returnFromOracleInput : recordingOrigin.current && (v.entryType === "choose" || recordingOrigin.current.direct)
+        onBack={oracleInputRef.current?.inputKind === "log" ? returnFromOracleInput : recordingOrigin.current && (v.entryType === "choose" || recordingOrigin.current.direct)
           ? returnFromRecording : v.entryType === "choose"
           ? v.journalDraft === undefined
             ? goHome
@@ -1015,11 +1232,19 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
             : () => runViewTransition("pop", () => setV(s => ({ ...s, entryType: "choose" })))}
         onOpenImport={openImport}
         onContinueDetailed={(entry) => runViewTransition("replace", () => setV((state) => viewForJournalDraft(state, entry.date, entry)))}
+        onSaved={(entry, reviewMessage, storageMessage) => {
+          const reward = confirmSavedJournalEffects(entry)
+          // Quick owns its completion screen. Show only the existing receipt
+          // notice now, so Back/closing never withholds confirmed reward status.
+          setSavedToast({ count: localOnlyCount(), phase: "enter", receipt: createSavedFactReceipt(entry),
+            storageStatus: "CONFIRMED", reviewMessage, storageMessage,
+            rewardMessage: reward.rewardMessage, rewardRetry: reward.rewardRetry, completionAlreadyShown: true })
+        }}
         onDone={(picked, savedEntry, reviewMessage, storageMessage) => {
           if (v.entryType === "choose") {
             runViewTransition("push", () => setV(s => ({ ...s, entryType: picked })))
           } else if (savedEntry !== undefined) {
-            goHomeAfterSave(savedEntry, reviewMessage, v.journalDraft?.date, storageMessage)
+            goHomeAfterSave(savedEntry, reviewMessage, v.journalDraft?.date, storageMessage, v.entryType === "quick-session")
           }
         }}
       />
@@ -1031,6 +1256,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         initialContext={analysisContext}
         initialOracleSection={oracleHubSection}
         oracleV2Enabled={oracleV2Enabled()}
+        journalReadComplete={calendarSnapshot.status === "READY" && oracleHistory.journalReadComplete}
         onOracleSectionChange={setOracleHubSection}
         onContextChange={context => { analysisReturnContext.current = context }}
         onOpenCoachingDay={(date, entryId) => runViewTransition("push", () => {
@@ -1073,6 +1299,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       savedToast={savedToast}
       tab={v.tab === "log" && recordingOrigin.current ? tabForChrome(recordingOrigin.current.view) : tabForChrome(v)}
       onDismissToast={() => setSavedToast(null)}
+      onRetryReward={retrySavedReward}
       onOpenTrends={goTrendsFromReceipt}
       onDecorateSaved={() => { const date = savedToast?.receipt.savedDate; if (date && loadEntries().some(entry => entry.date === date)) openDecorationStudio(date) }}
       onOpenSaved={() => {
@@ -1089,7 +1316,12 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       }}
       onTab={goTab}
       onStartRecording={() => startRecording()}
-      hideTabBar={(overlay !== null && overlay.kind !== "oracle") || (v.tab === "home" && utilityView === "minigame")}
+      hideTabBar={(overlay !== null ? overlay.kind !== "oracle" : v.tab === "log" && v.entryType !== "choose")
+        || (v.tab === "home" && utilityView === "minigame")}
+      wideTask={overlay === null && (v.tab === "log" || v.tab === "plan")}
+      wideResults={overlay === null ? v.tab === "trends"
+        : overlay.kind === "running-profile" || overlay.kind === "oracle"
+          || (overlay.kind === "record-reading" && (overlay.stage === "self-result" || overlay.stage === "pair-result"))}
     >
       <React.Suspense fallback={<AppLoadingState />}>
         <div
@@ -1108,6 +1340,9 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           </div>
         )}
         <ErrorBoundary key={`overlay-${overlay?.kind ?? "none"}-${accountScopeRevision}`} region onExit={closeOverlay} recoveryTab={tabForChrome(v)}>
+        {/* Loading a reader must not suspend the retained draft's layout effects
+            and dispose its native Back layer underneath the new overlay entry. */}
+        <React.Suspense fallback={<AppLoadingState />}>
         {overlay?.kind === "athlete-records" && <DeferredMobileScreens.AthleteRecords initialPurpose={overlay.initialPurpose}
           backLabel={utilityView === "more" ? "더보기로" : v.tab === "trends" ? "오라클로" : "홈으로"} onBack={closeOverlay} />}
         {overlay?.kind === "pace" && paceRequestRef.current?.token === overlay.token && (
@@ -1198,6 +1433,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
             }
           </div>
         )}
+        </React.Suspense>
         </ErrorBoundary>
       </React.Suspense>
     </AppShellFrame>

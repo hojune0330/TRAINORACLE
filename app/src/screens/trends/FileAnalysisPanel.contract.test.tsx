@@ -47,6 +47,7 @@ describe("FileAnalysisPanel independent UI contract", () => {
   it("keeps cached records out of current totals and explains a failed current confirmation", () => {
     const onOpenPlan = vi.fn()
     render(<FileAnalysisPanel entries={[]} pendingVerificationCount={2} onOpenPlan={onOpenPlan} />)
+    expect(screen.getByRole("heading", { level: 2, name: "가져온 기록 분석" })).toHaveClass("app-heading--screen", "app-heading--accent")
     expect(screen.getByRole("status")).toHaveTextContent("파일 기록 2개의 최신 상태")
     expect(screen.getByRole("status")).toHaveTextContent("기록은 보관")
     expect(screen.queryByText(/0km|0개 운동/u)).not.toBeInTheDocument()
@@ -57,6 +58,13 @@ describe("FileAnalysisPanel independent UI contract", () => {
     const guarded = { ...entry("one", 1000, 300), get memo(): string { throw Error("raw memo read") }, get title(): string { throw Error("raw title read") } }
     render(<FileAnalysisPanel entries={[guarded, entry("two", 9000, 4500)]} onOpenPlan={onOpenPlan} />)
     const panel = screen.getByRole("region", { name: "가져온 기록 분석" })
+    expect(within(panel).getByRole("heading", { level: 2, name: "가져온 기록 분석" })).toHaveClass("app-heading--screen", "app-heading--accent")
+    expect(panel.querySelectorAll(".app-heading--accent")).toHaveLength(1)
+    for (const name of ["달리기 · 2개", "기록 시간", "운동별 구간"]) {
+      const heading = within(panel).getByRole("heading", { level: 3, name })
+      expect(heading).toHaveClass("app-heading--section")
+      expect(heading).not.toHaveClass("app-heading--accent")
+    }
     expect(within(panel).getByText("10km")).toBeVisible()
     expect(within(panel).getByText("8분/km")).toBeVisible()
     expect(within(panel).getByText(/거리·시간이 함께 있는 2개/u)).toBeVisible()

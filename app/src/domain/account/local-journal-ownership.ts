@@ -1,3 +1,5 @@
+import { accountDeletionBoundaryState } from "./account-deletion-boundary"
+
 const OWNERSHIP_KEY = "trainoracle.journal.ownership.v1"
 const SCOPE_CHANGED_EVENT = "trainoracle:journal-scope-changed"
 
@@ -79,7 +81,7 @@ function announceScopeChange(): void {
 }
 
 export function setActiveLocalAccount(userId: string | null): void {
-  const next = userId === "" ? null : userId
+  const next = userId === "" || (userId !== null && accountDeletionBoundaryState(userId) !== "OPEN") ? null : userId
   if (activeAccountId === next) return
   activeAccountId = next
   scopeGeneration += 1
@@ -112,6 +114,26 @@ export function isJournalVisible(entryId: string): boolean {
   const owner = journalOwner(entryId)
   if (owner === undefined) return false
   return owner === null || owner === activeAccountId
+}
+
+/** One synchronous list read shares a fresh ledger and reports an unreadable owner map. */
+export function readVisibleJournalEntries<T extends { readonly id: string }>(entries: readonly T[]):
+  | { readonly kind: "loaded"; readonly entries: T[] }
+  | { readonly kind: "unavailable" } {
+  const snapshot = loadSnapshot()
+  if (snapshot.status === "uncertain") return { kind: "unavailable" }
+  const accountId = activeAccountId
+  return { kind: "loaded", entries: entries.filter(entry => {
+    const owner = snapshot.ownerByEntryId[entry.id] ?? null
+    return owner === null || owner === accountId
+  }) }
+}
+
+/** Never retain the ownership snapshot across reads. */
+export function filterVisibleJournalEntries<T extends { readonly id: string }>(entries: readonly T[]): T[] {
+  if (entries.length === 0) return []
+  const read = readVisibleJournalEntries(entries)
+  return read.kind === "loaded" ? read.entries : []
 }
 
 export function isJournalOwnedBy(entryId: string, userId: string): boolean {

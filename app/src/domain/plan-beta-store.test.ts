@@ -2,11 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   archiveAndClearActivePlan,
   archiveAndClearActivePlanWithLock,
+  activePlanBetaStorageKey,
   loadPlanBetaState,
   loadPreviousIntake,
   loadPreviousContinuity,
   savePlanBetaState,
   savePlanProgressWithLock,
+  readPlanBetaStateFromStorage,
   updateStoredProgress,
 } from "./plan-beta-store"
 import type { PlanBetaState } from "./plan-beta-store"
@@ -14,6 +16,9 @@ import { stateFixture } from "./plan-beta-store.test-fixture"
 import { PLAN_BETA_MUTATION_LOCK_NAME } from "./plan-mutation-lock"
 import { deriveCandidateId } from "@impl/plan-generator/candidate-identity"
 import { generatePlanFromDraft, selectPlanForActivation } from "./plan-beta-flow"
+import { setActiveLocalAccount } from "./account/local-journal-ownership"
+import { accountPlanPacketFixture } from "./account/account-plan.test-fixtures"
+import type { RetainedMultiAdjustedEvidenceV3 } from "./selected-multi-adjusted-plan-v3"
 
 let locksDescriptor: PropertyDescriptor | undefined
 
@@ -33,8 +38,16 @@ function legacyStateFixture() {
   return { ...current, version: 1 as const, intake, activePlan }
 }
 
+function multiPlanPacketFixture() {
+  const packet = accountPlanPacketFixture(6)
+  if (packet.state.version !== 6 || packet.evidence === null || !("slots" in packet.evidence)
+      || !("rpeBindings" in packet.evidence)) throw Error("Expected V6 evidence")
+  return { state: packet.state, evidence: packet.evidence as RetainedMultiAdjustedEvidenceV3 }
+}
+
 describe("plan beta local store", () => {
   beforeEach(() => {
+    setActiveLocalAccount(null)
     window.localStorage.clear()
     window.sessionStorage.clear()
     locksDescriptor = Object.getOwnPropertyDescriptor(navigator, "locks")
@@ -50,6 +63,7 @@ describe("plan beta local store", () => {
   })
 
   afterEach(() => {
+    setActiveLocalAccount(null)
     vi.restoreAllMocks()
     if (locksDescriptor === undefined) Reflect.deleteProperty(navigator, "locks")
     else Object.defineProperty(navigator, "locks", locksDescriptor)
@@ -62,6 +76,96 @@ describe("plan beta local store", () => {
 
     expect(loadPlanBetaState()).toEqual(state)
     expect(JSON.stringify(loadPlanBetaState())).not.toMatch(/memo|symptom/u)
+  })
+
+  it("defers multi-plan evidence until a V6 envelope actually needs it", () => {
+    const packet = multiPlanPacketFixture()
+    const readMultiEvidence = vi.fn(() => [packet.evidence])
+
+    expect(readPlanBetaStateFromStorage([], [], readMultiEvidence)).toEqual({ kind: "missing" })
+    expect(readMultiEvidence).not.toHaveBeenCalled()
+
+    const legacy = stateFixture()
+    expect(savePlanBetaState(legacy)).toEqual({ ok: true })
+    expect(readPlanBetaStateFromStorage([], [], readMultiEvidence)).toEqual({ kind: "loaded", state: legacy })
+    expect(readMultiEvidence).not.toHaveBeenCalled()
+
+    window.localStorage.setItem(activePlanBetaStorageKey(), JSON.stringify(packet.state))
+    expect(readPlanBetaStateFromStorage([], [], readMultiEvidence)).toMatchObject({ kind: "multi_adjusted_v3_loaded", state: packet.state })
+    expect(readMultiEvidence).toHaveBeenCalledOnce()
+  })
+
+  it("rechecks the local account scope after a lazy multi-plan evidence read", () => {
+    const packet = multiPlanPacketFixture()
+    setActiveLocalAccount("scope-b")
+    const current = stateFixture()
+    expect(savePlanBetaState(current)).toEqual({ ok: true })
+    setActiveLocalAccount("scope-a")
+    window.localStorage.setItem(activePlanBetaStorageKey(), JSON.stringify(packet.state))
+
+    const readMultiEvidence = vi.fn(() => {
+      setActiveLocalAccount("scope-b")
+      return [packet.evidence]
+    })
+    expect(readPlanBetaStateFromStorage([], [], readMultiEvidence)).toEqual({ kind: "loaded", state: current })
+    expect(readMultiEvidence).toHaveBeenCalledOnce()
+  })
+
+  it("retries a lazy multi-plan read after an account ABA", () => {
+    const packet = multiPlanPacketFixture()
+    setActiveLocalAccount("scope-a")
+    window.localStorage.setItem(activePlanBetaStorageKey(), JSON.stringify(packet.state))
+    const readMultiEvidence = vi.fn(() => {
+      if (readMultiEvidence.mock.calls.length === 1) {
+        setActiveLocalAccount("scope-b")
+        setActiveLocalAccount("scope-a")
+      }
+      return [packet.evidence]
+    })
+
+    expect(readPlanBetaStateFromStorage([], [], readMultiEvidence)).toMatchObject({
+      kind: "multi_adjusted_v3_loaded",
+      state: packet.state,
+    })
+    expect(readMultiEvidence).toHaveBeenCalledTimes(2)
+  })
+
+  it("fails closed when every lazy multi-plan retry changes the account generation", () => {
+    const packet = multiPlanPacketFixture()
+    setActiveLocalAccount("scope-a")
+    window.localStorage.setItem(activePlanBetaStorageKey(), JSON.stringify(packet.state))
+    const readMultiEvidence = vi.fn(() => {
+      setActiveLocalAccount("scope-b")
+      setActiveLocalAccount("scope-a")
+      return [packet.evidence]
+    })
+
+    expect(readPlanBetaStateFromStorage([], [], readMultiEvidence)).toEqual({ kind: "storage_error" })
+    expect(readMultiEvidence).toHaveBeenCalledTimes(2)
+  })
+
+  it.each(["progress", "archive"] as const)("rejects an old %s click after an account ABA while waiting for the mutation lock", async operation => {
+    setActiveLocalAccount("synthetic-a")
+    const state = stateFixture()
+    expect(savePlanBetaState(state)).toEqual({ ok: true })
+    const before = { local: JSON.stringify(localStorage), session: JSON.stringify(sessionStorage) }
+    let release!: () => Promise<void>
+    Object.defineProperty(navigator, "locks", { configurable: true, value: {
+      request: (_name: string, _options: unknown, callback: (lock: object) => unknown) => new Promise(resolve => {
+        release = async () => { resolve(await callback({})) }
+      }),
+    } })
+    const result = operation === "progress"
+      ? savePlanProgressWithLock(state.activePlan.candidateId, { sessionDay: 1, sessionSlot: "AM", state: "COMPLETED" })
+      : archiveAndClearActivePlanWithLock(state.activePlan.candidateId)
+    setActiveLocalAccount("synthetic-b")
+    setActiveLocalAccount("synthetic-a")
+    const write = vi.spyOn(Storage.prototype, "setItem"), remove = vi.spyOn(Storage.prototype, "removeItem")
+    await release()
+    await expect(result).resolves.toEqual({ kind: "rejected", code: "PLAN_STORAGE_STATE_UNCERTAIN" })
+    expect({ local: JSON.stringify(localStorage), session: JSON.stringify(sessionStorage) }).toEqual(before)
+    expect(write).not.toHaveBeenCalled()
+    expect(remove).not.toHaveBeenCalled()
   })
 
   it.each([

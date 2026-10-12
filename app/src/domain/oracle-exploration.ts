@@ -49,14 +49,14 @@ const TOPICS_BY_ID: Record<OracleTopicId, OracleTopic> = {
     question: "계획보다 더 힘들게 느껴진 훈련은?",
     teaser: "계획 강도와 실제 느낌을 나란히",
     example: {
-      headline: "계획 RPE 5, 실제 느낌은 7",
+      headline: "힘든 정도 · 계획 5, 실제 7",
       summary: "계획에 연결한 일지의 체감강도를 비교한 예시예요.",
       source: "가상 기록 · 계획과 연결 일지",
       rows: [
-        { label: "계획", value: 5, valueLabel: "RPE 5" },
-        { label: "실제", value: 7, valueLabel: "RPE 7" },
+        { label: "계획", value: 5, valueLabel: "힘든 정도 5/10" },
+        { label: "실제", value: 7, valueLabel: "힘든 정도 7/10" },
       ],
-      unit: "RPE",
+      unit: "힘든 정도 (1~10)",
       detail: "설명용 가상 수치입니다. 계획과 실제 느낌의 차이만 비교하며 강점·약점이나 차이의 원인을 진단하지 않아요. 개인 화면도 현재 계획과 연결 일지를 사용해요.",
     },
     nextId: "priority",

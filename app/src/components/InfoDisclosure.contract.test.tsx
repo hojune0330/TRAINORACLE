@@ -32,9 +32,26 @@ describe("optional explanation disclosure", () => {
     const { container } = render(<InfoDisclosure title="계산 기준"><a href="#source">출처</a></InfoDisclosure>)
     expect(container.querySelector("details > summary")).not.toBeNull()
     expect(container.querySelector("summary button, summary a")).toBeNull()
-    expect(css).toContain("min-height: var(--app-touch-min, 44px)")
+    expect(css).toContain("min-height: calc(var(--app-touch-min, 44px) + var(--space-2))")
+    expect(css).toContain("box-sizing: border-box")
     expect(css).toContain(":focus-visible")
     expect(css).toContain("prefers-reduced-motion: reduce")
     expect(css).not.toContain("line-clamp")
+  })
+
+  it("keeps the summary at a compact 52px border-box minimum that can grow for wrapped text", () => {
+    const css = readFileSync("src/components/InfoDisclosure.css", "utf8")
+    const disclosureRule = css.match(/\.info-disclosure\s*\{([^}]+)\}/)?.[1] ?? ""
+    const summaryRule = css.match(/\.info-disclosure > summary\s*\{([^}]+)\}/)?.[1] ?? ""
+
+    expect(disclosureRule).toContain("margin-block: var(--space-1)")
+    expect(disclosureRule).toContain("overflow-wrap: anywhere")
+    expect(summaryRule).toContain("box-sizing: border-box")
+    expect(summaryRule).toContain("min-height: calc(var(--app-touch-min, 44px) + var(--space-2))")
+    expect(summaryRule).toContain("padding-block: var(--space-2)")
+    expect(summaryRule).toContain("font-size: var(--fs-caption, 12px)")
+    expect(summaryRule).not.toMatch(/^\s*height\s*:/m)
+    expect(summaryRule).not.toMatch(/^\s*overflow\s*:/m)
+    expect(css).toContain(".info-disclosure > summary > span { flex: 1; min-width: 0; }")
   })
 })

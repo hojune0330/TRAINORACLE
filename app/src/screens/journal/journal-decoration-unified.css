@@ -1,5 +1,5 @@
 .journal-decoration-unified__header, .journal-decoration-unified__entry { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 0; flex-wrap:wrap; }
-.journal-decoration-unified__header h1 { margin:0; font-size:var(--fs-h3); }
+.journal-decoration-unified__header { padding-inline:var(--space-4); }
 .journal-decoration-unified__header [role="group"] { display:flex; gap:8px; }
 .journal-decoration-unified__header button, .journal-decoration-unified__entry button, .journal-decoration-unified__entry summary, .calendar-decoration-leave button { min-height:44px; padding:8px 12px; font:inherit; border:1px solid var(--line); border-radius:var(--r-md); color:var(--ink); background:var(--surface); cursor:pointer; }
 .journal-decoration-unified__header button[aria-pressed="true"] { border-color:var(--brand); background:var(--surface-2); }

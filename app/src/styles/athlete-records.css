@@ -39,6 +39,13 @@
   font-weight: 700;
 }
 
+.athlete-record-step {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
 .athlete-record-form input,
 .athlete-record-form select {
   width: 100%;
@@ -98,6 +105,55 @@
   font: inherit;
   font-weight: 800;
   cursor: pointer;
+}
+
+.athlete-record-step-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 8px;
+  align-items: stretch;
+}
+
+.athlete-record-step-actions--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.athlete-record-step-actions .athlete-record-save {
+  grid-column: auto;
+  width: 100%;
+}
+
+.athlete-record-step-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 10px 12px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.athlete-record-step-actions button:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.athlete-record-step-back svg,
+.athlete-record-step-actions .athlete-record-save svg {
+  flex-shrink: 0;
+}
+
+.athlete-record-goal-note {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 .athlete-record-list {

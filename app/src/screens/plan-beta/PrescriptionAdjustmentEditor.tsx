@@ -1,4 +1,5 @@
 import React from "react"
+import { TaskGuide } from "../../components/TaskGuide"
 import { createPortal } from "react-dom"
 import { ArrowLeft, Minus, Plus, RotateCcw, Undo2, Redo2 } from "lucide-react"
 import { applyAdjustmentDraft, createAdjustmentDraft } from "@impl/prescription/prescription-adjustment"
@@ -286,6 +287,9 @@ export function PrescriptionAdjustmentEditor(props: PrescriptionAdjustmentEditor
       <div className="prescription-adjustment__content">
         {notice !== null && <p role="alert" className="prescription-adjustment__error">{notice}</p>}
         {opened.current === null && <p role="alert">현재 처방을 확인할 수 없어요. 닫은 뒤 다시 확인해 주세요.</p>}
+        {opened.current !== null && <TaskGuide as="h3" title={choices.length > 0 && !blocked ? "훈련 조절하기" : "현재 훈련 확인"}
+          description={choices.length > 0 && !blocked && notice === null ? "변경안은 적용을 눌러야 반영돼요." : undefined}
+          illustration={choices.length > 0 && !blocked && notice === null ? "plan-adjust" : undefined} />}
         <div className="prescription-adjustment__preview-tools"><p role="status">{draft ? "아직 계획에 반영하지 않은 변경안이에요." : "현재 훈련이에요."}</p>
           <div className="prescription-adjustment__history" role="group" aria-label="변경안 되돌리기">
             <button type="button" className="prescription-adjustment__icon" title="되돌리기" aria-label="되돌리기" disabled={blocked || !history.past.length} onClick={() => travel("undo")}><Undo2 size={18} aria-hidden="true" /></button>

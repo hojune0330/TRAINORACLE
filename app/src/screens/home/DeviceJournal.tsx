@@ -27,7 +27,7 @@ type DeviceJournalProps = {
 
 const KIND_META: Record<JournalEntry["kind"], { readonly label: string; readonly mark: string }> = {
   "post-session": { label: "훈련 후", mark: "↻" },
-  evening: { label: "하루 마무리", mark: "☾" },
+  evening: { label: "컨디션·메모", mark: "☾" },
   race: { label: "경기", mark: "▲" },
 }
 
@@ -47,7 +47,7 @@ function entryHeadline(entry: JournalEntry): string {
   return [
     entry.sleepH > 0 ? `수면 ${entry.sleepH}h` : null,
     entry.mood > 0 ? `기분 ${entry.mood}/5` : null,
-  ].filter(Boolean).join(" · ") || "하루 마무리"
+  ].filter(Boolean).join(" · ") || "컨디션·메모"
 }
 
 function entrySub(entry: JournalEntry): string {
@@ -105,7 +105,7 @@ export function DeviceJournal({ onOpenDay, onOpenArchive }: DeviceJournalProps) 
                 <span className="device-journal__values">{entrySub(entry)}</span>
               </span>
               <span className="device-journal__badges">
-                <span className="device-journal__badge">{entry.syncState === "synced" ? "계정 보관" : "이 기기만"}</span>
+                <span className="device-journal__badge">{entry.syncState === "synced" ? "계정 보관" : "이 브라우저에 저장됨"}</span>
                 {hasImportedField(entry.fieldProvenance) && (
                   <span className="device-journal__badge device-journal__badge--imported" data-testid="imported-chip">가져옴</span>
                 )}

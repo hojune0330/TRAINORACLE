@@ -1,11 +1,15 @@
+import React from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { loadAnalysisEntries, loadEntries } from "../../domain/journal-store"
 import { QuickSessionForm } from "./QuickSessionForm"
 import { createPlannedSessionLogDraft } from "../../domain/planned-session-link"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
 import { collectPlanJournalEvidence } from "../../domain/plan-journal-evidence"
 import { runDraftSafeNavigation } from "../../domain/unsaved-draft-navigation"
+import { savePlanBetaState, loadVersionedPlanBetaState } from "../../domain/plan-beta-store"
+import { AppShellFrame, type ShellToastState } from "../../components/AppShellFrame"
+import { createSavedFactReceipt } from "../../domain/save-receipt"
 
 function finishPerformedSession(rpe = 6): void {
   fireEvent.click(screen.getByRole("button", { name: "운동을 마쳤어요" }))
@@ -16,6 +20,231 @@ function finishPerformedSession(rpe = 6): void {
 }
 
 describe("quick session journal contract", () => {
+  it("returns a single time or effort edit straight to review without repeating later answers", () => {
+    render(<QuickSessionForm />)
+    fireEvent.click(screen.getByRole("button", { name: "운동을 마쳤어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "오후" }))
+    fireEvent.click(screen.getByRole("button", { name: /힘든 정도 6\/10,/ }))
+    fireEvent.click(screen.getByRole("button", { name: "없어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "시간 오후" }))
+    fireEvent.click(screen.getByRole("button", { name: "오전" }))
+    expect(screen.getByRole("heading", { name: "이 내용으로 남길까요?" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "힘든 정도 6/10" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "몸 상태 불편한 곳 없음" })).toBeVisible()
+    fireEvent.click(screen.getByRole("button", { name: "힘든 정도 6/10" }))
+    fireEvent.click(screen.getByRole("button", { name: /힘든 정도 4\/10,/ }))
+    expect(screen.getByRole("heading", { name: "이 내용으로 남길까요?" })).toBeVisible()
+    expect(loadEntries()).toHaveLength(0)
+  })
+  it("uses one saved result with the shell reward retry and keeps the same record editable", async () => {
+    const retry = vi.fn(), open = vi.fn(), done = vi.fn()
+    function Fixture() {
+      const [result, setResult] = React.useState<ShellToastState | null>(null)
+      return <AppShellFrame scrollRegionRef={React.createRef()} tab="log" savedToast={result}
+        onDismissToast={() => setResult(null)} onOpenTrends={vi.fn()} onTab={vi.fn()}
+        onOpenSaved={open} onRetryReward={retry} hideTabBar>
+        <QuickSessionForm onDone={done} onSaved={entry => setResult({ count: 1, phase: "enter",
+          receipt: createSavedFactReceipt(entry), completionAlreadyShown: true, storageStatus: "CONFIRMED",
+          rewardMessage: "포인트 확인이 필요해요.", rewardRetry: true })} />
+      </AppShellFrame>
+    }
+    render(<Fixture />)
+    fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
+    expect(screen.queryByRole("button", { name: "포인트 다시 확인" })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
+    await screen.findByRole("button", { name: "완료" })
+    expect(document.querySelectorAll(".journal-save-result")).toHaveLength(1)
+    expect(document.querySelector("[data-toast-priority]")).toBeNull()
+    expect(screen.getAllByText("포인트 확인이 필요해요.")).toHaveLength(1)
+    fireEvent.click(screen.getByRole("button", { name: "포인트 다시 확인" }))
+    expect(retry).toHaveBeenCalledTimes(1)
+    expect(loadEntries()).toHaveLength(1)
+    expect(done).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole("button", { name: "기록 보기" }))
+    expect(open).toHaveBeenCalledTimes(1)
+    const originalId = loadEntries()[0]?.id
+    fireEvent.click(screen.getByText("내용 추가·수정"))
+    fireEvent.click(screen.getByRole("button", { name: "방금 기록 수정" }))
+    expect(screen.getByRole("button", { name: "오늘은 쉬었어요" })).toHaveAttribute("aria-pressed", "true")
+    expect(loadEntries()[0]?.id).toBe(originalId)
+    expect(document.querySelector("[data-toast-priority]")).toBeNull()
+  })
+
+  it.each(["오늘 운동 완료", "시간 오후", "힘든 정도 6/10", "몸 상태 불편한 곳 없음"])(
+    "dismisses the prior receipt when editing the saved summary: %s", async label => {
+      const dismiss = vi.fn()
+      function Fixture() {
+        const [result, setResult] = React.useState<ShellToastState | null>(null)
+        return <AppShellFrame scrollRegionRef={React.createRef()} tab="log" savedToast={result}
+          onDismissToast={() => { dismiss(); setResult(null) }} onOpenTrends={vi.fn()} onTab={vi.fn()} hideTabBar>
+          <QuickSessionForm onSaved={entry => setResult({ count: 1, phase: "enter",
+            receipt: createSavedFactReceipt(entry), completionAlreadyShown: true, storageStatus: "CONFIRMED",
+            rewardMessage: "포인트 확인이 필요해요." })} />
+        </AppShellFrame>
+      }
+      render(<Fixture />)
+      finishPerformedSession()
+      await screen.findByRole("button", { name: "완료" })
+      const original = loadEntries()[0]
+      fireEvent.click(screen.getByRole("button", { name: label }))
+      expect(dismiss).toHaveBeenCalledTimes(1)
+      expect(document.querySelector("[data-toast-priority]")).toBeNull()
+      expect(screen.queryByText("포인트 확인이 필요해요.")).not.toBeInTheDocument()
+      expect(loadEntries()[0]).toEqual(original)
+    })
+
+  it("keeps the independent high-pain notice when the authoritative result also needs another review", async () => {
+    function Fixture() {
+      const [result, setResult] = React.useState<ShellToastState | null>(null)
+      return <AppShellFrame scrollRegionRef={React.createRef()} tab="log" savedToast={result}
+        onDismissToast={() => setResult(null)} onOpenTrends={vi.fn()} onTab={vi.fn()} hideTabBar>
+        <QuickSessionForm onSaved={entry => setResult({ count: 1, phase: "enter", receipt: createSavedFactReceipt(entry),
+          completionAlreadyShown: true, storageStatus: "CONFIRMED", reviewMessage: "합성 메모 검토가 필요해요." })} />
+      </AppShellFrame>
+    }
+    render(<Fixture />)
+    fireEvent.click(screen.getByRole("button", { name: "운동을 마쳤어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "오전" }))
+    fireEvent.click(screen.getByRole("button", { name: /^힘든 정도 6\/10,/ }))
+    fireEvent.click(screen.getByRole("button", { name: "있어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "오른 무릎" }))
+    fireEvent.click(screen.getByRole("button", { name: "오른 무릎 통증 4단계" }))
+    fireEvent.click(screen.getByRole("button", { name: "이 상태로 기록" }))
+    fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
+    await screen.findByRole("button", { name: "완료" })
+    expect(screen.getByRole("alert")).toHaveTextContent("합성 메모 검토가 필요해요.")
+    expect(screen.getByText(/높은 통증은 사람이 꼭 확인해야 하는 기록이에요/)).toBeVisible()
+    expect(loadEntries()[0]).toMatchObject({ painParts: { rKnee: 4 } })
+    expect(document.querySelector("[data-toast-priority]")).toBeNull()
+  })
+
+  it("announces confirmed persistence before Done and never on an unsaved answer", async () => {
+    const saved = vi.fn(), done = vi.fn()
+    render(<QuickSessionForm onSaved={saved} onDone={done} />)
+    fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
+    expect(saved).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
+    await screen.findByRole("button", { name: "완료" })
+    expect(saved).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ activityOutcome: "RESTED" }), undefined, undefined)
+    expect(done).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole("button", { name: "완료" }))
+    expect(saved).toHaveBeenCalledTimes(1)
+    expect(done).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([false, true])("marks the plan only with pre-save opt-in (%s), preserving missing actual quantities", async optedIn => {
+    const state = stateFixture()
+    expect(savePlanBetaState(state).ok).toBe(true)
+    const link = createPlannedSessionLogDraft(state, state.activePlan.sessions[0]!, new Date().toISOString())!
+    const locks = Object.getOwnPropertyDescriptor(navigator, "locks")
+    Object.defineProperty(navigator, "locks", { configurable: true, value: {
+      request: async (_name: string, _options: unknown, callback: (lock: object) => unknown) => callback({}),
+    } })
+    try {
+      render(<QuickSessionForm plannedSessionLink={link.link} targetDate={link.date} />)
+      fireEvent.click(screen.getByRole("button", { name: "계획대로 마쳤어요" }))
+      fireEvent.click(screen.getByRole("button", { name: "오전" }))
+      fireEvent.click(screen.getByRole("button", { name: /^힘든 정도 6\/10,/ }))
+      fireEvent.click(screen.getByRole("button", { name: "없어요" }))
+      const confirm = screen.getByRole("checkbox", { name: "계획에도 완료 표시 남기기" })
+      expect(confirm).not.toBeChecked()
+      if (optedIn) fireEvent.click(confirm)
+      fireEvent.click(screen.getByRole("button", { name: optedIn ? "저장하고 계획에 완료 표시" : "이대로 저장" }))
+      await waitFor(() => expect(screen.getByRole("button", { name: "완료" })).toBeVisible())
+      expect(loadEntries()).toHaveLength(1)
+      expect(loadEntries()[0]).toMatchObject({ distanceKm: "", durationMin: "", avgPace: "", rpe: 6 })
+      expect(loadVersionedPlanBetaState()?.progress).toEqual(optedIn ? [{ sessionDay: 1, sessionSlot: "AM", state: "COMPLETED" }] : [])
+      expect(screen.getByText("내용 추가·수정").closest("details")).not.toHaveAttribute("open")
+    } finally {
+      if (locks) Object.defineProperty(navigator, "locks", locks)
+      else Reflect.deleteProperty(navigator, "locks")
+    }
+  })
+
+  it("withdraws pre-save plan consent when the reported result changes", () => {
+    const state = stateFixture()
+    savePlanBetaState(state)
+    const link = createPlannedSessionLogDraft(state, state.activePlan.sessions[0]!, new Date().toISOString())!
+    render(<QuickSessionForm plannedSessionLink={link.link} targetDate={link.date} />)
+    fireEvent.click(screen.getByRole("button", { name: "계획 대신 쉬었어요" }))
+    fireEvent.click(screen.getByRole("checkbox", { name: "계획에도 휴식 표시 남기기" }))
+    fireEvent.click(screen.getByRole("button", { name: /휴식으로 변경/ }))
+    fireEvent.click(screen.getByRole("button", { name: "계획한 훈련을 건너뛰었어요" }))
+    expect(screen.getByRole("checkbox", { name: "계획에도 건너뜀 표시 남기기" })).not.toBeChecked()
+    expect(loadEntries()).toEqual([])
+    expect(loadVersionedPlanBetaState()?.progress).toEqual([])
+  })
+
+  it("keeps the successful journal when the opted-in plan write fails", async () => {
+    const state = stateFixture()
+    savePlanBetaState(state)
+    const link = createPlannedSessionLogDraft(state, state.activePlan.sessions[0]!, new Date().toISOString())!
+    const locks = Object.getOwnPropertyDescriptor(navigator, "locks")
+    Object.defineProperty(navigator, "locks", { configurable: true, value: {
+      request: async (_name: string, _options: unknown, callback: (lock: object) => unknown) => callback({}),
+    } })
+    const original = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, key, value) {
+      if (key === "trainoracle.plan-beta.v1") throw new DOMException("quota", "QuotaExceededError")
+      original.call(this, key, value)
+    })
+    try {
+      render(<QuickSessionForm plannedSessionLink={link.link} targetDate={link.date} />)
+      fireEvent.click(screen.getByRole("button", { name: "계획 대신 쉬었어요" }))
+      fireEvent.click(screen.getByRole("checkbox", { name: "계획에도 휴식 표시 남기기" }))
+      fireEvent.click(screen.getByRole("button", { name: "저장하고 계획에 휴식 표시" }))
+      await waitFor(() => expect(screen.getByText(/일지는 저장돼 있어요/)).toBeVisible())
+      expect(screen.getByRole("button", { name: "이 결과를 계획에도 반영" })).toBeVisible()
+      expect(loadEntries()).toHaveLength(1)
+      expect(loadEntries()[0]).toMatchObject({ activityOutcome: "RESTED", rpe: 0 })
+      expect(loadVersionedPlanBetaState()?.progress).toEqual([])
+    } finally {
+      if (locks) Object.defineProperty(navigator, "locks", locks)
+      else Reflect.deleteProperty(navigator, "locks")
+    }
+  })
+
+  it("shows one active question and keeps answers editable when moving back", () => {
+    const onBack = vi.fn()
+    render(<QuickSessionForm onBack={onBack} />)
+    fireEvent.click(screen.getByRole("button", { name: "운동을 마쳤어요" }))
+    expect(screen.getByRole("heading", { name: "언제 했나요?" })).toBeVisible()
+    expect(screen.queryByRole("button", { name: "운동을 마쳤어요" })).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "오후" }))
+    fireEvent.click(screen.getByRole("button", { name: /^힘든 정도 7\/10,/ }))
+    expect(screen.getByRole("heading", { name: "운동 후 불편하거나 아픈 곳이 있나요?" })).toBeVisible()
+    expect(screen.queryByRole("group", { name: "힘든 정도 1부터 10까지" })).toBeNull()
+    expect(screen.getByRole("button", { name: /운동 완료/ })).toBeVisible()
+    expect(screen.getByRole("button", { name: /오후/ })).toBeVisible()
+    expect(screen.getByRole("button", { name: /힘든 정도 7\/10/ })).toBeVisible()
+    fireEvent.click(screen.getByRole("button", { name: "← 뒤로" }))
+    expect(screen.getByRole("button", { name: /^힘든 정도 7\/10,/ })).toHaveAttribute("aria-pressed", "true")
+    fireEvent.click(screen.getByRole("button", { name: "← 뒤로" }))
+    expect(screen.getByRole("button", { name: "오후" })).toHaveAttribute("aria-pressed", "true")
+    expect(onBack).not.toHaveBeenCalled()
+    expect(loadEntries()).toEqual([])
+    fireEvent.click(screen.getByRole("button", { name: "오전" }))
+    fireEvent.click(screen.getByRole("button", { name: "모르겠어요 · 비워 둘게요" }))
+    fireEvent.click(screen.getByRole("button", { name: "없어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
+    expect(loadEntries()[0]).toMatchObject({ activitySlot: "AM", rpe: 0, painCheckStatus: "NO_SIGNAL_REPORTED", fieldProvenance: { rpe: { provenance: "MISSING" } } })
+  })
+
+  it("uses one focused task heading and shows the saved answers below the current question", () => {
+    render(<QuickSessionForm />)
+
+    const firstQuestion = screen.getByRole("heading", { name: "오늘 운동은 어떻게 됐나요?" })
+    expect(firstQuestion.tagName).toBe("H2")
+    expect(screen.getAllByRole("heading", { name: "오늘 운동은 어떻게 됐나요?" })).toHaveLength(1)
+
+    fireEvent.click(screen.getByRole("button", { name: "운동을 마쳤어요" }))
+
+    const nextQuestion = screen.getByRole("heading", { name: "언제 했나요?" })
+    expect(nextQuestion.tagName).toBe("H2")
+    expect(screen.getAllByRole("heading", { name: "언제 했나요?" })).toHaveLength(1)
+    expect(screen.getByRole("button", { name: /운동 완료/ })).toBeVisible()
+    expect(screen.queryByRole("group", { name: "힘든 정도 1부터 10까지" })).toBeNull()
+  })
   it("accepts a note and two exercises first without saving or bypassing the activity and body check", () => {
     render(<QuickSessionForm />)
     const click = (name: string) => fireEvent.click(screen.getByRole("button", { name }))
@@ -58,6 +287,7 @@ describe("quick session journal contract", () => {
     expect(entry).toMatchObject({ activityOutcome: "PARTIAL", planExecutionChange: "FEWER_REPETITIONS",
       distanceKm: "", durationMin: "", fieldProvenance: { planExecutionChange: { provenance: "EXPLICIT" } } })
     expect(screen.queryByRole("button", { name: "이 결과를 계획에도 반영" })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByText("내용 추가·수정"))
     fireEvent.click(screen.getByRole("button", { name: "방금 기록 수정" }))
     fireEvent.click(screen.getByRole("button", { name: "계획 대신 쉬었어요" }))
     fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
@@ -216,6 +446,7 @@ describe("quick session journal contract", () => {
     render(<QuickSessionForm onContinueDetailed={onContinueDetailed} />)
 
     finishPerformedSession(4)
+    fireEvent.click(screen.getByText("내용 추가·수정"))
     fireEvent.click(screen.getByRole("button", { name: "일지 더 쓰기" }))
 
     const [entry] = loadEntries()
@@ -228,11 +459,13 @@ describe("quick session journal contract", () => {
     finishPerformedSession(6)
     const original = loadEntries()[0]
 
+    fireEvent.click(screen.getByText("내용 추가·수정"))
     fireEvent.click(screen.getByRole("button", { name: "방금 기록 수정" }))
     fireEvent.click(screen.getByRole("button", { name: "하던 운동을 일부만 했어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "시간 오후" }))
     fireEvent.click(screen.getByRole("button", { name: "오전" }))
+    fireEvent.click(screen.getByRole("button", { name: "힘든 정도 6/10" }))
     fireEvent.click(screen.getByRole("button", { name: /힘든 정도 7\/10,/ }))
-    fireEvent.click(screen.getByRole("button", { name: "없어요" }))
   fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
 
     expect(loadEntries()).toHaveLength(1)
@@ -248,6 +481,7 @@ describe("quick session journal contract", () => {
     render(<QuickSessionForm />)
     finishPerformedSession(6)
 
+    fireEvent.click(screen.getByText("내용 추가·수정"))
     fireEvent.click(screen.getByRole("button", { name: "방금 기록 수정" }))
     fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
   fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
@@ -274,7 +508,8 @@ describe("quick session journal contract", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("하나 이상")
     expect(loadEntries()).toHaveLength(0)
 
-    fireEvent.click(screen.getByRole("button", { name: /오른 무릎, 통증 없음/ }))
+    fireEvent.click(screen.getByRole("button", { name: "오른 무릎" }))
+    fireEvent.click(screen.getByRole("button", { name: "오른 무릎 통증 1단계" }))
     fireEvent.click(screen.getByRole("button", { name: "이 상태로 기록" }))
     fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
     expect(loadEntries()[0]).toMatchObject({

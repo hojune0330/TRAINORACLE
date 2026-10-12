@@ -1,6 +1,7 @@
 import React from "react"
 import { ArrowRight } from "lucide-react"
 import { InfoDisclosure } from "../../components/InfoDisclosure"
+import { AppHeading } from "../../components/AppHeading"
 import { buildFileAnalysisReport, type FileAnalysisEntry, type FileAnalysisExclusion, type ProjectedFileObservation } from "../../domain/import/file-analysis"
 import { fileAnalysisFormats } from "../../domain/import/file-analysis-policy"
 import { todayISO } from "../../domain/journal-store"
@@ -58,10 +59,10 @@ export function FileAnalysisPanel({ entries, pendingVerificationCount = 0, onOpe
   if (fileAnalysisFormats().length === 0 || (available.length === 0 && pendingVerificationCount === 0)) return null
   const pendingNotice = pendingVerificationCount > 0 && <p role="status">이전에 저장한 파일 기록 {pendingVerificationCount}개의 최신 상태를 계정에서 확인하지 못했어요. 기록은 보관돼 있으며, 확인 전에는 아래 분석에서 제외해요. 인터넷 연결을 확인한 뒤 다시 열어 주세요.</p>
   if (available.length === 0) return <section className="file-analysis-panel" aria-labelledby="file-analysis-title" data-testid="file-analysis-panel">
-    <h2 id="file-analysis-title">가져온 기록 분석</h2>{pendingNotice}
+    <AppHeading as="h2" variant="screen" accent id="file-analysis-title">가져온 기록 분석</AppHeading>{pendingNotice}
   </section>
   return <section className="file-analysis-panel" aria-labelledby="file-analysis-title" data-testid="file-analysis-panel">
-    <h2 id="file-analysis-title">가져온 기록 분석</h2>
+    <AppHeading as="h2" variant="screen" accent id="file-analysis-title">가져온 기록 분석</AppHeading>
     {pendingNotice}
     <div className="file-observation-review">
       <InfoDisclosure title={`${startDate} ~ ${endDate} · 기간 바꾸기`}>
@@ -74,11 +75,11 @@ export function FileAnalysisPanel({ entries, pendingVerificationCount = 0, onOpe
       <p>{report.includedSourceCount}개 운동 · 중복 사본 {report.duplicateSourceCount}개 제외 · 확인 필요 {report.excludedSourceCount}개</p>
       {report.coverage === "NO_DATA" && <p>이 기간에 가져온 기록이 없어요. 다른 기간을 골라 주세요.</p>}
       {report.sports.map(sport => <div key={sport.sport}>
-        <h3>{SPORT[sport.sport]} · {sport.sampleCount}개</h3>
+        <AppHeading as="h3" variant="section">{SPORT[sport.sport]} · {sport.sampleCount}개</AppHeading>
         <dl className="file-analysis-metrics"><div><dt>기록된 거리 · {sport.distanceMeters.sampleCount}개 사용</dt>
           <dd>{sport.distanceMeters.value === null ? "미기록" : `${number(sport.distanceMeters.value / 1000)}km`}</dd></div></dl>
         {sport.timeSummaries.map(time => <div key={time.durationMeaning}>
-          <h3>{MEANING[time.durationMeaning]}</h3>
+          <AppHeading as="h3" variant="section">{MEANING[time.durationMeaning]}</AppHeading>
           {time.referenceOnly ? <p>시간의 뜻을 확인한 뒤 같은 종류의 시간끼리만 합계·페이스를 계산해요. 구간 원본은 아래에서 볼 수 있어요.</p> :
             <dl className="file-analysis-metrics"><div><dt>시간 합계 · {time.durationSeconds.sampleCount}개 사용</dt><dd>{fileDuration(time.durationSeconds.value)}</dd></div>
               <div><dt>평균 페이스 · 거리·시간이 함께 있는 {time.paceSecondsPerKm.sampleCount}개</dt><dd>{pace(time.paceSecondsPerKm.value)}</dd></div></dl>}
@@ -92,7 +93,7 @@ export function FileAnalysisPanel({ entries, pendingVerificationCount = 0, onOpe
           <p key={`${sport.sport}-${time.durationMeaning}-${item.reasonCode}`}>{SPORT[sport.sport]} · {MEANING[time.durationMeaning]} 페이스 · {REASON[item.reasonCode]} {item.count}개</p>)))}
         <p>이 자료는 파일에 담긴 수행 기록이에요. 개인 최고기록, 에너지 시스템 능력, 회복 상태를 자동으로 판정하지 않아요.</p>
       </InfoDisclosure>
-      <h3>운동별 구간</h3>
+      <AppHeading as="h3" variant="section">운동별 구간</AppHeading>
       {report.observations.slice(0, activityLimit).map(observation => <ActivitySegments key={observation.sourceObservationKey} observation={observation} />)}
       {report.observations.length > activityLimit && <button type="button" onClick={() => setActivityLimit(value => value + 20)}>운동 20개 더 보기</button>}
       {onOpenPlan && report.includedSourceCount > 0 && <div className="file-analysis-actions">

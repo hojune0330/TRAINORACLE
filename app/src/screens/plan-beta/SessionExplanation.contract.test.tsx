@@ -65,6 +65,28 @@ function paceSession(): PlanSession {
 }
 
 describe("session explanation review regressions", () => {
+  it("cancels only the portal explanation and returns focus inside its parent day reader", async () => {
+    const parentCancel = vi.fn()
+    const session = paceSession()
+    const before = JSON.stringify(session)
+    render(<dialog open aria-label="부모 날짜 읽기" onCancel={parentCancel}>
+      <SessionExplanationEntry session={session} />
+    </dialog>)
+    const parent = screen.getByRole("dialog", { name: "부모 날짜 읽기" })
+    const opener = screen.getByRole("button", { name: "훈련 방법과 이유" })
+    await userEvent.click(opener)
+    const explanation = document.querySelector<HTMLDialogElement>(".session-explanation")!
+    expect(explanation).toBeVisible()
+    const cancellation = new Event("cancel", { cancelable: true })
+    fireEvent(explanation, cancellation)
+    expect(cancellation.defaultPrevented).toBe(true)
+    expect(parentCancel).not.toHaveBeenCalled()
+    await waitFor(() => expect(document.querySelector(".session-explanation")).toBeNull())
+    expect(parent).toHaveAttribute("open")
+    expect(opener).toHaveFocus()
+    expect(JSON.stringify(session)).toBe(before)
+  })
+
   it.each(["ACTIVE", "ARCHIVED"] as const)("shows planned and actual slots for %s changed execution without claiming no journal", async source => {
     const f = replacedReplanFixture(), session = f.state.activePlan.sessions.find(s => s.day === 1)!
     const entry = { ...f.entries[0]!, activitySlot: "PM" as const, planExecutionRelation: "MODIFIED" as const,
@@ -75,7 +97,7 @@ describe("session explanation review regressions", () => {
       loadEvidence={() => collectSessionExplanationEvidence([entry], f.state, session, { kind: "loaded", plans: f.archivedPlans })} />)
     await userEvent.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))
     expect(screen.getByText(/계획 오전 · 실제 오후/u)).toBeVisible()
-    expect(screen.getByText("직접 기록한 RPE 3")).toBeVisible()
+    expect(screen.getByText(/^(?:실제 힘든 정도 )?3\/10 · 직접 입력$/u)).toBeVisible()
     expect(screen.getByText(/일부만 하거나 바꾼 훈련이라 원래 계획과 비교하지 않음/u)).toBeVisible()
     expect(screen.queryByText(/연결된 일지가 아직 없어요/u)).toBeNull()
     expect(screen.queryByText("직접 기록한 거리")).toBeNull()
@@ -92,15 +114,15 @@ describe("session explanation review regressions", () => {
     const load = () => collectSessionExplanationEvidence([entry], f.state, session, { kind: "loaded", plans: f.archivedPlans })
     const view = render(<SessionExplanationEntry session={session} context={context} initialTab="주기·기록" loadEvidence={load} />)
     await userEvent.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))
-    expect(screen.getByText("직접 기록한 RPE 3")).toBeVisible()
+    expect(screen.getByText(/^(?:실제 힘든 정도 )?3\/10 · 직접 입력$/u)).toBeVisible()
     expect(screen.queryByText(/연결된 일지가 아직 없어요/u)).toBeNull()
     view.rerender(<SessionExplanationEntry session={session} context={context} initialTab="주기·기록"
       loadEvidence={() => collectSessionExplanationEvidence([entry], f.state, session, { kind: "unavailable" })} />)
-    expect(screen.queryByText("직접 기록한 RPE 3")).toBeNull()
+    expect(screen.queryByText(/^(?:실제 힘든 정도 )?3\/10 · 직접 입력$/u)).toBeNull()
     expect(screen.getByText("이전 기록의 연결을 다시 확인해 주세요.")).toBeVisible()
     expect(screen.queryByText(/연결된 일지가 아직 없어요/u)).toBeNull()
     view.rerender(<SessionExplanationEntry session={session} context={context} initialTab="주기·기록" loadEvidence={load} />)
-    expect(screen.getByText("직접 기록한 RPE 3")).toBeVisible()
+    expect(screen.getByText(/^(?:실제 힘든 정도 )?3\/10 · 직접 입력$/u)).toBeVisible()
   })
 
   it("rejects a lineage row projected to a different current occurrence", async () => {
@@ -121,7 +143,7 @@ describe("session explanation review regressions", () => {
       initialTab="주기·기록" entryLabel="연결된 일지 기록 보기" showPurpose={false} loadEvidence={() => evidence} />)
     await userEvent.click(screen.getByRole("button", { name: "연결된 일지 기록 보기" }))
     expect(screen.getByRole("tab", { name: "주기·기록" })).toHaveAttribute("aria-selected", "true")
-    expect(screen.getByText("직접 기록한 RPE 3")).toBeVisible()
+    expect(screen.getByText(/^(?:실제 힘든 정도 )?3\/10 · 직접 입력$/u)).toBeVisible()
     expect(screen.getByRole("heading", { name: "실제 기록" })).toBeVisible()
   })
 
@@ -150,7 +172,7 @@ describe("session explanation review regressions", () => {
     expect(screen.getByText(/1000m당 약 3분 42초.*5000m 18분 30초 기준/u)).toBeVisible()
     expect(screen.getByText("추천 기준")).toBeVisible()
     expect(reader.querySelectorAll(".plan-detailed-prescription__notation")).toHaveLength(1)
-    expect(reader.querySelector(".plan-detailed-prescription__notation code")).toHaveTextContent('5 × 1km @ 222s/1km · 5K RP · r150s Jog')
+    expect(reader.querySelector(".plan-detailed-prescription__notation code")).toHaveTextContent('5 × 1km · 222초/1km · 5K 경기 평균 페이스 · 반복 사이 150초 조깅')
     expect(reader).not.toHaveTextContent("오늘 할 훈련")
     expect(reader).toHaveTextContent("준비")
     expect(reader).toHaveTextContent("반복 사이: 150초 가벼운 조깅 · 4번")
@@ -180,14 +202,14 @@ describe("session explanation review regressions", () => {
     const view = render(<SessionExplanationEntry session={session} context={context} loadEvidence={() => current} />)
     await userEvent.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))
     await userEvent.click(screen.getByRole("tab", { name: "주기·기록" }))
-    expect(screen.getByText("직접 기록한 RPE 3")).toBeVisible()
+    expect(screen.getByText(/^(?:실제 힘든 정도 )?3\/10 · 직접 입력$/u)).toBeVisible()
     const nextContext = { ...context, generatedAt: "2026-09-02T00:00:00.000Z" }
     const next = scope(state.activePlan.candidateId, nextContext.generatedAt, 6)
     view.rerender(<SessionExplanationEntry session={session} context={nextContext} loadEvidence={() => next} />)
-    expect(screen.queryByText("직접 기록한 RPE 3")).toBeNull()
-    expect(screen.getByText("직접 기록한 RPE 6")).toBeVisible()
+    expect(screen.queryByText(/^(?:실제 힘든 정도 )?3\/10 · 직접 입력$/u)).toBeNull()
+    expect(screen.getByText(/^(?:실제 힘든 정도 )?6\/10 · 직접 입력$/u)).toBeVisible()
     view.rerender(<SessionExplanationEntry session={session} context={nextContext} loadEvidence={() => current} />)
-    expect(screen.queryByText("직접 기록한 RPE 3")).toBeNull()
+    expect(screen.queryByText(/^(?:실제 힘든 정도 )?3\/10 · 직접 입력$/u)).toBeNull()
     expect(screen.getByText(/조회하지 못한 상태를 일지가 없는 것으로 판단하지 않아요/u)).toBeVisible()
   })
 
@@ -215,7 +237,7 @@ describe("session explanation review regressions", () => {
       context={{ kind: "SAVED", plan: state.activePlan, generatedAt: state.generatedAt }} loadEvidence={() => wrongEvidence} />)
     await userEvent.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))
     await userEvent.click(screen.getByRole("tab", { name: "주기·기록" }))
-    expect(screen.queryByText("직접 기록한 RPE 3")).toBeNull()
+    expect(screen.queryByText(/^(?:실제 힘든 정도 )?3\/10 · 직접 입력$/u)).toBeNull()
     expect(screen.getByText(/조회하지 못한 상태를 일지가 없는 것으로 판단하지 않아요/u)).toBeVisible()
     expect(screen.queryByText(/연결된 일지가 아직 없어요/u)).toBeNull()
   })

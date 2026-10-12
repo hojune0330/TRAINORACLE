@@ -1,10 +1,13 @@
 import React from "react"
+import { ArrowRight } from "lucide-react"
+import { ErrorBoundary } from "../components/ErrorBoundary"
 import { ACCOUNT_PLAN_EVENT, accountPlanService, accountPlansEnabled } from "../domain/account/account-plan-service"
 import { ensureAccountPlanHistory } from "../domain/account/account-plan-domain"
 import { useAccountPlanRuntime } from "./plan-beta/useAccountPlanRuntime"
 import { AccountPlanHistoryControls, AccountPlanStorageControls } from "./plan-beta/AccountPlanStorageControls"
 import { AccountPlanHistoricalView } from "./plan-beta/AccountPlanHistoricalView"
 import { AccountPlanLegacyRecovery } from "./plan-beta/AccountPlanLegacyRecovery"
+import { archiveLegacyPlanForNewEntry, readLegacyPlanArchives } from "../domain/legacy-plan-archive"
 import { materializeAccountPlan, accountPlanCapacity, type AccountPlanEntry } from "../domain/account/account-plan-document-schema"
 import type {
   PlanGenerationSuccess,
@@ -24,6 +27,7 @@ import {
   loadPlanBetaState,
   loadPreviousIntake,
   savePlanBetaState,
+  restorePlanBetaStateIfMissing,
   readPlanBetaStateFromStorage,
   activePlanBetaStorageKey,
 } from "../domain/plan-beta-store"
@@ -32,7 +36,6 @@ import type {
   PlanBetaState,
 } from "../domain/plan-beta-store"
 import type { JournalEntryType } from "./log-entry/shared"
-import { PlanActiveState } from "./plan-beta/PlanActiveState"
 import { PlanCandidates } from "./plan-beta/PlanCandidates"
 import type { InitialMainCandidateReview } from "./plan-beta/PlanCandidates"
 import { applyInitialMainConditions, applyInitialMainManual, reviewInitialMainConditions } from "../domain/initial-main-conditions"
@@ -75,11 +78,15 @@ import {
 import type { PlanCloudPersistenceState } from "../domain/account/plan-cloud-backup"
 import type { PlannedSessionLogDraft } from "../domain/planned-session-link"
 import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
+import { useTaskFlowBack } from "../hooks/useTaskFlowBack"
 import { useOrderedStepMotion } from "../hooks/useOrderedStepMotion"
+import { useAutoAdvanceActivation } from "../hooks/useAutoAdvanceActivation"
 import { resolvePlanMethodChange } from "../domain/plan-method-selection"
 import { todayISO } from "../domain/journal-store"
-import { onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
+import { localJournalScopeGeneration, onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
 import { localAccountScopeIsCurrent, localAccountScopeSnapshot } from "../domain/account/local-account-scope"
+import type { PlanExecutionFeedback } from "./plan-beta/PlanActiveState"
+import { runDraftSafeNavigation } from "../domain/unsaved-draft-navigation"
 import { AdjustedPlanSchedule } from "./plan-beta/AdjustedPlanSchedule"
 import { AdjustedPlanEditFlow } from "./plan-beta/AdjustedPlanEditFlow"
 import { matchingAdjustmentEntry } from "./plan-beta/adjustment-entry"
@@ -111,6 +118,8 @@ export type PlanAdjustmentResolver = (context: {
 }) => AdjustmentEntry | null
 
 const AthleteRecords = React.lazy(() => import("./AthleteRecords").then(module => ({ default: module.AthleteRecords })))
+const PlanActiveState = React.lazy(() => import("./plan-beta/PlanActiveState").then(module => ({ default: module.PlanActiveState })))
+const GoalTrainingProgramFlow = React.lazy(() => import("./plan-beta/GoalTrainingProgramFlow").then(module => ({ default: module.GoalTrainingProgramFlow })))
 
 const INTAKE_MOTION_ORDER: readonly IntakeStep[] = [
   "goal",
@@ -159,8 +168,15 @@ function AccountPlanHistoryList({ plans }: { plans: AccountPlanEntry[] }) {
   </>
 }
 
-export function PlanBeta(props: React.ComponentProps<typeof PlanBetaContent>) {
+export function PlanBeta(props: Omit<React.ComponentProps<typeof PlanBetaContent>, "goalProgramEntry">) {
   const service = accountPlanService(), { view, retry } = useAccountPlanRuntime(service)
+  const [goalSession, setGoalSession] = React.useState<{ owner: string | null; generation: number } | null>(null)
+  const goalEntryButton = React.useRef<HTMLButtonElement>(null)
+  React.useEffect(() => onLocalJournalScopeChange(() => setGoalSession(null)), [])
+  const closeGoalProgram = () => {
+    setGoalSession(null)
+    requestAnimationFrame(() => goalEntryButton.current?.focus())
+  }
   const [error, setError] = React.useState<string | null>(null)
   const [archiveReview, setArchiveReview] = React.useState<{ fingerprint: string; planId: string } | null>(null)
   const [historyPanel, setHistoryPanel] = React.useState({ service, open: false, paused: false })
@@ -188,6 +204,19 @@ export function PlanBeta(props: React.ComponentProps<typeof PlanBetaContent>) {
   const historyControls = collection && <AccountPlanHistoryControls status={collection.historyStatus}
     progress={collection.historyProgress}
     onRetry={loadHistory} onCancel={cancelHistory} />
+  const accountContentOwnsEntry = !!collection?.legacyPending || needsHistoryForNewPlan || historical !== null
+  const goalProgramEntry = <div className="plan-program-entry">
+    <button type="button" ref={goalEntryButton} className="app-choice-control" onClick={() => {
+      const context = { owner: localAccountScopeSnapshot(), generation: localJournalScopeGeneration() }
+      runDraftSafeNavigation(() => setGoalSession(context), false,
+        () => localAccountScopeIsCurrent(context.owner) && context.generation === localJournalScopeGeneration())
+    }}>10km 한 달 훈련표<ArrowRight size={18} aria-hidden="true" /></button>
+  </div>
+  if (goalSession && localAccountScopeIsCurrent(goalSession.owner) && goalSession.generation === localJournalScopeGeneration()) {
+    return <ErrorBoundary><React.Suspense fallback={<p role="status">훈련표를 열고 있어요.</p>}>
+      <GoalTrainingProgramFlow key={`${goalSession.owner}:${goalSession.generation}`} onClose={closeGoalProgram} onOpenActive={closeGoalProgram} />
+    </React.Suspense></ErrorBoundary>
+  }
   return <div className="account-plan-runtime">
     {view && <AccountPlanStorageControls status={view.status} evidenceRequired={historical !== null}
       capacity={!collection && view.document ? accountPlanCapacity(view.document) : undefined}
@@ -224,7 +253,7 @@ export function PlanBeta(props: React.ComponentProps<typeof PlanBetaContent>) {
     </section>}
     {collection?.legacyPending ? collection.currentPlan?.packet && <AccountPlanHistoricalView packet={collection.currentPlan.packet} verificationPending /> : needsHistoryForNewPlan ? <section className="account-plan-storage" aria-label="이전 계획 확인">
       {!historyOpen && historyControls}
-    </section> : historical ? <AccountPlanHistoricalView packet={historical} /> : <PlanBetaContent {...props} />}
+    </section> : historical ? <AccountPlanHistoricalView packet={historical} /> : <PlanBetaContent {...props} goalProgramEntry={goalProgramEntry} />}
     {historyCount > (view?.currentPlan ? 1 : 0) && <details className="account-plan-history" open={historyOpen} onToggle={event => {
       const open = event.currentTarget.open
       setHistoryPanel({ service, open, paused: historyPaused })
@@ -236,24 +265,56 @@ export function PlanBeta(props: React.ComponentProps<typeof PlanBetaContent>) {
           plans={view?.confirmedDocument?.data.plans.filter(p => p.archivedAt) ?? []} />}
       </>}
     </details>}
+    {accountContentOwnsEntry && goalProgramEntry}
   </div>
 }
 
-function PlanBetaContent(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>, "onAdjustedStored"> & {
+function LegacyPlanArchiveDownloads({ revision }: { readonly revision: unknown }) {
+  const scope = localAccountScopeSnapshot()
+  const read = React.useMemo(() => readLegacyPlanArchives(), [revision, scope])
+  const [error, setError] = React.useState(false)
+  if (read.kind === "unavailable") return <p role="status">보관한 이전 계획을 확인하지 못했어요.</p>
+  if (read.archives.length === 0) return null
+  return <details className="plan-detailed-options">
+    <summary>보관한 이전 계획</summary>
+    <p>이전 계획은 원문 그대로 이 기기에 보관돼 있어요. 현재 훈련 계획으로 사용하지 않아요.</p>
+    {read.archives.map((entry, index) => <button key={`${entry.archivedAt}:${index}`} className="plan-text-action" type="button" onClick={() => {
+      let url: string | undefined
+      try {
+        const current = readLegacyPlanArchives()
+        if (!localAccountScopeIsCurrent(scope) || current.kind !== "loaded"
+            || current.archives[index]?.raw !== entry.raw || current.archives[index]?.archivedAt !== entry.archivedAt) throw Error("Archive changed")
+        url = URL.createObjectURL(new Blob([entry.raw], { type: "application/json" }))
+        const link = document.createElement("a")
+        link.href = url; link.download = `trainoracle-previous-plan-${entry.archivedAt.slice(0, 10)}-${index + 1}.json`
+        link.click(); setError(false)
+      } catch { setError(true) }
+      finally { if (url !== undefined) { const downloadUrl = url; window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000) } }
+    }}>이전 계획 {index + 1} 내려받기</button>)}
+    {error && <p role="alert">보관한 계획을 내려받지 못했어요. 원문은 그대로 있으니 다시 시도해 주세요.</p>}
+  </details>
+}
+
+function PlanBetaContent(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>, "onAdjustedStored" | "storageRead" | "goalProgramEntry"> & {
   readonly readAdjustedEvidence?: React.ComponentProps<typeof AdjustedPlanNextFlow>["readEvidence"]
   readonly readAdjustedEvidenceV3?: () => readonly RetainedAdjustedPlanEvidenceV3[]
   readonly readMultiAdjustedEvidenceV3?: () => readonly RetainedMultiAdjustedEvidenceV3[]
   readonly readMultiRestoreReviewV3?: React.ComponentProps<typeof MultiPlanCloudControlsV3>["readRestoreReview"]
   readonly adjustmentResolverV3?: PlanAdjustmentResolverV3
+  readonly goalProgramEntry?: React.ReactNode
 }) {
   const readEvidence = props.readAdjustedEvidence ?? readOperatingAdjustedEvidence
   const readV3Evidence = props.readAdjustedEvidenceV3 ?? readOperatingV3Evidence
   const readMultiV3Evidence = props.readMultiAdjustedEvidenceV3 ?? readOperatingMultiV3Evidence
-  const readCurrent = React.useCallback(() => readPlanBetaStateFromStorage(readEvidence(), readV3Evidence(), readMultiV3Evidence()), [readEvidence, readV3Evidence, readMultiV3Evidence])
+  const readCurrent = React.useCallback(() => readPlanBetaStateFromStorage(readEvidence(), readV3Evidence(), readMultiV3Evidence), [readEvidence, readV3Evidence, readMultiV3Evidence])
   const [read, setRead] = React.useState(readCurrent)
   const [nextOpen, setNextOpen] = React.useState(false)
   const [importOpen, setImportOpen] = React.useState(false)
   const [revision, setRevision] = React.useState(0)
+  const legacyMounted = React.useRef(false)
+  const storageUnavailable = read.kind === "invalid" || read.kind === "storage_error"
+  const keepLegacy = read.kind === "loaded" || read.kind === "missing" || storageUnavailable && legacyMounted.current
+  legacyMounted.current = keepLegacy
   const prepareNext = async (kind: typeof read.kind) => {
     const scope = localAccountScopeSnapshot()
     const expected = read.kind === "adjusted_loaded" || read.kind === "adjusted_v3_loaded" || read.kind === "multi_adjusted_v3_loaded"
@@ -266,10 +327,9 @@ function PlanBetaContent(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
       && current.kind === kind && current.state.contentFingerprint === expected) setNextOpen(true)
   }
   React.useEffect(() => {
-    const refresh = () => { setImportOpen(false); setNextOpen(false); setRead(readCurrent()); setRevision(value => value + 1) }
+    const refresh = () => { legacyMounted.current = false; setImportOpen(false); setNextOpen(false); setRead(readCurrent()); setRevision(value => value + 1) }
     const onStorage = (event: StorageEvent) => {
-      if (event.key === null) { refresh(); return }
-      if (event.key !== activePlanBetaStorageKey()) return
+      if (event.key !== null && event.key !== activePlanBetaStorageKey()) return
       // Keep an in-progress legacy candidate mounted; its save gate checks the current stored plan.
       setRead(readCurrent())
     }
@@ -279,6 +339,10 @@ function PlanBetaContent(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
     window.addEventListener("storage", onStorage)
     return () => { unsubscribe(); window.removeEventListener("storage", onStorage); window.removeEventListener(ACCOUNT_PLAN_EVENT, onAccountPlan) }
   }, [readCurrent])
+  // The legacy view owns its live save/restore state; reuse it instead of reading storage again.
+  const legacyOwnsEntry = keepLegacy && !storageUnavailable && !importOpen
+    && (read.kind === "loaded" || read.kind === "missing")
+  const renderContent = () => {
   if (read.kind === "multi_adjusted_v3_loaded" && nextOpen && !importOpen) return <MultiAdjustedPlanNextFlowV3
     key={`${localAccountScopeSnapshot()}:${read.state.contentFingerprint}`}
     loaded={read} resolver={props.multiAdjustmentResolverV3} readEvidence={readMultiV3Evidence}
@@ -333,18 +397,25 @@ function PlanBetaContent(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
       }
       props.onWritePlannedSessionLog?.(draft)
     }} returnToSession={props.returnToSession} />
-  if (read.kind === "invalid" || read.kind === "storage_error") return <section>
+  const storageError = storageUnavailable ? <section>
     <h1>저장된 계획을 확인하지 못했어요</h1>
     <p>{read.kind === "storage_error"
       ? "저장 공간에 접근하지 못했어요. 브라우저의 저장 허용 상태를 확인해 주세요."
       : "저장된 계획의 형식을 읽지 못했어요. 이전 버전의 계획이거나 일부 내용이 누락됐을 수 있어요."}</p>
     <p role="alert">계획을 지우거나 새 계획으로 바꾸지 않았어요. 다시 확인해 주세요.</p>
     <button type="button" onClick={() => setRead(readCurrent())}>다시 확인</button>
-  </section>
-  return <><LegacyPlanBeta key={revision} {...props} onAdjustedStored={() => setRead(readCurrent())} />
+  </section> : null
+  if (!keepLegacy) return storageError
+  return <>{storageError}<div hidden={storageUnavailable}>
+    <LegacyPlanBeta key={revision} {...props} storageRead={read} goalProgramEntry={legacyOwnsEntry ? props.goalProgramEntry : undefined}
+      onAdjustedStored={() => setRead(readCurrent())} planTools={<>
+    <LegacyPlanArchiveDownloads revision={read} />
     {read.kind === "missing" && <MultiPlanCloudControlsV3 fingerprint={null} readEvidence={readMultiV3Evidence}
       readRestoreReview={props.readMultiRestoreReviewV3 ?? readCurrentMultiRestoreReviewV3} onCurrentRestored={() => setRead(readCurrent())} />}
-    <button className="plan-file-import" type="button" onClick={() => setImportOpen(true)}>개인 계획 파일 불러오기</button></>
+    <button className="plan-file-import" type="button" onClick={() => setImportOpen(true)}>개인 계획 파일 불러오기</button></>} />
+  </div></>
+  }
+  return <>{renderContent()}{!legacyOwnsEntry && props.goalProgramEntry}</>
 }
 
 function LegacyPlanBeta({
@@ -356,6 +427,9 @@ function LegacyPlanBeta({
   adjustmentResolverV3,
   multiAdjustmentResolverV3,
   onAdjustedStored,
+  storageRead,
+  planTools,
+  goalProgramEntry,
 }: {
   readonly onWriteLog?: (entryType?: JournalEntryType) => void
   readonly onManageRecords?: () => void
@@ -365,6 +439,9 @@ function LegacyPlanBeta({
   readonly adjustmentResolverV3?: PlanAdjustmentResolverV3
   readonly multiAdjustmentResolverV3?: PlanMultiAdjustmentResolverV3
   readonly onAdjustedStored: () => void
+  readonly storageRead: ReturnType<typeof readPlanBetaStateFromStorage>
+  readonly planTools?: React.ReactNode
+  readonly goalProgramEntry?: React.ReactNode
 }) {
   const [adjusting, setAdjusting] = React.useState<{ entry: AdjustmentEntry; revision: number } | null>(null)
   const [adjustingV3, setAdjustingV3] = React.useState<{ entry: AdjustmentEntryV3; revision: number } | null>(null)
@@ -372,6 +449,11 @@ function LegacyPlanBeta({
   const [stored, setStored] = React.useState<PlanBetaState | null>(
     () => loadPlanBetaState(),
   )
+  const [executionFeedback, setExecutionFeedback] = React.useState<PlanExecutionFeedback | null>(null)
+  React.useEffect(() => onLocalJournalScopeChange(() => setExecutionFeedback(null)), [])
+  const legacyArchivePending = React.useRef(false)
+  const [legacyArchiving, setLegacyArchiving] = React.useState(false)
+  const [legacyArchiveError, setLegacyArchiveError] = React.useState<string | null>(null)
   const [nextPredecessor, setNextPredecessor] = React.useState<Extract<PlanBetaState, { version: 3 }> | null>(null)
   const [cycleDraft, setCycleDraft] = React.useState<CatalogCycleDraftContext | null>(null)
   const [cycleSummary, setCycleSummary] = React.useState<CatalogCycleSuccessorSummary | null>(null)
@@ -397,6 +479,28 @@ function LegacyPlanBeta({
   const [instantEntry, setInstantEntry] = React.useState<InstantPlanEntry | undefined>()
   const [instantEntryDirty, setInstantEntryDirty] = React.useState(false)
   const [instantEntryError, setInstantEntryError] = React.useState<string | null>(null)
+  const [activePlanEditing, setActivePlanEditing] = React.useState(false)
+  const lastStorageRead = React.useRef(storageRead)
+  React.useEffect(() => {
+    if (lastStorageRead.current === storageRead) return
+    lastStorageRead.current = storageRead
+    // A storage event may refresh an active view, but cannot replace an athlete's
+    // unfinished candidate or next-frame draft. Its save gate checks the live base.
+    if (stored === null || nextPredecessor !== null) return
+    if (storageRead.kind === "loaded") {
+      setStored(previous => JSON.stringify(previous) === JSON.stringify(storageRead.state) ? previous : storageRead.state)
+    } else if (storageRead.kind === "missing") {
+      setStored(null)
+      setGenerated(null)
+      setGate(null)
+      setRacePreview(null)
+      setRetrySelection(null)
+      setErrorCode(null)
+      setCurrentCheck(null)
+      setCelebrateActivePlan(false)
+      setInstantEntryOpen(true)
+    }
+  }, [storageRead, stored, nextPredecessor])
   const [draft, setDraft] = React.useState<Partial<PlanBetaIntake>>(
     previousIntake ?? {},
   )
@@ -416,8 +520,12 @@ function LegacyPlanBeta({
   const [racePreview, setRacePreview] = React.useState<
     Extract<PlanDraftGeneration, { readonly kind: "preview_only" }> | null
   >(null)
+  const refinementReturn = React.useRef<{
+    generated: PlanGenerationSuccess; gate: SafetyGateDecision; targetRaceDate: string; errorCode: string | null
+    retrySelection: CandidateSelection | null
+  } | null>(null)
   usePlanDraftNavigationGuard((stored === null || nextPredecessor !== null) && (
-    generated !== null || racePreview !== null || instantEntry !== undefined || instantEntryDirty
+    generated !== null || refinementReturn.current !== null || racePreview !== null || instantEntry !== undefined || instantEntryDirty
     || JSON.stringify(draft) !== JSON.stringify(previousIntake ?? {})
   ))
   const [blocked, setBlocked] = React.useState(false)
@@ -478,8 +586,10 @@ function LegacyPlanBeta({
   const [prescriptionBinding, setPrescriptionBinding] = React.useState<
     Omit<CandidatePrescriptionBinding, "generated">
   >({ kind: "fallback", code: "PACE_TARGET_FALLBACK_NO_EXPLICIT_ANCHOR" })
-  const intakeQuestionRef = React.useRef<HTMLDivElement>(null)
+  const intakeQuestionRef = React.useRef<HTMLHeadingElement>(null)
   const intakeMotion = useOrderedStepMotion(step, INTAKE_MOTION_ORDER)
+  // PlanIntake remounts per step; retain the click-series boundary in this owner.
+  const answerActivation = useAutoAdvanceActivation(step)
   const viewKey = recordsOpen
     ? "records"
     : notationReaderOpen
@@ -494,15 +604,46 @@ function LegacyPlanBeta({
         ? "candidates"
         : instantEntryOpen ? "instant-entry" : `intake-${step}`
 
+  const canGoBackInIntake = refining || step !== "goal" || instantEntry !== undefined
+  const goBackInIntake = () => {
+    if (refining) {
+      const previous = refinementReturn.current
+      refinementReturn.current = null
+      setRefining(false)
+      if (previous !== null) {
+        setGenerated(previous.generated)
+        setGate(previous.gate)
+        setTargetRaceDate(previous.targetRaceDate)
+        setErrorCode(previous.errorCode)
+        setRetrySelection(previous.retrySelection)
+      }
+      return
+    }
+    if (instantEntry !== undefined && (step === "experience" || step === "goal")) {
+      setInstantEntryOpen(true)
+      return
+    }
+    if (step !== "goal") setStep(previousIntakeStep(step, draft.eventGroup))
+  }
+  useTaskFlowBack({ enabled: viewKey.startsWith("intake-") && canGoBackInIntake,
+    busy: selectionSaving || instantRecordSaving || initialApplying, onBack: goBackInIntake })
+
   React.useLayoutEffect(() => {
     if (viewKey.startsWith("intake-")) return
     const scrollRegion = document.querySelector<HTMLElement>(".app-scroll-region")
     if (scrollRegion !== null) scrollRegion.scrollTop = 0
+    const headingId = viewKey === "candidates" ? "plan-candidates-title"
+      : viewKey === "active" ? "active-plan-title" : null
+    if (headingId) document.getElementById(headingId)?.focus({ preventScroll: true })
+    else if (viewKey === "blocked" || viewKey === "race-preview") {
+      const heading = document.querySelector<HTMLElement>(".plan-blocked h1, .plan-race-preview h1")
+      if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }) }
+    }
   }, [viewKey])
   useActiveContentScroll(
     viewKey.startsWith("intake-") ? viewKey : null,
     intakeQuestionRef,
-    undefined,
+    intakeQuestionRef,
     true,
   )
 
@@ -513,16 +654,37 @@ function LegacyPlanBeta({
       return
     }
     let cancelled = false
-    void loadLatestPlanFromServer().then((result) => {
-      if (cancelled) return
-      if (result.kind === "loaded" && savePlanBetaState(result.state).ok) {
-        setStored(result.state)
-        setCloudPersistence("SAVED")
+    const scope = localAccountScopeSnapshot(), generation = localJournalScopeGeneration()
+    const storageKey = activePlanBetaStorageKey()
+    const current = () => !cancelled && localAccountScopeIsCurrent(scope)
+      && localJournalScopeGeneration() === generation && activePlanBetaStorageKey() === storageKey
+      && planCloudBackupEnabled()
+    const refreshStored = () => {
+      const read = readPlanBetaStateFromStorage()
+      if (read.kind === "loaded") setStored(read.state)
+      onAdjustedStored()
+    }
+    if (readPlanBetaStateFromStorage().kind !== "missing") {
+      refreshStored()
+      setCloudRestorePending(false)
+      return
+    }
+    void loadLatestPlanFromServer().then(async (result) => {
+      if (!current()) return
+      if (result.kind === "loaded") {
+        const restored = await restorePlanBetaStateIfMissing(result.state, current)
+        if (!current()) return
+        refreshStored()
+        setCloudPersistence(restored.kind === "restored" ? "SAVED" : restored.kind === "failed" ? "FAILED" : "DEVICE_ONLY")
       } else if (result.kind === "failed") {
         setCloudPersistence("FAILED")
       } else {
         setCloudPersistence("DEVICE_ONLY")
       }
+      setCloudRestorePending(false)
+    }).catch(() => {
+      if (!current()) return
+      setCloudPersistence("FAILED")
       setCloudRestorePending(false)
     })
     return () => { cancelled = true }
@@ -609,19 +771,25 @@ function LegacyPlanBeta({
    * 안전 확인은 `generateCandidates` 안에서 다시 적용된다(현재 확인 값이 없으면 안전 질문으로).
    */
   const continueAfterRefinement = (nextDraft: Partial<PlanBetaIntake>) => {
+    refinementReturn.current = null
     const completed = withQuickDefaults(nextDraft)
+    const retainedRecordId = athleteRecords.some((record) => (
+      record.id === selectedRecordId && record.eventDistanceM === completed.eventDistanceM
+    )) ? selectedRecordId : null
     setDraft(completed)
     setRefining(false)
-    setSelectedRecordId(null)
+    setSelectedRecordId(retainedRecordId)
     setComparisonRecordId(null)
-    setRecordConfirmationPending(false)
+    setRecordConfirmationPending(retainedRecordId !== null && completed.selectedDetailedTemplateRef !== null)
     generateCandidates(completed, null, targetRaceDate || undefined)
   }
 
   /** 결과 화면에서 "다듬기" 항목을 탭하면 해당 질문 하나만 연다. */
   const openRefinement = (target: IntakeStep) => {
-    if (!REFINE_STEPS.includes(target)) return
-    draftRevision.current += 1
+    if (!REFINE_STEPS.includes(target) || selectionWrite.current || generated === null || gate === null) return
+    // Opening a question is not an accepted change to the reviewed candidate.
+    // Keep its exact workouts and review revision until an answer is applied.
+    refinementReturn.current = { generated, gate, targetRaceDate, errorCode, retrySelection }
     setRetrySelection(null)
     setGenerated(null)
     setGate(null)
@@ -772,9 +940,8 @@ function LegacyPlanBeta({
     finally { selectionWrite.current = false; setInitialApplying(false) }
   }
 
-  if (recordsOpen) {
-    return <React.Suspense fallback={<p role="status">경기 기록을 열고 있어요.</p>}>
-      <AthleteRecords onBack={() => {
+  const recordsView = recordsOpen ? <React.Suspense fallback={<p role="status">경기 기록을 열고 있어요.</p>}>
+      <AthleteRecords preserveMountedDraftsOnBack onBack={() => {
         setAthleteRecords([...readEligibleAccountPaceRecords()])
         setSelectedRecordId(null)
         setComparisonRecordId(null)
@@ -785,10 +952,12 @@ function LegacyPlanBeta({
         // Re-evaluate current safety and authority; never reuse the old bound numbers.
         if (generatedIntake !== null) generateCandidates(generatedIntake, null, targetRaceDate || undefined)
       }} />
-    </React.Suspense>
-  }
+    </React.Suspense> : null
 
-  if (notationReaderOpen) {
+  const renderContent = () => {
+  if (recordsOpen && !instantEntryOpen) return recordsView
+
+  if (notationReaderOpen && !instantEntryOpen) {
     return <NotationReader onBack={() => setNotationReaderOpen(false)} />
   }
 
@@ -798,14 +967,32 @@ function LegacyPlanBeta({
 
   if (stored !== null && nextPredecessor === null) {
     return (
+      <>
+      <ErrorBoundary key={stored.activePlan.candidateId} region recoveryTab="plan">
+      <React.Suspense fallback={<p role="status" style={{ padding: 24 }}>저장된 훈련 계획을 열고 있어요.</p>}>
       <PlanActiveState
         state={stored}
-        onManagePaceRecords={() => setRecordsOpen(true)}
+        executionFeedback={executionFeedback !== null
+          && executionFeedback.candidateId === stored.activePlan.candidateId
+          && executionFeedback.generatedAt === stored.generatedAt
+          && localAccountScopeIsCurrent(executionFeedback.owner)
+          && executionFeedback.scopeGeneration === localJournalScopeGeneration()
+          ? executionFeedback : undefined}
+        onEditingChange={setActivePlanEditing}
+        onManagePaceRecords={() => { setExecutionFeedback(null); setRecordsOpen(true) }}
         cloudPersistence={cloudPersistence}
         onRetryCloudBackup={retryCloudBackup}
         celebrateOnMount={celebrateActivePlan}
-        onStateChange={setStored}
+        onStateChange={(next, feedback) => {
+          if (feedback && (feedback.candidateId !== next.activePlan.candidateId
+            || feedback.generatedAt !== next.generatedAt
+            || !localAccountScopeIsCurrent(feedback.owner)
+            || feedback.scopeGeneration !== localJournalScopeGeneration())) return
+          setExecutionFeedback(feedback ?? null)
+          setStored(next)
+        }}
         onPrepareNextFrame={(predecessor) => {
+          setExecutionFeedback(null)
           draftRevision.current += 1
           setDetailedSessionTarget(null)
           setCandidateSessionTargets({})
@@ -831,6 +1018,33 @@ function LegacyPlanBeta({
         onWritePlannedSessionLog={onWritePlannedSessionLog}
         returnToSession={returnToSession}
       />
+      </React.Suspense>
+      </ErrorBoundary>
+      {stored.version === 2 && <section aria-label="이전 계획 보관">
+        <p>이전 형식의 계획은 내용만 볼 수 있어요. 원문을 이 기기에 보관한 뒤 새 계획을 만들 수 있어요.</p>
+        <button className="plan-text-action" type="button" disabled={legacyArchiving} onClick={async () => {
+          if (legacyArchivePending.current) return
+          legacyArchivePending.current = true; setLegacyArchiving(true); setLegacyArchiveError(null)
+          const scope = localAccountScopeSnapshot()
+          const generation = localJournalScopeGeneration()
+          try {
+            const result = await archiveLegacyPlanForNewEntry(stored)
+            if (!localAccountScopeIsCurrent(scope) || localJournalScopeGeneration() !== generation) return
+            if (result.kind === "archived") {
+              setStored(null); setDraft({}); setInstantEntry(undefined); setInstantEntryDirty(false); setInstantEntryOpen(true)
+              setGenerated(null); setGate(null); setRacePreview(null); setCurrentCheck(null)
+              onAdjustedStored()
+            } else setLegacyArchiveError(result.kind === "failed" && !result.rollbackComplete
+              ? "보관 상태를 확인하지 못했어요. 새 계획을 시작하지 않았어요. 현재 계획을 다시 확인해 주세요."
+              : "이전 계획을 보관하지 못했어요. 계획은 그대로 두었으니 다시 확인해 주세요.")
+          } finally { legacyArchivePending.current = false; setLegacyArchiving(false) }
+        }}>{legacyArchiving ? "이전 계획 보관 중…" : "이전 계획을 보관하고 새 계획 만들기"}</button>
+        {legacyArchiveError && <div role="alert"><p>{legacyArchiveError}</p>
+          <button type="button" onClick={onAdjustedStored}>현재 계획 다시 확인</button>
+        </div>}
+      </section>}
+      {!activePlanEditing && planTools}
+      </>
     )
   }
 
@@ -993,6 +1207,7 @@ function LegacyPlanBeta({
             setInitialConfirmed(null)
             refreshInitialRevision(draftRevision.current)
             setRetrySelection(null)
+            setErrorCode(code => code === "PLAN_START_DATE_PAST" || code === "ACCOUNT_PLAN_REVIEW_REQUIRED" ? null : code)
           }}
           onConfirmRecord={() => {
             if (selectedRecordId !== null) {
@@ -1019,39 +1234,53 @@ function LegacyPlanBeta({
             void saveCandidate(selection, generated)
           }}
         />
+        {planTools}
       </>
     )
   }
 
   if (instantEntryOpen) return <>
-    <InstantPlanEntryForm today={todayISO()} initialEntry={instantEntry} disabled={instantRecordSaving} onDraftChange={setInstantEntryDirty} onSubmit={async value => {
+    {/* Keep unsent values and the current question while a supporting tool is open. */}
+    <div className="plan-instant-entry" hidden={recordsOpen || notationReaderOpen}>
+    <InstantPlanEntryForm today={todayISO()} readToday={todayISO} initialEntry={instantEntry} active={!recordsOpen && !notationReaderOpen}
+      disabled={instantRecordSaving} isSubmitting={instantRecordSaving} onDraftChange={setInstantEntryDirty} onSubmit={async value => {
       if (instantRecordSaveLock.current) return
       instantRecordSaveLock.current = true; setInstantRecordSaving(true)
-      const prepared = await prepareAccountInstantPlanEntry(value)
-      instantRecordSaveLock.current = false; setInstantRecordSaving(false)
-      if (prepared.kind !== "ready") {
-        setInstantEntryError(prepared.kind === "invalid" ? "입력한 종목·기록·날짜를 다시 확인해 주세요."
-          : prepared.kind === "pending" ? "기록 전송을 기다리고 있어요. 연결 후 다시 누르면 저장 여부를 확인해요."
-          : "기록을 저장하지 못했어요. 입력은 그대로 남아 있어요. 다시 시도해 주세요.")
-        return
+      setInstantEntryError(null)
+      try {
+        const prepared = await prepareAccountInstantPlanEntry(value)
+        if (prepared.kind !== "ready") {
+          setInstantEntryError(prepared.kind === "invalid" ? "입력한 종목·기록·날짜를 다시 확인해 주세요."
+            : prepared.kind === "pending" ? "기록 전송을 기다리고 있어요. 연결 후 다시 누르면 저장 여부를 확인해요."
+            : prepared.kind === "cache_failed" ? "계정에 기록은 저장됐지만 이 기기의 기록 사본을 준비하지 못했어요. 내 경기 기록에서 확인한 뒤 다시 시도해 주세요."
+            : "기록을 저장하지 못했어요. 입력은 그대로 남아 있어요. 다시 시도해 주세요.")
+          return
+        }
+        draftRevision.current += 1
+        setInstantEntry(prepared.entry); setInstantEntryError(null); setInstantEntryOpen(false)
+        setBodyRecheckRequested(false)
+        setAthleteRecords([...readEligibleAccountPaceRecords()]); setSelectedRecordId(prepared.recordId)
+        setComparisonRecordId(null); setRecordConfirmationPending(false)
+        const nextDraft: Partial<PlanBetaIntake> = { ...draft, eventDistanceM: prepared.entry.eventDistanceM,
+          eventGroup: eventGroupForDistance(prepared.entry.eventDistanceM) }
+        delete nextDraft.selectedDetailedTemplateRef
+        if (draft.eventDistanceM !== prepared.entry.eventDistanceM) delete nextDraft.trainingFocus
+        setDraft(nextDraft); setStep(firstUnansweredQuickStep(nextDraft)); setCurrentCheck(null)
+      } catch {
+        setInstantEntryError("기록 준비를 마치지 못했어요. 입력은 그대로 남아 있어요. 다시 시도해 주세요.")
+      } finally {
+        instantRecordSaveLock.current = false; setInstantRecordSaving(false)
       }
-      draftRevision.current += 1
-      setInstantEntry(prepared.entry); setInstantEntryError(null); setInstantEntryOpen(false)
-      setBodyRecheckRequested(false)
-      setAthleteRecords([...readEligibleAccountPaceRecords()]); setSelectedRecordId(prepared.recordId)
-      setComparisonRecordId(null); setRecordConfirmationPending(false)
-      const nextDraft: Partial<PlanBetaIntake> = { ...draft, eventDistanceM: prepared.entry.eventDistanceM,
-        eventGroup: eventGroupForDistance(prepared.entry.eventDistanceM) }
-      delete nextDraft.selectedDetailedTemplateRef
-      if (draft.eventDistanceM !== prepared.entry.eventDistanceM) delete nextDraft.trainingFocus
-      setDraft(nextDraft); setStep(firstUnansweredQuickStep(nextDraft)); setCurrentCheck(null)
     }} />
     {instantEntryError && <p role="alert">{instantEntryError}</p>}
-    <details className="plan-detailed-options">
-      <summary>기록 관리·훈련표 읽기</summary>
-      <button type="button" className="plan-text-action" onClick={() => onManageRecords ? onManageRecords() : setRecordsOpen(true)}>내 경기 기록</button>
+    <div className="plan-support-actions" role="group" aria-label="경기 기록·훈련표 표기">
+      <button type="button" className="plan-text-action" onClick={() => setRecordsOpen(true)}>내 경기 기록</button>
       <button type="button" className="plan-text-action" onClick={() => setNotationReaderOpen(true)}>훈련표 표기 읽기</button>
-    </details>
+    </div>
+    </div>
+    {recordsView}
+    {notationReaderOpen && <NotationReader onBack={() => setNotationReaderOpen(false)} />}
+    {!recordsOpen && !notationReaderOpen && planTools}
   </>
 
   return (
@@ -1061,21 +1290,12 @@ function LegacyPlanBeta({
         key={step}
         step={step}
         motion={intakeMotion}
+        answerActivation={answerActivation}
         questionRef={intakeQuestionRef}
         draft={draft}
         refining={refining}
-        onBack={() => {
-          if (refining) {
-            setRefining(false)
-            generateCandidates(draft, null, targetRaceDate || undefined)
-            return
-          }
-          if (instantEntry !== undefined && (step === "experience" || step === "goal")) {
-            setInstantEntryOpen(true)
-            return
-          }
-          setStep(previousIntakeStep(step, draft.eventGroup))
-        }}
+        canGoBack={canGoBackInIntake}
+        onBack={goBackInIntake}
         onJump={(target) => setStep(target)}
         onGoal={(eventDistanceM) => {
           const eventGroup = eventGroupForDistance(eventDistanceM)
@@ -1101,7 +1321,11 @@ function LegacyPlanBeta({
         }}
         onDivision={(competitionDivision) => continueAfterRefinement({ ...draft, competitionDivision })}
         onExperience={(experienceBand) => {
-          const nextDraft = { ...draft, experienceBand }
+          const nextDraft = {
+            ...draft,
+            experienceBand,
+            selectedDetailedTemplateRef: experienceBand === "EXPERIENCED" ? draft.selectedDetailedTemplateRef : null,
+          }
           if (refining) {
             continueAfterRefinement(nextDraft)
             return
@@ -1133,6 +1357,7 @@ function LegacyPlanBeta({
         targetRaceDate={targetRaceDate}
         onTargetRaceDateChange={setTargetRaceDate}
         onRaceDate={(raceDate) => {
+          refinementReturn.current = null
           setRefining(false)
           if (raceDate === undefined) setTargetRaceDate("")
           generateCandidates(draft, null, raceDate)
@@ -1192,4 +1417,14 @@ function LegacyPlanBeta({
       )}
     </>
   )
+  }
+  const goalEntryFirst = storageRead.kind === "missing" && stored === null
+    && !cloudRestorePending && cloudPersistence !== "FAILED"
+    && !recordsOpen && !notationReaderOpen && !blocked && racePreview === null
+    && adjusting === null && adjustingV3 === null && adjustingMultiV3 === null
+  return <>
+    {goalEntryFirst && goalProgramEntry}
+    {renderContent()}
+    {!goalEntryFirst && goalProgramEntry}
+  </>
 }

@@ -23,11 +23,15 @@ export function MonthlyTrendSection({
   observations,
   today,
   initialMetric,
+  onWriteLog,
+  onWriteRecovery,
 }: {
   readonly observations: readonly StructuredJournalObservation[]
   readonly today: string
   /** Optional deep-link context; invalid values keep the existing pace default. */
   readonly initialMetric?: DisplayTrendMetric | string | undefined
+  readonly onWriteLog?: (() => void) | undefined
+  readonly onWriteRecovery?: (() => void) | undefined
 }) {
   const [metric, setMetric] = React.useState<DisplayTrendMetric>(() => (
     typeof initialMetric === "string" && TREND_METRIC_OPTIONS.some((item) => item.metric === initialMetric)
@@ -37,11 +41,14 @@ export function MonthlyTrendSection({
   const option = TREND_METRIC_OPTIONS.find((item) => item.metric === metric)
   if (option === undefined) throw new Error(`Missing trend metric option: ${metric}`)
   const buckets = bucketByMonth(observations, isoToDate(today), 4, metric)
+  const hasData = buckets.some(bucket => bucket.kind === "DATA")
   const labels = new Set(buckets.map((bucket) => bucket.label))
   const scoped = observations.filter((observation) => labels.has(observation.loggedOn.slice(0, 7)))
   const coverage = summarizeMetricCoverage(scoped, metric)
   const sourceRefs = buckets.flatMap((bucket) => bucket.sourceRefs)
   const fileDistanceRefs = new Set(scoped.filter(acceptsFileDistance).map(observation => observation.sourceRef))
+  const isRecoveryMetric = metric === "PAIN_MAX" || metric === "MOOD"
+  const onRecord = isRecoveryMetric ? onWriteRecovery : onWriteLog
 
   return (
     <section className="monthly-trend-section" aria-label="최근 4개월 추이">
@@ -64,9 +71,14 @@ export function MonthlyTrendSection({
         </div>
       )}
 
-      <MonthlyTrendBars buckets={buckets} metric={metric} metricLabel={option.noun} />
+      {hasData ? <MonthlyTrendBars buckets={buckets} metric={metric} metricLabel={option.noun} /> : <div className="monthly-trend-section__start">
+        <p>{coverage.excluded > 0
+          ? `최근 4개월의 기록은 있지만, 집계에 사용할 ${option.noun} 값을 확인하지 못했어요.`
+          : `일지에 남긴 ${option.noun} 값으로 최근 4개월의 변화를 볼 수 있어요.`}</p>
+        {onRecord && <button type="button" onClick={onRecord}>{isRecoveryMetric ? "몸 상태 기록하기" : "운동 기록하기"}</button>}
+      </div>}
 
-      <div className="monthly-trend-section__status" aria-live="polite">
+      {(hasData || coverage.excluded > 0) && <div className="monthly-trend-section__status" aria-live="polite">
         집계 사용 {coverage.included}건 · 집계 제외 {coverage.excluded}건
         {buckets.some((bucket) => bucket.kind === "DATA" && bucket.displayStatus === "STALE") && (
           <span> · 오래된 출처가 포함된 달이 있어요.</span>
@@ -74,12 +86,12 @@ export function MonthlyTrendSection({
         {buckets.some((bucket) => bucket.kind === "DATA" && bucket.displayStatus === "CONFLICTING") && (
           <span> · 출처가 서로 달라 확인이 필요한 달이 있어요.</span>
         )}
-        {buckets.some((bucket) => bucket.kind === "MISSING") && (
+        {hasData && buckets.some((bucket) => bucket.kind === "MISSING") && (
           <span> · 기록이 없는 달은 계산하지 않았어요.</span>
         )}
-      </div>
+      </div>}
 
-      <InfoDisclosure title="월별 수치와 집계 범위 보기" className="monthly-trend-section__details">
+      {hasData && <InfoDisclosure title="월별 수치와 집계 범위 보기" className="monthly-trend-section__details">
         <div className="monthly-trend-section__rows">
           {buckets.map((bucket) => (
             <div className="monthly-trend-section__row" key={bucket.label}>
@@ -99,7 +111,7 @@ export function MonthlyTrendSection({
             </div>
           ))}
         </div>
-      </InfoDisclosure>
+      </InfoDisclosure>}
       {sourceRefs.length > 0 && (
         <details className="monthly-trend-section__sources">
           <summary>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { calendarMarksDescription, journalCalendarMarks, plannedCalendarTone } from "./calendar-training-presentation"
-import type { PostSessionEntry, RaceEntry } from "./journal-schema"
+import type { EveningEntry, PostSessionEntry, RaceEntry } from "./journal-schema"
 
 function post(overrides: Partial<PostSessionEntry> = {}): PostSessionEntry {
   return { id: "synthetic", kind: "post-session", date: "2026-09-30", savedAt: "2026-09-30T00:00:00Z",
@@ -8,6 +8,14 @@ function post(overrides: Partial<PostSessionEntry> = {}): PostSessionEntry {
 }
 
 describe("calendar role presentation, never prescription or intensity inference", () => {
+  it("names a condition or memo entry without reading its private content", () => {
+    const entry: EveningEntry = { id: "synthetic-condition", kind: "evening", date: "2026-10-12", savedAt: "2026-10-12T00:00:00Z",
+      syncState: "local", sleepH: 0, sleepQuality: 0, weightKg: "", restingHr: "", painParts: {}, mood: 0, note: "" }
+    for (const field of ["note", "mood", "painParts", "sleepH"]) {
+      Object.defineProperty(entry, field, { get() { throw new Error(`Forbidden read ${field}`) } })
+    }
+    expect(journalCalendarMarks(entry)).toEqual([{ tone: "journal", label: "컨디션·메모" }])
+  })
   it.each([
     ["QUALITY", "ATP_PC_INTENT", "main"], ["QUALITY", "BASE_INTENT", "main"],
     ["EASY", "RECOVERY_INTENT", "recovery"], ["EASY", "BASE_INTENT", "base"],

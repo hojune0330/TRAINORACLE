@@ -1,4 +1,5 @@
 import { hasUnsafeDrafts } from "./unsaved-draft-navigation"
+import { localJournalScopeGeneration } from "./account/local-journal-ownership"
 import type { AppTab } from "../components/AppChrome"
 
 const RECOVERY_KEY = "trainoracle.screen-recovery.v1"
@@ -23,15 +24,16 @@ export function clearRecoveryTab(): void {
   try { sessionStorage.removeItem(RECOVERY_KEY) } catch { /* No user data is touched. */ }
 }
 
-let interruptedDraft = false
+let interruptedDraftGeneration: number | null = null
 
 export function captureInterruptedDraft(): boolean {
-  interruptedDraft ||= hasUnsafeDrafts()
-  return interruptedDraft
+  const generation = localJournalScopeGeneration()
+  if (hasUnsafeDrafts()) interruptedDraftGeneration = generation
+  return interruptedDraftGeneration === generation
 }
 
 export function isReloadBlocked(): boolean {
-  return interruptedDraft || hasUnsafeDrafts()
+  return interruptedDraftGeneration === localJournalScopeGeneration() || hasUnsafeDrafts()
 }
 
 export function isScreenAssetFailure(message: string): boolean {

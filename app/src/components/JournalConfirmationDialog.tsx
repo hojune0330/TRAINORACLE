@@ -1,4 +1,6 @@
 import React from "react"
+import { hasActiveBrowserBackLayer, registerBrowserBackLayer } from "../navigation/browserNavigation"
+import { localJournalScopeGeneration } from "../domain/account/local-journal-ownership"
 
 type JournalConfirmationDialogProps = {
   readonly title: string
@@ -27,6 +29,7 @@ export function JournalConfirmationDialog({
   const [failed, setFailed] = React.useState(false)
   const onCancelRef = React.useRef(onCancel)
   onCancelRef.current = onCancel
+  const closeLayerRef = React.useRef<(() => void) | null>(null)
   const capturedReturnFocus = document.activeElement instanceof HTMLElement
     ? document.activeElement
     : null
@@ -35,12 +38,27 @@ export function JournalConfirmationDialog({
   )
 
   React.useEffect(() => {
+    const layer = registerBrowserBackLayer({
+      id: `confirmation-${titleId}`,
+      canClose: () => !busyRef.current,
+      onClose: () => onCancelRef.current(),
+    })
+    closeLayerRef.current = layer.close
+    return () => {
+      closeLayerRef.current = null
+      layer.dispose()
+    }
+  }, [titleId])
+
+  React.useEffect(() => {
+    const scope = localJournalScopeGeneration()
     cancelRef.current?.focus()
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault()
-        if (!busyRef.current) onCancelRef.current()
+        event.stopPropagation()
+        if (!busyRef.current) closeLayerRef.current?.()
         return
       }
       if (event.key !== "Tab") return
@@ -61,11 +79,11 @@ export function JournalConfirmationDialog({
     document.addEventListener("keydown", onKeyDown)
     return () => {
       document.removeEventListener("keydown", onKeyDown)
-      if (!confirmedRef.current) {
-        window.setTimeout(() => {
-          const returnTarget = returnFocusRef.current()
-          if (returnTarget?.isConnected) returnTarget.focus()
-        }, 0)
+      if (!confirmedRef.current && scope === localJournalScopeGeneration() && !hasActiveBrowserBackLayer()) {
+        // Passive cleanup runs after the dialog DOM is removed. Restore now;
+        // a later native Back or new account/layer must never receive old focus.
+        const returnTarget = returnFocusRef.current()
+        if (returnTarget?.isConnected) returnTarget.focus({ preventScroll: true })
       }
     }
   }, [])
@@ -79,7 +97,7 @@ export function JournalConfirmationDialog({
       className="journal-confirmation"
       data-testid="journal-delete-dialog"
       onClick={(event) => {
-        if (event.target === event.currentTarget && !busyRef.current) onCancel()
+        if (event.target === event.currentTarget && !busyRef.current) closeLayerRef.current?.()
       }}
     >
       <div className="journal-confirmation__surface">
@@ -92,7 +110,7 @@ export function JournalConfirmationDialog({
             type="button"
             className="journal-confirmation__button"
             data-testid="journal-delete-cancel"
-            onClick={onCancel}
+            onClick={() => closeLayerRef.current?.()}
             disabled={busy}
           >
             취소

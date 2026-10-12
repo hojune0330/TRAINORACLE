@@ -1,8 +1,11 @@
 import { z } from "zod"
 import { supabase } from "./supabase-client"
+import { ACCOUNT_NETWORK_DEADLINE_MS } from "./account-network-deadline"
+import { accountDeletionBoundaryState, onAccountDeletionBoundaryChange } from "./account-deletion-boundary"
 import { activeLocalAccount } from "./local-journal-ownership"
 import { isAccountStoragePaused } from "./storage-consent"
 import { currentStorageConsentRevision, pinStorageOperationRevision } from "./storage-consent-revision"
+import { LOCAL_COLLECTION_SEND_GUARD_HEADER, registerCollectionSendGuard } from "./consent-checked-fetch"
 import { accountJournalDraftSchema } from "./account-journal-draft-buffer"
 import { isAccountJournalWriteRejection, type AccountJournalWriteRejection } from "./account-write-rejection"
 import type { AccountJournalDraft } from "./account-journal-draft-buffer"
@@ -25,6 +28,7 @@ return z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("athlete-record-support"), version: z.literal(1) }).strict(),
   z.object({ kind: z.literal("running-profile-support"), version: z.literal(1) }).strict(),
   z.object({ kind: z.literal("minigame-progress-support"), version: z.literal(1) }).strict(),
+  z.object({ kind: z.literal("goal-program-support"), version: z.literal(1) }).strict(),
   z.object({ kind: z.literal("oracle-v2-support"), version: z.literal(2) }).strict(),
   z.object({ kind: z.literal("oracle-v2-restart-support"), version: z.literal(1) }).strict(),
   document.extend({ kind: z.literal("document") }),
@@ -38,6 +42,8 @@ return z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("saved"), documentId: z.uuid(), operationId: z.uuid(), revision }).strict(),
   z.object({ kind: z.literal("conflict"), documentId: z.uuid(), operationId: z.uuid(),
     currentRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER - 1) }).strict(),
+  z.object({ kind: z.literal("source_unavailable"), documentId: z.uuid(), operationId: z.uuid(),
+    currentRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER - 1), sourceRevision: revision }).strict(),
 ])
 }
 
@@ -47,6 +53,7 @@ export type AccountJournalResponse<T = AccountJournalDraft> =
   | { kind: "athlete-record-support"; version: 1 }
   | { kind: "running-profile-support"; version: 1 }
   | { kind: "minigame-progress-support"; version: 1 }
+  | { kind: "goal-program-support"; version: 1 }
   | { kind: "oracle-v2-support"; version: 2 }
   | { kind: "oracle-v2-restart-support"; version: 1 }
   | { kind: "document"; documentId: string; revision: number; document: T }
@@ -56,6 +63,7 @@ export type AccountJournalResponse<T = AccountJournalDraft> =
   | { kind: "history"; documentId: string; versions: { revision: number; document: T; replacedAt: string; expiresAt: string; reason: "replaced" | "trash" }[] }
   | { kind: "saved"; documentId: string; operationId: string; revision: number }
   | { kind: "conflict"; documentId: string; operationId: string; currentRevision: number }
+  | { kind: "source_unavailable"; documentId: string; operationId: string; currentRevision: number; sourceRevision: number }
 export type AccountJournalRequest<T = AccountJournalDraft> = { supportedRunningProfileVersions?: (1 | 2)[] } & (
   | ConfirmComparisonRelationRequest | ReleaseComparisonRelationRequest
   | { action: "status" }
@@ -63,6 +71,7 @@ export type AccountJournalRequest<T = AccountJournalDraft> = { supportedRunningP
   | { action: "athleteRecordSupport" }
   | { action: "runningProfileSupport" }
   | { action: "minigameProgressSupport" }
+  | { action: "goalProgramSupport" }
   | { action: "oracleV2Support" }
   | { action: "oracleV2RestartSupport" }
   | { action: "restartOracleV2"; documentId: string; operationId: string; expectedRevision: number; confirmation: "START_NEW_ORACLE_V2" }
@@ -79,9 +88,14 @@ export type AccountJournalRequest<T = AccountJournalDraft> = { supportedRunningP
 
 export type AccountJournalResult<T = AccountJournalDraft> =
   | { ok: true; data: AccountJournalResponse<T> }
-  | { ok: false; code: "AUTH_REQUIRED" | "ACCESS_DENIED" | "NOT_FOUND" | "UNAVAILABLE" | "INVALID_RESPONSE" | "CALENDAR_DECORATION_UNSUPPORTED" | "ATHLETE_RECORD_UNSUPPORTED" | "MINIGAME_PROGRESS_UNSUPPORTED" | "STALE_RESPONSE" | "CONFLICT" | "UPGRADE_REQUIRED" | "FILE_EVIDENCE_DISABLED" | "INVALID_FILE_OBSERVATION" | "FILE_OBSERVATION_CONFLICT" | "COMPARISON_ORIGINAL_UNAVAILABLE" | "INVALID_COMPARISON_RELATION" | "COMPARISON_CAPACITY_EXCEEDED" | AccountJournalWriteRejection }
+  | { ok: false; code: "AUTH_REQUIRED" | "ACCESS_DENIED" | "NOT_FOUND" | "UNAVAILABLE" | "INVALID_RESPONSE" | "CALENDAR_DECORATION_UNSUPPORTED" | "ATHLETE_RECORD_UNSUPPORTED" | "MINIGAME_PROGRESS_UNSUPPORTED" | "GOAL_PROGRAM_UNSUPPORTED" | "STALE_RESPONSE" | "CONFLICT" | "SOURCE_UNAVAILABLE" | "UPGRADE_REQUIRED" | "FILE_EVIDENCE_DISABLED" | "INVALID_FILE_OBSERVATION" | "FILE_OBSERVATION_CONFLICT" | "COMPARISON_ORIGINAL_UNAVAILABLE" | "INVALID_COMPARISON_RELATION" | "COMPARISON_CAPACITY_EXCEEDED" | AccountJournalWriteRejection }
 
 export type CorrectImportedObservationRequest = Extract<AccountJournalRequest, { action: "correctImportedObservation" }>
+
+function localBoundaryFailure(ownerId: string): "ACCOUNT_DELETION_REQUESTED" | "UNAVAILABLE" | null {
+  const boundary = accountDeletionBoundaryState(ownerId)
+  return boundary === "CLOSED" ? "ACCOUNT_DELETION_REQUESTED" : boundary === "UNKNOWN" ? "UNAVAILABLE" : null
+}
 
 export async function requestAccountJournal(
   ownerId: string, request: AccountJournalRequest,
@@ -94,17 +108,67 @@ export async function requestAccountJournal(
 export async function requestAccountDocument<T>(
   ownerId: string, request: AccountJournalRequest<T>, isCurrent: () => boolean, schema: z.ZodType<T>,
   dependencies: { client: typeof supabase; owner: typeof activeLocalAccount } = { client: supabase, owner: activeLocalAccount },
+  options: { signal?: AbortSignal } = {},
 ): Promise<AccountJournalResult<T>> {
-  const current = () => isCurrent() && dependencies.owner() === ownerId
-  if (!current()) return { ok: false, code: "STALE_RESPONSE" }
+  const boundaryFailure = localBoundaryFailure(ownerId)
+  if (boundaryFailure !== null) return { ok: false, code: boundaryFailure }
+  if (options.signal?.aborted) return { ok: false, code: "STALE_RESPONSE" }
+  const controller = new AbortController()
+  let stopped = false
+  let resolveStopped!: (result: AccountJournalResult<T>) => void
+  const interruption = new Promise<AccountJournalResult<T>>(resolve => { resolveStopped = resolve })
+  const stop = (code: "STALE_RESPONSE" | "UNAVAILABLE" | "ACCOUNT_DELETION_REQUESTED") => {
+    if (stopped) return
+    stopped = true
+    resolveStopped({ ok: false, code })
+    controller.abort()
+  }
+  const abort = () => stop("STALE_RESPONSE")
+  const stopDeletion = onAccountDeletionBoundaryChange(userId => {
+    if (userId === ownerId) stop("ACCOUNT_DELETION_REQUESTED")
+  })
+  options.signal?.addEventListener("abort", abort, { once: true })
+  const deadline = setTimeout(() => stop(localBoundaryFailure(ownerId)
+    ?? (isCurrent() && dependencies.owner() === ownerId ? "UNAVAILABLE" : "STALE_RESPONSE")),
+    ACCOUNT_NETWORK_DEADLINE_MS)
+  try {
+    // SDK timeout alone cannot bound client initialization, auth, or response-body reads.
+    // Ignore all late results as well as aborting the underlying request when supported.
+    return await Promise.race([
+      executeAccountDocument(ownerId, request, isCurrent, schema, dependencies, controller.signal), interruption,
+    ])
+  } finally {
+    stopped = true
+    clearTimeout(deadline)
+    stopDeletion()
+    options.signal?.removeEventListener("abort", abort)
+  }
+}
+
+async function executeAccountDocument<T>(
+  ownerId: string, request: AccountJournalRequest<T>, isCurrent: () => boolean, schema: z.ZodType<T>,
+  dependencies: { client: typeof supabase; owner: typeof activeLocalAccount }, signal: AbortSignal,
+): Promise<AccountJournalResult<T>> {
+  let boundaryFailure: "ACCOUNT_DELETION_REQUESTED" | "UNAVAILABLE" | null = null
+  const current = () => {
+    // Preserve this check's unavailable result even if storage recovers before
+    // obsolete() runs. An unreadable marker is not proof of a deleted owner.
+    boundaryFailure = localBoundaryFailure(ownerId)
+    return !signal.aborted && boundaryFailure === null && isCurrent() && dependencies.owner() === ownerId
+  }
+  const obsolete = (): AccountJournalResult<T> => ({ ok: false,
+    code: boundaryFailure ?? localBoundaryFailure(ownerId) ?? "STALE_RESPONSE" })
+  if (!current()) return obsolete()
   const storageRevision = "operationId" in request
     ? pinStorageOperationRevision(ownerId, request.operationId, 0) : currentStorageConsentRevision(ownerId)
+  let sendGuard: ReturnType<typeof registerCollectionSendGuard> | undefined
+  const releaseSendGuard = () => sendGuard?.release()
   try {
     const client = await dependencies.client()
-    if (!current()) return { ok: false, code: "STALE_RESPONSE" }
+    if (!current()) return obsolete()
     if (!client) return { ok: false, code: "UNAVAILABLE" }
     const session = await client.auth.getSession()
-    if (!current()) return { ok: false, code: "STALE_RESPONSE" }
+    if (!current()) return obsolete()
     const token = session.data.session?.access_token
     if (session.error || session.data.session?.user.id !== ownerId || typeof token !== "string"
       || token.trim() !== token || !/^[A-Za-z0-9._~+\/-]+=*$/u.test(token)) return { ok: false, code: "AUTH_REQUIRED" }
@@ -112,18 +176,27 @@ export async function requestAccountDocument<T>(
     const journalCall = Object.is(schema, accountJournalRecordSchema) || ["correctImportedObservation", "confirmComparisonRelation", "releaseComparisonRelation"].includes(request.action)
       || ((request.action === "list" || request.action === "history") && request.collection === "JOURNAL")
       || (request.action === "save" && (request.document as { kind?: unknown })?.kind === "JOURNAL")
+    // Keep this INDEX's fresh/date decision through the SDK auth reread and
+    // asynchronous consent fetch. Do not change unrelated journal requests.
+    if (request.action === "save" && (request.document as { kind?: unknown })?.kind === "GOAL_PROGRAM_INDEX") {
+      sendGuard = registerCollectionSendGuard(current)
+      signal.addEventListener("abort", releaseSendGuard, { once: true })
+      if (!current()) return obsolete()
+    }
     const { data, error } = await client.functions.invoke("account-journal", {
       body: journalCall ? { ...request, supportedJournalVersions: [2, 3], supportsExerciseLogV1: true } : request,
-      headers: { Authorization: `Bearer ${token}`, "x-trainoracle-storage-revision": String(storageRevision) },
+      headers: { Authorization: `Bearer ${token}`, "x-trainoracle-storage-revision": String(storageRevision),
+        ...(sendGuard ? { [LOCAL_COLLECTION_SEND_GUARD_HEADER]: sendGuard.nonce } : {}) },
+      signal,
     })
     let responseData: unknown = data
-    if (!current()) return { ok: false, code: "STALE_RESPONSE" }
+    if (!current()) return obsolete()
     if (error) {
       const status = error.context instanceof Response ? error.context.status : 0
       if (status === 426) return { ok: false, code: "UPGRADE_REQUIRED" }
       if (status === 507) {
         const quota = await error.context.clone().json().catch(() => null)
-        if (!current()) return { ok: false, code: "STALE_RESPONSE" }
+        if (!current()) return obsolete()
         if ((quota as { error?: unknown } | null)?.error === "CONFLICT_STORAGE_LIMIT_REACHED") {
           return { ok: false, code: "CONFLICT_STORAGE_LIMIT_REACHED" }
         }
@@ -139,16 +212,24 @@ export async function requestAccountDocument<T>(
       if (request.action === "minigameProgressSupport" && [400, 404, 501].includes(status)) {
         return { ok: false, code: "MINIGAME_PROGRESS_UNSUPPORTED" }
       }
+      if (request.action === "goalProgramSupport" && [400, 404, 501].includes(status)) {
+        return { ok: false, code: "GOAL_PROGRAM_UNSUPPORTED" }
+      }
       if ([409, 422].includes(status) && ["save", "delete", "restore", "restartOracleV2", "correctImportedObservation", "confirmComparisonRelation", "releaseComparisonRelation"].includes(request.action)) {
         responseData = await error.context.clone().json()
-        if (!current()) return { ok: false, code: "STALE_RESPONSE" }
+        if (!current()) return obsolete()
         const rejection = (responseData as { error?: unknown })?.error
+        if (rejection === "SOURCE_UNAVAILABLE") {
+          return status === 409 && request.action === "restore"
+            && z.object({ error: z.literal("SOURCE_UNAVAILABLE") }).strict().safeParse(responseData).success
+            ? { ok: false, code: "SOURCE_UNAVAILABLE" } : { ok: false, code: "INVALID_RESPONSE" }
+        }
         if (rejection === "FILE_EVIDENCE_DISABLED" || rejection === "INVALID_FILE_OBSERVATION"
           || rejection === "FILE_OBSERVATION_CONFLICT" || rejection === "COMPARISON_ORIGINAL_UNAVAILABLE"
           || rejection === "INVALID_COMPARISON_RELATION" || rejection === "COMPARISON_CAPACITY_EXCEEDED") return { ok: false, code: rejection }
         if (isAccountJournalWriteRejection(rejection)) return { ok: false, code: rejection }
         if (status === 422) return { ok: false, code: "UNAVAILABLE" }
-        if ((responseData as { kind?: unknown })?.kind !== "conflict") return { ok: false, code: "CONFLICT" }
+        if (!["conflict", "source_unavailable"].includes(String((responseData as { kind?: unknown })?.kind))) return { ok: false, code: "CONFLICT" }
       } else return { ok: false, code: status === 401 ? "AUTH_REQUIRED" : status === 403 ? "ACCESS_DENIED"
         : status === 404 && request.action === "read" ? "NOT_FOUND" : "UNAVAILABLE" }
     }
@@ -160,19 +241,25 @@ export async function requestAccountDocument<T>(
       : request.action === "athleteRecordSupport" ? result.kind === "athlete-record-support"
       : request.action === "runningProfileSupport" ? result.kind === "running-profile-support"
       : request.action === "minigameProgressSupport" ? result.kind === "minigame-progress-support"
+      : request.action === "goalProgramSupport" ? result.kind === "goal-program-support"
       : request.action === "oracleV2Support" ? result.kind === "oracle-v2-support"
       : request.action === "oracleV2RestartSupport" ? result.kind === "oracle-v2-restart-support"
       : request.action === "list" ? result.kind === "list"
       : request.action === "read" ? (result.kind === "document" || result.kind === "deleted") && result.documentId === request.documentId
       : request.action === "history" ? result.kind === "history" && result.documentId === request.documentId
       : request.action === "delete" || request.action === "restore"
-        ? (result.kind === "conflict" || request.action === "delete" && result.kind === "deleted" || request.action === "restore" && result.kind === "restored")
+        ? (result.kind === "conflict" || request.action === "delete" && result.kind === "deleted"
+          || request.action === "restore" && (result.kind === "restored" || result.kind === "source_unavailable"))
           && result.documentId === request.documentId && result.operationId === request.operationId
-          && (result.kind === "conflict" || result.revision === request.expectedRevision + 1)
-          && (result.kind !== "restored" || request.action === "restore" && result.sourceRevision === request.sourceRevision)
+          && (result.kind === "conflict" || result.kind === "source_unavailable"
+            ? result.kind !== "source_unavailable" || result.currentRevision === request.expectedRevision
+            : result.revision === request.expectedRevision + 1)
+          && ((result.kind !== "restored" && result.kind !== "source_unavailable")
+            || request.action === "restore" && result.sourceRevision === request.sourceRevision)
       : (result.kind === "saved" || result.kind === "conflict")
         && result.documentId === request.documentId && result.operationId === request.operationId
         && (result.kind !== "saved" || result.revision === request.expectedRevision + 1)
     return correctKind ? { ok: true, data: result } : { ok: false, code: "INVALID_RESPONSE" }
-  } catch { return { ok: false, code: current() ? "UNAVAILABLE" : "STALE_RESPONSE" } }
+  } catch { return current() ? { ok: false, code: "UNAVAILABLE" } : obsolete() }
+  finally { signal.removeEventListener("abort", releaseSendGuard); releaseSendGuard() }
 }

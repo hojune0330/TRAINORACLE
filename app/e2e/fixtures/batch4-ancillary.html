@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Batch 4 synthetic navigation review</title></head>
+<body><main id="batch4" style="max-width:600px;margin:0 auto;background:var(--bg);min-height:100dvh"></main>
+<script type="module">
+  import React from "react"
+  import { createRoot } from "react-dom/client"
+  import "../../../colors_and_type.css"
+  import "../../../colors_and_type_journal.css"
+  import "../../src/styles/app.css"
+  import "../../src/styles/journal-calendar.css"
+  import "./app-font.css"
+  import { More } from "../../src/screens/More.tsx"
+  import { ImportActivities } from "../../src/screens/ImportActivities.tsx"
+  import { JournalArchive } from "../../src/screens/JournalArchive.tsx"
+  const noop = () => {}
+  const query = new URLSearchParams(location.search)
+  const surface = query.get("screen") || "more"
+  const views = {
+    more: React.createElement(More, {onBack: noop, onOpenMinji: noop, onOpenGuide: noop,
+      onOpenPaceCalculator: noop, onOpenRecords: noop, onOpenImport: noop, onOpenRunningProfile: noop,
+      onOpenRecordReading: noop, onOpenOracleLibrary: noop, onOpenContent: noop, onOpenRewards: noop,
+      onOpenRestore: noop, onOpenAccount: noop, onOpenFeedback: noop}),
+    import: React.createElement(ImportActivities, {onBack: noop}),
+    archive: React.createElement(JournalArchive, {entries: [], readiness: query.get("readiness") || "ERROR",
+      selection: {selectedMonth: null, selectedWeekStart: null}, onSelectionChange: noop,
+      onOpenDay: noop, onBack: noop, onRetry: noop}),
+  }
+  createRoot(document.getElementById("batch4")).render(views[surface] || views.more)
+</script></body></html>

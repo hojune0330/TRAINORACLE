@@ -8,6 +8,8 @@ import type { ActivePlanEditApplyResult, ActivePlanEditSelection } from "../../d
 import type { AthleteRecord } from "../../domain/athlete-records"
 import { isoShift } from "../../domain/dates"
 import { CatalogWorkoutEditor } from "./CatalogWorkoutPicker"
+import { AppHeading } from "../../components/AppHeading"
+import { SessionWorkoutNotation } from "./WorkoutNotation"
 import "./ActivePlanSessionEditor.css"
 
 export type ActivePlanSessionEditorIntent = "schedule" | "workout"
@@ -219,8 +221,10 @@ export function ActivePlanSessionEditor({ state, sourceOptions, entriesReady, in
     <section className="active-plan-session-editor" role="region" aria-labelledby="active-plan-session-editor-heading">
       <header className="active-plan-session-editor__header">
         <div>
-          <h2 id="active-plan-session-editor-heading" ref={headingRef} tabIndex={-1}>이 훈련 수정</h2>
-          <p>현재 계획은 미리보기에서 확인한 뒤 한 번에 적용해요.</p>
+          <AppHeading as="h2" variant="screen" id="active-plan-session-editor-heading" ref={headingRef} tabIndex={-1}>
+            {intent === "schedule" ? "훈련 날짜 바꾸기" : "훈련 내용 바꾸기"}
+          </AppHeading>
+          <p>바뀐 내용을 확인한 뒤 현재 계획에 적용해요.</p>
         </div>
         <button type="button" className="active-plan-session-editor__back" onClick={cancel} disabled={busy}>닫기</button>
       </header>
@@ -295,17 +299,17 @@ export function ActivePlanSessionEditor({ state, sourceOptions, entriesReady, in
                   onChange={event => { setSourceUnstartedConfirmed(event.target.checked); invalidatePreview() }} />
                 이 훈련은 아직 시작하지 않았어요.
               </label>
-              <div className="active-plan-session-editor__mode" role="group" aria-label="훈련 변경 방법">
-                {selectedOption?.actions.includes("DURATION") && <button type="button" aria-pressed={action === "DURATION"} disabled={busy || disabled || !unstartedConfirmed}
+              <div className="active-plan-session-editor__mode app-choice-group" role="group" aria-label="훈련 변경 방법">
+                {selectedOption?.actions.includes("DURATION") && <button className="app-choice-control" type="button" aria-pressed={action === "DURATION"} disabled={busy || disabled || !unstartedConfirmed}
                   onClick={() => { setAction("DURATION"); setCatalogChoice(null); invalidatePreview() }}>시간 줄이기</button>}
-                {selectedOption?.actions.includes("CATALOG") && <button type="button" aria-pressed={action === "CATALOG"} disabled={busy || disabled || !unstartedConfirmed}
+                {selectedOption?.actions.includes("CATALOG") && <button className="app-choice-control" type="button" aria-pressed={action === "CATALOG"} disabled={busy || disabled || !unstartedConfirmed}
                   onClick={() => { setAction("CATALOG"); setMaximumMinutes(""); invalidatePreview() }}>훈련 구성 바꾸기</button>}
               </div>
               {action === "DURATION" && durationRange && <label className="active-plan-session-editor__field">새 최대 시간 · 분
                 <input type="number" inputMode="numeric" min={durationRange.minimum} max={durationRange.maximum}
                   value={maximumMinutes} disabled={busy || disabled || !unstartedConfirmed}
                   onChange={event => { setMaximumMinutes(event.target.value); invalidatePreview() }} />
-                <span>현재 범위 {durationRange.minimum}–{durationRange.maximum}분 안에서 입력해요.</span>
+                <span>준비·회복·정리 포함. 현재 {durationRange.minimum}–{durationRange.maximum}분 범위에서 고르세요.</span>
               </label>}
               {action === "CATALOG" && selectedSession?.prescription.kind === "RPE_TIME_RANGE" && (
                   <CatalogWorkoutEditor
@@ -369,14 +373,12 @@ export function ActivePlanSessionEditor({ state, sourceOptions, entriesReady, in
 
 function SessionSummary({ session }: { readonly session: ActivePlanEditProposal["beforeSessions"][number] }) {
   const duration = session.prescription.kind === "RPE_TIME_RANGE" ? session.prescription.durationMinutes : null
-  const rpe = session.prescription.kind === "RPE_TIME_RANGE" ? session.prescription.rpe : null
   const catalog = session.prescription.kind === "RPE_TIME_RANGE" ? session.prescription.catalogWorkout : undefined
   const name = catalog ? ALL_WORKOUT_CATALOG.find(workout => workout.id === catalog.catalogId)?.name : undefined
-  const label = session.prescription.kind === "REST" ? "휴식"
-    : duration ? `${duration.minimum}–${duration.maximum}분` : "훈련 내용 확인"
-  return <p className="active-plan-session-editor__session-summary">
+  return <div className="active-plan-session-editor__session-summary">
     {name && <strong>{name}<br /></strong>}
-    {session.day}일차 · {slotLabel(session.slot)} · {roleLabel(session.role)} · {label}
-    {rpe && <> · RPE {rpe.minimum}–{rpe.maximum}</>}
-  </p>
+    {session.day}일차 · {slotLabel(session.slot)} · {roleLabel(session.role)}<br />
+    <SessionWorkoutNotation session={session} />
+    {catalog && duration && <><br />전체 {duration.minimum}{duration.minimum === duration.maximum ? "" : `–${duration.maximum}`}분 · 준비·회복·정리 포함</>}
+  </div>
 }

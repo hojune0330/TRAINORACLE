@@ -1,4 +1,5 @@
 import React from "react"
+import { TaskGuide } from "../../components/TaskGuide"
 import { createPortal } from "react-dom"
 import { ArrowLeft, Minus, Plus, RotateCcw, Undo2, Redo2, RefreshCw } from "lucide-react"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
@@ -52,7 +53,15 @@ const METRICS: readonly [keyof Totals, string, string][] = [
   ["recoverySteps", "회복 단계", "개"], ["recoverySeconds", "회복 시간", "초"],
   ["recoveryDistanceM", "회복 거리", "m"], ["totalSeconds", "전체 시간", "초"],
 ]
+const CORE_METRICS: readonly [keyof Totals, string, string][] = [
+  ["repetitionBlocks", "반복 횟수", "회"], ["workDistanceM", "본운동 거리", "m"],
+  ["workSeconds", "본운동 시간", "초"], ["recoverySeconds", "회복 시간", "초"],
+  ["recoveryDistanceM", "회복 거리", "m"], ["totalSeconds", "본운동 소요시간", "초"],
+]
 function metric(value: number | null, unit: string) { return value === null ? "산출 불가" : `${value}${unit}` }
+function coreMetric(value: number | null, unit: string) {
+  return value === null ? "—" : unit === "초" ? formatTrainingSeconds(value) : `${value}${unit}`
+}
 
 /** Every +/- step selects an independently reviewed complete configuration, not an invented numeric dose. */
 export function PrescriptionAdjustmentEditorV3(props: Props) {
@@ -184,6 +193,7 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
       return result.kind === "draft" ? [result.draft.after] : []
     } catch { return [] }
   }) : []
+  const canExplore = !blocked && authorized.some(item => !same(item.configuration, selected))
   const preview = draft?.after ?? visibleBaseline
   const pool = visibleBaseline ? [visibleBaseline, ...authorized.filter(item => !same(item.configuration, visibleBaseline.configuration))] : authorized
   const methodGroups = props.orderedChoices?.map(group => group.configurations) ?? []
@@ -200,6 +210,11 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
   const controls = preview ? buildWorkoutTuningStepsV3(preview, orderedPool)
     .filter(control => controlDimensions === null || (controlDimensions as readonly string[]).includes(control.dimension)) : []
   const changes = draft && visibleBaseline ? workoutTuningChangesV3(visibleBaseline, draft.after) : []
+  const coreChanges = draft && a && b ? CORE_METRICS.flatMap(([key, label, unit]) => {
+    const beforeValue = a.main[key], afterValue = b.main[key]
+    return beforeValue === null && afterValue === null || beforeValue === afterValue
+      ? [] : [{ key, label, unit, beforeValue, afterValue }]
+  }) : []
   const resetDisabled = same(selected, visibleBaseline?.configuration)
   const choiceLabel = (configuration: ConfigurationReference, fallback: string) => {
     const item = [visibleBaseline, ...authorized].find(value => value && same(value.configuration, configuration))
@@ -230,6 +245,9 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
         {props.sessionLabel && <p id={`${id}-session`}>{props.sessionLabel}</p>}
         {stale && <p role="alert">현재 훈련이나 적용 조건이 바뀌었어요. 닫은 뒤 다시 열어 주세요.</p>}
         {error && <p role="alert">{error}</p>}
+        {opened.current !== null && <TaskGuide as="h3" title={canExplore || draft ? "훈련 조절하기" : "현재 훈련 확인"}
+          description={!blocked && !error && (canExplore || draft) ? "변경안은 적용을 눌러야 반영돼요." : undefined}
+          illustration={!blocked && !error && (canExplore || draft) ? "plan-adjust" : undefined} />}
         <div className="prescription-adjustment__preview-tools">
           {hasOtherMethod && <button type="button" disabled={blocked} onClick={() => {
             if (!preview || blocked || discarding || pending.current || completed.current) return
@@ -257,6 +275,16 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
         {changes.length > 0 && <ul className="prescription-adjustment__changes" aria-label="바뀐 값" aria-live="polite">
           {changes.map(change => <li key={change}>{change}</li>)}
         </ul>}
+        {draft && <section aria-label="핵심 수치 변경 전후">
+          <h3>현재와 변경안 · 본운동 합계</h3>
+          {coreChanges.length > 0 ? <table className="prescription-adjustment__totals" aria-label="핵심 수치 변경 전후">
+            <thead><tr><th scope="col">항목</th><th scope="col">현재</th><th scope="col">변경안</th></tr></thead>
+            <tbody>{coreChanges.map(row => <tr key={row.key}><th scope="row">{row.label}</th>
+              <td>{coreMetric(row.beforeValue, row.unit)}</td><td>{coreMetric(row.afterValue, row.unit)}</td></tr>)}</tbody>
+          </table> : <p>본운동 합계 수치는 달라지지 않았어요.</p>}
+          {coreChanges.some(row => row.beforeValue === null || row.afterValue === null)
+            && <p className="prescription-adjustment__note">산출할 수 없는 값은 임의로 계산하지 않았어요.</p>}
+        </section>}
         {controls.length > 2 && <button type="button" aria-expanded={showAllControls} onClick={() => setShowAllControls(value => !value)}>{showAllControls ? "조절 접기" : "더 조절"}</button>}
         {controls.length > 0 && <p className="prescription-adjustment__note">구성에 따라 다른 값도 함께 바뀔 수 있어요. 위 훈련 순서를 확인해 주세요.</p>}
         <details><summary>훈련 목록·다른 설정</summary>
@@ -273,17 +301,19 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
           disabled={blocked} aria-expanded={showAllChoices} onClick={() => setShowAllChoices(value => !value)}>
           {showAllChoices ? "기본 선택지만 보기" : "다른 검토된 구성 보기"}</button>}
         </details>
-        <details><summary>바뀐 수치 비교</summary><p className="prescription-adjustment__note">거리와 시간은 따로 계산해요. 값이 없는 항목은 추정하지 않아요.</p>
-        {(["warmup", "main", "cooldown"] as const).map(phase => <details key={phase}>
-          <summary>{PHASES[phase]} 합계</summary>
+        <details><summary>전체 합계 세부 비교</summary><p className="prescription-adjustment__note">거리와 시간은 따로 계산해요. 값이 없는 항목은 추정하지 않아요.</p>
+        {(["warmup", "main", "cooldown"] as const).map(phase => <section key={phase} aria-label={`${PHASES[phase]} 변경 전후 합계`}>
+          <h4>{PHASES[phase]} 합계</h4>
           <table className="prescription-adjustment__totals" aria-label={`${PHASES[phase]} 변경 전후 합계`}>
             <thead><tr><th scope="col">항목</th><th scope="col">현재</th><th scope="col">변경안</th><th scope="col">차이</th></tr></thead>
-            <tbody>{METRICS.map(([key, label, unit]) => {
+            <tbody>{METRICS.flatMap(([key, label, unit]) => {
               const first = a?.[phase][key] ?? null, second = b?.[phase][key] ?? null
-              return <tr key={key}><th scope="row">{label}</th><td>{metric(first, unit)}</td><td>{metric(second, unit)}</td>
+              if (first === null && second === null) return []
+              return [<tr key={key}><th scope="row">{label}</th><td>{metric(first, unit)}</td><td>{metric(second, unit)}</td>
                 <td>{first === null || second === null ? "산출 불가" : `${second > first ? "+" : ""}${metric(second - first, unit)}`}</td></tr>
+              ]
             })}</tbody>
-          </table></details>)}
+          </table></section>)}
         </details>
         <details><summary>현재 수행 순서</summary>{before && <PrescriptionStructureV3 sequence={before} />}</details>
       </div>

@@ -1,4 +1,79 @@
 /* noqa: SIZE_OK - one beta surface owns shared responsive selectors; split after the public layout stabilizes. */
+.plan-choice-list--days,
+.plan-purpose-entries {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.plan-intake .plan-choice-list--days {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.plan-day-choice,
+.plan-purpose-entries > button {
+  min-width: 0;
+  min-height: var(--app-touch-min);
+  padding: var(--space-2);
+  border: var(--bw-line) solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.plan-purpose-entries {
+  margin-block: var(--space-4);
+}
+
+.plan-purpose-entries > button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.plan-day-choice[aria-pressed="true"],
+.plan-purpose-entries > button[aria-expanded="true"] {
+  border-color: var(--brand);
+  color: var(--brand);
+  font-weight: 700;
+}
+
+.plan-day-choice:focus-visible,
+.plan-purpose-entries > button:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.plan-purpose-fields {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.plan-instant-entry {
+  padding: var(--space-4) var(--space-5);
+}
+
+.plan-program-entry {
+  padding: var(--space-3) var(--space-5) 0;
+}
+
+.plan-program-entry > button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  text-align: left;
+}
+
 .home-plan-action {
   width: 100%;
   min-height: var(--app-action-height);
@@ -409,7 +484,6 @@
 .plan-training-flow {
   margin-top: var(--space-4);
   padding-block: var(--space-3);
-  border-block: var(--bw-line) solid var(--ink);
 }
 
 .plan-training-flow > header {
@@ -811,6 +885,239 @@
   line-height: 1.45;
 }
 
+.plan-training-flow[data-presentation="prescription-calendar"] .prescription-calendar__view-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: var(--space-3);
+}
+
+.prescription-calendar__rest {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--ink-3);
+  font-size: var(--fs-body-sm);
+  line-height: 1.5;
+}
+
+.plan-training-flow[data-presentation="prescription-calendar"] > .month-calendar {
+  margin-inline: 0;
+}
+
+@media (max-width: 400px) {
+  .plan-training-flow[data-presentation="prescription-calendar"] > .month-calendar {
+    margin-inline: min(0px, calc((100% - 7 * var(--app-touch-min) - 8px) / 2));
+  }
+}
+
+.plan-training-flow[data-presentation="prescription-calendar"] .month-calendar__grid td[data-in-range] button {
+  min-height: 120px;
+  padding: var(--space-2) var(--space-1);
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.plan-training-flow[data-presentation="prescription-calendar"] .month-calendar__date-heading {
+  justify-content: flex-start;
+  min-height: var(--app-touch-min);
+}
+
+.plan-training-flow[data-presentation="prescription-calendar"] .month-calendar__events {
+  align-content: start;
+  padding: 0;
+  text-align: left;
+}
+
+.plan-training-flow[data-presentation="prescription-calendar"] .calendar-training-mark {
+  justify-items: start;
+  min-height: 0;
+  padding: var(--space-1);
+  border: var(--bw-line) solid var(--line);
+  box-sizing: border-box;
+}
+
+.plan-training-flow[data-presentation="prescription-calendar"] .calendar-training-mark__slot {
+  text-align: left;
+}
+
+.plan-training-flow[data-presentation="prescription-calendar"] .calendar-training-mark__label {
+  display: block;
+  text-align: left;
+  line-height: 1.2;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.prescription-calendar__amount {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  white-space: pre-line;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.prescription-calendar__calendar-name--short,
+.prescription-calendar__amount--short {
+  display: none;
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .prescription-calendar__amount {
+  display: block;
+  max-width: 100%;
+  font-size: var(--fs-body-sm);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .prescription-calendar__day-trigger {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+  min-height: var(--app-touch-min);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  white-space: normal;
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .prescription-calendar__day-trigger small {
+  overflow-wrap: anywhere;
+}
+
+.prescription-calendar__empty {
+  display: block;
+  padding: var(--space-1);
+  color: var(--ink-3);
+  font-size: var(--fs-caption);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .plan-schedule-preview > li {
+  padding-block: var(--space-2);
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .plan-schedule-preview > li > header {
+  margin-bottom: var(--space-1);
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .plan-schedule-preview__sessions {
+  gap: 0;
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .plan-schedule-preview__sessions > section {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-block: 0;
+  border-top: var(--bw-line) solid var(--hair);
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .plan-schedule-preview__sessions > section > header {
+  justify-content: flex-start;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .plan-schedule-preview__sessions .plan-schedule-preview__slot {
+  min-height: 0;
+  padding-inline: 0;
+  border: 0;
+  background: transparent;
+  font-size: var(--fs-mono-xs);
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .plan-session-content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-2);
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .plan-session-content > strong {
+  flex: 1 1 100%;
+  overflow-wrap: anywhere;
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .plan-session-content .prescription-calendar__amount {
+  flex: 1 1 auto;
+  width: auto;
+  margin: 0;
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .prescription-calendar__progress {
+  color: var(--ink-3);
+  font-size: var(--fs-caption);
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .prescription-calendar__empty-day {
+  margin: 0;
+  padding: var(--space-2) 0;
+  border-top: var(--bw-line) solid var(--hair);
+  color: var(--ink-3);
+  font-size: var(--fs-body-sm);
+}
+
+@media (min-width: 768px) {
+  .plan-training-flow[data-presentation="prescription-calendar"] .month-calendar__grid td[data-in-range] button {
+    min-height: 148px;
+    padding: var(--space-3);
+  }
+}
+
+@media (max-width: 375px) {
+  .plan-training-flow[data-presentation="prescription-calendar"] .month-calendar__grid td[data-in-range] button {
+    min-height: 104px;
+    padding-inline: 2px;
+  }
+
+  .plan-training-flow[data-presentation="prescription-calendar"] .calendar-training-mark {
+    min-height: 0;
+    padding: 2px;
+  }
+
+  .plan-training-flow[data-presentation="prescription-calendar"] .calendar-training-mark__label,
+  .plan-training-flow[data-presentation="prescription-calendar"] .prescription-calendar__amount {
+    font-size: 0.6875rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .plan-training-flow[data-presentation="prescription-calendar"] .prescription-calendar__calendar-name--full,
+  .plan-training-flow[data-presentation="prescription-calendar"] .prescription-calendar__amount--full {
+    display: none;
+  }
+
+  .plan-training-flow[data-presentation="prescription-calendar"] .prescription-calendar__calendar-name--short,
+  .plan-training-flow[data-presentation="prescription-calendar"] .prescription-calendar__amount--short {
+    display: block;
+  }
+
+  .plan-training-flow[data-presentation="prescription-calendar"] .calendar-training-mark__label,
+  .plan-training-flow[data-presentation="prescription-calendar"] .prescription-calendar__amount {
+    font-size: var(--fs-caption);
+    word-break: keep-all;
+    overflow-wrap: normal;
+  }
+}
+
 .plan-day-card__session > header {
   display: flex;
   align-items: center;
@@ -998,6 +1305,7 @@
 .plan-back,
 .plan-text-action {
   align-self: flex-start;
+  min-width: var(--app-touch-min);
   min-height: var(--app-touch-min);
   padding: 0;
   border: 0;
@@ -1094,9 +1402,9 @@
 
 .plan-eyebrow {
   margin-top: var(--space-6);
-  color: var(--brand);
+  color: var(--ink-2);
   font-family: var(--mono);
-  font-size: var(--fs-mono-xs);
+  font-size: var(--fs-caption);
   font-weight: 700;
 }
 
@@ -1109,9 +1417,24 @@
   margin: var(--space-2) 0 0;
   font-family: var(--sans);
   font-size: var(--fs-app-title);
-  line-height: 1.25;
+  font-weight: var(--fw-app-heading);
+  line-height: var(--lh-app-heading);
   letter-spacing: 0;
   word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.plan-intake h1::before,
+.plan-candidates h1::before,
+.active-plan h1::before,
+.plan-race-preview h1::before,
+.plan-notation-reader h1::before {
+  content: "";
+  display: block;
+  width: 28px;
+  height: 2px;
+  margin-bottom: var(--space-3);
+  background: var(--brand);
 }
 
 .plan-heading-row {
@@ -1122,6 +1445,10 @@
 
 .plan-heading-row h1 {
   min-width: 0;
+}
+
+.plan-intake .plan-heading-row h1.active-content-scroll-target {
+  scroll-margin-block-start: var(--space-8);
 }
 
 .active-plan__edit-heading {
@@ -2014,7 +2341,6 @@
 
 .active-plan__information {
   margin-top: var(--space-3);
-  border-block: var(--bw-line) solid var(--hair);
 }
 
 .active-plan__information > summary {
@@ -2142,6 +2468,46 @@
 .active-plan__variant span {
   color: var(--ink-3);
 }
+
+/* Concrete schedule values before optional explanations; no extra card shell. */
+.plan-easy-times {
+  min-width: 0;
+  margin-block: var(--space-3);
+  font-family: var(--sans);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.plan-easy-times h3 {
+  margin: 0 0 var(--space-2);
+  font: 600 var(--fs-body-sm)/1.5 var(--sans);
+  color: var(--ink-2);
+}
+.plan-easy-times dl { margin: 0; display: grid; gap: var(--space-2); }
+.plan-easy-times dl > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  padding-block: var(--space-2);
+  border-bottom: var(--bw-line) solid var(--hair);
+}
+.plan-easy-times dt { flex: 1 1 10rem; min-width: 0; font-size: var(--fs-body); line-height: 1.5; }
+.plan-easy-times dt span { display: block; color: var(--ink-3); font-size: var(--fs-caption); }
+.plan-easy-times dd { margin: 0; color: var(--ink); font-size: var(--fs-body); font-weight: 700; font-variant-numeric: tabular-nums; }
+.plan-easy-times dd small { margin-inline-end: var(--space-2); color: var(--ink-3); font-size: var(--fs-caption); font-weight: 400; }
+.plan-easy-times > p, .plan-duration-total {
+  margin: var(--space-2) 0;
+  color: var(--ink-2);
+  font: 400 var(--fs-body-sm)/1.6 var(--sans);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.plan-easy-times > details > summary { min-height: var(--app-touch-min, 44px); display: flex; align-items: center; cursor: pointer; }
+.plan-easy-times > details > summary:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.plan-prescription-basis { min-width: 0; font: 400 var(--fs-body-sm)/1.6 var(--sans); overflow-wrap: anywhere; word-break: keep-all; }
+.plan-prescription-basis__notice, .plan-prescription-basis__pending { margin-block: var(--space-2); color: var(--ink); }
+.plan-prescription-basis__pending { font-weight: 600; }
+.plan-prescription-basis .info-disclosure__preview { font-size: var(--fs-body-sm); }
 
 .active-plan__date-range {
   margin: var(--space-3) 0 0;
@@ -2654,26 +3020,6 @@
 
 @media (max-width: 420px) {
   .plan-candidate-comparison__options {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .plan-candidate-comparison article {
-    padding: 0 var(--space-2);
-  }
-
-  .plan-candidate-comparison article:first-child {
-    padding-top: 0;
-    border-right: var(--bw-line) solid var(--hair);
-    border-bottom: 0;
-  }
-
-  .plan-candidate-comparison article:last-child {
-    padding-right: 0;
-  }
-}
-
-@media (max-width: 280px) {
-  .plan-candidate-comparison__options {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -2682,12 +3028,17 @@
   }
 
   .plan-candidate-comparison article:first-child {
+    padding-top: 0;
     border-right: 0;
     border-bottom: var(--bw-line) solid var(--hair);
   }
+
+  .plan-candidate-comparison article:last-child {
+    padding-bottom: 0;
+  }
 }
 
-/* A rem-based container threshold also responds to text-only enlargement. */
+/* Narrow comparison containers also stack independently of viewport width. */
 @container plan-comparison (max-width: 16rem) {
   .plan-candidate-comparison__options,
   .plan-main-comparison__pair {
@@ -3546,17 +3897,6 @@
   border: var(--bw-line) solid var(--brand);
 }
 
-.plan-candidate[data-recommended="true"] {
-  border: var(--bw-line) solid var(--brand);
-  border-radius: var(--r-md);
-  padding: var(--space-3);
-}
-
-.plan-candidate[data-recommended="true"] .plan-select-action {
-  background: var(--brand);
-  color: #fff;
-}
-
 .plan-result-header {
   display: flex;
   flex-wrap: wrap;
@@ -3584,7 +3924,6 @@
 
 .plan-detailed-options {
   margin-block: var(--space-3);
-  border-top: var(--bw-line) solid var(--line);
 }
 
 .plan-detailed-options > summary {
@@ -3595,4 +3934,10 @@
 
 .plan-day-deck[hidden] {
   display: none;
+}
+
+.plan-support-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }

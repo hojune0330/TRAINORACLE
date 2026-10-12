@@ -26,7 +26,7 @@ function entryLabel(entry: JournalEntry): string {
     case "post-session":
       return "훈련 기록"
     case "evening":
-      return "하루 마무리"
+      return "컨디션·메모"
     case "race":
       return "경기 기록"
   }

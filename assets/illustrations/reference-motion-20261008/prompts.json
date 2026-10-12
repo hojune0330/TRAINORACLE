@@ -1,0 +1,49 @@
+{
+  "created": "2026-10-08",
+  "generator": "built-in image_gen",
+  "referencePolicy": "Original assets from text prompts. No video frames, private data, branded art, or external reference images were sent.",
+  "assets": [
+    {
+      "name": "plan-notebook-v2",
+      "prompt": "Use case: stylized-concept. Asset type: small original decorative illustration for the TrainOracle athlete training app. Create a single isolated polished matte 3D clay-and-paper object illustration, friendly premium mobile-app feel, soft tactile bevels, restrained diffuse studio shading within the object only. Brand palette deep teal #0D5F5A, warm ivory #FAFAF7, charcoal #2B3330, muted mint. Square composition, object takes 76 percent of canvas, same elevated three-quarter view, clear chunky silhouette legible at 64-80px. Genuine transparent background, no ground plane, no cast shadow beyond object, no text, letters, numbers, logos, watermark, badge words, decorative sparkles, confetti or interface mockup. Original design, not a copy of a branded app asset.\nPrimary request: A small upright spiral-bound training planning notebook with a deep teal cover, two ivory rounded page tabs, and one short graphite pencil leaning alongside. No written marks or grid numbers. A composed purposeful shape.",
+      "source": "C:\\Users\\admin\\.codex\\generated_images\\01a0bcfe-66fc-7a22-ae04-426aa6d6bcb0\\exec-476fce1f-b998-4be6-a353-56fbab67e6a1.png",
+      "original": "assets/illustrations/reference-motion-20261008/plan-notebook-v2.png",
+      "web": "app/public/illustrations/plan-notebook-v2.webp"
+    },
+    {
+      "name": "journal-saved-v2",
+      "prompt": "Use case: stylized-concept. Asset type: small original decorative illustration for the TrainOracle athlete training app. Create a single isolated polished matte 3D clay-and-paper object illustration, friendly premium mobile-app feel, soft tactile bevels, restrained diffuse studio shading within the object only. Brand palette deep teal #0D5F5A, warm ivory #FAFAF7, charcoal #2B3330, muted mint. Square composition, object takes 76 percent of canvas, same elevated three-quarter view, clear chunky silhouette legible at 64-80px. Genuine transparent background, no ground plane, no cast shadow beyond object, no text, letters, numbers, logos, watermark, badge words, decorative sparkles, confetti or interface mockup. Original design, not a copy of a branded app asset.\nPrimary request: A compact closed warm ivory training journal with a teal spine and a small inset teal check-shaped tab on its cover. The check is part of the book, not a floating badge. One quiet confident object, no trophy or money.",
+      "source": "C:\\Users\\admin\\.codex\\generated_images\\01a0bcfe-66fc-7a22-ae04-426aa6d6bcb0\\exec-eec6efd2-ebf5-490f-a839-91d5896f95cf.png",
+      "original": "assets/illustrations/reference-motion-20261008/journal-saved-v2.png",
+      "web": "app/public/illustrations/journal-saved-v2.webp"
+    },
+    {
+      "name": "running-shoe-v2",
+      "prompt": "Use case: stylized-concept. Asset type: small original decorative illustration for the TrainOracle athlete training app. Create a single isolated polished matte 3D clay-and-paper object illustration, friendly premium mobile-app feel, soft tactile bevels, restrained diffuse studio shading within the object only. Brand palette deep teal #0D5F5A, warm ivory #FAFAF7, charcoal #2B3330, muted mint. Square composition, object takes 76 percent of canvas, same elevated three-quarter view, clear chunky silhouette legible at 64-80px. Genuine transparent background, no ground plane, no cast shadow beyond object, no text, letters, numbers, logos, watermark, badge words, decorative sparkles, confetti or interface mockup. Original design, not a copy of a branded app asset.\nPrimary request: One simple unbranded running shoe angled toe slightly toward viewer. Deep teal upper, warm ivory sole, ivory laces and a small muted mint heel loop. No speed streaks, no brand mark. Compact clear athletic silhouette.",
+      "source": "C:\\Users\\admin\\.codex\\generated_images\\01a0bcfe-66fc-7a22-ae04-426aa6d6bcb0\\exec-401849aa-af5f-46d4-8df6-ad8b5b626e5b.png",
+      "original": "assets/illustrations/reference-motion-20261008/running-shoe-v2.png",
+      "web": "app/public/illustrations/running-shoe-v2.webp"
+    },
+    {
+      "name": "analysis-lens-v2",
+      "prompt": "Use case: stylized-concept. Asset type: small original decorative illustration for the TrainOracle athlete training app. Create a single isolated polished matte 3D clay-and-paper object illustration, friendly premium mobile-app feel, soft tactile bevels, restrained diffuse studio shading within the object only. Brand palette deep teal #0D5F5A, warm ivory #FAFAF7, charcoal #2B3330, muted mint. Square composition, object takes 76 percent of canvas, same elevated three-quarter view, clear chunky silhouette legible at 64-80px. Genuine transparent background, no ground plane, no cast shadow beyond object, no text, letters, numbers, logos, watermark, badge words, decorative sparkles, confetti or interface mockup. Original design, not a copy of a branded app asset.\nPrimary request: One chunky deep teal magnifying glass resting diagonally over a small warm ivory blank data card with exactly three short shallow embossed horizontal strokes, no chart, no values. A tiny muted mint page tab. No eyes, no mystical objects.",
+      "source": "C:\\Users\\admin\\.codex\\generated_images\\01a0bcfe-66fc-7a22-ae04-426aa6d6bcb0\\exec-1c209e18-b350-4350-811f-cae0b9023e3b.png",
+      "original": "assets/illustrations/reference-motion-20261008/analysis-lens-v2.png",
+      "web": "app/public/illustrations/analysis-lens-v2.webp"
+    },
+    {
+      "name": "watch-file-v2",
+      "prompt": "Use case: stylized-concept. Asset type: small original decorative illustration for the TrainOracle athlete training app. Create a single isolated polished matte 3D clay-and-paper object illustration, friendly premium mobile-app feel, soft tactile bevels, restrained diffuse studio shading within the object only. Brand palette deep teal #0D5F5A, warm ivory #FAFAF7, charcoal #2B3330, muted mint. Square composition, object takes 76 percent of canvas, same elevated three-quarter view, clear chunky silhouette legible at 64-80px. Genuine transparent background, no ground plane, no cast shadow beyond object, no text, letters, numbers, logos, watermark, badge words, decorative sparkles, confetti or interface mockup. Original design, not a copy of a branded app asset.\nPrimary request: One compact charcoal and deep teal sports watch with a completely blank warm ivory display, beside a small ivory document with one folded corner and a muted mint lower edge. No clock hands, digits, route, personal data or logo.",
+      "source": "C:\\Users\\admin\\.codex\\generated_images\\01a0bcfe-66fc-7a22-ae04-426aa6d6bcb0\\exec-c5660bf5-cc88-4740-9a0b-7932aeaea59a.png",
+      "original": "assets/illustrations/reference-motion-20261008/watch-file-v2.png",
+      "web": "app/public/illustrations/watch-file-v2.webp"
+    },
+    {
+      "name": "decorating-kit-v2",
+      "prompt": "Use case: stylized-concept. Asset type: small original decorative illustration for the TrainOracle athlete training app. Create a single isolated polished matte 3D clay-and-paper object illustration, friendly premium mobile-app feel, soft tactile bevels, restrained diffuse studio shading within the object only. Brand palette deep teal #0D5F5A, warm ivory #FAFAF7, charcoal #2B3330, muted mint. Square composition, object takes 76 percent of canvas, same elevated three-quarter view, clear chunky silhouette legible at 64-80px. Genuine transparent background, no ground plane, no cast shadow beyond object, no text, letters, numbers, logos, watermark, badge words, decorative sparkles, confetti or interface mockup. Original design, not a copy of a branded app asset.\nPrimary request: A compact arrangement of one small deep teal washi tape roll, one short ivory pencil with graphite tip, and two overlapping blank rounded paper stickers in muted mint and warm ivory. Clean three-object cluster, no confetti and no lettering.",
+      "source": "C:\\Users\\admin\\.codex\\generated_images\\01a0bcfe-66fc-7a22-ae04-426aa6d6bcb0\\exec-b6d228db-0d73-49a4-a887-f56d80e586ca.png",
+      "original": "assets/illustrations/reference-motion-20261008/decorating-kit-v2.png",
+      "web": "app/public/illustrations/decorating-kit-v2.webp"
+    }
+  ]
+}

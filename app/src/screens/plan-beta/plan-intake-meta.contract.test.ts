@@ -21,6 +21,7 @@ describe("plan intake wording", () => {
     // 글자 피로를 줄이기 위해 각 질문의 보조 문구는 한두 문장, 60자 이내로 유지한다.
     for (const step of Object.values(STEP_META)) expect(step.copy.length).toBeLessThanOrEqual(60)
   })
+
 })
 
 describe("conditional competition division", () => {

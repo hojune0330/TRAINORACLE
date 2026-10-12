@@ -122,7 +122,7 @@ export function ExecutionReviewReader({ review, article, originalMethod, onOpenJ
       <div><span>{review ? `${review.date} · ${review.slot}${review.recordLabel ? ` · ${review.recordLabel}` : ""}` : "훈련 코칭 · 일반 안내"}</span><h2 id={`${tabId}-title`}>{review?.title ?? article?.title}</h2></div>
     </header>
     {review && <div className="execution-review__navigation">
-      <div className="execution-review__tabs" role="tablist" aria-label="훈련 비교 내용">{VIEWS.map((item, index) => <button type="button" role="tab" key={item}
+      <div className="execution-review__tabs app-choice-group" role="tablist" aria-label="훈련 비교 내용">{VIEWS.map((item, index) => <button className="app-choice-control" type="button" role="tab" key={item}
         id={`${tabId}-${item}`} aria-controls={`${tabId}-${item}-panel`} aria-selected={view === item} tabIndex={view === item ? 0 : -1}
         onClick={() => changeView(item)} onKeyDown={event => {
           const next = event.key === "ArrowRight" ? (index + 1) % VIEWS.length : event.key === "ArrowLeft" ? (index + VIEWS.length - 1) % VIEWS.length

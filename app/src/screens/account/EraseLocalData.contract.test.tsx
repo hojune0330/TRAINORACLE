@@ -4,10 +4,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { EraseLocalData } from "./EraseLocalData"
 import { erasableKeys } from "../../domain/erase-local-data"
 
+const disposal = vi.hoisted(() => ({ run: vi.fn() }))
+vi.mock("../../domain/account/goal-program-database-disposal", () => ({
+  disposeGoalProgramDatabase: disposal.run,
+}))
+
 afterEach(cleanup)
 
 describe("EraseLocalData recovery surface", () => {
   beforeEach(() => {
+    disposal.run.mockReset()
+    disposal.run.mockResolvedValue({ ok: true, failed: [] })
     window.localStorage.clear()
     window.localStorage.setItem("trainoracle.journal.v1", "[]")
   })
@@ -26,9 +33,31 @@ describe("EraseLocalData recovery surface", () => {
 
     await user.click(screen.getByTestId("erase-start"))
     await user.click(screen.getByTestId("erase-confirm"))
+    await screen.findByRole("button", { name: "백업 파일 되돌리기" })
     await user.click(screen.getByRole("button", { name: "백업 파일 되돌리기" }))
 
     expect(onOpenRestore).toHaveBeenCalledOnce()
+    expect(disposal.run).toHaveBeenCalledOnce()
+  })
+
+  it("stays busy until database deletion resolves and reports partial deletion on database failure", async () => {
+    const user = userEvent.setup()
+    let resolveDisposal: ((result: { ok: boolean; failed: readonly string[] }) => void) | undefined
+    disposal.run.mockImplementation(() => new Promise(resolve => { resolveDisposal = resolve }))
+    render(<EraseLocalData />)
+
+    await user.click(screen.getByTestId("erase-start"))
+    await user.click(screen.getByTestId("erase-confirm"))
+
+    expect(screen.getByTestId("erase-progress")).toBeVisible()
+    expect(screen.getByTestId("erase-confirm")).toBeDisabled()
+    expect(screen.getByTestId("erase-cancel")).toBeDisabled()
+    expect(screen.queryByTestId("erase-result")).toBeNull()
+
+    resolveDisposal?.({ ok: false, failed: ["trainoracle-account-goal-program-v1"] })
+    const result = await screen.findByTestId("erase-result")
+    expect(result.textContent).toContain("계정 훈련 계획 저장소를 삭제하지 못했어요")
+    expect(result.textContent).not.toContain("저장 데이터를 삭제했어요")
   })
 })
 

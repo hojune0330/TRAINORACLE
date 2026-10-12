@@ -12,6 +12,13 @@ import { loadPlanBetaState } from "../domain/plan-beta-store"
 import { deriveTrainingMethodCompatibility } from "../domain/training-method-compatibility"
 import type { TrainingMethodCompatibilityStatus } from "../domain/training-method-compatibility"
 import { InfoDisclosure } from "../components/InfoDisclosure"
+import { ContextualIllustration } from "../components/ContextualIllustration"
+import { AppHeading } from "../components/AppHeading"
+import { TrainingLexicon } from "./TrainingLexicon"
+import { useTaskFlowBack } from "../hooks/useTaskFlowBack"
+import { localJournalScopeGeneration } from "../domain/account/local-journal-ownership"
+import { useNavigationReturnFrame } from "../hooks/useNavigationReturnFrame"
+import { captureReaderPosition, restoreReaderPosition, type ReaderPosition } from "../navigation/readerPosition"
 
 const SOURCE_STATE_LABEL: Record<TrainingContentSourceState, string> = {
   DIRECT_SOURCE_REOPENED: "원문 확인 자료",
@@ -33,7 +40,36 @@ const COMPATIBILITY_LABEL: Record<TrainingMethodCompatibilityStatus, string> = {
 
 export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
   const [selected, setSelected] = React.useState<TrainingContentId | null>(null)
+  const [basics, setBasics] = React.useState(false)
   const [saved, setSaved] = React.useState<readonly TrainingContentId[]>(loadSavedTrainingContent)
+  const root = React.useRef<HTMLDivElement>(null)
+  const listReturn = React.useRef<ReaderPosition | null>(null)
+  const { schedule } = useNavigationReturnFrame()
+  const region = () => root.current?.closest<HTMLElement>(".app-scroll-region") ?? root.current
+  const openReader = (article: TrainingContentId | null, opener: HTMLElement) => {
+    listReturn.current = captureReaderPosition(region(), opener)
+    if (article === null) setBasics(true)
+    else setSelected(article)
+  }
+  React.useEffect(() => {
+    if (basics) return // The glossary manages its own title and nested return position.
+    const position = selected === null ? listReturn.current : null
+    if (position) listReturn.current = null
+    schedule(() => {
+      if (position) restoreReaderPosition(region(), position)
+      else {
+        if (selected !== null && region()) region()!.scrollTop = 0
+        root.current?.querySelector<HTMLElement>("h1")?.focus({ preventScroll: true })
+      }
+    })
+  }, [basics, selected, schedule])
+  useTaskFlowBack({ enabled: true, onBack: () => {
+    if (selected !== null) { setSelected(null); return }
+    if (basics) { setBasics(false); return }
+    const scope = localJournalScopeGeneration()
+    queueMicrotask(() => { if (scope === localJournalScopeGeneration()) onBack() })
+  } })
+  if (basics) return <div ref={root} className="training-content-screen"><ContentHeader title="훈련 용어 배우기" onBack={() => setBasics(false)} /><TrainingLexicon /></div>
 
   if (selected !== null) {
     const article = trainingContentById(selected)
@@ -45,11 +81,11 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
       today: todayISO(),
     })
     return (
-      <div className="training-content-screen">
+      <div ref={root} className="training-content-screen">
         <ContentHeader title="훈련법 읽기" onBack={() => setSelected(null)} />
         <article className="training-content-article">
           <span className="training-content-article__category">{article.category}</span>
-          <h1>{article.title}</h1>
+          <AppHeading variant="screen" accent tabIndex={-1}>{article.title}</AppHeading>
           <p className="training-content-article__lead">{article.summary}</p>
           <button
             className="training-content-article__save"
@@ -62,11 +98,11 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
           </button>
 
           <section>
-            <h2>왜 주목받나요?</h2>
+            <AppHeading as="h2" variant="section">왜 주목받나요?</AppHeading>
             <p>{article.whyNoticed}</p>
           </section>
           <section>
-            <h2>무엇을 훈련하나요?</h2>
+            <AppHeading as="h2" variant="section">무엇을 훈련하나요?</AppHeading>
             <p>{article.whatItTrains}</p>
           </section>
           <section className="training-content-article__compatibility" aria-labelledby="training-method-compatibility-title">
@@ -74,7 +110,7 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
               <Scale aria-hidden="true" size={18} />
               <div>
                 <span>내 기록과 비교</span>
-                <h2 id="training-method-compatibility-title">{compatibility.headline}</h2>
+                <AppHeading as="h2" variant="section" id="training-method-compatibility-title">{compatibility.headline}</AppHeading>
               </div>
               <strong data-status={compatibility.status}>{COMPATIBILITY_LABEL[compatibility.status]}</strong>
             </div>
@@ -100,7 +136,7 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
             </InfoDisclosure>
           </section>
           <section className="training-content-article__boundary">
-            <h2>따라 하기 전에</h2>
+            <AppHeading as="h2" variant="section">따라 하기 전에</AppHeading>
             <p>{article.useBoundary}</p>
           </section>
 
@@ -122,15 +158,19 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
   }
 
   return (
-    <div className="training-content-screen">
+    <div ref={root} className="training-content-screen">
       <ContentHeader title="훈련 방법 배우기" onBack={onBack} />
       <div className="training-content-intro">
-        <span>훈련 방법 · 선수 사례</span>
-        <h1>어떤 훈련이 궁금한가요?</h1>
+        <div className="training-content-intro__heading">
+          <AppHeading variant="screen" accent tabIndex={-1}>어떤 훈련이 궁금한가요?</AppHeading>
+          <ContextualIllustration image="running-shoe" size="small" />
+        </div>
       </div>
-      <div className="training-content-list" aria-label="훈련법 콘텐츠 목록">
+      <button className="training-content-basics-link app-choice-control" type="button" onClick={event => openReader(null, event.currentTarget)}>훈련 용어부터 보기<ChevronRight aria-hidden="true" size={18} /></button>
+      <AppHeading as="h2" variant="section">선수들의 훈련 사례</AppHeading>
+      <div className="training-content-list app-choice-group" aria-label="훈련법 콘텐츠 목록">
         {TRAINING_CONTENT_CATALOG.map((article, index) => (
-          <button type="button" key={article.id} onClick={() => setSelected(article.id)}>
+          <button className="app-choice-control" type="button" key={article.id} onClick={event => openReader(article.id, event.currentTarget)}>
             <span className="training-content-list__number">0{index + 1}</span>
             <span className="training-content-list__copy">
               <small>{article.category} · {SOURCE_STATE_LABEL[article.sourceState]}</small>
@@ -167,7 +207,7 @@ function ContentHeader({ title, onBack }: { readonly title: string; readonly onB
   return (
     <header className="training-content-header">
       <button type="button" onClick={onBack} aria-label="이전 화면" title="뒤로"><ArrowLeft aria-hidden="true" size={19} /></button>
-      <span>{title}</span>
+      <span className="app-chrome-title">{title}</span>
     </header>
   )
 }

@@ -52,7 +52,7 @@ it("real account history progress does not close an open cycle review; actual pl
   const loadHistory = vi.spyOn(service, "loadHistory")
   render(<PlanBeta />)
   const user = userEvent.setup()
-  await waitFor(() => expect(screen.getByRole("button", { name: "이번 주기 기록 확인" })).toBeEnabled())
+  await waitFor(() => expect(screen.getByRole("button", { name: "이번 주기 기록 확인" })).toBeEnabled(), { timeout: 10_000 })
   await user.click(screen.getByRole("button", { name: "이번 주기 기록 확인" }))
   await waitFor(() => expect(loadHistory).toHaveBeenCalled())
   await act(async () => { expect(await loadHistory.mock.results[0]!.value).toBe(true) })

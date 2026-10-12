@@ -105,19 +105,140 @@ function ArchiveHarness() {
 }
 
 describe("journal archive surface", () => {
-  it("offers a separate example before the empty real calendar", async () => {
+  it.each(["LOADING", "ERROR", "STALE"] as const)("does not render an empty calendar or example before %s resolves", (readiness) => {
+    const retry = vi.fn()
+    const back = vi.fn()
+    render(<JournalArchive entries={[]} readiness={readiness} onRetry={retry}
+      selection={{ selectedMonth: null, selectedWeekStart: null }} onSelectionChange={vi.fn()}
+      onOpenDay={vi.fn()} onBack={back} />)
+    expect(screen.getByRole(readiness === "ERROR" ? "alert" : "status")).toHaveTextContent(/확인하지 못|불러오지 못|불러오고 있어요/)
+    expect(screen.queryByRole("grid")).toBeNull()
+    expect(screen.queryByRole("button", { name: "기록 묶음" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "내 달력" })).toBeNull()
+    expect(screen.queryByText(/0개 기록|이날 작성한 일지가 없어요/)).toBeNull()
+    if (readiness === "LOADING") expect(screen.queryByRole("button", { name: "일지 다시 불러오기" })).toBeNull()
+    else {
+      fireEvent.click(screen.getByRole("button", { name: "일지 다시 불러오기" }))
+      expect(retry).toHaveBeenCalledOnce()
+    }
+    fireEvent.click(screen.getByRole("button", { name: "홈으로" }))
+    expect(back).toHaveBeenCalledOnce()
+  })
+
+  it.each(["LOADING", "ERROR", "STALE"] as const)("retains known records with an explicit refresh state during %s", (readiness) => {
+    render(<JournalArchive entries={ENTRIES} readiness={readiness}
+      selection={{ selectedMonth: "2026-07", selectedWeekStart: null }} onSelectionChange={vi.fn()}
+      onOpenDay={vi.fn()} onBack={vi.fn()} />)
+    expect(screen.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
+    expect(screen.getByRole("button", { name: /2026년 7월 10일.*훈련 후 2건/ })).toBeVisible()
+    expect(screen.getByText(/저장된 일지를 보고 있어요/)).toBeVisible()
+    expect(screen.queryByRole("button", { name: "내 달력" })).toBeNull()
+  })
+
+  it("opens the confirmed empty calendar first and hides it when refresh fails", () => {
+    const props = { entries: [], selection: { selectedMonth: null, selectedWeekStart: null },
+      onSelectionChange: vi.fn(), onOpenDay: vi.fn(), onBack: vi.fn() }
+    const view = render(<JournalArchive {...props} readiness="LOADING" />)
+    view.rerender(<JournalArchive {...props} readiness="READY" />)
+    expect(screen.getByRole("grid")).toBeVisible()
+    expect(screen.queryByText("예시 · 내 기록에 저장되지 않아요")).toBeNull()
+    view.rerender(<JournalArchive {...props} readiness="ERROR" />)
+    expect(screen.queryByRole("grid")).toBeNull()
+    view.rerender(<JournalArchive {...props} readiness="ERROR" mode="CYCLE" />)
+    expect(screen.queryByRole("grid")).toBeNull()
+    expect(screen.queryByText(/0개 기록/)).toBeNull()
+  })
+
+  it("preserves an explicitly opened and labelled example without claiming it is the user's missing data", () => {
+    const props = { entries: [], selection: { selectedMonth: null, selectedWeekStart: null },
+      onSelectionChange: vi.fn(), onOpenDay: vi.fn(), onBack: vi.fn() }
+    const view = render(<JournalArchive {...props} />)
+    fireEvent.click(screen.getByRole("button", { name: "일지가 쌓인 예시 보기" }))
+    view.rerender(<JournalArchive {...props} readiness="ERROR" />)
+    expect(screen.getByRole("alert")).toHaveTextContent("일지를 불러오지 못했어요")
+    expect(screen.getByText("예시 · 내 기록에 저장되지 않아요")).toBeVisible()
+    expect(screen.getByRole("heading", { name: "일지가 쌓인 달력" })).toBeVisible()
+    fireEvent.click(screen.getByRole("button", { name: "기록 묶음" }))
+    expect(screen.queryByRole("grid")).toBeNull()
+    expect(screen.queryByText(/0개 기록/)).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "월간 달력으로" }))
+    expect(screen.getByRole("heading", { name: "일지가 쌓인 달력" })).toBeVisible()
+    fireEvent.click(screen.getByRole("button", { name: "내 달력" }))
+    expect(screen.queryByRole("grid")).toBeNull()
+  })
+
+  it("uses one screen title accent and shows the example heading only after an explicit request", async () => {
+    const user = userEvent.setup()
+    const { container } = render(<JournalArchive entries={[]} selection={{ selectedMonth: null, selectedWeekStart: null }}
+      onSelectionChange={vi.fn()} onOpenDay={vi.fn()} onBack={vi.fn()} />)
+    const title = screen.getByRole("heading", { name: "지난 일지", level: 1 })
+    expect(title).toHaveClass("app-heading", "app-heading--screen", "app-heading--accent")
+    expect(container.querySelectorAll(".app-heading--accent")).toHaveLength(1)
+    expect(screen.queryByRole("heading", { name: "첫 일지를 남겨보세요" })).toBeNull()
+    expect(screen.queryByText("예시 · 내 기록에 저장되지 않아요")).toBeNull()
+
+    await user.click(screen.getByRole("button", { name: "일지가 쌓인 예시 보기" }))
+    const expandedTitle = screen.getByRole("heading", { name: "일지가 쌓인 달력", level: 2 })
+    expect(expandedTitle).toHaveClass("app-heading--section")
+    expect(expandedTitle).not.toHaveClass("app-heading--accent")
+    expect(container.querySelectorAll(".app-heading--accent")).toHaveLength(1)
+  })
+
+  it("keeps an opened example explicit but removes its empty illustration until emptiness is confirmed", async () => {
+    const user = userEvent.setup()
+    const props = {
+      selection: { selectedMonth: null, selectedWeekStart: null },
+      onSelectionChange: vi.fn(),
+      onOpenDay: vi.fn(),
+      onBack: vi.fn(),
+    }
+    const { container, rerender } = render(<JournalArchive {...props} entries={[]} readiness="READY" />)
+    const illustration = () => container.querySelector('img[src$="journal-empty-illustration.webp"]')
+
+    expect(illustration()).toBeNull()
+    expect(screen.queryByText("예시 · 내 기록에 저장되지 않아요")).toBeNull()
+    await user.click(screen.getByRole("button", { name: "일지가 쌓인 예시 보기" }))
+    expect(illustration()).toHaveAttribute("width", "64")
+    expect(illustration()).toHaveAttribute("height", "64")
+    expect(screen.getByRole("heading", { name: "일지가 쌓인 달력" })).toBeVisible()
+
+    for (const { readiness, message } of [
+      { readiness: "LOADING", message: "일지를 불러오고 있어요." },
+      { readiness: "STALE", message: "최신 일지를 아직 확인하지 못했어요. 기록이 없는 상태로 표시하지 않아요." },
+      { readiness: "ERROR", message: "일지를 불러오지 못했어요. 기록이 없는 것은 아니에요." },
+    ] as const) {
+      rerender(<JournalArchive {...props} entries={[]} readiness={readiness} />)
+      expect(illustration()).toBeNull()
+      expect(screen.getByText(message)).toBeVisible()
+      expect(screen.getByText("예시 · 내 기록에 저장되지 않아요")).toBeVisible()
+      expect(screen.getByRole("heading", { name: "일지가 쌓인 달력" })).toBeVisible()
+      expect(screen.getByRole("grid")).toBeVisible()
+    }
+
+    rerender(<JournalArchive {...props} entries={ENTRIES} readiness="READY" />)
+    expect(illustration()).toBeNull()
+    expect(screen.getByText("내 기록도 도착했어요.")).toBeVisible()
+    expect(screen.getByText("예시 · 내 기록에 저장되지 않아요")).toBeVisible()
+    expect(screen.getByRole("grid")).toBeVisible()
+    expect(props.onOpenDay).not.toHaveBeenCalled()
+  })
+
+  it("shows the real calendar first and keeps the fictional example optional", async () => {
     const user = userEvent.setup()
     const onSelectionChange = vi.fn()
     const onOpenDay = vi.fn()
     const now = new Date()
     render(<JournalArchive entries={[]} selection={{ selectedMonth: null, selectedWeekStart: null }}
       onSelectionChange={onSelectionChange} onOpenDay={onOpenDay} onBack={vi.fn()} />)
-    expect(screen.queryByRole("grid")).toBeNull()
+    expect(screen.getByRole("grid", { name: `${now.getFullYear()}년 ${now.getMonth() + 1}월 달력` })).toBeVisible()
+    expect(screen.queryByText("예시 · 내 기록에 저장되지 않아요")).toBeNull()
+    await user.click(screen.getByRole("button", { name: "일지가 쌓인 예시 보기" }))
+    expect(screen.getByRole("heading", { name: "일지가 쌓인 달력" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "내 달력" }))
     expect(screen.getByRole("grid", { name: `${now.getFullYear()}년 ${now.getMonth() + 1}월 달력` })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "오늘" }))
     expect(onOpenDay).not.toHaveBeenCalled()
-    expect(screen.getByRole("status")).toHaveTextContent("이날 작성한 일지가 없어요")
+    expect(screen.queryByRole("status")).toBeNull()
     await user.click(screen.getByRole("button", { name: "다음 달" }))
     expect(onSelectionChange).not.toHaveBeenCalled()
   })
@@ -144,7 +265,7 @@ describe("journal archive surface", () => {
     expect(screen.queryByText(SECRET)).toBeNull()
     expect(document.body.textContent).not.toContain(SECRET)
     expect(screen.getByText("출처를 확인할 수 없어 제외된 기록 1건")).not.toBeVisible()
-    await user.click(screen.getByText("월별 기록 모아보기"))
+    await user.click(screen.getByRole("button", { name: "다른 달 찾기" }))
     expect(screen.getByText("출처를 확인할 수 없어 제외된 기록 1건")).toBeVisible()
 
     await user.click(screen.getByRole("button", { name: /^2026년 7월 훈련 후/u }))
@@ -169,7 +290,8 @@ describe("journal archive surface", () => {
     expect(document.body.textContent).not.toContain(SECRET)
     expect(onOpenDay).not.toHaveBeenCalled()
     await user.click(screen.getByRole("button", { name: "일지·메모 원문 열기" }))
-    expect(onOpenDay).toHaveBeenCalledWith("2026-07-10")
+    expect(onOpenDay).toHaveBeenCalledWith("2026-07-10", "session-visible",
+      expect.objectContaining({ date: "2026-07-10", entryId: "session-visible", scroll: expect.any(Number) }))
   })
 
   it("keeps controlled month and week selection when the archive remounts", () => {
@@ -213,9 +335,25 @@ describe("journal archive surface", () => {
     expect(screen.getByText(/처방이나 정답 주기가 아니에요/u)).toBeVisible()
     expect(screen.getByRole("button", { name: "월간 달력으로" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "다음 달" }))
-    expect(screen.getByText(/이 달 0일 · 0개 기록/)).toBeVisible()
+    expect(screen.queryByText(/0일 · 0개 기록/)).toBeNull()
     await user.click(screen.getByRole("button", { name: "선택한 주기로 이동" }))
     expect(screen.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
+  })
+
+  it("keeps cycle-origin record identity without passing a monthly reopen context", async () => {
+    const user = userEvent.setup()
+    const onOpenDay = vi.fn()
+    render(<JournalArchive entries={ENTRIES} mode="CYCLE" cycleAnchor="2026-07-10" cycleIndex={0}
+      selection={{ selectedMonth: null, selectedWeekStart: null }}
+      onSelectionChange={vi.fn()} onOpenDay={onOpenDay} onBack={vi.fn()} />)
+
+    await user.click(screen.getByRole("button", { name: /2026년 7월 10일/u }))
+    const choices = screen.getAllByRole("button", { name: /^시간대 미기록 · 훈련 기록/u })
+    expect(choices).toHaveLength(2)
+    await user.click(choices[1]!)
+    await user.click(screen.getByRole("button", { name: "일지·메모 원문 열기" }))
+
+    expect(onOpenDay).toHaveBeenCalledExactlyOnceWith("2026-07-10", "session-private-only")
   })
 
   it("offers date-specific writing on an empty past day without silently selecting today", async () => {
@@ -223,10 +361,20 @@ describe("journal archive surface", () => {
     const write = vi.fn()
     render(<JournalArchive entries={[]} selection={{ selectedMonth: "2025-07", selectedWeekStart: null }}
       onSelectionChange={vi.fn()} onOpenDay={vi.fn()} onBack={vi.fn()} onWriteDate={write} />)
-    await user.click(screen.getByRole("button", { name: "내 달력" }))
     await user.click(screen.getByRole("button", { name: /2025년 7월 10일 목요일/ }))
     expect(write).not.toHaveBeenCalled()
+    expect(screen.queryByText("이날 작성한 일지가 없어요.")).toBeNull()
+    expect(screen.queryByRole("heading", { name: "이날 남긴 기록" })).toBeNull()
     await user.click(screen.getByRole("button", { name: "이날 일지 쓰기" }))
     expect(write).toHaveBeenCalledExactlyOnceWith("2025-07-10")
   })
+})
+
+it("keeps the month list's accessible label without repeating it as visible copy", async () => {
+  const user = userEvent.setup()
+  render(<JournalArchive entries={ENTRIES} selection={{ selectedMonth: null, selectedWeekStart: null }}
+    onSelectionChange={vi.fn()} onOpenDay={vi.fn()} onBack={vi.fn()} />)
+  expect(screen.queryByText("월별 기록")).toBeNull()
+  await user.click(screen.getByRole("button", { name: "다른 달 찾기" }))
+  expect(screen.getByRole("region", { name: "월별 기록" })).toBeVisible()
 })

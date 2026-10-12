@@ -1,27 +1,29 @@
 import React from "react"
 import { formatPaceSeconds } from "@impl/prescription/record-pace"
 import { InitialRecordPaceOffer } from "./InitialRecordPaceOffer"
-import { ArrowLeft, ShieldCheck } from "lucide-react"
+import { ArrowLeft, CalendarDays, BookOpen, SlidersHorizontal, ShieldCheck } from "lucide-react"
 import type {
   PlanGenerationSuccess,
 } from "@impl/plan-generator/types"
 import { TermHelp } from "../../components/TermHelp"
-import { InfoDisclosure } from "../../components/InfoDisclosure"
 import { isValidIsoDate, isoShift } from "../../domain/dates"
 import { todayISO } from "../../domain/journal-store"
+import { useLocalToday } from "../../hooks/useLocalToday"
 import type { PlanBetaIntake } from "../../domain/plan-beta-store"
 import type { PlanAthleteEvidence } from "../../domain/plan-beta-flow"
 import type { AthleteRecord } from "../../domain/athlete-records"
 import type { CandidatePrescriptionBinding } from "../../domain/plan-candidate-prescription"
+import { deriveRecordCurrentness } from "../../domain/pace-target-evidence"
 import {
   candidateDurationSummary,
   candidateLabel,
   candidateSharedSessionSummary,
   ENERGY_INTENT_LABELS,
 } from "./labels"
-import { candidatePurposeStatus } from "./candidate-purpose-status"
+import { EasyTrainingTimes } from "./EasyTrainingTimes"
 import { DIVISION_LABELS } from "./plan-intake-meta"
 import { CandidateSection } from "./CandidateSection"
+import { PlanSchedulePreview } from "./PlanSchedulePreview"
 import type { CandidateSelection } from "./plan-selection"
 import { PaceEvidenceFlow } from "./PaceEvidenceFlow"
 import { RacePlacementNotice } from "./RacePlacementNotice"
@@ -34,7 +36,7 @@ import { resolveDetailedPlanTemplateOptions } from "./plan-template-options"
 import { listDetailedSessionTargets, type PlanSessionTarget, type CandidateSessionTargets } from "../../domain/plan-session-target"
 import { PlanSessionTargetPicker } from "./PlanSessionTargetPicker"
 import type { RepeatPreference } from "@impl/prescription/method-recommendation"
-import { InstantPlanRecommendationView } from "../../components/instant-plan/InstantPlanRecommendationView"
+import { InstantPlanRecommendationFacts, InstantPlanRecommendationView } from "../../components/instant-plan/InstantPlanRecommendationView"
 import type { InstantPlanEntry } from "../../domain/instant-plan-contract"
 import { formatRecordTime } from "../../domain/athlete-record-display"
 import { defaultInstantCandidate, projectInstantRecommendation } from "./instant-plan-projection"
@@ -50,12 +52,21 @@ import { PlanPrescriptionBasis } from "./PlanPrescriptionBasis"
 import type { CatalogCycleSuccessorSummary } from "../../domain/catalog-cycle-successor"
 import { InitialMainConditions } from "./InitialMainConditions"
 import type { InitialMainConditionsProps } from "./InitialMainConditions"
+import { AppHeading } from "../../components/AppHeading"
+import { projectInstantExecutionSteps } from "./instant-plan-today"
 
 export type InitialMainCandidateReview = Omit<InitialMainConditionsProps, "disabled" | "onPendingChange"> & {
   readonly applying: boolean
   readonly confirmed?: { readonly pairId: string; readonly startDate: string; readonly accountScope: string | null;
     readonly revision: number; readonly keys: readonly string[] } | null
 }
+
+const PURPOSE_ENTRIES = [
+  { id: "schedule", label: "일정·운동 시간", icon: CalendarDays },
+  { id: "workout", label: "훈련 조절", icon: SlidersHorizontal },
+  { id: "basis", label: "추천 근거", icon: BookOpen },
+] as const
+type CandidatePurpose = typeof PURPOSE_ENTRIES[number]["id"]
 
 export function PlanCandidates({
   generated,
@@ -131,7 +142,9 @@ export function PlanCandidates({
   readonly onRebuildCycle?: () => void
   readonly initialMain?: InitialMainCandidateReview
 }) {
-  const [showOptions, setShowOptions] = React.useState(false)
+  const [purpose, setPurpose] = React.useState<CandidatePurpose | null>(null)
+  const [workoutOpened, setWorkoutOpened] = React.useState(false)
+  const purposeId = React.useId()
   const resultRef = React.useRef<HTMLElement>(null)
   const headingRef = React.useRef<HTMLHeadingElement>(null)
   const optionsRef = React.useRef<HTMLDivElement>(null)
@@ -144,6 +157,12 @@ export function PlanCandidates({
   const confirmationRequested = React.useRef(false)
   const [navigation, setNavigation] = React.useState<{ kind: "result" | "options" | "date" | "method" | "catalog" | "recovery" | "record"; revision: number } | null>(null)
   const reveal = React.useCallback((kind: "result" | "options" | "date" | "method" | "catalog" | "recovery" | "record") => {
+    if (kind === "date" || kind === "options") setPurpose("schedule")
+    else if (kind === "method" || kind === "catalog" || kind === "record") {
+      setWorkoutOpened(true)
+      setPurpose("workout")
+    }
+    else if (kind === "result") setPurpose(null)
     setNavigation(previous => ({ kind, revision: (previous?.revision ?? 0) + 1 }))
   }, [])
   useActiveContentScroll(navigation?.revision ?? null,
@@ -164,10 +183,12 @@ export function PlanCandidates({
   }, [intake.eventGroup, intake.eventDistanceM, intake.trainingFocus, intake.experienceBand])
   const [localStartDate, setLocalStartDate] = React.useState(todayISO)
   const startDate = startDateValue ?? localStartDate
+  const localToday = useLocalToday()
   const [expandedCandidateKind, setExpandedCandidateKind] = React.useState<PlanGenerationSuccess["candidates"][number]["kind"] | null>(
     null,
   )
-  const hasValidStartDate = isValidIsoDate(startDate)
+  const isRealStartDate = isValidIsoDate(startDate)
+  const hasValidStartDate = isRealStartDate && startDate >= localToday
   const detailedEvidencePending = intake.selectedDetailedTemplateRef !== null
     && prescriptionBinding.kind !== "bound"
   const selectionUnavailable = saving || saveCode?.startsWith("ACCOUNT_PLAN_") === true
@@ -210,28 +231,35 @@ export function PlanCandidates({
   const selectedEventLabel = selectedRecord === undefined
     ? "선택한 종목"
     : `${selectedRecord.eventDistanceM}m`
-  const recommendation = projectInstantRecommendation(defaultInstantCandidate(generated), startDate)
+  const defaultCandidate = defaultInstantCandidate(generated)
+  const visibleDefaultSessions = defaultCandidate.sessions.filter(session => session.day >= 1
+    && session.day <= Math.ceil(defaultCandidate.frame.projectionLengthDays ?? defaultCandidate.frame.lengthDays))
+  const recommendation = projectInstantRecommendation(defaultCandidate, startDate)
+  const firstWorkout = [...visibleDefaultSessions].sort((a, b) => a.day - b.day || a.slot.localeCompare(b.slot))
+    .find(session => session.role !== "REST")
+  const firstWorkoutSteps = firstWorkout ? projectInstantExecutionSteps(firstWorkout) : []
   const instantAdjustment = recommendation === null ? undefined : adjustmentActions[recommendation.id]
   const conditionContext = JSON.stringify([intake, startDate, accountScope])
   const conditionReview = React.useMemo(() => !initialMainActive && onCatalogChange && instantAdjustment === undefined && reviewedConditionContext !== conditionContext && unreviewedConditions.length === 0
     ? findCatalogConditionReview(generated, intake) : null, [initialMainActive, generated, intake, onCatalogChange, instantAdjustment, reviewedConditionContext, conditionContext, unreviewedConditions.length])
-  const detailedOptions = resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference, { anchor: selectedRecord })
+  const detailedOptions = workoutOpened || intake.selectedDetailedTemplateRef !== null
+    ? resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference, { anchor: selectedRecord })
+    : []
   const selectedDetailedOption = detailedOptions.find(option => sameDetailedTemplateReference(option.ref, intake.selectedDetailedTemplateRef))
   const pacePrescription = defaultInstantCandidate(generated).sessions.find(session => session.prescription.kind === "PACE_TARGET")?.prescription
   const workoutSummary = selectedDetailedOption?.mainSummary && pacePrescription?.kind === "PACE_TARGET"
     ? `${selectedDetailedOption.mainSummary} · ${pacePrescription.repetitionDistanceM}m당 ${formatPaceSeconds(pacePrescription.targetRepSeconds)}`
     : selectedDetailedOption?.mainSummary
   const needsReview = recordConfirmationPending || detailedEvidencePending || targetDraftPending || methodDraftPending || !hasValidStartDate
+  const visiblePurpose = purpose
   React.useEffect(() => {
     if (!confirmationRequested.current || needsReview || selectionUnavailable) return
     confirmationRequested.current = false
-    setShowOptions(false)
     reveal("result")
   }, [needsReview, selectionUnavailable, reveal])
 
   return (
     <section ref={resultRef} className="plan-candidates" aria-labelledby="plan-candidates-title">
-      <p className="plan-eyebrow">오라클 · 훈련 계획</p>
       <div className="plan-result-header">
       <button className="plan-back" type="button" onClick={onBack} disabled={!canRevise || initialMainPending} aria-label="질문 다시 보기" title="질문 다시 보기">
         <ArrowLeft aria-hidden="true" size={17} />
@@ -242,25 +270,54 @@ export function PlanCandidates({
       </div>
       </div>
       {cycleSummary && <CatalogCycleSummary summary={cycleSummary} startDate={startDate} />}
-      <PlanPrescriptionBasis sessions={defaultInstantCandidate(generated).sessions}
-        confirmationPending={recordConfirmationPending || detailedEvidencePending} />
-      {onCatalogChange && intake.selectedDetailedTemplateRef === null && <InitialRecordPaceOffer
-        generated={generated} records={athleteRecords} disabled={!canRevise || !canSelect}
-        onChange={onCatalogChange} />}
+      {instantEntry?.kind === "CURRENT_RECORD" && intake.selectedDetailedTemplateRef === null
+        && selectedRecord && deriveRecordCurrentness(selectedRecord, new Date()) !== "CURRENT" && (
+        <p className="plan-copy" role="status">
+          {selectedRecord.achievedOn === null ? "기록 날짜가 없어" : "현재 페이스 기준으로 쓰기에는 오래된 기록이라"}
+          {" 이 기록으로는 개인 페이스를 적용하지 않았어요. 입력한 기록은 보관하고, 시간·힘든 정도 기준 계획으로 시작할 수 있어요."}
+        </p>
+      )}
       {recommendation && <InstantPlanRecommendationView recommendation={recommendation}
+        showSupportingDetails={false}
+        calendar={<PlanSchedulePreview
+          presentation="prescription-calendar"
+          startDate={startDate}
+          frameLengthDays={defaultCandidate.frame.projectionLengthDays ?? defaultCandidate.frame.lengthDays}
+          sessions={defaultCandidate.sessions}
+          explanationContext={{ plan: defaultCandidate, kind: "CANDIDATE" }}
+          showRpeGuide={false}
+          detailsExpanded={false}
+          allowMemoExport={false}
+          timelineHeading="전체 훈련표"
+        />}
+        executionSummary={<section className="plan-first-workout" aria-label="첫 훈련 구성">
+          <AppHeading as="h3" variant="section">첫 훈련</AppHeading>
+          <p>{recommendation.firstSessionLabel}</p>
+          {firstWorkout && <dl className="plan-first-workout__facts">
+            {firstWorkoutSteps.map((step, index) => <div key={`${step.role}-${index}`}><dt>{step.label}</dt><dd>{step.instruction}</dd></div>)}
+          </dl>}
+        </section>}
+        beforeStart={<>
+          <p className="plan-duration-total">{recommendation.durationLabel}</p>
+          <PlanPrescriptionBasis sessions={visibleDefaultSessions}
+            confirmationPending={recordConfirmationPending || detailedEvidencePending} />
+        </>}
         recoveryRef={recoveryRef}
         blockedAction={!selectionUnavailable && !saveError && !initialApplying && !catalogDraftPending && !initialMainPending
           && !methodDraftPending && !targetDraftPending && hasValidStartDate && unreviewedConditions.length === 0
           && intake.selectedDetailedTemplateRef !== null && intake.experienceBand === "EXPERIENCED"
           && (recordConfirmationPending || detailedEvidencePending)
-          ? { label: "기준 기록 확인하기", onClick: () => { setShowOptions(true); reveal("record") } } : undefined}
+          ? { label: "기준 기록 확인하기", onClick: () => reveal("record") } : undefined}
         actionState={saving ? { kind: "SAVING" } : saveCode === "ACCOUNT_PLAN_PENDING" ? { kind: "PENDING", message: saveError ?? "계정 저장을 확인하고 있어요." }
           : selectionUnavailable ? { kind: "BLOCKED", message: saveError ?? "계정 저장 상태를 먼저 확인해 주세요." }
           : saveError ? { kind: "FAILED", message: saveError }
           : initialApplying ? { kind: "BLOCKED", message: "확인한 구성을 계획안에 반영하고 있어요." }
           : catalogDraftPending || initialMainPending ? { kind: "BLOCKED", message: "바꾼 훈련을 적용하거나 취소해 주세요." }
           : unreviewedConditions.length ? { kind: "BLOCKED", message: "새 날짜에 사용할 운동 환경을 확인해 주세요." }
-          : needsReview ? { kind: "BLOCKED", message: "아래에서 기준 기록이나 변경한 내용을 확인해 주세요." } : { kind: "READY" }}
+          : needsReview ? { kind: "BLOCKED", message: !hasValidStartDate
+            ? isRealStartDate ? "시작 날짜가 지났어요. 일정·운동 시간에서 오늘 또는 이후 날짜를 다시 골라 주세요."
+              : "일정·운동 시간에서 시작 날짜를 골라 주세요."
+            : "훈련 조절에서 기준 기록이나 변경한 내용을 확인해 주세요." } : { kind: "READY" }}
         onStart={candidateId => {
           if (!canSelect || !localAccountScopeIsCurrent(accountScope)) return
           const adjust = adjustmentActions[candidateId]
@@ -279,10 +336,6 @@ export function PlanCandidates({
             onSelectionDetailsChange?.()
             reveal("result")
           }} />}
-        onShowAlternatives={() => { setShowOptions(true); reveal("options") }}
-        onEditSchedule={() => { setShowOptions(true); reveal("date") }}
-        onEditWorkout={instantAdjustment ?? (onCatalogChange && intake.selectedDetailedTemplateRef === null
-          ? () => reveal("catalog") : detailedOptions.length > 0 ? () => reveal("method") : undefined)}
         workoutLabel={instantAdjustment ? "거리·시간·반복·회복을 확인하고 조절해요" : workoutSummary}
         workoutLabelTitle={instantAdjustment ? "상세 훈련" : undefined}
         startLabel={instantAdjustment ? "처방 훈련 확인" : undefined}
@@ -300,10 +353,36 @@ export function PlanCandidates({
       {initialMainActive && instantAdjustment === undefined && <InitialMainConditions {...initialMain}
         disabled={!canRevise || selectionUnavailable || catalogDraftPending || methodDraftPending || targetDraftPending || recordConfirmationPending}
         onPendingChange={setInitialMainPending} />}
+      {!recommendation && <PlanPrescriptionBasis sessions={visibleDefaultSessions}
+        confirmationPending={recordConfirmationPending || detailedEvidencePending} />}
       {saveCode === "CYCLE_EVIDENCE_CHANGED" && onRebuildCycle && <button type="button" className="plan-text-action"
         disabled={saving} onClick={onRebuildCycle}>일지를 반영해 다시 만들기</button>}
+      <div className="plan-purpose-entries app-choice-group" role="group" aria-label="계획 확인·변경">
+        {PURPOSE_ENTRIES.map(({ id, label, icon: Icon }) => <button className="app-choice-control" key={id} type="button"
+          id={`${purposeId}-${id}-entry`} aria-expanded={visiblePurpose === id} aria-controls={`${purposeId}-${id}`}
+          onClick={() => {
+            if (visiblePurpose === id) {
+              setPurpose(null)
+              return
+            }
+            if (id === "schedule") {
+              reveal("date")
+              return
+            }
+            if (id === "workout") setWorkoutOpened(true)
+            setPurpose(id)
+          }}>
+          <Icon size={18} aria-hidden="true" />{label}
+        </button>)}
+      </div>
+      <section id={`${purposeId}-workout`} hidden={visiblePurpose !== "workout"} aria-labelledby={`${purposeId}-workout-entry`}>
+      {workoutOpened && <>
+      {instantAdjustment && <button type="button" className="plan-text-action" disabled={!canSelect} onClick={instantAdjustment}>처방 확인·조절</button>}
+      {onCatalogChange && intake.selectedDetailedTemplateRef === null && <InitialRecordPaceOffer
+        generated={generated} records={athleteRecords} disabled={!canRevise || !canSelect}
+        onChange={onCatalogChange} />}
       {onCatalogChange && intake.selectedDetailedTemplateRef === null && <div ref={catalogRef} tabIndex={-1}>
-        <CatalogWorkoutPicker generated={generated} intake={intake} openRequest={navigation?.kind === "catalog" ? navigation.revision : null}
+        <CatalogWorkoutPicker inline generated={generated} intake={intake} openRequest={navigation?.kind === "catalog" ? navigation.revision : null}
           conditionRequest={conditionRequest} startDate={startDate} reviewedConditionKeys={reviewedConditionKeys}
           records={athleteRecords} onChange={(next, reviewedAddress) => {
             if (!localAccountScopeIsCurrent(accountScope)) return
@@ -324,6 +403,7 @@ export function PlanCandidates({
       {!recommendation && saveError && <p role="alert">{saveError}</p>}
       {instantAdjustment === undefined && onChangeMethod !== undefined && detailedOptions.length > 0 && <div ref={methodRef} tabIndex={-1}>
         <PlanMethodPicker
+          inline
           options={detailedOptions}
           openRequest={navigation?.kind === "method" ? navigation.revision : null}
           selected={intake.selectedDetailedTemplateRef}
@@ -334,9 +414,6 @@ export function PlanCandidates({
           onRepeatPreferenceChange={setRepeatPreference}
         />
       </div>}
-      <details className="plan-detailed-options" open={showOptions || needsReview}
-        onToggle={event => { if (!needsReview) setShowOptions(event.currentTarget.open) }}>
-      <summary>기록·시작일·다른 일정 확인</summary>
       <fieldset disabled={selectionUnavailable || initialMainPending || initialApplying} style={{ border: 0, padding: 0, minWidth: 0 }}>
       {intake.selectedDetailedTemplateRef !== null
         && (intake.eventGroup === "FIVE_K" || intake.eventGroup === "MIDDLE_DISTANCE")
@@ -364,16 +441,6 @@ export function PlanCandidates({
         </div>
         </>
       )}
-      {!hasValidStartDate && (
-        <>
-          <p className="plan-start-date-error" role="alert">
-            실제 날짜를 고른 뒤 계획을 선택해 주세요.
-          </p>
-          <p className="plan-schedule-unavailable" role="status">
-            시작 날짜를 고르면 실제 날짜에 맞춘 계획을 보여드려요.
-          </p>
-        </>
-      )}
       {recordConfirmationPending && (
         <p className="plan-start-date-error" role="alert">
           새로 고른 기준 기록을 확인한 뒤 계획을 선택해 주세요.
@@ -381,15 +448,29 @@ export function PlanCandidates({
       )}
       {detailedEvidencePending && !recordConfirmationPending && (
         <p className="plan-start-date-error" role="alert">
-          같은 종목의 경기 기록 또는 목표기록을 고르고 확인해 주세요. 기록 없이 받으려면 상세 훈련에서 ‘기록 없이 시간·RPE로 받기’를 고르세요.
+          같은 종목의 기록을 고르고 확인해 주세요. 기록이 없으면 ‘기록 없이 계획 받기’를 고르세요.
         </p>
       )}
+      </fieldset>
+      {onRefine !== undefined && canRevise && <fieldset disabled={initialMainPending} className="plan-purpose-fields">
+        <PlanRefinePanel purpose="workout" intake={intake} targetRaceDate={targetRaceDate} onRefine={onRefine}
+          detailedTemplateAvailable={resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference).length > 0} />
+      </fieldset>}
+      </>}
+      </section>
+      <section id={`${purposeId}-schedule`} hidden={visiblePurpose !== "schedule"} aria-labelledby={`${purposeId}-schedule-entry`}>
+      <fieldset disabled={selectionUnavailable || initialMainPending || initialApplying} className="plan-purpose-fields">
+      {!hasValidStartDate && <p className="plan-start-date-error" role="alert">
+        {isRealStartDate ? "시작 날짜가 지났어요. 오늘 또는 이후 날짜를 다시 골라 주세요."
+          : "실제 날짜를 고른 뒤 계획을 선택해 주세요."}
+      </p>}
       <label ref={dateRef} className="plan-start-date" htmlFor="plan-start-date">
         <span>계획 시작 날짜</span>
         <input
           id="plan-start-date"
           ref={dateInputRef}
           type="date"
+          min={localToday}
           value={startDate}
           aria-label="계획 시작 날짜"
           aria-describedby="plan-start-date-help"
@@ -400,13 +481,15 @@ export function PlanCandidates({
           }}
         />
         <small id="plan-start-date-help">
-          오늘부터 시작해요. 바꿀 수 있어요.
+          오늘 또는 이후 날짜로 시작해요. 바꿀 수 있어요.
         </small>
       </label>
+      {onRefine !== undefined && canRevise && <PlanRefinePanel purpose="schedule" intake={intake}
+        targetRaceDate={targetRaceDate} onRefine={onRefine} detailedTemplateAvailable={false} />}
       {unreviewedConditions.length > 0 && <button type="button" className="plan-text-action"
         onClick={() => reveal("result")}>바뀐 날짜의 운동 환경 확인</button>}
       <div ref={optionsRef} tabIndex={-1} role="region" aria-label="다른 계획 비교" className="plan-candidate-list">
-        <h2>일정을 보고 골라요</h2>
+        <h2>운동 시간을 비교하고 골라요</h2>
         {generated.candidates.map((candidate) => (
           <CandidateSection
             key={candidate.kind}
@@ -428,30 +511,15 @@ export function PlanCandidates({
         ))}
       </div>
       </fieldset>
-      </details>
-      {onRefine !== undefined && canRevise && (
-        <fieldset disabled={initialMainPending} style={{ border: 0, padding: 0, minWidth: 0 }}>
-        <PlanRefinePanel
-          intake={intake}
-          targetRaceDate={targetRaceDate}
-          onRefine={onRefine}
-          detailedTemplateAvailable={resolveDetailedPlanTemplateOptions(intake, undefined, undefined, repeatPreference).length > 0}
-        />
-        </fieldset>
-      )}
+      </section>
       {generated.racePlacement.kind !== "NO_TARGET_RACE" && <RacePlacementNotice state={generated.racePlacement} />}
-      <InfoDisclosure title="추천 이유·계획 기준">
+      <section id={`${purposeId}-basis`} hidden={visiblePurpose !== "basis"} aria-labelledby={`${purposeId}-basis-entry`}>
+      <h2>전체 훈련 시간·목표</h2>
+      {recommendation && <InstantPlanRecommendationFacts recommendation={recommendation}
+        goalLabel={instantEntry?.kind === "GOAL_ONLY" ? `${instantEntry.eventDistanceM}m ${formatRecordTime(instantEntry.performanceSeconds)}` : undefined} />}
+      {recommendation?.reason && <p>{recommendation.reason}</p>}
       {generated.racePlacement.kind === "NO_TARGET_RACE" && <RacePlacementNotice state={generated.racePlacement} />}
-      <h2>A와 B는 뭐가 달라요?</h2>
         <CandidateComparison candidates={generated.candidates} />
-      <h2>이 계획은 어떤 정보로 만들었나요?</h2>
-      <p className="plan-copy">
-        {prescriptionBinding.kind === "bound"
-          ? `직접 고르고 확인한 현재 ${selectedEventLabel} 기록으로 한 강도 세션의 상세 페이스를 계산했어요. 다른 훈련과 일지 값은 시간이나 RPE를 바꾸지 않습니다.`
-          : generated.sourceMode === "PROFILE_ONLY"
-          ? "고른 목표·경험·운동할 날로 만들었어요. 아래에서 조금씩 다듬을 수 있어요."
-          : "최근 일지가 있는지만 확인했어요. 일지의 거리, RPE, 메모는 계획의 시간이나 강도를 바꾸지 않아요."}
-      </p>
       <h2>기준 기록·참가 부문·이전 계획</h2>
       <div className="plan-source-strip">
         <ShieldCheck aria-hidden="true" size={17} />
@@ -491,7 +559,7 @@ export function PlanCandidates({
           )}
         </span>
       </div>
-      </InfoDisclosure>
+      </section>
     </section>
   )
 }
@@ -507,21 +575,15 @@ function CandidateComparison({
 
   return (
     <section className="plan-candidate-comparison" aria-label="두 계획 핵심 비교">
-      <h2>{comparison.easyDurationOnly ? "고른 목표는 같고, 쉬운 훈련 시간만 달라요" : "두 계획의 본운동 구성을 확인하세요"}</h2>
+      <h2>계획 A·B 비교</h2>
       <p className="plan-candidate-comparison__intro">
-        {comparison.hasUnsupportedCatalog ? <>
-          {comparison.contextMatches && <>두 계획 모두 주요 훈련 목적은 &lsquo;{selectedIntentLabel}&rsquo;
-            <TermHelp term={ENERGY_INTENT_LABELS[sharedCandidate.selectedEnergyIntent].term} />이에요. </>}
-          카탈로그 상세 구성은 이 비교에서 공통 여부를 확인할 수 없어요. 각 일정의 훈련 방법을 확인해 주세요.
-        </> : comparison.sameMainValues ? <>
-          두 계획 모두 주요 훈련 목적은 &lsquo;{selectedIntentLabel}&rsquo;
-          <TermHelp term={ENERGY_INTENT_LABELS[sharedCandidate.selectedEnergyIntent].term} />이에요.
-          {comparison.hasDetailed
-            ? " 상세 처방이 있는 본운동의 반복·회복·목표 페이스가 같아요."
-            : " 같은 날·시간대에 같은 시간·RPE 범위를 넣었어요. 구체적인 반복과 회복 방법이 정해진 것은 아니에요."}
-          {comparison.hasDetailed && comparison.hasUnspecified && " 구간이 미지정인 다른 본운동은 시간·RPE 범위만 같아요."}
-          {" "}여기서 쉬운 훈련은 기초 달리기와 회복 운동을 말해요.
-        </> : "일정이나 본운동의 수치가 달라 공통 구성이라고 단정할 수 없어요."}
+        {comparison.easyDurationOnly
+          ? "일부 기초·회복 운동의 시간만 달라요. 주요 훈련과 그에 붙는 회복 운동은 그대로예요."
+          : comparison.hasUnsupportedCatalog
+          ? "운동 시간부터 비교해 보세요. 세부 훈련 방법이 같은지는 각 일정에서 확인해야 해요."
+          : comparison.sameMainValues
+          ? `두 계획의 주요 훈련 수치는 같아요. 훈련 목표는 ${selectedIntentLabel}이에요.`
+          : "일정이나 주요 훈련이 달라요. 시간뿐 아니라 날짜별 훈련 방법도 확인해 주세요."}
       </p>
       {comparison.easyDurationOnly && <div className="plan-candidate-comparison__shared">
         <strong>두 계획의 공통 일정</strong>
@@ -531,12 +593,10 @@ function CandidateComparison({
         {candidates.map((candidate) => {
           const hasCatalog = candidate.sessions.some(s => s.prescription.kind === "RPE_TIME_RANGE" && s.prescription.catalogWorkout)
           const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent, hasCatalog)
-          const purposeStatus = candidatePurposeStatus(candidate.kind, hasCatalog)
           return (
             <article key={candidate.candidateId}>
-              <span>계획안 {candidate.kind === "BALANCED" ? "A" : "B"}</span>
               <strong>{label.title}</strong>
-              <p>{purposeStatus.label}</p>
+              <EasyTrainingTimes sessions={candidate.sessions.filter(session => session.day >= 1 && session.day <= Math.ceil(candidate.frame.projectionLengthDays ?? candidate.frame.lengthDays))} />
               <small>{candidateDurationSummary(candidate)}</small>
             </article>
           )
@@ -545,8 +605,8 @@ function CandidateComparison({
       <MainWorkComparison comparison={comparison} />
       <p className="plan-candidate-comparison__note">
         {comparison.easyDurationOnly
-          ? "두 합계의 차이는 조절할 수 있는 쉬운 훈련을 A에서는 시간 범위로, B에서는 가장 짧은 시간으로 계산해서 생겨요. 주요 훈련이 더 많거나 세지는 차이는 아니에요."
-          : "시간 합계만으로 훈련 방법이나 부담이 같다고 판단하지 않아요."}
+          ? "범위의 앞 숫자는 최소 시간, 뒤 숫자는 최대 시간이에요. 두 안 모두 그 범위 안에서 정한 시간이므로, B가 항상 실제 운동 시간이 더 짧다는 뜻은 아니에요."
+          : "시간이 같아도 운동 방법과 강도는 다를 수 있어요."}
       </p>
     </section>
   )

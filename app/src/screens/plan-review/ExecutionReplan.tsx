@@ -10,14 +10,12 @@ import { isoShift, isoToDate } from "../../domain/dates"
 import { sessionLabel, prescriptionLabel } from "../plan-beta/labels"
 import type { VersionedStoredPlanSession } from "../../domain/plan-session-schema"
 import "../../styles/execution-review.css"
+import { SessionWorkoutNotation } from "../plan-beta/WorkoutNotation"
 
 function Workout({ session }: { session: VersionedStoredPlanSession }) {
   const p = session.prescription
-  const range = (min: number, max: number) => min === max ? `${min}` : `${min}~${max}`
-  const summary = p.kind === "RPE_TIME_RANGE"
-    ? `${range(p.durationMinutes.minimum, p.durationMinutes.maximum)}분 · RPE ${range(p.rpe.minimum, p.rpe.maximum)}`
-    : p.kind === "REST" ? "운동 없음" : prescriptionLabel(session)
-  return <><strong>{sessionLabel(session)}</strong><span>{summary}</span></>
+  return <><strong>{sessionLabel(session)}</strong><SessionWorkoutNotation session={session} />
+    {p.kind === "RPE_TIME_RANGE" && p.catalogWorkout && <small>전체 {p.durationMinutes.minimum}{p.durationMinutes.minimum === p.durationMinutes.maximum ? "" : `–${p.durationMinutes.maximum}`}분 · 준비·회복·정리 포함</small>}</>
 }
 
 export function ExecutionReplan({ entryId, onClose, onOpenPlan, onOpenJournal, returnFocusTo }: {
@@ -76,7 +74,7 @@ export function ExecutionReplan({ entryId, onClose, onOpenPlan, onOpenJournal, r
               <div className="execution-replan__before-after"><div><small>변경 전</small><Workout session={before} /></div><ArrowRight size={18} aria-hidden="true" /><div><small>변경 후</small><Workout session={session} /></div></div></section>]
           })}</div>
           <p className="execution-review__muted">표시한 날짜만 바꿔요. 오늘과 이미 기록한 훈련은 그대로예요.</p>
-          <details><summary>남은 일정 전체</summary>{selected.after.activePlan.sessions.filter(s => isoShift(selected.after.intake.startDate!, s.day-1) > today).map(s => <p key={`${s.day}:${s.slot}`}><strong>{isoShift(selected.after.intake.startDate!, s.day-1)} · {s.slot === "AM" ? "오전" : "오후"}</strong><br />{prescriptionLabel(s)}</p>)}</details>
+          <details><summary>남은 일정 전체</summary>{selected.after.activePlan.sessions.filter(s => isoShift(selected.after.intake.startDate!, s.day-1) > today).map(s => <p key={`${s.day}:${s.slot}`}><strong>{isoShift(selected.after.intake.startDate!, s.day-1)} · {s.slot === "AM" ? "오전" : "오후"}</strong><br />{prescriptionLabel(s, true)}</p>)}</details>
           <details><summary>이 변경의 한계</summary><p>실제 기록을 확인한 뒤 본인이 고른 변경이에요. 수행량이나 회복 정도를 자동 진단하지 않아요. 못 한 훈련을 더하지 않으며, 다음 주기는 이번 변경만으로 자동 생성하지 않아요.</p></details>
         </> : <>
           <p className="execution-review__muted">남긴 기록을 바탕으로 내일 이후만 조정해요. 그대로 진행해도 괜찮아요.</p>
