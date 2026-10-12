@@ -34,7 +34,7 @@ npx playwright test --config scripts/phase2-assets/playwright.assets.config.ts
 | 빈 스탬프 칸 | `stamps/stamp-empty.svg` | 128 | 게임 | G3 | "아직 받지 않은 스탬프" |
 | 시즌 엠블럼 2종 | `seasons/season-{korea,world}.svg` | 192, 표시 40·96 | 게임 | G3 섹션 머리, G4 | "시즌 1 코리아 투어 엠블럼" 등 |
 | 빈 지갑 | `illustrations/empty-wallet.svg` | 160 | 앱 크롬 | S2·S3 빈 상태 | 장식 |
-| 캐릭터 초상 6종 | `portraits/portrait-{tori,hana,dandan,nabi,r01,pengu}@2x.png` | 320(표시 160) | 게임 | G5, 캐릭터 선택 큰 카드 | 캐릭터 이름 |
+| 캐릭터 초상 6종 (**임시**) | `portraits/portrait-{tori,hana,dandan,nabi,r01,pengu}@2x.png` | 320(표시 160) | 게임 | G5, 캐릭터 선택 큰 카드 | 캐릭터 이름 — 오너가 생성 이미지로 교체 예정(CHARACTER_ART_BRIEF, 2026-10-09) |
 
 ## 디자인 기준
 

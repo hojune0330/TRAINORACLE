@@ -9,7 +9,7 @@
 - 메달 문구에는 원·P 가치를 붙이지 않는다.
 - `pending` 표시가 있는 문구는 오너·법률 승인 전에는 화면에 넣지 않는다.
 
-키 106개 · 검사 결과: 통과
+키 109개 · 검사 결과: 통과
 
 ## point
 
@@ -42,8 +42,8 @@
 | `wallet.earn.journal.hint` | 하루 한 번, 오늘 날짜 일지만 | 22 |  |
 | `wallet.earn.visit` | 앱을 연 날 10P | 18 |  |
 | `wallet.earn.visit.hint` | 하루 한 번 | 12 |  |
-| `wallet.earn.streak7` | 기록 7일째 100P | 18 | ⚠️ 오너 승인 필요(POINT_STANDARD §7-1) |
-| `wallet.earn.streak30` | 기록 30일째 300P | 18 | ⚠️ 오너 승인 필요 |
+| `wallet.earn.streak7` | 기록 7일 연속마다 30P | 18 |  |
+| `wallet.earn.streak30` | 기록 30일 연속 100P | 18 |  |
 | `wallet.ledger.title` | 최근 내역 | 10 |  |
 | `wallet.ledger.all` | 전체 내역 | 8 |  |
 | `wallet.ledger.empty` | 아직 내역이 없어요. 일지를 남기면 40P가 쌓여요. | 40 |  |
@@ -57,6 +57,8 @@
 | `wallet.note` | 포인트는 지금 일지 꾸미기에만 써요. 다른 사람에게 보내거나 현금으로 바꾸는 기능은 아직 없어요. | 70 |  |
 | `wallet.guest` | 이 기기에 쌓인 포인트예요. 로그인하면 다른 기기에서도 볼 수 있어요. | 50 |  |
 | `wallet.guest.login` | 로그인 | 6 |  |
+| `wallet.earn.streak.hint` | 하루라도 빠지면 다시 1일부터 세요 | 22 |  |
+| `wallet.expiry` | 포인트는 적립일부터 5년 동안 쓸 수 있어요 | 26 |  |
 
 ## home
 
@@ -77,6 +79,7 @@
 | `rewards.visit.saveFailed` | 방문 포인트를 이 기기에 저장하지 못했어요. | 30 |  |
 | `rewards.visit.pending` | 계정 방문 포인트를 확인하고 있어요. | 26 |  |
 | `rewards.journal.awarded` | 일지를 남겨서 +40P | 16 |  |
+| `rewards.streak.awarded` | 기록 {days}일 연속! +{points}P | 22 |  |
 
 ## decoration
 
@@ -103,7 +106,7 @@
 
 | 키 | 문구 | 한도 | 비고 |
 |---|---|---|---|
-| `legal.points` | TrainOracle 포인트는 1P를 0.1원 가치로 계산합니다. 현재는 앱 안 꾸미기에만 사용할 수 있으며, 양도하거나 현금으로 바꿀 수 없습니다. | 120 | ⚠️ 법률 확인 후 open-source.html 생성기·약관에 반영(WORK_SPLIT O-2) |
+| `legal.points` | TrainOracle 포인트는 1P를 0.1원 가치로 계산합니다. 현재는 앱 안 꾸미기에만 사용할 수 있으며, 양도하거나 현금으로 바꿀 수 없습니다. 포인트는 적립일부터 5년 동안 사용할 수 있습니다. | 140 | ⚠️ 오너 승인 완료(2026-10-09). 법률 확인 후 약관·고지에 반영(E-5) |
 
 ## game
 
