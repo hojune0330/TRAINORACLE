@@ -1,0 +1,146 @@
+{
+  "kind": "TRAINORACLE_TRIPO_CANDIDATE_MANIFEST",
+  "date": "2026-10-12",
+  "status": "STATIC_BASE_DELIVERED_RIG_AND_RUN_PREVIEW_ONLY",
+  "sourceTaskId": "15d4e91d-7b0c-4471-af5a-8fcf70d73920",
+  "completedFiles": [
+    {
+      "file": ".gitattributes",
+      "bytes": 191,
+      "sha256": "835a115a89b773966966500f95f001f1d138313bdac2eb9e5adcdb6f4a01c355"
+    },
+    {
+      "file": "BASE_OFFLINE_REVIEW.md",
+      "bytes": 3206,
+      "sha256": "8e512dff84b74851e2a767c516e7f2ea44db6cb70217e30207515c5e802f07b7"
+    },
+    {
+      "file": "base-inspection.json",
+      "bytes": 2232,
+      "sha256": "b84d1d2b66f3a2e6d387f6ef1b2d3e3e87d3417291a1df1d411898b1b543c3c7"
+    },
+    {
+      "file": "base-review-back-64px.png",
+      "bytes": 4798,
+      "sha256": "15abe50b27efa97d371ee483e2b429a67fefb9bc1160ca4ddc9ad30b9742115a"
+    },
+    {
+      "file": "base-review-back-75px.png",
+      "bytes": 5911,
+      "sha256": "03d8c9ad28c7c59bf532ac5e45a0c2fc0f3fbe9f255b2edc7064beafe8228032"
+    },
+    {
+      "file": "base-review-back.png",
+      "bytes": 68708,
+      "sha256": "8ce6858fa9d362d9c7123cc591850e844dcb2287e2c342a0aadc7fda2275b494"
+    },
+    {
+      "file": "base-review-contact.png",
+      "bytes": 301806,
+      "sha256": "e80afef5650e7fbf2bee19fa694bcc75de8dbf1c93d570a2829b06efb3801ae3"
+    },
+    {
+      "file": "base-review-front-64px.png",
+      "bytes": 5370,
+      "sha256": "67fe9e00af5b3ab31f516b2a386d3cc224dc5f764d09278447b0b598f4ff715b"
+    },
+    {
+      "file": "base-review-front-75px.png",
+      "bytes": 6769,
+      "sha256": "45484286d6a1bddbeca20a55c37ffdb96b8b2e8e7482979a3255747b7704df0b"
+    },
+    {
+      "file": "base-review-front.png",
+      "bytes": 81897,
+      "sha256": "eb656d0ac79e6b26896013ecaf883a3a89595b4fcbe9d0c6e68beb37740a8eaa"
+    },
+    {
+      "file": "base-review-readability.png",
+      "bytes": 80349,
+      "sha256": "60cbc77b8601073d6bdd728d22c0d7b63796dcf633af417aa96171ea4d14e663"
+    },
+    {
+      "file": "base-review-renders.json",
+      "bytes": 1587,
+      "sha256": "85c533b16a80e39e045140886fe51b517f0a0d6f61f32507f4937abb7afef083"
+    },
+    {
+      "file": "base-review-right-64px.png",
+      "bytes": 3391,
+      "sha256": "59546a899c6bcac505355c033e096c9488a8caf3970502858356817ccbf6b9b0"
+    },
+    {
+      "file": "base-review-right-75px.png",
+      "bytes": 4377,
+      "sha256": "b4a3667d69a53e0f7f4e5e4d90fc006c2dd0664af804b2f5def8991d0e15d66c"
+    },
+    {
+      "file": "base-review-right.png",
+      "bytes": 52531,
+      "sha256": "8910ba02c30df9c8017b93d39db64f0fb898d82ea28c01afef88ec5e2246631a"
+    },
+    {
+      "file": "base-review-three-quarter-64px.png",
+      "bytes": 4857,
+      "sha256": "1859c5a583130989e9143b6928bf0588cad002da9003c52cb5a1323eaf9c87e1"
+    },
+    {
+      "file": "base-review-three-quarter-75px.png",
+      "bytes": 6329,
+      "sha256": "40e69744219baf68ccdbb360eda5b62b979025b82d66dd6204d7aa729783b141"
+    },
+    {
+      "file": "base-review-three-quarter.png",
+      "bytes": 76956,
+      "sha256": "004051c9a183f2b00dacd6ec53ab1c8da7953f242a8636738d17d34dfbf51198"
+    },
+    {
+      "file": "PROMPTS.md",
+      "bytes": 4827,
+      "sha256": "e0ecdc8b1f2ffc0367243d20f107e7a42f32ba5c6ab8cdb691acb199a748cceb"
+    },
+    {
+      "file": "README.md",
+      "bytes": 4154,
+      "sha256": "be295967339e5e7c0af9ecb67efc886b149880d84a51a40dbc267bb372c2d17f"
+    },
+    {
+      "file": "tools/inspect-glb.cjs",
+      "bytes": 8663,
+      "sha256": "cf8aa78c0584adffadec67006734d009cced2adc6166e5ddd4e5dba4bd41ea8a"
+    },
+    {
+      "file": "tools/render-glb-offline.py",
+      "bytes": 14782,
+      "sha256": "492a9529899174ea67c7b08fc27927353496b9fe481773c8588bc763cedfa472"
+    },
+    {
+      "file": "tori-base.glb",
+      "bytes": 889092,
+      "sha256": "cd39844b82b8d5058217c9434bad07f87e84feec3357027478fd924e4ea8e4db"
+    },
+    {
+      "file": "tori-tpose-reference.png",
+      "bytes": 1187187,
+      "sha256": "b0d49e2d35b12ffa05b3952e9ead6fa69032adaf6b01b6ed3fe340b96c5a70e1"
+    },
+    {
+      "file": "USAGE_AND_RIGHTS.md",
+      "bytes": 3272,
+      "sha256": "88328edd38580ee713cc43334e5b6b273a7fab5a3ae44fbaaf58cfbb216169b6"
+    }
+  ],
+  "credits": {
+    "generation": 25,
+    "rig": 20,
+    "totalObserved": 45,
+    "balanceBefore": 3105,
+    "balanceAfter": 3060
+  },
+  "pending": [
+    "Animated file download blocked by Chrome ERR_BLOCKED_BY_CLIENT",
+    "Side/back texture and dark-background contrast review",
+    "Final sprite rendering and D-12b/E-14 integration"
+  ],
+  "validationScope": "Checksums and static GLB metadata/visual review; no runtime, rig deformation or animation-loop acceptance"
+}

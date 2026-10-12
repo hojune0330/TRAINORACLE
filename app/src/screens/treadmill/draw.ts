@@ -206,7 +206,8 @@ export function createTreadmillRenderer() {
     const blink = state.invulnerable > 0 && !reduced && Math.floor(state.invulnerable * 12) % 2 === 0
     if (blink) context.globalAlpha = 0.45
     const squash = !reduced && state.landed < 0.14 ? 1 - state.landed / 0.14 : 0
-    drawRunner(context, palette, { pose: pose(state), phase: reduced ? 0 : phase, upgrades: state.upgrades, squash, character })
+    drawRunner(context, palette, { pose: pose(state), phase: reduced ? 0 : phase, upgrades: state.upgrades, squash, character,
+      jumpStage: state.velocityY > 80 ? 0 : state.velocityY < -80 ? 2 : 1 })
     context.restore()
     if (state.invulnerable > 0 && reduced) {
       context.strokeStyle = palette.gold; context.lineWidth = 3
