@@ -14,6 +14,7 @@ import type { PlannedSessionLink } from "./planned-session-link"
 import { fileObservationSchema, type FileObservationV1 } from "./import/file-observation"
 import { comparisonRelationSchema, type ComparisonRelationV1 } from "./import/comparison-relation"
 import { exerciseLogSchema, type ExerciseLog } from "./exercise-log"
+import { bodyPartMetadataSchema, journalHasPainSignal, type BodyPartMetadataV1 } from "./body-part-metadata"
 
 export const MEMO_PURPOSE = {
   privateSelfOnly: "PRIVATE_SELF_ONLY",
@@ -50,6 +51,7 @@ export type JournalEntryBase = {
   readonly savedAt: string
   readonly syncState: "local" | "synced"
   readonly fieldProvenance?: FieldProvenanceMap
+  readonly bodyPartMetadata?: BodyPartMetadataV1
 }
 
 type PurposeScopedMemo = {
@@ -148,6 +150,7 @@ const baseShape = {
   savedAt: z.string().min(1),
   syncState: z.enum(["local", "synced"]),
   fieldProvenance: fieldProvenanceSchema.optional(),
+  bodyPartMetadata: bodyPartMetadataSchema.optional(),
 } as const
 
 const purposeShape = {
@@ -222,6 +225,12 @@ const journalEntrySchema: z.ZodType<JournalEntry> = z.union([
 ])
 
 const journalEntryWriteSchema = journalEntrySchema.superRefine((entry, context) => {
+  if (entry.bodyPartMetadata !== undefined && (entry.kind === "race"
+    || entry.fieldProvenance?.painParts?.provenance !== "EXPLICIT"
+    || entry.kind === "post-session" && Object.keys(entry.painParts ?? {}).some(id => id.startsWith("other_"))
+    || entry.kind === "evening" && Object.keys(entry.painParts).some(id => id.startsWith("other_")))) {
+    context.addIssue({ code: "custom", path: ["bodyPartMetadata"], message: "Private body observations require explicit numeric input and a single severity source." })
+  }
   if (entry.kind === "post-session" && entry.planExecutionChange !== undefined
     && (entry.activityOutcome !== "PARTIAL" || !entry.plannedSessionLink
       || entry.fieldProvenance?.planExecutionChange?.provenance !== "EXPLICIT")) {
@@ -267,7 +276,7 @@ const journalEntryWriteSchema = journalEntrySchema.superRefine((entry, context) 
       || entry.activityOutcome === "PARTIAL"
       || entry.activityOutcome === "LIGHT_ACTIVITY"
     const didNotPerform = entry.activityOutcome === "RESTED" || entry.activityOutcome === "SKIPPED"
-    const hasPain = Object.values(entry.painParts ?? {}).some((level) => level > 0)
+    const hasPain = journalHasPainSignal(entry)
     const hasObjectiveValue = entry.distanceKm.trim() !== ""
       || entry.durationMin.trim() !== ""
       || entry.avgPace.trim() !== ""
@@ -340,7 +349,7 @@ const journalEntryWriteSchema = journalEntrySchema.superRefine((entry, context) 
           path: ["activityOutcome"],
         })
       }
-      if (entry.painCheckStatus !== undefined || entry.painParts !== undefined) {
+      if (entry.painCheckStatus !== undefined || entry.painParts !== undefined || (entry.bodyPartMetadata?.observations.length ?? 0) > 0) {
         context.addIssue({
           code: "custom",
           message: "Rested or skipped entries cannot retain a post-activity body check.",
@@ -348,7 +357,9 @@ const journalEntryWriteSchema = journalEntrySchema.superRefine((entry, context) 
         })
       }
       if (["activitySlot", "painCheckStatus", "painParts"].some(
-        (field) => entry.fieldProvenance?.[field] !== undefined,
+        (field) => entry.fieldProvenance?.[field] !== undefined
+          && !(field === "painParts" && entry.bodyPartMetadata?.observations.length === 0
+            && entry.fieldProvenance.painParts?.provenance === "EXPLICIT"),
       )) {
         context.addIssue({
           code: "custom",

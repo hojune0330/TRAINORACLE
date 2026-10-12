@@ -395,6 +395,43 @@ const finalized = { version: 2, state: 'FINALIZED', kind: 'JOURNAL', entry: {
   rpe: 0, memo: 'Synthetic private record', memoPurpose: 'PRIVATE_SELF_ONLY',
 } };
 const capabilities = { supportedJournalVersions: [2, 3] };
+test('body companion v4 capability preserves encrypted owner snapshots and rejects older editors', async () => {
+  const f = await fixture({ dependencies: { validateDocument: validateAccountJournalDocument } });
+  const document = { ...finalized, version: 4, entry: { ...finalized.entry,
+    fieldProvenance: { painParts: { provenance: 'EXPLICIT' } },
+    bodyPartMetadata: { schemaVersion: 1, observations: [{
+      id: 'other_11111111-1111-4111-8111-111111111111', labelSnapshot: 'SYNTHETIC_PRIVATE_LABEL',
+      severity: 5, note: 'SYNTHETIC_PRIVATE_NOTE',
+    }] },
+  } };
+  const documentId = await finalizedId();
+  const compatible = { supportedJournalVersions: [2, 3, 4] };
+  await response(await f.request({ action: 'journalBodyPartSupport' }), 200, { kind: 'journal-body-part-support', version: 1 });
+  await response(await f.request(save({ documentId, document, ...capabilities })), 426, { error: 'UPGRADE_REQUIRED' });
+  assert.equal(f.calls.commit, 0);
+  await response(await f.request(save({ documentId, document, ...compatible })), 200);
+  const read = await response(await f.request({ action: 'read', documentId, ...compatible }), 200);
+  assert.deepEqual(read.document, document);
+  for (const request of [{ action: 'read', documentId }, { action: 'list', collection: 'JOURNAL' }]) {
+    await response(await f.request({ ...request, ...capabilities }), 426, { error: 'UPGRADE_REQUIRED' });
+  }
+  await response(await f.request({ action: 'read', documentId, ...compatible }, {
+    headers: { Authorization: 'Bearer other-token' },
+  }), 404);
+  const oldEditor = { ...document, entry: { ...document.entry } };
+  delete oldEditor.entry.bodyPartMetadata;
+  await response(await f.request(save({ documentId, document: oldEditor, operationId: OP2,
+    expectedRevision: 1, ...compatible })), 422, { error: 'INVALID_DOCUMENT_UPDATE' });
+  assert.equal(f.calls.commit, 1);
+  const stored = f.docs.get(f.key(OWNER, documentId));
+  const operation = f.operations.get(f.key(OWNER, OP));
+  assert.equal(JSON.stringify(stored).includes('SYNTHETIC_PRIVATE'), false);
+  assert.equal(JSON.stringify(operation.trusted_metadata).includes('SYNTHETIC_PRIVATE'), false);
+  const unknown = structuredClone(document);
+  unknown.entry.bodyPartMetadata.schemaVersion = 2;
+  await response(await f.request(save({ documentId, document: unknown, operationId: OP2,
+    expectedRevision: 1, ...compatible })), 422, { error: 'INVALID_DOCUMENT' });
+});
 let evidenceFixtureModule;
 async function evidenceFixture() {
   if (!evidenceFixtureModule) {

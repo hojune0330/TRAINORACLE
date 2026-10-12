@@ -3,6 +3,7 @@ import type { JournalEntry } from "./journal-schema"
 import { hasPrivateMemoText } from "./private-memo-vault"
 import { JOURNAL_STORAGE_KEY } from "./journal-storage-keys"
 import { announceLocalJournalChange } from "./journal-change-events"
+import { journalWriteRetainsBodyMetadata } from "./body-part-metadata"
 
 export { JOURNAL_STORAGE_KEY }
 export const JOURNAL_STORAGE_PROBE_KEY = "__to_probe__"
@@ -29,6 +30,7 @@ export function writeJournalEntries(
   try {
     const serialized = JSON.stringify(entries)
     const previous = localStorage.getItem(JOURNAL_STORAGE_KEY)
+    if (!journalWriteRetainsBodyMetadata(previous, entries)) return false
     if (expected !== undefined && previous !== expected) return false
     try {
       localStorage.setItem(JOURNAL_STORAGE_KEY, serialized)

@@ -62,53 +62,38 @@ button.body-pain-selector__part-button {
   width: 100%;
 }
 
-.body-pain-selector__part-name { color: inherit; }
+.body-pain-selector__part-name {
+  color: inherit;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .body-pain-selector__part-value {
   color: var(--ink-2);
   font-size: var(--fs-caption);
   margin-left: auto;
   white-space: nowrap;
 }
-.body-pain-selector__picker-title {
-  color: var(--ink);
-  font-size: var(--fs-body-sm);
-  font-weight: 600;
-  line-height: 1.4;
-  margin: 0;
-}
+button.body-pain-selector__part-button[aria-expanded="true"] { border-color: var(--ink-2); }
 
-.body-pain-selector__picker {
-  display: grid;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
-  min-width: 0;
-}
-
-.body-pain-selector__scale-range {
+button.body-pain-selector__other-button {
   align-items: center;
-  color: var(--ink-2);
   display: flex;
-  font-size: var(--fs-caption);
   gap: var(--space-2);
-  line-height: 1.4;
-  margin: 0;
-}
-
-button.body-pain-selector__part-button[aria-expanded="true"] {
-  border-color: var(--ink-2);
-}
-
-.body-pain-selector__level-picker {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px;
-}
-
-.body-pain-selector .body-pain-selector__level-picker button.app-choice-control {
-  flex: 1 0 max(44px, 2.6em);
+  justify-content: flex-start;
   min-height: var(--app-touch-min, 44px);
-  min-width: max(44px, 2.6em);
-  padding: var(--space-1);
-  text-align: center;
-  white-space: nowrap;
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  width: 100%;
+}
+
+.body-pain-selector__history {
+  margin-top: var(--space-2);
+  min-height: var(--app-touch-min, 44px);
+}
+
+.body-pain-selector__metadata-warning {
+  color: var(--warn);
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+  margin: var(--space-2) 0 0;
 }

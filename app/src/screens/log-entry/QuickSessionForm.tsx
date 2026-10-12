@@ -25,7 +25,9 @@ import { useOrderedStepMotion } from "../../hooks/useOrderedStepMotion"
 import { useAutoAdvanceActivation } from "../../hooks/useAutoAdvanceActivation"
 import { useTaskFlowBack } from "../../hooks/useTaskFlowBack"
 import { painLevelsRequireReview } from "../../safety/memo-safety"
-import { BodyDiagram, PainReviewBanner } from "./BodyDiagram"
+import { PainReviewBanner } from "./BodyDiagram"
+import { JournalBodyInput } from "./JournalBodyInput"
+import { journalPainPartsForSafety, type BodyPartMetadataV1 } from "../../domain/body-part-metadata"
 import { TopBar } from "./shared"
 import { TaskFlowStep } from "../../components/TaskFlowStep"
 import { JournalSaveResult } from "../../components/JournalSaveResult"
@@ -176,6 +178,8 @@ function QuickSessionFormEditor({
   const [effortQuestion, setEffortQuestion] = React.useState<"rpe" | "pain">(presentation.effortQuestion)
   const [painStatus, setPainStatus] = React.useState<PainStatus>(input?.painStatus ?? initial?.painCheckStatus ?? "UNANSWERED")
   const [painParts, setPainParts] = React.useState<Record<string, number>>(() => ({ ...(input?.painParts ?? initial?.painParts ?? {}) }))
+  const [bodyPartMetadata, setBodyPartMetadata] = React.useState<BodyPartMetadataV1 | undefined>(() => input?.bodyPartMetadata ?? initial?.bodyPartMetadata)
+  const painSignals = journalPainPartsForSafety({ painParts, bodyPartMetadata })
   const [savedEntry, setSavedEntry] = React.useState<PostSessionEntry | null>(initial ?? null)
   const [saveError, setSaveError] = React.useState<string | null>(null)
   const [saving, setSaving] = React.useState(false)
@@ -199,13 +203,13 @@ function QuickSessionFormEditor({
     date, plannedSessionLink: planLink, activityOutcome: outcome,
     activitySlot: performed(outcome) ? slot ?? undefined : undefined,
     painCheckStatus: performed(outcome) ? painStatus : undefined,
-    painParts: performed(outcome) ? painParts : undefined,
+    painParts: performed(outcome) && painStatus === "SIGNAL_REPORTED" ? painSignals : undefined,
     fieldProvenance: {
       activityOutcome: explicitOrMissing(true), activitySlot: explicitOrMissing(slot !== null),
       painCheckStatus: explicitOrMissing(painStatus !== "UNANSWERED"),
     },
   }) : null
-  const progressIdentity = proposedProgress === null ? null : JSON.stringify([planLink, proposedProgress, outcome, slot, painStatus, painParts])
+  const progressIdentity = proposedProgress === null ? null : JSON.stringify([planLink, proposedProgress, outcome, slot, painStatus, painSignals])
   const includeProgress = progressIdentity !== null && requestedProgress === progressIdentity
   React.useEffect(() => { setRequestedProgress(null) }, [progressIdentity])
   const progressLabel = proposedProgress?.state === "PAIN_CHECKIN" ? "몸 상태 확인 필요"
@@ -217,7 +221,7 @@ function QuickSessionFormEditor({
   const draftQuestion: QuickActiveQuestion | undefined = step === "activity" ? activityQuestion
     : step === "effort" ? effortQuestion : undefined
   const draft = useFormInputDraft({ kind: "quick", step: step === "saved" ? "activity" : step,
-    outcome, slot, rpe, effortAnswered, painStatus, painParts, exerciseLog, exerciseEditor, plannedInputs: plannedInputs.values, planExecutionChange,
+    outcome, slot, rpe, effortAnswered, painStatus, painParts, ...(bodyPartMetadata ? { bodyPartMetadata } : {}), exerciseLog, exerciseEditor, plannedInputs: plannedInputs.values, planExecutionChange,
     ...(draftQuestion === undefined ? {} : { activeQuestion: draftQuestion }),
     memo: inheritedMemo.text, purpose: inheritedMemo.purpose ?? null }, entryId, step !== "saved", lastSavedAt.current)
   const activeQuestion = step === "activity" ? activityQuestion : step === "effort" ? effortQuestion : step
@@ -239,7 +243,8 @@ function QuickSessionFormEditor({
     if (exerciseEditor) { setSaveError("작성하던 운동 내용을 반영하거나 지운 뒤 저장해 주세요."); setStep("exercise"); return }
     const base = savedEntry ?? initial
     const didPerform = performed(next.outcome)
-    const hasPain = Object.values(next.painParts).some((level) => level > 0)
+    const nextMetadata = bodyPartMetadata ? didPerform && next.painStatus === "SIGNAL_REPORTED" ? bodyPartMetadata : { schemaVersion: 1 as const, observations: [] } : undefined
+    const hasPain = Object.values(journalPainPartsForSafety({ painParts: next.painParts, bodyPartMetadata: nextMetadata })).some((level) => level > 0)
     if (next.painStatus === "SIGNAL_REPORTED" && !hasPain) {
       setSaveError("불편한 곳을 하나 이상 골라 주세요.")
       return
@@ -287,6 +292,7 @@ function QuickSessionFormEditor({
       planExecutionRelation: relation,
       ...(didPerform ? { painCheckStatus: next.painStatus } : {}),
       ...(didPerform && next.painStatus === "SIGNAL_REPORTED" ? { painParts: next.painParts } : {}),
+      ...(nextMetadata ? { bodyPartMetadata: nextMetadata } : {}),
       system: didPerform ? base?.system ?? "" : "",
       title: outcomes.find((candidate) => candidate.value === next.outcome)?.ink ?? "오늘 기록",
       distanceKm: didPerform ? base?.distanceKm ?? "" : "",
@@ -313,7 +319,7 @@ function QuickSessionFormEditor({
           "QUICK_PLAN_EXECUTION_RELATION_V2",
         ),
         ...(didPerform ? { painCheckStatus: explicitOrMissing(next.painStatus !== "UNANSWERED") } : {}),
-        ...(didPerform ? { painParts: explicitOrMissing(hasPain) } : {}),
+        ...(nextMetadata ? { painParts: explicitOrMissing(true) } : didPerform ? { painParts: explicitOrMissing(hasPain) } : {}),
         system: didPerform ? base?.fieldProvenance?.system ?? explicitOrMissing(false) : explicitOrMissing(false),
         distanceKm: didPerform ? base?.fieldProvenance?.distanceKm ?? explicitOrMissing(false) : explicitOrMissing(false),
         durationMin: didPerform ? base?.fieldProvenance?.durationMin ?? explicitOrMissing(false) : explicitOrMissing(false),
@@ -374,7 +380,7 @@ function QuickSessionFormEditor({
           : isPrivateMemo ? "비밀 일지를 이 기기에 보관했어요. 계정 전송 대기 중이며 공유·분석에는 사용하지 않아요."
             : "일지를 이 기기에 보관했어요. 계정 전송 대기 중이에요."
       setSavedStorageMessage(storageMessage ?? undefined)
-      const reviewMessage = memoPreparation.reviewMessage ?? (painLevelsRequireReview(entry.painParts ?? {}) ? "불편한 곳을 기록했어요. 몸 상태를 확인해 주세요." : undefined)
+      const reviewMessage = memoPreparation.reviewMessage ?? (painLevelsRequireReview(journalPainPartsForSafety(entry)) ? "불편한 곳을 기록했어요. 몸 상태를 확인해 주세요." : undefined)
       setSavedReviewMessage(reviewMessage)
       setProgressResult(null)
       if (applyProgressAfterSave) {
@@ -442,6 +448,7 @@ function QuickSessionFormEditor({
     setTaps(nextTapCount)
     setPainStatus("NO_SIGNAL_REPORTED")
     setPainParts({})
+    setBodyPartMetadata(current => current ? { schemaVersion: 1, observations: [] } : undefined)
     reviewingEdit.current = false
     setStep("review")
   }
@@ -456,7 +463,7 @@ function QuickSessionFormEditor({
     if (outcome === null || slot === null || !effortAnswered) return
     const nextTapCount = taps + 1
     setTaps(nextTapCount)
-    if (!Object.values(painParts).some(level => level > 0)) { setSaveError("불편한 곳을 하나 이상 골라 주세요."); return }
+    if (!Object.values(painSignals).some(level => level > 0)) { setSaveError("불편한 곳을 하나 이상 골라 주세요."); return }
     reviewingEdit.current = false
     setStep("review")
   }
@@ -560,7 +567,7 @@ function QuickSessionFormEditor({
         </InfoDisclosure>}>
         <ExerciseLogSummary log={savedEntry.exerciseLog} />
         {savedEntry.planExecutionChange && <p>{PLAN_EXECUTION_CHANGE_LABELS[savedEntry.planExecutionChange]}</p>}
-        {performed(savedEntry.activityOutcome ?? null) && painLevelsRequireReview(savedEntry.painParts ?? {}) && <PainReviewBanner />}
+        {performed(savedEntry.activityOutcome ?? null) && painLevelsRequireReview(journalPainPartsForSafety(savedEntry)) && <PainReviewBanner />}
         {progressResult !== null && <JournalPlanProgressAction entry={savedEntry} initialResult={progressResult} />}
       </JournalSaveResult>
     </div>
@@ -621,8 +628,8 @@ function QuickSessionFormEditor({
                 </div>
                 {painStatus === "SIGNAL_REPORTED" && (
                   <div className="quick-log__pain-details">
-                    <BodyDiagram selected={painParts} onChange={setPainParts} />
-                    {painLevelsRequireReview(painParts) && <PainReviewBanner />}
+                    <JournalBodyInput selected={painParts} onChange={setPainParts} metadata={bodyPartMetadata} onMetadataChange={setBodyPartMetadata} />
+                    {painLevelsRequireReview(painSignals) && <PainReviewBanner />}
                   </div>
                 )}
             {saveError !== null && <p className="quick-log__error" role="alert">{saveError}</p>}
@@ -636,7 +643,7 @@ function QuickSessionFormEditor({
           {inheritedMemo.text.trim() !== "" && <p>{inheritedMemo.needsPrivateSetup
             ? "글은 아직 저장 전이에요. 비밀 메모 보관을 먼저 준비해요."
             : "저장 버튼을 누르면 글도 함께 저장돼요."}</p>}
-          {performed(outcome) && painLevelsRequireReview(painParts) && <PainReviewBanner />}
+          {performed(outcome) && painStatus === "SIGNAL_REPORTED" && painLevelsRequireReview(painSignals) && <PainReviewBanner />}
           <div className="quick-log__choices">
             {(performed(outcome) || exerciseLog.components.length > 0) && <button type="button" onClick={() => setStep("exercise")}>운동 추가·수정<ChevronRight aria-hidden="true" /></button>}
             <button type="button" onClick={() => setStep("memo")}>{inheritedMemo.text ? "글 수정" : "글 추가"}<FilePenLine aria-hidden="true" /></button>

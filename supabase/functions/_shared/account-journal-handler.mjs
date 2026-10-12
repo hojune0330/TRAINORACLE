@@ -2,7 +2,8 @@ import { encryptAccountJournalDocument, decryptAccountJournalDocument } from './
 import { validateAccountJournalRecord, validateAccountJournalRecordUpdate, validateInitialFileObservationRecord,
   correctAccountJournalImportedObservation, FILE_OBSERVATION_CORRECTION_FIELDS, parseFileObservation,
   confirmComparisonRelationRequestSchema, releaseComparisonRelationRequestSchema, applyAccountJournalComparisonMutation,
-  validateAccountJournalComparisonConfirmation, validateAccountJournalComparisonRestore, resolveComparisonOriginalFromPlanDocument } from './account-journal-record-validator.mjs';
+  validateAccountJournalComparisonConfirmation, validateAccountJournalComparisonRestore, resolveComparisonOriginalFromPlanDocument,
+  journalHasPainSignal } from './account-journal-record-validator.mjs';
 import { readAccountJournalComparisonCollection } from './account-journal-comparison-original.mjs';
 import * as accountState from './account-state-validator.mjs';
 
@@ -74,7 +75,7 @@ export function accountJournalMetadata(document) {
       || e.distanceKm.trim() !== '' || e.durationMin.trim() !== '' || e.avgPace.trim() !== ''
       || e.rpe > 0 || e.intensityAssessment !== undefined
     : e.kind === 'evening' ? e.sleepH > 0 || e.sleepQuality > 0 || e.weightKg.trim() !== ''
-      || e.restingHr.trim() !== '' || Object.values(e.painParts).some(level => level > 0) || e.mood > 0
+      || e.restingHr.trim() !== '' || journalHasPainSignal(e) || e.mood > 0
       : e.tension !== undefined || e.condition !== undefined || e.mood !== undefined;
   return { kind: 'JOURNAL', occurrenceId: e.kind === 'post-session' ? e.plannedSessionLink?.plannedSessionId ?? null : null,
     journalDate: e.date, eligible };
@@ -297,9 +298,9 @@ async function bodyJson(request) {
 function parseAction(input, validateDocument) {
   if (!object(input)) fail(400, 'INVALID_REQUEST');
   const supportedJournalVersions = input.supportedJournalVersions ?? [2];
-  if (!Array.isArray(supportedJournalVersions) || supportedJournalVersions.length < 1 || supportedJournalVersions.length > 2
+  if (!Array.isArray(supportedJournalVersions) || supportedJournalVersions.length < 1 || supportedJournalVersions.length > 3
     || new Set(supportedJournalVersions).size !== supportedJournalVersions.length
-    || supportedJournalVersions.some(version => ![2, 3].includes(version))
+    || supportedJournalVersions.some(version => ![2, 3, 4].includes(version))
     || Object.hasOwn(input, 'supportedJournalVersions') && input.supportedJournalVersions === null) fail(400, 'INVALID_REQUEST');
   if (Object.hasOwn(input, 'supportsExerciseLogV1') && typeof input.supportsExerciseLogV1 !== 'boolean') fail(400, 'INVALID_REQUEST');
   const supportsExerciseLogV1 = input.supportsExerciseLogV1 === true;
@@ -314,6 +315,7 @@ function parseAction(input, validateDocument) {
   const { action } = input;
   let valid = false;
   if (action === 'status') valid = keys(input, ['action']);
+  if (action === 'journalBodyPartSupport') valid = keys(input, ['action']);
   if (action === 'calendarDecorationSupport') valid = keys(input, ['action']);
   if (action === 'athleteRecordSupport') valid = keys(input, ['action']);
   if (action === 'runningProfileSupport') valid = keys(input, ['action']);
@@ -449,6 +451,17 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         if (enabled !== true) fail(503, 'UNAVAILABLE');
       };
       await checkGate();
+      if (input.action === 'journalBodyPartSupport') {
+        // The encrypted generic JOURNAL storage path already stores FINALIZED
+        // documents. Probe the exact server codec; no schema or public flag is opened.
+        if (!validateAccountJournalRecord({ version: 4, state: 'FINALIZED', kind: 'JOURNAL', entry: {
+          id: 'synthetic-body-support', kind: 'evening', date: '2026-10-12', savedAt: '2026-10-12T00:00:00.000Z',
+          syncState: 'local', sleepH: 0, sleepQuality: 0, weightKg: '', restingHr: '', painParts: {}, mood: 0, note: '',
+          fieldProvenance: { painParts: { provenance: 'EXPLICIT' } },
+          bodyPartMetadata: { schemaVersion: 1, observations: [] },
+        } })) fail(503, 'UNAVAILABLE');
+        return respond(200, { kind: 'journal-body-part-support', version: 1 });
+      }
       const checkOracleV2Support = async () => {
         if (typeof repo.oracleV2Support !== 'function'
           || typeof accountState.validateInitialOracleV2Document !== 'function'
@@ -825,6 +838,7 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
             if (!sameRelations(baseline, restoredDocument)) fail(422, 'INVALID_COMPARISON_RELATION');
             requireSupported(baseline);
             if (baseline?.state === 'FINALIZED' && baseline.version === 3 && restoredDocument.version === 2) fail(422, 'INVALID_FILE_OBSERVATION');
+            if (baseline?.state === 'FINALIZED' && baseline.version === 4 && restoredDocument.version < 4) fail(422, 'INVALID_DOCUMENT_UPDATE');
             const changed = !sameObservation(lifecycleCurrent?.document, restoredDocument);
             if (changed) await checkFileGate();
             if (baseline?.state === 'FINALIZED' && (!sameObservation(baseline, restoredDocument)
@@ -941,7 +955,7 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
           }
           if (relationsOf(currentDocument) && !sameRelations(currentDocument, input.document)) fail(422, 'INVALID_COMPARISON_RELATION');
           if (input.writePurpose === 'FILE_OBSERVATION' && !validateInitialFileObservationRecord(input.document)) fail(422, 'INVALID_FILE_OBSERVATION');
-          if (currentRow === null && input.document.version === 3
+          if (currentRow === null && (input.document.version === 3 || input.document.version === 4 && observationOf(input.document))
             && (!['FILE_OBSERVATION', 'MIGRATION'].includes(input.writePurpose)
               || !validateInitialFileObservationRecord(input.document))) fail(422, 'INVALID_FILE_OBSERVATION');
         }

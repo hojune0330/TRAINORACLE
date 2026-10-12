@@ -9,6 +9,19 @@ beforeEach(() => vi.stubGlobal("crypto", webcrypto))
 afterEach(() => vi.unstubAllGlobals())
 
 describe("validated form input DRAFT adapter", () => {
+  it("roundtrips private custom body observations and explicit clearing without leaking into fixed IDs", () => {
+    const bodyPartMetadata = { schemaVersion: 1 as const, observations: [{
+      id: "other_11111111-1111-4111-8111-111111111111" as const,
+      labelSnapshot: "합성 부위", severity: 4 as const, note: "SYNTHETIC_PRIVATE_BODY_NOTE",
+    }] }
+    const input = { ...body.input, bodyPartMetadata }
+    const restored = decodeFormDraft(encodeFormDraft("2026-10-12", { ...body, input })).input
+    expect(restored).toEqual(input)
+    expect(restored).toHaveProperty("painParts", {})
+    const cleared = { ...input, bodyPartMetadata: { schemaVersion: 1 as const, observations: [] } }
+    expect(decodeFormDraft(encodeFormDraft("2026-10-12", { ...body, input: cleared })).input).toEqual(cleared)
+    expect(formInputSchema.safeParse({ ...input, bodyPartMetadata: { schemaVersion: 99, observations: [] } }).success).toBe(false)
+  })
   it("roundtrips unaccepted segment numbers privately without promoting them to actual evidence", () => {
     if (body.input.kind !== "quick") throw new Error("Expected quick draft fixture")
     const quickInput = body.input

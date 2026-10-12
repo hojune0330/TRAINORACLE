@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { journalHasPainSignal } from "./body-part-metadata"
 import { isValidIsoDate } from "./dates"
 import type { JournalEntry } from "./journal-schema"
 import { accountRewardsEnabled, readAccountRewardSummary, hydrateAccountRewards, recordAccountDailyVisit } from "./account/account-reward-service"
@@ -216,7 +217,7 @@ export function toEngagementJournalRef(entry: JournalEntry): EngagementJournalRe
         || entry.sleepQuality > 0
         || entry.weightKg.trim() !== ""
         || entry.restingHr.trim() !== ""
-        || Object.values(entry.painParts).some((level) => level > 0)
+        || journalHasPainSignal(entry)
         || entry.mood > 0
       : entry.tension !== undefined
         || entry.condition !== undefined

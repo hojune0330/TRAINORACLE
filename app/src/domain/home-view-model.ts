@@ -5,6 +5,7 @@ import type { VersionedStoredPlanSession } from "./plan-session-schema"
 import type { AdjustedCandidateSession } from "./adjusted-plan-candidate"
 import type { SelectedMultiAdjustedPlanV3 } from "./selected-multi-adjusted-plan-content-v3"
 import { isoShift, isValidIsoDate } from "./dates"
+import { bodyPartLabel } from "../components/body-parts"
 
 export type HomeSession = VersionedStoredPlanSession | AdjustedCandidateSession | SelectedMultiAdjustedPlanV3["activePlan"]["sessions"][number]
 export type HomePlan = {
@@ -128,7 +129,7 @@ function buildBriefing(
   if (evening.weightKg.trim() !== "") parts.push(`체중 ${evening.weightKg}kg`)
   const painParts = Object.entries(evening.painParts)
     .filter(([, level]) => level > 0)
-    .map(([part, level]) => `통증\u00a0${part.replaceAll(" ", "\u00a0")}\u00a0${level}`)
+    .map(([part, level]) => `통증\u00a0${bodyPartLabel(part).replaceAll(" ", "\u00a0")}\u00a0${level}`)
   if (painParts.length > 0) parts.push(painParts.join(", "))
   if (parts.length === 0) return ""
 

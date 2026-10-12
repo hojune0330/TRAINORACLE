@@ -5,9 +5,10 @@ import { loadEntriesForPlanSafety } from "./journal-store"
 import { loadVersionedPlanBetaState, savePlanProgressWithLock } from "./plan-beta-store"
 import { localAccountScopeIsCurrent, localAccountScopeSnapshot } from "./account/local-account-scope"
 import { painLevelsRequireReview } from "../safety/memo-safety"
+import { journalBodyMetadataNeedsReview, journalPainPartsForSafety } from "./body-part-metadata"
 
 export function journalResultLabel(entry: PostSessionEntry): string {
-  if (entry.painCheckStatus === "SIGNAL_REPORTED" || painLevelsRequireReview(entry.painParts ?? {})) return "몸 상태 확인 기록 있음"
+  if (entry.painCheckStatus === "SIGNAL_REPORTED" || journalBodyMetadataNeedsReview(entry) || painLevelsRequireReview(journalPainPartsForSafety(entry))) return "몸 상태 확인 기록 있음"
   if (entry.activityOutcome === "PARTIAL") return "일부 수행·변경 기록 있음"
   if (entry.activityOutcome === "LIGHT_ACTIVITY") return "가벼운 운동 기록 있음"
   if (entry.activityOutcome === "RESTED") return "휴식 기록 있음"
@@ -18,14 +19,14 @@ export function journalResultLabel(entry: PostSessionEntry): string {
 
 /** A journal result is never silently converted into a plan progress mark. */
 export function journalProgressAction(state: PlanBetaState, entry: Pick<PostSessionEntry,
-  "plannedSessionLink" | "date" | "fieldProvenance" | "painCheckStatus" | "painParts" | "activityOutcome" | "activitySlot"
+  "plannedSessionLink" | "date" | "fieldProvenance" | "painCheckStatus" | "painParts" | "bodyPartMetadata" | "activityOutcome" | "activitySlot"
 >): StoredPlanProgress | null {
   if (state.version !== 3 || !entry.plannedSessionLink || entry.date !== entry.plannedSessionLink.plannedDate
     || entry.fieldProvenance?.activityOutcome?.provenance !== "EXPLICIT") return null
   const session = resolveCurrentPlannedSession(state, entry.plannedSessionLink)
   if (!session || state.progress.some(p => p.sessionDay === session.day && p.sessionSlot === session.slot)) return null
   const address = { sessionDay: session.day, sessionSlot: session.slot }
-  if (entry.painCheckStatus === "SIGNAL_REPORTED" || painLevelsRequireReview(entry.painParts ?? {}))
+  if (entry.painCheckStatus === "SIGNAL_REPORTED" || journalBodyMetadataNeedsReview(entry) || painLevelsRequireReview(journalPainPartsForSafety(entry)))
     return { ...address, state: "PAIN_CHECKIN" }
   if (entry.activityOutcome === "RESTED" || entry.activityOutcome === "SKIPPED") return { ...address, state: entry.activityOutcome }
   if (entry.activityOutcome === "COMPLETED" && entry.activitySlot === session.slot

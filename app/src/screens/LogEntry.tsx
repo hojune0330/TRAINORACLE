@@ -15,6 +15,7 @@ export interface LogEntryProps {
   readonly onDone?: (entryType: LogEntryType, savedEntry?: JournalEntry, reviewMessage?: string, storageMessage?: string) => void
   readonly targetDate?: string
   readonly initialEntry?: JournalEntry
+  readonly initialBodyPartId?: string | undefined
   readonly plannedSessionLink?: PlannedSessionLink
   readonly onContinueDetailed?: (entry: JournalEntry) => void
   readonly onSaved?: (entry: JournalEntry, reviewMessage?: string, storageMessage?: string) => void
@@ -22,7 +23,7 @@ export interface LogEntryProps {
   readonly onOpenImport?: () => void
 }
 
-export function LogEntry({ entryType = "choose", onBack, onDone, onSaved, onOpenImport, onContinueDetailed, targetDate, initialEntry, plannedSessionLink }: LogEntryProps) {
+export function LogEntry({ entryType = "choose", onBack, onDone, onSaved, onOpenImport, onContinueDetailed, targetDate, initialEntry, initialBodyPartId, plannedSessionLink }: LogEntryProps) {
   if (entryType === "choose") {
     return <EntryChooser onBack={onBack} onPick={(picked) => onDone?.(picked)} onOpenImport={onOpenImport} targetDate={targetDate} />
   }
@@ -57,7 +58,7 @@ export function LogEntry({ entryType = "choose", onBack, onDone, onSaved, onOpen
     />
   )
   if (entryType === "post-session") return <PostSessionForm key={draftKey} onBack={onBack} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} plannedSessionLink={plannedSessionLink} />
-  if (entryType === "evening") return <EveningCheckin key={draftKey} onBack={onBack} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} />
+  if (entryType === "evening") return <EveningCheckin key={draftKey} onBack={onBack} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} initialBodyPartId={initialBodyPartId} />
   if (entryType === "race") return <RaceForm key={draftKey} onBack={onBack} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} />
   return null
 }
