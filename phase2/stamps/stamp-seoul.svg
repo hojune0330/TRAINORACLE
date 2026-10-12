@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="서울 스탬프"><title>서울 스탬프</title>
+  <g transform="rotate(-1 64 64)">
+    <circle cx="64" cy="64" r="58" fill="#FFFFFF" stroke="#25C2A0" stroke-width="4"/>
+    <circle cx="64" cy="64" r="50" fill="none" stroke="#25C2A0" stroke-width="1.6" stroke-dasharray="3 4"/>
+    <defs><path id="arc-seoul" d="M24 64a40 40 0 0 1 80 0"/></defs>
+    <text font-family="Pretendard Variable, Pretendard, sans-serif" font-size="13" font-weight="800" letter-spacing="3" fill="#25C2A0"><textPath href="#arc-seoul" startOffset="50%" text-anchor="middle">SEOUL</textPath></text>
+    <path d="M64 30v8M58 46h12l-2-8h-8zM61 46l-3 38M67 46l3 38M52 84h24" fill="none" stroke="#25C2A0" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/>
+    <text x="64" y="100" text-anchor="middle" font-family="Pretendard Variable, Pretendard, sans-serif" font-size="13" font-weight="900" fill="#25C2A0">서울</text>
+  </g></svg>

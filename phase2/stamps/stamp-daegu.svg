@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="대구 스탬프"><title>대구 스탬프</title>
+  <g transform="rotate(-3 64 64)">
+    <circle cx="64" cy="64" r="58" fill="#FFFFFF" stroke="#FFB36B" stroke-width="4"/>
+    <circle cx="64" cy="64" r="50" fill="none" stroke="#FFB36B" stroke-width="1.6" stroke-dasharray="3 4"/>
+    <defs><path id="arc-daegu" d="M24 64a40 40 0 0 1 80 0"/></defs>
+    <text font-family="Pretendard Variable, Pretendard, sans-serif" font-size="13" font-weight="800" letter-spacing="3" fill="#FFB36B"><textPath href="#arc-daegu" startOffset="50%" text-anchor="middle">DAEGU</textPath></text>
+    <path d="M64 30v10M58 52h12l-2-12h-8zM62 52v32M66 52v32M50 84h28" fill="none" stroke="#FFB36B" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/>
+    <text x="64" y="100" text-anchor="middle" font-family="Pretendard Variable, Pretendard, sans-serif" font-size="13" font-weight="900" fill="#FFB36B">대구</text>
+  </g></svg>

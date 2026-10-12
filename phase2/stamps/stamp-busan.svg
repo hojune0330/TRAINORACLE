@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="부산 스탬프"><title>부산 스탬프</title>
+  <g transform="rotate(-2 64 64)">
+    <circle cx="64" cy="64" r="58" fill="#FFFFFF" stroke="#3FA7E0" stroke-width="4"/>
+    <circle cx="64" cy="64" r="50" fill="none" stroke="#3FA7E0" stroke-width="1.6" stroke-dasharray="3 4"/>
+    <defs><path id="arc-busan" d="M24 64a40 40 0 0 1 80 0"/></defs>
+    <text font-family="Pretendard Variable, Pretendard, sans-serif" font-size="13" font-weight="800" letter-spacing="3" fill="#3FA7E0"><textPath href="#arc-busan" startOffset="50%" text-anchor="middle">BUSAN</textPath></text>
+    <path d="M34 76h60M48 76V44M80 76V44M34 70q14-4 14-26q16 30 32 0q0 22 14 26" fill="none" stroke="#3FA7E0" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/>
+    <text x="64" y="100" text-anchor="middle" font-family="Pretendard Variable, Pretendard, sans-serif" font-size="13" font-weight="900" fill="#3FA7E0">부산</text>
+  </g></svg>
