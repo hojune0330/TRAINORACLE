@@ -5,14 +5,16 @@
  * the hit boxes are the same on every screen.
  */
 export const TREADMILL_RULES = {
-  version: 2,
-  stageSeconds: 10,
+  version: 3,
+  stageSeconds: 30,
+  waveSeconds: 10,
+  waveSupply: 75,
   maxEnergy: 100,
   startPosition: 0.5,
   fallEdge: 0.06,
   frontEdge: 0.88,
   runDrain: 9,
-  recovery: 12,
+  recovery: 20,
   jumpCost: 8,
   dashCost: 20,
   dashSeconds: 0.45,
@@ -51,14 +53,22 @@ export const TREADMILL_HAZARDS: Record<TreadmillHazardKind, { halfWidth: number;
 }
 
 /** Practice course. `at` is the stage second at which a hazard enters from the front edge. */
-export const TREADMILL_STAGES = [
+const BASE_STAGES = [
   { id: "track", surface: "track", name: "트랙", belt: 0.07, movement: 0.115, hint: "기본 속도. 달리고 쉬는 박자를 익히는 구간",
     course: [{ at: 1.6, kind: "barrier" }, { at: 4.6, kind: "barrier" }, { at: 7.2, kind: "barrier" }] },
-  { id: "mud", surface: "mud", name: "진흙", belt: 0.084, movement: 0.092, hint: "달려도 덜 나아가요. 앞쪽 공간을 미리 벌어 두세요",
+  { id: "mud", surface: "mud", name: "진흙", belt: 0.084, movement: 0.115, hint: "달려도 덜 나아가요. 앞쪽 공간을 미리 벌어 두세요",
     course: [{ at: 1.2, kind: "barrier" }, { at: 3.6, kind: "barrier" }, { at: 5.6, kind: "barrier" }, { at: 7.6, kind: "barrier" }] },
   { id: "spikes", surface: "spikes", name: "가시밭", belt: 0.074, movement: 0.115, hint: "가시는 한 번만 닿아도 끝. 점프할 에너지를 남기세요",
     course: [{ at: 1.0, kind: "spike" }, { at: 2.9, kind: "spike" }, { at: 4.6, kind: "barrier" }, { at: 5.9, kind: "spike" }, { at: 7.6, kind: "spike" }] },
 ] as const satisfies readonly TreadmillStage[]
+
+/** Three short waves: the middle wave reverses the rhythm; supplies separate the waves. */
+export function extendTreadmillCourse(course: TreadmillStage["course"]): TreadmillStage["course"] {
+  return [0, 1, 2].flatMap(wave => course.map(item => ({
+    ...item, at: Number((wave * TREADMILL_RULES.waveSeconds + (wave === 1 ? 9.8 - item.at : item.at)).toFixed(2)),
+  }))).sort((a, b) => a.at - b.at)
+}
+export const TREADMILL_STAGES: readonly TreadmillStage[] = BASE_STAGES.map(stage => ({ ...stage, course: extendTreadmillCourse(stage.course) }))
 
 export const TREADMILL_UPGRADES = [
   { id: "grip", name: "접지 밑창", benefit: "진흙 전진 +50% · 부딪혀도 덜 밀림", cost: "점프 에너지 +3", fits: "mud" },
@@ -234,6 +244,9 @@ function step(state: TreadmillState, dt: number): TreadmillState {
   next.energy = state.running
     ? Math.max(0, state.energy - runningSeconds * drain)
     : Math.min(rules.maxEnergy, state.energy + dt * rules.recovery * state.recoveryFactor)
+  if (next.seconds < rules.stageSeconds && Math.floor(next.seconds / rules.waveSeconds) > Math.floor(state.seconds / rules.waveSeconds)) {
+    next.energy = Math.min(rules.maxEnergy, next.energy + rules.waveSupply)
+  }
   next.exhausted = state.running && next.energy <= 0
   if (!state.running) next.stats.restSeconds += dt
   next.stats.lowestEnergy = Math.min(next.stats.lowestEnergy, next.energy)

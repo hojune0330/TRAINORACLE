@@ -134,7 +134,7 @@ function planRun(stages: readonly TreadmillStage[] = TREADMILL_STAGES): Step[] {
   const steps: Step[] = []
   let state: TreadmillState = treadmillCommand(newTreadmillRun(stages), { type: "start", stages })
   let ms = 0
-  for (let frame = 0; frame < 4000 && (state.mode === "running" || state.mode === "upgrade"); frame++) {
+  for (let frame = 0; frame < 7000 && (state.mode === "running" || state.mode === "upgrade"); frame++) {
     if (state.mode === "upgrade") {
       steps.push({ at: ms, key: "upgrade" })
       state = treadmillCommand(state, { type: "upgrade", upgrade: "economy" })
@@ -163,7 +163,7 @@ test("explains the rules before play, falls on inaction and restarts with pointe
     const element = canvas as HTMLCanvasElement
     return element.getContext("2d")!.getImageData(4, 4, 1, 1).data[3]
   })).toBe(255)
-  await expect(page.getByRole("heading", { name: "30초 동안 바닥 위에서 버티세요" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "90초 러닝 챌린지" })).toBeVisible()
   await expect(page.getByRole("navigation")).toHaveCount(0)
   await page.getByRole("button", { name: "시작", exact: true }).click()
   await page.clock.runFor(1000)
@@ -199,6 +199,7 @@ test("explains the rules before play, falls on inaction and restarts with pointe
 })
 
 test("clears three stages with real keys, shows trade-offs and resets the build", async ({ page }, info) => {
+  test.setTimeout(180_000) // Real input replay of the longer 90-second course.
   await openGame(page)
   const plan = planRun()
   await page.getByRole("button", { name: "시작", exact: true }).click()
@@ -209,8 +210,14 @@ test("clears three stages with real keys, shows trade-offs and resets the build"
     else if (step.key === "run-up") await page.keyboard.up("ArrowRight")
     else if (step.key === "jump") await page.keyboard.press("Space")
     else {
-      await expect(page.getByRole("heading", { name: "강화 하나 고르면 바로 출발" })).toBeVisible()
-      await expect(page.getByText("− 대시 충전 +1초 · 회복 −10%")).toBeVisible()
+      if (checkpoints === 0) {
+        await expect(page.getByRole("heading", { name: "이번 판의 능력을 바꿔요" })).toBeVisible()
+        await expect(page.locator("[data-upgrade]")).toHaveCount(0)
+        await page.screenshot({ path: info.outputPath("upgrade-intro.png"), fullPage: true })
+      }
+      await page.clock.runFor(2500)
+      await expect(page.getByRole("heading", { name: "어떤 능력을 키울까요?" })).toBeVisible()
+      await expect(page.getByText("대신 회복과 대시 충전이 느려요")).toBeVisible()
       const time = await page.getByLabel("경기 진행 시간").textContent()
       await page.clock.runFor(2000)
       await expect(page.getByLabel("경기 진행 시간")).toHaveText(time!)
@@ -221,9 +228,10 @@ test("clears three stages with real keys, shows trade-offs and resets the build"
       }
       // One tap: the pick starts the next stage; its name is announced during a short still countdown.
       await page.getByRole("button", { name: /일정한 박자/ }).click()
-      await expect(page.getByRole("heading", { name: "강화 하나 고르면 바로 출발" })).toHaveCount(0)
+      await expect(page.getByRole("heading", { name: "어떤 능력을 키울까요?" })).toHaveCount(0)
       await expect(page.getByRole("list", { name: `코스 ${checkpoints + 2}/3 · ${checkpoints === 0 ? "진흙" : "가시밭"}` })).toBeVisible()
       await expect(page.getByRole("button", { name: "계속", exact: true })).toHaveCount(0)
+      await expect(page.getByText("일정한 박자 장착!", { exact: true })).toBeVisible()
       checkpoints += 1
     }
   }
@@ -270,7 +278,8 @@ async function replay(page: Page, plan: Step[], afterResume?: (index: number) =>
     else if (step.key === "run-up") await page.keyboard.up("ArrowRight")
     else if (step.key === "jump") await page.keyboard.press("Space")
     else {
-      await expect(page.getByRole("heading", { name: "강화 하나 고르면 바로 출발" })).toBeVisible()
+      await page.clock.runFor(2500)
+      await expect(page.getByRole("heading", { name: "어떤 능력을 키울까요?" })).toBeVisible()
       await page.getByRole("button", { name: /일정한 박자/ }).click()
       now += (await afterResume?.(checkpoints)) ?? 0
       checkpoints += 1
@@ -287,7 +296,7 @@ test("a later-stage failure offers 'retry this stage' with the same build, cappe
   let now = 0
   for (const step of plan) {
     if (step.at > now) { await page.clock.runFor(Math.round(step.at - now)); now = step.at }
-    if (step.key === "upgrade") { await page.getByRole("button", { name: /스프링 밑창/ }).click(); break }
+    if (step.key === "upgrade") { await page.clock.runFor(2500); await page.getByRole("button", { name: /스프링 밑창/ }).click(); break }
     if (step.key === "run-down") await page.keyboard.down("ArrowRight")
     else if (step.key === "run-up") await page.keyboard.up("ArrowRight")
     else if (step.key === "jump") await page.keyboard.press("Space")
@@ -302,7 +311,7 @@ test("a later-stage failure offers 'retry this stage' with the same build, cappe
   await page.screenshot({ path: info.outputPath("retry-offer.png"), fullPage: true })
   await retry.click()
   await expect(page.getByRole("list", { name: "코스 2/3 · 진흙" })).toBeVisible()
-  await expect(page.getByLabel("경기 진행 시간")).toHaveText("10 / 30초")
+  await expect(page.getByLabel("경기 진행 시간")).toHaveText("30 / 90초")
   // Same build: the spring upgrade keeps the jump cheap.
   await expect(page.getByRole("button", { name: /점프/ })).toContainText("4")
 })
@@ -342,6 +351,7 @@ test("medals: a fixed medal per run whatever the result, spent only on a cosmeti
 const savedProgress = (page: Page) => page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.minigame.progress.v1") ?? "null"))
 
 test("tours Seoul in 2.5D, saves stars on this device, unlocks the next city and keeps it after reload", async ({ page }, info) => {
+  test.setTimeout(180_000) // Real input replay of the longer 90-second course.
   const external: string[] = []
   page.on("request", request => { const url = new URL(request.url()); if (url.hostname !== "127.0.0.1" && url.protocol !== "data:") external.push(url.href) })
   await page.goto("/?app=1")
