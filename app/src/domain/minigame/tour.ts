@@ -6,7 +6,7 @@
  * Adding a city later = one entry in TOUR_CITIES (and art in screens/treadmill/city-art.ts).
  * Ids are stable storage keys: never rename or reuse one.
  */
-import { TREADMILL_STAGES } from "./treadmill"
+import { extendTreadmillCourse, TREADMILL_STAGES, TREADMILL_RULES } from "./treadmill"
 import type { TreadmillHazardKind, TreadmillStage, TreadmillSurface } from "./treadmill"
 
 export type TourSeasonId = "korea" | "world"
@@ -81,11 +81,11 @@ export function tourStages(city: TourCity): TreadmillStage[] {
   return SURFACES.map((surface, index) => {
     const base = TREADMILL_STAGES.find(stage => stage.surface === surface)!
     const extra = EXTRA[surface].filter(([min]) => city.level >= min).map(([, at, kind]) => ({ at, kind }))
-    const course = [...base.course, ...extra].sort((a, b) => a.at - b.at)
+    const course = [...base.course.filter(item => item.at < TREADMILL_RULES.waveSeconds), ...extra].sort((a, b) => a.at - b.at)
       .map(item => surface === "spikes" && city.level >= SPIKE_HURDLE_LEVEL && item.at === 4.6 ? { ...item, kind: "spike" as const } : item)
     return {
       id: `${city.id}-${surface}`, surface, name: city.stageNames[index]!, hint: city.stageHints[index]!,
-      belt: Number((base.belt * (1 + city.level * TOUR_BELT_STEP)).toFixed(4)), movement: base.movement, course,
+      belt: Number((base.belt * (1 + city.level * TOUR_BELT_STEP)).toFixed(4)), movement: base.movement, course: extendTreadmillCourse(course),
     }
   })
 }
