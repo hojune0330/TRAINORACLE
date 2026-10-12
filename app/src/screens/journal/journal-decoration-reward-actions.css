@@ -208,3 +208,22 @@
     transition: none;
   }
 }
+
+/* The confirmation occupies its own row; material rows remain scrollable above it. */
+.journal-decoration-workspace--open .journal-decoration-toolbar {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.journal-decoration-reward-scroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-bottom: 12px; }
+.journal-decoration-workspace--open .journal-decoration-toolbar[data-confirming="true"] {
+  max-height: min(70dvh, calc(100dvh - 120px));
+}
+.journal-decoration-toolbar > .journal-decoration-reward-card,
+.journal-decoration-toolbar > .journal-decoration-reward-confirmation {
+  position: static;
+  flex: 0 0 auto;
+  margin: 12px 0;
+}
+.journal-decoration-toolbar > .journal-decoration-reward-confirmation .journal-decoration-reward-card { margin-top: 0; }
+.journal-decoration-toolbar .journal-decoration-reward-material { box-sizing: border-box; }

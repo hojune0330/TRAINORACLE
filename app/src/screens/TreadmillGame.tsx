@@ -410,6 +410,12 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
           </ul>}
           {view.mode === "clear" && view.stats.retries > 0 && <p className="treadmill-game__picks">구간 다시하기를 써서 별은 1개예요. 처음부터 완주하면 별 3개까지 받을 수 있어요.</p>}
           {view.mode === "over" && <p className="treadmill-game__tip">{treadmillTip(view)}</p>}
+          {result && <div className="game-reward-result__receipt" role="status" data-earned={result.medal > 0 || undefined}>
+            <span className="game-reward-result__medal" aria-hidden="true">🏅</span>
+            <div><strong>{result.medal > 0 ? `메달 +${result.medal}` : result.medalsLeft === 0 ? "오늘 받을 메달을 다 받았어요" : "이번 판은 메달이 지급되지 않았어요"}</strong>
+              <span>{result.medal > 0 ? `자동 지급 · 오늘 ${result.medalsLeft}회 더 받을 수 있어요` : result.medalsLeft === 0 ? "내일 다시 받을 수 있어요" : `${MINIGAME_REWARD_RULES.minRunSeconds}초 이상 플레이하면 받아요 · 오늘 ${result.medalsLeft}회 남음`}</span>
+            </div>
+          </div>}
           <div className="treadmill-game__result-actions">
             {view.mode === "clear" && following
               && <RewardActionButton type="button" tone="primary" className="game-reward-result__cta" onClick={() => openCourse({ kind: "city", city: following })}><ArrowRight size={18} aria-hidden="true" />다음 도시 · {following.name}</RewardActionButton>}
@@ -424,12 +430,6 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
               <button type="button" className="treadmill-game__text-button" onClick={backToMap}><MapIcon size={14} aria-hidden="true" />지도</button>
             </div>
           </div>
-          {result && <div className="game-reward-result__receipt" role="status" data-earned={result.medal > 0 || undefined}>
-            <span className="game-reward-result__medal" aria-hidden="true">🏅</span>
-            <div><strong>{result.medal > 0 ? `메달 +${result.medal}` : result.medalsLeft === 0 ? "오늘 받을 메달을 다 받았어요" : "이번 판은 메달이 지급되지 않았어요"}</strong>
-              <span>{result.medal > 0 ? `자동 지급 · 오늘 ${result.medalsLeft}회 더 받을 수 있어요` : result.medalsLeft === 0 ? "내일 다시 받을 수 있어요" : `${MINIGAME_REWARD_RULES.minRunSeconds}초 이상 플레이하면 받아요 · 오늘 ${result.medalsLeft}회 남음`}</span>
-            </div>
-          </div>}
           <details className="treadmill-game__more">
             <summary>이번 판 기록</summary>
             <dl className="treadmill-game__stats">

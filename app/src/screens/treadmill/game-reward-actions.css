@@ -65,3 +65,25 @@
   .treadmill-game .game-reward-actions__button,
   .treadmill-game .game-reward-result__cta { animation: none; transition: none; transform: none; }
 }
+
+.treadmill-game .game-reward-actions__header,
+.treadmill-game .game-reward-actions__list > li,
+.treadmill-game .game-reward-result__receipt { box-sizing: border-box; }
+.treadmill-game .treadmill-game__shop > h3 { margin: 20px 0 8px; }
+.treadmill-game .game-reward-actions__list { margin: 0; padding: 0; }
+.treadmill-game .treadmill-game__result-actions { width: 100%; display: grid; gap: 12px; margin-top: 16px; }
+.treadmill-game .treadmill-game__result-actions .treadmill-game__card-actions--quiet {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: 100%; margin: 0;
+}
+.treadmill-game .treadmill-game__result-actions .treadmill-game__text-button {
+  min-height: 44px; width: 100%; justify-content: center; margin: 0; padding: 8px;
+}
+.treadmill-game .treadmill-game__result-actions .treadmill-game__text-button:only-child { grid-column: 1 / -1; }
+.treadmill-game .game-reward-result__receipt { margin-top: 12px; }
+@media (max-width: 340px) {
+  .treadmill-game .game-reward-actions__header { grid-template-columns: 32px minmax(0, 1fr) auto; }
+  .game-reward-actions__header .game-reward-actions__medal { width: 32px; height: 32px; }
+  .treadmill-game .game-reward-actions__list > li { grid-template-columns: 32px minmax(0, 1fr) auto; }
+  .game-reward-actions__item-icon { width: 32px; height: 32px; }
+  .treadmill-game .game-reward-actions__button { min-width: 64px; padding-inline: 8px; }
+}

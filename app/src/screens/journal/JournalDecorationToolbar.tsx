@@ -691,11 +691,13 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
         id={drawerId}
         className="journal-decoration-toolbar"
         data-open={props.drawerOpen ? "true" : "false"}
+        data-confirming={pendingPurchaseId !== null || pendingBundleId !== null || undefined}
         aria-label="꾸미기 재료 서랍"
         aria-hidden={props.drawerOpen ? undefined : "true"}
         data-decoration-interaction="true"
       >
         {props.drawerOpen && <>
+        <div className="journal-decoration-reward-scroll">
         <div className="journal-decoration-toolbar__drawer-header">
           <div className="journal-decoration-toolbar__grabber" aria-hidden="true" />
           <header>
@@ -784,9 +786,10 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
                 )}
               </>
             )}
+        {props.materialsFooter}
+        </div>
         {pendingPurchase !== undefined && renderPurchaseRow(pendingPurchase)}
         {openCollection !== undefined && renderBundleRow(openCollection.collection, openCollection.items, true)}
-        {props.materialsFooter}
         </>}
       </section>
     </>
