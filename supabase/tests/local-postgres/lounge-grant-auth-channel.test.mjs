@@ -5,12 +5,13 @@ import { PGlite } from '@electric-sql/pglite';
 import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
 import { loadOracleMigrationChain, setOracleAuth, ORACLE_STORAGE_VERSION } from './oracle-auth-fixture.mjs';
 
-// Complete, unchanged 0001-0064 product SQL in a disposable memory database.
+// Unchanged 0001-0062 fixture plus 0063/0065 in a disposable memory database.
+// Upstream 0064 minigame storage is independent of this lounge auth gate.
 // Only Supabase-managed identity objects are synthetic. No service URL,
 // credential, network, real user data, durable DB or source mutation is used.
 const db = new PGlite({ extensions: { pgcrypto } });
 const migrations = new URL('../../migrations/', import.meta.url);
-const migration = readFileSync(new URL('0064_lounge_grant_auth_channel_recheck.sql', migrations), 'utf8');
+const migration = readFileSync(new URL('0065_lounge_grant_auth_channel_recheck.sql', migrations), 'utf8');
 const A='a1111111-1111-4111-8111-111111111111', B='b2222222-2222-4222-8222-222222222222';
 const SA='a3333333-3333-4333-8333-333333333333', SB='b4444444-4444-4444-8444-444444444444';
 const SA2='a5555555-5555-4555-8555-555555555555';
@@ -90,7 +91,7 @@ beforeEach(async()=>{
 });
 after(()=>db.close());
 
-test('0064 preserves legacy hashed rows without inferring origin; old capabilities fail closed and new ones can be issued',async()=>{
+test('0065 preserves legacy hashed rows without inferring origin; old capabilities fail closed and new ones can be issued',async()=>{
   assert.deepEqual(afterUpgrade,{...beforeUpgrade,requires_oauth:null,requires_passwordless:null});
   assert.deepEqual(legacyInspection,denied());
   const fresh=await issue();
