@@ -295,6 +295,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pages: write
     concurrency:
       group: trainoracle-pages
       cancel-in-progress: true
@@ -346,6 +347,7 @@ jobs:
           node .tools/build-oracle-pages-release.mjs --account-held --out="$RUNNER_TEMP/trainoracle-pages-bundle"
 
       - name: Publish verified package to gh-pages
+        id: publish-pages
         if: steps.deployment-source.outputs.current == 'true'
         shell: bash
         run: |
@@ -362,3 +364,63 @@ jobs:
             echo "- previous Pages: \`${{ steps.pages-snapshot.outputs.sha }}\`"
             echo "- deployed Pages: \`$DEPLOYED_PAGES_SHA\`"
           } >> "$GITHUB_STEP_SUMMARY"
+          echo "pages_sha=$DEPLOYED_PAGES_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Request and verify GitHub Pages build
+        if: steps.deployment-source.outputs.current == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_SOURCE_SHA: ${{ github.sha }}
+          EXPECTED_PAGES_SHA: ${{ steps.publish-pages.outputs.pages_sha }}
+        run: |
+          set -euo pipefail
+
+          git fetch --quiet origin main gh-pages
+          REMOTE_MAIN_SHA="$(git rev-parse origin/main)"
+          REMOTE_PAGES_SHA="$(git rev-parse origin/gh-pages)"
+          if [[ "$REMOTE_MAIN_SHA" != "$EXPECTED_SOURCE_SHA" || "$REMOTE_PAGES_SHA" != "$EXPECTED_PAGES_SHA" ]]; then
+            echo "::error::Refusing Pages build request because remote refs moved (main=$REMOTE_MAIN_SHA, gh-pages=$REMOTE_PAGES_SHA)."
+            exit 1
+          fi
+
+          gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds" --silent
+
+          for attempt in {1..30}; do
+            git fetch --quiet origin main gh-pages
+            REMOTE_MAIN_SHA="$(git rev-parse origin/main)"
+            REMOTE_PAGES_SHA="$(git rev-parse origin/gh-pages)"
+            if [[ "$REMOTE_MAIN_SHA" != "$EXPECTED_SOURCE_SHA" || "$REMOTE_PAGES_SHA" != "$EXPECTED_PAGES_SHA" ]]; then
+              echo "::error::Remote refs moved while waiting for the Pages build (main=$REMOTE_MAIN_SHA, gh-pages=$REMOTE_PAGES_SHA)."
+              exit 1
+            fi
+
+            BUILD="$(gh api "repos/$GITHUB_REPOSITORY/pages/builds/latest")"
+            BUILD_SHA="$(jq -r '.commit // empty' <<<"$BUILD")"
+            BUILD_STATUS="$(jq -r '.status // empty' <<<"$BUILD")"
+            if [[ "$BUILD_SHA" == "$EXPECTED_PAGES_SHA" ]]; then
+              case "$BUILD_STATUS" in
+                built)
+                  echo "Pages build completed for $EXPECTED_PAGES_SHA."
+                  {
+                    echo "- Pages build: \`$EXPECTED_PAGES_SHA\` ($BUILD_STATUS)"
+                  } >> "$GITHUB_STEP_SUMMARY"
+                  exit 0
+                  ;;
+                error|errored|stale)
+                  echo "::error::GitHub Pages build for $EXPECTED_PAGES_SHA finished with status '$BUILD_STATUS'."
+                  exit 1
+                  ;;
+                queued|building)
+                  ;;
+                *)
+                  echo "::error::Unexpected GitHub Pages build status '$BUILD_STATUS' for $EXPECTED_PAGES_SHA."
+                  exit 1
+                  ;;
+              esac
+            fi
+            sleep 10
+          done
+
+          echo "::error::Timed out waiting for GitHub Pages build of $EXPECTED_PAGES_SHA to reach status 'built'."
+          exit 1

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>훈련 날짜 슬라이드 예시</title>
+<style>@font-face { font-family: "Pretendard Variable"; src: url("/fonts/PretendardVariable.woff2") format("woff2-variations"); font-display: swap; } body { background: white !important; font-family: "Pretendard Variable", sans-serif; }</style></head>
+<body><main id="slider" class="plan-beta active-plan" style="max-width:600px;margin:0 auto;padding:20px;box-sizing:border-box"></main>
+<script type="module">
+import React from "react"
+import { createRoot } from "react-dom/client"
+import "../../../colors_and_type.css"
+import "../../../colors_and_type_journal.css"
+import "../../src/styles/app.css"
+import "../../src/styles/plan-beta.css"
+import "../../src/styles/app-presentation.css"
+import "../../src/styles/selection-system.css"
+import { PlanSchedulePreview } from "../../src/screens/plan-beta/PlanSchedulePreview.tsx"
+// Synthetic UI fixture: never writes a plan or diary.
+const sessions = Array.from({ length: 10 }, (_, index) => [
+  { day: index + 1, slot: "AM", role: "EASY", plannedEnergyIntent: "BASE_INTENT", prescription: { kind: "RPE_TIME_RANGE", durationMinutes: { minimum: 35, maximum: 35 }, rpe: { minimum: 3, maximum: 4 } } },
+  { day: index + 1, slot: "PM", role: "EASY", plannedEnergyIntent: "RECOVERY_INTENT", prescription: { kind: "RPE_TIME_RANGE", durationMinutes: { minimum: 20, maximum: 20 }, rpe: { minimum: 1, maximum: 2 } } },
+]).flat()
+createRoot(document.getElementById("slider")).render(React.createElement(PlanSchedulePreview, {
+  startDate: "2026-09-28", frameLengthDays: 10, sessions, presentation: "prescription-calendar", showRpeGuide: false,
+  timelineHeading: "날짜별 훈련", focusSession: { day: 1, slot: "AM" },
+  renderSessionAction: session => React.createElement("button", { className: "active-plan__journal-action", onClick: () => { document.getElementById("result").textContent = `${session.day}일차 ${session.slot} 일지 선택` } }, "이 훈련 일지 쓰기"),
+}))
+</script><output id="result"></output></body></html>

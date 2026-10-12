@@ -89,7 +89,7 @@ describe("active plan journal action", () => {
       />,
     )
 
-    await user.click(screen.getByRole("button", { name: "목록" }))
+    await user.click(screen.getByRole("button", { name: "하루씩" }))
     const list = screen.getByRole("region", { name: "날짜별 훈련 목록" })
     await user.click(within(list).getByRole("button", { name: "7월 24일 금요일 전체 처방 보기" }))
     const reader = within(await screen.findByRole("dialog", { name: "2026년 7월 24일 금요일" }))

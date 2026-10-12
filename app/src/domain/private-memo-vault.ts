@@ -11,7 +11,8 @@ import {
   isValidRecoveryCode,
 } from "./account/private-note-crypto"
 import type { EncryptedPrivateNote } from "./account/private-note-crypto"
-import { activeLocalAccount, isJournalVisible, localJournalScopeGeneration } from "./account/local-journal-ownership"
+import { captureJournalOwnershipGuard, isJournalVisible } from "./account/local-journal-ownership"
+import { loadSessionRecoveryCode } from "./account/private-note-sync"
 import {
   readVaultJournalStorageSnapshot,
   writeStorageValueWithReadback,
@@ -136,6 +137,7 @@ export async function savePrivateMemosWithJournalShells(
   commitGuard: () => boolean = () => true,
 ): Promise<JournalEntry[] | null> {
   if (privateEntries.length === 0 || !isValidRecoveryCode(recoveryCode)) return null
+  const scopeCurrent = capturePrivateMemoWriteGuard()
   const snapshot = readVaultJournalStorageSnapshot(storage)
   if (snapshot === null) return null
   if (expectedJournal !== undefined && snapshot.journal !== expectedJournal) return null
@@ -164,10 +166,17 @@ export async function savePrivateMemosWithJournalShells(
       records,
     }
     if (nextEntries.some(hasPrivateMemoText)) return null
-    return writeVaultAndJournalAtomically(storage, nextVault, nextEntries, snapshot, commitGuard) ? nextEntries : null
+    return writeVaultAndJournalAtomically(storage, nextVault, nextEntries, snapshot,
+      () => scopeCurrent() && commitGuard()) ? nextEntries : null
   } catch {
     return null
   }
+}
+
+function capturePrivateMemoWriteGuard(): () => boolean {
+  const ownershipCurrent = captureJournalOwnershipGuard()
+  const sessionRecoveryCode = loadSessionRecoveryCode()
+  return () => ownershipCurrent() && loadSessionRecoveryCode() === sessionRecoveryCode
 }
 
 export async function restorePrivateMemo(
@@ -201,8 +210,7 @@ export async function rotatePrivateMemoVault(
   }
   const vault = parsePrivateMemoVault(previousVault)
   if (vault === null) return { ok: false }
-  const owner = activeLocalAccount()
-  const generation = localJournalScopeGeneration()
+  const scopeCurrent = capturePrivateMemoWriteGuard()
   if (Object.keys(vault.records).some(entryId => !isJournalVisible(entryId))) return { ok: false }
 
   try {
@@ -212,9 +220,7 @@ export async function rotatePrivateMemoVault(
       rotatedRecords[entryId] = { encrypted: await encryptPrivateNote(plaintext, nextRecoveryCode) }
     }
     const nextVault: PrivateMemoVault = { version: 1, records: rotatedRecords }
-    if (storage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY) !== previousVault
-      || activeLocalAccount() !== owner
-      || localJournalScopeGeneration() !== generation) return { ok: false }
+    if (storage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY) !== previousVault || !scopeCurrent()) return { ok: false }
     return {
       ok: writeStorageValueWithReadback(
         storage,

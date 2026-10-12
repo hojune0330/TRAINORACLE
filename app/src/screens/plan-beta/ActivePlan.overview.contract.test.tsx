@@ -84,7 +84,7 @@ describe("active plan first-view overview", () => {
     expect(within(trainingDate!).getByText("회복 운동 · Recovery")).toBeVisible()
     expect(within(trainingDate!).getByText("전체 15–20분 · 힘든 정도 1–2/10")).toBeVisible()
     expect(screen.queryByRole("list", { name: "날짜별 계획 미리보기" })).toBeNull()
-    await userEvent.setup().click(screen.getByRole("button", { name: "목록" }))
+    await userEvent.setup().click(screen.getByRole("button", { name: "하루씩" }))
     const timeline = screen.getByRole("list", { name: "날짜별 계획 미리보기" })
     const trainingDay = screen.getByRole("group", {
       name: "8월 29일 토요일 · 훈련 2개",
