@@ -1,6 +1,7 @@
 import React from "react"
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { AdjustedPlanEditFlow } from "./AdjustedPlanEditFlow"
 import { adjustedPlanSelectionFixture } from "../../domain/adjusted-plan-selection.test-fixtures"
 import { activePlanBetaStorageKey } from "../../domain/plan-beta-store"
@@ -10,10 +11,11 @@ import type { PlanMutationLockManager } from "../../domain/plan-mutation-lock"
 const locks: PlanMutationLockManager = { request: async (_n, _o, callback) => callback({}) }
 const show = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const close = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "close")
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY)
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value: function(this: HTMLDialogElement) { this.setAttribute("open", "") } })
   Object.defineProperty(HTMLDialogElement.prototype, "close", { configurable: true, value: function(this: HTMLDialogElement) { this.removeAttribute("open") } })
+  await initializeCanonicalJournalFixture()
 })
 afterEach(() => {
   cleanup(); vi.restoreAllMocks(); vi.useRealTimers()

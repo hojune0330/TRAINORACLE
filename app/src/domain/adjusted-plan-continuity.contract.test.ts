@@ -1,4 +1,5 @@
 import { beforeEach, afterEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { adjustedPlanSelectionFixture } from "./adjusted-plan-selection.test-fixtures"
 import { selectAdjustedPlanForActivation } from "./adjusted-plan-selection"
 import { encodeStoredAdjustedPlanState } from "./adjusted-plan-storage-schema"
@@ -13,7 +14,7 @@ import { activePlanBetaStorageKey } from "./plan-beta-store"
 import { loadAthleteRecords } from "./athlete-records"
 import * as formation from "./plan-beta-formation"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY); await initializeCanonicalJournalFixture() })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 
 function setup(outcomes: "complete" | "missing" | "pain" = "complete", schedule: AdjustedFixtureSchedule = {}) {

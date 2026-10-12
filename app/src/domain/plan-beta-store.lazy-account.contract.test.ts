@@ -1,4 +1,5 @@
 import { beforeEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { accountPlanPacketFixture } from "./account/account-plan.test-fixtures"
 import { accountPlanEntry, emptyAccountPlanDocument } from "./account/account-plan-document-schema"
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
@@ -22,11 +23,12 @@ function accountView(packet: ReturnType<typeof accountPlanPacketFixture>) {
   }
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   setActiveLocalAccount(null)
   window.localStorage.clear()
   window.sessionStorage.clear()
   runtime.snapshot.mockReset()
+  await initializeCanonicalJournalFixture()
 })
 
 it("does not read multi-plan evidence for an account V3 plan", () => {

@@ -1,4 +1,5 @@
 import { beforeEach, afterEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { sequenceV3ContentIdentity } from "@impl/prescription/sequence-v3-comparison"
 import { adjustedMethodV3FixtureWithCandidate } from "./adjusted-method-resolution-v3.test-fixtures"
 import { resolveAdjustedCandidateScope } from "./adjusted-plan-candidate"
@@ -8,7 +9,7 @@ import { setActiveLocalAccount } from "./account/local-journal-ownership"
 import { TODAY } from "./prescription-quality-matrix.test-fixtures"
 import { adjustedPlanReviewScopeV3, checkAdjustedPlanReviewPolicyV3 } from "./adjusted-plan-review-v3"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY); await initializeCanonicalJournalFixture() })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 function fixture() {
   const { candidate, resolution } = adjustedMethodV3FixtureWithCandidate()

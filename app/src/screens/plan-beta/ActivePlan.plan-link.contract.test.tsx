@@ -8,6 +8,8 @@ import { createPlannedSessionLogDraft } from "../../domain/planned-session-link"
 import { QuickSessionForm } from "../log-entry/QuickSessionForm"
 import { hasPendingBrowserBackLayer } from "../../navigation/browserNavigation"
 import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
+import { loadEntries } from "../../domain/journal-store"
+import { journalProgressAction } from "../../domain/journal-plan-progress"
 
 afterEach(async () => {
   cleanup()
@@ -35,7 +37,7 @@ function saveQuickPlanJournal(input: {
   readonly outcome: "COMPLETED" | "PARTIAL"
   readonly pain: "NONE" | "SIGNAL"
 }) {
-  const { draft } = plannedDraft()
+  const { state, draft } = plannedDraft()
   const view = render(<QuickSessionForm targetDate={draft.date} plannedSessionLink={draft.link} />)
   fireEvent.click(screen.getByRole("button", {
     name: input.outcome === "COMPLETED" ? "계획대로 마쳤어요" : "일부만 했거나 내용을 바꿨어요",
@@ -47,11 +49,27 @@ function saveQuickPlanJournal(input: {
   } else {
     fireEvent.click(screen.getByRole("button", { name: "있어요" }))
     fireEvent.click(screen.getByRole("button", { name: "오른 무릎" }))
+    expect(loadEntries()).toHaveLength(0)
     fireEvent.click(screen.getByRole("button", { name: "오른 무릎 통증 1단계" }))
     fireEvent.click(screen.getByRole("button", { name: "이 상태로 기록" }))
   }
-    fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
-    view.unmount()
+  expect(loadEntries()).toHaveLength(0)
+  fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
+  const savedEntries = loadEntries()
+  expect(savedEntries).toHaveLength(1)
+  const saved = savedEntries[0]
+  expect(saved).toMatchObject({
+    kind: "post-session", date: draft.date, activityOutcome: input.outcome,
+    activitySlot: draft.link.sessionSlot, plannedSessionLink: draft.link,
+    painCheckStatus: input.pain === "SIGNAL" ? "SIGNAL_REPORTED" : "NO_SIGNAL_REPORTED",
+    fieldProvenance: { activityOutcome: { provenance: "EXPLICIT" },
+      activitySlot: { provenance: "EXPLICIT" }, painCheckStatus: { provenance: "EXPLICIT" } },
+  })
+  if (saved?.kind !== "post-session") throw new Error("Expected saved planned journal")
+  expect(saved.painParts ?? {}).toEqual(input.pain === "SIGNAL" ? { rKnee: 1 } : {})
+  expect(journalProgressAction(state, saved)?.state ?? null).toBe(input.pain === "SIGNAL"
+    ? "PAIN_CHECKIN" : input.outcome === "COMPLETED" ? "COMPLETED" : null)
+  view.unmount()
   return plannedDraft()
 }
 

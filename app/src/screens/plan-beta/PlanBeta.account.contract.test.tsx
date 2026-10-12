@@ -1,6 +1,7 @@
 import React from "react"
 import { webcrypto } from "node:crypto"
 import { beforeEach, afterEach, it, expect, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { cleanup, render, screen, fireEvent, waitFor, act } from "@testing-library/react"
 import { ACCOUNT_PLAN_EVENT, type AccountPlanTrust } from "../../domain/account/account-plan-service"
 import { createAccountPlanCollectionService } from "../../domain/account/account-plan-collection-service"
@@ -39,6 +40,7 @@ function createService() {
 beforeEach(async () => {
   vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(TODAY); vi.stubGlobal("crypto", webcrypto)
   localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(COLLECTION_OWNER)
+  await initializeCanonicalJournalFixture()
   resetAccountJournalProjection(COLLECTION_OWNER)
   setAccountJournalProjectionStatus(COLLECTION_OWNER, "READY")
   trusted = []; remote = collectionServer(); runtime.enabled = true

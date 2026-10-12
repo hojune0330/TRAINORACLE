@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { adjustedSuccessorFixture } from "./adjusted-plan-successor.test-fixtures"
 import { saveSelectedAdjustedSuccessor } from "./adjusted-plan-store"
 import { readStoredAdjustedPlanState, encodeStoredAdjustedPlanState } from "./adjusted-plan-storage-schema"
@@ -20,7 +21,7 @@ import { readCatalogCycleDraftSource } from "./catalog-cycle-draft"
 
 // Real successor writes validate both retained originals and the new plan.
 vi.setConfig({ testTimeout: 20000 })
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY); await initializeCanonicalJournalFixture() })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 
 async function setup() {

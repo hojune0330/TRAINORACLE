@@ -1,6 +1,7 @@
 import React from "react"
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { JournalOriginalPlan } from "./JournalOriginalPlan"
 import { adjustedPlanSelectionFixture } from "../../domain/adjusted-plan-selection.test-fixtures"
 import type { RetainedAdjustedPlanEvidence } from "../../domain/adjusted-plan-selection"
@@ -18,7 +19,7 @@ vi.mock("../../domain/journal-original-plan", async importOriginal => {
   const original = await importOriginal<typeof import("../../domain/journal-original-plan")>()
   return { ...original, readJournalOriginalPlan: (entry: PostSessionEntry) => original.readJournalOriginalPlan(entry, context.retained) }
 })
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY); await initializeCanonicalJournalFixture() })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers(); context.retained = [] })
 
 async function savedEntry() {

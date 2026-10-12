@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
 import { TODAY } from "./prescription-quality-matrix.test-fixtures"
@@ -7,7 +8,7 @@ import { resolveAdjustedMethodPrescription } from "./adjusted-method-resolution"
 import { createAdjustedMethodSnapshot, readAdjustedMethodSnapshot, revalidateAdjustedMethodSnapshot } from "./adjusted-method-snapshot"
 import type { ResolvedAdjustedExplanation } from "./adjusted-method-snapshot"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY); await initializeCanonicalJournalFixture() })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 
 function fixture() {

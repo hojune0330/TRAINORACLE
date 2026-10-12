@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { sequenceV3ContentIdentity } from "@impl/prescription/sequence-v3-comparison"
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
 import { RUNTIME_CASES, TODAY } from "./prescription-quality-matrix.test-fixtures"
@@ -8,7 +9,7 @@ import { prepareSourceAdjustmentOfferV3 } from "./source-adjustment-offer"
 import { prepareAdjustedPlanCandidateV3, resolveAdjustedCandidateScope } from "./adjusted-plan-candidate"
 import { planAdaptationCandidateSchema } from "./plan-beta-schema"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY); await initializeCanonicalJournalFixture() })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 
 function fixture(event: typeof RUNTIME_CASES[number] = RUNTIME_CASES[3]!) {
@@ -63,9 +64,10 @@ it("rejects snapshot relocation and current source/record changes", () => {
   }
 })
 
-it("rejects another original's snapshot even if it is otherwise readable", () => {
+it("rejects another original's snapshot even if it is otherwise readable", async () => {
   const first = fixture(RUNTIME_CASES[0]!)
   localStorage.clear()
+  await initializeCanonicalJournalFixture()
   const other = fixture(RUNTIME_CASES[1]!)
   expect(prepareAdjustedPlanCandidateV3({ ...first, rawSnapshot: other.rawSnapshot, source: other.source, explanation: other.explanation }).kind).toBe("unavailable")
 })

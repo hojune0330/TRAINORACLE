@@ -2,6 +2,7 @@
 import React from "react"
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { PlanBeta } from "../PlanBeta"
 import { adjustedPlanSelectionFixture } from "../../domain/adjusted-plan-selection.test-fixtures"
 import type { RetainedAdjustedPlanEvidence } from "../../domain/adjusted-plan-selection"
@@ -22,7 +23,7 @@ vi.mock("../../domain/adjusted-plan-progress", async importOriginal => {
     original.saveAdjustedPlanProgress({ ...input, retained: context.retained,
       locks: { request: async (_n, _o, callback) => callback({}) } }) }
 })
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY); await initializeCanonicalJournalFixture() })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers(); context.retained = [] })
 async function openMethodDetails(slot: "AM" | "PM") {
   const session = screen.getByRole("region", { name: slot === "AM" ? "오전 훈련" : "오후 훈련" })

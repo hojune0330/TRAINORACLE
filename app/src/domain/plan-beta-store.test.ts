@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import {
   archiveAndClearActivePlan,
   archiveAndClearActivePlanWithLock,
@@ -46,10 +47,11 @@ function multiPlanPacketFixture() {
 }
 
 describe("plan beta local store", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     setActiveLocalAccount(null)
     window.localStorage.clear()
     window.sessionStorage.clear()
+    await initializeCanonicalJournalFixture()
     locksDescriptor = Object.getOwnPropertyDescriptor(navigator, "locks")
     Object.defineProperty(navigator, "locks", {
       configurable: true,
@@ -652,7 +654,8 @@ describe("plan beta local store", () => {
         { state: "PAIN_CHECKIN", count: 1 },
       ],
     })
-    expect(JSON.stringify(window.localStorage)).not.toMatch(/memo|symptom/u)
+    const persistedPlanHistory = localStorage.getItem("trainoracle.plan-beta.history.v1") ?? "[]"
+    expect(persistedPlanHistory).not.toMatch(/memo|symptom/u)
   })
 
   it("keeps AM and PM progress separate for an explicitly selected two-a-day plan", () => {

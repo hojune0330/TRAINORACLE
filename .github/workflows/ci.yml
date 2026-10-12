@@ -62,6 +62,9 @@ jobs:
           node --test specs/test-packages/validate-personalized-prescription-v2-race-placement.test.mjs
           node specs/test-packages/validate-personalized-prescription-v2-race-placement.mjs
 
+      - name: Verify publication and reconciliation guards
+        run: node --test .tools/pages-release-safety.test.mjs .tools/manual-release-lock.test.mjs .tools/oracle-public-release-config.test.mjs .tools/repository-freshness.test.mjs
+
       - name: Install shared schema fixture compiler dependencies
         working-directory: app
         run: npm ci --ignore-scripts --no-audit --no-fund
@@ -76,6 +79,9 @@ jobs:
       - name: Rehearse V6 migration and account isolation in memory
         working-directory: supabase/tests/local-postgres
         run: npm test
+
+      - name: Verify closed lounge operation rollback
+        run: node --test supabase/operations/lounge-closure-operator.test.mjs
 
       - name: Verify COROS protocol and encrypted daily transport
         run: node --test supabase/tests/coros-*.test.mjs
@@ -311,6 +317,15 @@ jobs:
           echo "current=false" >> "$GITHUB_OUTPUT"
           echo "::notice::Skipping stale deployment source $GITHUB_SHA; current main is $CURRENT_MAIN_SHA."
 
+      - name: Fetch current Pages snapshot
+        id: pages-snapshot
+        if: steps.deployment-source.outputs.current == 'true'
+        shell: bash
+        run: |
+          git fetch origin gh-pages
+          PAGES_SHA="$(git rev-parse origin/gh-pages)"
+          echo "sha=$PAGES_SHA" >> "$GITHUB_OUTPUT"
+
       - name: Setup Node
         if: steps.deployment-source.outputs.current == 'true'
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -319,102 +334,31 @@ jobs:
           cache: npm
           cache-dependency-path: app/package-lock.json
 
-      - name: Build hosted app
+      - name: Install app dependencies
         if: steps.deployment-source.outputs.current == 'true'
         working-directory: app
-        env:
-          VITE_ACCOUNT_PUBLIC_ENABLED: ${{ vars.TRAINORACLE_ACCOUNT_PUBLIC_ENABLED }}
-          VITE_KAKAO_AUTH_ENABLED: ${{ vars.TRAINORACLE_KAKAO_AUTH_ENABLED }}
-          VITE_PHONE_AUTH_ENABLED: ${{ vars.TRAINORACLE_PHONE_AUTH_ENABLED }}
-          VITE_PHONE_AUTH_OPERATIONS_APPROVED: ${{ vars.TRAINORACLE_PHONE_AUTH_OPERATIONS_APPROVED }}
-          VITE_FEATURE_SYNC: ${{ vars.TRAINORACLE_FEATURE_SYNC }}
-          VITE_FEATURE_ACCOUNT_JOURNAL: ${{ vars.TRAINORACLE_FEATURE_ACCOUNT_JOURNAL }}
-          VITE_FEATURE_FILE_ANALYSIS_TCX: ${{ vars.TRAINORACLE_FEATURE_FILE_ANALYSIS_TCX }}
-          VITE_KILL_FILE_ANALYSIS_TCX: ${{ vars.TRAINORACLE_KILL_FILE_ANALYSIS_TCX }}
-          VITE_FEATURE_FILE_ANALYSIS_CSV: ${{ vars.TRAINORACLE_FEATURE_FILE_ANALYSIS_CSV }}
-          VITE_KILL_FILE_ANALYSIS_CSV: ${{ vars.TRAINORACLE_KILL_FILE_ANALYSIS_CSV }}
-          VITE_FEATURE_FILE_ANALYSIS_JSON: ${{ vars.TRAINORACLE_FEATURE_FILE_ANALYSIS_JSON }}
-          VITE_KILL_FILE_ANALYSIS_JSON: ${{ vars.TRAINORACLE_KILL_FILE_ANALYSIS_JSON }}
-          VITE_FEATURE_FILE_ANALYSIS_GPX: ${{ vars.TRAINORACLE_FEATURE_FILE_ANALYSIS_GPX }}
-          VITE_KILL_FILE_ANALYSIS_GPX: ${{ vars.TRAINORACLE_KILL_FILE_ANALYSIS_GPX }}
-          VITE_FEATURE_SHARING: ${{ vars.TRAINORACLE_FEATURE_SHARING }}
-          VITE_FEATURE_PLAN_PROPOSALS: ${{ vars.TRAINORACLE_FEATURE_PLAN_PROPOSALS }}
-          VITE_FEATURE_PLAN_BACKUP: ${{ vars.TRAINORACLE_FEATURE_PLAN_BACKUP }}
-          VITE_FEATURE_PUBLIC_PROFILE: ${{ vars.TRAINORACLE_FEATURE_PUBLIC_PROFILE }}
-          VITE_FEATURE_EXPERIMENTAL_FATIGUE: ${{ vars.TRAINORACLE_FEATURE_EXPERIMENTAL_FATIGUE }}
-          VITE_FEATURE_DECORATION_SHOP: ${{ vars.TRAINORACLE_FEATURE_DECORATION_SHOP }}
-          VITE_FEATURE_PRODUCT_ANALYTICS: ${{ vars.TRAINORACLE_FEATURE_PRODUCT_ANALYTICS }}
-          VITE_FEATURE_FEEDBACK_BOARD: ${{ vars.TRAINORACLE_FEATURE_FEEDBACK_BOARD }}
-          VITE_KILL_ACCOUNT: ${{ vars.TRAINORACLE_KILL_ACCOUNT }}
-          VITE_KILL_KAKAO_AUTH: ${{ vars.TRAINORACLE_KILL_KAKAO_AUTH }}
-          VITE_KILL_PHONE_AUTH: ${{ vars.TRAINORACLE_KILL_PHONE_AUTH }}
-          VITE_KILL_SYNC: ${{ vars.TRAINORACLE_KILL_SYNC }}
-          VITE_KILL_ACCOUNT_JOURNAL: ${{ vars.TRAINORACLE_KILL_ACCOUNT_JOURNAL }}
-          VITE_KILL_SHARING: ${{ vars.TRAINORACLE_KILL_SHARING }}
-          VITE_KILL_PLAN_PROPOSALS: ${{ vars.TRAINORACLE_KILL_PLAN_PROPOSALS }}
-          VITE_KILL_PLAN_BACKUP: ${{ vars.TRAINORACLE_KILL_PLAN_BACKUP }}
-          VITE_KILL_PUBLIC_PROFILE: ${{ vars.TRAINORACLE_KILL_PUBLIC_PROFILE }}
-          VITE_KILL_EXPERIMENTAL_FATIGUE: ${{ vars.TRAINORACLE_KILL_EXPERIMENTAL_FATIGUE }}
-          VITE_KILL_DECORATION_SHOP: ${{ vars.TRAINORACLE_KILL_DECORATION_SHOP }}
-          VITE_KILL_PRODUCT_ANALYTICS: ${{ vars.TRAINORACLE_KILL_PRODUCT_ANALYTICS }}
-          VITE_KILL_FEEDBACK_BOARD: ${{ vars.TRAINORACLE_KILL_FEEDBACK_BOARD }}
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_PRIVACY_POLICY_URL: ${{ vars.TRAINORACLE_PRIVACY_POLICY_URL }}
-          VITE_PRIVACY_POLICY_VERSION: ${{ vars.TRAINORACLE_PRIVACY_POLICY_VERSION }}
-          VITE_TERMS_OF_SERVICE_URL: ${{ vars.TRAINORACLE_TERMS_OF_SERVICE_URL }}
-          VITE_TERMS_OF_SERVICE_VERSION: ${{ vars.TRAINORACLE_TERMS_OF_SERVICE_VERSION }}
-        run: |
-          npm ci
-          node scripts/validate-hosted-release-env.mjs
-          npm run build
+        run: npm ci
 
-      - name: Publish verified build to gh-pages
+      - name: Build account-held release package
         if: steps.deployment-source.outputs.current == 'true'
         shell: bash
         run: |
-          git fetch origin gh-pages
-          PREVIOUS_PAGES_SHA="$(git rev-parse origin/gh-pages)"
-          export PREVIOUS_PAGES_SHA
-          export SOURCE_SHA="${{ github.sha }}"
-          export WORKFLOW_RUN_ID="${{ github.run_id }}"
-          export WORKFLOW_ATTEMPT="${{ github.run_attempt }}"
-          node --input-type=module <<'NODE'
-          import { writeFileSync } from "node:fs"
+          node .tools/build-oracle-pages-release.mjs --account-held --out="$RUNNER_TEMP/trainoracle-pages-bundle"
 
-          const receipt = {
-            kind: "TRAINORACLE_PAGES_DEPLOYMENT",
-            sourceSha: process.env.SOURCE_SHA,
-            previousPagesSha: process.env.PREVIOUS_PAGES_SHA,
-            workflowRunId: process.env.WORKFLOW_RUN_ID,
-            workflowAttempt: process.env.WORKFLOW_ATTEMPT,
-            deployedAt: new Date().toISOString(),
-          }
-          writeFileSync("app/dist/trainoracle-deploy-receipt.json", `${JSON.stringify(receipt, null, 2)}\n`)
-          NODE
-          git worktree add "$RUNNER_TEMP/trainoracle-pages" origin/gh-pages
-          find "$RUNNER_TEMP/trainoracle-pages" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
-          cp -R app/dist/. "$RUNNER_TEMP/trainoracle-pages/"
-          touch "$RUNNER_TEMP/trainoracle-pages/.nojekyll"
-          cd "$RUNNER_TEMP/trainoracle-pages"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          if git diff --cached --quiet; then
-            echo "Hosted build is already current."
-            exit 0
-          fi
-          git commit -m "deploy: verified app from main ${GITHUB_SHA::7}"
-          git fetch origin main
-          CURRENT_MAIN_SHA_BEFORE_PUSH="$(git rev-parse origin/main)"
-          if [[ "$GITHUB_SHA" != "$CURRENT_MAIN_SHA_BEFORE_PUSH" ]]; then
-            echo "::notice::Skipping stale deployment immediately before publish: $GITHUB_SHA; current main is $CURRENT_MAIN_SHA_BEFORE_PUSH."
-            exit 0
-          fi
-          git push origin HEAD:gh-pages
+      - name: Publish verified package to gh-pages
+        if: steps.deployment-source.outputs.current == 'true'
+        shell: bash
+        run: |
+          PAGES_WORKTREE="$RUNNER_TEMP/trainoracle-pages"
+          git worktree add "$PAGES_WORKTREE" "${{ steps.pages-snapshot.outputs.sha }}"
+          git -C "$PAGES_WORKTREE" config user.name "github-actions[bot]"
+          git -C "$PAGES_WORKTREE" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          RESULT="$(node .tools/publish-oracle-pages-release.mjs --bundle="$RUNNER_TEMP/trainoracle-pages-bundle" --pages-worktree="$PAGES_WORKTREE" --publish)"
+          echo "$RESULT"
+          DEPLOYED_PAGES_SHA="$(git -C "$PAGES_WORKTREE" rev-parse HEAD)"
           {
             echo "### deployment receipt"
-            echo "- source: \`${GITHUB_SHA}\`"
-            echo "- previous Pages: \`${PREVIOUS_PAGES_SHA}\`"
-            echo "- deployed Pages: \`$(git rev-parse HEAD)\`"
+            echo "- source: \`$GITHUB_SHA\`"
+            echo "- previous Pages: \`${{ steps.pages-snapshot.outputs.sha }}\`"
+            echo "- deployed Pages: \`$DEPLOYED_PAGES_SHA\`"
           } >> "$GITHUB_STEP_SUMMARY"

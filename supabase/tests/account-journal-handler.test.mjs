@@ -702,6 +702,7 @@ async function comparisonFixture(storage = 'legacy') {
     const { build } = createRequire(new URL('../../app/package.json', import.meta.url))('esbuild');
     const output = await build({ stdin: { contents: `
       export { accountPlanPacketFixture } from './src/domain/account/account-plan.test-fixtures.ts';
+      export { initializeCanonicalJournalFixture } from './src/test/canonical-journal-fixture.ts';
       export * from './src/domain/account/account-plan-document-schema.ts';
       export * from './src/domain/account/account-plan-collection-schema.ts';
       export * from './src/domain/import/file-plan-comparison.ts';
@@ -722,12 +723,18 @@ async function comparisonFixture(storage = 'legacy') {
   const m = comparisonFixtureModule, at = '2026-09-01T00:00:00.000Z';
   let packet;
   const realDate = globalThis.Date, priorWindow = globalThis.window, values = new Map();
-  globalThis.window = { localStorage: { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key) } };
+  const memoryStorage = entries => ({ get length() { return entries.size; }, key: index => [...entries.keys()][index] ?? null,
+    getItem: key => entries.get(key) ?? null, setItem: (key, value) => entries.set(key, String(value)),
+    removeItem: key => entries.delete(key), clear: () => entries.clear() });
+  globalThis.window = { localStorage: memoryStorage(values), sessionStorage: memoryStorage(new Map()) };
   globalThis.Date = class extends realDate {
     constructor(...args) { super(...(args.length ? args : ['2026-08-17T03:00:00.000Z'])); }
     static now() { return realDate.parse('2026-08-17T03:00:00.000Z'); }
   };
-  try { packet = m.accountPlanPacketFixture(4); } catch (error) { throw new Error(`Comparison fixture: ${error.message}`); }
+  try {
+    await m.initializeCanonicalJournalFixture(globalThis.window.localStorage, globalThis.window.sessionStorage);
+    packet = m.accountPlanPacketFixture(4);
+  } catch (error) { throw new Error(`Comparison fixture: ${error.message}`); }
   finally { globalThis.Date = realDate; if (priorWindow === undefined) delete globalThis.window; else globalThis.window = priorWindow; }
   const planEntry = m.accountPlanEntry(packet, at), plan = m.emptyAccountPlanDocument();
   plan.data.plans = [planEntry]; plan.data.currentPlanId = planEntry.planId;
