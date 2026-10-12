@@ -13,6 +13,7 @@ import { createRecoveryCode, decryptPrivateNote } from "./account/private-note-c
 import { saveSessionRecoveryCode } from "./account/private-note-sync"
 import { purgeExpiredTrash } from "./journal-trash"
 import { privateEntry } from "./private-memo-test-fixtures"
+import { canonicalJournalStorage } from "./journal-device-storage"
 
 const vaultSchema = z.object({
   version: z.literal(1),
@@ -48,7 +49,7 @@ describe("private memo local vault lifecycle", () => {
       .resolves.toEqual({ ok: true, total: 1 })
 
     expect(allLocalStorageValues()).not.toContain("PRIVATE-LUNA-731")
-    const rawVault = window.localStorage.getItem("trainoracle.private-memo.v1")
+    const rawVault = canonicalJournalStorage(window.localStorage).getItem("trainoracle.private-memo.v1")
     if (rawVault === null) throw new Error("Expected the private memo vault")
     const record = vaultSchema.parse(JSON.parse(rawVault)).records["private-luna"]
     if (record === undefined) throw new Error("Expected encrypted private memo record")
