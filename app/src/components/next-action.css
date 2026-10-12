@@ -1,0 +1,39 @@
+/* State-specific next actions; native click and cancellation remain unchanged. */
+.next-action.next-action {
+  width: 100%;
+  min-height: var(--app-action-height, 52px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border: 1px solid var(--info);
+  border-radius: var(--r-action, 12px);
+  background: var(--info);
+  color: var(--surface);
+  font-family: var(--sans);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: normal;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 80ms ease-out, transform 70ms ease-out;
+}
+
+.next-action.next-action:active:not(:disabled),
+.next-action.next-action[data-pressed="true"]:not(:disabled) {
+  background: color-mix(in srgb, var(--info) 80%, var(--ink));
+  transform: translateY(1px) scale(.98);
+  transition-duration: 0ms;
+}
+
+.next-action.next-action:focus-visible { outline: 3px solid var(--info); outline-offset: 3px; }
+.next-action.next-action:disabled { background: var(--surface-2); border-color: var(--line); color: var(--ink-3); cursor: default; }
+
+@media (prefers-reduced-motion: reduce) {
+  .next-action.next-action { transition: none; }
+  .next-action.next-action:active:not(:disabled),
+  .next-action.next-action[data-pressed="true"]:not(:disabled) { transform: none; }
+}

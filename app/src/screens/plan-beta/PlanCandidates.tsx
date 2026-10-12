@@ -251,6 +251,10 @@ export function PlanCandidates({
     ? `${selectedDetailedOption.mainSummary} · ${pacePrescription.repetitionDistanceM}m당 ${formatPaceSeconds(pacePrescription.targetRepSeconds)}`
     : selectedDetailedOption?.mainSummary
   const needsReview = recordConfirmationPending || detailedEvidencePending || targetDraftPending || methodDraftPending || !hasValidStartDate
+  const canReviewMethodDraft = methodDraftPending && purpose !== "workout" && !recordConfirmationPending && !detailedEvidencePending
+    && !targetDraftPending && !catalogDraftPending && !initialMainPending && !initialApplying
+    && !selectionUnavailable && !saveError && (saveCode === undefined || saveCode === null)
+    && hasValidStartDate && unreviewedConditions.length === 0
   const visiblePurpose = purpose
   React.useEffect(() => {
     if (!confirmationRequested.current || needsReview || selectionUnavailable) return
@@ -303,7 +307,9 @@ export function PlanCandidates({
             confirmationPending={recordConfirmationPending || detailedEvidencePending} />
         </>}
         recoveryRef={recoveryRef}
-        blockedAction={!selectionUnavailable && !saveError && !initialApplying && !catalogDraftPending && !initialMainPending
+        blockedAction={canReviewMethodDraft
+          ? { label: "변경한 훈련 확인", onClick: () => reveal("method") }
+          : !selectionUnavailable && !saveError && !initialApplying && !catalogDraftPending && !initialMainPending
           && !methodDraftPending && !targetDraftPending && hasValidStartDate && unreviewedConditions.length === 0
           && intake.selectedDetailedTemplateRef !== null && intake.experienceBand === "EXPERIENCED"
           && (recordConfirmationPending || detailedEvidencePending)

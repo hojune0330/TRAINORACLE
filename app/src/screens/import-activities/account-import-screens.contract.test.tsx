@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ImportActivities } from "../ImportActivities"
 import { RestoreBackup } from "../RestoreBackup"
+import { SavedStage } from "./ImportStages"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 import { resetAccountJournalProjection } from "../../domain/account/account-journal-projection"
 import { FULL_FORMAT } from "../../domain/restore/backup-file"
@@ -37,6 +38,37 @@ beforeEach(() => {
   api.calendarPersist.mockResolvedValue({ ok: true, storage: "ACCOUNT", state: createEmptyCalendarDecorationState() })
 })
 afterEach(() => { cleanup(); setActiveLocalAccount(null); vi.unstubAllEnvs() })
+
+describe("next action follows account import confirmation", () => {
+  it.each([
+    { account: 1, pending: 1, failed: 0, name: "저장 상태 다시 확인", target: "retry" },
+    { account: 1, pending: 0, failed: 1, name: "저장 상태 다시 확인", target: "retry" },
+    { account: 1, pending: 0, failed: 0, name: "가져온 기록 분석하기", target: "analysis" },
+  ])("routes the next action for $account confirmed, $pending pending, $failed failed", async ({ account, pending, failed, name, target }) => {
+    const retry = vi.fn(), analysis = vi.fn()
+    const { container } = render(<SavedStage outcome={{ total: account + pending + failed, saved: 0, merged: 0, account, pending, failed, conflicts: 0 }}
+      onRetry={retry} onOpenAnalysis={analysis} onRestart={vi.fn()} />)
+    const next = container.querySelector<HTMLButtonElement>("button.next-action")!
+    expect(container.querySelectorAll("button.next-action")).toHaveLength(1)
+    expect(next).toHaveAccessibleName(name)
+    expect(retry).not.toHaveBeenCalled()
+    expect(analysis).not.toHaveBeenCalled()
+    await userEvent.setup().click(next)
+    expect(target === "retry" ? retry : analysis).toHaveBeenCalledTimes(1)
+    expect(target === "retry" ? analysis : retry).not.toHaveBeenCalled()
+  })
+
+  it("offers the confirmed-record view when analysis is unavailable without retrying the import", async () => {
+    const retry = vi.fn(), summary = vi.fn()
+    const { container } = render(<SavedStage outcome={{ total: 1, saved: 0, account: 1, pending: 0, failed: 0 }}
+      onRetry={retry} onOpenSummary={summary} onRestart={vi.fn()} />)
+    const next = container.querySelector<HTMLButtonElement>("button.next-action")!
+    expect(next).toHaveAccessibleName("가져온 기록 보기")
+    await userEvent.setup().click(next)
+    expect(summary).toHaveBeenCalledTimes(1)
+    expect(retry).not.toHaveBeenCalled()
+  })
+})
 
 function watchFile() {
   return new File([JSON.stringify([{ date: "2026-07-20", name: "Synthetic watch", sport: "running", distanceKm: 5, durationMin: 30 }])], "watch.json", { type: "application/json" })

@@ -6,6 +6,7 @@ import type {
   InstantPlanRecommendation,
 } from "../../domain/instant-plan-contract"
 import "./instant-plan.css"
+import { nextActionFeedback } from "../next-action"
 import { RecommendationCalendar } from "./RecommendationCalendar"
 import { IncompleteWorkoutNotice } from "./IncompleteWorkoutNotice"
 import { AppHeading } from "../AppHeading"
@@ -81,7 +82,8 @@ export function InstantPlanRecommendationView({
     : actionState.kind === "READY" ? null : actionState.message
   const startAction = <div className="instant-plan__actions instant-plan__start-action">
     <button
-      className="instant-plan__button"
+      {...nextActionFeedback}
+      className={`instant-plan__button${actionState.kind === "BLOCKED" && blockedAction ? " next-action" : ""}`}
       type="button"
       disabled={!ready && !(actionState.kind === "BLOCKED" && blockedAction)}
       aria-describedby={status !== null ? actionStatusId : undefined}

@@ -25,6 +25,7 @@ import { accountJournalRecordsEnabled } from "../domain/account/account-journal-
 import { createAccountBackupRestoration, type AccountRestoreOutcome } from "../domain/restore/account-restore"
 import { useImportOwnerScope } from "./import-activities/useImportOwnerScope"
 import { BACKUP_JSON_IMPORT_LIMITS } from "../domain/restore/backup-json-stream"
+import { nextActionFeedback } from "../components/next-action"
 
 const mono: React.CSSProperties = { fontFamily: "var(--mono)" }
 const backupFileLimitMb = BACKUP_JSON_IMPORT_LIMITS.blobBytes / (1024 * 1024)
@@ -211,7 +212,7 @@ export function RestoreBackup({ onBack, onOpenHome }: {
         )}
 
         {stage.step === "failed" && (
-          <RestoreFailedStage outcome={stage.outcome} onRestart={restart} />
+          <RestoreFailedStage outcome={stage.outcome} onRestart={restart} onOpenHome={onOpenHome} />
         )}
         {stage.step === "account-result" && <div data-testid="restore-account-result" role="status">
           <h2>계정 백업 복원 결과</h2>
@@ -578,10 +579,15 @@ function DoneStage({ outcome, onOpenHome, onRestart, busy }: {
   )
 }
 
-function RestoreFailedStage({ outcome, onRestart }: {
+function RestoreFailedStage({ outcome, onRestart, onOpenHome }: {
   readonly outcome: RestoreOutcome
   readonly onRestart: () => void
+  readonly onOpenHome?: () => void
 }) {
+  const repickRequired = outcome.failureReason === "RECOVERY_CODE_REQUIRED" || outcome.failureReason === "STATE_CHANGED"
+  const inspectFirst = !repickRequired && onOpenHome !== undefined
+  const restartLabel = outcome.failureReason === "RECOVERY_CODE_REQUIRED" ? "복구 코드 준비 후 다시 고르기"
+    : outcome.failureReason === "STATE_CHANGED" ? "파일 다시 골라 확인" : "다른 파일 고르기"
   const message = outcome.failureReason === "RECOVERY_CODE_REQUIRED"
     ? "비공개 메모를 되돌리려면 먼저 복구 코드를 준비해야 해요. 백업 원본을 보관해 주세요."
     : outcome.failureReason === "STATE_CHANGED"
@@ -600,7 +606,10 @@ function RestoreFailedStage({ outcome, onRestart }: {
         {outcome.calendarDecorationRestore === "ROLLED_BACK" && <p>달력 꾸미기는 이전 상태로 되돌렸어요.</p>}
         {outcome.calendarDecorationRestore === "SAVE_FAILED" && <p>달력 꾸미기 저장을 확인하지 못했어요.</p>}
       </div>
-      <button type="button" style={secondaryBtn} onClick={onRestart}>다른 파일 고르기</button>
+      {onOpenHome && <button {...nextActionFeedback} type="button" className={inspectFirst ? "next-action" : undefined}
+        style={inspectFirst ? undefined : secondaryBtn} onClick={onOpenHome}>현재 일지 확인</button>}
+      <button {...nextActionFeedback} type="button" className={inspectFirst ? undefined : "next-action"}
+        style={inspectFirst ? secondaryBtn : undefined} onClick={onRestart}>{restartLabel}</button>
     </div>
   )
 }
