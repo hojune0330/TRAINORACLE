@@ -25,9 +25,11 @@
   color: var(--ink, #101713);
   background: transparent;
   border: 1px solid var(--line, #d6d6d1);
-  border-radius: 4px;
+  border-radius: var(--r-action, 12px);
   cursor: pointer;
 }
 .pace-plan-update button.pace-plan-update-primary { background: var(--ink, #101713); color: var(--paper, #fff); }
 .pace-plan-update button:disabled { opacity: .45; cursor: default; }
 .pace-plan-update button:focus-visible, .pace-plan-update summary:focus-visible { outline: 2px solid var(--ink-blue, #224674); outline-offset: 3px; }
+
+.pace-plan-update > .next-action-group { margin-top: 8px; }

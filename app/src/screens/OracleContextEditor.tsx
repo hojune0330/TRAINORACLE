@@ -4,6 +4,7 @@ import { useReaderDialog } from "../hooks/useReaderDialog"
 import { ORACLE_CONTEXT_QUESTIONS, oracleProfileContextSchema, type OracleProfileContext } from "../domain/oracle-profile-context"
 import { OracleConditionsFields, type OracleConditionsHandle } from "./OracleConditionsFields"
 import type { AthleteRecord } from "../domain/athlete-records"
+import { nextActionFeedback } from "../components/next-action"
 
 export function OracleContextEditor({ initial, onSave, onClose, onDraft, records = null }: {
   initial?: OracleProfileContext; onSave: (context: OracleProfileContext) => Promise<boolean>; onClose: () => void; onDraft: (context: OracleProfileContext) => void; records?: readonly AthleteRecord[] | null
@@ -33,6 +34,8 @@ export function OracleContextEditor({ initial, onSave, onClose, onDraft, records
     if (dirty.current && notifiedDraft.current !== draft) { notifiedDraft.current = draft; draftListener.current(draft) }
   }, [draft])
   const question = index === null ? null : ORACLE_CONTEXT_QUESTIONS[index]!
+  const selectedAnswer = question ? draft.answers[question.id] : undefined
+  const hasSelectedAnswer = Array.isArray(selectedAnswer) ? selectedAnswer.length > 0 : typeof selectedAnswer === "string" && selectedAnswer.length > 0
   const grouped = [[0, 1, 4, 5], [2, 3, 10, 11], [6, 7], [8, 9, 12], []]
   React.useEffect(() => {
     const target = conditionsView ? ref.current?.querySelector<HTMLElement>(".oracle-v2__conditions h2") : heading.current
@@ -49,16 +52,16 @@ export function OracleContextEditor({ initial, onSave, onClose, onDraft, records
     dirty.current = true; setSaved(false); setFailed(false); setDraft(parsed.data)
     if (!question.multiple) setIndex(null)
   }
-  return <dialog ref={ref} className="oracle-v2 oracle-v2__dialog" aria-label="추가 응답" onCancel={event => { event.preventDefault(); close() }}>
+  return <dialog ref={ref} className="oracle-v2 oracle-v2__dialog oracle-context-editor" aria-label="추가 응답" onCancel={event => { event.preventDefault(); close() }}>
     <header className="oracle-v2__chrome"><button type="button" disabled={busy} aria-label="항목 목록으로" title="항목 목록으로" onClick={() => { if (finishConditions()) { setIndex(null); setConditionsView(null) } }}><ArrowLeft size={18} /></button><span>원하는 항목만 알려주세요</span><button type="button" disabled={busy} aria-label="닫기" title="닫기" onClick={close}><X size={18} /></button></header>
     <div className="oracle-v2__reader-body">
       {conditionsView ? <><OracleConditionsFields ref={conditions} key={conditionsView} kind={conditionsView} value={draft.conditions} records={records} onChange={conditions => {
         const next = { ...draft, conditions }; dirty.current = true; setSaved(false); setFailed(false); setDraft(next)
         notifiedDraft.current = next; draftListener.current(next)
-      }} /><button type="button" onClick={() => { if (finishConditions()) setConditionsView(null) }}>입력 마치기<Check size={16} /></button></> : question ? <><h1 ref={heading} tabIndex={-1}>{question.title}</h1><div className="oracle-v2__choices app-choice-group">{question.options.map(([value, label]) => {
+      }} /></> : question ? <><h1 ref={heading} tabIndex={-1}>{question.title}</h1><div className="oracle-v2__choices app-choice-group">{question.options.map(([value, label]) => {
         const selected = draft.answers[question.id], pressed = Array.isArray(selected) ? (selected as string[]).includes(value) : selected === value
         return <button className="app-choice-control app-choice-control--answer" type="button" key={value} disabled={busy} aria-pressed={pressed} onClick={() => change(value)}>{label}{pressed && <Check size={16} />}</button>
-      })}</div>{question.multiple && <button type="button" onClick={() => setIndex(null)}>선택 완료<Check size={16} /></button>}<button type="button" onClick={() => { const next = { ...draft, answers: { ...draft.answers } }; delete next.answers[question.id]; dirty.current = true; setSaved(false); setDraft(next); setIndex(null) }}>답하지 않기</button></> : <>
+      })}</div></> : <>
         <h1 ref={heading} tabIndex={-1}>조금 더 나답게</h1><p>여기서 고른 답은 점수에 더하지 않아요. 관련된 풀이에만 사용해요.</p>
         <div className="oracle-v2__groups app-choice-group" role="group" aria-label="추가 응답 주제">{["달리기", "함께", "보조 운동", "대회", "시간·장소"].map((label, n) => <button className="app-choice-control" type="button" key={label} aria-pressed={group === n} onClick={() => setGroup(n)}>{label}</button>)}</div>
         <div className="oracle-v2__topics">{ORACLE_CONTEXT_QUESTIONS.map((item, n) => grouped[group]!.includes(n) ? <button type="button" key={item.id} disabled={busy} onClick={() => setIndex(n)}>{item.title}{draft.answers[item.id] !== undefined ? <Check size={16} aria-label="응답 있음" /> : <ChevronRight size={16} />}</button> : null)}</div>
@@ -77,12 +80,16 @@ export function OracleContextEditor({ initial, onSave, onClose, onDraft, records
         }}>{label}</button>)}</div></>}
         {failed && <p role="alert">저장을 확인하지 못했어요. 입력한 답은 이 화면에 남아 있어요.</p>}
         {saved && <p role="status">응답을 반영했어요.</p>}
-        <button type="button" disabled={busy || saved} onClick={async () => {
+      </>}
+    </div>
+    <footer className="next-action-footer">
+      {conditionsView ? <button {...nextActionFeedback} className="next-action" type="button" onClick={() => { if (finishConditions()) setConditionsView(null) }}>입력 마치기<Check size={16} /></button> : question ? <>
+        {question.multiple && <button {...nextActionFeedback} className={hasSelectedAnswer ? "next-action" : undefined} type="button" onClick={() => setIndex(null)}>선택 완료<Check size={16} /></button>}<button type="button" onClick={() => { const next = { ...draft, answers: { ...draft.answers } }; delete next.answers[question.id]; dirty.current = true; setSaved(false); setDraft(next); setIndex(null) }}>{hasSelectedAnswer ? "선택 지우고 돌아가기" : "답하지 않기"}</button>
+      </> : <button {...nextActionFeedback} className="next-action" type="button" disabled={busy || saved} onClick={async () => {
           setBusy(true); setFailed(false)
           try { const ok = await onSave({ ...draft, answeredAt: new Date().toISOString() }); setFailed(!ok); setSaved(ok); if (ok) dirty.current = false }
           catch { setFailed(true) } finally { setBusy(false) }
-        }}>{busy ? "저장 중" : "응답 반영"}<Check size={16} /></button>
-      </>}
-    </div>
+        }}>{busy ? "저장 중" : "응답 반영"}<Check size={16} /></button>}
+    </footer>
   </dialog>
 }

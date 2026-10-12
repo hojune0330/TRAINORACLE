@@ -119,7 +119,7 @@ describe("deferred workout editors on a candidate result", () => {
     expect(props.onSelect).not.toHaveBeenCalled()
   })
 
-  it("keeps the same unaccepted method editor and save block through collapse and reopen", () => {
+  it("reveals the same hidden method draft without starting or applying it through the blocked action", () => {
     const props = fixture()
     render(<PlanCandidates {...props} />)
     toggleWorkout()
@@ -129,11 +129,22 @@ describe("deferred workout editors on a candidate result", () => {
     toggleWorkout()
     expect(apply).not.toBeVisible()
     expect(apply).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "이 일정으로 시작" })).toBeDisabled()
-    toggleWorkout()
+    const review = screen.getByRole("button", { name: "변경한 훈련 확인" })
+    expect(review).toBeEnabled()
+    expect(screen.queryByRole("button", { name: "이 일정으로 시작" })).not.toBeInTheDocument()
+    expect(review).toBeVisible()
+    fireEvent.click(review)
     expect(screen.getByRole("button", { name: "이 훈련으로 변경" })).toBe(apply)
     expect(screen.getByRole("region", { name: "훈련 미리보기" })).toBeVisible()
     expect(props.onChangeMethod).not.toHaveBeenCalled()
+    expect(props.onSelect).not.toHaveBeenCalled()
+    const start = screen.getByRole("button", { name: "이 일정으로 시작" })
+    expect(start).toBeDisabled()
+    fireEvent.click(start)
+    expect(props.onChangeMethod).not.toHaveBeenCalled()
+    expect(props.onSelect).not.toHaveBeenCalled()
+    fireEvent.click(apply)
+    expect(props.onChangeMethod).toHaveBeenCalledTimes(1)
     expect(props.onSelect).not.toHaveBeenCalled()
   })
 

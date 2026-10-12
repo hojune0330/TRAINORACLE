@@ -1,0 +1,97 @@
+/* State-specific next actions; native click and cancellation remain unchanged. */
+.next-action.next-action {
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+  min-height: var(--app-action-height, 52px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border: 1px solid var(--info);
+  border-radius: var(--r-action, 12px);
+  background: var(--info);
+  color: var(--surface);
+  font-family: var(--sans);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: normal;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 80ms ease-out, transform 70ms ease-out;
+}
+
+.next-action.next-action:active:not(:disabled),
+.next-action.next-action[data-pressed="true"]:not(:disabled) {
+  background: color-mix(in srgb, var(--info) 80%, var(--ink));
+  transform: translateY(1px) scale(.98);
+  transition-duration: 0ms;
+}
+
+.next-action.next-action:focus-visible { outline: 3px solid var(--info); outline-offset: 3px; }
+.next-action.next-action:disabled { background: var(--surface-2); border-color: var(--line); color: var(--ink-3); cursor: default; }
+
+@media (prefers-reduced-motion: reduce) {
+  .next-action.next-action { transition: none; }
+  .next-action.next-action:active:not(:disabled),
+  .next-action.next-action[data-pressed="true"]:not(:disabled) { transform: none; }
+}
+
+/* Separate the decision from its content, then keep related actions together. */
+.next-action-group {
+  display: grid;
+  gap: var(--space-3, 12px);
+  margin-top: var(--space-6, 24px);
+}
+.next-action-alternatives {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2, 8px);
+}
+.next-action-alternatives > button {
+  min-width: 0;
+  padding: 12px;
+  line-height: 1.45;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+/* A separate flex row stays visible without covering the scrollable answers. */
+.oracle-context-editor > .next-action-footer {
+  display: grid;
+  flex: 0 0 auto;
+  gap: var(--space-2, 8px);
+  padding: 16px;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+  background: var(--paper);
+}
+.oracle-context-editor > .next-action-footer > button { width: 100%; }
+.oracle-context-editor > .next-action-footer > button:not(.next-action):last-child {
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink-2);
+}
+.oracle-context-editor > .oracle-v2__reader-body { padding-top: 24px; }
+.oracle-context-editor > .oracle-v2__reader-body > h1 {
+  margin: 0 0 24px;
+  font-size: var(--fs-app-section-title, 24px);
+  line-height: 1.4;
+  word-break: keep-all;
+}
+@media (max-width: 340px) {
+  .next-action-alternatives { grid-template-columns: minmax(0, 1fr); }
+  .oracle-context-editor > .next-action-footer { padding-inline: 12px; }
+}
+
+.next-action-result { display: grid; gap: var(--space-3, 12px); }
+.next-action-result > :is(h2, p) { margin: 0; line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere; }
+.next-action-result > .next-action-group { margin-top: var(--space-2, 8px); }
+
+.restore-failure-actions { margin-top: 8px; }
+.restore-failure-notice { border-radius: var(--r-task-surface, 16px); line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere; }
+.restore-failure-actions > button { padding: 12px 16px; line-height: 1.45; word-break: keep-all; }
+
+.restore-failure-actions > button { border-radius: var(--r-action, 12px); }

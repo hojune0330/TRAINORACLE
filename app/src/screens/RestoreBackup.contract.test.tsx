@@ -448,6 +448,7 @@ describe("restore backup failure boundaries", () => {
 
   it("does not present a rolled-back full restore as success", async () => {
     const user = userEvent.setup()
+    const onOpenHome = vi.fn()
     const backup = backupFile(
       [postSession("journal", "2026-07-21")],
       FULL_FORMAT,
@@ -459,12 +460,15 @@ describe("restore backup failure boundaries", () => {
       if (key === JOURNAL_STORAGE_KEY) throw new DOMException("quota")
       setItem(key, value)
     })
-    render(<RestoreBackup />)
+    render(<RestoreBackup onOpenHome={onOpenHome} />)
 
     await pick(user, backup)
     await user.click(screen.getByTestId("restore-submit"))
 
     await waitFor(() => expect(screen.getByTestId("restore-commit-failure")).toBeTruthy())
+    expect(screen.queryByTestId("restore-done")).toBeNull()
+    await user.click(screen.getByRole("button", { name: "현재 일지 확인" }))
+    expect(onOpenHome).toHaveBeenCalledTimes(1)
     expect(screen.queryByTestId("restore-done")).toBeNull()
   })
 

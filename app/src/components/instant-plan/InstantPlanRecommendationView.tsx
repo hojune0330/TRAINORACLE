@@ -6,6 +6,7 @@ import type {
   InstantPlanRecommendation,
 } from "../../domain/instant-plan-contract"
 import "./instant-plan.css"
+import { nextActionFeedback } from "../next-action"
 import { RecommendationCalendar } from "./RecommendationCalendar"
 import { IncompleteWorkoutNotice } from "./IncompleteWorkoutNotice"
 import { AppHeading } from "../AppHeading"
@@ -81,7 +82,8 @@ export function InstantPlanRecommendationView({
     : actionState.kind === "READY" ? null : actionState.message
   const startAction = <div className="instant-plan__actions instant-plan__start-action">
     <button
-      className="instant-plan__button"
+      {...nextActionFeedback}
+      className={`instant-plan__button${actionState.kind === "BLOCKED" && blockedAction ? " next-action" : ""}`}
       type="button"
       disabled={!ready && !(actionState.kind === "BLOCKED" && blockedAction)}
       aria-describedby={status !== null ? actionStatusId : undefined}
@@ -135,12 +137,14 @@ export function InstantPlanRecommendationView({
       {beforeStart}
       {/* Full prescription calendars can be long lists. Required facts stay above
           the action; browsing every date is not another acceptance requirement. */}
+      <div className="instant-plan__decision">
       {startAction}
       {onEditWorkout && <div className="instant-plan__actions">
         <button className="instant-plan__secondary" type="button" disabled={waiting} onClick={onEditWorkout}>
           훈련 조절
         </button>
       </div>}
+      </div>
       <section aria-label="이번 일정">
         <h3>이번 일정</h3>
         {calendar ?? (recommendation.days.length === 0 ? (

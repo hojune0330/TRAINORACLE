@@ -2,6 +2,7 @@ import React from "react"
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { OracleContextEditor } from "./OracleContextEditor"
+import { ORACLE_CONTEXT_QUESTIONS } from "../domain/oracle-profile-context"
 
 vi.mock("../hooks/useReaderDialog", () => ({ useReaderDialog: (ref: React.RefObject<HTMLDialogElement>, close: () => void) => {
   React.useEffect(() => { ref.current?.showModal() }, [ref]); return close
@@ -39,4 +40,38 @@ it("keeps invalid unfinished values visible rather than leaving or creating an e
   fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "닫기" }))
   expect(close).not.toHaveBeenCalled()
   expect(draft).not.toHaveBeenCalled()
+})
+
+it("emphasizes completed multiple selection and explicitly clears it without saving or requiring an answer", () => {
+  const questionIndex = ORACLE_CONTEXT_QUESTIONS.findIndex(candidate => candidate.multiple)
+  const question = ORACLE_CONTEXT_QUESTIONS[questionIndex]
+  if (!question) throw new Error("A multiple-choice question is required in the existing context questions")
+  const topicIndex = [[0, 1, 4, 5], [2, 3, 10, 11], [6, 7], [8, 9, 12]].findIndex(indices => indices.includes(questionIndex))
+  const topic = ["달리기", "함께", "보조 운동", "대회"][topicIndex]
+  if (!topic) throw new Error("The existing multiple-choice fixture needs a visible topic")
+  const draft = vi.fn(), save = vi.fn(async () => true)
+  render(<OracleContextEditor onDraft={draft} onSave={save} onClose={vi.fn()} />)
+  expect(screen.getByRole("button", { name: "응답 반영" })).toHaveClass("next-action")
+  fireEvent.click(screen.getByRole("button", { name: topic }))
+  fireEvent.click(screen.getByRole("button", { name: name => name.startsWith(question.title) }))
+  const finish = screen.getByRole("button", { name: "선택 완료" })
+  expect(finish).toBeEnabled()
+  expect(finish).not.toHaveClass("next-action")
+  expect(screen.getByRole("button", { name: "답하지 않기" })).toBeEnabled()
+  const [value, label] = question.options[0]!
+  fireEvent.click(screen.getByRole("button", { name: label }))
+  expect(screen.getByRole("button", { name: label })).toHaveAttribute("aria-pressed", "true")
+  expect(finish).toHaveClass("next-action")
+  expect(screen.getByRole("button", { name: "선택 지우고 돌아가기" })).not.toHaveClass("next-action")
+  fireEvent.click(finish)
+  expect(draft).toHaveBeenLastCalledWith(expect.objectContaining({ answers: { [question.id]: [value] } }))
+  fireEvent.click(screen.getByRole("button", { name: name => name.startsWith(question.title) }))
+  fireEvent.click(screen.getByRole("button", { name: "선택 지우고 돌아가기" }))
+  expect(screen.getByRole("heading", { name: "조금 더 나답게" })).toHaveFocus()
+  expect(draft).toHaveBeenLastCalledWith(expect.objectContaining({ answers: {} }))
+  fireEvent.click(screen.getByRole("button", { name: name => name.startsWith(question.title) }))
+  expect(screen.getByRole("button", { name: label })).toHaveAttribute("aria-pressed", "false")
+  expect(screen.getByRole("button", { name: "답하지 않기" })).toBeEnabled()
+  expect(screen.getByRole("button", { name: "선택 완료" })).toBeEnabled()
+  expect(save).not.toHaveBeenCalled()
 })
