@@ -52,3 +52,19 @@ Node 24.19.0, 설치된 TypeScript/Vitest, 합성 데이터만 사용했다.
 이 검사는 hosted CI, main 병합, 공개 배포 또는 실계정 왕복의 증거가 아니다.
 Cloudflare CLI 연결/활성 cron 성공과 두 앱의 실제 라운지 연결은 별도 미완료다.
 계정 공개 관문과 기존 closed 설정은 이 코드 통합으로 변경하지 않는다.
+
+## 후속 본류 보존과 미통과 브라우저 검사
+
+- 커밋 전 다시 확인한 main `95e0f56ac628e311aaf6895bf1220be7614c1456`의
+  날짜 선택/하루씩 보기 UI 5파일도 그대로 병합한다. 이번 저장 guard, 라운지
+  전송/SQL 및 canonical lifecycle 소스에는 차이가 없었다. 위 단위/타입 검사
+  결과를 이 후속 UI 변경의 전체 화면 검수로 확대하지 않는다.
+- `account-plan-service.spec.ts`의 실제 계획 선택→진행→일지 연결 한 사례는
+  최초 및 한 번의 재시도 모두 beforeEach의 module import에서 30초 제한으로
+  종료했다. 본문 UI 단언에는 도달하지 않았으며 통과가 아니다. 초기 실행의
+  Vite dep-scan 종료 메시지는 시험 teardown과 함께 발생했으므로 원인으로
+  단정하지 않는다. timeout/skip/기존 단언은 변경하지 않았다.
+- 결과 디렉터리: `app/test-results/lounge-main-integration-20261012-1211/`,
+  `app/test-results/lounge-main-integration-20261012-1215-retry/`.
+- 다음 판정은 exact-head hosted CI와 초기화 원인 확인이다. 미통과를 숨기거나
+  필수 gate를 낮추어 main 병합·운영 게시하지 않는다.

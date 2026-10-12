@@ -74,7 +74,7 @@ describe("plan schedule preview", () => {
       presentation="prescription-calendar" showRpeGuide={false}
       programProjection={{ kind: "THREE_CYCLE_PROGRAM", calendarDayCount: 29 }} />)
     expect(screen.getByRole("region", { name: "한 달 훈련표 · 9.5일 × 3" })).toBeInTheDocument()
-    await user.click(screen.getByRole("button", { name: "목록" }))
+    await user.click(screen.getByRole("button", { name: "하루씩" }))
     const list = screen.getByRole("list", { name: "날짜별 계획 미리보기" })
     expect(list.children).toHaveLength(29)
     expect(within(list).getByRole("button", { name: "11월 8일 일요일 전체 처방 보기" })).toBeVisible()
@@ -119,7 +119,7 @@ describe("plan schedule preview", () => {
     expect(JSON.stringify(sessions)).toBe(original)
   })
 
-  it("offers a vertically readable list view for narrow or enlarged text layouts", async () => {
+  it("offers daily slides with unchanged prescriptions and reader actions", async () => {
     const user = userEvent.setup()
     const original = JSON.stringify(sessions)
     render(<PlanSchedulePreview startDate="2026-08-17" frameLengthDays={7} sessions={sessions}
@@ -128,9 +128,17 @@ describe("plan schedule preview", () => {
       renderSessionAction={session => session.day === 1 ? <button type="button">이 훈련 일지 쓰기</button> : null}
       renderSessionFooter={() => <button type="button">진행 기록 자세히</button>} />)
 
-    await user.click(screen.getByRole("button", { name: "목록" }))
+    await user.click(screen.getByRole("button", { name: "하루씩" }))
 
-    expect(screen.getByRole("button", { name: "목록" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("button", { name: "하루씩" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("list", { name: "날짜별 계획 미리보기" })).toHaveAttribute("data-display-mode", "swipe")
+    await user.click(screen.getByRole("button", { name: "8월 17일 월요일 선택" }))
+    expect(screen.getByRole("button", { name: "이전 날짜" })).toBeDisabled()
+    await user.click(screen.getByRole("button", { name: "다음 날짜" }))
+    expect(screen.getByRole("button", { name: "8월 18일 화요일 선택" })).toHaveAttribute("aria-pressed", "true")
+    await user.click(screen.getByRole("button", { name: "8월 23일 일요일 선택" }))
+    expect(screen.getByRole("button", { name: "다음 날짜" })).toBeDisabled()
+    await user.click(screen.getByRole("button", { name: "8월 17일 월요일 선택" }))
     expect(screen.queryByRole("grid", { name: "2026년 8월 달력" })).not.toBeInTheDocument()
     expect(screen.getByRole("list", { name: "날짜별 계획 미리보기" })).toBeVisible()
     const summary = screen.getByRole("group", { name: "8월 17일 월요일 오전 세션" })
@@ -181,12 +189,12 @@ describe("plan schedule preview", () => {
       render(<PlanSchedulePreview startDate="2026-08-17" frameLengthDays={7} sessions={sessions}
         presentation="prescription-calendar" detailsExpanded={false} />)
 
-      expect(screen.getByRole("button", { name: "목록" })).toHaveAttribute("aria-pressed", "true")
+      expect(screen.getByRole("button", { name: "하루씩" })).toHaveAttribute("aria-pressed", "true")
       expect(screen.queryByRole("grid", { name: "2026년 8월 달력" })).not.toBeInTheDocument()
       matchMedia.mockImplementation((query: string) => ({
         matches: false, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn(),
       }))
-      expect(screen.getByRole("button", { name: "목록" })).toHaveAttribute("aria-pressed", "true")
+      expect(screen.getByRole("button", { name: "하루씩" })).toHaveAttribute("aria-pressed", "true")
 
       await user.click(screen.getByRole("button", { name: "달력" }))
       expect(screen.getByRole("button", { name: "달력" })).toHaveAttribute("aria-pressed", "true")
