@@ -66,6 +66,9 @@ export function createTreadmillRenderer() {
     if ((state.mode === "over" || state.mode === "clear") && before.mode !== state.mode) endedAt = clock
     // A new stage starts clean, so the "구간 통과!" popup never sits under the countdown.
     if (state.stage !== before.stage) popups = []
+    if (state.stage === before.stage && state.mode === "running" && Math.floor(state.seconds / TREADMILL_RULES.waveSeconds) > Math.floor(before.seconds / TREADMILL_RULES.waveSeconds)) {
+      popups.push({ x: runnerX, y: footY - 95, text: `보급! 에너지 +${Math.round(Math.max(0, state.energy - before.energy))}`, life: 1.4, color: "good", size: 21 })
+    }
     if (state.stats.hits > before.stats.hits) {
       if (!reduced) shake = 0.35
       popups.push({ x: runnerX + 6, y: footY - 76, text: state.failure === "spike" ? "앗!" : "쿵!", life: 0.8, color: "gold", size: 26 })

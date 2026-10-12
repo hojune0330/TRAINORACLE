@@ -1,0 +1,30 @@
+.upgrade-choice { gap:8px; }
+.treadmill-game[data-mode="upgrade"] .treadmill-game__canvas { position:absolute; inset:0; height:100%; }
+.treadmill-game[data-mode="upgrade"] .treadmill-game__overlay { position:relative; min-height:440px; align-items:center; padding:24px 10px 12px; }
+.treadmill-game[data-mode="upgrade"] .treadmill-game__controls { display:none; }
+.upgrade-choice h2 { font-size:20px; }
+.upgrade-choice .treadmill-game__upgrades { width:100%; gap:8px; }
+.upgrade-choice .treadmill-game__upgrades button { position:relative; grid-template-columns:36px minmax(0,1fr) 16px; gap:8px; padding:10px; }
+.upgrade-choice .treadmill-game__gear-icon { width:36px; height:42px; }
+.upgrade-choice .treadmill-game__gear-text strong { font-size:16px; }
+.upgrade-choice .treadmill-game__gear-text small { font-size:11px; color:var(--game-ink-soft); line-height:1.5; }
+.upgrade-choice .treadmill-game__plus, .upgrade-choice .treadmill-game__minus { font-size:12px; line-height:1.5; }
+.upgrade-choice__footer { font-size:12px; color:var(--game-ink-soft); }
+.upgrade-choice__intro { width:100%; text-align:center; padding:16px 0; }
+.upgrade-choice__effects { display:flex; gap:8px; justify-content:space-between; margin:24px 0; }
+.upgrade-choice__effects > div { flex:1; min-width:0; }
+.upgrade-choice__effects strong { display:block; font-size:12px; line-height:1.5; }
+.upgrade-choice__demo { position:relative; display:grid; place-items:center; height:72px; margin-bottom:8px; border-radius:12px; border:2px solid var(--game-outline); background:var(--game-sky-low); overflow:hidden; }
+.upgrade-choice__demo svg { z-index:1; color:var(--game-shirt-dark); }
+[data-effect="grip"] svg { animation:upgrade-grip 1.2s ease-out 2; }
+[data-effect="grip"] i { position:absolute; bottom:0; height:12px; width:100%; background:var(--game-mud-light); }
+[data-effect="spring"] svg { animation:upgrade-jump 1.2s ease-in-out 2; }
+[data-effect="economy"] i { position:absolute; bottom:8px; left:15%; height:6px; width:70%; border-radius:4px; background:var(--game-good); transform-origin:left; animation:upgrade-energy 1.2s ease-out 2; }
+.treadmill-game__equipped { position:absolute; top:100px; left:12px; right:12px; z-index:4; display:grid; justify-items:center; gap:4px; padding:10px; border-radius:12px; background:var(--game-panel); border:3px solid var(--game-shirt-dark); color:var(--game-ink); pointer-events:none; animation:treadmill-pop .3s ease-out; }
+.treadmill-game__equipped span { font-size:12px; }
+.treadmill-game__wave { position:absolute; left:12px; bottom:12px; padding:3px 8px; background:var(--game-panel); border-radius:8px; color:var(--game-ink); font-size:11px; pointer-events:none; }
+@keyframes upgrade-grip { 0% {transform:translateX(-16px)} 70%,100% {transform:translateX(10px)} }
+@keyframes upgrade-jump { 0%,100% {transform:translateY(10px)} 45% {transform:translateY(-14px)} }
+@keyframes upgrade-energy { 0% {transform:scaleX(.4)} 100% {transform:scaleX(1)} }
+.treadmill-game[data-reduced] .upgrade-choice__demo *, .treadmill-game[data-reduced] .treadmill-game__equipped { animation:none; }
+@media(prefers-reduced-motion:reduce) { .upgrade-choice__demo *, .treadmill-game__equipped { animation:none !important; } }

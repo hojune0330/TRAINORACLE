@@ -15,7 +15,7 @@ const player = (target: number, reserve: number, gap: number): Strategy => state
 }
 function play(stages: readonly TreadmillStage[], picks: readonly TreadmillUpgrade[], strategy: Strategy): TreadmillState {
   let state = treadmillCommand(newTreadmillRun(stages), { type: "start", stages })
-  for (let frame = 0; frame < 6000 && (state.mode === "running" || state.mode === "upgrade"); frame++) {
+  for (let frame = 0; frame < 7000 && (state.mode === "running" || state.mode === "upgrade"); frame++) {
     if (state.mode === "upgrade") state = treadmillCommand(treadmillCommand(state, { type: "upgrade", upgrade: picks[state.stage]! }), { type: "resume" })
     state = advanceTreadmill(strategy(state), 1 / 60)
   }
@@ -56,10 +56,10 @@ describe("running tour content", () => {
   })
   it("plays a city course through the same engine and finishes on its last stage", () => {
     const stages = tourStages(tourCity("seoul")!)
-    const done = advanceTreadmill({ ...treadmillCommand(newTreadmillRun(stages), { type: "start", stages }), countdown: 0, stage: 2, seconds: 9.99, spawned: 99 }, 0.05)
+    const done = advanceTreadmill({ ...treadmillCommand(newTreadmillRun(stages), { type: "start", stages }), countdown: 0, stage: 2, seconds: TREADMILL_RULES.stageSeconds - 0.01, spawned: 99 }, 0.05)
     expect(done.mode).toBe("clear")
     expect(done.stages[0]!.id).toBe("seoul-track")
-    expect(treadmillCourseSeconds(done)).toBe(30)
+    expect(treadmillCourseSeconds(done)).toBe(90)
     // Restarting keeps the city unless a different course is given.
     expect(treadmillCommand(done, { type: "start" }).stages[0]!.id).toBe("seoul-track")
     expect(treadmillCommand(done, { type: "start", stages: TREADMILL_STAGES }).stages[0]!.id).toBe("track")
@@ -87,7 +87,7 @@ describe("tour balance guard (game feel, not training)", () => {
     const careless = player(0.5, 8, 0.08)
     const survived = (stages: readonly TreadmillStage[]) => {
       const end = play(stages, ["grip", "grip"], careless)
-      return end.stage * 10 + end.seconds
+      return end.stage * TREADMILL_RULES.stageSeconds + end.seconds
     }
     expect(survived(tourStages(TOUR_CITIES[TOUR_CITIES.length - 1]!))).toBeLessThanOrEqual(survived(tourStages(TOUR_CITIES[0]!)))
   })
