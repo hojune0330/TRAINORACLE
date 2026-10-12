@@ -1,0 +1,54 @@
+{
+  "kind": "TRAINORACLE_OFFLINE_STATIC_MODEL_REVIEW",
+  "date": "2026-10-12",
+  "renderer": "Local NumPy/Pillow CPU orthographic z-buffer renderer",
+  "sourceFile": "tori-base.glb",
+  "sourceSha256BeforeAndAfter": "cd39844b82b8d5058217c9434bad07f87e84feec3357027478fd924e4ea8e4db",
+  "sourceUnchanged": true,
+  "views": [
+    {
+      "name": "front",
+      "yawDegrees": 0
+    },
+    {
+      "name": "right",
+      "yawDegrees": -90
+    },
+    {
+      "name": "back",
+      "yawDegrees": 180
+    },
+    {
+      "name": "three-quarter",
+      "yawDegrees": -45
+    }
+  ],
+  "outputFrame": {
+    "width": 512,
+    "height": 512,
+    "heightScalePixels": 420,
+    "groundBaselineY": 480
+  },
+  "thumbnailSizes": [
+    64,
+    75
+  ],
+  "thumbnailMeaning": "Alpha-cropped model fits a square; this Tori model is taller than wide so its silhouette is 64 or 75 pixels tall.",
+  "outputs": [
+    "base-review-front.png",
+    "base-review-front-64px.png",
+    "base-review-front-75px.png",
+    "base-review-right.png",
+    "base-review-right-64px.png",
+    "base-review-right-75px.png",
+    "base-review-back.png",
+    "base-review-back-64px.png",
+    "base-review-back-75px.png",
+    "base-review-three-quarter.png",
+    "base-review-three-quarter-64px.png",
+    "base-review-three-quarter-75px.png",
+    "base-review-contact.png",
+    "base-review-readability.png"
+  ],
+  "scope": "Static default scene, embedded base-color texture, simple diffuse light. No package downloads or user-browser control. Not full PBR, skeletal animation, mesh topology, app rendering or owner approval proof."
+}
