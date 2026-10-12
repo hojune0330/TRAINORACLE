@@ -15,6 +15,7 @@ import { medalBalance, medalsEarned, runMedalsLeftToday, MINIGAME_REWARD_RULES, 
 import { medalsOf } from "../../domain/minigame/progress"
 import { TREADMILL_RULES, TREADMILL_UPGRADES } from "../../domain/minigame/treadmill"
 import { drawRunner, gamePalette } from "./sprites"
+import { loadToriArt } from "./runner-art"
 import type { RunnerCharacter } from "./sprites"
 
 export function CharacterPortrait({ character, size = 64, pose = "idle", label }: {
@@ -26,9 +27,16 @@ export function CharacterPortrait({ character, size = 64, pose = "idle", label }
     if (!canvas || !context) return
     const ratio = Math.min(window.devicePixelRatio || 1, 2)
     canvas.width = size * ratio; canvas.height = size * ratio
-    context.setTransform(ratio, 0, 0, ratio, 0, 0); context.clearRect(0, 0, size, size)
-    context.translate(size / 2, size * 0.9); context.scale(size / 90, size / 90)
-    drawRunner(context, gamePalette(canvas), { pose, phase: 0, upgrades: [], character })
+    let mounted = true
+    const paint = () => {
+      if (!mounted) return
+      context.setTransform(ratio, 0, 0, ratio, 0, 0); context.clearRect(0, 0, size, size)
+      context.translate(size / 2, size * 0.9); context.scale(size / 90, size / 90)
+      drawRunner(context, gamePalette(canvas), { pose, phase: 0, upgrades: [], character })
+    }
+    paint()
+    if (character === "tori") void loadToriArt().then(paint)
+    return () => { mounted = false }
   }, [character, size, pose])
   return <canvas ref={ref} className="treadmill-game__mini-portrait" style={{ width: size, height: size }}
     {...(label ? { role: "img", "aria-label": label } : { "aria-hidden": true })} />
