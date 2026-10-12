@@ -1,5 +1,6 @@
 import React from "react"
 import "./pace-plan-update.css"
+import { nextActionFeedback } from "../../components/next-action"
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 import { formatPaceSeconds } from "@impl/prescription/record-pace"
 import type { AthleteRecord } from "../../domain/athlete-records"
@@ -107,8 +108,10 @@ export function PacePlanUpdateNotice({ record, onDone, explicitPaceBasis = false
       </details>}
     </>}
     {message && <p role="status">{message}</p>}
+    <div className="next-action-group">
+    <button {...nextActionFeedback} className={applied || uncertain ? "next-action" : undefined} type="button" disabled={busy} onClick={onDone}>{uncertain ? "계획으로 돌아가 저장 확인" : applied ? "계획으로 돌아가기" : "계획은 그대로 두기"}</button>
     {applied && !undone && !uncertain && <button type="button" disabled={busy} onClick={() => void undo()}>이번 페이스 변경 되돌리기</button>}
     {!busy && !applied && !uncertain && (message || preparation?.kind === "blocked") && <button type="button" onClick={() => setRetry(value => value + 1)}>변경안 다시 확인</button>}
-    <button type="button" disabled={busy} onClick={onDone}>{uncertain ? "계획으로 돌아가 저장 확인" : applied ? "계획으로 돌아가기" : "계획은 그대로 두기"}</button>
+    </div>
   </section>
 }

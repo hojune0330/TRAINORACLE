@@ -3,6 +3,7 @@ import type { JournalEntry } from "./journal-schema"
 import { JOURNAL_STORAGE_KEY, PRIVATE_MEMO_VAULT_STORAGE_KEY } from "./journal-storage-keys"
 import { writeVaultAndJournalAtomically } from "./private-memo-vault-storage"
 import type { PrivateMemoVault } from "./private-memo-vault"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
 function entry(id: string): JournalEntry {
   return {
@@ -40,8 +41,9 @@ function vault(id: string): PrivateMemoVault {
   }
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 
 afterEach(() => {

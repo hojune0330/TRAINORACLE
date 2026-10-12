@@ -92,7 +92,7 @@ test("keeps saved results visible and does not turn missing RPE into a value", a
   await expect(page.getByRole("heading", { name: "오늘 기록을 남겼어요.", exact: true })).toBeVisible()
   await expect(page.locator(".quick-log__stamp")).toBeVisible()
   expect(await page.locator(".quick-log__stamp").evaluate(el => el.closest("details") === null)).toBe(true)
-  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.journal.v1") ?? "[]"))
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("to-local-journal.journal.v2") ?? "[]"))
   expect(saved).toHaveLength(1)
   expect(saved[0].fieldProvenance.rpe.provenance).toBe("MISSING")
   await page.screenshot({ path: testInfo.outputPath("quick-saved.png") })

@@ -9,9 +9,11 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import type { JournalEntry } from "../../domain/journal-store"
 import { todayISO } from "../../domain/journal-store"
 import type { FieldProvenance } from "../../domain/field-provenance"
+import { JOURNAL_STORAGE_KEY } from "../../domain/journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { Trends } from "../Trends"
 
-const STORAGE_KEY = "trainoracle.journal.v1"
+const STORAGE_KEY = JOURNAL_STORAGE_KEY
 
 const IMPORTED: FieldProvenance = {
   provenance: "DERIVED",
@@ -47,7 +49,7 @@ function seed(entries: readonly JournalEntry[]): void {
 afterEach(cleanup)
 
 describe("추이 화면 · 반영되지 않은 일지 안내", () => {
-  beforeEach(() => { window.localStorage.clear() })
+  beforeEach(async () => { window.localStorage.clear(); await initializeCanonicalJournalFixture() })
 
   it("가져온 일지는 저장 사실과 분석 제외 이유를 함께 말한다", () => {
     seed([session("imported", {

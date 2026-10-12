@@ -136,8 +136,10 @@ import { loadTombstones, recordTombstone } from "./tombstone"
 import { saveEntry, savePrivateEntry } from "../journal-store"
 import { assignJournalsToAccount, setActiveLocalAccount } from "./local-journal-ownership"
 import type { PostSessionEntry } from "../journal-schema"
+import { JOURNAL_STORAGE_KEY } from "../journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 
-const JOURNAL_KEY = "trainoracle.journal.v1"
+const JOURNAL_KEY = JOURNAL_STORAGE_KEY
 
 function post(id: string, savedAt = "2026-07-20T10:00:00.000Z"): PostSessionEntry {
   return {
@@ -167,9 +169,10 @@ function localIds(): string[] {
   return result.success ? result.data.map((entry) => entry.id) : []
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
   window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
   server.entries = []
   server.privateNotes = []
   server.tombstones = []

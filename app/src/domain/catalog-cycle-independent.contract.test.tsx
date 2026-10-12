@@ -6,6 +6,7 @@ import { planBetaStateV3Schema } from './plan-beta-schema'
 import { savePlanBetaState, readPlanBetaStateFromStorage, readArchivedOriginalPlans } from './plan-beta-store'
 import { createPlannedSessionLogDraft } from './planned-session-link'
 import { JOURNAL_STORAGE_KEY } from './journal-storage-keys'
+import { initializeCanonicalJournalFixture } from '../test/canonical-journal-fixture'
 import { FIELD_PROVENANCE } from './field-provenance'
 import { readCatalogCycleDraftSource, catalogCycleDraftSourceStillCurrent } from './catalog-cycle-draft'
 import { saveSelectedPlanCandidate } from '../screens/plan-beta/plan-selection'
@@ -80,8 +81,9 @@ function fixture(id = 'P-LT-B', changes = {}) {
   return { predecessor, entries, first, generated, next, save }
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null)
+  await initializeCanonicalJournalFixture()
   vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-10-01T03:00:00Z'))
   vi.stubGlobal('fetch', () => { throw Error('Independent audit: network forbidden') })
 })

@@ -99,6 +99,7 @@ export async function expectSaveAboveNavigation(page: Page) {
 
 export async function seedTouchAuditEntries(page: Page) {
   await page.addInitScript(() => {
+    if (localStorage.getItem("to-local-journal.migration.v1") !== null) return
     const dateAt = (daysBack: number) => {
       const value = new Date()
       value.setDate(value.getDate() - daysBack)

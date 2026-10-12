@@ -6,6 +6,7 @@ import { DETAILED_PRESCRIPTION_APPROVALS } from "../../domain/detailed-prescript
 import { activeAthleteRecordsStorageKey, createSelfReportedAthleteRecord, saveAthleteRecord } from "../../domain/athlete-records"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 import { JOURNAL_STORAGE_KEY } from "../../domain/journal-local-storage"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { PLAN_ADAPTATION_CONTEXT_STORAGE_KEY } from "../../domain/plan-adaptation-ui-context"
 import { readPlanBetaStateFromStorage } from "../../domain/plan-beta-store"
 import { saveSelectedPlanCandidate } from "./plan-selection"
@@ -13,10 +14,11 @@ import { saveSelectedPlanCandidate } from "./plan-selection"
 const NOW = new Date("2026-09-06T03:00:00.000Z")
 const ACTIVE_KEY = "trainoracle.plan-beta.v1"
 
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear()
   sessionStorage.clear()
   setActiveLocalAccount(null)
+  await initializeCanonicalJournalFixture()
   vi.useFakeTimers()
   vi.setSystemTime(NOW)
 })

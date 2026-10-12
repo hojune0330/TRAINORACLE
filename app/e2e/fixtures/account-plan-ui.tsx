@@ -12,8 +12,10 @@ import { hydrateAccountJournalRecords } from "../../src/domain/account/account-j
 import type { PlannedSessionLogDraft } from "../../src/domain/planned-session-link"
 import type { PostSessionEntry } from "../../src/domain/journal-schema"
 import { reserveJournalOwnership, setActiveLocalAccount } from "../../src/domain/account/local-journal-ownership"
+import { initializeCanonicalJournalBrowserFixture } from "./canonical-journal-browser"
 
 export async function mount() {
+  await initializeCanonicalJournalBrowserFixture()
   setActiveLocalAccount("11111111-1111-4111-8111-111111111111")
   await hydrateAccountJournalRecords()
   const service = accountPlanService()!

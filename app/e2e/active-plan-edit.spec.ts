@@ -71,7 +71,7 @@ for (const viewport of [
     expect(applied.activePlan.sessions.find(session => session.day === 1 && session.slot === "AM")?.prescription)
       .toMatchObject({ kind: "RPE_TIME_RANGE", durationMinutes: { minimum: 20, maximum: 25 } })
     expect(applied.progress).toEqual(fixture.state.progress)
-    expect(await page.evaluate(() => window.localStorage.getItem("trainoracle.journal.v1"))).toBe("[]")
+    expect(await page.evaluate(() => window.localStorage.getItem("to-local-journal.journal.v2"))).toBe("[]")
 
     await page.reload()
     await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()

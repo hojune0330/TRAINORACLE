@@ -138,9 +138,10 @@ test("first numeric pace plan routes its primary action to explicit record confi
 })
 
 test("repeated above-range journals explain and apply only the reviewed shorter successor", async ({ page }, info) => {
-  const fixture = loadCatalogReductionFixture()
+  const fixture = await loadCatalogReductionFixture()
   await page.clock.setFixedTime(new Date("2026-10-01T03:00:00Z"))
   await page.goto("/?app=1")
+  await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
   await page.evaluate(({ fixture, key }) => {
     localStorage.setItem("trainoracle.plan-beta.v1", JSON.stringify(fixture.state))
     localStorage.setItem(key, JSON.stringify(fixture.journals))
@@ -165,12 +166,13 @@ test("repeated above-range journals explain and apply only the reviewed shorter 
 })
 
 for (const reason of ["old-pain", "unconfirmed"] as const) test(`high RPE with ${reason} does not change next-cycle dose`, async ({ page }) => {
-  const fixture = loadCatalogReductionFixture()
+  const fixture = await loadCatalogReductionFixture()
   const journals = fixture.journals.map(entry => reason === "old-pain"
     ? { ...entry, painCheckStatus: "SIGNAL_REPORTED" }
     : { ...entry, activityOutcome: undefined, activitySlot: undefined })
   await page.clock.setFixedTime(new Date("2026-10-01T03:00:00Z"))
   await page.goto("/?app=1")
+  await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
   await page.evaluate(({ state, journals, key }) => {
     localStorage.setItem("trainoracle.plan-beta.v1", JSON.stringify(state))
     localStorage.setItem(key, JSON.stringify(journals))

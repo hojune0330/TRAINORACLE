@@ -21,8 +21,9 @@ async function expectJournalReaderAtTop(page: import("@playwright/test").Page) {
 test("revisits a past journal without duplicating it and adds a same-date check-in", async ({ page }) => {
   // Given
   await page.goto("/?app=1")
+  await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
   await page.evaluate(({ date, entryId }) => {
-    window.localStorage.setItem("trainoracle.journal.v1", JSON.stringify([{
+    window.localStorage.setItem("to-local-journal.journal.v2", JSON.stringify([{
       id: entryId,
       kind: "post-session",
       date,
@@ -68,7 +69,7 @@ test("revisits a past journal without duplicating it and adds a same-date check-
 
   // Then
   const afterEdit = await page.evaluate(({ date, entryId }) => {
-    const raw = window.localStorage.getItem("trainoracle.journal.v1") ?? "[]"
+    const raw = window.localStorage.getItem("to-local-journal.journal.v2") ?? "[]"
     const parsed: unknown = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
     return parsed.filter((entry) => typeof entry === "object" && entry !== null
@@ -89,7 +90,7 @@ test("revisits a past journal without duplicating it and adds a same-date check-
 
   // Then
   const sameDateEntries = await page.evaluate((date) => {
-    const raw = window.localStorage.getItem("trainoracle.journal.v1") ?? "[]"
+    const raw = window.localStorage.getItem("to-local-journal.journal.v2") ?? "[]"
     const parsed: unknown = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
     return parsed.filter((entry) => typeof entry === "object" && entry !== null && "date" in entry && entry.date === date)

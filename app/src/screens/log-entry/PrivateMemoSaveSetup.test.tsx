@@ -9,8 +9,13 @@ import { clearSessionRecoveryCode, loadSessionRecoveryCode, saveSessionRecoveryC
 import { LOCAL_JOURNAL_OWNERSHIP_KEY, setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 import { StickyBar } from "./StickyBar"
 import * as privateCrypto from "../../domain/account/private-note-crypto"
+import { JOURNAL_STORAGE_KEY, PRIVATE_MEMO_VAULT_STORAGE_KEY } from "../../domain/journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); clearSessionRecoveryCode() })
+beforeEach(async () => {
+  localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); clearSessionRecoveryCode()
+  await initializeCanonicalJournalFixture()
+})
 afterEach(() => { cleanup(); vi.restoreAllMocks(); localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); clearSessionRecoveryCode() })
 
 function openRaceMemo() {
@@ -99,8 +104,8 @@ async function seedPrivateVault() {
 
 it("does not treat orphan ciphertext as an empty vault or activate a replacement key", async () => {
   await seedPrivateVault()
-  localStorage.removeItem("trainoracle.journal.v1")
-  const vault = localStorage.getItem("trainoracle.private-memo.v1")
+  localStorage.removeItem(JOURNAL_STORAGE_KEY)
+  const vault = localStorage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)
   const ready = vi.fn()
   render(<PrivateMemoSaveSetup requested onReady={ready} />)
   fireEvent.click(screen.getByRole("button", { name: /처음 사용해요/ }))
@@ -111,14 +116,14 @@ it("does not treat orphan ciphertext as an empty vault or activate a replacement
   await waitFor(() => expect(screen.getByRole("alert")).toBeVisible())
   expect(ready).not.toHaveBeenCalled()
   expect(loadSessionRecoveryCode()).toBeNull()
-  expect(localStorage.getItem("trainoracle.private-memo.v1")).toBe(vault)
+  expect(localStorage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)).toBe(vault)
 })
 
 it("rejects activation when the journal changes during asynchronous key verification", async () => {
   const code = await seedPrivateVault()
   const decrypt = privateCrypto.decryptPrivateNote
   vi.spyOn(privateCrypto, "decryptPrivateNote").mockImplementationOnce(async (...args) => {
-    localStorage.setItem("trainoracle.journal.v1", "[]")
+    localStorage.setItem(JOURNAL_STORAGE_KEY, "[]")
     return decrypt(...args)
   })
   const ready = vi.fn()

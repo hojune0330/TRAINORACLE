@@ -10,6 +10,7 @@ import {
 import { loadTombstones } from "./account/tombstone"
 import { mergeEntries } from "./account/sync"
 import { loadTrash } from "./journal-trash"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
 const ORIGINAL_SAVED_AT = "2026-07-20T09:00:00.000Z"
 
@@ -34,8 +35,9 @@ function session(
   }
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 
 describe("journal update integrity", () => {

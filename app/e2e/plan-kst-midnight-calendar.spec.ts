@@ -56,7 +56,7 @@ test("a plan waiting across KST midnight requires today's date and keeps its cal
   await page.getByRole("button", { name: "이대로 저장", exact: true }).click()
   await page.getByRole("button", { name: "완료", exact: true }).click()
 
-  const journal = await page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.journal.v1") ?? "[]") as {
+  const journal = await page.evaluate(() => JSON.parse(localStorage.getItem("to-local-journal.journal.v2") ?? "[]") as {
     date: string
     plannedSessionLink?: { plannedDate: string; sessionDay: number; sessionSlot: string }
   }[])

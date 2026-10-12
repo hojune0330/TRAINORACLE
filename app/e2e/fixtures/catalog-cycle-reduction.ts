@@ -3,8 +3,11 @@ import { replaceCandidateCatalogWorkout } from "../../src/domain/catalog-plan-bi
 import { createPlannedSessionLogDraft } from "../../src/domain/planned-session-link"
 import { parseJournalEntryForWrite, type PostSessionEntry } from "../../src/domain/journal-schema"
 import { planBetaStateV3Schema } from "../../src/domain/plan-beta-schema"
+import { initializeCanonicalJournalStorage, type CanonicalJournalLockRunner } from "../../src/domain/canonical-journal-storage"
 
-export function catalogReductionFixture() {
+export async function catalogReductionFixture(lockRunner?: CanonicalJournalLockRunner) {
+  const storageStatus = await initializeCanonicalJournalStorage(window.localStorage, window.sessionStorage, lockRunner)
+  if (storageStatus.status !== "ready") throw Error(`CANONICAL_JOURNAL_FIXTURE_NOT_READY:${storageStatus.reason}`)
   const result = generatePlanFromDraft({ eventGroup: "FIVE_K", eventDistanceM: 5000,
     competitionDivision: "OPEN", experienceBand: "EXPERIENCED", availableDayCount: 5,
     requestedFrameLength: 10, trainingFocus: "LT_INTENT", secondSessionMode: "SINGLE_SESSION_ONLY",

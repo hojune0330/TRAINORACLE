@@ -12,8 +12,10 @@ import { toUploadPayload } from "../account/sync-local"
 import { createRecoveryCode } from "../account/private-note-crypto"
 import { saveSessionRecoveryCode } from "../account/private-note-sync"
 import { setActiveLocalAccount } from "../account/local-journal-ownership"
+import { JOURNAL_STORAGE_KEY } from "../journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 
-beforeEach(() => { window.localStorage.clear(); window.sessionStorage.clear(); setActiveLocalAccount(null) })
+beforeEach(async () => { window.localStorage.clear(); window.sessionStorage.clear(); setActiveLocalAccount(null); await initializeCanonicalJournalFixture() })
 
 function stored(): PostSessionEntry {
   const entry = loadEntries()[0]
@@ -109,7 +111,7 @@ describe("progressive import reconciliation", () => {
     expect(stored().title).toBe("New revision")
   })
 
-  it("preserves an exact plan link and never creates a link for a generic record", () => {
+  it("preserves an exact plan link and never creates a link for a generic record", async () => {
     const target = { planVersionId: `sha256:${"a".repeat(64)}`, candidateFingerprint: `sha256:${"b".repeat(64)}`,
       sessionContentFingerprint: `sha256:${"c".repeat(64)}`, plannedDate: watchActivity.date,
       sessionDay: 1, sessionSlot: "AM" as const, plannedRole: "EASY" as const, plannedEnergyIntent: "BASE_INTENT" as const }
@@ -123,6 +125,7 @@ describe("progressive import reconciliation", () => {
     expect(updateEntry({ ...entry, plannedSessionLink: undefined, planExecutionRelation: undefined,
       savedAt: nextJournalSavedAt(entry.savedAt) }, entry.savedAt).ok).toBe(false)
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
     expect(mixedEntry().plannedSessionLink).toBeUndefined()
   })
 })
@@ -158,7 +161,7 @@ describe("mixed-origin storage protections", () => {
     expect(payload).not.toHaveProperty("memo")
     expect(payload).not.toHaveProperty("memoPurpose")
     if (path === "private") {
-      expect(window.localStorage.getItem("trainoracle.journal.v1")).not.toContain(next.memo)
+      expect(window.localStorage.getItem(JOURNAL_STORAGE_KEY)).not.toContain(next.memo)
       expect((await loadEntriesWithPrivateMemos())[0]).toMatchObject({ memo: next.memo })
     }
   })

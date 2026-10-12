@@ -2,7 +2,7 @@ import React from "react"
 import ReactDOM from "react-dom/client"
 import App from "./App"
 import { ErrorBoundary } from "./components/ErrorBoundary"
-import { purgeExpiredTrash } from "./domain/journal-trash"
+import { CanonicalJournalBoundary } from "./components/CanonicalJournalBoundary"
 import { registerAppServiceWorker } from "./domain/pwa-update"
 import { FeedbackBoardRoute } from "./screens/FeedbackBoardRoute"
 import { TrainingLexiconRoute } from "./screens/TrainingLexiconRoute"
@@ -64,15 +64,6 @@ if ("serviceWorker" in navigator) {
   })
 }
 
-// 휴지통 보관 기간(30일)이 지난 항목을 실제로 지운다. 백그라운드 작업이 없는
-// 정적 앱이므로 앱이 켜질 때가 유일한 정리 시점이다. 읽기 시점 필터링만으로는
-// localStorage 자리가 계속 잡혀 있다.
-try {
-  purgeExpiredTrash()
-} catch {
-  // 정리 실패는 앱 시작을 막을 이유가 아니다 — 다음 실행에서 다시 시도한다.
-}
-
 const rootEl = document.getElementById("root")
 if (!rootEl) throw new Error("root element not found")
 
@@ -98,5 +89,5 @@ if (showTrainingLexicon) {
   })
 } else {
   // ErrorBoundary는 App 바깥에 둔다 — App 자체가 렌더에 실패해도 잡아야 한다.
-  renderRoot(<App multiPlanRuntime={LT_PILOT_MULTI_PLAN_RUNTIME_V3} />)
+  renderRoot(<CanonicalJournalBoundary><App multiPlanRuntime={LT_PILOT_MULTI_PLAN_RUNTIME_V3} /></CanonicalJournalBoundary>)
 }

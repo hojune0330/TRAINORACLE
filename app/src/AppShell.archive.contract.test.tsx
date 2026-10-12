@@ -6,9 +6,11 @@ import { AppShell } from "./AppShell"
 import { ENGAGEMENT_STORAGE_KEY } from "./domain/engagement"
 import type { JournalEntry } from "./domain/journal-schema"
 import { setActiveLocalAccount } from "./domain/account/local-journal-ownership"
+import { JOURNAL_STORAGE_KEY } from "./domain/journal-storage-keys"
 import { registerUnsavedDraftGuard } from "./domain/unsaved-draft-navigation"
+import { initializeCanonicalJournalFixture } from "./test/canonical-journal-fixture"
 
-const STORAGE_KEY = "trainoracle.journal.v1"
+const STORAGE_KEY = JOURNAL_STORAGE_KEY
 
 // Transform the lazy archive outside the interaction timeout, as in navigation contracts.
 beforeAll(async () => {
@@ -39,9 +41,10 @@ const ENTRY = {
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 describe("AppShell journal archive routing", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     setActiveLocalAccount("test-reset"); setActiveLocalAccount(null)
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify([ENTRY]))
   })
 
@@ -141,6 +144,7 @@ describe("AppShell journal archive routing", () => {
 
   it("returns a Minji example opened from home back to home", async () => {
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
     const user = userEvent.setup()
     render(<AppShell />)
 
@@ -163,6 +167,7 @@ describe("AppShell journal archive routing", () => {
 
   it("starts a journal from the empty archive without returning home first", async () => {
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
     const user = userEvent.setup()
     render(<AppShell />)
 
@@ -178,6 +183,7 @@ describe("AppShell journal archive routing", () => {
 
   it("starts a journal from the empty analysis screen", async () => {
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
     const user = userEvent.setup()
     render(<AppShell />)
 
@@ -219,6 +225,7 @@ describe("AppShell journal archive routing", () => {
 
   it("does not grant points merely for opening the app or its decoration menu", async () => {
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
     const user = userEvent.setup()
     render(<AppShell />)
 

@@ -1,7 +1,8 @@
 import { accountDeletionBoundaryState } from "./account-deletion-boundary"
-import { canonicalJournalStorage } from "../journal-device-storage"
+import { canonicalJournalAccess } from "../canonical-journal-access"
+import { JOURNAL_OWNERSHIP_STORAGE_KEY } from "../journal-storage-keys"
 
-const OWNERSHIP_KEY = "trainoracle.journal.ownership.v1"
+const OWNERSHIP_KEY = JOURNAL_OWNERSHIP_STORAGE_KEY
 const SCOPE_CHANGED_EVENT = "trainoracle:journal-scope-changed"
 
 type OwnershipManifest = {
@@ -21,27 +22,6 @@ export type OwnershipReservation = {
   readonly committedRaw: string | null
 }
 
-export type OwnershipCommitPlan = {
-  readonly ok: boolean
-  readonly previousRaw: string | null
-  readonly nextRaw: string | null
-}
-
-/** Capture-only CAS pin for async cipher preparation. It publishes no ghost
- * binding; the final vault+journal commit must match this exact owner ledger. */
-export function prepareJournalOwnershipCommit(entryIds: readonly string[], ownerId: string | null): OwnershipCommitPlan {
-  const snapshot = loadSnapshot()
-  if (snapshot.status !== "complete") return { ok: false, previousRaw: snapshot.raw, nextRaw: snapshot.raw }
-  const ids = [...new Set(entryIds.filter(id => id !== ""))]
-  for (const entryId of ids) {
-    const existing = snapshot.ownerByEntryId[entryId]
-    if (existing !== undefined && existing !== ownerId) return { ok: false, previousRaw: snapshot.raw, nextRaw: snapshot.raw }
-  }
-  if (ownerId === null || ids.length === 0) return { ok: true, previousRaw: snapshot.raw, nextRaw: snapshot.raw }
-  const owners = Object.fromEntries([...Object.entries(snapshot.ownerByEntryId), ...ids.map(id => [id, ownerId] as const)])
-  return { ok: true, previousRaw: snapshot.raw, nextRaw: JSON.stringify({ schemaVersion: 1, ownerByEntryId: owners }) }
-}
-
 export const LOCAL_JOURNAL_OWNERSHIP_KEY = OWNERSHIP_KEY
 
 let activeAccountId: string | null = null
@@ -50,7 +30,7 @@ let scopeGeneration = 0
 function storage(): Storage | null {
   try {
     if (typeof window === "undefined") return null
-    return canonicalJournalStorage(window.localStorage)
+    return canonicalJournalAccess(window.localStorage)
   } catch {
     return null
   }
@@ -117,6 +97,20 @@ export function activeLocalAccount(): string | null {
 /** Monotonic session proof so an A -> B -> A switch cannot revive stale reads. */
 export function localJournalScopeGeneration(): number {
   return scopeGeneration
+}
+
+/** Pin both the session and the exact ledger across async private operations.
+ * Ownership-only writes do not change the canonical migration/deletion epoch.
+ * This is a checked commit guard, not a cross-tab transaction or a new store. */
+export function captureJournalOwnershipGuard(): () => boolean {
+  const owner = activeAccountId
+  const generation = scopeGeneration
+  const snapshot = loadSnapshot()
+  return () => {
+    if (snapshot.status !== "complete" || activeAccountId !== owner || scopeGeneration !== generation) return false
+    const current = loadSnapshot()
+    return current.status === "complete" && current.raw === snapshot.raw
+  }
 }
 
 export function onLocalJournalScopeChange(listener: () => void): () => void {

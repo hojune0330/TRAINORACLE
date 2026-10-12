@@ -9,12 +9,16 @@ import { QuickSessionForm } from "../log-entry/QuickSessionForm"
 import { hasPendingBrowserBackLayer } from "../../navigation/browserNavigation"
 import { loadEntries } from "../../domain/journal-store"
 import { journalProgressAction } from "../../domain/journal-plan-progress"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 
 afterEach(async () => {
   cleanup()
   await waitFor(() => expect(hasPendingBrowserBackLayer()).toBe(false))
 })
-beforeEach(() => window.localStorage.clear())
+beforeEach(async () => {
+  window.localStorage.clear()
+  await initializeCanonicalJournalFixture()
+})
 
 function plannedDraft() {
   const state = stateFixture()

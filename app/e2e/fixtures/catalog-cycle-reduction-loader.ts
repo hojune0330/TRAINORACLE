@@ -6,8 +6,9 @@ import { basename, dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import type { PlanBetaStateV3 } from "../../src/domain/plan-beta-schema"
 import type { JournalEntry } from "../../src/domain/journal-schema"
+import type { CanonicalJournalLockRunner } from "../../src/domain/canonical-journal-storage"
 
-export function loadCatalogReductionFixture(): { state: PlanBetaStateV3; journals: JournalEntry[] } {
+export async function loadCatalogReductionFixture(): Promise<{ state: PlanBetaStateV3; journals: JournalEntry[] }> {
   const directory = mkdtempSync(join(tmpdir(), "trainoracle-cycle-fixture-"))
   const require = createRequire(import.meta.url)
   const { JSDOM } = require("jsdom")
@@ -24,7 +25,9 @@ export function loadCatalogReductionFixture(): { state: PlanBetaStateV3; journal
       outfile: output, bundle: true, platform: "node", format: "cjs", logLevel: "silent",
       alias: { "@impl": fileURLToPath(new URL("../../../impl/src", import.meta.url)) },
       define: { "import.meta.env": "{}" } })
-    return require(output).catalogReductionFixture()
+    // Fresh JSDOM has no Web Locks; only this isolated Node fixture uses an inline runner.
+    const lockRunner: CanonicalJournalLockRunner = operation => operation()
+    return await require(output).catalogReductionFixture(lockRunner)
   } finally {
     for (const [key, descriptor] of previous) {
       if (descriptor) Object.defineProperty(globalThis, key, descriptor)

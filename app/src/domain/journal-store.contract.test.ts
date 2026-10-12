@@ -11,8 +11,10 @@ import {
 import { createRecoveryCode } from "./account/private-note-crypto"
 import { saveSessionRecoveryCode } from "./account/private-note-sync"
 import { readBackupBlob } from "./restore/backup-file"
+import { JOURNAL_STORAGE_KEY } from "./journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
-const STORAGE_KEY = "trainoracle.journal.v1"
+const STORAGE_KEY = JOURNAL_STORAGE_KEY
 
 function validRaceEntry(id: string): RaceEntry {
   return {
@@ -44,8 +46,9 @@ function raceWithoutPurpose(): RaceEntry {
 }
 
 describe("journal storage boundary", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
     window.history.replaceState({}, "", "/?app=1")
   })
 
@@ -223,8 +226,9 @@ describe("journal storage boundary", () => {
 })
 
 describe("safe journal export", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
   })
 
   it("omits private raw text and purpose metadata while retaining approved structured fields", async () => {

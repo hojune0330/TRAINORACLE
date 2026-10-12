@@ -27,6 +27,7 @@ type TrainingHomeProps = {
   readonly onOpenRewards?: () => void
   readonly onOpenNextTraining?: () => void
   readonly safetyNotice?: ReactNode
+  readonly announcement?: ReactNode
   readonly oraclePreview?: ReactNode
   readonly oraclePreviewLabel?: string
   readonly recordStart?: ReactNode
@@ -40,7 +41,7 @@ type TrainingHomeProps = {
 export function TrainingHome({
   model, onWriteLog, onOpenArchive, onOpenToday, onOpenGuide, onOpenPlan, onOpenTrends,
   onOpenOracle, onOpenMore, onOpenContent, onOpenRewards, onOpenNextTraining,
-  safetyNotice, oraclePreview, recordStart, accountEntry, recentJournal, installSuggestion,
+  safetyNotice, announcement, oraclePreview, recordStart, accountEntry, recentJournal, installSuggestion,
   journalReadiness = "READY", analysisAvailable = false,
 }: TrainingHomeProps) {
   const next = model.nextTraining
@@ -69,6 +70,8 @@ export function TrainingHome({
         {next !== null && <NextTrainingCard next={next} onOpen={nextAction} />}
         <TodaySection model={model} readiness={journalReadiness} onWriteLog={onWriteLog} onOpenToday={onOpenToday} />
       </>}
+
+      {announcement}
 
       {model.homeMode !== "WELCOME" && hasJournalHistory && <section className="home-hub__summary">
         {!recentJournal && <div className="home-hub__section-heading">

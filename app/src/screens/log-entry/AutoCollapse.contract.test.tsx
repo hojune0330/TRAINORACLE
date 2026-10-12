@@ -18,6 +18,8 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it } from "vitest"
+import { JOURNAL_STORAGE_KEY } from "../../domain/journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { PostSessionForm } from "./PostSessionForm"
 
 afterEach(cleanup)
@@ -121,6 +123,7 @@ describe("훈련 후 일지 자동 접기", () => {
   it("접힌 상태로 저장해도 RPE 가 그대로 저장된다", async () => {
     const user = userEvent.setup()
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
     render(<PostSessionForm />)
 
     await enterEffort(user)
@@ -130,7 +133,7 @@ describe("훈련 후 일지 자동 접기", () => {
     await enterReview(user)
     await user.click(screen.getByRole("button", { name: /^저장/u }))
 
-    const saved = window.localStorage.getItem("trainoracle.journal.v1")
+    const saved = window.localStorage.getItem(JOURNAL_STORAGE_KEY)
     expect(saved).toContain('"rpe":7')
     expect(saved).toContain('"plannedRpe":8')
     // 접혔다고 출처가 MISSING 으로 떨어지면 안 된다.

@@ -24,6 +24,7 @@ import { createRecoveryCode } from "../account/private-note-crypto"
 import { saveSessionRecoveryCode } from "../account/private-note-sync"
 import { setActiveLocalAccount } from "../account/local-journal-ownership"
 import { toUploadPayload } from "../account/sync-local"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import {
   FULL_FORMAT_V5, SAFE_FORMAT, buildRestorePlan, readBackupFile, restoreEntries,
 } from "./backup-file"
@@ -73,10 +74,11 @@ function backupOf(entries: readonly unknown[], format: string = SAFE_FORMAT): st
   })
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   setActiveLocalAccount(null)
   window.localStorage.clear()
   window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 
 describe("파일 읽기 — 인식하지 못하면 추측하지 않는다", () => {
@@ -296,6 +298,7 @@ describe("전체 왕복 — 내보내고 지우고 되돌린다", () => {
     const backup = exportEntriesJSON({ includeRawMemos: true })
 
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
     const read = readBackupFile(backup)
     const outcome = await restoreEntries(buildRestorePlan(read.entries))
 
@@ -372,6 +375,7 @@ describe("전체 왕복 — 내보내고 지우고 되돌린다", () => {
 
     // When — 브라우저 데이터가 날아갔다 (localStorage 전체 초기화)
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
     expect(loadEntries()).toHaveLength(0)
 
     const read = readBackupFile(backup)
@@ -392,6 +396,7 @@ describe("전체 왕복 — 내보내고 지우고 되돌린다", () => {
 
     // When
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
     const read = readBackupFile(safeBackup)
     await restoreEntries(buildRestorePlan(read.entries))
 
@@ -446,7 +451,10 @@ describe("전체 왕복 — 내보내고 지우고 되돌린다", () => {
 // 원인은 safe 투영이 fieldProvenance를 버려서 isEligibleForAnalysis가 전부
 // false가 된 것. 사용자에게는 아무 경고도 뜨지 않는 무증상 데이터 손실이었다.
 describe("백업 왕복이 분석 자격을 잃게 하지 않는다 (회귀 방지)", () => {
-  beforeEach(() => { window.localStorage.clear() })
+  beforeEach(async () => {
+    window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
+  })
 
   function explicitPost(id: string): PostSessionEntry {
     return post(id, {
@@ -466,6 +474,7 @@ describe("백업 왕복이 분석 자격을 잃게 하지 않는다 (회귀 방�
 
     const json = exportEntriesJSON({ includeRawMemos: false })
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
     await restoreEntries(buildRestorePlan(readBackupFile(json).entries))
 
     expect(loadAnalysisEntries()).toHaveLength(before)
@@ -478,6 +487,7 @@ describe("백업 왕복이 분석 자격을 잃게 하지 않는다 (회귀 방�
 
     const json = exportEntriesJSON({ includeRawMemos: true })
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
     await restoreEntries(buildRestorePlan(readBackupFile(json).entries))
 
     expect(loadAnalysisEntries()).toHaveLength(before)
@@ -497,6 +507,7 @@ describe("백업 왕복이 분석 자격을 잃게 하지 않는다 (회귀 방�
 
     const json = exportEntriesJSON({ includeRawMemos: false })
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
     await restoreEntries(buildRestorePlan(readBackupFile(json).entries))
 
     // 출처가 보존되므로 여전히 분석 제외 — 보존이 곧 안전장치다

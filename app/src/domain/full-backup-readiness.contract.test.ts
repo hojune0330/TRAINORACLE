@@ -8,11 +8,13 @@ import * as journalApi from "./account/account-journal-api"
 import * as journalProjection from "./account/account-journal-projection"
 import * as decorationService from "./account/account-decoration-service"
 import * as calendarService from "./account/account-calendar-decoration-service"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
-beforeEach(() => {
+beforeEach(async () => {
   setActiveLocalAccount(null)
   localStorage.clear()
   sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 afterEach(() => { vi.restoreAllMocks(); setActiveLocalAccount(null); localStorage.clear() })
 

@@ -23,7 +23,8 @@ import { loadSessionRecoveryCode } from "../account/private-note-sync"
 import { parseJournalEntryForWrite, parseJournalEntryList } from "../journal-schema"
 import type { JournalEntry } from "../journal-schema"
 import { JOURNAL_STORAGE_KEY, journalStorage, writeJournalEntries } from "../journal-local-storage"
-import { journalDeviceTransaction } from "../journal-device-storage"
+import { CANONICAL_JOURNAL_MANIFEST_KEY } from "../canonical-journal-storage"
+import { canonicalJournalRawStorage } from "../canonical-journal-access"
 import {
   hasPrivateMemoText,
   savePrivateMemosWithJournalShells,
@@ -418,7 +419,7 @@ async function restoreBackupFileUnlocked(
         : currentStatus === "READY" && currentRaw !== null
           ? parseStoredCalendarDecorationState(currentRaw) : null
       if (current === null || !calendarDecorationsOwnedBy(current, read.decorations!)) {
-        const rollback = rollbackLocalStorageMutations(applied)
+        const rollback = rollbackLocalStorageMutations(applied, scope)
         const rolledBack = rollback.complete && !rollback.stateChanged
         return { ...emptyRestoreOutcome(plan, rolledBack ? "ROLLED_BACK" : "SAVE_FAILED", rolledBack ? "ROLLED_BACK" : "FAILED", "STATE_CHANGED"), calendarDecorationRestore: "SAVE_FAILED" }
       }
@@ -427,20 +428,20 @@ async function restoreBackupFileUnlocked(
       const before = snapshotValue(snapshot, calendarKey)
       const after = JSON.stringify(calendar!)
       if (!saveCalendarDecorationStateIfCurrent(calendar!, before).ok) {
-        const rollback = rollbackLocalStorageMutations(applied)
+        const rollback = rollbackLocalStorageMutations(applied, scope)
         const rolledBack = rollback.complete && !rollback.stateChanged
         return { ...emptyRestoreOutcome(plan, replaceDecorations ? rolledBack ? "ROLLED_BACK" : "SAVE_FAILED" : "NOT_INCLUDED", rolledBack ? "ROLLED_BACK" : "FAILED", rollback.stateChanged ? "STATE_CHANGED" : "CALENDAR_DECORATION_SAVE_FAILED"), calendarDecorationRestore: "SAVE_FAILED" }
       }
       applied.push({ key: calendarKey, before, after })
     }
     if (!restoreScopeIsCurrent(scope)) {
-      const rollback = rollbackLocalStorageMutations(applied)
+      const rollback = rollbackLocalStorageMutations(applied, scope)
       const rolledBack = rollback.complete && !rollback.stateChanged
       return { ...emptyRestoreOutcome(plan, replaceDecorations ? rolledBack ? "ROLLED_BACK" : "SAVE_FAILED" : "NOT_INCLUDED", rolledBack ? "ROLLED_BACK" : "FAILED", "STATE_CHANGED"), calendarDecorationRestore: "SAVE_FAILED" }
     }
     const outcome = await applyRestoreEntries(prepared, mode, scope, true)
     if (outcome.failed > 0 || outcome.commit !== "COMMITTED") {
-      const rollback = rollbackLocalStorageMutations(applied)
+      const rollback = rollbackLocalStorageMutations(applied, scope)
       const rolledBack = rollback.complete && !rollback.stateChanged
       return {
         ...outcome,
@@ -523,14 +524,26 @@ function revalidateRestorePlan(reviewed: RestorePlan): PreparedRestorePlan | nul
   }
 }
 
-type RestoreScope = { readonly owner: string | null; readonly generation: number }
+type RestoreScope = {
+  readonly owner: string | null
+  readonly generation: number
+  readonly journalEpoch: string | null
+}
+
+function currentJournalEpoch(): string | null {
+  try {
+    return typeof window === "undefined" ? null
+      : canonicalJournalRawStorage(window.localStorage).getItem(CANONICAL_JOURNAL_MANIFEST_KEY)
+  } catch { return null }
+}
 
 function captureRestoreScope(): RestoreScope {
-  return { owner: localAccountScopeSnapshot(), generation: localJournalScopeGeneration() }
+  return { owner: localAccountScopeSnapshot(), generation: localJournalScopeGeneration(), journalEpoch: currentJournalEpoch() }
 }
 
 function restoreScopeIsCurrent(scope: RestoreScope): boolean {
-  return localAccountScopeSnapshot() === scope.owner && localJournalScopeGeneration() === scope.generation
+  return scope.journalEpoch !== null && currentJournalEpoch() === scope.journalEpoch
+    && localAccountScopeSnapshot() === scope.owner && localJournalScopeGeneration() === scope.generation
 }
 
 async function withLocalRestoreLock<T>(_scope: RestoreScope, run: () => T | Promise<T>): Promise<T> {
@@ -561,34 +574,29 @@ function snapshotValue(snapshot: LocalStorageSnapshot, key: string): string | nu
 }
 
 /** Revert only values this restore still owns; a newer tab/account value always wins. */
-function rollbackLocalStorageMutations(mutations: readonly LocalStorageMutation[]): {
+function rollbackLocalStorageMutations(mutations: readonly LocalStorageMutation[], scope: RestoreScope): {
   readonly complete: boolean
   readonly stateChanged: boolean
 } {
+  if (!restoreScopeIsCurrent(scope)) return { complete: false, stateChanged: true }
   const storage = journalStorage()
   if (storage === null) return { complete: false, stateChanged: false }
-  const transaction = journalDeviceTransaction(storage, () => rollbackLocalStorageMutationsInDeviceScope(storage, mutations),
-    value => value.complete && !value.stateChanged)
-  return transaction.ok ? transaction.value : { complete: false, stateChanged: true }
-}
-
-function rollbackLocalStorageMutationsInDeviceScope(storage: Storage, mutations: readonly LocalStorageMutation[]): {
-  readonly complete: boolean
-  readonly stateChanged: boolean
-} {
   try {
     let complete = true
     let stateChanged = false
     for (const { key, before, after } of [...mutations].reverse()) {
+      if (!restoreScopeIsCurrent(scope)) return { complete: false, stateChanged: true }
       const current = storage.getItem(key)
       if (current === before) continue
       if (current !== after) {
         stateChanged = true
         continue
       }
+      if (!restoreScopeIsCurrent(scope)) return { complete: false, stateChanged: true }
       if (before === null) storage.removeItem(key)
       else storage.setItem(key, before)
       if (storage.getItem(key) !== before) complete = false
+      if (!restoreScopeIsCurrent(scope)) return { complete: false, stateChanged: true }
     }
     return { complete, stateChanged }
   } catch {
@@ -720,7 +728,8 @@ async function applyRestoreEntries(
     const after = JSON.stringify(next)
     if (writeJournalEntries(storage, next, snapshot.raw) && commitGuard()) restored = accepted.length
     else {
-      if (storage.getItem(JOURNAL_STORAGE_KEY) === after) {
+      if (restoreScopeIsCurrent(scope) && storage.getItem(JOURNAL_STORAGE_KEY) === after
+        && restoreScopeIsCurrent(scope)) {
         writeJournalEntries(storage, snapshot.entries, after)
       }
       failed += accepted.length

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { useCalendarSnapshot } from "./useCalendarEntries"
 import { setActiveLocalAccount } from "../domain/account/local-journal-ownership"
 import { resetAccountJournalProjection, setAccountJournalProjectionStatus } from "../domain/account/account-journal-projection"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
 const mocks = vi.hoisted(() => ({ hydrate: vi.fn(async () => false), enabled: vi.fn(() => true) }))
 vi.mock("../domain/account/account-journal-record-service", () => ({
@@ -12,9 +13,10 @@ vi.mock("../domain/account/config", async importOriginal => ({
   ...await importOriginal<typeof import("../domain/account/config")>(), accountFeatureEnabled: () => true,
 }))
 
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear(); vi.clearAllMocks(); mocks.enabled.mockReturnValue(true)
   setActiveLocalAccount("synthetic-a"); resetAccountJournalProjection("synthetic-a")
+  await initializeCanonicalJournalFixture()
 })
 afterEach(() => { cleanup(); setActiveLocalAccount(null); resetAccountJournalProjection(null); localStorage.clear() })
 

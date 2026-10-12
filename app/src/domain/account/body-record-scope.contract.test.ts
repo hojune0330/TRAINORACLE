@@ -3,10 +3,11 @@ import { filterOwnerBodyEntries } from "./body-record-scope"
 import { setActiveLocalAccount, assignJournalsToAccount, LOCAL_JOURNAL_OWNERSHIP_KEY } from "./local-journal-ownership"
 import { resetAccountJournalProjection, putAccountJournalProjection } from "./account-journal-projection"
 import type { EveningEntry } from "../journal-schema"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 
 const entry = (id: string): EveningEntry => ({ id, kind: "evening", date: "2026-10-12", savedAt: "2026-10-12T00:00:00Z", syncState: "local",
   sleepH: 0, sleepQuality: 0, weightKg: "", restingHr: "", mood: 0, note: "", painParts: { rKnee: 4 } })
-beforeEach(() => { localStorage.clear(); setActiveLocalAccount(null); resetAccountJournalProjection(null) })
+beforeEach(async () => { localStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null); resetAccountJournalProjection(null) })
 afterEach(() => { vi.restoreAllMocks(); setActiveLocalAccount(null); resetAccountJournalProjection(null); localStorage.clear() })
 
 it("isolates guest body history and A/B owners while accepting projection-only account records", () => {

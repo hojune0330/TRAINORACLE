@@ -9,17 +9,17 @@
 // 설계 원칙:
 //  - **데이터를 먼저 구한다.** 오류 화면에서 바로 백업 파일을 내려받을 수
 //    있어야 한다. "다시 시도"만 있으면 같은 오류가 반복될 때 탈출구가 없다.
-//  - 백업은 화면 렌더와 무관한 localStorage 직읽기로 만든다. 이미 깨진
-//    상태이므로 도메인 로직을 신뢰하지 않는다(최소 의존).
+//  - 백업은 화면 렌더와 무관하게 저장 바이트를 읽되, 확인된 새 저장소와
+//    소유 계정 경계를 통과해야 한다. 미확인 구형 사본을 비상 백업으로 노출하지 않는다.
 //  - 오류 내용을 서버로 보내지 않는다. 일지 본문이 섞여 나갈 수 있다.
 //  - 사용자를 탓하거나 불안을 주는 문구를 쓰지 않는다.
 import React from "react"
 import { readVisibleJournalEntries } from "../domain/account/local-journal-ownership"
 import { captureInterruptedDraft, isScreenAssetFailure, reloadScreenAssets, rememberRecoveryTab } from "../domain/screen-recovery"
 import type { AppTab } from "./AppChrome"
-import { readJournalDeviceValue } from "../domain/journal-device-storage"
+import { JOURNAL_STORAGE_KEY as JOURNAL_KEY } from "../domain/journal-storage-keys"
+import { canonicalJournalAccess } from "../domain/canonical-journal-access"
 
-const JOURNAL_KEY = "trainoracle.journal.v1"
 
 type Props = {
   readonly children: React.ReactNode
@@ -33,7 +33,7 @@ type BackupRead = { kind: "ready"; raw: string; count: number } | { kind: "unava
 
 export function readEmergencyJournalBackup(): BackupRead {
   try {
-    const parsed: unknown = JSON.parse(readJournalDeviceValue(window.localStorage, JOURNAL_KEY) ?? "[]")
+    const parsed: unknown = JSON.parse(canonicalJournalAccess(window.localStorage).getItem(JOURNAL_KEY) ?? "[]")
     if (!Array.isArray(parsed)) return { kind: "unavailable" }
     const entries: { readonly id: string }[] = []
     for (const candidate of parsed) {

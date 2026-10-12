@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { loadEntries, loadEntriesForPlanSafety } from "./journal-store"
 import type { EveningEntry } from "./journal-schema"
 import { JOURNAL_STORAGE_KEY } from "./journal-local-storage"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { LOCAL_JOURNAL_OWNERSHIP_KEY, setActiveLocalAccount } from "./account/local-journal-ownership"
 import { putAccountJournalProjection, removeAccountJournalProjection, resetAccountJournalProjection,
   setAccountJournalProjectionStatus } from "./account/account-journal-projection"
@@ -16,12 +17,18 @@ function seed(entries: readonly EveningEntry[], ownerByEntryId: Readonly<Record<
   localStorage.setItem(LOCAL_JOURNAL_OWNERSHIP_KEY, JSON.stringify({ schemaVersion: 1, ownerByEntryId }))
 }
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); resetAccountJournalProjection(null) })
+beforeEach(async () => {
+  localStorage.clear()
+  sessionStorage.clear()
+  setActiveLocalAccount(null)
+  resetAccountJournalProjection(null)
+  await initializeCanonicalJournalFixture()
+})
 afterEach(() => { vi.restoreAllMocks(); setActiveLocalAccount(null); resetAccountJournalProjection(null) })
 
 describe("journal reads use one current ownership snapshot", () => {
-  it("bounds safety-read storage work as the journal grows while preserving owner-visible order", () => {
-    const entries = Array.from({ length: 200 }, (_, index) => entry(`entry-${index}`))
+  it.each([20, 200])("bounds safety-read storage work for %i entries while preserving owner-visible order", count => {
+    const entries = Array.from({ length: count }, (_, index) => entry(`entry-${index}`))
     seed(entries, Object.fromEntries(entries.filter((_, index) => index % 3 !== 0)
       .map((item, index) => [item.id, index % 2 === 0 ? "owner-a" : "owner-b"])))
     setActiveLocalAccount("owner-a")
@@ -31,7 +38,8 @@ describe("journal reads use one current ownership snapshot", () => {
     expect(loadEntriesForPlanSafety()).toEqual({ status: "complete", entries: expected })
     expect({ journal: reads.mock.calls.filter(([key]) => key === JOURNAL_STORAGE_KEY).length,
       ownership: reads.mock.calls.filter(([key]) => key === LOCAL_JOURNAL_OWNERSHIP_KEY).length })
-      .toEqual({ journal: 1, ownership: 1 })
+      // Two canonical guard snapshots plus one consumer read; independent of N.
+      .toEqual({ journal: 3, ownership: 3 })
     expect(expected.length).toBeGreaterThan(0)
     expect(expected.length).toBeLessThan(entries.length)
   })
@@ -60,8 +68,10 @@ describe("journal reads use one current ownership snapshot", () => {
       })
     }
     expect(loadEntries()).toEqual([])
-    // Preserve the existing status contract; unknown owners grant no visibility.
-    expect(loadEntriesForPlanSafety()).toEqual({ status: "complete", entries: [] })
+    // An unreadable key prevents checking the canonical preservation proof.
+    // Known malformed ownership still grants no local visibility via the parser.
+    expect(loadEntriesForPlanSafety()).toEqual(failure === "unreadable"
+      ? { status: "uncertain" } : { status: "complete", entries: [] })
   })
 
   it("preserves online precedence, deletion shadows and private-note redaction", () => {

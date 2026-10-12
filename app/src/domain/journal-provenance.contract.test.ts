@@ -12,8 +12,10 @@ import {
 } from "./journal-store"
 import { createRecoveryCode } from "./account/private-note-crypto"
 import { saveSessionRecoveryCode } from "./account/private-note-sync"
+import { JOURNAL_STORAGE_KEY } from "./journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
-const STORAGE_KEY = "trainoracle.journal.v1"
+const STORAGE_KEY = JOURNAL_STORAGE_KEY
 
 function legacyPostSession(id: string): PostSessionEntry {
   return {
@@ -33,8 +35,10 @@ function legacyPostSession(id: string): PostSessionEntry {
 }
 
 describe("journal provenance rollout boundary", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     window.localStorage.clear()
+    window.sessionStorage.clear()
+    await initializeCanonicalJournalFixture()
   })
 
   it("keeps a legacy entry visible while excluding it from analysis by default", () => {

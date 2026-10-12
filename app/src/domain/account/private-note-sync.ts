@@ -8,7 +8,7 @@ import {
 import type { EncryptedPrivateNote } from "./private-note-crypto"
 import { restorePrivateMemo, rotatePrivateMemoVault } from "../private-memo-vault"
 import { journalStorage } from "../journal-local-storage"
-import { PRIVATE_NOTE_RECOVERY_STORAGE_KEY } from "../journal-storage-keys"
+import { PRIVATE_NOTE_RECOVERY_STORAGE_KEY, LEGACY_JOURNAL_STORAGE_KEYS } from "../journal-storage-keys"
 import { accountScopedStorageKey } from "./local-account-scope"
 import { onLocalJournalScopeChange } from "./local-journal-ownership"
 
@@ -124,6 +124,8 @@ export { rotatePrivateMemoVault }
 export function clearSessionRecoveryCode(): void {
   if (typeof window === "undefined") return
   const recoveryKey = activeRecoveryKey()
+  // Explicit locking/logout must also retire the pre-migration tab secret.
+  removeStoredRecoveryCode(accountScopedStorageKey(LEGACY_JOURNAL_STORAGE_KEYS.privateNoteRecovery))
   invalidatedRecoveryKeys.add(recoveryKey)
   window.dispatchEvent(new Event(RECOVERY_CHANGED_EVENT))
   try {

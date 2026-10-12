@@ -5,6 +5,7 @@ import { privateEntry } from "./private-memo-test-fixtures"
 import { createRecoveryCode } from "./account/private-note-crypto"
 import { saveSessionRecoveryCode } from "./account/private-note-sync"
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { markAccountJournalFullListConfirmed, putAccountJournalProjection, resetAccountJournalProjection,
   setAccountJournalProjectionStatus } from "./account/account-journal-projection"
 import { restorePrivateMemo } from "./private-memo-vault"
@@ -15,10 +16,11 @@ vi.mock("./private-memo-vault", async original => ({
   restorePrivateMemo: vi.fn(),
 }))
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.resetAllMocks()
   window.localStorage.clear()
   window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
   vi.stubEnv("VITE_FEATURE_ACCOUNT_JOURNAL", "true")
   vi.stubEnv("VITE_KILL_ACCOUNT_JOURNAL", "false")
   setActiveLocalAccount("A")

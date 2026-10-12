@@ -21,8 +21,8 @@ const runtimeReady = runtime.approved
     .filter(([key]) => key !== "approved")
     .every(([, value]) => value !== "")
 const AUTH_STORAGE_KEY = "trainoracle.auth.v1"
-const JOURNAL_KEY = "trainoracle.journal.v1"
-const OWNERSHIP_KEY = "trainoracle.journal.ownership.v1"
+const JOURNAL_KEY = "to-local-journal.journal.v2"
+const OWNERSHIP_KEY = "to-local-journal.journal.ownership.v2"
 const PLAN_KEY = "trainoracle.plan-beta.v1"
 const RECORDS_KEY = "trainoracle.athlete-records.v1"
 const DECORATION_KEY = "trainoracle.decorations.v2"
@@ -116,7 +116,9 @@ test.describe("staging account runtime isolation", () => {
       library: { favoriteItemIds: ["STICKER_WEATHER_SUN"], recentItemIds: [] },
     }
     await contextA.addInitScript((seed) => {
-      window.localStorage.setItem("trainoracle.journal.v1", JSON.stringify([seed.journal]))
+      if (window.localStorage.getItem("to-local-journal.migration.v1") === null) {
+        window.localStorage.setItem("trainoracle.journal.v1", JSON.stringify([seed.journal]))
+      }
       window.localStorage.setItem("trainoracle.plan-beta.v1", seed.plan)
       window.localStorage.setItem("trainoracle.athlete-records.v1", seed.records)
       window.localStorage.setItem("trainoracle.decorations.v2", seed.decoration)
@@ -170,8 +172,8 @@ test.describe("staging account runtime isolation", () => {
     await expect(pageA.getByText(journalA.title, { exact: true })).toHaveCount(0)
 
     await pageA.evaluate((entry) => {
-      const current = JSON.parse(window.localStorage.getItem("trainoracle.journal.v1") ?? "[]")
-      window.localStorage.setItem("trainoracle.journal.v1", JSON.stringify([...current, entry]))
+      const current = JSON.parse(window.localStorage.getItem("to-local-journal.journal.v2") ?? "[]")
+      window.localStorage.setItem("to-local-journal.journal.v2", JSON.stringify([...current, entry]))
     }, journalB)
     await pageA.goto("/?account=1")
     await pageA.getByTestId("connect-device-journals-start").click()

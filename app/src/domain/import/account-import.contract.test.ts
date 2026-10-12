@@ -10,6 +10,7 @@ import { parseAccountJournalRecord, validateAccountJournalRecordUpdate } from ".
 import type { PostSessionEntry } from "../journal-schema"
 import type { ImportDraftSelection, ImportSaveIntent } from "./import-draft"
 import { ReviewStage, SavedStage } from "../../screens/import-activities/ImportStages"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 
 const api = vi.hoisted(() => ({ enabled: vi.fn(), hydrate: vi.fn(), persist: vi.fn(), deleted: vi.fn(), base: vi.fn(), fingerprint: vi.fn() }))
 vi.mock("../account/account-journal-record-service", () => ({
@@ -543,7 +544,9 @@ describe("account import confirmation", () => {
     expect(api.persist).not.toHaveBeenCalled()
   })
 
-  it("keeps legacy synchronous entry points fail closed under the account flag", () => {
+  it("keeps legacy synchronous entry points fail closed under the account flag", async () => {
+    window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
     vi.stubEnv("VITE_FEATURE_ACCOUNT_JOURNAL", "true")
     vi.stubEnv("VITE_KILL_ACCOUNT_JOURNAL", "false")
     expect(saveImportedActivities([activity], "csv")).toMatchObject({ saved: 0, failed: 1 })

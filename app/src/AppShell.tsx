@@ -1,4 +1,5 @@
 import React from "react"
+import { acknowledgeAnnouncement, MINIGAME_ANNOUNCEMENT } from "./domain/product-announcements"
 import { oracleV2FeatureEnabled } from "./domain/oracle-rollout"
 import { productFeatures } from "./domain/product-features"
 import { READER_HISTORY_KEY } from "./hooks/useReaderDialog"
@@ -1049,7 +1050,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         onOpenMinji={() => openGuide("minji")}
         onOpenGuide={() => openGuide("guide")}
         onOpenContent={openTrainingReading}
-        onOpenMinigame={() => runViewTransition("push", () => { setUtilityOrigin("more"); setUtilityView("minigame") })}
+        onOpenMinigame={() => runViewTransition("push", () => { acknowledgeAnnouncement(MINIGAME_ANNOUNCEMENT); setUtilityOrigin("more"); setUtilityView("minigame") })}
         onOpenRewards={() => openDecorationStudio()}
         onOpenPaceCalculator={() => openPaceCalculator()}
         onOpenRunningProfile={() => openOverlay({ kind: "running-profile", stage: "overview" })}
@@ -1063,7 +1064,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       />
     )
   } else if (v.tab === "home" && utilityView === "minigame") {
-    screen = <DeferredMobileScreens.TreadmillGame onBack={() => runViewTransition("pop", () => setUtilityView("more"))} />
+    screen = <DeferredMobileScreens.TreadmillGame backLabel={utilityOrigin === "home" ? "홈으로 돌아가기" : "더보기로 돌아가기"} onBack={() => runViewTransition("pop", () => setUtilityView(utilityOrigin === "home" ? null : "more"))} />
   } else if (v.tab === "home" && utilityView === "content") {
     screen = <DeferredMobileScreens.TrainingContent onBack={() => runViewTransition("pop", () => {
       const origin = trainingContentOrigin.current
@@ -1113,6 +1114,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           onOpenTrends={() => goTab("trends", { section: "distance" })}
           onOpenOracle={openOracle}
           onOpenMore={() => runViewTransition("push", () => setUtilityView("more"))}
+          onOpenMinigame={() => runViewTransition("push", () => { acknowledgeAnnouncement(MINIGAME_ANNOUNCEMENT); setUtilityOrigin("home"); setUtilityView("minigame") })}
           onOpenAccount={accountEnabled ? () => runViewTransition("push", () => setV(s => ({ ...s, accountOpen: true }))) : undefined}
           onOpenContent={openTrainingReading}
           onOpenRewards={() => openDecorationStudio()}

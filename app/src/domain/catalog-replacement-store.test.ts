@@ -5,16 +5,18 @@ import { prepareCatalogReplacement } from "./catalog-replacement"
 import { applyCatalogReplacement } from "./catalog-replacement-store"
 import { loadVersionedPlanBetaState, readArchivedOriginalPlans } from "./plan-beta-store"
 import { readJournalOriginalPlan } from "./journal-original-plan"
+import { JOURNAL_STORAGE_KEY } from "./journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
 vi.mock("./plan-mutation-lock", () => ({ PLAN_BETA_MUTATION_LOCK_NAME: "test-plan-lock", getPlanMutationLockManager: () => ({
   request: async (_name: string, _options: unknown, run: (lock: object) => unknown) => run({}),
 }) }))
-beforeEach(() => { localStorage.clear(); vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-09-29T03:00:00.000Z")) })
+beforeEach(async () => { localStorage.clear(); await initializeCanonicalJournalFixture(); vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-09-29T03:00:00.000Z")) })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); localStorage.clear() })
 function prepared() {
   const f = replanFixture()
   localStorage.setItem("trainoracle.plan-beta.v1", JSON.stringify(f.state))
-  localStorage.setItem("trainoracle.journal.v1", JSON.stringify(f.entries))
+  localStorage.setItem(JOURNAL_STORAGE_KEY, JSON.stringify(f.entries))
   for (const entry of ALL_WORKOUT_CATALOG.filter(e => e.family === "BASE")) {
     const result = prepareCatalogReplacement({ ...f, address: { day: 4, slot: "AM" }, catalogId: entry.id,
       inputs: { eventDistanceM: 5000, experience: f.state.intake.experienceBand, availableSeconds: null,
@@ -25,20 +27,20 @@ function prepared() {
 }
 describe("future catalog change persistence", () => {
   it("archives the original, changes one slot and keeps an older journal resolvable", async () => {
-    const f = prepared(), journal = localStorage.getItem("trainoracle.journal.v1")
+    const f = prepared(), journal = localStorage.getItem(JOURNAL_STORAGE_KEY)
     expect(await applyCatalogReplacement(f.proposal, true)).toEqual({ kind: "applied" })
     expect(loadVersionedPlanBetaState()).toEqual(f.proposal.after)
     expect(readJournalOriginalPlan(f.entries[0]!)).toMatchObject({ kind: "matched", source: "ARCHIVED" })
-    expect(localStorage.getItem("trainoracle.journal.v1")).toBe(journal)
+    expect(localStorage.getItem(JOURNAL_STORAGE_KEY)).toBe(journal)
     const archive = readArchivedOriginalPlans()
     expect((await applyCatalogReplacement(f.proposal, true)).kind).toBe("blocked")
     expect(readArchivedOriginalPlans()).toEqual(archive)
   })
   it.each(["journal", "plan", "pain", "midnight", "confirmation", "forged"])("blocks stale or invalid %s without writes", async reason => {
     const f = prepared()
-    if (reason === "journal") localStorage.setItem("trainoracle.journal.v1", JSON.stringify([{ ...f.entries[0], activityOutcome: "RESTED" }]))
+    if (reason === "journal") localStorage.setItem(JOURNAL_STORAGE_KEY, JSON.stringify([{ ...f.entries[0], activityOutcome: "RESTED" }]))
     if (reason === "plan") localStorage.setItem("trainoracle.plan-beta.v1", JSON.stringify({ ...f.state, progress: [] }))
-    if (reason === "pain") localStorage.setItem("trainoracle.journal.v1", JSON.stringify([{ ...f.entries[0], painCheckStatus: "SIGNAL_REPORTED" }]))
+    if (reason === "pain") localStorage.setItem(JOURNAL_STORAGE_KEY, JSON.stringify([{ ...f.entries[0], painCheckStatus: "SIGNAL_REPORTED" }]))
     if (reason === "midnight") vi.setSystemTime(new Date("2026-09-30T03:00:00.000Z"))
     if (reason === "forged") f.proposal.after.intake.availableDayCount = 5
     const before = localStorage.getItem("trainoracle.plan-beta.v1")

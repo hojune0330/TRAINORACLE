@@ -12,6 +12,7 @@ import { fileAnalysisFormats } from "../../domain/import/file-analysis-policy"
 import { FileObservationReview } from "./FileObservationReview"
 import type { ImportedActivity } from "../../domain/import/activity-file"
 import "./file-analysis.css"
+import { nextActionFeedback } from "../../components/next-action"
 
 export type ReadFailure = "unreadable" | "unsupported-format" | "empty" | "too-large" | "too-many-records" | "too-many-segments" | "cancelled" | "account-unavailable" | null
 
@@ -298,17 +299,35 @@ export function SavedStage({ outcome, onOpenLog, onOpenAnalysis, onOpenSummary, 
   readonly onOpenSummary?: (() => void) | undefined
   readonly onRestart: () => void
 }) {
-  if (outcome.account !== undefined) return <div data-testid="import-saved" role="status">
+  const confirmed = (outcome.account ?? 0) > 0
+  const needsReview = (outcome.pending ?? 0) > 0 || outcome.failed > 0
+    || (outcome.conflicts ?? 0) > 0 || Boolean(outcome.stopReason)
+  const primaryAction = needsReview
+    ? onRetry ? "retry" : confirmed && onOpenSummary ? "summary" : onOpenLog ? "log" : "restart"
+    : confirmed && onOpenAnalysis ? "analysis" : confirmed && onOpenSummary ? "summary"
+      : onOpenLog ? "log" : onRetry ? "retry" : "restart"
+  const actions = [
+    { id: "analysis", label: "가져온 기록 분석하기", onClick: confirmed ? onOpenAnalysis : undefined },
+    { id: "summary", label: "가져온 기록 보기", onClick: confirmed ? onOpenSummary : undefined },
+    { id: "retry", label: "저장 상태 다시 확인", onClick: onRetry },
+    { id: "log", label: "일지에서 확인하기", onClick: onOpenLog },
+    { id: "restart", label: "파일 더 가져오기", onClick: onRestart },
+  ].filter(action => action.onClick)
+  const renderAction = (action: typeof actions[number]) => <button key={action.id} {...nextActionFeedback}
+    type="button" className={primaryAction === action.id ? "next-action" : undefined}
+    style={primaryAction === action.id ? undefined : secondaryBtn} disabled={busy} onClick={action.onClick}>{action.label}</button>
+  if (outcome.account !== undefined) return <div className="next-action-result" data-testid="import-saved" role="status">
     <h2>계정 가져오기 결과</h2>
     <p>계정에 저장됨 {outcome.account}건 · 연결 대기 {outcome.pending ?? 0}건 · 충돌 확인 {outcome.conflicts ?? 0}건 · 실패 {outcome.failed}건</p>
     {((outcome.reused ?? 0) > 0 || (outcome.excluded ?? 0) > 0) && <p>기존 기록 확인 {outcome.reused ?? 0}건 · 가져오기 제외 {outcome.excluded ?? 0}건</p>}
     <p>원본 파일은 그대로 보관해 주세요. 연결 대기는 계정 저장 완료가 아니에요.</p>
     {outcome.stopReason && <p role="alert">나머지 저장을 멈췄어요. 이미 저장된 기록은 그대로 있어요. 연결·로그인·앱 업데이트 상태를 확인한 뒤 다시 시도해 주세요.</p>}
-    {onOpenAnalysis && (outcome.account ?? 0) > 0 && <button type="button" style={primaryBtn} disabled={busy} onClick={onOpenAnalysis}>가져온 기록 분석하기</button>}
-    {onOpenSummary && (outcome.account ?? 0) > 0 && <button type="button" style={secondaryBtn} disabled={busy} onClick={onOpenSummary}>가져온 기록 보기</button>}
-    {onRetry && <button type="button" style={primaryBtn} disabled={busy} onClick={onRetry}>저장 상태 다시 확인</button>}
-    {onOpenLog && <button type="button" style={secondaryBtn} disabled={busy} onClick={onOpenLog}>일지에서 확인하기</button>}
-    <button type="button" style={secondaryBtn} disabled={busy} onClick={onRestart}>파일 더 가져오기</button>
+    <div className="next-action-group">
+      {actions.filter(action => action.id === primaryAction).map(renderAction)}
+      <div className="next-action-alternatives">
+        {actions.filter(action => action.id !== primaryAction).map(renderAction)}
+      </div>
+    </div>
   </div>
   const completed = outcome.saved + (outcome.merged ?? 0)
   const onlyExcluded = completed === 0 && (outcome.excluded ?? 0) > 0

@@ -290,7 +290,7 @@ function step(state: TreadmillState, dt: number): TreadmillState {
   return next
 }
 
-/** Substeps keep collisions stable across display refresh rates; long stalls pause in the UI. */
+/** Substeps stabilize collisions; excess stalled time is discarded, never caught up. */
 export function advanceTreadmill(state: TreadmillState, seconds: number): TreadmillState {
   if (state.mode !== "running" || !Number.isFinite(seconds) || seconds <= 0) return state
   let next = state

@@ -8,9 +8,11 @@ import {
   restorePrivateMemoRecordWithJournalShell,
 } from "./private-memo-vault"
 import { privateEntry } from "./private-memo-test-fixtures"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 
 describe("private vault concurrent writers", () => {

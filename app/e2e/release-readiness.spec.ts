@@ -35,7 +35,7 @@ test("keeps the local diary usable after the network goes offline", async ({ con
   // Then: the honest receipt and the local record survive without a server.
   await expect(page.locator(".journal-save-result")).toContainText("3.2 km")
   await expect.poll(async () => page.evaluate(() => {
-    const journal = window.localStorage.getItem("trainoracle.journal.v1")
+    const journal = window.localStorage.getItem("to-local-journal.journal.v2")
     return journal?.includes('"distanceKm":"3.2"') ?? false
   })).toBe(true)
 })

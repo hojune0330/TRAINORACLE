@@ -5,17 +5,18 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
 import { cleanup, render, screen, fireEvent } from "@testing-library/react"
 import { ErrorBoundary, emergencyJournalBackupRaw, readEmergencyJournalBackup } from "./ErrorBoundary"
-import { setActiveLocalAccount } from "../domain/account/local-journal-ownership"
-
-const JOURNAL_KEY = "trainoracle.journal.v1"
+import { LOCAL_JOURNAL_OWNERSHIP_KEY, setActiveLocalAccount } from "../domain/account/local-journal-ownership"
+import { JOURNAL_STORAGE_KEY as JOURNAL_KEY } from "../domain/journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
 function Boom(): React.ReactElement {
   throw new Error("의도적 렌더 실패")
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
   setActiveLocalAccount(null)
+  await initializeCanonicalJournalFixture()
   // React가 경계 테스트에서 콘솔에 찍는 오류를 잠시 가린다
   vi.spyOn(console, "error").mockImplementation(() => {})
 })
@@ -58,7 +59,7 @@ describe("ErrorBoundary", () => {
       { id: "mine", title: "내 일지" },
       { id: "other", title: "다른 계정 일지" },
     ]))
-    window.localStorage.setItem("trainoracle.journal.ownership.v1", JSON.stringify({
+    window.localStorage.setItem(LOCAL_JOURNAL_OWNERSHIP_KEY, JSON.stringify({
       schemaVersion: 1,
       ownerByEntryId: { mine: "account-a", other: "account-b" },
     }))
@@ -74,20 +75,28 @@ describe("ErrorBoundary", () => {
 
   it("소유권 장부가 손상되면 공용 원문을 내보내지 않는다", () => {
     window.localStorage.setItem(JOURNAL_KEY, JSON.stringify([{ id: "possibly-private" }]))
-    window.localStorage.setItem("trainoracle.journal.ownership.v1", "{broken")
+    window.localStorage.setItem(LOCAL_JOURNAL_OWNERSHIP_KEY, "{broken")
 
     expect(emergencyJournalBackupRaw()).toBe("[]")
   })
 
-  it("reads one fresh ownership snapshot for a large emergency backup", () => {
+  it("keeps ownership verification reads constant as emergency backup size grows", () => {
+    const ownershipReads = (entries: readonly { id: string }[], ownerByEntryId: Record<string, string>) => {
+      localStorage.setItem(JOURNAL_KEY, JSON.stringify(entries))
+      localStorage.setItem(LOCAL_JOURNAL_OWNERSHIP_KEY, JSON.stringify({ schemaVersion: 1, ownerByEntryId }))
+      const read = vi.spyOn(Storage.prototype, "getItem")
+      const backup = readEmergencyJournalBackup()
+      const count = read.mock.calls.filter(([key]) => key === LOCAL_JOURNAL_OWNERSHIP_KEY).length
+      read.mockRestore()
+      return { backup, count }
+    }
+
+    const one = ownershipReads([{ id: "synthetic-0" }], { "synthetic-0": "another-account" })
+    expect(one.backup).toEqual({ kind: "ready", count: 0, raw: "[]" })
     const entries = Array.from({ length: 500 }, (_, index) => ({ id: `synthetic-${index}` }))
-    localStorage.setItem(JOURNAL_KEY, JSON.stringify(entries))
-    localStorage.setItem("trainoracle.journal.ownership.v1", JSON.stringify({
-      schemaVersion: 1, ownerByEntryId: { "synthetic-499": "another-account" },
-    }))
-    const read = vi.spyOn(Storage.prototype, "getItem")
-    expect(readEmergencyJournalBackup()).toEqual({ kind: "ready", count: 499, raw: JSON.stringify(entries.slice(0, 499)) })
-    expect(read.mock.calls.filter(([key]) => key === "trainoracle.journal.ownership.v1")).toHaveLength(1)
+    const many = ownershipReads(entries, { "synthetic-499": "another-account" })
+    expect(many.backup).toEqual({ kind: "ready", count: 499, raw: JSON.stringify(entries.slice(0, 499)) })
+    expect(many.count).toBe(one.count)
   })
 
   it("다시 열어 보기 경로를 제공한다", () => {

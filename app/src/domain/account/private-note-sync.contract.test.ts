@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { PostSessionEntry } from "../journal-schema"
 import {
+  PRIVATE_MEMO_VAULT_STORAGE_KEY,
+  PRIVATE_NOTE_RECOVERY_STORAGE_KEY,
+} from "../journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
+import {
   decryptPrivateJournalEntry,
   encryptPrivateJournalEntry,
   loadSessionRecoveryCode,
@@ -26,9 +31,10 @@ const privateEntry: PostSessionEntry = {
   memoPurpose: "PRIVATE_SELF_ONLY",
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
   window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 
 describe("private memo encrypted sync", () => {
@@ -53,7 +59,7 @@ describe("private memo encrypted sync", () => {
     expect(saveSessionRecoveryCode(code)).toBe(true)
     expect(loadSessionRecoveryCode()).toBe(code)
     expect([...Array(window.localStorage.length)].map((_, index) => window.localStorage.key(index)))
-      .not.toContain("trainoracle.private-note.recovery.v1")
+      .not.toContain(PRIVATE_NOTE_RECOVERY_STORAGE_KEY)
   })
 
   it("rotates the session recovery code and keeps a real private memo decryptable", async () => {
@@ -79,7 +85,7 @@ describe("private memo encrypted sync", () => {
       key: string,
       value: string,
     ) {
-      if (this === window.sessionStorage && key === "trainoracle.private-note.recovery.v1") {
+      if (this === window.sessionStorage && key === PRIVATE_NOTE_RECOVERY_STORAGE_KEY) {
         throw new DOMException("Injected session write failure", "QuotaExceededError")
       }
       return realSetItem.call(this, key, value)
@@ -102,7 +108,7 @@ describe("private memo encrypted sync", () => {
       key: string,
       value: string,
     ) {
-      if (this === window.sessionStorage && key === "trainoracle.private-note.recovery.v1" && value === nextCode) {
+      if (this === window.sessionStorage && key === PRIVATE_NOTE_RECOVERY_STORAGE_KEY && value === nextCode) {
         realSetItem.call(this, key, "partial")
         return
       }
@@ -120,7 +126,7 @@ describe("private memo encrypted sync", () => {
     const nextCode = createRecoveryCode()
     expect(saveSessionRecoveryCode(previousCode)).toBe(true)
     await expect(savePrivateEntry(privateEntry)).resolves.toEqual({ ok: true, total: 1 })
-    const previousVault = window.localStorage.getItem("trainoracle.private-memo.v1")
+    const previousVault = window.localStorage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)
     const realSetItem = Storage.prototype.setItem
     let vaultWriteCount = 0
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
@@ -128,11 +134,11 @@ describe("private memo encrypted sync", () => {
       key: string,
       value: string,
     ) {
-      if (this === window.localStorage && key === "trainoracle.private-memo.v1" && vaultWriteCount++ === 0) {
+      if (this === window.localStorage && key === PRIVATE_MEMO_VAULT_STORAGE_KEY && vaultWriteCount++ === 0) {
         realSetItem.call(this, key, "partial-vault")
         return
       }
-      if (this === window.sessionStorage && key === "trainoracle.private-note.recovery.v1" && value === previousCode) {
+      if (this === window.sessionStorage && key === PRIVATE_NOTE_RECOVERY_STORAGE_KEY && value === previousCode) {
         realSetItem.call(this, key, "partial-rollback")
         return
       }
@@ -142,7 +148,7 @@ describe("private memo encrypted sync", () => {
     await expect(rotateSessionRecoveryCode(previousCode, nextCode)).resolves.toEqual({ ok: false })
 
     expect(loadSessionRecoveryCode()).toBeNull()
-    expect(window.localStorage.getItem("trainoracle.private-memo.v1")).toBe(previousVault)
+    expect(window.localStorage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)).toBe(previousVault)
   })
 
   it("clears a stale session code after the vault rejects it during rotation", async () => {
@@ -152,12 +158,12 @@ describe("private memo encrypted sync", () => {
     expect(saveSessionRecoveryCode(vaultCode)).toBe(true)
     await expect(savePrivateEntry(privateEntry)).resolves.toEqual({ ok: true, total: 1 })
     expect(saveSessionRecoveryCode(staleCode)).toBe(true)
-    const previousVault = window.localStorage.getItem("trainoracle.private-memo.v1")
+    const previousVault = window.localStorage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)
 
     await expect(rotateSessionRecoveryCode(staleCode, nextCode)).resolves.toEqual({ ok: false })
 
     expect(loadSessionRecoveryCode()).toBeNull()
-    expect(window.localStorage.getItem("trainoracle.private-memo.v1")).toBe(previousVault)
+    expect(window.localStorage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)).toBe(previousVault)
   })
 
   it("does not retain a stale recovery code when clearing the failed rotation is denied", async () => {
@@ -169,7 +175,7 @@ describe("private memo encrypted sync", () => {
     expect(saveSessionRecoveryCode(staleCode)).toBe(true)
     const realRemoveItem = Storage.prototype.removeItem
     vi.spyOn(Storage.prototype, "removeItem").mockImplementation(function (this: Storage, key: string) {
-      if (this === window.sessionStorage && key === "trainoracle.private-note.recovery.v1") {
+      if (this === window.sessionStorage && key === PRIVATE_NOTE_RECOVERY_STORAGE_KEY) {
         throw new DOMException("Injected session remove failure", "QuotaExceededError")
       }
       realRemoveItem.call(this, key)
@@ -178,8 +184,8 @@ describe("private memo encrypted sync", () => {
     await expect(rotateSessionRecoveryCode(staleCode, nextCode)).resolves.toEqual({ ok: false })
 
     expect(loadSessionRecoveryCode()).toBeNull()
-    expect(window.sessionStorage.getItem("trainoracle.private-note.recovery.v1")).not.toBe(staleCode)
-    expect(window.sessionStorage.getItem("trainoracle.private-note.recovery.v1")).not.toBe(nextCode)
+    expect(window.sessionStorage.getItem(PRIVATE_NOTE_RECOVERY_STORAGE_KEY)).not.toBe(staleCode)
+    expect(window.sessionStorage.getItem(PRIVATE_NOTE_RECOVERY_STORAGE_KEY)).not.toBe(nextCode)
   })
 
   it("removes an unverified rotation code when invalidation storage is denied", async () => {
@@ -192,7 +198,7 @@ describe("private memo encrypted sync", () => {
     const realSetItem = Storage.prototype.setItem
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, key: string, value: string) {
       if (this === window.sessionStorage
-        && key === "trainoracle.private-note.recovery.v1"
+        && key === PRIVATE_NOTE_RECOVERY_STORAGE_KEY
         && value === "recovery-code-cleared") {
         throw new DOMException("Injected invalidation write failure", "QuotaExceededError")
       }
@@ -200,7 +206,7 @@ describe("private memo encrypted sync", () => {
     })
 
     await expect(rotateSessionRecoveryCode(staleCode, nextCode)).resolves.toEqual({ ok: false })
-    expect(window.sessionStorage.getItem("trainoracle.private-note.recovery.v1")).toBeNull()
+    expect(window.sessionStorage.getItem(PRIVATE_NOTE_RECOVERY_STORAGE_KEY)).toBeNull()
 
     vi.resetModules()
     const reloadedSync = await import("./private-note-sync")

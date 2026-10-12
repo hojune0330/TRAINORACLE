@@ -16,6 +16,8 @@
   import { PaceCalculator } from "../../src/screens/PaceCalculator.tsx"
   import { AthleteRecords } from "../../src/screens/AthleteRecords.tsx"
   import { CalendarJournalDetails } from "../../src/components/CalendarJournalDetails.tsx"
+  import { initializeCanonicalJournalBrowserFixture } from "./canonical-journal-browser.ts"
+  await initializeCanonicalJournalBrowserFixture()
   const noop = () => {}
   function PaceFixture() {
     const [stage, setStage] = React.useState("event")

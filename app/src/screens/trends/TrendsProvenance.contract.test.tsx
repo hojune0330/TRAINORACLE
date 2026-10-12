@@ -4,10 +4,12 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import type { JournalEntry } from "../../domain/journal-store"
 import { todayISO } from "../../domain/journal-store"
 import type { StructuredJournalObservation } from "../../domain/journal-observation"
+import { JOURNAL_STORAGE_KEY } from "../../domain/journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { Trends } from "../Trends"
 import { MonthlyTrendSection } from "./MonthlyTrendSection"
 
-const STORAGE_KEY = "trainoracle.journal.v1"
+const STORAGE_KEY = JOURNAL_STORAGE_KEY
 
 function postSession(
   id: string,
@@ -80,8 +82,9 @@ function entries(): readonly JournalEntry[] {
 afterEach(cleanup)
 
 describe("provenance-safe Trends surface", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(entries()))
   })
 

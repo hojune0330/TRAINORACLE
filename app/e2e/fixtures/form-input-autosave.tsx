@@ -9,7 +9,9 @@ import { setActiveLocalAccount } from "../../src/domain/account/local-journal-ow
 import "../../../colors_and_type.css"
 import "../../../colors_and_type_journal.css"
 import "../../src/styles/app.css"
+import { initializeCanonicalJournalBrowserFixture } from "./canonical-journal-browser"
 
+await initializeCanonicalJournalBrowserFixture()
 const owner = "11111111-1111-4111-8111-111111111111"
 setActiveLocalAccount(owner)
 const kind = new URLSearchParams(location.search).get("kind") ?? "evening"

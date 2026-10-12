@@ -8,10 +8,12 @@ import { setActiveLocalAccount, LOCAL_JOURNAL_OWNERSHIP_KEY } from "./account/lo
 import { deleteEntry, loadEntriesWithPrivateMemos, restoreDeletedEntry, savePrivateEntry } from "./journal-store"
 import { hasRetainedPrivateMemos, preparePrivateMemoCode } from "./private-memo-preparation"
 import { readTrashForRecovery, JOURNAL_TRASH_STORAGE_KEY } from "./journal-trash"
+import { JOURNAL_STORAGE_KEY } from "./journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { PrivateMemoSaveSetup } from "../screens/log-entry/PrivateMemoSaveSetup"
 import { RaceForm } from "../screens/log-entry/RaceForm"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); clearSessionRecoveryCode() })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); clearSessionRecoveryCode(); await initializeCanonicalJournalFixture() })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); clearSessionRecoveryCode() })
 const entry = (id: string) => ({ id, kind: "race", date: "2026-09-13", savedAt: "2026-09-13T00:00:00.000Z", syncState: "local", stage: "pre", record: "", rank: "", result: "", memo: `synthetic-${id}`, memoPurpose: "PRIVATE_SELF_ONLY" })
 async function seed(id: string, code: string) {
@@ -72,16 +74,25 @@ it("repairs mixed keys in both active and trash records without changing journal
   const a = createRecoveryCode(), b = createRecoveryCode()
   await seed("a", a); await seed("b", b)
   expect(deleteEntry("b").trashed).toBe(true)
-  const journal = localStorage.getItem("trainoracle.journal.v1")
-  const trash = JSON.parse(localStorage.getItem(JOURNAL_TRASH_STORAGE_KEY)!)
-  trash[0].historicalExtension = "preserved"
-  localStorage.setItem(JOURNAL_TRASH_STORAGE_KEY, JSON.stringify(trash))
+  const journal = localStorage.getItem(JOURNAL_STORAGE_KEY)
   expect(await preparePrivateMemoCode(a, b, () => true)).toBe("READY")
-  expect(localStorage.getItem("trainoracle.journal.v1")).toBe(journal)
-  expect(JSON.parse(localStorage.getItem(JOURNAL_TRASH_STORAGE_KEY)!)[0].historicalExtension).toBe("preserved")
+  expect(localStorage.getItem(JOURNAL_STORAGE_KEY)).toBe(journal)
   expect(restoreDeletedEntry("b").ok).toBe(true)
   expect((await loadEntriesWithPrivateMemos()).filter(value => value.kind === "race" && value.memo !== "")).toHaveLength(2)
   expect(JSON.stringify(localStorage)).not.toContain("synthetic-")
+})
+
+it("holds an unsupported trash extension without dropping it or rewriting either encrypted record", async () => {
+  const a = createRecoveryCode(), b = createRecoveryCode()
+  await seed("a", a); await seed("b", b)
+  expect(deleteEntry("b").trashed).toBe(true)
+  const trash = JSON.parse(localStorage.getItem(JOURNAL_TRASH_STORAGE_KEY)!)
+  trash[0].historicalExtension = "preserved"
+  localStorage.setItem(JOURNAL_TRASH_STORAGE_KEY, JSON.stringify(trash))
+  const before = JSON.stringify(localStorage)
+  expect(await preparePrivateMemoCode(a, b, () => true)).toBe("CHECK_CODES_OR_STORAGE")
+  expect(JSON.stringify(localStorage)).toBe(before)
+  expect(loadSessionRecoveryCode()).toBeNull()
 })
 
 it("does not start repairs when any ciphertext cannot be verified", async () => {

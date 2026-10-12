@@ -4,6 +4,7 @@ const DECORATION_KEY_V3 = "trainoracle.decorations.v3"
 
 async function seedEntry(page: import("@playwright/test").Page, id: string, title: string) {
   await page.addInitScript(([idArg, titleArg]: readonly [string, string]) => {
+    if (window.localStorage.getItem("to-local-journal.migration.v1") !== null) return
     const now = new Date()
     const date = [
       now.getFullYear(),

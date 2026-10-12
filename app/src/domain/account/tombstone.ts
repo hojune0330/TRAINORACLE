@@ -23,9 +23,9 @@
 //    **주의**: 상한 축출은 이론적 부활 경로다(§mergeTombstones 주석 참고).
 
 import { isJournalOwnedBy } from "./local-journal-ownership"
-import { canonicalJournalStorage } from "../journal-device-storage"
+import { canonicalJournalAccess } from "../canonical-journal-access"
+import { JOURNAL_TOMBSTONES_STORAGE_KEY as KEY } from "../journal-storage-keys"
 
-const KEY = "trainoracle.sync.tombstones.v1"
 
 /** 보관 상한 — 최근 삭제분 우선 (초과분은 오래된 것부터 잘라낸다) */
 export const TOMBSTONE_LIMIT = 500
@@ -40,7 +40,7 @@ export type Tombstone = {
 function storage(): Storage | null {
   try {
     if (typeof window === "undefined") return null
-    return canonicalJournalStorage(window.localStorage)
+    return canonicalJournalAccess(window.localStorage)
   } catch {
     return null
   }

@@ -23,6 +23,8 @@ import type { OracleTopicId } from "../domain/oracle-exploration"
 import { onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
 import { accountJournalProjectionStatus, readAccountJournalProjection, readCurrentConfirmedAccountJournalProjection } from "../domain/account/account-journal-projection"
 import { RecordStartActions } from "../components/RecordStartActions"
+import { ProductAnnouncement } from "../components/ProductAnnouncement"
+import { MINIGAME_ANNOUNCEMENT } from "../domain/product-announcements"
 import { createPlannedSessionLogDraft, type PlannedSessionLink } from "../domain/planned-session-link"
 
 export type HomeProps = {
@@ -39,6 +41,7 @@ export type HomeProps = {
   readonly oraclePreview?: ReactNode
   readonly oraclePreviewLabel?: string
   readonly onOpenMore?: () => void
+  readonly onOpenMinigame?: () => void
   readonly onOpenAccount?: () => void
   readonly onOpenContent?: () => void
   readonly onOpenRewards?: () => void
@@ -47,7 +50,7 @@ export type HomeProps = {
 
 export function Home({
   onWriteLog, onOpenDay, onOpenArchive, onOpenGuide, onOpenPlan,
-  onOpenNextTraining, onOpenTrends, onOpenImport, onOpenRecords, onOpenOracle, oraclePreview, oraclePreviewLabel, onOpenMore, onOpenAccount, onOpenContent, onOpenRewards,
+  onOpenNextTraining, onOpenTrends, onOpenImport, onOpenRecords, onOpenOracle, oraclePreview, oraclePreviewLabel, onOpenMore, onOpenMinigame, onOpenAccount, onOpenContent, onOpenRewards,
 }: HomeProps) {
   const [, setRevision] = React.useState(0)
   const journalSnapshot = useCalendarSnapshot()
@@ -153,6 +156,7 @@ export function Home({
         journalReadiness={journalSnapshot.status}
         analysisAvailable={toDateDistance.week.totalKm !== null}
         safetyNotice={safetyNotice}
+        announcement={onOpenMinigame && <ProductAnnouncement notice={MINIGAME_ANNOUNCEMENT} onOpen={onOpenMinigame} />}
         oraclePreview={oraclePreview}
         oraclePreviewLabel={oraclePreviewLabel}
         recordStart={journalSnapshot.status === "READY" && entries.length === 0 ? <RecordStartActions onImport={onOpenImport} onRecords={onOpenRecords} /> : undefined}

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { JOURNAL_STORAGE_KEY, writeJournalEntries } from "./journal-local-storage"
 import { MEMO_PURPOSE } from "./journal-schema"
 import type { JournalEntry } from "./journal-schema"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
 function entry(id: string): JournalEntry {
   return {
@@ -21,8 +22,9 @@ function entry(id: string): JournalEntry {
   }
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 
 afterEach(() => {

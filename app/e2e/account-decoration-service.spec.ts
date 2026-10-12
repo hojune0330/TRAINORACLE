@@ -95,7 +95,7 @@ async function mount(page: Page) {
     refresh.default.injectIntoGlobalHook(window)
     Object.assign(window, { $RefreshReg$: () => {}, $RefreshSig$: () => (type: unknown) => type, __vite_plugin_react_preamble_installed__: true })
     const fixture = await import(/* @vite-ignore */ fixturePath)
-    fixture.mount()
+    await fixture.mount()
   })
 }
 

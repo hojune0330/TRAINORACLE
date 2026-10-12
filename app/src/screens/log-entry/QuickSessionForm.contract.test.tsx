@@ -10,6 +10,7 @@ import { runDraftSafeNavigation } from "../../domain/unsaved-draft-navigation"
 import { savePlanBetaState, loadVersionedPlanBetaState } from "../../domain/plan-beta-store"
 import { AppShellFrame, type ShellToastState } from "../../components/AppShellFrame"
 import { createSavedFactReceipt } from "../../domain/save-receipt"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 
 function finishPerformedSession(rpe = 6): void {
   fireEvent.click(screen.getByRole("button", { name: "운동을 마쳤어요" }))
@@ -20,6 +21,11 @@ function finishPerformedSession(rpe = 6): void {
 }
 
 describe("quick session journal contract", () => {
+  beforeEach(async () => {
+    window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
+  })
+
   it("returns a single time or effort edit straight to review without repeating later answers", () => {
     render(<QuickSessionForm />)
     fireEvent.click(screen.getByRole("button", { name: "운동을 마쳤어요" }))
@@ -331,8 +337,9 @@ describe("quick session journal contract", () => {
     expect(screen.queryByRole("button", { name: "이대로 저장" })).toBeNull()
     expect(loadEntries()).toEqual([])
   })
-  beforeEach(() => {
+  beforeEach(async () => {
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
   })
 
   afterEach(() => {

@@ -9,21 +9,17 @@ import { openActiveSessionDetails } from "./active-plan-flow"
 test.use({ serviceWorkers: "block" })
 
 for (const journal of ["{broken-json", '[{"invalid":"journal"}]']) {
-  test(`unreadable journal is not reported as no linked activity: ${journal}`, async ({ page }) => {
+  test(`unreadable legacy journal blocks entry without being reported as no linked activity: ${journal}`, async ({ page }) => {
     const state = stateFixture()
     await page.addInitScript(({ plan, raw }) => {
       localStorage.setItem("trainoracle.plan-beta.v1", JSON.stringify(plan))
       localStorage.setItem("trainoracle.journal.v1", raw)
     }, { plan: state, raw: journal })
     await page.goto("/?app=1")
-    await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
-    await openActiveSessionDetails(page)
-    await page.getByRole("button", { name: "훈련 방법과 이유", exact: true }).first().click()
-    const reader = page.locator(".session-explanation[open]")
-    await reader.getByRole("tab", { name: "주기·기록" }).click()
-    await expect(reader.getByRole("status")).toContainText(/일지를 아직 모두 불러오지 못했어요/u)
-    await expect(reader.getByText(/이 훈련과 연결된 일지가 아직 없어요/u)).toHaveCount(0)
+    await expect(page.getByRole("heading", { name: "기록을 확인하지 못했어요", exact: true })).toBeVisible()
+    await expect(page.getByText(/이 훈련과 연결된 일지가 아직 없어요/u)).toHaveCount(0)
     expect(await page.evaluate(() => localStorage.getItem("trainoracle.journal.v1"))).toBe(journal)
+    expect(await page.evaluate(() => localStorage.getItem("to-local-journal.journal.v2"))).toBeNull()
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.plan-beta.v1")!))).toEqual(state)
   })
 }

@@ -162,6 +162,6 @@ test("empty calendar creates no fake journals and cancel discards only the draft
   await expectMaterialsDrawerClosed(page)
   await page.getByRole("button", { name: "취소", exact: true }).click()
   expect(await page.evaluate(() => localStorage.getItem("trainoracle.calendar-decorations.v1"))).toBeNull()
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.journal.v1") ?? "[]"))).toEqual([])
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("to-local-journal.journal.v2") ?? "[]"))).toEqual([])
   await expect(page.getByRole("button", { name: "일지", exact: true })).toHaveAttribute("aria-pressed", "true")
 })

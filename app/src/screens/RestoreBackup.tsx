@@ -25,6 +25,7 @@ import { accountJournalRecordsEnabled } from "../domain/account/account-journal-
 import { createAccountBackupRestoration, type AccountRestoreOutcome } from "../domain/restore/account-restore"
 import { useImportOwnerScope } from "./import-activities/useImportOwnerScope"
 import { BACKUP_JSON_IMPORT_LIMITS } from "../domain/restore/backup-json-stream"
+import { nextActionFeedback } from "../components/next-action"
 
 const mono: React.CSSProperties = { fontFamily: "var(--mono)" }
 const backupFileLimitMb = BACKUP_JSON_IMPORT_LIMITS.blobBytes / (1024 * 1024)
@@ -211,7 +212,7 @@ export function RestoreBackup({ onBack, onOpenHome }: {
         )}
 
         {stage.step === "failed" && (
-          <RestoreFailedStage outcome={stage.outcome} onRestart={restart} />
+          <RestoreFailedStage outcome={stage.outcome} onRestart={restart} onOpenHome={onOpenHome} />
         )}
         {stage.step === "account-result" && <div data-testid="restore-account-result" role="status">
           <h2>계정 백업 복원 결과</h2>
@@ -578,10 +579,15 @@ function DoneStage({ outcome, onOpenHome, onRestart, busy }: {
   )
 }
 
-function RestoreFailedStage({ outcome, onRestart }: {
+function RestoreFailedStage({ outcome, onRestart, onOpenHome }: {
   readonly outcome: RestoreOutcome
   readonly onRestart: () => void
+  readonly onOpenHome?: () => void
 }) {
+  const repickRequired = outcome.failureReason === "RECOVERY_CODE_REQUIRED" || outcome.failureReason === "STATE_CHANGED"
+  const inspectFirst = !repickRequired && onOpenHome !== undefined
+  const restartLabel = outcome.failureReason === "RECOVERY_CODE_REQUIRED" ? "복구 코드 준비 후 다시 고르기"
+    : outcome.failureReason === "STATE_CHANGED" ? "파일 다시 골라 확인" : "다른 파일 고르기"
   const message = outcome.failureReason === "RECOVERY_CODE_REQUIRED"
     ? "비공개 메모를 되돌리려면 먼저 복구 코드를 준비해야 해요. 백업 원본을 보관해 주세요."
     : outcome.failureReason === "STATE_CHANGED"
@@ -594,13 +600,21 @@ function RestoreFailedStage({ outcome, onRestart }: {
 
   return (
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
-      <div role="alert" data-testid="restore-commit-failure" style={{ border: "1px solid var(--pain-5)", background: "var(--surface)", padding: "14px 16px" }}>
+      <div role="alert" data-testid="restore-commit-failure" className="restore-failure-notice" style={{ border: "1px solid var(--pain-5)", background: "var(--surface)", padding: "14px 16px" }}>
         <div style={{ ...mono, fontSize: 10, color: "var(--pain-5)", letterSpacing: "0.1em" }}>되돌리기 실패</div>
         <div style={{ fontFamily: "var(--sans)", fontSize: 15, fontWeight: 500, marginTop: 5 }}>{message}</div>
         {outcome.calendarDecorationRestore === "ROLLED_BACK" && <p>달력 꾸미기는 이전 상태로 되돌렸어요.</p>}
         {outcome.calendarDecorationRestore === "SAVE_FAILED" && <p>달력 꾸미기 저장을 확인하지 못했어요.</p>}
       </div>
-      <button type="button" style={secondaryBtn} onClick={onRestart}>다른 파일 고르기</button>
+      <div className="next-action-group restore-failure-actions">
+        {inspectFirst ? <>
+          <button {...nextActionFeedback} type="button" className="next-action" onClick={onOpenHome}>현재 일지 확인</button>
+          <button type="button" style={secondaryBtn} onClick={onRestart}>{restartLabel}</button>
+        </> : <>
+          <button {...nextActionFeedback} type="button" className="next-action" onClick={onRestart}>{restartLabel}</button>
+          {onOpenHome && <button type="button" style={secondaryBtn} onClick={onOpenHome}>현재 일지 확인</button>}
+        </>}
+      </div>
     </div>
   )
 }

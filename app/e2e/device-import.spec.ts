@@ -7,7 +7,7 @@
 //  - 가져온 기록은 홈 합계(주간 통계)에 들어가지 않는다.
 import { expect, test } from "@playwright/test"
 
-const JOURNAL_KEY = "trainoracle.journal.v1"
+const JOURNAL_KEY = "to-local-journal.journal.v2"
 
 function tcxFor(date: string): string {
   return `<?xml version="1.0" encoding="UTF-8"?>

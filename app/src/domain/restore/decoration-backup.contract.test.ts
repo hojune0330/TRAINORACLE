@@ -6,6 +6,7 @@ import { loadAnalysisEntries, loadEntries, exportEntriesJSON, saveEntry } from "
 import type { PostSessionEntry } from "../journal-schema"
 import { generatePlanFromDraft } from "../plan-beta-flow"
 import { toUploadPayload } from "../account/sync-local"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import {
   buildRestorePlan,
   readBackupFile,
@@ -63,11 +64,12 @@ function storageBytes(): Readonly<Record<string, string>> {
   return entries
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.useFakeTimers()
   vi.setSystemTime(new Date("2026-08-03T12:00:00.000Z"))
   window.localStorage.clear()
   window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 
 afterEach(() => {
@@ -127,6 +129,7 @@ describe("explicit full backup decoration section", () => {
     const backup = exportEntriesJSON({ includeRawMemos: true })
 
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
     const read = readBackupFile(backup)
     const outcome = await restoreBackupFile(read, buildRestorePlan(read.entries), "keep-existing", "replace")
 

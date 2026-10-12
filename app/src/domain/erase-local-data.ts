@@ -26,20 +26,20 @@ import {
 } from "./decorations"
 import { ENGAGEMENT_STORAGE_KEY } from "./engagement"
 import {
-  PRIVATE_MEMO_VAULT_STORAGE_KEY,
+  JOURNAL_OWNERSHIP_STORAGE_KEY,
+  JOURNAL_TOMBSTONES_STORAGE_KEY,
   PRIVATE_NOTE_RECOVERY_STORAGE_KEY,
-  SYNC_RECOVERY_STORAGE_KEY,
 } from "./journal-storage-keys"
 import {
-  LOCAL_JOURNAL_OWNERSHIP_KEY,
-} from "./account/local-journal-ownership"
+  canonicalJournalStorageKeys,
+  eraseCanonicalJournalStorage,
+  legacyJournalStorageKeys,
+} from "./canonical-journal-storage"
 import { findAccountScopedStorageKeys } from "./account/local-account-scope"
 import { DAILY_CONTEXT_STORAGE_KEY } from "./daily-context"
 import { FATIGUE_EXPERIMENT_STORAGE_KEY } from "./fatigue-experiment-store"
 import { SYNC_CONSENT_STORAGE_KEY } from "./account/sync-local"
 import { ACCOUNT_DELETION_BOUNDARY_PREFIX } from "./account/account-deletion-boundary"
-import { eraseJournalDeviceData, isJournalDeviceManagedKey, JOURNAL_DEVICE_PREFIX, JOURNAL_DEVICE_POINTER_KEY } from "./journal-device-storage"
-import { clearJournalPrivateReadCache } from "./journal-store"
 
 const ACCOUNT_SCOPED_PLAN_LOCAL_KEYS = [
   "trainoracle.plan-beta.v1",
@@ -65,34 +65,35 @@ const ACCOUNT_SCOPED_LOCAL_KEYS = [
   CALENDAR_DECORATION_STORAGE_KEY,
   FATIGUE_EXPERIMENT_STORAGE_KEY,
   SYNC_CONSENT_STORAGE_KEY,
-  SYNC_RECOVERY_STORAGE_KEY,
+  PRIVATE_NOTE_RECOVERY_STORAGE_KEY,
+  "trainoracle.private-note.recovery.v1",
+  "trainoracle.journal.full-backup.v1",
   ...ACCOUNT_SCOPED_PLAN_LOCAL_KEYS,
 ] as const
 const ACCOUNT_SCOPED_SESSION_KEYS = [
   "trainoracle.plan-beta.previous-intake.v1",
   "trainoracle.plan-adjustment.workspace.v1",
   PRIVATE_NOTE_RECOVERY_STORAGE_KEY,
+  // An older app may have left recovery credentials in this tab or localStorage.
+  "trainoracle.private-note.recovery.v1",
 ] as const
 
 /** 일지 본문이 담기는 키 — 반드시 지운다 */
 const CONTENT_KEYS = [
-  "trainoracle.journal.v1",
-  // 휴지통에는 **지운 일지 원본이 메모 원문까지 그대로** 들어 있다. 여기를
-  // 빼놓으면 "이 기기의 내 데이터 전부 지우기"가 거짓말이 된다 — 지운 일지가
-  // 30일 동안 기기에 남는다. 기기를 넘기는 상황에서 가장 위험한 누락이다.
-  "trainoracle.journal.trash.v1",
+  // Journal, vault, trash and their preserved originals are removed together
+  // by the canonical lifecycle below. Never clear its migration fence here.
   "trainoracle.journal.full-backup.v1",
   DECORATION_STORAGE_KEY_V1,
   DECORATION_STORAGE_KEY_V2,
   DECORATION_STORAGE_KEY_V2_BACKUP,
   DECORATION_STORAGE_KEY_V3,
-  SYNC_RECOVERY_STORAGE_KEY,
   CALENDAR_DECORATION_STORAGE_KEY,
-  PRIVATE_MEMO_VAULT_STORAGE_KEY,
   ATHLETE_RECORDS_STORAGE_KEY,
   ...ACCOUNT_SCOPED_PLAN_LOCAL_KEYS,
   // 이전 빌드가 이 세션 값을 localStorage에 남겼을 가능성까지 정리한다.
   "trainoracle.plan-beta.previous-intake.v1",
+  PRIVATE_NOTE_RECOVERY_STORAGE_KEY,
+  "trainoracle.private-note.recovery.v1",
   "trainoracle.engagement.v1",
   ENGAGEMENT_STORAGE_KEY,
   DAILY_CONTEXT_STORAGE_KEY,
@@ -102,6 +103,7 @@ const CONTENT_KEYS = [
 
 const SESSION_KEYS = [
   PRIVATE_NOTE_RECOVERY_STORAGE_KEY,
+  "trainoracle.private-note.recovery.v1",
   "trainoracle.account.pending-setup.v1",
   ...ACCOUNT_SCOPED_SESSION_KEYS,
 ] as const
@@ -133,7 +135,20 @@ const ACCOUNT_KEYS = [
 ] as const
 
 /** 삭제 기록 — 기본은 **남긴다**(서버 부활 방지) */
-const DELETION_RECORD_KEY = "trainoracle.sync.tombstones.v1"
+const LEGACY_DELETION_RECORD_KEY = "trainoracle.sync.tombstones.v1"
+const LEGACY_JOURNAL_OWNERSHIP_KEY = "trainoracle.journal.ownership.v1"
+const MIGRATION_MANIFEST_KEY = "to-local-journal.migration.v1"
+
+function journalEraseKeys(target: Storage, options: EraseOptions): string[] {
+  const retained = options.includeDeletionRecord === true ? new Set<string>() : new Set([
+    JOURNAL_TOMBSTONES_STORAGE_KEY,
+    JOURNAL_OWNERSHIP_STORAGE_KEY,
+    LEGACY_DELETION_RECORD_KEY,
+    LEGACY_JOURNAL_OWNERSHIP_KEY,
+  ])
+  return [...canonicalJournalStorageKeys(target), ...legacyJournalStorageKeys(target)]
+    .filter(key => key !== MIGRATION_MANIFEST_KEY && !retained.has(key))
+}
 
 function accountDeletionRecordKeys(target: Storage): string[] {
   const keys: string[] = []
@@ -201,34 +216,24 @@ function clearStorageKeys(
 export function eraseAllLocalData(options: EraseOptions = {}): EraseResult {
   const localStorage = storage("local")
   if (localStorage === null) return { ok: false, cleared: 0, failed: ["storage-unavailable"] }
-  clearJournalPrivateReadCache()
 
+  // This explicit lifecycle is allowed even while ordinary journal access is
+  // held for a conflict. Its erase intent prevents a partial wipe remigrating
+  // surviving legacy originals on the next startup.
+  const journalResult = eraseCanonicalJournalStorage(localStorage, options)
   const keys: string[] = [
     ...CONTENT_KEYS,
     ...ACCOUNT_KEYS,
     ...findAccountScopedStorageKeys(localStorage, ACCOUNT_SCOPED_LOCAL_KEYS),
   ]
   if (options.includeDeletionRecord === true) {
-    keys.push(DELETION_RECORD_KEY)
     // Default wipe preserves resurrection prevention. An explicit full-trace
     // wipe removes durable metadata, but cannot reopen this tab's deleted session.
     keys.push(...accountDeletionRecordKeys(localStorage))
   }
 
-  const failed: string[] = []
-  const previousManagedKeys: string[] = []
-  for (let index = 0; index < localStorage.length; index++) {
-    const key = localStorage.key(index)
-    if (key && (isJournalDeviceManagedKey(key) || key.startsWith(JOURNAL_DEVICE_PREFIX))) previousManagedKeys.push(key)
-  }
-  // The canonical adapter also clears the retained seed/recovery generations.
-  // It retains only existing deletion IDs and their exact owner bindings by
-  // default; an explicit full-trace wipe removes those too and leaves an empty
-  // anti-reimport fence. No legacy medical record can silently migrate again.
-  const journalErased = eraseJournalDeviceData(localStorage, options.includeDeletionRecord === true)
-  if (!journalErased) failed.push(JOURNAL_DEVICE_POINTER_KEY)
-  let cleared = clearStorageKeys(localStorage, keys.filter(key => !isJournalDeviceManagedKey(key)), failed)
-  cleared += previousManagedKeys.filter(key => localStorage.getItem(key) === null).length
+  const failed: string[] = [...journalResult.failed]
+  let cleared = journalResult.cleared + clearStorageKeys(localStorage, [...new Set(keys)], failed)
   const sessionStorage = storage("session")
   if (sessionStorage === null) {
     failed.push("session-storage-unavailable")
@@ -237,7 +242,7 @@ export function eraseAllLocalData(options: EraseOptions = {}): EraseResult {
       ...SESSION_KEYS,
       ...findAccountScopedStorageKeys(sessionStorage, ACCOUNT_SCOPED_SESSION_KEYS),
     ]
-    cleared += clearStorageKeys(sessionStorage, sessionKeys, failed)
+    cleared += clearStorageKeys(sessionStorage, [...new Set(sessionKeys)], failed)
   }
 
   return { ok: failed.length === 0, cleared, failed }
@@ -248,20 +253,17 @@ export function erasableKeys(options: EraseOptions = {}): readonly string[] {
   const keys: string[] = [...CONTENT_KEYS, ...ACCOUNT_KEYS, ...SESSION_KEYS]
   const localStorage = storage("local")
   if (localStorage !== null) {
+    keys.push(...journalEraseKeys(localStorage, options))
     keys.push(...findAccountScopedStorageKeys(localStorage, ACCOUNT_SCOPED_LOCAL_KEYS))
-    for (let index = 0; index < localStorage.length; index++) {
-      const key = localStorage.key(index)
-      if (key?.startsWith(JOURNAL_DEVICE_PREFIX)) keys.push(key)
-    }
   }
   const sessionStorage = storage("session")
   if (sessionStorage !== null) {
     keys.push(...findAccountScopedStorageKeys(sessionStorage, ACCOUNT_SCOPED_SESSION_KEYS))
   }
   if (options.includeDeletionRecord === true) {
-    keys.push(DELETION_RECORD_KEY)
-    keys.push(LOCAL_JOURNAL_OWNERSHIP_KEY)
+    keys.push(JOURNAL_TOMBSTONES_STORAGE_KEY, JOURNAL_OWNERSHIP_STORAGE_KEY)
+    keys.push(LEGACY_DELETION_RECORD_KEY, LEGACY_JOURNAL_OWNERSHIP_KEY)
     if (localStorage !== null) keys.push(...accountDeletionRecordKeys(localStorage))
   }
-  return keys
+  return [...new Set(keys)]
 }

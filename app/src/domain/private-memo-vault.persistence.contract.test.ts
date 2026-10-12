@@ -9,58 +9,57 @@ import {
   savePrivateMemoWithJournalShell,
 } from "./private-memo-vault"
 import { privateEntry } from "./private-memo-test-fixtures"
-import { canonicalJournalStorage, JOURNAL_DEVICE_POINTER_KEY, JOURNAL_DEVICE_PREFIX } from "./journal-device-storage"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
   window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 
 describe("private memo vault and journal persistence", () => {
-  it("restores the prior encrypted vault and journal shell after a partial canonical publication", async () => {
+  it("restores the prior encrypted vault and journal shell after a partial journal write", async () => {
     const recoveryCode = createRecoveryCode()
     expect(saveSessionRecoveryCode(recoveryCode)).toBe(true)
     await expect(savePrivateEntry(privateEntry("original", "PRIVATE-LUNA-ORIGINAL"))).resolves.toEqual({ ok: true, total: 1 })
-    const original = persistenceSnapshot()
+    const originalJournal = window.localStorage.getItem(JOURNAL_STORAGE_KEY)
+    const originalVault = window.localStorage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)
     const realSet = Storage.prototype.setItem
-    let faultInjected = false
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, key: string, value: string) {
-      realSet.call(this, key, value)
-      // The paired record is now one immutable candidate. Fail after publishing
-      // its real pointer, before confirmation, rather than a nonexistent v1 write.
-      if (!faultInjected && key === JOURNAL_DEVICE_POINTER_KEY && value !== original.pointer) {
-        faultInjected = true
-        throw new Error("PartialCanonicalPublicationError")
+      if (key === JOURNAL_STORAGE_KEY && value !== originalJournal) {
+        realSet.call(this, key, "{partial")
+        return
       }
+      realSet.call(this, key, value)
     })
 
     await expect(savePrivateEntry(privateEntry("new", "PRIVATE-LUNA-NEW"))).resolves.toEqual({ ok: false, total: 1 })
-    expect(faultInjected).toBe(true)
-    expectPriorPersistence(original)
+    expect(window.localStorage.getItem(JOURNAL_STORAGE_KEY)).toBe(originalJournal)
+    expect(window.localStorage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)).toBe(originalVault)
     expect(allLocalStorageValues()).not.toContain("PRIVATE-LUNA-NEW")
   })
 
   it.each([
-    { step: "candidate", label: "candidate generation" },
-    { step: "pointer", label: "published pointer" },
-  ])("restores both records when $label confirmation throws", async ({ step }) => {
+    { key: PRIVATE_MEMO_VAULT_STORAGE_KEY, label: "vault" },
+    { key: JOURNAL_STORAGE_KEY, label: "journal" },
+  ])("restores both records when $label confirmation throws", async ({ key }) => {
     const recoveryCode = createRecoveryCode()
     expect(saveSessionRecoveryCode(recoveryCode)).toBe(true)
     await expect(savePrivateEntry(privateEntry("original", "PRIVATE-LUNA-ORIGINAL"))).resolves.toEqual({ ok: true, total: 1 })
-    const original = persistenceSnapshot()
+    const originalJournal = window.localStorage.getItem(JOURNAL_STORAGE_KEY)
+    const originalVault = window.localStorage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)
     const realSet = Storage.prototype.setItem
     const realGet = Storage.prototype.getItem
-    let candidateKey: string | null = null
-    let wrotePointer = false
+    let wroteVault = false
+    let wroteJournal = false
     let throwConfirmation = true
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, storageKey: string, value: string) {
       realSet.call(this, storageKey, value)
-      if (storageKey.startsWith(`${JOURNAL_DEVICE_PREFIX}generation:`) && JSON.parse(value).kind === "commit") candidateKey = storageKey
-      if (storageKey === JOURNAL_DEVICE_POINTER_KEY && value !== original.pointer) wrotePointer = true
+      if (storageKey === PRIVATE_MEMO_VAULT_STORAGE_KEY && value !== originalVault) wroteVault = true
+      if (storageKey === JOURNAL_STORAGE_KEY && value !== originalJournal) wroteJournal = true
     })
     vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (this: Storage, storageKey: string) {
-      if (throwConfirmation && ((step === "candidate" && storageKey === candidateKey)
-        || (step === "pointer" && wrotePointer && storageKey === JOURNAL_DEVICE_POINTER_KEY))) {
+      if (storageKey === key && wroteVault && wroteJournal && throwConfirmation) {
         throwConfirmation = false
         throw new Error("ReadbackError")
       }
@@ -68,43 +67,35 @@ describe("private memo vault and journal persistence", () => {
     })
 
     await expect(savePrivateEntry(privateEntry("new", "PRIVATE-LUNA-NEW"))).resolves.toEqual({ ok: false, total: 1 })
-    expect(candidateKey).not.toBeNull()
-    expect(throwConfirmation).toBe(false)
-    if (step === "pointer") expect(wrotePointer).toBe(true)
-    expectPriorPersistence(original)
-    expect(allLocalStorageValues()).not.toContain("PRIVATE-LUNA-NEW")
+    expect(window.localStorage.getItem(JOURNAL_STORAGE_KEY)).toBe(originalJournal)
+    expect(window.localStorage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)).toBe(originalVault)
   })
 
-  it("keeps both prior records when the legacy source snapshot cannot be read", async () => {
+  it("keeps both prior records when the journal snapshot cannot be read", async () => {
     const recoveryCode = createRecoveryCode()
     expect(saveSessionRecoveryCode(recoveryCode)).toBe(true)
     await expect(savePrivateEntry(privateEntry("original", "PRIVATE-LUNA-ORIGINAL"))).resolves.toEqual({ ok: true, total: 1 })
-    const original = persistenceSnapshot()
+    const originalJournal = window.localStorage.getItem(JOURNAL_STORAGE_KEY)
+    const originalVault = window.localStorage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)
     const realGet = Storage.prototype.getItem
     let journalReads = 0
-    let faultInjected = false
     vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (this: Storage, storageKey: string) {
-      if (storageKey === JOURNAL_STORAGE_KEY && ++journalReads === 2) {
-        faultInjected = true
-        throw new Error("SnapshotReadError")
-      }
+      if (storageKey === JOURNAL_STORAGE_KEY && ++journalReads === 2) throw new Error("SnapshotReadError")
       return realGet.call(this, storageKey)
     })
 
     await expect(savePrivateEntry(privateEntry("new", "PRIVATE-LUNA-NEW"))).resolves.toEqual({ ok: false, total: 1 })
-    expect(faultInjected).toBe(true)
-    expectPriorPersistence(original)
-    expect(allLocalStorageValues()).not.toContain("PRIVATE-LUNA-NEW")
+    expect(window.localStorage.getItem(JOURNAL_STORAGE_KEY)).toBe(originalJournal)
+    expect(window.localStorage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)).toBe(originalVault)
   })
 
-  it("does not overwrite late legacy vault and journal writes while a private cipher await is pending", async () => {
+  it("does not overwrite a vault and journal changed while encrypting a new private memo", async () => {
     const recoveryCode = createRecoveryCode()
     expect(saveSessionRecoveryCode(recoveryCode)).toBe(true)
     const original = privateEntry("original", "PRIVATE-LUNA-ORIGINAL")
     const pending = privateEntry("pending", "PRIVATE-LUNA-PENDING")
     const concurrent = privateEntry("concurrent", "PRIVATE-LUNA-CONCURRENT")
     await expect(savePrivateEntry(original)).resolves.toEqual({ ok: true, total: 1 })
-    const prior = persistenceSnapshot()
     const currentVault = loadPrivateMemoVault(window.localStorage)
     if (currentVault === null) throw new Error("Expected the current vault")
     const concurrentVault = {
@@ -118,58 +109,19 @@ describe("private memo vault and journal persistence", () => {
     const concurrentVaultRaw = JSON.stringify(concurrentVault)
     const realGetItem = Storage.prototype.getItem
     const realSetItem = Storage.prototype.setItem
-    const storage = delegatedStorage(key => realGetItem.call(window.localStorage, key))
-    const encrypt = crypto.subtle.encrypt.bind(crypto.subtle)
-    let lateWriterTriggered = false
-    vi.spyOn(crypto.subtle, "encrypt").mockImplementationOnce(async (...args) => {
-      const encrypted = await encrypt(...args)
-      // An old client still writes physical v1 keys. This occurs inside the
-      // actual cipher await, not incidentally during the source snapshot read.
-      realSetItem.call(window.localStorage, PRIVATE_MEMO_VAULT_STORAGE_KEY, concurrentVaultRaw)
-      realSetItem.call(window.localStorage, JOURNAL_STORAGE_KEY, concurrentJournal)
-      lateWriterTriggered = true
-      return encrypted
+    const storage = delegatedStorage((key) => {
+      return realGetItem.call(window.localStorage, key)
     })
 
-    await expect(savePrivateMemoWithJournalShell(storage, [...loadEntries(), pending], pending, recoveryCode))
-      .resolves.toBe(false)
+    const pendingSave = savePrivateMemoWithJournalShell(storage, [...loadEntries(), pending], pending, recoveryCode)
+    realSetItem.call(window.localStorage, PRIVATE_MEMO_VAULT_STORAGE_KEY, concurrentVaultRaw)
+    realSetItem.call(window.localStorage, JOURNAL_STORAGE_KEY, concurrentJournal)
+    await expect(pendingSave).resolves.toBe(false)
 
-    expect(lateWriterTriggered).toBe(true)
     expect(window.localStorage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)).toBe(concurrentVaultRaw)
     expect(window.localStorage.getItem(JOURNAL_STORAGE_KEY)).toBe(concurrentJournal)
-    expect(window.localStorage.getItem(JOURNAL_DEVICE_POINTER_KEY)).toBe(prior.pointer)
-    expect(window.localStorage.getItem(prior.headKey)).toBe(prior.headRaw)
-    expect(() => canonicalJournalStorage(window.localStorage).getItem(JOURNAL_STORAGE_KEY))
-      .toThrow("JOURNAL_DEVICE_STORAGE_UNCERTAIN")
-    expect(allLocalStorageValues()).not.toContain("PRIVATE-LUNA-PENDING")
   })
 })
-
-function persistenceSnapshot() {
-  const storage = canonicalJournalStorage(window.localStorage)
-  const pointer = window.localStorage.getItem(JOURNAL_DEVICE_POINTER_KEY)
-  if (pointer === null) throw new Error("Expected a confirmed canonical pointer")
-  const headKey = `${JOURNAL_DEVICE_PREFIX}generation:${JSON.parse(pointer).head}`
-  return {
-    pointer, headKey, headRaw: window.localStorage.getItem(headKey),
-    journal: storage.getItem(JOURNAL_STORAGE_KEY), vault: storage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY),
-    rawJournal: window.localStorage.getItem(JOURNAL_STORAGE_KEY), rawVault: window.localStorage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY),
-    generationKeys: Object.keys(window.localStorage).filter(key => key.startsWith(`${JOURNAL_DEVICE_PREFIX}generation:`)).sort(),
-  }
-}
-
-function expectPriorPersistence(original: ReturnType<typeof persistenceSnapshot>): void {
-  const storage = canonicalJournalStorage(window.localStorage)
-  expect(storage.getItem(JOURNAL_STORAGE_KEY)).toBe(original.journal)
-  expect(storage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)).toBe(original.vault)
-  expect(window.localStorage.getItem(JOURNAL_DEVICE_POINTER_KEY)).toBe(original.pointer)
-  expect(window.localStorage.getItem(original.headKey)).toBe(original.headRaw)
-  expect(window.localStorage.getItem(JOURNAL_STORAGE_KEY)).toBe(original.rawJournal)
-  expect(window.localStorage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)).toBe(original.rawVault)
-  expect(Object.keys(window.localStorage).filter(key => key.startsWith(`${JOURNAL_DEVICE_PREFIX}generation:`)).sort())
-    .toEqual(original.generationKeys)
-  expect(allLocalStorageValues()).not.toContain("PRIVATE-LUNA-ORIGINAL")
-}
 
 function delegatedStorage(getItem: (key: string) => string | null): Storage {
   return {

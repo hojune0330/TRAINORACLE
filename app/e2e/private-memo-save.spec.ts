@@ -41,11 +41,11 @@ test("prepares encryption without leaving the race form and saves without plaint
   await expect(page.getByRole("textbox", { name: "경기 메모", exact: true })).toHaveValue("synthetic-private-browser-fixture")
   await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
   await page.getByRole("button", { name: /^저장/ }).click()
-  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.journal.v1") ?? "[]").length)).toBe(1)
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("to-local-journal.journal.v2") ?? "[]").length)).toBe(1)
   const result = await page.evaluate(() => ({
-    entries: JSON.parse(localStorage.getItem("trainoracle.journal.v1") ?? "[]"),
+    entries: JSON.parse(localStorage.getItem("to-local-journal.journal.v2") ?? "[]"),
     rawLeaked: JSON.stringify(localStorage).includes("synthetic-private-browser-fixture"),
-    vaultPresent: localStorage.getItem("trainoracle.private-memo.v1") !== null,
+    vaultPresent: localStorage.getItem("to-local-journal.private-memo.v2") !== null,
     overflow: document.documentElement.scrollWidth > innerWidth,
   }))
   expect(result.entries[0]).toMatchObject({ kind: "race", memo: "", memoPurpose: "PRIVATE_SELF_ONLY" })
@@ -60,9 +60,9 @@ test("prepares encryption without leaving the race form and saves without plaint
   await expect(page.getByRole("textbox", { name: "경기 메모", exact: true })).toHaveValue("")
   await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
   await page.getByRole("button", { name: /^저장/ }).click()
-  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.journal.v1") ?? "[]").length)).toBe(2)
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("to-local-journal.journal.v2") ?? "[]").length)).toBe(2)
   expect(await page.evaluate(() => {
-    const entries = JSON.parse(localStorage.getItem("trainoracle.journal.v1") ?? "[]") as { id: string }[]
+    const entries = JSON.parse(localStorage.getItem("to-local-journal.journal.v2") ?? "[]") as { id: string }[]
     return new Set(entries.map(entry => entry.id)).size
   })).toBe(2)
 })

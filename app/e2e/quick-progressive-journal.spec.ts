@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 
-const JOURNAL_KEY = "trainoracle.journal.v1"
+const JOURNAL_KEY = "to-local-journal.journal.v2"
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/?app=1&uitest=1")

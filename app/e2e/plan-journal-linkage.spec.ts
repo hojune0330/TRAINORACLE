@@ -32,7 +32,7 @@ test("links one explicitly selected plan session to its journal without copying 
 
   await expect(page.getByRole("heading", { name: "9일 훈련 계획" })).toBeVisible()
   const stored = await page.evaluate(() => ({
-    journal: JSON.parse(window.localStorage.getItem("trainoracle.journal.v1") ?? "[]"),
+    journal: JSON.parse(window.localStorage.getItem("to-local-journal.journal.v2") ?? "[]"),
     plan: JSON.parse(window.localStorage.getItem("trainoracle.plan-beta.v1") ?? "null"),
   }))
   expect(stored.journal).toHaveLength(1)

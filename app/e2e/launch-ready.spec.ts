@@ -78,7 +78,7 @@ test("moves a first visitor from WELCOME to JOURNAL after a real first save", as
   await page.getByRole("button", { name: "완료", exact: true }).click()
 
   await expect.poll(async () => page.evaluate(() => {
-    const stored = localStorage.getItem("trainoracle.journal.v1")
+    const stored = localStorage.getItem("to-local-journal.journal.v2")
     if (stored === null) return 0
     const parsed: unknown = JSON.parse(stored)
     return Array.isArray(parsed) ? parsed.length : -1

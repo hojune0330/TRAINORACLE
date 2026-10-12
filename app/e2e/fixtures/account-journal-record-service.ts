@@ -15,6 +15,9 @@ import type { ComparisonRelationV1 } from "../../src/domain/import/comparison-re
 import { projectStructuredJournalObservations } from "../../src/domain/journal-observation"
 import { acceptsFileDistance } from "../../src/domain/analysis-field-eligibility"
 import { buildFileAnalysisReport } from "../../src/domain/import/file-analysis"
+import { initializeCanonicalJournalBrowserFixture } from "./canonical-journal-browser"
+
+await initializeCanonicalJournalBrowserFixture()
 
 export const owner = "11111111-1111-4111-8111-111111111111"
 export const otherOwner = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"

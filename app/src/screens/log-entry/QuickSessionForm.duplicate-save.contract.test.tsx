@@ -4,12 +4,14 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { AppShellFrame, type ShellToastState } from "../../components/AppShellFrame"
 import { createSavedFactReceipt } from "../../domain/save-receipt"
 import { loadEntries } from "../../domain/journal-store"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import type { PostSessionEntry } from "../../domain/journal-schema"
 import { QuickSessionForm } from "./QuickSessionForm"
 
 describe("quick RESTED duplicate-save boundary", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
   })
 
   afterEach(() => {

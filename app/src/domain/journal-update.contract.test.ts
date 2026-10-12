@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import * as journalStore from "./journal-store"
 import { loadEntries, saveEntry } from "./journal-store"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
 const DATE = "2026-07-20"
 
@@ -27,8 +28,9 @@ function findJournalUpdate(): JournalUpdate | null {
 }
 
 describe("past local journal updates", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
   })
 
   afterEach(() => vi.restoreAllMocks())

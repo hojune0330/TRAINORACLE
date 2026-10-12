@@ -1,9 +1,14 @@
-import { expect, test } from "@playwright/test"
+import { expect, test, type Page } from "@playwright/test"
 
 // 휴지통 30일 — 실제 브라우저에서 지우기 → 되돌리기 왕복이 되는지 확인한다.
 // 단위 테스트가 통과해도 화면에서 눌러지지 않으면 사용자에게는 없는 기능이다.
 
-const TRASH_KEY = "trainoracle.journal.trash.v1"
+const TRASH_KEY = "to-local-journal.journal.trash.v2"
+
+async function openReadyApp(page: Page): Promise<void> {
+  await page.goto("/?app=1&uitest=1")
+  await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
+}
 
 test("지운 일지를 그 자리에서 되돌릴 수 있다", async ({ page }) => {
   // Given — 일지 하나를 저장한다
@@ -70,7 +75,7 @@ test("지운 일지를 그 자리에서 되돌릴 수 있다", async ({ page }) 
 })
 
 test("휴지통 화면에서 나중에도 되돌릴 수 있다", async ({ page }) => {
-  await page.goto("/?app=1&uitest=1")
+  await openReadyApp(page)
 
   // Given — 휴지통에 항목이 있는 상태를 만든다 (스키마를 통과하는 일지)
   await page.evaluate((key) => {
@@ -116,7 +121,7 @@ test("휴지통 화면에서 나중에도 되돌릴 수 있다", async ({ page }
 })
 
 test("완전히 지우기는 확인을 한 번 더 받는다", async ({ page }) => {
-  await page.goto("/?app=1&uitest=1")
+  await openReadyApp(page)
   await page.evaluate((key) => {
     const entry = {
       id: "trash-e2e-2",
@@ -163,7 +168,7 @@ test("완전히 지우기는 확인을 한 번 더 받는다", async ({ page }) 
 })
 
 test("30일이 지난 항목은 앱을 켤 때 사라진다", async ({ page }) => {
-  await page.goto("/?app=1&uitest=1")
+  await openReadyApp(page)
   await page.evaluate((key) => {
     const old = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString()
     const entry = {
@@ -196,7 +201,7 @@ test("30일이 지난 항목은 앱을 켤 때 사라진다", async ({ page }) =
 })
 
 test("메모만 쓴 일지가 안전 백업에서 빠진다는 안내가 뜬다", async ({ page }) => {
-  await page.goto("/?app=1&uitest=1")
+  await openReadyApp(page)
 
   // Given — 수치 없이 메모만 있는 일지 2개 + 정상 일지 1개
   await page.evaluate(() => {
@@ -209,7 +214,7 @@ test("메모만 쓴 일지가 안전 백업에서 빠진다는 안내가 뜬다"
       avgPace: "",
       memoPurpose: "PRIVATE_SELF_ONLY",
     }
-    window.localStorage.setItem("trainoracle.journal.v1", JSON.stringify([
+    window.localStorage.setItem("to-local-journal.journal.v2", JSON.stringify([
       { ...base, id: "ok1", title: "정상 일지", distanceKm: "8", durationMin: "45", rpe: 4, memo: "" },
       { ...base, id: "m1", title: "", distanceKm: "", durationMin: "", rpe: 0, memo: "마음이 무거웠다" },
       { ...base, id: "m2", title: "", distanceKm: "", durationMin: "", rpe: 0, memo: "잠이 안 왔다" },
@@ -229,9 +234,9 @@ test("메모만 쓴 일지가 안전 백업에서 빠진다는 안내가 뜬다"
 })
 
 test("빠지는 일지가 없으면 안내를 띄우지 않는다", async ({ page }) => {
-  await page.goto("/?app=1&uitest=1")
+  await openReadyApp(page)
   await page.evaluate(() => {
-    window.localStorage.setItem("trainoracle.journal.v1", JSON.stringify([
+    window.localStorage.setItem("to-local-journal.journal.v2", JSON.stringify([
       {
         id: "ok1", kind: "post-session", date: "2026-07-20",
         savedAt: "2026-07-20T09:00:00.000Z", syncState: "local",

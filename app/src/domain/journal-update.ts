@@ -50,6 +50,7 @@ export function updateEntryPreservingMemo(entry: unknown, expectedSavedAt: strin
 function updateEntryWithMemoMode(entry: unknown, expectedSavedAt: string, memoMode: "EDIT" | "PRESERVE"): UpdateEntryResult {
   const snapshot = loadJournalEntriesSnapshot()
   const entries = snapshot.entries
+  if (snapshot.readStatus !== "complete") return { ok: false, total: entries.length }
   if (legacyJournalWritesBlocked()) return { ok: false, total: entries.length }
   const nextEntry = parseJournalEntryForWrite(entry)
   if (nextEntry === null) return { ok: false, total: entries.length }

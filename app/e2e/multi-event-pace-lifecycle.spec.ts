@@ -3,7 +3,7 @@ import type { PlanBetaStateV3 } from "../src/domain/plan-beta-schema"
 import type { AthleteRecord } from "../src/domain/athlete-records"
 import type * as Harness from "./fixtures/multi-event-pace-lifecycle"
 
-const PLAN = "trainoracle.plan-beta.v1", RECORDS = "trainoracle.athlete-records.v1", JOURNAL = "trainoracle.journal.v1"
+const PLAN = "trainoracle.plan-beta.v1", RECORDS = "trainoracle.athlete-records.v1", JOURNAL = "to-local-journal.journal.v2"
 const HISTORY = "trainoracle.plan-beta.history.v1"
 const helperPath = "/e2e/fixtures/multi-event-pace-lifecycle.ts"
 const TODAY = "2026-10-02", DATE = "2026-09-25"

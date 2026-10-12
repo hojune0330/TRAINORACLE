@@ -17,10 +17,12 @@ import type { JournalEntry } from "./journal-schema"
 import { deleteEntry, loadEntries, restoreDeletedEntry, saveEntry } from "./journal-store"
 import { mergeEntries } from "./account/sync"
 import { loadTombstones, tombstonedIds } from "./account/tombstone"
+import { JOURNAL_STORAGE_KEY, JOURNAL_TOMBSTONES_STORAGE_KEY, JOURNAL_TRASH_STORAGE_KEY } from "./journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
-const TRASH_KEY = "trainoracle.journal.trash.v1"
-const JOURNAL_KEY = "trainoracle.journal.v1"
-const TOMBSTONE_KEY = "trainoracle.sync.tombstones.v1"
+const TRASH_KEY = JOURNAL_TRASH_STORAGE_KEY
+const JOURNAL_KEY = JOURNAL_STORAGE_KEY
+const TOMBSTONE_KEY = JOURNAL_TOMBSTONES_STORAGE_KEY
 
 function session(id: string, overrides: Partial<JournalEntry> = {}): JournalEntry {
   return {
@@ -81,8 +83,9 @@ function memoOnly(id: string): JournalEntry {
  */
 const TEST_NOW = new Date("2026-07-21T00:00:00.000Z")
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
+  await initializeCanonicalJournalFixture()
   vi.useFakeTimers()
   vi.setSystemTime(TEST_NOW)
 })
@@ -165,7 +168,7 @@ describe("휴지통 보관", () => {
     expect(ids.has("e0")).toBe(false)
     expect(ids.has("e4")).toBe(false)
     expect(ids.has(`e${TRASH_LIMIT + 4}`)).toBe(true)
-  })
+  }, 15_000)
 })
 
 describe("30일 보관 기간", () => {

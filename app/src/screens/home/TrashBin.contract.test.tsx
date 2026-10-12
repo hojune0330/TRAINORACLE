@@ -8,6 +8,8 @@ import { MEMO_PURPOSE } from "../../domain/journal-schema"
 import type { JournalEntry } from "../../domain/journal-schema"
 import { deleteEntry, loadEntries, saveEntry } from "../../domain/journal-store"
 import { TRASH_RETENTION_DAYS, loadTrash, moveToTrash } from "../../domain/journal-trash"
+import { JOURNAL_STORAGE_KEY } from "../../domain/journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 
 function session(id: string, overrides: Partial<JournalEntry> = {}): JournalEntry {
   return {
@@ -41,8 +43,9 @@ function store(entry: JournalEntry): void {
   if (!saved.ok) throw new Error(`fixture rejected by schema: ${entry.id}`)
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 
 afterEach(() => {
@@ -194,7 +197,7 @@ describe("휴지통 실패 처리", () => {
     const real = Storage.prototype.setItem
     const setItem = vi.spyOn(Storage.prototype, "setItem")
       .mockImplementation(function (this: Storage, key: string, value: string) {
-        if (key === "trainoracle.journal.v1") throw new Error("quota")
+        if (key === JOURNAL_STORAGE_KEY) throw new Error("quota")
         real.call(this, key, value)
       })
 

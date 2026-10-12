@@ -5,6 +5,7 @@ import { rotatePrivateMemoVault, saveSessionRecoveryCode } from "./account/priva
 import { loadEntriesWithPrivateMemos, savePrivateEntry } from "./journal-store"
 import { JOURNAL_STORAGE_KEY, PRIVATE_MEMO_VAULT_STORAGE_KEY } from "./journal-storage-keys"
 import { privateEntry } from "./private-memo-test-fixtures"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
 const vaultSchema = z.object({ version: z.literal(1), records: z.record(z.string(), z.object({ encrypted: z.object({
   version: z.literal(1), algorithm: z.literal("AES-GCM"), derivation: z.literal("PBKDF2-SHA-256"),
@@ -29,9 +30,10 @@ function storageWith(overrides: StorageOverrides): Storage {
   }
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
   window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 
 describe("private memo vault rotation", () => {
@@ -130,17 +132,10 @@ describe("private memo vault rotation", () => {
     const updatedVault = vaultSchema.parse(JSON.parse(originalVault))
     updatedVault.records.concurrent = { encrypted: await encryptPrivateNote("PRIVATE-LUNA-CONCURRENT", originalCode) }
     const rawUpdatedVault = JSON.stringify(updatedVault)
-    const realGetItem = Storage.prototype.getItem
-    const realSetItem = Storage.prototype.setItem
-    let vaultReadCount = 0
-    vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (this: Storage, key: string) {
-      if (this === window.localStorage && key === PRIVATE_MEMO_VAULT_STORAGE_KEY && vaultReadCount++ === 1) {
-        realSetItem.call(this, key, rawUpdatedVault)
-      }
-      return realGetItem.call(this, key)
-    })
+    const pendingRotation = rotatePrivateMemoVault(originalCode, nextCode)
+    window.localStorage.setItem(PRIVATE_MEMO_VAULT_STORAGE_KEY, rawUpdatedVault)
 
-    await expect(rotatePrivateMemoVault(originalCode, nextCode)).resolves.toEqual({ ok: false })
+    await expect(pendingRotation).resolves.toEqual({ ok: false })
     expect(window.localStorage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)).toBe(rawUpdatedVault)
     await expect(decryptPrivateNote(updatedVault.records.concurrent.encrypted, originalCode))
       .resolves.toBe("PRIVATE-LUNA-CONCURRENT")

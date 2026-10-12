@@ -38,7 +38,7 @@ test("keeps race task actions visible and saves only corrected pace on mobile", 
   await saveButton.click()
   await expect(page.getByRole("region", { name: "오늘 기록을 남겼어요.", exact: true })).toBeVisible()
   await expect.poll(() => page.evaluate(() => {
-    const entries = JSON.parse(localStorage.getItem("trainoracle.journal.v1") ?? "[]") as { kind: string; goalPace?: { secondsPerKm: number } }[]
+    const entries = JSON.parse(localStorage.getItem("to-local-journal.journal.v2") ?? "[]") as { kind: string; goalPace?: { secondsPerKm: number } }[]
     return entries.filter(entry => entry.kind === "race").map(entry => entry.goalPace?.secondsPerKm)
   })).toEqual([239])
   await page.screenshot({ path: testInfo.outputPath("corrected-pace-saved.png") })

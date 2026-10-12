@@ -5,12 +5,14 @@ import { deleteEntry, restoreDeletedEntry, saveEntry } from "../domain/journal-s
 import { updateEntry } from "../domain/journal-update"
 import { setActiveLocalAccount } from "../domain/account/local-journal-ownership"
 import type { JournalEntry } from "../domain/journal-schema"
+import { JOURNAL_STORAGE_KEY } from "../domain/journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
 const entry: JournalEntry = { id: "synthetic-refresh", kind: "post-session", date: "2026-09-27",
   savedAt: "2026-09-27T01:00:00Z", syncState: "local", system: "base", title: "", memo: "",
   distanceKm: "3", durationMin: "20", avgPace: "", rpe: 3 }
 
-beforeEach(() => { localStorage.clear(); setActiveLocalAccount(null) })
+beforeEach(async () => { localStorage.clear(); setActiveLocalAccount(null); await initializeCanonicalJournalFixture() })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); localStorage.clear(); setActiveLocalAccount(null) })
 
 it("refreshes committed local create, edit, delete and undo in the same tab", () => {
@@ -44,7 +46,7 @@ it("retries a temporary local read failure without replacing the stored journal"
   const read = Storage.prototype.getItem
   let unavailable = true
   vi.spyOn(Storage.prototype, "getItem").mockImplementation(function(this: Storage, key: string) {
-    if (key === "trainoracle.journal.v1" && unavailable) throw new Error("synthetic read failure")
+    if (key === JOURNAL_STORAGE_KEY && unavailable) throw new Error("synthetic read failure")
     return read.call(this, key)
   })
   const write = vi.spyOn(Storage.prototype, "setItem")
@@ -57,5 +59,5 @@ it("retries a temporary local read failure without replacing the stored journal"
   expect(result.current.entries).toEqual([entry])
   expect(result.current.retry).toBeUndefined()
   expect(write.mock.calls.every(([key]) => key === "__to_probe__")).toBe(true)
-  expect(JSON.parse(localStorage.getItem("trainoracle.journal.v1")!)).toEqual([entry])
+  expect(JSON.parse(localStorage.getItem(JOURNAL_STORAGE_KEY)!)).toEqual([entry])
 })

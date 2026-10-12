@@ -14,13 +14,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ImportActivities } from "./ImportActivities"
 import { PickStage, SavedStage } from "./import-activities/ImportStages"
 import { loadAnalysisEntries, loadEntries } from "../domain/journal-store"
+import { JOURNAL_STORAGE_KEY } from "../domain/journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
 })
 
-const JOURNAL_KEY = "trainoracle.journal.v1"
+const JOURNAL_KEY = JOURNAL_STORAGE_KEY
 
 function tcxLap(startISO: string, meters: number, seconds: number): string {
   return `<Lap StartTime="${startISO}">
@@ -57,8 +59,9 @@ it("opens the imported facts after a confirmed device save without claiming anal
 })
 
 describe("ImportActivities — 고르기 단계", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
   })
 
   it("opens the native picker directly without requiring a provider choice", () => {
@@ -263,8 +266,9 @@ describe("ImportActivities — 고르기 단계", () => {
 })
 
 describe("ImportActivities — 확인 단계", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
   })
 
   it("읽은 활동을 목록으로 보여주고, 고르기 전에는 저장 버튼이 잠겨 있다", async () => {
@@ -338,8 +342,9 @@ describe("ImportActivities — 확인 단계", () => {
 })
 
 describe("ImportActivities — 저장", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
   })
 
   it("고른 활동만 이 기기 일지에 저장하고 분석에서는 제외한다", async () => {

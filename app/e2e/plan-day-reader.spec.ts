@@ -25,7 +25,7 @@ test("enlarged AM/PM reader, nested records, back restoration and linked writing
     savedAt: state.generatedAt, syncState: "local", system: "base", title: "", memo: "", distanceKm: "",
     durationMin: "", avgPace: "", rpe: 3, activityOutcome: "PARTIAL", planExecutionRelation: "MODIFIED",
     plannedSessionLink: draft!.link }
-  await page.evaluate((entry) => localStorage.setItem("trainoracle.journal.v1", JSON.stringify([entry])), linkedJournal)
+  await page.evaluate((entry) => localStorage.setItem("to-local-journal.journal.v2", JSON.stringify([entry])), linkedJournal)
   await page.reload()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
   await page.getByRole("group", { name: "계획 일정 보기", exact: true }).getByRole("button", { name: "달력", exact: true }).click()

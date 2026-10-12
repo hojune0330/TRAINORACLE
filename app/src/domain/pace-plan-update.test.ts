@@ -36,6 +36,8 @@ import * as accountJournals from "./account/account-journal-projection"
 import * as accountJournalApi from "./account/account-journal-api"
 import * as planStore from "./plan-beta-store"
 import * as journals from "./journal-store"
+import { JOURNAL_STORAGE_KEY } from "./journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
 vi.mock("./plan-mutation-lock", () => ({ PLAN_BETA_MUTATION_LOCK_NAME: "pace-test-lock", getPlanMutationLockManager: () => ({
   request: async (_name: string, _options: unknown, run: (lock: object) => unknown) => run({}),
@@ -45,7 +47,7 @@ vi.mock("./account/account-plan-service", async importOriginal => ({
 }))
 
 const today = "2026-10-02", now = "2026-10-02T03:00:00.000Z"
-const historyKey = "trainoracle.plan-beta.history.v1", journalKey = "trainoracle.journal.v1"
+const historyKey = "trainoracle.plan-beta.history.v1", journalKey = JOURNAL_STORAGE_KEY
 const oldRecord: AthleteRecord = { schemaVersion: 1, id: "pace-old", purpose: "RECENT_RESULT", eventDistanceM: 5000,
   performanceSeconds: 1200, achievedOn: "2026-09-20", seasonId: null, enteredBy: "ATHLETE",
   verificationState: "SELF_REPORTED", sourceRef: "athlete-record:pace-old", savedAt: "2026-09-21T03:00:00.000Z" }
@@ -103,7 +105,7 @@ function seeded(legacy = false) {
   return input
 }
 
-beforeEach(() => { localStorage.clear(); setActiveLocalAccount(null); vi.mocked(accountPlansEnabled).mockReturnValue(false) })
+beforeEach(async () => { localStorage.clear(); setActiveLocalAccount(null); await initializeCanonicalJournalFixture(); vi.mocked(accountPlansEnabled).mockReturnValue(false) })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); setActiveLocalAccount(null); localStorage.clear() })
 
 describe("bounded pace update receipt", () => {

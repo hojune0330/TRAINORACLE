@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { chromium, expect } from '@playwright/test'
 
 // Isolated local browser only. No real athlete/account data or external traffic.
-const base = 'http://127.0.0.1:4176'
+const base = 'http://127.0.0.1:4184'
 const output = new URL('../.codex-calendar-visual-qa/body-history-20261012/', import.meta.url)
 await mkdir(output, { recursive: true })
 const browser = await chromium.launch({ headless: true })
@@ -79,7 +79,7 @@ try {
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await page.getByRole('button', { name: '입력 확인으로', exact: true }).click()
   await page.getByRole('button', { name: /^저장/ }).click()
-  await page.waitForFunction(() => JSON.parse(localStorage.getItem('trainoracle.journal.v1') ?? '[]').some(e => e.bodyPartMetadata?.observations.length))
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem('to-local-journal.journal.v2') ?? '[]').some(e => e.bodyPartMetadata?.observations.length))
   const saved = await page.evaluate(async () => {
     const { loadEntries } = await import('/src/domain/journal-store.ts')
     const { toExportJournalEntry, toAnalysisJournalEntry } = await import('/src/domain/safe-export.ts')

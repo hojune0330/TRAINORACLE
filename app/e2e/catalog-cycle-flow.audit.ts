@@ -90,7 +90,7 @@ for (const [width, reduced] of [[320, true], [375, false], [1280, true]] as cons
         syncState: "local", system: "lt", title: "", distanceKm: "", durationMin: "", avgPace: "", rpe: 9, memo: "",
         plannedSessionLink: draft.link, fieldProvenance: { rpe: { provenance: "EXPLICIT" } } }
     })
-    await page.evaluate(rows => localStorage.setItem("trainoracle.journal.v1", JSON.stringify(rows)), entries)
+    await page.evaluate(rows => localStorage.setItem("to-local-journal.journal.v2", JSON.stringify(rows)), entries)
     await page.clock.setFixedTime(new Date("2026-10-01T03:00:00Z"))
     await page.reload(); await planTab().click()
     await page.getByRole("button", { name: "현재 기준으로 다음 계획안 만들기", exact: true }).click()
