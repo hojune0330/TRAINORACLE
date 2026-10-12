@@ -1,6 +1,7 @@
 import React from "react"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { ALL_WORKOUT_CATALOG, calculateCatalogWorkout, catalogMethodIdentity } from "@impl/prescription/all-workout-calculator"
 import { catalogRecommendationMethodKey } from "@impl/prescription/catalog-method-selection"
 import { bindCatalogSession, catalogFamilyForIntent } from "@impl/prescription/catalog-session-binding"
@@ -26,6 +27,10 @@ function fixture(experienceBand: "NEW_TO_RUNNING" | "EXPERIENCED" = "EXPERIENCED
   return result
 }
 function openPicker() { fireEvent.click(screen.getByText("다른 훈련으로 바꾸기", { exact: true })) }
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
+})
 
 describe("catalog picker actionable and truthful review", () => {
   it("opens a canonical half-marathon RP binding from a legacy 21097m plan without changing it", () => {

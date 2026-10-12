@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { PlanBeta } from "./PlanBeta"
 import { loadAthleteRecords } from "../domain/athlete-records"
 import { activePlanBetaStorageKey, loadPlanBetaState } from "../domain/plan-beta-store"
@@ -24,6 +25,10 @@ async function fillEntry() {
   fireEvent.change(screen.getByLabelText("기록 달성일"), { target: { value: "2026-09-01" } })
   return user
 }
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
+})
 
 describe("plan entry supporting navigation", () => {
   it.each(["invalid", "storage_error"] as const)("keeps %s plan status ahead of the goal program entry", mode => {

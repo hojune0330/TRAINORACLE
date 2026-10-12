@@ -1,6 +1,7 @@
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { PlanBeta } from "./PlanBeta"
 import { stateFixture } from "../domain/plan-beta-store.test-fixture"
 import { activePlanBetaStorageKey, readPlanBetaStateFromStorage, restorePlanBetaStateIfMissing, savePlanBetaState } from "../domain/plan-beta-store"
@@ -61,7 +62,7 @@ it("preserves and displays a new local plan saved in another tab while the older
   expect(readPlanBetaStateFromStorage()).toEqual({ kind: "loaded", state: newer })
   expect(await screen.findByRole("heading", { name: "9일 훈련 계획" })).toBeVisible()
   const user = userEvent.setup()
-  await user.click(within(screen.getByRole("group", { name: "계획 일정 보기" })).getByRole("button", { name: "목록" }))
+  await user.click(within(screen.getByRole("group", { name: "계획 일정 보기" })).getByRole("button", { name: "하루씩" }))
   const schedule = within(screen.getByRole("region", { name: "날짜별 훈련 목록" }))
   const list = schedule.getByRole("list", { name: "날짜별 계획 미리보기" })
   expect(list).toBeVisible()
@@ -150,4 +151,9 @@ it.each(["quota", "write-then-throw", "other-writer"] as const)("preserves the c
   expect(await restorePlanBetaStateIfMissing(stateFixture(), () => true))
     .toEqual({ kind: "failed", rollbackComplete: mode !== "other-writer" })
   expect(localStorage.getItem(key)).toBe(mode === "other-writer" ? newer : null)
+})
+
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })

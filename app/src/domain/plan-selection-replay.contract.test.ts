@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { saveSelectedPlanCandidate } from "../screens/plan-beta/plan-selection"
 import { generatePlanFromDraft, selectPlanForActivation } from "./plan-beta-flow"
@@ -8,9 +9,11 @@ import { RUNTIME_CASES, draftFor, saveCurrentRecord, TODAY } from "./prescriptio
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
 import * as mutationLock from "./plan-mutation-lock"
 
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear()
   sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
+
   setActiveLocalAccount(null)
   vi.useFakeTimers()
   vi.setSystemTime(TODAY)

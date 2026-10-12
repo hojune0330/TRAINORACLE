@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture";
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import {
   createSelfReportedAthleteRecord,
@@ -99,10 +100,11 @@ function saveCurrentRecord(eventDistanceM: number, performanceSeconds: number): 
   return id
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.useFakeTimers()
   vi.setSystemTime(TODAY)
   window.localStorage.clear()
+    await initializeCanonicalJournalFixture();
 })
 
 describe("multi-event same-event detailed prescriptions", () => {

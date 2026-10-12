@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture";
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { rebindCandidatePairIdentity } from "@impl/plan-generator/candidate-identity"
 import { isVerifiedPlanCandidate } from "@impl/plan-generator/adaptation"
@@ -74,7 +75,8 @@ function result(f: ReturnType<typeof fixture>, entries: readonly PostSessionEntr
     response: derivePlanCycleResponse(entries, f.predecessor), evaluatedAt })
 }
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear()
+    await initializeCanonicalJournalFixture(); })
 
 describe("bounded catalog cycle successor", () => {
   it.each(["pain", "pain-parts", "slot", "outcome", "provenance"] as const)("does not reduce from repeated high RPE with %s uncertainty", reason => {

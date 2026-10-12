@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 // 계정 잠금 해제(releaseSyncOwner) 계약 테스트 — Q4 도메인 층.
 //
 // 왜 이 파일이 필요한가:
@@ -14,7 +15,6 @@
 //     - 잠금이 안 풀리면 → 애초에 아무 문제도 해결하지 못함
 //   네 가지를 각각 **실행으로** 고정한다. 주석으로 약속하는 것은 검증이 아니다.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-
 import { currentSyncOwner, releaseSyncOwner } from "./sync-local"
 import { loadTombstones, recordTombstone } from "./tombstone"
 import { loadEntries, saveEntry } from "../journal-store"
@@ -42,8 +42,9 @@ function store(entry: PostSessionEntry): void {
   if (!result.ok) throw new Error(`픽스처가 스키마에 거부됐다: ${entry.id}`)
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 
 afterEach(() => {

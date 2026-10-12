@@ -1,6 +1,7 @@
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { loadEntries } from "../../domain/journal-store"
 import { hasPendingBrowserBackLayer } from "../../navigation/browserNavigation"
 import { PostSessionForm } from "./PostSessionForm"
@@ -26,6 +27,10 @@ async function addCustomOnlyPart(user: ReturnType<typeof userEvent.setup>): Prom
   await user.click(within(dialog).getByRole("button", { name: "발바닥 통증 3단계" }))
   expect(await screen.findByRole("button", { name: "발바닥, 통증 3/5" })).toBeVisible()
 }
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
+})
 
 describe("custom-only body metadata transitions in journal forms", () => {
   it("stores an explicit empty companion when PostSession changes custom-only discomfort to none", async () => {

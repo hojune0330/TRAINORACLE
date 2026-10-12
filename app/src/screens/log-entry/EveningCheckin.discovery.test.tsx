@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { EveningCheckin } from "./EveningCheckin"
 import { EntryChooser } from "./EntryChooser"
@@ -124,4 +125,9 @@ it("reveals a missing memo purpose when saving from an existing review", () => {
   expect(screen.getByRole("heading", { level: 2, name: "오늘 남길 메모" })).toBeVisible()
   expect(screen.getByRole("textbox", { name: "오늘의 메모" })).toHaveValue("합성 용도 미선택 메모")
   expect(screen.getByRole("alert")).toHaveTextContent("메모를 저장할 방법을 선택해 주세요.")
+})
+
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })

@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture";
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import {
   canonicalJsonSha256,
@@ -32,10 +33,11 @@ type CandidateMutation = (candidate: PlanCandidate) => unknown
 
 const candidateSchema = planAdaptationCandidateSchema
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.useFakeTimers()
   vi.setSystemTime(TODAY)
   window.localStorage.clear()
+    await initializeCanonicalJournalFixture();
 })
 
 function appAcceptsCandidate(candidate: unknown): boolean {

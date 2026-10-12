@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture";
 import { createHash } from "node:crypto"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 // Exercise a proposed adoption without granting production authority in this test.
@@ -14,7 +15,8 @@ import { REPETITION_TEST_NOW, repetitionFixture } from "./planned-repetition.tes
 import { generatePlanFromDraft } from "./plan-beta-flow"
 import { readFileSync } from "node:fs"
 
-beforeEach(() => { localStorage.clear(); vi.useFakeTimers(); vi.setSystemTime(REPETITION_TEST_NOW) })
+beforeEach(async () => { localStorage.clear();
+    await initializeCanonicalJournalFixture(); vi.useFakeTimers(); vi.setSystemTime(REPETITION_TEST_NOW) })
 afterEach(() => vi.useRealTimers())
 const expected = [
   ["RP5K-800-05", 800, 5, 1, 4000, 480],

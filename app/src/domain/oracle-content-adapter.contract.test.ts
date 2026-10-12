@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { buildOracleContentAdapter, oracleContentCalendarPeriods, type OracleContentAdapterInput } from "./oracle-content-adapter"
 import { buildOracleContentReading, type OracleReaderSource } from "./oracle-content-reader"
@@ -191,9 +192,10 @@ describe("Oracle plan adapter: demonstrable original source only", () => {
     expect(result.training.state).toBe("READY")
     expect(result.planActual.state).toBe(state)
   })
-  it("adapts original repetition point targets without inventing a success range or RUN activity", () => {
+  it("adapts original repetition point targets without inventing a success range or RUN activity", async () => {
     localStorage.clear(); sessionStorage.clear(); vi.useFakeTimers(); vi.setSystemTime(REPETITION_TEST_NOW)
     try {
+      await initializeCanonicalJournalFixture()
       const f = repetitionFixture()
       const selected = selectPlanForActivation(f.result.generated.candidates[0].candidateId, f.result.generated, f.result.gate,
         { ...f.result.intake, startDate: "2026-09-30" }, f.result.athleteEvidence, REPETITION_TEST_NOW)
@@ -226,8 +228,9 @@ describe("Oracle plan adapter: demonstrable original source only", () => {
       expect(training(buildOracleContentAdapter({ ...args, journal: ready({ ...args.journal.data, entries: [tampered] }) }).training)).toMatchObject({ coverage: "PARTIAL", sessions: [] })
     } finally { vi.useRealTimers(); localStorage.clear(); sessionStorage.clear() }
   })
-  it("preserves catalog time-only work and recovery via the existing calculation fingerprint", () => {
+  it("preserves catalog time-only work and recovery via the existing calculation fingerprint", async () => {
     localStorage.clear(); sessionStorage.clear()
+    await initializeCanonicalJournalFixture()
     const result = generatePlanFromDraft({ eventGroup: "FIVE_K", eventDistanceM: 5000, competitionDivision: "OPEN", experienceBand: "EXPERIENCED", availableDayCount: 5,
       requestedFrameLength: 10, trainingFocus: "LT_INTENT", secondSessionMode: "SINGLE_SESSION_ONLY", trainingTimePreference: "MORNING", selectedDetailedTemplateRef: null }, "NO_KNOWN_RISK")
     if (result.kind !== "generated") throw Error("fixture generation")
@@ -275,7 +278,10 @@ describe("Oracle plan adapter: demonstrable original source only", () => {
 })
 
 describe("Oracle existing source adapters", () => {
-  beforeEach(() => { vi.stubEnv("VITE_FEATURE_FILE_ANALYSIS_TCX", "true"); vi.stubEnv("VITE_KILL_FILE_ANALYSIS_TCX", "false") })
+  beforeEach(async () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    await initializeCanonicalJournalFixture(); vi.stubEnv("VITE_FEATURE_FILE_ANALYSIS_TCX", "true"); vi.stubEnv("VITE_KILL_FILE_ANALYSIS_TCX", "false") })
   afterEach(() => { vi.unstubAllEnvs() })
   const lapRows: FileObservationInput["laps"] = [
     { sourceIndex: 0, distanceMeters: 1000, durationSeconds: 300, durationMeaning: "TIMER", kind: "UNKNOWN" },

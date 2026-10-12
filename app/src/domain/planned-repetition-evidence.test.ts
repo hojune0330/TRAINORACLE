@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { comparePlannedRepetitions, plannedRepetitionEvidenceSchema, plannedRepeatRecovery } from "./planned-repetition-evidence"
 import { REPETITION_TEST_NOW, repetitionFixture } from "./planned-repetition.test-fixture"
@@ -6,7 +7,10 @@ import { exerciseLogSchema } from "./exercise-log"
 import { executionReplanEvidence, replanFingerprint } from "./execution-replan"
 import { parseJournalEntryForWrite } from "./journal-schema"
 
-beforeEach(() => { localStorage.clear(); vi.useFakeTimers(); vi.setSystemTime(REPETITION_TEST_NOW) })
+beforeEach(async () => { localStorage.clear();
+  await initializeCanonicalJournalFixture()
+   vi.useFakeTimers(); vi.setSystemTime(REPETITION_TEST_NOW)
+})
 afterEach(() => vi.useRealTimers())
 
 describe("original prescription to explicit repetition evidence", () => {

@@ -1,6 +1,7 @@
 import React from "react"
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { PlanBeta } from "../PlanBeta"
 import * as store from "../../domain/plan-beta-store"
 import * as flow from "../../domain/plan-beta-flow"
@@ -29,6 +30,10 @@ async function reachCandidates(next = intake) {
 }
 const applyName = "이 훈련으로 적용"
 function initialRegion() { return screen.getByRole("region", { name: "첫 주요 훈련 조건" }) }
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
+})
 
 describe("first-generation MAIN integration", () => {
   it("keeps compact unchecked review optional and saves RPE fallback without hypothetical answers", async () => {

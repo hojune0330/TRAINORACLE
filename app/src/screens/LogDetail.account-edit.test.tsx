@@ -1,6 +1,7 @@
 import React from "react"
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import type { JournalEntry, PostSessionEntry } from "../domain/journal-store"
 import { canEditJournalEntry } from "../domain/journal-edit-policy"
 import { putAccountJournalProjection, readAccountJournalPrivateEntry, resetAccountJournalProjection, setAccountJournalProjectionStatus } from "../domain/account/account-journal-projection"
@@ -158,4 +159,9 @@ it("retains the account edit and does not send when durable finalization preflig
   expect(done).not.toHaveBeenCalled()
   expect(screen.getByRole("button", { name: /^수정 저장/ })).toBeInTheDocument()
   expect(readAccountJournalPrivateEntry(session.id)).toEqual(session)
+})
+
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })

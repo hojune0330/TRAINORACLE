@@ -1,4 +1,5 @@
 import { beforeEach, expect, it } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import { defaultInstantCandidate, projectInstantRecommendation } from "./instant-plan-projection"
 import type { PlanCandidate } from "@impl/plan-generator/types"
@@ -43,4 +44,9 @@ it("does not describe a partially bound plan as fully detailed", () => {
   expect(projected.reason).toContain("아직 반복·회복까지 정한 처방이 아니에요")
   const noMain = projectInstantRecommendation({ ...partial, sessions: partial.sessions.filter(session => session.role !== "QUALITY") }, "2026-09-20")!
   expect(noMain.guidanceNotice).toBeUndefined()
+})
+
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })

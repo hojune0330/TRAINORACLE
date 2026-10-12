@@ -1,6 +1,7 @@
 import React from "react"
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { beforeEach, afterEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { PlanBeta, type PlanAdjustmentResolver } from "../PlanBeta"
 import { adjustedSuccessorFixture } from "../../domain/adjusted-plan-successor.test-fixtures"
 import { activePlanBetaStorageKey, readPlanBetaStateFromStorage } from "../../domain/plan-beta-store"
@@ -109,4 +110,9 @@ it("rejects current risk and storage changes, and clears an open draft on accoun
   act(() => setActiveLocalAccount("another-account"))
   expect(screen.queryByRole("heading", { name: "다음 계획을 비교해 주세요" })).toBeNull()
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
+})
+
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })

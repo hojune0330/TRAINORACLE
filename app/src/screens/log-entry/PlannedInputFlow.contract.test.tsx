@@ -1,17 +1,20 @@
 import React from "react"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { QuickSessionForm } from "./QuickSessionForm"
 import { PostSessionForm } from "./PostSessionForm"
 import { readJournalOriginalPlan } from "../../domain/journal-original-plan"
 import { repetitionFixture, REPETITION_TEST_NOW } from "../../domain/planned-repetition.test-fixture"
+import { loadEntriesForPlanSafety } from "../../domain/journal-store"
+import { accountJournalProjectionStatus } from "../../domain/account/account-journal-projection"
 import { saveEntry } from "../../domain/journal-store"
 import { sessionWorkoutName, sessionWorkoutNotation } from "../../domain/workout-notation"
 vi.mock("../../domain/journal-original-plan", () => ({ readJournalOriginalPlan: vi.fn() }))
 vi.mock("../../domain/journal-store", async importOriginal => ({ ...await importOriginal<object>(), saveEntry: vi.fn(() => ({ ok: true })) }))
 let fixture: ReturnType<typeof repetitionFixture>
-beforeEach(() => {
-  localStorage.clear(); sessionStorage.clear(); vi.clearAllMocks()
+beforeEach(async () => {
+  localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); vi.clearAllMocks()
   vi.useFakeTimers(); vi.setSystemTime(REPETITION_TEST_NOW)
   fixture = repetitionFixture(); vi.useRealTimers()
   vi.mocked(readJournalOriginalPlan).mockReturnValue(fixture.original)

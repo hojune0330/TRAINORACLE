@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture";
 import { createElement } from "react"
 import { act, cleanup, fireEvent, render, renderHook, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -31,20 +32,23 @@ const record = (id: string, overrides: Partial<AthleteRecord> = {}): AthleteReco
 const server = record("server"), device = record("device"), stale = record("server", { performanceSeconds: 900 })
 let state: AccountAthleteRecordsState
 // Exercise source authority with a real draft; only the pace transformation is stubbed.
-const generated = (() => {
+let generated: PlanGenerationSuccess
+function createGeneratedFixture() {
   const result = generatePlanFromDraft({ eventGroup: "FIVE_K", eventDistanceM: 5000,
     competitionDivision: "OPEN", experienceBand: "EXPERIENCED", availableDayCount: "EVERY_DAY",
     requestedFrameLength: 9, trainingFocus: "LT_INTENT", secondSessionMode: "RECOVERY_PM_ALLOWED",
     trainingTimePreference: "MORNING", selectedDetailedTemplateRef: null, startDate: "2026-10-02" }, "NO_KNOWN_RISK")
   if (result.kind !== "generated") throw Error("Expected valid source-authority draft")
   return result.generated
-})()
+}
 const preview = { synthetic: "preview" } as unknown as PlanGenerationSuccess
-beforeEach(() => {
+beforeEach(async () => {
   vi.clearAllMocks()
   vi.useFakeTimers({ toFake: ["Date"] })
   vi.setSystemTime(new Date("2026-10-02T03:00:00.000Z"))
   localStorage.clear()
+  await initializeCanonicalJournalFixture()
+  generated = createGeneratedFixture()
   setActiveLocalAccount(A)
   state = { ownerId: A, status: "READY", confirmed: true, documentId: "document-a", serverRevision: 1, records: [server] }
   vi.mocked(readAccountAthleteRecordsState).mockImplementation(() => state)

@@ -1,6 +1,7 @@
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import type { AthleteRecord } from "../../domain/athlete-records"
 import {
   createSelfReportedAthleteRecord,
@@ -63,6 +64,10 @@ afterEach(() => {
   cleanup()
   setActiveLocalAccount(null)
   vi.useRealTimers()
+})
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })
 
 describe("next-frame adaptation flow", () => {

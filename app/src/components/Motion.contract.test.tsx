@@ -4,6 +4,7 @@ import { Profiler } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { AppShell, SavedToast } from "../AppShell"
 import { PopCard, usePopover } from "./Popover"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
 afterEach(cleanup)
 
@@ -196,6 +197,7 @@ describe("saved toast motion structure", () => {
   it("keeps a confirmed result until explicitly closed instead of timing it out", async () => {
     vi.useFakeTimers()
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
 
     try {
       render(<AppShell />)
@@ -224,6 +226,7 @@ describe("saved toast motion structure", () => {
   it("keeps review attention until the athlete dismisses it", async () => {
     vi.useFakeTimers()
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
 
     try {
       render(<AppShell />)
@@ -253,6 +256,7 @@ describe("saved toast motion structure", () => {
 describe("app screen direction structure", () => {
   it("labels the first screen and bottom-tab travel direction", async () => {
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
     // Test navigation direction independently of lazy-module compilation latency.
     await import("../screens/PlanBeta")
     const committedScreens: Array<{ element: Element; motion: string | null }> = []

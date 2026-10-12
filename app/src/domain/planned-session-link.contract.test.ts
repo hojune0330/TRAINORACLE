@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { beforeEach, describe, expect, it } from "vitest"
 import { stateFixture } from "./plan-beta-store.test-fixture"
 import {
@@ -36,8 +37,13 @@ function entry(id: string, savedAt: string) {
   }
 }
 
+beforeEach(async () => {
+  localStorage.clear()
+  sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
+})
+
 describe("immutable planned-session journal linkage", () => {
-  beforeEach(() => window.localStorage.clear())
 
   it("derives an opaque stable session id from the accepted plan occurrence", () => {
     const first = linkedDraft().draft

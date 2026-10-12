@@ -1,6 +1,7 @@
 import React from "react"
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { AdjustedPlanSchedule } from "./AdjustedPlanSchedule"
 import { AdjustedPlanScheduleV3 } from "./AdjustedPlanScheduleV3"
 import { MultiAdjustedPlanScheduleV3 } from "./MultiAdjustedPlanScheduleV3"
@@ -199,4 +200,9 @@ describe.each([4, 5, 6] as const)("V%s personal export full-history gate", versi
       expect(revoke).toHaveBeenCalledWith("blob:synthetic-full-history")
     }
   })
+})
+
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })

@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { PlanBeta } from "./PlanBeta"
 import { todayISO } from "../domain/journal-store"
 import { loadAthleteRecords } from "../domain/athlete-records"
@@ -20,6 +21,10 @@ async function safetyAndExperience() {
   await user.click(screen.getByRole("button", { name: /^매일/u }))
   await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
 }
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
+})
 
 describe("integrated minimal entry to selected plan", () => {
   it.each([["800", "2", "1.5"], ["1500", "4", "23.4"], ["3000", "10", "55"], ["5000", "18", "31"]])(

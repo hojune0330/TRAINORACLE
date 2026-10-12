@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture";
 import { afterEach, beforeAll, beforeEach, expect, it, vi } from "vitest"
 import { createAdjustmentDraftV3, applyAdjustmentDraftV3 } from "@impl/prescription/prescription-adjustment-v3"
 import { sequenceV3ContentIdentity } from "@impl/prescription/sequence-v3-comparison"
@@ -55,8 +56,9 @@ const dialogShow = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, 
 const dialogClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "close")
 // The integration fixture replays crypto-backed source and successor validation.
 vi.setConfig({ testTimeout: 20000, hookTimeout: 30000 })
-beforeEach(() => {
-  localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(TODAY)
+beforeEach(async () => {
+  localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null);
+    await initializeCanonicalJournalFixture(); vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(TODAY)
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value() { this.setAttribute("open", "") } })
   Object.defineProperty(HTMLDialogElement.prototype, "close", { configurable: true, value() { this.removeAttribute("open") } })
 })
@@ -804,6 +806,7 @@ let existingPredecessor: {
 }
 beforeAll(async () => {
   localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null)
+  await initializeCanonicalJournalFixture()
   vi.useFakeTimers(); vi.setSystemTime(TODAY)
   try {
     defaultFixture = freezeJson(buildFixture())

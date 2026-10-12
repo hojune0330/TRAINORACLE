@@ -1,3 +1,5 @@
+import { captureCanonicalJournalFixtureReset, initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
+let resetCanonicalJournalFixture: () => void
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { generatePlanCandidates } from "@impl/plan-generator/generator"
 import {
@@ -52,12 +54,16 @@ function approved5000Template() {
 type LocksDescriptor = PropertyDescriptor | undefined
 let locksDescriptor: LocksDescriptor
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.useFakeTimers()
   vi.setSystemTime(new Date(ACTIVATED_AT))
   window.localStorage.clear()
   window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
+
   locksDescriptor = installAvailableLock()
+
+  resetCanonicalJournalFixture = captureCanonicalJournalFixtureReset()
 })
 
 afterEach(() => {
@@ -318,7 +324,7 @@ describe("accepted successor activation", () => {
 
   it("restores byte-identical storage when every transaction stage silently drops once", async () => {
     for (const target of [HISTORY_KEY, PREVIOUS_INTAKE_KEY, CONTEXT_KEY, ACTIVE_KEY, PLAN_SUCCESSOR_ACTIVATION_RECEIPT_STORAGE_KEY, PENDING_KEY]) {
-      window.localStorage.clear()
+      resetCanonicalJournalFixture()
       window.sessionStorage.clear()
       const fixture = await acceptedFixture(9, true)
       const before = storageSnapshot()

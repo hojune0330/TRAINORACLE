@@ -1,3 +1,5 @@
+import { captureCanonicalJournalFixtureReset, initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
+let resetCanonicalJournalFixture: () => void
 // 가져오기 초안·저장 계약 테스트 (IMP-2).
 //
 // 계약:
@@ -50,6 +52,13 @@ function existingSession(overrides: Partial<PostSessionEntry> = {}): PostSession
   }
 }
 
+beforeEach(async () => {
+  window.localStorage.clear()
+  window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
+  resetCanonicalJournalFixture = captureCanonicalJournalFixtureReset()
+})
+
 describe("file identity candidate review", () => {
   const observed = (sourceActivityId: string | null = null, distanceMeters = 5000): ImportedActivity => {
     const observation = buildFileObservation({ format: "tcx", sourceProfile: "TCX_ACTIVITY_V1", parserVersion: "tcx-v1",
@@ -97,7 +106,7 @@ describe("file identity candidate review", () => {
   })
 
   it("honors explicit exclusion on the legacy local path", () => {
-    window.localStorage.clear()
+    resetCanonicalJournalFixture()
     const source = activity(), draft = buildImportDrafts([source], [])[0]!
     expect(confirmImportDrafts([{ draft, intent: { kind: "EXCLUDE" } }], "csv"))
       .toMatchObject({ saved: 0, failed: 0, excluded: 1 })
@@ -106,9 +115,11 @@ describe("file identity candidate review", () => {
 })
 
 describe("imported activity save", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     window.localStorage.clear()
-  })
+    await initializeCanonicalJournalFixture()
+    resetCanonicalJournalFixture = captureCanonicalJournalFixtureReset()
+})
 
   it("가져온 활동을 실제로 저장한다", () => {
     const result = saveImportedActivity(activity(), "tcx")
@@ -185,9 +196,11 @@ describe("imported activity save", () => {
 })
 
 describe("import duplicate detection", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     window.localStorage.clear()
-  })
+    await initializeCanonicalJournalFixture()
+    resetCanonicalJournalFixture = captureCanonicalJournalFixtureReset()
+})
 
   it("같은 날 비슷한 거리의 기존 일지를 중복으로 표시한다", () => {
     const [draft] = buildImportDrafts([activity()], [existingSession()])

@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { generatePlanFromDraft, selectPlanForActivation } from "./plan-beta-flow"
 import { replaceCandidateCatalogWorkout } from "./catalog-plan-binding"
@@ -11,7 +12,10 @@ import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identit
 import { sessionExecutionSteps } from "../screens/plan-beta/labels"
 
 const now = new Date("2026-09-30T03:00:00.000Z")
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); vi.useFakeTimers(); vi.setSystemTime(now) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear();
+  await initializeCanonicalJournalFixture()
+   vi.useFakeTimers(); vi.setSystemTime(now)
+})
 afterEach(() => vi.useRealTimers())
 function fixture() {
   const result = generatePlanFromDraft({ eventGroup: "FIVE_K", eventDistanceM: 5000, competitionDivision: "OPEN",

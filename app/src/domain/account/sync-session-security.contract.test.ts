@@ -1,5 +1,5 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-
 let journalSelectCount = 0
 let localReplacementCount = 0
 let sessionUserId: string | null = "athlete-b"
@@ -50,9 +50,11 @@ vi.mock("../journal-store", async importOriginal => ({
 
 import { previewSync, saveSyncConsent, syncNow } from "./sync"
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
   window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
+
   journalSelectCount = 0
   localReplacementCount = 0
   sessionUserId = "athlete-b"

@@ -1,3 +1,5 @@
+import { captureCanonicalJournalFixtureReset, initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
+let resetCanonicalJournalFixture: () => void
 import { webcrypto } from "node:crypto"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import type { SupabaseClient } from "@supabase/supabase-js"
@@ -9,13 +11,17 @@ import { joinAccountPlanCollection, type AccountPlanSnapshotPart, type AccountPl
 import { createAccountPlanCollectionService, type AccountPlanCollectionServiceInput } from "./account-plan-collection-service"
 import { COLLECTION_OWNER, collectionMemoryBuffers, collectionServer } from "./account-plan-collection.test-support"
 
-beforeEach(() => { vi.stubGlobal("crypto", webcrypto); localStorage.clear(); vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date(TODAY.getTime() + 120_000)) })
+beforeEach(async () => { vi.stubGlobal("crypto", webcrypto); localStorage.clear();
+  await initializeCanonicalJournalFixture()
+   vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date(TODAY.getTime() + 120_000))
+  resetCanonicalJournalFixture = captureCanonicalJournalFixtureReset()
+})
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks() })
 const tick = async () => { await new Promise<void>(resolve => setTimeout(resolve, 0)) }
 function fixture(count = 3, version: 3 | 4 | 5 | 6 = 3) {
   const doc = emptyAccountPlanDocument()
   for (let i = 0; i < count; i++) {
-    localStorage.clear()
+    resetCanonicalJournalFixture()
     const entry = accountPlanEntry(accountPlanPacketFixture(version, new Date(TODAY.getTime() + i * 1000)))
     if (i < count - 1) entry.archivedAt = new Date().toISOString()
     doc.data.plans.push(entry)

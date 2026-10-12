@@ -1,6 +1,7 @@
 import React from "react"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
-import { afterEach, expect, it, vi } from "vitest"
+import { afterEach, expect, it, vi, beforeEach } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import { draftFor, RUNTIME_CASES } from "../../domain/prescription-quality-matrix.test-fixtures"
 import { listDetailedSessionTargets } from "../../domain/plan-session-target"
@@ -73,4 +74,9 @@ it("uses an explicit apply/cancel transaction on the exact schedule slot", () =>
   choose()
   view.rerender(<CandidateSection {...props} startDate="2026-09-07" />)
   expect(screen.queryByRole("button", { name: "이 날짜에 적용" })).not.toBeInTheDocument()
+})
+
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })

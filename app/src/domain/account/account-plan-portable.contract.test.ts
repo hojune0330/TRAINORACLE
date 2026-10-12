@@ -1,3 +1,5 @@
+import { captureCanonicalJournalFixtureReset, initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
+let resetCanonicalJournalFixture: () => void
 import { execFileSync } from "node:child_process"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { accountPlanEntry, emptyAccountPlanDocument } from "./account-plan-document-schema"
@@ -5,12 +7,16 @@ import { accountPlanPacketFixture } from "./account-plan.test-fixtures"
 import { TODAY } from "../prescription-quality-matrix.test-fixtures"
 import { setActiveLocalAccount } from "./local-journal-ownership"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear();
+  await initializeCanonicalJournalFixture()
+   setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY)
+  resetCanonicalJournalFixture = captureCanonicalJournalFixtureReset()
+})
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks() })
 
 it("bundles existing V2-V6 validation without browser/auth/store dependencies and runs in a clean server process", async () => {
   const documents = ([2, 3, 4, 5, 6] as const).map(version => {
-    localStorage.clear()
+    resetCanonicalJournalFixture()
     const document = emptyAccountPlanDocument(), entry = accountPlanEntry(accountPlanPacketFixture(version))
     document.data.plans.push(entry)
     if (version !== 2) document.data.currentPlanId = entry.planId

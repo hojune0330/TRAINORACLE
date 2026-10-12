@@ -1,8 +1,12 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { generatePlanFromDraft } from "./plan-beta-flow"
 import { mainDraftStillMatches, snapshotPlanMainDraft } from "./plan-main-draft"
 
-beforeEach(() => { localStorage.clear(); vi.useFakeTimers(); vi.setSystemTime(new Date("2026-09-06T03:00:00Z")) })
+beforeEach(async () => { localStorage.clear();
+  await initializeCanonicalJournalFixture()
+   vi.useFakeTimers(); vi.setSystemTime(new Date("2026-09-06T03:00:00Z"))
+})
 afterEach(() => vi.useRealTimers())
 
 function fixture() {

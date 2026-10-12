@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react"
-import { afterEach, expect, it } from "vitest"
+import { afterEach, expect, it, beforeEach } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { ALL_WORKOUT_CATALOG, calculateCatalogWorkout, calculatedWorkoutSequence, type WorkoutCalculationInputs } from "@impl/prescription/all-workout-calculator"
 import { parsePrescriptionSequenceV3 } from "@impl/prescription/sequence-v3"
 import { bindCatalogSession, resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
@@ -104,4 +105,9 @@ it("separates a bound catalog's main workout and full time, and never calls its 
   const generic = { ...session, prescription: { kind: "RPE_TIME_RANGE" as const, rpe: { minimum: 6, maximum: 7 }, durationMinutes: { minimum: 20, maximum: 30 } } }
   expect(projectInstantToday({ ...state, activePlan: { ...state.activePlan, sessions: [generic] } }, "2026-09-30").sessions[0]!.guidanceNotice)
     .toContain("반복 횟수와 회복 시간은 정해지지 않았어요")
+})
+
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })

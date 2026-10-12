@@ -1,3 +1,5 @@
+import { captureCanonicalJournalFixtureReset, initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
+let resetCanonicalJournalFixture: () => void
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
 import { TODAY } from "../prescription-quality-matrix.test-fixtures"
@@ -11,7 +13,11 @@ import {
   joinAccountPlanCollection, splitAccountPlanCollection, type AccountPlanCollectionParts,
 } from "./account-plan-collection-schema"
 
-beforeEach(() => { localStorage.clear(); vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date(TODAY.getTime() + 120_000)) })
+beforeEach(async () => { localStorage.clear();
+  await initializeCanonicalJournalFixture()
+   vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date(TODAY.getTime() + 120_000))
+  resetCanonicalJournalFixture = captureCanonicalJournalFixtureReset()
+})
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 const bytes = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).byteLength
 const hash = (value: unknown) => canonicalJsonFingerprint("trainoracle.account-plan-collection.v1", value)
@@ -21,7 +27,7 @@ const copy = <T>(value: T): T => structuredClone(value)
 function fixture(version: 3 | 4 | 5 | 6 = 3, count = 2): AccountPlanDocument {
   const document = emptyAccountPlanDocument()
   for (let i = 0; i < count; i++) {
-    localStorage.clear()
+    resetCanonicalJournalFixture()
     const entry = accountPlanEntry(accountPlanPacketFixture(version, new Date(TODAY.getTime() + i * 1000)))
     const state = entry.snapshot.state
     const session = (state.version === 2 || state.version === 3 ? state.activePlan : state.selection.activePlan).sessions[0]!

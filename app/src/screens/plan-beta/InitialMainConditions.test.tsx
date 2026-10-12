@@ -1,6 +1,7 @@
 import React from "react"
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { InitialMainConditions } from "./InitialMainConditions"
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import { applyInitialMainConditions, applyInitialMainManual, reviewInitialMainConditions } from "../../domain/initial-main-conditions"
@@ -19,6 +20,10 @@ function fixture(trainingFocus = "ATP_PC_INTENT" as "ATP_PC_INTENT" | "GLY_INTEN
     context: { mode: "newplan", startDate: "2026-10-02", accountScope: null, revision: 1 } }
 }
 const applyName = "이 훈련으로 적용"
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
+})
 
 describe("grouped initial MAIN environment confirmation", () => {
   it("reuses candidate review for checkbox edits but refreshes it for new inputs and account scope", () => {

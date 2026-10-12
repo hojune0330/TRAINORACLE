@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { exportEntriesJSON, savePrivateEntry, type JournalEntry } from "./journal-store"
 import { createRecoveryCode } from "./account/private-note-crypto"
@@ -28,10 +29,11 @@ function privateEntry(memo: string): JournalEntry {
 }
 
 describe("owner-selected full journal export", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date("2026-07-14T12:00:00.000Z"))
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture();
   })
 
   afterEach(() => {
@@ -43,6 +45,7 @@ describe("owner-selected full journal export", () => {
     await expect(savePrivateEntry(privateEntry("PRIVATE_EXPORT_A"))).resolves.toEqual({ ok: true, total: 1 })
     const first = exportEntriesJSON()
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
     await expect(savePrivateEntry(privateEntry("PRIVATE_EXPORT_B"))).resolves.toEqual({ ok: true, total: 1 })
     const second = exportEntriesJSON()
 

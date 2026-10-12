@@ -1,5 +1,6 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture";
 import { deriveCandidateId } from "@impl/plan-generator/candidate-identity"
-import { describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it } from "vitest"
 import { prepareActivePlanEdit, type ActivePlanEditAddress } from "./active-plan-edit"
 import { activePlanEditDurationConsentRequired } from "./active-plan-edit-policy"
 import { planBetaStateV3Schema, type PlanBetaStateV3 } from "./plan-beta-schema"
@@ -10,6 +11,13 @@ import { stateFixture } from "./plan-beta-store.test-fixture"
 import { ALL_WORKOUT_CATALOG, catalogMethodIdentity } from "@impl/prescription/all-workout-calculator"
 import { bindCatalogSession, catalogFamilyForIntent } from "@impl/prescription/catalog-session-binding"
 import { generatePlanFromDraft, selectPlanForActivation } from "./plan-beta-flow"
+
+beforeEach(async () => {
+  localStorage.clear();
+  sessionStorage.clear();
+  await initializeCanonicalJournalFixture();
+});
+
 
 function fixture() {
   const state = stateFixture() as PlanBetaStateV3

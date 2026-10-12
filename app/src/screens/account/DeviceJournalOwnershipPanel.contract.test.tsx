@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import type { PostSessionEntry } from "../../domain/journal-schema"
 import { loadEntriesOwnedBy, saveEntry } from "../../domain/journal-store"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
@@ -21,6 +22,10 @@ beforeEach(() => {
 })
 
 afterEach(() => cleanup())
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
+})
 
 describe("DeviceJournalOwnershipPanel", () => {
   it("requires a second explicit tap before assigning device journals", async () => {
