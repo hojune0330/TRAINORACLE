@@ -12,6 +12,9 @@ const state = vi.hoisted(() => ({
 vi.mock("./account-journal-api", () => ({
   accountJournalPreviewEnabled: () => state.enabled,
   requestAccountDocument: state.request,
+  // The optional body metadata capability probe is separate from journal freshness.
+  checkAccountJournalBodyPartSupport: vi.fn(async () => false),
+  accountBodyPartMetadataSupported: () => false,
 }))
 vi.mock("./account-journal-draft-buffer", () => ({
   createAccountDocumentBuffer: () => ({

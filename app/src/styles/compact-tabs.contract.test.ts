@@ -44,6 +44,12 @@ describe("compact tab density", () => {
       expect(source, path).toContain(groupClass)
       expect(source, path).toContain(buttonClass)
     }
+    // The approved journal view uses the common choice controls instead of tabs.
+    const journal = readFileSync("src/screens/JournalArchive.tsx", "utf8")
+    expect(journal).toContain("app-choice-group")
+    expect(journal).toContain("app-choice-control")
+    expect(journal).toContain('aria-pressed={activeMode === "CALENDAR"}')
+    expect(journal).toContain('aria-pressed={activeMode === "CYCLE"}')
   })
 
   it("does not apply the compact rule to answer controls", () => {
