@@ -76,6 +76,7 @@ export function TrashBin({ onChanged }: { readonly onChanged?: () => void } = {}
       window.alert("되돌리지 못했어요. 잠시 후 다시 시도해 주세요.")
       return
     }
+    if (result.cleanupPending) window.alert("일지는 되돌렸어요. 보관 사본 정리를 마치지 못해 다시 확인이 필요해요.")
     refresh()
   }
 

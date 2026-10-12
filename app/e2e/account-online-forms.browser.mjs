@@ -33,6 +33,8 @@ try {
             await import('/src/styles/app.css');
             await import('${tokenUrl("colors_and_type.css")}');
             await import('${tokenUrl("colors_and_type_journal.css")}');
+            const {initializeCanonicalJournalBrowserFixture}=await import('/e2e/fixtures/canonical-journal-browser.ts');
+            await initializeCanonicalJournalBrowserFixture();
             const {${form}}=await import('/src/screens/log-entry/${form}.tsx');
             window.calls=0;window.saved=null;
             createRoot(document.getElementById('root')).render(React.createElement(${form},{onDone:(...args)=>{window.saved=args}}));

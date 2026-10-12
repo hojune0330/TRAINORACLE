@@ -6,6 +6,8 @@ import { setAccountAuthState } from "../../domain/account/account-auth-state"
 import { markCurrentConfirmedAccountJournalProjection, putAccountJournalProjection,
   resetAccountJournalProjection, setAccountJournalProjectionStatus } from "../../domain/account/account-journal-projection"
 import { Home } from "../Home"
+import { JOURNAL_STORAGE_KEY } from "../../domain/journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 
 // Synthetic enabled state only; no credentials, service initialization or remote calls.
 vi.mock("../../domain/account/config", async importOriginal => ({
@@ -13,7 +15,7 @@ vi.mock("../../domain/account/config", async importOriginal => ({
   accountFeatureEnabled: () => true,
 }))
 
-const STORAGE_KEY = "trainoracle.journal.v1"
+const STORAGE_KEY = JOURNAL_STORAGE_KEY
 const OWNER = "synthetic-home-owner"
 const TODAY = "2026-10-12"
 const ENTRY = {
@@ -23,8 +25,9 @@ const ENTRY = {
 } satisfies JournalEntry
 const dayButton = () => screen.getByRole("button", { name: "2026년 10월 12일 기록 1개 보기 · 훈련 1" })
 
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear(); setActiveLocalAccount(null); resetAccountJournalProjection(null); setAccountAuthState("GUEST")
+  await initializeCanonicalJournalFixture()
   vi.useFakeTimers(); vi.setSystemTime(new Date("2026-10-12T12:00:00Z"))
 })
 afterEach(() => {

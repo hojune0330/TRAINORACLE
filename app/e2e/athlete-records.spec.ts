@@ -94,7 +94,14 @@ test("rejects invalid records and never migrates a legacy race note", async ({
     window.localStorage.setItem("trainoracle.journal.v1", JSON.stringify([{
       id: "legacy-race",
       kind: "race",
+      date: "2026-07-01",
+      savedAt: "2026-07-01T00:00:00.000Z",
+      syncState: "local",
+      stage: "post",
       record: "18:30",
+      rank: "",
+      result: "",
+      memo: "",
       goalPace: {
         schemaVersion: 1,
         unit: "seconds_per_kilometer",

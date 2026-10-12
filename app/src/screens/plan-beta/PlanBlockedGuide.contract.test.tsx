@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { createBodyReviewPlanPreview, generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import { JOURNAL_STORAGE_KEY } from "../../domain/journal-local-storage"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { loadPlanBetaState, savePlanBetaState } from "../../domain/plan-beta-store"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
 import { PlanBlockedGuide } from "./PlanBlockedGuide"
@@ -14,7 +15,11 @@ const draft = {
   trainingTimePreference: "VARIES" as const, selectedDetailedTemplateRef: null,
 }
 
-beforeEach(() => { window.localStorage.clear(); window.sessionStorage.clear() })
+beforeEach(async () => {
+  window.localStorage.clear()
+  window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
+})
 afterEach(cleanup)
 
 describe("body-review plan preview", () => {

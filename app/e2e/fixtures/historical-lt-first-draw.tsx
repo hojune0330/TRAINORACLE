@@ -11,6 +11,9 @@ import "../../../colors_and_type_journal.css"
 import "../../src/styles/app.css"
 import "../../src/styles/plan-beta.css"
 import "../../src/styles/training-content.css"
+import { initializeCanonicalJournalBrowserFixture } from "./canonical-journal-browser"
+
+await initializeCanonicalJournalBrowserFixture()
 
 // The same historical core boundary as lt-pilot-runtime-v3.contract.test.tsx:
 // never strip catalog bindings from current app plans or widen pilot authority.

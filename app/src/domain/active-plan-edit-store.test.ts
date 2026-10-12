@@ -6,6 +6,8 @@ import { generateReplacementPlanFromDraft, selectPlanForActivation } from "./pla
 import { activePlanBetaStorageKey, loadVersionedPlanBetaState, readArchivedOriginalPlans } from "./plan-beta-store"
 import { planBetaStateV3Schema } from "./plan-beta-schema"
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
+import { JOURNAL_STORAGE_KEY } from "./journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
 vi.mock("./plan-mutation-lock", () => ({ PLAN_BETA_MUTATION_LOCK_NAME: "test-plan-lock", getPlanMutationLockManager: () => ({
   request: async (_name: string, _options: unknown, run: (lock: object) => unknown) => run({}),
@@ -16,10 +18,11 @@ vi.mock("./account/account-plan-service", async importOriginal => {
 })
 
 const HISTORY_KEY = "trainoracle.plan-beta.history.v1"
-const JOURNAL_KEY = "trainoracle.journal.v1"
+const JOURNAL_KEY = JOURNAL_STORAGE_KEY
 
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear()
+  await initializeCanonicalJournalFixture()
   setActiveLocalAccount(null)
   vi.useFakeTimers({ toFake: ["Date"] })
   vi.setSystemTime(new Date("2026-09-29T03:00:00.000Z"))

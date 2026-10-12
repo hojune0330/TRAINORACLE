@@ -12,6 +12,8 @@
   import { More } from "../../src/screens/More.tsx"
   import { ImportActivities } from "../../src/screens/ImportActivities.tsx"
   import { JournalArchive } from "../../src/screens/JournalArchive.tsx"
+  import { initializeCanonicalJournalBrowserFixture } from "./canonical-journal-browser.ts"
+  await initializeCanonicalJournalBrowserFixture()
   const noop = () => {}
   const query = new URLSearchParams(location.search)
   const surface = query.get("screen") || "more"

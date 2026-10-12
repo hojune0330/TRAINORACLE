@@ -37,8 +37,10 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { loadEntries, saveEntry } from "./journal-store"
 import { MEMO_PURPOSE } from "./journal-schema"
 import type { JournalEntry } from "./journal-schema"
+import { JOURNAL_STORAGE_KEY } from "./journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
-const JOURNAL_KEY = "trainoracle.journal.v1"
+const JOURNAL_KEY = JOURNAL_STORAGE_KEY
 
 function session(id: string, date: string): JournalEntry {
   return {
@@ -58,8 +60,9 @@ function session(id: string, date: string): JournalEntry {
   } as JournalEntry
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 
 afterEach(() => {

@@ -36,8 +36,10 @@ import { parsePrivateMemoRecord } from "./private-memo-vault"
 import type { PrivateMemoRecord } from "./private-memo-vault"
 import { pruneUnusedJournalDecorations } from "./journal-decoration-lifecycle"
 import { isJournalVisible } from "./account/local-journal-ownership"
+import { canonicalJournalAccess } from "./canonical-journal-access"
+import { JOURNAL_TRASH_STORAGE_KEY as KEY } from "./journal-storage-keys"
+import { permanentlyEraseJournalOriginals } from "./journal-original-retention"
 
-const KEY = "trainoracle.journal.trash.v1"
 export const JOURNAL_TRASH_STORAGE_KEY = KEY
 
 /** 보관 기간 — 소유자 결정: 30일 */
@@ -61,7 +63,7 @@ export type TrashedEntry = {
 function storage(): Storage | null {
   try {
     if (typeof window === "undefined") return null
-    return window.localStorage
+    return canonicalJournalAccess(window.localStorage)
   } catch {
     return null
   }
@@ -88,6 +90,7 @@ function parseTrashed(value: unknown): TrashedEntry | null {
 
 // Recovery must not mistake unreadable or retained ciphertext for an empty vault.
 export function readTrashForRecovery(target: Storage): { raw: string | null; items: TrashedEntry[] } | null {
+  target = canonicalJournalAccess(target)
   try {
     const raw = target.getItem(KEY)
     if (raw === null) return { raw, items: [] }
@@ -99,12 +102,14 @@ export function readTrashForRecovery(target: Storage): { raw: string | null; ite
   } catch { return null }
 }
 
-function write(items: readonly TrashedEntry[]): boolean {
+function write(items: readonly TrashedEntry[], expectedRaw?: string | null): boolean {
   const localStorage = storage()
   if (localStorage === null) return false
   try {
-    localStorage.setItem(KEY, JSON.stringify(items))
-    return true
+    if (expectedRaw !== undefined && localStorage.getItem(KEY) !== expectedRaw) return false
+    const raw = JSON.stringify(items)
+    localStorage.setItem(KEY, raw)
+    return localStorage.getItem(KEY) === raw
   } catch {
     return false
   }
@@ -147,33 +152,14 @@ export function loadTrash(now: number = Date.now()): TrashedEntry[] {
 export function purgeExpiredTrash(now: number = Date.now()): number {
   const localStorage = storage()
   if (localStorage === null) return 0
-  const raw = localStorage.getItem(KEY)
-  if (raw === null) return 0
-  const kept = loadAllTrash(now)
-  const before = (() => {
-    try {
-      const parsed: unknown = JSON.parse(raw)
-      return Array.isArray(parsed) ? parsed.length : 0
-    } catch {
-      return 0
-    }
-  })()
-  if (before === kept.length) return 0
-  if (!write(kept)) return 0
-  const expiredDates: string[] = []
-  try {
-    const parsed: unknown = JSON.parse(raw)
-    if (Array.isArray(parsed)) {
-      for (const candidate of parsed) {
-        const item = parseTrashed(candidate)
-        if (item !== null && isExpired(item.deletedAt, now)) expiredDates.push(item.entry.date)
-      }
-    }
-  } catch {
-    return before - kept.length
-  }
-  pruneUnusedJournalDecorations(expiredDates, kept.map((item) => item.entry.date))
-  return before - kept.length
+  const snapshot = readTrashForRecovery(localStorage)
+  if (snapshot === null) return 0
+  const expired = snapshot.items.filter(item => isExpired(item.deletedAt, now))
+  if (expired.length === 0 || !permanentlyEraseJournalOriginals(localStorage, expired)) return 0
+  const removedIds = new Set(expired.map(item => item.entry.id))
+  const kept = snapshot.items.filter(item => !removedIds.has(item.entry.id))
+  pruneUnusedJournalDecorations(expired.map(item => item.entry.date), kept.map(item => item.entry.date))
+  return expired.length
 }
 
 /**
@@ -185,12 +171,24 @@ export function moveToTrash(
   deletedAt: string = new Date().toISOString(),
   privateMemo?: PrivateMemoRecord,
 ): boolean {
-  const existing = loadAllTrash().filter((item) => item.entry.id !== entry.id)
+  const localStorage = storage()
+  if (localStorage === null) return false
+  const snapshot = readTrashForRecovery(localStorage)
+  if (snapshot === null) return false
+  const now = Date.now()
+  const expired = snapshot.items.filter(item => item.entry.id !== entry.id && isExpired(item.deletedAt, now))
+  const existing = snapshot.items.filter(item => item.entry.id !== entry.id && !isExpired(item.deletedAt, now))
   const item = privateMemo === undefined ? { entry, deletedAt } : { entry, deletedAt, privateMemo }
   const next = [...existing, item]
     .sort((a, b) => a.deletedAt.localeCompare(b.deletedAt))
   const trimmed = next.length > TRASH_LIMIT ? next.slice(next.length - TRASH_LIMIT) : next
-  return write(trimmed)
+  const keptIds = new Set(trimmed.map(item => item.entry.id))
+  const permanent = [...expired, ...existing.filter(item => !keptIds.has(item.entry.id))]
+  if (!permanentlyEraseJournalOriginals(localStorage, permanent)) return false
+  const removedIds = new Set(permanent.map(item => item.entry.id))
+  const current = readTrashForRecovery(localStorage)
+  if (current === null || JSON.stringify(current.items) !== JSON.stringify(snapshot.items.filter(item => !removedIds.has(item.entry.id)))) return false
+  return write(trimmed, current.raw)
 }
 
 /**
@@ -201,31 +199,40 @@ export function moveToTrash(
  */
 export function takeFromTrash(id: string): TrashedEntry | null {
   if (!isJournalVisible(id)) return null
-  const items = loadAllTrash()
-  const found = items.find((item) => item.entry.id === id)
+  const localStorage = storage()
+  if (localStorage === null) return null
+  const snapshot = readTrashForRecovery(localStorage)
+  if (snapshot === null) return null
+  const found = snapshot.items.find(item => item.entry.id === id && !isExpired(item.deletedAt, Date.now()))
   if (found === undefined) return null
-  if (!write(items.filter((item) => item.entry.id !== id))) return null
+  if (!write(snapshot.items.filter(item => item.entry.id !== id), snapshot.raw)) return null
   return found
 }
 
 /** 휴지통에서 완전히 지운다 — 되돌릴 수 없다 */
 export function dropFromTrash(id: string): boolean {
   if (!isJournalVisible(id)) return false
-  const items = loadAllTrash()
-  const found = items.find((item) => item.entry.id === id)
+  const localStorage = storage()
+  if (localStorage === null) return false
+  const snapshot = readTrashForRecovery(localStorage)
+  if (snapshot === null) return false
+  const found = snapshot.items.find(item => item.entry.id === id)
   if (found === undefined) return false
-  const remaining = items.filter((item) => item.entry.id !== id)
-  if (!write(remaining)) return false
+  if (!permanentlyEraseJournalOriginals(localStorage, [found])) return false
+  const remaining = snapshot.items.filter(item => item.entry.id !== id)
   pruneUnusedJournalDecorations([found.entry.date], remaining.map((item) => item.entry.date))
   return true
 }
 
 /** 휴지통 비우기 */
 export function emptyTrash(): boolean {
-  const items = loadAllTrash()
-  const removed = items.filter((item) => isJournalVisible(item.entry.id))
-  const preserved = items.filter((item) => !isJournalVisible(item.entry.id))
-  if (!write(preserved)) return false
+  const localStorage = storage()
+  if (localStorage === null) return false
+  const snapshot = readTrashForRecovery(localStorage)
+  if (snapshot === null) return false
+  const removed = snapshot.items.filter(item => isJournalVisible(item.entry.id))
+  const preserved = snapshot.items.filter(item => !isJournalVisible(item.entry.id))
+  if (!permanentlyEraseJournalOriginals(localStorage, removed)) return false
   pruneUnusedJournalDecorations(removed.map((item) => item.entry.date), preserved.map((item) => item.entry.date))
   return true
 }

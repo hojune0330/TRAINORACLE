@@ -25,10 +25,12 @@ import { loadTombstones } from "./account/tombstone"
 import { loadTrash } from "./journal-trash"
 import { MEMO_PURPOSE } from "./journal-schema"
 import type { JournalEntry } from "./journal-schema"
+import { JOURNAL_STORAGE_KEY, JOURNAL_TOMBSTONES_STORAGE_KEY, JOURNAL_TRASH_STORAGE_KEY } from "./journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
-const JOURNAL_KEY = "trainoracle.journal.v1"
-const TRASH_KEY = "trainoracle.journal.trash.v1"
-const TOMBSTONE_KEY = "trainoracle.sync.tombstones.v1"
+const JOURNAL_KEY = JOURNAL_STORAGE_KEY
+const TRASH_KEY = JOURNAL_TRASH_STORAGE_KEY
+const TOMBSTONE_KEY = JOURNAL_TOMBSTONES_STORAGE_KEY
 
 function makeEntry(id: string): JournalEntry {
   return {
@@ -81,8 +83,9 @@ function failWritesTo(key: string): void {
   })
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 
 afterEach(() => {

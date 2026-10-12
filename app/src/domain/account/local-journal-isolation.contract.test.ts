@@ -16,8 +16,10 @@ import {
   LOCAL_JOURNAL_OWNERSHIP_KEY,
   setActiveLocalAccount,
 } from "./local-journal-ownership"
+import { JOURNAL_STORAGE_KEY } from "../journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 
-const JOURNAL_KEY = "trainoracle.journal.v1"
+const JOURNAL_KEY = JOURNAL_STORAGE_KEY
 
 function post(id: string, savedAt = "2026-08-25T10:00:00.000Z"): PostSessionEntry {
   return {
@@ -36,9 +38,10 @@ function post(id: string, savedAt = "2026-08-25T10:00:00.000Z"): PostSessionEntr
   }
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
   setActiveLocalAccount(null)
+  await initializeCanonicalJournalFixture()
 })
 
 describe("local journal account isolation", () => {

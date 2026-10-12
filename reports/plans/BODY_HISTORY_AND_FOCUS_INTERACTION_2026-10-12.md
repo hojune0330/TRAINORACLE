@@ -1,7 +1,7 @@
 # 몸 기록 · 선택 부위 확대 · 기타 부위 재사용 계획
 
 ```yaml
-status: LOCAL_IMPLEMENTED_RELEASE_HELD_FOR_LEGACY_DEVICE_STORAGE
+status: LOCAL_IMPLEMENTED_CANONICAL_STORAGE_APPROVED_RELEASE_CHECKS_PENDING
 owner_approval: 2026-10-12 상세 진행 승인
 owner_request: 2026-10-12
 accepted_asset: body-check-emoji-v1.webp
@@ -19,9 +19,10 @@ not_authorized_by_this_document: 서버 공개, 진단, 자동 처방 변경, �
 
 2026-10-12 구현 인수: 확대·기타 입력·이력·계정 v4·백업 v6 코드를 연결하고
 로컬 검증했다. 이미 배포된 구형 기기 앱의 v1 전체 배열 저장은 새 companion을
-지울 수 있으므로 **배포 준비 완료가 아니다**. 새로운 canonical 기기 저장소로
-분리할지 오너에게 확인 중이며, 승인 전 자동 이관·민감정보 보호 사본을 추가하지 않는다.
-현재 클라이언트의 덮어쓰기 차단과 구형 바이너리 소급 보호를 구분한다.
+지울 수 있다는 P1 때문에 배포를 보류했다. 이후 오너가 **저장소를 분리해 보호한 뒤
+배포 준비**를 승인하여 canonical 분리·원본 보존·충돌 확인·삭제 생명주기를 구현했다.
+최신 근거는 `reports/review/CANONICAL_LOCAL_JOURNAL_IMPLEMENTATION_2026-10-12.md`를 따른다.
+이는 구형 바이너리를 수정한 것이 아니며, 실제 운영 배포·전체 릴리스 검사 완료와도 구분한다.
 
 현재 구현은 부위 이름 버튼 10개와 1–5/해제 선택, 일지의 `painParts` 보관을 제공한다.
 이 구조에 사용자 문장을 key로 추가하는 간편한 방식은 채택하지 않는다. 기존

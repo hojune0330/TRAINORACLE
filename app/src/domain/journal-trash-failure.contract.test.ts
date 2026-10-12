@@ -34,8 +34,10 @@ import {
 import { MEMO_PURPOSE } from "./journal-schema"
 import type { JournalEntry } from "./journal-schema"
 import { saveEntry } from "./journal-store"
+import { JOURNAL_TRASH_STORAGE_KEY } from "./journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
-const TRASH_KEY = "trainoracle.journal.trash.v1"
+const TRASH_KEY = JOURNAL_TRASH_STORAGE_KEY
 const ONE_DAY_MS = 24 * 60 * 60 * 1000
 
 function recentDeletedAt(): string {
@@ -100,7 +102,9 @@ function seedTrash(items: readonly { entry: JournalEntry; deletedAt: string }[])
   window.localStorage.setItem(TRASH_KEY, JSON.stringify(items))
 }
 
-beforeEach(() => {
+beforeEach(async () => {
+  window.localStorage.clear()
+  await initializeCanonicalJournalFixture()
   // 이 파일의 픽스처 deletedAt은 "2026년 7월" 같은 절대 날짜였다. 휴지통은
   // 읽는 순간 30일이 지난 항목을 버리므로, 실제 시간이 흘러 deletedAt이
   // 30일 전보 오래되면 loadTrash()가 항목을 조용히 비워버려 T-2~T-4가

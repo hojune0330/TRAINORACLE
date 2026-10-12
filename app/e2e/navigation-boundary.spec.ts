@@ -26,7 +26,7 @@ async function openReader(page: Page): Promise<void> {
 }
 
 async function storedJournal(page: Page): Promise<string | null> {
-  return page.evaluate(() => localStorage.getItem("trainoracle.journal.v1"))
+  return page.evaluate(() => localStorage.getItem("to-local-journal.journal.v2"))
 }
 
 test("native Back and Escape close decoration layers in order without applying text or replaying on Forward", async ({ page }) => {
@@ -80,7 +80,7 @@ test("confirmation Back, quick Forward/Back and Escape never delete or close the
   await expect(page.getByTestId("journal-delete-dialog")).toHaveCount(0)
   await expect(deleteButton).toBeFocused()
   expect(await storedJournal(page)).toBe(original)
-  expect(await page.evaluate(() => localStorage.getItem("trainoracle.journal.trash.v1"))).toBeNull()
+  expect(await page.evaluate(() => localStorage.getItem("to-local-journal.journal.trash.v2"))).toBeNull()
 })
 
 test("native POP restores a nonzero reader scroll and keeps it after delayed alignment would have fired", async ({ page }) => {

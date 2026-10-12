@@ -3,8 +3,13 @@ import { LOCAL_JOURNALS_CHANGED } from "./journal-change-events"
 import { JOURNAL_STORAGE_KEY, writeJournalEntries } from "./journal-local-storage"
 import { writeVaultAndJournalAtomically } from "./private-memo-vault-storage"
 import { PRIVATE_MEMO_VAULT_STORAGE_KEY } from "./journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
-beforeEach(() => localStorage.clear())
+beforeEach(async () => {
+  localStorage.clear()
+  sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
+})
 afterEach(() => { vi.restoreAllMocks(); localStorage.clear() })
 
 it("notifies only after confirmed plain or private-shell transactions, without record payloads", () => {

@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { canonicalJournalAccess } from "./canonical-journal-access"
 import type { JournalEntry } from "./journal-schema"
 import {
   JOURNAL_STORAGE_KEY,
@@ -79,6 +80,7 @@ export function restorePrivateMemoShell(entry: JournalEntry, memo: string): Jour
 }
 
 export function loadPrivateMemoVault(storage: Storage): PrivateMemoVault | null {
+  storage = canonicalJournalAccess(storage)
   try {
     return parsePrivateMemoVault(storage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY))
   } catch {
@@ -186,6 +188,7 @@ export async function rotatePrivateMemoVault(
   nextRecoveryCode: string,
   storage: Storage = window.localStorage,
 ): Promise<{ readonly ok: boolean }> {
+  storage = canonicalJournalAccess(storage)
   if (!isValidRecoveryCode(previousRecoveryCode) || !isValidRecoveryCode(nextRecoveryCode)) return { ok: false }
   let previousVault: string | null
   try {

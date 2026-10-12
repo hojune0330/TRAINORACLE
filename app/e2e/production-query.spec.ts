@@ -9,7 +9,7 @@ test("does not write journal data for a legacy uitest query", async ({ page }) =
 
   // Then: the query must not create a journal entry in browser storage.
   await expect
-    .poll(() => page.evaluate(() => window.localStorage.getItem("trainoracle.journal.v1")))
+    .poll(() => page.evaluate(() => window.localStorage.getItem("to-local-journal.journal.v2")))
     .toBeNull()
 })
 

@@ -12,7 +12,9 @@ import { createPlannedSessionLogDraft } from "../../src/domain/planned-session-l
 import { linkedCatalogWorkout } from "../../src/domain/planned-segment-evidence"
 import type { ExerciseLog } from "../../src/domain/exercise-log"
 import { parsePlanBetaState } from "../../src/domain/plan-beta-schema"
+import { initializeCanonicalJournalBrowserFixture } from "./canonical-journal-browser"
 
+await initializeCanonicalJournalBrowserFixture()
 const now = new Date("2026-09-30T03:00:00Z")
 const record = createSelfReportedAthleteRecord({ id: "catalog-browser-5k", purpose: "RECENT_RESULT", eventDistanceM: 5000,
   performanceSeconds: 1111.7, achievedOn: "2026-09-01", seasonId: null }, now)!

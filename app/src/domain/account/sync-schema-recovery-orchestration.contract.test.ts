@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { z } from "zod"
 import { saveEntry } from "../journal-store"
 import type { PostSessionEntry } from "../journal-schema"
+import { JOURNAL_STORAGE_KEY, SYNC_RECOVERY_STORAGE_KEY } from "../journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 
 type Row = Record<string, unknown>
 
@@ -104,7 +106,7 @@ import { previewSync, saveSyncConsent, syncNow } from "./sync"
 import { encryptPrivateJournalEntry, saveSessionRecoveryCode } from "./private-note-sync"
 import { createRecoveryCode } from "./private-note-crypto"
 
-const JOURNAL_KEY = "trainoracle.journal.v1"
+const JOURNAL_KEY = JOURNAL_STORAGE_KEY
 
 function post(id: string, savedAt = "2026-07-20T10:00:00.000Z"): PostSessionEntry {
   return {
@@ -134,9 +136,10 @@ function localIds(): string[] {
   return result.success ? result.data.map((entry) => entry.id) : []
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
   window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
   server.entries = []
   server.privateNotes = []
   server.schemaVersion = 17
@@ -233,7 +236,7 @@ describe("sync schema and recovery orchestration", () => {
 
     expect((await syncNow("user-1")).ok).toBe(true)
     expect(localIds().sort()).toEqual(["before", "during-outage", "remote"])
-    expect(window.localStorage.getItem("trainoracle.sync.recovery.v1")).toBeNull()
+    expect(window.localStorage.getItem(SYNC_RECOVERY_STORAGE_KEY)).toBeNull()
   })
 
   it("keeps syncing after pulling an encrypted private memo", async () => {

@@ -6,6 +6,8 @@ import {
 } from "./account-service"
 import { closeAccountDeletionBoundary, isAccountDeletionClosed } from "./account-deletion-boundary"
 import { activeLocalAccount, localJournalScopeGeneration, setActiveLocalAccount } from "./local-journal-ownership"
+import { JOURNAL_STORAGE_KEY } from "../journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 
 const { supabaseMock } = vi.hoisted(() => ({ supabaseMock: vi.fn() }))
 vi.mock("./supabase-client", () => ({ supabase: supabaseMock }))
@@ -234,13 +236,15 @@ describe("beta account admission service", () => {
     const rpc = vi.fn().mockResolvedValueOnce({ error: { message: "synthetic refusal" }, data: null })
       .mockRejectedValueOnce(new Error("synthetic offline"))
     supabaseMock.mockResolvedValue(verifiedClient(rpc, owner))
-    localStorage.setItem("trainoracle.journal.v1", "synthetic original unchanged")
+    localStorage.clear(); sessionStorage.clear()
+    await initializeCanonicalJournalFixture()
+    localStorage.setItem(JOURNAL_STORAGE_KEY, "synthetic original unchanged")
     setActiveLocalAccount(owner)
     expect(await requestServerAccountDeletion(owner)).toMatchObject({ ok: false })
     expect(await requestServerAccountDeletion(owner)).toMatchObject({ ok: false })
     expect(isAccountDeletionClosed(owner)).toBe(false)
     expect(activeLocalAccount()).toBe(owner)
-    expect(localStorage.getItem("trainoracle.journal.v1")).toBe("synthetic original unchanged")
+    expect(localStorage.getItem(JOURNAL_STORAGE_KEY)).toBe("synthetic original unchanged")
     setActiveLocalAccount(null)
   })
 

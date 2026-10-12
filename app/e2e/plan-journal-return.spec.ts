@@ -76,7 +76,7 @@ test("returning from a cancelled DAY 5 PM journal restores its slot without a sa
   await expect(returnedSession).toBeInViewport()
   await expect(page.getByText("일지를 연결했어요. 수행 결과와 계획을 함께 확인할 수 있어요.")).not.toBeVisible()
   await expect.poll(() => page.evaluate(() => ({
-    journal: JSON.parse(window.localStorage.getItem("trainoracle.journal.v1") ?? "[]"),
+    journal: JSON.parse(window.localStorage.getItem("to-local-journal.journal.v2") ?? "[]"),
     progress: JSON.parse(window.localStorage.getItem("trainoracle.plan-beta.v1") ?? "null")?.progress,
   }))).toEqual({ journal: [], progress: [] })
 })
@@ -132,7 +132,7 @@ test(`returning from a ${detailed ? "detailed" : completion === "native-back" ? 
   await expect(returnedSession.getByText("일지를 연결했어요. 수행 결과와 계획을 함께 확인할 수 있어요.")).toBeVisible()
   await expect(returnedSession.getByRole("button", { name: "계획에도 완료 표시" })).toBeVisible()
   await expect.poll(() => page.evaluate(() => ({
-    journal: JSON.parse(window.localStorage.getItem("trainoracle.journal.v1") ?? "[]"),
+    journal: JSON.parse(window.localStorage.getItem("to-local-journal.journal.v2") ?? "[]"),
     progress: JSON.parse(window.localStorage.getItem("trainoracle.plan-beta.v1") ?? "null")?.progress,
   }))).toMatchObject({
     journal: [{
@@ -151,7 +151,7 @@ test(`returning from a ${detailed ? "detailed" : completion === "native-back" ? 
     await page.goBack()
     await expect(reader).not.toBeVisible()
     await expect(page.getByRole("heading", { name: "9일 훈련 계획" })).toBeVisible()
-    await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.journal.v1") ?? "[]").length)).toBe(1)
+    await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("to-local-journal.journal.v2") ?? "[]").length)).toBe(1)
   }
 })
 }

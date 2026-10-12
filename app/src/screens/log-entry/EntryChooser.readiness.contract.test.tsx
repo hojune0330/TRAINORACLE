@@ -4,6 +4,8 @@ import type { JournalEntry } from "../../domain/journal-schema"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 import { resetAccountJournalProjection, setAccountJournalProjectionStatus } from "../../domain/account/account-journal-projection"
 import { setAccountAuthState } from "../../domain/account/account-auth-state"
+import { JOURNAL_STORAGE_KEY } from "../../domain/journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { EntryChooser } from "./EntryChooser"
 
 vi.mock("../../domain/account/config", async importOriginal => ({
@@ -11,7 +13,7 @@ vi.mock("../../domain/account/config", async importOriginal => ({
   accountFeatureEnabled: () => true,
 }))
 
-const STORAGE_KEY = "trainoracle.journal.v1"
+const STORAGE_KEY = JOURNAL_STORAGE_KEY
 const DATE = "2026-10-12"
 const ENTRY = {
   id: "synthetic-chooser-entry", kind: "post-session", date: "2026-10-11", savedAt: "2026-10-11T01:00:00Z",
@@ -19,8 +21,9 @@ const ENTRY = {
 } satisfies JournalEntry
 const guide = () => document.querySelector('img[src$="mari-journal-guide.webp"]')
 
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear(); setActiveLocalAccount(null); resetAccountJournalProjection(null); setAccountAuthState("GUEST")
+  await initializeCanonicalJournalFixture()
   vi.useFakeTimers(); vi.setSystemTime(new Date("2026-10-12T12:00:00Z"))
 })
 afterEach(() => {

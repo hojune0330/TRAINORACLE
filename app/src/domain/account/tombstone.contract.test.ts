@@ -7,13 +7,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { PostSessionEntry } from "../journal-schema"
 import { deleteEntry, loadEntries, saveEntry } from "../journal-store"
+import { JOURNAL_TOMBSTONES_STORAGE_KEY } from "../journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { mergeEntries } from "./sync"
 import {
   TOMBSTONE_LIMIT, clearTombstones, loadTombstones, mergeTombstones, recordTombstone,
   saveTombstones, tombstonedIds,
 } from "./tombstone"
 
-const TOMBSTONE_KEY = "trainoracle.sync.tombstones.v1"
+const TOMBSTONE_KEY = JOURNAL_TOMBSTONES_STORAGE_KEY
 
 function post(id: string, savedAt: string, overrides: Partial<PostSessionEntry> = {}): PostSessionEntry {
   return {
@@ -33,8 +35,10 @@ function post(id: string, savedAt: string, overrides: Partial<PostSessionEntry> 
   }
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
+  window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 
 afterEach(() => {
@@ -137,7 +141,7 @@ describe("deleteEntry 연동", () => {
     saveEntry(post("protected", "2026-07-20T10:00:00.000Z"))
     const original = Storage.prototype.setItem
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, key, value) {
-      if (key === "trainoracle.sync.tombstones.v1") throw new Error("quota")
+      if (key === JOURNAL_TOMBSTONES_STORAGE_KEY) throw new Error("quota")
       original.call(this, key, value)
     })
 
@@ -257,7 +261,11 @@ describe("삭제 기록 저장의 견고함", () => {
 // 지운 일지를 B기기가 자기 사본으로 다시 밀어 올려 되살린다. 서버 tombstone
 // 테이블을 pull해 합쳐야 삭제가 기기 사이로 전파된다.
 describe("기기 간 삭제 전파", () => {
-  beforeEach(() => { window.localStorage.clear() })
+  beforeEach(async () => {
+    window.localStorage.clear()
+    window.sessionStorage.clear()
+    await initializeCanonicalJournalFixture()
+  })
 
   it("다른 기기에서 지운 id를 받아오면 이 기기에서도 되살리지 않는다", () => {
     // B기기: 로컬에 X가 있고 tombstone은 없다 (A에서 지웠으므로)

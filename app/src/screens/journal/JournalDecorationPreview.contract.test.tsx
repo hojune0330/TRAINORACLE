@@ -1,13 +1,20 @@
 import { act, cleanup, fireEvent, render } from "@testing-library/react"
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { createEmptyDecorationState } from "../../domain/decoration-schema"
 import { decorationCatalogItem } from "../../domain/decoration-catalog"
 import { appendJournalDecoration, appendJournalTextSticker } from "../../domain/journal-decoration-state"
 import { activeDecorationStorageKeyV3 } from "../../domain/decorations"
 import { saveEntry } from "../../domain/journal-store"
 import { JOURNAL_STORAGE_KEY, JOURNAL_STORAGE_PROBE_KEY } from "../../domain/journal-local-storage"
+import { JOURNAL_OWNERSHIP_STORAGE_KEY } from "../../domain/journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { JournalDecorationPreview, JournalWritingDecorationPreview, selectJournalDecorationPreview } from "./JournalDecorationPreview"
 
+beforeEach(async () => {
+  localStorage.clear()
+  sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
+})
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 const DATE = "2026-10-02"
@@ -68,7 +75,7 @@ describe("JournalDecorationPreview", () => {
     expect(read).not.toHaveBeenCalled()
     expect(write).not.toHaveBeenCalled()
 
-    for (const key of [JOURNAL_STORAGE_KEY, activeDecorationStorageKeyV3(), "trainoracle.journal.ownership.v1",
+    for (const key of [JOURNAL_STORAGE_KEY, activeDecorationStorageKeyV3(), JOURNAL_OWNERSHIP_STORAGE_KEY,
       "trainoracle.storage-consent-revision.v1:synthetic-owner", "trainoracle.account.storage-withdrawal-pending.synthetic-owner", null]) {
       read.mockClear(); write.mockClear()
       act(() => window.dispatchEvent(new StorageEvent("storage", { key })))

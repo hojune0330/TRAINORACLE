@@ -30,7 +30,7 @@ for (const width of [375,320]) test(`remaining schedule selection and persisted 
   await dialog.getByRole("button", { name: "이 일정으로 바꾸기" }).click()
   await expect(dialog.getByRole("heading", { name: "남은 일정을 바꿨어요" })).toBeVisible()
   const stored = await page.evaluate(() => ({ plan: JSON.parse(localStorage.getItem("trainoracle.plan-beta.v1")!),
-    history: JSON.parse(localStorage.getItem("trainoracle.plan-beta.history.v1")!), journals: JSON.parse(localStorage.getItem("trainoracle.journal.v1")!) }))
+    history: JSON.parse(localStorage.getItem("trainoracle.plan-beta.history.v1")!), journals: JSON.parse(localStorage.getItem("to-local-journal.journal.v2")!) }))
   expect(stored.plan.executionReplan.action).toBe("REDUCE")
   expect(stored.history[0].originalPlan).toEqual(f.state)
   expect(stored.journals).toEqual(f.entries)

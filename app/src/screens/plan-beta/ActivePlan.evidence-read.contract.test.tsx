@@ -2,12 +2,15 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
+import { JOURNAL_STORAGE_KEY } from "../../domain/journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { ActivePlan } from "./ActivePlan"
 
 const showModal = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const scrollTo = Object.getOwnPropertyDescriptor(Element.prototype, "scrollTo")
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
+  await initializeCanonicalJournalFixture()
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true,
     value: function (this: HTMLDialogElement) { this.setAttribute("open", "") } })
   Object.defineProperty(Element.prototype, "scrollTo", { configurable: true, value: vi.fn() })
@@ -44,21 +47,21 @@ async function closeEvidenceReaders({ user, reader }: Awaited<ReturnType<typeof 
 
 it.each([null, "[]", "{broken", '[{"invalid":"entry"}]'])
   ("preserves complete versus unavailable journal evidence for %s", async raw => {
-    if (raw !== null) localStorage.setItem("trainoracle.journal.v1", raw)
+    if (raw !== null) localStorage.setItem(JOURNAL_STORAGE_KEY, raw)
     render(<ActivePlan state={stateFixture()} onProgress={vi.fn()} onNextFrame={vi.fn()}
       onActivateNextFrame={vi.fn()} onCheckDetailedExecution={vi.fn()} />)
     const readers = await openFirstSessionEvidence()
     const complete = raw === null || raw === "[]"
     expect(screen.queryByText(/이 훈련과 연결된 일지가 아직 없어요/u) !== null).toBe(complete)
     expect(screen.queryByText(/일지를 아직 모두 불러오지 못했어요/u) !== null).toBe(!complete)
-    expect(localStorage.getItem("trainoracle.journal.v1")).toBe(raw)
+    expect(localStorage.getItem(JOURNAL_STORAGE_KEY)).toBe(raw)
     await closeEvidenceReaders(readers)
   })
 
 it("does not turn a storage exception into an empty journal", async () => {
   const original = Storage.prototype.getItem
   vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (this: Storage, key) {
-    if (key === "trainoracle.journal.v1") throw new Error("synthetic storage failure")
+    if (key === JOURNAL_STORAGE_KEY) throw new Error("synthetic storage failure")
     return original.call(this, key)
   })
   render(<ActivePlan state={stateFixture()} onProgress={vi.fn()} onNextFrame={vi.fn()}

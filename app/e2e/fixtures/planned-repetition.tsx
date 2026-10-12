@@ -9,7 +9,9 @@ import { comparePlannedRepetitions } from "../../src/domain/planned-repetition-e
 import type { ExerciseLog } from "../../src/domain/exercise-log"
 import "../../../colors_and_type.css"
 import "../../src/styles/app.css"
+import { initializeCanonicalJournalBrowserFixture } from "./canonical-journal-browser"
 
+await initializeCanonicalJournalBrowserFixture()
 const f = repetitionFixture()
 const selected = selectPlanForActivation(f.result.generated.candidates[0].candidateId, f.result.generated, f.result.gate,
   { ...f.result.intake, startDate: "2026-09-30" }, f.result.athleteEvidence, REPETITION_TEST_NOW)

@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ATHLETE_RECORDS_STORAGE_KEY } from "../domain/athlete-records"
 import { createRecoveryCode } from "../domain/account/private-note-crypto"
 import { saveSessionRecoveryCode } from "../domain/account/private-note-sync"
+import { JOURNAL_STORAGE_KEY, PRIVATE_MEMO_VAULT_STORAGE_KEY } from "../domain/journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { LogEntry } from "./LogEntry"
 
 afterEach(cleanup)
@@ -42,8 +44,9 @@ async function savePostFromCurrentStep(user: ReturnType<typeof userEvent.setup>)
 }
 
 describe("race entry purpose-scoped notes", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
   })
 
   it("requires an explicit purpose before saving nonempty free text", async () => {
@@ -60,7 +63,7 @@ describe("race entry purpose-scoped notes", () => {
     // Then
     expect(onDone).not.toHaveBeenCalled()
     expect(screen.getByRole("alert")).toHaveTextContent("메모를 저장할 방법을 선택해 주세요")
-    expect(window.localStorage.getItem("trainoracle.journal.v1")).toBeNull()
+    expect(window.localStorage.getItem(JOURNAL_STORAGE_KEY)).toBeNull()
   })
 
   it("still starts without athlete-record-driven pace wiring on a clean store", () => {
@@ -134,7 +137,7 @@ describe("race entry purpose-scoped notes", () => {
         return key === null ? [] : [window.localStorage.getItem(key) ?? ""]
       })
     expect(values.join("\n")).not.toContain("PRIVATE-LUNA-731")
-    expect(window.localStorage.getItem("trainoracle.private-memo.v1")).not.toBeNull()
+    expect(window.localStorage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)).not.toBeNull()
   })
 
   it("persists structured pace, optional self-checks, and training-note context", async () => {
@@ -160,11 +163,11 @@ describe("race entry purpose-scoped notes", () => {
 
     // Then
     expect(onDone).toHaveBeenCalledWith("race", expect.objectContaining({ kind: "race" }))
-    expect(window.localStorage.getItem("trainoracle.journal.v1")).toContain('"tension":7')
-    expect(window.localStorage.getItem("trainoracle.journal.v1")).toContain('"condition":4')
-    expect(window.localStorage.getItem("trainoracle.journal.v1")).toContain('"mood":5')
-    expect(window.localStorage.getItem("trainoracle.journal.v1")).toContain('"goalPace":{"schemaVersion":1,"unit":"seconds_per_kilometer","secondsPerKm":225}')
-    expect(window.localStorage.getItem("trainoracle.journal.v1")).toContain('"memoPurpose":"ANALYZABLE_TRAINING_NOTE"')
+    expect(window.localStorage.getItem(JOURNAL_STORAGE_KEY)).toContain('"tension":7')
+    expect(window.localStorage.getItem(JOURNAL_STORAGE_KEY)).toContain('"condition":4')
+    expect(window.localStorage.getItem(JOURNAL_STORAGE_KEY)).toContain('"mood":5')
+    expect(window.localStorage.getItem(JOURNAL_STORAGE_KEY)).toContain('"goalPace":{"schemaVersion":1,"unit":"seconds_per_kilometer","secondsPerKm":225}')
+    expect(window.localStorage.getItem(JOURNAL_STORAGE_KEY)).toContain('"memoPurpose":"ANALYZABLE_TRAINING_NOTE"')
   })
 
   it.each([
@@ -188,13 +191,14 @@ describe("race entry purpose-scoped notes", () => {
       expect.objectContaining({ kind: "race" }),
       expect.stringContaining(notice),
     )
-    expect(window.localStorage.getItem("trainoracle.journal.v1")).toContain(text)
+    expect(window.localStorage.getItem(JOURNAL_STORAGE_KEY)).toContain(text)
   })
 })
 
 describe("existing journal entry regression", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
   })
 
   it("still saves a post-session entry", async () => {
@@ -207,7 +211,7 @@ describe("existing journal entry regression", () => {
     await savePostFromCurrentStep(user)
     expect(onDone).not.toHaveBeenCalled()
     expect(screen.getByRole("alert")).toHaveTextContent("아직 입력한 내용이 없어요")
-    expect(window.localStorage.getItem("trainoracle.journal.v1")).toBeNull()
+    expect(window.localStorage.getItem(JOURNAL_STORAGE_KEY)).toBeNull()
     await user.click(screen.getByRole("button", { name: "운동 결과 수정" }))
     await user.click(screen.getByRole("button", { name: "완료" }))
     await savePostFromCurrentStep(user)
@@ -217,7 +221,7 @@ describe("existing journal entry regression", () => {
       "post-session",
       expect.objectContaining({ kind: "post-session", activityOutcome: "COMPLETED" }),
     )
-    expect(window.localStorage.getItem("trainoracle.journal.v1")).toContain('"kind":"post-session"')
+    expect(window.localStorage.getItem(JOURNAL_STORAGE_KEY)).toContain('"kind":"post-session"')
   })
 
   it("captures a planned subjective intensity before saving", async () => {
@@ -236,7 +240,7 @@ describe("existing journal entry regression", () => {
       "post-session",
       expect.objectContaining({ kind: "post-session" }),
     )
-    expect(window.localStorage.getItem("trainoracle.journal.v1")).toContain('"plannedRpe":7')
+    expect(window.localStorage.getItem(JOURNAL_STORAGE_KEY)).toContain('"plannedRpe":7')
   })
 
   it("saves an interval component beside subjective intensity", async () => {
@@ -257,7 +261,7 @@ describe("existing journal entry regression", () => {
     await user.click(screen.getByRole("button", { name: "지금 입력 확인" }))
     await savePostFromCurrentStep(user)
 
-    const saved = window.localStorage.getItem("trainoracle.journal.v1")
+    const saved = window.localStorage.getItem(JOURNAL_STORAGE_KEY)
     expect(saved).toContain('"plannedRpe":7')
     expect(saved).toContain('"kind":"INTERVALS"')
     expect(saved).toContain('"repetitions":6')

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest"
 import type { PostSessionEntry } from "../journal-schema"
+import { SYNC_RECOVERY_STORAGE_KEY } from "../journal-storage-keys"
 import { loadEntries, replaceAllEntries, saveEntry } from "../journal-store"
 import {
   clearSyncRecoveryCheckpoint,
@@ -8,8 +9,9 @@ import {
 } from "./sync-recovery"
 import { loadTombstones, recordTombstone } from "./tombstone"
 import { assignJournalsToAccount, setActiveLocalAccount } from "./local-journal-ownership"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 
-const RECOVERY_KEY = "trainoracle.sync.recovery.v1"
+const RECOVERY_KEY = SYNC_RECOVERY_STORAGE_KEY
 const USER_1_RECOVERY_KEY = `${RECOVERY_KEY}.account.user-1`
 
 function post(id: string, savedAt = "2026-08-02T08:00:00.000Z"): PostSessionEntry {
@@ -29,9 +31,11 @@ function post(id: string, savedAt = "2026-08-02T08:00:00.000Z"): PostSessionEntr
   }
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
+  window.sessionStorage.clear()
   setActiveLocalAccount("user-1")
+  await initializeCanonicalJournalFixture()
 })
 
 describe("interrupted journal sync recovery", () => {
@@ -72,13 +76,13 @@ describe("interrupted journal sync recovery", () => {
     expect(loadEntries()).toEqual([])
   })
 
-  it("discards a malformed checkpoint without changing current entries", () => {
+  it("holds a malformed checkpoint and leaves current entries unchanged", () => {
     saveEntry(post("safe"))
     window.localStorage.setItem(RECOVERY_KEY, "{broken")
 
-    expect(recoverPendingSync("user-1")).toEqual({ ok: true, recovered: false })
+    expect(recoverPendingSync("user-1")).toEqual({ ok: false, recovered: false })
     expect(loadEntries().map((entry) => entry.id)).toEqual(["safe"])
-    expect(window.localStorage.getItem(RECOVERY_KEY)).toBeNull()
+    expect(window.localStorage.getItem(RECOVERY_KEY)).toBe("{broken")
   })
 
   it("discards an expired checkpoint instead of resurrecting old entries", () => {

@@ -41,6 +41,10 @@ import { readAccountJournalProjection, readCurrentConfirmedAccountJournalProject
 import { accountJournalPreviewEnabled } from "./account/account-journal-api"
 import { buildFileAnalysisReport } from "./import/file-analysis"
 import { stringifyBackupJsonForExport } from "./restore/backup-json-stream"
+import { isCanonicalJournalWritable } from "./canonical-journal-storage"
+import { canonicalJournalRawStorage } from "./canonical-journal-access"
+import { permanentlyEraseJournalOriginals } from "./journal-original-retention"
+import { announceLocalJournalChange } from "./journal-change-events"
 
 export { BackupJsonExportLimitError } from "./restore/backup-json-stream"
 
@@ -48,7 +52,9 @@ const privateMemoCache = new Map<string, { readonly recoveryCode: string; readon
 
 /** Cutover guard for legacy writers; account-less local journals remain available. */
 export function legacyJournalWritesBlocked(userId: string | null = activeLocalAccount()): boolean {
-  return accountJournalPreviewEnabled() && userId !== null
+  try {
+    return !isCanonicalJournalWritable(window.localStorage) || (accountJournalPreviewEnabled() && userId !== null)
+  } catch { return true }
 }
 
 export type {
@@ -140,13 +146,18 @@ export function loadJournalEntriesSnapshot(): JournalEntriesStorageSnapshot {
         : "uncertain",
     }
   } catch {
-    return { entries: [], raw: null, readStatus: "uncertain" }
+    // Retain opaque bytes for optimistic recovery; never parse/display them as
+    // entries when the namespace/legacy proof is unavailable. Writers still gate.
+    let raw: string | null = null
+    try { raw = canonicalJournalRawStorage(localStorage).getItem(JOURNAL_STORAGE_KEY) } catch { /* Storage denied. */ }
+    return { entries: [], raw, readStatus: "uncertain" }
   }
 }
 
 export function saveEntry(entry: unknown): { readonly ok: boolean; readonly total: number } {
   if (legacyJournalWritesBlocked()) return { ok: false, total: loadEntries().length }
   const snapshot = loadJournalEntriesSnapshot()
+  if (snapshot.readStatus !== "complete") return { ok: false, total: loadEntries().length }
   const all = snapshot.entries
   const parsedEntry = parseJournalEntryForWrite(entry)
   if (parsedEntry === null) return { ok: false, total: all.length }
@@ -169,6 +180,7 @@ export function saveEntry(entry: unknown): { readonly ok: boolean; readonly tota
 export async function savePrivateEntry(entry: unknown): Promise<{ readonly ok: boolean; readonly total: number }> {
   if (legacyJournalWritesBlocked()) return { ok: false, total: loadEntries().length }
   const snapshot = loadJournalEntriesSnapshot()
+  if (snapshot.readStatus !== "complete") return { ok: false, total: loadEntries().length }
   const all = snapshot.entries
   const parsedEntry = parseJournalEntryForWrite(entry)
   if (parsedEntry === null || !hasPrivateMemoText(parsedEntry)) return { ok: false, total: all.length }
@@ -210,6 +222,7 @@ export async function updatePrivateEntry(
 ): Promise<{ readonly ok: boolean; readonly total: number }> {
   if (legacyJournalWritesBlocked()) return { ok: false, total: loadEntries().length }
   const snapshot = loadJournalEntriesSnapshot()
+  if (snapshot.readStatus !== "complete") return { ok: false, total: loadEntries().length }
   const entries = snapshot.entries
   const nextEntry = parseJournalEntryForWrite(entry)
   if (nextEntry === null || !hasPrivateMemoText(nextEntry)) return { ok: false, total: entries.length }
@@ -303,6 +316,7 @@ export function replaceAllEntries(entries: readonly unknown[]): { readonly ok: b
   if (legacyJournalWritesBlocked()) return { ok: false, total: loadEntries().length }
   const parsed = parseJournalEntryList(entries)
   const snapshot = loadJournalEntriesSnapshot()
+  if (snapshot.readStatus !== "complete") return { ok: false, total: loadEntries().length }
   const localStorage = journalStorage()
   const hidden = snapshot.entries.filter((entry) => !isJournalVisible(entry.id))
   const hiddenIds = new Set(hidden.map((entry) => entry.id))
@@ -320,6 +334,7 @@ export function replaceEntriesOwnedBy(
   if (legacyJournalWritesBlocked(userId)) return { ok: false, total: loadEntriesOwnedBy(userId).length }
   const parsed = parseJournalEntryList(entries)
   const snapshot = loadJournalEntriesSnapshot()
+  if (snapshot.readStatus !== "complete") return { ok: false, total: loadEntriesOwnedBy(userId).length }
   const preserved = snapshot.entries.filter((entry) => !isJournalOwnedBy(entry.id, userId))
   const preservedIds = new Set(preserved.map((entry) => entry.id))
   if (parsed.some((entry) => preservedIds.has(entry.id))) return { ok: false, total: loadEntriesOwnedBy(userId).length }
@@ -339,6 +354,7 @@ export async function replaceEntriesOwnedByWithPrivateMemos(
 ): Promise<{ readonly ok: boolean; readonly total: number }> {
   if (legacyJournalWritesBlocked(userId)) return { ok: false, total: loadEntriesOwnedBy(userId).length }
   const snapshot = loadJournalEntriesSnapshot()
+  if (snapshot.readStatus !== "complete") return { ok: false, total: loadEntriesOwnedBy(userId).length }
   const preserved = snapshot.entries.filter((entry) => !isJournalOwnedBy(entry.id, userId))
   const preservedIds = new Set(preserved.map((entry) => entry.id))
   if (entries.some((entry) => preservedIds.has(entry.id))) return { ok: false, total: loadEntriesOwnedBy(userId).length }
@@ -389,6 +405,7 @@ export type DeleteEntryResult = {
 export function deleteEntry(id: string): DeleteEntryResult {
   if (legacyJournalWritesBlocked()) return { ok: false, total: loadEntries().length, trashed: false }
   const snapshot = loadJournalEntriesSnapshot()
+  if (snapshot.readStatus !== "complete") return { ok: false, total: loadEntries().length, trashed: false }
   const all = snapshot.entries
   if (!isJournalVisible(id)) return { ok: false, total: loadEntries().length, trashed: false }
   const matches = all.filter((entry) => entry.id === id)
@@ -424,6 +441,8 @@ export type RestoreDeletedResult = {
   /** 복구된 일지의 새 id — 원래 id와 다르다(아래 설명) */
   readonly restoredId: string | null
   readonly total: number
+  /** The restored record is saved; never retry restoration as if it failed. */
+  readonly cleanupPending?: boolean
 }
 
 /**
@@ -442,10 +461,11 @@ export type RestoreDeletedResult = {
 export function restoreDeletedEntry(id: string): RestoreDeletedResult {
   if (legacyJournalWritesBlocked()) return { ok: false, restoredId: null, total: loadEntries().length }
   if (!isJournalVisible(id)) return { ok: false, restoredId: null, total: loadEntries().length }
+  const snapshot = loadJournalEntriesSnapshot()
+  if (snapshot.readStatus !== "complete") return { ok: false, restoredId: null, total: loadEntries().length }
   const taken = takeFromTrash(id)
   if (taken === null) return { ok: false, restoredId: null, total: loadEntries().length }
 
-  const snapshot = loadJournalEntriesSnapshot()
   const restored = { ...taken.entry, id: newEntryId(), syncState: "local" as const }
   const owner = journalOwner(taken.entry.id)
   if (owner === undefined) {
@@ -480,7 +500,9 @@ export function restoreDeletedEntry(id: string): RestoreDeletedResult {
     moveToTrash(taken.entry, taken.deletedAt, taken.privateMemo)
     return { ok: false, restoredId: null, total: next.length - 1 }
   }
-  return { ok: true, restoredId: restored.id, total: next.length }
+  const cleaned = permanentlyEraseJournalOriginals(localStorage, [taken])
+  announceLocalJournalChange()
+  return { ok: true, restoredId: restored.id, total: next.length, ...(!cleaned ? { cleanupPending: true } : {}) }
 }
 
 export function exportEntriesJSON(options: JournalExportOptions = {}): string {

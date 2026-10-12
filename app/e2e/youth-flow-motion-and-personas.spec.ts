@@ -62,7 +62,7 @@ test("moves from a choice to the next question and gives a clear journal save co
   await expect(receipt.locator(".journal-save-result__mark .lucide-check")).toHaveCount(1)
   await expect(receipt).toContainText("저장")
   const savedEntries = await page.evaluate(() => {
-    const raw = window.localStorage.getItem("trainoracle.journal.v1")
+    const raw = window.localStorage.getItem("to-local-journal.journal.v2")
     return raw === null ? [] : JSON.parse(raw)
   })
   expect(savedEntries).toHaveLength(1)

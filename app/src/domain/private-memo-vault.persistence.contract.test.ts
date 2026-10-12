@@ -9,10 +9,12 @@ import {
   savePrivateMemoWithJournalShell,
 } from "./private-memo-vault"
 import { privateEntry } from "./private-memo-test-fixtures"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
   window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 
 describe("private memo vault and journal persistence", () => {
@@ -107,17 +109,14 @@ describe("private memo vault and journal persistence", () => {
     const concurrentVaultRaw = JSON.stringify(concurrentVault)
     const realGetItem = Storage.prototype.getItem
     const realSetItem = Storage.prototype.setItem
-    let vaultReads = 0
     const storage = delegatedStorage((key) => {
-      if (key === PRIVATE_MEMO_VAULT_STORAGE_KEY && vaultReads++ === 1) {
-        realSetItem.call(window.localStorage, PRIVATE_MEMO_VAULT_STORAGE_KEY, concurrentVaultRaw)
-        realSetItem.call(window.localStorage, JOURNAL_STORAGE_KEY, concurrentJournal)
-      }
       return realGetItem.call(window.localStorage, key)
     })
 
-    await expect(savePrivateMemoWithJournalShell(storage, [...loadEntries(), pending], pending, recoveryCode))
-      .resolves.toBe(false)
+    const pendingSave = savePrivateMemoWithJournalShell(storage, [...loadEntries(), pending], pending, recoveryCode)
+    realSetItem.call(window.localStorage, PRIVATE_MEMO_VAULT_STORAGE_KEY, concurrentVaultRaw)
+    realSetItem.call(window.localStorage, JOURNAL_STORAGE_KEY, concurrentJournal)
+    await expect(pendingSave).resolves.toBe(false)
 
     expect(window.localStorage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)).toBe(concurrentVaultRaw)
     expect(window.localStorage.getItem(JOURNAL_STORAGE_KEY)).toBe(concurrentJournal)

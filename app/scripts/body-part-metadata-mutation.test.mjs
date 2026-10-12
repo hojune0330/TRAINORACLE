@@ -39,10 +39,10 @@ const mutations = [
     check: "const previous={version:4,state:'FINALIZED',kind:'JOURNAL',entry}; const next=structuredClone(previous); delete next.entry.bodyPartMetadata; assert.equal(m.validateAccountJournalRecordUpdate(previous,next), false)",
   },
   {
-    name: 'unknown-version original survives a later save', file: 'journal-local-storage.ts',
+    name: 'supported companion survives a later save', file: 'journal-local-storage.ts',
     before: 'if (!journalWriteRetainsBodyMetadata(previous, entries)) return false',
     after: '',
-    check: "const raw=JSON.stringify([{...entry,bodyPartMetadata:{schemaVersion:99,observations:[]}}]); const map=new Map([['trainoracle.journal.v1',raw]]); const storage={getItem:k=>map.get(k)??null,setItem:(k,v)=>map.set(k,v),removeItem:k=>map.delete(k)}; assert.equal(m.writeJournalEntries(storage,[entry],raw),false); assert.equal(storage.getItem('trainoracle.journal.v1'),raw)",
+    check: `const values=new Map(); const storage={get length(){return values.size},key:index=>[...values.keys()][index]??null,getItem:key=>values.get(key)??null,setItem:(key,value)=>values.set(key,String(value)),removeItem:key=>values.delete(key),clear:()=>values.clear()}; const initialized=await m.initializeCanonicalJournalStorage(storage,undefined,operation=>operation()); assert.equal(initialized.status,'ready'); const raw=JSON.stringify([entry]); storage.setItem(m.JOURNAL_STORAGE_KEY,raw); const replacement={...entry}; delete replacement.bodyPartMetadata; assert.equal(m.writeJournalEntries(storage,[replacement],raw),false); assert.equal(storage.getItem(m.JOURNAL_STORAGE_KEY),raw)`,
   },
 ]
 
@@ -52,7 +52,8 @@ async function bundle(mutation) {
     stdin: { contents: `export * from './src/domain/body-part-metadata.ts';
       export { toExportJournalEntry } from './src/domain/safe-export.ts';
       export { parseAccountJournalRecord, validateAccountJournalRecordUpdate } from './src/domain/account/account-journal-record-schema.ts';
-      export { writeJournalEntries } from './src/domain/journal-local-storage.ts';`, resolveDir: app, loader: 'ts' },
+      export { writeJournalEntries, JOURNAL_STORAGE_KEY } from './src/domain/journal-local-storage.ts';
+      export { initializeCanonicalJournalStorage } from './src/domain/canonical-journal-storage.ts';`, resolveDir: app, loader: 'ts' },
     tsconfig: `${app}/tsconfig.json`, bundle: true, write: false, platform: 'node', format: 'esm',
     define: { navigator: 'undefined' }, minify: true,
     plugins: mutation ? [{ name: 'in-memory-body-contract-fault', setup(builder) {
@@ -69,9 +70,10 @@ async function bundle(mutation) {
 const baseline = await bundle()
 function run(result, mutation) {
   const url = `data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString('base64')}`
-  const code = `import assert from 'node:assert/strict'; import {test} from 'node:test';
+  const code = `import assert from 'node:assert/strict'; import {test} from 'node:test'; import {webcrypto} from 'node:crypto';
+    globalThis.crypto ??= webcrypto;
     const m=await import(${JSON.stringify(url)}); const entry=${JSON.stringify(fixture)};
-    test(${JSON.stringify(mutation.name)},()=>{${mutation.check}});`
+    test(${JSON.stringify(mutation.name)},async()=>{${mutation.check}});`
   return spawnSync(process.execPath, ['--input-type=module', '--test-reporter=tap'], {
     input: code, encoding: 'utf8', timeout: 30000,
     // A native test-worker child otherwise emits internal binary events instead

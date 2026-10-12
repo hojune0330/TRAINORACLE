@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { FIELD_PROVENANCE } from "../domain/field-provenance"
 import { JOURNAL_STORAGE_KEY } from "../domain/journal-local-storage"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { MEMO_PURPOSE } from "../domain/journal-schema"
 import { saveEntry, savePrivateEntry, todayISO } from "../domain/journal-store"
 import { loadPlanBetaState, loadPreviousIntake, savePlanBetaState } from "../domain/plan-beta-store"
@@ -14,9 +15,10 @@ import { PlanBeta } from "./PlanBeta"
 import { enterPlanWithoutRecord } from "./plan-beta/instant-plan.test-helper"
 import { hasPendingBrowserBackLayer } from "../navigation/browserNavigation"
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
   window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 
 afterEach(async () => {

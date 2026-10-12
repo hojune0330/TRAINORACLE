@@ -3,8 +3,10 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest"
 import { AppShell } from "./AppShell"
 import { setActiveLocalAccount } from "./domain/account/local-journal-ownership"
+import { JOURNAL_STORAGE_KEY } from "./domain/journal-storage-keys"
 import { hasPendingBrowserBackLayer } from "./navigation/browserNavigation"
 import type { JournalEntry } from "./domain/journal-schema"
+import { initializeCanonicalJournalFixture } from "./test/canonical-journal-fixture"
 
 const date = "2026-10-08"
 const entries: JournalEntry[] = ["AM", "PM"].map((slot, index) => ({
@@ -15,10 +17,11 @@ const entries: JournalEntry[] = ["AM", "PM"].map((slot, index) => ({
 beforeAll(async () => {
   await Promise.all([import("./screens/JournalArchive"), import("./screens/JournalDayReader"), import("./screens/LogDetail")])
 }, 60000)
-beforeEach(() => {
+beforeEach(async () => {
   setActiveLocalAccount("reset-calendar-return"); setActiveLocalAccount(null)
   localStorage.clear(); sessionStorage.clear()
-  localStorage.setItem("trainoracle.journal.v1", JSON.stringify(entries))
+  await initializeCanonicalJournalFixture()
+  localStorage.setItem(JOURNAL_STORAGE_KEY, JSON.stringify(entries))
 })
 afterEach(async () => {
   cleanup()
@@ -48,7 +51,7 @@ describe("original journal return through the shell", { timeout: 15000 }, () => 
     fireEvent.click(within(dialog).getByRole("button", { name: "달력으로 돌아가기" }))
     await waitFor(() => expect(screen.getByRole("button", { name: /2026년 10월 8일.*일지 열기/ })).toHaveFocus())
     expect(screen.queryByRole("dialog")).toBeNull()
-    expect(JSON.parse(localStorage.getItem("trainoracle.journal.v1")!)).toEqual(entries)
+    expect(JSON.parse(localStorage.getItem(JOURNAL_STORAGE_KEY)!)).toEqual(entries)
     fireEvent.click(screen.getByRole("button", { name: "홈" }))
     fireEvent.click(screen.getByRole("button", { name: "일지" }))
     await screen.findByRole("grid", { name: "2026년 10월 달력" })

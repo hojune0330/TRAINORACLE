@@ -10,10 +10,16 @@ import { buildRestorePlan, readBackupFile, restoreBackupFile, FULL_FORMAT_V5 } f
 import * as decorationService from "../account/account-decoration-service"
 import * as calendarService from "../account/account-calendar-decoration-service"
 import * as calendarStore from "../calendar-decoration-store"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 
 const calendar = { version: 1 as const, paperThemeId: null, items: [{ placementId: "4b4a2f50-321a-49cd-b413-4290dbcb7992", itemId: "STICKER_WEATHER_SUN" as const, region: "HEADER_MARGIN" as const, transform: { xPercent: 50, yPercent: 50, scale: 1, rotationDeg: 0 } }] }
 const entry = { id: "synthetic-restore", kind: "post-session" as const, date: "2026-10-02", savedAt: "2026-10-02T01:00:00.000Z", syncState: "local" as const, system: "base" as const, title: "합성 기록", distanceKm: "5", durationMin: "30", avgPace: "6:00", memo: "", rpe: 4 }
-beforeEach(() => { setActiveLocalAccount(null); localStorage.clear(); sessionStorage.clear() })
+beforeEach(async () => {
+  setActiveLocalAccount(null)
+  localStorage.clear()
+  sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
+})
 afterEach(() => { vi.restoreAllMocks(); localStorage.clear() })
 const read = (cal: unknown = calendar, entries: unknown[] = []) => readBackupFile(JSON.stringify({ app: "TRAINORACLE", format: FULL_FORMAT_V5, entries, decorations: createEmptyDecorationState(), calendarDecorations: cal }))
 
@@ -87,6 +93,7 @@ describe("calendar full backup v5", () => {
     expect(raw).toContain(FULL_FORMAT_V5)
     expect(exportEntriesJSON()).not.toContain("calendarDecorations")
     localStorage.clear()
+    await initializeCanonicalJournalFixture()
     const parsed = readBackupFile(raw)
     const outcome = await restoreBackupFile(parsed, buildRestorePlan(parsed.entries), "keep-existing", "keep-existing", "replace")
     expect(outcome.calendarDecorationRestore).toBe("RESTORED")

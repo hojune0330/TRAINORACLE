@@ -15,9 +15,11 @@ import {
 } from "./sync"
 import { requestEmailOtp, signInWithGoogle, currentUser } from "./auth"
 import { accountFeatureEnabled } from "./config"
+import { JOURNAL_STORAGE_KEY } from "../journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 
 const CONSENT_KEY = "trainoracle.sync.consent.v1"
-const JOURNAL_KEY = "trainoracle.journal.v1"
+const JOURNAL_KEY = JOURNAL_STORAGE_KEY
 
 function post(id: string, savedAt: string, overrides: Partial<PostSessionEntry> = {}): PostSessionEntry {
   return {
@@ -38,8 +40,10 @@ function post(id: string, savedAt: string, overrides: Partial<PostSessionEntry> 
   }
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
+  window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 
 describe("mergeEntries — id 기준 LWW", () => {

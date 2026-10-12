@@ -16,6 +16,8 @@ import { evaluatePlanSafety } from "./plan-beta-flow"
 import { activePlanBetaStorageKey, readArchivedOriginalPlans, readPlanBetaStateFromStorage } from "./plan-beta-store"
 import { planBetaStateV3Schema, type PlanBetaStateV3 } from "./plan-beta-schema"
 import { ATHLETE_RECORDS_STORAGE_KEY } from "./athlete-records"
+import { JOURNAL_STORAGE_KEY } from "./journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
 // These are full recipe replay + storage integration tests, not mocked arithmetic.
 vi.setConfig({ testTimeout: 30_000 })
@@ -32,7 +34,7 @@ vi.mock("./account/account-plan-service", async importOriginal => {
   return { ...actual, accountPlansEnabled: vi.fn(() => false) }
 })
 
-const PLAN_HISTORY = "trainoracle.plan-beta.history.v1", JOURNAL = "trainoracle.journal.v1"
+const PLAN_HISTORY = "trainoracle.plan-beta.history.v1", JOURNAL = JOURNAL_STORAGE_KEY
 const input: GoalTrainingProgramPreviewInput = {
   goalMinutes: 45, dateChoice: { kind: "START", startDate: "2026-10-11" }, today: "2026-10-11",
   generatedAt: "2026-10-11T00:00:00.000Z", experienceBand: "DEVELOPING", availableDayCount: 4,
@@ -40,8 +42,9 @@ const input: GoalTrainingProgramPreviewInput = {
 }
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T
 
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null)
+  await initializeCanonicalJournalFixture()
   vi.mocked(accountPlansEnabled).mockReturnValue(false)
   lock.before = null; lock.available = true
   vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-10-11T03:00:00.000Z"))
@@ -228,6 +231,7 @@ describe("goal program local persistence and explicit current-frame bridge", () 
     const future = await saved(program({ dateChoice: { kind: "START", startDate: "2026-10-12" } }))
     expect((await applyGoalTrainingProgramCycle(applyInput(future))).kind).toBe("applied")
     localStorage.clear()
+    await initializeCanonicalJournalFixture()
     const document = await saved()
     vi.setSystemTime(new Date("2026-10-21T03:00:00.000Z"))
     expect(await applyGoalTrainingProgramCycle(applyInput(document))).toMatchObject({ kind: "rejected", code: "CYCLE_DATES_ELAPSED" })
@@ -240,9 +244,12 @@ describe("goal program local persistence and explicit current-frame bridge", () 
     vi.setSystemTime(new Date("2026-10-15T03:00:00.000Z"))
     expect(await applyGoalTrainingProgramCycle(applyInput(document))).toMatchObject({ kind: "rejected", code: "START_DATE_ELAPSED" })
     localStorage.clear()
+    await initializeCanonicalJournalFixture()
     expect(await saveGoalTrainingProgram(document.program, { expectedRevision: null, currentCheck: "NO_KNOWN_RISK" })).toMatchObject({ kind: "rejected", code: "START_DATE_ELAPSED" })
     vi.setSystemTime(new Date("2026-10-11T03:00:00.000Z")); localStorage.clear()
+    await initializeCanonicalJournalFixture()
     await applied(); const backup = exportGoalTrainingProgramJSON(); localStorage.clear()
+    await initializeCanonicalJournalFixture()
     vi.setSystemTime(new Date("2026-10-15T03:00:00.000Z"))
     const restored = await restoreGoalTrainingProgramJSON(backup, { expectedRevision: null, confirmsOwnFile: true })
     if (restored.kind !== "restored") throw Error("Restore")
@@ -286,6 +293,7 @@ describe("program backup, replacement history and scope boundary", () => {
     localStorage.setItem(activePlanBetaStorageKey(), JSON.stringify(completed))
     const backup = exportGoalTrainingProgramJSON()
     localStorage.clear()
+    await initializeCanonicalJournalFixture()
     expect(await restoreGoalTrainingProgramJSON(backup, { expectedRevision: null, confirmsOwnFile: false })).toMatchObject({ kind: "rejected", code: "OWN_FILE_CONFIRMATION_REQUIRED" })
     const restored = await restoreGoalTrainingProgramJSON(backup, { expectedRevision: null, confirmsOwnFile: true })
     expect(restored).toMatchObject({ kind: "restored", activePlanChanged: false })
@@ -298,6 +306,7 @@ describe("program backup, replacement history and scope boundary", () => {
 
   it("restoring a backup never replaces the unrelated actual active plan", async () => {
     await applied(); const backup = exportGoalTrainingProgramJSON(); localStorage.clear()
+    await initializeCanonicalJournalFixture()
     const unrelated = JSON.stringify(program({ dateChoice: { kind: "START", startDate: "2026-10-12" } }).frames[0]!.plan)
     localStorage.setItem(activePlanBetaStorageKey(), unrelated)
     expect((await restoreGoalTrainingProgramJSON(backup, { expectedRevision: null, confirmsOwnFile: true })).kind).toBe("restored")
@@ -307,6 +316,7 @@ describe("program backup, replacement history and scope boundary", () => {
 
   it.each(["hash", "source", "date", "field"] as const)("rejects a modified backup %s, including a recalculated outer hash", async change => {
     await saved(); const incoming = JSON.parse(exportGoalTrainingProgramJSON()); localStorage.clear()
+    await initializeCanonicalJournalFixture()
     if (change === "hash") incoming.contentFingerprint = "not-the-fingerprint"
     else {
       if (change === "source") incoming.document.program.source.version = "unreviewed"
@@ -338,6 +348,7 @@ describe("program backup, replacement history and scope boundary", () => {
     expect(history.entries[0].document.cycles[0]).toMatchObject({ status: "ENDED", latestPlan: completed })
     expect(readArchivedOriginalPlans()).toMatchObject({ kind: "loaded", plans: expect.arrayContaining([completed]) })
     const backup = exportGoalTrainingProgramJSON(); localStorage.clear()
+    await initializeCanonicalJournalFixture()
     expect((await restoreGoalTrainingProgramJSON(backup, { expectedRevision: null, confirmsOwnFile: true })).kind).toBe("restored")
     expect(JSON.parse(localStorage.getItem(GOAL_TRAINING_PROGRAM_HISTORY_STORAGE_KEY)!).entries).toEqual(history.entries)
     expect(loaded().document.program).toEqual(next)

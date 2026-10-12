@@ -7,6 +7,7 @@ import { createPlannedSessionLogDraft } from "./planned-session-link"
 import type { PostSessionEntry } from "./journal-schema"
 import { FIELD_PROVENANCE } from "./field-provenance"
 import { JOURNAL_STORAGE_KEY } from "./journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { readCatalogCycleDraftSource, catalogCycleDraftSourceStillCurrent } from "./catalog-cycle-draft"
 import { saveSelectedPlanCandidate } from "../screens/plan-beta/plan-selection"
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
@@ -55,8 +56,9 @@ function setup() {
   return { predecessor, entries, next }
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null)
+  await initializeCanonicalJournalFixture()
   vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-10-01T03:00:00Z"))
 })
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); setActiveLocalAccount(null) })

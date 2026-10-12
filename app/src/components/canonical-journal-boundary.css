@@ -1,0 +1,31 @@
+.canonical-journal-boundary {
+  box-sizing: border-box;
+  width: min(100%, 32rem);
+  margin-inline: auto;
+  padding: var(--space-8) var(--space-5);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.canonical-journal-boundary > svg { color: var(--brand); }
+.canonical-journal-boundary h1 { margin-block: var(--space-5) var(--space-3); font-size: 1.4rem; line-height: 1.4; }
+.canonical-journal-boundary p { color: var(--ink-2); line-height: 1.6; }
+.canonical-journal-boundary__actions { display: grid; gap: var(--space-3); margin-block: var(--space-6); }
+.canonical-journal-boundary button, .canonical-journal-boundary summary { min-height: 44px; white-space: normal; }
+.canonical-journal-boundary button { padding: var(--space-3) var(--space-4); border: 1px solid var(--line-2); border-radius: var(--r-task-surface); font: inherit; font-weight: 700; cursor: pointer; }
+.canonical-journal-boundary__primary { background: var(--brand); color: var(--surface); }
+.canonical-journal-boundary__secondary { background: var(--surface); color: var(--ink); }
+.canonical-journal-boundary button:disabled { opacity: .6; cursor: wait; }
+.canonical-journal-boundary button:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
+.canonical-journal-boundary summary { display: flex; align-items: center; cursor: pointer; }
+.canonical-journal-boundary summary:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.canonical-journal-dialog {
+  box-sizing: border-box;
+  width: min(calc(100% - 32px), 32rem);
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-task-surface);
+  background: var(--bg);
+  overflow-y: auto;
+}
+.canonical-journal-dialog::backdrop { background: rgb(14 20 18 / 45%); }

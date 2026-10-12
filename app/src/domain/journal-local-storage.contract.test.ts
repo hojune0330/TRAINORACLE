@@ -29,6 +29,7 @@ import {
 } from "./journal-local-storage"
 import { MEMO_PURPOSE } from "./journal-schema"
 import type { JournalEntry } from "./journal-schema"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
 const PRIVATE_TEXT = "PRIVATE-LUNA-731"
 
@@ -76,8 +77,9 @@ function evening(
   }
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 
 afterEach(() => {

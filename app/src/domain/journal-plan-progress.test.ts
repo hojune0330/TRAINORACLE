@@ -10,6 +10,7 @@ import { parseAccountJournalRecord } from "./account/account-journal-record-sche
 import { fromStructuredJournalPayload, toAnalysisJournalEntry, toExportJournalEntry } from "./safe-export"
 import { parseJournalEntryForWrite } from "./journal-schema"
 import { JOURNAL_STORAGE_KEY } from "./journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
 function fixture() {
   const state = stateFixture() as PlanBetaStateV3
@@ -64,9 +65,10 @@ describe("journal receipt progress is explicit and exact", () => {
 
 describe("saved journal progress transaction", () => {
   let locksDescriptor: PropertyDescriptor | undefined
-  beforeEach(() => {
+  beforeEach(async () => {
     localStorage.clear()
     sessionStorage.clear()
+    await initializeCanonicalJournalFixture()
     locksDescriptor = Object.getOwnPropertyDescriptor(navigator, "locks")
     Object.defineProperty(navigator, "locks", { configurable: true, value: {
       request: async (_name: string, _options: unknown, callback: (lock: object) => unknown) => callback({}),

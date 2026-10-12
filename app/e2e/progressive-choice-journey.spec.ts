@@ -115,7 +115,7 @@ for (const persona of personas) {
       await noHorizontalOverflow(page)
       await page.getByRole("button", { name: "이대로 저장", exact: true }).click()
       await expect(page.getByRole("heading", { name: "오늘 기록을 남겼어요." })).toBeVisible()
-      const stored = await page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.journal.v1") ?? "[]"))
+      const stored = await page.evaluate(() => JSON.parse(localStorage.getItem("to-local-journal.journal.v2") ?? "[]"))
       expect(stored).toHaveLength(1)
       await page.getByRole("button", { name: "완료", exact: true }).click()
       await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "일지", exact: true }).click()
@@ -128,7 +128,7 @@ for (const persona of personas) {
       await page.getByText("월별 기록 모아보기", { exact: true }).click()
       await noHorizontalOverflow(page)
       await expect(page.getByText("월별 기록 모아보기", { exact: true })).toBeVisible()
-      expect(await page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.journal.v1") ?? "[]"))).toEqual(stored)
+      expect(await page.evaluate(() => JSON.parse(localStorage.getItem("to-local-journal.journal.v2") ?? "[]"))).toEqual(stored)
     })
   })
 }

@@ -199,7 +199,9 @@ const opaqueAthleteIdSchema = z.string().refine(
     || /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(value),
 )
 const adaptationExposureIdSchema = z.string().regex(/^(?:app-main-day-(?:[1-9]|10)|fixture-main-[1-3])$/u)
-const adaptationRecordIdSchema = athleteRecordIdSchema
+// Journal validation can reach this module while athlete-records is initializing.
+// Resolve the unchanged record schema when parsing, not during module evaluation.
+const adaptationRecordIdSchema = z.lazy(() => athleteRecordIdSchema)
 const currentElapsedLabels = new Set(
   Array.from({ length: SEASON_WINDOW_MONTHS + 1 }, (_, months) => formatElapsedMonths(months)),
 )

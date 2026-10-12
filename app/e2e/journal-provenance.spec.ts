@@ -13,9 +13,9 @@ test("writes direct and skipped post-session provenance without a test query", a
   await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
   await page.getByRole("button", { name: /^저장/u }).click()
 
-  await expect.poll(() => page.evaluate(() => window.localStorage.getItem("trainoracle.journal.v1"))).not.toBeNull()
+  await expect.poll(() => page.evaluate(() => window.localStorage.getItem("to-local-journal.journal.v2"))).not.toBeNull()
   const entry = await page.evaluate(() => {
-    const raw = window.localStorage.getItem("trainoracle.journal.v1")
+    const raw = window.localStorage.getItem("to-local-journal.journal.v2")
     return raw === null ? null : JSON.parse(raw)[0]
   })
   expect(entry).toMatchObject({

@@ -7,9 +7,11 @@ import { buildFileObservation } from "../../domain/import/file-observation"
 import { putAccountJournalProjection, resetAccountJournalProjection } from "../../domain/account/account-journal-projection"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 import { ORACLE_TOPICS, type OracleTopicId } from "../../domain/oracle-exploration"
+import { JOURNAL_STORAGE_KEY } from "../../domain/journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { Trends } from "../Trends"
 
-const STORAGE_KEY = "trainoracle.journal.v1"
+const STORAGE_KEY = JOURNAL_STORAGE_KEY
 const OWNER_ID = "trends-exploration-owner"
 async function chooseDetail(user: ReturnType<typeof userEvent.setup>, label: string) {
   await user.click(screen.getByRole("button", { name: label }))
@@ -68,8 +70,9 @@ function pendingFileSession(): PostSessionEntry {
   }
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
+  await initializeCanonicalJournalFixture()
   setActiveLocalAccount(null)
   resetAccountJournalProjection(null)
   vi.stubEnv("VITE_FEATURE_FILE_ANALYSIS_TCX", "true")

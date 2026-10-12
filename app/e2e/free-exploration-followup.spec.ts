@@ -76,7 +76,7 @@ test("does not ask to discard a blank or successfully saved guest journal", asyn
   await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
   await home.click()
   expect(dialogs).toEqual([])
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.journal.v1") ?? "[]"))).toHaveLength(1)
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("to-local-journal.journal.v2") ?? "[]"))).toHaveLength(1)
 })
 
 test("keeps personal mode when another analysis topic has no personal evidence", async ({ page }) => {

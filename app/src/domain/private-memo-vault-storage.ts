@@ -1,21 +1,39 @@
 import type { JournalEntry } from "./journal-schema"
-import { parseJournalEntryList } from "./journal-schema"
 import { JOURNAL_STORAGE_KEY, PRIVATE_MEMO_VAULT_STORAGE_KEY } from "./journal-storage-keys"
 import type { PrivateMemoVault } from "./private-memo-vault"
 import { announceLocalJournalChange } from "./journal-change-events"
 import { journalWriteRetainsBodyMetadata } from "./body-part-metadata"
+import { canonicalJournalAccess, canonicalJournalRawStorage } from "./canonical-journal-access"
+import { CANONICAL_JOURNAL_MANIFEST_KEY, isCanonicalJournalWritable } from "./canonical-journal-storage"
 
 export type VaultJournalStorageSnapshot = {
   readonly vault: string | null
   readonly journal: string | null
 }
 
+// Preserve the public snapshot shape while binding snapshots passed across an
+// async encryption step to the migration/deletion epoch in which they were read.
+const snapshotEpochs = new WeakMap<VaultJournalStorageSnapshot, string | null>()
+
+function sameEpoch(storage: Storage, epoch: string | null): boolean {
+  try { return canonicalJournalRawStorage(storage).getItem(CANONICAL_JOURNAL_MANIFEST_KEY) === epoch }
+  catch { return false }
+}
+
 export function readVaultJournalStorageSnapshot(storage: Storage): VaultJournalStorageSnapshot | null {
+  return readSnapshot(canonicalJournalAccess(storage))
+}
+
+function readSnapshot(storage: Storage): VaultJournalStorageSnapshot | null {
   try {
-    return {
+    const epoch = canonicalJournalRawStorage(storage).getItem(CANONICAL_JOURNAL_MANIFEST_KEY)
+    const snapshot = {
       vault: storage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY),
       journal: storage.getItem(JOURNAL_STORAGE_KEY),
     }
+    if (!sameEpoch(storage, epoch)) return null
+    snapshotEpochs.set(snapshot, epoch)
+    return snapshot
   } catch {
     return null
   }
@@ -28,8 +46,13 @@ export function writeVaultAndJournalAtomically(
   expected?: VaultJournalStorageSnapshot,
   commitGuard: () => boolean = () => true,
 ): boolean {
+  storage = canonicalJournalAccess(storage)
+  let epoch: string | null
+  try { epoch = canonicalJournalRawStorage(storage).getItem(CANONICAL_JOURNAL_MANIFEST_KEY) }
+  catch { return false }
   const previous = expected ?? readVaultJournalStorageSnapshot(storage)
   if (previous === null) return false
+  if (snapshotEpochs.has(previous) && snapshotEpochs.get(previous) !== epoch) return false
   if (!journalWriteRetainsBodyMetadata(previous.journal, entries)) return false
   if (expected !== undefined && !snapshotMatches(storage, expected)) return false
   if (!guardAllowsCommit(commitGuard)) return false
@@ -37,19 +60,23 @@ export function writeVaultAndJournalAtomically(
   const nextJournal = JSON.stringify(entries)
 
   try {
+    if (!sameEpoch(storage, epoch)) return false
     storage.setItem(PRIVATE_MEMO_VAULT_STORAGE_KEY, nextVault)
+    if (!sameEpoch(storage, epoch)) return false
     storage.setItem(JOURNAL_STORAGE_KEY, nextJournal)
     if (storage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY) === nextVault
       && storage.getItem(JOURNAL_STORAGE_KEY) === nextJournal
-      && guardAllowsCommit(commitGuard)) {
+      && guardAllowsCommit(commitGuard)
+      && sameEpoch(storage, epoch)
+      && isCanonicalJournalWritable(canonicalJournalRawStorage(storage))) {
       announceLocalJournalChange()
       return true
     }
   } catch {
-    restoreUnconfirmedStorageSnapshot(storage, previous, nextVault, nextJournal)
+    restoreUnconfirmedStorageSnapshot(storage, previous, nextVault, nextJournal, epoch)
     return false
   }
-  restoreUnconfirmedStorageSnapshot(storage, previous, nextVault, nextJournal)
+  restoreUnconfirmedStorageSnapshot(storage, previous, nextVault, nextJournal, epoch)
   return false
 }
 
@@ -75,49 +102,23 @@ function restoreUnconfirmedStorageSnapshot(
   previous: VaultJournalStorageSnapshot,
   nextVault: string,
   nextJournal: string,
+  epoch: string | null,
 ): void {
-  const current = readVaultJournalStorageSnapshot(storage)
-  if (current === null || isNewerValidSnapshot(current, previous, nextVault, nextJournal)) return
-  restoreStorageValue(storage, PRIVATE_MEMO_VAULT_STORAGE_KEY, previous.vault)
-  restoreStorageValue(storage, JOURNAL_STORAGE_KEY, previous.journal)
+  storage = canonicalJournalRawStorage(storage)
+  if (!sameEpoch(storage, epoch)) return
+  const current = readSnapshot(storage)
+  if (current === null || !sameEpoch(storage, epoch)
+    || isForeignCompleteValue(current.vault, previous.vault, nextVault)
+    || isForeignCompleteValue(current.journal, previous.journal, nextJournal)) return
+  restoreStorageValue(storage, PRIVATE_MEMO_VAULT_STORAGE_KEY, previous.vault, current.vault, epoch)
+  restoreStorageValue(storage, JOURNAL_STORAGE_KEY, previous.journal, current.journal, epoch)
 }
 
-function isNewerValidSnapshot(
-  current: VaultJournalStorageSnapshot,
-  previous: VaultJournalStorageSnapshot,
-  nextVault: string,
-  nextJournal: string,
-): boolean {
-  if (current.vault === nextVault && current.journal === nextJournal) return false
-  if (current.vault === previous.vault && current.journal === previous.journal) return false
-  if (current.vault === nextVault && current.journal === previous.journal) return false
-  if (current.vault === previous.vault && current.journal === nextJournal) return false
-  return isValidVaultEnvelope(current.vault) && isValidJournalList(current.journal)
-}
-
-function isValidVaultEnvelope(raw: string | null): boolean {
-  if (raw === null) return false
-  try {
-    const parsed: unknown = JSON.parse(raw)
-    if (!isRecord(parsed) || parsed.version !== 1 || !isRecord(parsed.records)) return false
-    return true
-  } catch {
-    return false
-  }
-}
-
-function isValidJournalList(raw: string | null): boolean {
-  if (raw === null) return false
-  try {
-    const parsed: unknown = JSON.parse(raw)
-    return Array.isArray(parsed) && parseJournalEntryList(parsed).length === parsed.length
-  } catch {
-    return false
-  }
-}
-
-function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
+function isForeignCompleteValue(current: string | null, previous: string | null, next: string): boolean {
+  if (current === previous || current === next) return false
+  if (current === null) return true
+  try { JSON.parse(current); return true }
+  catch { return false }
 }
 
 export function writeStorageValueWithReadback(
@@ -126,19 +127,46 @@ export function writeStorageValueWithReadback(
   next: string,
   previous: string | null,
 ): boolean {
+  storage = canonicalJournalAccess(storage)
+  let epoch: string | null
+  try { epoch = canonicalJournalRawStorage(storage).getItem(CANONICAL_JOURNAL_MANIFEST_KEY) }
+  catch { return false }
+  let attempted = false
+  const rollback = () => {
+    if (!attempted) return
+    const raw = canonicalJournalRawStorage(storage)
+    try {
+      if (!sameEpoch(raw, epoch)) return
+      const current = raw.getItem(key)
+      // A malformed partial write needs raw rollback because the normal guard
+      // correctly refuses it. Never replace another complete vault version.
+      if (current === previous || current === null) return
+      if (current !== next) {
+        try { JSON.parse(current); return }
+        catch { /* Only a syntactically partial write is eligible for rollback. */ }
+      }
+      restoreStorageValue(raw, key, previous, current, epoch)
+    } catch { /* An unreadable current value is not authority to overwrite it. */ }
+  }
   try {
+    if (storage.getItem(key) !== previous) return false
+    if (!sameEpoch(storage, epoch)) return false
+    attempted = true
     storage.setItem(key, next)
-    if (storage.getItem(key) === next) return true
+    if (storage.getItem(key) === next
+      && sameEpoch(storage, epoch)
+      && isCanonicalJournalWritable(canonicalJournalRawStorage(storage))) return true
   } catch {
-    restoreStorageValue(storage, key, previous)
+    rollback()
     return false
   }
-  restoreStorageValue(storage, key, previous)
+  rollback()
   return false
 }
 
-function restoreStorageValue(storage: Storage, key: string, previous: string | null): void {
+function restoreStorageValue(storage: Storage, key: string, previous: string | null, expectedCurrent: string | null, epoch: string | null): void {
   try {
+    if (!sameEpoch(storage, epoch) || storage.getItem(key) !== expectedCurrent || expectedCurrent === previous) return
     if (previous === null) storage.removeItem(key)
     else storage.setItem(key, previous)
   } catch {

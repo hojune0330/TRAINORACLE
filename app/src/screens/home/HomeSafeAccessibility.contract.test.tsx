@@ -2,6 +2,8 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { todayISO, type JournalEntry } from "../../domain/journal-store"
 import type { TrainingHomeViewModel } from "../../domain/home-view-model"
+import { JOURNAL_STORAGE_KEY } from "../../domain/journal-storage-keys"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { Home } from "../Home"
 import { TrainingHome } from "./TrainingHome"
 
@@ -10,7 +12,7 @@ vi.mock("../../domain/account/account-journal-projection", async importOriginal 
   ...await importOriginal<typeof import("../../domain/account/account-journal-projection")>(),
   accountJournalProjectionStatus: () => projection.status,
 }))
-const STORAGE_KEY = "trainoracle.journal.v1"
+const STORAGE_KEY = JOURNAL_STORAGE_KEY
 const RECENT_ENTRY = {
   id: "recent-session", kind: "post-session", date: "2026-07-14",
   savedAt: "2026-07-14T08:00:00.000Z", syncState: "local", system: "lt",
@@ -36,9 +38,10 @@ const TRAINING = {
 } satisfies TrainingHomeViewModel
 
 afterEach(cleanup)
-beforeEach(() => {
+beforeEach(async () => {
   projection.status = "IDLE"
   localStorage.clear()
+  await initializeCanonicalJournalFixture()
   localStorage.setItem(STORAGE_KEY, JSON.stringify([RECENT_ENTRY]))
 })
 
@@ -154,8 +157,9 @@ describe("home hub destinations and information", () => {
     expect(onOpenAccount).toHaveBeenCalledOnce()
   })
 
-  it("offers a clear first record, plan, and honestly named example without empty data panels", () => {
+  it("offers a clear first record, plan, and honestly named example without empty data panels", async () => {
     localStorage.clear()
+    await initializeCanonicalJournalFixture()
     const onWriteLog = vi.fn(), onOpenPlan = vi.fn(), onOpenGuide = vi.fn()
     render(<Home onWriteLog={onWriteLog} onOpenPlan={onOpenPlan} onOpenGuide={onOpenGuide} />)
     fireEvent.click(screen.getByRole("button", { name: "오늘 운동 기록 쓰기" }))

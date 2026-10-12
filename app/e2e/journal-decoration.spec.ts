@@ -6,6 +6,7 @@ const DECORATION_KEY_V2_BACKUP = "trainoracle.decorations.v2-backup"
 
 async function seedEntry(page: import("@playwright/test").Page, id: string, title: string) {
   await page.addInitScript(([idArg, titleArg]: readonly [string, string]) => {
+    if (window.localStorage.getItem("to-local-journal.migration.v1") !== null) return
     const now = new Date()
     const date = [
       now.getFullYear(),
@@ -550,6 +551,7 @@ test("copies a decoration on one date and pastes it onto another, and the clipbo
 
   /* 이틀치 일지를 심는다: 오늘(B)과 어제(A). */
   await page.addInitScript(() => {
+    if (window.localStorage.getItem("to-local-journal.migration.v1") !== null) return
     const toKey = (value: Date) => [
       value.getFullYear(),
       String(value.getMonth() + 1).padStart(2, "0"),

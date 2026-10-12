@@ -288,6 +288,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
       window.alert("되돌리지 못했어요. 휴지통에서 다시 시도해 주세요.")
       return
     }
+    if ("cleanupPending" in r && r.cleanupPending) window.alert("일지는 되돌렸어요. 보관 사본 정리를 마치지 못해 다시 확인이 필요해요.")
     setJustDeleted(null)
     setRev(v => v + 1)
   }

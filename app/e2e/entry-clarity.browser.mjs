@@ -54,7 +54,7 @@ try {
   await capture('condition-choice-320', 320)
   await page.getByRole('button', { name: '메모 쓰기', exact: true }).click()
   await page.getByRole('textbox', { name: '오늘의 메모', exact: true }).waitFor()
-  assert.equal(await page.evaluate(() => localStorage.getItem('trainoracle.journal.v1')), null)
+  assert.equal(await page.evaluate(() => localStorage.getItem('to-local-journal.journal.v2')), null)
   await page.getByRole('button', { name: '이전 질문', exact: true }).click()
   await page.getByRole('heading', { name: '무엇을 남길까요?' }).waitFor()
   await page.getByRole('button', { name: '← 뒤로', exact: true }).click()
@@ -119,7 +119,7 @@ try {
     state.intake.startDate = '2026-10-01'
     state.progress = [{ sessionDay: 1, sessionSlot: 'AM', state: 'COMPLETED' }]
     if (!savePlanBetaState(state).ok) throw new Error('Synthetic plan setup failed')
-    localStorage.setItem('trainoracle.journal.v1', JSON.stringify([{
+    localStorage.setItem('to-local-journal.journal.v2', JSON.stringify([{
       id: 'synthetic-entry-clarity-evening', kind: 'evening', date: '2026-10-11',
       savedAt: '2026-10-11T12:00:00Z', syncState: 'local', sleepH: 0, sleepQuality: 0,
       weightKg: '', restingHr: '', painParts: {}, mood: 0,

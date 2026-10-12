@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { canonicalJournalAccess } from "../canonical-journal-access"
 import { parseJournalEntryList } from "../journal-schema"
 import type { JournalEntry } from "../journal-schema"
 import { loadEntriesOwnedBy, replaceEntriesOwnedBy } from "../journal-store"
@@ -40,7 +41,7 @@ type RecoveryResult = {
 function storage(): Storage | null {
   try {
     if (typeof window === "undefined") return null
-    return window.localStorage
+    return canonicalJournalAccess(window.localStorage)
   } catch (error) {
     if (error instanceof Error) return null
     throw error

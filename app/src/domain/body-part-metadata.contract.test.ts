@@ -15,6 +15,7 @@ import { evaluatePlanSafety } from "./plan-beta-flow"
 import { setActiveLocalAccount, assignJournalsToAccount } from "./account/local-journal-ownership"
 import { JOURNAL_STORAGE_KEY, writeJournalEntries } from "./journal-local-storage"
 import { writeVaultAndJournalAtomically } from "./private-memo-vault-storage"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
 const id = "other_11111111-1111-4111-8111-111111111111" as const
 const metadata: BodyPartMetadataV1 = { schemaVersion: 1, observations: [{ id,
@@ -24,7 +25,10 @@ const evening = (): EveningEntry => ({ id: "synthetic-body-entry", kind: "evenin
   painParts: {}, mood: 0, note: "", fieldProvenance: { painParts: { provenance: "EXPLICIT" } }, bodyPartMetadata: structuredClone(metadata) })
 const record = (entry: EveningEntry, version: 2 | 3 | 4 = 4) => ({ version, state: "FINALIZED", kind: "JOURNAL", entry })
 
-beforeEach(() => { window.localStorage.clear(); window.sessionStorage.clear(); setActiveLocalAccount(null) })
+beforeEach(async () => {
+  window.localStorage.clear(); window.sessionStorage.clear(); setActiveLocalAccount(null)
+  await initializeCanonicalJournalFixture()
+})
 afterEach(() => { setActiveLocalAccount(null); window.localStorage.clear(); window.sessionStorage.clear() })
 
 describe("owner-private body companion", () => {

@@ -16,6 +16,7 @@ import { FULL_FORMAT, FULL_FORMAT_V5, FULL_FORMAT_V6, SAFE_FORMAT } from "../dom
 import type { PostSessionEntry } from "../domain/journal-schema"
 import { loadDecorationState } from "../domain/decoration-store"
 import { JOURNAL_STORAGE_KEY } from "../domain/journal-local-storage"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { createRecoveryCode } from "../domain/account/private-note-crypto"
 import { saveSessionRecoveryCode } from "../domain/account/private-note-sync"
 import { loadCalendarDecorationState } from "../domain/calendar-decoration-store"
@@ -61,7 +62,11 @@ async function pick(user: ReturnType<typeof userEvent.setup>, file: File) {
 }
 
 describe("restore private custom body text", () => {
-  beforeEach(() => { window.localStorage.clear(); window.sessionStorage.clear() })
+  beforeEach(async () => {
+    window.localStorage.clear()
+    window.sessionStorage.clear()
+    await initializeCanonicalJournalFixture()
+  })
   const entry = () => postSession("synthetic-body", "2026-07-21", {
     painParts: {}, fieldProvenance: { painParts: { provenance: "EXPLICIT" } },
     bodyPartMetadata: { schemaVersion: 1, observations: [{ id: "other_11111111-1111-4111-8111-111111111111",
@@ -89,7 +94,10 @@ describe("restore private custom body text", () => {
 })
 
 describe("RestoreBackup — 고르기 단계", () => {
-  beforeEach(() => { window.localStorage.clear() })
+  beforeEach(async () => {
+    window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
+  })
 
   it("파일을 고르기 전에 기존 일지를 지우지 않는다는 안내가 보인다", () => {
     render(<RestoreBackup />)
@@ -147,7 +155,10 @@ describe("RestoreBackup — 고르기 단계", () => {
 })
 
 describe("RestoreBackup — 검토 단계", () => {
-  beforeEach(() => { window.localStorage.clear() })
+  beforeEach(async () => {
+    window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
+  })
 
   it("새로 들어올 개수를 보여주고 버튼에 그 수를 적는다", async () => {
     const user = userEvent.setup()
@@ -223,7 +234,10 @@ describe("RestoreBackup — 검토 단계", () => {
 })
 
 describe("RestoreBackup — 되돌리기 실행", () => {
-  beforeEach(() => { window.localStorage.clear() })
+  beforeEach(async () => {
+    window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
+  })
 
   it("고른 만큼만 일지에 저장하고 결과를 보여준다", async () => {
     const user = userEvent.setup()
@@ -300,7 +314,10 @@ describe("RestoreBackup — 되돌리기 실행", () => {
   })
 })
 describe("restore backup decorations preview", () => {
-  beforeEach(() => { window.localStorage.clear() })
+  beforeEach(async () => {
+    window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
+  })
 
   it("keeps journal entries separate from decorations in the restore summary for full backups", async () => {
     const user = userEvent.setup()
@@ -380,7 +397,10 @@ describe("restore backup decorations preview", () => {
 })
 
 describe("restore backup calendar decorations", () => {
-  beforeEach(() => { window.localStorage.clear() })
+  beforeEach(async () => {
+    window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
+  })
 
   const calendar = {
     version: 1,
@@ -420,7 +440,11 @@ describe("restore backup calendar decorations", () => {
 })
 
 describe("restore backup failure boundaries", () => {
-  beforeEach(() => { window.localStorage.clear(); window.sessionStorage.clear() })
+  beforeEach(async () => {
+    window.localStorage.clear()
+    window.sessionStorage.clear()
+    await initializeCanonicalJournalFixture()
+  })
 
   it("does not present a rolled-back full restore as success", async () => {
     const user = userEvent.setup()

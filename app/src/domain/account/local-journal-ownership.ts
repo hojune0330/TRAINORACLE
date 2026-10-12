@@ -1,6 +1,8 @@
 import { accountDeletionBoundaryState } from "./account-deletion-boundary"
+import { canonicalJournalAccess } from "../canonical-journal-access"
+import { JOURNAL_OWNERSHIP_STORAGE_KEY } from "../journal-storage-keys"
 
-const OWNERSHIP_KEY = "trainoracle.journal.ownership.v1"
+const OWNERSHIP_KEY = JOURNAL_OWNERSHIP_STORAGE_KEY
 const SCOPE_CHANGED_EVENT = "trainoracle:journal-scope-changed"
 
 type OwnershipManifest = {
@@ -28,7 +30,7 @@ let scopeGeneration = 0
 function storage(): Storage | null {
   try {
     if (typeof window === "undefined") return null
-    return window.localStorage
+    return canonicalJournalAccess(window.localStorage)
   } catch {
     return null
   }

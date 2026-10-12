@@ -4,6 +4,7 @@ import {
   selectPlanForActivation,
 } from "./plan-beta-flow"
 import { JOURNAL_STORAGE_KEY } from "./journal-local-storage"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { parsePlanBetaState } from "./plan-beta-schema"
 import { loadPlanBetaState, savePlanBetaState } from "./plan-beta-store"
 import {
@@ -11,9 +12,10 @@ import {
   saveAthleteRecord,
 } from "./athlete-records"
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
   window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 
 const COMPLETE_DRAFT = {

@@ -73,7 +73,7 @@ try {
     await continueButton.click()
     await page.getByRole('button', { name: '몸 상태 · 기분 수정', exact: true }).click()
     assert.equal(await page.getByRole('button', { name: '오른 무릎, 통증 2/5', exact: true }).count(), 1)
-    assert.equal(await page.evaluate(() => localStorage.getItem('trainoracle.journal.v1')), null)
+    assert.equal(await page.evaluate(() => localStorage.getItem('to-local-journal.journal.v2')), null)
     await context.close()
   }
   const missing = await open(320, true)
