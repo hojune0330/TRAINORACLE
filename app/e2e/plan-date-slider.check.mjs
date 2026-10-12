@@ -11,6 +11,10 @@ try {
   await page.goto('http://127.0.0.1:4477/e2e/fixtures/plan-date-slider.html')
   const list = page.getByRole('list', { name: '날짜별 계획 미리보기' })
   await page.getByRole('button', { name: '9월 28일 월요일 선택', exact: true }).click()
+  assert.equal(await page.locator('.plan-date-rail [aria-pressed="true"] strong').evaluate(element => getComputedStyle(element).animationName), 'none')
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  assert.equal(await page.locator('.plan-date-rail [aria-pressed="true"] strong').evaluate(element => getComputedStyle(element).animationName), 'plan-date-pop')
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.getByRole('button', { name: '다음 날짜', exact: true }).click()
   await page.waitForFunction(() => document.querySelector('.plan-date-rail [aria-pressed="true"]')?.textContent?.includes('29'))
   await page.waitForFunction(() => {

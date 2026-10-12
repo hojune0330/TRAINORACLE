@@ -1040,11 +1040,37 @@
   background: var(--surface);
   color: var(--ink);
   font-size: 18px;
+  transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
 }
 
 .plan-date-rail [aria-pressed="true"] strong {
   background: var(--brand);
   color: white;
+  animation: plan-date-pop 280ms ease-out;
+}
+
+.plan-date-rail button:active strong { transform: scale(0.92); }
+
+@keyframes plan-date-pop {
+  0% { transform: scale(0.9); }
+  60% { transform: translateY(-2px) scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .plan-date-rail button:hover strong { transform: translateY(-2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plan-date-rail strong,
+  .plan-date-rail [aria-pressed="true"] strong { animation: none; transition: none; }
+  .plan-date-rail button:hover strong,
+  .plan-date-rail button:active strong { transform: none; }
+}
+
+.plan-day-deck[data-prescription-calendar-view="list"] .plan-schedule-preview:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
 }
 
 .plan-date-rail small { min-height: 1.3em; font-size: 12px; }
