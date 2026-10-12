@@ -29,7 +29,9 @@ test("keeps analysis view tabs compact and touchable", async ({ page }) => {
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클" }).click()
   await page.getByRole("group", { name: "훈련 분석 자세히 보기" }).getByRole("button", { name: "월별 변화", exact: true }).click()
 
-  const tabs = page.getByRole("group", { name: "추이 항목" }).getByRole("button")
+  const tabs = page.getByRole("region", { name: "최근 4개월 추이" })
+    .getByRole("group", { name: "추이 항목" })
+    .getByRole("button")
   await expect(tabs).toHaveCount(4)
 
   for (const tab of await tabs.all()) {

@@ -237,6 +237,7 @@ async function stateIdentityValid(ownerId, documentId, document) {
   if (document.kind === 'CALENDAR_DECORATIONS') return documentId === await namespacedId(['trainoracle.account.calendar-decorations.v1',ownerId]);
   if (document.kind === 'ATHLETE_RECORDS') return documentId === await namespacedId(['trainoracle.account.athlete-records.v1',ownerId]);
   if (document.kind === 'RUNNING_PROFILE') return documentId === await namespacedId(['trainoracle.account.running-profile.v1',ownerId]);
+  if (document.kind === 'MINIGAME_PROGRESS') return documentId === await namespacedId(['trainoracle.account.minigame-progress.v1',ownerId]);
   if (document.kind === 'PLAN') return documentId === await namespacedId(['trainoracle.account.plan.v1',ownerId]);
   if (['GOAL_PROGRAM_BODY', 'GOAL_PROGRAM_PROGRESS', 'GOAL_PROGRAM_INDEX'].includes(document.kind)) {
     return typeof accountState.accountGoalProgramDocumentId === 'function'
@@ -316,6 +317,7 @@ function parseAction(input, validateDocument) {
   if (action === 'calendarDecorationSupport') valid = keys(input, ['action']);
   if (action === 'athleteRecordSupport') valid = keys(input, ['action']);
   if (action === 'runningProfileSupport') valid = keys(input, ['action']);
+  if (action === 'minigameProgressSupport') valid = keys(input, ['action']);
   if (action === 'goalProgramSupport') valid = keys(input, ['action']);
   if (action === 'oracleV2Support') valid = keys(input, ['action']);
   if (action === 'oracleV2RestartSupport') valid = keys(input, ['action']);
@@ -529,6 +531,20 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         const support = await repo.runningProfileSupport();
         await checkGate();
         if (!keys(support, ['kind', 'version']) || support.kind !== 'running-profile-support' || support.version !== 1) fail(503, 'UNAVAILABLE');
+        return respond(200, support);
+      }
+      if (input.action === 'minigameProgressSupport') {
+        // Game-only progress. Fails closed on an older SQL function or validator bundle.
+        if (typeof repo.minigameProgressSupport !== 'function' || !accountState.validateAccountStateDocument({
+          version: 3, state: 'ACCOUNT_STATE', kind: 'MINIGAME_PROGRESS',
+          data: { version: 'MINIGAME_PROGRESS_V1', cities: {}, character: 'tori', settingsUpdatedAt: '2026-10-08T00:00:00.000Z',
+            settings: { sound: true, vibration: true, effects: 'high', view: 'auto', motion: 'system', controls: 'normal', runSide: 'left', jumpGuide: true } },
+        })) fail(503, 'UNAVAILABLE');
+        let support;
+        try { support = await repo.minigameProgressSupport(); }
+        catch (error) { if (error?.code === '22023') fail(400, 'MINIGAME_PROGRESS_UNSUPPORTED'); throw error; }
+        await checkGate();
+        if (!keys(support, ['kind', 'version']) || support.kind !== 'minigame-progress-support' || support.version !== 1) fail(503, 'UNAVAILABLE');
         return respond(200, support);
       }
       if (input.action === 'oracleV2Support') return respond(200, await checkOracleV2Support());
@@ -1019,6 +1035,7 @@ export function createAccountJournalRepository(client, { ownerId, attest } = {})
     calendarDecorationSupport: () => mutate('calendarDecorationSupport', {}),
     athleteRecordSupport: () => mutate('athleteRecordSupport', {}),
     runningProfileSupport: () => mutate('runningProfileSupport', {}),
+    minigameProgressSupport: () => mutate('minigameProgressSupport', {}),
     goalProgramSupport: () => mutate('goalProgramSupport', {}),
     oracleV2Support: () => mutate('oracleV2Support', {}),
     oracleV2RestartSupport: () => mutate('oracleV2RestartSupport', {}),

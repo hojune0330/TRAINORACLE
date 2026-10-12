@@ -42,6 +42,8 @@ export type GoalTrainingProgramSaveOptions = {
   freshPreview?: () => boolean
   /** An explicit owner-reviewed whole-program replacement; never an implicit overwrite. */
   replaceExisting?: boolean
+  replaceExpiredPending?: true
+  expectedPendingReview?: AccountGoalProgramSnapshot
 }
 export type GoalTrainingProgramApplyInput = {
   programId: string
@@ -110,10 +112,14 @@ function accountProgramFailure() {
   return rejected(status === "UNSUPPORTED" ? "ACCOUNT_STORAGE_UNSUPPORTED"
     : status === "READY" || status === "EMPTY" ? "ACCOUNT_PROGRAM_STATE_CHANGED" : `ACCOUNT_PROGRAM_${status}`)
 }
-async function readyAccountProgram() {
+async function readyAccountProgram(allowExpiredPending = false) {
   const service = monthlyAccountService()
-  if (!service || !await service.loadHistory() || monthlyAccountService() !== service || !await ensureAccountPlanHistory()) return null
-  return ["READY", "EMPTY"].includes(service.snapshot().status) && monthlyAccountService() === service ? service : null
+  if (!service) return null
+  const loaded = await service.loadHistory(), view = service.snapshot()
+  const expiredPending = allowExpiredPending && view.status === "PENDING" && view.goalStartDateReviewRequired === true
+    && view.pendingDocument !== null && view.pendingDocument.program.window.startDate < todayISO()
+  if ((!loaded && !expiredPending) || monthlyAccountService() !== service || !await ensureAccountPlanHistory()) return null
+  return (["READY", "EMPTY"].includes(view.status) || expiredPending) && monthlyAccountService() === service ? service : null
 }
 async function lockedAccountProgram<T>(service: NonNullable<ReturnType<typeof monthlyAccountService>>, run: (current: () => boolean) => Promise<T>): Promise<T | GoalTrainingProgramWriteFailure> {
   const owner = localAccountScopeSnapshot(), generation = localJournalScopeGeneration(), locks = getPlanMutationLockManager()
@@ -126,25 +132,43 @@ async function lockedAccountProgram<T>(service: NonNullable<ReturnType<typeof mo
   } catch { return rejected("PROGRAM_STORAGE_UNAVAILABLE") }
 }
 async function persistAccountProgram(service: NonNullable<ReturnType<typeof monthlyAccountService>>, document: StoredGoalTrainingProgram,
-  history: GoalTrainingProgramHistory, token: string, fresh: () => boolean) {
+  history: GoalTrainingProgramHistory, token: string, fresh: () => boolean, goalStartDateReviewRequired?: true, replaceExpiredPending?: true) {
   if (!parseDocument(document) || !fresh()) return false
-  return await service.save(document, history, token, fresh) && monthlyAccountService() === service && fresh()
+  return await service.save(document, history, token, fresh, { goalStartDateReviewRequired, replaceExpiredPending }) && monthlyAccountService() === service && fresh()
+}
+function expiredPendingReviewIdentity(view?: AccountGoalProgramSnapshot) {
+  return view?.status === "PENDING" && view.goalStartDateReviewRequired === true
+    && view.pendingDocument !== null && view.pendingDocument.program.window.startDate < todayISO()
+    ? fingerprint([view.ownerId, view.sessionGeneration, view.revision, view.sequence, view.document, view.pendingDocument,
+      view.goalStartDateReviewRequired]) : null
 }
 async function saveAccountGoalProgram(program: GoalTrainingProgram, options: GoalTrainingProgramSaveOptions) {
   if (validateGoalTrainingProgram(program).kind !== "valid") return rejected("INVALID_PROGRAM")
-  const request = fingerprint([program, options.expectedRevision, options.currentCheck, options.replaceExisting === true])
-  const service = await readyAccountProgram()
+  const pendingReview = options.replaceExpiredPending ? expiredPendingReviewIdentity(options.expectedPendingReview) : null
+  if (options.replaceExpiredPending && pendingReview === null) return rejected("ACCOUNT_PROGRAM_STATE_CHANGED")
+  const request = fingerprint([program, options.expectedRevision, options.currentCheck, options.replaceExisting === true, options.replaceExpiredPending === true, pendingReview])
+  const service = await readyAccountProgram(options.replaceExpiredPending === true)
   if (!service) return accountProgramFailure()
   return lockedAccountProgram(service, async current => {
     const fresh = () => current() && options.freshPreview?.() !== false && evaluatePlanSafety(options.currentCheck).kind === "passed"
-      && fingerprint([program, options.expectedRevision, options.currentCheck, options.replaceExisting === true]) === request
+      && fingerprint([program, options.expectedRevision, options.currentCheck, options.replaceExisting === true, options.replaceExpiredPending === true,
+        options.replaceExpiredPending ? expiredPendingReviewIdentity(options.expectedPendingReview) : null]) === request
     if (!fresh()) return rejected("SAFETY_OR_PREVIEW_CHANGED")
-    const read = storedDocument(), opening = service.snapshot(), token = accountGoalProgramEditToken(opening)
+    const opening = service.snapshot(), token = accountGoalProgramEditToken(opening)
+    if (options.replaceExpiredPending && expiredPendingReviewIdentity(opening) !== pendingReview) return rejected("ACCOUNT_PROGRAM_STATE_CHANGED")
+    const read = options.replaceExpiredPending === true && opening.status === "PENDING"
+      && opening.goalStartDateReviewRequired === true && opening.document === null
+      ? { kind: "missing" as const } : storedDocument()
     if (!compareRevision(read, options.expectedRevision)) return rejected("STALE_PROGRAM_REVISION")
     const history = structuredClone(opening.history), at = new Date().toISOString()
     if (read.kind === "loaded") {
       const previous = reconcile(read.document)
-      if (fingerprint(read.document.program) === fingerprint(program)) return { kind: "saved" as const, document: previous.document }
+      if (fingerprint(read.document.program) === fingerprint(program)) {
+        if (options.replaceExpiredPending) return rejected("ACCOUNT_PROGRAM_PENDING")
+        return { kind: "saved" as const, document: previous.document }
+      }
+      // Reject an expired replacement before ending the currently selected plan.
+      if (program.window.startDate < todayISO()) return rejected("START_DATE_ELAPSED")
       if (!options.replaceExisting) return rejected("EXISTING_PROGRAM_REQUIRES_REVIEW")
       if (history.entries.length >= MAX_PROGRAM_HISTORY) return rejected("PROGRAM_HISTORY_CAPACITY_REACHED")
       if (["DETACHED", "UNAVAILABLE"].includes(previous.currentCycleStatus)) return rejected("EXISTING_ACTIVE_PLAN_REQUIRES_REVIEW")
@@ -153,7 +177,7 @@ async function saveAccountGoalProgram(program: GoalTrainingProgram, options: Goa
       if (active.kind !== "missing" && previous.currentCycleStatus !== "CURRENT") return rejected("EXISTING_ACTIVE_PLAN_REQUIRES_ARCHIVE")
       if (previous.currentCycleStatus === "CURRENT") {
         const writer = captureAccountPlanWrite(activePlanBetaStorageKey())
-        const code = await writer?.archive()
+        const code = await writer?.archive(() => fresh() && program.window.startDate >= todayISO())
         if (!writer || code || !fresh()) return rejected(code ?? "ACCOUNT_OR_STATE_CHANGED")
       }
       const archived = structuredClone(previous.document)
@@ -164,7 +188,7 @@ async function saveAccountGoalProgram(program: GoalTrainingProgram, options: Goa
     const pending = (cycle: Cycle): GoalTrainingProgramCycleRecord => ({ cycle, status: "PENDING", latestPlan: null, lineage: [] })
     const document: StoredGoalTrainingProgram = { version: 1, revision: read.kind === "loaded" ? read.document.revision + 1 : 0,
       program: structuredClone(program), application: null, cycles: [pending(1), pending(2), pending(3)] }
-    return await persistAccountProgram(service, document, history, token, () => fresh() && program.window.startDate >= todayISO())
+    return await persistAccountProgram(service, document, history, token, () => fresh() && program.window.startDate >= todayISO(), true, options.replaceExpiredPending)
       ? { kind: "saved" as const, document } : accountProgramFailure()
   })
 }

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { createConsentCheckedFetch } from "./consent-checked-fetch"
+import { createConsentCheckedFetch, LOCAL_COLLECTION_SEND_GUARD_HEADER, registerCollectionSendGuard } from "./consent-checked-fetch"
 import { holdStorageTransmission, releaseStorageTransmissionHold } from "./storage-transmission-hold"
 import { pinStorageOperationRevision, rememberStorageConsentRevision } from "./storage-consent-revision"
 import { createClient } from "@supabase/supabase-js"
@@ -13,6 +13,161 @@ const authorization=`Bearer x.${btoa(JSON.stringify({sub:A,session_id:B})).repla
 const receipt={userId:A,revision:1,purposeVersion:"2026-10-05",healthStorage:true,journalTextStorage:true,operationsReady:true}
 const init={method:"POST",headers:{Authorization:authorization,apikey:"synthetic-public"},body:'{"private":"synthetic-health"}'}
 beforeEach(()=>{localStorage.clear();rememberStorageConsentRevision(A,1)})
+describe("request-local collection send review", () => {
+  const commitPath = origin + "/functions/v1/account-plan-collection"
+  const guardedInit = (nonce: string): RequestInit => ({ ...init,
+    headers: { ...init.headers, [LOCAL_COLLECTION_SEND_GUARD_HEADER]: nonce },
+    body: JSON.stringify({ action: "commit", request: { synthetic: true } }),
+  })
+  it.each([
+    { path: "https://elsewhere.invalid/functions/v1/account-plan-collection", method: "POST", body: '{"action":"commit"}' },
+    { path: origin + "/auth/v1/token", method: "POST", body: '{"action":"commit"}' },
+    { path: origin + "/rest/v1/rpc/get_account_storage_consent", method: "POST", body: '{"action":"commit"}' },
+    { path: origin + "/functions/v1/account-journal", method: "POST", body: '{"action":"commit"}' },
+    { path: commitPath, method: "GET", body: '{"action":"commit"}' },
+    { path: commitPath, method: "POST", body: '{"action":"readIndex"}' },
+    { path: commitPath, method: "POST", body: "invalid-json" },
+  ])("does not forward an internal guard outside the permitted commit: %j", async value => {
+    const registration = registerCollectionSendGuard(() => true), transport = vi.fn<typeof fetch>()
+    try {
+      const request = { ...guardedInit(registration.nonce), method: value.method, body: value.body }
+      expect((await createConsentCheckedFetch(origin, transport)(value.path, request)).status).toBe(403)
+      expect(transport).not.toHaveBeenCalled()
+    } finally { registration.release() }
+  })
+  it("a released or throwing review cannot start a consent request", async () => {
+    for (const throwing of [false, true]) {
+      const registration = registerCollectionSendGuard(() => { if (throwing) throw new Error("expired"); return true })
+      const transport = vi.fn<typeof fetch>()
+      try {
+        if (!throwing) registration.release()
+        expect((await createConsentCheckedFetch(origin, transport)(commitPath, guardedInit(registration.nonce))).status).toBe(403)
+        expect(transport).not.toHaveBeenCalled()
+      } finally { registration.release() }
+    }
+  })
+  it("a release during consent prevents a late transport even if the captured callback remains true", async () => {
+    const registration = registerCollectionSendGuard(() => true)
+    let release!: (value: Response) => void
+    const held = new Promise<Response>(resolve => { release = resolve })
+    const transport = vi.fn<typeof fetch>().mockReturnValueOnce(held)
+    try {
+      const sending = createConsentCheckedFetch(origin, transport)(commitPath, guardedInit(registration.nonce))
+      expect(transport).toHaveBeenCalledTimes(1)
+      registration.release(); release(new Response(JSON.stringify(receipt)))
+      expect((await sending).status).toBe(403)
+      expect(transport).toHaveBeenCalledTimes(1)
+      expect(new Headers(transport.mock.calls[0]?.[1]?.headers).has(LOCAL_COLLECTION_SEND_GUARD_HEADER)).toBe(false)
+    } finally { registration.release() }
+  })
+  it("the actual SDK timeout signal replacement retains the same request review", async () => {
+    const original = new AbortController()
+    let fresh = true, release!: (value: Response) => void, reached!: () => void
+    const registration = registerCollectionSendGuard(() => fresh)
+    const held = new Promise<Response>(resolve => { release = resolve })
+    const started = new Promise<void>(resolve => { reached = resolve })
+    const transport = vi.fn<typeof fetch>().mockImplementation(async (_url, options) => {
+      expect(options?.signal).toBeInstanceOf(AbortSignal)
+      expect(options?.signal).not.toBe(original.signal)
+      expect(new Headers(options?.headers).has(LOCAL_COLLECTION_SEND_GUARD_HEADER)).toBe(false)
+      reached(); return held
+    })
+    const sdk = createClient(origin, "synthetic-public", {
+      global: { fetch: createConsentCheckedFetch(origin, transport) },
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: "wrapped-collection-review" },
+    })
+    try {
+      await sdk.auth.initialize()
+      const sending = sdk.functions.invoke("account-plan-collection", {
+        body: { action: "commit", request: { synthetic: true } },
+        headers: { Authorization: authorization, "x-trainoracle-storage-revision": "1",
+          [LOCAL_COLLECTION_SEND_GUARD_HEADER]: registration.nonce },
+        signal: original.signal, timeout: 30_000,
+      })
+      await started; fresh = false; release(new Response(JSON.stringify(receipt)))
+      const result = await sending
+      expect(result.error?.context).toBeInstanceOf(Response)
+      expect((result.error?.context as Response).status).toBe(403)
+      expect(transport).toHaveBeenCalledTimes(1)
+    } finally { registration.release() }
+  })
+  it("strips the marker from a Request override and preserves the exact commit body", async () => {
+    const registration = registerCollectionSendGuard(() => true)
+    const request = guardedInit(registration.nonce)
+    const transport = vi.fn<typeof fetch>().mockResolvedValueOnce(new Response(JSON.stringify(receipt)))
+      .mockImplementationOnce(async (input, options) => {
+        const outgoing = new Request(input, options)
+        expect(outgoing.headers.has(LOCAL_COLLECTION_SEND_GUARD_HEADER)).toBe(false)
+        expect(await outgoing.text()).toBe(request.body)
+        return new Response("{}")
+      })
+    try {
+      expect((await createConsentCheckedFetch(origin, transport)(new Request(commitPath, request), request)).status).toBe(200)
+      expect(transport).toHaveBeenCalledTimes(2)
+    } finally { registration.release() }
+  })
+  it("bounds concurrent registrations and reclaims released capacity", () => {
+    const registrations: ReturnType<typeof registerCollectionSendGuard>[] = []
+    try {
+      for (let i = 0; i < 128; i++) registrations.push(registerCollectionSendGuard(() => true))
+      expect(() => registerCollectionSendGuard(() => true)).toThrow("LOCAL_SEND_GUARD_LIMIT")
+      registrations.pop()!.release()
+      registrations.push(registerCollectionSendGuard(() => true))
+    } finally { registrations.forEach(registration => registration.release()) }
+  })
+})
+
+describe("request-local goal index send review", () => {
+  const journalPath = origin + "/functions/v1/account-journal"
+  const indexBody = JSON.stringify({ action: "save", document: { kind: "GOAL_PROGRAM_INDEX", data: { synthetic: true } } })
+  const guardedInit = (nonce: string): RequestInit => ({ ...init,
+    headers: { ...init.headers, [LOCAL_COLLECTION_SEND_GUARD_HEADER]: nonce }, body: indexBody,
+  })
+  it.each([
+    { path: "https://elsewhere.invalid/functions/v1/account-journal", method: "POST", body: indexBody },
+    { path: journalPath, method: "GET", body: indexBody },
+    { path: journalPath, method: "POST", body: '{"action":"read","document":{"kind":"GOAL_PROGRAM_INDEX"}}' },
+    { path: journalPath, method: "POST", body: '{"action":"save","document":{"kind":"GOAL_PROGRAM_BODY"}}' },
+    { path: journalPath, method: "POST", body: '{"action":"save","document":{"kind":"GOAL_PROGRAM_PROGRESS"}}' },
+    { path: journalPath, method: "POST", body: '{"action":"save","document":{"kind":"JOURNAL"}}' },
+  ])("rejects a goal marker outside the exact same-origin index save: %j", async value => {
+    const registration = registerCollectionSendGuard(() => true), transport = vi.fn<typeof fetch>()
+    try {
+      expect((await createConsentCheckedFetch(origin, transport)(value.path, { ...guardedInit(registration.nonce), method: value.method, body: value.body })).status).toBe(403)
+      expect(transport).not.toHaveBeenCalled()
+    } finally { registration.release() }
+  })
+  it.each(["consent", "json"])("holds a goal index when its request review expires during %s", async boundary => {
+    let fresh = true, release!: () => void, reached!: () => void
+    const registration = registerCollectionSendGuard(() => fresh)
+    const held = new Promise<void>(resolve => { release = resolve }), started = new Promise<void>(resolve => { reached = resolve })
+    const transport = vi.fn<typeof fetch>(async (_url, options) => {
+      expect(new Headers(options?.headers).has(LOCAL_COLLECTION_SEND_GUARD_HEADER)).toBe(false)
+      if (boundary === "consent") { reached(); await held; return new Response(JSON.stringify(receipt)) }
+      const checked = new Response(JSON.stringify(receipt))
+      vi.spyOn(checked, "json").mockImplementation(async () => { reached(); await held; return receipt })
+      return checked
+    })
+    try {
+      const sending = createConsentCheckedFetch(origin, transport)(journalPath, guardedInit(registration.nonce))
+      await started; fresh = false; release()
+      expect((await sending).status).toBe(403)
+      expect(transport).toHaveBeenCalledTimes(1)
+    } finally { release?.(); registration.release() }
+  })
+  it("strips a valid goal marker and preserves the exact index save body", async () => {
+    const registration = registerCollectionSendGuard(() => true)
+    const transport = vi.fn<typeof fetch>().mockResolvedValueOnce(new Response(JSON.stringify(receipt)))
+      .mockResolvedValueOnce(new Response("{}"))
+    try {
+      expect((await createConsentCheckedFetch(origin, transport)(journalPath, guardedInit(registration.nonce))).status).toBe(200)
+      expect(transport).toHaveBeenCalledTimes(2)
+      expect(transport.mock.calls[1]?.[1]?.body).toBe(indexBody)
+      for (const [, options] of transport.mock.calls) expect(new Headers(options?.headers).has(LOCAL_COLLECTION_SEND_GUARD_HEADER)).toBe(false)
+    } finally { registration.release() }
+  })
+})
+
 describe("consent body transport boundary",()=>{
   it("does not upgrade a pre-withdrawal new operation on a later regrant or page reload",async()=>{
     const operation="synthetic-new-operation"

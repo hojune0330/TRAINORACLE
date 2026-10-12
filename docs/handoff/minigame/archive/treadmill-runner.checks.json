@@ -1,0 +1,13 @@
+{
+  "syntax": true,
+  "noInputFall": true,
+  "recovery": true,
+  "pause": true,
+  "threeStagesCleared": true,
+  "upgrades": [
+    "접지 밑창",
+    "접지 밑창"
+  ],
+  "mobileOverflow": false,
+  "runtimeErrors": []
+}

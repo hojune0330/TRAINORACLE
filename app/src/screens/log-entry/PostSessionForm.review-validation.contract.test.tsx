@@ -1,18 +1,22 @@
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react"
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { clearSessionRecoveryCode } from "../../domain/account/private-note-sync"
 import { loadEntries } from "../../domain/journal-store"
 import type { PostSessionEntry } from "../../domain/journal-schema"
 import { PostSessionForm } from "./PostSessionForm"
+import { hasPendingBrowserBackLayer } from "../../navigation/browserNavigation"
 
 beforeEach(() => {
   localStorage.clear()
   sessionStorage.clear()
   clearSessionRecoveryCode()
 })
-afterEach(() => {
+afterEach(async () => {
   cleanup()
+  await act(async () => { await Promise.resolve() })
+  await waitFor(() => expect(hasPendingBrowserBackLayer()).toBe(false))
+  vi.restoreAllMocks()
   localStorage.clear()
   sessionStorage.clear()
   clearSessionRecoveryCode()
@@ -113,8 +117,12 @@ describe("PostSession review validation routing", () => {
     await user.click(screen.getByRole("button", { name: "지금 입력 확인" }))
     await user.click(screen.getByRole("button", { name: "메모 수정" }))
     await user.type(screen.getByRole("textbox", { name: "훈련 메모 내용" }), "synthetic private draft")
+    expect(screen.getByRole("textbox", { name: "훈련 메모 내용" })).toHaveValue("synthetic private draft")
     await user.click(screen.getByRole("radio", { name: "나만의 메모" }))
+    expect(screen.getByRole("radio", { name: "나만의 메모" })).toBeChecked()
+    expect(screen.getByRole("textbox", { name: "훈련 메모 내용" })).toHaveValue("synthetic private draft")
     await user.click(screen.getByRole("button", { name: "입력 확인으로" }))
+    expect(screen.getByText("synthetic private draft · 나만 보는 메모")).toBeVisible()
     await user.click(screen.getByRole("button", { name: /^저장/ }))
 
     await waitFor(() => expect(screen.getByRole("heading", { level: 2, name: "오늘 남길 메모" })).toBeVisible())
@@ -122,6 +130,58 @@ describe("PostSession review validation routing", () => {
     expect(screen.getByRole("button", { name: "나만의 메모 저장 준비" })).toBeVisible()
     expect(screen.getByRole("textbox", { name: "훈련 메모 내용" })).toHaveValue("synthetic private draft")
     expect(loadEntries()).toHaveLength(0)
+  })
+
+  it("keeps fast private memo input focused and intact when the deferred section alignment runs", async () => {
+    const frames = new Map<number, FrameRequestCallback>()
+    let nextFrame = 0
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation(callback => {
+      frames.set(++nextFrame, callback)
+      return nextFrame
+    })
+    vi.spyOn(window, "cancelAnimationFrame").mockImplementation(frame => { frames.delete(frame) })
+    const user = userEvent.setup()
+    const onDone = vi.fn()
+    render(<PostSessionForm targetDate="2026-10-08" onDone={onDone} />)
+
+    await user.click(screen.getByRole("button", { name: "결과는 생략하고 계속" }))
+    await user.click(screen.getByRole("button", { name: "지금 입력 확인" }))
+    await user.click(screen.getByRole("button", { name: /^저장/ }))
+    expect(screen.getByRole("alert")).toHaveTextContent("아직 입력한 내용이 없어요")
+    expect(loadEntries()).toHaveLength(0)
+    expect(onDone).not.toHaveBeenCalled()
+    await user.click(screen.getByRole("button", { name: "메모 수정" }))
+    expect(screen.getByRole("heading", { level: 2, name: "오늘 남길 메모" })).toHaveFocus()
+
+    const textarea = screen.getByRole("textbox", { name: "훈련 메모 내용" })
+    await user.click(textarea)
+    await user.type(textarea, "synthetic", { skipClick: true })
+    expect(textarea).toHaveFocus()
+    expect(textarea).toHaveValue("synthetic")
+    expect(frames.size).toBeGreaterThan(0)
+    await act(async () => {
+      const scheduled = [...frames.values()]
+      frames.clear()
+      for (const callback of scheduled) callback(performance.now())
+    })
+    expect(textarea).toHaveFocus()
+    expect(textarea).toHaveValue("synthetic")
+    await user.type(textarea, " private draft", { skipClick: true })
+    expect(textarea).toHaveValue("synthetic private draft")
+    await user.click(screen.getByRole("radio", { name: "나만의 메모" }))
+    expect(screen.getByRole("radio", { name: "나만의 메모" })).toBeChecked()
+    expect(textarea).toHaveValue("synthetic private draft")
+    await user.click(screen.getByRole("button", { name: "입력 확인으로" }))
+    expect(screen.getByText("synthetic private draft · 나만 보는 메모")).toBeVisible()
+    await user.click(screen.getByRole("button", { name: /^저장/ }))
+
+    expect(await screen.findByRole("heading", { level: 2, name: "오늘 남길 메모" })).toBeVisible()
+    expect(screen.getByRole("alert")).toHaveTextContent("복구 코드를 준비해 주세요")
+    expect(screen.getByRole("button", { name: "나만의 메모 저장 준비" })).toBeVisible()
+    expect(screen.getByRole("textbox", { name: "훈련 메모 내용" })).toHaveValue("synthetic private draft")
+    expect(screen.getByRole("radio", { name: "나만의 메모" })).toBeChecked()
+    expect(loadEntries()).toHaveLength(0)
+    expect(onDone).not.toHaveBeenCalled()
   })
 
   it("returns a reported-but-unlocated body condition to its editor without flattening the review", async () => {

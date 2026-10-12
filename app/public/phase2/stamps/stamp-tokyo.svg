@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="도쿄 스탬프"><title>도쿄 스탬프</title>
+  <g transform="rotate(2 64 64)">
+    <circle cx="64" cy="64" r="58" fill="#FFFFFF" stroke="#FF4D5E" stroke-width="4"/>
+    <circle cx="64" cy="64" r="50" fill="none" stroke="#FF4D5E" stroke-width="1.6" stroke-dasharray="3 4"/>
+    <defs><path id="arc-tokyo" d="M24 64a40 40 0 0 1 80 0"/></defs>
+    <text font-family="Pretendard Variable, Pretendard, sans-serif" font-size="13" font-weight="800" letter-spacing="3" fill="#FF4D5E"><textPath href="#arc-tokyo" startOffset="50%" text-anchor="middle">TOKYO</textPath></text>
+    <path d="M50 84l14-54 14 54M54 68h20M57 56h14M60 44h8" fill="none" stroke="#FF4D5E" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/>
+    <text x="64" y="100" text-anchor="middle" font-family="Pretendard Variable, Pretendard, sans-serif" font-size="13" font-weight="900" fill="#FF4D5E">도쿄</text>
+  </g></svg>

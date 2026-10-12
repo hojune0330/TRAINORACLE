@@ -52,7 +52,7 @@ it("opens the saved adjusted structure and reasons from the journal, not origina
   render(<JournalOriginalPlan entry={entry} />)
   expect(screen.queryByText(/400m당 약/)).toBeNull()
   expand()
-  expect(screen.getByText(/2 × 400m @/)).toBeVisible()
+  expect(screen.getByText(/2 × 400m ·/)).toBeVisible()
   expect(screen.getByText(/400m당 약/)).not.toBeVisible()
   fireEvent.click(screen.getByText("자세히 보기 · 방법과 근거"))
   expect(screen.getByText(/400m당 약/)).toBeVisible()

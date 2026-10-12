@@ -145,6 +145,28 @@ function renderFlow(onClose = vi.fn()) {
   return render(<React.StrictMode><GoalTrainingProgramFlow onClose={onClose} onOpenActive={vi.fn()} /></React.StrictMode>)
 }
 
+function expiredPendingDateReview(hasConfirmed = false) {
+  mocks.owner = "synthetic-account"; mocks.today = "2026-10-12"
+  mocks.storageStatus.mockReturnValue("PENDING")
+  if (hasConfirmed) currentDocument = makeStoredDocument({ ...programFor(latestPreview), programId: "confirmed-original" })
+  const pendingDocument = makeStoredDocument({ ...programFor(latestPreview), programId: "expired-pending-original" })
+  pendingDocument.revision = hasConfirmed ? 2 : 0
+  const review = { ownerId: mocks.owner, sessionGeneration: 1, status: "PENDING" as const, revision: hasConfirmed ? 1 : 0,
+    sequence: 2, historyLoaded: true, document: currentDocument, history: { version: 1 as const, entries: [] },
+    pendingDocument, remoteRevision: null, goalStartDateReviewRequired: true as const }
+  mocks.accountSnapshot.mockReturnValue(review)
+  return review
+}
+
+async function chooseNewPendingDate(user: ReturnType<typeof userEvent.setup>, date = "2026-10-18") {
+  await user.click(screen.getByRole("button", { name: "날짜를 다시 골라 보관하기" }))
+  expect(screen.getByLabelText("시작일")).toHaveValue(START)
+  fireEvent.change(screen.getByLabelText("시작일"), { target: { value: date } })
+  await user.click(screen.getByRole("button", { name: "다음" }))
+  await user.click(screen.getByRole("button", { name: /빠른 훈련과 쉬운 훈련/u }))
+  await user.click(screen.getByRole("button", { name: /시간 기준으로 훈련/u }))
+}
+
 async function chooseGoalDateAndExperience(user: ReturnType<typeof userEvent.setup>, goal = 45, date = "2026-10-18") {
   await chooseGoalDate(user, goal, date)
   await user.click(screen.getByRole("button", { name: /빠른 훈련과 쉬운 훈련/u }))
@@ -540,6 +562,101 @@ describe("GoalTrainingProgramFlow", () => {
     expect(screen.getByText("미리보기 · 아직 시작하지 않았어요")).toBeVisible()
     expect(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 시작" })).toBeDisabled()
     expect(mocks.apply).not.toHaveBeenCalled()
+  })
+
+  it.each([false, true])("explicitly selects a new date and confirms an expired pending original (confirmed program: %s)", async hasConfirmed => {
+    const review = expiredPendingDateReview(hasConfirmed), original = currentDocument
+    mocks.save.mockImplementation(async (program: GoalTrainingProgram) => {
+      currentDocument = makeStoredDocument(program); mocks.storageStatus.mockReturnValue("READY")
+      return { kind: "saved", document: currentDocument }
+    })
+    const user = userEvent.setup()
+    renderFlow()
+    expect(screen.getByText("초안의 시작일이 지났어요. 날짜를 다시 고르면 이전 초안도 보관해요.")).toBeVisible()
+    await chooseNewPendingDate(user)
+    expect(currentDocument).toBe(original)
+    expect(review.pendingDocument.program.window.startDate).toBe(START)
+    expect(mocks.save).not.toHaveBeenCalled(); expect(mocks.apply).not.toHaveBeenCalled()
+    if (hasConfirmed) {
+      expect(screen.getByRole("button", { name: "이 계획 시작" })).toBeDisabled()
+      await user.click(screen.getByLabelText("이전 훈련표를 보관하고 새 훈련표로 바꿀게요"))
+    }
+    await user.click(screen.getByRole("button", { name: "이 계획 시작" }))
+    expect(mocks.save).not.toHaveBeenCalled(); expect(mocks.apply).not.toHaveBeenCalled()
+    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 시작" }))
+    expect(mocks.save).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ window: expect.objectContaining({ startDate: "2026-10-18" }) }),
+      expect.objectContaining({ expectedRevision: original?.revision ?? null, currentCheck: "NO_KNOWN_RISK", replaceExisting: hasConfirmed,
+        replaceExpiredPending: true, expectedPendingReview: review }))
+    expect(mocks.apply).toHaveBeenCalledOnce()
+    expect(mocks.conflictBackup).not.toHaveBeenCalled()
+    expect(review.pendingDocument.program.window.startDate).toBe(START)
+  })
+
+  it("does not allow an expired pending save without the explicit recovery choice", async () => {
+    expiredPendingDateReview()
+    const user = userEvent.setup(); renderFlow()
+    await chooseGoalDateAndExperience(user)
+    expect(screen.getByRole("button", { name: "이 계획 시작" })).toBeDisabled()
+    expect(mocks.save).not.toHaveBeenCalled(); expect(mocks.apply).not.toHaveBeenCalled()
+  })
+
+  it.each(["unmarked", "future"])("keeps ordinary pending blocked when it is %s", async variant => {
+    const review = expiredPendingDateReview()
+    mocks.accountSnapshot.mockReturnValue(variant === "unmarked" ? { ...review, goalStartDateReviewRequired: undefined }
+      : { ...review, pendingDocument: makeStoredDocument(programFor(previewFor({ ...latestPreview.inputs,
+        goalMinutes: 45, dateChoice: { kind: "START", startDate: "2026-10-18" }, generatedAt: latestPreview.generatedAt }))) })
+    const user = userEvent.setup(); renderFlow()
+    expect(screen.queryByRole("button", { name: "날짜를 다시 골라 보관하기" })).not.toBeInTheDocument()
+    await chooseGoalDateAndExperience(user)
+    expect(screen.getByRole("button", { name: "이 계획 시작" })).toBeDisabled()
+    expect(mocks.save).not.toHaveBeenCalled(); expect(mocks.apply).not.toHaveBeenCalled()
+  })
+
+  it("keeps the pending original when a reselected date expires before confirmation", async () => {
+    const review = expiredPendingDateReview(), pending = structuredClone(review.pendingDocument)
+    const user = userEvent.setup(); renderFlow()
+    await chooseNewPendingDate(user)
+    await user.click(screen.getByRole("button", { name: "이 계획 시작" }))
+    mocks.today = "2026-10-19"
+    mocks.generate.mockReturnValueOnce({ kind: "start-in-past", requiredStartDate: "2026-10-18", suggestedStartDate: mocks.today })
+    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 시작" }))
+    expect(screen.getByRole("alert")).toHaveTextContent("날짜")
+    expect(mocks.save).not.toHaveBeenCalled(); expect(mocks.apply).not.toHaveBeenCalled()
+    expect(review.pendingDocument).toEqual(pending)
+  })
+
+  it("invalidates expired pending recovery when the reviewed source changes", async () => {
+    const review = expiredPendingDateReview()
+    const user = userEvent.setup(); renderFlow()
+    await chooseNewPendingDate(user)
+    mocks.accountSnapshot.mockReturnValue({ ...review, sequence: 3 })
+    act(() => mocks.subscribe.mock.calls.at(-1)?.[0]())
+    expect(screen.getByRole("button", { name: "이 계획 시작" })).toBeDisabled()
+    expect(mocks.save).not.toHaveBeenCalled(); expect(mocks.apply).not.toHaveBeenCalled()
+  })
+
+  it("exports an expired pending original without publishing or choosing the account program", async () => {
+    const review = expiredPendingDateReview(), raw = JSON.stringify({ document: review.pendingDocument, history: review.history })
+    mocks.refresh.mockResolvedValue(false); mocks.conflictBackup.mockResolvedValue(raw)
+    const create = vi.fn().mockReturnValue("blob:synthetic-pending"), revoke = vi.fn()
+    const oldCreate = URL.createObjectURL, oldRevoke = URL.revokeObjectURL
+    Object.defineProperty(URL, "createObjectURL", { configurable: true, writable: true, value: create })
+    Object.defineProperty(URL, "revokeObjectURL", { configurable: true, writable: true, value: revoke })
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined)
+    try {
+      renderFlow()
+      fireEvent.click(screen.getByRole("button", { name: "대기 중 초안 파일로 보관" }))
+      await waitFor(() => expect(create).toHaveBeenCalledWith(expect.any(Blob)))
+      expect(mocks.conflictBackup).toHaveBeenCalledExactlyOnceWith(review)
+      expect(mocks.save).not.toHaveBeenCalled(); expect(mocks.apply).not.toHaveBeenCalled()
+      expect(mocks.acceptRemote).not.toHaveBeenCalled()
+      await new Promise(resolve => setTimeout(resolve, 1050))
+      expect(revoke).toHaveBeenCalledWith("blob:synthetic-pending")
+    } finally {
+      click.mockRestore()
+      Object.defineProperty(URL, "createObjectURL", { configurable: true, writable: true, value: oldCreate })
+      Object.defineProperty(URL, "revokeObjectURL", { configurable: true, writable: true, value: oldRevoke })
+    }
   })
 
   it("does not replace an in-progress entry when a stored account program arrives late", async () => {

@@ -150,6 +150,32 @@ describe("native browser layer history", () => {
     expect(popTo(null)).toBe(false)
   })
 
+  it("does not claim another owner's POP when an inactive ancestor marker is unchanged", async () => {
+    const outerClose = vi.fn(), innerClose = vi.fn()
+    const outer = navigation.registerBrowserBackLayer({ id: "outer-inactive", canClose: () => true, onClose: outerClose })
+    const outerState = window.history.state
+    const inner = navigation.registerBrowserBackLayer({ id: "inner-inactive", canClose: () => true, onClose: innerClose })
+    outer.dispose()
+    await Promise.resolve()
+    inner.dispose()
+    await Promise.resolve()
+    expect(window.history.back).toHaveBeenCalledOnce()
+    expect(popTo(outerState)).toBe(true)
+    // The completed outer sentinel must drain before a new reader can open.
+    expect(navigation.hasPendingBrowserBackLayer()).toBe(true)
+    expect(window.history.back).toHaveBeenCalledTimes(2)
+    expect(popTo({ parent: "origin" })).toBe(true)
+    expect(navigation.hasPendingBrowserBackLayer()).toBe(false)
+    // Forward can revisit that stale marker without reopening the completed
+    // layer. A reader may now own a separate entry above the same marker.
+    expect(popTo(outerState)).toBe(true)
+    window.history.pushState({ ...outerState, trainoracleReader: "separate-reader" }, "", window.location.href)
+    expect(popTo(outerState)).toBe(false)
+    expect(outerClose).not.toHaveBeenCalled()
+    expect(innerClose).not.toHaveBeenCalled()
+    expect(popTo({ parent: "origin" })).toBe(true)
+  })
+
   it("does not create or consume a ghost entry during StrictMode effect replay", async () => {
     const close = vi.fn(), push = vi.spyOn(window.history, "pushState")
     const first = navigation.registerBrowserBackLayer({ id: "strict", canClose: () => true, onClose: close })

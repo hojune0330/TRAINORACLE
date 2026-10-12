@@ -21,7 +21,7 @@ test("keeps term help inside 320px and closes it by outside tap and Escape", asy
   expect((box?.x ?? 0) + (box?.width ?? 999)).toBeLessThanOrEqual(320)
   await expect.poll(() => clampLogs.some((line) => line.includes("withinX=true"))).toBe(true)
 
-  await page.getByRole("heading", { name: "지금까지 어떻게 달려왔나요?" }).click()
+  await page.getByText("경험에 맞는 훈련 구성과 운동 시간을 정하는 데 써요.", { exact: true }).click()
   await expect(page.getByRole("note")).toHaveCount(0)
 
   await page.getByRole("button", { name: /훈련 경험 설명 보기/u }).click()

@@ -2,6 +2,20 @@
 // a fresh server consent check. The database remains the authorization boundary.
 import { isStorageTransmissionHeld } from "./storage-transmission-hold"
 import { currentStorageConsentRevision } from "./storage-consent-revision"
+
+// SDK timeout signals may be replaced. This browser-only marker keeps the
+// review attached to one commit/index save without changing the shared SDK client.
+export const LOCAL_COLLECTION_SEND_GUARD_HEADER = "x-trainoracle-local-send-guard"
+const collectionSendGuards = new Map<string, () => boolean>()
+export function registerCollectionSendGuard(beforeSend: () => boolean): { nonce: string; release: () => void } {
+  if (collectionSendGuards.size >= 128) throw new Error("LOCAL_SEND_GUARD_LIMIT")
+  const nonce = crypto.randomUUID()
+  if (collectionSendGuards.has(nonce)) throw new Error("LOCAL_SEND_GUARD_COLLISION")
+  collectionSendGuards.set(nonce, beforeSend)
+  return { nonce, release: () => {
+    if (collectionSendGuards.get(nonce) === beforeSend) collectionSendGuards.delete(nonce)
+  } }
+}
 const META_ROUTES = new Set([
   "rpc/claim_beta_seat", "rpc/get_current_account_admission_status", "rpc/request_account_deletion",
   "rpc/get_account_storage_consent", "rpc/set_account_storage_consent",
@@ -49,6 +63,36 @@ export function createConsentCheckedFetch(serviceUrl: string, transport: typeof 
     // Keep an identity-only exemption bound to the body and URL checked here.
     init = init ? { ...init } : undefined
     if (input instanceof URL) input = url.href
+    const headers = new Headers(input instanceof Request ? input.headers : undefined)
+    new Headers(init?.headers).forEach((value, key) => headers.set(key, value))
+    const guarded = headers.has(LOCAL_COLLECTION_SEND_GUARD_HEADER)
+    const nonce = headers.get(LOCAL_COLLECTION_SEND_GUARD_HEADER)
+    const beforeSend = nonce ? collectionSendGuards.get(nonce) : undefined
+    const reviewCurrent = () => {
+      if (!guarded) return true
+      try {
+        return !!nonce && !!beforeSend && collectionSendGuards.get(nonce) === beforeSend
+          && beforeSend() === true && collectionSendGuards.get(nonce) === beforeSend
+      } catch { return false }
+    }
+    const denied = () => new Response(JSON.stringify({ error: "STORAGE_CONSENT_REQUIRED" }), {
+      status: 403, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+    })
+    if (guarded) {
+      headers.delete(LOCAL_COLLECTION_SEND_GUARD_HEADER)
+      init = { ...init, headers }
+      // Internal markers are accepted only for this service's JSON commit or
+      // goal INDEX save. BODY/progress/JOURNAL writes keep their existing path.
+      // Never forward one to auth, rights, a different function or origin.
+      let permitted = false
+      try {
+        const body = typeof init.body === "string" ? JSON.parse(init.body) : null
+        permitted = url.pathname === "/functions/v1/account-plan-collection" && body?.action === "commit"
+          || url.pathname === "/functions/v1/account-journal" && body?.action === "save" && body.document?.kind === "GOAL_PROGRAM_INDEX"
+      } catch { /* fail closed */ }
+      const method = (init.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase()
+      if (url.origin !== service.origin || method !== "POST" || !permitted || !reviewCurrent()) return denied()
+    }
     const path = url.pathname.replace(/^\/rest\/v1\//u, "")
     const comparison = url.pathname === "/functions/v1/oracle-profile-comparison"
     const protectedRequest = url.origin === service.origin && (
@@ -56,15 +100,10 @@ export function createConsentCheckedFetch(serviceUrl: string, transport: typeof 
       || comparison || ["/functions/v1/account-journal", "/functions/v1/account-plan-collection"].includes(url.pathname)
     )
     if (!protectedRequest) return transport(input, init)
-    const headers = new Headers(input instanceof Request ? input.headers : undefined)
-    new Headers(init?.headers).forEach((value, key) => headers.set(key, value))
     const subject = tokenSubject(headers.get("Authorization"))
     const withdrawal = comparison && comparisonWithdrawal(input, init)
     const signal = init?.signal ?? (input instanceof Request ? input.signal : undefined)
-    const denied = () => new Response(JSON.stringify({ error: "STORAGE_CONSENT_REQUIRED" }), {
-      status: 403, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
-    })
-    if (!subject || (!withdrawal && isStorageTransmissionHeld(subject)) || signal?.aborted) return denied()
+    if (!subject || (!withdrawal && isStorageTransmissionHeld(subject)) || signal?.aborted || !reviewCurrent()) return denied()
     // Capture before the server check awaits. Never upgrade a pinned old job to
     // a new grant, including an operation whose first write never reached SQL.
     const revision = headers.get("x-trainoracle-storage-revision") ?? String(currentStorageConsentRevision(subject))
@@ -84,7 +123,7 @@ export function createConsentCheckedFetch(serviceUrl: string, transport: typeof 
           method: "POST", headers: checkHeaders, signal, cache: "no-store",
           body: JSON.stringify({ expected_user_id_input: subject, expected_session_id_input: sessionId }),
         })
-        if (!response.ok || await response.json() !== true || signal?.aborted) return denied()
+        if (!reviewCurrent() || !response.ok || await response.json() !== true || signal?.aborted || !reviewCurrent()) return denied()
         return transport(input, { ...init, headers })
       }
       const response = await transport(new URL("/rest/v1/rpc/get_account_storage_consent", service).href, {
@@ -92,13 +131,15 @@ export function createConsentCheckedFetch(serviceUrl: string, transport: typeof 
         body: JSON.stringify({ expected_user_id_input: subject }),
         signal, cache: "no-store",
       })
+      if (!reviewCurrent()) return denied()
       const value: unknown = response.ok ? await response.json() : null
+      if (!reviewCurrent()) return denied()
       const consent = value as { userId?: unknown; revision?: unknown; purposeVersion?: unknown; healthStorage?: unknown; journalTextStorage?: unknown; operationsReady?: unknown } | null
       if (consent?.userId !== subject || consent.purposeVersion !== "2026-10-05"
         || typeof consent.revision !== "number" || !Number.isSafeInteger(consent.revision) || consent.revision <= 0
         || String(consent.revision) !== revision
         || consent.healthStorage !== true || consent.journalTextStorage !== true || consent.operationsReady !== true
-        || isStorageTransmissionHeld(subject) || signal?.aborted) return denied()
+        || isStorageTransmissionHeld(subject) || signal?.aborted || !reviewCurrent()) return denied()
       // Pin the exact Authorization used for the consent check.
       return transport(input, { ...init, headers })
     } catch { return denied() }

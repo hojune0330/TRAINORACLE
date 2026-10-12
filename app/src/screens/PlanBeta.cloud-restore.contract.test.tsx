@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen, within } from "@testing-library/react"
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { PlanBeta } from "./PlanBeta"
@@ -63,9 +63,18 @@ it("preserves and displays a new local plan saved in another tab while the older
   const user = userEvent.setup()
   await user.click(within(screen.getByRole("group", { name: "계획 일정 보기" })).getByRole("button", { name: "목록" }))
   const schedule = within(screen.getByRole("region", { name: "날짜별 훈련 목록" }))
-  const progress = schedule.getAllByLabelText("현재 진행 상태")[0]!
+  const list = schedule.getByRole("list", { name: "날짜별 계획 미리보기" })
+  expect(list).toBeVisible()
+  const firstDay = within(list).getByRole("group", { name: "7월 24일 금요일 · 훈련 1개" })
+  const progress = within(firstDay).getByLabelText("현재 진행 상태")
   expect(progress).toBeVisible()
   expect(progress).toHaveTextContent("완료")
+  await user.click(within(firstDay).getByRole("button", { name: /전체 처방 보기$/u }))
+  const reader = screen.getByRole("dialog")
+  await user.click(within(reader).getByText("일지·진행 기록"))
+  expect(within(reader).getByText("완료", { selector: "em" })).toBeVisible()
+  await user.click(within(reader).getByRole("button", { name: "달력으로 돌아가기" }))
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
 })
 
 it.each(["invalid", "unreadable"] as const)("preserves %s local state that appears during a cloud request", async mode => {

@@ -36,7 +36,11 @@ test("preference questions, reactive helper and optional next topic retain answe
   await dialog.getByRole("button", { name: "이전 질문", exact: true }).click()
   await expect(dialog.getByRole("button", { name: "매우 그래요", exact: true })).toHaveAttribute("aria-pressed", "true")
   await page.screenshot({ path: info.outputPath("profile-question-375.png"), animations: "disabled" })
-  for (let n = 0; n < 3; n++) await dialog.getByRole("button", { name: "매우 그래요", exact: true }).click()
+  for (let n = 0; n < 3; n++) {
+    const answer = dialog.getByRole("button", { name: "매우 그래요", exact: true })
+    await answer.focus()
+    await answer.press("Enter")
+  }
   await expect(dialog.getByRole("heading", { name: "내 답을 정리했어요" })).toBeFocused()
   await expect(dialog.locator(".oracle-v2__result-number")).toContainText("100")
   await expect(dialog.getByText("취향을 정리한 값이에요. 체력이나 실력 점수가 아니에요.")).toBeVisible()
@@ -97,7 +101,11 @@ test("desktop skip keeps an unknown result distinct from zero", async ({ page },
   await page.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개", exact: true }).click()
   const dialog = page.getByRole("dialog", { name: "계획 선호", exact: true })
   await expect(dialog.locator(".oracle-v2__question")).toHaveCSS("animation-name", "none")
-  for (let n = 0; n < 3; n++) await dialog.getByRole("button", { name: "건너뛰기", exact: true }).click()
+  for (let n = 0; n < 3; n++) {
+    const skip = dialog.getByRole("button", { name: "건너뛰기", exact: true })
+    await skip.focus()
+    await skip.press("Enter")
+  }
   await expect(dialog.getByText("점수 없이 답만 정리했어요.", { exact: true })).toBeVisible()
   await expect(dialog.locator(".oracle-v2__result-number")).toHaveCount(0)
   await page.screenshot({ path: info.outputPath("profile-skipped-desktop.png") })

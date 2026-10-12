@@ -30,6 +30,7 @@ const headerSchema = z.object({
   legacy: z.object({ documentId: uuid, revision: z.number().int().positive(), fingerprint: hash }).strict().nullable(),
   journalGuard: accountPlanJournalGuardSchema.optional(),
   paceRecordGuard: accountPlanPaceRecordGuardSchema.optional(),
+  archiveReviewRequired: z.literal(true).optional(),
 }).strict()
 type Row = { ownerId: string; slot: string; operationId: string; fingerprint: string; iv: Uint8Array; ciphertext: Uint8Array }
 type Key = { id: string; key: CryptoKey }

@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen, waitFor } from "@testing-library/react"
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { PlanBeta } from "./PlanBeta"
@@ -7,16 +7,24 @@ import { activePlanBetaStorageKey, readPlanBetaStateFromStorage, savePlanBetaSta
 import { setActiveLocalAccount } from "../domain/account/local-journal-ownership"
 import { enterPlanWithoutRecord } from "./plan-beta/instant-plan.test-helper"
 import * as legacyArchive from "../domain/legacy-plan-archive"
+import { hasPendingBrowserBackLayer } from "../navigation/browserNavigation"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null) })
-afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
+afterEach(async () => {
+  cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals()
+  await waitFor(() => expect(hasPendingBrowserBackLayer()).toBe(false))
+})
 const storageChanged = (key: string | null = activePlanBetaStorageKey()) => act(() => {
   window.dispatchEvent(new StorageEvent("storage", { key, storageArea: localStorage }))
 })
 const showProgress = async () => {
   const user = userEvent.setup()
-  await user.click(await screen.findByRole("button", { name: "날짜별 카드 보기" }))
-  await user.click(screen.getAllByText(/훈련 방법과 기록/u)[0]!)
+  await user.click(await screen.findByRole("button", { name: "목록" }))
+  const list = screen.getByRole("region", { name: "날짜별 훈련 목록" })
+  await user.click(within(list).getByRole("button", { name: "7월 24일 금요일 전체 처방 보기" }))
+  const reader = within(await screen.findByRole("dialog", { name: "2026년 7월 24일 금요일" }))
+  await user.click(reader.getByText("일지·진행 기록", { exact: true }))
+  return reader
 }
 function storeLegacyOriginal() {
   const current = stateFixture()
@@ -32,13 +40,13 @@ it("refreshes active progress changed in another tab without requiring remount",
   const original = stateFixture()
   expect(savePlanBetaState(original)).toEqual({ ok: true })
   render(<PlanBeta />)
-  await showProgress()
-  expect(screen.getByText("예정", { selector: "em" })).toBeVisible()
+  const reader = await showProgress()
+  expect(reader.getByText("예정", { selector: "em" })).toBeVisible()
   const updated = { ...original, progress: [{ sessionDay: 1, sessionSlot: "AM" as const, state: "COMPLETED" as const }] }
   expect(savePlanBetaState(updated)).toEqual({ ok: true })
   storageChanged()
-  expect(screen.getByText("완료", { selector: "em" })).toBeVisible()
-  expect(screen.queryByText("예정", { selector: "em" })).not.toBeInTheDocument()
+  expect(reader.getByText("완료", { selector: "em" })).toBeVisible()
+  expect(reader.queryByText("예정", { selector: "em" })).not.toBeInTheDocument()
 })
 
 it("stops displaying an active plan removed in another tab", async () => {

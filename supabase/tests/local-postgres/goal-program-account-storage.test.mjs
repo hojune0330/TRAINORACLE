@@ -6,7 +6,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
 import { loadOracleMigrationChain, setOracleAuth, approveSyntheticOracleStorage, admitOracleStorage } from './oracle-auth-fixture.mjs';
 
-// Local PostgreSQL engine + the complete integrated 0001..0062 chain. This is
+// Local PostgreSQL engine + the complete integrated 0001..0064 chain. This is
 // neither a production migration nor native multi-session concurrency evidence.
 const db=new PGlite({extensions:{pgcrypto}});
 const owner='a1111111-1111-4111-8111-111111111111',other='b2222222-2222-4222-8222-222222222222';
@@ -24,6 +24,9 @@ async function submit(body={},action='commit',actor=owner) {
 const denied=(work,code='22023')=>assert.rejects(work,error=>error.code===code);
 before(async()=>{
   await loadOracleMigrationChain(db);
+  await db.exec('reset role');
+  for(const file of ['0063_lounge_identity_deletion_outbox.sql','0064_minigame_progress_account_storage.sql'])
+    await db.exec(readFileSync(new URL(`../../migrations/${file}`,import.meta.url),'utf8'));
   for(const actor of [owner,other]) {
     await db.query("insert into auth.users(id,created_at,email_confirmed_at,encrypted_password) values($1,'2020-01-01',clock_timestamp(),null)",[actor]);
     await db.query("insert into auth.sessions(id,user_id,not_after) values($1,$2,clock_timestamp()+interval '1 hour')",[sessions.get(actor),actor]);
@@ -33,20 +36,62 @@ before(async()=>{
   await approveSyntheticOracleStorage(db);
   for(const actor of [owner,other]) await admitOracleStorage(db,actor,sessions.get(actor));
   await db.exec('reset role');
+  const permissions=async()=>({
+    functions:(await db.query(`select p.oid,p.proname,p.proacl,p.prosecdef,p.proconfig from pg_proc p
+      join pg_namespace n on n.oid=p.pronamespace where n.nspname='public'
+      and p.proname<>'verify_account_goal_program_parts' order by p.oid`)).rows,
+    relations:(await db.query(`select c.oid,c.relname,c.relacl from pg_class c
+      join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' order by c.oid`)).rows,
+  });
   const before=(await db.query('select * from public.service_feature_controls order by feature_key')).rows;
-  await db.exec(readFileSync(new URL('../../operations/goal-program-account-storage.sql',import.meta.url),'utf8'));
+  const permissionsBefore=await permissions();
+  const proposal=readFileSync(new URL('../../operations/goal-program-account-storage.sql',import.meta.url),'utf8');
+  const definition=async()=>(await db.query("select pg_get_functiondef('public.mutate_account_journal_attested(text,text,text)'::regprocedure) source")).rows[0].source;
+  const installed=await definition();
+  const kindAnchor="('DRAFT','JOURNAL','DECORATIONS','PLAN','CALENDAR_DECORATIONS','ATHLETE_RECORDS','RUNNING_PROFILE','MINIGAME_PROGRESS')";
+  assert.ok(installed.includes(kindAnchor),'0064 must provide the reviewed kind list');
+  // An unreviewed predecessor must fail atomically, rather than erase another kind.
+  await db.exec('begin');
+  try {
+    await db.exec(installed.replace(kindAnchor,kindAnchor.replace(",'MINIGAME_PROGRESS'",'')));
+    await assert.rejects(()=>db.exec(proposal),error=>error.code==='P0001' && error.message==='GOAL_PROGRAM_KIND_ANCHOR_MISSING');
+  } finally { await db.exec('rollback') }
+  assert.equal(await definition(),installed,'failed proposal must restore the original attested function');
+  assert.equal((await db.query("select to_regprocedure('public.verify_account_goal_program_parts(uuid,jsonb)') helper")).rows[0].helper,null);
+  await db.exec(proposal);
   const after=(await db.query('select * from public.service_feature_controls order by feature_key')).rows;
   assert.deepEqual(after,before,'SQL proposal must not activate any feature');
+  assert.deepEqual(await permissions(),permissionsBefore,'SQL proposal must not expand existing permissions');
   await setOracleAuth(db,owner,sessions.get(owner));
 },{timeout:120000});
 after(()=>db.close());
 
 test('additive attested support keeps existing storage admission and draft CAS intact',async()=>{
   assert.deepEqual(await submit({},'goalProgramSupport'),{kind:'goal-program-support',version:1});
+  assert.deepEqual(await submit({},'minigameProgressSupport'),{kind:'minigame-progress-support',version:1});
+  assert.deepEqual(await submit({},'runningProfileSupport'),{kind:'running-profile-support',version:1});
+  assert.deepEqual(await submit({},'oracleV2RestartSupport'),{kind:'oracle-v2-restart-support',version:1});
   const legacy=input('DRAFT');
   const first=await submit(legacy);assert.equal(first.kind,'saved');assert.equal(first.revision,1);
   assert.deepEqual(await submit(legacy),first);
   assert.equal((await submit({...legacy,operationId:randomUUID()})).kind,'conflict');
+});
+
+test('goal support preserves encrypted game CAS, metadata isolation and reward restrictions after 0064',async()=>{
+  const game=input('MINIGAME_PROGRESS');
+  const first=await submit(game);assert.equal(first.kind,'saved');assert.equal(first.revision,1);
+  assert.deepEqual(await submit(game),first);
+  assert.equal((await submit({...game,operationId:randomUUID()})).kind,'conflict');
+  assert.equal((await submit({...game,operationId:randomUUID(),expectedRevision:1})).revision,2);
+  for(const extra of [{eligible:true},{journalDate:'2026-10-11'},{occurrenceId:randomUUID()},
+    {goalProgramPartId:`sha256:${'a'.repeat(64)}`},{goalProgramParts:[]}]) {
+    await denied(()=>submit(input('MINIGAME_PROGRESS',{metadata:metadata('MINIGAME_PROGRESS',extra)})));
+  }
+  await denied(()=>submit({...game,operationId:randomUUID(),expectedRevision:2,metadata:metadata('DECORATIONS')}));
+  await denied(()=>submit(input('MINIGAME_POINTS')));
+  const summary=(await db.query('select public.account_reward_summary() summary')).rows[0].summary;
+  assert.equal(summary.journalDays,0);
+  assert.equal((await submit({documentId:game.documentId,operationId:randomUUID(),expectedRevision:2},'delete')).kind,'deleted');
 });
 
 test('immutable encrypted parts, receipts and verified manifest CAS share the existing owner boundary',async()=>{

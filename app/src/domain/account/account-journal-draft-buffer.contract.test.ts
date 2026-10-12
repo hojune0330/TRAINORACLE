@@ -128,6 +128,22 @@ describe("draft buffer refusal before storage", () => {
     expect(open).not.toHaveBeenCalled()
   })
 
+  it.each([false, "true", 1, null])("refuses nonliteral goal review batch metadata %# before storage", async value => {
+    const { buffer, open } = unopenedBuffer()
+    await expect(buffer.saveDraftBatch!(owner, [{ documentId: doc, draft, expectedLocalSequence: 0,
+      goalStartDateReviewRequired: value as true }])).rejects.toThrow()
+    expect(open).not.toHaveBeenCalled()
+    buffer.close()
+  })
+
+  it("refuses goal review metadata on another document family before encryption or storage", async () => {
+    const { buffer, open } = unopenedBuffer()
+    await expect(buffer.saveDraftBatch!(owner, [{ documentId: doc, draft, expectedLocalSequence: 0,
+      goalStartDateReviewRequired: true }])).rejects.toThrow("Invalid goal review metadata")
+    expect(open).not.toHaveBeenCalled()
+    buffer.close()
+  })
+
   it("refuses invalid drafts without leaking their contents into errors", async () => {
     const { buffer, open } = unopenedBuffer()
     const invalid = { ...draft, body: "sensitive-synthetic-value", visibility: "PUBLIC" } as unknown as AccountJournalDraft

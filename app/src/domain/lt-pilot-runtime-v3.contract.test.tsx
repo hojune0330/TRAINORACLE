@@ -125,7 +125,7 @@ it("saves and reloads the historical raw-RPE detailed pilot with retained eviden
   await act(async () => Promise.resolve())
 })
 
-it("uses the same exact display on home and details while preserving historical raw-RPE source labels and explanation evidence", () => {
+it("preserves exact time and effort on home and details with historical raw-RPE source labels and explanation evidence", () => {
   const entry = entryFor(), review = entry.readReview()
   const prepared = prepareMultiAdjustedPlanCandidateV3(entry.seed.preparations, review.rpeBindings)
   if (prepared.kind !== "prepared") throw Error(prepared.code)
@@ -133,9 +133,14 @@ it("uses the same exact display on home and details while preserving historical 
   const explanation = entry.seed.preparations.find(item => item.address.day === session.day && item.address.slot === session.slot)!.explanation
   const before = JSON.stringify({ session, explanation })
   const homeText = nextTrainingPrescriptionLabel(session)
+  const detailText = "20분 · 힘든 정도 6–7/10 (제안)"
+  const effortText = "힘들지만 정해진 구간 동안 고르게 유지하는 노력 · 본운동 체감 제안 힘든 정도 6–7/10"
   const view = render(<AdjustedPrescriptionV3 session={session} explanation={explanation} />)
-  expect(homeText).toBe("20min @ RPE 6–7")
-  expect(screen.getByText(homeText)).toBeVisible()
+  expect(homeText).toBe("20분 · 힘들지만 정해진 구간 동안 고르게 유지하는 노력 · 본운동 체감 제안 힘든 정도 6–7/10")
+  expect(screen.getByText(detailText)).toBeVisible()
+  expect(screen.getByText(effortText)).not.toBeVisible()
+  fireEvent.click(screen.getByText("강도 안내"))
+  expect(screen.getByText(effortText)).toBeVisible()
   expect(screen.getByText("템포런 · Tempo Run")).toBeVisible()
   expect(screen.getByText(explanation.purpose)).not.toBeVisible()
   fireEvent.click(screen.getByText("자세히 보기 · 방법과 근거"))
@@ -149,7 +154,8 @@ it("uses the same exact display on home and details while preserving historical 
   view.rerender(<AdjustedPrescriptionV3 session={session} />)
   expect(screen.getByText(/연결된 설명을 읽지 못했어요/)).toBeVisible()
   expect(screen.queryByText(explanation.purpose)).toBeNull()
-  expect(screen.getByText(homeText)).toBeVisible()
+  expect(screen.getByText(detailText)).toBeVisible()
+  expect(screen.getByText(effortText)).toBeVisible()
 })
 
 it("keeps current catalog plans outside the historical LT pilot without rewriting the candidate", () => {
@@ -178,7 +184,7 @@ it("opens the current catalog workout flow from the first plan result action wit
     kind: candidate.kind, sessions: candidate.sessions.map(({ day, slot, role }) => ({ day, slot, role })),
   }))
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
-  fireEvent.click(screen.getByRole("button", { name: "처방 확인·조절" }))
+  fireEvent.click(screen.getByRole("button", { name: "훈련 조절" }))
   const address = screen.getByRole("combobox", { name: "바꿀 일정" })
   expect(address).toBeVisible()
   expect(address).toHaveValue("5:AM")

@@ -11,38 +11,71 @@ export async function openActiveSessionDetails(
   expectedText?: string | RegExp,
 ): Promise<Locator> {
   await openActivePlanCards(page)
-  const cards = page.locator(".plan-schedule-preview > li")
-  const position = page.getByLabel("현재 날짜 위치")
-  const next = page.getByRole("button", { name: "다음 날짜" })
-  const currentPosition = await position.textContent()
-  const total = await cards.count()
-  let currentIndex = Math.max(0, Number.parseInt(currentPosition?.split("/")[0] ?? "1", 10) - 1)
-
-  while (currentIndex < total) {
-    const activeCard = cards.nth(currentIndex)
-    await expect(activeCard).toHaveAttribute("data-active-card", "true")
-    await expect(activeCard).toBeVisible()
-    const expanders = activeCard.getByText(/훈련 방법과 기록/u)
-    for (let sessionIndex = 0; sessionIndex < await expanders.count(); sessionIndex += 1) {
-      const expander = expanders.nth(sessionIndex)
-      if (await expander.isVisible()) await expander.click()
+  const total = await page.locator(".active-plan .plan-schedule-preview > li").count()
+  for (let dayIndex = 0; dayIndex < total; dayIndex += 1) {
+    const reader = await openActiveDayReader(page, dayIndex)
+    const records = reader.locator("[data-session-records]")
+    for (let sessionIndex = 0; sessionIndex < await records.count(); sessionIndex += 1) {
+      await openSessionRecords(records.nth(sessionIndex))
     }
-
-    if (expectedText === undefined) return activeCard
-    const target = activeCard.getByText(expectedText).first()
-    if (await target.isVisible()) return activeCard
-
-    currentIndex += 1
-    if (currentIndex >= total) break
-    await next.click()
-    await expect(position).toHaveText(`${currentIndex + 1}/${total}`)
+    if (expectedText === undefined) return reader
+    if (await reader.getByText(expectedText).first().isVisible()) return reader
+    const notation = reader.locator("details").filter({ has: page.getByText("기존 훈련 표기", { exact: true }) })
+    for (let index = 0; index < await notation.count(); index += 1) {
+      if (await notation.nth(index).getAttribute("open") === null) {
+        await notation.nth(index).getByText("기존 훈련 표기", { exact: true }).click()
+      }
+    }
+    if (await reader.getByText(expectedText).first().isVisible()) return reader
   }
 
   throw new Error(`Could not find a visible active-plan session matching ${String(expectedText)}`)
 }
 
 export async function openActivePlanCards(page: Page): Promise<void> {
+  await closeActiveDayReader(page)
   await expect(page.locator(".active-plan")).toBeVisible()
-  const toggle = page.getByRole("button", { name: "날짜별 카드 보기", exact: true })
-  if (await toggle.isVisible()) await toggle.click()
+  const list = page.getByRole("group", { name: "계획 일정 보기", exact: true })
+    .getByRole("button", { name: "목록", exact: true })
+  if (await list.getAttribute("aria-pressed") !== "true") await list.click()
+  await expect(list).toHaveAttribute("aria-pressed", "true")
+  await expect(page.getByRole("list", { name: "날짜별 계획 미리보기", exact: true })).toBeVisible()
+}
+
+export async function openActiveDayReader(page: Page, dayIndex = 0): Promise<Locator> {
+  await openActivePlanCards(page)
+  const cards = page.locator(".active-plan .plan-schedule-preview > li")
+  const total = await cards.count()
+  expect(dayIndex).toBeGreaterThanOrEqual(0)
+  expect(dayIndex).toBeLessThan(total)
+  const card = cards.nth(dayIndex)
+  const date = await card.locator("header time").textContent()
+  expect(date).toBeTruthy()
+  const trigger = card.getByRole("button", { name: /전체 처방 보기$/u })
+  await expect(trigger).toHaveAccessibleName(`${date} 전체 처방 보기`)
+  await trigger.click()
+  const reader = page.locator(".plan-day-reader[open]")
+  await expect(reader).toBeVisible()
+  await expect(reader.getByRole("heading", { level: 2 })).toContainText(date!)
+  await expect(reader.getByRole("button", { name: "크게 보기 이전 날짜", exact: true })).toBeVisible()
+  await expect(reader.getByRole("button", { name: "크게 보기 다음 날짜", exact: true })).toBeVisible()
+  return reader
+}
+
+export async function closeActiveDayReader(page: Page): Promise<void> {
+  const reader = page.locator(".plan-day-reader[open]")
+  if (await reader.count()) {
+    await reader.getByRole("button", { name: "달력으로 돌아가기", exact: true }).click()
+    await expect(reader).toHaveCount(0)
+  }
+}
+
+export async function openSessionRecords(session: Locator): Promise<void> {
+  const records = session.locator("[data-session-records]")
+  const target = await session.getAttribute("data-session-records") === null ? records : session
+  await expect(target).toHaveCount(1)
+  if (await target.getAttribute("open") === null) {
+    await target.getByText("일지·진행 기록", { exact: true }).click()
+  }
+  await expect(target).toHaveAttribute("open", "")
 }

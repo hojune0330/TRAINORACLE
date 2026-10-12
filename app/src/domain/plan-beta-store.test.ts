@@ -2,11 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   archiveAndClearActivePlan,
   archiveAndClearActivePlanWithLock,
+  activePlanBetaStorageKey,
   loadPlanBetaState,
   loadPreviousIntake,
   loadPreviousContinuity,
   savePlanBetaState,
   savePlanProgressWithLock,
+  readPlanBetaStateFromStorage,
   updateStoredProgress,
 } from "./plan-beta-store"
 import type { PlanBetaState } from "./plan-beta-store"
@@ -15,6 +17,8 @@ import { PLAN_BETA_MUTATION_LOCK_NAME } from "./plan-mutation-lock"
 import { deriveCandidateId } from "@impl/plan-generator/candidate-identity"
 import { generatePlanFromDraft, selectPlanForActivation } from "./plan-beta-flow"
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
+import { accountPlanPacketFixture } from "./account/account-plan.test-fixtures"
+import type { RetainedMultiAdjustedEvidenceV3 } from "./selected-multi-adjusted-plan-v3"
 
 let locksDescriptor: PropertyDescriptor | undefined
 
@@ -32,6 +36,13 @@ function legacyStateFixture() {
     ...activePlan
   } = current.activePlan
   return { ...current, version: 1 as const, intake, activePlan }
+}
+
+function multiPlanPacketFixture() {
+  const packet = accountPlanPacketFixture(6)
+  if (packet.state.version !== 6 || packet.evidence === null || !("slots" in packet.evidence)
+      || !("rpeBindings" in packet.evidence)) throw Error("Expected V6 evidence")
+  return { state: packet.state, evidence: packet.evidence as RetainedMultiAdjustedEvidenceV3 }
 }
 
 describe("plan beta local store", () => {
@@ -65,6 +76,72 @@ describe("plan beta local store", () => {
 
     expect(loadPlanBetaState()).toEqual(state)
     expect(JSON.stringify(loadPlanBetaState())).not.toMatch(/memo|symptom/u)
+  })
+
+  it("defers multi-plan evidence until a V6 envelope actually needs it", () => {
+    const packet = multiPlanPacketFixture()
+    const readMultiEvidence = vi.fn(() => [packet.evidence])
+
+    expect(readPlanBetaStateFromStorage([], [], readMultiEvidence)).toEqual({ kind: "missing" })
+    expect(readMultiEvidence).not.toHaveBeenCalled()
+
+    const legacy = stateFixture()
+    expect(savePlanBetaState(legacy)).toEqual({ ok: true })
+    expect(readPlanBetaStateFromStorage([], [], readMultiEvidence)).toEqual({ kind: "loaded", state: legacy })
+    expect(readMultiEvidence).not.toHaveBeenCalled()
+
+    window.localStorage.setItem(activePlanBetaStorageKey(), JSON.stringify(packet.state))
+    expect(readPlanBetaStateFromStorage([], [], readMultiEvidence)).toMatchObject({ kind: "multi_adjusted_v3_loaded", state: packet.state })
+    expect(readMultiEvidence).toHaveBeenCalledOnce()
+  })
+
+  it("rechecks the local account scope after a lazy multi-plan evidence read", () => {
+    const packet = multiPlanPacketFixture()
+    setActiveLocalAccount("scope-b")
+    const current = stateFixture()
+    expect(savePlanBetaState(current)).toEqual({ ok: true })
+    setActiveLocalAccount("scope-a")
+    window.localStorage.setItem(activePlanBetaStorageKey(), JSON.stringify(packet.state))
+
+    const readMultiEvidence = vi.fn(() => {
+      setActiveLocalAccount("scope-b")
+      return [packet.evidence]
+    })
+    expect(readPlanBetaStateFromStorage([], [], readMultiEvidence)).toEqual({ kind: "loaded", state: current })
+    expect(readMultiEvidence).toHaveBeenCalledOnce()
+  })
+
+  it("retries a lazy multi-plan read after an account ABA", () => {
+    const packet = multiPlanPacketFixture()
+    setActiveLocalAccount("scope-a")
+    window.localStorage.setItem(activePlanBetaStorageKey(), JSON.stringify(packet.state))
+    const readMultiEvidence = vi.fn(() => {
+      if (readMultiEvidence.mock.calls.length === 1) {
+        setActiveLocalAccount("scope-b")
+        setActiveLocalAccount("scope-a")
+      }
+      return [packet.evidence]
+    })
+
+    expect(readPlanBetaStateFromStorage([], [], readMultiEvidence)).toMatchObject({
+      kind: "multi_adjusted_v3_loaded",
+      state: packet.state,
+    })
+    expect(readMultiEvidence).toHaveBeenCalledTimes(2)
+  })
+
+  it("fails closed when every lazy multi-plan retry changes the account generation", () => {
+    const packet = multiPlanPacketFixture()
+    setActiveLocalAccount("scope-a")
+    window.localStorage.setItem(activePlanBetaStorageKey(), JSON.stringify(packet.state))
+    const readMultiEvidence = vi.fn(() => {
+      setActiveLocalAccount("scope-b")
+      setActiveLocalAccount("scope-a")
+      return [packet.evidence]
+    })
+
+    expect(readPlanBetaStateFromStorage([], [], readMultiEvidence)).toEqual({ kind: "storage_error" })
+    expect(readMultiEvidence).toHaveBeenCalledTimes(2)
   })
 
   it.each(["progress", "archive"] as const)("rejects an old %s click after an account ABA while waiting for the mutation lock", async operation => {

@@ -252,7 +252,13 @@ function frameCandidates(request: CanonicalPlanGenerationRequest, cycle: 1 | 2 |
   const candidates = generated?.kind === "generated" ? generated.candidates
     : createDeterministicCandidates(request, { ...ledger, mainExposureCount: ledger.mainExposureCount })
   const bound = candidates.map(candidate => {
-    const sessions = bindDefaultCatalogSessions(candidate.sessions, 10000, request.profile.experienceBand, cycle)
+    // Explicit goal RP replaces every QUALITY prescription below. Binding an
+    // ordinary MAIN first would calculate and discard a different recipe.
+    const ordinary = settings.goalPaceConfirmed
+      ? candidate.sessions.map(session => session.role === "QUALITY" ? session
+        : bindDefaultCatalogSessions([session], 10000, request.profile.experienceBand, cycle)[0]!)
+      : bindDefaultCatalogSessions(candidate.sessions, 10000, request.profile.experienceBand, cycle)
+    const sessions = ordinary
       .map((session, index) => {
         if (!settings.goalPaceConfirmed || session.role !== "QUALITY") return session
         const options = goalPaceSessionOptions(candidate.sessions[index]!, settings)
@@ -400,6 +406,39 @@ export function createGoalTrainingProgramPreview(input: GoalTrainingProgramPrevi
   } catch { return { kind: "unavailable", code: "INVALID_SETTINGS" } }
 }
 
+type ValidationReplay = Readonly<{
+  program: GoalTrainingProgram
+  fingerprint: string
+  durationConfirmationRequired: boolean
+  bytes: number
+}>
+const validationReplays = new Map<string, ValidationReplay>()
+const VALIDATION_REPLAY_MAX_ENTRIES = 32
+const VALIDATION_REPLAY_MAX_BYTES = 4 * 1024 * 1024
+let validationReplaySource = "", validationReplayBytes = 0
+
+function validationReplayKey(settings: Settings, window: GoalProgramWindow): string {
+  // Catalog JSON is mutable at the module boundary. A changed sequence or
+  // eligibility must invalidate old recipes even when its declared hash is unchanged.
+  const source = JSON.stringify({ source: GOAL_TRAINING_PROGRAM_SOURCE, catalog: ALL_WORKOUT_CATALOG })
+  if (source !== validationReplaySource) {
+    validationReplays.clear(); validationReplayBytes = 0; validationReplaySource = source
+  }
+  return JSON.stringify({ settings, window })
+}
+
+function retainValidationReplay(key: string, replay: ValidationReplay): void {
+  if (replay.bytes > VALIDATION_REPLAY_MAX_BYTES) return
+  while (validationReplays.size >= VALIDATION_REPLAY_MAX_ENTRIES
+    || validationReplayBytes + replay.bytes > VALIDATION_REPLAY_MAX_BYTES) {
+    const oldest = validationReplays.keys().next().value
+    if (oldest === undefined) break
+    validationReplayBytes -= validationReplays.get(oldest)!.bytes
+    validationReplays.delete(oldest)
+  }
+  validationReplays.set(key, replay); validationReplayBytes += replay.bytes
+}
+
 /** Restores exact proposals by replaying reviewed recipes, inputs and dates.
  * Hash agreement alone never makes edited quantities or source claims valid. */
 export function validateGoalTrainingProgram(value: unknown):
@@ -412,12 +451,25 @@ export function validateGoalTrainingProgram(value: unknown):
     if (!settings || !isValidIsoDate(program.window.startDate)) return { kind: "invalid", code: "INVALID_SETTINGS" }
     const resolved = resolveGoalProgramWindow(settings.dateChoice, program.window.startDate)
     if (resolved.kind !== "ready") return { kind: "invalid", code: "INVALID_WINDOW" }
-    const replay = makeProgram(settings, resolved.window, UNCHECKED_PREVIEW_GATE, false)
-    if (replay && goalTrainingProgramDurationReview(replay).required && !settings.longerDurationConfirmed) {
+    const key = validationReplayKey(settings, resolved.window)
+    const retained = validationReplays.get(key)
+    // Only the immutable expected recipe is reused. Current frame validators and
+    // the entire incoming body comparison still run; approval and activation do not.
+    if (retained && !retained.program.frames.every(frame => planBetaStateV3Schema.safeParse(frame.plan).success)) {
+      return { kind: "invalid", code: "SOURCE_REPLAY_MISMATCH" }
+    }
+    const replay = retained?.program ?? makeProgram(settings, resolved.window, UNCHECKED_PREVIEW_GATE, false)
+    const durationConfirmationRequired = retained?.durationConfirmationRequired
+      ?? (replay !== null && goalTrainingProgramDurationReview(replay).required)
+    if (replay && durationConfirmationRequired && !settings.longerDurationConfirmed) {
       return { kind: "invalid", code: "SOURCE_DURATION_CONFIRMATION_MISSING" }
     }
+    const expectedFingerprint = retained?.fingerprint
+      ?? (replay && canonicalJsonFingerprint("trainoracle.goal-program-compare.v1", replay))
     if (!replay || canonicalJsonFingerprint("trainoracle.goal-program-compare.v1", program)
-      !== canonicalJsonFingerprint("trainoracle.goal-program-compare.v1", replay)) return { kind: "invalid", code: "SOURCE_REPLAY_MISMATCH" }
+      !== expectedFingerprint) return { kind: "invalid", code: "SOURCE_REPLAY_MISMATCH" }
+    if (!retained) retainValidationReplay(key, { program: replay, fingerprint: expectedFingerprint!,
+      durationConfirmationRequired, bytes: new TextEncoder().encode(key + JSON.stringify(replay)).byteLength })
     return { kind: "valid", program: replay }
   } catch { return { kind: "invalid", code: "INVALID_PROGRAM" } }
 }

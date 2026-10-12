@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
@@ -6,8 +6,12 @@ import { ActivePlan } from "./ActivePlan"
 import { createInitialPeriodizationContext } from "../../domain/periodization-lineage"
 import { createPlannedSessionLogDraft } from "../../domain/planned-session-link"
 import { QuickSessionForm } from "../log-entry/QuickSessionForm"
+import { hasPendingBrowserBackLayer } from "../../navigation/browserNavigation"
 
-afterEach(cleanup)
+afterEach(async () => {
+  cleanup()
+  await waitFor(() => expect(hasPendingBrowserBackLayer()).toBe(false))
+})
 beforeEach(() => window.localStorage.clear())
 
 function plannedDraft() {
@@ -62,10 +66,12 @@ describe("active plan journal action", () => {
       />,
     )
 
-    await user.click(screen.getByRole("button", { name: "날짜별 카드 보기" }))
-    await user.click(screen.getAllByText(/훈련 방법과 기록/u)[0]!)
-    await user.click(screen.getByRole("button", { name: "이 훈련 일지 쓰기" }))
-    expect(onWriteSessionLog).toHaveBeenCalledWith(state.activePlan.sessions[0])
+    await user.click(screen.getByRole("button", { name: "목록" }))
+    const list = screen.getByRole("region", { name: "날짜별 훈련 목록" })
+    await user.click(within(list).getByRole("button", { name: "7월 24일 금요일 전체 처방 보기" }))
+    const reader = within(await screen.findByRole("dialog", { name: "2026년 7월 24일 금요일" }))
+    await user.click(reader.getByRole("button", { name: "이 훈련 일지 쓰기" }))
+    await waitFor(() => expect(onWriteSessionLog).toHaveBeenCalledWith(state.activePlan.sessions[0]))
   })
 
   it("shows the long direction without presenting it as automatic load progression", async () => {
@@ -127,7 +133,7 @@ describe("active plan journal action", () => {
   it.each([
     ["partial", { outcome: "PARTIAL", pain: "NONE" }],
     ["pain", { outcome: "COMPLETED", pain: "SIGNAL" }],
-  ] as const)("does not offer completion for a saved linked %s journal", (_case, input) => {
+  ] as const)("does not offer completion for a saved linked %s journal", async (_case, input) => {
     const { state, draft } = saveQuickPlanJournal(input)
     const onProgress = vi.fn()
     render(
@@ -141,7 +147,7 @@ describe("active plan journal action", () => {
       />,
     )
 
-    const reader = within(screen.getByRole("dialog"))
+    const reader = within(await screen.findByRole("dialog"))
     expect(reader.getByText("일지·진행 기록").closest("details")).toHaveAttribute("open")
     expect(reader.getByText("일지를 연결했어요. 수행 결과와 계획을 함께 확인할 수 있어요.")).toBeVisible()
     expect(reader.getByText(input.pain === "SIGNAL" ? "몸 상태 확인 기록 있음" : "일부 수행·변경 기록 있음")).toBeVisible()

@@ -20,6 +20,7 @@ describe("DS-04 reading layouts", () => {
     expect(css).toMatch(/\.training-lexicon__index\s*\{[^}]*width:\s*min\(100%,\s*760px\)/u)
     expect(css).toMatch(/\.training-term\s*\{[^}]*width:\s*min\(100%,\s*680px\)/u)
     expect(css).toMatch(/\.training-term__section li\s*\{[^}]*max-width:\s*68ch[^}]*font-size:\s*var\(--fs-body\)[^}]*word-break:\s*keep-all/u)
-    expect(css).toMatch(/\.training-lexicon__tools select\s*\{[^}]*font:\s*400\s+var\(--fs-body-lg\)/u)
+    expect(css).toMatch(/\.training-lexicon__search-field input\s*\{[^}]*font:\s*400\s+var\(--fs-body-lg\)/u)
+    expect(css).toMatch(/\.training-lexicon__search-field input\s*\{[^}]*min-height:\s*var\(--app-touch-min\)/u)
   })
 })

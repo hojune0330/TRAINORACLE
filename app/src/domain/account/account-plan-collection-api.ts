@@ -8,6 +8,7 @@ import { validateAccountPlanDocument, type AccountPlanDocument } from "./account
 import { validateAccountPlanCollectionIndex, validateAccountPlanCollectionPart,
   type AccountPlanCollectionIndex } from "./account-plan-collection-schema"
 import type { AccountPlanCollectionPort } from "./account-plan-collection-transfer"
+import { LOCAL_COLLECTION_SEND_GUARD_HEADER, registerCollectionSendGuard } from "./consent-checked-fetch"
 
 export class AccountPlanCollectionError extends Error {
   constructor(readonly code: "AUTH_REQUIRED" | "STALE" | "INVALID" | "UNAVAILABLE" | "CONFLICT" | "REJECTED") {
@@ -40,14 +41,21 @@ export function createAccountPlanCollectionClient(ownerId: string, isCurrent: ()
   const check = (requestedOwner = ownerId) => {
     if (requestedOwner !== ownerId || !current()) throw new AccountPlanCollectionError("STALE")
   }
-  async function invoke(body: object, signal?: AbortSignal, pinnedStorageRevision?: number) {
-    const checkRequest = () => { check(); if (signal?.aborted) throw new AccountPlanCollectionError("STALE") }
+  async function invoke(body: object, signal?: AbortSignal, pinnedStorageRevision?: number, beforeSend?: () => boolean) {
+    const requestCurrent = () => {
+      try {
+        return current() && !signal?.aborted && (!beforeSend || beforeSend() === true)
+          && current() && !signal?.aborted
+      } catch { return false }
+    }
+    const checkRequest = () => { if (!requestCurrent()) throw new AccountPlanCollectionError("STALE") }
     checkRequest()
     const captured = structuredClone(body)
     const operation = captured as { action?: string; request?: { operationId?: string } }
     const storageRevision = pinnedStorageRevision ?? (operation.action === "commit" && operation.request?.operationId
       ? pinStorageOperationRevision(ownerId, operation.request.operationId, 0)
       : currentStorageConsentRevision(ownerId))
+    let sendGuard: ReturnType<typeof registerCollectionSendGuard> | undefined
     try {
       const client = await dependencies.client(); checkRequest()
       if (!client) throw new AccountPlanCollectionError("UNAVAILABLE")
@@ -55,15 +63,20 @@ export function createAccountPlanCollectionClient(ownerId: string, isCurrent: ()
       const token = session.data.session?.access_token
       if (session.error || session.data.session?.user.id !== ownerId || typeof token !== "string" || !token.trim())
         throw new AccountPlanCollectionError("AUTH_REQUIRED")
+      // Register only after client/auth awaits; release even if the SDK times
+      // out while its consent fetch is still waiting for a response.
+      if (beforeSend) sendGuard = registerCollectionSendGuard(requestCurrent)
+      checkRequest()
       const { data, error } = await client.functions.invoke("account-plan-collection", {
-        body: captured, headers: { Authorization: `Bearer ${token}`, "x-trainoracle-storage-revision": String(storageRevision) }, timeout: 30_000,
+        body: captured, headers: { Authorization: `Bearer ${token}`, "x-trainoracle-storage-revision": String(storageRevision),
+          ...(sendGuard ? { [LOCAL_COLLECTION_SEND_GUARD_HEADER]: sendGuard.nonce } : {}) }, timeout: 30_000,
         ...(signal ? { signal } : {}),
       }); checkRequest()
       let value: unknown = data
       if (error) {
         const status = error.context instanceof Response ? error.context.status : 0
         if (status === 409 && "action" in captured && captured.action === "commit") {
-          value = await error.context.clone().json(); check()
+          value = await error.context.clone().json(); checkRequest()
           if ((value as { error?: unknown })?.error === "PACE_RECORD_SOURCE_CHANGED") return { kind: "conflict" as const }
           if ((value as { kind?: unknown })?.kind !== "conflict") throw new AccountPlanCollectionError("REJECTED")
         } else throw new AccountPlanCollectionError(status === 401 ? "AUTH_REQUIRED"
@@ -74,10 +87,10 @@ export function createAccountPlanCollectionClient(ownerId: string, isCurrent: ()
       if (!parsed.success) throw new AccountPlanCollectionError("INVALID")
       return parsed.data
     } catch (error) {
-      if (!current()) throw new AccountPlanCollectionError("STALE")
+      if (!requestCurrent()) throw new AccountPlanCollectionError("STALE")
       if (error instanceof AccountPlanCollectionError) throw error
       throw new AccountPlanCollectionError("UNAVAILABLE")
-    }
+    } finally { sendGuard?.release() }
   }
   const invalid = (): never => { throw new AccountPlanCollectionError("INVALID") }
   return {
@@ -103,9 +116,9 @@ export function createAccountPlanCollectionClient(ownerId: string, isCurrent: ()
       if (!validateAccountPlanCollectionPart(part)) invalid()
       if ((await invoke({ action: "stage", ownerId, part }, undefined, storageConsentRevision)).kind !== "staged") invalid()
     },
-    async commit(request) {
+    async commit(request, beforeSend) {
       check(request.ownerId)
-      const result = await invoke({ action: "commit", request })
+      const result = await invoke({ action: "commit", request }, undefined, undefined, beforeSend)
       return result.kind === "conflict" || result.kind === "committed" ? result : invalid()
     },
     async readLegacy() {

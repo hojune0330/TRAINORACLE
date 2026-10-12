@@ -44,7 +44,7 @@ test("compact questions, named disclosures and preview-first flows remain usable
 })
 
 test("200 percent text and keyboard disclosure retain content and controls", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== "phone-375", "One focused text-size run, not a device matrix")
+  test.skip(testInfo.project.name !== "mobile-chromium", "One focused text-size run, not a device matrix")
   const evidence = path.resolve("../reports/review/evidence/ux-clarity-20261007")
   for (const surface of ["quick", "oracle", "profile", "plan", "records", "calendar"]) {
     await page.goto(`/e2e/fixtures/ux-clarity.html?screen=${surface}`)

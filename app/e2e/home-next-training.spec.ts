@@ -14,7 +14,7 @@ test("shows a saved upcoming training on home and opens its existing plan", asyn
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
   await answerPlanQuestions(page)
   await page.getByLabel("계획 시작 날짜").fill("2099-01-10")
-  await page.getByRole("button", { name: /선택하기|이 계획으로 시작하기/u }).first().click()
+  await page.getByRole("button", { name: /선택하기|이 일정으로 시작/u }).first().click()
   await page.getByRole("button", { name: "홈" }).click()
 
   const nextTraining = page.getByRole("region", { name: "다음 훈련" })

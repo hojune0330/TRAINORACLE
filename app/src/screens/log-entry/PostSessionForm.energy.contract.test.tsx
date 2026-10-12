@@ -19,6 +19,7 @@ describe("post-session energy provenance", () => {
     const onDone = vi.fn()
     render(<PostSessionForm onDone={onDone} />)
 
+    await user.click(screen.getByRole("button", { name: "완료" }))
     await user.click(screen.getByRole("button", { name: "지금 입력 확인" }))
     await user.click(screen.getByRole("button", { name: /저장/u }))
     await waitFor(() => expect(onDone).toHaveBeenCalledOnce())
@@ -28,6 +29,8 @@ describe("post-session energy provenance", () => {
     if (entry?.kind !== "post-session") throw new Error("Expected post-session entry")
     expect(entry.system).toBe("")
     expect(entry.fieldProvenance?.system).toEqual({ provenance: "MISSING" })
+    expect(entry.rpe).toBe(0)
+    expect(entry.fieldProvenance?.rpe).toEqual({ provenance: "MISSING" })
   })
 
   it("records the system only after the user directly chooses it", async () => {

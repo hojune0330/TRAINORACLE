@@ -5,6 +5,7 @@ import { accountDeletionBoundaryState, onAccountDeletionBoundaryChange } from ".
 import { activeLocalAccount } from "./local-journal-ownership"
 import { isAccountStoragePaused } from "./storage-consent"
 import { currentStorageConsentRevision, pinStorageOperationRevision } from "./storage-consent-revision"
+import { LOCAL_COLLECTION_SEND_GUARD_HEADER, registerCollectionSendGuard } from "./consent-checked-fetch"
 import { accountJournalDraftSchema } from "./account-journal-draft-buffer"
 import { isAccountJournalWriteRejection, type AccountJournalWriteRejection } from "./account-write-rejection"
 import type { AccountJournalDraft } from "./account-journal-draft-buffer"
@@ -26,6 +27,7 @@ return z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("calendar-decoration-support"), version: z.literal(1) }).strict(),
   z.object({ kind: z.literal("athlete-record-support"), version: z.literal(1) }).strict(),
   z.object({ kind: z.literal("running-profile-support"), version: z.literal(1) }).strict(),
+  z.object({ kind: z.literal("minigame-progress-support"), version: z.literal(1) }).strict(),
   z.object({ kind: z.literal("goal-program-support"), version: z.literal(1) }).strict(),
   z.object({ kind: z.literal("oracle-v2-support"), version: z.literal(2) }).strict(),
   z.object({ kind: z.literal("oracle-v2-restart-support"), version: z.literal(1) }).strict(),
@@ -50,6 +52,7 @@ export type AccountJournalResponse<T = AccountJournalDraft> =
   | { kind: "calendar-decoration-support"; version: 1 }
   | { kind: "athlete-record-support"; version: 1 }
   | { kind: "running-profile-support"; version: 1 }
+  | { kind: "minigame-progress-support"; version: 1 }
   | { kind: "goal-program-support"; version: 1 }
   | { kind: "oracle-v2-support"; version: 2 }
   | { kind: "oracle-v2-restart-support"; version: 1 }
@@ -67,6 +70,7 @@ export type AccountJournalRequest<T = AccountJournalDraft> = { supportedRunningP
   | { action: "calendarDecorationSupport" }
   | { action: "athleteRecordSupport" }
   | { action: "runningProfileSupport" }
+  | { action: "minigameProgressSupport" }
   | { action: "goalProgramSupport" }
   | { action: "oracleV2Support" }
   | { action: "oracleV2RestartSupport" }
@@ -84,7 +88,7 @@ export type AccountJournalRequest<T = AccountJournalDraft> = { supportedRunningP
 
 export type AccountJournalResult<T = AccountJournalDraft> =
   | { ok: true; data: AccountJournalResponse<T> }
-  | { ok: false; code: "AUTH_REQUIRED" | "ACCESS_DENIED" | "NOT_FOUND" | "UNAVAILABLE" | "INVALID_RESPONSE" | "CALENDAR_DECORATION_UNSUPPORTED" | "ATHLETE_RECORD_UNSUPPORTED" | "GOAL_PROGRAM_UNSUPPORTED" | "STALE_RESPONSE" | "CONFLICT" | "SOURCE_UNAVAILABLE" | "UPGRADE_REQUIRED" | "FILE_EVIDENCE_DISABLED" | "INVALID_FILE_OBSERVATION" | "FILE_OBSERVATION_CONFLICT" | "COMPARISON_ORIGINAL_UNAVAILABLE" | "INVALID_COMPARISON_RELATION" | "COMPARISON_CAPACITY_EXCEEDED" | AccountJournalWriteRejection }
+  | { ok: false; code: "AUTH_REQUIRED" | "ACCESS_DENIED" | "NOT_FOUND" | "UNAVAILABLE" | "INVALID_RESPONSE" | "CALENDAR_DECORATION_UNSUPPORTED" | "ATHLETE_RECORD_UNSUPPORTED" | "MINIGAME_PROGRESS_UNSUPPORTED" | "GOAL_PROGRAM_UNSUPPORTED" | "STALE_RESPONSE" | "CONFLICT" | "SOURCE_UNAVAILABLE" | "UPGRADE_REQUIRED" | "FILE_EVIDENCE_DISABLED" | "INVALID_FILE_OBSERVATION" | "FILE_OBSERVATION_CONFLICT" | "COMPARISON_ORIGINAL_UNAVAILABLE" | "INVALID_COMPARISON_RELATION" | "COMPARISON_CAPACITY_EXCEEDED" | AccountJournalWriteRejection }
 
 export type CorrectImportedObservationRequest = Extract<AccountJournalRequest, { action: "correctImportedObservation" }>
 
@@ -157,6 +161,8 @@ async function executeAccountDocument<T>(
   if (!current()) return obsolete()
   const storageRevision = "operationId" in request
     ? pinStorageOperationRevision(ownerId, request.operationId, 0) : currentStorageConsentRevision(ownerId)
+  let sendGuard: ReturnType<typeof registerCollectionSendGuard> | undefined
+  const releaseSendGuard = () => sendGuard?.release()
   try {
     const client = await dependencies.client()
     if (!current()) return obsolete()
@@ -170,9 +176,17 @@ async function executeAccountDocument<T>(
     const journalCall = Object.is(schema, accountJournalRecordSchema) || ["correctImportedObservation", "confirmComparisonRelation", "releaseComparisonRelation"].includes(request.action)
       || ((request.action === "list" || request.action === "history") && request.collection === "JOURNAL")
       || (request.action === "save" && (request.document as { kind?: unknown })?.kind === "JOURNAL")
+    // Keep this INDEX's fresh/date decision through the SDK auth reread and
+    // asynchronous consent fetch. Do not change unrelated journal requests.
+    if (request.action === "save" && (request.document as { kind?: unknown })?.kind === "GOAL_PROGRAM_INDEX") {
+      sendGuard = registerCollectionSendGuard(current)
+      signal.addEventListener("abort", releaseSendGuard, { once: true })
+      if (!current()) return obsolete()
+    }
     const { data, error } = await client.functions.invoke("account-journal", {
       body: journalCall ? { ...request, supportedJournalVersions: [2, 3], supportsExerciseLogV1: true } : request,
-      headers: { Authorization: `Bearer ${token}`, "x-trainoracle-storage-revision": String(storageRevision) },
+      headers: { Authorization: `Bearer ${token}`, "x-trainoracle-storage-revision": String(storageRevision),
+        ...(sendGuard ? { [LOCAL_COLLECTION_SEND_GUARD_HEADER]: sendGuard.nonce } : {}) },
       signal,
     })
     let responseData: unknown = data
@@ -194,6 +208,9 @@ async function executeAccountDocument<T>(
       }
       if (request.action === "athleteRecordSupport" && [400, 404, 501].includes(status)) {
         return { ok: false, code: "ATHLETE_RECORD_UNSUPPORTED" }
+      }
+      if (request.action === "minigameProgressSupport" && [400, 404, 501].includes(status)) {
+        return { ok: false, code: "MINIGAME_PROGRESS_UNSUPPORTED" }
       }
       if (request.action === "goalProgramSupport" && [400, 404, 501].includes(status)) {
         return { ok: false, code: "GOAL_PROGRAM_UNSUPPORTED" }
@@ -223,6 +240,7 @@ async function executeAccountDocument<T>(
       : request.action === "calendarDecorationSupport" ? result.kind === "calendar-decoration-support"
       : request.action === "athleteRecordSupport" ? result.kind === "athlete-record-support"
       : request.action === "runningProfileSupport" ? result.kind === "running-profile-support"
+      : request.action === "minigameProgressSupport" ? result.kind === "minigame-progress-support"
       : request.action === "goalProgramSupport" ? result.kind === "goal-program-support"
       : request.action === "oracleV2Support" ? result.kind === "oracle-v2-support"
       : request.action === "oracleV2RestartSupport" ? result.kind === "oracle-v2-restart-support"
@@ -243,4 +261,5 @@ async function executeAccountDocument<T>(
         && (result.kind !== "saved" || result.revision === request.expectedRevision + 1)
     return correctKind ? { ok: true, data: result } : { ok: false, code: "INVALID_RESPONSE" }
   } catch { return current() ? { ok: false, code: "UNAVAILABLE" } : obsolete() }
+  finally { signal.removeEventListener("abort", releaseSendGuard); releaseSendGuard() }
 }

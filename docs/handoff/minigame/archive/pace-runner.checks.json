@@ -1,0 +1,22 @@
+{
+  "status": "passed",
+  "scope": "planning simulation only",
+  "checks": [
+    {
+      "scenario": "all-slow",
+      "result": "passed"
+    },
+    {
+      "scenario": "all-steady",
+      "result": "passed"
+    },
+    {
+      "scenario": "mixed",
+      "result": "passed"
+    },
+    {
+      "scenario": "all-fast",
+      "result": "passed"
+    }
+  ]
+}

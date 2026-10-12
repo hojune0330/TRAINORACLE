@@ -12,6 +12,13 @@ export const MULTI_ADJUSTED_PLAN_ARCHIVE_V3_KEY = "trainoracle.multi-adjusted-pl
 type Entry = { readonly archivedAt: string; readonly state: StoredMultiAdjustedPlanStateV6 }
 const hash = (value: unknown) => canonicalJsonFingerprint("trainoracle.multi-adjusted-original-archive.v3", value)
 const invalid = () => ({ kind: "invalid" as const })
+function isValidEmptyArchive(value: unknown): boolean {
+  const content = { version: 3, entries: [] as readonly Entry[] }
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    && "version" in value && value.version === 3 && "entries" in value && Array.isArray(value.entries)
+    && value.entries.length === 0 && Object.keys(value).length === 3
+    && hash({ ...content, contentFingerprint: hash(content) }) === hash(value)
+}
 export function parseMultiAdjustedOriginalArchiveV3(raw: string | null, retained: readonly RetainedMultiAdjustedEvidenceV3[], at = new Date()) {
   if (raw === null) return { kind: "loaded" as const, entries: [] as readonly Entry[] }
   try {
@@ -30,6 +37,18 @@ export function parseMultiAdjustedOriginalArchiveV3(raw: string | null, retained
     if (hash({ ...content, contentFingerprint: hash(content) }) !== hash(value)) return invalid()
     return { kind: "loaded" as const, entries }
   } catch { return invalid() }
+}
+/** Cheap presence check only. The validated reader must still re-read the archive after evidence is obtained. */
+export function hasMultiAdjustedOriginalPlansV3(): boolean {
+  if (accountPlansEnabled()) {
+    const view = accountPlanService()?.snapshot(), document = view?.confirmedDocument
+    return Boolean(document?.data.plans.some(entry => entry.archivedAt !== null && entry.snapshot.state.version === 6))
+  }
+  try {
+    const raw = localStorage.getItem(accountScopedStorageKey(MULTI_ADJUSTED_PLAN_ARCHIVE_V3_KEY))
+    if (raw === null) return false
+    return !isValidEmptyArchive(JSON.parse(raw))
+  } catch { return true }
 }
 export function readMultiAdjustedOriginalPlansV3(retained = RETAINED_MULTI_ADJUSTED_EVIDENCE_V3, at = new Date()) {
   if (accountPlansEnabled()) {

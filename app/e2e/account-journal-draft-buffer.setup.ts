@@ -7,7 +7,30 @@ export default async function setup() {
   const server = await createServer({
     root: fileURLToPath(new URL("..", import.meta.url)),
     configLoader: "runner",
-    cacheDir: fileURLToPath(new URL("../test-results/account-draft-buffer-vite-cache", import.meta.url)),
+    cacheDir: process.env.ACCOUNT_BROWSER_TEST_VITE_CACHE_DIR
+      ?? fileURLToPath(new URL("../test-results/account-draft-buffer-vite-cache", import.meta.url)),
+    // Scan the actual browser harnesses, not retained dist-* HTML and bundles.
+    // Explicit dynamic-import entries avoid discovering harness dependencies mid-test.
+    optimizeDeps: {
+      entries: [
+        "index.html",
+        "e2e/fixtures/account-journal-draft-buffer.ts",
+        "e2e/fixtures/account-journal-record-service.ts",
+        "e2e/fixtures/account-plan-service.ts",
+        "e2e/fixtures/account-plan-ui.tsx",
+        "e2e/fixtures/account-plan-collection.ts",
+        "e2e/fixtures/account-plan-collection-preparation.ts",
+        "e2e/fixtures/account-plan-lock.ts",
+        "e2e/fixtures/account-decoration-service.ts",
+        "e2e/fixtures/account-decoration-ui.tsx",
+        "e2e/fixtures/account-calendar-decoration-service.ts",
+        "src/domain/account/account-oracle-v2-service.ts",
+        "src/domain/account/account-oracle-v2-schema.ts",
+        "src/domain/account/account-running-profile-schema.ts",
+        "src/domain/account/account-running-profile-service.ts",
+        "src/domain/account/account-journal-draft-buffer.ts",
+      ],
+    },
     // A named, memory-only fault probe. Never modify the shared working source.
     plugins: process.env.DRAFT_DELETION_MUTATION === "ignore-durable-marker" ? [{
       name: "synthetic-deletion-marker-defect", enforce: "pre",

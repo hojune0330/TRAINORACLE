@@ -38,7 +38,7 @@ for (const viewport of [
     await expect(page.getByRole("heading", { name: "계획 수정" })).toBeVisible()
     await assertFits(page, ".active-plan-edit-hub")
     await page.getByRole("button", { name: "훈련 내용 바꾸기" }).click()
-    const editor = page.getByRole("region", { name: "이 훈련 수정" })
+    const editor = page.getByRole("region", { name: "훈련 내용 바꾸기", exact: true })
     await expect(editor).toBeVisible()
     await assertFits(page, ".active-plan-session-editor")
 
@@ -62,7 +62,7 @@ for (const viewport of [
     await editor.getByRole("checkbox", { name: "지금 통증이나 몸 상태 이상이 없어요." }).check()
     await editor.getByRole("button", { name: "변경안 적용하기" }).click()
     await expect(editor).toHaveCount(0)
-    await expect(page.getByText("계획을 수정했어요. 이전 계획과 일지는 남겨두었어요.")).toBeVisible()
+    await expect(page.getByText("수정한 계획이에요. 이전 계획과 일지는 보관되어 있어요.")).toBeVisible()
 
     const appliedBytes = await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))
     expect(appliedBytes).not.toBeNull()
@@ -71,6 +71,7 @@ for (const viewport of [
     expect(applied.activePlan.sessions.find(session => session.day === 1 && session.slot === "AM")?.prescription)
       .toMatchObject({ kind: "RPE_TIME_RANGE", durationMinutes: { minimum: 20, maximum: 25 } })
     expect(applied.progress).toEqual(fixture.state.progress)
+    expect(await page.evaluate(() => window.localStorage.getItem("trainoracle.journal.v1"))).toBe("[]")
 
     await page.reload()
     await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
@@ -113,7 +114,7 @@ test("catalog edit prepares, previews, applies, and persists at 390px", async ({
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
   await page.locator("[data-plan-edit-button]").click()
   await page.getByRole("button", { name: "훈련 내용 바꾸기" }).click()
-  const editor = page.getByRole("region", { name: "이 훈련 수정" })
+  const editor = page.getByRole("region", { name: "훈련 내용 바꾸기", exact: true })
   await editor.getByLabel("수정할 훈련").selectOption("3:AM")
   await editor.getByRole("checkbox", { name: "이 훈련은 아직 시작하지 않았어요." }).check()
   await editor.getByLabel("훈련 구성").selectOption(fixture.alternateCatalogId)
@@ -121,8 +122,9 @@ test("catalog edit prepares, previews, applies, and persists at 390px", async ({
   await editor.getByRole("button", { name: "변경안 미리보기" }).click()
   const preview = editor.locator(".active-plan-session-editor__preview")
   await expect(preview.getByRole("heading", { name: "변경안 미리보기" })).toBeVisible()
-  await expect(preview.locator(".active-plan-session-editor__comparison")).toContainText(fixture.catalogBeforeDuration)
-  await expect(preview.locator(".active-plan-session-editor__comparison")).toContainText(fixture.catalogAfterDuration)
+  const comparison = preview.locator(".active-plan-session-editor__comparison > div")
+  await expect(comparison.nth(0)).toContainText(fixture.catalogBeforeDuration)
+  await expect(comparison.nth(1)).toContainText(fixture.catalogAfterDuration)
   await editor.getByRole("checkbox", { name: "지금 통증이나 몸 상태 이상이 없어요." }).check()
   await editor.getByRole("button", { name: "변경안 적용하기" }).click()
   await expect(editor).toHaveCount(0)
@@ -205,8 +207,12 @@ async function activePlanFixture(): Promise<ActivePlanFixture> {
       return {
         state: parsed.data,
         alternateCatalogId: alternate.id,
-        catalogBeforeDuration: catalog.prescription.durationMinutes.minimum + "–" + catalog.prescription.durationMinutes.maximum + "분",
-        catalogAfterDuration: replacement.prescription.durationMinutes.minimum + "–" + replacement.prescription.durationMinutes.maximum + "분",
+        catalogBeforeDuration: catalog.prescription.durationMinutes.minimum === catalog.prescription.durationMinutes.maximum
+          ? catalog.prescription.durationMinutes.maximum + "분"
+          : catalog.prescription.durationMinutes.minimum + "–" + catalog.prescription.durationMinutes.maximum + "분",
+        catalogAfterDuration: replacement.prescription.durationMinutes.minimum === replacement.prescription.durationMinutes.maximum
+          ? replacement.prescription.durationMinutes.maximum + "분"
+          : replacement.prescription.durationMinutes.minimum + "–" + replacement.prescription.durationMinutes.maximum + "분",
       };
     }
   `

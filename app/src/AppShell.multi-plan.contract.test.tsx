@@ -5,7 +5,9 @@ import { AppShell } from "./AppShell"
 import App from "./App"
 import { PlanBeta } from "./screens/PlanBeta"
 import { stateFixture } from "./domain/plan-beta-store.test-fixture"
-import { savePlanBetaState } from "./domain/plan-beta-store"
+import { activePlanBetaStorageKey, savePlanBetaState } from "./domain/plan-beta-store"
+import { accountPlanPacketFixture } from "./domain/account/account-plan.test-fixtures"
+import type { RetainedMultiAdjustedEvidenceV3 } from "./domain/selected-multi-adjusted-plan-v3"
 
 const { planProps, planMode } = vi.hoisted(() => ({ planProps: vi.fn(), planMode: { actual: false } }))
 vi.mock("./DeferredMobileScreens", () => ({ DeferredMobileScreens: {
@@ -17,6 +19,13 @@ vi.mock("./DeferredMobileScreens", () => ({ DeferredMobileScreens: {
 } }))
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); planProps.mockClear(); planMode.actual = false })
 afterEach(cleanup)
+
+function multiPlanPacketFixture() {
+  const packet = accountPlanPacketFixture(6)
+  if (packet.state.version !== 6 || packet.evidence === null || !("slots" in packet.evidence)
+      || !("rpeBindings" in packet.evidence)) throw Error("Expected V6 evidence")
+  return { state: packet.state, evidence: packet.evidence as RetainedMultiAdjustedEvidenceV3 }
+}
 
 it.each([false, true].flatMap(supplied => [App, AppShell].map(Component => ({ supplied, Component }))))("forwards only explicitly supplied plan services through application navigation: $supplied $Component.name", ({ supplied, Component }) => {
   const resolver = vi.fn(() => null), readEvidence = vi.fn(() => [])
@@ -38,7 +47,7 @@ it.each([false, true].flatMap(supplied => [App, AppShell].map(Component => ({ su
   expect(typeof forwarded.onWritePlannedSessionLog).toBe("function")
 })
 
-it("queries the supplied evidence reader when the actual next-training plan screen opens", () => {
+it("keeps the supplied V6 evidence reader deferred when a stored V3 next-training plan opens", () => {
   const state = stateFixture(), today = new Date()
   const startDate = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, "0"), String(today.getDate()).padStart(2, "0")].join("-")
   expect(savePlanBetaState({ ...state, intake: { ...state.intake, startDate } }).ok).toBe(true)
@@ -49,6 +58,30 @@ it("queries the supplied evidence reader when the actual next-training plan scre
   expect(readEvidence).not.toHaveBeenCalled()
   fireEvent.click(nextTraining)
   expect(planProps.mock.calls.at(-1)![0].returnToSession).toMatchObject({ plannedDate: startDate, sessionDay: 1, sessionSlot: "AM" })
-  expect(readEvidence).toHaveBeenCalled()
+  expect(readEvidence).not.toHaveBeenCalled()
+  expect(resolver).not.toHaveBeenCalled()
+})
+
+it("keeps the supplied V6 evidence reader deferred when an empty plan screen opens", () => {
+  const resolver = vi.fn(() => null), readEvidence = vi.fn((): never => { throw new Error("V6 evidence must stay deferred") })
+  planMode.actual = true
+  render(<AppShell multiPlanRuntime={{ multiAdjustmentResolverV3: resolver, readMultiAdjustedEvidenceV3: readEvidence }} />)
+  expect(readEvidence).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole("button", { name: "훈련" }))
+  expect(screen.getByRole("heading", { name: "어떤 종목을 준비하세요?" })).toBeVisible()
+  expect(readEvidence).not.toHaveBeenCalled()
+  expect(resolver).not.toHaveBeenCalled()
+})
+
+it("defers supplied evidence for a stored multi-plan until the plan screen opens", () => {
+  const packet = multiPlanPacketFixture()
+  localStorage.setItem(activePlanBetaStorageKey(), JSON.stringify(packet.state))
+  const resolver = vi.fn(() => null), readEvidence = vi.fn(() => [packet.evidence])
+  planMode.actual = true
+  render(<AppShell multiPlanRuntime={{ multiAdjustmentResolverV3: resolver, readMultiAdjustedEvidenceV3: readEvidence }} />)
+  expect(readEvidence).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole("button", { name: "훈련" }))
+  expect(screen.getByRole("heading", { name: "내 훈련 일정" })).toBeVisible()
+  expect(readEvidence).toHaveBeenCalledOnce()
   expect(resolver).not.toHaveBeenCalled()
 })

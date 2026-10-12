@@ -25,7 +25,7 @@ import { readJournalOriginalPlan } from "./journal-original-plan"
 import { saveEntry, loadEntries } from "./journal-store"
 import { MEMO_PURPOSE, type PostSessionEntry } from "./journal-schema"
 import React from "react"
-import { render, screen, cleanup, act, fireEvent, within } from "@testing-library/react"
+import { render, screen, cleanup, act, fireEvent, within, waitFor } from "@testing-library/react"
 import { AdjustedPrescriptionV3 } from "../screens/plan-beta/AdjustedPrescriptionV3"
 import { PlanBeta } from "../screens/PlanBeta"
 import * as mutationLocks from "./plan-mutation-lock"
@@ -48,18 +48,26 @@ import { MultiPlanEvidenceContext } from "../components/MultiPlanEvidenceContext
 import { JournalOriginalPlan } from "../screens/journal/JournalOriginalPlan"
 import App from "../App"
 import { isoShift } from "./dates"
+import { calendarDayLabel } from "../components/MonthCalendar"
+import { hasPendingBrowserBackLayer } from "../navigation/browserNavigation"
 
 const dialogShow = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const dialogClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "close")
 // The integration fixture replays crypto-backed source and successor validation.
 vi.setConfig({ testTimeout: 20000, hookTimeout: 30000 })
 beforeEach(() => {
-  localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY)
+  localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(TODAY)
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value() { this.setAttribute("open", "") } })
   Object.defineProperty(HTMLDialogElement.prototype, "close", { configurable: true, value() { this.removeAttribute("open") } })
 })
-afterEach(() => {
-  cleanup(); vi.restoreAllMocks(); vi.useRealTimers()
+afterEach(async () => {
+  // Task-flow disposal queues native Back. Keep its timers live and finish the
+  // owned POP before a later fixture opens a reader above that history entry.
+  vi.useRealTimers()
+  cleanup()
+  await act(async () => { await Promise.resolve() })
+  await waitFor(() => expect(hasPendingBrowserBackLayer()).toBe(false))
+  vi.restoreAllMocks()
   for (const [key, descriptor] of [["showModal", dialogShow], ["close", dialogClose]] as const) {
     if (descriptor) Object.defineProperty(HTMLDialogElement.prototype, key, descriptor)
     else Reflect.deleteProperty(HTMLDialogElement.prototype, key)
@@ -379,9 +387,8 @@ it("opens a saved multi-plan through real application navigation with independen
   expect(loadEntries()).toEqual([])
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
   fireEvent.click(screen.getByRole("button", { name: "계획대로 마쳤어요" }))
-  const activityRegion = screen.getByRole("region", { name: /운동은 어떻게 됐나요\?/u })
-  fireEvent.click(within(activityRegion).getByRole("button", { name: slotName }))
-  fireEvent.click(screen.getByRole("button", { name: /RPE 6,/ }))
+  fireEvent.click(within(screen.getByRole("region", { name: "언제 했나요?" })).getByRole("button", { name: slotName }))
+  fireEvent.click(screen.getByRole("button", { name: /힘든 정도 6\/10,/ }))
   fireEvent.click(screen.getByRole("button", { name: "없어요" }))
   expect(loadEntries()).toHaveLength(0)
   await act(async () => { fireEvent.click(screen.getByRole("button", { name: "이대로 저장" })) })
@@ -659,6 +666,8 @@ it("retains the same multi-plan original idempotently without duplicating archiv
 })
 
 it("opens the actual multi-plan schedule, records a slot and archives its original before handing off to the journal", async () => {
+  vi.useRealTimers()
+  vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(TODAY)
   const input = storageFixture(), saved = await saveSelectedMultiAdjustedPlanV6(input)
   if (saved.kind !== "saved") throw Error("Initial save failed")
   const retained = input.readReview().retained
@@ -670,7 +679,9 @@ it("opens the actual multi-plan schedule, records a slot and archives its origin
     onWritePlannedSessionLog: onWrite }))
   expect(screen.getByRole("heading", { name: "내 훈련 일정" })).toBeTruthy()
   fireEvent.click(screen.getByRole("button", { name: /크게 보기/u }))
-  const region = () => within(screen.getByRole("region", { name: `${slot.slot === "AM" ? "오전" : "오후"} 훈련` }))
+  const date = isoShift(saved.state.selection.intake.startDate ?? saved.state.selection.generatedAt.slice(0, 10), slot.day - 1)
+  const reader = await screen.findByRole("dialog", { name: calendarDayLabel(date) })
+  const region = () => within(within(reader).getByRole("region", { name: `${slot.slot === "AM" ? "오전" : "오후"} 훈련` }))
   await act(async () => { fireEvent.click(region().getByRole("button", { name: "완료" })) })
   const current = readPlanBetaStateFromStorage([], [], retained)
   expect(current).toMatchObject({ kind: "multi_adjusted_v3_loaded", state: { progress: [{ sessionDay: slot.day, sessionSlot: slot.slot, state: "COMPLETED" }] } })

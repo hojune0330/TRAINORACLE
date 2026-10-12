@@ -45,7 +45,7 @@ export type AccountPlanMutation =
     journalGuard?: import("./account-plan-collection-transfer").AccountPlanJournalGuard;
     paceRecordGuard?: import("./account-plan-collection-transfer").AccountPlanPaceRecordGuard }
   | { kind: "PROGRESS"; packet: AccountPlanPacket }
-  | { kind: "ARCHIVE"; planId: string }
+  | { kind: "ARCHIVE"; planId: string; freshReview?: () => boolean }
 export type AccountPlanResult = "ACCOUNT" | "PENDING" | "CONFLICT" | "STALE" | "FAILED" | "INVALID" | "REVIEW_REQUIRED" | "HISTORY_CONFLICT" | "CAPACITY" | "REJECTED"
 
 export function createAccountPlanService(input: {
@@ -135,6 +135,8 @@ export function createAccountPlanService(input: {
       currentPlan: selected ? { planId: selected.planId, ...readAccountPlanEntry(selected, trusted) } : null }
   }
   function mutate(command: AccountPlanMutation, expectedFingerprint: string): Promise<AccountPlanResult> {
+    // The retired writer cannot retain an archive review requirement across reopen.
+    if (command?.kind === "ARCHIVE" && command.freshReview !== undefined) return Promise.resolve("REVIEW_REQUIRED")
     // The retired monolithic writer cannot provide the collection's atomic journal guard.
     if (command?.kind === "SELECT" && (command.journalGuard !== undefined || command.paceRecordGuard !== undefined)) return Promise.resolve("REVIEW_REQUIRED")
     if (!["SAVE_HISTORY", "SELECT", "PROGRESS", "ARCHIVE"].includes(command?.kind)

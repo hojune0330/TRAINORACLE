@@ -47,9 +47,11 @@ begin
   anchor := 'if action = ''status'' then return jsonb_build_object(''kind'',''ready''); end if;';
   if position(anchor in source)=0 then raise exception 'GOAL_PROGRAM_SUPPORT_ANCHOR_MISSING'; end if;
   source := replace(source,anchor,anchor || E'\n  if action = ''goalProgramSupport'' then return jsonb_build_object(''kind'',''goal-program-support'',''version'',1); end if;');
-  anchor := '(''DRAFT'',''JOURNAL'',''DECORATIONS'',''PLAN'',''CALENDAR_DECORATIONS'',''ATHLETE_RECORDS'',''RUNNING_PROFILE'')';
+  -- Require the reviewed 0001..0064 chain, including encrypted game storage.
+  -- Refuse an unexpected kind list instead of dropping another feature's kind.
+  anchor := '(''DRAFT'',''JOURNAL'',''DECORATIONS'',''PLAN'',''CALENDAR_DECORATIONS'',''ATHLETE_RECORDS'',''RUNNING_PROFILE'',''MINIGAME_PROGRESS'')';
   if position(anchor in source)=0 then raise exception 'GOAL_PROGRAM_KIND_ANCHOR_MISSING'; end if;
-  source := replace(source,anchor,'(''DRAFT'',''JOURNAL'',''DECORATIONS'',''PLAN'',''CALENDAR_DECORATIONS'',''ATHLETE_RECORDS'',''RUNNING_PROFILE'',''GOAL_PROGRAM_BODY'',''GOAL_PROGRAM_PROGRESS'',''GOAL_PROGRAM_INDEX'')');
+  source := replace(source,anchor,'(''DRAFT'',''JOURNAL'',''DECORATIONS'',''PLAN'',''CALENDAR_DECORATIONS'',''ATHLETE_RECORDS'',''RUNNING_PROFILE'',''MINIGAME_PROGRESS'',''GOAL_PROGRAM_BODY'',''GOAL_PROGRAM_PROGRESS'',''GOAL_PROGRAM_INDEX'')');
   anchor := '''paidReferenceItemIds''';
   -- Limit this replacement to the existing metadata allowlist.
   if position('metadata - array[' in source)=0 then raise exception 'GOAL_PROGRAM_METADATA_ANCHOR_MISSING'; end if;

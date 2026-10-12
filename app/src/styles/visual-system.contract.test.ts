@@ -179,6 +179,29 @@ describe("shared visual system", () => {
     expect(lexiconCss).toMatch(/\.term-help__more\s*\{[^}]*min-height:\s*var\(--app-touch-min\)/u)
   })
 
+  it("keeps the minigame world tokens inside the minigame and free of raw colors", () => {
+    const gameFiles = new Set([
+      join("src", "styles", "treadmill-game.css"),
+      join("src", "screens", "TreadmillGame.tsx"),
+      join("src", "screens", "treadmill", "draw.ts"),
+      join("src", "screens", "treadmill", "sprites.ts"),
+      join("src", "screens", "treadmill", "shader-sky.ts"),
+      join("src", "screens", "treadmill", "sky-presets.ts"),
+      join("src", "styles", "treadmill-tour.css"),
+      join("src", "screens", "treadmill", "city-art.ts"),
+      join("src", "screens", "treadmill", "GamePanels.tsx"),
+      join("src", "screens", "treadmill", "anime-runner.ts"),
+    ])
+    const leaking = sourceFiles("src").filter((path) => !gameFiles.has(path) && /var\(--game-/u.test(readFileSync(path, "utf8")))
+    expect(leaking).toEqual([])
+    for (const path of gameFiles) {
+      const source = readFileSync(path, "utf8")
+      expect(source, path).not.toMatch(/#[0-9a-f]{3,8}(?![0-9a-z])/iu)
+    }
+    const css = readFileSync("src/styles/treadmill-game.css", "utf8")
+    expect(css).toMatch(/var\(--game-/u)
+  })
+
   it("centers the analysis chrome between equal flexible tracks while keeping both tools touch-safe", () => {
     const trends = readFileSync("src/screens/Trends.tsx", "utf8")
     const css = readFileSync("src/screens/trends/trends-hub.css", "utf8")

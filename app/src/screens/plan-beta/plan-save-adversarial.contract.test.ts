@@ -127,7 +127,7 @@ describe("adversarial plan save transaction", () => {
     const plan = generated(true)
     const release = delayedLock()
     const pending = save(plan)
-    vi.setSystemTime(new Date("2026-10-06T03:00:00Z"))
+    vi.setSystemTime(new Date("2026-09-08T03:00:00Z"))
     release()
     const result = await pending
     expect(result.kind).toBe("saved")

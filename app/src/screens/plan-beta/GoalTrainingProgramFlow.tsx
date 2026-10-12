@@ -69,6 +69,7 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
   const [replaceConfirmed, setReplaceConfirmed] = React.useState(false)
   const [dateExpired, setDateExpired] = React.useState(false)
   const [conflictReview, setConflictReview] = React.useState<AccountGoalProgramSnapshot | null>(null)
+  const [expiredPendingReview, setExpiredPendingReview] = React.useState<AccountGoalProgramSnapshot | null>(null)
   const scope = React.useRef({ owner: localAccountScopeSnapshot(), generation: localJournalScopeGeneration() })
   const pending = React.useRef(false)
   const mounted = React.useRef(true)
@@ -101,6 +102,7 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
     setSafetyFor(null)
     setArchiveReview(false)
     setConflictReview(null)
+    setExpiredPendingReview(null)
   }), [])
   React.useLayoutEffect(() => {
     if (safetyFor !== null) safetyHeading.current?.focus()
@@ -149,17 +151,21 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
     let document = read.kind === "loaded" ? read.document : null
     let cycle: Cycle
     if (safetyFor === "new" && preview) {
+      if (expiredPendingReview && !reviewedPendingCurrent()) {
+        setError("확인한 초안이 바뀌었어요. 저장 상태를 다시 확인해 주세요."); return
+      }
       const selected = preview
       const result = generateGoalTrainingProgram({ goalMinutes: selected.goalMinutes, dateChoice: selected.dateChoice,
         today: todayISO(), generatedAt: selected.generatedAt, ...selected.inputs, longerDurationConfirmed, safetyGate: safety.gate })
       if (result.kind !== "ready") { setError(failureMessage("code" in result ? result.code : "INVALID_DATE")); return }
       const saved = await saveGoalTrainingProgram(result.program, { expectedRevision: document?.revision ?? null,
         currentCheck: "NO_KNOWN_RISK", replaceExisting: replaceConfirmed,
+        ...(expiredPendingReview ? { replaceExpiredPending: true as const, expectedPendingReview: structuredClone(expiredPendingReview) } : {}),
         freshPreview: () => current() && previewRef.current === selected })
       if (!current()) return
       if (saved.kind !== "saved") { setError(failureMessage(saved.code)); return }
       document = saved.document; cycle = 1
-      setPreview(null); setEntryDirty(false); setRequest(undefined); setReplaceConfirmed(false); setRead(readGoalTrainingProgram())
+      setPreview(null); setEntryDirty(false); setRequest(undefined); setReplaceConfirmed(false); setExpiredPendingReview(null); setRead(readGoalTrainingProgram())
     } else if (typeof safetyFor === "number" && document) cycle = safetyFor
     else return
     if (!document) return
@@ -202,6 +208,18 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
   }) }
 
   const writable = storageStatus === "DEVICE" ? scope.current.owner === null : storageStatus === "READY" || storageStatus === "EMPTY"
+  const accountSnapshot = storageStatus === "PENDING" ? goalTrainingProgramAccountSnapshot() : null
+  const expiredPending = accountSnapshot?.status === "PENDING" && accountSnapshot.goalStartDateReviewRequired === true && accountSnapshot.pendingDocument
+    && accountSnapshot.pendingDocument.program.window.startDate < todayISO() ? accountSnapshot : null
+  const reviewedPendingCurrent = () => {
+    if (!expiredPendingReview) return false
+    const latest = goalTrainingProgramAccountSnapshot()
+    return current() && !!expiredPendingReview && latest?.status === "PENDING" && latest.goalStartDateReviewRequired === true
+      && !!latest.pendingDocument && latest.pendingDocument.program.window.startDate < todayISO()
+      && JSON.stringify(latest) === JSON.stringify(expiredPendingReview)
+  }
+  const recoveringExpiredPending = reviewedPendingCurrent()
+  const newProgramWritable = writable || recoveringExpiredPending
   const accountStorageLabel = storageStatus === "DEVICE" && scope.current.owner !== null
     ? "계정 저장이 아직 지원되지 않아요. 훈련표는 미리보기로 볼 수 있어요."
     : ({ LOADING: "계정의 훈련표를 확인하고 있어요.", PENDING: "동기화 대기 중",
@@ -211,6 +229,21 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
     UPGRADE_REQUIRED: "더 최신 버전에서 저장한 훈련표예요. 앱을 업데이트한 뒤 다시 열어 주세요." } as Record<string, string>)[storageStatus]
   const storageFeedback = accountStorageLabel && <div className="goal-program__storage">
     <p role="status">{accountStorageLabel}</p>
+    {expiredPending && <section aria-label="시작일이 지난 초안 확인">
+      <p>초안의 시작일이 지났어요. 날짜를 다시 고르면 이전 초안도 보관해요.</p>
+      <p>{expiredPending.pendingDocument!.program.window.startDate} 시작 · 10km {expiredPending.pendingDocument!.program.goalMinutes}분 목표</p>
+      <button type="button" disabled={busy} onClick={() => { void run(async () => {
+        const raw = await exportGoalTrainingProgramConflictJSON(expiredPending)
+        if (current()) downloadBackup(raw, true)
+      }) }}>대기 중 초안 파일로 보관</button>
+      {!recoveringExpiredPending && <button type="button" disabled={busy} onClick={() => {
+        setExpiredPendingReview(structuredClone(expiredPending))
+        setRequest({ goalMinutes: expiredPending.pendingDocument!.program.goalMinutes, window: structuredClone(expiredPending.pendingDocument!.program.window) })
+        setPreview(null); setEntryDirty(false); setReplaceConfirmed(false); setSafetyFor(null); setConflictReview(null)
+        setDateExpired(false); setStage("entry"); setError(null); setNotice(null)
+      }}>날짜를 다시 골라 보관하기</button>}
+      {recoveringExpiredPending && <p>새 날짜와 몸 상태를 확인한 뒤 저장해요. 확인하기 전까지 기존 훈련표와 초안은 그대로 있어요.</p>}
+    </section>}
     {!["LOADING", "AUTH_REQUIRED", "UPGRADE_REQUIRED"].includes(storageStatus) && <button type="button" disabled={busy} onClick={() => {
       void run(async () => { await refreshGoalTrainingProgram() })
     }}>저장 상태 다시 확인</button>}
@@ -231,7 +264,7 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
             if (accepted) {
               const next = readGoalTrainingProgram()
               setRead(next); setPreview(null); setRequest(undefined); setEntryDirty(false)
-              setSafetyFor(null); setReplaceConfirmed(false); setArchiveReview(false)
+              setSafetyFor(null); setReplaceConfirmed(false); setArchiveReview(false); setExpiredPendingReview(null)
               setStage(next.kind === "missing" ? "entry" : "result")
               setConflictReview(null); setNotice("계정 훈련표를 불러왔어요. 진행 중인 훈련은 바꾸지 않았어요.")
             } else setError("확인하는 동안 저장 상태가 바뀌었어요. 다시 확인해 주세요.")
@@ -250,12 +283,13 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
   </details>
 
   if (stage === "entry") return <section className="goal-program" aria-label="한 달 훈련표 만들기">
-    <GoalProgramEntry today={todayISO()} readToday={todayISO} initialRequest={request} disabled={busy}
+    <GoalProgramEntry key={expiredPendingReview ? `pending-date:${expiredPendingReview.sequence}` : "ordinary"}
+      today={todayISO()} readToday={todayISO} initialRequest={request} disabled={busy}
       onDraftChange={setEntryDirty} onBack={() => {
         if (dirty && !window.confirm("입력한 목표와 날짜를 지우고 나갈까요?")) return
         if (read.kind === "loaded") {
           setPreview(null); setRequest(undefined); setEntryDirty(false); setReplaceConfirmed(false)
-          setSafetyFor(null); setError(null); setStage("result")
+          setSafetyFor(null); setExpiredPendingReview(null); setError(null); setStage("result")
         } else onClose()
       }}
       onPreview={value => { setRequest(value); setStage("experience"); setError(null); setDateExpired(false) }} />
@@ -362,7 +396,7 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
       {safetyFor !== null ? <section className="goal-program__safety" aria-label="시작 전 몸 상태 확인">
         <h3 ref={safetyHeading} tabIndex={-1}>지금 몸 상태는 어떤가요?</h3>
         <div className="app-choice-group goal-program__choices">
-          <button type="button" className="app-choice-control" disabled={busy || !writable} onClick={start}>{busy ? "시작하는 중…" : "통증 없고 평소와 같아요 · 시작"}</button>
+          <button type="button" className="app-choice-control" disabled={busy || !(safetyFor === "new" ? newProgramWritable : writable)} onClick={start}>{busy ? "시작하는 중…" : "통증 없고 평소와 같아요 · 시작"}</button>
           <button type="button" className="app-choice-control" disabled={busy} onClick={() => { setReviewOnly(true); setSafetyFor(null) }}>통증·몸 이상이 있거나 잘 모르겠어요</button>
         </div><button type="button" disabled={busy} onClick={() => setSafetyFor(null)}>미리보기로 돌아가기</button>
       </section> : preview ? <>
@@ -373,7 +407,7 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
         </label>}
         {stored && <label className="goal-program__check"><input type="checkbox" checked={replaceConfirmed}
           onChange={event => setReplaceConfirmed(event.target.checked)} />이전 훈련표를 보관하고 새 훈련표로 바꿀게요</label>}
-        <button type="button" className="instant-plan__button" disabled={busy || !writable || !!stored && !replaceConfirmed
+        <button type="button" className="instant-plan__button" disabled={busy || !newProgramWritable || !!stored && !replaceConfirmed
           || durationReview?.required && !longerDurationConfirmed}
           onClick={() => setSafetyFor("new")}>{reviewOnly ? "몸 상태 다시 확인" : "이 계획 시작"}</button>
       </> : <>
@@ -409,7 +443,7 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
         </details>}
         {stored && <details className="goal-program__details"><summary>목표·날짜를 바꿔 새로 만들기</summary>
           <p>새 훈련표를 시작하기 전까지 기존 훈련표를 유지해요. 이전 훈련표와 진행 표시는 보관해요.</p>
-          <button type="button" disabled={busy} onClick={() => { setReplaceConfirmed(false); setStage("entry"); setRequest(undefined); setEntryDirty(false) }}>새 훈련표 만들기</button>
+          <button type="button" disabled={busy} onClick={() => { setReplaceConfirmed(false); setExpiredPendingReview(null); setStage("entry"); setRequest(undefined); setEntryDirty(false) }}>새 훈련표 만들기</button>
         </details>}
       </>}
       {cycleSummary && <details className="goal-program__details"><summary>1·2·3차 훈련 구성</summary>

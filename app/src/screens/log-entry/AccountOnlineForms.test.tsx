@@ -1,5 +1,5 @@
 import React from "react"
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { JournalEntry, PostSessionEntry } from "../../domain/journal-store"
 
@@ -43,6 +43,11 @@ function mount(form: Form, purpose?: Purpose, memo = syntheticMemo) {
     if (purpose) {
       fireEvent.change(memoField(form), { target: { value: memo } })
       fireEvent.click(screen.getByRole("radio", { name: purpose === "PRIVATE_SELF_ONLY" ? "나만의 메모" : "훈련 메모" }))
+    } else {
+      // A new detailed form needs one explicit answer before account persistence.
+      const answer = form === "post-session" ? "완료"
+        : form === "evening" ? "수면 질 3 보통" : "긴장도 3"
+      fireEvent.click(screen.getByRole("button", { name: answer }))
     }
   }
   if (form === "quick") fireEvent.click(screen.getByRole("button", { name: "오늘은 쉬었어요" }))
@@ -243,7 +248,11 @@ describe.each(forms)("%s account-online form", form => {
     const result = await complete(form, done)
     expect(result.reviewMessage).toContain(review)
     expect(result.storageMessage).toContain(storage === "ACCOUNT" ? "계정에 저장했어요" : "전송 대기")
-    if (form === "quick") expect(screen.getByRole("status")).toHaveTextContent(review!)
+    if (form === "quick") {
+      const receipt = screen.getByRole("region", { name: "일지를 계정에 저장했어요." })
+      expect(within(receipt).getByRole("alert")).toHaveTextContent(review!)
+      expect(within(receipt).getByRole("alert")).toHaveTextContent("자동 확인은 결론이 아니에요")
+    }
   })
 
   it("does not log raw private memo text", async () => {

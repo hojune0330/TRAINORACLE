@@ -11,8 +11,11 @@ import { prepareInitialRecordPaces } from "../../domain/initial-record-pace"
 import { CatalogWorkoutEditor, CatalogWorkoutPicker } from "./CatalogWorkoutPicker"
 import { PlanCandidates } from "./PlanCandidates"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
-afterEach(() => { cleanup(); vi.restoreAllMocks() })
+beforeEach(() => {
+  localStorage.clear(); sessionStorage.clear()
+  vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-09-29T12:00:00Z"))
+})
+afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers() })
 
 function fixture(experienceBand: "NEW_TO_RUNNING" | "EXPERIENCED" = "EXPERIENCED") {
   const result = generatePlanFromDraft({ eventGroup: "FIVE_K", eventDistanceM: 5000,

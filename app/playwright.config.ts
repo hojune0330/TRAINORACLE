@@ -5,7 +5,7 @@ const previewUrl = process.env.PLAYWRIGHT_BASE_URL ?? `http://127.0.0.1:${previe
 const usesExternalServer = process.env.PLAYWRIGHT_EXTERNAL_SERVER === "1"
 // run-full-suite runs these in the same four projects against the test-only Vite
 // lane. Its fixtures import the app's actual module instances, not copied bundles.
-export const browserFixtureTests = ["**/multi-event-pace-lifecycle.spec.ts", "**/catalog-workout.spec.ts", "**/prescription-first-draw.spec.ts"]
+export const browserFixtureTests = ["**/multi-event-pace-lifecycle.spec.ts", "**/catalog-workout.spec.ts", "**/prescription-first-draw.spec.ts", "**/ux-clarity.spec.ts"]
 export default defineConfig({
   testDir: "./e2e",
   // Native-IDB and draft-panel tests require their dedicated Vite configs, not built preview.

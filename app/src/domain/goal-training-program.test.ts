@@ -7,6 +7,7 @@ import { mapD9ResultToRveSignal } from "@impl/rve/signal"
 import { decideSafetyGate } from "@impl/safety-gate/gate"
 import { parseFormation } from "@impl/plan-generator/formation-parser"
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
+import { ALL_WORKOUT_CATALOG } from "@impl/prescription/all-workout-calculator"
 import { planBetaStateV3Schema } from "./plan-beta-schema"
 import { listPermittedActivePlanEditTargets, prepareActivePlanEdit } from "./active-plan-edit"
 import { TEN_K_GOAL_MINUTES } from "./goal-program-calendar"
@@ -32,6 +33,54 @@ function program(overrides: Partial<GoalTrainingProgramPreviewInput> = {}): Goal
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T
 
 describe("three-frame goal program", () => {
+  it("reuses only the frozen expected recipe while rejecting rehashed changes to incoming bytes", () => {
+    const value = program({ generatedAt: "2026-10-11T00:47:00.000Z" })
+    const builder = vi.spyOn(candidateBuilder, "createDeterministicCandidates")
+    try {
+      const first = validateGoalTrainingProgram(clone(value))
+      expect(first.kind).toBe("valid")
+      const coldCalls = builder.mock.calls.length
+      expect(coldCalls).toBeGreaterThan(0)
+      const second = validateGoalTrainingProgram(clone(value))
+      expect(second).toEqual(first)
+      expect(builder.mock.calls).toHaveLength(coldCalls)
+      if (second.kind !== "valid") throw Error("Expected valid replay")
+      expect(Object.isFrozen(second.program.frames[0]!.plan.activePlan.sessions)).toBe(true)
+      for (const change of [
+        (copy: any) => { copy.frames[0].plan.activePlan.sessions[0].prescription.durationMinutes.maximum += 1 },
+        (copy: any) => { copy.window.halfDays[0].date = "2026-10-12" },
+        (copy: any) => { copy.frames[0].plan.progress.push({ day: 1, slot: "AM", status: "COMPLETED" }) },
+        (copy: any) => { copy.generatedAt = "2026-10-11T00:48:00.000Z" },
+        (copy: any) => { copy.dateChoice = { kind: "DEADLINE", deadline: "2026-11-08" } },
+      ]) {
+        const copy = clone(value) as any
+        change(copy)
+        const { programId: _id, ...content } = copy
+        copy.programId = `goal-program:${canonicalJsonFingerprint("trainoracle.goal-program.v1", content)}`
+        expect(validateGoalTrainingProgram(copy).kind).toBe("invalid")
+      }
+      expect(validateGoalTrainingProgram(clone(value))).toEqual(first)
+      expect(regenerateGoalTrainingProgram(value, blocked, input.today).kind).toBe("blocked")
+      expect(regenerateGoalTrainingProgram(value, cleared, "2026-10-12").kind).toBe("start-in-past")
+    } finally { builder.mockRestore() }
+  })
+
+  it("invalidates a warm recipe when the actual catalog eligibility changes without a new fingerprint", () => {
+    const value = program({ generatedAt: "2026-10-11T00:49:00.000Z" })
+    expect(validateGoalTrainingProgram(clone(value)).kind).toBe("valid")
+    const session = value.days.find(day => day.session.prescription.kind === "RPE_TIME_RANGE"
+      && day.session.prescription.catalogWorkout)!.session
+    if (session.prescription.kind !== "RPE_TIME_RANGE") throw Error("Expected catalog source")
+    const catalogId = session.prescription.catalogWorkout!.catalogId
+    const entry = ALL_WORKOUT_CATALOG.find(row => row.id === catalogId)!
+    const before = entry.hold
+    try {
+      Object.assign(entry, { hold: "SYNTHETIC_REVIEW_HOLD" })
+      expect(validateGoalTrainingProgram(clone(value)).kind).toBe("invalid")
+    } finally { Object.assign(entry, { hold: before }) }
+    expect(validateGoalTrainingProgram(clone(value)).kind).toBe("valid")
+  })
+
   it.each(TEN_K_GOAL_MINUTES)("offers the %i-minute goal without turning it into a current record", goalMinutes => {
     const value = program({ goalMinutes })
     expect(value.goalMinutes).toBe(goalMinutes)

@@ -15,11 +15,12 @@ function requireTouchProject(projectName: string) {
 test("audits empty home and chooser touch actions", async ({ page }, testInfo) => {
   requireTouchProject(testInfo.project.name)
   await page.goto("/")
+  await page.getByRole("button", { name: "일지 예시·훈련법·꾸미기" }).click()
   const services = page.getByRole("navigation", { name: "훈련 도움말과 일지 꾸미기" })
   await auditTouchTargets(page, [
     { name: "empty-home.first-entry", locator: page.getByRole("button", { name: "오늘 운동 기록 쓰기" }), heightOnly: true },
     { name: "empty-home.create-plan", locator: page.getByRole("button", { name: "훈련 계획 만들기" }), heightOnly: true },
-    { name: "empty-home.learn", locator: services.getByRole("button", { name: "훈련 배우기" }), heightOnly: true },
+    { name: "empty-home.learn", locator: services.getByRole("button", { name: "훈련법 읽기" }), heightOnly: true },
     { name: "empty-home.decorate", locator: services.getByRole("button", { name: "일지 꾸미기" }), heightOnly: true },
     { name: "empty-home.more", locator: page.getByRole("button", { name: "더보기" }) },
   ])
@@ -55,6 +56,7 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
     { name: "populated-home.tabs", locator: page.getByRole("navigation", { name: "주 탭" }).getByRole("button"), count: 5 },
   ])
   await page.getByRole("button", { name: "더보기" }).click()
+  await page.getByRole("button", { name: "백업·복원·휴지통" }).click()
   await auditTouchTargets(page, [
     { name: "more.export", locator: page.getByRole("button", { name: /내 일지 데이터 내려받기/u }), heightOnly: true },
     { name: "more.full-export", locator: page.getByRole("button", { name: /메모 포함 파일 내보내기/u }), heightOnly: true },
@@ -65,6 +67,7 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
     { name: "full-export.confirm", locator: page.getByRole("button", { name: "파일 만들기" }) },
   ])
   await page.getByRole("button", { name: "취소" }).click()
+  await page.getByRole("button", { name: "더보기로 돌아가기" }).click()
   await page.getByRole("button", { name: "홈으로 돌아가기" }).click()
   await expectNoHorizontalOverflow(page)
   await entries.nth(0).click()
@@ -104,6 +107,7 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
   await page.getByRole("group", { name: "훈련 분석 자세히 보기" }).getByRole("button", { name: "월별 변화", exact: true }).click()
   const metricButtons = page
     .getByRole("region", { name: "최근 4개월 추이" })
+    .getByRole("group", { name: "추이 항목" })
     .getByRole("button")
   await auditTouchTargets(page, [
     { name: "trends.back", locator: page.getByRole("button", { name: "뒤로", exact: true }) },
@@ -118,20 +122,31 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
 test("saves post-session and evening entries through the mobile shell", async ({ page }, testInfo) => {
   requireTouchProject(testInfo.project.name)
   await openEntry(page, /자세히 기록.*운동별로 자세히/u)
+  await page.getByRole("button", { name: "휴식", exact: true }).click()
+  await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
   await page.getByRole("button", { name: /^저장/u }).click()
+  await page.getByRole("button", { name: "닫기", exact: true }).click()
   await expect(page.getByRole("button", { name: /기록 1개 보기 · 훈련 1/u })).toHaveCount(1)
   await openEntry(page, /하루 마무리/u)
+  await page.getByRole("button", { name: /^수면 질 3/u }).click()
+  await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
   await page.getByRole("button", { name: /^저장/u }).click()
+  await page.getByRole("button", { name: "닫기", exact: true }).click()
   await expect(page.getByRole("button", { name: /기록 2개 보기 · 훈련 1 · 하루 마무리 1/u })).toHaveCount(1)
 })
 
 test("keeps the review toast dismissal touchable", async ({ page }, testInfo) => {
   requireTouchProject(testInfo.project.name)
-  await openEntry(page, /경기 기록.*경기 전후 기록·컨디션/u)
-  await page.getByRole("textbox", { name: "경기 메모" }).fill("무릎이 아파")
+  await openEntry(page, /빠르게 기록.*거리·시간·힘든 정도/u)
+  await page.getByRole("button", { name: "오늘은 쉬었어요", exact: true }).click()
+  await page.getByRole("button", { name: "글 추가", exact: true }).click()
+  await page.getByRole("textbox", { name: "일지 내용", exact: true }).fill("무릎이 아파")
   await page.getByRole("radio", { name: "훈련 메모" }).click()
-  await page.getByRole("button", { name: /^저장/u }).click()
+  await page.getByRole("button", { name: "내용 반영", exact: true }).click()
+  await page.getByRole("button", { name: "이대로 저장", exact: true }).click()
+  await page.getByRole("button", { name: "완료", exact: true }).click()
   const alert = page.getByRole("alert")
   await expect(alert).toBeVisible()
+  await expect(alert).toContainText("자동 확인을 완료하지 못했어요. 안전 여부를 판정한 것이 아니에요.")
   await expectMinimumTouchSize(alert.getByRole("button", { name: "검토 안내 닫기" }))
 })

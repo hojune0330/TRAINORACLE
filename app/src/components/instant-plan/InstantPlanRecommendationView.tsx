@@ -76,7 +76,6 @@ export function InstantPlanRecommendationView({
   const saving = actionState.kind === "SAVING"
   const waiting = saving || actionState.kind === "PENDING"
   const ready = actionState.kind === "READY"
-  const hasPrescriptionCalendar = calendar != null
   const status = saving
     ? "계획을 저장하고 있어요. 저장이 확인될 때까지 기다려 주세요."
     : actionState.kind === "READY" ? null : actionState.message
@@ -136,7 +135,7 @@ export function InstantPlanRecommendationView({
       {beforeStart}
       {/* Full prescription calendars can be long lists. Required facts stay above
           the action; browsing every date is not another acceptance requirement. */}
-      {hasPrescriptionCalendar && startAction}
+      {startAction}
       {onEditWorkout && <div className="instant-plan__actions">
         <button className="instant-plan__secondary" type="button" disabled={waiting} onClick={onEditWorkout}>
           훈련 조절
@@ -154,7 +153,6 @@ export function InstantPlanRecommendationView({
         <summary>전체 훈련 시간·목표</summary>
         <InstantPlanRecommendationFacts recommendation={recommendation} goalLabel={goalLabel} programPurposeLabel={programPurposeLabel} />
       </details>}
-      {!hasPrescriptionCalendar && startAction}
       {showSupportingDetails && (onEditSchedule || onShowAlternatives) && <details className="instant-plan__disclosure">
         <summary>일정·훈련 바꾸기</summary>
         <div className="instant-plan__actions">

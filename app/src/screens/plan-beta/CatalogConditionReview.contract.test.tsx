@@ -10,8 +10,11 @@ import { replaceCandidateCatalogWorkout } from "../../domain/catalog-plan-bindin
 import { catalogScheduleConditions } from "../../domain/catalog-schedule-conditions"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null) })
-afterEach(() => { cleanup(); setActiveLocalAccount(null) })
+beforeEach(() => {
+  localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null)
+  vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-10-01T12:00:00Z"))
+})
+afterEach(() => { cleanup(); vi.useRealTimers(); setActiveLocalAccount(null) })
 function fixture() {
   const result = generatePlanFromDraft({ eventGroup: "FIVE_K", eventDistanceM: 5000, competitionDivision: "HIGH_SCHOOL",
     experienceBand: "EXPERIENCED", availableDayCount: 5, requestedFrameLength: 9, trainingFocus: "ATP_PC_INTENT",

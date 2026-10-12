@@ -166,12 +166,14 @@ describe("AppShell journal archive routing", () => {
     expect(await screen.findByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
   })
 
-  it("keeps the easy FAQ reachable through More's learning menu", async () => {
+  it("keeps the easy FAQ reachable through More's training section", async () => {
     const user = userEvent.setup()
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "더보기" }))
+    expect(await screen.findByRole("heading", { name: "훈련 배우기" })).toBeVisible()
     await user.click(await screen.findByRole("button", { name: "훈련 용어집·도움말" }))
+    expect(await screen.findByRole("heading", { name: "훈련 용어집" })).toBeVisible()
     await user.click(await screen.findByRole("button", { name: "앱 이용 안내" }))
 
     expect(await screen.findByRole("heading", { name: "궁금한 점을 쉽게 풀어드려요" })).toBeVisible()

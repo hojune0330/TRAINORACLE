@@ -18,7 +18,12 @@ async function openProfile(page: Page) {
 
 async function answerThree(page: Page, axis: string, response: string) {
   const dialog = page.getByRole("dialog", { name: axis, exact: true })
-  for (let count = 0; count < 3; count++) await dialog.getByRole("button", { name: response, exact: true }).click()
+  // Choose each answer deliberately across the guarded question transition.
+  for (let count = 0; count < 3; count++) {
+    const answer = dialog.getByRole("button", { name: response, exact: true })
+    await answer.focus()
+    await answer.press("Enter")
+  }
   await expect(dialog.getByRole("heading", { name: "내 답을 정리했어요" })).toBeFocused()
   return dialog
 }
@@ -114,8 +119,11 @@ test("a real zero stays distinct from missing answers at 320px with large text a
   dialog = page.getByRole("dialog", { name: "기록 도전 선호", exact: true })
   await dialog.getByText("답하기 어려워요", { exact: true }).click()
   await dialog.getByRole("button", { name: "아직 모르겠어요", exact: true }).click()
-  await dialog.getByRole("button", { name: "건너뛰기", exact: true }).click()
-  await dialog.getByRole("button", { name: "건너뛰기", exact: true }).click()
+  for (let count = 0; count < 2; count++) {
+    const skip = dialog.getByRole("button", { name: "건너뛰기", exact: true })
+    await skip.focus()
+    await skip.press("Enter")
+  }
   await expect(dialog.locator(".oracle-v2__result-number")).toHaveCount(0)
   await closeResult(dialog, page)
   const radar = page.locator(".preference-radar")

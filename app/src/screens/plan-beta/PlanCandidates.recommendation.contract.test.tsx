@@ -10,8 +10,14 @@ import { isoShift } from "../../domain/dates"
 import { formatTrainingSeconds, prescriptionLabel, sessionLabel } from "./labels"
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
-afterEach(cleanup)
+beforeEach(() => {
+  localStorage.clear()
+  sessionStorage.clear()
+  // Keep this dated fixture eligible while preserving real input and RAF timers.
+  vi.useFakeTimers({ toFake: ["Date"] })
+  vi.setSystemTime(new Date(2026, 8, 5, 12))
+})
+afterEach(() => { cleanup(); vi.useRealTimers() })
 
 function setup() {
   const result = generatePlanFromDraft({
@@ -72,7 +78,8 @@ describe("candidate-owned optional recommendation preference", () => {
     for (const session of sessions) {
       const day = calendar.querySelector<HTMLButtonElement>(`button[data-date="${isoShift(startDate, session.day - 1)}"]`)
       expect(day).not.toBeNull()
-      for (const label of within(day!).getAllByText(sessionLabel(session))) expect(label).toBeVisible()
+      for (const label of within(day!).getAllByText(session.role === "REST" ? "휴식" : sessionLabel(session))) expect(label).toBeVisible()
+      if (session.role === "REST") expect(day).toHaveAccessibleName(expect.stringContaining(sessionLabel(session)))
       if (session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout) {
         const calculation = resolveCatalogBinding(session.prescription.catalogWorkout)
         const total = calculation?.totals.seconds
