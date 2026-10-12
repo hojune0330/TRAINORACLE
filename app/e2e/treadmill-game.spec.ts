@@ -22,6 +22,82 @@ async function openGame(page: Page, course: "practice" | "seoul" = "practice", b
 const energy = async (page: Page) => Number((await page.getByLabel("게임 에너지", { exact: true }).textContent())!.replace(/\D/g, ""))
 const noSideScroll = (page: Page) => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)
 
+test("home launch banner opens the game, returns home and stays acknowledged after reload", async ({ page }, info) => {
+  await page.route("**/*", route => new URL(route.request().url()).hostname === "127.0.0.1" ? route.continue() : route.abort())
+  await page.goto("/?app=1")
+  const banner = page.getByRole("complementary", { name: "새 소식" })
+  await expect(banner).toBeVisible()
+  const record = await page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true }).boundingBox()
+  const notice = await banner.boundingBox()
+  expect(record!.y + record!.height).toBeLessThan(notice!.y)
+  expect(await noSideScroll(page)).toBe(true)
+  await page.screenshot({ path: info.outputPath("home-launch-banner.png"), fullPage: true })
+  await banner.getByRole("button", { name: "게임하기" }).click()
+  await expect(page.getByRole("heading", { name: "러닝 투어", exact: true })).toBeVisible()
+  await page.getByRole("button", { name: "홈으로 돌아가기" }).click()
+  await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true })).toBeVisible()
+  await expect(banner).toHaveCount(0)
+  await page.reload()
+  await expect(page.getByRole("button", { name: "더보기", exact: true })).toBeVisible()
+  await expect(banner).toHaveCount(0)
+  await page.getByRole("button", { name: "더보기", exact: true }).click()
+  await page.getByRole("button", { name: "미니게임", exact: true }).click()
+  await page.getByRole("button", { name: "더보기로 돌아가기" }).click()
+  await expect(page.getByRole("heading", { name: "더보기", exact: true })).toBeVisible()
+})
+
+test("closing the launch banner preserves the journal action and stays closed", async ({ page }) => {
+  await page.route("**/*", route => new URL(route.request().url()).hostname === "127.0.0.1" ? route.continue() : route.abort())
+  await page.goto("/?app=1")
+  await page.getByRole("button", { name: "러닝 투어가 열렸어요 안내 닫기" }).click()
+  await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true })).toBeVisible()
+  await page.reload()
+  await expect(page.getByRole("button", { name: "더보기", exact: true })).toBeVisible()
+  await expect(page.getByRole("complementary", { name: "새 소식" })).toHaveCount(0)
+})
+
+test("a delayed frame keeps playing without catching up the stall", async ({ page }) => {
+  await openGame(page)
+  await page.getByRole("button", { name: "시작", exact: true }).click()
+  await page.clock.runFor(3100)
+  await page.keyboard.down("ArrowRight")
+  const before = await energy(page)
+  // One late RAF callback, as when mobile rendering stalls, not 900ms of normal frames.
+  await page.clock.fastForward(900)
+  await expect(page.locator(".treadmill-game")).toHaveAttribute("data-mode", "running")
+  expect(before - await energy(page)).toBeLessThan(3)
+  await page.clock.runFor(800)
+  expect(await energy(page)).toBeLessThan(before)
+  await page.keyboard.up("ArrowRight")
+})
+
+test("touch-style empty focus does not pause but hidden page freezes and releases input", async ({ page }) => {
+  await openGame(page)
+  await page.getByRole("button", { name: "시작", exact: true }).click()
+  await page.clock.runFor(3100)
+  await page.locator("canvas.treadmill-game__canvas").evaluate(element => (element as HTMLElement).blur())
+  await expect(page.locator(".treadmill-game")).toHaveAttribute("data-mode", "running")
+  const run = page.getByRole("button", { name: /달리기 꾹/ })
+  await run.hover(); await page.mouse.down(); await page.clock.runFor(300)
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hidden", { configurable: true, value: true })
+    document.dispatchEvent(new Event("visibilitychange"))
+  })
+  await expect(page.locator(".treadmill-game")).toHaveAttribute("data-mode", "paused")
+  const frozen = await energy(page)
+  await page.clock.fastForward(5000)
+  expect(await energy(page)).toBe(frozen)
+  await page.evaluate(() => {
+    delete (document as unknown as { hidden?: boolean }).hidden
+    document.dispatchEvent(new Event("visibilitychange"))
+  })
+  await page.mouse.up()
+  await page.getByRole("button", { name: "계속", exact: true }).click()
+  await page.clock.runFor(400)
+  await expect(run).toHaveAttribute("aria-pressed", "false")
+  await expect(page.locator(".treadmill-game")).toHaveAttribute("data-mode", "running")
+})
+
 for (const blocked of [false, true]) test(`Tori atlas ${blocked ? "failure keeps the fallback playable" : "loads and is painted in the running game"}`, async ({ page }, info) => {
   await page.addInitScript(() => {
     const target = window as unknown as Window & { __toriAtlasPaints: number }
