@@ -30,6 +30,10 @@ import { useCalendarDecorationState } from "../components/calendar/useCalendarDe
 import type { DecorationId } from "../domain/decoration-catalog"
 import { useJournalDecorationSnapshot } from "./journal/JournalDecorationPreview"
 import { validJournalCalendarReturn, type JournalCalendarReturn, type OpenJournalDay } from "../navigation/readerPosition"
+import { BodyHistory } from "./BodyHistory"
+import { localJournalScopeGeneration } from "../domain/account/local-journal-ownership"
+import { filterOwnerBodyEntries } from "../domain/account/body-record-scope"
+import { useTaskFlowBack } from "../hooks/useTaskFlowBack"
 
 export type JournalArchiveProps = {
   readonly entries: readonly JournalEntry[]
@@ -49,6 +53,11 @@ export type JournalArchiveProps = {
   readonly onCycleIndexChange?: (index: number) => void
   readonly calendarReturn?: JournalCalendarReturn | null
   readonly onCalendarReturnConsumed?: () => void
+  readonly section?: "JOURNAL" | "BODY" | undefined
+  readonly onSectionChange?: (section: "JOURNAL" | "BODY") => void
+  readonly bodyPartId?: string | null | undefined
+  readonly onBodyPartChange?: (partId: string | null) => void
+  readonly onWriteBody?: (partId?: string) => void
 }
 
 export function JournalArchive({
@@ -67,10 +76,24 @@ export function JournalArchive({
   onCycleIndexChange,
   calendarReturn,
   onCalendarReturnConsumed,
+  section = "JOURNAL", onSectionChange, bodyPartId, onBodyPartChange, onWriteBody,
   readiness = "READY",
   onRetry,
 }: JournalArchiveProps) {
   const [internalMode, setInternalMode] = React.useState<"CALENDAR" | "CYCLE">("CALENDAR")
+  const [internalSection, setInternalSection] = React.useState<"JOURNAL" | "BODY">("JOURNAL")
+  const [internalBodyPartId, setInternalBodyPartId] = React.useState<string | null>(null)
+  const [bodyNavigationPending, setBodyNavigationPending] = React.useState(false)
+  const activeBodyPartId = onBodyPartChange ? bodyPartId ?? null : internalBodyPartId
+  const changeBodyPart = onBodyPartChange ?? setInternalBodyPartId
+  const activeSection = onSectionChange ? section : internalSection
+  const bodyScope = localJournalScopeGeneration()
+  const bodyEntries = React.useMemo(() => filterOwnerBodyEntries(entries), [entries, bodyScope])
+  const changeSection = onSectionChange ?? setInternalSection
+  const releaseBodyBack = useTaskFlowBack({ enabled: activeSection === "BODY", onBack: () => {
+    if (activeBodyPartId) changeBodyPart(null)
+    else changeSection("JOURNAL")
+  } })
   const calendarDecorationState = useCalendarDecorationState()
   const journalDecorationSnapshot = useJournalDecorationSnapshot()
   const allowedCalendarDecorationIds = React.useMemo<ReadonlySet<DecorationId>>(
@@ -78,7 +101,7 @@ export function JournalArchive({
     [journalDecorationSnapshot?.ownedItemIds],
   )
   const activeMode = mode ?? internalMode
-  const calendarRoot = useCalendarScroll(`journal-scroll:${activeMode}`)
+  const calendarRoot = useCalendarScroll(`journal-scroll:${activeMode}${activeSection === "BODY" ? ":body" : ""}`)
   const changeMode = onModeChange ?? setInternalMode
   const archive = React.useMemo(() => projectJournalArchive(entries), [entries])
   const today = useLocalToday()
@@ -110,7 +133,10 @@ export function JournalArchive({
   ) ?? null
 
   const goBack = () => {
-    if (activeMode === "CYCLE") {
+    if (activeSection === "BODY") {
+      if (activeBodyPartId) changeBodyPart(null)
+      else changeSection("JOURNAL")
+    } else if (activeMode === "CYCLE") {
       changeMode("CALENDAR")
     } else if (selectedWeek !== null) {
       onSelectionChange({
@@ -141,7 +167,7 @@ export function JournalArchive({
         <button
           type="button"
           onClick={goBack}
-          aria-label={activeMode === "CYCLE" || selectedWeek !== null || selection.selectedMonth !== null ? "월간 달력으로" : "홈으로"}
+          aria-label={activeSection === "BODY" ? activeBodyPartId ? "몸 기록 목록으로" : "일지로" : activeMode === "CYCLE" || selectedWeek !== null || selection.selectedMonth !== null ? "월간 달력으로" : "홈으로"}
           title="뒤로"
           className="journal-archive__back"
         >
@@ -149,10 +175,17 @@ export function JournalArchive({
         </button>
         <div className="journal-archive__heading">
           <AppHeading as="h1" variant="screen" accent className="journal-archive__title">
-            {heading}
+            {activeSection === "BODY" ? "몸 기록" : heading}
           </AppHeading>
         </div>
       </header>
+
+      <div className="journal-archive__mode-tabs app-choice-group" role="group" aria-label="일지와 몸 기록">
+        <button type="button" className="app-choice-control" aria-pressed={activeSection === "JOURNAL"}
+          onClick={() => changeSection("JOURNAL")}>일지</button>
+        <button type="button" className="app-choice-control" aria-pressed={activeSection === "BODY"}
+          onClick={() => changeSection("BODY")}>몸 기록</button>
+      </div>
 
       {readiness !== "READY" && <div className="calendar-guidance">
         <p role={readiness === "ERROR" ? "alert" : "status"}>{readMessage}</p>
@@ -161,6 +194,17 @@ export function JournalArchive({
         </button>}
       </div>}
 
+      {activeSection === "BODY" && (readiness === "READY" || entries.length > 0) && <BodyHistory
+        entries={bodyEntries} scopeKey={String(bodyScope)} showHeading={false} manageBrowserBack={false}
+        selectedPartId={activeBodyPartId} onSelectedPartChange={changeBodyPart}
+        onOpenEntry={(id, date) => {
+          if (releaseBodyBack()) { setBodyNavigationPending(false); onOpenDay(date, id) }
+          else setBodyNavigationPending(true)
+        }} onRecord={onWriteBody ?? (() => onWriteLog?.())} />}
+      {activeSection === "BODY" && bodyNavigationPending && <p role="status" className="calendar-guidance">
+        화면을 닫는 중이에요. 잠시 후 다시 눌러 주세요.
+      </p>}
+      <div hidden={activeSection !== "JOURNAL"}>
       {!unconfirmedEmpty && <>
       <div className="journal-archive__mode-tabs app-choice-group" role="group" aria-label="일지 보기 방식">
         <button className="app-choice-control" type="button" aria-pressed={activeMode === "CALENDAR"} onClick={() => changeMode("CALENDAR")}>
@@ -250,6 +294,7 @@ export function JournalArchive({
         </div>
       )}
       </>}
+      </div>
     </div>
   )
 }

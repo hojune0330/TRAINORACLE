@@ -11,6 +11,7 @@ import { EXERCISE_KINDS, describeExerciseRow } from "../domain/exercise-log"
 import { journalRpeLabel, quickOutcomeLabel } from "../domain/quick-journal"
 import { isImportedField } from "../domain/field-provenance"
 import { bodyPartLabel } from "./body-parts"
+import { parseBodyPartMetadata } from "../domain/body-part-metadata"
 import { CalendarTrainingMark } from "./CalendarTrainingMark"
 import { calendarMarksDescription, journalCalendarMarks } from "../domain/calendar-training-presentation"
 import { isValidIsoDate } from "../domain/dates"
@@ -234,6 +235,8 @@ function facts(entry: JournalEntry): [string, string][] {
     if (entry.condition !== undefined) add("컨디션", "condition", `${entry.condition}/5`)
   }
   if (entry.kind !== "race") {
+    const customCount = parseBodyPartMetadata(entry.bodyPartMetadata)?.observations.length ?? 0
+    if (customCount > 0) add("직접 적은 부위", "painParts", `${customCount}곳 · 원문에서 보기`)
     const pain = Object.entries(entry.painParts ?? {}).filter(([, level]) => level > 0)
     if (pain.length > 0) add("통증 기록", "painParts", pain.map(([part, level]) => `${bodyPartLabel(part)} ${level}/5`).join(" · "))
     else if (entry.kind === "post-session") {

@@ -14,6 +14,9 @@ export type AppViewState = {
   readonly restoreOpen: boolean
   readonly archiveSelection: ArchiveSelection | null
   readonly journalMode: "CALENDAR" | "CYCLE"
+  readonly journalSection?: "JOURNAL" | "BODY"
+  readonly bodyHistoryPartId?: string | null
+  readonly bodyInputPartId?: string
   readonly cycleAnchor: string | null
   readonly cycleIndex: number
   readonly cyclePositionSet?: boolean
@@ -109,6 +112,8 @@ export function viewForJournalReturn(state: AppViewState): AppViewState {
     detailDate: draft.date,
     archiveSelection: draft.returnTab === "journal" ? draft.archiveSelection : null,
     journalMode: state.journalMode,
+    ...(state.journalSection === undefined ? {} : { journalSection: state.journalSection }),
+    ...(state.bodyHistoryPartId === undefined ? {} : { bodyHistoryPartId: state.bodyHistoryPartId }),
     cycleAnchor: state.cycleAnchor,
     cycleIndex: state.cycleIndex,
     cyclePositionSet: state.cyclePositionSet,

@@ -15,10 +15,15 @@ import { comparisonRelationSchema } from "../import/comparison-relation"
  * This does not authorize sharing, analytics, logging, or journal completion.
  */
 export type AccountJournalRecord = {
-  readonly version: 2 | 3
+  readonly version: 2 | 3 | 4
   readonly state: "FINALIZED"
   readonly kind: "JOURNAL"
   readonly entry: JournalEntry
+}
+
+export function accountJournalRecordVersion(entry: JournalEntry, previousVersion?: 2 | 3 | 4): 2 | 3 | 4 {
+  return previousVersion === 4 || entry.bodyPartMetadata !== undefined ? 4
+    : entry.kind === "post-session" && entry.fileObservation !== undefined ? 3 : 2
 }
 
 // Validate JSON before parsing: never silently drop undefined, invoke getters/toJSON,
@@ -55,12 +60,13 @@ export function parseAccountJournalRecord(value: unknown): AccountJournalRecord 
   try {
     const input = canonicalJson(value)
     const candidate = JSON.parse(input) as Record<string, unknown> | null
-    if (candidate === null || ![2, 3].includes(candidate.version as number) || candidate.state !== "FINALIZED" || candidate.kind !== "JOURNAL") return null
+    if (candidate === null || ![2, 3, 4].includes(candidate.version as number) || candidate.state !== "FINALIZED" || candidate.kind !== "JOURNAL") return null
     const entry = parseJournalEntryForWrite(candidate.entry)
     if (entry === null) return null
+    if (entry.bodyPartMetadata !== undefined && candidate.version !== 4) return null
     if (candidate.version === 2 && entry.kind === "post-session"
       && (entry.fileObservation !== undefined || entry.comparisonRelations !== undefined)) return null
-    const record: AccountJournalRecord = { version: candidate.version as 2 | 3, state: "FINALIZED", kind: "JOURNAL", entry }
+    const record: AccountJournalRecord = { version: candidate.version as 2 | 3 | 4, state: "FINALIZED", kind: "JOURNAL", entry }
     // Parser-added optional undefined values have no JSON representation.
     if (input !== canonicalJson(JSON.parse(JSON.stringify(record)))) return null
     return record
@@ -82,7 +88,7 @@ const objectiveFields = ["distanceKm", "durationMin", "avgPace"] as const
 /** File-owned summaries must match; independent explicit facts survive owner backups. */
 export function validateInitialFileObservationRecord(value: unknown): boolean {
   const record = parseAccountJournalRecord(value)
-  if (record?.version !== 3 || record.entry.kind !== "post-session" || !record.entry.fileObservation) return false
+  if (!record || ![3, 4].includes(record.version) || record.entry.kind !== "post-session" || !record.entry.fileObservation) return false
   const observation = record.entry.fileObservation
   const summary = toFileObservationSummary(observation)
   return objectiveFields.every(field => record.entry.kind === "post-session"
@@ -128,7 +134,7 @@ export function correctAccountJournalImportedObservation(
   try {
     const previous = parseAccountJournalRecord(previousValue)
     const replacement = parseFileObservation(JSON.parse(canonicalJson(replacementValue)))
-    if (previous?.version !== 3 || previous.entry.kind !== "post-session" || !previous.entry.fileObservation || !replacement) return null
+    if (!previous || ![3, 4].includes(previous.version) || previous.entry.kind !== "post-session" || !previous.entry.fileObservation || !replacement) return null
     const original = previous.entry.fileObservation
     if (original.contentRevisionFingerprint !== previousContentRevisionFingerprint) return null
     const immutable = ["schemaVersion", "source", "format", "sourceProfile", "parserVersion", "sourceActivityId", "date",
@@ -163,12 +169,13 @@ export function correctAccountJournalImportedObservation(
 export function validateAccountJournalRecordUpdate(previousValue: unknown, nextValue: unknown, purpose?: AccountJournalWritePurpose): boolean {
   const previousRecord = parseAccountJournalRecord(previousValue)
   const nextRecord = parseAccountJournalRecord(nextValue)
-  if (!previousRecord || !nextRecord || (previousRecord.version === 3 && nextRecord.version === 2)) return false
+  if (!previousRecord || !nextRecord || previousRecord.version > nextRecord.version) return false
   const previous = previousRecord.entry
   const next = nextRecord.entry
   if (previous.kind === "post-session" && next.kind === "post-session"
     && !sameJson(previous.comparisonRelations, next.comparisonRelations)) return false
-  if (previousRecord.version !== nextRecord.version && purpose !== "FILE_OBSERVATION") return false
+  if (previousRecord.version !== nextRecord.version && purpose !== "FILE_OBSERVATION"
+    && !(nextRecord.version === 4 && next.bodyPartMetadata !== undefined)) return false
   if (purpose === "FILE_OBSERVATION") return validAttachment(previous, next, nextValue)
   if (previous.kind === "post-session" && next.kind === "post-session"
     && (!sameJson(previous.fileObservation, next.fileObservation)
@@ -194,7 +201,7 @@ export function applyAccountJournalComparisonMutation(previousValue: unknown, re
   try {
     const previous = parseAccountJournalRecord(previousValue)
     const request = JSON.parse(canonicalJson(requestValue))
-    if (previous?.version !== 3 || previous.entry.kind !== "post-session" || !previous.entry.fileObservation) return null
+    if (!previous || ![3, 4].includes(previous.version) || previous.entry.kind !== "post-session" || !previous.entry.fileObservation) return null
     const relations = previous.entry.comparisonRelations ?? []
     if (request.action === "confirmComparisonRelation") {
       const parsed = confirmComparisonRelationRequestSchema.safeParse(request)
@@ -216,7 +223,7 @@ export function validateAccountJournalComparisonConfirmation(previousValue: unkn
   original: ComparisonOriginalResolution): boolean {
   const previous = parseAccountJournalRecord(previousValue)
   const parsed = confirmComparisonRelationRequestSchema.safeParse(request)
-  if (previous?.version !== 3 || previous.entry.kind !== "post-session" || !parsed.success) return false
+  if (!previous || ![3, 4].includes(previous.version) || previous.entry.kind !== "post-session" || !parsed.success) return false
   const projection = projectFileObservation(previous.entry, { formats: ["tcx", "csv", "json", "gpx"], sourceContext: "ACCOUNT_CONFIRMED" })
   return projection.status === "ACCEPTED"
     && prepareComparisonRelation(parsed.data, original, projection.observation, parsed.data.expectedRevision).status === "READY_FOR_PERSISTENCE"
@@ -227,7 +234,7 @@ export function validateAccountJournalComparisonConfirmation(previousValue: unkn
 export function validateAccountJournalComparisonRestore(value: unknown, relationValue: unknown,
   original: ComparisonOriginalResolution): boolean {
   const record = parseAccountJournalRecord(value), relation = comparisonRelationSchema.safeParse(relationValue)
-  if (record?.version !== 3 || record.entry.kind !== "post-session" || !relation.success
+  if (!record || ![3, 4].includes(record.version) || record.entry.kind !== "post-session" || !relation.success
     || relation.data.journalId !== record.entry.id
     || validateComparisonRelationOriginalMapping(relation.data, original).status !== "VALID_ORIGINAL_MAPPING") return false
   const projection = projectFileObservation(record.entry, { formats: ["tcx", "csv", "json", "gpx"], sourceContext: "ACCOUNT_CONFIRMED" })

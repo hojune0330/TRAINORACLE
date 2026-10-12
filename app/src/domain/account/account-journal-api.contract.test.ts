@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { webcrypto } from "node:crypto"
 import { createClient, type Session, type SupabaseClient } from "@supabase/supabase-js"
-import { accountJournalPreviewEnabled, requestAccountJournal, requestAccountDocument } from "./account-journal-api"
+import { accountJournalPreviewEnabled, requestAccountJournal, requestAccountDocument, checkAccountJournalBodyPartSupport,
+  accountBodyPartMetadataSupported } from "./account-journal-api"
+import { setActiveLocalAccount } from "./local-journal-ownership"
 import { accountJournalRecordSchema, type AccountJournalRecord } from "./account-journal-record-schema"
 import { waitingJournal } from "../../test/progressive-journal-fixture"
 import { buildFileObservation } from "../import/file-observation"
@@ -28,6 +30,45 @@ function dependencies(data: unknown, error: unknown = null) {
     functions: { invoke } }
   return { client: vi.fn().mockResolvedValue(client as unknown as SupabaseClient), owner: () => ownerId, invoke, auth: client.auth }
 }
+
+describe("private body capability owner binding", () => {
+  afterEach(() => { setActiveLocalAccount(null); localStorage.clear() })
+  it("sends no v4 write before verified support and revokes capability on A-B-A", async () => {
+    localStorage.clear(); setActiveLocalAccount(ownerId)
+    const document: AccountJournalRecord = { version: 4, kind: "JOURNAL", state: "FINALIZED",
+      entry: { ...waitingJournal(), painCheckStatus: "SIGNAL_REPORTED" as const,
+        fieldProvenance: { ...waitingJournal().fieldProvenance, painParts: { provenance: "EXPLICIT" as const } },
+        bodyPartMetadata: { schemaVersion: 1 as const, observations: [{
+          id: "other_11111111-1111-4111-8111-111111111111" as const, labelSnapshot: "Synthetic private", severity: 4 as const,
+        }] } } }
+    const save = { action: "save" as const, documentId, operationId, expectedRevision: 0, document }
+    const before = dependencies({ kind: "saved", documentId, operationId, revision: 1 })
+    expect(await requestAccountDocument(ownerId, save, () => true, accountJournalRecordSchema, before)).toEqual({ ok: false, code: "UPGRADE_REQUIRED" })
+    expect(before.invoke).not.toHaveBeenCalled()
+    expect(await checkAccountJournalBodyPartSupport(ownerId, () => true,
+      dependencies({ kind: "ready" }))).toBe(false)
+    expect(accountBodyPartMetadataSupported(ownerId)).toBe(false)
+    expect(await checkAccountJournalBodyPartSupport(ownerId, () => true,
+      dependencies({ kind: "journal-body-part-support", version: 1 }))).toBe(true)
+    const after = dependencies({ kind: "saved", documentId, operationId, revision: 1 })
+    expect(await requestAccountDocument(ownerId, save, () => true, accountJournalRecordSchema, after)).toMatchObject({ ok: true })
+    expect(after.invoke.mock.calls[0]?.[1].body.supportedJournalVersions).toEqual([2, 3, 4])
+    setActiveLocalAccount(otherOwnerId); setActiveLocalAccount(ownerId)
+    expect(accountBodyPartMetadataSupported(ownerId)).toBe(false)
+  })
+  it("does not accept a late support reply after the owning scope changes", async () => {
+    localStorage.clear(); setActiveLocalAccount(ownerId)
+    const deps = dependencies(null)
+    let finish!: (result: unknown) => void
+    deps.invoke.mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
+    const result = checkAccountJournalBodyPartSupport(ownerId, () => true, deps)
+    await vi.waitFor(() => expect(deps.invoke).toHaveBeenCalled())
+    setActiveLocalAccount(otherOwnerId); setActiveLocalAccount(ownerId)
+    finish({ data: { kind: "journal-body-part-support", version: 1 }, error: null })
+    expect(await result).toBe(false)
+    expect(accountBodyPartMetadataSupported(ownerId)).toBe(false)
+  })
+})
 
 it("unpinned retries cannot borrow a regrant while explicitly pinned new operations retain their revision",async()=>{
   localStorage.clear()

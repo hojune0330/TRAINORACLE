@@ -1,6 +1,7 @@
 import { accountJournalEntryFingerprint, accountJournalRecordsEnabled, hydrateAccountJournalRecords, persistAccountJournalRecord, readAccountJournalWriteBase, type AccountJournalWriteBase } from "../account/account-journal-record-service"
 import { readAccountJournalPrivateEntry } from "../account/account-journal-projection"
-import { validateAccountJournalRecordUpdate } from "../account/account-journal-record-schema"
+import { accountJournalRecordVersion, validateAccountJournalRecordUpdate } from "../account/account-journal-record-schema"
+import { preserveBodyPartMetadataForRestore } from "../body-part-metadata"
 import { accountDecorationStatus, hydrateAccountDecorations, persistAccountDecorations, readAccountDecorationState } from "../account/account-decoration-service"
 import { accountCalendarDecorationStatus, hydrateAccountCalendarDecorations, persistAccountCalendarDecorations, readAccountCalendarDecorationState } from "../account/account-calendar-decoration-service"
 import { createAccountImportScope, isAccountImportDeleted } from "../import/account-import"
@@ -183,14 +184,14 @@ export async function createAccountBackupRestoration(source: BackupReadResult) {
         const preservedMemo = read.kind === "safe" && current
           ? { ...(current.kind === "evening" ? { note: current.note } : { memo: current.memo }), ...(current.memoPurpose ? { memoPurpose: current.memoPurpose } : {}) }
           : {}
-        const candidate = parseJournalEntryForWrite({ ...original, ...preservedMemo, syncState: "local",
+        const candidate = parseJournalEntryForWrite(preserveBodyPartMetadataForRestore(current ?? undefined, { ...original, ...preservedMemo, syncState: "local" as const,
           ...(current ? { savedAt: new Date(Math.max(Date.now(), Date.parse(current.savedAt) + 1)).toISOString() } : {}),
-        })
+        }))
         if (!candidate) { result.failed++; continue }
         // Reject, rather than silently rewrite, backup provenance/immutable facts.
         if (current && !validateAccountJournalRecordUpdate(
-          { version: current.kind === "post-session" && current.fileObservation ? 3 : 2, kind: "JOURNAL", state: "FINALIZED", entry: { ...current, syncState: "local" } },
-          { version: candidate.kind === "post-session" && candidate.fileObservation ? 3 : 2, kind: "JOURNAL", state: "FINALIZED", entry: candidate },
+          { version: accountJournalRecordVersion(current), kind: "JOURNAL", state: "FINALIZED", entry: { ...current, syncState: "local" } },
+          { version: accountJournalRecordVersion(candidate, accountJournalRecordVersion(current)), kind: "JOURNAL", state: "FINALIZED", entry: candidate },
         )) { result.conflicts++; continue }
         item = { entry: candidate, expectedBase, ...(current ? { expectedSavedAt: current.savedAt } : {}) }
         prepared.set(original.id, item)

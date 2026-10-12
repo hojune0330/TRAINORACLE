@@ -16,6 +16,7 @@ export async function buildAccountJournalRecordValidator() {
         correctAccountJournalImportedObservation, FILE_OBSERVATION_CORRECTION_FIELDS, applyAccountJournalComparisonMutation,
         validateAccountJournalComparisonConfirmation, validateAccountJournalComparisonRestore } from "./src/domain/account/account-journal-record-schema.ts";
         export { parseFileObservation } from "./src/domain/import/file-observation.ts";
+        export { journalHasPainSignal } from "./src/domain/body-part-metadata.ts";
         export { confirmComparisonRelationRequestSchema, releaseComparisonRelationRequestSchema } from "./src/domain/import/comparison-relation.ts";
         export { resolveComparisonOriginalFromPlanDocument, resolveComparisonOriginalFromPlanCollection } from "./src/domain/import/file-plan-comparison.ts";`,
       resolveDir: app,

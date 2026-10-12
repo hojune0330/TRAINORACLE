@@ -7,11 +7,12 @@ export function useTaskFlowBack({ enabled, busy = false, onBack }: {
   readonly enabled: boolean
   readonly busy?: boolean
   readonly onBack: () => void
-}): void {
+}): () => boolean {
   const id = React.useId()
   const latest = React.useRef({ enabled, busy, onBack })
   latest.current = { enabled, busy, onBack }
   const [backRevision, rearm] = React.useReducer((revision: number) => revision + 1, 0)
+  const layerRef = React.useRef<ReturnType<typeof registerBrowserBackLayer> | null>(null)
 
   React.useLayoutEffect(() => {
     if (!enabled) return
@@ -26,8 +27,10 @@ export function useTaskFlowBack({ enabled, busy = false, onBack }: {
         rearm()
       },
     })
-    return () => { alive = false; layer.dispose() }
+    layerRef.current = layer
+    return () => { alive = false; layerRef.current = null; layer.dispose() }
     // Changing an answer or opening help must NOT push a new sentinel above an
     // existing dialog. Rearm only after this flow actually consumed native Back.
   }, [enabled, backRevision, id])
+  return React.useCallback(() => layerRef.current?.releaseForNavigation() ?? false, [])
 }

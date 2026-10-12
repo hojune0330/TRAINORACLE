@@ -1,0 +1,30 @@
+.body-record-dialog {
+  width: min(100% - 24px, 640px);
+  max-height: calc(100dvh - 24px);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-task-surface);
+  background: var(--surface);
+  color: var(--ink);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.body-record-dialog::backdrop { background: rgb(0 0 0 / 35%); }
+.body-record-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+.body-record-dialog__header h2 { margin: 0; font-size: var(--fs-app-section-title); }
+.body-record-dialog__header button {
+  min-height: 44px;
+  min-width: 44px;
+  border: 0;
+  border-radius: var(--r-action);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.body-record-dialog__content { padding: var(--space-4); }

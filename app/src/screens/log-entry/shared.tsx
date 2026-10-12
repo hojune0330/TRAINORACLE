@@ -12,6 +12,7 @@ export interface EntryFormProps {
   readonly onDone?: (entryType: JournalEntryType, savedEntry: JournalEntry, reviewMessage?: string, storageMessage?: string) => void
   readonly targetDate?: string
   readonly initialEntry?: JournalEntry
+  readonly initialBodyPartId?: string | undefined
   readonly plannedSessionLink?: PlannedSessionLink
 }
 

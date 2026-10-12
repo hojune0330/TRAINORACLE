@@ -26,6 +26,7 @@ let pendingBackLayerId: string | null = null
 const layers = new Map<string, BackLayer>()
 const popListeners = new Set<() => void>()
 const consumedPopEvents = new WeakSet<PopStateEvent>()
+const inspectedPopEvents = new WeakSet<PopStateEvent>()
 let captureInstalled = false
 
 function layerMarker(state: unknown): string | null {
@@ -102,6 +103,7 @@ function pushLayerEntry(layer: BackLayer): void {
 export function registerBrowserBackLayer(options: BackLayerOptions): {
   readonly close: () => void
   readonly dispose: () => void
+  readonly releaseForNavigation: () => boolean
 } {
   if (!captureInstalled) {
     // Capture precedes both the shell and independently mounted editor readers.
@@ -129,6 +131,25 @@ export function registerBrowserBackLayer(options: BackLayerOptions): {
   observedLayer = layerMarker(window.history.state)
 
   return {
+    // Explicit handoff to a child screen that replaces this exact sentinel.
+    // Never transfer a pending POP or a marker owned by another layer.
+    releaseForNavigation: () => {
+      if (pendingBackLayerId !== null || !registered.active || !mayClose(registered)) return false
+      if (!registered.ownsEntry) {
+        registered.active = false; registered.options = null; registered.revision += 1
+        return true
+      }
+      if (layerMarker(window.history.state) !== registered.id) return false
+      const { [BROWSER_BACK_LAYER_HISTORY_KEY]: _marker, ...state } = window.history.state
+      try { window.history.replaceState(state, "", window.location.href) }
+      catch { return false }
+      registered.active = false
+      registered.ownsEntry = false
+      registered.options = null
+      registered.revision += 1
+      observedLayer = layerMarker(window.history.state)
+      return true
+    },
     close: () => {
       if (!registered.active || registered.pendingBack || !mayClose(registered)) return
       if (registered.ownsEntry && layerMarker(window.history.state) === registered.id) {
@@ -158,7 +179,10 @@ export function registerBrowserBackLayer(options: BackLayerOptions): {
 
 /** True means this POP belongs to a layer, not to the parent screen. */
 export function consumeBrowserBackLayer(event: PopStateEvent): boolean {
-  if (isBrowserPopNavigationConsumed(event)) return true
+  // A shell callback may synchronously mount a new flow before the window's
+  // other listener sees this same event. That new flow did not own this POP.
+  if (inspectedPopEvents.has(event)) return isBrowserPopNavigationConsumed(event)
+  inspectedPopEvents.add(event)
   const consume = () => { consumedPopEvents.add(event); return true }
   const nextMarker = layerMarker(event.state)
   const previousMarker = observedLayer
