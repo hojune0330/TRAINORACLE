@@ -194,12 +194,10 @@ describe("past journal revisit forms", () => {
     const { container } = render(<LogEntry entryType="choose" targetDate={DATE} />)
 
     // Then
-    expect(screen.getByText("이 날짜의 첫 일지예요.")).toBeVisible()
+    expect(screen.queryByText("이 날짜의 첫 일지예요.")).toBeNull()
     expect(screen.queryByText(/오늘 첫 일지/u)).not.toBeInTheDocument()
-    expect(screen.getAllByText("이 날짜의 첫 일지예요.")).toHaveLength(1)
     const intro = container.querySelector(".contextual-entry-intro")
-    expect(intro).toContainElement(screen.getByRole("heading", { name: "어떤 일지를 쓰세요?" }))
-    expect(intro).toHaveTextContent("이 날짜의 첫 일지예요.")
+    expect(intro).toContainElement(screen.getByRole("heading", { name: "무엇을 기록할까요?" }))
     expect(intro?.querySelector("img")).toHaveAttribute("width", "64")
     expect(intro?.querySelector("img")).toHaveAttribute("alt", "")
     expect(intro?.querySelector("img")).toHaveAttribute("aria-hidden", "true")
@@ -207,7 +205,7 @@ describe("past journal revisit forms", () => {
 
   it("keeps a focused native screen heading while its four entry actions stay separate", () => {
     const { container } = render(<LogEntry entryType="choose" targetDate={DATE} />)
-    const heading = screen.getByRole("heading", { name: "어떤 일지를 쓰세요?", level: 1 })
+    const heading = screen.getByRole("heading", { name: "무엇을 기록할까요?", level: 1 })
 
     expect(heading).toHaveClass("app-heading", "app-heading--screen", "app-heading--accent")
     expect(heading).toHaveAttribute("tabindex", "-1")
@@ -216,7 +214,7 @@ describe("past journal revisit forms", () => {
     expect(heading.style.fontWeight).toBe("")
     expect(container.querySelectorAll(".app-heading--accent")).toHaveLength(1)
     expect(container.querySelectorAll("[data-testid^='entry-choice-']")).toHaveLength(4)
-    expect(screen.getByText("이 날짜의 첫 일지예요.")).not.toHaveClass("app-heading")
+    expect(screen.queryByText("이 날짜의 첫 일지예요.")).toBeNull()
   })
 
   it("limits the small guide to the selected empty date without changing the four choices or import action", async () => {

@@ -6,7 +6,6 @@ import { DETAILED_PRESCRIPTION_APPROVALS } from "../../domain/detailed-prescript
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
 import { PlanIntake } from "./PlanIntake"
 import { firstUnansweredRefinement } from "./plan-intake-navigation"
-import { SINGLE_CHOICE_ADVANCE_HINT } from "./plan-intake-meta"
 
 afterEach(cleanup)
 
@@ -33,7 +32,7 @@ describe("question-first plan preparation", () => {
     expect(goalEdit).toBeVisible()
     const dayGroup = screen.getByRole("group", { name: "운동할 날 선택" })
     const days = within(dayGroup)
-    expect(dayGroup).toHaveAccessibleDescription(SINGLE_CHOICE_ADVANCE_HINT)
+    expect(dayGroup).toBeVisible()
     expect(days.getAllByRole("button").map(button => button.textContent)).toEqual(["3일", "4일", "5일", "6일", "매일"])
     await userEvent.setup().click(days.getByRole("button", { name: "매일" }))
     expect(callbacks.onDays).toHaveBeenCalledWith("EVERY_DAY")
@@ -45,7 +44,7 @@ describe("question-first plan preparation", () => {
     render(<PlanIntake step="goal" draft={{}} canGoBack={false} {...callbacks} />)
     expect(screen.queryByRole("button", { name: "이전" })).not.toBeInTheDocument()
     expect(screen.getByRole("group", { name: "계획 종목 선택" }))
-      .toHaveAccessibleDescription(SINGLE_CHOICE_ADVANCE_HINT)
+      .toBeVisible()
   })
 
   it("keeps the quick-flow answer shortcuts to the three prior answers", () => {

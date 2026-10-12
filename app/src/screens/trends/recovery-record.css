@@ -1,5 +1,10 @@
 .recovery-record { margin: var(--space-6) var(--space-5) 0; padding-block: var(--space-4); border-top: 1px solid var(--line); font-family: var(--sans); }
-.recovery-record h2 { margin: 0 0 var(--space-3); font-size: var(--fs-h3); }
+.recovery-record__prior { margin-block: var(--space-2); color: var(--ink-2); font-size: var(--fs-caption); line-height: 1.5; }
+.recovery-record__prior-list { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.recovery-record__prior-list li { display: grid; gap: var(--space-1); }
+.recovery-record__prior-list time { color: var(--ink); font-weight: 600; }
+.recovery-record__prior-error { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); margin-block: var(--space-2); color: var(--ink-2); font-size: var(--fs-caption); line-height: 1.5; }
+.recovery-record__prior-error button { min-height: 44px; padding-inline: var(--space-2); border: 1px solid var(--line); border-radius: var(--r-action, 12px); background: transparent; color: var(--brand); font: inherit; cursor: pointer; }
 .recovery-record__action { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); width: 100%; min-height: 48px; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
 .recovery-record__action span { min-width: 0; overflow-wrap: anywhere; }
 .recovery-record__action svg { flex-shrink: 0; }

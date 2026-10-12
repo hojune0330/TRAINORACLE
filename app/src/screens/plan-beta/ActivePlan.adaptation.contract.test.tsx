@@ -17,7 +17,6 @@ describe("active plan adaptation entry", () => {
     primary.click()
     expect(next).toHaveBeenCalledTimes(1)
     expect(activate).not.toHaveBeenCalled()
-    expect(screen.getByText("계획안을 보고 고른 뒤에 시작해요.")).toBeVisible()
   })
 
   it("does not offer a new-plan action before completion", () => {

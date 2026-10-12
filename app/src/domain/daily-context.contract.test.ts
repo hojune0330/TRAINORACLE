@@ -1,7 +1,9 @@
-import { beforeEach, describe, expect, it } from "vitest"
-import { loadDailyContext, saveDailyContext } from "./daily-context"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { loadDailyContext, readDailyContexts, saveDailyContext } from "./daily-context"
+import { setActiveLocalAccount } from "./account/local-journal-ownership"
 
 beforeEach(() => window.localStorage.clear())
+afterEach(() => setActiveLocalAccount(null))
 
 describe("daily context tags", () => {
   it("stores only manual mood, body, and weather choices for one date", () => {
@@ -14,6 +16,34 @@ describe("daily context tags", () => {
       weather: "SUNNY",
     })
     expect(loadDailyContext("2026-08-02")).toBeNull()
+  })
+
+  it("lists validated saved dates in newest-first order without writing", () => {
+    saveDailyContext({ date: "2026-08-01", mood: "GOOD", body: "NORMAL", weather: "SUNNY" })
+    saveDailyContext({ date: "2026-08-03", mood: null, body: "TIRED", weather: null })
+    const key = "trainoracle.daily-context.v1"
+    const stored = window.localStorage.getItem(key)
+
+    expect(readDailyContexts()).toEqual({ kind: "loaded", contexts: [
+      { date: "2026-08-03", mood: null, body: "TIRED", weather: null },
+      { date: "2026-08-01", mood: "GOOD", body: "NORMAL", weather: "SUNNY" },
+    ] })
+    expect(window.localStorage.getItem(key)).toBe(stored)
+  })
+
+  it("lists only the active account's validated dates", () => {
+    setActiveLocalAccount("daily-context-account-a")
+    saveDailyContext({ date: "2026-08-01", mood: "GOOD", body: null, weather: null })
+    setActiveLocalAccount("daily-context-account-b")
+    saveDailyContext({ date: "2026-08-02", mood: "LOW", body: null, weather: null })
+
+    expect(readDailyContexts()).toEqual({ kind: "loaded", contexts: [
+      { date: "2026-08-02", mood: "LOW", body: null, weather: null },
+    ] })
+    setActiveLocalAccount("daily-context-account-a")
+    expect(readDailyContexts()).toEqual({ kind: "loaded", contexts: [
+      { date: "2026-08-01", mood: "GOOD", body: null, weather: null },
+    ] })
   })
 
   it("rejects malformed storage rather than inventing tags", () => {

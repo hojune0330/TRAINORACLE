@@ -71,7 +71,7 @@ export function AccountJournalHistory({ entryId }: { readonly entryId?: string }
       const entry = version.document.entry
       const text = entry.kind === "evening" ? entry.note : entry.memo
       return <details key={version.revision}>
-        <summary style={{ minHeight: 44, padding: 8 }}>{entry.date} · {entry.kind === "evening" ? "하루 마무리" : entry.kind === "race" ? "경기 일지" : entry.title || "훈련 일지"} · 수정본 {version.revision}</summary>
+        <summary style={{ minHeight: 44, padding: 8 }}>{entry.date} · {entry.kind === "evening" ? "컨디션·메모" : entry.kind === "race" ? "경기 일지" : entry.title || "훈련 일지"} · 수정본 {version.revision}</summary>
         {entry.kind === "post-session" && <p>
           거리 {entry.distanceKm ? `${entry.distanceKm}km` : "미기록"} · 시간 {entry.durationMin ? `${entry.durationMin}분` : "미기록"} · RPE {entry.rpe > 0 ? entry.rpe : "미기록"}
         </p>}

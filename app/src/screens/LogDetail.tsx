@@ -1,8 +1,8 @@
 import React from "react"
 import { ChevronDown } from "lucide-react"
 import { accountJournalRecordsEnabled, deleteAccountJournalRecord, undoAccountJournalDeletion } from "../domain/account/account-journal-record-service"
-import { readAccountJournalPrivateEntry } from "../domain/account/account-journal-projection"
-import { activeLocalAccount } from "../domain/account/local-journal-ownership"
+import { accountJournalProjectionStatus, readAccountJournalPrivateEntry } from "../domain/account/account-journal-projection"
+import { activeLocalAccount, journalOwner } from "../domain/account/local-journal-ownership"
 import { canEditJournalEntry } from "../domain/journal-edit-policy"
 import { AccountJournalHistory } from "./account/AccountJournalHistory"
 import { IndexCard, MoodStrip, PainDot } from "../components/JournalPrimitives"
@@ -69,6 +69,21 @@ const SYSTEM_META = Object.fromEntries(
       term: SYSTEM_TERM[key],
     }]),
 ) as Record<string, { c: string; n: string; cls: string; term: TermId }>
+
+function journalStorageLabel(entry: JournalEntry): string | null {
+  const owner = journalOwner(entry.id)
+  if (owner === undefined || owner !== null && owner !== activeLocalAccount()) return null
+  if (owner === null) return entry.syncState === "local" ? "이 브라우저에 저장됨" : null
+  const accountEntry = readAccountJournalPrivateEntry(entry.id)
+  if (!accountEntry || accountEntry.syncState !== "local") return null
+  switch (accountJournalProjectionStatus()) {
+    case "PENDING": return "계정 저장 대기 중"
+    case "REJECTED": return "계정 저장 거절"
+    case "FAILED": return "계정 확인 실패"
+    case "CONFLICT": return "충돌 확인 필요"
+    default: return null
+  }
+}
 
 function savedClock(iso: string): string {
   const d = new Date(iso)
@@ -320,7 +335,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
   const countSummary = compactSummary([
     entryCounts["post-session"] > 0 ? `훈련 ${entryCounts["post-session"]}` : null,
     entryCounts.race > 0 ? `경기 ${entryCounts.race}` : null,
-    entryCounts.evening > 0 ? `하루 마무리 ${entryCounts.evening}` : null,
+    entryCounts.evening > 0 ? `컨디션·메모 ${entryCounts.evening}` : null,
   ])
 
   return (
@@ -385,7 +400,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
             이 날의 일지는 아직 비어 있어요.
           </div>
           <div style={{ marginTop: 12, fontFamily: "var(--mono)", fontSize: "var(--fs-mono-sm)", color: "var(--ink-3)", letterSpacing: "0.04em", lineHeight: 1.6 }}>
-            {decorationStudio ? <>일지를 저장한 뒤 그림을 붙일 수 있어요.<br />달력은 지금 꾸밀 수 있어요.</> : <>오늘 일지는 홈 → 일지 쓰기에서 1분이면 남길 수 있어요.<br />어떤 모습으로 쌓이는지 궁금하면 가이드 탭의 예시 일지를 봐 주세요.</>}
+            {decorationStudio ? <>일지를 저장한 뒤 그림을 붙일 수 있어요.<br />달력은 지금 꾸밀 수 있어요.</> : null}
           </div>
           {!readOnly && onAddEntry !== undefined && (
             <button type="button" className="journal-empty-state__add" onClick={() => onAddEntry(date)}>
@@ -399,6 +414,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
         const viewKey = journalEntryViewKey(entry, sourceIndex)
         const panelId = `journal-entry-panel-${displayIndex}`
         const open = expandedEntryKeys.has(viewKey)
+        const storageLabel = journalStorageLabel(entry)
 
         if (entry.kind === "post-session") {
           const meta = entry.system === ""
@@ -430,7 +446,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
                 <div className="journal-entry-card__meta">
                   <span className={`etag ${meta.cls}`}><span className="d"></span><span className="c">{meta.c}</span><span className="n">{meta.n}</span></span>
                   {meta.term !== null && <TermHelp term={meta.term} />}
-                  <SyncChip />
+                  {storageLabel !== null && <SyncChip label={storageLabel} />}
                   {imported && <ImportedChip />}
                 </div>
                 <div className="journal-entry-card__title">{entry.title || "훈련 기록"}</div>
@@ -471,7 +487,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
               <div className="journal-entry-card journal-entry-card--race">
                 <div className="journal-entry-card__meta journal-entry-card__meta--apart">
                   <span className="journal-entry-card__eyebrow">RACE DAY · {entry.stage === "pre" ? "직전" : "직후"}</span>
-                  <SyncChip />
+                  {storageLabel !== null && <SyncChip label={storageLabel} />}
                 </div>
                 {entry.record && <div className="journal-entry-card__record">{entry.record}</div>}
                 {(entry.rank || entry.result) && (
@@ -492,7 +508,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
           <JournalEntryDisclosure
             key={viewKey}
             panelId={panelId}
-            kindLabel="하루 마무리"
+            kindLabel="컨디션·메모"
             title={entry.note.trim().slice(0, 40) || "몸과 마음 기록"}
             summary={eveningSummary(entry)}
             savedAt={entry.savedAt}
@@ -514,7 +530,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
                 <SavedMemo entry={entry} text={entry.note} fontSize={17} />
               </div>
               <div style={{ padding: "0 14px" }}>
-                {!readOnly && <EntryDeleteRow entryId={entry.id} onDelete={() => setPendingDelete({ id: entry.id, label: "하루 마무리" })} />}
+                {!readOnly && <EntryDeleteRow entryId={entry.id} onDelete={() => setPendingDelete({ id: entry.id, label: "컨디션·메모" })} />}
                 {!readOnly && <AccountJournalHistory entryId={entry.id} />}
               </div>
             </div>
@@ -534,9 +550,6 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
 
       {entries.length > 0 && (
         <>
-          {!readOnly && <div className="journal-detail-page__storage-note">
-            이 페이지는 이 기기에만 저장돼 있어요. 온라인 보관·기기 이동은 계정 연동 후에 할 수 있어요.
-          </div>}
           <div className="journal-day-end" data-testid="journal-day-end" aria-hidden="true"><span>오늘 기록 끝</span></div>
           {!readOnly && <JournalDetailActions
             date={date}

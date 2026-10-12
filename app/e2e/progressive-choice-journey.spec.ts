@@ -70,7 +70,7 @@ for (const persona of personas) {
       await click(page.getByRole("button", { name: "훈련 요약", exact: true }))
       await click(page.getByRole("group", { name: "오라클 항목" })
         .getByRole("button", { name: "읽을거리·관심", exact: true }))
-      await click(page.getByRole("button", { name: /전체 주제·다른 글/u }))
+      await expect(page.getByRole("group", { name: "읽을거리 주제" })).toBeVisible()
       await click(page.getByRole("button", { name: "경기 기록", exact: true }))
       await expect(page.getByRole("button", { name: "최근 경기와 최고기록", exact: true })).toBeVisible()
       await click(page.getByRole("button", { name: "오라클로 돌아가기", exact: true }))

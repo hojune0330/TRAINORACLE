@@ -15,18 +15,20 @@ const DAY_NAMES = ["일요일", "월요일", "화요일", "수요일", "목요�
 
 export function SummaryList<T>({
   label,
+  showLabel = true,
   items,
   itemKey,
   renderItem,
 }: {
   readonly label: string
+  readonly showLabel?: boolean
   readonly items: readonly T[]
   readonly itemKey: (item: T) => string
   readonly renderItem: (item: T) => React.ReactNode
 }) {
   return (
     <section aria-label={label} style={{ paddingTop: 20 }}>
-      <div style={{
+      {showLabel && <div style={{
         padding: "0 20px 10px",
         fontFamily: "var(--mono)",
         fontSize: 10,
@@ -35,7 +37,7 @@ export function SummaryList<T>({
         letterSpacing: "0.14em",
       }}>
         {label}
-      </div>
+      </div>}
       <div style={{ margin: "0 20px", borderTop: "1px solid var(--ink)" }}>
         {items.map((item) => (
           <React.Fragment key={itemKey(item)}>{renderItem(item)}</React.Fragment>
@@ -121,7 +123,7 @@ export function SummaryButton({
 function kindText(counts: ArchiveKindCounts): string {
   const parts = [
     counts.postSession > 0 ? `훈련 후 ${counts.postSession}건` : null,
-    counts.evening > 0 ? `하루 마무리 ${counts.evening}건` : null,
+    counts.evening > 0 ? `컨디션·메모 ${counts.evening}건` : null,
     counts.race > 0 ? `경기 ${counts.race}건` : null,
   ].filter((part): part is string => part !== null)
   return parts.join(" · ")

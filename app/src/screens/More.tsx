@@ -13,7 +13,7 @@ import { useNavigationReturnFrame } from "../hooks/useNavigationReturnFrame"
 export type MoreView = "tools" | "learning" | "account" | "backup" | "about"
 
 const VIEW_TITLES: Record<MoreView, string> = {
-  tools: "더보기", learning: "훈련 배우기·일지 꾸미기", account: "계정·기록 보관",
+  tools: "더보기", learning: "훈련 배우기", account: "계정·기록 보관",
   backup: "백업·복원·휴지통", about: "앱 정보·개인정보·문의",
 }
 
@@ -105,21 +105,18 @@ export function More({
         <UtilityRow icon={BookOpen} label="민지의 예시 일지" onClick={onOpenMinji} />
         <UtilityRow icon={CircleHelp} label="훈련 용어집·도움말" onClick={onOpenGuide} />
         {onOpenContent && <UtilityRow icon={Newspaper} label="훈련법 읽기" onClick={onOpenContent} />}
-        {onOpenRewards && <>
-          <h2 className="more-screen__group-label">일지 꾸미기</h2>
-          <UtilityRow icon={Sticker} label="일지 꾸미기" detail="달력도 함께 꾸며요 · 포인트는 재료에서 확인" onClick={onOpenRewards} />
-        </>}
+        {onOpenRewards && <UtilityRow icon={Sticker} label="일지 꾸미기" onClick={onOpenRewards} />}
         {onOpenMinigame && <UtilityRow icon={Gamepad2} label="미니게임" detail="러닝 투어 · 서울에서 런던까지" onClick={onOpenMinigame} />}
         <h2 className="more-screen__group-label">관리·도움말</h2>
         <UtilityRow icon={UserRound} label={VIEW_TITLES.account} onClick={() => changeView("account")} />
         <UtilityRow icon={DatabaseBackup} label={VIEW_TITLES.backup} onClick={() => changeView("backup")} />
-        <UtilityRow icon={ShieldCheck} label={VIEW_TITLES.about} detail="기기 연동 상태 · 약관 · 출처" onClick={() => changeView("about")} />
+        <UtilityRow icon={ShieldCheck} label={VIEW_TITLES.about} onClick={() => changeView("about")} />
         </>}
         {activeView === "learning" && <>
         <UtilityRow icon={BookOpen} label="민지의 예시 일지" onClick={onOpenMinji} />
         <UtilityRow icon={CircleHelp} label="훈련 용어집·도움말" onClick={onOpenGuide} />
         {onOpenContent !== undefined && <UtilityRow icon={Newspaper} label="훈련법 읽기" onClick={onOpenContent} />}
-        {onOpenRewards !== undefined && <UtilityRow icon={Sticker} label="일지 꾸미기" detail="달력도 함께 꾸며요 · 포인트는 재료에서 확인" onClick={onOpenRewards} />}
+        {onOpenRewards !== undefined && <UtilityRow icon={Sticker} label="일지 꾸미기" onClick={onOpenRewards} />}
         {onOpenMinigame && <UtilityRow icon={Gamepad2} label="미니게임" detail="러닝 투어 · 서울에서 런던까지" onClick={onOpenMinigame} />}
         </>}
         {activeView === "account" && <>

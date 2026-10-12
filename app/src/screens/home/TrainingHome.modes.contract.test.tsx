@@ -25,8 +25,7 @@ describe("training home presentation", () => {
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
     expect(container.querySelectorAll(".app-heading--accent")).toHaveLength(1)
     expect(container.querySelector(".home-hub__eyebrow")).toBeNull()
-    if (model.homeMode === "WELCOME") expect(screen.queryByRole("heading", { level: 2, name: "오늘" })).toBeNull()
-    else expect(screen.getByRole("heading", { level: 2, name: "오늘" })).toHaveClass("app-heading--section")
+    expect(screen.queryByRole("heading", { level: 2, name: "오늘" })).toBeNull()
     expect(container.querySelectorAll(".home-hub__primary")).toHaveLength(1)
     if (model.homeMode === "TRAINING") {
       expect(screen.getByRole("heading", { level: 2, name: "다음 훈련" })).toHaveClass("app-heading--section")
@@ -69,23 +68,16 @@ describe("training home presentation", () => {
     fireEvent.click(result)
     expect(open).toHaveBeenCalledOnce()
   })
-  it("keeps plan progress distinct from workout journaling and preserves its complete source in details", () => {
+  it("does not turn a plan checklist into a home Oracle result or help panel", () => {
     const open = vi.fn()
     const source = "저장 계획 9회 · 완료 체크 1회 · 실제 운동은 일지에서 확인해요."
     render(<HomeOraclePreview kind="plan" question="저장한 훈련 계획" answer="계획 9회 · 완료 체크 1회"
       sourceLabel={source} onOpen={open} />)
-    const preview = screen.getByRole("region", { name: "오라클 · 내 계획 진행" })
-    const result = within(preview).getByRole("button", { name: "계획 자세히 보기" })
-    expect(result).toHaveAttribute("aria-describedby")
-    expect(within(preview).getByRole("heading", { level: 2, name: "저장한 훈련 계획" })).toBeVisible()
-    expect(within(preview).getByText("계획 9회 · 완료 체크 1회")).toBeVisible()
-    expect(within(preview).getByText("운동 일지와 별도")).toBeVisible()
-    expect(within(preview).getByText(source)).not.toBeVisible()
-    fireEvent.click(within(preview).getByText("계획과 완료 체크 기준"))
-    expect(within(preview).getByText(source)).toBeVisible()
-    expect(preview.querySelector(".home-hub__oracle-card button")).toBeNull()
-    fireEvent.click(result)
-    expect(open).toHaveBeenCalledOnce()
+    expect(screen.queryByRole("region", { name: "오라클 · 내 계획 진행" })).toBeNull()
+    expect(screen.queryByText("계획 9회 · 완료 체크 1회")).toBeNull()
+    expect(screen.queryByText("계획과 완료 체크 기준")).toBeNull()
+    expect(screen.queryByText("운동 일지와 별도")).toBeNull()
+    expect(open).not.toHaveBeenCalled()
   })
   it("keeps welcome focused on recording and planning with a named learning and decoration entry", () => {
     const learn = vi.fn(); const decorate = vi.fn(); const guide = vi.fn()
@@ -115,7 +107,7 @@ describe("training home presentation", () => {
     expect(preview.closest("details")).toBeNull()
     expect(screen.queryByText("예시 결과는 이렇게 읽어요")).toBeNull()
     expect(screen.queryByText("가상 기록으로 결과 화면을 먼저 둘러볼 수 있어요.")).toBeNull()
-    expect(preview.querySelector('img[src$="analysis-lens-v2.webp"]')).toHaveAttribute("alt", "")
+    expect(preview.querySelector("img")).toBeNull()
     expect(open).not.toHaveBeenCalled()
     fireEvent.click(within(preview).getByRole("button", { name: "예시 결과 보기" }))
     expect(open).toHaveBeenCalledOnce()
@@ -168,7 +160,7 @@ describe("training home presentation", () => {
     expect(recent.compareDocumentPosition(screen.getByText("오라클 결과")) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     fireEvent.click(screen.getByRole("button", { name: "오늘 운동 기록 쓰기" }))
     expect(write).toHaveBeenCalledWith("quick-session")
-    fireEvent.click(screen.getByRole("button", { name: "하루 마무리" }))
+    fireEvent.click(screen.getByRole("button", { name: "컨디션·메모" }))
     expect(write).toHaveBeenCalledWith("evening")
   })
   it("omits empty journal and analysis rows for plan-only users but keeps real history when today is unrecorded", () => {
@@ -197,7 +189,7 @@ describe("training home presentation", () => {
   })
   it("does not claim all training is complete when today has a record", () => {
     render(<TrainingHome model={{ ...TRAINING, todayRecordCount: 1, briefing: "오늘 기록 · 수면 7h" }} />)
-    expect(screen.getByText("오늘 기록을 남겼어요.")).toBeVisible(); expect(screen.getByText("다음 훈련")).toBeVisible(); expect(screen.queryByText(/모든 훈련을 마쳤어요/u)).toBeNull()
+    expect(screen.getByText("오늘 남긴 기록 1개")).toBeVisible(); expect(screen.getByText("다음 훈련")).toBeVisible(); expect(screen.queryByText(/모든 훈련을 마쳤어요/u)).toBeNull()
   })
   it("keeps the write action without presenting cached counts as confirmed before a successful read", () => {
     const trends = vi.fn()
@@ -216,7 +208,7 @@ describe("training home presentation", () => {
     expect(trends).toHaveBeenCalledOnce()
   })
   it.each([
-    ["하루 마무리만", "이번 주 직접 입력 기록이 없어요"],
+    ["컨디션·메모만", "이번 주 직접 입력 기록이 없어요"],
     ["거리는 아직 없음", "분석에 쓸 직접 입력 기록이 없어요"],
   ])("keeps the analysis destination but hides an unsupported summary for %s", (_caseName, analysisSummary) => {
     render(<TrainingHome model={{ ...TRAINING, showMinjiPrompt: false, analysisSummary }}
@@ -231,13 +223,12 @@ describe("training home presentation", () => {
   })
   it.each([BASE, TRAINING, { ...TRAINING, todayRecordCount: 1 }])("keeps optional daily entries available without competing with the primary action: $homeMode/$todayRecordCount", (model) => {
     const write = vi.fn()
-    render(<TrainingHome model={model} onWriteLog={write} todayContext={<p>선택 입력 내용</p>} />)
+    render(<TrainingHome model={model} onWriteLog={write} />)
     const optional = screen.getByRole("group", { name: "선택해서 남기는 기록" })
-    fireEvent.click(within(optional).getByRole("button", { name: "하루 마무리" }))
+    fireEvent.click(within(optional).getByRole("button", { name: "컨디션·메모" }))
     expect(write).toHaveBeenCalledWith("evening")
-    expect(screen.getByText("선택 입력 내용")).not.toBeVisible()
-    fireEvent.click(within(optional).getByRole("button", { name: "기분·몸 상태" }))
-    expect(screen.getByText("선택 입력 내용")).toBeVisible()
+    expect(within(optional).queryByRole("button", { name: "기분·몸 상태" })).toBeNull()
+    expect(within(optional).getAllByRole("button")).toHaveLength(1)
     expect(optional.querySelector(".home-hub__primary")).toBeNull()
     expect(screen.queryByText("기분·몸 상태·날씨 남기기")).toBeNull()
   })

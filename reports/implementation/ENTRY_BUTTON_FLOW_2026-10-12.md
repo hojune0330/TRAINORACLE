@@ -1,5 +1,9 @@
 # 초기 화면의 직접 선택과 단계 진입 구현
 
+> 후속 승인·구현: [전 탭 불필요 안내 정리](ENTRY_DECLUTTER_IMPLEMENTATION_2026-10-12.md).
+> 아래는 앞선 시점의 구현 기록이다. 계획 체크 미리보기, 별도 하루 상태 입력,
+> 상시 준비 중 선택과 중복 펼침의 현재 배치는 후속 문서와 공통 UI 기준을 따른다.
+
 ```yaml
 status: IMPLEMENTED_LOCAL_CHECKS_PASSED
 implemented_on: 2026-10-12

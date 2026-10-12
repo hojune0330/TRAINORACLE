@@ -1273,11 +1273,10 @@ function LegacyPlanBeta({
       }
     }} />
     {instantEntryError && <p role="alert">{instantEntryError}</p>}
-    <details className="plan-detailed-options">
-      <summary>기록 관리·훈련표 읽기</summary>
+    <div className="plan-support-actions" role="group" aria-label="경기 기록·훈련표 표기">
       <button type="button" className="plan-text-action" onClick={() => setRecordsOpen(true)}>내 경기 기록</button>
       <button type="button" className="plan-text-action" onClick={() => setNotationReaderOpen(true)}>훈련표 표기 읽기</button>
-    </details>
+    </div>
     </div>
     {recordsView}
     {notationReaderOpen && <NotationReader onBack={() => setNotationReaderOpen(false)} />}

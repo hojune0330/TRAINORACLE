@@ -34,6 +34,7 @@ export function PersonalOraclePanel({
   const savedCount = new Set(savedSessions.filter(entry => entry.date >= since && entry.date <= today).map(entry => entry.id)).size
   const latestSaved = savedSessions.filter(entry => entry.date <= today)
     .sort((a, b) => b.date.localeCompare(a.date))[0]
+  const hasPlan = oracle.insights.some(insight => insight.id === "PLAN_FOLLOW_THROUGH" && insight.available)
   const bySource = new Map<string, StructuredJournalObservation | null>()
   for (const item of observations) {
     if (item.sourceRef.sourceKind !== "SESSION_RESULT_RECORD") continue
@@ -44,20 +45,19 @@ export function PersonalOraclePanel({
   const recent = [...bySource.values()].filter((item): item is StructuredJournalObservation => item !== null
     && item.loggedOn >= since && item.loggedOn <= today && eligibleMetricValue(item, "RPE") !== null)
     .sort((a, b) => b.loggedOn.localeCompare(a.loggedOn) || (b.sourceRef.observedAt ?? "").localeCompare(a.sourceRef.observedAt ?? ""))[0]
-  const available = oracle.insights.filter(insight => insight.available)
-  const showRecent = recent && !available.some(insight => insight.id !== "PLAN_FOLLOW_THROUGH")
+  const available = oracle.insights.filter(insight => insight.available && insight.id !== "PLAN_FOLLOW_THROUGH")
+  const showRecent = recent && available.length === 0
   const receipt = savedCount > 0 ? `최근 8주 훈련 일지 ${savedCount}건을 남겼어요.` : null
   // The parent owns the first-record/example entry. Do not fill an empty result
   // with unavailable metrics or explanations of a result that does not exist.
-  if (available.length === 0 && !recent && !latestSaved) return null
+  if (available.length === 0 && !recent && !latestSaved) {
+    return hasPlan && onOpenPlan ? <button type="button" className="personal-oracle__action"
+      onClick={onOpenPlan}>훈련표 보기<ArrowRight size={16} aria-hidden="true" /></button> : null
+  }
   const renderInsight = (insight: typeof oracle.insights[number]) => <article key={insight.id} className="personal-oracle__insight">
     <div>
       <span>{INSIGHT_LABEL[insight.id]}</span>
       <h3>{insight.headline}</h3>
-      {insight.id === "PLAN_FOLLOW_THROUGH" && <>
-        <p>일정에 직접 체크한 횟수예요. 실제 운동 기록과는 달라요.</p>
-        {onOpenPlan && <button type="button" className="personal-oracle__action" onClick={onOpenPlan}>훈련 일정 보기<ArrowRight size={16} aria-hidden="true" /></button>}
-      </>}
     </div>
   </article>
   return (
@@ -82,6 +82,8 @@ export function PersonalOraclePanel({
       {latestSaved && onOpenDay ? <button type="button" className="personal-oracle__action"
         onClick={() => onOpenDay(latestSaved.date)}>최근 일지 읽기<ArrowRight size={16} aria-hidden="true" /></button>
         : !latestSaved && onWriteLog ? <button type="button" className="personal-oracle__action" onClick={onWriteLog}>운동 기록 남기기<ArrowRight size={16} aria-hidden="true" /></button> : null}
+
+      {hasPlan && onOpenPlan && <button type="button" className="personal-oracle__action" onClick={onOpenPlan}>훈련표 보기<ArrowRight size={16} aria-hidden="true" /></button>}
 
       {(available.length > 0 || recent) && <details className="personal-oracle__details">
         <summary>

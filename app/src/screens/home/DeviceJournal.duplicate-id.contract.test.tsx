@@ -70,7 +70,7 @@ describe("recent journal duplicate identifier resilience", () => {
     render(<DeviceJournal />)
 
     expect(screen.getByText("내 일지", { exact: false })).toBeVisible()
-    expect(screen.getByText("이 기기만")).toBeVisible()
+    expect(screen.getByText("이 브라우저에 저장됨")).toBeVisible()
     expect(screen.getByText("계정 보관")).toBeVisible()
     const rows = screen.getAllByRole("button", { name: /상세 열기/u })
     expect(rows).toHaveLength(2)

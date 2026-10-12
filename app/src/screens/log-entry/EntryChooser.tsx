@@ -19,7 +19,7 @@ interface EntryChooserProps {
 const ENTRY_OPTIONS = [
   { id: "quick-session", t: "빠르게 기록", d: "거리·시간·힘든 정도", Icon: CheckCircle2 },
   { id: "post-session", t: "자세히 기록", d: "운동별로 자세히", Icon: PencilLine },
-  { id: "evening", t: "하루 마무리", d: "메모·수면·기분·몸 상태", Icon: Moon },
+  { id: "evening", t: "컨디션·메모", d: "수면·몸 상태·기분·메모", Icon: Moon },
   { id: "race", t: "경기 기록", d: "경기 전후 기록·컨디션", Icon: Flag },
 ] as const
 
@@ -27,14 +27,13 @@ export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: Entry
   const headingRef = React.useRef<HTMLHeadingElement>(null)
   const today = todayISO()
   const entryDate = targetDate ?? today
-  const isToday = entryDate === today
   const journalSnapshot = useCalendarSnapshot()
   const entryCount = journalSnapshot.entries.filter(entry => entry.date === entryDate).length
   const hasEntries = entryCount > 0
   const confirmedEmpty = journalSnapshot.status === "READY" && !hasEntries
-  const readMessage = journalSnapshot.status === "LOADING" ? "기록을 확인하고 있어요. 아직 첫 일지인지 확인하지 못했어요."
+  const readMessage = journalSnapshot.status === "LOADING" ? "기록을 불러오는 중이에요."
     : journalSnapshot.status === "STALE" ? "기록의 최신 상태를 확인하지 못했어요. 보관된 기록은 계속 볼 수 있어요."
-    : journalSnapshot.status === "ERROR" ? "기록을 읽지 못했어요. 기록이 없는 상태와는 달라요."
+    : journalSnapshot.status === "ERROR" ? "기록을 불러오지 못했어요."
     : null
   React.useEffect(() => {
     headingRef.current?.focus()
@@ -50,12 +49,7 @@ export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: Entry
         </div>
         <div className="contextual-entry-intro">
           <div className="contextual-entry-intro__copy">
-            <AppHeading ref={headingRef} tabIndex={-1} as="h1" variant="screen" accent className="entry-chooser__title">어떤 일지를 쓰세요?</AppHeading>
-            {confirmedEmpty && (
-              <p style={{ fontFamily: "var(--sans)", fontSize: 12, color: "var(--ink-3)", letterSpacing: 0, lineHeight: 1.55, margin: "8px 0 0" }}>
-                {`${isToday ? "오늘" : "이 날짜의"} 첫 일지예요.`}
-              </p>
-            )}
+            <AppHeading ref={headingRef} tabIndex={-1} as="h1" variant="screen" accent className="entry-chooser__title">무엇을 기록할까요?</AppHeading>
             {readMessage !== null && <p role={journalSnapshot.status === "ERROR" ? "alert" : "status"}>
               {readMessage}
             </p>}
@@ -94,9 +88,6 @@ export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: Entry
           >
             <span style={{ fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 500, color: "var(--ink)" }}>
               워치 기록 불러오기
-            </span>
-            <span style={{ display: "block", fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", marginTop: 3 }}>
-              워치 앱에서 내보낸 파일을 골라요
             </span>
           </button>
         </div>

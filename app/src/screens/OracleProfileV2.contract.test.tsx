@@ -147,6 +147,20 @@ it("does not normalize a real account loading state into a ready helper", () => 
   expect(screen.queryByRole("button", { name: "마리의 답변 팁" })).not.toBeInTheDocument()
   expect(screen.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" })).toBeDisabled()
 })
+
+it("keeps all interest axes directly selectable in settings", () => {
+  const fixture = mount(ready(scored()))
+  fireEvent.click(screen.getByRole("button", { name: "프로필 설정·추가 정보" }))
+  const settings = screen.getByRole("dialog", { name: "프로필 설정" })
+  const axes = within(settings).getByRole("group", { name: "다른 항목 선택" })
+  expect(within(axes).getAllByRole("button")).toHaveLength(ORACLE_AXES.length)
+
+  const social = ORACLE_AXES.find(axis => axis.id === "SOCIAL")!
+  fireEvent.click(within(axes).getByRole("button", { name: social.label }))
+  const questionDialog = screen.getByRole("dialog", { name: social.label })
+  expect(within(questionDialog).getByRole("heading", { name: ORACLE_QUESTIONS.find(question => question.id === "SOCIAL_1")!.text })).toBeVisible()
+  expect(fixture.service.commitAnswers).not.toHaveBeenCalled()
+})
 const contextButton = () => {
   if (!screen.queryByRole("button", { name: /훈련·대회 정보 추가|작성하던 추가 맥락 이어가기/ })) {
     fireEvent.click(screen.getByRole("button", { name: "프로필 설정·추가 정보" }))
@@ -158,7 +172,6 @@ const resultScore = (container: HTMLElement) => container.querySelector(".prefer
 function restartStructureQuestions() {
   fireEvent.click(screen.getByRole("button", { name: "프로필 설정·추가 정보" }))
   const settings = screen.getByRole("dialog", { name: "프로필 설정" })
-  fireEvent.click(within(settings).getByText("다른 러닝 취향 알아보기"))
   fireEvent.click(within(settings).getByRole("button", { name: "계획 선호" }))
 }
 function contextAnswer() {
@@ -178,10 +191,10 @@ it.each(profileTopics.flatMap(topic => (["LOADING", "FAILED"] as const).map(stat
     const local = scored()
     const fixture = mount({ ...ready(), status, document: local, draftDocument: local, draftState: "EDITING", confirmedDocument: null })
     fireEvent.click(screen.getByRole("button", { name: "읽을거리" }))
-    fireEvent.click(screen.getByText("전체 주제·다른 글"))
+    expect(screen.getByRole("group", { name: "읽을거리 주제" })).toBeVisible()
     fireEvent.click(screen.getByRole("button", { name: group }))
     fireEvent.click(screen.getByRole("button", { name: title }))
-    const reader = screen.getByRole("dialog", { name: title })
+    const reader = screen.getByRole("dialog", { name: "읽을거리" })
     expect(within(reader).getByRole("heading", { level: 1, name: title })).toHaveClass("app-heading--screen", "app-heading--accent")
     expect(within(reader).getByText("자료를 확인하지 못했어요")).toBeVisible()
     expect(within(reader).queryByText("일반 해설")).toBeNull()
@@ -194,7 +207,7 @@ it.each(profileTopics.flatMap(topic => (["LOADING", "FAILED"] as const).map(stat
     })
 
     act(() => fixture.publish({ ...ready(emptyOracleV2Document()), status: "EMPTY" }))
-    expect(screen.getByRole("dialog", { name: title })).toBe(reader)
+    expect(screen.getByRole("dialog", { name: "읽을거리" })).toBe(reader)
     expect(within(reader).getByText("일반 해설")).toBeVisible()
     expect(within(reader).queryByText("자료를 확인하지 못했어요")).toBeNull()
     expect(vi.mocked(buildOracleContentReading).mock.lastCall).toEqual([id, expect.objectContaining({
@@ -212,9 +225,10 @@ it.each(profileTopics.flatMap(topic => (["LOADING", "FAILED"] as const).map(stat
 it.each([1, 3, 5] as const)("labels the self-report index denominator as a 100-point scale, not 100 observations (answer=%s)", response => {
   mount(ready(scored({ INTENSITY_1: response, INTENSITY_2: response, INTENSITY_3: response })))
   fireEvent.click(screen.getByRole("button", { name: "읽을거리" }))
-  fireEvent.click(screen.getByText("전체 주제·다른 글"))
+  expect(screen.getByRole("group", { name: "읽을거리 주제" })).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: "좋아하는 달리기 강도" }))
-  const reader = screen.getByRole("dialog", { name: "좋아하는 달리기 강도" })
+  const reader = screen.getByRole("dialog", { name: "읽을거리" })
+  expect(within(reader).getByRole("heading", { level: 1, name: "좋아하는 달리기 강도" })).toBeVisible()
   const facts = reader.querySelector(".oracle-v2__facts")
   expect(facts).toHaveTextContent("100점 만점 · 내 응답")
   expect(facts).not.toHaveTextContent("확인한 100개 기준")
@@ -236,10 +250,11 @@ it("labels M05 race speed as an index with baseline 100, not a self-response sco
   ]
   mount(ready(scored()))
   fireEvent.click(screen.getByRole("button", { name: "읽을거리" }))
-  fireEvent.click(screen.getByText("전체 주제·다른 글"))
+  expect(screen.getByRole("group", { name: "읽을거리 주제" })).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: "경기 기록" }))
   fireEvent.click(screen.getByRole("button", { name: "최근 경기와 최고기록" }))
-  const reader = screen.getByRole("dialog", { name: "최근 경기와 최고기록" })
+  const reader = screen.getByRole("dialog", { name: "읽을거리" })
+  expect(within(reader).getByRole("heading", { level: 1, name: "최근 경기와 최고기록" })).toBeVisible()
   const facts = reader.querySelector<HTMLElement>(".oracle-v2__facts")!
   const row = within(facts).getByText("이전 경기 속도 = 100").parentElement!
   expect(row).toHaveTextContent("120 · 속도 지수")
@@ -269,7 +284,7 @@ it.each([OWNER_B, null])("hides prior account readings and open editors immediat
   expect(screen.queryByRole("dialog", { name: "추가 응답" })).toBeNull()
   expect(screen.queryByRole("button", { name: "보관함" })).toBeNull()
   fireEvent.click(screen.getByRole("button", { name: "읽을거리" }))
-  fireEvent.click(screen.getByRole("button", { name: "보관함" }))
+  expect(screen.queryByRole("button", { name: "보관함" })).toBeNull()
   expect(screen.queryByRole("button", { name: "2026-10-01 · 당시 응답" })).toBeNull()
   expect(fixture.service.close).toHaveBeenCalledTimes(1)
   act(() => fixture.publish(ready(scored())))
@@ -373,13 +388,18 @@ it("resumes question two after a same-value first edit and reload, without clear
   expect(screen.queryByRole("dialog", { name: "추가 응답" })).toBeNull()
   const social = ORACLE_AXES.find(axis => axis.id === "SOCIAL")!
   fireEvent.click(screen.getByRole("button", { name: "프로필 설정·추가 정보" }))
-  fireEvent.click(screen.getByText("다른 러닝 취향 알아보기"))
+  const settings = screen.getByRole("dialog", { name: "프로필 설정" })
+  const axes = within(settings).getByRole("group", { name: "다른 항목 선택" })
+  expect(axes).toBeVisible()
+  expect(within(axes).getByRole("button", { name: social.label })).toBeDisabled()
   fireEvent.click(screen.getByRole("button", { name: social.label }))
   expect(screen.queryByRole("dialog", { name: social.label })).toBeNull()
+  fireEvent.click(within(settings).getByRole("button", { name: "닫기" }))
   fireEvent.click(screen.getByRole("button", { name: "작성하던 답 이어가기" }))
   const question = ORACLE_QUESTIONS.find(item => item.id === "STRUCTURE_2")!
-  expect(within(screen.getByRole("dialog")).getByRole("heading", { name: question.text })).toBeVisible()
-  expect(within(screen.getByRole("dialog")).getByText("2 / 3")).toBeVisible()
+  const questionDialog = screen.getByRole("dialog", { name: "계획 선호" })
+  expect(within(questionDialog).getByRole("heading", { name: question.text })).toBeVisible()
+  expect(within(questionDialog).getByText("2 / 3")).toBeVisible()
   expect(fixture.service.snapshot().confirmedDocument).toEqual(document)
   expect(fixture.service.saveDraft).toHaveBeenCalledTimes(1)
   expect(fixture.service.save).not.toHaveBeenCalled()
@@ -409,14 +429,13 @@ it("clears results, readings and context on deletion and restarts only through t
   const fixture = mount(ready(scored()))
   expect(resultScore(fixture.container)).toHaveTextContent("100")
   fireEvent.click(screen.getByRole("button", { name: "프로필 설정·추가 정보" }))
-  fireEvent.click(screen.getByText("내 응답 관리"))
   fireEvent.click(screen.getByRole("button", { name: "응답 삭제" }))
   fireEvent.click(screen.getByRole("button", { name: "삭제하기" }))
   await waitFor(() => expect(screen.getByRole("button", { name: "빈 프로필로 새로 시작" })).toBeVisible())
   expect(fixture.service.restartProfile).not.toHaveBeenCalled()
   expect(resultScore(fixture.container)).toBeNull()
   fireEvent.click(screen.getByRole("button", { name: "읽을거리" }))
-  fireEvent.click(screen.getByRole("button", { name: "보관함" }))
+  expect(screen.queryByRole("button", { name: "보관함" })).toBeNull()
   expect(screen.queryByRole("button", { name: "2026-10-01 · 당시 응답" })).toBeNull()
   const tombstoneToken = oracleV2EditToken(fixture.service.snapshot())
   fireEvent.click(screen.getByRole("button", { name: "빈 프로필로 새로 시작" }))

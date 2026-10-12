@@ -25,7 +25,6 @@ import { IntakeCalendarPeek } from "./IntakeCalendarPeek"
 import {
   answeredSummary,
   DIVISION_LABELS,
-  SINGLE_CHOICE_ADVANCE_HINT,
   STEP_META,
   trainingTimeLabel,
 } from "./plan-intake-meta"
@@ -35,7 +34,6 @@ import {
   RECOMMENDED_ANSWERS,
 } from "./plan-intake-navigation"
 import { resolveDetailedPlanTemplateOptions } from "./plan-template-options"
-import { PlanSupportCoverage } from "./PlanSupportCoverage"
 
 export type IntakeStep = MetaIntakeStep | "frame-length" | "race-date" | "preview"
 
@@ -99,27 +97,26 @@ export function PlanIntake({
   onContinue,
   onJump,
 }: PlanIntakeProps) {
-  const choiceAdvanceHintId = React.useId()
   const projectionDays = Math.ceil(draft.requestedFrameLength ?? 9)
   const meta = step === "preview"
     ? {
         eyebrow: "확인",
         title: "이대로 계획을 만들까요?",
-        copy: "아직 계획이 아니에요. 만든 뒤에 바꿀 수 있어요.",
+        copy: "",
         helpTerm: null,
       }
     : step === "frame-length"
     ? {
         eyebrow: "계획 길이",
         title: "며칠짜리 달력을 받을까요?",
-        copy: "7일은 끝나면 다음 계획으로 이어져요.",
+        copy: "",
         helpTerm: "plan-frame" as const,
       }
     : step === "race-date"
     ? {
         eyebrow: "대회 날짜",
         title: "대회 날짜가 있나요?",
-        copy: "없어도 괜찮아요. 있으면 그 날이 달력에 표시돼요.",
+        copy: "",
         helpTerm: null,
       }
     : step === "days"
@@ -150,17 +147,11 @@ export function PlanIntake({
         <ArrowLeft aria-hidden="true" size={17} />
         {refining ? "계획으로" : "이전"}
       </button>}
-      <div className="plan-eyebrow">{meta.eyebrow}</div>
       <div className="plan-heading-row">
         <h1 ref={questionRef} tabIndex={-1} className="active-content-scroll-target" id="plan-intake-title">{meta.title}</h1>
         {meta.helpTerm !== null && <TermHelp term={meta.helpTerm} />}
       </div>
-      <p className="plan-copy">{meta.copy}</p>
-      {hasSingleChoiceQuestion && (
-        <p id={choiceAdvanceHintId} className="plan-choice-note plan-choice-note--muted">
-          {SINGLE_CHOICE_ADVANCE_HINT}
-        </p>
-      )}
+      {meta.copy && <p className="plan-copy">{meta.copy}</p>}
       {step === "preview" && (
         <>
           <dl className="plan-shape-preview" aria-label="미리보기 기준">
@@ -194,7 +185,6 @@ export function PlanIntake({
           className={`plan-choice-list app-choice-group${(isQuickStep && step !== "days") || step === "division" || step === "focus" ? " plan-choice-list--cards" : ""}${step === "goal" ? " plan-choice-list--goals" : ""}${step === "days" ? " plan-choice-list--days" : ""}`}
           role={hasSingleChoiceQuestion ? "group" : undefined}
           aria-label={step === "goal" ? "계획 종목 선택" : step === "days" ? "운동할 날 선택" : hasSingleChoiceQuestion ? meta.title : undefined}
-          aria-describedby={hasSingleChoiceQuestion ? choiceAdvanceHintId : undefined}
         >
         {step === "goal" && (
           SUPPORTED_GOAL_ORDER.map((event) => (
@@ -267,7 +257,7 @@ export function PlanIntake({
                   <summary>준비·정리와 훈련 표기 보기</summary>
                   <p>{detailedTemplate.preparationSummary}</p>
                   <p><code>{detailedTemplate.notation}</code><TermHelp term="training-notation" /></p>
-                  <p>현재 기록을 직접 확인한 뒤 한 주요 훈련에 적용해요. 다른 날의 반복 수나 훈련량을 자동으로 늘리지 않아요.</p>
+                  <p>현재 기록을 확인한 뒤 주요 훈련 한 번에 적용해요.</p>
                 </details>
               </div>
             ))}
@@ -278,7 +268,6 @@ export function PlanIntake({
                   : "이 종목·훈련 종류엔 상세 훈련표가 없어요. 시간과 힘든 정도로 안내해요."}
               </p>
             )}
-            <PlanSupportCoverage experienceBand={draft.experienceBand} />
           </>
         )}
         {step === "days" && (
@@ -390,9 +379,7 @@ export function PlanIntake({
       {!refining && (step === "goal" || step === "preview") && <IntakeCalendarPeek draft={draft}
         frameLengthDays={draft.requestedFrameLength === 9.5 ? 10 : draft.requestedFrameLength ?? 9} />}
       {step === "goal" && !refining && (
-        <details className="plan-support-more">
-          <summary>경기 기록이 있나요?</summary>
-          <div className="plan-support-actions">
+        <div className="plan-support-actions" role="group" aria-label="경기 기록·훈련표 표기">
             <button
               className="plan-text-action plan-records-entry"
               type="button"
@@ -408,11 +395,7 @@ export function PlanIntake({
             >
               훈련표 표기 읽기
             </button>
-          </div>
-          <p className="plan-records-note">
-            기록을 저장해도 계획의 페이스·거리·반복은 자동으로 바뀌지 않아요.
-          </p>
-        </details>
+        </div>
       )}
     </section>
   )

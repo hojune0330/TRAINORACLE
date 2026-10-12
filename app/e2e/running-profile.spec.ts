@@ -44,7 +44,7 @@ for (const width of [320, 375, 1440]) {
 
     await page.getByRole("button", { name: "프로필 설정·추가 정보" }).click()
     const settings = page.getByRole("dialog", { name: "프로필 설정" })
-    await settings.getByText("다른 러닝 취향 알아보기", { exact: true }).click()
+    await expect(settings.getByRole("group", { name: "다른 항목 선택" })).toBeVisible()
     await settings.getByRole("button", { name: "기록 도전 선호" }).click()
     await answerAxis(page, "기록 도전 선호", "그런 편이에요")
     await expect(scores).toHaveCount(2)

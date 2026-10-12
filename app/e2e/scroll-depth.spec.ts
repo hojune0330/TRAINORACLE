@@ -23,7 +23,7 @@
  */
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
-import { TOUCH_PROJECTS, openEntry } from "./touch-audit"
+import { TOUCH_PROJECTS, openEntry, openEveningStage } from "./touch-audit"
 
 const SCROLL_REGION = "main.app-scroll-region"
 
@@ -297,9 +297,9 @@ test("훈련 후 일지가 빈 상태에서 길지 않다", async ({ page }, tes
   await expect(page.getByRole("textbox", { name: "운동 이름", exact: true })).toHaveValue("합성 반복 훈련")
 })
 
-test("하루 마무리가 빈 상태에서 길지 않다", async ({ page }, testInfo) => {
+test("컨디션·메모가 빈 상태에서 길지 않다", async ({ page }, testInfo) => {
   const { before, limit } = limitsFor(testInfo.project.name)
-  await openEntry(page, /하루 마무리/u)
+  await openEntry(page, /컨디션·메모/u)
   const height = await scrollHeightPx(page)
   console.log(`[SCROLL] ${testInfo.project.name} evening-empty before=${before.evening} after=${height} limit=${limit.evening}`)
   expect(height).toBeLessThanOrEqual(limit.evening)
@@ -364,8 +364,7 @@ test("접어도 값은 사라지지 않는다 — 객관 기록을 펼쳤다 접
 
 test("몸 그림을 접어도 부위 버튼 10개는 늘 눌린다", async ({ page }, testInfo) => {
   limitsFor(testInfo.project.name)
-  await openEntry(page, /하루 마무리/u)
-  await page.getByRole("button", { name: "다음 질문", exact: true }).click()
+  await openEveningStage(page, "몸 상태·기분")
   const selector = page.locator(".body-pain-selector")
   const bodyButtons = page.getByRole("button", { name: /통증/u })
 
@@ -380,8 +379,7 @@ test("몸 그림을 접어도 부위 버튼 10개는 늘 눌린다", async ({ pa
 
 test("사람이 접은 구획을 코드가 다시 펼치지 않는다", async ({ page }, testInfo) => {
   limitsFor(testInfo.project.name)
-  await openEntry(page, /하루 마무리/u)
-  await page.getByRole("button", { name: "다음 질문", exact: true }).click()
+  await openEveningStage(page, "몸 상태·기분")
   const selector = page.locator(".body-pain-selector")
 
   // 통증을 고르면 자동으로 펼쳐진다. 거기서 사람이 접는다.

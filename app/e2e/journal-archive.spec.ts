@@ -131,7 +131,7 @@ test("opens a day from the monthly calendar with provenance-safe summaries and r
   const calendar = archive.getByRole("grid", { name: "2026년 7월 달력" })
   await expect(calendar).toBeVisible()
   await expect(calendar.getByRole("button", { name: /2026년 7월 9일.*훈련 후 1건/u })).toBeVisible()
-  await calendar.getByRole("button", { name: /2026년 7월 10일.*훈련 후 1건.*하루 마무리 1건/u }).click()
+  await calendar.getByRole("button", { name: /2026년 7월 10일.*훈련 후 1건.*컨디션·메모 1건/u }).click()
   await expect(page.getByRole("dialog")).toBeVisible()
   await expect(page.getByRole("dialog")).not.toContainText(secret)
   await page.getByRole("button", { name: "일지·메모 원문 열기" }).click()

@@ -20,13 +20,13 @@ export function plannedCalendarTone(session: { readonly role: string; readonly p
 
 export const CALENDAR_TRAINING_LABELS: Readonly<Record<CalendarTrainingTone, string>> = {
   race: "경기", main: "주요", neural: "플라이오", base: "기본", recovery: "회복",
-  off: "휴식", unknown: "훈련", journal: "일상",
+  off: "휴식", unknown: "훈련", journal: "컨디션·메모",
 }
 
 /** No title, memo, health value, or planned-session link is read by this projection. */
 export function journalCalendarMarks(entry: JournalEntry): readonly CalendarTrainingMarkData[] {
   if (entry.kind === "race") return [{ tone: "race", label: entry.stage === "pre" ? "경기 전" : "경기 결과" }]
-  if (entry.kind === "evening") return [{ tone: "journal", label: "일상" }]
+  if (entry.kind === "evening") return [{ tone: "journal", label: CALENDAR_TRAINING_LABELS.journal }]
   if (entry.activityOutcome === "RESTED") return [{ tone: "off", label: "휴식 기록" }]
   if (entry.activityOutcome === "SKIPPED") return [{ tone: "unknown", label: "건너뜀" }]
   const slot = entry.activitySlot === "AM" ? "오전" : entry.activitySlot === "PM" ? "오후" : undefined

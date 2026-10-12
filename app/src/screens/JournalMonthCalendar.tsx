@@ -86,7 +86,7 @@ export function JournalMonthCalendar({ month, onOpenDay, onMonthChange, entries 
     <section ref={calendarRoot} className="journal-calendar-browse" aria-labelledby={summaryId}>
       <div className="journal-month-calendar__summary" id={summaryId}>
         <strong>날짜별 일지</strong>
-        <span>이 달 {activeDays}일 · {month.entryCount}개 기록</span>
+        {month.entryCount > 0 && activeDays > 0 && <span>이 달 {activeDays}일 · {month.entryCount}개 기록</span>}
       </div>
       <MonthCalendar trainingColors month={month.month} today={today} selectedDate={selectedDate} highlightedRange={highlightedRange}
         onMonthChange={onMonthChange} onToday={setSelectedDate} onSelectDate={date => {
@@ -108,11 +108,10 @@ export function JournalMonthCalendar({ month, onOpenDay, onMonthChange, entries 
           </>
           return <>
             {day.kindCounts.postSession > 0 && <CalendarTrainingMark tone="unknown" label={`훈련 ${day.kindCounts.postSession}`} />}
-            {day.kindCounts.evening > 0 && <span className="month-calendar__event">일상 {day.kindCounts.evening}</span>}
+            {day.kindCounts.evening > 0 && <span className="month-calendar__event">컨디션·메모 {day.kindCounts.evening}</span>}
             {day.kindCounts.race > 0 && <CalendarTrainingMark tone="race" label={`경기 ${day.kindCounts.race}`} />}
           </>
         }} />
-      {selectedDate?.startsWith(month.month) && !byDate.has(selectedDate) && <p className="month-calendar__empty" role="status">이날 작성한 일지가 없어요.</p>}
       {readerDate !== null && <PlanDayReader date={readerDate} sessions={[]} canPrevious canNext
         onPrevious={() => openDate(isoShift(readerDate, -1))} onNext={() => openDate(isoShift(readerDate, 1))}
         onClose={() => { if (restoredReturn.current) consumeReturn(); setReaderDate(null) }}
@@ -136,7 +135,7 @@ export function JournalMonthCalendar({ month, onOpenDay, onMonthChange, entries 
 function kindText(counts: ArchiveKindCounts): string {
   const parts = [
     counts.postSession > 0 ? `훈련 후 ${counts.postSession}건` : null,
-    counts.evening > 0 ? `하루 마무리 ${counts.evening}건` : null,
+    counts.evening > 0 ? `컨디션·메모 ${counts.evening}건` : null,
     counts.race > 0 ? `경기 ${counts.race}건` : null,
   ].filter((part): part is string => part !== null)
   return parts.join(" · ")

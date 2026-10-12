@@ -82,8 +82,9 @@ test("revisits a past journal without duplicating it and adds a same-date check-
   await page.getByTestId("journal-manage-toggle").click()
   await page.getByTestId("journal-add-entry").click()
   await page.getByTestId("entry-choice-evening").click()
+  await page.getByRole("button", { name: "수면", exact: true }).click()
   await page.getByRole("button", { name: /^수면 질 3 /u }).click()
-  await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
   await page.getByRole("button", { name: /^저장/u }).click()
 
   // Then
@@ -98,7 +99,7 @@ test("revisits a past journal without duplicating it and adds a same-date check-
   await expect(page.getByRole("button", { name: /훈련 · Past revisit session.+펼쳐보기/u })).toBeVisible()
   await page.getByTestId("journal-manage-toggle").click()
   await expect(page.getByRole("button", { name: "훈련 기록 수정" })).toBeVisible()
-  await expect(page.getByRole("button", { name: "하루 마무리 수정" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "컨디션·메모 수정" })).toBeVisible()
 })
 
 test("swipes between real diary dates and returns the selected page to its content top", async ({ page }) => {

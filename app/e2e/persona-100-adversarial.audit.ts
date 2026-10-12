@@ -272,7 +272,7 @@ for (let n = 1; n <= 100; n++) {
       if (p.entry === "일지" || p.entry === "분석") {
         const action = page.getByRole("button", { name: p.entry === "일지" ? "내 첫 기록 남기기" : "첫 기록 남기기", exact: true })
         await click(page, e, action, "empty-state-record-entry")
-        await expect(page.getByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
+        await expect(page.getByRole("heading", { name: "무엇을 기록할까요?" })).toBeVisible()
         e.steps.push({ phase: "record-entry", detail: await page.locator("main").innerText() })
         const back = page.getByRole("button", { name: /뒤로|이전/u }).first()
         if (await back.isVisible()) { await back.click(); e.steps.push({ phase: "record-entry-back", detail: await page.locator("main").innerText() }) }

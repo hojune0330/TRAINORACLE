@@ -8,11 +8,12 @@ vi.mock("./PersonalOraclePanel", () => ({ PersonalOraclePanel: () => null }))
 beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
 afterEach(cleanup)
 
-it("keeps import and PB actions behind one named entry when a plan exists without workout records", () => {
+it("keeps import and PB actions direct when a plan exists without workout records", () => {
   const onImport = vi.fn(), onRecords = vi.fn()
   render(<Trends onOpenImport={onImport} onOpenRecords={onRecords} />)
-  expect(screen.getByRole("button", { name: /운동 파일 가져오기/ })).not.toBeVisible()
-  fireEvent.click(screen.getByText("운동 파일·최고기록 추가"))
+  expect(screen.getByRole("button", { name: /운동 파일 가져오기/ })).toBeVisible()
+  expect(screen.getByRole("region", { name: "이미 있는 기록으로 시작하기" })).toBeVisible()
+  expect(screen.queryByText("운동 파일·최고기록 추가")).not.toBeInTheDocument()
   fireEvent.click(screen.getByRole("button", { name: /운동 파일 가져오기/ }))
   fireEvent.click(screen.getByRole("button", { name: /최고기록 남기기/ }))
   expect(onImport).toHaveBeenCalledOnce()

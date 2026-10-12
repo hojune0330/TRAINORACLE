@@ -38,8 +38,6 @@ type Step = "event" | "basis" | "details"
 type Field = "event" | "minutes" | "seconds" | "achievedOn"
 type Errors = Partial<Record<Field, string>>
 
-const SINGLE_CHOICE_ADVANCE_HINT = "하나를 고르면 다음 단계로 이동해요."
-
 function isCalendarDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
   const [year = 0, month = 0, day = 0] = value.split("-").map(Number)
@@ -267,9 +265,8 @@ export function InstantPlanEntryForm({
             </h2>
             {!event && active && !disabled && !isSubmitting && !errors.event && <ContextualIllustration image="plan-notebook" />}
           </div>
-          <p id={`${id}-advance-hint`} className="instant-plan__hint">{SINGLE_CHOICE_ADVANCE_HINT}</p>
           <div className="instant-plan__step-choices app-choice-group" role="group" aria-labelledby={`${id}-event-heading`}
-            aria-describedby={errors.event ? `${id}-advance-hint ${id}-event-error` : `${id}-advance-hint`}>
+            aria-describedby={errors.event ? `${id}-event-error` : undefined}>
             {EVENTS.map((option, index) => (
               <button key={option.value} ref={index === 0 ? eventButtonRef : undefined}
                 className="instant-plan__step-choice app-choice-control app-choice-control--answer" type="button" disabled={disabled}
@@ -292,9 +289,7 @@ export function InstantPlanEntryForm({
           <h2 id={`${id}-basis-heading`} ref={stepHeadingRef} tabIndex={-1} className="instant-plan__step-heading">
             {selectedEventLabel} 기록이 있나요?
           </h2>
-          <p id={`${id}-advance-hint`} className="instant-plan__hint">{SINGLE_CHOICE_ADVANCE_HINT}</p>
-          <div className="instant-plan__step-choices instant-plan__basis-choices app-choice-group" role="group" aria-labelledby={`${id}-basis-heading`}
-            aria-describedby={`${id}-advance-hint`}>
+          <div className="instant-plan__step-choices instant-plan__basis-choices app-choice-group" role="group" aria-labelledby={`${id}-basis-heading`}>
             {([
               ["CURRENT_RECORD", "내 기록", "실제로 달린 시간"],
               ["GOAL_ONLY", "목표만 있어요", "앞으로 달리고 싶은 시간"],
@@ -392,7 +387,7 @@ export function InstantPlanEntryForm({
                 </div>
               </details>
               {achievedOn === "" && <p id={`${id}-date-hint`} className="instant-plan__hint">
-                개인 페이스를 계산하려면 기록 날짜가 필요해요. 모르면 비워 두세요. 시간·힘든 정도 기준 계획으로 시작할 수 있어요.
+                개인 페이스에는 기록 날짜가 필요해요. 모르면 비워 두세요.
               </p>}
             </div>
           )}

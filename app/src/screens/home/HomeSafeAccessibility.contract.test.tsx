@@ -1,5 +1,4 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { todayISO, type JournalEntry } from "../../domain/journal-store"
 import type { TrainingHomeViewModel } from "../../domain/home-view-model"
@@ -51,9 +50,9 @@ describe("home hub destinations and information", () => {
     ]))
     const onOpenDay = vi.fn(), onOpenArchive = vi.fn()
     render(<Home onOpenDay={onOpenDay} onOpenArchive={onOpenArchive} />)
-    const day = screen.getByRole("button", { name: "2026년 7월 14일 기록 3개 보기 · 훈련 2 · 하루 마무리 1" })
+    const day = screen.getByRole("button", { name: "2026년 7월 14일 기록 3개 보기 · 훈련 2 · 컨디션·메모 1" })
     expect(day).toHaveTextContent("7월 14일 · 기록 3개")
-    expect(day).toHaveAccessibleDescription("이 기기만 · 3개")
+    expect(day).toHaveAccessibleDescription("이 브라우저에 저장됨")
     fireEvent.click(day)
     fireEvent.click(screen.getByRole("button", { name: "전체 일지" }))
     expect(onOpenDay).toHaveBeenCalledWith("2026-07-14")
@@ -71,7 +70,7 @@ describe("home hub destinations and information", () => {
     render(<Home />)
     const day = screen.getByRole("button", { name: /2026년 7월 14일 기록 1개 보기/ })
     expect(day).toHaveTextContent("가져온 기록 포함")
-    expect(day).toHaveAccessibleDescription("이 기기만 · 가져온 기록 포함")
+    expect(day).toHaveAccessibleDescription("이 브라우저에 저장됨 · 가져온 기록 포함")
     expect(day).not.toHaveTextContent("계정 보관")
   })
 
@@ -79,7 +78,7 @@ describe("home hub destinations and information", () => {
     const learn = vi.fn(), decorate = vi.fn(), openTrends = vi.fn()
     render(<Home onWriteLog={vi.fn()} onOpenContent={learn} onOpenRewards={decorate} onOpenTrends={openTrends} />)
     expect(screen.getByRole("button", { name: "오늘 운동 기록 쓰기" })).toBeVisible()
-    expect(screen.getByRole("button", { name: "하루 마무리" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "컨디션·메모" })).toBeVisible()
     expect(screen.queryByRole("button", { name: /훈련 계획 만들기/ })).toBeNull()
     const analysis = screen.getByRole("button", { name: /훈련량·변화 보기/ })
     const recent = screen.getByRole("region", { name: "최근 하루 기록" })
@@ -106,8 +105,8 @@ describe("home hub destinations and information", () => {
     render(<Home onOpenDay={onOpenDay} onWriteLog={onWriteLog} />)
     expect(screen.getByText("오늘 남긴 기록 1개")).toBeVisible()
     expect(screen.queryByRole("button", { name: "오늘 운동 기록 쓰기" })).toBeNull()
-    expect(screen.getByRole("button", { name: "기분·몸 상태" })).toBeVisible()
-    expect(screen.getByRole("region", { name: "오늘의 기분 몸 상태 날씨" })).not.toBeVisible()
+    expect(screen.getByRole("button", { name: "컨디션·메모" })).toBeVisible()
+    expect(screen.queryByRole("region", { name: "오늘의 기분 몸 상태 날씨" })).toBeNull()
     expect(screen.queryByText("오늘 훈련을 모두 마쳤어요")).toBeNull()
     fireEvent.click(screen.getByRole("button", { name: "오늘 기록 보기" }))
     fireEvent.click(screen.getByRole("button", { name: "기록 더 남기기" }))
@@ -169,14 +168,14 @@ describe("home hub destinations and information", () => {
     expect(screen.queryByRole("region", { name: "기록 습관" })).toBeNull()
   })
 
-  it("keeps the optional daily context inside today and usable", async () => {
-    const user = userEvent.setup()
-    render(<Home />)
-    await user.click(screen.getByText("기분·몸 상태"))
-    await user.click(screen.getByRole("button", { name: "날씨 맑음" }))
-    const context = screen.getByRole("region", { name: "오늘의 기분 몸 상태 날씨" })
-    expect(screen.getByLabelText("오늘")).toContainElement(context)
-    expect(screen.getByRole("button", { name: "날씨 맑음" })).toHaveAttribute("aria-pressed", "true")
-    expect(context).toHaveTextContent("위치정보를 사용하지 않아요")
+  it("keeps one named journal action without mounting or overwriting legacy daily context", () => {
+    const legacy = JSON.stringify({ "2026-07-14": { date: "2026-07-14", mood: "GOOD", body: "NORMAL", weather: "SUNNY" } })
+    localStorage.setItem("trainoracle.daily-context.v1", legacy)
+    const write = vi.fn()
+    render(<Home onWriteLog={write} />)
+    fireEvent.click(screen.getByRole("button", { name: "컨디션·메모" }))
+    expect(write).toHaveBeenCalledWith("evening")
+    expect(screen.queryByRole("region", { name: "오늘의 기분 몸 상태 날씨" })).toBeNull()
+    expect(localStorage.getItem("trainoracle.daily-context.v1")).toBe(legacy)
   })
 })

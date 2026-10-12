@@ -27,7 +27,7 @@ test("groups a busy day into one compact destination alongside oracle exploratio
   })
   await page.goto("/?app=1&uitest=1")
   await page.evaluate(() => document.fonts.ready)
-  const day = page.getByRole("button", { name: "2026년 7월 14일 기록 3개 보기 · 훈련 2 · 하루 마무리 1" })
+  const day = page.getByRole("button", { name: "2026년 7월 14일 기록 3개 보기 · 훈련 2 · 컨디션·메모 1" })
   await expect(day).toBeVisible()
   await expect(page.getByRole("region", { name: "최근 하루 기록" })).toHaveCount(1)
   await expect(page.getByRole("region", { name: "기록 습관" })).toHaveCount(0)

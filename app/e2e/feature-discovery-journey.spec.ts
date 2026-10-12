@@ -26,7 +26,6 @@ for (const width of [320, 375]) {
       await page.getByRole("button", { name: "뒤로", exact: true }).click()
       await page.getByRole("button", { name: "오라클 읽을거리", exact: true }).click()
       await expect(page.locator(".oracle-v2__chrome").getByText("오라클 읽을거리", { exact: true })).toBeVisible()
-      await page.getByRole("button", { name: /^전체 주제·다른 글/u }).click()
       await expect(page.getByRole("group", { name: "읽을거리 주제" })).toBeVisible()
       await page.getByRole("button", { name: "더보기로 돌아가기", exact: true }).click()
       await page.getByRole("button", { name: "러닝 취향", exact: true }).click()
@@ -37,11 +36,10 @@ for (const width of [320, 375]) {
       await page.getByRole("button", { name: "닫기", exact: true }).click()
       await page.getByRole("button", { name: "프로필 설정·추가 정보", exact: true }).click()
       await expect(page.getByRole("button", { name: "내 훈련 해설", exact: true })).toBeVisible()
-      await page.getByText("기록·계획 해설", { exact: true }).click()
       for (const name of ["내 기록 해설", "계획·수행 비교"]) {
         const entry = page.getByRole("button", { name, exact: true })
         await expect(entry).toBeVisible()
-        expect(await entry.evaluate(node => node.closest("details")?.hasAttribute("open"))).toBe(true)
+        expect(await entry.evaluate(node => node.closest("details"))).toBe(null)
       }
       await page.screenshot({ path: info.outputPath("profile-actions.png"), fullPage: true })
       await page.getByRole("dialog", { name: "프로필 설정" }).getByRole("button", { name: "닫기" }).click()

@@ -16,8 +16,6 @@ import { eventDistanceLabel } from "./plan-intake-navigation"
 
 export type IntakeStep = "goal" | "division" | "experience" | "focus" | "template" | "days" | "training-time" | "two-a-day" | "safety"
 
-export const SINGLE_CHOICE_ADVANCE_HINT = "하나를 고르면 다음 단계로 이동해요."
-
 export const DIVISION_LABELS: Record<CompetitionDivision, {
   readonly title: string
   readonly detail: string
@@ -42,7 +40,7 @@ export const STEP_META: Record<IntakeStep, {
   goal: {
     eyebrow: "목표",
     title: "어떤 달리기를 준비할까요?",
-    copy: "나중에 바꿀 수 있어요.",
+    copy: "",
     helpTerm: "plan-goal",
   },
   division: {
@@ -54,19 +52,19 @@ export const STEP_META: Record<IntakeStep, {
   experience: {
     eyebrow: "경험",
     title: "지금까지 어떻게 달려왔나요?",
-    copy: "경험에 맞는 훈련 구성과 운동 시간을 정하는 데 써요.",
+    copy: "",
     helpTerm: "plan-experience",
   },
   focus: {
     eyebrow: "훈련 종류",
     title: "더 하고 싶은 훈련이 있나요?",
-    copy: "모르면 ‘골고루’를 고를 수 있어요.",
+    copy: "",
     helpTerm: "energy-system",
   },
   template: {
     eyebrow: "안내 방식",
     title: "강도를 어떻게 알려줄까요?",
-    copy: "기록이 없으면 시간과 힘든 정도로 안내해요.",
+    copy: "",
     helpTerm: "rpe",
   },
   days: {
@@ -78,13 +76,13 @@ export const STEP_META: Record<IntakeStep, {
   "training-time": {
     eyebrow: "시간대",
     title: "주로 언제 운동하나요?",
-    copy: "주요 훈련을 놓을 칸만 정해요.",
+    copy: "",
     helpTerm: "training-days",
   },
   "two-a-day": {
     eyebrow: "하루 두 번",
     title: "하루에 두 번 운동하는 날도 넣을까요?",
-    copy: "고르면 훈련일을 오전·오후 두 칸으로 나눠요.",
+    copy: "",
     helpTerm: "two-a-day",
   },
   safety: {

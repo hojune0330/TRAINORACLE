@@ -43,7 +43,7 @@ it("offers an explicitly labelled example only after all sources are confirmed e
   expect(screen.getByRole("heading", { name: "오라클 결과 예시 보기" })).toBeVisible()
 })
 
-it("uses the existing plan-progress summary when no personal Oracle candidate has rows", () => {
+it("leaves the saved plan intact without using checklist counts as a personal Oracle result", () => {
   source.complete = true
   source.planState = stateFixture()
   source.planReadKind = "loaded"
@@ -51,14 +51,12 @@ it("uses the existing plan-progress summary when no personal Oracle candidate ha
   render(<AppShell multiPlanRuntime={{ readMultiAdjustedEvidenceV3: readEvidence }} />)
 
   expect(readEvidence).not.toHaveBeenCalled()
-  expect(screen.getByRole("heading", { name: "내 계획 진행" })).toBeVisible()
-  expect(document.querySelector('[data-oracle-kind="plan"]')).toBeInTheDocument()
-  expect(screen.getByRole("heading", { name: "저장한 훈련 계획" })).toBeVisible()
-  expect(screen.getByText("예정 1회 중 완료 표시 0회")).toBeVisible()
-  expect(screen.getByText(/완료 표시는 실제 일지와 다른 기록이에요/u)).toBeVisible()
+  expect(document.querySelector('[data-oracle-kind="plan"]')).toBeNull()
+  expect(screen.queryByRole("heading", { name: "저장한 훈련 계획" })).toBeNull()
+  expect(screen.queryByText("예정 1회 중 완료 표시 0회")).toBeNull()
+  expect(screen.queryByText(/완료 표시는 실제 일지와 다른 기록이에요/u)).toBeNull()
   expect(screen.queryByText(/합성 개인 결과|월별 훈련|결과 예시/u)).toBeNull()
-  fireEvent.click(screen.getByRole("button", { name: "이 결과 자세히 보기" }))
-  expect(screen.getByRole("heading", { name: "기록 상태 확인 화면" })).toBeVisible()
+  expect(source.planState).toEqual(stateFixture())
 })
 
 it("does not offer an example when the active plan read fails", () => {

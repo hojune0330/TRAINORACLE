@@ -3935,3 +3935,9 @@
 .plan-day-deck[hidden] {
   display: none;
 }
+
+.plan-support-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}

@@ -212,7 +212,7 @@ describe.skip("production detailed prescription experience", () => {
     await user.click(screen.getByRole("button", { name: /계획 A로 시작/u }))
     await screen.findByRole("heading", { name: /9일 훈련 계획/u })
     expect(screen.queryByRole("alert")).toBeNull()
-    expect(screen.getByText("기간·운동 시간")).toBeVisible()
+    expect(screen.getByText("훈련 구성·시간")).toBeVisible()
     const activeSession = await openDetailedActiveSession(user)
     const activeNotation = within(activeSession).getByText(/5×1000m @5000m RP.*r150.*JOG/u)
     expect(activeNotation).toBeVisible()

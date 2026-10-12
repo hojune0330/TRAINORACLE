@@ -22,6 +22,10 @@ export type DailyContextReadResult =
   | { readonly kind: "loaded"; readonly context: DailyContext | null }
   | { readonly kind: "unavailable" }
 
+export type DailyContextsReadResult =
+  | { readonly kind: "loaded"; readonly contexts: readonly DailyContext[] }
+  | { readonly kind: "unavailable" }
+
 export type DailyContextUpdateResult =
   | { readonly kind: "saved"; readonly context: DailyContext }
   | { readonly kind: "read_unavailable" }
@@ -51,6 +55,19 @@ export function readDailyContext(date: string): DailyContextReadResult {
     return map === null
       ? { kind: "unavailable" }
       : { kind: "loaded", context: map[date] ?? null }
+  } catch {
+    return { kind: "unavailable" }
+  }
+}
+
+/** Read the validated current-account context history without changing stored data. */
+export function readDailyContexts(): DailyContextsReadResult {
+  if (typeof window === "undefined") return { kind: "unavailable" }
+  try {
+    const map = loadMap(activeStorageKey())
+    return map === null
+      ? { kind: "unavailable" }
+      : { kind: "loaded", contexts: Object.values(map).sort((left, right) => right.date.localeCompare(left.date)) }
   } catch {
     return { kind: "unavailable" }
   }

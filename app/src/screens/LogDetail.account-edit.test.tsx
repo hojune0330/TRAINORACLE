@@ -3,8 +3,8 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import type { JournalEntry, PostSessionEntry } from "../domain/journal-store"
 import { canEditJournalEntry } from "../domain/journal-edit-policy"
-import { putAccountJournalProjection, readAccountJournalPrivateEntry, resetAccountJournalProjection } from "../domain/account/account-journal-projection"
-import { setActiveLocalAccount } from "../domain/account/local-journal-ownership"
+import { putAccountJournalProjection, readAccountJournalPrivateEntry, resetAccountJournalProjection, setAccountJournalProjectionStatus } from "../domain/account/account-journal-projection"
+import { assignJournalsToAccount, setActiveLocalAccount } from "../domain/account/local-journal-ownership"
 import { toImportedEntry } from "../domain/import/import-draft"
 
 const mocks = vi.hoisted(() => ({ entries: [] as JournalEntry[], enabled: true, persist: vi.fn(), readFinalization: vi.fn() }))
@@ -62,6 +62,21 @@ it("passes the current-account private body to its editor without mutating the a
   fireEvent.click(screen.getByTestId(`journal-edit-${session.id}`))
   expect(edit).toHaveBeenCalledExactlyOnceWith(privateEntry)
   expect(readAccountJournalPrivateEntry(session.id)).toEqual(privateEntry)
+})
+
+it.each([
+  ["PENDING", "계정 저장 대기 중"],
+  ["REJECTED", "계정 저장 거절"],
+  ["FAILED", "계정 확인 실패"],
+  ["CONFLICT", "충돌 확인 필요"],
+] as const)("keeps the current account %s state visible for a local draft", (status, label) => {
+  const draft = { ...session, syncState: "local" as const }
+  mocks.entries = [draft]
+  expect(assignJournalsToAccount([draft.id], owner)).toBe(true)
+  expect(putAccountJournalProjection(owner, draft, false)).toBe(true)
+  setAccountJournalProjectionStatus(owner, status)
+  render(<LogDetail date={session.date} />)
+  expect(screen.getByText(label)).toBeVisible()
 })
 
 it("rechecks account ownership at click time rather than trusting a previously rendered action", () => {

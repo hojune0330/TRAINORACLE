@@ -25,16 +25,13 @@
 .oracle-v2__status, .oracle-v2__eyebrow { font-size: 12px; color: var(--ink-muted, var(--ink)); }
 .oracle-v2__identity { display: flex; align-items: center; gap: 12px; margin-block: var(--space-4) var(--space-3); }
 .oracle-v2__identity > svg { flex-shrink: 0; color: var(--ink-muted, var(--ink)); }
-.oracle-v2__manager { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: var(--space-3); margin-block: var(--space-6); padding-block: var(--space-4); border-block: var(--bw-line) solid var(--line); }
-.oracle-v2__manager-portrait { width: 64px; height: 64px; }
-.oracle-v2__manager-portrait img { display: block; width: 64px; height: 64px; object-fit: contain; }
-.oracle-v2__manager-copy { min-width: 0; }
+.oracle-v2__manager { margin-block: var(--space-6); padding-block: var(--space-4); border-block: var(--bw-line) solid var(--line); }
 .oracle-v2__manager .app-heading.app-heading--section { margin: 0; }
-.oracle-v2__manager p { margin-block: var(--space-2); }
-.oracle-v2__manager > .oracle-v2__manager-details { grid-column: 1 / -1; }
-.oracle-v2__manager-details > p { margin-top: 0; }
 .oracle-v2__manager-actions { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
-.oracle-v2__manager-actions button { width: 100%; justify-content: space-between; text-align: left; font-size: var(--fs-caption); }
+.oracle-v2__manager-actions button { width: 100%; justify-content: space-between; text-align: left; }
+.oracle-v2__manager-actions p { margin: 0; }
+.oracle-v2__axis-picker { margin-block: var(--space-4); }
+.oracle-v2__axis-picker > .app-heading--section { margin: 0; }
 .oracle-v2__context-disclosure { margin-block: var(--space-4); }
 .oracle-v2__context-disclosure > p { margin-top: 0; }
 .oracle-v2 .oracle-v2__context-action { width: 100%; justify-content: space-between; text-align: left; margin-block: var(--space-4); }

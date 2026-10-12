@@ -1,7 +1,7 @@
 // 가져오기 화면 계약 — 화면이 지켜야 할 안전 약속을 잠근다.
 //
 // 잠그는 약속:
-//  1. 파일을 고르기 전에 "이 기기에서만 읽는다"는 안내가 보인다.
+//  1. 파일을 고르기 전에 원본과 로그인 계정 저장 경계를 안내한다.
 //  2. 자동 연동을 되는 척하지 않는다(시점 미약속 안내).
 //  3. 읽지 못한 활동 수를 숨기지 않는다(fail-visible).
 //  4. 중복으로 보이는 항목은 기본 해제 — 사용자가 켜야 저장된다.
@@ -41,7 +41,7 @@ function upload(text: string, name = "activity.tcx"): File {
 }
 
 async function pickFile(user: ReturnType<typeof userEvent.setup>, file: File) {
-  const input = screen.getByLabelText(/내보낸 활동 파일/u)
+  const input = screen.getByLabelText(/가져올 운동 파일 선택/u)
   await user.upload(input, file)
 }
 
@@ -63,7 +63,7 @@ describe("ImportActivities — 고르기 단계", () => {
 
   it("opens the native picker directly without requiring a provider choice", () => {
     render(<ImportActivities />)
-    const input = screen.getByLabelText(/내보낸 활동 파일/u)
+    const input = screen.getByLabelText(/가져올 운동 파일 선택/u)
     const click = vi.spyOn(input, "click").mockImplementation(() => undefined)
     fireEvent.click(screen.getByRole("button", { name: "파일이 있어요 · 바로 선택" }))
     expect(click).toHaveBeenCalledOnce()
@@ -84,7 +84,7 @@ describe("ImportActivities — 고르기 단계", () => {
     expect(screen.getByRole("heading", { name: title })).toHaveFocus()
     expect(screen.queryByRole("group", { name: "기록이 있는 곳 선택" })).toBeNull()
     expect(screen.getByRole("region", { name: "운동 파일 준비" })).toHaveTextContent(text)
-    expect(screen.getByText(/계정 자동 연결이 아니라 파일 가져오기/)).toBeVisible()
+    expect(screen.getByText(/계정 자동 연결 대신 파일을 가져와요/)).toBeVisible()
     expect(screen.getByRole("button", { name: "파일이 있어요 · 바로 선택" })).toBeEnabled()
     expect(screen.queryByRole("textbox", { name: /비밀번호|로그인/ })).toBeNull()
     fireEvent.click(screen.getByRole("button", { name: "다른 기록 위치" }))
@@ -99,7 +99,7 @@ describe("ImportActivities — 고르기 단계", () => {
 
   it("keeps a single screen heading without adding a second heading to the file pick guidance", () => {
     const { container } = render(<ImportActivities />)
-    const heading = screen.getByRole("heading", { name: "워치 기록 불러오기", level: 1 })
+    const heading = screen.getByRole("heading", { name: "운동 기록 가져오기", level: 1 })
 
     expect(heading).toHaveClass("app-heading", "app-heading--screen", "app-heading--accent")
     expect(heading.style.fontSize).toBe("")
@@ -128,7 +128,7 @@ describe("ImportActivities — 고르기 단계", () => {
     expect(guide).toHaveAttribute("aria-hidden", "true")
     expect(container.querySelectorAll("img")).toHaveLength(1)
     expect(screen.getByTestId("import-privacy-notice")).toBeVisible()
-    expect(screen.getByLabelText(/내보낸 활동 파일/u)).toHaveAttribute("accept", ".csv,.json,.tcx,.gpx,text/csv,application/json,application/xml,text/xml")
+    expect(screen.getByLabelText(/가져올 운동 파일 선택/u)).toHaveAttribute("accept", ".csv,.json,.tcx,.gpx,text/csv,application/json,application/xml,text/xml")
     expect(loadEntries()).toEqual([])
 
     await pickFile(user, upload(tcxFile([tcxLap("2026-07-20T06:00:00Z", 10000, 3000)])))
@@ -150,12 +150,12 @@ describe("ImportActivities — 고르기 단계", () => {
     expect(view.container.querySelector("img")).toBeNull()
     expect(screen.getByRole("status")).toHaveTextContent("읽는 중…")
     expect(screen.getByRole("button", { name: "가져오기 취소" })).toBeEnabled()
-    expect(screen.getByLabelText(/내보낸 활동 파일/u)).toBeDisabled()
+    expect(screen.getByLabelText(/가져올 운동 파일 선택/u)).toBeDisabled()
 
     view.rerender(<PickStage {...props} busy={false} failure="unreadable" />)
     expect(view.container.querySelector("img")).toBeNull()
     expect(screen.getByRole("alert")).toHaveTextContent("기존 일지는 그대로 있어요.")
-    expect(screen.getByLabelText(/내보낸 활동 파일/u)).toBeEnabled()
+    expect(screen.getByLabelText(/가져올 운동 파일 선택/u)).toBeEnabled()
   })
 
   it("파일을 고르기 전에 기기 내 처리 안내를 보여준다", () => {
@@ -168,7 +168,7 @@ describe("ImportActivities — 고르기 단계", () => {
     expect(notice).toHaveTextContent(/서버로 올라가지 않아요/u)
   })
 
-  it("자동 연동 시점을 약속하지 않고 도움말에서 원본 보존을 설명한다", async () => {
+  it("자동 연동 시점을 약속하지 않고 원본 보존 안내를 한 번만 보여준다", async () => {
     // Given / When
     render(<ImportActivities />)
 
@@ -179,14 +179,15 @@ describe("ImportActivities — 고르기 단계", () => {
     expect(help.closest("details")).not.toHaveAttribute("open")
     await userEvent.click(help)
     expect(status).toHaveTextContent(/시작 날짜는 아직 정해지지 않았어요/u)
-    expect(screen.getByText("파일을 가져와도 워치 앱의 원본 기록은 바뀌지 않아요.")).toBeVisible()
+    expect(screen.getByText("계정 자동 연결 대신 파일을 가져와요. 원본 기록은 바뀌지 않아요.")).toBeVisible()
+    expect(screen.queryByText("파일을 가져와도 워치 앱의 원본 기록은 바뀌지 않아요.")).toBeNull()
     expect(status.textContent ?? "").not.toMatch(/곧 가져올 수 있어요/u)
   })
 
   it("CSV와 JSON 파일을 선택할 수 있고 저장 전 미리보기를 보여준다", async () => {
     const user = userEvent.setup()
     render(<ImportActivities />)
-    const input = screen.getByLabelText(/내보낸 활동 파일/u)
+    const input = screen.getByLabelText(/가져올 운동 파일 선택/u)
 
     expect(input).toHaveAttribute("accept", expect.stringContaining(".csv"))
     expect(input).toHaveAttribute("accept", expect.stringContaining(".json"))
@@ -229,7 +230,7 @@ describe("ImportActivities — 고르기 단계", () => {
 
     expect(await screen.findByTestId("import-failure")).toHaveTextContent(/파일이 너무 커요/u)
     expect(read).not.toHaveBeenCalled()
-    expect(screen.getByLabelText(/내보낸 활동 파일/u)).toHaveValue("")
+    expect(screen.getByLabelText(/가져올 운동 파일 선택/u)).toHaveValue("")
   })
 
   it("파일을 읽는 중 취소하면 일지를 건드리지 않는다", async () => {
@@ -326,9 +327,9 @@ describe("ImportActivities — 확인 단계", () => {
     // Then
     await waitFor(() => expect(screen.getByText(/새 일지는 읽기 전용/u)).toBeVisible())
     expect(screen.getByText(/기존 일지를 보완하면 힘든 정도/u)).not.toBeVisible()
-    await user.click(screen.getByRole("button", { name: "저장 후 수정·분석은 어떻게 되나요?" }))
+    await user.click(screen.getByRole("button", { name: "수정·분석 범위" }))
     expect(screen.getByText(/기존 일지를 보완하면 힘든 정도/u)).toBeVisible()
-    expect(screen.getByText(/새 일지로 가져온 활동은 현재 읽기 전용이에요/u)).toBeVisible()
+    expect(screen.queryByText(/새 일지로 가져온 활동은 현재 읽기 전용이에요/u)).toBeNull()
     expect(screen.getByText(/주간 통계·추이·훈련계획에는 들어가지 않아요/u)).toBeVisible()
   })
 })
@@ -357,7 +358,7 @@ describe("ImportActivities — 저장", () => {
 
     // Then
     await waitFor(() => expect(screen.getByTestId("import-saved")).toBeVisible())
-    expect(screen.getByTestId("import-saved")).toHaveTextContent("1건을 일지에 저장했어요")
+    expect(screen.getByTestId("import-saved")).toHaveTextContent("새 일지 1건 저장 · 기존 일지 0건 보완")
     const stored = loadEntries()
     expect(stored).toHaveLength(1)
     expect(stored[0]?.syncState).toBe("local")
@@ -396,6 +397,6 @@ describe("ImportActivities — 저장", () => {
     render(<SavedStage outcome={{ saved: 1, failed: 1, total: 2 }} onRestart={() => undefined} />)
 
     expect(screen.getByTestId("import-saved")).toHaveTextContent("일부 완료")
-    expect(screen.getByTestId("import-saved")).toHaveTextContent("1건을 일지에 저장했어요")
+    expect(screen.getByTestId("import-saved")).toHaveTextContent("새 일지 1건 저장 · 기존 일지 0건 보완")
   })
 })

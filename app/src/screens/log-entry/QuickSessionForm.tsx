@@ -582,7 +582,6 @@ function QuickSessionFormEditor({
         </div>}
         {step === "activity" && activityQuestion === "outcome" && (
           <section>
-            <small>운동 결과</small>
             {planLink !== undefined && <div className="quick-log__plan-source">계획 {planLink.sessionDay}일차 · {planLink.sessionSlot === "AM" ? "오전" : "오후"}</div>}
             {planLink && <PlannedWorkoutContext entryId={entryId} date={date} link={planLink} />}
             <div className="quick-log__choices app-choice-group">
@@ -598,7 +597,6 @@ function QuickSessionFormEditor({
           </section>
         )}
         {step === "activity" && activityQuestion === "slot" && <section>
-          <small>운동 시간대</small>
           {planLink && <p>계획은 {planLink.sessionSlot === "AM" ? "오전" : "오후"}이에요. 실제로 한 시간대를 골라 주세요.</p>}
           <div className="quick-log__choices app-choice-group">
             {[...ACTIVITY_SLOTS].sort((a, b) => Number(b.value === planLink?.sessionSlot) - Number(a.value === planLink?.sessionSlot)).map(item => <button data-auto-advance className="app-choice-control app-choice-control--answer" key={item.value} type="button" aria-pressed={slot === item.value} onClick={() => selectSlot(item.value)}>{item.label}<ChevronRight aria-hidden="true" /></button>)}
@@ -606,7 +604,6 @@ function QuickSessionFormEditor({
         </section>}
         {step === "effort" && effortQuestion === "rpe" && (
           <section>
-            <small>힘든 정도</small>
             <p>1 아주 가벼움 · 10 최대 노력</p>
             <div className="quick-log__rpe-scale" role="group" aria-label="힘든 정도 1부터 10까지">
               {RPE_OPTIONS.map((item) => <button data-auto-advance key={item.value} type="button" aria-label={`힘든 정도 ${item.value}/10, ${item.detail}`} aria-pressed={effortAnswered && rpe === item.value} onClick={() => selectRpe(item.value)}>{item.value}</button>)}
@@ -617,7 +614,6 @@ function QuickSessionFormEditor({
         )}
         {step === "effort" && effortQuestion === "pain" && (
               <section>
-                <small>몸 상태</small>
                 <p>이 확인은 몸 상태를 남기기 위한 것이며 의료 판단이 아니에요.</p>
                 <div className="quick-log__safety-actions">
                   <button data-auto-advance type="button" aria-pressed={painStatus === "NO_SIGNAL_REPORTED"} onClick={selectNoPain}>없어요</button>
@@ -633,7 +629,6 @@ function QuickSessionFormEditor({
               </section>
         )}
         {step === "review" && outcome !== null && <section>
-          <small>마지막 확인</small>
           {!performed(outcome) && performed(savedEntry?.activityOutcome ?? null) && <p>쉬거나 건너뛴 기록으로 바꾸면 운동 시간·거리·힘든 정도·몸 상태 응답은 제외돼요.</p>}
             <ExerciseLogSummary log={exerciseLog} />
             {(performed(outcome) || exerciseLog.plannedRepetitions || exerciseLog.plannedSegments || Object.keys(plannedInputs.values).length > 0) && <PlannedRepetitionEditor entryId={entryId} date={date} link={planLink} value={exerciseLog} onChange={setExerciseLog} inputs={plannedInputs} />}

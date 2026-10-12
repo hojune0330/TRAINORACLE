@@ -27,7 +27,7 @@ import {
 
 const KIND_LABEL: Record<JournalEntry["kind"], string> = {
   "post-session": "훈련 후",
-  evening: "하루 마무리",
+  evening: "컨디션·메모",
   race: "경기",
 }
 
@@ -43,7 +43,7 @@ function summarize(entry: JournalEntry): string {
     entry.sleepH > 0 ? `수면 ${entry.sleepH}h` : null,
     entry.mood > 0 ? `기분 ${entry.mood}/5` : null,
   ].filter((part): part is string => part !== null)
-  return parts.length > 0 ? parts.join(" · ") : "하루 마무리"
+  return parts.length > 0 ? parts.join(" · ") : "컨디션·메모"
 }
 
 export function TrashBin({ onChanged }: { readonly onChanged?: () => void } = {}) {

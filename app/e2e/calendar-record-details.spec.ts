@@ -19,7 +19,7 @@ test("same real calendar in journal and cycle, health details on demand, no reco
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "일지", exact: true }).click()
   const before = await page.evaluate(() => localStorage.getItem("trainoracle.journal.v1"))
   await expect(page.getByRole("grid", { name: "2026년 9월 달력" })).toBeVisible()
-  const date = page.getByRole("button", { name: /2026년 9월 27일 일요일.*하루 마무리/ })
+  const date = page.getByRole("button", { name: /2026년 9월 27일 일요일.*컨디션·메모/ })
   await expect(date).toHaveAttribute("aria-current", "date")
   await expect(date).not.toContainText("61.2")
   await date.click()

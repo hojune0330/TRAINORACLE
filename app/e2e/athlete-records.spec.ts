@@ -4,7 +4,6 @@ import type { Page } from "@playwright/test"
 async function enterAthleteRecordsFromPlan(page: Page): Promise<void> {
   const recordsButton = page.getByRole("button", { name: "내 경기 기록", exact: true })
   if (!await recordsButton.isVisible()) {
-    await page.locator("summary", { hasText: "기록 관리·훈련표 읽기" }).click()
   }
   await recordsButton.click()
 }

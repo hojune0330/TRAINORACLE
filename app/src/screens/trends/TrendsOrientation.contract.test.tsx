@@ -3,7 +3,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { Trends } from "../Trends"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
-afterEach(cleanup)
+afterEach(() => { cleanup(); vi.unstubAllEnvs() })
 
 it("puts a meaningful task title before navigation without inventing a result for the first visit", () => {
   const write = vi.fn()
@@ -26,7 +26,6 @@ it("offers direct analysis choices and lets the selected result own its title wi
   expect(distance).toHaveAccessibleDescription("달린 거리 합계")
   expect(within(choices).getByRole("button", { name: "훈련 구성" })).toHaveAccessibleDescription("직접 고른 훈련 종류")
   expect(within(choices).getByRole("button", { name: "월별 변화" })).toHaveAccessibleDescription("거리·페이스·기분·통증")
-  expect(within(choices).getByRole("button", { name: "파일 분석" })).toHaveAccessibleDescription(expect.stringContaining("준비 중"))
   fireEvent.click(distance)
   expect(screen.getByRole("heading", { name: "누적 거리와 변화", level: 2 })).toBeVisible()
   expect(screen.queryByRole("heading", { name: "훈련량 보기" })).toBeNull()
@@ -36,6 +35,23 @@ it("offers direct analysis choices and lets the selected result own its title wi
   expect(change).toHaveBeenLastCalledWith({ section: "distance", savedDate: "2026-10-05", metric: "DISTANCE_KM" })
   expect(container.querySelectorAll(".trends-hub__guide")).toHaveLength(0)
   expect(distance).toHaveAttribute("aria-pressed", "true")
+})
+
+it("omits unavailable file analysis while keeping file import direct", () => {
+  for (const format of ["TCX", "CSV", "JSON", "GPX"]) {
+    vi.stubEnv(`VITE_FEATURE_FILE_ANALYSIS_${format}`, "false")
+    vi.stubEnv(`VITE_KILL_FILE_ANALYSIS_${format}`, "false")
+  }
+  const onImport = vi.fn()
+  render(<Trends onOpenImport={onImport} />)
+
+  const choices = screen.getByRole("group", { name: "훈련 분석 자세히 보기" })
+  expect(within(choices).queryByRole("button", { name: "파일 분석" })).toBeNull()
+  expect(within(choices).getByRole("button", { name: "훈련량" })).toBeVisible()
+  const importButton = screen.getByRole("button", { name: "운동 파일 가져오기" })
+  expect(importButton.closest("details")).toBeNull()
+  fireEvent.click(importButton)
+  expect(onImport).toHaveBeenCalledOnce()
 })
 
 it("keeps unfinished reads visible without inviting users into imaginary results", () => {

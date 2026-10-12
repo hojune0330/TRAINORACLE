@@ -40,6 +40,7 @@ function mount(form: Form, purpose?: Purpose, memo = syntheticMemo) {
   else {
     const Component = form === "post-session" ? PostSessionForm : form === "evening" ? EveningCheckin : RaceForm
     render(<Component onDone={onDone} />)
+    if (form === "evening") fireEvent.click(screen.getByRole("button", { name: purpose ? "메모 쓰기" : "수면" }))
     if (purpose) {
       fireEvent.change(memoField(form), { target: { value: memo } })
       fireEvent.click(screen.getByRole("radio", { name: purpose === "PRIVATE_SELF_ONLY" ? "나만의 메모" : "훈련 메모" }))

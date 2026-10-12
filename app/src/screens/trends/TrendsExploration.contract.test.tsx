@@ -205,16 +205,19 @@ describe("Trends exploration hub", () => {
     expect(screen.getByText("2026-10-05에 저장한 기분을 월별 기록과 함께 볼 수 있어요.")).toBeVisible()
   })
 
-  it("keeps the file-analysis tab useful when the file feature is disabled", async () => {
-    const user = userEvent.setup()
+  it("omits the unavailable file-analysis choice but keeps import directly available", async () => {
     vi.stubEnv("VITE_FEATURE_FILE_ANALYSIS_TCX", "false")
-    render(<Trends />)
+    const onOpenImport = vi.fn()
+    render(<Trends onOpenImport={onOpenImport} />)
 
-    await chooseDetail(user, "파일 분석")
-    expect(screen.getByRole("heading", { name: "파일 분석은 준비 중이에요" })).toBeVisible()
-    expect(screen.getByText("현재는 일지에 직접 남긴 값으로 훈련량과 변화를 볼 수 있어요.")).toBeVisible()
-    await user.click(screen.getByRole("button", { name: "훈련량 보기" }))
-    expect(screen.getByRole("region", { name: "누적 거리와 변화" })).toBeVisible()
+    const choices = screen.getByRole("group", { name: "훈련 분석 자세히 보기" })
+    expect(within(choices).queryByRole("button", { name: "파일 분석" })).not.toBeInTheDocument()
+    expect(within(choices).getAllByRole("button")).toHaveLength(4)
+    expect(screen.queryByText(/파일 분석은 준비 중/u)).not.toBeInTheDocument()
+    const importButton = screen.getByRole("button", { name: "운동 파일 가져오기" })
+    expect(importButton.closest("details")).toBeNull()
+    await userEvent.setup().click(importButton)
+    expect(onOpenImport).toHaveBeenCalledOnce()
   })
 
   it("keeps pending-file and provenance-exclusion notices visible", async () => {

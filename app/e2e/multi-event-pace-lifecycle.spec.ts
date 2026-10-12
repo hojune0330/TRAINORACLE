@@ -89,7 +89,6 @@ async function assertNumeric(page: Page, persona: Persona, seconds: number, sour
 async function openRecords(page: Page, active: boolean) {
   if (active) await page.getByRole("button", { name: "기준 기록·페이스 바꾸기", exact: true }).click()
   else {
-    await page.locator("summary", { hasText: "기록 관리·훈련표 읽기" }).click()
     await page.getByRole("button", { name: "내 경기 기록", exact: true }).click()
   }
   await expect(page.getByRole("heading", { name: "내 경기 기록", exact: true })).toBeVisible()

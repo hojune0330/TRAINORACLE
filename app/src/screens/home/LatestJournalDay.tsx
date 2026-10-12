@@ -8,7 +8,7 @@ import { hasImportedField } from "../../domain/field-provenance"
 import { JournalDecorationPreview, useJournalDecorationPreviews } from "../journal/JournalDecorationPreview"
 
 const KIND_LABELS = [
-  ["post-session", "훈련"], ["race", "경기"], ["evening", "하루 마무리"],
+  ["post-session", "훈련"], ["race", "경기"], ["evening", "컨디션·메모"],
 ] as const
 
 type JournalStorageVersion = Pick<JournalEntry, "savedAt" | "date" | "kind">
@@ -74,7 +74,7 @@ function describeStorage(entries: readonly JournalEntry[], storage?: LatestJourn
   if (storage.owner === null) {
     // A restored/legacy synced flag alone cannot identify any current account receipt.
     return storage.readiness === "READY" && storage.accountStatus === "IDLE" && entries.every(entry => entry.syncState === "local")
-      ? `이 기기만${entries.length > 1 ? ` · ${entries.length}개` : ""}`
+      ? "이 브라우저에 저장됨"
       : "보관된 기록 · 계정 저장 미확인"
   }
   const storedCount = entries.filter(entry => matchesStoredVersion(entry, storage.accountStoredVersions)).length

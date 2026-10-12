@@ -65,7 +65,6 @@ describe("instant plan record submission recovery", () => {
     expect(screen.getByLabelText("초")).toHaveValue("23.4")
     expect(screen.getByRole("button", { name: "기록 입력 완료" })).toBeEnabled()
     expect(loadPlanBetaState()).toBeNull()
-    await user.click(screen.getByText("기록 관리·훈련표 읽기"))
     expect(screen.getByRole("button", { name: "내 경기 기록" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "기록 입력 완료" }))
     expect(prepare).toHaveBeenCalledTimes(2)

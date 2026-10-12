@@ -9,7 +9,7 @@ test("지운 일지를 그 자리에서 되돌릴 수 있다", async ({ page }) 
   // Given — 일지 하나를 저장한다
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
-  // 기록 탭은 곧바로 입력폼이 아니라 "어떤 일지를 쓰세요?" 선택 화면이다.
+  // 기록 탭은 곧바로 입력폼이 아니라 "무엇을 기록할까요?" 선택 화면이다.
   // 종류를 먼저 골라야 입력폼이 나온다(스냅샷으로 확인).
   await page.getByRole("button", { name: /자세히 기록.*운동별로 자세히/u }).first().click()
   await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()

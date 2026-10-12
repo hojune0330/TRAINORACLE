@@ -100,13 +100,14 @@ async function openInput(kind: keyof typeof components, label: string | RegExp) 
   // for either legitimate destination instead of assuming the fresh route.
   const action = await waitFor(() => {
     const node = screen.queryByRole("button", { name: editLabel })
+      ?? (kind === "evening" ? screen.queryByRole("button", { name: label === "오늘의 메모" ? "메모 쓰기" : "체중·심박" }) : null)
       ?? screen.queryByRole("button", { name: /^(지금 입력 확인|입력 확인으로)$/ })
     expect(node).not.toBeNull()
     return node!
   })
   const editing = screen.queryByRole("button", { name: editLabel }) === action
   fireEvent.click(action)
-  if (!editing) fireEvent.click(await screen.findByRole("button", { name: editLabel }))
+  if (!editing && !screen.queryByLabelText(label, { selector: "input,textarea,select" })) fireEvent.click(await screen.findByRole("button", { name: editLabel }))
   return screen.findByLabelText(label, { selector: "input,textarea,select" })
 }
 

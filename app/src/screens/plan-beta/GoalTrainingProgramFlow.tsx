@@ -3,7 +3,6 @@ import type { ExperienceBand, PlanSession, TrainingTimePreference } from "@impl/
 import { ArrowLeft } from "lucide-react"
 import { GoalProgramEntry, type GoalProgramPreviewRequest } from "../../components/instant-plan/GoalProgramEntry"
 import { resolveGoalProgramWindow, tenKGoalPaceLabel } from "../../domain/goal-program-calendar"
-import { summarizeGoalTrainingProgram } from "../../domain/goal-training-program-summary"
 import { createGoalTrainingProgramPreview, generateGoalTrainingProgram, projectGoalTrainingProgramFrames, goalTrainingProgramDurationReview,
   type GoalTrainingProgramPreview } from "../../domain/goal-training-program"
 import { applyGoalTrainingProgramCycle, archiveGoalTrainingProgramCycle, exportGoalTrainingProgramJSON,
@@ -298,9 +297,7 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
 
   if (stage === "experience") return <section className="goal-program">
     <button type="button" className="plan-text-action" onClick={back}><ArrowLeft size={18} aria-hidden="true" />목표·날짜 바꾸기</button>
-    <p className="goal-program__muted">3 / 4 · 달리기 경험</p>
     <h2 tabIndex={-1} ref={heading}>달리기 경험은 어느 정도인가요?</h2>
-    <p className="goal-program__muted">기록은 입력하지 않아도 돼요. 경험에 맞는 훈련부터 볼게요.</p>
     <div className="app-choice-group goal-program__choices" role="group" aria-label="달리기 경험">
       {EXPERIENCE.map(value => <button type="button" className="app-choice-control app-choice-control--answer" key={value}
         aria-pressed={experience === value} onClick={() => { setExperience(value); setStage("basis"); setError(null) }}>{EXPERIENCE_LABELS[value].title}</button>)}
@@ -311,16 +308,13 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
       <label>주로 훈련할 시간<select value={time} onChange={event => setTime(event.target.value as TrainingTimePreference)}>
         <option value="VARIES">날마다 달라요</option><option value="MORNING">오전</option><option value="EVENING">오후·저녁</option>
       </select></label>
-      <p>9.5일을 세 번 이어 한 달 기본 훈련을 만들어요. 하루 훈련은 최대 한 번이에요.</p>
     </details>
     {error && <p role="alert">{error}</p>}
   </section>
 
   if (stage === "basis") return <section className="goal-program">
     <button type="button" className="plan-text-action" disabled={busy} onClick={back}><ArrowLeft size={18} aria-hidden="true" />경험·훈련 횟수 바꾸기</button>
-    <p className="goal-program__muted">4 / 4 · 훈련 방식</p>
     <h2 tabIndex={-1} ref={heading}>어떤 방식으로 훈련할까요?</h2>
-    <p className="goal-program__muted">선택에 따라 훈련 구성과 시간도 달라져요.</p>
     <div className="app-choice-group goal-program__choices" role="group" aria-label="훈련 방식">
       <button type="button" className="app-choice-control app-choice-control--answer" disabled={busy}
         onClick={() => { setGoalPaceConfirmed(true); makePreview(experience, true) }}>
@@ -361,9 +355,6 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
   const activeCycle = stored?.application?.currentCycleIndex
   const canUseActive = read.kind === "loaded" && read.currentCycleStatus === "CURRENT"
   const annotations: Record<string, string> = {}
-  const summarySource = stored && !preview ? { ...stored.program, frames: stored.program.frames.map(frame => ({ ...frame,
-    plan: stored.cycles.find(cycle => cycle.cycle === frame.cycle)?.latestPlan ?? frame.plan })) } : source
-  const cycleSummary = summarySource && !projectionInvalid ? summarizeGoalTrainingProgram(summarySource) : null
   source?.frames.forEach(frame => {
     const start = source.window.halfDays[frame.halfDayOffset]
     if (start) annotations[start.date] = `${frame.cycle}차 시작${start.slot === "PM" ? " · 오후" : ""}`
@@ -383,9 +374,10 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
     </> : <>
       <p className="goal-program__summary">{source.window.startDate} ~ {source.window.endDate}<br />{!projectionInvalid && <>훈련 {workouts}회 · 휴식 {29 - workouts}일 · 하루 최대 1회</>}</p>
       <p>한 달 기본 훈련 · 9.5일 × 3</p>
-      {source.window.deadline && <p>대회 날짜 · {source.window.deadline}<br />날짜만 맞춰요. 대회 전 훈련량을 자동으로 줄이지는 않아요.</p>}
+      {source.window.deadline && <p>대회 날짜 · {source.window.deadline}<br />대회 전 훈련량은 자동으로 줄이지 않아요.</p>}
       <p className="goal-program__muted">{preview ? "미리보기 · 아직 시작하지 않았어요" : storageStatus === "DEVICE" ? "이 기기에 보관된 훈련표" : "계정에서 확인한 훈련표"}</p>
       <p>{source.inputs.goalPaceConfirmed ? `목표 속도 · 1km에 ${tenKGoalPaceLabel(source.goalMinutes).replace("/km", "")} · 속도가 적힌 구간에서만 따라요` : "시간 기준 훈련표 · 각 날짜의 시간·힘든 정도를 따라요."}</p>
+      <p className="goal-program__muted">목표 기록은 현재 실력이나 달성 보장이 아니에요.</p>
       {projectionInvalid && <p role="alert">수정된 훈련표의 날짜를 확인하지 못했어요. 원본으로 바꿔 표시하지 않았어요. 현재 계획을 확인해 주세요.</p>}
       {reviewOnly && <p role="alert">몸 상태 확인 필요 · 이 훈련표로 훈련을 시작하지 마세요.</p>}
       {first && preview && <section className="goal-program__first" aria-label="첫 훈련">
@@ -427,10 +419,10 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
               onClick={() => setSafetyFor(cycle.cycle)}>{cycle.cycle}차 훈련 시작</button>}
           </div>)}
         </div>
-        {canUseActive && <details className="goal-program__details"><summary>이번 9.5일 마치기</summary>
-          <p>진행 표시는 그대로 보관해요. 다음 9.5일 훈련을 자동으로 시작하거나 놓친 훈련을 추가하지 않아요.</p>
+        {canUseActive && <section className="goal-program__actions" aria-label="이번 9.5일 마치기">
           {!archiveReview ? <button type="button" disabled={busy || !writable} onClick={() => setArchiveReview(true)}>이번 훈련 마치기</button> : <>
             <p>{activeCycle}차 9.5일 훈련을 마치고 보관할까요?</p>
+            <p>진행 표시를 함께 보관해요. 다음 훈련은 따로 시작하며 놓친 훈련은 추가하지 않아요.</p>
             <button type="button" disabled={busy || !writable} onClick={() => { void run(async () => {
               if (!stored) return
               const result = await archiveGoalTrainingProgramCycle({ programId: stored.program.programId, expectedRevision: stored.revision })
@@ -440,24 +432,11 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
               else setNotice("이번 9.5일 훈련과 진행 표시를 보관했어요.")
             }) }}>마치고 보관</button><button type="button" disabled={busy} onClick={() => setArchiveReview(false)}>계속 보기</button>
           </>}
-        </details>}
-        {stored && <details className="goal-program__details"><summary>목표·날짜를 바꿔 새로 만들기</summary>
-          <p>새 훈련표를 시작하기 전까지 기존 훈련표를 유지해요. 이전 훈련표와 진행 표시는 보관해요.</p>
-          <button type="button" disabled={busy} onClick={() => { setReplaceConfirmed(false); setExpiredPendingReview(null); setStage("entry"); setRequest(undefined); setEntryDirty(false) }}>새 훈련표 만들기</button>
-        </details>}
+        </section>}
+        {stored && <button type="button" className="plan-text-action" disabled={busy}
+          onClick={() => { setReplaceConfirmed(false); setExpiredPendingReview(null); setStage("entry"); setRequest(undefined); setEntryDirty(false) }}>목표·날짜를 바꿔 새로 만들기</button>}
       </>}
-      {cycleSummary && <details className="goal-program__details"><summary>1·2·3차 훈련 구성</summary>
-        <ol className="goal-program__cycle-summary">{cycleSummary.frames.map(frame => {
-          const original = summarySource?.frames.find(item => item.cycle === frame.cycle)
-          const frameSessions = original ? "plan" in original ? original.plan.activePlan.sessions : original.sessions : []
-          const labels = [...new Set(frameSessions.filter(session => session.role === "QUALITY").map(session => sessionLabel(session, true)))]
-          return <li key={frame.cycle}><strong>{frame.cycle}차 · 9.5일</strong>
-            <p>주요 훈련 {frame.qualityCount}회 · 쉬운 훈련 {frame.easyCount}회</p>
-            {labels.length > 0 && <ul>{labels.map(label => <li key={label}>{label}</li>)}</ul>}
-          </li>
-        })}</ol>
-      </details>}
-      {!projectionInvalid && <><p className="goal-program__muted">날짜를 누르면 운동 순서를 볼 수 있어요.</p>
+      {!projectionInvalid && <>
       <PlanSchedulePreview key={stored?.program.programId ?? preview?.generatedAt} startDate={source.window.startDate}
         sessions={sessions} presentation="prescription-calendar" programProjection={{ kind: "THREE_CYCLE_PROGRAM", calendarDayCount: 29 }}
         dayAnnotations={annotations}
@@ -467,12 +446,6 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
           return state?.progress.find(item => item.sessionDay === day?.session.day && item.sessionSlot === day?.session.slot)?.state
         } : undefined}
         showRpeGuide={false} detailsExpanded={false} allowMemoExport={false} /></>}
-      <details className="goal-program__details"><summary>목표·주기·훈련 기준</summary>
-        <p>최소 훈련 단위는 9.5일 마이크로사이클이에요. 세 번을 묶은 28.5일이 한 달 기본 프로그램이며, 달력에서는 29개 날짜에 걸쳐 보여요.</p>
-        <p>목표 기록은 현재 실력이 아니며 한 달 안의 목표 달성을 보장하지 않아요.</p>
-        <p>기록 없이 고른 훈련표는 경험과 훈련 횟수 기준이에요. 빠른 목표를 골랐다는 이유로 강도나 훈련량을 올리지 않아요.</p>
-        <p>대회 날짜 선택은 날짜 배치만 맞춰요. 경기 전 훈련량 조절이나 대회 페이스를 자동 계산한 계획은 아니에요.</p>
-      </details>
       {!preview && backupTools}
     </>}
   </section>

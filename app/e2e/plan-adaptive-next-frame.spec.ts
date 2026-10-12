@@ -55,7 +55,6 @@ for (const viewport of [
     await openActivePlanCards(page)
     await assertCurrentBuild(page)
 
-    await page.getByText("다음 계획은 언제 받나요?", { exact: true }).click()
     await expect(page.getByRole("button", { name: "현재 계획을 먼저 기록해 주세요" })).toBeDisabled()
     await expect(page.getByRole("button", { name: "기록 확인·다음 계획 조정" })).toHaveCount(0)
     await expect(page.getByRole("list", { name: "날짜별 계획 미리보기" })).toHaveCount(1)

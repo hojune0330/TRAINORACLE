@@ -20,7 +20,6 @@
 .calendar-journal-detail__exercise { margin-top: var(--space-3); font-size: var(--fs-body); line-height: 1.6; }
 .calendar-journal-detail__exercise p { margin-block: var(--space-1); }
 .calendar-journal-detail > button { display: flex; align-items: center; gap: var(--space-2); min-height: var(--app-touch-min); margin-block: var(--space-3); background: transparent; border: 1px solid var(--line); padding: var(--space-2) var(--space-3); font: inherit; color: var(--brand); cursor: pointer; }
-.calendar-journal-detail__empty { color: var(--ink-3); font-size: var(--fs-body); }
 .cycle-calendar { padding: var(--space-4); }
 .cycle-calendar__controls { display: flex; align-items: center; gap: var(--space-2); justify-content: space-between; padding-block: var(--space-3); }
 .cycle-calendar__controls strong { text-align: center; font-size: var(--fs-body); word-break: keep-all; }

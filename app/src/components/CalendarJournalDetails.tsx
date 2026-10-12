@@ -118,14 +118,14 @@ export function CalendarJournalDetails({ entries, date, onOpenDay, onWriteDate, 
     <button type="button" onClick={closeOriginal}><ChevronLeft size={18} aria-hidden="true" />날짜 요약으로</button>
     <Suspense fallback={<p role="status">일지를 여는 중이에요.</p>}><OriginalJournal date={date} initialEntryId={selectedEntry?.id} onBack={closeOriginal} /></Suspense>
   </section>
+  if (day.length === 0 && (!onWriteDate || date > today)) return null
   return <section ref={section} className="calendar-journal-detail" aria-label="이날 남긴 기록">
-    <h3 className="calendar-journal-detail__heading">
+    {day.length > 0 && <h3 className="calendar-journal-detail__heading">
       <span>이날 남긴 기록</span>
-      {day.length > 0 && <small className="calendar-journal-detail__count">{day.length}개</small>}
+      <small className="calendar-journal-detail__count">{day.length}개</small>
       <JournalDecorationPreview item={decorationPreviews.get(date)} />
-    </h3>
+    </h3>}
     {day.length === 0 ? <>
-      <p className="calendar-journal-detail__empty">이날 작성한 일지가 없어요.</p>
       {onWriteDate && date <= today && <button type="button" onClick={() => onWriteDate(date)}>
         <PenLine size={18} aria-hidden="true" />이날 일지 쓰기
       </button>}
@@ -140,7 +140,7 @@ export function CalendarJournalDetails({ entries, date, onOpenDay, onWriteDate, 
             <strong>{entryHeading(entry)}</strong>
             <small>{selectedEntry?.id === entry.id ? "선택됨" : `기록 ${index + 1}`}</small>
           </span>
-          <span className="calendar-journal-detail__entry-summary">{entrySummary(entry)}</span>
+          {entrySummary(entry) && <span className="calendar-journal-detail__entry-summary">{entrySummary(entry)}</span>}
         </button>)}
       </div>}
       {selectedEntry && <article id={selectionPanelId} aria-label="선택한 기록 상세">
@@ -180,11 +180,11 @@ function slotLabel(entry: Extract<JournalEntry, { kind: "post-session" }>) {
 function entryHeading(entry: JournalEntry): string {
   if (entry.kind === "post-session") return `${slotLabel(entry)} · 훈련 기록`
   if (entry.kind === "race") return entry.stage === "pre" ? "경기 전 기록" : "경기 결과"
-  return "하루 마무리"
+  return "컨디션·메모"
 }
 
-function entrySummary(entry: JournalEntry): string {
-  if (entry.kind === "evening") return "하루 마무리 기록"
+function entrySummary(entry: JournalEntry): string | null {
+  if (entry.kind === "evening") return null
   const values = entry.kind === "post-session" ? [
     summaryFact(entry, "수행", "activityOutcome", quickOutcomeLabel(entry)),
     summaryFact(entry, "거리", "distanceKm", entry.distanceKm, " km"),

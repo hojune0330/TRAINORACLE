@@ -15,7 +15,6 @@ import { summarizeToDateDistances } from "../domain/cumulative-distance"
 import { projectStructuredJournalObservations } from "../domain/journal-observation"
 import { painLevelsRequireReview } from "../safety/memo-safety"
 import { AccountEntryButton } from "../components/AccountEntryButton"
-import { DailyContextTags } from "./home/DailyContextTags"
 import { TrainingHome } from "./home/TrainingHome"
 import { LatestJournalDay } from "./home/LatestJournalDay"
 import { LOCAL_JOURNALS_CHANGED } from "../domain/journal-change-events"
@@ -169,7 +168,6 @@ export function Home({
         onOpenContent={onOpenContent}
         onOpenRewards={onOpenRewards}
         accountEntry={<AccountEntryButton onOpenAccount={onOpenAccount} />}
-        todayContext={<DailyContextTags date={today} />}
         installSuggestion={<InstallShortcutSuggestion compact eligible={entries.length > 0 || homePlan !== null || accountCurrent !== null || accountAuthState() === "ACCOUNT"} returnFocusTo={() => document.querySelector<HTMLElement>('[data-install-shortcut-return="home"]')} />}
         recentJournal={<LatestJournalDay entries={entries} today={today} storage={{
           readiness: journalSnapshot.status, owner: journalSnapshot.owner, accountStatus: storageStatus,

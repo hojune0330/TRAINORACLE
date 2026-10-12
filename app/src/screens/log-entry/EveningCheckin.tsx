@@ -28,8 +28,9 @@ import { useTaskFlowBack } from "../../hooks/useTaskFlowBack"
 
 const MOOD_LABELS = ["흐림", "무덤덤", "보통", "좋음", "최고"] as const
 const SLEEP_QUALITY_LABELS = ["최악", "나쁨", "보통", "좋음", "최고"] as const
-type EveningStep = "sleep" | "condition" | "metrics" | "memo" | "review"
-type EveningEditGroup = Exclude<EveningStep, "review"> | null
+type EveningInputStep = "sleep" | "condition" | "metrics" | "memo"
+type EveningStep = EveningInputStep | "choose" | "review"
+type EveningEditGroup = EveningInputStep | null
 type EveningLocation = { readonly step: EveningStep; readonly editGroup: EveningEditGroup; readonly returnToReview?: boolean }
 type EveningFlow = { readonly location: EveningLocation; readonly history: readonly EveningLocation[] }
 
@@ -55,7 +56,7 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
   const finalization = useFormFinalization(entryId, accountEnabled, lastSavedAt)
   const entryDate = initial?.date ?? targetDate ?? todayISO()
   const [flow, setFlow] = React.useState<EveningFlow>(() => ({
-    location: { step: initial !== undefined || recovered !== null ? "review" : "sleep", editGroup: null }, history: [],
+    location: { step: initial !== undefined || recovered !== null ? "review" : "choose", editGroup: null }, history: [],
   }))
   const { step, editGroup } = flow.location
   const [sleep, setSleep] = React.useState(() => input?.sleep ?? initial?.sleepH ?? 0)
@@ -89,14 +90,6 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
     }
     navigateTo({ step: "review", editGroup: null })
   }
-  const continueFlow = () => {
-    if (flow.location.returnToReview || editGroup !== null) { enterReview(); return }
-    if (step === "sleep") navigateTo({ step: "condition", editGroup: null })
-    else if (step === "condition") navigateTo({ step: "memo", editGroup: null })
-    else if (step === "memo") enterReview()
-    else if (step === "metrics") enterReview()
-  }
-  const goToMemoOnly = () => navigateTo({ step: "memo", editGroup: null })
   useTaskFlowBack({ enabled: flow.history.length > 0, busy: saving, onBack: goBackFlow })
   React.useEffect(() => {
     if (step === "memo" && note.purposeError !== null) note.privateOptionRef.current?.focus()
@@ -167,17 +160,12 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
   }
 
   const stepTitle: Record<EveningStep, string> = {
+    choose: "무엇을 남길까요?",
     sleep: "어젯밤 수면",
     condition: "오늘 몸 상태와 기분",
     metrics: "체중 · 안정시 심박",
     memo: "오늘 남길 메모",
     review: "입력 확인",
-  }
-  const guidance: Record<Exclude<EveningStep, "review">, string> = {
-    sleep: "수면 시간과 질은 선택 입력이에요. 모르면 비워 두고 넘어가도 괜찮아요.",
-    condition: "몸 상태와 기분은 각각 선택 입력이에요. 입력하지 않아도 됩니다.",
-    metrics: "재지 않은 값은 비워 둬도 괜찮아요.",
-    memo: "메모는 선택이에요. 남기지 않고 입력 확인으로 갈 수 있어요.",
   }
   const painPartCount = Object.values(painParts).filter((level) => level > 0).length
   const sleepSummary = [
@@ -197,13 +185,13 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
   const memoSummary = memoPreview
     ? `${memoPreview.slice(0, 80)}${memoPreview.length > 80 ? "…" : ""}${note.purpose === "PRIVATE_SELF_ONLY" ? " · 나만 보는 메모" : note.purpose === undefined ? " · 용도 미선택" : ""}`
     : "입력 안 함"
-  const reviewItems: Array<{ key: Exclude<EveningStep, "review">; label: string; value: string }> = [
+  const reviewItems: Array<{ key: EveningInputStep; label: string; value: string }> = [
     { key: "sleep", label: "수면", value: sleepSummary },
     { key: "condition", label: "몸 상태 · 기분", value: conditionSummary },
     { key: "metrics", label: "체중 · 안정시 심박", value: metricsSummary },
     { key: "memo", label: "메모", value: memoSummary },
   ]
-  const reviewActionLabel = (key: Exclude<EveningStep, "review">) => {
+  const reviewActionLabel = (key: EveningInputStep) => {
     const hasValue = key === "sleep" ? sleep > 0 || quality > 0
       : key === "condition" ? painPartCount > 0 || mood > 0
         : key === "metrics" ? hasMetricInput
@@ -214,7 +202,7 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
   return (
     <div style={{ paddingBottom: 100 }} aria-busy={saving}>
       <fieldset disabled={saving} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
-      <TopBar onBack={draft.back(onBack)}>회복 · 하루 마무리</TopBar>
+      <TopBar onBack={draft.back(onBack)}>컨디션·메모</TopBar>
       <FormFinalizationRecovery recovery={finalization} onBack={draft.back(onBack)} />
       <div style={{ padding: "14px 20px 0" }}>
         <IndexCard date={compactDate(entryDate)} dow={`${dowOf(entryDate)} · ${nowClock()}`} />
@@ -222,25 +210,23 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
       {step === "review" && emptyNotice && !hasInput && <p role="alert">아직 입력한 내용이 없어요. 남길 항목 하나를 골라 주세요.</p>}
       <TaskFlowStep stepKey={`${step}:${editGroup ?? "flow"}`} title={stepTitle[step]}
         busy={saving} onBack={flow.history.length > 0 ? goBackFlow : undefined}
-        summary={step === "review" ? undefined : <p style={{ margin: 0 }}>{guidance[step]}</p>}
         actions={step === "review" ? <StickyBar onSave={persist} error={saveError && !accountEnabled}
-          label={saving ? "저장 중" : isEditing ? "수정 저장" : undefined} /> : (
+          label={saving ? "저장 중" : isEditing ? "수정 저장" : undefined} /> : step === "choose" ? undefined : (
           <div className="task-flow__actions">
-            {flow.location.returnToReview
-              ? <button type="button" className="quick-log__primary" onClick={enterReview}>입력 확인으로</button>
-              : <>
-                {step === "sleep" && <button type="button" className="quick-log__secondary" onClick={goToMemoOnly}>메모만 남기기</button>}
-                {(step === "sleep" || step === "condition") && <button type="button" className="quick-log__primary" onClick={continueFlow}>다음 질문</button>}
-                {(step === "sleep" || step === "condition") && <button type="button" className="quick-log__secondary" onClick={enterReview}>지금 입력 확인</button>}
-                {(step === "memo" || step === "metrics") && <button type="button" className="quick-log__primary" onClick={continueFlow}>입력 확인으로</button>}
-              </>}
+            <button type="button" className="quick-log__primary" onClick={enterReview}>입력 확인으로</button>
           </div>
         )}>
+
+        {step === "choose" && <nav className="app-choice-group" aria-label="남길 항목" style={{ display: "grid", paddingInline: "var(--space-5)" }}>
+          {([
+            ["condition", "몸 상태·기분"], ["sleep", "수면"], ["memo", "메모 쓰기"], ["metrics", "체중·심박"],
+          ] as const).map(([key, label]) => <button key={key} type="button" className="app-choice-control app-choice-control--answer"
+            onClick={() => navigateTo({ step: key, editGroup: key, returnToReview: true })}>{label}</button>)}
+        </nav>}
 
         {step === "review" && <div className="post-session-review" aria-label="저장 전 입력 확인">
           {note.reviewMessage !== null && <p role="status">{note.reviewMessage}</p>}
           {painLevelsRequireReview(painParts) && <PainReviewBanner />}
-          <p>입력한 내용만 저장해요.</p>
           <dl style={{ display: "grid", gap: 8, margin: 0 }}>
             {reviewItems.filter(item => reviewActionLabel(item.key) === "수정").map((item) => (
               <div key={item.key} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", alignItems: "center", gap: 8, borderBottom: "1px solid var(--line)", paddingBlock: 8 }}>

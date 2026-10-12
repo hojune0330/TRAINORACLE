@@ -260,7 +260,6 @@ export function PlanCandidates({
 
   return (
     <section ref={resultRef} className="plan-candidates" aria-labelledby="plan-candidates-title">
-      <p className="plan-eyebrow">오라클 · 훈련 계획</p>
       <div className="plan-result-header">
       <button className="plan-back" type="button" onClick={onBack} disabled={!canRevise || initialMainPending} aria-label="질문 다시 보기" title="질문 다시 보기">
         <ArrowLeft aria-hidden="true" size={17} />
@@ -297,8 +296,6 @@ export function PlanCandidates({
           {firstWorkout && <dl className="plan-first-workout__facts">
             {firstWorkoutSteps.map((step, index) => <div key={`${step.role}-${index}`}><dt>{step.label}</dt><dd>{step.instruction}</dd></div>)}
           </dl>}
-          {instantAdjustment ? <p className="plan-caption">상세 훈련 · 거리·시간·반복·회복을 확인하고 조절해요.</p>
-            : workoutSummary && <p className="plan-caption">처방 훈련 · {workoutSummary}</p>}
         </section>}
         beforeStart={<>
           <p className="plan-duration-total">{recommendation.durationLabel}</p>
@@ -493,7 +490,6 @@ export function PlanCandidates({
         onClick={() => reveal("result")}>바뀐 날짜의 운동 환경 확인</button>}
       <div ref={optionsRef} tabIndex={-1} role="region" aria-label="다른 계획 비교" className="plan-candidate-list">
         <h2>운동 시간을 비교하고 골라요</h2>
-        <p className="plan-copy">각 운동의 1회 시간을 확인해 주세요. 계획 이름만으로 강도나 운동량을 나누지 않아요.</p>
         {generated.candidates.map((candidate) => (
           <CandidateSection
             key={candidate.kind}
@@ -524,14 +520,6 @@ export function PlanCandidates({
       {recommendation?.reason && <p>{recommendation.reason}</p>}
       {generated.racePlacement.kind === "NO_TARGET_RACE" && <RacePlacementNotice state={generated.racePlacement} />}
         <CandidateComparison candidates={generated.candidates} />
-      <h2>이 계획은 어떤 정보로 만들었나요?</h2>
-      <p className="plan-copy">
-        {prescriptionBinding.kind === "bound"
-          ? `직접 고르고 확인한 ${selectedEventLabel} 기록으로 주요 훈련 한 번의 페이스를 계산했어요. 다른 훈련의 시간·힘든 정도는 바꾸지 않아요.`
-          : generated.sourceMode === "PROFILE_ONLY"
-          ? "고른 목표·경험·운동할 날로 만들었어요. 아래에서 조금씩 다듬을 수 있어요."
-          : "최근 일지가 있는지만 확인했어요. 일지에 남긴 거리·힘든 정도·메모로 계획을 바꾸지 않아요."}
-      </p>
       <h2>기준 기록·참가 부문·이전 계획</h2>
       <div className="plan-source-strip">
         <ShieldCheck aria-hidden="true" size={17} />

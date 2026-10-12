@@ -14,13 +14,13 @@ export function EntryDeleteRow({ entryId, onDelete }: { entryId: string; onDelet
   )
 }
 
-export function SyncChip() {
+export function SyncChip({ label }: { readonly label: string }) {
   return (
     <span style={{
       fontFamily: "var(--mono)", fontSize: 8.5, letterSpacing: "0.1em",
       color: "var(--ink-4)",
       border: "1px solid var(--hair)", padding: "2px 5px", whiteSpace: "nowrap",
-    }}>이 기기</span>
+    }}>{label}</span>
   )
 }
 

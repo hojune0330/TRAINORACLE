@@ -47,7 +47,7 @@ test("moves from a choice to the next question and gives a clear journal save co
   expect(activePlanBefore).toBeNull()
 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
-  await expect(page.getByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "무엇을 기록할까요?" })).toBeVisible()
   await page.getByRole("button", { name: /자세히 기록.*운동별로 자세히/u }).click()
   await expect(page.getByRole("heading", { name: "훈련 후 · 기록" })).toBeVisible()
   await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()

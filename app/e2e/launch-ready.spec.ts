@@ -84,14 +84,16 @@ test("moves a first visitor from WELCOME to JOURNAL after a real first save", as
     return Array.isArray(parsed) ? parsed.length : -1
   })).toBe(1)
   await expect(page.getByRole("heading", { name: "내 기록", exact: true })).toBeVisible()
-  await expect(page.getByText("오늘 기록을 남겼어요.", { exact: true })).toBeVisible()
+  await expect(page.getByText("오늘 남긴 기록 1개", { exact: true })).toBeVisible()
   await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기" })).toHaveCount(0)
-  await expect(page.getByRole("button", { name: "하루 마무리 기록하기" })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "컨디션·메모 기록하기" })).toHaveCount(0)
 
   await page.getByRole("button", { name: "기록 더 남기기" }).click()
-  await expect(page.getByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
-  await page.getByRole("button", { name: /하루 마무리.*메모·수면·기분·몸 상태/u }).click()
-  await expect(page.getByRole("heading", { name: /회복.*하루 마무리/u })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "무엇을 기록할까요?" })).toBeVisible()
+  await page.getByRole("button", { name: /컨디션·메모.*수면·몸 상태·기분·메모/u }).click()
+  await expect(page.getByRole("heading", { name: "무엇을 남길까요?" })).toBeVisible()
+  await page.getByRole("button", { name: "수면", exact: true }).click()
+  await expect(page.getByRole("heading", { name: "어젯밤 수면" })).toBeVisible()
 })
 
 test("generates selectable 9-day candidates from first-screen intake", async ({ page }) => {
@@ -213,7 +215,6 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
 test("reads a detailed training notation without creating a plan", async ({ page }) => {
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
-  await page.locator("summary", { hasText: "기록 관리·훈련표 읽기" }).click()
   await page.getByRole("button", { name: "훈련표 표기 읽기" }).click()
   await page.getByRole("textbox", { name: "훈련표 표기" }).fill(
     "2×(10×400m) @5000m RP · r60″ STAND · R3′ STAND",

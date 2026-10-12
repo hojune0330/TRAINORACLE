@@ -5,6 +5,7 @@ import {
   expectMinimumTouchSize,
   expectNoHorizontalOverflow,
   openEntry,
+  openEveningStage,
   seedTouchAuditEntries,
 } from "./touch-audit"
 
@@ -38,7 +39,7 @@ test("audits empty home and chooser touch actions", async ({ page }, testInfo) =
   await auditTouchTargets(page, [
     { name: "chooser.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
     { name: "chooser.post", locator: page.getByRole("button", { name: /자세히 기록.*운동별로 자세히/u }), heightOnly: true },
-    { name: "chooser.evening", locator: page.getByRole("button", { name: /하루 마무리.*메모·수면·기분·몸 상태/u }), heightOnly: true },
+    { name: "chooser.evening", locator: page.getByRole("button", { name: /컨디션·메모.*수면·몸 상태·기분·메모/u }), heightOnly: true },
     { name: "chooser.race", locator: page.getByRole("button", { name: /경기 기록.*경기 전후 기록·컨디션/u }), heightOnly: true },
   ])
   await expectNoHorizontalOverflow(page)
@@ -127,12 +128,12 @@ test("saves post-session and evening entries through the mobile shell", async ({
   await page.getByRole("button", { name: /^저장/u }).click()
   await page.getByRole("button", { name: "닫기", exact: true }).click()
   await expect(page.getByRole("button", { name: /기록 1개 보기 · 훈련 1/u })).toHaveCount(1)
-  await openEntry(page, /하루 마무리/u)
+  await openEveningStage(page, "수면")
   await page.getByRole("button", { name: /^수면 질 3/u }).click()
-  await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
   await page.getByRole("button", { name: /^저장/u }).click()
   await page.getByRole("button", { name: "닫기", exact: true }).click()
-  await expect(page.getByRole("button", { name: /기록 2개 보기 · 훈련 1 · 하루 마무리 1/u })).toHaveCount(1)
+  await expect(page.getByRole("button", { name: /기록 2개 보기 · 훈련 1 · 컨디션·메모 1/u })).toHaveCount(1)
 })
 
 test("keeps the review toast dismissal touchable", async ({ page }, testInfo) => {

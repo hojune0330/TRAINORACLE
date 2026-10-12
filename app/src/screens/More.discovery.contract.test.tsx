@@ -16,9 +16,10 @@ it("restores the management opener and scroll when returning to More", async () 
   expect(region.scrollTop).toBe(350)
 })
 
-it("exposes a destination's supporting description without making its name verbose", () => {
+it("does not repeat a destination name as a heading or supporting description", () => {
   render(<More onBack={vi.fn()} onOpenMinji={vi.fn()} onOpenGuide={vi.fn()} onOpenRewards={vi.fn()} />)
-  expect(screen.getByRole("button", { name: "일지 꾸미기" })).toHaveAccessibleDescription("달력 꾸미기 · 포인트는 재료에서 확인")
+  expect(screen.getByRole("button", { name: "일지 꾸미기" })).not.toHaveAccessibleDescription()
+  expect(screen.queryByRole("heading", { name: "일지 꾸미기", level: 2 })).toBeNull()
 })
 
 it("shows learning and decoration destinations directly in More", () => {
@@ -31,6 +32,7 @@ it("shows learning and decoration destinations directly in More", () => {
     ["오라클 읽을거리", "onOpenOracleLibrary"],
     ["훈련법 읽기", "onOpenContent"],
     ["일지 꾸미기", "onOpenRewards"],
+    ["미니게임", "onOpenMinigame"],
     ["민지의 예시 일지", "onOpenMinji"],
     ["훈련 용어집·도움말", "onOpenGuide"],
   ] as const
@@ -44,6 +46,7 @@ it("shows learning and decoration destinations directly in More", () => {
     expect(actions[key]).toHaveBeenCalledOnce()
   }
   expect(screen.getByText("저장 없이 내 기록·친구 기록 비교")).toBeVisible()
+  expect(screen.getByText("러닝 투어 · 서울에서 런던까지")).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: "백업·복원·휴지통" }))
   expect(screen.getByRole("button", { name: "내려받은 백업 되돌리기" })).toBeVisible()
 })
@@ -52,7 +55,9 @@ it("does not advertise tools whose callbacks are unavailable", () => {
   render(<More onBack={vi.fn()} onOpenMinji={vi.fn()} onOpenGuide={vi.fn()} />)
   expect(screen.queryByRole("button", { name: "오라클 읽을거리" })).toBeNull()
   expect(screen.queryByRole("button", { name: "워치 파일 가져오기" })).toBeNull()
-  fireEvent.click(screen.getByRole("button", { name: "앱 정보·개인정보·문의" }))
+  const about = screen.getByRole("button", { name: "앱 정보·개인정보·문의" })
+  expect(about).not.toHaveAccessibleDescription()
+  fireEvent.click(about)
   expect(screen.getByRole("link", { name: /^기기 연동 상태/ })).toBeVisible()
 })
 
@@ -104,7 +109,7 @@ it("returns a restored learning view to the More tools list", () => {
   const change = vi.fn()
   const props = { onBack: vi.fn(), onOpenMinji: vi.fn(), onOpenGuide: vi.fn(), onViewChange: change }
   const view = render(<More {...props} view="learning" />)
-  expect(screen.getByRole("heading", { name: "훈련 배우기·일지 꾸미기" })).toBeVisible()
+  expect(screen.getByRole("heading", { name: "훈련 배우기" })).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: "더보기로 돌아가기" }))
   expect(change).toHaveBeenCalledWith("tools")
   view.rerender(<More {...props} view="tools" />)

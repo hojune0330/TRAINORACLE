@@ -31,7 +31,7 @@ describe("latest journal day concise information and storage proof", () => {
     render(<LatestJournalDay entries={entries} today={TODAY} storage={context()} onOpenDay={openDay} />)
     const day = screen.getByRole("button", { name: "2026년 10월 11일 기록 1개 보기 · 훈련 1" })
     expect(day.querySelector("strong")).toHaveTextContent("10월 11일 · 훈련")
-    expect(day).toHaveAccessibleDescription("이 기기만 · 가져온 기록 포함")
+    expect(day).toHaveAccessibleDescription("이 브라우저에 저장됨 · 가져온 기록 포함")
     fireEvent.click(day)
     expect(openDay).toHaveBeenCalledWith("2026-10-11")
     expect(entries).toEqual(before)
@@ -41,10 +41,10 @@ describe("latest journal day concise information and storage proof", () => {
   it("shows a different year and every kind/count in a single grouped destination", () => {
     const entries = [ENTRY, { ...ENTRY, id: "synthetic-second" }, EVENING].map(entry => ({ ...entry, date: "2025-12-31" }))
     render(<LatestJournalDay entries={entries} today={TODAY} storage={context()} />)
-    const day = screen.getByRole("button", { name: "2025년 12월 31일 기록 3개 보기 · 훈련 2 · 하루 마무리 1" })
+    const day = screen.getByRole("button", { name: "2025년 12월 31일 기록 3개 보기 · 훈련 2 · 컨디션·메모 1" })
     expect(day.querySelector("strong")).toHaveTextContent("2025년 12월 31일 · 기록 3개")
-    expect(day).toHaveTextContent("훈련 2 · 하루 마무리 1")
-    expect(day).toHaveAccessibleDescription("이 기기만 · 3개")
+    expect(day).toHaveTextContent("훈련 2 · 컨디션·메모 1")
+    expect(day).toHaveAccessibleDescription("이 브라우저에 저장됨")
     expect(screen.getAllByRole("button", { name: /기록 3개 보기/ })).toHaveLength(1)
   })
 
@@ -55,7 +55,7 @@ describe("latest journal day concise information and storage proof", () => {
     })} />)
     const day = screen.getByRole("button", { name: /기록 2개 보기/ })
     expect(day).toHaveAccessibleDescription("계정 보관 1개 · 기기 보관 1개 · 계정 저장 미확인")
-    expect(day).not.toHaveTextContent("이 기기만")
+    expect(day).not.toHaveTextContent("이 브라우저에 저장됨")
   })
 
   it("does not promote an acknowledged cache to current account confirmation when READY follows another receipt", () => {
@@ -97,7 +97,7 @@ describe("latest journal day concise information and storage proof", () => {
     const day = screen.getByRole("button", { name: /기록 1개 보기/ })
     expect(day).toHaveAccessibleDescription("보관된 기록 · 계정 저장 미확인")
     expect(day).not.toHaveTextContent("계정 보관")
-    expect(day).not.toHaveTextContent("이 기기만")
+    expect(day).not.toHaveTextContent("이 브라우저에 저장됨")
   })
 
   it("leaves storage unconfirmed without context or with an unreadable guest snapshot", () => {

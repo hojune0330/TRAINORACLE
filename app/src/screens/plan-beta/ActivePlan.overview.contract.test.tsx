@@ -63,9 +63,10 @@ describe("active plan first-view overview", () => {
     render(<ActivePlan state={state} {...callbacks} />)
 
     expect(screen.getByRole("heading", { level: 1, name: "9일 훈련 계획" })).toBeVisible()
-    expect(screen.getByText("기간·운동 시간").closest("details")).not.toHaveAttribute("open")
-    await userEvent.setup().click(screen.getByText("기간·운동 시간"))
     expect(screen.getByText("8월 27일(목) - 9월 4일(금)")).toBeVisible()
+    expect(screen.getByText("8월 27일(목) - 9월 4일(금)").closest("details")).toBeNull()
+    expect(screen.getByText("훈련 구성·시간").closest("details")).not.toHaveAttribute("open")
+    await userEvent.setup().click(screen.getByText("훈련 구성·시간"))
     const buildSummary = screen.getByRole("list", { name: "계획 구성 요약" })
     const summaryItems = within(buildSummary).getAllByRole("listitem")
     expect(summaryItems[0]).toHaveTextContent("5000m")
@@ -143,7 +144,7 @@ describe("active plan first-view overview", () => {
   it("does not claim two workouts per day just because the setting allows them", async () => {
     const state = overviewState()
     render(<ActivePlan state={{ ...state, activePlan: { ...state.activePlan, sessions: [state.activePlan.sessions[0]!] } }} {...callbacks} />)
-    await userEvent.setup().click(screen.getByText("기간·운동 시간"))
+    await userEvent.setup().click(screen.getByText("훈련 구성·시간"))
     expect(screen.getByRole("list", { name: "계획 구성 요약" })).toHaveTextContent("예정된 운동 1회")
     expect(screen.getByRole("list", { name: "계획 구성 요약" })).not.toHaveTextContent("하루 2회")
   })

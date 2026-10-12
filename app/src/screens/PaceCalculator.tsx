@@ -97,7 +97,6 @@ export function PaceCalculator({ request = {}, stage, onStageChange, onBack }: {
       <span>오라클 · 페이스 계산</span>
       <button type="button" onClick={closeTool} aria-label="페이스 도구 닫기" title="페이스 도구 닫기"><X size={18} /></button></header>
     <TaskGuide as="h1" ref={heading} tabIndex={-1} title={titles[stage]}
-      description={stage === "event" ? "기록으로 거리별 평균 시간을 계산해요." : undefined}
       illustration={stage === "event" ? "pace-stopwatch" : undefined} />
     {message && <p role="status">{message}</p>}
     {stage === "event" && <>

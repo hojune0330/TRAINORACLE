@@ -74,7 +74,7 @@ test("keeps the welcome home clear and usable on narrow phones", async ({ page }
   await page.getByRole("button", { name: "← 뒤로", exact: true }).click()
   await expect(page.getByRole("button", { name: "오늘 기록 남기기", exact: true })).toBeVisible()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
-  const heading = page.getByRole("heading", { name: "어떤 일지를 쓰세요?" })
+  const heading = page.getByRole("heading", { name: "무엇을 기록할까요?" })
   await expect(heading).toBeFocused()
   await expect(page.getByRole("button", { name: /경기 기록.*경기 전후 기록·컨디션/u })).toBeInViewport()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)

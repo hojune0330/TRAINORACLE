@@ -11,16 +11,16 @@ it("names both multi-exercise and memo choices without adding another required c
   const pick = vi.fn()
   render(<EntryChooser onPick={pick} />)
   expect(screen.getByRole("button", { name: /자세히 기록.*운동별로 자세히/ })).toBeVisible()
-  fireEvent.click(screen.getByRole("button", { name: /하루 마무리.*메모·수면·기분·몸 상태/ }))
+  fireEvent.click(screen.getByRole("button", { name: /컨디션·메모.*수면·몸 상태·기분·메모/ }))
   expect(pick).toHaveBeenCalledWith("evening")
 })
 
 it("allows a memo-only route without inventing recovery measurements", () => {
   render(<EveningCheckin />)
-  expect(screen.getByRole("heading", { level: 2, name: "어젯밤 수면" })).toBeVisible()
-  expect(screen.getByRole("slider", { name: "수면 시간" })).toBeVisible()
+  expect(screen.getByRole("heading", { level: 2, name: "무엇을 남길까요?" })).toBeVisible()
+  expect(screen.queryByRole("slider", { name: "수면 시간" })).toBeNull()
   expect(screen.queryByRole("textbox", { name: "오늘의 메모" })).toBeNull()
-  fireEvent.click(screen.getByRole("button", { name: "메모만 남기기" }))
+  fireEvent.click(screen.getByRole("button", { name: "메모 쓰기" }))
   const note = screen.getByRole("textbox", { name: "오늘의 메모" })
   fireEvent.click(screen.getByRole("radio", { name: "훈련 메모" }))
   fireEvent.change(note, { target: { value: "합성 하루 메모" } })
@@ -36,10 +36,10 @@ it("allows a memo-only route without inventing recovery measurements", () => {
 
 it("keeps each selected answer in a concise review instead of rendering the full form", () => {
   render(<EveningCheckin />)
-  fireEvent.click(screen.getByRole("button", { name: "다음 질문" }))
+  fireEvent.click(screen.getByRole("button", { name: "몸 상태·기분" }))
   expect(screen.getByRole("heading", { level: 2, name: "오늘 몸 상태와 기분" })).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: "감정 4 좋음" }))
-  fireEvent.click(screen.getByRole("button", { name: "지금 입력 확인" }))
+  fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
 
   expect(screen.getByRole("heading", { level: 2, name: "입력 확인" })).toBeVisible()
   expect(screen.getByText("기분 좋음")).toBeVisible()

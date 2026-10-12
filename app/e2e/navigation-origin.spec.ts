@@ -50,5 +50,5 @@ test("returns every audited child screen to the screen that opened it", async ({
   await page.getByRole("button", { name: /^워치 기록 불러오기/u }).click()
   await expect(page.getByRole("heading", { name: "워치 기록 불러오기" })).toBeVisible()
   await page.getByRole("button", { name: "뒤로" }).click()
-  await expect(page.getByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "무엇을 기록할까요?" })).toBeVisible()
 })

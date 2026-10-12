@@ -6,6 +6,7 @@ import {
   expectNoHorizontalOverflow,
   meetsTouchContract,
   openEntry,
+  openEveningStage,
 } from "./touch-audit"
 
 function requireTouchProject(projectName: string) {
@@ -101,7 +102,7 @@ test("keeps core journal controls at least 44px tall", async ({ page }, testInfo
 
 test("keeps the journal title centered at touch widths", async ({ page }, testInfo) => {
   requireTouchProject(testInfo.project.name)
-  for (const entryName of [/자세히 기록.*운동별로 자세히/u, /하루 마무리/u, /경기 기록.*경기 전후 기록·컨디션/u]) {
+  for (const entryName of [/자세히 기록.*운동별로 자세히/u, /컨디션·메모/u, /경기 기록.*경기 전후 기록·컨디션/u]) {
     await openEntry(page, entryName)
     const topbarBox = await page.locator(".entry-topbar").boundingBox()
     const titleBox = await page.locator(".entry-topbar__title").boundingBox()
@@ -141,7 +142,7 @@ test("lays out ten-point scales as two ordered rows on narrow touch screens", as
 
 test("keeps evening controls and every body-part selector touchable", async ({ page }, testInfo) => {
   requireTouchProject(testInfo.project.name)
-  await openEntry(page, /하루 마무리/u)
+  await openEveningStage(page, "수면")
   const bodyParts = [
     { id: "rKnee", name: "오른 무릎" }, { id: "lKnee", name: "왼 무릎" },
     { id: "rCalf", name: "오른 종아리" }, { id: "lCalf", name: "왼 종아리" },
@@ -165,7 +166,7 @@ test("keeps evening controls and every body-part selector touchable", async ({ p
   await expect(sleepFirst).toHaveAttribute("aria-pressed", "false")
   await expect(sleepLast).toHaveAttribute("aria-pressed", "true")
   await expectNoHorizontalOverflow(page)
-  await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
   await page.getByRole("button", { name: /^체중 · 안정시 심박 (입력|수정)$/u }).click()
   await auditTouchTargets(page, [
     { name: "evening.weight", locator: page.getByRole("textbox", { name: "체중 (kg)" }), heightOnly: true },
@@ -189,7 +190,7 @@ test("keeps evening controls and every body-part selector touchable", async ({ p
   expect(orderedLabels.map((label) => label.split(",")[0])).toEqual(bodyPartNames)
   // 몸 그림은 닫힌 상태로 시작한다 (작업지시서 UX1 §2-3).
   // 그림은 aria-hidden 이고 onClick 도 없어서 고르는 데 쓰이지 않는데
-  // 하루 마무리 화면 길이의 절반(476px)을 먹었다. 접어도 기능 손실은 없다.
+  // 컨디션·메모 화면 길이의 절반(476px)을 먹었다. 접어도 기능 손실은 없다.
   // 닫혀 있어도 <svg> 는 DOM 에 남으므로 [data-body-part] 는 계속 읽힌다.
   await expect(page.locator(".body-pain-selector")).toHaveAttribute("data-diagram-open", "false")
   expect(await page.locator('[data-body-part="rKnee"]').getAttribute("r")).toBe("6")

@@ -37,6 +37,19 @@ describe("journal reader chrome", () => {
     expect(heading).toHaveTextContent("2026 · 09 · 27")
   })
 
+  it("labels a local record by its actual browser storage", () => {
+    render(<LogDetail date={date} entries={[entry]} />)
+    expect(screen.getByText("이 브라우저에 저장됨")).toBeVisible()
+    expect(screen.queryByText("이 기기")).toBeNull()
+    expect(screen.queryByText(/이 페이지는 이 기기에만 저장돼/u)).toBeNull()
+  })
+
+  it("does not label a legacy synced flag as browser-only storage", () => {
+    render(<LogDetail date={date} entries={[{ ...entry, syncState: "synced" }]} />)
+    expect(screen.queryByText("이 브라우저에 저장됨")).toBeNull()
+    expect(screen.queryByText("저장 위치·상태 확인")).toBeNull()
+  })
+
   it("keeps the reader background plain while retaining the saved theme and placement", () => {
     const base = createEmptyDecorationState()
     const state = decorationStateSchema.parse({

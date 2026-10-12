@@ -18,7 +18,7 @@ test("starts a journal directly from the empty archive", async ({ page }) => {
   await expect(page.getByText("예시 · 내 기록에 저장되지 않아요", { exact: true })).toBeVisible()
   await page.getByRole("button", { name: "내 첫 기록 남기기", exact: true }).click()
 
-  await expect(page.getByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "무엇을 기록할까요?" })).toBeVisible()
 })
 
 test("starts a journal directly from the empty analysis screen", async ({ page }) => {
@@ -29,7 +29,7 @@ test("starts a journal directly from the empty analysis screen", async ({ page }
   await expect(page.getByText("남긴 운동으로 훈련량과 변화를 살펴봐요.", { exact: true })).toBeVisible()
   await page.getByRole("button", { name: "첫 기록 남기기" }).click()
 
-  await expect(page.getByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "무엇을 기록할까요?" })).toBeVisible()
 })
 
 test("keeps the empty cycle action inside a mobile viewport", async ({ page }) => {

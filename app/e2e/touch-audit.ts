@@ -40,6 +40,12 @@ export async function openEntry(page: Page, entryName: RegExp) {
   await page.getByRole("button", { name: entryName }).click()
 }
 
+export async function openEveningStage(page: Page, stage: "수면" | "몸 상태·기분" | "메모 쓰기" | "체중·심박") {
+  await openEntry(page, /컨디션·메모/u)
+  await expect(page.getByRole("heading", { name: "무엇을 남길까요?", exact: true })).toBeVisible()
+  await page.getByRole("button", { name: stage, exact: true }).click()
+}
+
 export async function expectMinimumTouchHeight(target: Locator) {
   const box = await target.boundingBox()
   expect(box).not.toBeNull()

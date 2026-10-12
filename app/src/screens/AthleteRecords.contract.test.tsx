@@ -58,10 +58,9 @@ describe("athlete record entry surface", () => {
     render(<PlanBeta onManageRecords={onManageRecords} />)
 
     const user = userEvent.setup()
-    const tools = screen.getByText("기록 관리·훈련표 읽기").closest("details")!
-    expect(tools.open).toBe(false)
+    const tools = screen.getByRole("group", { name: "경기 기록·훈련표 표기" })
+    expect(tools.closest("details")).toBeNull()
     expect(onManageRecords).not.toHaveBeenCalled()
-    await user.click(within(tools).getByText("기록 관리·훈련표 읽기"))
     await user.click(within(tools).getByRole("button", {
       name: "내 경기 기록",
     }))
@@ -76,7 +75,7 @@ describe("athlete record entry surface", () => {
 
     await user.click(screen.getByRole("button", { name: "계획으로" }))
     expect(screen.getByRole("heading", { name: "어떤 종목을 준비하세요?" })).toBeVisible()
-    expect(tools.open).toBe(true)
+    expect(screen.getByRole("group", { name: "경기 기록·훈련표 표기" })).toBeVisible()
     expect(window.localStorage.getItem(ATHLETE_RECORDS_STORAGE_KEY)).toBeNull()
   })
 

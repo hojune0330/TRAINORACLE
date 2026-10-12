@@ -59,12 +59,10 @@ export function GoalProgramEntry({ today, readToday, onPreview, onBack, disabled
     <button type="button" className="instant-plan__step-back" disabled={disabled} onClick={back}>
       <ArrowLeft size={18} aria-hidden="true" />{goal === null ? "뒤로" : "목표 다시 선택"}
     </button>
-    <p className="instant-plan__hint">{goal === null ? "1 / 4 · 목표" : "2 / 4 · 날짜"}</p>
     <h2 id={`${id}-heading`} ref={heading} tabIndex={-1} className="instant-plan__step-heading">
       {goal === null ? "10km, 몇 분을 목표로 할까요?" : "언제 시작할까요?"}
     </h2>
     {goal === null ? <>
-      <p className="instant-plan__hint">기록 입력 없이 훈련표부터 볼 수 있어요.</p>
       <div className="instant-plan__step-choices instant-plan__basis-choices app-choice-group" role="group" aria-label="10km 목표 선택">
         {TEN_K_GOAL_MINUTES.map(value => <button type="button" key={value} disabled={disabled}
           className="instant-plan__step-choice app-choice-control app-choice-control--answer"
@@ -73,7 +71,7 @@ export function GoalProgramEntry({ today, readToday, onPreview, onBack, disabled
         </button>)}
       </div>
     </> : <form noValidate onSubmit={event => { event.preventDefault(); preview() }} className="instant-plan__step">
-      <p>10km {goal}분 목표 · 약 한 달 · 하루 최대 1회</p>
+      <p>10km {goal}분 목표 · 한 달 · 9.5일 × 3</p>
       <fieldset disabled={disabled} className="instant-plan__fields">
         <legend>훈련표 날짜</legend>
         <div className="instant-plan__step-choices instant-plan__basis-choices app-choice-group">
@@ -91,7 +89,7 @@ export function GoalProgramEntry({ today, readToday, onPreview, onBack, disabled
               setError(null); setTooClose(false)
             }} />
         </div>}
-        {mode === "DEADLINE" && <p className="instant-plan__hint">날짜만 맞춰요. 대회 전 훈련량을 자동으로 줄이지는 않아요.</p>}
+        {mode === "DEADLINE" && <p className="instant-plan__hint">대회 전 훈련량은 자동으로 줄이지 않아요.</p>}
       </fieldset>
       {error && <p id={`${id}-error`} role="alert">{error}</p>}
       {tooClose && <button type="button" className="instant-plan__button" disabled={disabled} onClick={() => preview(true)}>

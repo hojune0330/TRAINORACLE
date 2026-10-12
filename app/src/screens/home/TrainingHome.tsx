@@ -1,7 +1,6 @@
 import { BookOpen, CheckCircle2, ChevronRight, Ellipsis, NotebookPen, PencilLine } from "lucide-react"
 import { useId, type ReactNode } from "react"
 import type { HomeSession, TrainingHomeViewModel } from "../../domain/home-view-model"
-import { InfoDisclosure } from "../../components/InfoDisclosure"
 import { AppHeading } from "../../components/AppHeading"
 import type { OracleTopicId } from "../../domain/oracle-exploration"
 import { sessionWorkoutNotation } from "../../domain/workout-notation"
@@ -32,7 +31,6 @@ type TrainingHomeProps = {
   readonly oraclePreviewLabel?: string
   readonly recordStart?: ReactNode
   readonly accountEntry?: ReactNode
-  readonly todayContext?: ReactNode
   readonly recentJournal?: ReactNode
   readonly installSuggestion?: ReactNode
   readonly journalReadiness?: CalendarReadiness
@@ -42,7 +40,7 @@ type TrainingHomeProps = {
 export function TrainingHome({
   model, onWriteLog, onOpenArchive, onOpenToday, onOpenGuide, onOpenPlan, onOpenTrends,
   onOpenOracle, onOpenMore, onOpenContent, onOpenRewards, onOpenNextTraining,
-  safetyNotice, oraclePreview, recordStart, accountEntry, todayContext, recentJournal, installSuggestion,
+  safetyNotice, oraclePreview, recordStart, accountEntry, recentJournal, installSuggestion,
   journalReadiness = "READY", analysisAvailable = false,
 }: TrainingHomeProps) {
   const next = model.nextTraining
@@ -67,9 +65,9 @@ export function TrainingHome({
         <AppHeading id="home-hub-title" variant="hero" accent>{model.homeMode === "WELCOME" ? "오늘 운동을 기록해요" : model.homeMode === "TRAINING" ? "훈련과 기록" : "내 기록"}</AppHeading>
       </section>
 
-      {model.homeMode === "WELCOME" ? <WelcomeToday onWriteLog={onWriteLog} onOpenPlan={onOpenPlan} todayContext={todayContext} /> : <>
+      {model.homeMode === "WELCOME" ? <WelcomeToday onWriteLog={onWriteLog} onOpenPlan={onOpenPlan} /> : <>
         {next !== null && <NextTrainingCard next={next} onOpen={nextAction} />}
-        <TodaySection model={model} readiness={journalReadiness} onWriteLog={onWriteLog} onOpenToday={onOpenToday} todayContext={todayContext} />
+        <TodaySection model={model} readiness={journalReadiness} onWriteLog={onWriteLog} onOpenToday={onOpenToday} />
       </>}
 
       {model.homeMode !== "WELCOME" && hasJournalHistory && <section className="home-hub__summary">
@@ -83,7 +81,7 @@ export function TrainingHome({
 
       {oraclePreview ? oraclePreview
         : onOpenOracle && <button className="home-hub__text-action" type="button" onClick={() => onOpenOracle("level")}>오라클 결과 보기<ChevronRight aria-hidden="true" size={17} /></button>}
-      {recordStart && journalReadiness === "READY" && <InfoDisclosure purpose="actions" title="운동 파일·최고기록 가져오기">{recordStart}</InfoDisclosure>}
+      {recordStart && journalReadiness === "READY" && recordStart}
 
       {onOpenTrends && <section className="home-hub__summary" aria-label="훈련 기록 분석">
         <SummaryRow label="훈련량·변화 보기" detail={journalReadiness === "READY" && analysisAvailable && hasJournalHistory ? model.analysisSummary : undefined} onClick={onOpenTrends} />
@@ -100,13 +98,13 @@ export function TrainingHome({
   )
 }
 
-function WelcomeToday({ onWriteLog, onOpenPlan, todayContext }: { onWriteLog?: (entryType?: LogEntryType) => void; onOpenPlan?: () => void; todayContext?: ReactNode }) {
+function WelcomeToday({ onWriteLog, onOpenPlan }: { onWriteLog?: (entryType?: LogEntryType) => void; onOpenPlan?: () => void }) {
   return <section className="home-hub__today home-hub__today--welcome" aria-label="오늘의 활동">
     <nav aria-label="오늘 기록 또는 계획 만들기">
     <button className="home-hub__primary" type="button" onClick={() => onWriteLog?.("quick-session")}><PencilLine aria-hidden="true" size={19} /><span>오늘 운동 기록 쓰기</span><ChevronRight aria-hidden="true" size={18} /></button>
     <button className="home-hub__text-action" type="button" onClick={onOpenPlan}>훈련 계획 만들기<ChevronRight aria-hidden="true" size={17} /></button>
     </nav>
-    <OptionalDailyEntries onWriteLog={onWriteLog} todayContext={todayContext} />
+    <OptionalDailyEntries onWriteLog={onWriteLog} />
   </section>
 }
 
@@ -122,25 +120,23 @@ function NextTrainingCard({ next, onOpen }: { next: NonNullable<TrainingHomeView
   </section>
 }
 
-function TodaySection({ model, readiness, onWriteLog, onOpenToday, todayContext }: { model: TrainingHomeViewModel; readiness: CalendarReadiness; onWriteLog?: (entryType?: LogEntryType) => void; onOpenToday?: () => void; todayContext?: ReactNode }) {
+function TodaySection({ model, readiness, onWriteLog, onOpenToday }: { model: TrainingHomeViewModel; readiness: CalendarReadiness; onWriteLog?: (entryType?: LogEntryType) => void; onOpenToday?: () => void }) {
   const confirmedTodayRecordCount = readiness === "READY" ? model.todayRecordCount : 0
   const confirmedBriefing = readiness === "READY" ? model.briefing : ""
-  return <section className={`home-hub__today${confirmedTodayRecordCount === 0 ? " home-hub__today--record-action" : ""}`} aria-labelledby="home-hub-today">
-    <AppHeading as="h2" variant="section" id="home-hub-today" className="home-hub__section-label">오늘</AppHeading>
+  return <section className={`home-hub__today${confirmedTodayRecordCount === 0 ? " home-hub__today--record-action" : ""}`} aria-label="오늘">
     {confirmedTodayRecordCount > 0 ? <div className="home-hub__today-complete">
-      <div className="home-hub__status"><CheckCircle2 aria-hidden="true" size={21} /><span><strong>오늘 기록을 남겼어요.</strong><small>오늘 남긴 기록 {confirmedTodayRecordCount}개</small></span></div>
+      <div className="home-hub__status"><CheckCircle2 aria-hidden="true" size={21} /><strong>오늘 남긴 기록 {confirmedTodayRecordCount}개</strong></div>
       {confirmedBriefing !== "" && <p className="home-hub__briefing" aria-label="오늘 기록 요약">{confirmedBriefing}</p>}
       <div className="home-hub__today-actions"><button className="home-hub__text-action" type="button" onClick={onOpenToday}>오늘 기록 보기<ChevronRight aria-hidden="true" size={17} /></button><button className="home-hub__text-action" type="button" onClick={() => onWriteLog?.()}>기록 더 남기기<ChevronRight aria-hidden="true" size={17} /></button></div>
     </div> : <><button className="home-hub__primary" type="button" onClick={() => onWriteLog?.("quick-session")}><PencilLine aria-hidden="true" size={19} /><span>오늘 운동 기록 쓰기</span><ChevronRight aria-hidden="true" size={18} /></button>{confirmedBriefing !== "" && <p className="home-hub__briefing" aria-label="아침 브리핑">{confirmedBriefing}</p>}</>}
-    <OptionalDailyEntries onWriteLog={onWriteLog} todayContext={todayContext} />
+    <OptionalDailyEntries onWriteLog={onWriteLog} />
   </section>
 }
 
-function OptionalDailyEntries({ onWriteLog, todayContext }: { onWriteLog?: (entryType?: LogEntryType) => void; todayContext?: ReactNode }) {
-  if (!onWriteLog && !todayContext) return null
+function OptionalDailyEntries({ onWriteLog }: { onWriteLog?: (entryType?: LogEntryType) => void }) {
+  if (!onWriteLog) return null
   return <div className="home-hub__optional-records" role="group" aria-label="선택해서 남기는 기록">
-    {onWriteLog && <button className="home-hub__text-action" type="button" onClick={() => onWriteLog("evening")}>하루 마무리<ChevronRight aria-hidden="true" size={16} /></button>}
-    {todayContext && <InfoDisclosure className="home-hub__context-entry" purpose="actions" title="기분·몸 상태">{todayContext}</InfoDisclosure>}
+    <button className="home-hub__text-action" type="button" onClick={() => onWriteLog("evening")}>컨디션·메모<ChevronRight aria-hidden="true" size={16} /></button>
   </div>
 }
 

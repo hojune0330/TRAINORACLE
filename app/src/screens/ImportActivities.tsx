@@ -196,11 +196,8 @@ export function ImportActivities({ onBack, onOpenLog, onOpenAnalysis, onOpenSumm
           >←</button>
         )}
         <div>
-          <div style={{ ...mono, fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>
-            워치·건강앱 운동 기록
-          </div>
           <AppHeading as="h1" variant="screen" accent className="import-activities__title">
-            워치 기록 불러오기
+            운동 기록 가져오기
           </AppHeading>
         </div>
       </div>

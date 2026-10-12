@@ -32,7 +32,7 @@ describe("entry chooser confirmed-first journal guard", () => {
   it("offers the first-journal guide only after a confirmed empty read and keeps all entry destinations", () => {
     const pick = vi.fn(), openImport = vi.fn()
     render(<EntryChooser targetDate={DATE} onPick={pick} onOpenImport={openImport} />)
-    expect(screen.getByText(/오늘 첫 일지예요/)).toBeVisible()
+    expect(screen.queryByText(/첫 일지예요/)).toBeNull()
     expect(guide()).not.toBeNull()
     for (const type of ["quick-session", "post-session", "evening", "race"]) {
       fireEvent.click(screen.getByTestId(`entry-choice-${type}`))
@@ -53,7 +53,7 @@ describe("entry chooser confirmed-first journal guard", () => {
     }
     const pick = vi.fn()
     render(<EntryChooser targetDate={DATE} onPick={pick} />)
-    expect(screen.getByRole("alert")).toHaveTextContent("기록을 읽지 못했어요")
+    expect(screen.getByRole("alert")).toHaveTextContent("기록을 불러오지 못했어요")
     expect(screen.queryByText(/첫 일지예요/)).toBeNull()
     expect(guide()).toBeNull()
     fireEvent.click(screen.getByTestId("entry-choice-quick-session"))
@@ -73,7 +73,7 @@ describe("entry chooser confirmed-first journal guard", () => {
     setActiveLocalAccount(owner); resetAccountJournalProjection(owner)
     const pick = vi.fn(), openImport = vi.fn()
     render(<EntryChooser targetDate={DATE} onPick={pick} onOpenImport={openImport} />)
-    expect(screen.getByRole("status")).toHaveTextContent("기록을 확인하고 있어요")
+    expect(screen.getByRole("status")).toHaveTextContent("기록을 불러오는 중이에요")
     expect(screen.queryByText(/첫 일지예요/)).toBeNull()
     expect(guide()).toBeNull()
     fireEvent.click(screen.getByTestId("entry-choice-evening"))
@@ -81,7 +81,7 @@ describe("entry chooser confirmed-first journal guard", () => {
     expect(pick).toHaveBeenCalledWith("evening")
     expect(openImport).toHaveBeenCalledOnce()
     act(() => { setAccountJournalProjectionStatus(owner, "READY") })
-    expect(screen.getByText(/오늘 첫 일지예요/)).toBeVisible()
+    expect(screen.queryByText(/첫 일지예요/)).toBeNull()
     expect(guide()).not.toBeNull()
     expect(screen.queryByRole("status")).toBeNull()
   })

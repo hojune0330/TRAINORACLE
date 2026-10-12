@@ -91,8 +91,8 @@ describe("active plan journal action", () => {
       />,
     )
 
-    expect(screen.getByText("기간·운동 시간").closest("details")).not.toHaveAttribute("open")
-    await userEvent.setup().click(screen.getByText("기간·운동 시간"))
+    expect(screen.getByText("훈련 구성·시간").closest("details")).not.toHaveAttribute("open")
+    await userEvent.setup().click(screen.getByText("훈련 구성·시간"))
     expect(screen.getByText("24주 훈련 방향")).toBeVisible()
     expect(screen.getByText(/1\/18번째 계획/u)).toBeVisible()
     expect(screen.getByRole("progressbar", { name: "24주 훈련 방향 진행 위치" }))

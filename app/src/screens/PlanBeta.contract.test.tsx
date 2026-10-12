@@ -417,7 +417,6 @@ describe("plan beta user flow", () => {
     const user = userEvent.setup()
     render(<PlanBeta />)
 
-    await user.click(screen.getByText("기록 관리·훈련표 읽기"))
     await user.click(screen.getByRole("button", { name: "훈련표 표기 읽기" }))
     expect(screen.getByRole("heading", { name: "훈련표 표기 읽기" })).toBeVisible()
     expect(screen.getByText("훈련 표기 읽기", { selector: ".plan-eyebrow" })).toBeVisible()
@@ -441,7 +440,6 @@ describe("plan beta user flow", () => {
     const user = userEvent.setup()
     render(<PlanBeta />)
 
-    await user.click(screen.getByText("기록 관리·훈련표 읽기"))
     await user.click(screen.getByRole("button", { name: "훈련표 표기 읽기" }))
     await user.type(screen.getByRole("textbox", { name: "훈련표 표기" }), "10×400m")
     await user.click(screen.getByRole("button", { name: "표기 풀어보기" }))
@@ -478,7 +476,7 @@ describe("plan beta user flow", () => {
     expect(screen.getByRole("heading", {
       name: "하루에 두 번 운동하는 날도 넣을까요?",
     })).toBeVisible()
-    expect(screen.getByText("고르면 훈련일을 오전·오후 두 칸으로 나눠요.")).toBeVisible()
+    expect(screen.getByRole("button", { name: /하루 두 번 운동할게요.*오전·오후 두 칸.*힘든 훈련은 하나만/u })).toBeVisible()
     expect(screen.queryByText(/오후 RPE 1~2 회복 운동만/u)).toBeNull()
   })
 
