@@ -143,11 +143,11 @@ test("large text, keyboard and browser back preserve draft and preview", async (
   expect(await page.locator(".journal-decoration-workspace").evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true)
   await page.screenshot({ path: testInfo.outputPath("calendar-large-text.png"), fullPage: true })
   await page.goBack() // selected art closes first; editor and draft remain
-  await expect(page.getByRole("dialog", { name: "일지 꾸미기", exact: true })).toBeVisible()
+  await expect(page.getByRole("dialog", { name: "달력 꾸미기", exact: true })).toBeVisible()
   await page.goBack()
   await expect(page.getByRole("alertdialog")).toBeVisible()
   await page.getByRole("button", { name: "변경 버리기", exact: true }).click()
-  await expect(page.getByRole("dialog", { name: "일지 꾸미기", exact: true })).toHaveCount(0)
+  await expect(page.getByRole("dialog", { name: "달력 꾸미기", exact: true })).toHaveCount(0)
   expect(await page.evaluate(() => localStorage.getItem("trainoracle.calendar-decorations.v1"))).toBeNull()
 })
 
