@@ -1,0 +1,8 @@
+# Keep manifest checksums stable across Windows and Linux checkouts.
+*.md text eol=lf
+*.json text eol=lf
+*.cjs text eol=lf
+*.py text eol=lf
+.gitattributes text eol=lf
+*.png -text
+*.glb -text

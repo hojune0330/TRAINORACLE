@@ -1,0 +1,102 @@
+{
+  "kind": "TRAINORACLE_GLB_METADATA_INSPECTION",
+  "inspectorVersion": 1,
+  "file": "tori-base.glb",
+  "bytes": 889092,
+  "sha256": "cd39844b82b8d5058217c9434bad07f87e84feec3357027478fd924e4ea8e4db",
+  "header": {
+    "magic": "glTF",
+    "version": 2,
+    "declaredLength": 889092
+  },
+  "chunks": [
+    {
+      "type": 1313821514,
+      "name": "JSON",
+      "bytes": 1652,
+      "offset": 20
+    },
+    {
+      "type": 5130562,
+      "name": "BIN",
+      "bytes": 887412,
+      "offset": 1680
+    }
+  ],
+  "asset": {
+    "version": "2.0",
+    "generator": "Tripo"
+  },
+  "defaultScene": 0,
+  "counts": {
+    "scenes": 1,
+    "nodes": 1,
+    "meshes": 1,
+    "primitives": 1,
+    "verticesSummedPerPrimitive": 6092,
+    "verticesUniquePositionAccessors": 6092,
+    "trianglesSummedPerMesh": 9398,
+    "instantiatedTrianglesAllNodes": 9398,
+    "materials": 1,
+    "textures": 1,
+    "images": 1,
+    "skins": 0,
+    "jointsSummedPerSkin": 0,
+    "animations": 0
+  },
+  "images": [
+    {
+      "index": 0,
+      "mimeType": "image/jpeg",
+      "bufferView": 0,
+      "hasUri": false
+    }
+  ],
+  "animations": [],
+  "extensionsUsed": [
+    "KHR_materials_volume",
+    "FB_ngon_encoding"
+  ],
+  "extensionsRequired": [],
+  "uriReferences": [],
+  "externalUriReferences": [],
+  "selfContained": true,
+  "meshDetails": [
+    {
+      "index": 0,
+      "name": "meshes[0]",
+      "vertices": 6092,
+      "triangles": 9398,
+      "primitives": [
+        {
+          "mode": 4,
+          "indexed": true,
+          "vertices": 6092,
+          "elements": 28194,
+          "triangles": 9398,
+          "material": 0,
+          "attributes": [
+            "POSITION",
+            "NORMAL",
+            "TEXCOORD_0"
+          ],
+          "morphTargets": 0,
+          "positionBounds": {
+            "min": [
+              -0.399749755859375,
+              0,
+              -0.1997528076171875
+            ],
+            "max": [
+              0.399749755859375,
+              1,
+              0.1997528076171875
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "warnings": [],
+  "scope": "Header, chunk bounds and metadata inspection only; not full glTF validation, visual approval, mesh manifoldness or rig deformation proof."
+}
