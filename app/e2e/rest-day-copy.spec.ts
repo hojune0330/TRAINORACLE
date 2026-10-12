@@ -25,19 +25,19 @@ test("offers a rest-day path without pressuring the athlete to log more", async 
   await page.goto("/?app=1")
 
   await expect(page.getByText("오늘 기록을 남겼어요.", { exact: true })).toBeVisible()
-  await expect(page.getByRole("button", { name: "오늘 기록하기" })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기" })).toHaveCount(0)
   await expect(page.getByRole("button", { name: "하루 마무리 기록하기" })).toHaveCount(0)
   await expect(page.getByText(/일만 더 쓰면/u)).toHaveCount(0)
 
   // 추가 기록은 완료 상태를 깨지 않고 보조 동작으로만 열 수 있다.
   await page.getByRole("button", { name: "기록 더 남기기" }).click()
-  await page.getByRole("button", { name: /회복 · 하루 마무리/u }).click()
+  await page.getByRole("button", { name: /하루 마무리.*메모·수면·기분·몸 상태/u }).click()
   await expect(page.getByRole("heading", { name: "회복 · 하루 마무리" })).toBeVisible()
 
   // 입력 중에는 주 탭이 숨겨지고, 폼의 뒤로가기로 종류 선택에 돌아온다.
   await expect(page.getByRole("navigation", { name: "주 탭" })).toHaveCount(0)
   await page.getByRole("button", { name: "← 뒤로", exact: true }).click()
-  await expect(page.getByRole("button", { name: /회복 · 하루 마무리.*수면·기분·몸 상태/u })).toBeVisible()
+  await expect(page.getByRole("button", { name: /하루 마무리.*메모·수면·기분·몸 상태/u })).toBeVisible()
 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클" }).click()
   const distance = page.getByRole("region", { name: "누적 거리와 변화" })

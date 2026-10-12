@@ -45,7 +45,7 @@ test("does not round a 43x44 target up to the touch contract", () => {
 
 test("keeps core journal controls at least 44px tall", async ({ page }, testInfo) => {
   requireTouchProject(testInfo.project.name)
-  await openEntry(page, /훈련 후/u)
+  await openEntry(page, /자세히 기록.*운동별로 자세히/u)
   await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
   await page.getByRole("button", { name: "실제로 한 운동 수정", exact: true }).click()
   const privateMemo = page.getByRole("radio", { name: "나만의 메모" })
@@ -101,7 +101,7 @@ test("keeps core journal controls at least 44px tall", async ({ page }, testInfo
 
 test("keeps the journal title centered at touch widths", async ({ page }, testInfo) => {
   requireTouchProject(testInfo.project.name)
-  for (const entryName of [/훈련 후/u, /하루 마무리/u, /경기 직전\/직후/u]) {
+  for (const entryName of [/자세히 기록.*운동별로 자세히/u, /하루 마무리/u, /경기 기록.*경기 전후 기록·컨디션/u]) {
     await openEntry(page, entryName)
     const topbarBox = await page.locator(".entry-topbar").boundingBox()
     const titleBox = await page.locator(".entry-topbar__title").boundingBox()
@@ -114,7 +114,7 @@ test("keeps the journal title centered at touch widths", async ({ page }, testIn
 
 test("lays out ten-point scales as two ordered rows on narrow touch screens", async ({ page }, testInfo) => {
   test.skip(!["mobile-chromium", "touch-narrow"].includes(testInfo.project.name), "Two-row layout is a mobile touch contract")
-  await openEntry(page, /훈련 후/u)
+  await openEntry(page, /자세히 기록.*운동별로 자세히/u)
   await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
   await page.getByRole("button", { name: "운동 강도 수정", exact: true }).click()
   const buttons = Array.from({ length: 10 }, (_, index) => page.getByRole("button", { name: String(index + 1), exact: true }))
@@ -238,7 +238,7 @@ test("keeps evening controls and every body-part selector touchable", async ({ p
 
 test("keeps race stages, checks, fields, and help controls touchable", async ({ page }, testInfo) => {
   requireTouchProject(testInfo.project.name)
-  await openEntry(page, /경기 직전\/직후/u)
+  await openEntry(page, /경기 기록.*경기 전후 기록·컨디션/u)
 
   const privateMemo = page.getByRole("radio", { name: "나만의 메모" })
   const trainingMemo = page.getByRole("radio", { name: "훈련 메모" })
@@ -295,7 +295,7 @@ test("keeps race stages, checks, fields, and help controls touchable", async ({ 
 })
 
 test("keeps the help mark small while its hit area and popover remain usable", async ({ page }, testInfo) => {
-  await openEntry(page, /훈련 후/u)
+  await openEntry(page, /자세히 기록.*운동별로 자세히/u)
   await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
   await page.getByRole("button", { name: "실제로 한 운동 수정", exact: true }).click()
   const help = page.getByRole("button", { name: /훈련 목적과 에너지 대사 설명 보기/u })

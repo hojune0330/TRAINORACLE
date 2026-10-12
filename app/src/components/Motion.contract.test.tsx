@@ -202,7 +202,7 @@ describe("saved toast motion structure", () => {
       const tabBar = screen.getByRole("navigation", { name: "주 탭" })
 
       fireEvent.click(within(tabBar).getByRole("button", { name: "기록하기" }))
-      fireEvent.click(screen.getByRole("button", { name: /훈련 후/u }))
+      fireEvent.click(screen.getByRole("button", { name: /자세히 기록.*운동별로 자세히/u }))
       fireEvent.click(screen.getByRole("button", { name: "지금 입력 확인" }))
       fireEvent.click(screen.getByRole("button", { name: "메모 수정" }))
       fireEvent.change(screen.getByRole("textbox", { name: "훈련 메모 내용" }), { target: { value: "합성 테스트 기록" } })
@@ -229,7 +229,7 @@ describe("saved toast motion structure", () => {
       render(<AppShell />)
       const tabBar = screen.getByRole("navigation", { name: "주 탭" })
       fireEvent.click(within(tabBar).getByRole("button", { name: "기록하기" }))
-      fireEvent.click(screen.getByRole("button", { name: /훈련 후/u }))
+      fireEvent.click(screen.getByRole("button", { name: /자세히 기록.*운동별로 자세히/u }))
       fireEvent.click(screen.getByRole("button", { name: "지금 입력 확인" }))
       fireEvent.click(screen.getByRole("button", { name: "메모 수정" }))
       fireEvent.change(screen.getByRole("textbox", { name: "훈련 메모 내용" }), { target: { value: "무릎이 아파" } })

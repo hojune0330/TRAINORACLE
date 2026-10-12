@@ -67,25 +67,33 @@ describe("ImportActivities — 고르기 단계", () => {
     const click = vi.spyOn(input, "click").mockImplementation(() => undefined)
     fireEvent.click(screen.getByRole("button", { name: "파일이 있어요 · 바로 선택" }))
     expect(click).toHaveBeenCalledOnce()
-    expect(screen.getByRole("combobox", { name: "어디에 기록이 있나요?" })).toHaveValue("")
+    expect(screen.getByRole("button", { name: "파일 준비하기" })).toHaveAttribute("aria-expanded", "false")
+    expect(screen.queryByRole("group", { name: "기록이 있는 곳 선택" })).toBeNull()
     expect(loadEntries()).toEqual([])
   })
 
   it.each([
-    ["garmin", "Garmin 파일 준비", "Garmin Connect"],
-    ["coros", "COROS 파일 준비", "TCX"],
-    ["health", "건강앱 파일 준비", "전체 ZIP·XML 백업은 아직 읽지 못해요"],
+    ["Garmin · 가민", "Garmin 파일 준비", "Garmin Connect"],
+    ["COROS · 코로스", "COROS 파일 준비", "TCX"],
+    ["애플 건강·삼성 헬스", "건강앱 파일 준비", "전체 ZIP·XML 백업은 아직 읽지 못해요"],
   ])("shows only the chosen %s preparation, keeps direct upload and returns to source choice", (value, title, text) => {
     render(<ImportActivities />)
-    fireEvent.change(screen.getByRole("combobox", { name: "어디에 기록이 있나요?" }), { target: { value } })
+    fireEvent.click(screen.getByRole("button", { name: "파일 준비하기" }))
+    fireEvent.click(screen.getByRole("button", { name: value }))
     expect(screen.getByRole("heading", { name: title })).toBeVisible()
+    expect(screen.getByRole("heading", { name: title })).toHaveFocus()
+    expect(screen.queryByRole("group", { name: "기록이 있는 곳 선택" })).toBeNull()
     expect(screen.getByRole("region", { name: "운동 파일 준비" })).toHaveTextContent(text)
     expect(screen.getByText(/계정 자동 연결이 아니라 파일 가져오기/)).toBeVisible()
     expect(screen.getByRole("button", { name: "파일이 있어요 · 바로 선택" })).toBeEnabled()
     expect(screen.queryByRole("textbox", { name: /비밀번호|로그인/ })).toBeNull()
     fireEvent.click(screen.getByRole("button", { name: "다른 기록 위치" }))
     expect(screen.queryByRole("heading", { name: title })).toBeNull()
-    expect(screen.getByRole("combobox", { name: "어디에 기록이 있나요?" })).toHaveValue("")
+    expect(screen.getByRole("heading", { name: "어디에 기록이 있나요?" })).toHaveFocus()
+    expect(screen.getByRole("group", { name: "기록이 있는 곳 선택" })).toBeVisible()
+    fireEvent.click(screen.getByRole("button", { name: "준비 안내 닫기" }))
+    expect(screen.queryByRole("group", { name: "기록이 있는 곳 선택" })).toBeNull()
+    expect(screen.getByRole("button", { name: "파일 준비하기" })).toHaveFocus()
     expect(loadEntries()).toEqual([])
   })
 

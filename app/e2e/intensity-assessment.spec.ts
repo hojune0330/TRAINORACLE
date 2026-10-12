@@ -4,7 +4,7 @@ import type { Page } from "@playwright/test"
 async function openPostSession(page: Page) {
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
-  await page.getByRole("button", { name: /훈련 후/u }).click()
+  await page.getByRole("button", { name: /자세히 기록.*운동별로 자세히/u }).click()
   await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
   await page.getByRole("button", { name: "운동 강도 수정", exact: true }).click()
   // 객관 기록 구획은 닫힌 상태로 시작한다 (작업지시서 UX1 §2-2).

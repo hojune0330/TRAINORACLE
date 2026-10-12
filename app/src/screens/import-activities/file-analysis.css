@@ -54,3 +54,9 @@
   font: inherit;
 }
 .import-preparation__formats { margin: 0; color: var(--ink-3); font: 400 var(--fs-caption) / 1.6 var(--sans); }
+.import-preparation__choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+  margin-block: var(--space-3);
+}
+.import-preparation__toggle { width: 100%; text-align: left; }

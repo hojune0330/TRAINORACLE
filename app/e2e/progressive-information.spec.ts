@@ -11,15 +11,15 @@ test.beforeEach(async ({ page, baseURL }) => {
       ? route.continue() : route.abort()
   })
   await page.goto("/?app=1&uitest=1")
-  await expect(page.getByRole("button", { name: "오늘 기록 남기기", exact: true })).toBeVisible()
+  await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true })).toBeVisible()
 })
 
 for (const width of [320, 375]) {
   test(`shows the primary action and plan entry without requiring a fixed first viewport at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: width === 320 ? 568 : 667 })
     await page.evaluate(() => document.fonts.ready)
-    await expect(page.getByRole("button", { name: "오늘 기록 남기기", exact: true })).toBeInViewport({ ratio: 1 })
-    for (const name of ["오늘 기록 남기기", "훈련 계획 만들기"]) {
+    await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true })).toBeInViewport({ ratio: 1 })
+    for (const name of ["오늘 운동 기록 쓰기", "훈련 계획 만들기"]) {
       const button = page.getByRole("button", { name, exact: true })
       await button.scrollIntoViewIfNeeded()
       await expect(button).toBeInViewport({ ratio: 1 })
@@ -27,7 +27,7 @@ for (const width of [320, 375]) {
     }
     await expect(page.getByText("모든 데이터는 이 기기에만 저장돼요.")).toHaveCount(0)
     await page.screenshot({ path: testInfo.outputPath(`home-${width}.png`) })
-    await page.getByRole("button", { name: "오늘 기록 남기기", exact: true }).click()
+    await page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true }).click()
     await expect(page.locator(".quick-log__paper")).toHaveCount(0)
     const outcomes = page.locator(".quick-log__choices").first().getByRole("button")
     await expect(outcomes).toHaveCount(5)
@@ -80,7 +80,7 @@ test("keeps empty analysis focused and opens examples and help with the keyboard
 
 test("keeps saved results visible and does not turn missing RPE into a value", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 375, height: 667 })
-  await page.getByRole("button", { name: "오늘 기록 남기기", exact: true }).click()
+  await page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true }).click()
   await page.getByRole("button", { name: "운동을 마쳤어요", exact: true }).click()
   await expect(page.locator(".quick-log__summary-help")).not.toHaveAttribute("open")
   await page.getByRole("button", { name: "오전", exact: true }).click()
@@ -98,7 +98,7 @@ test("keeps saved results visible and does not turn missing RPE into a value", a
   await page.getByRole("button", { name: "완료", exact: true }).click()
   await expect(page.getByText("오늘 기록을 남겼어요.", { exact: true })).toBeVisible()
   await expect(page.getByRole("button", { name: "기록 더 남기기", exact: true })).toBeVisible()
-  await expect(page.getByRole("button", { name: "오늘 기록하기", exact: true })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true })).toHaveCount(0)
 })
 
 test("keeps learning content and its application limits available without a developer introduction", async ({ page }, testInfo) => {

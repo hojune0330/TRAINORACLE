@@ -2,17 +2,11 @@
 .trends-hub__guide { margin: var(--space-5) var(--space-5) var(--space-2); }
 
 .trends-hub__sections {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
   padding: var(--space-2) var(--space-5) var(--space-3);
 }
-
-.trends-hub__detail-menu { margin: 0 20px 12px; }
-.trends-hub__detail-menu > summary { min-height: 44px; padding: 12px 0; box-sizing: border-box; cursor: pointer; font: 600 var(--fs-body, 14.5px) var(--sans); color: var(--ink); }
-.trends-hub__detail-menu > summary:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
-.trends-hub__detail-menu .trends-hub__drilldowns { padding: 0 0 12px; border: 0; }
-.trends-hub__detail-menu > summary small { display: block; margin-top: var(--space-1); color: var(--ink-2); font: 400 var(--fs-caption) / 1.5 var(--sans); }
 .trends-hub__header {
   display: grid;
   grid-template-columns: minmax(64px, 1fr) auto minmax(64px, 1fr);
@@ -50,7 +44,6 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-2);
   padding: 8px 20px 12px;
-  border-bottom: 1px solid var(--line);
 }
 
 .trends-hub__sections button,
@@ -60,12 +53,20 @@
   min-height: 44px;
   padding: 8px 12px;
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm, 8px);
+  border-radius: var(--r-action);
   background: var(--bg);
   color: var(--ink-2);
   font-family: var(--sans);
   font-size: var(--fs-body, 14.5px);
   cursor: pointer;
+}
+
+.trends-hub__sections button {
+  min-width: 0;
+  font-weight: 600;
+  line-height: 1.5;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .trends-hub__drilldowns button {
@@ -87,7 +88,12 @@
 }
 
 .trends-hub__drilldowns button > span { font-weight: 600; }
-.trends-hub__drilldowns button > small { color: var(--ink-2); font: 400 var(--fs-caption) / 1.5 var(--sans); }
+/* Choice names orient sighted users; keep the extra label description for AT.
+   The selected panel retains its full explanation, period and data warnings. */
+.trends-hub__drilldowns button > small {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
 
 .trends-hub__drilldowns button[aria-pressed="true"] {
   border-color: var(--brand);
@@ -151,7 +157,7 @@
 .trends-hub__start button:focus-visible, .trends-hub__example button:focus-visible, .trends-hub__recovery > button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 
 @media (max-width: 359px) {
-  .trends-hub__drilldowns { grid-template-columns: minmax(0, 1fr); }
+  .trends-hub__sections { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (min-width: 56rem) {

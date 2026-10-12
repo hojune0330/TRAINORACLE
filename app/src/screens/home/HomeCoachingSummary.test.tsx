@@ -55,7 +55,7 @@ it("does not interrupt general reading on unrelated journal revisions", () => {
 it("prioritizes recording and shows one prepared preview without a second entry wrapper", () => {
   const model: TrainingHomeViewModel = { homeMode: "WELCOME", todayMessage: "", todayRecordCount: 0, journalSummary: "", flowSummary: "", planSummary: "저장된 계획 없음", analysisSummary: "", showMinjiPrompt: true, nextTraining: null, briefing: "" }
   render(<TrainingHome model={model} onOpenOracle={vi.fn()} oraclePreview={<h2>오라클 미리보기</h2>} />)
-  const write = screen.getByRole("button", { name: "오늘 기록 남기기" })
+  const write = screen.getByRole("button", { name: "오늘 운동 기록 쓰기" })
   const preview = screen.getByRole("heading", { name: "오라클 미리보기" })
   expect(write).toBeVisible()
   expect(preview.closest("details")).toBeNull()

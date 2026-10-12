@@ -1,7 +1,8 @@
 import React from "react"
 import { CheckCircle2, ChevronRight, Flag, Moon, PencilLine } from "lucide-react"
-import { compactDate, dowOf, nowClock } from "../../domain/dates"
-import { entriesForDate, todayISO } from "../../domain/journal-store"
+import { compactDate, dowOf } from "../../domain/dates"
+import { todayISO } from "../../domain/journal-store"
+import { useCalendarSnapshot } from "../../hooks/useCalendarEntries"
 import { ContextualIllustration } from "../../components/ContextualIllustration"
 import { AppHeading } from "../../components/AppHeading"
 import { TopBar } from "./shared"
@@ -16,10 +17,10 @@ interface EntryChooserProps {
 }
 
 const ENTRY_OPTIONS = [
-  { id: "quick-session", t: "빠르게 기록", d: "결과부터 짧게", Icon: CheckCircle2 },
-  { id: "post-session", t: "훈련 후", d: "운동별로 자세히", Icon: PencilLine },
-  { id: "evening", t: "회복 · 하루 마무리", d: "메모·수면·기분·몸 상태 · 원하는 것만", Icon: Moon },
-  { id: "race", t: "경기 직전/직후", d: "경기 기록과 컨디션", Icon: Flag },
+  { id: "quick-session", t: "빠르게 기록", d: "거리·시간·힘든 정도", Icon: CheckCircle2 },
+  { id: "post-session", t: "자세히 기록", d: "운동별로 자세히", Icon: PencilLine },
+  { id: "evening", t: "하루 마무리", d: "메모·수면·기분·몸 상태", Icon: Moon },
+  { id: "race", t: "경기 기록", d: "경기 전후 기록·컨디션", Icon: Flag },
 ] as const
 
 export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: EntryChooserProps) {
@@ -27,7 +28,14 @@ export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: Entry
   const today = todayISO()
   const entryDate = targetDate ?? today
   const isToday = entryDate === today
-  const hasEntries = entriesForDate(entryDate).length > 0
+  const journalSnapshot = useCalendarSnapshot()
+  const entryCount = journalSnapshot.entries.filter(entry => entry.date === entryDate).length
+  const hasEntries = entryCount > 0
+  const confirmedEmpty = journalSnapshot.status === "READY" && !hasEntries
+  const readMessage = journalSnapshot.status === "LOADING" ? "기록을 확인하고 있어요. 아직 첫 일지인지 확인하지 못했어요."
+    : journalSnapshot.status === "STALE" ? "기록의 최신 상태를 확인하지 못했어요. 보관된 기록은 계속 볼 수 있어요."
+    : journalSnapshot.status === "ERROR" ? "기록을 읽지 못했어요. 기록이 없는 상태와는 달라요."
+    : null
   React.useEffect(() => {
     headingRef.current?.focus()
   }, [])
@@ -36,19 +44,23 @@ export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: Entry
     <div style={{ paddingBottom: 30 }}>
       <TopBar onBack={onBack}>새 일지</TopBar>
       <div style={{ padding: "20px 20px 4px" }}>
-        <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: 0 }}>
-          {compactDate(entryDate)} {dowOf(entryDate)} · {nowClock()}
+        <div style={{ fontFamily: "var(--sans)", fontSize: 14, color: "var(--ink-3)", letterSpacing: 0 }}>
+          {entryDate.slice(0, 4) !== today.slice(0, 4) ? `${entryDate.slice(0, 4)}년 ` : ""}{compactDate(entryDate)} {dowOf(entryDate)}
+          {hasEntries && <span> · {journalSnapshot.status === "READY" ? "일지" : "보관된 일지"} {entryCount}개</span>}
         </div>
         <div className="contextual-entry-intro">
           <div className="contextual-entry-intro__copy">
             <AppHeading ref={headingRef} tabIndex={-1} as="h1" variant="screen" accent className="entry-chooser__title">어떤 일지를 쓰세요?</AppHeading>
-            {!hasEntries && (
+            {confirmedEmpty && (
               <p style={{ fontFamily: "var(--sans)", fontSize: 12, color: "var(--ink-3)", letterSpacing: 0, lineHeight: 1.55, margin: "8px 0 0" }}>
-                {`${isToday ? "오늘" : "이 날짜의"} 첫 일지예요. 원하는 항목만 남겨도 괜찮아요.`}
+                {`${isToday ? "오늘" : "이 날짜의"} 첫 일지예요.`}
               </p>
             )}
+            {readMessage !== null && <p role={journalSnapshot.status === "ERROR" ? "alert" : "status"}>
+              {readMessage}
+            </p>}
           </div>
-          {!hasEntries && <ContextualIllustration image="journal-guide" size="small" />}
+          {confirmedEmpty && <ContextualIllustration image="journal-guide" size="small" />}
         </div>
       </div>
 
@@ -90,11 +102,6 @@ export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: Entry
         </div>
       )}
 
-      {hasEntries && <div style={{ padding: "24px 20px" }}>
-        <div style={{ fontFamily: "var(--sans)", fontSize: 12, color: "var(--ink-3)", letterSpacing: 0, lineHeight: 1.55 }}>
-          {`${isToday ? "오늘" : "이 날짜에"} 남긴 일지가 있어요. 기록을 더 쓰면 같은 날짜에 모아 보여드려요.`}
-        </div>
-      </div>}
     </div>
   )
 }

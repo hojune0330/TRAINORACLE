@@ -194,9 +194,9 @@ describe("past journal revisit forms", () => {
     const { container } = render(<LogEntry entryType="choose" targetDate={DATE} />)
 
     // Then
-    expect(screen.getByText("이 날짜의 첫 일지예요. 원하는 항목만 남겨도 괜찮아요.")).toBeVisible()
+    expect(screen.getByText("이 날짜의 첫 일지예요.")).toBeVisible()
     expect(screen.queryByText(/오늘 첫 일지/u)).not.toBeInTheDocument()
-    expect(screen.getAllByText("이 날짜의 첫 일지예요. 원하는 항목만 남겨도 괜찮아요.")).toHaveLength(1)
+    expect(screen.getAllByText("이 날짜의 첫 일지예요.")).toHaveLength(1)
     const intro = container.querySelector(".contextual-entry-intro")
     expect(intro).toContainElement(screen.getByRole("heading", { name: "어떤 일지를 쓰세요?" }))
     expect(intro).toHaveTextContent("이 날짜의 첫 일지예요.")
@@ -216,7 +216,7 @@ describe("past journal revisit forms", () => {
     expect(heading.style.fontWeight).toBe("")
     expect(container.querySelectorAll(".app-heading--accent")).toHaveLength(1)
     expect(container.querySelectorAll("[data-testid^='entry-choice-']")).toHaveLength(4)
-    expect(screen.getByText("이 날짜의 첫 일지예요. 원하는 항목만 남겨도 괜찮아요.")).not.toHaveClass("app-heading")
+    expect(screen.getByText("이 날짜의 첫 일지예요.")).not.toHaveClass("app-heading")
   })
 
   it("limits the small guide to the selected empty date without changing the four choices or import action", async () => {
@@ -251,7 +251,7 @@ describe("past journal revisit forms", () => {
 
     view.rerender(<LogEntry entryType="choose" targetDate={recordedDate} onDone={onDone} onOpenImport={onOpenImport} />)
     expect(view.container.querySelector("img")).toBeNull()
-    expect(screen.getByText("이 날짜에 남긴 일지가 있어요. 기록을 더 쓰면 같은 날짜에 모아 보여드려요.")).toBeVisible()
+    expect(screen.getByText(/일지 1개/u)).toBeVisible()
     expect(screen.queryByText(/첫 일지예요/u)).not.toBeInTheDocument()
   })
 

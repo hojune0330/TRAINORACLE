@@ -3,11 +3,16 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { PlanBeta } from "./PlanBeta"
 import { loadAthleteRecords } from "../domain/athlete-records"
-import { loadPlanBetaState } from "../domain/plan-beta-store"
+import { activePlanBetaStorageKey, loadPlanBetaState } from "../domain/plan-beta-store"
 import { enterPlanWithoutRecord } from "./plan-beta/instant-plan.test-helper"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
+
+function expectBefore(first: HTMLElement, second: HTMLElement) {
+  expect(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING)
+    .toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+}
 
 async function fillEntry() {
   const user = userEvent.setup()
@@ -21,6 +26,22 @@ async function fillEntry() {
 }
 
 describe("plan entry supporting navigation", () => {
+  it.each(["invalid", "storage_error"] as const)("keeps %s plan status ahead of the goal program entry", mode => {
+    const key = activePlanBetaStorageKey()
+    if (mode === "invalid") localStorage.setItem(key, "{synthetic-invalid-plan")
+    else {
+      const originalGet = Storage.prototype.getItem
+      vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (this: Storage, queried: string) {
+        if (queried === key) throw Error("Synthetic plan read failure")
+        return originalGet.call(this, queried)
+      })
+    }
+    render(<PlanBeta />)
+    const entry = screen.getByRole("button", { name: "10km 한 달 훈련표" })
+    expect(screen.getAllByRole("button", { name: "10km 한 달 훈련표" })).toHaveLength(1)
+    expectBefore(screen.getByRole("heading", { name: "저장된 계획을 확인하지 못했어요" }), entry)
+  })
+
   it("returns from notation help to the exact unsent current and goal drafts", async () => {
     render(<PlanBeta />)
     const user = await fillEntry()
@@ -82,6 +103,9 @@ describe("plan entry supporting navigation", () => {
   it("moves keyboard focus to each new condition question", async () => {
     render(<PlanBeta />)
     expect(screen.getByRole("heading", { name: "어떤 종목을 준비하세요?" })).toHaveFocus()
+    expect(screen.getAllByRole("button", { name: "10km 한 달 훈련표" })).toHaveLength(1)
+    expectBefore(screen.getByRole("button", { name: "10km 한 달 훈련표" }),
+      screen.getByRole("heading", { name: "어떤 종목을 준비하세요?" }))
     const user = await fillEntry()
     screen.getByRole("button", { name: "기록 입력 완료" }).focus()
     await user.keyboard("{Enter}")
@@ -113,5 +137,8 @@ describe("plan entry supporting navigation", () => {
     await user.click(screen.getByRole("button", { name: "이 일정으로 시작" }))
     await waitFor(() => expect(screen.getByRole("heading", { name: "7일 훈련 계획" })).toHaveFocus())
     expect(loadPlanBetaState()).not.toBeNull()
+    expect(screen.getAllByRole("button", { name: "10km 한 달 훈련표" })).toHaveLength(1)
+    expectBefore(screen.getByRole("heading", { name: "7일 훈련 계획" }),
+      screen.getByRole("button", { name: "10km 한 달 훈련표" }))
   }, 20_000)
 })

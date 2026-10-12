@@ -90,10 +90,10 @@ export function JournalArchive({
     const returned = validJournalCalendarReturn(calendarReturn, entries)
     if (returned && activeMode === "CALENDAR" && (nav.date !== returned.date || nav.month !== returned.date.slice(0, 7))) nav.selectDate(returned.date)
   }, [calendarReturn, entries, activeMode, nav.date, nav.month, nav.selectDate])
-  const [emptyView, setEmptyView] = React.useState<"teaser" | "example" | "calendar">("teaser")
+  const [emptyView, setEmptyView] = React.useState<"example" | "calendar">("calendar")
   const unconfirmedEmpty = readiness !== "READY" && entries.length === 0
     && !(activeMode === "CALENDAR" && emptyView === "example")
-  const exampleVisible = emptyView === "example" || (emptyView === "teaser" && readiness === "READY" && entries.length === 0)
+  const exampleVisible = emptyView === "example"
   const readMessage = readiness === "LOADING"
     ? entries.length > 0 ? "저장된 일지를 보고 있어요. 최신 기록을 불러오는 중이에요." : "일지를 불러오고 있어요."
     : entries.length > 0 ? "저장된 일지를 보고 있어요. 최신 기록은 아직 확인하지 못했어요."
@@ -148,9 +148,6 @@ export function JournalArchive({
           <ArrowLeft aria-hidden="true" size={18} />
         </button>
         <div className="journal-archive__heading">
-          <div className="journal-archive__eyebrow">
-            JOURNAL ARCHIVE
-          </div>
           <AppHeading as="h1" variant="screen" accent className="journal-archive__title">
             {heading}
           </AppHeading>
@@ -165,23 +162,14 @@ export function JournalArchive({
       </div>}
 
       {!unconfirmedEmpty && <>
-      <div className="journal-archive__mode-tabs app-compact-tabs">
-        <button className="app-compact-tab" type="button" aria-pressed={activeMode === "CALENDAR"} onClick={() => changeMode("CALENDAR")}>
+      <div className="journal-archive__mode-tabs app-choice-group" role="group" aria-label="일지 보기 방식">
+        <button className="app-choice-control" type="button" aria-pressed={activeMode === "CALENDAR"} onClick={() => changeMode("CALENDAR")}>
           <span>월간 달력</span>
         </button>
-        <button className="app-compact-tab" type="button" aria-pressed={activeMode === "CYCLE"} onClick={() => changeMode("CYCLE")}>
+        <button className="app-choice-control" type="button" aria-pressed={activeMode === "CYCLE"} onClick={() => changeMode("CYCLE")}>
           <span>기록 묶음</span>
         </button>
       </div>
-
-      {entries.some(entry => entry.kind === "post-session" && entry.date === today)
-        && entries.filter(entry => entry.kind === "post-session" && entry.date <= today).length > 1 && (
-        <div style={{ padding: "0 20px 16px" }}>
-          <InfoDisclosure title="최근 훈련 비교" purpose="actions" preview="지난 훈련과 오늘 기록 나란히 보기">
-            <JournalThenNow onOpenDay={onOpenDay} />
-          </InfoDisclosure>
-        </div>
-      )}
 
       {activeMode === "CYCLE" ? (
         <CycleArchive
@@ -251,6 +239,14 @@ export function JournalArchive({
             </InfoDisclosure>
           )}
         </>
+      )}
+      {entries.some(entry => entry.kind === "post-session" && entry.date === today)
+        && entries.filter(entry => entry.kind === "post-session" && entry.date <= today).length > 1 && (
+        <div className="journal-archive__comparison">
+          <InfoDisclosure title="최근 훈련 비교" purpose="actions" preview="지난 훈련과 비교">
+            <JournalThenNow onOpenDay={onOpenDay} />
+          </InfoDisclosure>
+        </div>
       )}
       </>}
     </div>

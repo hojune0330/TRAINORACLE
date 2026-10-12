@@ -2,10 +2,10 @@ import { expect, test, type Page, type Locator } from "@playwright/test"
 import { completeQuickPlan } from "./plan-flow"
 
 const personas = [
-  { id: "small-phone-new-runner", width: 320, height: 740, event: "800m", reduced: false },
-  { id: "commuter-short-visit", width: 375, height: 667, event: "5km", reduced: false },
-  { id: "reduced-motion-returner", width: 390, height: 844, event: "10km", reduced: true },
-  { id: "desktop-marathon-reader", width: 1280, height: 900, event: "마라톤", reduced: false },
+  { id: "small-phone-new-runner", width: 320, height: 740, seed: 17, event: "800m", reduced: false },
+  { id: "commuter-short-visit", width: 375, height: 667, seed: 43, event: "5km", reduced: false },
+  { id: "reduced-motion-returner", width: 390, height: 844, seed: 71, event: "10km", reduced: true },
+  { id: "desktop-marathon-reader", width: 1280, height: 900, seed: 97, event: "마라톤", reduced: false },
 ] as const
 
 async function noHorizontalOverflow(page: Page) {
@@ -25,11 +25,11 @@ for (const persona of personas) {
       await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "홈", exact: true }).click()
     })
 
-    test("opens Oracle details on demand and returns through each section destination", async ({ page }, info) => {
+    test("opens Oracle details on demand and returns through each destination and seeded section order", async ({ page }, info) => {
       let actions = 0
       const click = async (locator: Locator) => { await locator.click(); actions++ }
       const nav = page.getByRole("navigation", { name: "주 탭" })
-      await expect(page.getByRole("button", { name: "오늘 기록 남기기" })).toBeInViewport()
+      await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기" })).toBeInViewport()
       await click(nav.getByRole("button", { name: "오라클", exact: true }))
       await expect(page.getByRole("heading", { name: "첫 운동부터 남겨볼까요?" })).toBeVisible()
       await expect(page.getByRole("button", { name: "훈련량", exact: true })).not.toBeVisible()
@@ -51,11 +51,22 @@ for (const persona of personas) {
       await click(page.getByRole("button", { name: "오라클로 돌아가기", exact: true }))
       await expect(sections()).toBeVisible()
 
+      let seed: number = persona.seed
+      const choices = ["러닝 취향", "읽을거리·관심", "내 훈련"]
+      for (let n = 0; n < 6; n++) {
+        seed = (seed * 16807) % 2147483647
+        const choice = choices[seed % choices.length]
+        await click(sections().getByRole("button", { name: choice, exact: true }))
+        await noHorizontalOverflow(page)
+        if (choice !== "내 훈련") {
+          await click(page.getByRole("button", { name: "오라클로 돌아가기", exact: true }))
+          await expect(sections()).toBeVisible()
+        }
+      }
       await click(sections().getByRole("button", { name: "내 훈련", exact: true }))
       await click(page.getByText("훈련량·구성·변화 보기", { exact: true }))
       await click(page.getByRole("button", { name: "훈련량", exact: true }))
-      await expect(page.getByText("훈련량 · 다른 항목 보기", { exact: true })).toBeVisible()
-      await click(page.getByText("훈련량 · 다른 항목 보기", { exact: true }))
+      await expect(page.getByRole("button", { name: "훈련량", exact: true })).toHaveAttribute("aria-pressed", "true")
       await click(page.getByRole("button", { name: "훈련 요약", exact: true }))
       await click(page.getByRole("group", { name: "오라클 항목" })
         .getByRole("button", { name: "읽을거리·관심", exact: true }))
@@ -66,7 +77,7 @@ for (const persona of personas) {
       await click(nav.getByRole("button", { name: "일지", exact: true }))
       await expect(page.getByRole("heading", { name: "지난 일지", exact: true })).toBeVisible()
       await click(nav.getByRole("button", { name: "홈", exact: true }))
-      await expect(page.getByRole("button", { name: "오늘 기록 남기기" })).toBeVisible()
+      await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기" })).toBeVisible()
       await noHorizontalOverflow(page)
       await info.attach("synthetic-actions", { body: JSON.stringify({ persona, actions }), contentType: "application/json" })
     })
@@ -95,7 +106,7 @@ for (const persona of personas) {
     })
 
     test("saves a short journal and opens it from the calendar", async ({ page }, info) => {
-      await page.getByRole("button", { name: "오늘 기록 남기기", exact: true }).click()
+      await page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true }).click()
       await page.getByRole("button", { name: "운동을 마쳤어요", exact: true }).click()
       await page.getByRole("button", { name: "오후", exact: true }).click()
       await page.getByRole("button", { name: /힘든 정도 6\/10,/u }).click()

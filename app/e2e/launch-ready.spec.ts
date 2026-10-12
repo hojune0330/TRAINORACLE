@@ -66,7 +66,7 @@ test("moves a first visitor from WELCOME to JOURNAL after a real first save", as
     name: "오늘 운동을 기록해요",
   })).toBeVisible()
 
-  await page.getByRole("button", { name: "오늘 기록 남기기" }).click()
+  await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).click()
   await expect(page.getByRole("heading", { name: "오늘 운동은 어떻게 됐나요?" })).toBeVisible()
   await page.getByRole("button", { name: "운동을 마쳤어요" }).click()
   await page.getByRole("button", { name: "시간 미지정" }).click()
@@ -85,12 +85,12 @@ test("moves a first visitor from WELCOME to JOURNAL after a real first save", as
   })).toBe(1)
   await expect(page.getByRole("heading", { name: "내 기록", exact: true })).toBeVisible()
   await expect(page.getByText("오늘 기록을 남겼어요.", { exact: true })).toBeVisible()
-  await expect(page.getByRole("button", { name: "오늘 기록하기" })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기" })).toHaveCount(0)
   await expect(page.getByRole("button", { name: "하루 마무리 기록하기" })).toHaveCount(0)
 
   await page.getByRole("button", { name: "기록 더 남기기" }).click()
   await expect(page.getByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
-  await page.getByRole("button", { name: /회복 · 하루 마무리/u }).click()
+  await page.getByRole("button", { name: /하루 마무리.*메모·수면·기분·몸 상태/u }).click()
   await expect(page.getByRole("heading", { name: /회복.*하루 마무리/u })).toBeVisible()
 })
 
@@ -293,7 +293,7 @@ test("shows a truthful distance receipt and opens the real trend", async ({ page
   })
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
-  await page.getByRole("button", { name: /훈련 후.*운동별로 자세히/u }).click()
+  await page.getByRole("button", { name: /자세히 기록.*운동별로 자세히/u }).click()
   await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
   await page.getByRole("button", { name: "거리와 시간 수정", exact: true }).click()
   await page.getByRole("textbox", { name: "거리 (km)" }).fill("8")

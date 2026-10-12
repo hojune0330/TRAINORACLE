@@ -163,7 +163,7 @@ test("WELCOME keeps its height and readable actions with a reserved scrollbar gu
   expect(await page.evaluate(() => innerWidth)).toBe(320)
   const region = page.locator(SCROLL_REGION)
   expect(await region.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
-  const first = page.getByRole("button", { name: "오늘 기록 남기기", exact: true })
+  const first = page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true })
   const second = page.getByRole("button", { name: "훈련 계획 만들기", exact: true })
   await expect(first).toBeVisible()
   await expect(second).toBeVisible()
@@ -278,7 +278,7 @@ test("기록이 하나 생기면 꾸미기 진입 뒤 포인트 보관함을 확
 
 test("훈련 후 일지가 빈 상태에서 길지 않다", async ({ page }, testInfo) => {
   const { before, limit } = limitsFor(testInfo.project.name)
-  await openEntry(page, /훈련 후/u)
+  await openEntry(page, /자세히 기록.*운동별로 자세히/u)
   const height = await scrollHeightPx(page)
   console.log(`[SCROLL] ${testInfo.project.name} post-empty before=${before.post} after=${height} limit=${limit.post}`)
   expect(height).toBeLessThanOrEqual(limit.post)
@@ -308,7 +308,7 @@ test("하루 마무리가 빈 상태에서 길지 않다", async ({ page }, test
 
 test("RPE 를 채우고 다음으로 넘어가면 화면이 더 짧아진다", async ({ page }, testInfo) => {
   limitsFor(testInfo.project.name)
-  await openEntry(page, /훈련 후/u)
+  await openEntry(page, /자세히 기록.*운동별로 자세히/u)
   await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
   await page.getByRole("button", { name: "운동 강도 수정", exact: true }).click()
   const emptyHeight = await scrollHeightPx(page)
@@ -339,7 +339,7 @@ test("RPE 를 채우고 다음으로 넘어가면 화면이 더 짧아진다", a
 
 test("경기 일지는 나빠지지 않는다", async ({ page }, testInfo) => {
   const { before, limit } = limitsFor(testInfo.project.name)
-  await openEntry(page, /경기 직전\/직후/u)
+  await openEntry(page, /경기 기록.*경기 전후 기록·컨디션/u)
   const height = await scrollHeightPx(page)
   console.log(`[SCROLL] ${testInfo.project.name} race before=${before.race} after=${height} limit=${limit.race}`)
   // 손대지 않은 화면이다. 회귀만 막는다.
@@ -348,7 +348,7 @@ test("경기 일지는 나빠지지 않는다", async ({ page }, testInfo) => {
 
 test("접어도 값은 사라지지 않는다 — 객관 기록을 펼쳤다 접었다 해도 입력이 남는다", async ({ page }, testInfo) => {
   limitsFor(testInfo.project.name)
-  await openEntry(page, /훈련 후/u)
+  await openEntry(page, /자세히 기록.*운동별로 자세히/u)
   await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
   await page.getByRole("button", { name: "운동 강도 수정", exact: true }).click()
   const section = page.getByRole("button", { name: /객관 기록 · \d+개/u })

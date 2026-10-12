@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { openEntry } from "./touch-audit"
 
 test("enlarged navigation labels stay inside their buttons and update the reserved height", async ({ page }) => {
   await page.goto("/?app=1&uitest=1")
@@ -82,8 +83,7 @@ test("home navigation remains usable when the bundled font cannot load", async (
 
 test("review receipt has one modal-owned copy and a keyboard reachable dismissal", async ({ page }) => {
   await page.clock.install()
-  await page.goto("/?app=1")
-  await page.getByRole("button", { name: "오늘 기록 남기기", exact: true }).click()
+  await openEntry(page, /빠르게 기록.*거리·시간·힘든 정도/u)
   await page.getByRole("button", { name: "오늘은 쉬었어요", exact: true }).click()
   await page.getByRole("button", { name: "글 추가", exact: true }).click()
   await page.getByRole("textbox", { name: "일지 내용", exact: true }).fill("무릎이 아파")

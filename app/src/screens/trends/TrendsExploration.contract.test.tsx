@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { JournalEntry } from "../../domain/journal-store"
@@ -12,7 +12,6 @@ import { Trends } from "../Trends"
 const STORAGE_KEY = "trainoracle.journal.v1"
 const OWNER_ID = "trends-exploration-owner"
 async function chooseDetail(user: ReturnType<typeof userEvent.setup>, label: string) {
-  await user.click(screen.getByText(/훈련량·구성·변화 보기|· 다른 항목 보기/u))
   await user.click(screen.getByRole("button", { name: label }))
 }
 type PostSessionEntry = Extract<JournalEntry, { readonly kind: "post-session" }>
@@ -99,7 +98,8 @@ describe("Trends exploration hub", () => {
     expect(screen.getAllByRole("button", { name: /^(내 훈련|러닝 취향|읽을거리·관심)$/u })).toHaveLength(3)
     expect(screen.getByText("예시 · 내 기록 분석이 아니에요")).toBeVisible()
 
-    expect(screen.queryAllByRole("button", { name: /결과 보기/u })).toHaveLength(0)
+    expect(screen.queryAllByRole("button", { name: / · 결과 보기$/u })).toHaveLength(0)
+    expect(screen.getByRole("button", { name: "예시 결과 보기" })).toHaveAccessibleDescription("예시 · 내 기록 분석이 아니에요")
     await user.click(screen.getByRole("button", { name: "읽을거리·관심" }))
     expect(screen.getByText("내 관심 주제·기록할 요일")).toBeVisible()
     const topicButtons = screen.getAllByRole("button", { name: /결과 보기/u })
@@ -122,8 +122,13 @@ describe("Trends exploration hub", () => {
     const onWriteLog = vi.fn()
     render(<Trends onOpenImport={onOpenImport} onWriteLog={onWriteLog} />)
 
-    expect(screen.getByRole("heading", { name: "첫 운동부터 남겨볼까요?" })).toBeVisible()
-    expect(screen.getByText("훈련량·구성·변화 보기")).toBeVisible()
+    expect(screen.getByRole("button", { name: "첫 기록 남기기" })).toBeVisible()
+    const analysis = screen.getByRole("group", { name: "훈련 분석 자세히 보기" })
+    expect(within(analysis).getAllByRole("button")).toHaveLength(5)
+    for (const button of within(analysis).getAllByRole("button")) {
+      expect(button).toBeVisible()
+      expect(button.closest("details")).toBeNull()
+    }
 
     await chooseDetail(user, "훈련량")
     expect(screen.getByRole("region", { name: "누적 거리와 변화" })).toBeVisible()

@@ -11,7 +11,7 @@ async function openMore(page: import("@playwright/test").Page) {
 test("shortcut is optional after a real quick save and dismissal survives reload", async ({ page }) => {
   await page.goto("/?app=1&uitest=1")
   await expect(page.getByTestId("install-shortcut-suggestion")).toHaveCount(0)
-  await page.getByRole("button", { name: "오늘 기록 남기기" }).click()
+  await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).click()
   await page.getByRole("button", { name: "오늘은 쉬었어요" }).click()
   await expect(page.getByRole("heading", { name: "이 내용으로 남길까요?" })).toBeVisible()
   await page.getByRole("button", { name: "이대로 저장", exact: true }).click()
@@ -84,7 +84,7 @@ test("iPhone manual instructions fit narrow enlarged text without stealing the i
 
 test("closing after installation restores focus when the suggestion disappears", async ({ page }) => {
   await page.goto("/?app=1&uitest=1")
-  await page.getByRole("button", { name: "오늘 기록 남기기" }).click()
+  await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).click()
   await page.getByRole("button", { name: "오늘은 쉬었어요" }).click()
   await expect(page.getByRole("heading", { name: "이 내용으로 남길까요?" })).toBeVisible()
   await page.getByRole("button", { name: "이대로 저장", exact: true }).click()

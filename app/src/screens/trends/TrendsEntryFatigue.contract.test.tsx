@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { Trends } from "../Trends"
 import { todayISO, type JournalEntry } from "../../domain/journal-store"
+import { getOracleTopic } from "../../domain/oracle-exploration"
 
 const panel = vi.hoisted(() => vi.fn())
 vi.mock("./PersonalOraclePanel", () => ({ PersonalOraclePanel: (props: unknown) => { panel(props); return <p>저장한 운동 요약</p> } }))
@@ -15,9 +16,12 @@ it("offers one empty-state action and an explicitly selected example while recov
   expect(start.querySelectorAll("button")).toHaveLength(1)
   expect(screen.getByRole("button", { name: /운동 파일 가져오기/ })).not.toBeVisible()
   expect(screen.queryByRole("region", { name: "몸 상태와 회복 기록" })).toBeNull()
+  expect(screen.queryByText(getOracleTopic("focus").example.headline)).toBeNull()
   fireEvent.click(screen.getByRole("button", { name: "첫 기록 남기기" }))
   expect(write).toHaveBeenCalledOnce()
-  fireEvent.click(screen.getByRole("button", { name: "이 예시 자세히 보기" }))
+  const example = screen.getByRole("button", { name: "예시 결과 보기" })
+  expect(example).toHaveAccessibleDescription("예시 · 내 기록 분석이 아니에요")
+  fireEvent.click(example)
   expect(explore).toHaveBeenCalledExactlyOnceWith("focus", "example")
   fireEvent.click(screen.getByRole("button", { name: "몸 상태·회복 기록" }))
   expect(screen.getByRole("region", { name: "몸 상태와 회복 기록" })).toBeVisible()

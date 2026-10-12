@@ -87,7 +87,6 @@ export function More({
           <ArrowLeft aria-hidden="true" size={19} />
         </button>
         <div>
-          <div className="utility-header__eyebrow">TRAINORACLE</div>
           <h1 ref={heading} tabIndex={-1}>{VIEW_TITLES[activeView]}</h1>
         </div>
       </header>
@@ -108,7 +107,7 @@ export function More({
         {onOpenContent && <UtilityRow icon={Newspaper} label="훈련법 읽기" onClick={onOpenContent} />}
         {onOpenRewards && <>
           <h2 className="more-screen__group-label">일지 꾸미기</h2>
-          <UtilityRow icon={Sticker} label="일지 꾸미기" detail="달력 꾸미기 · 포인트는 재료에서 확인" onClick={onOpenRewards} />
+          <UtilityRow icon={Sticker} label="일지 꾸미기" detail="달력도 함께 꾸며요 · 포인트는 재료에서 확인" onClick={onOpenRewards} />
         </>}
         {onOpenMinigame && <UtilityRow icon={Gamepad2} label="미니게임" detail="러닝 투어 · 서울에서 런던까지" onClick={onOpenMinigame} />}
         <h2 className="more-screen__group-label">관리·도움말</h2>
@@ -120,7 +119,7 @@ export function More({
         <UtilityRow icon={BookOpen} label="민지의 예시 일지" onClick={onOpenMinji} />
         <UtilityRow icon={CircleHelp} label="훈련 용어집·도움말" onClick={onOpenGuide} />
         {onOpenContent !== undefined && <UtilityRow icon={Newspaper} label="훈련법 읽기" onClick={onOpenContent} />}
-        {onOpenRewards !== undefined && <UtilityRow icon={Sticker} label="일지 꾸미기" detail="달력 꾸미기 · 포인트는 재료에서 확인" onClick={onOpenRewards} />}
+        {onOpenRewards !== undefined && <UtilityRow icon={Sticker} label="일지 꾸미기" detail="달력도 함께 꾸며요 · 포인트는 재료에서 확인" onClick={onOpenRewards} />}
         {onOpenMinigame && <UtilityRow icon={Gamepad2} label="미니게임" detail="러닝 투어 · 서울에서 런던까지" onClick={onOpenMinigame} />}
         </>}
         {activeView === "account" && <>

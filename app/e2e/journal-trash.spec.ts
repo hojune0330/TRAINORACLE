@@ -11,7 +11,7 @@ test("지운 일지를 그 자리에서 되돌릴 수 있다", async ({ page }) 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
   // 기록 탭은 곧바로 입력폼이 아니라 "어떤 일지를 쓰세요?" 선택 화면이다.
   // 종류를 먼저 골라야 입력폼이 나온다(스냅샷으로 확인).
-  await page.getByRole("button", { name: /훈련 후/u }).first().click()
+  await page.getByRole("button", { name: /자세히 기록.*운동별로 자세히/u }).first().click()
   await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
   await page.getByRole("button", { name: "실제로 한 운동 수정", exact: true }).click()
   // 실제 접근성 이름은 "세션 제목"이다(PostSessionForm.tsx). 추측한 이름(/훈련 이름|제목/)은

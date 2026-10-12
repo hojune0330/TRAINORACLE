@@ -18,22 +18,24 @@ it("puts a meaningful task title before navigation without inventing a result fo
   expect(write).toHaveBeenCalledOnce()
 })
 
-it("explains each analysis choice and updates only the selected task while preserving return context", () => {
+it("offers direct analysis choices and lets the selected result own its title without losing return context", () => {
   const change = vi.fn()
   const { container } = render(<Trends initialContext={{ section: "summary", savedDate: "2026-10-05", metric: "DISTANCE_KM" }} onContextChange={change} />)
-  fireEvent.click(screen.getByText("훈련량·구성·변화 보기"))
   const choices = screen.getByRole("group", { name: "훈련 분석 자세히 보기" })
   const distance = within(choices).getByRole("button", { name: "훈련량" })
   expect(distance).toHaveAccessibleDescription("달린 거리 합계")
   expect(within(choices).getByRole("button", { name: "훈련 구성" })).toHaveAccessibleDescription("직접 고른 훈련 종류")
   expect(within(choices).getByRole("button", { name: "월별 변화" })).toHaveAccessibleDescription("거리·페이스·기분·통증")
+  expect(within(choices).getByRole("button", { name: "파일 분석" })).toHaveAccessibleDescription(expect.stringContaining("준비 중"))
   fireEvent.click(distance)
-  expect(screen.getByRole("heading", { name: "훈련량 보기", level: 2 })).toBeVisible()
+  expect(screen.getByRole("heading", { name: "누적 거리와 변화", level: 2 })).toBeVisible()
+  expect(screen.queryByRole("heading", { name: "훈련량 보기" })).toBeNull()
   expect(screen.queryByRole("heading", { name: "내 훈련 살펴보기" })).toBeNull()
   expect(screen.getByRole("region", { name: "누적 거리와 변화" })).toBeVisible()
   expect(screen.queryByRole("region", { name: "훈련 종류별 합계" })).toBeNull()
   expect(change).toHaveBeenLastCalledWith({ section: "distance", savedDate: "2026-10-05", metric: "DISTANCE_KM" })
-  expect(container.querySelectorAll(".trends-hub__guide img")).toHaveLength(1)
+  expect(container.querySelectorAll(".trends-hub__guide")).toHaveLength(0)
+  expect(distance).toHaveAttribute("aria-pressed", "true")
 })
 
 it("keeps unfinished reads visible without inviting users into imaginary results", () => {

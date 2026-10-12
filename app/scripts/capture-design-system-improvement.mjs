@@ -63,7 +63,7 @@ try {
   await page.setViewportSize({ width: 1440, height: 900 }); await fresh(); await capture('13-home-new-1440');
   await page.setViewportSize({ width: 320, height: 568 }); await fresh(); await capture('14-home-new-320');
   await page.setViewportSize({ width: 375, height: 667 }); await fresh();
-  await page.getByRole('button', { name: '오늘 기록 남기기', exact: true }).click(); await capture('15-quick-outcome-375');
+  await page.getByRole('button', { name: '오늘 운동 기록 쓰기', exact: true }).click(); await capture('15-quick-outcome-375');
   await page.getByRole('button', { name: '운동을 마쳤어요', exact: true }).click(); await capture('16-quick-slot-375');
   await page.getByRole('button', { name: '오후', exact: true }).click(); await capture('17-quick-rpe-375');
   await page.getByRole('button', { name: /RPE 6,/ }).click(); await capture('18-quick-body-375');
