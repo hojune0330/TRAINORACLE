@@ -167,8 +167,10 @@ test("actual PlanBeta selection, progress, archive and Home/journal projections 
   await page.evaluate(() => window.accountPlanUi.home())
   await expect(page.getByRole("button", { name: /다음 훈련/u }).first()).toBeVisible()
   await page.getByRole("button", { name: /다음 훈련/u }).first().click()
-  await openActiveSessionDetails(page)
-  await page.getByRole("button", { name: /이 훈련.*일지/u }).first().click()
+  const reader = await openActiveSessionDetails(page)
+  // The schedule also contains background journal actions. The open modal is
+  // the user's active surface; do not click a covered background button.
+  await reader.getByRole("button", { name: /이 훈련.*일지/u }).first().click()
   await expect.poll(() => page.evaluate(() => !!window.accountPlanUi.draft())).toBe(true)
   await page.evaluate(() => window.accountPlanUi.journal())
   await page.getByText("계획한 훈련과 비교하기", { exact: true }).click()

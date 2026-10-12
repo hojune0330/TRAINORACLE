@@ -36,6 +36,7 @@ import { parsePrivateMemoRecord } from "./private-memo-vault"
 import type { PrivateMemoRecord } from "./private-memo-vault"
 import { pruneUnusedJournalDecorations } from "./journal-decoration-lifecycle"
 import { isJournalVisible } from "./account/local-journal-ownership"
+import { canonicalJournalStorage, journalDeviceTransaction, stageJournalDeviceDeletion } from "./journal-device-storage"
 
 const KEY = "trainoracle.journal.trash.v1"
 export const JOURNAL_TRASH_STORAGE_KEY = KEY
@@ -61,7 +62,7 @@ export type TrashedEntry = {
 function storage(): Storage | null {
   try {
     if (typeof window === "undefined") return null
-    return window.localStorage
+    return canonicalJournalStorage(window.localStorage)
   } catch {
     return null
   }
@@ -89,6 +90,7 @@ function parseTrashed(value: unknown): TrashedEntry | null {
 // Recovery must not mistake unreadable or retained ciphertext for an empty vault.
 export function readTrashForRecovery(target: Storage): { raw: string | null; items: TrashedEntry[] } | null {
   try {
+    target = canonicalJournalStorage(target)
     const raw = target.getItem(KEY)
     if (raw === null) return { raw, items: [] }
     const values: unknown = JSON.parse(raw)
@@ -159,14 +161,28 @@ export function purgeExpiredTrash(now: number = Date.now()): number {
     }
   })()
   if (before === kept.length) return 0
-  if (!write(kept)) return 0
+  const expiredIds: string[] = []
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    if (Array.isArray(parsed)) for (const value of parsed) {
+      const item = parseTrashed(value)
+      if (item && isExpired(item.deletedAt, now)) expiredIds.push(item.entry.id)
+    }
+  } catch { return 0 }
+  const transaction = journalDeviceTransaction(localStorage, () => {
+    if (localStorage.getItem(KEY) !== raw || !write(kept)) return false
+    return expiredIds.every(id => stageJournalDeviceDeletion(localStorage, id))
+  }, Boolean)
+  if (!transaction.ok) return 0
   const expiredDates: string[] = []
   try {
     const parsed: unknown = JSON.parse(raw)
     if (Array.isArray(parsed)) {
       for (const candidate of parsed) {
         const item = parseTrashed(candidate)
-        if (item !== null && isExpired(item.deletedAt, now)) expiredDates.push(item.entry.date)
+        if (item !== null && isExpired(item.deletedAt, now)) {
+          expiredDates.push(item.entry.date)
+        }
       }
     }
   } catch {
@@ -208,24 +224,35 @@ export function takeFromTrash(id: string): TrashedEntry | null {
   return found
 }
 
-/** 휴지통에서 완전히 지운다 — 되돌릴 수 없다 */
+/** Confirmed permanent deletion cannot be undone. false is unconfirmed, not
+ * proof that no durable owner-bound deletion intent was recorded. */
 export function dropFromTrash(id: string): boolean {
   if (!isJournalVisible(id)) return false
   const items = loadAllTrash()
   const found = items.find((item) => item.entry.id === id)
   if (found === undefined) return false
   const remaining = items.filter((item) => item.entry.id !== id)
-  if (!write(remaining)) return false
+  const target = storage()
+  if (!target) return false
+  const expected = target.getItem(KEY)
+  const transaction = journalDeviceTransaction(target, () => target.getItem(KEY) === expected
+    && write(remaining) && stageJournalDeviceDeletion(target, id), Boolean)
+  if (!transaction.ok) return false
   pruneUnusedJournalDecorations([found.entry.date], remaining.map((item) => item.entry.date))
   return true
 }
 
-/** 휴지통 비우기 */
+/** false means cleanup is unconfirmed; do not announce an empty/erased device. */
 export function emptyTrash(): boolean {
   const items = loadAllTrash()
   const removed = items.filter((item) => isJournalVisible(item.entry.id))
   const preserved = items.filter((item) => !isJournalVisible(item.entry.id))
-  if (!write(preserved)) return false
+  const target = storage()
+  if (!target) return false
+  const expected = target.getItem(KEY)
+  const transaction = journalDeviceTransaction(target, () => target.getItem(KEY) === expected && write(preserved)
+    && removed.every(item => stageJournalDeviceDeletion(target, item.entry.id)), Boolean)
+  if (!transaction.ok) return false
   pruneUnusedJournalDecorations(removed.map((item) => item.entry.date), preserved.map((item) => item.entry.date))
   return true
 }

@@ -23,6 +23,7 @@
 //    **주의**: 상한 축출은 이론적 부활 경로다(§mergeTombstones 주석 참고).
 
 import { isJournalOwnedBy } from "./local-journal-ownership"
+import { canonicalJournalStorage } from "../journal-device-storage"
 
 const KEY = "trainoracle.sync.tombstones.v1"
 
@@ -39,7 +40,7 @@ export type Tombstone = {
 function storage(): Storage | null {
   try {
     if (typeof window === "undefined") return null
-    return window.localStorage
+    return canonicalJournalStorage(window.localStorage)
   } catch {
     return null
   }

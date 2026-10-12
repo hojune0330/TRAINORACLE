@@ -17,6 +17,7 @@ import React from "react"
 import { readVisibleJournalEntries } from "../domain/account/local-journal-ownership"
 import { captureInterruptedDraft, isScreenAssetFailure, reloadScreenAssets, rememberRecoveryTab } from "../domain/screen-recovery"
 import type { AppTab } from "./AppChrome"
+import { readJournalDeviceValue } from "../domain/journal-device-storage"
 
 const JOURNAL_KEY = "trainoracle.journal.v1"
 
@@ -32,7 +33,7 @@ type BackupRead = { kind: "ready"; raw: string; count: number } | { kind: "unava
 
 export function readEmergencyJournalBackup(): BackupRead {
   try {
-    const parsed: unknown = JSON.parse(window.localStorage.getItem(JOURNAL_KEY) ?? "[]")
+    const parsed: unknown = JSON.parse(readJournalDeviceValue(window.localStorage, JOURNAL_KEY) ?? "[]")
     if (!Array.isArray(parsed)) return { kind: "unavailable" }
     const entries: { readonly id: string }[] = []
     for (const candidate of parsed) {

@@ -4,6 +4,7 @@ import type { JournalEntry } from "../journal-schema"
 import { loadEntriesOwnedBy, replaceEntriesOwnedBy } from "../journal-store"
 import { SYNC_RECOVERY_STORAGE_KEY } from "../journal-storage-keys"
 import { hasPrivateMemoText } from "../private-memo-vault"
+import { canonicalJournalStorage } from "../journal-device-storage"
 import { mergeEntries } from "./sync-local"
 import {
   loadTombstonesOwnedBy,
@@ -40,7 +41,7 @@ type RecoveryResult = {
 function storage(): Storage | null {
   try {
     if (typeof window === "undefined") return null
-    return window.localStorage
+    return canonicalJournalStorage(window.localStorage)
   } catch (error) {
     if (error instanceof Error) return null
     throw error

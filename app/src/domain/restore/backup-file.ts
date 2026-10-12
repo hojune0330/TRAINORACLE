@@ -23,6 +23,7 @@ import { loadSessionRecoveryCode } from "../account/private-note-sync"
 import { parseJournalEntryForWrite, parseJournalEntryList } from "../journal-schema"
 import type { JournalEntry } from "../journal-schema"
 import { JOURNAL_STORAGE_KEY, journalStorage, writeJournalEntries } from "../journal-local-storage"
+import { journalDeviceTransaction } from "../journal-device-storage"
 import {
   hasPrivateMemoText,
   savePrivateMemosWithJournalShells,
@@ -566,6 +567,15 @@ function rollbackLocalStorageMutations(mutations: readonly LocalStorageMutation[
 } {
   const storage = journalStorage()
   if (storage === null) return { complete: false, stateChanged: false }
+  const transaction = journalDeviceTransaction(storage, () => rollbackLocalStorageMutationsInDeviceScope(storage, mutations),
+    value => value.complete && !value.stateChanged)
+  return transaction.ok ? transaction.value : { complete: false, stateChanged: true }
+}
+
+function rollbackLocalStorageMutationsInDeviceScope(storage: Storage, mutations: readonly LocalStorageMutation[]): {
+  readonly complete: boolean
+  readonly stateChanged: boolean
+} {
   try {
     let complete = true
     let stateChanged = false

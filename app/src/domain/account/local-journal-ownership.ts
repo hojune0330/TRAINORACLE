@@ -1,4 +1,5 @@
 import { accountDeletionBoundaryState } from "./account-deletion-boundary"
+import { canonicalJournalStorage } from "../journal-device-storage"
 
 const OWNERSHIP_KEY = "trainoracle.journal.ownership.v1"
 const SCOPE_CHANGED_EVENT = "trainoracle:journal-scope-changed"
@@ -20,6 +21,27 @@ export type OwnershipReservation = {
   readonly committedRaw: string | null
 }
 
+export type OwnershipCommitPlan = {
+  readonly ok: boolean
+  readonly previousRaw: string | null
+  readonly nextRaw: string | null
+}
+
+/** Capture-only CAS pin for async cipher preparation. It publishes no ghost
+ * binding; the final vault+journal commit must match this exact owner ledger. */
+export function prepareJournalOwnershipCommit(entryIds: readonly string[], ownerId: string | null): OwnershipCommitPlan {
+  const snapshot = loadSnapshot()
+  if (snapshot.status !== "complete") return { ok: false, previousRaw: snapshot.raw, nextRaw: snapshot.raw }
+  const ids = [...new Set(entryIds.filter(id => id !== ""))]
+  for (const entryId of ids) {
+    const existing = snapshot.ownerByEntryId[entryId]
+    if (existing !== undefined && existing !== ownerId) return { ok: false, previousRaw: snapshot.raw, nextRaw: snapshot.raw }
+  }
+  if (ownerId === null || ids.length === 0) return { ok: true, previousRaw: snapshot.raw, nextRaw: snapshot.raw }
+  const owners = Object.fromEntries([...Object.entries(snapshot.ownerByEntryId), ...ids.map(id => [id, ownerId] as const)])
+  return { ok: true, previousRaw: snapshot.raw, nextRaw: JSON.stringify({ schemaVersion: 1, ownerByEntryId: owners }) }
+}
+
 export const LOCAL_JOURNAL_OWNERSHIP_KEY = OWNERSHIP_KEY
 
 let activeAccountId: string | null = null
@@ -28,7 +50,7 @@ let scopeGeneration = 0
 function storage(): Storage | null {
   try {
     if (typeof window === "undefined") return null
-    return window.localStorage
+    return canonicalJournalStorage(window.localStorage)
   } catch {
     return null
   }

@@ -31,8 +31,10 @@ import {
   isJournalOwnedBy,
   isJournalVisible,
   journalOwner,
+  localJournalScopeGeneration,
   onLocalJournalScopeChange,
   reserveJournalOwnership,
+  prepareJournalOwnershipCommit,
   rollbackJournalOwnership,
   unboundJournalIds,
 } from "./account/local-journal-ownership"
@@ -41,10 +43,15 @@ import { readAccountJournalProjection, readCurrentConfirmedAccountJournalProject
 import { accountJournalPreviewEnabled } from "./account/account-journal-api"
 import { buildFileAnalysisReport } from "./import/file-analysis"
 import { stringifyBackupJsonForExport } from "./restore/backup-json-stream"
+import { JOURNAL_DEVICE_UNCERTAIN_EVENT, journalDeviceTransaction, stageJournalDeviceDeletion } from "./journal-device-storage"
 
 export { BackupJsonExportLimitError } from "./restore/backup-json-stream"
 
 const privateMemoCache = new Map<string, { readonly recoveryCode: string; readonly memo: string }>()
+
+/** Explicit device erasure must also discard already-decrypted private text. */
+export function clearJournalPrivateReadCache(): void { privateMemoCache.clear() }
+if (typeof window !== "undefined") window.addEventListener(JOURNAL_DEVICE_UNCERTAIN_EVENT, clearJournalPrivateReadCache)
 
 /** Cutover guard for legacy writers; account-less local journals remain available. */
 export function legacyJournalWritesBlocked(userId: string | null = activeLocalAccount()): boolean {
@@ -145,6 +152,13 @@ export function loadJournalEntriesSnapshot(): JournalEntriesStorageSnapshot {
 }
 
 export function saveEntry(entry: unknown): { readonly ok: boolean; readonly total: number } {
+  const storage = journalStorage()
+  if (storage === null) return { ok: false, total: loadEntries().length }
+  const result = journalDeviceTransaction(storage, () => saveEntryWithinDeviceTransaction(entry), value => value.ok)
+  return result.ok ? result.value : { ok: false, total: loadEntries().length }
+}
+
+function saveEntryWithinDeviceTransaction(entry: unknown): { readonly ok: boolean; readonly total: number } {
   if (legacyJournalWritesBlocked()) return { ok: false, total: loadEntries().length }
   const snapshot = loadJournalEntriesSnapshot()
   const all = snapshot.entries
@@ -176,8 +190,9 @@ export async function savePrivateEntry(entry: unknown): Promise<{ readonly ok: b
   const localStorage = journalStorage()
   const recoveryCode = loadSessionRecoveryCode()
   if (localStorage === null || recoveryCode === null) return { ok: false, total: all.length }
+  const owner = activeLocalAccount(), generation = localJournalScopeGeneration()
 
-  const ownership = reserveJournalOwnership([parsedEntry.id], activeLocalAccount())
+  const ownership = prepareJournalOwnershipCommit([parsedEntry.id], owner)
   if (!ownership.ok) return { ok: false, total: loadEntries().length }
   const ok = await savePrivateMemoWithJournalShell(
     localStorage,
@@ -185,9 +200,11 @@ export async function savePrivateEntry(entry: unknown): Promise<{ readonly ok: b
     parsedEntry,
     recoveryCode,
     snapshot.raw,
+    () => activeLocalAccount() === owner && localJournalScopeGeneration() === generation
+      && loadSessionRecoveryCode() === recoveryCode,
+    ownership,
   )
   if (!ok) {
-    rollbackJournalOwnership(ownership)
     return { ok: false, total: loadEntries().length }
   }
   privateMemoCache.set(parsedEntry.id, { recoveryCode, memo: parsedEntry.kind === "evening" ? parsedEntry.note : parsedEntry.memo })
@@ -231,6 +248,9 @@ export async function updatePrivateEntry(
   const localStorage = journalStorage()
   const recoveryCode = loadSessionRecoveryCode()
   if (localStorage === null || recoveryCode === null) return { ok: false, total: entries.length }
+  const owner = activeLocalAccount(), generation = localJournalScopeGeneration()
+  const ownership = prepareJournalOwnershipCommit([nextEntry.id], owner)
+  if (!ownership.ok) return { ok: false, total: entries.length }
 
   const preservedEntry = preserveJournalProvenance(previous, nextEntry)
   const nextEntries = entries.map((current) => current.id === nextEntry.id ? preservedEntry : current)
@@ -240,6 +260,11 @@ export async function updatePrivateEntry(
     preservedEntry,
     recoveryCode,
     snapshot.raw,
+    () => activeLocalAccount() === owner && localJournalScopeGeneration() === generation
+      && loadSessionRecoveryCode() === recoveryCode,
+    // Editing an unbound visible record is not approval to adopt it into an
+    // account. Pin the exact whole ledger without changing its bindings.
+    { ...ownership, nextRaw: ownership.previousRaw },
   )
   if (!ok) return { ok: false, total: entries.length }
   privateMemoCache.set(nextEntry.id, { recoveryCode, memo: nextEntry.kind === "evening" ? nextEntry.note : nextEntry.memo })
@@ -248,11 +273,12 @@ export async function updatePrivateEntry(
 
 export async function loadEntriesWithPrivateMemos(): Promise<JournalEntry[]> {
   const owner = activeLocalAccount()
+  const generation = localJournalScopeGeneration()
   let revoked = false
   const unsubscribe = onLocalJournalScopeChange(() => {
     if (activeLocalAccount() !== owner) revoked = true
   })
-  const current = () => !revoked && activeLocalAccount() === owner
+  const current = () => !revoked && activeLocalAccount() === owner && localJournalScopeGeneration() === generation
   try {
     const entries = loadEntries().map(entry => readAccountJournalPrivateEntry(entry.id) ?? entry)
     const localStorage = journalStorage()
@@ -317,6 +343,13 @@ export function replaceEntriesOwnedBy(
   userId: string,
   entries: readonly unknown[],
 ): { readonly ok: boolean; readonly total: number } {
+  const storage = journalStorage()
+  if (!storage) return { ok: false, total: loadEntriesOwnedBy(userId).length }
+  const result = journalDeviceTransaction(storage, () => replaceEntriesOwnedByWithinDeviceTransaction(userId, entries), value => value.ok)
+  return result.ok ? result.value : { ok: false, total: loadEntriesOwnedBy(userId).length }
+}
+
+function replaceEntriesOwnedByWithinDeviceTransaction(userId: string, entries: readonly unknown[]): { readonly ok: boolean; readonly total: number } {
   if (legacyJournalWritesBlocked(userId)) return { ok: false, total: loadEntriesOwnedBy(userId).length }
   const parsed = parseJournalEntryList(entries)
   const snapshot = loadJournalEntriesSnapshot()
@@ -342,9 +375,11 @@ export async function replaceEntriesOwnedByWithPrivateMemos(
   const preserved = snapshot.entries.filter((entry) => !isJournalOwnedBy(entry.id, userId))
   const preservedIds = new Set(preserved.map((entry) => entry.id))
   if (entries.some((entry) => preservedIds.has(entry.id))) return { ok: false, total: loadEntriesOwnedBy(userId).length }
-  const ownership = reserveJournalOwnership(entries.map((entry) => entry.id), userId)
+  const ownership = prepareJournalOwnershipCommit(entries.map((entry) => entry.id), userId)
   if (!ownership.ok) return { ok: false, total: loadEntriesOwnedBy(userId).length }
   const localStorage = journalStorage()
+  const owner = activeLocalAccount(), generation = localJournalScopeGeneration()
+  const sessionRecoveryCode = loadSessionRecoveryCode()
   const persisted = localStorage === null
     ? null
     : await savePrivateMemosWithJournalShells(
@@ -352,12 +387,17 @@ export async function replaceEntriesOwnedByWithPrivateMemos(
       [...preserved, ...entries],
       privateEntries,
       recoveryCode,
+      snapshot.raw,
+      () => activeLocalAccount() === owner && localJournalScopeGeneration() === generation
+        && loadSessionRecoveryCode() === sessionRecoveryCode,
+      ownership,
     )
-  if (persisted === null) rollbackJournalOwnership(ownership)
   return { ok: persisted !== null, total: persisted === null ? loadEntriesOwnedBy(userId).length : entries.length }
 }
 
 export type DeleteEntryResult = {
+  /** false is an unconfirmed deletion, not proof that no durable intent exists.
+   * Readers may finish that exact owner-bound intent after a process restart. */
   readonly ok: boolean
   readonly total: number
   /**
@@ -387,6 +427,13 @@ export type DeleteEntryResult = {
  * `trashed: false`를 실어 보내 UI가 사실대로 말하게 한다.
  */
 export function deleteEntry(id: string): DeleteEntryResult {
+  const storage = journalStorage()
+  if (storage === null) return { ok: false, total: loadEntries().length, trashed: false }
+  const result = journalDeviceTransaction(storage, () => deleteEntryWithinDeviceTransaction(id), value => value.ok)
+  return result.ok ? result.value : { ok: false, total: loadEntries().length, trashed: false }
+}
+
+function deleteEntryWithinDeviceTransaction(id: string): DeleteEntryResult {
   if (legacyJournalWritesBlocked()) return { ok: false, total: loadEntries().length, trashed: false }
   const snapshot = loadJournalEntriesSnapshot()
   const all = snapshot.entries
@@ -416,6 +463,8 @@ export function deleteEntry(id: string): DeleteEntryResult {
     return { ok: false, total: all.length, trashed: false }
   }
 
+  if (!stageJournalDeviceDeletion(localStorage, id)) return { ok: false, total: all.length, trashed: false }
+  privateMemoCache.delete(id)
   return { ok: true, total: remaining.length, trashed }
 }
 
@@ -440,6 +489,13 @@ export type RestoreDeletedResult = {
  * 휴지통에서 꺼내기(takeFromTrash)를 먼저 해서, 저장이 실패하면 되돌려 놓는다.
  */
 export function restoreDeletedEntry(id: string): RestoreDeletedResult {
+  const storage = journalStorage()
+  if (storage === null) return { ok: false, restoredId: null, total: loadEntries().length }
+  const result = journalDeviceTransaction(storage, () => restoreDeletedEntryWithinDeviceTransaction(id), value => value.ok)
+  return result.ok ? result.value : { ok: false, restoredId: null, total: loadEntries().length }
+}
+
+function restoreDeletedEntryWithinDeviceTransaction(id: string): RestoreDeletedResult {
   if (legacyJournalWritesBlocked()) return { ok: false, restoredId: null, total: loadEntries().length }
   if (!isJournalVisible(id)) return { ok: false, restoredId: null, total: loadEntries().length }
   const taken = takeFromTrash(id)
@@ -480,6 +536,8 @@ export function restoreDeletedEntry(id: string): RestoreDeletedResult {
     moveToTrash(taken.entry, taken.deletedAt, taken.privateMemo)
     return { ok: false, restoredId: null, total: next.length - 1 }
   }
+  if (!stageJournalDeviceDeletion(localStorage, id)) return { ok: false, restoredId: null, total: next.length - 1 }
+  privateMemoCache.delete(id)
   return { ok: true, restoredId: restored.id, total: next.length }
 }
 

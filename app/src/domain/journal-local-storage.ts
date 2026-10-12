@@ -4,6 +4,7 @@ import { hasPrivateMemoText } from "./private-memo-vault"
 import { JOURNAL_STORAGE_KEY } from "./journal-storage-keys"
 import { announceLocalJournalChange } from "./journal-change-events"
 import { journalWriteRetainsBodyMetadata } from "./body-part-metadata"
+import { canonicalJournalStorage } from "./journal-device-storage"
 
 export { JOURNAL_STORAGE_KEY }
 export const JOURNAL_STORAGE_PROBE_KEY = "__to_probe__"
@@ -15,19 +16,20 @@ export function journalStorage(): Storage | null {
     const probe = JOURNAL_STORAGE_PROBE_KEY
     localStorage.setItem(probe, "1")
     localStorage.removeItem(probe)
-    return localStorage
+    return canonicalJournalStorage(localStorage)
   } catch {
     return null
   }
 }
 
 export function writeJournalEntries(
-  localStorage: Storage,
+  target: Storage,
   entries: readonly JournalEntry[],
   expected: string | null | undefined = undefined,
 ): boolean {
   if (entries.some(hasPrivateMemoText)) return false
   try {
+    const localStorage = canonicalJournalStorage(target)
     const serialized = JSON.stringify(entries)
     const previous = localStorage.getItem(JOURNAL_STORAGE_KEY)
     if (!journalWriteRetainsBodyMetadata(previous, entries)) return false

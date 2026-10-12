@@ -4,14 +4,17 @@ import { JOURNAL_STORAGE_KEY, PRIVATE_MEMO_VAULT_STORAGE_KEY } from "./journal-s
 import type { PrivateMemoVault } from "./private-memo-vault"
 import { announceLocalJournalChange } from "./journal-change-events"
 import { journalWriteRetainsBodyMetadata } from "./body-part-metadata"
+import { canonicalJournalStorage, writeJournalDeviceValues } from "./journal-device-storage"
+import { LOCAL_JOURNAL_OWNERSHIP_KEY, type OwnershipCommitPlan } from "./account/local-journal-ownership"
 
 export type VaultJournalStorageSnapshot = {
   readonly vault: string | null
   readonly journal: string | null
 }
 
-export function readVaultJournalStorageSnapshot(storage: Storage): VaultJournalStorageSnapshot | null {
+export function readVaultJournalStorageSnapshot(target: Storage): VaultJournalStorageSnapshot | null {
   try {
+    const storage = canonicalJournalStorage(target)
     return {
       vault: storage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY),
       journal: storage.getItem(JOURNAL_STORAGE_KEY),
@@ -27,30 +30,22 @@ export function writeVaultAndJournalAtomically(
   entries: readonly JournalEntry[],
   expected?: VaultJournalStorageSnapshot,
   commitGuard: () => boolean = () => true,
+  ownership?: OwnershipCommitPlan,
 ): boolean {
   const previous = expected ?? readVaultJournalStorageSnapshot(storage)
   if (previous === null) return false
   if (!journalWriteRetainsBodyMetadata(previous.journal, entries)) return false
   if (expected !== undefined && !snapshotMatches(storage, expected)) return false
   if (!guardAllowsCommit(commitGuard)) return false
-  const nextVault = JSON.stringify(vault)
-  const nextJournal = JSON.stringify(entries)
-
-  try {
-    storage.setItem(PRIVATE_MEMO_VAULT_STORAGE_KEY, nextVault)
-    storage.setItem(JOURNAL_STORAGE_KEY, nextJournal)
-    if (storage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY) === nextVault
-      && storage.getItem(JOURNAL_STORAGE_KEY) === nextJournal
-      && guardAllowsCommit(commitGuard)) {
-      announceLocalJournalChange()
-      return true
-    }
-  } catch {
-    restoreUnconfirmedStorageSnapshot(storage, previous, nextVault, nextJournal)
-    return false
-  }
-  restoreUnconfirmedStorageSnapshot(storage, previous, nextVault, nextJournal)
-  return false
+  if (ownership && !ownership.ok) return false
+  const ok = writeJournalDeviceValues(storage, {
+    [PRIVATE_MEMO_VAULT_STORAGE_KEY]: JSON.stringify(vault),
+    [JOURNAL_STORAGE_KEY]: JSON.stringify(entries),
+    ...(ownership ? { [LOCAL_JOURNAL_OWNERSHIP_KEY]: ownership.nextRaw } : {}),
+  }, { [PRIVATE_MEMO_VAULT_STORAGE_KEY]: previous.vault, [JOURNAL_STORAGE_KEY]: previous.journal,
+    ...(ownership ? { [LOCAL_JOURNAL_OWNERSHIP_KEY]: ownership.previousRaw } : {}) }, commitGuard)
+  if (ok) announceLocalJournalChange()
+  return ok
 }
 
 function guardAllowsCommit(commitGuard: () => boolean): boolean {
@@ -63,6 +58,7 @@ function guardAllowsCommit(commitGuard: () => boolean): boolean {
 
 function snapshotMatches(storage: Storage, expected: VaultJournalStorageSnapshot): boolean {
   try {
+    storage = canonicalJournalStorage(storage)
     return storage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY) === expected.vault
       && storage.getItem(JOURNAL_STORAGE_KEY) === expected.journal
   } catch {
@@ -127,6 +123,7 @@ export function writeStorageValueWithReadback(
   previous: string | null,
 ): boolean {
   try {
+    storage = canonicalJournalStorage(storage)
     storage.setItem(key, next)
     if (storage.getItem(key) === next) return true
   } catch {

@@ -32,14 +32,14 @@ import {
 } from "./journal-storage-keys"
 import {
   LOCAL_JOURNAL_OWNERSHIP_KEY,
-  retainJournalOwnershipForIds,
 } from "./account/local-journal-ownership"
-import { loadTombstones } from "./account/tombstone"
 import { findAccountScopedStorageKeys } from "./account/local-account-scope"
 import { DAILY_CONTEXT_STORAGE_KEY } from "./daily-context"
 import { FATIGUE_EXPERIMENT_STORAGE_KEY } from "./fatigue-experiment-store"
 import { SYNC_CONSENT_STORAGE_KEY } from "./account/sync-local"
 import { ACCOUNT_DELETION_BOUNDARY_PREFIX } from "./account/account-deletion-boundary"
+import { eraseJournalDeviceData, isJournalDeviceManagedKey, JOURNAL_DEVICE_PREFIX, JOURNAL_DEVICE_POINTER_KEY } from "./journal-device-storage"
+import { clearJournalPrivateReadCache } from "./journal-store"
 
 const ACCOUNT_SCOPED_PLAN_LOCAL_KEYS = [
   "trainoracle.plan-beta.v1",
@@ -201,10 +201,8 @@ function clearStorageKeys(
 export function eraseAllLocalData(options: EraseOptions = {}): EraseResult {
   const localStorage = storage("local")
   if (localStorage === null) return { ok: false, cleared: 0, failed: ["storage-unavailable"] }
+  clearJournalPrivateReadCache()
 
-  const retainedTombstoneIds = options.includeDeletionRecord === true
-    ? []
-    : loadTombstones().map((tombstone) => tombstone.id)
   const keys: string[] = [
     ...CONTENT_KEYS,
     ...ACCOUNT_KEYS,
@@ -218,10 +216,19 @@ export function eraseAllLocalData(options: EraseOptions = {}): EraseResult {
   }
 
   const failed: string[] = []
-  let cleared = clearStorageKeys(localStorage, keys, failed)
-  const ownershipResult = retainJournalOwnershipForIds(retainedTombstoneIds)
-  if (ownershipResult === "removed") cleared += 1
-  else if (ownershipResult === "failed") failed.push(LOCAL_JOURNAL_OWNERSHIP_KEY)
+  const previousManagedKeys: string[] = []
+  for (let index = 0; index < localStorage.length; index++) {
+    const key = localStorage.key(index)
+    if (key && (isJournalDeviceManagedKey(key) || key.startsWith(JOURNAL_DEVICE_PREFIX))) previousManagedKeys.push(key)
+  }
+  // The canonical adapter also clears the retained seed/recovery generations.
+  // It retains only existing deletion IDs and their exact owner bindings by
+  // default; an explicit full-trace wipe removes those too and leaves an empty
+  // anti-reimport fence. No legacy medical record can silently migrate again.
+  const journalErased = eraseJournalDeviceData(localStorage, options.includeDeletionRecord === true)
+  if (!journalErased) failed.push(JOURNAL_DEVICE_POINTER_KEY)
+  let cleared = clearStorageKeys(localStorage, keys.filter(key => !isJournalDeviceManagedKey(key)), failed)
+  cleared += previousManagedKeys.filter(key => localStorage.getItem(key) === null).length
   const sessionStorage = storage("session")
   if (sessionStorage === null) {
     failed.push("session-storage-unavailable")
@@ -242,6 +249,10 @@ export function erasableKeys(options: EraseOptions = {}): readonly string[] {
   const localStorage = storage("local")
   if (localStorage !== null) {
     keys.push(...findAccountScopedStorageKeys(localStorage, ACCOUNT_SCOPED_LOCAL_KEYS))
+    for (let index = 0; index < localStorage.length; index++) {
+      const key = localStorage.key(index)
+      if (key?.startsWith(JOURNAL_DEVICE_PREFIX)) keys.push(key)
+    }
   }
   const sessionStorage = storage("session")
   if (sessionStorage !== null) {
