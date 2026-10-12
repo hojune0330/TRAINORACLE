@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { chromium } from '@playwright/test'
 
 const base = 'http://127.0.0.1:4176'
-const output = new URL('../.codex-calendar-visual-qa/body-asset-ux-20261012/', import.meta.url)
+const output = new URL('../.codex-calendar-visual-qa/body-emoji-ux-20261012/', import.meta.url)
 await mkdir(output, { recursive: true })
 const browser = await chromium.launch({ headless: true })
 const observations = [], errors = []
@@ -13,7 +13,7 @@ const openContext = async (width, imageFailure = false) => {
   const context = await browser.newContext({ viewport: { width, height: 812 }, serviceWorkers: 'block', reducedMotion: 'reduce' })
   await context.route('**/*', route => {
     const url = new URL(route.request().url())
-    return url.origin !== base || imageFailure && url.pathname.endsWith('body-check-guide-v1.webp') ? route.abort() : route.continue()
+    return url.origin !== base || imageFailure && url.pathname.endsWith('body-check-emoji-v1.webp') ? route.abort() : route.continue()
   })
   const page = await context.newPage()
   page.on('pageerror', error => errors.push(error.message))
@@ -58,7 +58,7 @@ try {
     await lens.evaluate(img => img.decode())
     await capture(page, `oracle-start-${width}`)
     await condition(page)
-    const guide = page.locator('img[src$="body-check-guide-v1.webp"]')
+    const guide = page.locator('img[src$="body-check-emoji-v1.webp"]')
     await guide.waitFor()
     await guide.evaluate(img => img.decode())
     await capture(page, `body-start-${width}`)
@@ -120,7 +120,7 @@ try {
   await missing.page.getByRole('button', { name: '오른 무릎', exact: true }).click()
   await missing.page.getByRole('button', { name: '오른 무릎 통증 2단계', exact: true }).click()
   assert.equal(await missing.page.getByRole('button', { name: '오른 무릎 통증 2단계', exact: true }).getAttribute('aria-pressed'), 'true')
-  assert.equal(await missing.page.locator('img[src$="body-check-guide-v1.webp"]').isVisible(), false)
+  assert.equal(await missing.page.locator('.body-pain-selector__visual').count(), 0)
   await capture(missing.page, 'body-image-unavailable-320')
   await missing.context.close()
 
@@ -155,6 +155,6 @@ try {
   await capture(plan.page, 'oracle-plan-only-375')
   await plan.context.close()
   assert.deepEqual(errors, [])
-  await writeFile(new URL('observations.json', output), JSON.stringify({ baseSource: '6d347d16', mode: 'LOCAL_SYNTHETIC_IMPLEMENTATION_CHECK', observations, pageErrors: errors }, null, 2))
+  await writeFile(new URL('observations.json', output), JSON.stringify({ baseSource: '01783011', mode: 'LOCAL_SYNTHETIC_IMPLEMENTATION_CHECK', observations, pageErrors: errors }, null, 2))
   console.log(JSON.stringify({ captures: observations.filter(item => item.horizontalOverflow !== undefined).length, observations: observations.length, pageErrors: errors.length }))
 } finally { await browser.close() }

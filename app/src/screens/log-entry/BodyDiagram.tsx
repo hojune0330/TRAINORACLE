@@ -11,6 +11,7 @@ interface BodyDiagramProps {
 
 export function BodyDiagram({ selected = {}, onChange }: BodyDiagramProps) {
   const [openPartId, setOpenPartId] = React.useState<string | null>(null)
+  const [guideUnavailable, setGuideUnavailable] = React.useState(false)
   const pickerId = React.useId()
   const firstLevelRef = React.useRef<HTMLButtonElement>(null)
   const partButtonRefs = React.useRef(new Map<string, HTMLButtonElement>())
@@ -29,15 +30,21 @@ export function BodyDiagram({ selected = {}, onChange }: BodyDiagramProps) {
 
   return (
     <div className="body-pain-selector">
-      <div className="body-pain-selector__visual" aria-hidden="true">
-        <img
-          src={`${import.meta.env.BASE_URL || "/"}illustrations/body-check-guide-v1.webp`}
-          alt=""
-          onError={(event) => { event.currentTarget.hidden = true }}
-        />
+      <div className="body-pain-selector__heading">
+        {!guideUnavailable && <div className="body-pain-selector__visual" aria-hidden="true">
+          <img
+            src={`${import.meta.env.BASE_URL || "/"}illustrations/body-check-emoji-v1.webp`}
+            alt=""
+            width={80}
+            height={80}
+            decoding="async"
+            draggable={false}
+            onError={() => setGuideUnavailable(true)}
+          />
+        </div>}
+        <p className="body-pain-selector__instruction">불편한 부위를 골라요</p>
       </div>
       <div className="body-pain-selector__content">
-        <p className="body-pain-selector__instruction">불편한 부위를 골라 단계를 선택해요.</p>
         <div className="body-pain-selector__buttons">
           {BODY_PARTS.map((part) => {
             const level = selected[part.id] || 0
