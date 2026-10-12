@@ -1,8 +1,8 @@
 {
   "kind": "TRAINORACLE_PAGES_DEPLOYMENT",
-  "sourceSha": "aba840b62e72d605c6f19263f852a92dd25d7ff3",
-  "previousPagesSha": "07f682182bd565fd920c570dc31dea6637c4b342",
+  "sourceSha": "95e0f56ac628e311aaf6895bf1220be7614c1456",
+  "previousPagesSha": "14ae07c52985ed54b486adcd9868a3d102da1ce4",
   "method": "PRESERVING_GUARDED_MANUAL",
-  "deployedAt": "2026-10-12T10:05:51.947Z",
+  "deployedAt": "2026-10-12T12:08:25.281Z",
   "backendVerification": "NOT_CONFIRMED"
 }
