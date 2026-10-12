@@ -786,10 +786,10 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
                 )}
               </>
             )}
-        {props.materialsFooter}
         </div>
         {pendingPurchase !== undefined && renderPurchaseRow(pendingPurchase)}
         {openCollection !== undefined && renderBundleRow(openCollection.collection, openCollection.items, true)}
+        {props.materialsFooter}
         </>}
       </section>
     </>
