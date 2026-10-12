@@ -6,3 +6,5 @@
 .gitattributes text eol=lf
 *.png -text
 *.glb -text
+*.fbx -text
+*.webp -text

@@ -1,6 +1,6 @@
 # 2차 디자인 에셋
 
-작성·제작: 디자인·UX·문구 담당. 모든 에셋은 TrainOracle이 직접 만들었다(`TRAINORACLE_IN_HOUSE`). 외부 그림·AI 생성·폰트 외 서드파티 자산은 쓰지 않았다.
+작성·제작: 디자인·UX·문구 담당. 아래 `app/public/phase2/` 목록은 TrainOracle이 직접 만든 에셋이다(`TRAINORACLE_IN_HOUSE`). 이 목록에는 외부 그림·AI 생성·폰트 외 서드파티 자산을 쓰지 않았다. 2026-10-12 추가한 토리 게임 atlas는 별도 Tripo 생성·Blender 가공 에셋이며 [동작 원본과 제작 기록](../../character-art/tori/tripo/2026-10-12/motion/README.md)을 따른다.
 
 ![컨택트 시트](assets-contact-sheet.png)
 

@@ -3,9 +3,10 @@ import { advanceTreadmill, nearestHazard, newTreadmillRun, treadmillCommand, TRE
 import type { TreadmillStage, TreadmillState } from "../src/domain/minigame/treadmill"
 import { tourCity, tourStages } from "../src/domain/minigame/tour"
 
-async function openGame(page: Page, course: "practice" | "seoul" = "practice") {
+async function openGame(page: Page, course: "practice" | "seoul" = "practice", blockToriArt = false) {
   await page.route("**/*", route => {
     const url = new URL(route.request().url())
+    if (blockToriArt && url.pathname.endsWith("/tori-atlas-v1.webp")) return route.abort()
     return url.hostname === "127.0.0.1" || url.protocol === "data:" ? route.continue() : route.abort()
   })
   await page.goto("/?app=1")
@@ -20,6 +21,32 @@ async function openGame(page: Page, course: "practice" | "seoul" = "practice") {
 }
 const energy = async (page: Page) => Number((await page.getByLabel("게임 에너지", { exact: true }).textContent())!.replace(/\D/g, ""))
 const noSideScroll = (page: Page) => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)
+
+for (const blocked of [false, true]) test(`Tori atlas ${blocked ? "failure keeps the fallback playable" : "loads and is painted in the running game"}`, async ({ page }, info) => {
+  await page.addInitScript(() => {
+    const target = window as unknown as Window & { __toriAtlasPaints: number }
+    target.__toriAtlasPaints = 0
+    const original = CanvasRenderingContext2D.prototype.drawImage
+    CanvasRenderingContext2D.prototype.drawImage = function (image: CanvasImageSource, ...coordinates: number[]) {
+      if (image instanceof HTMLImageElement && image.src.endsWith("/tori-atlas-v1.webp") && image.naturalWidth === 1024) target.__toriAtlasPaints++
+      return Reflect.apply(original, this, [image, ...coordinates])
+    }
+  })
+  await openGame(page, "practice", blocked)
+  const paints = () => page.evaluate(() => (window as unknown as Window & { __toriAtlasPaints: number }).__toriAtlasPaints)
+  if (!blocked) await expect.poll(paints).toBeGreaterThan(0)
+  await page.getByRole("button", { name: "시작", exact: true }).click()
+  await page.clock.runFor(3100)
+  await page.keyboard.down("ArrowRight")
+  await page.clock.runFor(700)
+  await page.keyboard.up("ArrowRight")
+  await expect(page.getByLabel("게임 에너지", { exact: true })).not.toHaveText("에너지 100")
+  await page.screenshot({ path: info.outputPath(blocked ? "tori-fallback-running.png" : "tori-atlas-running.png"), fullPage: true })
+  await page.getByRole("button", { name: "일시정지", exact: true }).click()
+  await expect(page.getByRole("button", { name: "계속", exact: true })).toBeVisible()
+  if (blocked) expect(await paints()).toBe(0)
+  await page.screenshot({ path: info.outputPath(blocked ? "tori-fallback.png" : "tori-atlas.png"), fullPage: true })
+})
 
 type Step = { at: number; key: "run-down" | "run-up" | "jump" | "upgrade" }
 /**

@@ -267,7 +267,8 @@ export function GameMenu({ progress, status, onClose, onSettings, onCharacter, o
       </div>}
 
       {tab === "licenses" && <div role="tabpanel" id="treadmill-panel-licenses" aria-labelledby="treadmill-tab-licenses" className="treadmill-game__panel">
-        <p>이 게임의 캐릭터·도시·랜드마크 그림과 효과음은 TrainOracle이 코드로 직접 그리거나 합성했어요. 실제 건축물은 단순한 실루엣으로만 표현했어요. 아래 오픈소스를 사용해요.</p>
+        <p>토리는 TrainOracle의 캐릭터 설정을 바탕으로 Tripo Studio에서 생성하고 Blender에서 가공한 그림이에요. 나머지 캐릭터·도시·랜드마크와 효과음은 코드로 직접 그리거나 합성했어요. 실제 건축물은 단순한 실루엣으로 표현했어요.</p>
+        <p><a href="https://www.tripo3d.ai/terms" target="_blank" rel="noreferrer">Tripo 에셋 이용약관</a> · 아래 오픈소스 라이선스와 캐릭터 그림의 사용 권한은 별개예요.</p>
         <p className="treadmill-game__fine">달리기 동작 참고: Eadweard Muybridge, 《Animal Locomotion》 Plate 65 “Running full speed”(1887), 퍼블릭 도메인 · Boston Public Library / <a href="https://commons.wikimedia.org/wiki/File:Animal_locomotion._Plate_65_(Boston_Public_Library).jpg" target="_blank" rel="noreferrer">Wikimedia Commons</a>. 사진을 옮기지 않고 관절 각도만 참고했어요.</p>
         <ul className="treadmill-game__licenses">
           {LICENSES.map(item => <li key={item.name}>
