@@ -6,6 +6,7 @@ import { resolveExecutionReplanSource } from "./execution-replan-source"
 import { reviewPlanExecution } from "./plan-execution-review"
 import { EXECUTION_REPLAN_POLICY, replayExecutionReplan, replanKey, type ReplanAction, type ExecutionReplanReceipt } from "./execution-replan-policy"
 import { recordedPlanSlots } from "./recorded-plan-slots"
+import { journalPainPartsForSafety } from "./body-part-metadata"
 
 export const replanFingerprint = (value: unknown) => canonicalJsonFingerprint("trainoracle.execution-replan.v1", value)
 export type ExecutionReplanProposal = {
@@ -19,7 +20,7 @@ export type ReplanPreparation = { kind: "ready"; proposals: ExecutionReplanPropo
 export function executionReplanEvidence(entries: readonly JournalEntry[]) {
   return entries.map(e => ({ id: e.id, kind: e.kind, date: e.date,
     ...(e.kind === "post-session" ? { link: e.plannedSessionLink ?? null, outcome: e.activityOutcome ?? null,
-      slot: e.activitySlot ?? null, pain: e.painCheckStatus ?? null, painParts: e.painParts ?? [],
+      slot: e.activitySlot ?? null, pain: e.painCheckStatus ?? null, painParts: journalPainPartsForSafety(e),
       relation: e.planExecutionRelation ?? null, waiting: e.objectiveDataState ?? null,
       rpe: e.fieldProvenance?.rpe?.provenance === "EXPLICIT" ? e.rpe : null,
       distance: e.fieldProvenance?.distanceKm?.provenance === "EXPLICIT" ? e.distanceKm : null,

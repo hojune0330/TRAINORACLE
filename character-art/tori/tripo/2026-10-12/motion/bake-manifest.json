@@ -1,0 +1,293 @@
+{
+  "sourceSha256": "e6d3417b3727bf13fcf987d6e2400e78fa0f9414c2db51e325bc69019ae2314e",
+  "blender": "4.5.14 LTS",
+  "cameraOffset": [
+    -8,
+    -5,
+    0
+  ],
+  "orthoScale": 1.2190476655960083,
+  "fps": 24,
+  "baseline": 480,
+  "pivotX": 256,
+  "runGround": -0.04767942428588867,
+  "frames": [
+    {
+      "index": 0,
+      "file": "tori_run_01.png",
+      "action": "run",
+      "frame": 1.0,
+      "cameraTarget": [
+        -0.01880478300154209,
+        -0.39848044514656067,
+        0.48565390706062317
+      ],
+      "alphaBounds": [
+        182,
+        83,
+        365,
+        469
+      ]
+    },
+    {
+      "index": 1,
+      "file": "tori_run_02.png",
+      "action": "run",
+      "frame": 4.75,
+      "cameraTarget": [
+        -0.01880478486418724,
+        -0.39848044514656067,
+        0.48565390706062317
+      ],
+      "alphaBounds": [
+        135,
+        74,
+        377,
+        476
+      ]
+    },
+    {
+      "index": 2,
+      "file": "tori_run_03.png",
+      "action": "run",
+      "frame": 8.5,
+      "cameraTarget": [
+        -0.01880478300154209,
+        -0.39848044514656067,
+        0.48565390706062317
+      ],
+      "alphaBounds": [
+        143,
+        73,
+        385,
+        466
+      ]
+    },
+    {
+      "index": 3,
+      "file": "tori_run_04.png",
+      "action": "run",
+      "frame": 12.25,
+      "cameraTarget": [
+        -0.01880478486418724,
+        -0.39848044514656067,
+        0.48565390706062317
+      ],
+      "alphaBounds": [
+        154,
+        67,
+        388,
+        481
+      ]
+    },
+    {
+      "index": 4,
+      "file": "tori_run_05.png",
+      "action": "run",
+      "frame": 16.0,
+      "cameraTarget": [
+        -0.01880478300154209,
+        -0.3984804153442383,
+        0.48565390706062317
+      ],
+      "alphaBounds": [
+        177,
+        77,
+        366,
+        467
+      ]
+    },
+    {
+      "index": 5,
+      "file": "tori_run_06.png",
+      "action": "run",
+      "frame": 19.75,
+      "cameraTarget": [
+        -0.01880478300154209,
+        -0.3984804153442383,
+        0.48565390706062317
+      ],
+      "alphaBounds": [
+        139,
+        67,
+        371,
+        478
+      ]
+    },
+    {
+      "index": 6,
+      "file": "tori_run_07.png",
+      "action": "run",
+      "frame": 23.5,
+      "cameraTarget": [
+        -0.01880478300154209,
+        -0.3984804153442383,
+        0.48565390706062317
+      ],
+      "alphaBounds": [
+        139,
+        68,
+        382,
+        465
+      ]
+    },
+    {
+      "index": 7,
+      "file": "tori_run_08.png",
+      "action": "run",
+      "frame": 27.25,
+      "cameraTarget": [
+        -0.01880478300154209,
+        -0.3984804153442383,
+        0.48565390706062317
+      ],
+      "alphaBounds": [
+        155,
+        67,
+        387,
+        480
+      ]
+    },
+    {
+      "index": 8,
+      "file": "tori_idle_01.png",
+      "action": "idle",
+      "frame": 1,
+      "cameraTarget": [
+        0.0019531197613105178,
+        -0.0332031175494194,
+        0.5059980750083923
+      ],
+      "alphaBounds": [
+        158,
+        44,
+        328,
+        481
+      ]
+    },
+    {
+      "index": 9,
+      "file": "tori_idle_02.png",
+      "action": "idle",
+      "frame": 31,
+      "cameraTarget": [
+        0.0019531197613105178,
+        -0.0332031175494194,
+        0.5058473944664001
+      ],
+      "alphaBounds": [
+        158,
+        44,
+        328,
+        481
+      ]
+    },
+    {
+      "index": 10,
+      "file": "tori_jump_01.png",
+      "action": "jump",
+      "frame": 15,
+      "cameraTarget": [
+        0.00157963577657938,
+        -0.03891359642148018,
+        0.5179764628410339
+      ],
+      "alphaBounds": [
+        164,
+        29,
+        334,
+        481
+      ]
+    },
+    {
+      "index": 11,
+      "file": "tori_jump_02.png",
+      "action": "jump",
+      "frame": 27,
+      "cameraTarget": [
+        0.00157963577657938,
+        -0.03891359642148018,
+        0.5073455572128296
+      ],
+      "alphaBounds": [
+        169,
+        29,
+        335,
+        481
+      ]
+    },
+    {
+      "index": 12,
+      "file": "tori_jump_03.png",
+      "action": "jump",
+      "frame": 40,
+      "cameraTarget": [
+        0.00157963577657938,
+        -0.03891359642148018,
+        0.5264430046081543
+      ],
+      "alphaBounds": [
+        163,
+        28,
+        339,
+        481
+      ]
+    },
+    {
+      "index": 13,
+      "file": "tori_hit_01.png",
+      "action": "hit_to_body_01",
+      "frame": 12,
+      "cameraTarget": [
+        0.0019531190628185868,
+        -0.033203113824129105,
+        0.49135541915893555
+      ],
+      "alphaBounds": [
+        172,
+        68,
+        420,
+        481
+      ]
+    },
+    {
+      "index": 14,
+      "file": "tori_fall_01.png",
+      "action": "fall",
+      "frame": 18,
+      "cameraTarget": [
+        0.0015862954314798117,
+        -0.033929307013750076,
+        0.5171957015991211
+      ],
+      "alphaBounds": [
+        59,
+        127,
+        337,
+        481
+      ]
+    },
+    {
+      "index": 15,
+      "file": "tori_cheer_01.png",
+      "action": "cheer",
+      "frame": 60,
+      "cameraTarget": [
+        0.0023239527363330126,
+        -0.0326717309653759,
+        0.523057222366333
+      ],
+      "alphaBounds": [
+        106,
+        77,
+        336,
+        481
+      ]
+    }
+  ],
+  "atlas": {
+    "file": "app/public/game/characters/tori/tori-atlas-v1.webp",
+    "bytes": 313802,
+    "sha256": "62f75f39d5c52bfb7578a9f36f8e2f4d4224d06d2055b7546ba661c3909c03d5"
+  }
+}

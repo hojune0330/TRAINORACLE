@@ -18,3 +18,17 @@ Use case: stylized-concept. Asset type: very small supportive bitmap icon for a 
 ## Rejected draft
 
 A preliminary transparent front/back pair was not adopted: the two featureless figures repeated the same information and the generated transparent edges were uneven. The final single symbol above was generated anew on ivory, not programmatically edited from that draft.
+
+## Approved follow-up: body-part focus
+
+- The original 80px overview remains unchanged.
+- `body-check-focus-front-v1.webp`: 768 × 768, 9,580 bytes, resized from the approved original for a legible zoom.
+- `body-check-emoji-back-v1.png`: new companion rear-view image generated using the approved front as reference; no private user data.
+- `body-check-focus-back-v1.webp`: 768 × 768, 10,518 bytes.
+- Runtime files are in `app/public/illustrations/`. Sharp only resized and encoded generated bitmap originals.
+- Display-only focus anchors crop/scale the generated picture. They do not create anatomical geometry or infer pain. Native part names remain authoritative; shin and lower back are unsided legacy fields.
+- No service-worker precache addition.
+
+Exact rear-view prompt:
+
+Use case: precise-object-edit. Input image 1 is the approved edit target and style invariant. Create ONE companion rear-view bitmap for this exact simple genderless body emoji used in a body-area selector. Keep its round detached head, simple rounded rectangular torso, pill arms, two separated straight legs and detached oval feet, muted teal color, gentle matte shading, warm ivory background, full body centered same scale and square composition. Change only the view cue: show a subtle shallow central back groove between shoulder blades and a subtle waist crease on the back, no muscular anatomy. Maintain a very simple pictogram, not a person. Legs viewed from behind, keep smooth and neutral. No face, no hair, no gender, no clothes, no nipples, no buttock details, no outlines, no labels, no letters, no symbols, no arrows, no pain marks, no medical claims. Single figure, not front/back pair. This is an unmarked decorative location guide; app supplies labels separately. Preserve overall silhouette and simplicity.

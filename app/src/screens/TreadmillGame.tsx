@@ -17,6 +17,7 @@ import { useMinigameProgress } from "../domain/minigame/progress-store"
 import { createTreadmillRenderer, gamePalette } from "./treadmill/draw"
 import type { RenderView } from "./treadmill/draw"
 import { drawRunner } from "./treadmill/sprites"
+import { loadToriArt } from "./treadmill/runner-art"
 import type { GamePalette, RunnerCharacter } from "./treadmill/sprites"
 import { fxPalette, mountShaderSky } from "./treadmill/shader-sky"
 import type { ShaderSky } from "./treadmill/shader-sky"
@@ -48,11 +49,18 @@ function RunnerPortrait({ upgrades, pose = "idle", label, character }: { readonl
     const ratio = Math.min(window.devicePixelRatio || 1, 2)
     const size = canvas.clientWidth || 88
     canvas.width = size * ratio; canvas.height = size * ratio
-    context.setTransform(ratio, 0, 0, ratio, 0, 0)
-    context.clearRect(0, 0, size, size)
-    context.translate(size / 2, size * 0.86)
-    context.scale(size / 94, size / 94)
-    drawRunner(context, gamePalette(canvas), { pose, phase: 0, upgrades, character })
+    let mounted = true
+    const paint = () => {
+      if (!mounted) return
+      context.setTransform(ratio, 0, 0, ratio, 0, 0)
+      context.clearRect(0, 0, size, size)
+      context.translate(size / 2, size * 0.86)
+      context.scale(size / 94, size / 94)
+      drawRunner(context, gamePalette(canvas), { pose, phase: 0, upgrades, character })
+    }
+    paint()
+    if (character === "tori") void loadToriArt().then(paint)
+    return () => { mounted = false }
   }, [upgrades, pose, character])
   return <canvas ref={ref} className="treadmill-game__portrait" role="img" aria-label={label} />
 }
@@ -88,6 +96,9 @@ export function TreadmillGame({ onBack }: { readonly onBack: () => void }) {
   const { progress } = store
   const settings = progress.settings
   const character = activeCharacter(progress)
+  React.useEffect(() => {
+    if (character === "tori") void loadToriArt()
+  }, [character])
   const [screen, setScreen] = React.useState<Screen>("map")
   const [course, setCourse] = React.useState<Course>({ kind: "city", city: TOUR_CITIES[0]! })
   const [season, setSeason] = React.useState<TourSeasonId>(() => seasonUnlocked(progress, "world") ? "world" : "korea")

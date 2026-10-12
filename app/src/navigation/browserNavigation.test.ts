@@ -18,6 +18,34 @@ function popTo(state: unknown): boolean {
 }
 
 describe("native browser layer history", () => {
+  it("does not reinterpret an inspected parent POP as closing the flow mounted by that POP", () => {
+    const event = new PopStateEvent("popstate", { state: { parent: "origin" } })
+    expect(navigation.consumeBrowserBackLayer(event)).toBe(false)
+    const close = vi.fn()
+    navigation.registerBrowserBackLayer({ id: "restored-history", canClose: () => true, onClose: close })
+    expect(navigation.consumeBrowserBackLayer(event)).toBe(false)
+    expect(close).not.toHaveBeenCalled()
+    expect(popTo({ parent: "origin" })).toBe(true)
+    expect(close).toHaveBeenCalledOnce()
+  })
+  it("hands its sentinel to a replacement reader without disposal popping it or consuming its return", async () => {
+    const close = vi.fn()
+    const layer = navigation.registerBrowserBackLayer({ id: "body-history", canClose: () => true, onClose: close })
+    expect(layer.releaseForNavigation()).toBe(true)
+    window.history.replaceState({ ...window.history.state, calendarOriginalPage: "original" }, "", window.location.href)
+    layer.dispose()
+    await Promise.resolve()
+    expect(window.history.back).not.toHaveBeenCalled()
+    expect(popTo({ parent: "origin" })).toBe(false)
+    expect(close).not.toHaveBeenCalled()
+  })
+  it("refuses a handoff while a child or pending Back owns navigation", () => {
+    const parent = navigation.registerBrowserBackLayer({ id: "parent", canClose: () => true, onClose: vi.fn() })
+    const child = navigation.registerBrowserBackLayer({ id: "child", canClose: () => true, onClose: vi.fn() })
+    expect(parent.releaseForNavigation()).toBe(false)
+    child.close()
+    expect(parent.releaseForNavigation()).toBe(false)
+  })
   it("drains inherited duplicate markers before releasing a queued new flow without replaying callbacks", async () => {
     const close = vi.fn(), nextClose = vi.fn()
     const layer = navigation.registerBrowserBackLayer({ id: "inherited-parent", canClose: () => true, onClose: close })

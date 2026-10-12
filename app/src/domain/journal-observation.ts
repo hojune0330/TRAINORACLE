@@ -12,6 +12,7 @@ import { isProjectedFileObservation, projectFileObservation, type FileAnalysisEn
 import type { FileAnalysisFormat } from "./import/file-analysis-policy"
 import { parseFileObservation } from "./import/file-observation"
 import { readCurrentConfirmedAccountJournalProjection } from "./account/account-journal-projection"
+import { journalHasPainSignal, journalPainPartsForSafety } from "./body-part-metadata"
 
 export const PACE_DERIVATION_RULE_ID = "JOURNAL_DISTANCE_DURATION_TO_SECONDS_PER_KM_V1"
 export const PAIN_MAX_DERIVATION_RULE_ID = "JOURNAL_EXPLICIT_PAIN_PARTS_TO_MAX_V1"
@@ -125,7 +126,7 @@ function hasSessionSignal(entry: Extract<JournalEntry, { readonly kind: "post-se
 }
 
 function hasEveningSignal(entry: Extract<JournalEntry, { readonly kind: "evening" }>): boolean {
-  return entry.mood > 0 || Object.values(entry.painParts).some((level) => level > 0)
+  return entry.mood > 0 || journalHasPainSignal(entry)
 }
 
 export type StructuredJournalProjectionOptions = {
@@ -180,7 +181,7 @@ export function selectStructuredJournalInput(
       loggedOn: entry.date,
       observedAt: entry.savedAt,
       mood: entry.mood,
-      painParts: entry.painParts,
+      painParts: journalPainPartsForSafety(entry),
       ...(entry.fieldProvenance === undefined ? {} : { fieldProvenance: entry.fieldProvenance }),
     }
   }

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { BodyDiagram, PainReviewBanner } from "./BodyDiagram"
@@ -106,30 +106,28 @@ describe("body pain keyboard controls", () => {
     expect(onChange).toHaveBeenCalledWith({ lKnee: 2, rKnee: 3 })
   })
 
-  it("opens a named part by keyboard and selects a direct level", async () => {
+  it("opens a named part in a dialog by keyboard and selects a direct level", async () => {
     // Given
     const user = userEvent.setup()
     const onChange = vi.fn()
     const view = render(<BodyDiagram onChange={onChange} />)
     const rightKnee = screen.getByRole("button", { name: "오른 무릎" })
-    const parts = view.container.querySelector(".body-pain-selector__buttons")
-    const partPosition = Array.from(parts?.children ?? []).indexOf(rightKnee.parentElement as HTMLElement)
-
     // When
     rightKnee.focus()
     await user.keyboard("{Enter}")
-    expect(screen.getByRole("heading", { name: "오른 무릎 통증 정도" })).toBeVisible()
+    const dialog = await screen.findByRole("dialog", { name: "오른 무릎 통증 정도" })
     expect(rightKnee).toHaveAttribute("aria-expanded", "true")
-    expect(document.activeElement).toBe(screen.getByRole("button", { name: "오른 무릎 통증 1단계" }))
-    await user.keyboard(" ")
+    expect(dialog).toHaveAttribute("aria-modal", "true")
+    expect(dialog.querySelector("img")).toHaveAttribute("alt", "앞면 부위 위치 확대")
+    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "오른 무릎 통증 정도" }))
+    await user.click(screen.getByRole("button", { name: "오른 무릎 통증 1단계" }))
 
     // Then
     expect(onChange).toHaveBeenCalledWith({ rKnee: 1 })
-    expect(Array.from(parts?.children ?? []).indexOf(rightKnee.parentElement as HTMLElement)).toBe(partPosition)
-    expect(screen.getByText("약함")).toBeVisible()
-    expect(screen.getByText("심함")).toBeVisible()
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
+    expect(document.activeElement).toBe(rightKnee)
     view.rerender(<BodyDiagram selected={{ rKnee: 1 }} onChange={onChange} />)
-    expect(screen.getByRole("button", { name: "오른 무릎 통증 1단계" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("button", { name: "오른 무릎, 통증 1/5" })).toBeVisible()
   })
 
   it("lets a saved level be changed or explicitly cleared without inventing zero-filled parts", async () => {
@@ -142,6 +140,8 @@ describe("body pain keyboard controls", () => {
     expect(screen.getByRole("heading", { name: "오른 무릎 통증 정도" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "오른 무릎 통증 5단계" }))
     expect(onChange).toHaveBeenNthCalledWith(1, { rKnee: 5 })
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
+    await user.click(rightKnee)
     await user.click(screen.getByRole("button", { name: "오른 무릎 통증 해제" }))
     expect(onChange).toHaveBeenNthCalledWith(2, {})
   })

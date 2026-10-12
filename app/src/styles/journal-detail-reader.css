@@ -2,3 +2,9 @@
   background-color: var(--bg);
   background-image: none;
 }
+.body-record-summary { padding: 14px; }
+.body-record-summary h3 { margin: 0 0 10px; font-size: 1rem; }
+.body-record-summary ul { margin: 0; padding: 0; list-style: none; }
+.body-record-summary li { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 0; overflow-wrap: anywhere; }
+.body-record-summary li strong { flex: 1; }
+.body-record-summary li p { flex-basis: 100%; white-space: pre-wrap; margin: 0; }

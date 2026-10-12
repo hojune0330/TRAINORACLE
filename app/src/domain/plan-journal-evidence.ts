@@ -8,6 +8,7 @@ import { resolveExecutionReplanSource } from "./execution-replan-source"
 import { comparePlannedSegments, plannedSegmentEvidenceSchema } from "./planned-segment-evidence"
 import { comparePlannedRepetitions, plannedRepetitionEvidenceSchema, type RepetitionComparison } from "./planned-repetition-evidence"
 import { painLevelsRequireReview } from "../safety/memo-safety"
+import { journalBodyMetadataNeedsReview, journalPainPartsForSafety } from "./body-part-metadata"
 
 export type PlanJournalHistory =
   | { readonly kind: "loaded"; readonly plans: readonly unknown[] }
@@ -60,7 +61,7 @@ function resultSignature(entry: PostSessionEntry): string {
     outcome: entry.activityOutcome ?? null,
     relation: entry.planExecutionRelation ?? null,
     slot: entry.activitySlot ?? null,
-    painSignal: entry.painCheckStatus === "SIGNAL_REPORTED" || painLevelsRequireReview(entry.painParts ?? {}),
+    painSignal: entry.painCheckStatus === "SIGNAL_REPORTED" || journalBodyMetadataNeedsReview(entry) || painLevelsRequireReview(journalPainPartsForSafety(entry)),
     performanceProvenance: [entry.fieldProvenance?.activityOutcome?.provenance ?? null,
       entry.fieldProvenance?.activitySlot?.provenance ?? null, entry.fieldProvenance?.painCheckStatus?.provenance ?? null],
     painCheckStatus: entry.painCheckStatus ?? null,
@@ -116,7 +117,7 @@ function comparisonFor(entry: PostSessionEntry, session: PlanSession, execution?
 }
 
 function adaptationEligibility(entry: PostSessionEntry, session: PlanSession): NonNullable<PlanJournalEvidenceRow["adaptationEligibility"]> {
-  if (entry.painCheckStatus === "SIGNAL_REPORTED" || painLevelsRequireReview(entry.painParts ?? {})) return "PAIN_SIGNAL"
+  if (entry.painCheckStatus === "SIGNAL_REPORTED" || journalBodyMetadataNeedsReview(entry) || painLevelsRequireReview(journalPainPartsForSafety(entry))) return "PAIN_SIGNAL"
   return entry.activityOutcome === "COMPLETED" && entry.activitySlot === session.slot
     && entry.painCheckStatus === "NO_SIGNAL_REPORTED"
     && entry.fieldProvenance?.activityOutcome?.provenance === "EXPLICIT"

@@ -6,7 +6,7 @@ import { useCalendarSnapshot } from "./hooks/useCalendarEntries"
 import { rememberCalendarDate } from "./hooks/useCalendarPosition"
 import { runDraftSafeNavigation } from "./domain/unsaved-draft-navigation"
 import { useNavigationReturnFrame } from "./hooks/useNavigationReturnFrame"
-import { beginBrowserPopNavigation, consumeBrowserBackLayer, getBrowserNavigationEpoch, isBrowserPopScrollRestoration } from "./navigation/browserNavigation"
+import { BROWSER_BACK_LAYER_HISTORY_KEY, beginBrowserPopNavigation, consumeBrowserBackLayer, getBrowserNavigationEpoch, isBrowserPopScrollRestoration } from "./navigation/browserNavigation"
 import { captureReaderPosition, captureCalendarReaderPosition, restoreReaderPosition, validJournalCalendarReturn,
   type JournalCalendarReturn, type ReaderPosition } from "./navigation/readerPosition"
 import type { AppTab } from "./components/AppChrome"
@@ -1152,6 +1152,12 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           calendarReturn={calendarReaderReturn}
           onCalendarReturnConsumed={() => setCalendarReaderReturn(null)}
           mode={v.journalMode}
+          section={v.journalSection}
+          onSectionChange={journalSection => setV(s => ({ ...s, journalSection }))}
+          bodyPartId={v.bodyHistoryPartId}
+          onBodyPartChange={bodyHistoryPartId => setV(s => ({ ...s, bodyHistoryPartId }))}
+          onWriteBody={partId => startRecording("evening", { ...viewForTab("log", "evening"),
+            bodyInputPartId: partId ?? "" })}
           cycleAnchor={v.cycleAnchor}
           cycleIndex={v.cyclePositionSet ? v.cycleIndex : undefined}
           onModeChange={(journalMode) => setV(s => ({ ...s, journalMode }))}
@@ -1171,6 +1177,10 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           onOpenDay={(detailDate, entryId, calendarReturn) => runViewTransition("push", () => {
             const token = `calendar-original-${Date.now()}`
             const { [READER_HISTORY_KEY]: reader, ...rest } = window.history.state ?? {}
+            // This archive unmounts for the original. Replace its Back sentinel
+            // instead of inheriting it: disposal must not pop the new reader.
+            const bodyReader = v.journalSection === "BODY"
+            if (bodyReader) delete rest[BROWSER_BACK_LAYER_HISTORY_KEY]
             setCalendarReaderReturn(null)
             // Keep return context in this owner only, not in browser history or storage.
             calendarOriginalReturn.current = { token, owner: activeLocalAccount(),
@@ -1178,7 +1188,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
               calendarReturn: validJournalCalendarReturn(calendarReturn, calendarSnapshot.entries),
               position: captureCalendarReaderPosition(scrollRegionRef.current, detailDate) }
             try {
-              window.history[reader ? "replaceState" : "pushState"]({ ...rest, calendarOriginalPage: token }, "", window.location.href)
+              window.history[reader || bodyReader ? "replaceState" : "pushState"]({ ...rest, calendarOriginalPage: token }, "", window.location.href)
             } catch { /* In-app Back still returns to the archive. */ }
             setV(s => ({ ...s, detailDate, detailEntryId: entryId }))
           })}
@@ -1222,6 +1232,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         targetDate={v.journalDraft?.date}
         initialEntry={v.journalDraft?.initialEntry}
         plannedSessionLink={v.journalDraft?.plannedSessionLink}
+        initialBodyPartId={v.bodyInputPartId}
         onBack={oracleInputRef.current?.inputKind === "log" ? returnFromOracleInput : recordingOrigin.current && (v.entryType === "choose" || recordingOrigin.current.direct)
           ? returnFromRecording : v.entryType === "choose"
           ? v.journalDraft === undefined

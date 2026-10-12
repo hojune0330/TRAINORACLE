@@ -6,6 +6,7 @@ import { describeExerciseRow, EXERCISE_KINDS } from "./exercise-log"
 import { projectStructuredJournalObservation } from "./journal-observation"
 import { comparePlannedRepetitions } from "./planned-repetition-evidence"
 import { comparePlannedSegments } from "./planned-segment-evidence"
+import { journalHasPainSignal } from "./body-part-metadata"
 
 export type OriginalPlanLookup = ReturnType<typeof readJournalOriginalPlan>
 export const EXECUTION_REVIEW_POLICY_VERSION = "descriptive-review-v2" as const
@@ -43,7 +44,7 @@ const outcomeText = {
 export function reviewPlanExecution(entry: PostSessionEntry, original: OriginalPlanLookup, conflict = false): ExecutionReview {
   const base = { policyVersion: EXECUTION_REVIEW_POLICY_VERSION, id: entry.id, date: entry.date, slot: entry.activitySlot === "PM" ? "오후" : entry.activitySlot === "AM" ? "오전" : "시간대 미기록",
     ...(entry.objectiveDataState === "WAITING" ? { awaitingDeviceData: true } : {}) }
-  const pain = entry.painCheckStatus === "SIGNAL_REPORTED" || Object.values(entry.painParts ?? {}).some(value => value > 0)
+  const pain = entry.painCheckStatus === "SIGNAL_REPORTED" || journalHasPainSignal(entry)
   const unavailable = (): ExecutionReview => ({ ...base, status: pain ? "SAFETY_REVIEW" : "SOURCE_UNAVAILABLE", title: pain ? "몸 상태 확인이 먼저예요" : "원래 계획을 확인해 주세요", facts: [], metrics: [],
     summary: pain ? "이 기록에 통증 표시가 있어요. 다음 훈련 전에 몸 상태를 확인해 주세요." : "연결된 계획을 읽지 못했어요. 다른 계획으로 대신 비교하지 않아요.",
     unknowns: ["이 기록과 정확히 연결된 계획 원본을 확인하지 못했어요."], explanation: "오늘의 계획이나 비슷한 날짜의 훈련을 대신 비교하지 않아요.",

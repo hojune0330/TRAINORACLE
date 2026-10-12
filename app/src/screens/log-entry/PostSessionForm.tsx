@@ -32,7 +32,9 @@ import { FormInputSaveBar as StickyBar } from "./useFormInputDraft"
 import type { EntryFormProps } from "./shared"
 import { JOURNAL_ENERGY_SYSTEM_OPTIONS } from "../../domain/energy-system-taxonomy"
 import { painLevelsRequireReview } from "../../safety/memo-safety"
-import { BodyDiagram, PainReviewBanner } from "./BodyDiagram"
+import { PainReviewBanner } from "./BodyDiagram"
+import { JournalBodyInput } from "./JournalBodyInput"
+import { journalPainPartsForSafety, type BodyPartMetadataV1 } from "../../domain/body-part-metadata"
 import { derivePlanExecutionRelation } from "../../domain/plan-execution-relation"
 import { TaskFlowStep } from "../../components/TaskFlowStep"
 import { useTaskFlowBack } from "../../hooks/useTaskFlowBack"
@@ -108,6 +110,8 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
   })
   const [painCheckStatus, setPainCheckStatus] = React.useState(() => input?.painCheckStatus ?? initial?.painCheckStatus ?? "UNANSWERED")
   const [painParts, setPainParts] = React.useState<Record<string, number>>(() => ({ ...(input?.painParts ?? initial?.painParts ?? {}) }))
+  const [bodyPartMetadata, setBodyPartMetadata] = React.useState<BodyPartMetadataV1 | undefined>(() => input?.bodyPartMetadata ?? initial?.bodyPartMetadata)
+  const painSignals = journalPainPartsForSafety({ painParts, bodyPartMetadata })
   const [saveError, setSaveError] = React.useState(false)
   const [accountNotice, setAccountNotice] = React.useState<string | null>(null)
   const [system, setSystem] = React.useState(() => (
@@ -127,7 +131,7 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
   const exercisePanelId = React.useId()
   const memo = usePurposeScopedMemo(input?.memo ?? initial?.memo ?? "", input ? input.purpose ?? undefined : initial?.memoPurpose)
   const draft = useFormInputDraft({ kind: "post-session", rpe, activityOutcome: activityOutcome ?? null,
-    activitySlot: activitySlot ?? null, painCheckStatus, painParts, system, title, distanceKm, durationMin,
+    activitySlot: activitySlot ?? null, painCheckStatus, painParts, ...(bodyPartMetadata ? { bodyPartMetadata } : {}), system, title, distanceKm, durationMin,
     avgPace, plannedRpe: intensity.plannedRpe, objectiveComponents: [...intensity.objectiveComponents],
     objectiveEditor, exerciseLog, exerciseEditor, plannedInputs: plannedInputs.values, memo: memo.text, purpose: memo.purpose ?? null }, entryId, true, lastSavedAt.current)
   const didNotPerform = isNonPerformedOutcome(activityOutcome)
@@ -199,7 +203,7 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
   const bodySummary = painCheckStatus === "NO_SIGNAL_REPORTED"
     ? "불편한 곳 없음"
     : painCheckStatus === "SIGNAL_REPORTED"
-      ? `불편한 곳 표시 ${Object.values(painParts).filter((level) => level > 0).length}곳`
+      ? `불편한 곳 표시 ${Object.values(painSignals).filter((level) => level > 0).length}곳`
       : "아직 응답하지 않았어요"
   const memoPreview = memo.text.trim().replace(/\s+/gu, " ")
   const reviewItems: Array<{ key: PostSessionTask; label: string; value: string; answered: boolean }> = [
@@ -277,7 +281,7 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
     const memoPreparation = memo.prepareForSave()
     if (!memoPreparation.ready) { setTask("memo"); return }
     if (recordsPerformance && painCheckStatus === "SIGNAL_REPORTED"
-      && !Object.values(painParts).some((level) => level > 0)) {
+      && !Object.values(painSignals).some((level) => level > 0)) {
       setSaveError(true)
       setTask("body")
       return
@@ -307,6 +311,7 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
       ...(planExecutionRelation === undefined ? {} : { planExecutionRelation }),
       ...(!recordsPerformance || painCheckStatus === "UNANSWERED" ? {} : { painCheckStatus }),
       ...(recordsPerformance && painCheckStatus === "SIGNAL_REPORTED" ? { painParts } : {}),
+      ...(bodyPartMetadata ? { bodyPartMetadata: recordsPerformance && painCheckStatus === "SIGNAL_REPORTED" ? bodyPartMetadata : { schemaVersion: 1 as const, observations: [] } } : {}),
       system: persistedSystem,
       title,
       distanceKm: persistedDistanceKm,
@@ -334,7 +339,7 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
           ),
         }),
         ...(!recordsPerformance || painCheckStatus === "UNANSWERED" ? {} : { painCheckStatus: explicitOrMissing(true) }),
-        ...(!recordsPerformance || painCheckStatus === "UNANSWERED" ? {} : { painParts: explicitOrMissing(Object.values(painParts).some((level) => level > 0)) }),
+        ...(bodyPartMetadata ? { painParts: explicitOrMissing(true) } : !recordsPerformance || painCheckStatus === "UNANSWERED" ? {} : { painParts: explicitOrMissing(Object.values(painSignals).some((level) => level > 0)) }),
         ...(recordsPerformance && persistedRpe === 0 && initial?.rpeBand !== undefined
           ? { rpeBand: initial.fieldProvenance?.rpeBand ?? explicitOrMissing(true) }
           : {}),
@@ -383,7 +388,7 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
           ? "수정 충돌을 확인해 주세요. 이 기기의 내용은 보관했지만 계정 저장은 완료되지 않았어요."
           : isPrivateMemo ? "비밀 일지를 이 기기에 보관했어요. 계정 전송 대기 중이며 공유·분석에는 사용하지 않아요."
             : "일지를 이 기기에 보관했어요. 계정 전송 대기 중이에요."
-      const reviewMessage = memoPreparation.reviewMessage ?? (painLevelsRequireReview(saved.painParts ?? {}) ? "불편한 곳을 기록했어요. 몸 상태를 확인해 주세요." : undefined)
+      const reviewMessage = memoPreparation.reviewMessage ?? (painLevelsRequireReview(journalPainPartsForSafety(saved)) ? "불편한 곳을 기록했어요. 몸 상태를 확인해 주세요." : undefined)
       if (storageMessage) onDone?.("post-session", saved, reviewMessage, storageMessage)
       else onDone?.("post-session", saved, reviewMessage)
     } catch {
@@ -441,7 +446,7 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
         {memo.reviewMessage !== null && <p role="status" className="post-session-review__notice">
           {memo.reviewMessage} {accountEnabled ? "계정 저장 여부는 저장 결과에서 확인해 주세요." : "저장은 이 기기에만 됩니다."}
         </p>}
-        {painLevelsRequireReview(painParts) && <PainReviewBanner />}
+        {recordsPerformance && painCheckStatus === "SIGNAL_REPORTED" && painLevelsRequireReview(painSignals) && <PainReviewBanner />}
         {answeredReviewItems.length > 0 && <dl className="post-session-review__answers" style={{ display: "grid", gap: 8, margin: 0 }}>
           {answeredReviewItems.map((item) => (
             <div key={item.key} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", alignItems: "center", gap: 8, borderBottom: "1px solid var(--line)", paddingBlock: 8 }}>
@@ -571,13 +576,13 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
 
       {task === "body" && recordsPerformance && <FormSec compact lb="운동 후 몸 상태">
         <div className="journal-progressive-edit" role="group" aria-label="운동 후 불편함 확인">
-          <button type="button" aria-pressed={painCheckStatus === "NO_SIGNAL_REPORTED"} onClick={() => { setPainCheckStatus("NO_SIGNAL_REPORTED"); setPainParts({}) }}>불편한 곳 없음</button>
+          <button type="button" aria-pressed={painCheckStatus === "NO_SIGNAL_REPORTED"} onClick={() => { setPainCheckStatus("NO_SIGNAL_REPORTED"); setPainParts({}); setBodyPartMetadata(current => current ? { schemaVersion: 1, observations: [] } : undefined) }}>불편한 곳 없음</button>
           <button type="button" aria-pressed={painCheckStatus === "SIGNAL_REPORTED"} onClick={() => setPainCheckStatus("SIGNAL_REPORTED")}>불편한 곳 있음</button>
         </div>
         {painCheckStatus === "SIGNAL_REPORTED" && (
           <>
-            <BodyDiagram selected={painParts} onChange={setPainParts} />
-            {painLevelsRequireReview(painParts) && <PainReviewBanner />}
+            <JournalBodyInput selected={painParts} onChange={setPainParts} metadata={bodyPartMetadata} onMetadataChange={setBodyPartMetadata} />
+            {painLevelsRequireReview(painSignals) && <PainReviewBanner />}
           </>
         )}
       </FormSec>}

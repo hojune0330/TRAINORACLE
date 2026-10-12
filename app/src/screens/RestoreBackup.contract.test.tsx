@@ -12,7 +12,7 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { RestoreBackup } from "./RestoreBackup"
 import { loadEntries, saveEntry, deleteEntry } from "../domain/journal-store"
-import { FULL_FORMAT, FULL_FORMAT_V5, SAFE_FORMAT } from "../domain/restore/backup-file"
+import { FULL_FORMAT, FULL_FORMAT_V5, FULL_FORMAT_V6, SAFE_FORMAT } from "../domain/restore/backup-file"
 import type { PostSessionEntry } from "../domain/journal-schema"
 import { loadDecorationState } from "../domain/decoration-store"
 import { JOURNAL_STORAGE_KEY } from "../domain/journal-local-storage"
@@ -59,6 +59,34 @@ function backupFile(
 async function pick(user: ReturnType<typeof userEvent.setup>, file: File) {
   await user.upload(screen.getByLabelText(/백업 파일/u), file)
 }
+
+describe("restore private custom body text", () => {
+  beforeEach(() => { window.localStorage.clear(); window.sessionStorage.clear() })
+  const entry = () => postSession("synthetic-body", "2026-07-21", {
+    painParts: {}, fieldProvenance: { painParts: { provenance: "EXPLICIT" } },
+    bodyPartMetadata: { schemaVersion: 1, observations: [{ id: "other_11111111-1111-4111-8111-111111111111",
+      labelSnapshot: "SYNTHETIC_PRIVATE_LABEL", severity: 4, note: "SYNTHETIC_PRIVATE_NOTE" }] },
+  })
+  it.each([false, true])("restores custom text only after explicit inclusion %s", async include => {
+    const user = userEvent.setup()
+    render(<RestoreBackup />)
+    await pick(user, backupFile([entry()], FULL_FORMAT_V6))
+    expect(screen.getByRole("radio", { name: /몸 상태 수치만 되돌리기/u }).getAttribute("aria-checked")).toBe("true")
+    expect(document.body.textContent).not.toContain("SYNTHETIC_PRIVATE_LABEL")
+    if (include) {
+      await user.click(screen.getByRole("radio", { name: /기타 이름·메모도 되돌리기/u }))
+      await waitFor(() => expect(screen.getByRole("radio", { name: /기타 이름·메모도 되돌리기/u }).getAttribute("aria-checked")).toBe("true"))
+    }
+    await user.click(screen.getByTestId("restore-submit"))
+    await waitFor(() => expect(screen.getByTestId("restore-done")).toBeTruthy())
+    const saved = loadEntries()[0]!
+    if (include) expect(saved.bodyPartMetadata).toEqual(entry().bodyPartMetadata)
+    else {
+      expect(saved.bodyPartMetadata).toBeUndefined()
+      expect(saved.kind === "post-session" && saved.painParts).toEqual({ other_1: 4 })
+    }
+  })
+})
 
 describe("RestoreBackup — 고르기 단계", () => {
   beforeEach(() => { window.localStorage.clear() })

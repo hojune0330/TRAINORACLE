@@ -1,4 +1,5 @@
 import { evaluateD9ColloquialLayer } from "@impl/d9/evaluator"
+import { journalBodyMetadataNeedsReview, journalPainPartsForSafety } from "./body-part-metadata"
 import { assertNever } from "@impl/shared/assert-never"
 import { bindDefaultCatalogSessions } from "@impl/prescription/catalog-session-binding"
 import { rebindCandidatePairIdentity } from "@impl/plan-generator/candidate-identity"
@@ -654,10 +655,11 @@ function recentJournalRequiresReview(
 }
 
 function entryRequiresReview(entry: JournalEntry): boolean {
-  if (entry.kind === "evening" && painLevelsRequireReview(entry.painParts)) {
+  if (journalBodyMetadataNeedsReview(entry)) return true
+  if (entry.kind === "evening" && painLevelsRequireReview(journalPainPartsForSafety(entry))) {
     return true
   }
-  if (entry.kind === "post-session" && painLevelsRequireReview(entry.painParts ?? {})) {
+  if (entry.kind === "post-session" && painLevelsRequireReview(journalPainPartsForSafety(entry))) {
     return true
   }
 
