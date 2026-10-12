@@ -87,7 +87,7 @@ export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: Entry
             }}
           >
             <span style={{ fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 500, color: "var(--ink)" }}>
-              워치 기록 불러오기
+              운동 파일 불러오기
             </span>
           </button>
         </div>

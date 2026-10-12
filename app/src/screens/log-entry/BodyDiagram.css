@@ -1,0 +1,121 @@
+.body-pain-selector {
+  align-items: start;
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+  min-width: 0;
+}
+
+.body-pain-selector__visual {
+  box-sizing: border-box;
+  display: flex;
+  height: 160px;
+  justify-content: center;
+  min-width: 0;
+  width: min(220px, 100%);
+}
+
+.body-pain-selector__visual img {
+  display: block;
+  height: 160px;
+  max-width: 100%;
+  object-fit: contain;
+  width: auto;
+}
+
+.body-pain-selector__visual img[hidden] { display: none; }
+
+.body-pain-selector__content,
+.body-pain-selector__buttons,
+.body-pain-selector__part { min-width: 0; }
+
+.body-pain-selector__instruction {
+  color: var(--ink-2);
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+  margin: 0 0 var(--space-2);
+}
+
+.body-pain-selector__buttons { gap: var(--space-2); }
+.body-pain-selector__part {
+  align-content: start;
+  align-items: start;
+  display: grid;
+  gap: var(--space-1);
+}
+
+button.body-pain-selector__part-button {
+  align-items: center;
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-start;
+  min-height: var(--app-touch-min, 44px);
+  padding: var(--space-2) var(--space-3);
+  align-self: start;
+  text-align: left;
+  width: 100%;
+}
+
+.body-pain-selector__part-name { color: inherit; }
+.body-pain-selector__part-value {
+  color: var(--ink-2);
+  font-size: var(--fs-caption);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.body-pain-selector__picker-title {
+  color: var(--ink);
+  font-size: var(--fs-body-sm);
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.body-pain-selector__picker {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  min-width: 0;
+}
+
+.body-pain-selector__scale-range {
+  align-items: center;
+  color: var(--ink-2);
+  display: flex;
+  font-size: var(--fs-caption);
+  gap: var(--space-2);
+  line-height: 1.4;
+  margin: 0;
+}
+
+button.body-pain-selector__part-button[aria-expanded="true"] {
+  border-color: var(--ink-2);
+}
+
+.body-pain-selector__level-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.body-pain-selector .body-pain-selector__level-picker button.app-choice-control {
+  flex: 1 0 max(44px, 2.6em);
+  min-height: var(--app-touch-min, 44px);
+  min-width: max(44px, 2.6em);
+  padding: var(--space-1);
+  text-align: center;
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  .body-pain-selector {
+    grid-template-columns: 1fr;
+  }
+
+  .body-pain-selector__visual {
+    justify-self: center;
+  }
+
+  .body-pain-selector__buttons {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

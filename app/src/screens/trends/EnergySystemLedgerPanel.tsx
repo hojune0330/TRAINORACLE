@@ -57,6 +57,11 @@ export function EnergySystemLedgerPanel({
   const plan = React.useMemo(() => summarizeCurrentPlanEnergy(planState), [planState])
   const hasData = ledger.coverage !== "MISSING"
   const hasSources = hasData || ledger.excludedSourceCount > 0
+  const hasSelectableHistory = React.useMemo(() => mode === "full" && (["RECENT_24_WEEKS", "YEAR_TO_DATE"] as const).some(candidatePeriod => {
+    const candidate = buildEnergySystemLedger(observations, energyLedgerWindow(candidatePeriod, today))
+    return candidate.includedSourceCount > 0 || candidate.excludedSourceCount > 0
+      || candidate.duplicateSourceCount > 0 || candidate.conflictingSourceCount > 0
+  }), [mode, observations, today])
   const recordStart = <>
     <p className="energy-ledger__empty">{ledger.excludedSourceCount > 0
       ? "이 기간의 기록은 있지만, 분석에 사용할 훈련 목적을 확인하지 못했어요."
@@ -65,6 +70,9 @@ export function EnergySystemLedgerPanel({
       운동 기록하기<ChevronRight aria-hidden="true" size={16} />
     </button>}
   </>
+  const emptyContent = hasSelectableHistory && !hasSources
+    ? <p className="energy-ledger__empty">이 기간에는 집계할 기록이 없어요. 더 긴 기간을 선택해 지난 기록을 확인할 수 있어요.</p>
+    : recordStart
 
   if (mode === "compact") {
     const actualRows = ledger.rows.filter((row) => row.journalSessionCount > 0 && row.key !== "MIXED_UNALLOCATED")
@@ -124,7 +132,7 @@ export function EnergySystemLedgerPanel({
         일지에서 고른 훈련 목적별 횟수예요.
       </p>}
 
-      <div className="energy-ledger__periods app-compact-tabs" aria-label="에너지 시스템 분석 기간">
+      {hasSelectableHistory && <div className="energy-ledger__periods app-compact-tabs" aria-label="에너지 시스템 분석 기간">
         {PERIODS.map((option) => (
           <button
             className="app-compact-tab"
@@ -136,9 +144,9 @@ export function EnergySystemLedgerPanel({
             <span>{option.label}</span>
           </button>
         ))}
-      </div>
+      </div>}
 
-      {!hasData ? recordStart : <>
+      {!hasData ? emptyContent : <>
       <div className="energy-ledger__chart" role="img" aria-label={`${PERIODS.find((item) => item.value === period)?.label ?? "선택 기간"} 에너지 시스템: ${ariaSummary}`}>
         {ledger.rows.map((row) => (
           <div className={`energy-ledger__row energy-ledger__row--${keyClass(row.key)}`} key={row.key}>

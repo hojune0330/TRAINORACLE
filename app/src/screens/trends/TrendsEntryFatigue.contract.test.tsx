@@ -19,7 +19,7 @@ it("offers one empty-state action and an explicitly selected example while recov
   expect(screen.getByRole("button", { name: /최고기록 남기기/ })).toBeVisible()
   expect(screen.queryByRole("region", { name: "몸 상태와 회복 기록" })).toBeNull()
   expect(screen.queryByText(getOracleTopic("focus").example.headline)).toBeNull()
-  fireEvent.click(screen.getByRole("button", { name: "첫 기록 남기기" }))
+  fireEvent.click(screen.getByRole("button", { name: "운동 기록 쓰기" }))
   expect(write).toHaveBeenCalledOnce()
   fireEvent.click(importButton)
   expect(importFile).toHaveBeenCalledOnce()

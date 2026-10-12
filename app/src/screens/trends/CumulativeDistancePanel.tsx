@@ -54,6 +54,13 @@ export function CumulativeDistancePanel({
     weeksBack: mode === "compact" ? 4 : weekCount,
     monthsBack: mode === "compact" ? 6 : monthCount,
   }), [mode, monthCount, observations, planWindow, today, weekCount])
+  const widestDashboard = React.useMemo(() => mode === "full" ? buildCumulativeDistanceDashboard({
+    observations,
+    asOfDate: today,
+    planWindow,
+    weeksBack: 12,
+    monthsBack: 12,
+  }) : null, [mode, observations, planWindow, today])
   const totals = [
     { label: "이번 주", summary: dashboard.toDate.week },
     { label: "이번 달", summary: dashboard.toDate.month },
@@ -61,6 +68,9 @@ export function CumulativeDistancePanel({
     ...(dashboard.plan === null ? [] : [{ label: mode === "compact" ? "현재 계획" : "현재 계획 기간", summary: dashboard.plan }]),
   ]
   const hasTotals = totals.some(item => item.summary.totalKm !== null)
+  const hasWeekHistory = widestDashboard?.weeks.some(summary => summary.includedSourceCount > 0 || summary.excludedSourceCount > 0) ?? false
+  const hasMonthHistory = widestDashboard?.months.some(summary => summary.includedSourceCount > 0 || summary.excludedSourceCount > 0) ?? false
+  const hasAnySelectableHistory = hasWeekHistory || hasMonthHistory
   const hasSources = [...totals.map(item => item.summary), ...dashboard.weeks, ...dashboard.months]
     .some(summary => summary.includedSourceCount > 0 || summary.excludedSourceCount > 0)
   const recordStart = <div className="distance-overview__heading">
@@ -107,12 +117,16 @@ export function CumulativeDistancePanel({
 
       {hasTotals ? <div className="distance-overview__totals distance-overview__totals--full">
         {totals.map(item => <DistanceTotal key={item.label} label={item.label} summary={item.summary} />)}
-      </div> : recordStart}
+      </div> : hasAnySelectableHistory
+        ? <p className="distance-overview__empty">최근 합계는 없어요. 아래 기간을 넓혀 지난 기록을 확인할 수 있어요.</p>
+        : recordStart}
 
-      <DistanceSeries
+      {hasWeekHistory && <DistanceSeries
         title="주간 거리"
         buckets={dashboard.weeks}
         labelForBucket={compactWeek}
+        emptyMessage={dashboard.weeks.some(bucket => bucket.includedSourceCount > 0 || bucket.excludedSourceCount > 0)
+          ? undefined : "선택한 주간에 집계할 기록이 없어요. 기간을 넓혀 확인할 수 있어요."}
         control={(
           <PeriodToggle
             label="주간 비교 기간"
@@ -122,12 +136,14 @@ export function CumulativeDistancePanel({
             onChange={(value) => setWeekCount(value as 4 | 12)}
           />
         )}
-      />
+      />}
 
-      <DistanceSeries
+      {hasMonthHistory && <DistanceSeries
         title="월간 거리"
         buckets={dashboard.months}
         labelForBucket={compactMonth}
+        emptyMessage={dashboard.months.some(bucket => bucket.includedSourceCount > 0 || bucket.excludedSourceCount > 0)
+          ? undefined : "선택한 월에 집계할 기록이 없어요. 기간을 넓혀 확인할 수 있어요."}
         control={(
           <PeriodToggle
             label="월간 비교 기간"
@@ -137,7 +153,7 @@ export function CumulativeDistancePanel({
             onChange={(value) => setMonthCount(value as 6 | 12)}
           />
         )}
-      />
+      />}
 
       {dashboard.days.some(bucket => bucket.totalKm !== null) && <DailyDistanceHeatmap buckets={dashboard.days} month={today.slice(0, 7)} />}
 
@@ -188,10 +204,11 @@ function PeriodToggle({ label, value, options, suffix, onChange }: {
   )
 }
 
-function DistanceSeries({ title, buckets, labelForBucket, control }: {
+function DistanceSeries({ title, buckets, labelForBucket, emptyMessage, control }: {
   readonly title: string
   readonly buckets: readonly DistanceBucket[]
   readonly labelForBucket: (label: string) => string
+  readonly emptyMessage?: string | undefined
   readonly control: React.ReactNode
 }) {
   const values = buckets.flatMap((bucket) => bucket.totalKm === null ? [] : [bucket.totalKm])
@@ -230,6 +247,7 @@ function DistanceSeries({ title, buckets, labelForBucket, control }: {
         }))}
       />
       </>}
+      {values.length === 0 && emptyMessage && <p className="distance-overview__empty">{emptyMessage}</p>}
       {excluded > 0 && <p className="distance-overview__excluded">집계 기준에 맞지 않아 제외한 기록 {excluded}건</p>}
     </div>
   )

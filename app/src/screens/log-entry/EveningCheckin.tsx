@@ -28,6 +28,11 @@ import { useTaskFlowBack } from "../../hooks/useTaskFlowBack"
 
 const MOOD_LABELS = ["흐림", "무덤덤", "보통", "좋음", "최고"] as const
 const SLEEP_QUALITY_LABELS = ["최악", "나쁨", "보통", "좋음", "최고"] as const
+const isValidSleepHours = (value: string) => {
+  if (!/^(?:\d+(?:\.\d+)?|\.\d+)$/u.test(value)) return false
+  const hours = Number(value)
+  return Number.isFinite(hours) && hours > 0 && hours <= 24
+}
 type EveningInputStep = "sleep" | "condition" | "metrics" | "memo"
 type EveningStep = EveningInputStep | "choose" | "review"
 type EveningEditGroup = EveningInputStep | null
@@ -60,6 +65,12 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
   }))
   const { step, editGroup } = flow.location
   const [sleep, setSleep] = React.useState(() => input?.sleep ?? initial?.sleepH ?? 0)
+  const [sleepText, setSleepText] = React.useState(() => {
+    const hours = input?.sleep ?? initial?.sleepH ?? 0
+    return hours > 0 ? String(hours) : ""
+  })
+  const [sleepInputError, setSleepInputError] = React.useState(false)
+  const sleepInputRef = React.useRef<HTMLInputElement>(null)
   const [quality, setQuality] = React.useState(() => input?.quality ?? initial?.sleepQuality ?? 0)
   const [mood, setMood] = React.useState(() => input?.mood ?? initial?.mood ?? 0)
   const [painParts, setPainParts] = React.useState<Record<string, number>>(() => ({ ...(input?.painParts ?? initial?.painParts) }))
@@ -77,12 +88,37 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
   const navigateTo = (location: EveningLocation) => setFlow((current) => ({
     location, history: [...current.history, current.location],
   }))
-  const goBackFlow = () => setFlow((current) => {
-    const previous = current.history[current.history.length - 1]
-    if (previous === undefined) return current
-    return { location: previous, history: current.history.slice(0, -1) }
-  })
+  const updateSleepText = (value: string) => {
+    setSleepText(value)
+    if (value === "") {
+      setSleep(0)
+      setSleepInputError(false)
+      return
+    }
+    if (!isValidSleepHours(value)) {
+      setSleepInputError(true)
+      return
+    }
+    setSleep(Number(value))
+    setSleepInputError(false)
+  }
+  const goBackFlow = () => {
+    if (step === "sleep" && sleepInputError) {
+      sleepInputRef.current?.focus()
+      return
+    }
+    setFlow((current) => {
+      const previous = current.history[current.history.length - 1]
+      if (previous === undefined) return current
+      return { location: previous, history: current.history.slice(0, -1) }
+    })
+  }
   const enterReview = () => {
+    if (sleepInputError) {
+      if (step !== "sleep") navigateTo({ step: "sleep", editGroup: "sleep", returnToReview: true })
+      window.requestAnimationFrame(() => sleepInputRef.current?.focus())
+      return
+    }
     const preparation = note.prepareForSave()
     if (!preparation.ready) {
       if (step !== "memo") navigateTo({ step: "memo", editGroup: "memo", returnToReview: true })
@@ -97,6 +133,11 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
 
   const persist = async () => {
     if (persistInFlight.current || !draft.current()) return
+    if (sleepInputError) {
+      if (step !== "sleep") navigateTo({ step: "sleep", editGroup: "sleep", returnToReview: true })
+      window.requestAnimationFrame(() => sleepInputRef.current?.focus())
+      return
+    }
     if (!hasInput) { setEmptyNotice(true); return }
     setEmptyNotice(false)
     const notePreparation = note.prepareForSave()
@@ -247,53 +288,27 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
         </div>}
 
         {step === "sleep" && <>
-          <FormSec compact lb={`수면 시간 · ${sleep > 0 ? `${sleep}h` : "선택 입력"}`}>
-            <div style={{ position: "relative", height: 44, display: "flex", alignItems: "center" }}>
-              <div aria-hidden="true" style={{
-                position: "absolute", left: 0, right: 0, top: "50%", height: 4,
-                transform: "translateY(-50%)", background: "var(--line)",
-              }}>
-                <div style={{
-                  width: sleep > 0 ? `${((sleep - 4) / 8) * 100}%` : "0%",
-                  height: 4, background: "var(--ink)",
-                }} />
-              </div>
-              {sleep > 0 && (
-                <div aria-hidden="true" style={{
-                  position: "absolute", top: "50%", left: `${((sleep - 4) / 8) * 100}%`,
-                  width: 18, height: 18, transform: "translate(-50%, -50%)",
-                  borderRadius: 999, background: "var(--ink)", border: "3px solid var(--bg)",
-                }} />
-              )}
-              {sleep === 0 && (
-                <div aria-hidden="true" style={{
-                  position: "absolute", left: 6, top: "50%", transform: "translateY(-50%)",
-                  fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)",
-                  letterSpacing: "0.06em", pointerEvents: "none",
-                }}>아래로 움직여 기록</div>
-              )}
-              <input aria-label="수면 시간" type="range" min="4" max="12" step="0.5"
-                value={sleep > 0 ? sleep : 4}
-                onChange={(event) => setSleep(parseFloat(event.target.value))}
-                style={{ position: "absolute", inset: 0, width: "100%", height: 44, margin: 0, opacity: 0.01, cursor: "pointer" }} />
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.06em", marginTop: 4 }}>
-              <span>4h</span><span>8h</span><span>12h</span>
-            </div>
-            {sleep > 0 && <button type="button" className="quick-log__secondary" onClick={() => setSleep(0)}>시간 입력 안 함</button>}
+          <FormSec compact lb="수면 시간">
+            <label htmlFor="evening-sleep-hours" style={{ display: "block", fontSize: "var(--fs-body-sm)", marginBottom: "var(--space-2)" }}>
+              시간 (h) · 선택 입력
+            </label>
+            <input id="evening-sleep-hours" ref={sleepInputRef} aria-label="수면 시간" aria-invalid={sleepInputError}
+              aria-describedby={sleepInputError ? "sleep-time-error" : undefined}
+              type="text" inputMode="decimal" autoComplete="off" value={sleepText}
+              onChange={(event) => updateSleepText(event.target.value)}
+              style={{ ...inputStyle(), borderRadius: "var(--r-action)", fontFamily: "var(--mono)", maxWidth: 220, textAlign: "right" }} />
+            {sleepInputError && <p id="sleep-time-error" role="alert" style={{ fontSize: "var(--fs-caption)", color: "var(--err)", lineHeight: 1.5, margin: "var(--space-1) 0 0" }}>
+              0은 비워 두고, 1시간 미만도 입력할 수 있어요. 최대 24시간이에요.
+            </p>}
+            {sleepText !== "" && <button type="button" className="quick-log__secondary" onClick={() => updateSleepText("")}>시간 입력 안 함</button>}
           </FormSec>
 
           <FormSec compact lb="수면 질 · 선택">
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", border: "1px solid var(--ink)" }}>
+            <div className="app-choice-group" role="group" aria-label="수면 질" style={{ display: "flex", flexWrap: "wrap" }}>
               {SLEEP_QUALITY_LABELS.map((label, index) => (
-                <button key={label} type="button" aria-label={`수면 질 ${index + 1} ${label}`} aria-pressed={quality === index + 1} onClick={() => setQuality(index + 1)} style={{
-                  minHeight: 44, padding: "10px 0", border: 0,
-                  background: quality === index + 1 ? "var(--ink)" : "transparent",
-                  color: quality === index + 1 ? "var(--bg)" : "var(--ink)",
-                  fontFamily: "var(--mono)", fontSize: 10.5,
-                  borderRight: index < 4 ? "1px solid var(--line)" : 0,
-                  cursor: "pointer", letterSpacing: "0.04em",
-                }}>{label}</button>
+                <button key={label} type="button" className="app-choice-control" aria-label={`수면 질 ${index + 1} ${label}`}
+                  aria-pressed={quality === index + 1} onClick={() => setQuality(index + 1)}
+                  style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-body-sm)", paddingInline: "var(--space-1)", flex: "1 0 44px", minWidth: "max-content", whiteSpace: "nowrap" }}>{label}</button>
               ))}
             </div>
             {quality > 0 && <button type="button" className="quick-log__secondary" onClick={() => setQuality(0)}>수면 질 입력 안 함</button>}
@@ -306,17 +321,15 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
             {painLevelsRequireReview(painParts) && <PainReviewBanner />}
           </FormSec>
           <FormSec compact lb="오늘 감정 · 선택">
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4 }}>
+            <div role="group" aria-label="오늘 감정" style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
               {MOOD_LABELS.map((label, index) => (
-                <button key={label} type="button" aria-label={`감정 ${index + 1} ${label}`} aria-pressed={mood === index + 1} onClick={() => setMood(index + 1)} style={{
-                  minHeight: 44, padding: "14px 4px 10px",
-                  background: mood === index + 1 ? "var(--surface)" : "transparent",
-                  border: mood === index + 1 ? "1px solid var(--ink)" : "1px solid var(--line)",
+                <button key={label} type="button" className="app-choice-control app-choice-control--answer" aria-label={`감정 ${index + 1} ${label}`} aria-pressed={mood === index + 1} onClick={() => setMood(index + 1)} style={{
+                  padding: "var(--space-2) var(--space-1)",
+                  flex: "1 0 44px", minWidth: "max-content", whiteSpace: "nowrap",
                   cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-                  borderRadius: 0,
                 }}>
                   <MoodStrip level={index + 1} />
-                  <span style={{ fontFamily: "var(--mono)", fontSize: 9, color: mood === index + 1 ? "var(--ink)" : "var(--ink-3)", letterSpacing: "0.06em" }}>{label}</span>
+                  <span style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-caption)", color: mood === index + 1 ? "var(--ink)" : "var(--ink-3)", letterSpacing: "0.02em" }}>{label}</span>
                 </button>
               ))}
             </div>
@@ -328,11 +341,11 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
             <div>
               <input aria-label="체중 (kg)" type="text" value={weight} onChange={(event) => setWeight(event.target.value)} placeholder="62.0" style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
-              <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.06em", marginTop: 4 }}>kg · 안 재면 비워둬요</div>
+              <div style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-caption)", color: "var(--ink-2)", letterSpacing: "0.02em", marginTop: 4 }}>kg · 안 재면 비워둬요</div>
             </div>
             <div>
               <input aria-label="안정시 심박 (bpm)" type="text" value={hr} onChange={(event) => setHr(event.target.value)} placeholder="55" style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
-              <div style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.06em", marginTop: 4 }}>bpm · 아침 안정시 기준</div>
+              <div style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-caption)", color: "var(--ink-2)", letterSpacing: "0.02em", marginTop: 4 }}>bpm · 아침 안정시 기준</div>
             </div>
           </div>
         </FormSec>}

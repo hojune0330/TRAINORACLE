@@ -11,7 +11,9 @@ import { registerUnsavedDraftGuard } from "./domain/unsaved-draft-navigation"
 const STORAGE_KEY = "trainoracle.journal.v1"
 
 // Transform the lazy archive outside the interaction timeout, as in navigation contracts.
-beforeAll(async () => { await import("./screens/JournalArchive") }, 60000)
+beforeAll(async () => {
+  await Promise.all([import("./screens/JournalArchive"), import("./screens/Trends")])
+}, 60000)
 
 const ENTRY = {
   id: "archive-shell-session",
@@ -34,7 +36,7 @@ const ENTRY = {
   },
 } satisfies JournalEntry
 
-afterEach(cleanup)
+afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 describe("AppShell journal archive routing", () => {
   beforeEach(() => {
@@ -117,6 +119,26 @@ describe("AppShell journal archive routing", () => {
     expect(screen.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
   })
 
+  it("retries a calendar read in place and keeps the month being viewed", async () => {
+    const user = userEvent.setup()
+    render(<AppShell />)
+    await user.click(screen.getByRole("button", { name: "일지" }))
+    await user.click(await screen.findByRole("button", { name: /^2026년 7월 훈련 후/u }))
+    const read = Storage.prototype.getItem
+    let unavailable = true
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(function(this: Storage, key: string) {
+      if (key === STORAGE_KEY && unavailable) throw new Error("synthetic read failure")
+      return read.call(this, key)
+    })
+    act(() => window.dispatchEvent(new Event("focus")))
+    const retry = await screen.findByRole("button", { name: "일지 다시 불러오기" })
+    unavailable = false
+    await user.click(retry)
+    expect(await screen.findByRole("heading", { name: "2026년 7월", level: 1 })).toBeVisible()
+    expect(screen.getByRole("button", { name: /2026년 7월 10일/u })).toBeVisible()
+    expect(screen.queryByRole("button", { name: "일지 다시 불러오기" })).toBeNull()
+  })
+
   it("returns a Minji example opened from home back to home", async () => {
     window.localStorage.clear()
     const user = userEvent.setup()
@@ -151,7 +173,7 @@ describe("AppShell journal archive routing", () => {
     await user.click(selectedDate!)
     await user.click(await screen.findByRole("button", { name: "이날 일지 쓰기" }))
 
-    expect(await screen.findByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
+    expect(await screen.findByRole("heading", { name: "무엇을 기록할까요?" })).toBeVisible()
   })
 
   it("starts a journal from the empty analysis screen", async () => {
@@ -161,9 +183,9 @@ describe("AppShell journal archive routing", () => {
 
     await user.click(screen.getByRole("button", { name: "오라클" }))
     expect(await screen.findByRole("heading", { name: "오라클" })).toBeVisible()
-    await user.click(screen.getByRole("button", { name: "첫 기록 남기기" }))
+    await user.click(screen.getByRole("button", { name: "운동 기록 쓰기" }))
 
-    expect(await screen.findByRole("heading", { name: "어떤 일지를 쓰세요?" })).toBeVisible()
+    expect(await screen.findByRole("heading", { name: "무엇을 기록할까요?" })).toBeVisible()
   })
 
   it("keeps the easy FAQ reachable through More's training section", async () => {

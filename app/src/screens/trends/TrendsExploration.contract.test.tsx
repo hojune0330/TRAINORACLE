@@ -122,7 +122,7 @@ describe("Trends exploration hub", () => {
     const onWriteLog = vi.fn()
     render(<Trends onOpenImport={onOpenImport} onWriteLog={onWriteLog} />)
 
-    expect(screen.getByRole("button", { name: "첫 기록 남기기" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "운동 기록 쓰기" })).toBeVisible()
     const analysis = screen.getByRole("group", { name: "훈련 분석 자세히 보기" })
     expect(within(analysis).getAllByRole("button")).toHaveLength(5)
     for (const button of within(analysis).getAllByRole("button")) {

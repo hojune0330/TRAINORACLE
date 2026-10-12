@@ -20,7 +20,16 @@ it("allows a memo-only route without inventing recovery measurements", () => {
   expect(screen.getByRole("heading", { level: 2, name: "무엇을 남길까요?" })).toBeVisible()
   expect(screen.queryByRole("slider", { name: "수면 시간" })).toBeNull()
   expect(screen.queryByRole("textbox", { name: "오늘의 메모" })).toBeNull()
-  fireEvent.click(screen.getByRole("button", { name: "메모 쓰기" }))
+  fireEvent.click(screen.getByRole("button", { name: "수면" }))
+  const sleep = screen.getByRole("textbox", { name: "수면 시간" })
+  fireEvent.change(sleep, { target: { value: "0" } })
+  fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
+  expect(screen.getByRole("alert")).toHaveTextContent(/1시간 미만.*최대 24시간/u)
+  expect(screen.getByRole("heading", { level: 2, name: "어젯밤 수면" })).toBeVisible()
+  fireEvent.change(sleep, { target: { value: "" } })
+  fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
+  expect(screen.getByRole("heading", { level: 2, name: "입력 확인" })).toBeVisible()
+  fireEvent.click(screen.getByRole("button", { name: "메모 입력" }))
   const note = screen.getByRole("textbox", { name: "오늘의 메모" })
   fireEvent.click(screen.getByRole("radio", { name: "훈련 메모" }))
   fireEvent.change(note, { target: { value: "합성 하루 메모" } })
@@ -30,8 +39,40 @@ it("allows a memo-only route without inventing recovery measurements", () => {
   fireEvent.click(screen.getByRole("button", { name: /^저장/u }))
   expect(loadEntries()).toHaveLength(1)
   expect(loadEntries()[0]).toMatchObject({ kind: "evening", note: "합성 하루 메모",
+    sleepH: 0,
     fieldProvenance: { sleepH: { provenance: "MISSING" }, mood: { provenance: "MISSING" },
       painParts: { provenance: "MISSING" } } })
+})
+
+it("accepts a positive fractional sleep value within the existing schema", () => {
+  render(<EveningCheckin />)
+  fireEvent.click(screen.getByRole("button", { name: "수면" }))
+  fireEvent.change(screen.getByRole("textbox", { name: "수면 시간" }), { target: { value: "0.25" } })
+  fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
+  expect(screen.getByRole("heading", { level: 2, name: "입력 확인" })).toBeVisible()
+  fireEvent.click(screen.getByRole("button", { name: /^저장/u }))
+
+  expect(loadEntries()[0]).toMatchObject({ sleepH: 0.25,
+    fieldProvenance: { sleepH: { provenance: "EXPLICIT" } } })
+})
+
+it("blocks out-of-range sleep hours until the input is repaired", () => {
+  render(<EveningCheckin />)
+  fireEvent.click(screen.getByRole("button", { name: "수면" }))
+  const sleep = screen.getByRole("textbox", { name: "수면 시간" })
+  fireEvent.change(sleep, { target: { value: "25" } })
+  fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
+
+  expect(sleep).toHaveAttribute("aria-invalid", "true")
+  expect(screen.getByRole("alert")).toHaveTextContent(/1시간 미만.*최대 24시간/u)
+  expect(screen.queryByRole("heading", { level: 2, name: "입력 확인" })).toBeNull()
+  expect(loadEntries()).toEqual([])
+
+  fireEvent.change(sleep, { target: { value: "24" } })
+  fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
+  fireEvent.click(screen.getByRole("button", { name: /^저장/u }))
+  expect(loadEntries()[0]).toMatchObject({ sleepH: 24,
+    fieldProvenance: { sleepH: { provenance: "EXPLICIT" } } })
 })
 
 it("keeps each selected answer in a concise review instead of rendering the full form", () => {

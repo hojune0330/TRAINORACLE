@@ -40,6 +40,7 @@ describe("entry chooser confirmed-first journal guard", () => {
     }
     fireEvent.click(screen.getByTestId("open-import"))
     expect(openImport).toHaveBeenCalledOnce()
+    expect(screen.getByRole("button", { name: "운동 파일 불러오기" })).toBeVisible()
   })
 
   it.each(["malformed", "read-failure"] as const)("does not present %s local storage as the first journal", failure => {

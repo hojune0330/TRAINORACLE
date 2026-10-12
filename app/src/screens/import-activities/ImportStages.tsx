@@ -82,10 +82,10 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
         data-testid="import-privacy-notice"
       style={{ border: "1px solid var(--line)", background: "var(--surface)", padding: "10px 13px" }}
       >
-        <div style={{ ...mono, fontSize: 9.5, fontWeight: 600, color: "var(--ink-3)", letterSpacing: "0.12em" }}>
+        <div style={{ ...mono, fontSize: "var(--fs-caption)", fontWeight: 600, color: "var(--ink-3)", letterSpacing: "0.04em" }}>
           파일은 이 기기에서만 읽어요
         </div>
-        <div style={{ ...mono, fontSize: 10, color: "var(--ink-2)", lineHeight: 1.65, marginTop: 5 }}>
+        <div style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-2)", lineHeight: 1.65, marginTop: 5 }}>
           {accountJournalRecordsEnabled()
             ? "파일은 이 브라우저에서 읽어요. 저장을 눌러 확인한 기록만 현재 로그인한 계정의 암호화 보관 경로로 전송해요. 비밀 글은 공유·분석에서 제외해요."
             : <>고른 파일은 서버로 올라가지 않아요. 이 화면에서 내용을 읽어 일지 초안만

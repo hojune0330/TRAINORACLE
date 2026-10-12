@@ -664,6 +664,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       setAthleteRecordsOpen(false)
       setUtilityView(null)
       setAnalysisContext(tab === "trends" ? analysis : undefined)
+      if (tab === "trends" && analysis) setOracleHubSection("training")
       analysisReturnContext.current = tab === "trends" ? analysis : undefined
       calendarOriginalReturn.current = null
       setCalendarReaderReturn(null)
@@ -1109,7 +1110,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
           }}
           onOpenGuide={() => openGuide("minji")}
           onOpenPlan={() => goTab("plan")}
-          onOpenTrends={() => goTab("trends")}
+          onOpenTrends={() => goTab("trends", { section: "distance" })}
           onOpenOracle={openOracle}
           onOpenMore={() => runViewTransition("push", () => setUtilityView("more"))}
           onOpenAccount={accountEnabled ? () => runViewTransition("push", () => setV(s => ({ ...s, accountOpen: true }))) : undefined}
@@ -1146,6 +1147,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         <DeferredMobileScreens.JournalArchive
           entries={calendarSnapshot.entries}
           readiness={calendarSnapshot.status}
+          onRetry={calendarSnapshot.retry}
           selection={selection}
           calendarReturn={calendarReaderReturn}
           onCalendarReturnConsumed={() => setCalendarReaderReturn(null)}

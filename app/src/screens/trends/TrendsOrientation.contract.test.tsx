@@ -13,8 +13,9 @@ it("puts a meaningful task title before navigation without inventing a result fo
   expect(title.compareDocumentPosition(navigation) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
   expect(container.querySelectorAll(".trends-hub__guide img")).toHaveLength(1)
   expect(container.querySelector(".trends-hub__guide img")).toHaveAttribute("alt", "")
+  expect(container.querySelector(".trends-hub__guide img")).toHaveAttribute("src", expect.stringContaining("analysis-lens-v2.webp"))
   expect(screen.queryByRole("region", { name: "누적 거리와 변화" })).toBeNull()
-  fireEvent.click(screen.getByRole("button", { name: "첫 기록 남기기" }))
+  fireEvent.click(screen.getByRole("button", { name: "운동 기록 쓰기" }))
   expect(write).toHaveBeenCalledOnce()
 })
 

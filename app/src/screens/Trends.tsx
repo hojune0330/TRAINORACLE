@@ -117,7 +117,10 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
   const isEmpty = observations.length === 0
   const readComplete = journalReadComplete !== false && loadEntriesForPlanSafety().status === "complete"
   const savedSessions = entries.filter(entry => entry.kind === "post-session").map(({ id, date }) => ({ id, date }))
-  const hasSummary = readComplete && (savedSessions.some(entry => entry.date <= today) || derivePersonalOracle({ observations, today, planState }).maturity !== "EMPTY")
+  // A saved plan is not evidence of a completed workout analysis. Keep the
+  // plan available as its own destination, but only show the summary when
+  // workouts or structured observations can support it.
+  const hasSummary = readComplete && (savedSessions.some(entry => entry.date <= today) || derivePersonalOracle({ observations, today, planState: null }).maturity !== "EMPTY")
   const currentAnalysis = ANALYSIS_SECTIONS.find(item => item.id === detail) ?? ANALYSIS_SECTIONS[0]
   const guideTitle = section === "profile" ? "최고기록 살펴보기"
     : section === "library" ? "훈련 이야기 읽기"
@@ -126,7 +129,7 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
   // entry and panels without one, rather than repeating the same purpose above them.
   const showGuide = section !== "training" || !readComplete
     || detail === "monthly" || (detail === "summary" && !hasSummary)
-  const startAction = onWriteLog ? { label: entries.length > 0 ? "기록 더 남기기" : "첫 기록 남기기", run: onWriteLog } : null
+  const startAction = onWriteLog ? { label: savedSessions.length > 0 ? "기록 더 남기기" : "운동 기록 쓰기", run: onWriteLog } : null
   /**
    * 값을 적었는데도 추이에 못 들어간 일지 개수 (Q1).
    * 화면이 침묵하면 사용자는 자기가 적은 값이 왜 그래프에 없는지 알 수 없다.
@@ -146,7 +149,7 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
       <TrendsHeader onBack={onBack} onPace={navigation?.openPaceCalculator ? () => navigation.openPaceCalculator?.() : undefined} />
       <div className="trends-motion-stage">
         {showGuide && <TaskGuide className="trends-hub__guide" title={guideTitle}
-          illustration={section === "training" && readComplete ? "training-map" : undefined} />}
+          illustration={section === "training" && readComplete && detail === "summary" && !hasSummary ? "analysis-lens" : undefined} />}
         <div className="trends-hub__sections app-choice-group" role="group" aria-label="오라클 항목">
           {ORACLE_SECTIONS.map(item => (
             <button className="app-choice-control" key={item.id} type="button" aria-pressed={section === item.id}
@@ -201,9 +204,10 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
         {section === "training" && detail === "summary" && readComplete && !hasSummary && (
           <>
             <div style={{ padding: "0 20px" }}>
-              {!savedRace && <section className="trends-hub__start" aria-label="내 기록으로 시작하기">
-                {entries.length > 0 && <p>저장한 일지 {entries.length}건 · 분석할 값은 기록마다 달라요.</p>}
-                {startAction && <button type="button" onClick={startAction.run}>{startAction.label}<ArrowRight size={16} aria-hidden="true" /></button>}
+              {(!savedRace || (planState !== null && onOpenPlan)) && <section className="trends-hub__start" aria-label="내 기록으로 시작하기">
+                {!savedRace && entries.length > 0 && <p>저장한 일지 {entries.length}건 · 분석할 값은 기록마다 달라요.</p>}
+                {!savedRace && startAction && <button type="button" onClick={startAction.run}>{startAction.label}<ArrowRight size={16} aria-hidden="true" /></button>}
+                {planState !== null && onOpenPlan && <button type="button" className="trends-hub__start-secondary" onClick={onOpenPlan}>훈련표 보기<ArrowRight size={16} aria-hidden="true" /></button>}
               </section>}
               {onOpenOracle && <section className="trends-hub__example" aria-label="오라클 예시">
                 <p id="trends-example-scope">예시 · 내 기록 분석이 아니에요</p>

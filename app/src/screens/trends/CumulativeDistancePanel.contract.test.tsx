@@ -97,10 +97,10 @@ describe("cumulative distance panel", () => {
     fireEvent.click(screen.getByRole("button", { name: "운동 기록하기" }))
     expect(write).toHaveBeenCalledOnce()
     if (mode === "full") {
-      expect(screen.getByRole("button", { name: "4주" })).toHaveAttribute("aria-pressed", "true")
-      expect(screen.getByRole("button", { name: "12주" })).toBeVisible()
-      expect(screen.getByRole("button", { name: "6개월" })).toHaveAttribute("aria-pressed", "true")
-      expect(screen.getByRole("button", { name: "12개월" })).toBeVisible()
+      expect(screen.queryByRole("group", { name: "주간 비교 기간" })).toBeNull()
+      expect(screen.queryByRole("group", { name: "월간 비교 기간" })).toBeNull()
+      expect(screen.queryByRole("heading", { name: "주간 거리" })).toBeNull()
+      expect(screen.queryByRole("heading", { name: "월간 거리" })).toBeNull()
     }
   })
 
@@ -111,6 +111,10 @@ describe("cumulative distance panel", () => {
     render(<CumulativeDistancePanel observations={[observation("older-period", date, 7)]} today="2026-08-28" mode="full" />)
     expect(screen.queryByRole("img", { name: new RegExp(series) })).toBeNull()
     expect(screen.queryByRole("list", { name: /날짜별 거리/u })).toBeNull()
+    expect(screen.getByRole("button", { name: period })).toBeVisible()
+    expect(screen.getByText(series === "주간 거리"
+      ? /선택한 주간에 집계할 기록이 없어요. 기간을 넓혀 확인할 수 있어요/u
+      : /선택한 월에 집계할 기록이 없어요. 기간을 넓혀 확인할 수 있어요/u)).toBeVisible()
     fireEvent.click(screen.getByRole("button", { name: period }))
     expect(screen.getByRole("img", { name: new RegExp(series) })).toHaveAccessibleName(/7킬로미터/u)
     expect(screen.getByRole("table", { name: series })).toBeInTheDocument()

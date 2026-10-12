@@ -26,7 +26,8 @@ describe("form input names", () => {
     render(<EveningCheckin />)
 
     await user.click(screen.getByRole("button", { name: "수면" }))
-    expect(screen.getByRole("slider", { name: "수면 시간" })).toBeVisible()
+    expect(screen.getByRole("textbox", { name: "수면 시간" })).toBeVisible()
+    expect(screen.getByRole("textbox", { name: "수면 시간" })).toHaveAttribute("inputmode", "decimal")
     expect(screen.queryByRole("textbox", { name: "체중 (kg)" })).toBeNull()
     await user.click(screen.getByRole("button", { name: "입력 확인으로" }))
     await user.click(screen.getByRole("button", { name: "몸 상태 · 기분 입력" }))
@@ -77,29 +78,56 @@ describe("high-pain review guidance", () => {
 })
 
 describe("body pain keyboard controls", () => {
-  it("uses native buttons while the body drawing stays noninteractive", () => {
+  it("uses the static guide image and named buttons while the drawing stays noninteractive", () => {
     const { container } = render(<BodyDiagram />)
-    const bodyPartButtons = screen.getAllByRole("button", { name: /통증/u })
+    const bodyPartButtons = screen.getAllByRole("button")
+    const guide = container.querySelector(".body-pain-selector__visual img")
 
     expect(bodyPartButtons).toHaveLength(10)
     expect(bodyPartButtons.every((button) => button.tagName === "BUTTON")).toBe(true)
-    expect(container.querySelector("svg [role='button']")).toBeNull()
+    expect(guide?.getAttribute("src")).toMatch(/\/illustrations\/body-check-guide-v1\.webp$/u)
+    expect(guide?.closest("button")).toBeNull()
+    expect(container.querySelector("svg")).toBeNull()
+    expect(container.querySelector("[data-diagram-open]")).toBeNull()
   })
 
-  it("cycles a pain selector once for Enter and once for Space", async () => {
+  it("opens a named part by keyboard and selects a direct level", async () => {
     // Given
     const user = userEvent.setup()
     const onChange = vi.fn()
-    render(<BodyDiagram onChange={onChange} />)
-    const rightKnee = screen.getByRole("button", { name: /오른 무릎.*통증 없음/u })
+    const view = render(<BodyDiagram onChange={onChange} />)
+    const rightKnee = screen.getByRole("button", { name: "오른 무릎" })
+    const parts = view.container.querySelector(".body-pain-selector__buttons")
+    const partPosition = Array.from(parts?.children ?? []).indexOf(rightKnee.parentElement as HTMLElement)
 
     // When
     rightKnee.focus()
     await user.keyboard("{Enter}")
+    expect(screen.getByRole("heading", { name: "오른 무릎 통증 정도" })).toBeVisible()
+    expect(rightKnee).toHaveAttribute("aria-expanded", "true")
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "오른 무릎 통증 1단계" }))
     await user.keyboard(" ")
 
     // Then
-    expect(onChange).toHaveBeenNthCalledWith(1, { rKnee: 1 })
-    expect(onChange).toHaveBeenNthCalledWith(2, { rKnee: 1 })
+    expect(onChange).toHaveBeenCalledWith({ rKnee: 1 })
+    expect(Array.from(parts?.children ?? []).indexOf(rightKnee.parentElement as HTMLElement)).toBe(partPosition)
+    expect(screen.getByText("약함")).toBeVisible()
+    expect(screen.getByText("심함")).toBeVisible()
+    view.rerender(<BodyDiagram selected={{ rKnee: 1 }} onChange={onChange} />)
+    expect(screen.getByRole("button", { name: "오른 무릎 통증 1단계" })).toHaveAttribute("aria-pressed", "true")
+  })
+
+  it("lets a saved level be changed or explicitly cleared without inventing zero-filled parts", async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+    render(<BodyDiagram selected={{ rKnee: 3 }} onChange={onChange} />)
+    const rightKnee = screen.getByRole("button", { name: "오른 무릎, 통증 3/5" })
+
+    await user.click(rightKnee)
+    expect(screen.getByRole("heading", { name: "오른 무릎 통증 정도" })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "오른 무릎 통증 5단계" }))
+    expect(onChange).toHaveBeenNthCalledWith(1, { rKnee: 5 })
+    await user.click(screen.getByRole("button", { name: "오른 무릎 통증 해제" }))
+    expect(onChange).toHaveBeenNthCalledWith(2, {})
   })
 })

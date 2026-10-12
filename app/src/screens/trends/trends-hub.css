@@ -150,6 +150,7 @@
 .trends-hub__start p, .trends-hub__example p { color: var(--ink-2); font: 400 var(--fs-caption) / 1.6 var(--sans); }
 .trends-hub__start button, .trends-hub__example button, .trends-hub__recovery > button { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); width: 100%; min-height: var(--app-touch-min); padding: var(--space-3); border: 0; border-radius: var(--r-md); background: transparent; color: var(--ink); font: 600 var(--fs-body) / 1.5 var(--sans); text-align: left; overflow-wrap: anywhere; cursor: pointer; }
 .trends-hub__start button { background: var(--brand); color: var(--paper); }
+.trends-hub__start button.trends-hub__start-secondary { margin-top: var(--space-2); border: 1px solid var(--line); background: transparent; color: var(--ink); }
 .trends-hub__example button { padding-inline: 0; }
 .trends-hub__start button svg, .trends-hub__example button svg { flex-shrink: 0; }
 .trends-hub__recovery { margin: var(--space-3) 20px; }

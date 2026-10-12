@@ -252,7 +252,7 @@ describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {
     await user.click(screen.getByRole("button", { name: "홈으로 돌아가기" }))
     await user.click(screen.getByRole("button", { name: "기록하기" }))
     expect(await screen.findByRole("heading", { name: "무엇을 기록할까요?" })).toBeVisible()
-    await user.click(screen.getByRole("button", { name: /^워치 기록 불러오기/u }))
+    await user.click(screen.getByRole("button", { name: /^운동 파일 불러오기/u }))
     expect(await screen.findByRole("heading", { name: "운동 기록 가져오기" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "뒤로" }))
     expect(await screen.findByRole("heading", { name: "무엇을 기록할까요?" })).toBeVisible()

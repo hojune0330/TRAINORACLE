@@ -90,6 +90,7 @@ describe("energy system ledger UI", () => {
     expect(screen.getByText(/일지에 운동과 훈련 목적을 남기면/u)).toBeVisible()
     expect(screen.queryByRole("img")).not.toBeInTheDocument()
     expect(screen.queryByRole("table")).not.toBeInTheDocument()
+    expect(screen.queryByRole("group", { name: "에너지 시스템 분석 기간" })).not.toBeInTheDocument()
     expect(screen.queryByText(/계산 기준/u)).not.toBeInTheDocument()
     expect(screen.queryByText("저장된 계획 없음")).not.toBeInTheDocument()
     expect(screen.queryByText(/^0회$/u)).not.toBeInTheDocument()
@@ -119,6 +120,7 @@ describe("energy system ledger UI", () => {
     expect(screen.getByRole("table", { name: "에너지 시스템별 일지 누적" })).toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "4주" }))
     expect(screen.queryByRole("img")).not.toBeInTheDocument()
+    expect(screen.getByText(/더 긴 기간을 선택해 지난 기록을 확인할 수 있어요/u)).toBeVisible()
   })
 
   it("keeps the compact home summary short while naming mixed allocation", () => {

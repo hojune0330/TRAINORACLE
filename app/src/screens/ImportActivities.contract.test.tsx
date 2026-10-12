@@ -164,8 +164,11 @@ describe("ImportActivities — 고르기 단계", () => {
 
     // Then
     const notice = screen.getByTestId("import-privacy-notice")
+    const [title, details] = Array.from(notice.querySelectorAll("div"))
     expect(notice).toBeVisible()
     expect(notice).toHaveTextContent(/서버로 올라가지 않아요/u)
+    expect(title).toHaveStyle({ fontSize: "var(--fs-caption)" })
+    expect(details).toHaveStyle({ fontSize: "var(--fs-body-sm)" })
   })
 
   it("자동 연동 시점을 약속하지 않고 원본 보존 안내를 한 번만 보여준다", async () => {
