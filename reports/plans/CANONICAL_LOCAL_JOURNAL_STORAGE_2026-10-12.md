@@ -1,7 +1,7 @@
 # 구형 앱과 새 몸 기록의 기기 저장소 분리
 
 ```yaml
-status: OWNER_APPROVED_IMPLEMENTED_VALIDATION_IN_PROGRESS
+status: OWNER_APPROVED_IMPLEMENTED_FOCUSED_VALIDATION_PASSED_RELEASE_GATE_PENDING
 owner_approval: 2026-10-12 저장소를 분리해 보호한 뒤 배포 준비
 baseline_commit: ccf0c00d1a838c72a1bcbb12a057c3a793771a9a
 release_authority: 준비만 승인, 이번 작업에서 운영 배포하지 않음
@@ -97,15 +97,16 @@ E2E의 각 맥락을 검토해 **33개 spec + 6개 script/audit + 12개 fixture,
 대신하지 않는다. 대표 후행 후보는 `private-memo-save.spec.ts`, `journal-trash.spec.ts`,
 `journal-drop-observability.spec.ts`이며 실제 결과는 별도 실행 로그로 확정한다.
 
-후행 확대 48파일 배치에는 통과, assertion 실패, worker 시작 실패가 함께 남아 있다.
-영향 fixture 5묶음과 pace 관련 4검사는 통합 담당이 보정 중이며 현재 전체 성공이나
-배포 준비 완료를 선언하지 않는다. 후행 worker 실패·fixture 재실행도 호스트의 worker
-시작·종료 timeout으로 결과 없이 중단되어 원래 부분 통과·실패 증거를 유지한다.
-순환참조 보정 뒤 기존 pace 검사 112/112와 최종 app 타입 검사는 통과했다. 별도 신규 import
-순서 회귀는 worker 시작 timeout으로 실행되지 않았다. 수정 fixture 재실행과 최종 통합
-릴리스 검증은 남아 있으므로 전체 검증 완료로 처리하지 않는다.
+최초 확대 48파일 배치에는 통과, assertion/변환 실패, worker 시작 실패가 함께 있었다.
+실제 순환 참조 결함과 fixture 정비를 구분해 보정했고, 기존 pace 검사 112/112가 통과했다.
+후행 8파일 134검사와 마지막 3파일 22검사를 통해 당시 실패·미시작 항목을 확인했다.
+최신 main 통합 관련 추가 4파일 77검사, named mutation 5개, 대표 모바일 E2E 9개도 통과했다.
+초기 timeout과 실패 증거는 후행 통과로 소급 덮어쓰지 않으며 skip 2개도 통과로 세지 않는다.
+최신 main 통합 후 로컬 production 번들 빌드가 통과했다. 전체 CI·모든 E2E·운영 또는
+실계정 검증은 수행하지 않았고, 실제 공개 전 최종 릴리스 SHA의 필수 관문은 남아 있다.
 중간 수치·최종 재실행 결과·E2E 정확한 변경 목록은
 [구현 인수 보고서](../review/CANONICAL_LOCAL_JOURNAL_IMPLEMENTATION_2026-10-12.md)에
 구분하여 기록하고, 겹치는 실행을 합산하지 않는다. 미시작 worker와 skip도 통과로 세지 않는다.
 
-현재 작업 결과와 실행한 검사/미실행 검사의 최종 확정은 통합 담당의 검증 인수 단계에 남아 있다.
+저장소 보호 구현·확인된 영향 범위의 집중 검증·소스 통합을 이번 인수 범위로 한다.
+운영 배포와 계정 JOURNAL v4 서버 확인은 별도이며 자동 공개하지 않는다.

@@ -7,12 +7,16 @@ import { createInitialPeriodizationContext } from "../../domain/periodization-li
 import { createPlannedSessionLogDraft } from "../../domain/planned-session-link"
 import { QuickSessionForm } from "../log-entry/QuickSessionForm"
 import { hasPendingBrowserBackLayer } from "../../navigation/browserNavigation"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 
 afterEach(async () => {
   cleanup()
   await waitFor(() => expect(hasPendingBrowserBackLayer()).toBe(false))
 })
-beforeEach(() => window.localStorage.clear())
+beforeEach(async () => {
+  window.localStorage.clear()
+  await initializeCanonicalJournalFixture()
+})
 
 function plannedDraft() {
   const state = stateFixture()

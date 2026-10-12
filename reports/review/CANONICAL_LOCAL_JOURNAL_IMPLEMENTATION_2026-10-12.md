@@ -1,7 +1,7 @@
 # 기기 일지 저장소 분리 — 구현 인수 보고
 
 ```yaml
-status: IMPLEMENTED_EXPANDED_VALIDATION_IN_PROGRESS
+status: IMPLEMENTED_FOCUSED_VALIDATION_PASSED_RELEASE_GATE_PENDING
 date: 2026-10-12
 baseline: ccf0c00d1a838c72a1bcbb12a057c3a793771a9a
 authority: 저장소를 분리해 보호한 뒤 배포 준비
@@ -24,7 +24,7 @@ production_deployed: false
 ## 검증 기록
 
 아래 결과는 각각의 실행 묶음에서 관측한 범위다. 전체 검사·전체 E2E 성공을 뜻하지 않으며,
-겹치는 재실행을 합산하지 않는다. 후행 확대 배치와 재실행의 최종 집계는 통합 담당이 확정한다.
+겹치는 재실행을 합산하지 않는다. 실패 이력과 그 뒤의 수정·재실행을 아래에서 구별한다.
 
 | 묶음 | 해당 묶음의 관측 결과 |
 |---|---|
@@ -33,7 +33,7 @@ production_deployed: false
 | 기존 일지·암호화 메모·읽기·폼 fixture | 근접 19파일 161/161 통과. 이후 확대 48파일 배치는 아래의 별도 중간 분류이며 이 결과로 대신하지 않는다 |
 | 접근 어댑터·작성 중 입력·미지원 버전 | 접근 6 + 경계 UI 3 + 삭제 revision 경쟁 9 + 대기 중 복원 3: 21/21 통과. 23파일 배치의 복구 fixture 1실패를 아래 근거로 바로잡고 접근 6개를 재실행 |
 | 실제 로컬 Chromium | 최종 저장소 보호 6개 관측 통과, pageerror 0. 기존 몸 기록 흐름도 최종 13개 관측 통과, pageerror 0 |
-| 타입·production 번들 | 고정 Node 24.19.0의 직접 `tsc --noEmit`와 Vite build 통과. E2E 51파일 소스 정비 동결 뒤 `typecheck:e2e`도 통합 담당이 통과를 확인했다. 이후 확대 fixture·pace 보정의 최종 재검사는 아직 확정 전 |
+| 타입·production 번들 | 고정 Node 24.19.0의 직접 app/E2E 타입 검사 통과. 최신 main 통합 `8eb3119a`와 순환 참조 보정이 포함된 Vite build exit 0. 릴리스 게시용 빌드·배포 증거는 아님 |
 
 결함 주입: 원본 비교를 제거했을 때 `holds old edits, additions, deletion and namespace-prefix erase without merging into canonical data`가 실제 실패했다(expected conflict / received ready). 소스는 주입 전과 같은 SHA-256으로 복원했다. 이를 모든 테스트 각각의 결함 주입 완료로 확대하지 않는다.
 
@@ -48,21 +48,20 @@ production_deployed: false
 
 실행 환경에서 Vitest worker가 검사 시작 전에 60초 기동 제한으로 실패한 실행도 있었다. 이는 assertion 통과가 아니며 성공 수치에 포함하지 않는다. 중간 배치의 일부 실패나 중단도 전체 통과로 세지 않는다.
 
-### 확대 48파일 배치 — 중간 분류, 최종 확정 전
+### 확대 48파일 배치 — 최초 실패 이력
 
-아래 수치는 E2E 소스 정비 이후 통합 담당이 전달한 중간 실행 보고 기준이다. 이 문서 초안의
-작성 담당은 검사를 추가 실행하지 않았다. 최종 로그 경로·재실행 결과와 집계는 통합 담당이
-마무리하며, 아래 숫자를 완료된 전체 검사 수로 재사용하지 않는다.
+아래는 첫 실행의 실제 결과다. 이후 성공으로 소급 수정하지 않으며, 바로 아래 후행 재실행과
+함께 읽는다. 이 수치는 완료된 전체 검사 수가 아니다.
 
 | 분류 | 중간 보고 | 현재 경계 |
 |---|---|---|
 | 통과한 검사 파일 | 38파일, 628 tests 통과 + 2 skip | skip은 통과가 아니며 다른 묶음과 합산하지 않는다 |
-| assertion 실패 | 6파일, 9 tests 실패 | 실패 원인과 재실행 결과 확정 전 |
+| assertion/변환 실패 | 6파일, 9 tests 실패 | 아래 후행 수정·재실행으로 해소 |
 | worker 시작 실패 | 4파일 | 검사가 시작되지 않았으므로 assertion 결과나 통과로 세지 않는다 |
 
-영향받은 fixture 5묶음은 보정 중이다. pace 관련 4검사는 canonical import 이후 실제 주기
-경로가 드러난 사례로 통합 담당이 별도 보정 중이다. 이 두 작업의 개수는 위 표와 독립적으로
-더할 집계가 아니며, 현재 전체 성공이나 배포 준비 완료를 선언할 근거가 아니다.
+영향받은 fixture 5묶음을 보정했다. pace 관련 4검사는 canonical import 이후 실제 순환
+참조가 드러난 사례라 production 코드를 별도로 수정했다. 개수는 위 표와 독립적으로
+더할 집계가 아니며, 전체 CI 성공을 선언할 근거가 아니다.
 
 후행 worker 실패 4파일 재실행과 fixture 6파일 재실행도 호스트의 worker 시작·종료 timeout이
 반복되어 결과를 얻지 못했고, 통합 담당이 두 실행을 중단했다. 따라서 원래 배치의
@@ -75,8 +74,29 @@ production_deployed: false
 실제 순환은 athlete-records → account scope/ownership → canonical storage → journal schema →
 comparison relation → plan schema → athlete-records였다. 초기화 전 ID schema를 고정한 alias를
 `z.lazy`로 지연 참조하도록 바꿨다. ID 제약·훈련 수치·처방 및 안전 규칙은 바꾸지 않았다.
-후행 fixture 수정 5묶음은 소스 정비 완료이나 재실행 확인이 남아 있다. 마지막 전체 빌드 성공은
-이 alias 수정 전의 증거이므로 최종 통합 SHA의 릴리스 빌드 성공으로 재사용하지 않는다.
+그 뒤 11파일 배치에서는 8파일 134검사가 통과했고, AppShell archive와 sync orchestration은
+worker 시작에 실패했다. 신규 import-order 검사는 잘못된 입력을 production builder가 이미
+거절하는데도 다음 단계까지 가도록 만든 fixture 때문에 실패했다. builder의 조기 `null`
+거절을 그대로 확인하도록 바로잡았고 guard를 우회하지 않았다.
+
+이 마지막 3파일만 다시 실행해 **3파일 22/22, exit 0**을 확인했다. 유효한 실제 후보의 parse,
+athlete-records first import 순서, 잘못된 ID 거절을 유지한다. 따라서 최초 48파일 배치에서
+실패하거나 시작하지 못했던 항목은 관련 후행 재실행으로 확인했으며, 38개 통과 파일의
+불필요한 전면 재실행은 하지 않았다. 최초 배치의 skip 2개는 여전히 통과로 세지 않는다.
+
+몸 메타데이터의 named mutation script는 **5/5 통과**했다. 정상 코드의 성공과 각 guard를
+메모리에서 제거한 코드의 이름 있는 실패를 모두 확인하며, 지원 v1 companion의 후속 저장
+누락을 막는 production guard를 실제 initializer와 함께 검사한다.
+
+최신 main을 충돌 없이 통합한 뒤 로컬 production 번들 빌드는 exit 0이었다. 대표 모바일
+E2E `private-memo-save`, `journal-trash`, `journal-drop-observability`는 **3파일 9/9, exit 0**이다.
+개인 계정이 아닌 격리된 합성 자료로 수행했고, 전체 E2E·CI·운영 배포를 대신하지 않는다.
+
+최신 main의 작성 폼 변경과 맞물린 추가 fixture 네 곳(`QuickSessionForm.contract`,
+`QuickSessionForm.duplicate-save.contract`, `ActivePlan.plan-link.contract`,
+`account-import.contract`)은 production 초기화를 명시해 **4파일 77/77, exit 0**을 확인했다.
+계정 플래그 거부 검사가 저장소 미준비 때문에 공허하게 통과하지 않도록 한 정비이며,
+기존 기대값과 보호 규칙은 유지했다.
 
 실제 브라우저 검사는 합성 기록과 격리된 컨텍스트를 사용하고 외부 요청을 차단한다. 옛 탭의 필드 제거·빈 배열·키 삭제, 충돌 중 입력 유지, 명시 확인, 새로고침을 확인한다. 320/375/1280px 및 320px 큰 글씨에서 안내창과 터치 영역을 확인한다. 캡처는 로컬 `app/.codex-calendar-visual-qa/canonical-storage-20261012/`에 있으며 공개·CI 증거가 아니다.
 
@@ -135,21 +155,25 @@ await한다. 제품의 초기화·쓰기 guard를 완화하지 않았다.
 E2E 51파일 정비 동결 후 `typecheck:e2e`는 통합 담당이 통과를 확인했다. 타입 통과는
 브라우저 행동 성공, 전체 E2E 또는 운영 증거가 아니다. 대표 후행 실행 후보는
 `private-memo-save.spec.ts`(새 journal/vault 저장), `journal-trash.spec.ts`(삭제·undo·복원·영구
-삭제·만료), `journal-drop-observability.spec.ts`(초기 손상 원본 보존)이다. 이 초안에서는
-해당 대표 묶음의 실행 성공을 아직 확정하지 않는다.
+삭제·만료), `journal-drop-observability.spec.ts`(초기 손상 원본 보존)이다.
+해당 대표 묶음은 이후 통합 담당 실행에서 9/9 통과했다. 위 후행 검증 기록을 따른다.
 
 E2E 소유 범위 밖 `app/scripts/body-part-metadata-mutation.test.mjs`의 기존 old-key Map와
 manifest 없는 fixture는 새 guard에서 공허하게 거절될 가능성을 통합 담당에게 보고했다.
-E2E 정비 담당은 이 파일을 수정하거나 검사를 실행하지 않았다. 별도 정합성 확인과 필요한
-named fault injection 결과는 통합 담당이 확정한다.
+E2E 정비 담당은 이 파일을 수정하거나 검사를 실행하지 않았다. 별도 담당이 지원 v1
+메타데이터의 후속 저장 누락 사례로 정비했고 통합 담당이 named mutation 5/5를 확인했다.
 
-따라서 전체 CI나 모든 E2E가 통과했다고 보고하지 않는다. 최종 릴리스 SHA에서 해당 fixture 정비와 필요한 릴리스 검사를 한 번 완료한 뒤 공개해야 한다.
+따라서 전체 CI나 모든 E2E가 통과했다고 보고하지 않는다. 이번에 확인한 영향 범위의 fixture
+정비는 완료했다. 실제 공개 전 최종 릴리스 SHA에서 필수 릴리스 검사를 한 번 수행해야 한다.
 
 ## 인수·배포 경계
 
 - 몸 기록의 입력·확대·기타 재사용·날짜별 이력은 앞선 `BODY_HISTORY_IMPLEMENTATION_2026-10-12.md`의 구현이다. 이 보고서는 그때 발견한 구형 기기 저장소 P1을 다룬다.
 - 이번 작업은 운영 배포, DB 변경, 실계정 왕복을 하지 않는다. 이전 계정 JOURNAL v4 지원의 서버 반영도 별도 증거가 필요하다.
 - 저장소 규칙의 main 커밋·푸시와 운영 공개를 구분한다. 자동 게시를 막는 `[skip ci]` 커밋은 CI 통과가 아니다.
+- 보호 구현 커밋은 `dbfabaac`, 다른 작업자의 최신 main 통합은 `8eb3119a`다. 후행 검증 결과와
+  fixture 보완은 별도 `[skip ci]` 인수 커밋으로 보존한다. 통합 및 마지막 fixture 보완 후 app
+  `tsc --noEmit`도 exit 0을 확인했다. 실제 게시용 최종 SHA 검증은 아직 실행하지 않았다.
 - 문제 발생 시 새 저장소를 옛 주소로 복사하거나 원본/구매 내역/DB를 삭제하지 않는다. 새 읽기 지원은 유지하고 새 쓰기를 보수적으로 막는다.
 - 이번 작업자가 PR #354/#355/#356를 병합하거나 수정하지 않았다. 최종 원격 재확인에서 다른
   작업자가 PR #354 등을 반영해 main이 `6194f3f5`로 전진한 것을 확인했다. 최신 main 통합은
