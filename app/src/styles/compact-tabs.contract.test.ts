@@ -6,7 +6,6 @@ const tokens = readFileSync("../colors_and_type.css", "utf8")
 const main = readFileSync("src/main.tsx", "utf8")
 
 const compactTabSurfaces = [
-  "src/screens/JournalArchive.tsx",
   "src/screens/TrainingLexicon.tsx",
   "src/screens/trends/CumulativeDistancePanel.tsx",
   "src/screens/trends/EnergySystemLedgerPanel.tsx",
@@ -38,6 +37,12 @@ describe("compact tab density", () => {
       expect(source, path).toContain("app-compact-tabs")
       expect(source, path).toContain("app-compact-tab")
     }
+    // The approved journal view uses the common choice controls instead of tabs.
+    const journal = readFileSync("src/screens/JournalArchive.tsx", "utf8")
+    expect(journal).toContain("app-choice-group")
+    expect(journal).toContain("app-choice-control")
+    expect(journal).toContain('aria-pressed={activeMode === "CALENDAR"}')
+    expect(journal).toContain('aria-pressed={activeMode === "CYCLE"}')
   })
 
   it("does not apply the compact rule to answer controls", () => {

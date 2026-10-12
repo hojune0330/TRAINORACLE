@@ -42,7 +42,8 @@ function saveQuickPlanJournal(input: {
     fireEvent.click(screen.getByRole("button", { name: "없어요" }))
   } else {
     fireEvent.click(screen.getByRole("button", { name: "있어요" }))
-    fireEvent.click(screen.getByRole("button", { name: /오른 무릎, 통증 없음/ }))
+    fireEvent.click(screen.getByRole("button", { name: "오른 무릎" }))
+    fireEvent.click(screen.getByRole("button", { name: "오른 무릎 통증 1단계" }))
     fireEvent.click(screen.getByRole("button", { name: "이 상태로 기록" }))
   }
     fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))

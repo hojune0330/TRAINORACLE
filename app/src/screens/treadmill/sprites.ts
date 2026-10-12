@@ -5,6 +5,7 @@
  */
 import type { TreadmillHazardKind, TreadmillUpgrade } from "../../domain/minigame/treadmill"
 import { drawAnimeRunner } from "./anime-runner"
+import { drawToriArt } from "./runner-art"
 
 export const GAME_TOKENS = {
   skyTop: "--game-sky-top", skyLow: "--game-sky-low", hillFar: "--game-hill-far", hillNear: "--game-hill-near",
@@ -80,13 +81,16 @@ export type RunnerLook = {
   character?: RunnerCharacter
   /** Running cycle phase in radians. */
   phase: number
+  /** Take-off, apex, landing; only affects the rendered pose. */
+  jumpStage?: 0 | 1 | 2
   upgrades: readonly TreadmillUpgrade[]
   /** 0..1, flattens the body for one beat after landing. */
   squash?: number
 }
 
-/** All runners use the anime rig in anime-runner.ts (one skeleton, same height and hit box for everyone). */
+/** Generated Tori art uses the same foot origin; other runners and load failures keep the canvas fallback. */
 export function drawRunner(context: CanvasRenderingContext2D, palette: GamePalette, look: RunnerLook) {
+  if (drawToriArt(context, look)) return
   drawAnimeRunner(context, palette, look)
 }
 

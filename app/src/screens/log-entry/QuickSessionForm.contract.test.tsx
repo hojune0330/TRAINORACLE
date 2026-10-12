@@ -108,7 +108,7 @@ describe("quick session journal contract", () => {
     fireEvent.click(screen.getByRole("button", { name: /^힘든 정도 6\/10,/ }))
     fireEvent.click(screen.getByRole("button", { name: "있어요" }))
     fireEvent.click(screen.getByRole("button", { name: "오른 무릎" }))
-    fireEvent.click(screen.getByRole("button", { name: "오른 무릎 통증 4단계" }))
+    fireEvent.click(await screen.findByRole("button", { name: "오른 무릎 통증 4단계" }))
     fireEvent.click(screen.getByRole("button", { name: "이 상태로 기록" }))
     fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
     await screen.findByRole("button", { name: "완료" })
@@ -497,7 +497,7 @@ describe("quick session journal contract", () => {
     expect(entry.fieldProvenance?.painParts).toBeUndefined()
   })
 
-  it("requires a structured body area when the athlete reports discomfort", () => {
+  it("requires a structured body area when the athlete reports discomfort", async () => {
     render(<QuickSessionForm />)
     fireEvent.click(screen.getByRole("button", { name: "운동을 마쳤어요" }))
     fireEvent.click(screen.getByRole("button", { name: "오전" }))
@@ -509,7 +509,7 @@ describe("quick session journal contract", () => {
     expect(loadEntries()).toHaveLength(0)
 
     fireEvent.click(screen.getByRole("button", { name: "오른 무릎" }))
-    fireEvent.click(screen.getByRole("button", { name: "오른 무릎 통증 1단계" }))
+    fireEvent.click(await screen.findByRole("button", { name: "오른 무릎 통증 1단계" }))
     fireEvent.click(screen.getByRole("button", { name: "이 상태로 기록" }))
     fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
     expect(loadEntries()[0]).toMatchObject({
