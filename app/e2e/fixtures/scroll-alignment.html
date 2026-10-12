@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Scroll alignment fixture</title>
+<style>body { margin:0; min-height:200vh; } .app-scroll-region { height:600px !important; overflow:auto !important; position:relative; margin-top:100px; } input { min-height:44px; } </style></head>
+<body><div id="root"></div><script type="module">
+import React from "react"
+import { createRoot } from "react-dom/client"
+import "../../../colors_and_type.css"
+import "../../../colors_and_type_journal.css"
+import "../../src/styles/app.css"
+import { RecordReadingOracle } from "../../src/screens/RecordReadingOracle.tsx"
+import { useActiveContentScroll } from "../../src/hooks/useActiveContentScroll.ts"
+const h = React.createElement
+function Fixture() {
+  const [stage, setStage] = React.useState("own-event")
+  const [step, setStep] = React.useState(0)
+  const ref = React.useRef(null)
+  useActiveContentScroll(step, ref, undefined, true)
+  return h("main", { className:"app-scroll-region" },
+    h("button", { id:"next", onClick:() => setStep(s => s + 1) }, "Next step"),
+    h("div", { style:{ height:300 } }),
+    h("section", { ref, id:"target" }, h("h2", null, `Step ${step}`), h("input", { "aria-label":"Memo" })),
+    h(RecordReadingOracle, { stage, today:"2026-10-12", onStageChange:setStage, onBack:() => setStage("own-event"), onClose:() => {}, onOpenPlan:() => {} }),
+    h("div", { style:{ height:900 } }))
+}
+createRoot(document.getElementById("root")).render(h(Fixture))
+</script></body></html>

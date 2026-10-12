@@ -29,6 +29,8 @@ export function RecordReadingOracle({ stage, today, onStageChange, onBack, onClo
   const [chapter, setChapter] = React.useState(0)
   const { reduced } = useCalendarMotion()
   const heading = React.useRef<HTMLHeadingElement>(null)
+  const bodyRef = React.useRef<HTMLDivElement>(null)
+  const chapterScrollRequested = React.useRef(false)
   const ownResult = own ? readPersonalRecord(own) : null
   const pair = own && friend ? subject === "self" ? readTogetherRecords(own, friend, consent)
     : readTogetherRecords(friend, own, firstFriendConsent) : null
@@ -51,6 +53,18 @@ export function RecordReadingOracle({ stage, today, onStageChange, onBack, onClo
   React.useEffect(() => {
     heading.current?.focus({ preventScroll: true })
   }, [visibleStage, chapter])
+
+  React.useLayoutEffect(() => {
+    if (!chapterScrollRequested.current) return
+    chapterScrollRequested.current = false
+    const body = bodyRef.current
+    const region = body?.closest<HTMLElement>(".app-scroll-region")
+    if (!body || !region) return
+    region.scrollTo?.({
+      top: Math.max(0, region.scrollTop + body.getBoundingClientRect().top - region.getBoundingClientRect().top),
+      behavior: "auto",
+    })
+  }, [chapter])
 
   const edit = (patch: Partial<Draft>) => {
     if (isFriend) {
@@ -83,8 +97,9 @@ export function RecordReadingOracle({ stage, today, onStageChange, onBack, onClo
   }
   const chapters = isPair ? ["두 기록 비교", "함께 달리기", "비교 기준"] : ["기록 요약", "400m 평균", "더 알아보기"]
   const pickChapter = (next: number) => {
+    if (next === chapter) return
+    chapterScrollRequested.current = true
     setChapter(next)
-    heading.current?.scrollIntoView({ block: "start", behavior: "auto" })
   }
 
   return <div className="record-reading" data-reduced-motion={reduced}>
@@ -93,7 +108,7 @@ export function RecordReadingOracle({ stage, today, onStageChange, onBack, onClo
       <span>오라클 · {isPair ? "러닝 궁합" : "기록 풀이"}</span>
       <button type="button" onClick={onClose} aria-label="풀이 닫기"><X size={19} aria-hidden="true" /></button>
     </header>
-    <div className="record-reading__body">
+    <div className="record-reading__body" ref={bodyRef}>
       {!isResult && <>
         <p className="record-reading__eyebrow">{entryIsFriend ? "친구의 최고기록" : "나의 최고기록"} · {visibleStage.endsWith("event") ? "1 / 2" : "2 / 2"}</p>
         <TaskGuide as="h1" ref={heading} tabIndex={-1}

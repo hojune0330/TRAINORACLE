@@ -53,6 +53,34 @@ function queuedFrames() {
 }
 
 describe("active content scroll", () => {
+  it.each(["pointerdown", "touchstart", "wheel", "keydown", "input"])("yields delayed alignment to a later %s and allows the next step", eventName => {
+    vi.useFakeTimers()
+    const scrollIntoView = vi.fn()
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", { configurable: true, value: scrollIntoView })
+    const view = render(<ScrollHarness activeKey="one" />)
+    act(() => { vi.advanceTimersByTime(20) })
+    expect(scrollIntoView).toHaveBeenCalledOnce()
+    act(() => {
+      document.dispatchEvent(new Event(eventName, { bubbles: true }))
+      vi.advanceTimersByTime(300)
+    })
+    expect(scrollIntoView).toHaveBeenCalledOnce()
+    view.rerender(<ScrollHarness activeKey="two" />)
+    act(() => { vi.advanceTimersByTime(20) })
+    expect(scrollIntoView).toHaveBeenCalledTimes(2)
+  })
+
+  it("does not scroll an editable field already in use", () => {
+    const flushFrames = queuedFrames()
+    const scrollIntoView = vi.fn()
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", { configurable: true, value: scrollIntoView })
+    const view = render(<FocusHarness activeKey="one" skipInitial />)
+    view.getByRole("textbox", { name: "작성 중인 메모" }).focus()
+    view.rerender(<FocusHarness activeKey="two" skipInitial />)
+    flushFrames()
+    expect(scrollIntoView).not.toHaveBeenCalled()
+  })
+
   it("focuses the new heading after alignment when no later input has taken focus", () => {
     const flushFrames = queuedFrames()
     const view = render(<FocusHarness activeKey="one" />)

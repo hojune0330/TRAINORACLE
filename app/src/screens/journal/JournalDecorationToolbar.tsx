@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react"
 import React from "react"
+import { calendarReducedMotion } from "../../hooks/useCalendarMotion"
 import { RewardActionButton } from "../../components/rewards/RewardActionButton"
 import "./journal-decoration-reward-actions.css"
 import {
@@ -721,7 +722,15 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
                 key={filter.id}
                 type="button"
                 aria-pressed={toolFilter === filter.id}
-                onClick={() => {
+                onClick={(event) => {
+                  const rail = event.currentTarget.parentElement
+                  if (rail) {
+                    const bounds = rail.getBoundingClientRect()
+                    const item = event.currentTarget.getBoundingClientRect()
+                    const delta = item.left < bounds.left ? item.left - bounds.left
+                      : item.right > bounds.right ? item.right - bounds.right : 0
+                    if (delta) rail.scrollTo?.({ left: rail.scrollLeft + delta, behavior: calendarReducedMotion() ? "auto" : "smooth" })
+                  }
                   setToolFilter(filter.id)
                   setPendingPurchaseId(null)
                 }}

@@ -24,6 +24,23 @@ async function ownReading() {
 }
 
 describe("record reading flow", () => {
+  it("aligns a selected chapter only inside the app and leaves the outer page alone", async () => {
+    const user = userEvent.setup()
+    const view = render(<main className="app-scroll-region"><Harness /></main>)
+    const region = view.container.querySelector<HTMLElement>("main")!
+    const scrollTo = vi.fn()
+    Object.defineProperty(region, "scrollTo", { configurable: true, value: scrollTo })
+    await user.click(screen.getByRole("button", { name: "5000m" }))
+    await user.type(screen.getByRole("textbox", { name: "최고기록" }), "20:30")
+    await user.click(screen.getByRole("button", { name: "나의 러닝 풀이 보기" }))
+    expect(scrollTo).not.toHaveBeenCalled()
+    await user.click(screen.getByRole("button", { name: "400m 평균" }))
+    expect(scrollTo).toHaveBeenCalledOnce()
+    expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled()
+    await user.click(screen.getByRole("button", { name: "400m 평균" }))
+    expect(scrollTo).toHaveBeenCalledOnce()
+  })
+
   it("applies the app motion preference live without changing the current result", async () => {
     const user = await ownReading()
     try {

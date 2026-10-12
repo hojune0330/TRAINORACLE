@@ -1,6 +1,7 @@
 import React from "react"
 import { ArrowLeft, ArrowRight, CalendarDays, Save } from "lucide-react"
 import { InfoDisclosure } from "../components/InfoDisclosure"
+import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
 import { useAppOverlayNavigation } from "../components/AppOverlayNavigation"
 import { paceClock } from "../domain/pace-tools"
 import { registerUnsavedDraftGuard, runDraftSafeNavigation } from "../domain/unsaved-draft-navigation"
@@ -95,6 +96,7 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로", in
   const [errorField, setErrorField] = React.useState<string | null>(null)
   const formRef = React.useRef<HTMLFormElement>(null)
   const headingRef = React.useRef<HTMLHeadingElement>(null)
+  useActiveContentScroll(entryStep, headingRef, headingRef, true)
   const errorId = React.useId()
   const showError = (message: string, field: string | null = null) => {
     setError(message)

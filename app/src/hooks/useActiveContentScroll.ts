@@ -29,11 +29,14 @@ export function useActiveContentScroll(
     if (target === null) return
 
     let settleTimer: number | undefined
+    let cancelled = false
     const epoch = getBrowserNavigationEpoch()
     const scope = localJournalScopeGeneration()
     const focusAtSchedule = document.activeElement
     const alignTarget = () => {
-      if (epoch !== getBrowserNavigationEpoch() || scope !== localJournalScopeGeneration()) return
+      const active = document.activeElement
+      if (cancelled || epoch !== getBrowserNavigationEpoch() || scope !== localJournalScopeGeneration()
+        || active instanceof HTMLElement && (active.matches("input, textarea, select") || active.isContentEditable)) return
       const behavior = calendarReducedMotion() ? "auto" : "smooth"
       const scrollRegion = target.closest<HTMLElement>(".app-scroll-region")
       if (scrollRegion !== null && typeof scrollRegion.scrollTo === "function") {
@@ -53,7 +56,7 @@ export function useActiveContentScroll(
       }
     }
     const frame = window.requestAnimationFrame(() => {
-      if (epoch !== getBrowserNavigationEpoch() || scope !== localJournalScopeGeneration()) return
+      if (cancelled || epoch !== getBrowserNavigationEpoch() || scope !== localJournalScopeGeneration()) return
       alignTarget()
       const focusTarget = focusRef?.current
       const activeFocus = document.activeElement
@@ -70,12 +73,17 @@ export function useActiveContentScroll(
       settleTimer = window.setTimeout(alignTarget, 220)
     })
     const cancel = () => {
+      cancelled = true
       window.cancelAnimationFrame(frame)
       if (settleTimer !== undefined) window.clearTimeout(settleTimer)
     }
+    // A later gesture owns the viewport; never settle back over the user's work.
+    const interruptions = ["pointerdown", "touchstart", "wheel", "keydown", "input"] as const
+    for (const event of interruptions) document.addEventListener(event, cancel, { capture: true, passive: true })
     cancelAlignment.current = cancel
     return () => {
       cancel()
+      for (const event of interruptions) document.removeEventListener(event, cancel, true)
       if (cancelAlignment.current === cancel) cancelAlignment.current = null
     }
   }, [activeKey, focusRef, skipInitial, targetRef])
