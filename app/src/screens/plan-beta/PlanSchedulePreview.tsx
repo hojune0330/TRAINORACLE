@@ -196,6 +196,7 @@ export function PlanSchedulePreview({
   const dateRailRef = React.useRef<HTMLDivElement>(null)
   const scheduleId = React.useId()
   const scheduleRef = React.useRef<HTMLOListElement>(null)
+  const pendingSlideIndex = React.useRef<number | null>(null)
   const calendarRef = React.useRef<HTMLElement>(null)
   const handledReaderRequest = React.useRef<number>()
   const readerRequestOrigin = React.useRef<HTMLElement | null>(null)
@@ -203,9 +204,38 @@ export function PlanSchedulePreview({
   const previousCalendarIdentity = React.useRef(calendarIdentity)
 
   React.useEffect(() => {
-    dateRailRef.current?.querySelector<HTMLElement>('[aria-pressed="true"]')
-      ?.scrollIntoView?.({ block: "nearest", inline: "nearest", behavior: "auto" })
+    const rail = dateRailRef.current
+    const selected = rail?.querySelector<HTMLElement>('[aria-pressed="true"]')
+    if (!rail || !selected) return
+    const bounds = rail.getBoundingClientRect()
+    const item = selected.getBoundingClientRect()
+    rail.scrollTo?.({
+      left: rail.scrollLeft + item.left + item.width / 2 - bounds.left - bounds.width / 2,
+      behavior: calendarReducedMotion() ? "auto" : "smooth",
+    })
   }, [activeDayIndex, scheduleView])
+
+  React.useEffect(() => {
+    const list = scheduleRef.current
+    if (!list || !showDetails || previewDisplayMode !== "swipe" || typeof ResizeObserver === "undefined") return
+    let width = list.clientWidth
+    const observer = new ResizeObserver(() => {
+      if (width === list.clientWidth) return
+      width = list.clientWidth
+      const first = list.children.item(0) as HTMLElement | null
+      const selected = list.children.item(activeDayIndex) as HTMLElement | null
+      if (first && selected) list.scrollLeft = selected.offsetLeft - first.offsetLeft
+      const rail = dateRailRef.current
+      const date = rail?.querySelector<HTMLElement>('[aria-pressed="true"]')
+      if (rail && date) {
+        const bounds = rail.getBoundingClientRect()
+        const item = date.getBoundingClientRect()
+        rail.scrollLeft += item.left + item.width / 2 - bounds.left - bounds.width / 2
+      }
+    })
+    observer.observe(list)
+    return () => observer.disconnect()
+  }, [activeDayIndex, previewDisplayMode, showDetails])
 
   React.useEffect(() => {
     if (previousCalendarIdentity.current === calendarIdentity) return
@@ -241,6 +271,7 @@ export function PlanSchedulePreview({
 
   const moveToDay = React.useCallback((nextIndex: number) => {
     const boundedIndex = Math.min(Math.max(nextIndex, 0), days.length - 1)
+    pendingSlideIndex.current = previewDisplayMode === "swipe" ? boundedIndex : null
     setActiveDayIndex(boundedIndex)
     const date = days[boundedIndex]?.date
     if (date !== undefined) setSelectedDate(date)
@@ -293,6 +324,9 @@ export function PlanSchedulePreview({
     ), 0)
     const nearestCard = cards[nearest]
     if (nearestCard === undefined || Math.abs(nearestCard.offsetLeft - (cards[0]?.offsetLeft ?? 0) - list.scrollLeft) > 2) return
+    // A smooth slide may pass another snapped date before reaching the latest tap.
+    if (pendingSlideIndex.current !== null && nearest !== pendingSlideIndex.current) return
+    pendingSlideIndex.current = null
     setActiveDayIndex(nearest)
     const date = days[nearest]?.date
     if (date !== undefined) setSelectedDate(date)
@@ -426,6 +460,8 @@ export function PlanSchedulePreview({
           data-display-mode={previewDisplayMode}
           aria-label="날짜별 계획 미리보기"
           onScroll={syncActiveDay}
+          onPointerDown={() => { pendingSlideIndex.current = null }}
+          onWheel={() => { pendingSlideIndex.current = null }}
           tabIndex={previewDisplayMode === "swipe" ? 0 : undefined}
           onKeyDown={event => {
             if (previewDisplayMode !== "swipe" || event.target !== event.currentTarget) return

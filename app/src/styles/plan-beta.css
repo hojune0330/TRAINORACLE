@@ -1012,7 +1012,9 @@
 .plan-date-rail {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(44px, calc(100% / 7));
+  grid-auto-columns: 48px;
+  padding-inline: calc(50% - 24px);
+  box-sizing: border-box;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scrollbar-width: none;
