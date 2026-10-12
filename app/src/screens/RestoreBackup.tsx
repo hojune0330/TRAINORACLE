@@ -14,7 +14,7 @@
 import React from "react"
 import { SectionLb } from "../components/JournalPrimitives"
 import {
-  buildRestorePlan, readBackupBlob, restoreBackupFile,
+  buildRestorePlan, readBackupBlob, restoreBackupFile, withoutPrivateBodyPartMetadata,
 } from "../domain/restore/backup-file"
 import type {
   BackupReadFailure, BackupReadResult, DecorationRestoreMode, RestoreMode, RestoreOutcome, RestorePlan,
@@ -58,6 +58,7 @@ export function RestoreBackup({ onBack, onOpenHome }: {
   const [mode, setMode] = React.useState<RestoreMode>("keep-existing")
   const [decorationMode, setDecorationMode] = React.useState<DecorationRestoreMode>("keep-existing")
   const [calendarMode, setCalendarMode] = React.useState<DecorationRestoreMode>("keep-existing")
+  const [includeBodyPartMetadata, setIncludeBodyPartMetadata] = React.useState(false)
   const [busy, setBusy] = React.useState(false)
   const busyRef = React.useRef(false)
   const accountRestore = React.useRef<Awaited<ReturnType<typeof createAccountBackupRestoration>>>(null)
@@ -67,6 +68,7 @@ export function RestoreBackup({ onBack, onOpenHome }: {
   const captureScope = useImportOwnerScope(() => {
     accountRestore.current?.dispose(); accountRestore.current = null
     busyRef.current = false; setBusy(false); setStage({ step: "pick" }); setFailure(null)
+    setIncludeBodyPartMetadata(false)
   })
   React.useEffect(() => () => accountRestore.current?.dispose(), [])
 
@@ -80,7 +82,8 @@ export function RestoreBackup({ onBack, onOpenHome }: {
     const read = await readBackupBlob(file, current)
     if (!current()) return
     const account = accountJournalRecordsEnabled()
-    const restoration = account && read.recognized ? await createAccountBackupRestoration(read) : null
+    const selectedRead = withoutPrivateBodyPartMetadata(read)
+    const restoration = account && read.recognized ? await createAccountBackupRestoration(selectedRead) : null
     if (!current()) { restoration?.dispose(); return }
     accountRestore.current = restoration
     busyRef.current = false
@@ -99,7 +102,23 @@ export function RestoreBackup({ onBack, onOpenHome }: {
     setMode("keep-existing")
     setDecorationMode("keep-existing")
     setCalendarMode("keep-existing")
-    setStage({ step: "review", read, plan: restoration?.plan ?? buildRestorePlan(read.entries) })
+    setIncludeBodyPartMetadata(false)
+    setStage({ step: "review", read, plan: restoration?.plan ?? buildRestorePlan(selectedRead.entries) })
+  }
+
+  const selectBodyPartMetadata = async (include: boolean) => {
+    if (busyRef.current || stage.step !== "review") return
+    const current = captureScope()
+    busyRef.current = true; setBusy(true)
+    const read = include ? stage.read : withoutPrivateBodyPartMetadata(stage.read)
+    try {
+      const restoration = accountJournalRecordsEnabled() ? await createAccountBackupRestoration(read) : null
+      if (!current()) { restoration?.dispose(); return }
+      if (accountJournalRecordsEnabled() && !restoration) { setFailure("account-unavailable"); return }
+      accountRestore.current?.dispose(); accountRestore.current = restoration
+      setIncludeBodyPartMetadata(include)
+      setStage({ ...stage, plan: restoration?.plan ?? buildRestorePlan(read.entries) })
+    } finally { if (current()) { busyRef.current = false; setBusy(false) } }
   }
 
   const handleRestore = async () => {
@@ -114,7 +133,8 @@ export function RestoreBackup({ onBack, onOpenHome }: {
       if (outcome) setStage({ step: "account-result", outcome })
       return
     }
-    const outcome = await restoreBackupFile(stage.read, stage.plan, mode, decorationMode, calendarMode)
+    const read = includeBodyPartMetadata ? stage.read : withoutPrivateBodyPartMetadata(stage.read)
+    const outcome = await restoreBackupFile(read, stage.plan, mode, decorationMode, calendarMode)
     if (!current()) return
     busyRef.current = false
     setBusy(false)
@@ -173,6 +193,8 @@ export function RestoreBackup({ onBack, onOpenHome }: {
             onDecorationModeChange={setDecorationMode}
             calendarMode={calendarMode}
             onCalendarModeChange={setCalendarMode}
+            includeBodyPartMetadata={includeBodyPartMetadata}
+            onBodyPartMetadataChange={selectBodyPartMetadata}
             onRestore={handleRestore}
             onRestart={restart}
             busy={busy}
@@ -294,7 +316,7 @@ function PickStage({ busy, failure, onFile }: {
   )
 }
 
-function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorationModeChange, calendarMode, onCalendarModeChange, onRestore, onRestart, busy, accountDecorationReady = false, accountCalendarReady = false }: {
+function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorationModeChange, calendarMode, onCalendarModeChange, includeBodyPartMetadata, onBodyPartMetadataChange, onRestore, onRestart, busy, accountDecorationReady = false, accountCalendarReady = false }: {
   readonly accountDecorationReady?: boolean
   readonly accountCalendarReady?: boolean
   readonly read: BackupReadResult
@@ -305,6 +327,8 @@ function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorat
   readonly onDecorationModeChange: (mode: DecorationRestoreMode) => void
   readonly calendarMode: DecorationRestoreMode
   readonly onCalendarModeChange: (mode: DecorationRestoreMode) => void
+  readonly includeBodyPartMetadata: boolean
+  readonly onBodyPartMetadataChange: (include: boolean) => void | Promise<void>
   readonly onRestore: () => void
   readonly onRestart: () => void
   readonly busy: boolean
@@ -334,6 +358,19 @@ function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorat
           )}
         </ul>
       </div>
+
+      {read.entries.some(entry => entry.bodyPartMetadata !== undefined) && (
+        <div role="radiogroup" aria-label="기타 부위 복원 범위" style={{ display: "grid", gap: 8 }}>
+          <ModeChoice checked={!includeBodyPartMetadata} disabled={busy}
+            onSelect={() => { void onBodyPartMetadataChange(false) }}
+            title="몸 상태 수치만 되돌리기"
+            detail="기타 이름·메모는 제외해요. 겹친 일지의 기타 몸 기록은 현재 것을 유지해요." />
+          <ModeChoice checked={includeBodyPartMetadata} disabled={busy}
+            onSelect={() => { void onBodyPartMetadataChange(true) }}
+            title="기타 이름·메모도 되돌리기"
+            detail="백업의 비공개 기타 이름과 직접 쓴 내용을 함께 복원해요." />
+        </div>
+      )}
 
       {read.decorationStatus === "included" && (
         <div

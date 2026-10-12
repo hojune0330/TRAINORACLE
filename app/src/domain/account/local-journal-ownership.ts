@@ -136,6 +136,14 @@ export function filterVisibleJournalEntries<T extends { readonly id: string }>(e
   return read.kind === "loaded" ? read.entries : []
 }
 
+/** Narrow owner-only observations. Unlike the journal's migration view, an
+ * account body history may not adopt unconnected device records. One ledger read. */
+export function filterJournalEntriesByExactOwner<T extends { readonly id: string }>(entries: readonly T[], ownerId: string | null): T[] {
+  const snapshot = loadSnapshot()
+  if (snapshot.status !== "complete") return []
+  return entries.filter(entry => (snapshot.ownerByEntryId[entry.id] ?? null) === ownerId)
+}
+
 export function isJournalOwnedBy(entryId: string, userId: string): boolean {
   return userId !== "" && journalOwner(entryId) === userId
 }

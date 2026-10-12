@@ -6,10 +6,11 @@ import type {
 } from "./journal-schema"
 import { parseJournalEntry } from "./journal-schema"
 import { isEligibleForAnalysis } from "./field-provenance"
+import { journalHasPainSignal, journalPainPartsForSafety } from "./body-part-metadata"
 
-export type SafePostSessionEntry = Omit<PostSessionEntry, "memo" | "memoPurpose" | "fileObservation" | "comparisonRelations">
-export type SafeEveningEntry = Omit<EveningEntry, "note" | "memoPurpose">
-export type SafeRaceEntry = Omit<RaceEntry, "memo" | "memoPurpose">
+export type SafePostSessionEntry = Omit<PostSessionEntry, "memo" | "memoPurpose" | "bodyPartMetadata" | "fileObservation" | "comparisonRelations">
+export type SafeEveningEntry = Omit<EveningEntry, "note" | "memoPurpose" | "bodyPartMetadata">
+export type SafeRaceEntry = Omit<RaceEntry, "memo" | "memoPurpose" | "bodyPartMetadata">
 
 export type SafeJournalEntry = SafePostSessionEntry | SafeEveningEntry | SafeRaceEntry
 
@@ -39,9 +40,12 @@ function unreachableEntry(entry: never): never {
  *  제거하도록 되어 있었다. 구현이 타입 의도보다 더 많이 지우고 있었다.
  */
 function toSafeJournalEntry(entry: JournalEntry): SafeJournalEntry {
+  const { painParts: _privateClearProvenance, ...restProvenance } = entry.fieldProvenance ?? {}
+  const clearedCompanionOnly = entry.kind === "post-session" && entry.painParts === undefined
+    && entry.bodyPartMetadata?.observations.length === 0
   const provenance = entry.fieldProvenance === undefined
     ? {}
-    : { fieldProvenance: entry.fieldProvenance }
+    : { fieldProvenance: clearedCompanionOnly ? restProvenance : entry.fieldProvenance }
   switch (entry.kind) {
     case "post-session":
       return {
@@ -58,7 +62,7 @@ function toSafeJournalEntry(entry: JournalEntry): SafeJournalEntry {
         ...(entry.objectiveDataState === undefined ? {} : { objectiveDataState: entry.objectiveDataState }),
         ...(entry.planExecutionRelation === undefined ? {} : { planExecutionRelation: entry.planExecutionRelation }),
         ...(entry.painCheckStatus === undefined ? {} : { painCheckStatus: entry.painCheckStatus }),
-        ...(entry.painParts === undefined ? {} : { painParts: entry.painParts }),
+        ...(entry.painParts === undefined && (entry.bodyPartMetadata?.observations.length ?? 0) === 0 ? {} : { painParts: journalPainPartsForSafety(entry) }),
         system: entry.system,
         title: entry.title,
         distanceKm: entry.distanceKm,
@@ -81,7 +85,7 @@ function toSafeJournalEntry(entry: JournalEntry): SafeJournalEntry {
         sleepQuality: entry.sleepQuality,
         weightKg: entry.weightKg,
         restingHr: entry.restingHr,
-        painParts: entry.painParts,
+        painParts: journalPainPartsForSafety(entry),
         mood: entry.mood,
         ...provenance,
       }
@@ -161,7 +165,7 @@ export function hasValueExcludedFromAnalysis(entry: JournalEntry): boolean {
       || excluded(entry.durationMin.trim() !== "", "durationMin")
       || excluded(entry.avgPace.trim() !== "", "avgPace")
       || excluded(entry.rpe > 0, "rpe")
-      || excluded(Object.values(entry.painParts ?? {}).some((level) => level > 0), "painParts")
+      || excluded(journalHasPainSignal(entry), "painParts")
       || excluded(entry.intensityAssessment?.plannedRpe !== undefined, "plannedRpe")
       || excluded((entry.intensityAssessment?.objectiveComponents.length ?? 0) > 0, "objectiveComponents")
   }
@@ -169,7 +173,7 @@ export function hasValueExcludedFromAnalysis(entry: JournalEntry): boolean {
     || excluded(entry.sleepQuality > 0, "sleepQuality")
     || excluded(entry.weightKg.trim() !== "", "weightKg")
     || excluded(entry.restingHr.trim() !== "", "restingHr")
-    || excluded(Object.values(entry.painParts).some((level) => level > 0), "painParts")
+    || excluded(journalHasPainSignal(entry), "painParts")
     || excluded(entry.mood > 0, "mood")
 }
 
@@ -214,7 +218,7 @@ function toAnalysisPostSessionEntry(entry: PostSessionEntry): AnalysisPostSessio
       ? { painCheckStatus: entry.painCheckStatus }
       : {}),
     ...(eligible("painParts")
-      ? { painParts: entry.painParts ?? {} }
+      ? { painParts: journalPainPartsForSafety(entry) }
       : {}),
     ...(entry.plannedSessionLink !== undefined && eligible("plannedSessionLink")
       ? { plannedSessionLink: entry.plannedSessionLink }
@@ -234,7 +238,7 @@ function toAnalysisEveningEntry(entry: EveningEntry): AnalysisEveningEntry {
     sleepQuality: isEligibleForAnalysis("sleepQuality", entry.fieldProvenance) ? entry.sleepQuality : 0,
     weightKg: isEligibleForAnalysis("weightKg", entry.fieldProvenance) ? entry.weightKg : "",
     restingHr: isEligibleForAnalysis("restingHr", entry.fieldProvenance) ? entry.restingHr : "",
-    painParts: isEligibleForAnalysis("painParts", entry.fieldProvenance) ? entry.painParts : {},
+    painParts: isEligibleForAnalysis("painParts", entry.fieldProvenance) ? journalPainPartsForSafety(entry) : {},
     mood: isEligibleForAnalysis("mood", entry.fieldProvenance) ? entry.mood : 0,
   }
 }
@@ -252,7 +256,7 @@ export function fromStructuredJournalPayload(value: unknown): JournalEntry | nul
   if (typeof value !== "object" || value === null || Array.isArray(value)) return null
   const record = value as Record<string, unknown>
   if (record.fileObservation !== undefined || record.comparisonRelations !== undefined) return null
-  const { memo: _memo, note: _note, memoPurpose: _memoPurpose, ...structured } = record
+  const { memo: _memo, note: _note, memoPurpose: _memoPurpose, bodyPartMetadata: _bodyPartMetadata, ...structured } = record
   const textField = structured.kind === "evening" ? "note" : "memo"
   return parseJournalEntry({ ...structured, syncState: "local", [textField]: "" })
 }
@@ -288,7 +292,7 @@ function hasExportableStructuredSignal(entry: JournalEntry): boolean {
       || entry.rpe > 0
       || entry.activityOutcome !== undefined
       || entry.painCheckStatus !== undefined
-      || Object.values(entry.painParts ?? {}).some((level) => level > 0)
+      || journalHasPainSignal(entry)
       || entry.intensityAssessment?.plannedRpe !== undefined
       || (entry.intensityAssessment?.objectiveComponents.length ?? 0) > 0
       || (entry.exerciseLog?.components.length ?? 0) > 0
@@ -298,7 +302,7 @@ function hasExportableStructuredSignal(entry: JournalEntry): boolean {
       || entry.sleepQuality > 0
       || entry.weightKg.trim() !== ""
       || entry.restingHr.trim() !== ""
-      || Object.values(entry.painParts).some((level) => level > 0)
+      || journalHasPainSignal(entry)
       || entry.mood > 0
   }
   return entry.record.trim() !== ""

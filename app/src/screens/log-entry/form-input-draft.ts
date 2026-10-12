@@ -3,6 +3,7 @@ import { accountJournalDraftSchema, createAccountDocumentBuffer } from "../../do
 import { objectiveLoadComponentSchema } from "../../domain/intensity-assessment"
 import { FORM_INPUT_DRAFT_TITLE } from "./form-draft-marker"
 import { exerciseLogSchema, exerciseKindSchema } from "../../domain/exercise-log"
+import { bodyPartMetadataSchema } from "../../domain/body-part-metadata"
 
 const text = z.string().max(10_000)
 const rpe = z.number().int().min(0).max(10)
@@ -49,12 +50,12 @@ const exerciseFields = { exerciseLog: exerciseLogSchema.optional(), exerciseEdit
 // strings and the quick form's explicit skipped answer survive without coercion.
 export const formInputSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("evening"), sleep: z.number().min(0).max(24), quality: mood,
-    mood, painParts: pain, weight: text, hr: text, ...memo }).strict(),
+    mood, painParts: pain, bodyPartMetadata: bodyPartMetadataSchema.optional(), weight: text, hr: text, ...memo }).strict(),
   z.object({ kind: z.literal("race"), stage: z.enum(["pre", "post"]), record: text,
     rank: text, result: text, tension: rpe.nullable(), condition: mood.nullable(),
     mood: mood.nullable(), paceMinutes: text, paceSeconds: text, ...memo }).strict(),
   z.object({ kind: z.literal("post-session"), rpe, activityOutcome: outcome.nullable(),
-    activitySlot: slot.nullable(), painCheckStatus: painStatus, painParts: pain,
+    activitySlot: slot.nullable(), painCheckStatus: painStatus, painParts: pain, bodyPartMetadata: bodyPartMetadataSchema.optional(),
     system: text, title: text, distanceKm: text, durationMin: text, avgPace: text,
     plannedRpe: rpe, objectiveComponents: z.array(objectiveLoadComponentSchema).max(6),
     objectiveEditor: objectiveEditorDraftSchema, ...exerciseFields, ...memo }).strict(),
@@ -62,7 +63,7 @@ export const formInputSchema = z.discriminatedUnion("kind", [
     activeQuestion: quickActiveQuestion.optional(),
     outcome: outcome.nullable(), slot: slot.nullable(), rpe, effortAnswered: z.boolean(),
     planExecutionChange: z.enum(["FEWER_REPETITIONS", "SHORTER_DURATION", "DIFFERENT_WORKOUT"]).nullable().optional(),
-    painStatus, painParts: pain, ...exerciseFields,
+    painStatus, painParts: pain, bodyPartMetadata: bodyPartMetadataSchema.optional(), ...exerciseFields,
     memo: z.string().max(50_000).optional(), purpose: purpose.optional() }).strict(),
 ])
 export type FormInput = z.infer<typeof formInputSchema>

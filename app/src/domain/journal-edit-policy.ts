@@ -1,6 +1,7 @@
 import { hasImportedField, isImportedField, type FieldProvenanceMap } from "./field-provenance"
 import type { JournalEntry } from "./journal-schema"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
+import { journalPainPartsForSafety, keepsBodyPartMetadata } from "./body-part-metadata"
 
 export const IMPORTED_OBJECTIVE_FIELDS = ["distanceKm", "durationMin", "avgPace"] as const
 
@@ -18,6 +19,7 @@ export function canEditJournalEntry(entry: JournalEntry): boolean {
 }
 
 export function keepsImportedObjectiveFacts(previous: JournalEntry, next: JournalEntry): boolean {
+  if (!keepsBodyPartMetadata(previous, next)) return false
   if (previous.kind === "post-session" && previous.fileObservation !== undefined
     && (next.kind !== "post-session" || next.fileObservation === undefined
       || canonicalJsonFingerprint("trainoracle.file-observation-preservation.v1", previous.fileObservation)
@@ -37,7 +39,7 @@ function provenanceValues(entry: JournalEntry): Readonly<Record<string, unknown>
     planExecutionRelation: entry.planExecutionRelation,
     planExecutionChange: entry.planExecutionChange,
     painCheckStatus: entry.painCheckStatus,
-    painParts: entry.painParts,
+    painParts: entry.painParts === undefined && entry.bodyPartMetadata === undefined ? undefined : journalPainPartsForSafety(entry),
     plannedSessionLink: entry.plannedSessionLink,
     distanceKm: entry.distanceKm,
     durationMin: entry.durationMin,
@@ -50,7 +52,7 @@ function provenanceValues(entry: JournalEntry): Readonly<Record<string, unknown>
   if (entry.kind === "evening") return {
     sleepH: entry.sleepH, sleepQuality: entry.sleepQuality,
     weightKg: entry.weightKg, restingHr: entry.restingHr,
-    painParts: entry.painParts, mood: entry.mood,
+    painParts: journalPainPartsForSafety(entry), mood: entry.mood,
   }
   return { tension: entry.tension, condition: entry.condition, mood: entry.mood, goalPace: entry.goalPace }
 }

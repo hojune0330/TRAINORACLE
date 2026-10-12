@@ -5,7 +5,9 @@ import { accountJournalProjectionStatus, readAccountJournalPrivateEntry } from "
 import { activeLocalAccount, journalOwner } from "../domain/account/local-journal-ownership"
 import { canEditJournalEntry } from "../domain/journal-edit-policy"
 import { AccountJournalHistory } from "./account/AccountJournalHistory"
-import { IndexCard, MoodStrip, PainDot } from "../components/JournalPrimitives"
+import { IndexCard, MoodStrip } from "../components/JournalPrimitives"
+import { BodyRecordSummary } from "../components/BodyRecordSummary"
+import { journalPainPartsForSafety } from "../domain/body-part-metadata"
 import { calendarDayLabel } from "../components/MonthCalendar"
 import { JournalConfirmationDialog } from "../components/JournalConfirmationDialog"
 import { TermHelp } from "../components/TermHelp"
@@ -116,13 +118,11 @@ function raceSummary(entry: RaceEntry): string {
 
 function eveningSummary(entry: EveningEntry): string {
   const mood = ["", "흐림", "무덤덤", "보통", "좋음", "최고"][entry.mood] ?? ""
-  const pain = Object.entries(entry.painParts ?? {}).reduce<{ part: string; level: number } | null>((highest, [part, level]) => (
-    level > (highest?.level ?? 0) ? { part, level } : highest
-  ), null)
+  const painCount = Object.values(journalPainPartsForSafety(entry)).filter(level => level > 0).length
   return compactSummary([
     entry.sleepH > 0 ? `수면 ${entry.sleepH}h` : null,
     mood ? `기분 ${mood}` : null,
-    pain === null ? "통증 기록 없음" : `${pain.part} 통증 ${pain.level}/5`,
+    painCount > 0 ? `불편한 곳 ${painCount}곳` : null,
   ])
 }
 
@@ -461,6 +461,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
                     </div>
                   ))}
                 </div>}
+                <BodyRecordSummary entry={entry} />
                 <SavedMemo entry={entry} text={entry.memo} fontSize={19} />
                 <JournalOriginalPlan entry={entry} />
                 {!readOnly && <EntryDeleteRow entryId={entry.id} onDelete={() => setPendingDelete({ id: entry.id, label: "훈련" })} />}
@@ -502,8 +503,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
           )
         }
 
-        const pains = Object.entries(entry.painParts ?? {}).filter(([, level]) => level > 0)
-        const needsReview = painLevelsRequireReview(entry.painParts ?? {})
+        const needsReview = painLevelsRequireReview(journalPainPartsForSafety(entry))
         return (
           <JournalEntryDisclosure
             key={viewKey}
@@ -522,9 +522,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
               <CheckinRow lb="수면" v={entry.sleepH > 0 ? `${entry.sleepH} h · ${["", "나쁨", "부족", "보통", "좋음", "최고"][entry.sleepQuality] ?? "—"}` : "미기록"} />
               {entry.weightKg && <CheckinRow lb="체중" v={`${entry.weightKg} kg`} />}
               {entry.restingHr && <CheckinRow lb="안정시 HR" v={`${entry.restingHr} bpm`} />}
-              {pains.map(([part, level]) => (
-                <CheckinRow key={part} lb="통증" v={`${part} ${level}/5`} right={<PainDot level={level} size={10} />} />
-              ))}
+              <BodyRecordSummary entry={entry} />
               <CheckinRow lb="감정" v={entry.mood > 0 ? "" : "미기록"} right={entry.mood > 0 ? <MoodStrip level={entry.mood} showLabel /> : undefined} last={!entry.note} />
               <div style={{ padding: entry.note ? "0 14px" : 0 }}>
                 <SavedMemo entry={entry} text={entry.note} fontSize={17} />

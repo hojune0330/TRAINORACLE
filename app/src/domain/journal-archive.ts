@@ -1,4 +1,5 @@
 import { isValidIsoDate, isoShift, weekStartOf } from "./dates"
+import { journalHasPainSignal } from "./body-part-metadata"
 import {
   projectStructuredJournalObservation,
   selectStructuredJournalInput,
@@ -113,7 +114,7 @@ function hasSummaryCandidate(entry: JournalEntry): boolean {
     return entry.distanceKm.trim() !== "" || entry.durationMin.trim() !== ""
   }
   if (entry.kind === "evening") {
-    return entry.mood > 0 || Object.values(entry.painParts).some((level) => level > 0)
+    return entry.mood > 0 || journalHasPainSignal(entry)
   }
   return false
 }

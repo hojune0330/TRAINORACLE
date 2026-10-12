@@ -17,7 +17,9 @@ import {
 } from "../../domain/journal-store"
 import type { JournalEntry } from "../../domain/journal-store"
 import { painLevelsRequireReview } from "../../safety/memo-safety"
-import { BodyDiagram, PainReviewBanner } from "./BodyDiagram"
+import { PainReviewBanner } from "./BodyDiagram"
+import { JournalBodyInput } from "./JournalBodyInput"
+import { journalPainPartsForSafety, type BodyPartMetadataV1 } from "../../domain/body-part-metadata"
 import { PurposeScopedMemoField, usePurposeScopedMemo } from "./PurposeScopedMemoField"
 import { inputStyle } from "./input-style"
 import { FormSec, TopBar } from "./shared"
@@ -48,7 +50,7 @@ export function EveningCheckin(props: EntryFormProps) {
   </FormInputDraftBoundary></JournalWritingDecorationPreview>
 }
 
-function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: EntryFormProps) {
+function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry, initialBodyPartId }: EntryFormProps) {
   const recovered = useRecoveredFormInput("evening")
   const input = recovered?.input
   const initial = initialEntry?.kind === "evening" ? initialEntry : undefined
@@ -61,7 +63,7 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
   const finalization = useFormFinalization(entryId, accountEnabled, lastSavedAt)
   const entryDate = initial?.date ?? targetDate ?? todayISO()
   const [flow, setFlow] = React.useState<EveningFlow>(() => ({
-    location: { step: initial !== undefined || recovered !== null ? "review" : "choose", editGroup: null }, history: [],
+    location: { step: initial !== undefined || recovered !== null ? "review" : initialBodyPartId !== undefined ? "condition" : "choose", editGroup: null }, history: [],
   }))
   const { step, editGroup } = flow.location
   const [sleep, setSleep] = React.useState(() => input?.sleep ?? initial?.sleepH ?? 0)
@@ -74,15 +76,17 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
   const [quality, setQuality] = React.useState(() => input?.quality ?? initial?.sleepQuality ?? 0)
   const [mood, setMood] = React.useState(() => input?.mood ?? initial?.mood ?? 0)
   const [painParts, setPainParts] = React.useState<Record<string, number>>(() => ({ ...(input?.painParts ?? initial?.painParts) }))
+  const [bodyPartMetadata, setBodyPartMetadata] = React.useState<BodyPartMetadataV1 | undefined>(() => input?.bodyPartMetadata ?? initial?.bodyPartMetadata)
+  const painSignals = journalPainPartsForSafety({ painParts, bodyPartMetadata })
   const [weight, setWeight] = React.useState(() => input?.weight ?? initial?.weightKg ?? "")
   const [hr, setHr] = React.useState(() => input?.hr ?? initial?.restingHr ?? "")
   const [saveError, setSaveError] = React.useState(false)
   const [emptyNotice, setEmptyNotice] = React.useState(false)
   const [accountNotice, setAccountNotice] = React.useState<string | null>(null)
   const note = usePurposeScopedMemo(input?.memo ?? initial?.note ?? "", input ? input.purpose ?? undefined : initial?.memoPurpose)
-  const draft = useFormInputDraft({ kind: "evening", sleep, quality, mood, painParts, weight, hr,
+  const draft = useFormInputDraft({ kind: "evening", sleep, quality, mood, painParts, ...(bodyPartMetadata ? { bodyPartMetadata } : {}), weight, hr,
     memo: note.text, purpose: note.purpose ?? null }, entryId, true, lastSavedAt.current)
-  const hasInput = sleep > 0 || quality > 0 || mood > 0 || Object.values(painParts).some(level => level > 0)
+  const hasInput = initial?.bodyPartMetadata !== undefined || sleep > 0 || quality > 0 || mood > 0 || Object.values(painSignals).some(level => level > 0)
     || weight.trim() !== "" || hr.trim() !== "" || note.text.trim() !== ""
 
   const navigateTo = (location: EveningLocation) => setFlow((current) => ({
@@ -150,12 +154,13 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
       savedAt: nextJournalSavedAt(lastSavedAt.current), syncState: "local",
       sleepH: sleep, sleepQuality: quality, weightKg: weight, restingHr: hr,
       painParts, mood, note: note.text,
+      ...(bodyPartMetadata ? { bodyPartMetadata } : {}),
       fieldProvenance: {
         sleepH: explicitOrMissing(sleep > 0),
         sleepQuality: explicitOrMissing(quality > 0),
         weightKg: explicitOrMissing(weight.trim() !== ""),
         restingHr: explicitOrMissing(hr.trim() !== ""),
-        painParts: explicitOrMissing(Object.values(painParts).some((level) => level > 0)),
+        painParts: explicitOrMissing(bodyPartMetadata !== undefined || Object.values(painSignals).some((level) => level > 0)),
         mood: explicitOrMissing(mood > 0),
       },
       ...(note.text.trim() !== "" && note.purpose !== undefined ? { memoPurpose: note.purpose } : {}),
@@ -189,7 +194,7 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
           ? "수정 충돌을 확인해 주세요. 이 기기의 내용은 보관했지만 계정 저장은 완료되지 않았어요."
           : isPrivateMemo ? "비밀 일지를 이 기기에 보관했어요. 계정 전송 대기 중이며 공유·분석에는 사용하지 않아요."
             : "일지를 이 기기에 보관했어요. 계정 전송 대기 중이에요."
-      const reviewMessage = notePreparation.reviewMessage ?? (painLevelsRequireReview(saved.painParts) ? "불편한 곳을 기록했어요. 몸 상태를 확인해 주세요." : undefined)
+      const reviewMessage = notePreparation.reviewMessage ?? (painLevelsRequireReview(journalPainPartsForSafety(saved)) ? "불편한 곳을 기록했어요. 몸 상태를 확인해 주세요." : undefined)
       if (storageMessage) onDone?.("evening", saved, reviewMessage, storageMessage)
       else onDone?.("evening", saved, reviewMessage)
     } catch {
@@ -208,7 +213,7 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
     memo: "오늘 남길 메모",
     review: "입력 확인",
   }
-  const painPartCount = Object.values(painParts).filter((level) => level > 0).length
+  const painPartCount = Object.values(painSignals).filter((level) => level > 0).length
   const sleepSummary = [
     sleep > 0 ? `${sleep}h` : null,
     quality > 0 ? `수면 질 ${SLEEP_QUALITY_LABELS[quality - 1]}` : null,
@@ -267,7 +272,7 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
 
         {step === "review" && <div className="post-session-review" aria-label="저장 전 입력 확인">
           {note.reviewMessage !== null && <p role="status">{note.reviewMessage}</p>}
-          {painLevelsRequireReview(painParts) && <PainReviewBanner />}
+          {painLevelsRequireReview(painSignals) && <PainReviewBanner />}
           <dl style={{ display: "grid", gap: 8, margin: 0 }}>
             {reviewItems.filter(item => reviewActionLabel(item.key) === "수정").map((item) => (
               <div key={item.key} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", alignItems: "center", gap: 8, borderBottom: "1px solid var(--line)", paddingBlock: 8 }}>
@@ -317,8 +322,8 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry }: Entr
 
         {step === "condition" && <>
           <FormSec compact lb="몸 상태 · 표시 선택">
-            <BodyDiagram selected={painParts} onChange={setPainParts} />
-            {painLevelsRequireReview(painParts) && <PainReviewBanner />}
+            <JournalBodyInput selected={painParts} onChange={setPainParts} metadata={bodyPartMetadata} onMetadataChange={setBodyPartMetadata} initialPartId={initialBodyPartId} />
+            {painLevelsRequireReview(painSignals) && <PainReviewBanner />}
           </FormSec>
           <FormSec compact lb="오늘 감정 · 선택">
             <div role="group" aria-label="오늘 감정" style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>

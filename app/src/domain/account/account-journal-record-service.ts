@@ -1,8 +1,8 @@
 import { createAccountDocumentBuffer, type AccountJournalConflictBuffer, type AccountJournalDraftView } from "./account-journal-draft-buffer"
-import { accountJournalPreviewEnabled, requestAccountDocument } from "./account-journal-api"
+import { accountJournalPreviewEnabled, requestAccountDocument, accountBodyPartMetadataSupported, checkAccountJournalBodyPartSupport } from "./account-journal-api"
 import { currentStorageConsentRevision, pinStorageOperationRevision } from "./storage-consent-revision"
 import type { AccountJournalRequest } from "./account-journal-api"
-import { accountJournalRecordSchema, validateAccountJournalRecordUpdate, correctAccountJournalImportedObservation, applyAccountJournalComparisonMutation, type AccountJournalRecord } from "./account-journal-record-schema"
+import { accountJournalRecordSchema, accountJournalRecordVersion, validateAccountJournalRecordUpdate, correctAccountJournalImportedObservation, applyAccountJournalComparisonMutation, type AccountJournalRecord } from "./account-journal-record-schema"
 import type { AccountJournalMutation, ConflictChoice } from "./account-journal-draft-buffer"
 import type { FileObservationV1 } from "../import/file-observation"
 import type { ComparisonRelationV1 } from "../import/comparison-relation"
@@ -28,6 +28,11 @@ const unavailableRestoreSources = new Set<string>()
 const deleted = new Map<string, number>()
 export function accountJournalDeletedDocuments() { return owner === activeLocalAccount() ? [...deleted].map(([documentId, revision]) => ({ documentId, revision })) : [] }
 export function accountJournalRecordsEnabled() { return accountJournalPreviewEnabled() && activeLocalAccount() !== null }
+export function accountBodyPartMetadataAvailable() { const id = activeLocalAccount(); return id !== null && accountJournalRecordsEnabled() && accountBodyPartMetadataSupported(id) }
+export async function checkAccountBodyPartMetadataAvailable(): Promise<boolean> {
+  const ctx = context()
+  return ctx !== null && await checkAccountJournalBodyPartSupport(ctx.ownerId, ctx.current)
+}
 
 export async function accountJournalDocumentId(ownerId: string, entryId: string) {
   const bytes = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(["trainoracle.journal.record.v1", ownerId, entryId]))))
@@ -117,7 +122,11 @@ function markCurrent(ctx: Context, document: AccountJournalRecord, revision: num
 
 function flush(ctx: Context, documentId: string) {
   return flushAccountJournalDraft(ctx.buffer, ctx.ownerId, documentId,
-    request => requestAccountDocument(ctx.ownerId, request, ctx.current, accountJournalRecordSchema), ctx.current,
+    async request => {
+      if (request.action === "save" && request.document.version === 4
+        && !await checkAccountJournalBodyPartSupport(ctx.ownerId, ctx.current)) return { ok: false, code: "UPGRADE_REQUIRED" }
+      return requestAccountDocument(ctx.ownerId, request, ctx.current, accountJournalRecordSchema)
+    }, ctx.current,
     (document, revision) => markCurrent(ctx, document, revision))
 }
 
@@ -339,11 +348,14 @@ export async function persistAccountJournalRecord(entry: JournalEntry, expectedS
     try {
       // The codec still requires a genuine local write. Migration normalizes only
       // its legacy transport metadata before calling this boundary.
-      const version = entry.kind === "post-session" && entry.fileObservation !== undefined ? 3 : 2
+      const version = accountJournalRecordVersion(entry)
       let document = accountJournalRecordSchema.parse({ version, state: "FINALIZED", kind: "JOURNAL", entry })
       const documentId = await accountJournalDocumentId(current.ownerId, document.entry.id)
       if (!current.current() || lifecycleRequests.has(documentId) || deleted.has(documentId)) return failedSave
       const old = await current.buffer.read(current.ownerId, documentId)
+      if (old?.draft.version === 4) document = accountJournalRecordSchema.parse({ ...document, version: 4 })
+      if (document.version === 4 && !await checkAccountJournalBodyPartSupport(current.ownerId, current.current)) return failedSave
+      if (!current.current()) return failedSave
       if (old?.pending?.mutation) return failedSave
       if (expectedBase !== undefined) {
         if (!expectedBase || !Number.isSafeInteger(expectedBase.revision) || expectedBase.revision < 0
@@ -582,6 +594,8 @@ export async function refreshAccountJournalRecordsForExport(): Promise<boolean> 
 
 async function hydrate(ctx: Context) {
   try {
+    await checkAccountJournalBodyPartSupport(ctx.ownerId, ctx.current)
+    if (!ctx.current()) return false
     setAccountJournalProjectionStatus(ctx.ownerId, "LOADING")
     const local = await ctx.buffer.list(ctx.ownerId)
     for (const item of local) {

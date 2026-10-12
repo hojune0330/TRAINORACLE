@@ -11,6 +11,15 @@ import { stateFixture } from "./plan-beta-store.test-fixture"
 import { createPlannedSessionLogDraft } from "./planned-session-link"
 
 describe("app shell return state", () => {
+  it("keeps body history selection and the calendar context when returning from its original journal", () => {
+    const state = { ...INITIAL_VIEW_STATE, tab: "journal" as const, journalSection: "BODY" as const,
+      bodyHistoryPartId: "other_11111111-1111-4111-8111-111111111111",
+      journalMode: "CYCLE" as const, cycleAnchor: "2026-10-01", cycleIndex: 2,
+      journalDraft: { date: "2026-10-12", returnTab: "journal" as const,
+        archiveSelection: { selectedMonth: "2026-09", selectedWeekStart: null } } }
+    expect(viewForJournalReturn(state)).toMatchObject({ tab: "journal", journalSection: "BODY",
+      bodyHistoryPartId: state.bodyHistoryPartId, journalMode: "CYCLE", cycleAnchor: "2026-10-01", cycleIndex: 2 })
+  })
   it("keeps the selected cycle window when returning from a journal draft", () => {
     const state = {
       ...INITIAL_VIEW_STATE,

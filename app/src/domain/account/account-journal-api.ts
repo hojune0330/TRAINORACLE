@@ -2,7 +2,7 @@ import { z } from "zod"
 import { supabase } from "./supabase-client"
 import { ACCOUNT_NETWORK_DEADLINE_MS } from "./account-network-deadline"
 import { accountDeletionBoundaryState, onAccountDeletionBoundaryChange } from "./account-deletion-boundary"
-import { activeLocalAccount } from "./local-journal-ownership"
+import { activeLocalAccount, localJournalScopeGeneration } from "./local-journal-ownership"
 import { isAccountStoragePaused } from "./storage-consent"
 import { currentStorageConsentRevision, pinStorageOperationRevision } from "./storage-consent-revision"
 import { LOCAL_COLLECTION_SEND_GUARD_HEADER, registerCollectionSendGuard } from "./consent-checked-fetch"
@@ -24,6 +24,7 @@ function responseSchema<T>(schema: z.ZodType<T>) {
 const document = z.object({ documentId: z.uuid(), revision, document: schema }).strict()
 return z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("ready") }).strict(),
+  z.object({ kind: z.literal("journal-body-part-support"), version: z.literal(1) }).strict(),
   z.object({ kind: z.literal("calendar-decoration-support"), version: z.literal(1) }).strict(),
   z.object({ kind: z.literal("athlete-record-support"), version: z.literal(1) }).strict(),
   z.object({ kind: z.literal("running-profile-support"), version: z.literal(1) }).strict(),
@@ -49,6 +50,7 @@ return z.discriminatedUnion("kind", [
 
 export type AccountJournalResponse<T = AccountJournalDraft> =
   | { kind: "ready" }
+  | { kind: "journal-body-part-support"; version: 1 }
   | { kind: "calendar-decoration-support"; version: 1 }
   | { kind: "athlete-record-support"; version: 1 }
   | { kind: "running-profile-support"; version: 1 }
@@ -67,6 +69,7 @@ export type AccountJournalResponse<T = AccountJournalDraft> =
 export type AccountJournalRequest<T = AccountJournalDraft> = { supportedRunningProfileVersions?: (1 | 2)[] } & (
   | ConfirmComparisonRelationRequest | ReleaseComparisonRelationRequest
   | { action: "status" }
+  | { action: "journalBodyPartSupport" }
   | { action: "calendarDecorationSupport" }
   | { action: "athleteRecordSupport" }
   | { action: "runningProfileSupport" }
@@ -91,6 +94,25 @@ export type AccountJournalResult<T = AccountJournalDraft> =
   | { ok: false; code: "AUTH_REQUIRED" | "ACCESS_DENIED" | "NOT_FOUND" | "UNAVAILABLE" | "INVALID_RESPONSE" | "CALENDAR_DECORATION_UNSUPPORTED" | "ATHLETE_RECORD_UNSUPPORTED" | "MINIGAME_PROGRESS_UNSUPPORTED" | "GOAL_PROGRAM_UNSUPPORTED" | "STALE_RESPONSE" | "CONFLICT" | "SOURCE_UNAVAILABLE" | "UPGRADE_REQUIRED" | "FILE_EVIDENCE_DISABLED" | "INVALID_FILE_OBSERVATION" | "FILE_OBSERVATION_CONFLICT" | "COMPARISON_ORIGINAL_UNAVAILABLE" | "INVALID_COMPARISON_RELATION" | "COMPARISON_CAPACITY_EXCEEDED" | AccountJournalWriteRejection }
 
 export type CorrectImportedObservationRequest = Extract<AccountJournalRequest, { action: "correctImportedObservation" }>
+
+let bodySupport: { ownerId: string; generation: number; supported: boolean } | null = null
+export function accountBodyPartMetadataSupported(ownerId: string): boolean {
+  return bodySupport?.ownerId === ownerId && activeLocalAccount() === ownerId
+    && bodySupport.generation === localJournalScopeGeneration() && bodySupport.supported
+}
+
+/** Additive authenticated probe. A legacy route or uncertain response grants no write capability. */
+export async function checkAccountJournalBodyPartSupport(ownerId: string, isCurrent: () => boolean,
+  dependencies: { client: typeof supabase; owner: typeof activeLocalAccount } = { client: supabase, owner: activeLocalAccount }): Promise<boolean> {
+  const generation = localJournalScopeGeneration()
+  if (bodySupport?.ownerId === ownerId && bodySupport.generation === generation) return bodySupport.supported
+  const result = await requestAccountDocument(ownerId, { action: "journalBodyPartSupport" }, isCurrent, accountJournalRecordSchema, dependencies)
+  if (!isCurrent() || activeLocalAccount() !== ownerId || localJournalScopeGeneration() !== generation) return false
+  const supported = result.ok && result.data.kind === "journal-body-part-support" && result.data.version === 1
+  // An uncertain failure is retryable and never becomes positive capability.
+  if (supported) bodySupport = { ownerId, generation, supported }
+  return supported
+}
 
 function localBoundaryFailure(ownerId: string): "ACCOUNT_DELETION_REQUESTED" | "UNAVAILABLE" | null {
   const boundary = accountDeletionBoundaryState(ownerId)
@@ -176,6 +198,10 @@ async function executeAccountDocument<T>(
     const journalCall = Object.is(schema, accountJournalRecordSchema) || ["correctImportedObservation", "confirmComparisonRelation", "releaseComparisonRelation"].includes(request.action)
       || ((request.action === "list" || request.action === "history") && request.collection === "JOURNAL")
       || (request.action === "save" && (request.document as { kind?: unknown })?.kind === "JOURNAL")
+    if (request.action === "save" && (request.document as { kind?: unknown; version?: unknown })?.kind === "JOURNAL"
+      && (request.document as { version?: unknown }).version === 4 && !accountBodyPartMetadataSupported(ownerId)) {
+      return { ok: false, code: "UPGRADE_REQUIRED" }
+    }
     // Keep this INDEX's fresh/date decision through the SDK auth reread and
     // asynchronous consent fetch. Do not change unrelated journal requests.
     if (request.action === "save" && (request.document as { kind?: unknown })?.kind === "GOAL_PROGRAM_INDEX") {
@@ -184,7 +210,7 @@ async function executeAccountDocument<T>(
       if (!current()) return obsolete()
     }
     const { data, error } = await client.functions.invoke("account-journal", {
-      body: journalCall ? { ...request, supportedJournalVersions: [2, 3], supportsExerciseLogV1: true } : request,
+      body: journalCall ? { ...request, supportedJournalVersions: accountBodyPartMetadataSupported(ownerId) ? [2, 3, 4] : [2, 3], supportsExerciseLogV1: true } : request,
       headers: { Authorization: `Bearer ${token}`, "x-trainoracle-storage-revision": String(storageRevision),
         ...(sendGuard ? { [LOCAL_COLLECTION_SEND_GUARD_HEADER]: sendGuard.nonce } : {}) },
       signal,
@@ -237,6 +263,7 @@ async function executeAccountDocument<T>(
     if (!parsed.success) return { ok: false, code: "INVALID_RESPONSE" }
     const result = parsed.data as AccountJournalResponse<T>
     const correctKind = request.action === "status" ? result.kind === "ready"
+      : request.action === "journalBodyPartSupport" ? result.kind === "journal-body-part-support"
       : request.action === "calendarDecorationSupport" ? result.kind === "calendar-decoration-support"
       : request.action === "athleteRecordSupport" ? result.kind === "athlete-record-support"
       : request.action === "runningProfileSupport" ? result.kind === "running-profile-support"

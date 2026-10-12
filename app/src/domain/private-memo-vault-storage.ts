@@ -3,6 +3,7 @@ import { parseJournalEntryList } from "./journal-schema"
 import { JOURNAL_STORAGE_KEY, PRIVATE_MEMO_VAULT_STORAGE_KEY } from "./journal-storage-keys"
 import type { PrivateMemoVault } from "./private-memo-vault"
 import { announceLocalJournalChange } from "./journal-change-events"
+import { journalWriteRetainsBodyMetadata } from "./body-part-metadata"
 
 export type VaultJournalStorageSnapshot = {
   readonly vault: string | null
@@ -29,6 +30,7 @@ export function writeVaultAndJournalAtomically(
 ): boolean {
   const previous = expected ?? readVaultJournalStorageSnapshot(storage)
   if (previous === null) return false
+  if (!journalWriteRetainsBodyMetadata(previous.journal, entries)) return false
   if (expected !== undefined && !snapshotMatches(storage, expected)) return false
   if (!guardAllowsCommit(commitGuard)) return false
   const nextVault = JSON.stringify(vault)
