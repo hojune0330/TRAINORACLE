@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { BodyDiagram, PainReviewBanner } from "./BodyDiagram"
@@ -85,10 +85,25 @@ describe("body pain keyboard controls", () => {
 
     expect(bodyPartButtons).toHaveLength(10)
     expect(bodyPartButtons.every((button) => button.tagName === "BUTTON")).toBe(true)
-    expect(guide?.getAttribute("src")).toMatch(/\/illustrations\/body-check-guide-v1\.webp$/u)
+    expect(guide?.getAttribute("src")).toMatch(/\/illustrations\/body-check-emoji-v1\.webp$/u)
+    expect(guide).toHaveAttribute("width", "80")
+    expect(guide).toHaveAttribute("height", "80")
     expect(guide?.closest("button")).toBeNull()
     expect(container.querySelector("svg")).toBeNull()
     expect(container.querySelector("[data-diagram-open]")).toBeNull()
+  })
+
+  it("removes the optional picture space after a load failure without losing pain controls", async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+    const view = render(<BodyDiagram selected={{ lKnee: 2 }} onChange={onChange} />)
+    fireEvent.error(view.container.querySelector(".body-pain-selector__visual img") as HTMLImageElement)
+
+    expect(view.container.querySelector(".body-pain-selector__visual")).toBeNull()
+    expect(screen.getByText("불편한 부위를 골라요")).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "오른 무릎" }))
+    await user.click(screen.getByRole("button", { name: "오른 무릎 통증 3단계" }))
+    expect(onChange).toHaveBeenCalledWith({ lKnee: 2, rKnee: 3 })
   })
 
   it("opens a named part by keyboard and selects a direct level", async () => {
