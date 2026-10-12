@@ -1,0 +1,67 @@
+/* Presentation only. Existing callbacks own awarding, prices and equipment. */
+.treadmill-game .reward-action--primary {
+  background: var(--reward-action-accent, var(--info));
+  color: var(--game-cloud, var(--surface));
+  border-color: var(--reward-action-accent, var(--info));
+  border-radius: var(--r-action, 12px);
+  min-height: 52px;
+  touch-action: manipulation;
+  transition: background-color 80ms ease-out, border-color 80ms ease-out, transform 70ms ease-out;
+}
+.treadmill-game .reward-action--quiet { background: var(--surface-2); color: var(--ink-2); border-color: var(--line); border-radius: 12px; touch-action: manipulation; }
+.treadmill-game .reward-action:active:not(:disabled) { transition-duration: 0ms; }
+.treadmill-game .reward-action--primary:active:not(:disabled) { background: color-mix(in srgb, var(--reward-action-accent) 80%, var(--ink)); }
+.treadmill-game .reward-action--quiet:active:not(:disabled) { background: var(--line); }
+.treadmill-game .reward-action:disabled { background: var(--surface-2); border-color: var(--line); color: var(--ink-3); cursor: default; }
+
+.treadmill-game .game-reward-actions__header {
+  display: grid; grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center; gap: 10px; padding: 14px 12px;
+  border: 1px solid var(--game-panel-edge); border-radius: 16px;
+  background: var(--game-sky-low);
+}
+.game-reward-actions__medal, .game-reward-actions__item-icon, .game-reward-result__medal {
+  display: grid; place-items: center; width: 40px; height: 40px;
+  border-radius: 12px; background: var(--game-panel); color: var(--game-ink); font-size: 24px;
+}
+.game-reward-actions__header > div { display: grid; gap: 3px; min-width: 0; }
+.game-reward-actions__header > div > span { color: var(--game-ink-soft); font-size: 12px; font-weight: 700; }
+.game-reward-actions__header strong { color: var(--game-ink); font-size: 26px; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.game-reward-actions__header strong small { margin-left: 4px; font-size: 12px; font-weight: 700; }
+.game-reward-actions__remaining { padding-left: 12px; border-left: 1px solid var(--game-panel-edge); }
+
+.treadmill-game .game-reward-actions__list { gap: 8px; }
+.treadmill-game .game-reward-actions__list > li {
+  display: grid; grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center; gap: 10px; min-height: 82px; padding: 12px 10px;
+  border: 1px solid var(--game-panel-edge); border-radius: 14px; background: var(--game-panel);
+}
+.game-reward-actions__item-copy { min-width: 0; overflow-wrap: anywhere; }
+.treadmill-game__shop .game-reward-actions__item-copy strong { color: var(--game-ink); font-size: 14px; line-height: 1.4; }
+.treadmill-game__shop .game-reward-actions__item-copy small { color: var(--game-ink-soft); font-size: 12px; line-height: 1.45; }
+.game-reward-actions__price { margin-top: 3px; color: var(--game-ink); font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.treadmill-game .game-reward-actions__button { min-width: 72px; min-height: 52px; height: auto; padding: 10px 12px; line-height: 1.35; }
+
+.treadmill-game .game-reward-result__cta { width: 100%; min-height: 56px; height: auto; flex-wrap: wrap; gap: 6px; padding: 10px 12px; line-height: 1.4; }
+.game-reward-result__cta small { flex-basis: 100%; font-size: 12px; font-weight: 700; }
+.treadmill-game .game-reward-result__receipt {
+  width: 100%; display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: center;
+  gap: 10px; padding: 10px 12px; border: 1px solid var(--game-panel-edge); border-radius: 12px;
+  background: var(--game-sky-low); text-align: left;
+}
+.game-reward-result__receipt .game-reward-result__medal { width: 36px; height: 36px; font-size: 22px; }
+.game-reward-result__receipt > div { display: grid; gap: 3px; min-width: 0; overflow-wrap: anywhere; }
+.game-reward-result__receipt strong { color: var(--game-ink); font-size: 14px; font-weight: 900; }
+.game-reward-result__receipt > div > span { color: var(--game-ink-soft); font-size: 12px; line-height: 1.45; }
+
+.treadmill-game[data-reduced] .game-reward-actions__button,
+.treadmill-game[data-reduced] .game-reward-result__cta { animation: none; transition: none; transform: none; }
+@media (max-width: 360px) {
+  .treadmill-game .game-reward-actions__list > li,
+  .treadmill-game .game-reward-actions__header { gap: 8px; padding-inline: 8px; }
+  .game-reward-actions__remaining { padding-left: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .treadmill-game .game-reward-actions__button,
+  .treadmill-game .game-reward-result__cta { animation: none; transition: none; transform: none; }
+}

@@ -1,0 +1,57 @@
+/* Reward-only controls. Pointer feedback does not wait for React or storage. */
+.reward-action {
+  --reward-action-accent: var(--info);
+  min-height: var(--app-action-height, 52px);
+  min-width: 88px;
+  padding: 12px 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: var(--r-action, 12px);
+  font-family: var(--sans);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 80ms ease-out, border-color 80ms ease-out, transform 70ms ease-out;
+}
+
+.reward-action--primary {
+  background: var(--reward-action-accent);
+  color: var(--surface);
+}
+
+.reward-action--quiet {
+  background: var(--surface-2);
+  color: var(--ink-2);
+  border-color: var(--line);
+}
+
+@media (hover: hover) {
+  .reward-action--primary:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--reward-action-accent) 88%, var(--ink));
+  }
+  .reward-action--quiet:hover:not(:disabled) { border-color: var(--ink-3); }
+}
+
+.reward-action:active:not(:disabled) {
+  transform: translateY(1px) scale(.98);
+  transition-duration: 0ms;
+}
+.reward-action--primary:active:not(:disabled) {
+  background: color-mix(in srgb, var(--reward-action-accent) 80%, var(--ink));
+}
+.reward-action--quiet:active:not(:disabled) { background: var(--line); }
+.reward-action:focus-visible { outline: 3px solid var(--info); outline-offset: 3px; }
+.reward-action:disabled { background: var(--surface-2); border-color: var(--line); color: var(--ink-3); cursor: default; }
+.reward-action svg { flex: 0 0 auto; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reward-action { transition: none; }
+  .reward-action:active:not(:disabled) { transform: none; }
+}
