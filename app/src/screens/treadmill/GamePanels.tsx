@@ -3,7 +3,8 @@
  * Everything here is game-only. Nothing reads or writes training data or reward points.
  */
 import React from "react"
-import { Check, ChevronLeft, ChevronRight, Footprints, Lock, MapPin, MoveUp, Pause, Star, X, ChevronsRight, Zap } from "lucide-react"
+import { Check, ChevronLeft, ChevronRight, Flame, Flower2, Footprints, Lock, MapPin, MoveUp, Pause, Rainbow, Star, X, ChevronsRight, Zap } from "lucide-react"
+import { RewardActionButton } from "../../components/rewards/RewardActionButton"
 import { TOUR_CITIES, TOUR_SEASONS, citiesOf } from "../../domain/minigame/tour"
 import type { TourCity, TourSeasonId } from "../../domain/minigame/tour"
 import {
@@ -125,6 +126,7 @@ export function CharacterPicker({ progress, selected, onSelect }: {
 }
 
 type Tab = "settings" | "shop" | "help" | "licenses"
+const TRAIL_ICON: Record<string, typeof Star> = { stardust: Star, petals: Flower2, spark: Zap, flame: Flame, rainbow: Rainbow }
 
 function Toggle({ label, hint, checked, onChange }: { readonly label: string; readonly hint?: string; readonly checked: boolean; readonly onChange: (value: boolean) => void }) {
   return <label className="treadmill-game__setting">
@@ -165,6 +167,8 @@ export function GameMenu({ progress, status, onClose, onSettings, onCharacter, o
   const tabs: readonly { id: Tab; label: string }[] = [{ id: "settings", label: "설정" }, { id: "shop", label: "상점" }, { id: "help", label: "도움말" }, { id: "licenses", label: "오픈소스" }]
   const medals = medalsOf(progress)
   const balance = medalBalance(medals)
+  const runsLeft = Math.max(0, runMedalsLeftToday(medals, new Date()))
+  const rewardPolicyId = React.useId()
   return <div className="treadmill-game__sheet-backdrop" onClick={event => { if (event.target === event.currentTarget) onClose() }}
     onKeyDown={event => { if (event.key === "Escape") { event.stopPropagation(); onClose() } }}>
     <section className="treadmill-game__sheet" role="dialog" aria-modal="true" aria-labelledby="treadmill-menu-title">
@@ -215,17 +219,25 @@ export function GameMenu({ progress, status, onClose, onSettings, onCharacter, o
       </div>}
 
       {tab === "shop" && <div role="tabpanel" id="treadmill-panel-shop" aria-labelledby="treadmill-tab-shop" className="treadmill-game__panel">
-        <p className="treadmill-game__shop-balance"><b aria-hidden="true">🏅</b><strong>{balance}</strong><span>메달 · 모은 메달 {medalsEarned(medals)}개</span></p>
-        <p className="treadmill-game__fine">한 판(8초 이상)을 하면 결과와 상관없이 메달 {MINIGAME_REWARD_RULES.medalsPerRun}개, 하루 {MINIGAME_REWARD_RULES.runMedalsPerDay}개까지. 오늘 {Math.max(0, runMedalsLeftToday(medals, new Date()))}개 더 받을 수 있어요. 메달은 게임 꾸미기에만 쓰고 포인트(P)·현금으로 바꿀 수 없어요.</p>
+        <div className="game-reward-actions__header" aria-label="게임 메달과 오늘 남은 기회">
+          <span className="game-reward-actions__medal" aria-hidden="true">🏅</span>
+          <div><span>보유 메달</span><strong>{balance}<small>개</small></strong></div>
+          <div className="game-reward-actions__remaining"><span>오늘 남은 기회</span><strong>{runsLeft}<small>회</small></strong></div>
+        </div>
+        <p id={rewardPolicyId} className="treadmill-game__fine">모은 메달 {medalsEarned(medals)}개 · 한 판 {MINIGAME_REWARD_RULES.minRunSeconds}초 이상 · 결과와 상관없이 {MINIGAME_REWARD_RULES.medalsPerRun}개 자동 지급 · 하루 {MINIGAME_REWARD_RULES.runMedalsPerDay}회. 메달은 게임 꾸미기에만 쓰고 포인트(P)·현금으로 바꿀 수 없어요.</p>
         <h3>달리기 효과</h3>
-        <ul className="treadmill-game__shop">
+        <ul className="treadmill-game__shop game-reward-actions__list" aria-describedby={rewardPolicyId}>
           {TRAIL_ITEMS.map(item => {
             const owned = medals.owned.includes(item.id), equipped = medals.trail === item.id
+            const Icon = TRAIL_ICON[item.id] ?? Star
             return <li key={item.id} data-trail={item.id} data-owned={owned || undefined}>
-              <span><strong>{item.name}</strong><small>{item.line}</small></span>
+              <span className="game-reward-actions__item-icon" aria-hidden="true"><Icon size={24} /></span>
+              <span className="game-reward-actions__item-copy"><strong>{item.name}</strong><small>{item.line}</small>
+                <span className="game-reward-actions__price">{owned ? (equipped ? "내 효과 · 장착 중" : "내 효과") : `메달 ${item.price}개`}</span>
+              </span>
               {owned
-                ? <button type="button" className="treadmill-game__ghost" aria-pressed={equipped} onClick={() => onEquip(equipped ? null : item.id)}>{equipped ? "장착 중" : "장착"}</button>
-                : <button type="button" className="treadmill-game__ghost" disabled={balance < item.price} onClick={() => onBuy(item.id)} aria-label={`${item.name} 메달 ${item.price}개로 열기`}><b aria-hidden="true">🏅</b>{item.price}</button>}
+                ? <RewardActionButton type="button" tone="quiet" className="game-reward-actions__button" aria-pressed={equipped} onClick={() => onEquip(equipped ? null : item.id)}>{equipped ? "장착 중" : "장착"}</RewardActionButton>
+                : <RewardActionButton type="button" tone="primary" className="game-reward-actions__button" disabled={balance < item.price} onClick={() => onBuy(item.id)} aria-label={`${item.name} 메달 ${item.price}개로 열기`}>받기</RewardActionButton>}
             </li>
           })}
         </ul>

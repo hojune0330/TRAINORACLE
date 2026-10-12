@@ -20,6 +20,8 @@ import {
   X,
 } from "lucide-react"
 import React from "react"
+import { RewardActionButton } from "../../components/rewards/RewardActionButton"
+import "./journal-decoration-reward-actions.css"
 import {
   DECORATION_COLLECTIONS,
   MAX_DECORATION_ITEMS_PER_PAGE,
@@ -205,7 +207,7 @@ function MaterialTile({
   return (
     <button
       type="button"
-      className="journal-decoration-toolbar__material-tile"
+      className={`journal-decoration-toolbar__material-tile${owned ? "" : " journal-decoration-reward-material"}`}
       data-active={active ? "true" : undefined}
       data-blocked={blockedReason === null ? undefined : "true"}
       data-previewing={previewing ? "true" : undefined}
@@ -249,6 +251,9 @@ function MaterialTile({
             : <><Gift size={12} /> {item.acquisition.kind === "SEASON" ? "시즌" : "보상"}</>}
         </span>
       )}
+      {!owned && <span className="journal-decoration-reward-material__action" aria-hidden="true">
+        {pointAcquisition(item) ? "받기" : "조건 보기"}
+      </span>}
       {owned && active && item.compatibleSlots.length === 0 && (
         <span className="journal-decoration-toolbar__material-check" aria-hidden="true"><Check size={12} /></span>
       )}
@@ -399,6 +404,7 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
       return
     }
     if (props.purchasableItemIds.has(item.id)) {
+      setPendingBundleId(null)
       setPendingPurchaseId(item.id)
       return
     }
@@ -414,33 +420,46 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
     if (!pointAcquisition(item)) {
       /* 보상·시즌 아이템은 포인트로 살 수 없다 — 받는 조건만 알려 준다. */
       return (
-        <div className="journal-decoration-toolbar__purchase-row" role="group" aria-label={`${item.name} 받는 조건`}>
-          <span>
-            <strong>{item.name}</strong>
-            <small>{acquisitionLabel(item.acquisition)}</small>
-          </span>
-          <button type="button" onClick={() => setPendingPurchaseId(null)}>닫기</button>
+        <div className="journal-decoration-toolbar__purchase-row journal-decoration-reward-card" role="group" aria-label={`${item.name} 받는 조건`}>
+          <div className="journal-decoration-reward-card__summary">
+            <Gift className="journal-decoration-reward-card__icon" aria-hidden="true" size={24} />
+            <span>
+              <strong>{item.name}</strong>
+              <small>{acquisitionLabel(item.acquisition)}</small>
+            </span>
+          </div>
+          <RewardActionButton tone="quiet" type="button" onClick={() => setPendingPurchaseId(null)}>닫기</RewardActionButton>
         </div>
       )
     }
     const missingPoints = Math.max(0, item.cost - props.availablePoints)
     return (
-      <div className="journal-decoration-toolbar__purchase-row" role="group" aria-label={`${item.name} 받기 확인`}>
-        <span>
-          <strong>{item.name}</strong>
-          <small>{missingPoints > 0 ? `${missingPoints}P 더 필요해요.` : `${item.cost}P를 사용해 받을까요?`}</small>
-        </span>
-        <button
-          type="button"
-          disabled={missingPoints > 0}
-          onClick={() => {
-            props.onPurchase(item)
-            setPendingPurchaseId(null)
-          }}
-        >
-          {item.cost}P로 받기
-        </button>
-        <button type="button" onClick={() => setPendingPurchaseId(null)}>취소</button>
+      <div className="journal-decoration-toolbar__purchase-row journal-decoration-reward-card" role="group" aria-label={`${item.name} 받기 확인`}>
+        <div className="journal-decoration-reward-card__summary">
+          <span className="journal-decoration-reward-card__art" aria-hidden="true">
+            {item.category === "INK" ? <PenLine size={24} />
+              : <img src={`${import.meta.env.BASE_URL}${item.assetPath}`} alt="" draggable="false" />}
+          </span>
+          <span>
+            <strong>{item.name}</strong>
+            <small>{missingPoints > 0 ? `${missingPoints}P 더 필요해요.` : `${item.cost}P를 사용해 받을까요?`}</small>
+            <small>사용 가능 {props.availablePoints}P</small>
+          </span>
+        </div>
+        <div className="journal-decoration-reward-card__actions">
+          <RewardActionButton
+            type="button"
+            className="journal-decoration-reward-card__confirm"
+            disabled={missingPoints > 0}
+            onClick={() => {
+              props.onPurchase(item)
+              setPendingPurchaseId(null)
+            }}
+          >
+            {item.cost}P로 받기
+          </RewardActionButton>
+          <RewardActionButton tone="quiet" type="button" onClick={() => setPendingPurchaseId(null)}>취소</RewardActionButton>
+        </div>
       </div>
     )
   }
@@ -486,7 +505,6 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
                 onPreview={() => props.onPreview(item)}
                 onPreviewEnd={props.onPreviewEnd}
               />
-              {renderPurchaseRow(item)}
             </React.Fragment>
           )
         })}
@@ -505,8 +523,9 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
     .map((collection) => ({ collection, items: visibleItems.filter((item) => item.collection === collection.id) }))
     .filter(({ items }) => items.length > 0)
   const openCollection = collectionsWithItems.find(({ collection }) => collection.id === openCollectionId)
+  const pendingPurchase = visibleItems.find(item => item.id === pendingPurchaseId)
 
-  const renderBundleRow = (collection: DecorationCollection, items: readonly DecorationCatalogItem[]): React.ReactNode => {
+  const renderBundleRow = (collection: DecorationCollection, items: readonly DecorationCatalogItem[], confirmation = false): React.ReactNode => {
     if (!props.bundlePurchasesEnabled || collection.bundle === undefined || !collectionVisibleInShop(collection, props.today)) return null
     const ownedIds = new Set(items.filter((item) => !props.purchasableItemIds.has(item.id)).map((item) => item.id))
     const remaining = items.filter((item) => props.purchasableItemIds.has(item.id) && pointAcquisition(item) && item.availability === "ACTIVE")
@@ -514,41 +533,49 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
     const cost = collectionBundleCost(collection, ownedIds) ?? 0
     const missingPoints = Math.max(0, cost - props.availablePoints)
     const pending = pendingBundleId === collection.id
+    if (confirmation !== pending) return null
     return (
-      <div className="journal-decoration-toolbar__bundle">
+      <div className={pending ? "journal-decoration-reward-confirmation" : "journal-decoration-toolbar__bundle"}>
         {!pending
           ? (
-              <button
+              <RewardActionButton
                 type="button"
-                className="journal-decoration-toolbar__bundle-button"
+                className="journal-decoration-toolbar__bundle-button journal-decoration-reward-bundle"
                 aria-label={`${collection.title} 남은 ${remaining.length}종 한 번에 받기, ${cost}포인트`}
                 onClick={() => {
                   setPendingPurchaseId(null)
                   setPendingBundleId(collection.id)
                 }}
               >
-                <Gift aria-hidden="true" size={14} />
+                <Gift aria-hidden="true" size={20} />
                 <span>{`남은 ${remaining.length}종 한 번에 받기`}</span>
                 <b>{`${cost}P`}</b>
-              </button>
+              </RewardActionButton>
             )
           : (
-              <div className="journal-decoration-toolbar__purchase-row" role="group" aria-label={`${collection.title} 한 번에 받기 확인`}>
-                <span>
-                  <strong>{`${collection.title} ${remaining.length}종`}</strong>
-                  <small>{missingPoints > 0 ? `${missingPoints}P 더 필요해요.` : `${cost}P를 사용해 모두 받을까요?`}</small>
-                </span>
-                <button
-                  type="button"
-                  disabled={missingPoints > 0}
-                  onClick={() => {
-                    props.onPurchaseBundle(collection)
-                    setPendingBundleId(null)
-                  }}
-                >
-                  {`${cost}P로 모두 받기`}
-                </button>
-                <button type="button" onClick={() => setPendingBundleId(null)}>취소</button>
+              <div className="journal-decoration-toolbar__purchase-row journal-decoration-reward-card" role="group" aria-label={`${collection.title} 한 번에 받기 확인`}>
+                <div className="journal-decoration-reward-card__summary">
+                  <Gift className="journal-decoration-reward-card__icon" aria-hidden="true" size={24} />
+                  <span>
+                    <strong>{`${collection.title} ${remaining.length}종`}</strong>
+                    <small>{missingPoints > 0 ? `${missingPoints}P 더 필요해요.` : `${cost}P를 사용해 모두 받을까요?`}</small>
+                    <small>사용 가능 {props.availablePoints}P</small>
+                  </span>
+                </div>
+                <div className="journal-decoration-reward-card__actions">
+                  <RewardActionButton
+                    type="button"
+                    className="journal-decoration-reward-card__confirm"
+                    disabled={missingPoints > 0}
+                    onClick={() => {
+                      props.onPurchaseBundle(collection)
+                      setPendingBundleId(null)
+                    }}
+                  >
+                    {`${cost}P로 모두 받기`}
+                  </RewardActionButton>
+                  <RewardActionButton tone="quiet" type="button" onClick={() => setPendingBundleId(null)}>취소</RewardActionButton>
+                </div>
               </div>
             )}
       </div>
@@ -606,7 +633,6 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
                     onPreview={() => props.onPreview(item)}
                     onPreviewEnd={props.onPreviewEnd}
                   />
-                  {renderPurchaseRow(item)}
                 </React.Fragment>
               )
             }),
@@ -665,11 +691,13 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
         id={drawerId}
         className="journal-decoration-toolbar"
         data-open={props.drawerOpen ? "true" : "false"}
+        data-confirming={pendingPurchaseId !== null || pendingBundleId !== null || undefined}
         aria-label="꾸미기 재료 서랍"
         aria-hidden={props.drawerOpen ? undefined : "true"}
         data-decoration-interaction="true"
       >
         {props.drawerOpen && <>
+        <div className="journal-decoration-reward-scroll">
         <div className="journal-decoration-toolbar__drawer-header">
           <div className="journal-decoration-toolbar__grabber" aria-hidden="true" />
           <header>
@@ -759,6 +787,9 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
               </>
             )}
         {props.materialsFooter}
+        </div>
+        {pendingPurchase !== undefined && renderPurchaseRow(pendingPurchase)}
+        {openCollection !== undefined && renderBundleRow(openCollection.collection, openCollection.items, true)}
         </>}
       </section>
     </>

@@ -1,4 +1,5 @@
 import React from "react"
+import { RewardActionButton } from "../components/rewards/RewardActionButton"
 import { ArrowLeft, ChevronsRight, Footprints, Pause, Play, RotateCcw, MoveUp, Star, Zap, Flame, Trophy, Menu, Map as MapIcon, ArrowRight, Sparkles } from "lucide-react"
 import {
   advanceTreadmill, newTreadmillRun, treadmillCommand, treadmillCourseSeconds, treadmillElapsed, treadmillStars, treadmillTip, treadmillWarning,
@@ -25,6 +26,7 @@ import { CharacterPortrait, GameMenu, TourMap } from "./treadmill/GamePanels"
 import { playGameSound } from "./treadmill/sound"
 import "../styles/treadmill-game.css"
 import "../styles/treadmill-tour.css"
+import "./treadmill/game-reward-actions.css"
 
 /** Taps act on press for game timing; keyboard activation (click with detail 0) still works. */
 function tapAction(action: () => void) {
@@ -418,21 +420,23 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
           {result && result.unlocks.length > 0 && <ul className="treadmill-game__unlocks" aria-label="새로 열림">
             {result.unlocks.map(item => <li key={item}><Sparkles size={14} aria-hidden="true" />{item}</li>)}
           </ul>}
-          {result && <p className="treadmill-game__medal-line" data-earned={result.medal > 0 || undefined}>
-            <b aria-hidden="true">🏅</b>{result.medal > 0 ? `메달 +${result.medal}` : "오늘 받을 메달을 다 받았어요"}
-            <small>{result.medal > 0 ? `오늘 ${result.medalsLeft}번 더 받을 수 있어요 · 결과와 상관없이 한 판에 ${MINIGAME_REWARD_RULES.medalsPerRun}개` : "내일 다시 받을 수 있어요"}</small>
-          </p>}
           {view.mode === "clear" && view.stats.retries > 0 && <p className="treadmill-game__picks">구간 다시하기를 써서 별은 1개예요. 처음부터 완주하면 별 3개까지 받을 수 있어요.</p>}
           {view.mode === "over" && <p className="treadmill-game__tip">{treadmillTip(view)}</p>}
+          {result && <div className="game-reward-result__receipt" role="status" data-earned={result.medal > 0 || undefined}>
+            <span className="game-reward-result__medal" aria-hidden="true">🏅</span>
+            <div><strong>{result.medal > 0 ? `메달 +${result.medal}` : result.medalsLeft === 0 ? "오늘 받을 메달을 다 받았어요" : "이번 판은 메달이 지급되지 않았어요"}</strong>
+              <span>{result.medal > 0 ? `자동 지급 · 오늘 ${result.medalsLeft}회 더 받을 수 있어요` : result.medalsLeft === 0 ? "내일 다시 받을 수 있어요" : `${MINIGAME_REWARD_RULES.minRunSeconds}초 이상 플레이하면 받아요 · 오늘 ${result.medalsLeft}회 남음`}</span>
+            </div>
+          </div>}
           <div className="treadmill-game__result-actions">
             {view.mode === "clear" && following
-              && <button type="button" className="treadmill-game__cta" onClick={() => openCourse({ kind: "city", city: following })}><ArrowRight size={18} aria-hidden="true" />다음 도시 · {following.name}</button>}
+              && <RewardActionButton type="button" tone="primary" className="game-reward-result__cta" onClick={() => openCourse({ kind: "city", city: following })}><ArrowRight size={18} aria-hidden="true" />다음 도시 · {following.name}</RewardActionButton>}
             {view.mode === "clear" && !following
-              && <button type="button" className="treadmill-game__cta" onClick={backToMap}><MapIcon size={18} aria-hidden="true" />지도에서 보기</button>}
+              && <RewardActionButton type="button" tone="primary" className="game-reward-result__cta" onClick={backToMap}><MapIcon size={18} aria-hidden="true" />지도에서 보기</RewardActionButton>}
             {canRetryStage
-              && <button type="button" className="treadmill-game__cta" onClick={retryStage}><RotateCcw size={18} aria-hidden="true" />{view.stage + 1}구간부터 다시<small>강화 유지 · 별 최대 1개</small></button>}
+              && <RewardActionButton type="button" tone="primary" className="game-reward-result__cta" onClick={retryStage}><RotateCcw size={18} aria-hidden="true" />{view.stage + 1}구간부터 다시<small>강화 유지 · 별 최대 1개</small></RewardActionButton>}
             {view.mode === "over" && !canRetryStage
-              && <button type="button" className="treadmill-game__cta" onClick={start}><RotateCcw size={18} aria-hidden="true" />다시 도전</button>}
+              && <RewardActionButton type="button" tone="primary" className="game-reward-result__cta" onClick={start}><RotateCcw size={18} aria-hidden="true" />다시 도전</RewardActionButton>}
             <div className="treadmill-game__card-actions treadmill-game__card-actions--quiet">
               {(view.mode === "clear" || canRetryStage) && <button type="button" className="treadmill-game__text-button" onClick={start}><RotateCcw size={14} aria-hidden="true" />처음부터</button>}
               <button type="button" className="treadmill-game__text-button" onClick={backToMap}><MapIcon size={14} aria-hidden="true" />지도</button>
