@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 test('two isolated browsers invite, push, repeatedly respawn, rank and rematch in the same room', async ({ browser, page }, info) => {
   const errors: string[] = []; page.on('pageerror', e => errors.push(e.message))
-  await page.goto('/?app=1')
+  await page.goto('./?app=1')
   await page.getByRole('button', { name: '더보기', exact: true }).click()
   await page.getByRole('button', { name: '미니게임', exact: true }).click()
   await page.getByRole('button', { name: '친구와 밀어내기 · 90초 무한 리젠' }).click()

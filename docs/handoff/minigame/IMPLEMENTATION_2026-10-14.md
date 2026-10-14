@@ -32,9 +32,11 @@
   8개 통과: 카메라, 제스처, 취소 경계, 서울 투어, 중간 저장/복귀, native Back,
   강화 후 저장, 투어 초기화. 공개 배포 증거는 아래 갱신.
 
-## 배포 상태
+## 배포 확인 위치
 
-작업 중. 로컬 검사와 Render/Pages 공개 검증을 혼동하지 않는다.
+공개 배포 결과와 정확한 SHA는 [PR #366](https://github.com/hojune0330/TRAINORACLE/pull/366)의
+최종 배포 기록, Render 배포의 commit, Pages의 `trainoracle-deploy-receipt.json`을 함께 확인한다.
+이 문서의 로컬 검사 결과를 Render/Pages 공개 검증으로 취급하지 않는다.
 오너는 ‘호준's workspace’ 무료 배포를 승인했다. 유료 인스턴스·DB는 생성하지 않는다.
 
 ## 의도적으로 남긴 범위
