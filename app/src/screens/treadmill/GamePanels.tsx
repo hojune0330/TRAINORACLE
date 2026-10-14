@@ -150,8 +150,11 @@ function Choice<T extends string>({ label, hint, value, options, onChange }: {
   </div>
 }
 
-export function GameMenu({ progress, status, onClose, onSettings, onCharacter, onReset, onBuy, onEquip, initialTab = "settings" }: {
+export function GameMenu({ progress, status, onClose, onSettings, onCharacter, onReset, onBuy, onEquip, onMap, onExit, onContinue, initialTab = "settings" }: {
   readonly progress: MinigameProgress; readonly status: MinigameStorageStatus
+  readonly onMap?: () => void
+  readonly onExit?: () => void
+  readonly onContinue?: () => void
   readonly onBuy: (id: string) => boolean
   readonly onEquip: (id: string | null) => void
   readonly initialTab?: "settings" | "shop"
@@ -173,11 +176,16 @@ export function GameMenu({ progress, status, onClose, onSettings, onCharacter, o
   const rewardPolicyId = React.useId()
   return <div className="treadmill-game__sheet-backdrop" onClick={event => { if (event.target === event.currentTarget) onClose() }}
     onKeyDown={event => { if (event.key === "Escape") { event.stopPropagation(); onClose() } }}>
-    <section className="treadmill-game__sheet" role="dialog" aria-modal="true" aria-labelledby="treadmill-menu-title">
+    <section className="treadmill-game__sheet" data-navigation={!!(onContinue || onMap || onExit) || undefined} role="dialog" aria-modal="true" aria-labelledby="treadmill-menu-title">
       <header>
         <h2 id="treadmill-menu-title">게임 메뉴</h2>
         <button ref={close} type="button" className="treadmill-game__icon" aria-label="메뉴 닫기" onClick={onClose}><X size={20} aria-hidden="true" /></button>
       </header>
+      {(onContinue || onMap || onExit) && <nav className="treadmill-game__menu-nav" aria-label="게임 이동">
+        {onContinue && <button type="button" className="treadmill-game__cta" onClick={onContinue}>게임 계속하기</button>}
+        {onMap && <button type="button" className="treadmill-game__ghost" onClick={onMap}>지도로 나가기</button>}
+        {onExit && <button type="button" className="treadmill-game__text-button" onClick={onExit}>게임 나가기</button>}
+      </nav>}
       <div className="treadmill-game__tabs" role="tablist" aria-label="게임 메뉴">
         {tabs.map(item => <button type="button" key={item.id} role="tab" id={`treadmill-tab-${item.id}`} aria-selected={tab === item.id}
           aria-controls={`treadmill-panel-${item.id}`} onClick={() => setTab(item.id)}>{item.label}</button>)}
@@ -209,7 +217,7 @@ export function GameMenu({ progress, status, onClose, onSettings, onCharacter, o
         {!confirm
           ? <button type="button" className="treadmill-game__ghost treadmill-game__danger" onClick={() => { setConfirm(true); setResetMessage(null) }}>투어 처음부터 다시 하기</button>
           : <div className="treadmill-game__confirm" role="alertdialog" aria-labelledby="treadmill-reset-title">
-            <p id="treadmill-reset-title">모든 도시의 별과 기록을 지울까요? 캐릭터와 설정은 남아요.</p>
+            <p id="treadmill-reset-title">모든 도시의 별과 기록, 중간 저장한 판을 지울까요? 진행 중인 판도 끝나요. 캐릭터와 설정은 남아요.</p>
             <div className="treadmill-game__card-actions">
               <button type="button" className="treadmill-game__ghost" onClick={() => setConfirm(false)}>취소</button>
               <button type="button" className="treadmill-game__ghost treadmill-game__danger" onClick={() => {
@@ -257,6 +265,8 @@ export function GameMenu({ progress, status, onClose, onSettings, onCharacter, o
           <li><b><Pause size={18} aria-hidden="true" /></b><span><strong>일시정지</strong>오른쪽 위 버튼, 키보드 Esc·P. 다른 앱으로 가도 자동으로 멈춰요.</span></li>
         </ul>
         <p className="treadmill-game__fine">키보드: → 달리기 · Space/↑ 점프 · D 대시 · Esc 정지</p>
+        <h3>쉬었다 이어하기</h3>
+        <p>일시정지에서 ‘저장하고 지도로 나가기’를 누르면 시간·에너지·강화를 보관해요. 지도 위의 ‘저장한 판 이어하기’로 돌아오세요. 중간 저장은 이 기기와 브라우저에 한 판만 남고, 다른 기기로 옮겨지지 않아요. 새 판을 시작하거나 투어 기록을 초기화하면 지워져요.</p>
         <h3>구간</h3>
         <dl className="treadmill-game__glossary">
           <div><dt>낮 구간</dt><dd>기본 속도. 허들에 부딪히면 뒤로 밀리고 에너지가 줄어요.</dd></div>

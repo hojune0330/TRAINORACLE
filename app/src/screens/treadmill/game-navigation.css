@@ -1,0 +1,19 @@
+.treadmill-game__header { grid-template-columns: auto minmax(0, 1fr) auto; }
+.treadmill-game button.treadmill-game__nav { width: auto; min-width: 56px; display: flex; gap: 4px; padding: 0 8px; font-weight: 800; }
+.treadmill-game__resume-card { margin: var(--space-2) var(--tm-pad) var(--space-3); padding: var(--space-3); display: grid; gap: var(--space-2); background: var(--game-panel); border: var(--tm-edge) solid var(--game-outline); border-bottom-width: 6px; border-radius: var(--tm-radius); }
+.treadmill-game__resume-card h2, .treadmill-game__resume-card p { margin: 0; }
+.treadmill-game__resume-card h2 { font-size: var(--fs-body-lg); }
+.treadmill-game__resume-card p { color: var(--game-ink-soft); font-size: var(--fs-body); }
+.treadmill-game__leave-dialog { padding: 0; width: min(420px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; color: var(--game-ink); background: var(--game-panel); border: var(--tm-edge) solid var(--game-outline); border-bottom-width: 7px; border-radius: var(--tm-radius); font-family: var(--sans); }
+.treadmill-game__leave-dialog::backdrop { background: color-mix(in srgb, var(--game-outline) 65%, transparent); }
+.treadmill-game__leave-content { display: grid; gap: var(--space-3); padding: var(--space-4); }
+.treadmill-game__leave-content h2, .treadmill-game__leave-content p { margin: 0; }
+.treadmill-game__leave-content h2 { font-size: var(--fs-h3); }
+.treadmill-game__leave-content p { font-size: var(--fs-body); color: var(--game-ink-soft); }
+.treadmill-game__leave-content button { width: 100%; min-height: 48px; }
+.treadmill-game__save-error { margin: var(--space-2) var(--tm-pad); padding: var(--space-2); background: var(--game-panel); color: var(--game-danger); border-radius: var(--tm-radius-sm); }
+.treadmill-game__leave-content .treadmill-game__save-error { margin: 0; }
+.treadmill-game__pause-nav, .treadmill-game__menu-nav { display: grid; gap: var(--space-2); width: 100%; }
+.treadmill-game__menu-nav { padding: var(--space-3); border-bottom: 2px solid var(--game-outline); }
+.treadmill-game__sheet[data-navigation] { grid-template-rows: auto auto auto minmax(0, 1fr); }
+.treadmill-game__pause-nav button { min-height: 44px; }

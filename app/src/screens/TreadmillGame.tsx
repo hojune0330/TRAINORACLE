@@ -1,4 +1,9 @@
 import React from "react"
+import { useTaskFlowBack } from "../hooks/useTaskFlowBack"
+import { tourCity } from "../domain/minigame/tour"
+import { useSavedRun } from "./treadmill/useSavedRun"
+import { GameLeaveDialog } from "./treadmill/GameLeaveDialog"
+
 import { RewardActionButton } from "../components/rewards/RewardActionButton"
 import { ArrowLeft, ChevronsRight, Footprints, Pause, Play, RotateCcw, MoveUp, Star, Zap, Trophy, Menu, Map as MapIcon, ArrowRight, Sparkles } from "lucide-react"
 import {
@@ -30,6 +35,7 @@ import "../styles/treadmill-game.css"
 import "../styles/treadmill-tour.css"
 import "./treadmill/game-reward-actions.css"
 import "./treadmill/upgrade-choice.css"
+import "./treadmill/game-navigation.css"
 
 /** Taps act on press for game timing; keyboard activation (click with detail 0) still works. */
 function tapAction(action: () => void) {
@@ -96,6 +102,8 @@ function unlocksBetween(before: MinigameProgress, after: MinigameProgress): stri
 
 export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" }: { readonly onBack: () => void; readonly backLabel?: string }) {
   const store = useMinigameProgress()
+  const saved = useSavedRun()
+  const [leave, setLeave] = React.useState<null | { title: string; detail: string; action: () => void; canSave: boolean; replaceSaved: boolean; returnToRun: boolean }>(null)
   const { progress } = store
   const settings = progress.settings
   const character = activeCharacter(progress)
@@ -260,6 +268,13 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
   const focusField = () => canvas.current?.focus({ preventScroll: true })
   const start = () => { setResult(null); command({ type: "start", stages: courseStages(course) }); playGameSound("tap", settings.sound); focusField() }
   const resume = () => { command({ type: "resume" }); focusField() }
+  const inProgress = screen === "play" && ["running", "paused", "upgrade"].includes(view.mode)
+  React.useEffect(() => {
+    if (!inProgress) return
+    const protect = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = "" }
+    window.addEventListener("beforeunload", protect)
+    return () => window.removeEventListener("beforeunload", protect)
+  }, [inProgress])
   const energyLow = view.energy < view.jumpCost + 4
   const canJump = live && view.y === 0 && view.energy >= view.jumpCost
   const canDash = live && view.cooldown === 0 && view.energy >= TREADMILL_RULES.dashCost
@@ -278,7 +293,59 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
     state.current = newTreadmillRun(courseStages(next)); setView(state.current)
     setScreen("play"); playGameSound("tap", settings.sound)
   }
-  const backToMap = () => { command({ type: "pause" }); releaseInputs(); setScreen("map"); setResult(null) }
+  const goMap = () => { command({ type: "pause" }); releaseInputs(); setMenuOpen(false); setScreen("map"); setResult(null) }
+  const requestLeave = (action: () => void, title: string, canSave = true) => {
+    if (!inProgress) { setMenuOpen(false); action(); return }
+    const returnToRun = state.current.mode === "running"
+    command({ type: "pause" }); releaseInputs(); setMenuOpen(false); saved.clearError()
+    setLeave({ title, action, canSave, replaceSaved: false, returnToRun,
+      detail: canSave ? "저장하면 시간·에너지·강화를 그대로 이어가요. 중간 저장은 이 기기에 한 판만 보관해요." : "현재 판의 진행과 강화가 초기화돼요. 완주 기록과 모은 별은 유지돼요." })
+  }
+  const backToMap = () => requestLeave(goMap, "지도로 나갈까요?")
+  const exitGame = () => requestLeave(onBack, "게임에서 나갈까요?")
+  const requestRestart = () => requestLeave(start, "새 판을 시작할까요?", false)
+  const savedCourse = saved.slot.kind === "saved" ? saved.slot.run.course : null
+  const savedTitle = savedCourse === "practice" ? "러닝머신 연습" : tourCity(savedCourse ?? "")?.name ?? "저장한 판"
+  const chooseCourse = (next: Course) => {
+    if (saved.slot.raw === null) { openCourse(next); return }
+    saved.clearError()
+    setLeave({ title: "저장한 판 대신 새로 시작할까요?", detail: "새 판을 시작하면 중간 저장한 판은 지워져요. 완주 기록과 모은 별은 유지돼요.",
+      action: () => openCourse(next), canSave: false, replaceSaved: true, returnToRun: false })
+  }
+  const resumeSaved = () => {
+    if (saved.slot.kind !== "saved") return
+    const run = saved.slot.run
+    if (!saved.clear()) return
+    const next: Course = run.course === "practice" ? { kind: "practice" } : { kind: "city", city: tourCity(run.course)! }
+    setCourse(next); courseRef.current = next; setResult(null); setEquipped(null)
+    state.current = run.state; setView(run.state); setPauseReason("중간 저장한 판을 불러왔어요.")
+    setScreen("play")
+  }
+  const saveAndGo = (action: () => void) => {
+    command({ type: "pause" }); releaseInputs()
+    if (!saved.save(course.kind === "city" ? course.city.id : "practice", state.current)) return
+    setLeave(null); action()
+  }
+  const cancelLeave = () => {
+    const continueRun = leave?.returnToRun
+    setLeave(null); saved.clearError()
+    if (continueRun) resume()
+  }
+  const discardAndGo = () => {
+    if (!leave || (leave.replaceSaved && !saved.clear())) return
+    const action = leave.action
+    setLeave(null); action()
+  }
+  const discardSaved = () => {
+    saved.clearError()
+    setLeave({ title: "중간 저장한 판을 지울까요?", detail: "이 판의 진행만 지워요. 완주 기록과 모은 별은 유지돼요.",
+      action: () => {}, canSave: false, replaceSaved: true, returnToRun: false })
+  }
+  useTaskFlowBack({ enabled: screen === "play" || menuOpen || leave !== null, onBack: () => {
+    if (leave) cancelLeave()
+    else if (menuOpen) setMenuOpen(false)
+    else backToMap()
+  } })
   const openMenu = () => { command({ type: "pause" }); setMenuTab("settings"); setMenuOpen(true) }
   const following = city ? nextCity(progress, city.id) : undefined
   const isCity = course.kind === "city"
@@ -290,7 +357,7 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
   const retryStage = () => { setResult(null); command({ type: "retryStage" }); playGameSound("tap", settings.sound); focusField() }
 
   const handleKey = (event: React.KeyboardEvent) => {
-    if (!running || event.repeat || menuOpen) return
+    if (!running || event.repeat || menuOpen || leave) return
     const onField = event.target === canvas.current
     if (event.key === "ArrowRight") {
       event.preventDefault(); keyboardHeld.current = true; updateHeld()
@@ -317,8 +384,8 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
     }}>
     <header className="treadmill-game__header">
       {screen === "map"
-        ? <button type="button" className="treadmill-game__icon" onClick={onBack} aria-label={backLabel}><ArrowLeft size={20} aria-hidden="true" /></button>
-        : <button type="button" className="treadmill-game__icon" onClick={backToMap} aria-label="투어 지도로"><MapIcon size={20} aria-hidden="true" /></button>}
+        ? <button type="button" className="treadmill-game__icon treadmill-game__nav" onClick={onBack} aria-label={backLabel}><ArrowLeft size={18} aria-hidden="true" />{backLabel.startsWith("홈") ? "홈" : "더보기"}</button>
+        : <button type="button" className="treadmill-game__icon treadmill-game__nav" onClick={backToMap} aria-label="투어 지도로"><MapIcon size={18} aria-hidden="true" />지도</button>}
       <div className="treadmill-game__title"><span>TRAINORACLE 미니게임</span><h1>{title}</h1></div>
       <div className="treadmill-game__header-actions">
         {screen === "play" && <button type="button" className="treadmill-game__icon" disabled={!running} aria-label="일시정지" title="일시정지 (Esc)"
@@ -327,8 +394,20 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
       </div>
     </header>
 
+    {saved.error && !leave && <p className="treadmill-game__save-error" role="alert">{saved.error}</p>}
+    {screen === "map" && saved.slot.kind === "saved" && <section className="treadmill-game__resume-card" aria-label="중간 저장한 판">
+      <h2>{savedTitle} · 이어서 달릴까요?</h2>
+      <p>{saved.slot.run.state.stage + 1}구간 · {Math.floor(treadmillElapsed(saved.slot.run.state))}/{treadmillCourseSeconds(saved.slot.run.state)}초 · 에너지 {Math.ceil(saved.slot.run.state.energy)}</p>
+      <p>{saved.slot.run.state.upgrades.length ? `강화: ${saved.slot.run.state.upgrades.map(upgradeName).join(" · ")}` : "강화 선택 전"} · 이 기기에 저장됨</p>
+      <button type="button" className="treadmill-game__cta" onClick={resumeSaved}><Play size={18} aria-hidden="true" />저장한 판 이어하기</button>
+      <button type="button" className="treadmill-game__text-button" onClick={discardSaved}>저장한 판 지우기</button>
+    </section>}
+    {screen === "map" && saved.slot.kind === "invalid" && <section className="treadmill-game__resume-card" aria-label="중간 저장 확인">
+      <h2>저장한 판을 불러올 수 없어요</h2><p>게임 버전이 달라졌거나 저장 내용이 손상됐어요. 완주 기록은 유지돼요.</p>
+      <button type="button" className="treadmill-game__ghost" onClick={discardSaved}>저장한 판 지우기</button>
+    </section>}
     {screen === "map" && <TourMap progress={progress} season={season} onSeason={setSeason} status={store.status} onShop={() => { setMenuTab("shop"); setMenuOpen(true) }}
-      onPlay={item => openCourse({ kind: "city", city: item })} onPractice={() => openCourse({ kind: "practice" })} />}
+      onPlay={item => chooseCourse({ kind: "city", city: item })} onPractice={() => chooseCourse({ kind: "practice" })} />}
 
     {screen === "play" && <>
     <div className="treadmill-game__stage">
@@ -364,13 +443,16 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
       {running && view.countdown > 0 && equipped && <div className="treadmill-game__equipped" role="status"><strong>{upgradeName(equipped)} 장착!</strong><span>{UPGRADE_STORIES[equipped].effect}</span></div>}
       <p className="treadmill-game__warning" role="status" data-tone={warning.tone}>{warning.text}</p>
 
-      {view.mode === "paused" && !menuOpen && <div className="treadmill-game__overlay">
+      {view.mode === "paused" && !menuOpen && !leave && <div className="treadmill-game__overlay">
         <div className="treadmill-game__card treadmill-game__card--small">
           <span className="treadmill-game__ribbon">일시정지</span><h2>잠깐 쉬는 중</h2><p>{pauseReason}<br />계속을 누르면 이어서 달려요.</p>
           <button type="button" className="treadmill-game__cta" onClick={resume}><Play size={18} aria-hidden="true" />계속</button>
-          <div className="treadmill-game__card-actions treadmill-game__card-actions--quiet">
-            <button type="button" className="treadmill-game__text-button" onClick={start}><RotateCcw size={14} aria-hidden="true" />처음부터</button>
-            <button type="button" className="treadmill-game__text-button" onClick={backToMap}><MapIcon size={14} aria-hidden="true" />지도로</button>
+          <div className="treadmill-game__pause-nav">
+            <button type="button" className="treadmill-game__ghost" onClick={() => saveAndGo(goMap)}>저장하고 지도로 나가기</button>
+            <div className="treadmill-game__card-actions treadmill-game__card-actions--quiet">
+              <button type="button" className="treadmill-game__text-button" onClick={requestRestart}><RotateCcw size={14} aria-hidden="true" />처음부터</button>
+              <button type="button" className="treadmill-game__text-button" onClick={exitGame}>게임 나가기</button>
+            </div>
           </div>
         </div>
       </div>}
@@ -468,13 +550,29 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
     </>}
 
     {menuOpen && <GameMenu progress={progress} status={store.status} initialTab={menuTab}
+      onMap={screen === "play" ? backToMap : undefined} onExit={exitGame}
+      onContinue={screen === "play" ? () => { setMenuOpen(false); if (state.current.mode === "paused") resume(); else focusField() } : undefined}
       onBuy={id => { let ok = false; store.update(current => { const bought = buyTrail(medalsOf(current), id); ok = bought.ok; return bought.ok ? withMedals(current, bought.state) : current }); return ok }}
       onEquip={id => store.update(current => withMedals(current, equipTrail(medalsOf(current), id)))}
       onClose={() => { setMenuOpen(false); if (screen === "play") focusField() }}
       onSettings={patch => store.update(current => updateMinigameSettings(current, patch))}
       onCharacter={id => store.update(current => updateMinigameSettings(current, { character: id }))}
-      onReset={store.reset} />}
+      onReset={async () => {
+        if (!saved.clear()) return false
+        const ok = await store.reset()
+        if (ok) {
+          releaseInputs(); state.current = newTreadmillRun(courseStages(course)); setView(state.current)
+          setResult(null); setEquipped(null); setScreen("map")
+        }
+        return ok
+      }} />}
 
+    {leave && <GameLeaveDialog title={leave.title} onCancel={cancelLeave}>
+      <p>{leave.detail}</p>
+      {saved.error && <p className="treadmill-game__save-error" role="alert">{saved.error}</p>}
+      {leave.canSave && <button type="button" className="treadmill-game__cta" onClick={() => saveAndGo(leave.action)}>저장하고 나가기</button>}
+      <button type="button" className="treadmill-game__text-button" onClick={discardAndGo}>{leave.canSave ? "저장 없이 나가기" : leave.replaceSaved ? "지우고 진행하기" : "처음부터 시작하기"}</button>
+    </GameLeaveDialog>}
     <p className="treadmill-game__note">게임 에너지·점수·별은 게임 안에서만 쓰여요. 실제 훈련 기록이나 포인트(P)와 연결되지 않아요. 투어 기록은 이 기기와, 로그인하면 계정에 저장돼요.</p>
   </div>
 }
