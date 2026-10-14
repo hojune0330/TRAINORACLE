@@ -3,6 +3,7 @@ import { useTaskFlowBack } from "../hooks/useTaskFlowBack"
 import { tourCity } from "../domain/minigame/tour"
 import { useSavedRun } from "./treadmill/useSavedRun"
 import { GameLeaveDialog } from "./treadmill/GameLeaveDialog"
+import { createGameGestures } from "./treadmill/gestures"
 
 import { RewardActionButton } from "../components/rewards/RewardActionButton"
 import { ArrowLeft, ChevronsRight, Footprints, Pause, Play, RotateCcw, MoveUp, Star, Zap, Trophy, Menu, Map as MapIcon, ArrowRight, Sparkles } from "lucide-react"
@@ -37,13 +38,6 @@ import "./treadmill/game-reward-actions.css"
 import "./treadmill/upgrade-choice.css"
 import "./treadmill/game-navigation.css"
 
-/** Taps act on press for game timing; keyboard activation (click with detail 0) still works. */
-function tapAction(action: () => void) {
-  return {
-    onPointerDown: (event: React.PointerEvent) => { if (event.button === 0) { event.preventDefault(); action() } },
-    onClick: (event: React.MouseEvent) => { if (event.detail === 0) action() },
-  }
-}
 const fillStyle = (fill: number) => ({ "--fill": Math.max(0, Math.min(1, fill)).toFixed(3) }) as React.CSSProperties
 const upgradeName = (id: string) => TREADMILL_UPGRADES.find(upgrade => upgrade.id === id)?.name ?? id
 
@@ -127,7 +121,7 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
   const [shaderLive, setShaderLive] = React.useState(false)
   const shaderLiveRef = React.useRef(false)
   const surface = React.useRef<HTMLDivElement>(null)
-  const heldPointers = React.useRef(new Set<number>())
+  const gestures = React.useRef(createGameGestures())
   const keyboardHeld = React.useRef(false)
   const [systemReduced, setSystemReduced] = React.useState(() => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches)
   const reduced = systemReduced || settings.motion === "reduce"
@@ -142,7 +136,7 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
   const updateRef = React.useRef(store.update)
   updateRef.current = store.update
 
-  const releaseInputs = () => { heldPointers.current.clear(); keyboardHeld.current = false }
+  const releaseInputs = () => { gestures.current.reset(); keyboardHeld.current = false }
   // Stable on purpose: the game loop depends on it and must not restart on every render.
   const settle = React.useCallback((next: TreadmillState) => {
     if (next.mode !== "over" && next.mode !== "clear") return
@@ -174,7 +168,7 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
     if (input.type === "jump" && state.current.stats.jumps > before.stats.jumps) playGameSound("jump", renderView.current.sound)
     setView(state.current)
   }, [])
-  const updateHeld = () => command({ type: "run", held: keyboardHeld.current || heldPointers.current.size > 0 })
+  const updateHeld = () => command({ type: "run", held: keyboardHeld.current || gestures.current.held })
 
   React.useEffect(() => {
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)")
@@ -193,7 +187,13 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
     const render = createTreadmillRenderer()
     let width = 320, height = 300, previous = 0, published = 0, frame = 0
     let palette: GamePalette = gamePalette(container)
-    const draw = (now: number) => render(context, state.current, width, height, palette, renderView.current.reduced, now, shaderLiveRef.current, renderView.current)
+    const draw = (now: number) => {
+      // Enlarge the whole scene together, keeping runner/hazards on the same geometry.
+      const zoom = Math.min(1.5, Math.max(1, width / 430, height / 580))
+      const ratio = Math.min(window.devicePixelRatio || 1, 2)
+      context.setTransform(ratio * zoom, 0, 0, ratio * zoom, 0, 0)
+      render(context, state.current, width / zoom, height / zoom, palette, renderView.current.reduced, now, shaderLiveRef.current, renderView.current)
+    }
     const resize = () => {
       width = element.clientWidth; height = element.clientHeight
       const ratio = Math.min(window.devicePixelRatio || 1, 2)
@@ -276,8 +276,6 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
     return () => window.removeEventListener("beforeunload", protect)
   }, [inProgress])
   const energyLow = view.energy < view.jumpCost + 4
-  const canJump = live && view.y === 0 && view.energy >= view.jumpCost
-  const canDash = live && view.cooldown === 0 && view.energy >= TREADMILL_RULES.dashCost
   const ended = view.mode === "over" || view.mode === "clear"
   const stars = treadmillStars(view)
   const scene: SkyScene = view.mode === "clear" ? "clear" : view.mode === "over" ? "over" : stage.surface
@@ -438,7 +436,27 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
 
       <canvas ref={skyCanvas} className="treadmill-game__sky" aria-hidden="true" data-live={shaderLive || undefined} />
       <canvas ref={canvas} tabIndex={0} className="treadmill-game__canvas"
-        aria-label="게임 조작 영역. 오른쪽 방향키를 누르고 있으면 달리기, 스페이스나 위 방향키는 점프, D는 대시, Esc는 일시정지. 왼쪽 끝으로 밀리면 떨어집니다." />
+        data-running={view.running} data-jumps={view.stats.jumps} data-dashes={view.stats.dashes}
+        aria-label="게임 조작 영역. 화면을 꾹 누르면 달리기, 위나 대각선 위로 스와이프하면 점프, 두 번 누르면 대시. 키보드 → 달리기, Space 또는 ↑ 점프, D 대시, Esc 일시정지."
+        onContextMenu={event => event.preventDefault()}
+        onPointerDown={event => {
+          if (event.button !== 0 || state.current.mode !== "running" || menuOpen || leave) return
+          event.preventDefault(); event.currentTarget.focus({ preventScroll: true }); event.currentTarget.setPointerCapture(event.pointerId)
+          const dash = gestures.current.down(event.pointerId, { x: event.clientX, y: event.clientY, time: event.timeStamp })
+          updateHeld(); if (dash) command({ type: "dash" })
+        }}
+        onPointerMove={event => {
+          if (state.current.mode !== "running" || menuOpen || leave) return
+          if (gestures.current.move(event.pointerId, { x: event.clientX, y: event.clientY, time: event.timeStamp })) command({ type: "jump" })
+        }}
+        onPointerUp={event => { gestures.current.up(event.pointerId, { x: event.clientX, y: event.clientY, time: event.timeStamp }); updateHeld() }}
+        onPointerCancel={event => { gestures.current.cancel(event.pointerId); updateHeld() }}
+        onLostPointerCapture={event => { gestures.current.cancel(event.pointerId); updateHeld() }} />
+      <div className="treadmill-game__gesture-hint" aria-label="화면 조작 안내">
+        <span>{view.exhausted ? "손을 떼면 회복" : view.running ? "달리는 중 · 떼면 회복" : "화면 꾹 달리기"}</span>
+        <span aria-label="점프 에너지">↗ 점프 ⚡{view.jumpCost}</span>
+        <span aria-label="대시 충전">두 번 대시 {view.cooldown > 0 ? `${view.cooldown.toFixed(1)}초` : `⚡${TREADMILL_RULES.dashCost}`}</span>
+      </div>
       {live && <span className="treadmill-game__wave">웨이브 {Math.min(3, Math.floor(view.seconds / TREADMILL_RULES.waveSeconds) + 1)}/3 · 10초마다 보급</span>}
       {running && view.countdown > 0 && equipped && <div className="treadmill-game__equipped" role="status"><strong>{upgradeName(equipped)} 장착!</strong><span>{UPGRADE_STORIES[equipped].effect}</span></div>}
       <p className="treadmill-game__warning" role="status" data-tone={warning.tone}>{warning.text}</p>
@@ -466,9 +484,9 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
             : <h2 id="treadmill-ready-title">{total}초 러닝 챌린지</h2>}
           {firstTime
             ? <ul className="treadmill-game__rules">
-              <li><b><Footprints size={18} aria-hidden="true" /></b><span><strong>꾹 누르면 앞으로</strong>에너지를 써요</span></li>
-              <li><b><Pause size={18} aria-hidden="true" /></b><span><strong>손을 떼면 회복</strong>대신 뒤로 밀려요</span></li>
-              <li><b><MoveUp size={18} aria-hidden="true" /></b><span><strong>장애물은 점프</strong>{city ? "허들·못판" : "구덩이·가시"}에 닿으면 끝</span></li>
+              <li><b><Footprints size={18} aria-hidden="true" /></b><span><strong>화면을 꾹 누르면 달리기</strong>손을 떼면 회복하며 뒤로 밀려요</span></li>
+              <li><b><MoveUp size={18} aria-hidden="true" /></b><span><strong>위로 쓸어 올리면 점프</strong>대각선 위로도 가능해요</span></li>
+              <li><b><ChevronsRight size={18} aria-hidden="true" /></b><span><strong>두 번 누르면 대시</strong>짧게 빠르게 앞으로</span></li>
             </ul>
             : <p className="treadmill-game__ready-hint">{stages[0]!.hint}{cityBest > 0 && <> · 최고 <strong>{cityBest.toLocaleString("ko-KR")}점</strong></>}</p>}
           <div className="treadmill-game__ready-runner"><CharacterPortrait character={character} size={52} label={`캐릭터 ${MINIGAME_CHARACTERS.find(item => item.id === character)?.name}`} />
@@ -526,27 +544,6 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
       </div>}
     </div>
 
-    <div className="treadmill-game__controls" onContextMenu={event => event.preventDefault()} data-hidden={!running && view.mode !== "paused" && view.mode !== "upgrade" ? true : undefined}>
-      <button type="button" className="treadmill-game__pad treadmill-game__run" disabled={!running} aria-pressed={view.running}
-        onPointerDown={event => { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); heldPointers.current.add(event.pointerId); updateHeld() }}
-        onPointerUp={event => { heldPointers.current.delete(event.pointerId); updateHeld() }}
-        onPointerCancel={event => { heldPointers.current.delete(event.pointerId); updateHeld() }}
-        onLostPointerCapture={event => { heldPointers.current.delete(event.pointerId); updateHeld() }}
-        onKeyDown={event => { if (!event.repeat && [" ", "Enter"].includes(event.key)) { event.preventDefault(); event.stopPropagation(); keyboardHeld.current = true; updateHeld() } }}
-        onKeyUp={event => { if ([" ", "Enter"].includes(event.key)) { event.preventDefault(); keyboardHeld.current = false; updateHeld() } }}>
-        <Footprints size={26} aria-hidden="true" />
-        <span>달리기 꾹</span>
-        <small>{view.exhausted ? "에너지 0 · 손을 떼세요" : view.running ? "앞으로 · 에너지 소모" : "놓으면 회복 · 뒤로 밀림"}</small>
-      </button>
-      <button type="button" className="treadmill-game__pad treadmill-game__jump" disabled={!canJump} {...tapAction(() => command({ type: "jump" }))}>
-        <MoveUp size={26} aria-hidden="true" /><span>점프</span><small><Zap size={11} aria-hidden="true" />{view.jumpCost}</small>
-      </button>
-      <button type="button" className="treadmill-game__pad treadmill-game__dash" disabled={!canDash} {...tapAction(() => command({ type: "dash" }))}>
-        <ChevronsRight size={26} aria-hidden="true" /><span>대시</span>
-        <small>{view.cooldown > 0 ? `${view.cooldown.toFixed(1)}초 뒤` : <><Zap size={11} aria-hidden="true" />{TREADMILL_RULES.dashCost}</>}</small>
-        {view.cooldown > 0 && <i aria-hidden="true" style={fillStyle(1 - view.cooldown / view.cooldownSeconds)} />}
-      </button>
-    </div>
     </>}
 
     {menuOpen && <GameMenu progress={progress} status={store.status} initialTab={menuTab}
@@ -573,6 +570,6 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
       {leave.canSave && <button type="button" className="treadmill-game__cta" onClick={() => saveAndGo(leave.action)}>저장하고 나가기</button>}
       <button type="button" className="treadmill-game__text-button" onClick={discardAndGo}>{leave.canSave ? "저장 없이 나가기" : leave.replaceSaved ? "지우고 진행하기" : "처음부터 시작하기"}</button>
     </GameLeaveDialog>}
-    <p className="treadmill-game__note">게임 에너지·점수·별은 게임 안에서만 쓰여요. 실제 훈련 기록이나 포인트(P)와 연결되지 않아요. 투어 기록은 이 기기와, 로그인하면 계정에 저장돼요.</p>
+    {screen === "map" && <p className="treadmill-game__note">게임 에너지·점수·별은 게임 안에서만 쓰여요. 실제 훈련 기록이나 포인트(P)와 연결되지 않아요. 투어 기록은 이 기기와, 로그인하면 계정에 저장돼요.</p>}
   </div>
 }
