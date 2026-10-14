@@ -23,6 +23,99 @@ async function openGame(page: Page, course: "practice" | "seoul" = "practice", b
 const energy = async (page: Page) => Number((await page.getByLabel("게임 에너지", { exact: true }).textContent())!.replace(/\D/g, ""))
 const noSideScroll = (page: Page) => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)
 
+async function screenPointer(page: Page, touch: boolean) {
+  const session = touch ? await page.context().newCDPSession(page) : null
+  return {
+    down: async (x: number, y: number) => {
+      if (session) await session.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y, id: 1 }] })
+      else { await page.mouse.move(x, y); await page.mouse.down() }
+    },
+    move: async (x: number, y: number) => {
+      if (session) await session.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x, y, id: 1 }] })
+      else await page.mouse.move(x, y)
+    },
+    up: async () => {
+      if (session) await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] })
+      else await page.mouse.up()
+    },
+    cancel: async () => {
+      if (session) await session.send("Input.dispatchTouchEvent", { type: "touchCancel", touchPoints: [] })
+      else await page.mouse.up()
+    },
+  }
+}
+
+test("gestures fill the viewport and hold, swipe up diagonally and double tap without action buttons", async ({ page }, info) => {
+  await openGame(page, "seoul")
+  const field = page.locator("canvas.treadmill-game__canvas")
+  await page.getByRole("button", { name: "시작", exact: true }).click()
+  await page.clock.runFor(3100)
+  const bounds = (await field.boundingBox())!, viewport = page.viewportSize()!
+  expect(bounds.height).toBeGreaterThan(viewport.height * 0.75)
+  expect(bounds.y + bounds.height).toBeGreaterThan(viewport.height - 12)
+  expect(bounds.y + bounds.height).toBeLessThanOrEqual(viewport.height)
+  expect(await noSideScroll(page)).toBe(true)
+  await expect(page.locator(".treadmill-game__controls, .treadmill-game__note")).toHaveCount(0)
+  const pointer = await screenPointer(page, info.project.name === "phone")
+  const x = bounds.x + bounds.width * 0.55, y = bounds.y + bounds.height * 0.72
+  await pointer.down(x, y); await page.clock.runFor(800)
+  await expect(field).toHaveAttribute("data-running", "true")
+  const drained = await energy(page)
+  expect(drained).toBeLessThan(100)
+  await pointer.up(); await page.clock.runFor(250)
+  expect(await energy(page)).toBeGreaterThan(drained)
+  await expect(field).toHaveAttribute("data-running", "false")
+  for (const [index, dx] of [0, -45, 45].entries()) {
+    await pointer.down(x, y)
+    await pointer.move(x + dx, y - 55)
+    await expect(field).toHaveAttribute("data-jumps", String(index + 1))
+    await pointer.move(x + dx, y - 90)
+    await expect(field).toHaveAttribute("data-jumps", String(index + 1))
+    // A normal jump is about 0.82 seconds: land before starting the next swipe.
+    await page.clock.runFor(1000); await pointer.up()
+  }
+  await pointer.down(x, y); await pointer.up(); await pointer.down(x, y); await pointer.up()
+  await expect(field).toHaveAttribute("data-dashes", "1")
+  await pointer.down(x, y); await pointer.up(); await pointer.down(x, y); await pointer.up()
+  await expect(field).toHaveAttribute("data-dashes", "1")
+  await page.screenshot({ path: info.outputPath("full-screen-gestures.png"), fullPage: true })
+  await page.setViewportSize({ width: 800, height: 360 })
+  await page.clock.runFor(20)
+  const rotated = (await field.boundingBox())!
+  expect(rotated.y + rotated.height).toBeLessThanOrEqual(360)
+  expect(rotated.y + rotated.height).toBeGreaterThan(348)
+  expect(await noSideScroll(page)).toBe(true)
+  await page.getByRole("button", { name: /게임 메뉴/ }).click()
+  await page.getByRole("button", { name: "게임 계속하기", exact: true }).click()
+  await page.screenshot({ path: info.outputPath("landscape-gestures.png"), fullPage: true })
+})
+
+test("gestures release on cancellation and never cross pause or menu boundaries", async ({ page }, info) => {
+  await openGame(page)
+  await page.getByRole("button", { name: "시작", exact: true }).click()
+  await page.clock.runFor(3100)
+  const field = page.locator("canvas.treadmill-game__canvas"), bounds = (await field.boundingBox())!
+  const pointer = await screenPointer(page, info.project.name === "phone")
+  const x = bounds.x + bounds.width / 2, y = bounds.y + bounds.height * 0.65
+  await pointer.down(x, y); await pointer.move(x + 60, y + 20)
+  await expect(field).toHaveAttribute("data-jumps", "0")
+  await pointer.cancel(); await page.clock.runFor(100)
+  await expect(field).toHaveAttribute("data-running", "false")
+  await pointer.down(x, y)
+  await page.evaluate(() => window.dispatchEvent(new Event("blur")))
+  await pointer.up()
+  await expect(field).toHaveAttribute("data-running", "false")
+  await page.getByRole("button", { name: "계속", exact: true }).click()
+  await page.clock.runFor(1100)
+  await page.getByRole("button", { name: /게임 메뉴/ }).click()
+  await page.getByRole("button", { name: "게임 계속하기", exact: true }).click()
+  await page.clock.runFor(1100)
+  await pointer.down(x, y); await page.clock.runFor(100)
+  await expect(field).toHaveAttribute("data-running", "true")
+  await expect(field).toHaveAttribute("data-dashes", "0")
+  await pointer.up()
+})
+
 test("home launch banner opens the game, returns home and stays acknowledged after reload", async ({ page }, info) => {
   await page.route("**/*", route => new URL(route.request().url()).hostname === "127.0.0.1" ? route.continue() : route.abort())
   await page.goto("/?app=1")
@@ -78,7 +171,7 @@ test("touch-style empty focus does not pause but hidden page freezes and release
   await page.clock.runFor(3100)
   await page.locator("canvas.treadmill-game__canvas").evaluate(element => (element as HTMLElement).blur())
   await expect(page.locator(".treadmill-game")).toHaveAttribute("data-mode", "running")
-  const run = page.getByRole("button", { name: /달리기 꾹/ })
+  const run = page.locator("canvas.treadmill-game__canvas")
   await run.hover(); await page.mouse.down(); await page.clock.runFor(300)
   await page.evaluate(() => {
     Object.defineProperty(document, "hidden", { configurable: true, value: true })
@@ -95,7 +188,7 @@ test("touch-style empty focus does not pause but hidden page freezes and release
   await page.mouse.up()
   await page.getByRole("button", { name: "계속", exact: true }).click()
   await page.clock.runFor(400)
-  await expect(run).toHaveAttribute("aria-pressed", "false")
+  await expect(run).toHaveAttribute("data-running", "false")
   await expect(page.locator(".treadmill-game")).toHaveAttribute("data-mode", "running")
 })
 
@@ -168,7 +261,8 @@ test("explains the rules before play, falls on inaction and restarts with pointe
   await expect(page.getByRole("navigation")).toHaveCount(0)
   await page.getByRole("button", { name: "시작", exact: true }).click()
   await page.clock.runFor(1000)
-  await expect(page.getByRole("button", { name: /점프/ })).toBeDisabled()
+  await page.keyboard.press("Space")
+  await expect(page.locator("canvas.treadmill-game__canvas")).toHaveAttribute("data-jumps", "0")
   await page.clock.runFor(10000)
   await expect(page.getByRole("heading", { name: "트랙에서 뒤로 떨어졌어요" })).toBeVisible()
   await page.getByText("이번 판 기록").click()
@@ -177,12 +271,12 @@ test("explains the rules before play, falls on inaction and restarts with pointe
   // Stage 1 failure: the one primary action is a full retry.
   await page.getByRole("button", { name: "다시 도전", exact: true }).click()
   await page.clock.runFor(3100)
-  const run = page.getByRole("button", { name: /달리기 꾹/ })
+  const run = page.locator("canvas.treadmill-game__canvas")
   await run.hover(); await page.mouse.down(); await page.clock.runFor(1500)
-  await expect(run).toHaveAttribute("aria-pressed", "true")
+  await expect(run).toHaveAttribute("data-running", "true")
   const before = await energy(page)
   await page.mouse.up(); await page.clock.runFor(600)
-  await expect(run).toHaveAttribute("aria-pressed", "false")
+  await expect(run).toHaveAttribute("data-running", "false")
   expect(await energy(page)).toBeGreaterThan(before)
   await page.getByRole("button", { name: "일시정지", exact: true }).click()
   await expect(page.getByRole("button", { name: "계속", exact: true })).toBeVisible()
@@ -256,9 +350,11 @@ test("focus loss pauses, Esc pauses, and reduced motion preserves movement and c
   await page.getByRole("button", { name: "시작", exact: true }).click()
   await page.clock.runFor(3100)
   await page.keyboard.down("ArrowRight"); await page.clock.runFor(500); await page.keyboard.up("ArrowRight")
-  await page.getByRole("button", { name: /대시/ }).click()
+  await page.keyboard.press("d")
   await expect(page.getByLabel("게임 에너지", { exact: true })).not.toHaveText("에너지 100")
-  await expect(page.getByRole("button", { name: /대시/ })).toBeDisabled()
+  await expect(page.locator("canvas.treadmill-game__canvas")).toHaveAttribute("data-dashes", "1")
+  await page.keyboard.press("d")
+  await expect(page.locator("canvas.treadmill-game__canvas")).toHaveAttribute("data-dashes", "1")
   await page.evaluate(() => window.dispatchEvent(new Event("blur")))
   await expect(page.getByRole("button", { name: "계속", exact: true })).toBeVisible()
   const frozen = await page.getByLabel("경기 진행 시간").textContent()
@@ -315,7 +411,7 @@ test("a later-stage failure offers 'retry this stage' with the same build, cappe
   await expect(page.getByRole("list", { name: "코스 2/3 · 진흙" })).toBeVisible()
   await expect(page.getByLabel("경기 진행 시간")).toHaveText("30 / 90초")
   // Same build: the spring upgrade keeps the jump cheap.
-  await expect(page.getByRole("button", { name: /점프/ })).toContainText("4")
+  await expect(page.getByLabel("점프 에너지", { exact: true })).toContainText("4")
 })
 
 test("medals: a fixed medal per run whatever the result, spent only on a cosmetic trail in the shop", async ({ page }, info) => {
@@ -424,7 +520,7 @@ test("menu: settings change the game and persist, help explains the rules, open 
   await expect(dialog.getByRole("radio", { name: /단단/ })).toBeDisabled()
   await dialog.getByRole("radio", { name: /하나/ }).click()
   await expect(dialog.getByRole("radio", { name: /하나/ })).toHaveAttribute("aria-checked", "true")
-  await dialog.getByText("크게", { exact: true }).click()
+  await dialog.getByRole("switch", { name: /점프 타이밍/ }).uncheck()
   await dialog.getByText("클래식 옆모습").click()
   await dialog.getByRole("switch", { name: /효과음/ }).uncheck()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
@@ -440,11 +536,11 @@ test("menu: settings change the game and persist, help explains the rules, open 
   await page.screenshot({ path: info.outputPath("menu-licenses.png") })
   await page.keyboard.press("Escape")
   await expect(dialog).toHaveCount(0)
-  await expect(page.locator(".treadmill-game")).toHaveAttribute("data-controls", "large")
+  await expect(page.locator(".treadmill-game__controls")).toHaveCount(0)
   await expect(page.locator(".treadmill-game")).toHaveAttribute("data-view", "flat")
   const saved = await savedProgress(page)
   expect(saved.character).toBe("hana")
-  expect(saved.settings).toMatchObject({ controls: "large", view: "flat", sound: false })
+  expect(saved.settings).toMatchObject({ jumpGuide: false, view: "flat", sound: false })
 })
 
 test("navigation saves a paused run, restores it after reload and confirms a fresh start", async ({ page }, info) => {
@@ -541,7 +637,7 @@ test("navigation keeps the chosen upgrade when saving and resuming a later stage
   await page.getByRole("button", { name: "미니게임", exact: true }).click()
   await page.getByRole("button", { name: "저장한 판 이어하기" }).click()
   await expect(page.getByRole("list", { name: "코스 2/3 · 진흙" })).toBeVisible()
-  await expect(page.getByRole("button", { name: /점프/ })).toContainText("4")
+  await expect(page.getByLabel("점프 에너지", { exact: true })).toContainText("4")
   await page.getByRole("button", { name: "계속", exact: true }).click()
   await expect(page.locator(".treadmill-game")).toHaveAttribute("data-mode", "running")
 })

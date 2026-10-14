@@ -206,10 +206,7 @@ export function GameMenu({ progress, status, onClose, onSettings, onCharacter, o
         <Choice label="움직임 줄이기" hint="기기 설정을 따르거나, 게임에서만 화면 흔들림·날씨 움직임을 멈춰요" value={s.motion} onChange={motion => onSettings({ motion })}
           options={[{ value: "system", label: "기기 설정" }, { value: "reduce", label: "항상 줄이기" }]} />
         <h3>조작</h3>
-        <Choice label="버튼 크기" value={s.controls} onChange={controls => onSettings({ controls })}
-          options={[{ value: "normal", label: "보통" }, { value: "large", label: "크게" }]} />
-        <Choice label="달리기 버튼 위치" value={s.runSide} onChange={runSide => onSettings({ runSide })}
-          options={[{ value: "left", label: "왼쪽" }, { value: "right", label: "오른쪽" }]} />
+        <p>화면 꾹 달리기 · 위로 스와이프 점프 · 두 번 누르기 대시</p>
         <Toggle label="점프 타이밍 표시" hint="바닥의 금색 띠가 빛날 때 점프하면 넘어요" checked={s.jumpGuide} onChange={jumpGuide => onSettings({ jumpGuide })} />
         <h3>저장</h3>
         <p className="treadmill-game__fine"><span className="treadmill-game__sync" data-status={status}>{storageLabel(status)}</span><br />
@@ -259,9 +256,9 @@ export function GameMenu({ progress, status, onClose, onSettings, onCharacter, o
         <p>각 도시는 30초짜리 구간 세 개, 총 90초예요. 10초마다 새 웨이브와 에너지 보급이 와요. 바닥은 계속 뒤로 흐르니, 뒤쪽 끝으로 밀려 떨어지지 않게 버티면 완주예요.</p>
         <h3>조작</h3>
         <ul className="treadmill-game__rules">
-          <li><b><Footprints size={18} aria-hidden="true" /></b><span><strong>달리기 꾹</strong>누르는 동안 앞으로 가고 에너지를 써요. 떼면 회복하지만 뒤로 밀려요.</span></li>
-          <li><b><MoveUp size={18} aria-hidden="true" /></b><span><strong>점프</strong>장애물을 넘어요. 에너지 {TREADMILL_RULES.jumpCost}을 써요 (강화에 따라 달라져요).</span></li>
-          <li><b><ChevronsRight size={18} aria-hidden="true" /></b><span><strong>대시</strong>짧게 빠르게 앞으로. 쓰고 나면 잠시 충전돼요.</span></li>
+          <li><b><Footprints size={18} aria-hidden="true" /></b><span><strong>화면 꾹 · 달리기</strong>장면 어디든 누르면 앞으로 가고 에너지를 써요. 떼면 회복하지만 뒤로 밀려요.</span></li>
+          <li><b><MoveUp size={18} aria-hidden="true" /></b><span><strong>위로 스와이프 · 점프</strong>위나 대각선 위로 쓸어 올려요. 누른 채 올려도 돼요. 에너지 {TREADMILL_RULES.jumpCost}을 써요 (강화에 따라 달라져요).</span></li>
+          <li><b><ChevronsRight size={18} aria-hidden="true" /></b><span><strong>두 번 누르기 · 대시</strong>같은 곳을 빠르게 두 번 눌러요. 쓰고 나면 잠시 충전돼요.</span></li>
           <li><b><Pause size={18} aria-hidden="true" /></b><span><strong>일시정지</strong>오른쪽 위 버튼, 키보드 Esc·P. 다른 앱으로 가도 자동으로 멈춰요.</span></li>
         </ul>
         <p className="treadmill-game__fine">키보드: → 달리기 · Space/↑ 점프 · D 대시 · Esc 정지</p>

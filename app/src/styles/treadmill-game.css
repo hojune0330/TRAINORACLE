@@ -24,6 +24,21 @@
 .treadmill-game__canvas { display: block; width: 100%; height: clamp(320px, 52dvh, 440px); touch-action: none; -webkit-user-select: none; user-select: none; font-family: var(--sans); }
 .treadmill-game__canvas:focus-visible { outline: 3px solid var(--game-gold); outline-offset: -3px; }
 
+/* Play owns the available viewport; map/menu keep their normal scrolling flow. */
+.treadmill-game[data-screen="play"] { position: fixed; inset: 0; z-index: 30; width: 100%; max-width: 1100px; margin-inline: auto; height: 100dvh; min-height: 0; padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px); overscroll-behavior: none; }
+.treadmill-game[data-screen="play"] .treadmill-game__header { flex: none; }
+.treadmill-game[data-screen="play"] .treadmill-game__stage { flex: 1; min-height: 0; margin: 0 var(--space-1) var(--space-1); }
+.treadmill-game[data-screen="play"] .treadmill-game__canvas { position: absolute; inset: 0; height: 100%; -webkit-touch-callout: none; }
+.treadmill-game__gesture-hint { position: absolute; inset: auto var(--space-2) var(--space-2); display: flex; justify-content: space-between; gap: var(--space-1); pointer-events: none; color: var(--game-cloud); font-size: var(--fs-caption); font-weight: 800; }
+.treadmill-game__gesture-hint span { padding: 3px 5px; border-radius: var(--tm-radius-sm); background: var(--game-outline); }
+.treadmill-game[data-screen="play"] .treadmill-game__warning { bottom: 76px; }
+.treadmill-game[data-screen="play"] .treadmill-game__wave { bottom: 44px; pointer-events: none; }
+.treadmill-game__overlay { overscroll-behavior: contain; }
+@media (max-height: 500px) {
+  .treadmill-game[data-screen="play"] .treadmill-game__title span { display: none; }
+  .treadmill-game[data-screen="play"] .treadmill-game__overlay { place-items: start center; }
+}
+
 .treadmill-game__hud { position: absolute; inset: var(--space-2) var(--space-2) auto; display: grid; gap: var(--space-2); pointer-events: none; }
 .treadmill-game__hud-row { display: flex; align-items: center; gap: var(--space-2); }
 .treadmill-game__stages { flex: 1; min-width: 0; list-style: none; margin: 0; padding: var(--space-1) var(--space-2); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-1); border-radius: 999px; background: var(--game-panel); border: 2px solid var(--game-outline); }
@@ -155,9 +170,6 @@
 
 /* Card states get the whole stage; thumb pads only exist while there is something to press. */
 .treadmill-game { min-height: calc(100dvh - var(--space-1)); }
-.treadmill-game[data-mode="ready"] .treadmill-game__canvas,
-.treadmill-game[data-mode="over"] .treadmill-game__canvas,
-.treadmill-game[data-mode="clear"] .treadmill-game__canvas { height: clamp(500px, 76dvh, 640px); }
 .treadmill-game[data-mode="ready"] .treadmill-game__controls,
 .treadmill-game[data-mode="over"] .treadmill-game__controls,
 .treadmill-game[data-mode="clear"] .treadmill-game__controls { display: none; }
