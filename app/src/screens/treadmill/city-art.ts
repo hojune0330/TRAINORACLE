@@ -10,6 +10,7 @@ import type { TreadmillSurface } from "../../domain/minigame/treadmill"
 import type { TourCity, TourLandmark, TourWeather } from "../../domain/minigame/tour"
 import { part, roundRect } from "./sprites"
 import type { GamePalette } from "./sprites"
+import { drawSceneProp } from "./scene-art"
 
 export type CityScene = { city: TourCity; surface: TreadmillSurface; weather: TourWeather }
 export type CityFrame = {
@@ -68,7 +69,10 @@ export function drawCityBackdrop(context: CanvasRenderingContext2D, palette: Gam
   // Far skyline, then the landmark, then a nearer skyline: three parallax layers.
   skyline(context, palette, scene, width, horizon, travel * 0.05, 0.55, 7, clock, reduced)
   const landmarkX = width * 0.62 - wrap(travel * 0.02, width * 0.4)
-  landmark(context, palette, scene, scene.city.landmark, landmarkX, horizon, Math.min(1.25, Math.max(0.8, width / 380)))
+  const towerHeight = Math.min(150, Math.max(40, horizon - 14))
+  if (!(scene.city.id === "seoul" && drawSceneProp(context, "tower", landmarkX, horizon, towerHeight * 76 / 150, towerHeight))) {
+    landmark(context, palette, scene, scene.city.landmark, landmarkX, horizon, Math.min(1.25, Math.max(0.8, width / 380)))
+  }
   skyline(context, palette, scene, width, horizon, travel * 0.12, 0.85, 3, clock, reduced)
   if (scene.weather === "sea") sea(context, palette, scene, width, horizon, travel, clock, reduced)
 }
@@ -223,20 +227,37 @@ export function drawCityGround(context: CanvasRenderingContext2D, palette: GameP
   // Running track band: lanes from d = 1 (playable) to d = 1.55.
   const top = depthY(1.55)
   const track = context.createLinearGradient(0, top, 0, floor + 14)
-  track.addColorStop(0, palette.laneRedDark); track.addColorStop(1, palette.laneRed)
+  const miniature = scene.city.id === "seoul"
+  track.addColorStop(0, miniature && dusk(scene) ? palette.mud : miniature && night(scene) ? palette.cityNight : palette.laneRedDark)
+  track.addColorStop(1, miniature && dusk(scene) ? palette.mudLight : miniature && night(scene) ? palette.beltDark : palette.laneRed)
   context.fillStyle = scene.surface === "mud" && scene.weather === "sea" ? palette.sand : track
   context.fillRect(0, top, width, floor + 14 - top)
-  context.strokeStyle = palette.cloud; context.lineWidth = 1.5
+  context.strokeStyle = miniature && night(scene) ? palette.neonBlue : palette.cloud; context.lineWidth = 1.5
   for (const d of [1.12, 1.26, 1.4, 1.55]) { context.globalAlpha = 0.8; context.beginPath(); context.moveTo(0, depthY(d)); context.lineTo(width, depthY(d)); context.stroke() }
   context.globalAlpha = 1
   // Cross lines converge toward the vanishing point and scroll with the course: the 2.5D cue.
   context.save(); context.beginPath(); context.rect(0, top, width, floor + 14 - top); context.clip()
-  context.strokeStyle = palette.cloud; context.globalAlpha = 0.35; context.lineWidth = 2
+  context.strokeStyle = miniature && night(scene) ? palette.neonBlue : palette.cloud
+  context.globalAlpha = miniature && dusk(scene) ? 0.12 : 0.35; context.lineWidth = 2
   for (let x = -60 - wrap(travel * 1.6, 70); x < width + 70; x += 70) {
     const farX = vpX + (x - vpX) / 1.55
     context.beginPath(); context.moveTo(x, floor + 14); context.lineTo(farX, top); context.stroke()
   }
   context.restore()
+  if (miniature && dusk(scene)) {
+    // Broad shallow puddles read at phone size; all decoration stays on the ground.
+    context.save(); context.beginPath(); context.rect(0, top, width, floor + 10 - top); context.clip()
+    for (let row = 0; row < 3; row++) {
+      const y = top + (floor - top) * (0.2 + row * 0.31)
+      for (let x = -80 - wrap(travel * 1.6 + row * 43, 150); x < width + 80; x += 150) {
+        context.fillStyle = palette.mud; context.globalAlpha = 0.7
+        context.beginPath(); context.ellipse(x, y, 34 + row * 6, 5 + row * 2, -0.08, 0, Math.PI * 2); context.fill()
+        context.fillStyle = palette.rain; context.globalAlpha = 0.28
+        context.beginPath(); context.ellipse(x - 5, y - 1, 22, 2.5, -0.08, 0, Math.PI * 2); context.fill()
+      }
+    }
+    context.restore()
+  }
   // Weathered surface on slow-ground stages.
   if (scene.surface === "mud") {
     context.fillStyle = scene.weather === "rain" ? palette.rain : scene.weather === "petals" ? palette.petal : scene.weather === "sea" ? palette.mudLight : palette.heat
@@ -249,6 +270,17 @@ export function drawCityGround(context: CanvasRenderingContext2D, palette: GameP
   part(context, palette, palette.rail, -4, floor + 10, width + 8, 7, 3)
   context.fillStyle = field; context.fillRect(0, floor + 17, width, height - floor - 17)
   context.fillStyle = palette.outline; context.globalAlpha = 0.18; context.fillRect(0, floor + 17, width, 4); context.globalAlpha = 1
+  if (miniature) {
+    // A thick miniature plinth gives the course depth without changing the foot line.
+    context.fillStyle = night(scene) ? palette.cityNight : palette.mud
+    context.fillRect(left, floor + 21, width - left, 13)
+    context.fillStyle = night(scene) ? palette.neonBlue : palette.mudLight
+    context.globalAlpha = 0.65; context.fillRect(left, floor + 21, width - left, 3); context.globalAlpha = 1
+    if (night(scene)) {
+      context.fillStyle = palette.neonBlue
+      for (let x = left + 18 - wrap(travel * 1.6, 58); x < width; x += 58) context.fillRect(x, floor + 24, 18, 3)
+    }
+  }
 
   // The rear edge: the course drops away behind the start (same rule as the treadmill pit).
   const pit = context.createLinearGradient(0, floor - 4, 0, height)
@@ -270,6 +302,11 @@ export function drawCityGround(context: CanvasRenderingContext2D, palette: GameP
 }
 
 function prop(context: CanvasRenderingContext2D, palette: GamePalette, scene: CityScene, i: number) {
+  if (scene.city.id === "seoul") {
+    const id = i % 5 === 0 ? "rock" : i % 5 === 1 ? "gate" : "tree"
+    if (drawSceneProp(context, id, 0, 0, id === "rock" ? 36 : id === "gate" ? 72 : 58,
+      id === "rock" ? 22 : id === "gate" ? 60 : 76)) return
+  }
   context.lineWidth = 2; context.strokeStyle = palette.outline; context.lineJoin = "round"
   const n = night(scene)
   const kind = scene.weather === "sea" ? (i % 3 === 0 ? "palm" : i % 3 === 1 ? "umbrella" : "lamp")

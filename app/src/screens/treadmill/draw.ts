@@ -164,7 +164,7 @@ export function createTreadmillRenderer() {
       context.save()
       context.translate(toPx(hazard.x), floor)
       if (hazard.hit) { context.globalAlpha = 0.5; context.rotate(hazard.kind === "barrier" ? -0.5 : 0) }
-      drawHazard(context, palette, hazard.kind, Math.max(6, shape.halfWidth * beltWidth), shape.height, now)
+      drawHazard(context, palette, hazard.kind, Math.max(6, shape.halfWidth * beltWidth), shape.height, now, view.city?.id === "seoul")
       context.restore()
     }
 
