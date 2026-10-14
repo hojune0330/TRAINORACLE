@@ -18,6 +18,7 @@ import { TREADMILL_RULES, TREADMILL_UPGRADES } from "../../domain/minigame/tread
 import { drawRunner, gamePalette } from "./sprites"
 import { loadToriArt } from "./runner-art"
 import { CityPreview } from "./CityPreview"
+import { PartyIcon } from "./PartyIcon"
 import type { RunnerCharacter } from "./sprites"
 
 export function CharacterPortrait({ character, size = 64, pose = "idle", label }: {
@@ -80,7 +81,7 @@ export function TourMap({ progress, season, onSeason, onPlay, onPractice, status
             disabled={!unlocked} onClick={() => onPlay(city)}
             aria-label={`${city.name}${unlocked ? "" : " (잠김)"} · ${city.tagline}${stars ? ` · 별 ${stars}개` : ""}`}>
             {city.id === "seoul" && <CityPreview city={city} />}
-            <b className="treadmill-game__city-pin" aria-hidden="true">{unlocked ? <MapPin size={18} /> : <Lock size={16} />}</b>
+            <b className="treadmill-game__city-pin" aria-hidden="true"><PartyIcon id="track-island" size={58} fallback={<MapPin size={18} />} />{!unlocked && <Lock className="treadmill-game__city-lock-badge" size={16} />}</b>
             <span className="treadmill-game__city-text">
               <strong>{city.name}<small>{city.country}</small></strong>
               <span>{city.tagline}</span>
@@ -289,6 +290,7 @@ export function GameMenu({ progress, status, onClose, onSettings, onCharacter, o
 
       {tab === "licenses" && <div role="tabpanel" id="treadmill-panel-licenses" aria-labelledby="treadmill-tab-licenses" className="treadmill-game__panel">
         <p>토리와 서울 코스의 나무·바위·허들·체크포인트·러닝화·전망탑은 Tripo Studio에서 생성하고 Blender에서 가공한 그림이에요. 나머지 캐릭터·도시 배경과 효과음은 코드로 직접 그리거나 합성했어요. 전망탑은 실제 건축물을 단순화한 가상의 미니어처예요.</p>
+        <p>미니 트랙 섬·리젠 비콘·점프 발판·보급 캡슐·강화 코어도 Tripo 생성 원형을 가공했어요. 보급 링·입자 효과는 Blender에서 제작했어요. 트랙 섬은 도시의 실제 지도를 뜻하지 않는 공통 코스 아이콘이에요.</p>
         <p><a href="https://www.tripo3d.ai/terms" target="_blank" rel="noreferrer">Tripo 에셋 이용약관</a> · 아래 오픈소스 라이선스와 캐릭터 그림의 사용 권한은 별개예요.</p>
         <p className="treadmill-game__fine">달리기 동작 참고: Eadweard Muybridge, 《Animal Locomotion》 Plate 65 “Running full speed”(1887), 퍼블릭 도메인 · Boston Public Library / <a href="https://commons.wikimedia.org/wiki/File:Animal_locomotion._Plate_65_(Boston_Public_Library).jpg" target="_blank" rel="noreferrer">Wikimedia Commons</a>. 사진을 옮기지 않고 관절 각도만 참고했어요.</p>
         <ul className="treadmill-game__licenses">

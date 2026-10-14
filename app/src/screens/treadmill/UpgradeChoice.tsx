@@ -3,6 +3,7 @@ import { Footprints, MoveUp, Zap, ArrowRight } from "lucide-react"
 import { applyUpgrade, TREADMILL_RULES, TREADMILL_UPGRADES } from "../../domain/minigame/treadmill"
 import type { TreadmillState, TreadmillStage, TreadmillUpgrade } from "../../domain/minigame/treadmill"
 import { GearArt } from "./GearArt"
+import { PartyEffect } from "./PartyEffect"
 
 export const UPGRADE_STORIES = {
   grip: { title: "진흙에서 덜 밀리기", detail: "접지 밑창", effect: "진흙을 딛고 앞으로!", tradeoff: "대신 점프할 때 힘을 더 써요", Icon: Footprints },
@@ -32,8 +33,9 @@ export function upgradePreview(state: TreadmillState, id: TreadmillUpgrade) {
   }
 }
 
-export function UpgradeChoice({ state, nextStage, onPick }: {
+export function UpgradeChoice({ state, nextStage, onPick, reduced = false }: {
   readonly state: TreadmillState; readonly nextStage: TreadmillStage; readonly onPick: (id: TreadmillUpgrade) => void
+  readonly reduced?: boolean
 }) {
   const [explaining, setExplaining] = useState(state.upgrades.length === 0)
   useEffect(() => {
@@ -45,6 +47,7 @@ export function UpgradeChoice({ state, nextStage, onPick }: {
     <section className="treadmill-game__card treadmill-game__pick upgrade-choice" aria-labelledby="treadmill-upgrade-title">
       <span className="treadmill-game__ribbon" data-tone="gold">{state.stage + 1}구간 통과!</span>
       {explaining ? <div className="upgrade-choice__intro" role="status">
+        <PartyEffect reduced={reduced} />
         <h2 id="treadmill-upgrade-title">이번 판의 능력을 바꿔요</h2>
         <div className="upgrade-choice__effects" aria-label="강화 효과 미리보기">
           {TREADMILL_UPGRADES.map(item => {

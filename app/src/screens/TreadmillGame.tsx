@@ -25,6 +25,8 @@ import type { RenderView } from "./treadmill/draw"
 import { drawRunner } from "./treadmill/sprites"
 import { loadToriArt } from "./treadmill/runner-art"
 import { loadSceneArt } from "./treadmill/scene-art"
+import { loadPartyArt } from "./treadmill/party-art"
+import { PartyIcon } from "./treadmill/PartyIcon"
 import type { GamePalette, RunnerCharacter } from "./treadmill/sprites"
 import { fxPalette, mountShaderSky } from "./treadmill/shader-sky"
 import type { ShaderSky } from "./treadmill/shader-sky"
@@ -111,6 +113,7 @@ function SoloTreadmillGame({ onBack, backLabel, onFriends }: { readonly onBack: 
   React.useEffect(() => {
     if (character === "tori") void loadToriArt()
     void loadSceneArt()
+    void loadPartyArt()
   }, [character])
   const [screen, setScreen] = React.useState<Screen>("map")
   const [course, setCourse] = React.useState<Course>({ kind: "city", city: TOUR_CITIES[0]! })
@@ -469,7 +472,7 @@ function SoloTreadmillGame({ onBack, backLabel, onFriends }: { readonly onBack: 
         onPointerUp={event => { gestures.current.up(event.pointerId, { x: event.clientX, y: event.clientY, time: event.timeStamp }); updateHeld() }}
         onPointerCancel={event => { gestures.current.cancel(event.pointerId); updateHeld() }}
         onLostPointerCapture={event => { gestures.current.cancel(event.pointerId); updateHeld() }} />
-      {running && view.countdown > 0 && equipped && <div className="treadmill-game__equipped" role="status"><strong>{upgradeName(equipped)} 장착!</strong><span>{UPGRADE_STORIES[equipped].effect}</span></div>}
+      {running && view.countdown > 0 && equipped && <div className="treadmill-game__equipped" role="status"><PartyIcon id="upgrade-core" size={48} /><strong>{upgradeName(equipped)} 장착!</strong><span>{UPGRADE_STORIES[equipped].effect}</span></div>}
 
       {view.mode === "paused" && !menuOpen && !leave && <div className="treadmill-game__overlay">
         <div className="treadmill-game__card treadmill-game__card--small">
@@ -506,7 +509,7 @@ function SoloTreadmillGame({ onBack, backLabel, onFriends }: { readonly onBack: 
         </section>
       </div>}
 
-      {view.mode === "upgrade" && nextStage && <UpgradeChoice state={view} nextStage={nextStage} onPick={pickUpgrade} />}
+      {view.mode === "upgrade" && nextStage && <UpgradeChoice state={view} nextStage={nextStage} onPick={pickUpgrade} reduced={reduced} />}
 
       {ended && <div className="treadmill-game__overlay">
         <section className="treadmill-game__card treadmill-game__result" aria-labelledby="treadmill-result-title" data-result={view.mode}>

@@ -3,6 +3,7 @@ import { TOUR_CITIES } from '../../domain/minigame/tour'
 import { drawHazard, drawRunner, outlinedText } from './sprites'
 import type { GamePalette } from './sprites'
 import type { ArenaSnapshot } from './arena-types'
+import { drawPartyProp } from './party-art'
 
 export function drawArena(ctx: CanvasRenderingContext2D, palette: GamePalette, snapshot: ArenaSnapshot,
   selfId: string, width: number, height: number, reduced: boolean, visualTime: number) {
@@ -25,6 +26,11 @@ export function drawArena(ctx: CanvasRenderingContext2D, palette: GamePalette, s
   ctx.globalAlpha = 1; ctx.fillStyle = palette.danger; ctx.fillRect(width * .055, floor - 30 * scale, 4, 100 * scale)
   const font = 'system-ui, sans-serif'
   outlinedText(ctx, '낙하선', width * .12, floor + 86 * scale, 12, palette.cloud, palette.outline, font)
+  // Spawn art is scenery: hazards and active players always paint over it.
+  for (const p of game.players) if (p.state === 'respawning') {
+    const spawnX = (p.slot === 0 ? .53 : .68) * width
+    drawPartyProp(ctx, 'respawn-beacon', spawnX, floor + p.slot * 12 - 18, 72 * scale)
+  }
   for (const h of game.hazards) {
     ctx.save(); ctx.translate(h.x * width, floor + 5); ctx.scale(scale, scale)
     if (h.kind === 'hurdle') drawHazard(ctx, palette, 'barrier', 15, 36, true)

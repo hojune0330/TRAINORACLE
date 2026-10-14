@@ -7,6 +7,7 @@ import { gamePalette } from './sprites'
 import { drawArena } from './arena-render'
 import { loadToriArt } from './runner-art'
 import { loadSceneArt } from './scene-art'
+import { loadPartyArt } from './party-art'
 import { GameLeaveDialog } from './GameLeaveDialog'
 import { useTaskFlowBack } from '../../hooks/useTaskFlowBack'
 import './friend-arena.css'
@@ -111,6 +112,7 @@ export function FriendArena({ onBack }: { readonly onBack: () => void }) {
     const node = canvas.current, ctx = node?.getContext('2d')
     if (!node || !ctx) return
     void loadToriArt(); void loadSceneArt()
+    void loadPartyArt()
     let frame = 0, last = performance.now(), painted: ArenaSnapshot | null = null
     const palette = gamePalette(node), reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
     const paint = (now: number) => {

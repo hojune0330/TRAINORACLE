@@ -7,6 +7,7 @@ import type { CityFrame } from "./city-art"
 import type { TourCity } from "../../domain/minigame/tour"
 import { createRunnerCamera } from "./camera"
 import { presentedHazards } from "./hazard-view"
+import { drawPartyProp } from "./party-art"
 
 export { gamePalette }
 export type { GamePalette }
@@ -41,6 +42,7 @@ export function createTreadmillRenderer() {
   let lastNow = 0
   let dustTimer = 0
   let seed = 1
+  let supplyAt = -10
   const random = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646 }
 
   let fewer = false
@@ -56,11 +58,12 @@ export function createTreadmillRenderer() {
     const before = previous
     previous = state
     if (!before) return
-    if (state.mode === "running" && before.mode !== "running" && state.countdown > 0 && treadmillElapsed(state) === 0) { particles = []; popups = [] }
+    if (state.mode === "running" && before.mode !== "running" && state.countdown > 0 && treadmillElapsed(state) === 0) { particles = []; popups = []; supplyAt = -10 }
     if ((state.mode === "over" || state.mode === "clear") && before.mode !== state.mode) endedAt = clock
     // A new stage starts clean, so the "구간 통과!" popup never sits under the countdown.
     if (state.stage !== before.stage) popups = []
     if (state.stage === before.stage && state.mode === "running" && Math.floor(state.seconds / TREADMILL_RULES.waveSeconds) > Math.floor(before.seconds / TREADMILL_RULES.waveSeconds)) {
+      supplyAt = clock
       popups.push({ x: runnerX, y: footY - 95, text: `보급! 에너지 +${Math.round(Math.max(0, state.energy - before.energy))}`, life: 1.4, color: "good", size: 21 })
     }
     if (state.stats.hits > before.stats.hits) {
@@ -167,7 +170,15 @@ export function createTreadmillRenderer() {
       roundRect(context, runnerX + from * beltWidth, floor + 2, (to - from) * beltWidth, 4, 2)
       context.fillStyle = palette.gold; context.fill()
       context.globalAlpha = 1
+      if (inWindow) drawPartyProp(context, "jump-pad", runnerX, floor + 18, 48)
     }
+
+    // Event art is below hazards and bodies in paint order; never blocks input.
+    if (clock - supplyAt < .64 && state.mode === "running") {
+      drawPartyProp(context, "supply-capsule", Math.max(55, runnerX - 72), floor - 88,
+        reduced || low ? 56 : 108, clock - supplyAt, reduced || low)
+      if (context.canvas.dataset) context.canvas.dataset.partySupply = "visible"
+    } else if (context.canvas.dataset) delete context.canvas.dataset.partySupply
 
     const hazards = presentedHazards(state)
     const visibleHazards: { id: number; x: number; scheduled: boolean }[] = []
