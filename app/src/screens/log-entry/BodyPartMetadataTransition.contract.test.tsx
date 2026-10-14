@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
@@ -6,9 +7,10 @@ import { hasPendingBrowserBackLayer } from "../../navigation/browserNavigation"
 import { PostSessionForm } from "./PostSessionForm"
 import { QuickSessionForm } from "./QuickSessionForm"
 
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear()
   sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 
 afterEach(async () => {

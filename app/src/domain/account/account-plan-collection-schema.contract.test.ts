@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
 import { TODAY } from "../prescription-quality-matrix.test-fixtures"
@@ -11,17 +12,17 @@ import {
   joinAccountPlanCollection, splitAccountPlanCollection, type AccountPlanCollectionParts,
 } from "./account-plan-collection-schema"
 
-beforeEach(() => { localStorage.clear(); vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date(TODAY.getTime() + 120_000)) })
+beforeEach(async () => { localStorage.clear(); await initializeCanonicalJournalFixture(); vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date(TODAY.getTime() + 120_000)) })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 const bytes = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).byteLength
 const hash = (value: unknown) => canonicalJsonFingerprint("trainoracle.account-plan-collection.v1", value)
 const copy = <T>(value: T): T => structuredClone(value)
 
 // Same real versioned packets and distinct timestamps as the existing capacity fixture.
-function fixture(version: 3 | 4 | 5 | 6 = 3, count = 2): AccountPlanDocument {
+async function fixture(version: 3 | 4 | 5 | 6 = 3, count = 2): Promise<AccountPlanDocument> {
   const document = emptyAccountPlanDocument()
   for (let i = 0; i < count; i++) {
-    localStorage.clear()
+    localStorage.clear(); await initializeCanonicalJournalFixture();
     const entry = accountPlanEntry(accountPlanPacketFixture(version, new Date(TODAY.getTime() + i * 1000)))
     const state = entry.snapshot.state
     const session = (state.version === 2 || state.version === 3 ? state.activePlan : state.selection.activePlan).sessions[0]!
@@ -37,9 +38,9 @@ function freeze(value: unknown): void {
   if (value && typeof value === "object") { Object.values(value).forEach(freeze); Object.freeze(value) }
 }
 
-it("round trips empty and V3 collections with detached data and no source mutation", () => {
+it("round trips empty and V3 collections with detached data and no source mutation", async () => {
   expect(joinAccountPlanCollection(splitAccountPlanCollection(emptyAccountPlanDocument()))).toEqual(emptyAccountPlanDocument())
-  const source = fixture(), before = copy(source)
+  const source = (await fixture()), before = copy(source)
   freeze(source)
   const parts = splitAccountPlanCollection(source), partsBefore = copy(parts)
   freeze(parts)
@@ -52,8 +53,8 @@ it("round trips empty and V3 collections with detached data and no source mutati
   expect(splitAccountPlanCollection(source)).toEqual(parts)
 })
 
-it.each([4, 5, 6] as const)("V%s retains 18 real frames where the monolith fails", version => {
-  const document = fixture(version, 18), before = copy(document)
+it.each([4, 5, 6] as const)("V%s retains 18 real frames where the monolith fails", async version => {
+  const document = (await fixture(version, 18)), before = copy(document)
   expect(validateAccountPlanDocument(document)).toBe(false)
   expect(bytes(document)).toBeGreaterThan(ACCOUNT_PLAN_MAX_BYTES)
   const splitStart = performance.now()
@@ -76,16 +77,16 @@ it.each([4, 5, 6] as const)("V%s retains 18 real frames where the monolith fails
 
 // Full real-packet generation and integrity coverage, not a UI latency budget.
 // Keep the 100-entry assertions intact under concurrent CI worker contention.
-it.each([3, 4, 5, 6] as const)("V%s round trips all 100 retained real frames without trimming", version => {
-  const document = fixture(version, 100), parts = splitAccountPlanCollection(document)
+it.each([3, 4, 5, 6] as const)("V%s round trips all 100 retained real frames without trimming", async version => {
+  const document = (await fixture(version, 100)), parts = splitAccountPlanCollection(document)
   expect(parts.index.plans).toHaveLength(100)
   expect(joinAccountPlanCollection(parts)).toEqual(document)
   expect(bytes(parts.index)).toBeLessThan(100_000)
   for (const part of [...parts.snapshots, ...parts.progress]) expect(bytes(part)).toBeLessThanOrEqual(ACCOUNT_PLAN_MAX_BYTES)
 }, 240_000)
 
-it("keeps snapshots stable and makes progress/archive revisions content addressed", () => {
-  const document = fixture(), original = splitAccountPlanCollection(document)
+it("keeps snapshots stable and makes progress/archive revisions content addressed", async () => {
+  const document = (await fixture()), original = splitAccountPlanCollection(document)
   document.data.plans[1]!.progress = []
   const next = splitAccountPlanCollection(document)
   expect(next.snapshots).toEqual(original.snapshots)
@@ -103,8 +104,8 @@ it("keeps snapshots stable and makes progress/archive revisions content addresse
   expect(joinAccountPlanCollection(archived)).toEqual(document)
 })
 
-it("accepts unordered physical parts but preserves index history order", () => {
-  const document = fixture(), parts = splitAccountPlanCollection(document)
+it("accepts unordered physical parts but preserves index history order", async () => {
+  const document = (await fixture()), parts = splitAccountPlanCollection(document)
   parts.snapshots.reverse(); parts.progress.reverse()
   expect(joinAccountPlanCollection(parts)).toEqual(document)
   parts.index.plans.reverse()
@@ -136,20 +137,20 @@ const corruptions: [string, (parts: AccountPlanCollectionParts) => void][] = [
   ["unknown part field", p => { Reflect.set(p.progress[0]!, "extra", true) }],
   ["unknown wrapper field", p => { Reflect.set(p, "extra", true) }],
 ]
-it.each(corruptions)("rejects %s", (_name, corrupt) => {
-  const parts = splitAccountPlanCollection(fixture())
+it.each(corruptions)("rejects %s", async (_name, corrupt) => {
+  const parts = splitAccountPlanCollection((await fixture()))
   corrupt(parts)
   expect(joinAccountPlanCollection(parts)).toBeNull()
 })
 
-it.each([4, 5, 6] as const)("V%s rejects changed evidence", version => {
-  const parts = splitAccountPlanCollection(fixture(version, 1))
+it.each([4, 5, 6] as const)("V%s rejects changed evidence", async version => {
+  const parts = splitAccountPlanCollection((await fixture(version, 1)))
   Reflect.set(parts.snapshots[0]!.snapshot.evidence!, "policies", [])
   expect(joinAccountPlanCollection(parts)).toBeNull()
 })
 
-it.each([4, 5, 6] as const)("V%s fully validates packets even after all tampered evidence hashes are recomputed", version => {
-  const document = fixture(version, 1), parts = splitAccountPlanCollection(document)
+it.each([4, 5, 6] as const)("V%s fully validates packets even after all tampered evidence hashes are recomputed", async version => {
+  const document = (await fixture(version, 1)), parts = splitAccountPlanCollection(document)
   const entry = document.data.plans[0]!, snapshot = parts.snapshots[0]!, progress = parts.progress[0]!
   Reflect.set(entry.snapshot.evidence!, "policies", [])
   entry.planId = accountPlanFingerprint(entry.snapshot)
@@ -165,8 +166,8 @@ it.each([4, 5, 6] as const)("V%s fully validates packets even after all tampered
   expect(joinAccountPlanCollection(parts)).toBeNull()
 })
 
-it("still validates logical progress and current/archive lineage even with recomputed hashes", () => {
-  const document = fixture(), parts = splitAccountPlanCollection(document)
+it("still validates logical progress and current/archive lineage even with recomputed hashes", async () => {
+  const document = (await fixture()), parts = splitAccountPlanCollection(document)
   document.data.plans[0]!.progress = [{ sessionDay: 99, sessionSlot: "AM", state: "COMPLETED" }]
   parts.progress[0]!.progress = document.data.plans[0]!.progress
   const { id: _id, ...revision } = parts.progress[0]!
@@ -176,29 +177,29 @@ it("still validates logical progress and current/archive lineage even with recom
   parts.index.documentFingerprint = hash(document)
   expect(joinAccountPlanCollection(parts)).toBeNull()
   expect(() => splitAccountPlanCollection(document)).toThrow("Invalid account plan collection source")
-  const valid = fixture(), archivedPointer = splitAccountPlanCollection(valid)
+  const valid = (await fixture()), archivedPointer = splitAccountPlanCollection(valid)
   valid.data.currentPlanId = valid.data.plans[0]!.planId
   archivedPointer.index.currentPlanId = valid.data.currentPlanId
   archivedPointer.index.documentFingerprint = hash(valid)
   expect(joinAccountPlanCollection(archivedPointer)).toBeNull()
 })
 
-it("rejects 101 refs and noncanonical/unknown logical input", () => {
-  const source = fixture(3, 101)
+it("rejects 101 refs and noncanonical/unknown logical input", async () => {
+  const source = (await fixture(3, 101))
   expect(() => splitAccountPlanCollection(source)).toThrow()
-  const parts = splitAccountPlanCollection(fixture())
+  const parts = splitAccountPlanCollection((await fixture()))
   parts.index.plans = Array.from({ length: 101 }, () => copy(parts.index.plans[0]!))
   expect(joinAccountPlanCollection(parts)).toBeNull()
   for (const value of [null, undefined, {}, [], { ...parts, extra: undefined }]) expect(joinAccountPlanCollection(value)).toBeNull()
   const cyclic: Record<string, unknown> = {}; cyclic.self = cyclic
   expect(joinAccountPlanCollection(cyclic)).toBeNull()
-  const invalid = fixture()
+  const invalid = (await fixture())
   Reflect.set(invalid, "extra", true)
   expect(() => splitAccountPlanCollection(invalid)).toThrow()
 })
 
-it("counts UTF-8 physical bytes including envelopes at the exact 500000 boundary (isolated size gate)", () => {
-  const source = fixture(3, 1), baseline = splitAccountPlanCollection(source)
+it("counts UTF-8 physical bytes including envelopes at the exact 500000 boundary (isolated size gate)", async () => {
+  const source = (await fixture(3, 1)), baseline = splitAccountPlanCollection(source)
   // Isolate capacity from packet field limits, as in the existing document size contract.
   Reflect.set(source.data.plans[0]!.snapshot, "padding", "")
   Reflect.set(baseline.snapshots[0]!.snapshot, "padding", "")

@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { beforeEach, expect, it, vi } from "vitest"
 import { accountPlanPacketFixture } from "./account/account-plan.test-fixtures"
 import { accountPlanEntry, emptyAccountPlanDocument } from "./account/account-plan-document-schema"
@@ -22,10 +23,11 @@ function accountView(packet: ReturnType<typeof accountPlanPacketFixture>) {
   }
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   setActiveLocalAccount(null)
   window.localStorage.clear()
   window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
   runtime.snapshot.mockReset()
 })
 

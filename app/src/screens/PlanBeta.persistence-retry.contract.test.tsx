@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
@@ -22,9 +23,10 @@ async function openFirstProgress(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe("active plan persistence retry", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     window.localStorage.clear()
     window.sessionStorage.clear()
+    await initializeCanonicalJournalFixture()
     locksDescriptor = Object.getOwnPropertyDescriptor(navigator, "locks")
     Object.defineProperty(navigator, "locks", {
       configurable: true,

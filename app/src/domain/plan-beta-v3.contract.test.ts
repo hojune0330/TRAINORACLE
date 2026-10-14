@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   generatePlanFromDraft,
@@ -43,7 +44,8 @@ afterEach(() => {
 })
 
 describe("stored plan v3 target and preview boundary", () => {
-  it("requires and binds one exact target event plus an explicit null template selection", () => {
+  it("requires and binds one exact target event plus an explicit null template selection", async () => {
+    await initializeCanonicalJournalFixture()
     const missingTarget = generatePlanFromDraft(
       { ...DRAFT, eventDistanceM: undefined },
       "NO_KNOWN_RISK",
@@ -119,7 +121,8 @@ describe("stored plan v3 target and preview boundary", () => {
     expect(window.sessionStorage.length).toBe(0)
   })
 
-  it("creates a v3 active snapshot from a generated candidate", () => {
+  it("creates a v3 active snapshot from a generated candidate", async () => {
+    await initializeCanonicalJournalFixture()
     const result = generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK")
     if (result.kind !== "generated") throw new TypeError("Expected generated v3 fixture")
 
@@ -156,7 +159,8 @@ describe("stored plan v3 target and preview boundary", () => {
     })
   })
 
-  it("keeps target event distinct from cross-event evidence and falls back atomically", () => {
+  it("keeps target event distinct from cross-event evidence and falls back atomically", async () => {
+    await initializeCanonicalJournalFixture()
     const record = createSelfReportedAthleteRecord({
       id: "00000000-0000-4000-8000-000000005000",
       purpose: "RECENT_RESULT",
@@ -186,7 +190,8 @@ describe("stored plan v3 target and preview boundary", () => {
     ))).toBe(true)
   })
 
-  it("binds one explicitly selected exact-event template to both candidates", () => {
+  it("binds one explicitly selected exact-event template to both candidates", async () => {
+    await initializeCanonicalJournalFixture()
     const record = createSelfReportedAthleteRecord({
       id: "00000000-0000-4000-8000-000000001500",
       purpose: "RECENT_RESULT",
@@ -215,7 +220,8 @@ describe("stored plan v3 target and preview boundary", () => {
     ))).toBe(true)
   })
 
-  it("rejects an active detailed plan whose primary template no longer matches its session", () => {
+  it("rejects an active detailed plan whose primary template no longer matches its session", async () => {
+    await initializeCanonicalJournalFixture()
     const record = createSelfReportedAthleteRecord({
       id: "00000000-0000-4000-8000-000000001501",
       purpose: "RECENT_RESULT",
@@ -255,7 +261,8 @@ describe("stored plan v3 target and preview boundary", () => {
     expect(planBetaStateV3Schema.safeParse(forged).success).toBe(false)
   })
 
-  it("invalidates coordinated candidate and pair mutations at selection", () => {
+  it("invalidates coordinated candidate and pair mutations at selection", async () => {
+    await initializeCanonicalJournalFixture()
     const original = generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK")
     if (original.kind !== "generated") throw new TypeError("Expected generated v3 fixture")
     const [balanced, conservative] = original.generated.candidates
@@ -298,7 +305,8 @@ describe("stored plan v3 target and preview boundary", () => {
     expect(window.sessionStorage.length).toBe(0)
   })
 
-  it("leaves no persistent race-date bytes and cannot select or save a preview", () => {
+  it("leaves no persistent race-date bytes and cannot select or save a preview", async () => {
+    await initializeCanonicalJournalFixture()
     const urlBefore = window.location.href
     const historyBefore = JSON.stringify(window.history.state)
     const fetchSpy = vi.spyOn(globalThis, "fetch")
@@ -338,7 +346,8 @@ describe("stored plan v3 target and preview boundary", () => {
     expect(fetchSpy).not.toHaveBeenCalled()
   })
 
-  it("preserves invalid stored bytes while rejecting identity tampering", () => {
+  it("preserves invalid stored bytes while rejecting identity tampering", async () => {
+    await initializeCanonicalJournalFixture()
     const generated = generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK")
     if (generated.kind !== "generated") throw new TypeError("Expected generated v3 fixture")
     const selected = selectPlanForActivation(
@@ -359,7 +368,8 @@ describe("stored plan v3 target and preview boundary", () => {
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBe(tampered)
   })
 
-  it("rejects retained candidate identity after stored support-session bytes change", () => {
+  it("rejects retained candidate identity after stored support-session bytes change", async () => {
+    await initializeCanonicalJournalFixture()
     const generated = generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK")
     if (generated.kind !== "generated") throw new TypeError("Expected generated v3 fixture")
     const selected = selectPlanForActivation(

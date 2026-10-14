@@ -1,9 +1,12 @@
-import { describe, expect, it } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
+import { beforeEach, describe, expect, it } from "vitest"
 import { generatePlanFromDraft } from "./plan-beta-flow"
 import { findCatalogConditionReview } from "./catalog-condition-review"
 import { replaceCandidateCatalogWorkout } from "./catalog-plan-binding"
 import { catalogScheduleConditions, isCatalogEnvironmentRequirement } from "./catalog-schedule-conditions"
 import { ALL_WORKOUT_CATALOG } from "@impl/prescription/all-workout-calculator"
+
+beforeEach(async () => { await initializeCanonicalJournalFixture() })
 
 function fixture() {
   const source = generatePlanFromDraft({ eventGroup: "FIVE_K", eventDistanceM: 5000,

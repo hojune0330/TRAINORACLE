@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -40,12 +41,12 @@ const TEMPLATE_5000 = {
 const TEST_SYSTEM_TIME = new Date("2026-08-18T12:00:00.000Z")
 let locksDescriptor: PropertyDescriptor | undefined
 
-beforeEach(() => {
+beforeEach(async () => {
   /* PB/SB recency and active-frame fixtures must not expire when the calendar advances. */
   vi.useFakeTimers({ toFake: ["Date"] })
   vi.setSystemTime(TEST_SYSTEM_TIME)
   window.localStorage.clear()
-  window.sessionStorage.clear()
+  window.sessionStorage.clear(); await initializeCanonicalJournalFixture()
   locksDescriptor = Object.getOwnPropertyDescriptor(navigator, "locks")
   Object.defineProperty(navigator, "locks", {
     configurable: true,

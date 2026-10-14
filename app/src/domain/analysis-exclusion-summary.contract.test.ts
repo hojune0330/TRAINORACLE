@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 // Q1 계약 — 추이 화면에서 빠지는 일지를 정확히 센다.
 //
 // 왜 이 파일이 있는가:
@@ -65,7 +66,8 @@ const ALL_IMPORTED = {
 }
 
 describe("analysisExclusionSummary", () => {
-  beforeEach(() => { window.localStorage.clear() })
+  beforeEach(async () => { window.localStorage.clear()
+  await initializeCanonicalJournalFixture() })
 
   it("일지가 없으면 모두 0이다", () => {
     expect(analysisExclusionSummary()).toEqual({

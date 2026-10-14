@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { JournalEntry } from "../../domain/journal-store"
@@ -5,9 +6,9 @@ import { loadEntries, replaceAllEntries } from "../../domain/journal-store"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 import { RaceForm } from "./RaceForm"
 
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear()
-  sessionStorage.clear()
+  sessionStorage.clear(); await initializeCanonicalJournalFixture()
   setActiveLocalAccount(null)
   vi.stubEnv("VITE_FEATURE_ACCOUNT_JOURNAL", "false")
   vi.stubEnv("VITE_KILL_ACCOUNT_JOURNAL", "true")

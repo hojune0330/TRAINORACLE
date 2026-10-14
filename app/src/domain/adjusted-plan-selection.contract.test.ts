@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { selectAdjustedPlanForActivation } from "./adjusted-plan-selection"
 import { adjustedPlanSelectionFixture as fixture } from "./adjusted-plan-selection.test-fixtures"
@@ -6,7 +7,7 @@ import { setActiveLocalAccount } from "./account/local-journal-ownership"
 import { TODAY } from "./prescription-quality-matrix.test-fixtures"
 
 const now = TODAY.getTime()
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 
 describe("explicit adjusted whole-plan selection", () => {

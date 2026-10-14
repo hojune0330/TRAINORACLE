@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
@@ -9,7 +10,7 @@ import { enterPlanWithoutRecord } from "./plan-beta/instant-plan.test-helper"
 import * as legacyArchive from "../domain/legacy-plan-archive"
 import { hasPendingBrowserBackLayer } from "../navigation/browserNavigation"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null) })
 afterEach(async () => {
   cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals()
   await waitFor(() => expect(hasPendingBrowserBackLayer()).toBe(false))

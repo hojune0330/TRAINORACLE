@@ -1,10 +1,11 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { EveningCheckin } from "./EveningCheckin"
 import { EntryChooser } from "./EntryChooser"
 import { loadEntries } from "../../domain/journal-store"
 
-beforeEach(() => localStorage.clear())
+beforeEach(async () => { localStorage.clear(); await initializeCanonicalJournalFixture() })
 afterEach(cleanup)
 
 it("names both multi-exercise and memo choices without adding another required choice", () => {

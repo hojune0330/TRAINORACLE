@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 // 가져오기 초안·저장 계약 테스트 (IMP-2).
 //
 // 계약:
@@ -96,8 +97,8 @@ describe("file identity candidate review", () => {
     expect(draft.requiresIdentityChoice).toBe(true)
   })
 
-  it("honors explicit exclusion on the legacy local path", () => {
-    window.localStorage.clear()
+  it("honors explicit exclusion on the legacy local path", async () => {
+    window.localStorage.clear(); await initializeCanonicalJournalFixture();
     const source = activity(), draft = buildImportDrafts([source], [])[0]!
     expect(confirmImportDrafts([{ draft, intent: { kind: "EXCLUDE" } }], "csv"))
       .toMatchObject({ saved: 0, failed: 0, excluded: 1 })
@@ -106,8 +107,8 @@ describe("file identity candidate review", () => {
 })
 
 describe("imported activity save", () => {
-  beforeEach(() => {
-    window.localStorage.clear()
+  beforeEach(async () => {
+    window.localStorage.clear(); await initializeCanonicalJournalFixture();
   })
 
   it("가져온 활동을 실제로 저장한다", () => {
@@ -185,8 +186,8 @@ describe("imported activity save", () => {
 })
 
 describe("import duplicate detection", () => {
-  beforeEach(() => {
-    window.localStorage.clear()
+  beforeEach(async () => {
+    window.localStorage.clear(); await initializeCanonicalJournalFixture();
   })
 
   it("같은 날 비슷한 거리의 기존 일지를 중복으로 표시한다", () => {

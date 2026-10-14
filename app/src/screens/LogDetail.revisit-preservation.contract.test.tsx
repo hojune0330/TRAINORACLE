@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -12,8 +13,9 @@ const ENTRY_ID = "past-local-entry"
 afterEach(cleanup)
 
 describe("past journal preservation before revisit work", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
     window.history.replaceState({}, "", "/?app=1")
   })
 

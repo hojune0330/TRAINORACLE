@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
@@ -15,7 +16,7 @@ import { generateAdjustedNextFrameFromDraft } from "./plan-beta-flow"
 import { loadAthleteRecords } from "./athlete-records"
 import { adjustedPlanSelectionFixture } from "./adjusted-plan-selection.test-fixtures"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 
 function fixture() {

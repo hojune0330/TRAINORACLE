@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import React from "react"
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
@@ -33,8 +34,9 @@ function seed(entry: JournalEntry) {
   mocks.entries = [entry]
   expect(putAccountJournalProjection(owner, entry)).toBe(true)
 }
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
+  await initializeCanonicalJournalFixture()
   mocks.entries = []; mocks.enabled = true; mocks.persist.mockReset()
   mocks.persist.mockResolvedValue({ ok: true, storage: "ACCOUNT" })
   mocks.readFinalization.mockReset().mockResolvedValue(null)

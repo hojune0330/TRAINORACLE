@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import {
@@ -37,7 +38,8 @@ describe("journal reader chrome", () => {
     expect(heading).toHaveTextContent("2026 · 09 · 27")
   })
 
-  it("labels a local record by its actual browser storage", () => {
+  it("labels a local record by its actual browser storage", async () => {
+    await initializeCanonicalJournalFixture()
     render(<LogDetail date={date} entries={[entry]} />)
     expect(screen.getByText("이 브라우저에 저장됨")).toBeVisible()
     expect(screen.queryByText("이 기기")).toBeNull()

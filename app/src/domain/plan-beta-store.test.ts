@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   archiveAndClearActivePlan,
@@ -46,10 +47,11 @@ function multiPlanPacketFixture() {
 }
 
 describe("plan beta local store", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     setActiveLocalAccount(null)
     window.localStorage.clear()
     window.sessionStorage.clear()
+    await initializeCanonicalJournalFixture()
     locksDescriptor = Object.getOwnPropertyDescriptor(navigator, "locks")
     Object.defineProperty(navigator, "locks", {
       configurable: true,

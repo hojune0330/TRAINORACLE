@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { generatePlanFromDraft, selectPlanForActivation } from "./plan-beta-flow"
 import { RUNTIME_CASES, draftFor, saveCurrentRecord, TODAY } from "./prescription-quality-matrix.test-fixtures"
@@ -6,7 +7,7 @@ import { snapshotPlanMainDraft } from "./plan-main-draft"
 import { isInitialCandidatePair, isSupportOnlyCandidatePair } from "@impl/plan-generator/support-only-candidate-pair"
 import { rebindCandidatePairIdentity } from "@impl/plan-generator/candidate-identity"
 
-beforeEach(() => { localStorage.clear(); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); await initializeCanonicalJournalFixture(); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { vi.useRealTimers() })
 
 it.each(RUNTIME_CASES.slice(0, 4))("$eventDistanceM: moving A preserves B and keeps one detailed MAIN in each", fixture => {

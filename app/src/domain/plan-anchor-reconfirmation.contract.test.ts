@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { activeAthleteRecordsStorageKey, createSelfReportedAthleteRecord, saveAthleteRecord } from "./athlete-records"
 import { PLAN_METHOD_REGISTRY } from "./plan-method-registry"
@@ -28,7 +29,7 @@ function fixture() {
   if (bound.kind !== "bound") throw new Error("Expected bound exact prescription")
   return { ...plan, generated: bound.generated }
 }
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); vi.useFakeTimers(); vi.setSystemTime(now) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); vi.useFakeTimers(); vi.setSystemTime(now) })
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks() })
 
 it("accepts unchanged facts across a calendar-label change without modifying prescription", () => {

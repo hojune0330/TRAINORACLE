@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -11,7 +12,7 @@ import * as prescriptionSchema from "../domain/plan-session-schema"
 import { isoShift } from "../domain/dates"
 import { projectCurrentInstantToday } from "./plan-beta/instant-plan-today-context"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture() })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 async function safetyAndExperience() {

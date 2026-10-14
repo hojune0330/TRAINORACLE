@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { beforeEach, describe, expect, it } from "vitest"
 import {
   createEmptyDecorationState,
@@ -41,8 +42,9 @@ function seedPlacement(): void {
   if (!saveDecorationState(state).ok) throw new Error("decoration fixture save failed")
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 
 describe("journal decoration placement lifecycle", () => {

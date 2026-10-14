@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import React from "react"
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
@@ -24,7 +25,7 @@ import { readCatalogCycleDraftSource } from "./catalog-cycle-draft"
 
 // These integration cases replay and validate retained originals as well as the new plan.
 vi.setConfig({ testTimeout: 20000 })
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers() })
 
 function nextInput(previous: StoredAdjustedPlanStateV5, retained: readonly RetainedAdjustedPlanEvidenceV3[]) {

@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import React from "react"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
@@ -8,7 +9,7 @@ import { TrainingHome, nextTrainingPrescriptionLabel } from "./TrainingHome"
 import { TODAY } from "../../domain/prescription-quality-matrix.test-fixtures"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 import { isoShift } from "../../domain/dates"
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks() })
 it("shows actual adjusted repetition/distance on the home card and opens the plan", () => {
   const { request, policy } = adjustedPlanSelectionFixture()

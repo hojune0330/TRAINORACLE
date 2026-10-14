@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { parsePrescriptionSequence } from "@impl/prescription/sequence"
 import { projectPacePrescriptionSequence } from "@impl/prescription/pace-sequence"
@@ -15,9 +16,10 @@ import { sessionPrescriptionSequence } from "./session-prescription-sequence"
 import { hasMatchingExplanationReceipt } from "./training-explanation-receipt"
 import { publicPlanCardFromState } from "./account/public-profile"
 
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear()
   sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
   vi.useFakeTimers()
   vi.setSystemTime(TODAY)
 })

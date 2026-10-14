@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { readFileSync } from "node:fs"
 import { Profiler } from "react"
@@ -196,6 +197,7 @@ describe("saved toast motion structure", () => {
   it("keeps a confirmed result until explicitly closed instead of timing it out", async () => {
     vi.useFakeTimers()
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
 
     try {
       render(<AppShell />)
@@ -224,6 +226,7 @@ describe("saved toast motion structure", () => {
   it("keeps review attention until the athlete dismisses it", async () => {
     vi.useFakeTimers()
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
 
     try {
       render(<AppShell />)

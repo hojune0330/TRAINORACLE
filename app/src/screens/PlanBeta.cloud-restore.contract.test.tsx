@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
@@ -28,8 +29,8 @@ const newerPlan = () => ({ ...stateFixture(), progress: [{ sessionDay: 1, sessio
 const storageChanged = () => act(() => {
   window.dispatchEvent(new StorageEvent("storage", { key: activePlanBetaStorageKey(), storageArea: localStorage }))
 })
-beforeEach(() => {
-  localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount("synthetic-a")
+beforeEach(async () => {
+  localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount("synthetic-a")
   cloud.load.mockReset(); cloud.backup.mockClear()
   locksDescriptor = Object.getOwnPropertyDescriptor(navigator, "locks")
 })

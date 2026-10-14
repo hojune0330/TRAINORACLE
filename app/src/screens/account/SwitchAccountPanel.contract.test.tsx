@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 // "다른 계정으로 바꾸기" 화면 계약 테스트 (Q4).
 //
 // 왜 도메인 테스트만으로 부족한가:
@@ -44,8 +45,9 @@ function store(entry: PostSessionEntry): void {
 
 const successfulSignOut = () => ({ ok: true, message: "로그아웃되었어요." })
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 
 afterEach(() => {

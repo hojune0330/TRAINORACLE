@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -10,8 +11,9 @@ afterEach(cleanup)
 const DATE = "2026-07-20"
 
 describe("past journal revisit forms", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
   })
 
   it("prefills and replaces an evening check-in without changing its identity", async () => {
