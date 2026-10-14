@@ -45,6 +45,63 @@ async function screenPointer(page: Page, touch: boolean) {
   }
 }
 
+test("camera follows with slack, accelerates on dash, freezes on pause and keeps notices off the runner", async ({ page }, info) => {
+  await openGame(page, "seoul")
+  await page.getByRole("button", { name: "시작", exact: true }).click()
+  await page.clock.runFor(3100)
+  const field = page.locator("canvas.treadmill-game__canvas")
+  const value = async (name: string) => Number(await field.getAttribute(`data-${name}`))
+  const start = await value("camera-offset"), startX = await value("runner-x")
+  await page.keyboard.down("ArrowRight"); await page.clock.runFor(500)
+  expect(await value("camera-offset")).not.toBeCloseTo(start, 3)
+  expect(await value("runner-x")).not.toBeCloseTo(startX, 3)
+  const travel = await value("scene-travel")
+  await page.clock.runFor(200)
+  const normalDistance = await value("scene-travel") - travel
+  await page.keyboard.press("d"); await page.clock.runFor(100)
+  const dashTravel = await value("scene-travel")
+  await page.clock.runFor(200)
+  expect(await value("scene-travel") - dashTravel).toBeGreaterThan(normalDistance * 1.3)
+  await page.keyboard.press("Space"); await page.clock.runFor(200)
+  const bounds = (await field.boundingBox())!
+  const hud = (await page.locator(".treadmill-game__hud").boundingBox())!
+  expect(hud.y + hud.height).toBeLessThan(bounds.y + bounds.height * await value("runner-y") - 75)
+  await page.screenshot({ path: info.outputPath("camera-dash-jump.png"), fullPage: true })
+  await page.setViewportSize({ width: 800, height: 360 })
+  await page.clock.runFor(200)
+  const wide = (await field.boundingBox())!, wideHud = (await page.locator(".treadmill-game__hud").boundingBox())!
+  expect(wideHud.y + wideHud.height).toBeLessThan(wide.y + wide.height * await value("runner-y") - 65)
+  await page.screenshot({ path: info.outputPath("camera-landscape-jump.png"), fullPage: true })
+  await page.getByRole("button", { name: "일시정지", exact: true }).click()
+  const stoppedTravel = await value("scene-travel"), stoppedOffset = await value("camera-offset")
+  await page.clock.runFor(1000)
+  expect(await value("scene-travel")).toBe(stoppedTravel)
+  expect(await value("camera-offset")).toBe(stoppedOffset)
+  await page.keyboard.up("ArrowRight")
+})
+
+test("camera keeps the moving city and hazard lane clear at thirteen seconds", async ({ page }, info) => {
+  await openGame(page, "seoul")
+  await page.getByRole("button", { name: "시작", exact: true }).click()
+  let now = 0
+  for (const step of planRun(tourStages(tourCity("seoul")!)).filter(step => step.at <= 16_000)) {
+    await page.clock.runFor(Math.round(step.at - now)); now = step.at
+    if (step.key === "run-down") await page.keyboard.down("ArrowRight")
+    if (step.key === "run-up") await page.keyboard.up("ArrowRight")
+    if (step.key === "jump") await page.keyboard.press("Space")
+  }
+  await page.clock.runFor(Math.round(16_000 - now))
+  await expect(page.getByLabel("경기 진행 시간")).toHaveText("13 / 90초")
+  const canvas = page.locator("canvas.treadmill-game__canvas"), bounds = (await canvas.boundingBox())!
+  const foot = bounds.y + bounds.height * Number(await canvas.getAttribute("data-runner-y"))
+  for (const selector of [".treadmill-game__warning", ".treadmill-game__gesture-hint", ".treadmill-game__wave"]) {
+    const box = (await page.locator(selector).boundingBox())!
+    expect(box.y + box.height).toBeLessThan(foot - 75)
+  }
+  await page.screenshot({ path: info.outputPath("camera-city-13s.png"), fullPage: true })
+  await page.keyboard.up("ArrowRight")
+})
+
 test("gestures fill the viewport and hold, swipe up diagonally and double tap without action buttons", async ({ page }, info) => {
   await openGame(page, "seoul")
   const field = page.locator("canvas.treadmill-game__canvas")

@@ -189,7 +189,7 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
     let palette: GamePalette = gamePalette(container)
     const draw = (now: number) => {
       // Enlarge the whole scene together, keeping runner/hazards on the same geometry.
-      const zoom = Math.min(1.5, Math.max(1, width / 430, height / 580))
+      const zoom = height < 420 ? 1 : Math.min(1.5, Math.max(1, width / 430, height / 580))
       const ratio = Math.min(window.devicePixelRatio || 1, 2)
       context.setTransform(ratio * zoom, 0, 0, ratio * zoom, 0, 0)
       render(context, state.current, width / zoom, height / zoom, palette, renderView.current.reduced, now, shaderLiveRef.current, renderView.current)
@@ -431,7 +431,16 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
           </div>
           <output className="treadmill-game__time" aria-label="경기 진행 시간" aria-live="off">{elapsed} / {total}초</output>
         </div>
-        {view.stats.combo > 1 && live && <div className="treadmill-game__combo" aria-label={`연속 ${view.stats.combo}`}>콤보 ×{view.stats.combo}</div>}
+        <div className="treadmill-game__hud-notice">
+          <p className="treadmill-game__warning" role="status" data-tone={warning.tone}>{warning.text}</p>
+          {view.stats.combo > 1 && live && <div className="treadmill-game__combo" aria-label={`연속 ${view.stats.combo}`}>콤보 ×{view.stats.combo}</div>}
+        </div>
+        <div className="treadmill-game__gesture-hint" aria-label="화면 조작 안내">
+          <span>{view.exhausted ? "손을 떼면 회복" : view.running ? "달리는 중 · 떼면 회복" : "화면 꾹 달리기"}</span>
+          <span aria-label="점프 에너지">↗ 점프 ⚡{view.jumpCost}</span>
+          <span aria-label="대시 충전">두 번 대시 {view.cooldown > 0 ? `${view.cooldown.toFixed(1)}초` : `⚡${TREADMILL_RULES.dashCost}`}</span>
+        </div>
+        {live && <span className="treadmill-game__wave">웨이브 {Math.min(3, Math.floor(view.seconds / TREADMILL_RULES.waveSeconds) + 1)}/3 · 10초마다 보급</span>}
       </div>
 
       <canvas ref={skyCanvas} className="treadmill-game__sky" aria-hidden="true" data-live={shaderLive || undefined} />
@@ -452,14 +461,7 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
         onPointerUp={event => { gestures.current.up(event.pointerId, { x: event.clientX, y: event.clientY, time: event.timeStamp }); updateHeld() }}
         onPointerCancel={event => { gestures.current.cancel(event.pointerId); updateHeld() }}
         onLostPointerCapture={event => { gestures.current.cancel(event.pointerId); updateHeld() }} />
-      <div className="treadmill-game__gesture-hint" aria-label="화면 조작 안내">
-        <span>{view.exhausted ? "손을 떼면 회복" : view.running ? "달리는 중 · 떼면 회복" : "화면 꾹 달리기"}</span>
-        <span aria-label="점프 에너지">↗ 점프 ⚡{view.jumpCost}</span>
-        <span aria-label="대시 충전">두 번 대시 {view.cooldown > 0 ? `${view.cooldown.toFixed(1)}초` : `⚡${TREADMILL_RULES.dashCost}`}</span>
-      </div>
-      {live && <span className="treadmill-game__wave">웨이브 {Math.min(3, Math.floor(view.seconds / TREADMILL_RULES.waveSeconds) + 1)}/3 · 10초마다 보급</span>}
       {running && view.countdown > 0 && equipped && <div className="treadmill-game__equipped" role="status"><strong>{upgradeName(equipped)} 장착!</strong><span>{UPGRADE_STORIES[equipped].effect}</span></div>}
-      <p className="treadmill-game__warning" role="status" data-tone={warning.tone}>{warning.text}</p>
 
       {view.mode === "paused" && !menuOpen && !leave && <div className="treadmill-game__overlay">
         <div className="treadmill-game__card treadmill-game__card--small">

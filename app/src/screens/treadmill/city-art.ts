@@ -8,7 +8,7 @@
  */
 import type { TreadmillSurface } from "../../domain/minigame/treadmill"
 import type { TourCity, TourLandmark, TourWeather } from "../../domain/minigame/tour"
-import { part, roundRect } from "./sprites"
+import { roundRect } from "./sprites"
 import type { GamePalette } from "./sprites"
 import { drawSceneProp } from "./scene-art"
 
@@ -29,7 +29,7 @@ const wrap = (value: number, span: number) => ((value % span) + span) % span
 
 /** Horizon for the tilted camera. */
 export function cityHorizon(floor: number) {
-  return Math.round(floor * 0.56)
+  return Math.round(floor * 0.48)
 }
 
 /** Background: sky (unless a shader draws it), sun or moon, skyline with the landmark. */
@@ -231,17 +231,17 @@ export function drawCityGround(context: CanvasRenderingContext2D, palette: GameP
   track.addColorStop(0, miniature && dusk(scene) ? palette.mud : miniature && night(scene) ? palette.cityNight : palette.laneRedDark)
   track.addColorStop(1, miniature && dusk(scene) ? palette.mudLight : miniature && night(scene) ? palette.beltDark : palette.laneRed)
   context.fillStyle = scene.surface === "mud" && scene.weather === "sea" ? palette.sand : track
-  context.fillRect(0, top, width, floor + 14 - top)
+  context.fillRect(0, top, width, height - top)
   context.strokeStyle = miniature && night(scene) ? palette.neonBlue : palette.cloud; context.lineWidth = 1.5
   for (const d of [1.12, 1.26, 1.4, 1.55]) { context.globalAlpha = 0.8; context.beginPath(); context.moveTo(0, depthY(d)); context.lineTo(width, depthY(d)); context.stroke() }
   context.globalAlpha = 1
   // Cross lines converge toward the vanishing point and scroll with the course: the 2.5D cue.
-  context.save(); context.beginPath(); context.rect(0, top, width, floor + 14 - top); context.clip()
+  context.save(); context.beginPath(); context.rect(0, top, width, height - top); context.clip()
   context.strokeStyle = miniature && night(scene) ? palette.neonBlue : palette.cloud
   context.globalAlpha = miniature && dusk(scene) ? 0.12 : 0.35; context.lineWidth = 2
   for (let x = -60 - wrap(travel * 1.6, 70); x < width + 70; x += 70) {
     const farX = vpX + (x - vpX) / 1.55
-    context.beginPath(); context.moveTo(x, floor + 14); context.lineTo(farX, top); context.stroke()
+    context.beginPath(); context.moveTo(x, height + 10); context.lineTo(farX, top); context.stroke()
   }
   context.restore()
   if (miniature && dusk(scene)) {
@@ -266,31 +266,17 @@ export function drawCityGround(context: CanvasRenderingContext2D, palette: GameP
     context.globalAlpha = 1
   }
 
-  // Near curb and foreground.
-  part(context, palette, palette.rail, -4, floor + 10, width + 8, 7, 3)
-  context.fillStyle = field; context.fillRect(0, floor + 17, width, height - floor - 17)
-  context.fillStyle = palette.outline; context.globalAlpha = 0.18; context.fillRect(0, floor + 17, width, 4); context.globalAlpha = 1
-  if (miniature) {
-    // A thick miniature plinth gives the course depth without changing the foot line.
-    context.fillStyle = night(scene) ? palette.cityNight : palette.mud
-    context.fillRect(left, floor + 21, width - left, 13)
-    context.fillStyle = night(scene) ? palette.neonBlue : palette.mudLight
-    context.globalAlpha = 0.65; context.fillRect(left, floor + 21, width - left, 3); context.globalAlpha = 1
-    if (night(scene)) {
-      context.fillStyle = palette.neonBlue
-      for (let x = left + 18 - wrap(travel * 1.6, 58); x < width; x += 58) context.fillRect(x, floor + 24, 18, 3)
-    }
+  // Full-bleed lane: no black cut-out or foreground plinth covering the playable plane.
+  context.strokeStyle = miniature && night(scene) ? palette.neonBlue : palette.cloud
+  context.globalAlpha = 0.5; context.lineWidth = 2
+  for (let y = floor + 18; y < height; y += 36) {
+    context.beginPath(); context.moveTo(0, y); context.lineTo(width, y); context.stroke()
   }
-
-  // The rear edge: the course drops away behind the start (same rule as the treadmill pit).
-  const pit = context.createLinearGradient(0, floor - 4, 0, height)
-  pit.addColorStop(0, palette.beltDark); pit.addColorStop(1, palette.outline)
-  context.fillStyle = pit
-  context.beginPath(); context.moveTo(0, top); context.lineTo(left - 4, top); context.lineTo(left - 2, floor + 17); context.lineTo(left - 10, height); context.lineTo(0, height); context.fill()
-  const warn = left + warnRear * beltWidth
-  context.save(); context.beginPath(); context.rect(left, floor - 1, warn - left, 11); context.clip()
+  context.globalAlpha = 1
+  const warn = Math.max(0, left + warnRear * beltWidth)
+  context.save(); context.beginPath(); context.rect(0, floor + 5, warn, 9); context.clip()
   for (let x = left - 20; x < warn + 20; x += 12) {
-    context.fillStyle = palette.danger
+    context.globalAlpha = near; context.fillStyle = palette.danger
     context.beginPath(); context.moveTo(x, floor + 10); context.lineTo(x + 6, floor + 10); context.lineTo(x + 14, floor - 1); context.lineTo(x + 8, floor - 1); context.fill()
   }
   context.restore()
