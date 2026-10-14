@@ -1,5 +1,6 @@
 import React from "react"
-import { ArrowLeft, RefreshCw } from "lucide-react"
+import { ArrowLeft, CalendarDays, Layers, RefreshCw } from "lucide-react"
+import { CategoryIcon } from "../components/CategoryCard"
 import {
   projectJournalArchive,
 } from "../domain/journal-archive"
@@ -181,10 +182,10 @@ export function JournalArchive({
       </header>
 
       <div className="journal-archive__mode-tabs app-choice-group" role="group" aria-label="일지와 몸 기록">
-        <button type="button" className="app-choice-control" aria-pressed={activeSection === "JOURNAL"}
-          onClick={() => changeSection("JOURNAL")}>일지</button>
-        <button type="button" className="app-choice-control" aria-pressed={activeSection === "BODY"}
-          onClick={() => changeSection("BODY")}>몸 기록</button>
+        <button type="button" className="app-choice-control category-choice" data-category="journal" aria-pressed={activeSection === "JOURNAL"}
+          onClick={() => changeSection("JOURNAL")}><CategoryIcon category="journal" compact /><span>일지</span></button>
+        <button type="button" className="app-choice-control category-choice" data-category="body" aria-pressed={activeSection === "BODY"}
+          onClick={() => changeSection("BODY")}><CategoryIcon category="body" compact /><span>몸 기록</span></button>
       </div>
 
       {readiness !== "READY" && <div className="calendar-guidance">
@@ -207,11 +208,11 @@ export function JournalArchive({
       <div hidden={activeSection !== "JOURNAL"}>
       {!unconfirmedEmpty && <>
       <div className="journal-archive__mode-tabs app-choice-group" role="group" aria-label="일지 보기 방식">
-        <button className="app-choice-control" type="button" aria-pressed={activeMode === "CALENDAR"} onClick={() => changeMode("CALENDAR")}>
-          <span>월간 달력</span>
+        <button className="app-choice-control category-choice" data-category="journal" type="button" aria-pressed={activeMode === "CALENDAR"} onClick={() => changeMode("CALENDAR")}>
+          <CalendarDays size={18} aria-hidden="true" /><span>월간 달력</span>
         </button>
-        <button className="app-choice-control" type="button" aria-pressed={activeMode === "CYCLE"} onClick={() => changeMode("CYCLE")}>
-          <span>기록 묶음</span>
+        <button className="app-choice-control category-choice" data-category="journal" type="button" aria-pressed={activeMode === "CYCLE"} onClick={() => changeMode("CYCLE")}>
+          <Layers size={18} aria-hidden="true" /><span>기록 묶음</span>
         </button>
       </div>
 

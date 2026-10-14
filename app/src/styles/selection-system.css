@@ -111,7 +111,9 @@ button.app-choice-control.app-choice-control--answer {
 }
 .app-tab-bar .app-tab-bar__button[data-active="true"] { color: var(--ink); }
 .app-tab-bar .app-tab-bar__button[data-active="true"]::before { background: var(--surface-2); }
-.app-tab-bar .app-tab-bar__button:not(.app-tab-bar__record):not(:disabled):hover::before { background: var(--surface-2); }
+@media (hover: hover) and (pointer: fine) {
+  .app-tab-bar .app-tab-bar__button:not(.app-tab-bar__record):not(:disabled):hover::before { background: var(--surface-2); }
+}
 .app-tab-bar .app-tab-bar__button[data-active="true"] svg { animation: none; }
 
 .app-shell[data-reduced-motion="true"] .app-choice-control,

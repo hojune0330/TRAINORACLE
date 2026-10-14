@@ -66,7 +66,7 @@ describe("active plan first-view overview", () => {
     expect(screen.getByText("8월 27일(목) - 9월 4일(금)")).toBeVisible()
     expect(screen.getByText("8월 27일(목) - 9월 4일(금)").closest("details")).toBeNull()
     expect(screen.getByText("훈련 구성·시간").closest("details")).not.toHaveAttribute("open")
-    await userEvent.setup().click(screen.getByText("훈련 구성·시간"))
+    await userEvent.setup().click(screen.getByRole("button", { name: "페이스·훈련 구성" }))
     const buildSummary = screen.getByRole("list", { name: "계획 구성 요약" })
     const summaryItems = within(buildSummary).getAllByRole("listitem")
     expect(summaryItems[0]).toHaveTextContent("5000m")
@@ -84,7 +84,8 @@ describe("active plan first-view overview", () => {
     expect(within(trainingDate!).getByText("회복 운동 · Recovery")).toBeVisible()
     expect(within(trainingDate!).getByText("전체 15–20분 · 힘든 정도 1–2/10")).toBeVisible()
     expect(screen.queryByRole("list", { name: "날짜별 계획 미리보기" })).toBeNull()
-    await userEvent.setup().click(screen.getByRole("button", { name: "목록" }))
+    await userEvent.setup().click(screen.getByRole("button", { name: "하루씩" }))
+    await userEvent.setup().click(screen.getByRole("button", { name: "8월 29일 토요일 선택" }))
     const timeline = screen.getByRole("list", { name: "날짜별 계획 미리보기" })
     const trainingDay = screen.getByRole("group", {
       name: "8월 29일 토요일 · 훈련 2개",
@@ -144,7 +145,7 @@ describe("active plan first-view overview", () => {
   it("does not claim two workouts per day just because the setting allows them", async () => {
     const state = overviewState()
     render(<ActivePlan state={{ ...state, activePlan: { ...state.activePlan, sessions: [state.activePlan.sessions[0]!] } }} {...callbacks} />)
-    await userEvent.setup().click(screen.getByText("훈련 구성·시간"))
+    await userEvent.setup().click(screen.getByRole("button", { name: "페이스·훈련 구성" }))
     expect(screen.getByRole("list", { name: "계획 구성 요약" })).toHaveTextContent("예정된 운동 1회")
     expect(screen.getByRole("list", { name: "계획 구성 요약" })).not.toHaveTextContent("하루 2회")
   })

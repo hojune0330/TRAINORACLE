@@ -1,5 +1,4 @@
-import { ArrowRight } from "lucide-react"
-import { useId } from "react"
+import { CategoryCard } from "../../components/CategoryCard"
 import "../../styles/home-hub.css"
 
 export type HomeOraclePreviewProps = {
@@ -18,27 +17,20 @@ const KIND_LABELS: Record<HomeOraclePreviewProps["kind"], string> = {
   unavailable: "결과를 표시할 수 없어요",
 }
 
-export function HomeOraclePreview({ question, answer, sourceLabel, kind, onOpen }: HomeOraclePreviewProps) {
-  const resultDescriptionId = useId()
+export function HomeOraclePreview({ answer, kind, onOpen }: HomeOraclePreviewProps) {
   // Examples remain opt-in. The home invitation contains no fictional result.
   if (kind === "example") return <section className="home-hub__oracle home-hub__oracle--example" aria-label="오라클 · 예시 결과" data-oracle-kind={kind}>
-    <button className="home-hub__oracle-action" type="button" onClick={onOpen}>예시 결과 보기<ArrowRight aria-hidden="true" size={17} /></button>
+    <CategoryCard category="oracle" title="예시 결과 보기" onClick={onOpen} />
   </section>
   // Detailed loading/error and recovery notices stay at the top of Home.
   if (kind === "unavailable") return <section className="home-hub__oracle-fallback" aria-label="오라클 · 결과를 표시할 수 없어요" data-oracle-kind={kind}>
     <p>{answer}</p>
-    <button className="home-hub__oracle-action" type="button" onClick={onOpen}>기록 상태 확인<ArrowRight aria-hidden="true" size={17} /></button>
+    <CategoryCard category="oracle" title="기록 상태 확인" onClick={onOpen} />
   </section>
   if (kind === "plan") return null
   return <section className={`home-hub__oracle home-hub__oracle--${kind}`} aria-label={`오라클 · ${KIND_LABELS[kind]}`} data-oracle-kind={kind}>
-    <button className="home-hub__oracle-card" type="button" onClick={onOpen}
-      aria-label="이 결과 자세히 보기" aria-describedby={resultDescriptionId}>
-      <span className="home-hub__oracle-copy" id={resultDescriptionId}>
-        <span className="home-hub__oracle-title" role="heading" aria-level={2}>{question}</span>
-        <span className="home-hub__oracle-answer">{answer}</span>
-        <span className="home-hub__oracle-source">{sourceLabel}</span>
-      </span>
-      <ArrowRight aria-hidden="true" size={18} />
-    </button>
+    <CategoryCard category="oracle" title="내 훈련 분석" headingLevel={2}
+      description={kind === "partial" ? "확인된 일부 기록으로 보기" : undefined}
+      aria-label="내 훈련 분석" onClick={onOpen} />
   </section>
 }

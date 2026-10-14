@@ -1,5 +1,5 @@
 /* LEGACY_11STEP_FLOW: 2026-09 4질문 빠른 흐름 도입으로 옛 인테이크 클릭 순서를 전제한 테스트. 다듬기 경로로 재작성 예정(PR #341 본문). */
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { FIELD_PROVENANCE } from "../domain/field-provenance"
@@ -392,6 +392,7 @@ describe("plan beta user flow", () => {
     await openRefinement("하루 두 번")
     await user.click(screen.getByRole("button", { name: /하루 두 번 운동할게요/u }))
     await user.click(screen.getByRole("button", { name: "이 일정으로 시작" }))
+    await act(async () => { await vi.dynamicImportSettled() })
 
     expect(loadPlanBetaState()?.intake).toMatchObject({
       trainingFocus: "VO2_INTENT",
@@ -401,6 +402,7 @@ describe("plan beta user flow", () => {
       secondSessionMode: "RECOVERY_PM_ALLOWED",
     })
     expect(loadPreviousIntake()).toBeNull()
+    await user.click(await screen.findByRole("button", { name: "다음 계획 준비" }))
     expect(await screen.findByRole("button", { name: "현재 계획을 먼저 기록해 주세요" }, { timeout: 10_000 }))
       .toBeDisabled()
   }, 20_000)
@@ -821,7 +823,9 @@ describe("plan beta user flow", () => {
   it("keeps the current plan active and writes no history before the frame is complete", async () => {
     expect(savePlanBetaState(stateFixture())).toEqual({ ok: true })
     render(<PlanBeta />)
+    await act(async () => { await vi.dynamicImportSettled() })
 
+    fireEvent.click(await screen.findByRole("button", { name: "다음 계획 준비" }))
     expect(await screen.findByRole("button", { name: "현재 계획을 먼저 기록해 주세요" }))
       .toBeDisabled()
     expect(screen.getByRole("heading", { name: /9일 훈련 계획/u })).toBeVisible()

@@ -1540,6 +1540,13 @@
 }
 
 .active-plan__edit-heading h1 { margin: 0; }
+.active-plan__category-heading { justify-content: flex-start; flex-wrap: nowrap; }
+.active-plan__category-heading h1 { min-width: 0; }
+.active-plan__category-heading h1::before { display: none; }
+.active-plan > .instant-plan--entry-cards { margin-top: var(--space-5); }
+.active-plan__tools { margin-block: var(--space-5); align-items: start; }
+.active-plan__composition-title { margin: var(--space-5) 0 var(--space-2); font: 700 var(--fs-body-lg) / 1.5 var(--sans); }
+.active-plan__tools > .category-disclosure[open] { grid-column: 1 / -1; }
 .active-plan__edit-heading > button {
   display: inline-flex;
   align-items: center;
@@ -2593,10 +2600,10 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  color: var(--ink);
-  font-family: var(--mono);
+  color: var(--ink-3);
+  font-family: var(--sans);
   font-size: var(--fs-body-sm);
-  font-weight: 700;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   line-height: 1.45;
 }
@@ -3195,9 +3202,10 @@
   min-height: var(--app-touch-min);
   margin-top: var(--space-3);
   padding: var(--space-2) var(--space-3);
-  border: var(--bw-line) solid var(--ink);
-  background: var(--ink);
-  color: var(--bg);
+  border: var(--bw-line) solid var(--category-journal);
+  border-radius: var(--r-action);
+  background: var(--category-journal-wash);
+  color: var(--category-journal);
   cursor: pointer;
   font-size: var(--fs-body-sm);
   font-weight: 700;
@@ -3239,6 +3247,12 @@
   margin-top: var(--space-6);
   padding-block: var(--space-4);
   border-block: var(--bw-line) solid var(--line);
+}
+
+.category-disclosure__content > .active-plan__continuity {
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 
 .active-plan__continuity .plan-adaptation__entry {

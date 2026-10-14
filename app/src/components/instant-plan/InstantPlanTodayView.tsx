@@ -3,6 +3,7 @@ import type { InstantPlanToday } from "../../domain/instant-plan-contract"
 import { IncompleteWorkoutNotice } from "./IncompleteWorkoutNotice"
 import { AppHeading } from "../AppHeading"
 import { TrainingInstructionCards } from "../TrainingInstructionCards"
+import { CategoryCard } from "../CategoryCard"
 import "./instant-plan.css"
 
 export type InstantPlanTodayViewProps = {
@@ -13,6 +14,8 @@ export type InstantPlanTodayViewProps = {
   readonly changeScheduleLabel?: string
   readonly onContinue?: () => void
   readonly compact?: boolean
+  /** Entry cards open the existing complete session reader. */
+  readonly navigationCards?: boolean
 }
 
 const stateMessages: Record<InstantPlanToday["state"], string> = {
@@ -99,6 +102,7 @@ export function InstantPlanTodayView({
   changeScheduleLabel = "일정 확인",
   onContinue,
   compact = false,
+  navigationCards = false,
 }: InstantPlanTodayViewProps) {
   const headingId = useId()
   const canRecord = today.state === "SCHEDULED" || today.state === "PARTLY_RECORDED"
@@ -113,6 +117,28 @@ export function InstantPlanTodayView({
     if (!showSessions || today.sessions.some(session => session.id === selectedSessionId)) return
     setSelectedSessionId(defaultSessionId)
   }, [defaultSessionId, selectedSessionId, showSessions, today.sessions])
+
+  if (navigationCards && onViewSession) return <section className="instant-plan instant-plan--entry-cards" aria-labelledby={headingId}>
+    <header className="instant-plan__entry-heading">
+      <AppHeading as="h2" variant="section" id={headingId}>{today.title}</AppHeading>
+      <span className="instant-plan__hint">{today.dateLabel}</span>
+    </header>
+    {today.sourceLabel && <p className="instant-plan__source">{today.sourceLabel}</p>}
+    {showSessions ? <div className="category-card-grid">
+      {today.sessions.map(session => <div className="instant-plan__entry-session" key={session.id}>
+        <CategoryCard category="training" title={session.title} label={session.slotLabel}
+          description={session.recorded ? "남긴 기록 있음" : "훈련 내용 보기"}
+          aria-label={`${session.slotLabel} 훈련 내용 보기 · ${session.title}`}
+          onClick={() => onViewSession(session.id)} />
+        {session.guidanceNotice && <IncompleteWorkoutNotice detail={session.guidanceNotice} />}
+        {canRecord && !session.recorded && onRecordSession && <button className="instant-plan__entry-record" type="button"
+          onClick={() => onRecordSession(session.id)} aria-label={`${session.slotLabel} 훈련 기록 남기기`}>일지 쓰기</button>}
+      </div>)}
+    </div> : <>
+      {today.state === "UNAVAILABLE" && <p className="instant-plan__status" role="alert">{stateMessages.UNAVAILABLE}</p>}
+      {onContinue && <CategoryCard category="training" title={today.state === "COMPLETED" ? "지난 훈련 보기" : "전체 일정 보기"} onClick={onContinue} />}
+    </>}
+  </section>
 
   return (
     <section className={`instant-plan${compact ? " instant-plan--today-compact" : ""}`} aria-labelledby={headingId}>

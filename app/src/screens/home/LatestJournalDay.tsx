@@ -1,4 +1,5 @@
-import { BookOpen, ChevronRight } from "lucide-react"
+import { ChevronRight } from "lucide-react"
+import { CategoryCard } from "../../components/CategoryCard"
 import { useId, useMemo } from "react"
 import type { JournalEntry } from "../../domain/journal-schema"
 import type { CalendarReadiness } from "../../domain/calendar-context"
@@ -53,19 +54,16 @@ export function LatestJournalDay({ entries, today, storage, onOpenDay, onOpenArc
       <h2>최근 기록</h2>
       <button type="button" onClick={onOpenArchive}>전체 일지 <ChevronRight size={16} aria-hidden="true" /></button>
     </div>
-    <button type="button" className="home-hub__summary-row" onClick={() => onOpenDay?.(latest)}
-      aria-label={`${year}년 ${dateLabel} 기록 ${dayEntries.length}개 보기 · ${kinds}`} aria-describedby={descriptionId}>
-      <BookOpen size={20} aria-hidden="true" />
-      <span className="home-hub__summary-copy">
-        <span className="home-hub__latest-heading">
+    <CategoryCard category="journal" onClick={() => onOpenDay?.(latest)}
+      aria-label={`${year}년 ${dateLabel} 기록 ${dayEntries.length}개 보기 · ${kinds}`} aria-describedby={descriptionId}
+      title={<span className="home-hub__latest-heading">
           <strong>{visibleDate} · {singleKind ?? `기록 ${dayEntries.length}개`}</strong>
           <JournalDecorationPreview item={decorationPreviews.get(latest)} />
-        </span>
+        </span>}
+      description={<span className="home-hub__summary-copy">
         {dayEntries.length > 1 && <span>{kinds}</span>}
         <small id={descriptionId}>{storageLabel}{imported ? " · 가져온 기록 포함" : ""}</small>
-      </span>
-      <ChevronRight size={18} aria-hidden="true" />
-    </button>
+      </span>} />
   </section>
 }
 

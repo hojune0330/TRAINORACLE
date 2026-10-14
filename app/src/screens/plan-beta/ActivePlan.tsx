@@ -1,7 +1,6 @@
 import React from "react"
 import {
   AlertTriangle,
-  CalendarDays,
   Check,
   ChevronDown,
   ChevronRight,
@@ -11,7 +10,10 @@ import {
   Info,
   RefreshCw,
   Pencil,
+  SlidersHorizontal,
+  Gauge,
 } from "lucide-react"
+import { CategoryCard, CategoryDisclosure, CategoryIcon } from "../../components/CategoryCard"
 import type { LucideIcon } from "lucide-react"
 import type { PlanProgressState } from "@impl/plan-generator/types"
 import type { PlanSession } from "@impl/plan-generator/types"
@@ -224,9 +226,11 @@ export function ActivePlan({
           </span>
         </div>
       )}
-      <div className="active-plan__edit-heading">
+      <div className="active-plan__edit-heading active-plan__category-heading">
+        <CategoryIcon category="training" />
         <h1 id="active-plan-title" tabIndex={-1}>{frameLengthDays}일 훈련 계획</h1>
       </div>
+      <p className="active-plan__date-range">{planDateRangeLabel(startDate, frameDayCount)}</p>
       {state.version === 3 && state.activePlanEdit && <p className="active-plan__journal-return" role="status">수정한 계획이에요. 이전 계획과 일지는 보관되어 있어요.</p>}
       {state.version === 3 && state.executionReplan && <details className="plan-detailed-options">
         <summary>수행 기록을 확인하고 바꾼 일정</summary>
@@ -259,7 +263,7 @@ export function ActivePlan({
         </div>)}
       </section>}
       {executionMessage && <div className="plan-execution-status" role="status">{executionMessage}</div>}
-      <InstantPlanTodayView today={todayView} compact onContinue={showSchedule} changeScheduleLabel="휴식·건너뜀 기록"
+      <InstantPlanTodayView today={todayView} compact navigationCards onContinue={showSchedule} changeScheduleLabel="휴식·건너뜀 기록"
         onViewSession={id => {
           const session = activePlan.sessions.find(item => instantSessionId(item) === id)
           if (session) setReaderRequest(previous => ({ day: session.day, slot: session.slot, sequence: (previous?.sequence ?? 0) + 1 }))
@@ -272,66 +276,7 @@ export function ActivePlan({
           const session = activePlan.sessions.find(item => instantSessionId(item) === id)
           if (session && session.role !== "REST") onWriteSessionLog(session)
         }} />
-      {onEditSession && activePlan.sessions.filter(session => todayIds.has(instantSessionId(session))
-        && session.role !== "REST" && !recorded.has(`${session.day}:${session.slot}`)).map(session => <button
-          type="button" className="plan-text-action" key={`edit-today:${session.day}:${session.slot}`} onClick={() => onEditSession(session)}>
-          <Pencil aria-hidden="true" size={16} />{sessionSlotLabel(session.slot)} 훈련 수정
-        </button>)}
-      <div className="active-plan__edit-heading">
-        {onEditPlan && <button type="button" className="plan-text-action" data-plan-edit-button onClick={onEditPlan}><Pencil aria-hidden="true" size={16} />계획 수정</button>}
-        {onManagePaceRecords && <button type="button" className="plan-text-action" onClick={onManagePaceRecords}>기준 기록·페이스 바꾸기</button>}
-      </div>
-      {futureTrainingEditor}
-      <PlanPrescriptionBasis sessions={visibleSessions} />
-      <p className="active-plan__date-range">
-        <CalendarDays aria-hidden="true" size={18} />
-        {planDateRangeLabel(startDate, frameDayCount)}
-      </p>
-      <details className="plan-detailed-options">
-      <summary>훈련 구성·시간</summary>
-      <ul className="active-plan__build-summary" aria-label="계획 구성 요약">
-        <li>{eventDistanceLabel(activePlan.eventDistanceM ?? state.intake.eventDistanceM)}</li>
-        <li>
-          {focusLabel}
-          <TermHelp term={ENERGY_INTENT_LABELS[activePlan.selectedEnergyIntent].term} />
-        </li>
-        <li>{doubleDays > 0 ? `하루 2회 운동하는 날 ${doubleDays}일` : `예정된 운동 ${trainingCount}회`}</li>
-      </ul>
-      <EasyTrainingTimes sessions={visibleSessions} />
-      {state.version === 3 && state.periodization !== undefined && (
-        <section className="periodization-direction" aria-labelledby="periodization-direction-title">
-          <div>
-            <p id="periodization-direction-title">24주 훈련 방향</p>
-            <strong>
-              {state.periodization.frameOrdinal}/18번째 계획
-              {" · "}{PERIODIZATION_PHASE_LABELS[state.periodization.phase]}
-            </strong>
-            <small>
-              3개 계획을 한 묶음으로 보고 있어요. 지금은 {state.periodization.mesocycleOrdinal}/6번째 묶음이에요.
-            </small>
-          </div>
-          <div
-            className="periodization-direction__track"
-            role="progressbar"
-            aria-label="24주 훈련 방향 진행 위치"
-            aria-valuemin={1}
-            aria-valuemax={18}
-            aria-valuenow={state.periodization.frameOrdinal}
-          >
-            {Array.from({ length: 18 }, (_, index) => (
-              <span
-                key={index}
-                className={index + 1 <= state.periodization!.frameOrdinal ? "is-reached" : undefined}
-                aria-hidden="true"
-              />
-            ))}
-          </div>
-          <p className="periodization-direction__boundary">
-            장기 방향을 보여주는 표예요. 이 표가 훈련 강도·양·횟수를 자동으로 올리지는 않아요.
-          </p>
-        </section>
-      )}
-      </details>
+      <PlanPrescriptionBasis sessions={visibleSessions} noticePlacement="only" />
       <div ref={scheduleAnchor} tabIndex={-1} aria-label="전체 일정과 기록">
       <PlanSchedulePreview
         presentation="prescription-calendar"
@@ -358,17 +303,49 @@ export function ActivePlan({
         </> : undefined}
         renderAfterSchedule={(
           <>
-            {!frameComplete && (
-              <div className="plan-adaptation__notice" role="status">
-                각 훈련을 마친 뒤 완료·휴식·건너뜀·통증 확인 중 하나를 기록해 주세요.
-              </div>
-            )}
+            <div className="active-plan__tools category-card-grid">
+              {onEditPlan && <CategoryCard category="training" icon={SlidersHorizontal} title="계획 수정" data-plan-edit-button onClick={onEditPlan} />}
+              <CategoryDisclosure category="training" icon={Gauge} title="페이스·훈련 구성">
+                {onManagePaceRecords && <button type="button" className="plan-text-action" onClick={onManagePaceRecords}>기준 기록·페이스 바꾸기</button>}
+                <PlanPrescriptionBasis sessions={visibleSessions} inline noticePlacement="outside" />
+                <h2 className="active-plan__composition-title">훈련 구성·시간</h2>
+                <ul className="active-plan__build-summary" aria-label="계획 구성 요약">
+                  <li>{eventDistanceLabel(activePlan.eventDistanceM ?? state.intake.eventDistanceM)}</li>
+                  <li>{focusLabel}<TermHelp term={ENERGY_INTENT_LABELS[activePlan.selectedEnergyIntent].term} /></li>
+                  <li>{doubleDays > 0 ? `하루 2회 운동하는 날 ${doubleDays}일` : `예정된 운동 ${trainingCount}회`}</li>
+                </ul>
+                <EasyTrainingTimes sessions={visibleSessions} />
+                {state.version === 3 && state.periodization !== undefined && (
+                  <section className="periodization-direction" aria-labelledby="periodization-direction-title">
+                    <div>
+                      <p id="periodization-direction-title">24주 훈련 방향</p>
+                      <strong>{state.periodization.frameOrdinal}/18번째 계획{" · "}{PERIODIZATION_PHASE_LABELS[state.periodization.phase]}</strong>
+                      <small>3개 계획을 한 묶음으로 보고 있어요. 지금은 {state.periodization.mesocycleOrdinal}/6번째 묶음이에요.</small>
+                    </div>
+                    <div className="periodization-direction__track" role="progressbar" aria-label="24주 훈련 방향 진행 위치"
+                      aria-valuemin={1} aria-valuemax={18} aria-valuenow={state.periodization.frameOrdinal}>
+                      {Array.from({ length: 18 }, (_, index) => (
+                        <span key={index} className={index + 1 <= state.periodization!.frameOrdinal ? "is-reached" : undefined} aria-hidden="true" />
+                      ))}
+                    </div>
+                    <p className="periodization-direction__boundary">장기 방향을 보여주는 표예요. 이 표가 훈련 강도·양·횟수를 자동으로 올리지는 않아요.</p>
+                  </section>
+                )}
+              </CategoryDisclosure>
+            </div>
+            {futureTrainingEditor}
+            {futureTrainingEditor && onEditSession && activePlan.sessions.filter(session => todayIds.has(instantSessionId(session))
+              && session.role !== "REST" && !recorded.has(`${session.day}:${session.slot}`)).map(session => <button
+                type="button" className="plan-text-action" key={`edit-today:${session.day}:${session.slot}`} onClick={() => onEditSession(session)}>
+                <Pencil aria-hidden="true" size={16} />{sessionSlotLabel(session.slot)} 훈련 수정
+              </button>)}
             <details className="active-plan__information">
               <summary>
                 <span><Info aria-hidden="true" size={17} />계획 정보와 유의사항</span>
                 <ChevronDown aria-hidden="true" size={18} />
               </summary>
               <div className="active-plan__information-body">
+                {!frameComplete && <p>각 훈련을 마친 뒤 완료·휴식·건너뜀·통증 확인 중 하나를 기록해 주세요.</p>}
                 <p className="active-plan__carryover-warning">
                   완료하지 못한 훈련을 다음 날에 몰아서 하지 마세요. 계획에 표시된 날짜를 기준으로 진행해 주세요.
                 </p>
@@ -520,8 +497,8 @@ export function ActivePlan({
         }}
       />
       </div>
+      <CategoryDisclosure category="training" icon={RefreshCw} title={frameComplete ? "다음 계획 시작하기" : "다음 계획 준비"} defaultOpen={frameComplete}>
       <div className="active-plan__continuity">
-        <h2>{frameComplete ? "다음 주기" : "이번 주기 이어가기"}</h2>
         {frameComplete && hasPendingSuccessor ? (
           <>
             <button className="active-plan__next-primary" type="button" onClick={() => setShowActivationCheck(true)}>
@@ -556,6 +533,7 @@ export function ActivePlan({
         )}
         {frameComplete && <PlanAdaptationFlow state={state} onPendingChange={setHasPendingSuccessor} onPrepareNextFrame={onNextFrame} />}
       </div>
+      </CategoryDisclosure>
     </section>
   )
 }

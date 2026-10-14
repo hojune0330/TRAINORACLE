@@ -7,6 +7,12 @@
   gap: var(--space-2);
   padding: var(--space-2) var(--space-5) var(--space-3);
 }
+.trends-hub .trends-hub__sections button.app-choice-control.category-choice { flex-direction: column; justify-content: center; gap: var(--space-2); text-align: center; }
+.trends-hub__drilldowns button.category-choice { align-items: center; }
+.trends-hub :is(.trends-hub__start, .trends-hub__example, .trends-hub__recovery) > button.category-card {
+  padding: var(--space-4); border: var(--bw-line) solid var(--hair); border-radius: var(--r-task-surface); background: var(--surface); color: var(--ink);
+}
+.trends-hub__start > button + button { margin-top: var(--space-3); }
 .trends-hub__header {
   display: grid;
   grid-template-columns: minmax(64px, 1fr) auto minmax(64px, 1fr);

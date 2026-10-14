@@ -1,5 +1,6 @@
 import React, { type ReactNode } from "react"
-import { Check, ChevronLeft, ChevronRight, CircleMinus, HeartPulse, Maximize2, SkipForward } from "lucide-react"
+import { Check, ChevronLeft, ChevronRight, CircleMinus, HeartPulse, Maximize2, SkipForward, PanelsTopLeft } from "lucide-react"
+import { CategoryIcon } from "../../components/CategoryCard"
 import type { PlanProgressState } from "@impl/plan-generator/types"
 import type { PlanSession } from "@impl/plan-generator/types"
 import { TermHelp } from "../../components/TermHelp"
@@ -773,10 +774,10 @@ function PlanTrainingFlow({
         <span>{days[0]?.date.slice(5).replace("-", "/")} ~ {days.at(-1)?.date.slice(5).replace("-", "/")}</span>
       </header>
       {prescriptionCalendar && <div className="prescription-calendar__view-toggle app-choice-group" role="group" aria-label="계획 일정 보기">
-        <button className="app-choice-control" type="button" aria-pressed={scheduleView === "calendar"}
-          onClick={() => onScheduleViewChange("calendar")}>달력</button>
-        <button className="app-choice-control" type="button" aria-pressed={scheduleView === "list"}
-          onClick={() => onScheduleViewChange("list")}>하루씩</button>
+        <button className="app-choice-control category-choice" data-category="training" type="button" aria-pressed={scheduleView === "calendar"}
+          onClick={() => onScheduleViewChange("calendar")}><CategoryIcon category="training" compact />달력</button>
+        <button className="app-choice-control category-choice" data-category="training" type="button" aria-pressed={scheduleView === "list"}
+          onClick={() => onScheduleViewChange("list")}><CategoryIcon category="training" icon={PanelsTopLeft} compact />하루씩</button>
       </div>}
       {outsidePlanMonth && showCalendar && <button className="calendar-range-return" type="button" onClick={() => {
         setMonth(days[0]!.date.slice(0, 7))

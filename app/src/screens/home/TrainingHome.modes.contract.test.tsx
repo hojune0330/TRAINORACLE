@@ -44,7 +44,7 @@ describe("training home presentation", () => {
     fireEvent.click(screen.getByRole("button", { name: "오라클 결과 보기" }))
     expect(explore).toHaveBeenCalledWith("level")
   })
-  it("shows one prepared result with its supplied source dates and opens its existing destination", () => {
+  it("opens the prepared analysis from one concise card without repeating its explanation on home", () => {
     const open = vi.fn()
     render(<TrainingHome model={TRAINING} oraclePreview={<HomeOraclePreview
       kind="personal"
@@ -58,13 +58,14 @@ describe("training home presentation", () => {
     expect(preview.closest("details")).toBeNull()
     expect(preview).toHaveAttribute("data-oracle-kind", "personal")
     expect(preview.querySelector('img[src$="analysis-lens-v2.webp"]')).toBeNull()
-    expect(within(preview).getByText(/2026\.09\.12 \/ 2026\.09\.28/u)).toBeVisible()
+    expect(within(preview).queryByText(/2026\.09\.12 \/ 2026\.09\.28/u)).toBeNull()
+    expect(within(preview).queryByText("같은 종목에 저장한 두 기록을 나란히 볼 수 있어요.")).toBeNull()
     expect(screen.getAllByRole("region", { name: /오라클/u })).toHaveLength(1)
     expect(screen.queryByRole("button", { name: / · 결과 보기$/u })).not.toBeInTheDocument()
-    const result = within(preview).getByRole("button", { name: "이 결과 자세히 보기" })
-    expect(result).toHaveAttribute("aria-describedby")
+    const result = within(preview).getByRole("button", { name: "내 훈련 분석" })
+    expect(result).toHaveAttribute("data-category", "oracle")
     expect(preview.querySelectorAll("button")).toHaveLength(1)
-    expect(within(preview).getByRole("heading", { level: 2, name: "최근 경기 기록을 비교했어요" })).toBeVisible()
+    expect(within(preview).getByRole("heading", { level: 2, name: "내 훈련 분석" })).toBeVisible()
     fireEvent.click(result)
     expect(open).toHaveBeenCalledOnce()
   })
@@ -139,11 +140,13 @@ describe("training home presentation", () => {
     expect(screen.getByTestId("install")).toBeVisible()
     expect(screen.getByRole("button", { name: "더보기" })).toHaveAttribute("data-install-shortcut-return", "home")
   })
-  it("uses next-training callback first and preserves prescription metadata", () => {
+  it("uses the next-training reader callback first without making the entry card a prescription", () => {
     const next = vi.fn(); const plan = vi.fn()
     render(<TrainingHome model={TRAINING} onOpenNextTraining={next} onOpenPlan={plan} />)
     const card = screen.getByRole("button", { name: /^다음 훈련 ·/u })
-    expect(card).toHaveTextContent(/전체 25–40분 · 힘든 정도 5–6\/10/u); fireEvent.click(card)
+    expect(card).not.toHaveTextContent(/전체 25–40분/u)
+    expect(card).toHaveTextContent("훈련 내용 보기")
+    fireEvent.click(card)
     expect(next).toHaveBeenCalledOnce(); expect(plan).not.toHaveBeenCalled()
   })
   it("shows the saved future training and useful record actions without a no-record panel", () => {
@@ -152,7 +155,8 @@ describe("training home presentation", () => {
       onWriteLog={write} oraclePreview={<div>오라클 결과</div>} recentJournal={<div data-testid="actual-recent">10월 6일 기록 2개</div>} />)
     expect(screen.getByRole("heading", { name: "훈련과 기록" })).toBeVisible()
     const next = screen.getByRole("button", { name: /^다음 훈련 ·/u })
-    expect(next).toHaveAccessibleName(/10월 9일.*오후.*전체 25–40분 · 힘든 정도 5–6\/10/u)
+    expect(next).toHaveAccessibleName(/10월 9일.*오후/u)
+    expect(next).not.toHaveTextContent(/25–40분/u)
     expect(screen.queryByText(TRAINING.todayMessage)).toBeNull()
     expect(screen.queryByText(/오늘의 훈련|휴식일|미완료/u)).toBeNull()
     const recent = screen.getByTestId("actual-recent")

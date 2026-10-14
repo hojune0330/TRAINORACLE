@@ -1,0 +1,81 @@
+/* Destination identity is opt-in; never recolor journal paper, charts or safety. */
+[data-category="home"] { --category-ink: var(--ink-2); --category-wash: var(--surface-2); }
+[data-category="training"] { --category-ink: var(--category-training); --category-wash: var(--category-training-wash); }
+[data-category="journal"] { --category-ink: var(--category-journal); --category-wash: var(--category-journal-wash); }
+[data-category="oracle"] { --category-ink: var(--category-oracle); --category-wash: var(--category-oracle-wash); }
+[data-category="body"] { --category-ink: var(--category-body); --category-wash: var(--category-body-wash); }
+[data-category="record"] { --category-ink: var(--category-record); --category-wash: var(--category-record-wash); }
+
+.category-icon {
+  display: inline-flex;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-action);
+  color: var(--category-ink);
+  background: var(--category-wash);
+}
+.category-icon.category-icon--compact { flex-basis: 28px; width: 28px; height: 28px; border-radius: var(--space-2); }
+.category-icon > svg { flex-shrink: 0; }
+
+button.category-card,
+.category-disclosure > summary {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-width: 0;
+  min-height: 72px;
+  padding: var(--space-4);
+  border: var(--bw-line) solid var(--hair);
+  border-radius: var(--r-task-surface);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color 160ms ease-out, border-color 160ms ease-out;
+}
+.category-card__copy { display: grid; flex: 1 1 auto; min-width: 0; gap: var(--space-1); }
+.category-card__label { color: var(--category-ink); font: 600 var(--fs-caption) / 1.5 var(--sans); }
+.category-card__title { color: var(--ink); font: 700 var(--fs-body-lg) / 1.45 var(--sans); }
+.category-card__description { color: var(--ink-3); font: 400 var(--fs-body) / 1.5 var(--sans); }
+.category-card__chevron { flex: 0 0 auto; color: var(--category-ink); }
+button.category-card:focus-visible,
+.category-disclosure > summary:focus-visible { outline: 2px solid var(--category-ink); outline-offset: 3px; }
+button.category-card:active,
+.category-disclosure > summary:active { background: var(--category-wash); }
+@media (hover: hover) and (pointer: fine) {
+  button.category-card:not(:disabled):hover,
+  .category-disclosure > summary:hover { border-color: var(--category-ink); }
+}
+.category-disclosure { min-width: 0; margin: 0; }
+.category-disclosure > summary { list-style: none; }
+.category-disclosure > summary::-webkit-details-marker { display: none; }
+.category-disclosure[open] > summary { background: var(--category-wash); }
+.category-disclosure[open] > summary > .category-card__chevron { transform: rotate(180deg); }
+.category-disclosure__content { min-width: 0; padding: var(--space-4); overflow-wrap: anywhere; }
+.category-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: var(--space-3); }
+
+/* Category choices retain explicit aria selection and readable labels. */
+button.app-choice-control.app-choice-control.category-choice { display: flex; align-items: center; gap: var(--space-2); text-align: left; }
+button.app-choice-control.app-choice-control.category-choice.category-choice:is([aria-pressed="true"], [aria-selected="true"]) {
+  background: var(--category-wash); color: var(--category-ink); border-color: var(--category-ink);
+}
+.app-tab-bar .app-tab-bar__button[data-category] > svg { color: var(--category-ink); }
+.app-tab-bar .app-tab-bar__button[data-category][data-active="true"] { color: var(--category-ink); }
+.app-tab-bar .app-tab-bar__button[data-category][data-active="true"]::before { background: var(--category-wash); }
+@media (hover: hover) and (pointer: fine) {
+  .app-tab-bar .app-tab-bar__button[data-category]:not(.app-tab-bar__record):not(:disabled):hover::before { background: var(--category-wash); }
+}
+.app-shell[data-reduced-motion="true"] :is(button.category-card, .category-disclosure > summary) { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  button.category-card, .category-disclosure > summary { transition: none; }
+}

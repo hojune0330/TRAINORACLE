@@ -26,6 +26,32 @@ const today: InstantPlanToday = {
 }
 
 describe("InstantPlanTodayView", () => {
+  it("opens the selected full workout from a category card without recording or changing either slot", () => {
+    const view = vi.fn(), record = vi.fn()
+    const original = JSON.stringify(today)
+    render(<InstantPlanTodayView today={today} navigationCards onViewSession={view} onRecordSession={record} />)
+    expect(screen.queryByText("각 반복 사이 90초 걷기")).toBeNull()
+    const afternoon = screen.getByRole("button", { name: "오후 훈련 내용 보기 · 반복 훈련" })
+    expect(afternoon).toHaveAttribute("data-category", "training")
+    fireEvent.click(afternoon)
+    expect(view).toHaveBeenCalledExactlyOnceWith("pm")
+    expect(record).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole("button", { name: "오전 훈련 기록 남기기" }))
+    expect(record).toHaveBeenCalledExactlyOnceWith("am")
+    expect(JSON.stringify(today)).toBe(original)
+  })
+
+  it("keeps incomplete-workout warnings outside the navigation card and blocks recording when unavailable", () => {
+    const warned = { ...today, sessions: [{ ...today.sessions[0]!, guidanceNotice: "반복 횟수와 회복 시간은 정해지지 않았어요." }] }
+    const props = { navigationCards: true, onViewSession: vi.fn(), onRecordSession: vi.fn() }
+    const { rerender } = render(<InstantPlanTodayView today={warned} {...props} />)
+    expect(screen.getByText("이 시간 내내 강하게 뛰지 마세요.")).toBeVisible()
+    expect(screen.getByText("이 시간 내내 강하게 뛰지 마세요.").closest("details")).toBeNull()
+    rerender(<InstantPlanTodayView today={{ ...warned, state: "UNAVAILABLE" }} {...props} />)
+    expect(screen.getByRole("alert")).toBeVisible()
+    expect(screen.queryByRole("button", { name: /훈련 기록 남기기|훈련 내용 보기/ })).toBeNull()
+  })
+
   it("keeps incomplete repeat guidance visible and opens only the selected method", () => {
     const onViewSession = vi.fn()
     render(<InstantPlanTodayView today={{ ...today, sessions: [{ ...today.sessions[0]!,
