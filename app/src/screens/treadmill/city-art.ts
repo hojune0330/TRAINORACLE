@@ -69,7 +69,8 @@ export function drawCityBackdrop(context: CanvasRenderingContext2D, palette: Gam
   // Far skyline, then the landmark, then a nearer skyline: three parallax layers.
   skyline(context, palette, scene, width, horizon, travel * 0.05, 0.55, 7, clock, reduced)
   const landmarkX = width * 0.62 - wrap(travel * 0.02, width * 0.4)
-  if (!(scene.city.id === "seoul" && drawSceneProp(context, "tower", landmarkX, horizon, 76, 150))) {
+  const towerHeight = Math.min(150, Math.max(40, horizon - 14))
+  if (!(scene.city.id === "seoul" && drawSceneProp(context, "tower", landmarkX, horizon, towerHeight * 76 / 150, towerHeight))) {
     landmark(context, palette, scene, scene.city.landmark, landmarkX, horizon, Math.min(1.25, Math.max(0.8, width / 380)))
   }
   skyline(context, palette, scene, width, horizon, travel * 0.12, 0.85, 3, clock, reduced)

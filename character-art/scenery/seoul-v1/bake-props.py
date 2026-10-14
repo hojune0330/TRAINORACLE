@@ -1,7 +1,7 @@
-"""Offline miniature prop bake. Imported Tripo GLBs override clearly labelled local prototypes.
+"""Offline miniature prop bake. Imported Tripo FBX/GLB overrides labelled prototypes.
 
 blender --background --python bake-props.py -- <output-dir> [<source-dir>]
-Source names: tree.glb, rock.glb, hurdle.glb, gate.glb, shoe.glb, tower.glb.
+Source names: tree, rock, hurdle, gate, shoe, tower; .glb or embedded-texture .fbx.
 No networking or credits. Every output records whether its source was imported or local.
 """
 import bpy, sys, math, json
@@ -65,8 +65,12 @@ reports=[]
 for prop in ['tree','rock','hurdle','gate','shoe','tower']:
     bpy.ops.object.select_all(action='SELECT'); bpy.ops.object.delete(use_global=False)
     path=source/f'{prop}.glb'
-    if path.exists(): bpy.ops.import_scene.gltf(filepath=str(path))
+    if not path.exists(): path=source/f'{prop}.fbx'
+    if path.exists():
+        if path.suffix == '.fbx': bpy.ops.import_scene.fbx(filepath=str(path))
+        else: bpy.ops.import_scene.gltf(filepath=str(path))
     else: make(prop)
+    bpy.context.view_layer.update()
     objects=[o for o in bpy.context.scene.objects if o.type=='MESH']
     points=[o.matrix_world @ Vector(c) for o in objects for c in o.bound_box]
     center=sum(points,Vector())/len(points)
@@ -83,9 +87,22 @@ for prop in ['tree','rock','hurdle','gate','shoe','tower']:
     sh=scene.display.shading; sh.light='STUDIO'; sh.color_type='MATERIAL'; sh.show_shadows=True
     sh.show_cavity=True; sh.cavity_type='BOTH'; sh.curvature_ridge_factor=1.1; sh.curvature_valley_factor=.6
     sh.show_specular_highlight=False; sh.show_object_outline=False
+    if path.exists():
+        # Studio Bridge delivers embedded-texture FBX. Render its materials,
+        # rather than replacing them with the viewport's material swatches.
+        scene.render.engine='CYCLES'; scene.cycles.device='CPU'; scene.cycles.samples=24
+        scene.view_settings.view_transform='AgX'; scene.view_settings.exposure=0
+        scene.cycles.use_denoising=True
+        scene.world.use_nodes=True
+        scene.world.node_tree.nodes['Background'].inputs[0].default_value=(.75,.8,.9,1)
+        scene.world.node_tree.nodes['Background'].inputs[1].default_value=.7
+        span=cam.data.ortho_scale
+        bpy.ops.object.light_add(type='AREA',location=center+Vector((-3,-4,7))*span)
+        key=bpy.context.object; key.data.energy=1100*span*span; key.data.size=5*span
+        key.rotation_euler=(center-key.location).to_track_quat('-Z','Y').to_euler()
     scene.render.film_transparent=True
     scene.render.resolution_x=512; scene.render.resolution_y=512; scene.render.resolution_percentage=100
     scene.render.image_settings.file_format='PNG'; scene.render.image_settings.color_mode='RGBA'
     scene.render.filepath=str(out/f'{prop}.png'); bpy.ops.render.render(write_still=True)
-    reports.append({'id':prop,'source':'imported-glb' if path.exists() else 'local-parametric-prototype','file':str(path.name) if path.exists() else None})
+    reports.append({'id':prop,'source':'tripo-studio-h3.1' if path.exists() else 'local-parametric-prototype','file':str(path.name) if path.exists() else None})
 (out/'bake-report.json').write_text(json.dumps(reports,indent=2),encoding='utf-8')

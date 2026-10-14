@@ -21,11 +21,15 @@ export function CityPreview({ city }: { readonly city: TourCity }) {
       drawCityGround(ctx, palette, scene, frame, 0.1, 0)
     }
     paint()
-    void loadSceneArt().then(paint)
+    void loadSceneArt().then(() => {
+      if (!mounted) return
+      paint()
+      canvas.dataset.art = "settled"
+    })
     return () => { mounted = false }
   }, [city])
   return <span className="treadmill-game__city-preview" aria-hidden="true">
-    <canvas ref={ref} width={390} height={210} />
+    <canvas ref={ref} width={390} height={210} data-art="loading" />
     <span>트랙 <i /> 진흙 <i /> 야간</span>
   </span>
 }

@@ -1,0 +1,60 @@
+{
+  "generator": "Tripo Studio H3.1",
+  "date": "2026-10-14",
+  "plan": "Pro",
+  "transfer": "Official Blender Bridge 1.0.3; embedded-texture FBX",
+  "seed": null,
+  "credits": 150,
+  "balanceBefore": 3060,
+  "balanceAfter": 2910,
+  "assets": [
+    {
+      "id": "tree",
+      "task": "b8c802be-7561-4dee-802e-d54b9a5a532a",
+      "file": "tree.fbx",
+      "sha256": "5eb9f75534694d74d352e471854a1832c951bd45582576782061f836b66ddb2c",
+      "bytes": 602396,
+      "credits": 25
+    },
+    {
+      "id": "rock",
+      "task": "23168032-2c39-4dbe-a29b-17ae6c143fcd",
+      "file": "rock.fbx",
+      "sha256": "96e651bae0e71a353bcb8c5c944dbf765a8aed6ad437142e4163cc2465ff2392",
+      "bytes": 589196,
+      "credits": 25
+    },
+    {
+      "id": "hurdle",
+      "task": "c448c0b0-227c-4a52-9475-f0248f36d91f",
+      "file": "hurdle.fbx",
+      "sha256": "1d5f34eec6ae052dcb3f8a7beec58f996af96cc8c59dd10cba377356cbede467",
+      "bytes": 765804,
+      "credits": 25
+    },
+    {
+      "id": "gate",
+      "task": "025df683-9280-4cb9-96de-8aad23a8222d",
+      "file": "gate.fbx",
+      "sha256": "6282f477332952532dc5692ce71f459179d9b8b0ea3c296355431b430685ab23",
+      "bytes": 739804,
+      "credits": 25
+    },
+    {
+      "id": "shoe",
+      "task": "b0a99e90-c050-418d-bfe3-1ee418b257fe",
+      "file": "shoe.fbx",
+      "sha256": "9a16be09e727b8bcc73e2a0467cc77be0fa8e24a9366e8e2c4158690321002a3",
+      "bytes": 801516,
+      "credits": 25
+    },
+    {
+      "id": "tower",
+      "task": "7f81a2bc-1593-4ff1-9b9e-8a399714ddf9",
+      "file": "tower.fbx",
+      "sha256": "94feab5b90b4f4c17f0bd9251adca7e56becd0b224aaa48fc17daf78f8b6900d",
+      "bytes": 684156,
+      "credits": 25
+    }
+  ]
+}

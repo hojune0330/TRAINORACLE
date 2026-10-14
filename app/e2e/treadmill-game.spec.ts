@@ -393,6 +393,7 @@ test("tours Seoul in 2.5D, saves stars on this device, unlocks the next city and
   await page.getByRole("button", { name: "미니게임", exact: true }).click()
   await expect(page.getByRole("button", { name: /^대전 · / })).toBeEnabled()
   await expect(page.getByText("이 기기에 저장")).toBeVisible()
+  await expect(page.locator(".treadmill-game__city-preview canvas")).toHaveAttribute("data-art", "settled")
   await page.screenshot({ path: info.outputPath("tour-map.png"), fullPage: true })
   expect(external).toEqual([])
 })

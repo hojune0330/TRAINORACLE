@@ -3,57 +3,57 @@
   "assets": [
     {
       "id": "tree",
-      "source": "local-parametric-prototype",
-      "file": null,
-      "width": 200,
+      "source": "tripo-studio-h3.1",
+      "file": "tree.fbx",
+      "width": 218,
       "height": 256,
-      "bytes": 6352,
-      "sha256": "ce9d6245d2045e65eec4c7fe07a6c02b6fa9e741611878aa64dc8936d1196003"
+      "bytes": 10404,
+      "sha256": "e930c2653ba15b0489d34b467f0e9431282150a4455482cfdefb56c3c36c04fe"
     },
     {
       "id": "rock",
-      "source": "local-parametric-prototype",
-      "file": null,
-      "width": 256,
-      "height": 167,
-      "bytes": 4604,
-      "sha256": "b6da7f438473737b34f0e32e292bb3049334016dbcb2881b048ba5b38cba94f5"
+      "source": "tripo-studio-h3.1",
+      "file": "rock.fbx",
+      "width": 241,
+      "height": 256,
+      "bytes": 7990,
+      "sha256": "f62971a01446373427a7f55c2051029ee65859440ec17a28c6b76ca890b37edf"
     },
     {
       "id": "hurdle",
-      "source": "local-parametric-prototype",
-      "file": null,
+      "source": "tripo-studio-h3.1",
+      "file": "hurdle.fbx",
       "width": 256,
-      "height": 161,
-      "bytes": 7036,
-      "sha256": "2c65691ee9f5cd6b693700ae70f335d293e1e1254f218ddaa2eb66dd0170b18f"
+      "height": 165,
+      "bytes": 9278,
+      "sha256": "934b1c4f8346a4ec725b527d03d3c0fac31df3fe3e6c5334bcd93402d2a2677b"
     },
     {
       "id": "gate",
-      "source": "local-parametric-prototype",
-      "file": null,
-      "width": 203,
-      "height": 256,
-      "bytes": 6700,
-      "sha256": "5ffb7da634b66614bd9315242b65d83fd4591c77afe54aad127d483d6c312184"
+      "source": "tripo-studio-h3.1",
+      "file": "gate.fbx",
+      "width": 256,
+      "height": 176,
+      "bytes": 9776,
+      "sha256": "e6d1519e4c935320a6315588efb3bce45f894689b674a12bb4482da7b0f2c064"
     },
     {
       "id": "shoe",
-      "source": "local-parametric-prototype",
-      "file": null,
+      "source": "tripo-studio-h3.1",
+      "file": "shoe.fbx",
       "width": 256,
-      "height": 145,
-      "bytes": 6992,
-      "sha256": "06a9d63389b536e9097d22432939adbdc73a6eb25d365fea41fe88e68e2775e4"
+      "height": 142,
+      "bytes": 8866,
+      "sha256": "119e0bb3e0da6669bb8c6f41b22b0f88254c6fc2e432445625079d03d5f36cfc"
     },
     {
       "id": "tower",
-      "source": "local-parametric-prototype",
-      "file": null,
-      "width": 145,
+      "source": "tripo-studio-h3.1",
+      "file": "tower.fbx",
+      "width": 156,
       "height": 256,
-      "bytes": 5082,
-      "sha256": "16804feaf0117a6a51b46438613b319101f5eff9881ddf2d09aea8510dae2fa7"
+      "bytes": 7906,
+      "sha256": "ab1277d5bdeb5210bb3d0b05e480d1096c814a91f55b0ae2406ebe8b85a6459a"
     }
   ]
 }
