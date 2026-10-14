@@ -97,9 +97,9 @@ function OracleArticleContent({ title, reading }: { title: string; reading: Orac
   </>
 }
 
-function restoredFlow(answers: OracleResponses, draft?: OracleResponses): OracleQuestionFlow {
+function restoredFlow(answers: OracleResponses, draft?: OracleResponses, activeAxis?: OracleAxisId): OracleQuestionFlow {
   const axis = draft ? ORACLE_AXES.find(item => item.questions.some((_text, index) => draft[`${item.id}_${index + 1}` as keyof OracleResponses] !== answers[`${item.id}_${index + 1}` as keyof OracleResponses])) : undefined
-  const flow = startOracleQuestionFlow(draft ?? answers, axis?.id ?? "STRUCTURE")
+  const flow = startOracleQuestionFlow(draft ?? answers, axis?.id ?? activeAxis ?? "STRUCTURE")
   return { ...flow, completed: answers, position: draft && axis && flow.position === 3 ? 0 : flow.position }
 }
 
@@ -124,13 +124,25 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
   const [localMessage, setLocalMessage] = React.useState("")
   const touch = React.useRef<{ x: number; y: number } | null>(null)
   const questionHeading = React.useRef<HTMLHeadingElement>(null)
+  const [answerFeedback, setAnswerFeedback] = React.useState<{ flow: OracleQuestionFlow; editing: boolean } | null>(null)
+  const feedbackRef = React.useRef<typeof answerFeedback>(null)
+  const feedbackTimer = React.useRef<ReturnType<typeof setTimeout>>()
+  const [resultReveal, setResultReveal] = React.useState(0)
+  const clearFeedback = React.useCallback(() => {
+    clearTimeout(feedbackTimer.current)
+    feedbackRef.current = null
+    setAnswerFeedback(null)
+  }, [])
+  React.useEffect(() => () => { clearTimeout(feedbackTimer.current); feedbackRef.current = null }, [])
+  React.useEffect(() => { if (reduced) clearFeedback() }, [reduced, clearFeedback])
   React.useEffect(() => {
     if (props.status === "DELETED") {
+      clearFeedback(); setResultReveal(0)
       dirty.current = false; const empty = startOracleQuestionFlow(); flowRef.current = empty; setFlow(empty)
       setCharacter(null); setQuestionOpen(false); setEditingQuestion(false); setSavedReading(null); setStoryAxis(null); setTopicId(null); setLearning(null); setSettingsOpen(false); setFeaturedTopicId("D02"); return
     }
     if (dirty.current) return
-    const next = restoredFlow(props.answers, props.draftAnswers)
+    const next = restoredFlow(props.answers, props.draftAnswers, questionOpen ? flowRef.current.axisId : undefined)
     flowRef.current = next; setFlow(next); setCharacter(props.selectedCharacter)
   }, [props.answers, props.draftAnswers, props.selectedCharacter, props.status])
   const profile = buildOracleProfile(flow.completed, character)
@@ -139,11 +151,13 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
   const basicScores = profile.scores.filter(score => score.axisId !== "SU" && score.axisId !== "WE")
   const extraScores = visibleScores.filter(score => score.axisId === "SU" || score.axisId === "WE")
   const hasChartScores = basicScores.some(score => score.display !== null)
-  const question = currentOracleQuestion(flow)
+  const shownFlow = answerFeedback?.flow ?? flow
+  const shownEditing = answerFeedback?.editing ?? editingQuestion
+  const question = currentOracleQuestion(shownFlow)
   const answerActivation = useAutoAdvanceActivation(question?.id ?? `${flow.axisId}-result`)
   const currentScore = profile.scores.find(score => score.axisId === flow.axisId)!
   const nextAxis = ORACLE_AXES.find(axis => profile.scores.find(score => score.axisId === axis.id)?.state === "UNANSWERED")
-  const previousQuestion = flow.position > 0 ? ORACLE_QUESTIONS.find(item => item.id === `${flow.axisId}_${flow.position}`) : undefined
+  const previousQuestion = shownFlow.position > 0 ? ORACLE_QUESTIONS.find(item => item.id === `${shownFlow.axisId}_${shownFlow.position}`) : undefined
   // The reader opens in an effect; focus after showModal rather than while the dialog is hidden.
   React.useEffect(() => { if (questionOpen) questionHeading.current?.focus({ preventScroll: true }) }, [question?.id, questionOpen])
   const accountBlocked = props.account && ["LOADING", "CONFLICT", "DELETED"].includes(props.status)
@@ -160,34 +174,47 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
     finally { setBusy(false) }
   }
   const openQuestions = (axis: OracleAxisId) => {
+    clearFeedback(); setResultReveal(0)
     if (dirty.current || props.hasPendingScore) { setQuestionOpen(true); return }
     setEditingQuestion(false)
     const next = editOracleAxis(flowRef.current, axis)
     flowRef.current = next; setFlow(next); setQuestionOpen(true)
   }
   const reviewAnswers = (axis: OracleAxisId) => {
+    clearFeedback(); setResultReveal(0)
     if (dirty.current || props.hasPendingScore) { setQuestionOpen(true); return }
     const next = startOracleQuestionFlow(flowRef.current.completed, axis)
     setEditingQuestion(false); flowRef.current = next; setFlow(next); setQuestionOpen(true)
   }
   const answer = (response: OracleResponse) => {
-    if (!question || blocked) return
+    if (!question || blocked || feedbackRef.current) return
     const accepted = answerOracleQuestion(flowRef.current, question.id, response)
     if (accepted === flowRef.current) return
     // A result-review edit changes only this answer; a normal first pass still needs three answers.
     const next: OracleQuestionFlow = editingQuestion
       ? { ...accepted, position: 3, completed: { ...flowRef.current.completed, [question.id]: response } }
       : accepted
+    // Accept and protect the answer immediately. Only its presentation stays
+    // briefly on the old question; close/unmount never cancels a chosen answer.
+    if (!reduced) {
+      const feedback = { flow: { ...flowRef.current, draft: accepted.draft }, editing: editingQuestion }
+      feedbackRef.current = feedback
+      setAnswerFeedback(feedback)
+      feedbackTimer.current = setTimeout(clearFeedback, 140)
+    }
     setEditingQuestion(false)
     dirty.current = true; flowRef.current = next; setFlow(next); props.onDraft(next.draft)
     if (next.position === 3) {
+      setResultReveal(value => value + 1)
       const candidate = buildOracleProfile(next.completed, Object.keys(flow.completed).length === 0 ? undefined : character)
       const selected = candidate.representative.id === "NEUTRAL" ? null : candidate.representative.id
       setCharacter(selected); void commit(next.completed, selected)
     }
   }
   const previous = () => {
-    const next = previousOracleQuestion(flowRef.current)
+    const position = feedbackRef.current?.flow.position ?? flowRef.current.position
+    clearFeedback()
+    const next = previousOracleQuestion({ ...flowRef.current, position })
     flowRef.current = next; setFlow(next)
   }
   const topic = topicId ? oracleContentTopic(topicId) : null
@@ -288,24 +315,27 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
         {localMessage && <p role="alert">변경을 저장하지 못했어요. 입력한 답은 그대로 남아 있어요.</p>}
     </>}</Reader>}
     {story && <Reader title="응답 해설" onClose={() => setStoryAxis(null)} action={!blocked && storyAxis ? { label: "내 답 수정", run: () => reviewAnswers(storyAxis) } : undefined}><p className="oracle-v2__eyebrow">내 응답 기준</p><AppHeading variant="screen" accent>{story.title}</AppHeading><p>{story.reading}</p><p>{story.example}</p><AppHeading as="h2" variant="section">이렇게 활용해 볼 수 있어요</AppHeading><p>{story.use}</p><InfoDisclosure title="응답 근거와 해석 범위"><AppHeading as="h2" variant="section">함께 생각할 점</AppHeading><p>{story.watchFor}</p><AppHeading as="h2" variant="section">내가 답한 내용</AppHeading>{story.facts.map((fact, i) => <p key={i}>{fact.question}<br />{typeof fact.response === "number" ? `${fact.response}/5` : fact.response === "SKIPPED" ? "건너뜀" : nonNumeric.find(([value]) => value === fact.response)?.[1]}</p>)}<AppHeading as="h2" variant="section">아직 알 수 없는 것</AppHeading><p>{story.boundary}</p><p>{story.scope}</p></InfoDisclosure></Reader>}
-    {questionOpen && <Reader title={ORACLE_AXES.find(axis => axis.id === flow.axisId)!.label} contentKey={question?.id ?? `${flow.axisId}-result`} onClose={() => setQuestionOpen(false)} closeLabel={question ? null : "내 결과 보기"} initialFocusRef={questionHeading}>
-      {question ? <div className="oracle-v2__question" key={question.id} {...answerActivation}>
-        {editingQuestion ? <p className="oracle-v2__eyebrow">내 답 수정</p> : <div className="oracle-v2__question-progress"><p className="oracle-v2__eyebrow">{flow.position + 1} / 3</p><progress aria-label="현재 질문 순서" value={flow.position + 1} max={3} /></div>}
+    {questionOpen && <Reader title={ORACLE_AXES.find(axis => axis.id === flow.axisId)!.label} contentKey={question?.id ?? `${flow.axisId}-result`} onClose={() => { clearFeedback(); setQuestionOpen(false) }} closeLabel={question ? null : "내 결과 보기"} initialFocusRef={questionHeading}>
+      {question ? <div className="oracle-v2__question" key={question.id} data-answer-feedback={answerFeedback ? "true" : undefined} {...answerActivation}>
+        {shownEditing ? <p className="oracle-v2__eyebrow">내 답 수정</p> : <div className="oracle-v2__question-progress"><p className="oracle-v2__eyebrow">{shownFlow.position + 1} / 3</p><progress aria-label="현재 질문 순서" value={shownFlow.position + 1} max={3} /></div>}
         <AppHeading variant="screen" accent ref={questionHeading} tabIndex={-1}>{question.text}</AppHeading>
-        <p className="oracle-v2__question-hint">{editingQuestion ? "답을 고르면 이 항목의 결과에 반영돼요." : "지금 내 생각에 가까운 답을 골라요."}</p>
-        <div className="oracle-v2__choices app-choice-group">{responseLabels.map(([value, label]) => <button data-auto-advance className="app-choice-control app-choice-control--answer" type="button" key={value} disabled={blocked} aria-pressed={flow.draft[question.id] === value} onClick={() => answer(value)}><span>{label}</span>{flow.draft[question.id] === value ? <Check size={18} aria-hidden="true" /> : <ChevronRight size={18} aria-hidden="true" />}</button>)}</div>
-        <div className="oracle-v2__choices app-choice-group" role="group" aria-label="숫자로 답하기 어려운 경우">{nonNumeric.map(([value, label]) => <button data-auto-advance className="app-choice-control app-choice-control--answer" type="button" key={value} disabled={blocked} aria-pressed={flow.draft[question.id] === value} onClick={() => answer(value)}>{label}{flow.draft[question.id] === value && <Check size={18} aria-hidden="true" />}</button>)}</div>
-        {previousQuestion && !editingQuestion && <button type="button" className="oracle-v2__previous-answer" disabled={blocked} onClick={previous}><span><small>이전 답</small>{" "}{responseLabel(flow.draft[previousQuestion.id])}</span><Pencil size={16} aria-hidden="true" /></button>}
-        <footer className="oracle-v2__pager">{editingQuestion ? <button type="button" disabled={blocked} onClick={() => { const next = { ...flowRef.current, position: 3 as const }; flowRef.current = next; setFlow(next); setEditingQuestion(false) }}>수정 취소</button> : <button type="button" disabled={flow.position === 0 || blocked} aria-label="이전 질문" title="이전 질문" onClick={previous}><ArrowLeft size={18} aria-hidden="true" />이전</button>}<button data-auto-advance type="button" disabled={blocked} aria-pressed={flow.draft[question.id] === "SKIPPED"} onClick={() => answer("SKIPPED")}>건너뛰기</button></footer>
-      </div> : <div className="oracle-v2__question-result">
+        <p className="oracle-v2__question-hint">{shownEditing ? "답을 고르면 이 항목의 결과에 반영돼요." : "지금 내 생각에 가까운 답을 골라요."}</p>
+        <div className="oracle-v2__choices app-choice-group">{responseLabels.map(([value, label]) => <button data-auto-advance className="app-choice-control app-choice-control--answer" type="button" key={value} disabled={blocked} aria-pressed={shownFlow.draft[question.id] === value} onClick={() => answer(value)}><span>{label}</span>{shownFlow.draft[question.id] === value ? <Check size={18} aria-hidden="true" /> : <ChevronRight size={18} aria-hidden="true" />}</button>)}</div>
+        <div className="oracle-v2__choices app-choice-group" role="group" aria-label="숫자로 답하기 어려운 경우">{nonNumeric.map(([value, label]) => <button data-auto-advance className="app-choice-control app-choice-control--answer" type="button" key={value} disabled={blocked} aria-pressed={shownFlow.draft[question.id] === value} onClick={() => answer(value)}>{label}{shownFlow.draft[question.id] === value && <Check size={18} aria-hidden="true" />}</button>)}</div>
+        {previousQuestion && !shownEditing && <button type="button" className="oracle-v2__previous-answer" disabled={blocked} onClick={previous}><span><small>이전 답</small>{" "}{responseLabel(flow.draft[previousQuestion.id])}</span><Pencil size={16} aria-hidden="true" /></button>}
+        <footer className="oracle-v2__pager">{shownEditing ? <button type="button" disabled={blocked} onClick={() => { clearFeedback(); const next = { ...flowRef.current, position: 3 as const }; flowRef.current = next; setFlow(next); setEditingQuestion(false) }}>수정 취소</button> : <button type="button" disabled={shownFlow.position === 0 || blocked} aria-label="이전 질문" title="이전 질문" onClick={previous}><ArrowLeft size={18} aria-hidden="true" />이전</button>}<button data-auto-advance type="button" disabled={blocked} aria-pressed={shownFlow.draft[question.id] === "SKIPPED"} onClick={() => answer("SKIPPED")}>건너뛰기</button></footer>
+      </div> : <div className="oracle-v2__question-result" key={`${flow.axisId}:${resultReveal}`} data-result-reveal={resultReveal > 0 ? "true" : undefined}>
         <p className="oracle-v2__eyebrow">내 응답 기준</p>
         <AppHeading variant="screen" accent ref={questionHeading} tabIndex={-1}>내 답을 정리했어요</AppHeading>
         <p className="oracle-v2__result-reading">{describeOracleAxis(currentScore)}</p>
-        {currentScore.display !== null ? <><p className="oracle-v2__result-number">{currentScore.display}<small> / 100</small></p><p className="oracle-v2__status">취향을 정리한 값이에요. 체력이나 실력 점수가 아니에요.</p></> : <p className="oracle-v2__status">점수 없이 답만 정리했어요.</p>}
-        {illustrationAllowed && (profile.candidates.find(item => item.id === flow.axisId) ? <PreferenceCharacter key={flow.axisId} axis={flow.axisId} label={ORACLE_AXES.find(axis => axis.id === flow.axisId)!.character!} /> : <ProfileCompanion mode="result" />)}
+        <div className="oracle-v2__result-highlight">
+          {currentScore.display !== null ? <p className="oracle-v2__result-number">{currentScore.display}<small> / 100</small></p> : <p className="oracle-v2__status">점수 없이 답만 정리했어요.</p>}
+          {illustrationAllowed && <div className="oracle-v2__result-character">{profile.candidates.find(item => item.id === flow.axisId) ? <PreferenceCharacter key={flow.axisId} axis={flow.axisId} label={ORACLE_AXES.find(axis => axis.id === flow.axisId)!.character!} /> : <ProfileCompanion mode="result" />}</div>}
+        </div>
+        {currentScore.display !== null && <p className="oracle-v2__status">취향을 정리한 값이에요. 체력이나 실력 점수가 아니에요.</p>}
         {localMessage ? <p role="alert">저장을 확인하지 못했어요. 입력한 답은 이 화면에 남아 있어요.</p> : <p role="status">{busy ? "답을 저장하는 중이에요." : sourceMessage}</p>}
         {localMessage === "save" && <button type="button" disabled={busy} onClick={() => { void commit(flow.completed, character) }}>다시 저장<RotateCcw size={16} /></button>}
-        <InfoDisclosure title="내 답 확인·수정" purpose="actions"><div className="oracle-v2__answer-review">{currentScore.evidence.map((item, index) => <button type="button" key={item.questionId} disabled={blocked} onClick={() => { const next = { ...flowRef.current, position: index as 0 | 1 | 2 }; flowRef.current = next; setFlow(next); setEditingQuestion(true) }}><span><small>{ORACLE_QUESTIONS.find(q => q.id === item.questionId)?.text}</small>{" "}{responseLabel(item.response ?? undefined)}</span><Pencil size={16} aria-hidden="true" /></button>)}</div></InfoDisclosure>
+        <InfoDisclosure title="내 답 확인·수정" purpose="actions"><div className="oracle-v2__answer-review">{currentScore.evidence.map((item, index) => <button type="button" key={item.questionId} disabled={blocked} onClick={() => { setResultReveal(0); const next = { ...flowRef.current, position: index as 0 | 1 | 2 }; flowRef.current = next; setFlow(next); setEditingQuestion(true) }}><span><small>{ORACLE_QUESTIONS.find(q => q.id === item.questionId)?.text}</small>{" "}{responseLabel(item.response ?? undefined)}</span><Pencil size={16} aria-hidden="true" /></button>)}</div></InfoDisclosure>
         {nextAxis && <div className="oracle-v2__next-interest"><p className="oracle-v2__status">더 궁금하다면 · 다음 항목도 질문 3개</p><button type="button" className="oracle-v2__primary" disabled={blocked || dirty.current || props.hasPendingScore} onClick={() => openQuestions(nextAxis.id)}>{axisActionLabels[nextAxis.id]}도 알아보기<ArrowRight size={18} aria-hidden="true" /></button></div>}
       </div>}
     </Reader>}

@@ -40,6 +40,7 @@ test("preference questions, reactive helper and optional next topic retain answe
     const answer = dialog.getByRole("button", { name: "매우 그래요", exact: true })
     await answer.focus()
     await answer.press("Enter")
+    if (n < 2) await expect(dialog.getByRole("progressbar")).toHaveAttribute("value", String(n + 2))
   }
   await expect(dialog.getByRole("heading", { name: "내 답을 정리했어요" })).toBeFocused()
   await expect(dialog.locator(".oracle-v2__result-number")).toContainText("100")
@@ -92,6 +93,15 @@ test("large text, missing pictures and app motion preference keep answers usable
   await expect(dialog.getByRole("heading", { name: "훈련 순서가 미리 정해져 있으면 마음이 편해요." })).toBeFocused()
   await dialog.getByRole("button", { name: "이전 질문", exact: true }).click()
   await expect(dialog.getByRole("button", { name: "그런 편이에요", exact: true })).toHaveAttribute("aria-pressed", "true")
+  for (let n = 0; n < 3; n++) {
+    const choice = dialog.getByRole("button", { name: "매우 그래요", exact: true })
+    await choice.focus(); await choice.press("Enter")
+  }
+  await expect(dialog.getByRole("heading", { name: "내 답을 정리했어요" })).toBeFocused()
+  await expect(dialog.locator(".oracle-v2__result-number")).toHaveCSS("animation-name", "none")
+  await expect(dialog.locator(".oracle-v2__result-character")).toHaveCSS("animation-name", "none")
+  expect(await dialog.locator(".oracle-v2__reader-body").evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true)
+  await page.screenshot({ path: info.outputPath("profile-result-large-320.png") })
 })
 
 test("desktop skip keeps an unknown result distinct from zero", async ({ page }, info) => {
@@ -108,5 +118,59 @@ test("desktop skip keeps an unknown result distinct from zero", async ({ page },
   }
   await expect(dialog.getByText("점수 없이 답만 정리했어요.", { exact: true })).toBeVisible()
   await expect(dialog.locator(".oracle-v2__result-number")).toHaveCount(0)
+  await expect(dialog.locator(".oracle-v2__result-character")).toHaveCSS("animation-name", "none")
   await page.screenshot({ path: info.outputPath("profile-skipped-desktop.png") })
+})
+
+test.describe("answer confirmation and result feedback", () => {
+test.use({ hasTouch: true })
+test("touch answers confirm briefly, clear the next choice and reveal the real result in order", async ({ page }, info) => {
+  await page.setViewportSize({ width: 375, height: 667 })
+  await page.emulateMedia({ reducedMotion: "no-preference" })
+  await openProfile(page)
+  await page.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개", exact: true }).click()
+  const dialog = page.getByRole("dialog", { name: "계획 선호", exact: true })
+  await page.clock.install()
+  await page.clock.pauseAt(new Date())
+  const answer = dialog.getByRole("button", { name: "그런 편이에요", exact: true })
+  await answer.tap()
+  await expect(dialog.locator(".oracle-v2__question")).toHaveAttribute("data-answer-feedback", "true")
+  await expect(answer).toHaveAttribute("aria-pressed", "true")
+  await expect(dialog.getByRole("progressbar")).toHaveAttribute("value", "1")
+  await page.clock.runFor(140)
+  await expect(dialog.getByRole("progressbar")).toHaveAttribute("value", "2")
+  await expect(dialog.locator('[aria-pressed="true"]')).toHaveCount(0)
+  await expect(dialog.getByRole("heading")).toBeFocused()
+  await expect(dialog.getByRole("heading")).toHaveCSS("outline-style", "none")
+  expect(await answer.evaluate(el => getComputedStyle(el).borderColor)).toBe(
+    await dialog.evaluate(el => getComputedStyle(el).borderColor)
+  )
+  await page.screenshot({ path: info.outputPath("preference-next-choice-clear.png"), animations: "disabled" })
+  await dialog.getByRole("button", { name: "닫기", exact: true }).click()
+  await page.getByRole("button", { name: "작성하던 답 이어가기", exact: true }).click()
+  await expect(dialog.getByRole("progressbar")).toHaveAttribute("value", "2")
+  await dialog.getByRole("button", { name: "이전 질문", exact: true }).click()
+  await expect(dialog.getByRole("button", { name: "그런 편이에요", exact: true })).toHaveAttribute("aria-pressed", "true")
+  for (let n = 0; n < 3; n++) {
+    const choice = dialog.getByRole("button", { name: "매우 그래요", exact: true })
+    await choice.focus(); await choice.press("Enter")
+    await page.clock.runFor(140)
+  }
+  await expect(dialog.getByRole("heading", { name: "내 답을 정리했어요" })).toBeFocused()
+  await expect(dialog.locator(".oracle-v2__result-number")).toHaveText("100 / 100")
+  await expect(dialog.locator(".oracle-v2__result-number")).toHaveCSS("animation-name", "oracle-v2-reveal")
+  await expect(dialog.locator(".oracle-v2__result-character")).toHaveCSS("animation-delay", "0.12s")
+  await page.clock.runFor(400)
+  await dialog.locator(".oracle-v2__result-character img").evaluate(img => (img as HTMLImageElement).decode())
+  await page.screenshot({ path: info.outputPath("preference-result-reveal.png"), animations: "disabled" })
+  expect(await dialog.locator(".oracle-v2__reader-body").evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
+  await dialog.getByRole("button", { name: "기록 도전도 알아보기", exact: true }).click()
+  const challenge = page.getByRole("dialog", { name: "기록 도전 선호", exact: true })
+  for (let n = 0; n < 3; n++) {
+    const choice = challenge.getByRole("button", { name: "그런 편이에요", exact: true })
+    await choice.focus(); await choice.press("Enter")
+    await page.clock.runFor(140)
+  }
+  await expect(challenge.locator(".oracle-v2__result-number")).toHaveText("75 / 100")
+})
 })

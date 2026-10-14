@@ -41,7 +41,9 @@ button.app-choice-control.app-choice-control.app-choice-control:is([aria-pressed
   font-weight: 700;
 }
 button.app-choice-control.app-choice-control:is([aria-pressed="true"], [aria-selected="true"], [aria-current="page"], [aria-current="location"]) :is(small, span) { color: inherit; }
-button.app-choice-control.app-choice-control:not(:disabled):not([aria-disabled="true"]):hover { border-color: var(--ink-2); }
+@media (hover: hover) and (pointer: fine) {
+  button.app-choice-control.app-choice-control:not(:disabled):not([aria-disabled="true"]):hover { border-color: var(--ink-2); }
+}
 button.app-choice-control.app-choice-control:not(:disabled):not([aria-disabled="true"]):active { border-color: var(--brand); }
 button.app-choice-control.app-choice-control:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 button.app-choice-control.app-choice-control:is(:disabled, [aria-disabled="true"]) { cursor: default; opacity: .55; }

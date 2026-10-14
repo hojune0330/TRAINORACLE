@@ -115,6 +115,10 @@ function account(initial = ready()) {
 const accounts = new Map<string, ReturnType<typeof account>>()
 beforeEach(() => {
   vi.clearAllMocks(); accounts.clear()
+  // Controller/persistence contracts use the actual reduced-motion path;
+  // timed answer presentation is covered by OracleProfileExperience contracts.
+  localStorage.setItem("trainoracle.calendar-reduced-motion.v1", "true")
+  fireEvent(window, new StorageEvent("storage", { key: "trainoracle.calendar-reduced-motion.v1" }))
   readerMode.native = false
   recordSource.records = []
   vi.mocked(activeLocalAccount).mockReturnValue(OWNER_A)
@@ -127,7 +131,11 @@ beforeEach(() => {
   vi.spyOn(HTMLDialogElement.prototype, "close").mockImplementation(function (this: HTMLDialogElement) { this.removeAttribute("open") })
   vi.stubGlobal("fetch", vi.fn(async () => { throw Error("Controller contract tests must not access the network") }))
 })
-afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
+afterEach(() => {
+  cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals()
+  localStorage.removeItem("trainoracle.calendar-reduced-motion.v1")
+  fireEvent(window, new StorageEvent("storage", { key: "trainoracle.calendar-reduced-motion.v1" }))
+})
 const props = { today: "2026-10-04", onBack: vi.fn(), onNavigate: vi.fn() }
 const mount = (initial = ready()) => {
   const fixture = account(initial); accounts.set(OWNER_A, fixture)

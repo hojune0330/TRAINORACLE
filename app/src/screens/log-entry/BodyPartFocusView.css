@@ -54,6 +54,7 @@
   word-break: keep-all;
   overflow-wrap: break-word;
 }
+.body-part-focus-dialog__title:focus { outline: none; }
 
 .body-part-focus-dialog button.app-choice-control.body-part-focus-dialog__close {
   flex: 0 0 var(--app-touch-min, 44px);
