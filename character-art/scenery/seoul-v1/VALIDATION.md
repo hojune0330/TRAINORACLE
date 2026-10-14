@@ -38,3 +38,14 @@ This distinction matters: source delivery, local game checks and a built preview
 - Final map screenshot waits for the image-load settled signal. Desktop and phone show the Tripo tower fully within the preview, with tree/gate scenery. Phone mud and night screenshots were refreshed from this final run.
 - All six runtime hashes, alpha channels and maximum dimensions verified. Source hashes are separately preserved in the source manifest.
 - Local preview is available on this computer at `http://127.0.0.1:4221/?app=1`; it is not a public deployment.
+
+## Release decision after owner deployment request — 2026-10-14
+
+The earlier withheld status above describes the previous checkpoint. The owner subsequently requested deployment and improvement verification.
+
+- Fresh `origin/main` is still `0eb26e4319c7e4fffb118976211c228cfa25e510`; the patch changes only game presentation, assets and their evidence/tests. Training, safety, storage and account implementation are byte-identical to this base.
+- Hosted PR run `38504112333` at `770f8601387da477fab421eb26e0d78fd49b813b` also failed. It is not reported as a passing release gate.
+- A synthetic local diagnosis reproduced the common generation failure: an empty, uninitialized canonical journal reports `MIGRATION_INCOMPLETE`, causing `RECENT_JOURNAL_REQUIRES_REVIEW`. Calling the existing production `initializeCanonicalJournalStorage` makes the same fixture generate successfully. No production guard was changed.
+- The production entry point already mounts `CanonicalJournalBoundary`. Its focused contracts and canonical storage access contracts passed: 2 files / 9 tests. This confirms the diagnosed initialization boundary, not every hosted failure.
+- The active repository freshness policy permits the approved preserving manual release with scope-appropriate checks, retaining failed/skipped CI evidence. Use the passing game/browser/type/build checks above, preserve the existing account hold and assets, then verify the published source receipt and game behavior. No tests, assertions, protection rules or workflows are weakened.
+- Remaining repository maintenance: update older test fixtures for canonical storage initialization and resolve the remaining full-suite failures independently. This release does not claim full CI success or authenticated account verification.
