@@ -31,6 +31,7 @@ import "./styles/emphasis-system.css"
 import "./styles/app-presentation.css"
 import "./styles/selection-system.css"
 import "./styles/category-cards.css"
+import "./styles/date-controls.css"
 
 const showP3PaceHarness = import.meta.env.DEV
   && new URLSearchParams(window.location.search).get("p3-pace-fixture") === "1"

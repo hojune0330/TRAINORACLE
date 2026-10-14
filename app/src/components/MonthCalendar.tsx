@@ -33,11 +33,16 @@ type Props = {
   readonly dayAdornmentDescription?: (date: string) => string | undefined
   readonly highlightedRange?: { readonly start: string; readonly end: string }
   readonly trainingColors?: boolean
+  readonly category?: "training" | "journal"
+  /** Journal overview only. Detailed training calendars keep their full session labels. */
+  readonly compact?: boolean
 }
 
 export function MonthCalendar({ month, today, selectedDate, onMonthChange, onSelectDate, onToday, dayDescription, renderDay,
-  renderDayAdornment, dayAdornmentDescription, highlightedRange, trainingColors = false }: Props) {
+  renderDayAdornment, dayAdornmentDescription, highlightedRange, trainingColors = false, category = "training", compact = false }: Props) {
   const headingId = useId()
+  const jumpId = useId()
+  const monthTrigger = useRef<HTMLButtonElement>(null)
   const motion = useCalendarMotion()
   const [jumpOpen, setJumpOpen] = useState(false)
   const [focusedDate, setFocusedDate] = useState<string | null>(null)
@@ -65,9 +70,9 @@ export function MonthCalendar({ month, today, selectedDate, onMonthChange, onSel
     }
   }
 
-  return <section className="month-calendar" data-reduced-motion={motion.reduced || undefined} aria-labelledby={headingId}>
+  return <section className="month-calendar" data-category={category} data-compact={compact || undefined} data-reduced-motion={motion.reduced || undefined} aria-labelledby={headingId}>
     <header className="month-calendar__toolbar">
-      <h3 id={headingId} aria-live="polite"><button type="button" className="month-calendar__month" aria-label={`${label} · 년월과 날짜 이동`} aria-expanded={jumpOpen} onClick={() => setJumpOpen(value => !value)}>{label}<ChevronDown size={16} aria-hidden="true" /></button></h3>
+      <h3 id={headingId} aria-live="polite"><button ref={monthTrigger} type="button" className="month-calendar__month" aria-label={`${label} · 년월과 날짜 이동`} aria-expanded={jumpOpen} aria-controls={jumpId} onClick={() => setJumpOpen(value => !value)}>{label}<ChevronDown size={16} aria-hidden="true" /></button></h3>
       <div>
         <button type="button" className="month-calendar__today" onClick={() => {
           setFocusedDate(today)
@@ -83,7 +88,9 @@ export function MonthCalendar({ month, today, selectedDate, onMonthChange, onSel
         </button>
       </div>
     </header>
-    {jumpOpen && <div className="month-calendar__jump">
+    {jumpOpen && <div id={jumpId} className="month-calendar__jump" onKeyDown={event => {
+      if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); setJumpOpen(false); monthTrigger.current?.focus() }
+    }}>
       <label>년월 선택<input type="month" value={month} onChange={event => {
         if (isValidIsoDate(`${event.target.value}-01`)) onMonthChange(event.target.value)
       }} /></label>

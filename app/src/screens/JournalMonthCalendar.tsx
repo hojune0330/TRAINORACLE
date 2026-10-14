@@ -27,6 +27,7 @@ type JournalMonthCalendarProps = {
 }
 
 export function JournalMonthCalendar({ month, onOpenDay, onMonthChange, entries = [], highlightedRange, onWriteDate, selectedDate: controlledDate, onSelectedDateChange, calendarReturn, onCalendarReturnConsumed }: JournalMonthCalendarProps) {
+  const [showTraining, setShowTraining] = React.useState(false)
   const today = useLocalToday()
   const calendarRoot = React.useRef<HTMLElement>(null)
   const restoredReturn = React.useRef(validJournalCalendarReturn(calendarReturn, entries))
@@ -88,7 +89,11 @@ export function JournalMonthCalendar({ month, onOpenDay, onMonthChange, entries 
         <strong>날짜별 일지</strong>
         {month.entryCount > 0 && activeDays > 0 && <span>이 달 {activeDays}일 · {month.entryCount}개 기록</span>}
       </div>
-      <MonthCalendar trainingColors month={month.month} today={today} selectedDate={selectedDate} highlightedRange={highlightedRange}
+      <div className="journal-calendar-view" role="group" aria-label="달력 표시">
+        <button type="button" aria-pressed={!showTraining} onClick={() => setShowTraining(false)}>간단히</button>
+        <button type="button" aria-pressed={showTraining} onClick={() => setShowTraining(true)}>훈련 종류</button>
+      </div>
+      <MonthCalendar category="journal" compact={!showTraining} trainingColors={showTraining} month={month.month} today={today} selectedDate={selectedDate} highlightedRange={highlightedRange}
         onMonthChange={onMonthChange} onToday={setSelectedDate} onSelectDate={date => {
           openDate(date)
         }}
@@ -101,6 +106,7 @@ export function JournalMonthCalendar({ month, onOpenDay, onMonthChange, entries 
         renderDay={date => {
           const day = byDate.get(date)
           if (!day) return null
+          if (!showTraining) return <span className="month-calendar__record-count">{day.kindCounts.postSession + day.kindCounts.evening + day.kindCounts.race}개</span>
           const marks = marksByDate.get(date) ?? []
           if (marks.length) return <>
             {marks.slice(0, 3).map((mark, index) => <CalendarTrainingMark key={index} {...mark} />)}

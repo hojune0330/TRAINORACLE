@@ -67,7 +67,7 @@ function LinkedJournal({ today, onBack }: Pick<OracleLinkedDestinationProps, "to
         : snapshot.status === "STALE" ? "저장된 일지를 보고 있어요. 최신 기록은 아직 확인하지 못했어요."
           : "일지를 불러오지 못했어요. 기록이 없는 것은 아니에요."}</p>
     {readable && isValidIsoDate(today) && <>
-      <MonthCalendar month={month} today={today} selectedDate={date} onMonthChange={value => { anchored.current = true; setMonth(value); setOriginal(false) }}
+      <MonthCalendar category="journal" month={month} today={today} selectedDate={date} onMonthChange={value => { anchored.current = true; setMonth(value); setOriginal(false) }}
         onSelectDate={selectDate} onToday={selectDate} trainingColors
         dayDescription={value => calendarJournalDescription(snapshot.entries, value)}
         renderDay={value => <CalendarJournalBadge entries={snapshot.entries} date={value} />} />

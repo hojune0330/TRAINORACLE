@@ -1028,7 +1028,9 @@
   border: 0;
   background: transparent;
   color: var(--ink-2);
-  padding: 6px 0;
+  padding: var(--space-2) 0;
+  min-width: var(--app-touch-min);
+  border-radius: var(--r-action);
   font-family: var(--sans);
   cursor: pointer;
 }
@@ -1046,10 +1048,14 @@
 }
 
 .plan-date-rail [aria-pressed="true"] strong {
-  background: var(--brand);
-  color: white;
-  animation: plan-date-pop 280ms ease-out;
+  background: var(--category-training);
+  color: var(--surface);
+  outline: 2px solid var(--category-training);
+  outline-offset: 2px;
 }
+
+.plan-date-rail [aria-pressed="true"] { background: var(--category-training-wash); font-weight: 700; }
+.plan-date-rail [aria-current="date"] strong { text-decoration: underline; text-underline-offset: 4px; }
 
 .plan-date-rail button:active strong { transform: scale(0.92); }
 

@@ -56,6 +56,7 @@ describe("calendar colors are shared by every real plan and journal adapter", ()
       { id: "l", kind: "post-session", date: "2026-09-30", savedAt: "2026-09-30T12:00:00Z", syncState: "local", system: "base", title: "", distanceKm: "", durationMin: "", avgPace: "", rpe: 0, memo: "" },
     ]
     const view = render(<JournalMonthCalendar month={projectJournalArchive(entries).months[0]!} entries={entries} onMonthChange={vi.fn()} onOpenDay={vi.fn()} />)
+    fireEvent.click(screen.getByRole("button", { name: "훈련 종류" }))
     expect(colors(view.container)).toEqual(["race", "neural", "unknown"])
     expect(view.container.querySelector("button[data-date='2026-09-29'] .calendar-training-mark")).toBeNull()
     expect(view.container.querySelector("button[data-date='2026-09-30']")).toHaveAccessibleName(/경기 전.*오후 플라이오.*훈련/)
@@ -69,6 +70,7 @@ describe("calendar colors are shared by every real plan and journal adapter", ()
         { id: "p", kind: "PLYOMETRIC", name: "", rows: [] }, { id: "r", kind: "RUNNING", name: "", rows: [] },
       ] } }
     const view = render(<JournalMonthCalendar month={projectJournalArchive([entry]).months[0]!} entries={[entry]} onMonthChange={vi.fn()} onOpenDay={vi.fn()} />)
+    fireEvent.click(screen.getByRole("button", { name: "훈련 종류" }))
     expect(colors(view.container)).toEqual(["base"])
     expect(view.container.querySelector('.calendar-training-mark')).toHaveTextContent("오후기본플라이오 포함")
     view.rerender(<PlanSchedulePreview startDate="2026-09-30" sessions={sessions} detailsExpanded={false} journalEntries={[entry]} />)

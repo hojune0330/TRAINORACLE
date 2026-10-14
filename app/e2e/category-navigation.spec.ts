@@ -101,7 +101,7 @@ test("category cards open full workouts and visible editing without changing the
   await expect(myTraining).toHaveCSS("background-color", "rgb(242, 238, 255)")
   await expect.poll(() => tabs.getByRole("button", { name: "오라클", exact: true }).evaluate(el => getComputedStyle(el, "::before").backgroundColor)).toBe("rgb(242, 238, 255)")
   await captureLayouts(page, info, "oracle")
-  for (const [name, category] of [["훈련", "training"], ["일지", "journal"], ["오라클", "oracle"]]) {
+  for (const [name, category] of [["훈련", "training"], ["일지", "journal"], ["오라클", "oracle"]] as const) {
     await expect(tabs.getByRole("button", { name, exact: true })).toHaveAttribute("data-category", category)
   }
   await page.setViewportSize({ width: 320, height: 800 })

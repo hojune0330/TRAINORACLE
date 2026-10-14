@@ -914,7 +914,7 @@ function JournalDecorationSurfaceSession({
         ref={calendarRef} state={calendar} ownedIds={new Set(canonical.ownedItemIds)} saving={calendarSaving} requiresApply={calendarStatus === "OWNERSHIP_STATE_CHANGED"}
         disabledReason={calendarDisabled} onDirtyChange={setCalendarDirty} onApply={applyCalendar}
         onExit={() => requestLeave(close)} onCancel={() => { calendarRef.current?.discard(); setCalendarDirty(false); setDrawerOpen(false); clearPreview(); setTarget("JOURNAL") }} onOpenMaterials={() => { setCalendarMaterials(calendarRef.current?.getDraft() ?? calendar); setDrawerOpen(true) }}>
-        <MonthCalendar month={calendarMonth} today={today} selectedDate={calendarDate} onMonthChange={setCalendarMonth} onSelectDate={setCalendarDate}
+        <MonthCalendar category="journal" month={calendarMonth} today={today} selectedDate={calendarDate} onMonthChange={setCalendarMonth} onSelectDate={setCalendarDate}
           dayDescription={day => activeDates.has(day) ? "저장한 일지 있음" : "일지 없음"}
           dayAdornmentDescription={day => motifs.has(day) ? "일지에 그림 장식 있음" : undefined}
           renderDayAdornment={day => <JournalDecorationPreview item={motifs.get(day)} />}
