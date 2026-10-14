@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>러닝 파티 · Tripo 에셋 검수</title>
+<style>
+:root{--game-ink:#252337;--game-paper:#fff3d6;--game-mint:#20bea7;--game-coral:#f46c66;--game-gold:#ffce3a;--game-grass:#9ac8ad;--game-road:#8ea7b5;--game-sky:#d7e8e6}
+*{box-sizing:border-box}body{margin:0;background:var(--game-ink);color:var(--game-paper);font:16px system-ui,sans-serif}main{max-width:1000px;margin:auto;padding:20px}h1{font-size:24px;margin:0 0 6px}p{line-height:1.5;margin:8px 0}nav{display:flex;gap:8px;margin:16px 0}button{min-height:44px;padding:10px 18px;border:2px solid var(--game-paper);border-radius:12px;color:var(--game-paper);background:transparent;font:inherit;cursor:pointer}button[aria-pressed=true]{background:var(--game-gold);color:var(--game-ink);border-color:var(--game-gold)}canvas{width:100%;display:block;border-radius:16px;border:3px solid var(--game-paper);background:var(--game-grass)}small{display:block;line-height:1.6;margin-top:12px;opacity:.85}.status{color:var(--game-gold)}@media(max-width:600px){main{padding:12px}h1{font-size:21px}nav{gap:5px}button{padding:8px 12px;font-size:14px}}
+</style>
+<main><h1>러닝 파티 · 에셋 검수</h1><p>Tripo 원본으로 만든 캐릭터·소품을 같은 사선 시점에 배치했습니다.</p>
+<nav><button id="run" aria-pressed="true">커브 러닝</button><button id="defense" aria-pressed="false">함께 디펜스</button><button id="motion" aria-pressed="true">모션 멈추기</button></nav>
+<canvas id="scene" width="900" height="900" aria-label="새 Tripo 에셋을 배치한 맵 아트 시안"></canvas>
+<p class="status" id="status">에셋을 불러오는 중…</p>
+<small>아트·가독성 검수용 시안입니다. 디펜스 판정, 친구 동기화, 라운드 전환은 이 페이지에 구현돼 있지 않습니다. 나무·바위·허들·게이트·먼지 적·바람 본체·토리는 Tripo 원본을 사용합니다. 발사기·깃발·발판·회전 날개·도로와 효과는 로컬 제작입니다.</small></main>
+<script type="module">
+const base='../../../app/public/game/run-party-v1/';
+const c=document.querySelector('canvas'),ctx=c.getContext('2d');
+const css=getComputedStyle(document.documentElement), color=k=>css.getPropertyValue('--game-'+k).trim();
+const C=Object.fromEntries(['ink','paper','mint','coral','gold','grass','road','sky'].map(k=>[k,color(k)]));
+const meta=await fetch(base+'manifest.json').then(r=>r.json());
+const load=src=>new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=src;});
+const [props,tori]=await Promise.all([load(base+'props.webp'),load(base+'tori-diagonal.webp')]);
+const frames=Object.fromEntries(meta.assets.map(a=>[a.id,a]));
+let mode='run',animate=!matchMedia('(prefers-reduced-motion: reduce)').matches,time=0,last=0;
+for(const id of ['run','defense'])document.getElementById(id).onclick=()=>{mode=id;for(const n of ['run','defense'])document.getElementById(n).setAttribute('aria-pressed',String(n===mode));};
+const motion=document.getElementById('motion');
+function motionLabel(){motion.setAttribute('aria-pressed',String(animate));motion.textContent=animate?'모션 멈추기':'모션 보기';}motionLabel();motion.onclick=()=>{animate=!animate;motionLabel();};
+document.getElementById('status').textContent=`소품 ${meta.assets.length}종 · 토리 16프레임 · 아트 시안 / 게임 미연결`;
+// One ground projection for road, anchors and shadows. No foreground panels hide actors.
+const project=(x,y,z=0)=>[450+(x*.573634-y*.819112)*62,470+(x*.280110+y*.196165)*62-z*62];
+function polygon(points,fill){ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.fillStyle=fill;ctx.fill();}
+function worldRect(x,y,w,h,fill){polygon([[x,y],[x+w,y],[x+w,y+h],[x,y+h]].map(p=>project(...p)),fill);}
+function shadow(x,y,size){ctx.fillStyle=C.ink;ctx.globalAlpha=.15;ctx.beginPath();ctx.ellipse(x,y,size*.36,size*.11,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
+function sprite(id,x,y,size){const a=frames[id];const s=size/256;shadow(x,y,size);ctx.drawImage(props,...a.rect,x-a.pivot[0]*s,y-a.pivot[1]*s,size,size);}
+function actor(x,y,size,phase){const index=Math.floor(time*8+phase)%8;const s=size/256;shadow(x,y,size*.55);ctx.drawImage(tori,index%4*256,Math.floor(index/4)*256,256,256,x-128*s,y-240*s,size,size);}
+function label(text,x,y){ctx.font='bold 22px system-ui';const w=ctx.measureText(text).width+26;ctx.fillStyle=C.ink;ctx.beginPath();ctx.roundRect(x-w/2,y-29,w,38,12);ctx.fill();ctx.fillStyle=C.paper;ctx.textAlign='center';ctx.fillText(text,x,y-3);}
+function draw(){ctx.clearRect(0,0,900,900);ctx.fillStyle=C.sky;ctx.fillRect(0,0,900,900);
+ polygon([[0,280],[900,140],[900,900],[0,900]],C.grass);
+ // A broad curved road built from joined world-space strips, extending beyond both viewport edges.
+ const curve=x=>mode==='run'?Math.sin(x*.32)*1.25:Math.sin(x*.22)*.5;
+ for(let x=-14;x<14;x+=.25){const y=curve(x);polygon([[x,y-1.45],[x+.27,curve(x+.27)-1.45],[x+.27,curve(x+.27)+1.45],[x,y+1.45]].map(p=>project(...p)),C.road);}
+ for(let x=-14;x<14;x+=1.2){const y=curve(x);worldRect(x,y-.05,.55,.1,C.paper);}
+ const items=[];
+ const place=(id,x,y,size)=>{const p=project(x,y);items.push({y:p[1],draw:()=>sprite(id,...p,size)});};
+ for(const [x,y,s]of [[-9,-4,132],[-5,4,180],[-1,5.5,125],[9,-4.5,130],[13,4,140],[-11,5,160]])place('tree',x,y,s);
+ place('rock',-1,4.3,70);place('rock',7,4,78);
+ if(mode==='run'){
+   place('hurdle',1,curve(1),126);place('hurdle',6,curve(6),126);place('gate',11,curve(11),188);
+   for(let x=2.8;x<5;x+=.8)place('supply-token',x,curve(x),52);
+ }else{
+   place('gate',8,curve(8),188);
+   for(const [id,x,y] of [['wind-device',-1,-3],['ball-launcher',3,3],['supply-flag',6,-3]]){
+     place('tower-pad',x,y,125);place(id,x,y,150);
+     if(id==='wind-device'){
+       const p=project(x,y);items.push({y:p[1]+.01,draw:()=>{
+         ctx.save();ctx.translate(p[0]+17,p[1]-48);ctx.transform(.58,-.25,.05,1,0,0);ctx.rotate(time*5);
+         ctx.fillStyle=C.paper;for(let i=0;i<3;i++){ctx.rotate(Math.PI*2/3);ctx.fillRect(-4,-21,8,23);}ctx.restore();
+       }});
+     }
+   }
+   for(const [id,x]of [['dust-runner-base',-7],['dust-fast',-3.5],['dust-armored',.5]])place(id,x,curve(x)+Math.sin(time*2+x)*.12,105);
+ }
+ const a=project(-1.4,curve(-1.4));items.push({y:a[1],draw:()=>actor(a[0],a[1],144,0)});
+ if(mode==='defense'){const b=project(4,curve(4));items.push({y:b[1],draw:()=>{actor(b[0],b[1],144,4);label('친구',b[0],b[1]+46);}});}
+ items.sort((a,b)=>a.y-b.y).forEach(i=>i.draw());
+ label(mode==='run'?'커브 러닝 · 사선 시점':'친구와 함께 · 러닝 디펜스',450,100);
+ ctx.fillStyle=C.ink;ctx.textAlign='center';ctx.font='22px system-ui';ctx.fillText('같은 Tripo 원본 · 새로운 배치와 라운드',450,800);
+ }
+function tick(now){if(last&&animate)time+=Math.min(.05,(now-last)/1000);last=now;draw();requestAnimationFrame(tick);}requestAnimationFrame(tick);
+</script></html>

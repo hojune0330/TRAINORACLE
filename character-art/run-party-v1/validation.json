@@ -1,0 +1,67 @@
+{
+  "status": "passed",
+  "scope": "asset files only; not gameplay, browser or deployment verification",
+  "sources": [
+    {
+      "file": "character-art/run-party-v1/sources/dust-runner-base.glb",
+      "bytes": 583848,
+      "sha256": "b26cecdadb8a8aa0e9f01fb0f0114f1fb5b6305194bd32304818c631b8b767a5",
+      "triangles": 9688,
+      "materials": 1,
+      "images": 1
+    },
+    {
+      "file": "character-art/run-party-v1/sources/wind-device.glb",
+      "bytes": 787884,
+      "sha256": "af1aa57f2256985a8e653db13175e0821f01e5f709b9a6cb4da98dc8d8b18c16",
+      "triangles": 9410,
+      "materials": 1,
+      "images": 1
+    }
+  ],
+  "workingModels": [
+    {
+      "file": "character-art/run-party-v1/working/dust-armored.glb",
+      "bytes": 99532,
+      "sha256": "45e1054b1718b70a7e64098dce50cf25a548988089cd1a96aa8a8ec7c38ee406",
+      "triangles": 2812,
+      "materials": 3,
+      "images": 1
+    },
+    {
+      "file": "character-art/run-party-v1/working/dust-fast.glb",
+      "bytes": 94144,
+      "sha256": "9e5b40e07267be0fbe85f04bedb8d3070b4045fec685a47729f7addba1c220f0",
+      "triangles": 2704,
+      "materials": 2,
+      "images": 1
+    },
+    {
+      "file": "character-art/run-party-v1/working/dust-runner-base.glb",
+      "bytes": 87000,
+      "sha256": "87f236a3b78412733f06688c651ac028b26b858dd33047258aaa50d22669acd8",
+      "triangles": 2596,
+      "materials": 1,
+      "images": 1
+    },
+    {
+      "file": "character-art/run-party-v1/working/wind-device.glb",
+      "bytes": 92824,
+      "sha256": "83891d7e174dd4717fb9139f46c994c5c2d65ff74fe386120a62eaae73e05065",
+      "triangles": 2566,
+      "materials": 3,
+      "images": 0
+    }
+  ],
+  "props": 14,
+  "toriFrames": 16,
+  "runtimeWebPBytes": 385456,
+  "decodedAtlasBytes": 8388608,
+  "alphaBounds": "all 14 props and 16 tori frames inside cells",
+  "creditsSpent": 50,
+  "balanceBefore": 2910,
+  "balanceAfter": 2860,
+  "browserPreview": "not verified; browser connection timed out",
+  "gameplayIntegration": false,
+  "productionDeployment": false
+}

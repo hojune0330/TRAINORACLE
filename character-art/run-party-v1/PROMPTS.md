@@ -1,3 +1,5 @@
+> 실제 제출본: [sources/manifest.json](sources/manifest.json). Studio의 1,000자 제한에 맞춰 아래 계획 문장을 압축했다. 모델 H3.1, 작업 2건, 총 50크레딧, seed는 UI에 제공되지 않아 null.
+
 # 신규2종 생성 지시문 — 미실행
 
 기본 경로: 기존 유료 Tripo Studio. 한 종 생성→내보내기→64px 검수 후 다음 종. 출력 소스는 이 폴더 아래 자산별 `sources/`에 보존한다. 비용은 [README](README.md)의 실행 전 확인 절차를 따른다. 프롬프트는 다른 게임의 스크린샷 없이 텍스트만 입력한다.

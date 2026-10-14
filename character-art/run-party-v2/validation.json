@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "sourceCount": 3,
+  "workingCount": 3,
+  "staticViews": 6,
+  "effectFrames": 24,
+  "payloadBytes": 167586,
+  "decodedBytes": 7864320,
+  "allFramesWithinBounds": true,
+  "gameplayIntegration": false,
+  "productionDeployment": false
+}

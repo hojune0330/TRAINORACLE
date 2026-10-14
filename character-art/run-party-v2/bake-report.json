@@ -1,0 +1,279 @@
+{
+  "blender": "4.5.14 LTS",
+  "assets": [
+    {
+      "id": "supply-capsule",
+      "source": "character-art/run-party-v2/sources/supply-capsule.glb",
+      "sourceSha256": "39268be7d39c3c7126e80137913f502270b3e46b64dcd7d454e72da34695fabc",
+      "sourceTriangles": 2598,
+      "cameraMatrix": [
+        [
+          0.5736336708068848,
+          0.2801103889942169,
+          -0.7697288990020752,
+          -7.698094367980957
+        ],
+        [
+          -0.8191119432449341,
+          0.19616462290287018,
+          -0.5390501022338867,
+          -5.391290187835693
+        ],
+        [
+          5.3218528250909e-08,
+          0.9397114515304565,
+          0.3419683873653412,
+          3.9201815128326416
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "orthoScale": 1.507516622543335,
+      "groundPixel": [
+        255.93741845719813,
+        415.60738025074556
+      ],
+      "originalTriangles": 9612
+    },
+    {
+      "id": "supply-capsule-icon",
+      "source": "character-art/run-party-v2/sources/supply-capsule.glb",
+      "sourceSha256": "39268be7d39c3c7126e80137913f502270b3e46b64dcd7d454e72da34695fabc",
+      "sourceTriangles": 2598,
+      "cameraMatrix": [
+        [
+          0.7071067094802856,
+          0.39069923758506775,
+          -0.5893676280975342,
+          -6.400094509124756
+        ],
+        [
+          -0.7071068286895752,
+          0.3906991183757782,
+          -0.5893675684928894,
+          -6.400291442871094
+        ],
+        [
+          -6.47280842258624e-08,
+          0.8334916234016418,
+          0.5525320768356323,
+          6.500181198120117
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "orthoScale": 1.6287832260131836,
+      "groundPixel": [
+        255.95614550782452,
+        387.00221265493417
+      ],
+      "effect": {
+        "frames": [
+          "supply-capsule-fx-01.png",
+          "supply-capsule-fx-02.png",
+          "supply-capsule-fx-03.png",
+          "supply-capsule-fx-04.png",
+          "supply-capsule-fx-05.png",
+          "supply-capsule-fx-06.png",
+          "supply-capsule-fx-07.png",
+          "supply-capsule-fx-08.png"
+        ],
+        "durationMs": 640,
+        "loop": false,
+        "provenance": "Tripo source plus locally authored pulse, expanding ring and four sparkles",
+        "reducedMotion": "supply-capsule-icon.png"
+      }
+    },
+    {
+      "id": "jump-pad",
+      "source": "character-art/run-party-v2/sources/jump-pad.glb",
+      "sourceSha256": "a3ccf426c7019c1b67879e554d2d934b361da84fa3814e54afc97a6a6a0b5bed",
+      "sourceTriangles": 2596,
+      "cameraMatrix": [
+        [
+          0.5736336708068848,
+          0.2801103889942169,
+          -0.7697288990020752,
+          -7.697855472564697
+        ],
+        [
+          -0.8191119432449341,
+          0.19616462290287018,
+          -0.5390501022338867,
+          -5.3910813331604
+        ],
+        [
+          5.3218528250909e-08,
+          0.9397114515304565,
+          0.3419683873653412,
+          3.5601789951324463
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "orthoScale": 1.7034856796264648,
+      "groundPixel": [
+        255.95484042455072,
+        295.5995239594002
+      ],
+      "originalTriangles": 9842
+    },
+    {
+      "id": "jump-pad-icon",
+      "source": "character-art/run-party-v2/sources/jump-pad.glb",
+      "sourceSha256": "a3ccf426c7019c1b67879e554d2d934b361da84fa3814e54afc97a6a6a0b5bed",
+      "sourceTriangles": 2596,
+      "cameraMatrix": [
+        [
+          0.7071067094802856,
+          0.39069923758506775,
+          -0.5893676280975342,
+          -6.399855613708496
+        ],
+        [
+          -0.7071068286895752,
+          0.3906991183757782,
+          -0.5893675684928894,
+          -6.400082111358643
+        ],
+        [
+          -6.47280842258624e-08,
+          0.8334916234016418,
+          0.5525320768356323,
+          6.140178680419922
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "orthoScale": 1.7297428607940672,
+      "groundPixel": [
+        255.95241502253307,
+        290.591063344222
+      ],
+      "effect": {
+        "frames": [
+          "jump-pad-fx-01.png",
+          "jump-pad-fx-02.png",
+          "jump-pad-fx-03.png",
+          "jump-pad-fx-04.png",
+          "jump-pad-fx-05.png",
+          "jump-pad-fx-06.png",
+          "jump-pad-fx-07.png",
+          "jump-pad-fx-08.png"
+        ],
+        "durationMs": 640,
+        "loop": false,
+        "provenance": "Tripo source plus locally authored pulse, expanding ring and four sparkles",
+        "reducedMotion": "jump-pad-icon.png"
+      }
+    },
+    {
+      "id": "upgrade-core",
+      "source": "character-art/run-party-v2/sources/upgrade-core.glb",
+      "sourceSha256": "7dd4ba337842def9d9e15fc51d41626558763a894a9c528ae4a41ac552d3474c",
+      "sourceTriangles": 2594,
+      "cameraMatrix": [
+        [
+          0.5736336708068848,
+          0.2801103889942169,
+          -0.7697288990020752,
+          -7.698057174682617
+        ],
+        [
+          -0.8191119432449341,
+          0.19616462290287018,
+          -0.5390501022338867,
+          -5.3909173011779785
+        ],
+        [
+          5.3218528250909e-08,
+          0.9397114515304565,
+          0.3419683873653412,
+          3.920013427734375
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "orthoScale": 1.5407331705093383,
+      "groundPixel": [
+        256.03320891939177,
+        412.1416580370036
+      ],
+      "originalTriangles": 9290
+    },
+    {
+      "id": "upgrade-core-icon",
+      "source": "character-art/run-party-v2/sources/upgrade-core.glb",
+      "sourceSha256": "7dd4ba337842def9d9e15fc51d41626558763a894a9c528ae4a41ac552d3474c",
+      "sourceTriangles": 2594,
+      "cameraMatrix": [
+        [
+          0.7071067094802856,
+          0.39069923758506775,
+          -0.5893676280975342,
+          -6.400057315826416
+        ],
+        [
+          -0.7071068286895752,
+          0.3906991183757782,
+          -0.5893675684928894,
+          -6.399918079376221
+        ],
+        [
+          -6.47280842258624e-08,
+          0.8334916234016418,
+          0.5525320768356323,
+          6.5000128746032715
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "orthoScale": 1.675030517578125,
+      "groundPixel": [
+        256.03001463973715,
+        383.39140494904115
+      ],
+      "effect": {
+        "frames": [
+          "upgrade-core-fx-01.png",
+          "upgrade-core-fx-02.png",
+          "upgrade-core-fx-03.png",
+          "upgrade-core-fx-04.png",
+          "upgrade-core-fx-05.png",
+          "upgrade-core-fx-06.png",
+          "upgrade-core-fx-07.png",
+          "upgrade-core-fx-08.png"
+        ],
+        "durationMs": 640,
+        "loop": false,
+        "provenance": "Tripo source plus locally authored pulse, expanding ring and four sparkles",
+        "reducedMotion": "upgrade-core-icon.png"
+      }
+    }
+  ],
+  "gameplayIntegration": false
+}

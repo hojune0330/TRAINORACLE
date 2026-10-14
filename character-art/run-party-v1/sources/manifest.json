@@ -1,0 +1,42 @@
+{
+  "assets": [
+    {
+      "id": "dust-runner-base",
+      "taskId": "634968c0-a239-49ba-b9e2-5971623d7f84",
+      "url": "https://studio.tripo3d.ai/ko/workspace/generate/634968c0-a239-49ba-b9e2-5971623d7f84",
+      "generator": "Tripo Studio H3.1",
+      "date": "2026-10-14",
+      "plan": "existing Studio Pro",
+      "seed": null,
+      "prompt": "Single isolated original miniature toy dust creature for a friendly running defense game. Extremely simple chunky rounded geometry, one quarter of ordinary game asset detail: three to five large masses, at most three flat matte colors. Strong silhouette readable at 64 pixels. One squat rounded bean body in warm coral, two tiny navy dot eyes on its front, two large rounded feet integrated into its broad stable base. Wider than tall, thick readable feet, neutral standing shape. Clearly distinguish front and back using eyes. No arms, fingers, hair, teeth, fur, clothing, accessories, thin pieces, environment, floor plane, lettering, logo, realistic texture or baked dramatic shadow. Simple materials. Animated later as one rigid object. Avoid resemblance to existing game or cartoon characters.",
+      "file": "dust-runner-base.glb",
+      "bytes": 583848,
+      "sha256": "b26cecdadb8a8aa0e9f01fb0f0114f1fb5b6305194bd32304818c631b8b767a5",
+      "credits": 25,
+      "balanceBefore": 2910,
+      "balanceAfter": 2885,
+      "transfer": "Studio GLB direct download",
+      "rights": "See PRODUCTION_RECEIPT.md; no MIT/CC relicensing"
+    },
+    {
+      "id": "wind-device",
+      "taskId": "51dba8a7-8dc2-46ab-91d3-9e6faaeb48ec",
+      "url": "https://studio.tripo3d.ai/ko/workspace/generate/51dba8a7-8dc2-46ab-91d3-9e6faaeb48ec",
+      "generator": "Tripo Studio H3.1",
+      "date": "2026-10-14",
+      "plan": "existing Studio Pro",
+      "seed": null,
+      "prompt": "Single isolated original miniature toy wind machine for a friendly park running defense game. Extremely simple chunky rounded geometry, one quarter of ordinary game asset detail, three to five large masses and only three flat matte colors. Strong silhouette readable at 64 pixels. A broad mint rounded housing on a short navy block base, with one large cream circular opening on the front. Empty clean opening with a dark navy interior, no fan blades, grille, mesh, buttons, screws or cables. Clearly readable front opening. Squat stable silhouette, rounded rear cap. A simple separate three-blade rotor will be added locally: do not generate internal mechanics or blades. No environment, floor plane, text, logo, thin pieces, realistic texture or baked dramatic shadow. Original design, no existing game or cartoon references.",
+      "file": "wind-device.glb",
+      "bytes": 787884,
+      "sha256": "af1aa57f2256985a8e653db13175e0821f01e5f709b9a6cb4da98dc8d8b18c16",
+      "credits": 25,
+      "balanceBefore": 2885,
+      "balanceAfter": 2860,
+      "transfer": "Studio GLB direct download",
+      "rights": "See PRODUCTION_RECEIPT.md; no MIT/CC relicensing"
+    }
+  ],
+  "creditsTotal": 50,
+  "newPayments": 0
+}
