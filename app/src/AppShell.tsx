@@ -1,4 +1,5 @@
 import React from "react"
+import { arenaInvitation } from "./screens/treadmill/arena-types"
 import { acknowledgeAnnouncement, MINIGAME_ANNOUNCEMENT } from "./domain/product-announcements"
 import { oracleV2FeatureEnabled } from "./domain/oracle-rollout"
 import { productFeatures } from "./domain/product-features"
@@ -184,6 +185,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   const [accountScopeRevision, setAccountScopeRevision] = React.useState(0)
   const [, refreshAccountJournals] = React.useReducer((revision: number) => revision + 1, 0)
   const [v, setV] = React.useState(() => {
+    if (arenaInvitation()) return INITIAL_VIEW_STATE
     const recoveryTab = readRecoveryTab()
     const accountEntry = accountFeatureEnabled() && typeof window !== "undefined"
       && (new URLSearchParams(window.location.search).get("account") === "1" || loungeEntryIntent().requested)
@@ -231,7 +233,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   const [athleteRecordsOpen, setAthleteRecordsOpen] = React.useState(false)
   const [homeDetailOrigin, setHomeDetailOrigin] = React.useState<"home" | "rewards">("home")
   const scrollRegionRef = React.useRef<HTMLElement>(null)
-  const [utilityView, setUtilityView] = React.useState<"more" | "guide" | "minji" | "content" | "rewards" | "minigame" | null>(null)
+  const [utilityView, setUtilityView] = React.useState<"more" | "guide" | "minji" | "content" | "rewards" | "minigame" | null>(() => arenaInvitation() ? "minigame" : null)
   const [utilityOrigin, setUtilityOrigin] = React.useState<"home" | "more">("more")
   const [moreView, setMoreView] = React.useState<MoreView>("tools")
   const moreVisibleRef = React.useRef(false)

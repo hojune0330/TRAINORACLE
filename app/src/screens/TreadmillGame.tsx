@@ -37,6 +37,8 @@ import "../styles/treadmill-tour.css"
 import "./treadmill/game-reward-actions.css"
 import "./treadmill/upgrade-choice.css"
 import "./treadmill/game-navigation.css"
+import { FriendArena } from "./treadmill/FriendArena"
+import { arenaInvitation } from "./treadmill/arena-types"
 
 const fillStyle = (fill: number) => ({ "--fill": Math.max(0, Math.min(1, fill)).toFixed(3) }) as React.CSSProperties
 const upgradeName = (id: string) => TREADMILL_UPGRADES.find(upgrade => upgrade.id === id)?.name ?? id
@@ -95,6 +97,11 @@ function unlocksBetween(before: MinigameProgress, after: MinigameProgress): stri
 }
 
 export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" }: { readonly onBack: () => void; readonly backLabel?: string }) {
+  const [friends, setFriends] = React.useState(() => !!arenaInvitation())
+  return friends ? <FriendArena onBack={() => setFriends(false)} /> : <SoloTreadmillGame onBack={onBack} backLabel={backLabel} onFriends={() => setFriends(true)} />
+}
+
+function SoloTreadmillGame({ onBack, backLabel, onFriends }: { readonly onBack: () => void; readonly backLabel: string; readonly onFriends: () => void }) {
   const store = useMinigameProgress()
   const saved = useSavedRun()
   const [leave, setLeave] = React.useState<null | { title: string; detail: string; action: () => void; canSave: boolean; replaceSaved: boolean; returnToRun: boolean }>(null)
@@ -404,6 +411,7 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
       <h2>저장한 판을 불러올 수 없어요</h2><p>게임 버전이 달라졌거나 저장 내용이 손상됐어요. 완주 기록은 유지돼요.</p>
       <button type="button" className="treadmill-game__ghost" onClick={discardSaved}>저장한 판 지우기</button>
     </section>}
+    {screen === "map" && <button className="treadmill-game__cta arena-entry" onClick={onFriends}>친구와 밀어내기 · 90초 무한 리젠</button>}
     {screen === "map" && <TourMap progress={progress} season={season} onSeason={setSeason} status={store.status} onShop={() => { setMenuTab("shop"); setMenuOpen(true) }}
       onPlay={item => chooseCourse({ kind: "city", city: item })} onPractice={() => chooseCourse({ kind: "practice" })} />}
 
