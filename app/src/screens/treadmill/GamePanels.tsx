@@ -17,6 +17,7 @@ import { medalsOf } from "../../domain/minigame/progress"
 import { TREADMILL_RULES, TREADMILL_UPGRADES } from "../../domain/minigame/treadmill"
 import { drawRunner, gamePalette } from "./sprites"
 import { loadToriArt } from "./runner-art"
+import { CityPreview } from "./CityPreview"
 import type { RunnerCharacter } from "./sprites"
 
 export function CharacterPortrait({ character, size = 64, pose = "idle", label }: {
@@ -78,6 +79,7 @@ export function TourMap({ progress, season, onSeason, onPlay, onPractice, status
           <button type="button" className="treadmill-game__city" data-city={city.id} data-state={stars > 0 ? "done" : unlocked ? "open" : "locked"}
             disabled={!unlocked} onClick={() => onPlay(city)}
             aria-label={`${city.name}${unlocked ? "" : " (잠김)"} · ${city.tagline}${stars ? ` · 별 ${stars}개` : ""}`}>
+            {city.id === "seoul" && <CityPreview city={city} />}
             <b className="treadmill-game__city-pin" aria-hidden="true">{unlocked ? <MapPin size={18} /> : <Lock size={16} />}</b>
             <span className="treadmill-game__city-text">
               <strong>{city.name}<small>{city.country}</small></strong>

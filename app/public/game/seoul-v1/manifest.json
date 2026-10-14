@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "assets": [
+    {
+      "id": "tree",
+      "source": "local-parametric-prototype",
+      "file": null,
+      "width": 200,
+      "height": 256,
+      "bytes": 6352,
+      "sha256": "ce9d6245d2045e65eec4c7fe07a6c02b6fa9e741611878aa64dc8936d1196003"
+    },
+    {
+      "id": "rock",
+      "source": "local-parametric-prototype",
+      "file": null,
+      "width": 256,
+      "height": 167,
+      "bytes": 4604,
+      "sha256": "b6da7f438473737b34f0e32e292bb3049334016dbcb2881b048ba5b38cba94f5"
+    },
+    {
+      "id": "hurdle",
+      "source": "local-parametric-prototype",
+      "file": null,
+      "width": 256,
+      "height": 161,
+      "bytes": 7036,
+      "sha256": "2c65691ee9f5cd6b693700ae70f335d293e1e1254f218ddaa2eb66dd0170b18f"
+    },
+    {
+      "id": "gate",
+      "source": "local-parametric-prototype",
+      "file": null,
+      "width": 203,
+      "height": 256,
+      "bytes": 6700,
+      "sha256": "5ffb7da634b66614bd9315242b65d83fd4591c77afe54aad127d483d6c312184"
+    },
+    {
+      "id": "shoe",
+      "source": "local-parametric-prototype",
+      "file": null,
+      "width": 256,
+      "height": 145,
+      "bytes": 6992,
+      "sha256": "06a9d63389b536e9097d22432939adbdc73a6eb25d365fea41fe88e68e2775e4"
+    },
+    {
+      "id": "tower",
+      "source": "local-parametric-prototype",
+      "file": null,
+      "width": 145,
+      "height": 256,
+      "bytes": 5082,
+      "sha256": "16804feaf0117a6a51b46438613b319101f5eff9881ddf2d09aea8510dae2fa7"
+    }
+  ]
+}

@@ -18,6 +18,7 @@ import { createTreadmillRenderer, gamePalette } from "./treadmill/draw"
 import type { RenderView } from "./treadmill/draw"
 import { drawRunner } from "./treadmill/sprites"
 import { loadToriArt } from "./treadmill/runner-art"
+import { loadSceneArt } from "./treadmill/scene-art"
 import type { GamePalette, RunnerCharacter } from "./treadmill/sprites"
 import { fxPalette, mountShaderSky } from "./treadmill/shader-sky"
 import type { ShaderSky } from "./treadmill/shader-sky"
@@ -100,6 +101,7 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
   const character = activeCharacter(progress)
   React.useEffect(() => {
     if (character === "tori") void loadToriArt()
+    void loadSceneArt()
   }, [character])
   const [screen, setScreen] = React.useState<Screen>("map")
   const [course, setCourse] = React.useState<Course>({ kind: "city", city: TOUR_CITIES[0]! })

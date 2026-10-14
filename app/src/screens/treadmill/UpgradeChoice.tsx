@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { Footprints, MoveUp, Zap, ArrowRight } from "lucide-react"
 import { applyUpgrade, TREADMILL_RULES, TREADMILL_UPGRADES } from "../../domain/minigame/treadmill"
 import type { TreadmillState, TreadmillStage, TreadmillUpgrade } from "../../domain/minigame/treadmill"
+import { GearArt } from "./GearArt"
 
 export const UPGRADE_STORIES = {
   grip: { title: "진흙에서 덜 밀리기", detail: "접지 밑창", effect: "진흙을 딛고 앞으로!", tradeoff: "대신 점프할 때 힘을 더 써요", Icon: Footprints },
@@ -48,7 +49,7 @@ export function UpgradeChoice({ state, nextStage, onPick }: {
         <div className="upgrade-choice__effects" aria-label="강화 효과 미리보기">
           {TREADMILL_UPGRADES.map(item => {
             const story = UPGRADE_STORIES[item.id]
-            return <div key={item.id} data-effect={item.id}><span className="upgrade-choice__demo" aria-hidden="true"><story.Icon size={32} /><i /></span><strong>{story.title}</strong></div>
+            return <div key={item.id} data-effect={item.id}><span className="upgrade-choice__demo" aria-hidden="true"><GearArt upgrade={item.id} /><i /></span><strong>{story.title}</strong></div>
           })}
         </div>
         <p>잘하는 것 하나를 키우고<br />다른 능력은 조금 양보해요.</p>
@@ -61,7 +62,7 @@ export function UpgradeChoice({ state, nextStage, onPick }: {
             const story = UPGRADE_STORIES[upgrade.id], preview = upgradePreview(state, upgrade.id)
             const owned = state.upgrades.filter(id => id === upgrade.id).length
             return <button type="button" key={upgrade.id} data-upgrade={upgrade.id} onClick={() => onPick(upgrade.id)}>
-              <b className="treadmill-game__gear-icon" aria-hidden="true"><story.Icon size={24} /></b>
+              <b className="treadmill-game__gear-icon" aria-hidden="true"><GearArt upgrade={upgrade.id} /></b>
               <span className="treadmill-game__gear-text">
                 <strong>{story.title}{upgrade.fits === nextStage.surface && <mark>추천</mark>}</strong>
                 <small>{story.detail} · Lv.{owned + 1}</small>

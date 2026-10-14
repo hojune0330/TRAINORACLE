@@ -6,6 +6,7 @@
 import type { TreadmillHazardKind, TreadmillUpgrade } from "../../domain/minigame/treadmill"
 import { drawAnimeRunner } from "./anime-runner"
 import { drawToriArt } from "./runner-art"
+import { drawSceneProp } from "./scene-art"
 
 export const GAME_TOKENS = {
   skyTop: "--game-sky-top", skyLow: "--game-sky-low", hillFar: "--game-hill-far", hillNear: "--game-hill-near",
@@ -96,10 +97,13 @@ export function drawRunner(context: CanvasRenderingContext2D, palette: GamePalet
 
 /** Hurdle or spike row. `halfWidth` and `height` are the hit box in px, so the art never lies about collisions. */
 export function drawHazard(context: CanvasRenderingContext2D, palette: GamePalette, kind: TreadmillHazardKind,
-  halfWidth: number, height: number, highlight: boolean) {
+  halfWidth: number, height: number, highlight: boolean, miniature = false) {
   context.save()
   context.lineWidth = 2; context.lineJoin = "round"; context.strokeStyle = palette.outline
-  if (kind === "barrier") {
+  const baked = miniature && kind === "barrier" && drawSceneProp(context, "hurdle", 0, 0, halfWidth * 2 + 6, height)
+  if (baked) {
+    // Art fills the original collision bounds; warning outline below is unchanged.
+  } else if (kind === "barrier") {
     const postW = 3.5
     for (const x of [-halfWidth, halfWidth - postW]) part(context, palette, palette.rail, x, -height + 4, postW, height - 4, 1)
     part(context, palette, palette.rail, -halfWidth - 3, -3, halfWidth * 2 + 6, 3, 1)

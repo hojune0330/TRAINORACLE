@@ -3,10 +3,11 @@ import { advanceTreadmill, nearestHazard, newTreadmillRun, treadmillCommand, TRE
 import type { TreadmillStage, TreadmillState } from "../src/domain/minigame/treadmill"
 import { tourCity, tourStages } from "../src/domain/minigame/tour"
 
-async function openGame(page: Page, course: "practice" | "seoul" = "practice", blockToriArt = false) {
+async function openGame(page: Page, course: "practice" | "seoul" = "practice", blockToriArt = false, blockSceneArt = false) {
   await page.route("**/*", route => {
     const url = new URL(route.request().url())
     if (blockToriArt && url.pathname.endsWith("/tori-atlas-v1.webp")) return route.abort()
+    if (blockSceneArt && url.pathname.includes("/game/seoul-v1/")) return route.abort()
     return url.hostname === "127.0.0.1" || url.protocol === "data:" ? route.continue() : route.abort()
   })
   await page.goto("/?app=1")
@@ -353,10 +354,13 @@ const savedProgress = (page: Page) => page.evaluate(() => JSON.parse(localStorag
 test("tours Seoul in 2.5D, saves stars on this device, unlocks the next city and keeps it after reload", async ({ page }, info) => {
   test.setTimeout(180_000) // Real input replay of the longer 90-second course.
   const external: string[] = []
+  const scenery = new Set<string>()
+  page.on("response", response => { if (response.ok() && /\/game\/seoul-v1\/.*\.webp$/u.test(response.url())) scenery.add(response.url()) })
   page.on("request", request => { const url = new URL(request.url()); if (url.hostname !== "127.0.0.1" && url.protocol !== "data:") external.push(url.href) })
   await page.goto("/?app=1")
   await page.evaluate(() => localStorage.removeItem("trainoracle.minigame.progress.v1"))
   await openGame(page, "seoul")
+  await expect.poll(() => scenery.size).toBe(6)
   await expect(page.locator(".treadmill-game")).toHaveAttribute("data-view", "city")
   await expect(page.getByRole("heading", { name: "서울 · 한강을 따라 남산타워까지" })).toBeVisible()
   await expect(page.locator(".treadmill-game__intro-stages")).toHaveText(/한강 러닝트랙.*비 오는 자전거길.*남산 야간 공사길/u)
@@ -391,6 +395,21 @@ test("tours Seoul in 2.5D, saves stars on this device, unlocks the next city and
   await expect(page.getByText("이 기기에 저장")).toBeVisible()
   await page.screenshot({ path: info.outputPath("tour-map.png"), fullPage: true })
   expect(external).toEqual([])
+})
+
+test("missing miniature images keep Seoul playable with vector fallbacks", async ({ page }, info) => {
+  const errors: string[] = []
+  page.on("pageerror", error => errors.push(error.message))
+  await openGame(page, "seoul", false, true)
+  await page.getByRole("button", { name: "시작", exact: true }).click()
+  await page.clock.runFor(3200)
+  await page.keyboard.down("ArrowRight")
+  await page.clock.runFor(800)
+  await page.keyboard.up("ArrowRight")
+  await expect(page.locator(".treadmill-game")).toHaveAttribute("data-mode", "running")
+  expect(await noSideScroll(page)).toBe(true)
+  expect(errors).toEqual([])
+  await page.screenshot({ path: info.outputPath("seoul-missing-art.png"), fullPage: true })
 })
 
 test("menu: settings change the game and persist, help explains the rules, open source lists licenses", async ({ page }, info) => {
