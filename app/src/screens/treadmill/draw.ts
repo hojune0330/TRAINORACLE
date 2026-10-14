@@ -1,4 +1,4 @@
-import { nearestHazard, treadmillElapsed, upcomingHazards, TREADMILL_HAZARDS, TREADMILL_RULES } from "../../domain/minigame/treadmill"
+import { nearestHazard, treadmillElapsed, TREADMILL_HAZARDS, TREADMILL_RULES } from "../../domain/minigame/treadmill"
 import type { TreadmillState } from "../../domain/minigame/treadmill"
 import { drawHazard, drawRunner, gamePalette, outlinedText, roundRect } from "./sprites"
 import type { GamePalette, RunnerCharacter, RunnerPose } from "./sprites"
@@ -6,6 +6,7 @@ import { citySceneFor, drawCityBackdrop, drawCityGround, drawWeather } from "./c
 import type { CityFrame } from "./city-art"
 import type { TourCity } from "../../domain/minigame/tour"
 import { createRunnerCamera } from "./camera"
+import { presentedHazards } from "./hazard-view"
 
 export { gamePalette }
 export type { GamePalette }
@@ -168,23 +169,29 @@ export function createTreadmillRenderer() {
       context.globalAlpha = 1
     }
 
-    for (const hazard of state.hazards) {
+    const hazards = presentedHazards(state)
+    const visibleHazards: { id: number; x: number; scheduled: boolean }[] = []
+    for (const hazard of hazards) {
       const shape = TREADMILL_HAZARDS[hazard.kind]
+      const x = toPx(hazard.x), halfWidth = Math.max(6, shape.halfWidth * beltWidth)
+      if (x + halfWidth + 8 < 0 || x - halfWidth - 8 > width) continue
+      visibleHazards.push({ id: hazard.id, x: x / width, scheduled: hazard.scheduled })
       const gap = hazard.x - state.x
-      const now = hazard === ahead && gap >= rules.jumpWindow[0] && gap <= rules.jumpWindow[1]
+      const now = hazard.id === ahead?.id && gap >= rules.jumpWindow[0] && gap <= rules.jumpWindow[1]
       context.save()
-      context.translate(toPx(hazard.x), floor)
+      context.translate(x, floor)
       if (hazard.hit) { context.globalAlpha = 0.5; context.rotate(hazard.kind === "barrier" ? -0.5 : 0) }
-      drawHazard(context, palette, hazard.kind, Math.max(6, shape.halfWidth * beltWidth), shape.height, now, view.city?.id === "seoul")
+      drawHazard(context, palette, hazard.kind, halfWidth, shape.height, now, view.city?.id === "seoul")
       context.restore()
     }
+    if (context.canvas.dataset) context.canvas.dataset.renderedHazards = JSON.stringify(visibleHazards)
 
     // Telegraph: a bouncing "!" bubble at the front edge before a hazard enters.
     if (state.mode === "running") {
-      const entering = ahead && toPx(ahead.x) > width
-        ? { kind: ahead.kind, inSeconds: (ahead.x - (width - left) / beltWidth) / rules.hazardSpeed } : null
-      const item = entering ?? upcomingHazards(state)[0]
-      if (item) {
+      const entering = hazards.find(hazard => !hazard.hit && !hazard.passed && toPx(hazard.x) > width)
+      const item = entering
+        ? { kind: entering.kind, inSeconds: (entering.x - (width - left) / beltWidth) / rules.hazardSpeed } : null
+      if (item && item.inSeconds <= rules.telegraphSeconds) {
         const bounce = reduced ? 0 : Math.sin(clock * 10) * 2
         const cx = width - 22, cy = floor - 98 + bounce
         const progress = 1 - Math.max(0, item.inSeconds) / rules.telegraphSeconds

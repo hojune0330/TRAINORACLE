@@ -8,20 +8,35 @@ import { TOUR_CITIES, tourCity, tourStages } from "../../domain/minigame/tour"
 /** A 2D context that records text and swallows everything else. */
 function recordingContext() {
   const texts: string[] = []
+  const translations: [number, number][] = []
   const gradient = { addColorStop() {} }
   const target: Record<string, unknown> = {
-    canvas: document.createElement("canvas"), texts,
+    canvas: document.createElement("canvas"), texts, translations,
+    translate: (x: number, y: number) => translations.push([x, y]),
     fillText: (text: string) => { texts.push(text) }, strokeText() {},
     createLinearGradient: () => gradient, createRadialGradient: () => gradient,
   }
   return new Proxy(target, {
     get: (object, key: string) => key in object ? object[key] : () => undefined,
     set: (object, key: string, value) => { object[key] = value; return true },
-  }) as unknown as CanvasRenderingContext2D & { texts: string[] }
+  }) as unknown as CanvasRenderingContext2D & { texts: string[]; translations: [number, number][] }
 }
 const palette = Object.fromEntries(Object.keys(GAME_TOKENS).map(key => [key, "red"])) as GamePalette
 
 describe("treadmill renderer with tour cities", () => {
+  it("actually paints a scheduled obstacle ahead of a front-running player before activation", () => {
+    const state = { ...newTreadmillRun(), mode: "running" as const, countdown: 0, running: true, x: 0.88, seconds: 1.5 }
+    const context = recordingContext()
+    createTreadmillRenderer()(context, state, 360, 600, palette, false, 1000)
+    const visible = JSON.parse(context.canvas.dataset.renderedHazards!) as { id: number; x: number; scheduled: boolean }[]
+    const first = visible.find(hazard => hazard.id === 0)!
+    expect(first).toBeDefined()
+    expect(first.scheduled).toBe(true)
+    expect(first.x).toBeGreaterThan(0.6)
+    expect(first.x).toBeLessThan(0.75)
+    expect(context.translations.some(([x, y]) => Math.abs(x - first.x * 360) < 0.01 && y === 474)).toBe(true)
+    expect(state.hazards).toHaveLength(0)
+  })
   it("announces the city's own stage name in the countdown, not the practice course", () => {
     const stages = tourStages(tourCity("seoul")!)
     const state = { ...treadmillCommand(newTreadmillRun(stages), { type: "start", stages }), stage: 2 }
