@@ -27,6 +27,19 @@
   --brand:      #0D5F5A;
   --brand-ink:  #07302E;
 
+  /* Owner request 2026-10-14: destination identity, never intensity or health.
+     Paired icon + label remains meaningful without color. */
+  --category-training: #245BC2;
+  --category-training-wash: #EDF3FF;
+  --category-journal: #92570B;
+  --category-journal-wash: #FFF3DC;
+  --category-oracle: #6946BC;
+  --category-oracle-wash: #F2EEFF;
+  --category-body: #A13E63;
+  --category-body-wash: #FCEEF3;
+  --category-record: var(--brand);
+  --category-record-wash: #E7F5F1;
+
   /* Semantic */
   --ok:    #1F7A3A;
   --warn:  #B4530C;
