@@ -9,6 +9,7 @@ export type LogEntryType = "quick-session" | JournalEntryType
 
 export interface EntryFormProps {
   readonly onBack?: () => void
+  readonly onExit?: (() => void) | undefined
   readonly onDone?: (entryType: JournalEntryType, savedEntry: JournalEntry, reviewMessage?: string, storageMessage?: string) => void
   readonly targetDate?: string
   readonly initialEntry?: JournalEntry
@@ -236,8 +237,9 @@ export function FormSec({
   )
 }
 
-export function TopBar({ onBack, children }: {
+export function TopBar({ onBack, onExit, children }: {
   readonly onBack?: () => void
+  readonly onExit?: (() => void) | undefined
   readonly children: ReactNode
 }) {
   return (
@@ -248,11 +250,12 @@ export function TopBar({ onBack, children }: {
       <button type="button" onClick={onBack} style={{
         background: "transparent", border: 0, cursor: "pointer",
         minWidth: 64, minHeight: 44, padding: "4px 8px",
-        fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-2)",
+        fontFamily: "var(--sans)", fontSize: 14, color: "var(--ink-2)",
         letterSpacing: "0.06em",
       }}>← 뒤로</button>
       <h1 className="entry-topbar__title app-chrome-title">{children}</h1>
-      <div aria-hidden="true" style={{ width: 64 }}></div>
+      {onExit ? <button type="button" onClick={onExit} style={{ minWidth: 64, minHeight: 44, border: 0, background: "transparent", color: "var(--ink-2)", font: "inherit", cursor: "pointer" }}>나가기</button>
+        : <div aria-hidden="true" style={{ width: 64 }} />}
     </div>
   )
 }

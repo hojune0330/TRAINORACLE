@@ -37,7 +37,7 @@ import { JournalBodyInput } from "./JournalBodyInput"
 import { journalPainPartsForSafety, type BodyPartMetadataV1 } from "../../domain/body-part-metadata"
 import { derivePlanExecutionRelation } from "../../domain/plan-execution-relation"
 import { TaskFlowStep } from "../../components/TaskFlowStep"
-import { useTaskFlowBack } from "../../hooks/useTaskFlowBack"
+import { useJournalFormNavigation } from "./useJournalFormNavigation"
 
 const DETAILED_OUTCOMES = [
   ["COMPLETED", "완료"],
@@ -75,14 +75,14 @@ function isNonPerformedOutcome(outcome: DetailedOutcome | undefined): boolean {
 
 export function PostSessionForm(props: EntryFormProps) {
   const date = props.initialEntry?.date ?? props.targetDate ?? todayISO()
-  return <JournalWritingDecorationPreview date={date}><FormInputDraftBoundary kind="post-session" date={date}
+  return <JournalWritingDecorationPreview date={date}><FormInputDraftBoundary kind="post-session" date={date} onExit={props.onExit ?? props.onBack}
     hasInitialContext={props.initialEntry !== undefined || props.plannedSessionLink !== undefined}
     identity={JSON.stringify([props.initialEntry?.id, props.initialEntry?.savedAt, props.plannedSessionLink])}>
     <PostSessionFormEditor {...props} />
   </FormInputDraftBoundary></JournalWritingDecorationPreview>
 }
 
-function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plannedSessionLink }: EntryFormProps) {
+function PostSessionFormEditor({ onBack, onExit, onDone, targetDate, initialEntry, plannedSessionLink }: EntryFormProps) {
   const recovered = useRecoveredFormInput("post-session")
   const input = recovered?.input
   const initial = initialEntry?.kind === "post-session" ? initialEntry : undefined
@@ -176,10 +176,11 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
   }
   const firstTask = isInputReview ? task === "review" : task === "outcome"
   const goBackFlow = () => {
-    if (firstTask) { draft.back(onBack)?.(); return }
+    if (firstTask) { navigation.back(); return }
     previousTask()
   }
-  useTaskFlowBack({ enabled: !firstTask, busy: saving, onBack: goBackFlow })
+  const navigation = useJournalFormNavigation({ draft, onBack, onExit, onSave: () => { setTask("review"); void persist() },
+    flowEnabled: !firstTask, busy: saving, onStepBack: goBackFlow })
 
   const selectedOutcome = activityOutcome
     ? DETAILED_OUTCOMES.find(([value]) => value === activityOutcome)?.[1] ?? "선택한 결과"
@@ -389,8 +390,10 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
           : isPrivateMemo ? "비밀 일지를 이 기기에 보관했어요. 계정 전송 대기 중이며 공유·분석에는 사용하지 않아요."
             : "일지를 이 기기에 보관했어요. 계정 전송 대기 중이에요."
       const reviewMessage = memoPreparation.reviewMessage ?? (painLevelsRequireReview(journalPainPartsForSafety(saved)) ? "불편한 곳을 기록했어요. 몸 상태를 확인해 주세요." : undefined)
-      if (storageMessage) onDone?.("post-session", saved, reviewMessage, storageMessage)
-      else onDone?.("post-session", saved, reviewMessage)
+      navigation.finish(() => {
+        if (storageMessage) onDone?.("post-session", saved, reviewMessage, storageMessage)
+        else onDone?.("post-session", saved, reviewMessage)
+      })
     } catch {
       setSaveError(true)
     } finally {
@@ -402,7 +405,8 @@ function PostSessionFormEditor({ onBack, onDone, targetDate, initialEntry, plann
   return (
     <div style={{ paddingBottom: task === "review" ? 100 : 24 }} aria-busy={saving}>
       <fieldset disabled={saving} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
-      <TopBar onBack={goBackFlow}>훈련 후 · 기록</TopBar>
+      <TopBar onBack={goBackFlow} onExit={navigation.exit}>훈련 후 · 기록</TopBar>
+      {navigation.dialog}
       <FormFinalizationRecovery recovery={finalization} onBack={draft.back(onBack)} />
       <div style={{ padding: "8px 20px 0" }}>
         <IndexCard date={compactDate(entryDate)} dow={`${dowOf(entryDate)} · ${nowClock()}`} />

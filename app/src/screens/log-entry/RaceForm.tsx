@@ -25,21 +25,21 @@ import { FormSec, TopBar } from "./shared"
 import { FormInputSaveBar as StickyBar } from "./useFormInputDraft"
 import type { EntryFormProps } from "./shared"
 import { TaskFlowStep } from "../../components/TaskFlowStep"
-import { useTaskFlowBack } from "../../hooks/useTaskFlowBack"
+import { useJournalFormNavigation } from "./useJournalFormNavigation"
 
 type RaceStage = "pre" | "post"
 type RaceFlowStep = "info" | "memo" | "review"
 
 export function RaceForm(props: EntryFormProps) {
   const date = props.initialEntry?.date ?? props.targetDate ?? todayISO()
-  return <JournalWritingDecorationPreview date={date}><FormInputDraftBoundary kind="race" date={date}
+  return <JournalWritingDecorationPreview date={date}><FormInputDraftBoundary kind="race" date={date} onExit={props.onExit ?? props.onBack}
     hasInitialContext={props.initialEntry !== undefined}
     identity={JSON.stringify([props.initialEntry?.id, props.initialEntry?.savedAt])}>
     <RaceFormEditor {...props} />
   </FormInputDraftBoundary></JournalWritingDecorationPreview>
 }
 
-function RaceFormEditor({ onBack, onDone, targetDate, initialEntry }: EntryFormProps) {
+function RaceFormEditor({ onBack, onExit, onDone, targetDate, initialEntry }: EntryFormProps) {
   const recovered = useRecoveredFormInput("race")
   const input = recovered?.input
   const initial = initialEntry?.kind === "race" ? initialEntry : undefined
@@ -101,17 +101,18 @@ function RaceFormEditor({ onBack, onDone, targetDate, initialEntry }: EntryFormP
       setFlowStep(previous)
       return
     }
-    draft.back(onBack)?.()
+    navigation.back()
   }
   const returnToReviewFromMemo = () => {
     memo.reviewIfNeeded()
     navigateToStep("review")
   }
-  useTaskFlowBack({ enabled: !isFirstStep, busy: saving, onBack: goBackFlow })
+  const navigation = useJournalFormNavigation({ draft, onBack, onExit, onSave: () => { navigateToStep("review"); void persist() },
+    flowEnabled: !isFirstStep, busy: saving, onStepBack: goBackFlow })
 
   const persist = async () => {
     if (persistInFlight.current || !draft.current()) return
-    if (!reviewItems.some(item => item.label !== "경기 시점" && item.answered)) { setEmptyNotice(true); return }
+    if (!reviewItems.some(item => item.label !== "경기 시점" && item.answered)) { setEmptyNotice(true); navigateToStep("review"); return }
     setEmptyNotice(false)
     const hasPaceInput = paceMinutes.trim() !== "" || paceSeconds.trim() !== ""
     const goalPace = parseTargetPaceInput(paceMinutes, paceSeconds)
@@ -174,8 +175,10 @@ function RaceFormEditor({ onBack, onDone, targetDate, initialEntry }: EntryFormP
           ? "수정 충돌을 확인해 주세요. 이 기기의 내용은 보관했지만 계정 저장은 완료되지 않았어요."
           : isPrivateMemo ? "비밀 일지를 이 기기에 보관했어요. 계정 전송 대기 중이며 공유·분석에는 사용하지 않아요."
             : "일지를 이 기기에 보관했어요. 계정 전송 대기 중이에요."
-      if (storageMessage) onDone?.("race", saved, memoPreparation.reviewMessage ?? undefined, storageMessage)
-      else onDone?.("race", saved, memoPreparation.reviewMessage ?? undefined)
+      navigation.finish(() => {
+        if (storageMessage) onDone?.("race", saved, memoPreparation.reviewMessage ?? undefined, storageMessage)
+        else onDone?.("race", saved, memoPreparation.reviewMessage ?? undefined)
+      })
     } catch {
       setSaveError(true)
     } finally {
@@ -219,7 +222,8 @@ function RaceFormEditor({ onBack, onDone, targetDate, initialEntry }: EntryFormP
   return (
     <div style={{ paddingBottom: flowStep === "review" ? 100 : 24 }} aria-busy={saving}>
       <fieldset disabled={saving} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
-      <TopBar onBack={goBackFlow}>경기 · 빠른 점검</TopBar>
+      <TopBar onBack={goBackFlow} onExit={navigation.exit}>경기 · 빠른 점검</TopBar>
+      {navigation.dialog}
       <FormFinalizationRecovery recovery={finalization} onBack={draft.back(onBack)} />
       <RaceHeader date={entryDate} isToday={entryDate === todayISO()} />
 

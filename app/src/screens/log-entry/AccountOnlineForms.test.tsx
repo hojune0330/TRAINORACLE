@@ -2,6 +2,7 @@ import React from "react"
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { JournalEntry, PostSessionEntry } from "../../domain/journal-store"
+import { hasPendingBrowserBackLayer } from "../../navigation/browserNavigation"
 
 const mocks = vi.hoisted(() => ({ enabled: true, persist: vi.fn(),
   save: vi.fn(), update: vi.fn(), privateSave: vi.fn(), privateUpdate: vi.fn() }))
@@ -88,7 +89,15 @@ beforeEach(() => {
   for (const writer of oldWriters()) writer.mockReturnValue({ ok: true })
   window.history.replaceState(null, "", "/?uitest=1")
 })
-afterEach(() => { cleanup(); window.history.replaceState(null, "", "/"); vi.restoreAllMocks() })
+afterEach(async () => {
+  cleanup()
+  // Disposal queues a native Back in a microtask. Do not replace its target
+  // before jsdom delivers POP to the real browser-navigation capture listener.
+  await settle()
+  await waitFor(() => expect(hasPendingBrowserBackLayer()).toBe(false))
+  window.history.replaceState(null, "", "/")
+  vi.restoreAllMocks()
+})
 
 describe.each(forms)("%s account-online form", form => {
   it("replays an ACK-lost pending save with the original snapshot and baseline", async () => {
@@ -209,7 +218,7 @@ describe.each(forms)("%s account-online form", form => {
     }
     await settle()
     if (form === "quick") fireEvent.click(screen.getByRole("button", { name: "완료" }))
-    expect(done).toHaveBeenCalledTimes(2)
+    await waitFor(() => expect(done).toHaveBeenCalledTimes(2))
     expect(mocks.persist.mock.calls[1]![0].id).toBe(first.id)
     expect(mocks.persist.mock.calls[1]![1]).toBe(first.savedAt)
     expect(mocks.persist.mock.calls[1]![0].savedAt > first.savedAt).toBe(true)

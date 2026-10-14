@@ -15,6 +15,7 @@ export type BodyHistoryProps = {
   readonly selectedPartId?: string | null
   readonly onSelectedPartChange?: (partId: string | null) => void
   readonly manageBrowserBack?: boolean
+  readonly recordActionLabel?: string
 }
 
 type SelectionState = {
@@ -50,6 +51,7 @@ export function BodyHistory({
   selectedPartId,
   onSelectedPartChange,
   manageBrowserBack = true,
+  recordActionLabel = "오늘 상태 남기기",
 }: BodyHistoryProps) {
   const headingId = React.useId()
   const [localSelection, setLocalSelection] = React.useState<SelectionState>({ scopeKey, partId: null })
@@ -135,7 +137,7 @@ export function BodyHistory({
       {selectedPart === null ? (
         <>
           <button type="button" className="body-history__primary" onClick={() => writeToday()}>
-            <span>오늘 상태 남기기</span>
+            <span>{recordActionLabel}</span>
             <ChevronRight aria-hidden="true" size={18} />
           </button>
           {history.parts.length > 0 && (
@@ -181,7 +183,7 @@ export function BodyHistory({
             {selectedPart.label}
           </AppHeading>
           <button type="button" className="body-history__primary" onClick={() => writeToday(selectedPart)}>
-            <span>오늘 상태 남기기</span>
+            <span>{recordActionLabel}</span>
             <ChevronRight aria-hidden="true" size={18} />
           </button>
           <ol className="body-history__records" aria-label={selectedPart.label + " 날짜별 기록"}>

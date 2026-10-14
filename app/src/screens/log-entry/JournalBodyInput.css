@@ -1,4 +1,6 @@
 .body-record-dialog {
+  box-sizing: border-box;
+  height: fit-content;
   width: min(100% - 24px, 640px);
   max-height: calc(100dvh - 24px);
   padding: 0;
@@ -16,8 +18,12 @@
   justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-4);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
 }
-.body-record-dialog__header h2 { margin: 0; font-size: var(--fs-app-section-title); }
+.body-record-dialog__header h2 { margin: 0; font-size: var(--fs-h3); font-weight: 700; line-height: 1.35; }
 .body-record-dialog__header button {
   min-height: 44px;
   min-width: 44px;
@@ -27,4 +33,4 @@
   color: inherit;
   cursor: pointer;
 }
-.body-record-dialog__content { padding: var(--space-4); }
+.body-record-dialog__content { padding: 0 var(--space-4) var(--space-4); }

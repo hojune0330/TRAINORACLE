@@ -28,7 +28,7 @@ export default function App({ multiPlanRuntime }: { readonly multiPlanRuntime?: 
       </React.Suspense>
     )
   }
-  if (appShell) return <InstallShortcutProvider><AccountJournalStorageStatus /><AppShell multiPlanRuntime={multiPlanRuntime} /></InstallShortcutProvider>
+  if (appShell) return <InstallShortcutProvider><AppShell multiPlanRuntime={multiPlanRuntime} systemStatus={<AccountJournalStorageStatus />} /></InstallShortcutProvider>
   return (
     <InstallShortcutProvider><AccountJournalStorageStatus />
     <React.Suspense fallback={<AppLoadingState fullScreen />}>
