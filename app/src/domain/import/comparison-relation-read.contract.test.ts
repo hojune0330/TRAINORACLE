@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { accountPlanPacketFixture } from "../account/account-plan.test-fixtures"
 import { accountPlanEntry } from "../account/account-plan-document-schema"
 import {
@@ -20,11 +21,10 @@ import {
 const owner = "synthetic-restore-owner-a"
 const at = TODAY.toISOString()
 
-function fixture(id = "restored-journal") {
-  // The shared generator fixture seeds device records before account hydration.
+function fixture(id = "restored-journal", existingSnapshot?: ReturnType<typeof accountPlanEntry>["snapshot"]) {
+  // The enclosing test setup initializes canonical storage before generating account-plan evidence.
   setActiveLocalAccount(null)
-  localStorage.clear()
-  const snapshot = accountPlanEntry(accountPlanPacketFixture(4), at).snapshot
+  const snapshot = existingSnapshot ?? accountPlanEntry(accountPlanPacketFixture(4), at).snapshot
   setActiveLocalAccount(owner)
   const sessions = resolveComparisonPlanSessions(snapshot)
   if (sessions.status !== "ORIGINAL_SESSIONS") throw Error("Original sessions missing")
@@ -54,7 +54,7 @@ function fixture(id = "restored-journal") {
   return { snapshot, original, observation, relation, entry: { ...entry, comparisonRelations: [relation] } }
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.useFakeTimers()
   vi.setSystemTime(TODAY)
   localStorage.clear()
@@ -63,6 +63,7 @@ beforeEach(() => {
   vi.stubEnv("VITE_KILL_FILE_ANALYSIS_TCX", "false")
   setActiveLocalAccount(owner)
   resetAccountJournalProjection(owner)
+  await initializeCanonicalJournalFixture()
 })
 afterEach(() => {
   setActiveLocalAccount(null)
@@ -209,7 +210,7 @@ describe("current acknowledged persisted comparison read", () => {
   })
 
   it("threads separate read contexts through previous-performance comparison without inventing compatibility", () => {
-    const a = fixture("current-journal"), b = fixture("previous-journal")
+    const a = fixture("current-journal"), b = fixture("previous-journal", a.snapshot)
     markCurrentConfirmedAccountJournalProjection(owner, a.entry, 1)
     markCurrentConfirmedAccountJournalProjection(owner, b.entry, 1)
     const current = { original: a.original, observation: a.observation, relation: a.relation, journalRevision: 1,

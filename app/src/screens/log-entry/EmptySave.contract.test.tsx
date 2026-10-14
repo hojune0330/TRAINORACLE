@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { PostSessionForm } from "./PostSessionForm"
 import { EveningCheckin } from "./EveningCheckin"
 import { RaceForm } from "./RaceForm"
@@ -27,4 +28,9 @@ it("still saves a single selected mood without requiring other measurements", ()
   fireEvent.click(screen.getByRole("button", { name: /^저장/u }))
   expect(loadEntries()).toHaveLength(1)
   expect(loadEntries()[0]).toMatchObject({ mood: 4, fieldProvenance: { sleepH: { provenance: "MISSING" } } })
+})
+
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })

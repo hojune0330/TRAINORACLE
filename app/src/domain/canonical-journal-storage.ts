@@ -279,7 +279,10 @@ function validateStoredValue(legacyKey: string, raw: string | null): Validation 
     if (!Array.isArray(value)) return "corrupt"
     for (const item of value) {
       if (!isRecord(item) || typeof item.deletedAt !== "string" || item.deletedAt === "") return "corrupt"
-      if (!hasOnlyKeys(item, ["entry", "deletedAt", "privateMemo"])) return "unsupported"
+      if (!hasOnlyKeys(item, ["entry", "deletedAt", "privateMemo", "restoredId"])) return "unsupported"
+      if (item.restoredId !== undefined && (typeof item.restoredId !== "string"
+        || item.restoredId.length === 0 || item.restoredId.length > 128
+        || isRecord(item.entry) && item.restoredId === item.entry.id)) return "corrupt"
       const validEntry = validateEntries([item.entry])
       if (validEntry !== "valid") return validEntry
       if (item.privateMemo !== undefined) {

@@ -1,6 +1,6 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
-
 const mocks = vi.hoisted(() => ({ request: vi.fn() }))
 vi.mock("./account-journal-api", () => ({ accountJournalPreviewEnabled: () => true, requestAccountDocument: mocks.request }))
 vi.mock("./account-journal-draft-buffer", () => ({ createAccountDocumentBuffer: () => ({ close: vi.fn(), read: async () => null }) }))
@@ -9,8 +9,10 @@ import { useAccountAthleteRecordsRuntime } from "./useAccountAthleteRecordsRunti
 import { disposeAccountAthleteRecords, readAccountAthleteRecordsState } from "./account-athlete-record-service"
 import { assignJournalsToAccount, setActiveLocalAccount } from "./local-journal-ownership"
 
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear()
+  await initializeCanonicalJournalFixture()
+
   disposeAccountAthleteRecords()
   setActiveLocalAccount("account-a")
   mocks.request.mockReset().mockImplementation(async (_owner: string, request: { action: string }) => request.action === "athleteRecordSupport"

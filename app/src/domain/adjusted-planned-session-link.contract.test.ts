@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { adjustedCandidateFixture } from "./adjusted-plan-candidate.test-fixtures"
 import { prepareAdjustedPlanCandidate } from "./adjusted-plan-candidate"
 import { createPlannedSessionLogDraft, plannedSessionLinkSchema, resolveCurrentPlannedSession } from "./planned-session-link"
@@ -18,7 +19,7 @@ function fixture() {
 }
 
 describe("adjusted content in the shared journal link identity", () => {
-  beforeEach(() => { localStorage.clear(); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+  beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
   afterEach(() => { localStorage.clear(); vi.useRealTimers() })
 
   it("round trips the full adjusted session through the existing link schema", () => {

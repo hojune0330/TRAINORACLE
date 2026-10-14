@@ -1,3 +1,5 @@
+import { captureCanonicalJournalFixtureReset, initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
+let resetCanonicalJournalFixture: () => void
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
 import { configurationReference } from "@impl/prescription/prescription-adjustment"
@@ -11,23 +13,27 @@ import * as explanationModule from "./training-template-explanations"
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
 import { resolveDetailedPlanTemplateOptions } from "../screens/plan-beta/plan-template-options"
 
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear()
   sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
+
   setActiveLocalAccount(null)
   vi.useFakeTimers()
   vi.setSystemTime(TODAY)
+
+  resetCanonicalJournalFixture = captureCanonicalJournalFixtureReset()
 })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 
 function generated(fixture = RUNTIME_CASES[0], seconds: number = fixture.performanceSeconds) {
-  localStorage.clear()
+  resetCanonicalJournalFixture()
   const selectedRecordId = saveCurrentRecord(fixture.eventDistanceM, seconds)
   return generatePlanFromDraft(draftFor(fixture), "NO_KNOWN_RISK", { selectedRecordId })
 }
 
 function prescription(fixture: typeof RUNTIME_CASES[number] = RUNTIME_CASES[0], seconds: number = fixture.performanceSeconds) {
-  localStorage.clear()
+  resetCanonicalJournalFixture()
   const selectedRecordId = saveCurrentRecord(fixture.eventDistanceM, seconds)
   const result = generatePlanFromDraft(draftFor(fixture), "NO_KNOWN_RISK", { selectedRecordId })
   if (result.kind !== "generated") throw new Error("Expected generated fixture")

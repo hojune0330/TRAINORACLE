@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { PaceTargetPlanPrescription, PlanCandidate, PlanSession } from "@impl/plan-generator/types"
 import { comparePlanMainWork } from "./plan-main-comparison"
@@ -8,7 +9,10 @@ import { sessionPrescriptionSequence } from "./session-prescription-sequence"
 import { planSessionSchema } from "./plan-session-schema"
 import { resolveDetailedPlanTemplateOptions } from "../screens/plan-beta/plan-template-options"
 
-beforeEach(() => { localStorage.clear(); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear();
+  await initializeCanonicalJournalFixture()
+   vi.useFakeTimers(); vi.setSystemTime(TODAY)
+})
 afterEach(() => { vi.useRealTimers() })
 
 function pair(fixture: MatrixCase = RUNTIME_CASES[0]): readonly [PlanCandidate, PlanCandidate] {

@@ -1,6 +1,7 @@
 import React from "react"
 import { cleanup, render, screen, within } from "@testing-library/react"
-import { afterEach, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { deriveSequenceV3Totals } from "@impl/prescription/sequence-v3"
 import type { PlanMutationLockManager } from "../../domain/plan-mutation-lock"
 import { adjustedPlanSelectionV3Fixture } from "../../domain/adjusted-plan-selection-v3.test-fixtures"
@@ -8,6 +9,7 @@ import { prepareAdjustedPlanCandidateV3 } from "../../domain/adjusted-plan-candi
 import { formatTrainingSeconds } from "./labels"
 import { AdjustedPlanApplyReviewV3 } from "./AdjustedPlanApplyReviewV3"
 
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture() })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 const locks: PlanMutationLockManager = { request: async (_name, _options, callback) => callback({}) }

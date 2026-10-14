@@ -1,6 +1,7 @@
 import React from "react"
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import { PlanCandidates } from "./PlanCandidates"
 import * as templateOptions from "./plan-template-options"
@@ -42,6 +43,10 @@ function setup() {
   }
   return { props, resolver }
 }
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
+})
 
 describe("candidate-owned optional recommendation preference", () => {
   it("shows the actual candidate preparation and cooldown with dated prescription amounts without selecting silently", () => {

@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture";
 import { beforeEach, describe, expect, it } from "vitest"
 import { generatePlanFromDraft, selectPlanForActivation } from "./plan-beta-flow"
 import { parsePlanBetaState } from "./plan-beta-schema"
@@ -6,7 +7,8 @@ import { isInitialCandidatePair } from "@impl/plan-generator/support-only-candid
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 import { replaceCandidateCatalogWorkout } from "./catalog-plan-binding"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear()
+    await initializeCanonicalJournalFixture(); })
 const base = { eventGroup: "FIVE_K" as const, eventDistanceM: 5000 as const, competitionDivision: "OPEN" as const,
   experienceBand: "EXPERIENCED" as const, availableDayCount: 5 as const, requestedFrameLength: 9 as const, trainingFocus: "LT_INTENT" as const,
   secondSessionMode: "SINGLE_SESSION_ONLY" as const, trainingTimePreference: "VARIES" as const, selectedDetailedTemplateRef: null }

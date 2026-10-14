@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { webcrypto } from "node:crypto"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { createAccountGoalProgramService, accountGoalProgramEditToken } from "./account-goal-program-service"
@@ -14,8 +15,10 @@ vi.setConfig({ testTimeout: 30_000 })
 
 const owner = "a1111111-1111-4111-8111-111111111111"
 const clone = <T,>(value: T): T => structuredClone(value)
-beforeEach(() => {
-  localStorage.clear(); vi.stubGlobal("crypto", webcrypto)
+beforeEach(async () => {
+  localStorage.clear();
+  await initializeCanonicalJournalFixture()
+   vi.stubGlobal("crypto", webcrypto)
   vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date(2026, 9, 11, 23, 59))
 })
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals() })

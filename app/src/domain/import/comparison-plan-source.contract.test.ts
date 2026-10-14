@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { accountPlanEntry, emptyAccountPlanDocument, materializeAccountPlan } from "../account/account-plan-document-schema"
 import { accountPlanPacketFixture } from "../account/account-plan.test-fixtures"
@@ -20,7 +21,10 @@ function setup(version: 2 | 3 | 4 | 5 | 6 = 3) {
   return { entry, document, state, reference, service, options: { getService: () => service, referenceTime: at },
     update: (patch: Partial<typeof view>) => { view = { ...view, ...patch } } }
 }
-beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(TODAY); localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null) })
+beforeEach(async () => { vi.useFakeTimers(); vi.setSystemTime(TODAY); localStorage.clear(); sessionStorage.clear();
+  await initializeCanonicalJournalFixture()
+   setActiveLocalAccount(null)
+})
 afterEach(() => { setActiveLocalAccount(null); vi.restoreAllMocks(); vi.useRealTimers() })
 
 describe("acknowledged account comparison plan source", () => {

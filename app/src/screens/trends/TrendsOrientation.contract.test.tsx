@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { Trends } from "../Trends"
 
 beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
@@ -72,4 +73,9 @@ it("gives legacy in-page destinations their own title instead of leaving an anal
   fireEvent.click(screen.getByRole("button", { name: "읽을거리·관심" }))
   expect(screen.getByRole("heading", { name: "훈련 이야기 읽기", level: 2 })).toBeVisible()
   expect(screen.queryByRole("heading", { name: "최고기록 살펴보기" })).toBeNull()
+})
+
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })

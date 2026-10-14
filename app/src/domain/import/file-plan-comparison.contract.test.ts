@@ -1,3 +1,5 @@
+import { captureCanonicalJournalFixtureReset, initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
+let resetCanonicalJournalFixture: () => void
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { createActiveSnapshot } from "@impl/plan-generator/selection"
 import { accountPlanPacketFixture } from "../account/account-plan.test-fixtures"
@@ -15,7 +17,7 @@ import { compareFileToPlan, comparePreviousFilePerformance, comparisonObservatio
 const relationId = "10000000-0000-4000-8000-000000000001"
 const at = TODAY.toISOString()
 function fixture(version: 2 | 3 | 4 | 5 | 6 = 4, pace = false) {
-  localStorage.clear()
+  resetCanonicalJournalFixture()
   let packet = accountPlanPacketFixture(version)
   if (pace) {
     if (packet.state.version !== 4) throw Error("pace fixture needs v4 origin")
@@ -58,7 +60,10 @@ const request = (value: ComparisonRelationV1) => ({ action: "confirmComparisonRe
 function input(original: VerifiedComparisonOriginal, actual: ProjectedFileObservation, value = relation(original, actual)) {
   return { original, observation: actual, relation: value, journalRevision: 8 }
 }
-beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(TODAY); localStorage.clear(); sessionStorage.clear() })
+beforeEach(async () => { vi.useFakeTimers(); vi.setSystemTime(TODAY); localStorage.clear(); sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
+  resetCanonicalJournalFixture = captureCanonicalJournalFixtureReset()
+})
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 
 describe("exact selected immutable comparison original", () => {

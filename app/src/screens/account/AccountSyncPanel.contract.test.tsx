@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { saveSyncConsent } from "../../domain/account/sync"
 import { AccountSyncPanel } from "./AccountSyncPanel"
 
@@ -9,6 +10,10 @@ beforeEach(() => {
   window.localStorage.clear()
   vi.stubEnv("VITE_FEATURE_ACCOUNT_JOURNAL", "false")
   vi.stubEnv("VITE_KILL_ACCOUNT_JOURNAL", "false")
+})
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })
 
 describe("sync feature switch", () => {

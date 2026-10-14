@@ -1,6 +1,7 @@
 import React from "react"
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { OracleLinkedDestination, canEmbedOracleDestination } from "./OracleLinkedDestination"
 import { OracleProfileReader } from "./OracleProfileExperience"
 import { ORACLE_CONTENT_CATALOG } from "../domain/oracle-content-catalog"
@@ -402,4 +403,9 @@ it.each(["date", "month"] as const)("does not override manual %s navigation when
   expect(screen.getByRole("grid", { name: navigation === "date" ? "2026년 10월 달력" : "2026년 11월 달력" })).toBeVisible()
   if (navigation === "date") expect(view.container.querySelector('td[aria-selected="true"] button')).toHaveAttribute("data-date", "2026-10-02")
   expect(screen.queryByRole("grid", { name: "2026년 9월 달력" })).toBeNull()
+})
+
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })

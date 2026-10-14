@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture";
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { adjustedSuccessorFixture } from "./adjusted-plan-successor.test-fixtures"
 import { saveSelectedAdjustedSuccessor } from "./adjusted-plan-store"
@@ -7,7 +8,8 @@ import { ADJUSTED_PLAN_ARCHIVE_KEY } from "./adjusted-plan-archive"
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
 import { TODAY } from "./prescription-quality-matrix.test-fixtures"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null);
+    await initializeCanonicalJournalFixture(); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 
 it("exports actual successor and predecessor together and reads without writing or granting authority", async () => {

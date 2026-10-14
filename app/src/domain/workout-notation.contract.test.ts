@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it } from "vitest"
+import { beforeEach, afterEach, describe, expect, it } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import type { PrescriptionSequenceV3, SequenceNodeV3 } from "@impl/prescription/sequence-v3"
 import type { PrescriptionSequence, PrescriptionSequenceSegment } from "@impl/prescription/sequence"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
@@ -8,6 +9,7 @@ import { selectAdjustedPlanForActivation } from "./adjusted-plan-selection"
 import { TODAY } from "./prescription-quality-matrix.test-fixtures"
 import { memoSessionFixture } from "./workout-memo.test-fixtures"
 
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture() })
 afterEach(() => localStorage.clear())
 
 const segment = (overrides: Partial<Extract<SequenceNodeV3, { kind: "segment" }>> = {}): Extract<SequenceNodeV3, { kind: "segment" }> => ({

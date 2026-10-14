@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture";
 import { beforeEach, describe, expect, it } from "vitest"
 import { generatePlanFromDraft, selectPlanForActivation } from "./plan-beta-flow"
 import { planBetaStateV3Schema } from "./plan-beta-schema"
@@ -38,7 +39,8 @@ function fixture() {
   return { state, entry, calculation }
 }
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear()
+    await initializeCanonicalJournalFixture(); })
 
 describe("cycle structured execution evidence", () => {
   it("keeps explicit partial segment facts without treating unrecorded segments as zero", () => {

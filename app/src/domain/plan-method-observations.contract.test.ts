@@ -1,4 +1,6 @@
-import { describe, expect, it, vi } from "vitest"
+import { captureCanonicalJournalFixtureReset, initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
+let resetCanonicalJournalFixture: () => void
+import { describe, expect, it, vi, beforeEach } from "vitest"
 import { stateFixture } from "./plan-beta-store.test-fixture"
 import { createPlannedSessionLogDraft } from "./planned-session-link"
 import { collectPlanMethodObservations } from "./plan-method-observations"
@@ -19,6 +21,13 @@ const entry: PostSessionEntry = {
 }
 const empty = { distanceKm: null, durationMin: null, secondsPerKm: null, rpe: null, splits: null, recovery: null }
 const project = (entries: readonly PostSessionEntry[]) => collectPlanMethodObservations(entries, [plan])
+
+beforeEach(async () => {
+  localStorage.clear()
+  sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
+  resetCanonicalJournalFixture = captureCanonicalJournalFixtureReset()
+})
 
 describe("exact plan method observations", () => {
   it("projects only explicitly recorded metrics with immutable occurrence lineage", () => {
@@ -107,7 +116,7 @@ describe("exact plan method observations", () => {
   it("links an adopted PACE_TARGET occurrence but never substitutes its dose for actual metrics", () => {
     vi.useFakeTimers()
     vi.setSystemTime(TODAY)
-    window.localStorage.clear()
+    resetCanonicalJournalFixture()
     try {
       const selectedRecordId = saveCurrentRecord(5000, 1111)
       const intake = draftFor({ caseId: "synthetic-method-observation", eventDistanceM: 5000,
@@ -131,7 +140,7 @@ describe("exact plan method observations", () => {
       })
     } finally {
       vi.useRealTimers()
-      window.localStorage.clear()
+      resetCanonicalJournalFixture()
     }
   })
 

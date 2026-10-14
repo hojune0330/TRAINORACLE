@@ -9,6 +9,8 @@ import {
   savePrivateEntry,
   updateEntry,
 } from "./journal-store"
+import { rotatePrivateMemoVault } from "./private-memo-vault"
+import { activeLocalAccount, reserveJournalOwnership, setActiveLocalAccount } from "./account/local-journal-ownership"
 import { createRecoveryCode, decryptPrivateNote } from "./account/private-note-crypto"
 import { saveSessionRecoveryCode } from "./account/private-note-sync"
 import { purgeExpiredTrash } from "./journal-trash"
@@ -32,6 +34,7 @@ const vaultSchema = z.object({
 beforeEach(async () => {
   window.localStorage.clear()
   window.sessionStorage.clear()
+  setActiveLocalAccount(null)
   await initializeCanonicalJournalFixture()
 })
 
@@ -116,6 +119,46 @@ describe("private memo local vault lifecycle", () => {
 
     expect(purgeExpiredTrash(Date.now() + 31 * 24 * 60 * 60 * 1000)).toBe(1)
     expect(allLocalStorageValues()).not.toContain("PRIVATE-LUNA-EXPIRED")
+  })
+
+  it("does not rotate ciphertext belonging to another local account", async () => {
+    const recoveryCode = createRecoveryCode()
+    expect(saveSessionRecoveryCode(recoveryCode)).toBe(true)
+    await expect(savePrivateEntry(privateEntry("owner-a-private", "PRIVATE-LUNA-OWNER-A")))
+      .resolves.toEqual({ ok: true, total: 1 })
+    expect(reserveJournalOwnership(["owner-a-private"], "owner-a").ok).toBe(true)
+    const priorVault = window.localStorage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)
+
+    setActiveLocalAccount("owner-b")
+    await expect(rotatePrivateMemoVault(recoveryCode, createRecoveryCode())).resolves.toEqual({ ok: false })
+
+    expect(activeLocalAccount()).toBe("owner-b")
+    expect(window.localStorage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)).toBe(priorVault)
+  })
+
+  it("does not commit a rotation after the local account scope changes during encryption", async () => {
+    const recoveryCode = createRecoveryCode()
+    const nextRecoveryCode = createRecoveryCode()
+    expect(saveSessionRecoveryCode(recoveryCode)).toBe(true)
+    await expect(savePrivateEntry(privateEntry("scope-private", "PRIVATE-LUNA-SCOPE")))
+      .resolves.toEqual({ ok: true, total: 1 })
+    expect(reserveJournalOwnership(["scope-private"], "owner-a").ok).toBe(true)
+    setActiveLocalAccount("owner-a")
+    const priorVault = window.localStorage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)
+    const realEncrypt = crypto.subtle.encrypt.bind(crypto.subtle)
+    let switched = false
+    vi.spyOn(crypto.subtle, "encrypt").mockImplementationOnce(async (...args) => {
+      const result = await realEncrypt(...args)
+      switched = true
+      setActiveLocalAccount("owner-b")
+      return result
+    })
+
+    await expect(rotatePrivateMemoVault(recoveryCode, nextRecoveryCode)).resolves.toEqual({ ok: false })
+
+    expect(switched).toBe(true)
+    expect(activeLocalAccount()).toBe("owner-b")
+    expect(window.localStorage.getItem(PRIVATE_MEMO_VAULT_STORAGE_KEY)).toBe(priorVault)
   })
 })
 

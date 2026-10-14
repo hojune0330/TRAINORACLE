@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { loadTombstones } from "../domain/account/tombstone"
 import { entriesForDate, replaceAllEntries, saveEntry } from "../domain/journal-store"
 import { toImportedEntry } from "../domain/import/import-draft"
@@ -12,8 +13,10 @@ const ENTRY_ID = "past-local-entry"
 afterEach(cleanup)
 
 describe("past journal preservation before revisit work", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     window.localStorage.clear()
+
+    await initializeCanonicalJournalFixture()
     window.history.replaceState({}, "", "/?app=1")
   })
 

@@ -9,15 +9,22 @@ function readRepositoryFile(relativePath: string): string {
 
 function assertDeployReceipt(workflow: string): void {
   const requiredClauses = [
-    "PREVIOUS_PAGES_SHA",
-    "trainoracle-deploy-receipt.json",
-    "sourceSha",
-    "previousPagesSha",
-    "workflowRunId",
-    "Publish verified build to gh-pages",
+    "node .tools/build-oracle-pages-release.mjs --account-held",
+    'node .tools/publish-oracle-pages-release.mjs --bundle=',
+    '--pages-worktree="$PAGES_WORKTREE" --publish',
+    "steps.pages-snapshot.outputs.sha",
+    "EXPECTED_PAGES_SHA",
+    'pages/builds" --silent',
   ]
   for (const clause of requiredClauses) {
     if (!workflow.includes(clause)) throw new Error(`missing deploy receipt clause: ${clause}`)
+  }
+}
+
+function assertPublishedReceipt(publisher: string): void {
+  for (const clause of ["sourceSha: manifest.sourceSha", "previousPagesSha: manifest.previousPagesSha",
+    "workflowRunId: workflow.runId", "PRESERVING_GUARDED_CI", "writeFileSync(join(target, DEPLOY_RECEIPT), receiptBytes)"]) {
+    if (!publisher.includes(clause)) throw new Error(`missing published receipt clause: ${clause}`)
   }
 }
 
@@ -68,6 +75,7 @@ function assertRollbackWorkflow(workflow: string): void {
 describe("server operations workflows", () => {
   it("publishes a deployment receipt with the previous Pages revision", () => {
     assertDeployReceipt(readRepositoryFile(".github/workflows/ci.yml"))
+    assertPublishedReceipt(readRepositoryFile(".tools/publish-oracle-pages-release.mjs"))
   })
 
   it("runs retention cleanup only through the server operations gate", () => {
@@ -79,7 +87,8 @@ describe("server operations workflows", () => {
   })
 
   it.each([
-    ["deploy previous SHA", ".github/workflows/ci.yml", "PREVIOUS_PAGES_SHA", "CURRENT_PAGES_SHA", assertDeployReceipt],
+    ["deploy guarded publisher", ".github/workflows/ci.yml", ".tools/publish-oracle-pages-release.mjs", "unsafe-publisher.mjs", assertDeployReceipt],
+    ["deploy previous SHA", ".tools/publish-oracle-pages-release.mjs", "previousPagesSha: manifest.previousPagesSha", "previousPagesSha: manifest.sourceSha", assertPublishedReceipt],
     ["retention service key", ".github/workflows/retention-cleanup.yml", "SUPABASE_SERVICE_ROLE_KEY", "VITE_SUPABASE_ANON_KEY", assertRetentionWorkflow],
     ["retention integer counts", ".github/workflows/retention-cleanup.yml", "floor == .", "true", assertRetentionWorkflow],
     ["rollback ancestry", ".github/workflows/rollback-pages.yml", "git merge-base --is-ancestor", "git cat-file -e", assertRollbackWorkflow],

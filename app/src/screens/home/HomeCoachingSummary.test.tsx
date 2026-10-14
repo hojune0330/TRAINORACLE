@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
-import { afterEach, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { HomeCoachingSummary } from "./HomeCoachingSummary"
 import { TrainingHome } from "./TrainingHome"
 import type { TrainingHomeViewModel } from "../../domain/home-view-model"
@@ -12,6 +13,7 @@ import type { PostSessionEntry } from "../../domain/journal-schema"
 import { MultiPlanEvidenceContext } from "../../components/MultiPlanEvidenceContext"
 import type { RetainedMultiAdjustedEvidenceV3 } from "../../domain/selected-multi-adjusted-plan-v3"
 
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture() })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); localStorage.clear() })
 
 it("shows a useful general article immediately when reviews are empty and returns without writing a record", async () => {

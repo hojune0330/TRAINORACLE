@@ -1,6 +1,7 @@
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { PlanBeta } from "./PlanBeta"
 import { stateFixture } from "../domain/plan-beta-store.test-fixture"
 import { activePlanBetaStorageKey, readPlanBetaStateFromStorage, savePlanBetaState } from "../domain/plan-beta-store"
@@ -19,7 +20,7 @@ const storageChanged = (key: string | null = activePlanBetaStorageKey()) => act(
 })
 const showProgress = async () => {
   const user = userEvent.setup()
-  await user.click(await screen.findByRole("button", { name: "목록" }))
+  await user.click(await screen.findByRole("button", { name: "하루씩" }))
   const list = screen.getByRole("region", { name: "날짜별 훈련 목록" })
   await user.click(within(list).getByRole("button", { name: "7월 24일 금요일 전체 처방 보기" }))
   const reader = within(await screen.findByRole("dialog", { name: "2026년 7월 24일 금요일" }))
@@ -219,4 +220,9 @@ it("holds one legacy archive operation while a repeated click arrives", async ()
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(raw)
   await act(async () => { finish(); await held })
   expect(legacyArchive.readLegacyPlanArchives()).toMatchObject({ kind: "loaded", archives: [{ raw }] })
+})
+
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })

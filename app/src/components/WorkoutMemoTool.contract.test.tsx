@@ -1,5 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { WorkoutMemoTool } from "./WorkoutMemoTool"
 import { memoSessionFixture } from "../domain/workout-memo.test-fixtures"
 import { downloadMemo, renderWorkoutMemoPng } from "../domain/workout-memo-export"
@@ -13,11 +14,12 @@ vi.mock("../domain/account/local-journal-ownership", async importOriginal => ({
 vi.mock("../domain/workout-memo-export", async importOriginal => ({ ...await importOriginal<typeof import("../domain/workout-memo-export")>(),
   renderWorkoutMemoPng: vi.fn(), downloadMemo: vi.fn() }))
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.mocked(renderWorkoutMemoPng).mockResolvedValue(new Blob(["synthetic-png"], { type: "image/png" }))
   Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: vi.fn().mockResolvedValue(undefined) } })
   Object.defineProperty(navigator, "canShare", { configurable: true, value: undefined })
   Object.defineProperty(navigator, "share", { configurable: true, value: undefined })
+  await initializeCanonicalJournalFixture()
 })
 afterEach(() => { cleanup(); localStorage.clear(); vi.clearAllMocks() })
 const open = () => fireEvent.click(screen.getByRole("button", { name: "자세히" }))

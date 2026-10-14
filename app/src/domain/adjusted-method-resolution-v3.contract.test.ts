@@ -1,10 +1,12 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture";
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { projectLegacyPaceSourceV3, resolveAdjustedMethodPrescriptionV3 } from "./adjusted-method-resolution-v3"
 import { adjustedMethodResolutionV3Fixture as fixture } from "./adjusted-method-resolution-v3.test-fixtures"
 import { RUNTIME_CASES, TODAY } from "./prescription-quality-matrix.test-fixtures"
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null);
+    await initializeCanonicalJournalFixture(); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 
 it.each(RUNTIME_CASES.slice(0, 4))("$eventDistanceM connects a generated legacy plan to V3 with exact fractional targets", event => {

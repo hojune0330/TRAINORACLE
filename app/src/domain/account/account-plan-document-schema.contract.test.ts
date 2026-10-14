@@ -1,3 +1,5 @@
+import { captureCanonicalJournalFixtureReset, initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
+let resetCanonicalJournalFixture: () => void
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { accountPlanDocumentSchema, accountPlanEntry, accountPlanFingerprint, emptyAccountPlanDocument, materializeAccountPlan,
   validateAccountPlanDocument, validateAccountPlanDocumentUpdate, validateAccountPlanPacket } from "./account-plan-document-schema"
@@ -6,7 +8,11 @@ import { readAccountPlanEntry } from "./account-plan-service"
 import { TODAY } from "../prescription-quality-matrix.test-fixtures"
 import { setActiveLocalAccount } from "./local-journal-ownership"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear();
+  await initializeCanonicalJournalFixture()
+   setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY)
+  resetCanonicalJournalFixture = captureCanonicalJournalFixtureReset()
+})
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 
 it.each([2, 3, 4, 5, 6] as const)("V%s restores the exact historical body and progress without local originals or execution authority", version => {
@@ -17,7 +23,7 @@ it.each([2, 3, 4, 5, 6] as const)("V%s restores the exact historical body and pr
   document.data.plans.push(entry)
   if (version !== 2) document.data.currentPlanId = entry.planId
   expect(validateAccountPlanDocument(document)).toBe(true)
-  localStorage.clear()
+  resetCanonicalJournalFixture()
   const write = vi.spyOn(Storage.prototype, "setItem")
   const read = readAccountPlanEntry(entry, () => packet.evidence ? [packet.evidence] : [])
   expect(read).toMatchObject({ kind: "read_only", executionAuthority: "NONE", packet: { state: { version, progress: entry.progress } } })

@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react"
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { afterEach, describe, expect, it, vi, beforeEach } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import {
   createEmptyDecorationState,
   decorationStateSchema,
@@ -26,6 +27,10 @@ const entry: JournalEntry = {
   avgPace: "",
   rpe: 0,
 }
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
+})
 
 describe("journal reader chrome", () => {
   it("exposes the original date as a level-one heading without adding a paper layout box", () => {

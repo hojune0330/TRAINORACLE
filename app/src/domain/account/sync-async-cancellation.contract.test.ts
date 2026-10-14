@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { PostSessionEntry } from "../journal-schema"
 import { loadEntriesOwnedBy, saveEntry } from "../journal-store"
@@ -112,11 +113,13 @@ function cancel(reason: Cancellation) {
   }
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.stubEnv("VITE_FEATURE_ACCOUNT_JOURNAL", "false")
   vi.stubEnv("VITE_KILL_ACCOUNT_JOURNAL", "false")
   window.localStorage.clear()
   window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
+
   paused = null
   entered = deferred()
   released = deferred()

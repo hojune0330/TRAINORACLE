@@ -1,6 +1,7 @@
 import React from "react"
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
-import { afterEach, expect, it, vi } from "vitest"
+import { afterEach, expect, it, vi, beforeEach } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import type { PlanCandidate, PlanSession } from "@impl/plan-generator/types"
 import { bindCatalogSession } from "@impl/prescription/catalog-session-binding"
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
@@ -106,4 +107,9 @@ it("does not call a conservative candidate shorter when both catalog sessions ta
   expect(cards.b.getByRole("heading", { name: "계획 B" })).toBeVisible()
   expect(cards.b.queryByText(/짧게|가장 짧은/u)).toBeNull()
   expect(within(easyTimesB).queryByText(/Easy Run/u)).toBeNull()
+})
+
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })

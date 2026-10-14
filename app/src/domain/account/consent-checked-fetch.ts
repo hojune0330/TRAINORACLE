@@ -21,6 +21,9 @@ const META_ROUTES = new Set([
   "rpc/get_account_storage_consent", "rpc/set_account_storage_consent",
   "rpc/read_account_data_rights_page", "rpc/account_data_rights_identity",
 ])
+const LOUNGE_IDENTITY_ROUTES = new Set([
+  "/rest/v1/rpc/get_lounge_admission", "/rest/v1/rpc/issue_lounge_grant",
+])
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu
 function tokenSubject(authorization: string | null): string | null {
   try {
@@ -43,6 +46,19 @@ function comparisonWithdrawal(input: RequestInfo | URL, init?: RequestInit): boo
       && Object.keys(value).sort().join(",") === "action,comparisonId"
       && (value.action === "revoke" || value.action === "revokeExternal")
       && typeof value.comparisonId === "string" && uuid.test(value.comparisonId)
+  } catch { return false }
+}
+
+// These no-argument RPCs receive identity only; their database functions still
+// enforce the current session, auth channel and account/lounge admission. Never
+// turn them into an unrestricted META_ROUTES entry or read an unknown Request
+// stream. The SDK's captured JSON string is the only supported exemption body.
+function emptyLoungeIdentityBody(input: RequestInfo | URL, init?: RequestInit): boolean {
+  if ((init?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase() !== "POST"
+    || typeof init?.body !== "string" || init.body.length > 256) return false
+  try {
+    const value: unknown = JSON.parse(init.body)
+    return value !== null && typeof value === "object" && !Array.isArray(value) && Object.keys(value).length === 0
   } catch { return false }
 }
 
@@ -103,6 +119,15 @@ export function createConsentCheckedFetch(serviceUrl: string, transport: typeof 
     const subject = tokenSubject(headers.get("Authorization"))
     const withdrawal = comparison && comparisonWithdrawal(input, init)
     const signal = init?.signal ?? (input instanceof Request ? input.signal : undefined)
+    if (url.origin === service.origin && LOUNGE_IDENTITY_ROUTES.has(url.pathname)
+      && !url.search && !url.hash && !url.username && !url.password
+      && headers.get("Content-Type")?.split(";")[0]?.trim().toLowerCase() === "application/json"
+      && emptyLoungeIdentityBody(input, init)) {
+      // Decoding selects a user/session shape, not an authorization decision.
+      // The original server RPC remains the only admission/auth authority.
+      if (!subject || !tokenSessionId(headers.get("Authorization")) || signal?.aborted) return denied()
+      return transport(url.href, { ...init, method: "POST", body: "{}", headers, signal })
+    }
     if (!subject || (!withdrawal && isStorageTransmissionHeld(subject)) || signal?.aborted || !reviewCurrent()) return denied()
     // Capture before the server check awaits. Never upgrade a pinned old job to
     // a new grant, including an operation whose first write never reached SQL.

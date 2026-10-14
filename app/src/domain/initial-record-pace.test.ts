@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 import type { PlanGenerationSuccess, PlanSession } from "@impl/plan-generator/types"
 import type { WorkoutCalculationInputs } from "@impl/prescription/all-workout-calculator"
@@ -59,7 +60,10 @@ function fixture(focus: "LT_INTENT" | "VO2_INTENT", catalogId: string): PlanGene
 }
 let lt: PlanGenerationSuccess
 let vo2: PlanGenerationSuccess
-beforeAll(() => {
+beforeAll(async () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    await initializeCanonicalJournalFixture();
   vi.useFakeTimers({ toFake: ["Date"] })
   vi.setSystemTime(new Date(`${TODAY}T03:00:00Z`))
   try {

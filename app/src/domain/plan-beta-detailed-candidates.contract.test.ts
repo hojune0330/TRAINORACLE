@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   ATHLETE_RECORDS_STORAGE_KEY,
@@ -118,11 +119,12 @@ function expectAtomicFallback(
   }
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.useFakeTimers()
   vi.setSystemTime(TODAY)
   window.localStorage.clear()
   window.sessionStorage.clear()
+    await initializeCanonicalJournalFixture();
 })
 
 afterEach(() => {

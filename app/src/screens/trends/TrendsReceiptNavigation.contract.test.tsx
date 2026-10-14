@@ -1,9 +1,14 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, beforeEach } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { Trends } from "../Trends"
 
 afterEach(cleanup)
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
+})
 
 describe("saved receipt navigation into Trends", () => {
   it.each([

@@ -132,7 +132,7 @@ describe("PostSession review validation routing", () => {
     expect(loadEntries()).toHaveLength(0)
   })
 
-  it("keeps fast private memo input focused and intact when the deferred section alignment runs", async () => {
+  it("cancels deferred section alignment when private memo input begins and keeps content intact", async () => {
     const frames = new Map<number, FrameRequestCallback>()
     let nextFrame = 0
     vi.spyOn(window, "requestAnimationFrame").mockImplementation(callback => {
@@ -152,18 +152,22 @@ describe("PostSession review validation routing", () => {
     expect(onDone).not.toHaveBeenCalled()
     await user.click(screen.getByRole("button", { name: "메모 수정" }))
     expect(screen.getByRole("heading", { level: 2, name: "오늘 남길 메모" })).toHaveFocus()
+    expect(frames.size).toBeGreaterThan(0)
+    const staleCallbacks = [...frames.values()]
+    const scrollTarget = document.querySelector<HTMLElement>(".task-flow")!
+    const scrollIntoView = vi.fn()
+    scrollTarget.scrollIntoView = scrollIntoView
 
     const textarea = screen.getByRole("textbox", { name: "훈련 메모 내용" })
     await user.click(textarea)
+    expect(frames.size).toBe(0)
     await user.type(textarea, "synthetic", { skipClick: true })
     expect(textarea).toHaveFocus()
     expect(textarea).toHaveValue("synthetic")
-    expect(frames.size).toBeGreaterThan(0)
     await act(async () => {
-      const scheduled = [...frames.values()]
-      frames.clear()
-      for (const callback of scheduled) callback(performance.now())
+      for (const callback of staleCallbacks) callback(performance.now())
     })
+    expect(scrollIntoView).not.toHaveBeenCalled()
     expect(textarea).toHaveFocus()
     expect(textarea).toHaveValue("synthetic")
     await user.type(textarea, " private draft", { skipClick: true })

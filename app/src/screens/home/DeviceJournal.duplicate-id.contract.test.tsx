@@ -1,15 +1,18 @@
 import React from "react"
 import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { replaceAllEntries } from "../../domain/journal-store"
 import { DeviceJournal } from "./DeviceJournal"
 
 afterEach(cleanup)
 
 describe("recent journal duplicate identifier resilience", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     window.localStorage.clear()
+
     vi.restoreAllMocks()
+    await initializeCanonicalJournalFixture()
   })
 
   it("renders each legacy duplicate without a React key collision", () => {

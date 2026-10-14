@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { PrescriptionSequenceNode } from "@impl/prescription/sequence"
 import { resolveAdjustedMethodPrescription } from "./adjusted-method-resolution"
@@ -5,7 +6,8 @@ import { RUNTIME_CASES, TODAY } from "./prescription-quality-matrix.test-fixture
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
 import { adjustedMethodResolutionFixture as fixture } from "./adjusted-method-resolution.test-fixtures"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null);
+    await initializeCanonicalJournalFixture(); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 
 describe("adjusted MAIN with exact current-record targets", () => {

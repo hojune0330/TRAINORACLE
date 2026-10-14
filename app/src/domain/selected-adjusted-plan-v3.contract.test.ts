@@ -1,3 +1,5 @@
+import { captureCanonicalJournalFixtureReset, initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
+let resetCanonicalJournalFixture: () => void
 import { beforeEach, afterEach, expect, it, vi } from "vitest"
 import React from "react"
 import { render, screen, fireEvent, act, cleanup, within } from "@testing-library/react"
@@ -20,7 +22,11 @@ import { saveAdjustedPlanProgressV3 } from "./adjusted-plan-progress"
 import { prepareAdjustedNextFrameV3 } from "./adjusted-plan-continuity"
 import { isoShift } from "./dates"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear();
+  await initializeCanonicalJournalFixture()
+   setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY)
+  resetCanonicalJournalFixture = captureCanonicalJournalFixtureReset()
+})
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers() })
 async function openMethodDetails(container: HTMLElement) {
   const summary = within(container).getByText("자세히 보기 · 방법과 근거", { selector: "summary" })
@@ -32,7 +38,7 @@ it("selects the exact V3 plan and reconstructs it historically without a live re
   const selected = selectAdjustedPlanForActivationV3(request, [policy], TODAY)
   if (selected.kind !== "selected_adjusted") throw Error(selected.code)
   expect(selected).toMatchObject({ storageState: "NOT_SAVED", state: { schemaVersion: 3 } })
-  localStorage.clear()
+  resetCanonicalJournalFixture()
   const writes = vi.spyOn(Storage.prototype, "setItem")
   const read = readSelectedAdjustedPlanV3(JSON.parse(JSON.stringify(selected.state)), retained, new Date(TODAY.getTime() + 1000))
   expect(read).toMatchObject({ kind: "read_only", executionAuthority: "NONE", state: selected.state })
@@ -43,7 +49,7 @@ it("requires current explicit selection, current records and exact candidate con
   expect(selectAdjustedPlanForActivationV3({ ...request, expectedCandidateFingerprint: "changed" }, [policy], TODAY).kind).toBe("rejected")
   expect(selectAdjustedPlanForActivationV3(request, [], TODAY).kind).toBe("rejected")
   expect(selectAdjustedPlanForActivationV3(request, [policy], new Date(TODAY.getTime() + 1000)).kind).toBe("rejected")
-  localStorage.clear()
+  resetCanonicalJournalFixture()
   expect(selectAdjustedPlanForActivationV3(request, [policy], TODAY).kind).toBe("rejected")
 })
 it("rejects altered stored targets, missing retained evidence, future capture and private fields", () => {
@@ -143,7 +149,7 @@ it("preserves an existing plan and refuses missing locks or changed accounts", a
 })
 it("rolls back only its own failed write and preserves another writer's replacement", async () => {
   for (const replace of [false, true]) {
-    localStorage.clear(); setActiveLocalAccount(null)
+    resetCanonicalJournalFixture(); setActiveLocalAccount(null)
     const { input } = storeInput(), key = activePlanBetaStorageKey(), originalSet = Storage.prototype.setItem
     const spy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, k, value) {
       originalSet.call(this, k, replace && k === key ? "OTHER_WRITER" : value)

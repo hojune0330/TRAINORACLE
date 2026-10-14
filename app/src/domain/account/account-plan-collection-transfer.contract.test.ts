@@ -1,3 +1,5 @@
+import { captureCanonicalJournalFixtureReset, initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
+let resetCanonicalJournalFixture: () => void
 import { beforeEach, afterEach, expect, it, vi } from "vitest"
 import { TODAY } from "../prescription-quality-matrix.test-fixtures"
 import { accountPlanPacketFixture } from "./account-plan.test-fixtures"
@@ -11,13 +13,17 @@ import { accountPlanCollectionCommit, prepareAccountPlanCollectionTransfer, read
 const OWNER = "11111111-1111-4111-8111-111111111111", OTHER = "22222222-2222-4222-8222-222222222222"
 const OP = "33333333-3333-4333-8333-333333333333", OP2 = "44444444-4444-4444-8444-444444444444"
 const LEGACY = "55555555-5555-4555-8555-555555555555"
-beforeEach(() => { localStorage.clear(); vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date(TODAY.getTime() + 120_000)) })
+beforeEach(async () => { localStorage.clear();
+  await initializeCanonicalJournalFixture()
+   vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date(TODAY.getTime() + 120_000))
+  resetCanonicalJournalFixture = captureCanonicalJournalFixtureReset()
+})
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks() })
 
 function document(count = 1, version: 3 | 4 | 5 | 6 = 3) {
   const result = emptyAccountPlanDocument()
   for (let i = 0; i < count; i++) {
-    localStorage.clear()
+    resetCanonicalJournalFixture()
     const entry = accountPlanEntry(accountPlanPacketFixture(version, new Date(TODAY.getTime() + i * 1000)))
     if (i < count - 1) entry.archivedAt = new Date().toISOString()
     result.data.plans.push(entry)

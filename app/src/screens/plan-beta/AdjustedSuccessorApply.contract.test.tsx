@@ -1,6 +1,7 @@
 import React from "react"
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { beforeEach, afterEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { AdjustedPlanApplyReview } from "./AdjustedPlanApplyReview"
 import { adjustedSuccessorFixture } from "../../domain/adjusted-plan-successor.test-fixtures"
 import { readPlanBetaStateFromStorage, activePlanBetaStorageKey } from "../../domain/plan-beta-store"
@@ -86,4 +87,9 @@ it("cancel keeps the prior plan and changing predecessor props rejects the opene
   expect(saved).not.toHaveBeenCalled()
   expect(screen.getByRole("alert").textContent).toContain("적용하지 않았어요")
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(old.raw)
+})
+
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })

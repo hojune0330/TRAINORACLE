@@ -1,6 +1,7 @@
 import React from "react"
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { generatePlanFromDraft, selectPlanForActivation } from "../../domain/plan-beta-flow"
 import { parsePlanBetaState } from "../../domain/plan-beta-schema"
 import { findCatalogConditionReview } from "../../domain/catalog-condition-review"
@@ -38,6 +39,10 @@ function withAppliedCondition(source = fixture()) {
   if (!generated) throw Error("valid bound fixture required")
   return { source, generated, initial: props(source) }
 }
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
+})
+
 describe("condition review to explicit detail application", () => {
   it("opens the exact slot with no preconfirmation and only applies after the user's actual answer", () => {
     const source = fixture(), initial = props(source), offer = findCatalogConditionReview(source.generated, source.intake)!

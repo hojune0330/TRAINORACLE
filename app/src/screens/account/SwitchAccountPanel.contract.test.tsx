@@ -16,6 +16,7 @@
 //   7. 묶여 있지 않으면 나타나지 않는다 (없는 문제로 불안하게 만들지 않음)
 import React from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 
@@ -51,6 +52,10 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   window.localStorage.clear()
+})
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })
 
 describe("SwitchAccountPanel — 나타나는 조건", () => {

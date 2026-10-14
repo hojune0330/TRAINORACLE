@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   generatePlanFromDraft,
@@ -30,11 +31,16 @@ const TEMPLATE_1500 = {
   fingerprint: approval1500.templateContentFingerprint,
 } as const
 
-beforeEach(() => {
+function storageSnapshot() {
+  return { local: Object.entries(window.localStorage), session: Object.entries(window.sessionStorage) }
+}
+
+beforeEach(async () => {
   vi.useFakeTimers()
   vi.setSystemTime(NOW)
   window.localStorage.clear()
   window.sessionStorage.clear()
+    await initializeCanonicalJournalFixture();
 })
 
 afterEach(() => {
@@ -73,6 +79,7 @@ describe("stored plan v3 target and preview boundary", () => {
   })
 
   it("returns a valid future race date only as a non-selectable in-memory preview", () => {
+    const storageBefore = storageSnapshot()
     const result = generatePlanFromDraft({
       ...DRAFT,
       targetRaceDate: "2026-09-12",
@@ -94,12 +101,12 @@ describe("stored plan v3 target and preview boundary", () => {
       },
       candidates: [],
     })
-    expect(window.localStorage.length).toBe(0)
-    expect(window.sessionStorage.length).toBe(0)
+    expect(storageSnapshot()).toEqual(storageBefore)
   })
 
   it("compares a race date with the authoritative local civil day after KST midnight", () => {
     vi.setSystemTime(new Date(2026, 7, 24, 0, 30))
+    const storageBefore = storageSnapshot()
 
     const sameLocalDay = generatePlanFromDraft({
       ...DRAFT,
@@ -115,8 +122,7 @@ describe("stored plan v3 target and preview boundary", () => {
       kind: "preview_only",
       preview: { targetRaceDate: "2026-08-25" },
     })
-    expect(window.localStorage.length).toBe(0)
-    expect(window.sessionStorage.length).toBe(0)
+    expect(storageSnapshot()).toEqual(storageBefore)
   })
 
   it("creates a v3 active snapshot from a generated candidate", () => {
@@ -280,6 +286,7 @@ describe("stored plan v3 target and preview boundary", () => {
   })
 
   it("rejects malformed, past, multiple, prioritized, and receipt-injected race input", () => {
+    const storageBefore = storageSnapshot()
     const malformedInputs = [
       { ...DRAFT, targetRaceDate: "2026-02-30" },
       { ...DRAFT, targetRaceDate: "2026-08-23" },
@@ -294,8 +301,7 @@ describe("stored plan v3 target and preview boundary", () => {
     for (const input of malformedInputs) {
       expect(generatePlanFromDraft(input, "NO_KNOWN_RISK")).toMatchObject({ kind: "rejected" })
     }
-    expect(window.localStorage.length).toBe(0)
-    expect(window.sessionStorage.length).toBe(0)
+    expect(storageSnapshot()).toEqual(storageBefore)
   })
 
   it("leaves no persistent race-date bytes and cannot select or save a preview", () => {

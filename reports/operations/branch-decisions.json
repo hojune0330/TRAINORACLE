@@ -1,0 +1,108 @@
+[
+  {
+    "branch": "b02-wip-safety",
+    "sha": "cd9ca80c699edadddd076df87377547cbacd4404",
+    "reviewedAgainst": "aba840b62e72d605c6f19263f852a92dd25d7ff3",
+    "disposition": "already_integrated",
+    "reason": "REST/QUALITY PM slots and current plan/home semantics exist; broad branch snapshot stale.",
+    "evidence": [
+      "impl/src/plan-generator/session-builder.ts:158-167,204-236",
+      "app/src/domain/plan-beta-schema.ts"
+    ]
+  },
+  {
+    "branch": "codex/diversified-improvements",
+    "sha": "5f9ae78cbd36ca1d9abcc07f01d58b3bac898784",
+    "reviewedAgainst": "aba840b62e72d605c6f19263f852a92dd25d7ff3",
+    "disposition": "already_integrated",
+    "reason": "Chosen training time and PM quality slot semantics exist.",
+    "evidence": [
+      "app/src/domain/plan-beta-flow.ts:147-165,376-394",
+      "impl/src/plan-generator/session-builder.ts:158-167,204-236"
+    ]
+  },
+  {
+    "branch": "codex/home-records-surface",
+    "sha": "5d2f29c7818a7c7e29440760e3c5fab0b16bf5eb",
+    "reviewedAgainst": "aba840b62e72d605c6f19263f852a92dd25d7ff3",
+    "disposition": "already_integrated",
+    "reason": "Feedback entry truthfully shows preparation state; board gates composition.",
+    "evidence": [
+      "app/src/screens/More.tsx",
+      "app/src/screens/FeedbackBoard.tsx",
+      "app/src/screens/More.feedback.contract.test.tsx"
+    ]
+  },
+  {
+    "branch": "codex/personal-plan-reliability-20261007",
+    "sha": "ddf37b5d644999060a1e7320e66ebc862e61c7bb",
+    "reviewedAgainst": "aba840b62e72d605c6f19263f852a92dd25d7ff3",
+    "disposition": "already_integrated",
+    "reason": "Migration, save retry, and restore guards exist.",
+    "evidence": [
+      "app/src/domain/account/device-training-data-connection.ts:463-483",
+      "app/src/screens/PlanBeta.tsx:890-901,1173-1176",
+      "app/src/domain/plan-beta-store.ts:295-325"
+    ]
+  },
+  {
+    "branch": "codex/plan-save-reliability-audit",
+    "sha": "ab37972b335f4f398ac9ab245d9399e85421ec87",
+    "reviewedAgainst": "aba840b62e72d605c6f19263f852a92dd25d7ff3",
+    "disposition": "already_integrated",
+    "reason": "Storage-failure retry preserves candidate; current contract/E2E coverage.",
+    "evidence": [
+      "app/src/screens/PlanBeta.tsx:890-901,1173-1176",
+      "app/src/screens/PlanBeta.retry.contract.test.tsx",
+      "app/e2e/plan-save-retry.spec.ts"
+    ]
+  },
+  {
+    "branch": "codex/v3-full-plan-selection",
+    "sha": "048f267dc62a7fef94394d4cbede7260e3cb2f45",
+    "reviewedAgainst": "aba840b62e72d605c6f19263f852a92dd25d7ff3",
+    "disposition": "superseded",
+    "reason": "Current plan selection/intake contains semantics; remaining broad patch is stale.",
+    "evidence": [
+      "app/src/domain/plan-beta-flow.ts",
+      "app/src/screens/plan-beta/PlanIntake.tsx",
+      "app/src/screens/plan-beta/PlanChoice.tsx"
+    ]
+  },
+  {
+    "branch": "fable/diary-aesthetic-emoji-stickers-v1",
+    "sha": "a572ff9dcf83da8dcbd28c5f8dd74a7875e2db0f",
+    "reviewedAgainst": "aba840b62e72d605c6f19263f852a92dd25d7ff3",
+    "disposition": "already_integrated",
+    "reason": "Emoji sticker catalog/rendering present; later collections supersede V1 packaging.",
+    "evidence": [
+      "app/src/domain/decorations.ts",
+      "app/src/components/CalendarDecorationFrame.tsx",
+      "app/public/collections/open-cute-v1/assets.json"
+    ]
+  },
+  {
+    "branch": "genspark_ai_developer",
+    "sha": "133842a73b3fcd7793d733a384d842f7b8df1735",
+    "reviewedAgainst": "aba840b62e72d605c6f19263f852a92dd25d7ff3",
+    "disposition": "already_integrated",
+    "reason": "The exact head commit is a 34-file quick-plan UI/test change (four-question intake, calendar peek, blocked guide, refinement panel). Canonical main has these components and current quick-intake/navigation behavior; later UI/test changes supersede the historical patch snapshot.",
+    "evidence": [
+      "app/src/screens/plan-beta/IntakeCalendarPeek.tsx",
+      "app/src/screens/plan-beta/PlanBlockedGuide.tsx",
+      "app/src/screens/plan-beta/PlanRefinePanel.tsx",
+      "app/src/screens/plan-beta/plan-intake-navigation.ts:QUICK_STEP_ORDER",
+      "app/src/screens/plan-beta/PlanIntake.tsx"
+    ]
+  },
+  {
+    "branch": "codex/journal-backup-security-release-20261002",
+    "sha": "367cfa7d1ccac47c19d0747b8ad1164d09c92ab5",
+    "reviewedAgainst": "aba840b62e72d605c6f19263f852a92dd25d7ff3",
+    "disposition": "already_integrated",
+    "reason": "The exact remote tip is an ancestor of the reviewed main; no missing patch remains even though there is no matching PR.",
+    "evidence": [
+      "git merge-base --is-ancestor 367cfa7d1ccac47c19d0747b8ad1164d09c92ab5 aba840b62e72d605c6f19263f852a92dd25d7ff3 succeeded"
+    ]
+  }
+]

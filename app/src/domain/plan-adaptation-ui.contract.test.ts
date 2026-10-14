@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   createPlanAdaptationProposal,
@@ -51,12 +52,13 @@ const fiveKTemplateRef = {
   fingerprint: fiveKApproval.templateContentFingerprint,
 } as const
 
-beforeEach(() => {
+beforeEach(async () => {
   /* PB/SB recency and active-frame fixtures must not expire when the calendar advances. */
   vi.useFakeTimers({ toFake: ["Date"] })
   vi.setSystemTime(TEST_SYSTEM_TIME)
   window.localStorage.clear()
   window.sessionStorage.clear()
+    await initializeCanonicalJournalFixture();
   locksDescriptor = Object.getOwnPropertyDescriptor(navigator, "locks")
   Object.defineProperty(navigator, "locks", {
     configurable: true,

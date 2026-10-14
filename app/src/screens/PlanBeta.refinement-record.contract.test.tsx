@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { PlanBeta } from "./PlanBeta"
 import { todayISO } from "../domain/journal-store"
 import { loadAthleteRecords } from "../domain/athlete-records"
@@ -27,6 +28,10 @@ async function confirmedPersonalPlan() {
   expect(screen.getByRole("button", { name: "이 일정으로 시작" })).toBeEnabled()
   return user
 }
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
+})
 
 describe("personal plan refinement without a dead end", () => {
   it("keeps the chosen same-event record after changing the calendar but requires a fresh confirmation", async () => {

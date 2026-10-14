@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture";
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { generatePlanFromDraft } from "./plan-beta-flow"
 import {
@@ -12,10 +13,11 @@ const LONGER_EVENTS = [
   { distanceM: 42195, eventGroup: "GENERAL_ENDURANCE", competitionDivision: "NOT_PROVIDED", label: "마라톤" },
 ] as const
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.useFakeTimers()
   vi.setSystemTime(new Date("2026-08-28T03:00:00.000Z"))
   window.localStorage.clear()
+    await initializeCanonicalJournalFixture();
 })
 
 describe("800m through marathon event breadth", () => {

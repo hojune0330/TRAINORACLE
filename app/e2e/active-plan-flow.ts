@@ -36,7 +36,7 @@ export async function openActivePlanCards(page: Page): Promise<void> {
   await closeActiveDayReader(page)
   await expect(page.locator(".active-plan")).toBeVisible()
   const list = page.getByRole("group", { name: "계획 일정 보기", exact: true })
-    .getByRole("button", { name: "목록", exact: true })
+    .getByRole("button", { name: "하루씩", exact: true })
   if (await list.getAttribute("aria-pressed") !== "true") await list.click()
   await expect(list).toHaveAttribute("aria-pressed", "true")
   await expect(page.getByRole("list", { name: "날짜별 계획 미리보기", exact: true })).toBeVisible()
