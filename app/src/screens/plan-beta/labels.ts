@@ -206,7 +206,7 @@ export type SessionExecutionStep = {
   readonly detail: string
 }
 
-const EXECUTION_STOP_CUE = "통증\u2060·\u2060어지럼\u2060·\u2060자세\u00a0무너짐이 생기면 시간을 채우지 말고 중단하세요."
+export const EXECUTION_STOP_CUE = "통증\u2060·\u2060어지럼\u2060·\u2060자세\u00a0무너짐이 생기면 시간을 채우지 말고 중단하세요."
 
 export function sessionExecutionSteps(session: PlanSession, plain = false): readonly SessionExecutionStep[] {
   if (session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout) {

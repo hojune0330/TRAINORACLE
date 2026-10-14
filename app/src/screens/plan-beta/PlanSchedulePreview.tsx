@@ -28,6 +28,7 @@ import { DetailedPrescriptionView } from "./DetailedPrescriptionView"
 import { PlanFlowCodeHelp } from "./PlanFlowCodeHelp"
 import { SessionExplanationEntry } from "./SessionExplanation"
 import { WorkoutMemoTool } from "../../components/WorkoutMemoTool"
+import { TrainingInstructionCards } from "../../components/TrainingInstructionCards"
 import type { SessionExplanationContext } from "../../domain/session-explanation"
 import type { SessionExplanationEvidence } from "../../domain/session-explanation-evidence"
 import { PlanDayReader } from "./PlanDayReader"
@@ -630,7 +631,7 @@ function PlanSessionPreview({
       {session.prescription.kind === "PACE_TARGET" && (
         <DetailedPrescriptionView prescription={session.prescription} />
       )}
-      {executionSteps.length > 0 && (
+      {executionSteps.length > 0 && (expanded ? <TrainingInstructionCards steps={executionSteps} /> : (
         <ol className="plan-session-steps" aria-label="훈련 실행 순서">
           {executionSteps.map((step) => (
             <li key={step.title}>
@@ -639,7 +640,7 @@ function PlanSessionPreview({
             </li>
           ))}
         </ol>
-      )}
+      ))}
       {!expanded && footer}
     </>
   )

@@ -1,0 +1,102 @@
+.training-instructions {
+  min-width: 0;
+  color: var(--ink);
+  font-size: var(--fs-body);
+  line-height: 1.55;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.training-instructions .training-instructions__cards {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+}
+
+.training-instructions__card {
+  min-width: 0;
+  padding: var(--space-4);
+  border: var(--bw-line) solid var(--line);
+  border-radius: var(--r-task-surface);
+  background: var(--surface);
+}
+
+.training-instructions__card dt {
+  margin: 0 0 var(--space-2);
+  color: var(--ink-2);
+  font-weight: var(--fw-app-heading);
+}
+
+.training-instructions__card dd,
+.training-instructions p {
+  margin: 0;
+}
+
+.training-instructions__card--total dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+}
+
+.training-instructions__duration {
+  font-size: var(--fs-app-metric);
+  font-weight: var(--fw-app-heading);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.training-instructions__included {
+  color: var(--ink-2);
+}
+
+.training-instructions .training-instructions__sequence {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.training-instructions__sequence li {
+  display: grid;
+  grid-template-columns: var(--space-8) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+}
+
+.training-instructions__sequence li:first-child { padding-block-start: 0; }
+.training-instructions__sequence li:last-child { padding-block-end: 0; }
+.training-instructions__sequence li + li { border-top: var(--bw-line) solid var(--line); }
+.training-instructions__sequence strong { font-size: var(--fs-body-lg); }
+.training-instructions__sequence p { color: var(--ink-2); }
+
+.training-instructions__number {
+  display: grid;
+  place-items: center;
+  width: var(--space-8);
+  height: var(--space-8);
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-weight: var(--fw-app-heading);
+  font-variant-numeric: tabular-nums;
+}
+
+.training-instructions__coach {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-block-start: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--r-task-surface);
+  background: var(--paper);
+}
+
+.training-instructions__coach > div { min-width: 0; }
+.training-instructions__coach .contextual-illustration { flex: 0 0 64px; }
+.training-instructions .training-instructions__coach-name {
+  margin-block-end: var(--space-1);
+  font-weight: var(--fw-app-heading);
+}

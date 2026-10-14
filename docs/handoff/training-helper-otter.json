@@ -1,0 +1,34 @@
+{
+  "kind": "TRAINORACLE_TRAINING_HELPER_ARTWORK",
+  "generatedAt": "2026-10-14",
+  "provenance": "Original AI-generated otter character; resized and encoded as transparent WebP without retouching.",
+  "sourceArchive": "character-art/training-helper-otter/2026-10-14-v1 (local workspace archive with originals and prompts)",
+  "usage": [
+    "Plan entry: explain",
+    "Today and expanded calendar instructions: check",
+    "Training method reader: explain",
+    "Both adjustment editors: check"
+  ],
+  "display": "Fixed decorative 64px; empty alt; lazy decode; image failure removes artwork without removing text or actions.",
+  "totalBytes": 26542,
+  "assets": [
+    {
+      "file": "otter-explain-v1.webp",
+      "width": 256,
+      "height": 256,
+      "bytes": 13408,
+      "hasAlpha": true,
+      "sha256": "422fc07a0151896f36d2755f71301085d4de4044de9489459681d6e873dc42bc",
+      "sourceSha256": "9345d9658c7c320bec695b687f09573c7f00e51d6c35fb5677f05473b705a472"
+    },
+    {
+      "file": "otter-check-v1.webp",
+      "width": 256,
+      "height": 256,
+      "bytes": 13134,
+      "hasAlpha": true,
+      "sha256": "3307851591cfdbcca79cb52385477a245a552edc0486d2f598eefeae991022d4",
+      "sourceSha256": "30229a02b42f478486c5e5d24bbc64640ea897b7b11ae712b1d9c287e42bd2ff"
+    }
+  ]
+}
