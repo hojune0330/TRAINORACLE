@@ -124,6 +124,7 @@ function BodyHistoryDialog({ entries, scopeKey, readiness, onRetry, onClose, onR
       <div hidden={originalId !== null}>
         {(readiness === "READY" || entries.length > 0) && <Suspense fallback={<p role="status">몸 기록을 여는 중이에요.</p>}>
           <History entries={entries} scopeKey={scopeKey} showHeading={false} manageBrowserBack={false}
+            recordActionLabel="이 일지에 상태 남기기"
             selectedPartId={selectedPartId} onSelectedPartChange={setSelectedPartId}
             onOpenEntry={id => {
               originalOpener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null

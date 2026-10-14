@@ -22,6 +22,7 @@ vi.mock("../../domain/account/account-journal-record-service", () => ({
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 import { loadEntries } from "../../domain/journal-store"
 import { runDraftSafeNavigation } from "../../domain/unsaved-draft-navigation"
+import { hasPendingBrowserBackLayer } from "../../navigation/browserNavigation"
 import { decodeFormDraft, encodeFormDraft, formDraftEnvelopeSchema } from "./form-input-draft"
 import { EveningCheckin } from "./EveningCheckin"
 import { RaceForm } from "./RaceForm"
@@ -133,7 +134,15 @@ beforeEach(() => {
     : { ok: true, data: { kind: "saved", documentId: request.documentId,
       operationId: request.operationId, revision: request.expectedRevision + 1 } })
 })
-afterEach(() => { cleanup(); setActiveLocalAccount(null); vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.restoreAllMocks() })
+afterEach(async () => {
+  cleanup()
+  // Let the real native POP release the disposed form before another test
+  // changes owner or installs a new form's history sentinel.
+  await settle()
+  await waitFor(() => expect(hasPendingBrowserBackLayer()).toBe(false))
+  setActiveLocalAccount(null)
+  vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.restoreAllMocks()
+})
 
 describe("existing form input autosave", () => {
   it.each([
@@ -372,7 +381,9 @@ describe("existing form input autosave", () => {
     expect(done).not.toHaveBeenCalled()
     expect(decodeFormDraft([...records.values()][0]!.draft).completed).toBe(false)
     fireEvent.click(reviewedSave()); await settle()
-    expect(done).toHaveBeenCalledOnce()
+    // The account ACK retires the draft before the native Back sentinel has
+    // finished leaving. Completion is delivered only after that real POP.
+    await waitFor(() => expect(done).toHaveBeenCalledOnce())
     expect(decodeFormDraft([...records.values()][0]!.draft).completed).toBe(true)
   })
 

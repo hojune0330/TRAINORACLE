@@ -4,6 +4,17 @@
 
 html, body { margin: 0; padding: 0; background: var(--app-frame-canvas); }
 #root { min-height: 100vh; }
+/* The app owns one scrolling region. A second, large-vh document can slide the
+   entire shell above the visible viewport after browser chrome/keyboard changes.
+   Standalone documents and the desktop workspace keep their normal scrolling. */
+html:has(.app-shell),
+body:has(.app-shell),
+#root:has(.app-shell) {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  overscroll-behavior-y: none;
+}
 button, input, textarea, select { font: inherit; letter-spacing: inherit; }
 
 .journal-ten-scale {
@@ -652,7 +663,13 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   --app-shell-tab-bar-height: var(--app-tab-height);
   --first-visit-header-offset: var(--app-date-header-height);
   --entry-sticky-bottom: calc(var(--app-shell-tab-bar-height) + env(safe-area-inset-bottom, 0px));
-  position: relative;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  min-height: 0;
+  min-width: 0;
   border-inline: var(--bw-line) solid var(--hair);
   box-sizing: border-box;
 }
@@ -660,7 +677,9 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
 .app-scroll-region {
   flex: 1;
   min-height: 0;
+  min-width: 0;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
 }
 
 /* The standalone plan flow owns its gutter; embedded Home and legacy readers do not. */

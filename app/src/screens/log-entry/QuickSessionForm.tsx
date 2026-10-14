@@ -23,7 +23,7 @@ import { PLAN_EXECUTION_CHANGE_LABELS, type PlanExecutionChange } from "../../do
 import { derivePlanExecutionRelation } from "../../domain/plan-execution-relation"
 import { useOrderedStepMotion } from "../../hooks/useOrderedStepMotion"
 import { useAutoAdvanceActivation } from "../../hooks/useAutoAdvanceActivation"
-import { useTaskFlowBack } from "../../hooks/useTaskFlowBack"
+import { useJournalFormNavigation } from "./useJournalFormNavigation"
 import { painLevelsRequireReview } from "../../safety/memo-safety"
 import { PainReviewBanner } from "./BodyDiagram"
 import { JournalBodyInput } from "./JournalBodyInput"
@@ -134,7 +134,7 @@ function restoreQuickPresentation(input: QuickFormInput | undefined): QuickPrese
 
 export function QuickSessionForm(props: React.ComponentProps<typeof QuickSessionFormEditor>) {
   const date = props.initialEntry?.date ?? props.targetDate ?? todayISO()
-  return <JournalWritingDecorationPreview date={date}><FormInputDraftBoundary kind="quick" date={date}
+  return <JournalWritingDecorationPreview date={date}><FormInputDraftBoundary kind="quick" date={date} onExit={props.onExit ?? props.onBack}
     hasInitialContext={props.initialEntry !== undefined || props.plannedSessionLink !== undefined}
     identity={JSON.stringify([props.initialEntry?.id, props.initialEntry?.savedAt, props.plannedSessionLink])}>
     <QuickSessionFormEditor {...props} />
@@ -143,6 +143,7 @@ export function QuickSessionForm(props: React.ComponentProps<typeof QuickSession
 
 function QuickSessionFormEditor({
   onBack,
+  onExit,
   onDone,
   onSaved,
   onContinueDetailed,
@@ -151,6 +152,7 @@ function QuickSessionFormEditor({
   plannedSessionLink,
 }: {
   readonly onBack?: () => void
+  readonly onExit?: (() => void) | undefined
   readonly onDone?: (entry: PostSessionEntry, reviewMessage?: string, storageMessage?: string) => void
   /** Confirmed persistence, independent of leaving the local completion screen. */
   readonly onSaved?: (entry: PostSessionEntry, reviewMessage?: string, storageMessage?: string) => void
@@ -237,7 +239,7 @@ function QuickSessionFormEditor({
     readonly painStatus: PainStatus
     readonly painParts: Readonly<Record<string, number>>
     readonly answerTapCount: number
-  }) => {
+  }, exitAfterSave = false) => {
     if (persistInFlight.current || !draft.current()) return
     if (plannedInputs.invalidKeys.length > 0) { setSaveError("구간 기록에 고칠 숫자가 있어요. 수정하거나 입력한 구간 기록을 지운 뒤 저장해 주세요."); setStep("review"); plannedInputs.revealFirstInvalid(); return }
     if (exerciseEditor) { setSaveError("작성하던 운동 내용을 반영하거나 지운 뒤 저장해 주세요."); setStep("exercise"); return }
@@ -394,6 +396,7 @@ function QuickSessionFormEditor({
       setSaveError(null)
       onSaved?.(entry, reviewMessage, storageMessage ?? undefined)
       setStep("saved")
+      if (exitAfterSave) navigation.finish(() => onDone?.(entry, reviewMessage, storageMessage ?? undefined))
     } catch {
       setSaveError("저장을 완료하지 못했어요. 입력은 그대로 남아 있어요. 다시 시도해 주세요.")
     } finally {
@@ -478,7 +481,7 @@ function QuickSessionFormEditor({
   const goBack = () => {
     setSaveError(null)
     if (reviewingEdit.current) { reviewingEdit.current = false; setStep("review"); return }
-    if (step === "saved" || (step === "activity" && activityQuestion === "outcome")) { draft.back(onBack)?.(); return }
+    if (step === "saved" || (step === "activity" && activityQuestion === "outcome")) { navigation.back(); return }
     if (step === "memo" || step === "exercise") { returnToRecord(); return }
     if (step === "activity") { editOutcome(); return }
     if (step === "effort") { if (effortQuestion === "pain") editEffort(); else editSlot(); return }
@@ -486,19 +489,22 @@ function QuickSessionFormEditor({
     else editOutcome()
   }
   const firstQuestion = step === "activity" && activityQuestion === "outcome"
-  useTaskFlowBack({ enabled: !firstQuestion && step !== "saved", busy: saving, onBack: goBack })
+  const navigation = useJournalFormNavigation({ draft, onBack, onExit, onSave: () => saveReview(true),
+    flowEnabled: !firstQuestion && step !== "saved", busy: saving, onStepBack: goBack })
 
-  const saveReview = () => {
-    if (outcome === null) return
+  const saveReview = (exitAfterSave = false) => {
+    if (outcome === null) { setSaveError("운동 결과를 먼저 골라 주세요."); editOutcome(); return }
     if (performed(outcome) && (!effortAnswered || slot === null || painStatus === "UNANSWERED")) {
+      setSaveError("아직 답하지 않은 항목을 골라 주세요.")
       if (slot === null) editSlot()
       else if (!effortAnswered) editEffort()
       else editPain()
       return
     }
+    if (exitAfterSave) setStep("review")
     void persist({ outcome, slot: performed(outcome) ? slot : null, rpe: performed(outcome) ? rpe : 0,
       effortAnswered: performed(outcome) && effortAnswered, painStatus: performed(outcome) ? painStatus : "UNANSWERED",
-      painParts: performed(outcome) ? painParts : {}, answerTapCount: taps + 1 })
+      painParts: performed(outcome) ? painParts : {}, answerTapCount: taps + 1 }, exitAfterSave)
   }
 
   const editAnswered = (edit: () => void) => {
@@ -531,7 +537,7 @@ function QuickSessionFormEditor({
             : "기록을 남겼어요."
 
   const taskFlowActions = step === "review" && outcome !== null ? (
-    <button type="button" className="quick-log__primary" onClick={saveReview}>
+    <button type="button" className="quick-log__primary" onClick={() => saveReview()}>
       {inheritedMemo.text.trim() !== "" && inheritedMemo.needsPrivateSetup ? "비밀 메모 보관 준비" : includeProgress ? `저장하고 계획에 ${progressLabel} 표시` : "이대로 저장"}
     </button>
   ) : step === "effort" && effortQuestion === "pain" && painStatus === "SIGNAL_REPORTED" ? (
@@ -576,11 +582,13 @@ function QuickSessionFormEditor({
   return (
     <div className="quick-log" aria-busy={saving} {...answerActivation}>
       <fieldset disabled={saving} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
-      <TopBar onBack={goBack}>빠르게 기록</TopBar>
+      <TopBar onBack={goBack} onExit={navigation.exit}>빠르게 기록</TopBar>
+      {navigation.dialog}
       <FormFinalizationRecovery recovery={finalization} onBack={draft.back(onBack)} />
       {saving && <p role="status">저장 중이에요.</p>}
       <TaskFlowStep stepKey={activeQuestion} title={taskTitle} summary={outcomeLabel === undefined ? undefined : recordSummary}
         summaryFirst={step === "review"} actions={taskFlowActions} busy={saving} motion={motion}>
+      {saveError !== null && <p className="quick-log__error" role="alert">{saveError}</p>}
       <div className="quick-log__stage">
         <div data-task-motion-surface>
         {(step === "exercise" || step === "memo") && <div className="quick-log__safety-actions app-choice-group" role="group" aria-label="추가 기록 종류">
@@ -600,7 +608,6 @@ function QuickSessionFormEditor({
                 <button className="app-choice-control" type="button" onClick={() => setStep("exercise")}>달리기·근력 등 운동 추가<ChevronRight aria-hidden="true" /></button>
               </div>
             </InfoDisclosure>
-            {saveError !== null && <p className="quick-log__error" role="alert">{saveError}</p>}
           </section>
         )}
         {step === "activity" && activityQuestion === "slot" && <section>
@@ -632,7 +639,6 @@ function QuickSessionFormEditor({
                     {painLevelsRequireReview(painSignals) && <PainReviewBanner />}
                   </div>
                 )}
-            {saveError !== null && <p className="quick-log__error" role="alert">{saveError}</p>}
               </section>
         )}
         {step === "review" && outcome !== null && <section>
@@ -662,12 +668,10 @@ function QuickSessionFormEditor({
             <input type="checkbox" checked={includeProgress} onChange={event => setRequestedProgress(event.target.checked ? progressIdentity : null)} />
             계획에도 {progressLabel} 표시 남기기
           </label>}
-          {saveError && <p role="alert">{saveError}</p>}
         </section>}
         {step === "exercise" && <section>
           <ExerciseLogEditor value={exerciseLog} onChange={setExerciseLog} draft={exerciseEditor} onDraftChange={setExerciseEditor}
             recent={loadEntries().filter(entry => entry.id !== entryId).flatMap(entry => entry.kind === "post-session" ? entry.exerciseLog?.components ?? [] : []).slice(0, 6)} />
-          {saveError && <p role="alert">{saveError}</p>}
         </section>}
         {step === "memo" && <section>
           <PurposeScopedMemoField controller={inheritedMemo} fieldId="quick-memo" label="일지 내용" rows={4} />

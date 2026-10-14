@@ -26,7 +26,7 @@ import { FormSec, TopBar } from "./shared"
 import { FormInputSaveBar as StickyBar } from "./useFormInputDraft"
 import type { EntryFormProps } from "./shared"
 import { TaskFlowStep } from "../../components/TaskFlowStep"
-import { useTaskFlowBack } from "../../hooks/useTaskFlowBack"
+import { useJournalFormNavigation } from "./useJournalFormNavigation"
 import "./EveningCheckin.css"
 
 const MOOD_LABELS = ["흐림", "무덤덤", "보통", "좋음", "최고"] as const
@@ -44,14 +44,14 @@ type EveningFlow = { readonly location: EveningLocation; readonly history: reado
 
 export function EveningCheckin(props: EntryFormProps) {
   const date = props.initialEntry?.date ?? props.targetDate ?? todayISO()
-  return <JournalWritingDecorationPreview date={date}><FormInputDraftBoundary kind="evening" date={date}
+  return <JournalWritingDecorationPreview date={date}><FormInputDraftBoundary kind="evening" date={date} onExit={props.onExit ?? props.onBack}
     hasInitialContext={props.initialEntry !== undefined}
     identity={JSON.stringify([props.initialEntry?.id, props.initialEntry?.savedAt])}>
     <EveningCheckinEditor {...props} />
   </FormInputDraftBoundary></JournalWritingDecorationPreview>
 }
 
-function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry, initialBodyPartId }: EntryFormProps) {
+function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry, initialBodyPartId }: EntryFormProps) {
   const recovered = useRecoveredFormInput("evening")
   const input = recovered?.input
   const initial = initialEntry?.kind === "evening" ? initialEntry : undefined
@@ -86,7 +86,7 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry, initia
   const [accountNotice, setAccountNotice] = React.useState<string | null>(null)
   const note = usePurposeScopedMemo(input?.memo ?? initial?.note ?? "", input ? input.purpose ?? undefined : initial?.memoPurpose)
   const draft = useFormInputDraft({ kind: "evening", sleep, quality, mood, painParts, ...(bodyPartMetadata ? { bodyPartMetadata } : {}), weight, hr,
-    memo: note.text, purpose: note.purpose ?? null }, entryId, true, lastSavedAt.current)
+    memo: note.text, purpose: note.purpose ?? null }, entryId, true, lastSavedAt.current, sleepInputError)
   const hasInput = initial?.bodyPartMetadata !== undefined || sleep > 0 || quality > 0 || mood > 0 || Object.values(painSignals).some(level => level > 0)
     || weight.trim() !== "" || hr.trim() !== "" || note.text.trim() !== ""
 
@@ -131,7 +131,11 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry, initia
     }
     navigateTo({ step: "review", editGroup: null })
   }
-  useTaskFlowBack({ enabled: flow.history.length > 0, busy: saving, onBack: goBackFlow })
+  const navigation = useJournalFormNavigation({ draft, onBack, onExit, onSave: () => {
+    if (!sleepInputError && step !== "review") navigateTo({ step: "review", editGroup: null })
+    void persist()
+  },
+    flowEnabled: flow.history.length > 0, busy: saving, onStepBack: goBackFlow })
   React.useEffect(() => {
     if (step === "memo" && note.purposeError !== null) note.privateOptionRef.current?.focus()
   }, [step, note.purposeError, note.privateOptionRef])
@@ -196,8 +200,10 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry, initia
           : isPrivateMemo ? "비밀 일지를 이 기기에 보관했어요. 계정 전송 대기 중이며 공유·분석에는 사용하지 않아요."
             : "일지를 이 기기에 보관했어요. 계정 전송 대기 중이에요."
       const reviewMessage = notePreparation.reviewMessage ?? (painLevelsRequireReview(journalPainPartsForSafety(saved)) ? "불편한 곳을 기록했어요. 몸 상태를 확인해 주세요." : undefined)
-      if (storageMessage) onDone?.("evening", saved, reviewMessage, storageMessage)
-      else onDone?.("evening", saved, reviewMessage)
+      navigation.finish(() => {
+        if (storageMessage) onDone?.("evening", saved, reviewMessage, storageMessage)
+        else onDone?.("evening", saved, reviewMessage)
+      })
     } catch {
       setSaveError(true)
     } finally {
@@ -250,7 +256,8 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry, initia
   return (
     <div style={{ paddingBottom: 100 }} aria-busy={saving}>
       <fieldset disabled={saving} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
-      <TopBar onBack={draft.back(onBack)}>컨디션·메모</TopBar>
+      <TopBar onBack={flow.history.length > 0 ? goBackFlow : navigation.back} onExit={navigation.exit}>컨디션·메모</TopBar>
+      {navigation.dialog}
       <FormFinalizationRecovery recovery={finalization} onBack={draft.back(onBack)} />
       {step === "condition" ? <p className="evening-checkin__body-date">
         <time dateTime={entryDate}>{compactDate(entryDate)}</time>

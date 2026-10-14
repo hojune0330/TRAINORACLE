@@ -40,6 +40,8 @@
 
 .body-pain-selector__buttons {
   display: grid;
+  align-content: start;
+  align-items: start;
   gap: var(--space-2);
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -120,11 +122,22 @@ button.body-pain-selector__other-button {
   gap: var(--space-2);
   font-size: var(--fs-body);
   text-align: left;
+  align-self: start;
 }
+button.app-choice-control.body-pain-selector__group-button { color: var(--ink); font-weight: 600; }
 button.body-pain-selector__other-button { grid-column: 1 / -1; justify-content: center; }
 .body-pain-selector__summary .body-pain-selector__part-button { min-height: 52px; align-items: center; }
 .body-pain-selector__summary .body-pain-selector__part-button > span:not(.pain-dot) { overflow-wrap: anywhere; }
-.body-pain-selector__summary strong { margin-left: auto; white-space: nowrap; }
+.body-pain-selector__summary strong {
+  margin-left: auto;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--r-action);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: var(--fs-body-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
 .body-pain-selector__recent { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-3); }
 .body-pain-selector__recent > p { width: 100%; margin: 0; font-size: var(--fs-caption); color: var(--ink-2); }
 .body-pain-selector__recent > button { min-height: 44px; }

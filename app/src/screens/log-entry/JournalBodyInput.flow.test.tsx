@@ -167,16 +167,16 @@ describe("body history inside an unfinished body input", () => {
     expect(screen.getByText("이 일지를 확인할 수 없어요.")).toBeVisible()
     expect(screen.queryByRole("region", { name: "원본 보기" })).toBeNull()
     await user.click(screen.getByRole("button", { name: "몸 기록으로 돌아가기" }))
-    expect(screen.queryByRole("button", { name: "오늘 상태 남기기" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "이 일지에 상태 남기기" })).toBeNull()
     await user.click(screen.getByRole("button", { name: "다시 불러오기" }))
     expect(state.snapshot.retry).toHaveBeenCalledOnce()
   })
 
-  it("starts today's input with the selected ID without copying its historical severity", async () => {
+  it("returns to this journal's input with the selected ID without copying its historical severity", async () => {
     const view = mount()
     const { user } = await openOriginal()
     await user.click(screen.getByRole("button", { name: "원본에서 뒤로" }))
-    await user.click(screen.getByRole("button", { name: "오늘 상태 남기기" }))
+    await user.click(screen.getByRole("button", { name: "이 일지에 상태 남기기" }))
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull())
     expect(screen.getByLabelText("입력할 부위")).toHaveTextContent("rKnee")
     expect(screen.getByLabelText("입력 초안")).toHaveTextContent('{"rKnee":4}')

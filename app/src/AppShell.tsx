@@ -172,7 +172,10 @@ function overlayHistoryMarker(state: unknown, owner: string): AppOverlay | null 
 export type AppShellMultiPlanRuntime = Pick<React.ComponentProps<typeof DeferredMobileScreens.PlanBeta>,
   "multiAdjustmentResolverV3" | "readMultiAdjustedEvidenceV3">
 
-export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: AppShellMultiPlanRuntime } = {}) {
+export function AppShell({ multiPlanRuntime, systemStatus }: {
+  readonly multiPlanRuntime?: AppShellMultiPlanRuntime
+  readonly systemStatus?: React.ReactNode
+} = {}) {
   const guestScopeGeneration = localJournalScopeGeneration()
   const calendarSnapshot = useCalendarSnapshot()
   const [oracleEntry, setOracleEntry] = React.useState(initialOracleEntry)
@@ -1235,6 +1238,9 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
         initialEntry={v.journalDraft?.initialEntry}
         plannedSessionLink={v.journalDraft?.plannedSessionLink}
         initialBodyPartId={v.bodyInputPartId}
+        onExit={oracleInputRef.current?.inputKind === "log" ? returnFromOracleInput
+          : recordingOrigin.current ? returnFromRecording
+          : v.journalDraft ? () => runViewTransition("pop", () => setV(viewForJournalReturn(v))) : goHome}
         onBack={oracleInputRef.current?.inputKind === "log" ? returnFromOracleInput : recordingOrigin.current && (v.entryType === "choose" || recordingOrigin.current.direct)
           ? returnFromRecording : v.entryType === "choose"
           ? v.journalDraft === undefined
@@ -1308,6 +1314,7 @@ export function AppShell({ multiPlanRuntime }: { readonly multiPlanRuntime?: App
       openFeedback={() => openOverlay({ kind: "feedback" })}
     >
     <AppShellFrame
+      systemStatus={systemStatus}
       scrollRegionRef={scrollRegionRef}
       savedToast={savedToast}
       tab={v.tab === "log" && recordingOrigin.current ? tabForChrome(recordingOrigin.current.view) : tabForChrome(v)}

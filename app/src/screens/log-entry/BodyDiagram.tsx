@@ -300,6 +300,7 @@ export function BodyDiagram({
       </div>
       {dialogOpen && <BodySelectionDialog onClose={closeFocus} returnFocusTo={() => activeReturnButton.current?.isConnected ? activeReturnButton.current : rootRef.current}
         showComplete={showSummary}
+        stage={activeTarget ? activeTarget.kind : showSummary ? "summary" : activeGroup ? "side" : "picker"}
         backLabel={reviewHelpOpen ? "도움말 닫기" : "부위 선택으로"}
         dialogId={dialogId} title={activeTarget ? activeTarget.kind === "known" ? bodyPartFocusLabel(activeTarget.part) : "기타 부위" : showSummary ? "선택한 부위" : activeGroup ? `${activeGroup.label} · 어느 쪽인가요?` : "불편한 곳을 골라요"}
         onBack={activeTarget || activeGroup || showSummary ? goBack : undefined}>
@@ -318,7 +319,7 @@ export function BodyDiagram({
           {activeGroup.ids.map(id => {
             const part = BODY_PARTS.find(item => item.id === id)!
             return <button key={id} type="button" className="app-choice-control body-pain-selector__group-button"
-              onClick={() => openKnownPart(id, activeReturnButton.current)}>{bodyPartInputLabel(part)}</button>
+              onClick={() => openKnownPart(id, activeReturnButton.current)}><span>{bodyPartInputLabel(part)}</span><ChevronRight size={16} aria-hidden="true" /></button>
           })}
         </div> : picker(true)}
       </BodySelectionDialog>}
@@ -326,9 +327,10 @@ export function BodyDiagram({
   )
 }
 
-function BodySelectionDialog({ dialogId, title, onClose, returnFocusTo, onBack, backLabel, showComplete, children }: {
+function BodySelectionDialog({ dialogId, title, onClose, returnFocusTo, onBack, backLabel, showComplete, stage, children }: {
   dialogId: string; title: string; onClose: () => void; returnFocusTo: () => HTMLElement | null
   onBack?: (() => void) | undefined; backLabel: string; showComplete: boolean; children: React.ReactNode
+  stage: "known" | "other" | "summary" | "side" | "picker"
 }) {
   const ref = React.useRef<HTMLDialogElement>(null)
   const heading = React.useRef<HTMLHeadingElement>(null)
@@ -352,7 +354,7 @@ function BodySelectionDialog({ dialogId, title, onClose, returnFocusTo, onBack, 
     const editorTarget = ref.current?.querySelector<HTMLElement>('.body-part-focus-fields input, .body-part-focus-fields button[aria-pressed="true"]')
     ;(editorTarget ?? heading.current)?.focus({ preventScroll: true })
   }, [title])
-  return <dialog ref={ref} id={dialogId} className="body-part-focus-dialog" aria-modal="true" aria-labelledby={`${dialogId}-heading`}
+  return <dialog ref={ref} id={dialogId} className="body-part-focus-dialog" data-body-stage={stage} aria-modal="true" aria-labelledby={`${dialogId}-heading`}
     onCancel={event => { event.preventDefault(); if (onBack) onBack(); else requestClose() }}
     onKeyDown={event => {
       if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); if (onBack) onBack(); else requestClose() }
@@ -367,7 +369,7 @@ function BodySelectionDialog({ dialogId, title, onClose, returnFocusTo, onBack, 
       <h2 id={`${dialogId}-heading`} ref={heading} tabIndex={-1} className="body-part-focus-dialog__title">{title}</h2>
       <button type="button" className="app-choice-control body-part-focus-dialog__close" aria-label="몸 상태 입력 닫기" onClick={requestClose}><X size={18} aria-hidden="true" /></button>
     </header>
-    {children}
+    <div className="body-part-focus-dialog__content">{children}</div>
     {showComplete && <button type="button" className="app-choice-control body-part-focus-dialog__apply" onClick={requestClose}>입력 완료</button>}
   </dialog>
 }

@@ -12,6 +12,7 @@ export type EntryType = "choose" | "quick-session" | JournalEntryType
 export interface LogEntryProps {
   readonly entryType?: EntryType
   readonly onBack?: () => void
+  readonly onExit?: (() => void) | undefined
   readonly onDone?: (entryType: LogEntryType, savedEntry?: JournalEntry, reviewMessage?: string, storageMessage?: string) => void
   readonly targetDate?: string
   readonly initialEntry?: JournalEntry
@@ -23,7 +24,7 @@ export interface LogEntryProps {
   readonly onOpenImport?: () => void
 }
 
-export function LogEntry({ entryType = "choose", onBack, onDone, onSaved, onOpenImport, onContinueDetailed, targetDate, initialEntry, initialBodyPartId, plannedSessionLink }: LogEntryProps) {
+export function LogEntry({ entryType = "choose", onBack, onExit, onDone, onSaved, onOpenImport, onContinueDetailed, targetDate, initialEntry, initialBodyPartId, plannedSessionLink }: LogEntryProps) {
   if (entryType === "choose") {
     return <EntryChooser onBack={onBack} onPick={(picked) => onDone?.(picked)} onOpenImport={onOpenImport} targetDate={targetDate} />
   }
@@ -49,6 +50,7 @@ export function LogEntry({ entryType = "choose", onBack, onDone, onSaved, onOpen
     <QuickSessionForm
       key={draftKey}
       onBack={onBack}
+      onExit={onExit}
       targetDate={targetDate}
       initialEntry={initialEntry?.kind === "post-session" ? initialEntry : undefined}
       plannedSessionLink={plannedSessionLink}
@@ -57,9 +59,9 @@ export function LogEntry({ entryType = "choose", onBack, onDone, onSaved, onOpen
       onSaved={onSaved}
     />
   )
-  if (entryType === "post-session") return <PostSessionForm key={draftKey} onBack={onBack} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} plannedSessionLink={plannedSessionLink} />
-  if (entryType === "evening") return <EveningCheckin key={draftKey} onBack={onBack} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} initialBodyPartId={initialBodyPartId} />
-  if (entryType === "race") return <RaceForm key={draftKey} onBack={onBack} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} />
+  if (entryType === "post-session") return <PostSessionForm key={draftKey} onBack={onBack} onExit={onExit} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} plannedSessionLink={plannedSessionLink} />
+  if (entryType === "evening") return <EveningCheckin key={draftKey} onBack={onBack} onExit={onExit} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} initialBodyPartId={initialBodyPartId} />
+  if (entryType === "race") return <RaceForm key={draftKey} onBack={onBack} onExit={onExit} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} />
   return null
 }
 

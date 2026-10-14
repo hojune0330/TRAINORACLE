@@ -42,7 +42,7 @@ export function useRecoveredFormInput<K extends FormKind>(kind: K) {
   } : null
 }
 
-export function useFormInputDraft(input: FormInput, entryId: string, capture = true, baseSavedAt?: string) {
+export function useFormInputDraft(input: FormInput, entryId: string, capture = true, baseSavedAt?: string, pendingLocalInput = false) {
   const session = React.useContext(DraftContext)
   const owner = React.useRef(activeLocalAccount())
   const alive = React.useRef(true)
@@ -53,13 +53,16 @@ export function useFormInputDraft(input: FormInput, entryId: string, capture = t
     objectiveEditor: { ...input.objectiveEditor, previousKinds: input.objectiveEditor.previousKinds ?? {} },
   } : input
   const content = JSON.stringify(comparable.kind === "quick" ? { ...comparable, step: undefined } : comparable)
-  const volatile = React.useRef({ baseline: content, latest: content, dirty: false })
+  const volatile = React.useRef({ baseline: content, latest: content, dirty: false, capture, pendingLocalInput })
   React.useLayoutEffect(() => {
     volatile.current.latest = content
-    volatile.current.dirty = session === null && capture && content !== volatile.current.baseline
-  }, [content, session, capture])
+    volatile.current.capture = capture
+    volatile.current.pendingLocalInput = pendingLocalInput
+    // Raw inputs not accepted into FormInput are not protected by an account
+    // buffer either. Keep their leave warning separate from that buffer guard.
+    volatile.current.dirty = capture && (pendingLocalInput || (session === null && content !== volatile.current.baseline))
+  }, [content, session, capture, pendingLocalInput])
   React.useEffect(() => {
-    if (session !== null) return
     const unsafe = () => alive.current && activeLocalAccount() === owner.current && volatile.current.dirty
     const unregister = registerUnsavedDraftGuard({ isUnsafe: unsafe, onBlocked: () => {},
       confirmDiscard: () => window.confirm("아직 저장하지 않은 내용이 있어요. 입력을 버리고 이동할까요?\n계속 작성하려면 취소를 눌러 주세요."),
@@ -74,6 +77,22 @@ export function useFormInputDraft(input: FormInput, entryId: string, capture = t
   React.useLayoutEffect(() => { if (capture) session?.change(input, entryId, baseSavedAt) }, [session, serialized, entryId, capture, baseSavedAt])
   return {
     current: () => alive.current && activeLocalAccount() === owner.current && (session?.current() ?? true),
+    hasChanges: () => alive.current && activeLocalAccount() === owner.current && volatile.current.capture
+      && (volatile.current.pendingLocalInput || volatile.current.latest !== volatile.current.baseline),
+    // Indicates an account draft session, not proof that its latest write
+    // succeeded. The existing buffer guard still decides whether leaving is safe.
+    hasSavedDraft: session !== null,
+    leaveWithoutSaving: (callback: () => void) => {
+      const current = () => alive.current && activeLocalAccount() === owner.current
+      if (!current()) return false
+      const previousDirty = volatile.current.dirty
+      volatile.current.dirty = false // The exit sheet already confirmed this form's volatile discard.
+      const allowed = runDraftSafeNavigation(callback, false, current)
+      // Another draft's pending/failed write may still block this exit. Do not
+      // erase this form's warning, answers, baseline, or account draft on failure.
+      if (!allowed && current()) volatile.current.dirty = previousDirty
+      return allowed
+    },
     complete: async () => {
       if (session) await session.complete()
       volatile.current.baseline = volatile.current.latest
@@ -83,8 +102,16 @@ export function useFormInputDraft(input: FormInput, entryId: string, capture = t
   }
 }
 
-export function FormInputDraftBoundary({ kind, date, identity, hasInitialContext = false, children }: {
-  kind: FormKind; date: string; identity: string; hasInitialContext?: boolean; children: React.ReactNode
+function FormDraftExit({ onExit }: { onExit?: (() => void) | undefined }) {
+  if (!onExit) return null
+  return <div style={{ display: "flex", justifyContent: "flex-end", padding: "8px 16px" }}>
+    <button type="button" className="app-text-button" style={{ minWidth: 44, minHeight: 44, padding: "8px 12px" }}
+      onClick={() => runDraftSafeNavigation(onExit)}>나가기</button>
+  </div>
+}
+
+export function FormInputDraftBoundary({ kind, date, identity, hasInitialContext = false, onExit, children }: {
+  kind: FormKind; date: string; identity: string; hasInitialContext?: boolean; onExit?: (() => void) | undefined; children: React.ReactNode
 }) {
   const [owner, setOwner] = React.useState(activeLocalAccount)
   const initialOwner = React.useRef(owner)
@@ -92,16 +119,19 @@ export function FormInputDraftBoundary({ kind, date, identity, hasInitialContext
   const context = JSON.stringify([kind, date, identity])
   // A parent may still hold an old account's entry/plan props during a scope change.
   // Remounting state alone must never transfer that inherited content to the new owner.
-  if (hasInitialContext && owner !== initialOwner.current) return <p role="status">계정이 변경됐어요. 기록 목록에서 다시 열어 주세요.</p>
+  if (hasInitialContext && owner !== initialOwner.current) return <>
+    <FormDraftExit onExit={onExit} />
+    <p role="status">계정이 변경됐어요. 기록 목록에서 다시 열어 주세요.</p>
+  </>
   // Remount even when the feature is disabled: no volatile plaintext crosses accounts.
   return <ScopedFormInputDraft key={JSON.stringify([owner, context])} owner={owner}
-    enabled={accountJournalPreviewEnabled()} context={context} date={date} kind={kind}>
+    enabled={accountJournalPreviewEnabled()} context={context} date={date} kind={kind} onExit={onExit}>
     {children}
   </ScopedFormInputDraft>
 }
 
-function ScopedFormInputDraft({ owner, enabled, context, date, kind, children }: {
-  owner: string | null; enabled: boolean; context: string; date: string; kind: FormKind; children: React.ReactNode
+function ScopedFormInputDraft({ owner, enabled, context, date, kind, onExit, children }: {
+  owner: string | null; enabled: boolean; context: string; date: string; kind: FormKind; onExit?: (() => void) | undefined; children: React.ReactNode
 }) {
   const active = enabled && owner !== null
   const [session, setSession] = React.useState<Session | null>(null)
@@ -414,6 +444,7 @@ function ScopedFormInputDraft({ owner, enabled, context, date, kind, children }:
   return <DraftContext.Provider value={session}><ReviewContext.Provider value={{
     visible: reviewRequired || review.recoveries.length > 0 || review.archive.length > 0, required: reviewRequired,
   }}>
+    {(!loaded || deleted) && <FormDraftExit onExit={onExit} />}
     <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 16px", borderBottom: "1px solid var(--line)" }}>
       <div role="status" style={{ flex: 1, minWidth: 0, fontSize: "var(--fs-caption)", overflowWrap: "anywhere" }}>{notice}</div>
       {loaded && <button type="button" aria-label="초안 저장 재시도" title="초안 저장 재시도"

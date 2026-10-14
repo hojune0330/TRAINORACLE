@@ -51,6 +51,7 @@ export function useShellReaderVisibility() {
 
 export function AppShellFrame({
   children,
+  systemStatus,
   scrollRegionRef,
   savedToast,
   tab,
@@ -67,6 +68,7 @@ export function AppShellFrame({
   wideResults = false,
 }: {
   readonly children: React.ReactNode
+  readonly systemStatus?: React.ReactNode
   readonly scrollRegionRef: React.RefObject<HTMLElement>
   readonly savedToast: ShellToastState | null
   readonly tab: AppTab
@@ -112,11 +114,12 @@ export function AppShellFrame({
     <ShellToastHostProvider>
       <InlineJournalSaveResultContext.Provider value={resultHost}>
       <div className={`app-shell${taskSurface ? " app-shell--task" : wideResults ? " app-shell--results" : ""}`} data-reduced-motion={reduced || undefined} style={{
-        height: "100dvh", minHeight: 0, background: "var(--bg)",
+        background: "var(--bg)",
         display: "flex", flexDirection: "column",
         maxWidth: "var(--app-shell-max-width)", margin: "0 auto",
       }}>
         <main ref={scrollRegionRef} className="app-scroll-region">
+          {systemStatus}
           <div hidden={showResult} style={showResult ? undefined : { display: "contents" }}>{children}</div>
           {showResult && savedToast && <JournalSaveResult result={savedToast} onClose={onDismissToast}
             onOpenSaved={onOpenSaved} onDecorateSaved={onDecorateSaved}

@@ -1,5 +1,5 @@
 import React from "react"
-import { ChevronDown, X } from "lucide-react"
+import { Check, ChevronDown, X } from "lucide-react"
 import { useReaderDialog } from "../../hooks/useReaderDialog"
 import { BODY_PARTS } from "../../components/body-parts"
 import {
@@ -378,7 +378,7 @@ export function BodyPartFocusView({
               if (target.kind === "known") handleSelectLevel(value)
               else { setCurrentLevel(value); setValidationMessage(""); setValidationField("") }
             }}>
-            {value}
+            <span>{value}</span>{currentLevel === value && <Check size={16} aria-hidden="true" />}
           </button>
         ))}
       </div>
