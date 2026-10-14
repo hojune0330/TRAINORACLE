@@ -38,3 +38,12 @@
 `TreadmillGame.tsx`, `GamePanels.tsx`, `GameLeaveDialog.tsx`, `game-navigation.css`, `useSavedRun.ts`, `domain/minigame/saved-run.ts`, 저장 테스트 및 `e2e/treadmill-game.spec.ts`.
 
 다음 개선은 다중 기기 이어하기가 실제로 필요한지 확인한 뒤 별도 계정 저장 계약으로 결정한다. 현재 구현을 서버 동기화 완료로 설명하지 않는다.
+
+## 배포 후 확인 — 2026-10-14
+
+- PR #362 병합: `5212dd9b8f7f2216af9b5eadec3b866125b87785`.
+- 보존형 수동 Pages 게시: `b4969f8566849daf7d4dbd233c2c38f04351e041`, GitHub Pages `built`. 공개 영수증의 sourceSha도 위 병합 SHA와 일치한다.
+- 공개 주소 `https://hojune0330.github.io/TRAINORACLE/?app=1`에서 PC/휴대폰 각 6개, 총 12개 통과(1.8분). 저장 후 새로고침·강화 복구·뒤로가기 확인·저장 실패 후 재시도·초기화·메뉴 이동과 저장 후 게임 종료/재진입을 검증했다. 격리된 브라우저의 합성 기기 데이터만 사용하고 서버 요청은 차단했다.
+- 원격 CI `38512165834`: 계약 검사 15개 실패(Comparison fixture: Expected generated original), UTC 전체 단위 검사 164개 파일 실패. 그 실행에서 `treadmill.test.ts` 22개와 `saved-run.test.ts` 6개는 통과. KST는 이 기록 시점 진행 중이다. 전체 CI 성공이나 실계정 검증으로 보고하지 않는다.
+- 원격 로그에서 시각 검사 목록의 게임 CSS 누락도 확인했다. `game-navigation.css` 및 기존 `game-reward-actions.css`, `upgrade-choice.css`를 게임 파일 목록에 추가해 원시 색상 금지 검사 대상으로 포함했다. 해당 계약 통과, 새 파일에 `#fff`를 주입하면 같은 이름의 테스트가 실패하는 것 확인, 원복 후 재통과. 이 후속 변경은 검사 목록·이 문서뿐이며 배포된 런타임은 바꾸지 않는다.
+- 자동 root 교체 게시를 피하고 기존 자산을 보존하는 승인된 수동 경로를 사용했다. 병합의 `[skip ci]`와 후속 검사/증거 전용 커밋을 CI 통과로 해석하지 않는다. 후속 검사/문서 커밋으로 main과 공개 sourceSha가 달라도 런타임 차이는 없다.
