@@ -23,6 +23,7 @@ export const TREADMILL_RULES = {
   gravity: 1150,
   jumpVelocity: 470,
   hazardSpeed: 0.28,
+  hazardEntry: 1.06,
   runnerHalfWidth: 0.018,
   barrierKnockback: 0.12,
   barrierEnergy: 12,
@@ -260,7 +261,7 @@ function step(state: TreadmillState, dt: number): TreadmillState {
   }
   const course = stage.course
   while (next.spawned < course.length && next.seconds >= course[next.spawned]!.at) {
-    next.hazards.push({ id: state.stage * 100 + next.spawned, kind: course[next.spawned]!.kind, x: 1.06, hit: false, passed: false })
+    next.hazards.push({ id: state.stage * 100 + next.spawned, kind: course[next.spawned]!.kind, x: rules.hazardEntry, hit: false, passed: false })
     next.spawned += 1
   }
   for (const hazard of next.hazards) {

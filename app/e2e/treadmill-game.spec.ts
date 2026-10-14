@@ -45,6 +45,45 @@ async function screenPointer(page: Page, touch: boolean) {
   }
 }
 
+test("hazards enter at the screen edge and stay continuous when a scheduled obstacle activates", async ({ page }, info) => {
+  await openGame(page, "seoul")
+  await page.getByRole("button", { name: "시작", exact: true }).click()
+  await page.clock.runFor(3050)
+  await page.keyboard.down("ArrowRight")
+  const stages = tourStages(tourCity("seoul")!)
+  let model = { ...treadmillCommand(newTreadmillRun(stages), { type: "start", stages }), countdown: 0, running: true }
+  const field = page.locator("canvas.treadmill-game__canvas")
+  type Seen = { id: number; x: number; scheduled: boolean }
+  let previous: Seen[] = [], sawPreview = false, activated = false
+  const seenIds = new Set<number>()
+  // The third course entry activates at 7.2s; include its approach as well.
+  for (let tick = 0; tick < 95; tick++) {
+    if (tick === 0 || tick === 27) { await page.keyboard.press("d"); model = treadmillCommand(model, { type: "dash" }) }
+    const ahead = nearestHazard(model)
+    if (ahead && ahead.x - model.x < 0.15 && model.y === 0) {
+      await page.keyboard.press("Space"); model = treadmillCommand(model, { type: "jump" })
+    }
+    await page.clock.runFor(100)
+    model = advanceTreadmill(model, 0.1)
+    const visible = JSON.parse((await field.getAttribute("data-rendered-hazards"))!) as Seen[]
+    for (const hazard of visible) {
+      if (!seenIds.has(hazard.id)) { expect(hazard.x, "first sight must be at the right edge, not mid-lane").toBeGreaterThan(0.94); seenIds.add(hazard.id) }
+      const before = previous.find(item => item.id === hazard.id)
+      if (before) expect(Math.abs(hazard.x - before.x)).toBeLessThan(0.09)
+      if (before?.scheduled && !hazard.scheduled) activated = true
+      if (hazard.scheduled && hazard.x < 0.95 && !sawPreview) {
+        sawPreview = true
+        await page.screenshot({ path: info.outputPath("approaching-obstacle.png"), fullPage: true })
+      }
+    }
+    previous = visible
+  }
+  await page.keyboard.up("ArrowRight")
+  expect(sawPreview).toBe(true)
+  expect(activated).toBe(true)
+  expect(seenIds.size).toBeGreaterThanOrEqual(3)
+})
+
 test("camera follows with slack, accelerates on dash, freezes on pause and keeps notices off the runner", async ({ page }, info) => {
   await openGame(page, "seoul")
   await page.getByRole("button", { name: "시작", exact: true }).click()
