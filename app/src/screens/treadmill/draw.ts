@@ -5,6 +5,7 @@ import type { GamePalette, RunnerCharacter, RunnerPose } from "./sprites"
 import { citySceneFor, drawCityBackdrop, drawCityGround, drawWeather } from "./city-art"
 import type { CityFrame } from "./city-art"
 import type { TourCity } from "../../domain/minigame/tour"
+import { createRunnerCamera } from "./camera"
 
 export { gamePalette }
 export type { GamePalette }
@@ -20,15 +21,6 @@ export type RenderView = {
   trail?: string | null
 }
 
-/** Shared geometry so the drawing, the hit boxes and the tests talk about the same belt. */
-export function treadmillGeometry(width: number, height: number) {
-  const left = Math.round(width * 0.1)
-  const right = Math.round(width * 0.04)
-  const beltWidth = width - left - right
-  const floor = height - 74
-  return { left, beltWidth, floor, toPx: (x: number) => left + x * beltWidth }
-}
-
 type Particle = { x: number; y: number; vx: number; vy: number; life: number; max: number; size: number; color: keyof GamePalette; kind: "dot" | "star" | "confetti" | "line" }
 type Popup = { x: number; y: number; text: string; life: number; color: keyof GamePalette; size: number }
 
@@ -37,6 +29,7 @@ type Popup = { x: number; y: number; text: string; life: number; color: keyof Ga
  * shake, confetti, the fall animation) live here and are derived from state changes.
  */
 export function createTreadmillRenderer() {
+  const camera = createRunnerCamera()
   let previous: TreadmillState | null = null
   let particles: Particle[] = []
   let popups: Popup[] = []
@@ -123,17 +116,23 @@ export function createTreadmillRenderer() {
     clock += dt
     const rules = TREADMILL_RULES
     const stage = state.stages[state.stage]!
-    const { left, beltWidth, floor, toPx } = treadmillGeometry(width, height)
+    const { left, beltWidth, floor, toPx, travel, speed, offset } = camera(state, width, height, reduced)
     const font = getComputedStyle(context.canvas).fontFamily
-    const runnerX = Math.max(left - 18, toPx(state.x))
+    const runnerX = toPx(state.x)
+    // Expose rendered coordinates for viewport/input diagnostics, never for game decisions.
+    if (context.canvas.dataset) {
+      context.canvas.dataset.runnerX = String(runnerX / width)
+      context.canvas.dataset.runnerY = String((floor - state.y) / height)
+      context.canvas.dataset.cameraOffset = String(offset)
+      context.canvas.dataset.sceneTravel = String(travel)
+    }
     const moving = state.mode === "running" && state.countdown === 0
-    if (moving && state.running && !state.exhausted) phase += dt * 15
+    if (moving && state.running && !state.exhausted) phase += dt * (state.dashLeft > 0 ? 25 : 18)
     react(state, runnerX, floor - state.y, reduced)
     step(dt)
 
     context.save()
     if (shake > 0) context.translate((random() - 0.5) * 10 * (shake / 0.35), (random() - 0.5) * 8 * (shake / 0.35))
-    const travel = reduced ? 0 : treadmillElapsed(state) * 60
     const scene = view.city ? citySceneFor(view.city, stage.surface) : null
     const frame: CityFrame = { width, height, floor, left, beltWidth, travel, clock, reduced, low, skyFromShader }
     if (scene) {
@@ -142,7 +141,19 @@ export function createTreadmillRenderer() {
       drawCityGround(context, palette, scene, frame, rules.warnRear, near)
     } else {
       drawWorld(context, palette, stage.surface, width, height, floor, travel, clock, reduced, skyFromShader)
-      drawMachine(context, palette, stage.surface, width, height, left, beltWidth, floor, travel * 1.6, state)
+      drawMachine(context, palette, stage.surface, width, height, -16, width + 32, floor, travel * 1.6, state)
+    }
+
+    // Short, low-contrast streaks below the feet sell speed without hiding obstacles.
+    if (moving && !reduced && !low) {
+      context.save(); context.strokeStyle = palette.cloud; context.globalAlpha = state.dashLeft > 0 ? 0.5 : 0.2
+      context.lineWidth = 1.5
+      for (let i = 0; i < 7; i++) {
+        const x = ((i * 97 - travel * 2.8) % (width + 100) + width + 100) % (width + 100) - 50
+        const y = floor + 22 + (i % 3) * 12
+        context.beginPath(); context.moveTo(x, y); context.lineTo(x + 12 + speed * 0.08, y); context.stroke()
+      }
+      context.restore()
     }
 
     // Jump guide: a gold strip on the belt; it lights up while a jump now would clear.
@@ -170,10 +181,12 @@ export function createTreadmillRenderer() {
 
     // Telegraph: a bouncing "!" bubble at the front edge before a hazard enters.
     if (state.mode === "running") {
-      const item = upcomingHazards(state)[0]
+      const entering = ahead && toPx(ahead.x) > width
+        ? { kind: ahead.kind, inSeconds: (ahead.x - (width - left) / beltWidth) / rules.hazardSpeed } : null
+      const item = entering ?? upcomingHazards(state)[0]
       if (item) {
         const bounce = reduced ? 0 : Math.sin(clock * 10) * 2
-        const cx = width - 24, cy = floor - 44 + bounce
+        const cx = width - 22, cy = floor - 98 + bounce
         const progress = 1 - Math.max(0, item.inSeconds) / rules.telegraphSeconds
         context.lineWidth = 2.5; context.strokeStyle = palette.outline
         context.beginPath(); context.arc(cx, cy, 14, 0, Math.PI * 2)
