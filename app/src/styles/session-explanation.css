@@ -31,6 +31,10 @@
 .session-explanation__content li { margin-block: 8px; font-size: 1rem; }
 .session-explanation__content a { display: block; min-height: 44px; padding-block: 8px; color: var(--brand); text-underline-offset: 3px; }
 .session-explanation__metric { font-weight: 700; font-variant-numeric: tabular-nums; }
+.session-explanation__guide { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3); }
+.session-explanation__guide > div { flex: 1; min-width: 0; }
+.session-explanation__guide > .contextual-illustration { flex: 0 0 64px; }
+.session-explanation__guide h3, .session-explanation__guide .session-explanation__metric { margin-block: 0; }
 .session-explanation__method-flow > .session-explanation__metric { margin-top: 0; }
 .session-explanation__method-flow .plan-detailed-prescription--sequence-lead { margin-top: 12px; }
 .session-explanation__content .session-explanation__notice, .session-explanation__content .session-explanation__note { font-size: 0.875rem; color: var(--ink-2); }

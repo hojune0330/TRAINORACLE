@@ -21,6 +21,7 @@ import { usePlanEvidenceHistory } from "../../hooks/usePlanEvidenceHistory"
 import { PlanEvidenceHistoryNotice } from "../../components/PlanEvidenceHistoryNotice"
 import { onLocalJournalScopeChange } from "../../domain/account/local-journal-ownership"
 import { WorkoutMemoTool } from "../../components/WorkoutMemoTool"
+import { ContextualIllustration } from "../../components/ContextualIllustration"
 import type { WorkoutMemoContext } from "../../domain/workout-memo"
 
 type Props = {
@@ -148,8 +149,11 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
       <div ref={content} className="session-explanation__content" role="tabpanel" id={`${id}-panel`} aria-labelledby={`${id}-tab-${TABS.indexOf(tab)}`} tabIndex={0}>
         <div className="session-explanation__tab-content" hidden={tab !== "방법"}>
             <WorkoutMemoTool session={session} date={date} state={memoState ?? (context?.kind === "SAVED" ? "PLAN" : "PREVIEW")} />
-            <section className="session-explanation__method-flow"><h3>수행 순서</h3>
-              <p className="session-explanation__metric">{sessionExecution(session)}</p>
+            <section className="session-explanation__method-flow">
+              <div className="session-explanation__guide">
+                <div><h3>수행 순서</h3><p className="session-explanation__metric">{sessionExecution(session)}</p></div>
+                <ContextualIllustration image="otter-explain" />
+              </div>
               {session.prescription.kind === "PACE_TARGET" && <DetailedPrescriptionView prescription={session.prescription} variant="sequence-lead" />}
               {catalogWorkout ? <CatalogWorkoutDetail workout={catalogWorkout} /> : sequence !== null ? <PrescriptionStructure sequence={sequence} /> : <ol className="session-explanation__sequence">
                 {explanation.components.map((component) => {

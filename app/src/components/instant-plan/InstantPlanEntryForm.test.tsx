@@ -9,7 +9,7 @@ afterEach(cleanup)
 const TODAY = "2026-09-20"
 it("uses the plan illustration only at a fresh, available entry and not after choosing an event", () => {
   const view = render(<InstantPlanEntryForm today={TODAY} onSubmit={vi.fn()} />)
-  expect(view.container.querySelector('img[src$="plan-notebook-v2.webp"]')).toHaveAttribute("width", "64")
+  expect(view.container.querySelector('img[src$="otter-explain-v1.webp"]')).toHaveAttribute("width", "64")
   chooseEvent()
   expect(view.container.querySelector("img")).toBeNull()
   fireEvent.click(screen.getByRole("button", { name: "종목 다시 선택" }))

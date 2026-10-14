@@ -247,7 +247,7 @@ export function PrescriptionAdjustmentEditorV3(props: Props) {
         {error && <p role="alert">{error}</p>}
         {opened.current !== null && <TaskGuide as="h3" title={canExplore || draft ? "훈련 조절하기" : "현재 훈련 확인"}
           description={!blocked && !error && (canExplore || draft) ? "변경안은 적용을 눌러야 반영돼요." : undefined}
-          illustration={!blocked && !error && (canExplore || draft) ? "plan-adjust" : undefined} />}
+          illustration={!blocked && !error && (canExplore || draft) ? "otter-check" : undefined} />}
         <div className="prescription-adjustment__preview-tools">
           {hasOtherMethod && <button type="button" disabled={blocked} onClick={() => {
             if (!preview || blocked || discarding || pending.current || completed.current) return

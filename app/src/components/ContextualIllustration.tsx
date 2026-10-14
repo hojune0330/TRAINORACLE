@@ -2,6 +2,8 @@ import { useState } from "react"
 import "../styles/contextual-illustration.css"
 
 const imageFiles = {
+  "otter-explain": "otter-explain-v1.webp",
+  "otter-check": "otter-check-v1.webp",
   "journal-guide": "mari-journal-guide.webp",
   "watch-file": "watch-file-guide-v1.webp",
   "empty-journal": "journal-empty-illustration.webp",

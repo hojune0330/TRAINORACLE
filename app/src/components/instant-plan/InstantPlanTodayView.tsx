@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from "react"
 import type { InstantPlanToday } from "../../domain/instant-plan-contract"
 import { IncompleteWorkoutNotice } from "./IncompleteWorkoutNotice"
 import { AppHeading } from "../AppHeading"
+import { TrainingInstructionCards } from "../TrainingInstructionCards"
 import "./instant-plan.css"
 
 export type InstantPlanTodayViewProps = {
@@ -58,11 +59,9 @@ function SessionDetail({
   const primarySteps = session.steps.filter(step => step.role !== "METHOD" && step.role !== "OTHER")
   const visibleSteps = primarySteps
   const otherSteps = session.steps.filter(step => !visibleSteps.includes(step))
-  const steps = (items: TodaySession["steps"]) => <dl className="instant-plan__steps">
-    {items.map((step, index) => <div key={`${index}-${step.label}`}>
-      <dt>{step.label}</dt><dd>{step.instruction}</dd>
-    </div>)}
-  </dl>
+  const steps = (items: TodaySession["steps"]) => <TrainingInstructionCards steps={items.map(step => ({
+    role: step.role, title: step.label, detail: step.instruction,
+  }))} />
   return (
     <section className="instant-plan__session" aria-label={`${session.slotLabel} · ${session.title}`}>
       {showHeading && <><p className="instant-plan__eyebrow">{session.slotLabel}</p>

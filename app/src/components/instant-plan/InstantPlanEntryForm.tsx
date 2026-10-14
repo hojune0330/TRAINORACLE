@@ -263,7 +263,7 @@ export function InstantPlanEntryForm({
             <h2 id={`${id}-event-heading`} ref={stepHeadingRef} tabIndex={-1} className="instant-plan__step-heading contextual-entry-intro__copy">
               어떤 종목을 준비하세요?
             </h2>
-            {!event && active && !disabled && !isSubmitting && !errors.event && <ContextualIllustration image="plan-notebook" />}
+            {!event && active && !disabled && !isSubmitting && !errors.event && <ContextualIllustration image="otter-explain" />}
           </div>
           <div className="instant-plan__step-choices app-choice-group" role="group" aria-labelledby={`${id}-event-heading`}
             aria-describedby={errors.event ? `${id}-event-error` : undefined}>
