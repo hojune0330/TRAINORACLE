@@ -1,5 +1,5 @@
 import React from "react"
-import { X } from "lucide-react"
+import { ChevronDown, X } from "lucide-react"
 import { useReaderDialog } from "../../hooks/useReaderDialog"
 import { BODY_PARTS } from "../../components/body-parts"
 import {
@@ -10,23 +10,32 @@ import {
 } from "../../domain/body-part-metadata"
 import type { OtherBodyPartId, OtherBodyPartObservation } from "../../domain/body-part-metadata"
 import "./BodyPartFocusView.css"
+import { bodyPartFocusLabel } from "./body-part-presentation"
 
 type KnownBodyPart = typeof BODY_PARTS[number]
 type RecentCustomPart = Pick<OtherBodyPartObservation, "id" | "labelSnapshot">
+// Only retained while the enclosing body-input dialog is open; never persisted.
+export type OtherBodyPartDraft = {
+  name: string
+  note: string
+  id: OtherBodyPartId | undefined
+  level: number
+  recentSelection: { id: OtherBodyPartId; label: string } | null
+}
 type FocusAnchor = { readonly side: "front" | "back"; readonly x: number; readonly y: number }
 
-/** Display-only crop anchors from the owner-reviewed 768px front/back bitmaps.
+/** Display-only crop anchors from the generated v2 front/back bitmaps.
  * They do not affect stored IDs, severity, safety interpretation, or analysis. */
 export const BODY_PART_FOCUS_ANCHORS: Readonly<Record<KnownBodyPart["id"], FocusAnchor>> = {
-  rKnee: { side: "front", x: 0.444, y: 0.735 },
-  lKnee: { side: "front", x: 0.556, y: 0.735 },
-  rFoot: { side: "front", x: 0.438, y: 0.900 },
-  lFoot: { side: "front", x: 0.562, y: 0.900 },
-  rShin: { side: "front", x: 0.500, y: 0.805 },
+  rKnee: { side: "front", x: 0.444, y: 0.716 },
+  lKnee: { side: "front", x: 0.556, y: 0.716 },
+  rFoot: { side: "front", x: 0.435, y: 0.896 },
+  lFoot: { side: "front", x: 0.565, y: 0.896 },
+  rShin: { side: "front", x: 0.500, y: 0.800 },
   rHam: { side: "back", x: 0.556, y: 0.655 },
   lHam: { side: "back", x: 0.444, y: 0.655 },
-  rCalf: { side: "back", x: 0.556, y: 0.795 },
-  lCalf: { side: "back", x: 0.444, y: 0.795 },
+  rCalf: { side: "back", x: 0.556, y: 0.800 },
+  lCalf: { side: "back", x: 0.444, y: 0.800 },
   lBack: { side: "back", x: 0.500, y: 0.490 },
 }
 
@@ -56,6 +65,9 @@ type BodyPartFocusViewProps = {
   readonly onSelectKnown: (id: KnownBodyPart["id"], level: number) => void
   readonly onSelectOther: (selection: OtherBodyPartSelection) => void
   readonly returnFocusTo?: () => HTMLElement | null
+  readonly embedded?: boolean
+  readonly initialDraft?: OtherBodyPartDraft | undefined
+  readonly onDraftChange?: ((draft: OtherBodyPartDraft) => void) | undefined
 }
 
 const FOCUS_ZOOM = 2.2
@@ -86,38 +98,47 @@ export function BodyPartFocusView({
   onSelectKnown,
   onSelectOther,
   returnFocusTo,
+  embedded = false,
+  initialDraft,
+  onDraftChange,
 }: BodyPartFocusViewProps) {
   const dialogRef = React.useRef<HTMLDialogElement>(null)
   const nameInputRef = React.useRef<HTMLInputElement>(null)
   const titleRef = React.useRef<HTMLHeadingElement>(null)
   const levelRefs = React.useRef(new Map<number, HTMLButtonElement>())
-  const close = useReaderDialog(dialogRef, onClose, returnFocusTo)
+  const closeDialog = useReaderDialog(dialogRef, onClose, returnFocusTo, !embedded)
+  const close = embedded ? onClose : closeDialog
   const [imageUnavailable, setImageUnavailable] = React.useState(false)
-  const [customName, setCustomName] = React.useState(target.kind === "other" ? target.labelSnapshot : "")
-  const [customNote, setCustomNote] = React.useState(target.kind === "other" ? target.note ?? "" : "")
-  const [customId, setCustomId] = React.useState<OtherBodyPartId | undefined>(target.kind === "other" ? target.id : undefined)
-  const [currentLevel, setCurrentLevel] = React.useState(target.currentLevel)
+  const [customName, setCustomName] = React.useState(initialDraft?.name ?? (target.kind === "other" ? target.labelSnapshot : ""))
+  const [customNote, setCustomNote] = React.useState(initialDraft?.note ?? (target.kind === "other" ? target.note ?? "" : ""))
+  const [customId, setCustomId] = React.useState<OtherBodyPartId | undefined>(initialDraft ? initialDraft.id : target.kind === "other" ? target.id : undefined)
+  const [currentLevel, setCurrentLevel] = React.useState(initialDraft?.level ?? target.currentLevel)
+  const [memoOpen, setMemoOpen] = React.useState(Boolean(initialDraft?.note || (target.kind === "other" && target.note)))
   const [validationMessage, setValidationMessage] = React.useState("")
   const [validationField, setValidationField] = React.useState<"name" | "note" | "general" | "">("")
   const [recentSelection, setRecentSelection] = React.useState<{ id: OtherBodyPartId; label: string } | null>(() =>
-    target.kind === "other" && target.id
+    initialDraft ? initialDraft.recentSelection : target.kind === "other" && target.id
       ? target.recentCustomParts.find(candidate => candidate.id === target.id)
         ? { id: target.id, label: target.labelSnapshot }
         : null
       : null,
   )
 
+  React.useEffect(() => {
+    if (target.kind === "other") onDraftChange?.({ name: customName, note: customNote, id: customId, level: currentLevel, recentSelection })
+  }, [target.kind, customName, customNote, customId, currentLevel, recentSelection, onDraftChange])
+
   const known = target.kind === "known" ? target.part : null
   const anchor = known ? BODY_PART_FOCUS_ANCHORS[known.id] : null
   const sideLabel = anchor?.side === "back" ? "뒷면" : anchor?.side === "front" ? "앞면" : null
   const baseUrl = import.meta.env.BASE_URL || "/"
-  const focusImageSrc = `${baseUrl}illustrations/body-check-focus-${anchor?.side ?? "front"}-v1.webp`
+  const focusImageSrc = `${baseUrl}illustrations/body-check-focus-${anchor?.side ?? "front"}-v2.webp`
   const matchingRecentPart = target.kind === "other"
     ? target.recentCustomParts.find(candidate => candidate.labelSnapshot === customName.trim())
     : undefined
   const title = target.kind === "known"
-    ? `${target.part.name} 통증 정도`
-    : `${customName.trim() || "기타 부위"} 통증 정도`
+    ? bodyPartFocusLabel(target.part)
+    : "기타 부위"
   const focusTitleId = `${dialogId}-title`
   const scaleDescriptionId = `${dialogId}-scale`
   const nameInputId = `${dialogId}-other-name`
@@ -188,16 +209,19 @@ export function BodyPartFocusView({
     close()
   }
 
+  const Frame = embedded ? "section" : "dialog"
   return (
-    <dialog
-      ref={dialogRef}
+    <Frame
+      ref={embedded ? undefined : dialogRef}
       id={dialogId}
-      className="body-part-focus-dialog"
-      aria-modal="true"
-      aria-labelledby={focusTitleId}
+      className={embedded ? "body-part-focus-fields" : "body-part-focus-dialog"}
+      aria-modal={embedded ? undefined : "true"}
+      aria-labelledby={embedded ? undefined : focusTitleId}
+      aria-label={embedded ? title : undefined}
       data-testid="body-part-focus-dialog"
       onCancel={event => { event.preventDefault(); close() }}
       onKeyDown={event => {
+        if (embedded) return
         if (event.key === "Escape") {
           event.preventDefault()
           event.stopPropagation()
@@ -224,19 +248,19 @@ export function BodyPartFocusView({
         }
       }}
     >
-      <div className="body-part-focus-dialog__header">
+      {!embedded && <div className="body-part-focus-dialog__header">
         <h2 id={focusTitleId} ref={titleRef} tabIndex={-1} className="body-part-focus-dialog__title">{title}</h2>
-        <button type="button" className="app-choice-control body-part-focus-dialog__close"
+        {!embedded && <button type="button" className="app-choice-control body-part-focus-dialog__close"
           aria-label={`${title} 닫기`} onClick={close}>
           <X size={18} aria-hidden="true" />
-        </button>
-      </div>
+        </button>}
+      </div>}
 
       {anchor && !imageUnavailable && <figure className="body-part-focus-dialog__figure body-part-focus-dialog__figure--crop"
         data-focus-side={sideLabel ?? undefined}>
         <img
           src={focusImageSrc}
-          alt={`${sideLabel} 부위 위치 확대`}
+          alt={`${known ? bodyPartFocusLabel(known) : ""} 위치 · ${sideLabel}`}
           decoding="async"
           draggable={false}
           className="body-part-focus-dialog__image body-part-focus-dialog__image--crop"
@@ -248,8 +272,13 @@ export function BodyPartFocusView({
           }}
           onError={() => setImageUnavailable(true)}
         />
+        {known?.id === "rShin" ? <>
+          <span className="body-part-focus-dialog__marker" style={{ left: "37.7%" }} aria-hidden="true" />
+          <span className="body-part-focus-dialog__marker" style={{ left: "62.3%" }} aria-hidden="true" />
+        </> : <span className="body-part-focus-dialog__marker" aria-hidden="true" />}
         <figcaption>{sideLabel ?? "위치 미표시"}</figcaption>
       </figure>}
+      {known && (known.id === "lHam" || known.id === "rHam") && <p className="body-part-focus-dialog__hint">허벅지 뒤 근육 · 햄스트링</p>}
 
       {target.kind === "other" && <div className="body-part-focus-dialog__custom-fields">
         <div className="body-part-focus-dialog__field">
@@ -292,8 +321,8 @@ export function BodyPartFocusView({
             }}
           >최근 이름 “{matchingRecentPart.labelSnapshot}” 재사용</button>}
         </div>
-        <details className="body-part-focus-dialog__memo-details">
-          <summary>추가 메모 <span>선택</span></summary>
+        <details className="body-part-focus-dialog__memo-details" open={memoOpen} onToggle={event => setMemoOpen(event.currentTarget.open)}>
+          <summary>메모 추가 <span>선택</span><ChevronDown size={18} aria-hidden="true" /></summary>
           <div className="body-part-focus-dialog__field">
             <label htmlFor={noteInputId}>메모</label>
             <textarea
@@ -335,28 +364,35 @@ export function BodyPartFocusView({
         </div>}
       </div>}
 
+      <p className="body-part-focus-dialog__question">통증은 어느 정도인가요?</p>
       <p id={scaleDescriptionId} className="body-part-focus-dialog__scale-range">
         <span>약함</span><span aria-hidden="true">→</span><span>심함</span>
       </p>
-      <div className="body-part-focus-dialog__levels" role="group" aria-labelledby={focusTitleId} aria-describedby={scaleDescriptionId}>
+      <div className="body-part-focus-dialog__levels" role="group" aria-label="통증 정도" aria-describedby={scaleDescriptionId}>
         {[1, 2, 3, 4, 5].map(value => (
           <button key={value} type="button" className="app-choice-control body-part-focus-dialog__level"
             aria-label={`${target.kind === "known" ? target.part.name : customName.trim() || "기타 부위"} 통증 ${value}단계`}
             aria-pressed={currentLevel === value}
             ref={node => { if (node) levelRefs.current.set(value, node); else levelRefs.current.delete(value) }}
-            onClick={() => handleSelectLevel(value)}>
+            onClick={() => {
+              if (target.kind === "known") handleSelectLevel(value)
+              else { setCurrentLevel(value); setValidationMessage(""); setValidationField("") }
+            }}>
             {value}
           </button>
         ))}
-        <button type="button" className="app-choice-control body-part-focus-dialog__clear"
-          aria-label={target.kind === "known"
-            ? `${target.part.name} 통증 해제`
-            : `${customName.trim() || "기타 부위"} 통증 해제`}
-          aria-pressed={currentLevel === 0}
-          onClick={() => handleSelectLevel(0)}>
-          해제
-        </button>
       </div>
-    </dialog>
+      {target.kind === "other" && <button type="button" className="app-choice-control body-part-focus-dialog__apply"
+        disabled={currentLevel === 0} onClick={() => handleSelectLevel(currentLevel)}>
+        {target.currentLevel > 0 ? "변경 적용" : "추가"}
+      </button>}
+        {target.currentLevel > 0 && <button type="button" className="app-text-button body-part-focus-dialog__clear"
+          aria-label={target.kind === "known"
+            ? `${target.part.name} 선택 취소`
+            : `${customName.trim() || "기타 부위"} 선택 취소`}
+          onClick={() => handleSelectLevel(0)}>
+          선택 취소
+        </button>}
+    </Frame>
   )
 }

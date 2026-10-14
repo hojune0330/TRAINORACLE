@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { EveningCheckin } from "./EveningCheckin"
 import { EntryChooser } from "./EntryChooser"
@@ -77,15 +78,15 @@ it("blocks out-of-range sleep hours until the input is repaired", () => {
 
 it("keeps each selected answer in a concise review instead of rendering the full form", () => {
   render(<EveningCheckin />)
-  fireEvent.click(screen.getByRole("button", { name: "몸 상태·기분" }))
-  expect(screen.getByRole("heading", { level: 2, name: "오늘 몸 상태와 기분" })).toBeVisible()
-  fireEvent.click(screen.getByRole("button", { name: "감정 4 좋음" }))
+  fireEvent.click(screen.getByRole("button", { name: "기분" }))
+  expect(screen.getByRole("heading", { level: 2, name: "오늘 기분" })).toBeVisible()
+  fireEvent.click(screen.getByRole("button", { name: "기분 4 좋음" }))
   fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
 
   expect(screen.getByRole("heading", { level: 2, name: "입력 확인" })).toBeVisible()
   expect(screen.getByText("기분 좋음")).toBeVisible()
   expect(screen.queryByRole("slider", { name: "수면 시간" })).toBeNull()
-  expect(screen.queryByRole("button", { name: "감정 4 좋음" })).toBeNull()
+  expect(screen.queryByRole("button", { name: "기분 4 좋음" })).toBeNull()
   fireEvent.click(screen.getByRole("button", { name: "메모 입력" }))
   expect(screen.getByRole("textbox", { name: "오늘의 메모" })).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
@@ -95,6 +96,71 @@ it("keeps each selected answer in a concise review instead of rendering the full
   expect(loadEntries()).toHaveLength(1)
   expect(loadEntries()[0]).toMatchObject({ kind: "evening", mood: 4,
     fieldProvenance: { mood: { provenance: "EXPLICIT" }, painParts: { provenance: "MISSING" } } })
+})
+
+it("opens body and mood independently without requiring either answer", () => {
+  render(<EveningCheckin />)
+  fireEvent.click(screen.getByRole("button", { name: "몸 상태" }))
+  expect(screen.getByRole("heading", { level: 2, name: "오늘 몸 상태" })).toHaveFocus()
+  expect(screen.queryByRole("group", { name: "오늘 기분" })).toBeNull()
+  expect(screen.queryByRole("button", { name: "기분 4 좋음" })).toBeNull()
+
+  fireEvent.click(screen.getByRole("button", { name: "입력 확인" }))
+  expect(screen.getByRole("button", { name: "몸 상태 입력" })).toBeVisible()
+  fireEvent.click(screen.getByRole("button", { name: "기분 입력" }))
+  expect(screen.getByRole("heading", { level: 2, name: "오늘 기분" })).toHaveFocus()
+  expect(screen.queryByRole("button", { name: /몸 부위 기록 이력 보기/u })).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "이전 질문" }))
+  expect(screen.getByRole("heading", { level: 2, name: "입력 확인" })).toHaveFocus()
+  expect(loadEntries()).toEqual([])
+})
+
+it("keeps the selected date in a compact body question without changing other steps or saving an empty answer", () => {
+  render(<EveningCheckin targetDate="2026-07-20" />)
+  expect(screen.getByText("2026·07·20").closest("time")).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "몸 상태" }))
+  expect(screen.getByText("2026·07·20").closest("time")).toHaveAttribute("datetime", "2026-07-20")
+  expect(screen.getByRole("heading", { name: "오늘 몸 상태" })).toHaveFocus()
+  expect(screen.getByRole("button", { name: "이전 질문" })).toBeVisible()
+  expect(screen.queryByRole("button", { name: "입력 확인으로" })).toBeNull()
+  expect(screen.queryByRole("button", { name: /^저장/u })).toBeNull()
+
+  fireEvent.click(screen.getByRole("button", { name: "입력 확인" }))
+  expect(screen.getByRole("heading", { name: "입력 확인" })).toHaveFocus()
+  expect(screen.getByRole("button", { name: "몸 상태 입력" })).toBeVisible()
+  expect(screen.getByText("2026·07·20").closest("time")).toBeNull()
+  expect(loadEntries()).toEqual([])
+
+  fireEvent.click(screen.getByRole("button", { name: "기분 입력" }))
+  expect(screen.getByRole("button", { name: "입력 확인으로" })).toBeVisible()
+  expect(screen.getByText("2026·07·20").closest("time")).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "이전 질문" }))
+  expect(screen.getByRole("heading", { name: "입력 확인" })).toHaveFocus()
+  expect(loadEntries()).toEqual([])
+})
+
+it("retains existing body answers when editing mood and returning through review", () => {
+  render(<EveningCheckin initialEntry={{ id: "synthetic-body-mood", kind: "evening", date: "2026-10-08",
+    savedAt: "2026-10-08T00:00:00.000Z", syncState: "local", sleepH: 0, sleepQuality: 0,
+    weightKg: "", restingHr: "", mood: 4, painParts: { rKnee: 4 }, note: "" }} />)
+  expect(screen.getByText("불편한 곳 1곳 표시")).toBeVisible()
+  expect(screen.getByText("기분 좋음")).toBeVisible()
+  expect(screen.getByText(/높은 통증은 사람이 꼭 확인/u)).toBeVisible()
+
+  fireEvent.click(screen.getByRole("button", { name: "기분 수정" }))
+  expect(screen.getByRole("button", { name: "기분 4 좋음" })).toHaveAttribute("aria-pressed", "true")
+  fireEvent.click(screen.getByRole("button", { name: "기분 입력 안 함" }))
+  fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
+  expect(screen.getByRole("button", { name: "기분 입력" })).toBeVisible()
+  expect(screen.getByText("불편한 곳 1곳 표시")).toBeVisible()
+  expect(screen.getByText(/높은 통증은 사람이 꼭 확인/u)).toBeVisible()
+
+  fireEvent.click(screen.getByRole("button", { name: "몸 상태 수정" }))
+  expect(screen.getByRole("heading", { level: 2, name: "오늘 몸 상태" })).toBeVisible()
+  expect(screen.queryByRole("group", { name: "오늘 기분" })).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "이전 질문" }))
+  expect(screen.getByRole("heading", { level: 2, name: "입력 확인" })).toHaveFocus()
+  expect(screen.getByText("불편한 곳 1곳 표시")).toBeVisible()
 })
 
 it("opens only the selected edit group when an existing check-in starts in review", () => {
@@ -124,4 +190,9 @@ it("reveals a missing memo purpose when saving from an existing review", () => {
   expect(screen.getByRole("heading", { level: 2, name: "오늘 남길 메모" })).toBeVisible()
   expect(screen.getByRole("textbox", { name: "오늘의 메모" })).toHaveValue("합성 용도 미선택 메모")
   expect(screen.getByRole("alert")).toHaveTextContent("메모를 저장할 방법을 선택해 주세요.")
+})
+
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })

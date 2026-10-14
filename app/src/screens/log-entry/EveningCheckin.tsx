@@ -27,6 +27,7 @@ import { FormInputSaveBar as StickyBar } from "./useFormInputDraft"
 import type { EntryFormProps } from "./shared"
 import { TaskFlowStep } from "../../components/TaskFlowStep"
 import { useTaskFlowBack } from "../../hooks/useTaskFlowBack"
+import "./EveningCheckin.css"
 
 const MOOD_LABELS = ["흐림", "무덤덤", "보통", "좋음", "최고"] as const
 const SLEEP_QUALITY_LABELS = ["최악", "나쁨", "보통", "좋음", "최고"] as const
@@ -35,7 +36,7 @@ const isValidSleepHours = (value: string) => {
   const hours = Number(value)
   return Number.isFinite(hours) && hours > 0 && hours <= 24
 }
-type EveningInputStep = "sleep" | "condition" | "metrics" | "memo"
+type EveningInputStep = "sleep" | "condition" | "mood" | "metrics" | "memo"
 type EveningStep = EveningInputStep | "choose" | "review"
 type EveningEditGroup = EveningInputStep | null
 type EveningLocation = { readonly step: EveningStep; readonly editGroup: EveningEditGroup; readonly returnToReview?: boolean }
@@ -208,7 +209,8 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry, initia
   const stepTitle: Record<EveningStep, string> = {
     choose: "무엇을 남길까요?",
     sleep: "어젯밤 수면",
-    condition: "오늘 몸 상태와 기분",
+    condition: "오늘 몸 상태",
+    mood: "오늘 기분",
     metrics: "체중 · 안정시 심박",
     memo: "오늘 남길 메모",
     review: "입력 확인",
@@ -218,10 +220,8 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry, initia
     sleep > 0 ? `${sleep}h` : null,
     quality > 0 ? `수면 질 ${SLEEP_QUALITY_LABELS[quality - 1]}` : null,
   ].filter((value): value is string => value !== null).join(" · ") || "입력 안 함"
-  const conditionSummary = [
-    painPartCount > 0 ? `불편한 곳 ${painPartCount}곳 표시` : null,
-    mood > 0 ? `기분 ${MOOD_LABELS[mood - 1]}` : null,
-  ].filter((value): value is string => value !== null).join(" · ") || "입력 안 함"
+  const conditionSummary = painPartCount > 0 ? `불편한 곳 ${painPartCount}곳 표시` : "입력 안 함"
+  const moodSummary = mood > 0 ? `기분 ${MOOD_LABELS[mood - 1]}` : "입력 안 함"
   const hasMetricInput = weight.trim() !== "" || hr.trim() !== ""
   const metricsSummary = [
     weight.trim() ? `체중 ${weight.trim()}kg` : null,
@@ -233,15 +233,17 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry, initia
     : "입력 안 함"
   const reviewItems: Array<{ key: EveningInputStep; label: string; value: string }> = [
     { key: "sleep", label: "수면", value: sleepSummary },
-    { key: "condition", label: "몸 상태 · 기분", value: conditionSummary },
+    { key: "condition", label: "몸 상태", value: conditionSummary },
+    { key: "mood", label: "기분", value: moodSummary },
     { key: "metrics", label: "체중 · 안정시 심박", value: metricsSummary },
     { key: "memo", label: "메모", value: memoSummary },
   ]
   const reviewActionLabel = (key: EveningInputStep) => {
     const hasValue = key === "sleep" ? sleep > 0 || quality > 0
-      : key === "condition" ? painPartCount > 0 || mood > 0
-        : key === "metrics" ? hasMetricInput
-          : memoPreview.length > 0
+      : key === "condition" ? painPartCount > 0
+        : key === "mood" ? mood > 0
+          : key === "metrics" ? hasMetricInput
+            : memoPreview.length > 0
     return hasValue ? "수정" : "입력"
   }
 
@@ -250,14 +252,20 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry, initia
       <fieldset disabled={saving} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
       <TopBar onBack={draft.back(onBack)}>컨디션·메모</TopBar>
       <FormFinalizationRecovery recovery={finalization} onBack={draft.back(onBack)} />
-      <div style={{ padding: "14px 20px 0" }}>
+      {step === "condition" ? <p className="evening-checkin__body-date">
+        <time dateTime={entryDate}>{compactDate(entryDate)}</time>
+        <span>{dowOf(entryDate)} · {nowClock()}</span>
+      </p> : <div style={{ padding: "14px 20px 0" }}>
         <IndexCard date={compactDate(entryDate)} dow={`${dowOf(entryDate)} · ${nowClock()}`} />
-      </div>
+      </div>}
       {step === "review" && emptyNotice && !hasInput && <p role="alert">아직 입력한 내용이 없어요. 남길 항목 하나를 골라 주세요.</p>}
       <TaskFlowStep stepKey={`${step}:${editGroup ?? "flow"}`} title={stepTitle[step]}
+        className={step === "condition" ? "evening-checkin__body-step" : undefined}
         busy={saving} onBack={flow.history.length > 0 ? goBackFlow : undefined}
         actions={step === "review" ? <StickyBar onSave={persist} error={saveError && !accountEnabled}
-          label={saving ? "저장 중" : isEditing ? "수정 저장" : undefined} /> : step === "choose" ? undefined : (
+          label={saving ? "저장 중" : isEditing ? "수정 저장" : undefined} /> : step === "choose" ? undefined : step === "condition" ? (
+          <button type="button" className="evening-checkin__body-review" onClick={enterReview}>입력 확인</button>
+        ) : (
           <div className="task-flow__actions">
             <button type="button" className="quick-log__primary" onClick={enterReview}>입력 확인으로</button>
           </div>
@@ -265,7 +273,7 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry, initia
 
         {step === "choose" && <nav className="app-choice-group" aria-label="남길 항목" style={{ display: "grid", paddingInline: "var(--space-5)" }}>
           {([
-            ["condition", "몸 상태·기분"], ["sleep", "수면"], ["memo", "메모 쓰기"], ["metrics", "체중·심박"],
+            ["condition", "몸 상태"], ["mood", "기분"], ["sleep", "수면"], ["memo", "메모 쓰기"], ["metrics", "체중·심박"],
           ] as const).map(([key, label]) => <button key={key} type="button" className="app-choice-control app-choice-control--answer"
             onClick={() => navigateTo({ step: key, editGroup: key, returnToReview: true })}>{label}</button>)}
         </nav>}
@@ -320,15 +328,18 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry, initia
           </FormSec>
         </>}
 
-        {step === "condition" && <>
-          <FormSec compact lb="몸 상태 · 표시 선택">
+        {step === "condition" &&
+          <div style={{ padding: "var(--space-1) var(--space-5) 0" }}>
             <JournalBodyInput selected={painParts} onChange={setPainParts} metadata={bodyPartMetadata} onMetadataChange={setBodyPartMetadata} initialPartId={initialBodyPartId} />
             {painLevelsRequireReview(painSignals) && <PainReviewBanner />}
-          </FormSec>
-          <FormSec compact lb="오늘 감정 · 선택">
-            <div role="group" aria-label="오늘 감정" style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+          </div>
+        }
+
+        {step === "mood" &&
+          <div style={{ padding: "var(--space-1) var(--space-5) 0" }}>
+            <div role="group" aria-label="오늘 기분" style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
               {MOOD_LABELS.map((label, index) => (
-                <button key={label} type="button" className="app-choice-control app-choice-control--answer" aria-label={`감정 ${index + 1} ${label}`} aria-pressed={mood === index + 1} onClick={() => setMood(index + 1)} style={{
+                <button key={label} type="button" className="app-choice-control app-choice-control--answer" aria-label={`기분 ${index + 1} ${label}`} aria-pressed={mood === index + 1} onClick={() => setMood(index + 1)} style={{
                   padding: "var(--space-2) var(--space-1)",
                   flex: "1 0 44px", minWidth: "max-content", whiteSpace: "nowrap",
                   cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
@@ -339,8 +350,8 @@ function EveningCheckinEditor({ onBack, onDone, targetDate, initialEntry, initia
               ))}
             </div>
             {mood > 0 && <button type="button" className="quick-log__secondary" onClick={() => setMood(0)}>기분 입력 안 함</button>}
-          </FormSec>
-        </>}
+          </div>
+        }
 
         {step === "metrics" && <FormSec compact lb="체중 · 안정시 심박 · 선택">
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>

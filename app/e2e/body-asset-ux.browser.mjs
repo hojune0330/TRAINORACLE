@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
-import { chromium } from '@playwright/test'
+import { chromium, expect } from '@playwright/test'
 
 const base = 'http://127.0.0.1:4176'
-const output = new URL('../.codex-calendar-visual-qa/body-emoji-ux-20261012/', import.meta.url)
+const output = new URL('../.codex-calendar-visual-qa/body-emoji-ux-20261014/', import.meta.url)
 await mkdir(output, { recursive: true })
 const browser = await chromium.launch({ headless: true })
 const observations = [], errors = []
@@ -35,7 +35,21 @@ const capture = async (page, name) => {
 const condition = async page => {
   await nav(page, '기록하기').click()
   await page.getByTestId('entry-choice-evening').click()
-  await page.getByRole('button', { name: '몸 상태·기분', exact: true }).click()
+  await page.getByRole('button', { name: '몸 상태', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '오늘 몸 상태', exact: true })).toBeVisible()
+  await expect(page.getByRole('group', { name: '오늘 기분', exact: true })).toHaveCount(0)
+}
+const openKnee = async page => {
+  await page.getByRole('button', { name: '무릎', exact: true }).click()
+  await page.getByRole('dialog').getByRole('button', { name: '오른 무릎', exact: true }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(1)
+  await expect(page.getByRole('dialog')).toHaveAccessibleName('내 오른쪽 무릎')
+}
+const completeBodyInput = async page => {
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toHaveAccessibleName('선택한 부위')
+  await dialog.getByRole('button', { name: '입력 완료', exact: true }).click()
+  await expect(dialog).toHaveCount(0)
 }
 const contentPosition = locator => locator.evaluate(element => {
   let scroll = 0
@@ -62,16 +76,22 @@ try {
     await guide.waitFor()
     await guide.evaluate(img => img.decode())
     await capture(page, `body-start-${width}`)
-    const knee = page.getByRole('button', { name: '오른 무릎', exact: true })
+    const knee = page.getByRole('button', { name: '무릎', exact: true })
     await knee.scrollIntoViewIfNeeded()
     const before = await contentPosition(knee)
     await knee.click()
     const after = await contentPosition(knee)
     assert.ok(Math.abs(after.y - before.y) <= 1 && Math.abs(after.x - before.x) <= 1, `body button moved at ${width}`)
-    const levels = page.getByRole('group', { name: '오른 무릎 통증 정도' })
+    await page.getByRole('dialog').getByRole('button', { name: '오른 무릎', exact: true }).click()
+    await expect(page.getByRole('dialog')).toHaveCount(1)
+    const levels = page.getByRole('dialog').getByRole('group', { name: '통증 정도', exact: true })
     const targets = await levels.getByRole('button').evaluateAll(buttons => buttons.map(button => ({ name: button.getAttribute('aria-label'), width: button.getBoundingClientRect().width, height: button.getBoundingClientRect().height })))
+    assert.equal(targets.length, 5, 'five severity choices are present')
     assert.ok(targets.every(target => target.width >= 44 && target.height >= 44), `pain target too small at ${width}: ${JSON.stringify(targets)}`)
     await page.getByRole('button', { name: '오른 무릎 통증 4단계', exact: true }).click()
+    await expect(page.getByRole('dialog').getByRole('button', { name: '오른 무릎, 통증 4/5', exact: true })).toBeVisible()
+    await expect(page.getByRole('dialog').getByText('지도자·보호자와 상의해 주세요.', { exact: false })).toBeVisible()
+    await completeBodyInput(page)
     await capture(page, `body-selected-${width}`)
     observations.push({ name: `body-controls-${width}`, before, after, targets, guide: await guide.evaluate(img => ({ width: img.clientWidth, height: img.clientHeight, naturalWidth: img.naturalWidth })) })
     await context.close()
@@ -80,20 +100,45 @@ try {
 
   const large = await openContext(320)
   await condition(large.page)
-  await large.page.getByRole('button', { name: '오른 무릎', exact: true }).click()
+  await openKnee(large.page)
+  await large.page.getByRole('button', { name: '오른 무릎 통증 2단계', exact: true }).click()
+  await completeBodyInput(large.page)
+  await large.page.getByRole('button', { name: '오른 무릎, 통증 2/5', exact: true }).click()
   await large.page.evaluate(() => {
     const sizes = [...document.querySelectorAll('h1,h2,h3,p,button,small,span,summary,label')]
       .map(element => [element, parseFloat(getComputedStyle(element).fontSize)])
     for (const [element, size] of sizes) element.style.fontSize = `${size * 2}px`
   })
-  const largeTargets = await large.page.locator('.body-pain-selector__level-picker button, [aria-label="오늘 감정"] button').evaluateAll(buttons =>
+  const largeTargets = await large.page.getByRole('dialog').locator('.body-part-focus-dialog__levels button, .body-part-focus-dialog__clear').evaluateAll(buttons =>
     buttons.map(button => ({ name: button.textContent, width: button.getBoundingClientRect().width,
-      height: button.getBoundingClientRect().height, wraps: getComputedStyle(button).whiteSpace !== 'nowrap',
+      height: button.getBoundingClientRect().height,
       overflow: button.scrollWidth > button.clientWidth })))
-  assert.ok(largeTargets.every(button => button.width >= 44 && button.height >= 44 && !button.wraps && !button.overflow))
-  await large.page.getByRole('button', { name: '오른 무릎 통증 해제', exact: true }).scrollIntoViewIfNeeded()
+  assert.equal(largeTargets.length, 6, 'five levels and the selected-part clear action remain available')
+  assert.ok(largeTargets.every(button => button.width >= 44 && button.height >= 44 && !button.overflow))
+  await large.page.getByRole('button', { name: '오른 무릎 선택 취소', exact: true }).scrollIntoViewIfNeeded()
   await capture(large.page, 'body-large-text-320')
   observations.push({ name: 'large-text-controls', targets: largeTargets })
+  await large.page.getByRole('button', { name: '몸 상태 입력 닫기', exact: true }).click()
+  await expect(large.page.getByRole('dialog')).toHaveCount(0)
+  await large.page.getByRole('button', { name: '입력 확인', exact: true }).click()
+  await large.page.getByRole('button', { name: '기분 입력', exact: true }).click()
+  const mood = large.page.getByRole('group', { name: '오늘 기분', exact: true })
+  await expect(mood).toBeVisible()
+  await expect(large.page.getByRole('group', { name: '몸 부위 선택', exact: true })).toHaveCount(0)
+  await mood.getByRole('button').evaluateAll(buttons => {
+    for (const button of buttons) {
+      const label = button.querySelector('span:last-child')
+      if (label) label.style.fontSize = `${parseFloat(getComputedStyle(label).fontSize) * 2}px`
+    }
+  })
+  const moodTargets = await mood.getByRole('button').evaluateAll(buttons => buttons.map(button => ({
+    width: button.getBoundingClientRect().width, height: button.getBoundingClientRect().height,
+    overflow: button.scrollWidth > button.clientWidth,
+  })))
+  assert.equal(moodTargets.length, 5)
+  assert.ok(moodTargets.every(button => button.width >= 44 && button.height >= 44 && !button.overflow))
+  await capture(large.page, 'mood-large-text-320')
+  observations.push({ name: 'separate-mood-large-text-controls', targets: moodTargets })
   await large.context.close()
 
   const { page, context } = await openContext(375)
@@ -109,17 +154,25 @@ try {
   await capture(page, 'sleep-input-375')
   await page.getByRole('button', { name: '입력 확인으로', exact: true }).click()
   await page.getByRole('button', { name: /^저장/ }).click()
-  await page.waitForFunction(() => JSON.parse(localStorage.getItem('to-local-journal.journal.v2') ?? '[]').some(entry => entry.kind === 'evening'))
-  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('to-local-journal.journal.v2')))
+  await page.waitForFunction(async () => {
+    const { loadEntries } = await import('/src/domain/journal-store.ts')
+    return loadEntries().some(entry => entry.kind === 'evening')
+  })
+  const saved = await page.evaluate(async () => {
+    const { loadEntries } = await import('/src/domain/journal-store.ts')
+    return loadEntries()
+  })
   assert.equal(saved[0].sleepH, 2.5)
   observations.push({ name: 'sleep-synthetic-save', sleepH: saved[0].sleepH, provenance: saved[0].fieldProvenance.sleepH.provenance })
   await context.close()
 
   const missing = await openContext(320, true)
   await condition(missing.page)
-  await missing.page.getByRole('button', { name: '오른 무릎', exact: true }).click()
+  await openKnee(missing.page)
   await missing.page.getByRole('button', { name: '오른 무릎 통증 2단계', exact: true }).click()
-  assert.equal(await missing.page.getByRole('button', { name: '오른 무릎 통증 2단계', exact: true }).getAttribute('aria-pressed'), 'true')
+  await expect(missing.page.getByRole('dialog').getByRole('button', { name: '오른 무릎, 통증 2/5', exact: true })).toBeVisible()
+  await completeBodyInput(missing.page)
+  await expect(missing.page.getByRole('button', { name: '오른 무릎, 통증 2/5', exact: true })).toBeVisible()
   assert.equal(await missing.page.locator('.body-pain-selector__visual').count(), 0)
   await capture(missing.page, 'body-image-unavailable-320')
   await missing.context.close()
@@ -155,6 +208,6 @@ try {
   await capture(plan.page, 'oracle-plan-only-375')
   await plan.context.close()
   assert.deepEqual(errors, [])
-  await writeFile(new URL('observations.json', output), JSON.stringify({ baseSource: '01783011', mode: 'LOCAL_SYNTHETIC_IMPLEMENTATION_CHECK', observations, pageErrors: errors }, null, 2))
+  await writeFile(new URL('observations.json', output), JSON.stringify({ source: 'LOCAL_WORKTREE_UNVERIFIED_SHA', mode: 'LOCAL_SYNTHETIC_IMPLEMENTATION_CHECK', observations, pageErrors: errors }, null, 2))
   console.log(JSON.stringify({ captures: observations.filter(item => item.horizontalOverflow !== undefined).length, observations: observations.length, pageErrors: errors.length }))
 } finally { await browser.close() }

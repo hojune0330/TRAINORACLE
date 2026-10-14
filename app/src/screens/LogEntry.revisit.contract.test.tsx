@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import type { JournalEntry } from "../domain/journal-store"
 import { loadEntries, replaceAllEntries } from "../domain/journal-store"
 import { LogEntry } from "./LogEntry"
@@ -10,8 +11,9 @@ afterEach(cleanup)
 const DATE = "2026-07-20"
 
 describe("past journal revisit forms", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
   })
 
   it("prefills and replaces an evening check-in without changing its identity", async () => {
@@ -47,8 +49,14 @@ describe("past journal revisit forms", () => {
     expect(screen.queryByLabelText("체중 (kg)")).toBeNull()
     await user.click(screen.getByRole("button", { name: "입력 확인으로" }))
 
-    await user.click(screen.getByRole("button", { name: "몸 상태 · 기분 수정" }))
-    expect(screen.getByRole("button", { name: "감정 4 좋음" })).toHaveAttribute("aria-pressed", "true")
+    await user.click(screen.getByRole("button", { name: "몸 상태 수정" }))
+    expect(screen.getByRole("heading", { name: "오늘 몸 상태" })).toBeVisible()
+    expect(screen.queryByRole("group", { name: "오늘 기분" })).toBeNull()
+    await user.click(screen.getByRole("button", { name: "입력 확인" }))
+
+    await user.click(screen.getByRole("button", { name: "기분 수정" }))
+    expect(screen.getByRole("heading", { name: "오늘 기분" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "기분 4 좋음" })).toHaveAttribute("aria-pressed", "true")
     expect(screen.queryByLabelText("수면 시간")).toBeNull()
     expect(screen.queryByLabelText("체중 (kg)")).toBeNull()
     await user.click(screen.getByRole("button", { name: "입력 확인으로" }))
@@ -65,14 +73,16 @@ describe("past journal revisit forms", () => {
     await user.type(screen.getByLabelText("체중 (kg)"), "61.0")
     await user.click(screen.getByRole("button", { name: "입력 확인으로" }))
     expect(screen.getByRole("button", { name: "수면 수정" })).toBeVisible()
-    expect(screen.getByRole("button", { name: "몸 상태 · 기분 수정" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "몸 상태 수정" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "기분 수정" })).toBeVisible()
     expect(screen.getByRole("button", { name: "체중 · 안정시 심박 수정" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: /수정 저장/u }))
 
     // Then
     const [updated] = loadEntries()
     expect(updated).toEqual(
-      expect.objectContaining({ id: entry.id, date: DATE, weightKg: "61.0" }),
+      expect.objectContaining({ id: entry.id, date: DATE, weightKg: "61.0",
+        sleepH: entry.sleepH, sleepQuality: entry.sleepQuality, painParts: entry.painParts, mood: entry.mood }),
     )
     expect(Date.parse(updated?.savedAt ?? "")).toBeGreaterThan(Date.parse(entry.savedAt))
   })

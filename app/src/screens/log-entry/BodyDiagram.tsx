@@ -1,18 +1,26 @@
 import React from "react"
+import { ArrowLeft, ChevronRight, Plus, X } from "lucide-react"
+import { useReaderDialog } from "../../hooks/useReaderDialog"
+import { useTaskFlowBack } from "../../hooks/useTaskFlowBack"
+import { hasPendingBrowserBackLayer } from "../../navigation/browserNavigation"
 import { PainDot } from "../../components/JournalPrimitives"
 import { TermHelp } from "../../components/TermHelp"
+import { GLOSSARY } from "../../domain/glossary"
 import { BODY_PARTS } from "../../components/body-parts"
 import {
   OTHER_BODY_PART_COUNT_LIMIT,
   parseBodyPartMetadata,
+  journalPainPartsForSafety,
 } from "../../domain/body-part-metadata"
+import { painLevelsRequireReview } from "../../safety/memo-safety"
 import type {
   BodyPartMetadataV1,
   OtherBodyPartId,
   OtherBodyPartObservation,
 } from "../../domain/body-part-metadata"
 import { BodyPartFocusView } from "./BodyPartFocusView"
-import type { BodyPartFocusTarget, OtherBodyPartSelection } from "./BodyPartFocusView"
+import type { BodyPartFocusTarget, OtherBodyPartSelection, OtherBodyPartDraft } from "./BodyPartFocusView"
+import { BODY_PART_GROUPS, bodyPartFocusLabel, bodyPartInputLabel, type BodyPartGroup } from "./body-part-presentation"
 import "./BodyDiagram.css"
 
 const EMPTY_SELECTED: Readonly<Record<string, number>> = Object.freeze({})
@@ -27,6 +35,7 @@ interface BodyDiagramProps {
   readonly recentCustomParts?: readonly Pick<OtherBodyPartObservation, "id" | "labelSnapshot">[]
   readonly onRequestHistory?: () => void
   readonly initialPartId?: string
+  readonly recentKnownPartIds?: readonly string[]
 }
 
 export function BodyDiagram({
@@ -37,7 +46,15 @@ export function BodyDiagram({
   recentCustomParts = EMPTY_RECENT_PARTS,
   onRequestHistory,
   initialPartId,
+  recentKnownPartIds = [],
 }: BodyDiagramProps) {
+  const [dialogOpen, setDialogOpen] = React.useState(false)
+  const [activeGroup, setActiveGroup] = React.useState<BodyPartGroup | null>(null)
+  const [showSummary, setShowSummary] = React.useState(false)
+  const [reviewHelpOpen, setReviewHelpOpen] = React.useState(false)
+  const customDrafts = React.useRef(new Map<string, OtherBodyPartDraft>())
+  const reviewHelpButton = React.useRef<HTMLButtonElement>(null)
+  const rootRef = React.useRef<HTMLDivElement>(null)
   const [activeTarget, setActiveTarget] = React.useState<BodyPartFocusTarget | null>(null)
   const [guideUnavailable, setGuideUnavailable] = React.useState(false)
   const [showMetadataWarning, setShowMetadataWarning] = React.useState(false)
@@ -53,7 +70,11 @@ export function BodyDiagram({
   )
   const currentOtherParts = supportedMetadata?.observations ?? []
   const customEditingAvailable = onMetadataChange !== undefined && supportedMetadata !== null
-  const otherDialogFromAddButton = activeTarget?.kind === "other" && activeReturnButton.current === addOtherButtonRef.current
+  const hasSelection = BODY_PARTS.some(part => (selected[part.id] ?? 0) > 0) || currentOtherParts.length > 0
+  const draftKey = activeTarget?.kind === "other" ? activeTarget.id ?? "new-other" : null
+  const retainCustomDraft = React.useCallback((draft: OtherBodyPartDraft) => {
+    if (draftKey !== null) customDrafts.current.set(draftKey, draft)
+  }, [draftKey])
 
   const canSaveOtherPart = (id?: OtherBodyPartId) => {
     if (!customEditingAvailable || supportedMetadata === null) return false
@@ -64,12 +85,20 @@ export function BodyDiagram({
   const openKnownPart = (partId: string, trigger: HTMLElement | null) => {
     const part = BODY_PARTS.find(candidate => candidate.id === partId)
     if (!part) return
+    setReviewHelpOpen(false)
     activeReturnButton.current = trigger
+    setDialogOpen(true)
+    setActiveGroup(null)
+    setShowSummary(false)
     setActiveTarget({ kind: "known", part, currentLevel: selected[part.id] || 0 })
   }
 
   const openCurrentOtherPart = (observation: OtherBodyPartObservation, trigger: HTMLElement | null) => {
+    setReviewHelpOpen(false)
     activeReturnButton.current = trigger
+    setDialogOpen(true)
+    setActiveGroup(null)
+    setShowSummary(false)
     setActiveTarget({
       kind: "other",
       id: observation.id,
@@ -88,6 +117,7 @@ export function BodyDiagram({
     const recent = recentCustomParts.find(item => item.id === initialPartId)
     if (!known && !existing && !recent) return
     initialPartOpened.current = true
+    setDialogOpen(true)
     if (known) {
       activeReturnButton.current = partButtonRefs.current.get(known.id) ?? null
       setActiveTarget({ kind: "known", part: known, currentLevel: selected[known.id] || 0 })
@@ -115,7 +145,26 @@ export function BodyDiagram({
     }
   }, [initialPartId, currentOtherParts, recentCustomParts, selected, supportedMetadata])
 
-  const closeFocus = () => setActiveTarget(null)
+  const closeFocus = () => { customDrafts.current.clear(); setReviewHelpOpen(false); setDialogOpen(false); setActiveTarget(null); setActiveGroup(null); setShowSummary(false) }
+  const showResult = () => { if (draftKey !== null) customDrafts.current.delete(draftKey); setReviewHelpOpen(false); setActiveTarget(null); setActiveGroup(null); setShowSummary(true) }
+  const showPicker = () => { setReviewHelpOpen(false); setActiveTarget(null); setActiveGroup(null); setShowSummary(false) }
+  const goBack = () => {
+    if (reviewHelpOpen) { setReviewHelpOpen(false); reviewHelpButton.current?.focus({ preventScroll: true }) }
+    else showPicker()
+  }
+
+  const openGroup = (group: BodyPartGroup, trigger: HTMLElement | null) => {
+    setReviewHelpOpen(false)
+    if (!dialogOpen) activeReturnButton.current = trigger
+    setDialogOpen(true)
+    setShowSummary(false)
+    setActiveTarget(null)
+    if (group.ids.length === 1) {
+      const part = BODY_PARTS.find(item => item.id === group.ids[0])!
+      setActiveTarget({ kind: "known", part, currentLevel: selected[part.id] || 0 })
+      setActiveGroup(null)
+    } else setActiveGroup(group)
+  }
 
   const chooseKnownLevel = (id: string, level: number) => {
     const output = { ...selected }
@@ -164,7 +213,11 @@ export function BodyDiagram({
 
   const openNewOtherPart = (trigger: HTMLElement | null) => {
     if (!customEditingAvailable) return
+    setReviewHelpOpen(false)
     activeReturnButton.current = trigger
+    setDialogOpen(true)
+    setActiveGroup(null)
+    setShowSummary(false)
     setActiveTarget({
       kind: "other",
       labelSnapshot: "",
@@ -174,8 +227,39 @@ export function BodyDiagram({
     })
   }
 
+  const selection = (inDialog: boolean) => <div className="body-pain-selector__summary" role="group" aria-label="선택한 부위">
+    {BODY_PARTS.filter(part => (selected[part.id] ?? 0) > 0).map(part => <button key={part.id} type="button"
+      className="app-choice-control body-pain-selector__part-button"
+      aria-label={`${part.name}, 통증 ${selected[part.id]}/5`}
+      onClick={event => openKnownPart(part.id, inDialog ? activeReturnButton.current : event.currentTarget)}>
+      <PainDot level={selected[part.id] ?? 0} /><span>{bodyPartInputLabel(part)}</span><strong>{selected[part.id]}/5</strong><ChevronRight size={16} aria-hidden="true" />
+    </button>)}
+    {currentOtherParts.map(part => <button key={part.id} type="button"
+      ref={node => { if (!inDialog) { if (node) recentPartButtonRefs.current.set(part.id, node); else recentPartButtonRefs.current.delete(part.id) } }}
+      className="app-choice-control body-pain-selector__part-button"
+      aria-label={`${part.labelSnapshot}, 통증 ${part.severity}/5`}
+      onClick={event => openCurrentOtherPart(part, inDialog ? activeReturnButton.current : event.currentTarget)}>
+      <PainDot level={part.severity} /><span>{part.labelSnapshot}</span><strong>{part.severity}/5</strong><ChevronRight size={16} aria-hidden="true" />
+    </button>)}
+  </div>
+
+  const picker = (inDialog: boolean) => <div className="body-pain-selector__buttons" role="group" aria-label="몸 부위 선택">
+    {BODY_PART_GROUPS.map(group => <button key={group.id} type="button"
+      ref={node => { if (!inDialog) group.ids.forEach(id => { if (node) partButtonRefs.current.set(id, node); else partButtonRefs.current.delete(id) }) }}
+      className="app-choice-control body-pain-selector__group-button"
+      aria-haspopup="dialog" aria-expanded={!inDialog ? dialogOpen && (activeGroup?.id === group.id || (activeTarget?.kind === "known" && group.ids.some(id => id === activeTarget.part.id))) : undefined}
+      onClick={event => openGroup(group, event.currentTarget)}>
+      <span>{group.label}</span><ChevronRight size={16} aria-hidden="true" />
+    </button>)}
+    {customEditingAvailable && <button ref={!inDialog ? addOtherButtonRef : undefined} type="button"
+      className="app-choice-control body-pain-selector__other-button" aria-haspopup="dialog"
+      onClick={event => openNewOtherPart(inDialog ? activeReturnButton.current : event.currentTarget)}>
+      <Plus size={16} aria-hidden="true" /><span>기타 부위 추가</span>
+    </button>}
+  </div>
+
   return (
-    <div className="body-pain-selector">
+    <div className="body-pain-selector" ref={rootRef} tabIndex={-1}>
       <div className="body-pain-selector__heading">
         {!guideUnavailable && <div className="body-pain-selector__visual" aria-hidden="true">
           <img
@@ -188,67 +272,24 @@ export function BodyDiagram({
             onError={() => setGuideUnavailable(true)}
           />
         </div>}
-        <p className="body-pain-selector__instruction">불편한 부위를 골라요</p>
+        <p className="body-pain-selector__instruction">{hasSelection ? "선택한 부위" : "불편한 곳을 골라요"}</p>
       </div>
       <div className="body-pain-selector__content">
-        <div className="body-pain-selector__buttons" role="group" aria-label="몸 부위 선택">
-          {BODY_PARTS.map((part) => {
-            const level = selected[part.id] || 0
-            const isOpen = activeTarget?.kind === "known" && activeTarget.part.id === part.id
-            return (
-              <div className="body-pain-selector__part" key={part.id}>
-                <button
-                  type="button"
-                  ref={(node) => {
-                    if (node) partButtonRefs.current.set(part.id, node)
-                    else partButtonRefs.current.delete(part.id)
-                  }}
-                  aria-label={`${part.name}${level > 0 ? `, 통증 ${level}/5` : ""}`}
-                  aria-expanded={isOpen}
-                  aria-controls={isOpen ? dialogId : undefined}
-                  onClick={event => openKnownPart(part.id, event.currentTarget)}
-                  className="body-pain-selector__part-button app-choice-control"
-                >
-                  <PainDot level={level} />
-                  <span className="body-pain-selector__part-name">{part.name}</span>
-                  {level > 0 && <span className="body-pain-selector__part-value">{level}/5</span>}
-                </button>
-              </div>
-            )
-          })}
-          {currentOtherParts.map(observation => (
-            <div className="body-pain-selector__part" key={observation.id}>
-              <button
-                type="button"
-                ref={node => {
-                  if (node) recentPartButtonRefs.current.set(observation.id, node)
-                  else recentPartButtonRefs.current.delete(observation.id)
-                }}
-                className="body-pain-selector__part-button app-choice-control"
-                aria-label={`${observation.labelSnapshot}, 통증 ${observation.severity}/5`}
-                aria-expanded={activeTarget?.kind === "other" && activeTarget.id === observation.id}
-                aria-controls={activeTarget?.kind === "other" && activeTarget.id === observation.id ? dialogId : undefined}
-                onClick={event => openCurrentOtherPart(observation, event.currentTarget)}
-              >
-                <PainDot level={observation.severity} />
-                <span className="body-pain-selector__part-name">{observation.labelSnapshot}</span>
-                <span className="body-pain-selector__part-value">{observation.severity}/5</span>
-              </button>
-            </div>
-          ))}
-          {customEditingAvailable && <button
-            ref={addOtherButtonRef}
-            type="button"
-            className="body-pain-selector__part-button body-pain-selector__other-button app-choice-control"
-            aria-expanded={otherDialogFromAddButton}
-            aria-controls={otherDialogFromAddButton ? dialogId : undefined}
-            onClick={event => openNewOtherPart(event.currentTarget)}
-          >
-            <span aria-hidden="true">＋</span><span>기타 부위 추가</span>
-          </button>}
-        </div>
+        {hasSelection ? <>{selection(false)}<button type="button" className="app-choice-control body-pain-selector__other-button"
+          onClick={event => { activeReturnButton.current = event.currentTarget; showPicker(); setDialogOpen(true) }}>
+          <Plus size={16} aria-hidden="true" />다른 부위 추가
+        </button></> : <>
+          {recentKnownPartIds.length > 0 && <div className="body-pain-selector__recent" role="group" aria-label="최근 기록한 부위">
+            <p>최근 부위</p>
+            {Array.from(new Set(recentKnownPartIds)).slice(0, 3).map(id => {
+              const part = BODY_PARTS.find(item => item.id === id)
+              return part ? <button key={id} type="button" className="app-choice-control" onClick={event => openKnownPart(id, event.currentTarget)}>{bodyPartInputLabel(part)}</button> : null
+            })}
+          </div>}
+          {picker(false)}
+        </>}
         {onRequestHistory && <button type="button" className="body-pain-selector__history app-text-button" onClick={onRequestHistory}>
-          몸 부위 기록 이력 보기
+          몸 기록 보기<ChevronRight size={16} aria-hidden="true" />
         </button>}
         {showMetadataWarning && <p className="body-pain-selector__metadata-warning" role="status">
           기타 부위 정보를 적용하지 못했어요. 새로고침하거나 다시 확인해 주세요.
@@ -257,20 +298,82 @@ export function BodyDiagram({
           기타 부위 정보를 읽을 수 없어 수정할 수 없어요.
         </p>}
       </div>
-      {activeTarget && <BodyPartFocusView
-        key={activeTarget.kind === "known" ? activeTarget.part.id : activeTarget.id ?? "new-other"}
-        dialogId={dialogId}
-        target={activeTarget}
-        onClose={closeFocus}
-        onSelectKnown={chooseKnownLevel}
-        onSelectOther={chooseOtherLevel}
-        returnFocusTo={() => activeReturnButton.current}
-      />}
+      {dialogOpen && <BodySelectionDialog onClose={closeFocus} returnFocusTo={() => activeReturnButton.current?.isConnected ? activeReturnButton.current : rootRef.current}
+        showComplete={showSummary}
+        backLabel={reviewHelpOpen ? "도움말 닫기" : "부위 선택으로"}
+        dialogId={dialogId} title={activeTarget ? activeTarget.kind === "known" ? bodyPartFocusLabel(activeTarget.part) : "기타 부위" : showSummary ? "선택한 부위" : activeGroup ? `${activeGroup.label} · 어느 쪽인가요?` : "불편한 곳을 골라요"}
+        onBack={activeTarget || activeGroup || showSummary ? goBack : undefined}>
+        {activeTarget ? <BodyPartFocusView embedded
+          key={activeTarget.kind === "known" ? activeTarget.part.id : activeTarget.id ?? "new-other"}
+          dialogId={`${dialogId}-fields`} target={activeTarget} onClose={showResult}
+          onSelectKnown={chooseKnownLevel} onSelectOther={chooseOtherLevel}
+          initialDraft={draftKey !== null ? customDrafts.current.get(draftKey) : undefined}
+          onDraftChange={retainCustomDraft}
+        /> : showSummary ? <>
+          {hasSelection ? selection(true) : <p className="body-pain-selector__instruction">선택한 부위가 없어요.</p>}
+          {painLevelsRequireReview(journalPainPartsForSafety({ painParts: selected, bodyPartMetadata: supportedMetadata ?? undefined })) && <PainReviewBanner
+            inlineHelp={{ open: reviewHelpOpen, toggle: () => setReviewHelpOpen(value => !value), buttonRef: reviewHelpButton }} />}
+          <button type="button" className="app-choice-control body-pain-selector__other-button" onClick={showPicker}><Plus size={16} aria-hidden="true" />다른 부위 추가</button>
+        </> : activeGroup ? <div className="body-pain-selector__buttons" role="group" aria-label={`${activeGroup.label} 좌우 선택`}>
+          {activeGroup.ids.map(id => {
+            const part = BODY_PARTS.find(item => item.id === id)!
+            return <button key={id} type="button" className="app-choice-control body-pain-selector__group-button"
+              onClick={() => openKnownPart(id, activeReturnButton.current)}>{bodyPartInputLabel(part)}</button>
+          })}
+        </div> : picker(true)}
+      </BodySelectionDialog>}
     </div>
   )
 }
 
-export function PainReviewBanner() {
+function BodySelectionDialog({ dialogId, title, onClose, returnFocusTo, onBack, backLabel, showComplete, children }: {
+  dialogId: string; title: string; onClose: () => void; returnFocusTo: () => HTMLElement | null
+  onBack?: (() => void) | undefined; backLabel: string; showComplete: boolean; children: React.ReactNode
+}) {
+  const ref = React.useRef<HTMLDialogElement>(null)
+  const heading = React.useRef<HTMLHeadingElement>(null)
+  const close = useReaderDialog(ref, onClose, returnFocusTo)
+  const [ready, setReady] = React.useState(false)
+  const [closeRequested, setCloseRequested] = React.useState(false)
+  React.useEffect(() => { setReady(true) }, [])
+  useTaskFlowBack({ enabled: ready && !closeRequested && Boolean(onBack), onBack: () => onBack?.() })
+  const requestClose = () => setCloseRequested(true)
+  React.useEffect(() => {
+    if (!closeRequested) return
+    let alive = true
+    const finish = () => { if (alive && !hasPendingBrowserBackLayer()) close() }
+    window.addEventListener("popstate", finish)
+    queueMicrotask(finish)
+    return () => { alive = false; window.removeEventListener("popstate", finish) }
+  }, [closeRequested, close])
+  React.useEffect(() => {
+    // Run after the native dialog opens; retain the editor's meaningful target
+    // instead of moving focus from a name or selected level to the title.
+    const editorTarget = ref.current?.querySelector<HTMLElement>('.body-part-focus-fields input, .body-part-focus-fields button[aria-pressed="true"]')
+    ;(editorTarget ?? heading.current)?.focus({ preventScroll: true })
+  }, [title])
+  return <dialog ref={ref} id={dialogId} className="body-part-focus-dialog" aria-modal="true" aria-labelledby={`${dialogId}-heading`}
+    onCancel={event => { event.preventDefault(); if (onBack) onBack(); else requestClose() }}
+    onKeyDown={event => {
+      if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); if (onBack) onBack(); else requestClose() }
+      if (event.key !== "Tab" || !ref.current) return
+      const buttons = Array.from(ref.current.querySelectorAll<HTMLElement>('button:not([disabled]), input, textarea, summary')).filter(element => !element.closest("details:not([open])") || element.tagName === "SUMMARY")
+      const first = buttons[0], last = buttons.at(-1)
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === heading.current)) { event.preventDefault(); last?.focus() }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() }
+    }}>
+    <header className="body-part-focus-dialog__header">
+      {onBack && <button type="button" className="app-choice-control body-part-focus-dialog__close" aria-label={backLabel} onClick={onBack}><ArrowLeft size={18} aria-hidden="true" /></button>}
+      <h2 id={`${dialogId}-heading`} ref={heading} tabIndex={-1} className="body-part-focus-dialog__title">{title}</h2>
+      <button type="button" className="app-choice-control body-part-focus-dialog__close" aria-label="몸 상태 입력 닫기" onClick={requestClose}><X size={18} aria-hidden="true" /></button>
+    </header>
+    {children}
+    {showComplete && <button type="button" className="app-choice-control body-part-focus-dialog__apply" onClick={requestClose}>입력 완료</button>}
+  </dialog>
+}
+
+export function PainReviewBanner({ inlineHelp }: { inlineHelp?: { open: boolean; toggle: () => void; buttonRef: React.RefObject<HTMLButtonElement> } } = {}) {
+  const helpId = React.useId()
   return (
     <div role="status" style={{
       marginTop: 10, padding: "10px 12px",
@@ -285,7 +388,7 @@ export function PainReviewBanner() {
         <div style={{
           fontFamily: "var(--mono)", fontSize: "var(--fs-caption)", fontWeight: 600,
           letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--warn)",
-        }}>REVIEW · 통증 4 이상<TermHelp term="review" /></div>
+        }}>통증 기록 확인{!inlineHelp && <TermHelp term="review" />}</div>
         <div style={{
           marginTop: 4, fontFamily: "var(--sans)", fontSize: 12.5,
           color: "var(--ink-2)", lineHeight: 1.5,
@@ -294,6 +397,14 @@ export function PainReviewBanner() {
           지도자·보호자와 상의해 주세요.
           기록은 그대로 저장돼요.
         </div>
+        {inlineHelp && <>
+          <button ref={inlineHelp.buttonRef} type="button" className="app-text-button body-part-focus-dialog__review-help"
+            aria-expanded={inlineHelp.open} aria-controls={helpId} onClick={inlineHelp.toggle}>왜 확인하나요?</button>
+          {inlineHelp.open && <div id={helpId} className="body-part-focus-dialog__review-detail">
+            <strong>{GLOSSARY.review.label} · {GLOSSARY.review.code}</strong>
+            <p>{GLOSSARY.review.short}</p><p>{GLOSSARY.review.detail}</p><p>{GLOSSARY.review.notMeaning}</p>
+          </div>}
+        </>}
       </div>
     </div>
   )

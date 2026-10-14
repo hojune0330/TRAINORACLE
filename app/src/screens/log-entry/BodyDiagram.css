@@ -86,10 +86,21 @@ button.body-pain-selector__other-button {
   width: 100%;
 }
 
-.body-pain-selector__history {
+button.body-pain-selector__history {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-action, 12px);
+  color: var(--brand);
+  font: inherit;
+  cursor: pointer;
   margin-top: var(--space-2);
   min-height: var(--app-touch-min, 44px);
 }
+button.body-pain-selector__history:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 
 .body-pain-selector__metadata-warning {
   color: var(--warn);
@@ -97,3 +108,23 @@ button.body-pain-selector__other-button {
   line-height: 1.5;
   margin: var(--space-2) 0 0;
 }
+.body-pain-selector__content,
+.body-pain-selector__summary { display: grid; gap: var(--space-2); }
+button.body-pain-selector__group-button,
+button.body-pain-selector__other-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+  padding: var(--space-3);
+  gap: var(--space-2);
+  font-size: var(--fs-body);
+  text-align: left;
+}
+button.body-pain-selector__other-button { grid-column: 1 / -1; justify-content: center; }
+.body-pain-selector__summary .body-pain-selector__part-button { min-height: 52px; align-items: center; }
+.body-pain-selector__summary .body-pain-selector__part-button > span:not(.pain-dot) { overflow-wrap: anywhere; }
+.body-pain-selector__summary strong { margin-left: auto; white-space: nowrap; }
+.body-pain-selector__recent { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-3); }
+.body-pain-selector__recent > p { width: 100%; margin: 0; font-size: var(--fs-caption); color: var(--ink-2); }
+.body-pain-selector__recent > button { min-height: 44px; }

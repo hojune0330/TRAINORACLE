@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { PostSessionForm } from "./PostSessionForm"
 import { EveningCheckin } from "./EveningCheckin"
 import { RaceForm } from "./RaceForm"
@@ -21,10 +22,15 @@ for (const [name, Form] of [["post", PostSessionForm], ["evening", EveningChecki
 }
 it("still saves a single selected mood without requiring other measurements", () => {
   render(<EveningCheckin />)
-  fireEvent.click(screen.getByRole("button", { name: "몸 상태·기분" }))
-  fireEvent.click(screen.getByRole("button", { name: "감정 4 좋음" }))
+  fireEvent.click(screen.getByRole("button", { name: "기분" }))
+  fireEvent.click(screen.getByRole("button", { name: "기분 4 좋음" }))
   fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
   fireEvent.click(screen.getByRole("button", { name: /^저장/u }))
   expect(loadEntries()).toHaveLength(1)
   expect(loadEntries()[0]).toMatchObject({ mood: 4, fieldProvenance: { sleepH: { provenance: "MISSING" } } })
+})
+
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })
