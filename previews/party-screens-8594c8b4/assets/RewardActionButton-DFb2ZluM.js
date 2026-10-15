@@ -1,0 +1,1 @@
+import{R as e,j as i}from"./vendor-react-oS_qnrG8.js";const u=e.forwardRef(function({tone:t="primary",className:r="",type:o="button",...a},n){return i.jsx("button",{...a,ref:n,type:o,className:`reward-action reward-action--${t} ${r}`.trim()})});export{u as R};

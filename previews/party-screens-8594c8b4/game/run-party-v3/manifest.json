@@ -1,0 +1,111 @@
+{
+  "assets": [
+    {
+      "id": "track-island",
+      "file": "track-island.webp",
+      "size": [
+        256,
+        256
+      ],
+      "bytes": 7958,
+      "sha256": "e4fd1b9407148a254f0f3a7f5c771b3086711884e6df28ff803a03ea90e66ada",
+      "source": "character-art/run-party-v3/renders/track-island.png",
+      "alphaBounds": [
+        72,
+        146,
+        440,
+        392
+      ],
+      "sources": {
+        "sha256": "aeeb0fc271a46de35626879e3452014118f931f1fb61bf786e094e4f44238dfd",
+        "bytes": 777948,
+        "triangles": 9473
+      },
+      "working": {
+        "sha256": "3e5155f82edb4cea4fed541f0a6f45141b4955cc37403aec5584c4e19a6855a5",
+        "bytes": 111612,
+        "triangles": 2597
+      }
+    },
+    {
+      "id": "respawn-beacon",
+      "file": "respawn-beacon.webp",
+      "size": [
+        256,
+        256
+      ],
+      "bytes": 8530,
+      "sha256": "2a7dfaacdd4d721a8c12317e0e58ff0eab29a53be1d60370504ffce060c40cae",
+      "source": "character-art/run-party-v3/renders/respawn-beacon.png",
+      "alphaBounds": [
+        124,
+        96,
+        389,
+        450
+      ],
+      "sources": {
+        "sha256": "de1c9c4307cd2bf5f2ecc10680713152b33f232734815557237a3b234669d5bc",
+        "bytes": 744588,
+        "triangles": 9376
+      },
+      "working": {
+        "sha256": "865d4a4b9927ded09618a12c357ae957307752e1b7092e333be3d447dec3d461",
+        "bytes": 105676,
+        "triangles": 2598
+      }
+    },
+    {
+      "id": "jump-pad",
+      "file": "jump-pad.webp",
+      "size": [
+        256,
+        256
+      ],
+      "bytes": 8392,
+      "sha256": "85e88ac2c12d508a18d6e6ef80583ed390bc701b99b7118705308f53403af4d5",
+      "source": "character-art/run-party-v2/renders/jump-pad-icon.png",
+      "alphaBounds": [
+        105,
+        156,
+        406,
+        368
+      ]
+    },
+    {
+      "id": "supply-capsule",
+      "file": "supply-capsule.webp",
+      "size": [
+        256,
+        256
+      ],
+      "bytes": 7468,
+      "sha256": "104308eb87859f0c647aa9059e10d90cddbec9c468f7e3d9b5c8cfb2b8f61c7a",
+      "source": "character-art/run-party-v2/renders/supply-capsule-icon.png",
+      "alphaBounds": [
+        145,
+        105,
+        356,
+        403
+      ]
+    },
+    {
+      "id": "upgrade-core",
+      "file": "upgrade-core.webp",
+      "size": [
+        256,
+        256
+      ],
+      "bytes": 7180,
+      "sha256": "078ad668d2885e104e60bec73346a4858bcff1d42845f6f58d7a5f4848fc88c5",
+      "source": "character-art/run-party-v2/renders/upgrade-core-icon.png",
+      "alphaBounds": [
+        147,
+        105,
+        359,
+        424
+      ]
+    }
+  ],
+  "payloadBytes": 39528,
+  "decodedBytes": 1310720
+}
