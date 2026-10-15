@@ -38,7 +38,7 @@ export const TOUR_SEASONS: readonly { id: TourSeasonId; name: string; subtitle: 
 export const TOUR_CITIES: readonly TourCity[] = [
   { id: "seoul", season: "korea", name: "서울", country: "대한민국", tagline: "한강을 따라 남산타워까지", landmark: "namsan",
     weather: ["clear", "rain", "clear"], stageNames: ["한강 러닝트랙", "비 오는 자전거길", "남산 야간 공사길"],
-    stageHints: ["기본 속도. 달리고 쉬는 박자를 익혀요", "젖은 길은 덜 나아가요. 앞쪽 공간을 벌어 두세요", "공사 못판은 한 번만 닿아도 끝"], level: 0 },
+    stageHints: ["콘·허들·넓은 상자. 모양마다 점프 박자를 바꿔요", "젖은 길은 덜 나아가요. 앞쪽 공간을 벌어 두세요", "공사 못판은 한 번만 닿아도 끝"], level: 0 },
   { id: "daejeon", season: "korea", name: "대전", country: "대한민국", tagline: "엑스포 다리와 한빛탑", landmark: "hanbit",
     weather: ["clear", "clear", "clear"], stageNames: ["엑스포 다리", "과학관 잔디밭", "한빛탑 야간 광장"],
     stageHints: ["장애물이 조금 더 촘촘해요", "잔디는 미끄러워요. 미리 앞으로", "불빛 사이 못판을 조심"], level: 1 },
@@ -67,12 +67,10 @@ const SURFACES: readonly TreadmillSurface[] = ["track", "mud", "spikes"]
 /** Extra hazards by level, appended to the practice course and kept 1.2s+ apart. */
 const EXTRA: Record<TreadmillSurface, readonly (readonly [number, number, TreadmillHazardKind])[]> = {
   // [minimum level, second, kind]
-  track: [[1, 8.8, "barrier"], [4, 3.1, "barrier"], [6, 5.9, "spike"]],
-  mud: [[2, 9.0, "barrier"], [5, 2.4, "barrier"]],
-  spikes: [[3, 8.9, "barrier"]],
+  track: [[1, 8.8, "cone"], [4, 3.7, "crate"]],
+  mud: [[2, 8.9, "barrier"]],
+  spikes: [[3, 8.9, "cone"]],
 }
-/** From this level the night stage's middle hurdle becomes a spike row (no room left for more hazards). */
-const SPIKE_HURDLE_LEVEL = 7
 
 /** Per-level belt speed-up, capped so every city stays clearable (see the balance guard). */
 export const TOUR_BELT_STEP = 0.022
@@ -82,7 +80,7 @@ export function tourStages(city: TourCity): TreadmillStage[] {
     const base = TREADMILL_STAGES.find(stage => stage.surface === surface)!
     const extra = EXTRA[surface].filter(([min]) => city.level >= min).map(([, at, kind]) => ({ at, kind }))
     const course = [...base.course.filter(item => item.at < TREADMILL_RULES.waveSeconds), ...extra].sort((a, b) => a.at - b.at)
-      .map(item => surface === "spikes" && city.level >= SPIKE_HURDLE_LEVEL && item.at === 4.6 ? { ...item, kind: "spike" as const } : item)
+      .map(item => surface === "spikes" && city.level >= 7 && item.kind === "barrier" && item.at === 3.8 ? { ...item, kind: "spike" as const } : item)
     return {
       id: `${city.id}-${surface}`, surface, name: city.stageNames[index]!, hint: city.stageHints[index]!,
       belt: Number((base.belt * (1 + city.level * TOUR_BELT_STEP)).toFixed(4)), movement: base.movement, course: extendTreadmillCourse(course),

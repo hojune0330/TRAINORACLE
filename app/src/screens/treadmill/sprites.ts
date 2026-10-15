@@ -115,6 +115,17 @@ export function drawHazard(context: CanvasRenderingContext2D, palette: GamePalet
     for (let x = -halfWidth - 8; x < halfWidth + 8; x += 8) { context.beginPath(); context.moveTo(x, -height + 9); context.lineTo(x + 4, -height + 9); context.lineTo(x + 8, -height); context.lineTo(x + 4, -height); context.fill() }
     context.restore()
     roundRect(context, -halfWidth - 3, -height, halfWidth * 2 + 6, 9, 3); context.stroke()
+  } else if (kind === "cone") {
+    part(context, palette, palette.rail, -halfWidth, -3, halfWidth * 2, 3, 1)
+    context.beginPath(); context.moveTo(-halfWidth, -3); context.lineTo(0, -height); context.lineTo(halfWidth, -3); context.closePath()
+    context.fillStyle = palette.gold; context.fill(); context.stroke()
+    context.strokeStyle = palette.cloud; context.lineWidth = 2
+    context.beginPath(); context.moveTo(-halfWidth * .35, -height * .5); context.lineTo(halfWidth * .35, -height * .5); context.stroke()
+  } else if (kind === "crate") {
+    part(context, palette, palette.rail, -halfWidth, -height, halfWidth * 2, height, 2)
+    context.strokeStyle = palette.gold; context.lineWidth = 2
+    context.beginPath(); context.moveTo(-halfWidth + 3, -height + 3); context.lineTo(halfWidth - 3, -3)
+    context.moveTo(halfWidth - 3, -height + 3); context.lineTo(-halfWidth + 3, -3); context.stroke()
   } else {
     part(context, palette, palette.dangerDark, -halfWidth - 1, -4, halfWidth * 2 + 2, 4, 1)
     const teeth = Math.max(2, Math.round(halfWidth / 5))

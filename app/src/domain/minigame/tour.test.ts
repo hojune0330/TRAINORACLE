@@ -69,7 +69,8 @@ describe("running tour content", () => {
 describe("tour balance guard (game feel, not training)", () => {
   it("keeps every city clearable by a player that runs, rests and times jumps, with every upgrade path", () => {
     for (const city of TOUR_CITIES) for (const pick of ["grip", "spring", "economy"] as const) {
-      expect(play(tourStages(city), [pick, pick], player(0.55, 25, 0.08)).mode, `${city.id} ${pick}`).toBe("clear")
+      const end = play(tourStages(city), [pick, pick], player(0.55, 25, 0.08))
+      expect(end.mode, `${city.id} ${pick}: ${end.failure} stage ${end.stage} at ${end.seconds.toFixed(2)} energy ${end.energy.toFixed(1)} hits ${end.stats.hits}`).toBe("clear")
     }
   })
   it("still does not reward doing nothing or only holding run, even in the first city", () => {

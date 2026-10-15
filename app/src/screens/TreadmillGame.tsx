@@ -417,6 +417,7 @@ function SoloTreadmillGame({ onBack, backLabel, onFriends }: { readonly onBack: 
     {screen === "map" && saved.slot.kind === "saved" && <section className="treadmill-game__resume-card" aria-label="중간 저장한 판">
       <h2>{savedTitle} · 이어서 달릴까요?</h2>
       <p>{saved.slot.run.state.stage + 1}구간 · {Math.floor(treadmillElapsed(saved.slot.run.state))}/{treadmillCourseSeconds(saved.slot.run.state)}초 · 에너지 {Math.ceil(saved.slot.run.state.energy)}</p>
+      {saved.slot.run.notice && <p role="status">{saved.slot.run.notice}</p>}
       <p>{saved.slot.run.state.upgrades.length ? `강화: ${saved.slot.run.state.upgrades.map(upgradeName).join(" · ")}` : "강화 선택 전"} · 이 기기에 저장됨</p>
       <button type="button" className="treadmill-game__cta" onClick={resumeSaved}><Play size={18} aria-hidden="true" />저장한 판 이어하기</button>
       <button type="button" className="treadmill-game__text-button" onClick={discardSaved}>저장한 판 지우기</button>

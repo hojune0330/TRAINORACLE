@@ -44,6 +44,24 @@ describe("treadmill survival rules", () => {
       expect(stage.course.filter(item => item.at >= start && item.at < start + 10).length, `${stage.id} wave ${start}`).toBeGreaterThanOrEqual(3)
     }
   })
+  it("mixes four silhouettes and denser rhythms while leaving landing gaps", () => {
+    expect(TREADMILL_STAGES.map(stage => stage.course.length)).toEqual([15, 18, 18])
+    expect(new Set(TREADMILL_STAGES.flatMap(stage => stage.course.map(h => h.kind))).size).toBe(4)
+    for (const stage of TREADMILL_STAGES) for (let i = 1; i < stage.course.length; i++) {
+      expect(stage.course[i]!.at - stage.course[i-1]!.at).toBeGreaterThanOrEqual(1.1)
+    }
+  })
+  it("clears each silhouette across a forgiving jump window, but grounded contact still hurts", () => {
+    for (const kind of ["cone", "barrier", "crate", "spike"] as const) {
+      expect(advanceTreadmill(clean({ hazards: [hazard(.51, kind)] }), .02).stats.hits, kind).toBe(1)
+      for (const gap of [.08, .11, .14]) {
+        const s = clean({ hazards: [hazard(.5 + gap, kind)] })
+        const jumped = advance(treadmillCommand(s, { type: "jump" }), 1)
+        expect(jumped.stats.hits, `${kind} gap ${gap}`).toBe(0)
+        expect(jumped.stats.cleared, `${kind} gap ${gap}`).toBe(1)
+      }
+    }
+  })
   it("supplies energy once at an internal wave boundary, never while paused", () => {
     const before = clean({ seconds: 9.99, energy: 20, running: true })
     const supplied = advanceTreadmill(before, 0.02)
