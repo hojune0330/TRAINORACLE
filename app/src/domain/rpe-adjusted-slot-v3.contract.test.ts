@@ -1,4 +1,5 @@
 import { afterEach, beforeAll, beforeEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { createAdjustmentDraftV3, applyAdjustmentDraftV3 } from "@impl/prescription/prescription-adjustment-v3"
 import { sequenceV3ContentIdentity } from "@impl/prescription/sequence-v3-comparison"
 import { generatePlanFromDraft, selectPlanForActivation, generateMultiAdjustedNextFrameV3FromDraft } from "./plan-beta-flow"
@@ -55,8 +56,9 @@ const dialogShow = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, 
 const dialogClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "close")
 // The integration fixture replays crypto-backed source and successor validation.
 vi.setConfig({ testTimeout: 20000, hookTimeout: 30000 })
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(TODAY)
+  await initializeCanonicalJournalFixture()
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value() { this.setAttribute("open", "") } })
   Object.defineProperty(HTMLDialogElement.prototype, "close", { configurable: true, value() { this.removeAttribute("open") } })
 })
@@ -805,6 +807,7 @@ let existingPredecessor: {
 beforeAll(async () => {
   localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null)
   vi.useFakeTimers(); vi.setSystemTime(TODAY)
+  await initializeCanonicalJournalFixture()
   try {
     defaultFixture = freezeJson(buildFixture())
     defaultStorageMaterials = freezeJson(buildStorageMaterials(structuredClone(defaultFixture)))
@@ -836,6 +839,7 @@ function seededExistingPredecessorFixture() {
 it("matches a cold predecessor with isolated seeded bytes while preserving expiry and account boundaries", async () => {
   const cold = await coldSuccessorStorageFixture(), raw = localStorage.getItem(activePlanBetaStorageKey())
   localStorage.clear(); sessionStorage.clear(); vi.setSystemTime(TODAY)
+  await initializeCanonicalJournalFixture()
   const seeded = seededExistingPredecessorFixture()
   expect(seeded.previous).toEqual(cold.previous)
   expect(seeded.input.request).toEqual(cold.input.request)
@@ -848,6 +852,7 @@ it("matches a cold predecessor with isolated seeded bytes while preserving expir
   seeded.later.setTime(0)
   Reflect.set(seeded.input.readReview().policies[0]!, "revokedAtMs", 1)
   localStorage.clear(); vi.setSystemTime(TODAY)
+  await initializeCanonicalJournalFixture()
   const fresh = seededExistingPredecessorFixture()
   expect(fresh.input.request).not.toBe(seeded.input.request)
   expect(fresh.input.readReview()).not.toBe(seeded.input.readReview())
