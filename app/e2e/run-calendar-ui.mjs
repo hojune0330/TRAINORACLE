@@ -7,10 +7,10 @@ const app = fileURLToPath(new URL('../', import.meta.url)), root = resolve(app, 
 const fault = process.argv.includes('--fault')
 const server = await createServer({ configFile: false, envDir: false, root: app, base: './', logLevel: 'error',
   cacheDir: resolve(root, '.scratch/calendar-ui/cache'), plugins: [react(), ...(fault ? [{
-    name: 'calendar-escape-fault', enforce: 'pre', transform(code, id) {
-      if (id.split('?')[0].replaceAll('\\', '/').endsWith('/MonthCalendar.tsx')) {
-        if (!code.includes('event.key === "Escape"')) throw new Error('Fault target missing')
-        return code.replace('event.key === "Escape"', 'event.key === "NEVER_ESCAPE"')
+    name: 'calendar-role-visibility-fault', enforce: 'pre', transform(code, id) {
+      if (id.split('?')[0].replaceAll('\\', '/').endsWith('/CalendarTrainingMark.tsx')) {
+        if (!code.includes('{label}{children}')) throw new Error('Fault target missing')
+        return code.replace('{label}{children}', '{children}')
       }
     }
   }] : [])], resolve: { alias: { '@impl': resolve(root, 'impl/src') } },

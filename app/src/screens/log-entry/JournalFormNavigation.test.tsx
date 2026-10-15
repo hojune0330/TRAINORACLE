@@ -75,6 +75,8 @@ describe("journal form departure", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "수면 시간" }), { target: { value: "6.5" } })
     fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
     fireEvent.click(screen.getByRole("button", { name: "← 뒤로" }))
+    expect(screen.getByRole("heading", { name: "무엇을 남길까요?" })).toBeVisible()
+    fireEvent.click(screen.getByRole("button", { name: "수면" }))
     expect(screen.getByRole("heading", { name: "어젯밤 수면" })).toBeVisible()
     expect(screen.getByRole("textbox", { name: "수면 시간" })).toHaveValue("6.5")
     expect(onBack).not.toHaveBeenCalled()

@@ -904,6 +904,13 @@
   margin-inline: 0;
 }
 
+.plan-training-flow[data-presentation="prescription-calendar"] { container-type: inline-size; }
+@container (max-width: 767px) {
+  .plan-training-flow .prescription-calendar__calendar-name--full,
+  .plan-training-flow .prescription-calendar__amount--full { display: none; }
+  .plan-training-flow .prescription-calendar__amount--short { display: block; }
+}
+
 @media (max-width: 400px) {
   .plan-training-flow[data-presentation="prescription-calendar"] > .month-calendar {
     margin-inline: min(0px, calc((100% - 7 * var(--app-touch-min) - 8px) / 2));
@@ -923,17 +930,23 @@
 }
 
 .plan-training-flow[data-presentation="prescription-calendar"] .month-calendar__events {
+  width: 100%;
   align-content: start;
   padding: 0;
   text-align: left;
 }
 
 .plan-training-flow[data-presentation="prescription-calendar"] .calendar-training-mark {
+  width: 100%;
   justify-items: start;
   min-height: 0;
   padding: var(--space-1);
   border: var(--bw-line) solid var(--line);
   box-sizing: border-box;
+}
+
+.plan-training-flow[data-presentation="prescription-calendar"] .calendar-training-mark[data-tone="main"] {
+  border-color: var(--ink-2);
 }
 
 .plan-training-flow[data-presentation="prescription-calendar"] .calendar-training-mark__slot {
@@ -959,6 +972,8 @@
   word-break: keep-all;
   overflow-wrap: break-word;
 }
+
+.prescription-calendar__calendar-name--full { display: block; margin-top: var(--space-1); font-weight: 500; }
 
 .prescription-calendar__calendar-name--short,
 .prescription-calendar__amount--short {

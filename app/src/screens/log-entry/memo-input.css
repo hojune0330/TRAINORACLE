@@ -1,0 +1,5 @@
+.memo-input__explanation { color: var(--ink-2); font-size: var(--fs-body-sm); line-height: 1.55; margin-bottom: var(--space-3); }
+.memo-input__explanation p { margin: var(--space-2) 0; }
+.memo-input summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; text-decoration: underline; }
+.memo-input summary:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.memo-input textarea { box-sizing: border-box; max-width: 100%; }

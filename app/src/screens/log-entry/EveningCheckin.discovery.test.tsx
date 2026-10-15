@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { EveningCheckin } from "./EveningCheckin"
 import { EntryChooser } from "./EntryChooser"
-import { loadEntries } from "../../domain/journal-store"
+import { loadEntries, saveEntry } from "../../domain/journal-store"
 
 beforeEach(() => localStorage.clear())
 afterEach(cleanup)
@@ -110,31 +110,32 @@ it("opens body and mood independently without requiring either answer", () => {
   fireEvent.click(screen.getByRole("button", { name: "기분 입력" }))
   expect(screen.getByRole("heading", { level: 2, name: "오늘 기분" })).toHaveFocus()
   expect(screen.queryByRole("button", { name: /몸 부위 기록 이력 보기/u })).toBeNull()
-  fireEvent.click(screen.getByRole("button", { name: "이전 질문" }))
+  fireEvent.click(screen.getByRole("button", { name: "← 뒤로" }))
   expect(screen.getByRole("heading", { level: 2, name: "입력 확인" })).toHaveFocus()
   expect(loadEntries()).toEqual([])
 })
 
-it("keeps the selected date in a compact body question without changing other steps or saving an empty answer", () => {
+it("keeps a compact date and one back control across questions without saving an empty answer", () => {
   render(<EveningCheckin targetDate="2026-07-20" />)
-  expect(screen.getByText("2026·07·20").closest("time")).toBeNull()
+  expect(screen.getByText("2026·07·20").closest("time")).toHaveAttribute("datetime", "2026-07-20")
   fireEvent.click(screen.getByRole("button", { name: "몸 상태" }))
   expect(screen.getByText("2026·07·20").closest("time")).toHaveAttribute("datetime", "2026-07-20")
   expect(screen.getByRole("heading", { name: "오늘 몸 상태" })).toHaveFocus()
-  expect(screen.getByRole("button", { name: "이전 질문" })).toBeVisible()
+  expect(screen.getByRole("button", { name: "← 뒤로" })).toBeVisible()
+  expect(screen.queryByRole("button", { name: "이전 질문" })).toBeNull()
   expect(screen.queryByRole("button", { name: "입력 확인으로" })).toBeNull()
   expect(screen.queryByRole("button", { name: /^저장/u })).toBeNull()
 
   fireEvent.click(screen.getByRole("button", { name: "입력 확인" }))
   expect(screen.getByRole("heading", { name: "입력 확인" })).toHaveFocus()
   expect(screen.getByRole("button", { name: "몸 상태 입력" })).toBeVisible()
-  expect(screen.getByText("2026·07·20").closest("time")).toBeNull()
+  expect(screen.getByText("2026·07·20").closest("time")).toHaveAttribute("datetime", "2026-07-20")
   expect(loadEntries()).toEqual([])
 
   fireEvent.click(screen.getByRole("button", { name: "기분 입력" }))
   expect(screen.getByRole("button", { name: "입력 확인으로" })).toBeVisible()
-  expect(screen.getByText("2026·07·20").closest("time")).toBeNull()
-  fireEvent.click(screen.getByRole("button", { name: "이전 질문" }))
+  expect(screen.getByText("2026·07·20").closest("time")).toHaveAttribute("datetime", "2026-07-20")
+  fireEvent.click(screen.getByRole("button", { name: "← 뒤로" }))
   expect(screen.getByRole("heading", { name: "입력 확인" })).toHaveFocus()
   expect(loadEntries()).toEqual([])
 })
@@ -158,7 +159,7 @@ it("retains existing body answers when editing mood and returning through review
   fireEvent.click(screen.getByRole("button", { name: "몸 상태 수정" }))
   expect(screen.getByRole("heading", { level: 2, name: "오늘 몸 상태" })).toBeVisible()
   expect(screen.queryByRole("group", { name: "오늘 기분" })).toBeNull()
-  fireEvent.click(screen.getByRole("button", { name: "이전 질문" }))
+  fireEvent.click(screen.getByRole("button", { name: "← 뒤로" }))
   expect(screen.getByRole("heading", { level: 2, name: "입력 확인" })).toHaveFocus()
   expect(screen.getByText("불편한 곳 1곳 표시")).toBeVisible()
 })
@@ -176,6 +177,10 @@ it("opens only the selected edit group when an existing check-in starts in revie
   expect(screen.getByRole("heading", { level: 2, name: "체중 · 안정시 심박" })).toBeVisible()
   expect(screen.getByRole("textbox", { name: "체중 (kg)" })).toBeVisible()
   expect(screen.getByRole("textbox", { name: "안정시 심박 (bpm)" })).toBeVisible()
+  expect(screen.getByLabelText("체중 (kg)")).toHaveAttribute("inputmode", "decimal")
+  expect(screen.getByLabelText("안정시 심박 (bpm)")).toHaveAttribute("inputmode", "numeric")
+  expect(screen.getByText("체중 (kg)", { selector: "label" })).toBeVisible()
+  expect(screen.getByLabelText("체중 (kg)")).toHaveValue("")
   expect(screen.queryByRole("slider", { name: "수면 시간" })).toBeNull()
   fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
   expect(screen.getByRole("heading", { level: 2, name: "입력 확인" })).toBeVisible()
@@ -195,4 +200,73 @@ it("reveals a missing memo purpose when saving from an existing review", () => {
 
 beforeEach(async () => {
   await initializeCanonicalJournalFixture()
+})
+
+it("returns to choices after repeated review edits without replaying finished questions", () => {
+  render(<EveningCheckin />)
+  fireEvent.click(screen.getByRole("button", { name: "기분" }))
+  fireEvent.click(screen.getByRole("button", { name: "기분 4 좋음" }))
+  fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
+  for (let i = 0; i < 3; i++) {
+    fireEvent.click(screen.getByRole("button", { name: "기분 수정" }))
+    fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
+  }
+  fireEvent.click(screen.getByRole("button", { name: "← 뒤로" }))
+  expect(screen.getByRole("heading", { name: "무엇을 남길까요?" })).toBeVisible()
+})
+
+it("allows leaving invalid sleep input but preserves it and blocks saving it", () => {
+  render(<EveningCheckin />)
+  fireEvent.click(screen.getByRole("button", { name: "수면" }))
+  fireEvent.change(screen.getByRole("textbox", { name: "수면 시간" }), { target: { value: "25" } })
+  fireEvent.click(screen.getByRole("button", { name: "← 뒤로" }))
+  expect(screen.getByRole("heading", { name: "무엇을 남길까요?" })).toBeVisible()
+  fireEvent.click(screen.getByRole("button", { name: "수면" }))
+  expect(screen.getByRole("textbox", { name: "수면 시간" })).toHaveValue("25")
+  fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
+  expect(screen.getByRole("textbox", { name: "수면 시간" })).toHaveAttribute("aria-invalid", "true")
+  expect(loadEntries()).toHaveLength(0)
+})
+
+it("offers entry choices instead of save for an empty new review", () => {
+  render(<EveningCheckin />)
+  fireEvent.click(screen.getByRole("button", { name: "기분" }))
+  fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
+  expect(screen.queryByRole("button", { name: /^저장/u })).toBeNull()
+  expect(screen.getByRole("button", { name: "기분 입력" })).toBeVisible()
+})
+
+it("rejects nonnumeric measurements and accepts decimal weight after correction", () => {
+  render(<EveningCheckin />)
+  fireEvent.click(screen.getByRole("button", { name: "체중·심박" }))
+  fireEvent.change(screen.getByLabelText("체중 (kg)"), { target: { value: "abc" } })
+  fireEvent.change(screen.getByLabelText("안정시 심박 (bpm)"), { target: { value: "-1" } })
+  fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
+  expect(screen.getByLabelText("체중 (kg)")).toHaveAttribute("aria-invalid", "true")
+  expect(screen.getByLabelText("안정시 심박 (bpm)")).toHaveAttribute("aria-invalid", "true")
+  expect(loadEntries()).toHaveLength(0)
+  fireEvent.change(screen.getByLabelText("체중 (kg)"), { target: { value: "50.5" } })
+  fireEvent.change(screen.getByLabelText("안정시 심박 (bpm)"), { target: { value: "" } })
+  fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
+  fireEvent.click(screen.getByRole("button", { name: /^저장/u }))
+  expect(loadEntries()[0]).toMatchObject({ weightKg: "50.5", restingHr: "" })
+})
+
+it("saves intentional removal of the last fixed pain marker in an existing record", async () => {
+  const entry = { id: "synthetic-clear-last-pain", kind: "evening" as const, date: "2026-10-08", savedAt: "2026-10-08T00:00:00.000Z", syncState: "local" as const,
+    sleepH: 0, sleepQuality: 0, mood: 0, weightKg: "", restingHr: "", painParts: { rKnee: 2 }, note: "" }
+  expect(saveEntry(entry).ok).toBe(true)
+  render(<EveningCheckin initialEntry={entry} />)
+  fireEvent.click(screen.getByRole("button", { name: "몸 상태 수정" }))
+  fireEvent.click(screen.getByRole("button", { name: "오른 무릎, 통증 2/5" }))
+  fireEvent.click(await screen.findByRole("button", { name: "오른 무릎 선택 취소" }))
+  fireEvent.click(screen.getByRole("button", { name: "몸 상태 입력 닫기" }))
+  fireEvent.click(screen.getByRole("button", { name: "입력 확인" }))
+  expect(screen.getByText("이 기록의 통증 표시를 지웠어요")).toBeVisible()
+  fireEvent.click(screen.getByRole("button", { name: /^수정 저장/u }))
+  await waitFor(() => {
+    const saved = loadEntries()[0]
+    expect(saved?.kind).toBe("evening")
+    if (saved?.kind === "evening") expect(saved.painParts).toEqual({})
+  })
 })

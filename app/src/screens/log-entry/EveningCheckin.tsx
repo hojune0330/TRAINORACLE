@@ -3,8 +3,9 @@ import { JournalWritingDecorationPreview } from "../journal/JournalDecorationPre
 import { FormInputDraftBoundary, useFormInputDraft, useRecoveredFormInput } from "./useFormInputDraft"
 import { accountJournalRecordsEnabled } from "../../domain/account/account-journal-record-service"
 import { FormFinalizationRecovery, useFormFinalization } from "./useFormFinalization"
-import { IndexCard, MoodStrip } from "../../components/JournalPrimitives"
-import { compactDate, dowOf, nowClock } from "../../domain/dates"
+import { MoodStrip } from "../../components/JournalPrimitives"
+import { ChevronRight, HeartPulse, Smile, Moon, Pencil, Activity } from "lucide-react"
+import { compactDate, dowOf } from "../../domain/dates"
 import { explicitOrMissing } from "../../domain/field-provenance"
 import {
   newEntryId,
@@ -28,9 +29,11 @@ import type { EntryFormProps } from "./shared"
 import { TaskFlowStep } from "../../components/TaskFlowStep"
 import { useJournalFormNavigation } from "./useJournalFormNavigation"
 import "./EveningCheckin.css"
+import "../../styles/category-cards.css"
 
 const MOOD_LABELS = ["흐림", "무덤덤", "보통", "좋음", "최고"] as const
 const SLEEP_QUALITY_LABELS = ["최악", "나쁨", "보통", "좋음", "최고"] as const
+const validOptionalMeasurement = (value: string) => value.trim() === "" || (/^(?:\d+(?:\.\d+)?|\.\d+)$/u.test(value.trim()) && Number.isFinite(Number(value)) && Number(value) > 0)
 const isValidSleepHours = (value: string) => {
   if (!/^(?:\d+(?:\.\d+)?|\.\d+)$/u.test(value)) return false
   const hours = Number(value)
@@ -81,6 +84,11 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
   const painSignals = journalPainPartsForSafety({ painParts, bodyPartMetadata })
   const [weight, setWeight] = React.useState(() => input?.weight ?? initial?.weightKg ?? "")
   const [hr, setHr] = React.useState(() => input?.hr ?? initial?.restingHr ?? "")
+  const weightRef = React.useRef<HTMLInputElement>(null)
+  const hrRef = React.useRef<HTMLInputElement>(null)
+  const [metricsChecked, setMetricsChecked] = React.useState(false)
+  const weightInvalid = !validOptionalMeasurement(weight)
+  const hrInvalid = !validOptionalMeasurement(hr)
   const [saveError, setSaveError] = React.useState(false)
   const [emptyNotice, setEmptyNotice] = React.useState(false)
   const [accountNotice, setAccountNotice] = React.useState<string | null>(null)
@@ -90,9 +98,16 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
   const hasInput = initial?.bodyPartMetadata !== undefined || sleep > 0 || quality > 0 || mood > 0 || Object.values(painSignals).some(level => level > 0)
     || weight.trim() !== "" || hr.trim() !== "" || note.text.trim() !== ""
 
-  const navigateTo = (location: EveningLocation) => setFlow((current) => ({
-    location, history: [...current.history, current.location],
-  }))
+  const navigateTo = (location: EveningLocation) => setFlow((current) => {
+    // Review is a stable destination, not another visit in an ever-growing stack.
+    if (location.step === "review") {
+      const existing = current.history.findIndex(item => item.step === "review")
+      return { location, history: existing >= 0 ? current.history.slice(0, existing)
+        : current.history.filter(item => item.step === "choose") }
+    }
+    if (location.step === current.location.step) return current
+    return { location, history: [...current.history, current.location] }
+  })
   const updateSleepText = (value: string) => {
     setSleepText(value)
     if (value === "") {
@@ -108,15 +123,18 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
     setSleepInputError(false)
   }
   const goBackFlow = () => {
-    if (step === "sleep" && sleepInputError) {
-      sleepInputRef.current?.focus()
-      return
-    }
     setFlow((current) => {
       const previous = current.history[current.history.length - 1]
       if (previous === undefined) return current
       return { location: previous, history: current.history.slice(0, -1) }
     })
+  }
+  const validateMetrics = () => {
+    if (!weightInvalid && !hrInvalid) return true
+    setMetricsChecked(true)
+    if (step !== "metrics") navigateTo({ step: "metrics", editGroup: "metrics" })
+    window.requestAnimationFrame(() => (weightInvalid ? weightRef : hrRef).current?.focus())
+    return false
   }
   const enterReview = () => {
     if (sleepInputError) {
@@ -124,6 +142,7 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
       window.requestAnimationFrame(() => sleepInputRef.current?.focus())
       return
     }
+    if (!validateMetrics()) return
     const preparation = note.prepareForSave()
     if (!preparation.ready) {
       if (step !== "memo") navigateTo({ step: "memo", editGroup: "memo", returnToReview: true })
@@ -147,7 +166,9 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
       window.requestAnimationFrame(() => sleepInputRef.current?.focus())
       return
     }
-    if (!hasInput) { setEmptyNotice(true); return }
+    if (!validateMetrics()) return
+    // Clearing an existing answer is a valid edit, not a new empty record.
+    if (!hasInput && !isEditing) { setEmptyNotice(true); return }
     setEmptyNotice(false)
     const notePreparation = note.prepareForSave()
     if (!notePreparation.ready) {
@@ -226,7 +247,8 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
     sleep > 0 ? `${sleep}h` : null,
     quality > 0 ? `수면 질 ${SLEEP_QUALITY_LABELS[quality - 1]}` : null,
   ].filter((value): value is string => value !== null).join(" · ") || "입력 안 함"
-  const conditionSummary = painPartCount > 0 ? `불편한 곳 ${painPartCount}곳 표시` : "입력 안 함"
+  const clearedBody = painPartCount === 0 && initial !== undefined && Object.values(journalPainPartsForSafety(initial)).some(level => level > 0)
+  const conditionSummary = painPartCount > 0 ? `불편한 곳 ${painPartCount}곳 표시` : clearedBody ? "이 기록의 통증 표시를 지웠어요" : "입력 안 함"
   const moodSummary = mood > 0 ? `기분 ${MOOD_LABELS[mood - 1]}` : "입력 안 함"
   const hasMetricInput = weight.trim() !== "" || hr.trim() !== ""
   const metricsSummary = [
@@ -246,7 +268,7 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
   ]
   const reviewActionLabel = (key: EveningInputStep) => {
     const hasValue = key === "sleep" ? sleep > 0 || quality > 0
-      : key === "condition" ? painPartCount > 0
+      : key === "condition" ? painPartCount > 0 || clearedBody
         : key === "mood" ? mood > 0
           : key === "metrics" ? hasMetricInput
             : memoPreview.length > 0
@@ -254,46 +276,46 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
   }
 
   return (
-    <div style={{ paddingBottom: 100 }} aria-busy={saving}>
+    <div className="evening-checkin" style={{ paddingBottom: 100 }} aria-busy={saving}>
       <fieldset disabled={saving} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
       <TopBar onBack={flow.history.length > 0 ? goBackFlow : navigation.back} onExit={navigation.exit}>컨디션·메모</TopBar>
       {navigation.dialog}
       <FormFinalizationRecovery recovery={finalization} onBack={draft.back(onBack)} />
-      {step === "condition" ? <p className="evening-checkin__body-date">
+      <p className="evening-checkin__body-date">
         <time dateTime={entryDate}>{compactDate(entryDate)}</time>
-        <span>{dowOf(entryDate)} · {nowClock()}</span>
-      </p> : <div style={{ padding: "14px 20px 0" }}>
-        <IndexCard date={compactDate(entryDate)} dow={`${dowOf(entryDate)} · ${nowClock()}`} />
-      </div>}
+        <span>{dowOf(entryDate)}</span>
+      </p>
       {step === "review" && emptyNotice && !hasInput && <p role="alert">아직 입력한 내용이 없어요. 남길 항목 하나를 골라 주세요.</p>}
       <TaskFlowStep stepKey={`${step}:${editGroup ?? "flow"}`} title={stepTitle[step]}
         className={step === "condition" ? "evening-checkin__body-step" : undefined}
-        busy={saving} onBack={flow.history.length > 0 ? goBackFlow : undefined}
-        actions={step === "review" ? <StickyBar onSave={persist} error={saveError && !accountEnabled}
-          label={saving ? "저장 중" : isEditing ? "수정 저장" : undefined} /> : step === "choose" ? undefined : step === "condition" ? (
+        busy={saving}
+        actions={step === "review" ? hasInput || isEditing ? <StickyBar onSave={persist} error={saveError && !accountEnabled}
+          label={saving ? "저장 중" : isEditing ? "수정 저장" : undefined} /> : undefined : step === "choose" ? undefined : step === "condition" ? (
           <button type="button" className="evening-checkin__body-review" onClick={enterReview}>입력 확인</button>
         ) : (
-          <div className="task-flow__actions">
-            <button type="button" className="quick-log__primary" onClick={enterReview}>입력 확인으로</button>
-          </div>
+          <button type="button" className="evening-checkin__body-review" onClick={enterReview}>입력 확인으로</button>
         )}>
 
-        {step === "choose" && <nav className="app-choice-group" aria-label="남길 항목" style={{ display: "grid", paddingInline: "var(--space-5)" }}>
+        {step === "choose" && <nav className="evening-checkin__choices" aria-label="남길 항목">
           {([
-            ["condition", "몸 상태"], ["mood", "기분"], ["sleep", "수면"], ["memo", "메모 쓰기"], ["metrics", "체중·심박"],
-          ] as const).map(([key, label]) => <button key={key} type="button" className="app-choice-control app-choice-control--answer"
-            onClick={() => navigateTo({ step: key, editGroup: key, returnToReview: true })}>{label}</button>)}
+            ["condition", "몸 상태", HeartPulse], ["mood", "기분", Smile], ["sleep", "수면", Moon], ["memo", "메모 쓰기", Pencil], ["metrics", "체중·심박", Activity],
+          ] as const).map(([key, label, Icon]) => <button key={key} type="button" data-category="body" className="category-card"
+            onClick={() => navigateTo({ step: key, editGroup: key, returnToReview: true })}>
+            <span className="category-icon" aria-hidden="true"><Icon size={22} /></span>
+            <span className="category-card__copy category-card__title">{label}</span><ChevronRight size={18} aria-hidden="true" />
+          </button>)}
         </nav>}
 
         {step === "review" && <div className="post-session-review" aria-label="저장 전 입력 확인">
+          {!hasInput && !isEditing && <p>남길 항목을 골라 주세요.</p>}
           {note.reviewMessage !== null && <p role="status">{note.reviewMessage}</p>}
           {painLevelsRequireReview(painSignals) && <PainReviewBanner />}
-          <dl style={{ display: "grid", gap: 8, margin: 0 }}>
+          <dl className="evening-checkin__review">
             {reviewItems.filter(item => reviewActionLabel(item.key) === "수정").map((item) => (
-              <div key={item.key} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", alignItems: "center", gap: 8, borderBottom: "1px solid var(--line)", paddingBlock: 8 }}>
+              <div key={item.key} className="evening-checkin__review-row">
                 <div style={{ minWidth: 0 }}>
-                  <dt style={{ fontSize: 11, color: "var(--ink-3)" }}>{item.label}</dt>
-                  <dd style={{ margin: "2px 0 0", fontSize: 14, color: "var(--ink)", overflowWrap: "anywhere" }}>{item.value}</dd>
+                  <dt>{item.label}</dt>
+                  <dd>{item.value}</dd>
                 </div>
                 <button type="button" className="quick-log__secondary" aria-label={`${item.label} ${reviewActionLabel(item.key)}`}
                   onClick={() => navigateTo({ step: item.key, editGroup: item.key, returnToReview: true })}>{reviewActionLabel(item.key)}</button>
@@ -361,13 +383,17 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
         }
 
         {step === "metrics" && <FormSec compact lb="체중 · 안정시 심박 · 선택">
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          <div className="evening-checkin__metrics">
             <div>
-              <input aria-label="체중 (kg)" type="text" value={weight} onChange={(event) => setWeight(event.target.value)} placeholder="62.0" style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
+              <label htmlFor="evening-weight">체중 (kg)</label>
+              <input id="evening-weight" ref={weightRef} inputMode="decimal" aria-label="체중 (kg)" aria-invalid={metricsChecked && weightInvalid} aria-describedby={metricsChecked && weightInvalid ? "evening-weight-error" : undefined} type="text" value={weight} onChange={(event) => setWeight(event.target.value)} placeholder="미입력" style={{ ...inputStyle(), textAlign: "right" }} />
+              {metricsChecked && weightInvalid && <p id="evening-weight-error" role="alert">0보다 큰 숫자로 입력해 주세요. 안 쟀다면 비워 두세요.</p>}
               <div style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-caption)", color: "var(--ink-2)", letterSpacing: "0.02em", marginTop: 4 }}>kg · 안 재면 비워둬요</div>
             </div>
             <div>
-              <input aria-label="안정시 심박 (bpm)" type="text" value={hr} onChange={(event) => setHr(event.target.value)} placeholder="55" style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
+              <label htmlFor="evening-hr">안정시 심박 (bpm)</label>
+              <input id="evening-hr" ref={hrRef} inputMode="numeric" aria-label="안정시 심박 (bpm)" aria-invalid={metricsChecked && hrInvalid} aria-describedby={metricsChecked && hrInvalid ? "evening-hr-error" : undefined} type="text" value={hr} onChange={(event) => setHr(event.target.value)} placeholder="미입력" style={{ ...inputStyle(), textAlign: "right" }} />
+              {metricsChecked && hrInvalid && <p id="evening-hr-error" role="alert">0보다 큰 숫자로 입력해 주세요. 안 쟀다면 비워 두세요.</p>}
               <div style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-caption)", color: "var(--ink-2)", letterSpacing: "0.02em", marginTop: 4 }}>bpm · 아침 안정시 기준</div>
             </div>
           </div>

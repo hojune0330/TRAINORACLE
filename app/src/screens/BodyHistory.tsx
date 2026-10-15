@@ -191,8 +191,7 @@ export function BodyHistory({
               <li className="body-history__record" key={record.key}>
                 <div className="body-history__record-head">
                   <time className="body-history__date" dateTime={record.date}>{dateLabel(record.date)}</time>
-                  <span className="body-history__source">{sourceLabel(record.source)}</span>
-                  <strong className="body-history__severity">정도 {record.severity}/5</strong>
+                  <strong className="body-history__severity">통증 정도 {record.severity}/5</strong>
                 </div>
                 {record.labelSnapshot !== undefined && record.labelSnapshot !== selectedPart.label && (
                   <p className="body-history__snapshot">기록 이름 · {record.labelSnapshot}</p>
@@ -200,9 +199,13 @@ export function BodyHistory({
                 {record.note !== undefined && record.note !== "" && (
                   <p className="body-history__note">{record.note}</p>
                 )}
+                <details>
+                  <summary className="body-history__source-link">기록 정보</summary>
+                  <span className="body-history__source">{sourceLabel(record.source)}</span>
                 {timeLabel(record.savedAt) !== null && (
                   <p className="body-history__saved-time">저장 시간 · {timeLabel(record.savedAt)}</p>
                 )}
+                </details>
                 <button
                   type="button"
                   className="body-history__source-link"

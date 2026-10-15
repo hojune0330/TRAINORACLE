@@ -19,7 +19,7 @@
 .month-calendar__grid th[data-weekday="6"] { color: var(--ink-blue); }
 .month-calendar__grid td { padding: 0; vertical-align: top; border: 0; }
 .month-calendar__grid td[data-outside] .month-calendar__number { color: var(--ink-3); font-weight: 400; }
-.month-calendar__grid td[data-in-range] { background: var(--calendar-wash); border-bottom: 2px solid var(--calendar-accent); }
+.month-calendar__grid td[data-in-range] { border-bottom: 2px solid var(--calendar-accent); }
 .month-calendar__grid td button { display: flex; flex-direction: column; align-items: stretch; width: 100%; min-height: 64px; padding: var(--space-1) 0; border: 0; border-radius: var(--r-action); background: transparent; color: var(--ink); cursor: pointer; font: inherit; text-align: center; }
 .month-calendar__date-heading { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%; min-height: 28px; }
 .month-calendar__number { box-sizing: border-box; display: grid; place-items: center; min-width: 28px; min-height: 32px; border: 1px solid transparent; border-radius: 50%; white-space: nowrap; font-size: var(--fs-body); font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -68,12 +68,26 @@
 .calendar-training-mark[data-tone="unknown"] { border-block-style: dashed; }
 .calendar-training-mark[data-tone="journal"] { border-color: transparent; }
 .calendar-training-mark[data-tone="off"] .calendar-training-mark__label { font-weight: 400; }
+.calendar-training-mark[data-tone="main"] { border-color: var(--ink-2); }
+.calendar-training-mark[data-tone="main"] .calendar-training-mark__label { font-weight: 800; }
+.calendar-training-mark > .calendar-role-icon { justify-self: center; margin-bottom: var(--space-1); }
+.calendar-role-icon { flex-shrink: 0; }
+.month-calendar__grid { background: var(--surface); border-radius: var(--r-task-surface); }
+.calendar-decoration-frame .month-calendar__grid { background: transparent; }
+.calendar-training-mark { border-radius: var(--r-action); }
+.month-calendar__events:has(.calendar-training-mark) { gap: 2px; }
+.month-calendar__events > .calendar-training-mark { margin-inline: 1px; }
 .calendar-color-guide { margin-top: var(--space-1); font-size: var(--fs-caption); }
 .calendar-color-guide summary { display: flex; align-items: center; gap: var(--space-1); width: fit-content; min-height: var(--app-touch-min); cursor: pointer; color: var(--ink-2); }
 .calendar-color-guide summary:focus-visible { outline: 2px solid var(--focus-ring); }
-.calendar-color-guide ul { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); padding: 0; margin: var(--space-1) 0; list-style: none; }
+.calendar-color-guide ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: var(--space-3); padding: var(--space-3); margin: var(--space-1) 0; list-style: none; background: var(--surface); border-radius: var(--r-task-surface); }
 .calendar-color-guide li { display: flex; align-items: center; gap: var(--space-1); min-width: 0; }
-.calendar-color-guide__swatch { display: inline-block; flex: 0 0 16px; height: 16px; border: 1px solid var(--line-2); }
+.calendar-color-guide__swatch { display: grid; place-items: center; flex: 0 0 32px; height: 32px; border: 1px solid var(--line-2); border-radius: var(--r-action); }
+.calendar-color-guide li > span:last-child { display: grid; gap: var(--space-1); }
+.calendar-color-guide small { font-size: var(--fs-caption); color: var(--ink-2); }
+.calendar-color-guide summary { width: auto; padding: var(--space-2); border-radius: var(--r-action); background: var(--surface-2); font-weight: 600; }
+.calendar-color-guide summary > svg:last-child { margin-left: auto; }
+.calendar-color-guide[open] summary > svg:last-child { transform: rotate(180deg); }
 .calendar-color-guide p { margin: var(--space-2) 0; color: var(--ink-2); }
 .month-calendar__grid tbody { animation: calendar-month-enter var(--dur-slow) var(--ease-out-strong); }
 .month-calendar__grid td button { transition: transform var(--dur-base) var(--ease-out-strong); }

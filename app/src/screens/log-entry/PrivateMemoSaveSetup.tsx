@@ -15,6 +15,7 @@ export function PrivateMemoSaveSetup({ onReady, requested = false }: { readonly 
   const [created, setCreated] = React.useState(false)
   const [kept, setKept] = React.useState(false)
   const [open, setOpen] = React.useState(requested)
+  const [codeEntryOpen, setCodeEntryOpen] = React.useState(false)
   const [busy, setBusy] = React.useState(false)
   const [notice, setNotice] = React.useState<string | null>(null)
   const mounted = React.useRef(true)
@@ -32,6 +33,7 @@ export function PrivateMemoSaveSetup({ onReady, requested = false }: { readonly 
   }, [open, recoveryCode, requested])
 
   const create = () => {
+    setCodeEntryOpen(true)
     try {
       if (hasRetainedPrivateMemos()) {
         setNotice("기존 메모 또는 휴지통에 암호화된 메모가 있어요. 보관한 기존 복구 코드를 입력해 주세요.")
@@ -72,6 +74,8 @@ export function PrivateMemoSaveSetup({ onReady, requested = false }: { readonly 
       <p>로그인 없이 쓰는 비밀 메모는 복구 코드로 암호화해 이 기기에 저장해요. 코드를 잃으면 운영자도 메모를 복구할 수 없어요. 작성한 글은 아직 저장 전이에요.</p>
       <fieldset disabled={busy} style={{ border: 0, padding: 0, margin: 0, minWidth: 0, display: "grid", gap: 8 }}>
         <button type="button" onClick={create} style={buttonStyle}>처음 사용해요 · 코드 만들기</button>
+        {!created && <button type="button" aria-expanded={codeEntryOpen} style={buttonStyle} onClick={() => setCodeEntryOpen(value => !value)}>코드가 있어요</button>}
+        {codeEntryOpen && <>
         <label htmlFor={id}>{created ? "보관할 복구 코드" : "기존 복구 코드"}</label>
         <input id={id} value={code} readOnly={created} type={created ? "text" : "password"} autoComplete="off" spellCheck={false} onChange={event => setCode(event.target.value)} style={{ ...inputStyle(), fontSize: 16 }} />
         {!created && <button type="button" style={buttonStyle} aria-expanded={repair} onClick={() => { setRepair(value => !value); setKept(false); setAdditional("") }}>서로 다른 코드를 쓴 메모 복구</button>}
@@ -83,6 +87,7 @@ export function PrivateMemoSaveSetup({ onReady, requested = false }: { readonly 
         {(created || repair) && <label style={{ display: "flex", gap: 8, alignItems: "center", minHeight: 44 }}><input type="checkbox" checked={kept} onChange={event => setKept(event.target.checked)} /> {repair ? "두 코드를 모두 보관했고 첫 번째 코드로 모을게요" : "복구 코드를 따로 보관했어요"}</label>}
         {created && <button type="button" style={buttonStyle} onClick={() => { setCreated(false); setKept(false); setCode(""); setNotice(null) }}>기존 코드 입력하기</button>}
         <button type="button" disabled={code.trim() === "" || ((created || repair) && !kept) || (repair && additional.trim() === "")} onClick={() => void prepare()} style={{ ...buttonStyle, background: "var(--ink)", color: "var(--bg)" }}>{busy ? "확인 중" : repair ? "확인하고 첫 번째 코드로 모으기" : "이 코드로 저장 준비"}</button>
+        </>}
       </fieldset>
       {notice && <p role="alert">{notice}</p>}
     </div>}
