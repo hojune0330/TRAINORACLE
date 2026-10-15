@@ -1,5 +1,5 @@
 import { BookOpen, CalendarDays, CheckCircle2, ChevronRight, Ellipsis, NotebookPen, PencilLine } from "lucide-react"
-import { useId, type ReactNode } from "react"
+import { useId, useRef, type ReactNode } from "react"
 import { CategoryCard, type AppCategory } from "../../components/CategoryCard"
 import type { HomeSession, TrainingHomeViewModel } from "../../domain/home-view-model"
 import { AppHeading } from "../../components/AppHeading"
@@ -8,7 +8,7 @@ import { sessionWorkoutNotation } from "../../domain/workout-notation"
 import { sessionLabel, sessionSlotLabel } from "../plan-beta/labels"
 import type { LogEntryType } from "../log-entry/shared"
 import type { CalendarReadiness } from "../../domain/calendar-context"
-import { HomeIntroduction, useHomeIntroduction } from "./HomeIntroduction"
+import { HomeIdentityArtwork, HomeIntroduction, useHomeIntroduction } from "./HomeIntroduction"
 import "../../styles/home-hub.css"
 
 export function nextTrainingPrescriptionLabel(session: HomeSession): string {
@@ -53,15 +53,18 @@ export function TrainingHome({
   // The model requests the first-record example only when no dated journal is visible.
   const hasJournalHistory = !model.showMinjiPrompt
   const welcome = model.homeMode === "WELCOME"
-  const expandedIntroduction = useHomeIntroduction(welcome && introductionAllowed && introductionReady && journalReadiness === "READY")
+  const introduction = useHomeIntroduction(introductionAllowed && introductionReady && journalReadiness === "READY")
+  const title = useRef<HTMLHeadingElement>(null)
   const analysisEntry = oraclePreview ? oraclePreview
     : onOpenOracle && <section className="home-hub__oracle"><CategoryCard category="oracle" title="오라클 결과 보기" onClick={() => onOpenOracle("level")} /></section>
 
   return (
     <div className="home-hub">
       <header className="home-hub__header">
-        <div className="home-hub__identity"><div className="home-hub__brand">TRAINORACLE</div>
+        <div className="home-hub__identity"><HomeIdentityArtwork /><div className="home-hub__identity-copy">
+          <div className="home-hub__brand">TRAINORACLE</div>
           {!welcome && <span className="home-hub__purpose">운동 분석 · 훈련 계획</span>}
+        </div>
         </div>
         <div className="home-hub__header-actions">
           {accountEntry}
@@ -72,14 +75,20 @@ export function TrainingHome({
       </header>
       {safetyNotice}
 
-      {welcome ? <HomeIntroduction expanded={expandedIntroduction} /> : <section className="home-hub__intro" aria-labelledby="home-hub-title">
-        <AppHeading id="home-hub-title" variant="hero" accent>{model.homeMode === "TRAINING" ? "훈련과 기록" : "내 기록"}</AppHeading>
-      </section>}
+      <section className="home-hub__intro" aria-labelledby="home-hub-title">
+        <AppHeading ref={title} tabIndex={-1} id="home-hub-title" variant="hero" accent>{welcome ? "운동 분석과 훈련 계획" : model.homeMode === "TRAINING" ? "훈련과 기록" : "내 기록"}</AppHeading>
+      </section>
 
       {welcome ? <WelcomeToday onWriteLog={onWriteLog} onOpenPlan={onOpenPlan} analysisEntry={analysisEntry} /> : <>
         {next !== null && <NextTrainingCard next={next} onOpen={nextAction} />}
         <TodaySection model={model} readiness={journalReadiness} onWriteLog={onWriteLog} onOpenToday={onOpenToday} />
       </>}
+
+      {introduction.expanded && <HomeIntroduction onDismiss={() => {
+        introduction.dismiss()
+        const actions = title.current?.closest(".home-hub")?.querySelectorAll<HTMLButtonElement>(".home-hub__today button")
+        actions?.[actions.length - 1]?.focus({ preventScroll: true })
+      }} />}
 
       {model.homeMode !== "WELCOME" && hasJournalHistory && <section className="home-hub__summary">
         {!recentJournal && <div className="home-hub__section-heading">

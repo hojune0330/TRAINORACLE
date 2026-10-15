@@ -83,7 +83,7 @@ describe("training home presentation", () => {
   it("keeps welcome focused on recording and planning with a named learning and decoration entry", () => {
     const learn = vi.fn(); const decorate = vi.fn(); const guide = vi.fn()
     render(<TrainingHome model={BASE} onOpenContent={learn} onOpenRewards={decorate} onOpenGuide={guide} />)
-    expect(screen.getByRole("heading", { name: "운동을 분석하고 훈련 계획을 세워요" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "운동 분석과 훈련 계획" })).toBeVisible()
     expect(screen.getByRole("button", { name: "훈련법 읽기" })).toBeVisible()
     expect(screen.getByRole("button", { name: "일지 꾸미기" })).toBeVisible()
     expect(screen.getByRole("navigation", { name: "훈련 계획과 운동 분석" }).querySelectorAll("button")).toHaveLength(1)

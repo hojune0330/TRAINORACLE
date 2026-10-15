@@ -22,6 +22,10 @@
   color: var(--ink);
 }
 .more-screen .utility-header > button:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
+.more-screen__introduction { margin-top:var(--space-6); min-width:0; }
+.more-screen__introduction .home-hub__identity-art { margin-bottom:var(--space-4); }
+.more-screen__introduction > .app-heading { margin:0 0 var(--space-6); line-height:1.5; overflow-wrap:anywhere; }
+.more-screen__introduction nav { display:grid; }
 .more-screen__trash { margin-top: 20px; border-block: 1px solid var(--line); }
 .more-screen__trash > summary {
   display: flex;
