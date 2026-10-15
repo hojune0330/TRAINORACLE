@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   generatePlanFromDraft,
@@ -30,6 +31,13 @@ const TEMPLATE_1500 = {
   fingerprint: approval1500.templateContentFingerprint,
 } as const
 
+function storageSnapshot(storage: Storage): readonly (readonly [string, string | null])[] {
+  return Array.from({ length: storage.length }, (_, index) => storage.key(index))
+    .filter((key): key is string => key !== null)
+    .sort()
+    .map(key => [key, storage.getItem(key)] as const)
+}
+
 beforeEach(() => {
   vi.useFakeTimers()
   vi.setSystemTime(NOW)
@@ -43,7 +51,8 @@ afterEach(() => {
 })
 
 describe("stored plan v3 target and preview boundary", () => {
-  it("requires and binds one exact target event plus an explicit null template selection", () => {
+  it("requires and binds one exact target event plus an explicit null template selection", async () => {
+    await initializeCanonicalJournalFixture()
     const missingTarget = generatePlanFromDraft(
       { ...DRAFT, eventDistanceM: undefined },
       "NO_KNOWN_RISK",
@@ -72,7 +81,10 @@ describe("stored plan v3 target and preview boundary", () => {
     }
   })
 
-  it("returns a valid future race date only as a non-selectable in-memory preview", () => {
+  it("returns a valid future race date only as a non-selectable in-memory preview", async () => {
+    await initializeCanonicalJournalFixture()
+    const localBefore = storageSnapshot(window.localStorage)
+    const sessionBefore = storageSnapshot(window.sessionStorage)
     const result = generatePlanFromDraft({
       ...DRAFT,
       targetRaceDate: "2026-09-12",
@@ -94,17 +106,22 @@ describe("stored plan v3 target and preview boundary", () => {
       },
       candidates: [],
     })
-    expect(window.localStorage.length).toBe(0)
-    expect(window.sessionStorage.length).toBe(0)
+    expect(storageSnapshot(window.localStorage)).toEqual(localBefore)
+    expect(storageSnapshot(window.sessionStorage)).toEqual(sessionBefore)
   })
 
-  it("compares a race date with the authoritative local civil day after KST midnight", () => {
+  it("compares a race date with the authoritative local civil day after KST midnight", async () => {
+    await initializeCanonicalJournalFixture()
+    const localBefore = storageSnapshot(window.localStorage)
+    const sessionBefore = storageSnapshot(window.sessionStorage)
     vi.setSystemTime(new Date(2026, 7, 24, 0, 30))
 
     const sameLocalDay = generatePlanFromDraft({
       ...DRAFT,
       targetRaceDate: "2026-08-24",
     }, "NO_KNOWN_RISK")
+    expect(storageSnapshot(window.localStorage)).toEqual(localBefore)
+    expect(storageSnapshot(window.sessionStorage)).toEqual(sessionBefore)
     const nextLocalDay = generatePlanFromDraft({
       ...DRAFT,
       targetRaceDate: "2026-08-25",
@@ -115,11 +132,12 @@ describe("stored plan v3 target and preview boundary", () => {
       kind: "preview_only",
       preview: { targetRaceDate: "2026-08-25" },
     })
-    expect(window.localStorage.length).toBe(0)
-    expect(window.sessionStorage.length).toBe(0)
+    expect(storageSnapshot(window.localStorage)).toEqual(localBefore)
+    expect(storageSnapshot(window.sessionStorage)).toEqual(sessionBefore)
   })
 
-  it("creates a v3 active snapshot from a generated candidate", () => {
+  it("creates a v3 active snapshot from a generated candidate", async () => {
+    await initializeCanonicalJournalFixture()
     const result = generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK")
     if (result.kind !== "generated") throw new TypeError("Expected generated v3 fixture")
 
@@ -156,7 +174,8 @@ describe("stored plan v3 target and preview boundary", () => {
     })
   })
 
-  it("keeps target event distinct from cross-event evidence and falls back atomically", () => {
+  it("keeps target event distinct from cross-event evidence and falls back atomically", async () => {
+    await initializeCanonicalJournalFixture()
     const record = createSelfReportedAthleteRecord({
       id: "00000000-0000-4000-8000-000000005000",
       purpose: "RECENT_RESULT",
@@ -186,7 +205,8 @@ describe("stored plan v3 target and preview boundary", () => {
     ))).toBe(true)
   })
 
-  it("binds one explicitly selected exact-event template to both candidates", () => {
+  it("binds one explicitly selected exact-event template to both candidates", async () => {
+    await initializeCanonicalJournalFixture()
     const record = createSelfReportedAthleteRecord({
       id: "00000000-0000-4000-8000-000000001500",
       purpose: "RECENT_RESULT",
@@ -215,7 +235,8 @@ describe("stored plan v3 target and preview boundary", () => {
     ))).toBe(true)
   })
 
-  it("rejects an active detailed plan whose primary template no longer matches its session", () => {
+  it("rejects an active detailed plan whose primary template no longer matches its session", async () => {
+    await initializeCanonicalJournalFixture()
     const record = createSelfReportedAthleteRecord({
       id: "00000000-0000-4000-8000-000000001501",
       purpose: "RECENT_RESULT",
@@ -255,7 +276,8 @@ describe("stored plan v3 target and preview boundary", () => {
     expect(planBetaStateV3Schema.safeParse(forged).success).toBe(false)
   })
 
-  it("invalidates coordinated candidate and pair mutations at selection", () => {
+  it("invalidates coordinated candidate and pair mutations at selection", async () => {
+    await initializeCanonicalJournalFixture()
     const original = generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK")
     if (original.kind !== "generated") throw new TypeError("Expected generated v3 fixture")
     const [balanced, conservative] = original.generated.candidates
@@ -279,7 +301,10 @@ describe("stored plan v3 target and preview boundary", () => {
     expect(selection).toMatchObject({ kind: "rejected" })
   })
 
-  it("rejects malformed, past, multiple, prioritized, and receipt-injected race input", () => {
+  it("rejects malformed, past, multiple, prioritized, and receipt-injected race input", async () => {
+    await initializeCanonicalJournalFixture()
+    const localBefore = storageSnapshot(window.localStorage)
+    const sessionBefore = storageSnapshot(window.sessionStorage)
     const malformedInputs = [
       { ...DRAFT, targetRaceDate: "2026-02-30" },
       { ...DRAFT, targetRaceDate: "2026-08-23" },
@@ -292,13 +317,18 @@ describe("stored plan v3 target and preview boundary", () => {
     ]
 
     for (const input of malformedInputs) {
-      expect(generatePlanFromDraft(input, "NO_KNOWN_RISK")).toMatchObject({ kind: "rejected" })
+      expect(generatePlanFromDraft(input, "NO_KNOWN_RISK")).toMatchObject({ kind: "rejected", code: "MALFORMED_INPUT" })
+      expect(storageSnapshot(window.localStorage)).toEqual(localBefore)
+      expect(storageSnapshot(window.sessionStorage)).toEqual(sessionBefore)
     }
-    expect(window.localStorage.length).toBe(0)
-    expect(window.sessionStorage.length).toBe(0)
+    expect(storageSnapshot(window.localStorage)).toEqual(localBefore)
+    expect(storageSnapshot(window.sessionStorage)).toEqual(sessionBefore)
   })
 
-  it("leaves no persistent race-date bytes and cannot select or save a preview", () => {
+  it("leaves no persistent race-date bytes and cannot select or save a preview", async () => {
+    await initializeCanonicalJournalFixture()
+    const localBefore = storageSnapshot(window.localStorage)
+    const sessionBefore = storageSnapshot(window.sessionStorage)
     const urlBefore = window.location.href
     const historyBefore = JSON.stringify(window.history.state)
     const fetchSpy = vi.spyOn(globalThis, "fetch")
@@ -335,10 +365,13 @@ describe("stored plan v3 target and preview boundary", () => {
     expect(JSON.stringify(storageBytes)).not.toContain(result.preview.targetRaceDate)
     expect(window.location.href).toBe(urlBefore)
     expect(JSON.stringify(window.history.state)).toBe(historyBefore)
+    expect(storageSnapshot(window.localStorage)).toEqual(localBefore)
+    expect(storageSnapshot(window.sessionStorage)).toEqual(sessionBefore)
     expect(fetchSpy).not.toHaveBeenCalled()
   })
 
-  it("preserves invalid stored bytes while rejecting identity tampering", () => {
+  it("preserves invalid stored bytes while rejecting identity tampering", async () => {
+    await initializeCanonicalJournalFixture()
     const generated = generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK")
     if (generated.kind !== "generated") throw new TypeError("Expected generated v3 fixture")
     const selected = selectPlanForActivation(
@@ -359,7 +392,8 @@ describe("stored plan v3 target and preview boundary", () => {
     expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBe(tampered)
   })
 
-  it("rejects retained candidate identity after stored support-session bytes change", () => {
+  it("rejects retained candidate identity after stored support-session bytes change", async () => {
+    await initializeCanonicalJournalFixture()
     const generated = generatePlanFromDraft(DRAFT, "NO_KNOWN_RISK")
     if (generated.kind !== "generated") throw new TypeError("Expected generated v3 fixture")
     const selected = selectPlanForActivation(

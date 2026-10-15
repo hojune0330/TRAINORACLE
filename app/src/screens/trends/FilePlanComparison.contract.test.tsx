@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import React from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
@@ -49,8 +50,8 @@ function fixture() {
   return { plan, reference, original, entry, choice }
 }
 let f: ReturnType<typeof fixture>
-beforeEach(() => {
-  vi.resetAllMocks(); api.owner = null; resetAccountJournalProjection(null); localStorage.clear(); sessionStorage.clear(); f = fixture()
+beforeEach(async () => {
+  vi.resetAllMocks(); api.owner = null; resetAccountJournalProjection(null); localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); f = fixture()
   vi.stubEnv("VITE_FEATURE_FILE_ANALYSIS_TCX", "true"); vi.stubEnv("VITE_KILL_FILE_ANALYSIS_TCX", "false")
   api.read.mockResolvedValue({ entry: f.entry, revision: 4, contentFingerprint: "sha256:" + "a".repeat(64) })
   api.load.mockResolvedValue({ status: "AVAILABLE", choices: [f.choice] })

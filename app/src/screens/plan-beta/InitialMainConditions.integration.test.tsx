@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import React from "react"
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -14,8 +15,8 @@ vi.mock("../../domain/account/supabase-client", () => ({ supabase: async () => n
 const intake: store.PlanBetaIntake = { eventGroup: "FIVE_K", eventDistanceM: 5000, competitionDivision: "OPEN",
   experienceBand: "NEW_TO_RUNNING", availableDayCount: "EVERY_DAY", requestedFrameLength: 9, trainingFocus: "ATP_PC_INTENT",
   secondSessionMode: "SINGLE_SESSION_ONLY", trainingTimePreference: "EVENING", selectedDetailedTemplateRef: null }
-beforeEach(() => {
-  localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null)
+beforeEach(async () => {
+  localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null)
   vi.spyOn(store, "loadPreviousIntake").mockReturnValue(intake)
   vi.stubGlobal("fetch", vi.fn(() => { throw Error("Synthetic fixture forbids network") }))
 })

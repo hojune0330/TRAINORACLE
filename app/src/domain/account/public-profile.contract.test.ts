@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { generatePlanFromDraft, selectPlanForActivation } from "../plan-beta-flow"
 import { planBetaStateV3Schema } from "../plan-beta-schema"
@@ -144,13 +145,13 @@ function upsertShareSlugs(): string[] {
     .filter((value): value is string => typeof value === "string")
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   runtime.publicProfileEnabled = true
   runtime.profileIsPublic = true
   runtime.currentUserId = OWNER_A
   runtime.shareCardCalls = []
   runtime.savedCards = []
-  window.localStorage.clear()
+  window.localStorage.clear(); await initializeCanonicalJournalFixture();
 })
 
 afterEach(() => {
@@ -208,7 +209,7 @@ describe("public plan-card publication privacy boundary", () => {
 
   it("separates public ids for a different authenticated owner or detailed plan", async () => {
     const first = detailedStoredPlan(1)
-    window.localStorage.clear()
+    window.localStorage.clear(); await initializeCanonicalJournalFixture();
     const second = detailedStoredPlan(2)
 
     await publishActivePlanCard(OWNER_A, first.state)

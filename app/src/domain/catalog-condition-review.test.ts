@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { beforeEach, describe, expect, it } from "vitest"
 import { generatePlanFromDraft } from "./plan-beta-flow"
 import { findCatalogConditionReview } from "./catalog-condition-review"
@@ -7,7 +8,8 @@ import { isVerifiedPlanCandidate } from "@impl/plan-generator/adaptation"
 import { isInitialCandidatePair } from "@impl/plan-generator/support-only-candidate-pair"
 import type { PlanGenerationSuccess } from "@impl/plan-generator/types"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear()
+  await initializeCanonicalJournalFixture() })
 function conditionFixture() {
   const result = generatePlanFromDraft({ eventGroup: "FIVE_K", eventDistanceM: 5000, competitionDivision: "HIGH_SCHOOL",
     experienceBand: "EXPERIENCED", availableDayCount: 5, requestedFrameLength: 9, trainingFocus: "ATP_PC_INTENT",

@@ -9,10 +9,12 @@ import type { PostSessionEntry } from "../../domain/journal-schema"
 import { SessionExplanationEntry } from "./SessionExplanation"
 import { PlanMethodObservationDetails } from "./PlanMethodObservationDetails"
 import { COMPARISON_LABELS } from "./PlanCycleEvidence"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 
 const originalShowModal = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const originalScrollTo = Object.getOwnPropertyDescriptor(Element.prototype, "scrollTo")
-beforeEach(() => {
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value: function (this: HTMLDialogElement) { this.setAttribute("open", "") } })
   Object.defineProperty(Element.prototype, "scrollTo", { configurable: true, value: vi.fn() })
 })

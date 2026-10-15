@@ -1,9 +1,10 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { beforeEach, expect, it } from "vitest"
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import { defaultInstantCandidate, projectInstantRecommendation } from "./instant-plan-projection"
 import type { PlanCandidate } from "@impl/plan-generator/types"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture() })
 const draft = { eventGroup: "FIVE_K", eventDistanceM: 5000, competitionDivision: "OPEN", experienceBand: "EXPERIENCED",
   availableDayCount: "EVERY_DAY", requestedFrameLength: 9, trainingFocus: "MIXED_INTENT",
   secondSessionMode: "RECOVERY_PM_ALLOWED", trainingTimePreference: "EVENING", selectedDetailedTemplateRef: null } as const

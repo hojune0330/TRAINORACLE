@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "./test/canonical-journal-fixture"
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
@@ -15,9 +16,10 @@ beforeAll(async () => { await Promise.all([
   import("./screens/ImportActivities"), import("./screens/AthleteRecords"),
 ]) }, 60000)
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
   window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
   window.history.replaceState(null, "", "/?app=1")
 })
 

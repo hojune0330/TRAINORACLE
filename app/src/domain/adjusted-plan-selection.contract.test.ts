@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { selectAdjustedPlanForActivation } from "./adjusted-plan-selection"
 import { adjustedPlanSelectionFixture as fixture } from "./adjusted-plan-selection.test-fixtures"
@@ -6,7 +7,7 @@ import { setActiveLocalAccount } from "./account/local-journal-ownership"
 import { TODAY } from "./prescription-quality-matrix.test-fixtures"
 
 const now = TODAY.getTime()
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 
 describe("explicit adjusted whole-plan selection", () => {
@@ -65,9 +66,10 @@ describe("explicit adjusted whole-plan selection", () => {
       candidate: { ...request.preparation.candidate, sourceMode: "JOURNAL_CONTEXT_ONLY" as const } } }
     expect(selectAdjustedPlanForActivation(changed, [policy])).toEqual({ kind: "rejected", code: "STALE_ORIGINAL_CANDIDATE" })
   })
-  it("requires the underlying record still to exist", () => {
+  it("requires the underlying record still to exist", async () => {
     const { request, policy } = fixture()
     localStorage.clear()
+    await initializeCanonicalJournalFixture()
     expect(selectAdjustedPlanForActivation(request, [policy])).toEqual({ kind: "rejected", code: "PACE_ANCHOR_RECONFIRMATION_REQUIRED" })
   })
   it("rejects missing explicit action and mismatched athlete experience", () => {

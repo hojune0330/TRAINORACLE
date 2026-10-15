@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "./test/canonical-journal-fixture"
 import React from "react"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
@@ -17,7 +18,7 @@ vi.mock("./DeferredMobileScreens", () => ({ DeferredMobileScreens: {
     return planMode.actual ? <PlanBeta {...props} /> : <h1>계획 연결 검수</h1>
   },
 } }))
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); planProps.mockClear(); planMode.actual = false })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); planProps.mockClear(); planMode.actual = false })
 afterEach(cleanup)
 
 function multiPlanPacketFixture() {

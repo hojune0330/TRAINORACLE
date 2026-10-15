@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
@@ -9,7 +10,7 @@ import { enterPlanWithoutRecord } from "./plan-beta/instant-plan.test-helper"
 import * as legacyArchive from "../domain/legacy-plan-archive"
 import { hasPendingBrowserBackLayer } from "../navigation/browserNavigation"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null) })
 afterEach(async () => {
   cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals()
   await waitFor(() => expect(hasPendingBrowserBackLayer()).toBe(false))
@@ -19,7 +20,7 @@ const storageChanged = (key: string | null = activePlanBetaStorageKey()) => act(
 })
 const showProgress = async () => {
   const user = userEvent.setup()
-  await user.click(await screen.findByRole("button", { name: "목록" }))
+  await user.click(await screen.findByRole("button", { name: "하루씩" }))
   const list = screen.getByRole("region", { name: "날짜별 훈련 목록" })
   await user.click(within(list).getByRole("button", { name: "7월 24일 금요일 전체 처방 보기" }))
   const reader = within(await screen.findByRole("dialog", { name: "2026년 7월 24일 금요일" }))

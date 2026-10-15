@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, expect, it, vi } from "vitest"
 import { HomeCoachingSummary } from "./HomeCoachingSummary"
@@ -83,7 +84,8 @@ it("refreshes the date filter after the tab resumes across midnight", () => {
   expect(readMultiEvidence).not.toHaveBeenCalled()
 })
 
-it("memoizes a failed V6 evidence read across visible coaching records", () => {
+it("memoizes a failed V6 evidence read across visible coaching records", async () => {
+  await initializeCanonicalJournalFixture()
   const packet = accountPlanPacketFixture(6)
   if (packet.state.version !== 6) throw Error("Expected V6 plan")
   const state = packet.state
@@ -108,7 +110,8 @@ it("memoizes a failed V6 evidence read across visible coaching records", () => {
   expect(readMultiEvidence).toHaveBeenCalledOnce()
 })
 
-it("reuses a successful V6 evidence read when a coaching record opens", () => {
+it("reuses a successful V6 evidence read when a coaching record opens", async () => {
+  await initializeCanonicalJournalFixture()
   const packet = accountPlanPacketFixture(6)
   if (packet.state.version !== 6 || packet.evidence === null || !("slots" in packet.evidence) || !("rpeBindings" in packet.evidence)) throw Error("Expected V6 plan evidence")
   const evidence = packet.evidence as RetainedMultiAdjustedEvidenceV3

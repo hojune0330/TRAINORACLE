@@ -8,6 +8,7 @@ import { CoachSupportPanel } from "./CoachSupportPanel"
 import { PrivateMemoVault } from "./PrivateMemoVault"
 import { SwitchAccountPanel } from "./SwitchAccountPanel"
 import { inputStyle, primaryBtn } from "./styles"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 
 const config = {
   url: "https://example.supabase.co",
@@ -20,9 +21,10 @@ const config = {
   termsOfService: { url: "https://trainoracle.example/terms", version: "2026-09-12" },
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
   window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
   vi.stubEnv("VITE_FEATURE_ACCOUNT_JOURNAL", "false")
   vi.stubEnv("VITE_KILL_ACCOUNT_JOURNAL", "false")
 })
@@ -128,6 +130,7 @@ describe("DS-06 account presentation fixtures", () => {
     expect(screen.getByRole("status")).toHaveAttribute("data-state", "error")
     cleanup()
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
 
     const successfulPreview = vi.fn().mockResolvedValue({
       ok: true,

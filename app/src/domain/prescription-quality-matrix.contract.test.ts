@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import * as d9Module from "@impl/d9/evaluator"
 import {
@@ -22,11 +23,12 @@ import {
 const observations: MatrixObservation[] = []
 const populationContractObservations: PopulationContractObservation[] = []
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.useFakeTimers()
   vi.setSystemTime(TODAY)
   window.localStorage.clear()
   window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 
 afterEach(() => {

@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { generatePlanCandidates } from "@impl/plan-generator/generator"
 import {
@@ -52,11 +53,12 @@ function approved5000Template() {
 type LocksDescriptor = PropertyDescriptor | undefined
 let locksDescriptor: LocksDescriptor
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.useFakeTimers()
   vi.setSystemTime(new Date(ACTIVATED_AT))
   window.localStorage.clear()
   window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
   locksDescriptor = installAvailableLock()
 })
 
@@ -320,6 +322,7 @@ describe("accepted successor activation", () => {
     for (const target of [HISTORY_KEY, PREVIOUS_INTAKE_KEY, CONTEXT_KEY, ACTIVE_KEY, PLAN_SUCCESSOR_ACTIVATION_RECEIPT_STORAGE_KEY, PENDING_KEY]) {
       window.localStorage.clear()
       window.sessionStorage.clear()
+      await initializeCanonicalJournalFixture()
       const fixture = await acceptedFixture(9, true)
       const before = storageSnapshot()
       let dropped = false

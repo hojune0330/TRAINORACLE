@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { accountPlanPacketFixture } from "../account/account-plan.test-fixtures"
 import { accountPlanEntry } from "../account/account-plan-document-schema"
@@ -20,10 +21,10 @@ import {
 const owner = "synthetic-restore-owner-a"
 const at = TODAY.toISOString()
 
-function fixture(id = "restored-journal") {
+async function fixture(id = "restored-journal") {
   // The shared generator fixture seeds device records before account hydration.
   setActiveLocalAccount(null)
-  localStorage.clear()
+  localStorage.clear(); await initializeCanonicalJournalFixture();
   const snapshot = accountPlanEntry(accountPlanPacketFixture(4), at).snapshot
   setActiveLocalAccount(owner)
   const sessions = resolveComparisonPlanSessions(snapshot)
@@ -54,11 +55,11 @@ function fixture(id = "restored-journal") {
   return { snapshot, original, observation, relation, entry: { ...entry, comparisonRelations: [relation] } }
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.useFakeTimers()
   vi.setSystemTime(TODAY)
   localStorage.clear()
-  sessionStorage.clear()
+  sessionStorage.clear(); await initializeCanonicalJournalFixture();
   vi.stubEnv("VITE_FEATURE_FILE_ANALYSIS_TCX", "true")
   vi.stubEnv("VITE_KILL_FILE_ANALYSIS_TCX", "false")
   setActiveLocalAccount(owner)
@@ -73,8 +74,8 @@ afterEach(() => {
 })
 
 describe("current acknowledged persisted comparison read", () => {
-  it("keeps stale restored history nonquantitative until exact content and interpretation revert, not permanently invalid", () => {
-    const f = fixture(), file = f.entry.fileObservation!
+  it("keeps stale restored history nonquantitative until exact content and interpretation revert, not permanently invalid", async () => {
+    const f = (await fixture()), file = f.entry.fileObservation!
     const laps = file.laps.map((lap, index) => index === 0 ? { ...lap, distanceMeters: lap.distanceMeters! + 10 } : lap)
     const differentContent = buildFileObservation({
       format: file.format, sourceProfile: file.sourceProfile, parserVersion: file.parserVersion,
@@ -114,8 +115,8 @@ describe("current acknowledged persisted comparison read", () => {
     }
   })
 
-  it("reads a validated restored relation at revision one without rewriting historical revision four or weakening CAS", () => {
-    const f = fixture(), before = JSON.stringify(f.entry)
+  it("reads a validated restored relation at revision one without rewriting historical revision four or weakening CAS", async () => {
+    const f = (await fixture()), before = JSON.stringify(f.entry)
     markCurrentConfirmedAccountJournalProjection(owner, f.entry, 1)
     const context = readPersistedComparisonReadContext(f.entry.id, f.relation.relationId)
     expect(context).not.toBeNull()
@@ -135,8 +136,8 @@ describe("current acknowledged persisted comparison read", () => {
     expect(write).not.toHaveBeenCalled()
   })
 
-  it("does not mint from an offline ACK cache, invalid relation, released relation or disabled file format", () => {
-    const f = fixture()
+  it("does not mint from an offline ACK cache, invalid relation, released relation or disabled file format", async () => {
+    const f = (await fixture())
     putAccountJournalProjection(owner, f.entry, true)
     expect(readPersistedComparisonReadContext(f.entry.id, f.relation.relationId)).toBeNull()
     for (const relation of [
@@ -152,8 +153,8 @@ describe("current acknowledged persisted comparison read", () => {
     expect(readPersistedComparisonReadContext(f.entry.id, f.relation.relationId)).toBeNull()
   })
 
-  it("rejects copied tokens and exact relation, file, revision or mapping substitutions", () => {
-    const f = fixture()
+  it("rejects copied tokens and exact relation, file, revision or mapping substitutions", async () => {
+    const f = (await fixture())
     markCurrentConfirmedAccountJournalProjection(owner, f.entry, 1)
     const context = readPersistedComparisonReadContext(f.entry.id, f.relation.relationId)!
     for (const forged of [{}, { ...context }, structuredClone(context), JSON.parse(JSON.stringify(context))]) {
@@ -172,8 +173,8 @@ describe("current acknowledged persisted comparison read", () => {
     expect(compareFileToPlan(f.original, changed.observation, f.relation, 1, context)).toMatchObject({ status: "INVALID_COMPARISON" })
   })
 
-  it("invalidates on hydration failure, acknowledgement replacement and owner ABA even with identical data", () => {
-    const f = fixture()
+  it("invalidates on hydration failure, acknowledgement replacement and owner ABA even with identical data", async () => {
+    const f = (await fixture())
     for (const invalidate of [
       () => setAccountJournalProjectionStatus(owner, "FAILED"),
       () => markCurrentConfirmedAccountJournalProjection(owner, f.entry, 2),
@@ -191,8 +192,8 @@ describe("current acknowledged persisted comparison read", () => {
     }
   })
 
-  it("still requires the exact original and current mapping semantics after a server acknowledgement", () => {
-    const f = fixture()
+  it("still requires the exact original and current mapping semantics after a server acknowledgement", async () => {
+    const f = (await fixture())
     markCurrentConfirmedAccountJournalProjection(owner, f.entry, 1)
     const context = readPersistedComparisonReadContext(f.entry.id, f.relation.relationId)!
     expect(compareFileToPlan(resolveComparisonOriginal(null, f.relation.original), f.observation, f.relation, 1, context))
@@ -208,8 +209,8 @@ describe("current acknowledged persisted comparison read", () => {
       readPersistedComparisonReadContext(f.entry.id, interpretation.relationId)!)).toMatchObject({ reason: "OBSERVATION_CHANGED" })
   })
 
-  it("threads separate read contexts through previous-performance comparison without inventing compatibility", () => {
-    const a = fixture("current-journal"), b = fixture("previous-journal")
+  it("threads separate read contexts through previous-performance comparison without inventing compatibility", async () => {
+    const a = (await fixture("current-journal")), b = (await fixture("previous-journal"))
     markCurrentConfirmedAccountJournalProjection(owner, a.entry, 1)
     markCurrentConfirmedAccountJournalProjection(owner, b.entry, 1)
     const current = { original: a.original, observation: a.observation, relation: a.relation, journalRevision: 1,

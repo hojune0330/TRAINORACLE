@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 
@@ -9,8 +10,8 @@ import { useAccountAthleteRecordsRuntime } from "./useAccountAthleteRecordsRunti
 import { disposeAccountAthleteRecords, readAccountAthleteRecordsState } from "./account-athlete-record-service"
 import { assignJournalsToAccount, setActiveLocalAccount } from "./local-journal-ownership"
 
-beforeEach(() => {
-  localStorage.clear()
+beforeEach(async () => {
+  localStorage.clear(); await initializeCanonicalJournalFixture();
   disposeAccountAthleteRecords()
   setActiveLocalAccount("account-a")
   mocks.request.mockReset().mockImplementation(async (_owner: string, request: { action: string }) => request.action === "athleteRecordSupport"

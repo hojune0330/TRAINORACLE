@@ -1,7 +1,12 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { afterEach, describe, expect, it } from "vitest"
+import { beforeEach, afterEach, describe, expect, it } from "vitest"
 import { Trends } from "../Trends"
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
+})
 
 afterEach(cleanup)
 
