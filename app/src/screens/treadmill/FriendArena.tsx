@@ -169,7 +169,7 @@ export function FriendArena({ onBack }: { readonly onBack: () => void }) {
       <input className="arena-invite" aria-label="초대 링크" readOnly value={inviteUrl} onFocus={e => e.currentTarget.select()} />
       <button className="treadmill-game__cta" disabled={!connected} onClick={() => send({ type: 'ready', ready: !member?.ready })}>{member?.ready ? '준비 취소' : game ? '한 판 더 · 준비' : '준비 완료'}</button>
       {snapshot.host === self && <button className="treadmill-game__ghost" disabled={!canStart} onClick={() => send({ type: 'start' })}>함께 출발</button>}
-      <p className="arena-note">꾹 눌러 달리기 · 위로 스와이프해서 점프 · 두 번 눌러 밀치기<br />가까이서 대시하면 상대가 뒤로 밀려요. 점프로 피하세요.<br />키보드 → 달리기 · Space/↑ 점프 · D 밀치기</p>
+      <p className="arena-note">꾹 눌러 달리기 · 위로 스와이프해서 점프 · 두 번 눌러 밀치기<br />손을 떼지 않고 내렸다 다시 올려도 점프해요.<br />가까이서 대시하면 상대가 뒤로 밀려요. 점프로 피하세요.<br />키보드 → 달리기 · Space/↑ 점프 · D 밀치기</p>
       {snapshot.history.length > 1 && <details><summary>이 방 최근 {snapshot.history.length}판 비교</summary>{snapshot.history.map(r => <p key={r.round}>{r.round}판 · {r.standings.map(p => `${p.name} ${p.rank}위 (${p.kos}밀어냄/${p.falls}낙하)`).join(' · ')}</p>)}</details>}
     </div>}
     {playing && game && <div className="arena-field">

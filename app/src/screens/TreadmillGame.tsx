@@ -511,7 +511,7 @@ function SoloTreadmillGame({ onBack, backLabel, onFriends }: { readonly onBack: 
           {firstTime
             ? <ul className="treadmill-game__rules">
               <li><b><Footprints size={18} aria-hidden="true" /></b><span><strong>화면을 꾹 누르면 달리기</strong>손을 떼면 회복하며 뒤로 밀려요</span></li>
-              <li><b><MoveUp size={18} aria-hidden="true" /></b><span><strong>위로 쓸어 올리면 점프</strong>대각선 위로도 가능해요</span></li>
+              <li><b><MoveUp size={18} aria-hidden="true" /></b><span><strong>위로 쓸어 올리면 점프</strong>손을 뗄 필요 없이 내렸다 다시 올려요</span></li>
               <li><b><ChevronsRight size={18} aria-hidden="true" /></b><span><strong>두 번 누르면 대시</strong>짧게 빠르게 앞으로</span></li>
             </ul>
             : <p className="treadmill-game__ready-hint">{stages[0]!.hint}{cityBest > 0 && <> · 최고 <strong>{cityBest.toLocaleString("ko-KR")}점</strong></>}</p>}
