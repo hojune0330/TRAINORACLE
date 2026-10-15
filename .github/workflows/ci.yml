@@ -255,6 +255,10 @@ jobs:
           name: browser-bundle-${{ github.run_id }}-${{ github.run_attempt }}
           path: app/dist
 
+      - name: Install loopback arena fixture dependencies
+        working-directory: game-server
+        run: npm ci --ignore-scripts
+
       - name: Run both browser lanes for the project
         working-directory: app
         run: node e2e/run-project-suite.mjs '${{ matrix.project }}'

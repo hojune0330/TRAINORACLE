@@ -28,7 +28,8 @@ test("question motion is local, does not overflow, and respects the app preferen
   await expect.soft(page.getByRole("heading", { name: "언제 했나요?" })).toBeFocused()
   expect(await page.locator(".app-scroll-region").evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true)
   expect(await page.locator(".task-flow").evaluate(element => element.getAnimations().length)).toBe(0)
-  expect(await page.locator("[data-task-motion-surface]").evaluate(element => element.getAnimations().length)).toBe(1)
+  const systemReduced = await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches)
+  expect(await page.locator("[data-task-motion-surface]").evaluate(element => element.getAnimations().length)).toBe(systemReduced ? 0 : 1)
   await page.evaluate(() => {
     localStorage.setItem("trainoracle.calendar-reduced-motion.v1", "true")
     dispatchEvent(new StorageEvent("storage", { key: "trainoracle.calendar-reduced-motion.v1" }))

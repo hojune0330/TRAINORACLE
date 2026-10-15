@@ -90,3 +90,26 @@ locally after the hosted run lost a Vite module connection (`socket hang up`).
 No authentication or production storage code was altered for that infrastructure
 failure. The local long game replay timed out at 81/90 seconds and remains an
 explicit non-pass, pending hosted results; its timeout was not increased.
+
+### Final browser fixture reconciliation
+
+- Resolved the long-game harness's frame-by-frame key chatter with separate
+  press/release thresholds and physical key release at upgrade boundaries.
+  The unchanged three-stage clear and Seoul replay passed with CI's bundled
+  Chromium; navigation preserved the exact upgrade cost. No game timeout was
+  increased and no physics or success assertion was removed.
+- The arena is now in every browser project's source-fixture lane, backed by
+  the real loopback server in an isolated worker. Its existing dedicated
+  135-second allowance covers the real 90-second match. Standalone invitation,
+  collision, result, rematch and exit test passed. CI installs the server's
+  locked dependency; this does not configure a public game endpoint.
+- Form autosave: 13 scenarios passed together, then the final recovery scenario
+  passed after using the current group/side/pain selector. Both fake account
+  transports explicitly report unsupported body metadata, matching their scope.
+  Production account code and conflict safeguards are unchanged.
+- Calendar, journal linkage and motion accessibility: 10 focused touch/reduced
+  motion checks passed. Cycle evidence assertions remain intact after opening
+  the current next-plan disclosure; its clock is fixed after the fixture frame.
+- CI guard tests: all 6 passed with the Windows Bash runtime available.
+  A sandbox-only Bash launch failure is not counted as a gate pass.
+- These are focused local receipts, not a full hosted gate or deployment pass.

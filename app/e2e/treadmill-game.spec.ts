@@ -331,7 +331,12 @@ function planRun(stages: readonly TreadmillStage[] = TREADMILL_STAGES): Step[] {
       steps.push({ at: ms, key: "upgrade" })
       state = treadmillCommand(state, { type: "upgrade", upgrade: "economy" })
     }
-    const want = (state.x < 0.45 && state.energy > 25) || (state.x < 0.22 && state.energy > 0)
+    // Separate start/stop thresholds model a deliberate hold, rather than
+    // toggling the real browser key every simulation frame around x=.45.
+    // Keep the pure-engine clear assertion and replay every jump/checkpoint.
+    const want = state.running
+      ? state.x < 0.5 && state.energy > 20
+      : (state.x < 0.4 && state.energy > 35) || (state.x < 0.22 && state.energy > 0)
     if (want !== state.running) { steps.push({ at: ms, key: want ? "run-down" : "run-up" }); state = treadmillCommand(state, { type: "run", held: want }) }
     const ahead = nearestHazard(state)
     if (ahead && ahead.x - state.x < 0.09 && state.y === 0 && state.energy >= state.jumpCost) {
@@ -404,6 +409,9 @@ test("clears three stages with real keys, shows trade-offs and resets the build"
     else if (step.key === "run-up") await page.keyboard.up("ArrowRight")
     else if (step.key === "jump") await page.keyboard.press("Space")
     else {
+      // Release the physical key while choosing an upgrade. The game clears
+      // held input at this boundary; a still-held browser key would repeat.
+      await page.keyboard.up("ArrowRight")
       if (checkpoints === 0) {
         await expect(page.getByRole("heading", { name: "이번 판의 능력을 바꿔요" })).toBeVisible()
         await expect(page.locator("[data-upgrade]")).toHaveCount(0)
@@ -474,6 +482,7 @@ async function replay(page: Page, plan: Step[], afterResume?: (index: number) =>
     else if (step.key === "run-up") await page.keyboard.up("ArrowRight")
     else if (step.key === "jump") await page.keyboard.press("Space")
     else {
+      await page.keyboard.up("ArrowRight")
       await page.clock.runFor(2500)
       await expect(page.getByRole("heading", { name: "어떤 능력을 키울까요?" })).toBeVisible()
       await page.getByRole("button", { name: /일정한 박자/ }).click()
@@ -492,7 +501,7 @@ test("a later-stage failure offers 'retry this stage' with the same build, cappe
   let now = 0
   for (const step of plan) {
     if (step.at > now) { await page.clock.runFor(Math.round(step.at - now)); now = step.at }
-    if (step.key === "upgrade") { await page.clock.runFor(2500); await page.getByRole("button", { name: /스프링 밑창/ }).click(); break }
+    if (step.key === "upgrade") { await page.keyboard.up("ArrowRight"); await page.clock.runFor(2500); await page.getByRole("button", { name: /스프링 밑창/ }).click(); break }
     if (step.key === "run-down") await page.keyboard.down("ArrowRight")
     else if (step.key === "run-up") await page.keyboard.up("ArrowRight")
     else if (step.key === "jump") await page.keyboard.press("Space")
@@ -729,6 +738,8 @@ test("navigation keeps the chosen upgrade when saving and resuming a later stage
   await page.keyboard.up("ArrowRight")
   await page.clock.runFor(2500)
   await page.getByRole("button", { name: /스프링 밑창/ }).click()
+  await expect(page.getByLabel("점프 에너지", { exact: true })).toHaveText("↗ 점프 ⚡3")
+  const savedJumpCost = await page.getByLabel("점프 에너지", { exact: true }).textContent()
   await page.getByRole("button", { name: "일시정지", exact: true }).click()
   await page.getByRole("button", { name: "저장하고 지도로 나가기" }).click()
   await expect(page.getByRole("region", { name: "중간 저장한 판" })).toContainText("스프링 밑창")
@@ -737,7 +748,7 @@ test("navigation keeps the chosen upgrade when saving and resuming a later stage
   await page.getByRole("button", { name: "미니게임", exact: true }).click()
   await page.getByRole("button", { name: "저장한 판 이어하기" }).click()
   await expect(page.getByRole("list", { name: "코스 2/3 · 진흙" })).toBeVisible()
-  await expect(page.getByLabel("점프 에너지", { exact: true })).toContainText("4")
+  await expect(page.getByLabel("점프 에너지", { exact: true })).toHaveText(savedJumpCost!)
   await page.getByRole("button", { name: "계속", exact: true }).click()
   await expect(page.locator(".treadmill-game")).toHaveAttribute("data-mode", "running")
 })

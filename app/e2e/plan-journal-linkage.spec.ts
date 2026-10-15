@@ -10,6 +10,7 @@ test("links one explicitly selected plan session to its journal without copying 
     ? { width: 375, height: 667 }
     : { width: 1440, height: 900 })
   const state = stateFixture()
+  await page.clock.setFixedTime(new Date(2026, 7, 2, 12))
   await page.addInitScript((plan) => {
     window.localStorage.setItem("trainoracle.plan-beta.v1", JSON.stringify(plan))
   }, state)
@@ -53,7 +54,8 @@ test("links one explicitly selected plan session to its journal without copying 
   )?.progress)).toEqual([{ sessionDay: 1, sessionSlot: "AM", state: "COMPLETED" }])
   await page.getByRole("dialog").getByRole("button", { name: "달력으로 돌아가기" }).click()
   const beforeReview = await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))
-  // One completed session permits reviewing this cycle, not adjusting an unfinished frame.
+  // The elapsed frame's review now lives inside the next-plan disclosure.
+  await page.getByRole("button", { name: "다음 계획 시작하기", exact: true }).click()
   await expect(page.getByRole("button", { name: "기록 확인·다음 계획 조정", exact: true })).toHaveCount(0)
   await page.getByRole("button", { name: "이번 주기 기록 확인", exact: true }).click()
   await expect(page.getByRole("heading", { name: "이번 주기 기록 요약", exact: true })).toBeVisible()

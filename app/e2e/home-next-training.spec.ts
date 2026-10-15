@@ -29,6 +29,9 @@ test("shows a saved upcoming training on home and opens its existing plan", asyn
   await expect(reader).not.toContainText("목표 페이스")
   await reader.getByRole("button", { name: "달력으로 돌아가기", exact: true }).click()
   await expect(page.getByRole("heading", { name: "9일 훈련 계획", exact: true })).toBeVisible()
-  await expect(page.getByRole("grid", { name: "2099년 1월 달력" })).toBeVisible()
+  if (await page.evaluate(() => matchMedia("(max-width: 767px)").matches)) {
+    await expect(page.getByRole("group", { name: "훈련 날짜 선택" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "1월 10일 토요일 선택", exact: true })).toHaveAttribute("aria-pressed", "true")
+  } else await expect(page.getByRole("grid", { name: "2099년 1월 달력" })).toBeVisible()
   expect(await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(before)
 })

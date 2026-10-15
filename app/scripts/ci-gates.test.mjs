@@ -46,6 +46,21 @@ test("quality and dedicated checks keep the original complete command coverage",
   }
 })
 
+test("the real arena remains mandatory in every fixture project with a loopback server", () => {
+  const config = readFileSync(new URL('../playwright.config.ts', import.meta.url), 'utf8')
+  const fixtureConfig = readFileSync(new URL('../playwright.browser-fixtures.config.ts', import.meta.url), 'utf8')
+  const setup = readFileSync(new URL('../e2e/browser-fixtures.setup.mjs', import.meta.url), 'utf8')
+  const worker = readFileSync(new URL('../e2e/arena-fixture-worker.mjs', import.meta.url), 'utf8')
+  assert.match(config, /browserFixtureTests = .*friend-arena\.spec\.ts/)
+  assert.match(fixtureConfig, /testMatch: browserFixtureTests/)
+  assert.match(fixtureConfig, /\.\.\.generic/)
+  assert(commands(jobs['app-browser-generic']).includes('npm ci --ignore-scripts'))
+  assert.match(setup, /envFile: false/)
+  assert.match(setup, /ws:\/\/127\.0\.0\.1:/)
+  assert.match(setup, /await arena\.terminate\(\)/)
+  assert.match(worker, /arena\.server\.listen\(0, "127\.0\.0\.1"/)
+})
+
 function bashCommand() {
   if (process.platform !== "win32") return "bash"
   const git = spawnSync("git", ["--exec-path"], { encoding: "utf8", windowsHide: true, shell: false })
