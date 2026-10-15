@@ -29,13 +29,13 @@ for animal,name in animals.items():
           'description':f'내가 고른 {name}을 일지에 붙여요.','fileName':target.name,'group':animal.upper(),
           'licenseId':'TRAINORACLE_COMPANIONS_TRIPO','sourceAsset':f'trainoracle-{animal}-exercise-set-v3.glb#{pose}',
           'sha256':hashlib.sha256(target.read_bytes()).hexdigest()})
-for motion in ['run','walk','warm_up','nod']:
+for motion in ['run','walk','warm_up','nod','idle']:
     images=[Image.open(frames/f'otter-{motion}-{i:02}.png').convert('RGBA') for i in range(16)]
     box=bounds(images)
     atlas=Image.new('RGBA',(192*16,192))
     for i,im in enumerate(images):atlas.paste(fit(im,box,192),(192*i,0))
     atlas.save(motiondir/f'otter-{motion}-atlas.webp',quality=83,method=6)
-    if motion=='nod':fit(images[0],box,320).save(motiondir/'otter-nod.webp',quality=88,method=6)
+    if motion in ['nod','idle']:fit(images[0],box,320).save(motiondir/f'otter-{motion}.webp',quality=88,method=6)
 definition={
  'id':'TRAINING_COMPANIONS_V1','title':'운동하는 동물','subtitle':'9종 · 무료',
  'artDirection':'원본 수달·고양이·곰의 무광 3D 모델에서 만든 작은 운동 스티커.',

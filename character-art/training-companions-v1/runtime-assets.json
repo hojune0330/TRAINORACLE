@@ -45,6 +45,16 @@
     "sha256": "4a79658b5e28cd743b388212385d0da2c2c8f9a7a4117d7635a29417638099cf"
   },
   {
+    "file": "companions/v1/otter-idle-atlas.webp",
+    "bytes": 63430,
+    "sha256": "720a2a9d40ce603f29a2ae0d548d70404577922f95478e676579c49a5d5912f5"
+  },
+  {
+    "file": "companions/v1/otter-idle.webp",
+    "bytes": 12830,
+    "sha256": "5e764074558b5972f09f92540ec83bcb31c83cf2bde3c737bbffc4955bd39a57"
+  },
+  {
     "file": "companions/v1/otter-nod-atlas.webp",
     "bytes": 57110,
     "sha256": "d7b9e9ccc0611d3bc931f1b5655ae9c98f2a14fb1bcc516ac844f2e31ea0cc11"
