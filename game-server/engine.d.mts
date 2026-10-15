@@ -6,7 +6,7 @@ export type EngineRound = Omit<ArenaRound, 'players' | 'hazards'> & {
   hazards: (ArenaRound['hazards'][number] & { checked: string[] })[];
 }
 export const RULES: Readonly<Rules>
-export function newRound(ids: string[], round?: number, rules?: Rules): EngineRound
+export function newRound(ids: string[], round?: number, rules?: Rules, mode?: 'push' | 'survival'): EngineRound
 export function command(state: EngineRound, id: string, input: { run?: boolean; action?: 'jump' | 'dash' }): void
 export function step(state: EngineRound, dt: number): void
 export function finish(state: EngineRound, interrupted?: boolean): void

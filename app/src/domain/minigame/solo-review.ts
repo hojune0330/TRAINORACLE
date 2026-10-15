@@ -21,6 +21,7 @@ export function finishDefenseReview(start: ReturnType<typeof beginDefenseReview>
 export function previousBestMessage(records: SoloRecord[], current: SoloRecord) {
   const best = bestSoloRecord(records.filter(r => r.id !== current.id), current.mode, current.version)
   if (!best) return '첫 완주 기록이에요. 다음 판부터 같은 종목의 이전 최고 기록과 비교해요.'
+  if (current.mode === 'survival') return `이전 최고와 비교 · 낙하 ${best.falls} → ${current.falls}회 · 점프 회피 ${best.success} → ${current.success}회.`
   if (current.mode === 'defense') {
     const d = current.missed - best.missed
     return d === 0 ? `이전 최고와 놓친 적이 같아요. 낙하 ${best.falls} → ${current.falls}회.`

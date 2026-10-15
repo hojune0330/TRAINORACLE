@@ -26,8 +26,8 @@ import './solo-party.css'
 
 type Session = SoloPush | SoloDefense
 const isPlaying = (s: Session | null) => !!s && (s.phase === 'playing' || s.phase === 'countdown')
-const titles = { push: '혼자 밀어내기', defense: '러닝 디펜스' }
-const modes = ['push', 'defense'] as const
+const titles = { push: '혼자 밀어내기', survival: '혼자 장애물 생존', defense: '러닝 디펜스' }
+const modes = ['push', 'survival', 'defense'] as const
 const members = [{ id: 'you', name: '나', ready: true, connected: true }, { id: 'bot', name: '연습 상대', ready: true, connected: true }]
 
 export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; readonly onFriends: () => void }) {
@@ -68,7 +68,7 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
   const pause = React.useCallback(() => { release(); sync(); setPaused(true) }, [release, sync])
   const requestBack = () => {
     if (!view) onBack()
-    else if (view.phase === 'finished' || (view.mode === 'push' && view.phase === 'ready')) menu()
+    else if (view.phase === 'finished' || (view.mode !== 'defense' && view.phase === 'ready')) menu()
     else pause()
   }
   useTaskFlowBack({ enabled: true, onBack: requestBack })
@@ -76,7 +76,7 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
     const s = current.current
     if (!s || paused) return
     const run = gestures.current.held || keys.current
-    if (s.mode === 'push') pushInput(s, run, value)
+    if (s.mode !== 'defense') pushInput(s, run, value)
     else defenseInput(s, run, value)
   }, [paused])
   React.useEffect(() => {
@@ -109,7 +109,7 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
       if (!paused) {
         carry += dt
         while (carry >= 1 / 60) {
-          if (s.mode === 'push') advanceSoloPush(s, 1 / 60, keys.current || gestures.current.held)
+          if (s.mode !== 'defense') advanceSoloPush(s, 1 / 60, keys.current || gestures.current.held)
           else advanceSoloDefense(s, 1 / 60, keys.current || gestures.current.held)
           carry -= 1 / 60
         }
@@ -117,7 +117,7 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
       const ratio = Math.min(devicePixelRatio || 1, 2), w = node.clientWidth, h = node.clientHeight
       if (node.width !== Math.round(w * ratio) || node.height !== Math.round(h * ratio)) { node.width = Math.round(w * ratio); node.height = Math.round(h * ratio) }
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
-      if (s.mode === 'push') drawArena(ctx, palette, { type: 'state', room: 'solo', host: 'you', members, game: s.game, history: [] }, 'you', w, h, reduced, Math.max(0, s.game.time), s.round === 2)
+      if (s.mode !== 'defense') drawArena(ctx, palette, { type: 'state', room: 'solo', host: 'you', members, game: s.game, history: [] }, 'you', w, h, reduced, Math.max(0, s.game.time), s.round === 2)
       else drawSoloDefense(ctx, palette, s, w, h, reduced)
       if (now - lastUI > 90 || !isPlaying(s)) { sync(); lastUI = now }
       raf = requestAnimationFrame(frame)
@@ -128,12 +128,12 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
   React.useEffect(() => {
     if (view?.phase !== 'finished' || recorded.current) return
     recorded.current = true
-    const self = view.mode === 'push' ? view.results.flat().filter(p => p.id === 'you') : []
+    const self = view.mode !== 'defense' ? view.results.flat().filter(p => p.id === 'you') : []
     const result: SoloRecord = { id: runId.current, mode: view.mode, version: view.mode === 'defense' ? DEFENSE_RULES.version : 1, completedAt: new Date().toISOString(),
-      success: view.mode === 'defense' ? view.totals.killed : self.reduce((sum, p) => sum + p.kos, 0),
+      success: view.mode === 'defense' ? view.totals.killed : self.reduce((sum, p) => sum + (view.mode === 'survival' ? p.dodges : p.kos), 0),
       missed: view.mode === 'defense' ? view.totals.passed + view.totals.unresolved : 0,
       falls: view.mode === 'defense' ? view.runner.falls : self.reduce((sum, p) => sum + p.falls, 0),
-      wins: view.mode === 'push' ? pushSeriesPoints(view.results, 'you') : 0 }
+      wins: view.mode !== 'defense' ? pushSeriesPoints(view.results, 'you') : 0 }
     try { setComparison(previousBestMessage(readSoloRecords(localStorage), result)) }
     catch { setComparison('이전 기록을 읽지 못해 비교할 수 없어요.') }
     try { setRecords(storeSoloRecord(localStorage, result)); setRecordStatus('완주 기록을 이 기기에 저장했어요.') }
@@ -143,7 +143,7 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
     const s = current.current
     if (!s) return
     release()
-    if (s.mode === 'push') startSoloPush(s)
+    if (s.mode !== 'defense') startSoloPush(s)
     else {
       if (draft) current.current = structuredClone(draft)
       startDefenseWave(current.current as SoloDefense)
@@ -166,9 +166,9 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
     if (buyFacility(next, selected, kind)) setDraft(next)
   }
   const preparation = view?.mode === 'defense' && view.phase === 'prepare' ? draft ?? view : null
-  const me = view?.mode === 'push' ? view.game.players[0] : null
-  const time = view?.mode === 'push' ? view.game.time : view?.time ?? 0
-  const countdown = view?.mode === 'push' ? Math.ceil(-view.game.time) : view?.phase === 'countdown' ? Math.ceil(view.countdown) : 0
+  const me = view && view.mode !== 'defense' ? view.game.players[0] : null
+  const time = view && view.mode !== 'defense' ? view.game.time : view?.time ?? 0
+  const countdown = view && view.mode !== 'defense' ? Math.ceil(-view.game.time) : view?.phase === 'countdown' ? Math.ceil(view.countdown) : 0
   const point = (e: React.PointerEvent) => ({ x: e.clientX, y: e.clientY, time: performance.now() })
   return <section className="treadmill-game solo-party" data-screen={playing ? 'play' : 'map'} data-phase={view?.phase ?? 'select'} data-solo-mode={mode}>
     <header className="treadmill-game__header">
@@ -179,23 +179,23 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
     {notice && <p className="solo-party__notice" role="status">{notice}</p>}
     {!view && <div className="solo-party__menu">
       {saved && <button className="treadmill-game__cta" onClick={() => start(saved.state, saved.id)}><Play size={20} /> 디펜스 {saved.state.wave}웨이브 이어하기</button>}
-      {modes.map(m => { const best = bestSoloRecord(records, m); return <button key={m} className="solo-party__mode" onClick={() => start(m === 'push' ? newSoloPush() : newSoloDefense())}>
-        <PartyIcon id={m === 'push' ? 'track-island' : 'upgrade-core'} fallback={m === 'push' ? <Swords /> : <Shield />} />
-        <span><strong>{titles[m]}</strong><span>{m === 'push' ? '컴퓨터와 90초 × 2라운드' : '시설을 짓고 지키는 최대 60초 × 3웨이브'}</span>
-          <small>{best ? m === 'push' ? `최고 기록 · 시리즈 승점 ${best.wins}/4 · 밀어냄 ${best.success}` : `최고 기록 · 놓친 적 ${best.missed}/48 · 낙하 ${best.falls}` : m === 'push' ? '트랙 → 커브 · 시간 끝까지 무한 리젠' : '직접 뛰며 밀치기 · 예산으로 시설 강화'}</small></span>
+      {modes.map(m => { const best = bestSoloRecord(records, m); return <button key={m} className="solo-party__mode" onClick={() => start(m === 'defense' ? newSoloDefense() : newSoloPush(m))}>
+        <PartyIcon id={m === 'defense' ? 'upgrade-core' : m === 'survival' ? 'jump-pad' : 'track-island'} fallback={m === 'push' ? <Swords /> : <Shield />} />
+        <span><strong>{titles[m]}</strong><span>{m !== 'defense' ? '컴퓨터와 90초 × 2라운드' : '시설을 짓고 지키는 최대 60초 × 3웨이브'}</span>
+          <small>{best ? m === 'survival' ? `최고 기록 · 낙하 ${best.falls} · 점프 회피 ${best.success}` : m === 'push' ? `최고 기록 · 시리즈 승점 ${best.wins}/4 · 밀어냄 ${best.success}` : `최고 기록 · 놓친 적 ${best.missed}/48 · 낙하 ${best.falls}` : m === 'survival' ? '연속 장애물 · 낙하 적은 순 · 서로 밀리지 않아요' : m === 'push' ? '트랙 → 커브 · 시간 끝까지 무한 리젠' : '직접 뛰며 밀치기 · 예산으로 시설 강화'}</small></span>
       </button> })}
-      <button className="treadmill-game__ghost" onClick={onFriends}>친구와 밀어내기</button>
+      <button className="treadmill-game__ghost" onClick={onFriends}>친구 파티</button>
       {records.length > 0 && <details className="solo-party__history"><summary>최근 도전 기록 {Math.min(5, records.length)}판</summary>
-        <ol>{records.slice(-5).reverse().map(r => <li key={r.id}><strong>{titles[r.mode]}{r.mode === 'defense' && r.version !== DEFENSE_RULES.version ? ' · 이전 규칙' : ''}</strong><span>{r.mode === 'defense' ? `막은 적 ${r.success}/48 · 놓친 적 ${r.missed}` : `승점 ${r.wins}/4 · 밀어냄 ${r.success}`} · 낙하 {r.falls}회</span><small>{new Date(r.completedAt).toLocaleString('ko-KR')}</small></li>)}</ol>
+        <ol>{records.slice(-5).reverse().map(r => <li key={r.id}><strong>{titles[r.mode]}{r.mode === 'defense' && r.version !== DEFENSE_RULES.version ? ' · 이전 규칙' : ''}</strong><span>{r.mode === 'defense' ? `막은 적 ${r.success}/48 · 놓친 적 ${r.missed}` : r.mode === 'survival' ? `점프 회피 ${r.success}` : `승점 ${r.wins}/4 · 밀어냄 ${r.success}`} · 낙하 {r.falls}회</span><small>{new Date(r.completedAt).toLocaleString('ko-KR')}</small></li>)}</ol>
       </details>}
-      <p className="solo-party__note">기록은 이 기기의 최근 20판만 보관해요. 같은 종목·규칙끼리 비교하며 친구 순위와 훈련 기록에는 들어가지 않아요.</p>
+      <p className="solo-party__note">기록은 이 기기에 저장하고 최근 20판을 모아 보여줘요. 같은 종목·규칙끼리 비교하며 친구 순위와 훈련 기록에는 들어가지 않아요.</p>
     </div>}
-    {view?.mode === 'push' && ['ready', 'between'].includes(view.phase) && <div className="solo-party__panel">
+    {view && view.mode !== 'defense' && ['ready', 'between'].includes(view.phase) && <div className="solo-party__panel">
       <PartyIcon id="track-island" size={80} />
-      <h2>{view.phase === 'ready' ? '연습 상대를 밀어 떨어뜨리세요' : '1라운드 완료 · 다음은 커브'}</h2>
-      <p>{view.phase === 'ready' ? '두 라운드를 끝내면 시리즈 기록이 남아요. 떨어져도 2초 뒤 돌아옵니다.' : `트랙에서 밀어냄 ${view.game.players[0]!.kos} · 낙하 ${view.game.players[0]!.falls}. 다음 라운드는 위치와 에너지를 새로 시작해요.`}</p>
-      <p>각 라운드: 밀어냄이 많으면 승리. 같으면 낙하가 적은 쪽이 이겨요. 승리 2점 · 공동 1점으로 두 라운드를 비교해요.</p>
-      <Controls />
+      <h2>{view.phase === 'ready' ? view.mode === 'survival' ? '연속 장애물을 넘고, 낙하를 줄이세요' : '연습 상대를 밀어 떨어뜨리세요' : '1라운드 완료 · 다음은 커브'}</h2>
+      <p>{view.phase === 'ready' ? '두 라운드를 끝내면 시리즈 기록이 남아요. 떨어져도 2초 뒤 돌아옵니다.' : `트랙에서 ${view.mode === 'survival' ? '점프 회피 ' + view.game.players[0]!.dodges : '밀어냄 ' + view.game.players[0]!.kos} · 낙하 ${view.game.players[0]!.falls}. 다음 라운드는 위치와 에너지를 새로 시작해요.`}</p>
+      <p>{view.mode === 'survival' ? '낙하가 적은 쪽이 승리. 같으면 점프 회피가 많은 쪽이 이겨요. 대시는 전진만 하며 서로 밀리지 않아요.' : '밀어냄이 많으면 승리. 같으면 낙하가 적은 쪽이 이겨요.'} 승리 2점 · 공동 1점으로 두 라운드를 비교해요.</p>
+      <Controls survival={view.mode === 'survival'} />
       <button className="treadmill-game__cta" onClick={begin}>{view.phase === 'ready' ? '1라운드 시작' : '2라운드 시작'}</button>
     </div>}
     {preparation && <div className="solo-party__panel">
@@ -234,30 +234,30 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
         onPointerUp={e => gestures.current.up(e.pointerId, point(e))}
         onPointerCancel={e => gestures.current.cancel(e.pointerId)} onLostPointerCapture={e => gestures.current.cancel(e.pointerId)} />
       <div className="arena-hud solo-party__hud">
-        <strong>{view.mode === 'push' ? `${view.round}/2라운드` : `${view.wave}/3웨이브`} · {Math.ceil((view.mode === 'push' ? 90 : 60) - Math.max(0, time))}초</strong>
-        <span>{view.mode === 'push' ? view.round === 1 ? '트랙 · 컴퓨터 상대' : '커브 · 컴퓨터 상대' : `적 ${view.spawned}/${waveCount(view.wave)} · 남은 예산 ${view.budget}`}</span>
-        <div className="solo-party__stats">{view.mode === 'push' ? <>밀어냄 {me?.kos} : {view.game.players[1]!.kos} · 내 낙하 {me?.falls}</> : <>막은 적 {view.totals.killed} · 놓친 적 {view.totals.passed + view.totals.unresolved} · 낙하 {view.runner.falls}</>}</div>
+        <strong>{view.mode !== 'defense' ? `${view.round}/2라운드` : `${view.wave}/3웨이브`} · {Math.ceil((view.mode !== 'defense' ? 90 : 60) - Math.max(0, time))}초</strong>
+        <span>{view.mode !== 'defense' ? view.round === 1 ? '트랙 · 컴퓨터 상대' : '커브 · 컴퓨터 상대' : `적 ${view.spawned}/${waveCount(view.wave)} · 남은 예산 ${view.budget}`}</span>
+        <div className="solo-party__stats">{view.mode !== 'defense' ? <>{view.mode === 'survival' ? `점프 회피 ${me?.dodges} : ${view.game.players[1]!.dodges}` : `밀어냄 ${me?.kos} : ${view.game.players[1]!.kos}`} · 내 낙하 {me?.falls}</> : <>막은 적 {view.totals.killed} · 놓친 적 {view.totals.passed + view.totals.unresolved} · 낙하 {view.runner.falls}</>}</div>
         <label>에너지 {Math.ceil(me?.energy ?? (view as SoloDefense).runner.energy)}<progress max={100} value={me?.energy ?? (view as SoloDefense).runner.energy} /></label>
       </div>
       {countdown > 0 && <div className="arena-countdown" role="status"><strong>{countdown}</strong><span>준비하세요</span></div>}
-      <div className="arena-hints">꾹 달리기 · ↗ 점프 · 두 번 밀치기</div>
+      <div className="arena-hints">꾹 달리기 · ↗ 점프 · 두 번 {view.mode === 'survival' ? '대시 · 서로 밀리지 않아요' : '밀치기'}</div>
     </div>}
     {view?.phase === 'finished' && <div className="solo-party__panel">
-      {view.mode === 'defense' ? <DefenseIcon id="finish-gate" size={96} /> : <PartyIcon id="upgrade-core" size={80} />}<h2>{view.mode === 'push' ? '두 라운드 완주!' : '세 웨이브 완주!'}</h2>
-      {view.mode === 'push' ? <>
+      {view.mode === 'defense' ? <DefenseIcon id="finish-gate" size={96} /> : <PartyIcon id="upgrade-core" size={80} />}<h2>{view.mode !== 'defense' ? '두 라운드 완주!' : '세 웨이브 완주!'}</h2>
+      {view.mode !== 'defense' ? <>
         <strong className="solo-party__result">시리즈 승점 {pushSeriesPoints(view.results, 'you')} : {pushSeriesPoints(view.results, 'bot')}</strong>
-        <p>{pushSeriesPoints(view.results, 'you') > pushSeriesPoints(view.results, 'bot') ? '연습 상대에게 승리했어요.' : pushSeriesPoints(view.results, 'you') === pushSeriesPoints(view.results, 'bot') ? '공동 순위예요. 다음에는 낙하를 줄여보세요.' : '다음 목표: 상대가 가까워질 때 밀치고, 공격은 점프로 피하세요.'}</p>
-        {view.results.map((r, i) => { const a = r.find(p => p.id === 'you')!; return <p key={i}>{i + 1}라운드 · {a.rank}위 · 밀어냄 {a.kos} · 낙하 {a.falls}</p> })}
+        <p>{pushSeriesPoints(view.results, 'you') > pushSeriesPoints(view.results, 'bot') ? '연습 상대에게 승리했어요.' : pushSeriesPoints(view.results, 'you') === pushSeriesPoints(view.results, 'bot') ? '공동 순위예요. 다음에는 낙하를 줄여보세요.' : view.mode === 'survival' ? '다음 목표: 앞의 장애물을 보고 점프하고, 낙하를 줄이세요.' : '다음 목표: 상대가 가까워질 때 밀치고, 공격은 점프로 피하세요.'}</p>
+        {view.results.map((r, i) => { const a = r.find(p => p.id === 'you')!; return <p key={i}>{i + 1}라운드 · {a.rank}위 · {view.mode === 'survival' ? `점프 회피 ${a.dodges}` : `밀어냄 ${a.kos}`} · 낙하 {a.falls}</p> })}
       </> : <><strong className="solo-party__result">막은 적 {view.totals.killed}/48</strong>
         <p>기지 통과 {view.totals.passed} · 시간 안에 못 막음 {view.totals.unresolved}<br />낙하 {view.runner.falls} · 직접 밀치기 적중 {view.totals.pushed}</p>
         <p>{view.totals.passed + view.totals.unresolved > 0 ? `다음 목표: 놓친 적 ${view.totals.passed + view.totals.unresolved}마리보다 줄이기` : view.runner.falls ? '다음 목표: 모든 적을 막고 낙하 없이 완주하기' : '완벽 방어 달성! 다른 시설 조합으로 도전해 보세요.'}</p></>}
       <p className="solo-party__comparison">{comparison}</p>
       <p role="status">{recordStatus}</p>
       {recordStatus.startsWith('기록을 저장하지') && <button className="treadmill-game__ghost" onClick={sync}>기록 저장 다시 시도</button>}
-      <button className="treadmill-game__cta" onClick={() => start(view.mode === 'push' ? newSoloPush() : newSoloDefense())}>같은 종목 새로 시작</button>
+      <button className="treadmill-game__cta" onClick={() => start(view.mode === 'defense' ? newSoloDefense() : newSoloPush(view.mode))}>같은 종목 새로 시작</button>
       {view.mode === 'defense' && <DefenseRecap reviews={reviews} expected={3} />}
       <button className="treadmill-game__ghost" onClick={menu}>다른 종목 고르기</button>
-      <button className="treadmill-game__ghost" onClick={onFriends}>친구와 밀어내기</button>
+      <button className="treadmill-game__ghost" onClick={onFriends}>친구 파티</button>
     </div>}
     {paused && <GameLeaveDialog title="잠깐 쉬는 중" onCancel={() => setPaused(false)}>
       <p>혼자 경기는 멈춰 있어요. 종목 선택으로 나가면 진행 중인 판은 기록되지 않아요.</p>
@@ -283,6 +283,6 @@ function DefenseRecap({ reviews, expected }: { readonly reviews: DefenseReview[]
   </div>
 }
 
-function Controls() {
-  return <p className="solo-party__note">꾹 눌러 달리기 · 위로 쓸어 점프 · 두 번 눌러 밀치기.<br />손을 떼지 않고 내렸다 올려도 다시 점프해요.<br />키보드 → 달리기 · Space/↑ 점프 · D 밀치기</p>
+function Controls({ survival = false }: { readonly survival?: boolean }) {
+  return <p className="solo-party__note">꾹 눌러 달리기 · 위로 쓸어 점프 · 두 번 눌러 {survival ? '대시' : '밀치기'}.<br />손을 떼지 않고 내렸다 올려도 다시 점프해요.<br />키보드 → 달리기 · Space/↑ 점프 · D {survival ? '대시' : '밀치기'}</p>
 }

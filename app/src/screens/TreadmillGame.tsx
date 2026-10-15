@@ -433,8 +433,8 @@ function SoloTreadmillGame({ onBack, backLabel, onFriends, onParty }: { readonly
       <h2>저장한 판을 불러올 수 없어요</h2><p>게임 버전이 달라졌거나 저장 내용이 손상됐어요. 완주 기록은 유지돼요.</p>
       <button type="button" className="treadmill-game__ghost" onClick={discardSaved}>저장한 판 지우기</button>
     </section>}
-    {screen === "map" && <><button className="treadmill-game__cta arena-entry" onClick={onParty}>혼자 도전 · 밀어내기와 러닝 디펜스</button>
-      <button className="treadmill-game__ghost arena-entry" onClick={onFriends}>친구와 밀어내기 · 90초 무한 리젠</button></>}
+    {screen === "map" && <><button className="treadmill-game__cta arena-entry" onClick={onParty}>혼자 도전 · 세 가지 종목</button>
+      <button className="treadmill-game__ghost arena-entry" onClick={onFriends}>친구 파티 · 밀어내기와 장애물 생존</button></>}
     {screen === "map" && <TourMap progress={progress} season={season} onSeason={setSeason} status={store.status} onShop={() => { setMenuTab("shop"); setMenuOpen(true) }}
       onPlay={item => chooseCourse({ kind: "city", city: item })} onPractice={() => chooseCourse({ kind: "practice" })} />}
 

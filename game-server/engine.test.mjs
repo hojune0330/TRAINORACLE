@@ -1,5 +1,26 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+
+test('survival keeps dash movement but never attacks another player; ranks falls before dodges', () => {
+  const s = newRound(['a', 'b'], 1, RULES, 'survival'); s.phase = 'playing'; s.time = 5; s.nextHazard = 100;
+  const [a, b] = s.players; a.x = b.x = .5; a.protectedUntil = b.protectedUntil = 0;
+  command(s, 'a', { action: 'dash', run: true }); step(s, 1 / 30);
+  assert.ok(a.x > .5); assert.equal(b.vx, 0); assert.equal(b.lastHit, null);
+  a.falls = 1; a.dodges = 20; b.falls = 0; b.dodges = 2; finish(s);
+  assert.equal(s.standings[0].id, 'b'); assert.equal(s.standings[0].rank, 1);
+  a.falls = b.falls; finish(s); assert.equal(s.standings[0].id, 'a');
+  b.dodges = a.dodges; finish(s); assert.deepEqual(s.standings.map(p => p.rank), [1, 1]);
+});
+
+test('survival has denser paired hazards with unchanged jump clearance and unlimited idle respawns', () => {
+  const survival = newRound(['a', 'b'], 1, RULES, 'survival'), push = newRound(['a', 'b']);
+  for (let frame = 0; frame < 30 * 70; frame++) { step(survival, 1 / 30); step(push, 1 / 30); }
+  assert.ok(survival.hazardId > push.hazardId); assert.ok(survival.players[0].falls > 5);
+  assert.equal(survival.players[0].kos, 0);
+  const p = survival.players[0]; p.state = 'alive'; p.protectedUntil = 0; p.hitUntil = 0; p.x = .5; p.y = 40;
+  survival.hazards = [{ id: 999, x: .5, kind: 'hurdle', checked: [] }]; survival.nextHazard = 1000;
+  const dodges = p.dodges; step(survival, 1 / 30); assert.equal(p.dodges, dodges + 1);
+});
 import { RULES, newRound, command, step, finish } from './engine.mjs';
 function advance(s, seconds) { for (let t = 0; t < seconds - .000001; t += 1 / 30) step(s, Math.min(1 / 30, seconds - t)); }
 function playing() { const s = newRound(['a', 'b']); advance(s, 3.05); return s; }

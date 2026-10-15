@@ -5,13 +5,16 @@ import type { SoloDefense } from './solo-defense'
 // Retain v1 bytes: its budgets/results came from different defense rules.
 export const SOLO_CHECKPOINT_KEY = 'trainoracle.solo-party.checkpoint.v2'
 export const SOLO_RECORDS_KEY = 'trainoracle.solo-party.records.v1'
+// Older published clients must continue to read their push/defense records.
+export const SURVIVAL_RECORDS_KEY = 'trainoracle.solo-party.survival-records.v1'
 const integer = z.number().int().nonnegative()
 const facility = z.object({ kind: z.enum(['cannon', 'fan', 'flag']), level: z.union([z.literal(1), z.literal(2)]) })
 const totals = z.object({ killed: integer.max(48), passed: integer.max(48), unresolved: integer.max(48), collected: integer.max(6), pushed: integer.max(1000) })
 const checkpoint = z.object({ version: z.literal(2), id: z.string().min(1).max(100), wave: integer.min(1).max(3), budget: integer.max(20),
   facilities: z.array(facility.nullable()).length(3), falls: integer.max(1000), totals, collectedIds: z.array(integer).max(6) })
-const record = z.object({ id: z.string().min(1).max(100), mode: z.enum(['push', 'defense']), version: z.union([z.literal(1), z.literal(2)]),
-  completedAt: z.string().datetime(), success: integer.max(48), missed: integer.max(48), falls: integer.max(1000), wins: integer.max(4) })
+const record = z.object({ id: z.string().min(1).max(100), mode: z.enum(['push', 'defense', 'survival']), version: z.union([z.literal(1), z.literal(2)]),
+  completedAt: z.string().datetime(), success: integer.max(100), missed: integer.max(48), falls: integer.max(1000), wins: integer.max(4) })
+  .refine(r => r.mode === 'survival' || r.success <= 48)
 export type SoloRecord = z.infer<typeof record>
 type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
 export function loadSoloCheckpoint(storage: StorageLike): { state: SoloDefense; id: string } | null {
@@ -34,24 +37,33 @@ export function saveSoloCheckpoint(storage: StorageLike, s: SoloDefense, id: str
   if (storage.getItem(SOLO_CHECKPOINT_KEY) !== raw) throw new Error('save-not-confirmed')
 }
 export function readSoloRecords(storage: StorageLike): SoloRecord[] {
-  const raw = storage.getItem(SOLO_RECORDS_KEY)
-  return raw === null ? [] : z.array(record).max(20).parse(JSON.parse(raw))
+  return [...readRecordBucket(storage, SOLO_RECORDS_KEY), ...readRecordBucket(storage, SURVIVAL_RECORDS_KEY)]
+    .sort((a, b) => a.completedAt.localeCompare(b.completedAt)).slice(-20)
+}
+function readRecordBucket(storage: StorageLike, key: string): SoloRecord[] {
+  const raw = storage.getItem(key)
+  const records = raw === null ? [] : z.array(record).max(20).parse(JSON.parse(raw))
+  if (records.some(r => (r.mode === 'survival') !== (key === SURVIVAL_RECORDS_KEY))) throw new Error('incompatible-record-bucket')
+  return records
 }
 export function storeSoloRecord(storage: StorageLike, value: SoloRecord) {
-  const result = record.parse(value), records = readSoloRecords(storage)
+  const result = record.parse(value), key = result.mode === 'survival' ? SURVIVAL_RECORDS_KEY : SOLO_RECORDS_KEY
+  readSoloRecords(storage)
+  const records = readRecordBucket(storage, key)
   const next = [...records.filter(r => r.id !== result.id), result].slice(-20)
   const raw = JSON.stringify(next)
-  storage.setItem(SOLO_RECORDS_KEY, raw)
-  if (storage.getItem(SOLO_RECORDS_KEY) !== raw) throw new Error('save-not-confirmed')
+  storage.setItem(key, raw)
+  if (storage.getItem(key) !== raw) throw new Error('save-not-confirmed')
   // Only retire the checkpoint belonging to this completed series.
   if (result.mode === 'defense') {
     try { if (loadSoloCheckpoint(storage)?.id === result.id) storage.removeItem(SOLO_CHECKPOINT_KEY) } catch { /* retain unknown versions */ }
   }
-  return next
+  return readSoloRecords(storage)
 }
 /** Compare only the same solo mode and rules, never a friend-room leaderboard. */
 export function bestSoloRecord(records: SoloRecord[], mode: SoloRecord['mode'], version: number = mode === 'defense' ? DEFENSE_RULES.version : 1) {
   return records.filter(r => r.mode === mode && r.version === version).sort((a, b) =>
     mode === 'defense' ? a.missed - b.missed || a.falls - b.falls
+      : mode === 'survival' ? a.falls - b.falls || b.success - a.success
       : b.wins - a.wins || b.success - a.success || a.falls - b.falls)[0]
 }

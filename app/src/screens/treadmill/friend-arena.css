@@ -11,6 +11,25 @@
 .arena-members, .arena-results { display: grid; gap: 8px; list-style: none; padding: 0; margin: 0; }
 .arena-members li, .arena-results li { display: grid; gap: 4px; padding: 12px; border: 2px solid var(--game-panel-edge); border-radius: 12px; overflow-wrap: anywhere; }
 .arena-members [data-self="true"] { border-color: var(--game-gold-dark); }
+.arena-series, .arena-ready { display: grid; gap: 8px; padding: 16px; background: var(--game-panel-edge); border-radius: 16px; }
+.arena-series span { overflow-wrap: anywhere; }
+.arena-bubble { min-height: 24px; color: var(--game-ink); font-weight: 800; }
+.arena-reactions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.arena-reactions button, .arena-mode-actions button, .arena-mute { min-height: 44px; padding: 8px; border: 2px solid var(--game-outline); border-radius: 12px; font: inherit; color: var(--game-ink); background: var(--game-cloud); }
+.arena-mute { justify-self: start; font-size: 13px; border-color: var(--game-panel-edge); }
+.arena-mode-picker { display: grid; gap: 12px; }
+.arena-mode-picker h3 { margin: 0; font-size: 18px; }
+.arena-mode { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 8px 12px; padding: 12px; border: 3px solid var(--game-panel-edge); border-radius: 16px; }
+.arena-mode[data-selected="true"] { border-color: var(--game-gold-dark); background: var(--game-panel); }
+.arena-mode strong { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 18px; }
+.arena-mode strong span { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; }
+.arena-mode p { font-size: 14px; }
+.arena-mode small { font-size: 13px; }
+.arena-mode-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
+.arena-mode-actions button { flex: 1; }
+.arena-mode-actions button[aria-pressed="true"] { border-color: var(--game-gold-dark); background: var(--game-gold); font-weight: 800; }
+.arena-reactions button:active, .arena-mode-actions button:active { transform: translateY(2px); }
+@media (prefers-reduced-motion: reduce) { .arena-reactions button:active, .arena-mode-actions button:active { transform: none; } }
 .arena-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .friend-arena button:disabled { opacity: .5; cursor: default; }
 .arena-error, .arena-connection { padding: 12px; margin: 0; border-radius: 12px; background: var(--game-panel); color: var(--game-ink); z-index: 3; }

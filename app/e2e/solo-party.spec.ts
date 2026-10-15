@@ -3,11 +3,31 @@ import type { SoloDefense } from '../src/domain/minigame/solo-defense'
 import type { SoloPush } from '../src/domain/minigame/solo-push'
 import { SOLO_CHECKPOINT_KEY, SOLO_RECORDS_KEY } from '../src/domain/minigame/solo-party-storage'
 
+test('solo survival finishes two rounds and saves jump achievements separately', async ({page}) => {
+  await openParty(page)
+  await page.getByRole('button', {name:/^혼자 장애물 생존/}).click()
+  await expect(page.getByText(/대시는 전진만 하며 서로 밀리지 않아요/)).toBeVisible()
+  await freeze(page)
+  for (const round of [1,2]) {
+    await page.getByRole('button', {name:`${round}라운드 시작`,exact:true}).click()
+    await page.clock.runFor(6000)
+    expect((await state(page) as SoloPush).game.mode).toBe('survival')
+    await page.clock.runFor(88000)
+  }
+  await expect(page.getByRole('heading',{name:'두 라운드 완주!'})).toBeVisible()
+  await expect(page.getByText('완주 기록을 이 기기에 저장했어요.')).toBeVisible()
+  const records=await page.evaluate(()=>JSON.parse(localStorage.getItem('trainoracle.solo-party.survival-records.v1')!))
+  expect(records).toHaveLength(1); expect(records[0].mode).toBe('survival')
+  expect(await page.evaluate(key=>localStorage.getItem(key),SOLO_RECORDS_KEY)).toBeNull()
+  await page.getByRole('button',{name:'같은 종목 새로 시작'}).click()
+  await expect(page.getByRole('heading',{name:'연속 장애물을 넘고, 낙하를 줄이세요'})).toBeVisible()
+})
+
 async function openParty(page: Page) {
-  await page.goto('/?app=1')
+  await page.goto('./?app=1')
   await page.getByRole('button', { name: '더보기', exact: true }).click()
   await page.getByRole('button', { name: '미니게임', exact: true }).click()
-  await page.getByRole('button', { name: '혼자 도전 · 밀어내기와 러닝 디펜스', exact: true }).click()
+  await page.getByRole('button', { name: '혼자 도전 · 세 가지 종목', exact: true }).click()
 }
 async function freeze(page: Page) {
   await page.clock.install()
@@ -137,8 +157,8 @@ test('small screens and missing art retain playable controls and readable naviga
   await page.getByRole('button', { name: '종목 선택으로', exact: true }).click()
   await expect(page.getByRole('dialog', { name: '잠깐 쉬는 중' })).toBeVisible()
   await page.getByRole('button', { name: '저장 없이 종목 선택으로' }).click()
-  await page.getByRole('button', { name: '친구와 밀어내기', exact: true }).click()
-  await expect(page.getByRole('heading', { name: '90초 밀어내기' })).toBeVisible()
+  await page.getByRole('button', { name: '친구 파티', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '친구 파티' })).toBeVisible()
   await page.getByRole('button', { name: '친구 경기 나가기' }).click()
   await expect(page.getByRole('heading', { name: '오늘은 어떤 경기?' })).toBeVisible()
   expect(errors).toEqual([])
