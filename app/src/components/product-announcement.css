@@ -1,5 +1,6 @@
 .product-announcement { display:flex; gap:12px; margin:20px 0 0; padding:12px 8px 8px 16px; border:1px solid var(--line); border-radius:16px; background:color-mix(in srgb, var(--brand) 7%, var(--bg)); color:var(--ink); }
 .product-announcement__icon { flex:none; margin-top:5px; color:var(--brand); }
+.product-announcement__art { flex:none; align-self:center; }
 .product-announcement__copy { flex:1; min-width:0; }
 .product-announcement__eyebrow { display:block; color:var(--brand); font-size:12px; font-weight:700; margin-bottom:4px; }
 .product-announcement strong { display:block; font-size:16px; line-height:1.5; }

@@ -4,6 +4,7 @@ import { ArrowLeft, ChevronRight, ExternalLink, Search } from "lucide-react"
 import { useNavigationReturnFrame } from "../hooks/useNavigationReturnFrame"
 import { captureReaderPosition, restoreReaderPosition, type ReaderPosition } from "../navigation/readerPosition"
 import { AppHeading } from "../components/AppHeading"
+import { ContextualIllustration, type ContextualIllustrationName } from "../components/ContextualIllustration"
 import {
   GLOSSARY,
   GLOSSARY_ENTRIES,
@@ -33,6 +34,7 @@ export function TrainingLexicon({
   active = true,
   standalone = false,
   directEntry = false,
+  illustration,
   onBack,
   onNavigateTerm,
 }: {
@@ -40,6 +42,7 @@ export function TrainingLexicon({
   readonly active?: boolean
   readonly standalone?: boolean
   readonly directEntry?: boolean
+  readonly illustration?: ContextualIllustrationName
   readonly onBack?: () => void
   readonly onNavigateTerm?: (term: TermId) => void
 }) {
@@ -172,7 +175,11 @@ export function TrainingLexicon({
             <ArrowLeft aria-hidden="true" size={18} />앱으로 돌아가기
           </button>
         )}
-        <AppHeading accent tabIndex={-1} id="training-lexicon-title">훈련 용어집</AppHeading>
+        <div className="training-lexicon__heading">
+          <AppHeading accent tabIndex={-1} id="training-lexicon-title">훈련 용어집</AppHeading>
+          {illustration && selectedEntry === null && normalizedQuery === "" && category === "ALL" && !showAll
+            && <ContextualIllustration image={illustration} />}
+        </div>
         {selectedEntry === null && <p>궁금한 용어를 골라 보세요.</p>}
       </header>
 

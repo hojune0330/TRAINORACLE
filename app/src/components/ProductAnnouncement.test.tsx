@@ -5,6 +5,33 @@ import { acknowledgeAnnouncement, announcementKey, MINIGAME_ANNOUNCEMENT } from 
 
 afterEach(() => { cleanup(); localStorage.clear(); vi.restoreAllMocks() })
 
+it("uses generated art without changing acknowledgement or losing navigation when it fails", () => {
+  const notice = { ...MINIGAME_ANNOUNCEMENT, id: "art-failure-test" }
+  const onOpen = vi.fn()
+  const { container } = render(<ProductAnnouncement notice={notice} onOpen={onOpen} />)
+  const art = container.querySelector("img")!
+  expect(art).toHaveAttribute("src", "/illustrations/running-game-announcement-v1.webp")
+  expect(art).toHaveAttribute("aria-hidden", "true")
+  expect(localStorage.getItem(announcementKey(notice))).toBeNull()
+  fireEvent.error(art)
+  expect(container.querySelector("img")).toBeNull()
+  expect(screen.getByText(notice.title)).toBeVisible()
+  fireEvent.click(screen.getByRole("button", { name: "게임하기" }))
+  expect(onOpen).toHaveBeenCalledOnce()
+  expect(localStorage.getItem(announcementKey(notice))).toBe("acknowledged")
+})
+
+it("can reuse the calculator illustration without mounting a calculator or creating a plan", () => {
+  const open = vi.fn()
+  const { container } = render(<ProductAnnouncement notice={{ ...MINIGAME_ANNOUNCEMENT, id: "calculator-art-test",
+    title: "달리는 페이스를 계산해요", description: "거리와 시간으로 확인하세요.", actionLabel: "페이스 계산", illustration: "pace-calculator-announcement" }} onOpen={open} />)
+  expect(container.querySelector("img")).toHaveAttribute("src", "/illustrations/pace-calculator-announcement-v1.webp")
+  expect(open).not.toHaveBeenCalled()
+  expect(screen.queryByRole("dialog")).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "페이스 계산" }))
+  expect(open).toHaveBeenCalledOnce()
+})
+
 it("dismisses persistently without opening, and only a new version is offered again", () => {
   const notice = { ...MINIGAME_ANNOUNCEMENT, id: "dismiss-test" }
   const onOpen = vi.fn()

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, expect, it, vi } from "vitest"
 import { More } from "./More"
 
@@ -33,7 +33,7 @@ it("shows learning and decoration destinations directly in More", () => {
     ["훈련법 읽기", "onOpenContent"],
     ["일지 꾸미기", "onOpenRewards"],
     ["미니게임", "onOpenMinigame"],
-    ["민지의 예시 일지", "onOpenMinji"],
+    ["일지 예시 보기", "onOpenMinji"],
     ["훈련 용어집·도움말", "onOpenGuide"],
   ] as const
   const actions = Object.fromEntries(entries.map(([, key]) => [key, vi.fn()]))
@@ -45,6 +45,10 @@ it("shows learning and decoration destinations directly in More", () => {
     fireEvent.click(button)
     expect(actions[key]).toHaveBeenCalledOnce()
   }
+  expect(within(screen.getByRole("region", { name: "배우기" })).getByRole("button", { name: "일지 예시 보기" })).toBeVisible()
+  expect(within(screen.getByRole("region", { name: "배우기" })).queryByRole("button", { name: "미니게임" })).toBeNull()
+  expect(within(screen.getByRole("region", { name: "꾸미기·게임" })).getByRole("button", { name: "일지 꾸미기" })).toBeVisible()
+  expect(within(screen.getByRole("region", { name: "꾸미기·게임" })).getByRole("button", { name: "미니게임" })).toBeVisible()
   expect(screen.getByText("저장 없이 내 기록·친구 기록 비교")).toBeVisible()
   expect(screen.getByText("러닝 투어 · 서울에서 런던까지")).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: "백업·복원·휴지통" }))

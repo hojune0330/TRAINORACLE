@@ -1,5 +1,6 @@
 import { useEffect, useReducer } from "react"
 import { ArrowRight, Sparkles, X } from "lucide-react"
+import { ContextualIllustration } from "./ContextualIllustration"
 import { acknowledgeAnnouncement, announcementVisible, ANNOUNCEMENTS_CHANGED, type ProductAnnouncement as Notice } from "../domain/product-announcements"
 import "./product-announcement.css"
 
@@ -16,7 +17,8 @@ export function ProductAnnouncement({ notice, onOpen }: { readonly notice: Notic
   }, [])
   if (!announcementVisible(notice)) return null
   return <aside className="product-announcement" aria-label="새 소식">
-    <Sparkles className="product-announcement__icon" size={22} aria-hidden="true" />
+    {notice.illustration ? <ContextualIllustration image={notice.illustration} className="product-announcement__art" />
+      : <Sparkles className="product-announcement__icon" size={22} aria-hidden="true" />}
     <div className="product-announcement__copy">
       <span className="product-announcement__eyebrow">새로 나왔어요</span>
       <strong>{notice.title}</strong>

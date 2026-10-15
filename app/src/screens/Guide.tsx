@@ -45,7 +45,7 @@ export function Guide({ initialSection = "all", onBack, backLabel = "더보기�
               aria-controls="guide-app-content" onClick={() => setGuidePurpose("app")}>앱 이용 안내</button>
           </div>
           <div id="guide-terms-content" hidden={guidePurpose !== "terms"}>
-            <TrainingLexicon active={guidePurpose === "terms"} />
+            <TrainingLexicon active={guidePurpose === "terms"} illustration="training-map" />
           </div>
           <div id="guide-app-content" hidden={guidePurpose !== "app"}>
             <EasyFaq feedbackAvailable={feedbackAvailable} headingLevel={initialSection === "guide" ? 1 : 2} />

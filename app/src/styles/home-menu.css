@@ -1,9 +1,27 @@
 .more-screen .more-screen__group-label {
-  margin: 24px 0 8px;
-  color: var(--ink-2);
-  font: 600 var(--fs-body) / 1.5 var(--sans);
+  margin: 0 0 var(--space-2);
+  color: var(--ink);
+  font: 700 var(--fs-h3) / 1.5 var(--sans);
 }
-.more-screen .more-screen__group-label:first-child { margin-top: 8px; }
+.more-screen__group { margin-block: var(--space-6); min-width: 0; }
+.more-screen__group:first-child { margin-top: var(--space-2); }
+.more-screen__group > .menu-action:last-child { border-bottom-color: transparent; }
+.more-screen__group > .menu-action--illustrated:last-child { border-bottom-color: var(--hair); }
+.more-screen .utility-header { border-bottom-color: var(--hair); }
+.more-screen .utility-header .app-heading { margin: 0; font-size: var(--fs-app-title); line-height: 1.4; }
+.more-screen .utility-header > button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-width: var(--app-touch-min);
+  min-height: var(--app-touch-min);
+  padding: var(--space-2);
+  border: var(--bw-line) solid var(--line);
+  border-radius: var(--r-action);
+  background: var(--surface);
+  color: var(--ink);
+}
+.more-screen .utility-header > button:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
 .more-screen__trash { margin-top: 20px; border-block: 1px solid var(--line); }
 .more-screen__trash > summary {
   display: flex;
