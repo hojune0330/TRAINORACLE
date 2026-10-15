@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react"
-import { AppHeading } from "../../components/AppHeading"
+import { useState } from "react"
+import { X } from "lucide-react"
 
-export const HOME_INTRODUCTION_KEY = "trainoracle.home-introduction.v1"
+// v1 only introduced an empty home. Existing athletes must also see this revision.
+export const HOME_INTRODUCTION_KEY = "trainoracle.home-introduction.v2"
 
 /** Only a presentation preference. Never journal, account, plan or analysis state. */
 function hasSeenIntroduction(): boolean {
@@ -14,27 +15,33 @@ export function isPlainHomeEntry(location: Pick<Location, "search" | "hash">): b
   return [...new URLSearchParams(location.search).keys()].every(key => key === "app" || key.startsWith("utm_"))
 }
 
-export function useHomeIntroduction(eligible: boolean): boolean {
-  // Keep the introduction stable for this visit; only the next mount is compact.
+export function useHomeIntroduction(eligible: boolean) {
+  // Keep the short introduction stable until dismissed, without waiting or moving focus.
   const [alreadySeen] = useState(hasSeenIntroduction)
-  const expanded = eligible && !alreadySeen
-  useEffect(() => {
-    if (!expanded) return
+  const [dismissed, setDismissed] = useState(false)
+  const expanded = eligible && !alreadySeen && !dismissed
+  const dismiss = () => {
+    setDismissed(true)
     try { window.localStorage.setItem(HOME_INTRODUCTION_KEY, "seen"); return } catch { /* Non-blocking preference. */ }
     try { window.sessionStorage.setItem(HOME_INTRODUCTION_KEY, "seen") } catch { /* The actions still work with storage denied. */ }
-  }, [expanded])
-  return expanded
+  }
+  // Rendering below the fold is not proof that the athlete has read the introduction.
+  return { expanded, dismiss }
 }
 
-export function HomeIntroduction({ expanded }: { readonly expanded: boolean }) {
+export function HomeIdentityArtwork({ size = 48 }: { readonly size?: 48 | 64 }) {
   const [imageFailed, setImageFailed] = useState(false)
-  return <section className={`home-hub__intro${expanded ? " home-hub__intro--first" : ""}`} aria-labelledby="home-hub-title">
-    {expanded && !imageFailed && <img className="home-hub__identity-art"
-      src={`${import.meta.env.BASE_URL || "/"}illustrations/training-analysis-plan-v1.webp`}
-      width={112} height={112} alt="" aria-hidden="true" decoding="async" draggable={false}
-      onError={() => setImageFailed(true)} />}
-    <AppHeading id="home-hub-title" variant="hero" accent={!expanded}>
-      {expanded ? <>운동을 분석하고 <br />훈련 계획을 세워요</> : "운동 분석과 훈련 계획"}
-    </AppHeading>
+  if (imageFailed) return null
+  return <img className="home-hub__identity-art"
+    src={`${import.meta.env.BASE_URL || "/"}illustrations/training-analysis-plan-v1.webp`}
+    width={size} height={size} alt="" aria-hidden="true" decoding="async" draggable={false}
+    onError={() => setImageFailed(true)} />
+}
+
+/** A one-time, optional line after today's actions, never an opening gate or result. */
+export function HomeIntroduction({ onDismiss }: { readonly onDismiss: () => void }) {
+  return <section className="home-hub__introduction" aria-label="앱 소개">
+    <p>운동 기록을 분석하고 훈련 계획을 세우는 앱이에요.</p>
+    <button type="button" onClick={onDismiss} aria-label="앱 소개 닫기" title="소개 닫기"><X size={18} aria-hidden="true" /></button>
   </section>
 }

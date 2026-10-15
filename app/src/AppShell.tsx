@@ -476,7 +476,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       } else if (moreVisibleRef.current) {
         const marker = event.state?.[MORE_HISTORY_KEY]
         const section = marker?.owner === overlayHistoryOwnerRef.current ? marker.view : "tools"
-        if (["tools", "learning", "account", "backup", "about"].includes(section)) setMoreView(section)
+        if (["tools", "learning", "account", "backup", "about", "introduction"].includes(section)) setMoreView(section)
       }
     }
     window.addEventListener("popstate", onPopState)
@@ -1067,6 +1067,8 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
         onOpenOracleLibrary={oracleV2Enabled() ? () => openOverlay({ kind: "running-profile", stage: "overview", initialView: "library" }) : undefined}
         onOpenRecords={() => openOverlay({ kind: "athlete-records" })}
         onOpenImport={openImport}
+        onOpenPlan={() => goTab("plan")}
+        onOpenAnalysis={() => goTab("trends")}
         onOpenFeedback={() => openOverlay({ kind: "feedback" })}
         onOpenAccount={accountEnabled ? () => runViewTransition("push", () => setV(s => ({ ...s, accountOpen: true }))) : undefined}
         onOpenRestore={openRestore}

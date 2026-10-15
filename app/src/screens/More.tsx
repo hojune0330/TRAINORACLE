@@ -1,5 +1,5 @@
 import React from "react"
-import { ArrowLeft, Calculator, ChartNoAxesCombined, CircleHelp, CircleUserRound, DatabaseBackup, Flag, Gamepad2, Info, LibraryBig, MessageSquareText, Newspaper, NotebookText, ScrollText, ShieldCheck, Sticker, Trash2, UserRound, Watch } from "lucide-react"
+import { ArrowLeft, Calculator, CalendarDays, ChartNoAxesCombined, CircleHelp, CircleUserRound, Compass, DatabaseBackup, Flag, Gamepad2, Info, LibraryBig, MessageSquareText, Newspaper, NotebookText, ScrollText, ShieldCheck, Sticker, Trash2, UserRound, Watch } from "lucide-react"
 import { AppHeading } from "../components/AppHeading"
 import { MenuAction } from "../components/MenuAction"
 import { DataSafetyNotice } from "../components/DataSafetyNotice"
@@ -11,12 +11,13 @@ import { loadTrash } from "../domain/journal-trash"
 import "../styles/home-menu.css"
 import { captureReaderPosition, restoreReaderPosition, type ReaderPosition } from "../navigation/readerPosition"
 import { useNavigationReturnFrame } from "../hooks/useNavigationReturnFrame"
+import { HomeIdentityArtwork } from "./home/HomeIntroduction"
 
-export type MoreView = "tools" | "learning" | "account" | "backup" | "about"
+export type MoreView = "tools" | "learning" | "account" | "backup" | "about" | "introduction"
 
 const VIEW_TITLES: Record<MoreView, string> = {
   tools: "더보기", learning: "훈련 배우기", account: "계정·기록 보관",
-  backup: "백업·복원·휴지통", about: "앱 정보·개인정보·문의",
+  backup: "백업·복원·휴지통", about: "앱 정보·개인정보·문의", introduction: "앱 소개",
 }
 
 export type MoreProps = {
@@ -38,6 +39,8 @@ export type MoreProps = {
   readonly onOpenOracleLibrary?: () => void
   readonly onOpenRecords?: () => void
   readonly onOpenImport?: () => void
+  readonly onOpenPlan?: () => void
+  readonly onOpenAnalysis?: () => void
 }
 
 export function More({
@@ -59,6 +62,8 @@ export function More({
   onOpenOracleLibrary,
   onOpenRecords,
   onOpenImport,
+  onOpenPlan,
+  onOpenAnalysis,
 }: MoreProps) {
   const [internalView, setInternalView] = React.useState<MoreView>("tools")
   const activeView = view ?? internalView
@@ -115,11 +120,20 @@ export function More({
           {onOpenMinigame && <MenuAction icon={Gamepad2} label="미니게임" detail="러닝 투어 · 서울에서 런던까지" illustration="running-game-announcement" onClick={onOpenMinigame} />}
         </MenuGroup>}
         <MenuGroup title="관리">
+          <MenuAction icon={Compass} label={VIEW_TITLES.introduction} onClick={() => changeView("introduction")} />
           <MenuAction icon={CircleUserRound} label={VIEW_TITLES.account} onClick={() => changeView("account")} />
           <MenuAction icon={DatabaseBackup} label={VIEW_TITLES.backup} onClick={() => changeView("backup")} />
           <MenuAction icon={Info} label={VIEW_TITLES.about} onClick={() => changeView("about")} />
         </MenuGroup>
         </>}
+        {activeView === "introduction" && <section className="more-screen__introduction" aria-labelledby="app-introduction-purpose">
+          <HomeIdentityArtwork size={64} />
+          <AppHeading as="h2" variant="section" id="app-introduction-purpose">운동을 분석하고 <br />훈련 계획을 세워요</AppHeading>
+          <nav aria-label="앱의 주요 기능">
+            {onOpenPlan && <MenuAction category="training" icon={CalendarDays} label="훈련 계획 보기" onClick={onOpenPlan} />}
+            {onOpenAnalysis && <MenuAction category="oracle" icon={ChartNoAxesCombined} label="운동 분석 보기" onClick={onOpenAnalysis} />}
+          </nav>
+        </section>}
         {activeView === "learning" && <>
         <MenuGroup title="예시와 읽을거리">
           <MenuAction category="journal" icon={NotebookText} label="일지 예시 보기" onClick={onOpenMinji} />

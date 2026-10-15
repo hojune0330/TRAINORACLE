@@ -85,7 +85,8 @@ export function Home({
   const planState = planRead.kind === "loaded" ? planRead.state : null
   const adjustedPlan = planRead.kind === "adjusted_loaded" || planRead.kind === "adjusted_v3_loaded" || planRead.kind === "multi_adjusted_v3_loaded"
     ? { ...planRead.state.selection, progress: planRead.state.progress } : null
-  const accountCurrent = accountPlansEnabled() ? accountPlanService()?.snapshot().currentPlan : null
+  const accountPlanSnapshot = accountPlansEnabled() ? accountPlanService()?.snapshot() : null
+  const accountCurrent = accountPlanSnapshot?.currentPlan ?? null
   const original = accountCurrent?.kind === "evidence_required" ? accountCurrent.packet.state : null
   const homePlan = original ? original.version === 2 || original.version === 3
     ? original
@@ -156,7 +157,9 @@ export function Home({
       <TrainingHome
         model={model}
         introductionAllowed={introductionAllowed}
-        introductionReady={journalSnapshot.status === "READY" && athleteRecords.status === "READY" && athleteRecords.records.length === 0 && planRead.kind === "missing"}
+        introductionReady={journalSnapshot.status === "READY" && athleteRecords.status === "READY"
+          && planRead.kind !== "invalid" && planRead.kind !== "storage_error" && safetyNotice === undefined
+          && (!accountPlansEnabled() || accountPlanSnapshot?.status === "READY" || accountPlanSnapshot?.status === "EMPTY")}
         journalReadiness={journalSnapshot.status}
         analysisAvailable={toDateDistance.week.totalKm !== null}
         safetyNotice={safetyNotice}
