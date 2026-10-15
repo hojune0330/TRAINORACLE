@@ -46,11 +46,13 @@ export type HomeProps = {
   readonly onOpenContent?: () => void
   readonly onOpenRewards?: () => void
   readonly onDecorateToday?: () => void
+  readonly introductionAllowed?: boolean
 }
 
 export function Home({
   onWriteLog, onOpenDay, onOpenArchive, onOpenGuide, onOpenPlan,
   onOpenNextTraining, onOpenTrends, onOpenImport, onOpenRecords, onOpenOracle, oraclePreview, oraclePreviewLabel, onOpenMore, onOpenMinigame, onOpenAccount, onOpenContent, onOpenRewards,
+  introductionAllowed = true,
 }: HomeProps) {
   const [, setRevision] = React.useState(0)
   const journalSnapshot = useCalendarSnapshot()
@@ -153,6 +155,8 @@ export function Home({
     <div className="training-home-screen">
       <TrainingHome
         model={model}
+        introductionAllowed={introductionAllowed}
+        introductionReady={journalSnapshot.status === "READY" && athleteRecords.status === "READY" && athleteRecords.records.length === 0 && planRead.kind === "missing"}
         journalReadiness={journalSnapshot.status}
         analysisAvailable={toDateDistance.week.totalKm !== null}
         safetyNotice={safetyNotice}

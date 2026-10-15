@@ -7,6 +7,7 @@ import { authReturnUrl } from "./domain/account/auth"
 import type { GuestOracleSession } from "./screens/OracleProfileV2"
 
 const runtime = vi.hoisted(() => ({ account: false,
+  homeIntroduction: [] as boolean[],
   currentUser: vi.fn<() => Promise<{ id: string } | null>>(),
   auth: null as ((user: { id: string } | null) => void) | null,
   comparison: vi.fn(),
@@ -22,7 +23,10 @@ vi.mock("./domain/account/account-service", async original => ({
   loadPrivateProfileSetupStatus: async () => ({ ok: true, ready: true }),
 }))
 vi.mock("./domain/account/oracle-profile-comparison-api", () => ({ requestProfileComparison: runtime.comparison }))
-vi.mock("./screens/Home", () => ({ Home: () => <h1>Entry home</h1> }))
+vi.mock("./screens/Home", () => ({ Home: ({ introductionAllowed }: { introductionAllowed: boolean }) => {
+  runtime.homeIntroduction.push(introductionAllowed)
+  return <h1>Entry home</h1>
+} }))
 vi.mock("./DeferredMobileScreens", () => ({ DeferredMobileScreens: {
   Trends: ({ onOpenRunningProfile }: { onOpenRunningProfile: () => void }) => <button onClick={onOpenRunningProfile}>Open profile</button>,
   RunningProfile: () => <h1>V1 profile</h1>,
@@ -46,6 +50,7 @@ import { AppShell } from "./AppShell"
 const code = "a".repeat(43), otherCode = "b".repeat(43)
 const pendingKey = "trainoracle.oracle-v2.invitation-return"
 beforeEach(() => {
+  runtime.homeIntroduction = []
   localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null)
   runtime.account = false; runtime.currentUser.mockReset().mockResolvedValue(null); runtime.comparison.mockReset()
   vi.stubEnv("DEV", false); vi.stubEnv("PROD", true)
@@ -60,6 +65,16 @@ async function openProfile() {
   await user.click(screen.getByRole("button", { name: "오라클" }))
   await user.click(await screen.findByRole("button", { name: "Open profile" }))
 }
+it.each(["?app=1&oracleV2=1", "?app=1&account=1", "?app=1#return"])("keeps the home introduction out of direct entry %s", query => {
+  window.history.replaceState(null, "", query)
+  render(<AppShell />)
+  expect(runtime.homeIntroduction.length).toBeGreaterThan(0)
+  expect(runtime.homeIntroduction.every(allowed => !allowed)).toBe(true)
+})
+it("permits the home introduction on a normal home entry", () => {
+  render(<AppShell />)
+  expect(runtime.homeIntroduction).toContain(true)
+})
 it("retains a completed guest result within the app only and clears it on scope change and remount", async () => {
   vi.stubEnv("VITE_FEATURE_ORACLE_V2", "true")
   const user = userEvent.setup()

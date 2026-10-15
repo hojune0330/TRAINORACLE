@@ -152,7 +152,7 @@ describe("AppShell journal archive routing", () => {
     await user.click(await screen.findByRole("button", { name: /돌아가기/u }))
 
     expect(screen.getByRole("heading", {
-      name: "오늘 운동을 기록해요",
+      name: "운동 분석과 훈련 계획",
     })).toBeVisible()
   })
 
@@ -230,7 +230,7 @@ describe("AppShell journal archive routing", () => {
     render(<AppShell />)
 
     expect(screen.getByRole("heading", {
-      name: "오늘 운동을 기록해요",
+      name: "운동을 분석하고 훈련 계획을 세워요",
     })).toBeVisible()
     expect(screen.getByRole("button", { name: "오늘 운동 기록 쓰기" })).toBeVisible()
     expect(screen.getByRole("button", { name: "일지" })).toBeVisible()

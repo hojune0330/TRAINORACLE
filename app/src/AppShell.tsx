@@ -1,5 +1,6 @@
 import React from "react"
 import { arenaInvitation } from "./screens/treadmill/arena-types"
+import { isPlainHomeEntry } from "./screens/home/HomeIntroduction"
 import { acknowledgeAnnouncement, MINIGAME_ANNOUNCEMENT } from "./domain/product-announcements"
 import { oracleV2FeatureEnabled } from "./domain/oracle-rollout"
 import { productFeatures } from "./domain/product-features"
@@ -196,6 +197,9 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       : INITIAL_VIEW_STATE
   })
   React.useEffect(() => { clearRecoveryTab() }, [])
+  // A direct route or interrupted-task recovery must never become an introduction.
+  const [allowHomeIntroduction] = React.useState(() => v.tab === "home" && !v.accountOpen
+    && !oracleEntry.requested && readRecoveryTab() === null && isPlainHomeEntry(window.location))
   const [savedToast, setSavedToast] = React.useState<ShellToastState | null>(null)
   const confirmedSaveEffects = React.useRef<{
     entryId: string; savedAt: string; scope: number; rewardMessage: string; rewardRetry?: boolean
@@ -1101,6 +1105,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       }), true)
       : (
         <Home
+          introductionAllowed={allowHomeIntroduction && overlay === null}
           oraclePreview={homeOraclePreview}
           oraclePreviewLabel={homeCandidate ? "내 기록으로 본 오라클" : homeSourceUnavailable ? "오라클 기록 상태" : homePlanState ? "오라클" : "오라클 결과 예시 보기"}
           onOpenImport={openImport}
