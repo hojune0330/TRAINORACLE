@@ -344,6 +344,10 @@ export function treadmillWarning(state: TreadmillState): { text: string; tone: T
   }
   if (state.hitFlash < 0.8) return { text: state.message, tone: "caution" }
   if (state.energy < state.jumpCost + 4) return { text: "에너지 부족 · 잠깐 놓고 회복", tone: "caution" }
+  if (!state.running && state.dashLeft === 0) {
+    const seconds = Math.max(0, (state.x - TREADMILL_RULES.fallEdge) / state.stages[state.stage]!.belt)
+    return { text: `뒤로 밀려요 · 약 ${Math.ceil(seconds)}초 뒤 낙하`, tone: "caution" }
+  }
   if (upcomingHazards(state).length > 0) return { text: "곧 장애물이 와요", tone: "neutral" }
   return { text: state.running ? "달리는 중" : "회복 중 · 뒤로 밀려요", tone: "neutral" }
 }

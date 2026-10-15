@@ -9,6 +9,7 @@ import { createRunnerCamera } from "./camera"
 import { presentedHazards } from "./hazard-view"
 import { drawPartyProp } from "./party-art"
 import { drawMotionBurst } from './motion-bursts'
+import { drawRearEdge } from "./rear-edge"
 import type { MotionBurst } from './motion-bursts'
 
 export { gamePalette }
@@ -157,6 +158,11 @@ export function createTreadmillRenderer() {
       drawWorld(context, palette, stage.surface, width, height, floor, travel, clock, reduced, skyFromShader)
       drawMachine(context, palette, stage.surface, width, height, -16, width + 32, floor, travel * 1.6, state)
     }
+
+    // The city road also has an actual rear edge; full-bleed scenery is not safe ground.
+    const rearEdge = toPx(rules.fallEdge)
+    drawRearEdge(context, palette, rearEdge, floor, width, height)
+    if (context.canvas.dataset) context.canvas.dataset.rearEdgeX = String(rearEdge / width)
 
     // Short, low-contrast streaks below the feet sell speed without hiding obstacles.
     if (moving && !reduced && !low) {

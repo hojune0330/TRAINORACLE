@@ -77,6 +77,19 @@ describe("treadmill survival rules", () => {
     expect(state.failure).toBe("fall")
     expect(advance(state, 2)).toEqual(state)
   })
+  it("falls even from the front at full energy after releasing input, on every surface", () => {
+    for (const stage of [0, 1, 2]) for (const dt of [1/30, 1/60, 1/120]) {
+      let state = treadmillCommand(clean({ stage, x: TREADMILL_RULES.frontEdge, running: true }), { type: "run", held: false })
+      expect(treadmillWarning(state).text).toContain("낙하")
+      const before = state
+      for (let t = 0; t < 12 && state.mode === "running"; t += dt) state = advanceTreadmill(state, dt)
+      expect(state.mode, `surface ${stage} dt ${dt}`).toBe("over")
+      expect(state.failure).toBe("fall")
+      expect(state.x).toBeLessThan(TREADMILL_RULES.fallEdge)
+      expect(state.stats.score).toBe(before.stats.score)
+      expect(advanceTreadmill(state, .1)).toBe(state)
+    }
+  })
   it("buys front space while running and spends it to recover", () => {
     const original = clean()
     const running = advance(treadmillCommand(original, { type: "run", held: true }), 1)
