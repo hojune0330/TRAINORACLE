@@ -9,6 +9,17 @@ import { hasPendingBrowserBackLayer } from "../navigation/browserNavigation"
 
 afterEach(cleanup)
 
+async function cleanupShellHistory() {
+  // Dispose queues native Back in a microtask. Finish it before replacing the
+  // fake clock, or the next independent shell inherits a pending sentinel.
+  await act(async () => {
+    cleanup()
+    await Promise.resolve()
+    await vi.advanceTimersByTimeAsync(50)
+  })
+  expect(hasPendingBrowserBackLayer()).toBe(false)
+}
+
 const appCss = readFileSync("src/styles/app.css", "utf8")
 
 function PopoverHarness() {
@@ -222,7 +233,11 @@ describe("saved toast motion structure", () => {
       expect(document.querySelector(".journal-save-result")).toBeNull()
       expect(screen.getByRole("navigation", { name: "주 탭" })).toBeVisible()
     } finally {
-      vi.useRealTimers()
+      try {
+        await cleanupShellHistory()
+      } finally {
+        vi.useRealTimers()
+      }
     }
   })
 
@@ -266,7 +281,11 @@ describe("saved toast motion structure", () => {
       expect(screen.queryByRole("alert")).not.toBeInTheDocument()
     } finally {
       nativeBack.mockRestore()
-      vi.useRealTimers()
+      try {
+        await cleanupShellHistory()
+      } finally {
+        vi.useRealTimers()
+      }
     }
   })
 })
