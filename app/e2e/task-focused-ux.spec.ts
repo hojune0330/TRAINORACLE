@@ -87,7 +87,7 @@ for (const kind of ["post-session", "evening", "race"] as const) {
     await page.getByRole("button", { name: "기록하기", exact: true }).click()
     await page.getByTestId(`entry-choice-${kind}`).click()
     await expect(page.getByRole("navigation", { name: "주 탭" })).toHaveCount(0)
-    await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
+    if (kind !== "evening") await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
     if (kind === "post-session") {
       await page.getByRole("button", { name: "실제로 한 운동 수정", exact: true }).click()
       await page.getByLabel("세션 제목", { exact: true }).fill("합성 운동 기록")
@@ -95,7 +95,7 @@ for (const kind of ["post-session", "evening", "race"] as const) {
       await expect(page.getByRole("heading", { name: "입력 확인", exact: true })).toBeFocused()
       await expect(page.getByText("합성 운동 기록", { exact: false })).toBeVisible()
     } else if (kind === "evening") {
-      await page.getByRole("button", { name: /^체중 · 안정시 심박 입력$/ }).click()
+      await page.getByRole("button", { name: "체중·심박", exact: true }).click()
       await page.getByLabel("체중 (kg)", { exact: true }).fill("60.5")
       await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
       await expect(page.getByRole("heading", { name: "입력 확인", exact: true })).toBeFocused()

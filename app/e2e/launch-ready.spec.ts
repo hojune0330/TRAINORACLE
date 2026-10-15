@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import type { Page } from "@playwright/test"
+import type { Locator, Page } from "@playwright/test"
 import { completeDetailedPlan, completeQuickPlan, enterPlanWithoutRecord } from "./plan-flow"
 import { expectActivePlanHeading, openActiveSessionDetails } from "./active-plan-flow"
 import { EXECUTION_STOP_CUE } from "../src/screens/plan-beta/labels"
@@ -14,6 +14,21 @@ test.beforeEach(async ({ page, baseURL }) => {
 
 async function answerMinimumPlanQuestions(page: Page): Promise<void> {
   await completeDetailedPlan(page, { division: /고등부/u })
+}
+
+async function expectInstructionCards(cards: Locator, selectedSteps: string[]): Promise<void> {
+  await expect(cards.getByRole("term")).toHaveText(["총 시간", "준비", "본운동", "정리"])
+  await expect(cards.locator(".training-instructions__duration")).toHaveText(selectedSteps[0]!.replace("준비·회복·정리 포함 ", ""))
+  await expect(cards.locator(".training-instructions__included")).toHaveText("준비·회복·정리 포함")
+  for (let index = 1; index < selectedSteps.length; index++) {
+    const detail = cards.getByRole("definition").nth(index)
+    const text = await detail.evaluate(element => {
+      const steps = Array.from(element.querySelectorAll("li > div"))
+      return steps.length ? steps.map(step => Array.from(step.children).map(child => child.textContent).join(" · ")).join(" → ")
+        : element.textContent?.trim()
+    })
+    expect(text).toBe(selectedSteps[index]!.replace(EXECUTION_STOP_CUE, "").trim())
+  }
 }
 
 async function expectCanonicalPlanCandidates(page: Page): Promise<void> {
@@ -170,12 +185,7 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
     .locator("li").filter({ has: page.getByText("본운동", { exact: true }) }).locator("span")).toHaveText(selectedNotation)
   const qualitySteps = qualitySession.locator(".training-instructions__cards")
   await expect(qualitySteps).toBeVisible()
-  await expect(qualitySteps.getByRole("term")).toHaveText(["총 시간", "준비", "본운동", "정리"])
-  await expect(qualitySteps.locator(".training-instructions__duration")).toHaveText("40분 20초")
-  await expect(qualitySteps.locator(".training-instructions__included")).toHaveText("준비·회복·정리 포함")
-  for (let index = 1; index < selectedSteps.length; index++) {
-    await expect(qualitySteps.getByRole("definition").nth(index)).toHaveText(selectedSteps[index]!.replace(EXECUTION_STOP_CUE, "").trim())
-  }
+  await expectInstructionCards(qualitySteps, selectedSteps)
   await expect(qualitySession.getByRole("complementary", { name: "운동 중 기억할 점" })).toContainText(EXECUTION_STOP_CUE)
   await expect(qualitySession).toContainText("오후")
   await expect.poll(async () => page.evaluate(() => {
@@ -214,11 +224,7 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
     .locator("li").filter({ has: page.getByText("본운동", { exact: true }) }).locator("span")).toHaveText(selectedNotation)
   const reloadedSteps = reloadedQualitySession.locator(".training-instructions__cards")
   await expect(reloadedSteps).toBeVisible()
-  await expect(reloadedSteps.getByRole("term")).toHaveText(["총 시간", "준비", "본운동", "정리"])
-  await expect(reloadedSteps.locator(".training-instructions__duration")).toHaveText("40분 20초")
-  for (let index = 1; index < selectedSteps.length; index++) {
-    await expect(reloadedSteps.getByRole("definition").nth(index)).toHaveText(selectedSteps[index]!.replace(EXECUTION_STOP_CUE, "").trim())
-  }
+  await expectInstructionCards(reloadedSteps, selectedSteps)
   await expect(reloadedQualitySession.getByRole("complementary", { name: "운동 중 기억할 점" })).toContainText(EXECUTION_STOP_CUE)
   await expect.poll(() => page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(savedPlan)
 })
