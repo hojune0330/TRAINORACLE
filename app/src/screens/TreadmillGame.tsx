@@ -26,7 +26,9 @@ import { drawRunner } from "./treadmill/sprites"
 import { loadToriArt } from "./treadmill/runner-art"
 import { loadSceneArt } from "./treadmill/scene-art"
 import { loadPartyArt } from "./treadmill/party-art"
-import { PartyIcon } from "./treadmill/PartyIcon"
+import { PartyEffect } from "./treadmill/PartyEffect"
+import { ActionFeedback, useActionFeedback } from "./treadmill/ActionFeedback"
+import { actionFeedback } from "./treadmill/action-feedback"
 import type { GamePalette, RunnerCharacter } from "./treadmill/sprites"
 import { fxPalette, mountShaderSky } from "./treadmill/shader-sky"
 import type { ShaderSky } from "./treadmill/shader-sky"
@@ -39,6 +41,7 @@ import "../styles/treadmill-tour.css"
 import "./treadmill/game-reward-actions.css"
 import "./treadmill/upgrade-choice.css"
 import "./treadmill/game-navigation.css"
+import "./treadmill/game-feedback.css"
 import { FriendArena } from "./treadmill/FriendArena"
 import { arenaInvitation } from "./treadmill/arena-types"
 
@@ -125,6 +128,7 @@ function SoloTreadmillGame({ onBack, backLabel, onFriends }: { readonly onBack: 
   const [equipped, setEquipped] = React.useState<TreadmillUpgrade | null>(null)
   const state = React.useRef(newTreadmillRun(courseStages(course)))
   const [view, setView] = React.useState<TreadmillState>(state.current)
+  const { cue, show: showAction, clear: clearAction } = useActionFeedback()
   const canvas = React.useRef<HTMLCanvasElement>(null)
   const skyCanvas = React.useRef<HTMLCanvasElement>(null)
   const sky = React.useRef<ShaderSky | null>(null)
@@ -173,12 +177,19 @@ function SoloTreadmillGame({ onBack, backLabel, onFriends }: { readonly onBack: 
     const before = state.current
     if (["start", "resume", "retryStage", "pause"].includes(input.type)) setEquipped(null)
     state.current = treadmillCommand(state.current, input)
+    const reaction = actionFeedback(before, state.current, input)
+    showAction(reaction)
+    if (reaction?.kind === "dash") playGameSound("dash", renderView.current.sound)
     if (before.mode === "running" && state.current.mode === "paused") setPauseReason(reason)
     if (state.current.mode !== "running" || input.type === "start") releaseInputs()
     if (input.type === "jump" && state.current.stats.jumps > before.stats.jumps) playGameSound("jump", renderView.current.sound)
     setView(state.current)
-  }, [])
+  }, [showAction])
   const updateHeld = () => command({ type: "run", held: keyboardHeld.current || gestures.current.held })
+
+  React.useEffect(() => {
+    if (screen !== "play" || view.mode !== "running" || menuOpen || leave) clearAction()
+  }, [screen, view.mode, menuOpen, leave, clearAction])
 
   React.useEffect(() => {
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)")
@@ -446,7 +457,7 @@ function SoloTreadmillGame({ onBack, backLabel, onFriends }: { readonly onBack: 
           <p className="treadmill-game__warning" role="status" data-tone={warning.tone}>{warning.text}</p>
           {view.stats.combo > 1 && live && <div className="treadmill-game__combo" aria-label={`연속 ${view.stats.combo}`}>콤보 ×{view.stats.combo}</div>}
         </div>
-        <div className="treadmill-game__gesture-hint" aria-label="화면 조작 안내">
+        <div className="treadmill-game__gesture-hint" aria-label="화면 조작 안내" data-held={view.running && !view.exhausted}>
           <span>{view.exhausted ? "손을 떼면 회복" : view.running ? "달리는 중 · 떼면 회복" : "화면 꾹 달리기"}</span>
           <span aria-label="점프 에너지">↗ 점프 ⚡{view.jumpCost}</span>
           <span aria-label="대시 충전">두 번 대시 {view.cooldown > 0 ? `${view.cooldown.toFixed(1)}초` : `⚡${TREADMILL_RULES.dashCost}`}</span>
@@ -472,7 +483,8 @@ function SoloTreadmillGame({ onBack, backLabel, onFriends }: { readonly onBack: 
         onPointerUp={event => { gestures.current.up(event.pointerId, { x: event.clientX, y: event.clientY, time: event.timeStamp }); updateHeld() }}
         onPointerCancel={event => { gestures.current.cancel(event.pointerId); updateHeld() }}
         onLostPointerCapture={event => { gestures.current.cancel(event.pointerId); updateHeld() }} />
-      {running && view.countdown > 0 && equipped && <div className="treadmill-game__equipped" role="status"><PartyIcon id="upgrade-core" size={48} /><strong>{upgradeName(equipped)} 장착!</strong><span>{UPGRADE_STORIES[equipped].effect}</span></div>}
+      {running && !menuOpen && !leave && <ActionFeedback cue={cue} />}
+      {running && view.countdown > 0 && equipped && <div className="treadmill-game__equipped" role="status"><PartyEffect key={equipped} id={equipped === 'spring' ? 'jump-pad' : equipped === 'economy' ? 'supply-capsule' : 'upgrade-core'} size={64} reduced={reduced} /><strong>{upgradeName(equipped)} 장착!</strong><span>{UPGRADE_STORIES[equipped].effect}</span></div>}
 
       {view.mode === "paused" && !menuOpen && !leave && <div className="treadmill-game__overlay">
         <div className="treadmill-game__card treadmill-game__card--small">

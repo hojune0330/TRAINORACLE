@@ -97,7 +97,7 @@
 .treadmill-game button.treadmill-game__cta { width: 100%; min-height: 56px; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); border-radius: var(--tm-radius-sm); border: var(--tm-edge) solid var(--game-outline); border-bottom-width: 7px; background: var(--game-good); color: var(--game-ink); font-size: var(--fs-body-lg); font-weight: 900; }
 .treadmill-game__card-actions .treadmill-game__cta { flex: 1 1 140px; width: auto; }
 .treadmill-game button.treadmill-game__ghost { flex: 1 1 110px; min-height: 56px; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); border-radius: var(--tm-radius-sm); border: var(--tm-edge) solid var(--game-outline); border-bottom-width: 7px; background: var(--game-panel); color: var(--game-ink); font-weight: 800; }
-.treadmill-game button.treadmill-game__cta:active, .treadmill-game button.treadmill-game__ghost:active { border-bottom-width: var(--tm-edge); transform: translateY(4px); }
+.treadmill-game button.treadmill-game__cta:active, .treadmill-game button.treadmill-game__ghost:active { transform: translateY(2px) scale(.98); }
 
 /* Thumb pads */
 .treadmill-game__controls { margin: var(--space-3) var(--tm-pad) 0; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-2); }
@@ -125,7 +125,7 @@
 .treadmill-game__gear-stats span { display: inline-flex; align-items: center; justify-content: center; gap: 3px; padding: var(--space-1); border-radius: 8px; background: var(--game-outline); color: var(--game-cloud); font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .treadmill-game__upgrades { display: grid; gap: var(--space-2); }
 .treadmill-game__upgrades button { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: var(--space-3); align-items: center; padding: var(--space-3); text-align: left; border-radius: var(--tm-radius-sm); border: var(--tm-edge) solid var(--game-outline); border-bottom-width: 6px; background: var(--game-panel); color: var(--game-ink); }
-.treadmill-game__upgrades button:active { border-bottom-width: var(--tm-edge); transform: translateY(3px); }
+.treadmill-game__upgrades button:active { transform: translateY(2px) scale(.98); }
 .treadmill-game__gear-icon { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 12px; border: 2px solid var(--game-outline); color: var(--game-cloud); }
 [data-upgrade="grip"] .treadmill-game__gear-icon { background: var(--game-mud-light); }
 [data-upgrade="spring"] .treadmill-game__gear-icon { background: var(--game-gold-dark); }

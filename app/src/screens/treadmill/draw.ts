@@ -8,6 +8,8 @@ import type { TourCity } from "../../domain/minigame/tour"
 import { createRunnerCamera } from "./camera"
 import { presentedHazards } from "./hazard-view"
 import { drawPartyProp } from "./party-art"
+import { drawMotionBurst } from './motion-bursts'
+import type { MotionBurst } from './motion-bursts'
 
 export { gamePalette }
 export type { GamePalette }
@@ -43,6 +45,8 @@ export function createTreadmillRenderer() {
   let dustTimer = 0
   let seed = 1
   let supplyAt = -10
+  let goAt = -10
+  let burst: { kind: MotionBurst; at: number } | null = null
   const random = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646 }
 
   let fewer = false
@@ -58,6 +62,12 @@ export function createTreadmillRenderer() {
     const before = previous
     previous = state
     if (!before) return
+    if (before.countdown > 0 && state.countdown === 0 && state.mode === 'running') goAt = clock
+    if (state.mode !== 'running' || state.stage !== before.stage) burst = null
+    else if (state.stats.dashes > before.stats.dashes) burst = {kind:'dash',at:clock}
+    else if (state.stats.jumps > before.stats.jumps) burst = {kind:'jump',at:clock}
+    else if (state.stats.cleared > before.stats.cleared) burst = {kind:'clear',at:clock}
+    else if (before.y > 0 && state.y === 0) burst = {kind:'land',at:clock}
     if (state.mode === "running" && before.mode !== "running" && state.countdown > 0 && treadmillElapsed(state) === 0) { particles = []; popups = []; supplyAt = -10 }
     if ((state.mode === "over" || state.mode === "clear") && before.mode !== state.mode) endedAt = clock
     // A new stage starts clean, so the "구간 통과!" popup never sits under the countdown.
@@ -180,6 +190,7 @@ export function createTreadmillRenderer() {
       if (context.canvas.dataset) context.canvas.dataset.partySupply = "visible"
     } else if (context.canvas.dataset) delete context.canvas.dataset.partySupply
 
+    if (burst) drawMotionBurst(context, palette, burst.kind, runnerX, floor, clock-burst.at, reduced || low)
     const hazards = presentedHazards(state)
     const visibleHazards: { id: number; x: number; scheduled: boolean }[] = []
     for (const hazard of hazards) {
@@ -291,6 +302,11 @@ export function createTreadmillRenderer() {
     if (scene) drawWeather(context, palette, scene, frame)
 
     // Countdown banner.
+    if (state.mode === 'running' && state.countdown === 0 && clock-goAt < .45) {
+      context.save(); context.globalAlpha = reduced ? 1 : Math.min(1,(.45-(clock-goAt))*5)
+      outlinedText(context, '출발!', width/2, height*.38, 34, palette.gold, palette.outline, font)
+      context.restore()
+    }
     if (state.mode === "running" && state.countdown > 0) {
       const n = Math.ceil(state.countdown)
       const t = state.countdown - Math.floor(state.countdown)

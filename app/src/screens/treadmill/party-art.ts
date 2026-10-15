@@ -19,10 +19,10 @@ function load(url: string): Promise<void> {
   pending.set(url, promise)
   return promise
 }
-export function loadPartyArt(): Promise<void> {
+export function loadPartyArt(includeJumpEffect = false): Promise<void> {
   return Promise.all([
     ...(['jump-pad', 'supply-capsule', 'upgrade-core', 'respawn-beacon'] as const).map(id => load(partyIconUrl(id))),
-    ...manifest.assets.filter(a => a.id !== 'jump-pad').map(a => load(`${import.meta.env.BASE_URL}game/run-party-v2/${a.effect.file}`)),
+    ...manifest.assets.filter(a => includeJumpEffect || a.id !== 'jump-pad').map(a => load(`${import.meta.env.BASE_URL}game/run-party-v2/${a.effect.file}`)),
   ]).then(() => undefined)
 }
 
