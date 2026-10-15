@@ -35,10 +35,13 @@ const requiredKillVariables = [
 ] as const
 
 describe("hosted beta feature controls", () => {
-  it("allows a fresh deployment after an operator changes feature switches", () => {
+  it("allows a fresh original-origin deployment only after explicit operator approval", () => {
     expect(workflow).toMatch(/on:\s*[\s\S]*?workflow_dispatch:/u)
     expect(workflow).toContain(
-      "if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'",
+      "if: github.event_name == 'workflow_dispatch' && inputs.publish_original_pages == true && github.ref == 'refs/heads/main'",
+    )
+    expect(workflow).toMatch(
+      /publish_original_pages:\s*description:[^\n]*\s*type: boolean\s*required: false\s*default: false/u,
     )
   })
 

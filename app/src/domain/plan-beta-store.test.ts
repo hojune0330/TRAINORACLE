@@ -643,7 +643,9 @@ describe("plan beta local store", () => {
     )
     const localBefore = storageEntries(window.localStorage)
     const sessionBefore = storageEntries(window.sessionStorage)
-    const mutableLocalKeys = new Set([activePlanBetaStorageKey(), "trainoracle.plan-beta.history.v1"])
+    const mutableLocalKeys = new Set([
+      activePlanBetaStorageKey(), "trainoracle.plan-beta.history.v1", "trainoracle.plan-cloud-archive.v1",
+    ])
     const mutableSessionKeys = new Set(["trainoracle.plan-beta.previous-intake.v1"])
     const generated = generatePlanFromDraft(stateFixture().intake, "NO_KNOWN_RISK")
     if (generated.kind !== "generated") throw new Error("Expected generated plan")
@@ -681,7 +683,11 @@ describe("plan beta local store", () => {
     expect(historyBytes).not.toBeNull()
     expect(intakeBytes).toBe(JSON.stringify(state.intake))
     expect(window.localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
-    expect(JSON.stringify([historyBytes, intakeBytes, loadPreviousContinuity()])).not.toMatch(/memo|symptom/u)
+    // The existing local archive marker stores only this exact candidate ID, even with online backup OFF.
+    const archiveMarkerBytes = window.localStorage.getItem("trainoracle.plan-cloud-archive.v1")
+    expect(archiveMarkerBytes).toBe(JSON.stringify([state.activePlan.candidateId]))
+    expect(JSON.stringify([historyBytes, intakeBytes, archiveMarkerBytes, loadPreviousContinuity()]))
+      .not.toMatch(/memo|symptom/u)
     // Every non-plan key/value stays byte-identical; unexpected new persistence must fail.
     expect(storageEntries(window.localStorage).filter(([key]) => !mutableLocalKeys.has(key)))
       .toEqual(localBefore.filter(([key]) => !mutableLocalKeys.has(key)))
