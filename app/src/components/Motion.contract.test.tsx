@@ -5,7 +5,7 @@ import { Profiler } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { AppShell, SavedToast } from "../AppShell"
 import { PopCard, usePopover } from "./Popover"
-import { hasPendingBrowserBackLayer } from "../navigation/browserNavigation"
+import { beginBrowserPopNavigation, hasPendingBrowserBackLayer } from "../navigation/browserNavigation"
 
 afterEach(cleanup)
 
@@ -246,11 +246,13 @@ describe("saved toast motion structure", () => {
     window.localStorage.clear()
     await initializeCanonicalJournalFixture()
     const nativeBack = vi.spyOn(window.history, "back").mockImplementation(() => undefined)
+    let shellParentState: unknown
 
     try {
       expect(hasPendingBrowserBackLayer()).toBe(false)
       // This is a fresh shell, not a continuation of the previous test's history.
       window.history.replaceState({}, "", window.location.href)
+      shellParentState = window.history.state
       render(<AppShell />)
       const tabBar = screen.getByRole("navigation", { name: "주 탭" })
       fireEvent.click(within(tabBar).getByRole("button", { name: "기록하기" }))
@@ -280,10 +282,24 @@ describe("saved toast motion structure", () => {
       fireEvent.click(screen.getByRole("button", { name: "닫기" }))
       expect(screen.queryByRole("alert")).not.toBeInTheDocument()
     } finally {
-      nativeBack.mockRestore()
       try {
-        await cleanupShellHistory()
+        // Keep this deterministic native-POP fixture through unmount as well.
+        // Manual POP above does not traverse jsdom's actual SessionHistory.
+        await act(async () => {
+          cleanup()
+          await Promise.resolve()
+        })
+        if (shellParentState !== undefined) {
+          await act(async () => {
+            window.history.replaceState(shellParentState, "", window.location.href)
+            beginBrowserPopNavigation()
+            window.dispatchEvent(new PopStateEvent("popstate", { state: shellParentState }))
+            await Promise.resolve()
+          })
+          expect(hasPendingBrowserBackLayer()).toBe(false)
+        }
       } finally {
+        nativeBack.mockRestore()
         vi.useRealTimers()
       }
     }
