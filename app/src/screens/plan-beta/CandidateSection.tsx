@@ -54,7 +54,7 @@ export function CandidateSection({
   const headingId = `candidate-heading-${localId}`
   const scheduleId = `candidate-schedule-${localId}`
   return (
-    <article className="plan-candidate" aria-labelledby={headingId}>
+    <article className="plan-candidate" data-schedule-open={expanded || undefined} aria-labelledby={headingId}>
       <header>
         <span>일정·운동 시간{recommended && <em className="plan-choice__badge">먼저 보기</em>}</span>
         <h2 id={headingId}>{label.title}</h2>

@@ -14,6 +14,7 @@ import {
   Gauge,
 } from "lucide-react"
 import { CategoryCard, CategoryDisclosure, CategoryIcon } from "../../components/CategoryCard"
+import { CALENDAR_TRAINING_LABELS, plannedCalendarTone } from "../../domain/calendar-training-presentation"
 import type { LucideIcon } from "lucide-react"
 import type { PlanProgressState } from "@impl/plan-generator/types"
 import type { PlanSession } from "@impl/plan-generator/types"
@@ -264,6 +265,10 @@ export function ActivePlan({
       </section>}
       {executionMessage && <div className="plan-execution-status" role="status">{executionMessage}</div>}
       <InstantPlanTodayView today={todayView} compact navigationCards onContinue={showSchedule} changeScheduleLabel="휴식·건너뜀 기록"
+        sessionRoleLabel={id => {
+          const session = activePlan.sessions.find(item => instantSessionId(item) === id)
+          return session ? CALENDAR_TRAINING_LABELS[plannedCalendarTone(session)] : undefined
+        }}
         onViewSession={id => {
           const session = activePlan.sessions.find(item => instantSessionId(item) === id)
           if (session) setReaderRequest(previous => ({ day: session.day, slot: session.slot, sequence: (previous?.sequence ?? 0) + 1 }))
@@ -386,7 +391,7 @@ export function ActivePlan({
         )}
         renderSessionAction={onWriteSessionLog === undefined ? undefined : (session, leave) => session.role !== "REST" && (
           <button className="active-plan__journal-action" type="button" onClick={() => leave ? leave(() => onWriteSessionLog(session)) : onWriteSessionLog(session)}>
-            이 훈련 일지 쓰기
+            <Pencil size={16} aria-hidden="true" />이 훈련 일지 쓰기
           </button>
         )}
         renderSessionFooter={(session) => {

@@ -8,7 +8,7 @@ import "../../styles/plan-day-reader.css"
 import { useCalendarMotion } from "../../hooks/useCalendarMotion"
 import { useShellReaderVisibility } from "../../components/AppShellFrame"
 
-export function PlanDayReader({ date, sessions, initialSlot, initialSection, canPrevious, canNext, onPrevious, onNext, onClose, returnFocusTo, notice, children }: {
+export function PlanDayReader({ date, sessions, initialSlot, initialSection, canPrevious, canNext, onPrevious, onNext, onClose, returnFocusTo, notice, children, backLabel = "달력으로 돌아가기" }: {
   readonly date: string
   readonly sessions: readonly { readonly slot: "AM" | "PM" }[]
   readonly initialSlot?: "AM" | "PM"
@@ -21,6 +21,7 @@ export function PlanDayReader({ date, sessions, initialSlot, initialSection, can
   readonly returnFocusTo?: (date: string) => HTMLElement | null
   readonly children: ReactNode | ((leave: (action: () => void) => void) => ReactNode)
   readonly notice?: ReactNode
+  readonly backLabel?: string
 }) {
   const dialog = React.useRef<HTMLDialogElement>(null)
   const content = React.useRef<HTMLDivElement>(null)
@@ -76,7 +77,7 @@ export function PlanDayReader({ date, sessions, initialSlot, initialSection, can
   return createPortal(<dialog ref={dialog} className="plan-day-reader" data-reduced-motion={motion.reduced || undefined} aria-labelledby={titleId}
     onCancel={event => { event.preventDefault(); close() }}>
     <header className="plan-day-reader__header">
-      <button type="button" onClick={close} aria-label="달력으로 돌아가기" title="달력으로 돌아가기"><ArrowLeft size={21} aria-hidden="true" /></button>
+      <button type="button" onClick={close} aria-label={backLabel} title={backLabel}><ArrowLeft size={21} aria-hidden="true" /></button>
       <div><span>훈련 · 일지</span><h2 id={titleId}>{calendarDayLabel(date)}</h2></div>
       <div className="plan-day-reader__arrows">
         <button type="button" onClick={onPrevious} disabled={!canPrevious} aria-label="크게 보기 이전 날짜" title="이전 날짜"><ChevronLeft size={19} aria-hidden="true" /></button>

@@ -98,7 +98,7 @@ export function More({
         </div>
       </header>
 
-      <div className="more-screen__list">
+      <div className={`more-screen__list${activeView === "tools" ? " more-screen__list--tools" : ""}`}>
         {activeView === "tools" && <>
         {(onOpenPaceCalculator || onOpenImport || onOpenRecords) && <MenuGroup title="훈련 도구">
           {onOpenPaceCalculator && <MenuAction category="training" icon={Calculator} label="페이스 계산" illustration="pace-calculator-announcement" onClick={onOpenPaceCalculator} />}

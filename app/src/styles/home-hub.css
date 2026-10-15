@@ -78,7 +78,12 @@
 .home-hub__notice strong { display:block; margin-bottom:4px; }
 .home-hub__notice button { min-height:44px; max-width:100%; margin-top:4px; padding:8px 0; border:0; background:none; color:var(--brand); font-weight:700; overflow-wrap:break-word; }
 .home-hub__explore { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); gap:var(--space-3); margin-top:var(--space-5); }
-.home-hub .home-hub__explore > button.category-card { padding:var(--space-4); border-color:var(--hair); border-radius:var(--r-task-surface); }
+.home-hub .home-hub__explore > button.category-card.category-card--row { padding:var(--space-3); border-color:transparent; border-radius:var(--r-action); background:transparent; }
+.home-hub__explore { grid-template-columns:1fr; gap:0; padding:var(--space-1); border:var(--bw-line) solid var(--hair); border-radius:var(--r-task-surface); background:var(--surface); }
+.home-hub .home-hub__explore > button.category-card--row + button.category-card--row { border-top-color:var(--hair); }
+.home-hub__next-prescription { display:block; color:var(--ink-2); margin-top:var(--space-1); }
+.home-hub__next-open { display:block; margin-top:var(--space-2); color:var(--category-training); font-size:var(--fs-body-sm); font-weight:600; }
+.home-hub__next-open > span { color:var(--ink-3); font-weight:400; }
 .home-hub button:focus-visible { outline:3px solid var(--brand); outline-offset:3px; }
 @media (max-width:380px) {
   /* Keep the first actions usable when a platform scrollbar narrows content.

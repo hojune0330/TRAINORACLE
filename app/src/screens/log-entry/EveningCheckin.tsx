@@ -298,11 +298,14 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
 
         {step === "choose" && <nav className="evening-checkin__choices" aria-label="남길 항목">
           {([
-            ["condition", "몸 상태", HeartPulse], ["mood", "기분", Smile], ["sleep", "수면", Moon], ["memo", "메모 쓰기", Pencil], ["metrics", "체중·심박", Activity],
-          ] as const).map(([key, label, Icon]) => <button key={key} type="button" data-category="body" className="category-card"
+            ["condition", "몸 상태", HeartPulse], ["mood", "기분", Smile], ["sleep", "수면", Moon], ["metrics", "체중·심박", Activity], ["memo", "메모 쓰기", Pencil],
+          ] as const).map(([key, label, Icon]) => <button key={key} type="button" data-category="body"
+            data-entry-choice={key}
+            className={`evening-checkin__choice category-card${key === "memo" ? " evening-checkin__choice--memo" : ""}`}
             onClick={() => navigateTo({ step: key, editGroup: key, returnToReview: true })}>
-            <span className="category-icon" aria-hidden="true"><Icon size={22} /></span>
-            <span className="category-card__copy category-card__title">{label}</span><ChevronRight size={18} aria-hidden="true" />
+            <span className="evening-checkin__choice-icon category-icon" aria-hidden="true"><Icon size={20} /></span>
+            <span className="evening-checkin__choice-label category-card__copy category-card__title">{label}</span>
+            <ChevronRight size={18} aria-hidden="true" />
           </button>)}
         </nav>}
 

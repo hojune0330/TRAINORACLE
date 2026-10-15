@@ -66,10 +66,10 @@ describe("InstantPlanTodayView", () => {
     expect(screen.getByText("반복 횟수와 회복 시간은 정해지지 않았어요.")).toBeVisible()
     expect(screen.queryByText("저장된 안내")).not.toBeInTheDocument()
     expect(screen.queryByText("훈련 방법", { selector: "summary" })).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole("button", { name: "오전 훈련 방법·근거" }))
+    fireEvent.click(screen.getByRole("button", { name: "오전 훈련 내용 보기" }))
     expect(onViewSession).toHaveBeenCalledExactlyOnceWith("am")
   })
-  it("prioritizes recording while retaining every main step and recovery in compact mode", () => {
+  it("opens full training before offering recording while retaining every main step and recovery", () => {
     const record = vi.fn(), view = vi.fn()
     const session = { ...today.sessions[1]!, steps: [
       ...today.sessions[1]!.steps,
@@ -78,9 +78,9 @@ describe("InstantPlanTodayView", () => {
     ] }
     render(<InstantPlanTodayView compact today={{ ...today, sessions: [session] }} onRecordSession={record} onViewSession={view} />)
     const button = screen.getByRole("button", { name: "오후 훈련 기록 남기기" })
-    const explanation = screen.getByRole("button", { name: "오후 훈련 방법·근거" })
-    expect(button).toHaveClass("instant-plan__button")
-    expect(button.compareDocumentPosition(explanation) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    const explanation = screen.getByRole("button", { name: "오후 훈련 내용 보기" })
+    expect(button).toHaveClass("instant-plan__entry-record")
+    expect(explanation.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     for (const step of session.steps.filter(step => ["본운동", "회복", "사이 회복"].includes(step.label))) {
       expect(screen.getByText(step.instruction)).toBeVisible()
     }

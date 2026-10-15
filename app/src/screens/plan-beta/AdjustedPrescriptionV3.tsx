@@ -20,10 +20,7 @@ export function AdjustedPrescriptionV3({ session, explanation, showName = true, 
   if (p.kind === "PACE_TARGET") return <><DetailedPrescriptionView prescription={p} />{memo}</>
   if (p.kind === "REST") return <><p>운동을 쉬는 날이에요.</p>{memo}</>
   if (p.kind !== "ADJUSTED_METHOD_V3") return <><p>{sessionWorkoutNotation(session)}</p>{memo}</>
-  return <>
-    <WorkoutNotation sequence={p.projection.sequence} intent={session.plannedEnergyIntent} targets={p.projection.segmentTargets} showName={showName} />
-    {p.projection.segmentTargets.length > 0 && <p className="plan-pace-recommendation__notice">저장 당시 개인 기록을 나눈 참고값이에요. 오늘 몸 상태를 새로 판단한 값은 아니에요.</p>}
-    <details><summary>자세히 보기 · 방법과 근거</summary>
+  const execution = <>
     <PrescriptionStructureV3 sequence={p.projection.sequence}
       originalDurationMinutes={"originalPrescription" in p.projection && p.projection.originalPrescription.kind === "RPE_TIME_RANGE"
         ? p.projection.originalPrescription.durationMinutes : undefined} />
@@ -33,6 +30,12 @@ export function AdjustedPrescriptionV3({ session, explanation, showName = true, 
         : target.fixedWorkSeconds !== null ? `${formatTrainingSeconds(target.fixedWorkSeconds)} 동안 · 1km당 약 ${formatTrainingSeconds(target.secondsPerKm)} 기준`
           : "거리·시간을 지정하지 않은 구간"}</li>)}</ul>
     <p>현재 몸 상태를 다시 판단한 값은 아니에요.</p></>}
+  </>
+  return <>
+    {memoState === "PLAN" ? execution : <WorkoutNotation sequence={p.projection.sequence} intent={session.plannedEnergyIntent} targets={p.projection.segmentTargets} showName={showName} />}
+    {p.projection.segmentTargets.length > 0 && <p className="plan-pace-recommendation__notice">저장 당시 개인 기록을 나눈 참고값이에요. 오늘 몸 상태를 새로 판단한 값은 아니에요.</p>}
+    <details><summary>자세히 보기 · 방법과 근거</summary>
+    {memoState !== "PLAN" && execution}
     {explanation ? <section aria-label="이 훈련을 하는 이유"><h4>이 훈련을 하는 이유</h4><dl>{([
       ["목적", explanation.purpose], ["에너지 공급", explanation.energySupply], ["운동 구성", explanation.workRationale],
       ["회복 구성", explanation.recoveryRationale], ["주기 역할", explanation.cycleRole], ["기대하는 변화", explanation.expectedAdaptation],

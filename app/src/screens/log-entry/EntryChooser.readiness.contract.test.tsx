@@ -35,6 +35,11 @@ describe("entry chooser confirmed-first journal guard", () => {
   it("offers the first-journal guide only after a confirmed empty read and keeps all entry destinations", () => {
     const pick = vi.fn(), openImport = vi.fn()
     render(<EntryChooser targetDate={DATE} onPick={pick} onOpenImport={openImport} />)
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
+    expect(screen.getByRole("heading", { level: 1, name: "새 일지" })).toBeVisible()
+    const prompt = screen.getByRole("heading", { level: 2, name: "무엇을 기록할까요?" })
+    expect(prompt).toHaveClass("app-heading--screen", "app-heading--accent")
+    expect(prompt).toHaveFocus()
     expect(screen.queryByText(/첫 일지예요/)).toBeNull()
     expect(guide()).not.toBeNull()
     for (const type of ["quick-session", "post-session", "evening", "race"]) {

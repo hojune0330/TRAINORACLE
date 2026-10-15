@@ -1,5 +1,5 @@
 import React from "react"
-import { Activity, ArrowLeft, ArrowRight, BookOpen, Calculator, ChartColumn, Heart, Layers, CalendarDays, FileChartColumn, TrendingUp } from "lucide-react"
+import { Activity, ArrowLeft, ArrowRight, BookOpen, Calculator, ChartColumn, Check, Heart, Layers, CalendarDays, FileChartColumn, TrendingUp } from "lucide-react"
 import { CategoryCard, CategoryDisclosure, CategoryIcon } from "../components/CategoryCard"
 import { useAppOverlayNavigation } from "../components/AppOverlayNavigation"
 import { projectStructuredJournalObservations } from "../domain/journal-observation"
@@ -43,7 +43,7 @@ const ANALYSIS_SECTIONS = [
 const ORACLE_SECTIONS = [
   { id: "training", label: "내 훈련", icon: Activity },
   { id: "profile", label: "러닝 취향", icon: Heart },
-  { id: "library", label: "읽을거리·관심", icon: BookOpen },
+  { id: "library", label: "읽을거리", icon: BookOpen },
 ] as const
 export type OracleHubSection = (typeof ORACLE_SECTIONS)[number]["id"]
 
@@ -154,11 +154,12 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
         <div className="trends-hub__sections app-choice-group" role="group" aria-label="오라클 항목">
           {ORACLE_SECTIONS.map(item => (
             <button className="app-choice-control category-choice" data-category="oracle" key={item.id} type="button" aria-pressed={section === item.id}
+              aria-label={item.id === "library" ? "읽을거리·관심" : undefined}
               onClick={() => {
                 const destination = destinationFor(item.id)
                 if (destination) { destination(); return }
                 setSection(item.id); onOracleSectionChange?.(item.id)
-              }}><CategoryIcon category="oracle" icon={item.icon} compact /><span>{item.label}</span></button>
+              }}><CategoryIcon category="oracle" icon={item.icon} compact /><span>{item.label}</span><Check size={16} className="category-choice__check" aria-hidden="true" /></button>
           ))}
         </div>
         {section === "training" && !readComplete && <p className="trends-hub__saved-context" role="status">기록을 아직 모두 확인하지 못했어요. 저장한 일지 수와 분석 결과는 확인이 끝난 뒤 표시해요.</p>}
@@ -240,7 +241,7 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
             onClick={() => {
               setDetail(item.id)
               onContextChange?.({ ...initialContext, section: item.id })
-            }}><CategoryIcon category="oracle" icon={item.icon} compact /><span>{item.label}</span><small id={`trends-choice-${item.id}`}>{item.description}</small></button>)}
+            }}><CategoryIcon category="oracle" icon={item.icon} compact /><span>{item.label}</span><small id={`trends-choice-${item.id}`}>{item.description}</small><Check size={16} className="category-choice__check" aria-hidden="true" /></button>)}
         </div>}
         {section === "training" && detail === "summary" && (onOpenImport || onOpenRecords) && <div className="trends-hub__explore">
           <RecordStartActions onImport={onOpenImport} onRecords={onOpenRecords} />

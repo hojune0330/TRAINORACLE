@@ -1348,7 +1348,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       hideTabBar={(overlay !== null ? overlay.kind !== "oracle" : v.tab === "log" && v.entryType !== "choose")
         || (v.tab === "home" && utilityView === "minigame")}
       wideTask={overlay === null && (v.tab === "log" || v.tab === "plan")}
-      wideResults={overlay === null ? v.tab === "trends"
+      wideResults={overlay === null ? v.tab === "trends" || (v.tab === "home" && utilityView === "more" && !v.accountOpen && !v.restoreOpen)
         : overlay.kind === "running-profile" || overlay.kind === "oracle"
           || (overlay.kind === "record-reading" && (overlay.stage === "self-result" || overlay.stage === "pair-result"))}
     >

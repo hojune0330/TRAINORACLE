@@ -5,6 +5,8 @@ import type { HomeSession, TrainingHomeViewModel } from "../../domain/home-view-
 import { AppHeading } from "../../components/AppHeading"
 import type { OracleTopicId } from "../../domain/oracle-exploration"
 import { sessionWorkoutNotation } from "../../domain/workout-notation"
+import { catalogWorkoutReader } from "../../domain/catalog-workout-reader"
+import { CALENDAR_TRAINING_LABELS, plannedCalendarTone } from "../../domain/calendar-training-presentation"
 import { sessionLabel, sessionSlotLabel } from "../plan-beta/labels"
 import type { LogEntryType } from "../log-entry/shared"
 import type { CalendarReadiness } from "../../domain/calendar-context"
@@ -111,9 +113,9 @@ export function TrainingHome({
       {announcement && <div className="home-hub__announcement">{announcement}</div>}
 
       {(onOpenGuide || onOpenContent || onOpenRewards) && <nav className="home-hub__explore" aria-label="훈련 도움말과 일지 꾸미기">
-        {onOpenGuide && <CategoryCard category="journal" title="일지 예시 보기" onClick={onOpenGuide} />}
-        {onOpenContent && <CategoryCard category="training" icon={BookOpen} title="훈련법 읽기" onClick={onOpenContent} />}
-        {onOpenRewards && <CategoryCard category="journal" icon={NotebookPen} title="일지 꾸미기" onClick={onOpenRewards} />}
+        {onOpenGuide && <CategoryCard variant="row" category="journal" title="일지 예시 보기" onClick={onOpenGuide} />}
+        {onOpenContent && <CategoryCard variant="row" category="training" icon={BookOpen} title="훈련법 읽기" onClick={onOpenContent} />}
+        {onOpenRewards && <CategoryCard variant="row" category="journal" icon={NotebookPen} title="일지 꾸미기" onClick={onOpenRewards} />}
       </nav>}
     </div>
   )
@@ -131,14 +133,18 @@ function WelcomeToday({ onWriteLog, onOpenPlan, analysisEntry }: { onWriteLog?: 
 }
 
 function NextTrainingCard({ next, onOpen }: { next: NonNullable<TrainingHomeViewModel["nextTraining"]>; onOpen?: () => void }) {
+  const descriptionId = useId()
   const later = next.laterSameDaySession
-  const accessibleName = `다음 훈련 · ${sessionLabel(next.session)} · ${nextTrainingDateLabel(next.date)} · ${sessionSlotLabel(next.session.slot)}`
+  const role = CALENDAR_TRAINING_LABELS[plannedCalendarTone(next.session)]
+  const prescription = catalogWorkoutReader(next.session)?.summary ?? nextTrainingPrescriptionLabel(next.session)
+  const accessibleName = `다음 훈련 · ${sessionLabel(next.session)} · ${nextTrainingDateLabel(next.date)} · ${sessionSlotLabel(next.session.slot)} · ${role}`
   return <section className="home-hub__next" aria-labelledby="home-hub-next">
     <AppHeading as="h2" variant="section" id="home-hub-next" className="home-hub__section-label">다음 훈련</AppHeading>
     <CategoryCard category="training" title={sessionLabel(next.session)}
-      label={`${nextTrainingDateLabel(next.date)} · ${sessionSlotLabel(next.session.slot)}`}
-      description={later === null ? "훈련 내용 보기" : `${sessionSlotLabel(later.slot)} 훈련도 있어요`}
-      onClick={onOpen} aria-label={accessibleName} />
+      label={`${nextTrainingDateLabel(next.date)} · ${sessionSlotLabel(next.session.slot)} · ${role}`}
+      description={<><span id={descriptionId} className="home-hub__next-prescription">{prescription}</span>
+        <span className="home-hub__next-open">훈련 내용 보기{later !== null && <span> · {sessionSlotLabel(later.slot)} 훈련도 있어요</span>}</span></>}
+      onClick={onOpen} aria-label={accessibleName} aria-describedby={descriptionId} />
   </section>
 }
 
@@ -158,13 +164,13 @@ function TodaySection({ model, readiness, onWriteLog, onOpenToday }: { model: Tr
 function OptionalDailyEntries({ onWriteLog }: { onWriteLog?: (entryType?: LogEntryType) => void }) {
   if (!onWriteLog) return null
   return <div className="home-hub__optional-records" role="group" aria-label="선택해서 남기는 기록">
-    <CategoryCard category="body" title="컨디션·메모" onClick={() => onWriteLog("evening")} />
+    <CategoryCard variant="row" category="body" title="컨디션·메모" onClick={() => onWriteLog("evening")} />
   </div>
 }
 
 function SummaryRow({ category, label, detail, onClick }: { category: AppCategory; label: string; detail?: string; onClick?: () => void }) {
   const descriptionId = useId()
-  return <CategoryCard category={category} title={label}
+  return <CategoryCard variant="row" category={category} title={label}
     description={detail ? <span id={descriptionId}>{detail}</span> : undefined}
     onClick={onClick} aria-label={label} aria-describedby={detail ? descriptionId : undefined} />
 }

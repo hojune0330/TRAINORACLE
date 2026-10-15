@@ -38,6 +38,7 @@ import { journalPainPartsForSafety, type BodyPartMetadataV1 } from "../../domain
 import { derivePlanExecutionRelation } from "../../domain/plan-execution-relation"
 import { TaskFlowStep } from "../../components/TaskFlowStep"
 import { useJournalFormNavigation } from "./useJournalFormNavigation"
+import "./post-session-measurements.css"
 
 const DETAILED_OUTCOMES = [
   ["COMPLETED", "완료"],
@@ -530,13 +531,19 @@ function PostSessionFormEditor({ onBack, onExit, onDone, targetDate, initialEntr
       {task === "content" && (recordsPerformance || exerciseLog.plannedRepetitions || exerciseLog.plannedSegments || Object.keys(plannedInputs.values).length > 0) && <PlannedRepetitionEditor entryId={entryId} date={entryDate} link={planLink} value={exerciseLog} onChange={setExerciseLog} inputs={plannedInputs} />}
       {task === "content" && plannedInputs.invalidKeys.length > 0 && <p>구간 기록 {plannedInputs.invalidKeys.length}곳의 숫자를 확인해 주세요. 확인 전에는 저장되지 않아요.</p>}
       {task === "measurements" && recordsPerformance && <FormSec compact lb="거리 · 시간 · 평균 페이스" help="pace">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-          <input aria-label="거리 (km)" readOnly={isImportedField("distanceKm", initial?.fieldProvenance)} type="text" value={distanceKm} onChange={(event) => setDistanceKm(event.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
-          <input aria-label="시간 (분)" readOnly={isImportedField("durationMin", initial?.fieldProvenance)} type="text" value={durationMin} onChange={(event) => setDurationMin(event.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
-          <input aria-label="평균 페이스 (/km)" readOnly={isImportedField("avgPace", initial?.fieldProvenance)} type="text" value={avgPace} onChange={(event) => setAvgPace(event.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 4, fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-3)", letterSpacing: "0.06em" }}>
-          <span>km</span><span>min</span><span>/km</span>
+        <div className="post-session-measurements">
+          <label className="post-session-measurements__field">
+            <span className="post-session-measurements__label">거리 <span className="post-session-measurements__unit">km</span></span>
+            <input aria-label="거리 (km)" readOnly={isImportedField("distanceKm", initial?.fieldProvenance)} type="text" value={distanceKm} onChange={(event) => setDistanceKm(event.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
+          </label>
+          <label className="post-session-measurements__field">
+            <span className="post-session-measurements__label">시간 <span className="post-session-measurements__unit">분</span></span>
+            <input aria-label="시간 (분)" readOnly={isImportedField("durationMin", initial?.fieldProvenance)} type="text" value={durationMin} onChange={(event) => setDurationMin(event.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
+          </label>
+          <label className="post-session-measurements__field">
+            <span className="post-session-measurements__label">평균 페이스 <span className="post-session-measurements__unit">/km</span></span>
+            <input aria-label="평균 페이스 (/km)" readOnly={isImportedField("avgPace", initial?.fieldProvenance)} type="text" value={avgPace} onChange={(event) => setAvgPace(event.target.value)} style={{ ...inputStyle(), fontFamily: "var(--mono)", textAlign: "right" }} />
+          </label>
         </div>
         {importedObjective && <p role="note">파일에서 가져온 거리·시간·페이스는 읽기 전용이에요.</p>}
         {/* WORK_ORDER_UX2 §3-2 (D-06): 페이스 입력 형식 가이드 — 파서 철거가 아니라 안내 */}
