@@ -27,6 +27,7 @@ import { loadToriArt } from "./treadmill/runner-art"
 import { loadSceneArt } from "./treadmill/scene-art"
 import { loadPartyArt } from "./treadmill/party-art"
 import { PartyEffect } from "./treadmill/PartyEffect"
+import { SoloParty } from "./treadmill/SoloParty"
 import { ActionFeedback, useActionFeedback } from "./treadmill/ActionFeedback"
 import { actionFeedback } from "./treadmill/action-feedback"
 import type { GamePalette, RunnerCharacter } from "./treadmill/sprites"
@@ -103,10 +104,13 @@ function unlocksBetween(before: MinigameProgress, after: MinigameProgress): stri
 
 export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" }: { readonly onBack: () => void; readonly backLabel?: string }) {
   const [friends, setFriends] = React.useState(() => !!arenaInvitation())
-  return friends ? <FriendArena onBack={() => setFriends(false)} /> : <SoloTreadmillGame onBack={onBack} backLabel={backLabel} onFriends={() => setFriends(true)} />
+  const [party, setParty] = React.useState(false)
+  return friends ? <FriendArena onBack={() => setFriends(false)} /> : party
+    ? <SoloParty onBack={() => setParty(false)} onFriends={() => setFriends(true)} />
+    : <SoloTreadmillGame onBack={onBack} backLabel={backLabel} onFriends={() => setFriends(true)} onParty={() => setParty(true)} />
 }
 
-function SoloTreadmillGame({ onBack, backLabel, onFriends }: { readonly onBack: () => void; readonly backLabel: string; readonly onFriends: () => void }) {
+function SoloTreadmillGame({ onBack, backLabel, onFriends, onParty }: { readonly onBack: () => void; readonly backLabel: string; readonly onFriends: () => void; readonly onParty: () => void }) {
   const store = useMinigameProgress()
   const saved = useSavedRun()
   const [leave, setLeave] = React.useState<null | { title: string; detail: string; action: () => void; canSave: boolean; replaceSaved: boolean; returnToRun: boolean }>(null)
@@ -429,7 +433,8 @@ function SoloTreadmillGame({ onBack, backLabel, onFriends }: { readonly onBack: 
       <h2>저장한 판을 불러올 수 없어요</h2><p>게임 버전이 달라졌거나 저장 내용이 손상됐어요. 완주 기록은 유지돼요.</p>
       <button type="button" className="treadmill-game__ghost" onClick={discardSaved}>저장한 판 지우기</button>
     </section>}
-    {screen === "map" && <button className="treadmill-game__cta arena-entry" onClick={onFriends}>친구와 밀어내기 · 90초 무한 리젠</button>}
+    {screen === "map" && <><button className="treadmill-game__cta arena-entry" onClick={onParty}>혼자 도전 · 밀어내기와 러닝 디펜스</button>
+      <button className="treadmill-game__ghost arena-entry" onClick={onFriends}>친구와 밀어내기 · 90초 무한 리젠</button></>}
     {screen === "map" && <TourMap progress={progress} season={season} onSeason={setSeason} status={store.status} onShop={() => { setMenuTab("shop"); setMenuOpen(true) }}
       onPlay={item => chooseCourse({ kind: "city", city: item })} onPractice={() => chooseCourse({ kind: "practice" })} />}
 
