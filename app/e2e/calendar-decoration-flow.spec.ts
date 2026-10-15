@@ -27,10 +27,9 @@ async function seed(page: import("@playwright/test").Page) {
 
 async function openDecorationStudio(page: Page) {
   const entry = page.getByRole("button", { name: "일지 꾸미기", exact: true })
-  if (!await entry.isVisible()) {
-    await page.getByRole("button", { name: "일지 예시·훈련법·꾸미기", exact: true }).click()
-    await expect(entry).toBeVisible()
-  }
+  // A fresh empty-device launch renders the current home entry asynchronously.
+  // Wait for that entry instead of probing once and choosing a removed expander.
+  await expect(entry).toBeVisible()
   await entry.click()
   await expect(page.getByRole("dialog", { name: "일지 꾸미기", exact: true })).toBeVisible()
 }

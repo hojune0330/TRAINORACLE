@@ -5,6 +5,12 @@ permissions:
 
 on:
   workflow_dispatch:
+    inputs:
+      publish_original_pages:
+        description: "기존 GitHub.io 사이트 재배포를 명시적으로 승인"
+        type: boolean
+        required: false
+        default: false
   pull_request:
   push:
     branches:
@@ -281,7 +287,8 @@ jobs:
           fi
 
   deploy-pages:
-    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+    # Keep the existing account-held origin unchanged unless republishing is explicitly approved.
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_original_pages == true && github.ref == 'refs/heads/main'
     needs:
       - contract-tests
       - app-quality
@@ -373,6 +380,12 @@ jobs:
         if: steps.deployment-source.outputs.current == 'true'
         shell: bash
         run: |
+          for RESERVED_ENTRY in previews .git; do
+            if [[ -e "app/dist/$RESERVED_ENTRY" || -L "app/dist/$RESERVED_ENTRY" ]]; then
+              echo "::error::Hosted build must not contain reserved entry: $RESERVED_ENTRY."
+              exit 1
+            fi
+          done
           git fetch origin gh-pages
           PREVIOUS_PAGES_SHA="$(git rev-parse origin/gh-pages)"
           export PREVIOUS_PAGES_SHA
@@ -393,13 +406,22 @@ jobs:
           writeFileSync("app/dist/trainoracle-deploy-receipt.json", `${JSON.stringify(receipt, null, 2)}\n`)
           NODE
           git worktree add "$RUNNER_TEMP/trainoracle-pages" origin/gh-pages
-          find "$RUNNER_TEMP/trainoracle-pages" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          PREVIEWS_BEFORE="$(mktemp "$RUNNER_TEMP/trainoracle-previews-before.XXXXXX")"
+          PREVIEWS_AFTER="$(mktemp "$RUNNER_TEMP/trainoracle-previews-after.XXXXXX")"
+          git -C "$RUNNER_TEMP/trainoracle-pages" ls-tree -r -z HEAD -- previews > "$PREVIEWS_BEFORE"
+          find "$RUNNER_TEMP/trainoracle-pages" -mindepth 1 -maxdepth 1 ! -name .git ! -name previews -exec rm -rf {} +
           cp -R app/dist/. "$RUNNER_TEMP/trainoracle-pages/"
           touch "$RUNNER_TEMP/trainoracle-pages/.nojekyll"
           cd "$RUNNER_TEMP/trainoracle-pages"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
+          STAGED_TREE="$(git write-tree)"
+          git ls-tree -r -z "$STAGED_TREE" -- previews > "$PREVIEWS_AFTER"
+          if ! cmp -s "$PREVIEWS_BEFORE" "$PREVIEWS_AFTER"; then
+            echo "::error::Refusing to publish: previews mode/path/blob inventory changed."
+            exit 1
+          fi
           if git diff --cached --quiet; then
             echo "Hosted build is already current."
             exit 0
