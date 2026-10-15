@@ -113,6 +113,7 @@ describe("race entry purpose-scoped notes", () => {
     await user.click(screen.getByRole("radio", { name: "나만의 메모" }))
 
     // Then
+    await user.click(screen.getByText("보관 방식 자세히"))
     expect(screen.getByText(/분석하지 않아요/u)).toBeVisible()
   })
 

@@ -14,8 +14,13 @@ for (const [name, Form] of [["post", PostSessionForm], ["evening", EveningChecki
     render(<Form onDone={done} />)
     if (name === "evening") fireEvent.click(screen.getByRole("button", { name: "수면" }))
     fireEvent.click(screen.getByRole("button", { name: name === "evening" ? "입력 확인으로" : "지금 입력 확인" }))
-    fireEvent.click(screen.getByRole("button", { name: /^저장/u }))
-    expect(screen.getByRole("alert")).toHaveTextContent("아직 입력한 내용이 없어요")
+    if (name === "evening") {
+      expect(screen.queryByRole("button", { name: /^저장/u })).toBeNull()
+      expect(screen.getByText("남길 항목을 골라 주세요.")).toBeVisible()
+    } else {
+      fireEvent.click(screen.getByRole("button", { name: /^저장/u }))
+      expect(screen.getByRole("alert")).toHaveTextContent("아직 입력한 내용이 없어요")
+    }
     expect(loadEntries()).toHaveLength(0)
     expect(done).not.toHaveBeenCalled()
   })

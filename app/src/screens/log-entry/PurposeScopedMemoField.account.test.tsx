@@ -32,6 +32,7 @@ it.each([
 ] as const)("preserves the exact flag-off explanation for %s", (purpose, expected) => {
   flag.enabled = false
   const { container } = render(<Fixture purpose={purpose} />)
+  fireEvent.click(screen.getByText("보관 방식 자세히"))
   expect(screen.getByText(expected)).toBeVisible()
   expect(container).not.toHaveTextContent("계정에 보관")
 })
@@ -52,6 +53,7 @@ it("updates copy on a storage-mode rerender without replacing typed text or its 
   fireEvent.change(screen.getByRole("textbox"), { target: { value: "synthetic-private-fixture" } })
   flag.enabled = false
   view.rerender(<Fixture />)
+  fireEvent.click(screen.getByText("보관 방식 자세히"))
   expect(screen.getByText("원문은 이 기기에만 남고 분석하지 않아요.")).toBeVisible()
   expect(screen.getByRole("textbox")).toHaveValue("synthetic-private-fixture")
   expect(screen.getByRole("radio", { name: "나만의 메모" })).toBeChecked()

@@ -59,8 +59,8 @@ describe("plan schedule preview", () => {
     const calendar = screen.getByRole("grid", { name: "2026년 8월 달력" })
     const rest = calendar.querySelector<HTMLButtonElement>('button[data-date="2026-08-18"]')!
     expect(rest).toHaveAccessibleName(expect.stringContaining("대회 날짜"))
-    expect(rest.querySelector(".prescription-calendar__rest")).toHaveTextContent("휴식")
-    expect(rest.querySelector(".calendar-training-mark")).toBeNull()
+    expect(rest.querySelector('.calendar-training-mark[data-tone="off"]')).toHaveTextContent("휴식")
+    expect(rest.querySelector('.calendar-training-mark:not([data-tone="off"])')).toBeNull()
     const empty = calendar.querySelector<HTMLButtonElement>('button[data-date="2026-08-19"]')!
     expect(empty.querySelector(".prescription-calendar__rest")).toBeNull()
     expect(empty).toHaveTextContent("예정 없음")

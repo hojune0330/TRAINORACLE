@@ -113,11 +113,11 @@ async function openInput(kind: keyof typeof components, label: string | RegExp) 
 }
 
 function reviewedSave() {
-  if (!screen.queryByRole("button", { name: /^저장/ })) {
+  if (!screen.queryByRole("button", { name: /^(수정 )?저장/ })) {
     fireEvent.click(screen.queryByRole("button", { name: "입력 확인으로" })
       ?? screen.getByRole("button", { name: "지금 입력 확인" }))
   }
-  return screen.getByRole("button", { name: /^저장/ })
+  return screen.getByRole("button", { name: /^(수정 )?저장/ })
 }
 
 beforeEach(() => {
@@ -376,7 +376,7 @@ describe("existing form input autosave", () => {
     mocks.persist.mockResolvedValueOnce({ ok: true, storage: "PENDING" })
     const done = vi.fn()
     render(<EveningCheckin targetDate="2026-09-08" onDone={done} />)
-    fireEvent.change(await openInput("evening", "체중 (kg)"), { target: { value: "62." } }); await settle()
+    fireEvent.change(await openInput("evening", "체중 (kg)"), { target: { value: "62.0" } }); await settle()
     fireEvent.click(reviewedSave()); await settle()
     expect(done).not.toHaveBeenCalled()
     expect(decodeFormDraft([...records.values()][0]!.draft).completed).toBe(false)
@@ -443,14 +443,14 @@ describe("existing form input autosave", () => {
 
   it("recovers the accepted edit baseline and stable entry ID after a post-ACK correction", async () => {
     render(<EveningCheckin targetDate="2026-09-08" />)
-    fireEvent.change(await openInput("evening", "체중 (kg)"), { target: { value: "62." } }); await settle()
+    fireEvent.change(await openInput("evening", "체중 (kg)"), { target: { value: "62.0" } }); await settle()
     fireEvent.click(reviewedSave()); await settle()
     const accepted = mocks.persist.mock.calls[0]![0]
-    fireEvent.change(await openInput("evening", "체중 (kg)"), { target: { value: "63." } }); await settle()
+    fireEvent.change(await openInput("evening", "체중 (kg)"), { target: { value: "63.0" } }); await settle()
     expect(decodeFormDraft([...records.values()][0]!.draft)).toMatchObject({ completed: false,
       entryId: accepted.id, baseSavedAt: accepted.savedAt })
     cleanup(); render(<EveningCheckin targetDate="2026-09-08" />)
-    expect(await openInput("evening", "체중 (kg)")).toHaveValue("63.")
+    expect(await openInput("evening", "체중 (kg)")).toHaveValue("63.0")
     fireEvent.click(reviewedSave()); await settle()
     expect(mocks.persist.mock.calls[1]![0].id).toBe(accepted.id)
     expect(mocks.persist.mock.calls[1]![1]).toBe(accepted.savedAt)

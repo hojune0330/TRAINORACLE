@@ -5,6 +5,9 @@ import { Profiler } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { AppShell, SavedToast } from "../AppShell"
 import { PopCard, usePopover } from "./Popover"
+import { hasPendingBrowserBackLayer } from "../navigation/browserNavigation"
+// Module compilation is setup, not part of the navigation timing contract.
+import "../screens/PlanBeta"
 
 afterEach(cleanup)
 
@@ -221,6 +224,8 @@ describe("saved toast motion structure", () => {
       expect(document.querySelector(".journal-save-result")).toBeNull()
       expect(screen.getByRole("navigation", { name: "주 탭" })).toBeVisible()
     } finally {
+      cleanup()
+      await act(async () => { await vi.waitFor(() => expect(hasPendingBrowserBackLayer()).toBe(false)) })
       vi.useRealTimers()
     }
   })
@@ -252,6 +257,8 @@ describe("saved toast motion structure", () => {
       fireEvent.click(screen.getByRole("button", { name: "닫기" }))
       expect(screen.queryByRole("alert")).not.toBeInTheDocument()
     } finally {
+      cleanup()
+      await act(async () => { await vi.waitFor(() => expect(hasPendingBrowserBackLayer()).toBe(false)) })
       vi.useRealTimers()
     }
   })
@@ -260,8 +267,6 @@ describe("saved toast motion structure", () => {
 describe("app screen direction structure", () => {
   it("labels the first screen and bottom-tab travel direction", async () => {
     window.localStorage.clear()
-    // Test navigation direction independently of lazy-module compilation latency.
-    await import("../screens/PlanBeta")
     const committedScreens: Array<{ element: Element; motion: string | null }> = []
     const shell = () => (
       <Profiler id="screen-motion" onRender={() => {

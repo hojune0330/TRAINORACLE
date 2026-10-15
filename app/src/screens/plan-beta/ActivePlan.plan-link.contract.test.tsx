@@ -132,7 +132,7 @@ describe("active plan journal action", () => {
       />,
     )
 
-    const reader = within(screen.getByRole("dialog"))
+    const reader = within(await screen.findByRole("dialog"))
     expect(reader.getByText("일지·진행 기록").closest("details")).toHaveAttribute("open")
     expect(reader.getByText("일지를 연결했어요. 수행 결과와 계획을 함께 확인할 수 있어요.")).toBeVisible()
     expect(reader.getByText("수행 기록 있음")).toBeVisible()
