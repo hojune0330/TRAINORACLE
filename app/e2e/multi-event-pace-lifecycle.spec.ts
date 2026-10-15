@@ -265,6 +265,9 @@ for (const persona of personas) test(`${persona.id} ${persona.name}`, async ({ p
         : persona.event === 5000 ? "5km" : `${persona.event}m`
       await page.getByRole("button", { name: eventLabel, exact: true }).click()
       await page.getByRole("button", { name: persona.goal ? "목표만 있어요" : "내 기록", exact: true }).click()
+      if (persona.goal && persona.event === 10000) {
+        await page.getByRole("button", { name: "다른 목표 직접 입력", exact: true }).click()
+      }
       const fields = timeFields(persona.seconds)
       await page.getByLabel("분", { exact: true }).fill(fields.minutes)
       await page.getByLabel("초", { exact: true }).fill(fields.seconds)

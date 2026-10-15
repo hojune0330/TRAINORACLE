@@ -126,3 +126,12 @@ disclosure and disambiguating the actual effort choice from its review shortcut.
 The prior hosted dedicated browser lane passed; its other in-progress jobs were
 cancelled only after this follow-up was known to be necessary. That run is not a
 successful full gate. No further application/runtime change is in this follow-up.
+
+All 24 synthetic pace lifecycle personas now have passing focused receipts:
+MEP-01 through 05 passed, the remaining batch passed 18 of 19, and its sole
+failure MEP-12 passed separately after explicitly choosing the new 10km custom
+goal input. This is combined local coverage, not an assertion that the earlier
+failed batch or a hosted full suite passed. Remaining lifecycle coverage includes
+unknown-date/ambiguous records, goal-versus-actual provenance, over-budget refusal,
+PM execution of an AM plan, stale account-scope rejection, offline persistence,
+failed-write retry and exact archived plan/journal preservation.
