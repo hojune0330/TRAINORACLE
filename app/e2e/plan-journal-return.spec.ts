@@ -159,7 +159,7 @@ test(`returning from a ${detailed ? "detailed" : completion === "native-back" ? 
 test("the first workout precedes the calendar and editing isolates its close action and tools", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 375, height: 667 })
   await page.goto("/?app=1&uitest=1")
-  await page.getByRole("button", { name: "훈련 계획 만들기", exact: true }).click()
+  await page.getByRole("button", { name: "훈련 계획 받기", exact: true }).click()
   await completeQuickPlan(page)
   const first = page.getByRole("region", { name: "첫 훈련 구성" })
   const calendar = page.getByRole("region", { name: "이번 일정" })

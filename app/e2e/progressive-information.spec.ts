@@ -19,7 +19,7 @@ for (const width of [320, 375]) {
     await page.setViewportSize({ width, height: width === 320 ? 568 : 667 })
     await page.evaluate(() => document.fonts.ready)
     await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true })).toBeInViewport({ ratio: 1 })
-    for (const name of ["오늘 운동 기록 쓰기", "훈련 계획 만들기"]) {
+    for (const name of ["오늘 운동 기록 쓰기", "훈련 계획 받기"]) {
       const button = page.getByRole("button", { name, exact: true })
       await button.scrollIntoViewIfNeeded()
       await expect(button).toBeInViewport({ ratio: 1 })
@@ -39,7 +39,7 @@ for (const width of [320, 375]) {
 
   test(`shows seven event choices and puts previous answers in an editable summary at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: width === 320 ? 568 : 667 })
-    await page.getByRole("button", { name: "훈련 계획 만들기", exact: true }).click()
+    await page.getByRole("button", { name: "훈련 계획 받기", exact: true }).click()
     const choices = page.getByRole("group", { name: "어떤 종목을 준비하세요?" })
     await expect(choices.getByRole("button")).toHaveCount(7)
     await expect(choices.getByRole("button").first()).toBeInViewport({ ratio: 1 })
@@ -48,22 +48,22 @@ for (const width of [320, 375]) {
     await expect(tools.getByRole("button", { name: "훈련표 표기 읽기", exact: true })).toBeVisible()
     await page.screenshot({ path: testInfo.outputPath(`plan-${width}.png`) })
     await enterPlanWithoutRecord(page)
-    await page.getByRole("button", { name: "선택한 내용 바꾸기", exact: true }).click()
-    const summary = page.locator(".plan-intake__summary")
+    const summary = page.getByRole("group", { name: "앞서 선택한 답 수정" })
     await expect(summary).toBeVisible()
-    await summary.getByRole("button", { name: "1500m", exact: true }).click()
-    await expect(page.getByRole("group", { name: "계획 종목 선택" })).toBeVisible()
-    await expect(page.getByRole("group", { name: "계획 종목 선택" }).getByRole("button", { name: /^1500m\b/u })).toHaveAttribute("aria-pressed", "true")
+    await summary.getByRole("button", { name: "목표 1500m 답 바꾸기", exact: true }).click()
+    const revisedChoices = page.getByRole("group", { name: "계획 종목 선택" })
+    await expect(revisedChoices).toBeVisible()
+    await expect(revisedChoices.getByRole("button", { name: /^1500m\b/u })).toHaveAttribute("aria-pressed", "true")
   })
 }
 
 test("keeps empty analysis focused and opens examples and help with the keyboard", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 375, height: 667 })
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클", exact: true }).click()
-  const record = page.getByRole("button", { name: "첫 기록 남기기", exact: true })
+  const record = page.getByRole("button", { name: "운동 기록 쓰기", exact: true })
   await expect(record).toBeInViewport({ ratio: 1 })
   const example = page.getByRole("region", { name: "오라클 예시" })
-  const openExample = example.getByRole("button", { name: "이 예시 자세히 보기" })
+  const openExample = example.getByRole("button", { name: "예시 결과 보기", exact: true })
   await openExample.focus()
   await page.keyboard.press("Enter")
   await expect(page.getByRole("combobox", { name: "살펴볼 주제" })).toHaveValue("focus")
@@ -83,15 +83,17 @@ test("keeps saved results visible and does not turn missing RPE into a value", a
   await page.setViewportSize({ width: 375, height: 667 })
   await page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true }).click()
   await page.getByRole("button", { name: "운동을 마쳤어요", exact: true }).click()
-  await expect(page.locator(".quick-log__summary-help")).not.toHaveAttribute("open")
+  await expect(page.getByRole("region", { name: "현재까지 답한 내용" })).toContainText("운동 완료")
   await page.getByRole("button", { name: "오전", exact: true }).click()
   await page.getByRole("button", { name: "모르겠어요 · 비워 둘게요", exact: true }).click()
   await page.getByRole("button", { name: "없어요", exact: true }).click()
   await expect(page.getByRole("heading", { name: "이 내용으로 남길까요?" })).toBeVisible()
   await page.getByRole("button", { name: "이대로 저장", exact: true }).click()
   await expect(page.getByRole("heading", { name: "오늘 기록을 남겼어요.", exact: true })).toBeVisible()
-  await expect(page.locator(".quick-log__stamp")).toBeVisible()
-  expect(await page.locator(".quick-log__stamp").evaluate(el => el.closest("details") === null)).toBe(true)
+  const savedSummary = page.getByRole("region", { name: "현재까지 답한 내용" })
+  await expect(savedSummary).toBeVisible()
+  await expect(savedSummary).toContainText("입력 안 함")
+  expect(await savedSummary.evaluate(el => el.closest("details") === null)).toBe(true)
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("to-local-journal.journal.v2") ?? "[]"))
   expect(saved).toHaveLength(1)
   expect(saved[0].fieldProvenance.rpe.provenance).toBe("MISSING")
@@ -104,7 +106,7 @@ test("keeps saved results visible and does not turn missing RPE into a value", a
 
 test("keeps learning content and its application limits available without a developer introduction", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 375, height: 667 })
-  await page.getByRole("button", { name: "일지 예시·훈련법·꾸미기", exact: true }).click()
+  await expect(page.getByRole("navigation", { name: "훈련 도움말과 일지 꾸미기" })).toBeVisible()
   await page.getByRole("button", { name: "훈련법 읽기", exact: true }).click()
   await expect(page.getByRole("heading", { name: "어떤 훈련이 궁금한가요?" })).toBeVisible()
   await page.screenshot({ path: testInfo.outputPath("learning.png") })
@@ -126,12 +128,13 @@ test("wraps text at double size without horizontal clipping and respects reduced
     nodes.forEach((el, i) => el.style.setProperty("font-size", `${sizes[i]! * 2}px`, "important"))
   })
   expect(await page.locator(".app-scroll-region").evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
-  await page.getByRole("button", { name: "일지 예시·훈련법·꾸미기", exact: true }).click()
-  for (const label of ["훈련 계획 만들기", "훈련법 읽기", "일지 꾸미기"]) {
+  await expect(page.getByRole("navigation", { name: "훈련 도움말과 일지 꾸미기" })).toBeVisible()
+  for (const label of ["훈련 계획 받기", "훈련법 읽기", "일지 꾸미기"]) {
     const button = page.getByRole("button", { name: label, exact: true })
     expect(await button.evaluate(el => el.scrollWidth <= el.clientWidth && el.scrollHeight <= el.clientHeight)).toBe(true)
   }
-  const summary = page.locator("summary", { hasText: "일지 예시·훈련법·꾸미기" })
-  await expect(summary.locator(".info-disclosure__chevron")).toHaveCSS("transition-property", "none")
+  expect(await page.locator(".home-hub").evaluate(el =>
+    el.getAnimations({ subtree: true }).filter(animation => animation.playState === "running").length,
+  )).toBe(0)
   await page.screenshot({ path: testInfo.outputPath("home-double-text.png") })
 })

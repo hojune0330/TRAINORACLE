@@ -40,13 +40,12 @@ test("question motion is local, does not overflow, and respects the app preferen
   await expect(page.getByRole("button", { name: "오후", exact: true })).toHaveAttribute("aria-pressed", "true")
 })
 
-test("plan entry loads one small illustration and does not repeat it while answering", async ({ page }, info) => {
+test("plan entry stays focused on its question and preserves an answer on return", async ({ page }, info) => {
   await page.setViewportSize({ width: 320, height: 740 })
-  await page.getByRole("button", { name: "훈련 계획 만들기", exact: true }).click()
+  await page.getByRole("button", { name: "훈련 계획 받기", exact: true }).click()
   const illustration = page.locator('img[src$="plan-notebook-v2.webp"]')
-  await expect(illustration).toBeVisible()
-  await expect(illustration).toHaveAttribute("alt", "")
-  await expect.poll(() => illustration.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBe(256)
+  await expect(page.getByRole("heading", { name: "어떤 종목을 준비하세요?" })).toBeVisible()
+  await expect(illustration).toHaveCount(0)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: info.outputPath("plan-entry-320.png"), fullPage: true })
   await page.getByRole("button", { name: "1500m", exact: true }).click()
@@ -63,6 +62,9 @@ test("confirmed save keeps the next action readable beside the small object", as
   await page.getByRole("button", { name: "기록하기", exact: true }).click()
   await page.getByTestId("entry-choice-post-session").click()
   await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
+  await page.getByRole("button", { name: "거리와 시간 수정", exact: true }).click()
+  await page.getByRole("textbox", { name: "거리 (km)" }).fill("3")
+  await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
   await page.getByRole("button", { name: /^저장/ }).click()
   const result = page.locator(".journal-save-result")
   await expect(result).toBeVisible()

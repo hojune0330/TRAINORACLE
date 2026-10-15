@@ -12,7 +12,7 @@ test("explains the first free beta places without implying that account sync is 
   // Given: a new athlete is using the public local-journal app.
   await page.goto("/")
   await page.getByRole("button", { name: "더보기" }).click()
-  await expect(page.getByRole("heading", { name: "훈련 배우기", exact: true })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "배우기", exact: true })).toBeVisible()
 
   // When: the athlete opens the plain-language FAQ and expands the free-beta answer.
   await page.getByRole("button", { name: "훈련 용어집·도움말" }).click()
@@ -41,7 +41,7 @@ test("keeps the welcome home clear and usable on narrow phones", async ({ page }
     await page.goto("/")
 
     await expect(page.getByRole("heading", {
-      name: "오늘 운동을 기록해요",
+      name: "운동 분석과 훈련 계획",
     })).toBeVisible()
     await expect(page.getByText("모든 데이터는 이 기기에만 저장돼요.")).toHaveCount(0)
     await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
@@ -52,7 +52,7 @@ test("keeps the welcome home clear and usable on narrow phones", async ({ page }
     await expect(result).toBeVisible()
     await expect(result).toContainText("예시")
     await expect(page.getByRole("region", { name: "더 살펴보기", exact: true })).toHaveCount(0)
-    await page.getByRole("button", { name: "일지 예시·훈련법·꾸미기" }).click()
+    await expect(page.getByRole("navigation", { name: "훈련 도움말과 일지 꾸미기" })).toBeVisible()
     const services = page.getByRole("navigation", { name: "훈련 도움말과 일지 꾸미기" })
     for (const name of ["훈련법 읽기", "일지 꾸미기"]) {
       await expect(services.getByRole("button", { name })).toBeVisible()
@@ -72,7 +72,7 @@ test("keeps the welcome home clear and usable on narrow phones", async ({ page }
   // Active recording hides the main tabs; leave the blank task before reopening the chooser.
   await expect(page.getByRole("navigation", { name: "주 탭" })).toHaveCount(0)
   await page.getByRole("button", { name: "← 뒤로", exact: true }).click()
-  await expect(page.getByRole("button", { name: "오늘 기록 남기기", exact: true })).toBeVisible()
+  await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true })).toBeVisible()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
   const heading = page.getByRole("heading", { name: "무엇을 기록할까요?" })
   await expect(heading).toBeFocused()
@@ -104,14 +104,15 @@ test("shows a returning athlete's latest entry before the decoration studio", as
   await page.setViewportSize({ width: 320, height: 568 })
   await page.goto("/")
   const recentEntry = page.getByRole("button", { name: /2026년 8월 10일 기록 1개 보기.*훈련 1/u })
-  await page.getByRole("button", { name: "일지 예시·훈련법·꾸미기" }).click()
+  await expect(page.getByRole("navigation", { name: "훈련 도움말과 일지 꾸미기" })).toBeVisible()
   const services = page.getByRole("navigation", { name: "훈련 도움말과 일지 꾸미기" })
   // 과거 날짜를 뒤늦게 넣은 기록에는 포인트를 소급 지급하지 않는다.
   const decorationEntry = services.getByRole("button", { name: "일지 꾸미기" })
 
   // When: the athlete opens the first home screen.
   await expect(recentEntry).toBeVisible()
-  await expect(recentEntry).toContainText("8월 10일 기록 1개")
+  await expect(recentEntry).toContainText("8월 10일 · 훈련")
+  await expect(recentEntry).toHaveAccessibleName("2026년 8월 10일 기록 1개 보기 · 훈련 1")
   await expect(decorationEntry).toBeVisible()
 
   // Then: the latest journal appears before decoration, with no horizontal overflow.

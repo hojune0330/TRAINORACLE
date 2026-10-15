@@ -61,7 +61,7 @@ test("large text and narrow screens keep the current choices operable", async ({
 
 test("plan native Back returns one question and preserves unsent record input", async ({ page }, info) => {
   await page.setViewportSize({ width: 1440, height: 900 })
-  await page.getByRole("button", { name: "훈련 계획 만들기", exact: true }).click()
+  await page.getByRole("button", { name: "훈련 계획 받기", exact: true }).click()
   expect((await page.locator(".app-shell").boundingBox())!.width).toBeGreaterThan(520)
   await page.getByRole("button", { name: "1500m", exact: true }).click()
   await page.getByRole("button", { name: "내 기록", exact: true }).click()

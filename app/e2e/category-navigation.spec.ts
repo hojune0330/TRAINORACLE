@@ -33,7 +33,7 @@ test("category cards open full workouts and visible editing without changing the
   await page.clock.setFixedTime(new Date(2026, 9, 14, 12))
   await page.goto("/?app=1&uitest=1")
   await expect(page.locator(".app-scroll-region .app-loading-state")).toHaveCount(0)
-  await page.getByRole("button", { name: "훈련 계획 만들기", exact: true }).click()
+  await page.getByRole("button", { name: "훈련 계획 받기", exact: true }).click()
   await completeQuickPlan(page, { days: /^매일/u })
   await page.getByRole("button", { name: "이 일정으로 시작" }).click()
   await expect(page.getByRole("heading", { name: "9일 훈련 계획", exact: true })).toBeVisible()

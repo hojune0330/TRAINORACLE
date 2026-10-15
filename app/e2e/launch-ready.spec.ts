@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
 import { completeDetailedPlan, completeQuickPlan, enterPlanWithoutRecord } from "./plan-flow"
 import { expectActivePlanHeading, openActiveSessionDetails } from "./active-plan-flow"
+import { EXECUTION_STOP_CUE } from "../src/screens/plan-beta/labels"
 
 test.use({ serviceWorkers: "block" })
 
@@ -32,8 +33,7 @@ test("keeps plan help inside the narrow scroll region", async ({ page }) => {
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
   await enterPlanWithoutRecord(page)
-  await page.getByRole("button", { name: "선택한 내용 바꾸기" }).click()
-  await page.locator(".plan-intake__summary").getByRole("button", { name: "1500m", exact: true }).click()
+  await page.getByRole("group", { name: "앞서 선택한 답 수정" }).getByRole("button", { name: "목표 1500m 답 바꾸기", exact: true }).click()
   await page.getByRole("button", { name: "준비 목표 설명 보기" }).click()
 
   const geometry = await page.evaluate(() => {
@@ -63,13 +63,15 @@ test("keeps plan help inside the narrow scroll region", async ({ page }) => {
 test("moves a first visitor from WELCOME to JOURNAL after a real first save", async ({ page }) => {
   await page.goto("/")
   await expect(page.getByRole("heading", {
-    name: "오늘 운동을 기록해요",
+    name: "운동 분석과 훈련 계획",
   })).toBeVisible()
 
   await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).click()
   await expect(page.getByRole("heading", { name: "오늘 운동은 어떻게 됐나요?" })).toBeVisible()
   await page.getByRole("button", { name: "운동을 마쳤어요" }).click()
-  await page.getByRole("button", { name: "시간 미지정" }).click()
+  // A second immediate pointer click at the same position is deliberately
+  // rejected as a double tap; use a distinct keyboard answer here.
+  await page.getByRole("button", { name: "시간 미지정" }).press("Enter")
   await page.getByRole("button", { name: /힘든 정도 6\/10,/u }).click()
   await page.getByRole("button", { name: "없어요" }).click()
   await expect(page.getByRole("heading", { name: "이 내용으로 남길까요?" })).toBeVisible()
@@ -166,10 +168,15 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   await qualitySession.getByText("기존 훈련 표기", { exact: true }).click()
   await expect(qualitySession.getByRole("list", { name: "기존 훈련 표기 순서", exact: true })
     .locator("li").filter({ has: page.getByText("본운동", { exact: true }) }).locator("span")).toHaveText(selectedNotation)
-  const qualitySteps = qualitySession.getByRole("list", { name: "훈련 실행 순서" })
+  const qualitySteps = qualitySession.locator(".training-instructions__cards")
   await expect(qualitySteps).toBeVisible()
-  await expect(qualitySteps.locator("li > strong")).toHaveText(["총 시간", "준비", "본운동", "정리"])
-  await expect(qualitySteps.locator("li > span")).toHaveText(selectedSteps)
+  await expect(qualitySteps.getByRole("term")).toHaveText(["총 시간", "준비", "본운동", "정리"])
+  await expect(qualitySteps.locator(".training-instructions__duration")).toHaveText("40분 20초")
+  await expect(qualitySteps.locator(".training-instructions__included")).toHaveText("준비·회복·정리 포함")
+  for (let index = 1; index < selectedSteps.length; index++) {
+    await expect(qualitySteps.getByRole("definition").nth(index)).toHaveText(selectedSteps[index]!.replace(EXECUTION_STOP_CUE, "").trim())
+  }
+  await expect(qualitySession.getByRole("complementary", { name: "운동 중 기억할 점" })).toContainText(EXECUTION_STOP_CUE)
   await expect(qualitySession).toContainText("오후")
   await expect.poll(async () => page.evaluate(() => {
     const stored = window.localStorage.getItem("trainoracle.plan-beta.v1")
@@ -205,10 +212,14 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   await reloadedQualitySession.getByText("기존 훈련 표기", { exact: true }).click()
   await expect(reloadedQualitySession.getByRole("list", { name: "기존 훈련 표기 순서", exact: true })
     .locator("li").filter({ has: page.getByText("본운동", { exact: true }) }).locator("span")).toHaveText(selectedNotation)
-  const reloadedSteps = reloadedQualitySession.getByRole("list", { name: "훈련 실행 순서" })
+  const reloadedSteps = reloadedQualitySession.locator(".training-instructions__cards")
   await expect(reloadedSteps).toBeVisible()
-  await expect(reloadedSteps.locator("li > strong")).toHaveText(["총 시간", "준비", "본운동", "정리"])
-  await expect(reloadedSteps.locator("li > span")).toHaveText(selectedSteps)
+  await expect(reloadedSteps.getByRole("term")).toHaveText(["총 시간", "준비", "본운동", "정리"])
+  await expect(reloadedSteps.locator(".training-instructions__duration")).toHaveText("40분 20초")
+  for (let index = 1; index < selectedSteps.length; index++) {
+    await expect(reloadedSteps.getByRole("definition").nth(index)).toHaveText(selectedSteps[index]!.replace(EXECUTION_STOP_CUE, "").trim())
+  }
+  await expect(reloadedQualitySession.getByRole("complementary", { name: "운동 중 기억할 점" })).toContainText(EXECUTION_STOP_CUE)
   await expect.poll(() => page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(savedPlan)
 })
 
@@ -308,8 +319,7 @@ test("shows a truthful distance receipt and opens the real trend", async ({ page
   await expect(receipt).toContainText("8 km")
   await receipt.getByRole("button", { name: "거리 추이 보기" }).click()
   await expect(page.getByRole("heading", { name: "오라클", exact: true })).toBeVisible()
-  const detailMenu = page.locator(".trends-hub__detail-menu")
-  await detailMenu.locator(":scope > summary").click()
+  const detailMenu = page.getByRole("group", { name: "훈련 분석 자세히 보기" })
   await expect(detailMenu.getByRole("button", { name: "월별 변화", exact: true })).toHaveAttribute("aria-pressed", "true")
   await page.getByRole("region", { name: "최근 4개월 추이" }).locator("summary", { hasText: "월별 수치와 집계 범위 보기" }).click()
   await expect(page.getByRole("region", { name: "최근 4개월 추이" }).getByText(/중앙 거리 8 km/u)).toBeVisible()
