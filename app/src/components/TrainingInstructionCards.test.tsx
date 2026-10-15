@@ -24,7 +24,7 @@ it("preserves the split workout order and total while keeping the stop cue outsi
   const reminder = screen.getByRole("complementary", { name: "운동 중 기억할 점" })
   expect(reminder).toHaveTextContent(EXECUTION_STOP_CUE.replace(/\s+/gu, " "))
   expect(container.textContent?.split("중단하세요")).toHaveLength(2)
-  fireEvent.error(container.querySelector("img")!)
+  container.querySelectorAll("img").forEach(img => fireEvent.error(img))
   expect(container.querySelector("img")).toBeNull()
   expect(reminder).toHaveTextContent("중단하세요")
   expect(JSON.stringify(steps)).toBe(original)

@@ -5,7 +5,7 @@ import { receiptPresentation } from "./AppChrome"
 import { TaskFlowStep } from "./TaskFlowStep"
 import { registerBrowserBackLayer } from "../navigation/browserNavigation"
 import { localJournalScopeGeneration } from "../domain/account/local-journal-ownership"
-import { ContextualIllustration } from "./ContextualIllustration"
+import { CompanionMotion } from "./CompanionMotion"
 
 /** An acknowledged save (or safely retained pending write), never an exercise award. */
 export function JournalSaveResult({ result, onClose, onOpenSaved, onDecorateSaved, onOpenTrends, onRetryReward,
@@ -45,7 +45,7 @@ export function JournalSaveResult({ result, onClose, onOpenSaved, onDecorateSave
 
   return <div className="journal-save-result" data-storage-state={confirmed ? "confirmed" : "pending"}>
     <TaskFlowStep stepKey={`saved-${result.receipt.savedDate}`} title={result.storageMessage ?? presentation.title}
-      headingAccessory={confirmed && !needsReview ? <ContextualIllustration image="journal-saved" size="medium" /> : undefined}
+      headingAccessory={confirmed && !needsReview ? <CompanionMotion key={result.receipt.savedDate} motion="nod" autoPlay size={80} /> : undefined}
       actions={<>
         {onOpenSaved && <button type="button" className="journal-save-result__primary" onClick={onOpenSaved}>기록 보기</button>}
         <button type="button" className="journal-save-result__secondary" onClick={close}>{closeLabel}</button>

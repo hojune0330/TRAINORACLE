@@ -21,7 +21,7 @@ import { usePlanEvidenceHistory } from "../../hooks/usePlanEvidenceHistory"
 import { PlanEvidenceHistoryNotice } from "../../components/PlanEvidenceHistoryNotice"
 import { onLocalJournalScopeChange } from "../../domain/account/local-journal-ownership"
 import { WorkoutMemoTool } from "../../components/WorkoutMemoTool"
-import { ContextualIllustration } from "../../components/ContextualIllustration"
+import { CompanionMotion } from "../../components/CompanionMotion"
 import type { WorkoutMemoContext } from "../../domain/workout-memo"
 
 type Props = {
@@ -152,7 +152,7 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
             <section className="session-explanation__method-flow">
               <div className="session-explanation__guide">
                 <div><h3>수행 순서</h3><p className="session-explanation__metric">{sessionExecution(session)}</p></div>
-                <ContextualIllustration image="otter-explain" />
+                <CompanionMotion interactive />
               </div>
               {session.prescription.kind === "PACE_TARGET" && <DetailedPrescriptionView prescription={session.prescription} variant="sequence-lead" />}
               {catalogWorkout ? <CatalogWorkoutDetail workout={catalogWorkout} /> : sequence !== null ? <PrescriptionStructure sequence={sequence} /> : <ol className="session-explanation__sequence">

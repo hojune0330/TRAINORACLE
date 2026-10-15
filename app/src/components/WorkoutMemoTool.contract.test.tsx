@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { WorkoutMemoTool } from "./WorkoutMemoTool"
@@ -13,17 +14,33 @@ vi.mock("../domain/account/local-journal-ownership", async importOriginal => ({
 vi.mock("../domain/workout-memo-export", async importOriginal => ({ ...await importOriginal<typeof import("../domain/workout-memo-export")>(),
   renderWorkoutMemoPng: vi.fn(), downloadMemo: vi.fn() }))
 
-beforeEach(() => {
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
+  // The source fixture is an August record: keep that fixture current without freezing timers.
+  vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-08-17T03:00:00.000Z"))
   vi.mocked(renderWorkoutMemoPng).mockResolvedValue(new Blob(["synthetic-png"], { type: "image/png" }))
   Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: vi.fn().mockResolvedValue(undefined) } })
   Object.defineProperty(navigator, "canShare", { configurable: true, value: undefined })
   Object.defineProperty(navigator, "share", { configurable: true, value: undefined })
 })
-afterEach(() => { cleanup(); localStorage.clear(); vi.clearAllMocks() })
+afterEach(() => { cleanup(); localStorage.clear(); vi.clearAllMocks(); vi.useRealTimers() })
 const open = () => fireEvent.click(screen.getByRole("button", { name: "자세히" }))
 const openCustomization = () => fireEvent.click(screen.getByText("표현·꾸미기"))
 
 describe("workout memo read-only actions", () => {
+  it("exports the selected animal and invalidates a previous image after its pose changes", async () => {
+    render(<WorkoutMemoTool session={memoSessionFixture()} />); open(); openCustomization()
+    fireEvent.click(screen.getByRole("button", { name: "고양이" }))
+    fireEvent.click(screen.getByRole("button", { name: "몸 풀기" }))
+    expect(screen.getByAltText("선택한 동물 스티커")).toHaveAttribute("src", expect.stringContaining("cat-warm_up.webp"))
+    fireEvent.click(screen.getByRole("button", { name: "저장" }))
+    await waitFor(() => expect(downloadMemo).toHaveBeenCalledTimes(1))
+    expect(renderWorkoutMemoPng).toHaveBeenLastCalledWith(expect.anything(), "yellow", "method", { animal: "cat", pose: "warm_up" })
+    fireEvent.click(screen.getByRole("button", { name: "없음" }))
+    fireEvent.click(screen.getByRole("button", { name: "저장" }))
+    await waitFor(() => expect(downloadMemo).toHaveBeenCalledTimes(2))
+    expect(renderWorkoutMemoPng).toHaveBeenLastCalledWith(expect.anything(), "yellow", "method", null)
+  })
   it("does not create another modal or history entry and copies the current snapshot", async () => {
     const history = vi.spyOn(window.history, "pushState")
     render(<WorkoutMemoTool session={memoSessionFixture()} date="2026-09-20" state="PLAN" />)
@@ -41,7 +58,7 @@ describe("workout memo read-only actions", () => {
     const button = screen.getByRole("button", { name: "저장" })
     fireEvent.click(button); fireEvent.click(button)
     await waitFor(() => expect(downloadMemo).toHaveBeenCalledTimes(1))
-    expect(renderWorkoutMemoPng).toHaveBeenCalledWith(expect.anything(), "pink", "method")
+    expect(renderWorkoutMemoPng).toHaveBeenCalledWith(expect.anything(), "pink", "method", null)
     expect(screen.getByRole("button", { name: "분홍 종이" })).toHaveAttribute("aria-pressed", "true")
   })
   it("provides selectable text when clipboard is denied", async () => {
@@ -110,7 +127,7 @@ describe("workout memo read-only actions", () => {
     expect(preview).toHaveTextContent("가속 달리기 (전력질주 아님)")
     expect(preview).toHaveTextContent("새 통증이나 심해지는 통증이 생기면 중단")
     fireEvent.click(screen.getByRole("button", { name: "저장" }))
-    await waitFor(() => expect(renderWorkoutMemoPng).toHaveBeenCalledWith(expect.anything(), "yellow", "standard"))
+    await waitFor(() => expect(renderWorkoutMemoPng).toHaveBeenCalledWith(expect.anything(), "yellow", "standard", null))
     fireEvent.click(screen.getByRole("button", { name: "자세히" }))
     expect(preview).toHaveAttribute("data-layout", "full")
   })
