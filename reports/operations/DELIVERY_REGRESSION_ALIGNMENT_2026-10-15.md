@@ -16,6 +16,17 @@ all existing journal, account, training calculation and release boundaries.
 
 ## Regression maintenance
 
+Additional reproduced runtime fixes:
+
+- Duplicate live journal IDs no longer block startup merely while collecting
+  cleanup membership. Both originals remain byte-for-byte intact, and ambiguous
+  update/delete operations still fail. Live IDs remain excluded from cleanup.
+- Reader selection follows a focused, visible session without forcing scrolling;
+  scrolling that session out of view returns selection to visible content.
+- Landscape game status rows no longer overlap the jump arc. Exhaustion camera
+  bounds are smoothed as a target, rather than clamping after interpolation and
+  snapping the entire hazard lane. Simulation physics are unchanged.
+
 Latest main uses direct home navigation, category cards, instruction definition
 lists, a confirmed-empty calendar and a custom unsaved-journal dialog. Tests now
 exercise those actual controls instead of waiting for removed accordions, labels,
@@ -52,3 +63,21 @@ this exact dependency and final guard; parallel scheduling is not a waiver.
 Merge/publication requires the exact candidate's existing hosted gates. The
 preserving publisher must retain preview files and hashed assets. Public status
 and deployment bytes do not prove an authenticated member posting round trip.
+
+### Follow-up focused evidence
+
+- Retention/update safety/reader contracts: 22 passed. Camera contracts: 5 passed.
+- Remaining focused built UI batch: 24 passed and 2 existing project-conditional
+  skips; no new skips were introduced. Covers four personas, real-zero scores,
+  explicit plan start, calendar journals, enlarged text, rest days and Back.
+- Synthetic account plan selection/progress/archive/journal pointer: passed.
+- Explicit numeric pace confirmation: passed in an isolated preview run. A prior
+  overlapping run lost its shared preview server and is not counted as success.
+- Browser hazard continuity after exhaustion: passed with the unchanged 0.09
+  bound. Landscape jump screenshot inspected; status stays above the runner.
+- Existing catalog-table assertions were removed from the method-picker journey
+  only because that component has no live caller; its component contracts remain.
+  Live method selection, exact quantities and save/reconfirmation are retained.
+- Latest typecheck and build passed before the final isolated camera correction;
+  the exact candidate still needs hosted CI. None of these receipts implies a
+  full suite pass, merge, publication or authenticated real-member proof.

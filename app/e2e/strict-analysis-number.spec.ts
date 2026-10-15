@@ -37,10 +37,9 @@ test("excludes a tampered distance with trailing text from the trends total", as
 
   // Then
   const distance = page.getByRole("region", { name: "누적 거리와 변화" })
-  const detailMenu = page.locator(".trends-hub__detail-menu")
-  await detailMenu.locator(":scope > summary").click()
+  const detailMenu = page.getByRole("group", { name: "훈련 분석 자세히 보기" })
   await detailMenu.getByRole("button", { name: "훈련량", exact: true }).click()
-  await expect(distance.getByText("운동 거리를 남기면 주·월별 합계와 변화를 볼 수 있어요.", { exact: true })).toBeVisible()
+  await expect(distance.getByText("최근 합계는 없어요. 아래 기간을 넓혀 지난 기록을 확인할 수 있어요.", { exact: true })).toBeVisible()
   await expect(distance.getByText(/집계 기준에 맞지 않아 제외한 기록 1건/u).first()).toBeVisible()
   await expect(page.getByText(/12\s*km/u)).toHaveCount(0)
 })

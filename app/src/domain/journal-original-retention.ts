@@ -214,7 +214,10 @@ export function retryPermanentJournalOriginalCleanup(storage: Storage): boolean 
     const activeIds = new Set<string>()
     const trashIds = new Set<string>()
     for (const entry of active) {
-      if (!record(entry) || typeof entry.id !== "string" || activeIds.has(entry.id)) return false
+      // Repeated live IDs must remain readable. This pass only needs membership
+      // to exclude ALL live copies from deletion; update/delete ambiguity is
+      // still rejected by journal-store. Never rewrite or deduplicate here.
+      if (!record(entry) || typeof entry.id !== "string" || entry.id === "") return false
       activeIds.add(entry.id)
     }
     let unresolvedExpiry = false

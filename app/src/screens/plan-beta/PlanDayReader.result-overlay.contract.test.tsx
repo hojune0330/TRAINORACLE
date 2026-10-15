@@ -14,7 +14,7 @@ afterEach(async () => { cleanup(); await Promise.resolve(); vi.restoreAllMocks()
 it("keeps a short final PM session selected at the scroll boundary and follows manual return to AM", () => {
   render(<PlanDayReader date="2026-07-28" sessions={[{ slot: "AM" }, { slot: "PM" }]} initialSlot="PM"
     canPrevious={false} canNext={false} onPrevious={vi.fn()} onNext={vi.fn()} onClose={vi.fn()}>
-    <section data-session-slot="AM">오전 훈련</section><section data-session-slot="PM">오후 훈련</section>
+    <section data-session-slot="AM">오전 훈련</section><section data-session-slot="PM"><button>오후 기록 펼치기</button></section>
   </PlanDayReader>)
   const body = document.querySelector<HTMLElement>(".plan-day-reader__body")!
   const morning = body.querySelector<HTMLElement>('[data-session-slot="AM"]')!
@@ -32,6 +32,13 @@ it("keeps a short final PM session selected at the scroll boundary and follows m
   expect(screen.getByRole("button", { name: "오후" })).toHaveAttribute("aria-current", "location")
   afternoonBounds.mockReturnValue({ top: 600 } as DOMRect)
   body.scrollTop = 0
+  fireEvent.scroll(body)
+  expect(screen.getByRole("button", { name: "오전" })).toHaveAttribute("aria-current", "location")
+  afternoonBounds.mockReturnValue({ top: 400, bottom: 800 } as DOMRect)
+  act(() => { screen.getByRole("button", { name: "오후 기록 펼치기" }).focus() })
+  expect(screen.getByRole("button", { name: "오후" })).toHaveAttribute("aria-current", "location")
+  // Manual scrolling past the focused section must release its selection.
+  afternoonBounds.mockReturnValue({ top: 650, bottom: 1000 } as DOMRect)
   fireEvent.scroll(body)
   expect(screen.getByRole("button", { name: "오전" })).toHaveAttribute("aria-current", "location")
 })

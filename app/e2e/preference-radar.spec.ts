@@ -20,6 +20,7 @@ async function answerThree(page: Page, axis: string, response: string) {
   const dialog = page.getByRole("dialog", { name: axis, exact: true })
   // Choose each answer deliberately across the guarded question transition.
   for (let count = 0; count < 3; count++) {
+    await expect(dialog.getByRole("progressbar", { name: "현재 질문 순서" })).toHaveAttribute("value", String(count + 1))
     const answer = dialog.getByRole("button", { name: response, exact: true })
     await answer.focus()
     await answer.press("Enter")
@@ -87,7 +88,7 @@ test("six real scores render a full radar and a single answer edit preserves the
   await page.screenshot({ path: info.outputPath("radar-complete-1440.png"), fullPage: true, animations: "disabled" })
 
   await radar.getByRole("button", { name: "계획, 100점, 결과 보기", exact: true }).click()
-  await page.getByRole("dialog", { name: "마리의 응답 해설", exact: true }).getByRole("button", { name: "내 답 수정", exact: true }).click()
+  await page.getByRole("dialog", { name: "응답 해설", exact: true }).getByRole("button", { name: "내 답 수정", exact: true }).click()
   dialog = page.getByRole("dialog", { name: "계획 선호", exact: true })
   await expect(dialog.getByRole("heading", { name: "내 답을 정리했어요" })).toBeVisible()
   await dialog.getByText("내 답 확인·수정", { exact: true }).click()
@@ -117,9 +118,10 @@ test("a real zero stays distinct from missing answers at 320px with large text a
   let dialog = await answerThree(page, "계획 선호", "전혀 그렇지 않아요")
   await dialog.getByRole("button", { name: "기록 도전도 알아보기", exact: true }).click()
   dialog = page.getByRole("dialog", { name: "기록 도전 선호", exact: true })
-  await dialog.getByText("답하기 어려워요", { exact: true }).click()
+  await expect(dialog.getByRole("group", { name: "숫자로 답하기 어려운 경우" })).toBeVisible()
   await dialog.getByRole("button", { name: "아직 모르겠어요", exact: true }).click()
   for (let count = 0; count < 2; count++) {
+    await expect(dialog.getByRole("progressbar", { name: "현재 질문 순서" })).toHaveAttribute("value", String(count + 2))
     const skip = dialog.getByRole("button", { name: "건너뛰기", exact: true })
     await skip.focus()
     await skip.press("Enter")

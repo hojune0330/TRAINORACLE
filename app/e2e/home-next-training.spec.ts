@@ -1,7 +1,6 @@
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
 import { completeDetailedPlan } from "./plan-flow"
-import { expectActivePlanHeading } from "./active-plan-flow"
 
 test.use({ serviceWorkers: "block" })
 
@@ -19,8 +18,17 @@ test("shows a saved upcoming training on home and opens its existing plan", asyn
 
   const nextTraining = page.getByRole("region", { name: "다음 훈련" })
   await expect(nextTraining).toContainText("1월 10일")
-  await expect(nextTraining).toContainText("RPE")
+  await expect(nextTraining).toContainText("훈련 내용 보기")
   await expect(nextTraining).not.toContainText("목표 페이스")
-  await nextTraining.getByRole("button", { name: /^다음 훈련/u }).click()
-  await expectActivePlanHeading(page)
+  const before = await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))
+  const entry = nextTraining.getByRole("button", { name: /^다음 훈련/u })
+  await entry.click()
+  const reader = page.getByRole("dialog", { name: /^2099년 1월 10일/u })
+  await expect(reader).toBeVisible()
+  await expect(reader.locator(".training-instructions__cards")).toContainText("힘든 정도")
+  await expect(reader).not.toContainText("목표 페이스")
+  await reader.getByRole("button", { name: "달력으로 돌아가기", exact: true }).click()
+  await expect(page.getByRole("heading", { name: "9일 훈련 계획", exact: true })).toBeVisible()
+  await expect(page.getByRole("grid", { name: "2099년 1월 달력" })).toBeVisible()
+  expect(await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(before)
 })

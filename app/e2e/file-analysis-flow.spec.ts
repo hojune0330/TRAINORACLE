@@ -286,8 +286,7 @@ async function saveImport(page: Page) {
 async function openFileAnalysis(page: Page) {
   const panel = page.getByTestId("file-analysis-panel")
   if (await panel.isVisible()) return panel
-  const menu = page.locator(".trends-hub__detail-menu")
-  if (await menu.getAttribute("open") === null) await menu.locator(":scope > summary").click()
+  const menu = page.getByRole("group", { name: "훈련 분석 자세히 보기" })
   await menu.getByRole("button", { name: "파일 분석", exact: true }).click()
   await expect(panel).toBeVisible()
   return panel

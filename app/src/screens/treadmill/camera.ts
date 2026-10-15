@@ -19,11 +19,10 @@ export function createRunnerCamera() {
     if (reset) { offset = target; lift = 0; travel = 0; speed = 0; restX = state.x; restOffset = offset }
     if (!propelling && wasPropelling) { restX = state.x; restOffset = offset }
     // Follow only a quarter of backward drift: releasing must visibly lose ground.
-    if (!propelling) target = Math.max(0, restOffset - Math.max(0, restX - state.x) * .25)
+    if (!propelling) target = Math.min(Math.max(0, restOffset - Math.max(0, restX - state.x) * .25), Math.max(0, state.x - .15))
     if (reduced) { offset = 0; lift = 0; travel = 0; speed = 0 }
     else if (active) {
       offset += (target - offset) * (1 - Math.exp(-dt * 5))
-      if (!propelling) offset = Math.min(offset, Math.max(0, state.x - .15))
       lift += (state.y * (height < 320 ? 0.5 : 0.22) - lift) * (1 - Math.exp(-dt * 8))
       speed += (desiredSpeed - speed) * (1 - Math.exp(-dt * 8))
       travel += dt * speed

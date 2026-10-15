@@ -16,9 +16,11 @@ async function openGame(page: Page, course: "practice" | "seoul" = "practice", b
   await expect(page.getByRole("heading", { name: "러닝 투어", exact: true })).toBeVisible()
   if (course === "practice") await page.getByRole("button", { name: "러닝머신 연습" }).click()
   else await page.getByRole("button", { name: /^서울/ }).click()
-  await page.clock.install()
+  const clockStart = Date.now()
+  await page.clock.install({ time: clockStart })
   // Keep simulated time fixed between input calls, including slow mobile screenshots.
-  await page.clock.pauseAt(await page.evaluate(() => Date.now()) + 100)
+  // Pause before play. A 100ms cross-process deadline races on a loaded runner.
+  await page.clock.pauseAt(clockStart + 60_000)
 }
 const energy = async (page: Page) => Number((await page.getByLabel("게임 에너지", { exact: true }).textContent())!.replace(/\D/g, ""))
 const noSideScroll = (page: Page) => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)
@@ -69,7 +71,7 @@ test("hazards enter at the screen edge and stay continuous when a scheduled obst
     for (const hazard of visible) {
       if (!seenIds.has(hazard.id)) { expect(hazard.x, "first sight must be at the right edge, not mid-lane").toBeGreaterThan(0.94); seenIds.add(hazard.id) }
       const before = previous.find(item => item.id === hazard.id)
-      if (before) expect(Math.abs(hazard.x - before.x)).toBeLessThan(0.09)
+      if (before) expect(Math.abs(hazard.x - before.x), JSON.stringify({ tick, before, hazard })).toBeLessThan(0.09)
       if (before?.scheduled && !hazard.scheduled) activated = true
       if (hazard.scheduled && hazard.x < 0.95 && !sawPreview) {
         sawPreview = true

@@ -4,6 +4,13 @@ import { createRunnerCamera } from "./camera"
 const run = { ...newTreadmillRun(), mode: "running" as const, running: true, countdown: 0 }
 
 describe("runner camera", () => {
+  it("smooths exhaustion recoil instead of snapping the shared projection", () => {
+    const camera = createRunnerCamera()
+    const before = camera({ ...run, x: .7 }, 390, 700, false)
+    const after = camera({ ...run, x: .35, exhausted: true, seconds: 1 / 60 }, 390, 700, false)
+    expect(Math.abs(after.toPx(.8) - before.toPx(.8))).toBeLessThan(390 * .09)
+    expect(after.offset).toBeLessThan(before.offset)
+  })
   it("retains visible runner movement during tracking and projects hazards at the same scale", () => {
     const camera = createRunnerCamera()
     const first = camera(run, 360, 600, false)

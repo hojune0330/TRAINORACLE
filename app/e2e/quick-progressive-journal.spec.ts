@@ -57,7 +57,7 @@ test("removes spatial quick-journal motion when reduced motion is requested", as
   await expect(page.getByRole("heading", { name: "이 내용으로 남길까요?" })).toBeVisible()
   await page.getByRole("button", { name: "이대로 저장", exact: true }).click()
 
-  const stamp = page.locator(".quick-log__stamp")
+  const stamp = page.getByRole("region", { name: "오늘 기록을 남겼어요.", exact: true })
   await expect(stamp).toBeVisible()
   await expect(stamp).toHaveCSS("animation-name", "none")
 })
@@ -136,7 +136,7 @@ test("keeps optional exercise controls usable with doubled text and reduced moti
   await page.emulateMedia({ reducedMotion: "reduce" })
   await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).click()
   await page.getByRole("button", { name: "운동을 마쳤어요" }).click()
-  await page.getByRole("button", { name: "시간 미지정", exact: true }).click()
+  await page.getByRole("button", { name: "시간 미지정", exact: true }).press("Enter")
   await page.getByRole("button", { name: "모르겠어요 · 비워 둘게요", exact: true }).click()
   await page.getByRole("button", { name: "없어요", exact: true }).click()
   await page.getByRole("button", { name: "운동 추가·수정" }).click()

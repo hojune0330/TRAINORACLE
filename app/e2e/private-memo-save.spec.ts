@@ -35,6 +35,7 @@ test("prepares encryption without leaving the race form and saves without plaint
   await page.getByRole("region", { name: "나만의 메모 저장 준비" }).scrollIntoViewIfNeeded()
   await page.screenshot({ path: testInfo.outputPath("inline-encryption-setup.png") })
   // Synthetic non-production code; never collect the owner's memo or key.
+  await page.getByRole("button", { name: "코드가 있어요", exact: true }).click()
   await page.getByLabel("기존 복구 코드", { exact: true }).fill("A1B2-C3D4-E5F6-A7B8-C9D0-E1F2-A3B4-C5D6")
   await page.getByRole("button", { name: "이 코드로 저장 준비", exact: true }).click()
   await expect(page.getByText(/암호화 준비가 됐어요/)).toBeVisible()
