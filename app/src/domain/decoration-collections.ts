@@ -1,4 +1,4 @@
-import { TRAINING_COMPANIONS_V1 } from "./training-companion-collection"
+import { TRAINING_COMPANIONS_V1 } from "./training-companion-collection.ts"
 
 /*
  * 꾸미기 컬렉션 레지스트리.

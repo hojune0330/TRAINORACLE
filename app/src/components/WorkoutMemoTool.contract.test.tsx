@@ -32,7 +32,7 @@ describe("workout memo read-only actions", () => {
     render(<WorkoutMemoTool session={memoSessionFixture()} />); open(); openCustomization()
     fireEvent.click(screen.getByRole("button", { name: "고양이" }))
     fireEvent.click(screen.getByRole("button", { name: "몸 풀기" }))
-    expect(screen.getByAltText("선택한 동물 스티커")).toHaveAttribute("src", expect.stringContaining("cat-warm_up.webp"))
+    expect(screen.getByAltText("선택한 동물 스티커")).toHaveAttribute("src", expect.stringContaining("cat-warm-up.webp"))
     fireEvent.click(screen.getByRole("button", { name: "저장" }))
     await waitFor(() => expect(downloadMemo).toHaveBeenCalledTimes(1))
     expect(renderWorkoutMemoPng).toHaveBeenLastCalledWith(expect.anything(), "yellow", "method", { animal: "cat", pose: "warm_up" })

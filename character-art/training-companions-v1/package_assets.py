@@ -23,7 +23,7 @@ manifest=[]
 for animal,name in animals.items():
     for pose,verb in poses.items():
         im=Image.open(frames/f'{animal}-{pose}.png').convert('RGBA')
-        target=stickers/f'{animal}-{pose}.webp'
+        target=stickers/f'{animal}-{pose.replace("_", "-")}.webp'
         fit(im,bounds([im]),320).save(target,quality=88,method=6)
         manifest.append({'id':f'COMPANION_{animal.upper()}_{pose.upper()}','name':f'{verb} {name}',
           'description':f'내가 고른 {name}을 일지에 붙여요.','fileName':target.name,'group':animal.upper(),

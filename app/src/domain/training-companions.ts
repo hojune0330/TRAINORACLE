@@ -11,7 +11,7 @@ export type CompanionStamp = { readonly animal: CompanionAnimal; readonly pose: 
 export type CompanionMotion = CompanionPose | "nod"
 export const COMPANION_MOTION_SECONDS: Record<CompanionMotion, number> = { run: 1.25, walk: 2.333333, warm_up: 2.8, nod: 1.2 }
 export function companionStampUrl(stamp: CompanionStamp): string {
-  return `${import.meta.env.BASE_URL}collections/training-companions-v1/${stamp.animal}-${stamp.pose}.webp`
+  return `${import.meta.env.BASE_URL}collections/training-companions-v1/${stamp.animal}-${stamp.pose.replace("_", "-")}.webp`
 }
 export function companionMotionPoster(motion: CompanionMotion): string {
   return motion === "nod" ? `${import.meta.env.BASE_URL}companions/v1/otter-nod.webp` : companionStampUrl({ animal: "otter", pose: motion })

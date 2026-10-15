@@ -50,7 +50,7 @@
     },
     {
       "catalogId": "COMPANION_OTTER_WARM_UP",
-      "file": "otter-warm_up.webp",
+      "file": "otter-warm-up.webp",
       "licenseId": "TRAINORACLE_COMPANIONS_TRIPO",
       "acquisition": {
         "kind": "POINTS",
@@ -86,7 +86,7 @@
     },
     {
       "catalogId": "COMPANION_CAT_WARM_UP",
-      "file": "cat-warm_up.webp",
+      "file": "cat-warm-up.webp",
       "licenseId": "TRAINORACLE_COMPANIONS_TRIPO",
       "acquisition": {
         "kind": "POINTS",
@@ -122,7 +122,7 @@
     },
     {
       "catalogId": "COMPANION_BEAR_WARM_UP",
-      "file": "bear-warm_up.webp",
+      "file": "bear-warm-up.webp",
       "licenseId": "TRAINORACLE_COMPANIONS_TRIPO",
       "acquisition": {
         "kind": "POINTS",

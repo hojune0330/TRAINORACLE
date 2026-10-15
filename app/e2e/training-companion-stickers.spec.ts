@@ -24,7 +24,7 @@ test("claims companion stickers, places one and restores it after reloading", as
   await expect(page.getByText("운동하는 동물 9종을 무료로 받았어요.")).toBeVisible()
   await expect(page.locator('.journal-decoration-editor__notice img[src$="otter-nod.webp"]')).toBeVisible()
   await page.getByRole("button", { name: "몸 푸는 고양이 붙이기", exact: true }).click()
-  const sticker = page.locator('.decorated-journal-page img[src$="cat-warm_up.webp"]')
+  const sticker = page.locator('.decorated-journal-page img[src$="cat-warm-up.webp"]')
   await expect(sticker).toBeVisible()
   await expect.poll(() => sticker.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth === 320)).toBe(true)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
