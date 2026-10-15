@@ -60,7 +60,6 @@ test(`uses the diary flow with ${hasEarnedHistory ? "previously earned" : "no ba
 
   // Historical entries stay visible; only a stored award history supplies past points.
   const balance = `베타 포인트 · 사용 가능 ${hasEarnedHistory ? 32 : 0}P`
-  await page.getByRole("button", { name: "일지 예시·훈련법·꾸미기" }).click()
   await page.getByRole("button", { name: "일지 꾸미기" }).click()
   const editor = page.getByRole("dialog", { name: "일지 꾸미기", exact: true })
   await expect(editor).toBeVisible()

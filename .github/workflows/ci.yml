@@ -267,6 +267,15 @@ jobs:
         working-directory: app
         run: node e2e/run-project-suite.mjs '${{ matrix.project }}'
 
+      - name: Retain synthetic browser failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-failure-${{ matrix.project }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: app/test-results/full-browser
+          if-no-files-found: ignore
+          retention-days: 3
+
   app-browser-dedicated:
     if: needs.delivery-scope.outputs.full == 'true'
     needs: [delivery-scope, app-quality]
@@ -307,6 +316,15 @@ jobs:
           npm run test:e2e:account-plan-service
           npm run test:e2e:form-input-autosave
           npm run test:e2e:file-analysis
+
+      - name: Retain synthetic dedicated failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dedicated-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: app/test-results
+          if-no-files-found: ignore
+          retention-days: 3
 
   app-browser:
     needs:

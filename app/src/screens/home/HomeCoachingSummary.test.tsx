@@ -53,7 +53,7 @@ it("does not interrupt general reading on unrelated journal revisions", () => {
   expect(screen.getByRole("dialog")).toBeVisible()
 })
 
-it("prioritizes recording and shows one prepared preview without a second entry wrapper", () => {
+it("shows the welcome plan and analysis before recording without a second entry wrapper", () => {
   const model: TrainingHomeViewModel = { homeMode: "WELCOME", todayMessage: "", todayRecordCount: 0, journalSummary: "", flowSummary: "", planSummary: "저장된 계획 없음", analysisSummary: "", showMinjiPrompt: true, nextTraining: null, briefing: "" }
   render(<TrainingHome model={model} onOpenOracle={vi.fn()} oraclePreview={<h2>오라클 미리보기</h2>} />)
   const write = screen.getByRole("button", { name: "오늘 운동 기록 쓰기" })
@@ -61,7 +61,9 @@ it("prioritizes recording and shows one prepared preview without a second entry 
   expect(write).toBeVisible()
   expect(preview.closest("details")).toBeNull()
   expect(preview).toBeVisible()
-  expect(write.compareDocumentPosition(preview) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  const plan = screen.getByRole("button", { name: "훈련 계획 받기" })
+  expect(plan.compareDocumentPosition(preview) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(preview.compareDocumentPosition(write) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   expect(screen.queryByRole("heading", { name: "훈련 코칭" })).toBeNull()
   expect(screen.queryByRole("heading", { name: "더 살펴보기" })).toBeNull()
   expect(screen.queryByText("내 훈련, 무엇부터 개선할까요?")).toBeNull()
