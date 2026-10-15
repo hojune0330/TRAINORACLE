@@ -1,0 +1,19 @@
+{
+  "name": "TRAINORACLE — 훈련계획과 일지",
+  "short_name": "TRAINORACLE",
+  "description": "안전 확인 후 베타 훈련계획 후보를 만들고, 일지와 진행 흐름을 기록합니다.",
+  "lang": "ko",
+  "dir": "ltr",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#E4E2DA",
+  "theme_color": "#E4E2DA",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
