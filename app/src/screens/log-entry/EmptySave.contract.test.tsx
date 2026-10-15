@@ -14,8 +14,18 @@ for (const [name, Form] of [["post", PostSessionForm], ["evening", EveningChecki
     render(<Form onDone={done} />)
     if (name === "evening") fireEvent.click(screen.getByRole("button", { name: "수면" }))
     fireEvent.click(screen.getByRole("button", { name: name === "evening" ? "입력 확인으로" : "지금 입력 확인" }))
-    fireEvent.click(screen.getByRole("button", { name: /^저장/u }))
-    expect(screen.getByRole("alert")).toHaveTextContent("아직 입력한 내용이 없어요")
+    if (name === "evening") {
+      // A fresh blank evening review offers inputs, not a save action.
+      expect(screen.getByRole("heading", { level: 2, name: "입력 확인" })).toBeVisible()
+      expect(screen.getByText("남길 항목을 골라 주세요.")).toBeVisible()
+      for (const label of ["수면 입력", "몸 상태 입력", "기분 입력", "체중 · 안정시 심박 입력", "메모 입력"]) {
+        expect(screen.getByRole("button", { name: label })).toBeVisible()
+      }
+      expect(screen.queryByRole("button", { name: /저장/u })).toBeNull()
+    } else {
+      fireEvent.click(screen.getByRole("button", { name: /^저장/u }))
+      expect(screen.getByRole("alert")).toHaveTextContent("아직 입력한 내용이 없어요")
+    }
     expect(loadEntries()).toHaveLength(0)
     expect(done).not.toHaveBeenCalled()
   })

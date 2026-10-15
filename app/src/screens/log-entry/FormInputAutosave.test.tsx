@@ -373,18 +373,43 @@ describe("existing form input autosave", () => {
   })
 
   it("retains input after finalized PENDING, and retires only after finalized ACCOUNT acknowledgement", async () => {
+    let acknowledge!: () => void
     mocks.persist.mockResolvedValueOnce({ ok: true, storage: "PENDING" })
+      .mockImplementationOnce(() => new Promise(resolve => {
+        acknowledge = () => resolve({ ok: true, storage: "ACCOUNT" })
+      }))
     const done = vi.fn()
     render(<EveningCheckin targetDate="2026-09-08" onDone={done} />)
-    fireEvent.change(await openInput("evening", "체중 (kg)"), { target: { value: "62." } }); await settle()
+    // Partial "62." is valid draft input, but not a final measurement.
+    fireEvent.change(await openInput("evening", "체중 (kg)"), { target: { value: "62" } }); await settle()
+    const draftBefore = decodeFormDraft([...records.values()][0]!.draft)
     fireEvent.click(reviewedSave()); await settle()
+    expect(mocks.persist).toHaveBeenCalledTimes(1)
+    const pending = copy(mocks.persist.mock.calls[0]![0])
+    expect(mocks.persist.mock.calls[0]).toEqual([{
+      id: draftBefore.entryId, kind: "evening", date: "2026-09-08",
+      savedAt: expect.any(String), syncState: "local", sleepH: 0, sleepQuality: 0,
+      weightKg: "62", restingHr: "", painParts: {}, mood: 0, note: "",
+      fieldProvenance: { sleepH: { provenance: "MISSING" }, sleepQuality: { provenance: "MISSING" },
+        weightKg: { provenance: "EXPLICIT" }, restingHr: { provenance: "MISSING" },
+        painParts: { provenance: "MISSING" }, mood: { provenance: "MISSING" } },
+    }, undefined])
     expect(done).not.toHaveBeenCalled()
-    expect(decodeFormDraft([...records.values()][0]!.draft).completed).toBe(false)
+    expect(screen.getByRole("alert")).toHaveTextContent("계정 전송 대기 · 기기 보관됨 · 기록 미완료")
+    expect(decodeFormDraft([...records.values()][0]!.draft)).toEqual(draftBefore)
+    expect(draftBefore.completed).toBe(false)
     fireEvent.click(reviewedSave()); await settle()
+    expect(mocks.persist).toHaveBeenCalledTimes(2)
+    // Retry transmits the original request exactly, including its stable ID/timestamp.
+    expect(mocks.persist.mock.calls[1]).toEqual([pending, undefined])
+    expect(done).not.toHaveBeenCalled()
+    expect(decodeFormDraft([...records.values()][0]!.draft)).toEqual(draftBefore)
+    acknowledge(); await settle()
     // The account ACK retires the draft before the native Back sentinel has
     // finished leaving. Completion is delivered only after that real POP.
     await waitFor(() => expect(done).toHaveBeenCalledOnce())
-    expect(decodeFormDraft([...records.values()][0]!.draft).completed).toBe(true)
+    expect(done).toHaveBeenCalledWith("evening", { ...pending, syncState: "synced" }, undefined, "일지를 계정에 저장했어요.")
+    expect(decodeFormDraft([...records.values()][0]!.draft)).toEqual({ ...draftBefore, completed: true })
   })
 
   it("recovers from a server DRAFT on a device with no local cache", async () => {
@@ -443,16 +468,36 @@ describe("existing form input autosave", () => {
 
   it("recovers the accepted edit baseline and stable entry ID after a post-ACK correction", async () => {
     render(<EveningCheckin targetDate="2026-09-08" />)
-    fireEvent.change(await openInput("evening", "체중 (kg)"), { target: { value: "62." } }); await settle()
+    fireEvent.change(await openInput("evening", "체중 (kg)"), { target: { value: "62" } }); await settle()
+    const draftBefore = decodeFormDraft([...records.values()][0]!.draft)
     fireEvent.click(reviewedSave()); await settle()
-    const accepted = mocks.persist.mock.calls[0]![0]
-    fireEvent.change(await openInput("evening", "체중 (kg)"), { target: { value: "63." } }); await settle()
-    expect(decodeFormDraft([...records.values()][0]!.draft)).toMatchObject({ completed: false,
+    expect(mocks.persist).toHaveBeenCalledTimes(1)
+    const accepted = copy(mocks.persist.mock.calls[0]![0])
+    expect(mocks.persist.mock.calls[0]).toEqual([{
+      id: draftBefore.entryId, kind: "evening", date: "2026-09-08",
+      savedAt: expect.any(String), syncState: "local", sleepH: 0, sleepQuality: 0,
+      weightKg: "62", restingHr: "", painParts: {}, mood: 0, note: "",
+      fieldProvenance: { sleepH: { provenance: "MISSING" }, sleepQuality: { provenance: "MISSING" },
+        weightKg: { provenance: "EXPLICIT" }, restingHr: { provenance: "MISSING" },
+        painParts: { provenance: "MISSING" }, mood: { provenance: "MISSING" } },
+    }, undefined])
+    expect(decodeFormDraft([...records.values()][0]!.draft).completed).toBe(true)
+    fireEvent.change(await openInput("evening", "체중 (kg)"), { target: { value: "63" } }); await settle()
+    const correction = decodeFormDraft([...records.values()][0]!.draft)
+    expect(correction).toMatchObject({ completed: false,
       entryId: accepted.id, baseSavedAt: accepted.savedAt })
+    expect(correction.input).toEqual({ ...draftBefore.input, weight: "63" })
     cleanup(); render(<EveningCheckin targetDate="2026-09-08" />)
-    expect(await openInput("evening", "체중 (kg)")).toHaveValue("63.")
+    expect(await openInput("evening", "체중 (kg)")).toHaveValue("63")
+    expect(decodeFormDraft([...records.values()][0]!.draft)).toEqual(correction)
     fireEvent.click(reviewedSave()); await settle()
+    expect(mocks.persist).toHaveBeenCalledTimes(2)
     expect(mocks.persist.mock.calls[1]![0].id).toBe(accepted.id)
     expect(mocks.persist.mock.calls[1]![1]).toBe(accepted.savedAt)
+    expect(mocks.persist.mock.calls[1]).toEqual([
+      { ...accepted, weightKg: "63", savedAt: expect.any(String) }, accepted.savedAt,
+    ])
+    expect(mocks.persist.mock.calls[1]![0].savedAt).not.toBe(accepted.savedAt)
+    expect(decodeFormDraft([...records.values()][0]!.draft).completed).toBe(true)
   })
 })

@@ -1,5 +1,6 @@
 import React from "react"
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import type { MemoPurpose } from "../../domain/journal-schema"
 
@@ -29,10 +30,16 @@ it.each([
   [undefined, "글을 적는다면 용도를 먼저 선택해 주세요. 원문은 이 기기에만 남아요."],
   ["PRIVATE_SELF_ONLY", "원문은 이 기기에만 남고 분석하지 않아요."],
   ["ANALYZABLE_TRAINING_NOTE", "저장 전에 이 기기에서만 잠시 검토해요. 원문은 기기에만 남고 훈련 계획의 근거로 쓰지 않아요."],
-] as const)("preserves the exact flag-off explanation for %s", (purpose, expected) => {
+] as const)("preserves the exact flag-off explanation for %s", async (purpose, expected) => {
+  const user = userEvent.setup()
   flag.enabled = false
   const { container } = render(<Fixture purpose={purpose} />)
-  expect(screen.getByText(expected)).toBeVisible()
+  const disclosure = screen.getByText("보관 방식 자세히", { selector: "summary" })
+  const details = disclosure.closest("details")!
+  expect(details).not.toHaveAttribute("open")
+  await user.click(disclosure)
+  expect(details).toHaveAttribute("open")
+  expect(within(details).getByText(expected)).toBeVisible()
   expect(container).not.toHaveTextContent("계정에 보관")
 })
 
@@ -46,13 +53,22 @@ it.each([true, false])("retains D9 review attention with storage-mode-appropriat
   if (enabled) expect(status).not.toHaveTextContent("저장은 이 기기에만 됩니다.")
 })
 
-it("updates copy on a storage-mode rerender without replacing typed text or its purpose", () => {
+it("updates copy on a storage-mode rerender without replacing typed text or its purpose", async () => {
+  const user = userEvent.setup()
   const view = render(<Fixture />)
   fireEvent.click(screen.getByRole("radio", { name: "나만의 메모" }))
   fireEvent.change(screen.getByRole("textbox"), { target: { value: "synthetic-private-fixture" } })
+  const disclosure = screen.getByText("보관 방식 자세히", { selector: "summary" })
+  const details = disclosure.closest("details")!
+  expect(details).not.toHaveAttribute("open")
+  await user.click(disclosure)
+  expect(details).toHaveAttribute("open")
+  expect(within(details).getByText("저장하면 원문을 암호화해 계정에 보관해요. 복구를 위해 서비스가 복호화할 수 있으며 종단간 암호화(E2EE)는 아니에요. 비밀 메모는 공유·분석에 사용하지 않아요.")).toBeVisible()
   flag.enabled = false
   view.rerender(<Fixture />)
-  expect(screen.getByText("원문은 이 기기에만 남고 분석하지 않아요.")).toBeVisible()
+  expect(details).toHaveAttribute("open")
+  expect(within(details).getByText("원문은 이 기기에만 남고 분석하지 않아요.")).toBeVisible()
+  expect(view.container).not.toHaveTextContent("계정에 보관")
   expect(screen.getByRole("textbox")).toHaveValue("synthetic-private-fixture")
   expect(screen.getByRole("radio", { name: "나만의 메모" })).toBeChecked()
 })

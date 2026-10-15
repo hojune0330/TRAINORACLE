@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ATHLETE_RECORDS_STORAGE_KEY } from "../domain/athlete-records"
@@ -111,9 +111,15 @@ describe("race entry purpose-scoped notes", () => {
     // When
     await openRaceMemo(user)
     await user.click(screen.getByRole("radio", { name: "나만의 메모" }))
+    const disclosure = screen.getByText("보관 방식 자세히", { selector: "summary" })
+    const details = disclosure.closest("details")!
+    expect(details).not.toHaveAttribute("open")
+    await user.click(disclosure)
 
     // Then
-    expect(screen.getByText(/분석하지 않아요/u)).toBeVisible()
+    expect(details).toHaveAttribute("open")
+    expect(within(details).getByText("원문은 이 기기에만 남고 분석하지 않아요.")).toBeVisible()
+    expect(screen.getByRole("radio", { name: "나만의 메모" })).toBeChecked()
   })
 
   it("stores a private race memo in the encrypted vault from the actual save surface", async () => {
