@@ -164,21 +164,13 @@ jobs:
         run: npm run "$UNIT_TEST_SCRIPT"
 
   app-quality:
-    needs: [delivery-scope, app-unit]
-    if: ${{ always() && needs.delivery-scope.outputs.full != 'false' }}
+    # Independent build/type checks need not wait for both long unit lanes.
+    # delivery-complete still requires every unit and browser result to pass.
+    needs: delivery-scope
+    if: needs.delivery-scope.outputs.full == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Require both unit timezones to pass
-        shell: bash
-        env:
-          APP_UNIT_RESULT: ${{ needs.app-unit.result }}
-        run: |
-          if [[ "$APP_UNIT_RESULT" != "success" ]]; then
-            echo "::error::Both unit timezones must pass; app-unit result is '$APP_UNIT_RESULT'."
-            exit 1
-          fi
-
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 

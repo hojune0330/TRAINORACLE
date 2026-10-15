@@ -31,6 +31,11 @@ remain unchanged.
 
 ## Evidence boundaries
 
+Independent quality/build and both timezone unit jobs now start together. The
+unchanged delivery-complete gate still rejects a failed, cancelled, skipped or
+unfinished unit lane before publication. A workflow regression test exercises
+this exact dependency and final guard; parallel scheduling is not a waiver.
+
 - Focused unit checks: 69 passed across five files (including reader, home and
   shell contracts). An earlier sandbox cache-rename failure ran no tests; the
   identical elevated rerun passed.

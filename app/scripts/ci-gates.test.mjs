@@ -55,7 +55,7 @@ function bashCommand() {
 
 test("actual aggregate shell guards reject every incomplete or unsuccessful result", () => {
   for (const [name, expectedNeeds] of [
-    ["app-quality", ["app-unit"]], ["app-browser", ["app-browser-generic", "app-browser-dedicated"]],
+    ["app-browser", ["app-browser-generic", "app-browser-dedicated"]],
   ]) {
     const job = jobs[name]
     assert.deepEqual(needs(job), expectedNeeds)
@@ -81,6 +81,20 @@ test("actual aggregate shell guards reject every incomplete or unsuccessful resu
       const missing = { ...successful }; delete missing[key]
       assert.equal(execute(missing).status, 1, `${name}:${key}:absent`)
     }
+  }
+})
+
+test("independent quality runs early but unit failures still block publication", async () => {
+  assert.deepEqual(needs(jobs['app-quality']), [])
+  assert.equal(jobs['app-quality'].needs, 'delivery-scope')
+  assert.equal(jobs['app-quality'].if, "needs.delivery-scope.outputs.full == 'true'")
+  assert(jobs['deploy-pages'].needs.includes('delivery-complete'))
+  const { assertDeliveryResults } = await import('../../.tools/ci-delivery-scope.cjs')
+  const results = Object.fromEntries(jobs['delivery-complete'].needs.map(name => [name, { result: 'success' }]))
+  results['delivery-scope'].outputs = { full: 'true' }
+  assert.equal(assertDeliveryResults(results), 'FULL_CHECKS_PASSED')
+  for (const result of ['failure', 'cancelled', 'skipped', '', 'in_progress']) {
+    assert.throws(() => assertDeliveryResults({ ...results, 'app-unit': { result } }))
   }
 })
 
