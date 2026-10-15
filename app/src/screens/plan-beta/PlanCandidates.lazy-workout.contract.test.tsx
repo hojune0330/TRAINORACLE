@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import React from "react"
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -13,8 +14,8 @@ import { setActiveLocalAccount } from "../../domain/account/local-journal-owners
 import { defaultInstantCandidate } from "./instant-plan-projection"
 import { projectInstantExecutionSteps } from "./instant-plan-today"
 
-beforeEach(() => {
-  localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null)
+beforeEach(async () => {
+  localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null)
   vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-09-05T00:00:00.000Z"))
 })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers(); setActiveLocalAccount(null) })

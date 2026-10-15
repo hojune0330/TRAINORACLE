@@ -31,12 +31,13 @@ function matchingSlotLabel(slot: "AM" | "PM"): "오전" | "오후" {
   return slot === "AM" ? "오전" : "오후"
 }
 
-function saveQuickPlanJournal(input: {
+async function saveQuickPlanJournal(input: {
   readonly outcome: "COMPLETED" | "PARTIAL"
   readonly pain: "NONE" | "SIGNAL"
 }) {
   const { draft } = plannedDraft()
-  const view = render(<QuickSessionForm targetDate={draft.date} plannedSessionLink={draft.link} />)
+  const onSaved = vi.fn()
+  const view = render(<QuickSessionForm targetDate={draft.date} plannedSessionLink={draft.link} onSaved={onSaved} />)
   fireEvent.click(screen.getByRole("button", {
     name: input.outcome === "COMPLETED" ? "계획대로 마쳤어요" : "일부만 했거나 내용을 바꿨어요",
   }))
@@ -46,12 +47,21 @@ function saveQuickPlanJournal(input: {
     fireEvent.click(screen.getByRole("button", { name: "없어요" }))
   } else {
     fireEvent.click(screen.getByRole("button", { name: "있어요" }))
-    fireEvent.click(screen.getByRole("button", { name: "오른 무릎" }))
-    fireEvent.click(screen.getByRole("button", { name: "오른 무릎 통증 1단계" }))
+    fireEvent.click(screen.getByRole("button", { name: "무릎" }))
+    const sidePicker = within(await screen.findByRole("dialog", { name: "무릎 · 어느 쪽인가요?" }))
+    fireEvent.click(sidePicker.getByRole("button", { name: "오른 무릎" }))
+    const painPicker = within(screen.getByRole("dialog", { name: "내 오른쪽 무릎" }))
+    fireEvent.click(painPicker.getByRole("button", { name: "오른 무릎 통증 1단계" }))
+    fireEvent.click(painPicker.getByRole("button", { name: "입력 완료" }))
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull()
+      expect(hasPendingBrowserBackLayer()).toBe(false)
+    })
     fireEvent.click(screen.getByRole("button", { name: "이 상태로 기록" }))
   }
-    fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
-    view.unmount()
+  fireEvent.click(screen.getByRole("button", { name: "이대로 저장" }))
+  await waitFor(() => expect(onSaved).toHaveBeenCalledOnce())
+  view.unmount()
   return plannedDraft()
 }
 
@@ -71,7 +81,7 @@ describe("active plan journal action", () => {
       />,
     )
 
-    await user.click(screen.getByRole("button", { name: "목록" }))
+    await user.click(screen.getByRole("button", { name: "하루씩" }))
     const list = screen.getByRole("region", { name: "날짜별 훈련 목록" })
     await user.click(within(list).getByRole("button", { name: "7월 24일 금요일 전체 처방 보기" }))
     const reader = within(await screen.findByRole("dialog", { name: "2026년 7월 24일 금요일" }))
@@ -96,8 +106,10 @@ describe("active plan journal action", () => {
       />,
     )
 
-    expect(screen.getByText("훈련 구성·시간").closest("details")).not.toHaveAttribute("open")
-    await userEvent.setup().click(screen.getByText("훈련 구성·시간"))
+    const composition = screen.getByRole("button", { name: "페이스·훈련 구성" })
+    expect(composition.closest("details")).not.toHaveAttribute("open")
+    await userEvent.setup().click(composition)
+    expect(composition.closest("details")).toHaveAttribute("open")
     expect(screen.getByText("24주 훈련 방향")).toBeVisible()
     expect(screen.getByText(/1\/18번째 계획/u)).toBeVisible()
     expect(screen.getByRole("progressbar", { name: "24주 훈련 방향 진행 위치" }))
@@ -106,7 +118,7 @@ describe("active plan journal action", () => {
   })
 
   it("offers one explicit completion action only after a matching completed no-pain journal", async () => {
-    const { state, draft } = saveQuickPlanJournal({ outcome: "COMPLETED", pain: "NONE" })
+    const { state, draft } = await saveQuickPlanJournal({ outcome: "COMPLETED", pain: "NONE" })
     const onProgress = vi.fn()
     const user = userEvent.setup()
     render(
@@ -139,7 +151,7 @@ describe("active plan journal action", () => {
     ["partial", { outcome: "PARTIAL", pain: "NONE" }],
     ["pain", { outcome: "COMPLETED", pain: "SIGNAL" }],
   ] as const)("does not offer completion for a saved linked %s journal", async (_case, input) => {
-    const { state, draft } = saveQuickPlanJournal(input)
+    const { state, draft } = await saveQuickPlanJournal(input)
     const onProgress = vi.fn()
     render(
       <ActivePlan

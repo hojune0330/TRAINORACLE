@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import React from "react"
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { beforeEach, afterEach, expect, it, vi } from "vitest"
@@ -12,7 +13,7 @@ import { loadAthleteRecords } from "../../domain/athlete-records"
 import * as successorStore from "../../domain/adjusted-plan-store"
 
 vi.setConfig({ testTimeout: 20000 })
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers() })
 
 it("V4 schedule opens the real next-flow resolver, rebinds detail and saves only after environment confirmation", async () => {

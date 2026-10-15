@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import React from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, render, screen, waitFor } from "@testing-library/react"
@@ -36,8 +37,8 @@ function seedHistory() {
   localStorage.setItem(HISTORY, JSON.stringify(planHistoryListSchema.parse(rows)))
   return rows
 }
-beforeEach(() => {
-  localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null)
+beforeEach(async () => {
+  localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null)
   vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date(NOW))
   vi.stubGlobal("fetch", vi.fn(() => { throw Error("Synthetic test forbids network") }))
 })

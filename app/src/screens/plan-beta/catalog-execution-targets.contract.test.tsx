@@ -2,15 +2,16 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { PlanSession } from "@impl/plan-generator/types"
 import { rangesFor, rpeForIntent } from "@impl/plan-generator/session-builder"
-import { ALL_WORKOUT_CATALOG, calculateCatalogWorkout } from "@impl/prescription/all-workout-calculator"
+import { ALL_WORKOUT_CATALOG, calculateCatalogWorkout, calculatedWorkoutSequence } from "@impl/prescription/all-workout-calculator"
 import type { WorkoutCalculationInputs } from "@impl/prescription/all-workout-calculator"
 import { bindCatalogSession, resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 import type { AthleteRecord } from "../../domain/athlete-records"
 import { createSegmentRecordReference } from "../../domain/catalog-pace-reference"
 import { projectInstantExecutionSteps } from "./instant-plan-today"
-import { prescriptionLabel, sessionExecutionSteps, sessionLabel } from "./labels"
+import { sessionExecutionSteps, sessionLabel } from "./labels"
 import { presentSessionWorkoutNotation } from "./workout-notation-presentation"
 import { PlanSchedulePreview } from "./PlanSchedulePreview"
+import { sequencePhaseNotation } from "../../domain/workout-notation"
 
 function required<T>(value: T | null | undefined): T {
   if (value === null || value === undefined) throw Error("Expected a verified synthetic catalog fixture")
@@ -157,14 +158,18 @@ describe("verified catalog targets in execution steps", () => {
     const calendar = screen.getByRole("grid", { name: "2026년 10월 달력" })
     fireEvent.click(required(calendar.querySelector('button[data-date="2026-10-02"]')))
     const firstReader = screen.getByRole("dialog", { name: "2026년 10월 2일 금요일" })
-    const firstExecution = within(firstReader).getByRole("list", { name: "훈련 실행 순서" })
+    const firstSession = within(firstReader).getByRole("group", { name: "10월 2일 금요일 오전 세션" })
+    const firstMain = within(firstSession).getAllByRole("term").find(term => term.textContent === "본운동")
+    const firstExecution = within(required(required(firstMain).parentElement)).getByRole("definition")
     expect(within(firstExecution).getByText(required(sessionExecutionSteps(distance, true).find(step => step.role === "MAIN")).detail)).toBeVisible()
     expect(firstExecution).toHaveTextContent("1km씩 5번")
     expect(firstExecution).toHaveTextContent("한 번에 약 5분 0.7초 · 10km 실제 기록 기준")
     expect(firstExecution).toHaveTextContent("사이 1분 조깅")
     fireEvent.click(within(firstReader).getByRole("button", { name: "크게 보기 다음 날짜" }))
     const nextReader = screen.getByRole("dialog", { name: "2026년 10월 3일 토요일" })
-    const nextExecution = within(nextReader).getByRole("list", { name: "훈련 실행 순서" })
+    const nextSession = within(nextReader).getByRole("group", { name: "10월 3일 토요일 오전 세션" })
+    const nextMain = within(nextSession).getAllByRole("term").find(term => term.textContent === "본운동")
+    const nextExecution = within(required(required(nextMain).parentElement)).getByRole("definition")
     expect(within(nextExecution).getByText(required(sessionExecutionSteps(timed, true).find(step => step.role === "MAIN")).detail)).toBeVisible()
     expect(nextExecution).toHaveTextContent("7분씩 3번")
     expect(nextExecution).toHaveTextContent("1km에 약 5분 1초 · 10km 목표 기록 기준")
@@ -176,9 +181,13 @@ describe("verified catalog targets in execution steps", () => {
     expect(originalNotation).not.toHaveAttribute("open")
     fireEvent.click(within(originalNotation).getByText("기존 훈련 표기"))
     expect(within(originalNotation).getByText(sessionLabel(timed))).toBeVisible()
-    expect(within(originalNotation).getByText(prescriptionLabel(timed))).toBeVisible()
     const originalSteps = within(originalNotation).getByRole("list", { name: "기존 훈련 표기 순서" })
-    expect(within(originalSteps).getAllByRole("listitem")).toHaveLength(3)
+    const originalItems = within(originalSteps).getAllByRole("listitem")
+    expect(originalItems).toHaveLength(3)
+    const originalSequence = required(calculatedWorkoutSequence(calculation(timed)))
+    for (const [index, phase] of (["warmup", "main", "cooldown"] as const).entries()) {
+      expect(within(required(originalItems[index])).getByText(sequencePhaseNotation(originalSequence, phase, [], "COACH"))).toBeVisible()
+    }
     expect(originalSteps).toHaveTextContent("RPE")
     expect(originalSteps).toHaveTextContent("RP")
     expect(originalSteps).toHaveTextContent("40s Walk")

@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -14,7 +15,8 @@ import { replacedReplanFixture } from "../../domain/execution-replan-lineage.tes
 
 const originalShowModal = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const originalScrollTo = Object.getOwnPropertyDescriptor(Element.prototype, "scrollTo")
-beforeEach(() => {
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value: function (this: HTMLDialogElement) { this.setAttribute("open", "") } })
   Object.defineProperty(Element.prototype, "scrollTo", { configurable: true, value: vi.fn(function (this: Element, options: ScrollToOptions) { this.scrollTop = options.top ?? this.scrollTop }) })
 })

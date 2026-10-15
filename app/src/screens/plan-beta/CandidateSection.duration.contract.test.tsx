@@ -1,11 +1,16 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import React from "react"
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
-import { afterEach, expect, it, vi } from "vitest"
+import { beforeEach, afterEach, expect, it, vi } from "vitest"
 import type { PlanCandidate, PlanSession } from "@impl/plan-generator/types"
 import { bindCatalogSession } from "@impl/prescription/catalog-session-binding"
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import { draftFor, RUNTIME_CASES } from "../../domain/prescription-quality-matrix.test-fixtures"
 import { CandidateSection } from "./CandidateSection"
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
+})
 
 afterEach(cleanup)
 

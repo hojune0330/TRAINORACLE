@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { beforeEach, afterEach, expect, it, vi } from "vitest"
 import React from "react"
 import { render, screen, fireEvent, act, cleanup, within } from "@testing-library/react"
@@ -20,7 +21,7 @@ import { saveAdjustedPlanProgressV3 } from "./adjusted-plan-progress"
 import { prepareAdjustedNextFrameV3 } from "./adjusted-plan-continuity"
 import { isoShift } from "./dates"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers() })
 async function openMethodDetails(container: HTMLElement) {
   const summary = within(container).getByText("자세히 보기 · 방법과 근거", { selector: "summary" })
@@ -144,6 +145,7 @@ it("preserves an existing plan and refuses missing locks or changed accounts", a
 it("rolls back only its own failed write and preserves another writer's replacement", async () => {
   for (const replace of [false, true]) {
     localStorage.clear(); setActiveLocalAccount(null)
+    await initializeCanonicalJournalFixture()
     const { input } = storeInput(), key = activePlanBetaStorageKey(), originalSet = Storage.prototype.setItem
     const spy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, k, value) {
       originalSet.call(this, k, replace && k === key ? "OTHER_WRITER" : value)

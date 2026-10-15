@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
@@ -27,8 +28,8 @@ function setup() {
     plan.generated, plan.gate, plan.intake, plan.athleteEvidence, () => true, base, plan.cycleDraft)
   return { base, plan, select }
 }
-beforeEach(() => {
-  localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null)
+beforeEach(async () => {
+  localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null)
   vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-10-01T03:00:00.000Z"))
 })
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); setActiveLocalAccount(null) })

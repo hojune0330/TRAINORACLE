@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { generatePlanFromDraft } from "./plan-beta-flow"
 import { RUNTIME_CASES, draftFor, saveCurrentRecord, TODAY } from "./prescription-quality-matrix.test-fixtures"
@@ -10,9 +11,10 @@ import { loadEntries, saveEntry } from "./journal-store"
 import { collectPlanMethodObservations } from "./plan-method-observations"
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
 
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear()
   sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
   setActiveLocalAccount(null)
   vi.useFakeTimers()
   vi.setSystemTime(TODAY)

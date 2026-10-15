@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { webcrypto } from "node:crypto"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import type { AthleteRecord } from "../athlete-records"
@@ -46,10 +47,10 @@ function packet(): AccountPlanPacket {
   if (!validateAccountPlanPacket(value)) throw Error("packet")
   return value
 }
-beforeEach(() => {
+beforeEach(async () => {
   vi.stubGlobal("crypto", webcrypto)
   vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-10-02T03:00:00Z"))
-  localStorage.clear(); setActiveLocalAccount(COLLECTION_OWNER)
+  localStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(COLLECTION_OWNER)
   source = { ownerId: COLLECTION_OWNER, status: "READY", confirmed: true, documentId: ID,
     serverRevision: 3, records: [structuredClone(record)] }
   vi.mocked(readAccountAthleteRecordsState).mockImplementation(() => source)

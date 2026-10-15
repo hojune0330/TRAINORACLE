@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
@@ -13,7 +14,7 @@ import { hasPendingBrowserBackLayer } from "../navigation/browserNavigation"
 let locksDescriptor: PropertyDescriptor | undefined
 
 async function openFirstProgress(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(await screen.findByRole("button", { name: "목록" }))
+  await user.click(await screen.findByRole("button", { name: "하루씩" }))
   const list = screen.getByRole("region", { name: "날짜별 훈련 목록" })
   await user.click(within(list).getByRole("button", { name: "7월 24일 금요일 전체 처방 보기" }))
   const reader = within(await screen.findByRole("dialog", { name: "2026년 7월 24일 금요일" }))
@@ -22,9 +23,10 @@ async function openFirstProgress(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe("active plan persistence retry", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     window.localStorage.clear()
     window.sessionStorage.clear()
+    await initializeCanonicalJournalFixture()
     locksDescriptor = Object.getOwnPropertyDescriptor(navigator, "locks")
     Object.defineProperty(navigator, "locks", {
       configurable: true,

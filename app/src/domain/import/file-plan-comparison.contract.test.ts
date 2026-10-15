@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { createActiveSnapshot } from "@impl/plan-generator/selection"
 import { accountPlanPacketFixture } from "../account/account-plan.test-fixtures"
@@ -14,8 +15,8 @@ import { compareFileToPlan, comparePreviousFilePerformance, comparisonObservatio
 
 const relationId = "10000000-0000-4000-8000-000000000001"
 const at = TODAY.toISOString()
-function fixture(version: 2 | 3 | 4 | 5 | 6 = 4, pace = false) {
-  localStorage.clear()
+async function fixture(version: 2 | 3 | 4 | 5 | 6 = 4, pace = false) {
+  localStorage.clear(); await initializeCanonicalJournalFixture();
   let packet = accountPlanPacketFixture(version)
   if (pace) {
     if (packet.state.version !== 4) throw Error("pace fixture needs v4 origin")
@@ -58,12 +59,12 @@ const request = (value: ComparisonRelationV1) => ({ action: "confirmComparisonRe
 function input(original: VerifiedComparisonOriginal, actual: ProjectedFileObservation, value = relation(original, actual)) {
   return { original, observation: actual, relation: value, journalRevision: 8 }
 }
-beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(TODAY); localStorage.clear(); sessionStorage.clear() })
+beforeEach(async () => { vi.useFakeTimers(); vi.setSystemTime(TODAY); localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 
 describe("exact selected immutable comparison original", () => {
-  it.each([2, 3, 4, 5, 6] as const)("reads V%s through existing historical evidence validators without writes", version => {
-    const f = fixture(version), before = JSON.stringify(f.snapshot)
+  it.each([2, 3, 4, 5, 6] as const)("reads V%s through existing historical evidence validators without writes", async version => {
+    const f = (await fixture(version)), before = JSON.stringify(f.snapshot)
     const write = vi.spyOn(Storage.prototype, "setItem")
     const value = resolveComparisonOriginal(f.snapshot, f.reference)
     expect(value).toMatchObject({ status: "ORIGINAL_VERIFIED", executionAuthority: "NONE", original: f.reference })
@@ -75,8 +76,8 @@ describe("exact selected immutable comparison original", () => {
     else expect(f.original.segments.filter(s => s.phase === "main" && s.kind === "WORK").length).toBeGreaterThan(0)
   })
 
-  it("looks up the selected archived plan, never the current plan or a summary", () => {
-    const f = fixture(), doc = emptyAccountPlanDocument()
+  it("looks up the selected archived plan, never the current plan or a summary", async () => {
+    const f = (await fixture()), doc = emptyAccountPlanDocument()
     doc.data.plans = [{ ...f.entry, archivedAt: at }, accountPlanEntry(accountPlanPacketFixture(3), at)]
     doc.data.currentPlanId = doc.data.plans[1]!.planId
     expect(resolveComparisonOriginalFromPlanDocument(doc, f.reference).status).toBe("ORIGINAL_VERIFIED")
@@ -85,8 +86,8 @@ describe("exact selected immutable comparison original", () => {
     expect(resolveComparisonOriginal(doc.data.plans[1]!.snapshot, f.reference).status).toBe("TEMPORARY_COMPARISON")
   })
 
-  it("rejects changed snapshot, date, slot, session content and missing retained evidence", () => {
-    const f = fixture()
+  it("rejects changed snapshot, date, slot, session content and missing retained evidence", async () => {
+    const f = (await fixture())
     for (const patch of [{ sessionSlot: "PM" }, { plannedDate: "2026-08-18" }, { sessionDay: 99 },
       { sessionContentFingerprint: `sha256:${"f".repeat(64)}` }]) {
       expect(resolveComparisonOriginal(f.snapshot, { ...f.reference, session: { ...f.reference.session, ...patch } }).status).toBe("TEMPORARY_COMPARISON")
@@ -98,8 +99,8 @@ describe("exact selected immutable comparison original", () => {
     expect(resolveComparisonOriginal(f.snapshot, { ...f.reference, planFingerprint: `sha256:${"f".repeat(64)}` }).status).toBe("TEMPORARY_COMPARISON")
   })
 
-  it("rejects internally consistent links for another date, slot or prescription in the selected snapshot", () => {
-    const f = fixture(4, true)
+  it("rejects internally consistent links for another date, slot or prescription in the selected snapshot", async () => {
+    const f = (await fixture(4, true))
     const state = { ...f.state, intake: { ...f.state.intake, startDate: "2026-08-18" } }
     const differentDate = createPlannedSessionLogDraft(state, f.session, at)!.link
     expect(resolveComparisonOriginal(f.snapshot, { ...f.reference, session: differentDate }).status).toBe("TEMPORARY_COMPARISON")
@@ -112,8 +113,8 @@ describe("exact selected immutable comparison original", () => {
     expect(resolveComparisonOriginal(f.snapshot, { ...f.reference, session: otherContent }).status).toBe("TEMPORARY_COMPARISON")
   })
 
-  it("requires an acknowledged collection index and exact snapshot/progress hashes", () => {
-    const f = fixture(), document = emptyAccountPlanDocument()
+  it("requires an acknowledged collection index and exact snapshot/progress hashes", async () => {
+    const f = (await fixture()), document = emptyAccountPlanDocument()
     document.data.plans = [f.entry]
     const parts = splitAccountPlanCollection(document)
     const resolve = (index: unknown, snapshot: unknown, progress: unknown) => resolveComparisonOriginalFromPlanCollection(index, snapshot, progress, f.reference)
@@ -124,8 +125,8 @@ describe("exact selected immutable comparison original", () => {
     expect(resolve(parts.index, { ...parts.snapshots[0], planId: `sha256:${"f".repeat(64)}` }, parts.progress[0]).status).toBe("TEMPORARY_COMPARISON")
   })
 
-  it("does not accept materialized progress as an immutable snapshot or a JSON attestation", () => {
-    const f = fixture(3), changed = structuredClone(f.snapshot)
+  it("does not accept materialized progress as an immutable snapshot or a JSON attestation", async () => {
+    const f = (await fixture(3)), changed = structuredClone(f.snapshot)
     Reflect.set(changed.state, "progress", [{ sessionDay: 1, sessionSlot: "AM", state: "COMPLETED" }])
     expect(validateAccountPlanPacket(changed)).toBe(true)
     expect(resolveComparisonOriginal(changed, { ...f.reference, planFingerprint: accountPlanFingerprint(changed) }).status).toBe("TEMPORARY_COMPARISON")
@@ -136,8 +137,8 @@ describe("exact selected immutable comparison original", () => {
 })
 
 describe("historical original mapping validation", () => {
-  it("validates active, stale and released history without filtering, sorting or rewriting its exact list", () => {
-    const f = fixture(4, true), actual = observation(lapsFor(f.original))
+  it("validates active, stale and released history without filtering, sorting or rewriting its exact list", async () => {
+    const f = (await fixture(4, true)), actual = observation(lapsFor(f.original))
     const stale = { ...relation(f.original, actual), contentRevisionFingerprint: `sha256:${"f".repeat(64)}`,
       observationInterpretationFingerprint: `sha256:${"e".repeat(64)}` }
     const released = { ...stale, relationId: "10000000-0000-4000-8000-000000000002", releasedAt: at }
@@ -156,8 +157,8 @@ describe("historical original mapping validation", () => {
     expect(write).not.toHaveBeenCalled()
   })
 
-  it("rejects changed plan segment IDs, order, kind and unit even when preserving stale history", () => {
-    const f = fixture(4, true), value = relation(f.original, observation(lapsFor(f.original)))
+  it("rejects changed plan segment IDs, order, kind and unit even when preserving stale history", async () => {
+    const f = (await fixture(4, true)), value = relation(f.original, observation(lapsFor(f.original)))
     const first = value.segmentMappings[0]!, second = value.segmentMappings[1]!
     const variants = [
       { ...value, segmentMappings: [{ ...first, planSegmentId: "missing-plan-segment" }] },
@@ -174,8 +175,8 @@ describe("historical original mapping validation", () => {
     }
   })
 
-  it("requires a verified exact original, never a JSON attestation or a different selected plan", () => {
-    const f = fixture(4, true), value = relation(f.original, observation(lapsFor(f.original)))
+  it("requires a verified exact original, never a JSON attestation or a different selected plan", async () => {
+    const f = (await fixture(4, true)), value = relation(f.original, observation(lapsFor(f.original)))
     expect(validateComparisonRelationOriginalMapping(value, resolveComparisonOriginal(null, value.original)))
       .toMatchObject({ status: "TEMPORARY_COMPARISON", reason: "ORIGINAL_UNAVAILABLE" })
     expect(validateComparisonRelationOriginalMapping(value, structuredClone(f.original)))
@@ -183,15 +184,15 @@ describe("historical original mapping validation", () => {
     expect(validateComparisonRelationOriginalMapping({ ...value,
       original: { ...value.original, planFingerprint: `sha256:${"f".repeat(64)}` } }, f.original))
       .toMatchObject({ status: "INVALID_COMPARISON", reason: "ORIGINAL_IDENTITY_MISMATCH" })
-    const other = fixture(4)
+    const other = (await fixture(4))
     expect(validateComparisonRelationOriginalMapping(value, other.original))
       .toMatchObject({ status: "INVALID_COMPARISON", reason: "ORIGINAL_IDENTITY_MISMATCH" })
   })
 })
 
 describe("explicit lap comparison and read-only relation binding", () => {
-  it("requires confirmation even for numerically exact laps; unknown auto-laps stay unmatched", () => {
-    const f = fixture(4, true), actual = observation(lapsFor(f.original))
+  it("requires confirmation even for numerically exact laps; unknown auto-laps stay unmatched", async () => {
+    const f = (await fixture(4, true)), actual = observation(lapsFor(f.original))
     const before = compareFileToPlan(f.original, actual)
     expect(before).toMatchObject({ status: "MAPPING_REQUIRED", automaticMappingCandidates: [], actualLaps: actual.laps })
     expect(before).not.toHaveProperty("rows")
@@ -200,8 +201,8 @@ describe("explicit lap comparison and read-only relation binding", () => {
     expect(after.status).toBe("QUANTITATIVE_COMPARISON")
   })
 
-  it("uses exact per-lap distance, seconds and pace differences, preserves unmatched order, and invents no success score", () => {
-    const f = fixture(4, true), segment = f.original.segments.find(s => s.phase === "main" && s.kind === "WORK")!
+  it("uses exact per-lap distance, seconds and pace differences, preserves unmatched order, and invents no success score", async () => {
+    const f = (await fixture(4, true)), segment = f.original.segments.find(s => s.phase === "main" && s.kind === "WORK")!
     const laps: FileObservationInput["laps"] = [
       { sourceIndex: 0, distanceMeters: 100, durationSeconds: 35, durationMeaning: "SOURCE_DEFINED", kind: "UNKNOWN" },
       { sourceIndex: 1, distanceMeters: segment.distanceMeters! + 10, durationSeconds: segment.durationSeconds! + 2, durationMeaning: "SOURCE_DEFINED", kind: "UNKNOWN" },
@@ -223,8 +224,8 @@ describe("explicit lap comparison and read-only relation binding", () => {
     expect(write).not.toHaveBeenCalled()
   })
 
-  it("retains N-1 and set recovery occurrences instead of inventing a final recovery", () => {
-    const f = fixture(4, true)
+  it("retains N-1 and set recovery occurrences instead of inventing a final recovery", async () => {
+    const f = (await fixture(4, true))
     if (f.session.prescription.kind !== "PACE_TARGET") throw Error("pace fixture")
     const p = f.session.prescription, main = f.original.segments.filter(s => s.phase === "main")
     expect(main.filter(s => s.kind === "WORK")).toHaveLength(p.setCount * p.repetitionsPerSet)
@@ -233,8 +234,8 @@ describe("explicit lap comparison and read-only relation binding", () => {
     expect(main.filter(s => s.kind === "RECOVERY").reduce((sum, s) => sum + s.durationSeconds!, 0)).toBe(p.totals.plannedRecoverySeconds)
   })
 
-  it.each([5, 6] as const)("V%s expands adjusted V3 roles and ordered recovery consistently with retained structural totals", version => {
-    const f = fixture(version)
+  it.each([5, 6] as const)("V%s expands adjusted V3 roles and ordered recovery consistently with retained structural totals", async version => {
+    const f = (await fixture(version))
     if (f.session.prescription.kind !== "ADJUSTED_METHOD_V3") throw Error("V3 fixture")
     const totals = f.session.prescription.projection.structuralTotals.main
     const main = f.original.segments.filter(s => s.phase === "main")
@@ -245,8 +246,8 @@ describe("explicit lap comparison and read-only relation binding", () => {
     expect(compareFileToPlan(f.original, actual, relation(f.original, actual), 8).status).toBe("QUANTITATIVE_COMPARISON")
   })
 
-  it("preserves missing values and true zeros and never produces a non-finite pace", () => {
-    const f = fixture(4, true)
+  it("preserves missing values and true zeros and never produces a non-finite pace", async () => {
+    const f = (await fixture(4, true))
     for (const patch of [{ distanceMeters: null, durationSeconds: null }, { distanceMeters: 0, durationSeconds: 0 }]) {
       const actual = observation(lapsFor(f.original).map(lap => ({ ...lap, ...patch })))
       const result = compareFileToPlan(f.original, actual, relation(f.original, actual), 8)
@@ -259,16 +260,16 @@ describe("explicit lap comparison and read-only relation binding", () => {
     }
   })
 
-  it("never reconstructs repeated laps from activity totals", () => {
-    const f = fixture(4, true), actual = observation([{ sourceIndex: 0, distanceMeters: 10000, durationSeconds: 3000, durationMeaning: "SOURCE_DEFINED", kind: "UNKNOWN" }])
+  it("never reconstructs repeated laps from activity totals", async () => {
+    const f = (await fixture(4, true)), actual = observation([{ sourceIndex: 0, distanceMeters: 10000, durationSeconds: 3000, durationMeaning: "SOURCE_DEFINED", kind: "UNKNOWN" }])
     expect(compareFileToPlan(f.original, actual)).toMatchObject({ status: "MAPPING_REQUIRED", actualLaps: actual.laps })
     expect(actual.laps).toHaveLength(1)
     expect(compareFileToPlan(f.original, actual, relation(f.original, actual), 8)).toMatchObject({ status: "INVALID_COMPARISON", reason: "MAPPING_ADDRESS_OR_ORDER" })
     expect(compareFileToPlan(f.original, observation([]))).toMatchObject({ status: "MAPPING_REQUIRED", actualLaps: [] })
   })
 
-  it("withholds unconfirmed/source-defined time and mismatched recovery while retaining raw values", () => {
-    const f = fixture(4, true), actual = observation(lapsFor(f.original)), value = relation(f.original, actual)
+  it("withholds unconfirmed/source-defined time and mismatched recovery while retaining raw values", async () => {
+    const f = (await fixture(4, true)), actual = observation(lapsFor(f.original)), value = relation(f.original, actual)
     value.segmentMappings = value.segmentMappings.map(m => ({ ...m, confirmedDurationMeaning: null, confirmedRecoveryMode: null }))
     const result = compareFileToPlan(f.original, actual, value, 8)
     expect(result.status).toBe("QUANTITATIVE_COMPARISON")
@@ -280,8 +281,8 @@ describe("explicit lap comparison and read-only relation binding", () => {
     expect(result.rows[0]!.actual.durationMeaning).toBe("SOURCE_DEFINED")
   })
 
-  it("rejects reordered, contradictory and changed-unit mappings instead of fuzzy matching", () => {
-    const f = fixture(4, true), actual = observation(lapsFor(f.original)), value = relation(f.original, actual)
+  it("rejects reordered, contradictory and changed-unit mappings instead of fuzzy matching", async () => {
+    const f = (await fixture(4, true)), actual = observation(lapsFor(f.original)), value = relation(f.original, actual)
     expect(compareFileToPlan(f.original, actual, { ...value, segmentMappings: [...value.segmentMappings].reverse() }, 8)).toMatchObject({ status: "INVALID_COMPARISON" })
     const first = value.segmentMappings[0]!
     expect(compareFileToPlan(f.original, actual, { ...value, segmentMappings: [{ ...first, confirmedTargetUnit: first.confirmedTargetUnit === "DISTANCE" ? "DURATION" : "DISTANCE" }] }, 8)).toMatchObject({ reason: "MAPPING_SEMANTICS" })
@@ -291,8 +292,8 @@ describe("explicit lap comparison and read-only relation binding", () => {
     expect(compareFileToPlan(f.original, moving, relation(f.original, moving), 8)).toMatchObject({ reason: "TIME_MEANING_CONFLICT" })
   })
 
-  it("distinguishes save-induced revision increments from observation corrections and interpretation changes", () => {
-    const f = fixture(), actual = observation(lapsFor(f.original)), value = relation(f.original, actual)
+  it("distinguishes save-induced revision increments from observation corrections and interpretation changes", async () => {
+    const f = (await fixture()), actual = observation(lapsFor(f.original)), value = relation(f.original, actual)
     expect(prepareComparisonRelation(request(value), f.original, actual, 7).status).toBe("READY_FOR_PERSISTENCE")
     expect(prepareComparisonRelation(request(value), f.original, actual, 8)).toMatchObject({ status: "INVALID_COMPARISON", reason: "CAS_OR_REQUEST_INVALID" })
     expect(validateComparisonRelationBinding(value, f.original, actual, 8).status).toBe("VALID_COMPARISON")
@@ -306,8 +307,8 @@ describe("explicit lap comparison and read-only relation binding", () => {
     expect(validateComparisonRelationBinding({ ...value, releasedAt: at }, f.original, actual, 8)).toMatchObject({ reason: "RELATION_RELEASED" })
   })
 
-  it("reopens unchanged originals with a different linkedAt without weakening exact plan/session identity", () => {
-    const f = fixture(), actual = observation(lapsFor(f.original)), value = relation(f.original, actual)
+  it("reopens unchanged originals with a different linkedAt without weakening exact plan/session identity", async () => {
+    const f = (await fixture()), actual = observation(lapsFor(f.original)), value = relation(f.original, actual)
     const freshReference = { ...f.reference, session: { ...f.reference.session, linkedAt: "2026-08-18T03:00:00.000Z" } }
     const reopened = resolveComparisonOriginal(f.snapshot, freshReference)
     expect(sameComparisonOriginalIdentity(value.original, freshReference)).toBe(true)
@@ -317,8 +318,8 @@ describe("explicit lap comparison and read-only relation binding", () => {
     expect(sameComparisonOriginalIdentity(value.original, { ...freshReference, session: { ...freshReference.session, sessionSlot: "PM" } })).toBe(false)
   })
 
-  it("never prepares a stored relation without the original or accepts a copied observation attestation", () => {
-    const f = fixture(), actual = observation(lapsFor(f.original)), value = relation(f.original, actual), missing = resolveComparisonOriginal(null, f.reference)
+  it("never prepares a stored relation without the original or accepts a copied observation attestation", async () => {
+    const f = (await fixture()), actual = observation(lapsFor(f.original)), value = relation(f.original, actual), missing = resolveComparisonOriginal(null, f.reference)
     expect(prepareComparisonRelation(request(value), missing, actual, 7)).toEqual({ status: "TEMPORARY_COMPARISON", reason: "ORIGINAL_UNAVAILABLE", executionAuthority: "NONE" })
     const result = compareFileToPlan(missing, actual, value, 8)
     expect(result.status).toBe("TEMPORARY_COMPARISON")
@@ -329,8 +330,8 @@ describe("explicit lap comparison and read-only relation binding", () => {
 })
 
 describe("previous performance compatibility", () => {
-  it("compares only confirmed compatible methods and reports date differences without causation", () => {
-    const f = fixture(4, true), prior = observation(lapsFor(f.original), { date: "2026-08-16" }, "previous-journal")
+  it("compares only confirmed compatible methods and reports date differences without causation", async () => {
+    const f = (await fixture(4, true)), prior = observation(lapsFor(f.original), { date: "2026-08-16" }, "previous-journal")
     const laps = lapsFor(f.original).map((lap, i) => f.original.segments[i]!.kind === "WORK" ? { ...lap, durationSeconds: lap.durationSeconds! + 2 } : lap)
     const current = observation(laps)
     const result = comparePreviousFilePerformance(input(f.original, current), input(f.original, prior))
@@ -344,8 +345,8 @@ describe("previous performance compatibility", () => {
     expect(comparePreviousFilePerformance({ ...input(f.original, current), relation: null }, input(f.original, prior))).toMatchObject({ reason: "CONFIRMED_MAPPING_REQUIRED" })
   })
 
-  it("refuses different configurations, unknown/missing recovery, changed actual recovery and mismatched time meaning", () => {
-    const f = fixture(4, true), adjusted = fixture(), actual = observation(lapsFor(f.original)), prior = observation(lapsFor(f.original), {}, "previous-journal")
+  it("refuses different configurations, unknown/missing recovery, changed actual recovery and mismatched time meaning", async () => {
+    const f = (await fixture(4, true)), adjusted = (await fixture()), actual = observation(lapsFor(f.original)), prior = observation(lapsFor(f.original), {}, "previous-journal")
     const adjustedActual = observation(lapsFor(adjusted.original), {}, "adjusted-journal")
     expect(comparePreviousFilePerformance(input(f.original, actual), input(adjusted.original, adjustedActual))).toMatchObject({ reason: "INCOMPATIBLE_METHOD" })
     const missingRecovery = relation(f.original, prior)

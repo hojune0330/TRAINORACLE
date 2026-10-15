@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { readFileSync } from "node:fs"
 import { Profiler } from "react"
@@ -196,6 +197,7 @@ describe("saved toast motion structure", () => {
   it("keeps a confirmed result until explicitly closed instead of timing it out", async () => {
     vi.useFakeTimers()
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
 
     try {
       render(<AppShell />)
@@ -210,6 +212,8 @@ describe("saved toast motion structure", () => {
       fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
       await act(async () => fireEvent.click(screen.getByRole("button", { name: /^저장/u })))
 
+      // Native Back drains asynchronously after persistence, before onDone.
+      await act(async () => { await vi.advanceTimersByTimeAsync(50) })
       expect(screen.getByRole("button", { name: "기록 보기" })).toBeVisible()
       act(() => vi.advanceTimersByTime(10_000))
       expect(screen.getByRole("button", { name: "닫기" })).toBeVisible()
@@ -224,6 +228,7 @@ describe("saved toast motion structure", () => {
   it("keeps review attention until the athlete dismisses it", async () => {
     vi.useFakeTimers()
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
 
     try {
       render(<AppShell />)
@@ -237,6 +242,8 @@ describe("saved toast motion structure", () => {
       fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
       await act(async () => fireEvent.click(screen.getByRole("button", { name: /^저장/u })))
 
+      // Keep timers fake from mount so a wrongly scheduled dismissal is tested.
+      await act(async () => { await vi.advanceTimersByTimeAsync(50) })
       expect(screen.getByRole("alert")).toHaveTextContent(/확인|검토/u)
       expect(screen.getByRole("alert")).not.toHaveTextContent("분석 결과")
       act(() => vi.advanceTimersByTime(10_000))

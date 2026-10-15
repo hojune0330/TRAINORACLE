@@ -1,6 +1,6 @@
 import React from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { QuickSessionForm } from "./log-entry/QuickSessionForm"
 import { OracleProfileExperience, type OracleProfileExperienceProps } from "./OracleProfileExperience"
@@ -48,23 +48,41 @@ describe("auto-advance answer activation", () => {
   })
 
   it("keeps the second Oracle question unanswered after a repeated same-position tap", () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] })
     let now = 1000
     vi.spyOn(performance, "now").mockImplementation(() => now)
-    const props = oracleProps()
-    render(<OracleProfileExperience {...props} />)
-    fireEvent.click(screen.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" }))
-    const reader = () => within(screen.getByRole("dialog"))
-    pointerClick(reader().getByRole("button", { name: "전혀 그렇지 않아요" }))
-    const heading = reader().getByRole("heading", { level: 1 }).textContent
-    now += 80
-    pointerClick(reader().getByRole("button", { name: "전혀 그렇지 않아요" }))
-    expect(reader().getByRole("heading", { level: 1 })).toHaveTextContent(heading!)
-    expect(props.onDraft).toHaveBeenCalledTimes(1)
-    expect(props.onCommit).not.toHaveBeenCalled()
-    now += 500
-    pointerClick(reader().getByRole("button", { name: "전혀 그렇지 않아요" }))
-    expect(reader().getByRole("heading", { level: 1 }).textContent).not.toBe(heading)
-    expect(props.onDraft).toHaveBeenCalledTimes(2)
+    try {
+      const props = oracleProps()
+      render(<OracleProfileExperience {...props} />)
+      fireEvent.click(screen.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" }))
+      const reader = () => within(screen.getByRole("dialog"))
+      const firstHeading = reader().getByRole("heading", { level: 1 }).textContent
+      pointerClick(reader().getByRole("button", { name: "전혀 그렇지 않아요" }))
+      expect(props.onDraft).toHaveBeenCalledTimes(1)
+      expect(props.onDraft).toHaveBeenLastCalledWith({ STRUCTURE_1: 1 })
+      // Presentation holds the accepted answer for 140ms. Reach question two
+      // before testing the cross-question guard, still within its 400ms window.
+      now += 140
+      act(() => vi.advanceTimersByTime(140))
+      const heading = reader().getByRole("heading", { level: 1 }).textContent
+      expect(heading).not.toBe(firstHeading)
+      now += 80
+      pointerClick(reader().getByRole("button", { name: "전혀 그렇지 않아요" }))
+      expect(reader().getByRole("heading", { level: 1 })).toHaveTextContent(heading!)
+      expect(reader().getByRole("button", { name: "전혀 그렇지 않아요" })).toHaveAttribute("aria-pressed", "false")
+      expect(props.onDraft).toHaveBeenCalledTimes(1)
+      expect(props.onCommit).not.toHaveBeenCalled()
+      now += 500
+      pointerClick(reader().getByRole("button", { name: "전혀 그렇지 않아요" }))
+      expect(props.onDraft).toHaveBeenCalledTimes(2)
+      expect(props.onDraft).toHaveBeenLastCalledWith({ STRUCTURE_1: 1, STRUCTURE_2: 1 })
+      now += 140
+      act(() => vi.advanceTimersByTime(140))
+      expect(reader().getByRole("heading", { level: 1 }).textContent).not.toBe(heading)
+      expect(props.onCommit).not.toHaveBeenCalled()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it("does not answer body safety when repeating the previous plan-days tap across an intake remount", async () => {

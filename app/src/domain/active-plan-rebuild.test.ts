@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { generateReplacementPlanFromDraft, selectPlanForActivation } from "./plan-beta-flow"
 import { stateFixture } from "./plan-beta-store.test-fixture"
@@ -10,7 +11,7 @@ vi.mock("@impl/plan-generator/generator", async importOriginal => {
   return { ...actual, generatePlanCandidates: vi.fn(actual.generatePlanCandidates) }
 })
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); vi.useFakeTimers(); vi.setSystemTime(new Date("2026-10-01T03:00:00.000Z")) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); vi.useFakeTimers(); vi.setSystemTime(new Date("2026-10-01T03:00:00.000Z")) })
 afterEach(() => { vi.useRealTimers(); localStorage.clear(); sessionStorage.clear() })
 
 describe("explicit new-start plan draft", () => {

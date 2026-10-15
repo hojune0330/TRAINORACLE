@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import React from "react"
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -10,8 +11,8 @@ import { replaceCandidateCatalogWorkout } from "../../domain/catalog-plan-bindin
 import { catalogScheduleConditions } from "../../domain/catalog-schedule-conditions"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 
-beforeEach(() => {
-  localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null)
+beforeEach(async () => {
+  localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null)
   vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-10-01T12:00:00Z"))
 })
 afterEach(() => { cleanup(); vi.useRealTimers(); setActiveLocalAccount(null) })

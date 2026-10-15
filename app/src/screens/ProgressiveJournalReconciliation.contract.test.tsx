@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import React from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
@@ -13,7 +14,7 @@ import type { PostSessionEntry } from "../domain/journal-schema"
 import { createRecoveryCode } from "../domain/account/private-note-crypto"
 import { saveSessionRecoveryCode } from "../domain/account/private-note-sync"
 
-beforeEach(() => { window.localStorage.clear(); window.sessionStorage.clear() })
+beforeEach(async () => { window.localStorage.clear(); window.sessionStorage.clear(); await initializeCanonicalJournalFixture() })
 afterEach(cleanup)
 
 function stored(): PostSessionEntry {

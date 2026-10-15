@@ -1,10 +1,15 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import React from "react"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
-import { afterEach, expect, it, vi } from "vitest"
+import { beforeEach, afterEach, expect, it, vi } from "vitest"
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import { draftFor, RUNTIME_CASES } from "../../domain/prescription-quality-matrix.test-fixtures"
 import { listDetailedSessionTargets } from "../../domain/plan-session-target"
 import { CandidateSection } from "./CandidateSection"
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
+})
 
 afterEach(cleanup)
 

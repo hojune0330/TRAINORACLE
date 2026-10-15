@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
 import { RUNTIME_CASES, TODAY } from "./prescription-quality-matrix.test-fixtures"
@@ -6,7 +7,7 @@ import { prepareAdjustedPlanCandidate, resolveAdjustedCandidateScope } from "./a
 import { planAdaptationCandidateSchema } from "./plan-beta-schema"
 import { adjustedCandidateFixture as fixture } from "./adjusted-plan-candidate.test-fixtures"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 
 describe("adjusted candidate assembly", () => {
@@ -49,16 +50,18 @@ describe("adjusted candidate assembly", () => {
     }
   })
 
-  it("rejects a snapshot from another original candidate", () => {
+  it("rejects a snapshot from another original candidate", async () => {
     const first = fixture(RUNTIME_CASES[0]!)
     localStorage.clear()
+    await initializeCanonicalJournalFixture()
     const other = fixture(RUNTIME_CASES[1]!)
     expect(prepareAdjustedPlanCandidate({ ...first, rawSnapshot: other.rawSnapshot }).kind).toBe("unavailable")
   })
 
-  it("rejects another prescription even with a snapshot rebound to the requested slot", () => {
+  it("rejects another prescription even with a snapshot rebound to the requested slot", async () => {
     const first = fixture(RUNTIME_CASES[0]!)
     localStorage.clear()
+    await initializeCanonicalJournalFixture()
     const other = fixture(RUNTIME_CASES[1]!)
     const saved = JSON.parse(other.rawSnapshot)
     const scope = resolveAdjustedCandidateScope(first.candidate, first.address, first.startDate)!

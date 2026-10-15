@@ -1,12 +1,17 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import React from "react"
 import { cleanup, render, screen, within } from "@testing-library/react"
-import { afterEach, expect, it, vi } from "vitest"
+import { beforeEach, afterEach, expect, it, vi } from "vitest"
 import { deriveSequenceV3Totals } from "@impl/prescription/sequence-v3"
 import type { PlanMutationLockManager } from "../../domain/plan-mutation-lock"
 import { adjustedPlanSelectionV3Fixture } from "../../domain/adjusted-plan-selection-v3.test-fixtures"
 import { prepareAdjustedPlanCandidateV3 } from "../../domain/adjusted-plan-candidate"
 import { formatTrainingSeconds } from "./labels"
 import { AdjustedPlanApplyReviewV3 } from "./AdjustedPlanApplyReviewV3"
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
+})
 
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 

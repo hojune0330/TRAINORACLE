@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import React from "react"
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { beforeEach, afterEach, expect, it, vi } from "vitest"
@@ -14,8 +15,8 @@ vi.setConfig({ testTimeout: 20000 })
 
 const show = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const close = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "close")
-beforeEach(() => {
-  localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY)
+beforeEach(async () => {
+  localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY)
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value: function(this: HTMLDialogElement) { this.setAttribute("open", "") } })
   Object.defineProperty(HTMLDialogElement.prototype, "close", { configurable: true, value: function(this: HTMLDialogElement) { this.removeAttribute("open") } })
 })

@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { beforeEach, afterEach, expect, it, vi } from "vitest"
 import { adjustedSuccessorFixture } from "./adjusted-plan-successor.test-fixtures"
 import { adjustedCycleV5Fixture, adjustedCycleV6Fixture } from "./adjusted-cycle-successor.test-fixtures"
@@ -19,7 +20,7 @@ import type { PlanMutationLockManager } from "./plan-mutation-lock"
 import { configurationReference } from "@impl/prescription/prescription-adjustment"
 import { configurationReferenceV3 } from "@impl/prescription/prescription-adjustment-v3"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 type Overrides = { cycleDraft?: CatalogCycleDraftContext; futureEnvironmentConfirmed?: boolean; locks?: PlanMutationLockManager | null }
 const preparedOnly = (result: ReturnType<typeof prepareAdjustedCycleSuccessor>) => {

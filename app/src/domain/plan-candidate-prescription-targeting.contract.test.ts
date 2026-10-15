@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { PlanCandidate, PlanGenerationSuccess } from "@impl/plan-generator/types"
 import type { PlanSession } from "@impl/plan-generator/session-types"
@@ -29,11 +30,12 @@ const DRAFT = {
 } as const
 const selection = { selectedRecordId: "targeting-current-pb" }
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.useFakeTimers()
   vi.setSystemTime(TODAY)
   window.localStorage.clear()
   window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
   const record = createSelfReportedAthleteRecord({
     id: selection.selectedRecordId, purpose: "PERSONAL_BEST", eventDistanceM: 5000,
     performanceSeconds: 1111, achievedOn: "2026-07-01", seasonId: null,

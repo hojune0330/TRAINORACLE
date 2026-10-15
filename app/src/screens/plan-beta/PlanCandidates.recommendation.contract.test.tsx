@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import React from "react"
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -10,9 +11,9 @@ import { isoShift } from "../../domain/dates"
 import { formatTrainingSeconds, prescriptionLabel, sessionLabel } from "./labels"
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear()
-  sessionStorage.clear()
+  sessionStorage.clear(); await initializeCanonicalJournalFixture()
   // Keep this dated fixture eligible while preserving real input and RAF timers.
   vi.useFakeTimers({ toFake: ["Date"] })
   vi.setSystemTime(new Date(2026, 8, 5, 12))

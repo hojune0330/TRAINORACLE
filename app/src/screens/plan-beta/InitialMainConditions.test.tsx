@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import React from "react"
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -8,7 +9,7 @@ import * as initialMainConditions from "../../domain/initial-main-conditions"
 import type { InitialMainInput } from "../../domain/initial-main-conditions"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null) })
 afterEach(() => { cleanup(); setActiveLocalAccount(null) })
 function fixture(trainingFocus = "ATP_PC_INTENT" as "ATP_PC_INTENT" | "GLY_INTENT", experienceBand = "NEW_TO_RUNNING" as "NEW_TO_RUNNING" | "DEVELOPING" | "EXPERIENCED"): InitialMainInput {
   const source = generatePlanFromDraft({ eventGroup: "FIVE_K", eventDistanceM: 5000, competitionDivision: "OPEN", experienceBand,
