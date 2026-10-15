@@ -81,3 +81,12 @@ and deployment bytes do not prove an authenticated member posting round trip.
 - Latest typecheck and build passed before the final isolated camera correction;
   the exact candidate still needs hosted CI. None of these receipts implies a
   full suite pass, merge, publication or authenticated real-member proof.
+
+Final fixture follow-up: the dedicated file input now uses its current accessible
+name (all 9 scenarios passed). The spring-upgrade retry asserts the current
+7-minus-4 energy cost and its exact preservation across retry (passed); map reset
+and shader navigation also passed. All 7 dedicated mobile account tests passed
+locally after the hosted run lost a Vite module connection (`socket hang up`).
+No authentication or production storage code was altered for that infrastructure
+failure. The local long game replay timed out at 81/90 seconds and remains an
+explicit non-pass, pending hosted results; its timeout was not increased.

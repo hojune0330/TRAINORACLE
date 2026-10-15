@@ -498,6 +498,8 @@ test("a later-stage failure offers 'retry this stage' with the same build, cappe
     else if (step.key === "jump") await page.keyboard.press("Space")
   }
   await page.keyboard.up("ArrowRight")
+  await expect(page.getByLabel("점프 에너지", { exact: true })).toHaveText("↗ 점프 ⚡3")
+  const upgradedJumpCost = await page.getByLabel("점프 에너지", { exact: true }).textContent()
   await page.clock.runFor(12000)
   await expect(page.getByRole("heading", { name: "진흙에서 뒤로 떨어졌어요" })).toBeVisible()
   const retry = page.getByRole("button", { name: /2구간부터 다시/ })
@@ -509,7 +511,7 @@ test("a later-stage failure offers 'retry this stage' with the same build, cappe
   await expect(page.getByRole("list", { name: "코스 2/3 · 진흙" })).toBeVisible()
   await expect(page.getByLabel("경기 진행 시간")).toHaveText("30 / 90초")
   // Same build: the spring upgrade keeps the jump cheap.
-  await expect(page.getByLabel("점프 에너지", { exact: true })).toContainText("4")
+  await expect(page.getByLabel("점프 에너지", { exact: true })).toHaveText(upgradedJumpCost!)
 })
 
 test("medals: a fixed medal per run whatever the result, spent only on a cosmetic trail in the shop", async ({ page }, info) => {

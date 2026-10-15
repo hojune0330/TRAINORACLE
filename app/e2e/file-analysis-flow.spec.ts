@@ -220,7 +220,7 @@ async function openImport(page: Page, file = { format: "tcx", mimeType: "applica
   })).toBe(owner)
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
   await page.getByTestId("open-import").click()
-  await page.getByLabel(/내보낸 활동 파일/u).setInputFiles({ name: `synthetic.${file.format}`, mimeType: file.mimeType, buffer: Buffer.from(file.content) })
+  await page.getByLabel("가져올 운동 파일 선택", { exact: true }).setInputFiles({ name: `synthetic.${file.format}`, mimeType: file.mimeType, buffer: Buffer.from(file.content) })
   await expect(page.getByTestId("import-draft-row")).toHaveCount(1)
   const review = page.locator("summary").filter({ hasText: "시간과 날짜 확인" })
   await review.focus()
