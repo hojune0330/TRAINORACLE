@@ -1,13 +1,13 @@
-// Game-only fixed course v1. Units are simulation units, not exercise prescriptions.
-export const DEFENSE_RULES = { version: 1, duration: 60, waves: 3, install: 3, upgrade: 4, totalEnemies: 48 } as const
+// Game-only fixed course v2. Units are simulation units, not exercise prescriptions.
+export const DEFENSE_RULES = { version: 2, duration: 60, waves: 3, install: 3, upgrade: 4, totalEnemies: 48 } as const
 export const FACILITIES = {
   cannon: { name: '공 발사기', detail: '가장 가까운 적 공격', levels: ['초당 피해 1', '초당 피해 2'] },
   fan: { name: '바람 장치', detail: '범위 안 모든 적 감속', levels: ['속도 −25%', '속도 −40%'] },
-  flag: { name: '보급 깃발', detail: '근처에서 쉴 때 회복 증가', levels: ['회복 ×1.25', '회복 ×1.5'] },
+  flag: { name: '보급 깃발', detail: '근처에서 회복·밀치기 재충전 가속', levels: ['회복 ×1.25 · 재충전 ×1.5', '회복 ×1.5 · 재충전 ×2'] },
 } as const
 export type FacilityKind = keyof typeof FACILITIES
 export type Facility = { kind: FacilityKind; level: 1 | 2; cooldown: number }
-export type DefenseEnemy = { id: number; kind: 'normal' | 'rush' | 'armor'; x: number; hp: number; maxHp: number; resist: number; touched: boolean }
+export type DefenseEnemy = { id: number; kind: 'normal' | 'rush' | 'armor'; x: number; hp: number; maxHp: number; resist: number; touched: boolean; cracked?: boolean }
 export type DefenseRunner = { x: number; y: number; vy: number; energy: number; falls: number; respawn: number; protected: number; hit: number; dash: number; cooldown: number; running: boolean }
 export type DefenseTotals = { killed: number; passed: number; unresolved: number; collected: number; pushed: number }
 export type SoloDefense = {
@@ -21,7 +21,7 @@ export function defenseSpawns(wave: number) {
   const count = waveCount(wave), groupSize = count / 4
   return Array.from({ length: count }, (_, i) => ({ id: wave * 100 + i,
     time: 3 + Math.floor(i / groupSize) * 12 + (i % groupSize) * .65,
-    kind: (wave === 3 && i % 5 === 4 ? 'armor' : wave > 1 && i % (wave === 2 ? 4 : 5) === 2 ? 'rush' : 'normal') as DefenseEnemy['kind'] }))
+    kind: ((wave === 1 && i === 8) || (wave === 2 && i % 8 === 7) || (wave === 3 && i % 5 === 4) ? 'armor' : wave > 1 && i % (wave === 2 ? 4 : 5) === 2 ? 'rush' : 'normal') as DefenseEnemy['kind'] }))
 }
 const freshRunner = (): DefenseRunner => ({ x: .5, y: 0, vy: 0, energy: 100, falls: 0, respawn: 0, protected: 2, hit: 0, dash: 0, cooldown: 0, running: false })
 export function newSoloDefense(): SoloDefense {
@@ -52,10 +52,12 @@ export function defenseInput(s: SoloDefense, run: boolean, action?: 'jump' | 'da
   if (action === 'dash' && p.y === 0 && p.energy >= 20 && p.cooldown <= 0 && p.protected <= 0) {
     p.energy -= 20; p.dash = .25; p.cooldown = 2.5
     const targets = s.enemies.filter(e => e.hp > 0 && e.resist <= 0 && Math.abs(e.x - p.x) < .14).sort((a, b) => a.x - b.x).slice(0, 3)
-    for (const e of targets) { e.hp--; e.x = Math.min(1.1, e.x + (e.kind === 'armor' ? .07 : .14)); e.resist = 1; s.totals.pushed++ }
+    for (const e of targets) { e.hp--; e.cracked = true; e.x = Math.min(1.1, e.x + (e.kind === 'armor' ? .07 : .14)); e.resist = 1; s.totals.pushed++ }
   }
 }
 export function defenseSupplies(s: SoloDefense) {
+  // Construction materials stop when no further shop remains in this series.
+  if (s.wave === DEFENSE_RULES.waves) return []
   return [0, 1].map(i => ({ id: s.wave * 10 + i, x: 1.08 - (s.time - (12 + i * 24)) * .075,
     active: s.time >= 12 + i * 24 && !s.collectedIds.includes(s.wave * 10 + i) })).filter(c => c.active && c.x > .055)
 }
@@ -72,7 +74,12 @@ export function advanceSoloDefense(s: SoloDefense, dt: number, run: boolean) {
   } else {
     p.running = run && p.energy > 0
     let recovery = 1
-    s.facilities.forEach((f, i) => { if (f?.kind === 'flag' && Math.abs(facilityX(i) - p.x) < .18) recovery = Math.max(recovery, f.level === 2 ? 1.5 : 1.25) })
+    let recharge = 1
+    s.facilities.forEach((f, i) => { if (f?.kind === 'flag' && Math.abs(facilityX(i) - p.x) < .18) {
+      recovery = Math.max(recovery, f.level === 2 ? 1.5 : 1.25)
+      recharge = Math.max(recharge, f.level === 2 ? 2 : 1.5)
+    } })
+    p.cooldown = Math.max(0, p.cooldown - (recharge - 1) * dt)
     p.energy = Math.max(0, Math.min(100, p.energy + (p.running ? -9 : 20 * recovery) * dt))
     p.x = Math.min(.86, p.x + ((p.running ? .18 : 0) - .085 + (p.dash > 0 ? .38 : 0)) * dt)
     if (p.y > 0 || p.vy !== 0) { p.y = Math.max(0, p.y + p.vy * dt); p.vy -= 1150 * dt; if (p.y === 0) p.vy = 0 }
@@ -97,7 +104,8 @@ export function advanceSoloDefense(s: SoloDefense, dt: number, run: boolean) {
     f.cooldown -= dt
     if (f.cooldown > 0) return
     const target = s.enemies.filter(e => e.hp > 0 && e.x > .055 && Math.abs(e.x - facilityX(i)) <= .16).sort((a, b) => a.x - b.x)[0]
-    if (target) { target.hp -= f.level; f.cooldown = 1; s.shots.push({ from: facilityX(i), to: target.x, life: .18 }) }
+    // A visible shell absorbs balls; a deliberate runner dash opens it for towers.
+    if (target) { target.hp -= f.level * (target.kind === 'armor' && !target.cracked ? .15 : 1); f.cooldown = 1; s.shots.push({ from: facilityX(i), to: target.x, life: .18 }) }
   })
   s.enemies = s.enemies.filter(e => {
     if (e.hp <= 0) { s.totals.killed++; return false }
@@ -108,7 +116,7 @@ export function advanceSoloDefense(s: SoloDefense, dt: number, run: boolean) {
     s.collectedIds.push(c.id); s.budget++; s.totals.collected++
   }
   s.shots = s.shots.map(b => ({ ...b, life: b.life - dt })).filter(b => b.life > 0)
-  if (s.time >= DEFENSE_RULES.duration) {
+  if (s.time >= DEFENSE_RULES.duration || (s.spawned === waveCount(s.wave) && s.enemies.length === 0)) {
     s.totals.unresolved += s.enemies.length; s.enemies = []; s.shots = []; p.running = false
     if (s.wave === 3) s.phase = 'finished'
     else { s.wave++; s.budget += 4; s.phase = 'prepare' }

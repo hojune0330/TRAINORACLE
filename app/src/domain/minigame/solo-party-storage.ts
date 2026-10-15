@@ -1,15 +1,16 @@
 import { z } from 'zod'
-import { newSoloDefense } from './solo-defense'
+import { newSoloDefense, DEFENSE_RULES } from './solo-defense'
 import type { SoloDefense } from './solo-defense'
 
-export const SOLO_CHECKPOINT_KEY = 'trainoracle.solo-party.checkpoint.v1'
+// Retain v1 bytes: its budgets/results came from different defense rules.
+export const SOLO_CHECKPOINT_KEY = 'trainoracle.solo-party.checkpoint.v2'
 export const SOLO_RECORDS_KEY = 'trainoracle.solo-party.records.v1'
 const integer = z.number().int().nonnegative()
 const facility = z.object({ kind: z.enum(['cannon', 'fan', 'flag']), level: z.union([z.literal(1), z.literal(2)]) })
 const totals = z.object({ killed: integer.max(48), passed: integer.max(48), unresolved: integer.max(48), collected: integer.max(6), pushed: integer.max(1000) })
-const checkpoint = z.object({ version: z.literal(1), id: z.string().min(1).max(100), wave: integer.min(1).max(3), budget: integer.max(20),
+const checkpoint = z.object({ version: z.literal(2), id: z.string().min(1).max(100), wave: integer.min(1).max(3), budget: integer.max(20),
   facilities: z.array(facility.nullable()).length(3), falls: integer.max(1000), totals, collectedIds: z.array(integer).max(6) })
-const record = z.object({ id: z.string().min(1).max(100), mode: z.enum(['push', 'defense']), version: z.literal(1),
+const record = z.object({ id: z.string().min(1).max(100), mode: z.enum(['push', 'defense']), version: z.union([z.literal(1), z.literal(2)]),
   completedAt: z.string().datetime(), success: integer.max(48), missed: integer.max(48), falls: integer.max(1000), wins: integer.max(4) })
 export type SoloRecord = z.infer<typeof record>
 type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
@@ -26,7 +27,7 @@ export function loadSoloCheckpoint(storage: StorageLike): { state: SoloDefense; 
 }
 export function saveSoloCheckpoint(storage: StorageLike, s: SoloDefense, id: string) {
   if (s.phase !== 'prepare') throw new Error('save-between-waves-only')
-  const value = checkpoint.parse({ version: 1, id, wave: s.wave, budget: s.budget, facilities: s.facilities,
+  const value = checkpoint.parse({ version: DEFENSE_RULES.version, id, wave: s.wave, budget: s.budget, facilities: s.facilities,
     falls: s.runner.falls, totals: s.totals, collectedIds: s.collectedIds })
   const raw = JSON.stringify(value)
   storage.setItem(SOLO_CHECKPOINT_KEY, raw)
@@ -49,8 +50,8 @@ export function storeSoloRecord(storage: StorageLike, value: SoloRecord) {
   return next
 }
 /** Compare only the same solo mode and rules, never a friend-room leaderboard. */
-export function bestSoloRecord(records: SoloRecord[], mode: SoloRecord['mode']) {
-  return records.filter(r => r.mode === mode && r.version === 1).sort((a, b) =>
+export function bestSoloRecord(records: SoloRecord[], mode: SoloRecord['mode'], version: number = mode === 'defense' ? DEFENSE_RULES.version : 1) {
+  return records.filter(r => r.mode === mode && r.version === version).sort((a, b) =>
     mode === 'defense' ? a.missed - b.missed || a.falls - b.falls
       : b.wins - a.wins || b.success - a.success || a.falls - b.falls)[0]
 }

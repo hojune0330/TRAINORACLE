@@ -2,7 +2,7 @@ import React from 'react'
 import { ArrowLeft, Pause, Swords, Shield, Trophy, Play, Save, RotateCcw } from 'lucide-react'
 import { newSoloPush, startSoloPush, advanceSoloPush, pushInput, pushSeriesPoints } from '../../domain/minigame/solo-push'
 import type { SoloPush } from '../../domain/minigame/solo-push'
-import { newSoloDefense, startDefenseWave, advanceSoloDefense, defenseInput, buyFacility, FACILITIES, waveCount } from '../../domain/minigame/solo-defense'
+import { newSoloDefense, startDefenseWave, advanceSoloDefense, defenseInput, buyFacility, FACILITIES, DEFENSE_RULES, waveCount } from '../../domain/minigame/solo-defense'
 import type { SoloDefense, FacilityKind } from '../../domain/minigame/solo-defense'
 import { bestSoloRecord, loadSoloCheckpoint, readSoloRecords, saveSoloCheckpoint, storeSoloRecord } from '../../domain/minigame/solo-party-storage'
 import type { SoloRecord } from '../../domain/minigame/solo-party-storage'
@@ -16,6 +16,8 @@ import { loadToriArt } from './runner-art'
 import { loadSceneArt } from './scene-art'
 import { loadPartyArt } from './party-art'
 import { PartyIcon } from './PartyIcon'
+import { loadDefenseArt } from './defense-art'
+import { DefenseIcon } from './DefenseIcon'
 import { GameLeaveDialog } from './GameLeaveDialog'
 import { useTaskFlowBack } from '../../hooks/useTaskFlowBack'
 import { useMinigameProgress } from '../../domain/minigame/progress-store'
@@ -50,10 +52,13 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
   }, [])
   const release = React.useCallback(() => { keys.current = false; gestures.current.reset() }, [])
   const refresh = React.useCallback(() => {
-    try { setSaved(loadSoloCheckpoint(localStorage)) } catch { setNotice('저장된 경기의 버전을 읽지 못했어요. 기존 저장은 보존하며 새 경기는 시작할 수 있어요.') }
+    try {
+      const checkpoint = loadSoloCheckpoint(localStorage); setSaved(checkpoint)
+      if (!checkpoint && localStorage.getItem('trainoracle.solo-party.checkpoint.v1')) setNotice('디펜스 규칙이 바뀌어 이전 판은 이어할 수 없어요. 이전 저장과 완주 기록은 보존했어요. 새 판으로 도전해 주세요.')
+    } catch { setNotice('저장된 경기의 버전을 읽지 못했어요. 기존 저장은 보존하며 새 경기는 시작할 수 있어요.') }
     try { setRecords(readSoloRecords(localStorage)) } catch { setNotice('이 기기의 기록을 읽지 못했어요. 기존 기록을 덮어쓰지 않아요.') }
   }, [])
-  React.useEffect(() => { refresh(); void loadToriArt(); void loadSceneArt(); void loadPartyArt() }, [refresh])
+  React.useEffect(() => { refresh(); void loadToriArt(); void loadSceneArt(); void loadPartyArt(); void loadDefenseArt() }, [refresh])
   const start = (next: Session, id: string = crypto.randomUUID()) => {
     release(); current.current = next; runId.current = id; recorded.current = false
     reviewStart.current = null; setReviews([]); setComparison('')
@@ -124,7 +129,7 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
     if (view?.phase !== 'finished' || recorded.current) return
     recorded.current = true
     const self = view.mode === 'push' ? view.results.flat().filter(p => p.id === 'you') : []
-    const result: SoloRecord = { id: runId.current, mode: view.mode, version: 1, completedAt: new Date().toISOString(),
+    const result: SoloRecord = { id: runId.current, mode: view.mode, version: view.mode === 'defense' ? DEFENSE_RULES.version : 1, completedAt: new Date().toISOString(),
       success: view.mode === 'defense' ? view.totals.killed : self.reduce((sum, p) => sum + p.kos, 0),
       missed: view.mode === 'defense' ? view.totals.passed + view.totals.unresolved : 0,
       falls: view.mode === 'defense' ? view.runner.falls : self.reduce((sum, p) => sum + p.falls, 0),
@@ -176,12 +181,12 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
       {saved && <button className="treadmill-game__cta" onClick={() => start(saved.state, saved.id)}><Play size={20} /> 디펜스 {saved.state.wave}웨이브 이어하기</button>}
       {modes.map(m => { const best = bestSoloRecord(records, m); return <button key={m} className="solo-party__mode" onClick={() => start(m === 'push' ? newSoloPush() : newSoloDefense())}>
         <PartyIcon id={m === 'push' ? 'track-island' : 'upgrade-core'} fallback={m === 'push' ? <Swords /> : <Shield />} />
-        <span><strong>{titles[m]}</strong><span>{m === 'push' ? '컴퓨터와 90초 × 2라운드' : '시설을 짓고 지키는 60초 × 3웨이브'}</span>
+        <span><strong>{titles[m]}</strong><span>{m === 'push' ? '컴퓨터와 90초 × 2라운드' : '시설을 짓고 지키는 최대 60초 × 3웨이브'}</span>
           <small>{best ? m === 'push' ? `최고 기록 · 시리즈 승점 ${best.wins}/4 · 밀어냄 ${best.success}` : `최고 기록 · 놓친 적 ${best.missed}/48 · 낙하 ${best.falls}` : m === 'push' ? '트랙 → 커브 · 시간 끝까지 무한 리젠' : '직접 뛰며 밀치기 · 예산으로 시설 강화'}</small></span>
       </button> })}
       <button className="treadmill-game__ghost" onClick={onFriends}>친구와 밀어내기</button>
       {records.length > 0 && <details className="solo-party__history"><summary>최근 도전 기록 {Math.min(5, records.length)}판</summary>
-        <ol>{records.slice(-5).reverse().map(r => <li key={r.id}><strong>{titles[r.mode]}</strong><span>{r.mode === 'defense' ? `막은 적 ${r.success}/48 · 놓친 적 ${r.missed}` : `승점 ${r.wins}/4 · 밀어냄 ${r.success}`} · 낙하 {r.falls}회</span><small>{new Date(r.completedAt).toLocaleString('ko-KR')}</small></li>)}</ol>
+        <ol>{records.slice(-5).reverse().map(r => <li key={r.id}><strong>{titles[r.mode]}{r.mode === 'defense' && r.version !== DEFENSE_RULES.version ? ' · 이전 규칙' : ''}</strong><span>{r.mode === 'defense' ? `막은 적 ${r.success}/48 · 놓친 적 ${r.missed}` : `승점 ${r.wins}/4 · 밀어냄 ${r.success}`} · 낙하 {r.falls}회</span><small>{new Date(r.completedAt).toLocaleString('ko-KR')}</small></li>)}</ol>
       </details>}
       <p className="solo-party__note">기록은 이 기기의 최근 20판만 보관해요. 같은 종목·규칙끼리 비교하며 친구 순위와 훈련 기록에는 들어가지 않아요.</p>
     </div>}
@@ -194,8 +199,12 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
       <button className="treadmill-game__cta" onClick={begin}>{view.phase === 'ready' ? '1라운드 시작' : '2라운드 시작'}</button>
     </div>}
     {preparation && <div className="solo-party__panel">
+      <div className="solo-party__enemy-guide" aria-label="적 종류">
+        <span><DefenseIcon id="normal" />일반</span><span><DefenseIcon id="rush" />빠른 돌진</span><span><DefenseIcon id="armor" />밀쳐서 껍질 깨기</span>
+      </div>
       <h2>{preparation.wave}웨이브 준비</h2>
-      <p>{preparation.wave === 1 ? '먼지 덩어리 12마리' : preparation.wave === 2 ? '돌진형 합류 · 커브에서 16마리' : '단단형 합류 · 20마리 최종 방어'}<br />놓친 적을 줄이세요. 기지가 무너져도 세 웨이브 끝까지 계속돼요.</p>
+      <p>{preparation.wave === 1 ? '12마리 · 껍질 적 1마리' : preparation.wave === 2 ? '16마리 · 돌진 적 4마리와 껍질 적 2마리' : '20마리 · 돌진 적 4마리와 껍질 적 4마리'}<br />놓친 적을 줄이세요. 모두 처리하면 바로 다음 단계로 넘어가요.</p>
+      <p><strong>껍질은 두 번 눌러 깨세요.</strong> 껍질 적은 공 피해를 85% 막아요. 가까이에서 밀치면 껍질이 깨져 발사기가 온전히 피해를 줘요. 바람으로 늦추면 접근할 시간이 늘어나요.</p>
       {preparation.wave > 1 && <p>지금까지 막은 적 {preparation.totals.killed} · 놓친 적 {preparation.totals.passed + preparation.totals.unresolved} · 낙하 {preparation.runner.falls}</p>}
       {preparation.wave > 1 && <DefenseRecap reviews={reviews} expected={preparation.wave - 1} />}
       <strong className="solo-party__budget">남은 예산 {preparation.budget}개{draft ? ' · 변경 미확정' : ''}</strong>
@@ -204,12 +213,13 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
         const f = preparation.facilities[selected], item = FACILITIES[kind], cost = f ? 4 : 3
         const unavailable = !!f && (f.kind !== kind || f.level === 2)
         return <button key={kind} disabled={unavailable || preparation.budget < cost} onClick={() => edit(kind)}>
+          <DefenseIcon id={kind} />
           <strong>{item.name} {f?.kind === kind ? '강화' : '설치'}</strong><span>{item.detail}</span>
           <small>{f?.kind === kind ? `${item.levels[0]} → ${item.levels[1]}` : item.levels[0]} · {unavailable ? f?.kind === kind ? '최대 레벨' : '다른 칸 선택' : `${cost}개 필요`}</small>
         </button>
       })}</div>
       {draft && <button className="treadmill-game__ghost" onClick={() => setDraft(null)}><RotateCcw size={16} /> 이번 변경 취소</button>}
-      <p className="solo-party__note">첫 예산 6개 · 다음 웨이브마다 +4개. 길 위 보급품은 회복약이 아니라 시설 예산 +1개이며, 웨이브마다 최대 2개예요. 보급 깃발은 근처에서 손을 놓았을 때 회복을 도와요.</p>
+      <p className="solo-party__note">첫 예산 6개 · 다음 웨이브마다 +4개. 1·2웨이브의 건설 재료는 다음 준비에서 쓸 예산 +1개이며 각 2개까지 모을 수 있어요. 마지막 웨이브에는 나오지 않아요. 보급 깃발 근처에서 손을 놓으면 밀치기에 쓸 에너지가 더 빨리 회복돼요.</p>
       <Controls />
       <button className="treadmill-game__cta" onClick={begin}>배치 확정하고 {preparation.wave}웨이브 시작</button>
       {preparation.facilities.every(f => !f) && <small>아무것도 설치하지 않으면 공 발사기 1개를 3예산으로 설치해요.</small>}
@@ -233,7 +243,7 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
       <div className="arena-hints">꾹 달리기 · ↗ 점프 · 두 번 밀치기</div>
     </div>}
     {view?.phase === 'finished' && <div className="solo-party__panel">
-      <PartyIcon id="upgrade-core" size={80} /><h2>{view.mode === 'push' ? '두 라운드 완주!' : '세 웨이브 완주!'}</h2>
+      {view.mode === 'defense' ? <DefenseIcon id="finish-gate" size={96} /> : <PartyIcon id="upgrade-core" size={80} />}<h2>{view.mode === 'push' ? '두 라운드 완주!' : '세 웨이브 완주!'}</h2>
       {view.mode === 'push' ? <>
         <strong className="solo-party__result">시리즈 승점 {pushSeriesPoints(view.results, 'you')} : {pushSeriesPoints(view.results, 'bot')}</strong>
         <p>{pushSeriesPoints(view.results, 'you') > pushSeriesPoints(view.results, 'bot') ? '연습 상대에게 승리했어요.' : pushSeriesPoints(view.results, 'you') === pushSeriesPoints(view.results, 'bot') ? '공동 순위예요. 다음에는 낙하를 줄여보세요.' : '다음 목표: 상대가 가까워질 때 밀치고, 공격은 점프로 피하세요.'}</p>

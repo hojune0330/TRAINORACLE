@@ -19,7 +19,7 @@ export function finishDefenseReview(start: ReturnType<typeof beginDefenseReview>
 }
 /** No invented baseline: exclude this run, other modes and incompatible rule versions. */
 export function previousBestMessage(records: SoloRecord[], current: SoloRecord) {
-  const best = bestSoloRecord(records.filter(r => r.id !== current.id && r.version === current.version), current.mode)
+  const best = bestSoloRecord(records.filter(r => r.id !== current.id), current.mode, current.version)
   if (!best) return '첫 완주 기록이에요. 다음 판부터 같은 종목의 이전 최고 기록과 비교해요.'
   if (current.mode === 'defense') {
     const d = current.missed - best.missed

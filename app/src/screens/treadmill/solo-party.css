@@ -13,6 +13,12 @@
 .solo-party__builds { display: grid; gap: 8px; }
 .solo-party__builds button { display: grid; gap: 4px; text-align: left; min-height: 80px; border: 2px solid var(--game-outline); border-radius: 12px; padding: 12px; color: var(--game-ink); background: var(--game-panel); }
 .solo-party__builds button:disabled { opacity: .55; }
+.solo-party__builds button:has(.solo-party__art) { grid-template-columns: 64px minmax(0, 1fr); }
+.solo-party__builds .solo-party__art { grid-row: 1 / 4; align-self: center; }
+.solo-party__art { object-fit: contain; flex-shrink: 0; }
+.solo-party__panel > .solo-party__art { justify-self: center; }
+.solo-party__enemy-guide { display: flex; justify-content: space-around; gap: 8px; }
+.solo-party__enemy-guide > span { display: grid; justify-items: center; gap: 4px; text-align: center; font-size: 12px; line-height: 1.5; }
 .solo-party__builds strong { font-size: 16px; }
 .solo-party__builds small { font-size: 13px; }
 .solo-party__notice { margin: 12px; padding: 12px; border-radius: 12px; background: var(--game-panel); color: var(--game-ink); line-height: 1.5; }

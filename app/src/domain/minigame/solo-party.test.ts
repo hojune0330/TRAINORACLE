@@ -116,7 +116,8 @@ describe('solo storage boundaries', () => {
     const latest = readSoloRecords(storage)[19]!
     storeSoloRecord(storage, latest)
     const records = readSoloRecords(storage)
-    expect(records).toHaveLength(20); expect(bestSoloRecord(records, 'defense')!.missed).toBe(4)
+    expect(records).toHaveLength(20); expect(bestSoloRecord(records, 'defense', 1)!.missed).toBe(4)
+    expect(bestSoloRecord(records, 'defense')).toBeUndefined()
     expect(records.filter(r => r.id === latest.id)).toHaveLength(1)
     expect(bestSoloRecord(records, 'push')!.success).toBe(23)
     expect(() => saveSoloCheckpoint({ ...storage, setItem: () => { throw new Error('quota') } }, newSoloDefense(), 'x')).toThrow('quota')

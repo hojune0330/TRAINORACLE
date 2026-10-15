@@ -1,0 +1,105 @@
+{
+  "date": "2026-10-15",
+  "timezone": "Asia/Seoul",
+  "tool": "Tripo Studio",
+  "model": "H3.1",
+  "plan": "Paid",
+  "privacy": "private",
+  "seed": null,
+  "seedNote": "Not exposed in Studio UI",
+  "credits": {
+    "start": 2425,
+    "spent": 200,
+    "remainingLastObserved": 2225,
+    "apiBalance": 0,
+    "newPayment": 0
+  },
+  "assets": [
+    {
+      "id": "cannon",
+      "taskId": "51063ad6-7231-4dfd-ac21-86ddb2fcd5fa",
+      "studioUrl": "https://studio.tripo3d.ai/ko/workspace/generate/51063ad6-7231-4dfd-ac21-86ddb2fcd5fa",
+      "prompt": "A single original minimalist toy ball launcher turret for a friendly running defense mobile game. Squat rounded teal base, one thick cream barrel angled slightly upward pointing right, big golden ball visible at the muzzle, two chunky simple feet. Very simple silhouette, three large color areas, smooth matte plastic, almost no surface detail, no screws, no text, no logo, no scenery, no platform. Easily readable as a small 64 pixel game icon. Whole object isolated, game ready prop.",
+      "cost": 25,
+      "generation": "complete",
+      "sourceDownload": "complete",
+      "runtime": "new-v4-render"
+    },
+    {
+      "id": "fan",
+      "taskId": "37628cb7-1d11-4c85-bc2b-c0b6b0c69c87",
+      "studioUrl": "https://studio.tripo3d.ai/ko/workspace/generate/37628cb7-1d11-4c85-bc2b-c0b6b0c69c87",
+      "prompt": "A single original minimalist toy wind fan device for a friendly mobile running defense game. Three very thick rounded sky blue blades, small cream circular hub, short teal stand with two chunky feet. Big readable silhouette, smooth matte plastic, only three flat color areas, no cage, no screws, no lettering, no floor or scenery. Game prop isolated.",
+      "cost": 25,
+      "generation": "complete",
+      "sourceDownload": "complete",
+      "runtime": "new-v4-render"
+    },
+    {
+      "id": "flag",
+      "taskId": "0328ca2e-a6f9-4969-9a24-65377a5b216e",
+      "studioUrl": "https://studio.tripo3d.ai/ko/workspace/generate/0328ca2e-a6f9-4969-9a24-65377a5b216e",
+      "prompt": "A single original minimalist recovery flag station for a friendly running defense mobile game. Short cream post on a squat green rounded base, one thick teal flag with a simple yellow lightning symbol, one small water flask attached. Very simple toy geometry, three flat matte colors, no text, no fine detail, no scenery. Easy to read at 64 pixels.",
+      "cost": 25,
+      "generation": "complete",
+      "sourceDownload": "complete",
+      "runtime": "new-v4-render"
+    },
+    {
+      "id": "normal",
+      "taskId": "f2af54b1-b942-4e19-9814-28cc84f9830b",
+      "studioUrl": "https://studio.tripo3d.ai/ko/workspace/generate/f2af54b1-b942-4e19-9814-28cc84f9830b",
+      "prompt": "A single original tiny dust creature enemy for a friendly mobile running defense game. One round sandy ochre puff body with three large rounded lobes, two large dark oval eyes, two stubby feet. Cute determined expression, no hair strands, no fingers, no clothing, no outlines, no text, no scenery, no platform. Extremely simple smooth matte toy geometry and flat colors.",
+      "cost": 25,
+      "generation": "complete",
+      "sourceDownload": "complete",
+      "runtime": "new-v4-render"
+    },
+    {
+      "id": "rush",
+      "taskId": "9372d83f-a189-4c72-b110-dc4d77c1247a",
+      "studioUrl": "https://studio.tripo3d.ai/ko/workspace/generate/9372d83f-a189-4c72-b110-dc4d77c1247a",
+      "prompt": "A single original tiny coral red comet creature enemy for a friendly running defense game. Smooth teardrop body pointing left, two large dark oval eyes, two stubby feet, one big cream swept back fin. Extremely simple matte toy geometry and flat colors, no hair strands, no fingers, no lettering, no scenery, no base.",
+      "cost": 25,
+      "generation": "complete",
+      "sourceDownload": "pending-browser-reconnect",
+      "runtime": "reused-v1-render"
+    },
+    {
+      "id": "armor",
+      "taskId": "80dde7ff-b40e-4f82-9a8e-f32f8720d5ac",
+      "studioUrl": "https://studio.tripo3d.ai/ko/workspace/generate/80dde7ff-b40e-4f82-9a8e-f32f8720d5ac",
+      "prompt": "A single original tiny armored dust creature enemy for a friendly running defense game. Squat cream round body with two dark oval eyes and two stubby feet. One thick slate blue turtle shell with a bold golden belt and one large zigzag crack groove across the front. Extremely simple smooth matte toy geometry, three flat colors, no fine details, no text, no scenery, no base.",
+      "cost": 25,
+      "generation": "complete",
+      "sourceDownload": "pending-browser-reconnect",
+      "runtime": "reused-v1-render"
+    },
+    {
+      "id": "base",
+      "taskId": "abca1c7f-30df-4593-9893-3ad3bb48556e",
+      "studioUrl": "https://studio.tripo3d.ai/ko/workspace/generate/abca1c7f-30df-4593-9893-3ad3bb48556e",
+      "prompt": "A single original friendly toy defense base beacon for a mobile running game. Squat cream cylinder on three teal chunky feet. Three large sky blue shield panels around the cylinder and one yellow circular cap. Extremely simple smooth matte toy geometry, three broad colors, no letters, no wires, no scenery.",
+      "cost": 25,
+      "generation": "complete",
+      "sourceDownload": "complete",
+      "runtime": "new-v4-render"
+    },
+    {
+      "id": "finish-gate",
+      "taskId": "ee1027bd-13c1-4127-843f-78f1a4915bb2",
+      "studioUrl": "https://studio.tripo3d.ai/ko/workspace/generate/ee1027bd-13c1-4127-843f-78f1a4915bb2",
+      "prompt": "A single original miniature finish line arch for a colorful mobile running game. Two thick teal cylindrical posts joined by a cream rounded top beam. Five large alternating yellow and cream rectangles and one big gold star centered on the beam. Smooth matte toy geometry, simple chunky silhouette, no text, no logos, no tiny details, isolated with no scenery.",
+      "cost": 25,
+      "generation": "complete",
+      "sourceDownload": "complete",
+      "runtime": "new-v4-render"
+    }
+  ],
+  "remainingPlan": {
+    "models": 89,
+    "credits": 2225,
+    "status": "not-submitted",
+    "reason": "Repeated browser control disconnects"
+  }
+}
