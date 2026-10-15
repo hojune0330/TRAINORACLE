@@ -1,0 +1,322 @@
+{
+  "version": 1,
+  "status": "asset-ready-not-gameplay-integrated",
+  "icons": {
+    "file": "icons.webp",
+    "size": [
+      768,
+      512
+    ],
+    "sha256": "03833a4e23ad1aedfbb4db3511575f98e7b37ca928f943dcbf2d81d0c9731fb5"
+  },
+  "assets": [
+    {
+      "id": "jump-pad",
+      "label": "점프 발판",
+      "source": {
+        "file": "jump-pad.glb",
+        "bytes": 790516,
+        "sha256": "a3ccf426c7019c1b67879e554d2d934b361da84fa3814e54afc97a6a6a0b5bed",
+        "triangles": 9842
+      },
+      "working": {
+        "file": "jump-pad.glb",
+        "bytes": 159852,
+        "sha256": "842ca7855e5eb21357544b9d334967063ddb8a6944acb65c38ee712442c25b5a",
+        "triangles": 2596
+      },
+      "views": [
+        {
+          "kind": "world",
+          "rect": [
+            0,
+            0,
+            256,
+            256
+          ]
+        },
+        {
+          "kind": "icon",
+          "rect": [
+            0,
+            256,
+            256,
+            256
+          ]
+        }
+      ],
+      "effect": {
+        "file": "jump-pad-fx.webp",
+        "sha256": "b9fe8eaa3e553997fce149ff7574019639d9fe95225c7c5a1a3151a84e1bd7e5",
+        "frames": [
+          [
+            0,
+            0,
+            256,
+            256
+          ],
+          [
+            256,
+            0,
+            256,
+            256
+          ],
+          [
+            512,
+            0,
+            256,
+            256
+          ],
+          [
+            768,
+            0,
+            256,
+            256
+          ],
+          [
+            0,
+            256,
+            256,
+            256
+          ],
+          [
+            256,
+            256,
+            256,
+            256
+          ],
+          [
+            512,
+            256,
+            256,
+            256
+          ],
+          [
+            768,
+            256,
+            256,
+            256
+          ]
+        ],
+        "durationMs": 640,
+        "loop": false,
+        "pivot": [
+          128,
+          128
+        ],
+        "localAuthored": [
+          "pulse",
+          "ring",
+          "sparkles"
+        ],
+        "reducedMotion": "use static icon; skip ring and sparkles"
+      }
+    },
+    {
+      "id": "supply-capsule",
+      "label": "보급 캡슐",
+      "source": {
+        "file": "supply-capsule.glb",
+        "bytes": 704636,
+        "sha256": "39268be7d39c3c7126e80137913f502270b3e46b64dcd7d454e72da34695fabc",
+        "triangles": 9612
+      },
+      "working": {
+        "file": "supply-capsule.glb",
+        "bytes": 104476,
+        "sha256": "b2d764ee5f2cf41e7818def42ef7e70ff6889a2b90cfe1d6dae66c79d132d00b",
+        "triangles": 2598
+      },
+      "views": [
+        {
+          "kind": "world",
+          "rect": [
+            256,
+            0,
+            256,
+            256
+          ]
+        },
+        {
+          "kind": "icon",
+          "rect": [
+            256,
+            256,
+            256,
+            256
+          ]
+        }
+      ],
+      "effect": {
+        "file": "supply-capsule-fx.webp",
+        "sha256": "d2e8cc380c16c1868d6468641cdd3ee3f12630209c15970a96a9812494518bd1",
+        "frames": [
+          [
+            0,
+            0,
+            256,
+            256
+          ],
+          [
+            256,
+            0,
+            256,
+            256
+          ],
+          [
+            512,
+            0,
+            256,
+            256
+          ],
+          [
+            768,
+            0,
+            256,
+            256
+          ],
+          [
+            0,
+            256,
+            256,
+            256
+          ],
+          [
+            256,
+            256,
+            256,
+            256
+          ],
+          [
+            512,
+            256,
+            256,
+            256
+          ],
+          [
+            768,
+            256,
+            256,
+            256
+          ]
+        ],
+        "durationMs": 640,
+        "loop": false,
+        "pivot": [
+          128,
+          128
+        ],
+        "localAuthored": [
+          "pulse",
+          "ring",
+          "sparkles"
+        ],
+        "reducedMotion": "use static icon; skip ring and sparkles"
+      }
+    },
+    {
+      "id": "upgrade-core",
+      "label": "강화 코어",
+      "source": {
+        "file": "upgrade-core.glb",
+        "bytes": 700276,
+        "sha256": "7dd4ba337842def9d9e15fc51d41626558763a894a9c528ae4a41ac552d3474c",
+        "triangles": 9290
+      },
+      "working": {
+        "file": "upgrade-core.glb",
+        "bytes": 103120,
+        "sha256": "e8a3e583841f8d89f13c4f66af5f549381769eb0acd14d024e500d195d2e7503",
+        "triangles": 2594
+      },
+      "views": [
+        {
+          "kind": "world",
+          "rect": [
+            512,
+            0,
+            256,
+            256
+          ]
+        },
+        {
+          "kind": "icon",
+          "rect": [
+            512,
+            256,
+            256,
+            256
+          ]
+        }
+      ],
+      "effect": {
+        "file": "upgrade-core-fx.webp",
+        "sha256": "ee536ce8c865be2f25daf1d195617945c6bbaaa8345c17f1995215649fb19c19",
+        "frames": [
+          [
+            0,
+            0,
+            256,
+            256
+          ],
+          [
+            256,
+            0,
+            256,
+            256
+          ],
+          [
+            512,
+            0,
+            256,
+            256
+          ],
+          [
+            768,
+            0,
+            256,
+            256
+          ],
+          [
+            0,
+            256,
+            256,
+            256
+          ],
+          [
+            256,
+            256,
+            256,
+            256
+          ],
+          [
+            512,
+            256,
+            256,
+            256
+          ],
+          [
+            768,
+            256,
+            256,
+            256
+          ]
+        ],
+        "durationMs": 640,
+        "loop": false,
+        "pivot": [
+          128,
+          128
+        ],
+        "localAuthored": [
+          "pulse",
+          "ring",
+          "sparkles"
+        ],
+        "reducedMotion": "use static icon; skip ring and sparkles"
+      }
+    }
+  ],
+  "payloadBytes": 167586,
+  "decodedBytes": 7864320
+}
