@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 // 계정 잠금 해제(releaseSyncOwner) 계약 테스트 — Q4 도메인 층.
 //
 // 왜 이 파일이 필요한가:
@@ -42,8 +43,8 @@ function store(entry: PostSessionEntry): void {
   if (!result.ok) throw new Error(`픽스처가 스키마에 거부됐다: ${entry.id}`)
 }
 
-beforeEach(() => {
-  window.localStorage.clear()
+beforeEach(async () => {
+  window.localStorage.clear(); await initializeCanonicalJournalFixture();
 })
 
 afterEach(() => {

@@ -26,7 +26,7 @@ afterEach(() => {
 
 async function openFirstSessionEvidence() {
   const user = userEvent.setup()
-  await user.click(within(screen.getByRole("group", { name: "계획 일정 보기" })).getByRole("button", { name: "목록" }))
+  await user.click(within(screen.getByRole("group", { name: "계획 일정 보기" })).getByRole("button", { name: "하루씩" }))
   const list = screen.getByRole("list", { name: "날짜별 계획 미리보기" })
   expect(list).toBeVisible()
   const firstDay = within(list).getByRole("group", { name: "7월 24일 금요일 · 훈련 1개" })

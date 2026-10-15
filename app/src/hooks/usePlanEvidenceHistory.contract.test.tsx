@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import React from "react"
 import { act, cleanup, render, renderHook, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
@@ -29,8 +30,8 @@ function expectExplicitEffort(panel: HTMLElement, value: number): void {
 }
 const savedDialog = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const savedScroll = Object.getOwnPropertyDescriptor(Element.prototype, "scrollTo")
-beforeEach(() => {
-  runtime.enabled = true; localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount("synthetic-a")
+beforeEach(async () => {
+  runtime.enabled = true; localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount("synthetic-a")
   resetAccountJournalProjection("synthetic-a"); setAccountJournalProjectionStatus("synthetic-a", "READY")
   vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-10-01T03:00:00Z"))
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value: function (this: HTMLDialogElement) { this.setAttribute("open", "") } })

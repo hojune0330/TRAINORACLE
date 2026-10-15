@@ -13,7 +13,8 @@ describe("active plan adaptation entry", () => {
     render(<ActivePlan state={{ ...state, progress: [{ sessionDay: 1, sessionSlot: "AM", state: "COMPLETED" }] }}
       onProgress={vi.fn()} onNextFrame={next} onActivateNextFrame={activate} onCheckDetailedExecution={vi.fn()} />)
     const primary = screen.getByRole("button", { name: "다음 계획안 만들기" })
-    expect(primary.closest("details")).toBeNull()
+    expect(primary.closest("details")).toHaveAttribute("open")
+    expect(primary).toBeVisible()
     primary.click()
     expect(next).toHaveBeenCalledTimes(1)
     expect(activate).not.toHaveBeenCalled()

@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   archiveAndClearActivePlan,
@@ -13,6 +14,7 @@ import {
 } from "./plan-beta-store"
 import type { PlanBetaState } from "./plan-beta-store"
 import { stateFixture } from "./plan-beta-store.test-fixture"
+import { canonicalJournalLegacySnapshots } from "./canonical-journal-storage"
 import { PLAN_BETA_MUTATION_LOCK_NAME } from "./plan-mutation-lock"
 import { deriveCandidateId } from "@impl/plan-generator/candidate-identity"
 import { generatePlanFromDraft, selectPlanForActivation } from "./plan-beta-flow"
@@ -46,10 +48,11 @@ function multiPlanPacketFixture() {
 }
 
 describe("plan beta local store", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     setActiveLocalAccount(null)
     window.localStorage.clear()
     window.sessionStorage.clear()
+    await initializeCanonicalJournalFixture()
     locksDescriptor = Object.getOwnPropertyDescriptor(navigator, "locks")
     Object.defineProperty(navigator, "locks", {
       configurable: true,
@@ -622,6 +625,28 @@ describe("plan beta local store", () => {
   })
 
   it("retains only structured progress as next-frame continuity", () => {
+    // Bootstrap originals record legacy key names with null values, not private content.
+    const originalsBefore = canonicalJournalLegacySnapshots(window.localStorage)
+    expect(originalsBefore.length).toBeGreaterThan(0)
+    for (const original of originalsBefore) {
+      expect(original.values).toContainEqual(["trainoracle.private-memo.v1", null])
+      expect(original.values.every(([, raw]) => raw === null)).toBe(true)
+    }
+    const originalBytesBefore = originalsBefore.map(original => (
+      [original.key, window.localStorage.getItem(original.key)] as const
+    ))
+    const storageEntries = (storage: Storage): readonly (readonly [string, string | null])[] => (
+      Array.from({ length: storage.length }, (_, index) => {
+        const key = storage.key(index)!
+        return [key, storage.getItem(key)] as const
+      }).sort(([left], [right]) => left.localeCompare(right))
+    )
+    const localBefore = storageEntries(window.localStorage)
+    const sessionBefore = storageEntries(window.sessionStorage)
+    const mutableLocalKeys = new Set([
+      activePlanBetaStorageKey(), "trainoracle.plan-beta.history.v1", "trainoracle.plan-cloud-archive.v1",
+    ])
+    const mutableSessionKeys = new Set(["trainoracle.plan-beta.previous-intake.v1"])
     const generated = generatePlanFromDraft(stateFixture().intake, "NO_KNOWN_RISK")
     if (generated.kind !== "generated") throw new Error("Expected generated plan")
     const selected = selectPlanForActivation(generated.generated.candidates[0].candidateId,
@@ -652,7 +677,26 @@ describe("plan beta local store", () => {
         { state: "PAIN_CHECKIN", count: 1 },
       ],
     })
-    expect(JSON.stringify(window.localStorage)).not.toMatch(/memo|symptom/u)
+    // These are the plan archive operation's persisted envelopes, not migration metadata.
+    const historyBytes = window.localStorage.getItem("trainoracle.plan-beta.history.v1")
+    const intakeBytes = window.sessionStorage.getItem("trainoracle.plan-beta.previous-intake.v1")
+    expect(historyBytes).not.toBeNull()
+    expect(intakeBytes).toBe(JSON.stringify(state.intake))
+    expect(window.localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
+    // The existing local archive marker stores only this exact candidate ID, even with online backup OFF.
+    const archiveMarkerBytes = window.localStorage.getItem("trainoracle.plan-cloud-archive.v1")
+    expect(archiveMarkerBytes).toBe(JSON.stringify([state.activePlan.candidateId]))
+    expect(JSON.stringify([historyBytes, intakeBytes, archiveMarkerBytes, loadPreviousContinuity()]))
+      .not.toMatch(/memo|symptom/u)
+    // Every non-plan key/value stays byte-identical; unexpected new persistence must fail.
+    expect(storageEntries(window.localStorage).filter(([key]) => !mutableLocalKeys.has(key)))
+      .toEqual(localBefore.filter(([key]) => !mutableLocalKeys.has(key)))
+    expect(storageEntries(window.sessionStorage).filter(([key]) => !mutableSessionKeys.has(key)))
+      .toEqual(sessionBefore.filter(([key]) => !mutableSessionKeys.has(key)))
+    expect(canonicalJournalLegacySnapshots(window.localStorage)).toEqual(originalsBefore)
+    for (const [key, bytes] of originalBytesBefore) {
+      expect(window.localStorage.getItem(key)).toBe(bytes)
+    }
   })
 
   it("keeps AM and PM progress separate for an explicitly selected two-a-day plan", () => {

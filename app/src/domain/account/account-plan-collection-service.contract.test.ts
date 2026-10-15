@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { webcrypto } from "node:crypto"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import type { SupabaseClient } from "@supabase/supabase-js"
@@ -9,13 +10,13 @@ import { joinAccountPlanCollection, type AccountPlanSnapshotPart, type AccountPl
 import { createAccountPlanCollectionService, type AccountPlanCollectionServiceInput } from "./account-plan-collection-service"
 import { COLLECTION_OWNER, collectionMemoryBuffers, collectionServer } from "./account-plan-collection.test-support"
 
-beforeEach(() => { vi.stubGlobal("crypto", webcrypto); localStorage.clear(); vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date(TODAY.getTime() + 120_000)) })
+beforeEach(async () => { vi.stubGlobal("crypto", webcrypto); localStorage.clear(); await initializeCanonicalJournalFixture(); vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date(TODAY.getTime() + 120_000)) })
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks() })
 const tick = async () => { await new Promise<void>(resolve => setTimeout(resolve, 0)) }
-function fixture(count = 3, version: 3 | 4 | 5 | 6 = 3) {
+async function fixture(count = 3, version: 3 | 4 | 5 | 6 = 3) {
   const doc = emptyAccountPlanDocument()
   for (let i = 0; i < count; i++) {
-    localStorage.clear()
+    localStorage.clear(); await initializeCanonicalJournalFixture();
     const entry = accountPlanEntry(accountPlanPacketFixture(version, new Date(TODAY.getTime() + i * 1000)))
     if (i < count - 1) entry.archivedAt = new Date().toISOString()
     doc.data.plans.push(entry)
@@ -33,7 +34,7 @@ const select = (packet = accountPlanPacketFixture(3)) => ({ kind: "SELECT" as co
 
 it.each(["service-yield", "buffer-read", "preparation-before-write", "before-external-commit"] as const)(
   "preserves the current plan when an archive review expires at %s", async phase => {
-    const document = fixture(1)
+    const document = (await fixture(1))
     let reviewCurrent = true, invalidate = true, archiving = false
     const { service, server, stores } = setup(collectionServer(document), { yieldTask: async () => {
       if (phase === "service-yield" && archiving && invalidate) { reviewCurrent = false; invalidate = false }
@@ -93,7 +94,7 @@ it.each(["service-yield", "buffer-read", "preparation-before-write", "before-ext
 )
 
 it("requires a fresh explicit archive review after reopen without replacing the durable operation", async () => {
-  const document = fixture(1), { service, server, stores } = setup(collectionServer(document))
+  const document = (await fixture(1)), { service, server, stores } = setup(collectionServer(document))
   expect(await service.hydrate()).toBe(true)
   server.failStages(true)
   expect(await service.mutate({ kind: "ARCHIVE", planId: document.data.currentPlanId!, freshReview: () => true },
@@ -118,7 +119,7 @@ it("requires a fresh explicit archive review after reopen without replacing the 
 })
 
 it("retains a reviewed archive when its explicit retry expires during the transport wait", async () => {
-  const document = fixture(1), { service, server, stores } = setup(collectionServer(document))
+  const document = (await fixture(1)), { service, server, stores } = setup(collectionServer(document))
   expect(await service.hydrate()).toBe(true)
   server.failStages(true)
   expect(await service.mutate({ kind: "ARCHIVE", planId: document.data.currentPlanId!, freshReview: () => true },
@@ -222,7 +223,7 @@ it.each(["missing", "rejected"])("production lock %s never falls back to uncoord
 })
 
 it("hydrates exactly the current two parts out of 18 and exposes an explicit partial confirmed projection", async () => {
-  const doc = fixture(18), { service, server } = setup(collectionServer(doc))
+  const doc = (await fixture(18)), { service, server } = setup(collectionServer(doc))
   expect(await service.hydrate()).toBe(true)
   expect(server.client.readPart).toHaveBeenCalledTimes(2)
   expect(server.client.readLegacy).not.toHaveBeenCalled()
@@ -237,7 +238,7 @@ it("hydrates exactly the current two parts out of 18 and exposes an explicit par
 })
 
 it("an index without a current pointer never scans archived parts on hydrate", async () => {
-  const doc = fixture(); doc.data.plans.at(-1)!.archivedAt = new Date().toISOString(); doc.data.currentPlanId = null
+  const doc = (await fixture()); doc.data.plans.at(-1)!.archivedAt = new Date().toISOString(); doc.data.currentPlanId = null
   const { service, server } = setup(collectionServer(doc))
   expect(await service.hydrate()).toBe(true)
   expect(server.client.readPart).not.toHaveBeenCalled()
@@ -271,7 +272,7 @@ it("repairs a previously stored non-current V2 entry into visible history", asyn
 })
 
 it("deduplicates history requests, yields per entry and keeps READY/current visible throughout", async () => {
-  const doc = fixture(), states: ReturnType<ReturnType<typeof createAccountPlanCollectionService>["snapshot"]>[] = []
+  const doc = (await fixture()), states: ReturnType<ReturnType<typeof createAccountPlanCollectionService>["snapshot"]>[] = []
   const { service, server } = setup(collectionServer(doc), { changed: () => { states.push(service.snapshot()) } })
   await service.hydrate()
   const first = service.loadHistory(), second = service.loadHistory()
@@ -287,7 +288,7 @@ it("deduplicates history requests, yields per entry and keeps READY/current visi
 })
 
 it("failed history reads preserve the confirmed current and are retryable without empty-history substitution", async () => {
-  const doc = fixture(), { service, server } = setup(collectionServer(doc))
+  const doc = (await fixture()), { service, server } = setup(collectionServer(doc))
   await service.hydrate(); const before = service.snapshot().confirmedDocument
   const id = server.index()!.plans[0]!.snapshotId, lost = server.parts.get(id)!
   server.parts.delete(id)
@@ -299,7 +300,7 @@ it("failed history reads preserve the confirmed current and are retryable withou
 })
 
 it("history validates the whole fingerprint without a second physical read pass", async () => {
-  const doc = fixture(), { service, stores } = setup(collectionServer(doc))
+  const doc = (await fixture()), { service, stores } = setup(collectionServer(doc))
   await service.hydrate()
   vi.mocked(stores.parts.buffer.read).mockClear()
   expect(await service.loadHistory()).toBe(true)
@@ -310,7 +311,7 @@ it("history validates the whole fingerprint without a second physical read pass"
 })
 
 it("history rejects an invented whole-document fingerprint despite valid individual entries", async () => {
-  const doc = fixture(), server = collectionServer(doc), original = server.index()!
+  const doc = (await fixture()), server = collectionServer(doc), original = server.index()!
   vi.mocked(server.client.readIndex).mockResolvedValue({ revision: 1,
     index: { ...original, documentFingerprint: `sha256:${"0".repeat(64)}` } })
   const { service } = setup(server)
@@ -322,7 +323,7 @@ it("history rejects an invented whole-document fingerprint despite valid individ
 })
 
 it("cancelled history preserves current and ignores a late failed response before retry", async () => {
-  const doc = fixture(), { service, server } = setup(collectionServer(doc))
+  const doc = (await fixture()), { service, server } = setup(collectionServer(doc))
   await service.hydrate()
   const before = service.snapshot().confirmedDocument
   let reject!: (error: unknown) => void, entered!: () => void
@@ -347,7 +348,7 @@ it("cancelled history preserves current and ignores a late failed response befor
 })
 
 it("cancel during a yielded history pass cannot publish a complete history or change the current plan", async () => {
-  const doc = fixture()
+  const doc = (await fixture())
   let cancel = false
   const { service } = setup(collectionServer(doc), { yieldTask: async () => {
     if (cancel) service.cancelHistory()
@@ -374,7 +375,7 @@ it("never treats failed index or legacy reads as an empty baseline", async () =>
 })
 
 it("preserves legacy view until explicit exact migration, without a monolithic write", async () => {
-  const doc = fixture(), { service, server } = setup()
+  const doc = (await fixture()), { service, server } = setup()
   server.setLegacy(doc, 7)
   expect(await service.hydrate()).toBe(true)
   expect(service.snapshot()).toMatchObject({ migrationRequired: true, historyLoaded: true, totalPlans: 3 })
@@ -388,7 +389,7 @@ it("preserves legacy view until explicit exact migration, without a monolithic w
 })
 
 it("a changed legacy revision conflicts and preserves the staged exact migration", async () => {
-  const doc = fixture(), { service, server, stores } = setup()
+  const doc = (await fixture()), { service, server, stores } = setup()
   server.setLegacy(doc, 1); await service.hydrate(); server.setLegacy(doc, 2)
   expect(await service.migrateLegacy()).toBe("CONFLICT")
   expect(service.snapshot().confirmedDocument).toEqual(doc)
@@ -487,7 +488,7 @@ it("an unsent selection needs fresh review after reopen and cannot trust transpo
   expect(await reopened.retry()).toBe("PENDING")
   expect(server.commits).toHaveLength(0)
   expect(await reopened.retry(() => true)).toBe("ACCOUNT")
-  const independent = setup(collectionServer(fixture(1, 6))).service
+  const independent = setup(collectionServer((await fixture(1, 6)))).service
   await independent.hydrate()
   expect(independent.snapshot().currentPlan).toMatchObject({ kind: "evidence_required", executionAuthority: "NONE" })
 })
@@ -548,7 +549,7 @@ it("captures caller input before queued awaits and refuses stale rendered finger
 
 it.each(["close", "epoch"])("blocks late responses across %s ABA and performs no durable or server write", async mode => {
   let epoch = 0
-  const { service, server, stores } = setup(collectionServer(fixture()), { epoch: () => epoch })
+  const { service, server, stores } = setup(collectionServer((await fixture())), { epoch: () => epoch })
   const read = server.client.readIndex
   vi.mocked(server.client.readIndex).mockImplementationOnce(async () => {
     const response = { index: server.index()!, revision: 1 }
@@ -562,7 +563,7 @@ it.each(["close", "epoch"])("blocks late responses across %s ABA and performs no
 })
 
 it("imports 18 real V6 frames beyond 500k using bounded part records and a compact manifest", async () => {
-  const doc = fixture(18, 6), packets = doc.data.plans.map(materializeAccountPlan)
+  const doc = (await fixture(18, 6)), packets = doc.data.plans.map(materializeAccountPlan)
   const { service, server, stores } = setup(undefined, { online: () => false })
   await service.hydrate()
   expect(new TextEncoder().encode(JSON.stringify(doc)).byteLength).toBeGreaterThan(500_000)
@@ -583,7 +584,7 @@ it("imports 18 real V6 frames beyond 500k using bounded part records and a compa
 }, 120_000)
 
 it("mutating a lazy collection loads all references and retains every historical plan", async () => {
-  const doc = fixture(4), { service } = setup(collectionServer(doc))
+  const doc = (await fixture(4)), { service } = setup(collectionServer(doc))
   await service.hydrate()
   expect(await service.mutate({ kind: "ARCHIVE", planId: doc.data.currentPlanId! }, service.snapshot().fingerprint!)).toBe("ACCOUNT")
   expect(service.snapshot().confirmedDocument?.data.plans).toHaveLength(4)
@@ -591,7 +592,7 @@ it("mutating a lazy collection loads all references and retains every historical
 })
 
 it("deduplicates simultaneous runtime hydration requests", async () => {
-  const { service, server } = setup(collectionServer(fixture()))
+  const { service, server } = setup(collectionServer((await fixture())))
   const one = service.hydrate(), two = service.hydrate()
   expect(one).toBe(two)
   expect(await one).toBe(true)
@@ -648,7 +649,7 @@ it("does not send imports after their caller guard is cancelled during durable s
 })
 
 it("the 101st plan is a structural CAPACITY error, never an eviction", async () => {
-  const doc = fixture(100), { service, server } = setup(collectionServer(doc))
+  const doc = (await fixture(100)), { service, server } = setup(collectionServer(doc))
   await service.hydrate()
   const packet = accountPlanPacketFixture(3, new Date(TODAY.getTime() + 100_000))
   expect(await service.mutate({ kind: "SAVE_HISTORY", packet }, service.snapshot().fingerprint!)).toBe("CAPACITY")

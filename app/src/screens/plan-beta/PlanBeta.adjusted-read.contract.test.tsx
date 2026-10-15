@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 /* LEGACY_11STEP_FLOW: 2026-09 4질문 빠른 흐름 도입으로 옛 인테이크 클릭 순서를 전제한 테스트. 다듬기 경로로 재작성 예정(PR #341 본문). */
 import React from "react"
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
@@ -22,7 +23,7 @@ vi.mock("../../domain/adjusted-plan-progress", async importOriginal => {
     original.saveAdjustedPlanProgress({ ...input, retained: context.retained,
       locks: { request: async (_n, _o, callback) => callback({}) } }) }
 })
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers(); context.retained = [] })
 async function openMethodDetails(slot: "AM" | "PM") {
   const session = screen.getByRole("region", { name: slot === "AM" ? "오전 훈련" : "오후 훈련" })

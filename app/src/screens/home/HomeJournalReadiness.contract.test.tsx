@@ -94,7 +94,9 @@ describe("Home uses the existing owner-scoped calendar readiness", () => {
     render(<Home onWriteLog={vi.fn()} onOpenDay={openDay} onOpenTrends={vi.fn()} />)
     expect(dayButton()).toHaveAccessibleDescription("마지막 확인 기록 1개 · 계정 확인 중")
     expect(document.querySelector(".home-hub__today-complete")).toBeNull()
-    expect(screen.getByRole("button", { name: "훈련량·변화 보기" })).toHaveAccessibleDescription("")
+    // CategoryCard renders its summary as visible child text, not an ARIA description.
+    expect(screen.getByRole("button", { name: "훈련량·변화 보기" })).toHaveTextContent(/^훈련량·변화 보기$/u)
+    expect(screen.queryByText("이번 주 3km · 직접 입력 1건")).toBeNull()
     fireEvent.click(dayButton())
     expect(openDay).toHaveBeenCalledWith(TODAY)
     act(() => {
@@ -103,7 +105,15 @@ describe("Home uses the existing owner-scoped calendar readiness", () => {
     })
     expect(dayButton()).toHaveAccessibleDescription("계정 보관")
     expect(document.querySelector(".home-hub__today-complete")).not.toBeNull()
-    expect(screen.getByRole("button", { name: "훈련량·변화 보기" })).not.toHaveAccessibleDescription("")
+    expect(screen.getByRole("button", { name: "훈련량·변화 보기" })).toHaveTextContent("이번 주 3km · 직접 입력 1건")
+    expect(screen.getByText("이번 주 3km · 직접 입력 1건")).toBeVisible()
+    act(() => {
+      resetAccountJournalProjection(OWNER)
+      setAccountJournalProjectionStatus(OWNER, "READY")
+    })
+    expect(document.querySelector(".home-hub__today-complete")).toBeNull()
+    expect(screen.getByRole("button", { name: "훈련량·변화 보기" })).toHaveTextContent(/^훈련량·변화 보기$/u)
+    expect(screen.queryByText("이번 주 3km · 직접 입력 1건")).toBeNull()
   })
 
   it("keeps a failed latest account check separate from its retained acknowledged day", () => {

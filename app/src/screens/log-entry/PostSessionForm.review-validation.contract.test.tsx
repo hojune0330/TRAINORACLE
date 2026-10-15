@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -7,9 +8,10 @@ import type { PostSessionEntry } from "../../domain/journal-schema"
 import { PostSessionForm } from "./PostSessionForm"
 import { hasPendingBrowserBackLayer } from "../../navigation/browserNavigation"
 
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear()
   sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
   clearSessionRecoveryCode()
 })
 afterEach(async () => {
@@ -139,7 +141,7 @@ describe("PostSession review validation routing", () => {
       frames.set(++nextFrame, callback)
       return nextFrame
     })
-    vi.spyOn(window, "cancelAnimationFrame").mockImplementation(frame => { frames.delete(frame) })
+    const cancelFrame = vi.spyOn(window, "cancelAnimationFrame").mockImplementation(frame => { frames.delete(frame) })
     const user = userEvent.setup()
     const onDone = vi.fn()
     render(<PostSessionForm targetDate="2026-10-08" onDone={onDone} />)
@@ -153,17 +155,25 @@ describe("PostSession review validation routing", () => {
     await user.click(screen.getByRole("button", { name: "메모 수정" }))
     expect(screen.getByRole("heading", { level: 2, name: "오늘 남길 메모" })).toHaveFocus()
 
+    // Capture before user input: pointer/keyboard/input correctly cancel alignment.
+    expect(frames.size).toBeGreaterThan(0)
+    const scheduled = [...frames.entries()]
+    const section = screen.getByRole("heading", { level: 2, name: "오늘 남길 메모" }).closest("section")
+    if (section === null) throw new Error("Expected memo step section")
+    const scrollIntoView = vi.fn()
+    section.scrollIntoView = scrollIntoView
     const textarea = screen.getByRole("textbox", { name: "훈련 메모 내용" })
     await user.click(textarea)
     await user.type(textarea, "synthetic", { skipClick: true })
     expect(textarea).toHaveFocus()
     expect(textarea).toHaveValue("synthetic")
-    expect(frames.size).toBeGreaterThan(0)
+    expect(frames.size).toBe(0)
+    for (const [frame] of scheduled) expect(cancelFrame).toHaveBeenCalledWith(frame)
     await act(async () => {
-      const scheduled = [...frames.values()]
-      frames.clear()
-      for (const callback of scheduled) callback(performance.now())
+      // Even a stale callback delivered after cancellation must not disrupt typing.
+      for (const [, callback] of scheduled) callback(performance.now())
     })
+    expect(scrollIntoView).not.toHaveBeenCalled()
     expect(textarea).toHaveFocus()
     expect(textarea).toHaveValue("synthetic")
     await user.type(textarea, " private draft", { skipClick: true })

@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { beforeEach, describe, expect, it } from "vitest"
 import { generatePlanFromDraft, selectPlanForActivation } from "./plan-beta-flow"
 import { parsePlanBetaState } from "./plan-beta-schema"
@@ -10,7 +11,7 @@ import { resolveCatalogBinding } from "@impl/prescription/catalog-session-bindin
 import { decideSafetyGate } from "@impl/safety-gate/gate"
 import { createEvaluatorFailureSignal } from "@impl/rve/signal"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null) })
 const space = "ACCELERATION_AND_DECELERATION_SPACE"
 function fixture(experienceBand = "EXPERIENCED" as "NEW_TO_RUNNING" | "DEVELOPING" | "EXPERIENCED",
   trainingFocus = "ATP_PC_INTENT" as "ATP_PC_INTENT" | "GLY_INTENT" | "VO2_INTENT" | "LT_INTENT",

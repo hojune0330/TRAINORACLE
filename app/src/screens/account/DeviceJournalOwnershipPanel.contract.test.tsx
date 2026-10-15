@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
@@ -15,8 +16,9 @@ function post(id: string): PostSessionEntry {
   }
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
+  await initializeCanonicalJournalFixture()
   setActiveLocalAccount(null)
 })
 

@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { beforeEach, afterEach, expect, it, vi } from "vitest"
 import { TODAY } from "../prescription-quality-matrix.test-fixtures"
 import { accountPlanPacketFixture } from "./account-plan.test-fixtures"
@@ -11,13 +12,13 @@ import { accountPlanCollectionCommit, prepareAccountPlanCollectionTransfer, read
 const OWNER = "11111111-1111-4111-8111-111111111111", OTHER = "22222222-2222-4222-8222-222222222222"
 const OP = "33333333-3333-4333-8333-333333333333", OP2 = "44444444-4444-4444-8444-444444444444"
 const LEGACY = "55555555-5555-4555-8555-555555555555"
-beforeEach(() => { localStorage.clear(); vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date(TODAY.getTime() + 120_000)) })
+beforeEach(async () => { localStorage.clear(); await initializeCanonicalJournalFixture(); vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date(TODAY.getTime() + 120_000)) })
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks() })
 
-function document(count = 1, version: 3 | 4 | 5 | 6 = 3) {
+async function document(count = 1, version: 3 | 4 | 5 | 6 = 3) {
   const result = emptyAccountPlanDocument()
   for (let i = 0; i < count; i++) {
-    localStorage.clear()
+    localStorage.clear(); await initializeCanonicalJournalFixture();
     const entry = accountPlanEntry(accountPlanPacketFixture(version, new Date(TODAY.getTime() + i * 1000)))
     if (i < count - 1) entry.archivedAt = new Date().toISOString()
     result.data.plans.push(entry)
@@ -25,7 +26,8 @@ function document(count = 1, version: 3 | 4 | 5 | 6 = 3) {
   result.data.currentPlanId = result.data.plans.at(-1)?.planId ?? null
   return result
 }
-function prepared(next = document(), previous: AccountPlanDocument | null = null, operationId = OP) {
+async function prepared(next: AccountPlanDocument | undefined = undefined, previous: AccountPlanDocument | null = null, operationId = OP) {
+  next ??= await document()
   const transfer = prepareAccountPlanCollectionTransfer({ ownerId: OWNER, operationId, expectedRevision: previous ? 1 : 0, previous, next })
   expect(transfer).not.toBeNull()
   return transfer!
@@ -75,15 +77,15 @@ function run(transfer: AccountPlanCollectionTransfer, port: AccountPlanCollectio
   return transferAccountPlanCollection({ transfer, port, scope: () => ({ ownerId: OWNER, epoch: 1 }), freshSelectionReview: () => true, ...overrides })
 }
 
-function archiveTransfer() {
-  const previous = document(), next = structuredClone(previous)
+async function archiveTransfer() {
+  const previous = (await document()), next = structuredClone(previous)
   next.data.plans[0]!.archivedAt = new Date().toISOString()
   next.data.currentPlanId = null
-  return { previous, next, transfer: { ...prepared(next, previous), archiveReviewRequired: true as const } }
+  return { previous, next, transfer: { ...(await prepared(next, previous)), archiveReviewRequired: true as const } }
 }
 
 it("keeps an archive review requirement local and resumes only after fresh review", async () => {
-  const { previous, next, transfer } = archiveTransfer(), server = repository(splitAccountPlanCollection(previous))
+  const { previous, next, transfer } = (await archiveTransfer()), server = repository(splitAccountPlanCollection(previous))
   expect((await run(transfer, server.port, { freshSelectionReview: () => false })).kind).toBe("review_required")
   expect(server.port.commit).not.toHaveBeenCalled()
   expect(server.indices.get(OWNER)?.parts.index.currentPlanId).toBe(previous.data.currentPlanId)
@@ -93,7 +95,7 @@ it("keeps an archive review requirement local and resumes only after fresh revie
 })
 
 it("rechecks an archive review after readback before committing or retrying", async () => {
-  const { previous, transfer } = archiveTransfer(), server = repository(splitAccountPlanCollection(previous))
+  const { previous, transfer } = (await archiveTransfer()), server = repository(splitAccountPlanCollection(previous))
   let fresh = true
   const read = server.port.readPart
   server.port.readPart = vi.fn(async (...args: Parameters<AccountPlanCollectionPort["readPart"]>) => {
@@ -106,7 +108,7 @@ it("rechecks an archive review after readback before committing or retrying", as
 })
 
 it.each(["archive", "selection"] as const)("keeps the final transport guard fresh for a reviewed %s", async kind => {
-  const archive = archiveTransfer(), transfer = kind === "archive" ? archive.transfer : prepared()
+  const archive = (await archiveTransfer()), transfer = kind === "archive" ? archive.transfer : (await prepared())
   const server = repository(kind === "archive" ? splitAccountPlanCollection(archive.previous) : null)
   const commit = server.port.commit
   let fresh = true, invalidate = true
@@ -132,29 +134,29 @@ it.each(["archive", "selection"] as const)("keeps the final transport guard fres
 })
 
 it("recovers an already committed reviewed archive from its exact receipt without a second commit", async () => {
-  const { previous, transfer } = archiveTransfer(), server = repository(splitAccountPlanCollection(previous)), commit = server.port.commit
+  const { previous, transfer } = (await archiveTransfer()), server = repository(splitAccountPlanCollection(previous)), commit = server.port.commit
   server.port.commit = vi.fn(async request => { await commit(request); throw Error("lost ACK") })
   expect((await run(transfer, server.port)).kind).toBe("outcome_unknown")
   expect((await run(transfer, server.port, { freshSelectionReview: () => false })).kind).toBe("committed")
   expect(server.port.commit).toHaveBeenCalledTimes(1)
 })
 
-it("accepts the local archive review marker only on an exact current-plan archive", () => {
-  const { previous, next, transfer } = archiveTransfer()
+it("accepts the local archive review marker only on an exact current-plan archive", async () => {
+  const { previous, next, transfer } = (await archiveTransfer())
   expect(readAccountPlanCollectionTransfer(transfer)).toEqual(transfer)
   for (const marker of [false, null, "true", 1]) expect(readAccountPlanCollectionTransfer({ ...transfer, archiveReviewRequired: marker })).toBeNull()
-  expect(readAccountPlanCollectionTransfer({ ...prepared(), archiveReviewRequired: true })).toBeNull()
-  expect(readAccountPlanCollectionTransfer({ ...prepared(previous, previous), archiveReviewRequired: true })).toBeNull()
+  expect(readAccountPlanCollectionTransfer({ ...(await prepared()), archiveReviewRequired: true })).toBeNull()
+  expect(readAccountPlanCollectionTransfer({ ...(await prepared(previous, previous)), archiveReviewRequired: true })).toBeNull()
   const changed = structuredClone(next)
   changed.data.plans[0]!.progress.push({ sessionDay: 1, sessionSlot: "AM", state: "COMPLETED" })
-  const combined = prepared(changed, previous)
+  const combined = (await prepared(changed, previous))
   expect(readAccountPlanCollectionTransfer({ ...combined, archiveReviewRequired: true })).toBeNull()
 })
 
 it("stages a prepared collection with its original consent revision after a later regrant",async()=>{
-  const next=document()
+  const next=(await document())
   rememberStorageConsentRevision(OWNER,1)
-  const transfer=prepared(next)
+  const transfer=(await prepared(next))
   rememberStorageConsentRevision(OWNER,3)
   const {port}=repository()
   expect((await run(transfer,port)).kind).toBe("committed")
@@ -165,7 +167,7 @@ it("stages a prepared collection with its original consent revision after a late
 it("binds source guard bytes to the commit and exact replay receipt", async () => {
   const guard = { documentId: LEGACY, revision: 2 }
   const transfer = prepareAccountPlanCollectionTransfer({ ownerId: OWNER, operationId: OP, expectedRevision: 0,
-    previous: null, next: document(), paceRecordGuard: guard })!
+    previous: null, next: (await document()), paceRecordGuard: guard })!
   guard.revision = 9
   expect(accountPlanCollectionCommit(transfer).paceRecordGuard).toEqual({ documentId: LEGACY, revision: 2 })
   const server = repository(), commit = server.port.commit
@@ -179,13 +181,13 @@ it("binds source guard bytes to the commit and exact replay receipt", async () =
     expect(readAccountPlanCollectionTransfer({ ...transfer, paceRecordGuard: bad })).toBeNull()
   }
   expect(prepareAccountPlanCollectionTransfer({ ownerId: OWNER, operationId: OP, expectedRevision: 1,
-    previous: document(), next: document(), paceRecordGuard: guard })).toBeNull()
+    previous: (await document()), next: (await document()), paceRecordGuard: guard })).toBeNull()
 })
 
 it("captures journal guard bytes in the request fingerprint and recovers only that exact receipt", async () => {
   const guard = [{ documentId: LEGACY, revision: 2 }]
   const transfer = prepareAccountPlanCollectionTransfer({ ownerId: OWNER, operationId: OP, expectedRevision: 0,
-    previous: null, next: document(), journalGuard: guard })!
+    previous: null, next: (await document()), journalGuard: guard })!
   guard[0]!.revision = 9
   expect(transfer.journalGuard).toEqual([{ documentId: LEGACY, revision: 2 }])
   const server = repository(), commit = server.port.commit
@@ -200,18 +202,18 @@ it("captures journal guard bytes in the request fingerprint and recovers only th
 })
 
 it("copies and reads back before committing an exact current pointer; transferred evidence remains data", async () => {
-  const source = document(2), transfer = prepared(source), server = repository()
+  const source = (await document(2)), transfer = (await prepared(source)), server = repository()
   expect((await run(transfer, server.port)).kind).toBe("committed")
   expect(server.port.stage).toHaveBeenCalledTimes(4)
   expect(joinAccountPlanCollection(server.indices.get(OWNER)!.parts)).toEqual(source)
   expect(server.indices.get(OWNER)!.revision).toBe(1)
   expect(server.indices.has(OTHER)).toBe(false)
-  expect(source).toEqual(document(2))
+  expect(source).toEqual((await document(2)))
 })
 
 it.each([4, 5, 6] as const)("transfers 18 actual V%s frames without a monolithic upload or truncation", async version => {
-  const source = document(18, version), server = repository()
-  expect((await run(prepared(source), server.port)).kind).toBe("committed")
+  const source = (await document(18, version)), server = repository()
+  expect((await run((await prepared(source)), server.port)).kind).toBe("committed")
   expect(joinAccountPlanCollection(server.indices.get(OWNER)!.parts)).toEqual(source)
   expect(server.port.stage).toHaveBeenCalledTimes(36)
   for (const [, part] of vi.mocked(server.port.stage).mock.calls) {
@@ -220,7 +222,7 @@ it.each([4, 5, 6] as const)("transfers 18 actual V%s frames without a monolithic
 }, 120_000)
 
 it("captures caller input before an authentication wait", async () => {
-  const transfer = prepared(), before = structuredClone(transfer), server = repository()
+  const transfer = (await prepared()), before = structuredClone(transfer), server = repository()
   let release!: () => void
   vi.mocked(server.port.receipt).mockImplementationOnce(async () => { await new Promise<void>(resolve => { release = resolve }); return null })
   const pending = run(transfer, server.port)
@@ -232,7 +234,7 @@ it("captures caller input before an authentication wait", async () => {
 })
 
 it("an interrupted stage leaves the current pointer and every original intact; retry reuses staged parts", async () => {
-  const before = document(), next = document(2), transfer = prepared(next, before), server = repository(splitAccountPlanCollection(before))
+  const before = (await document()), next = (await document(2)), transfer = (await prepared(next, before)), server = repository(splitAccountPlanCollection(before))
   const stage = server.port.stage
   server.port.stage = vi.fn(async (owner, part) => { await stage(owner, part); throw Error("network") })
   expect((await run(transfer, server.port)).kind).toBe("unavailable")
@@ -245,7 +247,7 @@ it("an interrupted stage leaves the current pointer and every original intact; r
 })
 
 it("a lost commit response is outcome_unknown and the exact operation receipt recovers it once", async () => {
-  const transfer = prepared(), server = repository(), commit = server.port.commit
+  const transfer = (await prepared()), server = repository(), commit = server.port.commit
   server.port.commit = vi.fn(async request => { await commit(request); throw Error("lost response") })
   expect((await run(transfer, server.port)).kind).toBe("outcome_unknown")
   expect(server.indices.get(OWNER)!.revision).toBe(1)
@@ -255,7 +257,7 @@ it("a lost commit response is outcome_unknown and the exact operation receipt re
 })
 
 it("lost ACK followed by unavailable receipt lookup stays outcome_unknown", async () => {
-  const transfer = prepared(), server = repository(), commit = server.port.commit
+  const transfer = (await prepared()), server = repository(), commit = server.port.commit
   server.port.commit = vi.fn(async request => { await commit(request); throw Error("lost response") })
   expect((await run(transfer, server.port)).kind).toBe("outcome_unknown")
   vi.mocked(server.port.receipt).mockRejectedValueOnce(Error("offline receipt lookup"))
@@ -266,7 +268,7 @@ it("lost ACK followed by unavailable receipt lookup stays outcome_unknown", asyn
 })
 
 it("adapter mutation cannot change the frozen retry request or produce a false ACK", async () => {
-  const transfer = prepared(), before = structuredClone(transfer), server = repository(), stage = server.port.stage
+  const transfer = (await prepared()), before = structuredClone(transfer), server = repository(), stage = server.port.stage
   server.port.stage = vi.fn(async (owner, part) => { await stage(owner, part); part.planId = accountPlanFingerprint({}) })
   server.port.commit = vi.fn(async request => {
     request.index.currentPlanId = null
@@ -279,8 +281,8 @@ it("adapter mutation cannot change the frozen retry request or produce a false A
 })
 
 it("two devices cannot overwrite each other's pointer at the same revision", async () => {
-  const before = document(), server = repository(splitAccountPlanCollection(before))
-  const a = prepared(document(2), before), b = prepared(document(3), before, OP2)
+  const before = (await document()), server = repository(splitAccountPlanCollection(before))
+  const a = (await prepared((await document(2)), before)), b = (await prepared((await document(3)), before, OP2))
   expect((await run(a, server.port)).kind).toBe("committed")
   const confirmed = structuredClone(server.indices.get(OWNER))
   expect((await run(b, server.port)).kind).toBe("conflict")
@@ -288,7 +290,7 @@ it("two devices cannot overwrite each other's pointer at the same revision", asy
 })
 
 it.each(["wrong owner", "wrong operation", "wrong revision", "wrong index", "wrong request"])("rejects %s receipt instead of manufacturing a successful account save", async mutation => {
-  const transfer = prepared(), request = accountPlanCollectionCommit(transfer), server = repository()
+  const transfer = (await prepared()), request = accountPlanCollectionCommit(transfer), server = repository()
   const receipt: AccountPlanCollectionReceipt = { ownerId: OWNER, operationId: OP, revision: 1,
     indexFingerprint: accountPlanFingerprint(transfer.next.index), requestFingerprint: accountPlanFingerprint(request) }
   if (mutation === "wrong owner") receipt.ownerId = OTHER
@@ -303,7 +305,7 @@ it.each(["wrong owner", "wrong operation", "wrong revision", "wrong index", "wro
 })
 
 it("A-B-A account changes during a read stop the old transfer even after A returns", async () => {
-  const server = repository(), transfer = prepared()
+  const server = repository(), transfer = (await prepared())
   let scope: AccountPlanCollectionScope = { ownerId: OWNER, epoch: 1 }
   vi.mocked(server.port.readPart).mockImplementationOnce(async () => {
     scope = { ownerId: OTHER, epoch: 2 }; scope = { ownerId: OWNER, epoch: 3 }; return null
@@ -314,7 +316,7 @@ it("A-B-A account changes during a read stop the old transfer even after A retur
 })
 
 it("scope change during the review callback cannot commit for the previous account", async () => {
-  const server = repository(), transfer = prepared()
+  const server = repository(), transfer = (await prepared())
   let scope: AccountPlanCollectionScope = { ownerId: OWNER, epoch: 1 }, reviews = 0
   expect((await run(transfer, server.port, { scope: () => scope, freshSelectionReview: () => {
     if (++reviews === 2) scope = { ownerId: OTHER, epoch: 2 }
@@ -324,7 +326,7 @@ it("scope change during the review callback cannot commit for the previous accou
 })
 
 it("failed or expired selection review cannot activate a staged plan", async () => {
-  const server = repository(), transfer = prepared()
+  const server = repository(), transfer = (await prepared())
   expect((await run(transfer, server.port, { freshSelectionReview: () => false })).kind).toBe("review_required")
   expect(server.port.stage).not.toHaveBeenCalled()
   let reviews = 0
@@ -336,24 +338,24 @@ it("failed or expired selection review cannot activate a staged plan", async () 
 it("mismatched read-back never publishes a collection and never repairs by overwriting the source", async () => {
   const server = repository()
   vi.mocked(server.port.readPart).mockResolvedValueOnce({ version: 1, kind: "PLAN_SNAPSHOT" })
-  expect((await run(prepared(), server.port)).kind).toBe("invalid")
+  expect((await run((await prepared()), server.port)).kind).toBe("invalid")
   expect(server.port.stage).not.toHaveBeenCalled()
   expect(server.port.commit).not.toHaveBeenCalled()
 })
 
 it("progress-only updates reuse immutable snapshots and do not require a new plan selection", async () => {
-  const before = document(), next = structuredClone(before), server = repository(splitAccountPlanCollection(before))
+  const before = (await document()), next = structuredClone(before), server = repository(splitAccountPlanCollection(before))
   const entry = next.data.plans[0]!, packet = entry.snapshot.state
   const session = (packet.version === 2 || packet.version === 3 ? packet.activePlan : packet.selection.activePlan).sessions[0]!
   entry.progress = [{ sessionDay: session.day, sessionSlot: session.slot, state: "COMPLETED" }]
-  expect((await run(prepared(next, before), server.port, { freshSelectionReview: () => false })).kind).toBe("committed")
+  expect((await run((await prepared(next, before)), server.port, { freshSelectionReview: () => false })).kind).toBe("committed")
   expect(server.port.stage).toHaveBeenCalledTimes(1)
   expect(vi.mocked(server.port.stage).mock.calls[0]![1].kind).toBe("PLAN_PROGRESS")
   expect(joinAccountPlanCollection(server.indices.get(OWNER)!.parts)).toEqual(next)
 })
 
 it("legacy migration copies exactly and carries its original revision without deleting anything", async () => {
-  const source = document(), before = structuredClone(source)
+  const source = (await document()), before = structuredClone(source)
   const transfer = prepareAccountPlanCollectionTransfer({ ownerId: OWNER, operationId: OP, expectedRevision: 0, previous: null,
     next: source, legacy: { documentId: LEGACY, revision: 7, document: source } })!
   expect(transfer).not.toBeNull()
@@ -366,19 +368,19 @@ it("legacy migration copies exactly and carries its original revision without de
     next: changed, legacy: { documentId: LEGACY, revision: 7, document: source } })).toBeNull()
 })
 
-it("complete rehash cannot delete historical originals, rewrite an archive, or switch without archiving", () => {
-  const before = document(2), removed = structuredClone(before)
+it("complete rehash cannot delete historical originals, rewrite an archive, or switch without archiving", async () => {
+  const before = (await document(2)), removed = structuredClone(before)
   removed.data.plans.shift()
   expect(prepareAccountPlanCollectionTransfer({ ownerId: OWNER, operationId: OP, expectedRevision: 1, previous: before, next: removed })).toBeNull()
   const rewritten = structuredClone(before)
   rewritten.data.plans[0]!.archivedAt = null
   expect(prepareAccountPlanCollectionTransfer({ ownerId: OWNER, operationId: OP, expectedRevision: 1, previous: before, next: rewritten })).toBeNull()
-  const switched = document(3); switched.data.plans[1]!.archivedAt = null
+  const switched = (await document(3)); switched.data.plans[1]!.archivedAt = null
   expect(prepareAccountPlanCollectionTransfer({ ownerId: OWNER, operationId: OP, expectedRevision: 1, previous: before, next: switched })).toBeNull()
 })
 
 it("invalid persisted operations and revision baselines are rejected before IO", async () => {
-  const transfer = prepared(), server = repository()
+  const transfer = (await prepared()), server = repository()
   expect(readAccountPlanCollectionTransfer({ ...transfer, expectedRevision: 1 })).toBeNull()
   const omittedPrevious: Record<string, unknown> = { ...transfer, expectedRevision: 1 }
   delete omittedPrevious.previous

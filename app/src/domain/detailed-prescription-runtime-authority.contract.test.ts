@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { createHash } from "node:crypto"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { DETAILED_PRESCRIPTION_APPROVALS } from "./detailed-prescription-approvals"
@@ -172,10 +173,11 @@ const DELEGATED_REQUEST = {
 } as const
 
 describe("detailed prescription runtime authority", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.useFakeTimers()
     vi.setSystemTime(TODAY)
     window.localStorage.clear()
+  await initializeCanonicalJournalFixture()
   })
 
   it("falls back both candidates when an explicit template fingerprint is stale", () => {

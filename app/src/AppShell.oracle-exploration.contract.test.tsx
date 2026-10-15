@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "./test/canonical-journal-fixture"
 import React from "react"
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
@@ -68,10 +69,11 @@ vi.mock("./DeferredMobileScreens", async () => {
 
 import { AppShell } from "./AppShell"
 
-beforeEach(() => {
+beforeEach(async () => {
   setActiveLocalAccount(null)
   window.localStorage.clear()
   window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
   window.history.replaceState(null, "", "/?app=1")
 })
 

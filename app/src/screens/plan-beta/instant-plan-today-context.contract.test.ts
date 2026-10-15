@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
 import * as safety from "../../domain/plan-beta-flow"
@@ -5,7 +6,7 @@ import * as journal from "../../domain/journal-store"
 import { createPlannedSessionLogDraft } from "../../domain/planned-session-link"
 import { projectCurrentInstantToday } from "./instant-plan-today-context"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture() })
 afterEach(() => vi.restoreAllMocks())
 function fixture() {
   const state = stateFixture()

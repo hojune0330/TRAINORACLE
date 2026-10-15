@@ -1,9 +1,11 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { readFileSync } from "node:fs"
 import { Profiler } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { AppShell, SavedToast } from "../AppShell"
 import { PopCard, usePopover } from "./Popover"
+import { hasPendingBrowserBackLayer } from "../navigation/browserNavigation"
 
 afterEach(cleanup)
 
@@ -196,6 +198,7 @@ describe("saved toast motion structure", () => {
   it("keeps a confirmed result until explicitly closed instead of timing it out", async () => {
     vi.useFakeTimers()
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
 
     try {
       render(<AppShell />)
@@ -210,6 +213,8 @@ describe("saved toast motion structure", () => {
       fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
       await act(async () => fireEvent.click(screen.getByRole("button", { name: /^저장/u })))
 
+      // Native Back drains asynchronously after persistence, before onDone.
+      await act(async () => { await vi.advanceTimersByTimeAsync(50) })
       expect(screen.getByRole("button", { name: "기록 보기" })).toBeVisible()
       act(() => vi.advanceTimersByTime(10_000))
       expect(screen.getByRole("button", { name: "닫기" })).toBeVisible()
@@ -224,12 +229,18 @@ describe("saved toast motion structure", () => {
   it("keeps review attention until the athlete dismisses it", async () => {
     vi.useFakeTimers()
     window.localStorage.clear()
+    await initializeCanonicalJournalFixture()
+    const nativeBack = vi.spyOn(window.history, "back").mockImplementation(() => undefined)
 
     try {
+      expect(hasPendingBrowserBackLayer()).toBe(false)
+      // This is a fresh shell, not a continuation of the previous test's history.
+      window.history.replaceState({}, "", window.location.href)
       render(<AppShell />)
       const tabBar = screen.getByRole("navigation", { name: "주 탭" })
       fireEvent.click(within(tabBar).getByRole("button", { name: "기록하기" }))
       fireEvent.click(screen.getByRole("button", { name: /자세히 기록.*운동별로 자세히/u }))
+      const recordingState = window.history.state
       fireEvent.click(screen.getByRole("button", { name: "지금 입력 확인" }))
       fireEvent.click(screen.getByRole("button", { name: "메모 수정" }))
       fireEvent.change(screen.getByRole("textbox", { name: "훈련 메모 내용" }), { target: { value: "무릎이 아파" } })
@@ -237,6 +248,15 @@ describe("saved toast motion structure", () => {
       fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
       await act(async () => fireEvent.click(screen.getByRole("button", { name: /^저장/u })))
 
+      // Own jsdom's native POP timing, not the production departure guard.
+      expect(nativeBack).toHaveBeenCalledTimes(1)
+      expect(hasPendingBrowserBackLayer()).toBe(true)
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+      await act(async () => {
+        window.history.replaceState(recordingState, "", window.location.href)
+        window.dispatchEvent(new PopStateEvent("popstate", { state: recordingState }))
+      })
+      expect(hasPendingBrowserBackLayer()).toBe(false)
       expect(screen.getByRole("alert")).toHaveTextContent(/확인|검토/u)
       expect(screen.getByRole("alert")).not.toHaveTextContent("분석 결과")
       act(() => vi.advanceTimersByTime(10_000))
@@ -245,6 +265,7 @@ describe("saved toast motion structure", () => {
       fireEvent.click(screen.getByRole("button", { name: "닫기" }))
       expect(screen.queryByRole("alert")).not.toBeInTheDocument()
     } finally {
+      nativeBack.mockRestore()
       vi.useRealTimers()
     }
   })

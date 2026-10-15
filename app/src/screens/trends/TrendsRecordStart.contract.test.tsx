@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { cleanup, render, screen, fireEvent } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { Trends } from "../Trends"
@@ -11,7 +12,7 @@ vi.mock("../../domain/plan-beta-store", async importOriginal => ({
 vi.mock("../../domain/personal-oracle", () => ({ derivePersonalOracle: ({ planState }: { planState: unknown }) => ({ maturity: planState === null ? "EMPTY" : "STARTING" }) }))
 vi.mock("./PersonalOraclePanel", () => ({ PersonalOraclePanel: () => null }))
 vi.mock("../home/HomeCoachingSummary", () => ({ HomeCoachingSummary: () => <div data-testid="home-coaching-summary" /> }))
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); planStore.state = null })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); planStore.state = null })
 afterEach(cleanup)
 
 it("keeps import and PB actions direct on a confirmed empty analysis", () => {

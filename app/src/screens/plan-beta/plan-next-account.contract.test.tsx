@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import React from "react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react"
@@ -29,8 +30,8 @@ vi.mock("../../domain/account/plan-cloud-backup", () => ({
   loadLatestPlanFromServer: async () => ({ kind: "unavailable" }),
 }))
 vi.mock("../../domain/account/supabase-client", () => ({ supabase: async () => null }))
-beforeEach(() => {
-  localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(COLLECTION_OWNER)
+beforeEach(async () => {
+  localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(COLLECTION_OWNER)
   resetAccountJournalProjection(COLLECTION_OWNER)
   setAccountJournalProjectionStatus(COLLECTION_OWNER, "READY")
   vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-10-01T03:00:00.000Z"))

@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { describe, expect, it, vi } from "vitest"
 import { stateFixture } from "./plan-beta-store.test-fixture"
 import { createPlannedSessionLogDraft } from "./planned-session-link"
@@ -104,11 +105,12 @@ describe("exact plan method observations", () => {
     expect(project([{ ...entry, plannedSessionLink: changedDraft.link }]).rejectedLinkCount).toBe(1)
   })
 
-  it("links an adopted PACE_TARGET occurrence but never substitutes its dose for actual metrics", () => {
+  it("links an adopted PACE_TARGET occurrence but never substitutes its dose for actual metrics", async () => {
     vi.useFakeTimers()
     vi.setSystemTime(TODAY)
     window.localStorage.clear()
     try {
+      await initializeCanonicalJournalFixture()
       const selectedRecordId = saveCurrentRecord(5000, 1111)
       const intake = draftFor({ caseId: "synthetic-method-observation", eventDistanceM: 5000,
         eventGroup: "FIVE_K", performanceSeconds: 1111, targetRepSeconds: 222,

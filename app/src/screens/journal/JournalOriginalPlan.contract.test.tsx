@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import React from "react"
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
@@ -18,7 +19,7 @@ const draft = createPlannedSessionLogDraft(plan, plan.activePlan.sessions[0]!, p
 const entry: PostSessionEntry = { id: "synthetic-linked", kind: "post-session", date: draft.date, savedAt: plan.generatedAt,
   syncState: "local", plannedSessionLink: draft.link, activitySlot: "AM", system: "", title: "", memo: "SECRET-NOT-FOR-EXPLANATION",
   distanceKm: "", durationMin: "", avgPace: "", rpe: 0 }
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null) })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); setActiveLocalAccount(null) })
 async function open() {
   const details = screen.getByText("계획한 훈련과 비교하기").closest("details")!

@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -6,7 +7,7 @@ import { loadAthleteRecords } from "../domain/athlete-records"
 import { activePlanBetaStorageKey, loadPlanBetaState } from "../domain/plan-beta-store"
 import { enterPlanWithoutRecord } from "./plan-beta/instant-plan.test-helper"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture() })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 function expectBefore(first: HTMLElement, second: HTMLElement) {

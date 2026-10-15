@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest"
 import { adjustedPlanSelectionFixture } from "./adjusted-plan-selection.test-fixtures"
 import { saveSelectedAdjustedPlan } from "./adjusted-plan-store"
@@ -15,7 +16,7 @@ import { TODAY } from "./prescription-quality-matrix.test-fixtures"
 import type { PlanMutationLockManager } from "./plan-mutation-lock"
 
 const locks: PlanMutationLockManager = { request: async (_name, _options, callback) => callback({}) }
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 function fixture() {
   const data = adjustedPlanSelectionFixture()

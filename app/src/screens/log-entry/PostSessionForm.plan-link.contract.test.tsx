@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -5,7 +6,7 @@ import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
 import { createPlannedSessionLogDraft } from "../../domain/planned-session-link"
 import { PostSessionForm } from "./PostSessionForm"
 
-beforeEach(() => window.localStorage.clear())
+beforeEach(async () => { window.localStorage.clear(); await initializeCanonicalJournalFixture() })
 afterEach(cleanup)
 
 async function advanceToReview(user: ReturnType<typeof userEvent.setup>) {

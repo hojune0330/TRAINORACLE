@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { accountPlanDocumentSchema, accountPlanEntry, accountPlanFingerprint, emptyAccountPlanDocument, materializeAccountPlan,
   validateAccountPlanDocument, validateAccountPlanDocumentUpdate, validateAccountPlanPacket } from "./account-plan-document-schema"
@@ -6,7 +7,7 @@ import { readAccountPlanEntry } from "./account-plan-service"
 import { TODAY } from "../prescription-quality-matrix.test-fixtures"
 import { setActiveLocalAccount } from "./local-journal-ownership"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 
 it.each([2, 3, 4, 5, 6] as const)("V%s restores the exact historical body and progress without local originals or execution authority", version => {
