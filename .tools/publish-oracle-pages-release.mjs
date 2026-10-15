@@ -18,7 +18,10 @@ export function publishRelease(options) {
   }
 }
 
-function publishUnlocked({ repo, bundle, pagesRepo, publish = false }) {
+function publishUnlocked({ repo, bundle, pagesRepo, publish = false, workflow = null }) {
+  if (workflow !== null && (!/^\d+$/u.test(workflow.runId ?? '') || !/^\d+$/u.test(workflow.attempt ?? ''))) {
+    throw Error('WORKFLOW_RECEIPT_INVALID');
+  }
   const { manifest, files } = verifyReleasePackage(bundle);
   assertReleaseSnapshot(manifest, remoteReleaseSnapshot(repo));
   const target = realpathSync(pagesRepo);
@@ -76,7 +79,8 @@ function publishUnlocked({ repo, bundle, pagesRepo, publish = false }) {
   expectedBlobs.set(BUILD_MANIFEST, blobForBytes(manifestBytes));
   const receiptBytes = Buffer.from(JSON.stringify({
     kind: 'TRAINORACLE_PAGES_DEPLOYMENT', sourceSha: manifest.sourceSha,
-    previousPagesSha: manifest.previousPagesSha, method: 'PRESERVING_GUARDED_MANUAL',
+    previousPagesSha: manifest.previousPagesSha, method: workflow ? 'PRESERVING_GUARDED_CI' : 'PRESERVING_GUARDED_MANUAL',
+    ...(workflow ? { workflowRunId: workflow.runId, workflowAttempt: workflow.attempt } : {}),
     deployedAt: new Date().toISOString(), backendVerification: 'NOT_CONFIRMED',
   }, null, 2) + '\n');
   writeFileSync(join(target, DEPLOY_RECEIPT), receiptBytes);
@@ -123,5 +127,7 @@ if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.m
   if (unknown.length) throw Error('UNKNOWN_PUBLISH_OPTION');
   console.log(JSON.stringify(publishRelease({ repo: fileURLToPath(new URL('../', import.meta.url)),
     bundle: resolve(option('bundle')), pagesRepo: resolve(option('pages-worktree')),
+    workflow: process.env.GITHUB_ACTIONS === 'true'
+      ? { runId: process.env.GITHUB_RUN_ID, attempt: process.env.GITHUB_RUN_ATTEMPT } : null,
     publish: process.argv.includes('--publish') })));
 }

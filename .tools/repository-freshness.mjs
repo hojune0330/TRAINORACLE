@@ -1,10 +1,11 @@
 import { appendFileSync } from "node:fs"
 import { pathToFileURL } from "node:url"
+import { classifyPaths } from './ci-delivery-scope.cjs'
 
 const PAGE_SIZE = 100
 const POLICY_ACTIVATED_AT = Date.parse("2026-08-14T11:10:24Z")
 
-export function evaluateFreshness({ main, branches, pulls, deployment }) {
+export function evaluateFreshness({ main, branches, pulls, deployment, deploymentDelta = null }) {
   const newestPullByBranch = new Map()
   for (const pull of [...pulls].sort((left, right) => right.number - left.number)) {
     if (!newestPullByBranch.has(pull.head.ref)) newestPullByBranch.set(pull.head.ref, pull)
@@ -23,7 +24,10 @@ export function evaluateFreshness({ main, branches, pulls, deployment }) {
     })
 
   const problems = []
-  if (deployment.sourceSha !== main.sha) {
+  const notesOnly = deploymentDelta?.base === deployment.sourceSha && deploymentDelta?.head === main.sha
+    && deploymentDelta.complete === true && Array.isArray(deploymentDelta.paths)
+    && classifyPaths(deploymentDelta.paths).full === false
+  if (deployment.sourceSha !== main.sha && !notesOnly) {
     problems.push(`Pages source ${deployment.sourceSha.slice(0, 7)} != main ${main.sha.slice(0, 7)}`)
   }
   if (unresolvedBranches.length > 0) {
@@ -34,6 +38,7 @@ export function evaluateFreshness({ main, branches, pulls, deployment }) {
     ok: problems.length === 0,
     mainSha: main.sha,
     deploymentSourceSha: deployment.sourceSha,
+    deploymentAlignment: deployment.sourceSha === main.sha ? 'EXACT_SOURCE' : notesOnly ? 'OPERATOR_NOTES_ONLY_RUNTIME_UNCHANGED' : 'SOURCE_MISMATCH',
     unresolvedBranches,
     openPullRequests: pulls.filter((pull) => pull.state === "open").map((pull) => pull.number),
     problems,
@@ -79,6 +84,17 @@ async function inspectRepository(repository, token) {
     }
   }))
   const deployment = JSON.parse(Buffer.from(receiptFile.content, "base64").toString("utf8"))
+  let deploymentDelta = null
+  if (/^[a-f0-9]{40}$/u.test(deployment.sourceSha ?? '') && deployment.sourceSha !== mainCommit.sha) {
+    const compare = await githubJson(`/repos/${repository}/compare/${deployment.sourceSha}...${mainCommit.sha}`, token)
+    // GitHub truncates comparison file lists at 300. Unknown/truncated history
+    // never becomes a documentation-only exemption; renames include both paths.
+    if (compare.status === 'ahead' && compare.merge_base_commit?.sha === deployment.sourceSha
+        && Array.isArray(compare.files) && compare.files.length > 0 && compare.files.length < 300) {
+      deploymentDelta = { base: deployment.sourceSha, head: mainCommit.sha, complete: true,
+        paths: compare.files.flatMap(file => [file.filename, ...(file.previous_filename ? [file.previous_filename] : [])]) }
+    }
+  }
 
   return {
     main: {
@@ -93,6 +109,7 @@ async function inspectRepository(repository, token) {
       head: { ref: pull.head.ref, sha: pull.head.sha },
     })),
     deployment,
+    deploymentDelta,
   }
 }
 
@@ -106,6 +123,7 @@ async function main() {
     "### TrainOracle repository freshness",
     `- main: \`${result.mainSha}\``,
     `- deployed source: \`${result.deploymentSourceSha}\``,
+    `- deployment alignment: ${result.deploymentAlignment}`,
     `- open PRs: ${result.openPullRequests.length === 0 ? "none" : result.openPullRequests.map((number) => `#${number}`).join(", ")}`,
     `- unresolved newer branches: ${result.unresolvedBranches.length === 0 ? "none" : result.unresolvedBranches.join(", ")}`,
   ]

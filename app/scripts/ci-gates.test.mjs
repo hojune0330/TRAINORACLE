@@ -8,7 +8,7 @@ import { projects } from "../e2e/run-full-suite.mjs"
 
 const workflow = YAML.parse(readFileSync(new URL("../../.github/workflows/ci.yml", import.meta.url), "utf8"))
 const jobs = workflow.jobs
-const needs = job => Array.isArray(job.needs) ? job.needs : [job.needs]
+const needs = job => (Array.isArray(job.needs) ? job.needs : [job.needs]).filter(name => name !== 'delivery-scope' && name !== 'delivery-complete')
 const commands = job => job.steps.filter(step => step.run).flatMap(step => step.run.trim().split("\n").map(line => line.trim()))
 
 test("CI distributes the complete fixed timezone and browser project inventories", () => {
@@ -59,7 +59,7 @@ test("actual aggregate shell guards reject every incomplete or unsuccessful resu
   ]) {
     const job = jobs[name]
     assert.deepEqual(needs(job), expectedNeeds)
-    assert.equal(job.if, "${{ always() }}")
+    assert.equal(job.if, "${{ always() && needs.delivery-scope.outputs.full != 'false' }}")
     const guard = job.steps.find(step => step.shell === "bash" && step.env)
     const keys = Object.keys(guard.env)
     assert.equal(keys.length, expectedNeeds.length)
@@ -82,4 +82,24 @@ test("actual aggregate shell guards reject every incomplete or unsuccessful resu
       assert.equal(execute(missing).status, 1, `${name}:${key}:absent`)
     }
   }
+})
+
+test("CI preserves publication and avoids duplicate branch runs and browser builds", () => {
+  assert.deepEqual(workflow.on.push.branches, ['main'])
+  assert.equal(workflow.concurrency['cancel-in-progress'], "${{ github.event_name == 'pull_request' }}")
+  assert.equal(jobs['deploy-pages'].concurrency['cancel-in-progress'], false)
+  assert(jobs['deploy-pages'].needs.includes('delivery-complete'))
+  assert(jobs['deploy-pages'].needs.includes('delivery-scope'))
+  for (const [name, job] of Object.entries(jobs)) assert(job['timeout-minutes'] > 0 && job['timeout-minutes'] <= 45, name)
+  const publish = commands(jobs['deploy-pages']).join('\n')
+  assert(publish.includes('build-oracle-pages-release.mjs --account-held'))
+  assert(publish.includes('publish-oracle-pages-release.mjs'))
+  assert(!publish.includes('rm -rf'))
+  assert(!commands(jobs['app-browser-generic']).includes('npm run build'))
+  const uploaded = jobs['app-quality'].steps.find(step => step.uses?.startsWith('actions/upload-artifact@'))
+  const downloaded = jobs['app-browser-generic'].steps.find(step => step.uses?.startsWith('actions/download-artifact@'))
+  assert.equal(downloaded.with.name, uploaded.with.name)
+  assert.equal(downloaded.with.path, 'app/dist')
+  const expected = Object.keys(jobs).filter(name => !['delivery-complete', 'deploy-pages'].includes(name))
+  assert.deepEqual([...jobs['delivery-complete'].needs].sort(), expected.sort())
 })
