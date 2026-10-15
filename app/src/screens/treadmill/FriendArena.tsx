@@ -142,9 +142,9 @@ export function FriendArena({ onBack }: { readonly onBack: () => void }) {
 
   const inviteUrl = snapshot ? `${location.origin}${location.pathname}?app=1#arena=${snapshot.room}` : ''
   const copy = async () => { try { await navigator.clipboard.writeText(inviteUrl); setCopied(true) } catch { setError('아래 초대 링크를 길게 눌러 복사해 주세요.') } }
-  const share = async () => { try { await navigator.share({ title: '90초 밀어내기 · 같이 한 판!', url: inviteUrl }) } catch { /* canceled share keeps the room */ } }
+  const share = async () => { try { await navigator.share({ title: '러닝 파티 · 같이 한 판!', url: inviteUrl }) } catch { /* canceled share keeps the room */ } }
   const point = (e: React.PointerEvent) => ({ x: e.clientX, y: e.clientY, time: performance.now() })
-  return <section className="treadmill-game friend-arena" data-screen={playing ? 'play' : 'map'} data-phase={game?.phase ?? 'lobby'}>
+  return <section className="treadmill-game friend-arena" data-room={Boolean(snapshot)} data-screen={playing ? 'play' : 'map'} data-phase={game?.phase ?? 'lobby'}>
     <header className="treadmill-game__header">
       <button type="button" className="treadmill-game__icon" onClick={requestExit} aria-label="친구 경기 나가기"><ArrowLeft size={20} /></button>
       <div className="treadmill-game__title"><span>친구와 1:1 · 같은 방에서 한 판 더</span><h1>{snapshot ? `90초 ${PARTY_MODES[mode].name}` : '친구 파티'}</h1></div><Users size={24} aria-hidden="true" />

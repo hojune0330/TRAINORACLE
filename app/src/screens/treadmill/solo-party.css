@@ -6,6 +6,15 @@
 .solo-party__mode > span { display: grid; gap: 6px; min-width: 0; }
 .solo-party__mode strong { font-size: 19px; }
 .solo-party__mode small, .solo-party__note { color: var(--game-ink-soft); font-size: 13px; line-height: 1.6; }
+.solo-party__games { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.solo-party__games .solo-party__mode { flex-direction: column; align-items: stretch; min-width: 0; padding: 8px; }
+.solo-party__games .solo-party__mode:first-child { grid-column: 1 / -1; display: grid; grid-template-columns: 112px minmax(0,1fr); align-items: center; }
+.solo-party__games .solo-party__mode > span:not(.game-mode-art) { display: grid; gap: 6px; }
+.solo-party__games .solo-party__mode strong { font-size: 18px; }
+.solo-party__games .solo-party__mode span > span { font-size: 14px; }
+.solo-party__games .game-mode-art .treadmill-party-icon { width: 100px !important; height: 100px !important; }
+.solo-party__games .game-mode-art__satellite .treadmill-party-icon { width: 52px !important; height: 52px !important; }
+@media (min-width:700px) { .solo-party__games { grid-template-columns: repeat(3,minmax(0,1fr)); } .solo-party__games .solo-party__mode:first-child { grid-column: auto; display: flex; } }
 .solo-party__budget { padding: 12px; background: var(--game-gold); border-radius: 12px; }
 .solo-party__slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .solo-party__slots button { min-height: 70px; padding: 8px 4px; border: 2px solid var(--game-outline); border-radius: 12px; background: var(--game-panel); color: var(--game-ink); font-size: 13px; line-height: 1.5; }

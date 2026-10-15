@@ -4,6 +4,7 @@ import { drawHazard, drawRunner, outlinedText } from './sprites'
 import type { GamePalette } from './sprites'
 import type { ArenaSnapshot } from './arena-types'
 import { drawPartyProp } from './party-art'
+import { drawSurvivalCourse } from './survival-render'
 
 export function drawArena(ctx: CanvasRenderingContext2D, palette: GamePalette, snapshot: ArenaSnapshot,
   selfId: string, width: number, height: number, reduced: boolean, visualTime: number, curve = false) {
@@ -18,6 +19,10 @@ export function drawArena(ctx: CanvasRenderingContext2D, palette: GamePalette, s
     reduced, low: false, skyFromShader: false }
   drawCityBackdrop(ctx, palette, scene, frame)
   drawCityGround(ctx, palette, scene, frame, 0, 0)
+  if (game.mode === 'survival') {
+    drawSurvivalCourse(ctx, palette, snapshot, selfId, width, height, reduced, visualTime, curve)
+    return
+  }
   // Full-width playable floor. Scenery always renders before bodies and hazards.
   ctx.fillStyle = surface === 'mud' ? palette.mud : palette.laneRedDark
   ctx.beginPath()

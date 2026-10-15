@@ -1,0 +1,45 @@
+import {test,expect} from '@playwright/test'
+test('illustrated games and depth survival remain readable on small screens',async({page},info)=>{
+  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message))
+  await page.goto('./?app=1')
+  await page.getByRole('button',{name:'더보기',exact:true}).click()
+  await page.getByRole('button',{name:'미니게임',exact:true}).click()
+  await page.getByRole('button',{name:'혼자 도전 · 세 가지 종목',exact:true}).click()
+  await page.waitForFunction(()=>[...document.querySelectorAll('.game-mode-art img')].every(i=>(i as HTMLImageElement).complete))
+  for(const width of [320,390,900]) {
+    await page.setViewportSize({width,height:844})
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
+    for(const card of await page.locator('.solo-party__mode').all()) {const box=await card.boundingBox();expect(box!.height).toBeGreaterThanOrEqual(44);expect(box!.x).toBeGreaterThanOrEqual(0);expect(box!.x+box!.width).toBeLessThanOrEqual(width)}
+    await page.screenshot({path:info.outputPath(`games-${width}.png`),fullPage:true})
+  }
+  await page.setViewportSize({width:390,height:844})
+  await page.getByRole('button',{name:/^혼자 장애물 생존/}).click()
+  await page.clock.install();await page.clock.pauseAt(await page.evaluate(()=>Date.now())+100)
+  await page.getByRole('button',{name:'1라운드 시작',exact:true}).click()
+  await page.keyboard.down('ArrowRight');await page.clock.runFor(11000);await page.keyboard.up('ArrowRight')
+  const canvas=page.locator('.solo-party canvas')
+  expect(JSON.parse((await canvas.getAttribute('data-state'))!).game.mode).toBe('survival')
+  await page.screenshot({path:info.outputPath('survival-depth.png'),fullPage:true})
+  await page.emulateMedia({reducedMotion:'reduce'})
+  await page.setViewportSize({width:900,height:520});await page.clock.runFor(100)
+  await page.screenshot({path:info.outputPath('survival-wide.png'),fullPage:true})
+  expect(errors).toEqual([])
+})
+
+test('missing art still permits selecting and playing survival',async({page:fallback})=>{
+    const errors:string[]=[]
+    fallback.on('pageerror',e=>errors.push(e.message))
+    await fallback.emulateMedia({reducedMotion:'reduce'})
+    await fallback.route('**/game/**',route=>route.request().resourceType()==='image'?route.abort():route.continue())
+    await fallback.goto('./?app=1')
+    await fallback.getByRole('button',{name:'더보기',exact:true}).click()
+    await fallback.getByRole('button',{name:'미니게임',exact:true}).click()
+    await fallback.getByRole('button',{name:'혼자 도전 · 세 가지 종목',exact:true}).click()
+    await expect(fallback.locator('.solo-party__mode')).toHaveCount(3)
+    await fallback.getByRole('button',{name:/^혼자 장애물 생존/}).click()
+    await fallback.getByRole('button',{name:'1라운드 시작',exact:true}).click()
+    await expect(fallback.locator('.solo-party canvas')).toBeVisible()
+    await fallback.getByRole('button',{name:'혼자 경기 일시정지',exact:true}).click()
+    await expect(fallback.getByRole('button',{name:'돌아가기',exact:true})).toBeVisible()
+  expect(errors).toEqual([])
+})

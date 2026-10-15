@@ -194,6 +194,7 @@ describe("shared visual system", () => {
       join("src", "screens", "treadmill", "game-reward-actions.css"),
       join("src", "screens", "treadmill", "friend-arena.css"),
       join("src", "screens", "treadmill", "solo-party.css"),
+      join("src", "screens", "treadmill", "game-mode-art.css"),
       join("src", "screens", "treadmill", "game-feedback.css"),
       join("src", "screens", "treadmill", "upgrade-choice.css"),
       join("src", "screens", "treadmill", "anime-runner.ts"),

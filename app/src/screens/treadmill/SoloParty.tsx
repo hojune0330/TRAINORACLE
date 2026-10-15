@@ -1,5 +1,5 @@
 import React from 'react'
-import { ArrowLeft, Pause, Swords, Shield, Trophy, Play, Save, RotateCcw } from 'lucide-react'
+import { ArrowLeft, Pause, Trophy, Play, Save, RotateCcw } from 'lucide-react'
 import { newSoloPush, startSoloPush, advanceSoloPush, pushInput, pushSeriesPoints } from '../../domain/minigame/solo-push'
 import type { SoloPush } from '../../domain/minigame/solo-push'
 import { newSoloDefense, startDefenseWave, advanceSoloDefense, defenseInput, buyFacility, FACILITIES, DEFENSE_RULES, waveCount } from '../../domain/minigame/solo-defense'
@@ -16,6 +16,7 @@ import { loadToriArt } from './runner-art'
 import { loadSceneArt } from './scene-art'
 import { loadPartyArt } from './party-art'
 import { PartyIcon } from './PartyIcon'
+import { GameModeArtwork } from './GameModeArtwork'
 import { loadDefenseArt } from './defense-art'
 import { DefenseIcon } from './DefenseIcon'
 import { GameLeaveDialog } from './GameLeaveDialog'
@@ -179,11 +180,11 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
     {notice && <p className="solo-party__notice" role="status">{notice}</p>}
     {!view && <div className="solo-party__menu">
       {saved && <button className="treadmill-game__cta" onClick={() => start(saved.state, saved.id)}><Play size={20} /> 디펜스 {saved.state.wave}웨이브 이어하기</button>}
-      {modes.map(m => { const best = bestSoloRecord(records, m); return <button key={m} className="solo-party__mode" onClick={() => start(m === 'defense' ? newSoloDefense() : newSoloPush(m))}>
-        <PartyIcon id={m === 'defense' ? 'upgrade-core' : m === 'survival' ? 'jump-pad' : 'track-island'} fallback={m === 'push' ? <Swords /> : <Shield />} />
+      <div className="solo-party__games">{modes.map(m => { const best = bestSoloRecord(records, m); return <button key={m} className="solo-party__mode" onClick={() => start(m === 'defense' ? newSoloDefense() : newSoloPush(m))}>
+        <GameModeArtwork mode={m} />
         <span><strong>{titles[m]}</strong><span>{m !== 'defense' ? '컴퓨터와 90초 × 2라운드' : '시설을 짓고 지키는 최대 60초 × 3웨이브'}</span>
           <small>{best ? m === 'survival' ? `최고 기록 · 낙하 ${best.falls} · 점프 회피 ${best.success}` : m === 'push' ? `최고 기록 · 시리즈 승점 ${best.wins}/4 · 밀어냄 ${best.success}` : `최고 기록 · 놓친 적 ${best.missed}/48 · 낙하 ${best.falls}` : m === 'survival' ? '연속 장애물 · 낙하 적은 순 · 서로 밀리지 않아요' : m === 'push' ? '트랙 → 커브 · 시간 끝까지 무한 리젠' : '직접 뛰며 밀치기 · 예산으로 시설 강화'}</small></span>
-      </button> })}
+      </button> })}</div>
       <button className="treadmill-game__ghost" onClick={onFriends}>친구 파티</button>
       {records.length > 0 && <details className="solo-party__history"><summary>최근 도전 기록 {Math.min(5, records.length)}판</summary>
         <ol>{records.slice(-5).reverse().map(r => <li key={r.id}><strong>{titles[r.mode]}{r.mode === 'defense' && r.version !== DEFENSE_RULES.version ? ' · 이전 규칙' : ''}</strong><span>{r.mode === 'defense' ? `막은 적 ${r.success}/48 · 놓친 적 ${r.missed}` : r.mode === 'survival' ? `점프 회피 ${r.success}` : `승점 ${r.wins}/4 · 밀어냄 ${r.success}`} · 낙하 {r.falls}회</span><small>{new Date(r.completedAt).toLocaleString('ko-KR')}</small></li>)}</ol>
