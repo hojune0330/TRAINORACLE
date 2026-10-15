@@ -22,7 +22,7 @@ test("compact overview keeps exact methods and opens the selected slot's progres
   await expect(page.getByRole("button", { name: "선택한 날짜 처방 보기", exact: true })).toBeVisible()
   const scheduleView = page.getByRole("group", { name: "계획 일정 보기" })
   await expect(scheduleView.getByRole("button", { name: "달력", exact: true })).toHaveAttribute("aria-pressed", "true")
-  await expect(scheduleView.getByRole("button", { name: "목록", exact: true })).toHaveAttribute("aria-pressed", "false")
+  await expect(scheduleView.getByRole("button", { name: "하루씩", exact: true })).toHaveAttribute("aria-pressed", "false")
   await expect(page.getByRole("list", { name: "날짜별 계획 미리보기" })).toHaveCount(0)
   const picker = overview.getByRole("group", { name: "오늘 세션 선택" })
   await picker.getByRole("button", { name: /오후/ }).click()

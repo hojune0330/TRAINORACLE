@@ -1,5 +1,5 @@
 /** Presentation-only Tripo art. Loading failure must never gate the simulation. */
-import manifest from '../../../public/game/run-party-v2/manifest.json'
+import manifest from '../../../public/game/run-party-v2/manifest.json' with { type: 'json' }
 
 export type PartyProp = 'jump-pad' | 'supply-capsule' | 'upgrade-core' | 'track-island' | 'respawn-beacon'
 export const partyIconUrl = (id: PartyProp) => `${import.meta.env.BASE_URL}game/run-party-v3/${id}.webp`
