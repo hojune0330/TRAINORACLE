@@ -113,3 +113,16 @@ explicit non-pass, pending hosted results; its timeout was not increased.
 - CI guard tests: all 6 passed with the Windows Bash runtime available.
   A sandbox-only Bash launch failure is not counted as a gate pass.
 - These are focused local receipts, not a full hosted gate or deployment pass.
+
+The previously unreached source-fixture lane exposed three more stale test
+consumers. Their readers now use explicit day/session navigation, open the
+current disclosure before its action, and distinguish the 10km plain-language
+time from retained half/marathon seconds notation. Numeric precision, source
+identity, blocked over-budget edits, unchanged journals and successor history
+assertions are retained. Initial 800m through 10km and half-marathon lifecycles
+passed; remaining personas are being checked. Both prescription scenarios and
+mobile clarity/200-percent text checks passed after using the current detail
+disclosure and disambiguating the actual effort choice from its review shortcut.
+The prior hosted dedicated browser lane passed; its other in-progress jobs were
+cancelled only after this follow-up was known to be necessary. That run is not a
+successful full gate. No further application/runtime change is in this follow-up.

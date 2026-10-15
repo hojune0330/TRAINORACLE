@@ -23,10 +23,10 @@ test("compact questions, named disclosures and preview-first flows remain usable
   await page.getByRole("button", {name: "오후", exact: true}).click()
   await expect(page.getByRole("button", {name: "오전", exact: true})).toHaveCount(0)
   await capture("quick-effort")
-  await page.getByRole("button", {name: /^힘든 정도 6\/10/}).click()
+  await page.getByRole("button", {name: /^힘든 정도 6\/10,/}).click()
   await capture("quick-body")
   await page.getByRole("button", {name: /뒤로/}).first().click()
-  await expect(page.getByRole("button", {name: /^힘든 정도 6\/10/})).toHaveAttribute("aria-pressed", "true")
+  await expect(page.getByRole("button", {name: /^힘든 정도 6\/10,/})).toHaveAttribute("aria-pressed", "true")
   // Never save: this is a presentation and navigation check in an isolated context.
   await page.evaluate(() => { localStorage.clear(); sessionStorage.clear() })
   page.on("dialog", dialog => dialog.accept())
