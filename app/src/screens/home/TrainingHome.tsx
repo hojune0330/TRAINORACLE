@@ -1,5 +1,6 @@
 import { BookOpen, CheckCircle2, ChevronRight, Ellipsis, NotebookPen, PencilLine } from "lucide-react"
-import { useId, type ReactNode } from "react"
+import { type ReactNode } from "react"
+import { CategoryCard, type AppCategory } from "../../components/CategoryCard"
 import type { HomeSession, TrainingHomeViewModel } from "../../domain/home-view-model"
 import { AppHeading } from "../../components/AppHeading"
 import type { OracleTopicId } from "../../domain/oracle-exploration"
@@ -79,23 +80,23 @@ export function TrainingHome({
           {onOpenArchive && <button type="button" onClick={onOpenArchive}>전체 기록 보기<ChevronRight aria-hidden="true" size={16} /></button>}
         </div>}
         {recentJournal}
-        {!recentJournal && <SummaryRow label="최근 기록" detail={model.journalSummary} onClick={onOpenArchive} />}
+        {!recentJournal && <SummaryRow category="journal" label="최근 기록" detail={model.journalSummary} onClick={onOpenArchive} />}
       </section>}
 
       {oraclePreview ? oraclePreview
-        : onOpenOracle && <button className="home-hub__text-action" type="button" onClick={() => onOpenOracle("level")}>오라클 결과 보기<ChevronRight aria-hidden="true" size={17} /></button>}
+        : onOpenOracle && <section className="home-hub__oracle"><CategoryCard category="oracle" title="오라클 결과 보기" onClick={() => onOpenOracle("level")} /></section>}
       {recordStart && journalReadiness === "READY" && recordStart}
 
       {onOpenTrends && <section className="home-hub__summary" aria-label="훈련 기록 분석">
-        <SummaryRow label="훈련량·변화 보기" detail={journalReadiness === "READY" && analysisAvailable && hasJournalHistory ? model.analysisSummary : undefined} onClick={onOpenTrends} />
+        <SummaryRow category="oracle" label="훈련량·변화 보기" detail={journalReadiness === "READY" && analysisAvailable && hasJournalHistory ? model.analysisSummary : undefined} onClick={onOpenTrends} />
       </section>}
 
       {installSuggestion}
 
       {(onOpenGuide || onOpenContent || onOpenRewards) && <nav className="home-hub__explore" aria-label="훈련 도움말과 일지 꾸미기">
-        {onOpenGuide && <button className="app-choice-control" type="button" onClick={onOpenGuide}><BookOpen aria-hidden="true" size={18} /><span>일지 예시 보기</span></button>}
-        {onOpenContent && <button className="app-choice-control" type="button" onClick={onOpenContent}><BookOpen aria-hidden="true" size={18} /><span>훈련법 읽기</span></button>}
-        {onOpenRewards && <button className="app-choice-control" type="button" onClick={onOpenRewards}><NotebookPen aria-hidden="true" size={18} /><span>일지 꾸미기</span></button>}
+        {onOpenGuide && <CategoryCard category="journal" title="일지 예시 보기" onClick={onOpenGuide} />}
+        {onOpenContent && <CategoryCard category="training" icon={BookOpen} title="훈련법 읽기" onClick={onOpenContent} />}
+        {onOpenRewards && <CategoryCard category="journal" icon={NotebookPen} title="일지 꾸미기" onClick={onOpenRewards} />}
       </nav>}
     </div>
   )
@@ -105,7 +106,7 @@ function WelcomeToday({ onWriteLog, onOpenPlan }: { onWriteLog?: (entryType?: Lo
   return <section className="home-hub__today home-hub__today--welcome" aria-label="오늘의 활동">
     <nav aria-label="오늘 기록 또는 계획 만들기">
     <button className="home-hub__primary" type="button" onClick={() => onWriteLog?.("quick-session")}><PencilLine aria-hidden="true" size={19} /><span>오늘 운동 기록 쓰기</span><ChevronRight aria-hidden="true" size={18} /></button>
-    <button className="home-hub__text-action" type="button" onClick={onOpenPlan}>훈련 계획 만들기<ChevronRight aria-hidden="true" size={17} /></button>
+    <CategoryCard category="training" title="훈련 계획 만들기" onClick={onOpenPlan} />
     </nav>
     <OptionalDailyEntries onWriteLog={onWriteLog} />
   </section>
@@ -113,13 +114,13 @@ function WelcomeToday({ onWriteLog, onOpenPlan }: { onWriteLog?: (entryType?: Lo
 
 function NextTrainingCard({ next, onOpen }: { next: NonNullable<TrainingHomeViewModel["nextTraining"]>; onOpen?: () => void }) {
   const later = next.laterSameDaySession
-  const accessibleName = `다음 훈련 · ${sessionLabel(next.session)} · ${nextTrainingDateLabel(next.date)} · ${sessionSlotLabel(next.session.slot)} · ${nextTrainingPrescriptionLabel(next.session)}${later === null ? "" : ` · 같은 날 ${sessionSlotLabel(later.slot)} ${sessionLabel(later)}도 예정`}`
+  const accessibleName = `다음 훈련 · ${sessionLabel(next.session)} · ${nextTrainingDateLabel(next.date)} · ${sessionSlotLabel(next.session.slot)}`
   return <section className="home-hub__next" aria-labelledby="home-hub-next">
     <AppHeading as="h2" variant="section" id="home-hub-next" className="home-hub__section-label">다음 훈련</AppHeading>
-    <button className="home-hub__next-card" type="button" onClick={onOpen} aria-label={accessibleName}>
-      <span><strong>{sessionLabel(next.session)}</strong><small><span>{nextTrainingDateLabel(next.date)}</span><span>{sessionSlotLabel(next.session.slot)}</span><span>{nextTrainingPrescriptionLabel(next.session)}</span></small>{later !== null && <small>같은 날 {sessionSlotLabel(later.slot)} · {sessionLabel(later)}도 예정</small>}</span>
-      <ChevronRight aria-hidden="true" size={19} />
-    </button>
+    <CategoryCard category="training" title={sessionLabel(next.session)}
+      label={`${nextTrainingDateLabel(next.date)} · ${sessionSlotLabel(next.session.slot)}`}
+      description={later === null ? "훈련 내용 보기" : `${sessionSlotLabel(later.slot)} 훈련도 있어요`}
+      onClick={onOpen} aria-label={accessibleName} />
   </section>
 }
 
@@ -139,13 +140,12 @@ function TodaySection({ model, readiness, onWriteLog, onOpenToday }: { model: Tr
 function OptionalDailyEntries({ onWriteLog }: { onWriteLog?: (entryType?: LogEntryType) => void }) {
   if (!onWriteLog) return null
   return <div className="home-hub__optional-records" role="group" aria-label="선택해서 남기는 기록">
-    <button className="home-hub__text-action" type="button" onClick={() => onWriteLog("evening")}>컨디션·메모<ChevronRight aria-hidden="true" size={16} /></button>
+    <CategoryCard category="body" title="컨디션·메모" onClick={() => onWriteLog("evening")} />
   </div>
 }
 
-function SummaryRow({ label, detail, onClick }: { label: string; detail?: string; onClick?: () => void }) {
-  const descriptionId = useId()
-  return <button className="home-hub__summary-row" type="button" onClick={onClick} aria-label={label} aria-describedby={detail ? descriptionId : undefined}><span className="home-hub__summary-copy"><strong>{label}</strong>{detail && <small id={descriptionId}>{detail}</small>}</span><ChevronRight aria-hidden="true" size={18} /></button>
+function SummaryRow({ category, label, detail, onClick }: { category: AppCategory; label: string; detail?: string; onClick?: () => void }) {
+  return <CategoryCard category={category} title={label} description={detail} onClick={onClick} aria-label={label} />
 }
 
 function nextTrainingDateLabel(iso: string): string {

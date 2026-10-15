@@ -4,6 +4,7 @@ import { isValidIsoDate, isoShift, isoToDate } from "../domain/dates"
 import { projectJournalMonthCalendar } from "../domain/journal-calendar"
 import "./MonthCalendar.css"
 import { useCalendarMotion } from "../hooks/useCalendarMotion"
+import { CalendarRoleIcon } from "./CalendarTrainingMark"
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"] as const
 
@@ -33,11 +34,16 @@ type Props = {
   readonly dayAdornmentDescription?: (date: string) => string | undefined
   readonly highlightedRange?: { readonly start: string; readonly end: string }
   readonly trainingColors?: boolean
+  readonly category?: "training" | "journal"
+  /** Journal overview only. Detailed training calendars keep their full session labels. */
+  readonly compact?: boolean
 }
 
 export function MonthCalendar({ month, today, selectedDate, onMonthChange, onSelectDate, onToday, dayDescription, renderDay,
-  renderDayAdornment, dayAdornmentDescription, highlightedRange, trainingColors = false }: Props) {
+  renderDayAdornment, dayAdornmentDescription, highlightedRange, trainingColors = false, category = "training", compact = false }: Props) {
   const headingId = useId()
+  const jumpId = useId()
+  const monthTrigger = useRef<HTMLButtonElement>(null)
   const motion = useCalendarMotion()
   const [jumpOpen, setJumpOpen] = useState(false)
   const [focusedDate, setFocusedDate] = useState<string | null>(null)
@@ -65,9 +71,9 @@ export function MonthCalendar({ month, today, selectedDate, onMonthChange, onSel
     }
   }
 
-  return <section className="month-calendar" data-reduced-motion={motion.reduced || undefined} aria-labelledby={headingId}>
+  return <section className="month-calendar" data-category={category} data-compact={compact || undefined} data-reduced-motion={motion.reduced || undefined} aria-labelledby={headingId}>
     <header className="month-calendar__toolbar">
-      <h3 id={headingId} aria-live="polite"><button type="button" className="month-calendar__month" aria-label={`${label} · 년월과 날짜 이동`} aria-expanded={jumpOpen} onClick={() => setJumpOpen(value => !value)}>{label}<ChevronDown size={16} aria-hidden="true" /></button></h3>
+      <h3 id={headingId} aria-live="polite"><button ref={monthTrigger} type="button" className="month-calendar__month" aria-label={`${label} · 년월과 날짜 이동`} aria-expanded={jumpOpen} aria-controls={jumpId} onClick={() => setJumpOpen(value => !value)}>{label}<ChevronDown size={16} aria-hidden="true" /></button></h3>
       <div>
         <button type="button" className="month-calendar__today" onClick={() => {
           setFocusedDate(today)
@@ -83,7 +89,9 @@ export function MonthCalendar({ month, today, selectedDate, onMonthChange, onSel
         </button>
       </div>
     </header>
-    {jumpOpen && <div className="month-calendar__jump">
+    {jumpOpen && <div id={jumpId} className="month-calendar__jump" onKeyDown={event => {
+      if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); setJumpOpen(false); monthTrigger.current?.focus() }
+    }}>
       <label>년월 선택<input type="month" value={month} onChange={event => {
         if (isValidIsoDate(`${event.target.value}-01`)) onMonthChange(event.target.value)
       }} /></label>
@@ -133,10 +141,12 @@ export function MonthCalendar({ month, today, selectedDate, onMonthChange, onSel
       </tr>)}</tbody>
     </table>
     {trainingColors && <details className="calendar-color-guide">
-      <summary><CircleHelp size={16} aria-hidden="true" />달력 색상</summary>
+      <summary><CircleHelp size={16} aria-hidden="true" />훈련 색·종류 알아보기<ChevronDown size={16} aria-hidden="true" /></summary>
       <ul aria-label="달력 색상 범례">
-        {([['race', '경기'], ['main', '주요 훈련'], ['neural', '플라이오'], ['base', '기본 운동'], ['recovery', '회복 운동'], ['off', '휴식']] as const).map(([tone, label]) =>
-          <li key={tone}><span className="calendar-color-guide__swatch" data-tone={tone} aria-hidden="true" />{label}</li>)}
+        {([['main', '주요 훈련', '계획의 메인 운동'], ['base', '기본 운동', '기초 지구력 훈련'],
+          ['recovery', '회복 운동', '회복을 위한 가벼운 운동'], ['off', '휴식', '운동 없이 쉬는 시간'],
+          ['race', '경기', '경기 전 기록 또는 결과'], ['neural', '플라이오', '점프·반동을 쓰는 운동']] as const).map(([tone, label, description]) =>
+          <li key={tone}><span className="calendar-color-guide__swatch" data-tone={tone} aria-hidden="true"><CalendarRoleIcon tone={tone} /></span><span><strong>{label}</strong><small>{description}</small></span></li>)}
       </ul>
       <p>색은 훈련의 역할을 나타내요. 주요 훈련이 모두 고강도인 것은 아니며, 플라이오도 부담이 클 수 있어요.</p>
       <p>기록에 없는 분류는 추측하지 않아요. 빈 칸은 휴식이나 회복을 뜻하지 않아요.</p>

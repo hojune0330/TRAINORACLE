@@ -1,5 +1,11 @@
 # AGENTS.md — AI 작업자 필수 규칙
 
+Calendar/card UI addendum 2026-10-14: use `design-toss-card-ui` as the interaction/design baseline
+when available, with `lean-delivery` for scoped delivery and `ui-ux-pro-max` as supplemental guidance.
+Read the actual skill body, not only its title; disclose unavailable references. Apply
+`docs/UX_UI_VISUAL_STANDARD.md` §8.8 alongside existing approved tokens and data/safety/storage contracts.
+Do not turn calendars into forced input wizards or claim a shared CSS update verifies every screen.
+
 Design handoff added 2026-09-10: [design_handoff_plan_beta_extension/README.md](design_handoff_plan_beta_extension/README.md). After reading PRODUCT_NORTH_STAR.md, consult this package and its Handoff Risk Review for related design work. Imported implementation claims and proposals must be checked against current code and approved contracts; uploading this package does not approve or complete implementation.
 
 > **이 파일은 이 저장소에서 일하는 모든 AI 작업자가 작업 시작 전에 읽는다.**

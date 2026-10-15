@@ -16,6 +16,17 @@ function CalendarHarness({ initial = "2026-09", live = false }: { initial?: stri
 }
 
 describe("shared civil-date calendar", () => {
+  it("closes date tools with Escape and restores the month trigger without changing dates", () => {
+    render(<CalendarHarness />)
+    const trigger = screen.getByRole("button", { name: /년월과 날짜 이동/ })
+    fireEvent.click(trigger)
+    const input = screen.getByLabelText("날짜로 이동")
+    input.focus()
+    fireEvent.keyDown(input, { key: "Escape" })
+    expect(screen.queryByLabelText("날짜로 이동")).not.toBeInTheDocument()
+    expect(trigger).toHaveFocus()
+    expect(screen.getByRole("button", { name: "2026년 9월 30일 수요일" }).closest("td")).toHaveAttribute("aria-selected", "true")
+  })
   it("shows weekdays and distinguishes today from selected date", () => {
     render(<CalendarHarness />)
     const grid = screen.getByRole("grid", { name: "2026년 9월 달력" })

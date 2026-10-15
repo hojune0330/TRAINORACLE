@@ -904,6 +904,13 @@
   margin-inline: 0;
 }
 
+.plan-training-flow[data-presentation="prescription-calendar"] { container-type: inline-size; }
+@container (max-width: 767px) {
+  .plan-training-flow .prescription-calendar__calendar-name--full,
+  .plan-training-flow .prescription-calendar__amount--full { display: none; }
+  .plan-training-flow .prescription-calendar__amount--short { display: block; }
+}
+
 @media (max-width: 400px) {
   .plan-training-flow[data-presentation="prescription-calendar"] > .month-calendar {
     margin-inline: min(0px, calc((100% - 7 * var(--app-touch-min) - 8px) / 2));
@@ -923,17 +930,23 @@
 }
 
 .plan-training-flow[data-presentation="prescription-calendar"] .month-calendar__events {
+  width: 100%;
   align-content: start;
   padding: 0;
   text-align: left;
 }
 
 .plan-training-flow[data-presentation="prescription-calendar"] .calendar-training-mark {
+  width: 100%;
   justify-items: start;
   min-height: 0;
   padding: var(--space-1);
   border: var(--bw-line) solid var(--line);
   box-sizing: border-box;
+}
+
+.plan-training-flow[data-presentation="prescription-calendar"] .calendar-training-mark[data-tone="main"] {
+  border-color: var(--ink-2);
 }
 
 .plan-training-flow[data-presentation="prescription-calendar"] .calendar-training-mark__slot {
@@ -959,6 +972,8 @@
   word-break: keep-all;
   overflow-wrap: break-word;
 }
+
+.prescription-calendar__calendar-name--full { display: block; margin-top: var(--space-1); font-weight: 500; }
 
 .prescription-calendar__calendar-name--short,
 .prescription-calendar__amount--short {
@@ -1028,7 +1043,9 @@
   border: 0;
   background: transparent;
   color: var(--ink-2);
-  padding: 6px 0;
+  padding: var(--space-2) 0;
+  min-width: var(--app-touch-min);
+  border-radius: var(--r-action);
   font-family: var(--sans);
   cursor: pointer;
 }
@@ -1046,10 +1063,14 @@
 }
 
 .plan-date-rail [aria-pressed="true"] strong {
-  background: var(--brand);
-  color: white;
-  animation: plan-date-pop 280ms ease-out;
+  background: var(--category-training);
+  color: var(--surface);
+  outline: 2px solid var(--category-training);
+  outline-offset: 2px;
 }
+
+.plan-date-rail [aria-pressed="true"] { background: var(--category-training-wash); font-weight: 700; }
+.plan-date-rail [aria-current="date"] strong { text-decoration: underline; text-underline-offset: 4px; }
 
 .plan-date-rail button:active strong { transform: scale(0.92); }
 
@@ -1540,6 +1561,13 @@
 }
 
 .active-plan__edit-heading h1 { margin: 0; }
+.active-plan__category-heading { justify-content: flex-start; flex-wrap: nowrap; }
+.active-plan__category-heading h1 { min-width: 0; }
+.active-plan__category-heading h1::before { display: none; }
+.active-plan > .instant-plan--entry-cards { margin-top: var(--space-5); }
+.active-plan__tools { margin-block: var(--space-5); align-items: start; }
+.active-plan__composition-title { margin: var(--space-5) 0 var(--space-2); font: 700 var(--fs-body-lg) / 1.5 var(--sans); }
+.active-plan__tools > .category-disclosure[open] { grid-column: 1 / -1; }
 .active-plan__edit-heading > button {
   display: inline-flex;
   align-items: center;
@@ -2593,10 +2621,10 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  color: var(--ink);
-  font-family: var(--mono);
+  color: var(--ink-3);
+  font-family: var(--sans);
   font-size: var(--fs-body-sm);
-  font-weight: 700;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   line-height: 1.45;
 }
@@ -3195,9 +3223,10 @@
   min-height: var(--app-touch-min);
   margin-top: var(--space-3);
   padding: var(--space-2) var(--space-3);
-  border: var(--bw-line) solid var(--ink);
-  background: var(--ink);
-  color: var(--bg);
+  border: var(--bw-line) solid var(--category-journal);
+  border-radius: var(--r-action);
+  background: var(--category-journal-wash);
+  color: var(--category-journal);
   cursor: pointer;
   font-size: var(--fs-body-sm);
   font-weight: 700;
@@ -3239,6 +3268,12 @@
   margin-top: var(--space-6);
   padding-block: var(--space-4);
   border-block: var(--bw-line) solid var(--line);
+}
+
+.category-disclosure__content > .active-plan__continuity {
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 
 .active-plan__continuity .plan-adaptation__entry {

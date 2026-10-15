@@ -88,12 +88,13 @@ export function TabBar({ tab, onTab, onStartRecording }: {
             onClick={() => onTab(id)}
             aria-current={active ? "page" : undefined}
             data-active={active ? "true" : "false"}
+            data-category={id === "plan" ? "training" : id === "trends" ? "oracle" : id}
           >
             <Icon aria-hidden="true" size={20} />
             <span>{label}</span>
           </button>
         )
-        return index === 1 ? [destination, <button key="record-action" className="app-tab-bar__button app-tab-bar__record" type="button" aria-label="기록하기" onClick={onStartRecording}>
+        return index === 1 ? [destination, <button key="record-action" className="app-tab-bar__button app-tab-bar__record" data-category="record" type="button" aria-label="기록하기" onClick={onStartRecording}>
           <Plus aria-hidden="true" size={20} /><span>기록</span>
         </button>] : [destination]
       })}

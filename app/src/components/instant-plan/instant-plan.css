@@ -171,6 +171,12 @@
   padding-block: var(--space-3);
 }
 
+.instant-plan__entry-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-2); }
+.instant-plan__entry-heading .app-heading { margin: 0; }
+.instant-plan__entry-heading > span { font-size: var(--fs-caption); }
+.instant-plan__entry-session { min-width: 0; }
+.instant-plan__entry-record { display: flex; align-items: center; justify-content: center; min-height: var(--app-touch-min); width: 100%; margin-top: var(--space-2); padding: var(--space-2) var(--space-3); border: 0; border-radius: var(--r-action); background: var(--category-journal-wash); color: var(--category-journal); font: 600 var(--fs-body) / 1.5 var(--sans); cursor: pointer; }
+
 .instant-plan__guidance {
   color: var(--ink-2);
 }

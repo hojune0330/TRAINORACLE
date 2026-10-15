@@ -6,6 +6,7 @@ import { assessPurposeScopedMemo } from "../../safety/memo-safety"
 import { inputStyle } from "./input-style"
 import { loadSessionRecoveryCode } from "../../domain/account/private-note-sync"
 import { PrivateMemoSaveSetup } from "./PrivateMemoSaveSetup"
+import "./memo-input.css"
 
 export type PurposeScopedMemoController = {
   readonly text: string
@@ -120,9 +121,9 @@ export function PurposeScopedMemoField({
     : `${explanationId} ${errorId}`
 
   return (
-    <div>
+    <div className="memo-input">
       <fieldset aria-describedby={describedBy} style={{ border: 0, margin: "0 0 10px", padding: 0 }}>
-        <legend style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-2)", marginBottom: 7 }}>
+        <legend style={{ fontSize: "var(--fs-body-sm)", color: "var(--ink-2)", marginBottom: 8 }}>
           메모 용도
         </legend>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
@@ -147,16 +148,19 @@ export function PurposeScopedMemoField({
           </label>
         </div>
       </fieldset>
-      <div id={explanationId} style={{ fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)", lineHeight: 1.55, marginBottom: 8 }}>
-        {purposeExplanation(controller.purpose, accountEnabled)}
+      <div id={explanationId} className="memo-input__explanation">
+        <p>{controller.purpose === MEMO_PURPOSE.privateSelfOnly ? "공유·분석에 쓰지 않는 메모예요."
+          : controller.purpose === MEMO_PURPOSE.analyzableTrainingNote ? "저장 전 이 기기에서 내용을 자동 확인해요. 훈련 계획의 근거로 쓰지 않아요."
+            : "메모를 남길 방법을 골라 주세요."} {accountEnabled ? "계정에 보관해요." : "이 기기에 보관해요."}</p>
+        <details><summary>보관 방식 자세히</summary><p>{purposeExplanation(controller.purpose, accountEnabled)}</p></details>
         {controller.needsPrivateSetup && <p>처음 한 번, 비밀 메모를 암호화해 보관할 복구 코드가 필요해요.</p>}
       </div>
       {controller.purposeError !== null && (
-        <div id={errorId} role="alert" style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--pain-5)", marginBottom: 8 }}>
+        <div id={errorId} role="alert" style={{ fontSize: "var(--fs-body-sm)", color: "var(--pain-5)", marginBottom: 8 }}>
           {controller.purposeError}
         </div>
       )}
-      <label htmlFor={fieldId} style={{ display: "block", fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)", marginBottom: 6 }}>
+      <label htmlFor={fieldId} style={{ display: "block", fontSize: "var(--fs-body-sm)", color: "var(--ink-2)", marginBottom: 8 }}>
         {label}
       </label>
       <textarea
@@ -183,7 +187,7 @@ export function PurposeScopedMemoField({
         }} requested={controller.purposeError !== null} />
       )}
       {controller.reviewMessage !== null && (
-        <div role="status" style={{ marginTop: 8, padding: "9px 10px", border: "1px solid var(--warn)", fontSize: 11.5, color: "var(--ink-2)", lineHeight: 1.55 }}>
+        <div role="status" style={{ marginTop: 8, padding: 12, border: "1px solid var(--warn)", fontSize: "var(--fs-body-sm)", color: "var(--ink-2)", lineHeight: 1.55 }}>
           {controller.reviewMessage} {accountEnabled ? "계정 저장 여부는 저장 결과에서 확인해 주세요." : "저장은 이 기기에만 됩니다."}
         </div>
       )}
@@ -214,6 +218,6 @@ function optionStyle(selected: boolean): React.CSSProperties {
     display: "flex", alignItems: "center", gap: 7, minHeight: 44, padding: "9px 10px",
     border: selected ? "1px solid var(--ink)" : "1px solid var(--line)",
     background: selected ? "var(--surface)" : "transparent",
-    fontFamily: "var(--sans)", fontSize: 12.5, color: "var(--ink)", cursor: "pointer",
+    borderRadius: "var(--r-action)", fontFamily: "var(--sans)", fontSize: "var(--fs-body)", color: "var(--ink)", cursor: "pointer",
   }
 }

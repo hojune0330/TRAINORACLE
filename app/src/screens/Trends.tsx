@@ -1,5 +1,6 @@
 import React from "react"
-import { ArrowLeft, ArrowRight, Calculator } from "lucide-react"
+import { Activity, ArrowLeft, ArrowRight, BookOpen, Calculator, ChartColumn, Heart, Layers, CalendarDays, FileChartColumn, TrendingUp } from "lucide-react"
+import { CategoryCard, CategoryDisclosure, CategoryIcon } from "../components/CategoryCard"
 import { useAppOverlayNavigation } from "../components/AppOverlayNavigation"
 import { projectStructuredJournalObservations } from "../domain/journal-observation"
 import { analysisExclusionSummary, loadEntries, loadEntriesForPlanSafety } from "../domain/journal-store"
@@ -33,16 +34,16 @@ import { TaskGuide } from "../components/TaskGuide"
 import "./trends/trends-hub.css"
 
 const ANALYSIS_SECTIONS = [
-  { id: "summary", label: "훈련 요약", description: "남긴 운동과 계획" },
-  { id: "distance", label: "훈련량", description: "달린 거리 합계" },
-  { id: "mix", label: "훈련 구성", description: "직접 고른 훈련 종류" },
-  { id: "monthly", label: "월별 변화", description: "거리·페이스·기분·통증" },
-  { id: "files", label: "파일 분석", description: "운동 파일의 구간 기록" },
+  { id: "summary", label: "훈련 요약", description: "남긴 운동과 계획", icon: TrendingUp },
+  { id: "distance", label: "훈련량", description: "달린 거리 합계", icon: ChartColumn },
+  { id: "mix", label: "훈련 구성", description: "직접 고른 훈련 종류", icon: Layers },
+  { id: "monthly", label: "월별 변화", description: "거리·페이스·기분·통증", icon: CalendarDays },
+  { id: "files", label: "파일 분석", description: "운동 파일의 구간 기록", icon: FileChartColumn },
 ] as const
 const ORACLE_SECTIONS = [
-  { id: "training", label: "내 훈련" },
-  { id: "profile", label: "러닝 취향" },
-  { id: "library", label: "읽을거리·관심" },
+  { id: "training", label: "내 훈련", icon: Activity },
+  { id: "profile", label: "러닝 취향", icon: Heart },
+  { id: "library", label: "읽을거리·관심", icon: BookOpen },
 ] as const
 export type OracleHubSection = (typeof ORACLE_SECTIONS)[number]["id"]
 
@@ -152,12 +153,12 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
           illustration={section === "training" && readComplete && detail === "summary" && !hasSummary ? "analysis-lens" : undefined} />}
         <div className="trends-hub__sections app-choice-group" role="group" aria-label="오라클 항목">
           {ORACLE_SECTIONS.map(item => (
-            <button className="app-choice-control" key={item.id} type="button" aria-pressed={section === item.id}
+            <button className="app-choice-control category-choice" data-category="oracle" key={item.id} type="button" aria-pressed={section === item.id}
               onClick={() => {
                 const destination = destinationFor(item.id)
                 if (destination) { destination(); return }
                 setSection(item.id); onOracleSectionChange?.(item.id)
-              }}>{item.label}</button>
+              }}><CategoryIcon category="oracle" icon={item.icon} compact /><span>{item.label}</span></button>
           ))}
         </div>
         {section === "training" && !readComplete && <p className="trends-hub__saved-context" role="status">기록을 아직 모두 확인하지 못했어요. 저장한 일지 수와 분석 결과는 확인이 끝난 뒤 표시해요.</p>}
@@ -207,11 +208,12 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
               {(!savedRace || (planState !== null && onOpenPlan)) && <section className="trends-hub__start" aria-label="내 기록으로 시작하기">
                 {!savedRace && entries.length > 0 && <p>저장한 일지 {entries.length}건 · 분석할 값은 기록마다 달라요.</p>}
                 {!savedRace && startAction && <button type="button" onClick={startAction.run}>{startAction.label}<ArrowRight size={16} aria-hidden="true" /></button>}
-                {planState !== null && onOpenPlan && <button type="button" className="trends-hub__start-secondary" onClick={onOpenPlan}>훈련표 보기<ArrowRight size={16} aria-hidden="true" /></button>}
+                {planState !== null && onOpenPlan && <CategoryCard category="training" title="훈련표 보기" onClick={onOpenPlan} />}
               </section>}
               {onOpenOracle && <section className="trends-hub__example" aria-label="오라클 예시">
-                <p id="trends-example-scope">예시 · 내 기록 분석이 아니에요</p>
-                <button type="button" aria-describedby="trends-example-scope" onClick={() => onOpenOracle("focus", "example")}>예시 결과 보기<ArrowRight size={16} aria-hidden="true" /></button>
+                <CategoryCard category="oracle" title="예시 결과 보기" aria-label="예시 결과 보기"
+                  description={<span id="trends-example-scope">예시 · 내 기록 분석이 아니에요</span>}
+                  aria-describedby="trends-example-scope" onClick={() => onOpenOracle("focus", "example")} />
               </section>}
               {entries.length > 0 && <InfoDisclosure title="어떤 기록을 분석하나요?">
                 <p>확인된 기록만 분석해요. 개인 메모는 읽지 않아요.</p>
@@ -230,15 +232,15 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
           </div>
         </div>}
         {section === "training" && detail === "summary" && hasSummary && onOpenOracle && <div className="trends-hub__explore">
-          <InfoDisclosure purpose="actions" title="경기·계획·훈련 비교하기" preview="경기 기록 · 강점 · 훈련 비교 · 다음 훈련"><OracleTopicGrid onSelectTopic={onOpenOracle} title="다른 주제 살펴보기" compact /></InfoDisclosure>
+          <CategoryDisclosure category="oracle" title="경기·계획·훈련 비교하기"><OracleTopicGrid onSelectTopic={onOpenOracle} title="다른 주제 살펴보기" compact /></CategoryDisclosure>
         </div>}
         {section === "training" && <div className="trends-hub__drilldowns app-choice-group" role="group" aria-label="훈련 분석 자세히 보기">
-          {(fileAnalysisEnabled ? ANALYSIS_SECTIONS : ANALYSIS_SECTIONS.filter(item => item.id !== "files")).map(item => <button className="app-choice-control" key={item.id} type="button" aria-pressed={detail === item.id}
+          {(fileAnalysisEnabled ? ANALYSIS_SECTIONS : ANALYSIS_SECTIONS.filter(item => item.id !== "files")).map(item => <button className="app-choice-control category-choice" data-category="oracle" key={item.id} type="button" aria-pressed={detail === item.id}
             aria-label={item.label} aria-describedby={`trends-choice-${item.id}`}
             onClick={() => {
               setDetail(item.id)
               onContextChange?.({ ...initialContext, section: item.id })
-            }}><span>{item.label}</span><small id={`trends-choice-${item.id}`}>{item.description}</small></button>)}
+            }}><CategoryIcon category="oracle" icon={item.icon} compact /><span>{item.label}</span><small id={`trends-choice-${item.id}`}>{item.description}</small></button>)}
         </div>}
         {section === "training" && detail === "summary" && (onOpenImport || onOpenRecords) && <div className="trends-hub__explore">
           <RecordStartActions onImport={onOpenImport} onRecords={onOpenRecords} />
@@ -250,7 +252,7 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
           <AnalysisExclusionNotice summary={exclusion} />
         </div>}
         {section === "training" && detail === "summary" && <div className="trends-hub__recovery">
-          <button type="button" aria-expanded={recoveryOpen} aria-controls="trends-recovery" onClick={() => setRecoveryOpen(open => !open)}>몸 상태·회복 기록</button>
+          <CategoryCard category="body" title="몸 상태·회복 기록" aria-expanded={recoveryOpen} aria-controls="trends-recovery" onClick={() => setRecoveryOpen(open => !open)} />
           <div id="trends-recovery">{recoveryOpen && <RecoveryRecordPanel today={today} entries={entries} observations={observations}
             onWriteRecovery={onWriteRecovery} onOpenDay={onOpenCoachingDay} experimentalFatigue={productFeatures().experimentalFatigue} />}</div>
         </div>}

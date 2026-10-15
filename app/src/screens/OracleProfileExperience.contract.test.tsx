@@ -1,5 +1,5 @@
 import React from "react"
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { OracleProfileExperience, type OracleProfileExperienceProps } from "./OracleProfileExperience"
 import { ORACLE_CONTENT_CATALOG } from "../domain/oracle-content-catalog"
@@ -15,8 +15,22 @@ function props(extra: Partial<OracleProfileExperienceProps> = {}): OracleProfile
     onDraft: vi.fn(), onCommit: vi.fn(async () => true), onRemember: vi.fn(async () => true),
     onDelete: vi.fn(async () => true), onRetry: vi.fn(), onBack: vi.fn(), onNavigate: vi.fn(), ...extra }
 }
-beforeEach(() => { HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", "") } })
-afterEach(cleanup)
+const motionKey = "trainoracle.calendar-reduced-motion.v1"
+function motion(reduced: boolean) {
+  window.localStorage.setItem(motionKey, String(reduced))
+  fireEvent(window, new StorageEvent("storage", { key: motionKey }))
+}
+beforeEach(() => {
+  HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", "") }
+  // Non-motion contracts use the actual instant, reduced-motion path.
+  // The normal confirmation pause is exercised explicitly below.
+  motion(true)
+})
+afterEach(() => {
+  cleanup(); vi.useRealTimers()
+  window.localStorage.removeItem(motionKey)
+  fireEvent(window, new StorageEvent("storage", { key: motionKey }))
+})
 const dialog = () => screen.getByRole("dialog", { hidden: true })
 const openSettings = () => fireEvent.click(screen.getByRole("button", { name: "프로필 설정·추가 정보" }))
 const openTopics = () => screen.getByRole("group", { name: "읽을거리 주제" })
@@ -540,4 +554,70 @@ it("passes the live app reduced-motion setting into the profile and the dialog",
   window.localStorage.removeItem(motionKey)
   fireEvent(window, new StorageEvent("storage", { key: motionKey }))
   expect(dialog()).not.toHaveAttribute("data-reduced-motion")
+})
+
+it("briefly confirms only the chosen answer, protects it immediately and clears selection on the next question", () => {
+  vi.useFakeTimers(); motion(false)
+  const p = props(); render(<OracleProfileExperience {...p} />)
+  fireEvent.click(screen.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" }))
+  const first = ORACLE_QUESTIONS.find(q => q.id === "STRUCTURE_1")!
+  const second = ORACLE_QUESTIONS.find(q => q.id === "STRUCTURE_2")!
+  fireEvent.click(within(dialog()).getByRole("button", { name: "그런 편이에요" }))
+  expect(p.onDraft).toHaveBeenCalledExactlyOnceWith({ STRUCTURE_1: 4 })
+  expect(within(dialog()).getByRole("heading", { name: first.text })).toBeVisible()
+  expect(within(dialog()).getByRole("button", { name: "그런 편이에요" })).toHaveAttribute("aria-pressed", "true")
+  fireEvent.click(within(dialog()).getByRole("button", { name: "매우 그래요" }))
+  expect(p.onDraft).toHaveBeenCalledOnce()
+  act(() => vi.advanceTimersByTime(140))
+  expect(within(dialog()).getByRole("heading", { name: second.text })).toHaveFocus()
+  expect(dialog().querySelectorAll('[aria-pressed="true"]')).toHaveLength(0)
+  expect(dialog().querySelector('[data-answer-feedback="true"]')).toBeNull()
+  fireEvent.click(within(dialog()).getByRole("button", { name: "이전 질문" }))
+  expect(within(dialog()).getByRole("button", { name: "그런 편이에요" })).toHaveAttribute("aria-pressed", "true")
+})
+
+it("closing during answer feedback keeps the accepted answer and resumes the next question", () => {
+  vi.useFakeTimers(); motion(false)
+  const p = props(); render(<OracleProfileExperience {...p} />)
+  fireEvent.click(screen.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" }))
+  fireEvent.click(within(dialog()).getByRole("button", { name: "매우 그래요" }))
+  expect(dialog().querySelector('[data-answer-feedback="true"]')).not.toBeNull()
+  fireEvent.click(within(dialog()).getByRole("button", { name: "닫기" }))
+  act(() => vi.advanceTimersByTime(140))
+  expect(screen.queryByRole("dialog")).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "작성하던 답 이어가기" }))
+  expect(within(dialog()).getByRole("heading", { name: ORACLE_QUESTIONS.find(q => q.id === "STRUCTURE_2")!.text })).toHaveFocus()
+  expect(p.onDraft).toHaveBeenCalledExactlyOnceWith({ STRUCTURE_1: 5 })
+  expect(p.onCommit).not.toHaveBeenCalled()
+})
+
+it("reveals the real result after final-answer confirmation without delaying the save", async () => {
+  vi.useFakeTimers(); motion(false)
+  const p = props(); render(<OracleProfileExperience {...p} />)
+  fireEvent.click(screen.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" }))
+  for (let n = 0; n < 2; n++) {
+    fireEvent.click(within(dialog()).getByRole("button", { name: "매우 그래요" }))
+    act(() => vi.advanceTimersByTime(140))
+  }
+  fireEvent.click(within(dialog()).getByRole("button", { name: "매우 그래요" }))
+  expect(p.onCommit).toHaveBeenCalledExactlyOnceWith({ STRUCTURE_1: 5, STRUCTURE_2: 5, STRUCTURE_3: 5 }, "STRUCTURE")
+  expect(within(dialog()).queryByRole("heading", { name: "내 답을 정리했어요" })).toBeNull()
+  await act(async () => { vi.advanceTimersByTime(140) })
+  expect(within(dialog()).getByRole("heading", { name: "내 답을 정리했어요" })).toHaveFocus()
+  expect(dialog().querySelector('[data-result-reveal="true"]')).not.toBeNull()
+  expect(dialog().querySelector(".oracle-v2__result-number")).toHaveTextContent("100 / 100")
+  expect(within(dialog()).getByRole("button", { name: "계획을 챙기는 여우 캐릭터 이야기" })).toBeVisible()
+})
+
+it("keeps the completed optional axis when the parent confirms the saved answers", async () => {
+  const answers = { STRUCTURE_1: 5, STRUCTURE_2: 5, STRUCTURE_3: 5 } as const
+  const p = props({ answers, selectedCharacter: "STRUCTURE" })
+  const mounted = render(<OracleProfileExperience {...p} />)
+  fireEvent.click(screen.getByRole("button", { name: "기록 도전도 알아보기" }))
+  for (let n = 0; n < 3; n++) fireEvent.click(within(dialog()).getByRole("button", { name: "그런 편이에요" }))
+  await waitFor(() => expect(p.onCommit).toHaveBeenCalledOnce())
+  mounted.rerender(<OracleProfileExperience {...p} answers={{ ...answers, CHALLENGE_1: 4, CHALLENGE_2: 4, CHALLENGE_3: 4 }} />)
+  expect(dialog()).toHaveAttribute("aria-label", "기록 도전 선호")
+  expect(dialog().querySelector(".oracle-v2__result-number")).toHaveTextContent("75 / 100")
+  expect(within(dialog()).getByRole("button", { name: "강한 달리기도 알아보기" })).toBeEnabled()
 })

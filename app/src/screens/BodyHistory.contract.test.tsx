@@ -77,9 +77,11 @@ describe("body history screen", () => {
 
     await user.click(screen.getByRole("button", { name: /오른 무릎, 마지막 기록/u }))
     expect(screen.getByRole("heading", { name: "오른 무릎" })).toBeVisible()
-    expect(screen.getAllByText("정도 4/5")).toHaveLength(1)
-    expect(screen.getAllByText("정도 2/5")).toHaveLength(1)
+    expect(screen.getAllByText("통증 정도 4/5")).toHaveLength(1)
+    expect(screen.getAllByText("통증 정도 2/5")).toHaveLength(1)
     expect(screen.getAllByRole("button", { name: "원본 일지 보기" })).toHaveLength(2)
+    expect(screen.getByText("훈련 일지")).not.toBeVisible()
+    for (const disclosure of screen.getAllByText("기록 정보")) await user.click(disclosure)
     expect(screen.getByText("훈련 일지")).toBeVisible()
     expect(screen.getByText("컨디션·메모")).toBeVisible()
     expect(document.body.textContent).not.toContain(SECRET)
@@ -94,7 +96,7 @@ describe("body history screen", () => {
 
     await user.click(screen.getByRole("button", { name: /왼쪽 발목, 마지막 기록/u }))
     expect(screen.getByText("synthetic private body note")).toBeVisible()
-    expect(screen.getByText("정도 3/5")).toBeVisible()
+    expect(screen.getByText("통증 정도 3/5")).toBeVisible()
     await user.click(screen.getByRole("button", { name: "오늘 상태 남기기" }))
     expect(onRecord).toHaveBeenCalledExactlyOnceWith(OTHER_ID)
   })

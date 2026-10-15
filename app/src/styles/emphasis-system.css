@@ -16,6 +16,8 @@
 .app-heading.app-heading--screen { font-size: var(--fs-app-title); }
 .app-heading.app-heading--hero { font-size: var(--fs-app-hero); }
 .app-heading.app-heading--section { font-size: var(--fs-h3); }
+/* Reading anchors receive focus for announcement, not a selected control ring. */
+.app-heading[tabindex="-1"]:focus { outline: none; }
 .entry-chooser__title.app-heading,
 .journal-archive__title.app-heading,
 .import-activities__title.app-heading { margin-top: var(--space-1); }

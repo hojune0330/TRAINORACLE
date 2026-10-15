@@ -22,12 +22,18 @@
 .plan-day-reader__header span { font-size: 0.75rem; color: var(--ink-2); }
 .plan-day-reader__header h2 { margin: 0; font-size: 1rem; line-height: 1.5; overflow-wrap: anywhere; }
 .plan-day-reader__header button { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; background: transparent; border: 0; color: var(--ink); cursor: pointer; }
+.plan-day-reader__header button { border-radius: var(--r-action); background: var(--surface-2); }
+.plan-day-reader__arrows { gap: var(--space-1); }
 .plan-day-reader__arrows { display: flex; flex-shrink: 0; }
 .plan-day-reader button:disabled { opacity: 0.4; cursor: default; }
 .plan-day-reader__slots { display: flex; gap: 16px; padding-inline: 16px; border-bottom: 1px solid var(--line); }
 .plan-day-reader__slots button { min-height: 44px; padding: 8px 12px; background: transparent; border: 0; font: inherit; color: var(--brand); cursor: pointer; }
 .plan-day-reader__slots button { border-bottom: 2px solid transparent; }
 .plan-day-reader__slots button[aria-current="location"] { border-bottom-color: var(--brand); font-weight: 700; }
+.plan-day-reader__slots { padding-block: var(--space-2); gap: var(--space-2); }
+.plan-day-reader__slots button { border: 1px solid var(--line); border-radius: var(--r-action); color: var(--ink-2); }
+.plan-day-reader__slots button[aria-current="location"] { border-color: var(--category-training); color: var(--category-training); background: var(--category-training-wash); text-decoration: underline; text-underline-offset: 4px; }
+.plan-day-reader[data-reduced-motion][open] { animation: none; }
 .plan-day-reader__notice { padding: 8px 16px; max-height: 30dvh; overflow-y: auto; border-bottom: 1px solid var(--line); color: var(--ink); }
 .plan-day-reader__notice p { margin: 4px 0; font-size: 0.875rem; line-height: 1.5; }
 .plan-day-reader__body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 16px 16px max(32px, env(safe-area-inset-bottom)); scroll-padding-top: 16px; }

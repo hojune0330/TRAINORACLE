@@ -88,7 +88,7 @@ export function JournalMonthCalendar({ month, onOpenDay, onMonthChange, entries 
         <strong>날짜별 일지</strong>
         {month.entryCount > 0 && activeDays > 0 && <span>이 달 {activeDays}일 · {month.entryCount}개 기록</span>}
       </div>
-      <MonthCalendar trainingColors month={month.month} today={today} selectedDate={selectedDate} highlightedRange={highlightedRange}
+      <MonthCalendar category="journal" trainingColors month={month.month} today={today} selectedDate={selectedDate} highlightedRange={highlightedRange}
         onMonthChange={onMonthChange} onToday={setSelectedDate} onSelectDate={date => {
           openDate(date)
         }}

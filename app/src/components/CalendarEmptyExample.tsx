@@ -28,7 +28,7 @@ export function CalendarEmptyExample({ today, expanded, onExpand, onCalendar, on
         <p className="calendar-example-label">예시 · 내 기록에 저장되지 않아요</p>
       </div>
     </header>
-    {expanded ? <MonthCalendar month={month} today={today} selectedDate={date ?? undefined}
+    {expanded ? <MonthCalendar category="journal" month={month} today={today} selectedDate={date ?? undefined}
       onMonthChange={setMonth} onToday={value => { setMonth(value.slice(0, 7)); setDate(null) }}
       onSelectDate={openDate} trainingColors
       dayDescription={value => `예시 · ${examples.find(item => item.date === value)?.label ?? "기록 없는 날"}`}

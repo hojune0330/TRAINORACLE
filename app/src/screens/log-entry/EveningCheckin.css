@@ -1,4 +1,32 @@
-/* Only the body-input question gets this focused presentation. */
+/* Scoped to the check-in: shared form and injury-editor contracts stay intact. */
+.evening-checkin__choices {
+  display: grid;
+  gap: var(--space-2);
+  padding-inline: var(--space-5);
+}
+.evening-checkin__review { display: grid; gap: var(--space-3); margin: 0; }
+.evening-checkin__review-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-task-surface);
+  background: var(--surface);
+}
+.evening-checkin__review dt { font-size: var(--fs-body-sm); color: var(--ink-2); }
+.evening-checkin__review dd {
+  margin: var(--space-1) 0 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.evening-checkin__metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.evening-checkin__metrics label { display: block; margin-bottom: var(--space-2); font-size: var(--fs-body-sm); }
+.evening-checkin__metrics input { width: 100%; min-width: 0; box-sizing: border-box; }
+@media (max-width: 359px) { .evening-checkin__metrics { grid-template-columns: minmax(0, 1fr); } }
 .evening-checkin__body-date {
   display: flex;
   flex-wrap: wrap;
@@ -20,7 +48,7 @@
   background: var(--brand);
 }
 
-.evening-checkin__body-step > .task-flow__actions {
+.evening-checkin .task-flow > .task-flow__actions {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
 }

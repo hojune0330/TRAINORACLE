@@ -1,5 +1,6 @@
 import React from "react"
-import { ArrowRight } from "lucide-react"
+import { FileUp, Flag } from "lucide-react"
+import { CategoryCard } from "../components/CategoryCard"
 import { ErrorBoundary } from "../components/ErrorBoundary"
 import { ACCOUNT_PLAN_EVENT, accountPlanService, accountPlansEnabled } from "../domain/account/account-plan-service"
 import { ensureAccountPlanHistory } from "../domain/account/account-plan-domain"
@@ -206,11 +207,11 @@ export function PlanBeta(props: Omit<React.ComponentProps<typeof PlanBetaContent
     onRetry={loadHistory} onCancel={cancelHistory} />
   const accountContentOwnsEntry = !!collection?.legacyPending || needsHistoryForNewPlan || historical !== null
   const goalProgramEntry = <div className="plan-program-entry">
-    <button type="button" ref={goalEntryButton} className="app-choice-control" onClick={() => {
+    <CategoryCard category="training" icon={Flag} title="10km 한 달 훈련표" ref={goalEntryButton} onClick={() => {
       const context = { owner: localAccountScopeSnapshot(), generation: localJournalScopeGeneration() }
       runDraftSafeNavigation(() => setGoalSession(context), false,
         () => localAccountScopeIsCurrent(context.owner) && context.generation === localJournalScopeGeneration())
-    }}>10km 한 달 훈련표<ArrowRight size={18} aria-hidden="true" /></button>
+    }} />
   </div>
   if (goalSession && localAccountScopeIsCurrent(goalSession.owner) && goalSession.generation === localJournalScopeGeneration()) {
     return <ErrorBoundary><React.Suspense fallback={<p role="status">훈련표를 열고 있어요.</p>}>
@@ -412,7 +413,7 @@ function PlanBetaContent(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
     <LegacyPlanArchiveDownloads revision={read} />
     {read.kind === "missing" && <MultiPlanCloudControlsV3 fingerprint={null} readEvidence={readMultiV3Evidence}
       readRestoreReview={props.readMultiRestoreReviewV3 ?? readCurrentMultiRestoreReviewV3} onCurrentRestored={() => setRead(readCurrent())} />}
-    <button className="plan-file-import" type="button" onClick={() => setImportOpen(true)}>개인 계획 파일 불러오기</button></>} />
+    <div className="plan-program-entry"><CategoryCard category="training" icon={FileUp} title="개인 계획 파일 불러오기" onClick={() => setImportOpen(true)} /></div></>} />
   </div></>
   }
   return <>{renderContent()}{!legacyOwnsEntry && props.goalProgramEntry}</>
