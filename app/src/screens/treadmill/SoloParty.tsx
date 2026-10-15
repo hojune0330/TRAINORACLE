@@ -6,6 +6,8 @@ import { newSoloDefense, startDefenseWave, advanceSoloDefense, defenseInput, buy
 import type { SoloDefense, FacilityKind } from '../../domain/minigame/solo-defense'
 import { bestSoloRecord, loadSoloCheckpoint, readSoloRecords, saveSoloCheckpoint, storeSoloRecord } from '../../domain/minigame/solo-party-storage'
 import type { SoloRecord } from '../../domain/minigame/solo-party-storage'
+import { beginDefenseReview, finishDefenseReview, previousBestMessage } from '../../domain/minigame/solo-review'
+import type { DefenseReview } from '../../domain/minigame/solo-review'
 import { createGameGestures } from './gestures'
 import { gamePalette } from './sprites'
 import { drawArena } from './arena-render'
@@ -31,12 +33,21 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
   const [view, setView] = React.useState<Session | null>(null), [paused, setPaused] = React.useState(false)
   const [notice, setNotice] = React.useState(''), [saved, setSaved] = React.useState<ReturnType<typeof loadSoloCheckpoint>>(null)
   const [records, setRecords] = React.useState<SoloRecord[]>([]), [recordStatus, setRecordStatus] = React.useState('')
+  const [reviews, setReviews] = React.useState<DefenseReview[]>([]), [comparison, setComparison] = React.useState('')
+  const reviewStart = React.useRef<ReturnType<typeof beginDefenseReview> | null>(null)
   const [draft, setDraft] = React.useState<SoloDefense | null>(null), [selected, setSelected] = React.useState(0)
   const canvas = React.useRef<HTMLCanvasElement>(null), keys = React.useRef(false), gestures = React.useRef(createGameGestures())
   const progress = useMinigameProgress()
   const reduced = progress.progress.settings.motion === 'reduce' || matchMedia('(prefers-reduced-motion: reduce)').matches
   const playing = isPlaying(view), mode = view?.mode
-  const sync = React.useCallback(() => setView(current.current ? structuredClone(current.current) : null), [])
+  const sync = React.useCallback(() => {
+    const s = current.current
+    if (s?.mode === 'defense' && reviewStart.current) {
+      const report = finishDefenseReview(reviewStart.current, s)
+      if (report) { setReviews(rows => [...rows, report]); reviewStart.current = null }
+    }
+    setView(s ? structuredClone(s) : null)
+  }, [])
   const release = React.useCallback(() => { keys.current = false; gestures.current.reset() }, [])
   const refresh = React.useCallback(() => {
     try { setSaved(loadSoloCheckpoint(localStorage)) } catch { setNotice('저장된 경기의 버전을 읽지 못했어요. 기존 저장은 보존하며 새 경기는 시작할 수 있어요.') }
@@ -45,6 +56,7 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
   React.useEffect(() => { refresh(); void loadToriArt(); void loadSceneArt(); void loadPartyArt() }, [refresh])
   const start = (next: Session, id: string = crypto.randomUUID()) => {
     release(); current.current = next; runId.current = id; recorded.current = false
+    reviewStart.current = null; setReviews([]); setComparison('')
     setPaused(false); setDraft(null); setRecordStatus(''); setNotice(''); sync()
   }
   const menu = () => { release(); current.current = null; setPaused(false); setDraft(null); sync(); refresh() }
@@ -117,6 +129,8 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
       missed: view.mode === 'defense' ? view.totals.passed + view.totals.unresolved : 0,
       falls: view.mode === 'defense' ? view.runner.falls : self.reduce((sum, p) => sum + p.falls, 0),
       wins: view.mode === 'push' ? pushSeriesPoints(view.results, 'you') : 0 }
+    try { setComparison(previousBestMessage(readSoloRecords(localStorage), result)) }
+    catch { setComparison('이전 기록을 읽지 못해 비교할 수 없어요.') }
     try { setRecords(storeSoloRecord(localStorage, result)); setRecordStatus('완주 기록을 이 기기에 저장했어요.') }
     catch { setRecordStatus('기록을 저장하지 못했어요. 이 결과는 현재 화면에서만 볼 수 있어요.'); recorded.current = false }
   }, [view])
@@ -125,7 +139,11 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
     if (!s) return
     release()
     if (s.mode === 'push') startSoloPush(s)
-    else { if (draft) current.current = structuredClone(draft); startDefenseWave(current.current as SoloDefense) }
+    else {
+      if (draft) current.current = structuredClone(draft)
+      startDefenseWave(current.current as SoloDefense)
+      reviewStart.current = beginDefenseReview(current.current as SoloDefense)
+    }
     setDraft(null); sync()
   }
   const save = () => {
@@ -162,6 +180,9 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
           <small>{best ? m === 'push' ? `최고 기록 · 시리즈 승점 ${best.wins}/4 · 밀어냄 ${best.success}` : `최고 기록 · 놓친 적 ${best.missed}/48 · 낙하 ${best.falls}` : m === 'push' ? '트랙 → 커브 · 시간 끝까지 무한 리젠' : '직접 뛰며 밀치기 · 예산으로 시설 강화'}</small></span>
       </button> })}
       <button className="treadmill-game__ghost" onClick={onFriends}>친구와 밀어내기</button>
+      {records.length > 0 && <details className="solo-party__history"><summary>최근 도전 기록 {Math.min(5, records.length)}판</summary>
+        <ol>{records.slice(-5).reverse().map(r => <li key={r.id}><strong>{titles[r.mode]}</strong><span>{r.mode === 'defense' ? `막은 적 ${r.success}/48 · 놓친 적 ${r.missed}` : `승점 ${r.wins}/4 · 밀어냄 ${r.success}`} · 낙하 {r.falls}회</span><small>{new Date(r.completedAt).toLocaleString('ko-KR')}</small></li>)}</ol>
+      </details>}
       <p className="solo-party__note">기록은 이 기기의 최근 20판만 보관해요. 같은 종목·규칙끼리 비교하며 친구 순위와 훈련 기록에는 들어가지 않아요.</p>
     </div>}
     {view?.mode === 'push' && ['ready', 'between'].includes(view.phase) && <div className="solo-party__panel">
@@ -176,6 +197,7 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
       <h2>{preparation.wave}웨이브 준비</h2>
       <p>{preparation.wave === 1 ? '먼지 덩어리 12마리' : preparation.wave === 2 ? '돌진형 합류 · 커브에서 16마리' : '단단형 합류 · 20마리 최종 방어'}<br />놓친 적을 줄이세요. 기지가 무너져도 세 웨이브 끝까지 계속돼요.</p>
       {preparation.wave > 1 && <p>지금까지 막은 적 {preparation.totals.killed} · 놓친 적 {preparation.totals.passed + preparation.totals.unresolved} · 낙하 {preparation.runner.falls}</p>}
+      {preparation.wave > 1 && <DefenseRecap reviews={reviews} expected={preparation.wave - 1} />}
       <strong className="solo-party__budget">남은 예산 {preparation.budget}개{draft ? ' · 변경 미확정' : ''}</strong>
       <div className="solo-party__slots" role="group" aria-label="시설 설치 칸">{preparation.facilities.map((f, i) => <button key={i} aria-pressed={selected === i} onClick={() => setSelected(i)}>{i + 1}번 칸<br />{f ? `${FACILITIES[f.kind].name} Lv.${f.level}` : '비어 있음'}</button>)}</div>
       <div className="solo-party__builds">{(Object.keys(FACILITIES) as FacilityKind[]).map(kind => {
@@ -219,9 +241,11 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
       </> : <><strong className="solo-party__result">막은 적 {view.totals.killed}/48</strong>
         <p>기지 통과 {view.totals.passed} · 시간 안에 못 막음 {view.totals.unresolved}<br />낙하 {view.runner.falls} · 직접 밀치기 적중 {view.totals.pushed}</p>
         <p>{view.totals.passed + view.totals.unresolved > 0 ? `다음 목표: 놓친 적 ${view.totals.passed + view.totals.unresolved}마리보다 줄이기` : view.runner.falls ? '다음 목표: 모든 적을 막고 낙하 없이 완주하기' : '완벽 방어 달성! 다른 시설 조합으로 도전해 보세요.'}</p></>}
+      <p className="solo-party__comparison">{comparison}</p>
       <p role="status">{recordStatus}</p>
       {recordStatus.startsWith('기록을 저장하지') && <button className="treadmill-game__ghost" onClick={sync}>기록 저장 다시 시도</button>}
       <button className="treadmill-game__cta" onClick={() => start(view.mode === 'push' ? newSoloPush() : newSoloDefense())}>같은 종목 새로 시작</button>
+      {view.mode === 'defense' && <DefenseRecap reviews={reviews} expected={3} />}
       <button className="treadmill-game__ghost" onClick={menu}>다른 종목 고르기</button>
       <button className="treadmill-game__ghost" onClick={onFriends}>친구와 밀어내기</button>
     </div>}
@@ -232,6 +256,21 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
       <button className="treadmill-game__ghost" onClick={menu}>저장 없이 종목 선택으로</button>
     </GameLeaveDialog>}
   </section>
+}
+
+function DefenseRecap({ reviews, expected }: { readonly reviews: DefenseReview[]; readonly expected: number }) {
+  return <div className="solo-party__recap" aria-label="웨이브별 결과">
+    <details><summary>웨이브별 결과 살펴보기</summary>
+    {reviews.length < expected && <p className="solo-party__note">이어하기 전 웨이브는 합계만 남아 있어요. 아래는 이번에 직접 진행한 웨이브예요.</p>}
+    <ol>{reviews.map(r => <li key={r.wave}>
+      <strong>{r.wave}웨이브 · 막은 적 {r.killed}/{r.killed + r.passed + r.unresolved}</strong>
+      <span>기지 통과 {r.passed} · 시간 내 미처리 {r.unresolved} · 낙하 {r.falls}회</span>
+      <span>직접 밀치기 적중 {r.pushed}회 · 보급품 {r.collected}개</span>
+      <details><summary>이때 사용한 시설</summary><p>{r.facilities.join(' · ')}</p></details>
+    </li>)}</ol>
+    <p className="solo-party__note">밀치기 적중은 처치 수가 아니에요. 다음 판에서 시설이나 밀치는 타이밍을 바꾸고 놓친 적을 비교해 보세요.</p>
+    </details>
+  </div>
 }
 
 function Controls() {
