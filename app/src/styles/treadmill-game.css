@@ -145,10 +145,13 @@
 .treadmill-game__stars svg:nth-child(2) { transform: translateY(-8px) scale(1.15); }
 .treadmill-game__stars svg[data-on]:nth-child(2) { animation-delay: 120ms; }
 .treadmill-game__stars svg[data-on]:nth-child(3) { animation-delay: 240ms; }
-.treadmill-game__big-score { display: grid; justify-items: center; }
-.treadmill-game__big-score small { font-size: var(--fs-caption); color: var(--game-ink-soft); font-weight: 700; }
-.treadmill-game__big-score strong { font-size: 34px; line-height: 1.1; font-weight: 900; font-variant-numeric: tabular-nums; }
-.treadmill-game__big-score em { margin-top: 2px; padding: 1px var(--space-2); border-radius: 999px; background: var(--game-danger); color: var(--game-cloud); font-style: normal; font-size: 11px; font-weight: 900; }
+.treadmill-game__mission { margin: var(--space-1) 0; font-weight: 800; text-align: center; }
+.treadmill-game__mission small { font-size: var(--fs-caption); font-weight: 500; color: var(--game-ink-soft); }
+.treadmill-game__achievement { display: grid; gap: var(--space-1); text-align: center; }
+.treadmill-game__achievement strong { font-size: 24px; }
+.treadmill-game__achievement span, .treadmill-game__achievement p { margin: 0; font-size: var(--fs-body-sm); }
+.treadmill-game__achievement em { font-style: normal; font-weight: 800; color: var(--game-good); }
+.treadmill-game[data-screen="play"] .treadmill-game__wave[data-aid] { display: block; font-size: var(--fs-caption); font-weight: 800; padding: var(--space-1) var(--space-2); background: var(--game-panel); border-radius: var(--r-action); }
 .treadmill-game__stats { margin: 0; width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-1); }
 .treadmill-game__stats div { padding: var(--space-2); border-radius: 10px; background: var(--game-sky-low); }
 .treadmill-game__stats dt { font-size: 11px; font-weight: 700; color: var(--game-ink-soft); }

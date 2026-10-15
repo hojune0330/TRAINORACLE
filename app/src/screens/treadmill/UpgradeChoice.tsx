@@ -77,7 +77,7 @@ export function UpgradeChoice({ state, nextStage, onPick, reduced = false }: {
             </button>
           })}
         </div>
-        <p className="upgrade-choice__footer">고르면 장착 후 출발 · 에너지 최대 +{TREADMILL_RULES.checkpointRefill}</p>
+        <p className="upgrade-choice__footer">구간 완주 → 안전 발판 회복 최대 +{TREADMILL_RULES.checkpointRefill}<br />강화를 고르면 다음 구간으로 출발</p>
         <button type="button" className="treadmill-game__text-button" onClick={() => setExplaining(true)}>효과 다시 보기</button>
       </>}
     </section>

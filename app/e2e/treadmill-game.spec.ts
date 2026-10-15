@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test"
-import { advanceTreadmill, nearestHazard, newTreadmillRun, treadmillCommand, TREADMILL_STAGES } from "../src/domain/minigame/treadmill"
+import { advanceTreadmill, nearestHazard, newTreadmillRun, treadmillCommand, treadmillAidStop, TREADMILL_STAGES } from "../src/domain/minigame/treadmill"
 import type { TreadmillStage, TreadmillState } from "../src/domain/minigame/treadmill"
 import { tourCity, tourStages } from "../src/domain/minigame/tour"
 
@@ -329,9 +329,11 @@ function planRun(stages: readonly TreadmillStage[] = TREADMILL_STAGES): Step[] {
       steps.push({ at: ms, key: "upgrade" })
       state = treadmillCommand(state, { type: "upgrade", upgrade: "economy" })
     }
-    const want = (state.x < 0.45 && state.energy > 25) || (state.x < 0.22 && state.energy > 0)
+    const ahead = nearestHazard(state), stop = treadmillAidStop(state)
+    const restForAid = stop.open && !stop.claimed && state.x > .11 && (state.energy < 95 || state.aid.rest > 0)
+      && state.y === 0 && (!ahead || ahead.x - state.x > (state.aid.rest > 0 ? .08 : .18))
+    const want = !restForAid && ((state.x < 0.45 && state.energy > 25) || (state.x < 0.22 && state.energy > 0))
     if (want !== state.running) { steps.push({ at: ms, key: want ? "run-down" : "run-up" }); state = treadmillCommand(state, { type: "run", held: want }) }
-    const ahead = nearestHazard(state)
     if (ahead && ahead.x - state.x < 0.09 && state.y === 0 && state.energy >= state.jumpCost) {
       steps.push({ at: ms, key: "jump" }); state = treadmillCommand(state, { type: "jump" })
     }
@@ -354,6 +356,8 @@ test("explains the rules before play, falls on inaction and restarts with pointe
     return element.getContext("2d")!.getImageData(4, 4, 1, 1).data[3]
   })).toBe(255)
   await expect(page.getByRole("heading", { name: "90초 러닝 챌린지" })).toBeVisible()
+  await expect(page.getByText("목표: 세 구간 완주")).toBeVisible()
+  await expect(page.getByText("완주 ★ · 부딪힘 1회 이하 ★★ · 무충돌 ★★★")).toBeVisible()
   await expect(page.getByRole("navigation")).toHaveCount(0)
   await page.getByRole("button", { name: "시작", exact: true }).click()
   await page.clock.runFor(1000)
@@ -431,7 +435,13 @@ test("clears three stages with real keys, shows trade-offs and resets the build"
   await page.clock.runFor(1200)
   await page.keyboard.up("ArrowRight")
   await expect(page.getByRole("heading", { name: "세 구간 완주!" })).toBeVisible()
+  await expect(page.getByText("3/3구간 완주", { exact: true })).toBeVisible()
+  await expect(page.locator(".treadmill-game__achievement")).toContainText(/장애물 \d+개 회피 · 부딪힘 \d+회/)
+  await expect(page.locator(".treadmill-game__achievement")).toContainText("다음 목표:")
+  await expect(page.locator(".treadmill-game__big-score")).toHaveCount(0)
   await page.getByText("이번 판 기록").click()
+  const aidReceipt = page.locator(".treadmill-game__stats div").filter({ hasText: "보급소 이용" })
+  await expect(aidReceipt).toContainText(/[1-6]회/)
   await expect(page.getByText("강화: 일정한 박자 · 일정한 박자")).toBeVisible()
   await page.screenshot({ path: info.outputPath("clear.png"), fullPage: true })
   await page.getByRole("button", { name: "처음부터" }).click()

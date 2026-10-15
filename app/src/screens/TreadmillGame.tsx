@@ -9,7 +9,7 @@ import { RewardActionButton } from "../components/rewards/RewardActionButton"
 import { ArrowLeft, ChevronsRight, Footprints, Pause, Play, RotateCcw, MoveUp, Star, Zap, Trophy, Menu, Map as MapIcon, ArrowRight, Sparkles } from "lucide-react"
 import {
   advanceTreadmill, newTreadmillRun, treadmillCommand, treadmillCourseSeconds, treadmillElapsed, treadmillStars, treadmillTip, treadmillWarning,
-  TREADMILL_RULES, TREADMILL_STAGES, TREADMILL_UPGRADES,
+  TREADMILL_RULES, TREADMILL_STAGES, TREADMILL_UPGRADES, treadmillAidStop, treadmillAchievement,
 } from "../domain/minigame/treadmill"
 import type { TreadmillCommand, TreadmillStage, TreadmillState, TreadmillUpgrade } from "../domain/minigame/treadmill"
 import { TOUR_CITIES, tourStages } from "../domain/minigame/tour"
@@ -124,7 +124,7 @@ function SoloTreadmillGame({ onBack, backLabel, onFriends }: { readonly onBack: 
   const [menuOpen, setMenuOpen] = React.useState(false)
   const [pauseReason, setPauseReason] = React.useState("직접 일시정지했어요.")
   const [menuTab, setMenuTab] = React.useState<"settings" | "shop">("settings")
-  const [result, setResult] = React.useState<{ best: boolean; unlocks: string[]; bestScore: number; medal: number; medalsLeft: number } | null>(null)
+  const [result, setResult] = React.useState<{ best: boolean; unlocks: string[]; medal: number; medalsLeft: number } | null>(null)
   const [equipped, setEquipped] = React.useState<TreadmillUpgrade | null>(null)
   const state = React.useRef(newTreadmillRun(courseStages(course)))
   const [view, setView] = React.useState<TreadmillState>(state.current)
@@ -164,12 +164,13 @@ function SoloTreadmillGame({ onBack, backLabel, onFriends }: { readonly onBack: 
     let after = paid.earned > 0 ? withMedals(before, paid.state) : before
     const medalsLeft = runMedalsLeftToday(paid.state, now)
     if (course.kind !== "city") {
-      setResult({ best: false, unlocks: [], bestScore: 0, medal: paid.earned, medalsLeft })
+      setResult({ best: false, unlocks: [], medal: paid.earned, medalsLeft })
     } else {
       const stars = treadmillStars(next)
-      const previousBest = before.cities[course.city.id]?.bestScore ?? 0
-      after = recordCityResult(after, course.city.id, stars, next.stats.score)
-      setResult({ best: stars > 0 && next.stats.score > previousBest, unlocks: unlocksBetween(before, after), bestScore: Math.max(previousBest, stars > 0 ? next.stats.score : 0), medal: paid.earned, medalsLeft })
+      const previousStars = before.cities[course.city.id]?.stars ?? 0
+      // Preserve historical scores in account data without mixing them with the new achievements.
+      after = recordCityResult(after, course.city.id, stars, 0)
+      setResult({ best: stars > previousStars, unlocks: unlocksBetween(before, after), medal: paid.earned, medalsLeft })
     }
     if (after !== before) updateRef.current(() => after)
   }, [])
@@ -370,7 +371,9 @@ function SoloTreadmillGame({ onBack, backLabel, onFriends }: { readonly onBack: 
   const isCity = course.kind === "city"
   // The full rules card is for someone who has never finished a city; afterwards the intro is one line.
   const firstTime = Object.values(progress.cities).every(item => item.clears === 0)
-  const cityBest = city ? progress.cities[city.id]?.bestScore ?? 0 : 0
+  const cityStars = city ? progress.cities[city.id]?.stars ?? 0 : 0
+  const achievement = treadmillAchievement(view)
+  const aidStop = treadmillAidStop(view)
   const canRetryStage = view.mode === "over" && view.stage > 0 && view.checkpoint !== null
   const pickUpgrade = (upgrade: TreadmillUpgrade) => { setEquipped(upgrade); command({ type: "upgrade", upgrade }); playGameSound("tap", settings.sound); focusField() }
   const retryStage = () => { setResult(null); command({ type: "retryStage" }); playGameSound("tap", settings.sound); focusField() }
@@ -444,7 +447,7 @@ function SoloTreadmillGame({ onBack, backLabel, onFriends }: { readonly onBack: 
               </li>
             })}
           </ol>
-          <div className="treadmill-game__score" aria-label="점수"><Trophy size={15} aria-hidden="true" />{view.stats.score.toLocaleString("ko-KR")}</div>
+          <div className="treadmill-game__score" aria-label={`장애물 ${view.stats.cleared}개 회피`}><Trophy size={15} aria-hidden="true" />회피 {view.stats.cleared}개</div>
         </div>
         <div className="treadmill-game__hud-row">
           <div className={`treadmill-game__energy${energyLow ? " is-low" : ""}`}>
@@ -456,14 +459,18 @@ function SoloTreadmillGame({ onBack, backLabel, onFriends }: { readonly onBack: 
         </div>
         <div className="treadmill-game__hud-notice">
           <p className="treadmill-game__warning" role="status" data-tone={warning.tone}>{warning.text}</p>
-          {view.stats.combo > 1 && live && <div className="treadmill-game__combo" aria-label={`연속 ${view.stats.combo}`}>콤보 ×{view.stats.combo}</div>}
+          {view.stats.combo >= 5 && live && <div className="treadmill-game__combo" aria-label={`연속 회피 ${view.stats.combo}개`}>연속 {view.stats.combo}개</div>}
         </div>
         <div className="treadmill-game__gesture-hint" aria-label="화면 조작 안내" data-held={view.running && !view.exhausted}>
           <span>{view.exhausted ? "손을 떼면 회복" : view.running ? "달리는 중 · 떼면 회복" : "화면 꾹 달리기"}</span>
           <span aria-label="점프 에너지">↗ 점프 ⚡{view.jumpCost}</span>
           <span aria-label="대시 충전">두 번 대시 {view.cooldown > 0 ? `${view.cooldown.toFixed(1)}초` : `⚡${TREADMILL_RULES.dashCost}`}</span>
         </div>
-        {live && <span className="treadmill-game__wave">웨이브 {Math.min(3, Math.floor(view.seconds / TREADMILL_RULES.waveSeconds) + 1)}/3 · 10초마다 보급</span>}
+        {live && <span className="treadmill-game__wave" data-aid={aidStop.open || undefined}>
+          {aidStop.open ? aidStop.claimed ? `보급 완료 · +${Math.round(view.aid.lastAmount)}`
+            : `보급소 ${Math.ceil(aidStop.remaining)}초 · ${view.energy >= TREADMILL_RULES.maxEnergy ? "에너지 충분 · 그대로 진행" : view.x < TREADMILL_RULES.aidFront ? "초록 구역으로 이동" : view.y > 0 ? "착지 후 손을 놓아요" : view.hitFlash < TREADMILL_RULES.invulnerableSeconds ? "부딪힘 뒤 잠깐 기다려요" : view.aid.rest > 0 ? "보급 받는 중…" : `손 놓기 ${TREADMILL_RULES.aidRestSeconds}초 · 최대 +${TREADMILL_RULES.aidEnergy}`}`
+            : `구간 ${achievement.completedStages}/${stages.length} 완료 · ${view.seconds < 20 ? `${Math.ceil((view.seconds < 10 ? 10 : 20) - view.seconds)}초 뒤 보급소` : "다음 목표: 구간 완주"}`}
+        </span>}
       </div>
 
       <canvas ref={skyCanvas} className="treadmill-game__sky" aria-hidden="true" data-live={shaderLive || undefined} />
@@ -514,7 +521,8 @@ function SoloTreadmillGame({ onBack, backLabel, onFriends }: { readonly onBack: 
               <li><b><MoveUp size={18} aria-hidden="true" /></b><span><strong>위로 쓸어 올리면 점프</strong>손을 뗄 필요 없이 내렸다 다시 올려요</span></li>
               <li><b><ChevronsRight size={18} aria-hidden="true" /></b><span><strong>두 번 누르면 대시</strong>짧게 빠르게 앞으로</span></li>
             </ul>
-            : <p className="treadmill-game__ready-hint">{stages[0]!.hint}{cityBest > 0 && <> · 최고 <strong>{cityBest.toLocaleString("ko-KR")}점</strong></>}</p>}
+            : <p className="treadmill-game__ready-hint">{stages[0]!.hint}{cityStars > 0 && <> · 최고 별 {cityStars}개</>}</p>}
+          <p className="treadmill-game__mission">목표: 세 구간 완주<br /><small>완주 ★ · 부딪힘 1회 이하 ★★ · 무충돌 ★★★</small></p>
           <div className="treadmill-game__ready-runner"><CharacterPortrait character={character} size={52} label={`캐릭터 ${MINIGAME_CHARACTERS.find(item => item.id === character)?.name}`} />
             <button type="button" className="treadmill-game__link" onClick={openMenu}>캐릭터·설정 바꾸기</button></div>
           <button type="button" className="treadmill-game__cta" onClick={start}><Play size={18} aria-hidden="true" />시작</button>
@@ -529,7 +537,12 @@ function SoloTreadmillGame({ onBack, backLabel, onFriends }: { readonly onBack: 
           <span className="treadmill-game__ribbon" data-tone={view.mode === "clear" ? "gold" : "danger"}>{view.mode === "clear" ? "완주" : `${view.stage + 1}구간에서 멈춤`}</span>
           <h2 id="treadmill-result-title">{view.mode === "clear" ? (city ? `${city.name} 완주!` : "세 구간 완주!") : view.failure === "spike" ? `${stage.name}에서 가시에 닿았어요` : `${stage.name}에서 뒤로 떨어졌어요`}</h2>
           {view.mode === "clear" ? <Stars count={stars} /> : <RunnerPortrait upgrades={view.upgrades} pose="hit" label="넘어진 러너" character={character} />}
-          <div className="treadmill-game__big-score"><small>점수</small><strong>{view.stats.score.toLocaleString("ko-KR")}</strong>{result?.best && <em>{city?.name} 최고 기록!</em>}</div>
+          <div className="treadmill-game__achievement" aria-label="이번 판 성취">
+            <strong>{achievement.completedStages}/{stages.length}구간 완주</strong>
+            <span>장애물 {view.stats.cleared}개 회피 · 부딪힘 {view.stats.hits}회</span>
+            {result?.best && <em>{city?.name} 별 기록 갱신!</em>}
+            <p>다음 목표: {achievement.nextGoal}</p>
+          </div>
           {result && result.unlocks.length > 0 && <ul className="treadmill-game__unlocks" aria-label="새로 열림">
             {result.unlocks.map(item => <li key={item}><Sparkles size={14} aria-hidden="true" />{item}</li>)}
           </ul>}
@@ -560,11 +573,10 @@ function SoloTreadmillGame({ onBack, backLabel, onFriends }: { readonly onBack: 
             <dl className="treadmill-game__stats">
               <div><dt>버틴 시간</dt><dd>{elapsed}<small>/{total}초</small></dd></div>
               <div><dt>넘은 장애물</dt><dd>{view.stats.cleared}</dd></div>
-              <div><dt>최고 콤보</dt><dd>{view.stats.bestCombo}</dd></div>
-              <div><dt>부딪힘</dt><dd>{view.stats.hits - (view.failure === "spike" ? 1 : 0)}</dd></div>
+              <div><dt>최장 연속 회피</dt><dd>{view.stats.bestCombo}개</dd></div>
+              <div><dt>보급소 이용</dt><dd>{view.aid.received}회</dd></div>
             </dl>
             {view.upgrades.length > 0 && <p className="treadmill-game__picks">강화: {view.upgrades.map(upgradeName).join(" · ")}</p>}
-            {isCity && result && result.bestScore > 0 && <p className="treadmill-game__best">{city?.name} 최고 {result.bestScore.toLocaleString("ko-KR")}점</p>}
           </details>
         </section>
       </div>}
@@ -596,6 +608,6 @@ function SoloTreadmillGame({ onBack, backLabel, onFriends }: { readonly onBack: 
       {leave.canSave && <button type="button" className="treadmill-game__cta" onClick={() => saveAndGo(leave.action)}>저장하고 나가기</button>}
       <button type="button" className="treadmill-game__text-button" onClick={discardAndGo}>{leave.canSave ? "저장 없이 나가기" : leave.replaceSaved ? "지우고 진행하기" : "처음부터 시작하기"}</button>
     </GameLeaveDialog>}
-    {screen === "map" && <p className="treadmill-game__note">게임 에너지·점수·별은 게임 안에서만 쓰여요. 실제 훈련 기록이나 포인트(P)와 연결되지 않아요. 투어 기록은 이 기기와, 로그인하면 계정에 저장돼요.</p>}
+    {screen === "map" && <p className="treadmill-game__note">게임 에너지·완주 기록·별은 게임 안에서만 쓰여요. 실제 훈련 기록이나 포인트(P)와 연결되지 않아요. 투어 기록은 이 기기와, 로그인하면 계정에 저장돼요.</p>}
   </div>
 }

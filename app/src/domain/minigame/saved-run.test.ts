@@ -74,6 +74,20 @@ describe("device-only suspended run", () => {
     expect(readSavedRun(localStorage, key).kind).toBe("invalid")
     expect(localStorage.getItem(key)).toBe("{broken")
   })
+  it("preserves a claimed aid stop and migrates v4 saves without mixing old automatic supplies", () => {
+    const state = { ...started(), countdown: 0, seconds: 10.8,
+      aid: { claimed: 1, rest: 0, received: 1, lastAmount: 28 } }
+    expect(writeSavedRun(localStorage, key, "practice", state, null)).toBe(true)
+    const raw = localStorage.getItem(key)!
+    expect(decodeSavedRun(raw)?.state.aid).toEqual(state.aid)
+    const old = JSON.parse(raw); old.rulesVersion = 4
+    delete old.state.aid; delete old.state.checkpoint.aid
+    const restored = decodeSavedRun(JSON.stringify(old))!
+    expect(restored.notice).toContain("보급 규칙")
+    expect(restored.state.seconds).toBe(0)
+    expect(restored.state.aid.claimed).toBe(0)
+    expect(localStorage.getItem(key)).toBe(raw)
+  })
   it("does not overwrite or consume a newer save from another window", () => {
     expect(writeSavedRun(localStorage, key, "practice", started(), null)).toBe(true)
     const first = localStorage.getItem(key)!

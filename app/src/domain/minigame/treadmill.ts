@@ -5,10 +5,14 @@
  * the hit boxes are the same on every screen.
  */
 export const TREADMILL_RULES = {
-  version: 4,
+  version: 5,
   stageSeconds: 30,
   waveSeconds: 10,
-  waveSupply: 75,
+  /** Game-only next-wave budget: five seconds of base running + four base jumps. */
+  aidEnergy: 5 * 9 + 4 * 7,
+  aidWindowSeconds: 3,
+  aidRestSeconds: 0.3,
+  aidFront: 0.1,
   maxEnergy: 100,
   startPosition: 0.5,
   fallEdge: 0.06,
@@ -96,14 +100,18 @@ export type TreadmillCommand =
 export type TreadmillHazard = { id: number; kind: TreadmillHazardKind; x: number; hit: boolean; passed: boolean }
 export type TreadmillStats = {
   hits: number; cleared: number; jumps: number; dashes: number; restSeconds: number; lowestEnergy: number
-  /** Hazards cleared in a row without a hit; multiplies the next clear. */
-  combo: number; bestCombo: number; score: number
+  /** Hazards avoided in a row. No score multiplier. */
+  combo: number; bestCombo: number
+  /** Preserved for old saves; new runs earn factual achievements instead. */
+  score: number
   /** Stage retries used this run; any retry caps the finish at 1 star. */
   retries: number
 }
 
 export type TreadmillState = {
   mode: TreadmillMode
+  /** Two finite aid stops per stage; progress and receipts survive device saves. */
+  aid: { claimed: number; rest: number; received: number; lastAmount: number }
   /** The course being played: the practice course or one city of the tour. Never changes mid-run. */
   stages: readonly TreadmillStage[]
   /** Seconds left before the belt moves. Inputs except holding run are ignored meanwhile. */
@@ -146,13 +154,10 @@ export type TreadmillCheckpoint = Omit<TreadmillState, "checkpoint">
 
 const freshStats = (): TreadmillStats => ({ hits: 0, cleared: 0, jumps: 0, dashes: 0, restSeconds: 0, lowestEnergy: TREADMILL_RULES.maxEnergy, combo: 0, bestCombo: 0, score: 0, retries: 0 })
 
-/** Game score only: clears grow with the combo, stage finishes add a flat bonus. */
-export const TREADMILL_SCORE = { clear: 100, comboStep: 50, comboCap: 5, stage: 300 } as const
-
 export function newTreadmillRun(stages: readonly TreadmillStage[] = TREADMILL_STAGES): TreadmillState {
   const rules = TREADMILL_RULES
   return {
-    mode: "ready", stages, countdown: 0, stage: 0, seconds: 0, x: rules.startPosition, y: 0, velocityY: 0,
+    mode: "ready", aid: { claimed: 0, rest: 0, received: 0, lastAmount: 0 }, stages, countdown: 0, stage: 0, seconds: 0, x: rules.startPosition, y: 0, velocityY: 0,
     energy: rules.maxEnergy, running: false, exhausted: false, dashLeft: 0, cooldown: 0, invulnerable: 0,
     hitFlash: 9, landed: 9, hazards: [], spawned: 0, upgrades: [], mudBonus: 0, jumpCost: rules.jumpCost,
     jumpVelocity: rules.jumpVelocity, dashFactor: 1, knockbackFactor: 1, strideFactor: 1, runDrainFactor: 1, recoveryFactor: 1,
@@ -189,7 +194,7 @@ export function treadmillCommand(state: TreadmillState, command: TreadmillComman
       stats: { ...from.stats, retries: state.stats.retries + 1 } }
   }
   if (command.type === "pause" && state.mode === "running") {
-    return { ...state, mode: "paused", running: false, exhausted: false, message: "일시정지" }
+    return { ...state, aid: { ...state.aid, rest: 0 }, mode: "paused", running: false, exhausted: false, message: "일시정지" }
   }
   if (command.type === "resume" && state.mode === "paused") {
     return { ...state, mode: "running", countdown: TREADMILL_RULES.countdownResume, running: false, exhausted: false, message: "출발!" }
@@ -197,7 +202,7 @@ export function treadmillCommand(state: TreadmillState, command: TreadmillComman
   if (command.type === "upgrade" && state.mode === "upgrade") {
     const next = applyUpgrade(state, command.upgrade)
     const started: TreadmillState = {
-      ...next, stage: state.stage + 1, seconds: 0, x: TREADMILL_RULES.startPosition, y: 0, velocityY: 0,
+      ...next, aid: { ...state.aid, claimed: 0, rest: 0, lastAmount: 0 }, stage: state.stage + 1, seconds: 0, x: TREADMILL_RULES.startPosition, y: 0, velocityY: 0,
       energy: Math.min(TREADMILL_RULES.maxEnergy, state.energy + TREADMILL_RULES.checkpointRefill),
       hazards: [], spawned: 0, dashLeft: 0, cooldown: 0, invulnerable: 0, hitFlash: 9, landed: 9,
       running: false, exhausted: false, mode: "running", countdown: TREADMILL_RULES.countdownStage, message: "출발!",
@@ -233,7 +238,7 @@ function step(state: TreadmillState, dt: number): TreadmillState {
   const rules = TREADMILL_RULES
   const stage = state.stages[state.stage]!
   if (state.countdown > 0) return { ...state, countdown: Math.max(0, state.countdown - dt) }
-  const next: TreadmillState = { ...state, stats: { ...state.stats }, hazards: state.hazards.map(hazard => ({ ...hazard })) }
+  const next: TreadmillState = { ...state, aid: { ...state.aid }, stats: { ...state.stats }, hazards: state.hazards.map(hazard => ({ ...hazard })) }
   next.seconds += dt
   next.cooldown = Math.max(0, state.cooldown - dt)
   next.invulnerable = Math.max(0, state.invulnerable - dt)
@@ -247,9 +252,6 @@ function step(state: TreadmillState, dt: number): TreadmillState {
   next.energy = state.running
     ? Math.max(0, state.energy - runningSeconds * drain)
     : Math.min(rules.maxEnergy, state.energy + dt * rules.recovery * state.recoveryFactor)
-  if (next.seconds < rules.stageSeconds && Math.floor(next.seconds / rules.waveSeconds) > Math.floor(state.seconds / rules.waveSeconds)) {
-    next.energy = Math.min(rules.maxEnergy, next.energy + rules.waveSupply)
-  }
   next.exhausted = state.running && next.energy <= 0
   if (!state.running) next.stats.restSeconds += dt
   next.stats.lowestEnergy = Math.min(next.stats.lowestEnergy, next.energy)
@@ -273,10 +275,12 @@ function step(state: TreadmillState, dt: number): TreadmillState {
     const reach = shape.halfWidth + rules.runnerHalfWidth
     const crossed = before > reach && hazard.x - next.x < -reach
     const low = Math.min(state.y, next.y) < shape.height
-    if (!hazard.hit && !hazard.passed && (overlaps(next.x, hazard) || crossed) && low && next.invulnerable === 0) {
+    if (!hazard.hit && !hazard.passed && (overlaps(next.x, hazard) || crossed) && low) {
       hazard.hit = true
-      next.stats.hits += 1
       next.stats.combo = 0
+      // Protection prevents repeated damage, but walking through a hazard is not avoidance.
+      if (next.invulnerable > 0) continue
+      next.stats.hits += 1
       if (hazard.kind === "spike") {
         return { ...next, mode: "over", running: false, exhausted: false, failure: "spike", message: "가시에 닿았어요." }
       }
@@ -288,7 +292,6 @@ function step(state: TreadmillState, dt: number): TreadmillState {
     } else if (!hazard.hit && !hazard.passed && hazard.x + shape.halfWidth < next.x - rules.runnerHalfWidth) {
       hazard.passed = true
       next.stats.cleared += 1
-      next.stats.score += TREADMILL_SCORE.clear + TREADMILL_SCORE.comboStep * Math.min(next.stats.combo, TREADMILL_SCORE.comboCap)
       next.stats.combo += 1
       next.stats.bestCombo = Math.max(next.stats.bestCombo, next.stats.combo)
     }
@@ -299,11 +302,39 @@ function step(state: TreadmillState, dt: number): TreadmillState {
   }
   if (next.seconds >= rules.stageSeconds) {
     const clear = next.stage === state.stages.length - 1
-    next.stats.score += TREADMILL_SCORE.stage
     return { ...next, seconds: rules.stageSeconds, mode: clear ? "clear" : "upgrade", running: false, exhausted: false,
       message: clear ? "완주!" : "안전 발판 도착! 바닥이 멈췄어요." }
   }
+  const stop = treadmillAidStop(next)
+  // Hold a real, uninterrupted ground rest. A hit, dash, jump or resumed run cancels it.
+  const eligible = stop.open && !stop.claimed && !state.running && next.y === 0
+    && next.dashLeft === 0 && next.x >= rules.aidFront && next.hitFlash >= rules.invulnerableSeconds
+  next.aid.rest = eligible ? state.aid.rest + dt : 0
+  if (next.aid.rest >= rules.aidRestSeconds && next.energy < rules.maxEnergy) {
+    const amount = Math.min(rules.aidEnergy, rules.maxEnergy - next.energy)
+    next.energy += amount
+    next.aid = { claimed: next.aid.claimed | stop.bit, rest: 0, received: next.aid.received + 1, lastAmount: amount }
+    next.message = `보급소에서 쉬었어요 · 에너지 +${Math.round(amount)}`
+  }
   return next
+}
+
+/** The aid window is a course landmark, never a random gift or a real fueling prescription. */
+export function treadmillAidStop(state: TreadmillState) {
+  const index = Math.floor(state.seconds / TREADMILL_RULES.waveSeconds)
+  const bit = index === 1 ? 1 : index === 2 ? 2 : 0
+  const remaining = index * TREADMILL_RULES.waveSeconds + TREADMILL_RULES.aidWindowSeconds - state.seconds
+  return { open: state.mode === "running" && state.countdown === 0 && bit !== 0 && remaining > 0,
+    bit, claimed: (state.aid.claimed & bit) !== 0, remaining: Math.max(0, remaining) }
+}
+
+export function treadmillAchievement(state: TreadmillState) {
+  const completedStages = state.mode === "clear" ? state.stages.length : state.stage + Number(state.mode === "upgrade")
+  const nextGoal = state.mode !== "clear" ? `${Math.min(completedStages + 1, state.stages.length)}구간 완주하기`
+    : state.stats.retries > 0 ? "처음부터 이어서 완주하기"
+    : state.stats.hits > 1 ? "부딪힘 1회 이하로 완주하기"
+    : state.stats.hits === 1 ? "부딪힘 없이 완주하기" : "다음 코스에서도 무충돌 완주하기"
+  return { completedStages, nextGoal }
 }
 
 /** Substeps stabilize collisions; excess stalled time is discarded, never caught up. */
