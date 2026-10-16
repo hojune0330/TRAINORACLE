@@ -67,6 +67,7 @@ test("tower defense has one mandatory dedicated owner, without generic duplicate
   const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
   assert.match(generic, /testIgnore:\s*\[[^\]]*"\*\*\/tower-defense\.spec\.ts"/)
   assert.match(dedicated, /testMatch:\s*'tower-defense\.spec\.ts'/)
+  assert.match(dedicated, /projects:\[\.\.\.\(base\.projects\?\?\[\]\),\.\.\.\(generic\.projects\?\?\[\]\)\]/)
   assert.equal(pkg.scripts['test:e2e:tower-defense'], 'playwright test --config playwright.tower-defense.config.ts')
   assert(pkg.scripts['test:e2e'].split(' && ').includes('npm run test:e2e:tower-defense'))
   assert(commands(jobs['app-browser-dedicated']).includes('npm run test:e2e:tower-defense'))
