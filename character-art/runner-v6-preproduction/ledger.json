@@ -1,0 +1,287 @@
+{
+  "createdUtc": "2026-10-16T15:31:46.153111+00:00",
+  "status": "offline_preproduction_not_integrated",
+  "originalSource": "character-art/tori/tripo/2026-10-12/motion/tori-game-motions.fbx",
+  "originalSourceSha256": "e6d3417b3727bf13fcf987d6e2400e78fa0f9414c2db51e325bc69019ae2314e",
+  "sourceTaskId": "15d4e91d-7b0c-4471-af5a-8fcf70d73920",
+  "newTripoTasks": 0,
+  "newTripoCredits": 0,
+  "runtimeChanges": false,
+  "sourcePreservationChecks": {
+    "vertexCount": true,
+    "polygonCount": true,
+    "geometryHash": true,
+    "topologyHash": true,
+    "weightsHash": true,
+    "vertexGroups": true,
+    "bones": true,
+    "restRigHash": true,
+    "actions": true
+  },
+  "cameraSamplesMatch": true,
+  "sampledFrames": 574,
+  "uniqueFrames": 574,
+  "exactDuplicateCellsRemoved": 0,
+  "emptyFrames": 0,
+  "clippedFrames": 0,
+  "totalSheetBytes": 7724312,
+  "outputs": [
+    {
+      "file": "review/cheer-two-view.webp",
+      "bytes": 3647570,
+      "sha256": "9eac3a6b03e705adbfdccc10eb7c68f250c46b9ba7726d28bca7441518d8a949",
+      "size": [
+        640,
+        390
+      ],
+      "frames": 98,
+      "animationDurationMs": 12183
+    },
+    {
+      "file": "review/contact-104.png",
+      "bytes": 431575,
+      "sha256": "b171dae6072912bfd23f43da928e4f9703488f15b98b089b1b6a116f8b71eb20",
+      "size": [
+        962,
+        1600
+      ],
+      "frames": 1,
+      "animationDurationMs": 0
+    },
+    {
+      "file": "review/contact-128.png",
+      "bytes": 588219,
+      "sha256": "e2ff4915d85400921f0d36942add758a1f53647467bb3b4da066740d22bc175d",
+      "size": [
+        1154,
+        1888
+      ],
+      "frames": 1,
+      "animationDurationMs": 0
+    },
+    {
+      "file": "review/fall-two-view.webp",
+      "bytes": 1275680,
+      "sha256": "29894e0d47e32d96cb5cf9213474fcc85b2fd01223f5082cba88f122c33f5022",
+      "size": [
+        640,
+        390
+      ],
+      "frames": 37,
+      "animationDurationMs": 3100
+    },
+    {
+      "file": "review/hit-two-view.webp",
+      "bytes": 616358,
+      "sha256": "1085ff0a0e032526f284116e4c777018dd08111330060c1f59ea2c0a4f707d30",
+      "size": [
+        640,
+        390
+      ],
+      "frames": 17,
+      "animationDurationMs": 1392
+    },
+    {
+      "file": "review/idle-two-view.webp",
+      "bytes": 3081602,
+      "sha256": "1334cc68ac1536e0c024e7831f8113769b2ad96c2db2b290da2ec1b1e6af3ba5",
+      "size": [
+        640,
+        390
+      ],
+      "frames": 92,
+      "animationDurationMs": 15333
+    },
+    {
+      "file": "review/jump-two-view.webp",
+      "bytes": 959156,
+      "sha256": "fa84c8e3f1219eadd482adfe3dd686be63e6a873ae818eef51ee0f437dc45174",
+      "size": [
+        640,
+        390
+      ],
+      "frames": 28,
+      "animationDurationMs": 2308
+    },
+    {
+      "file": "review/run-two-view.webp",
+      "bytes": 537484,
+      "sha256": "9cc85fb0f422ce245b4fe384e8fceb9e75803ac9b54bf8f12d22e1ac65c6b276",
+      "size": [
+        640,
+        390
+      ],
+      "frames": 15,
+      "animationDurationMs": 1250
+    },
+    {
+      "file": "sheets/tori-diagonal-cheer.webp",
+      "bytes": 1422584,
+      "sha256": "c6da565ee02cbf98f4fdaf7b12d9fa6afaf45af35d93155fec7e749643963411",
+      "size": [
+        2048,
+        3328
+      ],
+      "frames": 1,
+      "animationDurationMs": 0
+    },
+    {
+      "file": "sheets/tori-diagonal-fall.webp",
+      "bytes": 500348,
+      "sha256": "3de31e9fd2ebb91639240858b2579842b566626abb3288d904f519c377ecf0b5",
+      "size": [
+        2048,
+        1280
+      ],
+      "frames": 1,
+      "animationDurationMs": 0
+    },
+    {
+      "file": "sheets/tori-diagonal-hit.webp",
+      "bytes": 229578,
+      "sha256": "4d77c36d4aa304b61362a4148e7aeabd5eb6ed8ed7cb4dcc3472b475d65b9f65",
+      "size": [
+        2048,
+        768
+      ],
+      "frames": 1,
+      "animationDurationMs": 0
+    },
+    {
+      "file": "sheets/tori-diagonal-idle.webp",
+      "bytes": 1167358,
+      "sha256": "fe8bf0cb40e9b19c40850da39f1ebcd73d6056aab700583ac34cc550a7f2f886",
+      "size": [
+        2048,
+        3072
+      ],
+      "frames": 1,
+      "animationDurationMs": 0
+    },
+    {
+      "file": "sheets/tori-diagonal-jump.webp",
+      "bytes": 359520,
+      "sha256": "566588c67734844b72f531de344b300044d1b13befc77c20a0facf28c599c0b8",
+      "size": [
+        2048,
+        1024
+      ],
+      "frames": 1,
+      "animationDurationMs": 0
+    },
+    {
+      "file": "sheets/tori-diagonal-run.webp",
+      "bytes": 191200,
+      "sha256": "332021ff83fe5c979938fd798550d770a6608270288113f72f2dbba927a9514b",
+      "size": [
+        2048,
+        512
+      ],
+      "frames": 1,
+      "animationDurationMs": 0
+    },
+    {
+      "file": "sheets/tori-side-cheer.webp",
+      "bytes": 1407162,
+      "sha256": "5e55dbddc2fa19944a4ba4a40a9b9a18fa7da2befcc8f5e82a9c5dad00d5b1c7",
+      "size": [
+        2048,
+        3328
+      ],
+      "frames": 1,
+      "animationDurationMs": 0
+    },
+    {
+      "file": "sheets/tori-side-fall.webp",
+      "bytes": 482560,
+      "sha256": "afd4ffc59c1bb78620bfe5b79344e8fe90c8e0106a308ea50d5c11c4fd4e761e",
+      "size": [
+        2048,
+        1280
+      ],
+      "frames": 1,
+      "animationDurationMs": 0
+    },
+    {
+      "file": "sheets/tori-side-hit.webp",
+      "bytes": 240826,
+      "sha256": "c66fa44ad3aec782bf133d7509e7500903242ca4311bcf8dc584179370c7a1a7",
+      "size": [
+        2048,
+        768
+      ],
+      "frames": 1,
+      "animationDurationMs": 0
+    },
+    {
+      "file": "sheets/tori-side-idle.webp",
+      "bytes": 1156860,
+      "sha256": "fcc1c19049b3a50e881fd6d8057826936b0bce57e2bf0d9e2a961a92d0748ee7",
+      "size": [
+        2048,
+        3072
+      ],
+      "frames": 1,
+      "animationDurationMs": 0
+    },
+    {
+      "file": "sheets/tori-side-jump.webp",
+      "bytes": 360382,
+      "sha256": "d3a0238cc8743e381d4bcc4afd7a84cb8a09136e2ae4b70ba5df00b7090090ab",
+      "size": [
+        2048,
+        1024
+      ],
+      "frames": 1,
+      "animationDurationMs": 0
+    },
+    {
+      "file": "sheets/tori-side-run.webp",
+      "bytes": 205934,
+      "sha256": "1b28234c3210b317458a8bb2d915804523779fbc4634559ce58ec1553943e5e4",
+      "size": [
+        2048,
+        512
+      ],
+      "frames": 1,
+      "animationDurationMs": 0
+    },
+    {
+      "file": "tori-two-view-authoring.blend",
+      "bytes": 5917934,
+      "sha256": "1ca316efe179ea4141e47135e41284ec2ed17722d4342d2a08823accf38108e9"
+    }
+  ],
+  "scripts": [
+    {
+      "file": "tools/bake.py",
+      "sha256": "5fac1ea0ed99b692baf3af3f59cf775ae1301f4baafc78d22f960999dd8d7248"
+    },
+    {
+      "file": "tools/finalize_scene.py",
+      "sha256": "77cf6bab0ecfd5f7b03f14fef9358997ebfe11b86b3de7f917764f3de7f8d5d7"
+    },
+    {
+      "file": "tools/inspect_source.py",
+      "sha256": "8f86114e517b4b326e128be2eeacf43837573bd4517ec5603136801c9ee8234a"
+    },
+    {
+      "file": "tools/pack.py",
+      "sha256": "99d37953c91b30a888434f965b784501b92ab19ce4ad8110db414e06e215e23c"
+    },
+    {
+      "file": "tools/record_delivery.py",
+      "sha256": "d3a752e354efd3f0b4be2b36214853f95e608d60d7ac1d82230f7d3d23d939b2"
+    },
+    {
+      "file": "tools/validate_source.py",
+      "sha256": "76d7abc5b7fb8d9dd382be384fdaf9514320613362e38822514fe13e9552e644"
+    }
+  ],
+  "deferred": [
+    "jump: source repeats small hops; not adopted as one high obstacle jump",
+    "new dash/landing keyframes: not invented",
+    "game playback rate, interruption/blending, mobile performance: not tested"
+  ],
+  "rightsRecord": "../tori/tripo/2026-10-12/USAGE_AND_RIGHTS.md"
+}

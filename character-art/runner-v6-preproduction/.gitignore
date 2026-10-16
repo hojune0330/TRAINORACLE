@@ -1,0 +1,8 @@
+# Reproducible intermediate renders; retain final sheets, previews, ledgers/scripts.
+/frames/
+/probe/
+/probe-review/
+/probe-manifest.json
+/*.log
+/*.blend1
+/review/*-first-frame.png
