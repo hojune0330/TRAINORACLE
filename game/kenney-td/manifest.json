@@ -1,0 +1,68 @@
+{
+  "creator": "Kenney Vleugels",
+  "source": "https://kenney.nl/assets/tower-defense-top-down",
+  "license": "CC0-1.0",
+  "modifications": "None. Original PNG files copied; scale and rotation happen at runtime.",
+  "files": [
+    {
+      "file": "tile162.png",
+      "original": "PNG/Default size/towerDefense_tile162.png",
+      "sha256": "b6527b41e7ddd344aa8b700efdfb92c358fd949d8ebce54e5ef987008bfeb810",
+      "bytes": 3269
+    },
+    {
+      "file": "tile167.png",
+      "original": "PNG/Default size/towerDefense_tile167.png",
+      "sha256": "365032b40e9e573502575bfef9d3dbd401324e264186dfa411b48eb7c0096394",
+      "bytes": 2971
+    },
+    {
+      "file": "tile180.png",
+      "original": "PNG/Default size/towerDefense_tile180.png",
+      "sha256": "477cca9e002b7eaa107f72d8b59a976cfc492df66f64ba41a181e311a17eb4ca",
+      "bytes": 1921
+    },
+    {
+      "file": "tile203.png",
+      "original": "PNG/Default size/towerDefense_tile203.png",
+      "sha256": "b8e2db13978897761ffb299887b68f1a19746841576ce85905a243a74e712eb9",
+      "bytes": 1888
+    },
+    {
+      "file": "tile245.png",
+      "original": "PNG/Default size/towerDefense_tile245.png",
+      "sha256": "26060431bd2eeabddf383631e4ca854d8361978421501de049ab3dc932b2df1e",
+      "bytes": 2618
+    },
+    {
+      "file": "tile246.png",
+      "original": "PNG/Default size/towerDefense_tile246.png",
+      "sha256": "ae22aead77eb647266ddc2e5c3d66802dfa0c7c190603c0045f3b6d997275972",
+      "bytes": 2586
+    },
+    {
+      "file": "tile247.png",
+      "original": "PNG/Default size/towerDefense_tile247.png",
+      "sha256": "dc6b3d9212740fac53d847d3d74621a1a9d4af37a55080a809c8ffb7b45361d2",
+      "bytes": 2535
+    },
+    {
+      "file": "tile248.png",
+      "original": "PNG/Default size/towerDefense_tile248.png",
+      "sha256": "c5ae85506a397c8ba88ca1c7d734f32ddfe5a1ebb1cc23133378a663bbda3965",
+      "bytes": 2521
+    },
+    {
+      "file": "tile249.png",
+      "original": "PNG/Default size/towerDefense_tile249.png",
+      "sha256": "0be7e876c56820acbf2187e6211bfdd327d42fb4a7fe2aefff6145747a2aacb0",
+      "bytes": 2171
+    },
+    {
+      "file": "tile250.png",
+      "original": "PNG/Default size/towerDefense_tile250.png",
+      "sha256": "93aea1990fcff3b9315711fc175110b2b4ecae32f85912123305646cbc4ff504",
+      "bytes": 2430
+    }
+  ]
+}
