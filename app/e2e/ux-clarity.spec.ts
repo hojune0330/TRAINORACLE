@@ -14,6 +14,7 @@ test("compact questions, named disclosures and preview-first flows remain usable
     // Full-page evidence includes offscreen lazy companions. Request their bytes
     // before decoding; decode() alone does not start a deferred lazy request.
     await page.locator("img").evaluateAll(images => Promise.all(images.map(image => {
+      if (!(image instanceof HTMLImageElement)) throw new Error("Expected an HTML image for capture")
       image.loading = "eager"
       return image.decode()
     })))

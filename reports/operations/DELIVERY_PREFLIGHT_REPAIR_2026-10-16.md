@@ -90,3 +90,7 @@ preparation now requests those images eagerly, then still requires successful
 decode. Production lazy loading and test timeouts are unchanged. All four local
 projects plus mobile 200-percent text pass: 5 passed, 3 existing project-selection
 skips. Hosted gates must be rerun for this corrected candidate.
+The first capture correction missed the locator's broad element type in the
+browser TypeScript check. An explicit HTMLImageElement guard preserves decode
+failures and narrows the type. Browser TypeScript and both mobile capture/text-size
+cases pass after that correction; run 38850160426 remains a failed candidate.
