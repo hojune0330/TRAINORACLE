@@ -170,6 +170,45 @@
   --game-hair-silver: #C9D3E6;
   --game-hair-shine: #8FA0C8;
 
+  /* Forest defense battlefield, 2026-10-16: retain its muted ground and readable
+     combat cues in the game world only. Phaser reads these once when entering. */
+  --game-defense-ground: #6C9B71;
+  --game-defense-grass: #80AD7D;
+  --game-defense-grass-light: #8AB580;
+  --game-defense-grass-shade: #76A575;
+  --game-defense-path-edge: #537B59;
+  --game-defense-path-border: #C29E70;
+  --game-defense-path: #E5CB94;
+  --game-defense-path-light: #EDD8A8;
+  --game-defense-path-detail: #B69C73;
+  --game-defense-foundation-shadow: #44674E;
+  --game-defense-foundation: #EEE1B8;
+  --game-defense-foundation-border: #B69E73;
+  --game-defense-foundation-ink: #4C644E;
+  --game-defense-label: #294737;
+  --game-defense-shadow: #183F34;
+  --game-defense-projectile-shadow: #234C38;
+  --game-defense-outline: #283A38;
+  --game-defense-enemy: #D87956;
+  --game-defense-boss: #A84765;
+  --game-defense-range: #E2F7E3;
+  --game-defense-selection: #FFDF77;
+  --game-defense-level: #FFE9A5;
+  --game-defense-rapid: #FFE488;
+  --game-defense-cannon: #FFA56F;
+  --game-defense-frost: #9DE9FF;
+  --game-defense-hit: #FFF3CA;
+  --game-defense-impact: #FFE7AD;
+  --game-defense-slow: #B9EBFF;
+  --game-defense-slow-ring: #BCECFF;
+  --game-defense-health-background: #264734;
+  --game-defense-health: #F1DD9B;
+  --game-defense-boss-health: #F5A572;
+  --game-defense-bounty: #FFF0B0;
+  --game-defense-loss-text: #FFEADB;
+  --game-defense-text-outline: #354B35;
+  --game-defense-leak: #F29C7C;
+
   /* ============== TYPOGRAPHY ============== */
   --sans: "Pretendard Variable", "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   /* Korean labels historically used --mono too. Keep one glyph source across the app;
