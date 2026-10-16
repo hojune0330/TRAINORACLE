@@ -1,0 +1,98 @@
+[
+  {
+    "id": "fx-hit-burst",
+    "file": "fx-hit-burst.png",
+    "nameKo": "타격 섬광",
+    "role": "effect",
+    "tripoCandidate": false,
+    "status": "generated-alpha-checked",
+    "qaNotes": "전면 8방향 금색·아이보리 타격. 단일 프레임 애니메이션 소스이며 애니메이션은 미제작. 개별 view_image 육안검수, 32bpp ARGB 확인. 64px 실제 갤러리 및 모바일 검수는 통합 담당 범위.",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "D9A0A635304B4E6A39BB052462D309886EC4BCFFE24A03FF65E45FA45C743D34"
+  },
+  {
+    "id": "fx-cannon-blast",
+    "file": "fx-cannon-blast.png",
+    "nameKo": "포격 폭발",
+    "role": "effect",
+    "tripoCandidate": false,
+    "status": "generated-alpha-checked",
+    "qaNotes": "둥근 5개 돌출부와 금색 중심의 단일 포격 효과. 단일 프레임 애니메이션 소스. 개별 view_image 육안검수, 32bpp ARGB 확인. 64px 실제 갤러리 및 모바일 검수는 통합 담당 범위.",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "7670A2746C4B6E7B11A47487B6DF4BC4CD56BACAEAAC556D7C7F8D61B36853BC"
+  },
+  {
+    "id": "fx-frost-burst",
+    "file": "fx-frost-burst.png",
+    "nameKo": "서리 폭발",
+    "role": "effect",
+    "tripoCandidate": false,
+    "status": "generated-alpha-checked",
+    "qaNotes": "4개 큰 얼음 조각과 중심 섬광. 조각 사이 투명 간격 확인. 단일 프레임 애니메이션 소스. 개별 view_image 육안검수, 32bpp ARGB 확인. 64px 실제 갤러리 및 모바일 검수는 통합 담당 범위.",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "55603BE54260F90B0B9C7D009DE04AC1D6033C09C6F10B6E0CDBDA23CFCA96EB"
+  },
+  {
+    "id": "fx-dash-trail",
+    "file": "fx-dash-trail.png",
+    "nameKo": "대시 잔상",
+    "role": "effect",
+    "tripoCandidate": false,
+    "status": "generated-alpha-checked",
+    "qaNotes": "오른쪽 끝으로 가늘어지는 3개 가로 줄. 가로형 원본. 좌하단 모서리 alpha=1, 나머지 모서리 0. 단일 프레임 애니메이션 소스. 개별 view_image 육안검수, 32bpp ARGB 확인. 64px 실제 갤러리 및 모바일 검수는 통합 담당 범위.",
+    "width": 1896,
+    "height": 830,
+    "sha256": "EACC9E35BCF002595C22D2E44203CD2E521ACAB742D9D7CD45B24F11C428001D"
+  },
+  {
+    "id": "fx-upgrade-burst",
+    "file": "fx-upgrade-burst.png",
+    "nameKo": "강화 섬광",
+    "role": "effect",
+    "tripoCandidate": false,
+    "status": "generated-alpha-checked",
+    "qaNotes": "상승 꺾임 3개와 하단 금색 별빛. 단일 프레임 애니메이션 소스. 원본 비율 유지. 개별 view_image 육안검수, 32bpp ARGB 확인. 64px 실제 갤러리 및 모바일 검수는 통합 담당 범위.",
+    "width": 1247,
+    "height": 1261,
+    "sha256": "3C593C8DE836B8DCFC59461380A1CABDA66C7D9AD7E786991877D9D9D8E9CBDF"
+  },
+  {
+    "id": "reward-victory-medal",
+    "file": "reward-victory-medal.png",
+    "nameKo": "승리 메달",
+    "role": "reward",
+    "tripoCandidate": false,
+    "status": "generated-alpha-checked",
+    "qaNotes": "정면 금색 별 메달과 산호색 리본. 통화 기호 없음. 큰 크기에서 원반 위에 미세한 금색 점과 외곽 프린지가 보임; 원본 보존. 개별 view_image 육안검수, 32bpp ARGB 확인. 64px 실제 갤러리 및 모바일 검수는 통합 담당 범위.",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "7867FFC7484B86486599A748FBAFF20CB145F7F3ED3A6F721EF2D1C83EE818E2"
+  },
+  {
+    "id": "reward-star",
+    "file": "reward-star.png",
+    "nameKo": "보상 별",
+    "role": "reward",
+    "tripoCandidate": false,
+    "status": "generated-alpha-checked",
+    "qaNotes": "두께가 있는 단순 5각 별. 독립 보상 아이콘. 표정·문자 없음. 개별 view_image 육안검수, 32bpp ARGB 확인. 64px 실제 갤러리 및 모바일 검수는 통합 담당 범위.",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "7E0E5717A3D27CDF07B664EB4503F812F1C8EAFC44832A64B97F27CD78D17B7E"
+  },
+  {
+    "id": "reward-treasure-chest",
+    "file": "reward-treasure-chest.png",
+    "nameKo": "보물상자",
+    "role": "reward",
+    "tripoCandidate": true,
+    "status": "generated-alpha-checked",
+    "qaNotes": "닫힌 산호색 상자, 금색 띠, 아이보리 잠금판. 원본 입체 참조만 준비. Tripo 미실행; 후속 선택 후보. 개별 view_image 육안검수, 32bpp ARGB 확인. 64px 실제 갤러리 및 모바일 검수는 통합 담당 범위.",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "3F12BACC41822E617086F48BF2A9AF4992714C4EF6C3996F27A77C85A0E67D3B"
+  }
+]

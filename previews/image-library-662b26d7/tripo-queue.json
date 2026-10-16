@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "status": "images-first-no-submission",
+  "autoSubmit": false,
+  "tripoCalls": 0,
+  "tripoCreditsSpent": 0,
+  "balanceCheckedThisBatch": false,
+  "preferredAccountRoute": "Existing Studio Pro; API billing is separate and must not be assumed funded",
+  "generationOrder": [
+    "td-rapid-tower",
+    "td-cannon-tower",
+    "td-frost-tower",
+    "td-base-gate"
+  ],
+  "entries": [
+    {
+      "id": "td-rapid-tower",
+      "input": "defense/td-rapid-tower.png",
+      "status": "not-submitted",
+      "deliverable": "GLB original, render preview, generation receipt",
+      "targetTriangles": 3000,
+      "targetTexturePixels": 512,
+      "actualTrianglesRequireInspection": true,
+      "riggingNeeded": false,
+      "paidFormatConversionNeeded": false,
+      "reviewBeforeNext": true
+    },
+    {
+      "id": "td-cannon-tower",
+      "input": "defense/td-cannon-tower.png",
+      "status": "not-submitted",
+      "deliverable": "GLB original, render preview, generation receipt",
+      "targetTriangles": 3000,
+      "targetTexturePixels": 512,
+      "actualTrianglesRequireInspection": true,
+      "riggingNeeded": false,
+      "paidFormatConversionNeeded": false,
+      "reviewBeforeNext": true
+    },
+    {
+      "id": "td-frost-tower",
+      "input": "defense/td-frost-tower.png",
+      "status": "not-submitted",
+      "deliverable": "GLB original, render preview, generation receipt",
+      "targetTriangles": 3000,
+      "targetTexturePixels": 512,
+      "actualTrianglesRequireInspection": true,
+      "riggingNeeded": false,
+      "paidFormatConversionNeeded": false,
+      "reviewBeforeNext": true
+    },
+    {
+      "id": "td-base-gate",
+      "input": "defense/td-base-gate.png",
+      "status": "not-submitted",
+      "deliverable": "GLB original, render preview, generation receipt",
+      "targetTriangles": 3000,
+      "targetTexturePixels": 512,
+      "actualTrianglesRequireInspection": true,
+      "riggingNeeded": false,
+      "paidFormatConversionNeeded": false,
+      "reviewBeforeNext": true
+    }
+  ],
+  "reuseFirst": [
+    "world-tree-broadleaf",
+    "world-rock-cluster",
+    "world-jump-hurdle",
+    "world-respawn-beacon",
+    "world-grass-island"
+  ],
+  "keep2D": [
+    "fx-hit-burst",
+    "fx-cannon-blast",
+    "fx-frost-burst",
+    "fx-dash-trail",
+    "fx-upgrade-burst",
+    "reward-victory-medal",
+    "reward-star",
+    "world-mud-patch"
+  ],
+  "handoffNotes": [
+    "Check actual Studio credit balance and generation quote before starting.",
+    "Inspect one result at 64px and verify material, pivot, orientation and actual polygon count before the next.",
+    "Do not regenerate a successful task just because export/download failed.",
+    "Separate turret head/base and sweeper hub/bar if animation needs separate rotation.",
+    "Use current game collider geometry independently from art bounds."
+  ]
+}
