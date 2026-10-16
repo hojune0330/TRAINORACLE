@@ -20,7 +20,7 @@ export function PartyLobby({ snapshot: s, self, connected, inviteUrl, copied, se
       </li>)}</ol>
       <p className="arena-note">{PARTY_MODES[modeOf(game.mode)].ranking}. 같으면 공동 순위예요.</p>
     </> : game?.phase === 'interrupted' ? <><h2>경기가 중단됐어요</h2><p>참가자 이탈 또는 서버 지연으로 승패를 정하지 않았어요. 다시 준비하면 같은 방에서 만날 수 있어요.</p></>
-      : <><h2><Users size={24} /> 우리끼리 한 판</h2><p>친구를 초대하고, 같은 방에서 종목을 바꿔 즐겨요.</p></>}
+      : <><h2><Users size={24} /> {PARTY_MODES[mode].name} 대기실</h2><p>친구와 1:1 · 개인 대결 · 한 판 90초</p><p>{PARTY_MODES[mode].goal}</p></>}
     {series.rounds > 0 && <div className="arena-series" aria-label="이 멤버들의 최근 전적"><strong>이 멤버들과 최근 {series.rounds}판</strong>
       <span>{series.players.map(p => `${p.name} ${p.wins}승`).join(' : ')} · 공동 {series.players[0]?.ties ?? 0}판</span></div>}
     <ul className="arena-members" aria-label="참가자 자리">{s.members.map(m => <li key={m.id} data-self={m.id === self}>
@@ -31,7 +31,7 @@ export function PartyLobby({ snapshot: s, self, connected, inviteUrl, copied, se
     <div className="arena-actions"><button className="treadmill-game__ghost" onClick={onCopy}><Copy size={16} />{copied ? '복사했어요' : '초대 링크 복사'}</button>
       {typeof navigator.share === 'function' && <button className="treadmill-game__ghost" onClick={onShare}><Share2 size={16} />공유</button>}</div>
     <input className="arena-invite" aria-label="초대 링크" readOnly value={inviteUrl} onFocus={e => e.currentTarget.select()} />
-    {s.partyVersion === 2 && <>
+    {s.partyVersion === 2 && <details className="arena-change-game"><summary>게임 바꾸기</summary>
       <div className="arena-mode-picker" aria-label="다음 종목 고르기"><h3>다음에는 무엇을 할까요?</h3>
         <p className="arena-note">각자 투표하고 방장이 종목을 정해요. 종목이 바뀌면 두 명 모두 다시 준비해 주세요.</p>
         {(Object.keys(PARTY_MODES) as ArenaMode[]).map(key => <div className="arena-mode" key={key} data-selected={mode === key}>
@@ -42,7 +42,7 @@ export function PartyLobby({ snapshot: s, self, connected, inviteUrl, copied, se
         </div>)}
         {s.members.some(m => m.partyVersion !== 2) && <p className="arena-note">장애물 생존은 최신 초대 링크에서 함께 접속해 주세요. 현재 밀어내기는 이용할 수 있어요.</p>}
       </div>
-    </>}
+    </details>}
     {s.partyVersion === 2 && <details className="arena-social"><summary>친구에게 반응 보내기</summary>
       <div className="arena-reactions" role="group" aria-label="짧은 반응">{(Object.keys(PARTY_REACTIONS) as (keyof typeof PARTY_REACTIONS)[]).map(kind =>
         <button key={kind} disabled={!connected} onClick={() => send({type:'reaction',kind})}>{PARTY_REACTIONS[kind]}</button>)}</div>
@@ -54,8 +54,8 @@ export function PartyLobby({ snapshot: s, self, connected, inviteUrl, copied, se
     </div>
     <div className="arena-ready"><strong>{PARTY_MODES[mode].name} · {ready}/2명 준비</strong>
       <p className="arena-note">{s.members.length < 2 ? '친구가 입장하면 함께 출발할 수 있어요.' : ready < 2 ? '두 명 모두 준비 완료를 눌러 주세요.' : isHost ? '모두 준비됐어요. 함께 출발을 눌러 주세요.' : '방장이 출발하면 경기가 시작돼요.'}</p>
-      <button className="treadmill-game__cta" disabled={!connected} onClick={() => send({type:'ready',ready:!member?.ready})}>{member?.ready ? '준비 취소' : game ? '한 판 더 · 준비' : '준비 완료'}</button>
-      {isHost && <button className="treadmill-game__ghost" disabled={!connected || ready !== 2 || s.members.length !== 2} onClick={() => send({type:'start'})}>함께 출발</button>}
+      <button className={member?.ready ? 'treadmill-game__ghost' : 'treadmill-game__cta'} disabled={!connected} onClick={() => send({type:'ready',ready:!member?.ready})}>{member?.ready ? '준비 취소' : game ? '한 판 더 · 준비' : '준비 완료'}</button>
+      {isHost && <button className={ready === 2 ? 'treadmill-game__cta' : 'treadmill-game__ghost'} disabled={!connected || ready !== 2 || s.members.length !== 2} onClick={() => send({type:'start'})}>함께 출발</button>}
     </div>
   </div>
 }

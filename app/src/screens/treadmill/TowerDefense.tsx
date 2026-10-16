@@ -8,7 +8,7 @@ import {TowerDefenseBoard} from './TowerDefenseBoard'
 import {TDArtwork,tdTowerArtwork,tdEnemyArtwork} from './TowerDefenseArtwork'
 import './tower-defense.css'
 
-export function TowerDefense({onBack}:{onBack:()=>void}){
+export function TowerDefense({onBack,entry}:{onBack:()=>void;entry?:'new'|'resume'}){
  const current=React.useRef<State|null>(null),id=React.useRef(''),recorded=React.useRef(false)
  const [view,setView]=React.useState<State|null>(null),[selected,setSelected]=React.useState(0),[paused,setPaused]=React.useState(false),[speed,setSpeed]=React.useState(1)
  const [saved,setSaved]=React.useState<ReturnType<typeof loadTD>>(null),[notice,setNotice]=React.useState(''),[best,setBest]=React.useState(0)
@@ -33,6 +33,15 @@ export function TowerDefense({onBack}:{onBack:()=>void}){
  },[view?.phase,paused,speed,sync])
  React.useEffect(()=>{if(!finished||!view||recorded.current)return;recorded.current=true;try{recordTD(localStorage,view,id.current);setNotice('결과를 이 기기에 저장했어요.')}catch{setNotice('결과를 저장하지 못했어요. 아래 기록을 확인해 주세요.')}},[finished,view])
  const start=(s:State=newTowerDefense(),runId:string=crypto.randomUUID())=>{current.current=structuredClone(s);id.current=runId;recorded.current=false;setSelected(0);setSpeed(1);setNotice('');setBuildEffect(null);setPaused(false);sync()}
+ // Explicit lounge action only. Opening an information card never creates a run.
+ const entered=React.useRef(false)
+ React.useEffect(()=>{if(!entry||entered.current)return;entered.current=true
+  if(entry==='new'){start();return}
+  try{const checkpoint=loadTD(localStorage);if(checkpoint)start(checkpoint.state,checkpoint.id);else setNotice('저장한 방어전을 찾지 못했어요. 새 방어전을 시작할 수 있어요.')}
+  catch{setNotice('저장한 방어전을 읽지 못했어요. 기존 저장은 보존했어요.')}
+  // The entry is a one-time action, never replayed on a render or storage change.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+ },[entry])
  const act=(fn:(s:State)=>boolean,message:string)=>{if(!current.current||paused)return;const before=current.current.towers.find(t=>t.pad===selected)?.level??0;if(fn(current.current)){setNotice(message);if((current.current.towers.find(t=>t.pad===selected)?.level??0)>before)setBuildEffect({pad:selected,at:performance.now()})}sync()}
  const save=()=>{if(!current.current)return;try{saveTD(localStorage,current.current,id.current);onBack()}catch{setNotice('저장하지 못했어요. 기존 저장은 보존하며 현재 판을 계속할 수 있어요.')}}
  const tower=view?.towers.find(t=>t.pad===selected),stats=tower?towerStats(tower):null

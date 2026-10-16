@@ -12,11 +12,11 @@ async function seedLegacyDefense(page: Page) {
 
 test('solo survival finishes two rounds and saves jump achievements separately', async ({page}) => {
   await openParty(page)
-  await page.getByRole('button', {name:/^혼자 장애물 생존/}).click()
-  await expect(page.getByText(/대시는 전진만 하며 서로 밀리지 않아요/)).toBeVisible()
+  await page.getByRole('button', {name:'장애물 생존 게임 소개',exact:true}).click()
+  await expect(page.getByText(/이 종목에서는 서로 밀리지 않아요/)).toBeVisible()
   await freeze(page)
   for (const round of [1,2]) {
-    await page.getByRole('button', {name:`${round}라운드 시작`,exact:true}).click()
+    await page.getByRole('button', {name:round===1?'컴퓨터와 시작하기':'2라운드 시작',exact:true}).click()
     await page.clock.runFor(6000)
     expect((await state(page) as SoloPush).game.mode).toBe('survival')
     await page.clock.runFor(88000)
@@ -30,11 +30,11 @@ test('solo survival finishes two rounds and saves jump achievements separately',
   await expect(page.getByRole('heading',{name:'연속 장애물을 넘고, 낙하를 줄이세요'})).toBeVisible()
 })
 
-async function openParty(page: Page) {
+async function openParty(page: Page, legacy = false) {
   await page.goto('./?app=1')
   await page.getByRole('button', { name: '더보기', exact: true }).click()
-  await page.getByRole('button', { name: '미니게임', exact: true }).click()
-  await page.getByRole('button', { name: '혼자 도전 · 세 가지 종목', exact: true }).click()
+  await page.getByRole('button', { name: '게임 라운지', exact: true }).click()
+  if (legacy) { await page.getByText('이전 버전 저장', {exact:true}).click(); await page.getByRole('button', {name:'이전 러닝 디펜스 열기',exact:true}).click() }
 }
 async function freeze(page: Page) {
   await page.clock.install()
@@ -47,7 +47,7 @@ test('legacy saved defense builds, handles continuous touch and pause, resumes a
   const errors: string[] = [], sockets: string[] = []
   page.on('pageerror', e => errors.push(e.message)); page.on('websocket', s => sockets.push(s.url()))
   await seedLegacyDefense(page)
-  await openParty(page)
+  await openParty(page, true)
   await page.getByRole('button', { name: '이전 러닝 디펜스 1웨이브 이어하기' }).click()
   await page.getByRole('button', { name: /^공 발사기 설치/ }).click()
   await expect(page.getByText('남은 예산 3개 · 변경 미확정')).toBeVisible()
@@ -88,7 +88,7 @@ test('legacy saved defense builds, handles continuous touch and pause, resumes a
   await page.getByRole('button', { name: '확정·저장하고 종목 선택으로' }).click()
   const checkpoint = await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), SOLO_CHECKPOINT_KEY)
   expect(checkpoint.wave).toBe(2); expect(checkpoint.facilities[1].kind).toBe('fan')
-  await page.reload(); await openParty(page)
+  await page.reload(); await openParty(page, true)
   await page.getByRole('button', { name: '이전 러닝 디펜스 2웨이브 이어하기' }).click()
   await expect(page.getByText(`남은 예산 ${checkpoint.budget}개`, { exact: true })).toBeVisible()
   await expect(page.getByLabel('웨이브별 결과')).toContainText('이어하기 전 웨이브는 합계만 남아 있어요')
@@ -117,9 +117,9 @@ test('legacy saved defense builds, handles continuous touch and pause, resumes a
 test('solo push completes two rounds, ranks real actions, starts fresh and leaves without a false result', async ({ page }, info) => {
   const errors: string[] = []; page.on('pageerror', e => errors.push(e.message))
   await openParty(page)
-  await page.getByRole('button', { name: /^혼자 밀어내기/ }).click()
+  await page.getByRole('button', { name: '밀어내기 게임 소개',exact:true }).click()
   await freeze(page)
-  await page.getByRole('button', { name: '1라운드 시작' }).click()
+  await page.getByRole('button', { name: '컴퓨터와 시작하기' }).click()
   await page.clock.runFor(19000)
   expect((await state(page) as SoloPush).game.players[0]!.falls).toBeGreaterThan(1)
   await page.clock.runFor(74500)
@@ -134,8 +134,8 @@ test('solo push completes two rounds, ranks real actions, starts fresh and leave
   await page.getByRole('button', { name: '1라운드 시작' }).click()
   await page.clock.runFor(3500)
   expect((await state(page) as SoloPush).game.players[0]!.falls).toBe(0)
-  await page.getByRole('button', { name: '종목 선택으로', exact: true }).click()
-  await page.getByRole('button', { name: '저장 없이 종목 선택으로' }).click()
+  await page.getByRole('button', { name: '게임 소개로', exact: true }).click()
+  await page.getByRole('button', { name: '이번 경기 나가기' }).click()
   const records = await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), SOLO_RECORDS_KEY)
   expect(records).toHaveLength(1)
   expect(errors).toEqual([])
@@ -148,7 +148,7 @@ test('small screens and missing art retain playable controls and readable naviga
     await page.route('**/game/**', route => route.request().resourceType() === 'image' ? route.abort() : route.continue())
   } else await page.setViewportSize({ width: 320, height: 800 })
   await seedLegacyDefense(page)
-  await openParty(page)
+  await openParty(page, true)
   await page.screenshot({ path: info.outputPath('solo-selection.png'), fullPage: true })
   await page.getByRole('button', { name: '이전 러닝 디펜스 1웨이브 이어하기' }).click()
   await page.getByRole('button', { name: /^공 발사기 설치/ }).click()
@@ -166,9 +166,13 @@ test('small screens and missing art retain playable controls and readable naviga
   await page.getByRole('button', { name: '종목 선택으로', exact: true }).click()
   await expect(page.getByRole('dialog', { name: '잠깐 쉬는 중' })).toBeVisible()
   await page.getByRole('button', { name: '저장 없이 종목 선택으로' }).click()
-  await page.getByRole('button', { name: '친구 파티', exact: true }).click()
-  await expect(page.getByRole('heading', { name: '친구 파티' })).toBeVisible()
+  await page.getByRole('button', { name: '친구와 할 게임 보기', exact: true }).click()
+  await expect(page.getByRole('button', {name:'친구와',exact:true})).toHaveAttribute('aria-pressed','true')
+  await page.getByRole('button', {name:'밀어내기 게임 소개',exact:true}).click()
+  await page.getByRole('button', {name:'친구 초대 준비하기',exact:true}).click()
+  await expect(page.getByRole('heading', { name: '밀어내기', exact:true })).toBeVisible()
   await page.getByRole('button', { name: '친구 경기 나가기' }).click()
-  await expect(page.getByRole('heading', { name: '오늘은 어떤 경기?' })).toBeVisible()
+  await page.getByRole('button', {name:'게임 목록으로',exact:true}).click()
+  await expect(page.getByRole('heading', { name: '게임 라운지' })).toBeVisible()
   expect(errors).toEqual([])
 })

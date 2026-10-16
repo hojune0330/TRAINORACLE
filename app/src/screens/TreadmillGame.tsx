@@ -27,7 +27,7 @@ import { loadToriArt } from "./treadmill/runner-art"
 import { loadSceneArt } from "./treadmill/scene-art"
 import { loadPartyArt } from "./treadmill/party-art"
 import { PartyEffect } from "./treadmill/PartyEffect"
-import { SoloParty } from "./treadmill/SoloParty"
+import { GameLounge } from "./treadmill/GameLounge"
 import { ActionFeedback, useActionFeedback } from "./treadmill/ActionFeedback"
 import { actionFeedback } from "./treadmill/action-feedback"
 import type { GamePalette, RunnerCharacter } from "./treadmill/sprites"
@@ -43,8 +43,6 @@ import "./treadmill/game-reward-actions.css"
 import "./treadmill/upgrade-choice.css"
 import "./treadmill/game-navigation.css"
 import "./treadmill/game-feedback.css"
-import { FriendArena } from "./treadmill/FriendArena"
-import { arenaInvitation } from "./treadmill/arena-types"
 
 const fillStyle = (fill: number) => ({ "--fill": Math.max(0, Math.min(1, fill)).toFixed(3) }) as React.CSSProperties
 const upgradeName = (id: string) => TREADMILL_UPGRADES.find(upgrade => upgrade.id === id)?.name ?? id
@@ -103,14 +101,10 @@ function unlocksBetween(before: MinigameProgress, after: MinigameProgress): stri
 }
 
 export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" }: { readonly onBack: () => void; readonly backLabel?: string }) {
-  const [friends, setFriends] = React.useState(() => !!arenaInvitation())
-  const [party, setParty] = React.useState(false)
-  return friends ? <FriendArena onBack={() => setFriends(false)} /> : party
-    ? <SoloParty onBack={() => setParty(false)} onFriends={() => setFriends(true)} />
-    : <SoloTreadmillGame onBack={onBack} backLabel={backLabel} onFriends={() => setFriends(true)} onParty={() => setParty(true)} />
+  return <GameLounge onBack={onBack} backLabel={backLabel} renderTour={back => <SoloTreadmillGame onBack={back} backLabel="게임 소개로" />} />
 }
 
-function SoloTreadmillGame({ onBack, backLabel, onFriends, onParty }: { readonly onBack: () => void; readonly backLabel: string; readonly onFriends: () => void; readonly onParty: () => void }) {
+function SoloTreadmillGame({ onBack, backLabel }: { readonly onBack: () => void; readonly backLabel: string }) {
   const store = useMinigameProgress()
   const saved = useSavedRun()
   const [leave, setLeave] = React.useState<null | { title: string; detail: string; action: () => void; canSave: boolean; replaceSaved: boolean; returnToRun: boolean }>(null)
@@ -397,7 +391,7 @@ function SoloTreadmillGame({ onBack, backLabel, onFriends, onParty }: { readonly
   }
 
   const title = screen === "map" ? "러닝 투어" : city ? `${city.name} 투어` : "러닝머신 연습"
-  return <div className="treadmill-game" ref={surface} onKeyDown={handleKey} data-screen={screen} data-mode={view.mode} data-stage={stage.surface}
+  return <div className="treadmill-game game-entry-surface" ref={surface} onKeyDown={handleKey} data-screen={screen} data-mode={view.mode} data-stage={stage.surface}
     data-sky={shaderLive ? "shader" : "canvas"} data-view={renderView.current.city ? "city" : "flat"} data-controls={settings.controls} data-run-side={settings.runSide}
     data-reduced={reduced || undefined}
     onKeyUp={event => { if (event.key === "ArrowRight") { keyboardHeld.current = false; updateHeld() } }}
@@ -433,8 +427,6 @@ function SoloTreadmillGame({ onBack, backLabel, onFriends, onParty }: { readonly
       <h2>저장한 판을 불러올 수 없어요</h2><p>게임 버전이 달라졌거나 저장 내용이 손상됐어요. 완주 기록은 유지돼요.</p>
       <button type="button" className="treadmill-game__ghost" onClick={discardSaved}>저장한 판 지우기</button>
     </section>}
-    {screen === "map" && <><button className="treadmill-game__cta arena-entry" onClick={onParty}>혼자 도전 · 세 가지 종목</button>
-      <button className="treadmill-game__ghost arena-entry" onClick={onFriends}>친구 파티 · 밀어내기와 장애물 생존</button></>}
     {screen === "map" && <TourMap progress={progress} season={season} onSeason={setSeason} status={store.status} onShop={() => { setMenuTab("shop"); setMenuOpen(true) }}
       onPlay={item => chooseCourse({ kind: "city", city: item })} onPractice={() => chooseCourse({ kind: "practice" })} />}
 

@@ -32,10 +32,11 @@ const titles = { push: '혼자 밀어내기', survival: '혼자 장애물 생존
 const modes = ['push', 'survival', 'defense'] as const
 const members = [{ id: 'you', name: '나', ready: true, connected: true }, { id: 'bot', name: '연습 상대', ready: true, connected: true }]
 
-export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; readonly onFriends: () => void }) {
+export function SoloParty({ onBack, onFriends, initialMode }: { readonly onBack: () => void; readonly onFriends: () => void; readonly initialMode?: 'push' | 'survival' }) {
+  const [initial] = React.useState(() => { if (!initialMode) return null; const next = newSoloPush(initialMode); startSoloPush(next); return next })
   const [towerDefense, setTowerDefense] = React.useState(false)
-  const current = React.useRef<Session | null>(null), runId = React.useRef(''), recorded = React.useRef(false)
-  const [view, setView] = React.useState<Session | null>(null), [paused, setPaused] = React.useState(false)
+  const current = React.useRef<Session | null>(initial ? structuredClone(initial) : null), runId = React.useRef<string>(crypto.randomUUID()), recorded = React.useRef(false)
+  const [view, setView] = React.useState<Session | null>(initial), [paused, setPaused] = React.useState(false)
   const [notice, setNotice] = React.useState(''), [saved, setSaved] = React.useState<ReturnType<typeof loadSoloCheckpoint>>(null)
   const [records, setRecords] = React.useState<SoloRecord[]>([]), [recordStatus, setRecordStatus] = React.useState('')
   const [reviews, setReviews] = React.useState<DefenseReview[]>([]), [comparison, setComparison] = React.useState('')
@@ -67,7 +68,7 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
     reviewStart.current = null; setReviews([]); setComparison('')
     setPaused(false); setDraft(null); setRecordStatus(''); setNotice(''); sync()
   }
-  const menu = () => { release(); current.current = null; setPaused(false); setDraft(null); sync(); refresh() }
+  const menu = () => { release(); if (initialMode) { onBack(); return }; current.current = null; setPaused(false); setDraft(null); sync(); refresh() }
   const pause = React.useCallback(() => { release(); sync(); setPaused(true) }, [release, sync])
   const requestBack = () => {
     if (!view) onBack()
@@ -176,8 +177,8 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
   if (towerDefense) return <TowerDefense onBack={() => setTowerDefense(false)} />
   return <section className="treadmill-game solo-party" data-screen={playing ? 'play' : 'map'} data-phase={view?.phase ?? 'select'} data-solo-mode={mode}>
     <header className="treadmill-game__header">
-      <button className="treadmill-game__icon" aria-label={view ? '종목 선택으로' : '러닝 투어로'} onClick={requestBack}><ArrowLeft size={20} /></button>
-      <div className="treadmill-game__title"><span>혼자 도전 · 서버 연결 없이</span><h1>{mode ? titles[mode] : '오늘은 어떤 경기?'}</h1></div>
+      <button className="treadmill-game__icon" aria-label={initialMode ? '게임 소개로' : view ? '종목 선택으로' : '게임 라운지로'} onClick={requestBack}><ArrowLeft size={20} /></button>
+      <div className="treadmill-game__title"><span>혼자 하기 · 컴퓨터 상대</span><h1>{mode ? titles[mode] : '이전 도전 모음'}</h1></div>
       {playing ? <button className="treadmill-game__icon" aria-label="혼자 경기 일시정지" onClick={pause}><Pause size={20} /></button> : <Trophy aria-hidden="true" />}
     </header>
     {notice && <p className="solo-party__notice" role="status">{notice}</p>}
@@ -188,7 +189,7 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
         <span><strong>{m === 'defense' ? '타워 디펜스' : titles[m]}</strong><span>{m !== 'defense' ? '컴퓨터와 90초 × 2라운드' : '숲길 방어전 · 6웨이브 · 배치와 강화'}</span>
           <small>{m === 'defense' ? '연사·포격·감속 · 기지 체력 20을 지키세요' : best ? m === 'survival' ? `최고 기록 · 낙하 ${best.falls} · 점프 회피 ${best.success}` : `최고 기록 · 시리즈 승점 ${best.wins}/4 · 밀어냄 ${best.success}` : m === 'survival' ? '연속 장애물 · 낙하 적은 순 · 서로 밀리지 않아요' : '트랙 → 커브 · 시간 끝까지 무한 리젠'}</small></span>
       </button> })}</div>
-      <button className="treadmill-game__ghost" onClick={onFriends}>친구 파티</button>
+      <button className="treadmill-game__ghost" onClick={onFriends}>친구와 할 게임 보기</button>
       {records.length > 0 && <details className="solo-party__history"><summary>최근 도전 기록 {Math.min(5, records.length)}판</summary>
         <ol>{records.slice(-5).reverse().map(r => <li key={r.id}><strong>{titles[r.mode]}{r.mode === 'defense' && r.version !== DEFENSE_RULES.version ? ' · 이전 규칙' : ''}</strong><span>{r.mode === 'defense' ? `막은 적 ${r.success}/48 · 놓친 적 ${r.missed}` : r.mode === 'survival' ? `점프 회피 ${r.success}` : `승점 ${r.wins}/4 · 밀어냄 ${r.success}`} · 낙하 {r.falls}회</span><small>{new Date(r.completedAt).toLocaleString('ko-KR')}</small></li>)}</ol>
       </details>}
@@ -263,14 +264,14 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
       {recordStatus.startsWith('기록을 저장하지') && <button className="treadmill-game__ghost" onClick={sync}>기록 저장 다시 시도</button>}
       <button className="treadmill-game__cta" onClick={() => view.mode === 'defense' ? (menu(), setTowerDefense(true)) : start(newSoloPush(view.mode))}>같은 종목 새로 시작</button>
       {view.mode === 'defense' && <DefenseRecap reviews={reviews} expected={3} />}
-      <button className="treadmill-game__ghost" onClick={menu}>다른 종목 고르기</button>
-      <button className="treadmill-game__ghost" onClick={onFriends}>친구 파티</button>
+      <button className="treadmill-game__ghost" onClick={menu}>{initialMode ? '게임 소개로 돌아가기' : '다른 종목 고르기'}</button>
+      <button className="treadmill-game__ghost" onClick={onFriends}>{initialMode ? '이 게임을 친구와 하기' : '친구와 할 게임 보기'}</button>
     </div>}
     {paused && <GameLeaveDialog title="잠깐 쉬는 중" onCancel={() => setPaused(false)}>
-      <p>혼자 경기는 멈춰 있어요. 종목 선택으로 나가면 진행 중인 판은 기록되지 않아요.</p>
-      {view?.mode === 'defense' && view.phase === 'prepare' ? <button className="treadmill-game__cta" onClick={save}>저장하고 나가기</button> : <p>중간 저장은 디펜스의 웨이브 준비 화면에서 할 수 있어요.</p>}
+      <p>혼자 경기는 멈춰 있어요. 나가면 진행 중인 판은 기록되지 않아요.</p>
+      {view?.mode === 'defense' && view.phase === 'prepare' ? <button className="treadmill-game__cta" onClick={save}>저장하고 나가기</button> : <p>{view?.mode === 'defense' ? '웨이브 준비 화면에서 저장할 수 있어요.' : '이 종목은 중간 저장 없이 두 라운드를 진행해요.'}</p>}
       {notice && <p role="alert">{notice}</p>}
-      <button className="treadmill-game__ghost" onClick={menu}>저장 없이 종목 선택으로</button>
+      <button className="treadmill-game__ghost" onClick={menu}>{initialMode ? '이번 경기 나가기' : '저장 없이 종목 선택으로'}</button>
     </GameLeaveDialog>}
   </section>
 }

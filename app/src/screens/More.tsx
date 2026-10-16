@@ -112,7 +112,7 @@ export function More({
         </MenuGroup>
         {(onOpenRewards || onOpenMinigame) && <MenuGroup title="꾸미기·게임">
           {onOpenRewards && <MenuAction category="journal" icon={Sticker} label="일지 꾸미기" onClick={onOpenRewards} />}
-          {onOpenMinigame && <MenuAction icon={Gamepad2} label="미니게임" detail="러닝 투어 · 서울에서 런던까지" illustration="running-game-announcement" onClick={onOpenMinigame} />}
+          {onOpenMinigame && <MenuAction icon={Gamepad2} label="게임 라운지" detail="러닝·대결·디펜스 · 혼자 또는 친구와" illustration="running-game-announcement" onClick={onOpenMinigame} />}
         </MenuGroup>}
         <MenuGroup title="관리">
           <MenuAction icon={CircleUserRound} label={VIEW_TITLES.account} onClick={() => changeView("account")} />
@@ -128,7 +128,7 @@ export function More({
         </MenuGroup>
         {(onOpenRewards || onOpenMinigame) && <MenuGroup title="꾸미기·게임">
           {onOpenRewards && <MenuAction category="journal" icon={Sticker} label="일지 꾸미기" onClick={onOpenRewards} />}
-          {onOpenMinigame && <MenuAction icon={Gamepad2} label="미니게임" detail="러닝 투어 · 서울에서 런던까지" illustration="running-game-announcement" onClick={onOpenMinigame} />}
+          {onOpenMinigame && <MenuAction icon={Gamepad2} label="게임 라운지" detail="러닝·대결·디펜스 · 혼자 또는 친구와" illustration="running-game-announcement" onClick={onOpenMinigame} />}
         </MenuGroup>}
         </>}
         {activeView === "account" && <>
