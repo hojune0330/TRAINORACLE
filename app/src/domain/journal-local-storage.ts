@@ -2,6 +2,7 @@ import type { JournalEntry } from "./journal-schema"
 import { hasPrivateMemoText } from "./private-memo-vault"
 import { JOURNAL_STORAGE_KEY } from "./journal-storage-keys"
 import { announceLocalJournalChange } from "./journal-change-events"
+import { protectDeviceStorageAfterWrite } from "./device-storage-protection"
 import { journalWriteRetainsBodyMetadata } from "./body-part-metadata"
 import { canonicalJournalAccess, canonicalJournalRawStorage } from "./canonical-journal-access"
 import { CANONICAL_JOURNAL_MANIFEST_KEY, isCanonicalJournalWritable } from "./canonical-journal-storage"
@@ -47,6 +48,7 @@ export function writeJournalEntries(
         && sameEpoch(localStorage, epoch)
         && isCanonicalJournalWritable(canonicalJournalRawStorage(localStorage))) {
         announceLocalJournalChange()
+        protectDeviceStorageAfterWrite()
         return true
       }
     } catch {}

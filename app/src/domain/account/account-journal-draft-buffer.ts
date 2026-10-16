@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { protectDeviceStorageAfterWrite } from "../device-storage-protection"
 import { currentStorageConsentRevision, pinStorageOperationRevision } from "./storage-consent-revision"
 import { isValidIsoDate } from "../dates"
 import { fileObservationSchema } from "../import/file-observation"
@@ -322,7 +323,10 @@ export function createAccountDocumentBuffer<T>(schema: z.ZodType<T>, databaseNam
       tx.oncomplete = () => {
         transactions.delete(tx)
         if (!finished) reject(new Error("Incomplete draft transaction"))
-        else resolve(result)
+        else {
+          if (mode === "readwrite") protectDeviceStorageAfterWrite()
+          resolve(result)
+        }
       }
       tx.onabort = () => { transactions.delete(tx); reject(failure ?? new Error("Draft transaction aborted")) }
       tx.onerror = () => { failure ??= new Error("Draft storage failed") }

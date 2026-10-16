@@ -24,6 +24,22 @@ test.beforeEach(async ({ context, page }) => {
   await load(page)
 })
 
+test("device persistence denial does not block encrypted drafts or claim account storage", async ({ page }) => {
+  const result = await page.evaluate(async () => {
+    let requests = 0
+    Object.defineProperty(navigator, "storage", { configurable: true, value: {
+      persisted: async () => false,
+      persist: async () => { requests += 1; return false },
+    } })
+    const h = window.accountDraftHarness
+    await h.buffer.saveDraft(h.owner, h.doc, h.draft)
+    await h.buffer.saveDraft(h.owner, h.doc, { ...h.draft, body: "NEW_SYNTHETIC_DRAFT" })
+    const view = await h.buffer.read(h.owner, h.doc)
+    return { requests, state: view?.state, revision: view?.serverRevision, body: view?.draft.body }
+  })
+  expect(result).toEqual({ requests: 1, state: "LOCAL_CHANGES", revision: 0, body: "NEW_SYNTHETIC_DRAFT" })
+})
+
 test("dirty pre-withdrawal draft never borrows a later consent when queued after reload", async ({page})=>{
   await page.evaluate(async()=>{
     const path="/src/domain/account/storage-consent-revision.ts"

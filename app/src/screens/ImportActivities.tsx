@@ -1,5 +1,5 @@
 import React from "react"
-import { parseActivityFile } from "../domain/import/activity-file"
+import { ActivityParseCancelled, parseActivityFileAsync } from "../domain/import/parse-activity-file-async"
 import type { ActivityParseResult, ImportedActivity } from "../domain/import/activity-file"
 import { buildImportDrafts, confirmImportDrafts } from "../domain/import/import-draft"
 import type { ImportDraft, ImportDraftSelection, ImportFormat, ImportSaveIntent, ImportSaveResult } from "../domain/import/import-draft"
@@ -88,11 +88,14 @@ export function ImportActivities({ onBack, onOpenLog, onOpenAnalysis, onOpenSumm
     }
     if (!current() || controller.signal.aborted) return
 
+    let parsed = false
     try {
       const formats = accountJournalRecordsEnabled() ? fileAnalysisFormats() : []
-      const result = parseActivityFile(text, Intl.DateTimeFormat().resolvedOptions().timeZone, {
+      const result = await parseActivityFileAsync(text, Intl.DateTimeFormat().resolvedOptions().timeZone, {
         observations: { csv: formats.includes("csv"), json: formats.includes("json"), gpx: formats.includes("gpx") },
-      })
+      }, controller.signal)
+      if (!current() || controller.signal.aborted || readControllerRef.current !== controller) return
+      parsed = true
       if (result.activities.length === 0) {
         const codes = result.issues?.map(issue => issue.code) ?? []
         setFailure(codes.includes("FILE_TOO_LARGE") ? "too-large"
@@ -114,9 +117,13 @@ export function ImportActivities({ onBack, onOpenLog, onOpenAnalysis, onOpenSumm
       setSelected(new Set(separate))
       setIntents(new Map(separate.map((index) => [index, { kind: "SAVE_SEPARATE" }])))
       setStage({ step: "review", drafts, result })
-    } catch { if (current()) setFailure("account-unavailable") }
+    } catch (error) {
+      if (current() && readControllerRef.current === controller) {
+        setFailure(error instanceof ActivityParseCancelled ? "cancelled" : parsed ? "account-unavailable" : "unreadable")
+      }
+    }
     finally {
-      if (current()) {
+      if (current() && readControllerRef.current === controller) {
         if (readControllerRef.current === controller) readControllerRef.current = null
         busyRef.current = false; setBusy(false)
       }

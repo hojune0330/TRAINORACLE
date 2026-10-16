@@ -59,6 +59,7 @@ jobs:
       - name: Validate reasoning-tier work harness
         run: |
           node --test .tools/pages-release-safety.test.mjs .tools/manual-release-lock.test.mjs .tools/oracle-public-release-config.test.mjs .tools/repository-freshness.test.mjs
+          node --test .tools/prepare-cloudflare-pages.test.mjs .tools/check-release-channels.test.mjs
           node --test specs/test-packages/reasoning-tier-harness.test.mjs
           node specs/test-packages/reasoning-tier-harness.mjs validate
           node specs/test-packages/validate-formal-approval-foundation.mjs
