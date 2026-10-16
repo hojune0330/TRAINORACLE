@@ -80,3 +80,13 @@ The UTC run also exposed an asynchronous account-test race: a checking message c
 render before the mocked setup request starts. Waiting for that request before
 resolving it preserves the pre-admission denial and subsequent admission assertions.
 All 11 account session-exit cases pass locally after the synchronization correction.
+
+## Lazy-image capture readiness
+
+Run 38846726084 passes both UTC/KST unit groups, contracts, build and dedicated
+browser checks. Its generic fixture lane waits indefinitely when a full-page
+capture decodes an offscreen lazy companion before requesting its bytes. Capture
+preparation now requests those images eagerly, then still requires successful
+decode. Production lazy loading and test timeouts are unchanged. All four local
+projects plus mobile 200-percent text pass: 5 passed, 3 existing project-selection
+skips. Hosted gates must be rerun for this corrected candidate.
